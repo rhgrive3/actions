@@ -1,0 +1,215 @@
+name: PR Worker
+
+on:
+  workflow_dispatch:
+    inputs:
+      repository:
+        description: "Target repository, e.g. rhgrive3/hex-ida"
+        required: true
+        type: string
+      ref:
+        description: "Target branch or ref"
+        required: true
+        type: string
+      base_ref:
+        description: "Base branch/ref used for comparison"
+        required: false
+        default: main
+        type: string
+      operation:
+        description: "Worker operation"
+        required: true
+        type: choice
+        options:
+          - inspect
+          - test
+          - command
+          - command-and-test
+          - fix-and-push
+      command:
+        description: "Optional shell command(s) to run in the target checkout"
+        required: false
+        default: ""
+        type: string
+      test_command:
+        description: "Optional test command; required for deterministic validation of a fix"
+        required: false
+        default: ""
+        type: string
+      push:
+        description: "Push changes back to the same target branch (never force-pushes)"
+        required: false
+        default: false
+        type: boolean
+      artifact_name:
+        description: "Artifact name for logs/diffs"
+        required: false
+        default: pr-worker-output
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-worker-${{ inputs.repository }}-${{ inputs.ref }}
+  cancel-in-progress: false
+
+jobs:
+  worker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout worker repository
+        uses: actions/checkout@v4
+
+      - name: Configure Git
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global user.name "actions-pr-worker"
+          git config --global user.email "actions-pr-worker@users.noreply.github.com"
+
+      - name: Clone target repository
+        env:
+          TARGET_REPO: ${{ inputs.repository }}
+          TARGET_REF: ${{ inputs.ref }}
+          GH_PAT: ${{ secrets.GH_PAT }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${GH_PAT:-}" ]]; then
+            echo "GH_PAT is not configured; read-only public clone may still work, but push will be unavailable."
+            git clone --origin origin "https://github.com/${TARGET_REPO}.git" target
+          else
+            git clone --origin origin "https://x-access-token:${GH_PAT}@github.com/${TARGET_REPO}.git" target
+          fi
+          cd target
+          git fetch --prune origin "${TARGET_REF}" "${{ inputs.base_ref }}"
+          git checkout --detach "origin/${TARGET_REF}"
+          echo "Initial HEAD: $(git rev-parse HEAD)"
+          git rev-parse HEAD > ../initial_head.txt
+          git rev-parse "origin/${{ inputs.base_ref }}" > ../base_head.txt || true
+
+      - name: Inspect checkout and diff
+        working-directory: target
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo "== repository =="
+            pwd
+            echo "== HEAD =="
+            git rev-parse HEAD
+            echo "== status =="
+            git status --short --branch
+            echo "== recent commits =="
+            git --no-pager log -12 --oneline --decorate
+            echo "== diff stat vs base =="
+            git --no-pager diff --stat "origin/${{ inputs.base_ref }}...HEAD" || true
+            echo "== changed files vs base =="
+            git --no-pager diff --name-status "origin/${{ inputs.base_ref }}...HEAD" || true
+          } | tee ../inspect.txt
+
+      - name: Run requested command
+        if: ${{ inputs.operation == 'command' || inputs.operation == 'command-and-test' || inputs.operation == 'fix-and-push' }}
+        working-directory: target
+        env:
+          WORKER_COMMAND: ${{ inputs.command }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${WORKER_COMMAND}" ]]; then
+            echo "No command supplied; refusing to treat an empty command as a fix."
+            exit 2
+          fi
+          bash -lc "${WORKER_COMMAND}" 2>&1 | tee ../command.log
+
+      - name: Run validation/test command
+        if: ${{ inputs.operation == 'test' || inputs.operation == 'command-and-test' || inputs.operation == 'fix-and-push' || inputs.test_command != '' }}
+        working-directory: target
+        env:
+          TEST_COMMAND: ${{ inputs.test_command }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${TEST_COMMAND}" ]]; then
+            echo "No test_command supplied; cannot claim validation." | tee ../test.log
+            exit 2
+          fi
+          bash -lc "${TEST_COMMAND}" 2>&1 | tee ../test.log
+
+      - name: Verify and push same branch
+        if: ${{ inputs.operation == 'fix-and-push' && inputs.push == true }}
+        working-directory: target
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+          TARGET_REPO: ${{ inputs.repository }}
+          TARGET_REF: ${{ inputs.ref }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${GH_PAT:-}" ]]; then
+            echo "GH_PAT secret is required for cross-repository push."
+            exit 2
+          fi
+
+          git diff --check
+          git diff --stat
+          git status --short
+
+          expected="$(cat ../initial_head.txt)"
+          remote_now="$(git ls-remote "https://x-access-token:${GH_PAT}@github.com/${TARGET_REPO}.git" "refs/heads/${TARGET_REF}" | awk '{print $1}')"
+          if [[ -z "${remote_now}" ]]; then
+            echo "Could not resolve remote branch ${TARGET_REF}."
+            exit 3
+          fi
+          if [[ "${remote_now}" != "${expected}" ]]; then
+            echo "ABORT: target branch moved since checkout."
+            echo "expected=${expected}"
+            echo "remote_now=${remote_now}"
+            exit 4
+          fi
+
+          if git diff --quiet; then
+            echo "No working-tree changes; nothing to push."
+            exit 0
+          fi
+
+          git config remote.origin.url "https://x-access-token:${GH_PAT}@github.com/${TARGET_REPO}.git"
+          git add -A
+          git commit -m "fix: apply PR worker changes"
+          git push --no-verify origin "HEAD:refs/heads/${TARGET_REF}"
+          echo "Pushed new HEAD: $(git rev-parse HEAD)" | tee ../push.txt
+
+      - name: Capture final state
+        if: always()
+        working-directory: target
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo "== final HEAD =="
+            git rev-parse HEAD || true
+            echo "== status =="
+            git status --short --branch || true
+            echo "== diff check =="
+            git diff --check || true
+            echo "== working tree diff stat =="
+            git diff --stat || true
+          } | tee ../final.txt
+
+      - name: Upload worker artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.artifact_name }}
+          path: |
+            initial_head.txt
+            base_head.txt
+            inspect.txt
+            command.log
+            test.log
+            push.txt
+            final.txt
+          if-no-files-found: ignore
+          retention-days: 14
