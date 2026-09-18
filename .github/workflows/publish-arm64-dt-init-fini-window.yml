@@ -11,31 +11,68 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      TARGET_REPO: rhgrive3/hex-ida
+      TARGET_REF: fix/arm64-dt-init-fini-analysis-window
+      BASE_SHA: 1122837fd0644ff2c0996b3dbfc9fa021303d2c8
+      EXPECTED_TREE: f6f65ef10e63512207b1ed112fc49ddece2bc9c8
+      PATCH_URL: https://raw.githubusercontent.com/rhgrive3/hex-ida/tmp-arm64-dt-init-fini-window-stage/tmp/arm64-dt-window/fix.patch.gz
     steps:
-      - name: Apply verified patch and push target branch
+      - name: Check write token
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
-          TARGET_REPO: rhgrive3/hex-ida
-          TARGET_REF: fix/arm64-dt-init-fini-analysis-window
-          BASE_SHA: 1122837fd0644ff2c0996b3dbfc9fa021303d2c8
-          EXPECTED_TREE: f6f65ef10e63512207b1ed112fc49ddece2bc9c8
-          PATCH_URL: https://raw.githubusercontent.com/rhgrive3/hex-ida/tmp-arm64-dt-init-fini-window-stage/tmp/arm64-dt-window/fix.patch.gz
         shell: bash
         run: |
           set -euo pipefail
           test -n "${GH_PAT:-}"
+
+      - name: Clone exact target branch
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        shell: bash
+        run: |
+          set -euo pipefail
           git clone --filter=blob:none --no-checkout "https://x-access-token:${GH_PAT}@github.com/${TARGET_REPO}.git" target
           cd target
           git fetch --depth=1 origin "${TARGET_REF}"
           git checkout --detach "origin/${TARGET_REF}"
           test "$(git rev-parse HEAD)" = "${BASE_SHA}"
+
+      - name: Fetch staged patch
+        shell: bash
+        run: |
+          set -euo pipefail
           curl --fail --location --silent --show-error --max-time 60 -o /tmp/fix.patch.gz "${PATCH_URL}"
+          gzip -t /tmp/fix.patch.gz
           gzip -dc /tmp/fix.patch.gz > /tmp/fix.patch
+
+      - name: Apply patch
+        working-directory: target
+        shell: bash
+        run: |
+          set -euo pipefail
           git config user.name OpenAI
           git config user.email noreply@openai.com
           git am /tmp/fix.patch
+
+      - name: Verify base and tree
+        working-directory: target
+        shell: bash
+        run: |
+          set -euo pipefail
           test "$(git rev-parse HEAD^)" = "${BASE_SHA}"
           test "$(git rev-parse HEAD^{tree})" = "${EXPECTED_TREE}"
+
+      - name: Run focused regression
+        working-directory: target
+        shell: bash
+        run: |
+          set -euo pipefail
           timeout 180s node --test tests/issue-9203-elf-loader-entry-analysis-window.mjs tests/issue-2409-function-extent-boundary.mjs
+
+      - name: Push target branch
+        working-directory: target
+        shell: bash
+        run: |
+          set -euo pipefail
           git push --no-verify origin "HEAD:refs/heads/${TARGET_REF}"
-          git rev-parse HEAD
