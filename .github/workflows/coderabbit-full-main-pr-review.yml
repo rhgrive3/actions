@@ -1,0 +1,91 @@
+name: CodeRabbit full-main PR review
+
+on:
+  push:
+    branches:
+      - coderabbit-full-main-review
+    paths:
+      - '.github/workflows/coderabbit-full-main-pr-review.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  open-review-pr:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ secrets.GH_PAT }}
+      TARGET_REPO: rhgrive3/hex-ida
+    steps:
+      - name: Validate cross-repo token
+        id: token
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${GH_TOKEN:-}" ]]; then
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "GH_PAT is not configured." | tee pr-status.txt
+          else
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create empty baseline and review PR
+        if: steps.token.outputs.available == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 5m git clone --filter=blob:none --no-checkout "https://x-access-token:${GH_TOKEN}@github.com/${TARGET_REPO}.git" target
+          cd target
+          git fetch --depth=1 origin main
+          source_sha="$(git rev-parse origin/main)"
+          short="${source_sha:0:12}"
+          base_branch="coderabbit/full-main-baseline-${short}"
+
+          git config user.name "actions-coderabbit-review"
+          git config user.email "actions-coderabbit-review@users.noreply.github.com"
+          empty_tree="$(git mktree </dev/null)"
+          empty_commit="$(printf '%s\n' "CodeRabbit empty baseline for ${source_sha}" | git commit-tree "$empty_tree")"
+
+          if git ls-remote --exit-code origin "refs/heads/${base_branch}" >/dev/null 2>&1; then
+            echo "Baseline branch already exists: ${base_branch}"
+          else
+            timeout 2m git push origin "${empty_commit}:refs/heads/${base_branch}"
+          fi
+
+          existing="$(gh pr list --repo "${TARGET_REPO}" --state open --base "${base_branch}" --head main --json url --jq '.[0].url // empty')"
+          if [[ -n "$existing" ]]; then
+            pr_url="$existing"
+          else
+            pr_url="$(gh pr create \
+              --repo "${TARGET_REPO}" \
+              --base "${base_branch}" \
+              --head main \
+              --title "[DO NOT MERGE] CodeRabbit full review of main ${short}" \
+              --body "Synthetic review-only PR created from rhgrive3/actions. Base is an empty commit so CodeRabbit sees the current main tree as a complete diff. Do not merge this PR. Source main SHA: \`${source_sha}\`.")"
+          fi
+
+          {
+            echo "source_sha=${source_sha}"
+            echo "base_branch=${base_branch}"
+            echo "pr_url=${pr_url}"
+          } | tee ../pr-status.txt
+
+      - name: Write summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## CodeRabbit full-main PR"
+            echo
+            [[ -f pr-status.txt ]] && cat pr-status.txt
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload PR evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coderabbit-full-main-pr
+          path: pr-status.txt
+          if-no-files-found: ignore
+          retention-days: 7
