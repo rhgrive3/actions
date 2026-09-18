@@ -1,4 +1,4 @@
-name: PR 9203 ARM64 benchmark
+name: PR 9203 ARM64 benchmark sharded
 
 on:
   push:
@@ -36,310 +36,329 @@ jobs:
             echo "HEAD mismatch: expected=${TARGET_SHA} actual=${actual}" >&2
             exit 10
           fi
+          test "$(node --input-type=module -e "import fs from 'node:fs'; const m=JSON.parse(fs.readFileSync('benchmarks/public/codefuse-arm64/manifest.json','utf8')); process.stdout.write(String(m.cases.length));")" = "160"
 
-      - name: Run 10-case shard with original manifest
+      - name: Run shard
         working-directory: target
         env:
           SHARD_INDEX: ${{ matrix.shard }}
+          SHARD_COUNT: "16"
+          CASE_TIMEOUT_MS: "120000"
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p ../evidence
-          timeout 1500s node --input-type=module <<'NODE'
+          cat > /tmp/run-shard.mjs <<'NODE'
           import fs from 'node:fs';
           import path from 'node:path';
-          import crypto from 'node:crypto';
-          import { execFileSync, spawnSync } from 'node:child_process';
-          import { loadManifest, verifyInputs } from './tools/validation/public-benchmark/manifest.mjs';
-          import { aggregateComparisons, compareCase } from './tools/validation/public-benchmark/compare.mjs';
-          import { classifySubjectResult, SUBJECT_RESULT_STATES, SUBJECT_RESULT_SCHEMA } from './tools/validation/public-benchmark/outcome.mjs';
+          import { spawnSync } from 'node:child_process';
+          import { pathToFileURL } from 'node:url';
 
-          const REPO = process.cwd();
-          const CASE_RUNNER = path.join(REPO, 'tools/validation/public-benchmark/run-case.mjs');
-          const MANIFEST_FILE = path.join(REPO, 'benchmarks/public/codefuse-arm64/manifest.json');
-          const SUITE_ROOT = path.dirname(MANIFEST_FILE);
-          const OLD_FILE = path.join(REPO, 'reports/public-benchmark/summary.json');
-          const EXPECTED_HEAD = '1122837fd0644ff2c0996b3dbfc9fa021303d2c8';
-          const EXPECTED_MANIFEST_SHA = 'de5d7726ef6bb18649a0b8cc5e4d261e01873eb7ae2c5734d203fed7c8eef992';
-          const TIMEOUT = 120000;
+          const repo = process.cwd();
+          const manifestFile = path.join(repo, 'benchmarks/public/codefuse-arm64/manifest.json');
+          const suiteRoot = path.dirname(manifestFile);
+          const shardIndex = Number(process.env.SHARD_INDEX);
+          const shardCount = Number(process.env.SHARD_COUNT);
+          const timeout = Number(process.env.CASE_TIMEOUT_MS);
+
+          const { loadManifest, verifyInputs } = await import(pathToFileURL(path.join(repo, 'tools/validation/public-benchmark/manifest.mjs')));
+          const { compareCase } = await import(pathToFileURL(path.join(repo, 'tools/validation/public-benchmark/compare.mjs')));
+          const { classifySubjectResult, SUBJECT_RESULT_STATES, SUBJECT_RESULT_SCHEMA } = await import(pathToFileURL(path.join(repo, 'tools/validation/public-benchmark/outcome.mjs')));
+
+          const CASE_RUNNER = path.join(repo, 'tools/validation/public-benchmark/run-case.mjs');
           const HARD_STATES = new Set(['MISSING','MISSING_REFERENCE','HASH_MISMATCH','REFERENCE_HASH_MISMATCH','UNSUPPORTED','ERROR','CRASH','TIMEOUT']);
 
           function readFreshResult(resultPath) {
-            if (!fs.existsSync(resultPath)) return { schema:SUBJECT_RESULT_SCHEMA, state:'ERROR', reason:'result-missing', functions:[] };
+            if (!fs.existsSync(resultPath)) return { schema: SUBJECT_RESULT_SCHEMA, state: 'ERROR', reason: 'result-missing', functions: [] };
             let result;
-            try { result = JSON.parse(fs.readFileSync(resultPath,'utf8')); }
-            catch { return { schema:SUBJECT_RESULT_SCHEMA, state:'ERROR', reason:'result-invalid-json', functions:[] }; }
+            try { result = JSON.parse(fs.readFileSync(resultPath, 'utf8')); }
+            catch { return { schema: SUBJECT_RESULT_SCHEMA, state: 'ERROR', reason: 'result-invalid-json', functions: [] }; }
             if (!result || typeof result !== 'object' || Array.isArray(result)
               || result.schema !== SUBJECT_RESULT_SCHEMA
               || !SUBJECT_RESULT_STATES.has(result.state)
               || !Array.isArray(result.functions)) {
-              return { schema:SUBJECT_RESULT_SCHEMA, state:'ERROR', reason:'result-invalid', functions:[] };
+              return { schema: SUBJECT_RESULT_SCHEMA, state: 'ERROR', reason: 'result-invalid', functions: [] };
             }
             return classifySubjectResult(result);
           }
 
           function applyRunnerStatus(result, run) {
-            if (run.error?.code === 'ETIMEDOUT') {
-              return { schema:SUBJECT_RESULT_SCHEMA, state:'TIMEOUT', reason:'outer-runner-timeout', functions:[], runnerErrorCode:run.error.code };
-            }
-            if (run.error) {
-              return { schema:SUBJECT_RESULT_SCHEMA, state:'ERROR', reason:`outer-runner-error:${run.error.code || run.error.name || 'unknown'}`, functions:[] };
-            }
-            if (run.signal) {
-              return { schema:SUBJECT_RESULT_SCHEMA, state:'CRASH', reason:`case-runner-signal:${run.signal}`, functions:[], runnerSignal:run.signal };
-            }
+            if (run.error?.code === 'ETIMEDOUT') return { schema: SUBJECT_RESULT_SCHEMA, state: 'TIMEOUT', reason: 'outer-runner-timeout', functions: [], runnerErrorCode: run.error.code };
+            if (run.error) return { schema: SUBJECT_RESULT_SCHEMA, state: 'ERROR', reason: `outer-runner-error:${run.error.code || run.error.name || 'unknown'}`, functions: [] };
+            if (run.signal) return { schema: SUBJECT_RESULT_SCHEMA, state: 'CRASH', reason: `case-runner-signal:${run.signal}`, functions: [], runnerSignal: run.signal };
             if (run.status !== 0 && !HARD_STATES.has(result.state)) {
-              return { ...result, state:'ERROR', reason:`case-runner-nonzero-exit:${String(run.status)}`, runnerExitCode:run.status ?? null, subjectReportedState:result.state ?? null };
+              return { ...result, state: 'ERROR', reason: `case-runner-nonzero-exit:${String(run.status)}`, runnerExitCode: run.status ?? null, subjectReportedState: result.state ?? null };
             }
-            if (run.status !== 0) return { ...result, runnerExitCode:run.status ?? null };
+            if (run.status !== 0) return { ...result, runnerExitCode: run.status ?? null };
             return result;
           }
 
-          const head = execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
-          if (head !== EXPECTED_HEAD) throw new Error(`head-mismatch:${head}`);
-          const manifestBytes = fs.readFileSync(MANIFEST_FILE);
-          const manifestSha = crypto.createHash('sha256').update(manifestBytes).digest('hex');
-          if (manifestSha !== EXPECTED_MANIFEST_SHA) throw new Error(`manifest-sha-mismatch:${manifestSha}`);
-          const manifest = loadManifest(MANIFEST_FILE);
-          if (manifest.cases.length !== 160 || manifest.denominatorFrozen !== true) throw new Error('manifest-not-frozen-160');
-
-          const OLD = JSON.parse(fs.readFileSync(OLD_FILE,'utf8'));
-          const oldA = OLD.comparison?.aggregate || {};
-          const baselineMetrics = {
-            denominator:Number(oldA.denominator||0),
-            caseState:{PASS:Number(OLD.states?.PASS||0),PARTIAL:Number(OLD.states?.PARTIAL||0),CRASH:Number(OLD.states?.CRASH||0),UNSUPPORTED:Number(OLD.states?.UNSUPPORTED||0)},
-            functionState:{PASS:Number(OLD.functionStates?.PASS||0),PARTIAL:Number(OLD.functionStates?.PARTIAL||0),CRASH:Number(OLD.functionStates?.CRASH||0),UNSUPPORTED:Number(OLD.functionStates?.UNSUPPORTED||0)},
-            matched:Number(oldA.matched||0),
-            idaOnly:Number(oldA.ida||0)-Number(oldA.matched||0),
-            hexOnly:Number(oldA.hex||0)-Number(oldA.matched||0),
-            hexPseudocode:Number(oldA.hexPseudo||0),
-            hexPseudocodeCoverage:Number(oldA.hexCoverage||0),
-            idaFunctions:Number(oldA.ida||0),
-            hexFunctions:Number(oldA.hex||0),
-          };
-          const expectedBaseline = {denominator:11124,caseCrash:66,casePass:94,functionCrash:340,functionPartial:692,functionPass:9600,functionUnsupported:320,matched:10804,idaOnly:172,hexOnly:148,hexPseudo:10292};
-          if (
-            baselineMetrics.denominator !== expectedBaseline.denominator ||
-            baselineMetrics.caseState.CRASH !== expectedBaseline.caseCrash ||
-            baselineMetrics.caseState.PASS !== expectedBaseline.casePass ||
-            baselineMetrics.functionState.CRASH !== expectedBaseline.functionCrash ||
-            baselineMetrics.functionState.PARTIAL !== expectedBaseline.functionPartial ||
-            baselineMetrics.functionState.PASS !== expectedBaseline.functionPass ||
-            baselineMetrics.functionState.UNSUPPORTED !== expectedBaseline.functionUnsupported ||
-            baselineMetrics.matched !== expectedBaseline.matched ||
-            baselineMetrics.idaOnly !== expectedBaseline.idaOnly ||
-            baselineMetrics.hexOnly !== expectedBaseline.hexOnly ||
-            baselineMetrics.hexPseudocode !== expectedBaseline.hexPseudo
-          ) throw new Error('baseline-mismatch');
-
-          const inputs = verifyInputs(manifest, SUITE_ROOT);
-          const shard = Number(process.env.SHARD_INDEX);
-          if (!Number.isSafeInteger(shard) || shard < 0 || shard > 15) throw new Error('bad-shard-index');
-          const start = shard * 10;
-          const selected = inputs.slice(start, start + 10);
-          if (selected.length !== 10) throw new Error(`bad-shard-size:${selected.length}`);
-
-          const outDir = path.join('/tmp', `pr9203-shard-${shard}`);
-          fs.mkdirSync(outDir,{recursive:true});
-          const states = {};
+          const manifest = loadManifest(manifestFile);
+          const inputs = verifyInputs(manifest, suiteRoot);
+          if (inputs.length !== 160 || manifest.denominatorFrozen !== true) throw new Error('manifest-integrity');
+          const start = Math.floor(inputs.length * shardIndex / shardCount);
+          const end = Math.floor(inputs.length * (shardIndex + 1) / shardCount);
+          const selected = inputs.slice(start, end);
           const functionStates = {};
-          const comparisons = [];
           const results = [];
+          const comparisons = [];
+          const workDir = path.join('/tmp', `pr9203-shard-${shardIndex}`);
+          fs.rmSync(workDir, { recursive:true, force:true });
+          fs.mkdirSync(workDir, { recursive:true });
 
           for (const entry of selected) {
             if (entry.state !== 'READY') {
-              states[entry.state]=(states[entry.state]||0)+1;
-              results.push({id:entry.id,state:entry.state});
+              results.push({ id: entry.id, state: entry.state });
               continue;
             }
-            const resultPath = path.join(outDir, `${Buffer.from(entry.id).toString('hex')}.json`);
-            fs.rmSync(resultPath,{force:true});
+            const resultPath = path.join(workDir, `${Buffer.from(entry.id).toString('hex')}.json`);
             let runnerResult;
             try {
-              runnerResult = spawnSync(process.execPath,[CASE_RUNNER,entry.path,resultPath,String(TIMEOUT)],{
-                encoding:'utf8', timeout:TIMEOUT+5000, cwd:REPO
+              runnerResult = spawnSync(process.execPath, [CASE_RUNNER, entry.path, resultPath, String(timeout)], {
+                encoding: 'utf8',
+                timeout: timeout + 5000,
+                cwd: repo,
               });
             } catch (error) {
-              runnerResult={status:null,signal:null,error};
+              runnerResult = { status:null, signal:null, error };
             }
-            const subject = applyRunnerStatus(readFreshResult(resultPath),runnerResult);
-            states[subject.state]=(states[subject.state]||0)+1;
-            const fsc=subject.functionStateCounts||{};
-            for (const [k,v] of Object.entries(fsc)) functionStates[k]=(functionStates[k]||0)+v;
-            results.push({id:entry.id,state:subject.state,reason:subject.reason??null,functionStates:fsc,runnerExitCode:runnerResult.status??null,runnerSignal:runnerResult.signal??null});
-            comparisons.push(compareCase({caseEntry:entry,hexResult:subject,suiteRoot:SUITE_ROOT}));
+            const subject = applyRunnerStatus(readFreshResult(resultPath), runnerResult);
+            const caseFunctionStates = subject.functionStateCounts ?? {};
+            for (const [state,count] of Object.entries(caseFunctionStates)) functionStates[state]=(functionStates[state]||0)+count;
+            results.push({
+              id: entry.id,
+              state: subject.state,
+              reason: subject.reason ?? null,
+              functionStates: caseFunctionStates,
+              runnerExitCode: runnerResult.status ?? null,
+              runnerSignal: runnerResult.signal ?? null,
+            });
+            comparisons.push(compareCase({ caseEntry:entry, hexResult:subject, suiteRoot }));
           }
 
-          const aggregate = aggregateComparisons(comparisons);
-          const oldResultState = new Map((OLD.results||[]).map(r=>[r.id,r.state]));
-          const oldCase = new Map((OLD.comparison?.cases||[]).map(c=>[c.caseId,c]));
-          const caseTransitions = {};
-          const functionTransitions = {};
-          let oldIdaOnlyRecovered = 0;
-          let oldIdaOnlyStill = 0;
-          let rowKeyMissing = 0;
-
-          for (let i=0;i<comparisons.length;i++) {
-            const c = comparisons[i];
-            const result = results.find(r=>r.id===c.caseId);
-            const fromCase = oldResultState.get(c.caseId) ?? 'MISSING';
-            const toCase = result?.state ?? 'MISSING';
-            const ck = `${fromCase}->${toCase}`;
-            caseTransitions[ck]=(caseTransitions[ck]||0)+1;
-
-            const oc = oldCase.get(c.caseId);
-            const oldRows = new Map((oc?.rows||[]).map(r=>[r.address,r]));
-            for (const n of c.rows||[]) {
-              const o = oldRows.get(n.address);
-              if (!o) { rowKeyMissing++; continue; }
-              const from = o.hexPresent ? (o.hexState || 'PRESENT_UNKNOWN') : 'ABSENT';
-              const to = n.hexPresent ? (n.hexState || 'PRESENT_UNKNOWN') : 'ABSENT';
-              const fk = `${from}->${to}`;
-              functionTransitions[fk]=(functionTransitions[fk]||0)+1;
-              if (o.idaPresent && !o.hexPresent) {
-                if (n.hexPresent) oldIdaOnlyRecovered++;
-                else oldIdaOnlyStill++;
-              }
-            }
-          }
-
-          const payload = {
-            schema:'pr9203-arm64-benchmark-shard/v1',
-            shard,start,count:selected.length,caseIds:selected.map(x=>x.id),
-            head,manifestSha,manifestCases:manifest.cases.length,denominatorFrozen:manifest.denominatorFrozen,
-            baselineMetrics,
-            states,functionStates,aggregate,caseTransitions,functionTransitions,
-            oldIdaOnlyRecovered,oldIdaOnlyStill,rowKeyMissing,
-            results
-          };
-          fs.writeFileSync(`../evidence/shard-${shard}.json`,JSON.stringify(payload,null,2)+'\n');
+          fs.mkdirSync('../evidence', { recursive:true });
+          fs.writeFileSync(`../evidence/shard-${String(shardIndex).padStart(2,'0')}.json`, JSON.stringify({
+            shardIndex, shardCount, start, end, selected: selected.length,
+            head: spawnSync('git',['rev-parse','HEAD'],{cwd:repo,encoding:'utf8'}).stdout.trim(),
+            manifestSha256: (await import('node:crypto')).createHash('sha256').update(fs.readFileSync(manifestFile)).digest('hex'),
+            results, functionStates, comparisons
+          }) + '\n');
           NODE
+          rm -rf ../evidence
+          mkdir -p ../evidence
+          timeout 1500s node /tmp/run-shard.mjs
 
       - name: Upload shard evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: pr9203-shard-${{ matrix.shard }}
-          path: evidence/shard-${{ matrix.shard }}.json
+          name: shard-${{ matrix.shard }}
+          path: evidence/
           if-no-files-found: error
           retention-days: 7
 
   aggregate:
     needs: shard
-    if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Download all shard evidence
-        uses: actions/download-artifact@v4
-        with:
-          pattern: pr9203-shard-*
-          path: shards
-          merge-multiple: true
-
-      - name: Aggregate exact 160 cases
+      - name: Checkout exact PR HEAD
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+          TARGET_SHA: 1122837fd0644ff2c0996b3dbfc9fa021303d2c8
+          TARGET_BRANCH: integration/arch-defects-progress-20260918
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p evidence
+          if [[ -n "${GH_PAT:-}" ]]; then
+            git clone --depth=1 --branch "${TARGET_BRANCH}" "https://x-access-token:${GH_PAT}@github.com/rhgrive3/hex-ida.git" target >/dev/null 2>&1
+          else
+            git clone --depth=1 --branch "${TARGET_BRANCH}" "https://github.com/rhgrive3/hex-ida.git" target >/dev/null 2>&1
+          fi
+          cd target
+          test "$(git rev-parse HEAD)" = "${TARGET_SHA}"
+
+      - name: Download shard evidence
+        uses: actions/download-artifact@v4
+        with:
+          pattern: shard-*
+          path: shard-evidence
+          merge-multiple: true
+
+      - name: Aggregate exact benchmark semantics
+        working-directory: target
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ../final-evidence
           node --input-type=module <<'NODE'
           import fs from 'node:fs';
           import path from 'node:path';
+          import crypto from 'node:crypto';
+          import { aggregateComparisons } from './tools/validation/public-benchmark/compare.mjs';
 
-          const files = fs.readdirSync('shards').filter(x=>/^shard-\d+\.json$/.test(x)).sort((a,b)=>Number(a.match(/\d+/)[0])-Number(b.match(/\d+/)[0]));
+          const old = JSON.parse(fs.readFileSync('reports/public-benchmark/summary.json','utf8'));
+          const manifestBytes = fs.readFileSync('benchmarks/public/codefuse-arm64/manifest.json');
+          const manifest = JSON.parse(manifestBytes);
+          const dir = '../shard-evidence';
+          const files = fs.readdirSync(dir).filter(x=>/^shard-\d+\.json$/.test(x)).sort();
           if (files.length !== 16) throw new Error(`missing-shards:${files.length}`);
-          const shards = files.map(f=>JSON.parse(fs.readFileSync(path.join('shards',f),'utf8')));
+          const shards = files.map(f=>JSON.parse(fs.readFileSync(path.join(dir,f),'utf8')));
           const expectedHead='1122837fd0644ff2c0996b3dbfc9fa021303d2c8';
-          const expectedManifest='de5d7726ef6bb18649a0b8cc5e4d261e01873eb7ae2c5734d203fed7c8eef992';
-          const expectedIndices=Array.from({length:16},(_,i)=>i);
-          if (JSON.stringify(shards.map(s=>s.shard)) !== JSON.stringify(expectedIndices)) throw new Error('shard-index-mismatch');
-          if (shards.some(s=>s.head!==expectedHead || s.manifestSha!==expectedManifest || s.manifestCases!==160 || s.denominatorFrozen!==true)) throw new Error('shard-provenance-mismatch');
+          const expectedManifestSha='de5d7726ef6bb18649a0b8cc5e4d261e01873eb7ae2c5734d203fed7c8eef992';
+          for (const s of shards) {
+            if (s.head !== expectedHead) throw new Error(`head-mismatch-shard-${s.shardIndex}`);
+            if (s.manifestSha256 !== expectedManifestSha) throw new Error(`manifest-mismatch-shard-${s.shardIndex}`);
+          }
 
-          const allCaseIds=shards.flatMap(s=>s.caseIds);
-          if (allCaseIds.length !== 160 || new Set(allCaseIds).size !== 160) throw new Error('case-coverage-mismatch');
+          const results = shards.flatMap(s=>s.results);
+          const comparisons = shards.flatMap(s=>s.comparisons);
+          if (results.length !== 160 || comparisons.length !== 160) throw new Error(`count-mismatch:${results.length}/${comparisons.length}`);
+          if (new Set(results.map(r=>r.id)).size !== 160) throw new Error('duplicate-case-result');
 
-          const sumMap = (field) => {
-            const out={};
-            for (const s of shards) for (const [k,v] of Object.entries(s[field]||{})) out[k]=(out[k]||0)+Number(v||0);
-            return out;
+          const states={};
+          const functionStates={};
+          for (const r of results) {
+            states[r.state]=(states[r.state]||0)+1;
+            for (const [k,v] of Object.entries(r.functionStates||{})) functionStates[k]=(functionStates[k]||0)+Number(v||0);
+          }
+          const aggregate=aggregateComparisons(comparisons);
+
+          const order=['PASS','PARTIAL','CRASH','UNSUPPORTED'];
+          const state4=o=>Object.fromEntries(order.map(k=>[k,Number(o?.[k]||0)]));
+          const metricsParts=(statesObj,functionStatesObj,a)=>({
+            denominator:Number(a.denominator||0),
+            caseState:state4(statesObj),
+            functionState:state4(functionStatesObj),
+            matched:Number(a.matched||0),
+            idaOnly:Number(a.ida||0)-Number(a.matched||0),
+            hexOnly:Number(a.hex||0)-Number(a.matched||0),
+            hexPseudocode:Number(a.hexPseudo||0),
+            hexPseudocodeCoverage:Number(a.hexCoverage||0),
+            idaFunctions:Number(a.ida||0),
+            hexFunctions:Number(a.hex||0),
+          });
+          const oldM=metricsParts(old.states,old.functionStates,old.comparison.aggregate);
+          const newM=metricsParts(states,functionStates,aggregate);
+          const expected={
+            denominator:11124,caseCRASH:66,casePASS:94,
+            functionCRASH:340,functionPARTIAL:692,functionPASS:9600,functionUNSUPPORTED:320,
+            matched:10804,idaOnly:172,hexOnly:148,hexPseudo:10292
           };
-          const sumAgg = {};
-          for (const k of ['denominator','ida','hex','matched','hexPseudo']) sumAgg[k]=shards.reduce((n,s)=>n+Number(s.aggregate?.[k]||0),0);
-          sumAgg.idaCoverage=sumAgg.denominator ? sumAgg.ida/sumAgg.denominator : 0;
-          sumAgg.hexCoverage=sumAgg.denominator ? sumAgg.hexPseudo/sumAgg.denominator : 0;
-
-          const allCaseStates=sumMap('states');
-          const allFunctionStates=sumMap('functionStates');
-          const caseTransitions=sumMap('caseTransitions');
-          const functionTransitions=sumMap('functionTransitions');
-          const old=shards[0].baselineMetrics;
-          if (shards.some(s=>JSON.stringify(s.baselineMetrics)!==JSON.stringify(old))) throw new Error('baseline-metrics-diverged');
-
-          const state4 = obj => ({PASS:Number(obj?.PASS||0),PARTIAL:Number(obj?.PARTIAL||0),CRASH:Number(obj?.CRASH||0),UNSUPPORTED:Number(obj?.UNSUPPORTED||0)});
-          const current={
-            denominator:sumAgg.denominator,
-            caseState:state4(allCaseStates),
-            allCaseStates,
-            functionState:state4(allFunctionStates),
-            allFunctionStates,
-            matched:sumAgg.matched,
-            idaOnly:sumAgg.ida-sumAgg.matched,
-            hexOnly:sumAgg.hex-sumAgg.matched,
-            hexPseudocode:sumAgg.hexPseudo,
-            hexPseudocodeCoverage:sumAgg.hexCoverage,
-            idaFunctions:sumAgg.ida,
-            hexFunctions:sumAgg.hex,
+          const baselineChecks={
+            denominator:oldM.denominator===expected.denominator,
+            caseCRASH:oldM.caseState.CRASH===expected.caseCRASH,
+            casePASS:oldM.caseState.PASS===expected.casePASS,
+            functionCRASH:oldM.functionState.CRASH===expected.functionCRASH,
+            functionPARTIAL:oldM.functionState.PARTIAL===expected.functionPARTIAL,
+            functionPASS:oldM.functionState.PASS===expected.functionPASS,
+            functionUNSUPPORTED:oldM.functionState.UNSUPPORTED===expected.functionUNSUPPORTED,
+            matched:oldM.matched===expected.matched,
+            idaOnly:oldM.idaOnly===expected.idaOnly,
+            hexOnly:oldM.hexOnly===expected.hexOnly,
+            hexPseudo:oldM.hexPseudocode===expected.hexPseudo,
           };
+          if (Object.values(baselineChecks).some(v=>!v)) throw new Error('baseline-mismatch');
+
+          const deltaNum=(a,b)=>b-a;
           const delta={
-            denominator:current.denominator-old.denominator,
-            caseState:Object.fromEntries(['PASS','PARTIAL','CRASH','UNSUPPORTED'].map(k=>[k,current.caseState[k]-old.caseState[k]])),
-            functionState:Object.fromEntries(['PASS','PARTIAL','CRASH','UNSUPPORTED'].map(k=>[k,current.functionState[k]-old.functionState[k]])),
-            matched:current.matched-old.matched,
-            idaOnly:current.idaOnly-old.idaOnly,
-            hexOnly:current.hexOnly-old.hexOnly,
-            hexPseudocode:current.hexPseudocode-old.hexPseudocode,
-            hexPseudocodeCoverage:current.hexPseudocodeCoverage-old.hexPseudocodeCoverage,
+            denominator:deltaNum(oldM.denominator,newM.denominator),
+            caseState:Object.fromEntries(order.map(k=>[k,deltaNum(oldM.caseState[k],newM.caseState[k])])),
+            functionState:Object.fromEntries(order.map(k=>[k,deltaNum(oldM.functionState[k],newM.functionState[k])])),
+            matched:deltaNum(oldM.matched,newM.matched),
+            idaOnly:deltaNum(oldM.idaOnly,newM.idaOnly),
+            hexOnly:deltaNum(oldM.hexOnly,newM.hexOnly),
+            hexPseudocode:deltaNum(oldM.hexPseudocode,newM.hexPseudocode),
+            hexPseudocodeCoverage:newM.hexPseudocodeCoverage-oldM.hexPseudocodeCoverage,
           };
-          const transition = (from,to) => Number(functionTransitions[`${from}->${to}`]||0);
-          const crashRecovery={
-            oldCrashFunctions:old.functionState.CRASH,
-            toPass:transition('CRASH','PASS'),
-            toPartial:transition('CRASH','PARTIAL'),
-            recoveredToPassOrPartial:transition('CRASH','PASS')+transition('CRASH','PARTIAL'),
-            stillCrash:transition('CRASH','CRASH'),
-            toUnsupported:transition('CRASH','UNSUPPORTED'),
-            toAbsent:transition('CRASH','ABSENT'),
-            other:Object.entries(functionTransitions).filter(([k])=>k.startsWith('CRASH->') && !['CRASH->PASS','CRASH->PARTIAL','CRASH->CRASH','CRASH->UNSUPPORTED','CRASH->ABSENT'].includes(k)).reduce((n,[,v])=>n+Number(v),0)
+
+          const oldCases=new Map((old.results||[]).map(r=>[r.id,r.state]));
+          const newCases=new Map(results.map(r=>[r.id,r.state]));
+          const caseTransitions={};
+          for (const [id,from] of oldCases) {
+            const to=newCases.get(id)??'MISSING';
+            caseTransitions[`${from}->${to}`]=(caseTransitions[`${from}->${to}`]||0)+1;
+          }
+
+          const rowMapFromCases=cases=>{
+            const m=new Map();
+            for (const c of cases||[]) for (const r of c.rows||[]) m.set(`${c.caseId}\0${r.address}`,r);
+            return m;
           };
-          const unsupported320={
-            oldUnsupportedFunctions:old.functionState.UNSUPPORTED,
-            toPass:transition('UNSUPPORTED','PASS'),
-            toPartial:transition('UNSUPPORTED','PARTIAL'),
-            stillUnsupported:transition('UNSUPPORTED','UNSUPPORTED'),
-            toCrash:transition('UNSUPPORTED','CRASH'),
-            toAbsent:transition('UNSUPPORTED','ABSENT'),
-            other:Object.entries(functionTransitions).filter(([k])=>k.startsWith('UNSUPPORTED->') && !['UNSUPPORTED->PASS','UNSUPPORTED->PARTIAL','UNSUPPORTED->UNSUPPORTED','UNSUPPORTED->CRASH','UNSUPPORTED->ABSENT'].includes(k)).reduce((n,[,v])=>n+Number(v),0)
-          };
-          const oldIdaOnlyRecovered=shards.reduce((n,s)=>n+Number(s.oldIdaOnlyRecovered||0),0);
-          const oldIdaOnlyStill=shards.reduce((n,s)=>n+Number(s.oldIdaOnlyStill||0),0);
-          const rowKeyMissing=shards.reduce((n,s)=>n+Number(s.rowKeyMissing||0),0);
+          const oldRows=rowMapFromCases(old.comparison?.cases);
+          const newRows=rowMapFromCases(comparisons);
+          const functionTransitions={};
+          let crashToPass=0,crashToPartial=0,crashStill=0,crashOther=0;
+          let unsupToPass=0,unsupToPartial=0,unsupStill=0,unsupOther=0;
+          let idaOnlyRecovered=0,idaOnlyStill=0,rowKeyMissing=0;
+          for (const [key,o] of oldRows) {
+            const n=newRows.get(key);
+            if (!n) { rowKeyMissing++; continue; }
+            const from=o.hexPresent?(o.hexState||'PRESENT_UNKNOWN'):'ABSENT';
+            const to=n.hexPresent?(n.hexState||'PRESENT_UNKNOWN'):'ABSENT';
+            functionTransitions[`${from}->${to}`]=(functionTransitions[`${from}->${to}`]||0)+1;
+            if (from==='CRASH') {
+              if (to==='PASS') crashToPass++;
+              else if (to==='PARTIAL') crashToPartial++;
+              else if (to==='CRASH') crashStill++;
+              else crashOther++;
+            }
+            if (from==='UNSUPPORTED') {
+              if (to==='PASS') unsupToPass++;
+              else if (to==='PARTIAL') unsupToPartial++;
+              else if (to==='UNSUPPORTED') unsupStill++;
+              else unsupOther++;
+            }
+            if (o.idaPresent&&!o.hexPresent) {
+              if (n.hexPresent) idaOnlyRecovered++; else idaOnlyStill++;
+            }
+          }
 
           const out={
-            schema:'pr9203-arm64-benchmark-comparison/v2-sharded',
+            schema:'pr9203-arm64-benchmark-comparison/v2',
             targetHead:expectedHead,
-            manifest:{sha256:expectedManifest,cases:160,denominatorFrozen:true},
-            execution:{shards:16,casesPerShard:10,perCaseTimeoutMs:120000,shardTimeoutSeconds:1500,fullSequentialAttemptTimedOutAtSeconds:1800},
-            old,current,delta,caseTransitions,functionTransitions,crashRecovery,unsupported320,
-            idaOnly172:{oldIdaOnly:old.idaOnly,recoveredHexPresence:oldIdaOnlyRecovered,stillIdaOnly:oldIdaOnlyStill,currentIdaOnly:current.idaOnly},
-            integrity:{shardCount:shards.length,caseCount:allCaseIds.length,uniqueCaseCount:new Set(allCaseIds).size,rowKeyMissing}
+            manifest:{
+              sha256:crypto.createHash('sha256').update(manifestBytes).digest('hex'),
+              cases:manifest.cases.length,
+              denominatorFrozen:manifest.denominatorFrozen,
+              frozenAt:manifest.frozenAt
+            },
+            baselineChecks,
+            old:oldM,
+            current:newM,
+            delta,
+            caseTransitions,
+            functionTransitions,
+            crashRecovery:{
+              oldCrashFunctions:oldM.functionState.CRASH,
+              toPass:crashToPass,toPartial:crashToPartial,
+              recoveredToPassOrPartial:crashToPass+crashToPartial,
+              stillCrash:crashStill,other:crashOther
+            },
+            unsupported320:{
+              oldUnsupportedFunctions:oldM.functionState.UNSUPPORTED,
+              toPass:unsupToPass,toPartial:unsupToPartial,
+              stillUnsupported:unsupStill,other:unsupOther
+            },
+            idaOnly172:{
+              oldIdaOnly:oldM.idaOnly,
+              recoveredHexPresence:idaOnlyRecovered,
+              stillIdaOnly:idaOnlyStill
+            },
+            integrity:{
+              shards:files.length,
+              totalCases:results.length,
+              oldRows:oldRows.size,
+              newRows:newRows.size,
+              rowKeyMissing
+            }
           };
-          fs.writeFileSync('evidence/result.json',JSON.stringify(out,null,2)+'\n');
+          fs.writeFileSync('../final-evidence/result.json',JSON.stringify(out,null,2)+'\n');
           NODE
 
-      - name: Upload compact combined evidence
+      - name: Upload compact final result
         uses: actions/upload-artifact@v4
         with:
-          name: pr9203-arm64-benchmark-sharded-1122837
-          path: evidence/result.json
+          name: pr9203-arm64-benchmark-final
+          path: final-evidence/result.json
           if-no-files-found: error
           retention-days: 7
