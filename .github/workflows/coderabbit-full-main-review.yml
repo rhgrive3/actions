@@ -1,0 +1,131 @@
+name: CodeRabbit full main review
+
+on:
+  push:
+    branches:
+      - coderabbit-full-main-review
+    paths:
+      - '.github/workflows/coderabbit-full-main-review.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      CR_KEY_PRIMARY: ${{ secrets.CODERABBIT_API_KEY }}
+      CR_KEY_AGENTIC: ${{ secrets.CODERABBIT_AGENTIC_API_KEY }}
+      CR_KEY_SHORT: ${{ secrets.CR_API_KEY }}
+      CR_KEY_ALT: ${{ secrets.CODE_RABBIT_API_KEY }}
+    steps:
+      - name: Prepare full-main snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 5m git clone --depth 1 --branch main https://github.com/rhgrive3/hex-ida.git target
+          cd target
+          source_sha="$(git rev-parse HEAD)"
+          tree="$(git rev-parse 'HEAD^{tree}')"
+          empty_tree="$(git mktree </dev/null)"
+          export GIT_AUTHOR_NAME='CodeRabbit Review'
+          export GIT_AUTHOR_EMAIL='coderabbit-review@users.noreply.github.com'
+          export GIT_COMMITTER_NAME="$GIT_AUTHOR_NAME"
+          export GIT_COMMITTER_EMAIL="$GIT_AUTHOR_EMAIL"
+          empty_commit="$(printf '%s\n' 'synthetic empty baseline' | git commit-tree "$empty_tree")"
+          full_commit="$(printf '%s\n' "synthetic snapshot of hex-ida main $source_sha" | git commit-tree "$tree" -p "$empty_commit")"
+          git branch coderabbit-empty-base "$empty_commit"
+          git checkout -B coderabbit-full-main "$full_commit"
+          printf '%s\n' "$source_sha" > ../source-sha.txt
+          {
+            echo "source_sha=$source_sha"
+            echo "synthetic_base=$empty_commit"
+            echo "synthetic_head=$full_commit"
+            echo "tracked_files=$(git ls-files | wc -l)"
+          } > ../snapshot.txt
+
+      - name: Check CodeRabbit credential
+        id: credential
+        shell: bash
+        run: |
+          set -euo pipefail
+          key="${CR_KEY_PRIMARY:-}"
+          [[ -n "$key" ]] || key="${CR_KEY_AGENTIC:-}"
+          [[ -n "$key" ]] || key="${CR_KEY_SHORT:-}"
+          [[ -n "$key" ]] || key="${CR_KEY_ALT:-}"
+          if [[ -z "$key" ]]; then
+            echo "No CodeRabbit API key secret found." | tee coderabbit-status.txt
+            echo "Expected one of: CODERABBIT_API_KEY, CODERABBIT_AGENTIC_API_KEY, CR_API_KEY, CODE_RABBIT_API_KEY" >> coderabbit-status.txt
+            echo "available=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install CodeRabbit CLI
+        if: steps.credential.outputs.available == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location --max-time 120 https://cli.coderabbit.ai/install.sh | bash
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          export PATH="$HOME/.local/bin:$PATH"
+          coderabbit --version | tee coderabbit-version.txt
+
+      - name: Authenticate and review full main
+        if: steps.credential.outputs.available == 'true'
+        working-directory: target
+        shell: bash
+        run: |
+          set -uo pipefail
+          export PATH="$HOME/.local/bin:$PATH"
+          key="${CR_KEY_PRIMARY:-}"
+          [[ -n "$key" ]] || key="${CR_KEY_AGENTIC:-}"
+          [[ -n "$key" ]] || key="${CR_KEY_SHORT:-}"
+          [[ -n "$key" ]] || key="${CR_KEY_ALT:-}"
+
+          auth_rc=0
+          timeout 2m coderabbit auth login --api-key "$key" > ../coderabbit-auth.txt 2>&1 || auth_rc=$?
+          if [[ "$auth_rc" -ne 0 ]]; then
+            printf 'CodeRabbit authentication failed (exit %s).\n' "$auth_rc" | tee ../coderabbit-status.txt
+            exit 0
+          fi
+
+          review_rc=0
+          timeout 18m coderabbit review --plain --base coderabbit-empty-base > ../coderabbit-review.txt 2>&1 || review_rc=$?
+          printf 'CodeRabbit review exit=%s\n' "$review_rc" | tee ../coderabbit-status.txt
+
+      - name: Write compact summary
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo "## CodeRabbit full-main review"
+            echo
+            [[ -f source-sha.txt ]] && echo "- hex-ida main: `$(cat source-sha.txt)`"
+            [[ -f snapshot.txt ]] && sed 's/^/- /' snapshot.txt
+            [[ -f coderabbit-status.txt ]] && { echo; cat coderabbit-status.txt; }
+            if [[ -f coderabbit-review.txt ]]; then
+              echo
+              echo "### Review tail"
+              echo '~~~text'
+              tail -n 80 coderabbit-review.txt
+              echo '~~~'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload review evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coderabbit-full-main-review
+          path: |
+            source-sha.txt
+            snapshot.txt
+            coderabbit-status.txt
+            coderabbit-version.txt
+            coderabbit-auth.txt
+            coderabbit-review.txt
+          if-no-files-found: ignore
+          retention-days: 7
