@@ -32,16 +32,28 @@ jobs:
           git clone --depth 1 https://github.com/rhgrive3/hex-ida.git hex-ida
           git clone --depth 1 --filter=blob:none --sparse https://github.com/codefuse-ai/CodeFuse-DeBench.git codefuse
           cd codefuse
-          git sparse-checkout set --no-cone             '/build/arm64/**'             '/decompiled/ida_out/arm64/**'             '/decompiled/ghidra_out/arm64/**'             '/decompiled/retdec_out/arm64/**'             '/decompiled/angr_out/arm64/**'             '/decompiled/BinaryAI_out/arm64/**'
+          git sparse-checkout set --no-cone '/build/arm64/**' '/decompiled/ida_out/arm64/**' '/decompiled/ghidra_out/arm64/**' '/decompiled/retdec_out/arm64/**' '/decompiled/angr_out/arm64/**' '/decompiled/BinaryAI_out/arm64/**'
           cd ..
           mkdir -p out
-          printf '{"src":"%s","hexCommit":"%s","codefuseCommit":"%s"}\n'             "${{ matrix.src }}"             "$(git -C hex-ida rev-parse HEAD)"             "$(git -C codefuse rev-parse HEAD)"             > "out/meta-${{ matrix.src }}.json"
+          printf '{"src":"%s","hexCommit":"%s","codefuseCommit":"%s"}\n' "${{ matrix.src }}" "$(git -C hex-ida rev-parse HEAD)" "$(git -C codefuse rev-parse HEAD)" > "out/meta-${{ matrix.src }}.json"
 
       - name: Run LLM-free benchmark slice
         shell: bash
         run: |
-          set -euo pipefail
-          node codefuse-llmfree.mjs             --hex-root "$GITHUB_WORKSPACE/hex-ida"             --codefuse-root "$GITHUB_WORKSPACE/codefuse"             --src "${{ matrix.src }}"             --output "$GITHUB_WORKSPACE/out"             --timeout-ms 120000
+          set +e
+          node codefuse-llmfree.mjs             --hex-root "$GITHUB_WORKSPACE/hex-ida"             --codefuse-root "$GITHUB_WORKSPACE/codefuse"             --src "${{ matrix.src }}"             --output "$GITHUB_WORKSPACE/out"             --timeout-ms 120000             2>"out/runner-stderr-${{ matrix.src }}.txt"
+          rc=$?
+          set -e
+          if [ "$rc" -ne 0 ]; then
+            tail -n 40 "out/runner-stderr-${{ matrix.src }}.txt" > "out/diagnostic-${{ matrix.src }}.txt"
+            {
+              echo "### bench-${{ matrix.src }} first failure"
+              echo '~~~text'
+              cat "out/diagnostic-${{ matrix.src }}.txt"
+              echo '~~~'
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit "$rc"
+          fi
 
       - name: Upload slice evidence
         if: always()
@@ -52,6 +64,7 @@ jobs:
             out/rows-${{ matrix.src }}.json
             out/failures-${{ matrix.src }}.json
             out/meta-${{ matrix.src }}.json
+            out/diagnostic-${{ matrix.src }}.txt
           if-no-files-found: warn
           retention-days: 1
           compression-level: 6
@@ -89,6 +102,7 @@ jobs:
             merged/merge-output.json
             merged/meta-*.json
             merged/failures-*.json
+            merged/diagnostic-*.txt
           if-no-files-found: error
           retention-days: 1
           compression-level: 6
