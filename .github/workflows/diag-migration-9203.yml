@@ -52,6 +52,8 @@ jobs:
             fi
             return 0
           }
+          run_one circleci-checkout node tests/ci/circleci-checkout.test.mjs || exit $?
+          run_one circleci-impact node tests/ci/circleci-impact.test.mjs || exit $?
           run_one migration-guardrails node tests/migration-guardrails.mjs || exit $?
           run_one reusable-release node tests/reusable-release-validation.mjs || exit $?
           run_one freebuff-wrappers node tests/freebuff-wrappers.mjs || exit $?
