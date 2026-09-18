@@ -1,5 +1,5 @@
 name: Diagnose migration 9203
-# rerun after architecture blocker fixes
+# rerun after ownership regression update
 
 on:
   push:
