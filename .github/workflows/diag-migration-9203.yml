@@ -1,4 +1,5 @@
 name: Diagnose migration 9203
+# rerun after Ghidra trigger fix
 
 on:
   push:
