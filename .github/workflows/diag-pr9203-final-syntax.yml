@@ -1,0 +1,35 @@
+name: Diagnose PR 9203 final syntax
+
+on:
+  push:
+    branches:
+      - diag/migration-9203
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: rhgrive3/hex-ida
+          ref: integration/arch-defects-progress-20260918
+          fetch-depth: 1
+      - name: Validate final follow-up edits
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 120s python3 -m py_compile reports/investigations/direct-recompilability/harness/root-causes.py
+          timeout 120s node --check reports/investigations/function-discovery/scripts/elf-probe.mjs
+          printf 'root-causes.py PASS\nelf-probe.mjs PASS\n' > final-syntax.txt
+      - name: Upload concise result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr9203-final-syntax
+          path: final-syntax.txt
+          if-no-files-found: ignore
+          retention-days: 2
