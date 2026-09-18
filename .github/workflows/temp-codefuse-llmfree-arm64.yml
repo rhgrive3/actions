@@ -1,0 +1,94 @@
+name: temp-codefuse-llmfree-arm64
+
+on:
+  push:
+    branches:
+      - tmp-codefuse-llmfree
+
+jobs:
+  bench:
+    name: bench-${{ matrix.src }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        src: ["1","2","3","4","5-1","5-23","6","7"]
+    steps:
+      - name: Checkout actions harness
+        uses: actions/checkout@v4
+
+      - name: Install ARM64 compiler and emulator
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq gcc-aarch64-linux-gnu qemu-user
+
+      - name: Fetch Hex and sparse CodeFuse corpus
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --depth 1 https://github.com/rhgrive3/hex-ida.git hex-ida
+          git clone --depth 1 --filter=blob:none --sparse https://github.com/codefuse-ai/CodeFuse-DeBench.git codefuse
+          cd codefuse
+          git sparse-checkout set --no-cone             '/build/arm64/**'             '/decompiled/ida_out/arm64/**'             '/decompiled/ghidra_out/arm64/**'             '/decompiled/retdec_out/arm64/**'             '/decompiled/angr_out/arm64/**'             '/decompiled/BinaryAI_out/arm64/**'
+          cd ..
+          mkdir -p out
+          printf '{"src":"%s","hexCommit":"%s","codefuseCommit":"%s"}\n'             "${{ matrix.src }}"             "$(git -C hex-ida rev-parse HEAD)"             "$(git -C codefuse rev-parse HEAD)"             > "out/meta-${{ matrix.src }}.json"
+
+      - name: Run LLM-free benchmark slice
+        shell: bash
+        run: |
+          set -euo pipefail
+          node codefuse-llmfree.mjs             --hex-root "$GITHUB_WORKSPACE/hex-ida"             --codefuse-root "$GITHUB_WORKSPACE/codefuse"             --src "${{ matrix.src }}"             --output "$GITHUB_WORKSPACE/out"             --timeout-ms 120000
+
+      - name: Upload slice evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: part-${{ matrix.src }}
+          path: |
+            out/rows-${{ matrix.src }}.json
+            out/failures-${{ matrix.src }}.json
+            out/meta-${{ matrix.src }}.json
+          if-no-files-found: warn
+          retention-days: 1
+          compression-level: 6
+
+  merge:
+    if: always()
+    needs: bench
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout merger
+        uses: actions/checkout@v4
+
+      - name: Download completed slice evidence
+        uses: actions/download-artifact@v4
+        with:
+          pattern: part-*
+          path: merged
+          merge-multiple: true
+
+      - name: Merge result
+        shell: bash
+        run: |
+          set -euo pipefail
+          node merge-codefuse-llmfree.mjs merged > merged/merge-output.json
+          cat merged/comparison.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload final report
+        uses: actions/upload-artifact@v4
+        with:
+          name: codefuse-llmfree-final
+          path: |
+            merged/summary.json
+            merged/comparison.md
+            merged/merge-output.json
+            merged/meta-*.json
+            merged/failures-*.json
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 6
