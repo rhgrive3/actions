@@ -1,0 +1,69 @@
+name: Diagnose migration 9203
+
+on:
+  push:
+    branches:
+      - diag/migration-9203
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout target branch
+        uses: actions/checkout@v4
+        with:
+          repository: rhgrive3/hex-ida
+          ref: integration/arch-defects-progress-20260918
+          fetch-depth: 1
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies quietly
+        shell: bash
+        run: npm ci --no-audit --no-fund >/tmp/npm-ci.log 2>&1
+
+      - name: Find first migration failure
+        id: diagnose
+        shell: bash
+        run: |
+          set +e
+          : > diagnostic.txt
+          run_one() {
+            name="$1"
+            shift
+            out="/tmp/diag-$name.log"
+            "$@" >"$out" 2>&1
+            code=$?
+            printf '%s: exit=%s\n' "$name" "$code" >> diagnostic.txt
+            if [ "$code" -ne 0 ]; then
+              {
+                printf '\nFIRST_FAILURE=%s\n' "$name"
+                printf '%s\n' '--- last 80 lines ---'
+                tail -n 80 "$out"
+              } >> diagnostic.txt
+              return "$code"
+            fi
+            return 0
+          }
+          run_one migration-guardrails node tests/migration-guardrails.mjs || exit $?
+          run_one reusable-release node tests/reusable-release-validation.mjs || exit $?
+          run_one freebuff-wrappers node tests/freebuff-wrappers.mjs || exit $?
+          run_one universal-binary-source node tests/universal-binary-source.mjs || exit $?
+          run_one binary-platform node tests/binary-platform.mjs || exit $?
+          printf '\nALL_FOCUSED_MIGRATION_CHECKS_PASS\n' >> diagnostic.txt
+
+      - name: Upload concise diagnostic
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: migration-9203-diagnostic
+          path: diagnostic.txt
+          if-no-files-found: error
+          retention-days: 2
