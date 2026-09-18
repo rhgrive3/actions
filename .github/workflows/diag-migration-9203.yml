@@ -61,6 +61,13 @@ jobs:
           run_one universal-binary-source node tests/universal-binary-source.mjs || exit $?
           run_one binary-platform node tests/binary-platform.mjs || exit $?
           printf '\nALL_FOCUSED_MIGRATION_CHECKS_PASS\n' >> diagnostic.txt
+          run_one arch-invariants timeout 180s node --test tests/arch-invariants/*.test.mjs || exit $?
+          run_one query-dto timeout 180s node --test tests/phase7/analysis-query/analysis-query-decompiler-dto.test.mjs tests/phase7/analysis-query/analysis-query-decompiler-projection.test.mjs || exit $?
+          run_one ir-defuse timeout 180s node --test tests/semantic-v2/ir-def-use-ownership.test.mjs || exit $?
+          run_one ir-reachability timeout 180s node tests/semantic-v2/ir-reachability-cache-ownership.test.mjs || exit $?
+          run_one symbol-ranking timeout 180s node --test tests/phase4/platform/same-address-symbol-semantic-ranking.test.mjs tests/phase4/binary/issue-8255-aarch64-elf-mapping-symbols.test.mjs || exit $?
+          run_one symbol-name-types timeout 120s node tests/phase4/platform/issue-4739-analysis-result-name-types.test.mjs || exit $?
+          printf '\nALL_NON_F_FOCUSED_CHECKS_PASS\n' >> diagnostic.txt
 
       - name: Upload concise diagnostic
         if: always()
