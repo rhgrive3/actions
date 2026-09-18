@@ -1,0 +1,34 @@
+name: fetch-hex-ida-pr9203-head
+on:
+  push:
+    branches:
+      - hex-ida-pr9203-fetch
+
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout exact hex-ida PR head
+        uses: actions/checkout@v4
+        with:
+          repository: rhgrive3/hex-ida
+          ref: 1122837fd0644ff2c0996b3dbfc9fa021303d2c8
+          fetch-depth: 1
+          persist-credentials: false
+          path: hex-ida
+      - name: Archive exact tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd hex-ida
+          git archive --format=zip --output=../hex-ida-pr9203-head.zip HEAD
+      - name: Upload archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: hex-ida-pr9203-head
+          path: hex-ida-pr9203-head.zip
+          if-no-files-found: error
+          retention-days: 1
