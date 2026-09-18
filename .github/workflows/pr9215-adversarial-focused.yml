@@ -1,0 +1,56 @@
+name: PR9215 adversarial focused
+
+on:
+  push:
+    branches:
+      - tmp/pr9215-adversarial-focused
+
+permissions:
+  contents: read
+
+jobs:
+  focused:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout target
+        uses: actions/checkout@v4
+        with:
+          repository: rhgrive3/hex-ida
+          ref: fix/arm64-dt-init-fini-analysis-window
+          fetch-depth: 1
+
+      - name: Verify target HEAD
+        shell: bash
+        run: |
+          set -euo pipefail
+          actual="$(git rev-parse HEAD)"
+          expected="739d62fca5091960a18e45a7161f22c7c589067a"
+          printf 'expected=%s\nactual=%s\n' "$expected" "$actual" | tee head-check.txt
+          test "$actual" = "$expected"
+
+      - name: Focused tests
+        id: focused
+        shell: bash
+        run: |
+          set +e
+          timeout 180s node --test             tests/issue-9203-elf-loader-entry-analysis-window.mjs             tests/issue-2409-function-extent-boundary.mjs             > focused-full.txt 2>&1
+          status=$?
+          {
+            echo "exit_status=$status"
+            echo "---- tail ----"
+            tail -n 120 focused-full.txt
+          } > focused-summary.txt
+          cat focused-summary.txt
+          exit "$status"
+
+      - name: Upload focused summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr9215-focused-summary
+          path: |
+            head-check.txt
+            focused-summary.txt
+          if-no-files-found: ignore
+          retention-days: 2
