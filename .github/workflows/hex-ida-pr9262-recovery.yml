@@ -1,0 +1,200 @@
+name: hex-ida PR 9262 recovery cases 15m
+
+on:
+  push:
+    branches:
+      - "bench/hex-ida-pr9262-fresh-15m"
+    paths:
+      - ".github/workflows/hex-ida-pr9262-recovery.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  case:
+    name: case-${{ matrix.idx }}
+    strategy:
+      fail-fast: false
+      max-parallel: 18
+      matrix:
+        include:
+          - { idx: 0, case_id: "1/1_gcc_O3_g" }
+          - { idx: 1, case_id: "1/1_gcc_O3_no_g" }
+          - { idx: 2, case_id: "1/1_gcc_Os_g" }
+          - { idx: 3, case_id: "1/1_gcc_Os_no_g" }
+          - { idx: 4, case_id: "2/2_gcc_O3_g" }
+          - { idx: 5, case_id: "2/2_gcc_O3_no_g" }
+          - { idx: 6, case_id: "2/2_gcc_Os_g" }
+          - { idx: 7, case_id: "2/2_gcc_Os_no_g" }
+          - { idx: 8, case_id: "6/6_gcc_O0_g" }
+          - { idx: 9, case_id: "6/6_gcc_O0_no_g" }
+          - { idx: 10, case_id: "6/6_gcc_O1_g" }
+          - { idx: 11, case_id: "6/6_gcc_O1_no_g" }
+          - { idx: 12, case_id: "6/6_gcc_O2_g" }
+          - { idx: 13, case_id: "6/6_gcc_O2_no_g" }
+          - { idx: 14, case_id: "6/6_gcc_O3_g" }
+          - { idx: 15, case_id: "6/6_gcc_O3_no_g" }
+          - { idx: 16, case_id: "6/6_gcc_Os_g" }
+          - { idx: 17, case_id: "6/6_gcc_Os_no_g" }
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact benchmark branch
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+          TARGET_BRANCH: perf/fresh-benchmark-resumable-parallel
+          TARGET_SHA: 8df3605048a77b9ab99e78233208445b786f4064
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -n "${GH_PAT:-}" ]]; then
+            git clone --depth=1 --branch "${TARGET_BRANCH}" "https://x-access-token:${GH_PAT}@github.com/rhgrive3/hex-ida.git" target >/dev/null 2>&1
+          else
+            git clone --depth=1 --branch "${TARGET_BRANCH}" "https://github.com/rhgrive3/hex-ida.git" target >/dev/null 2>&1
+          fi
+          cd target
+          test "$(git rev-parse HEAD)" = "${TARGET_SHA}"
+
+      - name: Run one recovery case
+        working-directory: target
+        env:
+          CASE_ID: ${{ matrix.case_id }}
+          CASE_IDX: ${{ matrix.idx }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="../evidence/case-${CASE_IDX}"
+          mkdir -p "${out}/cases" "${out}/receipts"
+          set +e
+          timeout -k 5s 840s node tools/validation/public-benchmark/run-fresh.mjs             --manifest benchmarks/public/codefuse-arm64/manifest.json             --output "${out}/cases"             --receipt-dir "${out}/receipts"             --workers 1             --function-timeout-ms 10000             --setup-timeout-ms 60000             --case-id "${CASE_ID}"
+          code=$?
+          set -e
+          echo "${code}" > "${out}/runner-exit-code.txt"
+          printf '%s\n' "${CASE_ID}" > "${out}/case-id.txt"
+
+          pkill -TERM -f 'tools/validation/public-benchmark/(run-fresh|run-fresh-case|fresh-subject)\.mjs' 2>/dev/null || true
+          sleep 1
+          pkill -KILL -f 'tools/validation/public-benchmark/(run-fresh|run-fresh-case|fresh-subject)\.mjs' 2>/dev/null || true
+
+      - name: Build recovery evidence
+        if: always()
+        working-directory: target
+        env:
+          CASE_ID: ${{ matrix.case_id }}
+          CASE_IDX: ${{ matrix.idx }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="../evidence/case-${CASE_IDX}"
+          mkdir -p "${out}"
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import path from 'node:path';
+          const idx=Number(process.env.CASE_IDX);
+          const caseId=process.env.CASE_ID;
+          const root=path.resolve('..','evidence',`case-${idx}`);
+          const casesDir=path.join(root,'cases');
+          const receiptsDir=path.join(root,'receipts');
+          let code=null;
+          try { code=Number(fs.readFileSync(path.join(root,'runner-exit-code.txt'),'utf8').trim()); } catch {}
+          let summary=null;
+          try { summary=JSON.parse(fs.readFileSync(path.join(casesDir,'fresh-summary.json'),'utf8')); } catch {}
+          const outputs=fs.existsSync(casesDir)
+            ? fs.readdirSync(casesDir).filter(x=>x.endsWith('.json')&&x!=='fresh-summary.json')
+            : [];
+          let receiptCount=0;
+          if(fs.existsSync(receiptsDir)){
+            const stack=[receiptsDir];
+            while(stack.length){
+              const current=stack.pop();
+              for(const entry of fs.readdirSync(current,{withFileTypes:true})){
+                const p=path.join(current,entry.name);
+                if(entry.isDirectory()) stack.push(p);
+                else if(entry.isFile()&&entry.name.endsWith('.json')&&entry.name!=='inflight.json') receiptCount++;
+              }
+            }
+          }
+          fs.writeFileSync(path.join(root,'recovery-meta.json'),JSON.stringify({
+            schema:'hex-ida-pr9262-recovery-case/v1',
+            idx,caseId,targetSha:'8df3605048a77b9ab99e78233208445b786f4064',
+            runnerExitCode:code,
+            benchmarkTimedOut:code===124||code===137,
+            outputCaseCount:outputs.length,
+            receiptCount,
+            summary
+          },null,2)+'\n');
+          NODE
+          if [[ -f "${out}/cases/fresh-summary.json" ]]; then
+            cp "${out}/cases/fresh-summary.json" "${out}/fresh-summary.json"
+          fi
+          rm -rf "${out}/receipts"
+
+      - name: Upload recovery evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hex-ida-pr9262-recovery-${{ matrix.idx }}
+          path: evidence/case-${{ matrix.idx }}/
+          if-no-files-found: error
+          retention-days: 7
+
+  aggregate:
+    needs: case
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Download recovery artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: hex-ida-pr9262-recovery-*
+          path: recovery
+
+      - name: Build recovery summary
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p final
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import path from 'node:path';
+          const metas=[];
+          const stack=['recovery'];
+          while(stack.length){
+            const current=stack.pop();
+            for(const entry of fs.readdirSync(current,{withFileTypes:true})){
+              const p=path.join(current,entry.name);
+              if(entry.isDirectory()) stack.push(p);
+              else if(entry.isFile()&&entry.name==='recovery-meta.json') metas.push(JSON.parse(fs.readFileSync(p,'utf8')));
+            }
+          }
+          metas.sort((a,b)=>a.idx-b.idx);
+          const result={
+            schema:'hex-ida-pr9262-recovery-summary/v1',
+            expected:18,
+            artifacts:metas.length,
+            completed:metas.filter(x=>x.outputCaseCount===1).length,
+            timedOut:metas.filter(x=>x.benchmarkTimedOut).map(x=>x.caseId),
+            failed:metas.filter(x=>x.runnerExitCode!==0&&!x.benchmarkTimedOut).map(x=>({caseId:x.caseId,code:x.runnerExitCode})),
+            cases:metas.map(x=>({
+              idx:x.idx,caseId:x.caseId,runnerExitCode:x.runnerExitCode,
+              benchmarkTimedOut:x.benchmarkTimedOut,outputCaseCount:x.outputCaseCount,
+              receiptCount:x.receiptCount,
+              states:x.summary?.states??null,
+              functionStates:x.summary?.functionStates??null,
+              wallMs:x.summary?.performance?.wallMs??null,
+              functions:x.summary?.performance?.functionCount??null,
+              restarts:x.summary?.performance?.restarts??null
+            }))
+          };
+          fs.writeFileSync('final/result.json',JSON.stringify(result,null,2)+'\n');
+          console.log(JSON.stringify({completed:result.completed,timedOut:result.timedOut,failed:result.failed}));
+          NODE
+
+      - name: Upload recovery summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: hex-ida-pr9262-recovery-final
+          path: final/result.json
+          if-no-files-found: error
+          retention-days: 7
