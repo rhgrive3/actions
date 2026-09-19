@@ -1,4 +1,4 @@
-name: PR 9263 full fresh decompile benchmark 15m
+name: Main full fresh decompile benchmark 15m
 
 on:
   push:
@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: pr9263-full-fresh-benchmark
+  group: main-full-fresh-benchmark
   cancel-in-progress: true
 
 jobs:
@@ -26,11 +26,11 @@ jobs:
       - name: Checkout benchmark orchestrator
         uses: actions/checkout@v4
 
-      - name: Checkout exact PR 9263 HEAD
+      - name: Checkout exact current main HEAD
         uses: actions/checkout@v4
         with:
           repository: rhgrive3/hex-ida
-          ref: 882e66b7c626e97dfaad1622867aa1c80f681e61
+          ref: c5b48771eb53cbe89087d67aa501692daa0cefd8
           path: target
           fetch-depth: 1
 
@@ -45,7 +45,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git -C target rev-parse HEAD)" = "882e66b7c626e97dfaad1622867aa1c80f681e61"
+          test "$(git -C target rev-parse HEAD)" = "c5b48771eb53cbe89087d67aa501692daa0cefd8"
           test "$(node --input-type=module -e "import fs from 'node:fs'; const m=JSON.parse(fs.readFileSync('target/benchmarks/public/codefuse-arm64/manifest.json','utf8')); process.stdout.write(String(m.cases.length));")" = "160"
           echo "shard=${SHARD_INDEX} start=$((SHARD_INDEX * 4)) limit=4"
           node --version
@@ -57,7 +57,7 @@ jobs:
           TARGET_DIR: ${{ github.workspace }}/target
           OUTPUT_FILE: ${{ github.workspace }}/shard-output/result.json
           CASE_DIR: ${{ github.workspace }}/case-results
-          TARGET_SHA: 882e66b7c626e97dfaad1622867aa1c80f681e61
+          TARGET_SHA: c5b48771eb53cbe89087d67aa501692daa0cefd8
           WORKERS: "4"
           CASE_TIMEOUT_MS: "720000"
           SOFT_DEADLINE_MS: "780000"
@@ -72,7 +72,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: pr9263-bench-${{ matrix.shard }}
+          name: main-bench-${{ matrix.shard }}
           path: |
             shard-output/result.json
             case-results/
@@ -89,7 +89,7 @@ jobs:
       - name: Download shard evidence
         uses: actions/download-artifact@v4
         with:
-          pattern: pr9263-bench-*
+          pattern: main-bench-*
           path: shards
 
       - name: Build compact aggregate
@@ -130,8 +130,8 @@ jobs:
           }
           rows.sort((a,b)=>b.elapsedMs-a.elapsedMs);
           const out={
-            schema:'hex-pr9263-full-fresh-benchmark/v1',
-            targetSha:'882e66b7c626e97dfaad1622867aa1c80f681e61',
+            schema:'hex-main-full-fresh-benchmark/v1',
+            targetSha:'c5b48771eb53cbe89087d67aa501692daa0cefd8',
             expectedShards:40,
             shardSummaries:summaries.length,
             selectedCases:selected,
@@ -153,7 +153,7 @@ jobs:
       - name: Upload final aggregate
         uses: actions/upload-artifact@v4
         with:
-          name: pr9263-full-benchmark-final
+          name: main-full-benchmark-final
           path: final/result.json
           if-no-files-found: error
           retention-days: 7
