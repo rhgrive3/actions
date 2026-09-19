@@ -10,6 +10,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: hex-ida-pr9262-recovery
+  cancel-in-progress: true
+
 jobs:
   case:
     name: case-${{ matrix.idx }}
@@ -48,11 +52,12 @@ jobs:
         run: |
           set -euo pipefail
           if [[ -n "${GH_PAT:-}" ]]; then
-            git clone --depth=1 --branch "${TARGET_BRANCH}" "https://x-access-token:${GH_PAT}@github.com/rhgrive3/hex-ida.git" target >/dev/null 2>&1
+            git clone --depth=25 --branch "${TARGET_BRANCH}" "https://x-access-token:${GH_PAT}@github.com/rhgrive3/hex-ida.git" target >/dev/null 2>&1
           else
-            git clone --depth=1 --branch "${TARGET_BRANCH}" "https://github.com/rhgrive3/hex-ida.git" target >/dev/null 2>&1
+            git clone --depth=25 --branch "${TARGET_BRANCH}" "https://github.com/rhgrive3/hex-ida.git" target >/dev/null 2>&1
           fi
           cd target
+          git checkout --detach "${TARGET_SHA}" >/dev/null 2>&1
           test "$(git rev-parse HEAD)" = "${TARGET_SHA}"
 
       - name: Run one recovery case
