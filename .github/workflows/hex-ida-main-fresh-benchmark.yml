@@ -1,3 +1,4 @@
+# manual-trigger: 2026-09-19 post-9263 benchmark
 name: hex-ida main full fresh decompile benchmark 15m
 
 on:
