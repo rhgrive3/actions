@@ -1,0 +1,150 @@
+name: Repeat unstable post-9263 paired cases
+
+on:
+  push:
+    paths:
+      - ".github/workflows/repeat-post9263-unstable-pairs.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: repeat-post9263-unstable-pairs
+  cancel-in-progress: true
+
+jobs:
+  pair:
+    name: repeat-${{ matrix.index }}-${{ matrix.order }}-${{ matrix.rep }}
+    strategy:
+      fail-fast: false
+      max-parallel: 8
+      matrix:
+        include:
+          - { index: 62, id: "4/4_clang_O1_g", order: "AB", rep: 1 }
+          - { index: 62, id: "4/4_clang_O1_g", order: "BA", rep: 1 }
+          - { index: 62, id: "4/4_clang_O1_g", order: "AB", rep: 2 }
+          - { index: 62, id: "4/4_clang_O1_g", order: "BA", rep: 2 }
+          - { index: 57, id: "3/3_gcc_O3_no_g", order: "AB", rep: 1 }
+          - { index: 57, id: "3/3_gcc_O3_no_g", order: "BA", rep: 1 }
+          - { index: 57, id: "3/3_gcc_O3_no_g", order: "AB", rep: 2 }
+          - { index: 57, id: "3/3_gcc_O3_no_g", order: "BA", rep: 2 }
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      BASELINE_SHA: c5b48771eb53cbe89087d67aa501692daa0cefd8
+      CURRENT_SHA: ec02ff8f640e71e38d82a9295bfd197c4744313c
+      CASE_INDEX: ${{ matrix.index }}
+      CASE_ID: ${{ matrix.id }}
+      ORDER: ${{ matrix.order }}
+      REP: ${{ matrix.rep }}
+      CASE_TIMEOUT_MS: "600000"
+      SOFT_DEADLINE_MS: "660000"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: rhgrive3/hex-ida
+          ref: ${{ env.BASELINE_SHA }}
+          path: baseline
+          fetch-depth: 1
+      - uses: actions/checkout@v4
+        with:
+          repository: rhgrive3/hex-ida
+          ref: ${{ env.CURRENT_SHA }}
+          path: current
+          fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Run paired case
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p pair-out
+          run_one() {
+            local label="$1" dir="$2" sha="$3"
+            TARGET_DIR="${{ github.workspace }}/${dir}" \
+            OUTPUT_FILE="${{ github.workspace }}/pair-out/${label}.json" \
+            CASE_DIR="${{ github.workspace }}/pair-out/${label}-case" \
+            TARGET_SHA="${sha}" WORKERS="1" \
+            CASE_TIMEOUT_MS="${CASE_TIMEOUT_MS}" SOFT_DEADLINE_MS="${SOFT_DEADLINE_MS}" \
+            START_INDEX="${CASE_INDEX}" LIMIT="1" node scripts/pr9263-benchmark-local.mjs
+          }
+          if [[ "${ORDER}" == "AB" ]]; then
+            run_one baseline baseline "${BASELINE_SHA}"
+            run_one current current "${CURRENT_SHA}"
+          else
+            run_one current current "${CURRENT_SHA}"
+            run_one baseline baseline "${BASELINE_SHA}"
+          fi
+      - name: Build evidence
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const a=JSON.parse(fs.readFileSync('pair-out/baseline.json','utf8')).results[0];
+          const b=JSON.parse(fs.readFileSync('pair-out/current.json','utf8')).results[0];
+          const semanticMatch=a.state===b.state && a.reason===b.reason &&
+            a.functionCount===b.functionCount &&
+            JSON.stringify(a.functionStates||{})===JSON.stringify(b.functionStates||{});
+          const ratio=b.elapsedMs/a.elapsedMs;
+          const out={
+            id:process.env.CASE_ID,index:Number(process.env.CASE_INDEX),order:process.env.ORDER,rep:Number(process.env.REP),
+            baselineMs:a.elapsedMs,currentMs:b.elapsedMs,currentVsBaselinePct:(ratio-1)*100,
+            semanticMatch,baselineState:a.state,currentState:b.state
+          };
+          fs.writeFileSync('pair-out/pair.json',JSON.stringify(out,null,2)+'\n');
+          console.log(JSON.stringify(out));
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: repeat-${{ matrix.index }}-${{ matrix.order }}-${{ matrix.rep }}
+          path: pair-out/pair.json
+          if-no-files-found: warn
+          retention-days: 7
+
+  aggregate:
+    needs: pair
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: repeat-*
+          path: pairs
+      - name: Aggregate repeats
+        shell: bash
+        run: |
+          mkdir -p final
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs'; import path from 'node:path';
+          const files=[], stack=['pairs'];
+          while(stack.length){const d=stack.pop();if(!fs.existsSync(d))continue;for(const e of fs.readdirSync(d,{withFileTypes:true})){const p=path.join(d,e.name);if(e.isDirectory())stack.push(p);else if(e.isFile()&&e.name==='pair.json')files.push(p);}}
+          const samples=files.map(f=>JSON.parse(fs.readFileSync(f,'utf8')));
+          const groups={};
+          for(const s of samples)(groups[s.id]??=[]).push(s);
+          const rows=Object.entries(groups).map(([id,ss])=>{
+            ss.sort((a,b)=>a.rep-b.rep||a.order.localeCompare(b.order));
+            const ratios=ss.map(s=>s.currentMs/s.baselineMs);
+            const sortedPct=ss.map(s=>s.currentVsBaselinePct).sort((a,b)=>a-b);
+            return {
+              id,samples:ss.length,
+              geometricMeanCurrentVsBaselinePct:(Math.exp(ratios.reduce((x,y)=>x+Math.log(y),0)/ratios.length)-1)*100,
+              medianCurrentVsBaselinePct:(sortedPct[1]+sortedPct[2])/2,
+              minPct:sortedPct[0],maxPct:sortedPct.at(-1),
+              semanticMatch:ss.every(s=>s.semanticMatch),
+              evidence:ss
+            };
+          }).sort((a,b)=>a.id.localeCompare(b.id));
+          const out={expectedSamples:8,actualSamples:samples.length,semanticMismatchCount:samples.filter(s=>!s.semanticMatch).length,rows,complete:samples.length===8&&samples.every(s=>s.semanticMatch)};
+          fs.writeFileSync('final/result.json',JSON.stringify(out,null,2)+'\n');
+          console.log(JSON.stringify(out,null,2));
+          NODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: repeat-post9263-unstable-final
+          path: final/result.json
+          if-no-files-found: error
+          retention-days: 7
