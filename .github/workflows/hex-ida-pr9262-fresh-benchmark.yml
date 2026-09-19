@@ -1,0 +1,276 @@
+name: hex-ida PR 9262 fresh benchmark 15m
+
+on:
+  push:
+    branches:
+      - "bench/hex-ida-pr9262-fresh-15m"
+    paths:
+      - ".github/workflows/hex-ida-pr9262-fresh-benchmark.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  shard:
+    name: shard-${{ matrix.shard }}
+    strategy:
+      fail-fast: false
+      max-parallel: 8
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5, 6, 7]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact benchmark branch
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+          TARGET_BRANCH: perf/fresh-benchmark-resumable-parallel
+          TARGET_SHA: 8df3605048a77b9ab99e78233208445b786f4064
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -n "${GH_PAT:-}" ]]; then
+            git clone --depth=1 --branch "${TARGET_BRANCH}" "https://x-access-token:${GH_PAT}@github.com/rhgrive3/hex-ida.git" target >/dev/null 2>&1
+          else
+            git clone --depth=1 --branch "${TARGET_BRANCH}" "https://github.com/rhgrive3/hex-ida.git" target >/dev/null 2>&1
+          fi
+          cd target
+          actual="$(git rev-parse HEAD)"
+          if [[ "${actual}" != "${TARGET_SHA}" ]]; then
+            echo "HEAD mismatch: expected=${TARGET_SHA} actual=${actual}" >&2
+            exit 10
+          fi
+          node --input-type=module -e "import fs from 'node:fs'; const m=JSON.parse(fs.readFileSync('benchmarks/public/codefuse-arm64/manifest.json','utf8')); if(m.cases.length!==160) throw new Error('expected-160-cases');"
+
+      - name: Select shard cases
+        working-directory: target
+        env:
+          SHARD_INDEX: ${{ matrix.shard }}
+          SHARD_COUNT: "8"
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE' > /tmp/hex-cases.txt
+          import fs from 'node:fs';
+          const manifest=JSON.parse(fs.readFileSync('benchmarks/public/codefuse-arm64/manifest.json','utf8'));
+          const shard=Number(process.env.SHARD_INDEX);
+          const count=Number(process.env.SHARD_COUNT);
+          const start=Math.floor(manifest.cases.length*shard/count);
+          const end=Math.floor(manifest.cases.length*(shard+1)/count);
+          for(const item of manifest.cases.slice(start,end)) console.log(item.id);
+          NODE
+          test "$(wc -l < /tmp/hex-cases.txt)" = "20"
+
+      - name: Run fresh benchmark shard
+        working-directory: target
+        env:
+          SHARD_INDEX: ${{ matrix.shard }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="../evidence/shard-${SHARD_INDEX}"
+          mkdir -p "${out}/cases" "${out}/receipts"
+          args=()
+          while IFS= read -r case_id; do
+            args+=(--case-id "${case_id}")
+          done < /tmp/hex-cases.txt
+
+          set +e
+          timeout -k 5s 840s node tools/validation/public-benchmark/run-fresh.mjs             --manifest benchmarks/public/codefuse-arm64/manifest.json             --output "${out}/cases"             --receipt-dir "${out}/receipts"             --workers 4             --function-timeout-ms 10000             --setup-timeout-ms 60000             "${args[@]}"
+          code=$?
+          set -e
+          echo "${code}" > "${out}/runner-exit-code.txt"
+
+          pkill -TERM -f 'tools/validation/public-benchmark/(run-fresh|run-fresh-case|fresh-subject)\.mjs' 2>/dev/null || true
+          sleep 1
+          pkill -KILL -f 'tools/validation/public-benchmark/(run-fresh|run-fresh-case|fresh-subject)\.mjs' 2>/dev/null || true
+
+      - name: Build compact shard evidence
+        if: always()
+        working-directory: target
+        env:
+          SHARD_INDEX: ${{ matrix.shard }}
+          TARGET_SHA: 8df3605048a77b9ab99e78233208445b786f4064
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="../evidence/shard-${SHARD_INDEX}"
+          mkdir -p "${out}"
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import path from 'node:path';
+          const shard=Number(process.env.SHARD_INDEX);
+          const root=path.resolve('..', 'evidence', `shard-${shard}`);
+          const casesDir=path.join(root,'cases');
+          const receiptsDir=path.join(root,'receipts');
+          const selected=fs.existsSync('/tmp/hex-cases.txt')
+            ? fs.readFileSync('/tmp/hex-cases.txt','utf8').split(/\r?\n/).filter(Boolean)
+            : [];
+          const summaryFile=path.join(casesDir,'fresh-summary.json');
+          let summary=null;
+          try { summary=JSON.parse(fs.readFileSync(summaryFile,'utf8')); } catch {}
+          let runnerExitCode=null;
+          try { runnerExitCode=Number(fs.readFileSync(path.join(root,'runner-exit-code.txt'),'utf8').trim()); } catch {}
+          const caseFiles=fs.existsSync(casesDir)
+            ? fs.readdirSync(casesDir).filter(x=>x.endsWith('.json')&&x!=='fresh-summary.json')
+            : [];
+          let receiptCount=0;
+          const receiptStates={};
+          if(fs.existsSync(receiptsDir)){
+            const stack=[receiptsDir];
+            while(stack.length){
+              const current=stack.pop();
+              for(const entry of fs.readdirSync(current,{withFileTypes:true})){
+                const p=path.join(current,entry.name);
+                if(entry.isDirectory()) stack.push(p);
+                else if(entry.isFile()&&entry.name.endsWith('.json')&&entry.name!=='inflight.json'){
+                  receiptCount++;
+                  try{
+                    const row=JSON.parse(fs.readFileSync(p,'utf8'));
+                    if(row.state) receiptStates[row.state]=(receiptStates[row.state]||0)+1;
+                  }catch{}
+                }
+              }
+            }
+          }
+          const meta={
+            schema:'hex-ida-pr9262-fresh-shard/v1',
+            targetSha:process.env.TARGET_SHA,
+            shard,
+            selected,
+            selectedCount:selected.length,
+            runnerExitCode,
+            benchmarkTimedOut:runnerExitCode===124||runnerExitCode===137,
+            outputCaseCount:caseFiles.length,
+            receiptCount,
+            receiptStates,
+            summary,
+          };
+          fs.writeFileSync(path.join(root,'shard-meta.json'),JSON.stringify(meta,null,2)+'\n');
+          NODE
+          if [[ -f "${out}/cases/fresh-summary.json" ]]; then
+            cp "${out}/cases/fresh-summary.json" "${out}/fresh-summary.json"
+          fi
+          rm -rf "${out}/receipts"
+
+      - name: Upload shard evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hex-ida-pr9262-fresh-shard-${{ matrix.shard }}
+          path: evidence/shard-${{ matrix.shard }}/
+          if-no-files-found: error
+          retention-days: 7
+
+  aggregate:
+    name: aggregate
+    needs: shard
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Download shard evidence
+        uses: actions/download-artifact@v4
+        with:
+          pattern: hex-ida-pr9262-fresh-shard-*
+          path: shards
+
+      - name: Build final summary
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p final
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import path from 'node:path';
+
+          const root='shards';
+          const metaFiles=[];
+          if(fs.existsSync(root)){
+            const stack=[root];
+            while(stack.length){
+              const current=stack.pop();
+              for(const entry of fs.readdirSync(current,{withFileTypes:true})){
+                const p=path.join(current,entry.name);
+                if(entry.isDirectory()) stack.push(p);
+                else if(entry.isFile()&&entry.name==='shard-meta.json') metaFiles.push(p);
+              }
+            }
+          }
+          const shards=metaFiles.map(file=>JSON.parse(fs.readFileSync(file,'utf8'))).sort((a,b)=>a.shard-b.shard);
+          const states={};
+          const functionStates={};
+          let totalFunctions=0,reusedFunctions=0,executedFunctions=0,restarts=0;
+          let selected=0,outputCases=0,receipts=0;
+          const wall=[];
+          for(const shard of shards){
+            selected+=Number(shard.selectedCount||0);
+            outputCases+=Number(shard.outputCaseCount||0);
+            receipts+=Number(shard.receiptCount||0);
+            const summary=shard.summary;
+            if(!summary) continue;
+            for(const [k,v] of Object.entries(summary.states||{})) states[k]=(states[k]||0)+Number(v||0);
+            for(const [k,v] of Object.entries(summary.functionStates||{})) functionStates[k]=(functionStates[k]||0)+Number(v||0);
+            totalFunctions+=Number(summary.performance?.functionCount||0);
+            reusedFunctions+=Number(summary.performance?.reusedFunctions||0);
+            executedFunctions+=Number(summary.performance?.executedFunctions||0);
+            restarts+=Number(summary.performance?.restarts||0);
+            if(Number.isFinite(Number(summary.performance?.wallMs))) wall.push(Number(summary.performance.wallMs));
+          }
+          const final={
+            schema:'hex-ida-pr9262-fresh-benchmark/v1',
+            targetBranch:'perf/fresh-benchmark-resumable-parallel',
+            targetSha:'8df3605048a77b9ab99e78233208445b786f4064',
+            expectedCases:160,
+            expectedShards:8,
+            shardEvidenceCount:shards.length,
+            completedShardSummaries:shards.filter(x=>x.summary).length,
+            selectedCases:selected,
+            outputCaseArtifacts:outputCases,
+            durableReceiptCount:receipts,
+            benchmarkTimedOutShards:shards.filter(x=>x.benchmarkTimedOut).map(x=>x.shard),
+            nonzeroShardExitCodes:shards.filter(x=>x.runnerExitCode!==0).map(x=>({shard:x.shard,code:x.runnerExitCode})),
+            states,
+            functionStates,
+            performance:{
+              maxShardWallMs:wall.length?Math.max(...wall):null,
+              totalFunctions,
+              approximateClusterFunctionsPerSecond:wall.length&&Math.max(...wall)>0?totalFunctions/(Math.max(...wall)/1000):null,
+              reusedFunctions,
+              executedFunctions,
+              restarts,
+            },
+            complete:shards.length===8 && shards.filter(x=>x.summary).length===8 && selected===160,
+            shards:shards.map(x=>({
+              shard:x.shard,
+              selectedCount:x.selectedCount,
+              runnerExitCode:x.runnerExitCode,
+              benchmarkTimedOut:x.benchmarkTimedOut,
+              outputCaseCount:x.outputCaseCount,
+              receiptCount:x.receiptCount,
+              states:x.summary?.states??null,
+              functionStates:x.summary?.functionStates??null,
+              wallMs:x.summary?.performance?.wallMs??null,
+              functions:x.summary?.performance?.functionCount??null,
+              restarts:x.summary?.performance?.restarts??null,
+            })),
+          };
+          fs.writeFileSync('final/result.json',JSON.stringify(final,null,2)+'\n');
+          console.log(JSON.stringify({
+            complete:final.complete,
+            shardEvidenceCount:final.shardEvidenceCount,
+            completedShardSummaries:final.completedShardSummaries,
+            selectedCases:final.selectedCases,
+            states:final.states,
+            functionStates:final.functionStates,
+            maxShardWallMs:final.performance.maxShardWallMs,
+          }));
+          NODE
+
+      - name: Upload final benchmark summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: hex-ida-pr9262-fresh-final
+          path: final/result.json
+          if-no-files-found: error
+          retention-days: 7
