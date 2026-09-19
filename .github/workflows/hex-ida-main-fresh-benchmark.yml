@@ -1,0 +1,142 @@
+name: hex-ida main full fresh decompile benchmark 15m
+
+on:
+  push:
+    paths:
+      - ".github/workflows/hex-ida-main-fresh-benchmark.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hex-ida-main-full-fresh-benchmark
+  cancel-in-progress: true
+
+jobs:
+  shard:
+    name: main-shard-${{ matrix.shard }}
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout benchmark orchestrator
+        uses: actions/checkout@v4
+
+      - name: Checkout exact current main
+        uses: actions/checkout@v4
+        with:
+          repository: rhgrive3/hex-ida
+          ref: c5b48771eb53cbe89087d67aa501692daa0cefd8
+          path: target
+          fetch-depth: 1
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Verify target and shard
+        env:
+          SHARD_INDEX: ${{ matrix.shard }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C target rev-parse HEAD)" = "c5b48771eb53cbe89087d67aa501692daa0cefd8"
+          test "$(node --input-type=module -e "import fs from 'node:fs'; const m=JSON.parse(fs.readFileSync('target/benchmarks/public/codefuse-arm64/manifest.json','utf8')); process.stdout.write(String(m.cases.length));")" = "160"
+          echo "shard=${SHARD_INDEX} start=$((SHARD_INDEX * 4)) limit=4"
+          node --version
+          nproc
+          free -h
+
+      - name: Run four cases in parallel
+        env:
+          TARGET_DIR: ${{ github.workspace }}/target
+          OUTPUT_FILE: ${{ github.workspace }}/shard-output/result.json
+          CASE_DIR: ${{ github.workspace }}/case-results
+          TARGET_SHA: c5b48771eb53cbe89087d67aa501692daa0cefd8
+          WORKERS: "4"
+          CASE_TIMEOUT_MS: "720000"
+          SOFT_DEADLINE_MS: "780000"
+          SHARD_INDEX: ${{ matrix.shard }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          start=$((SHARD_INDEX * 4))
+          START_INDEX="${start}" LIMIT="4" node scripts/pr9263-benchmark-local.mjs
+
+      - name: Upload shard evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: main-bench-${{ matrix.shard }}
+          path: |
+            shard-output/result.json
+            case-results/
+          if-no-files-found: warn
+          retention-days: 7
+
+  aggregate:
+    name: aggregate-main-160-cases
+    needs: shard
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Download shard evidence
+        uses: actions/download-artifact@v4
+        with:
+          pattern: main-bench-*
+          path: shards
+
+      - name: Build compact aggregate
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p final
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import path from 'node:path';
+          const files=[], stack=['shards'];
+          while(stack.length){
+            const dir=stack.pop();
+            if(!fs.existsSync(dir)) continue;
+            for(const e of fs.readdirSync(dir,{withFileTypes:true})){
+              const p=path.join(dir,e.name);
+              if(e.isDirectory()) stack.push(p);
+              else if(e.isFile() && e.name==='result.json' && p.includes('shard-output')) files.push(p);
+            }
+          }
+          const summaries=files.map(f=>JSON.parse(fs.readFileSync(f,'utf8'))).sort((a,b)=>a.selectedStartIndex-b.selectedStartIndex);
+          const states={}, functionStates={}, rows=[];
+          let selected=0, completed=0, notRun=0, functions=0, maxShardWallMs=0;
+          for(const s of summaries){
+            selected+=Number(s.selectedCases||0); completed+=Number(s.completedCases||0); notRun+=Number(s.notRun||0);
+            functions+=Number(s.functionCount||0); maxShardWallMs=Math.max(maxShardWallMs,Number(s.performance?.wallMs||0));
+            for(const [k,v] of Object.entries(s.states||{})) states[k]=(states[k]||0)+Number(v||0);
+            for(const [k,v] of Object.entries(s.functionStates||{})) functionStates[k]=(functionStates[k]||0)+Number(v||0);
+            for(const r of s.results||[]) rows.push({id:r.id,state:r.state,reason:r.reason??null,elapsedMs:Number(r.elapsedMs||0),functionCount:Number(r.functionCount||0),functionStates:r.functionStates||{}});
+          }
+          rows.sort((a,b)=>b.elapsedMs-a.elapsedMs);
+          const out={
+            schema:'hex-main-full-fresh-benchmark/v1',
+            targetSha:'c5b48771eb53cbe89087d67aa501692daa0cefd8',
+            expectedShards:40, shardSummaries:summaries.length, selectedCases:selected,
+            completedCases:completed, notRun, states, functionStates, functionCount:functions,
+            performance:{maxShardWallMs,slowestCases:rows.slice(0,20)},
+            complete:summaries.length===40 && selected===160 && completed===160 && notRun===0
+          };
+          fs.writeFileSync('final/result.json',JSON.stringify(out,null,2)+'\n');
+          console.log(JSON.stringify(out));
+          NODE
+
+      - name: Upload final aggregate
+        uses: actions/upload-artifact@v4
+        with:
+          name: main-full-benchmark-final
+          path: final/result.json
+          if-no-files-found: error
+          retention-days: 7
