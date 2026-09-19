@@ -111,8 +111,9 @@ if (actualSha !== targetSha) throw new Error(`head-mismatch:${actualSha}`);
 const manifestBytes=fs.readFileSync(manifestFile);
 const manifestSha256=crypto.createHash('sha256').update(manifestBytes).digest('hex');
 const manifest=loadManifest(manifestFile);
-const inputs=verifyInputs(manifest,suiteRoot);
-if (inputs.length !== 160 || manifest.cases.length !== 160 || manifest.denominatorFrozen !== true) throw new Error('manifest-integrity');
+const allInputs=verifyInputs(manifest,suiteRoot);
+if (allInputs.length !== 160 || manifest.cases.length !== 160 || manifest.denominatorFrozen !== true) throw new Error('manifest-integrity');
+const inputs = limit > 0 ? allInputs.slice(startIndex, startIndex + limit) : allInputs.slice(startIndex);
 
 fs.rmSync(caseDir,{recursive:true,force:true});
 fs.mkdirSync(caseDir,{recursive:true});
@@ -157,7 +158,9 @@ const summary={
   targetSha,
   actualSha,
   manifestSha256,
-  manifestCases:manifest.cases.length,\n  selectedStartIndex:startIndex,\n  selectedCases:inputs.length,
+  manifestCases:manifest.cases.length,
+  selectedStartIndex:startIndex,
+  selectedCases:inputs.length,
   denominatorFrozen:manifest.denominatorFrozen===true,
   execution:{
     workers,
