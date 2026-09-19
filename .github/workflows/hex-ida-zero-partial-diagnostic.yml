@@ -1,0 +1,72 @@
+name: hex-ida zero partial diagnostic
+
+on:
+  push:
+    paths:
+      - ".github/workflows/hex-ida-zero-partial-diagnostic.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact fix head
+        uses: actions/checkout@v4
+        with:
+          repository: rhgrive3/hex-ida
+          ref: c45c6fb5b64ba5a606d17d9a8bbab5bf8e8e9186
+          path: target
+          fetch-depth: 1
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Capture only non-complete function status
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p evidence
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import path from 'node:path';
+          import { pathToFileURL } from 'node:url';
+          const root=path.resolve('target');
+          const manifest=JSON.parse(fs.readFileSync(path.join(root,'benchmarks/public/codefuse-arm64/manifest.json'),'utf8'));
+          const wanted=new Set(['4/4_gcc_O2_g','4/4_gcc_O2_no_g','4/4_gcc_O3_g','4/4_gcc_O3_no_g']);
+          const { openProduct }=await import(pathToFileURL(path.join(root,'tools/validation/public-benchmark/product-host.mjs')));
+          const out=[];
+          for(const entry of manifest.cases.filter(x=>wanted.has(x.id))){
+            const product=await openProduct(path.join(root,'benchmarks/public/codefuse-arm64',entry.binary));
+            try{
+              const snap=await product.query.snapshot();
+              let offset=0; const funcs=[];
+              while(true){
+                const page=await product.query.functions(snap,{}, {offset,limit:1000});
+                funcs.push(...(page.value||[]));
+                if(page.page?.next==null) break;
+                offset=page.page.next;
+              }
+              for(const fn of funcs){
+                const s=await product.query.snapshot();
+                const r=await product.query.decompile(s,fn.address);
+                const completeness=r?.status?.completeness ?? r?.completeness ?? 'unknown';
+                if(!r?.value || completeness!=='complete'){
+                  out.push({caseId:entry.id,address:String(fn.address),name:fn.name??null,end:fn.end==null?null:String(fn.end),status:r?.status??null,completeness,hasValue:!!r?.value,pseudocode:r?.value?.pseudocode??null});
+                }
+              }
+            } finally { await product?.close?.(); }
+          }
+          fs.writeFileSync('evidence/non-complete.json',JSON.stringify(out,null,2)+'\n');
+          console.log(JSON.stringify(out.map(({caseId,address,name,end,status,completeness,hasValue})=>({caseId,address,name,end,status,completeness,hasValue}))));
+          NODE
+      - name: Upload diagnostic evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zero-partial-diagnostic
+          path: evidence/non-complete.json
+          if-no-files-found: error
+          retention-days: 2
