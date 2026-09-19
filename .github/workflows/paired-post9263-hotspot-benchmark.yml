@@ -1,0 +1,233 @@
+name: Paired post-9263 hotspot benchmark
+
+on:
+  push:
+    paths:
+      - ".github/workflows/paired-post9263-hotspot-benchmark.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: paired-post9263-hotspot-benchmark
+  cancel-in-progress: true
+
+jobs:
+  pair:
+    name: pair-${{ matrix.index }}-${{ matrix.order }}
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix:
+        include:
+          - { index: 63,  id: "4/4_clang_O1_no_g", order: "AB" }
+          - { index: 63,  id: "4/4_clang_O1_no_g", order: "BA" }
+          - { index: 62,  id: "4/4_clang_O1_g", order: "AB" }
+          - { index: 62,  id: "4/4_clang_O1_g", order: "BA" }
+          - { index: 142, id: "7/7_clang_O1_g", order: "AB" }
+          - { index: 142, id: "7/7_clang_O1_g", order: "BA" }
+          - { index: 143, id: "7/7_clang_O1_no_g", order: "AB" }
+          - { index: 143, id: "7/7_clang_O1_no_g", order: "BA" }
+          - { index: 122, id: "6/6_clang_O1_g", order: "AB" }
+          - { index: 122, id: "6/6_clang_O1_g", order: "BA" }
+          - { index: 123, id: "6/6_clang_O1_no_g", order: "AB" }
+          - { index: 123, id: "6/6_clang_O1_no_g", order: "BA" }
+          - { index: 58,  id: "3/3_gcc_Os_g", order: "AB" }
+          - { index: 58,  id: "3/3_gcc_Os_g", order: "BA" }
+          - { index: 59,  id: "3/3_gcc_Os_no_g", order: "AB" }
+          - { index: 59,  id: "3/3_gcc_Os_no_g", order: "BA" }
+          - { index: 56,  id: "3/3_gcc_O3_g", order: "AB" }
+          - { index: 56,  id: "3/3_gcc_O3_g", order: "BA" }
+          - { index: 57,  id: "3/3_gcc_O3_no_g", order: "AB" }
+          - { index: 57,  id: "3/3_gcc_O3_no_g", order: "BA" }
+          - { index: 22,  id: "2/2_clang_O1_g", order: "AB" }
+          - { index: 22,  id: "2/2_clang_O1_g", order: "BA" }
+          - { index: 23,  id: "2/2_clang_O1_no_g", order: "AB" }
+          - { index: 23,  id: "2/2_clang_O1_no_g", order: "BA" }
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      BASELINE_SHA: c5b48771eb53cbe89087d67aa501692daa0cefd8
+      CURRENT_SHA: ec02ff8f640e71e38d82a9295bfd197c4744313c
+      CASE_INDEX: ${{ matrix.index }}
+      CASE_ID: ${{ matrix.id }}
+      ORDER: ${{ matrix.order }}
+      CASE_TIMEOUT_MS: "600000"
+      SOFT_DEADLINE_MS: "660000"
+    steps:
+      - name: Checkout benchmark orchestrator
+        uses: actions/checkout@v4
+
+      - name: Checkout baseline main
+        uses: actions/checkout@v4
+        with:
+          repository: rhgrive3/hex-ida
+          ref: ${{ env.BASELINE_SHA }}
+          path: baseline
+          fetch-depth: 1
+
+      - name: Checkout post-9263 main
+        uses: actions/checkout@v4
+        with:
+          repository: rhgrive3/hex-ida
+          ref: ${{ env.CURRENT_SHA }}
+          path: current
+          fetch-depth: 1
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Run same case on both revisions
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p pair-out
+          run_one() {
+            local label="$1"
+            local dir="$2"
+            local sha="$3"
+            TARGET_DIR="${{ github.workspace }}/${dir}" \
+            OUTPUT_FILE="${{ github.workspace }}/pair-out/${label}.json" \
+            CASE_DIR="${{ github.workspace }}/pair-out/${label}-case" \
+            TARGET_SHA="${sha}" \
+            WORKERS="1" \
+            CASE_TIMEOUT_MS="${CASE_TIMEOUT_MS}" \
+            SOFT_DEADLINE_MS="${SOFT_DEADLINE_MS}" \
+            START_INDEX="${CASE_INDEX}" LIMIT="1" \
+            node scripts/pr9263-benchmark-local.mjs
+          }
+          if [[ "${ORDER}" == "AB" ]]; then
+            run_one baseline baseline "${BASELINE_SHA}"
+            run_one current current "${CURRENT_SHA}"
+          else
+            run_one current current "${CURRENT_SHA}"
+            run_one baseline baseline "${BASELINE_SHA}"
+          fi
+
+      - name: Build pair evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const a=JSON.parse(fs.readFileSync('pair-out/baseline.json','utf8')).results[0];
+          const b=JSON.parse(fs.readFileSync('pair-out/current.json','utf8')).results[0];
+          const expected=process.env.CASE_ID;
+          if (a.id!==expected || b.id!==expected) throw new Error(`case-id-mismatch:${a.id}:${b.id}:${expected}`);
+          const semanticMatch =
+            a.state===b.state &&
+            a.reason===b.reason &&
+            a.functionCount===b.functionCount &&
+            JSON.stringify(a.functionStates||{})===JSON.stringify(b.functionStates||{});
+          const ratio=a.elapsedMs>0?b.elapsedMs/a.elapsedMs:null;
+          const out={
+            schema:'hex-paired-post9263-hotspot/v1',
+            id:expected,
+            index:Number(process.env.CASE_INDEX),
+            order:process.env.ORDER,
+            baselineSha:process.env.BASELINE_SHA,
+            currentSha:process.env.CURRENT_SHA,
+            baselineMs:a.elapsedMs,
+            currentMs:b.elapsedMs,
+            currentVsBaselinePct:ratio==null?null:(ratio-1)*100,
+            baselineState:a.state,
+            currentState:b.state,
+            baselineReason:a.reason,
+            currentReason:b.reason,
+            baselineFunctionCount:a.functionCount,
+            currentFunctionCount:b.functionCount,
+            baselineFunctionStates:a.functionStates||{},
+            currentFunctionStates:b.functionStates||{},
+            semanticMatch,
+          };
+          fs.writeFileSync('pair-out/pair.json',JSON.stringify(out,null,2)+'\n');
+          console.log(JSON.stringify(out));
+          NODE
+
+      - name: Upload pair evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: paired-${{ matrix.index }}-${{ matrix.order }}
+          path: pair-out/pair.json
+          if-no-files-found: warn
+          retention-days: 7
+
+  aggregate:
+    name: aggregate-paired-hotspots
+    needs: pair
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Download pair evidence
+        uses: actions/download-artifact@v4
+        with:
+          pattern: paired-*
+          path: pairs
+
+      - name: Aggregate paired evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p final
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import path from 'node:path';
+          const files=[], stack=['pairs'];
+          while(stack.length){
+            const d=stack.pop();
+            if(!fs.existsSync(d)) continue;
+            for(const e of fs.readdirSync(d,{withFileTypes:true})){
+              const p=path.join(d,e.name);
+              if(e.isDirectory()) stack.push(p);
+              else if(e.isFile() && e.name==='pair.json') files.push(p);
+            }
+          }
+          const samples=files.map(f=>JSON.parse(fs.readFileSync(f,'utf8')));
+          const byId=new Map();
+          for(const s of samples){
+            if(!byId.has(s.id)) byId.set(s.id,[]);
+            byId.get(s.id).push(s);
+          }
+          const rows=[];
+          for(const [id, ss] of byId){
+            ss.sort((a,b)=>a.order.localeCompare(b.order));
+            const ratios=ss.filter(s=>s.baselineMs>0&&s.currentMs>0).map(s=>s.currentMs/s.baselineMs);
+            const geo=ratios.length?Math.exp(ratios.reduce((x,y)=>x+Math.log(y),0)/ratios.length):null;
+            rows.push({
+              id,
+              samples:ss.length,
+              orders:ss.map(s=>s.order),
+              baselineMs:ss.map(s=>s.baselineMs),
+              currentMs:ss.map(s=>s.currentMs),
+              samplePct:ss.map(s=>s.currentVsBaselinePct),
+              geometricMeanCurrentOverBaseline:geo,
+              geometricMeanCurrentVsBaselinePct:geo==null?null:(geo-1)*100,
+              semanticMatch:ss.every(s=>s.semanticMatch===true),
+            });
+          }
+          rows.sort((a,b)=>(a.geometricMeanCurrentVsBaselinePct??0)-(b.geometricMeanCurrentVsBaselinePct??0));
+          const out={
+            schema:'hex-paired-post9263-hotspot-aggregate/v1',
+            expectedCases:12,
+            expectedSamples:24,
+            actualCases:rows.length,
+            actualSamples:samples.length,
+            semanticMismatchCount:samples.filter(s=>!s.semanticMatch).length,
+            rows,
+            complete:rows.length===12 && samples.length===24 && samples.every(s=>s.semanticMatch===true),
+          };
+          fs.writeFileSync('final/result.json',JSON.stringify(out,null,2)+'\n');
+          console.log(JSON.stringify(out,null,2));
+          NODE
+
+      - name: Upload paired aggregate
+        uses: actions/upload-artifact@v4
+        with:
+          name: paired-post9263-hotspot-final
+          path: final/result.json
+          if-no-files-found: error
+          retention-days: 7
