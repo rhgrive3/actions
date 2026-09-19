@@ -2,7 +2,6 @@ name: PR 9263 fresh decompile benchmark
 
 on:
   push:
-    branches: [main]
     paths:
       - ".github/workflows/pr9263-fresh-benchmark.yml"
 
@@ -14,12 +13,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  shard:
-    strategy:
-      fail-fast: false
-      max-parallel: 16
-      matrix:
-        shard: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+  benchmark:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -43,71 +37,35 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          actual="$(git -C target rev-parse HEAD)"
-          test "$actual" = "f25a404830c57d71ba689034a357362ce65837db"
-          count="$(node --input-type=module -e "import fs from 'node:fs'; const m=JSON.parse(fs.readFileSync('target/benchmarks/public/codefuse-arm64/manifest.json','utf8')); process.stdout.write(String(m.cases.length));")"
-          test "$count" = "160"
+          test "$(git -C target rev-parse HEAD)" = "f25a404830c57d71ba689034a357362ce65837db"
+          test "$(node --input-type=module -e "import fs from 'node:fs'; const m=JSON.parse(fs.readFileSync('target/benchmarks/public/codefuse-arm64/manifest.json','utf8')); process.stdout.write(String(m.cases.length));")" = "160"
           node --version
+          nproc
+          free -h
 
-      - name: Run fresh benchmark shard
+      - name: Run 8-way fresh benchmark
+        continue-on-error: true
         env:
           TARGET_DIR: ${{ github.workspace }}/target
-          EVIDENCE_DIR: ${{ github.workspace }}/evidence
+          OUTPUT_FILE: ${{ github.workspace }}/final/result.json
+          CASE_DIR: ${{ github.workspace }}/case-results
           TARGET_SHA: f25a404830c57d71ba689034a357362ce65837db
-          SHARD_INDEX: ${{ matrix.shard }}
-          SHARD_COUNT: "16"
+          WORKERS: "8"
           CASE_TIMEOUT_MS: "120000"
-          SHARD_SOFT_DEADLINE_MS: "660000"
+          SOFT_DEADLINE_MS: "690000"
         shell: bash
         run: |
           set -euo pipefail
-          node scripts/pr9263-benchmark-shard.mjs
+          node scripts/pr9263-benchmark-local.mjs
 
-      - name: Upload shard evidence
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: pr9263-fresh-shard-${{ matrix.shard }}
-          path: evidence/
-          if-no-files-found: warn
-          retention-days: 7
-
-  aggregate:
-    if: always()
-    needs: shard
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - name: Checkout benchmark orchestrator
-        uses: actions/checkout@v4
-
-      - name: Setup Node 22
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - name: Download shard evidence
-        uses: actions/download-artifact@v4
-        with:
-          pattern: pr9263-fresh-shard-*
-          path: downloaded
-          merge-multiple: true
-
-      - name: Aggregate benchmark evidence
-        continue-on-error: true
-        env:
-          EVIDENCE_ROOT: ${{ github.workspace }}/downloaded
-          OUTPUT_FILE: ${{ github.workspace }}/final/result.json
-          TARGET_SHA: f25a404830c57d71ba689034a357362ce65837db
-          EXPECTED_SHARDS: "16"
-        run: node scripts/pr9263-benchmark-aggregate.mjs
-
-      - name: Upload final benchmark summary
+      - name: Upload benchmark evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: pr9263-fresh-benchmark-final
-          path: final/result.json
+          path: |
+            final/result.json
+            case-results/
           if-no-files-found: warn
           retention-days: 7
 
