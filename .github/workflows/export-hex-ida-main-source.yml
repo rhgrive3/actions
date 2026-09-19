@@ -17,18 +17,18 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: rhgrive3/hex-ida
-          ref: a716588c79ec02e4b78d0f9a963cfbdc141302a8
+          ref: ec02ff8f640e71e38d82a9295bfd197c4744313c
           path: hex-ida
           fetch-depth: 1
       - name: Verify HEAD
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git -C hex-ida rev-parse HEAD)" = "a716588c79ec02e4b78d0f9a963cfbdc141302a8"
+          test "$(git -C hex-ida rev-parse HEAD)" = "ec02ff8f640e71e38d82a9295bfd197c4744313c"
       - name: Upload source
         uses: actions/upload-artifact@v4
         with:
-          name: hex-ida-pr9271-a716588c
+          name: hex-ida-main-ec02ff8f
           path: hex-ida
           include-hidden-files: true
           retention-days: 1
