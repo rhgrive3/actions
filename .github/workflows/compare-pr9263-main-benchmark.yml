@@ -1,0 +1,134 @@
+name: Compare PR 9263 vs main fresh benchmark
+
+on:
+  push:
+    paths:
+      - ".github/workflows/compare-pr9263-main-benchmark.yml"
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PR_RUN: "35418950597"
+      MAIN_RUN: "35420661567"
+    steps:
+      - name: Download PR 9263 shard artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p pr main final
+          gh run download "${PR_RUN}" --repo rhgrive3/actions --pattern 'pr9263-bench-*' --dir pr
+
+      - name: Download main shard artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh run download "${MAIN_RUN}" --repo rhgrive3/actions --pattern 'main-bench-*' --dir main
+
+      - name: Build paired comparison
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import path from 'node:path';
+
+          function collect(root) {
+            const out = new Map();
+            const stack = [root];
+            while (stack.length) {
+              const dir = stack.pop();
+              for (const e of fs.readdirSync(dir, {withFileTypes:true})) {
+                const p = path.join(dir, e.name);
+                if (e.isDirectory()) stack.push(p);
+                else if (e.isFile() && e.name === 'result.json') {
+                  let x;
+                  try { x = JSON.parse(fs.readFileSync(p, 'utf8')); } catch { continue; }
+                  if (!Array.isArray(x.results)) continue;
+                  for (const r of x.results) out.set(r.id, {
+                    id:r.id,
+                    state:r.state,
+                    elapsedMs:Number(r.elapsedMs||0),
+                    functionCount:Number(r.functionCount||0),
+                    functionStates:r.functionStates||{}
+                  });
+                }
+              }
+            }
+            return out;
+          }
+
+          function pct(xs,p) {
+            const a=[...xs].sort((x,y)=>x-y);
+            if(!a.length)return null;
+            return a[Math.min(a.length-1, Math.max(0, Math.ceil(a.length*p/100)-1))];
+          }
+          function stats(rows,key) {
+            const xs=rows.map(r=>r[key]).filter(Number.isFinite);
+            const sum=xs.reduce((a,b)=>a+b,0);
+            return {count:xs.length,sumMs:sum,meanMs:xs.length?sum/xs.length:null,p50Ms:pct(xs,50),p90Ms:pct(xs,90),p95Ms:pct(xs,95),maxMs:xs.length?Math.max(...xs):null};
+          }
+
+          const pr=collect('pr'), main=collect('main');
+          const ids=[...new Set([...pr.keys(),...main.keys()])].sort();
+          const rows=[];
+          for(const id of ids){
+            const a=pr.get(id), b=main.get(id);
+            if(!a||!b) continue;
+            const delta=b.elapsedMs-a.elapsedMs;
+            const ratio=a.elapsedMs>0?b.elapsedMs/a.elapsedMs:null;
+            rows.push({id,prMs:a.elapsedMs,mainMs:b.elapsedMs,deltaMs:delta,mainVsPrPct:ratio==null?null:(ratio-1)*100,prState:a.state,mainState:b.state,functionCountPr:a.functionCount,functionCountMain:b.functionCount,functionStatesPr:a.functionStates,functionStatesMain:b.functionStates});
+          }
+          const comparable=rows.filter(r=>r.prMs>0&&r.mainMs>0);
+          const ratios=comparable.map(r=>r.mainMs/r.prMs).filter(x=>Number.isFinite(x)&&x>0);
+          const geoMeanRatio=ratios.length?Math.exp(ratios.reduce((s,x)=>s+Math.log(x),0)/ratios.length):null;
+          const semanticMismatches=rows.filter(r=>r.prState!==r.mainState || r.functionCountPr!==r.functionCountMain || JSON.stringify(r.functionStatesPr)!==JSON.stringify(r.functionStatesMain));
+          const out={
+            schema:'hex-pr9263-vs-main-paired/v1',
+            prRun:Number(process.env.PR_RUN),
+            mainRun:Number(process.env.MAIN_RUN),
+            pairedCases:rows.length,
+            prCases:pr.size,
+            mainCases:main.size,
+            pr:stats(rows,'prMs'),
+            main:stats(rows,'mainMs'),
+            paired:{
+              geometricMeanMainOverPr:geoMeanRatio,
+              geometricMeanMainVsPrPct:geoMeanRatio==null?null:(geoMeanRatio-1)*100,
+              fasterOnPr:comparable.filter(r=>r.prMs<r.mainMs).length,
+              fasterOnMain:comparable.filter(r=>r.mainMs<r.prMs).length,
+              equal:comparable.filter(r=>r.mainMs===r.prMs).length,
+              medianMainVsPrPct:pct(comparable.map(r=>r.mainVsPrPct),50),
+              p90MainVsPrPct:pct(comparable.map(r=>r.mainVsPrPct),90),
+            },
+            semanticMismatchCount:semanticMismatches.length,
+            semanticMismatches,
+            largestPrWins:[...comparable].sort((a,b)=>b.mainVsPrPct-a.mainVsPrPct).slice(0,20),
+            largestMainWins:[...comparable].sort((a,b)=>a.mainVsPrPct-b.mainVsPrPct).slice(0,20),
+            rows
+          };
+          fs.writeFileSync('final/result.json', JSON.stringify(out,null,2)+'\n');
+          console.log(JSON.stringify({
+            pairedCases:out.pairedCases,
+            pr:out.pr,
+            main:out.main,
+            paired:out.paired,
+            semanticMismatchCount:out.semanticMismatchCount,
+            largestPrWins:out.largestPrWins.slice(0,5),
+            largestMainWins:out.largestMainWins.slice(0,5)
+          },null,2));
+          NODE
+
+      - name: Upload comparison
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr9263-vs-main-paired
+          path: final/result.json
+          if-no-files-found: error
+          retention-days: 7
