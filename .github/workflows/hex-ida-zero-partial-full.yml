@@ -1,0 +1,108 @@
+name: hex-ida zero partial full 160
+
+on:
+  push:
+    paths:
+      - ".github/workflows/hex-ida-zero-partial-full.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  shard:
+    name: shard-${{ matrix.shard }}
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout orchestrator
+        uses: actions/checkout@v4
+      - name: Checkout exact fix head
+        uses: actions/checkout@v4
+        with:
+          repository: rhgrive3/hex-ida
+          ref: c45c6fb5b64ba5a606d17d9a8bbab5bf8e8e9186
+          path: target
+          fetch-depth: 1
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Run four cases
+        env:
+          TARGET_DIR: ${{ github.workspace }}/target
+          OUTPUT_FILE: ${{ github.workspace }}/shard-output/result.json
+          CASE_DIR: ${{ github.workspace }}/case-results
+          TARGET_SHA: c45c6fb5b64ba5a606d17d9a8bbab5bf8e8e9186
+          WORKERS: "4"
+          CASE_TIMEOUT_MS: "720000"
+          SOFT_DEADLINE_MS: "780000"
+          SHARD_INDEX: ${{ matrix.shard }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          start=$((SHARD_INDEX * 4))
+          START_INDEX="${start}" LIMIT="4" node scripts/pr9263-benchmark-local.mjs
+      - name: Upload shard summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zero-partial-shard-${{ matrix.shard }}
+          path: shard-output/result.json
+          if-no-files-found: error
+          retention-days: 2
+
+  aggregate:
+    name: aggregate-zero-partial
+    needs: shard
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Download shard summaries
+        uses: actions/download-artifact@v4
+        with:
+          pattern: zero-partial-shard-*
+          path: shards
+      - name: Aggregate and assert
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p final
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import path from 'node:path';
+          const stack=['shards'], files=[];
+          while(stack.length){
+            const d=stack.pop();
+            for(const e of fs.readdirSync(d,{withFileTypes:true})){
+              const p=path.join(d,e.name);
+              if(e.isDirectory()) stack.push(p);
+              else if(e.isFile() && e.name==='result.json') files.push(p);
+            }
+          }
+          const totals={}; let cases=0, funcs=0, notRun=0;
+          for(const f of files){
+            const x=JSON.parse(fs.readFileSync(f,'utf8'));
+            cases += Number(x.completedCases||0);
+            funcs += Number(x.functionCount||0);
+            notRun += Number(x.notRun||0);
+            for(const [k,v] of Object.entries(x.functionStates||{})) totals[k]=(totals[k]||0)+Number(v||0);
+          }
+          const out={schema:'hex-zero-partial-full/v1',targetSha:'c45c6fb5b64ba5a606d17d9a8bbab5bf8e8e9186',shards:files.length,cases,functions:funcs,notRun,functionStates:totals,complete:files.length===40&&cases===160&&notRun===0};
+          fs.writeFileSync('final/result.json',JSON.stringify(out,null,2)+'\n');
+          console.log(JSON.stringify(out));
+          if(!out.complete || (totals.PARTIAL||0)!==0 || (totals.UNSUPPORTED||0)!==0 || (totals.CRASH||0)!==0 || (totals.TIMEOUT||0)!==0) process.exit(1);
+          NODE
+      - name: Upload aggregate
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zero-partial-full-final
+          path: final/result.json
+          if-no-files-found: warn
+          retention-days: 2
