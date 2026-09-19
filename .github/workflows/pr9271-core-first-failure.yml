@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - ".github/workflows/pr9271-core-first-failure.yml"
+      - "diag/pr9271-core-trigger.txt"
 
 permissions:
   contents: read
