@@ -12,10 +12,14 @@ const targetSha = String(process.env.TARGET_SHA || '');
 const workers = Number(process.env.WORKERS || '8');
 const caseTimeoutMs = Number(process.env.CASE_TIMEOUT_MS || '120000');
 const softDeadlineMs = Number(process.env.SOFT_DEADLINE_MS || '690000');
+const startIndex = Number(process.env.START_INDEX || '0');
+const limit = Number(process.env.LIMIT || '0');
 
 if (!Number.isSafeInteger(workers) || workers < 1 || workers > 16) throw new Error('invalid-workers');
 if (!Number.isSafeInteger(caseTimeoutMs) || caseTimeoutMs < 1000 || caseTimeoutMs > 900000) throw new Error('invalid-case-timeout');
 if (!Number.isSafeInteger(softDeadlineMs) || softDeadlineMs < caseTimeoutMs) throw new Error('invalid-soft-deadline');
+if (!Number.isSafeInteger(startIndex) || startIndex < 0) throw new Error('invalid-start-index');
+if (!Number.isSafeInteger(limit) || limit < 0) throw new Error('invalid-limit');
 
 const manifestFile = path.join(repo, 'benchmarks/public/codefuse-arm64/manifest.json');
 const suiteRoot = path.dirname(manifestFile);
@@ -153,7 +157,7 @@ const summary={
   targetSha,
   actualSha,
   manifestSha256,
-  manifestCases:manifest.cases.length,
+  manifestCases:manifest.cases.length,\n  selectedStartIndex:startIndex,\n  selectedCases:inputs.length,
   denominatorFrozen:manifest.denominatorFrozen===true,
   execution:{
     workers,
@@ -183,7 +187,7 @@ const summary={
   },
   results,
 };
-summary.complete=results.length===160 && summary.notRun===0 && actualSha===targetSha;
+summary.complete=results.length===inputs.length && summary.notRun===0 && actualSha===targetSha;
 fs.mkdirSync(path.dirname(outputFile),{recursive:true});
 fs.writeFileSync(outputFile,JSON.stringify(summary,null,2)+'\n');
 console.log(JSON.stringify({complete:summary.complete,workers,hostLogicalCpus:summary.execution.hostLogicalCpus,completedCases,states,functionStates,functionCount,performance:summary.performance},null,2));
