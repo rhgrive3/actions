@@ -1,0 +1,177 @@
+name: hex-ida PR 9262 balanced fresh benchmark 15m
+
+on:
+  push:
+    branches:
+      - "bench/hex-ida-pr9262-fresh-15m"
+    paths:
+      - ".github/workflows/hex-ida-pr9262-balanced.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hex-ida-pr9262-balanced
+  cancel-in-progress: true
+
+jobs:
+  shard:
+    name: balanced-${{ matrix.shard }}
+    strategy:
+      fail-fast: false
+      max-parallel: 16
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact benchmark commit
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+          TARGET_BRANCH: perf/fresh-benchmark-resumable-parallel
+          TARGET_SHA: 8df3605048a77b9ab99e78233208445b786f4064
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -n "${GH_PAT:-}" ]]; then
+            git clone --depth=25 --branch "${TARGET_BRANCH}" "https://x-access-token:${GH_PAT}@github.com/rhgrive3/hex-ida.git" target >/dev/null 2>&1
+          else
+            git clone --depth=25 --branch "${TARGET_BRANCH}" "https://github.com/rhgrive3/hex-ida.git" target >/dev/null 2>&1
+          fi
+          cd target
+          git checkout --detach "${TARGET_SHA}" >/dev/null 2>&1
+          test "$(git rev-parse HEAD)" = "${TARGET_SHA}"
+
+      - name: Select round-robin cases
+        working-directory: target
+        env:
+          SHARD_INDEX: ${{ matrix.shard }}
+          SHARD_COUNT: "16"
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE' > /tmp/hex-cases.txt
+          import fs from 'node:fs';
+          const m=JSON.parse(fs.readFileSync('benchmarks/public/codefuse-arm64/manifest.json','utf8'));
+          const shard=Number(process.env.SHARD_INDEX), count=Number(process.env.SHARD_COUNT);
+          for(let i=shard;i<m.cases.length;i+=count) console.log(m.cases[i].id);
+          NODE
+          test "$(wc -l < /tmp/hex-cases.txt)" = "10"
+
+      - name: Run balanced fresh benchmark
+        working-directory: target
+        env:
+          SHARD_INDEX: ${{ matrix.shard }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="../evidence/shard-${SHARD_INDEX}"
+          mkdir -p "${out}/cases" "${out}/receipts"
+          args=()
+          while IFS= read -r case_id; do args+=(--case-id "${case_id}"); done < /tmp/hex-cases.txt
+          set +e
+          timeout -k 5s 840s node tools/validation/public-benchmark/run-fresh.mjs             --manifest benchmarks/public/codefuse-arm64/manifest.json             --output "${out}/cases"             --receipt-dir "${out}/receipts"             --workers 4             --function-timeout-ms 10000             --setup-timeout-ms 60000             "${args[@]}"
+          code=$?
+          set -e
+          echo "${code}" > "${out}/runner-exit-code.txt"
+          pkill -TERM -f 'tools/validation/public-benchmark/(run-fresh|run-fresh-case|fresh-subject)\.mjs' 2>/dev/null || true
+          sleep 1
+          pkill -KILL -f 'tools/validation/public-benchmark/(run-fresh|run-fresh-case|fresh-subject)\.mjs' 2>/dev/null || true
+
+      - name: Build compact evidence
+        if: always()
+        working-directory: target
+        env:
+          SHARD_INDEX: ${{ matrix.shard }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="../evidence/shard-${SHARD_INDEX}"
+          mkdir -p "${out}"
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import path from 'node:path';
+          const shard=Number(process.env.SHARD_INDEX);
+          const root=path.resolve('..','evidence',`shard-${shard}`);
+          const casesDir=path.join(root,'cases');
+          const receiptsDir=path.join(root,'receipts');
+          const selected=fs.existsSync('/tmp/hex-cases.txt')?fs.readFileSync('/tmp/hex-cases.txt','utf8').split(/\r?\n/).filter(Boolean):[];
+          let code=null; try{code=Number(fs.readFileSync(path.join(root,'runner-exit-code.txt'),'utf8').trim())}catch{}
+          let summary=null; try{summary=JSON.parse(fs.readFileSync(path.join(casesDir,'fresh-summary.json'),'utf8'))}catch{}
+          const outputs=fs.existsSync(casesDir)?fs.readdirSync(casesDir).filter(x=>x.endsWith('.json')&&x!=='fresh-summary.json'):[];
+          let receipts=0;
+          if(fs.existsSync(receiptsDir)){const stack=[receiptsDir];while(stack.length){const d=stack.pop();for(const e of fs.readdirSync(d,{withFileTypes:true})){const p=path.join(d,e.name);if(e.isDirectory())stack.push(p);else if(e.isFile()&&e.name.endsWith('.json')&&e.name!=='inflight.json')receipts++;}}}
+          fs.writeFileSync(path.join(root,'shard-meta.json'),JSON.stringify({
+            schema:'hex-ida-pr9262-balanced-shard/v1', shard, selected,
+            runnerExitCode:code, benchmarkTimedOut:code===124||code===137,
+            outputCaseCount:outputs.length, receiptCount:receipts, summary
+          },null,2)+'\n');
+          NODE
+          if [[ -f "${out}/cases/fresh-summary.json" ]]; then cp "${out}/cases/fresh-summary.json" "${out}/fresh-summary.json"; fi
+          rm -rf "${out}/receipts"
+
+      - name: Upload balanced shard evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hex-ida-pr9262-balanced-${{ matrix.shard }}
+          path: evidence/shard-${{ matrix.shard }}/
+          if-no-files-found: error
+          retention-days: 7
+
+  aggregate:
+    name: aggregate-balanced
+    needs: shard
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Download balanced evidence
+        uses: actions/download-artifact@v4
+        with:
+          pattern: hex-ida-pr9262-balanced-*
+          path: shards
+
+      - name: Aggregate balanced result
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p final
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import path from 'node:path';
+          const files=[];
+          const stack=['shards'];
+          while(stack.length){const d=stack.pop();for(const e of fs.readdirSync(d,{withFileTypes:true})){const p=path.join(d,e.name);if(e.isDirectory())stack.push(p);else if(e.isFile()&&e.name==='shard-meta.json')files.push(p);}}
+          const shards=files.map(f=>JSON.parse(fs.readFileSync(f,'utf8'))).sort((a,b)=>a.shard-b.shard);
+          const states={}, functionStates={}; let selected=0,outputs=0,receipts=0,totalFunctions=0,reused=0,executed=0,restarts=0; const walls=[];
+          for(const s of shards){
+            selected+=s.selected.length; outputs+=s.outputCaseCount; receipts+=s.receiptCount;
+            const q=s.summary;if(!q)continue;
+            for(const [k,v] of Object.entries(q.states||{}))states[k]=(states[k]||0)+Number(v||0);
+            for(const [k,v] of Object.entries(q.functionStates||{}))functionStates[k]=(functionStates[k]||0)+Number(v||0);
+            totalFunctions+=Number(q.performance?.functionCount||0);reused+=Number(q.performance?.reusedFunctions||0);executed+=Number(q.performance?.executedFunctions||0);restarts+=Number(q.performance?.restarts||0);
+            if(Number.isFinite(Number(q.performance?.wallMs)))walls.push(Number(q.performance.wallMs));
+          }
+          const out={
+            schema:'hex-ida-pr9262-balanced-benchmark/v1',
+            targetSha:'8df3605048a77b9ab99e78233208445b786f4064',
+            shards:shards.length, selectedCases:selected, outputCaseArtifacts:outputs, durableReceiptCount:receipts,
+            timedOutShards:shards.filter(x=>x.benchmarkTimedOut).map(x=>x.shard),
+            nonzeroExitCodes:shards.filter(x=>x.runnerExitCode!==0).map(x=>({shard:x.shard,code:x.runnerExitCode})),
+            completedShardSummaries:shards.filter(x=>x.summary).length,
+            states,functionStates,
+            performance:{maxShardWallMs:walls.length?Math.max(...walls):null,totalFunctions,reusedFunctions:reused,executedFunctions:executed,restarts},
+            complete:shards.length===16&&selected===160&&outputs===160&&shards.every(x=>x.summary)
+          };
+          fs.writeFileSync('final/result.json',JSON.stringify(out,null,2)+'\n');
+          console.log(JSON.stringify(out));
+          NODE
+
+      - name: Upload balanced final summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: hex-ida-pr9262-balanced-final
+          path: final/result.json
+          if-no-files-found: error
+          retention-days: 7
