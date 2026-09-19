@@ -10,12 +10,18 @@ permissions:
 
 jobs:
   diagnose:
-    name: diagnose-${{ matrix.case_id }}
+    name: diagnose-${{ matrix.slot }}
     strategy:
       fail-fast: false
       max-parallel: 3
       matrix:
-        case_id: ["1/1_clang_O2_g", "3/3_gcc_O1_g", "4/4_gcc_O2_g"]
+        include:
+          - slot: one
+            case_id: "1/1_clang_O2_g"
+          - slot: three
+            case_id: "3/3_gcc_O1_g"
+          - slot: four
+            case_id: "4/4_gcc_O2_g"
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
@@ -23,57 +29,56 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: rhgrive3/hex-ida
-          ref: c45c6fb5b64ba5a606d17d9a8bbab5bf8e8e9186
+          ref: ac7bb277dbc0b2c6527d2a08451636fd90262584
           path: target
           fetch-depth: 1
       - name: Setup Node 22
         uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Capture non-complete function status
+      - name: Capture bounded diagnostic
         env:
           CASE_ID: ${{ matrix.case_id }}
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p evidence
-          node --input-type=module <<'NODE'
-          import fs from 'node:fs';
-          import path from 'node:path';
-          import { pathToFileURL } from 'node:url';
-          const root=path.resolve('target');
-          const manifest=JSON.parse(fs.readFileSync(path.join(root,'benchmarks/public/codefuse-arm64/manifest.json'),'utf8'));
-          const entry=manifest.cases.find(x=>x.id===process.env.CASE_ID);
-          if(!entry) throw new Error('case-not-found:'+process.env.CASE_ID);
-          const { openProduct }=await import(pathToFileURL(path.join(root,'tools/validation/public-benchmark/product-host.mjs')));
-          const product=await openProduct(path.join(root,'benchmarks/public/codefuse-arm64',entry.binary));
-          const out=[];
-          try{
-            const snap=await product.query.snapshot();
-            let offset=0; const funcs=[];
-            while(true){
-              const page=await product.query.functions(snap,{}, {offset,limit:1000});
-              funcs.push(...(page.value||[]));
-              if(page.page?.next==null) break;
-              offset=page.page.next;
-            }
-            for(const fn of funcs){
-              const s=await product.query.snapshot();
-              const r=await product.query.decompile(s,fn.address);
-              const completeness=r?.status?.completeness ?? r?.completeness ?? 'unknown';
-              if(!r?.value || completeness!=='complete'){
-                out.push({caseId:entry.id,address:String(fn.address),name:fn.name??null,end:fn.end==null?null:String(fn.end),status:r?.status??null,completeness,hasValue:!!r?.value,pseudocode:r?.value?.pseudocode??null});
-              }
-            }
-          } finally { await product?.close?.(); }
-          fs.writeFileSync('evidence/non-complete.json',JSON.stringify(out,null,2)+'\n');
-          console.log(JSON.stringify(out.map(({caseId,address,name,end,status,completeness,hasValue})=>({caseId,address,name,end,status,completeness,hasValue}))));
+          node > evidence/runner-stdout.txt 2> evidence/runner-stderr.txt <<'NODE'
+          const fs = require('node:fs');
+          const path = require('node:path');
+          const { spawnSync } = require('node:child_process');
+          const manifest = JSON.parse(fs.readFileSync('target/benchmarks/public/codefuse-arm64/manifest.json','utf8'));
+          const entry = manifest.cases.find(x => x.id === process.env.CASE_ID);
+          if (!entry) {
+            fs.writeFileSync('evidence/diagnostic.json', JSON.stringify({caseId:process.env.CASE_ID,error:'case-not-found'},null,2)+'\n');
+            process.exit(0);
+          }
+          const bin = path.join('target','benchmarks/public/codefuse-arm64',entry.binary);
+          const out = path.resolve('evidence/result.json');
+          const child = spawnSync(process.execPath, ['target/tools/validation/public-benchmark/run-case.mjs', bin, out, '420000'], {
+            encoding:'utf8', timeout:450000, maxBuffer:2*1024*1024,
+          });
+          let result = null;
+          try { result = JSON.parse(fs.readFileSync(out,'utf8')); } catch {}
+          const nonComplete = (result?.functions || []).filter(fn => fn.state !== 'PASS').map(fn => ({
+            address:fn.address, name:fn.name ?? null, end:fn.end ?? null, state:fn.state,
+            completeness:fn.completeness ?? null, pseudocode:fn.pseudocode ?? null,
+          }));
+          const diagnostic = {
+            caseId:entry.id, exitStatus:child.status, signal:child.signal,
+            stderr:String(child.stderr||'').slice(-2000),
+            state:result?.state ?? null,
+            functionCount:(result?.functions||[]).length,
+            nonComplete,
+          };
+          fs.writeFileSync('evidence/diagnostic.json', JSON.stringify(diagnostic,null,2)+'\n');
+          console.log(JSON.stringify({caseId:entry.id,state:diagnostic.state,functionCount:diagnostic.functionCount,nonCompleteCount:nonComplete.length,names:nonComplete.map(x=>x.name)}));
           NODE
       - name: Upload diagnostic evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: zero-partial-diagnostic-${{ strategy.job-index }}
-          path: evidence/non-complete.json
+          name: zero-partial-diagnostic-${{ matrix.slot }}
+          path: evidence/
           if-no-files-found: error
           retention-days: 2
