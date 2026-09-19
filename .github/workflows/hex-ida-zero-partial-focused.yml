@@ -1,0 +1,60 @@
+name: hex-ida zero partial focused
+
+on:
+  push:
+    paths:
+      - ".github/workflows/hex-ida-zero-partial-focused.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  focused:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact hex-ida fix head
+        uses: actions/checkout@v4
+        with:
+          repository: rhgrive3/hex-ida
+          ref: c45c6fb5b64ba5a606d17d9a8bbab5bf8e8e9186
+          path: target
+          fetch-depth: 1
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Run representative CodeFuse case
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p evidence
+          node target/tools/validation/public-benchmark/run-case.mjs \
+            target/benchmarks/public/codefuse-arm64/inputs/9600e39427753dcf4d4dc4c3ab218eca92bbf2fe898a8d3ca8204202ac0135ce.bin \
+            evidence/result.json 400000
+
+      - name: Assert zero PARTIAL and UNSUPPORTED
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const r=JSON.parse(fs.readFileSync('evidence/result.json','utf8'));
+          const counts={};
+          for(const fn of r.functions||[]) counts[fn.state]=(counts[fn.state]||0)+1;
+          const out={state:r.state,functionCount:(r.functions||[]).length,functionStates:counts};
+          fs.writeFileSync('evidence/summary.json',JSON.stringify(out,null,2)+'\n');
+          console.log(JSON.stringify(out));
+          if((counts.PARTIAL||0)!==0 || (counts.UNSUPPORTED||0)!==0 || (counts.TRUNCATED||0)!==0 || (counts.CRASH||0)!==0 || (counts.TIMEOUT||0)!==0) process.exit(1);
+          NODE
+
+      - name: Upload focused evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zero-partial-focused
+          path: evidence/
+          if-no-files-found: warn
+          retention-days: 7
