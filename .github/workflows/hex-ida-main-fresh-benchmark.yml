@@ -1,4 +1,4 @@
-# manual-trigger: 2026-09-19 current-main benchmark b547f9790be0
+# manual-trigger: 2026-09-19 current-main benchmark 821c9edb89be
 name: hex-ida main full fresh decompile benchmark 15m
 
 on:
@@ -31,7 +31,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: rhgrive3/hex-ida
-          ref: b547f9790be079b74a165b80d4326dbd2632045c
+          ref: 821c9edb89be1f0c904c0aaa927a0bf388eaa4ee
           path: target
           fetch-depth: 1
 
@@ -46,7 +46,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git -C target rev-parse HEAD)" = "b547f9790be079b74a165b80d4326dbd2632045c"
+          test "$(git -C target rev-parse HEAD)" = "821c9edb89be1f0c904c0aaa927a0bf388eaa4ee"
           test "$(node --input-type=module -e "import fs from 'node:fs'; const m=JSON.parse(fs.readFileSync('target/benchmarks/public/codefuse-arm64/manifest.json','utf8')); process.stdout.write(String(m.cases.length));")" = "160"
           echo "shard=${SHARD_INDEX} start=$((SHARD_INDEX * 4)) limit=4"
           node --version
@@ -58,7 +58,7 @@ jobs:
           TARGET_DIR: ${{ github.workspace }}/target
           OUTPUT_FILE: ${{ github.workspace }}/shard-output/result.json
           CASE_DIR: ${{ github.workspace }}/case-results
-          TARGET_SHA: b547f9790be079b74a165b80d4326dbd2632045c
+          TARGET_SHA: 821c9edb89be1f0c904c0aaa927a0bf388eaa4ee
           WORKERS: "4"
           CASE_TIMEOUT_MS: "720000"
           SOFT_DEADLINE_MS: "780000"
@@ -124,7 +124,7 @@ jobs:
           rows.sort((a,b)=>b.elapsedMs-a.elapsedMs);
           const out={
             schema:'hex-main-full-fresh-benchmark/v1',
-            targetSha:'b547f9790be079b74a165b80d4326dbd2632045c',
+            targetSha:'821c9edb89be1f0c904c0aaa927a0bf388eaa4ee',
             expectedShards:40, shardSummaries:summaries.length, selectedCases:selected,
             completedCases:completed, notRun, states, functionStates, functionCount:functions,
             performance:{maxShardWallMs,slowestCases:rows.slice(0,20)},
