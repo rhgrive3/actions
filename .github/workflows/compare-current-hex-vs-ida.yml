@@ -1,0 +1,151 @@
+name: compare current hex benchmark vs IDA artifact
+
+on:
+  push:
+    paths:
+      - ".github/workflows/compare-current-hex-vs-ida.yml"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout helper repo
+        uses: actions/checkout@v4
+
+      - name: Checkout exact benchmarked hex-ida
+        uses: actions/checkout@v4
+        with:
+          repository: rhgrive3/hex-ida
+          ref: b547f9790be079b74a165b80d4326dbd2632045c
+          path: target
+          fetch-depth: 1
+
+      - name: Download benchmark evidence only
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p evidence
+          gh run download 35435295306 -R rhgrive3/actions --pattern 'main-bench-*' --dir evidence
+
+      - name: Compare to frozen IDA 9.1 artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p final
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import path from 'node:path';
+          import { compareCase, aggregateComparisons } from './target/tools/validation/public-benchmark/compare.mjs';
+
+          const root = path.resolve('target/benchmarks/public/codefuse-arm64');
+          const manifest = JSON.parse(fs.readFileSync(path.join(root, 'manifest.json'), 'utf8'));
+
+          const byName = new Map();
+          const stack = ['evidence'];
+          while (stack.length) {
+            const dir = stack.pop();
+            if (!fs.existsSync(dir)) continue;
+            for (const e of fs.readdirSync(dir, {withFileTypes:true})) {
+              const p = path.join(dir, e.name);
+              if (e.isDirectory()) stack.push(p);
+              else if (e.isFile() && e.name.endsWith('.json') && p.includes('case-results')) byName.set(e.name, p);
+            }
+          }
+
+          const comparisons = [];
+          const stateCounts = {};
+          let missingEvidence = 0;
+          for (const entry of manifest.cases) {
+            const name = Buffer.from(entry.id).toString('hex') + '.json';
+            const file = byName.get(name);
+            if (!file) { missingEvidence++; continue; }
+            const hexResult = JSON.parse(fs.readFileSync(file, 'utf8'));
+            for (const fn of hexResult.functions || []) stateCounts[fn.state] = (stateCounts[fn.state] || 0) + 1;
+            comparisons.push(compareCase({caseEntry:entry, hexResult, suiteRoot:root}));
+          }
+          if (missingEvidence || comparisons.length !== 160) throw new Error('incomplete-case-evidence');
+
+          const agg = aggregateComparisons(comparisons);
+          const matchedRows = comparisons.flatMap(c => c.rows).filter(r => r.idaPresent && r.hexPresent && r.idaMetrics && r.hexMetrics);
+          const fields = ['nonEmptyLines','gotoCount','castCount','idaTempCount','hexLocalCount'];
+          const sums = {};
+          for (const side of ['ida','hex']) {
+            sums[side] = Object.fromEntries(fields.map(f => [f,0]));
+            for (const r of matchedRows) {
+              const m = side === 'ida' ? r.idaMetrics : r.hexMetrics;
+              for (const f of fields) sums[side][f] += Number(m?.[f] || 0);
+            }
+          }
+          const avg = side => Object.fromEntries(fields.map(f => [f, matchedRows.length ? sums[side][f] / matchedRows.length : 0]));
+
+          const byCompiler = {};
+          const byOptimization = {};
+          for (let i=0;i<manifest.cases.length;i++) {
+            const entry = manifest.cases[i], c = comparisons[i];
+            for (const [bucket,key] of [[byCompiler,entry.compiler],[byOptimization,entry.optimization]]) {
+              const x = bucket[key] ||= {cases:0,denominator:0,ida:0,hex:0,matched:0,hexPseudo:0};
+              x.cases++; x.denominator += c.denominator; x.ida += c.idaFunctions; x.hex += c.hexFunctions;
+              x.matched += c.matchedByAddress; x.hexPseudo += c.hexPseudocode;
+            }
+          }
+          const finalize = bucket => Object.fromEntries(Object.entries(bucket).map(([k,v]) => [k,{
+            ...v,
+            idaOnly:v.ida-v.matched,
+            hexOnly:v.hex-v.matched,
+            idaCoverage:v.denominator ? v.ida/v.denominator : 0,
+            hexPresenceCoverage:v.denominator ? v.hex/v.denominator : 0,
+            hexPseudocodeCoverage:v.denominator ? v.hexPseudo/v.denominator : 0,
+          }]));
+
+          const out = {
+            schema:'hex-vs-ida-artifact/current-benchmark-v1',
+            benchmarkRunId:35435295306,
+            hexSha:'b547f9790be079b74a165b80d4326dbd2632045c',
+            reference:{product:manifest.reference?.product,version:manifest.reference?.version,engine:manifest.reference?.engine,scope:manifest.reference?.scope},
+            cases:comparisons.length,
+            functionStates:stateCounts,
+            aggregate:{
+              denominator:agg.denominator,
+              idaFunctions:agg.ida,
+              hexFunctions:agg.hex,
+              matchedByAddress:agg.matched,
+              idaOnly:agg.ida-agg.matched,
+              hexOnly:agg.hex-agg.matched,
+              hexPseudocode:agg.hexPseudo,
+              idaPresenceCoverage:agg.denominator ? agg.ida/agg.denominator : 0,
+              hexPresenceCoverage:agg.denominator ? agg.hex/agg.denominator : 0,
+              hexPseudocodeCoverage:agg.denominator ? agg.hexPseudo/agg.denominator : 0,
+              matchedFractionOfIda:agg.ida ? agg.matched/agg.ida : 0,
+              matchedFractionOfHex:agg.hex ? agg.matched/agg.hex : 0,
+            },
+            matchedStructuralMetrics:{
+              functions:matchedRows.length,
+              totals:sums,
+              averages:{ida:avg('ida'),hex:avg('hex')},
+            },
+            byCompiler:finalize(byCompiler),
+            byOptimization:finalize(byOptimization),
+            caveats:{
+              semanticCorrectness:'UNMEASURED',
+              recompilability:'UNMEASURED',
+              idaLatency:'UNMEASURED',
+              note:'Public CodeFuse-DeBench IDA Pro 9.1 artifact comparison; not a native same-machine IDA run.'
+            }
+          };
+          fs.writeFileSync('final/result.json', JSON.stringify(out,null,2)+'\n');
+          console.log(JSON.stringify(out));
+          NODE
+
+      - name: Upload compact comparison
+        uses: actions/upload-artifact@v4
+        with:
+          name: current-hex-vs-ida
+          path: final/result.json
+          retention-days: 7
