@@ -1,18 +1,17 @@
-name: PR 9271 core first failure
+name: PR 9271 focused regression
 
 on:
   pull_request:
     paths:
-      - ".github/workflows/pr9271-core-first-failure.yml"
       - "diag/pr9271-core-trigger.txt"
 
 permissions:
   contents: read
 
 jobs:
-  diagnose:
+  focused:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 6
     steps:
       - name: Checkout exact PR 9271 head
         uses: actions/checkout@v4
@@ -30,49 +29,11 @@ jobs:
       - name: Install
         working-directory: hex-ida
         run: npm ci --no-audit --no-fund
-      - name: Find first core failure
+      - name: Structured control projection regression
         working-directory: hex-ida
-        shell: bash
+        run: timeout 120s node tests/phase8/structuring/structured-control-projection.test.mjs
+      - name: Decompiler DTO projection boundary
+        working-directory: hex-ida
         run: |
-          set -euo pipefail
-          tests=(
-            "node tests/issue-6168-support-scope.mjs"
-            "node tests/issue-6154-confirm-scope.mjs"
-            "node tests/issue-4466-missing-contradiction-verdict.test.mjs"
-            "node tests/core-identity-contracts.mjs"
-            "node tests/issue-1942-determinism-input-ids.mjs"
-            "node tests/issue-3786-slice-source-range-type-witness.test.mjs"
-            "node tests/issue-4251-core-identity-slice-index.test.mjs"
-            "node tests/issue-3915-core-identity-special-numbers.test.mjs"
-            "node tests/core-evidence-contracts.mjs"
-            "node tests/core-budget-scopes.mjs"
-            "node tests/evidence-canonical-roundtrip.mjs"
-            "node tests/issue-3590-5780-paged-artifact-dead-inflight.mjs"
-            "node tests/issue-5852-shl-fold-range.mjs"
-            "node tests/issue-5853-invalid-date-identity.mjs"
-            "node tests/issue-5855-cyclic-vector-element-type.mjs"
-            "npm run scpa:test"
-            "node tests/issue-4637-parse-goal-avoid-preset.mjs"
-          )
-          : > first-failure.txt
-          for cmd in "${tests[@]}"; do
-            if ! timeout 90s bash -lc "$cmd" > /tmp/core-one.log 2>&1; then
-              {
-                echo "COMMAND: $cmd"
-                echo "LAST_OUTPUT:"
-                tail -n 40 /tmp/core-one.log
-              } > first-failure.txt
-              cat first-failure.txt >> "$GITHUB_STEP_SUMMARY"
-              exit 1
-            fi
-          done
-          echo "ALL_CORE_CHILDREN_PASS" > first-failure.txt
-          cat first-failure.txt >> "$GITHUB_STEP_SUMMARY"
-      - name: Upload first failure
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: pr9271-core-first-failure
-          path: hex-ida/first-failure.txt
-          if-no-files-found: error
-          retention-days: 1
+          timeout 60s node --test tests/phase7/analysis-query/analysis-query-decompiler-dto.test.mjs
+          timeout 60s node --test tests/phase7/analysis-query/analysis-query-decompiler-projection.test.mjs
