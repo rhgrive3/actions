@@ -7,7 +7,11 @@ on:
       - ".github/workflows/pr9263-fresh-benchmark.yml"
 
 permissions:
-  contents: read
+  contents: write
+
+concurrency:
+  group: pr9263-fresh-benchmark
+  cancel-in-progress: true
 
 jobs:
   shard:
@@ -107,3 +111,20 @@ jobs:
           path: final/result.json
           if-no-files-found: warn
           retention-days: 7
+
+      - name: Publish benchmark summary to actions repo
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f final/result.json
+          mkdir -p results
+          cp final/result.json results/pr9263-fresh-benchmark.json
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add results/pr9263-fresh-benchmark.json
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "bench: record PR 9263 fresh benchmark"
+          git push origin HEAD:main
