@@ -1,4 +1,4 @@
-name: hex-ida zero partial full 160
+name: hex-ida zero partial full 160 final
 
 on:
   push:
@@ -25,7 +25,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: rhgrive3/hex-ida
-          ref: c45c6fb5b64ba5a606d17d9a8bbab5bf8e8e9186
+          ref: a9382afa584bb94ee26f954f9e1de3d95634f7a3
           path: target
           fetch-depth: 1
       - name: Setup Node 22
@@ -37,7 +37,7 @@ jobs:
           TARGET_DIR: ${{ github.workspace }}/target
           OUTPUT_FILE: ${{ github.workspace }}/shard-output/result.json
           CASE_DIR: ${{ github.workspace }}/case-results
-          TARGET_SHA: c45c6fb5b64ba5a606d17d9a8bbab5bf8e8e9186
+          TARGET_SHA: a9382afa584bb94ee26f954f9e1de3d95634f7a3
           WORKERS: "4"
           CASE_TIMEOUT_MS: "720000"
           SOFT_DEADLINE_MS: "780000"
@@ -93,7 +93,7 @@ jobs:
             notRun += Number(x.notRun||0);
             for(const [k,v] of Object.entries(x.functionStates||{})) totals[k]=(totals[k]||0)+Number(v||0);
           }
-          const out={schema:'hex-zero-partial-full/v1',targetSha:'c45c6fb5b64ba5a606d17d9a8bbab5bf8e8e9186',shards:files.length,cases,functions:funcs,notRun,functionStates:totals,complete:files.length===40&&cases===160&&notRun===0};
+          const out={schema:'hex-zero-partial-full/v1',targetSha:'a9382afa584bb94ee26f954f9e1de3d95634f7a3',shards:files.length,cases,functions:funcs,notRun,functionStates:totals,complete:files.length===40&&cases===160&&notRun===0};
           fs.writeFileSync('final/result.json',JSON.stringify(out,null,2)+'\n');
           console.log(JSON.stringify(out));
           if(!out.complete || (totals.PARTIAL||0)!==0 || (totals.UNSUPPORTED||0)!==0 || (totals.CRASH||0)!==0 || (totals.TIMEOUT||0)!==0) process.exit(1);
