@@ -30,7 +30,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: rhgrive3/hex-ida
-          ref: c5b48771eb53cbe89087d67aa501692daa0cefd8
+          ref: ec02ff8f640e71e38d82a9295bfd197c4744313c
           path: target
           fetch-depth: 1
 
@@ -45,7 +45,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git -C target rev-parse HEAD)" = "c5b48771eb53cbe89087d67aa501692daa0cefd8"
+          test "$(git -C target rev-parse HEAD)" = "ec02ff8f640e71e38d82a9295bfd197c4744313c"
           test "$(node --input-type=module -e "import fs from 'node:fs'; const m=JSON.parse(fs.readFileSync('target/benchmarks/public/codefuse-arm64/manifest.json','utf8')); process.stdout.write(String(m.cases.length));")" = "160"
           echo "shard=${SHARD_INDEX} start=$((SHARD_INDEX * 4)) limit=4"
           node --version
@@ -57,7 +57,7 @@ jobs:
           TARGET_DIR: ${{ github.workspace }}/target
           OUTPUT_FILE: ${{ github.workspace }}/shard-output/result.json
           CASE_DIR: ${{ github.workspace }}/case-results
-          TARGET_SHA: c5b48771eb53cbe89087d67aa501692daa0cefd8
+          TARGET_SHA: ec02ff8f640e71e38d82a9295bfd197c4744313c
           WORKERS: "4"
           CASE_TIMEOUT_MS: "720000"
           SOFT_DEADLINE_MS: "780000"
@@ -123,7 +123,7 @@ jobs:
           rows.sort((a,b)=>b.elapsedMs-a.elapsedMs);
           const out={
             schema:'hex-main-full-fresh-benchmark/v1',
-            targetSha:'c5b48771eb53cbe89087d67aa501692daa0cefd8',
+            targetSha:'ec02ff8f640e71e38d82a9295bfd197c4744313c',
             expectedShards:40, shardSummaries:summaries.length, selectedCases:selected,
             completedCases:completed, notRun, states, functionStates, functionCount:functions,
             performance:{maxShardWallMs,slowestCases:rows.slice(0,20)},
