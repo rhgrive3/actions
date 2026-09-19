@@ -75,3 +75,5 @@ jobs:
           path: hex-ida/first-failure.txt
           if-no-files-found: error
           retention-days: 1
+
+# synchronize diagnostic after workflow activation
