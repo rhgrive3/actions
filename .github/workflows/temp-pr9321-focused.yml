@@ -32,7 +32,7 @@ jobs:
         shell: bash
         run: |
           set +e
-          timeout 60s node --test tests/phase8/provenance/switch-render.test.mjs >/tmp/switch.out 2>&1
+          timeout 30s node --test --test-name-pattern="verified terminal switch bodies inline" tests/phase8/provenance/switch-render.test.mjs >/tmp/switch.out 2>&1
           code=$?
           if [ "$code" -ne 0 ]; then
             tail -n 40 /tmp/switch.out > "$GITHUB_WORKSPACE/switch-failure.txt"
