@@ -18,15 +18,12 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: rhgrive3/hex-ida
-          ref: 84cd5687b8555f4f71d7a67783928fcea264ea47
+          ref: c31b53d7ac45daf18ce901e564bea6fa43ec32fa
           path: target
           fetch-depth: 1
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Conditional region producer
-        working-directory: target
-        run: timeout 60s node --test tests/phase8/provenance/conditional-region-producer.test.mjs
       - name: Switch render
         working-directory: target
         shell: bash
