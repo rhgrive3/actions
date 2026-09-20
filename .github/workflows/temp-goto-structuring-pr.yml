@@ -26,7 +26,7 @@ jobs:
           test -n "${GH_PAT:-}" || { echo "GH_PAT missing"; exit 2; }
           git config --global user.name "actions-goto-structurer"
           git config --global user.email "actions-goto-structurer@users.noreply.github.com"
-          git clone --depth 1 --branch "$TARGET_BRANCH" "https://x-access-token:${GH_PAT}@github.com/${TARGET_REPO}.git" target
+          git clone --depth 1 --branch "$TARGET_BRANCH" "https://github.com/${TARGET_REPO}.git" target
 
       - name: Apply patch
         working-directory: target
