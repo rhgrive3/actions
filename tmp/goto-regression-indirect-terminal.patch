@@ -1,0 +1,193 @@
+--- a/js/decompiler/semantic-core.js
++++ b/js/decompiler/semantic-core.js
+@@ -1305,6 +1305,42 @@
+   return null;
+ }
+ 
++// A canonical unknown control effect with no CFG successor is still a proven
++// control-flow sink: execution does not fall through to another basic block,
++// even though the exact destination/behavior is unavailable.  Keep this
++// architecture-neutral by consuming only the published unknown category, never
++// instruction text or decoder mnemonics.
++function opaqueTerminalControlBlock(block, ctx) {
++  if (!block || blockTerm(block) != null) return false;
++  const insts = block.insts || [];
++  const last = insts.at(-1);
++  if (!last || last.op !== OP.UNKNOWN) return false;
++  const categories = last.extra?.unknownCategories ?? last.unknownCategories ?? [];
++  if (!Array.isArray(categories) || !categories.includes('control')) return false;
++
++  const succ = block.succ || [];
++  if (succ.length === 0) return true;
++  if (succ.length !== 1) return false;
++
++  // Canonical Semantic IR represents an unresolved indirect transfer with a
++  // typed unknown-control node followed by one synthetic empty successor.  The
++  // successor is not executable fallthrough: it is a placeholder for the
++  // unknown destination.  Accept that shape only when the placeholder is an
++  // empty sink with this block as its sole predecessor.
++  const sink = ctx?.ir?.blocks?.[succ[0]];
++  if (!sink || (sink.insts || []).length !== 0 || (sink.phis || []).length !== 0
++      || (sink.succ || []).length !== 0) return false;
++  const predecessors = ctx?.graph?.predecessors?.[sink.index] ?? sink.pred ?? [];
++  return predecessors.length === 1 && predecessors[0] === block.index;
++}
++
++function terminalProofExit(block, ctx) {
++  const term = blockTerm(block), succ = block?.succ || [];
++  if (term?.op === OP.RET && succ.length === 0) return 'return';
++  if (opaqueTerminalControlBlock(block, ctx)) return 'opaque-control';
++  return null;
++}
++
+ // Some reducible conditionals do not have a concrete post-dominator because
+ // one nested path returns before a shared continuation/cleanup is reached.  If
+ // one direct successor can be used as that continuation, prove that the other
+@@ -1328,7 +1364,7 @@
+     if (allowed && (!allowed.has(bodyStart) || !allowed.has(continuation))) continue;
+ 
+     const done = new Set(), active = new Set();
+-    let work = 0, reachedContinuation = false, sawReturn = false, failed = false;
++    let work = 0, reachedContinuation = false, sawTerminalExit = false, failed = false;
+     function visit(bi) {
+       if (bi === continuation) { reachedContinuation = true; return true; }
+       if (++work > MAX_BLOCKS || proofBudget.remaining-- <= 0 || bi === header || state.visited.has(bi)) return false;
+@@ -1338,10 +1374,9 @@
+       const block = ctx.ir.blocks[bi];
+       if (!block) return false;
+       active.add(bi);
+-      const term = blockTerm(block), succ = block.succ || [];
+-      if (term?.op === OP.RET) {
+-        if (succ.length !== 0) failed = true;
+-        else sawReturn = true;
++      const term = blockTerm(block), succ = block.succ || [], terminalExit = terminalProofExit(block, ctx);
++      if (terminalExit) {
++        sawTerminalExit = true;
+       } else {
+         if (term?.op === OP.BR && succ.length !== 1) failed = true;
+         else if (term?.op === OP.CBR && succ.length !== 2) failed = true;
+@@ -1354,7 +1389,7 @@
+       if (failed) return false;
+       done.add(bi); return true;
+     }
+-    if (!visit(bodyStart) || !sawReturn) continue;
++    if (!visit(bodyStart) || !sawTerminalExit) continue;
+     // Mixed exit-to-continuation + return is the shared-cleanup case.  When
+     // structuring inside an already bounded region, a purely terminal arm is
+     // also safe if the sibling successor is itself proven to reach that bound.
+@@ -1419,7 +1454,7 @@
+ 
+   function proveArm(start, continuation) {
+     const done = new Set(), active = new Set();
+-    let reachedContinuation = false, sawReturn = false;
++    let reachedContinuation = false, sawTerminalExit = false;
+     function visit(bi) {
+       if (bi === continuation) { reachedContinuation = true; return true; }
+       if (proofBudget.remaining-- <= 0 || bi === header || state.visited.has(bi)) return false;
+@@ -1430,10 +1465,9 @@
+       const block = ctx.ir.blocks[bi];
+       if (!block) return false;
+       active.add(bi);
+-      const term = blockTerm(block), succ = block.succ || [];
+-      if (term?.op === OP.RET) {
+-        if (succ.length !== 0) return false;
+-        sawReturn = true;
++      const term = blockTerm(block), succ = block.succ || [], terminalExit = terminalProofExit(block, ctx);
++      if (terminalExit) {
++        sawTerminalExit = true;
+       } else {
+         if (term?.op === OP.BR && succ.length !== 1) return false;
+         if (term?.op === OP.CBR && succ.length !== 2) return false;
+@@ -1444,12 +1478,12 @@
+       }
+       active.delete(bi); done.add(bi); return true;
+     }
+-    return visit(start) && reachedContinuation ? { blocks:done, sawReturn } : null;
++    return visit(start) && reachedContinuation ? { blocks:done, sawTerminalExit } : null;
+   }
+ 
+   for (const continuation of candidates.slice(0, 32)) {
+     const yesArm = proveArm(yes, continuation), noArm = proveArm(no, continuation);
+-    if (!yesArm || !noArm || (!yesArm.sawReturn && !noArm.sawReturn)) continue;
++    if (!yesArm || !noArm || (!yesArm.sawTerminalExit && !noArm.sawTerminalExit)) continue;
+     let overlap = false;
+     for (const bi of yesArm.blocks) if (noArm.blocks.has(bi)) { overlap = true; break; }
+     if (overlap) continue;
+@@ -1505,9 +1539,10 @@
+       const block = ctx.ir.blocks[bi];
+       if (!block) return false;
+       active.add(bi);
+-      const term = blockTerm(block), succ = block.succ || [];
+-      if (term?.op === OP.RET) {
+-        if (succ.length !== 0) return false;
++      const term = blockTerm(block), succ = block.succ || [], terminalExit = terminalProofExit(block, ctx);
++      if (terminalExit) {
++        // The sink itself is emitted normally.  The proof only establishes
++        // that no successor edge can escape this arm.
+       } else {
+         if (term?.op === OP.BR && succ.length !== 1) return false;
+         if (term?.op === OP.CBR && succ.length !== 2) return false;
+--- a/tests/phase8/provenance/conditional-region-producer.test.mjs
++++ b/tests/phase8/provenance/conditional-region-producer.test.mjs
+@@ -32,6 +32,14 @@
+     f.conditionalBranch(condition, 1, 2);
+     f.block(1); f.ret();
+     f.block(2); f.branch(2);
++  } else if (kind === 'opaque-terminal-cleanup' || kind === 'noncontrol-terminal-cleanup') {
++    f.conditionalBranch(condition, 3, 1);
++    f.block(1); f.conditionalBranch(condition, 3, 2);
++    f.block(2); const opaque = f.unknown(64).def;
++    opaque.extra = { unknownCategories:[kind === 'opaque-terminal-cleanup' ? 'control' : 'memory'],
++      reason:kind === 'opaque-terminal-cleanup' ? 'unresolved-indirect-control-flow' : 'unknown-memory-effect' };
++    opaque.text = kind === 'opaque-terminal-cleanup' ? 'br x16' : 'opaque memory';
++    f.block(3); f.ret();
+   } else if (kind === 'early-exit-cleanup') {
+     f.conditionalBranch(condition, 4, 1);
+     f.block(1); f.conditionalBranch(condition, 3, 2);
+@@ -59,12 +67,22 @@
+     f.block(2); const no = f.constant(2n, 32); f.store(no); f.branch(3);
+     f.block(3); merged = f.phi([[1, yes], [2, no]], 32); f.ret();
+   }
+-  const ir = f.build(); ir.instructions = ir.blocks.flatMap(block => [...block.phis, ...block.insts]);
++  const ir = f.build();
++  if (kind === 'opaque-terminal-cleanup' || kind === 'noncontrol-terminal-cleanup') {
++    const source = ir.blocks[2];
++    source.succ = [4];
++    ir.blocks.push({ index:4, phis:[], insts:[], succ:[], pred:[2], idom:-1,
++      startRow:-1, endRow:-1, isEntry:false, isExit:true, isLoopHeader:false });
++  }
++  ir.instructions = ir.blocks.flatMap(block => [...block.phis, ...block.insts]);
+   ir.instructions.forEach((inst, index) => {
+     inst.id = `region_${index}`; inst.row = index; inst.address = 0x1000n + BigInt(index * 4);
+     if (inst.op === 'cbr' && kind !== 'fallback') inst.extra = { ...inst.extra, targetBlock:ir.blocks[inst.block].succ[0] };
+   });
+-  for (const block of ir.blocks) { block.startRow = block.insts[0].row; block.endRow = block.insts.at(-1).row; }
++  for (const block of ir.blocks) {
++    if (block.insts.length) { block.startRow = block.insts[0].row; block.endRow = block.insts.at(-1).row; }
++    else { block.startRow = ir.instructions.length; block.endRow = ir.instructions.length; }
++  }
+   if (merged) ir.instructions.at(-1).args = [{ value:merged }];
+   const model = { name:'region', instructions:ir.instructions, calls:[] };
+   const opts = { ir, deterministicTransforms:true, phase8PrepareRegionProof:true, ...options };
+@@ -121,6 +139,21 @@
+   assert.match(cyclic.pseudocode, /goto loc_/);
+ });
+ 
++test('opaque canonical control sinks permit structured early exits without guessing a target', () => {
++  const control = render('opaque-terminal-cleanup').seed;
++  assert.equal(control.coverage.mode, 'structured');
++  assert.equal(control.coverage.structuredMissing, 0);
++  assert.ok(control.pseudocode.includes('__asm(\"br x16\")'));
++  assert.ok(control.pseudocode.includes('return;'));
++  assert.ok(!control.pseudocode.includes('goto loc_'));
++  assert.equal(readSemanticConditionalRegions(control).regions.length, 0,
++    'opaque early-exit recovery must not mint a canonical post-dominator region proof');
++
++  const nonControl = render('noncontrol-terminal-cleanup').seed;
++  assert.equal(nonControl.coverage.mode, 'linear');
++  assert.ok(nonControl.pseudocode.includes('goto loc_'));
++});
++
+ test('early-exit cleanup rendering does not mint a canonical post-dominator region proof', () => {
+   for (const kind of ['early-exit-cleanup', 'deep-early-exit-cleanup']) {
+     const { seed } = render(kind);
