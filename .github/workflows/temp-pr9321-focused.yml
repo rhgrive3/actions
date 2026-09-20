@@ -29,4 +29,20 @@ jobs:
         run: timeout 60s node --test tests/phase8/provenance/conditional-region-producer.test.mjs
       - name: Switch render
         working-directory: target
-        run: timeout 60s node --test tests/phase8/provenance/switch-render.test.mjs
+        shell: bash
+        run: |
+          set +e
+          timeout 60s node --test tests/phase8/provenance/switch-render.test.mjs >/tmp/switch.out 2>&1
+          code=$?
+          if [ "$code" -ne 0 ]; then
+            tail -n 40 /tmp/switch.out > "$GITHUB_WORKSPACE/switch-failure.txt"
+          fi
+          exit "$code"
+      - name: Upload switch first-failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr9321-switch-first-failure
+          path: switch-failure.txt
+          if-no-files-found: error
+          retention-days: 1
