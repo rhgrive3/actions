@@ -24,7 +24,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: rhgrive3/hex-ida
-          ref: 7934255939fd833ef1e6a6dd44e5d581ebd013a1
+          ref: e11702c4300ca411221e3e7619ceac1c54166a96
           path: target
           fetch-depth: 1
       - uses: actions/setup-node@v4
@@ -136,7 +136,7 @@ jobs:
           }
           rows.sort((a,b)=>a.index-b.index);
           const summary={
-            targetSha:'7934255939fd833ef1e6a6dd44e5d581ebd013a1',
+            targetSha:'e11702c4300ca411221e3e7619ceac1c54166a96',
             rows:rows.length,
             pass:rows.filter(r=>r.state==='PASS').length,
             errors:rows.filter(r=>r.state!=='PASS').length,
