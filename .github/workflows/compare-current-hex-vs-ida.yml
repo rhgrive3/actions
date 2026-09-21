@@ -1,3 +1,4 @@
+# manual-trigger: 2026-09-21 compare current main 9c95f7a vs IDA
 name: compare current hex benchmark vs IDA artifact
 
 on:
@@ -21,7 +22,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: rhgrive3/hex-ida
-          ref: a5c36562a67889c87eab6910e96744a24f000b63
+          ref: 9c95f7a57650737134ba859c597918807fe7cb31
           path: target
           fetch-depth: 1
 
@@ -32,7 +33,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p evidence
-          gh run download 35453584942 -R rhgrive3/actions --pattern 'main-bench-*' --dir evidence
+          gh run download 35595882163 -R rhgrive3/actions --pattern 'main-bench-*' --dir evidence
 
       - name: Compare to frozen IDA 9.1 artifacts
         shell: bash
@@ -106,8 +107,8 @@ jobs:
 
           const out = {
             schema:'hex-vs-ida-artifact/current-benchmark-v1',
-            benchmarkRunId:35453584942,
-            hexSha:'a5c36562a67889c87eab6910e96744a24f000b63',
+            benchmarkRunId:35595882163,
+            hexSha:'9c95f7a57650737134ba859c597918807fe7cb31',
             reference:{product:manifest.reference?.product,version:manifest.reference?.version,engine:manifest.reference?.engine,scope:manifest.reference?.scope},
             cases:comparisons.length,
             functionStates:stateCounts,
