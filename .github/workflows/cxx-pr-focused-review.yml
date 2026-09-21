@@ -1,4 +1,4 @@
-name: CXX PR focused review verification #4
+name: CXX PR9380 focused review
 
 on:
   push:
@@ -9,32 +9,6 @@ permissions:
   contents: read
 
 jobs:
-  pr9379:
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/checkout@v4
-        with:
-          repository: rhgrive3/hex-ida
-          ref: feat/cpp-object-evidence
-          path: target
-          fetch-depth: 1
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - name: PR9379 focused tests
-        run: |
-          set -euo pipefail
-          cd target
-          timeout 3m node --test tests/phase7/cxx-object-evidence.test.mjs
-          printf '{"pr":9379,"focused":"PASS"}\n' > ../pr9379.json
-      - uses: actions/upload-artifact@v4
-        with:
-          name: pr9379-focused
-          path: pr9379.json
-          retention-days: 2
-
   pr9380:
     runs-on: ubuntu-latest
     timeout-minutes: 7
@@ -49,14 +23,36 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: PR9380 focused tests
+      - name: Focused tests with bounded first-failure capture
+        shell: bash
         run: |
-          set -euo pipefail
+          set +e
           cd target
-          timeout 5m node --test             tests/phase8/cxx-object-decompiler-projection.test.mjs             tests/phase7/cxx-object-evidence.test.mjs
-          printf '{"pr":9380,"focused":"PASS"}\n' > ../pr9380.json
+          timeout 5m node --test \
+            tests/phase8/cxx-object-decompiler-projection.test.mjs \
+            tests/phase7/cxx-object-evidence.test.mjs > ../focused.txt 2>&1
+          rc=$?
+          cd ..
+          if [ "$rc" -eq 0 ]; then
+            printf '{"pr":9380,"focused":"PASS"}\n' > result.json
+          else
+            python3 - <<'PY'
+          from pathlib import Path
+          lines=Path('focused.txt').read_text(errors='replace').splitlines()
+          marks=[i for i,l in enumerate(lines) if 'not ok ' in l or 'AssertionError' in l or 'ERR_' in l or 'SyntaxError' in l or 'Error [' in l]
+          i=marks[0] if marks else max(0,len(lines)-50)
+          lo=max(0,i-10); hi=min(len(lines),i+45)
+          Path('failure.txt').write_text('\n'.join(lines[lo:hi])+'\n')
+          Path('result.json').write_text('{"pr":9380,"focused":"FAIL"}\n')
+          PY
+          fi
+          exit "$rc"
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: pr9380-focused
-          path: pr9380.json
+          path: |
+            result.json
+            failure.txt
+          if-no-files-found: warn
           retention-days: 2
