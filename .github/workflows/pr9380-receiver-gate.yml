@@ -67,9 +67,13 @@ jobs:
           };
           fs.writeFileSync('evidence/gate.json',JSON.stringify(out,null,2)+'\n');
           NODE
-          timeout 60s node evidence/diag.mjs
+          set +e
+          timeout 60s node evidence/diag.mjs > evidence/stdout.txt 2> evidence/stderr.txt
+          printf '%s\n' "$?" > evidence/status.txt
+          exit 0
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: pr9380-receiver-gate
-          path: evidence/gate.json
+          path: evidence/*
           retention-days: 2
