@@ -1,0 +1,105 @@
+name: Hex IDA single-function CPU diagnostic
+
+on:
+  push:
+    paths:
+      - ".github/workflows/hex-ida-single-function-cpu-diagnostic.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+      - name: Checkout exact hex-ida main
+        uses: actions/checkout@v4
+        with:
+          repository: rhgrive3/hex-ida
+          ref: 3794a4fe0ddf9dd3452c4ba915c7e2cf1ce342fb
+          path: target
+          fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Profile test_array_types
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p diagnostic/cpu
+          cat > diagnostic/profile.mjs <<'NODE'
+          import fs from 'node:fs';
+          import path from 'node:path';
+          import { pathToFileURL } from 'node:url';
+          const root=path.resolve('target');
+          const manifest=JSON.parse(fs.readFileSync(path.join(root,'benchmarks/public/codefuse-arm64/manifest.json'),'utf8'));
+          const entry=manifest.cases.find(x=>x.id==='2/2_gcc_O0_g');
+          const binary=path.join(root,'benchmarks/public/codefuse-arm64',entry.binary);
+          const { openProduct }=await import(pathToFileURL(path.join(root,'tools/validation/public-benchmark/product-host.mjs')));
+
+          const captures=[];
+          const passRuns=[];
+          globalThis.__hexPerfProbe={
+            recordCapturePassState(ms,records){captures.push({ms,records});},
+            recordPasses(metrics,elapsedMs){passRuns.push({elapsedMs,metrics});},
+          };
+
+          const product=await openProduct(binary);
+          try {
+            const snapshot=await product.query.snapshot();
+            let offset=0,target=null;
+            while(true){
+              const page=await product.query.functions(snapshot,{}, {offset,limit:1000});
+              target=(page.value??[]).find(x=>x.name==='test_array_types') ?? target;
+              if(target || page.page?.next==null) break;
+              offset=page.page.next;
+            }
+            if(!target) throw new Error('target-function-not-found');
+            const t0=performance.now();
+            const response=await product.query.decompile(await product.query.snapshot(),target.address,{profile:'fast'});
+            const elapsedMs=performance.now()-t0;
+            const out={
+              caseId:entry.id,function:'test_array_types',address:String(target.address),elapsedMs,
+              completeness:response?.status?.completeness??null,
+              pseudocodeChars:response?.value?.pseudocode?.length??0,
+              capturePassState:{
+                calls:captures.length,
+                totalMs:captures.reduce((n,x)=>n+x.ms,0),
+                maxMs:Math.max(0,...captures.map(x=>x.ms)),
+                totalRecords:captures.reduce((n,x)=>n+x.records,0),
+                samples:captures,
+              },
+              passRuns,
+            };
+            fs.writeFileSync('diagnostic/perf-probe.json',JSON.stringify(out,null,2)+'\n');
+            console.log(JSON.stringify(out));
+          } finally { await product.close(); }
+          NODE
+          timeout 150s node --cpu-prof --cpu-prof-dir=diagnostic/cpu --cpu-prof-name=profile.cpuprofile diagnostic/profile.mjs
+          cat > diagnostic/summarize-profile.mjs <<'NODE'
+          import fs from 'node:fs';
+          const p=JSON.parse(fs.readFileSync('diagnostic/cpu/profile.cpuprofile','utf8'));
+          const rows=p.nodes.map(n=>({
+            functionName:n.callFrame?.functionName||'(anonymous)',
+            url:n.callFrame?.url||'',
+            line:(n.callFrame?.lineNumber??-1)+1,
+            hitCount:n.hitCount||0,
+          })).filter(x=>x.hitCount>0).sort((a,b)=>b.hitCount-a.hitCount);
+          const total=rows.reduce((n,x)=>n+x.hitCount,0);
+          const out={totalHitCount:total,top:rows.slice(0,40).map(x=>({...x,pct:total?100*x.hitCount/total:0}))};
+          fs.writeFileSync('diagnostic/cpu-summary.json',JSON.stringify(out,null,2)+'\n');
+          console.log(JSON.stringify(out));
+          NODE
+          node diagnostic/summarize-profile.mjs
+      - name: Upload CPU diagnostic
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: single-function-cpu-diagnostic
+          path: |
+            diagnostic/perf-probe.json
+            diagnostic/cpu-summary.json
+          if-no-files-found: warn
+          retention-days: 2
