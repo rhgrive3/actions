@@ -1,0 +1,76 @@
+name: Hex IDA issue 9352 one-off
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'triggers/hex-ida-9352.txt'
+
+permissions:
+  contents: read
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout worker repository
+        uses: actions/checkout@v4
+
+      - name: Clone target branch
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "${GH_PAT:-}"
+          git clone --branch fix/issue-9352-freebuff-stable-dir --single-branch "https://x-access-token:${GH_PAT}@github.com/rhgrive3/hex-ida.git" target
+          cd target
+          git rev-parse HEAD > ../initial.txt
+
+      - name: Apply fixed patch
+        working-directory: target
+        shell: bash
+        run: |
+          set -euo pipefail
+          : > /tmp/issue9352.patch
+          for i in 1 2 3 4 5; do
+            base64 -d "../patches/hex-ida-9352-part${i}.b64" >> /tmp/issue9352.patch
+          done
+          patch -p2 < /tmp/issue9352.patch
+          git diff --check
+
+      - name: Focused validation
+        working-directory: target
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check scripts/freebuff-setup.mjs
+          node --test \
+            tests/issue-9352-freebuff-ancestor-swap.test.mjs \
+            tests/issue-9278-freebuff-ancestor-symlink.test.mjs \
+            tests/issue-9305-freebuff-home-link-publication.test.mjs \
+            tests/issue-9281-freebuff-atomic-binary-publication.test.mjs \
+            tests/issue-9309-freebuff-repo-home-migration.test.mjs \
+            tests/issue-9332-freebuff-postcommit-cleanup.test.mjs
+
+      - name: Commit and push target branch
+        working-directory: target
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected="$(cat ../initial.txt)"
+          remote_now="$(git ls-remote "https://x-access-token:${GH_PAT}@github.com/rhgrive3/hex-ida.git" 'refs/heads/fix/issue-9352-freebuff-stable-dir' | awk '{print $1}')"
+          test -n "${remote_now}"
+          if [[ "${remote_now}" != "${expected}" ]]; then
+            echo "target branch moved; refusing stale push"
+            exit 4
+          fi
+          git config user.name actions-pr-worker
+          git config user.email actions-pr-worker@users.noreply.github.com
+          git add -A
+          git commit -m 'fix(freebuff): bind mutations to validated directories'
+          git push --no-verify origin HEAD:refs/heads/fix/issue-9352-freebuff-stable-dir
+          echo "pushed_head=$(git rev-parse HEAD)" >> "$GITHUB_STEP_SUMMARY"
