@@ -1,0 +1,32 @@
+name: Query decompiler profile forwarding focused test
+
+on:
+  push:
+    paths:
+      - '.github/workflows/query-decompiler-profile-focused.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  focused:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: rhgrive3/hex-ida
+          ref: fix/query-decompiler-profile-forwarding
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Run focused profile/query tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 5m node --test tests/analysis-query-decompiler-profile.mjs tests/phase8/substrate/decompiler-fast-profile.test.mjs
+          timeout 5m node tests/analysis-query-api.mjs
