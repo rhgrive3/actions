@@ -1,0 +1,62 @@
+name: CXX PR focused review verification
+
+on:
+  push:
+    paths:
+      - ".github/workflows/cxx-pr-focused-review.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  pr9379:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: rhgrive3/hex-ida
+          ref: feat/cpp-object-evidence
+          path: target
+          fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: PR9379 focused tests
+        run: |
+          set -euo pipefail
+          cd target
+          timeout 3m node --test tests/phase7/cxx-object-evidence.test.mjs
+          printf '{"pr":9379,"focused":"PASS"}\n' > ../pr9379.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pr9379-focused
+          path: pr9379.json
+          retention-days: 2
+
+  pr9380:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: rhgrive3/hex-ida
+          ref: feat/cpp-object-decompiler-projection
+          path: target
+          fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: PR9380 focused tests
+        run: |
+          set -euo pipefail
+          cd target
+          timeout 5m node --test             tests/phase8/cxx-object-decompiler-projection.test.mjs             tests/phase7/cxx-object-evidence.test.mjs
+          printf '{"pr":9380,"focused":"PASS"}\n' > ../pr9380.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pr9380-focused
+          path: pr9380.json
+          retention-days: 2
