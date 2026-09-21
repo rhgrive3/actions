@@ -1,0 +1,91 @@
+name: Hex IDA one-case production timing
+
+on:
+  push:
+    paths:
+      - ".github/workflows/hex-ida-one-case-production-timing.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Checkout exact hex-ida main
+        uses: actions/checkout@v4
+        with:
+          repository: rhgrive3/hex-ida
+          ref: 3794a4fe0ddf9dd3452c4ba915c7e2cf1ce342fb
+          path: target
+          fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Time production query path
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p diagnostic
+          cat > diagnostic/production.mjs <<'NODE'
+          import fs from 'node:fs';
+          import path from 'node:path';
+          import { pathToFileURL } from 'node:url';
+          const root=path.resolve('target');
+          const manifest=JSON.parse(fs.readFileSync(path.join(root,'benchmarks/public/codefuse-arm64/manifest.json'),'utf8'));
+          const entry=manifest.cases.find(x=>x.id==='2/2_gcc_O0_g');
+          const binary=path.join(root,'benchmarks/public/codefuse-arm64',entry.binary);
+          const { openProduct }=await import(pathToFileURL(path.join(root,'tools/validation/public-benchmark/product-host.mjs')));
+          const product=await openProduct(binary);
+          try {
+            const snapshot=await product.query.snapshot();
+            const discovered=[]; let offset=0;
+            while(true){
+              const page=await product.query.functions(snapshot,{}, {offset,limit:1000});
+              discovered.push(...(page.value??[]));
+              if(page.page?.next==null) break;
+              offset=page.page.next;
+            }
+            const rows=[];
+            const started=performance.now();
+            for(const fn of discovered){
+              const t0=performance.now();
+              const currentSnapshot=await product.query.snapshot();
+              const snapshotMs=performance.now()-t0;
+              const t1=performance.now();
+              const response=await product.query.decompile(currentSnapshot,fn.address,{profile:'fast'});
+              const decompileQueryMs=performance.now()-t1;
+              rows.push({
+                address:String(fn.address),name:fn.name??null,
+                size:fn.size==null?null:String(fn.size),
+                snapshotMs,decompileQueryMs,totalMs:snapshotMs+decompileQueryMs,
+                completeness:response?.status?.completeness??null,
+                pseudocodeChars:response?.value?.pseudocode?.length??0,
+              });
+            }
+            const wallMs=performance.now()-started;
+            const sum=key=>rows.reduce((n,r)=>n+Number(r[key]||0),0);
+            const out={
+              schema:'hex-one-case-production-timing/v1',
+              targetSha:'3794a4fe0ddf9dd3452c4ba915c7e2cf1ce342fb',
+              caseId:entry.id,functionCount:rows.length,setup:product.profile,wallMs,
+              totals:{snapshotMs:sum('snapshotMs'),decompileQueryMs:sum('decompileQueryMs')},
+              topFunctions:[...rows].sort((a,b)=>b.decompileQueryMs-a.decompileQueryMs).slice(0,15),
+              functions:rows,
+            };
+            fs.writeFileSync('diagnostic/production.json',JSON.stringify(out,null,2)+'\n');
+            fs.writeFileSync('diagnostic/summary.json',JSON.stringify({...out,functions:undefined,topFunctions:out.topFunctions.slice(0,8)},null,2)+'\n');
+            console.log(JSON.stringify({caseId:out.caseId,functionCount:out.functionCount,setup:out.setup,wallMs:out.wallMs,totals:out.totals,topFunctions:out.topFunctions.slice(0,8)}));
+          } finally { await product.close(); }
+          NODE
+          timeout 8m node diagnostic/production.mjs
+      - name: Upload timing evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: one-case-production-timing
+          path: diagnostic/*.json
+          if-no-files-found: warn
+          retention-days: 2
