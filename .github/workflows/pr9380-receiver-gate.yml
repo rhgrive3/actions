@@ -26,10 +26,10 @@ jobs:
           mkdir -p evidence
           cat > evidence/diag.mjs <<'NODE'
           import fs from 'node:fs';
-          import { buildIR } from './js/ir-core.js';
-          import { buildSemanticModel } from './js/blocks.js';
-          import { currentCppReceiver } from './js/decompiler/cxx-evidence.js';
-          import { createCppReceiverEvidence, isCanonicalCppReceiverEvidence } from './js/analysis/cxx/object-evidence.js';
+          import { buildIR } from '../js/ir-core.js';
+          import { buildSemanticModel } from '../js/blocks.js';
+          import { currentCppReceiver } from '../js/decompiler/cxx-evidence.js';
+          import { createCppReceiverEvidence, isCanonicalCppReceiverEvidence } from '../js/analysis/cxx/object-evidence.js';
 
           const lines=['ldr w0, [x0, #0x38]','ret'];
           const rows=lines.map((text,row)=>{
