@@ -1,0 +1,37 @@
+name: PR9380 first-failure diagnostic
+
+on:
+  push:
+    paths:
+      - ".github/workflows/pr9380-first-failure.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: rhgrive3/hex-ida
+          ref: 5bebf5d2c4f325b59fca45378f997373c58863e1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Capture focused first failure
+        shell: bash
+        run: |
+          set +e
+          mkdir -p evidence
+          timeout 2m node --test tests/phase8/cxx-object-decompiler-projection.test.mjs > evidence/test.tap 2>&1
+          status=$?
+          printf '%s\n' "$status" > evidence/status.txt
+          exit 0
+      - name: Upload focused evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr9380-first-failure
+          path: evidence/*
+          retention-days: 2
