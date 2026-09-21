@@ -28,5 +28,5 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          timeout 5m node --test tests/analysis-query-decompiler-profile.mjs tests/phase8/substrate/decompiler-fast-profile.test.mjs
+          timeout 5m node --test tests/phase7/analysis/analysis-query-decompiler-profile.test.mjs tests/phase8/substrate/decompiler-fast-profile.test.mjs
           timeout 5m node tests/analysis-query-api.mjs
