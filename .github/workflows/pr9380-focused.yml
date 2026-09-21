@@ -1,0 +1,56 @@
+name: PR9380 focused verify and rebuild
+
+on:
+  push:
+    paths:
+      - ".github/workflows/pr9380-focused.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Checkout exact PR9380 head
+        uses: actions/checkout@v4
+        with:
+          repository: rhgrive3/hex-ida
+          ref: 5bebf5d2c4f325b59fca45378f997373c58863e1
+          path: target
+          fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        working-directory: target
+        run: timeout 4m npm ci --no-audit --no-fund
+      - name: Focused C++ projection tests
+        working-directory: target
+        run: timeout 3m node --test tests/phase8/cxx-object-decompiler-projection.test.mjs
+      - name: Phase 8 ownership
+        working-directory: target
+        run: |
+          timeout 2m node tools/validation/phase8-ownership.mjs --files-json '["js/decompiler/cxx-evidence.js","js/decompiler/semantic-core.js","js/decompiler/pipeline-core.js","js/decompiler/type-recovery.js","js/decompiler/types/high-variables.js","tests/phase8/cxx-object-decompiler-projection.test.mjs"]'
+      - name: Rebuild userscript
+        working-directory: target
+        run: timeout 3m npm run userscript:build
+      - name: Capture generated diff metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p evidence
+          cd target
+          git diff --numstat -- userscript/hex.user.template.js userscript/release-version.json > ../evidence/generated-numstat.txt
+          git diff --exit-code -- userscript/hex.user.template.js userscript/release-version.json >/dev/null || true
+      - name: Upload generated outputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr9380-focused
+          path: |
+            target/userscript/hex.user.template.js
+            target/userscript/release-version.json
+            evidence/generated-numstat.txt
+          retention-days: 2
