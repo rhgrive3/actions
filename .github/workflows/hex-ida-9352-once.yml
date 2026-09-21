@@ -23,8 +23,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test -n "${GH_PAT:-}"
-          git clone --branch fix/issue-9352-freebuff-stable-dir --single-branch "https://x-access-token:${GH_PAT}@github.com/rhgrive3/hex-ida.git" target
+          if [[ -n "${GH_PAT:-}" ]]; then
+            git clone --branch fix/issue-9352-freebuff-stable-dir --single-branch "https://x-access-token:${GH_PAT}@github.com/rhgrive3/hex-ida.git" target
+          else
+            git clone --branch fix/issue-9352-freebuff-stable-dir --single-branch "https://github.com/rhgrive3/hex-ida.git" target
+          fi
           cd target
           git rev-parse HEAD > ../initial.txt
 
@@ -62,7 +65,12 @@ jobs:
         run: |
           set -euo pipefail
           expected="$(cat ../initial.txt)"
-          remote_now="$(git ls-remote "https://x-access-token:${GH_PAT}@github.com/rhgrive3/hex-ida.git" 'refs/heads/fix/issue-9352-freebuff-stable-dir' | awk '{print $1}')"
+          if [[ -z "${GH_PAT:-}" ]]; then
+            echo 'GH_PAT missing; validation succeeded but cross-repository push is unavailable.'
+            exit 5
+          fi
+          remote_url="https://x-access-token:${GH_PAT}@github.com/rhgrive3/hex-ida.git"
+          remote_now="$(git ls-remote "${remote_url}" 'refs/heads/fix/issue-9352-freebuff-stable-dir' | awk '{print $1}')"
           test -n "${remote_now}"
           if [[ "${remote_now}" != "${expected}" ]]; then
             echo "target branch moved; refusing stale push"
@@ -72,5 +80,6 @@ jobs:
           git config user.email actions-pr-worker@users.noreply.github.com
           git add -A
           git commit -m 'fix(freebuff): bind mutations to validated directories'
+          git remote set-url origin "${remote_url}"
           git push --no-verify origin HEAD:refs/heads/fix/issue-9352-freebuff-stable-dir
           echo "pushed_head=$(git rev-parse HEAD)" >> "$GITHUB_STEP_SUMMARY"
