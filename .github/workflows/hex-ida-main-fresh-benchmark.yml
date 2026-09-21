@@ -1,4 +1,4 @@
-# manual-trigger: 2026-09-22 current-main FAST benchmark 53dd880f0db8
+# manual-trigger: 2026-09-22 current-main FAST benchmark a0eb10473721
 name: hex-ida main FAST full fresh decompile benchmark 15m
 
 on:
@@ -31,7 +31,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: rhgrive3/hex-ida
-          ref: 53dd880f0db8db038f8e7c6d572eacc8f4931753
+          ref: a0eb10473721fe31b45e86b2ec85c3ffd08dd8f9
           path: target
           fetch-depth: 1
 
@@ -46,7 +46,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git -C target rev-parse HEAD)" = "53dd880f0db8db038f8e7c6d572eacc8f4931753"
+          test "$(git -C target rev-parse HEAD)" = "a0eb10473721fe31b45e86b2ec85c3ffd08dd8f9"
           test "$(node --input-type=module -e "import fs from 'node:fs'; const m=JSON.parse(fs.readFileSync('target/benchmarks/public/codefuse-arm64/manifest.json','utf8')); process.stdout.write(String(m.cases.length));")" = "160"
           echo "shard=${SHARD_INDEX} start=$((SHARD_INDEX * 4)) limit=4"
           node --version
@@ -74,7 +74,7 @@ jobs:
           TARGET_DIR: ${{ github.workspace }}/target
           OUTPUT_FILE: ${{ github.workspace }}/shard-output/result.json
           CASE_DIR: ${{ github.workspace }}/case-results
-          TARGET_SHA: 53dd880f0db8db038f8e7c6d572eacc8f4931753
+          TARGET_SHA: a0eb10473721fe31b45e86b2ec85c3ffd08dd8f9
           WORKERS: "4"
           CASE_TIMEOUT_MS: "720000"
           SOFT_DEADLINE_MS: "780000"
@@ -140,7 +140,7 @@ jobs:
           rows.sort((a,b)=>b.elapsedMs-a.elapsedMs);
           const out={
             schema:'hex-main-full-fresh-benchmark/v1',
-            targetSha:'53dd880f0db8db038f8e7c6d572eacc8f4931753',
+            targetSha:'a0eb10473721fe31b45e86b2ec85c3ffd08dd8f9',
             expectedShards:40, shardSummaries:summaries.length, selectedCases:selected,
             completedCases:completed, notRun, states, functionStates, functionCount:functions,
             performance:{maxShardWallMs,slowestCases:rows.slice(0,20)},
