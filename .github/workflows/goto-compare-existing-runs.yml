@@ -1,0 +1,96 @@
+name: goto compare existing benchmark runs
+
+on:
+  push:
+    paths:
+      - ".github/workflows/goto-compare-existing-runs.yml"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Download pre-structuring benchmark artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: main-bench-*
+          path: baseline
+          repository: rhgrive3/actions
+          run-id: 35453584942
+          github-token: ${{ github.token }}
+
+      - name: Download current-main benchmark artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: main-bench-*
+          path: current
+          repository: rhgrive3/actions
+          run-id: 35681705551
+          github-token: ${{ github.token }}
+
+      - name: Compare goto counts
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p final
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import path from 'node:path';
+
+          function scan(root) {
+            const stack=[root];
+            const caseFiles=[];
+            const shardFiles=[];
+            while (stack.length) {
+              const dir=stack.pop();
+              if (!fs.existsSync(dir)) continue;
+              for (const e of fs.readdirSync(dir,{withFileTypes:true})) {
+                const p=path.join(dir,e.name);
+                if (e.isDirectory()) stack.push(p);
+                else if (e.isFile() && e.name.endsWith('.json') && p.includes('case-results')) caseFiles.push(p);
+                else if (e.isFile() && e.name==='result.json' && p.includes('shard-output')) shardFiles.push(p);
+              }
+            }
+            let gotoCount=0;
+            let functionsWithGoto=0;
+            let functionsWithPseudocode=0;
+            let functionCount=0;
+            let targetSha=null;
+            for (const f of shardFiles) {
+              const row=JSON.parse(fs.readFileSync(f,'utf8'));
+              functionCount += Number(row.functionCount || 0);
+              targetSha ||= row.targetSha || row.actualSha || null;
+            }
+            for (const f of caseFiles) {
+              const row=JSON.parse(fs.readFileSync(f,'utf8'));
+              for (const fn of row.functions || []) {
+                if (typeof fn.pseudocode !== 'string') continue;
+                functionsWithPseudocode++;
+                const matches=fn.pseudocode.match(/\bgoto\b/g) || [];
+                gotoCount += matches.length;
+                if (matches.length) functionsWithGoto++;
+              }
+            }
+            return {targetSha,shards:shardFiles.length,caseEvidenceFiles:caseFiles.length,functionCount,functionsWithPseudocode,gotoCount,functionsWithGoto};
+          }
+
+          const baseline=scan('baseline');
+          const current=scan('current');
+          const delta=current.gotoCount-baseline.gotoCount;
+          const reduction=baseline.gotoCount>0 ? (baseline.gotoCount-current.gotoCount)/baseline.gotoCount : null;
+          const out={schema:'hex-goto-existing-run-comparison/v1',baselineRunId:35453584942,currentRunId:35681705551,baseline,current,deltaGoto:delta,reductionFraction:reduction};
+          fs.writeFileSync('final/goto-comparison.json',JSON.stringify(out,null,2)+'\n');
+          console.log(JSON.stringify(out));
+          NODE
+
+      - name: Upload compact comparison
+        uses: actions/upload-artifact@v4
+        with:
+          name: goto-comparison-existing-runs
+          path: final/goto-comparison.json
+          if-no-files-found: error
+          retention-days: 7
