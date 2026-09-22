@@ -23,7 +23,7 @@ jobs:
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 45
     env:
-      TARGET_SHA: 45359e755c2851c3063ccc67ea80f711dc3ba88d
+      TARGET_SHA: 9d05bf7c4bc1c017dcc592d78d4168fd4751941f
     steps:
       - name: Checkout orchestrator
         uses: actions/checkout@v4
@@ -117,8 +117,9 @@ jobs:
           want(baseline?.truthHitAtBoundary, 0, 'baseline-truth-outside-verification-set');
           want(baseline?.boundaryRescue, 0, 'baseline-rescue');
           want(baseline?.wrongTop1, 1, 'baseline-wrong-top1');
-          want(baseline?.falseLikely, 1, 'baseline-false-likely');
-          want(baseline?.verdict, 'likely', 'baseline-verdict');
+          want(baseline?.falseLikely, 0, 'baseline-false-likely');
+          want(baseline?.verdict, 'ambiguous', 'baseline-verdict');
+          want(oracle?.verdict, 'ambiguous', 'oracle-verdict');
           want(baseline?.analyzeCalls, 18, 'baseline-analyze-calls');
 
           // declared-oracle ceiling: the probe can move the verification slot but not the answer
