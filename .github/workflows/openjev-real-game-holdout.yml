@@ -1,0 +1,107 @@
+# manual-trigger: 2026-09-22 real-game boundary-referee holdout on ARM64
+name: openjev real-game holdout arm64
+
+on:
+  push:
+    paths:
+      - ".github/workflows/openjev-real-game-holdout.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: openjev-real-game-holdout
+  cancel-in-progress: true
+
+jobs:
+  measure:
+    name: measure-${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [macos-14, ubuntu-24.04-arm]
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    env:
+      TARGET_SHA: ce39ec089bd76eeebf92af7af566e7c03345ab91
+    steps:
+      - name: Checkout orchestrator
+        uses: actions/checkout@v4
+
+      - name: Checkout exact holdout head
+        uses: actions/checkout@v4
+        with:
+          repository: rhgrive3/hex-ida
+          ref: ${{ env.TARGET_SHA }}
+          path: target
+          fetch-depth: 1
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Prove the runner really is ARM64
+        run: |
+          uname -m
+          node -e "console.log(process.platform, process.arch)"
+          test "$(uname -m)" = "arm64" -o "$(uname -m)" = "aarch64"
+
+      - name: Verify the exact holdout head
+        working-directory: target
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$TARGET_SHA"
+          node -e "const m=require('./tests/fixtures/real-game-boundary-holdout.manifest.json'); if(m.upstream.commit!=='e443ff7a3e6090a1ff92ad7a426916c4fd35ecc5') throw new Error('upstream'); console.log('manifest ok', m.artifacts[0].binary.sha256);"
+
+      - name: Fetch the pinned real-game holdout
+        working-directory: target
+        run: |
+          set -euo pipefail
+          node scripts/fetch-real-game-holdout.mjs | tee fetch.json
+          node scripts/fetch-real-game-holdout.mjs --check | tee check.json
+
+      - name: Measure (offline D1..D4 + label self-check)
+        working-directory: target
+        run: |
+          set -euo pipefail
+          export HEX_SEMANTIC_BOUNDARY_HOLDOUT_ARTIFACT="$PWD/tests/.real-game-holdout/dsda-doom"
+          node tests/semantic-boundary-real-game-holdout.mjs | tee holdout-report.json
+
+      - name: Assert the measured invariants
+        working-directory: target
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const report = JSON.parse(fs.readFileSync('holdout-report.json', 'utf8'));
+          const problems = [];
+          if (report.schema !== 'hex-semantic-boundary-real-game-holdout-evaluation/v1') problems.push('schema');
+          if (report.artifact.pinned !== true || report.artifact.bytes !== 2814096) problems.push('artifact-identity');
+          if (report.artifact.sha256 !== '76d5427c37b0eb0dba9b86c97f4f36345867cb8ad60584e33979092426c573b8') problems.push('artifact-sha');
+          if (report.live !== false) problems.push('unexpected-live');
+          if (report.labelsConsistent !== true) problems.push('labels-inconsistent');
+          if (report.promotionEligible !== false) problems.push('promotion-must-stay-blocked');
+          const current = report.cases[0]?.variants?.find((v) => v.name === 'current-d1-d4');
+          if (!current) problems.push('missing-baseline');
+          else {
+            if (current.finalTopOffset !== '148') problems.push(`top=${current.finalTopOffset}`);
+            if (current.boundaryRescue !== 0) problems.push('unexpected-rescue');
+            if (current.truthHitAtBoundary !== 1) problems.push('truth-must-be-verified');
+            if (current.falseLikely !== 1) problems.push('false-likely');
+          }
+          console.log(JSON.stringify({ ok: problems.length === 0, problems, top: current?.finalTopOffset, analyzeCalls: current?.analyzeCalls }, null, 2));
+          if (problems.length) process.exit(1);
+          NODE
+
+      - name: Publish evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: holdout-${{ matrix.runner }}
+          path: |
+            target/fetch.json
+            target/check.json
+            target/holdout-report.json
+          if-no-files-found: error
+          retention-days: 3
