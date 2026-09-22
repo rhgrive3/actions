@@ -1,4 +1,4 @@
-# manual-trigger: 2026-09-22 current-main FAST benchmark a0eb10473721
+# manual-trigger: 2026-09-22 current-main FAST goto benchmark 1e2b89c9b228
 name: hex-ida main FAST full fresh decompile benchmark 15m
 
 on:
@@ -31,7 +31,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: rhgrive3/hex-ida
-          ref: a0eb10473721fe31b45e86b2ec85c3ffd08dd8f9
+          ref: 1e2b89c9b228f6510c7c2bc9b5f7204633f35c90
           path: target
           fetch-depth: 1
 
@@ -46,7 +46,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git -C target rev-parse HEAD)" = "a0eb10473721fe31b45e86b2ec85c3ffd08dd8f9"
+          test "$(git -C target rev-parse HEAD)" = "1e2b89c9b228f6510c7c2bc9b5f7204633f35c90"
           test "$(node --input-type=module -e "import fs from 'node:fs'; const m=JSON.parse(fs.readFileSync('target/benchmarks/public/codefuse-arm64/manifest.json','utf8')); process.stdout.write(String(m.cases.length));")" = "160"
           echo "shard=${SHARD_INDEX} start=$((SHARD_INDEX * 4)) limit=4"
           node --version
@@ -74,7 +74,7 @@ jobs:
           TARGET_DIR: ${{ github.workspace }}/target
           OUTPUT_FILE: ${{ github.workspace }}/shard-output/result.json
           CASE_DIR: ${{ github.workspace }}/case-results
-          TARGET_SHA: a0eb10473721fe31b45e86b2ec85c3ffd08dd8f9
+          TARGET_SHA: 1e2b89c9b228f6510c7c2bc9b5f7204633f35c90
           WORKERS: "4"
           CASE_TIMEOUT_MS: "720000"
           SOFT_DEADLINE_MS: "780000"
@@ -117,7 +117,7 @@ jobs:
           node --input-type=module <<'NODE'
           import fs from 'node:fs';
           import path from 'node:path';
-          const files=[], stack=['shards'];
+          const files=[], caseFiles=[], stack=['shards'];
           while(stack.length){
             const dir=stack.pop();
             if(!fs.existsSync(dir)) continue;
@@ -125,6 +125,7 @@ jobs:
               const p=path.join(dir,e.name);
               if(e.isDirectory()) stack.push(p);
               else if(e.isFile() && e.name==='result.json' && p.includes('shard-output')) files.push(p);
+              else if(e.isFile() && e.name.endsWith('.json') && p.includes('case-results')) caseFiles.push(p);
             }
           }
           const summaries=files.map(f=>JSON.parse(fs.readFileSync(f,'utf8'))).sort((a,b)=>a.selectedStartIndex-b.selectedStartIndex);
@@ -138,11 +139,24 @@ jobs:
             for(const r of s.results||[]) rows.push({id:r.id,state:r.state,reason:r.reason??null,elapsedMs:Number(r.elapsedMs||0),functionCount:Number(r.functionCount||0),functionStates:r.functionStates||{}});
           }
           rows.sort((a,b)=>b.elapsedMs-a.elapsedMs);
+          let gotoCount=0, functionsWithGoto=0, functionsWithPseudocode=0;
+          for (const f of caseFiles) {
+            let row;
+            try { row=JSON.parse(fs.readFileSync(f,'utf8')); } catch { continue; }
+            for (const fn of row.functions || []) {
+              if (typeof fn.pseudocode !== 'string') continue;
+              functionsWithPseudocode++;
+              const matches=fn.pseudocode.match(/\\bgoto\\b/g) || [];
+              gotoCount += matches.length;
+              if (matches.length > 0) functionsWithGoto++;
+            }
+          }
           const out={
             schema:'hex-main-full-fresh-benchmark/v1',
-            targetSha:'a0eb10473721fe31b45e86b2ec85c3ffd08dd8f9',
+            targetSha:'1e2b89c9b228f6510c7c2bc9b5f7204633f35c90',
             expectedShards:40, shardSummaries:summaries.length, selectedCases:selected,
             completedCases:completed, notRun, states, functionStates, functionCount:functions,
+            controlFlow:{gotoCount,functionsWithGoto,functionsWithPseudocode,caseEvidenceFiles:caseFiles.length},
             performance:{maxShardWallMs,slowestCases:rows.slice(0,20)},
             complete:summaries.length===40 && selected===160 && completed===160 && notRun===0
           };
