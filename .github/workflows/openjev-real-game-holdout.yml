@@ -54,6 +54,12 @@ jobs:
           test "$(git rev-parse HEAD)" = "$TARGET_SHA"
           node -e "const m=require('./tests/fixtures/real-game-boundary-holdout.manifest.json'); if(m.upstream.commit!=='e443ff7a3e6090a1ff92ad7a426916c4fd35ecc5') throw new Error('upstream'); console.log('manifest ok', m.artifacts[0].binary.sha256);"
 
+      - name: Label self-check (no artifact needed)
+        working-directory: target
+        run: |
+          set -euo pipefail
+          node tests/semantic-boundary-holdout-labels.mjs | tee labels.json
+
       - name: Fetch the pinned real-game holdout
         working-directory: target
         run: |
@@ -61,7 +67,7 @@ jobs:
           node scripts/fetch-real-game-holdout.mjs | tee fetch.json
           node scripts/fetch-real-game-holdout.mjs --check | tee check.json
 
-      - name: Measure (offline D1..D4 + label self-check)
+      - name: Measure (offline D1..D4 + declared-oracle ceiling)
         working-directory: target
         run: |
           set -euo pipefail
@@ -76,21 +82,64 @@ jobs:
           import fs from 'node:fs';
           const report = JSON.parse(fs.readFileSync('holdout-report.json', 'utf8'));
           const problems = [];
-          if (report.schema !== 'hex-semantic-boundary-real-game-holdout-evaluation/v1') problems.push('schema');
-          if (report.artifact.pinned !== true || report.artifact.bytes !== 2814096) problems.push('artifact-identity');
-          if (report.artifact.sha256 !== '76d5427c37b0eb0dba9b86c97f4f36345867cb8ad60584e33979092426c573b8') problems.push('artifact-sha');
-          if (report.live !== false) problems.push('unexpected-live');
-          if (report.labelsConsistent !== true) problems.push('labels-inconsistent');
-          if (report.promotionEligible !== false) problems.push('promotion-must-stay-blocked');
-          const current = report.cases[0]?.variants?.find((v) => v.name === 'current-d1-d4');
-          if (!current) problems.push('missing-baseline');
-          else {
-            if (current.finalTopOffset !== '148') problems.push(`top=${current.finalTopOffset}`);
-            if (current.boundaryRescue !== 0) problems.push('unexpected-rescue');
-            if (current.truthHitAtBoundary !== 1) problems.push('truth-must-be-verified');
-            if (current.falseLikely !== 1) problems.push('false-likely');
+          const want = (actual, expected, label) => {
+            if (actual !== expected) problems.push(`${label}: measured ${JSON.stringify(actual)}`);
+          };
+
+          // artifact identity: the measurement is only valid on the pinned binary
+          want(report.schema, 'hex-semantic-boundary-real-game-holdout-evaluation/v1', 'schema');
+          want(report.artifact?.pinned, true, 'artifact-not-pinned');
+          want(report.artifact?.bytes, 2814096, 'artifact-bytes');
+          want(report.artifact?.sha256, '76d5427c37b0eb0dba9b86c97f4f36345867cb8ad60584e33979092426c573b8', 'artifact-sha');
+          want(report.live, false, 'unexpected-live');
+
+          // the case's own labels must be checkable, not unfalsifiable
+          const testCase = report.cases?.[0];
+          if (!testCase) problems.push('missing-case');
+          want(testCase?.goal, 'hp', 'goal');
+          want(testCase?.field, 'mobj_t.health', 'field');
+          want(testCase?.truthOffset, '196', 'truth-offset');
+          want(testCase?.expectedDeterministicRank, 5, 'expected-rank');
+          want((testCase?.rankedCandidateOffsets ?? []).join(','), '80,148,56,240,196,404,256,212', 'boundary-order');
+          for (const [name, ok] of Object.entries(testCase?.labelChecks ?? {})) {
+            want(ok, true, `label-check-${name}`);
           }
-          console.log(JSON.stringify({ ok: problems.length === 0, problems, top: current?.finalTopOffset, analyzeCalls: current?.analyzeCalls }, null, 2));
+          want(testCase?.labelsConsistent, true, 'labels-consistent');
+          want(testCase?.ceilingMeasured, true, 'ceiling-not-measured');
+          want(testCase?.oracleCeilingRescues, false, 'oracle-ceiling-unexpected-rescue');
+          want(testCase?.promotionEligible, false, 'promotion-must-stay-blocked');
+          want(report.promotionEligible, false, 'report-promotion-must-stay-blocked');
+
+          // baseline: the truth sits at boundary rank 5, i.e. outside the D1..D4 set
+          const baseline = testCase?.variants?.find((v) => v.name === 'current-d1-d4');
+          if (!baseline) problems.push('missing-baseline');
+          want(baseline?.finalTopOffset, '148', 'baseline-top');
+          want(baseline?.truthHitAtBoundary, 0, 'baseline-truth-outside-verification-set');
+          want(baseline?.boundaryRescue, 0, 'baseline-rescue');
+          want(baseline?.wrongTop1, 1, 'baseline-wrong-top1');
+          want(baseline?.falseLikely, 1, 'baseline-false-likely');
+          want(baseline?.verdict, 'likely', 'baseline-verdict');
+          want(baseline?.analyzeCalls, 18, 'baseline-analyze-calls');
+
+          // declared-oracle ceiling: the probe can move the verification slot but not the answer
+          const oracle = testCase?.variants?.find((v) => v.name === 'gated-one-probe-oracle-ceiling');
+          if (!oracle) problems.push('missing-oracle-ceiling');
+          want(oracle?.finalTopOffset, '148', 'oracle-top');
+          want(oracle?.truthHitAtBoundary, 1, 'oracle-truth-verified');
+          want(oracle?.boundaryRescue, 0, 'oracle-rescue');
+          want(oracle?.referee?.status, 'probe-promoted-by-binary-evidence', 'oracle-referee-status');
+          want(oracle?.referee?.challengerId, 'c1', 'oracle-challenger');
+          want(oracle?.probe?.status, 'reconfirmed', 'oracle-probe-status');
+          want((oracle?.verificationTargets ?? []).join(','), 'd1,d2,d3,d5', 'oracle-verification-targets');
+
+          console.log(JSON.stringify({
+            ok: problems.length === 0,
+            problems,
+            top: baseline?.finalTopOffset,
+            truthHitAtBoundary: baseline?.truthHitAtBoundary,
+            oracleProbe: oracle?.probe?.status,
+            oracleVerificationTargets: oracle?.verificationTargets,
+          }, null, 2));
           if (problems.length) process.exit(1);
           NODE
 
@@ -100,6 +149,7 @@ jobs:
         with:
           name: holdout-${{ matrix.runner }}
           path: |
+            target/labels.json
             target/fetch.json
             target/check.json
             target/holdout-report.json
