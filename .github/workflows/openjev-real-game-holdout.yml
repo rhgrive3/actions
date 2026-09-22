@@ -23,7 +23,7 @@ jobs:
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 45
     env:
-      TARGET_SHA: 9d05bf7c4bc1c017dcc592d78d4168fd4751941f
+      TARGET_SHA: 1dca6ca4f7b4704a4f9d42cf5b133c1958b7bc9a
     steps:
       - name: Checkout orchestrator
         uses: actions/checkout@v4
