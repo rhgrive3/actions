@@ -119,7 +119,6 @@ jobs:
           want(baseline?.wrongTop1, 1, 'baseline-wrong-top1');
           want(baseline?.falseLikely, 0, 'baseline-false-likely');
           want(baseline?.verdict, 'ambiguous', 'baseline-verdict');
-          want(oracle?.verdict, 'ambiguous', 'oracle-verdict');
           want(baseline?.analyzeCalls, 18, 'baseline-analyze-calls');
 
           // declared-oracle ceiling: the probe can move the verification slot but not the answer
@@ -131,6 +130,7 @@ jobs:
           want(oracle?.referee?.status, 'probe-promoted-by-binary-evidence', 'oracle-referee-status');
           want(oracle?.referee?.challengerId, 'c1', 'oracle-challenger');
           want(oracle?.probe?.status, 'reconfirmed', 'oracle-probe-status');
+          want(oracle?.verdict, 'ambiguous', 'oracle-verdict');
           want((oracle?.verificationTargets ?? []).join(','), 'd1,d2,d3,d5', 'oracle-verification-targets');
 
           console.log(JSON.stringify({
