@@ -1,0 +1,262 @@
+name: CXX OpenTTD projection diagnostic
+
+on:
+  push:
+    branches:
+      - diag/cxx-openttd-projection-20260924
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  regression:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 25
+    steps:
+      - name: Checkout Hex branch
+        uses: actions/checkout@v4
+        with:
+          repository: rhgrive3/hex-ida
+          ref: fix/cxx-output-projection-member-types-20260924
+          path: hex
+
+      - name: Checkout OpenTTD 16.0-beta4
+        uses: actions/checkout@v4
+        with:
+          repository: OpenTTD/OpenTTD
+          ref: 16.0-beta4
+          path: openttd
+
+      - name: Install OpenTTD build dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 300 sudo apt-get update -qq
+          timeout 300 sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            cmake ninja-build llvm file \
+            libcurl4-openssl-dev libfontconfig-dev libfreetype-dev libharfbuzz-dev libicu-dev \
+            liblzma-dev liblzo2-dev libogg-dev libopus-dev libopusfile-dev libpng-dev \
+            libsdl2-dev libsoxr-dev zlib1g-dev
+
+      - name: Build ARM64 OpenTTD with symbols
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 180 cmake -S openttd -B openttd/build -G Ninja \
+            -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+            -DOPTION_USE_ASSERTS=OFF \
+            -DCMAKE_DISABLE_PRECOMPILE_HEADERS=ON
+          timeout 900 cmake --build openttd/build --target openttd -j 4
+          file openttd/build/openttd
+          test "$(uname -m)" = "aarch64"
+          file openttd/build/openttd | grep -Ei 'aarch64|ARM aarch64'
+          test "$(nm -a openttd/build/openttd | grep -c '_ZTV' || true)" -gt 0
+
+      - name: Probe RTTI vtable member projection
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > hex/.openttd-cxx-probe.mjs <<'EOF'
+          import fs from 'node:fs';
+          import { spawnSync } from 'node:child_process';
+          import { openBinary } from './js/binary/index.js';
+          import { SymbolIndex } from './js/symbols.js';
+          import { parseOperands } from './js/arm64.js';
+          import { analyzeSemanticFunction } from './js/analysis/semantic-function.js';
+          import { createCxxEvidenceProvider } from './js/analysis/cxx/project.js';
+
+          const binary = process.argv[2];
+          if (!binary) throw new Error('binary-required');
+          const raw = fs.readFileSync(binary);
+          const bytes = new Uint8Array(raw.buffer, raw.byteOffset, raw.byteLength);
+          const image = openBinary(bytes);
+          const rawSymbols = image.symbols || [];
+          const symbols = new SymbolIndex({
+            addrs: rawSymbols.map(s => s.address),
+            names: rawSymbols.map(s => s.name),
+            kinds: rawSymbols.map(() => 0),
+            flags: rawSymbols.map(() => 0),
+          });
+          const sizeByAddress = new Map();
+          for (const symbol of rawSymbols) {
+            if (symbol.address == null) continue;
+            const key = symbol.address.toString();
+            if (!sizeByAddress.has(key)) sizeByAddress.set(key, symbol.size ?? null);
+          }
+          const read = (address, length) => {
+            const offset = image.addressToOffset?.(address);
+            if (offset == null) return null;
+            const start = Number(offset), size = Number(length);
+            if (!Number.isSafeInteger(start) || start < 0 || !Number.isSafeInteger(size) || size <= 0 || start >= bytes.length) return null;
+            return bytes.subarray(start, Math.min(start + size, bytes.length));
+          };
+          const provider = createCxxEvidenceProvider({
+            symbols,
+            read,
+            pointerBytes: 8,
+            architecture: 'arm64',
+            snapshotId: 'openttd-16.0-beta4-arm64-relwithdebinfo',
+            symbolSizeOf: address => sizeByAddress.get(address.toString()) ?? null,
+            sectionEndOf: address => {
+              const section = image.sectionAt?.(address);
+              return section?.size == null ? null : section.address + section.size;
+            },
+            maxClasses: 1024,
+            maxSlots: 128,
+            maxReads: 50000,
+            maxMembers: 256,
+          });
+          await provider.build();
+
+          const dummyArg = { id:'arg0', kind:'arg', reg:'x0', bits:64 };
+          const candidates = [];
+          for (const symbol of rawSymbols) {
+            if (typeof symbol.name !== 'string' || !/^_ZN/.test(symbol.name) || symbol.address == null) continue;
+            if (symbol.size != null && Number(symbol.size) <= 0) continue;
+            const projection = provider.projectForFunction({
+              functionId: `candidate:${symbol.address}`,
+              functionAddress: symbol.address,
+              functionName: symbol.name,
+              ir: { values:[dummyArg], instructions:[] },
+            });
+            if (projection?.receiver) candidates.push(symbol);
+            if (candidates.length >= 120) break;
+          }
+
+          function disassemble(symbol) {
+            const run = spawnSync('llvm-objdump', [
+              `--disassemble-symbols=${symbol.name}`,
+              '--no-show-raw-insn',
+              binary,
+            ], { encoding:'utf8', maxBuffer:16 * 1024 * 1024, timeout:15000 });
+            if (run.status !== 0) return null;
+            const rows = [];
+            for (const line of (run.stdout || '').split('\n')) {
+              const match = /^\s*([0-9a-f]+):\s+([a-z][\w.]*)\s*(.*)$/.exec(line);
+              if (!match) continue;
+              rows.push({
+                address:BigInt(`0x${match[1]}`),
+                mnemonic:match[2],
+                opStr:match[3].replace(/\s*\/\/.*$/, '').trim(),
+              });
+            }
+            return rows.length && rows.length <= 700 ? rows : null;
+          }
+
+          let typedHit = null;
+          let virtualHit = null;
+          let analyzed = 0;
+          const failures = [];
+          for (const symbol of candidates.slice(0, 80)) {
+            const rows = disassemble(symbol);
+            if (!rows) continue;
+            const input = {
+              architecture:'arm64',
+              platform:'linux',
+              abiId:'aapcs64',
+              mode:'a64',
+              decoderSemanticVersion:'openttd-cxx-regression-v1',
+              binaryId:'openttd-cxx-regression',
+              sliceId:'openttd-cxx-regression-arm64',
+              name:symbol.name,
+              instructions:rows.map((row, index) => ({
+                address:row.address,
+                size:4,
+                length:4,
+                mode:'a64',
+                mnemonic:row.mnemonic,
+                opStr:row.opStr,
+                ops:parseOperands(row.opStr),
+                instructionId:`openttd-${analyzed}-${index}`,
+                origin:{ instructionIds:[`openttd-${analyzed}-${index}`] },
+              })),
+              cxxEvidenceProvider:provider,
+            };
+            try {
+              const result = analyzeSemanticFunction(input);
+              analyzed++;
+              const projection = provider.lastAttempt()?.projection ?? null;
+              const code = result.decompiler?.pseudocode ?? '';
+              const typed = (projection?.members || []).filter(member => member.typeProven);
+              if (!typedHit && typed.length && /\bthis->[^\n]*\/\*[^\n]+\*\//.test(code)) {
+                typedHit = {
+                  symbol:symbol.name,
+                  address:String(symbol.address),
+                  typedMembers:typed.map(member => ({
+                    offset:`0x${member.offsetBytes.toString(16)}`,
+                    typeLabel:member.typeLabel,
+                    rule:member.rule,
+                  })).slice(0, 12),
+                  pseudocode:code.slice(0, 5000),
+                };
+              }
+              if (!virtualHit && (projection?.virtualSlots?.length || 0) > 0 && /\bthis\b/.test(code)) {
+                virtualHit = {
+                  symbol:symbol.name,
+                  address:String(symbol.address),
+                  virtualSlots:projection.virtualSlots.length,
+                  pseudocode:code.slice(0, 5000),
+                };
+              }
+              if (typedHit && virtualHit) break;
+            } catch (error) {
+              failures.push({ symbol:symbol.name, reason:String(error?.message || error) });
+              if (failures.length > 20) failures.shift();
+            }
+          }
+
+          const report = {
+            schema:'hex-openttd-cxx-projection-regression/v1',
+            binary,
+            symbolCount:rawSymbols.length,
+            vtableSymbolCount:rawSymbols.filter(s => typeof s.name === 'string' && /^_ZTV/.test(s.name)).length,
+            provider:provider.stats(),
+            candidateCount:candidates.length,
+            analyzed,
+            typedProjectionFound:Boolean(typedHit),
+            virtualProjectionFound:Boolean(virtualHit),
+            typedHit,
+            virtualHit,
+            recentFailures:failures,
+          };
+          fs.writeFileSync('../openttd-cxx-report.json', JSON.stringify(report, null, 2));
+          console.log(JSON.stringify({
+            symbolCount:report.symbolCount,
+            vtableSymbolCount:report.vtableSymbolCount,
+            provider:report.provider,
+            candidateCount:report.candidateCount,
+            analyzed:report.analyzed,
+            typedProjectionFound:report.typedProjectionFound,
+            virtualProjectionFound:report.virtualProjectionFound,
+            typedSymbol:typedHit?.symbol ?? null,
+            virtualSymbol:virtualHit?.symbol ?? null,
+          }));
+          if (!typedHit) process.exitCode = 3;
+          EOF
+          cd hex
+          timeout 240 node .openttd-cxx-probe.mjs ../openttd/build/openttd
+          rm -f .openttd-cxx-probe.mjs
+
+      - name: Publish compact evidence
+        if: always()
+        shell: bash
+        run: |
+          if [ -f openttd-cxx-report.json ]; then
+            {
+              echo '## OpenTTD C++ projection regression'
+              echo
+              echo '~~~json'
+              node -e "const r=require('./openttd-cxx-report.json'); console.log(JSON.stringify({symbolCount:r.symbolCount,vtableSymbolCount:r.vtableSymbolCount,provider:r.provider,candidateCount:r.candidateCount,analyzed:r.analyzed,typedProjectionFound:r.typedProjectionFound,virtualProjectionFound:r.virtualProjectionFound,typedSymbol:r.typedHit?.symbol||null,virtualSymbol:r.virtualHit?.symbol||null},null,2))"
+              echo '~~~'
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo 'OpenTTD C++ report was not produced.' >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload compact evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: openttd-cxx-projection-report
+          path: openttd-cxx-report.json
+          if-no-files-found: ignore
