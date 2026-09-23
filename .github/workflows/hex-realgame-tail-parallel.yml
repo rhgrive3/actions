@@ -1,4 +1,4 @@
-# manual-trigger: 2026-09-23 current-main real-game holdout + focused tail profiling
+# manual-trigger: 2026-09-23 latest-main after PR9518+9519
 name: hex current-main real-game + tail parallel
 
 on:
@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 env:
-  TARGET_SHA: e935578dc613f463efb583864d2178cf6b23137b
+  TARGET_SHA: 18a7750ee54eff3fa265172106ce4f014199237d
 
 jobs:
   realgame:
