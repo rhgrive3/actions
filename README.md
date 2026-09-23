@@ -47,3 +47,16 @@ push 前に checkout 時点の branch HEAD と remote branch HEAD を比較す�
 - push: `true`
 
 実行結果は artifact に `inspect.txt`, `command.log`, `test.log`, `push.txt`, `final.txt` として保存される。
+
+
+## Hex parallel lanes
+
+Hex completion work has three bounded measurement lanes that can run concurrently against an exact `rhgrive3/hex-ida` SHA:
+
+- `.github/workflows/hex-lane-perf.yml`
+- `.github/workflows/hex-lane-realgames.yml`
+- `.github/workflows/hex-lane-quality.yml`
+
+All three use `.github/workflows/hex-lane-worker-reusable.yml`, enforce a finite hard watchdog, verify the exact target SHA, and upload only bounded evidence (structured JSON plus the last 200 command lines). See `lanes/README.md`.
+
+A one-shot bootstrap for permanent worker repositories is also present at `.github/workflows/bootstrap-hex-worker-repos.yml` with its requested repository list in `bootstrap/worker-repos.json`.
