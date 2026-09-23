@@ -1,0 +1,79 @@
+name: Hex C++ projection OpenTTD PR9527
+
+on:
+  push:
+    paths:
+      - ".github/workflows/hex-cxx-projection-openttd-9527.yml"
+
+permissions:
+  contents: read
+
+env:
+  TARGET_SHA: d2c029508bb8d27e4548dee20d33a4c8fd485d9c
+
+jobs:
+  openttd:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 15
+    steps:
+      - name: Checkout orchestrator
+        uses: actions/checkout@v4
+      - name: Checkout Hex PR head
+        uses: actions/checkout@v4
+        with:
+          repository: rhgrive3/hex-ida
+          ref: ${{ env.TARGET_SHA }}
+          path: target
+          fetch-depth: 1
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Acquire stripped OpenTTD ARM64 package
+        id: acquire
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p packages/root evidence
+          timeout 300s sudo apt-get update -qq >/dev/null
+          (cd packages && timeout 300s apt download openttd >/dev/null)
+          deb="$(find packages -maxdepth 1 -name '*.deb' -type f | head -1)"
+          test -n "$deb"
+          dpkg-deb -x "$deb" packages/root
+          bin="$(find packages/root -type f -path '*/usr/games/openttd' -print -quit)"
+          test -n "$bin"
+          file "$bin" | tee evidence/file.txt
+          file "$bin" | grep -Eqi 'ARM aarch64|ARM64|aarch64'
+          echo "binary=$bin" >> "$GITHUB_OUTPUT"
+          sha256sum "$bin" > evidence/binary.sha256
+      - name: Analyze OpenTTD with Hex FAST
+        env:
+          BIN: ${{ steps.acquire.outputs.binary }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 600s node scripts/hex-realgame-holdout.mjs --target-root target --binary "$BIN" --game openttd --target-sha "$TARGET_SHA" --out evidence/result.json
+      - name: Publish projection regression summary
+        if: always()
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE' >> "$GITHUB_STEP_SUMMARY"
+          import fs from 'node:fs';
+          console.log('## OpenTTD C++ projection regression');
+          if (!fs.existsSync('evidence/result.json')) { console.log('- result unavailable'); process.exit(0); }
+          const r=JSON.parse(fs.readFileSync('evidence/result.json','utf8'));
+          console.log(`- target: ${r.targetSha}`);
+          console.log(`- binary sha256: ${r.sha256}`);
+          console.log(`- classes/vtables/typeinfos: ${r.totals.classes}/${r.totals.vtables}/${r.totals.typeinfos}`);
+          console.log(`- resolved/named vtable slots: ${r.totals.resolvedVtableSlots}/${r.totals.namedVtableSlots}`);
+          console.log(`- FAST complete: ${r.totals.completeSampled}/${r.totals.decompileSampled}; virtual: ${r.totals.completeVirtualTargets}/${r.totals.virtualTargetsSampled}`);
+          console.log(`- projected member names: ${r.totals.memberAccessNames}; class mentions: ${r.totals.classMentions}`);
+          NODE
+      - name: Upload compact OpenTTD evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: openttd-cxx-projection-pr9527
+          path: evidence/
+          if-no-files-found: warn
+          retention-days: 3
