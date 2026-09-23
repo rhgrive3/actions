@@ -1,0 +1,446 @@
+# manual-trigger: 2026-09-23 current-main real-game holdout + focused tail profiling
+name: hex current-main real-game + tail parallel
+
+on:
+  push:
+    paths:
+      - ".github/workflows/hex-realgame-tail-parallel.yml"
+
+permissions:
+  contents: read
+
+env:
+  TARGET_SHA: e935578dc613f463efb583864d2178cf6b23137b
+
+jobs:
+  realgame:
+    name: realgame-${{ matrix.game }}-arm64
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        include:
+          - game: openmw
+            package: openmw
+            binary_glob: "*/usr/games/openmw"
+          - game: openttd
+            package: openttd
+            binary_glob: "*/usr/games/openttd"
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 20
+    steps:
+      - name: Checkout orchestrator
+        uses: actions/checkout@v4
+
+      - name: Checkout exact Hex main
+        uses: actions/checkout@v4
+        with:
+          repository: rhgrive3/hex-ida
+          ref: ${{ env.TARGET_SHA }}
+          path: target
+          fetch-depth: 1
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Acquire stripped ARM64 game package
+        id: acquire
+        env:
+          GAME: ${{ matrix.game }}
+          PKG: ${{ matrix.package }}
+          BINARY_GLOB: ${{ matrix.binary_glob }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p packages/root evidence
+          timeout 300s sudo apt-get update -qq >/dev/null
+          (cd packages && timeout 300s apt download "$PKG" >/dev/null)
+          deb="$(find packages -maxdepth 1 -name '*.deb' -type f | head -1)"
+          test -n "$deb"
+          dpkg-deb -x "$deb" packages/root
+          bin="$(find packages/root -type f -path "$BINARY_GLOB" -print -quit)"
+          test -n "$bin"
+          file "$bin" | tee evidence/file.txt
+          file "$bin" | grep -Eqi 'ARM aarch64|ARM64|aarch64'
+          echo "binary=$bin" >> "$GITHUB_OUTPUT"
+          sha256sum "$bin" > evidence/binary.sha256
+
+      - name: Build binary-grounded RTTI oracle
+        id: oracle
+        env:
+          PKG: ${{ matrix.package }}
+          BIN: ${{ steps.acquire.outputs.binary }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          readelf -Ws "$BIN" 2>/dev/null | c++filt > evidence/symbols.txt || true
+          { sed -n 's/.*vtable for //p' evidence/symbols.txt; sed -n 's/.*typeinfo for //p' evidence/symbols.txt; } | sed 's/[[:space:]]*$//' | sort -u > evidence/oracle-classes.txt
+          vtables="$(grep -c 'vtable for ' evidence/symbols.txt || true)"
+          typeinfos="$(grep -c 'typeinfo for ' evidence/symbols.txt || true)"
+          typenames="$(grep -c 'typeinfo name for ' evidence/symbols.txt || true)"
+          buildid="$(readelf -n "$BIN" 2>/dev/null | awk '/Build ID:/{print $3; exit}')"
+          debug_status=unavailable
+          dwarf_classes=0
+          dwarf_members=0
+          mkdir -p packages/debugroot
+          if timeout 90s sudo apt-get install -y ubuntu-dbgsym-keyring >/dev/null 2>&1; then
+            codename="$(. /etc/os-release; printf '%s' "$VERSION_CODENAME")"
+            printf 'deb http://ddebs.ubuntu.com %s main universe multiverse restricted\ndeb http://ddebs.ubuntu.com %s-updates main universe multiverse restricted\n' "$codename" "$codename" | sudo tee /etc/apt/sources.list.d/ddebs.list >/dev/null
+            if timeout 240s sudo apt-get update -qq >/dev/null 2>&1; then
+              (cd packages && timeout 180s apt download "${PKG}-dbgsym" >/dev/null 2>&1) || true
+              dbgdeb="$(find packages -maxdepth 1 -name "${PKG}-dbgsym*.deb" -type f | head -1)"
+              if [ -n "$dbgdeb" ]; then dpkg-deb -x "$dbgdeb" packages/debugroot || true; fi
+            fi
+          fi
+          debugfile=""
+          if [ -n "$buildid" ]; then debugfile="$(find packages/debugroot -type f -path "*/.build-id/${buildid:0:2}/${buildid:2}.debug" -print -quit 2>/dev/null || true)"; fi
+          : > evidence/oracle-dwarf-classes.txt
+          : > evidence/oracle-dwarf-members.txt
+          if [ -n "$debugfile" ] && timeout 90s readelf --debug-dump=info "$debugfile" > /tmp/dwarf-info.txt 2>/dev/null; then
+            debug_status=matched-dbgsym
+            dwarf_classes="$(grep -Ec 'DW_TAG_(class|structure)_type' /tmp/dwarf-info.txt || true)"
+            dwarf_members="$(grep -c 'DW_TAG_member' /tmp/dwarf-info.txt || true)"
+            timeout 30s python3 - <<'PYDWARF' || true
+          import re
+          lines=open('/tmp/dwarf-info.txt',errors='replace')
+          current=None
+          classes=[]; members=[]
+          for line in lines:
+              if 'DW_TAG_class_type' in line or 'DW_TAG_structure_type' in line:
+                  current='class'; continue
+              if 'DW_TAG_member' in line:
+                  current='member'; continue
+              if 'DW_TAG_' in line:
+                  current=None
+              if current and 'DW_AT_name' in line:
+                  value=re.sub(r'^.*DW_AT_name\s*:\s*','',line).strip()
+                  if '): ' in value: value=value.split('): ',1)[1].strip()
+                  if value and value not in ('<anonymous>','(anonymous namespace)'):
+                      (classes if current=='class' else members).append(value)
+                  current=None
+          for path, rows in [('evidence/oracle-dwarf-classes.txt',classes),('evidence/oracle-dwarf-members.txt',members)]:
+              with open(path,'w') as f:
+                  for x in sorted(set(rows)): f.write(x+'\n')
+          PYDWARF
+          fi
+          GAME='${{ matrix.game }}' BIN="$BIN" BUILDID="$buildid" DEBUG_STATUS="$debug_status" VTABLES="$vtables" TYPEINFOS="$typeinfos" TYPENAMES="$typenames" DWARF_CLASSES="$dwarf_classes" DWARF_MEMBERS="$dwarf_members" node --input-type=module <<'NODE'
+          import fs from 'node:fs'; import crypto from 'node:crypto';
+          const bytes=fs.readFileSync(process.env.BIN);
+          const out={schema:'hex-realgame-oracle/v1',game:process.env.GAME,binary:process.env.BIN,sha256:crypto.createHash('sha256').update(bytes).digest('hex'),buildId:process.env.BUILDID||null,dynamic:{vtables:Number(process.env.VTABLES),typeinfos:Number(process.env.TYPEINFOS),typeNames:Number(process.env.TYPENAMES)},debug:{status:process.env.DEBUG_STATUS,dwarfClasses:Number(process.env.DWARF_CLASSES),dwarfMembers:Number(process.env.DWARF_MEMBERS)}};
+          fs.writeFileSync('evidence/oracle.json',JSON.stringify(out,null,2)+'\n');
+          NODE
+
+      - name: Analyze real game with Hex FAST
+        env:
+          BIN: ${{ steps.acquire.outputs.binary }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 600s node scripts/hex-realgame-holdout.mjs \
+            --target-root target --binary "$BIN" --game '${{ matrix.game }}' \
+            --target-sha "$TARGET_SHA" --out evidence/result.json
+
+      - name: Publish compact summary
+        if: always()
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE' >> "$GITHUB_STEP_SUMMARY"
+          import fs from 'node:fs';
+          const r=fs.existsSync('evidence/result.json')?JSON.parse(fs.readFileSync('evidence/result.json')):null;
+          const o=fs.existsSync('evidence/oracle.json')?JSON.parse(fs.readFileSync('evidence/oracle.json')):null;
+          console.log(`## ${{ matrix.game }} real-game holdout`);
+          if(!r){console.log('- Hex result unavailable'); process.exit(0)}
+          console.log(`- Hex classes: ${r.totals.classes}; vtables: ${r.totals.vtables}; RTTI: ${r.totals.typeinfos}`);
+          console.log(`- Resolved/named vtable slots: ${r.totals.resolvedVtableSlots}/${r.totals.namedVtableSlots}`);
+          console.log(`- FAST samples complete: ${r.totals.completeSampled}/${r.totals.decompileSampled}; virtual targets: ${r.totals.completeVirtualTargets}/${r.totals.virtualTargetsSampled}`);
+          if(o) console.log(`- Oracle dynamic vtables/typeinfos: ${o.dynamic.vtables}/${o.dynamic.typeinfos}; DWARF: ${o.debug.status} (${o.debug.dwarfClasses} classes, ${o.debug.dwarfMembers} members)`);
+          NODE
+
+      - name: Upload real-game evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: realgame-${{ matrix.game }}
+          path: evidence/
+          if-no-files-found: warn
+          retention-days: 7
+
+  tail-screen:
+    name: tail-screen-${{ matrix.case_id }}
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix:
+        case_id:
+          - 1/1_clang_O0_g
+          - 1/1_clang_O2_no_g
+          - 1/1_gcc_O1_g
+          - 1/1_gcc_Os_no_g
+          - 2/2_clang_O0_g
+          - 2/2_clang_O2_no_g
+          - 2/2_gcc_O1_g
+          - 2/2_gcc_Os_no_g
+          - 3/3_clang_O0_g
+          - 3/3_clang_O2_no_g
+          - 3/3_gcc_O1_g
+          - 3/3_gcc_Os_no_g
+          - 4/4_clang_O0_g
+          - 4/4_clang_O2_no_g
+          - 4/4_gcc_O1_g
+          - 4/4_gcc_Os_no_g
+          - 5-1/5-1_clang_O0_g
+          - 5-1/5-1_clang_O2_no_g
+          - 5-1/5-1_gcc_O1_g
+          - 5-1/5-1_gcc_Os_no_g
+          - 5-23/5-23_clang_O0_g
+          - 5-23/5-23_clang_O2_no_g
+          - 5-23/5-23_gcc_O1_g
+          - 5-23/5-23_gcc_Os_no_g
+          - 6/6_clang_O0_g
+          - 6/6_clang_O2_no_g
+          - 6/6_gcc_O1_g
+          - 6/6_gcc_Os_no_g
+          - 7/7_clang_O0_g
+          - 7/7_clang_O2_no_g
+          - 7/7_gcc_O1_g
+          - 7/7_gcc_Os_no_g
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout orchestrator
+        uses: actions/checkout@v4
+      - name: Checkout exact Hex main
+        uses: actions/checkout@v4
+        with:
+          repository: rhgrive3/hex-ida
+          ref: ${{ env.TARGET_SHA }}
+          path: target
+          fetch-depth: 1
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Screen one case on current FAST default
+        working-directory: target
+        env:
+          CASE_ID: ${{ matrix.case_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          safe="$(printf '%s' "$CASE_ID" | tr '/_' '--')"
+          timeout 540s node reports/investigations/current-main-weakness-20260923/harness/measure-functions.mjs \
+            --output "$GITHUB_WORKSPACE/screen" --workers 1 --case-id "$CASE_ID" \
+            --structure none --function-timeout-ms 30000 --product-timeout-ms 480000 --label current-fast-tail-screen
+      - name: Extract only slow-function evidence
+        if: always()
+        env:
+          CASE_ID: ${{ matrix.case_id }}
+        shell: bash
+        run: |
+          mkdir -p evidence
+          CASE_ID="$CASE_ID" node --input-type=module <<'NODE'
+          import fs from 'node:fs'; import path from 'node:path';
+          const dir='screen/cases';
+          const files=fs.existsSync(dir)?fs.readdirSync(dir).filter(x=>x.endsWith('.json')):[];
+          const rows=[];
+          for(const f of files){const x=JSON.parse(fs.readFileSync(path.join(dir,f))); for(const fn of x.functions??[]) rows.push({caseId:x.caseId,address:fn.address,name:fn.name??null,elapsedMs:Number(fn.elapsedMs||0),sizeBytes:fn.sizeBytes??null,state:fn.state??null,binary:path.basename(x.binary||'')});}
+          rows.sort((a,b)=>b.elapsedMs-a.elapsedMs);
+          fs.writeFileSync('evidence/tail.json',JSON.stringify({caseId:process.env.CASE_ID,top:rows.slice(0,8)},null,2)+'\n');
+          NODE
+      - name: Upload screen evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tail-screen-${{ strategy.job-index }}
+          path: evidence/tail.json
+          if-no-files-found: warn
+          retention-days: 3
+
+  tail-select:
+    name: select-current-tail
+    needs: tail-screen
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      matrix: ${{ steps.select.outputs.matrix }}
+    steps:
+      - name: Download screen evidence
+        uses: actions/download-artifact@v4
+        with:
+          pattern: tail-screen-*
+          path: screens
+      - name: Select top 12
+        id: select
+        shell: bash
+        run: |
+          mkdir -p final
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs'; import path from 'node:path';
+          const files=[]; const walk=d=>{if(!fs.existsSync(d))return;for(const e of fs.readdirSync(d,{withFileTypes:true})){const p=path.join(d,e.name);e.isDirectory()?walk(p):(e.name==='tail.json'&&files.push(p));}}; walk('screens');
+          const all=[]; for(const f of files){try{all.push(...(JSON.parse(fs.readFileSync(f)).top??[]));}catch{}}
+          all.sort((a,b)=>b.elapsedMs-a.elapsedMs);
+          const seen=new Set(), top=[]; for(const r of all){const k=`${r.caseId}:${r.address}`; if(seen.has(k)||!r.binary)continue;seen.add(k);top.push(r);if(top.length===12)break;}
+          const matrix={include:top.map(r=>({case_id:r.caseId,address:String(r.address),name:String(r.name??r.address),binary:r.binary,screen_ms:String(Math.round(r.elapsedMs))}))};
+          fs.writeFileSync('final/selection.json',JSON.stringify({screenFiles:files.length,candidates:all.length,top},null,2)+'\n');
+          fs.appendFileSync(process.env.GITHUB_OUTPUT,`matrix=${JSON.stringify(matrix)}\n`);
+          console.log(JSON.stringify({screenFiles:files.length,selected:top.length,top:top.slice(0,5)}));
+          NODE
+      - name: Upload selection
+        uses: actions/upload-artifact@v4
+        with:
+          name: tail-selection
+          path: final/selection.json
+          retention-days: 7
+
+  tail-profile:
+    name: tail-profile-${{ matrix.name }}
+    needs: tail-select
+    if: always() && needs.tail-select.outputs.matrix != ''
+    strategy:
+      fail-fast: false
+      max-parallel: 12
+      matrix: ${{ fromJSON(needs.tail-select.outputs.matrix) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout orchestrator
+        uses: actions/checkout@v4
+      - name: Checkout exact Hex main
+        uses: actions/checkout@v4
+        with:
+          repository: rhgrive3/hex-ida
+          ref: ${{ env.TARGET_SHA }}
+          path: target
+          fetch-depth: 1
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Focused CPU and internal profiling
+        env:
+          CASE_ID: ${{ matrix.case_id }}
+          ADDRESS: ${{ matrix.address }}
+          FUNCTION_NAME: ${{ matrix.name }}
+          BINARY_NAME: ${{ matrix.binary }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p evidence
+          timeout 420s node scripts/hex-tail-profile.mjs \
+            --target-root target \
+            --binary "target/benchmarks/public/codefuse-arm64/inputs/$BINARY_NAME" \
+            --case-id "$CASE_ID" --address "$ADDRESS" --name "$FUNCTION_NAME" \
+            --profile fast --runs 1 --target-sha "$TARGET_SHA" \
+            --out evidence/result.json --cpu-out evidence/profile.cpuprofile
+      - name: Publish focused summary
+        if: always()
+        shell: bash
+        run: |
+          MATRIX_NAME="${{ matrix.name }}" SCREEN_MS="${{ matrix.screen_ms }}" node --input-type=module <<'NODE' >> "$GITHUB_STEP_SUMMARY"
+          import fs from 'node:fs'; const r=fs.existsSync('evidence/result.json')?JSON.parse(fs.readFileSync('evidence/result.json')):null;
+          console.log(`## ${process.env.MATRIX_NAME}`); console.log(`- screen: ${process.env.SCREEN_MS} ms`);
+          if(r){const x=r.runs[0];console.log(`- isolated FAST: ${x.elapsedMs} ms; outside pass manager: ${(100*x.probe.outsideRatio).toFixed(1)}%`);console.log(`- capturePassState: ${x.probe.capturePassState.ms} ms / ${x.probe.capturePassState.records} records`);console.log(`- CPU top: ${(x.cpuTop??[]).slice(0,5).map(v=>`${v.functionName} ${v.selfMs}ms`).join(', ')}`)}
+          NODE
+      - name: Upload focused profile
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tail-profile-${{ strategy.job-index }}
+          path: evidence/
+          if-no-files-found: warn
+          retention-days: 7
+
+  tail-aggregate:
+    name: aggregate-focused-tail
+    needs: tail-profile
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Download focused profiles
+        uses: actions/download-artifact@v4
+        with:
+          pattern: tail-profile-*
+          path: profiles
+      - name: Aggregate tail evidence
+        shell: bash
+        run: |
+          mkdir -p final
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs'; import path from 'node:path';
+          const files=[];const walk=d=>{if(!fs.existsSync(d))return;for(const e of fs.readdirSync(d,{withFileTypes:true})){const p=path.join(d,e.name);e.isDirectory()?walk(p):(e.name==='result.json'&&files.push(p));}};walk('profiles');
+          const rows=[];for(const f of files){try{const r=JSON.parse(fs.readFileSync(f));const x=r.runs?.[0];rows.push({caseId:r.caseId,name:r.name,address:r.address,elapsedMs:x?.elapsedMs??null,outsideRatio:x?.probe?.outsideRatio??null,passManagerMs:x?.probe?.passManagerMs??null,capturePassStateMs:x?.probe?.capturePassState?.ms??null,captureRecords:x?.probe?.capturePassState?.records??null,cpuTop:(x?.cpuTop??[]).slice(0,10)});}catch{}}
+          rows.sort((a,b)=>(b.elapsedMs??0)-(a.elapsedMs??0));
+          const out={schema:'hex-current-fast-tail-aggregate/v1',targetSha:process.env.TARGET_SHA,profiles:rows.length,rows};fs.writeFileSync('final/tail.json',JSON.stringify(out,null,2)+'\n');
+          console.log('## Current FAST tail profiling');console.log(`- successful focused profiles: ${rows.length}`);for(const r of rows.slice(0,12))console.log(`- ${r.caseId} ${r.name}: ${r.elapsedMs} ms; outside pass ${(100*(r.outsideRatio??0)).toFixed(1)}%; capture ${r.capturePassStateMs} ms; CPU ${r.cpuTop?.[0]?.functionName??'n/a'} ${r.cpuTop?.[0]?.selfMs??0} ms`);
+          NODE
+      - name: Append aggregate summary
+        shell: bash
+        run: |
+          node <<'NODE' >> "$GITHUB_STEP_SUMMARY"
+          const fs = require('fs');
+          const r = JSON.parse(fs.readFileSync('final/tail.json', 'utf8'));
+          console.log('## Current FAST tail profiling');
+          console.log(`- successful focused profiles: ${r.profiles}`);
+          for (const x of r.rows.slice(0, 12)) {
+            console.log(`- ${x.caseId} ${x.name}: ${x.elapsedMs} ms; outside pass ${(100 * (x.outsideRatio ?? 0)).toFixed(1)}%; capture ${x.capturePassStateMs} ms; CPU ${x.cpuTop?.[0]?.functionName ?? 'n/a'} ${x.cpuTop?.[0]?.selfMs ?? 0} ms`);
+          }
+          NODE
+      - name: Upload tail aggregate
+        uses: actions/upload-artifact@v4
+        with:
+          name: tail-final
+          path: final/tail.json
+          retention-days: 7
+
+  realgame-aggregate:
+    name: aggregate-realgame
+    needs: realgame
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Download real-game evidence
+        uses: actions/download-artifact@v4
+        with:
+          pattern: realgame-*
+          path: games
+      - name: Aggregate real-game evidence
+        shell: bash
+        run: |
+          mkdir -p final
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';import path from 'node:path';
+          const dirs=fs.existsSync('games')?fs.readdirSync('games').map(x=>path.join('games',x)).filter(x=>fs.statSync(x).isDirectory()):[];const rows=[];
+          for(const d of dirs){
+            const rp=path.join(d,'result.json'),op=path.join(d,'oracle.json'),cp=path.join(d,'oracle-classes.txt'),dcp=path.join(d,'oracle-dwarf-classes.txt'),dmp=path.join(d,'oracle-dwarf-members.txt');
+            if(!fs.existsSync(rp))continue;
+            const r=JSON.parse(fs.readFileSync(rp));const o=fs.existsSync(op)?JSON.parse(fs.readFileSync(op)):null;
+            const setFrom=p=>new Set(fs.existsSync(p)?fs.readFileSync(p,'utf8').split(/\r?\n/).map(x=>x.trim()).filter(Boolean):[]);
+            const oracleClasses=setFrom(cp), dwarfClasses=setFrom(dcp), dwarfMembers=setFrom(dmp), hexClasses=new Set((r.classes??[]).map(x=>x.name)), hexMembers=new Set(r.observed?.memberNames??[]);
+            let overlap=0,dwarfClassOverlap=0,memberHits=0;for(const c of hexClasses){if(oracleClasses.has(c))overlap++;if(dwarfClasses.has(c))dwarfClassOverlap++;}for(const m of hexMembers)if(dwarfMembers.has(m))memberHits++;
+            rows.push({game:r.game,sha256:r.sha256,bytes:r.bytes,hex:r.totals,oracle:o,oracleDynamicClasses:oracleClasses.size,classOverlap:overlap,dwarfNamedClasses:dwarfClasses.size,dwarfClassOverlap,dwarfNamedMembers:dwarfMembers.size,hexObservedMembers:hexMembers.size,sampledMemberOracleHits:memberHits});
+          }
+          const out={schema:'hex-realgame-cxx-holdout-aggregate/v1',targetSha:process.env.TARGET_SHA,games:rows};fs.writeFileSync('final/realgame.json',JSON.stringify(out,null,2)+'\n');
+          console.log('## Real-game ARM64 holdout');for(const x of rows)console.log(`- ${x.game}: Hex ${x.hex.classes} classes / ${x.hex.vtables} vtables; dynamic-class overlap ${x.classOverlap}/${x.oracleDynamicClasses}; DWARF-class overlap ${x.dwarfClassOverlap}/${x.dwarfNamedClasses}; sampled member hits ${x.sampledMemberOracleHits}/${x.hexObservedMembers}; virtual FAST ${x.hex.completeVirtualTargets}/${x.hex.virtualTargetsSampled}; DWARF ${x.oracle?.debug?.status??'unavailable'}`);
+          NODE
+      - name: Append aggregate summary
+        shell: bash
+        run: |
+          node <<'NODE' >> "$GITHUB_STEP_SUMMARY"
+          const fs = require('fs');
+          const r = JSON.parse(fs.readFileSync('final/realgame.json', 'utf8'));
+          console.log('## Real-game ARM64 holdout');
+          for (const x of r.games) {
+            console.log(`- ${x.game}: dynamic classes ${x.classOverlap}/${x.oracleDynamicClasses}; DWARF classes ${x.dwarfClassOverlap}/${x.dwarfNamedClasses}; sampled member hits ${x.sampledMemberOracleHits}/${x.hexObservedMembers}; virtual FAST ${x.hex.completeVirtualTargets}/${x.hex.virtualTargetsSampled}; all FAST ${x.hex.completeSampled}/${x.hex.decompileSampled}; DWARF ${x.oracle?.debug?.status ?? 'unavailable'}`);
+          }
+          NODE
+      - name: Upload real-game aggregate
+        uses: actions/upload-artifact@v4
+        with:
+          name: realgame-final
+          path: final/realgame.json
+          retention-days: 7
