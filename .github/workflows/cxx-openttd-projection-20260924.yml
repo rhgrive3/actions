@@ -8,11 +8,21 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write
+
 jobs:
   regression:
+    if: github.event_name == 'push' && github.actor != 'github-actions[bot]'
     runs-on: ubuntu-24.04-arm
     timeout-minutes: 25
     steps:
+      - name: Checkout diagnostic control branch
+        uses: actions/checkout@v4
+        with:
+          ref: diag/cxx-openttd-projection-20260924
+          path: control
+
       - name: Checkout Hex branch
         uses: actions/checkout@v4
         with:
@@ -28,6 +38,7 @@ jobs:
           path: openttd
 
       - name: Install OpenTTD build dependencies
+        id: deps
         shell: bash
         run: |
           set -euo pipefail
@@ -39,6 +50,7 @@ jobs:
             libsdl2-dev libsoxr-dev zlib1g-dev
 
       - name: Build ARM64 OpenTTD with symbols
+        id: build
         shell: bash
         run: |
           set -euo pipefail
@@ -53,6 +65,7 @@ jobs:
           test "$(nm -a openttd/build/openttd | grep -c '_ZTV' || true)" -gt 0
 
       - name: Probe RTTI vtable member projection
+        id: probe
         shell: bash
         run: |
           set -euo pipefail
@@ -236,6 +249,43 @@ jobs:
           cd hex
           timeout 240 node .openttd-cxx-probe.mjs ../openttd/build/openttd
           rm -f .openttd-cxx-probe.mjs
+
+      - name: Persist compact diagnostic state
+        if: always()
+        shell: bash
+        env:
+          DEPS_OUTCOME: ${{ steps.deps.outcome }}
+          BUILD_OUTCOME: ${{ steps.build.outcome }}
+          PROBE_OUTCOME: ${{ steps.probe.outcome }}
+          JOB_STATUS: ${{ job.status }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          mkdir -p control/.diagnostics
+          node - <<'EOF' > control/.diagnostics/openttd-cxx-status.json
+          const status = {
+            schema: 'hex-openttd-cxx-ci-status/v1',
+            jobStatus: process.env.JOB_STATUS || null,
+            deps: process.env.DEPS_OUTCOME || null,
+            build: process.env.BUILD_OUTCOME || null,
+            probe: process.env.PROBE_OUTCOME || null,
+            sourceSha: process.env.SOURCE_SHA || null,
+          };
+          process.stdout.write(JSON.stringify(status, null, 2) + '\n');
+          EOF
+          if [ -f openttd-cxx-report.json ]; then
+            cp openttd-cxx-report.json control/.diagnostics/openttd-cxx-report.json
+          else
+            rm -f control/.diagnostics/openttd-cxx-report.json
+          fi
+          cd control
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .diagnostics/openttd-cxx-status.json .diagnostics/openttd-cxx-report.json 2>/dev/null || true
+          if ! git diff --cached --quiet; then
+            git commit -m "diag: persist OpenTTD C++ projection result"
+            timeout 60 git push origin HEAD:diag/cxx-openttd-projection-20260924
+          fi
 
       - name: Publish compact evidence
         if: always()
