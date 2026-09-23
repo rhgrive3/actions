@@ -1,0 +1,98 @@
+name: hex FAST known-tail focused benchmark
+
+on:
+  push:
+    paths:
+      - ".github/workflows/hex-fast-tail-known.yml"
+
+permissions:
+  contents: read
+
+env:
+  TARGET_SHA: 79517f95c4ed2a5a3ca895a4ed5e1c5c1311c6ba
+
+jobs:
+  profile:
+    name: profile-${{ matrix.case_id }}-${{ matrix.name }}
+    strategy:
+      fail-fast: false
+      max-parallel: 12
+      matrix:
+        include:
+          - { case_id: "2/2_gcc_O1_g", address: "5364", name: "test_composite_types", binary: "5a9b20c5e2d337ab12f812eccc2e13ba040f2d67477df839ee62d703a844152e.bin" }
+          - { case_id: "6/6_clang_O0_g", address: "13572", name: "param_thread_local_storage", binary: "9981aed241a45268b6c40d9beb43a4a15c767b6bd3885175cfa99991c07c2d93.bin" }
+          - { case_id: "2/2_gcc_Os_no_g", address: "5872", name: "__addtf3", binary: "c50d30201c285eb4343ee8adce1a67e527a7692dc0924be1e339fe4e4c672709.bin" }
+          - { case_id: "2/2_clang_O0_g", address: "8656", name: "__addtf3", binary: "c4809e58a36ecffd4ac6eca7b98343655f59d3d8734c97620d177bd5cb558138.bin" }
+          - { case_id: "2/2_clang_O0_g", address: "11632", name: "__multf3", binary: "c4809e58a36ecffd4ac6eca7b98343655f59d3d8734c97620d177bd5cb558138.bin" }
+          - { case_id: "2/2_gcc_Os_no_g", address: "8848", name: "__multf3", binary: "c50d30201c285eb4343ee8adce1a67e527a7692dc0924be1e339fe4e4c672709.bin" }
+          - { case_id: "2/2_gcc_O1_g", address: "6176", name: "__addtf3", binary: "5a9b20c5e2d337ab12f812eccc2e13ba040f2d67477df839ee62d703a844152e.bin" }
+          - { case_id: "2/2_gcc_O1_g", address: "9152", name: "__multf3", binary: "5a9b20c5e2d337ab12f812eccc2e13ba040f2d67477df839ee62d703a844152e.bin" }
+          - { case_id: "2/2_gcc_Os_no_g", address: "3240", name: "test_array_types", binary: "c50d30201c285eb4343ee8adce1a67e527a7692dc0924be1e339fe4e4c672709.bin" }
+          - { case_id: "4/4_clang_O2_no_g", address: "3268", name: "param_varargs", binary: "b51bff758d57e9d7fd756c792246a85baad49bb846b990386c8c7816a944adb7.bin" }
+          - { case_id: "2/2_clang_O2_no_g", address: "8960", name: "__multf3", binary: "d3f0ab937052c3543cfd9ccdf7c6c0e639165a2ddaf8249c2ca32885a09bcf06.bin" }
+          - { case_id: "2/2_clang_O0_g", address: "7760", name: "test_composite_types", binary: "c4809e58a36ecffd4ac6eca7b98343655f59d3d8734c97620d177bd5cb558138.bin" }
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: rhgrive3/hex-ida
+          ref: ${{ env.TARGET_SHA }}
+          path: target
+          fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Profile exact known tail
+        env:
+          CASE_ID: ${{ matrix.case_id }}
+          ADDRESS: ${{ matrix.address }}
+          FUNCTION_NAME: ${{ matrix.name }}
+          BINARY_NAME: ${{ matrix.binary }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p evidence
+          timeout 420s node scripts/hex-tail-profile.mjs \
+            --target-root target \
+            --binary "target/benchmarks/public/codefuse-arm64/inputs/$BINARY_NAME" \
+            --case-id "$CASE_ID" --address "$ADDRESS" --name "$FUNCTION_NAME" \
+            --profile fast --runs 1 --target-sha "$TARGET_SHA" \
+            --out evidence/result.json --cpu-out evidence/profile.cpuprofile
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: known-tail-${{ strategy.job-index }}
+          path: evidence/
+          retention-days: 7
+
+  aggregate:
+    name: aggregate-known-tail
+    needs: profile
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: known-tail-*
+          path: profiles
+      - name: Aggregate
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p final
+          TARGET_SHA="$TARGET_SHA" node --input-type=module <<'NODE'
+          import fs from 'node:fs'; import path from 'node:path';
+          const files=[]; const walk=d=>{if(!fs.existsSync(d))return;for(const e of fs.readdirSync(d,{withFileTypes:true})){const p=path.join(d,e.name);e.isDirectory()?walk(p):(e.name==='result.json'&&files.push(p));}}; walk('profiles');
+          const rows=[];
+          for(const f of files){try{const r=JSON.parse(fs.readFileSync(f));const x=r.runs?.[0];rows.push({caseId:r.caseId,name:r.name,address:r.address,elapsedMs:x?.elapsedMs??null,outsideRatio:x?.probe?.outsideRatio??null,passManagerMs:x?.probe?.passManagerMs??null,capturePassStateMs:x?.probe?.capturePassState?.ms??null,captureRecords:x?.probe?.capturePassState?.records??null,cpuTop:(x?.cpuTop??[]).slice(0,10)});}catch{}}
+          rows.sort((a,b)=>(b.elapsedMs??0)-(a.elapsedMs??0));
+          fs.writeFileSync('final/tail.json',JSON.stringify({schema:'hex-known-tail-focused/v1',targetSha:process.env.TARGET_SHA,profiles:rows.length,rows},null,2)+'\n');
+          NODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: known-tail-final
+          path: final/tail.json
+          retention-days: 7
