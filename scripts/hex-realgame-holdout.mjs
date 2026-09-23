@@ -143,7 +143,7 @@ try {
     try{response=await product.query.decompile(snapshot,Number(target.address),{profile:'fast'});}catch(e){error=String(e?.message||e).slice(0,200);}
     const targetElapsed=performance.now()-t;
     const completeness=response?.status?.completeness??(error?'CRASH':null);
-    const code=typeof response?.value==='string'?response.value:'';
+    const code=typeof response?.value==='string'?response.value:(typeof response?.value?.pseudocode==='string'?response.value.pseudocode:'');
     const members=memberNames(code);
     const classMentions=classes.filter(c=>c.name && code.includes(c.name)).slice(0,30).map(c=>c.name);
     decompiled.push({
@@ -152,6 +152,8 @@ try {
       indirectCallMarkers:(code.match(/\(\*\*|\(\*[^\n]{0,80}\)\s*\(/g)||[]).length,
       memberAccessMarkers:members.length,memberNames:members,classMentions,
       gotoCount:(code.match(/\bgoto\b/g)||[]).length,
+      semantic:response?.value?.semantic??null,reason:response?.status?.reason??null,
+      codeChars:code.length,excerpt:code.slice(0,400),
     });
     recordStage('decompile', !error, targetElapsed, {
       address:target.address,
