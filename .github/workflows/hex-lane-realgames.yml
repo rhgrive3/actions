@@ -1,0 +1,28 @@
+name: Hex Lane - Real Games
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_sha:
+        description: "Exact rhgrive3/hex-ida commit SHA"
+        required: true
+        type: string
+      command:
+        description: "OpenTTD/OpenMW/C++ holdout command; write JSON to $HEX_LANE_RESULT"
+        required: true
+        type: string
+      timeout_minutes:
+        description: "Hard watchdog in minutes (1..110)"
+        required: false
+        default: "90"
+        type: string
+
+jobs:
+  run:
+    uses: ./.github/workflows/hex-lane-worker-reusable.yml
+    with:
+      lane: realgames
+      target_sha: ${{ inputs.target_sha }}
+      command: ${{ inputs.command }}
+      timeout_minutes: ${{ inputs.timeout_minutes }}
+    secrets: inherit
