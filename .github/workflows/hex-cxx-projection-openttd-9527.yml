@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 env:
-  TARGET_SHA: d2c029508bb8d27e4548dee20d33a4c8fd485d9c
+  TARGET_SHA: b4c5bc14f69ce9990d954fa591c607b0144e6395
 
 jobs:
   openttd:
