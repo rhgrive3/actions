@@ -1,0 +1,60 @@
+name: hex perf userscript sync check
+
+on:
+  push:
+    paths:
+      - ".github/workflows/hex-perf-userscript-sync.yml"
+
+permissions:
+  contents: read
+
+env:
+  TARGET_SHA: 79517f95c4ed2a5a3ca895a4ed5e1c5c1311c6ba
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: rhgrive3/hex-ida
+          ref: ${{ env.TARGET_SHA }}
+          fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install exact dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 240s npm ci --ignore-scripts --no-audit --no-fund
+      - name: Canonical userscript build
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 120s npm run userscript:build
+      - name: Record generated-output sync
+        id: diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p evidence
+          git diff -- userscript/hex.user.template.js userscript/release-version.json > evidence/userscript.diff || true
+          git diff --stat -- userscript/hex.user.template.js userscript/release-version.json > evidence/stat.txt || true
+          if git diff --quiet -- userscript/hex.user.template.js userscript/release-version.json; then
+            echo "dirty=false" >> "$GITHUB_OUTPUT"
+            echo '{"dirty":false}' > evidence/result.json
+          else
+            echo "dirty=true" >> "$GITHUB_OUTPUT"
+            printf '{"dirty":true}\n' > evidence/result.json
+            cp userscript/hex.user.template.js evidence/hex.user.template.js
+            cp userscript/release-version.json evidence/release-version.json
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: userscript-sync-evidence
+          path: evidence/
+          retention-days: 7
