@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 env:
-  TARGET_SHA: 19fc24a015b1174eb8d50270088d02bddd11955c
+  TARGET_SHA: a5fd5618eaa4294a34ede776a9410948fd8e1642
 
 jobs:
   realgame:
