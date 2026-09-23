@@ -1,0 +1,45 @@
+name: hex param_varargs verification caller diagnostic
+
+on:
+  push:
+    paths:
+      - ".github/workflows/hex-param-varargs-verification-diag.yml"
+
+permissions:
+  contents: read
+
+env:
+  TARGET_SHA: d9badff5e23b0338e49bcdce1d149bb9668a37a1
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: rhgrive3/hex-ida
+          ref: ${{ env.TARGET_SHA }}
+          path: target
+          fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Profile param_varargs with verification stacks
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p evidence
+          timeout 420s node scripts/hex-tail-profile.mjs \
+            --target-root target \
+            --binary "target/benchmarks/public/codefuse-arm64/inputs/b51bff758d57e9d7fd756c792246a85baad49bb846b990386c8c7816a944adb7.bin" \
+            --case-id "4/4_clang_O2_no_g" --address "3268" --name "param_varargs" \
+            --profile fast --runs 1 --stacks true --target-sha "$TARGET_SHA" \
+            --out evidence/result.json --cpu-out evidence/profile.cpuprofile
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: param-varargs-verification-diag
+          path: evidence/
+          retention-days: 3
