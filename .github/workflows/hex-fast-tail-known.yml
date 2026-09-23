@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 env:
-  TARGET_SHA: 1a4c2ea9eb99c130fed94f3f08af2a422f28bcae
+  TARGET_SHA: 2b0d2004145da5a6e7932bf67d09a86b83ee5151
 
 jobs:
   profile:
