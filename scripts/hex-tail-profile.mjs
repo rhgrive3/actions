@@ -13,11 +13,11 @@ function round(v, n = 2) { return Number.isFinite(v) ? Number(v.toFixed(n)) : nu
 function post(session, method, params = {}) {
   return new Promise((resolve, reject) => session.post(method, params, (err, value) => err ? reject(err) : resolve(value)));
 }
-function makeProbe() {
+function makeProbe(stacks = false) {
   const passes = [];
   return {
     calls: 0, ms: 0, memoHits: 0, settleRechecks: 0, settleMs: 0,
-    obs: new WeakMap(), obsList: [], callers: new Map(),
+    obs: new WeakMap(), obsList: [], callers: new Map(), stacks,
     capturePassStateMs: 0, capturePassStateCalls: 0, capturePassStateRecords: 0,
     recordPasses(metrics, total) { passes.push({ metrics, total }); },
     recordCapturePassState(ms, records) { this.capturePassStateMs += ms; this.capturePassStateCalls++; this.capturePassStateRecords += records; },
@@ -34,7 +34,7 @@ function summarizeProbe(probe, elapsedMs) {
     passManagerMs: round(passMs), outsidePassManagerMs: round(Math.max(0, elapsedMs-passMs)), outsideRatio: round(Math.max(0, elapsedMs-passMs)/(elapsedMs||1),4),
     capturePassState: { calls: probe.capturePassStateCalls, ms: round(probe.capturePassStateMs), records: probe.capturePassStateRecords },
     phases: phases.slice(0,20),
-    verification: { calls: probe.calls, ms: round(probe.ms), memoHits: probe.memoHits, settleRechecks: probe.settleRechecks, settleMs: round(probe.settleMs), duplicateCalls, observations },
+    verification: { calls: probe.calls, ms: round(probe.ms), memoHits: probe.memoHits, settleRechecks: probe.settleRechecks, settleMs: round(probe.settleMs), duplicateCalls, observations, callers:[...(probe.callers ?? new Map()).entries()].map(([caller,calls])=>({caller,calls})).sort((a,b)=>b.calls-a.calls).slice(0,30) },
   };
 }
 function summarizeCpu(profile) {
@@ -67,7 +67,7 @@ try {
     const snapshotStart=performance.now();
     const snapshot=await product.query.snapshot();
     const snapshotMs=performance.now()-snapshotStart;
-    const probe=makeProbe();
+    const probe=makeProbe(a.stacks === '1' || a.stacks === 'true');
     globalThis.__hexPerfProbe=probe;
     const session=new inspector.Session(); session.connect();
     await post(session,'Profiler.enable'); await post(session,'Profiler.start');
