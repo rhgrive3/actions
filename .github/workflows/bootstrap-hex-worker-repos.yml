@@ -1,0 +1,97 @@
+name: Bootstrap Hex Worker Repositories
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - bootstrap/worker-repos.json
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bootstrap-hex-worker-repositories
+  cancel-in-progress: false
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ secrets.GH_PAT }}
+      OWNER: rhgrive3
+    steps:
+      - name: Checkout controller
+        uses: actions/checkout@v4
+
+      - name: Validate bootstrap token
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${GH_TOKEN:-}" ]]; then
+            echo "GH_PAT is not configured in rhgrive3/actions."
+            exit 2
+          fi
+
+      - name: Create missing worker repositories
+        shell: bash
+        run: |
+          set -euo pipefail
+          jq -e '.repositories | type == "array" and length > 0' bootstrap/worker-repos.json >/dev/null
+          : > bootstrap-created.txt
+          while IFS=$'\t' read -r name description; do
+            full="${OWNER}/${name}"
+            if gh api "repos/${full}" >/dev/null 2>&1; then
+              echo "EXISTS ${full}" | tee -a bootstrap-created.txt
+              continue
+            fi
+            gh api --method POST /user/repos \
+              -f "name=${name}" \
+              -f "description=${description}" \
+              -F private=false \
+              -F has_issues=true \
+              -F has_projects=false \
+              -F has_wiki=false \
+              -F auto_init=true >/dev/null
+            echo "CREATED ${full}" | tee -a bootstrap-created.txt
+          done < <(jq -r '.repositories[] | [.name, .description] | @tsv' bootstrap/worker-repos.json)
+
+      - name: Verify repositories
+        shell: bash
+        run: |
+          set -euo pipefail
+          failed=0
+          while IFS= read -r name; do
+            full="${OWNER}/${name}"
+            if gh api "repos/${full}" --jq '.full_name + " " + .default_branch' | tee -a bootstrap-verified.txt; then
+              :
+            else
+              echo "VERIFY_FAIL ${full}" | tee -a bootstrap-verified.txt
+              failed=1
+            fi
+          done < <(jq -r '.repositories[].name' bootstrap/worker-repos.json)
+          exit "${failed}"
+
+      - name: Publish concise summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## Hex worker repository bootstrap"
+            echo
+            echo '~~~text'
+            cat bootstrap-created.txt 2>/dev/null || true
+            cat bootstrap-verified.txt 2>/dev/null || true
+            echo '~~~'
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Upload bootstrap evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hex-worker-repo-bootstrap
+          path: |
+            bootstrap-created.txt
+            bootstrap-verified.txt
+          if-no-files-found: ignore
+          retention-days: 7
