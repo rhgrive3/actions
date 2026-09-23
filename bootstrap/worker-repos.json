@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "repositories": [
+    {
+      "name": "hex-actions-perf",
+      "description": "Hex FAST performance, tail latency, memory/GC, and IDA comparison worker"
+    },
+    {
+      "name": "hex-actions-realgames",
+      "description": "Hex OpenTTD/OpenMW, C++ projection, and real-game regression worker"
+    },
+    {
+      "name": "hex-actions-quality",
+      "description": "Hex goto/CFG/unknown/TU compile and decompiler quality worker"
+    }
+  ]
+}
