@@ -1,0 +1,197 @@
+name: Hex Lane Worker Reusable
+
+on:
+  workflow_call:
+    inputs:
+      lane:
+        required: true
+        type: string
+      target_sha:
+        required: true
+        type: string
+      command:
+        required: true
+        type: string
+      timeout_minutes:
+        required: false
+        type: string
+        default: "45"
+    secrets:
+      GH_PAT:
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  lane:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    concurrency:
+      group: hex-lane-${{ inputs.lane }}-${{ inputs.target_sha }}
+      cancel-in-progress: false
+    steps:
+      - name: Checkout controller
+        uses: actions/checkout@v4
+
+      - name: Validate inputs
+        env:
+          LANE: ${{ inputs.lane }}
+          TARGET_SHA: ${{ inputs.target_sha }}
+          TIMEOUT_MINUTES: ${{ inputs.timeout_minutes }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "${LANE}" in
+            perf|realgames|quality) ;;
+            *) echo "Unsupported lane: ${LANE}"; exit 2 ;;
+          esac
+          [[ "${TARGET_SHA}" =~ ^[0-9a-fA-F]{40}$ ]] || { echo "target_sha must be a full 40-hex SHA"; exit 2; }
+          [[ "${TIMEOUT_MINUTES}" =~ ^[0-9]+$ ]] || { echo "timeout_minutes must be an integer"; exit 2; }
+          (( TIMEOUT_MINUTES >= 1 && TIMEOUT_MINUTES <= 110 )) || { echo "timeout_minutes must be 1..110"; exit 2; }
+
+      - name: Checkout exact Hex target
+        env:
+          TARGET_SHA: ${{ inputs.target_sha }}
+          GH_PAT: ${{ secrets.GH_PAT }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -n "${GH_PAT:-}" ]]; then
+            remote="https://x-access-token:${GH_PAT}@github.com/rhgrive3/hex-ida.git"
+          else
+            remote="https://github.com/rhgrive3/hex-ida.git"
+          fi
+          git init target
+          git -C target remote add origin "${remote}"
+          git -C target fetch --no-tags --depth=1 origin "${TARGET_SHA}"
+          git -C target checkout --detach FETCH_HEAD
+          actual="$(git -C target rev-parse HEAD)"
+          [[ "${actual}" == "${TARGET_SHA}" ]] || { echo "HEAD mismatch: ${actual} != ${TARGET_SHA}"; exit 3; }
+
+      - name: Prepare lane evidence
+        env:
+          LANE: ${{ inputs.lane }}
+          TARGET_SHA: ${{ inputs.target_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p lane-output
+          jq -n \
+            --arg schema_version "1" \
+            --arg lane "${LANE}" \
+            --arg target_sha "${TARGET_SHA}" \
+            --arg run_id "${GITHUB_RUN_ID}" \
+            --arg run_attempt "${GITHUB_RUN_ATTEMPT}" \
+            --arg repository "${GITHUB_REPOSITORY}" \
+            '{
+              schema_version: ($schema_version|tonumber),
+              lane: $lane,
+              target_sha: $target_sha,
+              controller_repository: $repository,
+              run_id: $run_id,
+              run_attempt: $run_attempt
+            }' > lane-output/metadata.json
+
+      - name: Run lane command with hard watchdog
+        working-directory: target
+        env:
+          LANE: ${{ inputs.lane }}
+          TARGET_SHA: ${{ inputs.target_sha }}
+          LANE_COMMAND: ${{ inputs.command }}
+          TIMEOUT_MINUTES: ${{ inputs.timeout_minutes }}
+          HEX_LANE_RESULT: ../lane-output/lane-result.json
+        shell: bash
+        run: |
+          set +e
+          timeout --foreground --signal=TERM --kill-after=30s "${TIMEOUT_MINUTES}m" \
+            bash -lc "${LANE_COMMAND}" > ../lane-output/command.full.log 2>&1
+          rc=$?
+          set -e
+          printf '%s\n' "${rc}" > ../lane-output/run-exit-code.txt
+          tail -n 200 ../lane-output/command.full.log > ../lane-output/command-tail.txt || true
+          rm -f ../lane-output/command.full.log
+
+          if [[ ! -f ../lane-output/lane-result.json ]]; then
+            if [[ "${rc}" -eq 0 ]]; then status="pass"; first_failure=""; 
+            elif [[ "${rc}" -eq 124 || "${rc}" -eq 137 ]]; then status="timed_out"; first_failure="hard-watchdog";
+            else status="fail"; first_failure="command-exit-${rc}"; fi
+            jq -n \
+              --arg lane "${LANE}" \
+              --arg target_sha "${TARGET_SHA}" \
+              --arg status "${status}" \
+              --arg first_failure "${first_failure}" \
+              --argjson exit_code "${rc}" \
+              '{
+                schema_version: 1,
+                lane: $lane,
+                target_sha: $target_sha,
+                status: $status,
+                exit_code: $exit_code,
+                first_failure: (if $first_failure == "" then null else $first_failure end),
+                metrics: {}
+              }' > ../lane-output/lane-result.json
+          fi
+
+      - name: Validate lane result contract
+        if: always()
+        env:
+          LANE: ${{ inputs.lane }}
+          TARGET_SHA: ${{ inputs.target_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s lane-output/lane-result.json
+          jq -e \
+            --arg lane "${LANE}" \
+            --arg target_sha "${TARGET_SHA}" \
+            '
+              .schema_version == 1 and
+              .lane == $lane and
+              .target_sha == $target_sha and
+              (.status | IN("pass","fail","blocked","timed_out")) and
+              (.metrics | type == "object")
+            ' lane-output/lane-result.json >/dev/null
+
+      - name: Publish concise step summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## Hex lane evidence"
+            echo
+            echo '~~~json'
+            cat lane-output/lane-result.json 2>/dev/null || echo '{"status":"missing-result"}'
+            echo '~~~'
+            echo
+            echo "### Last 200 command lines"
+            echo '~~~text'
+            cat lane-output/command-tail.txt 2>/dev/null || true
+            echo '~~~'
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Upload bounded evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hex-${{ inputs.lane }}-${{ inputs.target_sha }}-${{ github.run_id }}
+          path: |
+            lane-output/metadata.json
+            lane-output/lane-result.json
+            lane-output/run-exit-code.txt
+            lane-output/command-tail.txt
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Enforce lane outcome
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s lane-output/lane-result.json
+          status="$(jq -r '.status' lane-output/lane-result.json)"
+          rc="$(cat lane-output/run-exit-code.txt 2>/dev/null || echo 1)"
+          if [[ "${status}" != "pass" || "${rc}" -ne 0 ]]; then
+            echo "Lane did not pass: status=${status} rc=${rc}"
+            exit 1
+          fi
