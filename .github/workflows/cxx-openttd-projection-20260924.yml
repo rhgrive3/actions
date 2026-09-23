@@ -11,6 +11,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: cxx-openttd-projection-20260924
+  cancel-in-progress: true
+
 jobs:
   regression:
     if: github.event_name == 'push' && github.actor != 'github-actions[bot]'
@@ -27,7 +31,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: rhgrive3/hex-ida
-          ref: fix/cxx-output-projection-member-types-20260924
+          ref: main
           path: hex
 
       - name: Checkout OpenTTD 16.0-beta4
@@ -108,7 +112,7 @@ jobs:
             read,
             pointerBytes: 8,
             architecture: 'arm64',
-            snapshotId: 'openttd-16.0-beta4-arm64-relwithdebinfo',
+            snapshotId: 'openttd-16.0-beta4-arm64-relwithdebinfo-main',
             symbolSizeOf: address => sizeByAddress.get(address.toString()) ?? null,
             sectionEndOf: address => {
               const section = image.sectionAt?.(address);
