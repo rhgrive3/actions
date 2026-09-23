@@ -1,4 +1,4 @@
-# manual-trigger: 2026-09-23 latest-main after PR9518+9519
+# manual-trigger: 2026-09-23T17:32:56Z main 19fc24a015b1174eb8d50270088d02bddd11955c
 name: hex current-main real-game + tail parallel
 
 on:
@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 env:
-  TARGET_SHA: 18a7750ee54eff3fa265172106ce4f014199237d
+  TARGET_SHA: 19fc24a015b1174eb8d50270088d02bddd11955c
 
 jobs:
   realgame:
