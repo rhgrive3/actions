@@ -113,6 +113,13 @@ jobs:
           git status --porcelain --untracked-files=all > "$OUT/worktree-status-after.txt"
           tail -80 "$OUT/full.log"
           exit $code
+      - name: Collect verifier reports
+        if: always()
+        run: |
+          mkdir -p "$RUNNER_TEMP/hex-out/reports"
+          for d in reports/stage1 reports/stage2 reports/phase7 reports/phase8 reports/phase12; do
+            if [ -d "$d" ]; then mkdir -p "$RUNNER_TEMP/hex-out/$d"; find "$d" -maxdepth 2 -type f \( -name '*.json' -o -name '*.md' \) -size -20M -exec cp --parents {} "$RUNNER_TEMP/hex-out/" \; ; fi
+          done
       - name: Name artifact
         if: always()
         id: name
