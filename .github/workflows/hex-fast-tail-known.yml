@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 env:
-  TARGET_SHA: 842d2becd7d0355e2c1bd6f97eb03bcc940a971a # single-descriptor-scan
+  TARGET_SHA: 0a6a07bd249809e08aea599f753ab1bfc265ce97 # frozen-live-data-entry-cache
 
 jobs:
   profile:
