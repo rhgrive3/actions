@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 env:
-  TARGET_SHA: 0a6a07bd249809e08aea599f753ab1bfc265ce97 # frozen-live-data-entry-cache
+  TARGET_SHA: a8fa8aec737aacd59ca3f198f69763ce5dcf7924 # fastbudget transform-budget implementation
 
 jobs:
   profile:
