@@ -102,13 +102,16 @@ jobs:
           CMD: ${{ matrix.command }}
         run: |
           set +e -uo pipefail
-          mkdir -p out
+          # Logs live outside the product checkout so exact-head verifiers see a clean tree.
+          OUT="$RUNNER_TEMP/hex-out"
+          mkdir -p "$OUT"
           start=$(date +%s)
-          bash -c "$CMD" > out/full.log 2>&1
+          bash -c "$CMD" > "$OUT/full.log" 2>&1
           code=$?
-          echo "exit=$code seconds=$(( $(date +%s) - start ))" | tee out/status.txt
-          printf '%s\n' "$CMD" > out/command.txt
-          tail -80 out/full.log
+          echo "exit=$code seconds=$(( $(date +%s) - start ))" | tee "$OUT/status.txt"
+          printf '%s\n' "$CMD" > "$OUT/command.txt"
+          git status --porcelain --untracked-files=all > "$OUT/worktree-status-after.txt"
+          tail -80 "$OUT/full.log"
           exit $code
       - name: Name artifact
         if: always()
@@ -120,5 +123,5 @@ jobs:
         if: always()
         with:
           name: log-${{ steps.name.outputs.n }}
-          path: out/
+          path: ${{ runner.temp }}/hex-out/
           retention-days: 7
