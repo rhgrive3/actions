@@ -61,16 +61,53 @@ jobs:
           from pathlib import Path
           p = Path("target/tools/validation/public-benchmark/subject.mjs")
           s = p.read_text()
+          old = "    const functions = [];"
+          new = """    const functions = [];
+          let activeTransformProbe = null;
+          const perfProbe = globalThis.__hexPerfProbe ?? {};
+          const previousRecordPasses = typeof perfProbe.recordPasses === 'function' ? perfProbe.recordPasses.bind(perfProbe) : null;
+          const previousRecordCapture = typeof perfProbe.recordCapturePassState === 'function' ? perfProbe.recordCapturePassState.bind(perfProbe) : null;
+          perfProbe.recordPasses = (metrics, total) => {
+            if (activeTransformProbe) {
+              activeTransformProbe.passManagerMs += Number.isFinite(total) ? total : 0;
+              for (const metric of Array.isArray(metrics) ? metrics : []) {
+                if (metric?.degradationReason === 'transform-safety-ceiling') activeTransformProbe.safetyCeilingHit = true;
+                if (metric?.degradationReason === 'transform-work-budget') activeTransformProbe.workBudgetHit = true;
+              }
+            }
+            previousRecordPasses?.(metrics, total);
+          };
+          perfProbe.recordCapturePassState = (elapsedMs, records) => {
+            if (activeTransformProbe) {
+              activeTransformProbe.capturePassStateMs += Number.isFinite(elapsedMs) ? elapsedMs : 0;
+              activeTransformProbe.captureRecords += Number.isFinite(records) ? records : 0;
+            }
+            previousRecordCapture?.(elapsedMs, records);
+          };
+          globalThis.__hexPerfProbe = perfProbe;"""
+          if old not in s:
+              raise SystemExit("function-loop-shape-not-found")
+          s = s.replace(old, new, 1)
           old = "const response = await product.query.decompile(currentSnapshot, fn.address)"
-          new = "const decompileStarted = performance.now();\n        const response = await product.query.decompile(currentSnapshot, fn.address, { profile: 'fast' });\n        const decompileElapsedMs = performance.now() - decompileStarted"
+          new = """const transformProbe = { passManagerMs: 0, capturePassStateMs: 0, captureRecords: 0, safetyCeilingHit: false, workBudgetHit: false };
+                  activeTransformProbe = transformProbe;
+                  const decompileStarted = performance.now();
+                  let response;
+                  try {
+                    response = await product.query.decompile(currentSnapshot, fn.address, { profile: 'fast' });
+                  } finally {
+                    activeTransformProbe = null;
+                  }
+                  const decompileElapsedMs = performance.now() - decompileStarted"""
           if old not in s:
               raise SystemExit("decompile-call-shape-not-found")
-          p.write_text(s.replace(old, new, 1))
+          s = s.replace(old, new, 1)
           old = "          pseudocode: value?.pseudocode ?? value?.code ?? null,"
-          new = "          pseudocode: value?.pseudocode ?? value?.code ?? null,\n          decompileElapsedMs,\n          transformSafetyCeilingHit: (value?.warnings ?? []).some(w => typeof w === 'string' && w.startsWith('Decompiler pass budget exhausted')),\n          transformWorkBudgetHit: (value?.warnings ?? []).some(w => typeof w === 'string' && (w.includes('work budget') || w.includes('rewrite budget'))),"
+          new = "          pseudocode: value?.pseudocode ?? value?.code ?? null,\n          decompileElapsedMs,\n          transformPassManagerMs: transformProbe.passManagerMs,\n          transformSafetyCeilingHit: transformProbe.safetyCeilingHit || (value?.warnings ?? []).some(w => typeof w === 'string' && w.startsWith('Decompiler pass budget exhausted')),\n          transformWorkBudgetHit: transformProbe.workBudgetHit || (value?.warnings ?? []).some(w => typeof w === 'string' && (w.includes('work budget') || w.includes('rewrite budget'))),"
+          new = "          pseudocode: value?.pseudocode ?? value?.code ?? null,\n          decompileElapsedMs,\n          transformPassManagerMs: transformProbe.passManagerMs,\n          capturePassStateMs: transformProbe.capturePassStateMs,\n          capturePassStateRecords: transformProbe.captureRecords,\n          transformSafetyCeilingHit: transformProbe.safetyCeilingHit || (value?.warnings ?? []).some(w => typeof w === 'string' && w.startsWith('Decompiler pass budget exhausted')),\n          transformWorkBudgetHit: transformProbe.workBudgetHit || (value?.warnings ?? []).some(w => typeof w === 'string' && (w.includes('work budget') || w.includes('rewrite budget'))),"
           if old not in s:
               raise SystemExit("function-result-shape-not-found")
-          p.write_text(p.read_text().replace(old, new, 1))
+          p.write_text(s.replace(old, new, 1))
           PY
           grep -F "profile: 'fast'" target/tools/validation/public-benchmark/subject.mjs
 
@@ -145,13 +182,16 @@ jobs:
           }
           rows.sort((a,b)=>b.elapsedMs-a.elapsedMs);
           let gotoCount=0, functionsWithGoto=0, functionsWithPseudocode=0;
-          const functionElapsedMs=[], safetyCeilingFunctions=[], workBudgetFunctions=[];
+          const functionElapsedMs=[], transformPassMs=[], capturePassStateMs=[], capturePassStateRecords=[], safetyCeilingFunctions=[], workBudgetFunctions=[];
           for (const f of caseFiles) {
             let row;
             try { row=JSON.parse(fs.readFileSync(f,'utf8')); } catch { continue; }
             const caseId=Buffer.from(path.basename(f,'.json'),'hex').toString();
             for (const fn of row.functions || []) {
               if (Number.isFinite(fn.decompileElapsedMs)) functionElapsedMs.push(fn.decompileElapsedMs);
+              if (Number.isFinite(fn.transformPassManagerMs)) transformPassMs.push(fn.transformPassManagerMs);
+              if (Number.isFinite(fn.capturePassStateMs)) capturePassStateMs.push(fn.capturePassStateMs);
+              if (Number.isFinite(fn.capturePassStateRecords)) capturePassStateRecords.push(fn.capturePassStateRecords);
               if (fn.transformSafetyCeilingHit) safetyCeilingFunctions.push({caseId,address:fn.address??null,name:fn.name??null});
               if (fn.transformWorkBudgetHit) workBudgetFunctions.push({caseId,address:fn.address??null,name:fn.name??null});
               if (typeof fn.pseudocode !== 'string') continue;
@@ -162,6 +202,9 @@ jobs:
             }
           }
           functionElapsedMs.sort((a,b)=>a-b);
+          transformPassMs.sort((a,b)=>a-b);
+          capturePassStateMs.sort((a,b)=>a-b);
+          capturePassStateRecords.sort((a,b)=>a-b);
           const percentile=(values,p)=>{if(!values.length)return null;const at=(values.length-1)*p,lo=Math.floor(at),hi=Math.ceil(at);return Number((values[lo]+(values[hi]-values[lo])*(at-lo)).toFixed(3));};
           const out={
             schema:'hex-main-full-fresh-benchmark/v1',
@@ -170,6 +213,8 @@ jobs:
             completedCases:completed, notRun, states, functionStates, functionCount:functions,
             controlFlow:{gotoCount,functionsWithGoto,functionsWithPseudocode,caseEvidenceFiles:caseFiles.length},
             functionTiming:{measuredFunctions:functionElapsedMs.length,p50Ms:percentile(functionElapsedMs,0.50),p95Ms:percentile(functionElapsedMs,0.95),p99Ms:percentile(functionElapsedMs,0.99),maxMs:functionElapsedMs.length?Number(functionElapsedMs.at(-1).toFixed(3)):null,safetyCeilingHits:safetyCeilingFunctions.length,safetyCeilingFunctions,workBudgetHits:workBudgetFunctions.length},
+            transformPassTiming:{measuredFunctions:transformPassMs.length,p50Ms:percentile(transformPassMs,0.50),p95Ms:percentile(transformPassMs,0.95),p99Ms:percentile(transformPassMs,0.99),p99_9Ms:percentile(transformPassMs,0.999),maxMs:transformPassMs.length?Number(transformPassMs.at(-1).toFixed(3)):null},
+            capturePassState:{measuredFunctions:capturePassStateMs.length,p50Ms:percentile(capturePassStateMs,0.50),p95Ms:percentile(capturePassStateMs,0.95),p99Ms:percentile(capturePassStateMs,0.99),p99_9Ms:percentile(capturePassStateMs,0.999),maxMs:capturePassStateMs.length?Number(capturePassStateMs.at(-1).toFixed(3)):null,maxRecords:capturePassStateRecords.length?Number(capturePassStateRecords.at(-1).toFixed(3)):null},
             performance:{maxShardWallMs,slowestCases:rows.slice(0,20)},
             complete:summaries.length===40 && selected===160 && completed===160 && notRun===0
           };
