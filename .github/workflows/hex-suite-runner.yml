@@ -101,7 +101,7 @@ jobs:
         env:
           CMD: ${{ matrix.command }}
         run: |
-          set -uo pipefail
+          set +e -uo pipefail
           mkdir -p out
           start=$(date +%s)
           bash -c "$CMD" > out/full.log 2>&1
