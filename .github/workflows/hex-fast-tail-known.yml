@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 env:
-  TARGET_SHA: 036887b094f25cf8492d807f3c9bb87904b34fcb # dual-fnv-single-pass # repeat-stage-local-identity-2
+  TARGET_SHA: 842d2becd7d0355e2c1bd6f97eb03bcc940a971a # single-descriptor-scan
 
 jobs:
   profile:
