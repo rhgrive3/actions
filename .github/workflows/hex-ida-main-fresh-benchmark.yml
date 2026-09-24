@@ -1,4 +1,4 @@
-# manual-trigger: 2026-09-24 main db01853d5 baseline for campaign item G
+# manual-trigger: 2026-09-24 db01853d5 baseline latency and ceiling measurements
 name: hex-ida main FAST full fresh decompile benchmark 15m
 
 on:
@@ -61,11 +61,16 @@ jobs:
           from pathlib import Path
           p = Path("target/tools/validation/public-benchmark/subject.mjs")
           s = p.read_text()
-          old = "product.query.decompile(currentSnapshot, fn.address)"
-          new = "product.query.decompile(currentSnapshot, fn.address, { profile: 'fast' })"
+          old = "const response = await product.query.decompile(currentSnapshot, fn.address)"
+          new = "const decompileStarted = performance.now();\n        const response = await product.query.decompile(currentSnapshot, fn.address, { profile: 'fast' });\n        const decompileElapsedMs = performance.now() - decompileStarted"
           if old not in s:
               raise SystemExit("decompile-call-shape-not-found")
           p.write_text(s.replace(old, new, 1))
+          old = "          pseudocode: value?.pseudocode ?? value?.code ?? null,"
+          new = "          pseudocode: value?.pseudocode ?? value?.code ?? null,\n          decompileElapsedMs,\n          transformSafetyCeilingHit: (value?.warnings ?? []).some(w => typeof w === 'string' && w.startsWith('Decompiler pass budget exhausted')),\n          transformWorkBudgetHit: (value?.warnings ?? []).some(w => typeof w === 'string' && (w.includes('work budget') || w.includes('rewrite budget'))),"
+          if old not in s:
+              raise SystemExit("function-result-shape-not-found")
+          p.write_text(p.read_text().replace(old, new, 1))
           PY
           grep -F "profile: 'fast'" target/tools/validation/public-benchmark/subject.mjs
 
@@ -140,10 +145,14 @@ jobs:
           }
           rows.sort((a,b)=>b.elapsedMs-a.elapsedMs);
           let gotoCount=0, functionsWithGoto=0, functionsWithPseudocode=0;
+          const functionElapsedMs=[], safetyCeilingFunctions=[], workBudgetFunctions=[];
           for (const f of caseFiles) {
             let row;
             try { row=JSON.parse(fs.readFileSync(f,'utf8')); } catch { continue; }
             for (const fn of row.functions || []) {
+              if (Number.isFinite(fn.decompileElapsedMs)) functionElapsedMs.push(fn.decompileElapsedMs);
+              if (fn.transformSafetyCeilingHit) safetyCeilingFunctions.push({caseId:row.caseId??row.id??null,address:fn.address??null,name:fn.name??null});
+              if (fn.transformWorkBudgetHit) workBudgetFunctions.push({caseId:row.caseId??row.id??null,address:fn.address??null,name:fn.name??null});
               if (typeof fn.pseudocode !== 'string') continue;
               functionsWithPseudocode++;
               const matches=fn.pseudocode.match(/\\bgoto\\b/g) || [];
@@ -151,12 +160,15 @@ jobs:
               if (matches.length > 0) functionsWithGoto++;
             }
           }
+          functionElapsedMs.sort((a,b)=>a-b);
+          const percentile=(values,p)=>{if(!values.length)return null;const at=(values.length-1)*p,lo=Math.floor(at),hi=Math.ceil(at);return Number((values[lo]+(values[hi]-values[lo])*(at-lo)).toFixed(3));};
           const out={
             schema:'hex-main-full-fresh-benchmark/v1',
             targetSha:'db01853d58697d4263b2a1c0b9c93bc5317a3ea8',
             expectedShards:40, shardSummaries:summaries.length, selectedCases:selected,
             completedCases:completed, notRun, states, functionStates, functionCount:functions,
             controlFlow:{gotoCount,functionsWithGoto,functionsWithPseudocode,caseEvidenceFiles:caseFiles.length},
+            functionTiming:{measuredFunctions:functionElapsedMs.length,p50Ms:percentile(functionElapsedMs,0.50),p95Ms:percentile(functionElapsedMs,0.95),p99Ms:percentile(functionElapsedMs,0.99),maxMs:functionElapsedMs.length?Number(functionElapsedMs.at(-1).toFixed(3)):null,safetyCeilingHits:safetyCeilingFunctions.length,safetyCeilingFunctions,workBudgetHits:workBudgetFunctions.length},
             performance:{maxShardWallMs,slowestCases:rows.slice(0,20)},
             complete:summaries.length===40 && selected===160 && completed===160 && notRun===0
           };
