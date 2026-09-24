@@ -1,0 +1,274 @@
+# dispatch-trigger: hex-ida fresh decompile benchmark with dynamic target_sha
+name: hex-ida FAST full fresh decompile benchmark (dispatch)
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_sha:
+        description: 'Target SHA in rhgrive3/hex-ida to benchmark'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hex-ida-dispatch-fresh-benchmark-${{ inputs.target_sha }}
+  cancel-in-progress: true
+
+jobs:
+  shard:
+    name: dispatch-shard-${{ matrix.shard }}
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout benchmark orchestrator
+        uses: actions/checkout@v4
+
+      - name: Checkout exact target
+        uses: actions/checkout@v4
+        with:
+          repository: rhgrive3/hex-ida
+          ref: ${{ inputs.target_sha }}
+          path: target
+          fetch-depth: 1
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Verify target and shard
+        env:
+          SHARD_INDEX: ${{ matrix.shard }}
+          EXPECTED_SHA: ${{ inputs.target_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C target rev-parse HEAD)" = "${EXPECTED_SHA}"
+          test "$(node --input-type=module -e "import fs from 'node:fs'; const m=JSON.parse(fs.readFileSync('target/benchmarks/public/codefuse-arm64/manifest.json','utf8')); process.stdout.write(String(m.cases.length));")" = "160"
+          echo "shard=${SHARD_INDEX} start=$((SHARD_INDEX * 4)) limit=4"
+          node --version
+          nproc
+          free -h
+
+      - name: Select fast decompiler profile in benchmark subject
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("target/tools/validation/public-benchmark/subject.mjs")
+          s = p.read_text()
+          old = "    const functions = [];"
+          new = """    const functions = [];
+          let activeTransformProbe = null;
+          globalThis.__hexPassManagerProbe = (metrics, total, context) => {
+            if (!activeTransformProbe) return;
+            activeTransformProbe.passManagerMs += Number.isFinite(total) ? total : 0;
+            activeTransformProbe.passRuns += 1;
+            if (context && Number.isFinite(context.deadline) && Number.isFinite(context.totalStart)) {
+              activeTransformProbe.deadlineSpanMs = Math.max(Number(activeTransformProbe.deadlineSpanMs || 0), context.deadline - context.totalStart);
+            }
+            for (const metric of Array.isArray(metrics) ? metrics : []) {
+              const elapsedMs = Number.isFinite(metric?.elapsedMs) ? metric.elapsedMs : null;
+              activeTransformProbe.passList.push({ name: metric?.name ?? null, elapsedMs, skipped: metric?.skipped === true, reason: metric?.degradationReason ?? metric?.reason ?? null });
+              if (elapsedMs != null) activeTransformProbe.passMaxMs = Math.max(Number(activeTransformProbe.passMaxMs || 0), elapsedMs);
+              if (metric?.degradationReason === 'transform-safety-ceiling') activeTransformProbe.safetyCeilingHit = true;
+              if (metric?.degradationReason === 'transform-work-budget') activeTransformProbe.workBudgetHit = true;
+            }
+          };
+          globalThis.__hexCapturePassStateProbe = (elapsedMs, records) => {
+            if (!activeTransformProbe) return;
+            activeTransformProbe.capturePassStateMs += Number.isFinite(elapsedMs) ? elapsedMs : 0;
+            activeTransformProbe.captureRecords += Number.isFinite(records) ? records : 0;
+          };
+          """
+          if old not in s:
+              raise SystemExit("function-loop-shape-not-found")
+          s = s.replace(old, new, 1)
+          manager = Path("target/js/decompiler/passes/manager.js")
+          manager_source = manager.read_text()
+          old = "function capturePassState(state, shouldAbort = null) {\n  const __t0 = globalThis.__hexPerfProbe ? performance.now() : 0; // PERF-PROBE"
+          new = "function capturePassState(state, shouldAbort = null) {\n  const __fastBudgetCaptureStarted = performance.now();\n  const __t0 = globalThis.__hexPerfProbe ? performance.now() : 0; // PERF-PROBE"
+          if old not in manager_source:
+              raise SystemExit("capture-pass-state-shape-not-found")
+          manager_source = manager_source.replace(old, new, 1)
+          old = "      if (globalThis.__hexPerfProbe) globalThis.__hexPerfProbe.recordCapturePassState?.(performance.now() - __t0, records.length);\n      return null;"
+          new = "      if (globalThis.__hexPerfProbe) globalThis.__hexPerfProbe.recordCapturePassState?.(performance.now() - __t0, records.length);\n      globalThis.__hexCapturePassStateProbe?.(performance.now() - __fastBudgetCaptureStarted, records.length);\n      return null;"
+          if old not in manager_source:
+              raise SystemExit("capture-abort-instrumentation-shape-not-found")
+          manager_source = manager_source.replace(old, new, 1)
+          old = "  if (globalThis.__hexPerfProbe) globalThis.__hexPerfProbe.recordCapturePassState?.(performance.now() - __t0, records.length); // PERF-PROBE"
+          new = old + "\n  globalThis.__hexCapturePassStateProbe?.(performance.now() - __fastBudgetCaptureStarted, records.length);"
+          if old not in manager_source:
+              raise SystemExit("capture-complete-instrumentation-shape-not-found")
+          manager_source = manager_source.replace(old, new, 1)
+          old = "    globalThis.__hexPerfProbe?.recordPasses?.(state.passMetrics, state.passElapsedMs); // PERF-PROBE"
+          new = old + "\n    globalThis.__hexPassManagerProbe?.(state.passMetrics, state.passElapsedMs, { deadline: Number.isFinite(deadline) ? deadline : null, totalStart, timeBudgetMs: totalBudget, deterministic });"
+          if old not in manager_source:
+              raise SystemExit("pass-metrics-instrumentation-shape-not-found")
+          manager.write_text(manager_source.replace(old, new, 1))
+          old = "const response = await product.query.decompile(currentSnapshot, fn.address)"
+          new = """const transformProbe = { passManagerMs: 0, capturePassStateMs: 0, captureRecords: 0, safetyCeilingHit: false, workBudgetHit: false, passRuns: 0, passList: [], passMaxMs: 0, deadlineSpanMs: 0 };
+                  activeTransformProbe = transformProbe;
+                  const decompileStarted = performance.now();
+                  let response;
+                  try {
+                    response = await product.query.decompile(currentSnapshot, fn.address, { profile: 'fast' });
+                  } finally {
+                    activeTransformProbe = null;
+                  }
+                  const decompileElapsedMs = performance.now() - decompileStarted"""
+          if old not in s:
+              raise SystemExit("decompile-call-shape-not-found")
+          s = s.replace(old, new, 1)
+          old = "          pseudocode: value?.pseudocode ?? value?.code ?? null,"
+          new = "          pseudocode: value?.pseudocode ?? value?.code ?? null,\n          decompileElapsedMs,\n          transformPassManagerMs: transformProbe.passManagerMs,\n          capturePassStateMs: transformProbe.capturePassStateMs,\n          capturePassStateRecords: transformProbe.captureRecords,\n          transformDeadlineSpanMs: transformProbe.deadlineSpanMs,\n          transformPassRuns: transformProbe.passRuns,\n          transformPassMaxMs: transformProbe.passMaxMs,\n          transformPassList: transformProbe.passList,\n          transformSafetyCeilingHit: transformProbe.safetyCeilingHit || (value?.warnings ?? []).some(w => typeof w === 'string' && w.startsWith('Decompiler pass budget exhausted')),\n          transformWorkBudgetHit: transformProbe.workBudgetHit || (value?.warnings ?? []).some(w => typeof w === 'string' && (w.includes('work budget') || w.includes('rewrite budget'))),"
+          if old not in s:
+              raise SystemExit("function-result-shape-not-found")
+          p.write_text(s.replace(old, new, 1))
+          PY
+          grep -F "profile: 'fast'" target/tools/validation/public-benchmark/subject.mjs
+
+      - name: Run four cases in parallel
+        env:
+          TARGET_DIR: ${{ github.workspace }}/target
+          OUTPUT_FILE: ${{ github.workspace }}/shard-output/result.json
+          CASE_DIR: ${{ github.workspace }}/case-results
+          TARGET_SHA: ${{ inputs.target_sha }}
+          WORKERS: "4"
+          CASE_TIMEOUT_MS: "720000"
+          SOFT_DEADLINE_MS: "780000"
+          SHARD_INDEX: ${{ matrix.shard }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          start=$((SHARD_INDEX * 4))
+          START_INDEX="${start}" LIMIT="4" node scripts/pr9263-benchmark-local.mjs
+
+      - name: Upload shard evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dispatch-bench-${{ matrix.shard }}
+          path: |
+            shard-output/result.json
+            case-results/
+          if-no-files-found: warn
+          retention-days: 7
+
+  aggregate:
+    name: aggregate-dispatch-160-cases
+    needs: shard
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Download shard evidence
+        uses: actions/download-artifact@v4
+        with:
+          pattern: dispatch-bench-*
+          path: shards
+
+      - name: Build compact aggregate
+        env:
+          TARGET_SHA: ${{ inputs.target_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p final
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import path from 'node:path';
+          const targetSha = process.env.TARGET_SHA;
+          const files=[], caseFiles=[], stack=['shards'];
+          while(stack.length){
+            const dir=stack.pop();
+            if(!fs.existsSync(dir)) continue;
+            for(const e of fs.readdirSync(dir,{withFileTypes:true})){
+              const p=path.join(dir,e.name);
+              if(e.isDirectory()) stack.push(p);
+              else if(e.isFile() && e.name==='result.json' && p.includes('shard-output')) files.push(p);
+              else if(e.isFile() && e.name.endsWith('.json') && p.includes('case-results')) caseFiles.push(p);
+            }
+          }
+          const summaries=files.map(f=>JSON.parse(fs.readFileSync(f,'utf8'))).sort((a,b)=>a.selectedStartIndex-b.selectedStartIndex);
+          const states={}, functionStates={}, rows=[];
+          let selected=0, completed=0, notRun=0, functions=0, maxShardWallMs=0;
+          for(const s of summaries){
+            selected+=Number(s.selectedCases||0); completed+=Number(s.completedCases||0); notRun+=Number(s.notRun||0);
+            functions+=Number(s.functionCount||0); maxShardWallMs=Math.max(maxShardWallMs,Number(s.performance?.wallMs||0));
+            for(const [k,v] of Object.entries(s.states||{})) states[k]=(states[k]||0)+Number(v||0);
+            for(const [k,v] of Object.entries(s.functionStates||{})) functionStates[k]=(functionStates[k]||0)+Number(v||0);
+            for(const r of s.results||[]) rows.push({id:r.id,state:r.state,reason:r.reason??null,elapsedMs:Number(r.elapsedMs||0),functionCount:Number(r.functionCount||0),functionStates:r.functionStates||{}});
+          }
+          rows.sort((a,b)=>b.elapsedMs-a.elapsedMs);
+          let gotoCount=0, functionsWithGoto=0, functionsWithPseudocode=0;
+          const functionElapsedMs=[], transformPassMs=[], capturePassStateMs=[], capturePassStateRecords=[], safetyCeilingFunctions=[], workBudgetFunctions=[];
+          const passStats=new Map(), overrunFunctions=[];
+          for (const f of caseFiles) {
+            let row;
+            try { row=JSON.parse(fs.readFileSync(f,'utf8')); } catch { continue; }
+            const caseId=Buffer.from(path.basename(f,'.json'),'hex').toString();
+            for (const fn of row.functions || []) {
+              if (Number.isFinite(fn.decompileElapsedMs)) functionElapsedMs.push(fn.decompileElapsedMs);
+              if (Number.isFinite(fn.transformPassManagerMs)) transformPassMs.push(fn.transformPassManagerMs);
+              if (Number.isFinite(fn.capturePassStateMs)) capturePassStateMs.push(fn.capturePassStateMs);
+              if (Number.isFinite(fn.capturePassStateRecords)) capturePassStateRecords.push(fn.capturePassStateRecords);
+              if (fn.transformSafetyCeilingHit) safetyCeilingFunctions.push({caseId,address:fn.address??null,name:fn.name??null});
+              if (fn.transformWorkBudgetHit) workBudgetFunctions.push({caseId,address:fn.address??null,name:fn.name??null});
+              if (Array.isArray(fn.transformPassList)) for (const p of fn.transformPassList) {
+                const key=String(p?.name ?? 'unknown');
+                let stats=passStats.get(key);
+                if(!stats){ stats={ name:key, runs:0, skipped:0, elapsed:[] }; passStats.set(key,stats); }
+                stats.runs+=1;
+                if (p?.skipped === true) stats.skipped+=1;
+                if (Number.isFinite(p?.elapsedMs)) stats.elapsed.push(p.elapsedMs);
+              }
+              if (Number.isFinite(fn.transformDeadlineSpanMs) && Number.isFinite(fn.transformPassManagerMs)) {
+                const overrun=fn.transformPassManagerMs-fn.transformDeadlineSpanMs;
+                if (overrun > 250) overrunFunctions.push({caseId,address:fn.address??null,name:fn.name??null,passManagerMs:fn.transformPassManagerMs,deadlineSpanMs:fn.transformDeadlineSpanMs,overrunMs:overrun,passRuns:fn.transformPassRuns??null,passes:fn.transformPassList??null});
+              }
+              if (typeof fn.pseudocode !== 'string') continue;
+              functionsWithPseudocode++;
+              const matches=fn.pseudocode.match(/\bgoto\b/g) || [];
+              gotoCount += matches.length;
+              if (matches.length > 0) functionsWithGoto++;
+            }
+          }
+          functionElapsedMs.sort((a,b)=>a-b);
+          transformPassMs.sort((a,b)=>a-b);
+          capturePassStateMs.sort((a,b)=>a-b);
+          capturePassStateRecords.sort((a,b)=>a-b);
+          const percentile=(values,p)=>{if(!values.length)return null;const at=(values.length-1)*p,lo=Math.floor(at),hi=Math.ceil(at);return Number((values[lo]+(values[hi]-values[lo])*(at-lo)).toFixed(3));};
+          const out={
+            schema:'hex-dispatch-full-fresh-benchmark/v1',
+            targetSha,
+            expectedShards:40, shardSummaries:summaries.length, selectedCases:selected,
+            completedCases:completed, notRun, states, functionStates, functionCount:functions,
+            controlFlow:{gotoCount,functionsWithGoto,functionsWithPseudocode,caseEvidenceFiles:caseFiles.length},
+            functionTiming:{measuredFunctions:functionElapsedMs.length,p50Ms:percentile(functionElapsedMs,0.50),p95Ms:percentile(functionElapsedMs,0.95),p99Ms:percentile(functionElapsedMs,0.99),maxMs:functionElapsedMs.length?Number(functionElapsedMs.at(-1).toFixed(3)):null,safetyCeilingHits:safetyCeilingFunctions.length,safetyCeilingFunctions,workBudgetHits:workBudgetFunctions.length},
+            transformPassTiming:{measuredFunctions:transformPassMs.length,p50Ms:percentile(transformPassMs,0.50),p95Ms:percentile(transformPassMs,0.95),p99Ms:percentile(transformPassMs,0.99),p99_9Ms:percentile(transformPassMs,0.999),maxMs:transformPassMs.length?Number(transformPassMs.at(-1).toFixed(3)):null},
+            capturePassState:{measuredFunctions:capturePassStateMs.length,p50Ms:percentile(capturePassStateMs,0.50),p95Ms:percentile(capturePassStateMs,0.95),p99Ms:percentile(capturePassStateMs,0.99),p99_9Ms:percentile(capturePassStateMs,0.999),maxMs:capturePassStateMs.length?Number(capturePassStateMs.at(-1).toFixed(3)):null,maxRecords:capturePassStateRecords.length?Number(capturePassStateRecords.at(-1).toFixed(3)):null},
+            transformPassBreakdown:[...passStats.values()].map(s=>({name:s.name,runs:s.runs,skipped:s.skipped,sumMs:Number(s.elapsed.reduce((a,b)=>a+b,0).toFixed(3)),p50Ms:percentile([...s.elapsed].sort((a,b)=>a-b),0.50),p95Ms:percentile([...s.elapsed].sort((a,b)=>a-b),0.95),maxMs:s.elapsed.length?Number(Math.max(...s.elapsed).toFixed(3)):null})).sort((a,b)=>b.sumMs-a.sumMs),
+            ceilingOverruns:{thresholdMs:250,count:overrunFunctions.length,worst:overrunFunctions.sort((a,b)=>b.overrunMs-a.overrunMs).slice(0,40)},
+            performance:{maxShardWallMs,slowestCases:rows.slice(0,20)},
+            complete:summaries.length===40 && selected===160 && completed===160 && notRun===0
+          };
+          fs.writeFileSync('final/result.json',JSON.stringify(out,null,2)+'\n');
+          console.log(JSON.stringify(out));
+          NODE
+
+      - name: Upload final aggregate
+        uses: actions/upload-artifact@v4
+        with:
+          name: dispatch-full-benchmark-final
+          path: final/result.json
+          if-no-files-found: error
+          retention-days: 7
