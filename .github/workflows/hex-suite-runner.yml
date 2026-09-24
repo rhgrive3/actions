@@ -80,7 +80,7 @@ jobs:
           repository: rhgrive3/hex-ida
           ref: ${{ needs.plan.outputs.sha }}
           token: ${{ secrets.HEX_IDA_READ_TOKEN || github.token }}
-          fetch-depth: 1
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 24
