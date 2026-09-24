@@ -4,12 +4,24 @@ on:
   push:
     paths:
       - ".github/workflows/hex-fast-tail-known.yml"
+  workflow_dispatch:
+    inputs:
+      target_sha:
+        description: "Exact 40-hex rhgrive3/hex-ida SHA to profile"
+        required: true
+        type: string
+      runs:
+        description: "Timed runs per function (median is aggregated)"
+        required: false
+        default: "3"
+        type: string
 
 permissions:
   contents: read
 
 env:
-  TARGET_SHA: b1d6954eb3de63e33f24a02ba795adb6d7924062 # fbe: hex-ida integration/hex-completion-20260924 (I) run 2/2
+  TARGET_SHA: ${{ inputs.target_sha || 'b1d6954eb3de63e33f24a02ba795adb6d7924062' }}
+  TAIL_RUNS: ${{ inputs.runs || '1' }}
 
 jobs:
   profile:
@@ -32,7 +44,7 @@ jobs:
           - { case_id: "2/2_clang_O2_no_g", address: "8960", name: "__multf3", binary: "d3f0ab937052c3543cfd9ccdf7c6c0e639165a2ddaf8249c2ca32885a09bcf06.bin" }
           - { case_id: "2/2_clang_O0_g", address: "7760", name: "test_composite_types", binary: "c4809e58a36ecffd4ac6eca7b98343655f59d3d8734c97620d177bd5cb558138.bin" }
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/checkout@v4
@@ -54,11 +66,11 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p evidence
-          timeout 420s node scripts/hex-tail-profile.mjs \
+          timeout 1500s node scripts/hex-tail-profile.mjs \
             --target-root target \
             --binary "target/benchmarks/public/codefuse-arm64/inputs/$BINARY_NAME" \
             --case-id "$CASE_ID" --address "$ADDRESS" --name "$FUNCTION_NAME" \
-            --profile fast --runs 1 --target-sha "$TARGET_SHA" \
+            --profile fast --runs "$TAIL_RUNS" --target-sha "$TARGET_SHA" \
             --out evidence/result.json --cpu-out evidence/profile.cpuprofile
       - uses: actions/upload-artifact@v4
         if: always()
@@ -87,7 +99,7 @@ jobs:
           import fs from 'node:fs'; import path from 'node:path';
           const files=[]; const walk=d=>{if(!fs.existsSync(d))return;for(const e of fs.readdirSync(d,{withFileTypes:true})){const p=path.join(d,e.name);e.isDirectory()?walk(p):(e.name==='result.json'&&files.push(p));}}; walk('profiles');
           const rows=[];
-          for(const f of files){try{const r=JSON.parse(fs.readFileSync(f));const x=r.runs?.[0];rows.push({caseId:r.caseId,name:r.name,address:r.address,elapsedMs:x?.elapsedMs??null,outsideRatio:x?.probe?.outsideRatio??null,passManagerMs:x?.probe?.passManagerMs??null,capturePassStateMs:x?.probe?.capturePassState?.ms??null,captureRecords:x?.probe?.capturePassState?.records??null,cpuTop:(x?.cpuTop??[]).slice(0,10)});}catch{}}
+          for(const f of files){try{const r=JSON.parse(fs.readFileSync(f));const runs=(r.runs??[]).filter(Boolean);const els=runs.map(v=>v.elapsedMs).filter(Number.isFinite).sort((a,b)=>a-b);const x=runs[0];rows.push({caseId:r.caseId,name:r.name,address:r.address,elapsedMs:els.length?els[Math.floor((els.length-1)/2)]:null,runsElapsedMs:runs.map(v=>v.elapsedMs??null),outsideRatio:x?.probe?.outsideRatio??null,passManagerMs:x?.probe?.passManagerMs??null,capturePassStateMs:x?.probe?.capturePassState?.ms??null,captureRecords:x?.probe?.capturePassState?.records??null,cpuTop:(x?.cpuTop??[]).slice(0,10)});}catch{}}
           rows.sort((a,b)=>(b.elapsedMs??0)-(a.elapsedMs??0));
           fs.writeFileSync('final/tail.json',JSON.stringify({schema:'hex-known-tail-focused/v1',targetSha:process.env.TARGET_SHA,profiles:rows.length,rows},null,2)+'\n');
           NODE
