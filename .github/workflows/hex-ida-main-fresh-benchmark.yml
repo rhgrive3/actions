@@ -1,4 +1,4 @@
-# manual-trigger: 2026-09-24 db01853d5 baseline latency and ceiling measurements
+# manual-trigger: 2026-09-24 main a8fa8aec7 FAST measurements for fastbudget
 name: hex-ida main FAST full fresh decompile benchmark 15m
 
 on:
@@ -31,7 +31,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: rhgrive3/hex-ida
-          ref: db01853d58697d4263b2a1c0b9c93bc5317a3ea8
+          ref: a8fa8aec737aacd59ca3f198f69763ce5dcf7924
           path: target
           fetch-depth: 1
 
@@ -46,7 +46,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git -C target rev-parse HEAD)" = "db01853d58697d4263b2a1c0b9c93bc5317a3ea8"
+          test "$(git -C target rev-parse HEAD)" = "a8fa8aec737aacd59ca3f198f69763ce5dcf7924"
           test "$(node --input-type=module -e "import fs from 'node:fs'; const m=JSON.parse(fs.readFileSync('target/benchmarks/public/codefuse-arm64/manifest.json','utf8')); process.stdout.write(String(m.cases.length));")" = "160"
           echo "shard=${SHARD_INDEX} start=$((SHARD_INDEX * 4)) limit=4"
           node --version
@@ -79,7 +79,7 @@ jobs:
           TARGET_DIR: ${{ github.workspace }}/target
           OUTPUT_FILE: ${{ github.workspace }}/shard-output/result.json
           CASE_DIR: ${{ github.workspace }}/case-results
-          TARGET_SHA: db01853d58697d4263b2a1c0b9c93bc5317a3ea8
+          TARGET_SHA: a8fa8aec737aacd59ca3f198f69763ce5dcf7924
           WORKERS: "4"
           CASE_TIMEOUT_MS: "720000"
           SOFT_DEADLINE_MS: "780000"
@@ -149,10 +149,11 @@ jobs:
           for (const f of caseFiles) {
             let row;
             try { row=JSON.parse(fs.readFileSync(f,'utf8')); } catch { continue; }
+            const caseId=Buffer.from(path.basename(f,'.json'),'hex').toString();
             for (const fn of row.functions || []) {
               if (Number.isFinite(fn.decompileElapsedMs)) functionElapsedMs.push(fn.decompileElapsedMs);
-              if (fn.transformSafetyCeilingHit) safetyCeilingFunctions.push({caseId:row.caseId??row.id??null,address:fn.address??null,name:fn.name??null});
-              if (fn.transformWorkBudgetHit) workBudgetFunctions.push({caseId:row.caseId??row.id??null,address:fn.address??null,name:fn.name??null});
+              if (fn.transformSafetyCeilingHit) safetyCeilingFunctions.push({caseId,address:fn.address??null,name:fn.name??null});
+              if (fn.transformWorkBudgetHit) workBudgetFunctions.push({caseId,address:fn.address??null,name:fn.name??null});
               if (typeof fn.pseudocode !== 'string') continue;
               functionsWithPseudocode++;
               const matches=fn.pseudocode.match(/\\bgoto\\b/g) || [];
@@ -164,7 +165,7 @@ jobs:
           const percentile=(values,p)=>{if(!values.length)return null;const at=(values.length-1)*p,lo=Math.floor(at),hi=Math.ceil(at);return Number((values[lo]+(values[hi]-values[lo])*(at-lo)).toFixed(3));};
           const out={
             schema:'hex-main-full-fresh-benchmark/v1',
-            targetSha:'db01853d58697d4263b2a1c0b9c93bc5317a3ea8',
+            targetSha:'a8fa8aec737aacd59ca3f198f69763ce5dcf7924',
             expectedShards:40, shardSummaries:summaries.length, selectedCases:selected,
             completedCases:completed, notRun, states, functionStates, functionCount:functions,
             controlFlow:{gotoCount,functionsWithGoto,functionsWithPseudocode,caseEvidenceFiles:caseFiles.length},
