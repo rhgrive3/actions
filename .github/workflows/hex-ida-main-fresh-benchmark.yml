@@ -64,30 +64,45 @@ jobs:
           old = "    const functions = [];"
           new = """    const functions = [];
           let activeTransformProbe = null;
-          const perfProbe = globalThis.__hexPerfProbe ?? {};
-          const previousRecordPasses = typeof perfProbe.recordPasses === 'function' ? perfProbe.recordPasses.bind(perfProbe) : null;
-          const previousRecordCapture = typeof perfProbe.recordCapturePassState === 'function' ? perfProbe.recordCapturePassState.bind(perfProbe) : null;
-          perfProbe.recordPasses = (metrics, total) => {
-            if (activeTransformProbe) {
-              activeTransformProbe.passManagerMs += Number.isFinite(total) ? total : 0;
-              for (const metric of Array.isArray(metrics) ? metrics : []) {
-                if (metric?.degradationReason === 'transform-safety-ceiling') activeTransformProbe.safetyCeilingHit = true;
-                if (metric?.degradationReason === 'transform-work-budget') activeTransformProbe.workBudgetHit = true;
-              }
+          globalThis.__hexPassManagerProbe = (metrics, total) => {
+            if (!activeTransformProbe) return;
+            activeTransformProbe.passManagerMs += Number.isFinite(total) ? total : 0;
+            for (const metric of Array.isArray(metrics) ? metrics : []) {
+              if (metric?.degradationReason === 'transform-safety-ceiling') activeTransformProbe.safetyCeilingHit = true;
+              if (metric?.degradationReason === 'transform-work-budget') activeTransformProbe.workBudgetHit = true;
             }
-            previousRecordPasses?.(metrics, total);
           };
-          perfProbe.recordCapturePassState = (elapsedMs, records) => {
-            if (activeTransformProbe) {
-              activeTransformProbe.capturePassStateMs += Number.isFinite(elapsedMs) ? elapsedMs : 0;
-              activeTransformProbe.captureRecords += Number.isFinite(records) ? records : 0;
-            }
-            previousRecordCapture?.(elapsedMs, records);
+          globalThis.__hexCapturePassStateProbe = (elapsedMs, records) => {
+            if (!activeTransformProbe) return;
+            activeTransformProbe.capturePassStateMs += Number.isFinite(elapsedMs) ? elapsedMs : 0;
+            activeTransformProbe.captureRecords += Number.isFinite(records) ? records : 0;
           };
-          globalThis.__hexPerfProbe = perfProbe;"""
+          """
           if old not in s:
               raise SystemExit("function-loop-shape-not-found")
           s = s.replace(old, new, 1)
+          manager = Path("target/js/decompiler/passes/manager.js")
+          manager_source = manager.read_text()
+          old = "function capturePassState(state, shouldAbort = null) {\n  const __t0 = globalThis.__hexPerfProbe ? performance.now() : 0; // PERF-PROBE"
+          new = "function capturePassState(state, shouldAbort = null) {\n  const __fastBudgetCaptureStarted = performance.now();\n  const __t0 = globalThis.__hexPerfProbe ? performance.now() : 0; // PERF-PROBE"
+          if old not in manager_source:
+              raise SystemExit("capture-pass-state-shape-not-found")
+          manager_source = manager_source.replace(old, new, 1)
+          old = "      if (globalThis.__hexPerfProbe) globalThis.__hexPerfProbe.recordCapturePassState?.(performance.now() - __t0, records.length);\n      return null;"
+          new = "      if (globalThis.__hexPerfProbe) globalThis.__hexPerfProbe.recordCapturePassState?.(performance.now() - __t0, records.length);\n      globalThis.__hexCapturePassStateProbe?.(performance.now() - __fastBudgetCaptureStarted, records.length);\n      return null;"
+          if old not in manager_source:
+              raise SystemExit("capture-abort-instrumentation-shape-not-found")
+          manager_source = manager_source.replace(old, new, 1)
+          old = "  if (globalThis.__hexPerfProbe) globalThis.__hexPerfProbe.recordCapturePassState?.(performance.now() - __t0, records.length); // PERF-PROBE"
+          new = old + "\n  globalThis.__hexCapturePassStateProbe?.(performance.now() - __fastBudgetCaptureStarted, records.length);"
+          if old not in manager_source:
+              raise SystemExit("capture-complete-instrumentation-shape-not-found")
+          manager_source = manager_source.replace(old, new, 1)
+          old = "    globalThis.__hexPerfProbe?.recordPasses?.(state.passMetrics, state.passElapsedMs); // PERF-PROBE"
+          new = old + "\n    globalThis.__hexPassManagerProbe?.(state.passMetrics, state.passElapsedMs);"
+          if old not in manager_source:
+              raise SystemExit("pass-metrics-instrumentation-shape-not-found")
+          manager.write_text(manager_source.replace(old, new, 1))
           old = "const response = await product.query.decompile(currentSnapshot, fn.address)"
           new = """const transformProbe = { passManagerMs: 0, capturePassStateMs: 0, captureRecords: 0, safetyCeilingHit: false, workBudgetHit: false };
                   activeTransformProbe = transformProbe;
