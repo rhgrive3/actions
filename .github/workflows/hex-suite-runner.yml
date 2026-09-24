@@ -92,6 +92,11 @@ jobs:
           for x in clang-18 ld.lld-18 lld-link-18 llvm-objdump-18 llvm-readobj-18 llvm-mc-18 llvm-objcopy-18; do
             test -x "/usr/bin/$x" || sudo ln -sf "/usr/lib/llvm-18/bin/${x%-18}" "/usr/bin/$x"
           done
+          # Unversioned LLVM names used by fixture builders (e.g. tests/phase7/cxx spawn `ld.lld`).
+          for x in ld.lld lld-link llvm-objcopy llvm-strip llvm-readobj llvm-objdump llvm-mc llvm-ar; do
+            command -v "$x" >/dev/null 2>&1 || { test -x "/usr/lib/llvm-18/bin/$x" && sudo ln -sf "/usr/lib/llvm-18/bin/$x" "/usr/local/bin/$x"; }
+          done
+          ld.lld --version | head -1
           npm ci --no-audit --no-fund
           npx --no-install playwright install --with-deps chromium webkit >/dev/null
           npm run userscript:build >/dev/null
