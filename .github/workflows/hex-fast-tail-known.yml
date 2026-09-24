@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 env:
-  TARGET_SHA: e07150ee00eb0951ed0852a9b5d80b39ff1eaafc # fbe: hex-ida origin/main (M) run 2/2
+  TARGET_SHA: b1d6954eb3de63e33f24a02ba795adb6d7924062 # fbe: hex-ida integration/hex-completion-20260924 (I) run 1/2
 
 jobs:
   profile:
