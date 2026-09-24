@@ -1,4 +1,4 @@
-# manual-trigger: 2026-09-24 main a8fa8aec7 FAST measurements for fastbudget
+# manual-trigger: 2026-09-24 fastbudget a8fa8aec7 per-pass overshoot attribution (deadline span + pass list)
 name: hex-ida main FAST full fresh decompile benchmark 15m
 
 on:
@@ -64,10 +64,17 @@ jobs:
           old = "    const functions = [];"
           new = """    const functions = [];
           let activeTransformProbe = null;
-          globalThis.__hexPassManagerProbe = (metrics, total) => {
+          globalThis.__hexPassManagerProbe = (metrics, total, context) => {
             if (!activeTransformProbe) return;
             activeTransformProbe.passManagerMs += Number.isFinite(total) ? total : 0;
+            activeTransformProbe.passRuns += 1;
+            if (context && Number.isFinite(context.deadline) && Number.isFinite(context.totalStart)) {
+              activeTransformProbe.deadlineSpanMs = Math.max(Number(activeTransformProbe.deadlineSpanMs || 0), context.deadline - context.totalStart);
+            }
             for (const metric of Array.isArray(metrics) ? metrics : []) {
+              const elapsedMs = Number.isFinite(metric?.elapsedMs) ? metric.elapsedMs : null;
+              activeTransformProbe.passList.push({ name: metric?.name ?? null, elapsedMs, skipped: metric?.skipped === true, reason: metric?.degradationReason ?? metric?.reason ?? null });
+              if (elapsedMs != null) activeTransformProbe.passMaxMs = Math.max(Number(activeTransformProbe.passMaxMs || 0), elapsedMs);
               if (metric?.degradationReason === 'transform-safety-ceiling') activeTransformProbe.safetyCeilingHit = true;
               if (metric?.degradationReason === 'transform-work-budget') activeTransformProbe.workBudgetHit = true;
             }
@@ -99,12 +106,12 @@ jobs:
               raise SystemExit("capture-complete-instrumentation-shape-not-found")
           manager_source = manager_source.replace(old, new, 1)
           old = "    globalThis.__hexPerfProbe?.recordPasses?.(state.passMetrics, state.passElapsedMs); // PERF-PROBE"
-          new = old + "\n    globalThis.__hexPassManagerProbe?.(state.passMetrics, state.passElapsedMs);"
+          new = old + "\n    globalThis.__hexPassManagerProbe?.(state.passMetrics, state.passElapsedMs, { deadline: Number.isFinite(deadline) ? deadline : null, totalStart, timeBudgetMs: totalBudget, deterministic });"
           if old not in manager_source:
               raise SystemExit("pass-metrics-instrumentation-shape-not-found")
           manager.write_text(manager_source.replace(old, new, 1))
           old = "const response = await product.query.decompile(currentSnapshot, fn.address)"
-          new = """const transformProbe = { passManagerMs: 0, capturePassStateMs: 0, captureRecords: 0, safetyCeilingHit: false, workBudgetHit: false };
+          new = """const transformProbe = { passManagerMs: 0, capturePassStateMs: 0, captureRecords: 0, safetyCeilingHit: false, workBudgetHit: false, passRuns: 0, passList: [], passMaxMs: 0, deadlineSpanMs: 0 };
                   activeTransformProbe = transformProbe;
                   const decompileStarted = performance.now();
                   let response;
@@ -119,7 +126,7 @@ jobs:
           s = s.replace(old, new, 1)
           old = "          pseudocode: value?.pseudocode ?? value?.code ?? null,"
           new = "          pseudocode: value?.pseudocode ?? value?.code ?? null,\n          decompileElapsedMs,\n          transformPassManagerMs: transformProbe.passManagerMs,\n          transformSafetyCeilingHit: transformProbe.safetyCeilingHit || (value?.warnings ?? []).some(w => typeof w === 'string' && w.startsWith('Decompiler pass budget exhausted')),\n          transformWorkBudgetHit: transformProbe.workBudgetHit || (value?.warnings ?? []).some(w => typeof w === 'string' && (w.includes('work budget') || w.includes('rewrite budget'))),"
-          new = "          pseudocode: value?.pseudocode ?? value?.code ?? null,\n          decompileElapsedMs,\n          transformPassManagerMs: transformProbe.passManagerMs,\n          capturePassStateMs: transformProbe.capturePassStateMs,\n          capturePassStateRecords: transformProbe.captureRecords,\n          transformSafetyCeilingHit: transformProbe.safetyCeilingHit || (value?.warnings ?? []).some(w => typeof w === 'string' && w.startsWith('Decompiler pass budget exhausted')),\n          transformWorkBudgetHit: transformProbe.workBudgetHit || (value?.warnings ?? []).some(w => typeof w === 'string' && (w.includes('work budget') || w.includes('rewrite budget'))),"
+          new = "          pseudocode: value?.pseudocode ?? value?.code ?? null,\n          decompileElapsedMs,\n          transformPassManagerMs: transformProbe.passManagerMs,\n          capturePassStateMs: transformProbe.capturePassStateMs,\n          capturePassStateRecords: transformProbe.captureRecords,\n          transformDeadlineSpanMs: transformProbe.deadlineSpanMs,\n          transformPassRuns: transformProbe.passRuns,\n          transformPassMaxMs: transformProbe.passMaxMs,\n          transformPassList: transformProbe.passList,\n          transformSafetyCeilingHit: transformProbe.safetyCeilingHit || (value?.warnings ?? []).some(w => typeof w === 'string' && w.startsWith('Decompiler pass budget exhausted')),\n          transformWorkBudgetHit: transformProbe.workBudgetHit || (value?.warnings ?? []).some(w => typeof w === 'string' && (w.includes('work budget') || w.includes('rewrite budget'))),"
           if old not in s:
               raise SystemExit("function-result-shape-not-found")
           p.write_text(s.replace(old, new, 1))
@@ -198,6 +205,7 @@ jobs:
           rows.sort((a,b)=>b.elapsedMs-a.elapsedMs);
           let gotoCount=0, functionsWithGoto=0, functionsWithPseudocode=0;
           const functionElapsedMs=[], transformPassMs=[], capturePassStateMs=[], capturePassStateRecords=[], safetyCeilingFunctions=[], workBudgetFunctions=[];
+          const passStats=new Map(), overrunFunctions=[];
           for (const f of caseFiles) {
             let row;
             try { row=JSON.parse(fs.readFileSync(f,'utf8')); } catch { continue; }
@@ -209,6 +217,18 @@ jobs:
               if (Number.isFinite(fn.capturePassStateRecords)) capturePassStateRecords.push(fn.capturePassStateRecords);
               if (fn.transformSafetyCeilingHit) safetyCeilingFunctions.push({caseId,address:fn.address??null,name:fn.name??null});
               if (fn.transformWorkBudgetHit) workBudgetFunctions.push({caseId,address:fn.address??null,name:fn.name??null});
+              if (Array.isArray(fn.transformPassList)) for (const p of fn.transformPassList) {
+                const key=String(p?.name ?? 'unknown');
+                let stats=passStats.get(key);
+                if(!stats){ stats={ name:key, runs:0, skipped:0, elapsed:[] }; passStats.set(key,stats); }
+                stats.runs+=1;
+                if (p?.skipped === true) stats.skipped+=1;
+                if (Number.isFinite(p?.elapsedMs)) stats.elapsed.push(p.elapsedMs);
+              }
+              if (Number.isFinite(fn.transformDeadlineSpanMs) && Number.isFinite(fn.transformPassManagerMs)) {
+                const overrun=fn.transformPassManagerMs-fn.transformDeadlineSpanMs;
+                if (overrun > 250) overrunFunctions.push({caseId,address:fn.address??null,name:fn.name??null,passManagerMs:fn.transformPassManagerMs,deadlineSpanMs:fn.transformDeadlineSpanMs,overrunMs:overrun,passRuns:fn.transformPassRuns??null,passes:fn.transformPassList??null});
+              }
               if (typeof fn.pseudocode !== 'string') continue;
               functionsWithPseudocode++;
               const matches=fn.pseudocode.match(/\\bgoto\\b/g) || [];
@@ -230,6 +250,8 @@ jobs:
             functionTiming:{measuredFunctions:functionElapsedMs.length,p50Ms:percentile(functionElapsedMs,0.50),p95Ms:percentile(functionElapsedMs,0.95),p99Ms:percentile(functionElapsedMs,0.99),maxMs:functionElapsedMs.length?Number(functionElapsedMs.at(-1).toFixed(3)):null,safetyCeilingHits:safetyCeilingFunctions.length,safetyCeilingFunctions,workBudgetHits:workBudgetFunctions.length},
             transformPassTiming:{measuredFunctions:transformPassMs.length,p50Ms:percentile(transformPassMs,0.50),p95Ms:percentile(transformPassMs,0.95),p99Ms:percentile(transformPassMs,0.99),p99_9Ms:percentile(transformPassMs,0.999),maxMs:transformPassMs.length?Number(transformPassMs.at(-1).toFixed(3)):null},
             capturePassState:{measuredFunctions:capturePassStateMs.length,p50Ms:percentile(capturePassStateMs,0.50),p95Ms:percentile(capturePassStateMs,0.95),p99Ms:percentile(capturePassStateMs,0.99),p99_9Ms:percentile(capturePassStateMs,0.999),maxMs:capturePassStateMs.length?Number(capturePassStateMs.at(-1).toFixed(3)):null,maxRecords:capturePassStateRecords.length?Number(capturePassStateRecords.at(-1).toFixed(3)):null},
+            transformPassBreakdown:[...passStats.values()].map(s=>({name:s.name,runs:s.runs,skipped:s.skipped,sumMs:Number(s.elapsed.reduce((a,b)=>a+b,0).toFixed(3)),p50Ms:percentile([...s.elapsed].sort((a,b)=>a-b),0.50),p95Ms:percentile([...s.elapsed].sort((a,b)=>a-b),0.95),maxMs:s.elapsed.length?Number(Math.max(...s.elapsed).toFixed(3)):null})).sort((a,b)=>b.sumMs-a.sumMs),
+            ceilingOverruns:{thresholdMs:250,count:overrunFunctions.length,worst:overrunFunctions.sort((a,b)=>b.overrunMs-a.overrunMs).slice(0,40)},
             performance:{maxShardWallMs,slowestCases:rows.slice(0,20)},
             complete:summaries.length===40 && selected===160 && completed===160 && notRun===0
           };
