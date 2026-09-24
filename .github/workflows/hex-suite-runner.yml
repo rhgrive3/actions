@@ -1,0 +1,124 @@
+name: hex suite runner
+
+# Runs heavy hex-ida test commands on GitHub runners so local agents do not
+# have to. One job per command; each job uploads its full log.
+#
+#   gh workflow run hex-suite-runner.yml -R rhgrive3/actions \
+#     -f ref=<hex-ida branch or sha> -f label=<name> \
+#     -f commands='["npm run phase7:test","node --test tests/foo.test.mjs"]'
+#
+# Leave commands empty to run every step of `npm run check` (from the
+# target's package.json), split so one failing step never hides another.
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: rhgrive3/hex-ida branch, tag or sha
+        required: true
+      label:
+        description: short name shown in the run title
+        required: false
+        default: suite
+      commands:
+        description: JSON array of shell commands (empty = all check steps)
+        required: false
+        default: ""
+
+run-name: "suite ${{ inputs.label }} @ ${{ inputs.ref }}"
+
+permissions:
+  contents: read
+
+jobs:
+  plan:
+    runs-on: ubuntu-24.04
+    outputs:
+      commands: ${{ steps.plan.outputs.commands }}
+      sha: ${{ steps.plan.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: rhgrive3/hex-ida
+          ref: ${{ inputs.ref }}
+          token: ${{ secrets.HEX_IDA_READ_TOKEN || github.token }}
+          fetch-depth: 1
+      - id: plan
+        env:
+          COMMANDS: ${{ inputs.commands }}
+        run: |
+          set -euo pipefail
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          node --input-type=module -e '
+            import fs from "node:fs";
+            let cmds = (process.env.COMMANDS || "").trim();
+            let list;
+            if (cmds) list = JSON.parse(cmds);
+            else {
+              const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
+              list = pkg.scripts.check.split("&&").map((s) => s.trim());
+              // `npm test` is one long && chain; split it so every sub-command reports.
+              const i = list.indexOf("npm test");
+              if (i >= 0) list.splice(i, 1, ...pkg.scripts.test.split("&&").map((s) => s.trim()));
+            }
+            if (!Array.isArray(list) || list.length === 0 || list.length > 256) throw new Error("bad command list");
+            fs.appendFileSync(process.env.GITHUB_OUTPUT, "commands=" + JSON.stringify(list) + "\n");
+          '
+
+  run:
+    needs: plan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 150
+    strategy:
+      fail-fast: false
+      max-parallel: 40
+      matrix:
+        command: ${{ fromJSON(needs.plan.outputs.commands) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: rhgrive3/hex-ida
+          ref: ${{ needs.plan.outputs.sha }}
+          token: ${{ secrets.HEX_IDA_READ_TOKEN || github.token }}
+          fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Toolchain
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq clang-18 lld-18 llvm-18 >/dev/null
+          for x in clang-18 ld.lld-18 lld-link-18 llvm-objdump-18 llvm-readobj-18 llvm-mc-18 llvm-objcopy-18; do
+            test -x "/usr/bin/$x" || sudo ln -sf "/usr/lib/llvm-18/bin/${x%-18}" "/usr/bin/$x"
+          done
+          npm ci --no-audit --no-fund
+          npx --no-install playwright install --with-deps chromium webkit >/dev/null
+          npm run userscript:build >/dev/null
+          git status --porcelain
+      - name: Run
+        id: run
+        env:
+          CMD: ${{ matrix.command }}
+        run: |
+          set -uo pipefail
+          mkdir -p out
+          start=$(date +%s)
+          bash -c "$CMD" > out/full.log 2>&1
+          code=$?
+          echo "exit=$code seconds=$(( $(date +%s) - start ))" | tee out/status.txt
+          printf '%s\n' "$CMD" > out/command.txt
+          tail -80 out/full.log
+          exit $code
+      - name: Name artifact
+        if: always()
+        id: name
+        env:
+          CMD: ${{ matrix.command }}
+        run: echo "n=$(printf '%s' "$CMD" | tr -c 'A-Za-z0-9._-' '_' | cut -c1-90)" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: log-${{ steps.name.outputs.n }}
+          path: out/
+          retention-days: 7
