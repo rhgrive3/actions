@@ -8,42 +8,18 @@
     "headers": {
       "Accept-Ranges": "bytes",
       "Access-Control-Allow-Origin": "*",
-      "Age": "45246",
+      "Age": "46432",
       "Cache-Control": "public, max-age=0, must-revalidate",
       "Content-Disposition": "inline",
       "Content-Length": "2290",
       "Content-Type": "text/html; charset=utf-8",
-      "Date": "Fri, 25 Sep 2026 17:48:46 GMT",
+      "Date": "Fri, 25 Sep 2026 17:50:47 GMT",
       "Etag": "\"19b2872ee59a0722027d970297d3c6b6\"",
-      "Last-Modified": "Fri, 25 Sep 2026 05:14:39 GMT",
+      "Last-Modified": "Fri, 25 Sep 2026 04:56:54 GMT",
       "Server": "Vercel",
       "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
       "X-Vercel-Cache": "HIT",
-      "X-Vercel-Id": "sfo1::cmdn9-1790358526219-61d1cac6d9f0",
-      "Connection": "close"
-    }
-  },
-  {
-    "url": "https://inkwave-six.vercel.app/assets/fonts/Rubik-latin.woff2",
-    "final_url": "https://inkwave-six.vercel.app/assets/fonts/Rubik-latin.woff2",
-    "path": "assets/fonts/Rubik-latin.woff2",
-    "content_type": "font/woff2",
-    "bytes": 35324,
-    "headers": {
-      "Accept-Ranges": "bytes",
-      "Access-Control-Allow-Origin": "*",
-      "Age": "2371",
-      "Cache-Control": "public, max-age=31536000, immutable",
-      "Content-Disposition": "inline; filename=\"Rubik-latin.woff2\"",
-      "Content-Length": "35324",
-      "Content-Type": "font/woff2",
-      "Date": "Fri, 25 Sep 2026 17:48:46 GMT",
-      "Etag": "\"94df5f5371c15d43ad8c4420affa4ec2\"",
-      "Last-Modified": "Fri, 25 Sep 2026 17:09:15 GMT",
-      "Server": "Vercel",
-      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
-      "X-Vercel-Cache": "HIT",
-      "X-Vercel-Id": "sfo1::8dg6h-1790358526342-3f5823235494",
+      "X-Vercel-Id": "iad1::89tn6-1790358647409-8fce48135e8b",
       "Connection": "close"
     }
   },
@@ -56,18 +32,890 @@
     "headers": {
       "Accept-Ranges": "bytes",
       "Access-Control-Allow-Origin": "*",
-      "Age": "43540",
+      "Age": "46476",
       "Cache-Control": "public, max-age=0, must-revalidate",
       "Content-Disposition": "inline; filename=\"main.js\"",
       "Content-Length": "44614",
       "Content-Type": "application/javascript; charset=utf-8",
-      "Date": "Fri, 25 Sep 2026 17:48:46 GMT",
+      "Date": "Fri, 25 Sep 2026 17:50:47 GMT",
       "Etag": "\"6ad0543afc2571670f55ae7d6d8df8a7\"",
-      "Last-Modified": "Fri, 25 Sep 2026 05:43:05 GMT",
+      "Last-Modified": "Fri, 25 Sep 2026 04:56:10 GMT",
       "Server": "Vercel",
       "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
       "X-Vercel-Cache": "HIT",
-      "X-Vercel-Id": "sfo1::2cpq7-1790358526441-0dcf33fb5405",
+      "X-Vercel-Id": "iad1::9n4h6-1790358647440-bf899f92c439",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/vendor/three/build/three.module.js",
+    "final_url": "https://inkwave-six.vercel.app/vendor/three/build/three.module.js",
+    "path": "vendor/three/build/three.module.js",
+    "content_type": "application/javascript; charset=utf-8",
+    "bytes": 662772,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "46357",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"three.module.js\"",
+      "Content-Length": "662772",
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:50:47 GMT",
+      "Etag": "\"3f776a49922e8a0b0e491c2c5fe641f1\"",
+      "Last-Modified": "Fri, 25 Sep 2026 04:58:10 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "iad1::kw5jk-1790358647471-33938c3a8dc1",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/world/levelMaterial.js",
+    "final_url": "https://inkwave-six.vercel.app/src/world/levelMaterial.js",
+    "path": "src/world/levelMaterial.js",
+    "content_type": "application/javascript; charset=utf-8",
+    "bytes": 34265,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "46357",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"levelMaterial.js\"",
+      "Content-Length": "34265",
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:50:47 GMT",
+      "Etag": "\"09b21ded8461b0500dcc28cbb26f9715\"",
+      "Last-Modified": "Fri, 25 Sep 2026 04:58:10 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "iad1::cdbfs-1790358647568-9dd353d674b4",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/dev/stubs.js",
+    "final_url": "https://inkwave-six.vercel.app/src/dev/stubs.js",
+    "path": "src/dev/stubs.js",
+    "content_type": "application/javascript; charset=utf-8",
+    "bytes": 2123,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "37041",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"stubs.js\"",
+      "Content-Length": "2123",
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:50:47 GMT",
+      "Etag": "\"4d54d725f885ad274c978a30dff194e4\"",
+      "Last-Modified": "Fri, 25 Sep 2026 07:33:26 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "iad1::dhqp6-1790358647663-a28554927d9f",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/world/dressing.js",
+    "final_url": "https://inkwave-six.vercel.app/src/world/dressing.js",
+    "path": "src/world/dressing.js",
+    "content_type": "application/javascript; charset=utf-8",
+    "bytes": 12636,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "46357",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"dressing.js\"",
+      "Content-Length": "12636",
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:50:47 GMT",
+      "Etag": "\"ed850b51887850e060d77cc421d6c5a4\"",
+      "Last-Modified": "Fri, 25 Sep 2026 04:58:10 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "iad1::jr8cx-1790358647720-f05b1e2ee332",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/game/cameraRig.js",
+    "final_url": "https://inkwave-six.vercel.app/src/game/cameraRig.js",
+    "path": "src/game/cameraRig.js",
+    "content_type": "application/javascript; charset=utf-8",
+    "bytes": 19837,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "46499",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"cameraRig.js\"",
+      "Content-Length": "19837",
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:50:47 GMT",
+      "Etag": "\"e04d9f637be8959545af4894908e39e0\"",
+      "Last-Modified": "Fri, 25 Sep 2026 04:55:48 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "iad1::885qn-1790358647751-14c010d138d7",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/game/minimap.js",
+    "final_url": "https://inkwave-six.vercel.app/src/game/minimap.js",
+    "path": "src/game/minimap.js",
+    "content_type": "application/javascript; charset=utf-8",
+    "bytes": 23925,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "46357",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"minimap.js\"",
+      "Content-Length": "23925",
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:50:47 GMT",
+      "Etag": "\"687490451bdc2bcf6b4cbbfade958e71\"",
+      "Last-Modified": "Fri, 25 Sep 2026 04:58:10 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "iad1::9t96h-1790358647777-a85fabcdd83e",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/game/showcase.js",
+    "final_url": "https://inkwave-six.vercel.app/src/game/showcase.js",
+    "path": "src/game/showcase.js",
+    "content_type": "application/javascript; charset=utf-8",
+    "bytes": 66720,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "46357",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"showcase.js\"",
+      "Content-Length": "66720",
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:50:47 GMT",
+      "Etag": "\"ebfd86ea4a4f98cf8d9998353ce12311\"",
+      "Last-Modified": "Fri, 25 Sep 2026 04:58:10 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "iad1::6qcbw-1790358647837-94fda4cbb1dc",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/world/props.js",
+    "final_url": "https://inkwave-six.vercel.app/src/world/props.js",
+    "path": "src/world/props.js",
+    "content_type": "application/javascript; charset=utf-8",
+    "bytes": 228003,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "46356",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"props.js\"",
+      "Content-Length": "228003",
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:50:47 GMT",
+      "Etag": "\"a938bcaa231e65ed213e93f674c00a7a\"",
+      "Last-Modified": "Fri, 25 Sep 2026 04:58:11 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "iad1::6mtpl-1790358647937-5dcb5c959bdc",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/world/decor.js",
+    "final_url": "https://inkwave-six.vercel.app/src/world/decor.js",
+    "path": "src/world/decor.js",
+    "content_type": "application/javascript; charset=utf-8",
+    "bytes": 28133,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "46357",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"decor.js\"",
+      "Content-Length": "28133",
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:50:47 GMT",
+      "Etag": "\"57d6cacd7e373d85c81b0ddeec7be584\"",
+      "Last-Modified": "Fri, 25 Sep 2026 04:58:10 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "iad1::dfhk5-1790358647982-3342fe6dba53",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/config.js",
+    "final_url": "https://inkwave-six.vercel.app/src/config.js",
+    "path": "src/config.js",
+    "content_type": "application/javascript; charset=utf-8",
+    "bytes": 10441,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "43925",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"config.js\"",
+      "Content-Length": "10441",
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:50:48 GMT",
+      "Etag": "\"eca59847c6698dc428a2d0de35f21cb6\"",
+      "Last-Modified": "Fri, 25 Sep 2026 05:38:42 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "iad1::kvzfw-1790358648038-d581d3b5fad2",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/game/match.js",
+    "final_url": "https://inkwave-six.vercel.app/src/game/match.js",
+    "path": "src/game/match.js",
+    "content_type": "application/javascript; charset=utf-8",
+    "bytes": 6394,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "46357",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"match.js\"",
+      "Content-Length": "6394",
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:50:48 GMT",
+      "Etag": "\"42a0553b9a358f0d05276f4c08c17574\"",
+      "Last-Modified": "Fri, 25 Sep 2026 04:58:10 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "iad1::mlslw-1790358648067-2fb1549b9ac0",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/world/murals.js",
+    "final_url": "https://inkwave-six.vercel.app/src/world/murals.js",
+    "path": "src/world/murals.js",
+    "content_type": "application/javascript; charset=utf-8",
+    "bytes": 5582,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "46357",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"murals.js\"",
+      "Content-Length": "5582",
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:50:48 GMT",
+      "Etag": "\"41cafc83251857729ad5c62dc8a0209e\"",
+      "Last-Modified": "Fri, 25 Sep 2026 04:58:10 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "iad1::2qcvk-1790358648103-3d922362d05e",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/world/level.js",
+    "final_url": "https://inkwave-six.vercel.app/src/world/level.js",
+    "path": "src/world/level.js",
+    "content_type": "application/javascript; charset=utf-8",
+    "bytes": 19880,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "46357",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"level.js\"",
+      "Content-Length": "19880",
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:50:48 GMT",
+      "Etag": "\"fd14cff738d14f40b8e0555c69bdd074\"",
+      "Last-Modified": "Fri, 25 Sep 2026 04:58:10 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "iad1::mlslw-1790358648124-b53e12e79a13",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/game/weapons.js",
+    "final_url": "https://inkwave-six.vercel.app/src/game/weapons.js",
+    "path": "src/game/weapons.js",
+    "content_type": "application/javascript; charset=utf-8",
+    "bytes": 41810,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "46499",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"weapons.js\"",
+      "Content-Length": "41810",
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:50:48 GMT",
+      "Etag": "\"38e75c33e2fd6ce6cb18224cc73b7fd2\"",
+      "Last-Modified": "Fri, 25 Sep 2026 04:55:48 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "iad1::kxp6w-1790358648160-e100422c2363",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/fx/fxHooks.js",
+    "final_url": "https://inkwave-six.vercel.app/src/fx/fxHooks.js",
+    "path": "src/fx/fxHooks.js",
+    "content_type": "application/javascript; charset=utf-8",
+    "bytes": 30237,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "46352",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"fxHooks.js\"",
+      "Content-Length": "30237",
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:50:48 GMT",
+      "Etag": "\"3a70584267cff23dfc05e45bdffaba38\"",
+      "Last-Modified": "Fri, 25 Sep 2026 04:58:15 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "iad1::m9fg5-1790358648184-7e7d14836962",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/core/ctx.js",
+    "final_url": "https://inkwave-six.vercel.app/src/core/ctx.js",
+    "path": "src/core/ctx.js",
+    "content_type": "application/javascript; charset=utf-8",
+    "bytes": 1928,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "42405",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"ctx.js\"",
+      "Content-Length": "1928",
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:50:48 GMT",
+      "Etag": "\"496309080a19942e542b8d920ff8861a\"",
+      "Last-Modified": "Fri, 25 Sep 2026 06:04:03 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "iad1::p65d5-1790358648275-1fedd359edf3",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/game/nav.js",
+    "final_url": "https://inkwave-six.vercel.app/src/game/nav.js",
+    "path": "src/game/nav.js",
+    "content_type": "application/javascript; charset=utf-8",
+    "bytes": 8156,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "46358",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"nav.js\"",
+      "Content-Length": "8156",
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:50:48 GMT",
+      "Etag": "\"afbd5b5f34a1415c3645209ad0b69e4a\"",
+      "Last-Modified": "Fri, 25 Sep 2026 04:58:10 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "iad1::wkjpt-1790358648365-15d31457a4a6",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/core/renderer.js",
+    "final_url": "https://inkwave-six.vercel.app/src/core/renderer.js",
+    "path": "src/core/renderer.js",
+    "content_type": "application/javascript; charset=utf-8",
+    "bytes": 8927,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "46358",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"renderer.js\"",
+      "Content-Length": "8927",
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:50:48 GMT",
+      "Etag": "\"2a6242f2d0a8e1e8d32c7f72a2227b51\"",
+      "Last-Modified": "Fri, 25 Sep 2026 04:58:10 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "iad1::jgt57-1790358648399-887a5e6b0c78",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/game/physics.js",
+    "final_url": "https://inkwave-six.vercel.app/src/game/physics.js",
+    "path": "src/game/physics.js",
+    "content_type": "application/javascript; charset=utf-8",
+    "bytes": 16970,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "46358",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"physics.js\"",
+      "Content-Length": "16970",
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:50:48 GMT",
+      "Etag": "\"e10d0e9c72cbafbe9176f90345004b77\"",
+      "Last-Modified": "Fri, 25 Sep 2026 04:58:10 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "iad1::chfkg-1790358648425-8fb9397459be",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/world/maps.js",
+    "final_url": "https://inkwave-six.vercel.app/src/world/maps.js",
+    "path": "src/world/maps.js",
+    "content_type": "application/javascript; charset=utf-8",
+    "bytes": 10949,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "46358",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"maps.js\"",
+      "Content-Length": "10949",
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:50:48 GMT",
+      "Etag": "\"bd0c75f5f7f6b02a85560cf859bc280c\"",
+      "Last-Modified": "Fri, 25 Sep 2026 04:58:10 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "iad1::5h7k2-1790358648476-9b5d54f769d4",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/ui/menus.js",
+    "final_url": "https://inkwave-six.vercel.app/src/ui/menus.js",
+    "path": "src/ui/menus.js",
+    "content_type": "application/javascript; charset=utf-8",
+    "bytes": 99856,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "46358",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"menus.js\"",
+      "Content-Length": "99856",
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:50:48 GMT",
+      "Etag": "\"096aa73cb9416f3611191697e34fee86\"",
+      "Last-Modified": "Fri, 25 Sep 2026 04:58:10 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "iad1::p8wbs-1790358648695-80bfa0ed17f4",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/ui/hud.js",
+    "final_url": "https://inkwave-six.vercel.app/src/ui/hud.js",
+    "path": "src/ui/hud.js",
+    "content_type": "application/javascript; charset=utf-8",
+    "bytes": 76744,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "46358",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"hud.js\"",
+      "Content-Length": "76744",
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:50:48 GMT",
+      "Etag": "\"2d33a7700227d8b09e312503c3dba3c0\"",
+      "Last-Modified": "Fri, 25 Sep 2026 04:58:10 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "iad1::w7c5j-1790358648730-75418706cd22",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/fx/fx.js",
+    "final_url": "https://inkwave-six.vercel.app/src/fx/fx.js",
+    "path": "src/fx/fx.js",
+    "content_type": "application/javascript; charset=utf-8",
+    "bytes": 108205,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "46358",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"fx.js\"",
+      "Content-Length": "108205",
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:50:48 GMT",
+      "Etag": "\"b59820e3e18bb3d9f1dde12d04685237\"",
+      "Last-Modified": "Fri, 25 Sep 2026 04:58:10 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "iad1::p65d5-1790358648760-263b25cb8035",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/world/paint.js",
+    "final_url": "https://inkwave-six.vercel.app/src/world/paint.js",
+    "path": "src/world/paint.js",
+    "content_type": "application/javascript; charset=utf-8",
+    "bytes": 22169,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "46358",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"paint.js\"",
+      "Content-Length": "22169",
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:50:48 GMT",
+      "Etag": "\"bfdecd030386aaf4113923e42cb42c4a\"",
+      "Last-Modified": "Fri, 25 Sep 2026 04:58:10 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "iad1::vl5qr-1790358648793-1d716522e74b",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/audio/audio.js",
+    "final_url": "https://inkwave-six.vercel.app/src/audio/audio.js",
+    "path": "src/audio/audio.js",
+    "content_type": "application/javascript; charset=utf-8",
+    "bytes": 53493,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "46358",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"audio.js\"",
+      "Content-Length": "53493",
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:50:48 GMT",
+      "Etag": "\"cdd9de2cb8d6eb79dc27963fee43c813\"",
+      "Last-Modified": "Fri, 25 Sep 2026 04:58:10 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "iad1::2rw9h-1790358648820-803f3ab3944d",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/world/texlib.js",
+    "final_url": "https://inkwave-six.vercel.app/src/world/texlib.js",
+    "path": "src/world/texlib.js",
+    "content_type": "application/javascript; charset=utf-8",
+    "bytes": 44969,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "46358",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"texlib.js\"",
+      "Content-Length": "44969",
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:50:48 GMT",
+      "Etag": "\"fee43d6a1a884de1fcb0db98b93d188d\"",
+      "Last-Modified": "Fri, 25 Sep 2026 04:58:10 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "iad1::qc49c-1790358648863-8c7868de1a1f",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/world/mapThumb.js",
+    "final_url": "https://inkwave-six.vercel.app/src/world/mapThumb.js",
+    "path": "src/world/mapThumb.js",
+    "content_type": "application/javascript; charset=utf-8",
+    "bytes": 5364,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "46358",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"mapThumb.js\"",
+      "Content-Length": "5364",
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:50:48 GMT",
+      "Etag": "\"c746c788218f0cf354c099f144b8abb4\"",
+      "Last-Modified": "Fri, 25 Sep 2026 04:58:10 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "iad1::hd56b-1790358648896-ddeeee9e910b",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/core/input.js",
+    "final_url": "https://inkwave-six.vercel.app/src/core/input.js",
+    "path": "src/core/input.js",
+    "content_type": "application/javascript; charset=utf-8",
+    "bytes": 5981,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "45222",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"input.js\"",
+      "Content-Length": "5981",
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:50:48 GMT",
+      "Etag": "\"86dd6cd6f06ab21383d1091abc29aeea\"",
+      "Last-Modified": "Fri, 25 Sep 2026 05:17:06 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "iad1::jr6wq-1790358648933-9b27cebb8ad7",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/game/character.js",
+    "final_url": "https://inkwave-six.vercel.app/src/game/character.js",
+    "path": "src/game/character.js",
+    "content_type": "application/javascript; charset=utf-8",
+    "bytes": 143522,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "46358",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"character.js\"",
+      "Content-Length": "143522",
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:50:49 GMT",
+      "Etag": "\"2778d4f4025c917f10f63e0d8638fae3\"",
+      "Last-Modified": "Fri, 25 Sep 2026 04:58:10 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "iad1::j2dpb-1790358649033-710f10f1376b",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/fx/screenfx.js",
+    "final_url": "https://inkwave-six.vercel.app/src/fx/screenfx.js",
+    "path": "src/fx/screenfx.js",
+    "content_type": "application/javascript; charset=utf-8",
+    "bytes": 53896,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "46477",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"screenfx.js\"",
+      "Content-Length": "53896",
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:50:49 GMT",
+      "Etag": "\"c564b9aa27a1a6c9c79ae663d7895d27\"",
+      "Last-Modified": "Fri, 25 Sep 2026 04:56:11 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "iad1::8hsnw-1790358649073-7439e36bbe89",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/world/environment.js",
+    "final_url": "https://inkwave-six.vercel.app/src/world/environment.js",
+    "path": "src/world/environment.js",
+    "content_type": "application/javascript; charset=utf-8",
+    "bytes": 109347,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "46358",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"environment.js\"",
+      "Content-Length": "109347",
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:50:49 GMT",
+      "Etag": "\"84ec20fe704bad887c16820cf2f77604\"",
+      "Last-Modified": "Fri, 25 Sep 2026 04:58:10 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "iad1::p7tgg-1790358649104-f92d93e25f4e",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/audio/music.js",
+    "final_url": "https://inkwave-six.vercel.app/src/audio/music.js",
+    "path": "src/audio/music.js",
+    "content_type": "application/javascript; charset=utf-8",
+    "bytes": 58532,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "46358",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"music.js\"",
+      "Content-Length": "58532",
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:50:49 GMT",
+      "Etag": "\"834143f39efa2ba48d38115a17c486ef\"",
+      "Last-Modified": "Fri, 25 Sep 2026 04:58:10 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "iad1::6pvzp-1790358649141-c1f58c4d6bae",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/main.js.map",
+    "error": "<HTTPError 404: 'Not Found'>"
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/vendor/three/build/three.core.js",
+    "final_url": "https://inkwave-six.vercel.app/vendor/three/build/three.core.js",
+    "path": "vendor/three/build/three.core.js",
+    "content_type": "application/javascript; charset=utf-8",
+    "bytes": 1458113,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "46358",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"three.core.js\"",
+      "Content-Length": "1458113",
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:50:49 GMT",
+      "Etag": "\"6bdce60e9b22a09cbd6815f58e63f1c6\"",
+      "Last-Modified": "Fri, 25 Sep 2026 04:58:10 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "iad1::68fjp-1790358649195-827a19473a42",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/vendor/three/build/three.module.js.map",
+    "error": "<HTTPError 404: 'Not Found'>"
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/world/levelMaterial.js.map",
+    "error": "<HTTPError 404: 'Not Found'>"
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/dev/stubs.js.map",
+    "error": "<HTTPError 404: 'Not Found'>"
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/world/dressing.js.map",
+    "error": "<HTTPError 404: 'Not Found'>"
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/game/cameraRig.js.map",
+    "error": "<HTTPError 404: 'Not Found'>"
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/game/minimap.js.map",
+    "error": "<HTTPError 404: 'Not Found'>"
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/vendor/three/jsm/utils/BufferGeometryUtils.js",
+    "final_url": "https://inkwave-six.vercel.app/vendor/three/jsm/utils/BufferGeometryUtils.js",
+    "path": "vendor/three/jsm/utils/BufferGeometryUtils.js",
+    "content_type": "application/javascript; charset=utf-8",
+    "bytes": 37712,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "46359",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"BufferGeometryUtils.js\"",
+      "Content-Length": "37712",
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:50:49 GMT",
+      "Etag": "\"0bbf02d4791c526bfdfdd8bff1db26ff\"",
+      "Last-Modified": "Fri, 25 Sep 2026 04:58:10 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "iad1::p65d5-1790358649559-5a619158f9cd",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/game/showcase.js.map",
+    "error": "<HTTPError 404: 'Not Found'>"
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/assets/fonts/Rubik-latin.woff2",
+    "final_url": "https://inkwave-six.vercel.app/assets/fonts/Rubik-latin.woff2",
+    "path": "assets/fonts/Rubik-latin.woff2",
+    "content_type": "font/woff2",
+    "bytes": 35324,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "46359",
+      "Cache-Control": "public, max-age=31536000, immutable",
+      "Content-Disposition": "inline; filename=\"Rubik-latin.woff2\"",
+      "Content-Length": "35324",
+      "Content-Type": "font/woff2",
+      "Date": "Fri, 25 Sep 2026 17:50:49 GMT",
+      "Etag": "\"94df5f5371c15d43ad8c4420affa4ec2\"",
+      "Last-Modified": "Fri, 25 Sep 2026 04:58:10 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "iad1::jzkqk-1790358649627-c578eac248d7",
       "Connection": "close"
     }
   },
@@ -80,79 +928,771 @@
     "headers": {
       "Accept-Ranges": "bytes",
       "Access-Control-Allow-Origin": "*",
-      "Age": "6524",
+      "Age": "46359",
       "Cache-Control": "public, max-age=31536000, immutable",
       "Content-Disposition": "inline; filename=\"TitanOne-latin.woff2\"",
       "Content-Length": "10732",
       "Content-Type": "font/woff2",
-      "Date": "Fri, 25 Sep 2026 17:48:46 GMT",
+      "Date": "Fri, 25 Sep 2026 17:50:49 GMT",
       "Etag": "\"7f15e0a02da0f12dcfc68c7fa7158871\"",
-      "Last-Modified": "Fri, 25 Sep 2026 16:00:02 GMT",
+      "Last-Modified": "Fri, 25 Sep 2026 04:58:10 GMT",
       "Server": "Vercel",
       "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
       "X-Vercel-Cache": "HIT",
-      "X-Vercel-Id": "sfo1::427vn-1790358526587-bc8562193837",
+      "X-Vercel-Id": "iad1::vmb6q-1790358649659-47b31e5d8179",
       "Connection": "close"
     }
   },
   {
-    "url": "https://inkwave-six.vercel.app/styles/ui.css",
-    "final_url": "https://inkwave-six.vercel.app/styles/ui.css",
-    "path": "styles/ui.css",
-    "content_type": "text/css; charset=utf-8",
-    "bytes": 117292,
-    "headers": {
-      "Accept-Ranges": "bytes",
-      "Access-Control-Allow-Origin": "*",
-      "Age": "9300",
-      "Cache-Control": "public, max-age=0, must-revalidate",
-      "Content-Disposition": "inline; filename=\"ui.css\"",
-      "Content-Length": "117292",
-      "Content-Type": "text/css; charset=utf-8",
-      "Date": "Fri, 25 Sep 2026 17:48:46 GMT",
-      "Etag": "\"9c4a464092f640e334e0b0bb791e05a5\"",
-      "Last-Modified": "Fri, 25 Sep 2026 15:13:46 GMT",
-      "Server": "Vercel",
-      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
-      "X-Vercel-Cache": "HIT",
-      "X-Vercel-Id": "sfo1::qb2d2-1790358526698-8a4a844b83a1",
-      "Connection": "close"
-    }
-  },
-  {
-    "url": "https://inkwave-six.vercel.app/src/main.js.map",
+    "url": "https://inkwave-six.vercel.app/src/world/props.js.map",
     "error": "<HTTPError 404: 'Not Found'>"
   },
   {
-    "url": "https://inkwave-six.vercel.app/styles/hud.css",
-    "final_url": "https://inkwave-six.vercel.app/styles/hud.css",
-    "path": "styles/hud.css",
-    "content_type": "text/css; charset=utf-8",
-    "bytes": 59947,
+    "url": "https://inkwave-six.vercel.app/src/world/decor.js.map",
+    "error": "<HTTPError 404: 'Not Found'>"
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/config.js.map",
+    "error": "<HTTPError 404: 'Not Found'>"
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/game/player.js",
+    "final_url": "https://inkwave-six.vercel.app/src/game/player.js",
+    "path": "src/game/player.js",
+    "content_type": "application/javascript; charset=utf-8",
+    "bytes": 9664,
     "headers": {
       "Accept-Ranges": "bytes",
       "Access-Control-Allow-Origin": "*",
-      "Age": "43541",
+      "Age": "46359",
       "Cache-Control": "public, max-age=0, must-revalidate",
-      "Content-Disposition": "inline; filename=\"hud.css\"",
-      "Content-Length": "59947",
-      "Content-Type": "text/css; charset=utf-8",
-      "Date": "Fri, 25 Sep 2026 17:48:46 GMT",
-      "Etag": "\"ed522bb214a6f6243ee4a5ebbfcd8d5d\"",
-      "Last-Modified": "Fri, 25 Sep 2026 05:43:05 GMT",
+      "Content-Disposition": "inline; filename=\"player.js\"",
+      "Content-Length": "9664",
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:50:49 GMT",
+      "Etag": "\"e806ad49584e4098e88cb080f1e2d415\"",
+      "Last-Modified": "Fri, 25 Sep 2026 04:58:10 GMT",
       "Server": "Vercel",
       "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
       "X-Vercel-Cache": "HIT",
-      "X-Vercel-Id": "sfo1::5b5j6-1790358526952-be559f307c2d",
+      "X-Vercel-Id": "iad1::n4kz7-1790358649769-020018397c8f",
       "Connection": "close"
     }
   },
   {
-    "url": "https://inkwave-six.vercel.app/styles/ui.css.map",
+    "url": "https://inkwave-six.vercel.app/src/game/bots.js",
+    "final_url": "https://inkwave-six.vercel.app/src/game/bots.js",
+    "path": "src/game/bots.js",
+    "content_type": "application/javascript; charset=utf-8",
+    "bytes": 23435,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "46359",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"bots.js\"",
+      "Content-Length": "23435",
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:50:49 GMT",
+      "Etag": "\"fefc6dc4348f94d636009d69030f9edf\"",
+      "Last-Modified": "Fri, 25 Sep 2026 04:58:10 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "iad1::sr2jn-1790358649804-9e9edecd3be0",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/game/actor.js",
+    "final_url": "https://inkwave-six.vercel.app/src/game/actor.js",
+    "path": "src/game/actor.js",
+    "content_type": "application/javascript; charset=utf-8",
+    "bytes": 43190,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "46359",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"actor.js\"",
+      "Content-Length": "43190",
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:50:49 GMT",
+      "Etag": "\"35ea6cbb011dc584d51e0a9d0737d278\"",
+      "Last-Modified": "Fri, 25 Sep 2026 04:58:10 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "iad1::gcwst-1790358649909-1fd0f71ffb47",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/game/match.js.map",
     "error": "<HTTPError 404: 'Not Found'>"
   },
   {
-    "url": "https://inkwave-six.vercel.app/styles/hud.css.map",
+    "url": "https://inkwave-six.vercel.app/src/world/murals.js.map",
+    "error": "<HTTPError 404: 'Not Found'>"
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/world/level.js.map",
+    "error": "<HTTPError 404: 'Not Found'>"
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/game/weapons.js.map",
+    "error": "<HTTPError 404: 'Not Found'>"
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/fx/fxHooks.js.map",
+    "error": "<HTTPError 404: 'Not Found'>"
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/core/ctx.js.map",
+    "error": "<HTTPError 404: 'Not Found'>"
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/game/nav.js.map",
+    "error": "<HTTPError 404: 'Not Found'>"
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/vendor/three/jsm/postprocessing/GTAOPass.js",
+    "final_url": "https://inkwave-six.vercel.app/vendor/three/jsm/postprocessing/GTAOPass.js",
+    "path": "vendor/three/jsm/postprocessing/GTAOPass.js",
+    "content_type": "application/javascript; charset=utf-8",
+    "bytes": 19910,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "46359",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"GTAOPass.js\"",
+      "Content-Length": "19910",
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:50:50 GMT",
+      "Etag": "\"3ceb97710a678522af5c56af5f9f64a4\"",
+      "Last-Modified": "Fri, 25 Sep 2026 04:58:10 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "iad1::57tnw-1790358650098-9f4664a753f8",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/vendor/three/jsm/postprocessing/ShaderPass.js",
+    "final_url": "https://inkwave-six.vercel.app/vendor/three/jsm/postprocessing/ShaderPass.js",
+    "path": "vendor/three/jsm/postprocessing/ShaderPass.js",
+    "content_type": "application/javascript; charset=utf-8",
+    "bytes": 3228,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "46359",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"ShaderPass.js\"",
+      "Content-Length": "3228",
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:50:50 GMT",
+      "Etag": "\"5a781f97fd18392eb28bf66e0b454cf7\"",
+      "Last-Modified": "Fri, 25 Sep 2026 04:58:10 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "iad1::7mhvb-1790358650129-ab4a407d8ad9",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/vendor/three/jsm/postprocessing/UnrealBloomPass.js",
+    "final_url": "https://inkwave-six.vercel.app/vendor/three/jsm/postprocessing/UnrealBloomPass.js",
+    "path": "vendor/three/jsm/postprocessing/UnrealBloomPass.js",
+    "content_type": "application/javascript; charset=utf-8",
+    "bytes": 15397,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "46359",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"UnrealBloomPass.js\"",
+      "Content-Length": "15397",
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:50:50 GMT",
+      "Etag": "\"6223a71976c3d5c88896f4a6f10d62a1\"",
+      "Last-Modified": "Fri, 25 Sep 2026 04:58:10 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "iad1::9jc7n-1790358650155-6dbd2f583318",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/vendor/three/jsm/postprocessing/EffectComposer.js",
+    "final_url": "https://inkwave-six.vercel.app/vendor/three/jsm/postprocessing/EffectComposer.js",
+    "path": "vendor/three/jsm/postprocessing/EffectComposer.js",
+    "content_type": "application/javascript; charset=utf-8",
+    "bytes": 8501,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "46359",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"EffectComposer.js\"",
+      "Content-Length": "8501",
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:50:50 GMT",
+      "Etag": "\"f23944beca4247e825b5971f8031b830\"",
+      "Last-Modified": "Fri, 25 Sep 2026 04:58:10 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "iad1::pss4s-1790358650179-f020e8d385a2",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/vendor/three/jsm/postprocessing/OutputPass.js",
+    "final_url": "https://inkwave-six.vercel.app/vendor/three/jsm/postprocessing/OutputPass.js",
+    "path": "vendor/three/jsm/postprocessing/OutputPass.js",
+    "content_type": "application/javascript; charset=utf-8",
+    "bytes": 4184,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "46359",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"OutputPass.js\"",
+      "Content-Length": "4184",
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:50:50 GMT",
+      "Etag": "\"42c2ad798a342f9841cb377db93229a2\"",
+      "Last-Modified": "Fri, 25 Sep 2026 04:58:10 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "iad1::6cfcx-1790358650202-39b51c8fbfc3",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/vendor/three/jsm/postprocessing/RenderPass.js",
+    "final_url": "https://inkwave-six.vercel.app/vendor/three/jsm/postprocessing/RenderPass.js",
+    "path": "vendor/three/jsm/postprocessing/RenderPass.js",
+    "content_type": "application/javascript; charset=utf-8",
+    "bytes": 4280,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "46359",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"RenderPass.js\"",
+      "Content-Length": "4280",
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:50:50 GMT",
+      "Etag": "\"0cf5eec9f98eb58dc00c586404b89643\"",
+      "Last-Modified": "Fri, 25 Sep 2026 04:58:10 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "iad1::cv8hj-1790358650221-8250bd6830a9",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/core/renderer.js.map",
+    "error": "<HTTPError 404: 'Not Found'>"
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/game/physics.js.map",
+    "error": "<HTTPError 404: 'Not Found'>"
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/world/maps.js.map",
+    "error": "<HTTPError 404: 'Not Found'>"
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/ui/ui-util.js",
+    "final_url": "https://inkwave-six.vercel.app/src/ui/ui-util.js",
+    "path": "src/ui/ui-util.js",
+    "content_type": "application/javascript; charset=utf-8",
+    "bytes": 10106,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "46359",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"ui-util.js\"",
+      "Content-Length": "10106",
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:50:50 GMT",
+      "Etag": "\"86b991ee3bad07684e813d5504dbc500\"",
+      "Last-Modified": "Fri, 25 Sep 2026 04:58:10 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "iad1::t7c5h-1790358650313-bfc1a582ac45",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/ui/menu-art.js",
+    "final_url": "https://inkwave-six.vercel.app/src/ui/menu-art.js",
+    "path": "src/ui/menu-art.js",
+    "content_type": "application/javascript; charset=utf-8",
+    "bytes": 53598,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "46359",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"menu-art.js\"",
+      "Content-Length": "53598",
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:50:50 GMT",
+      "Etag": "\"a3997a7eb4cb8913aebadf34a014d595\"",
+      "Last-Modified": "Fri, 25 Sep 2026 04:58:10 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "iad1::t6gwh-1790358650346-540418ce702a",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/ui/ui-icons.js",
+    "final_url": "https://inkwave-six.vercel.app/src/ui/ui-icons.js",
+    "path": "src/ui/ui-icons.js",
+    "content_type": "application/javascript; charset=utf-8",
+    "bytes": 25721,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "46359",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"ui-icons.js\"",
+      "Content-Length": "25721",
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:50:50 GMT",
+      "Etag": "\"f68dde4fcf419b08e5caee25f136066d\"",
+      "Last-Modified": "Fri, 25 Sep 2026 04:58:10 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "iad1::k2xlg-1790358650371-b12b3e949a28",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/ui/menus.js.map",
+    "error": "<HTTPError 404: 'Not Found'>"
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/ui/hud.js.map",
+    "error": "<HTTPError 404: 'Not Found'>"
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/fx/fx.js.map",
+    "error": "<HTTPError 404: 'Not Found'>"
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/world/paint.js.map",
+    "error": "<HTTPError 404: 'Not Found'>"
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/audio/audio.js.map",
+    "error": "<HTTPError 404: 'Not Found'>"
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/world/texlib.js.map",
+    "error": "<HTTPError 404: 'Not Found'>"
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/world/mapThumb.js.map",
+    "error": "<HTTPError 404: 'Not Found'>"
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/core/input.js.map",
+    "error": "<HTTPError 404: 'Not Found'>"
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/game/character-weapons.js",
+    "final_url": "https://inkwave-six.vercel.app/src/game/character-weapons.js",
+    "path": "src/game/character-weapons.js",
+    "content_type": "application/javascript; charset=utf-8",
+    "bytes": 31071,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "46359",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"character-weapons.js\"",
+      "Content-Length": "31071",
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:50:50 GMT",
+      "Etag": "\"97501b381be7246e13f28d58ee35db95\"",
+      "Last-Modified": "Fri, 25 Sep 2026 04:58:10 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "iad1::wf4xn-1790358650619-293a65cbde02",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/game/character-mats.js",
+    "final_url": "https://inkwave-six.vercel.app/src/game/character-mats.js",
+    "path": "src/game/character-mats.js",
+    "content_type": "application/javascript; charset=utf-8",
+    "bytes": 63746,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "46359",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"character-mats.js\"",
+      "Content-Length": "63746",
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:50:50 GMT",
+      "Etag": "\"0d98735df773ee003639ed3cecab2c85\"",
+      "Last-Modified": "Fri, 25 Sep 2026 04:58:10 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "iad1::b2n7t-1790358650648-e496e8e99390",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/game/character-geo.js",
+    "final_url": "https://inkwave-six.vercel.app/src/game/character-geo.js",
+    "path": "src/game/character-geo.js",
+    "content_type": "application/javascript; charset=utf-8",
+    "bytes": 102479,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "46359",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"character-geo.js\"",
+      "Content-Length": "102479",
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:50:50 GMT",
+      "Etag": "\"44bfba722e4c6948750932d77bdfa194\"",
+      "Last-Modified": "Fri, 25 Sep 2026 04:58:10 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "iad1::htbkr-1790358650682-7c843593d11a",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/game/character.js.map",
+    "error": "<HTTPError 404: 'Not Found'>"
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/fx/screenfx.js.map",
+    "error": "<HTTPError 404: 'Not Found'>"
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/world/environment.js.map",
+    "error": "<HTTPError 404: 'Not Found'>"
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/audio/music.js.map",
+    "error": "<HTTPError 404: 'Not Found'>"
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/vendor/three/build/three.core.js.map",
+    "error": "<HTTPError 404: 'Not Found'>"
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/vendor/three/jsm/utils/BufferGeometryUtils.js.map",
+    "error": "<HTTPError 404: 'Not Found'>"
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/game/player.js.map",
+    "error": "<HTTPError 404: 'Not Found'>"
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/game/bots.js.map",
+    "error": "<HTTPError 404: 'Not Found'>"
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/game/actor.js.map",
+    "error": "<HTTPError 404: 'Not Found'>"
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/vendor/three/jsm/shaders/CopyShader.js",
+    "final_url": "https://inkwave-six.vercel.app/vendor/three/jsm/shaders/CopyShader.js",
+    "path": "vendor/three/jsm/shaders/CopyShader.js",
+    "content_type": "application/javascript; charset=utf-8",
+    "bytes": 729,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "40644",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"CopyShader.js\"",
+      "Content-Length": "729",
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:50:51 GMT",
+      "Etag": "\"659b8645af074d24a1b1cdb4c5a9efa7\"",
+      "Last-Modified": "Fri, 25 Sep 2026 06:33:26 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "iad1::pfrnx-1790358651043-ca3b37ac94b1",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/vendor/three/jsm/shaders/PoissonDenoiseShader.js",
+    "final_url": "https://inkwave-six.vercel.app/vendor/three/jsm/shaders/PoissonDenoiseShader.js",
+    "path": "vendor/three/jsm/shaders/PoissonDenoiseShader.js",
+    "content_type": "application/javascript; charset=utf-8",
+    "bytes": 7080,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "46360",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"PoissonDenoiseShader.js\"",
+      "Content-Length": "7080",
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:50:51 GMT",
+      "Etag": "\"ab71e9d1a153b5f40e8392c581e8bc9c\"",
+      "Last-Modified": "Fri, 25 Sep 2026 04:58:10 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "iad1::m9fg5-1790358651066-0e7e62d1d880",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/vendor/three/jsm/postprocessing/Pass.js",
+    "final_url": "https://inkwave-six.vercel.app/vendor/three/jsm/postprocessing/Pass.js",
+    "path": "vendor/three/jsm/postprocessing/Pass.js",
+    "content_type": "application/javascript; charset=utf-8",
+    "bytes": 4218,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "46360",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"Pass.js\"",
+      "Content-Length": "4218",
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:50:51 GMT",
+      "Etag": "\"d7b2bd3da1ba1146672a8e3f4ff396e9\"",
+      "Last-Modified": "Fri, 25 Sep 2026 04:58:10 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "iad1::jd5xh-1790358651096-72214a48012c",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/vendor/three/jsm/shaders/GTAOShader.js",
+    "final_url": "https://inkwave-six.vercel.app/vendor/three/jsm/shaders/GTAOShader.js",
+    "path": "vendor/three/jsm/shaders/GTAOShader.js",
+    "content_type": "application/javascript; charset=utf-8",
+    "bytes": 12166,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "46360",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"GTAOShader.js\"",
+      "Content-Length": "12166",
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:50:51 GMT",
+      "Etag": "\"f272218fb31655a8260199315b126f8d\"",
+      "Last-Modified": "Fri, 25 Sep 2026 04:58:10 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "iad1::gqsb9-1790358651117-5453a123805a",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/vendor/three/jsm/math/SimplexNoise.js",
+    "final_url": "https://inkwave-six.vercel.app/vendor/three/jsm/math/SimplexNoise.js",
+    "path": "vendor/three/jsm/math/SimplexNoise.js",
+    "content_type": "application/javascript; charset=utf-8",
+    "bytes": 15148,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "33220",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"SimplexNoise.js\"",
+      "Content-Length": "15148",
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:50:51 GMT",
+      "Etag": "\"e7777ef581d61fabbf2f33d8f9faf213\"",
+      "Last-Modified": "Fri, 25 Sep 2026 08:37:11 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "iad1::qkxpf-1790358651137-34b858f57dea",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/vendor/three/jsm/postprocessing/GTAOPass.js.map",
+    "error": "<HTTPError 404: 'Not Found'>"
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/vendor/three/jsm/postprocessing/ShaderPass.js.map",
+    "error": "<HTTPError 404: 'Not Found'>"
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/vendor/three/jsm/shaders/LuminosityHighPassShader.js",
+    "final_url": "https://inkwave-six.vercel.app/vendor/three/jsm/shaders/LuminosityHighPassShader.js",
+    "path": "vendor/three/jsm/shaders/LuminosityHighPassShader.js",
+    "content_type": "application/javascript; charset=utf-8",
+    "bytes": 1291,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "37957",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"LuminosityHighPassShader.js\"",
+      "Content-Length": "1291",
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:50:51 GMT",
+      "Etag": "\"c3d1e98711a7f4c1dcc1fd3599e593cb\"",
+      "Last-Modified": "Fri, 25 Sep 2026 07:18:14 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "iad1::pk5fp-1790358651232-2c98a71cdf64",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/vendor/three/jsm/postprocessing/UnrealBloomPass.js.map",
+    "error": "<HTTPError 404: 'Not Found'>"
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/vendor/three/jsm/postprocessing/MaskPass.js",
+    "final_url": "https://inkwave-six.vercel.app/vendor/three/jsm/postprocessing/MaskPass.js",
+    "path": "vendor/three/jsm/postprocessing/MaskPass.js",
+    "content_type": "application/javascript; charset=utf-8",
+    "bytes": 4694,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "35185",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"MaskPass.js\"",
+      "Content-Length": "4694",
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:50:51 GMT",
+      "Etag": "\"e7b9f5f38c73dfb1a3f93c2bcbc686d4\"",
+      "Last-Modified": "Fri, 25 Sep 2026 08:04:25 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "iad1::wvckr-1790358651273-ca45f4cc6ddc",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/vendor/three/jsm/postprocessing/EffectComposer.js.map",
+    "error": "URLError(ConnectionResetError(104, 'Connection reset by peer'))"
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/vendor/three/jsm/shaders/OutputShader.js",
+    "final_url": "https://inkwave-six.vercel.app/vendor/three/jsm/shaders/OutputShader.js",
+    "path": "vendor/three/jsm/shaders/OutputShader.js",
+    "content_type": "application/javascript; charset=utf-8",
+    "bytes": 1876,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "46391",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"OutputShader.js\"",
+      "Content-Length": "1876",
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:51:21 GMT",
+      "Etag": "\"541821203c922dac64351bbf8cf66fa7\"",
+      "Last-Modified": "Fri, 25 Sep 2026 04:58:10 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "iad1::pdbhz-1790358681304-291b5a03b436",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/vendor/three/jsm/postprocessing/OutputPass.js.map",
+    "error": "<HTTPError 404: 'Not Found'>"
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/vendor/three/jsm/postprocessing/RenderPass.js.map",
+    "error": "<HTTPError 404: 'Not Found'>"
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/ui/ui-util.js.map",
+    "error": "<HTTPError 404: 'Not Found'>"
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/ui/menu-art.js.map",
+    "error": "<HTTPError 404: 'Not Found'>"
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/ui/ui-icons.js.map",
+    "error": "<HTTPError 404: 'Not Found'>"
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/game/character-weapons.js.map",
+    "error": "<HTTPError 404: 'Not Found'>"
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/game/character-mats.js.map",
+    "error": "<HTTPError 404: 'Not Found'>"
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/game/character-geo.js.map",
+    "error": "<HTTPError 404: 'Not Found'>"
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/vendor/three/jsm/shaders/CopyShader.js.map",
+    "error": "<HTTPError 404: 'Not Found'>"
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/vendor/three/jsm/shaders/PoissonDenoiseShader.js.map",
+    "error": "<HTTPError 404: 'Not Found'>"
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/vendor/three/jsm/postprocessing/Pass.js.map",
+    "error": "<HTTPError 404: 'Not Found'>"
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/vendor/three/jsm/shaders/GTAOShader.js.map",
+    "error": "<HTTPError 404: 'Not Found'>"
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/vendor/three/jsm/math/SimplexNoise.js.map",
+    "error": "<HTTPError 404: 'Not Found'>"
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/vendor/three/jsm/shaders/LuminosityHighPassShader.js.map",
+    "error": "<HTTPError 404: 'Not Found'>"
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/vendor/three/jsm/postprocessing/MaskPass.js.map",
+    "error": "<HTTPError 404: 'Not Found'>"
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/vendor/three/jsm/shaders/OutputShader.js.map",
     "error": "<HTTPError 404: 'Not Found'>"
   }
 ]
