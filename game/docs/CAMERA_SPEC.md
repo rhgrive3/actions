@@ -1,0 +1,1 @@
+# CAMERA_SPECFull specification lives in `docs/GAMEPLAY_SPEC.md` → section "CAMERA_SPEC" (rig chain, spring frequencies, offsets, FOV, sensitivities). Implementation: `src/game/camera/CameraRig.ts`, constants in `src/game/data/tuning.ts` (`CAMERA`). Golden test procedure: `docs/TEST_PLAN.md` C10.
