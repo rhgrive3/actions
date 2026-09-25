@@ -1,0 +1,158 @@
+[
+  {
+    "url": "https://inkwave-six.vercel.app/",
+    "final_url": "https://inkwave-six.vercel.app/",
+    "path": "index.html",
+    "content_type": "text/html; charset=utf-8",
+    "bytes": 2290,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "45246",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline",
+      "Content-Length": "2290",
+      "Content-Type": "text/html; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:48:46 GMT",
+      "Etag": "\"19b2872ee59a0722027d970297d3c6b6\"",
+      "Last-Modified": "Fri, 25 Sep 2026 05:14:39 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "sfo1::cmdn9-1790358526219-61d1cac6d9f0",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/assets/fonts/Rubik-latin.woff2",
+    "final_url": "https://inkwave-six.vercel.app/assets/fonts/Rubik-latin.woff2",
+    "path": "assets/fonts/Rubik-latin.woff2",
+    "content_type": "font/woff2",
+    "bytes": 35324,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "2371",
+      "Cache-Control": "public, max-age=31536000, immutable",
+      "Content-Disposition": "inline; filename=\"Rubik-latin.woff2\"",
+      "Content-Length": "35324",
+      "Content-Type": "font/woff2",
+      "Date": "Fri, 25 Sep 2026 17:48:46 GMT",
+      "Etag": "\"94df5f5371c15d43ad8c4420affa4ec2\"",
+      "Last-Modified": "Fri, 25 Sep 2026 17:09:15 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "sfo1::8dg6h-1790358526342-3f5823235494",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/main.js",
+    "final_url": "https://inkwave-six.vercel.app/src/main.js",
+    "path": "src/main.js",
+    "content_type": "application/javascript; charset=utf-8",
+    "bytes": 44614,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "43540",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"main.js\"",
+      "Content-Length": "44614",
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:48:46 GMT",
+      "Etag": "\"6ad0543afc2571670f55ae7d6d8df8a7\"",
+      "Last-Modified": "Fri, 25 Sep 2026 05:43:05 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "sfo1::2cpq7-1790358526441-0dcf33fb5405",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/assets/fonts/TitanOne-latin.woff2",
+    "final_url": "https://inkwave-six.vercel.app/assets/fonts/TitanOne-latin.woff2",
+    "path": "assets/fonts/TitanOne-latin.woff2",
+    "content_type": "font/woff2",
+    "bytes": 10732,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "6524",
+      "Cache-Control": "public, max-age=31536000, immutable",
+      "Content-Disposition": "inline; filename=\"TitanOne-latin.woff2\"",
+      "Content-Length": "10732",
+      "Content-Type": "font/woff2",
+      "Date": "Fri, 25 Sep 2026 17:48:46 GMT",
+      "Etag": "\"7f15e0a02da0f12dcfc68c7fa7158871\"",
+      "Last-Modified": "Fri, 25 Sep 2026 16:00:02 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "sfo1::427vn-1790358526587-bc8562193837",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/styles/ui.css",
+    "final_url": "https://inkwave-six.vercel.app/styles/ui.css",
+    "path": "styles/ui.css",
+    "content_type": "text/css; charset=utf-8",
+    "bytes": 117292,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "9300",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"ui.css\"",
+      "Content-Length": "117292",
+      "Content-Type": "text/css; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:48:46 GMT",
+      "Etag": "\"9c4a464092f640e334e0b0bb791e05a5\"",
+      "Last-Modified": "Fri, 25 Sep 2026 15:13:46 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "sfo1::qb2d2-1790358526698-8a4a844b83a1",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/src/main.js.map",
+    "error": "<HTTPError 404: 'Not Found'>"
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/styles/hud.css",
+    "final_url": "https://inkwave-six.vercel.app/styles/hud.css",
+    "path": "styles/hud.css",
+    "content_type": "text/css; charset=utf-8",
+    "bytes": 59947,
+    "headers": {
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+      "Age": "43541",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Disposition": "inline; filename=\"hud.css\"",
+      "Content-Length": "59947",
+      "Content-Type": "text/css; charset=utf-8",
+      "Date": "Fri, 25 Sep 2026 17:48:46 GMT",
+      "Etag": "\"ed522bb214a6f6243ee4a5ebbfcd8d5d\"",
+      "Last-Modified": "Fri, 25 Sep 2026 05:43:05 GMT",
+      "Server": "Vercel",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Vercel-Cache": "HIT",
+      "X-Vercel-Id": "sfo1::5b5j6-1790358526952-be559f307c2d",
+      "Connection": "close"
+    }
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/styles/ui.css.map",
+    "error": "<HTTPError 404: 'Not Found'>"
+  },
+  {
+    "url": "https://inkwave-six.vercel.app/styles/hud.css.map",
+    "error": "<HTTPError 404: 'Not Found'>"
+  }
+]
