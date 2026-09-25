@@ -63,9 +63,19 @@ jobs:
                   refs.update(re.findall(r'''(?:src|href)=["\']([^"\']+)["\']''', text, flags=re.I))
                   refs.update(re.findall(r'''url\((?:["\']?)([^)"\']+)(?:["\']?)\)''', text, flags=re.I))
                   refs.update(re.findall(r'''["\'](/(?:assets|_next|static|fonts|images|img|audio|models|textures)/[^"\']+)["\']''', text))
+                  # ES modules, dynamic imports, workers, import-map values and other relative assets.
+                  refs.update(re.findall(r'''(?:from\s*|import\s*\()\s*["\']([^"\']+)["\']''', text))
+                  refs.update(re.findall(r'''import\s*["\']([^"\']+)["\']''', text))
+                  refs.update(re.findall(r'''["\']((?:\./|\.\./)[^"\']+\.(?:js|mjs|css|json|svg|png|jpg|jpeg|webp|glb|gltf|bin|wasm|wav|mp3|ogg|woff2?))["\']''', text, flags=re.I))
                   for ref in refs:
                       ref=ref.strip()
                       if not ref or ref.startswith(('data:','blob:','javascript:','#','mailto:','tel:')): continue
+                      if ref == 'three':
+                          ref = '/vendor/three/build/three.module.js'
+                      elif ref.startswith('three/addons/'):
+                          ref = '/vendor/three/jsm/' + ref[len('three/addons/'):]
+                      elif not (ref.startswith(('./','../','/','http://','https://'))):
+                          continue
                       absu=urllib.parse.urljoin(final, ref)
                       pu=urllib.parse.urlparse(absu)
                       if pu.scheme in ('http','https') and pu.netloc=='inkwave-six.vercel.app': queue.append(absu)
