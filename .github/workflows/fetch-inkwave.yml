@@ -1,0 +1,91 @@
+name: Fetch INKWAVE public source
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch public site assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf inkwave-public
+          mkdir -p inkwave-public
+          cd inkwave-public
+          python3 - <<'PY2'
+          import os, re, json, urllib.parse, urllib.request, hashlib
+          from pathlib import Path
+
+          BASE='https://inkwave-six.vercel.app/'
+          seen=set(); queue=[BASE]; manifest=[]
+
+          def fetch(url):
+              req=urllib.request.Request(url, headers={'User-Agent':'Mozilla/5.0 source-mirror/1.0'})
+              with urllib.request.urlopen(req, timeout=30) as r:
+                  return r.read(), r.headers.get('content-type',''), r.geturl(), dict(r.headers)
+
+          def save_url(url, data):
+              u=urllib.parse.urlparse(url)
+              path=u.path or '/index.html'
+              if path.endswith('/'): path += 'index.html'
+              if u.query:
+                  q=hashlib.sha1(u.query.encode()).hexdigest()[:10]
+                  stem, ext=os.path.splitext(path)
+                  path=f'{stem}.q-{q}{ext}'
+              rel=Path(path.lstrip('/'))
+              rel.parent.mkdir(parents=True, exist_ok=True)
+              rel.write_bytes(data)
+              return str(rel)
+
+          while queue:
+              url=queue.pop(0)
+              if url in seen: continue
+              seen.add(url)
+              try:
+                  data, ctype, final, headers = fetch(url)
+              except Exception as e:
+                  manifest.append({'url':url,'error':repr(e)})
+                  continue
+              rel=save_url(final,data)
+              manifest.append({'url':url,'final_url':final,'path':rel,'content_type':ctype,'bytes':len(data),'headers':headers})
+              text=None
+              if any(x in ctype for x in ('text/','javascript','json','xml')) or rel.endswith(('.html','.js','.css','.json','.xml','.txt')):
+                  text=data.decode('utf-8','replace')
+              if text:
+                  refs=set()
+                  refs.update(re.findall(r'(?:src|href)=["\\']([^"\\']+)["\\']', text, flags=re.I))
+                  refs.update(re.findall(r'url\\((?:["\\']?)([^)"\\']+)(?:["\\']?)\\)', text, flags=re.I))
+                  refs.update(re.findall(r'["\\'](/(?:assets|_next|static|fonts|images|img|audio|models|textures)/[^"\\']+)["\\']', text))
+                  for ref in refs:
+                      ref=ref.strip()
+                      if not ref or ref.startswith(('data:','blob:','javascript:','#','mailto:','tel:')): continue
+                      absu=urllib.parse.urljoin(final, ref)
+                      pu=urllib.parse.urlparse(absu)
+                      if pu.scheme in ('http','https') and pu.netloc=='inkwave-six.vercel.app': queue.append(absu)
+                  for m in re.findall(r'//# sourceMappingURL=([^\\s]+)|/\\*# sourceMappingURL=([^*]+)\\*/', text):
+                      ref=(m[0] or m[1]).strip(); queue.append(urllib.parse.urljoin(final, ref))
+                  if rel.endswith(('.js','.css')): queue.append(final + '.map')
+
+          Path('FETCH_MANIFEST.json').write_text(json.dumps(manifest, indent=2, ensure_ascii=False))
+          Path('README_FETCH.txt').write_text(
+              'Publicly served assets mirrored from '+BASE+'\\n'
+              'This is not guaranteed to be the original repository source.\\n'
+              'Public source maps are included when discoverable.\\n'
+          )
+          print('fetched', sum('path' in x for x in manifest), 'resources')
+          print('errors', sum('error' in x for x in manifest))
+          PY2
+      - name: Commit mirror
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add inkwave-public
+          if git diff --cached --quiet; then
+            echo "No changes"
+          else
+            git commit -m "Mirror public INKWAVE deployment assets"
+            git push
+          fi
