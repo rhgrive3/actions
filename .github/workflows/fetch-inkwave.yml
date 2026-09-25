@@ -1,5 +1,9 @@
 name: Fetch INKWAVE public source
 on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/fetch-inkwave.yml
   workflow_dispatch:
 permissions:
   contents: write
