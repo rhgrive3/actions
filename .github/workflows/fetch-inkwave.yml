@@ -60,24 +60,24 @@ jobs:
                   text=data.decode('utf-8','replace')
               if text:
                   refs=set()
-                  refs.update(re.findall(r'(?:src|href)=["\\']([^"\\']+)["\\']', text, flags=re.I))
-                  refs.update(re.findall(r'url\\((?:["\\']?)([^)"\\']+)(?:["\\']?)\\)', text, flags=re.I))
-                  refs.update(re.findall(r'["\\'](/(?:assets|_next|static|fonts|images|img|audio|models|textures)/[^"\\']+)["\\']', text))
+                  refs.update(re.findall(r'''(?:src|href)=["\']([^"\']+)["\']''', text, flags=re.I))
+                  refs.update(re.findall(r'''url\((?:["\']?)([^)"\']+)(?:["\']?)\)''', text, flags=re.I))
+                  refs.update(re.findall(r'''["\'](/(?:assets|_next|static|fonts|images|img|audio|models|textures)/[^"\']+)["\']''', text))
                   for ref in refs:
                       ref=ref.strip()
                       if not ref or ref.startswith(('data:','blob:','javascript:','#','mailto:','tel:')): continue
                       absu=urllib.parse.urljoin(final, ref)
                       pu=urllib.parse.urlparse(absu)
                       if pu.scheme in ('http','https') and pu.netloc=='inkwave-six.vercel.app': queue.append(absu)
-                  for m in re.findall(r'//# sourceMappingURL=([^\\s]+)|/\\*# sourceMappingURL=([^*]+)\\*/', text):
+                  for m in re.findall(r'//# sourceMappingURL=([^\s]+)|/\*# sourceMappingURL=([^*]+)\*/', text):
                       ref=(m[0] or m[1]).strip(); queue.append(urllib.parse.urljoin(final, ref))
                   if rel.endswith(('.js','.css')): queue.append(final + '.map')
 
           Path('FETCH_MANIFEST.json').write_text(json.dumps(manifest, indent=2, ensure_ascii=False))
           Path('README_FETCH.txt').write_text(
-              'Publicly served assets mirrored from '+BASE+'\\n'
-              'This is not guaranteed to be the original repository source.\\n'
-              'Public source maps are included when discoverable.\\n'
+              'Publicly served assets mirrored from '+BASE+'\n'
+              'This is not guaranteed to be the original repository source.\n'
+              'Public source maps are included when discoverable.\n'
           )
           print('fetched', sum('path' in x for x in manifest), 'resources')
           print('errors', sum('error' in x for x in manifest))
