@@ -1394,7 +1394,7 @@ export class Menus {
       const t = h('button', { class: `iw-ltile iw-ltile--${sec.art === 'portrait' ? sec.kind : sec.art} iw-rowin`, style: { '--i': n, '--tilt': `${[-1.4, 1, -0.6, 1.3, -1, 0.7][n % 6]}deg` } },
         h('span', { class: 'iw-ltile__blob', html: splatSVG({ seed: 90 + n * 7, cls: 'iw-fa', r: 58, arms: 8, drops: 0 }) }),
         h('span', { class: 'iw-ltile__art', html: fallbackArt(sec, i) }),
-        sec.art === 'portrait' || sec.key === '_presets' ? h('span', { class: 'iw-ltile__name' }, optName(sec, i)) : null,
+        sec.art === 'portrait' || sec.key === '_presets' ? h('span', { class: 'iw-ltile__name', 'data-fit': '.7' }, optName(sec, i)) : null,
         h('span', { class: 'iw-ltile__eq', html: GLYPHS.check }));
       t._sec = sec; t._i = i;
       t.dataset.cur = 'own';
@@ -1411,13 +1411,16 @@ export class Menus {
       const tab = tabs[tabIdx];
       for (const k of tab.sections) {
         const sec = k === '_presets' ? { key: '_presets', title: 'CHOOSE YOUR SQUIDKID', count: presets.length, art: 'portrait', kind: 'bust', cause: 'preset' } : slots[k];
-        const grid = h('div', { class: `iw-lgrid iw-lgrid--${sec.art === 'portrait' ? sec.kind : 'swatch'}`, style: { '--cols': cols(sec) } });
+        const grid = h('div', { class: `iw-lgrid iw-lgrid--${sec.art === 'portrait' ? sec.kind : 'swatch'}`, 'data-fit-group': true, style: { '--cols': cols(sec) } });
         for (let i = 0; i < sec.count; i++) { const t = makeTile(sec, i, tiles.length); tiles.push(t); grid.appendChild(t); }
         gridWrap.appendChild(h('section', { class: 'iw-lsec', style: { '--dir': dirSign } },
           h('div', { class: 'iw-lsec__title' }, h('span', null, sec.title), h('small', null, tr(sec.key === '_presets' ? '{n} LOOKS' : '{n} OPTIONS', { n: sec.count }))), grid));
       }
       refresh();
+      // the info bar follows the tab: what you wear in its first section (until a tile is focused)
+      if (!(this._focus && this._focus._sec && tiles.includes(this._focus))) { const on = tiles.find(isOn) || tiles[0]; if (on) showInfo(on); }
       requestPortraits();
+      if (gridWrap.isConnected) this._fitAll(gridWrap);
     };
     const refresh = () => {
       for (const t of tiles) t.classList.toggle('is-on', isOn(t));

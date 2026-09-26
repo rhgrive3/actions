@@ -1661,8 +1661,12 @@ html[lang="ja"] .iw-row__label, html[lang="ja"] .iw-seclabel, html[lang="ja"] .i
   .iw-ss__foot .iw-wchip { padding-right: calc(var(--u) * .9); }
   .iw-start__map { display: none; }
 }
-/* locker: section titles stay readable above a focused tile's ring */
+/* locker: section titles stay readable above a focused tile's ring (the character presets get a little more room) */
 .iw-lsec__title { position: relative; z-index: 3; }
+.iw-lsec:has(.iw-ltile--bust) { gap: calc(var(--u) * 1.15); }
+.iw-ltile--bust { aspect-ratio: 1.05; }
+/* tile names shrink to fit (menus.js) and read as one size per grid */
+.iw-ltile__name { display: block; }
 
 /* =====================================================================================
    Fit & finish (every screen, every size). One-line names shrink to fit instead of turning into "…"
@@ -1711,13 +1715,17 @@ html[lang="ja"] .iw-row__label, html[lang="ja"] .iw-seclabel, html[lang="ja"] .i
      collided with the (taller, thumb-sized) menu */
   .iw-ui.is-touch .iw-main__desc { display: none; }
   /* locker: a clear gap between each section title and its tiles (the focus ring used to touch the title) */
-  .iw-lsec { gap: max(calc(var(--u) * .75), 8px); }
+  .iw-lgrids { gap: calc(var(--u) * .5); }
+  .iw-lsec { gap: calc(var(--u) * .55); }
+  .iw-lsec:has(.iw-ltile--bust) { gap: max(calc(var(--u) * .75), 8px); }
   .iw-ltile--bust { aspect-ratio: 1.08; }
+  /* hair / face / clothes tiles are thumb-sized here: the name shows in the info bar under the grid instead */
+  .iw-ltile--head .iw-ltile__name, .iw-ltile--face .iw-ltile__name, .iw-ltile--body .iw-ltile__name { display: none; }
 }
 
-/* Short screens: no label smaller than ~8 px (the unit-scaled micro labels would drop to 4–5 px on a phone). Generated
+/* Phones and tablets: no label smaller than ~8 px (the unit-scaled micro labels would drop to 4–5 px on a phone). Generated
    from every rule above whose font size is under 1.2 × --u; same selectors, so these win by order. */
-@media (max-height: 520px) {
+@media (max-height: 520px), (pointer: coarse) {
   .iw-setup__maps .iw-mapcard__blurb { font-size: max(calc(var(--u) * 0.82), 9px); }
   .iw-xp__lvup { font-size: max(calc(var(--u) * 1.15), 9px); }
   .iw-profile__next span { font-size: max(calc(var(--u) * .6), 8px); }
