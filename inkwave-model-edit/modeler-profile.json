@@ -1,5 +1,5 @@
 {
-  "version": 4,
+  "version": 5,
   "target": "inkwave-character",
   "notes": "AI-editable non-destructive modelling profile. Shape values are semantic; sculpt handles provide local soft deformation.",
   "style": {
@@ -90,5 +90,9 @@
     "mouthTilt": 0,
     "lookX": 0,
     "lookY": 0
+  },
+  "hairSpline": {
+    "enabled": true,
+    "strands": {}
   }
 }
