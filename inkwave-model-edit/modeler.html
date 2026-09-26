@@ -185,6 +185,14 @@ textarea{
       <label>Opacity<input id="refOpacity" type="range" min="0" max="1" step=".01"></label>
       <input id="refOpacityN" type="number" min="0" max="1" step=".01">
     </div>
+    <div class="slider">
+      <label>Scale<input id="refScale" type="range" min=".25" max="3" step=".01"></label>
+      <input id="refScaleN" type="number" min=".25" max="3" step=".01">
+    </div>
+    <div class="row">
+      <label class="field"><span>X OFFSET</span><input id="refX" type="number" min="-50" max="50" step=".5"></label>
+      <label class="field"><span>Y OFFSET</span><input id="refY" type="number" min="-50" max="50" step=".5"></label>
+    </div>
     <div class="row"><button id="clearRef">Clear image</button><button id="toggleRef">Hide / Show</button></div>
   </div>
 
@@ -195,6 +203,7 @@ textarea{
       <label class="toggle"><input id="grid" type="checkbox" checked> Grid</label>
       <label class="toggle"><input id="axes" type="checkbox"> Axes</label>
       <label class="toggle"><input id="rotate" type="checkbox"> Auto rotate</label>
+      <label class="field" style="grid-column:1/-1"><span>ISOLATE PART</span><select id="isolatePart"><option value="all">All</option><option value="skin">Skin / face</option><option value="hair">Hair</option><option value="cloth">Clothes / shoes</option><option value="eyes">Eyes</option><option value="tank">Tank</option><option value="weapon">Weapon</option></select></label>
     </div>
   </div>
 
@@ -330,7 +339,7 @@ const DEFAULT = {
     legLength:1,legThickness:1,shoeScale:1,shoeLength:1
   },
   weapon:{kind:'shooter',scaleX:1,scaleY:1,scaleZ:1,barrelLength:1},
-  view:{mode:'perspective',wireframe:false,grid:true,referenceOpacity:.45,showHandles:true,xrayHandles:true,quad:false}
+  view:{mode:'perspective',wireframe:false,grid:true,referenceOpacity:.45,referenceScale:1,referenceX:0,referenceY:0,isolatePart:'all',showHandles:true,xrayHandles:true,quad:false}
 };
 
 let profile = deepClone(DEFAULT);
@@ -612,6 +621,7 @@ function makeCharacter(){
     const fillM=ownedMaterial(MAT.makeInkFillMaterial());fillM.color.set(profile.look.ink);
     const ink=new THREE.Mesh(sh.tank.fill,fillM);ink.position.y=sh.tank.fillBottom;ink.scale.y=sh.tank.fillHeight;
     const glass=new THREE.Mesh(sh.tank.glass,MAT.getGlassMaterial());glass.renderOrder=2;
+    ink.userData.modelPart='tank';glass.userData.modelPart='tank';tank.userData.modelPart='tank';
     tank.add(ink,glass);group.add(tank);
   }
   $('statModel').textContent='Character · '+(STYLE.HAIR_STYLE_NAMES[st.hair]||st.hair);
@@ -673,6 +683,15 @@ function applyWire(){
   const on=$('wire').checked;
   current?.traverse(o=>{if(o.isMesh&&o.material&&'wireframe'in o.material)o.material.wireframe=on;});
 }
+function applyIsolation(){
+  if(!current)return;
+  const wanted=profile.view.isolatePart||'all';
+  current.traverse(o=>{
+    if(!o.isMesh)return;
+    const part=o.userData.modelPart||o.parent?.userData?.modelPart||'';
+    o.visible=wanted==='all'||part===wanted;
+  });
+}
 
 function rebuild(refit=false){
   try{
@@ -680,6 +699,7 @@ function rebuild(refit=false){
     current=currentMode==='character'?makeCharacter():makeWeapon();
     modelLayer.add(current);
     applyWire();
+    applyIsolation();
     const st=countStats(current);
     $('statTris').textContent=st.tris.toLocaleString();
     $('statMeshes').textContent=st.meshes;
@@ -869,8 +889,13 @@ function syncInputs(){
   $('grid').checked=profile.view.grid!==false;
   $('refOpacity').value=profile.view.referenceOpacity??.45;
   $('refOpacityN').value=profile.view.referenceOpacity??.45;
+  $('refScale').value=profile.view.referenceScale??1;
+  $('refScaleN').value=profile.view.referenceScale??1;
+  $('refX').value=profile.view.referenceX??0;
+  $('refY').value=profile.view.referenceY??0;
+  $('isolatePart').value=profile.view.isolatePart||'all';
   grid.visible=$('grid').checked;
-  $('refImage').style.opacity=profile.view.referenceOpacity??.45;
+  applyReferenceTransform();
 }
 
 function updateJson(){
@@ -1124,11 +1149,23 @@ $('refFile').onchange=()=>{
 };
 $('clearRef').onclick=()=>{$('refImage').src='';$('refImage').style.display='none';};
 $('toggleRef').onclick=()=>{refVisible=!refVisible;$('refImage').style.display=refVisible&&$('refImage').src?'block':'none';};
+function applyReferenceTransform(){
+  const im=$('refImage');
+  im.style.opacity=profile.view.referenceOpacity??.45;
+  im.style.transform='translate('+(profile.view.referenceX||0)+'px,'+(profile.view.referenceY||0)+'px) scale('+(profile.view.referenceScale||1)+')';
+}
 function setRefOpacity(v){
-  v=clamp(+v,0,1);profile.view.referenceOpacity=v;$('refOpacity').value=v;$('refOpacityN').value=v;$('refImage').style.opacity=v;updateJson();
+  v=clamp(+v,0,1);profile.view.referenceOpacity=v;$('refOpacity').value=v;$('refOpacityN').value=v;applyReferenceTransform();updateJson();
+}
+function setRefScale(v){
+  v=clamp(+v,.25,3);profile.view.referenceScale=v;$('refScale').value=v;$('refScaleN').value=v;applyReferenceTransform();updateJson();
 }
 $('refOpacity').oninput=()=>setRefOpacity($('refOpacity').value);
 $('refOpacityN').onchange=()=>setRefOpacity($('refOpacityN').value);
+$('refScale').oninput=()=>setRefScale($('refScale').value);
+$('refScaleN').onchange=()=>setRefScale($('refScaleN').value);
+for(const id of ['refX','refY'])$(id).onchange=()=>{profile.view[id==='refX'?'referenceX':'referenceY']=+$(id).value||0;applyReferenceTransform();updateJson();};
+$('isolatePart').onchange=()=>{profile.view.isolatePart=$('isolatePart').value;applyIsolation();updateJson();};
 
 function onResize(){
   const w=innerWidth,h=innerHeight;renderer.setSize(w,h);
