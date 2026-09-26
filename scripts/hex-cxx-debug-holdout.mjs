@@ -89,11 +89,12 @@ const [{ openBinary }, { SymbolIndex }, { createCxxEvidenceProvider }, { parseOp
 const bytes = fs.readFileSync(binary);
 const image = openBinary(new Uint8Array(bytes.buffer, bytes.byteOffset, bytes.byteLength));
 const rawSymbols = image.symbols || [];
+const addressableSymbols = rawSymbols.filter((symbol) => symbol.address != null);
 const symbols = new SymbolIndex({
-  addrs: rawSymbols.map((symbol) => symbol.address),
-  names: rawSymbols.map((symbol) => symbol.name),
-  kinds: rawSymbols.map(() => 0),
-  flags: rawSymbols.map(() => 0),
+  addrs: addressableSymbols.map((symbol) => symbol.address),
+  names: addressableSymbols.map((symbol) => symbol.name),
+  kinds: addressableSymbols.map(() => 0),
+  flags: addressableSymbols.map(() => 0),
 });
 const symbolNamesAt = new Map();
 for (const symbol of rawSymbols) {
