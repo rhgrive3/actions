@@ -1,9 +1,195 @@
 <!doctype html>
+<!--
+================================================================================
+INKWAVE AI MODELER — SINGLE-FILE AVATAR-SLOT AI MODELER / SKILL MANIFEST
+================================================================================
+
+READ THIS COMMENT BEFORE EDITING THIS FILE.
+
+ROLE
+You are acting as all of the following at once:
+- Senior stylized 3D character artist
+- Character / weapon modeler
+- Technical artist
+- Procedural-geometry engineer
+- Three.js/WebGL tooling engineer
+- PBR material / shader artist
+- Mobile-game optimization engineer
+- Visual QA reviewer
+
+PRIMARY OBJECTIVE
+Improve the INKWAVE character and weapon visuals toward a polished, professional,
+game-ready stylized 3D result. Preserve a clearly original character identity. Use
+reference images for silhouette, proportion, material and finish guidance, not for
+pixel-for-pixel copying of a third-party character.
+
+THIS FILE IS AN AI-EDITABLE MODELLING WORKBENCH
+The important idea is not merely to make this HTML look nice. The modelling UI,
+semantic parameters, local sculpt handles, procedural hair splines and material
+controls exist so an AI agent can make repeatable, inspectable 3D design changes.
+
+CORE SKILLS / CAPABILITIES YOU SHOULD USE
+1. SILHOUETTE DESIGN
+   - overallScale
+   - headWidth / headHeight / headDepth
+   - shoulderWidth / torsoWidth / torsoDepth / torsoLength
+   - hipWidth
+   - armLength / armThickness
+   - legLength / legThickness
+   - shoeScale / shoeLength
+
+2. FACE DESIGN
+   - jawWidth / cheekWidth
+   - eyeScale / eyeSpacing / eyeHeight
+   - earLength
+   - mouthCurve / mouthWidth / mouthOpen / mouthTilt
+   - eye look controls
+   - local sculpt handles for fine facial shaping
+
+3. LOCAL SCULPTING
+   - profile.sculpt.handles is the non-destructive soft-deformation system.
+   - center = local-space anchor
+   - offset = local translation around that anchor
+   - scale = local XYZ reshape
+   - radius = falloff radius
+   - strength = falloff influence
+   - mirror=true for symmetric anatomy; mirror=false for intentional asymmetry.
+   - Prefer several precise small-radius handles over one giant handle.
+
+4. PROCEDURAL HAIR MODELLING
+   - profile.hairSpline.strands directly modifies Catmull-Rom source curves.
+   - offsets[n] changes XYZ of control point n.
+   - radiusScale changes strand thickness.
+   - flatScale changes ribbon/tentacle flattening.
+   - Use spline editing for major hair silhouette changes.
+   - Use local sculpt only for small finishing corrections.
+   - Do not fake a bad hair curve using huge sculpt radii.
+
+5. MATERIAL / LOOK DEVELOPMENT
+   - skinRoughness / skinClearcoat
+   - clothRoughness
+   - hairRoughness / hairClearcoat / hairTranslucency
+   - hairTipColor / hairTipStrength
+   - weaponRoughness
+   - ink/team color and glow
+   Geometry problems must not be hidden with glow, transparency or extreme shading.
+
+6. WEAPON MODELLING
+   - scaleX / scaleY / scaleZ
+   - barrelLength
+   - local sculpt handles with part="weapon"
+   Maintain readable silhouette, plausible grip and mobile-game visual clarity.
+
+7. REFERENCE MATCHING / QA
+   Always inspect:
+   - Perspective
+   - Front
+   - Right/Side
+   - Back
+   - Quad
+   Use reference overlay scale/X/Y alignment before judging a mismatch.
+   Use wireframe and part isolation to diagnose geometry.
+
+8. MOBILE / GAME-READY DISCIPLINE
+   - Preserve existing triangle budget unless explicitly authorized otherwise.
+   - Prefer strong silhouette and normal/material response over unnecessary geometry.
+   - Avoid self-intersections.
+   - Preserve rig, hand-grip and exported API assumptions.
+
+9. PROCEDURAL DETAIL BUILDER
+   - profile.details.parts is the non-destructive add-on geometry layer.
+   - Use semantic anchors (head/face/torso/hip/shoes/hands) so detail meshes follow body edits.
+   - Use ribbon parts for bangs, eyelids, jacket flaps and straps.
+   - Use tube parts for laces, cords and piping.
+   - Use roundedBox/sphere/capsule/cylinder/torus for shoe panels, noses, buckles and hardware.
+   - Every part must have a stable id, explicit material role and validation-safe transform.
+   - Prefer detail parts over destructive base-geometry rewrites when the source module is unavailable.
+
+10. FACE / APPAREL MACRO DEFORMATION
+   - faceModel provides non-destructive nose and mouth surface shaping.
+   - apparel provides jacket shell/sleeve volume and shoe toe/sole/heel shaping.
+   - Defaults are neutral: enabling this tool must not silently change the source model.
+
+REQUIRED EDITING ORDER
+A. overall silhouette / proportions
+B. head and face
+C. hair silhouette and individual strands
+D. clothing and footwear
+E. weapon silhouette / grip
+F. materials and surface finish
+G. small details
+H. multi-view QA and regression check
+
+AI WORKFLOW
+- Make small, attributable iterations.
+- Do not randomly rewrite large portions of this file.
+- Preserve existing controls unless replacing them with a clearly better compatible
+  implementation.
+- Validate JSON/profile values before applying them.
+- Never invent silent profile keys that no renderer code consumes.
+- If adding a new profile parameter, wire it through:
+    UI -> DEFAULT/profile -> validation -> renderer/deformer/material -> JSON output.
+- Keep Undo/Redo behavior intact.
+- Keep Perspective/Front/Right/Back/Left/Quad working.
+- Keep reference overlay working.
+- Keep local sculpt and procedural hair editing working.
+- Keep capture and AI JSON workflow working.
+
+QUALITY GATES
+Before calling a design finished:
+- Front, side and back silhouettes must all look intentional.
+- Head/neck/shoulder transition must not pinch or intersect.
+- Eyes, cheeks, jaw and ears must remain readable from normal gameplay distance.
+- Hair roots must not visibly detach from or penetrate the head.
+- Hair curves must remain smooth under Catmull-Rom interpolation.
+- Clothing must not visibly intersect skin in the neutral pose.
+- Shoes need a deliberate sole and toe silhouette, not a scaled blob.
+- Weapon silhouette and grip must remain plausible.
+- Materials must remain readable under neutral studio lighting.
+- Wireframe should not reveal accidental extreme deformation.
+- No obvious regression may be hidden by the beauty-render angle.
+
+SINGLE-FILE RUNTIME CONTRACT
+This HTML is self-contained for all INKWAVE application/model data and modelling logic.
+The ONLY runtime dependencies intentionally loaded from the network are Three.js modules
+via the import map. There are NO required local JS, JSON, CSS, texture, or model files.
+
+Embedded runtime APIs used by this workbench include:
+- GEO.getKidShared()
+- GEO.getHairStyle(...)
+- GEO.getHairControlSpec(...)
+- MAT.makeCharUniforms()
+- MAT.makeSkinMaterial(...)
+- MAT.makeClothMaterial(...)
+- MAT.makeHairMaterial(...)
+- MAT.makeEyeMaterial(...)
+- WPN.getWeaponDef(...)
+- WPN.getSubDef(...)
+- STYLE.resolveStyle(...)
+- STYLE.applyStyleUniforms(...)
+
+When improving this file:
+- Keep all INKWAVE geometry/material/style/weapon logic embedded in THIS HTML.
+- Do not add required local-file imports or fetches.
+- It is acceptable to keep Three.js / official Three.js addons loaded from the CDN.
+- New model parameters must still be wired UI -> profile -> validation -> renderer -> JSON.
+
+DESIGN INTENT
+Aim for a polished, expressive, youthful, high-end stylized ink-action-game character:
+clean large shapes, strong silhouette, appealing face, expressive tentacle-like hair,
+fashion-forward streetwear, chunky readable footwear, controlled gloss, and purposeful
+color separation. Keep the result original rather than reproducing an existing
+franchise character exactly.
+
+END OF AI SKILL MANIFEST
+================================================================================
+-->
+
 <html lang="ja">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>INKWAVE AI Modeler</title>
+<title>INKWAVE AI Modeler v7 Standalone</title>
 <style>
 :root{
   color-scheme:dark;
@@ -49,7 +235,7 @@ input[type="color"]{padding:3px}
 .slider label{display:grid;grid-template-columns:1fr;gap:3px;font-size:11px;color:#d9e1ed}
 .slider input[type="range"]{width:100%;height:25px;accent-color:#68e2f3}
 .slider input[type="number"]{height:30px}
-.tabs{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;padding:6px;position:sticky;top:0;background:#0f151fe8;backdrop-filter:blur(14px);z-index:3;border-bottom:1px solid var(--line)}
+.tabs{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;padding:6px;position:sticky;top:0;background:#0f151fe8;backdrop-filter:blur(14px);z-index:3;border-bottom:1px solid var(--line)}
 .tabs button{border:0;background:transparent}
 .tabs button.active{background:#28354a}
 .tabbody{padding:13px}
@@ -94,16 +280,50 @@ textarea{
   .badge{display:none}
 }
 </style>
-<script type="importmap">
-{
-  "imports":{
-    "three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
-    "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
-  }
-}
+
+<style>
+#bootStatus{position:fixed;z-index:99999;left:50%;top:50%;transform:translate(-50%,-50%);max-width:min(560px,88vw);padding:16px 18px;border-radius:14px;background:#080c12ee;border:1px solid #34425a;color:#eaf2ff;font:600 13px/1.5 system-ui,-apple-system,sans-serif;box-shadow:0 18px 80px #000a;text-align:center}
+#bootStatus small{display:block;color:#9cabc0;font-weight:500;margin-top:6px}
+#bootStatus.ok{opacity:0;pointer-events:none;transition:opacity .25s ease}
+#bootStatus.err{background:#28141a;border-color:#8f3b49;color:#ffd6dc}
+</style>
+<script>
+(function(){
+  window.__INKWAVE_BOOT_ERRORS=[];
+  window.addEventListener('error',function(e){
+    window.__INKWAVE_BOOT_ERRORS.push((e && e.message)||'Unknown script error');
+    var b=document.getElementById('bootStatus');
+    if(b){b.className='err';b.innerHTML='<b>INKWAVE startup error</b><small>'+String((e&&e.message)||'Unknown error').replace(/[<>]/g,'')+'</small>';}
+  });
+  window.addEventListener('unhandledrejection',function(e){
+    var msg=(e&&e.reason&&(e.reason.stack||e.reason.message))||String(e&&e.reason||'Unhandled promise rejection');
+    window.__INKWAVE_BOOT_ERRORS.push(msg);
+    var b=document.getElementById('bootStatus');
+    if(b){b.className='err';b.innerHTML='<b>INKWAVE startup error</b><small>'+String(msg).replace(/[<>]/g,'').slice(0,600)+'</small>';}
+  });
+  window.__INKWAVE_THREE_READY=new Promise(function(resolve,reject){
+    var urls=[
+      'https://cdn.jsdelivr.net/npm/three@0.159.0/build/three.min.js',
+      'https://unpkg.com/three@0.159.0/build/three.min.js'
+    ];
+    var i=0;
+    function loadNext(){
+      if(window.THREE){resolve(window.THREE);return;}
+      if(i>=urls.length){reject(new Error('Three.js could not be loaded. Check internet access, then open this HTML in Safari/Chrome rather than a document preview.'));return;}
+      var s=document.createElement('script');
+      s.src=urls[i++];s.async=true;s.crossOrigin='anonymous';
+      s.onload=function(){if(window.THREE)resolve(window.THREE);else loadNext();};
+      s.onerror=function(){s.remove();loadNext();};
+      document.head.appendChild(s);
+    }
+    loadNext();
+  });
+})();
 </script>
+
 </head>
 <body>
+<div id="bootStatus">INKWAVEを起動中…<small>Three.js を読み込んでいます。通常は数秒です。</small></div>
 <div id="stage">
   <div id="refLayer"><img id="refImage" alt=""></div>
 </div>
@@ -127,12 +347,13 @@ textarea{
     <h3>Editing target</h3>
     <div class="row">
       <label class="field"><span>MODE</span><select id="mode"><option value="character">Character</option><option value="weapon">Weapon</option></select></label>
-      <label class="field"><span>GIZMO TARGET</span><select id="gizmoTarget"><option value="whole">Whole</option><option value="head">Head</option><option value="hair">Hair</option><option value="torso">Torso</option><option value="shoes">Shoes</option><option value="sculpt">Sculpt handle</option></select></label>
+      <label class="field"><span>GIZMO TARGET</span><select id="gizmoTarget"><option value="whole">Whole</option><option value="head">Head</option><option value="hair">Hair</option><option value="torso">Torso</option><option value="shoes">Shoes</option><option value="detail">Detail part</option><option value="sculpt">Sculpt handle</option></select></label>
     </div>
     <div class="row">
       <button id="moveTool" class="active">Move</button>
       <button id="scaleTool">Scale</button>
     </div>
+    <div class="row one"><button id="rotateTool">Rotate</button></div>
   </div>
 
   <div class="section" id="sculptQuick">
@@ -150,18 +371,26 @@ textarea{
   </div>
 
   <div class="section" id="characterStyleBlock">
-    <h3>Character source</h3>
+    <h3>Avatar slots</h3>
+    <div class="help" style="margin-bottom:8px">本体ベースと外見/装備を独立差し替え。Base 0 は今回の参考キャラを育てるための基準ボディ。</div>
     <div class="row">
+      <label class="field"><span>BASE BODY</span><select id="baseBody"></select></label>
       <label class="field"><span>HAIR</span><select id="hair"></select></label>
-      <label class="field"><span>OUTFIT</span><select id="outfit"></select></label>
     </div>
     <div class="row">
       <label class="field"><span>SKIN</span><select id="skin"></select></label>
       <label class="field"><span>EYES</span><select id="eyes"></select></label>
     </div>
     <div class="row">
-      <label class="field"><span>HAT</span><select id="hat"></select></label>
       <label class="field"><span>BROWS</span><select id="brows"></select></label>
+      <label class="field"><span>LEGWEAR</span><select id="legwear"></select></label>
+    </div>
+    <div class="row">
+      <label class="field"><span>HEADGEAR</span><select id="headgear"></select></label>
+      <label class="field"><span>CLOTHES</span><select id="clothes"></select></label>
+    </div>
+    <div class="row one">
+      <label class="field"><span>SHOES</span><select id="shoes"></select></label>
     </div>
   </div>
 
@@ -179,7 +408,7 @@ textarea{
   </div>
 
   <div class="section">
-    <h3>Reference overlay</h3>
+    <h3>Reference overlay · <span id="refSlot">Perspective</span></h3>
     <label class="dropzone" for="refFile">画像を重ねる / click to load<input id="refFile" type="file" accept="image/*" hidden></label>
     <div class="slider">
       <label>Opacity<input id="refOpacity" type="range" min="0" max="1" step=".01"></label>
@@ -203,7 +432,7 @@ textarea{
       <label class="toggle"><input id="grid" type="checkbox" checked> Grid</label>
       <label class="toggle"><input id="axes" type="checkbox"> Axes</label>
       <label class="toggle"><input id="rotate" type="checkbox"> Auto rotate</label>
-      <label class="field" style="grid-column:1/-1"><span>ISOLATE PART</span><select id="isolatePart"><option value="all">All</option><option value="skin">Skin / face</option><option value="hair">Hair</option><option value="cloth">Clothes / shoes</option><option value="eyes">Eyes</option><option value="tank">Tank</option><option value="weapon">Weapon</option></select></label>
+      <label class="field" style="grid-column:1/-1"><span>ISOLATE PART</span><select id="isolatePart"><option value="all">All</option><option value="skin">Skin / face</option><option value="hair">Hair</option><option value="cloth">Clothes / shoes</option><option value="eyes">Eyes</option><option value="brows">Brows</option><option value="headgear">Headgear</option><option value="clothes">Clothes</option><option value="legwear">Legwear</option><option value="shoes">Shoes</option><option value="tank">Tank</option><option value="detail">Detail parts</option><option value="weapon">Weapon</option></select></label>
     </div>
   </div>
 
@@ -220,6 +449,7 @@ textarea{
   <div class="tabs">
     <button data-tab="shape" class="active">Shape</button>
     <button data-tab="sculpt">Sculpt</button>
+    <button data-tab="details">Details</button>
     <button data-tab="materials">Materials</button>
     <button data-tab="ai">AI JSON</button>
     <button data-tab="info">Info</button>
@@ -228,6 +458,8 @@ textarea{
   <div class="tabbody" id="tab-shape">
     <div id="shapeControls"></div>
     <div class="section"><h3>Face / expression</h3><div id="faceControls"></div></div>
+    <div class="section"><h3>Face geometry</h3><div id="faceModelControls"></div></div>
+    <div class="section"><h3>Jacket / footwear macro</h3><div id="apparelControls"></div></div>
     <div id="weaponControls" hidden></div>
   </div>
 
@@ -276,6 +508,57 @@ textarea{
     </div>
   </div>
 
+  <div class="tabbody" id="tab-details" hidden>
+    <div class="help">Base meshを壊さず、前髪・目蓋・鼻/口補助形状・ジャケットレイヤー・靴パネル・ストラップ・バックル・靴紐などを追加する非破壊レイヤー。AIは <code>profile.details.parts</code> を直接編集できる。</div>
+    <div class="section">
+      <h3>Add semantic detail</h3>
+      <div class="row">
+        <label class="field"><span>PRESET</span><select id="detailPreset">
+          <option value="upperEyelid">Upper eyelid</option><option value="lowerEyelid">Lower eyelid</option><option value="nose">Nose volume</option><option value="upperLip">Upper lip</option><option value="bang">Bang ribbon</option><option value="jacketPanel">Jacket panel</option><option value="shoePanel">Shoe panel</option><option value="strap">Strap</option><option value="buckle">Buckle</option><option value="lace">Shoe lace</option><option value="customBox">Custom rounded box</option>
+        </select></label>
+        <button id="addDetailBtn" class="primary">Add detail</button>
+      </div>
+    </div>
+    <div class="section">
+      <h3>Selected detail</h3>
+      <div class="row">
+        <label class="field"><span>SELECTED</span><select id="detailSelect"></select></label>
+        <label class="field"><span>NAME</span><input id="detailName" type="text"></label>
+      </div>
+      <div class="row">
+        <label class="field"><span>PRIMITIVE</span><select id="detailPrimitive"><option>roundedBox</option><option>box</option><option>sphere</option><option>capsule</option><option>cylinder</option><option>torus</option><option>ribbon</option><option>tube</option></select></label>
+        <label class="field"><span>ANCHOR</span><select id="detailAnchor"><option>world</option><option>head</option><option>face</option><option>torso</option><option>hip</option><option>leftShoe</option><option>rightShoe</option><option>leftHand</option><option>rightHand</option></select></label>
+      </div>
+      <div class="row">
+        <label class="field"><span>MATERIAL</span><select id="detailMaterial"><option>cloth</option><option>hair</option><option>skin</option><option>eye</option><option>plastic</option><option>rubber</option><option>metal</option><option>custom</option></select></label>
+        <label class="field"><span>COLOR</span><input id="detailColor" type="color"></label>
+      </div>
+      <div class="row">
+        <label class="field"><span>ROUGHNESS</span><input id="detailRoughness" type="number" min="0" max="1" step=".01"></label>
+        <label class="field"><span>METALNESS</span><input id="detailMetalness" type="number" min="0" max="1" step=".01"></label>
+      </div>
+      <div class="row">
+        <label class="field"><span>OPACITY</span><input id="detailOpacity" type="number" min="0" max="1" step=".01"></label>
+        <label class="field"><span>WIDTH / RADIUS</span><input id="detailWidth" type="number" min=".001" max=".5" step=".001"></label>
+      </div>
+      <div class="row">
+        <label class="toggle"><input id="detailMirror" type="checkbox"> Mirror X</label>
+        <label class="toggle"><input id="detailVisible" type="checkbox" checked> Visible</label>
+      </div>
+      <div class="row">
+        <button id="focusDetail">Gizmo selected</button><button id="duplicateDetail">Duplicate</button>
+      </div>
+      <div class="row one"><button id="deleteDetail">Delete detail</button></div>
+      <div class="section">
+        <h3>Ribbon / tube control points</h3>
+        <textarea id="detailPoints" spellcheck="false" style="min-height:110px"></textarea>
+        <div class="row"><button id="applyDetailPoints" class="primary">Apply points</button><button id="resetDetailPoints">Reset points</button></div>
+        <div class="help">points は part-local XYZ の配列。Transform gizmo はpart全体、pointsは局所カーブ/リボン形状を編集する。</div>
+      </div>
+      <div id="detailList" class="handle-list"></div>
+    </div>
+  </div>
+
   <div class="tabbody" id="tab-materials" hidden>
     <div id="materialControls" class="material-grid"></div>
   </div>
@@ -290,10 +573,10 @@ textarea{
       <button id="copyJson">Copy JSON</button>
       <button id="downloadJson">Download JSON</button>
       <button id="copyBrief" class="good">Copy AI brief</button>
-      <button id="reloadProfile">Reload profile</button>
+      <button id="reloadProfile">Reload embedded</button>
     </div>
     <div class="help" style="margin-top:9px">
-      推奨: エージェントは <code>modeler-profile.json</code> を小刻みに変更し、スクリーンショットで正面/側面/背面を検証する。
+      推奨: エージェントはこのHTML内の埋め込みprofile / AI JSONを小刻みに変更し、スクリーンショットで正面/側面/背面を検証する。
     </div>
   </div>
 
@@ -302,16 +585,17 @@ textarea{
       <div>Model: <b id="statModel">—</b></div>
       <div>Triangles: <b id="statTris">—</b></div>
       <div>Meshes: <b id="statMeshes">—</b></div>
+      <div>Detail parts: <b id="statDetails">0</b></div>
       <div>Profile version: <b id="statVersion">—</b></div>
       <div>View: <b id="statView">—</b></div>
     </div>
     <div class="section">
       <h3>AI workflow</h3>
       <div class="help">
-        1. <code>modeler-profile.json</code> のみ編集<br>
-        2. HTMLを再読込して4方向を確認<br>
+        1. このHTML内の埋め込みprofile / AI JSONを編集<br>
+        2. 4方向を確認<br>
         3. 形状を先に合わせ、色・材質は後<br>
-        4. 承認後に値を <code>character-geo.js</code> へ焼き込む<br><br>
+        4. 完成値はこのHTML内へ焼き込む<br><br>
         目標画像をReferenceへ入れると、Front/Right/Backで輪郭を重ねて比較できる。
       </div>
     </div>
@@ -319,18 +603,363 @@ textarea{
 </aside>
 
 <div id="quadLabels"><div class="quad-label q1">Perspective</div><div class="quad-label q2">Front</div><div class="quad-label q3">Right</div><div class="quad-label q4">Back</div></div>
-<div class="badge"><span class="kbd">drag</span> rotate · <span class="kbd">wheel/pinch</span> zoom · <span class="kbd">right drag</span> pan · gizmo = semantic edit</div>
+<div class="badge" id="runtimeBadge"><span class="kbd">drag</span> rotate · <span class="kbd">wheel/pinch</span> zoom · <span class="kbd">right drag</span> pan · gizmo = semantic edit</div>
 
-<script type="module">
-import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { TransformControls } from 'three/addons/controls/TransformControls.js';
-import * as GEO from './src/game/character-geo.js';
-import * as MAT from './src/game/character-mats.js';
-import * as WPN from './src/game/character-weapons.js';
-import * as STYLE from './src/game/character-style.js';
+<script>
+(async function(){
+const THREE = await window.__INKWAVE_THREE_READY;
+
+// Compatibility geometry helpers are embedded so no Three.js addons are required.
+class RoundedBoxGeometry extends THREE.BoxGeometry {
+  constructor(w=1,h=1,d=1,segments=2,radius=.05){
+    const s=Math.max(1,Math.min(6,segments|0));
+    super(w,h,d,s,s,s);
+    this.userData.roundedRadius=radius;
+  }
+}
+function mergeGeometries(list){
+  const valid=(list||[]).filter(Boolean);
+  if(!valid.length) return new THREE.BufferGeometry();
+  const geos=valid.map(g=>g.index?g.toNonIndexed():g.clone());
+  const attrNames=new Set();
+  geos.forEach(g=>Object.keys(g.attributes).forEach(n=>attrNames.add(n)));
+  const out=new THREE.BufferGeometry();
+  for(const name of attrNames){
+    const first=geos.find(g=>g.attributes[name])?.attributes[name];
+    if(!first) continue;
+    const itemSize=first.itemSize;
+    const total=geos.reduce((n,g)=>n+(g.attributes.position?.count||0),0);
+    const arr=new Float32Array(total*itemSize);
+    let offset=0;
+    for(const g of geos){
+      const count=g.attributes.position?.count||0;
+      const a=g.attributes[name];
+      if(a){
+        for(let i=0;i<count;i++) for(let k=0;k<itemSize;k++) arr[(offset+i)*itemSize+k]=a.array[i*itemSize+k]??0;
+      }
+      offset+=count;
+    }
+    out.setAttribute(name,new THREE.BufferAttribute(arr,itemSize));
+  }
+  if(out.attributes.position && !out.attributes.normal) out.computeVertexNormals();
+  out.computeBoundingBox();out.computeBoundingSphere();
+  geos.forEach(g=>g.dispose?.());
+  return out;
+}
+
+class SimpleOrbitControls {
+  constructor(object,domElement){
+    this.object=object;this.domElement=domElement;this.target=new THREE.Vector3();
+    this.enabled=true;this.enableDamping=true;this.dampingFactor=.07;this.screenSpacePanning=true;
+    this.minDistance=.12;this.maxDistance=12;this.autoRotate=false;
+    this._drag=null;this._last={x:0,y:0};this._touchDist=0;
+    domElement.addEventListener('contextmenu',e=>e.preventDefault());
+    domElement.addEventListener('pointerdown',e=>this._down(e));
+    domElement.addEventListener('pointermove',e=>this._move(e));
+    addEventListener('pointerup',e=>this._up(e));
+    domElement.addEventListener('wheel',e=>this._wheel(e),{passive:false});
+  }
+  _down(e){if(!this.enabled)return;this._drag=e.button===2?'pan':'rotate';this._last={x:e.clientX,y:e.clientY};this.domElement.setPointerCapture?.(e.pointerId);}
+  _move(e){if(!this.enabled||!this._drag)return;const dx=e.clientX-this._last.x,dy=e.clientY-this._last.y;this._last={x:e.clientX,y:e.clientY};
+    if(this._drag==='rotate' && this.object.isPerspectiveCamera){
+      const off=this.object.position.clone().sub(this.target);const sph=new THREE.Spherical().setFromVector3(off);
+      sph.theta-=dx*.008;sph.phi=Math.max(.05,Math.min(Math.PI-.05,sph.phi+dy*.008));off.setFromSpherical(sph);this.object.position.copy(this.target).add(off);this.object.lookAt(this.target);
+    }else{
+      const dist=this.object.position.distanceTo(this.target)||1;
+      const right=new THREE.Vector3().setFromMatrixColumn(this.object.matrix,0).multiplyScalar(-dx*dist*.0015);
+      const up=new THREE.Vector3().setFromMatrixColumn(this.object.matrix,1).multiplyScalar(dy*dist*.0015);
+      this.object.position.add(right).add(up);this.target.add(right).add(up);
+    }
+  }
+  _up(){this._drag=null;}
+  _wheel(e){if(!this.enabled)return;e.preventDefault();const f=Math.exp(e.deltaY*.001);
+    if(this.object.isOrthographicCamera){this.object.zoom=Math.max(.2,Math.min(8,this.object.zoom/f));this.object.updateProjectionMatrix();}
+    else {const off=this.object.position.clone().sub(this.target);const d=Math.max(this.minDistance,Math.min(this.maxDistance,off.length()*f));off.setLength(d);this.object.position.copy(this.target).add(off);this.object.lookAt(this.target);}
+  }
+  update(dt){if(this.autoRotate&&this.enabled&&this.object.isPerspectiveCamera){const off=this.object.position.clone().sub(this.target);off.applyAxisAngle(new THREE.Vector3(0,1,0),(dt||.016)*.45);this.object.position.copy(this.target).add(off);}this.object.lookAt(this.target);}
+}
+
+class SimpleTransformControls extends THREE.Group {
+  constructor(camera,domElement){
+    super();this.camera=camera;this.domElement=domElement;this.object=null;this.mode='translate';this.size=.78;this.visible=false;this._axis=null;this._dragStart=null;this._objStart=null;
+    this._raycaster=new THREE.Raycaster();this._pointer=new THREE.Vector2();this._axisMeshes={};this._build();
+    domElement.addEventListener('pointerdown',e=>this._down(e),true);
+    domElement.addEventListener('pointermove',e=>this._move(e),true);
+    addEventListener('pointerup',e=>this._up(e),true);
+  }
+  _build(){
+    const axes=[['x',0xff5d6c,new THREE.Vector3(1,0,0)],['y',0x75e68a,new THREE.Vector3(0,1,0)],['z',0x62a9ff,new THREE.Vector3(0,0,1)]];
+    for(const [name,color,dir] of axes){
+      const mat=new THREE.MeshBasicMaterial({color,depthTest:false,transparent:true,opacity:.95});
+      const shaft=new THREE.Mesh(new THREE.CylinderGeometry(.006,.006,.18,8),mat);shaft.userData.axis=name;
+      const tip=new THREE.Mesh(new THREE.ConeGeometry(.018,.055,10),mat);tip.userData.axis=name;
+      if(name==='x'){shaft.rotation.z=-Math.PI/2;shaft.position.x=.09;tip.rotation.z=-Math.PI/2;tip.position.x=.205;}
+      if(name==='y'){shaft.position.y=.09;tip.position.y=.205;}
+      if(name==='z'){shaft.rotation.x=Math.PI/2;shaft.position.z=.09;tip.rotation.x=Math.PI/2;tip.position.z=.205;}
+      this.add(shaft,tip);this._axisMeshes[name]=[shaft,tip];
+    }
+    this.renderOrder=999;
+  }
+  getHelper(){return this;}
+  setSize(v){this.size=v||1;this.scale.setScalar(this.size);}
+  setMode(m){this.mode=m||'translate';}
+  attach(o){this.object=o;this.visible=!!o;if(o)this.position.copy(o.position);return this;}
+  detach(){this.object=null;this.visible=false;return this;}
+  _setPointer(e){const r=this.domElement.getBoundingClientRect();this._pointer.x=((e.clientX-r.left)/r.width)*2-1;this._pointer.y=-((e.clientY-r.top)/r.height)*2+1;}
+  _down(e){if(!this.object||!this.visible)return;this._setPointer(e);this._raycaster.setFromCamera(this._pointer,this.camera);const hit=this._raycaster.intersectObjects(this.children,true)[0];if(!hit)return;this._axis=hit.object.userData.axis;if(!this._axis)return;
+    this._dragStart={x:e.clientX,y:e.clientY};this._objStart={pos:this.object.position.clone(),scale:this.object.scale.clone(),rot:this.object.rotation.clone()};
+    this.dispatchEvent({type:'mouseDown'});this.dispatchEvent({type:'dragging-changed',value:true});e.preventDefault();e.stopPropagation();
+  }
+  _move(e){if(!this._axis||!this.object||!this._dragStart)return;const dx=e.clientX-this._dragStart.x,dy=e.clientY-this._dragStart.y;const delta=(this._axis==='y'?-dy:dx)*.0025;
+    const idx=this._axis==='x'?'x':this._axis==='y'?'y':'z';
+    if(this.mode==='scale'){const v=Math.max(.1,this._objStart.scale[idx]*(1+delta*2));this.object.scale[idx]=v;}
+    else if(this.mode==='rotate'){this.object.rotation[idx]=this._objStart.rot[idx]+delta*2.5;}
+    else {this.object.position.copy(this._objStart.pos);this.object.position[idx]+=delta;}
+    this.position.copy(this.object.position);e.preventDefault();e.stopPropagation();
+  }
+  _up(e){if(!this._axis)return;this._axis=null;this._dragStart=null;this.dispatchEvent({type:'mouseUp'});this.dispatchEvent({type:'dragging-changed',value:false});}
+}
+const OrbitControls=SimpleOrbitControls;
+const TransformControls=SimpleTransformControls;
+
+function _fg(geo,pos=[0,0,0],scale=[1,1,1],rot=[0,0,0]){
+  const g=geo.clone();
+  const m=new THREE.Matrix4();
+  const q=new THREE.Quaternion().setFromEuler(new THREE.Euler(...rot));
+  m.compose(new THREE.Vector3(...pos),q,new THREE.Vector3(...scale));
+  g.applyMatrix4(m);
+  return g;
+}
+function _merge(list){
+  const g=mergeGeometries(list.filter(Boolean),false);
+  for(const x of list) x?.dispose?.();
+  return g;
+}
+function _tube(points,r=.045,segments=32,radial=10){
+  const c=new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(...p)),false,'catmullrom',.5);
+  return new THREE.TubeGeometry(c,segments,r,radial,false);
+}
+function makeEmbeddedRuntime(){
+  const skinTone=new THREE.Color('#d9936f');
+  const skinParts=[];
+  skinParts.push(_fg(new THREE.SphereGeometry(.18,28,20),[0,1.22,.005],[1.00,1.08,.92]));
+  skinParts.push(_fg(new THREE.CylinderGeometry(.052,.062,.12,16),[0,1.02,0]));
+  skinParts.push(_fg(new THREE.SphereGeometry(.19,24,16),[0,.82,0],[1.04,1.18,.62]));
+  skinParts.push(_fg(new THREE.CapsuleGeometry(.043,.37,8,14),[-.225,.70,0],[1,1,1],[0,0,-.10]));
+  skinParts.push(_fg(new THREE.CapsuleGeometry(.043,.37,8,14),[ .225,.70,0],[1,1,1],[0,0, .10]));
+  skinParts.push(_fg(new THREE.SphereGeometry(.050,16,12),[-.245,.475,.005],[.75,1,.75]));
+  skinParts.push(_fg(new THREE.SphereGeometry(.050,16,12),[ .245,.475,.005],[.75,1,.75]));
+  skinParts.push(_fg(new THREE.CapsuleGeometry(.055,.37,8,14),[-.085,.32,0]));
+  skinParts.push(_fg(new THREE.CapsuleGeometry(.055,.37,8,14),[ .085,.32,0]));
+  // pointed ears
+  skinParts.push(_fg(new THREE.ConeGeometry(.055,.22,12),[-.205,1.225,.0],[1,.9,.55],[0,0,-Math.PI/2]));
+  skinParts.push(_fg(new THREE.ConeGeometry(.055,.22,12),[ .205,1.225,.0],[1,.9,.55],[0,0, Math.PI/2]));
+  const skin=_merge(skinParts);
+
+  const clothParts=[];
+  clothParts.push(_fg(new RoundedBoxGeometry(.34,.23,.17,3,.025),[0,.86,0]));
+  clothParts.push(_fg(new RoundedBoxGeometry(.40,.17,.19,3,.02),[0,.65,0]));
+  clothParts.push(_fg(new THREE.CylinderGeometry(.062,.065,.36,14),[-.085,.285,0]));
+  clothParts.push(_fg(new THREE.CylinderGeometry(.062,.065,.36,14),[ .085,.285,0]));
+  clothParts.push(_fg(new RoundedBoxGeometry(.16,.105,.29,3,.025),[-.085,.075,.035]));
+  clothParts.push(_fg(new RoundedBoxGeometry(.16,.105,.29,3,.025),[ .085,.075,.035]));
+  const cloth=_merge(clothParts);
+
+  const eyeParts=[];
+  eyeParts.push(_fg(new THREE.SphereGeometry(.052,20,14),[-.071,1.245,.154],[1.16,.92,.52]));
+  eyeParts.push(_fg(new THREE.SphereGeometry(.052,20,14),[ .071,1.245,.154],[1.16,.92,.52]));
+  const eyes=_merge(eyeParts);
+
+  const HAIR_BASE_SPECS=[
+    // 0: reference-oriented high twin-tail tentacles
+    [
+      {points:[[-.105,1.35,-.02],[-.20,1.33,-.03],[-.30,1.20,-.015],[-.33,1.01,.00],[-.28,.86,.035]]},
+      {points:[[ .105,1.35,-.02],[ .20,1.33,-.03],[ .30,1.20,-.015],[ .33,1.01,.00],[ .28,.86,.035]]},
+      {points:[[-.060,1.36,.105],[-.105,1.31,.155],[-.135,1.245,.178],[-.105,1.17,.183]]},
+      {points:[[ .025,1.36,.115],[ .010,1.315,.170],[-.010,1.255,.190],[-.025,1.185,.185]]},
+      {points:[[ .095,1.345,.095],[ .125,1.30,.145],[ .145,1.24,.165],[ .135,1.175,.170]]},
+      {points:[[-.125,1.335,.055],[-.165,1.285,.090],[-.175,1.215,.110]]}
+    ],
+    // 1: compact bob / short tentacles
+    [
+      {points:[[-.12,1.34,.00],[-.18,1.29,.01],[-.20,1.20,.03],[-.17,1.12,.05]]},
+      {points:[[ .12,1.34,.00],[ .18,1.29,.01],[ .20,1.20,.03],[ .17,1.12,.05]]},
+      {points:[[-.05,1.36,.11],[-.09,1.31,.16],[-.10,1.24,.18]]},
+      {points:[[ .04,1.36,.11],[ .03,1.31,.17],[ .01,1.24,.19]]}
+    ],
+    // 2: long swept style
+    [
+      {points:[[-.09,1.35,.00],[-.20,1.30,-.02],[-.30,1.16,-.04],[-.27,.98,-.02],[-.18,.82,.03]]},
+      {points:[[ .08,1.35,.02],[ .14,1.30,.08],[ .16,1.22,.13],[ .13,1.13,.15]]},
+      {points:[[-.03,1.36,.12],[-.03,1.30,.18],[-.01,1.22,.20],[ .03,1.14,.19]]},
+      {points:[[ .11,1.33,.08],[ .18,1.26,.11],[ .22,1.16,.10]]}
+    ],
+    // 3: low twin-tail / experimental alternative
+    [
+      {points:[[-.13,1.29,-.04],[-.23,1.22,-.06],[-.31,1.08,-.04],[-.31,.90,.00]]},
+      {points:[[ .13,1.29,-.04],[ .23,1.22,-.06],[ .31,1.08,-.04],[ .31,.90,.00]]},
+      {points:[[-.06,1.35,.11],[-.10,1.30,.16],[-.12,1.23,.18]]},
+      {points:[[ .04,1.35,.12],[ .02,1.29,.18],[0,1.22,.20]]}
+    ]
+  ];
+  function hairSpec(style){
+    const base=HAIR_BASE_SPECS[Math.max(0,Math.min(HAIR_BASE_SPECS.length-1,+style?.hair||0))]||HAIR_BASE_SPECS[0];
+    const ov=style?.modelerHair?.strands||{};
+    return base.map((sp,i)=>{
+      const o=ov[String(i)]||{};
+      return {
+        points:sp.points.map((p,j)=>{const d=o.offsets?.[j]||[0,0,0];return [p[0]+(d[0]||0),p[1]+(d[1]||0),p[2]+(d[2]||0)];}),
+        radiusScale:o.radiusScale??1,flatScale:o.flatScale??1
+      };
+    });
+  }
+  function hairGeo(style){
+    const spec=hairSpec(style), hi=Math.max(0,Math.min(3,+style?.hair||0));
+    const gs=[];
+    const capScales=[[1.05,.64,.96],[1.03,.62,.96],[1.04,.63,.95],[1.04,.62,.96]][hi];
+    gs.push(_fg(new THREE.SphereGeometry(.188,28,18),[0,1.315,-.028],capScales));
+    spec.forEach((sp,i)=>{
+      const major=(hi===0||hi===3)?i<2:i===0;
+      const r=(major ? .050 : .034)*(sp.radiusScale||1);
+      const g=_tube(sp.points,r,major?40:24,major?12:10);
+      if(sp.flatScale && Math.abs(sp.flatScale-1)>.001){
+        const arr=g.attributes.position;
+        for(let k=0;k<arr.count;k++) arr.setX(k,arr.getX(k)*sp.flatScale);
+        arr.needsUpdate=true; g.computeVertexNormals();
+      }
+      gs.push(g);
+    });
+    return _merge(gs);
+  }
+  function browGeo(style){
+    const bi=Math.max(0,Math.min(3,+style?.brows||0));
+    const cfg=[{w:.075,h:.010,tilt:.10},{w:.082,h:.012,tilt:0},{w:.074,h:.011,tilt:.24},{w:.086,h:.018,tilt:.06}][bi];
+    const gs=[];
+    for(const side of [-1,1]){
+      const g=_fg(new RoundedBoxGeometry(cfg.w,cfg.h,.010,2,.004),[side*.070,1.302,.168],[1,1,1],[0,0,-side*cfg.tilt]);
+      gs.push(g);
+    }
+    return _merge(gs);
+  }
+  function wearableParts(style){
+    const parts=[];
+    const add=(slot,geo,material,color,roughness=.65,metalness=0)=>parts.push({slot,geo,material,color,roughness,metalness});
+    const clothes=Math.max(0,Math.min(3,+style?.clothes||0));
+    if(clothes===0){ // Reference tech jacket + crop top
+      add('clothes',_fg(new RoundedBoxGeometry(.285,.115,.158,3,.020),[0,.875,.012]),'cloth','#161a20',.86);
+      add('clothes',_fg(new RoundedBoxGeometry(.365,.205,.188,3,.025),[0,.900,-.006]),'cloth','#eef1f4',.72);
+      add('clothes',_fg(new THREE.CapsuleGeometry(.055,.215,6,12),[-.215,.835,0],[1.10,1,1],[0,0,-.10]),'cloth','#eef1f4',.74);
+      add('clothes',_fg(new THREE.CapsuleGeometry(.055,.215,6,12),[ .215,.835,0],[1.10,1,1],[0,0, .10]),'cloth','#eef1f4',.74);
+      add('clothes',_fg(new RoundedBoxGeometry(.055,.150,.198,2,.012),[-.155,.905,.018]),'ink','#17d9d0',.42);
+      add('clothes',_fg(new RoundedBoxGeometry(.055,.150,.198,2,.012),[ .155,.905,.018]),'ink','#17d9d0',.42);
+      add('clothes',_fg(new RoundedBoxGeometry(.205,.030,.205,2,.010),[0,1.015,-.010]),'cloth','#b7ff3c',.60);
+    }else if(clothes===1){ // Basic tee
+      add('clothes',_fg(new RoundedBoxGeometry(.335,.245,.178,3,.025),[0,.855,0]),'cloth','#242a31',.86);
+      add('clothes',_fg(new THREE.CapsuleGeometry(.046,.15,6,10),[-.205,.86,0],[1,1,1],[0,0,-.10]),'cloth','#242a31',.86);
+      add('clothes',_fg(new THREE.CapsuleGeometry(.046,.15,6,10),[ .205,.86,0],[1,1,1],[0,0, .10]),'cloth','#242a31',.86);
+    }else if(clothes===2){ // Hoodie
+      add('clothes',_fg(new RoundedBoxGeometry(.385,.300,.205,3,.030),[0,.835,-.005]),'cloth','#dfe5e9',.78);
+      add('clothes',_fg(new THREE.TorusGeometry(.105,.030,8,20),[0,1.005,-.060],[1,1,1],[Math.PI/2,0,0]),'cloth','#dfe5e9',.78);
+      add('clothes',_fg(new THREE.CapsuleGeometry(.060,.235,6,12),[-.225,.79,0],[1,1,1],[0,0,-.08]),'cloth','#dfe5e9',.78);
+      add('clothes',_fg(new THREE.CapsuleGeometry(.060,.235,6,12),[ .225,.79,0],[1,1,1],[0,0, .08]),'cloth','#dfe5e9',.78);
+    }
+    const leg=Math.max(0,Math.min(3,+style?.legwear||0));
+    if(leg===0){ // Reference shorts + asymmetric tall socks
+      add('legwear',_fg(new RoundedBoxGeometry(.39,.17,.19,3,.020),[0,.645,0]),'cloth','#171b20',.84);
+      add('legwear',_fg(new THREE.CylinderGeometry(.060,.060,.25,14),[-.085,.285,0]),'cloth','#171b20',.88);
+      add('legwear',_fg(new THREE.CylinderGeometry(.060,.060,.25,14),[ .085,.285,0]),'cloth','#171b20',.88);
+      add('legwear',_fg(new RoundedBoxGeometry(.018,.20,.010,2,.004),[-.132,.29,.058]),'ink','#17d9d0',.5);
+      add('legwear',_fg(new RoundedBoxGeometry(.018,.20,.010,2,.004),[ .132,.29,.058]),'cloth','#b7ff3c',.60);
+    }else if(leg===1){
+      add('legwear',_fg(new RoundedBoxGeometry(.38,.18,.19,3,.020),[0,.64,0]),'cloth','#252a31',.86);
+      add('legwear',_fg(new THREE.CylinderGeometry(.060,.060,.09,14),[-.085,.16,0]),'cloth','#f1f2f3',.78);
+      add('legwear',_fg(new THREE.CylinderGeometry(.060,.060,.09,14),[ .085,.16,0]),'cloth','#f1f2f3',.78);
+    }else if(leg===2){
+      add('legwear',_fg(new RoundedBoxGeometry(.39,.17,.19,3,.020),[0,.645,0]),'cloth','#1d2228',.86);
+      add('legwear',_fg(new THREE.CylinderGeometry(.066,.060,.48,14),[-.085,.33,0]),'cloth','#1d2228',.86);
+      add('legwear',_fg(new THREE.CylinderGeometry(.066,.060,.48,14),[ .085,.33,0]),'cloth','#1d2228',.86);
+    }
+    const shoes=Math.max(0,Math.min(3,+style?.shoes||0));
+    for(const side of [-1,1]){
+      const x=side*.085;
+      if(shoes===0){ // Reference oversized technical high-top
+        add('shoes',_fg(new RoundedBoxGeometry(.165,.125,.305,3,.030),[x,.075,.050]),'plastic','#eef1f3',.35);
+        add('shoes',_fg(new RoundedBoxGeometry(.180,.042,.325,2,.012),[x,.024,.050]),'rubber','#171a1e',.92);
+        add('shoes',_fg(new RoundedBoxGeometry(.120,.100,.155,3,.022),[x,.130,-.005]),'plastic','#222832',.42);
+        add('shoes',_fg(new RoundedBoxGeometry(.035,.070,.180,2,.010),[x+side*.070,.095,.060]),'ink','#17d9d0',.38);
+        add('shoes',_fg(new RoundedBoxGeometry(.035,.055,.110,2,.010),[x-side*.070,.100,.020]),'cloth','#b7ff3c',.60);
+      }else if(shoes===1){
+        add('shoes',_fg(new RoundedBoxGeometry(.150,.090,.270,3,.025),[x,.060,.055]),'plastic','#eceff1',.40);
+        add('shoes',_fg(new RoundedBoxGeometry(.162,.035,.282,2,.010),[x,.018,.055]),'rubber','#20242a',.92);
+      }else if(shoes===2){
+        add('shoes',_fg(new RoundedBoxGeometry(.170,.190,.285,3,.030),[x,.110,.035]),'plastic','#2a3038',.45);
+        add('shoes',_fg(new RoundedBoxGeometry(.182,.045,.305,2,.012),[x,.020,.040]),'rubber','#111418',.94);
+      }
+    }
+    const head=Math.max(0,Math.min(3,+style?.headgear||0));
+    if(head===1){
+      add('headgear',_fg(new THREE.TorusGeometry(.185,.022,8,32),[0,1.335,-.010],[1,1,.92],[Math.PI/2,0,0]),'plastic','#242a30',.38);
+    }else if(head===2){
+      add('headgear',_fg(new THREE.SphereGeometry(.196,24,12,0,Math.PI*2,0,Math.PI*.55),[0,1.350,-.028],[1.06,.78,1.02]),'cloth','#1f252c',.78);
+      add('headgear',_fg(new RoundedBoxGeometry(.185,.018,.075,2,.008),[0,1.335,.175],[1,1,1],[.06,0,0]),'plastic','#1f252c',.45);
+    }else if(head===3){
+      add('headgear',_fg(new THREE.TorusGeometry(.090,.018,8,24),[-.090,1.285,.175],[1.25,.75,1],[Math.PI/2,0,0]),'plastic','#c8f7ff',.18);
+      add('headgear',_fg(new THREE.TorusGeometry(.090,.018,8,24),[ .090,1.285,.175],[1.25,.75,1],[Math.PI/2,0,0]),'plastic','#c8f7ff',.18);
+      add('headgear',_fg(new RoundedBoxGeometry(.075,.015,.020,2,.004),[0,1.285,.180]),'plastic','#20262c',.45);
+    }
+    return parts;
+  }
+  const GEO={
+    HEAD_C:new THREE.Vector3(0,1.214,.012),
+    getKidShared(){return {skin:skin.clone(),cloth:cloth.clone(),eyes:eyes.clone()};},
+    getHairControlSpec(style){return hairSpec(style);},
+    getHairStyle(style){return {geo:hairGeo(style)};},
+    getBrows(style){return browGeo(style);},
+    getWearables(style){return wearableParts(style);}
+  };
+  const MAT={
+    makeCharUniforms(){return {uTeam:{value:new THREE.Color('#17d9d0')},uGlow:{value:new THREE.Color(0)},uHairTip:{value:new THREE.Color('#b8ff4d')},uHairTipStrength:{value:0},uMouth:{value:new THREE.Vector4()},uLook:{value:new THREE.Vector2()},uTime:{value:0}};},
+    makeSkinMaterial(u,tone){return new THREE.MeshPhysicalMaterial({color:tone||skinTone,roughness:.52,clearcoat:.05});},
+    makeClothMaterial(){return new THREE.MeshStandardMaterial({color:'#222a30',roughness:.82});},
+    makeHairMaterial(u){return new THREE.MeshPhysicalMaterial({color:u?.uTeam?.value||'#17d9d0',roughness:.3,clearcoat:1,transparent:false});},
+    makeEyeMaterial(u,color){return new THREE.MeshPhysicalMaterial({color:color||'#42e8e1',roughness:.18,clearcoat:.82});},
+    makeInkFillMaterial(){return new THREE.MeshStandardMaterial({color:'#17d9d0',roughness:.3});},
+    getGlassMaterial(){return new THREE.MeshPhysicalMaterial({color:'#baf7ff',transparent:true,opacity:.28,roughness:.08,transmission:.5});},
+    getPlasticMaterial(){return new THREE.MeshStandardMaterial({color:'#353a42',roughness:.4});},
+    getInkMaterial(c){return new THREE.MeshStandardMaterial({color:c,roughness:.28});}
+  };
+  const STYLE={
+    BASE_BODY_NAMES:['Inkling A · Reference base','Inkling B','Octoling A','Octoling B'],
+    HAIR_STYLE_NAMES:['Reference high twin-tail','Compact bob','Long swept','Low twin-tail'],
+    SKIN_NAMES:['Porcelain','Light warm','Warm','Tan','Deep tan','Brown','Deep brown','Dark'],
+    IRIS_NAMES:['Aqua','Blue','Lime','Amber','Violet','Rose','Dark'],
+    BROW_NAMES:['Soft','Straight','Sharp','Bold'],
+    LEGWEAR_NAMES:['Reference shorts + asym socks','Shorts + ankle socks','Long pants','None / body only'],
+    HEADGEAR_NAMES:['None','Head band','Cap','Goggles'],
+    CLOTHES_NAMES:['Reference tech jacket','Basic tee','Hoodie','None / body only'],
+    SHOES_NAMES:['Reference tech high-tops','Low sneakers','Chunky boots','Barefoot / none'],
+    SKIN_TONES:['#f3c6ae','#e7ad8e','#d9936f','#bb7958','#955f46','#704638','#51332c','#35231f'].map(x=>new THREE.Color(x)),
+    IRIS_COLORS:['#42e8e1','#4da7ff','#b8ff4d','#ffb84f','#9d7cff','#ff72b6','#23303f'].map(x=>new THREE.Color(x)),
+    resolveStyle(p){return {baseBody:+p?.baseBody||0,hair:+p?.hair||0,skin:+p?.skin||0,eyes:+p?.eyes||0,brows:+p?.brows||0,legwear:+p?.legwear||0,headgear:+p?.headgear||0,clothes:+p?.clothes||0,shoes:+p?.shoes||0};},
+    applyStyleUniforms(){}
+  };
+  const WPN={
+    WEAPON_KINDS:['shooter'],
+    getWeaponDef(){
+      const body=_merge([_fg(new RoundedBoxGeometry(.16,.12,.42,3,.025),[0,0,.12]),_fg(new THREE.CylinderGeometry(.035,.045,.22,12),[0,-.12,.02],[1,1,1],[0,0,.22])]);
+      const ink=_fg(new THREE.CylinderGeometry(.052,.052,.16,16),[0,.06,.05],[1,1,1],[Math.PI/2,0,0]);
+      return {body,ink};
+    },
+    getSubDef(){return this.getWeaponDef();},
+    makeCoilMaterial(){return new THREE.MeshStandardMaterial({color:'#17d9d0',emissive:'#17d9d0'});}
+  };
+  return {GEO,MAT,WPN,STYLE};
+}
+
+const {GEO,MAT,WPN,STYLE}=makeEmbeddedRuntime();
 
 const $ = id => document.getElementById(id);
+{ const b=$('runtimeBadge'); if(b) b.innerHTML='<b>v10 Avatar Slots</b> · 4 base bodies + independent appearance/gear slots · Three.js from CDN'; }
 const deepClone = v => JSON.parse(JSON.stringify(v));
 const merge = (a,b) => {
   if (!b || typeof b !== 'object') return a;
@@ -344,14 +973,17 @@ const merge = (a,b) => {
 };
 
 const DEFAULT = {
-  version:5,target:'inkwave-character',
-  notes:'AI-editable non-destructive modelling profile. Shape values are semantic; sculpt handles provide local soft deformation.',
-  style:{hair:0,outfit:0,skin:1,eyes:1,hat:0,brows:0},
+  version:10,target:'inkwave-character',
+  notes:'Single-file avatar-slot modeller. Four base body presets + independently switchable hair, skin, eyes, brows, legwear, headgear, clothes and shoes. All INKWAVE logic is embedded; only Three.js core is loaded from CDN.',
+  style:{baseBody:0,hair:0,skin:2,eyes:0,brows:0,legwear:0,headgear:0,clothes:0,shoes:0},
   look:{ink:'#17d9d0',glow:0},
   face:{mouthCurve:.75,mouthWidth:1,mouthOpen:0,mouthTilt:0,lookX:0,lookY:0},
+  faceModel:{noseDepth:0,noseWidth:1,noseHeight:1,noseTipY:0,mouthDepth:0,lipVolume:0},
+  apparel:{jacketShell:0,sleeveVolume:1,shoeToeWidth:1,shoeToeLift:0,shoeSoleThickness:0,shoeHeelWidth:1},
   materials:{skinRoughness:.52,skinClearcoat:.06,clothRoughness:.82,hairRoughness:.3,hairClearcoat:1,hairTipColor:'#b8ff4d',hairTipStrength:0,hairTranslucency:0,weaponRoughness:.4},
   sculpt:{enabled:true,mirror:true,defaultRadius:.08,handles:[]},
   hairSpline:{enabled:true,strands:{}},
+  details:{enabled:true,parts:[]},
   shape:{
     overallScale:1,
     headWidth:1,headHeight:1,headDepth:1,
@@ -365,21 +997,30 @@ const DEFAULT = {
     legLength:1,legThickness:1,shoeScale:1,shoeLength:1
   },
   weapon:{kind:'shooter',scaleX:1,scaleY:1,scaleZ:1,barrelLength:1},
-  view:{mode:'perspective',wireframe:false,grid:true,referenceOpacity:.45,referenceScale:1,referenceX:0,referenceY:0,isolatePart:'all',showHandles:true,xrayHandles:true,quad:false}
-};
+  view:{mode:'perspective',wireframe:false,grid:true,referenceOpacity:.45,referenceScale:1,referenceX:0,referenceY:0,isolatePart:'all',showHandles:true,xrayHandles:true,quad:false} };
+
+const BASE_BODY_PRESETS=[
+  {shape:{headWidth:1.00,headHeight:.98,headDepth:.96,jawWidth:.84,cheekWidth:1.06,eyeScale:1.12,eyeSpacing:1.00,earLength:1.18,shoulderWidth:.94,torsoWidth:.94,torsoDepth:.94,torsoLength:.98,hipWidth:.96,armLength:.98,armThickness:.94,legLength:1.06,legThickness:.93,shoeScale:1.14,shoeLength:1.10},faceModel:{noseDepth:.010,noseWidth:.92,noseHeight:.92,mouthDepth:.004,lipVolume:.10}},
+  {shape:{headWidth:.98,headHeight:1.00,headDepth:.98,jawWidth:.94,cheekWidth:.99,eyeScale:1.04,eyeSpacing:1.00,earLength:1.12,shoulderWidth:1.07,torsoWidth:1.04,torsoDepth:1.02,torsoLength:1.02,hipWidth:.96,armLength:1.02,armThickness:1.06,legLength:1.04,legThickness:1.03,shoeScale:1.11,shoeLength:1.08},faceModel:{noseDepth:.014,noseWidth:1.00,noseHeight:1.00,mouthDepth:.004,lipVolume:.05}},
+  {shape:{headWidth:1.00,headHeight:.98,headDepth:.97,jawWidth:.86,cheekWidth:1.04,eyeScale:1.10,eyeSpacing:1.02,earLength:1.03,shoulderWidth:.95,torsoWidth:.95,torsoDepth:.95,torsoLength:.99,hipWidth:.98,armLength:.99,armThickness:.95,legLength:1.05,legThickness:.95,shoeScale:1.13,shoeLength:1.09},faceModel:{noseDepth:.009,noseWidth:.90,noseHeight:.90,mouthDepth:.004,lipVolume:.09}},
+  {shape:{headWidth:.99,headHeight:1.00,headDepth:.99,jawWidth:.95,cheekWidth:1.00,eyeScale:1.03,eyeSpacing:1.01,earLength:1.02,shoulderWidth:1.06,torsoWidth:1.03,torsoDepth:1.02,torsoLength:1.02,hipWidth:.97,armLength:1.02,armThickness:1.05,legLength:1.03,legThickness:1.03,shoeScale:1.10,shoeLength:1.07},faceModel:{noseDepth:.013,noseWidth:.98,noseHeight:.98,mouthDepth:.004,lipVolume:.05}}
+];
+function applyBaseBodyPreset(index){
+  const p=BASE_BODY_PRESETS[Math.max(0,Math.min(BASE_BODY_PRESETS.length-1,+index||0))];
+  if(!p)return;
+  Object.assign(profile.shape,p.shape||{});
+  Object.assign(profile.faceModel,p.faceModel||{});
+}
 
 let profile = deepClone(DEFAULT);
-try {
-  const r = await fetch('./modeler-profile.json',{cache:'no-store'});
-  if (r.ok) merge(profile,await r.json());
-} catch {}
+// Single-file invariant: startup state is embedded in this HTML. No local profile fetch.
 
 const stage = $('stage');
 const renderer = new THREE.WebGLRenderer({antialias:true,alpha:true,powerPreference:'high-performance'});
 renderer.setPixelRatio(Math.min(devicePixelRatio,2));
 renderer.setSize(innerWidth,innerHeight);
 renderer.setClearColor(0x000000,0);
-renderer.outputColorSpace = THREE.SRGBColorSpace;
+if('outputColorSpace' in renderer && THREE.SRGBColorSpace) renderer.outputColorSpace=THREE.SRGBColorSpace; else if(THREE.sRGBEncoding) renderer.outputEncoding=THREE.sRGBEncoding;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.05;
 renderer.shadowMap.enabled = true;
@@ -423,7 +1064,10 @@ let history = [], future = [];
 let rebuildQueued = false;
 let addHandleArmed = false;
 let selectedSculptId = null;
+let selectedDetailId = null;
 let handleCounter = 1;
+let detailCounter = 1;
+const referenceImages = {perspective:null,front:null,right:null,back:null,left:null};
 
 const HEAD = GEO.HEAD_C ? GEO.HEAD_C.clone() : new THREE.Vector3(0,1.214,.012);
 const HIP_Y = .64;
@@ -435,6 +1079,39 @@ const smooth=(a,b,x)=>{
   return t*t*(3-2*t);
 };
 const gauss=(x,s)=>Math.exp(-((x/s)**2));
+const vec3ok=v=>Array.isArray(v)&&v.length===3&&v.every(Number.isFinite);
+
+function getAnchorOrigin(anchor,s=profile.shape){
+  const hc=mappedHeadCenter(s);
+  const sx=.084*s.hipWidth;
+  const yShoe=.085*s.legLength;
+  const yHand=mapY(.62,s);
+  const xHand=.245*s.shoulderWidth;
+  const raw={
+    world:new THREE.Vector3(0,0,0),
+    head:hc.clone(),
+    face:hc.clone().add(new THREE.Vector3(0,-.015,.11*s.headDepth)),
+    torso:new THREE.Vector3(0,mapY(.82,s),.01),
+    hip:new THREE.Vector3(0,mapY(.64,s),0),
+    leftShoe:new THREE.Vector3(-sx,yShoe,.025), rightShoe:new THREE.Vector3(sx,yShoe,.025),
+    leftHand:new THREE.Vector3(-xHand,yHand,.015), rightHand:new THREE.Vector3(xHand,yHand,.015)
+  };
+  return (raw[anchor]||raw.world).multiplyScalar(s.overallScale);
+}
+
+function getDetailPart(){return profile.details?.parts?.find(p=>p.id===selectedDetailId)||null;}
+function nextDetailId(){
+  const used=new Set((profile.details?.parts||[]).map(p=>p.id));
+  let id; do{id='d'+String(detailCounter++).padStart(3,'0');}while(used.has(id)); return id;
+}
+function detailWorldTransform(part,s=profile.shape){
+  const k=s.overallScale;
+  const pos=getAnchorOrigin(part.anchor||'world',s).add(new THREE.Vector3(...(part.position||[0,0,0])).multiplyScalar(k));
+  const scale=new THREE.Vector3(...(part.scale||[.05,.05,.05])).multiplyScalar(k);
+  const rot=new THREE.Euler(...(part.rotation||[0,0,0]),'XYZ');
+  return {pos,scale,rot};
+}
+
 
 function mapY(y,s){
   const leg=s.legLength, torso=s.torsoLength;
@@ -518,6 +1195,26 @@ function deformCharacterGeometry(source,kind,s){
         x = hc.x + (x-hc.x)*(1+(s.cheekWidth-1)*cheekK);
         const earK=smooth(.15,.205,Math.abs(bx))*gauss(oy-1.2,.12)*headK;
         x = hc.x + (x-hc.x)*(1+(s.earLength-1)*earK);
+
+        // Non-destructive facial surface macro. Defaults are neutral.
+        const fm=profile.faceModel||DEFAULT.faceModel;
+        const frontK=smooth(.015,.075,z-hc.z)*headK;
+        if(frontK>0){
+          const nx=x-hc.x;
+          const noseY=hc.y-.018+(fm.noseTipY||0);
+          const nw=.032*(fm.noseWidth||1), nh=.052*(fm.noseHeight||1);
+          const noseK=gauss(nx,nw)*gauss(y-noseY,nh)*frontK;
+          z+=(fm.noseDepth||0)*noseK;
+          const mouthY=hc.y-.092;
+          const mouthK=gauss(nx,.070)*gauss(y-mouthY,.026)*frontK;
+          z+=(fm.mouthDepth||0)*mouthK;
+          const lip=+fm.lipVolume||0;
+          if(lip){
+            const upper=gauss(nx,.058)*gauss(y-(mouthY+.008),.012)*frontK;
+            const lower=gauss(nx,.055)*gauss(y-(mouthY-.010),.013)*frontK;
+            z+=lip*(upper+lower*.85);
+          }
+        }
       }
       if(kind==='hair'){
         const dy=y-hc.y;
@@ -569,6 +1266,23 @@ function deformCharacterGeometry(source,kind,s){
     }
 
     if(kind==='cloth'){
+      const ap=profile.apparel||DEFAULT.apparel;
+      const jacketK=smooth(.70,.78,oy)*(1-smooth(.97,1.035,oy));
+      if(jacketK>0){
+        const shell=+ap.jacketShell||0;
+        if(shell){
+          const sxn=Math.sign(x)||1, szn=Math.sign(z)||1;
+          x+=sxn*shell*.35*jacketK;
+          z+=szn*shell*jacketK;
+        }
+        const sleeveZone=smooth(.12,.18,Math.abs(x))*jacketK;
+        if(sleeveZone>0){
+          const sv=(ap.sleeveVolume||1)-1;
+          x*=1+sv*.20*sleeveZone;
+          z*=1+sv*.55*sleeveZone;
+        }
+      }
+
       const shoeK=1-smooth(.15,.22,oy);
       if(shoeK>0){
         const side=x>=0?1:-1;
@@ -577,6 +1291,12 @@ function deformCharacterGeometry(source,kind,s){
         y*=1+(s.shoeScale-1)*shoeK*.35;
         const footZ=-.01;
         z=footZ+(z-footZ)*(1+(s.shoeLength-1)*shoeK);
+        const toeK=smooth(.035,.16,z)*shoeK;
+        const heelK=(1-smooth(-.10,.02,z))*shoeK;
+        x=cx+(x-cx)*(1+((ap.shoeToeWidth||1)-1)*toeK+((ap.shoeHeelWidth||1)-1)*heelK);
+        y+=(ap.shoeToeLift||0)*toeK;
+        const soleK=(1-smooth(.055,.13,oy))*shoeK;
+        y-=(ap.shoeSoleThickness||0)*soleK;
       }
     }
 
@@ -608,6 +1328,74 @@ function deformWeaponGeometry(source,w){
 }
 
 function ownedMaterial(m){ m.userData.modelerOwned=true; return m; }
+
+function makeRibbonGeometry(points,width=.04){
+  const pts=(points?.length>=2?points:[[-.5,0,0],[.5,0,0]]).map(v=>new THREE.Vector3(...v));
+  const verts=[],uv=[],idx=[];
+  const up=new THREE.Vector3(0,0,1);
+  for(let i=0;i<pts.length;i++){
+    const p=pts[i], prev=pts[Math.max(0,i-1)], next=pts[Math.min(pts.length-1,i+1)];
+    const t=next.clone().sub(prev).normalize();
+    let side=new THREE.Vector3().crossVectors(t,up);
+    if(side.lengthSq()<1e-6)side.set(1,0,0); else side.normalize();
+    const w=(Array.isArray(width)?(width[i]??width[width.length-1]??.04):width)*.5;
+    const a=p.clone().addScaledVector(side,w),b=p.clone().addScaledVector(side,-w);
+    verts.push(a.x,a.y,a.z,b.x,b.y,b.z);uv.push(0,i/(pts.length-1),1,i/(pts.length-1));
+    if(i<pts.length-1){const n=i*2;idx.push(n,n+1,n+2,n+1,n+3,n+2);}
+  }
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(idx);g.computeVertexNormals();return g;
+}
+function makeDetailGeometry(part){
+  const type=part.primitive||'roundedBox', seg=Math.max(4,Math.min(64,part.segments||16));
+  if(type==='roundedBox')return new RoundedBoxGeometry(1,1,1,Math.max(1,part.bevelSegments||3),Math.max(.001,Math.min(.25,part.bevelRadius??.12)));
+  if(type==='box')return new THREE.BoxGeometry(1,1,1,1,1,1);
+  if(type==='sphere')return new THREE.SphereGeometry(.5,seg,Math.max(6,Math.round(seg*.65)));
+  if(type==='capsule')return new THREE.CapsuleGeometry(.35,.55,Math.max(4,Math.round(seg/2)),seg);
+  if(type==='cylinder')return new THREE.CylinderGeometry(.5,.5,1,seg,1,false);
+  if(type==='torus')return new THREE.TorusGeometry(.5,Math.max(.02,part.width||.12),Math.max(6,Math.round(seg/2)),seg);
+  if(type==='ribbon')return makeRibbonGeometry(part.points,part.width||.08);
+  if(type==='tube'){
+    const pts=(part.points?.length>=2?part.points:[[-.5,0,0],[.5,0,0]]).map(v=>new THREE.Vector3(...v));
+    const curve=new THREE.CatmullRomCurve3(pts,false,'centripetal');
+    return new THREE.TubeGeometry(curve,Math.max(8,seg*2),Math.max(.002,part.width||.03),Math.max(5,Math.round(seg/2)),false);
+  }
+  return new THREE.BoxGeometry(1,1,1);
+}
+function makeDetailMaterial(part,mats){
+  const role=part.material||'custom';
+  let m=null;
+  if(role==='skin'&&mats?.skinM)m=mats.skinM.clone();
+  else if(role==='hair'&&mats?.hairM)m=mats.hairM.clone();
+  else if(role==='cloth'&&mats?.clothM)m=mats.clothM.clone();
+  else if(role==='eye'&&mats?.eyeM)m=mats.eyeM.clone();
+  else {
+    m=new THREE.MeshStandardMaterial({color:part.color||'#e8edf4',roughness:part.roughness??.5,metalness:role==='metal'?(part.metalness??.85):(part.metalness??0)});
+    if(role==='rubber')m.roughness=part.roughness??.9;
+    if(role==='plastic')m.roughness=part.roughness??.35;
+  }
+  m=ownedMaterial(m);
+  if('roughness' in m && part.roughness!=null)m.roughness=part.roughness;
+  if('metalness' in m && part.metalness!=null)m.metalness=part.metalness;
+  if(m.color&&part.color&&['custom','metal','rubber','plastic'].includes(role))m.color.set(part.color);
+  const op=part.opacity??1;m.transparent=op<.999;m.opacity=op;if(op<.999)m.depthWrite=op>.7;
+  m.side=(part.primitive==='ribbon')?THREE.DoubleSide:m.side;
+  return m;
+}
+function buildDetailMesh(part,mats,s){
+  const g=makeDetailGeometry(part),m=makeDetailMaterial(part,mats),mesh=new THREE.Mesh(g,m);
+  const tr=detailWorldTransform(part,s);mesh.position.copy(tr.pos);mesh.rotation.copy(tr.rot);mesh.scale.copy(tr.scale);
+  mesh.castShadow=true;mesh.receiveShadow=true;mesh.visible=part.visible!==false;mesh.userData.modelPart='detail';mesh.userData.detailId=part.id;
+  return mesh;
+}
+function addDetailParts(group,mats,s){
+  if(profile.details?.enabled===false)return;
+  for(const part of profile.details?.parts||[]){
+    const mesh=buildDetailMesh(part,mats,s);group.add(mesh);
+    if(part.mirrorX){
+      const mirror=buildDetailMesh(part,mats,s);mirror.position.x*=-1;mirror.rotation.y*=-1;mirror.rotation.z*=-1;mirror.scale.x*=-1;mirror.userData.detailMirror=true;group.add(mirror);
+    }
+  }
+}
 function makeCharacter(){
   const st=STYLE.resolveStyle(profile.style,0);
   const u=MAT.makeCharUniforms();
@@ -618,26 +1406,41 @@ function makeCharacter(){
   if(u.uHairTipStrength) u.uHairTipStrength.value=profile.materials.hairTipStrength||0;
   if(u.uMouth) u.uMouth.value.set(profile.face.mouthCurve,profile.face.mouthWidth,profile.face.mouthOpen,profile.face.mouthTilt);
   if(u.uLook) u.uLook.value.set(profile.face.lookX,profile.face.lookY);
-  const sh=GEO.getKidShared(), hair=GEO.getHairStyle({...st,modelerHair:profile.hairSpline}), s=profile.shape;
+  const sh=GEO.getKidShared(), hair=GEO.getHairStyle({...st,modelerHair:profile.hairSpline}), brows=GEO.getBrows(st), wearables=GEO.getWearables(st), s=profile.shape;
   const group=new THREE.Group(); group.name='character-modeler';
   const skinM=ownedMaterial(MAT.makeSkinMaterial(u,STYLE.SKIN_TONES[st.skin]));
   const clothM=ownedMaterial(MAT.makeClothMaterial(u));
   const hairM=ownedMaterial(MAT.makeHairMaterial(u));
-  const eyeM=ownedMaterial(MAT.makeEyeMaterial(u));
+  const eyeM=ownedMaterial(MAT.makeEyeMaterial(u,STYLE.IRIS_COLORS[st.eyes]));
   skinM.roughness=profile.materials.skinRoughness; skinM.clearcoat=profile.materials.skinClearcoat;
   clothM.roughness=profile.materials.clothRoughness;
   hairM.roughness=profile.materials.hairRoughness; hairM.clearcoat=profile.materials.hairClearcoat;
   hairM.transparent=(profile.materials.hairTranslucency||0)>0.001;
   hairM.opacity=1-clamp(profile.materials.hairTranslucency||0,0,.8)*.45;
   hairM.depthWrite=(profile.materials.hairTranslucency||0)<.15;
-  const add=(geo,mat,kind)=>{
-    const m=new THREE.Mesh(deformCharacterGeometry(geo,kind,s),mat);
-    m.castShadow=true;m.receiveShadow=true;m.userData.modelPart=kind;group.add(m);return m;
+  const add=(geo,mat,kind,slot=null,disposeSource=false)=>{
+    if(!geo)return null;
+    const dg=deformCharacterGeometry(geo,kind,s);
+    if(disposeSource)geo.dispose?.();
+    const m=new THREE.Mesh(dg,mat);
+    m.castShadow=true;m.receiveShadow=true;m.userData.modelPart=kind;if(slot)m.userData.gearSlot=slot;group.add(m);return m;
   };
   add(sh.skin,skinM,'skin');
-  add(sh.cloth,clothM,'cloth');
-  add(hair.geo,hairM,'hair');
+  // Legacy merged cloth is intentionally not rendered in v10; gear slots below own clothing/legwear/shoes.
+  sh.cloth?.dispose?.();
+  add(hair.geo,hairM,'hair',null,true);
   add(sh.eyes,eyeM,'eyes');
+  const browM=ownedMaterial(new THREE.MeshStandardMaterial({color:new THREE.Color(profile.look.ink).multiplyScalar(.45),roughness:.55}));
+  add(brows,browM,'brows','brows',true);
+  const gearMat=(d)=>{
+    let color=d.color; if(d.material==='ink')color=profile.look.ink;
+    if(d.material==='rubber')return ownedMaterial(new THREE.MeshStandardMaterial({color,roughness:d.roughness??.92,metalness:0}));
+    if(d.material==='plastic')return ownedMaterial(new THREE.MeshPhysicalMaterial({color,roughness:d.roughness??.38,clearcoat:.18,metalness:0}));
+    if(d.material==='metal')return ownedMaterial(new THREE.MeshStandardMaterial({color,roughness:d.roughness??.28,metalness:d.metalness??.85}));
+    return ownedMaterial(new THREE.MeshStandardMaterial({color,roughness:d.roughness??.78,metalness:d.metalness??0}));
+  };
+  for(const d of wearables)add(d.geo,gearMat(d),'cloth',d.slot,true);
+  addDetailParts(group,{skinM,clothM,hairM,eyeM},s);
   if(sh.tank?.glass&&sh.tank?.fill){
     const tank=new THREE.Group();
     tank.position.copy(sh.tank.center);
@@ -650,7 +1453,7 @@ function makeCharacter(){
     ink.userData.modelPart='tank';glass.userData.modelPart='tank';tank.userData.modelPart='tank';
     tank.add(ink,glass);group.add(tank);
   }
-  $('statModel').textContent='Character · '+(STYLE.HAIR_STYLE_NAMES[st.hair]||st.hair);
+  $('statModel').textContent=(STYLE.BASE_BODY_NAMES[st.baseBody]||'Base')+' · '+(STYLE.HAIR_STYLE_NAMES[st.hair]||st.hair);
   return group;
 }
 
@@ -715,7 +1518,8 @@ function applyIsolation(){
   current.traverse(o=>{
     if(!o.isMesh)return;
     const part=o.userData.modelPart||o.parent?.userData?.modelPart||'';
-    o.visible=wanted==='all'||part===wanted;
+    const slot=o.userData.gearSlot||o.parent?.userData?.gearSlot||'';
+    o.visible=wanted==='all'||part===wanted||slot===wanted;
   });
 }
 
@@ -729,10 +1533,12 @@ function rebuild(refit=false){
     const st=countStats(current);
     $('statTris').textContent=st.tris.toLocaleString();
     $('statMeshes').textContent=st.meshes;
+    $('statDetails').textContent=(profile.details?.parts||[]).length;
     $('statVersion').textContent=profile.version;
     updateJson();
     syncInputs();
     refreshHandleUI();
+    refreshDetailUI();
     rebuildSculptVisuals();
     syncHandle();
     if(refit) fitCamera();
@@ -760,6 +1566,7 @@ function switchCamera(mode){
     transform.detach();
     controls.enabled=false;
     $('statView').textContent='quad';
+    showReferenceForView();
     return;
   }
   $('quadLabels').style.display='none';
@@ -772,6 +1579,7 @@ function switchCamera(mode){
   controls.object=camera;
   transform.camera=camera;
   $('statView').textContent=mode;
+  showReferenceForView();
   fitCamera();
 }
 function fitCamera(){
@@ -838,6 +1646,12 @@ const faceDefs=[
   ['lookX','Eye look X',-.35,.35,.01],
   ['lookY','Eye look Y',-.25,.25,.01]
 ];
+const faceModelDefs=[
+  ['noseDepth','Nose depth',-.02,.07,.001],['noseWidth','Nose width',.5,1.8,.01],['noseHeight','Nose height',.5,1.8,.01],['noseTipY','Nose Y offset',-.05,.05,.001],['mouthDepth','Mouth surface depth',-.02,.04,.001],['lipVolume','Lip volume',0,.035,.001]
+];
+const apparelDefs=[
+  ['jacketShell','Jacket shell offset',0,.08,.001],['sleeveVolume','Sleeve volume',.65,1.65,.01],['shoeToeWidth','Shoe toe width',.65,1.75,.01],['shoeToeLift','Shoe toe lift',-.03,.08,.001],['shoeSoleThickness','Sole thickness',0,.06,.001],['shoeHeelWidth','Heel width',.65,1.65,.01]
+];
 const materialDefs=[
   ['skinRoughness','Skin roughness',.05,1,.01],
   ['skinClearcoat','Skin clearcoat',0,1,.01],
@@ -868,6 +1682,8 @@ function buildSliders(root,defs,scope){
 }
 buildSliders($('shapeControls'),defs,'shape');
 buildSliders($('faceControls'),faceDefs,'face');
+buildSliders($('faceModelControls'),faceModelDefs,'faceModel');
+buildSliders($('apparelControls'),apparelDefs,'apparel');
 buildSliders($('weaponControls'),weaponDefs,'weapon');
 buildSliders($('materialControls'),materialDefs,'materials');
 const tipColorWrap=document.createElement('div');
@@ -878,12 +1694,15 @@ $('hairTipColor').addEventListener('input',()=>{profile.materials.hairTipColor=$
 $('hairTipColor').addEventListener('pointerdown',()=>snapshot());
 
 function setOptions(el,labels){el.innerHTML=labels.map((x,i)=>'<option value="'+i+'">'+x+'</option>').join('');}
+setOptions($('baseBody'),STYLE.BASE_BODY_NAMES);
 setOptions($('hair'),STYLE.HAIR_STYLE_NAMES);
-setOptions($('outfit'),STYLE.OUTFIT_NAMES);
 setOptions($('skin'),STYLE.SKIN_NAMES);
 setOptions($('eyes'),STYLE.IRIS_NAMES);
-setOptions($('hat'),STYLE.HAT_NAMES);
 setOptions($('brows'),STYLE.BROW_NAMES);
+setOptions($('legwear'),STYLE.LEGWEAR_NAMES);
+setOptions($('headgear'),STYLE.HEADGEAR_NAMES);
+setOptions($('clothes'),STYLE.CLOTHES_NAMES);
+setOptions($('shoes'),STYLE.SHOES_NAMES);
 $('weapon').innerHTML=[...WPN.WEAPON_KINDS,'bomb'].map(x=>'<option value="'+x+'">'+x+'</option>').join('');
 
 function syncInputs(){
@@ -895,6 +1714,14 @@ function syncInputs(){
     document.querySelector('[data-range="'+k+'"]').value=profile.weapon[k];
     document.querySelector('[data-number="'+k+'"]').value=profile.weapon[k];
   }
+  for(const [k] of faceModelDefs){
+    document.querySelector('[data-range="'+k+'"]').value=profile.faceModel[k];
+    document.querySelector('[data-number="'+k+'"]').value=profile.faceModel[k];
+  }
+  for(const [k] of apparelDefs){
+    document.querySelector('[data-range="'+k+'"]').value=profile.apparel[k];
+    document.querySelector('[data-number="'+k+'"]').value=profile.apparel[k];
+  }
   for(const [k] of faceDefs){
     document.querySelector('[data-range="'+k+'"]').value=profile.face[k];
     document.querySelector('[data-number="'+k+'"]').value=profile.face[k];
@@ -903,7 +1730,7 @@ function syncInputs(){
     document.querySelector('[data-range="'+k+'"]').value=profile.materials[k];
     document.querySelector('[data-number="'+k+'"]').value=profile.materials[k];
   }
-  for(const k of ['hair','outfit','skin','eyes','hat','brows'])$(k).value=profile.style[k];
+  for(const k of ['baseBody','hair','skin','eyes','brows','legwear','headgear','clothes','shoes'])$(k).value=profile.style[k];
   $('weapon').value=profile.weapon.kind;
   $('ink').value=profile.look.ink;
   $('glow').value=profile.look.glow||0;
@@ -963,6 +1790,9 @@ function syncHandle(){
     handle.position.set(0,mapY(.82,s)*s.overallScale,0);handle.scale.set(s.torsoWidth,s.torsoLength,s.torsoDepth);
   }else if(t==='shoes'){
     handle.position.set(0,.08*s.legLength*s.overallScale,0);handle.scale.set(s.shoeScale,s.shoeScale,s.shoeLength);
+  }else if(t==='detail'){
+    const p=getDetailPart();if(!p)return;
+    const tr=detailWorldTransform(p,s);handle.position.copy(tr.pos);handle.scale.copy(tr.scale);handle.rotation.copy(tr.rot);
   }else if(t==='sculpt'){
     const h=getSelectedHandle();
     if(!h)return;
@@ -994,6 +1824,13 @@ transform.addEventListener('mouseUp',()=>{
     s.torsoWidth=clamp(handle.scale.x,.7,1.4);s.torsoLength=clamp(handle.scale.y,.75,1.35);s.torsoDepth=clamp(handle.scale.z,.7,1.4);
   }else if(t==='shoes'){
     s.shoeScale=clamp((handle.scale.x+handle.scale.y)*.5,.65,1.55);s.shoeLength=clamp(handle.scale.z,.65,1.65);
+  }else if(t==='detail'){
+    const p=getDetailPart();if(p){
+      const k=s.overallScale,anchor=getAnchorOrigin(p.anchor||'world',s);
+      p.position=handle.position.clone().sub(anchor).multiplyScalar(1/k).toArray();
+      p.scale=[Math.max(.001,Math.abs(handle.scale.x/k)),Math.max(.001,Math.abs(handle.scale.y/k)),Math.max(.001,Math.abs(handle.scale.z/k))];
+      p.rotation=[handle.rotation.x,handle.rotation.y,handle.rotation.z];
+    }
   }else if(t==='sculpt'){
     const h=getSelectedHandle();
     if(h){
@@ -1007,8 +1844,9 @@ transform.addEventListener('mouseUp',()=>{
   rebuild(false);
 });
 
-$('moveTool').onclick=()=>{transform.setMode('translate');$('moveTool').classList.add('active');$('scaleTool').classList.remove('active');};
-$('scaleTool').onclick=()=>{transform.setMode('scale');$('scaleTool').classList.add('active');$('moveTool').classList.remove('active');};
+$('moveTool').onclick=()=>{transform.setMode('translate');$('moveTool').classList.add('active');$('scaleTool').classList.remove('active');$('rotateTool').classList.remove('active');};
+$('scaleTool').onclick=()=>{transform.setMode('scale');$('scaleTool').classList.add('active');$('moveTool').classList.remove('active');$('rotateTool').classList.remove('active');};
+$('rotateTool').onclick=()=>{transform.setMode('rotate');$('rotateTool').classList.add('active');$('moveTool').classList.remove('active');$('scaleTool').classList.remove('active');};
 $('gizmoTarget').onchange=syncHandle;
 
 function getSelectedHandle(){
@@ -1134,6 +1972,45 @@ $('copyHairSpec').onclick=async()=>{
   await navigator.clipboard.writeText(JSON.stringify(payload,null,2));
 };
 
+
+function detailPreset(name){
+  const base={id:nextDetailId(),name,primitive:'roundedBox',anchor:'world',position:[0,0,0],rotation:[0,0,0],scale:[.06,.06,.06],material:'custom',color:'#e8edf4',roughness:.5,metalness:0,opacity:1,width:.03,mirrorX:false,visible:true,points:[]};
+  if(name==='upperEyelid')return {...base,name:'Upper eyelid',primitive:'ribbon',anchor:'face',position:[0,.035,.012],scale:[1,1,1],material:'skin',width:.012,mirrorX:true,points:[[-.080,0,0],[-.060,.012,.004],[-.038,.006,.005]]};
+  if(name==='lowerEyelid')return {...base,name:'Lower eyelid',primitive:'ribbon',anchor:'face',position:[0,.012,.014],scale:[1,1,1],material:'skin',width:.009,mirrorX:true,points:[[-.080,0,0],[-.060,-.006,.003],[-.038,-.003,.004]]};
+  if(name==='nose')return {...base,name:'Nose volume',primitive:'sphere',anchor:'face',position:[0,-.010,.012],scale:[.035,.050,.030],material:'skin'};
+  if(name==='upperLip')return {...base,name:'Upper lip',primitive:'ribbon',anchor:'face',position:[0,-.078,.018],scale:[1,1,1],material:'skin',width:.012,points:[[-.045,0,0],[0,.006,.006],[.045,0,0]]};
+  if(name==='bang')return {...base,name:'Bang ribbon',primitive:'ribbon',anchor:'head',position:[0,.095,.090],scale:[1,1,1],material:'hair',width:.055,points:[[-.03,.02,0],[-.02,-.02,.015],[0,-.08,.025],[.015,-.14,.018]],mirrorX:false};
+  if(name==='jacketPanel')return {...base,name:'Jacket panel',primitive:'roundedBox',anchor:'torso',position:[0,.03,.115],scale:[.24,.30,.025],material:'cloth',color:'#f3f5f7',roughness:.78};
+  if(name==='shoePanel')return {...base,name:'Shoe upper panel',primitive:'roundedBox',anchor:'leftShoe',position:[0,.035,.105],scale:[.12,.075,.20],material:'plastic',color:'#f1f3f5',roughness:.35,mirrorX:true};
+  if(name==='strap')return {...base,name:'Utility strap',primitive:'ribbon',anchor:'hip',position:[-.10,.015,.070],scale:[1,1,1],material:'cloth',color:'#242930',roughness:.8,width:.025,points:[[0,.08,0],[.01,0,0],[.02,-.10,.005]]};
+  if(name==='buckle')return {...base,name:'Buckle',primitive:'torus',anchor:'hip',position:[0,.02,.105],rotation:[Math.PI/2,0,0],scale:[.055,.055,.025],material:'metal',color:'#aeb5bd',roughness:.25,metalness:.9,width:.13};
+  if(name==='lace')return {...base,name:'Shoe lace',primitive:'tube',anchor:'leftShoe',position:[0,.075,.125],scale:[1,1,1],material:'cloth',color:'#dfe4e8',roughness:.7,width:.006,mirrorX:true,points:[[-.045,0,-.04],[.045,.006,-.015],[-.04,.012,.015],[.04,.018,.045],[-.035,.024,.075]]};
+  return {...base,name:'Custom rounded box',primitive:'roundedBox',anchor:'torso',position:[0,0,.12],scale:[.08,.08,.03]};
+}
+function refreshDetailUI(){
+  const parts=profile.details?.parts||[];
+  if(!selectedDetailId&&parts.length)selectedDetailId=parts[0].id;
+  if(selectedDetailId&&!parts.some(p=>p.id===selectedDetailId))selectedDetailId=parts[0]?.id||null;
+  $('detailSelect').innerHTML=parts.length?parts.map(p=>'<option value="'+p.id+'">'+p.id+' · '+(p.name||p.primitive)+'</option>').join(''):'<option value="">No details</option>';
+  $('detailSelect').value=selectedDetailId||'';
+  const p=getDetailPart(), fields=['detailName','detailPrimitive','detailAnchor','detailMaterial','detailColor','detailRoughness','detailMetalness','detailOpacity','detailWidth','detailMirror','detailVisible','detailPoints'];
+  for(const id of fields)$(id).disabled=!p;
+  if(p){
+    $('detailName').value=p.name||p.id;$('detailPrimitive').value=p.primitive||'roundedBox';$('detailAnchor').value=p.anchor||'world';$('detailMaterial').value=p.material||'custom';$('detailColor').value=p.color||'#e8edf4';$('detailRoughness').value=p.roughness??.5;$('detailMetalness').value=p.metalness??0;$('detailOpacity').value=p.opacity??1;$('detailWidth').value=p.width??.03;$('detailMirror').checked=!!p.mirrorX;$('detailVisible').checked=p.visible!==false;$('detailPoints').value=JSON.stringify(p.points||[],null,2);  }else $('detailPoints').value='[]';
+  $('detailList').innerHTML=parts.map(p=>'<div class="handle-item '+(p.id===selectedDetailId?'active':'')+'"><span>'+p.id+' · '+(p.name||p.primitive)+' · '+p.anchor+'</span><button data-pick-detail="'+p.id+'">Select</button></div>').join('');
+  $('detailList').querySelectorAll('[data-pick-detail]').forEach(b=>b.onclick=()=>{selectedDetailId=b.dataset.pickDetail;$('gizmoTarget').value='detail';refreshDetailUI();syncHandle();});
+}
+$('addDetailBtn').onclick=()=>{snapshot();if(!profile.details)profile.details={enabled:true,parts:[]};const p=detailPreset($('detailPreset').value);profile.details.parts.push(p);selectedDetailId=p.id;$('gizmoTarget').value='detail';rebuild(false);};
+$('detailSelect').onchange=()=>{selectedDetailId=$('detailSelect').value||null;$('gizmoTarget').value='detail';refreshDetailUI();syncHandle();};
+$('focusDetail').onclick=()=>{if(!getDetailPart())return;$('gizmoTarget').value='detail';syncHandle();};
+$('duplicateDetail').onclick=()=>{const p=getDetailPart();if(!p)return;snapshot();const q=deepClone(p);q.id=nextDetailId();q.name=(q.name||q.primitive)+' copy';q.position=[(q.position?.[0]||0)+.015,q.position?.[1]||0,q.position?.[2]||0];profile.details.parts.push(q);selectedDetailId=q.id;rebuild(false);};
+$('deleteDetail').onclick=()=>{const p=getDetailPart();if(!p)return;snapshot();profile.details.parts=profile.details.parts.filter(x=>x.id!==p.id);selectedDetailId=null;rebuild(false);};
+for(const id of ['detailName','detailPrimitive','detailAnchor','detailMaterial','detailColor','detailRoughness','detailMetalness','detailOpacity','detailWidth','detailMirror','detailVisible']){
+  $(id).onchange=()=>{const p=getDetailPart();if(!p)return;snapshot();p.name=$('detailName').value.trim()||p.id;p.primitive=$('detailPrimitive').value;p.anchor=$('detailAnchor').value;p.material=$('detailMaterial').value;p.color=$('detailColor').value;p.roughness=clamp(+$('detailRoughness').value||0,0,1);p.metalness=clamp(+$('detailMetalness').value||0,0,1);p.opacity=clamp(+$('detailOpacity').value,0,1);p.width=clamp(+$('detailWidth').value||.001,.001,.5);p.mirrorX=$('detailMirror').checked;p.visible=$('detailVisible').checked;rebuild(false);};
+}
+$('applyDetailPoints').onclick=()=>{const p=getDetailPart();if(!p)return;try{const pts=JSON.parse($('detailPoints').value);if(!Array.isArray(pts)||pts.some(v=>!vec3ok(v)))throw new Error('points must be an array of finite vec3 arrays');snapshot();p.points=pts;rebuild(false);}catch(e){$('error').style.display='block';$('error').textContent='Invalid detail points: '+e.message;}};
+$('resetDetailPoints').onclick=()=>{const p=getDetailPart();if(!p)return;snapshot();p.points=[];rebuild(false);};
+
 $('mode').onchange=()=>{
   snapshot();currentMode=$('mode').value;
   $('characterStyleBlock').hidden=currentMode!=='character';
@@ -1144,9 +2021,10 @@ $('mode').onchange=()=>{
   rebuild(true);
 };
 
-for(const k of ['hair','outfit','skin','eyes','hat','brows']){
+for(const k of ['hair','skin','eyes','brows','legwear','headgear','clothes','shoes']){
   $(k).onchange=()=>{snapshot();profile.style[k]=+$(k).value;rebuild(true);};
 }
+$('baseBody').onchange=()=>{snapshot();profile.style.baseBody=+$('baseBody').value;applyBaseBodyPreset(profile.style.baseBody);profile.sculpt.handles=[];profile.hairSpline.strands={};rebuild(true);};
 $('weapon').onchange=()=>{snapshot();profile.weapon.kind=$('weapon').value;rebuild(true);};
 $('ink').onpointerdown=()=>snapshot();
 $('ink').oninput=()=>{profile.look.ink=$('ink').value;queueRebuild();};
@@ -1167,7 +2045,7 @@ $('captureBtn').onclick=()=>{
 document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{
   const id=b.dataset.tab;
   document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('active',x===b));
-  for(const t of ['shape','sculpt','materials','ai','info'])$('tab-'+t).hidden=t!==id;
+  for(const t of ['shape','sculpt','details','materials','ai','info'])$('tab-'+t).hidden=t!==id;
   if(id==='ai')updateJson();
 });
 
@@ -1179,14 +2057,20 @@ function validateProfileObject(p){
   };
   const shapeSpec=Object.fromEntries(defs.map(([k,,min,max])=>[k,[min,max]]));
   const faceSpec=Object.fromEntries(faceDefs.map(([k,,min,max])=>[k,[min,max]]));
+  const faceModelSpec=Object.fromEntries(faceModelDefs.map(([k,,min,max])=>[k,[min,max]]));
+  const apparelSpec=Object.fromEntries(apparelDefs.map(([k,,min,max])=>[k,[min,max]]));
   const matSpec=Object.fromEntries(materialDefs.map(([k,,min,max])=>[k,[min,max]]));
   const wpSpec=Object.fromEntries(weaponDefs.map(([k,,min,max])=>[k,[min,max]]));
   for(const [k,[a,b]] of Object.entries(shapeSpec))finite(p.shape?.[k],'shape.'+k,a,b);
   for(const [k,[a,b]] of Object.entries(faceSpec))finite(p.face?.[k],'face.'+k,a,b);
+  for(const [k,[a,b]] of Object.entries(faceModelSpec))finite(p.faceModel?.[k],'faceModel.'+k,a,b);
+  for(const [k,[a,b]] of Object.entries(apparelSpec))finite(p.apparel?.[k],'apparel.'+k,a,b);
   for(const [k,[a,b]] of Object.entries(matSpec))finite(p.materials?.[k],'materials.'+k,a,b);
   for(const [k,[a,b]] of Object.entries(wpSpec))finite(p.weapon?.[k],'weapon.'+k,a,b);
   if(!/^#[0-9a-fA-F]{6}$/.test(p.look?.ink||''))errs.push('look.ink: #RRGGBB required');
   if(!/^#[0-9a-fA-F]{6}$/.test(p.materials?.hairTipColor||''))errs.push('materials.hairTipColor: #RRGGBB required');
+  const styleLimits={baseBody:STYLE.BASE_BODY_NAMES.length,hair:STYLE.HAIR_STYLE_NAMES.length,skin:STYLE.SKIN_NAMES.length,eyes:STYLE.IRIS_NAMES.length,brows:STYLE.BROW_NAMES.length,legwear:STYLE.LEGWEAR_NAMES.length,headgear:STYLE.HEADGEAR_NAMES.length,clothes:STYLE.CLOTHES_NAMES.length,shoes:STYLE.SHOES_NAMES.length};
+  for(const [k,n] of Object.entries(styleLimits)){const v=p.style?.[k];if(!Number.isInteger(v)||v<0||v>=n)errs.push('style.'+k+': integer 0..'+(n-1)+' required');}
   const ids=new Set();
   if(!p.hairSpline || typeof p.hairSpline!=='object' || typeof p.hairSpline.strands!=='object')errs.push('hairSpline.strands: object required');
   for(const [sk,ov] of Object.entries(p.hairSpline?.strands||{})){
@@ -1199,6 +2083,20 @@ function validateProfileObject(p){
     if(!['skin','hair','cloth','eyes','weapon','all'].includes(h.part))errs.push(h.id+': invalid part');
     for(const k of ['center','offset','scale'])if(!Array.isArray(h[k])||h[k].length!==3||h[k].some(v=>typeof v!=='number'||!Number.isFinite(v)))errs.push(h.id+'.'+k+': vec3 required');
     finite(h.radius,h.id+'.radius',.005,.5);finite(h.strength,h.id+'.strength',0,2);
+  }
+  const dids=new Set();
+  const primitives=['roundedBox','box','sphere','capsule','cylinder','torus','ribbon','tube'];
+  const anchors=['world','head','face','torso','hip','leftShoe','rightShoe','leftHand','rightHand'];
+  const roles=['cloth','hair','skin','eye','plastic','rubber','metal','custom'];
+  if(!p.details||!Array.isArray(p.details.parts))errs.push('details.parts: array required');
+  for(const [i,d] of (p.details?.parts||[]).entries()){
+    if(!d.id||dids.has(d.id))errs.push('details.parts['+i+'].id: unique id required'); else dids.add(d.id);
+    if(!primitives.includes(d.primitive))errs.push(d.id+': invalid primitive');if(!anchors.includes(d.anchor))errs.push(d.id+': invalid anchor');if(!roles.includes(d.material))errs.push(d.id+': invalid material');
+    for(const k of ['position','rotation','scale'])if(!vec3ok(d[k]))errs.push(d.id+'.'+k+': finite vec3 required');
+    if((d.scale||[]).some(v=>v<=0))errs.push(d.id+'.scale: values must be > 0');
+    if(!/^#[0-9a-fA-F]{6}$/.test(d.color||''))errs.push(d.id+'.color: #RRGGBB required');
+    finite(d.roughness,d.id+'.roughness',0,1);finite(d.metalness,d.id+'.metalness',0,1);finite(d.opacity,d.id+'.opacity',0,1);finite(d.width,d.id+'.width',.001,.5);
+    if(!Array.isArray(d.points)||(d.points||[]).some(v=>!vec3ok(v)))errs.push(d.id+'.points: array of finite vec3 required');
   }
   return errs;
 }
@@ -1238,9 +2136,9 @@ $('downloadJson').onclick=()=>{
 };
 $('copyBrief').onclick=async()=>{
   updateJson();
-  const brief=`You are editing the INKWAVE character/weapon model through modeler-profile.json.
-Edit ONLY valid profile values first; do not touch gameplay code.
-The canonical field contract is modeler-profile.schema.json. Never invent profile keys.
+  const brief=`You are editing the INKWAVE character/weapon model inside one self-contained HTML file.
+Edit ONLY valid embedded profile values first; do not add required local-file dependencies.
+The canonical field contract is the validation/schema logic embedded in this HTML. Never invent profile keys that renderer code does not consume.
 Work in silhouette-first order: proportions -> face -> hair -> clothing -> materials.
 After each meaningful change, inspect Front, Right, Back and Perspective views.
 Keep edits small enough to identify regressions.
@@ -1252,7 +2150,13 @@ Important parameter semantics:
 - shoeScale/shoeLength control footwear silhouette
 - weapon scaleX/Y/Z and barrelLength affect static weapon preview
 - sculpt.handles are local soft-deformation controls; center is a local-space anchor, offset moves nearby vertices, scale reshapes around the anchor, radius controls falloff
-- hairSpline.strands directly modifies the procedural Catmull-Rom source curves. offsets[n] is XYZ added to curve point n; radiusScale changes strand thickness; flatScale changes ribbon flattening
+- style.baseBody selects one of four base body families; Base 0 is the current reference-oriented foundation
+- style.hair / skin / eyes / brows / legwear / headgear / clothes / shoes are independent avatar slots
+- hairSpline.strands directly modifies the selected procedural Catmull-Rom hair source curves. offsets[n] is XYZ added to curve point n; radiusScale changes strand thickness; flatScale changes ribbon flattening
+- faceModel provides nose/mouth surface shaping without replacing the base mesh; all defaults are neutral
+- apparel provides jacket shell/sleeve and shoe toe/sole/heel macro shaping; all defaults are neutral
+- details.parts is the procedural add-on layer for bangs, eyelids, nose/lip helper meshes, jacket panels, shoe panels, straps, buckles and laces
+- detail parts use semantic anchors and position/rotation/scale; ribbon/tube use local control points; mirrorX duplicates across the character X plane
 - use GEO.getHairControlSpec / Copy hair spec to inspect the exact current curve points before editing
 - use mirror=true for symmetric face/body work; use mirror=false for intentional asymmetry and individual hair locks
 - materials.hairTipColor + hairTipStrength control the strand-tip gradient
@@ -1261,17 +2165,25 @@ Target profile:
 ${$('jsonEditor').value}`;
   await navigator.clipboard.writeText(brief);
 };
-$('reloadProfile').onclick=async()=>{
-  const r=await fetch('./modeler-profile.json?'+Date.now());
-  if(!r.ok)return;profile=merge(deepClone(DEFAULT),await r.json());rebuild(true);
+$('reloadProfile').onclick=()=>{
+  snapshot();
+  profile=deepClone(DEFAULT);
+  currentMode=profile.target==='inkwave-weapon'?'weapon':'character';
+  $('mode').value=currentMode;
+  rebuild(true);
 };
 
+function refKey(){return currentView==='quad'?'perspective':currentView;}
+function showReferenceForView(){
+  const key=refKey(),u=referenceImages[key];$('refSlot').textContent=key[0].toUpperCase()+key.slice(1);
+  $('refImage').src=u||'';$('refImage').style.display=refVisible&&u?'block':'none';applyReferenceTransform();
+}
 $('refFile').onchange=()=>{
   const f=$('refFile').files?.[0];if(!f)return;
-  const u=URL.createObjectURL(f);$('refImage').src=u;$('refImage').style.display='block';refVisible=true;
+  const key=refKey();if(referenceImages[key])URL.revokeObjectURL(referenceImages[key]);referenceImages[key]=URL.createObjectURL(f);refVisible=true;showReferenceForView();
 };
-$('clearRef').onclick=()=>{$('refImage').src='';$('refImage').style.display='none';};
-$('toggleRef').onclick=()=>{refVisible=!refVisible;$('refImage').style.display=refVisible&&$('refImage').src?'block':'none';};
+$('clearRef').onclick=()=>{const key=refKey();if(referenceImages[key])URL.revokeObjectURL(referenceImages[key]);referenceImages[key]=null;showReferenceForView();};
+$('toggleRef').onclick=()=>{refVisible=!refVisible;showReferenceForView();};
 function applyReferenceTransform(){
   const im=$('refImage');
   im.style.opacity=profile.view.referenceOpacity??.45;
@@ -1332,6 +2244,12 @@ $('weaponControls').hidden=true;
 switchCamera(profile.view?.quad?'quad':viewMode);
 rebuild(true);
 frame();
+{ const boot=document.getElementById('bootStatus'); if(boot){boot.innerHTML='<b>INKWAVE ready</b><small>Single-file compatible runtime</small>';boot.className='ok';setTimeout(()=>boot.remove(),450);} }
+})().catch(err=>{
+  console.error(err);
+  const boot=document.getElementById('bootStatus');
+  if(boot){boot.className='err';boot.innerHTML='<b>INKWAVE startup error</b><small>'+String(err&&err.stack||err).replace(/[<>]/g,'').slice(0,900)+'</small>';}
+});
 </script>
 </body>
 </html>
