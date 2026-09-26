@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>INKWAVE Model Preview</title>
+  <style>
+    :root{
+      color-scheme:dark;
+      --bg:#0b0d12;--panel:#11151dcc;--panel2:#171c26;--line:#283142;
+      --text:#f4f7fb;--muted:#94a0b4;--accent:#67e8f9;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--text)}
+    #app{position:fixed;inset:0}
+    canvas{display:block;width:100%;height:100%;touch-action:none}
+    .panel{position:fixed;left:14px;top:14px;width:min(340px,calc(100vw - 28px));max-height:calc(100vh - 28px);overflow:auto;background:var(--panel);backdrop-filter:blur(18px);border:1px solid #ffffff16;border-radius:18px;padding:16px;box-shadow:0 18px 70px #0008;z-index:4}
+    h1{font-size:18px;margin:0 0 4px;letter-spacing:.02em}.sub{font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.45}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:9px 0}.row.one{grid-template-columns:1fr}.field{display:flex;flex-direction:column;gap:5px}.field>span{font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+    select,input[type="color"],button{width:100%;height:38px;border-radius:10px;border:1px solid var(--line);background:#0d1118;color:var(--text);padding:0 10px;font:inherit}
+    input[type="color"]{padding:4px;cursor:pointer}button{cursor:pointer;font-weight:700;background:linear-gradient(180deg,#1b2230,#111722)}button:hover{border-color:#3d4a62}
+    .seg{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:#0c1016;border:1px solid var(--line);padding:5px;border-radius:12px}.seg button{height:34px;border:0;background:transparent}.seg button.active{background:#273247;color:white;box-shadow:inset 0 0 0 1px #ffffff12}
+    .toggles{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px}.toggle{display:flex;align-items:center;gap:8px;padding:9px 10px;border:1px solid var(--line);border-radius:10px;background:#0d1118;font-size:12px}.toggle input{accent-color:#7dd3fc}
+    .stats{margin-top:12px;padding:10px 11px;border-radius:11px;background:#090c11;border:1px solid var(--line);font-size:12px;color:var(--muted);display:grid;gap:4px}.stats b{color:var(--text)}
+    .hint{position:fixed;right:14px;bottom:14px;background:#0d1118bd;border:1px solid #ffffff15;border-radius:12px;padding:8px 11px;font-size:11px;color:#b5bfd0;z-index:3;backdrop-filter:blur(12px)}
+    .error{display:none;margin-top:10px;background:#35171c;border:1px solid #8a3442;color:#ffc1cb;padding:10px;border-radius:10px;font-size:12px;white-space:pre-wrap}
+    .divider{height:1px;background:var(--line);margin:13px 0}
+    @media(max-width:700px){.panel{top:auto;bottom:10px;left:10px;width:calc(100vw - 20px);max-height:45vh;border-radius:16px}.hint{top:10px;right:10px;bottom:auto}.row{grid-template-columns:1fr 1fr}}
+  </style>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body>
+<div id="app"></div>
+<div class="panel">
+  <h1>INKWAVE · Model Preview</h1>
+  <div class="sub">切り離した <code>src/game</code> のプロシージャル形状を直接表示。ゲームプレイ処理は読み込みません。</div>
+  <div class="seg">
+    <button id="modeCharacter" class="active">CHARACTER</button>
+    <button id="modeWeapon">WEAPONS</button>
+  </div>
+  <section id="characterControls">
+    <div class="row">
+      <label class="field"><span>Hair</span><select id="hair"></select></label>
+      <label class="field"><span>Outfit</span><select id="outfit"></select></label>
+    </div>
+    <div class="row">
+      <label class="field"><span>Skin</span><select id="skin"></select></label>
+      <label class="field"><span>Eyes</span><select id="eyes"></select></label>
+    </div>
+    <div class="row">
+      <label class="field"><span>Hat</span><select id="hat"></select></label>
+      <label class="field"><span>Brows</span><select id="brows"></select></label>
+    </div>
+  </section>
+  <section id="weaponControls" hidden>
+    <div class="row one"><label class="field"><span>Weapon model</span><select id="weapon"></select></label></div>
+  </section>
+  <div class="row">
+    <label class="field"><span>Ink / team color</span><input id="teamColor" type="color" value="#18d7d1"></label>
+    <div class="field"><span>Camera</span><button id="resetCamera">Reset view</button></div>
+  </div>
+  <div class="toggles">
+    <label class="toggle"><input id="autoRotate" type="checkbox" checked> Auto rotate</label>
+    <label class="toggle"><input id="wireframe" type="checkbox"> Wireframe</label>
+    <label class="toggle"><input id="showGrid" type="checkbox" checked> Grid</label>
+    <label class="toggle"><input id="showAxes" type="checkbox"> Axes</label>
+  </div>
+  <div class="stats">
+    <div>Model: <b id="statName">—</b></div>
+    <div>Triangles: <b id="statTris">—</b></div>
+    <div>Meshes: <b id="statMeshes">—</b></div>
+    <div>Source: <b id="statSource">—</b></div>
+  </div>
+  <div id="error" class="error"></div>
+  <div class="divider"></div>
+  <div class="sub" style="margin:0">起動はHTTPサーバー経由で。例: <code>python -m http.server 8000</code> → <code>/inkwave-model-edit/preview.html</code></div>
+</div>
+<div class="hint">drag: rotate · pinch/wheel: zoom · right drag: pan</div>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { getKidShared, getHairStyle } from './src/game/character-geo.js';
+import {
+  makeCharUniforms, makeSkinMaterial, makeClothMaterial, makeHairMaterial, makeEyeMaterial,
+  getGlassMaterial, makeInkFillMaterial, getPlasticMaterial, getInkMaterial,
+} from './src/game/character-mats.js';
+import {
+  WEAPON_KINDS, getWeaponDef, getSubDef, makeCoilMaterial,
+} from './src/game/character-weapons.js';
+import {
+  SKIN_TONES, SKIN_NAMES, OUTFITS, OUTFIT_NAMES, IRIS, IRIS_NAMES,
+  HAIR_STYLES, HAIR_STYLE_NAMES, HATS, HAT_NAMES, BROWS, BROW_NAMES,
+  resolveStyle, applyStyleUniforms,
+} from './src/game/character-style.js';
+
+const $ = (id) => document.getElementById(id);
+const app = $('app');
+const errorBox = $('error');
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+renderer.setClearColor(0x0b0d12, 1);
+app.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0b0d12);
+scene.fog = new THREE.Fog(0x0b0d12, 5, 12);
+const camera = new THREE.PerspectiveCamera(34, innerWidth / innerHeight, 0.01, 50);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.07;
+controls.screenSpacePanning = true;
+controls.minDistance = 0.2;
+controls.maxDistance = 8;
+controls.autoRotate = true;
+controls.autoRotateSpeed = 1.25;
+
+scene.add(new THREE.HemisphereLight(0xdde9ff, 0x212531, 1.7));
+const key = new THREE.DirectionalLight(0xffffff, 4.2); key.position.set(3.2, 5.5, 4.5); key.castShadow = true; scene.add(key);
+const rim = new THREE.DirectionalLight(0x8fdcff, 2.2); rim.position.set(-4, 3, -3); scene.add(rim);
+const fill = new THREE.DirectionalLight(0xffe3ca, 1.0); fill.position.set(1, 1.5, -4); scene.add(fill);
+
+const grid = new THREE.GridHelper(10, 40, 0x31405c, 0x1b2230); grid.position.y = -0.002; scene.add(grid);
+const axes = new THREE.AxesHelper(0.5); axes.visible = false; scene.add(axes);
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(20, 20), new THREE.ShadowMaterial({color:0x000000, opacity:0.22}));
+ground.rotation.x = -Math.PI / 2; ground.position.y = -0.004; ground.receiveShadow = true; scene.add(ground);
+
+const modelRoot = new THREE.Group(); scene.add(modelRoot);
+let currentObject = null;
+let currentMode = 'character';
+let currentName = '';
+
+function setOptions(select, labels) {
+  select.innerHTML = labels.map((x,i)=>`<option value="${i}">${x}</option>`).join('');
+}
+setOptions($('hair'), HAIR_STYLE_NAMES || Array.from({length:HAIR_STYLES},(_,i)=>`Hair ${i}`));
+setOptions($('outfit'), OUTFIT_NAMES || OUTFITS.map((_,i)=>`Outfit ${i}`));
+setOptions($('skin'), SKIN_NAMES || SKIN_TONES.map((_,i)=>`Skin ${i}`));
+setOptions($('eyes'), IRIS_NAMES || IRIS.map((_,i)=>`Eyes ${i}`));
+setOptions($('hat'), HAT_NAMES || HATS);
+setOptions($('brows'), BROW_NAMES || BROWS);
+$('weapon').innerHTML = [...WEAPON_KINDS, 'bomb'].map(k=>`<option value="${k}">${k}</option>`).join('');
+
+$('hair').value = '0'; $('outfit').value = '0'; $('skin').value = '1'; $('eyes').value = '1'; $('hat').value = '0'; $('brows').value = '0';
+
+function disposeObject(obj) {
+  if (!obj) return;
+  obj.traverse(o => {
+    if (o.material && o.material.userData?.previewOwned) o.material.dispose?.();
+  });
+  obj.removeFromParent();
+}
+function markShadow(mesh, cast=true) {
+  mesh.castShadow = cast; mesh.receiveShadow = true; return mesh;
+}
+function makeCharacter() {
+  const team = new THREE.Color($('teamColor').value);
+  const style = resolveStyle({
+    hair:+$('hair').value, outfit:+$('outfit').value, skin:+$('skin').value,
+    eyes:+$('eyes').value, hat:+$('hat').value, brows:+$('brows').value,
+  }, 0);
+  const u = makeCharUniforms();
+  applyStyleUniforms(u, style);
+  u.uTeam.value.copy(team);
+
+  const sh = getKidShared();
+  const hair = getHairStyle(style);
+  const g = new THREE.Group();
+  g.name = 'character-preview';
+
+  g.add(markShadow(new THREE.Mesh(sh.skin, makeSkinMaterial(u, SKIN_TONES[style.skin]))));
+  g.add(markShadow(new THREE.Mesh(sh.cloth, makeClothMaterial(u))));
+  g.add(markShadow(new THREE.Mesh(hair.geo, makeHairMaterial(u))));
+  g.add(markShadow(new THREE.Mesh(sh.eyes, makeEyeMaterial(u)), false));
+
+  if (sh.tank?.glass && sh.tank?.fill) {
+    const tank = new THREE.Group();
+    tank.position.copy(sh.tank.center);
+    tank.rotation.x = sh.tank.tilt;
+    const glass = new THREE.Mesh(sh.tank.glass, getGlassMaterial()); glass.renderOrder = 2;
+    const fillMat = makeInkFillMaterial(); fillMat.color.copy(team);
+    const ink = new THREE.Mesh(sh.tank.fill, fillMat);
+    ink.position.y = sh.tank.fillBottom;
+    ink.scale.y = sh.tank.fillHeight;
+    tank.add(ink, glass); g.add(tank);
+  }
+
+  currentName = `Character · ${HAIR_STYLE_NAMES?.[style.hair] ?? style.hair}`;
+  $('statSource').textContent = 'character-geo.js + mats/style';
+  return g;
+}
+function makeWeapon(kind) {
+  const team = new THREE.Color($('teamColor').value);
+  const g = new THREE.Group(); g.name = `weapon:${kind}`;
+  const plastic = getPlasticMaterial();
+  const inkMat = getInkMaterial(team);
+
+  if (kind === 'bomb') {
+    const d = getSubDef('bomb');
+    if (d.body) g.add(markShadow(new THREE.Mesh(d.body, plastic)));
+    if (d.ink) g.add(markShadow(new THREE.Mesh(d.ink, inkMat)));
+  } else {
+    const d = getWeaponDef(kind);
+    if (d.body) g.add(markShadow(new THREE.Mesh(d.body, plastic)));
+    if (d.ink) g.add(markShadow(new THREE.Mesh(d.ink, inkMat)));
+    if (d.glow) {
+      const coil = makeCoilMaterial();
+      coil.emissive.copy(team);
+      if (coil.userData?.u) { coil.userData.u.uCharge.value = 1; coil.userData.u.uFull.value = 1; }
+      g.add(markShadow(new THREE.Mesh(d.glow, coil), false));
+    }
+    if (d.drum && d.drumAt) {
+      const dg = new THREE.Group(); dg.position.copy(d.drumAt);
+      dg.add(markShadow(new THREE.Mesh(d.drum, inkMat)));
+      if (d.drumCaps) dg.add(markShadow(new THREE.Mesh(d.drumCaps, plastic)));
+      g.add(dg);
+    }
+  }
+  currentName = `Weapon · ${kind}`;
+  $('statSource').textContent = kind === 'bomb' ? 'character-weapons.js · sub' : 'character-weapons.js';
+  return g;
+}
+function stats(obj) {
+  let tris=0, meshes=0;
+  obj.traverse(o=>{ if(o.isMesh && o.geometry){ meshes++; const geo=o.geometry; tris += (geo.index ? geo.index.count : geo.attributes.position?.count || 0) / 3; }});
+  return {tris:Math.round(tris),meshes};
+}
+function fitCamera(obj) {
+  obj.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(obj);
+  if (box.isEmpty()) return;
+  const center = box.getCenter(new THREE.Vector3());
+  const size = box.getSize(new THREE.Vector3());
+  const maxDim = Math.max(size.x,size.y,size.z,0.1);
+  const fov = THREE.MathUtils.degToRad(camera.fov);
+  let distance = (maxDim * 0.62) / Math.tan(fov/2);
+  distance *= 1.28;
+  const dir = currentMode === 'character' ? new THREE.Vector3(0.72,0.28,1.45) : new THREE.Vector3(1.0,0.55,1.5);
+  dir.normalize().multiplyScalar(distance);
+  camera.position.copy(center).add(dir);
+  camera.near = Math.max(0.005, distance/100);
+  camera.far = distance*20;
+  camera.updateProjectionMatrix();
+  controls.target.copy(center);
+  controls.update();
+}
+function applyWireframe() {
+  const on = $('wireframe').checked;
+  currentObject?.traverse(o=>{if(o.isMesh && o.material && 'wireframe' in o.material) o.material.wireframe=on;});
+}
+function rebuild(refit=true) {
+  errorBox.style.display='none';
+  try {
+    disposeObject(currentObject);
+    currentObject = currentMode === 'character' ? makeCharacter() : makeWeapon($('weapon').value);
+    modelRoot.add(currentObject);
+    applyWireframe();
+    const s = stats(currentObject);
+    $('statName').textContent = currentName;
+    $('statTris').textContent = s.tris.toLocaleString();
+    $('statMeshes').textContent = String(s.meshes);
+    if (refit) fitCamera(currentObject);
+  } catch (err) {
+    console.error(err);
+    errorBox.style.display='block';
+    errorBox.textContent = String(err?.stack || err);
+  }
+}
+function setMode(mode) {
+  currentMode = mode;
+  $('modeCharacter').classList.toggle('active', mode==='character');
+  $('modeWeapon').classList.toggle('active', mode==='weapon');
+  $('characterControls').hidden = mode!=='character';
+  $('weaponControls').hidden = mode!=='weapon';
+  rebuild(true);
+}
+$('modeCharacter').onclick=()=>setMode('character');
+$('modeWeapon').onclick=()=>setMode('weapon');
+for (const id of ['hair','outfit','skin','eyes','hat','brows']) $(id).addEventListener('change',()=>rebuild(true));
+$('weapon').addEventListener('change',()=>rebuild(true));
+$('teamColor').addEventListener('input',()=>rebuild(false));
+$('resetCamera').onclick=()=>currentObject&&fitCamera(currentObject);
+$('autoRotate').onchange=()=>controls.autoRotate=$('autoRotate').checked;
+$('wireframe').onchange=applyWireframe;
+$('showGrid').onchange=()=>grid.visible=$('showGrid').checked;
+$('showAxes').onchange=()=>axes.visible=$('showAxes').checked;
+window.addEventListener('resize',()=>{
+  camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight);
+});
+const clock = new THREE.Clock();
+function frame(){
+  requestAnimationFrame(frame);
+  const dt=Math.min(clock.getDelta(),0.05);
+  controls.update(dt);
+  renderer.render(scene,camera);
+}
+rebuild(true);
+frame();
+</script>
+</body>
+</html>
