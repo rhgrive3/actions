@@ -1418,7 +1418,8 @@ export class Menus {
       }
       refresh();
       // the info bar follows the tab: what you wear in its first section (until a tile is focused)
-      if (!(this._focus && this._focus._sec && tiles.includes(this._focus))) { const on = tiles.find(isOn) || tiles[0]; if (on) showInfo(on); }
+      const worn = tiles.find(isOn) || tiles[0];
+      if (worn) showInfo(worn);
       requestPortraits();
       if (gridWrap.isConnected) this._fitAll(gridWrap);
     };

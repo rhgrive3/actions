@@ -1767,6 +1767,8 @@ html[lang="ja"] .iw-row__label, html[lang="ja"] .iw-seclabel, html[lang="ja"] .i
   .iw-stat__delta { font-size: max(calc(var(--u) * .72), 8px); }
   .iw-kit__cost { font-size: max(calc(var(--u) * .66), 8px); }
   .iw-pv-lang__item { font-size: max(calc(var(--u) * .86), 9px); }
+  .iw-pstat > b small { font-size: max(.55em, 7px); }
+  .iw-roster__head em { font-size: max(.82em, 8px); }
   /* pause: the title and the focused first button never touch */
   .iw-pause__col { gap: max(calc(var(--u) * 2.2), 22px); }
   .iw-pause__menu { gap: max(calc(var(--u) * 1.1), 9px); }
