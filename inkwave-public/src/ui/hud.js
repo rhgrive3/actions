@@ -27,6 +27,9 @@ import { on, G } from '../core/ctx.js';
 
 let HUD_ID = 0;
 const BUMP = { duration: 320, easing: 'cubic-bezier(.34,1.8,.64,1)' };
+// dualies: the ring of the pistol that just fired jabs outward (SVG → Web Animations; the reflow restart trick needs HTML)
+const TWIN_KICK = [{ transform: 'scale(1.55)', strokeWidth: '2.6px' }, { transform: 'scale(1)', strokeWidth: '1.8px' }];
+const TWIN_KICK_T = { duration: 130, easing: 'cubic-bezier(.2,.8,.3,1)' };
 const TAU = Math.PI * 2;
 const STREAKS = { 2: 'DOUBLE SPLAT!', 3: 'TRIPLE SPLAT!', 4: 'QUAD SPLAT!' };
 const kindOf = (w) => (WEAPONS[w] && WEAPONS[w].kind) || w || 'shooter';
@@ -62,7 +65,7 @@ export class HUD {
     this._downs = [];       // ally-down pings
     this._turfAcc = 0; this._turfT = 0; this._turfTotal = 0; this._turfShown = 0;
     this._kills = { times: [], streak: 0, first: false, lastKiller: null, dealt: new Map() };
-    this._bloom = 0;
+    this._bloom = 0; this._kick = 0; this._hitN = 0; this._hitT = -9;
     this._tank = { level: 1, slosh: 0, sloshV: 0, wobble: 0, bubbles: [], prevInk: 1, prevYaw: null, prevVx: 0, prevVz: 0, empty: 0, t: 0 };
     this._map = { cx: 0.5, cy: 0.5, hover: -1, open: false, pressed: -1, pressT: 0 };
     this._build();
@@ -299,8 +302,14 @@ export class HUD {
   hitMarker(kind = 'hit') {
     const dmg = this._lastHitDmg || 36;
     this._lastHitDmg = 0;
-    const s = clamp(0.8 + dmg / 90, 0.8, 1.6);
+    // consecutive hits escalate (ticks grow, fly further and warm toward your ink colour); heavy hits get fat ticks
+    const now = this._fxTime;
+    this._hitN = now - (this._hitT ?? -9) < 0.55 ? Math.min((this._hitN || 0) + 1, 6) : 0;
+    this._hitT = now;
+    const s = clamp(0.8 + dmg / 90, 0.8, 1.6) * (1 + this._hitN * 0.06);
     this.hitEl.style.setProperty('--hs', s.toFixed(2));
+    this.hitEl.style.setProperty('--hn', String(this._hitN));
+    this.hitEl.classList.toggle('is-heavy', dmg >= 60);
     if (kind === 'kill') { this._restart(this.killEl, 'is-on'); this._restart(this.hitEl, 'is-on'); this._restart(this.ret, 'is-killflash'); }
     else { this._restart(this.hitEl, 'is-on'); this._restart(this.ret, 'is-hitflash'); }
   }
@@ -492,6 +501,11 @@ export class HUD {
       on('splatted', (e) => this._onSplatted(e)),
       on('respawn', ({ actor }) => { if (actor && actor === this._local()) { this._clearDamageDirs(); this._restart(this.shield, 'is-on'); } }),
       on('recoil', ({ amount }) => { if (this._live()) { this._bloom = Math.min(1, this._bloom + 0.18 + (amount || 0) * 6); this._tank.wobble = Math.min(1, this._tank.wobble + 0.25); } }),
+      on('weapon:fire', ({ actor, hand }) => {
+        if (!actor || actor !== this._local() || !this._live()) return;
+        this._kick = 1; this._tank.wobble = Math.min(1, this._tank.wobble + 0.06);
+        if (this._L.kind === 'dualies' && this._twin) { const el = this._twin[hand ? 1 : 0]; if (el && el.animate) el.animate(TWIN_KICK, TWIN_KICK_T); }
+      }),
       on('lowink', ({ actor }) => { if (actor === this._local() && this._live()) { this._tank.empty = 0.45; this._restart(this.tank, 'is-empty'); } }),
       on('special:ready', ({ actor }) => { if (actor === this._local() && this._live()) this._restart(this.sp, 'is-flare'); }),
       on('superjump', ({ actor, phase, to }) => { if (actor === this._local() && phase === 'charge' && this._live()) this._snd('ui_confirm', { volume: 0.6 }); void to; }),
@@ -771,6 +785,25 @@ export class HUD {
         <path class="iw-ret__ring" d="M-46 -15 L-56 -15 Q-60 -15 -60 -11 L-60 11 Q-60 15 -56 15 L-46 15"/>
         <path class="iw-ret__ring" d="M46 -15 L56 -15 Q60 -15 60 -11 L60 11 Q60 15 56 15 L46 15"/>
         <path class="iw-ret__ring thin" d="M-30 22 Q0 30 30 22"/></svg>`;
+    } else if (kind === 'dualies') {
+      // twin reticle: one ring per pistol (each kicks on its own shot), spread ticks, and a lock diamond after a roll
+      r.innerHTML = `<i class="iw-ret__dot"></i><svg class="iw-ret__svg" viewBox="-40 -40 80 80" aria-hidden="true">
+        <circle cx="-10.5" r="6.2" class="iw-ret__ring thin iw-ret__twin l"/><circle cx="10.5" r="6.2" class="iw-ret__ring thin iw-ret__twin r"/>
+        <path class="iw-ret__lock" d="M0 -19 L19 0 L0 19 L-19 0 Z"/></svg>
+        <i class="iw-ret__tick" style="--a:0deg"></i><i class="iw-ret__tick" style="--a:90deg"></i><i class="iw-ret__tick" style="--a:180deg"></i><i class="iw-ret__tick" style="--a:270deg"></i>`;
+      this._twin = [r.querySelector('.iw-ret__twin.r'), r.querySelector('.iw-ret__twin.l')];
+    } else if (kind === 'slosher') {
+      // the lob: an arch over the aim point and a landing "bucket" bracket under it
+      r.innerHTML = `<i class="iw-ret__dot"></i><svg class="iw-ret__svg" viewBox="-40 -40 80 80" aria-hidden="true">
+        <path class="iw-ret__ring iw-ret__arch" d="M-24 6 Q0 -26 24 6"/><path class="iw-ret__ring thin" d="M-10 13 L-6 18 L6 18 L10 13"/>
+        <path class="iw-ret__ring thin" d="M-24 6 L-27 1 M24 6 L27 1"/></svg>`;
+    } else if (kind === 'splatling') {
+      // spin-up meter (8 segments) that fills while charging and drains while the stream runs + spread ticks
+      r.innerHTML = `<i class="iw-ret__dot"></i><svg class="iw-ret__svg" viewBox="-40 -40 80 80" aria-hidden="true"><circle r="21" class="iw-ret__track"/>
+        <circle r="21" class="iw-ret__charge" pathLength="100" style="stroke-dasharray:100;stroke-dashoffset:100"/>
+        <g class="iw-ret__segs">${Array.from({ length: 8 }, (_, i) => `<path d="M0 -17 L0 -25" transform="rotate(${i * 45})"/>`).join('')}</g></svg>
+        <i class="iw-ret__tick" style="--a:90deg"></i><i class="iw-ret__tick" style="--a:270deg"></i>`;
+      this._chargeEl = r.querySelector('.iw-ret__charge'); this._chargeC = 100;
     } else {
       r.innerHTML = `<i class="iw-ret__dot"></i><svg class="iw-ret__svg" viewBox="-40 -40 80 80" aria-hidden="true"><circle r="15" class="iw-ret__ring thin"/></svg>
         <i class="iw-ret__tick" style="--a:0deg"></i><i class="iw-ret__tick" style="--a:90deg"></i><i class="iw-ret__tick" style="--a:180deg"></i><i class="iw-ret__tick" style="--a:270deg"></i>`;
@@ -792,9 +825,11 @@ export class HUD {
     }
     // per-shot kick (recoil events) on top of the live cone the engine reports in screen px (already includes bloom)
     this._bloom = Math.max(0, this._bloom - dt * 5);
+    this._kick = Math.max(0, (this._kick || 0) - dt * 16);   // per-shot reticle kick (~60 ms), on top of the live spread
     const ch = f.crosshair || {};
-    if (L.kind === 'shooter' || L.kind === 'blaster') {
-      const sp = clamp((+ch.spread || 0) + this._bloom * (L.kind === 'shooter' ? 2.5 : 5), 0, 90);
+    if (L.kind === 'shooter' || L.kind === 'blaster' || L.kind === 'dualies' || L.kind === 'splatling') {
+      const kk = L.kind === 'blaster' ? 0 : this._kick * this._kick * (L.kind === 'splatling' ? 4 : 7);
+      const sp = clamp((+ch.spread || 0) + this._bloom * (L.kind === 'blaster' ? 5 : 2.5) + kk, 0, 90);
       if (L.spread == null || Math.abs(sp - L.spread) > 0.25) { L.spread = sp; this.ret.style.setProperty('--sp', sp.toFixed(1)); }
     } else {
       const b = this._bloom;
@@ -815,6 +850,22 @@ export class HUD {
       if (full !== L.full) { L.full = full; this.ret.classList.toggle('is-full', full); if (full) this._restart(this.ret, 'is-flash'); }
       const charging = c > 0.001;
       if (charging !== L.charging) { L.charging = charging; this.ret.classList.toggle('is-charging', charging); }
+    } else if (L.kind === 'splatling') {
+      const lr = this._local()?.weaponRunner;
+      const c = clamp(+f.charge || 0), streaming = !!(lr && lr.streaming);
+      if (L.charge == null || Math.abs(c - L.charge) > 0.004) { L.charge = c; this._chargeEl.style.strokeDashoffset = (100 * (1 - c)).toFixed(2); this.ret.style.setProperty('--ch', c.toFixed(3)); }
+      if (streaming !== L.streaming) { L.streaming = streaming; this.ret.classList.toggle('is-streaming', streaming); }
+      const full = !streaming && c >= 0.999;
+      if (full !== L.full) { L.full = full; this.ret.classList.toggle('is-full', full); if (full) this._restart(this.ret, 'is-flash'); }
+    } else if (L.kind === 'dualies') {
+      const lr = this._local()?.weaponRunner;
+      const lock = !!(lr && lr.lockT > 0), roll = !!(lr && lr.dodge);
+      if (lock !== L.lock) { L.lock = lock; this.ret.classList.toggle('is-lock', lock); }
+      if (roll !== L.roll) { L.roll = roll; this.ret.classList.toggle('is-roll', roll); }
+    }
+    if (L.kind === 'slosher') {
+      const k = this._kick;
+      if (L.bk == null || Math.abs(k - L.bk) > 0.02) { L.bk = k; this.ret.style.setProperty('--kk', k.toFixed(2)); }
     }
     // spawn shield + bomb aim (read straight off the local actor; absent in the lab unless mocked)
     const a = this._local();

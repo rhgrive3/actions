@@ -466,36 +466,66 @@ def('ui_error', {
 
 /* ---- Weapons ---- */
 def('shoot_shooter', {
-  gain: 0.6, max: 8, jitter: 0.06, reverb: 0.07, minGap: 0.02,
+  gain: 0.72, max: 8, jitter: 0.05, reverb: 0.07, minGap: 0.02,
   build(v, p) {
-    const bp = v.r(1900, 2600);
-    v.nz({ f: bp * p, f1: bp * 0.55 * p, sw: 0.05, q: 1.2, a: 0.0008, d: 0.05, peak: 0.9 });           // pneumatic "pshk"
-    v.nz({ ft: 'highpass', f: 4500, a: 0.001, d: 0.07, peak: 0.3 });                                   // air hiss
-    v.tone({ f: 200 * p, f1: 70 * p, sw: 0.05, a: 0.001, d: 0.06, peak: 0.75 });                         // thump
-    v.nz({ t: 0.012, f: v.r(1500, 2000) * p, f1: v.r(520, 720) * p, sw: 0.1, q: v.r(4, 7), a: 0.004, d: 0.11, peak: 0.85 }); // wet tail
-    const f = v.r(620, 780) * p;
-    v.tone({ t: 0.01, f, f1: f * 0.36, sw: 0.06, a: 0.002, d: 0.07, peak: 0.25 });                        // bloop
+    // three voicings (+ the engine's pitch jitter) so a 10-shot/s stream never machine-guns one sample
+    const vo = v.pick([[1, 1], [1.12, 0.93], [0.9, 1.08]]);
+    const k = vo[0] * p, w = vo[1] * p;
+    v.nz({ f: 4200 * k, q: 1.6, a: 0.0004, d: 0.018, peak: 0.66 });                                       // snap (presence)
+    v.tone({ f: 2600 * k, f1: 820 * k, sw: 0.014, a: 0.0005, d: 0.02, peak: 0.26 });                       // "pew" chirp
+    const bp = v.r(2500, 3100) * k;
+    v.nz({ f: bp, f1: bp * 0.62, sw: 0.05, q: 1.4, a: 0.0008, d: 0.05, peak: 0.8 });                       // pneumatic "pshk"
+    v.tone({ f: 175 * w, f1: 62 * w, sw: 0.05, a: 0.001, d: 0.055, peak: 0.52 });                          // thump
+    v.nz({ t: 0.01, f: v.r(1500, 1900) * w, f1: v.r(520, 680) * w, sw: 0.09, q: v.r(4.5, 7), a: 0.004, d: 0.09, peak: 0.72 }); // wet splort
+    v.bub(v.t + v.r(0.018, 0.035), v.r(900, 1400) * w, 0.12, 0.022, 1.8);                                  // droplet plip
+    v.nz({ ft: 'highpass', f: 5200, a: 0.001, d: 0.06, peak: 0.2 });                                      // air
   },
 });
 def('shoot_blaster', {
-  gain: 0.55, max: 4, jitter: 0.05, reverb: 0.1,
+  gain: 0.55, max: 4, jitter: 0.04, reverb: 0.1,
   build(v, p) {
-    v.tone({ f: 150 * p, f1: 42 * p, sw: 0.16, a: 0.002, d: 0.3, peak: 1 });                            // thoomp
-    v.tone({ type: 'triangle', f: 300 * p, f1: 90 * p, sw: 0.08, a: 0.002, d: 0.1, peak: 0.4 });
-    v.nz({ kind: 'pink', ft: 'lowpass', f: 1500, f1: 300, sw: 0.12, q: 2, a: 0.002, d: 0.14, peak: 1 });
-    v.nz({ f: 700 * p, f1: 2400 * p, sw: 0.22, q: 1.4, a: 0.03, d: 0.18, peak: 0.28 });                   // projectile whoosh
-    v.nz({ t: 0.01, f: 1200 * p, f1: 420 * p, sw: 0.12, q: 5, a: 0.003, d: 0.12, peak: 0.5 });
+    v.nz({ ft: 'highpass', f: 3800, a: 0.0003, d: 0.008, peak: 0.5 });                                   // valve click
+    v.nz({ f: 1500 * p, f1: 900 * p, sw: 0.02, q: 2.2, a: 0.0006, d: 0.022, peak: 0.75 });                // "chunk"
+    v.tone({ f: 150 * p, f1: 40 * p, sw: 0.16, a: 0.002, d: 0.3, peak: 1 });                             // thoomp
+    v.tone({ type: 'triangle', f: 300 * p, f1: 88 * p, sw: 0.08, a: 0.002, d: 0.1, peak: 0.35 });
+    v.nz({ kind: 'pink', ft: 'lowpass', f: 1600, f1: 280, sw: 0.12, q: 2, a: 0.002, d: 0.14, peak: 0.9 });
+    v.nz({ t: 0.008, f: 320 * p, f1: 950 * p, sw: 0.06, q: 6, a: 0.004, d: 0.08, peak: 0.55 });          // the ink ball: a big rising gloop
+    v.tone({ t: 0.01, f: 190 * p, f1: 430 * p, sw: 0.07, a: 0.003, d: 0.075, peak: 0.4 });
+    v.nz({ f: 700 * p, f1: 2400 * p, sw: 0.22, q: 1.4, a: 0.03, d: 0.18, peak: 0.26 });                  // projectile whoosh
+    v.nz({ t: 0.05, ft: 'highpass', f: 5000, a: 0.02, d: 0.16, peak: 0.08 });                            // vent hiss
+  },
+});
+// Blaster pump rack: slide back → back-stop clack, slide forward → front-stop clack + re-pressurise puff. weapons.js
+// schedules it 0.27 s after the shot so the clacks land on the pump animation's stops (+0.29 s and +0.46 s).
+def('blaster_pump', {
+  gain: 0.62, max: 3, jitter: 0.03, reverb: 0.06,
+  build(v, p) {
+    const clack = (t, hard) => {
+      v.nz({ t, f: 3100 * p, q: 2.4, a: 0.0003, d: 0.009, peak: 0.8 * hard });                          // click
+      v.tone({ t, f: 1870 * p, a: 0.0005, d: 0.045, peak: 0.12 * hard });                               // metal ring
+      v.tone({ t, f: 3050 * p, a: 0.0005, d: 0.03, peak: 0.07 * hard });
+      v.tone({ t, f: 230 * p, f1: 120 * p, sw: 0.025, a: 0.001, d: 0.03, peak: 0.5 * hard });           // body thunk
+    };
+    v.nz({ f: 1200 * p, f1: 2200 * p, sw: 0.02, q: 1.2, a: 0.008, d: 0.014, peak: 0.12 });              // slide back
+    clack(0.02, 0.85);
+    v.nz({ t: 0.08, f: 2000 * p, f1: 1300 * p, sw: 0.1, q: 1.2, a: 0.03, d: 0.08, peak: 0.1 });         // slide forward
+    clack(0.19, 1);
+    v.nz({ t: 0.2, f: 900 * p, f1: 500 * p, sw: 0.08, q: 1.5, a: 0.01, d: 0.09, peak: 0.25 });          // re-pressurise
   },
 });
 def('blaster_boom', {
-  gain: 0.6, max: 4, jitter: 0.05, reverb: 0.22,
+  gain: 0.55, max: 4, jitter: 0.05, reverb: 0.22,
   build(v, p) {
     v.tone({ f: 110 * p, f1: 34 * p, sw: 0.3, a: 0.002, d: 0.45, peak: 1 });
-    v.nz({ ft: 'highpass', f: 2500, a: 0.0005, d: 0.03, peak: 0.7 });
+    v.nz({ ft: 'highpass', f: 2500, a: 0.0005, d: 0.03, peak: 0.7 });                                   // crack
+    v.tone({ t: 0.004, f: 950 * p, f1: 210 * p, sw: 0.03, a: 0.0006, d: 0.03, peak: 0.28 });             // pop
     v.nz({ kind: 'pink', ft: 'lowpass', f: 3500, f1: 250, sw: 0.35, q: 1, a: 0.002, d: 0.4, peak: 1 });
     v.nz({ t: 0.03, f: 1400 * p, f1: 450 * p, sw: 0.4, q: 3.5, a: 0.004, d: 0.45, peak: 0.7 });
     bloops(v, 0.04, 3, 0.1, [400, 700], 0.25, p);
-    v.nz({ t: 0.05, ft: 'highpass', f: 3500, a: 0.02, d: 0.4, peak: 0.22 });
+    // the shell of droplets raining back down: a patter that thins out
+    let t = 0.09;
+    for (let i = 0; i < 9; i++) { t += v.r(0.022, 0.05); v.bub(v.t + t, v.r(700, 1900) * p, 0.16 * (1 - i / 11), v.r(0.012, 0.026), v.r(1.5, 2.1)); }
+    v.nz({ t: 0.05, ft: 'highpass', f: 3500, a: 0.02, d: 0.4, peak: 0.2 });
   },
 });
 def('charger_charge', {
@@ -531,15 +561,16 @@ def('charger_full', {
   },
 });
 def('shoot_charger', {
-  gain: 0.55, max: 4, jitter: 0.04, reverb: 0.18,
+  gain: 0.55, max: 4, jitter: 0.03, reverb: 0.18,
   build(v, p) {
-    v.nz({ ft: 'highpass', f: 2200, a: 0.0003, d: 0.035, peak: 1 });                                     // crack
+    v.nz({ ft: 'highpass', f: 2600, a: 0.0002, d: 0.03, peak: 1 });                                     // crack
+    v.tone({ f: 5200 * p, a: 0.0002, d: 0.006, peak: 0.22 });                                           // bite
+    v.nz({ f: 6000 * p, f1: 900 * p, sw: 0.14, q: 3, a: 0.001, d: 0.16, peak: 0.5 });                   // "pshew" whistle-whoosh
     const lp = v.filter('lowpass', 6000, 1, v.out);
-    v.tone({ type: 'sawtooth', f: 2600 * p, f1: 260 * p, sw: 0.13, a: 0.0008, d: 0.16, peak: 0.28, to: lp }); // laser zap
-    v.tone({ type: 'square', f: 1300 * p, f1: 180 * p, sw: 0.12, a: 0.0008, d: 0.12, peak: 0.1, to: lp });
-    v.tone({ f: 140 * p, f1: 48 * p, sw: 0.1, a: 0.001, d: 0.16, peak: 0.8 });
-    v.nz({ t: 0.03, f: 1700 * p, f1: 420 * p, sw: 0.5, q: 2.5, a: 0.01, d: 0.55, peak: 0.55 });          // long splash
-    v.nz({ t: 0.04, ft: 'highpass', f: 3000, a: 0.03, d: 0.45, peak: 0.22 });
+    v.tone({ type: 'sawtooth', f: 2600 * p, f1: 260 * p, sw: 0.13, a: 0.0008, d: 0.15, peak: 0.16, to: lp }); // zap
+    v.tone({ f: 140 * p, f1: 46 * p, sw: 0.12, a: 0.001, d: 0.2, peak: 0.85 });                          // sub thump (pitch < 1 = full charge)
+    v.nz({ t: 0.03, f: 1700 * p, f1: 420 * p, sw: 0.5, q: 2.5, a: 0.01, d: 0.55, peak: 0.5 });          // ink streak splash
+    v.nz({ t: 0.04, ft: 'highpass', f: 3000, a: 0.03, d: 0.45, peak: 0.2 });
     bloops(v, 0.05, 2, 0.12, [500, 800], 0.2, p);
   },
 });
@@ -552,7 +583,8 @@ def('roller_flick', {
     v.noise('pink', T, T + 0.36, bp);                                                                     // heavy whoosh
     v.tone({ t: 0.12, f: 120 * p, f1: 45 * p, sw: 0.18, a: 0.002, d: 0.25, peak: 0.9 });
     v.nz({ t: 0.14, kind: 'pink', ft: 'lowpass', f: 1100, f1: 220, sw: 0.2, q: 1.5, a: 0.002, d: 0.2, peak: 0.6 });
-    v.nz({ t: 0.15, f: 1300 * p, f1: 380 * p, sw: 0.45, q: 3, a: 0.004, d: 0.5, peak: 0.8 });           // splash
+    // the sheet leaves the drum as a ripple of overlapping slaps (centre heavy, edges lighter)
+    for (let i = 0; i < 4; i++) v.nz({ t: 0.145 + i * 0.018 + v.r(0, 0.006), f: v.r(1100, 1500) * p, f1: v.r(350, 480) * p, sw: 0.3 + i * 0.05, q: v.r(2.5, 3.5), a: 0.003, d: 0.34, peak: 0.55 - i * 0.08 });
     bloops(v, 0.16, 4, 0.2, [350, 700], 0.3, p);
     v.nz({ t: 0.16, ft: 'highpass', f: 3500, a: 0.01, d: 0.5, peak: 0.25 });
   },
@@ -573,6 +605,116 @@ def('roll', {
         lp.frequency.setTargetAtTime(1200 + 600 * q, now, 0.05);
       },
     };
+  },
+});
+
+// ---- Arsenal: dualies · slosher · splatling
+// Dualies: lighter, snappier than the shooter (smaller nozzle) — a tight "tik-pff" with a slide clack; weapons.js
+// alternates the pitch per hand (0.97 / 1.05) so the rhythm reads left-right.
+def('shoot_dualies', {
+  gain: 0.8, max: 10, jitter: 0.04, reverb: 0.06, minGap: 0.018,
+  build(v, p) {
+    v.nz({ f: 4800 * p, q: 1.8, a: 0.0003, d: 0.01, peak: 0.6 });                                        // snap
+    v.nz({ t: 0.002, f: 3200 * p, q: 3, a: 0.0003, d: 0.006, peak: 0.35 });                              // slide clack
+    const bp = v.r(2700, 3300) * p;
+    v.nz({ f: bp, f1: bp * 0.6, sw: 0.04, q: 1.5, a: 0.0006, d: 0.04, peak: 0.72 });                     // pneumatic "pff"
+    v.tone({ f: 210 * p, f1: 80 * p, sw: 0.04, a: 0.001, d: 0.042, peak: 0.45 });                        // small thump
+    v.nz({ t: 0.008, f: v.r(1700, 2100) * p, f1: v.r(600, 760) * p, sw: 0.07, q: v.r(5, 7), a: 0.003, d: 0.07, peak: 0.55 }); // wet
+    v.nz({ ft: 'highpass', f: 5600, a: 0.001, d: 0.045, peak: 0.16 });
+  },
+});
+// Dodge roll: a body whoosh, a rubbery skid across the deck, a wet smear, and the plant.
+def('dualies_roll', {
+  gain: 0.55, max: 3, jitter: 0.05, reverb: 0.08,
+  build(v, p) {
+    const T = v.t, g = v.gain(0, v.out), bp = v.filter('bandpass', 500, 1.2, g);
+    sweep(bp.frequency, T, 450 * p, 1900 * p, 0.12); pts(g.gain, T, [[0, 0], [0.05, 0.6], [0.16, 0.35], [0.3, 0]]);
+    v.noise('pink', T, T + 0.32, bp);                                                                     // whoosh
+    v.nz({ t: 0.04, f: 900 * p, f1: 1400 * p, sw: 0.2, q: 4, a: 0.02, d: 0.2, peak: 0.3 });               // rubber skid
+    v.nz({ t: 0.06, kind: 'pink', ft: 'lowpass', f: 1400, f1: 400, sw: 0.25, q: 1.5, a: 0.01, d: 0.22, peak: 0.45 }); // ink smear
+    plips(v, 0.08, 3, 0.18, [800, 1500], 0.14, p);
+    v.tone({ t: 0.29, f: 140 * p, f1: 60 * p, sw: 0.06, a: 0.002, d: 0.09, peak: 0.7 });                 // plant
+    v.nz({ t: 0.29, f: 700 * p, f1: 380 * p, sw: 0.06, q: 3, a: 0.002, d: 0.07, peak: 0.4 });
+  },
+});
+// Slosher heave: the weight coming round (a rising air swing) and the wave leaving the lip (a deep "shloop").
+def('slosh_throw', {
+  gain: 0.6, max: 3, jitter: 0.05, reverb: 0.14,
+  build(v, p) {
+    const T = v.t, g = v.gain(0, v.out), bp = v.filter('bandpass', 300, 1.6, g);
+    bp.frequency.setValueAtTime(260 * p, T); bp.frequency.exponentialRampToValueAtTime(1400 * p, T + 0.13); bp.frequency.exponentialRampToValueAtTime(500 * p, T + 0.3);
+    pts(g.gain, T, [[0, 0], [0.11, 0.65], [0.17, 0.4], [0.32, 0]]);
+    v.noise('pink', T, T + 0.34, bp);                                                                     // swing
+    v.tone({ t: 0.12, f: 180 * p, f1: 420 * p, sw: 0.09, a: 0.004, d: 0.12, peak: 0.55 });               // shloop (rising gloop)
+    v.nz({ t: 0.12, f: 380 * p, f1: 1100 * p, sw: 0.1, q: 6, a: 0.006, d: 0.12, peak: 0.5 });
+    v.tone({ t: 0.125, f: 110 * p, f1: 48 * p, sw: 0.14, a: 0.003, d: 0.2, peak: 0.7 });                 // body
+    v.nz({ t: 0.14, f: 1500 * p, f1: 500 * p, sw: 0.35, q: 2.5, a: 0.01, d: 0.4, peak: 0.45 });          // sheet of ink tearing away
+    bloops(v, 0.15, 3, 0.18, [350, 650], 0.22, p);
+  },
+});
+// Slosher wave landing: a heavy wet slap with a spray and a patter of globs.
+def('slosh_land', {
+  gain: 0.58, max: 4, jitter: 0.06, reverb: 0.15, minGap: 0.05,
+  build(v, p) {
+    bigSplat(v, 0, p * 0.9, 0.95);
+    v.nz({ ft: 'highpass', f: 2800, a: 0.0005, d: 0.025, peak: 0.45 });                                  // slap
+    let t = 0.06;
+    for (let i = 0; i < 6; i++) { t += v.r(0.02, 0.045); v.bub(v.t + t, v.r(650, 1500) * p, 0.14 * (1 - i / 8), v.r(0.014, 0.028), v.r(1.5, 2)); }
+  },
+});
+// Splatling spin loop: motor whine + gear rattle + air; pitch = 0.6 (idle spin) … ~1.45 (full) … 1.5 streaming.
+def('splatling_spin', {
+  gain: 0.21, max: 3, jitter: 0, reverb: 0.05, oneShot: 1.2,
+  loop(v, p) {
+    const T = v.t, base = 180;
+    const amp = v.gain(0.6, v.out);
+    const lp = v.filter('lowpass', 1800 * p, 0.9, amp);
+    const o1 = v.osc('sawtooth', base * p, T, null, lp);                                                 // motor
+    const o2 = v.osc('square', base * 2.02 * p, T, null, v.filter('bandpass', base * 6 * p, 3, v.gain(0.08, amp)));
+    const rat = v.gain(0.06, v.out), rbp = v.filter('bandpass', 2400, 2.5, rat);
+    const rn = v.noise('white', T, null, rbp);
+    const trem = v.lfo(base * p / 6, 0.05, rat.gain, T, null, 'square');                                  // barrel/gear rattle
+    const air = v.gain(0.04 * p, v.out); v.noise('pink', T, null, v.filter('highpass', 3000, 0.7, air));
+    return {
+      pitch(q, now) {
+        const k = 0.05;
+        o1.frequency.setTargetAtTime(base * q, now, k); o2.frequency.setTargetAtTime(base * 2.02 * q, now, k);
+        lp.frequency.setTargetAtTime(Math.min(1800 * q * q, 12000), now, k); trem.osc.frequency.setTargetAtTime(base * q / 6, now, k);
+        air.gain.setTargetAtTime(0.04 * q, now, k); rbp.frequency.setTargetAtTime(2000 + 900 * q, now, k);
+        void rn;
+      },
+    };
+  },
+});
+// Splatling full charge: a hard mechanical clunk under a bright two-note chime (distinct from the charger's ting).
+def('splatling_ready', {
+  gain: 0.3, max: 2, jitter: 0, reverb: 0.18,
+  build(v, p) {
+    v.tone({ f: 170 * p, f1: 90 * p, sw: 0.04, a: 0.001, d: 0.06, peak: 0.8 });
+    v.nz({ f: 2600 * p, q: 3, a: 0.0004, d: 0.012, peak: 0.6 });
+    for (const [t, m] of [[0.02, 91], [0.075, 96]]) { const f = mtof(m) * p; v.tone({ t, f, a: 0.001, d: 0.5, peak: 0.34 }); v.tone({ t, f: f * 2.76, a: 0.001, d: 0.14, peak: 0.08 }); }
+  },
+});
+// Splatling round (15/s): very short and tight so the stream reads as a buzzing torrent, not a wall of clicks.
+def('shoot_splatling', {
+  gain: 1.0, max: 10, jitter: 0.05, reverb: 0.05, minGap: 0.03,
+  build(v, p) {
+    v.nz({ f: 3600 * p, q: 1.6, a: 0.0003, d: 0.012, peak: 0.75 });
+    v.nz({ f: 2400 * p, f1: 1300 * p, sw: 0.03, q: 1.6, a: 0.0005, d: 0.04, peak: 0.85 });
+    v.tone({ f: 160 * p, f1: 70 * p, sw: 0.03, a: 0.001, d: 0.04, peak: 0.42 });
+    v.nz({ t: 0.006, f: v.r(1500, 1900) * p, f1: 600 * p, sw: 0.06, q: 5, a: 0.002, d: 0.075, peak: 0.6 });   // wet
+    v.nz({ t: 0.01, f: 2100 * p, f1: 1500 * p, sw: 0.08, q: 1.2, a: 0.004, d: 0.08, peak: 0.28 });             // fizz tail
+  },
+});
+// Splatling spin-down after a stream: the motor winding down + a vent sigh.
+def('splatling_wind', {
+  gain: 0.34, max: 2, jitter: 0.03, reverb: 0.08,
+  build(v, p) {
+    const T = v.t, g = v.gain(0, v.out), lp = v.filter('lowpass', 2400, 0.9, g);
+    const o = v.osc('sawtooth', 270 * p, T, T + 0.62, lp);
+    sweep(o.frequency, T, 270 * p, 60 * p, 0.6); sweep(lp.frequency, T, 2400, 300, 0.6);
+    pts(g.gain, T, [[0, 0], [0.02, 0.5], [0.3, 0.25], [0.6, 0]]);
+    v.nz({ t: 0.03, f: 3500, f1: 1200, sw: 0.4, q: 1, a: 0.04, d: 0.35, peak: 0.12 });
   },
 });
 
@@ -693,12 +835,31 @@ def('land', {
 });
 
 /* ---- Combat feedback ---- */
+// Consecutive hits climb 1.5 semitones a step (up to an octave) and swell slightly — the rhythm of landing a stream.
+// Combo state is per AudioContext, so offline renders (tools/audio-test) stay independent.
+const _hitCombo = new WeakMap();
 def('hit_marker', {
-  gain: 0.48, max: 4, jitter: 0.03, reverb: 0, minGap: 0.035,
+  gain: 0.48, max: 4, jitter: 0, reverb: 0, minGap: 0.035,
   build(v, p) {
-    v.tone({ f: 1650 * p, f1: 1150 * p, sw: 0.02, a: 0.0008, d: 0.05, peak: 0.7 });
-    v.tone({ type: 'triangle', f: 3300 * p, a: 0.0005, d: 0.02, peak: 0.2 });
-    v.nz({ ft: 'highpass', f: 4000, a: 0.0003, d: 0.008, peak: 0.4 });
+    let st = _hitCombo.get(v.ctx);
+    if (!st) _hitCombo.set(v.ctx, (st = { t: -9, n: 0 }));
+    st.n = v.t - st.t < 0.55 ? Math.min(st.n + 1, 8) : 0; st.t = v.t;
+    const q = p * Math.pow(2, (st.n * 1.5) / 12), lift = 1 + st.n * 0.05;
+    v.nz({ ft: 'highpass', f: 4500, a: 0.0003, d: 0.007, peak: 0.42 });                                 // tick
+    v.nz({ f: 3400 * q, q: 4, a: 0.0006, d: 0.022, peak: 0.32 });                                      // wet "tsk"
+    v.tone({ f: 1650 * q, f1: 1250 * q, sw: 0.02, a: 0.0008, d: 0.05, peak: 0.62 * lift });           // plink
+    v.tone({ type: 'triangle', f: 3300 * q, a: 0.0005, d: 0.025, peak: 0.16 * lift });
+  },
+});
+// Ink smacking a body — diegetic, 3D at the victim (weapons.js), under the UI tick. pitch < 1 = a heavy hit.
+def('ink_hit_body', {
+  gain: 0.5, max: 5, jitter: 0.07, reverb: 0.06, minGap: 0.03,
+  build(v, p) {
+    const lp = v.filter('lowpass', 2600, 0.8, v.out);
+    v.tone({ f: 190 * p, f1: 70 * p, sw: 0.05, a: 0.001, d: 0.06, peak: 0.85, to: lp });                // smack
+    v.nz({ f: 1300 * p, f1: 520 * p, sw: 0.07, q: 3, a: 0.001, d: 0.08, peak: 0.8 });                  // wet slap
+    v.nz({ kind: 'pink', ft: 'lowpass', f: 900, a: 0.001, d: 0.05, peak: 0.5, to: lp });
+    v.bub(v.t + v.r(0.015, 0.03), v.r(700, 1100) * p, 0.14, 0.025, 1.7);
   },
 });
 def('hurt', {
@@ -713,9 +874,11 @@ def('hurt', {
 def('splat_enemy', {
   gain: 0.45, max: 3, jitter: 0, reverb: 0.18,
   build(v, p) {
+    v.nz({ ft: 'highpass', f: 3000, a: 0.0003, d: 0.02, peak: 0.45 });                                 // crack
     v.tone({ f: 780 * p, f1: 170 * p, sw: 0.06, a: 0.001, d: 0.09, peak: 0.9 });                         // pop
     v.nz({ f: 2000, f1: 700, sw: 0.1, q: 2, a: 0.001, d: 0.1, peak: 0.6 });
     v.tone({ f: 110, f1: 45, sw: 0.1, a: 0.001, d: 0.15, peak: 0.6 });
+    v.nz({ t: 0.005, kind: 'pink', ft: 'lowpass', f: 2400, f1: 300, sw: 0.2, q: 1.2, a: 0.002, d: 0.22, peak: 0.5 }); // the splat itself
     [88, 92, 95, 100].forEach((m, i) => {                                                                 // sparkle chime E maj
       const f = mtof(m) * p, t = 0.03 + i * 0.045;
       v.tone({ t, f, a: 0.001, d: 0.35, peak: 0.26 });
@@ -777,6 +940,8 @@ def('empty_click', {
     v.nz({ f: 2400 * p, q: 2, a: 0.0003, d: 0.006, peak: 0.8 });
     v.tone({ type: 'square', f: 190 * p, a: 0.0005, d: 0.018, peak: 0.3, to: v.filter('lowpass', 900, 1, v.out) });
     v.nz({ t: 0.028, f: 3200 * p, q: 2, a: 0.0003, d: 0.005, peak: 0.4 });
+    v.nz({ t: 0.035, f: 2800 * p, f1: 1600 * p, sw: 0.06, q: 1.4, a: 0.004, d: 0.06, peak: 0.2 });    // tank dry: a thin sputter of air
+    v.bub(v.t + 0.05, 1300 * p, 0.06, 0.02, 1.6);                                                       // …and a last spit of ink
   },
 });
 def('refill_full', {
@@ -1072,6 +1237,29 @@ def('gull', {
     v.tone({ t: 0.26, type: 'sawtooth', f: 1320 * p, f1: 900 * p, sw: 0.22, a: 0.02, d: 0.26, peak: 0.3, to: bp });
   },
 });
+def('ferry_horn', {
+  gain: 0.3, max: 1, jitter: 0.02, reverb: 0.55,
+  build(v, p) {
+    // a ship's horn out in the channel: a low major-third chord, brassy harmonics under a lowpass, slight wobble;
+    // one long blast then a short one
+    const lp = v.filter('lowpass', 820 * p, 0.9, v.out);
+    for (const [t, h] of [[0, 1.35], [2.05, 0.55]]) {
+      v.tone({ t, type: 'sawtooth', f: 98 * p, f1: 97 * p, sw: h, a: 0.14, h, d: 0.65, peak: 0.42, to: lp });
+      v.tone({ t, type: 'sawtooth', f: 123.5 * p, f1: 122.4 * p, sw: h, a: 0.16, h, d: 0.7, peak: 0.34, to: lp });
+      v.tone({ t, type: 'square', f: 49 * p, a: 0.2, h, d: 0.6, peak: 0.16, to: lp });
+    }
+  },
+});
+def('halyard_clink', {
+  gain: 0.07, max: 6, jitter: 0.12, reverb: 0.3, minGap: 0.03,
+  build(v, p) {
+    // a halyard slapping an aluminium mast: inharmonic metal partials, a quick bounce
+    const f = 1850 * p;
+    for (const [t, k] of [[0, 1], [0.07 + v.r(0, 0.05), 0.45]]) {
+      for (const [r, a, d] of [[1, 0.5, 0.2], [2.76, 0.26, 0.1], [5.4, 0.12, 0.05], [8.93, 0.06, 0.03]]) v.tone({ t, f: f * r, a: 0.0008, d, peak: a * k });
+    }
+  },
+});
 def('harbor_ambience', {
   gain: 0.12, max: 1, jitter: 0, reverb: 0.1, oneShot: 3,
   loop(v, p) {
@@ -1092,11 +1280,12 @@ def('harbor_ambience', {
 /* ------------------------------------------------------------------------------------------------------------ */
 export const SFX_GROUPS = {
   UI: ['ui_hover', 'ui_click', 'ui_back', 'ui_confirm', 'ui_toggle', 'ui_slider', 'ui_error'],
-  Weapons: ['shoot_shooter', 'shoot_blaster', 'blaster_boom', 'charger_charge', 'charger_full', 'shoot_charger', 'roller_flick', 'roll'],
+  Weapons: ['shoot_shooter', 'shoot_blaster', 'blaster_pump', 'blaster_boom', 'charger_charge', 'charger_full', 'shoot_charger', 'roller_flick', 'roll',
+    'shoot_dualies', 'dualies_roll', 'slosh_throw', 'slosh_land', 'splatling_spin', 'splatling_ready', 'shoot_splatling', 'splatling_wind'],
   Ink: ['splat_small', 'splat_big', 'ink_hit_wall', 'bomb_throw', 'bomb_beep', 'bomb_explode'],
   Squid: ['squid_in', 'squid_out', 'swim', 'swim_splash', 'jump', 'land', 'climb', 'step_dry', 'step_ink', 'step_enemy', 'ink_drip'],
-  World: ['gull', 'harbor_ambience'],
-  Combat: ['hit_marker', 'hurt', 'splat_enemy', 'splatted_self', 'ally_splatted', 'enemy_ink_sizzle'],
+  World: ['gull', 'harbor_ambience', 'ferry_horn', 'halyard_clink'],
+  Combat: ['hit_marker', 'ink_hit_body', 'hurt', 'splat_enemy', 'splatted_self', 'ally_splatted', 'enemy_ink_sizzle'],
   Status: ['low_ink', 'empty_click', 'refill_full', 'special_ready', 'special_activate', 'special_slam', 'storm_rain', 'storm_thunder', 'respawn', 'super_jump'],
   Match: ['ready', 'go_horn', 'countdown_tick', 'one_minute', 'final_count', 'times_up', 'judge_drumroll', 'judge_reveal', 'victory_fanfare', 'defeat_jingle', 'xp_tick', 'level_up'],
 };

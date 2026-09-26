@@ -18,8 +18,8 @@ export function layoutThumbSVG(layout, theme = 'day', teams = ['#18c7e8', '#ff4a
   const ox = (W - (B.maxZ - B.minZ) * s) / 2, oy = (H - (B.maxX - B.minX) * s) / 2;
   const X = (z) => ox + (z - B.minZ) * s;          // world z → svg x
   const Y = (x) => oy + (B.maxX - x) * s;          // world x → svg y (Alpha's right = up)
-  const sunset = theme === 'sunset';
-  const sea = sunset ? ['#ffb36b', '#e0607e', '#5b3b9a'] : ['#7fe3f5', '#2fb1e6', '#1e76cf'];
+  const sunset = theme === 'sunset', golden = theme === 'golden';
+  const sea = sunset ? ['#ffb36b', '#e0607e', '#5b3b9a'] : golden ? ['#ffd49a', '#3aa9b6', '#185f86'] : ['#7fe3f5', '#2fb1e6', '#1e76cf'];
   const defs = `<defs><linearGradient id="tsea${layout.id}${theme}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${sea[0]}"/><stop offset=".55" stop-color="${sea[1]}"/><stop offset="1" stop-color="${sea[2]}"/></linearGradient>
     <pattern id="tgr${layout.id}" width="2.4" height="2.4" patternUnits="userSpaceOnUse"><rect width="2.4" height="2.4" fill="#8fa0b3"/><rect width="1.2" height="1.2" fill="#dfe6ee"/></pattern>
     <pattern id="tst${layout.id}" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="4" height="4" fill="#f4ecdc"/><rect width="2" height="4" fill="#ffd66b"/></pattern></defs>`;
@@ -42,8 +42,8 @@ export function layoutThumbSVG(layout, theme = 'day', teams = ['#18c7e8', '#ff4a
     let fill;
     if (b.d.grate) fill = `url(#tgr${layout.id})`;
     else if (b.ramp) fill = `url(#tst${layout.id})`;
-    else if (top <= 0.05) fill = sunset ? '#f1cfae' : '#f3ecdd';
-    else { const k = Math.min(1, top / 5); fill = mix(sunset ? '#e8bf99' : '#e7dcc6', sunset ? '#fbe6d0' : '#ffffff', k); }
+    else if (top <= 0.05) fill = sunset ? '#f1cfae' : golden ? '#f4e6cf' : '#f3ecdd';
+    else { const k = Math.min(1, top / 5); fill = mix(sunset ? '#e8bf99' : golden ? '#ead6b6' : '#e7dcc6', sunset ? '#fbe6d0' : golden ? '#fff8ec' : '#ffffff', k); }
     const tint = b.d.pattern === 5 && b.d.color ? b.d.color : null; // containers keep their colour
     parts.push(`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" rx="${top > 0.05 ? 1.4 : 2.5}" fill="${tint || fill}" stroke="#2a3552" stroke-opacity="${top > 0.05 ? 0.35 : 0.15}" stroke-width="1"/>`);
   }

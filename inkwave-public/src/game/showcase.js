@@ -11,8 +11,12 @@
 // per frame. render() leaves the renderer exactly as it found it (target, clear colour/alpha, autoClear; viewport and
 // scissor are untouched).
 //
-// API (driven by main.js): new Showcase(renderer, CharacterClass); showLoadout(weapon, color); showResults(team, won,
-// color, styles); hide(); update(dt); render(); .mode ('loadout' | 'results' | null). Additive: dispose().
+// API (driven by main.js): new Showcase(renderer, CharacterClass); showLoadout(weapon, color[, style]); showResults(team,
+// won, color, styles); hide(); update(dt); render(); .mode ('loadout' | 'locker' | 'results' | null). Additive: dispose().
+// Locker (driven by menus.js): showLocker(style, color[, weapon]) — same pedestal, closer framing, drag to spin;
+// setStyle(style, cause) — swaps the look with a reaction ('hair'|'eyes'|'skin'|'outfit' → squash-pop / twirl,
+// 'preset'|'random' → dives into the ink and bursts back out in the new look); portrait({ style, color, kind:
+// 'head'|'bust'|'body', size, weapon }, cb(canvas)) — queued studio portraits for menu tiles (one per frame).
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { G, damp, lerp, rng } from '../core/ctx.js';
@@ -43,6 +47,13 @@ const SLOTS = [
 ];
 const CHAR_H = 1.62; // squidkid height incl. hair
 const LOAD_FOCUS_Y = 0.76; // camera aims here on the loadout character (feet at 0)
+const PEDESTAL = new Set(['loadout', 'locker']); // modes that stand one squidkid on the ink pedestal
+const sameStyle = (a, b) => {
+  if (!a || !b) return false;
+  for (const k in a) if (a[k] !== b[k]) return false;
+  for (const k in b) if (a[k] !== b[k]) return false;
+  return true;
+};
 
 // ================================================================================================ geometry
 // Lathe outline strips of [r, y] → rows {r, y, nr, ny}: normals smooth inside a strip, hard between strips.
@@ -764,6 +775,7 @@ export class Showcase {
     this.decks = [];
     this.rand = rng(0x5ca1ab);
     this._tgt = new THREE.Vector3(); this._clr = new THREE.Color(); this._dbs = new THREE.Vector2(); this._c = new THREE.Color();
+    this._c2 = new THREE.Color(); this._pv = new THREE.Vector3();
     this._rt = null;
     this.emit = { spark: 0, bubble: 0 };
 
@@ -790,6 +802,11 @@ export class Showcase {
     this.compCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
     this.stageL = null; this.stageR = null; // built lazily (first show)
+    // locker: current look, an in-flight look change (+ one queued behind it), camera framing blend between modes
+    this.style = null; this.look = null; this.lookNext = null; this.emT0 = 0; this.danceBack = -1;
+    this.shotFrom = null; this.shotT = 9; this._shotA = {}; this._shotB = {};
+    // portraits
+    this._pq = []; this._pcache = new Map(); this._prt = null; this._prt8 = null; this._pbuf = null; this._pcam = null;
     this._bindDrag();
     addEventListener('resize', () => { this.ui.next = 0; });
   }
@@ -879,7 +896,7 @@ export class Showcase {
     const el = document.getElementById('app');
     if (!el) return;
     el.addEventListener('pointerdown', (e) => {
-      if (this.mode !== 'loadout') return;
+      if (!PEDESTAL.has(this.mode)) return;
       const edge = this.ui.s ? this.ui.s.panelR : innerWidth * 0.52;
       if (e.clientX > edge) { this.drag = { x: e.clientX, t: performance.now() }; this.spinVel = 0; }
     });
@@ -898,6 +915,7 @@ export class Showcase {
   // ---------------------------------------------------------------------------------------------- lifecycle
   _clear() {
     for (const c of this.chars) { this.scene.remove(c.root); c.dispose?.(); }
+    if (this._warmChar) { this.scene.remove(this._warmChar.root); this._warmChar.dispose?.(); this._warmChar = null; }
     this.chars = [];
     this.fx.clear(); this.confetti.clear(); this.sparks.clear();
     for (let i = 0; i < 8; i++) this.contact.setMatrixAt(i, ZERO_M);
@@ -913,44 +931,105 @@ export class Showcase {
     return { time: 0, speed: 0, localMove: { x: 0, z: 0 }, grounded: true, vy: 0, aimPitch: 0, firing: false, charge: 0, rolling: false, form: 'kid', wallNormal: new THREE.Vector3(0, 0, 1), ink: 1, lowInk: false, special: 0, invuln: false };
   }
 
-  showLoadout(weapon, color) {
-    const fresh = this.mode !== 'loadout' || !this.chars.length;
+  /** The saved player look (main.js keeps the profile; menus save to it) — the default for pedestal kids. */
+  _profileStyle() {
+    const st = G.game?.profile?.style;
+    return st && typeof st === 'object' ? { ...st } : { hair: 0, skin: 1 };
+  }
+
+  showLoadout(weapon, color, style) { this._showPedestal('loadout', weapon, color, style); }
+  showLocker(style, color, weapon) { this._showPedestal('locker', weapon || this.weapon || G.game?.profile?.weapon || 'shooter', color, style); }
+
+  _showPedestal(mode, weapon, color, style) {
+    if (!color || !color.isColor) color = new THREE.Color(color || this.color);
+    const look = style ? { ...style } : this._profileStyle();
+    const onStage = PEDESTAL.has(this.mode) && this.chars.length;
+    const resume = !onStage && this._out > 0 && PEDESTAL.has(this._lastMode) && this.chars.length;
+    const fresh = !onStage && !resume;
+    if (resume) this._out = 0;
     if (fresh) {
-      const resume = this._out > 0 && this._lastMode === 'loadout' && this.chars.length;
-      if (resume) {
-        this._out = 0;
-      } else {
-        this._clear();
-        if (!this.stageL) this.stageL = this._buildLoadoutStage();
-        const c = new this.CharacterClass({ color: color.clone(), weapon, style: { hair: 0, skin: 1 }, name: 'preview', isLocal: false });
-        c._a = this._anim(); c._a.grounded = false;
-        c._y = -1.6; c.root.position.set(0, -1.6, 0);
-        this.scene.add(c.root);
-        this.chars.push(c);
-        this.t = 0; this.fadeIn = 0;
-        this.spin = 0; this.spinVel = 0; this.sinceDrag = 99;
-        this.hopT = -99; this.hopWeapon = null;
-        this.phase = 'emerge'; this.landT = -99; this.emerged = false;
-        this.weapon = weapon;
-        this.stageL.group.visible = true;
-        this.ui.next = 0;
-      }
-      this.mode = 'loadout';
-      this._lastMode = 'loadout';
-      this._aimLights(this._tgt.set(0, 0.8, 0), 1, 'loadout');
+      this._clear();
+      if (!this.stageL) this.stageL = this._buildLoadoutStage();
+      const c = new this.CharacterClass({ color: color.clone(), weapon, style: { ...look }, name: 'preview', isLocal: false });
+      c._a = this._anim(); c._a.grounded = false;
+      c._y = -1.6; c.root.position.set(0, -1.6, 0);
+      this.scene.add(c.root);
+      this.chars.push(c);
+      this.style = { ...look };
+      this.look = null; this.lookNext = null; this.danceBack = -1;
+      this.t = 0; this.fadeIn = 0; this.emT0 = 0;
+      this.spin = 0; this.spinVel = 0; this.sinceDrag = 99;
+      this.hopT = -99; this.hopWeapon = null;
+      this.phase = 'emerge'; this.landT = -99; this.emerged = false;
+      this.weapon = weapon;
+      this.stageL.group.visible = true;
+      this.ui.next = 0;
+      this.shotFrom = null;
+    } else if (this.mode !== mode) {
+      // same kid, new framing: blend the camera from the old shot
+      this.shotFrom = PEDESTAL.has(this.mode) ? this.mode : this._lastMode;
+      this.shotT = 0;
+      this.ui.next = 0; this.ui.stamp = -1;
     }
+    this.mode = mode;
+    this._lastMode = mode;
+    this._aimLights(this._tgt.set(0, 0.8, 0), 1, 'loadout');
     this._setColor(color);
     const c = this.chars[0];
     c.setColor(color);
-    if (weapon !== this.weapon && !fresh) {
-      // weapon change: hop + twirl, the new weapon materialises mid-air, splash on landing, camera punch
-      this.weapon = weapon;
-      this.hopWeapon = weapon;
-      this.hopT = this.t;
-      if (this.phase !== 'emerge') this.phase = 'hop';
-    } else if (fresh) {
-      c.setWeapon(weapon);
+    if (!fresh) {
+      if (weapon !== this.weapon) {
+        // weapon change: hop + twirl, the new weapon materialises mid-air, splash on landing, camera punch
+        this.weapon = weapon;
+        this.hopWeapon = weapon;
+        this.hopT = this.t;
+        if (this.phase === 'pose') this.phase = 'hop';
+      }
+      if (style && !sameStyle(look, (this.look && this.look.style) || this.style)) this.setStyle(look, 'swap');
     }
+  }
+
+  /** Change the pedestal kid's look with a reaction. cause: 'hair' | 'eyes' | 'skin' | 'outfit' | 'preset' | 'random'. */
+  setStyle(style, cause = 'swap') {
+    const look = { ...style };
+    if (!PEDESTAL.has(this.mode) || !this.chars.length) { this.style = look; return; }
+    const want = (this.lookNext && this.lookNext.style) || (this.look && this.look.style) || this.style;
+    if (sameStyle(look, want)) return;
+    const kind = cause === 'preset' || cause === 'random' ? 'dip' : 'pop';
+    const L = this.look;
+    // still before the swap point of the running change → just retarget it
+    if (L && !L.swapped) { L.style = look; if (kind === 'dip' && L.kind === 'pop') { L.kind = 'dip'; } L.cause = cause; return; }
+    if (L || this.phase !== 'pose') { this.lookNext = { style: look, cause, kind }; return; }
+    this._startLook(look, cause, kind);
+  }
+
+  _startLook(style, cause, kind) {
+    // full turns only (they end where they started, so nothing has to unwind): outfit spins one way, hair the other
+    const spin = cause === 'outfit' ? TAU : cause === 'hair' ? -TAU : 0;
+    this.look = { style, cause, kind, t0: this.t, swapped: false, landed: false, spin, dove: false };
+    this.danceBack = -1;
+    if (kind === 'dip') { this.phase = 'dip'; this.chars[0].trigger('jump'); }
+  }
+
+  /** Replace the pedestal kid with one wearing `style` (pre-warmed off-screen so it appears mid-pose, not T-posed). */
+  _swapChar(style, dance = 'lobby_pose') {
+    const old = this.chars[0];
+    const c = new this.CharacterClass({ color: this.color.clone(), weapon: this.weapon || 'shooter', style: { ...style }, name: 'preview', isLocal: false });
+    c._a = old ? old._a : this._anim();
+    if (old) { c.root.position.copy(old.root.position); c.root.rotation.copy(old.root.rotation); c.root.scale.copy(old.root.scale); }
+    if (dance) {
+      c.setDance(dance);
+      const warm = 0.8, n = 16;
+      c.danceT = Math.max(0, (old && old.dance === dance ? old.danceT : warm) - warm);
+      const a = c._a, g = a.grounded;
+      for (let i = 0; i < n; i++) { a.time += warm / n; c.update(warm / n, a); }
+      a.grounded = g;
+    }
+    if (old) { this.scene.remove(old.root); old.dispose?.(); }
+    this.scene.add(c.root);
+    this.chars[0] = c;
+    this.style = { ...style };
+    return c;
   }
 
   showResults(team, won, color, styles) {
@@ -1007,6 +1086,7 @@ export class Showcase {
   // ---------------------------------------------------------------------------------------------- update
   update(dt) {
     dt = Math.min(dt || 0, 0.1);
+    if (!this._warmState && G.env) this._warmup();
     let mode = this.mode;
     if (!mode && this._out > 0) {
       this._out -= dt;
@@ -1015,8 +1095,9 @@ export class Showcase {
     }
     if (!mode || !this.chars.length) return;
     this.t += dt;
+    this.shotT += dt;
     this.fadeIn = Math.min(1, this.fadeIn + dt / 0.25);
-    if (mode === 'loadout') this._updateLoadout(dt);
+    if (PEDESTAL.has(mode)) this._updateLoadout(dt);
     else this._updateResults(dt);
     this.fx.update(dt, this.decks);
     this.confetti.update(dt, this.decks);
@@ -1033,14 +1114,14 @@ export class Showcase {
   }
 
   _updateLoadout(dt) {
-    const t = this.t, c = this.chars[0], st = this.stageL, rnd = this.rand;
-    const a = c._a;
-    a.time = G.time;
+    const t = this.t, st = this.stageL, rnd = this.rand;
     // pedestal rises in
     const stageY = -0.95 * (1 - backOut(t / 0.6, 1.25));
     st.group.position.y = stageY;
     const deckY = stageY + PED.ink;
     // turntable: user drag + momentum; otherwise a slow sway that drifts home
+    const rx = PEDESTAL.has(this.mode) && G.input?.padAxis ? G.input.padAxis(2) : 0;
+    if (Math.abs(rx) > 0.25) { this.spinVel = lerp(this.spinVel, rx * 3.4, 1 - Math.exp(-10 * dt)); this.sinceDrag = 0; }
     if (!this.drag) {
       this.spin += this.spinVel * dt;
       this.spinVel *= Math.exp(-3.4 * dt);
@@ -1057,22 +1138,60 @@ export class Showcase {
     dk.x = 0; dk.z = 0; dk.r = PED.R - 0.035; dk.y = PED.ink;
 
     // character choreography
+    let c = this.chars[0];
     let y = 0, sy = 1, twirl = 0, air = false, vy = 0;
+    const L = this.look;
+    if (this.phase === 'dip') {
+      // costume change: hop, turn squid at the apex and dive into the pedestal ink; the new look bursts back out
+      const tl = t - L.t0, ant = 0.09, T = 0.4, H = 0.22, y1 = -1.5;
+      if (tl < ant) { sy = 1 - 0.12 * Math.sin((Math.PI * 0.5 * tl) / ant); }
+      else {
+        const x = Math.min(1, (tl - ant) / T);
+        // ballistic from 0 through apex H down to y1 at x = 1
+        const b = 2 * H + 2 * Math.sqrt(H * H - H * y1), a = y1 - b; // y(x) = a x² + b x: apex H, y(1) = y1
+        y = a * x * x + b * x; vy = (2 * a * x + b) / T; air = true;
+        twirl = 1.2 * eInOut(x);
+        c._a.form = x > 0.3 ? 'squid' : 'kid';
+        sy = 1 + 0.12 * c01(vy / 3) - 0.06 * c01(-vy / 6);
+        if (!L.dove && y < 0 && vy < 0) {
+          L.dove = true;
+          this.fx.crown(0, PED.ink, 0, 1.1, 22, 0.22);
+          this.fx.ripple(0, PED.ink, 0, 0.1, 0.7, 0.7);
+          G.audio?.play?.('squid_in', { volume: 0.7 });
+        }
+        if (x >= 1) {
+          c = this._swapChar(L.style, null);
+          c._a.form = 'kid'; c._a.grounded = false;
+          L.swapped = true;
+          this.phase = 'emerge'; this.emT0 = t - 0.02; this.emerged = false;
+          y = y1; air = true; twirl = 0;
+        }
+      }
+    }
     if (this.phase === 'emerge') {
       // bursts out of the ink: ballistic from inside the pedestal, stretched on the way up, squash on landing
       const t0 = 0.12, y0 = -1.45, tp = 0.4, peak = 0.3;
       const g = (2 * (peak - y0)) / (tp * tp), v0 = g * tp;
-      const te = t - t0;
+      const te = t - this.emT0 - t0;
       if (te < 0) { y = y0; air = true; }
       else {
         y = y0 + v0 * te - 0.5 * g * te * te;
         vy = v0 - g * te;
         air = true;
-        if (!this.emerged && y > 0) { this.emerged = true; this.fx.crown(0, PED.ink, 0, 1.25, 26, 0.24); c.trigger('jump'); }
+        if (!this.emerged && y > 0) {
+          this.emerged = true; this.fx.crown(0, PED.ink, 0, 1.25, 26, 0.24); c.trigger('jump');
+          if (L) G.audio?.play?.('squid_out', { volume: 0.7 });
+        }
         if (te > tp && y <= 0) {
           y = 0; air = false; this.phase = 'pose'; this.landT = t;
-          c.trigger('land', 7); c.setDance('lobby_pose');
+          c.trigger('land', 7);
           this.fx.crown(0, PED.ink, 0, 0.7, 16, 0.3);
+          if (L && L.kind === 'dip') {
+            // new look lands: a short celebration before settling back into the lobby stance
+            c.setDance('victory'); this.danceBack = t + 1.7;
+            this._sparkleBurst(14);
+            this.look = null;
+          } else c.setDance('lobby_pose');
         }
         sy = 1 + 0.16 * c01(vy / 7);
       }
@@ -1102,12 +1221,43 @@ export class Showcase {
     if (this.phase === 'pose') {
       const tl = t - this.landT;
       sy = 1 - 0.13 * wobble(tl, 15, 6.5);
+      // look change: squash (anticipation) → swap at full squash under an ink pop → stretch hop with a twirl → settle
+      if (L && L.kind === 'pop') {
+        const lt = t - L.t0, ant = 0.085, T = 0.34, H = L.cause === 'outfit' ? 0.2 : 0.13;
+        if (lt < ant) { sy *= 1 - 0.15 * Math.sin((Math.PI * 0.5 * lt) / ant); y -= 0.015 * (lt / ant); }
+        else {
+          if (!L.swapped) {
+            c = this._swapChar(L.style);
+            L.swapped = true;
+            c.trigger('jump');
+            this.fx.crown(0, PED.ink, 0, 0.85, 18, 0.3);
+            this._sparkleBurst(L.cause === 'eyes' ? 6 : 9);
+          }
+          const x = (lt - ant) / T;
+          if (x < 1) {
+            y += 4 * H * x * (1 - x); vy = (4 * H * (1 - 2 * x)) / T; air = true;
+            twirl += L.spin * eInOut(x);
+            sy = 1 + 0.1 * c01(vy / 2.2) - 0.05 * c01(-vy / 2.2);
+          } else {
+            if (!L.landed) {
+              L.landed = true; c.trigger('land', L.cause === 'outfit' ? 6 : 4.5); this.landT = t; this.fx.crown(0, PED.ink, 0, 0.5, 10, 0.3);
+              // look-specific flourish (no-ops until the animation stream adds them — see docs/HALYARD.md requests)
+              c.trigger(L.cause === 'outfit' ? 'admire' : L.cause === 'hair' ? 'hairflip' : 'wink');
+            }
+            if (x > 1.35) this.look = null;
+          }
+        }
+      }
+      if (!this.look && this.lookNext) { const n = this.lookNext; this.lookNext = null; this._startLook(n.style, n.cause, n.kind); }
+      if (this.danceBack > 0 && t > this.danceBack) { this.danceBack = -1; c.setDance('lobby_pose'); }
     }
     if (this.pop) {
       const k = backOut((t - this.popT) / 0.34, 2.4);
       this.pop.scale.setScalar(Math.max(0.001, k));
       if (t - this.popT > 0.34) { this.pop.scale.setScalar(1); this.pop = null; }
     }
+    const a = c._a;
+    a.time = G.time;
     a.grounded = !air; a.vy = vy;
     const sxz = 1 / Math.sqrt(sy);
     c.root.position.set(0, stageY + PED.ink * 0.5 + y, 0);
@@ -1133,6 +1283,16 @@ export class Showcase {
         const col = rnd() < 0.3 ? this._c.copy(this.color).lerp(_c1.setRGB(1, 1, 1), 0.45) : this._c.setRGB(1, 0.97, 0.9);
         this.sparks.spawn(Math.sin(ang) * rr, 0.25 + rnd() * 1.55, Math.cos(ang) * rr, 0.05 + rnd() * 0.07, col, 0.7 + rnd() * 0.7);
       }
+    }
+  }
+
+  // a ring of glints around the kid (look changes)
+  _sparkleBurst(n) {
+    const rnd = this.rand;
+    for (let i = 0; i < n; i++) {
+      const ang = (i / n) * TAU + rnd() * 0.5, rr = 0.34 + rnd() * 0.28;
+      const col = rnd() < 0.45 ? this._c.copy(this.color).lerp(_c1.setRGB(1, 1, 1), 0.35) : this._c.setRGB(1, 0.96, 0.84);
+      this.sparks.spawn(Math.sin(ang) * rr, 0.35 + rnd() * 1.35, Math.cos(ang) * rr, 0.08 + rnd() * 0.08, col, 0.45 + rnd() * 0.4);
     }
   }
 
@@ -1241,8 +1401,8 @@ export class Showcase {
         for (let e = el; e; e = e.offsetParent) { x += e.offsetLeft; y += e.offsetTop; }
         return { l: x, t: y, r: x + el.offsetWidth, b: y + el.offsetHeight };
       };
-      if (this.mode === 'loadout' || this._lastMode === 'loadout') {
-        const b = box('.iw-loadout:not(.is-leaving) .iw-loadout__body');
+      if (PEDESTAL.has(this.mode) || PEDESTAL.has(this._lastMode)) {
+        const b = box('.iw-locker:not(.is-leaving) .iw-locker__body') || box('.iw-loadout:not(.is-leaving) .iw-loadout__body');
         if (b && b.r > W * 0.2 && b.r < W * 0.8) U.panelR = b.r;
       } else {
         const tt = box('.iw-results:not(.is-leaving) .iw-res__title'), hd = box('.iw-results:not(.is-leaving) .iw-res__head'), bd = box('.iw-results:not(.is-leaving) .iw-res__body');
@@ -1276,22 +1436,40 @@ export class Showcase {
     cam.updateMatrixWorld();
   }
 
-  _cameraLoadout(W, H) {
-    const U = this._measureUI(W, H), t = this.t;
-    const fov = 25, tanH = Math.tan((fov * Math.PI) / 360);
+  // Pedestal framing for a mode → o { fy, yaw, pitch, dist, fov, sx, sy, roll }. Loadout: whole kid + pedestal in the free
+  // area right of the panel. Locker: closer, a touch lower angle, the kid fills more of the frame (the look is the point).
+  _pedestalShot(mode, W, H, U, o) {
+    const t = this.t, locker = mode === 'locker';
+    const fov = locker ? 23 : 25, tanH = Math.tan((fov * Math.PI) / 360);
     const freeL = U.panelR + W * 0.012, freeR = W * 0.985, freeW = Math.max(W * 0.18, freeR - freeL);
-    const kV = (0.6 * H) / CHAR_H, kW = (0.84 * freeW) / (2 * (PED.R + PED.flange.out));
+    const fy = locker ? 0.86 : LOAD_FOCUS_Y;
+    const kV = ((locker ? 0.56 : 0.6) * H) / CHAR_H, kW = ((locker ? 0.98 : 0.84) * freeW) / (2 * (PED.R + PED.flange.out));
     const k = Math.min(kV, kW);
     let dist = H / (2 * k * tanH);
-    const sx = (freeL + freeR) * 0.5, sy = 0.735 * H - LOAD_FOCUS_Y * k;
+    const sx = (freeL + freeR) * 0.5, sy = (locker ? 0.8 : 0.735) * H - fy * k;
     const e = eOut3(t / 1.45);
     let yaw = 0.36 * (1 - e) + 0.03 * Math.sin(t * 0.41) * e;
-    let pitch = -0.1 - 0.05 * (1 - e) + 0.012 * Math.sin(t * 0.29 + 1.3) * e;
+    let pitch = (locker ? -0.07 : -0.1) - 0.05 * (1 - e) + 0.012 * Math.sin(t * 0.29 + 1.3) * e;
     dist *= 1 + 0.3 * (1 - e) + 0.012 * Math.sin(t * 0.23 + 2.1) * e;
     let roll = 0;
     const tw = t - this.hopT;
     if (tw >= 0 && tw < 1.6) { const p = punch(tw); dist *= 1 - 0.075 * p; yaw -= 0.035 * p; roll = 0.012 * wobble(tw, 11, 5); }
-    this._place(this._tgt.set(0, LOAD_FOCUS_Y, 0), yaw, pitch, dist, fov, sx, sy, W, H, roll);
+    const L = this.look;
+    if (L && L.kind === 'pop') { const p = punch(t - L.t0, 26, 5); dist *= 1 - 0.035 * p; }
+    o.fy = fy; o.yaw = yaw; o.pitch = pitch; o.dist = dist; o.fov = fov; o.sx = sx; o.sy = sy; o.roll = roll;
+    return o;
+  }
+
+  _cameraPedestal(mode, W, H) {
+    const U = this._measureUI(W, H);
+    const A = this._pedestalShot(mode, W, H, U, this._shotA);
+    // switching loadout ⇄ locker keeps the kid on stage and glides the camera between the two framings
+    if (this.shotFrom && this.shotT < 0.75) {
+      const B = this._pedestalShot(this.shotFrom, W, H, U, this._shotB);
+      const k = eInOut(this.shotT / 0.75);
+      for (const key of ['fy', 'yaw', 'pitch', 'dist', 'fov', 'sx', 'sy', 'roll']) A[key] = lerp(B[key], A[key], k);
+    }
+    this._place(this._tgt.set(0, A.fy, 0), A.yaw, A.pitch, A.dist, A.fov, A.sx, A.sy, W, H, A.roll);
   }
 
   _cameraResults(W, H) {
@@ -1328,6 +1506,189 @@ export class Showcase {
     this._place(this._tgt.set(0, fy, 0), yaw, pitch, dist, fov, sx0, sy, W, H);
   }
 
+  // ---------------------------------------------------------------------------------------------- portraits
+  // Studio portraits for menu tiles: the kid is posed in this same scene (same lights → the character shaders are already
+  // compiled, and portraits match the pedestal look), rendered into a small MSAA HDR target, tone mapped + sRGB encoded
+  // by a resolve pass (straight alpha, transparent background) and read back into a 2D canvas. One per frame; cached.
+  portrait(req, cb) {
+    const key = [req.kind || 'head', req.size | 0 || 128, '#' + this._c2.set(req.color || this.color).getHexString(), req.weapon || '',
+      ...Object.keys(req.style || {}).sort().map((k) => `${k}:${req.style[k]}`)].join('|');
+    const hit = this._pcache.get(key);
+    if (hit) { cb(copyCanvas(hit)); return null; }
+    let q = this._pq.find((x) => x.key === key);
+    if (q) q.cbs.push(cb); else this._pq.push((q = { key, req: { ...req, style: { ...(req.style || {}) } }, cbs: [cb] }));
+    // handle: cancel() drops this request (a job nobody waits for any more is skipped, never rendered)
+    return { cancel: () => { const i = q.cbs.indexOf(cb); if (i >= 0) q.cbs.splice(i, 1); } };
+  }
+
+  _portraitStep() {
+    // the podium lights are aimed at the results stage; portraits wait until it's gone. Shaders first (see _warmup).
+    if (this.mode === 'results' || (!this.mode && this._out > 0 && this._lastMode === 'results')) return;
+    if (this._warmState !== 'done' || (this._pflight || 0) >= 2) return;
+    while (this._pq.length && !this._pq[0].cbs.length) this._pq.shift();
+    const job = this._pq.shift();
+    if (!job) return;
+    const t0 = performance.now();
+    let read = null;
+    try { read = this._renderPortrait(job.req); } catch (e) { console.error('[showcase] portrait', e); }
+    this.portraitMs = performance.now() - t0;
+    const finish = (cv) => {
+      if (cv) { this._pcache.set(job.key, cv); if (this._pcache.size > 96) this._pcache.delete(this._pcache.keys().next().value); }
+      for (const cb of job.cbs) { try { cb(cv ? copyCanvas(cv) : null); } catch (e) { console.error('[showcase] portrait cb', e); } }
+    };
+    if (!read) { finish(null); return; }
+    this._pflight = (this._pflight || 0) + 1;
+    read.then((cv) => { this._pflight--; finish(cv); }, (e) => { this._pflight--; console.error('[showcase] portrait read', e); finish(null); });
+  }
+
+  _renderPortrait(req) {
+    const r = this.r, S = Math.max(32, Math.min(512, req.size | 0 || 128)), kind = req.kind || 'head';
+    this._renderPortraitSetup(S);
+    // isolate the portrait kid in the showcase scene (lights stay)
+    return this._renderPortraitRun(req, S, kind, r);
+  }
+
+  _renderPortraitSetup(S) {
+    if (!this._prt || this._prt.width !== S) {
+      this._prt?.dispose(); this._prt8?.dispose();
+      this._prt = new THREE.WebGLRenderTarget(S, S, { type: THREE.HalfFloatType, samples: 4 });
+      this._prt8 = new THREE.WebGLRenderTarget(S, S, { depthBuffer: false });
+    }
+    if (!this._pres) {
+      this._pres = new THREE.ShaderMaterial({
+        uniforms: { tMap: { value: null }, uExposure: { value: 1 } },
+        vertexShader: 'varying vec2 vUv; void main() { vUv = position.xy * 0.5 + 0.5; gl_Position = vec4(position.xy, 0.0, 1.0); }',
+        fragmentShader: /* glsl */`
+          uniform sampler2D tMap; uniform float uExposure; varying vec2 vUv;
+          vec3 neutral(vec3 color) { // three.js NeutralToneMapping (the canvas' tone mapper), exposure applied
+            const float S0 = 0.8 - 0.04; const float D = 0.15;
+            color *= uExposure;
+            float x = min(color.r, min(color.g, color.b));
+            float off = x < 0.08 ? x - 6.25 * x * x : 0.04;
+            color -= off;
+            float peak = max(color.r, max(color.g, color.b));
+            if (peak < S0) return color;
+            float d = 1. - S0;
+            float np = 1. - d * d / (peak + d - S0);
+            color *= np / peak;
+            float g = 1. - 1. / (D * (peak - np) + 1.);
+            return mix(color, vec3(np), g);
+          }
+          vec3 srgb(vec3 c) { return mix(c * 12.92, 1.055 * pow(max(c, 0.0), vec3(1.0 / 2.4)) - 0.055, step(0.0031308, c)); }
+          void main() {
+            vec4 t = texture2D(tMap, vUv);
+            float a = clamp(t.a, 0.0, 1.0);
+            vec3 c = max(t.rgb, 0.0) / max(t.a, 1e-4);
+            gl_FragColor = vec4(clamp(srgb(neutral(c)), 0.0, 1.0), a);
+          }`,
+        depthTest: false, depthWrite: false, blending: THREE.NoBlending,
+      });
+      this._presScene = new THREE.Scene();
+      const q = new THREE.Mesh(this.compQuad.geometry, this._pres); q.frustumCulled = false;
+      this._presScene.add(q);
+    }
+  }
+
+  _renderPortraitRun(req, S, kind, r) {
+    const hidden = [];
+    for (const o of this.scene.children) if (o.visible && !o.isLight) { o.visible = false; hidden.push(o); }
+    const col = this._c2.set(req.color || this.color);
+    const idle = !this.mode && !(this._out > 0);
+    const keep = this._c.copy(this.color);
+    const keepCol = new THREE.Color().copy(keep);
+    if (idle) { this._aimLights(this._tgt.set(0, 0.8, 0), 1, 'loadout'); this._setColor(col); }
+    const c = new this.CharacterClass({ color: col.clone(), weapon: req.weapon || 'shooter', style: { ...req.style }, name: 'portrait', isLocal: false });
+    const a = this._anim();
+    c.setDance(kind === 'body' ? 'lobby_pose' : 'menu_idle');
+    this.scene.add(c.root);
+    for (let i = 0; i < 14; i++) { a.time = i / 30; c.update(1 / 30, a); }
+    // framing
+    const cam = this._pcam || (this._pcam = new THREE.PerspectiveCamera(18, 1, 0.05, 40));
+    // three-quarter view from the kid's right (the key-lit side); tiles put a name label over the bottom ~25 %, so
+    // the subject sits a little high in frame
+    let fy, span, yaw = -0.4, pitch = -0.06, fx = 0, fz = 0;
+    const fov = 18;
+    if (kind === 'body') { fy = 0.72; span = 1.74; yaw = -0.3; pitch = -0.07; }
+    else {
+      c.getHeadPosition(this._pv);
+      fx = this._pv.x; fz = this._pv.z;
+      if (kind === 'bust') { fy = this._pv.y - 0.3; span = 1.2; }
+      else if (kind === 'face') { fy = this._pv.y - 0.1; span = 0.5; pitch = -0.02; }
+      else { fy = this._pv.y - 0.08; span = 0.64; }
+    }
+    const dist = span / 2 / Math.tan((fov * Math.PI) / 360);
+    cam.fov = fov; cam.aspect = 1; cam.clearViewOffset();
+    cam.position.set(fx + Math.sin(yaw) * Math.cos(pitch) * dist, fy - Math.sin(pitch) * dist, fz + Math.cos(yaw) * Math.cos(pitch) * dist);
+    cam.up.set(0, 1, 0);
+    cam.lookAt(fx, fy, fz);
+    cam.near = Math.max(0.05, dist - 3); cam.far = dist + 3;
+    cam.updateProjectionMatrix();
+    // render → resolve → read back
+    const prevRT = r.getRenderTarget(), prevAuto = r.autoClear, prevAlpha = r.getClearAlpha();
+    r.getClearColor(this._clr);
+    r.autoClear = false;
+    this.scene.environment = G.env?.envMap || null;
+    this.scene.environmentIntensity = MOODS.loadout.env;
+    r.shadowMap.needsUpdate = true;
+    r.setRenderTarget(this._prt);
+    r.setClearColor(0x000000, 0);
+    r.clear(true, true, false);
+    r.render(this.scene, cam);
+    this._pres.uniforms.tMap.value = this._prt.texture;
+    this._pres.uniforms.uExposure.value = r.toneMappingExposure;
+    r.setRenderTarget(this._prt8);
+    r.render(this._presScene, this.compCam);
+    // async read-back (PBO + fence): no GPU pipeline stall; the next portrait may reuse the target right away
+    const buf = new Uint8Array(S * S * 4);
+    const read = r.readRenderTargetPixelsAsync ? r.readRenderTargetPixelsAsync(this._prt8, 0, 0, S, S, buf) : Promise.resolve(r.readRenderTargetPixels(this._prt8, 0, 0, S, S, buf));
+    this._pres.uniforms.tMap.value = null;
+    r.setRenderTarget(prevRT);
+    r.setClearColor(this._clr, prevAlpha);
+    r.autoClear = prevAuto;
+    r.shadowMap.needsUpdate = true; // the pedestal render after us needs its own shadow pass
+    // restore
+    this.scene.remove(c.root); c.dispose?.();
+    for (const o of hidden) o.visible = true;
+    if (idle) this._setColor(keepCol);
+    return read.then(() => {
+      const cv = document.createElement('canvas');
+      cv.width = cv.height = S;
+      const ctx = cv.getContext('2d');
+      const img = ctx.createImageData(S, S);
+      const row = S * 4;
+      for (let y = 0; y < S; y++) img.data.set(buf.subarray((S - 1 - y) * row, (S - y) * row), y * row);
+      ctx.putImageData(img, 0, 0);
+      return cv;
+    });
+  }
+
+  // Compile every showcase shader (pedestal, ink, FX pools, a squidkid under these lights, the portrait resolve)
+  // asynchronously once, right after boot, so the first loadout / locker / portrait never hitches on a compile.
+  _warmup() {
+    if (this._warmState) return;
+    this._warmState = 'busy';
+    const r = this.r;
+    try {
+      if (!this.stageL) this.stageL = this._buildLoadoutStage();
+      const stageWas = this.stageL.group.visible;
+      this.stageL.group.visible = true;
+      const c = (this._warmChar = new this.CharacterClass({ color: this.color.clone(), weapon: 'shooter', style: this._profileStyle(), name: 'warm', isLocal: false }));
+      this.scene.add(c.root);
+      this._aimLights(this._tgt.set(0, 0.8, 0), 1, 'loadout');
+      this.scene.environment = G.env?.envMap || null;
+      this._place(this._tgt.set(0, 0.8, 0), 0, -0.1, 6, 25, innerWidth / 2, innerHeight / 2, innerWidth, innerHeight);
+      this._renderPortraitSetup(128);
+      const done = () => {
+        if (this._warmChar) { this.scene.remove(this._warmChar.root); this._warmChar.dispose?.(); this._warmChar = null; }
+        if (!PEDESTAL.has(this.mode)) this.stageL.group.visible = stageWas && PEDESTAL.has(this.mode);
+        this._warmState = 'done';
+      };
+      const p1 = r.compileAsync ? r.compileAsync(this.scene, this.camera) : Promise.resolve(r.compile(this.scene, this.camera));
+      const p2 = r.compileAsync ? r.compileAsync(this._presScene, this.compCam) : Promise.resolve(r.compile(this._presScene, this.compCam));
+      Promise.all([p1, p2]).then(done, (e) => { console.warn('[showcase] warm-up', e); done(); });
+    } catch (e) { console.warn('[showcase] warm-up', e); this._warmState = 'done'; }
+  }
+
   // ---------------------------------------------------------------------------------------------- render
   // MSAA HDR target: the composer's spare ping-pong buffer when it matches the canvas, else a private one.
   _target() {
@@ -1346,11 +1707,12 @@ export class Showcase {
   }
 
   render() {
+    if (this._pq.length) this._portraitStep();
     const mode = this.mode || (this._out > 0 ? this._lastMode : null);
     if (!mode || !this.chars.length) return;
     const r = this.r, W = innerWidth, H = innerHeight;
     this._fdt = 1 / 60;
-    if (mode === 'loadout') this._cameraLoadout(W, H); else this._cameraResults(W, H);
+    if (PEDESTAL.has(mode)) this._cameraPedestal(mode, W, H); else this._cameraResults(W, H);
     this.scene.environment = G.env?.envMap || null;
     this.scene.environmentIntensity = (this.mood || MOODS.loadout).env;
     const opacity = this.mode ? eOut3(this.fadeIn) : c01(this._out / 0.2);
@@ -1372,3 +1734,9 @@ export class Showcase {
   }
 }
 const _c1 = new THREE.Color();
+function copyCanvas(src) {
+  const d = document.createElement('canvas');
+  d.width = src.width; d.height = src.height;
+  d.getContext('2d').drawImage(src, 0, 0);
+  return d;
+}

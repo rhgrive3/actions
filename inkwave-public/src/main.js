@@ -4,7 +4,7 @@ import { G, on, emit, clamp, damp } from './core/ctx.js';
 import { Renderer } from './core/renderer.js';
 import { Input } from './core/input.js';
 import { mobileProfile } from './core/mobile.js';
-import {
+import { mapTheme,
   DEFAULT_SETTINGS, QUALITY, TEAM_PALETTES, COLORBLIND_PALETTE, TEAM_NAMES, WEAPONS, WEAPON_ORDER, SUB, SPECIALS,
   MAPS, DIFFICULTY, PLAYER, PROGRESSION, VERSION, MATCH,
 } from './config.js';
@@ -12,6 +12,7 @@ import { Level } from './world/level.js';
 import { MAP_LAYOUTS } from './world/maps.js';
 import { PaintSystem } from './world/paint.js';
 import { createLevelMaterial } from './world/levelMaterial.js';
+import { SwimWake } from './fx/swimWake.js';
 import { Decor } from './world/decor.js';
 import { createMuralTexture } from './world/murals.js';
 import { layoutThumbSVG } from './world/mapThumb.js';
@@ -59,6 +60,8 @@ class Game {
     const [menusMod, hudMod] = await Promise.all([loadModule('./ui/menus.js'), loadModule('./ui/hud.js')]);
     this.menus = G.menus = menusMod.Menus ? new menusMod.Menus(this.uiRoot, this._menuApi()) : null;
     this.hud = G.hud = hudMod.HUD ? new hudMod.HUD(this.uiRoot, { playSound: (n, o) => G.audio?.play(n, o) }) : null;
+    // map diorama pins/finish live inside the HUD layer (under every other HUD element)
+    try { const { DioramaOverlay } = await import('./ui/diorama.js'); this.diorama = new DioramaOverlay(this.hud ? this.hud.el : this.uiRoot); } catch (e) { console.error('[inkwave] diorama', e); this.diorama = null; }
     this.hud?.setVisible(false);
     this.menus?.show('loading');
     this.bootMarks = [];
@@ -81,6 +84,10 @@ class Game {
         if (this.match?.paused) this.resume(); else if (G.mode === 'match') this.pause();
       };
     }
+    // after a focus steal while the map was held, the next click on the game takes the mouse back (no pause detour)
+    this.R.renderer.domElement.addEventListener('mousedown', () => {
+      if (this._relock && G.mode === 'match' && this.match && !this.match.paused && !this.menus?.current) { this._relock = false; this.input.requestLock(); }
+    });
 
     // modules built by other authors
     const [charMod, fxMod, envMod, audioMod, musicMod] = await Promise.all([
@@ -93,7 +100,11 @@ class Game {
     await progress(0.15, 'Building the plaza…');
 
     // world
-    const map = MAPS.find((m) => m.id === params.get('map')) || MAPS[0];
+    // (old ?map=sunset links = Tidewater at dusk)
+    const pm = params.get('map') === 'sunset' ? 'tidewater' : params.get('map');
+    const map = MAPS.find((m) => m.id === pm) || MAPS[0];
+    this.time = params.get('time') === 'dusk' || params.get('map') === 'sunset' ? 'dusk' : (this.settings.timeOfDay === 'dusk' ? 'dusk' : 'day');
+    this.theme = mapTheme(map, this.time);
     const qb = QUALITY[this.settings.quality] || QUALITY.high;
     const q = this.mobile?.touch ? { ...qb, paintAtlas: Math.min(qb.paintAtlas, 2048), shadowSize: Math.min(qb.shadowSize, 2048), particles: Math.min(qb.particles, 0.7), msaa: 0, ao: false, bloom: false, pixelRatio: Math.min(qb.pixelRatio, this.mobile.ios ? 1.2 : 1.35) } : qb;
     this.murals = await createMuralTexture();
@@ -104,7 +115,7 @@ class Game {
     await this._buildWorld(map);
     await progress(0.4, 'Filling the harbor…');
     const B = G.level.bounds;
-    G.env = new envMod.Environment(G.renderer, scene, { bounds: B, theme: map.theme, shadowSize: q.shadowSize, footprint: this._footprint(G.level) });
+    G.env = new envMod.Environment(G.renderer, scene, { bounds: B, theme: this.theme, shadowSize: q.shadowSize, footprint: this._footprint(G.level) });
     if (G.env.envMap) scene.environment = G.env.envMap;
     // lighting balance: less omnidirectional sky flood, more directional sky/ground fill → surfaces keep their form
     scene.environmentIntensity = 0.66;
@@ -114,6 +125,7 @@ class Game {
     G.projectiles = new Projectiles(scene);
     G.fx = new fxMod.FX(scene, { quality: q });
     G.fx.setLighting?.(G.env.getSkyColors?.());
+    this._applyNight();
     G.fx.setCollider?.((from, to) => { const h = G.physics.segment(from, to, this._fxHit || (this._fxHit = new Hit()), true); return h.hit ? { point: h.point, normal: h.normal } : null; });
     G.fx.onDropletLand = (point, normal, color, size) => {
       const team = this._teamOfColor(color);
@@ -202,6 +214,7 @@ class Game {
     const lightmap = await this._loadLightmap(level, layoutId);
     G.paint = new PaintSystem(G.renderer, level, { atlasSize: q.paintAtlas, maxDensity: q.paintAtlas >= 4096 ? 30 : 18 });
     this.levelMat = createLevelMaterial(G.paint.texture, G.paint.size, this.murals, { lightmap, texlib: this.texlib });
+    (this.swimWake || (this.swimWake = new SwimWake())).reset();
     this.levelMesh = new THREE.Mesh(level.buildGeometry(G.paint.size), this.levelMat);
     this.levelMesh.castShadow = true; this.levelMesh.receiveShadow = true;
     this.levelMesh.name = 'level';
@@ -267,7 +280,8 @@ class Game {
     this.levelMat.userData.uniforms.uTeamB.value.copy(G.teamColors[1]);
     if (this.grateMat) { this.grateMat.userData.uniforms.uTeamA.value.copy(G.teamColors[0]); this.grateMat.userData.uniforms.uTeamB.value.copy(G.teamColors[1]); }
     // warm/low light mutes saturated ink: give it more self-glow at dusk so team colours stay the loudest thing on screen
-    this.levelMat.userData.uniforms.uInkGlow.value = this.mapDef?.theme === 'sunset' ? 0.2 : 0.07;
+    // ink self-light: more at dusk, a touch more in golden hour's long shadows
+    this.levelMat.userData.uniforms.uInkGlow.value = { sunset: 0.2, golden: 0.1 }[this.theme] ?? 0.07;
     this.decor.setTeamColors(G.teamColors);
     this.props?.setTeamColors?.(G.teamColors[0], G.teamColors[1]);
     G.projectiles.refreshColors();
@@ -294,11 +308,13 @@ class Game {
         return { ...p, played: p.matches, xpToNext: PROGRESSION.xpForLevel(p.level) };
       },
       setProfileName: (n) => { self.profile.name = String(n || 'Player').slice(0, 16); saveJSON('inkwave.profile', self.profile); },
+      // locker look ({ hair, skin, outfit, eyes, hat, brows, … } — indices into character-style.js tables)
+      setProfileStyle: (st) => { self.profile.style = { ...(st || {}) }; saveJSON('inkwave.profile', self.profile); },
       getLoadout: () => ({ weapon: self.profile.weapon || 'shooter' }),
       setLoadout: ({ weapon }) => {
         if (!WEAPONS[weapon]) return;
         self.profile.weapon = weapon; saveJSON('inkwave.profile', self.profile);
-        if (self.menus?.current === 'loadout') self.showcase.showLoadout(weapon, G.teamColors[0]);
+        if (self.menus?.current === 'loadout') self.showcase.showLoadout(weapon, G.teamColors[0], self.profile.style);
       },
       startMatch: (o) => self.startMatch(o),
       resumeMatch: () => self.resume(),
@@ -322,10 +338,10 @@ class Game {
 
   _onScreen(s) {
     if (!this.showcase) return;
-    if (s === 'loadout') this.showcase.showLoadout(this.profile.weapon || 'shooter', G.teamColors[0]);
+    if (s === 'loadout') this.showcase.showLoadout(this.profile.weapon || 'shooter', G.teamColors[0], this.profile.style);
     else if (s !== 'results') { if (this.showcase.mode === 'loadout') this.showcase.hide(); }
     if (G.mode === 'menu') {
-      if (s === 'title' || s === 'main' || s === 'setup' || s === 'settings' || s === 'howto' || s === 'credits' || s === 'loadout') {
+      if (s === 'title' || s === 'main' || s === 'setup' || s === 'settings' || s === 'howto' || s === 'credits' || s === 'loadout' || s === 'locker') {
         if (this._musicTrack !== (s === 'title' ? 'title' : 'menu')) this._playMusic(s === 'title' ? 'title' : 'menu');
       }
     }
@@ -344,8 +360,21 @@ class Game {
     return false;
   }
   _onPointerUnlock() {
-    // only a live round pauses on focus loss; intro / time's up / judge / results release the mouse on purpose
+    // only a live round pauses on focus loss; intro / time's up / judge / results release the mouse on purpose.
+    // Holding the map is never a reason to pause (some browsers/embeds steal focus on TAB): relock on the next click.
+    if (this.match?.controller?.mapHeld || this.rig.mapK > 0) { this._relock = true; return; }
     if (!this.mobile?.touch && G.mode === 'match' && this.match && !this.match.paused && this.match.state === 'playing' && !this.menus?.current) this.pause();
+  }
+
+  // pull the fog back while the view is overhead (the stage is ~150 m away up there), restore it exactly after
+  _dioFog() {
+    const f = G.scene?.fog, k = this.rig.mapK;
+    if (!f || !f.isFog) return;
+    if (k > 0) {
+      if (!this._fog0) this._fog0 = { near: f.near, far: f.far };
+      const e = k * k * (3 - 2 * k);
+      f.near = this._fog0.near + 190 * e; f.far = this._fog0.far + 600 * e;
+    } else if (this._fog0) { f.near = this._fog0.near; f.far = this._fog0.far; this._fog0 = null; }
   }
 
   // ---------------------------------------------------------------------------------------- events → HUD/audio
@@ -374,6 +403,14 @@ class Game {
       this.hud?.damage(clamp(amount / 80, 0.15, 1), G.teamHex[victim.enemyTeam], ang);
       if (G.time - lastHurtSnd > 0.25) { lastHurtSnd = G.time; G.audio?.play('hurt', { volume: 0.7 }); }
       if (amount >= 40) this.rig.addShake(clamp((amount - 30) / 220, 0, 0.4));   // only heavy hits move the camera; chip damage reads through the HUD
+    });
+    // a squid dropping back into its own ink (dolphin-jump re-entry, hopping in from dry ground) gets a wet plunge;
+    // transform dives already play squid_in
+    const formT = new WeakMap();
+    on('actor:form', ({ actor }) => formT.set(actor, G.time));
+    on('actor:dive', ({ actor, speed }) => {
+      if (!actor || !this.match || this.match.attract || G.time - (formT.get(actor) ?? -9) < 0.2) return;
+      if (actor.isLocal || actor._nearCamera?.()) G.audio?.play('swim_splash', { pos: actor.isLocal ? undefined : actor.pos, volume: (actor.isLocal ? 0.5 : 0.32) * Math.min(1, 0.55 + (speed || 0) / 16) });
     });
     on('splatted', ({ victim, attacker, cause }) => {
       if (!this.match || this.match.attract) return;
@@ -478,9 +515,16 @@ class Game {
   }
 
   // ---------------------------------------------------------------------------------------- match flow
+  // lamps, signs, lit windows: follow the environment's night factor (0 day / golden … 1 dusk)
+  _applyNight() {
+    const k = G.env?.getSkyColors?.()?.night ?? 0;
+    this.props?.setNight?.(k); this.decor?.setNight?.(k);
+  }
+
   async startMatch(o = {}) {
     const opts = {
-      mapId: o.mapId || this.mapDef.id,
+      mapId: o.mapId === 'sunset' ? 'tidewater' : (o.mapId || this.mapDef.id),
+      time: o.mapId === 'sunset' ? 'dusk' : (o.time || this.time || 'day'),
       difficulty: o.difficulty || this.settings.difficulty,
       duration: o.duration || this.settings.matchLength || MATCH.defaultDuration,
     };
@@ -495,17 +539,21 @@ class Game {
     G.projectiles.clear(); G.fx.clear?.(); G.paint.clear();
     const map = MAPS.find((m) => m.id === opts.mapId) || MAPS[0];
     if ((map.layout || map.id) !== this.layoutId) await this._buildWorld(map);
-    if (map.theme !== this.mapDef.theme) {
-      G.env.setTheme?.(map.theme);
+    const theme = mapTheme(map, opts.time);
+    this.time = opts.time === 'dusk' ? 'dusk' : 'day';
+    if (theme !== this.theme) {
+      this.theme = theme;
+      G.env.setTheme?.(theme);
       if (G.env.envMap) G.scene.environment = G.env.envMap;
       G.fx.setLighting?.(G.env.getSkyColors?.());
     }
+    this._applyNight();   // after any stage rebuild too (new prop kit / decor)
     this.mapDef = map;
     this._setPalette(this._pickPalette());
     const m = (this.match = G.match = new Match({
       attract: false, duration: opts.duration, difficulty: opts.difficulty, weapon: this.profile.weapon || 'shooter',
       playerName: this.profile.name || 'Player', CharacterClass: this.CharacterClass, rig: this.rig, input: this.input,
-      autopilot: params.has('autopilot'),
+      autopilot: params.has('autopilot'), style: this.profile.style || null,
     }));
     m.setup();
     this.minimap.setViewerTeam(0);
@@ -520,9 +568,10 @@ class Game {
   _intro() {
     const L = G.level, pad = L.spawnPads[0];
     const local = this.match.local;
-    // sweep from high over the enemy base down behind the player
-    const from = new THREE.Vector3(18, 26, 30), to = new THREE.Vector3(pad.x, pad.y + 2.6, pad.z - 5.2);
-    const lookFrom = new THREE.Vector3(0, 0, 10), lookTo = new THREE.Vector3(pad.x, pad.y + 1.6, pad.z + 6);
+    // sweep from high over the enemy base down behind the player (a stage can open on its own hero shot instead)
+    const I = L.layout?.intro;
+    const from = I ? new THREE.Vector3(...I.from) : new THREE.Vector3(18, 26, 30), to = new THREE.Vector3(pad.x, pad.y + 2.6, pad.z - (I?.toBack ?? 5.2));
+    const lookFrom = I ? new THREE.Vector3(...I.lookFrom) : new THREE.Vector3(0, 0, 10), lookTo = new THREE.Vector3(pad.x, pad.y + 1.6, pad.z + 6);
     this.rig.cinematic(from, to, lookFrom, lookTo, 3.6, () => {});
     this.rig.yaw = 0; this.rig.pitch = -0.12;
     G.audio?.play('ready');
@@ -615,7 +664,6 @@ class Game {
   // ---------------------------------------------------------------------------------------- loop
   _loop(now = performance.now()) {
     requestAnimationFrame((t) => this._loop(t));
-    // ProMotion iPhones commonly deliver ~120 rAF callbacks. Run the game at 60 Hz instead of wasting GPU/CPU.
     if (this.mobile?.touch) {
       if (this._rafLast != null) {
         const rd = now - this._rafLast;
@@ -623,7 +671,6 @@ class Game {
       }
       this._rafLast = now;
       if ((this._rafAvg || 16.7) < 10.5) { this._mobileGate = !this._mobileGate; if (this._mobileGate) return; }
-      // Attract/menu rendering is cosmetic; 30 fps halves thermal load on phones.
       if (G.mode === 'menu') { this._menuGate = !this._menuGate; if (this._menuGate) return; }
     }
     this.timer.update(); let dt = this.timer.getDelta();
@@ -678,7 +725,11 @@ class Game {
     G.env.update?.(dt, G.camera);
     this.decor.update(dt);
     this.props?.update?.(dt, G.time);
+    // map diorama: held map key during live play (or while waiting to respawn) swoops the view overhead
+    this.rig.setMap?.(!!(m && !m.attract && !m.paused && m.state === 'playing' && m.controller?.mapHeld && !this.menus?.current));
     this.rig.update(dt);
+    this._dioFog();
+    this.diorama?.update(dt, this.rig.mapK);
     // local player camera-dependent aim must use this frame's camera
     if (m && m.controller && m.state === 'playing') m.controller.computeAim?.();
     // bomb arc preview
@@ -691,19 +742,21 @@ class Game {
     // see-through window toward the local player
     {
       const lu = this.levelMat.userData.uniforms;
-      const on = !!(m && !m.attract && loc && loc.alive && this.rig.mode === 'follow' && this.rig.target === loc);
+      const on = !!(m && !m.attract && loc && loc.alive && this.rig.mode === 'follow' && this.rig.target === loc && this.rig.mapK < 0.3);
       lu.uSeeOn.value = damp(lu.uSeeOn.value, on ? 1 : 0, 10, dt);
       lu.uSeeA.value.copy(G.camera.position);
       if (loc) lu.uSeeB.value.set(loc.pos.x, loc.pos.y + (loc.form === 'squid' ? 0.4 : 1.0), loc.pos.z);
       if (this.grateMat) { const gu = this.grateMat.userData.uniforms; gu.uSeeOn.value = lu.uSeeOn.value; gu.uSeeA.value.copy(lu.uSeeA.value); gu.uSeeB.value.copy(lu.uSeeB.value); }
     }
     if (this.grateMat) this.grateMat.userData.uniforms.uTime.value = G.time;
+    // swimmers' wakes in the ink surface
+    if (this.swimWake && (!m || !m.paused)) this.swimWake.update(dt, this.levelMat.userData.uniforms, G.camera.position);
     this.showcase.update(dt);
     this._updateLocalLoops(dt);
     this._updateAmbience(dt);
     // audio listener
     if (G.audio?.setListener) {
-      const cam = G.camera;
+      const cam = this.rig.gameCam || G.camera;   // the player's ears stay with the player while the map is up
       G.audio.setListener(cam.position, cam.getWorldDirection(this._lf || (this._lf = new THREE.Vector3())), cam.up);
     }
     // post uniforms (low-hp vignette)
@@ -749,6 +802,24 @@ class Game {
       p.set(Math.cos(a) * (B.maxX + 25), 12 + Math.random() * 8, Math.sin(a) * (B.maxZ + 20));
       G.audio.play('gull', { pos: p, volume: 0.6 + Math.random() * 0.4, pitch: 0.9 + Math.random() * 0.25 });
     }
+    // marina: rigging ringing against the masts in the gusts, and now and then a ship's horn out in the channel
+    if (G.level?.layout?.id === 'halyard') {
+      const p = this._ambP || (this._ambP = new THREE.Vector3());
+      this._gustT = (this._gustT ?? 2) - dt;
+      if (this._gustT <= 0) { this._gustT = 2.5 + Math.random() * 4; this._clinks = 2 + ((Math.random() * 4) | 0); this._clinkT = 0; }
+      if (this._clinks > 0 && (this._clinkT -= dt) <= 0) {
+        this._clinks--; this._clinkT = 0.12 + Math.random() * 0.45;
+        const s = Math.random() < 0.5 ? -1 : 1;
+        p.set(s * (27 + Math.random() * 14), 8 + Math.random() * 4, (Math.random() * 2 - 1) * 40);
+        G.audio.play('halyard_clink', { pos: p, volume: 0.5 + Math.random() * 0.5, pitch: 0.85 + Math.random() * 0.35 });
+      }
+      this._hornT = (this._hornT ?? 28 + Math.random() * 10) - dt;
+      if (this._hornT <= 0) {
+        this._hornT = 55 + Math.random() * 30;
+        p.set((Math.random() < 0.5 ? -1 : 1) * 95, 8, (Math.random() * 2 - 1) * 70);
+        G.audio.play('ferry_horn', { pos: p, volume: 0.8 });
+      }
+    }
   }
 
   _updateLocalLoops(dt) {
@@ -776,7 +847,7 @@ class Game {
     if (this.menus?.current) {
       const nav = (d) => this.menus.nav?.(d);
       if (pp.has(12)) nav('up'); if (pp.has(13)) nav('down'); if (pp.has(14)) nav('left'); if (pp.has(15)) nav('right');
-      if (pp.has(0)) nav('accept'); if (pp.has(1)) nav('back');
+      if (pp.has(0)) nav('accept'); if (pp.has(1)) nav('back'); if (pp.has(2)) nav('alt');   // X: locker shuffle etc.
       if (pp.has(4)) nav('tab_prev'); if (pp.has(5)) nav('tab_next');
       // left stick as d-pad with repeat
       const ly = inp.padAxis(1), lx = inp.padAxis(0);
@@ -835,7 +906,7 @@ class Game {
     let prompt = null;
     const inkF = a.ink / PLAYER.inkMax;
     if (m.state === 'playing' && a.alive) {
-      if (m.controller?.mapHeld) prompt = 'Press 1 – 3 to Super Jump to a teammate  ·  4 to jump home';
+      if (m.controller?.mapHeld) prompt = null;   // the map diorama carries its own super-jump hints
       else if (a.superJumpState) prompt = null;
       else if (this._lowInkFlash > 0) { this._lowInkFlash -= dt; prompt = 'Low ink! Hold SHIFT in your ink to refill'; }
       else if (a.specialReady() && (this._hints.specialT = (this._hints.specialT || 0) + dt) > 2) prompt = `Special ready! Press F`;
@@ -853,7 +924,7 @@ class Game {
       weapon: a.weaponId, charge: a.weaponRunner.charge,
       crosshair: { spread, onTarget: m.controller?.onTarget ? 'enemy' : null, inRange: m.controller ? m.controller.inRange !== false : true },
       // corner minimap follows the setting; the TAB map (needed for super jumps) is always available
-      map: (this.settings.minimap !== false || m.controller?.mapHeld) ? { canvas: this.minimap.canvas, expanded: !!m.controller?.mapHeld, players } : null,
+      map: (this.settings.minimap !== false) ? { canvas: this.minimap.canvas, expanded: false, players } : null,
       markers,
       prompt,
       fps: this.settings.showFps ? this.fps : undefined,

@@ -3,16 +3,27 @@
 // pier pilings + dock details hugging the deck, and far scenery (skyline, port cranes, lighthouse, islands, bridge,
 // ferris wheel, sailboats, buoys, gulls). All far scenery fades into the sky with a sky-matched aerial haze.
 //
-// const env = new Environment(renderer, scene, { bounds, theme: 'day'|'sunset', shadowSize, footprint })
+// const env = new Environment(renderer, scene, { bounds, theme: 'day'|'sunset'|'golden', shadowSize, footprint })
 //   footprint (optional): array of {minX,maxX,minZ,maxZ} rects = the deck slab's XZ outline (default [bounds]).
 //   Used for pilings, water foam, under-deck shading and the analytic deck shadow on the water.
+//   setTheme(name) switches light/sky/sea in place; rebuildForArena(bounds, footprint) follows a stage change.
+//
+// Marina water mode (stage property — Halyard, by day or at dusk; each theme supplies its look in THEMES[*].marina):
+// level-derived hull / floating-slab sets (no sea inside hulls, deep shade under the decks), calm sheltered basin,
+// wall-bounced ripples, froth wherever something stands in the water (analytic for hulls, triangle ∩ water-plane
+// contours of the stage props for piles / fenders / boats), waterline strips on the faces (reflected-sun caustics +
+// hull wet band), a planar reflection of the stage (Environment._renderReflection, quality-scaled) and a baked
+// far-reflection cube for the distant land. The other stages keep the original open-sea shader untouched.
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { PLAYER } from '../config.js';
+import { G } from '../core/ctx.js';
 
 const WATER_Y = PLAYER.waterY; // -1.6
 const DEG = Math.PI / 180;
-const MAX_RECTS = 8;
+const MAX_RECTS = 24;   // deck slabs (Halyard has 16: every pier/quay slab of both halves)
+const MAX_WET = 12;     // marina: solids piercing the surface (hulls) or sunk below it
+const HEMI_FLOOR = 0.38; // = the sky-fill floor main.js applies after construction
 
 // ---------------------------------------------------------------------------------------------------------------
 // Themes (colours are sRGB hex; converted to linear once)
@@ -33,6 +44,7 @@ const THEMES = {
     fog: [70, 1500],
     night: 0,
     grade: { uSat: 1.06, uVib: 0.12, uContrast: 1.07, uLift: 0.0, uVignette: 0.2, uShadowTint: [0.97, 0.99, 1.04], uHighTint: [1.025, 1.0, 0.97] },
+    marina: { channel: '#0b4552', shade: '#05121a', calm: 0.55, lap: 1.0, caustic: 2.0, wet: 0.5 },
   },
   sunset: {
     sunAz: 206, sunEl: 15,
@@ -49,6 +61,36 @@ const THEMES = {
     fog: [60, 1300],
     night: 1,
     grade: { uSat: 1.05, uVib: 0.1, uContrast: 1.08, uLift: 0.0, uVignette: 0.26, uShadowTint: [0.95, 0.96, 1.07], uHighTint: [1.04, 1.0, 0.95] },
+    // marina stages at dusk (Halyard): ink-blue channels, near-black under the decks, orange caustics off the low sun
+    marina: { channel: '#132140', shade: '#04060d', calm: 0.55, lap: 1.0, caustic: 1.7, wet: 0.55 },
+  },
+  // Halyard Marina: late afternoon. Warm low sun from the west (−X, over the islands) side-lights both lanes the same way
+  // (fair to both teams: nobody spawns facing it), cool sky fill in the long shadows, warm haze, and the sheltered
+  // harbour water of the `marina` block (planar reflections, hull contact foam, caustics, under-deck shade).
+  golden: {
+    sunAz: 194, sunEl: 28,
+    sunColor: '#ffd9ae', sunIntensity: 3.35,
+    hemiSky: '#bcd2f0', hemiGround: '#b39a7c', hemiIntensity: 0.4,
+    zenith: '#2a62b2', skyMid: '#72a3d6', horizon: '#f0d8b8', ground: '#5b7d90',
+    horizonGlow: '#ffbf80', horizonGlowK: 0.3, glowColor: '#ffd29a',
+    glow: [480, 1.5, 6.0, 0.24],
+    sunDisk: '#fff1d8', sunDiskK: 26, sunRadius: 1.35,
+    cloudLit: '#f4fbf4', cloudLitK: 0.95, cloudShade: '#909fbc', cloud: [0.42, 1.0, 0.85, 0.46], cloudCov: 0.4, cloudSeed: 7.0,
+    seaDeep: '#0a3f53', seaShallow: '#16707a', seaCrest: '#5fc9b6', foam: '#fff6ea',
+    seaAmbientK: 0.6, sunSpec: 1.2, waveStrength: 0.8,
+    haze: [1 / 1650, 0.9, 240],
+    fog: [60, 1400],
+    night: 0,
+    shafts: 1,
+    grade: { uSat: 1.05, uVib: 0.12, uContrast: 1.08, uLift: 0.0, uVignette: 0.22, uShadowTint: [0.94, 0.98, 1.07], uHighTint: [1.06, 1.0, 0.925] },
+    marina: {
+      channel: '#0d3a37',   // water colour hugging hulls / quay faces (bottle green, darker)
+      shade: '#06110f',     // water under the floating decks
+      calm: 0.55,           // wave-normal strength inside the arena's sheltered channels
+      lap: 1.0,             // wall-reflected ripple strength
+      caustic: 2.2,         // reflected-sun caustics on sunlit faces just above the water (1 = physical estimate)
+      wet: 0.55,            // wet-band darkening on hulls at the waterline
+    },
   },
 };
 
@@ -313,6 +355,27 @@ void main() {
     ci = smoothstep(0.02, 0.3, ci) * smoothstep(0.06, 0.35, d.y) * (1.0 - cloudA) * 0.11;
     col = mix(col, uCloudLit * 0.95 + uGlowColor * 0.1, ci);
   }
+#if defined(SKY_SHAFTS) && !defined(ENV_PASS)
+  // crepuscular rays: walk from this direction toward the sun across the baked cloud layer — clear paths glow, paths
+  // behind a heap fall into its shade, so shafts fan out from the sun between the clouds
+  {
+    float sdo = dot(d, uSunDir);
+    if (sdo > 0.35 && d.y > -0.05) {
+      float occ = 0.0;
+      for (int k = 0; k < 6; k++) {
+        vec3 s = normalize(mix(d, uSunDir, (float(k) + 0.5) / 6.0));
+        float uu = atan(s.z, s.x) / 6.28318531 + 0.5 + uTime * 0.00035 * uCloudParams.z;
+        float vv = pow(clamp(s.y, 0.0, 1.0), 1.0 / 1.6);
+        occ += textureLod(uCloudTex, vec2(uu, vv), 0.0).a * smoothstep(-0.002, 0.012, s.y);
+      }
+      occ /= 6.0;
+      float w = smoothstep(0.35, 1.0, sdo);
+      w *= w;
+      col += uGlowColor * (1.0 - occ) * w * 0.1 * (1.0 - cloudA);
+      col *= 1.0 - occ * w * 0.2 * (1.0 - cloudA);
+    }
+  }
+#endif
 
 #ifndef ENV_PASS
   // ---- sun disk + tight halo (HDR → blooms) ----
@@ -348,6 +411,17 @@ float sdDeck(vec2 p) {
   for (int i = 0; i < ${MAX_RECTS}; i++) { if (i >= uRectCount) break; d = min(d, sdRect(p, uRects[i])); }
   return d;
 }
+#ifdef MARINA
+uniform vec4 uWet[${MAX_WET}];
+uniform int uWetCount;
+uniform vec4 uArena;        // arena bounds (minX, minZ, maxX, maxZ): the harbour basin around it is sheltered
+float basinK(vec2 p) { return smoothstep(60.0, 210.0, sdRect(p, uArena)); }   // 0 in the basin → 1 open sea
+float sdWet(vec2 p) {
+  float d = 1e5;
+  for (int i = 0; i < ${MAX_WET}; i++) { if (i >= uWetCount) break; d = min(d, sdRect(p, uWet[i])); }
+  return d;
+}
+#endif
 `;
 
 const GLSL_SWELL = /* glsl */`
@@ -363,6 +437,164 @@ float swell(vec2 p, float t, out vec2 g) {
 float swellAmp(float dDeck) { return mix(0.035, 0.16, smoothstep(3.0, 70.0, dDeck)); }
 `;
 
+// Marina water (theme.marina — Halyard): sheltered harbour water in narrow channels between floating piers and hulls.
+//   • uWet (hulls, anything piercing the surface): never any sea inside; a lapping froth line hugs their sides
+//   • uRects (floating slabs): the water carries on underneath in deep shade — no sky showing through the gap
+//   • calm, glassy channels: wave normals damped near the faces, plus ripples bounced back off every face
+//   • planar reflection of the real scene (uReflTex, Environment._renderReflection) over the analytic sky + baked
+//     clouds; reflected geometry occludes the sun glints
+//   • colour: open harbour teal → darker bottle green hugging the faces
+const GLSL_SEA_MARINA = /* glsl */`
+${GLSL_NOISE}
+uniform sampler2D uReflTex;
+uniform mat4 uReflMat;
+uniform float uReflOn;
+uniform samplerCube uFarCube;   // far scenery (hills, city, port, bridge) baked from the arena centre, alpha = coverage
+uniform float uFarOn;
+uniform sampler2D uCloudTex;
+uniform vec4 uCloudParams;
+uniform vec3 uChannelCol;
+uniform vec3 uShadeCol;
+uniform vec4 uMarinaK;     // x calm (wave-normal scale hugging faces), y face-ripple strength, z reflection distortion (m)
+// distance (m) + outward unit gradient to a rect / the nearest rect of a set
+vec3 sdRectG(vec2 p, vec4 r) {
+  vec2 c = (r.xy + r.zw) * 0.5, h = (r.zw - r.xy) * 0.5;
+  vec2 d = p - c;
+  vec2 s = vec2(d.x < 0.0 ? -1.0 : 1.0, d.y < 0.0 ? -1.0 : 1.0);
+  vec2 q = abs(d) - h;
+  if (max(q.x, q.y) > 0.0) { vec2 m = max(q, 0.0); float l = max(length(m), 1e-4); return vec3(l, s * m / l); }
+  return q.x > q.y ? vec3(q.x, s.x, 0.0) : vec3(q.y, 0.0, s.y);
+}
+vec3 sdDeckG(vec2 p) {
+  vec3 b = vec3(1e5, 0.0, 1.0);
+  for (int i = 0; i < ${MAX_RECTS}; i++) { if (i >= uRectCount) break; vec3 r = sdRectG(p, uRects[i]); if (r.x < b.x) b = r; }
+  return b;
+}
+vec3 sdWetG(vec2 p) {
+  vec3 b = vec3(1e5, 0.0, 1.0);
+  for (int i = 0; i < ${MAX_WET}; i++) { if (i >= uWetCount) break; vec3 r = sdRectG(p, uWet[i]); if (r.x < b.x) b = r; }
+  return b;
+}
+vec3 skyRefl(vec3 R) {
+  vec3 c = skyGradient(normalize(R + vec3(0.0, 0.015, 0.0)));
+  float u = atan(R.z, R.x) / 6.28318531 + 0.5 + uTime * 0.00035 * uCloudParams.z;
+  float v = pow(clamp(R.y, 0.0, 1.0), 1.0 / 1.6);
+  vec4 cl = textureLod(uCloudTex, vec2(u, v), 0.0) * smoothstep(-0.002, 0.012, R.y);
+  return c * (1.0 - cl.a) + cl.rgb;
+}
+void main() {
+  vec3 P = vWorld;
+  vec3 toCam = cameraPosition - P;
+  float dist = length(toCam);
+  vec3 V = toCam / dist;
+  vec2 p = P.xz;
+  float detail = 1.0 - smoothstep(35.0, 380.0, dist);
+
+  // the per-rect work only matters near the stage: past 24 m from the arena every face is out of reach
+  float dA = sdRect(p, uArena);
+  vec3 gw = vec3(dA, 0.0, 1.0), gd = gw;
+  if (dA < 24.0) {
+    gw = sdWetG(p);
+    if (gw.x < -0.03) discard;                     // inside a hull / over a sunken floor: no sea
+    gd = sdDeckG(p);
+  }
+  vec3 gs = gd.x < gw.x ? gd : gw;                 // nearest face: distance + outward normal
+  float dS = gs.x;
+  float shelter = smoothstep(0.3, 9.0, max(dS, 0.0));
+
+  vec4 w1 = texture2D(uWaveTex, p * 0.041 + uTime * vec2(0.012, 0.007));
+  vec4 w2 = texture2D(uWaveTex, p * 0.097 + vec2(0.37, 0.61) + uTime * vec2(-0.019, 0.013));
+  vec4 w3 = texture2D(uWaveTex, p * 0.0083 + uTime * vec2(0.0034, -0.0022));
+  float nearF = 1.0 - smoothstep(6.0, 40.0, dist);
+  vec4 w4 = texture2D(uWaveTex, p * 0.29 + vec2(0.71, 0.13) + uTime * vec2(0.031, -0.026));
+  vec2 g = (w3.xy - 0.5) * 0.9 + ((w1.xy - 0.5) * 0.85 + (w2.xy - 0.5) * 0.55) * mix(0.3, 1.0, detail);
+  float basin = smoothstep(60.0, 210.0, dA);   // = basinK(p)
+  g *= uWaveStrength * 0.42 * mix(uMarinaK.x, 1.0, shelter) * mix(0.62, 1.0, basin);
+  // fine cat's-paw ripples close to the camera are not damped: glassy, never dead flat
+  g += (w4.xy - 0.5) * 0.45 * nearF * uWaveStrength * 0.42 * 0.85;
+  // ripples bounced off the faces: crests parallel to the nearest face, running outward, gone within ~3 m
+  float along = dot(p, vec2(-gs.z, gs.y));
+  float ph1 = dS * 4.4 - uTime * 1.8 + sin(along * 0.62 + uTime * 0.55) * 0.9 + w2.z * 3.0;
+  float ph2 = dS * 7.1 - uTime * 2.6 + sin(along * 1.25 - uTime * 0.45) * 0.8 + w1.z * 2.2;
+  float lapA = uMarinaK.y * exp(-max(dS, 0.0) * 0.85) * smoothstep(-0.25, 0.1, dS) * (0.4 + 0.9 * w3.z);
+  g += gs.yz * lapA * (0.055 * sin(ph1) + 0.03 * sin(ph2)) * detail;
+  vec2 gRip = g;
+  g += vSwellGrad;
+  vec3 N = normalize(vec3(-g.x, 1.0, -g.y));
+  float crest = (w1.z * 0.9 + w2.z * 0.5 + w3.z * 0.9) / 2.3;
+
+  vec2 fuv = (p - uFoamRect.xy) * uFoamRect.zw;
+  float inField = step(0.0, fuv.x) * step(fuv.x, 1.0) * step(0.0, fuv.y) * step(fuv.y, 1.0);
+  float dObj = mix(uMarinaK.w, texture2D(uFoamTex, clamp(fuv, 0.0, 1.0)).r * uMarinaK.w, inField);
+
+  // light: the shadow map (it covers every slab and hull here); no sky / sun under the floating slabs
+  float shadow = getShadowMask();
+  float under = smoothstep(0.0, -0.8, gd.x);
+  float skyVis = mix(0.55, 1.0, smoothstep(-0.2, 3.0, dS)) * (1.0 - 0.9 * under);
+
+  vec3 body = mix(uSeaDeep, uSeaShallow, clamp(0.4 + 0.5 * (w3.z - 0.5), 0.0, 1.0));
+  body = mix(uChannelCol, body, 0.3 + 0.7 * shelter);
+  body += uSeaCrest * smoothstep(0.55, 0.95, crest) * (0.3 + 0.7 * shadow) * 0.3 * mix(0.25, 1.0, detail) * shelter;
+  float NdL = max(dot(N, uSunDir), 0.0);
+  vec3 lit = body * (uSeaAmbient * skyVis + uSunLight * (0.35 + 0.65 * NdL) * shadow * 0.5);
+
+  // reflection: sky + clouds, then the planar reflection of everything standing above the water
+  vec3 R = reflect(-V, N);
+  R.y = abs(R.y);
+  vec3 refl = skyRefl(R);
+  float occl = 0.0;
+  if (uFarOn > 0.5) {
+    vec4 fc = textureLod(uFarCube, R, clamp(log2(1.0 + dist * 0.008) + length(gRip) * 4.0, 0.0, 5.0));
+    float fa = clamp(fc.a, 0.0, 1.0);
+    refl = refl * (1.0 - fa) + fc.rgb;
+    occl = fa;
+  }
+  refl *= skyVis;
+  if (uReflOn > 0.5) {
+    vec2 off = (N.xz - vSwellGrad * 0.5) * uMarinaK.z;
+    vec4 rp = uReflMat * vec4(P.x + off.x, ${WATER_Y.toFixed(3)}, P.z + off.y, 1.0);
+    vec2 ruv = rp.xy / max(rp.w, 1e-4);
+    float lod = clamp(log2(1.0 + dist * 0.035) + length(gRip) * 5.0, 0.0, 4.5);
+    vec4 rc = textureLod(uReflTex, clamp(ruv, 0.001, 0.999), lod);
+    float ra = clamp(rc.a, 0.0, 1.0);   // coverage: anything additive in the mirror must never push it past 1
+    refl = refl * (1.0 - ra) + rc.rgb;
+    occl = max(occl, ra);
+  }
+  float NdV = clamp(dot(N, V), 0.0, 1.0);
+  float fres = min((0.025 + 0.975 * pow(1.0 - NdV, 5.0)) * 1.1, 1.0);
+  vec3 col = mix(lit, refl, fres);
+  col = mix(col, uShadeCol * (uSeaAmbient + 0.02), under * 0.85);
+
+  // sun glints (blocked by shadows and by anything reflected in front of the sky)
+  float rs = clamp(dot(R, uSunDir), 0.0, 1.0);
+  float spec = pow(rs, 1600.0) * 9.0 + pow(rs, 200.0) * 0.38 + pow(rs, 24.0) * 0.04;
+  col += uSunLight * spec * uSunSpec * shadow * (1.0 - under) * (1.0 - occl);
+
+  // foam — calm harbour water: a thin, broken froth line where the water laps a hull or anything standing in it (the
+  // contour field: piles, fenders, moored boats), a few drifting clumps, faint rings pushed off by the lapping
+  float dC = min(gw.x, dObj);                       // nearest thing standing in the water
+  if (dC < 1.2) {
+    float fn = w2.z * 0.6 + w1.z * 0.4;
+    // non-repeating value noise (the wave texture tiles every ~1 m at froth scale)
+    float nA = vnoise2(p * 3.3 + uTime * vec2(0.13, -0.09));
+    float nB = vnoise2(p * 0.8 + vec2(17.0, 3.0) - uTime * vec2(0.05, 0.03));
+    float froth = nA * 0.55 + nB * 0.45;
+    float contact = smoothstep(0.03 + 0.07 * nA, 0.0, dC) * (0.35 + 0.65 * smoothstep(0.3, 0.7, nB)) * smoothstep(-0.04, 0.0, gw.x);
+    float clump = smoothstep(0.66, 0.86, froth) * smoothstep(0.7, 0.05, dC) * smoothstep(0.35, 0.8, nB);
+    float lapF = smoothstep(0.05, 0.0, abs(fract(dC * 1.5 - uTime * 0.2 + fn * 0.4) - 0.5) - 0.46)
+      * smoothstep(1.1, 0.1, dC) * smoothstep(0.4, 0.75, nB);
+    float foam = clamp(contact * 0.7 + clump * 0.35 + lapF * 0.15, 0.0, 1.0) * (1.0 - 0.8 * under);
+    vec3 foamCol = uFoamColor * (uSeaAmbient * 1.2 * skyVis + uSunLight * (0.3 + 0.7 * shadow) * 0.55);
+    col = mix(col, foamCol, foam * detail);
+  }
+
+  col = applyHaze(col, P);
+  gl_FragColor = vec4(col, 1.0);
+  #include <tonemapping_fragment>
+  #include <colorspace_fragment>
+}
+`;
+
 const SEA_VERT = /* glsl */`
 #include <common>
 #include <shadowmap_pars_vertex>
@@ -375,7 +607,13 @@ varying float vDeckD;
 void main() {
   vec4 worldPosition = modelMatrix * vec4(position, 1.0);
   float dd = sdDeck(worldPosition.xz);
+#ifdef MARINA
+  dd = min(dd, sdWet(worldPosition.xz));
+#endif
   float amp = swellAmp(dd);
+#ifdef MARINA
+  amp *= mix(0.45, 1.0, basinK(worldPosition.xz));
+#endif
   vec2 g;
   float h = swell(worldPosition.xz, uTime, g);
   worldPosition.y += h * amp;
@@ -412,6 +650,9 @@ varying vec3 vWorld;
 varying vec2 vSwellGrad;
 varying float vDeckD;
 
+#ifdef MARINA
+${GLSL_SEA_MARINA}
+#else
 void main() {
   vec3 P = vWorld;
   vec3 toCam = cameraPosition - P;
@@ -483,6 +724,7 @@ void main() {
   #include <tonemapping_fragment>
   #include <colorspace_fragment>
 }
+#endif
 `;
 
 // ---- scenery material patch (MeshStandardMaterial + sky haze + optional windows / waterline / gull flap) ----
@@ -688,6 +930,104 @@ const HZ_FRAG_HAZE = /* glsl */`
 gl_FragColor.rgb = applyHaze(gl_FragColor.rgb, vHzWorld) + hzEmit * exp(-length(vHzWorld - cameraPosition) * uHaze.x * 0.35);
 `;
 
+// ---- marina waterline strips -------------------------------------------------------------------------------------
+// Thin quads 1.2 cm proud of every level face that stands in / just over the water (slab fascias, hull sides, slab
+// undersides). One pass does two things with blend (ONE, SRC_ALPHA) → out = src.rgb + dst * src.a:
+//   rgb = reflected-sun caustics: the moving filament network at the water spot whose mirror-reflected sunlight lands on
+//         this point (looked up in the shadow map there — no light from shaded water), weighted by how squarely the
+//         face meets that reflected light, softened with height; tinted by the face albedo
+//   a   = wet band on hulls: darker just above the bobbing waterline, freshest right at the line
+const STRIP_VERT = /* glsl */`
+#include <common>
+#include <shadowmap_pars_vertex>
+uniform vec3 uSunDir;
+attribute vec4 aInfo;        // rgb = face albedo (linear), a = kind (0 slab fascia / underside, 1 hull in the water)
+varying vec3 vP;
+varying vec3 vPw;
+varying vec3 vN;
+varying vec4 vInfo;
+void main() {
+  vec4 wp = modelMatrix * vec4(position, 1.0);
+  vP = wp.xyz;
+  vN = normalize(mat3(modelMatrix) * normal);
+  vInfo = aInfo;
+  float h = max(wp.y - ${WATER_Y.toFixed(3)}, 0.0);
+  vec2 k = uSunDir.xz / max(uSunDir.y, 0.08);
+  vPw = vec3(wp.x + k.x * h, ${WATER_Y.toFixed(3)}, wp.z + k.y * h);
+  vec4 worldPosition = vec4(vPw, 1.0);
+  vec4 mvPosition = viewMatrix * wp;
+  vec3 transformedNormal = normalMatrix * vec3(0.0, 1.0, 0.0);
+  #include <shadowmap_vertex>
+  gl_Position = projectionMatrix * mvPosition;
+}
+`;
+const STRIP_FRAG = /* glsl */`
+#include <common>
+#include <packing>
+#include <lights_pars_begin>
+#include <shadowmap_pars_fragment>
+#include <shadowmask_pars_fragment>
+uniform float uTime;
+uniform vec3 uSunDir;
+uniform vec3 uSunLight;
+uniform vec4 uStripK;      // x caustic strength, y wet-band darkening
+varying vec3 vP;
+varying vec3 vPw;
+varying vec3 vN;
+varying vec4 vInfo;
+vec2 hash22s(vec2 p) { vec3 p3 = fract(vec3(p.xyx) * vec3(0.1031, 0.1030, 0.0973)); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.xx + p3.yz) * p3.zy); }
+// distance to the nearest cell border of a jittered grid whose points wander (F2 − F1): 0 on the borders
+float cellEdge(vec2 p, float t) {
+  vec2 i = floor(p), f = fract(p);
+  float d1 = 8.0, d2 = 8.0;
+  for (int y = -1; y <= 1; y++) for (int x = -1; x <= 1; x++) {
+    vec2 g = vec2(float(x), float(y));
+    vec2 h = hash22s(i + g);
+    vec2 o = 0.5 + 0.4 * sin(t * (0.7 + 0.6 * h) + 6.2831 * h.yx);
+    float d = length(g + o - f);
+    if (d < d1) { d2 = d1; d1 = d; } else if (d < d2) { d2 = d; }
+  }
+  return d2 - d1;
+}
+// focused-light network of a rippled surface (mean ≈ 1)
+float caustic(vec2 p, float t, float blur) {
+  vec2 w = p + 0.3 * vec2(sin(p.y * 1.1 + t * 0.8), sin(p.x * 0.9 - t * 0.7));
+  float c1 = 1.0 - smoothstep(0.0, 0.08 + blur, cellEdge(w * 2.2, t * 1.2));
+  float c2 = 1.0 - smoothstep(0.0, 0.08 + blur * 1.4, cellEdge(w * 3.3 + 7.3, t * 1.5));
+  return (c1 * 0.8 + c2 * 0.5 + c1 * c2 * 1.4) * 2.4;
+}
+float swellH(vec2 p, float t) {
+  return 0.45 * sin(dot(p, vec2(0.110, 0.047)) + t * 0.95) + 0.35 * sin(dot(p, vec2(-0.052, 0.097)) + t * 1.13 + 1.7) + 0.20 * sin(dot(p, vec2(0.173, -0.141)) + t * 1.61 + 4.1);
+}
+void main() {
+  vec3 n = normalize(vN);
+  float h = vP.y - ${WATER_Y.toFixed(3)};
+  // cosine between the face and the light bouncing up off the water (away from the sun)
+  float facing = max(dot(n, vec3(uSunDir.x, -uSunDir.y, uSunDir.z)), 0.0);
+  vec3 add = vec3(0.0);
+  if (facing > 0.002) {
+    float lit = getShadowMask();
+    if (lit > 0.002) {
+      float c = caustic(vPw.xz, uTime, 0.02 + max(h, 0.0) * 0.1);
+      float fall = exp(-max(h, 0.0) * 0.8) * smoothstep(-0.02, 0.05, h);
+      vec3 alb = max(vInfo.rgb, vec3(0.12));
+      add = uSunLight * alb * (c * 0.06) * facing * lit * fall * uStripK.x;
+    }
+  }
+  float mul = 1.0;
+  if (vInfo.a > 0.5) {
+    // hull in the water: the line bobs with the swell; a dark wet band above it, freshest right at the line
+    float wl = ${WATER_Y.toFixed(3)} + 0.035 * swellH(vP.xz, uTime) + 0.018 * sin(uTime * 1.7 + (vP.x + vP.z) * 1.3);
+    float top = 0.22 + 0.07 * sin(vP.x * 1.7 + vP.z * 1.3) + 0.04 * sin(vP.x * 5.1 - vP.z * 4.3);
+    float band = smoothstep(wl + top, wl + top - 0.14, vP.y);
+    float fresh = smoothstep(wl + 0.05, wl + 0.004, vP.y);
+    mul = 1.0 - uStripK.y * (0.75 * band + 0.25 * fresh);
+    add *= 1.0 - 0.5 * band;
+  }
+  gl_FragColor = vec4(add, mul);
+}
+`;
+
 function patchScenery(mat, U, flags = {}) {
   const defs = [];
   if (flags.city) defs.push('HZ_CITY');
@@ -734,6 +1074,10 @@ const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a
 const polar = (deg, d) => [Math.cos(deg * DEG) * d, Math.sin(deg * DEG) * d];
 
 const _m4 = new THREE.Matrix4(), _q = new THREE.Quaternion(), _e = new THREE.Euler(), _v = new THREE.Vector3(), _s = new THREE.Vector3();
+// planar-reflection scratch
+const _rv = [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()];
+const _rv2 = new THREE.Vector2(), _rv4 = [new THREE.Vector4(), new THREE.Vector4()], _rPlane = new THREE.Plane(), _rCol = new THREE.Color();
+const _bb = new THREE.Box3(), _ident = new THREE.Matrix4();
 
 // Normalise any geometry to non-indexed {position, normal, color, glow} so everything can be merged.
 function prep(geo, hex = '#ffffff', glow = 0) {
@@ -1006,6 +1350,12 @@ export class Environment {
     this.root = new THREE.Group();
     this.root.name = 'Environment';
     scene.add(this.root);
+    // marina water mode follows the STAGE (Halyard, by day or at dusk): level-derived hull / slab sets, waterline
+    // strips, planar reflections, and no generic dock kit (the stage dresses its own pier edges and moored boats).
+    // The theme only supplies its look (THEMES[*].marina).
+    this._marina = this._stageMarina();
+    this._frameId = 0;
+    this.reflections = true;   // marina planar reflections (perf lever; low quality turns them off regardless)
 
     this._initUniforms();
     this._buildLights();
@@ -1032,6 +1382,12 @@ export class Environment {
       uSeaDeep: C(), uSeaShallow: C(), uSeaCrest: C(), uFoamColor: C(), uSunLight: C(), uSeaAmbient: C(),
       uSunSpec: { value: 1 }, uWaveStrength: { value: 1 },
       uCloudTex: { value: null },
+      // marina water (theme.marina)
+      uWet: { value: Array.from({ length: MAX_WET }, () => new THREE.Vector4()) }, uWetCount: { value: 0 }, uArena: { value: new THREE.Vector4() },
+      uReflTex: { value: null }, uReflMat: { value: new THREE.Matrix4() }, uReflOn: { value: 0 },
+      uFarCube: { value: null }, uFarOn: { value: 0 },
+      uChannelCol: C(), uShadeCol: C(), uMarinaK: { value: new THREE.Vector4(1, 1, 0.3, 0) },
+      uStripK: { value: new THREE.Vector4(1, 0.4, 0, 0) },
     };
     this._writeRects();
   }
@@ -1192,12 +1548,278 @@ export class Environment {
     this.sea.frustumCulled = false;
     this.sea.receiveShadow = true;
     this.sea.renderOrder = -1;
+    // marina: the planar reflection is rendered right before the sea draws (camera already final for this frame)
+    this.sea.onBeforeRender = (renderer, scene, camera) => this._renderReflection(renderer, scene, camera);
     this.root.add(this.sea);
   }
 
-  // Distance field (metres, 0..8) to pilings, boats, buoys around the deck → foam rings on the water.
+  // ------------------------------------------------------------------ marina water
+  // Planar reflection: the scene mirrored in the water plane (oblique near plane = the water, so nothing below it
+  // reflects), rendered without sea or sky dome into a mip-mapped HDR target; alpha = coverage, so the sea shader keeps
+  // its analytic sky + clouds wherever nothing stands above the water. Once per frame, only in marina mode, skipped for
+  // override passes (GTAO normals) and when the camera dips under the surface. Resolution follows the quality preset.
+  _renderReflection(renderer, scene, camera) {
+    const U = this.U;
+    if (!this._marina || this._reflBusy || scene.overrideMaterial || this._reflFrame === this._frameId) return;
+    this._reflFrame = this._frameId;
+    const q = G.settings?.quality || 'high';
+    const scale = !this.reflections || q === 'low' ? 0 : (q === 'medium' ? 0.28 : q === 'ultra' ? 0.5 : 0.4) * (this.reflScale ?? 1);
+    const cp = _rv[0].setFromMatrixPosition(camera.matrixWorld);
+    if (!scale || cp.y < WATER_Y + 0.05) { U.uReflOn.value = 0; return; }
+    if (!this._reflRT) {
+      this._reflRT = new THREE.WebGLRenderTarget(64, 64, {
+        type: THREE.HalfFloatType, format: THREE.RGBAFormat, colorSpace: THREE.NoColorSpace, depthBuffer: true, stencilBuffer: false,
+        minFilter: THREE.LinearMipmapLinearFilter, magFilter: THREE.LinearFilter, generateMipmaps: true,
+      });
+      this._reflRT.texture.name = 'SeaReflection';
+      this._reflCam = new THREE.PerspectiveCamera();
+      this._reflCam.matrixAutoUpdate = true;
+      U.uReflTex.value = this._reflRT.texture;
+    }
+    const rt = this._reflRT, rc = this._reflCam;
+    renderer.getDrawingBufferSize(_rv2);
+    const w = Math.max(64, Math.round(_rv2.x * scale)), h = Math.max(64, Math.round(_rv2.y * scale));
+    if (rt.width !== w || rt.height !== h) rt.setSize(w, h);
+    // mirror the camera frame in the plane y = WATER_Y
+    const fwd = _rv[1].set(0, 0, -1).transformDirection(camera.matrixWorld);
+    const up = _rv[2].set(0, 1, 0).transformDirection(camera.matrixWorld);
+    fwd.y = -fwd.y; up.y = -up.y;
+    rc.position.set(cp.x, 2 * WATER_Y - cp.y, cp.z);
+    rc.up.copy(up);
+    rc.lookAt(_rv[3].copy(rc.position).add(fwd));
+    rc.updateMatrixWorld(true);
+    rc.layers.mask = camera.layers.mask;
+    rc.projectionMatrix.copy(camera.projectionMatrix);
+    // oblique near plane on the water (Lengyel): nothing under the surface ends up in the reflection
+    _rPlane.normal.set(0, 1, 0); _rPlane.constant = -WATER_Y;
+    _rPlane.applyMatrix4(rc.matrixWorldInverse);
+    const cv = _rv4[0].set(_rPlane.normal.x, _rPlane.normal.y, _rPlane.normal.z, _rPlane.constant);
+    const pm = rc.projectionMatrix.elements;
+    const qv = _rv4[1].set((Math.sign(cv.x) + pm[8]) / pm[0], (Math.sign(cv.y) + pm[9]) / pm[5], -1, (1 + pm[10]) / pm[14]);
+    cv.multiplyScalar(2 / cv.dot(qv));
+    pm[2] = cv.x; pm[6] = cv.y; pm[10] = cv.z + 1; pm[14] = cv.w;
+    rc.projectionMatrixInverse.copy(rc.projectionMatrix).invert();
+    U.uReflMat.value.set(0.5, 0, 0, 0.5, 0, 0.5, 0, 0.5, 0, 0, 0.5, 0.5, 0, 0, 0, 1)
+      .multiply(rc.projectionMatrix).multiply(rc.matrixWorldInverse);
+    // render
+    const prevRT = renderer.getRenderTarget(), xr = renderer.xr.enabled, sAuto = renderer.shadowMap.autoUpdate, sNeed = renderer.shadowMap.needsUpdate;
+    renderer.getClearColor(_rCol); const ca = renderer.getClearAlpha();
+    // What the water mirrors: the level, hulls / piles / fenders / boats / rails (props) and the near dock kit. Far
+    // scenery comes from the baked far-reflection cube; below ultra the squid kids, FX particles, lamp posts, palms,
+    // flags, light glows and spinners stay out too — they are most of the pass's draw calls (its real cost is CPU:
+    // ~50 µs per draw) and all but vanish in a wave-broken reflection.
+    const hide = [this.sea, this.sky, this.lhBeam, this.city, this.terrain, this.staticScenery, this.ferris, this.trees, this.sailInst, this.gullInst];
+    if (q !== 'ultra') {
+      for (const a of G.actors || []) if (a.character && a.character.root) hide.push(a.character.root);
+      hide.push(...this._reflSkips(scene));
+    }
+    for (let i = hide.length - 1; i >= 0; i--) if (!hide[i]) hide.splice(i, 1);
+    const vis = hide.map((o) => o.visible);
+    this._reflBusy = true;
+    try {
+      for (const o of hide) o.visible = false;
+      renderer.xr.enabled = false; renderer.shadowMap.autoUpdate = false; renderer.shadowMap.needsUpdate = false;
+      renderer.setRenderTarget(rt);
+      renderer.setClearColor(0x000000, 0);
+      renderer.clear(true, true, false);
+      renderer.render(scene, rc);
+    } finally {
+      hide.forEach((o, i) => { o.visible = vis[i]; });
+      renderer.xr.enabled = xr; renderer.shadowMap.autoUpdate = sAuto; renderer.shadowMap.needsUpdate = sNeed;
+      renderer.setClearColor(_rCol, ca);
+      renderer.setRenderTarget(prevRT);
+      this._reflBusy = false;
+    }
+    U.uReflOn.value = 1;
+  }
+
+  // Far reflections: the distant land (hills, city, port, bridge, lighthouse) only ever reflects near the horizon and
+  // never moves, so it is baked once per theme / stage into a cube from the arena centre (transparent elsewhere) and
+  // looked up by reflection direction under the planar reflection — calm harbour water mirrors the skyline for free.
+  _bakeFarReflection() {
+    const U = this.U;
+    if (!this._marina) { U.uFarOn.value = 0; return; }
+    const r = this.renderer;
+    if (!this._farRT) {
+      this._farRT = new THREE.WebGLCubeRenderTarget(512, {
+        type: THREE.HalfFloatType, format: THREE.RGBAFormat, colorSpace: THREE.NoColorSpace,
+        generateMipmaps: true, minFilter: THREE.LinearMipmapLinearFilter, magFilter: THREE.LinearFilter,
+      });
+      this._farRT.texture.name = 'FarReflection';
+      this._farCam = new THREE.CubeCamera(2, 30000, this._farRT);
+      U.uFarCube.value = this._farRT.texture;
+    }
+    const far = new Set([this.terrain, this.city, this.staticScenery, this.ferris, this.trees].filter(Boolean));
+    const hidden = [];
+    for (const o of this.scene.children) if (o !== this.root && o.visible && !o.isLight) { o.visible = false; hidden.push(o); }
+    for (const o of this.root.children) if (o.visible && !far.has(o)) { o.visible = false; hidden.push(o); }
+    const b = this.bounds;
+    this._farCam.position.set((b.minX + b.maxX) / 2, WATER_Y + 1.5, (b.minZ + b.maxZ) / 2);
+    this._farCam.updateMatrixWorld(true);
+    const prevRT = r.getRenderTarget(), ac = r.autoClear, cc = r.getClearColor(new THREE.Color()), ca = r.getClearAlpha();
+    const sAuto = r.shadowMap.autoUpdate, sNeed = r.shadowMap.needsUpdate;
+    try {
+      // at boot the sun's shadow map does not exist yet: let this render create it (the next frame redraws it fully),
+      // otherwise lit materials would sample a placeholder through their shadow samplers
+      r.shadowMap.autoUpdate = false; r.shadowMap.needsUpdate = !this.sun.shadow.map;
+      r.autoClear = true;
+      r.setClearColor(0x000000, 0);
+      this._farCam.update(r, this.scene);
+    } finally {
+      for (const o of hidden) o.visible = true;
+      r.setClearColor(cc, ca); r.autoClear = ac; r.setRenderTarget(prevRT);
+      r.shadowMap.autoUpdate = sAuto; r.shadowMap.needsUpdate = sNeed;
+    }
+    U.uFarOn.value = 1;
+  }
+
+  // Scene parts left out of the planar reflection below ultra (cached per prop build): FX, decor, small prop batches.
+  _reflSkips(scene) {
+    const props = scene.children.find((o) => o.name === 'props');
+    const key = scene.children.length + ':' + (props ? props.uuid + props.children.length : '-');
+    if (this._reflSkipKey === key) return this._reflSkipList;
+    const list = [];
+    for (const o of scene.children) if (o.name === 'FX' || o.name === 'decor') list.push(o);
+    if (props) for (const m of props.children) if (/glow|blink|flags|spin:|fence|blob|foliage/.test(m.name || '')) list.push(m);
+    this._reflSkipKey = key; this._reflSkipList = list;
+    return list;
+  }
+
+  // Is the current stage a marina (sheltered basin, hulls in the water)? A layout can say so with `water: 'marina'`.
+  _stageMarina() {
+    const lay = G.level && G.level.layout;
+    return !!(lay && (lay.water === 'marina' || lay.id === 'halyard'));
+  }
+
+  // Which level blocks float over the water (slabs: under-deck shade + dark undersides) and which pierce it or sit
+  // below it (hulls, dry-dock floors: no sea inside, contact foam). Read from the live level (y extents matter here —
+  // the main.js footprint only carries XZ).
+  _marinaSets() {
+    const L = G.level, decks = [], wet = [];
+    if (L) for (const b of L.blocks) {
+      if (!b.solid || b.hidden || !b.aligned || b.grate) continue;
+      const lo = b.aabbMin, hi = b.aabbMax;
+      const r = { minX: lo.x, maxX: hi.x, minZ: lo.z, maxZ: hi.z, y0: lo.y, y1: hi.y };
+      if (lo.y < WATER_Y - 0.02 && hi.y > -30) wet.push(r);          // pierces the surface / sunk below it
+      else if (lo.y >= WATER_Y - 0.02 && lo.y < WATER_Y + 0.9) decks.push(r);
+    }
+    return { decks: decks.slice(0, MAX_RECTS), wet: wet.slice(0, MAX_WET) };
+  }
+
+  // (Re)apply marina mode for the current theme + level: rect sets, waterline strips, slab undersides, uniforms.
+  _applyMarina() {
+    const U = this.U;
+    if (this.marinaFx) {
+      this.root.remove(this.marinaFx);
+      this.marinaFx.traverse((o) => { if (o.geometry) o.geometry.dispose(); });
+      this.marinaFx = null;
+    }
+    const on = this._marina;
+    if (('MARINA' in this.seaMat.defines) !== on) {       // presence test: the define's value is ''
+      if (on) this.seaMat.defines.MARINA = ''; else delete this.seaMat.defines.MARINA;
+      this.seaMat.needsUpdate = true;
+    }
+    if (!on) { this._marinaData = null; U.uWetCount.value = 0; U.uReflOn.value = 0; this._writeRects(); return; }
+    const M = (this._marinaData = this._marinaSets());
+    U.uArena.value.set(this.bounds.minX, this.bounds.minZ, this.bounds.maxX, this.bounds.maxZ);
+    M.decks.forEach((r, i) => U.uRects.value[i].set(r.minX, r.minZ, r.maxX, r.maxZ));
+    U.uRectCount.value = M.decks.length;
+    M.wet.forEach((r, i) => U.uWet.value[i].set(r.minX, r.minZ, r.maxX, r.maxZ));
+    U.uWetCount.value = M.wet.length;
+    this._buildFoamField([...(this._foamShapes || []), ...this._waterContours(M.wet)]);
+    this._buildMarinaFx(M);
+  }
+
+  _buildMarinaFx(M) {
+    const L = G.level;
+    if (!L) return;
+    const grp = new THREE.Group();
+    grp.name = 'MarinaWaterline';
+    const inR = (r, x, z) => x > r.minX && x < r.maxX && z > r.minZ && z < r.maxZ;
+    const open = (x, z) => !M.decks.some((r) => inR(r, x, z)) && !M.wet.some((r) => inR(r, x, z));
+    const pos = [], nor = [], info = [];
+    const quad = (a, b, c, d, n, col, kind) => {   // a b c d counter-clockwise seen from the front (n)
+      pos.push(...a, ...b, ...c, ...a, ...c, ...d);
+      for (let i = 0; i < 6; i++) { nor.push(n.x, n.y, n.z); info.push(col.r, col.g, col.b, kind); }
+    };
+    const OFF = 0.012;
+    for (const f of L.faces) {
+      const b = L.blocks[f.block];
+      if (!f.wall || !b.aligned || b.hidden || b.grate || !b.solid) continue;
+      const yb = b.aabbMin.y, yt = b.aabbMax.y;
+      const inWater = yb < WATER_Y - 0.02 && yt > WATER_Y + 0.02;
+      const overWater = !inWater && yb >= WATER_Y - 0.02 && yb < WATER_Y + 0.9;
+      if (!inWater && !overWater) continue;
+      // hull strips stand 3.5 cm proud (clear of boot-top / livery panels); slab-fascia strips stop under the whaler
+      const off = inWater ? 0.035 : OFF;
+      const y0 = inWater ? WATER_Y - 0.1 : yb + 0.004;
+      const y1 = Math.min(inWater ? yt - 0.16 : yt - 0.36, inWater ? WATER_Y + 1.7 : yb + 1.15);
+      if (y1 < y0 + 0.15) continue;
+      const n = f.n, u = f.u;
+      const steps = Math.max(2, Math.ceil(f.su / 0.2));
+      const ds = f.su / steps;
+      const emit = (s0, s1) => {
+        const e0 = s0 < 0.01 ? 0.15 : 0.03, e1 = s1 > f.su - 0.01 ? 0.15 : 0.03;
+        s0 += e0; s1 -= e1;
+        if (s1 - s0 < 0.25) return;
+        const px = (s, y) => [f.origin.x + u.x * s + n.x * off, y, f.origin.z + u.z * s + n.z * off];
+        quad(px(s0, y0), px(s1, y0), px(s1, y1), px(s0, y1), n, f.color, inWater ? 1 : 0);
+      };
+      let s0 = -1;
+      for (let i = 0; i <= steps; i++) {
+        const s = i * ds;
+        const ok = open(f.origin.x + u.x * s + n.x * 0.3, f.origin.z + u.z * s + n.z * 0.3);
+        if (ok && s0 < 0) s0 = s;
+        if (s0 >= 0 && (!ok || i === steps)) { emit(s0, ok ? s : s - ds); s0 = -1; }
+      }
+    }
+    // slab undersides: dark timber seen in the reflections / from the water, with the caustic band along the sunny edge
+    const under = [];
+    const dn = new THREE.Vector3(0, -1, 0), dark = new THREE.Color('#2e2923');
+    for (const r of M.decks) {
+      const y = r.y0 - 0.002, e = 0.004;
+      const A = [r.minX + e, y, r.minZ + e], B = [r.maxX - e, y, r.minZ + e], Cc = [r.maxX - e, y, r.maxZ - e], D = [r.minX + e, y, r.maxZ - e];
+      under.push(...A, ...B, ...Cc, ...A, ...Cc, ...D);     // winding faces −Y
+      const y2 = y - 0.006;
+      quad([A[0], y2, A[2]], [B[0], y2, B[2]], [Cc[0], y2, Cc[2]], [D[0], y2, D[2]], dn, dark.clone().multiplyScalar(4), 0);
+    }
+    if (under.length) {
+      const ug = new THREE.BufferGeometry();
+      ug.setAttribute('position', new THREE.Float32BufferAttribute(under, 3));
+      ug.computeVertexNormals();
+      const um = new THREE.Mesh(ug, this._underMat || (this._underMat = new THREE.MeshStandardMaterial({ color: dark, roughness: 0.95, metalness: 0 })));
+      um.name = 'SlabUndersides';
+      grp.add(um);
+    }
+    if (pos.length) {
+      const sg = new THREE.BufferGeometry();
+      sg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+      sg.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
+      sg.setAttribute('aInfo', new THREE.Float32BufferAttribute(info, 4));
+      if (!this._stripMat) {
+        const uniforms = { ...THREE.UniformsUtils.clone(THREE.UniformsLib.lights), uTime: this.U.uTime, uSunDir: this.U.uSunDir, uSunLight: this.U.uSunLight, uStripK: this.U.uStripK };
+        this._stripMat = new THREE.ShaderMaterial({
+          name: 'Waterline', uniforms, vertexShader: STRIP_VERT, fragmentShader: STRIP_FRAG, lights: true, fog: false,
+          transparent: true, depthWrite: false, blending: THREE.CustomBlending, blendEquation: THREE.AddEquation,
+          blendSrc: THREE.OneFactor, blendDst: THREE.SrcAlphaFactor, blendSrcAlpha: THREE.ZeroFactor, blendDstAlpha: THREE.OneFactor,
+          polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -4,
+        });
+      }
+      const sm = new THREE.Mesh(sg, this._stripMat);
+      sm.name = 'WaterlineStrips';
+      sm.receiveShadow = true;
+      sm.frustumCulled = false;
+      grp.add(sm);
+    }
+    this.marinaFx = grp;
+    this.root.add(grp);
+  }
+
+  // Distance field (metres, 0..range) to pilings, boats, buoys around the deck → foam rings on the water.
+  // Marina mode: finer (0.1 m) and short-range (2.5 m, 1 cm steps), fed by the real waterline contours.
   _buildFoamField(shapes) {
-    const b = this.bounds, pad = 22, res = 0.2;
+    const marina = this._marina;
+    const b = this.bounds, pad = 22, res = marina ? 0.1 : 0.2, range = marina ? 2.5 : 8;
     const minX = b.minX - pad, minZ = b.minZ - pad;
     const W = Math.ceil((b.maxX - b.minX + pad * 2) / res), H = Math.ceil((b.maxZ - b.minZ + pad * 2) / res);
     const data = new Uint8Array(W * H).fill(255);
@@ -1207,13 +1829,13 @@ export class Environment {
       return Math.hypot(px - ax - dx * t, pz - az - dz * t);
     };
     for (const s of shapes) {
-      const reach = s.r + 3;
+      const reach = s.r + (s.reach ?? 3);
       const x0 = Math.max(0, Math.floor((Math.min(s.ax, s.bx) - reach - minX) / res)), x1 = Math.min(W - 1, Math.ceil((Math.max(s.ax, s.bx) + reach - minX) / res));
       const z0 = Math.max(0, Math.floor((Math.min(s.az, s.bz) - reach - minZ) / res)), z1 = Math.min(H - 1, Math.ceil((Math.max(s.az, s.bz) + reach - minZ) / res));
       for (let j = z0; j <= z1; j++) for (let i = x0; i <= x1; i++) {
         const px = minX + (i + 0.5) * res, pz = minZ + (j + 0.5) * res;
         const d = Math.max(0, segDist(px, pz, s.ax, s.az, s.bx, s.bz) - s.r);
-        const v = Math.min(255, Math.round((d / 8) * 255));
+        const v = Math.min(255, Math.round((d / range) * 255));
         const k = j * W + i;
         if (v < data[k]) data[k] = v;
       }
@@ -1226,6 +1848,61 @@ export class Environment {
     if (this.U.uFoamTex.value) this.U.uFoamTex.value.dispose();
     this.U.uFoamTex.value = tex;
     this.U.uFoamRect.value.set(minX, minZ, 1 / (W * res), 1 / (H * res));
+    this.U.uMarinaK.value.w = range;
+  }
+
+  // Marina: where anything the stage dressed (piles, fenders, ladders, moored boats, buoys…) crosses the sea surface.
+  // Triangle ∩ plane y = WATER_Y segments from the prop meshes → zero-radius capsules for the foam field, so froth
+  // rings whatever actually stands in the water, whoever placed it. Hull dressing hugging a wet rect is left to the
+  // analytic hull contact line.
+  _waterContours(wet) {
+    const out = [];
+    const b = this.bounds, pad = 21;
+    const X0 = b.minX - pad, X1 = b.maxX + pad, Z0 = b.minZ - pad, Z1 = b.maxZ + pad;
+    const Wy = WATER_Y;
+    const A = new THREE.Vector3(), Bv = new THREE.Vector3(), Cv = new THREE.Vector3(), pts = [];
+    const nearWet = (x, z) => wet.some((r) => x > r.minX - 0.12 && x < r.maxX + 0.12 && z > r.minZ - 0.12 && z < r.maxZ + 0.12);
+    const cut = (p, q) => { const t = (Wy - p.y) / (q.y - p.y); pts.push(p.x + (q.x - p.x) * t, p.z + (q.z - p.z) * t); };
+    const scan = (geo, mat) => {
+      const pos = geo.attributes.position, idx = geo.index;
+      if (!pos) return;
+      if (!geo.boundingBox) geo.computeBoundingBox();
+      const bb = _bb.copy(geo.boundingBox);
+      if (mat) bb.applyMatrix4(mat);
+      if (bb.min.y > Wy || bb.max.y < Wy || bb.max.x < X0 || bb.min.x > X1 || bb.max.z < Z0 || bb.min.z > Z1) return;
+      const n = idx ? idx.count : pos.count;
+      for (let i = 0; i + 2 < n; i += 3) {
+        const ia = idx ? idx.getX(i) : i, ib = idx ? idx.getX(i + 1) : i + 1, ic = idx ? idx.getX(i + 2) : i + 2;
+        if (!mat) {
+          const ya = pos.getY(ia) - Wy, yb = pos.getY(ib) - Wy, yc = pos.getY(ic) - Wy;
+          if ((ya > 0 && yb > 0 && yc > 0) || (ya <= 0 && yb <= 0 && yc <= 0)) continue;
+        }
+        A.fromBufferAttribute(pos, ia); Bv.fromBufferAttribute(pos, ib); Cv.fromBufferAttribute(pos, ic);
+        if (mat) { A.applyMatrix4(mat); Bv.applyMatrix4(mat); Cv.applyMatrix4(mat); }
+        const sa = A.y > Wy, sb = Bv.y > Wy, sc = Cv.y > Wy;
+        if (sa === sb && sb === sc) continue;
+        pts.length = 0;
+        if (sa !== sb) cut(A, Bv);
+        if (sb !== sc) cut(Bv, Cv);
+        if (sc !== sa) cut(Cv, A);
+        if (pts.length !== 4) continue;
+        const mx = (pts[0] + pts[2]) / 2, mz = (pts[1] + pts[3]) / 2;
+        if (mx < X0 || mx > X1 || mz < Z0 || mz > Z1 || nearWet(mx, mz)) continue;
+        out.push({ ax: pts[0], az: pts[1], bx: pts[2], bz: pts[3], r: 0, reach: 1.6 });
+      }
+    };
+    const _mi = new THREE.Matrix4();
+    for (const grp of this.scene.children) {
+      if (grp === this.root || grp.name !== 'props') continue;
+      grp.updateMatrixWorld(true);
+      grp.traverse((o) => {
+        if (!o.isMesh || !o.geometry || o.visible === false) return;
+        if (o.isInstancedMesh) {
+          for (let k = 0; k < o.count; k++) { o.getMatrixAt(k, _mi); _mi.premultiply(o.matrixWorld); scan(o.geometry, _mi); }
+        } else scan(o.geometry, o.matrixWorld.equals(_ident) ? null : o.matrixWorld);
+      });
+    }
+    return out;
   }
 
   // ------------------------------------------------------------------ dock: pilings, fenders, ladders, moored boats
@@ -1264,11 +1941,14 @@ export class Environment {
 
   _buildDock() {
     const b = this.bounds;
+    // marina stages dress their own pier edges (piles, fenders, ladders) and moored boats: keep only the hidden
+    // under-slab piling grid here
+    const marina = this._marina;
     const runs = this._boundaryRuns();
     this._runs = runs;
     const pilings = []; // [x, z, radius, topY]
     const foamShapes = [];
-    for (const run of runs) {
+    for (const run of marina ? [] : runs) {
       const dx = (run.bx - run.ax) / run.len, dz = (run.bz - run.az) / run.len;
       const L = run.s1 - run.s0;
       const n = Math.max(2, Math.round(L / 3.4) + 1);
@@ -1289,7 +1969,7 @@ export class Environment {
     }
 
     // ---- moored boats + dolphins (outside the bounds) ----
-    const boatsSpec = [
+    const boatsSpec = marina ? [] : [
       { kind: 'fishing', x: b.maxX + 3.25, z: b.minZ + (b.maxZ - b.minZ) * 0.77, yaw: 0 },
       { kind: 'launch', x: b.minX - 2.85, z: b.minZ + (b.maxZ - b.minZ) * 0.2, yaw: Math.PI },
       { kind: 'row', x: b.minX - 1.75, z: b.minZ + (b.maxZ - b.minZ) * 0.86, yaw: 0.12 },
@@ -1330,7 +2010,7 @@ export class Environment {
 
     // ---- tyre fenders + ladders hung on the outer slab faces ----
     const fenderSlots = [];
-    for (const run of runs) {
+    for (const run of marina ? [] : runs) {
       const dx = (run.bx - run.ax) / run.len, dz = (run.bz - run.az) / run.len;
       const mx = run.ax + dx * (run.s0 + run.s1) / 2 + run.nx * 0.3, mz = run.az + dz * (run.s0 + run.s1) / 2 + run.nz * 0.3;
       if (this._insideBounds(mx, mz)) continue; // notch edges: no fenders
@@ -1354,8 +2034,10 @@ export class Environment {
       // grab rail loop over the top edge
       dockParts.push(tube([[x + nx * off + tx * 0.28, -0.1, z + nz * off + tz * 0.28], [x + nx * 0.02 + tx * 0.28, 0.02, z + nz * 0.02 + tz * 0.28]], 0.035, '#aab3bb'));
     };
-    ladderAt(b.maxX, boatsSpec[0].z - 5.5, 1, 0);
-    ladderAt(b.minX, boatsSpec[1].z + 4.5, -1, 0);
+    if (!marina) {
+      ladderAt(b.maxX, boatsSpec[0].z - 5.5, 1, 0);
+      ladderAt(b.minX, boatsSpec[1].z + 4.5, -1, 0);
+    }
 
     // ---- pilings (instanced) ----
     const pGeo = mergeGeometries([prep(new THREE.CylinderGeometry(1, 1, 1, 9, 1, true), '#ffffff'), xf(prep(new THREE.CircleGeometry(1, 9), '#ffffff'), 0, 0.5, 0, 0, -Math.PI / 2)]);
@@ -1381,7 +2063,7 @@ export class Environment {
     this.pilings = pInst;
 
     const dockMat = patchScenery(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.7, metalness: 0.05 }), this.U, { waterline: true });
-    this.dockProps = new THREE.Mesh(mergeGeometries(dockParts), dockMat);
+    this.dockProps = new THREE.Mesh(dockParts.length ? mergeGeometries(dockParts) : new THREE.BufferGeometry(), dockMat);
     this.dockProps.name = 'DockProps';
     this.dockProps.receiveShadow = true;
     this.dockProps.castShadow = true;
@@ -1571,6 +2253,7 @@ export class Environment {
     treeInst.name = 'Trees';
     treeInst.frustumCulled = false;
     this.root.add(treeInst);
+    this.trees = treeInst;
   }
 
   _buildLighthouse(parts, x, y, z) {
@@ -1943,7 +2626,7 @@ export class Environment {
     this.buoyInst.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     this.root.add(this.buoyInst);
     for (const s of this.buoys) this._foamShapes.push({ ax: s.x, az: s.z, bx: s.x, bz: s.z, r: 0.55 * s.s });
-    this._buildFoamField(this._foamShapes);
+    if (!this._marina) this._buildFoamField(this._foamShapes);
 
     // gulls (instanced, wing flap in the vertex shader)
     const gp = [];
@@ -1981,16 +2664,26 @@ export class Environment {
   // Water surface height at (x, z) (includes the gentle swell). Matches the sea vertex shader.
   waterHeightAt(x, z, t = this.time) {
     let d = 1e5;
-    for (const r of this.footprint) {
+    const M = this._marinaData;
+    for (const set of M ? [M.decks, M.wet] : [this.footprint]) for (const r of set) {
       const cx = (r.minX + r.maxX) / 2, cz = (r.minZ + r.maxZ) / 2, hx = (r.maxX - r.minX) / 2, hz = (r.maxZ - r.minZ) / 2;
       const qx = Math.abs(x - cx) - hx, qz = Math.abs(z - cz) - hz;
       const dd = Math.hypot(Math.max(qx, 0), Math.max(qz, 0)) + Math.min(Math.max(qx, qz), 0);
       d = Math.min(d, dd);
     }
-    const amp = 0.035 + (0.16 - 0.035) * smooth(3, 70, d);
+    let amp = 0.035 + (0.16 - 0.035) * smooth(3, 70, d);
+    if (M) {   // sheltered basin (matches basinK in the sea vertex shader)
+      const b = this.bounds, qx = Math.abs(x - (b.minX + b.maxX) / 2) - (b.maxX - b.minX) / 2, qz = Math.abs(z - (b.minZ + b.maxZ) / 2) - (b.maxZ - b.minZ) / 2;
+      const da = Math.hypot(Math.max(qx, 0), Math.max(qz, 0)) + Math.min(Math.max(qx, qz), 0);
+      amp *= 0.45 + 0.55 * smooth(60, 210, da);
+    }
     const h = 0.45 * Math.sin(x * 0.11 + z * 0.047 + t * 0.95) + 0.35 * Math.sin(-x * 0.052 + z * 0.097 + t * 1.13 + 1.7) + 0.2 * Math.sin(x * 0.173 - z * 0.141 + t * 1.61 + 4.1);
     return WATER_Y + h * amp;
   }
+
+  // How lively the water at the stage edges is, 0..1 (FX: wave slaps / spray bursts against the decks). Marina basins
+  // are sheltered and glassy: keep spray to a rare, small lap.
+  get seaState() { return this._marina ? 0.15 : 1; }
 
   // Sky colours for other modules (e.g. UI tint, character rim light). Linear THREE.Colors — do not mutate.
   getSkyColors() {
@@ -2005,18 +2698,26 @@ export class Environment {
   // New stage: rebuild everything that hugs the deck (pilings, fenders/ladders, moored boats, foam field) and refit the
   // sun's shadow camera to the new arena bounds.
   rebuildForArena(bounds, rects) {
+    this._marina = this._stageMarina();
+    this.bounds = { ...bounds };
+    this.footprint = (rects && rects.length ? rects : [this.bounds]).slice(0, MAX_RECTS).map((r) => ({ ...r }));
+    this._writeRects();
+    this._rebuildDock();
+    this._applyMarina();
+    this._fitShadow();
+    this._bakeFarReflection();
+  }
+
+  // pilings / dock kit / moored boats / foam field for the current footprint + mode
+  _rebuildDock() {
     for (const o of [this.pilings, this.dockProps, ...(this.moored || []).map((m) => m.mesh)]) {
       if (!o) continue;
       this.root.remove(o);
       o.geometry?.dispose();
     }
-    this.bounds = { ...bounds };
-    this.footprint = (rects && rects.length ? rects : [this.bounds]).slice(0, MAX_RECTS).map((r) => ({ ...r }));
-    this._writeRects();
     this._buildDock();
     for (const s of this.buoys || []) this._foamShapes.push({ ax: s.x, az: s.z, bx: s.x, bz: s.z, r: 0.55 * s.s });
-    this._buildFoamField(this._foamShapes);
-    this._fitShadow();
+    if (!this._marina) this._buildFoamField(this._foamShapes);   // marina: _applyMarina builds it with the contours
   }
 
   // Replace the deck outline (array of {minX,maxX,minZ,maxZ}) → foam/under-deck shading follow. Pilings are built once.
@@ -2046,10 +2747,29 @@ export class Environment {
     U.uSeaAmbient.value.copy(U.uSkyMid.value).lerp(U.uHorizon.value, 0.5).multiplyScalar(T.seaAmbientK);
     U.uSunSpec.value = T.sunSpec; U.uWaveStrength.value = T.waveStrength;
     this.grade = T.grade;    // colour grade the renderer applies for this theme
+    // sky extras (compiled in only for themes that use them, so the other themes run the exact same shader)
+    const shafts = !!T.shafts;
+    if (('SKY_SHAFTS' in this.skyMat.defines) !== shafts) {
+      if (shafts) this.skyMat.defines.SKY_SHAFTS = ''; else delete this.skyMat.defines.SKY_SHAFTS;
+      this.skyMat.needsUpdate = true;
+    }
+    // marina water: mode switch rebuilds the dock kit (the level may also have changed since the last call)
+    const stageMarina = this._stageMarina();
+    if (stageMarina !== this._marina) { this._marina = stageMarina; this._rebuildDock(); }
+    // marina look for this light (every theme resolves to a full set, so nothing lingers from the previous one)
+    const MA = { channel: null, shade: null, calm: 0.55, lap: 1.0, caustic: 1.5, wet: 0.5, ...(T.marina || {}) };
+    if (MA.channel) U.uChannelCol.value.set(MA.channel); else U.uChannelCol.value.set(T.seaDeep).multiplyScalar(0.65);
+    if (MA.shade) U.uShadeCol.value.set(MA.shade); else U.uShadeCol.value.set(T.seaDeep).multiplyScalar(0.12);
+    U.uMarinaK.value.x = MA.calm; U.uMarinaK.value.y = MA.lap; U.uMarinaK.value.z = 0.35;
+    U.uStripK.value.set(MA.caustic, MA.wet, 0, 0);
+    this._applyMarina();
 
     this.sun.color.set(T.sunColor);
     this.sun.intensity = T.sunIntensity;
-    this.hemi.color.set(T.hemiSky); this.hemi.groundColor.set(T.hemiGround); this.hemi.intensity = T.hemiIntensity;
+    // main.js lifts the sky fill once after construction (max(theme, HEMI_FLOOR)); apply the same floor on every theme
+    // change so a stage/time looks identical whether it was booted into or switched to mid-session
+    this.hemi.color.set(T.hemiSky); this.hemi.groundColor.set(T.hemiGround);
+    this.hemi.intensity = Math.max(T.hemiIntensity, HEMI_FLOOR);
     this.fogColor.copy(U.uHorizon.value).lerp(U.uSkyMid.value, 0.15);
     if (this.scene.fog && this.scene.fog.isFog) { this.scene.fog.color.copy(this.fogColor); this.scene.fog.near = T.fog[0]; this.scene.fog.far = T.fog[1]; }
     this.lhBeam.visible = T.night > 0.01;
@@ -2058,11 +2778,13 @@ export class Environment {
     this._bakeClouds(T);
     r0.setClearColor(cc, ca);
     this._rebuildEnvMap();
+    this._bakeFarReflection();
   }
 
   update(dt, camera) {
     dt = Math.min(dt || 0, 0.1);
     this.time += dt;
+    this._frameId++;
     this.U.uTime.value = this.time;
     if (camera) this.sky.position.copy(camera.position);
     this._animate(dt);
@@ -2121,6 +2843,7 @@ export class Environment {
     this.root.traverse((o) => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); });
     if (this._envRT) this._envRT.dispose();
     this._cloudRT?.dispose(); this._cloudMat?.dispose();
+    this._reflRT?.dispose(); this._farRT?.dispose(); this._stripMat?.dispose(); this._underMat?.dispose();
     this._pmrem.dispose();
     this.U.uWaveTex.value?.dispose(); this.U.uFoamTex.value?.dispose();
   }

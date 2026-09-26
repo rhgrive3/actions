@@ -6,7 +6,7 @@
 // nav('tab_prev'|'tab_next') for LB/RB tab switching, menus.timeScale (debug slow-motion for JS-driven motion).
 import {
   h, clamp, Spring, colorVars, toHex, splatSVG, fmtInt, fmtTime, pct, safeCall, restartAnim,
-  prefersReducedMotion, easeOutCubic,
+  prefersReducedMotion, easeOutCubic, easeInOutCubic, esc,
 } from './ui-util.js';
 import {
   WEAPON_ICONS, SUB_ICONS, SQUID, GLYPHS, SPLAT_ICON, DEATH_ICON, keycap, mouseGlyph, padGlyph,
@@ -16,16 +16,26 @@ import {
   GAME_TITLE, GAME_SUBTITLE, VERSION, WEAPONS, WEAPON_ORDER, SPECIALS, SUB, MAPS, DIFFICULTY, MATCH, QUALITY,
   DEFAULT_SETTINGS, TEAM_PALETTES, COLORBLIND_PALETTE, PROGRESSION, BOT_NAMES, TEAM_NAMES,
 } from '../config.js';
+import * as LOOK from '../game/character-style.js';
 import { G } from '../core/ctx.js';
 import {
   computeAwards, medalMarkup, awardBadge, awardIcon, rankEmblem, rankTier, RANK_TIERS, inkBurst, InkWipe, createPreview,
+  sweepEdge, sweepClip, splatClip, splatCover, skinSwatch, irisSwatch, outfitIcon,
 } from './menu-art.js';
 
-const SCREENS = ['loading', 'title', 'main', 'loadout', 'setup', 'settings', 'howto', 'credits', 'pause', 'results'];
+const SCREENS = ['loading', 'title', 'main', 'loadout', 'setup', 'locker', 'settings', 'howto', 'credits', 'pause', 'results'];
 // Transitions that get the full-screen ink wipe (the rest use staggered pop-ins).
 const WIPES = new Set(['loading>title', 'title>main', 'results>main', 'pause>main', 'results>null', 'pause>title']);
 // Pushes/pops between these get the light ink swipe (decorative — the swap itself is immediate).
-const LIGHT = new Set(['main', 'loadout', 'setup', 'settings', 'howto', 'credits', 'pause']);
+const LIGHT = new Set(['main', 'loadout', 'setup', 'locker', 'settings', 'howto', 'credits', 'pause']);
+// Stage art rendered from the real game by tools/stage-shots.mjs: <id>-<day|dusk>[-sm].webp (resolved against this
+// module so the UI lab in tools/ finds them too). Missing art falls back to the layout thumbnail.
+const STAGE_DIR = new URL('../../assets/stages/', import.meta.url).href;
+const stageArt = (id, time, small) => `${STAGE_DIR}${id}-${time === 'dusk' ? 'dusk' : 'day'}${small ? '-sm' : ''}.webp`;
+const TIME_INFO = {
+  day: { label: 'DAY', text: 'Bright sun, crisp shadows.' },
+  dusk: { label: 'DUSK', text: 'Low sun, long shadows, harbour lights.' },
+};
 
 const TIPS = [
   'Swim in your own ink to zip around and refill your tank.',
@@ -46,10 +56,18 @@ const DIFF_INFO = {
   hard: { pips: 3, text: 'Sharp, aggressive bots that punish mistakes. Bring your A-game.' },
 };
 const STAT_LABELS = [['range', 'Range'], ['damage', 'Damage'], ['rate', 'Fire rate'], ['mobility', 'Mobility'], ['paint', 'Ink coverage']];
-const KIND_LABEL = { shooter: 'Shooter', roller: 'Roller', charger: 'Charger', blaster: 'Blaster' };
+const KIND_LABEL = { shooter: 'Shooter', roller: 'Roller', charger: 'Charger', blaster: 'Blaster', dualies: 'Dualies', slosher: 'Slosher', splatling: 'Splatling' };
+const STAT_ICONS = { range: GLYPHS.target, damage: GLYPHS.bolt, rate: GLYPHS.clock, mobility: GLYPHS.feather, paint: GLYPHS.drop };
+const LOCKER_TABS = [
+  { id: 'kids', label: 'SQUIDKIDS', icon: 'users', sections: ['_presets'] },
+  { id: 'hair', label: 'HAIR', icon: 'hair', sections: ['hair', 'hat'] },
+  { id: 'face', label: 'FACE', icon: 'eye', sections: ['eyes', 'brows', 'skin'] },
+  { id: 'outfit', label: 'OUTFIT', icon: 'shirt', sections: ['outfit'] },
+];
 const MENU_DESC = {
-  play: 'Jump into a 4 v 4 Turf War against bots',
-  loadout: 'Pick your weapon and name your squidkid',
+  play: 'Pick a stage, day or dusk, and jump into a 4 v 4 Turf War',
+  loadout: 'Choose your weapon: stats, sub and special for every kind',
+  locker: 'Choose your squidkid — tentacles, headgear, eyes, skin and outfit',
   settings: 'Controls, video, audio and gameplay options',
   howto: 'The rules in 30 seconds, plus every control',
   credits: 'The squidkids and code behind INKWAVE',
@@ -94,6 +112,8 @@ const TAB_BLURB = {
 };
 
 const durLabel = (s) => (s < 120 ? `${s} SEC` : `${Math.round(s / 60)} MIN`);
+// FNV-1a — the Character's style seed (character.js hashStr) so an unsaved look resolves identically here
+const fnv = (str) => { let x = 2166136261; for (let i = 0; i < str.length; i++) { x ^= str.charCodeAt(i); x = Math.imul(x, 16777619); } return x >>> 0; };
 
 export class Menus {
   constructor(rootEl, api = {}) {
@@ -207,13 +227,13 @@ export class Menus {
     const byCode = {
       ArrowUp: 'up', KeyW: 'up', ArrowDown: 'down', KeyS: 'down', ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right',
       Enter: 'accept', NumpadEnter: 'accept', Space: 'accept', Escape: 'back', Backspace: 'back',
-      KeyQ: 'tab_prev', KeyE: 'tab_next', PageUp: 'tab_prev', PageDown: 'tab_next', Tab: e.shiftKey ? 'tab_prev' : 'tab_next',
+      KeyQ: 'tab_prev', KeyE: 'tab_next', PageUp: 'tab_prev', PageDown: 'tab_next', Tab: e.shiftKey ? 'tab_prev' : 'tab_next', KeyR: 'alt',
     };
     const byKey = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right', Enter: 'accept', ' ': 'accept', Escape: 'back', Backspace: 'back' };
     const dir = byCode[e.code] || byKey[e.key];
     if (!dir) return false;
     e.preventDefault();
-    if (e.repeat && (dir === 'accept' || dir === 'back' || dir === 'tab_prev' || dir === 'tab_next')) {
+    if (e.repeat && (dir === 'accept' || dir === 'back' || dir === 'tab_prev' || dir === 'tab_next' || dir === 'alt')) {
       if (dir === 'accept' && this._scr && this._scr.onHold) this._scr.onHold();
       return true;
     }
@@ -388,7 +408,7 @@ export class Menus {
     if (this._stack.length > 1) {
       this._sfx('ui_back');
       this.show(this._stack[this._stack.length - 2], { pop: true, back: true });
-    } else if (['loadout', 'setup', 'settings', 'howto', 'credits'].includes(this.current)) {
+    } else if (['loadout', 'setup', 'locker', 'settings', 'howto', 'credits'].includes(this.current)) {
       this._sfx('ui_back'); // opened directly by the engine: fall back to the main menu
       this.show('main', { back: true });
     }
@@ -490,6 +510,7 @@ export class Menus {
     if (s.onNav && s.onNav(dir)) return true;
     if (dir === 'back') { this._back(); return true; }
     if (dir === 'tab_prev' || dir === 'tab_next') return true;
+    if (dir !== 'accept' && dir !== 'up' && dir !== 'down' && dir !== 'left' && dir !== 'right') return true; // 'alt' etc. unused here
     const f = this._focus && this._focus.isConnected ? this._focus : null;
     const b = f ? this._binds.get(f) : null;
     if (dir === 'accept') {
@@ -498,12 +519,32 @@ export class Menus {
     }
     if ((dir === 'left' || dir === 'right') && b && b.adjust) { b.adjust(dir === 'left' ? -1 : 1); return true; }
     const next = this._spatial(f, dir);
-    if (next) {
-      // keyboard / pad focus floods ink in from the side we arrived from
-      next.style.setProperty('--mx', dir === 'left' ? '100%' : dir === 'right' ? '0%' : '50%');
-      next.style.setProperty('--my', dir === 'up' ? '100%' : dir === 'down' ? '0%' : '50%');
-      this._setFocus(next, { sound: true });
-    } else if (f) { restartAnim(f, dir === 'up' || dir === 'down' ? 'is-bump-v' : 'is-bump-h'); }
+    if (next) this._moveFocus(next, dir);
+    else if (f) this._bump(f, dir);
+    return true;
+  }
+
+  /** Keyboard / pad focus move: ink floods in from the side we arrived from; screens see `_navFocus` in onFocus. */
+  _moveFocus(next, dir) {
+    if (!next) return false;
+    next.style.setProperty('--mx', dir === 'left' ? '100%' : dir === 'right' ? '0%' : '50%');
+    next.style.setProperty('--my', dir === 'up' ? '100%' : dir === 'down' ? '0%' : '50%');
+    this._navFocus = true;
+    try { this._setFocus(next, { sound: true }); } finally { this._navFocus = false; }
+    return true;
+  }
+  _bump(el, dir) { if (el) restartAnim(el, dir === 'up' || dir === 'down' ? 'is-bump-v' : 'is-bump-h'); }
+
+  /** Explicit focus graph for screens whose layout makes spatial nav ambiguous: map el → { up, down, left, right }
+   *  (element, function → element, or null = edge bump). Directions not listed fall through to the default nav. */
+  _graphNav(graph, dir) {
+    if (dir !== 'up' && dir !== 'down' && dir !== 'left' && dir !== 'right') return false;
+    const f = this._focus, g = f && graph.get(f);
+    if (!g || !(dir in g)) return false;
+    let t = g[dir];
+    if (typeof t === 'function') t = t();
+    if (t && t.isConnected && t !== f) this._moveFocus(t, dir);
+    else this._bump(f, dir);
     return true;
   }
 
@@ -699,20 +740,24 @@ export class Menus {
     const items = [
       { id: 'play', label: 'PLAY', sub: 'Turf War · 4 v 4', icon: GLYPHS.play, cls: 'iw-btn--menu iw-btn--xl iw-btn--primary', accept: () => this._go('setup'), sound: 'ui_confirm' },
       { id: 'loadout', label: 'LOADOUT', icon: weaponIcon(W.kind || lo.weapon), cls: 'iw-btn--menu', accept: () => this._go('loadout') },
+      { id: 'locker', label: 'LOCKER', icon: GLYPHS.hanger, cls: 'iw-btn--menu', accept: () => this._go('locker') },
       { id: 'settings', label: 'SETTINGS', icon: GLYPHS.gear, cls: 'iw-btn--menu', accept: () => this._go('settings') },
       { id: 'howto', label: 'HOW TO PLAY', icon: GLYPHS.question, cls: 'iw-btn--menu', accept: () => this._go('howto') },
       { id: 'credits', label: 'CREDITS', icon: GLYPHS.star, cls: 'iw-btn--menu', accept: () => this._go('credits') },
     ];
-    const tilts = [-2.2, 1.4, -1.1, 1.6, -1.3];
-    const btns = items.map((it, i) => { const b = this._btn({ ...it, tilt: tilts[i] }); b.classList.add('iw-in', 'iw-in--left'); return b; });
+    const tilts = [-2.2, 1.4, -1.1, 1.6, -1.3, 1.1];
+    const btns = items.map((it, i) => { const b = this._btn({ ...it, tilt: tilts[i % tilts.length] }); b.classList.add('iw-in', 'iw-in--left'); return b; });
     const descText = h('span', { class: 'iw-main__desctext' });
     const desc = h('div', { class: 'iw-main__desc iw-in iw-in--left' }, h('i', { class: 'iw-main__descdot' }), descText);
     const xpT = clamp(prof.xp / Math.max(1, prof.xpToNext));
     const tier = rankTier(prof.level);
     const rank = RANK_TIERS[tier];
     const nextRank = RANK_TIERS[tier + 1];
+    const avatar = h('div', { class: 'iw-profile__avatar' }, h('span', { class: 'iw-profile__avblob', html: splatSVG({ seed: 17, cls: 'iw-fa', r: 62, arms: 8, drops: 0 }) }), h('span', { class: 'iw-profile__squid', html: SQUID }));
+    this._portraitInto(avatar, { kind: 'head', size: 160 });
+    this._preloadStages();
     const profile = this._panel('iw-profile iw-in iw-in--right',
-      h('div', { class: 'iw-profile__avatar' }, h('span', { class: 'iw-profile__avblob', html: splatSVG({ seed: 17, cls: 'iw-fa', r: 62, arms: 8, drops: 0 }) }), h('span', { class: 'iw-profile__squid', html: SQUID })),
+      avatar,
       h('div', { class: 'iw-profile__info' },
         h('div', { class: 'iw-profile__name' }, prof.name),
         h('div', { class: `iw-profile__rank ${rank.cls}` }, h('i', { class: 'iw-profile__emblem', html: rankEmblem(tier) }), h('span', null, rank.name))),
@@ -728,7 +773,7 @@ export class Menus {
       h('div', { class: 'iw-kitcard__label' }, 'CURRENT LOADOUT'),
       h('div', { class: 'iw-kitcard__main' },
         h('span', { class: 'iw-kitcard__icon', html: weaponIcon(W.kind || lo.weapon) }),
-        h('div', null, h('div', { class: 'iw-kitcard__name' }, W.name), h('div', { class: 'iw-kitcard__kind' }, KIND_LABEL[W.kind] || ''))),
+        h('div', null, h('div', { class: 'iw-kitcard__name' }, W.name), h('div', { class: 'iw-kitcard__kind' }, W.class || KIND_LABEL[W.kind] || ''))),
       h('div', { class: 'iw-kitcard__chips' },
         h('span', { class: 'iw-chip' }, h('i', { html: SUB_ICONS.bomb }), sub.name),
         h('span', { class: 'iw-chip' }, h('i', { html: specialIcon(sp.id) }), sp.name)));
@@ -750,46 +795,195 @@ export class Menus {
     };
   }
 
-  // ================================================================ SCREEN: setup
+  // ================================================================ SCREEN: setup (stage select)
+  /** The time of day a stage will be played at: this session's pick → saved per-stage pick → settings.timeOfDay. */
+  _stageTime(id) {
+    const s = this._settings();
+    const t = (this._setup && this._setup.times && this._setup.times[id]) || (s.stageTimes && s.stageTimes[id]);
+    return t === 'dusk' || t === 'day' ? t : (s.timeOfDay === 'dusk' ? 'dusk' : 'day');
+  }
+
+  /** Warm the image cache with every stage render (hero + thumbnail, day + dusk) so switches never flash. */
+  _preloadStages() {
+    if (this._stageImgs) return;
+    this._stageImgs = [];
+    for (const m of this._maps()) {
+      for (const t of ['day', 'dusk']) {
+        for (const sm of [true, false]) {
+          const im = new Image();
+          im.decoding = 'async';
+          im.src = stageArt(m.id, t, sm);
+          if (im.decode) im.decode().catch(() => {});
+          this._stageImgs.push(im);
+        }
+      }
+    }
+  }
+
   _scr_setup() {
     const s = this._settings();
     const maps = this._maps();
     const diffs = this._diffs();
     const durations = (MATCH.durations || [90, 180]);
-    if (!this._setup) this._setup = { mapId: maps[0].id };
-    const st = this._setup;
+    const byId = (id) => maps.find((m) => m.id === id);
+    const st = this._setup || (this._setup = { times: {} });
+    st.times = { ...(s.stageTimes || {}), ...(st.times || {}) };
+    if (!byId(st.mapId)) st.mapId = byId(s.lastStage) ? s.lastStage : maps[0].id;
     st.difficulty = diffs[s.difficulty] ? s.difficulty : 'normal';
     st.duration = durations.includes(s.matchLength) ? s.matchLength : (MATCH.defaultDuration || 180);
-    if (!maps.find((m) => m.id === st.mapId)) st.mapId = maps[0].id;
+    const timeOf = (id) => this._stageTime(id);
+    const reduced = prefersReducedMotion();
+    this._preloadStages();
 
-    const startSub = h('span');
-    const updateStart = () => {
-      const m = maps.find((x) => x.id === st.mapId);
-      startSub.textContent = `${m ? m.name : ''} · ${diffs[st.difficulty].name} · ${durLabel(st.duration)}`;
+    // ---- JS tweens (driven by tick → honour the lab's freeze / slow-mo)
+    const tweens = [];
+    const tween = (dur, step, done = null, delay = 0) => { const o = { t: -delay, dur, step, done }; tweens.push(o); if (delay <= 0) step(0); return o; };
+
+    // ---- hero: big stage art, name tape, DAY / DUSK switch, layout sticker
+    const art = h('div', { class: 'iw-ss__art' });
+    const counter = h('span', { class: 'iw-ss__count' });
+    const layoutMap = h('span', { class: 'iw-ss__layoutmap' });
+    const layoutEl = h('div', { class: 'iw-ss__layout' }, layoutMap, h('span', { class: 'iw-ss__layoutlbl' }, h('i', { html: GLYPHS.map }), 'LAYOUT'));
+    const stars = h('div', { class: 'iw-ss__stars' }, Array.from({ length: 16 }, (_, i) => {
+      const x = ((i * 0.618034 + 0.13) % 1) * 96 + 2, y = ((i * 0.41421 + 0.07) % 1) * 34 + 3;
+      return h('i', { style: { left: `${x.toFixed(1)}%`, top: `${y.toFixed(1)}%`, '--d': `${((i * 0.37) % 1 * 3).toFixed(2)}s`, '--s': (0.55 + ((i * 0.73) % 1) * 0.8).toFixed(2) } });
+    }));
+    const frame = h('div', { class: 'iw-ss__frame' }, art, h('i', { class: 'iw-ss__sun' }), stars, h('i', { class: 'iw-ss__glare' }), h('i', { class: 'iw-ss__vig' }), counter, layoutEl);
+    const nameEl = h('div', { class: 'iw-ss__name' });
+    const blurbEl = h('div', { class: 'iw-ss__blurb' });
+    const caption = h('div', { class: 'iw-ss__caption' }, h('div', { class: 'iw-ss__tape' }, nameEl), blurbEl);
+    const drips = h('div', { class: 'iw-ss__drips', html: `<svg viewBox="0 0 400 60" preserveAspectRatio="none" aria-hidden="true">${
+      [[38, 1], [96, 1.6], [140, 0.8], [226, 1.3], [300, 0.9], [352, 1.5]].map(([x, k], i) => `<g class="iw-ss__drip" style="--d:${i}"><path class="iw-fa" d="M${x - 6} 0 L${x + 6} 0 L${x + 4} ${22 * k} Q${x} ${31 * k} ${x - 4} ${22 * k} Z"/></g>`).join('')}</svg>` });
+
+    // DAY / DUSK switch (big, sticker-like; the thumb carries a sun that sets and a moon that rises)
+    const optDay = h('span', { class: 'iw-daytgl__opt is-day iw-noclick' }, 'DAY');
+    const optDusk = h('span', { class: 'iw-daytgl__opt is-dusk iw-noclick' }, 'DUSK');
+    const tgl = h('button', { class: 'iw-daytgl' },
+      h('span', { class: 'iw-daytgl__sky' }, h('i', { class: 'iw-daytgl__cloud' }), h('i', { class: 'iw-daytgl__cloud is-2' }),
+        ...Array.from({ length: 6 }, (_, i) => h('i', { class: 'iw-daytgl__star', style: { '--i': i } }))),
+      h('span', { class: 'iw-daytgl__thumb' }, h('i', { class: 'iw-daytgl__sunico', html: GLYPHS.sun }), h('i', { class: 'iw-daytgl__moonico', html: GLYPHS.moon })),
+      optDay, optDusk);
+    const timeText = h('span', { class: 'iw-ss__timetext' });
+    const tglWrap = h('div', { class: 'iw-ss__time' }, h('div', { class: 'iw-ss__timehead' }, h('small', null, 'TIME OF DAY'), this._hint(['Q', 'E'], null)), tgl, timeText);
+    tglWrap.querySelector('.iw-padg').innerHTML = padGlyph('LB') + padGlyph('RB');
+    const hero = h('div', { class: 'iw-ss__hero iw-in iw-in--pop' },
+      h('div', { class: 'iw-ss__splat', html: splatSVG({ seed: 21, cls: 'iw-fa', r: 60, arms: 9, drops: 6 }) }),
+      h('div', { class: 'iw-ss__splat is-b', html: splatSVG({ seed: 34, cls: 'iw-fb', r: 56, arms: 8, drops: 4 }) }),
+      frame, drips, caption, tglWrap);
+    this._fx(frame, { tilt: 3, press: false });
+
+    // ---- background: the selected stage, blurred, washing the whole screen in its light
+    const bg = h('div', { class: 'iw-ss__bg' });
+    const setBg = () => {
+      const im = h('img', { class: 'iw-ss__bgimg', alt: '', draggable: 'false' });
+      im.addEventListener('error', () => im.remove(), { once: true });
+      im.src = stageArt(st.mapId, timeOf(st.mapId), true);
+      const olds = [...bg.children];
+      bg.appendChild(im);
+      requestAnimationFrame(() => requestAnimationFrame(() => im.classList.add('is-on')));
+      setTimeout(() => olds.forEach((o) => o.remove()), 900);
     };
-    const cards = maps.map((m, i) => {
-      const c = h('button', { class: 'iw-mapcard iw-in iw-in--pop' + (m.id === st.mapId ? ' is-sel' : ''), style: { '--tilt': `${i % 2 ? 1.2 : -1.2}deg` } },
-        h('span', { class: 'iw-mapcard__art' }, h('span', { class: 'iw-mapcard__pan', html: m.thumb || mapThumb(m, i + 2) }), h('i', { class: 'iw-mapcard__shade' })),
-        h('span', { class: 'iw-mapcard__glare' }),
-        h('span', { class: 'iw-mapcard__chip' }, h('i', { html: m.theme === 'sunset' ? GLYPHS.moon : GLYPHS.sun }), m.theme === 'sunset' ? 'DUSK' : 'DAY'),
-        h('span', { class: 'iw-mapcard__check', html: GLYPHS.check }),
-        h('span', { class: 'iw-mapcard__sel' }, 'SELECTED'),
-        h('span', { class: 'iw-mapcard__info' },
-          h('span', { class: 'iw-mapcard__name' }, m.name),
-          h('span', { class: 'iw-mapcard__blurb' }, m.blurb || '')));
+
+    // ---- art layers + ink reveals
+    const makeLayer = (id, time) => {
+      const m = byId(id);
+      const img = h('img', { class: 'iw-ss__img', alt: '', draggable: 'false' });
+      const L = h('div', { class: 'iw-ss__layer', 'data-time': time }, img);
+      img.addEventListener('error', () => {
+        L.classList.add('is-noart');
+        L.appendChild(h('div', { class: 'iw-ss__fallback', html: (m && m.thumb) || mapThumb(m, 3) }));
+      }, { once: true });
+      img.src = stageArt(id, time);
+      L._img = img;
+      return L;
+    };
+    const whenReady = (img, cb) => {
+      if (img.complete || !img.decode) { cb(); return; }
+      let fired = false;
+      const go = () => { if (!fired) { fired = true; cb(); } };
+      img.decode().then(go, go);
+      setTimeout(go, 280); // never hold a reveal back for long
+    };
+    let artSeed = 3;
+    const showArt = (kind, fromEl) => {
+      const L = makeLayer(st.mapId, timeOf(st.mapId));
+      const finish = () => {
+        L.style.clipPath = '';
+        for (let n = L.previousSibling; n;) { const p = n.previousSibling; n.remove(); n = p; }
+      };
+      if (!art.firstChild || reduced || kind === 'instant') {
+        L.classList.add(art.firstChild ? 'is-fade' : 'is-first');
+        art.appendChild(L);
+        if (art.childElementCount > 1) setTimeout(finish, 320); else finish();
+        return;
+      }
+      const W = art.clientWidth || 1, H = art.clientHeight || 1;
+      const time = timeOf(st.mapId);
+      const ink = h('div', { class: `iw-ss__ink is-${kind} is-${time}` });
+      const ink2 = kind === 'stage' ? h('div', { class: 'iw-ss__ink is-stage is-b' }) : null;
+      const seed = (artSeed += 1);
+      ink.style.clipPath = L.style.clipPath = 'inset(0 0 0 100%)';
+      if (ink2) ink2.style.clipPath = ink.style.clipPath;
+      art.append(...[ink2, ink, L].filter(Boolean));
+      restartAnim(frame, kind === 'stage' ? 'is-hit' : 'is-flip');
+      whenReady(L._img, () => {
+        if (kind === 'time') {
+          // day → dusk: the ink edge sweeps right-to-left (the sun sets west); dusk → day the other way
+          const edge = sweepEdge(seed), dir = time === 'dusk' ? -1 : 1, D = 0.66;
+          tween(D, (k) => { ink.style.clipPath = sweepClip(edge, W, H, easeInOutCubic(k), dir); });
+          tween(D, (k) => { L.style.clipPath = sweepClip(edge, W, H, easeInOutCubic(k), dir); }, finish, 0.11);
+        } else {
+          // new stage: an ink splat thrown from the stage list side bursts open, carrying the new art inside it
+          let oy = H * 0.5;
+          if (fromEl && fromEl.isConnected) {
+            const fr = fromEl.getBoundingClientRect(), ar = art.getBoundingClientRect();
+            if (ar.height > 0) oy = clamp(((fr.top + fr.height / 2 - ar.top) / ar.height) * H, H * 0.12, H * 0.88);
+          }
+          const ox = W * 0.02, R = splatCover(ox, oy, W, H), D = 0.6;
+          const grow = (el, s, k) => { el.style.clipPath = splatClip(ox, oy, R * easeOutCubic(k), s); };
+          tween(D, (k) => grow(ink2, seed + 7, k));
+          tween(D, (k) => grow(ink, seed, k), null, 0.05);
+          tween(D, (k) => grow(L, seed + 3, k), finish, 0.12);
+        }
+      });
+    };
+
+    // ---- stage list: tilted tickets with the render, name tape, time badge, select splat
+    const tickets = maps.map((m, i) => {
+      const imgDay = h('img', { class: 'iw-ticket__img is-day', alt: '', draggable: 'false' });
+      const imgDusk = h('img', { class: 'iw-ticket__img is-dusk', alt: '', draggable: 'false' });
+      for (const [im, t] of [[imgDay, 'day'], [imgDusk, 'dusk']]) {
+        im.addEventListener('error', () => { im.remove(); c.classList.add('is-noart'); }, { once: true });
+        im.src = stageArt(m.id, t, true);
+      }
+      const badge = h('span', { class: 'iw-ticket__time iw-noclick' },
+        h('i', { class: 'iw-ticket__sun', html: GLYPHS.sun }), h('i', { class: 'iw-ticket__moon', html: GLYPHS.moon }));
+      const c = h('button', { class: 'iw-ticket iw-in iw-in--left', style: { '--tilt': `${[-1.2, 0.9, -0.7, 1.1][i % 4]}deg` } },
+        h('span', { class: 'iw-ticket__art' }, h('span', { class: 'iw-ticket__fallback', html: m.thumb || mapThumb(m, i + 2) }), imgDay, imgDusk, h('i', { class: 'iw-ticket__shade' })),
+        h('span', { class: 'iw-ticket__ink', html: splatSVG({ seed: 60 + i * 5, cls: 'iw-fa', r: 58, arms: 9, drops: 5 }) }),
+        h('span', { class: 'iw-ticket__num' }, String(i + 1).padStart(2, '0')),
+        h('span', { class: 'iw-ticket__name' }, m.name),
+        badge,
+        h('span', { class: 'iw-ticket__check', html: GLYPHS.check }));
+      c._mid = m.id;
       c.dataset.cur = 'own';
-      this._fx(c, { tilt: 7 });
-      this._bind(c, { id: 'map-' + m.id, accept: () => {
-        if (st.mapId === m.id) { this._sfx('ui_click'); restartAnim(c, 'is-pick'); return; }
-        st.mapId = m.id; this._sfx('ui_toggle'); this._sfx('splat_small');
-        cards.forEach((x) => x.classList.toggle('is-sel', x === c));
-        restartAnim(c, 'is-pick'); updateStart();
-        this._burstAt(c.querySelector('.iw-mapcard__check'), { count: 10, dist: 4.5, size: 0.8 });
-        restartAnim(start, 'is-recharge');
-      } });
+      this._fx(c, { tilt: 8 });
+      this._bind(c, {
+        id: 'map-' + m.id,
+        accept: (src) => select(m.id, src === 'mouse' ? 'click' : 'lock', c),
+        adjust: (d) => { select(m.id, 'nav', c); setTime(m.id, d < 0 ? 'day' : 'dusk', 'key'); },
+      });
+      badge.addEventListener('click', () => { this._setFocus(c); select(m.id, 'click', c); setTime(m.id, timeOf(m.id) === 'day' ? 'dusk' : 'day', 'mouse'); });
       return c;
     });
+    const refreshTicket = (c) => {
+      const t = timeOf(c._mid);
+      c.classList.toggle('is-dusk', t === 'dusk');
+      c.classList.toggle('is-sel', c._mid === st.mapId);
+    };
+    const listEl = h('div', { class: 'iw-ss__list' }, tickets);
 
+    // ---- match options (bot skill + length)
     const dOpts = Object.values(diffs).map((d) => [d.id, h('span', { class: 'iw-diffopt' }, h('span', { class: 'iw-pips' }, Array.from({ length: 3 }, (_, k) => h('i', { class: k < (DIFF_INFO[d.id]?.pips || 2) ? 'on' : '' }))), d.name)]);
     const dText = h('div', { class: 'iw-setup__desc' });
     const diffSeg = this._seg(dOpts, st.difficulty, (v) => {
@@ -797,55 +991,159 @@ export class Menus {
       safeCall(() => this.api.setSettings && this.api.setSettings({ difficulty: v })); updateStart();
     });
     dText.textContent = DIFF_INFO[st.difficulty]?.text || '';
-    const diffRow = h('div', { class: 'iw-setrow iw-in' }, h('div', { class: 'iw-setrow__label' }, h('i', { html: GLYPHS.bot }), 'BOT SKILL'), diffSeg.el);
+    const diffRow = h('div', { class: 'iw-setrow iw-setrow--stack' }, h('div', { class: 'iw-setrow__label' }, h('i', { html: GLYPHS.bot }), 'BOT SKILL'), diffSeg.el);
     this._bind(diffRow, { id: 'difficulty', type: 'row', adjust: diffSeg.adjust, accept: diffSeg.cycle });
-
     const lOpts = durations.map((d) => [d, durLabel(d)]);
     const lenSeg = this._seg(lOpts, st.duration, (v) => {
       st.duration = v; safeCall(() => this.api.setSettings && this.api.setSettings({ matchLength: v })); updateStart();
     });
-    const lenRow = h('div', { class: 'iw-setrow iw-in' }, h('div', { class: 'iw-setrow__label' }, h('i', { html: GLYPHS.clock }), 'MATCH LENGTH'), lenSeg.el);
+    const lenRow = h('div', { class: 'iw-setrow iw-setrow--stack' }, h('div', { class: 'iw-setrow__label' }, h('i', { html: GLYPHS.clock }), 'MATCH LENGTH'), lenSeg.el);
     this._bind(lenRow, { id: 'length', type: 'row', adjust: lenSeg.adjust, accept: lenSeg.cycle });
+    const matchPanel = this._panel('iw-ss__match iw-in iw-in--up', diffRow, dText, lenRow);
 
+    // ---- your weapon + your look + START
     const lo = this._loadout();
     const W = this._weapons()[lo.weapon];
     const weaponChip = h('button', { class: 'iw-wchip iw-in' },
       h('span', { class: 'iw-wchip__icon', html: weaponIcon(W.kind || lo.weapon) }),
-      h('span', { class: 'iw-wchip__text' }, h('small', null, 'YOUR WEAPON'), h('b', null, W.name)),
-      h('span', { class: 'iw-wchip__edit' }, h('i', { html: GLYPHS.pencil }), 'CHANGE'));
+      h('span', { class: 'iw-wchip__text' }, h('small', null, 'WEAPON'), h('b', null, W.name)),
+      h('span', { class: 'iw-wchip__edit' }, h('i', { html: GLYPHS.pencil })));
     this._fx(weaponChip);
     this._bind(weaponChip, { id: 'weapon', accept: () => { this._sfx('ui_click'); this._go('loadout'); } });
+    const prof = this._profile();
+    const lookAv = h('span', { class: 'iw-lchip__av' }, h('span', { class: 'iw-lchip__blob', html: splatSVG({ seed: 17, cls: 'iw-fa', r: 62, arms: 8, drops: 0 }) }), h('span', { class: 'iw-lchip__squid', html: SQUID }));
+    const lookChip = h('button', { class: 'iw-wchip iw-lchip iw-in' }, lookAv,
+      h('span', { class: 'iw-wchip__text' }, h('small', null, 'SQUIDKID'), h('b', null, prof.name)),
+      h('span', { class: 'iw-wchip__edit' }, h('i', { html: GLYPHS.hanger })));
+    this._fx(lookChip);
+    this._bind(lookChip, { id: 'look', accept: () => { this._sfx('ui_click'); this._go('locker'); } });
+    this._portraitInto(lookAv, { kind: 'head', size: 128 });
 
-    const start = this._btn({
-      id: 'start', label: 'START!', icon: GLYPHS.play, cls: 'iw-btn--start iw-in iw-in--pop', sound: 'ui_confirm',
-      accept: () => this._startMatch(),
-    });
+    const startSub = h('span');
+    const start = this._btn({ id: 'start', label: 'START!', icon: GLYPHS.play, cls: 'iw-btn--start iw-in iw-in--pop', sound: 'ui_confirm', accept: () => this._startMatch() });
     start.querySelector('.iw-btn__text').appendChild(h('span', { class: 'iw-btn__sub' }, startSub));
     start.append(h('span', { class: 'iw-start__charge' }, h('i')), h('span', { class: 'iw-start__ready' }, h('i', { html: GLYPHS.check }), 'READY'), h('span', { class: 'iw-start__chev' }, h('i'), h('i'), h('i')));
-    updateStart();
+    const updateStart = () => {
+      const m = byId(st.mapId);
+      startSub.textContent = `${m ? m.name : ''} · ${TIME_INFO[timeOf(st.mapId)].label} · ${diffs[st.difficulty].name} · ${durLabel(st.duration)}`;
+    };
 
-    const el = h('div', { class: 'iw-screen iw-setup' },
-      h('div', { class: 'iw-scrim-left' }),
-      this._header('TURF WAR', { sub: 'Ink the most turf in 4 v 4 against bots' }),
-      h('div', { class: 'iw-setup__body' },
-        h('div', { class: 'iw-seclabel iw-in' }, h('i', { html: GLYPHS.map }), 'STAGE'),
-        h('div', { class: 'iw-setup__maps' }, cards),
-        this._panel('iw-setup__opts iw-in', diffRow, dText, lenRow),
-        h('div', { class: 'iw-setup__foot' }, weaponChip, start)),
-      this._prompts([['Enter', 'A', 'Select'], [['←', '→'], 'DPad', 'Change'], ['Esc', 'B', 'Back']]));
-    return { el, initial: start };
+    // ---- state changes
+    const renderTime = (anim) => {
+      const t = timeOf(st.mapId);
+      tgl.dataset.time = t; hero.dataset.time = t; el.dataset.time = t;
+      optDay.classList.toggle('is-on', t === 'day'); optDusk.classList.toggle('is-on', t === 'dusk');
+      timeText.textContent = TIME_INFO[t].text;
+      if (anim) { restartAnim(tgl, 'is-flip'); restartAnim(timeText, 'is-in'); }
+      updateStart();
+    };
+    const renderStage = (anim) => {
+      const m = byId(st.mapId), i = maps.indexOf(m);
+      nameEl.innerHTML = m.name.split(' ').map((w, wi) => `<span class="iw-ss__word">${[...w].map((ch, k) => `<span style="--i:${wi * 4 + k}">${esc(ch)}</span>`).join('')}</span>`).join(' ');
+      blurbEl.textContent = m.blurb || '';
+      counter.innerHTML = `STAGE <b>${String(i + 1).padStart(2, '0')}</b><em>/ ${String(maps.length).padStart(2, '0')}</em>`;
+      layoutMap.innerHTML = m.thumb || mapThumb(m, i + 2);
+      if (anim) { restartAnim(caption, 'is-in'); restartAnim(layoutEl, 'is-in'); restartAnim(counter, 'is-in'); }
+      renderTime(false);
+    };
+    const lockIn = () => {
+      this._sfx('ui_confirm');
+      restartAnim(start, 'is-recharge');
+      this._moveFocus(start, 'right');
+    };
+    const select = (id, how, fromEl) => {
+      const t = tickets.find((x) => x._mid === id);
+      if (st.mapId === id) {
+        if (how === 'lock') lockIn();
+        else if (how === 'click') { this._sfx('ui_click'); if (t) restartAnim(t, 'is-pick'); }
+        return;
+      }
+      st.mapId = id;
+      this._setSetting('lastStage', id);
+      tickets.forEach(refreshTicket);
+      if (t) { restartAnim(t, 'is-pick'); this._burstAt(t.querySelector('.iw-ticket__num'), { count: 9, dist: 4, size: 0.7 }); }
+      this._sfx('ui_toggle'); this._sfx('splat_small', 0.06);
+      renderStage(true);
+      showArt('stage', fromEl || t);
+      setBg();
+      restartAnim(start, 'is-recharge');
+      if (how === 'lock') lockIn();
+    };
+    const setTime = (id, time, src) => {
+      if (timeOf(id) === time) {
+        if (src === 'key' || src === 'tab') { this._sfx('ui_error', 0.15); restartAnim(tgl, time === 'day' ? 'is-edge-l' : 'is-edge-r'); }
+        return false;
+      }
+      st.times[id] = time;
+      this._setSetting('stageTimes', { ...st.times });
+      this._sfx('ui_toggle'); this._sfx(time === 'dusk' ? 'squid_in' : 'squid_out', 0.08);
+      const t = tickets.find((x) => x._mid === id);
+      if (t) { refreshTicket(t); restartAnim(t, 'is-timeflip'); }
+      if (id === st.mapId) { renderTime(true); showArt('time'); setBg(); }
+      return true;
+    };
+    this._bind(tgl, { id: 'time', type: 'row', accept: () => setTime(st.mapId, timeOf(st.mapId) === 'day' ? 'dusk' : 'day', 'toggle'), adjust: (d) => setTime(st.mapId, d < 0 ? 'day' : 'dusk', 'key') });
+    this._fx(tgl);
+    optDay.addEventListener('click', () => { this._setFocus(tgl); setTime(st.mapId, 'day', 'mouse'); });
+    optDusk.addEventListener('click', () => { this._setFocus(tgl); setTime(st.mapId, 'dusk', 'mouse'); });
+
+    const el = h('div', { class: 'iw-screen iw-setup iw-ss' },
+      bg, h('div', { class: 'iw-ss__scrim' }),
+      this._header('TURF WAR', { sub: 'Pick a stage and the time of day · 4 v 4 against bots' }),
+      h('div', { class: 'iw-ss__left' }, h('div', { class: 'iw-seclabel iw-in' }, h('i', { html: GLYPHS.map }), 'STAGES'), listEl, matchPanel),
+      hero,
+      h('div', { class: 'iw-ss__foot' }, weaponChip, lookChip, start),
+      this._prompts([[['↑', '↓'], 'DPad', 'Stage'], [['←', '→'], null, 'Day · Dusk'], ['Enter', 'A', 'Select'], ['Esc', 'B', 'Back']]));
+    el.querySelector('.iw-prompts').children[1].querySelector('.iw-padg').innerHTML = padGlyph('LB') + padGlyph('RB');
+
+    // explicit focus graph (rows with ←/→ adjust would otherwise trap the pad in a column)
+    const selTicket = () => tickets.find((x) => x._mid === st.mapId) || tickets[0];
+    const graph = new Map();
+    tickets.forEach((t, i) => graph.set(t, { up: tickets[i - 1] || null, down: tickets[i + 1] || diffRow }));
+    graph.set(diffRow, { up: selTicket, down: lenRow });
+    graph.set(lenRow, { up: diffRow, down: start });
+    graph.set(tgl, { up: null, down: start });
+    graph.set(weaponChip, { up: tgl, down: null, left: lenRow, right: lookChip });
+    graph.set(lookChip, { up: tgl, down: null, left: weaponChip, right: start });
+    graph.set(start, { up: tgl, down: null, left: lookChip, right: null });
+
+    tickets.forEach(refreshTicket);
+    renderStage(false);
+    showArt('instant');
+    setBg();
+    return {
+      el, initial: selTicket(),
+      onFocus: (f) => { if (f._mid && this._navFocus) select(f._mid, 'nav', f); },
+      onNav: (dir) => {
+        if (dir === 'tab_prev' || dir === 'tab_next') { setTime(st.mapId, dir === 'tab_prev' ? 'day' : 'dusk', 'tab'); return true; }
+        return this._graphNav(graph, dir);
+      },
+      tick: (dt) => {
+        for (let i = tweens.length - 1; i >= 0; i--) {
+          const o = tweens[i];
+          o.t += dt;
+          if (o.t < 0) continue;
+          const k = clamp(o.t / o.dur);
+          safeCall(o.step, k);
+          if (k >= 1) { tweens.splice(i, 1); if (o.done) safeCall(o.done); }
+        }
+      },
+      destroy: () => { tweens.length = 0; },
+    };
   }
 
   _startMatch() {
     if (this._starting) return;
     this._starting = true;
     const st = this._setup;
-    const cfg = { mapId: st.mapId, difficulty: st.difficulty, duration: st.duration };
-    safeCall(() => this.api.setSettings && this.api.setSettings({ difficulty: st.difficulty, matchLength: st.duration }));
+    const time = this._stageTime(st.mapId);
+    const cfg = { mapId: st.mapId, time, difficulty: st.difficulty, duration: st.duration };
+    safeCall(() => this.api.setSettings && this.api.setSettings({ difficulty: st.difficulty, matchLength: st.duration, lastStage: st.mapId, stageTimes: { ...(st.times || {}) } }));
     if (this._scr) {
       this._scr.el.classList.add('is-launch');
       const b = this._scr.el.querySelector('.iw-btn--start');
       this._burstAt(b, { count: 18, dist: 11, size: 1.4, ring: true });
+      this._burstAt(this._scr.el.querySelector('.iw-ss__frame'), { count: 14, dist: 16, size: 2.2 });
       this._sfx('splat_big');
     }
     this._runWipe(() => {
@@ -855,21 +1153,62 @@ export class Menus {
     });
   }
 
-  // ================================================================ SCREEN: loadout
-  _scr_loadout() {
-    const Ws = this._weapons();
-    const order = this._weaponOrder().filter((id) => Ws[id]);
-    let equipped = this._loadout().weapon;
-    let shown = equipped;
-    const specials = this._specials();
-    const sub = this._sub();
-    const prof = this._profile();
+  /** Put a live 3D portrait of the player's squidkid into `host` (replacing its fallback squid glyph) when the
+   *  showcase can render one (the UI lab can't → the glyph stays). */
+  _portraitInto(host, { kind = 'head', size = 128, style = null } = {}) {
+    const sc = G.game && G.game.showcase;
+    if (!sc || !sc.portrait) return;
+    const look = style || this._style();
+    const [a] = this._accent();
+    safeCall(() => sc.portrait({ style: look, color: a, kind, size, weapon: this._loadout().weapon }, (cv) => {
+      if (!cv || !host.isConnected) return;
+      const img = h('span', { class: 'iw-portrait' });
+      img.appendChild(cv);
+      const old = host.querySelector('.iw-portrait');
+      if (old) old.remove();
+      host.appendChild(img);
+      host.classList.add('has-portrait');
+    }));
+  }
 
-    // ---- name field
+  /** The player's look, resolved against the live catalog exactly like the in-match Character does (fields never
+   *  saved derive from the name hash, so the locker shows the same kid you play as). */
+  _style() {
+    const p = this._profile();
+    const raw = p.style && typeof p.style === 'object' ? p.style : (this._styleCache || {});
+    try { return LOOK.resolveStyle({ ...raw }, fnv(p.name || 'Player')); } catch (e) { return { ...raw }; }
+  }
+  _saveStyle(style) {
+    const clean = { ...style };
+    this._styleCache = clean;
+    if (this.api.setProfileStyle) { safeCall(() => this.api.setProfileStyle(clean)); return; }
+    // until the engine exposes api.setProfileStyle: the same localStorage record main.js saves the profile to
+    const g = G.game;
+    if (g && g.profile) { g.profile.style = clean; try { localStorage.setItem('inkwave.profile', JSON.stringify(g.profile)); } catch (e) { /* private mode */ } }
+  }
+
+  // ================================================================ SCREEN: locker (choose + customise your squidkid)
+  /** Catalog slots the locker can edit, built from the live tables in character-style.js (never hard-coded counts). */
+  _lockerSlots() {
+    const L = LOOK;
+    const n = (x) => (Array.isArray(x) ? x.length : Math.max(0, x | 0));
+    return {
+      hair: { key: 'hair', title: 'TENTACLE STYLE', count: n(L.HAIR_STYLES), names: L.HAIR_STYLE_NAMES || L.HAIR_NAMES, art: 'portrait', kind: 'head', cause: 'hair' },
+      hat: { key: 'hat', title: 'HEADGEAR', count: n(L.HATS), names: L.HAT_NAMES, art: 'portrait', kind: 'head', cause: 'hair' },
+      eyes: { key: 'eyes', title: 'EYES', count: n(L.IRIS), names: L.IRIS_NAMES, art: 'iris', cause: 'eyes' },
+      brows: { key: 'brows', title: 'BROWS', count: n(L.BROWS), names: L.BROW_NAMES, art: 'portrait', kind: 'face', cause: 'eyes' },
+      skin: { key: 'skin', title: 'SKIN TONE', count: n(L.SKIN_TONES), names: L.SKIN_NAMES, art: 'skin', cause: 'skin' },
+      outfit: { key: 'outfit', title: 'OUTFIT', count: n(L.OUTFITS), names: L.OUTFIT_NAMES, art: 'portrait', kind: 'body', cause: 'outfit' },
+    };
+  }
+
+  /** Squidkid name field (Enter/click to edit, Esc cancels, blank names are refused). */
+  _nameRow() {
+    const prof = this._profile();
     const input = h('input', { class: 'iw-name__input', type: 'text', maxlength: '16', spellcheck: 'false', autocomplete: 'off', value: prof.name });
     input.dataset.orig = prof.name;
     const nameRow = h('div', { class: 'iw-name iw-in' },
-      h('span', { class: 'iw-name__label' }, 'SQUIDKID NAME'),
+      h('span', { class: 'iw-name__label' }, 'NAME'),
       h('span', { class: 'iw-name__field' }, input, h('i', { class: 'iw-name__pen', html: GLYPHS.pencil })));
     const commit = () => {
       nameRow.classList.remove('is-editing');
@@ -877,29 +1216,277 @@ export class Menus {
       const v = input.value.replace(/\s+/g, ' ').trim().slice(0, 16);
       if (!v) { input.value = input.dataset.orig; this._sfx('ui_error'); restartAnim(nameRow, 'is-shake'); return; }
       input.value = v;
-      if (v !== input.dataset.orig) { input.dataset.orig = v; safeCall(() => this.api.setProfileName && this.api.setProfileName(v)); this._sfx('ui_confirm'); restartAnim(nameRow, 'is-saved'); }
+      if (v !== input.dataset.orig) {
+        input.dataset.orig = v; safeCall(() => this.api.setProfileName && this.api.setProfileName(v)); this._sfx('ui_confirm'); restartAnim(nameRow, 'is-saved');
+        if (nameRow._onChange) nameRow._onChange(v);
+      }
     };
     input.addEventListener('blur', commit);
     input.addEventListener('focus', () => { nameRow.classList.add('is-editing'); input.dataset.orig = input.value; setTimeout(() => input.select(), 0); });
     input.addEventListener('keydown', (e) => {
-      // Handle commit/cancel here so it works even if the engine forwards keys late; stop them reaching the menu nav.
+      // commit/cancel here so it works even if the engine forwards keys late; keep them away from the menu nav
       if (e.key === 'Enter' || e.key === 'NumpadEnter') { e.preventDefault(); e.stopPropagation(); input.blur(); }
       else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); input.value = input.dataset.orig; input.dataset.cancel = '1'; input.blur(); }
       else if (e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === 'Tab') { e.preventDefault(); e.stopPropagation(); input.blur(); this.setInputMode('kbm'); this._nav(e.key === 'ArrowUp' ? 'up' : 'down'); }
     });
     this._bind(nameRow, { id: 'name', accept: () => { this._sfx('ui_click'); input.focus(); } });
     input.addEventListener('pointerdown', () => this._setFocus(nameRow));
+    nameRow._input = input;
+    return nameRow;
+  }
 
-    // ---- weapon cards (pointer ink, 3D tilt + parallax, press squash, equip splash)
+  _scr_locker() {
+    const slots = this._lockerSlots();
+    const presets = (Array.isArray(LOOK.PRESETS) ? LOOK.PRESETS : []).filter((p) => p && p.style);
+    const resolve = (st) => { try { return LOOK.resolveStyle({ ...st }, 0); } catch (e) { return { ...st }; } };
+    const same = (a, b) => { for (const k in a) if (a[k] !== b[k]) return false; for (const k in b) if (a[k] !== b[k]) return false; return true; };
+    let style = this._style();
+    const tabs = LOCKER_TABS.map((t) => ({ ...t, sections: t.sections.filter((k) => (k === '_presets' ? presets.length : slots[k] && slots[k].count > 0)) })).filter((t) => t.sections.length);
+    let tabIdx = clamp(this._lockerTab || 0, 0, tabs.length - 1);
+    const sc = G.game && G.game.showcase;
+    const teamColor = () => (G.teamColors && G.teamColors[0]) || this._accent()[0];
+    const reduced = prefersReducedMotion();
+
+    const nameRow = this._nameRow();
+
+    // ---- tabs
+    const tabsEl = h('div', { class: 'iw-tabs iw-ltabs' });
+    const pill = h('span', { class: 'iw-tabs__hl' });
+    const tabBtns = tabs.map((t, i) => {
+      const b = h('button', { class: 'iw-tab' }, h('i', { html: GLYPHS[t.icon] || GLYPHS.star }), h('span', null, t.label));
+      this._bind(b, { id: 'ltab-' + t.id, type: 'tab', accept: () => selectTab(i, true), adjust: (d) => { if (selectTab(i + d, true)) this._setFocus(tabBtns[tabIdx]); } });
+      return b;
+    });
+    tabsEl.append(h('span', { class: 'iw-tabs__hint' }, this._hint('Q', 'LB')), pill, ...tabBtns, h('span', { class: 'iw-tabs__hint' }, this._hint('E', 'RB')));
+
+    // ---- grid + info
+    const gridWrap = h('div', { class: 'iw-lgrids' });
+    const infoSub = h('small'), infoName = h('b'), infoText = h('span', { class: 'iw-linfo__text' });
+    const infoEq = h('em', { class: 'iw-linfo__eq' }, h('i', { html: GLYPHS.check }), 'WEARING');
+    const info = h('div', { class: 'iw-linfo' }, h('div', { class: 'iw-linfo__head' }, h('div', { class: 'iw-linfo__names' }, infoSub, infoName), infoEq), infoText);
+    const panel = this._panel('iw-lpanel iw-in', gridWrap, info);
+
+    // ---- footer: shuffle + done
+    const shuffle = this._btn({ id: 'shuffle', label: 'SHUFFLE', icon: GLYPHS.dice, cls: 'iw-btn--ghost iw-lbtn iw-lbtn--dice', sound: null, accept: () => randomise() });
+    shuffle.appendChild(h('span', { class: 'iw-lbtn__key' }, this._hint('R', null)));
+    const done = this._btn({ id: 'done', label: 'DONE', icon: GLYPHS.check, cls: 'iw-btn--primary iw-lbtn', sound: 'ui_confirm', accept: () => this._back() });
+    const saved = h('span', { class: 'iw-lsaved' }, h('i', { html: GLYPHS.check }), h('span', null, 'Saves automatically'));
+    const foot = h('div', { class: 'iw-lfoot iw-in iw-in--up' }, shuffle, saved, done);
+    const body = h('div', { class: 'iw-locker__body' }, tabsEl, panel, foot);
+
+    // ---- right side: the kid's name tag (editable) above the pedestal, drag hint below, the current look as chips
+    const spinHint = h('div', { class: 'iw-lspin iw-in iw-in--up' }, h('i', { html: GLYPHS.rotate }),
+      h('span', { class: 'iw-kbm' }, 'DRAG TO SPIN'), h('span', { class: 'iw-padg', html: padGlyph('RS') + '<b>SPIN</b>' }));
+    const sheet = h('div', { class: 'iw-lsheet' });
+    const tag = h('div', { class: 'iw-ltag iw-in iw-in--down' }, h('span', { class: 'iw-ltag__blob', html: splatSVG({ seed: 44, cls: 'iw-fa', r: 60, arms: 9, drops: 3 }) }), nameRow, sheet);
+
+    const el = h('div', { class: 'iw-screen iw-locker' },
+      h('div', { class: 'iw-scrim-left' }),
+      this._header('LOCKER', { sub: 'Choose your squidkid, then make it yours' }),
+      body, tag, spinHint,
+      this._prompts([['Enter', 'A', 'Wear'], [['Q', 'E'], null, 'Tabs'], ['R', null, 'Shuffle'], ['Esc', 'B', 'Done']]));
+    el.querySelector('.iw-prompts').children[1].querySelector('.iw-padg').innerHTML = padGlyph('LB') + padGlyph('RB');
+
+    // ---- tiles
+    let tiles = [];
+    let gen = 0;
+    const handles = [];
+    const tileStyle = (t) => (t._sec.key === '_presets' ? resolve(presets[t._i].style) : { ...style, [t._sec.key]: t._i });
+    const isOn = (t) => (t._sec.key === '_presets' ? same(resolve(presets[t._i].style), style) : style[t._sec.key] === t._i);
+    const optName = (sec, i) => (sec.key === '_presets' ? presets[i].name : (sec.names && sec.names[i]) || `${sec.title[0]}${sec.title.slice(1).toLowerCase()} ${i + 1}`);
+    const fallbackArt = (sec, i) => {
+      if (sec.art === 'skin') return skinSwatch(LOOK.SKIN_TONES[i]);
+      if (sec.art === 'iris') return irisSwatch(LOOK.IRIS[i]);
+      if (sec.key === 'outfit') return outfitIcon(LOOK.OUTFITS[i]);
+      return `<span class="iw-ltile__squid">${SQUID}</span>`;
+    };
+    const makeTile = (sec, i, n) => {
+      const t = h('button', { class: `iw-ltile iw-ltile--${sec.art === 'portrait' ? sec.kind : sec.art} iw-rowin`, style: { '--i': n, '--tilt': `${[-1.4, 1, -0.6, 1.3, -1, 0.7][n % 6]}deg` } },
+        h('span', { class: 'iw-ltile__blob', html: splatSVG({ seed: 90 + n * 7, cls: 'iw-fa', r: 58, arms: 8, drops: 0 }) }),
+        h('span', { class: 'iw-ltile__art', html: fallbackArt(sec, i) }),
+        sec.art === 'portrait' || sec.key === '_presets' ? h('span', { class: 'iw-ltile__name' }, optName(sec, i)) : null,
+        h('span', { class: 'iw-ltile__eq', html: GLYPHS.check }));
+      t._sec = sec; t._i = i;
+      t.dataset.cur = 'own';
+      this._fx(t, { tilt: 12 });
+      this._bind(t, { id: `lt-${sec.key}-${i}`, accept: () => wear(t) });
+      return t;
+    };
+    // columns per section so every tab fits the fixed grid area: presets 5 · heads 8 · bodies 6 · swatches 10
+    const cols = (sec) => (sec.key === '_presets' ? 5 : sec.art === 'portrait' ? (sec.kind === 'body' ? 6 : 8) : 10);
+    const buildTab = (dirSign) => {
+      for (const hd of handles.splice(0)) hd && hd.cancel && hd.cancel();
+      gridWrap.innerHTML = '';
+      tiles = [];
+      const tab = tabs[tabIdx];
+      for (const k of tab.sections) {
+        const sec = k === '_presets' ? { key: '_presets', title: 'CHOOSE YOUR SQUIDKID', count: presets.length, art: 'portrait', kind: 'bust', cause: 'preset' } : slots[k];
+        const grid = h('div', { class: `iw-lgrid iw-lgrid--${sec.art === 'portrait' ? sec.kind : 'swatch'}`, style: { '--cols': cols(sec) } });
+        for (let i = 0; i < sec.count; i++) { const t = makeTile(sec, i, tiles.length); tiles.push(t); grid.appendChild(t); }
+        gridWrap.appendChild(h('section', { class: 'iw-lsec', style: { '--dir': dirSign } },
+          h('div', { class: 'iw-lsec__title' }, h('span', null, sec.title), h('small', null, `${sec.count} ${sec.key === '_presets' ? 'LOOKS' : 'OPTIONS'}`)), grid));
+      }
+      refresh();
+      requestPortraits();
+    };
+    const refresh = () => {
+      for (const t of tiles) t.classList.toggle('is-on', isOn(t));
+      if (this._focus && this._focus._sec) showInfo(this._focus);
+      renderSheet();
+    };
+    // live 3D portraits: every tile shows *your* kid wearing that option (presets show the preset look)
+    const requestPortraits = () => {
+      if (!sc || !sc.portrait) return;
+      const g = ++gen;
+      for (const hd of handles.splice(0)) hd && hd.cancel && hd.cancel();
+      const col = teamColor();
+      for (const t of tiles) {
+        const sec = t._sec;
+        if (sec.art !== 'portrait') continue;
+        const hd = safeCall(() => sc.portrait({ style: tileStyle(t), color: col, kind: sec.kind, size: sec.kind === 'body' ? 224 : 176, weapon: this._loadout().weapon }, (cv) => {
+          if (!cv || g !== gen || !t.isConnected) return;
+          const art = t.querySelector('.iw-ltile__art');
+          const wrap = h('span', { class: 'iw-ltile__pic' + (t.classList.contains('has-pic') ? ' is-swap' : '') });
+          wrap.appendChild(cv);
+          const old = art.querySelector('.iw-ltile__pic');
+          art.appendChild(wrap);
+          t.classList.add('has-pic');
+          if (old) setTimeout(() => old.remove(), 260);
+        }));
+        handles.push(hd);
+      }
+    };
+    const showInfo = (t) => {
+      const sec = t._sec, i = t._i;
+      infoSub.textContent = sec.key === '_presets' ? 'SQUIDKID' : sec.title;
+      infoName.textContent = optName(sec, i);
+      infoText.textContent = sec.key === '_presets' ? (presets[i].blurb || '') : `${i + 1} of ${sec.count}`;
+      info.classList.toggle('is-on', isOn(t));
+      restartAnim(info, 'is-swap');
+    };
+    // the current look as a sticker sheet (one chip per slot)
+    const renderSheet = () => {
+      const rows = [['hair', 'HAIR'], ['hat', 'HAT'], ['eyes', 'EYES'], ['brows', 'BROWS'], ['skin', 'SKIN'], ['outfit', 'OUTFIT']].filter(([k]) => slots[k] && slots[k].count > 0);
+      sheet.innerHTML = '';
+      for (const [k, label] of rows) {
+        const sec = slots[k], i = style[k] | 0;
+        const dot = sec.art === 'skin' ? `<i class="iw-lsheet__dot" style="background:${LOOK.SKIN_TONES[i]}"></i>`
+          : sec.art === 'iris' ? `<i class="iw-lsheet__dot" style="background:linear-gradient(${LOOK.IRIS[i][0]},${LOOK.IRIS[i][1]})"></i>`
+            : k === 'outfit' ? `<i class="iw-lsheet__dot" style="background:linear-gradient(135deg,${LOOK.OUTFITS[i].shirt} 50%,${LOOK.OUTFITS[i].shorts} 50%)"></i>` : '';
+        sheet.appendChild(h('div', { class: 'iw-lsheet__row', html: `<small>${label}</small>${dot}<b>${esc(optName(sec, i))}</b>` }));
+      }
+    };
+
+    // ---- actions
+    const apply = (next, cause, fromEl) => {
+      next = resolve(next);
+      if (same(next, style)) { this._sfx('ui_click'); if (fromEl) restartAnim(fromEl, 'is-pick'); return false; }
+      style = next;
+      this._saveStyle(style);
+      if (sc && sc.setStyle) safeCall(() => sc.setStyle(style, cause));
+      this._sfx('ui_confirm'); this._sfx('splat_small', 0.06);
+      if (fromEl) { restartAnim(fromEl, 'is-pick'); this._burstAt(fromEl, { count: 10, dist: 6, size: 0.9 }); }
+      restartAnim(saved, 'is-on');
+      refresh();
+      requestPortraits();
+      return true;
+    };
+    const wear = (t) => {
+      if (t._sec.key === '_presets') apply(presets[t._i].style, 'preset', t);
+      else apply({ ...style, [t._sec.key]: t._i }, t._sec.cause, t);
+    };
+    const randomise = () => {
+      const roll = LOOK.randomStyle ? LOOK.randomStyle(Math.random) : Object.fromEntries(Object.values(slots).filter((s) => s.count).map((s) => [s.key, (Math.random() * s.count) | 0]));
+      this._sfx('ui_toggle');
+      restartAnim(shuffle, 'is-roll');
+      if (!apply(roll, 'random', null)) apply(LOOK.randomStyle ? LOOK.randomStyle(Math.random) : roll, 'random', null);
+      if (!reduced) this._burstAt(shuffle.querySelector('.iw-btn__icon'), { count: 12, dist: 7, size: 1 });
+    };
+
+    // ---- tab switching (keeps the equipped tile under the cursor when switching from the grid)
+    const movePill = (instant) => {
+      const b = tabBtns[tabIdx];
+      if (!b || !b.offsetWidth) return;
+      if (instant) pill.classList.add('is-instant');
+      pill.style.transform = `translateX(${b.offsetLeft}px)`;
+      pill.style.width = `${b.offsetWidth}px`;
+      if (instant) { void pill.offsetWidth; pill.classList.remove('is-instant'); } // eslint-disable-line no-void
+    };
+    const selectTab = (i, sound) => {
+      if (i < 0 || i >= tabs.length) { if (sound) this._sfx('ui_error', 0.15); return false; }
+      if (i === tabIdx && tiles.length) return false;
+      const dirSign = i >= tabIdx ? 1 : -1;
+      tabIdx = i; this._lockerTab = i;
+      tabBtns.forEach((b, k) => b.classList.toggle('is-sel', k === i));
+      restartAnim(pill, 'is-move');
+      movePill(false);
+      if (sound) this._sfx('ui_toggle');
+      buildTab(dirSign);
+      return true;
+    };
+    tabBtns.forEach((b, k) => b.classList.toggle('is-sel', k === tabIdx));
+    buildTab(1);
+    const equippedTile = () => tiles.find((t) => t.classList.contains('is-on')) || tiles[0];
+
+    return {
+      el,
+      initial: () => equippedTile(),
+      afterMount: () => {
+        movePill(true);
+        if (sc && sc.showLocker) safeCall(() => sc.showLocker(style, teamColor(), this._loadout().weapon));
+      },
+      onFocus: (f) => { if (f._sec) showInfo(f); },
+      onNav: (dir) => {
+        if (dir === 'tab_prev' || dir === 'tab_next') {
+          const onTab = this._focus && this._focus.dataset.nav === 'tab';
+          if (selectTab(tabIdx + (dir === 'tab_next' ? 1 : -1), true)) this._setFocus(onTab ? tabBtns[tabIdx] : equippedTile(), { snap: false });
+          else restartAnim(tabsEl, dir === 'tab_next' ? 'is-edge-r' : 'is-edge-l');
+          return true;
+        }
+        if (dir === 'alt') { randomise(); return true; }
+        return false;
+      },
+      destroy: () => {
+        gen++;
+        for (const hd of handles.splice(0)) hd && hd.cancel && hd.cancel();
+        const inp = nameRow._input;
+        if (document.activeElement === inp) inp.blur();
+        // the loadout keeps the kid on the pedestal (camera glides over); anything else sends it back into the ink
+        if (sc && this.current !== 'loadout') safeCall(() => sc.hide());
+      },
+    };
+  }
+
+  // ================================================================ SCREEN: loadout (weapon select)
+  _scr_loadout() {
+    const Ws = this._weapons();
+    const order = this._weaponOrder().filter((id) => Ws[id]);
+    let equipped = this._loadout().weapon;
+    let shown = equipped;
+    const specials = this._specials();
+    const subs = this.api.subs || SUB;
+    const classOf = (w) => w.class || KIND_LABEL[w.kind] || (w.kind ? w.kind[0].toUpperCase() + w.kind.slice(1) : '');
+    const subOf = (w) => (w.sub && subs[w.sub]) || this._sub();
+    // "NEW" stickers for weapons the player hasn't looked at yet (the original four count as seen)
+    const s0 = this._settings();
+    const seen = new Set(Array.isArray(s0.seenWeapons) ? s0.seenWeapons : ['shooter', 'roller', 'charger', 'blaster']);
+    const markSeen = (id) => { if (seen.has(id)) return; seen.add(id); this._setSetting('seenWeapons', [...seen]); };
+
+    // ---- weapon cards (grid scales 4 → 9+: 4 columns up to 8, then 5)
+    const n = order.length;
+    const cols = n <= 4 ? Math.max(1, n) : n <= 8 ? 4 : 5;
+    const compact = n > cols;
     const cards = order.map((id, i) => {
       const w = Ws[id];
-      const c = h('button', { class: 'iw-wcard iw-in iw-in--pop' + (id === equipped ? ' is-equipped' : ''), style: { '--tilt': `${[-1.5, 1, -0.8, 1.4][i % 4]}deg` } },
+      const isNew = !seen.has(id);
+      const c = h('button', { class: 'iw-wcard iw-in iw-in--pop' + (id === equipped ? ' is-equipped' : '') + (isNew ? ' is-new' : ''), style: { '--tilt': `${[-1.5, 1, -0.8, 1.4, -1.1][i % 5]}deg` } },
         h('span', { class: 'iw-wcard__ink' }),
         h('span', { class: 'iw-wcard__blob', html: splatSVG({ seed: 40 + i * 3, cls: 'iw-fa', r: 58, arms: 8, drops: 0 }) }),
         h('span', { class: 'iw-wcard__icon', html: weaponIcon(w.kind || id) }),
         h('span', { class: 'iw-wcard__name' }, w.name),
-        h('span', { class: 'iw-wcard__kind' }, KIND_LABEL[w.kind] || w.kind || ''),
+        h('span', { class: 'iw-wcard__kind' }, classOf(w)),
         h('span', { class: 'iw-wcard__eq', html: GLYPHS.check }),
+        isNew ? h('span', { class: 'iw-wcard__new' }, 'NEW!') : null,
         h('span', { class: 'iw-wcard__glare' }));
       c.dataset.cur = 'own';
       this._fx(c, { tilt: 14 });
@@ -921,21 +1508,24 @@ export class Menus {
     const kind = h('span', { class: 'iw-wd__kind' });
     const nm = h('span', { class: 'iw-wd__name iw-display' });
     const eqBadge = h('span', { class: 'iw-wd__eq' }, h('i', { html: GLYPHS.check }), 'EQUIPPED');
-    const cmpBadge = h('span', { class: 'iw-wd__cmp' }, 'vs ', h('b'));
+    const cmpBadge = h('span', { class: 'iw-wd__cmp' }, h('i', { class: 'iw-wd__cmpdot' }), 'vs ', h('b'));
     const blurb = h('p', { class: 'iw-wd__blurb' });
-    const statEls = STAT_LABELS.map(([k, label], i) => {
+    const statKeys = [...STAT_LABELS.map(([k]) => k), ...Object.keys((Ws[order[0]] && Ws[order[0]].stats) || {}).filter((k) => !STAT_LABELS.some(([x]) => x === k))].slice(0, 6);
+    const statEls = statKeys.map((k, i) => {
+      const label = (STAT_LABELS.find(([x]) => x === k) || [k, k[0].toUpperCase() + k.slice(1)])[1];
       const bar = h('span', { class: 'iw-stat__bar' }, h('i', { class: 'iw-stat__ghost' }), h('i', { class: 'iw-stat__fill' }), h('i', { class: 'iw-stat__ticks' }));
       const num = h('b', { class: 'iw-stat__num' }, '0');
-      const row = h('div', { class: 'iw-stat', style: { '--i': i } }, h('span', { class: 'iw-stat__label' }, label), bar, num);
-      return { k, row, bar, num, cur: 0, target: 0, shownInt: -1 };
+      const delta = h('em', { class: 'iw-stat__delta' });
+      const row = h('div', { class: 'iw-stat', style: { '--i': i } }, h('span', { class: 'iw-stat__label' }, h('i', { html: STAT_ICONS[k] || GLYPHS.star }), label), bar, num, delta);
+      return { k, row, bar, num, delta, cur: 0, target: 0, shownInt: -1, delay: 0.25 + i * 0.07 };
     });
-    const subChip = h('div', { class: 'iw-kit' }, h('span', { class: 'iw-kit__icon', html: SUB_ICONS.bomb }),
-      h('div', null, h('small', null, 'SUB'), h('b', null, sub.name), h('span', null, `Uses ${Math.round(sub.inkCost)}% of your ink tank. Hold to aim, release to throw.`)));
-    const spIcon = h('span', { class: 'iw-kit__icon' });
-    const spName = h('b'); const spBlurb = h('span');
-    const spChip = h('div', { class: 'iw-kit' }, spIcon, h('div', null, h('small', null, 'SPECIAL'), spName, spBlurb));
-    const detail = this._panel('iw-wd iw-in is-enter',
-      h('div', { class: 'iw-wd__head' }, h('div', null, kind, nm), h('div', { class: 'iw-wd__badges' }, cmpBadge, eqBadge)),
+    const subIcon = h('span', { class: 'iw-kit__icon' }), subName = h('b'), subText = h('span');
+    const subChip = h('div', { class: 'iw-kit' }, subIcon, h('div', null, h('small', null, 'SUB WEAPON'), subName, subText));
+    const spIcon = h('span', { class: 'iw-kit__icon is-sp' });
+    const spName = h('b'); const spBlurb = h('span'); const spCost = h('em', { class: 'iw-kit__cost' });
+    const spChip = h('div', { class: 'iw-kit' }, spIcon, h('div', null, h('small', null, 'SPECIAL'), h('div', { class: 'iw-kit__row' }, spName, spCost), spBlurb));
+    const detail = this._panel('iw-wd iw-in iw-in--up',
+      h('div', { class: 'iw-wd__head' }, h('div', { class: 'iw-wd__title' }, kind, nm), h('div', { class: 'iw-wd__badges' }, cmpBadge, eqBadge)),
       blurb,
       h('div', { class: 'iw-wd__stats' }, statEls.map((s) => s.row)),
       h('div', { class: 'iw-wd__kits' }, subChip, spChip));
@@ -945,7 +1535,7 @@ export class Menus {
       const first = shown === id && !entered;
       shown = id;
       const w = Ws[id], eqW = Ws[equipped];
-      kind.textContent = (KIND_LABEL[w.kind] || w.kind || '').toUpperCase();
+      kind.textContent = classOf(w).toUpperCase();
       nm.textContent = w.name;
       blurb.textContent = w.blurb || '';
       detail.classList.toggle('is-equipped', id === equipped);
@@ -960,29 +1550,54 @@ export class Menus {
         const up = id !== equipped && v > g + 0.01, down = id !== equipped && v < g - 0.01;
         s.bar.classList.toggle('is-up', up); s.bar.classList.toggle('is-down', down);
         s.num.classList.toggle('is-up', up); s.num.classList.toggle('is-down', down);
+        const d = Math.round((v - g) * 100);
+        s.delta.textContent = up ? `+${d}` : down ? `${d}` : '';
+        s.delta.className = 'iw-stat__delta' + (up ? ' is-up' : down ? ' is-down' : '');
       }
+      const sub = subOf(w);
+      subIcon.innerHTML = SUB_ICONS[sub.id] || SUB_ICONS.bomb;
+      subName.textContent = sub.name;
+      subText.textContent = `Costs ${Math.round(sub.inkCost || 70)}% of your ink tank. Hold to aim, release to throw.`;
       const sp = specials[w.special] || Object.values(specials)[0];
       spIcon.innerHTML = specialIcon(sp.id);
       spName.textContent = sp.name;
       spBlurb.textContent = sp.blurb || '';
+      spCost.textContent = w.specialCost ? `${Math.round(w.specialCost)}p` : '';
+      spCost.title = 'Turf points to fill the special gauge';
       if (!first) restartAnim(detail, 'is-swap');
+      markSeen(id);
     };
     render(equipped);
 
+    // ---- your squidkid (→ locker)
+    const prof = this._profile();
+    const lookAv = h('span', { class: 'iw-lchip__av' }, h('span', { class: 'iw-lchip__blob', html: splatSVG({ seed: 17, cls: 'iw-fa', r: 62, arms: 8, drops: 0 }) }), h('span', { class: 'iw-lchip__squid', html: SQUID }));
+    const lookChip = h('button', { class: 'iw-wchip iw-lchip iw-lchip--sm iw-in iw-in--down' }, lookAv,
+      h('span', { class: 'iw-wchip__text' }, h('small', null, 'SQUIDKID'), h('b', null, prof.name)),
+      h('span', { class: 'iw-wchip__edit' }, h('i', { html: GLYPHS.hanger }), 'LOCKER'));
+    this._fx(lookChip);
+    this._bind(lookChip, { id: 'look', accept: () => { this._sfx('ui_click'); this._go('locker'); } });
+    this._portraitInto(lookAv, { kind: 'head', size: 128 });
+
+    const grid = h('div', { class: 'iw-wgrid' + (compact ? ' is-compact' : ''), style: { '--cols': cols } }, cards);
     const el = h('div', { class: 'iw-screen iw-loadout' },
       h('div', { class: 'iw-scrim-left' }),
-      this._header('LOADOUT', { sub: 'Pick your weapon — your squidkid shows it off on the right' }),
+      this._header('LOADOUT', { sub: `${n} weapons · every one comes with a sub and a special` }),
       h('div', { class: 'iw-loadout__body' },
-        nameRow,
-        h('div', { class: 'iw-seclabel iw-in' }, h('i', { html: WEAPON_ICONS.shooter }), 'WEAPON'),
-        h('div', { class: 'iw-wgrid' }, cards),
+        h('div', { class: 'iw-seclabel iw-in' }, h('i', { html: WEAPON_ICONS.shooter }), 'WEAPON', h('span', { class: 'iw-seclabel__count' }, `${order.indexOf(equipped) + 1} / ${n}`)),
+        grid,
         detail),
-      this._prompts([['Enter', 'A', 'Equip'], ['Esc', 'B', 'Back']]));
+      h('div', { class: 'iw-loadout__look' }, lookChip),
+      this._prompts([['Enter', 'A', 'Equip'], [['←', '→'], 'DPad', 'Browse'], ['Esc', 'B', 'Back']]));
+    const countEl = el.querySelector('.iw-seclabel__count');
     let enterT = 0;
     return {
       el,
       initial: cards[order.indexOf(equipped)] || cards[0],
-      onFocus: (f) => { if (f._wid && f._wid !== shown) render(f._wid); },
+      onFocus: (f) => {
+        if (f._wid && f._wid !== shown) render(f._wid);
+        if (f._wid) { countEl.textContent = `${order.indexOf(f._wid) + 1} / ${n}`; if (f.classList.contains('is-new')) { f.classList.remove('is-new'); f.classList.add('was-new'); } }
+      },
       afterMount: () => {
         // stat bars grow in from zero once the panel has popped in
         requestAnimationFrame(() => requestAnimationFrame(() => {
@@ -992,18 +1607,15 @@ export class Menus {
       },
       tick: (dt) => {
         enterT += dt;
-        if (enterT > 1.6 && detail.classList.contains('is-enter')) detail.classList.remove('is-enter');
+        if (!entered) return;
         for (const s of statEls) {
-          if (!entered) continue;
-          const delay = detail.classList.contains('is-enter') ? 0.3 + s.row.style.getPropertyValue('--i') * 0.07 : 0;
-          if (enterT < delay) continue;
+          if (enterT < s.delay) continue;
           s.cur += (s.target - s.cur) * (1 - Math.exp(-dt * 9));
           if (Math.abs(s.target - s.cur) < 0.4) s.cur = s.target;
-          const n = Math.round(s.cur);
-          if (n !== s.shownInt) { s.shownInt = n; s.num.textContent = String(n); }
+          const v = Math.round(s.cur);
+          if (v !== s.shownInt) { s.shownInt = v; s.num.textContent = String(v); }
         }
       },
-      destroy: () => { if (document.activeElement === input) input.blur(); },
     };
   }
 

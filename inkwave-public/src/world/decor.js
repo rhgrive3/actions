@@ -453,6 +453,9 @@ export class Decor {
     this.flags = pts.map(({ team }, i) => ({ team, index: i }));
   }
 
+  // lamp bulbs: a dim warm glass by day, properly lit at dusk (k = environment night factor 0…1)
+  setNight(k = 0) { if (this.bulbMat) this.bulbMat.emissiveIntensity = 0.22 + 0.68 * Math.min(1, Math.max(0, k)); }
+
   setTeamColors(colors) {
     for (const p of this.pads) { p.padMat.uniforms.uColor.value.copy(colors[p.team]); p.barMat.uniforms.uColor.value.copy(colors[p.team]); }
     if (this.flagMesh) {

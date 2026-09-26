@@ -860,5 +860,86 @@ export function createPreview(key, ctx = {}) {
   }
 }
 
+// ================================================================================== JS-driven ink reveals (clip-path)
+// Both generators return a `path('…')`-ready string in the element's own px space. The command structure only depends
+// on the seed, so successive frames differ only in coordinates (cheap to rebuild every frame; no layout reads).
+const f1 = (v) => Math.round(v * 10) / 10;
+function curveThrough(pts) {
+  let d = `L${f1(pts[0][0])} ${f1(pts[0][1])}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[Math.max(0, i - 1)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(pts.length - 1, i + 2)];
+    d += `C${f1(p1[0] + (p2[0] - p0[0]) / 6)} ${f1(p1[1] + (p2[1] - p0[1]) / 6)} ${f1(p2[0] - (p3[0] - p1[0]) / 6)} ${f1(p2[1] - (p3[1] - p1[1]) / 6)} ${f1(p2[0])} ${f1(p2[1])}`;
+  }
+  return d;
+}
+/** Seeded wavy, drippy leading edge: [[dx (fraction of W), y (0..1)]…] with a few ink tongues pushing ahead. */
+export function sweepEdge(seed = 1, rows = 26) {
+  const R = rng(seed * 7919 + 13);
+  const ph = [R() * TAU, R() * TAU, R() * TAU];
+  const tongues = Array.from({ length: 3 + ((R() * 3) | 0) }, () => ({ y: 0.08 + R() * 0.84, w: 0.03 + R() * 0.045, L: 0.05 + R() * 0.08 }));
+  const pts = [];
+  for (let i = 0; i <= rows; i++) {
+    const y = -0.04 + (i / rows) * 1.08;
+    let x = 0.024 * Math.sin(y * 6.3 + ph[0]) + 0.014 * Math.sin(y * 14.1 + ph[1]) + 0.007 * Math.sin(y * 29 + ph[2]);
+    for (const t of tongues) { const d = (y - t.y) / t.w; x += t.L * Math.exp(-d * d * 1.5); }
+    pts.push([x, y]);
+  }
+  return pts;
+}
+/** clip-path for a sweep that covers fraction f (0 = nothing, 1 = all) of a W×H box, travelling right (dir 1) or left (-1). */
+export function sweepClip(edge, W, H, f, dir = 1) {
+  const reach = 0.22 * W, far = W * 0.5 + 40;
+  const base = -reach + f * (W + reach * 2);
+  const pts = edge.map(([x, y]) => [dir > 0 ? base + x * W : W - base - x * W, y * H]);
+  const bx = dir > 0 ? -far : W + far;
+  return `path('M${f1(bx)} ${f1(-0.04 * H - 20)}${curveThrough(pts)}L${f1(bx)} ${f1(1.04 * H + 20)}Z')`;
+}
+/** clip-path for an ink splat of radius r centred on (x, y) (arms reach ≈ 1.5 r, valleys ≈ 0.8 r). */
+export function splatClip(x, y, r, seed = 3) {
+  return `path('${splatShape(x, y, Math.max(0.01, r), { seed, arms: 9, armLen: 0.5, drops: 0 }).core}')`;
+}
+/** Radius a splat centred on (x, y) needs before its valleys clear every corner of a W×H box. */
+export function splatCover(x, y, W, H) {
+  return Math.max(Math.hypot(x, y), Math.hypot(W - x, y), Math.hypot(x, H - y), Math.hypot(W - x, H - y)) / 0.74;
+}
+
+// ================================================================================== locker swatches / fallback art
+/** Skin tone swatch: a glossy round cheek-blob with soft shading. */
+export function skinSwatch(hex) {
+  const id = 'sk' + ((burstSeed += 31) % 1e6);
+  return `<svg viewBox="0 0 64 64" aria-hidden="true"><defs><radialGradient id="${id}" cx=".38" cy=".32" r=".75"><stop offset="0" stop-color="${shade(hex, 0.28)}"/><stop offset=".55" stop-color="${hex}"/><stop offset="1" stop-color="${shade(hex, -0.34)}"/></radialGradient></defs>
+    <circle cx="32" cy="33" r="25" fill="url(#${id})" stroke="${K}" stroke-width="3"/>
+    <ellipse cx="22" cy="40" rx="6" ry="3.4" fill="#ff7a8a" opacity=".32"/><ellipse cx="42" cy="40" rx="6" ry="3.4" fill="#ff7a8a" opacity=".32"/>
+    <ellipse cx="24" cy="22" rx="7" ry="4.2" fill="#fff" opacity=".45" transform="rotate(-24 24 22)"/></svg>`;
+}
+/** Eye colour swatch: almond eye with a two-tone iris (matches the in-game iris gradient). */
+export function irisSwatch(pair) {
+  const [a, b] = Array.isArray(pair) ? pair : [pair, pair];
+  const id = 'ir' + ((burstSeed += 31) % 1e6);
+  return `<svg viewBox="0 0 64 64" aria-hidden="true"><defs><radialGradient id="${id}" cx=".5" cy=".35" r=".65"><stop offset="0" stop-color="${a}"/><stop offset=".7" stop-color="${b}"/><stop offset="1" stop-color="${shade(b, -0.45)}"/></radialGradient></defs>
+    <path d="M5 32 Q32 8 59 32 Q32 56 5 32 Z" fill="#fff" stroke="${K}" stroke-width="3" stroke-linejoin="round"/>
+    <circle cx="32" cy="32" r="13.5" fill="url(#${id})" stroke="${K}" stroke-width="2.5"/>
+    <circle cx="32" cy="32" r="5.2" fill="${K}"/><circle cx="36.5" cy="27" r="3.4" fill="#fff"/><circle cx="27.5" cy="36.5" r="1.6" fill="#fff" opacity=".8"/></svg>`;
+}
+/** Outfit icon (fallback when no 3D portrait): tee + shorts + sneakers in the outfit's colours; team trims use --a. */
+export function outfitIcon(o = {}) {
+  const shirt = o.shirt || '#f4f2ec', shorts = o.shorts || '#27304a', shoe = o.shoe || '#272b34', sole = o.sole || '#f4f2ec', sock = o.sock || '#f7f7f4';
+  const p = o.pattern | 0;
+  const ol = `stroke="${K}" stroke-width="2.6" stroke-linejoin="round"`;
+  const tee = 'M22 6 L13 9.5 L6 19 L12.5 23.5 L16 20 L16 38 L40 38 L40 20 L43.5 23.5 L50 19 L43 9.5 L34 6 Q31.5 11 28 11 Q24.5 11 22 6 Z';
+  let deco = '';
+  if (p === 0) deco = `<path d="M22 6 Q25 11.5 28 11.5 Q31 11.5 34 6" fill="none" stroke="var(--a)" stroke-width="2.4"/><circle cx="28" cy="21" r="5" class="iw-fa" ${ol} stroke-width="1.8"/>`;
+  else if (p === 1) deco = `<path d="M16 17 L40 17 M16 20.5 L40 20.5" stroke="var(--a)" stroke-width="1.7"/>`;
+  else if (p === 2) deco = `<path d="M13 9.5 L22 6 L20 20 L16 20 Z M43 9.5 L34 6 L36 20 L40 20 Z" fill="${shade(shirt, -0.3)}"/><path d="M16 26 L19 26 L19 38 L16 38 Z M40 26 L37 26 L37 38 L40 38 Z" fill="var(--a)"/>`;
+  else deco = `<path d="M17 16 L28 22 L39 16" fill="none" stroke="var(--a)" stroke-width="2.6" stroke-linejoin="round"/><path d="M16 34.5 L40 34.5" stroke="var(--a)" stroke-width="2"/>`;
+  const stripe = p === 1 || p === 2 ? `<path d="M18.5 40 L18.5 49 M37.5 40 L37.5 49" stroke="var(--a)" stroke-width="2"/>` : '';
+  return `<svg viewBox="0 0 56 64" aria-hidden="true">
+    <path d="${tee}" fill="${shirt}" ${ol}/>${deco}<path d="${tee}" fill="none" ${ol}/>
+    <path d="M16.5 38 L39.5 38 L41 50.5 L30.5 50.5 L28 44 L25.5 50.5 L15 50.5 Z" fill="${shorts}" ${ol}/>${stripe}
+    <rect x="18" y="51" width="6" height="4" fill="${sock}" ${ol} stroke-width="2"/><rect x="32" y="51" width="6" height="4" fill="${sock}" ${ol} stroke-width="2"/>
+    <path d="M12 55 Q12 52 16 52 L24.5 52 L25 59 L12 59 Z" fill="${shoe}" ${ol}/><path d="M31 52 L40 52 Q44 52 44 55 L44 59 L31 59 Z" fill="${shoe}" ${ol}/>
+    <path d="M11.5 59 L25.5 59 M30.5 59 L44.5 59" stroke="${sole}" stroke-width="3" stroke-linecap="round"/></svg>`;
+}
+
 // small re-exports used by menus.js
 export { WEAPON_ICONS, SPLAT_ICON };

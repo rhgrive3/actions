@@ -4,6 +4,9 @@
 import { G } from './ctx.js';
 import { MobileInput } from './mobile.js';
 
+// keys whose browser default (focus moves, page scroll) must never fire while the game has the mouse
+const GAME_KEYS = new Set(['Tab', 'Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Slash', 'Quote']);
+
 export class Input {
   constructor(canvas) {
     this.canvas = canvas;
@@ -19,12 +22,18 @@ export class Input {
     this.onKey = null;              // (e) => bool consumed  (menus)
     window.addEventListener('keydown', (e) => {
       // the menus call preventDefault themselves when needed (text fields must still receive keystrokes)
-      if (e.repeat) { if (this.onKey) this.onKey(e, true); return; }
+      // auto-repeat must be swallowed too: holding TAB for the map used to let the repeats move browser focus off the
+      // canvas → pointer lock dropped → the round paused ("opening the map opens the menu")
+      if (e.repeat) {
+        if (e.code === 'Tab' || (this.locked && GAME_KEYS.has(e.code))) e.preventDefault();
+        if (this.onKey) this.onKey(e, true);
+        return;
+      }
       this.lastDevice = 'kbm';
       if (this.onKey && this.onKey(e, false)) return;
       this.keys.add(e.code);
       this.pressed.add(e.code);
-      if (['Tab', 'Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code) && this.locked) e.preventDefault();
+      if (GAME_KEYS.has(e.code) && this.locked) e.preventDefault();
       if (e.code === 'Tab') e.preventDefault();
     });
     window.addEventListener('keyup', (e) => { this.keys.delete(e.code); });

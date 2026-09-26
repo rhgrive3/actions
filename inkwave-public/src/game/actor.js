@@ -18,6 +18,7 @@ import { makeContacts, Hit, GroundHit, WALKABLE } from './physics.js';
 import { WeaponRunner } from './weapons.js';
 
 const _v = new THREE.Vector3(), _v2 = new THREE.Vector3(), _fwd = new THREE.Vector3();
+const _ZERO_MOVE = Object.freeze(new THREE.Vector3());   // move input while planted after a dodge roll
 const DOWN = new THREE.Vector3(0, -1, 0);
 const TAU = Math.PI * 2;
 
@@ -271,6 +272,10 @@ export class Actor {
     // ---- horizontal movement
     if (!this.climbing) this._horizontal(dt, isSquid, onEnemy);
 
+    // ---- dualies: a jump press while firing with a move direction rolls instead of jumping (weapons.js owns the roll:
+    // it spends the ink, emits weapon:dodge and triggers the character's roll; its velocity profile drives _horizontal)
+    if (this.jumpBuffer > 0 && !isSquid && this.grounded && this.weaponRunner.tryDodge?.(this.intent.move)) this.jumpBuffer = 0;
+
     // ---- jump (buffered, with coyote time)
     this.coyote = this.grounded ? P.coyoteTime : this.coyote - dt;
     let jumped = false;
@@ -334,7 +339,7 @@ export class Actor {
   }
 
   _nearCamera() {
-    const c = G.camera; if (!c) return false;
+    const c = G.rig?.gameCam || G.camera; if (!c) return false;
     return c.position.distanceToSquared(this.pos) < 30 * 30;
   }
 
@@ -357,7 +362,9 @@ export class Actor {
   // ------------------------------------------------------------------ horizontal movement model
   _horizontal(dt, isSquid, onEnemy) {
     const P = PLAYER;
-    const mv = this.intent.move;
+    // while a dodge roll runs, the weapon runner owns horizontal velocity; in the post-roll lock you're a planted turret
+    if (this.weaponRunner.dodgeVel?.(this.vel)) return;
+    const mv = this.grounded && this.weaponRunner.lockT > 0 ? _ZERO_MOVE : this.intent.move;
     const mh = Math.hypot(mv.x, mv.z);
     const mag = Math.min(1, mh);
     const vx = this.vel.x, vz = this.vel.z;

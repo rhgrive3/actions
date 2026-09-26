@@ -4,6 +4,7 @@ import { G, emit, on, clamp } from '../core/ctx.js';
 import { MATCH, PLAYER, WEAPON_ORDER, BOT_NAMES, TEAM_NAMES } from '../config.js';
 import { Actor } from './actor.js';
 import { BotBrain } from './bots.js';
+import { randomStyle } from './character-style.js';
 import { PlayerController } from './player.js';
 
 const _v = new THREE.Vector3();
@@ -51,9 +52,9 @@ export class Match {
         const a = new Actor({
           team, slot: s, weapon: weapons[s], isLocal, isBot: !isLocal,
           name: isLocal ? (o.playerName || 'You') : names[ni++ % names.length],
-          style: { hair: (Math.random() * 4) | 0, skin: (Math.random() * 4) | 0 }, CharacterClass,
+          // the local player wears their locker look; everyone else is rolled (outfit/eyes derive from the name seed)
+          style: isLocal && o.style ? { ...o.style } : randomStyle(), CharacterClass,
         });
-        if (isLocal && o.style) { /* reserved for future customisation */ }
         G.scene.add(a.character.root);
         if (!isLocal || o.autopilot) a.bot = new BotBrain(a, o.difficulty);
         this.actors.push(a);

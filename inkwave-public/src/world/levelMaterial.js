@@ -2,6 +2,7 @@
 import * as THREE from 'three';
 import { TEXLIB_GLSL } from './texlib.js';
 import { G } from '../core/ctx.js';
+import { inkUniforms, inkBeforeRender, INK_PARS, INK_COLOR, INK_ROUGH, INK_GEL, INK_SLOPE, INK_EMISSIVE, INK_LIGHTS, INK_LIGHT_MAPS, INK_SHADE } from './inkShading.js';
 
 export function createLevelMaterial(paintTexture, atlasSize, muralTexture = null, opts = {}) {
   const mat = new THREE.MeshPhysicalMaterial({
@@ -26,25 +27,51 @@ export function createLevelMaterial(paintTexture, atlasSize, muralTexture = null
     uAO: { value: opts.lightmap ? 1.0 : 0.0 },
     uAtlasSize: { value: atlasSize },
     uPpm: { value: opts.ppm || 20 },          // atlas texels per metre (from the paint system, set per draw)
-    uFresh: { value: Array.from({ length: 16 }, () => new THREE.Vector4(0, -999, 0, 0)) },
-    uFreshAge: { value: new Float32Array(16).fill(99) },
+    ...inkUniforms(),                        // wet-ink layer (inkShading.js): paint clock + ripple table
     uGel: { value: 13 },                      // texlib layer of the ink gel micro-surface
+    // swim wakes (src/fx/swimWake.js): 4 swimmers × 12-point trails (xyz, birth time; w < -1 = empty/break),
+    // per-swimmer bounds (xyz centre, radius; 0 = off), head position + presence, head direction + speed
+    uWake: { value: Array.from({ length: 48 }, () => new THREE.Vector4(0, 0, 0, -9)) },
+    uWakeB: { value: Array.from({ length: 4 }, () => new THREE.Vector4(0, -999, 0, 0)) },
+    uSwimH: { value: Array.from({ length: 4 }, () => new THREE.Vector4(0, -999, 0, 0)) },
+    uSwimF: { value: Array.from({ length: 4 }, () => new THREE.Vector4(0, 0, 1, 0)) },
   };
-  // Texture library: per-pattern slot → (layer, 1/scale, anti-tiling mode, sym) and (tint, normal strength).
-  // Slot 17 = concrete, used for the vertical sides of ramps/asphalt slabs.
+  // Texture library: one slot per PATTERN id (maps.js) → uTL (layer, 1/scale, anti-tiling mode, sym) and uTLt (tint
+  // mode, normal strength, slot used on vertical faces, slot used on top faces). Tint mode 0 = own colours, 1 = albedo x
+  // block colour, 2 = premultiplied paint mask (albedo.rgb + block colour x albedo.a x 1.25, see texlib 'mask').
+  // The last slot (TL_SIDE) = concrete, used for the vertical sides of ramps / asphalt / boatyard slabs.
   const lib = opts.texlib || null;
   if (lib) {
     const L = lib.layers, M = lib.meta;
-    const map = ['concrete', 'pavers', 'tiles', 'concrete', 'rubber', 'corrugated', 'planks', 'metalpanel', 'tiles', 'concrete',
-      'asphalt', 'metalpanel', 'grate', 'brick', 'rubber', 'glasstile', 'pavers', 'concrete'];
+    const map = ['concrete', 'pavers', 'tiles', 'concrete', 'rubber', 'corrugated', 'boardwalk', 'metalpanel', 'tiles', 'concrete',
+      'asphalt', 'metalpanel', 'grate', 'brick', 'rubber', 'glasstile', 'pavers',
+      /* 17 planks … 23 render (marina set) */ 'planks', 'hullpaint', 'nonslip', 'gelcoat', 'yard', 'weatherboard', 'render',
+      /* 24 treads … 27 gangdeck (stairs + ramps) */ 'treads', 'stonestep', 'rampboard', 'gangdeck',
+      /* TL_SIDE */ 'concrete'];
+    const SIDE = map.length - 1;
+    // ramp / asphalt / yard sides → concrete; car-deck edge → hull plating; stair / ramp sides → steel stringer plating,
+    // rendered cheek wall, timber skirting, painted steel
+    const onWall = { 4: SIDE, 10: SIDE, 21: SIDE, 19: 18, 24: 18, 25: 23, 26: 17, 27: 11 };
+    const onTop = { 20: 17 };                                  // gelcoat hulls get a planked deck on top
     uniforms.tAlbedo = { value: lib.albedo };
     uniforms.tNormal = { value: lib.normal };
     uniforms.tOrm = { value: lib.orm };
     uniforms.uTexSize = { value: lib.stats?.size || 512 };
     uniforms.uTL = { value: map.map((n) => new THREE.Vector4(L[n] ?? 0, 1 / ((M[n] && M[n].scale) || 4), (M[n] && M[n].mode) ?? 1, (M[n] && M[n].sym) ?? 7)) };
-    uniforms.uTLt = { value: map.map((n) => new THREE.Vector2(M[n] && M[n].tint === false ? 0 : 1, n === 'grate' ? 0.6 : 1.0)) };
+    uniforms.uTLt = { value: map.map((n, i) => new THREE.Vector4(M[n] && M[n].mask ? 2 : (M[n] && M[n].tint === false ? 0 : 1), n === 'grate' ? 0.6 : 1.0, onWall[i] ?? i, onTop[i] ?? i)) };
+    // stair / ramp slots (meta.stair): top faces are sampled in the ramp's own frame, phase-locked so whole steps fit
+    uniforms.uTLs = { value: map.map((n) => new THREE.Vector4(...((M[n] && M[n].stair) || [0, 0, 0, 0]))) };
     uniforms.uGel.value = L.gel ?? -1;
-    mat.defines = { ...(mat.defines || {}), USE_TEXLIB: 1 };
+    mat.defines = { ...(mat.defines || {}), USE_TEXLIB: 1, TL_SLOTS: map.length };
+  }
+  // Mural / signage table (murals.js → texture.userData.murals, indexed by mural id): atlas rect, placement on the face
+  // (metres), weathering. Without a table: the original four 8:1 strips.
+  {
+    const MUR = 12;
+    const rows = (muralTexture && muralTexture.userData && muralTexture.userData.murals) || [0, 1, 2, 3].map((id) => ({ rect: [0, 1, (3 - id) / 4, 1 / 4], place: [0, -8, 0, 0] }));
+    uniforms.uMurA = { value: Array.from({ length: MUR }, (_, i) => new THREE.Vector4(...((rows[i] && rows[i].rect) || [0, 1, 0, 0.25]))) };
+    uniforms.uMurB = { value: Array.from({ length: MUR }, (_, i) => new THREE.Vector4(...((rows[i] && rows[i].place) || [0, -8, 0, 0]))) };
+    uniforms.uMurC = { value: Array.from({ length: MUR }, (_, i) => new THREE.Vector2(...((rows[i] && rows[i].fx) || [0, 0]))) };
   }
   mat.userData.uniforms = uniforms;
   // see-through window: feet height of the local player + whether this draw is multisampled (main.js drives the rest)
@@ -54,11 +81,11 @@ export function createLevelMaterial(paintTexture, atlasSize, muralTexture = null
     uniforms.uSeeFeet.value = loc ? loc.pos.y : uniforms.uSeeB.value.y - 1.0;
     const rt = renderer.getRenderTarget();
     uniforms.uSeeA2C.value = rt && rt.samples > 0 ? 1 : 0;
-    // paint system: atlas density + the most recent splats (fresh-ink sheen)
+    // paint system: atlas density, paint clock + ripples (inkShading.js)
     const P = opts.paint || G.paint;
     if (P && P.texture === uniforms.uPaint.value) {
       uniforms.uPpm.value = P.ppm;
-      if (P.fresh) for (let i = 0; i < 16; i++) { uniforms.uFresh.value[i].copy(P.fresh[i]); uniforms.uFreshAge.value[i] = P.clock - P.freshT[i]; }
+      inkBeforeRender(uniforms, P);
     }
   };
   mat.onBeforeCompile = (sh) => {
@@ -104,9 +131,11 @@ uniform float uSeeFeet;
 uniform float uSeeA2C;
 uniform float uAtlasSize;
 uniform float uPpm;
-uniform vec4 uFresh[16];
-uniform float uFreshAge[16];
 uniform float uGel;
+uniform vec4 uWake[48];
+uniform vec4 uWakeB[4];
+uniform vec4 uSwimH[4];
+uniform vec4 uSwimF[4];
 varying vec2 vLightUv;
 varying vec3 vFaceTan;
 varying vec2 vPaintUv;
@@ -129,47 +158,7 @@ float gridLine(float x, float period, float width) {
   float w = fwidth(x) * 0.75;
   return 1.0 - smoothstep(width - w, width + w, fx);
 }
-// Paint lookups use textureGrad with gradients clamped to ≤ 8 texels: trilinear + anisotropic filtering (no shimmer at
-// distance) while never reaching mip levels coarse enough to bleed across the 8-texel face padding.
-vec2 gPdx = vec2(0.0), gPdy = vec2(0.0);
-vec4 paintAt(vec2 uv) { return textureGrad(uPaint, uv, gPdx, gPdy); }
-// Close-up reconstruction of the paint atlas with a cubic B-spline (C2: smooth, round ink outlines and a smooth height
-// field at any magnification) plus its analytic gradient — 12 bilinear taps inside one 4×4 texel footprint.
-void inkBspl(float t, out vec4 w, out vec4 dw) {
-  float t2 = t * t, t3 = t2 * t, it = 1.0 - t;
-  w = vec4(it * it * it, 3.0 * t3 - 6.0 * t2 + 4.0, -3.0 * t3 + 3.0 * t2 + 3.0 * t + 1.0, t3) * (1.0 / 6.0);
-  dw = vec4(-it * it, 3.0 * t2 - 4.0 * t, -3.0 * t2 + 2.0 * t + 1.0, t2) * 0.5;
-}
-vec4 inkTap(vec2 st) { return textureLod(uPaint, (st + 0.5) / uAtlasSize, 0.0); }
-vec4 paintCubic(vec2 uv, out vec2 gradA) {
-  vec2 st = uv * uAtlasSize - 0.5;
-  vec2 i = floor(st), f = st - i;
-  vec4 wx, dwx, wy, dwy;
-  inkBspl(f.x, wx, dwx); inkBspl(f.y, wy, dwy);
-  vec2 gx = vec2(wx.x + wx.y, wx.z + wx.w), gy = vec2(wy.x + wy.y, wy.z + wy.w);
-  vec2 ox = vec2(-1.0 + wx.y / gx.x, 1.0 + wx.w / gx.y), oy = vec2(-1.0 + wy.y / gy.x, 1.0 + wy.w / gy.y);
-  vec2 dgx = vec2(dwx.x + dwx.y, dwx.z + dwx.w), dgy = vec2(dwy.x + dwy.y, dwy.z + dwy.w);
-  vec2 dox = vec2(-1.0 + dwx.y / dgx.x, 1.0 + dwx.w / dgx.y), doy = vec2(-1.0 + dwy.y / dgy.x, 1.0 + dwy.w / dgy.y);
-  vec4 v = gx.x * (gy.x * inkTap(i + vec2(ox.x, oy.x)) + gy.y * inkTap(i + vec2(ox.x, oy.y)))
-         + gx.y * (gy.x * inkTap(i + vec2(ox.y, oy.x)) + gy.y * inkTap(i + vec2(ox.y, oy.y)));
-  float ax = dgx.x * (gy.x * inkTap(i + vec2(dox.x, oy.x)).a + gy.y * inkTap(i + vec2(dox.x, oy.y)).a)
-           + dgx.y * (gy.x * inkTap(i + vec2(dox.y, oy.x)).a + gy.y * inkTap(i + vec2(dox.y, oy.y)).a);
-  float ay = dgy.x * (gx.x * inkTap(i + vec2(ox.x, doy.x)).a + gx.y * inkTap(i + vec2(ox.y, doy.x)).a)
-           + dgy.y * (gx.x * inkTap(i + vec2(ox.x, doy.y)).a + gx.y * inkTap(i + vec2(ox.y, doy.y)).a);
-  gradA = vec2(ax, ay);
-  return v;
-}
-// Unnormalised Mikkelsen bump: dHdxy is the per-pixel change of a height in metres, so the tilt equals the true
-// slope of the ink surface regardless of distance/viewing angle.
-vec3 perturbInk(vec3 surf_pos, vec3 surf_norm, vec2 dHdxy, float faceDirection) {
-  vec3 vSigmaX = dFdx(surf_pos.xyz);
-  vec3 vSigmaY = dFdy(surf_pos.xyz);
-  vec3 R1 = cross(vSigmaY, surf_norm);
-  vec3 R2 = cross(surf_norm, vSigmaX);
-  float fDet = dot(vSigmaX, R1) * faceDirection;
-  vec3 vGrad = sign(fDet) * (dHdxy.x * R1 + dHdxy.y * R2);
-  return normalize(abs(fDet) * surf_norm - vGrad);
-}
+${INK_PARS}
 vec2 fsz0(vec4 fd) { return fd.zw; }
 #ifdef USE_TEXLIB
 precision highp sampler2DArray;
@@ -177,13 +166,21 @@ uniform sampler2DArray tAlbedo;
 uniform sampler2DArray tNormal;
 uniform sampler2DArray tOrm;
 uniform float uTexSize;
-uniform vec4 uTL[18];
-uniform vec2 uTLt[18];
+uniform vec4 uTL[TL_SLOTS];
+uniform vec4 uTLt[TL_SLOTS];
+uniform vec4 uTLs[TL_SLOTS];
 ${TEXLIB_GLSL}
 #endif
+uniform vec4 uMurA[12];
+uniform vec4 uMurB[12];
+uniform vec2 uMurC[12];
+vec3 gTexMod = vec3(1.0);   // surface albedo modulation (≈ 1 mean) + paint coverage, for weathered murals
+float gTexPaint = 1.0;
 vec3 gTexN = vec3(0.0, 0.0, 1.0);
 vec4 gTexORM = vec4(1.0, 0.8, 0.0, 0.5);
 float gTexStr = 0.0;
+vec4 gStair = vec4(0.0);    // stair / ramp top: distance across from one side (m), width (m), edge kind, step coordinate
+float gTexKeep = 0.0;       // share of the texture relief kept under ink (stairs keep their steps)
 float gTexAlpha = 1.0;
 float gInk = 0.0;
 vec3 gInkCol = vec3(0.0);
@@ -193,7 +190,8 @@ vec2 gInkD = vec2(0.0);
 float gRib = 0.0;
 float gFresh = 0.0;
 float gInkNear = 0.0;
-float gInkS = 0.0;`)
+float gInkS = 0.0;
+float gWake = 0.0;`)
       .replace('#include <color_fragment>', `#include <color_fragment>
 {
   // see-through: geometry in front of the local player that overlaps their on-screen silhouette dissolves, so low
@@ -256,12 +254,37 @@ float gInkS = 0.0;`)
   {
     int pid = int(pattern + 0.5);
     bool vertical = abs(vWNorm.y) < 0.5;
-    if ((pid == 4 || pid == 10) && vertical) pid = 17;          // ramp / slab sides read as concrete
-    vec4 tl = uTL[pid]; vec2 tt = uTLt[pid];
-    TexlibSample ts = texlibSample(tAlbedo, tNormal, tOrm, fu * tl.y, tl.x, int(tl.z), int(tl.w));
-    base = tt.x > 0.5 ? diffuseColor.rgb * ts.albedo.rgb * 1.25 : ts.albedo.rgb;
+    // per-slot remaps: ramp / asphalt / yard sides → concrete, car-deck edge → plating, gelcoat tops → planks
+    if (vertical) pid = int(uTLt[pid].z + 0.5); else if (vWNorm.y > 0.5) pid = int(uTLt[pid].w + 0.5);
+    vec4 tl = uTL[pid]; vec4 tt = uTLt[pid];
+    // stairs / ramps: sample in the ramp's own frame — u across, v downhill from the top landing — with v phase-locked so
+    // a whole number of steps fits the visible flight (the slab runs 0.6 m on under the floor at its low end, level.js)
+    vec2 tuv = fu * tl.y;
+    vec4 sp = uTLs[pid];
+    vec2 tA = vec2(1.0, 0.0), tD = vec2(0.0, 1.0);
+    if (sp.x > 0.0 && vWNorm.y > 0.5) {
+      bool alongU = abs(vFaceTan.y) > 0.02;                                   // x-running ramps: face u runs up/down the slope
+      float sg = alongU ? sign(vFaceTan.y) : sign(vWNorm.z * vFaceTan.x - vWNorm.x * vFaceTan.z);   // uphill = +axis?
+      float fa = alongU ? fu.x : fu.y, fcr = alongU ? fu.y : fu.x;
+      float La = alongU ? fsz.x : fsz.y, Wd = alongU ? fsz.y : fsz.x;
+      float dTop = sg > 0.0 ? La - fa : fa;
+      if (dTop > La - 0.3) { sg = -sg; dTop = La - dTop; }                   // bevel past the crest: visible fragments never sit in the buried tail
+      float Lv = max(La - 0.6, sp.x);
+      float Ps = Lv / max(1.0, floor(Lv / sp.x + 0.5));
+      tuv = vec2(fcr * tl.y, dTop / (Ps * sp.y));
+      tA = alongU ? vec2(0.0, 1.0) : vec2(1.0, 0.0);
+      tD = alongU ? vec2(-sg, 0.0) : vec2(0.0, -sg);
+      gStair = vec4(fcr, Wd, sp.w, dTop / Ps);
+      gTexKeep = sp.z;
+    }
+    TexlibSample ts = texlibSample(tAlbedo, tNormal, tOrm, tuv, tl.x, int(tl.z), int(tl.w));
+    ts.normal = vec3(ts.normal.x * tA + ts.normal.y * tD, ts.normal.z);      // back into the face's (u, v) frame
+    base = tt.x > 1.5 ? ts.albedo.rgb + diffuseColor.rgb * ts.albedo.a * 1.25
+         : (tt.x > 0.5 ? diffuseColor.rgb * ts.albedo.rgb * 1.25 : ts.albedo.rgb);
     base *= texlibMacro(vWPos.xz + vWPos.y * 0.7);
     base *= mix(1.0, ts.orm.r, 0.85);                            // cavity occlusion in grout / seams / grooves
+    gTexMod = (tt.x > 1.5 ? vec3(ts.albedo.a * 1.25) : (tt.x > 0.5 ? ts.albedo.rgb * 1.25 : vec3(1.0))) * mix(1.0, ts.orm.r, 0.85);
+    gTexPaint = tt.x > 1.5 ? clamp(ts.albedo.a * 1.45, 0.0, 1.0) : 1.0;
     rough = ts.orm.g;
     gTexN = ts.normal; gTexORM = ts.orm; gTexStr = tt.y; gTexAlpha = ts.albedo.a;
     #ifdef GRATE
@@ -319,7 +342,7 @@ float gInkS = 0.0;`)
     bool isTop = vWNorm.y > 0.6;
     bool isWall = abs(vWNorm.y) < 0.5;
     // floors: soft grime patches, sun-bleached warm areas and smoother traffic-polished patches (sheen at grazing sun)
-    if (isTop && (pid == 1 || pid == 16 || pid == 10 || pid == 2 || pid == 8)) {
+    if (isTop && (pid == 1 || pid == 16 || pid == 10 || pid == 2 || pid == 8 || pid == 17 || pid == 19 || pid == 21)) {
       float m1 = vnoise(wp * 0.09 + 5.3), m2 = vnoise(wp * 0.31 + 1.7), m3 = vnoise(wp * 1.3);
       float grime = smoothstep(0.52, 0.86, m1 * 0.65 + m2 * 0.35);
       base *= 1.0 - 0.075 * grime * (0.7 + 0.3 * m3);
@@ -327,7 +350,7 @@ float gInkS = 0.0;`)
       rough = mix(rough, rough * 0.72, smoothstep(0.62, 0.9, m2) * 0.7);
     }
     // stone coping on exposed tops of walls / platforms / parapets, with a drip-groove shadow under the cap
-    if (pid == 0 || pid == 2 || pid == 3 || pid == 13 || pid == 15 || pid == 16) {
+    if (pid == 0 || pid == 2 || pid == 3 || pid == 13 || pid == 15 || pid == 16 || pid == 23) {
       float cop = 0.0, groove = 0.0;
       float cw = mix(0.2, 0.26, step(3.0, min(fsz.x, fsz.y)));
       if (isTop) {
@@ -362,6 +385,52 @@ float gInkS = 0.0;`)
       base = mix(base, vec3(0.42, 0.2, 0.1) * (0.8 + 0.4 * vnoise(fu * 11.0)), rust * 0.42);
       rough = mix(rough, 0.85, rust);
       base *= mix(0.84, 1.0, smoothstep(0.0, 0.7, fu.y));
+    }
+    // stairs / ramps: soft contact shadow along the stringers / kick plates / cheek walls the props put at both sides;
+    // the stone stair is worn smoother and paler down its middle, the steel stair's plate polished along the walking line
+    if (gStair.z > 0.5) {
+      float e = min(gStair.x, gStair.y - gStair.x);
+      float kind = gStair.z;
+      float sw = kind < 1.5 ? 0.16 : (kind < 2.5 ? 0.3 : (kind < 3.5 ? 0.14 : 0.12));
+      base *= 1.0 - (kind < 2.5 ? 0.26 : 0.2) * (1.0 - smoothstep(0.0, sw, e));
+      float mid = 1.0 - smoothstep(0.18, 0.42, abs(gStair.x / max(gStair.y, 0.01) - 0.5));
+      if (kind > 1.5 && kind < 2.5) { base *= 1.0 + 0.05 * mid; rough = mix(rough, rough * 0.78, mid); }
+      if (kind < 1.5) rough = mix(rough, rough * 0.85, mid * (1.0 - gTexPaint));
+    }
+    // painted render / timber cladding: rain-washed grime streaks hanging from the top edge of each wall face
+    if ((pid == 23 || pid == 22) && isWall) {
+      float fromTop = fsz.y - fu.y;
+      float st = 0.6 * vnoise(vec2(fu.x * 1.9, fromTop * 0.3 + 7.1)) + 0.4 * vnoise(vec2(fu.x * 6.3, fromTop * 0.8 + 2.3));
+      float streak = smoothstep(0.5, 0.85, st) * exp(-fromTop * 0.75);
+      base *= 1.0 - 0.2 * streak;
+      rough = mix(rough, 0.9, streak * 0.6);
+    }
+    // boatyard: galvanised slot drain round the tug's wash-down bay (Alpha-half coordinates; the 180° twin follows)
+    if (pid == 21 && isTop) {
+      vec2 q = wp.y > 0.0 ? -wp : wp;
+      vec2 d = abs(q - vec2(17.5, -18.4)) - vec2(4.4, 7.0);
+      float sd = length(max(d, 0.0)) + min(max(d.x, d.y), 0.0);
+      float e = abs(sd), aw = fwidth(e) + 1e-4;
+      float chan = 1.0 - smoothstep(0.08 - aw, 0.08 + aw, e);
+      float lip = (1.0 - smoothstep(0.105 - aw, 0.105 + aw, e)) * (1.0 - chan);
+      float run = d.x > d.y ? q.y : q.x;
+      float fw = fwidth(run) + 1e-5;
+      float slot = smoothstep(0.3 - fw / 0.025, 0.3 + fw / 0.025, abs(fract(run / 0.025) - 0.5) * 2.0);
+      float bar = mix(0.4, slot, clamp(0.025 / (fw * 4.0) - 0.5, 0.0, 1.0));
+      base = mix(base, mix(vec3(0.025), vec3(0.34, 0.35, 0.36), bar), chan);
+      base = mix(base, vec3(0.4, 0.41, 0.42) * (0.9 + 0.2 * fine), lip * 0.85);
+      rough = mix(rough, 0.48, max(chan * bar, lip));
+      gTexORM.b = mix(gTexORM.b, 0.75, max(chan * bar, lip));
+      gTexStr *= 1.0 - max(chan, lip);
+      base *= mix(vec3(1.0), vec3(0.94, 0.9, 0.87), step(sd, -0.105) * 0.8);   // the bay floor: darker, run-off stained
+      // world-scale (non-repeating) oil drips and a worn service-lane wheel track beside the bay
+      float oilW = smoothstep(0.68, 0.88, 0.65 * vnoise(q * 0.9 + 13.1) + 0.35 * vnoise(q * 3.1 + 2.7));
+      base *= 1.0 - 0.26 * oilW * (1.0 - chan);
+      rough = mix(rough, 0.62, oilW * 0.5);
+      float tx = q.x - (12.15 + 0.25 * sin(q.y * 0.37));
+      float track = (1.0 - smoothstep(0.1, 0.17, min(abs(tx - 0.85), abs(tx + 0.85)))) * step(q.y, -7.6) * (0.5 + 0.5 * vnoise(q * vec2(1.3, 0.35)));
+      base *= 1.0 - 0.1 * track;
+      rough = mix(rough, rough * 0.85, track);
     }
   }
   if (false) { if (pattern < 0.5) {   // legacy procedural chain below is compiled out of use
@@ -505,9 +574,17 @@ float gInkS = 0.0;`)
 #endif
   // murals / signage
   if (vFaceFlags.z > -0.5) {
-    float rep = fsz.y * 8.0;
-    vec2 muv = vec2(fu.x / rep, (3.0 - vFaceFlags.z + clamp(fu.y / fsz.y, 0.004, 0.996)) / 4.0);
+    // atlas rect (mA) + placement on the face in metres (mB: x0, xLen, y0, yLen; xLen < 0 = strip repeating every
+    // -xLen face heights, yLen <= 0 = full face height) + weathering (mC: surface shows through, paint damage cuts it)
+    int mi = int(vFaceFlags.z + 0.5);
+    vec4 mA = uMurA[mi], mB = uMurB[mi];
+    vec2 mC = uMurC[mi];
+    float my = mB.w > 0.0 ? (fu.y - mB.z) / mB.w : fu.y / fsz.y;
+    float mx = mB.y < 0.0 ? fu.x / (-mB.y * fsz.y) : clamp((fu.x - mB.x) / mB.y, 0.0005, 0.9995);
+    vec2 muv = vec2(mA.x + mA.y * mx, mA.z + mA.w * clamp(my, 0.004, 0.996));
     vec4 mc = texture2D(uMural, muv);
+    mc.rgb *= mix(vec3(1.0), gTexMod, mC.x);
+    mc.a *= mix(1.0, gTexPaint, mC.y);
     base = mix(base, mc.rgb * (0.92 + 0.1 * big), mc.a * 0.96);
   }
   // crisp modelled edges: thin bright chamfer + soft inner shadow
@@ -520,67 +597,12 @@ float gInkS = 0.0;`)
   }
   gBaseRough = rough;
 
-  // ---- wet ink ----
-  // Atlas: A = coverage profile (0.5 at the edge), R/G = team weights, B = per-splat tone. Close up the atlas is
-  // rebuilt with a cubic B-spline (round outlines + a smooth height field with an analytic gradient), far away the
-  // mip-filtered lookup keeps edges calm. The height profile is a meniscus: steep rounded lip, flat glossy top.
-  if (vFaceData.y > 0.5) {
-    vec2 pdx = dFdx(vPaintUv), pdy = dFdy(vPaintUv);
-    float texFoot = max(length(pdx), length(pdy)) / uTexel;
-    float gk = min(1.0, 8.0 / max(texFoot, 1e-4));
-    gPdx = pdx * gk; gPdy = pdy * gk;
-    vec4 pnt = paintAt(vPaintUv);
-    float near = 1.0 - smoothstep(0.9, 2.4, texFoot);
-    vec2 gradA = vec2(0.0);
-    float lod2 = textureLod(uPaint, vPaintUv, 2.0).a;
-    if (near > 0.0 && lod2 > 0.002 && (lod2 < 0.998 || pnt.a < 0.998)) {
-      vec4 cub = paintCubic(vPaintUv, gradA);
-      pnt = mix(pnt, cub, near);
-      gradA *= near;
-    }
-    gInkNear = near;
-    float amt = pnt.a;
-    float fw = fwidth(amt);
-    float w = clamp(fw * 0.8, 0.008, 0.25);
-    gInk = smoothstep(0.5 - w, 0.5 + w, amt);
-    float tw = pnt.r + pnt.g;
-    float tm = smoothstep(0.4, 0.6, pnt.g / max(tw, 1e-4));
-    // thickness profile: 0 at the edge → 1 on the flat top (≈2–3 texels in)
-    float s = clamp((amt - 0.5) * 1.7, 0.0, 1.0);
-    float hs = 1.0 - (1.0 - s) * (1.0 - s);
-    gInkS = hs;
-    // meniscus tilt (per texel of the atlas → angle independent of atlas density); fades once a texel is < ~1 px
-    gInkD = gradA * 2.0 * (1.0 - s) * 1.7 * 1.9 * gInk;
-    // fresh ink (landed in the last ~1.4 s): wetter, glossier, slightly brighter, still settling
-    for (int i = 0; i < 16; i++) {
-      vec4 fr = uFresh[i];
-      float age = uFreshAge[i];
-      if (age < 1.4) {
-        float d = length(vWPos - fr.xyz);
-        gFresh = max(gFresh, (1.0 - age / 1.4) * (1.0 - age / 1.4) * (1.0 - smoothstep(fr.w * 0.6, fr.w, d)));
-      }
-    }
-    gFresh *= gInk;
-    vec3 team = mix(uTeamA, uTeamB, tm);
-    vec3 inkCol = team * (0.93 + 0.13 * pnt.b);
-    // translucent thin lip reads lighter and a touch more saturated; the thick body a little deeper
-    float lip = (1.0 - hs) * near;
-    inkCol = mix(inkCol, inkCol * 1.16 + team * 0.05, lip * 0.35);
-    inkCol *= 1.0 - 0.05 * hs;
-    // seam between the two teams' ink: a thin darker crease so the colours never smear into each other
-    float crease = (1.0 - abs(tm * 2.0 - 1.0)) * step(0.01, tm) * step(tm, 0.99);
-    inkCol *= 1.0 - 0.22 * crease * gInk;
-    inkCol *= 1.0 + 0.1 * gFresh;
-    gInkCol = inkCol;
-    // ink sits ON the ground: soft contact shadow + a faint coloured bounce hugging the outside of every edge
-    float halo = smoothstep(0.06, 0.5, amt) * (1.0 - gInk) * near * smoothstep(0.4, 0.85, vWNorm.y);
-    base *= mix(vec3(1.0), team * 0.45 + 0.3, halo * 0.5);
-    base = mix(base, gInkCol, gInk);
-  }
+  // ---- wet ink (src/world/inkShading.js) ----
+${INK_COLOR}
   diffuseColor.rgb = base;
 }`)
       .replace('#include <roughnessmap_fragment>', `#include <roughnessmap_fragment>
-roughnessFactor = mix(gBaseRough, mix(0.24, 0.14, gFresh), gInk);`)
+${INK_ROUGH}`)
       .replace('#include <metalnessmap_fragment>', `#include <metalnessmap_fragment>
 #ifdef USE_TEXLIB
 metalnessFactor = gTexORM.b * (1.0 - gInk);
@@ -589,28 +611,7 @@ metalnessFactor = gTexORM.b * (1.0 - gInk);
 {
   // slopes along the face's u / v axes (height per unit length), applied in the face's world tangent frame
   vec2 slope = gInkD;
-  if (gInk > 0.01) {
-    // gel micro-surface: soft swells + settling ripples so reflections break into wet highlights. Mip-filtered
-    // (fades to flat by itself at distance). Walls stretch it vertically, fresh ink sloshes a little.
-    vec2 gp = vFaceUv * (abs(vWNorm.y) < 0.5 ? vec2(0.9, 0.42) : vec2(0.75));
-    gp += vec2(uTime * 0.011, -uTime * 0.007) + gFresh * 0.05 * vec2(sin(uTime * 7.0), cos(uTime * 5.3));
-#ifdef USE_TEXLIB
-    if (uGel >= 0.0) {
-      vec2 gx = dFdx(gp), gy = dFdy(gp);
-      vec3 gn = textureGrad(tNormal, vec3(gp, uGel), gx, gy).xyz * 2.0 - 1.0;
-      slope += -gn.xy / max(gn.z, 0.3) * (0.55 + 1.1 * gFresh) * gInk * gInkS;
-    }
-#else
-    {
-      const float e = 0.06;
-      vec2 q = gp * 2.2;
-      float hx = vnoise(q + vec2(e, 0.0)) - vnoise(q - vec2(e, 0.0));
-      float hy = vnoise(q + vec2(0.0, e)) - vnoise(q - vec2(0.0, e));
-      float gf = 1.0 - smoothstep(0.03, 0.12, length(fwidth(vWPos)));
-      slope += vec2(hx, hy) / (2.0 * e) * 0.035 * gf * gInk;
-    }
-#endif
-  }
+${INK_GEL}
 #ifndef USE_TEXLIB
   if (vFaceData.x > 4.5 && vFaceData.x < 5.5) {
     // corrugation on containers (only where not inked), analytic derivative
@@ -619,16 +620,74 @@ metalnessFactor = gTexORM.b * (1.0 - gInk);
 #endif
   vec3 T = normalize(vFaceTan - vWNorm * dot(vFaceTan, vWNorm));
   vec3 Bt = cross(vWNorm, T);
+  if (gInk > 0.01) {
+    // swim wakes: the ink itself ripples where a squid swims. Each trail segment sheds an expanding ripple (a stadium
+    // around the path — their envelope opens into the V-wake) and the submerged body pushes up a glossy mound with a
+    // small bow ridge at speed. Height field → analytic gradient in the face's tangent plane.
+    vec3 wS = vec3(0.0); float wG = 0.0;
+    for (int s = 0; s < 4; s++) {
+      vec4 Bd = uWakeB[s];
+      if (Bd.w <= 0.0 || distance(vWPos, Bd.xyz) > Bd.w) continue;
+      for (int i = 0; i < 11; i++) {
+        vec4 A0 = uWake[s * 12 + i], A1 = uWake[s * 12 + i + 1];
+        if (A0.w < -1.0 || A1.w < -1.0) continue;
+        vec3 ab = A1.xyz - A0.xyz;
+        float t = clamp(dot(vWPos - A0.xyz, ab) / max(dot(ab, ab), 1e-6), 0.0, 1.0);
+        float age = uTime - mix(A0.w, A1.w, t);
+        if (age <= 0.0 || age > 1.15) continue;
+        vec3 D = vWPos - (A0.xyz + ab * t);
+        D -= vWNorm * dot(D, vWNorm);
+        float d = length(D);
+        float r = 0.1 + age * 0.95, w = 0.075 + age * 0.085;
+        float x = d - r;
+        float env = exp(-x * x / (w * w));
+        if (env < 0.003) continue;
+        float fade = 1.0 - age / 1.15;
+        fade *= fade * smoothstep(0.0, 0.05, age);
+        float amp = 0.0135 * fade;
+        float dh = amp * env * (-2.0 * x / (w * w) * cos(x * 25.0) - 25.0 * sin(x * 25.0));
+        wS += D * (dh / max(d, 1e-4));
+        wG += env * fade * 0.6;
+      }
+      vec4 H = uSwimH[s], F = uSwimF[s];
+      if (H.w > 0.002) {
+        vec3 D = vWPos - H.xyz;
+        D -= vWNorm * dot(D, vWNorm);
+        vec3 Fp = F.xyz - vWNorm * dot(F.xyz, vWNorm);
+        float fl = length(Fp);
+        Fp = fl > 1e-3 ? Fp / fl : T;
+        float al = dot(D, Fp);
+        vec3 Cv = D - Fp * al;
+        float ac = length(Cv);
+        vec3 Cn = Cv / max(ac, 1e-4);
+        // mound over the body (sits a touch behind the head, stretches with speed)
+        float am = al + 0.1, La = 0.3 + 0.2 * F.w, Lc = 0.19;
+        float hm = 0.05 * H.w * exp(-(am * am) / (La * La) - (ac * ac) / (Lc * Lc));
+        // bow ridge pushed ahead of the head
+        float ab2 = al - 0.3, hb = 0.022 * H.w * F.w * exp(-(ab2 * ab2) / 0.012 - (ac * ac) / 0.07);
+        wS += Fp * (-2.0 * am / (La * La) * hm - 2.0 * ab2 / 0.012 * hb) + Cn * (-2.0 * ac / (Lc * Lc) * hm - 2.0 * ac / 0.07 * hb);
+        wG += hm * 16.0 + hb * 20.0;
+      }
+    }
+    // clamp the slope so crests never flip the normal; fade with distance like the gel (no shimmer on far floors)
+    float wl = length(wS);
+    if (wl > 0.9) wS *= 0.9 / wl;
+    float wFar = 1.0 - smoothstep(0.05, 0.16, length(fwidth(vWPos)));
+    slope += vec2(dot(wS, T), dot(wS, Bt)) * gInk * wFar;
+    gWake = clamp(wG, 0.0, 1.0) * gInk * wFar;
+  }
+${INK_SLOPE}
   vec3 nBase = vWNorm;
 #ifdef USE_TEXLIB
   // surface relief from the texture library; ink fills the grooves so the relief fades out under it
   // (on corrugated metal the ink still follows the ribs)
-  float keep = (vFaceData.x > 4.5 && vFaceData.x < 5.5) ? 0.55 : 0.0;
-  nBase = texlibPerturbNormal(gTexN, T, Bt, vWNorm, gTexStr * (1.0 - gInk * (1.0 - keep)));
+  float keep = max((vFaceData.x > 4.5 && vFaceData.x < 5.5) ? 0.55 : 0.0, gTexKeep);   // containers + stairs
+  nBase = texlibPerturbNormal(gTexN, T, Bt, vWNorm, gTexStr * (1.0 - gInk * (1.0 - max(keep, gInkKeep))));
 #endif
   vec3 wn = normalize(nBase - slope.x * T - slope.y * Bt);
   normal = normalize((viewMatrix * vec4(wn, 0.0)).xyz);
 }`)
+      .replace('#include <lights_fragment_end>', `#include <lights_fragment_end>${INK_SHADE}`)
       .replace('#include <aomap_fragment>', `#include <aomap_fragment>
 if (uAO > 0.0 && vLightUv.x >= 0.0) {
   // baked ambient occlusion: full on sky/indirect light, a touch on the sun so contact shadows read in daylight
@@ -640,36 +699,9 @@ if (uAO > 0.0 && vLightUv.x >= 0.0) {
       .replace('#include <clearcoat_normal_fragment_begin>', `#include <clearcoat_normal_fragment_begin>
 clearcoatNormal = normal;`)
       .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
-// a little self-light keeps ink loud in shadow and at dusk (subsurface-ish glow, stronger in the thick body)
-totalEmissiveRadiance += gInkCol * gInk * uInkGlow * (0.75 + 0.35 * gInkS);`)
-      .replace('#include <lights_physical_fragment>', `#include <lights_physical_fragment>
-{
-  // glossy wet coat on ink; roughness widened where the ink normal varies faster than the pixel grid (no sparkle)
-  vec3 cdu = dFdx(normal), cdv = dFdy(normal);
-  float kern = min(0.3 * (dot(cdu, cdu) + dot(cdv, cdv)), 0.18);
-  float cr = mix(0.05, 0.035, gFresh);
-  material.clearcoat = gInk;
-  material.clearcoatRoughness = min(sqrt(sqrt(cr * cr * cr * cr + kern)), 1.0);
-  material.roughness = mix(material.roughness, min(sqrt(sqrt(pow(material.roughness, 4.0) + kern)), 1.0), gInk);
-  // the coat carries the gloss; the pigment layer underneath only adds a soft sheen (keeps the hue pure)
-  material.specularColor *= 1.0 - 0.7 * gInk;
-  material.specularColorBlended *= 1.0 - 0.7 * gInk;
-  material.specularF90 = mix(material.specularF90, 0.35, gInk);
-}`)
-      .replace('#include <lights_fragment_maps>', `#include <lights_fragment_maps>
-// ink keeps its hue in shade: the blue sky's ambient is applied hue-neutral to the pigment
-if (gInk > 0.0) {
-  const vec3 LW = vec3(0.2126, 0.7152, 0.0722);
-  irradiance = mix(irradiance, vec3(dot(irradiance, LW)), 0.7 * gInk);
-  #if defined( USE_ENVMAP ) && defined( RE_IndirectSpecular )
-  iblIrradiance = mix(iblIrradiance, vec3(dot(iblIrradiance, LW)), 0.7 * gInk);
-  #endif
-}
-#if defined( USE_ENVMAP ) && defined( RE_IndirectSpecular ) && defined( USE_CLEARCOAT )
-  // stylised wet reflections: bright, but pushed toward a neutral sheen so a blue sky never turns yellow ink olive
-  clearcoatRadiance = mix(clearcoatRadiance, vec3(dot(clearcoatRadiance, vec3(0.2126, 0.7152, 0.0722))), 0.55 * gInk);
-  clearcoatRadiance *= 1.0 + gInk * (0.5 + 0.6 * gFresh);
-#endif`)
+${INK_EMISSIVE}`)
+      .replace('#include <lights_physical_fragment>', `#include <lights_physical_fragment>${INK_LIGHTS}`)
+      .replace('#include <lights_fragment_maps>', `#include <lights_fragment_maps>${INK_LIGHT_MAPS}`)
       .replace('#include <opaque_fragment>', `outgoingLight = min(outgoingLight, vec3(5.0));
 #include <opaque_fragment>`);
   };
@@ -677,6 +709,6 @@ if (gInk > 0.0) {
     mat.side = THREE.DoubleSide;
     mat.defines = { ...(mat.defines || {}), GRATE: 1 };
   }
-  mat.customProgramCacheKey = () => 'inkwave-level-v3' + (opts.grate ? '-grate' : '');
+  mat.customProgramCacheKey = () => 'inkwave-level-v5' + (opts.grate ? '-grate' : '');
   return mat;
 }

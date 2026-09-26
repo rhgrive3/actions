@@ -43,13 +43,15 @@ export class PlayerController {
     const touch = inp.mobile?.active ? inp.mobile : null;
     const usingPad = !!inp.pad && inp.lastDevice === 'pad';
     const usingTouch = !!touch && inp.lastDevice === 'touch';
-    // Touch gets the same friction/tracking class as a controller; no auto-snap is introduced.
+    // ---- aim assist target (computed from last frame's camera; cheap)
     const as = this._assistTarget((usingPad || usingTouch) ? (s.aimAssist ?? 1) : (s.aimAssistMouse ? 0.5 : 0));
     // ---- look
     const inv = s.invertY ? -1 : 1;
     const friction = as ? lerp(1, 0.58, as.closeness * as.strength) : 1;
     let lookActive = false;
-    const mdx = inp.mouse.dx + (touch?.lookDX || 0), mdy = inp.mouse.dy + (touch?.lookDY || 0);
+    // while the map diorama is up the mouse / right stick steer the map cursor, not your camera
+    const mapUp = (G.rig?.mapK ?? 0) > 0.05 || inp.down('Tab') || inp.down('KeyM') || inp.padButton(8) || !!touch?.mapOpen;
+    const mdx = mapUp ? 0 : (inp.mouse.dx + (touch?.lookDX || 0)), mdy = mapUp ? 0 : (inp.mouse.dy + (touch?.lookDY || 0));
     if (mdx || mdy) {
       const touchScale = usingTouch ? 1.12 : 1;
       const sens = 0.0021 * touchScale * (s.sensitivity ?? 1) * ((s.aimAssistMouse || usingTouch) ? friction : 1);
@@ -57,7 +59,7 @@ export class PlayerController {
       rig.pitch -= mdy * sens * inv;
       lookActive = true;
     }
-    if (inp.pad) {
+    if (inp.pad && !mapUp) {
       inp.padStick(2, 3, _stick, 0.11, 0.96);
       const ps = s.padSensitivity ?? 1;
       // edge boost: holding the stick at the rim speeds yaw up (quick 180s) after a short delay
@@ -99,7 +101,7 @@ export class PlayerController {
     it.fire = inp.mouse.left || inp.padValue(7) > 0.3 || !!touch?.down('fire');
     it.sub = inp.mouse.right || inp.down('KeyE') || inp.padButton(5) || !!touch?.down('sub');
     it.special = inp.down('KeyF') || inp.down('KeyQ') || inp.padButton(3) || inp.padButton(11) || !!touch?.down('special');
-    this.mapHeld = inp.down('Tab') || inp.padButton(8) || !!touch?.mapOpen;
+    this.mapHeld = inp.down('Tab') || inp.down('KeyM') || inp.padButton(8) || !!touch?.mapOpen;
     // the TAB map is a targeting UI (clicking a teammate beacon super jumps) — never fire or throw through it
     if (this.mapHeld) { it.fire = false; it.sub = false; }
     // super jump: while the map is open, 1-3 (or d-pad left/up/right) jumps to that teammate, 4 / d-pad down to spawn
@@ -149,7 +151,8 @@ export class PlayerController {
   }
 
   computeAim() {
-    const a = this.a, cam = G.camera;
+    // the gameplay view — while the map diorama is up the rendered camera is overhead, aim stays with the player
+    const a = this.a, cam = G.rig?.gameCam || G.camera;
     const fwd = cam.getWorldDirection(_fwd);
     // start the ray level with the player so geometry between camera and player is ignored
     _v.copy(a.pos); _v.y += 1.3;

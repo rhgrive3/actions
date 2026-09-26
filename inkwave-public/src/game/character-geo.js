@@ -1255,6 +1255,18 @@ const IN = (az, el) => ['in', az, el];
 const O = (az, el, off) => ['o', az, el, off];
 const mirror = (pts) => pts.map((p) => (p[0] === 's' || p[0] === 'in' || p[0] === 'o' ? [p[0], -p[1], ...p.slice(2)] : [-p[0], p[1], p[2]]));
 
+/** Bun coil: a spherical helix winding up and over a ball of radius Rb centred at C (head-relative), around `axis`. */
+function knotCoil(C, Rb, p0, axis = [0, 1, 0]) {
+  const q = new THREE.Quaternion().setFromUnitVectors(new V3(0, 1, 0), new V3(...axis).normalize());
+  const P = (x, y, z) => { const v = new V3(x, y, z).applyQuaternion(q); return [C[0] + v.x, C[1] + v.y, C[2] + v.z]; };
+  const pts = [P(0.022 * Math.sin(p0), -0.064, 0.022 * Math.cos(p0))]; // root, buried in the scalp under the bun
+  for (let k = 0; k <= 10; k++) {
+    const u = k / 10, th = lerp(2.3, 0.42, u), ph = p0 + u * TAU * 1.55;
+    pts.push(P(Rb * Math.sin(th) * Math.sin(ph), Rb * Math.cos(th), Rb * Math.sin(th) * Math.cos(ph)));
+  }
+  return { pts, r0: Rb * 0.75, r1: Rb * 0.6, taper: 1.5, flat: 1.25, K: 3.0, G: 0.12, suck: false, curl: 0, twist: 0, noClub: true };
+}
+
 const STYLES = [
   { // 0 — "Tide": long swept-back tentacles + face-framing locks + a swept bang
     name: 'Tide',
@@ -1284,6 +1296,14 @@ const STYLES = [
         { pts: [IN(0.3, 1.0), [0.02, 0.2, 0.12], [-0.04, 0.218, 0.172], [-0.1, 0.19, 0.198], [-0.135, 0.152, 0.2]], r0: 0.048, r1: 0.017, flat: 0.48, K: 2.8, G: 0.2, suck: false, curl: 0.8 },
       ];
     })(),
+    // under a hat the spikes are squashed flat: short flicks kick out below the rim at the back instead
+    underHat: {
+      strands: (() => {
+        const flick = { pts: [IN(2.3, 0.62), S(2.4, 0.16), [0.134, -0.046, -0.2], [0.148, -0.09, -0.228], [0.16, -0.112, -0.25]], r0: 0.046, r1: 0.017, flat: 0.52, K: 1.8, G: 0.6, suck: true, curl: 0.7 };
+        return [flick, { ...flick, pts: mirror(flick.pts) },
+          { pts: [IN(3.14, 0.55), S(3.14, 0.05), [0.0, -0.11, -0.205], [0.0, -0.155, -0.215], [0.0, -0.175, -0.245]], r0: 0.05, r1: 0.018, flat: 0.52, K: 1.6, G: 0.7, suck: true, curl: 0.9 }];
+      })(),
+    },
     gear: 'headphones',
   },
   { // 2 — "Twin": two long tied tails + split bangs
@@ -1298,6 +1318,17 @@ const STYLES = [
       ];
     })(),
     ties: [[0.2, 0.04, -0.105, 1], [-0.2, 0.04, -0.105, -1]],
+    // under a hat the tails are tied lower, just below the rim, so they hang from under it
+    underHat: {
+      strands: (() => {
+        const tailL = { pts: [IN(1.95, 0.42), S(2.0, 0.08), [0.19, -0.03, -0.118], [0.226, -0.13, -0.116], [0.234, -0.235, -0.097], [0.222, -0.318, -0.07], [0.238, -0.35, -0.038]], r0: 0.054, r1: 0.023, flat: 0.55, K: 0.85, G: 1.1, suck: true, curl: 1.1 };
+        const bangL = { pts: [IN(0.55, 1.15), S(0.38, 0.9, 0.002), S(0.58, 0.72, 0.003), S(0.9, 0.56, 0.004), [0.184, 0.06, 0.078]], r0: 0.045, r1: 0.017, flat: 0.4, K: 2.6, G: 0.3, suck: false, curl: 0.6 };
+        return [tailL, { ...tailL, pts: mirror(tailL.pts) },
+          { pts: [IN(3.14, 0.9), S(3.14, 0.3), S(3.14, -0.25), [0.0, -0.14, -0.205], [0.0, -0.18, -0.232]], r0: 0.05, r1: 0.02, flat: 0.52, K: 1.4, G: 0.8, suck: true, curl: 0.9 },
+          bangL, { ...bangL, pts: mirror(bangL.pts) }];
+      })(),
+      ties: [[0.19, -0.03, -0.118, 1], [-0.19, -0.03, -0.118, -1]],
+    },
     gear: 'twin',
   },
   { // 3 — "Bob": rounded bob that curls in at the jaw + side-swept bang
@@ -1309,6 +1340,89 @@ const STYLES = [
         { pts: [IN(-0.75, 1.15), S(-0.2, 0.9, 0.002), S(0.3, 0.75, 0.003), S(0.78, 0.6, 0.004), S(1.1, 0.44, 0.004), [0.196, 0.005, 0.058]], r0: 0.047, r1: 0.02, flat: 0.4, K: 2.4, G: 0.4, suck: false, curl: 0.5 }];
     })(),
     gear: 'bob',
+  },
+  { // 4 — "Pony": high fountain ponytail — a thick three-tentacle bundle gathered at the back of the crown, swept fringe
+    name: 'Pony',
+    strands: (() => {
+      const tail = { pts: [[0, 0.12, -0.085], [0, 0.172, -0.13], [0, 0.235, -0.175], [0, 0.262, -0.235], [0, 0.235, -0.3], [0, 0.165, -0.345], [0, 0.07, -0.36], [0, -0.03, -0.345], [0, -0.11, -0.31]], r0: 0.066, r1: 0.03, taper: 1.7, flat: 1.25, K: 0.95, G: 1.05, suck: true, curl: 0.85 };
+      const flank = { pts: [[0.012, 0.12, -0.085], [0.02, 0.17, -0.13], [0.04, 0.226, -0.172], [0.054, 0.246, -0.23], [0.062, 0.212, -0.29], [0.068, 0.138, -0.326], [0.074, 0.05, -0.332], [0.084, -0.03, -0.31]], r0: 0.048, r1: 0.022, taper: 1.4, flat: 1.1, K: 1.05, G: 1.0, suck: true, curl: 1.0 };
+      const lock = { pts: [IN(1.06, 0.82), S(1.17, 0.42), S(1.25, 0.08), [0.183, -0.072, 0.05], [0.177, -0.122, 0.064]], r0: 0.036, r1: 0.014, flat: 0.5, K: 1.8, G: 0.7, suck: false, curl: 0.6 };
+      return [
+        tail, flank, { ...flank, pts: mirror(flank.pts) }, lock, { ...lock, pts: mirror(lock.pts) },
+        { pts: [IN(-0.9, 1.12), S(-0.5, 0.95, 0.002), S(-0.05, 0.8, 0.003), S(0.42, 0.66, 0.004), S(0.8, 0.52, 0.004), [0.18, 0.058, 0.096]], r0: 0.046, r1: 0.018, flat: 0.4, K: 2.4, G: 0.4, suck: false, curl: 0.55 },
+      ];
+    })(),
+    cap: { pole: [0, 0.8, -0.6] },
+    tie: { at: [0, 0.172, -0.13] },
+    // under a hat: a low ponytail tied at the nape, below the rim
+    underHat: {
+      strands: [
+        { pts: [IN(3.14, 0.3), S(3.14, -0.06), [0, -0.05, -0.2], [0, -0.1, -0.236], [0, -0.148, -0.254], [0, -0.172, -0.262]], r0: 0.06, r1: 0.028, taper: 1.6, flat: 1.2, K: 1.0, G: 1.0, suck: true, curl: 0.8 },
+        { pts: [IN(1.06, 0.82), S(1.17, 0.42), S(1.25, 0.08), [0.183, -0.072, 0.05], [0.177, -0.122, 0.064]], r0: 0.036, r1: 0.014, flat: 0.5, K: 1.8, G: 0.7, suck: false, curl: 0.6 },
+        { pts: mirror([IN(1.06, 0.82), S(1.17, 0.42), S(1.25, 0.08), [0.183, -0.072, 0.05], [0.177, -0.122, 0.064]]), r0: 0.036, r1: 0.014, flat: 0.5, K: 1.8, G: 0.7, suck: false, curl: 0.6 },
+        { pts: [IN(-0.9, 1.12), S(-0.5, 0.95, 0.002), S(-0.05, 0.8, 0.003), S(0.42, 0.66, 0.004), S(0.8, 0.52, 0.004), [0.18, 0.058, 0.096]], r0: 0.046, r1: 0.018, flat: 0.4, K: 2.4, G: 0.4, suck: false, curl: 0.55 },
+      ],
+      tie: { at: [0, -0.05, -0.2] },
+    },
+    gear: 'pony',
+  },
+  { // 5 — "Crest": a tall mohawk of overlapping tentacle flames along the midline, clean sides
+    name: 'Crest',
+    strands: (() => {
+      const fin = (root, pts, r0, K = 2.4, curl = 0.9) => ({ pts: [root, ...pts], r0, r1: 0.019, taper: 1.15, flat: 1.25, K, G: 0.32, suck: false, curl, out: 'x', twist: 0 });
+      return [
+        fin(IN(0, 1.0), [[0, 0.212, 0.084], [0, 0.262, 0.046], [0, 0.285, -0.014], [0, 0.272, -0.07]], 0.056),
+        fin(IN(0, 1.4), [[0, 0.226, 0.014], [0, 0.262, -0.036], [0, 0.265, -0.096], [0, 0.24, -0.14]], 0.058),
+        fin(IN(3.14, 1.18), [[0, 0.206, -0.07], [0, 0.236, -0.12], [0, 0.226, -0.175], [0, 0.19, -0.21]], 0.056),
+        fin(IN(3.14, 0.85), [[0, 0.16, -0.126], [0, 0.18, -0.18], [0, 0.156, -0.23], [0, 0.11, -0.256]], 0.052, 2.0),
+        fin(IN(3.14, 0.5), [[0, 0.1, -0.172], [0, 0.104, -0.226], [0, 0.062, -0.256], [0, 0.0, -0.262]], 0.047, 1.6, 0.8),
+      ];
+    })(),
+    // under a hat the crest is pressed flat: only its tail shows, kicking out below the rim at the nape
+    underHat: {
+      strands: [
+        { pts: [IN(3.14, 0.4), S(3.14, -0.08), [0, -0.1, -0.205], [0, -0.13, -0.236], [0, -0.14, -0.262]], r0: 0.05, r1: 0.019, taper: 1.15, flat: 1.25, K: 1.6, G: 0.6, suck: false, curl: 0.9, out: 'x', twist: 0 },
+      ],
+    },
+    gear: 'crest',
+  },
+  { // 6 — "Knot": coiled top-knot bun with two sprouting tentacle ends, long face-framing side tentacles
+    name: 'Knot',
+    strands: (() => {
+      const C = [0, 0.214, -0.036], Rb = 0.04;
+      const sprout = { pts: [[0.004, 0.238, -0.036], [0.012, 0.276, -0.04], [0.034, 0.306, -0.068], [0.068, 0.302, -0.108], [0.09, 0.272, -0.134]], r0: 0.036, r1: 0.017, flat: 0.7, K: 2.0, G: 0.45, suck: true, curl: 0.9 };
+      const side = { pts: [IN(1.02, 0.86), S(1.16, 0.44), S(1.26, 0.08), [0.186, -0.075, 0.046], [0.182, -0.132, 0.058], [0.172, -0.16, 0.072]], r0: 0.042, r1: 0.017, flat: 0.52, K: 1.5, G: 0.8, suck: true, curl: 0.75 };
+      return [
+        knotCoil(C, Rb, 0.3), knotCoil(C, Rb, 0.3 + Math.PI),
+        sprout, { ...sprout, pts: mirror(sprout.pts).map((p, i) => (i === 4 ? [-0.094, 0.262, -0.128] : p)) },
+        side, { ...side, pts: mirror(side.pts) },
+        { pts: [IN(3.14, 0.45), S(3.14, 0.02), [0, -0.118, -0.196], [0, -0.156, -0.212]], r0: 0.04, r1: 0.017, flat: 0.55, K: 1.6, G: 0.7, suck: true, curl: 0.8 },
+      ];
+    })(),
+    knot: { at: [0, 0.214, -0.036], r: 0.04 },
+    // under a hat: a low bun on the nape (axis pointing back and down), face-framing tentacles kept
+    underHat: {
+      strands: (() => {
+        const C = [0, -0.075, -0.212], ax = [0, -0.34, -0.94];
+        const side = { pts: [IN(1.02, 0.86), S(1.16, 0.44), S(1.26, 0.08), [0.186, -0.075, 0.046], [0.182, -0.132, 0.058], [0.172, -0.16, 0.072]], r0: 0.042, r1: 0.017, flat: 0.52, K: 1.5, G: 0.8, suck: true, curl: 0.75 };
+        return [knotCoil(C, 0.034, 0.3, ax), knotCoil(C, 0.034, 0.3 + Math.PI, ax), side, { ...side, pts: mirror(side.pts) }];
+      })(),
+      knot: { at: [0, -0.075, -0.212], r: 0.034, axis: [0, -0.34, -0.94] },
+    },
+    gear: 'knot',
+  },
+  { // 7 — "Swoop": asymmetric side part — a heavy swoop across the brow and down the right side, short tucked left
+    name: 'Swoop',
+    strands: (() => [
+      { pts: [IN(0.78, 1.08), S(0.42, 0.95, 0.004), S(-0.02, 0.8, 0.006), S(-0.46, 0.66, 0.006), S(-0.86, 0.5, 0.004), O(-1.1, 0.14, 0.048), O(-1.14, -0.2, 0.05), [-0.168, -0.2, 0.068]], r0: 0.058, r1: 0.022, flat: 0.44, K: 1.5, G: 0.7, suck: false, curl: 0.7 },
+      { pts: [IN(0.95, 1.3), S(0.35, 1.2), S(-0.35, 1.0), S(-0.95, 0.72), S(-1.25, 0.36), O(-1.34, 0.0, 0.052), [-0.18, -0.17, 0.012], [-0.17, -0.225, 0.02]], r0: 0.056, r1: 0.022, flat: 0.5, K: 1.2, G: 0.9, suck: true, curl: 0.8 },
+      { pts: [IN(1.5, 1.35), S(-1.8, 1.2), S(-2.05, 0.7), S(-2.12, 0.2), [-0.15, -0.1, -0.13], [-0.148, -0.19, -0.14]], r0: 0.052, r1: 0.02, flat: 0.52, K: 1.2, G: 0.9, suck: true, curl: 0.8 },
+      { pts: [IN(-2.5, 0.95), S(-2.66, 0.44), S(-2.8, -0.06), [-0.062, -0.16, -0.2], [-0.07, -0.236, -0.214]], r0: 0.05, r1: 0.019, flat: 0.52, K: 1.3, G: 0.9, suck: true, curl: 0.85 },
+      { pts: [IN(1.35, 0.95), S(1.62, 0.52), S(1.9, 0.2), [0.172, -0.02, -0.108], [0.15, -0.055, -0.14]], r0: 0.04, r1: 0.016, flat: 0.52, K: 2.0, G: 0.5, suck: true, curl: 1.0 },
+      { pts: [IN(2.62, 0.85), S(2.76, 0.4), S(2.86, -0.02), [0.05, -0.1, -0.2]], r0: 0.044, r1: 0.017, flat: 0.52, K: 1.8, G: 0.6, suck: true, curl: 1.0 },
+    ])(),
+    cap: { pole: [0.52, 0.8, 0.3] },
+    gear: 'swoop',
   },
 ];
 export const HAIR_STYLE_NAMES = STYLES.map((s) => s.name);
@@ -1326,8 +1440,10 @@ const GEAR = { plastic: -2, metal: -3, fabric: -4, rubber: -5 };
 const gcol = (code, k = 1) => new THREE.Color(code, k, 0);
 
 /** Style accessories, built into the hair mesh (per style, skinned to the full skeleton). */
-function addGear(B, style, strandInfo) {
+function addGear(B, style, strandInfo, hatCtx = null) {
   const kind = style.gear;
+  const hidden = (p) => !!hatCtx && hatCtx.hidden(p); // accessories a hat covers are not built
+  const hb = (si, k) => `hair${strandInfo[si].bi}_${k}`; // bone of a style strand (indices shift when a hat drops some)
   if (kind === 'wristbands') {
     for (const [s] of [['L'], ['R']]) {
       const el = R['fArm' + s], wr = R['hand' + s];
@@ -1384,34 +1500,37 @@ function addGear(B, style, strandInfo) {
     // bobble ties at the tail roots
     for (const tie of style.ties || []) {
       const [x, y, z, sx] = tie;
+      const si = sx > 0 ? 0 : 1;
+      if (!strandInfo[si] || hidden(new V3(x, y, z).add(HEAD_C))) continue;
       const g = torus(0.036, 0.0105, 8, 18); g.rotateY(Math.PI / 2 - 0.25 * sx); g.rotateZ(0.5 * sx);
       g.translate(HEAD_C.x + x, HEAD_C.y + y, HEAD_C.z + z);
-      B.add(g, { ex: GEAR.fabric, color: gcol(-2, 1.0), bone: `hair${sx > 0 ? 0 : 1}_0` });
+      B.add(g, { ex: GEAR.fabric, color: gcol(-2, 1.0), bone: hb(si, 0) });
       const bead = superEllipsoid(0.0135, 0.0135, 0.0135, 1, 1, 12, 8);
       bead.translate(HEAD_C.x + x + 0.012 * sx, HEAD_C.y + y + 0.036, HEAD_C.z + z + 0.004);
-      B.add(bead, { ex: GEAR.plastic, color: gcol(-1, 1.18), bone: `hair${sx > 0 ? 0 : 1}_0` });
+      B.add(bead, { ex: GEAR.plastic, color: gcol(-1, 1.18), bone: hb(si, 0) });
     }
     // star clip on the left bang
     const info = strandInfo[3];
-    if (info) {
-      const smp = info.sw.sample(0.45);
+    const smp = info && info.sample(0.45);
+    if (smp && !hidden(smp.P)) {
       const sh = new THREE.Shape();
       for (let k = 0; k < 10; k++) { const a = Math.PI / 2 + (k / 10) * TAU; const r = k % 2 ? 0.0068 : 0.0155; const px = Math.cos(a) * r, py = Math.sin(a) * r; if (k === 0) sh.moveTo(px, py); else sh.lineTo(px, py); }
       const st = finalize(new THREE.ExtrudeGeometry(sh, { depth: 0.0026, bevelEnabled: true, bevelThickness: 0.0012, bevelSize: 0.0012, bevelSegments: 2 }));
       const up = new V3(0, 1, 0);
       placeBasis(st, new V3().crossVectors(up, smp.o).normalize(), up, smp.P.clone().addScaledVector(smp.o, smp.r * 0.52));
-      B.add(st, { ex: GEAR.plastic, color: _c.setRGB(0.98, 0.94, 0.62), bone: `hair3_1` });
+      B.add(st, { ex: GEAR.plastic, color: _c.setRGB(0.98, 0.94, 0.62), bone: hb(3, 1) });
     }
   } else if (kind === 'bob') {
     // twin-bar barrette on the side-swept bang
     const info = strandInfo[6];
     if (info) {
       for (const [t, k] of [[0.62, 0], [0.7, 1]]) {
-        const smp = info.sw.sample(t);
+        const smp = info.sample(t);
+        if (!smp || hidden(smp.P)) continue;
         const bar = superEllipsoid(0.0035, 0.017, 0.0022, 0.5, 0.6, 6, 8);
         const across = new V3().crossVectors(smp.T, smp.o).normalize();
         placeBasis(bar, smp.T, across, smp.P.clone().addScaledVector(smp.o, smp.r * 0.44));
-        B.add(bar, { ex: GEAR.metal, color: k ? _c.setRGB(0.96, 0.8, 0.46) : gcol(-1, 1), bone: 'hair6_1' });
+        B.add(bar, { ex: GEAR.metal, color: k ? _c.setRGB(0.96, 0.8, 0.46) : gcol(-1, 1), bone: hb(6, 1) });
       }
     }
     // carabiner + squid charm on the left hip, under the tee hem
@@ -1424,14 +1543,95 @@ function addGear(B, style, strandInfo) {
     charm.translate(c0.x + 0.001, c0.y - 0.031, c0.z + 0.001);
     B.add(charm, { ex: GEAR.plastic, color: gcol(-1, 1.12), bone: 'hips' });
     for (const sx of [1, -1]) { const e = superEllipsoid(0.0016, 0.0019, 0.001, 1, 1, 6, 4); e.translate(c0.x + 0.0072, c0.y - 0.032, c0.z + 0.001 + 0.0032 * sx); B.add(e, { ex: GEAR.plastic, color: _c.setRGB(0.02, 0.02, 0.03), bone: 'hips' }); }
+  } else if (kind === 'pony') {
+    // chunky ruffled scrunchie gathering the tail (rides on the tail's root bone so the tail never slides out of it)
+    const info = strandInfo[0];
+    const at = style.tie && new V3(...style.tie.at).add(HEAD_C);
+    if (info && at && !hidden(at)) {
+      const t = closestT(info.sw.curve, at);
+      const smp = info.sw.sample(t);
+      const R0 = smp.r * 0.98 + 0.004;
+      const g = ruffledRing(R0, 0.0135, 13, 0.0032, 10, 44);
+      placeBasis(g, smp.o, smp.T, smp.P);
+      B.add(g, { ex: GEAR.fabric, color: gcol(-2, 1.0), bone: hb(0, 0) });
+      // a small team-ink bead knotted on the scrunchie
+      const bead = superEllipsoid(0.0118, 0.0118, 0.0118, 1, 1, 12, 8);
+      const bp = smp.P.clone().addScaledVector(smp.o, R0 + 0.012).addScaledVector(smp.b, 0.006);
+      bead.translate(bp.x, bp.y, bp.z);
+      B.add(bead, { ex: GEAR.plastic, color: gcol(-1, 1.18), bone: hb(0, 0) });
+    }
+  } else if (kind === 'crest') {
+    // two small hoops through the rim of the left ear (punk detail to go with the mohawk)
+    const root = headSurf(EAR.az, EAR.el, -0.0085, new V3());
+    const A = new V3(0.63, 0.43, -0.65).normalize();
+    const F = new V3(0.46, 0.1, 0.88); F.addScaledVector(A, -F.dot(A)).normalize();
+    const W = new V3().crossVectors(A, F).normalize();
+    const up = W.y > 0 ? 1 : -1;
+    for (const u of [0.42, 0.58]) {
+      const w = 0.0268 * Math.pow(1 - u, 0.8) * sstep(-0.4, 0.28, u) + 0.0011;
+      const e = root.clone().addScaledVector(A, u * 0.106).addScaledVector(F, -0.011 * u * u).addScaledVector(W, up * w);
+      const ring = torus(0.0056, 0.0011, 5, 16);
+      placeBasis(ring, W, F, e);
+      B.add(ring, { ex: GEAR.metal, color: _c.setRGB(0.86, 0.87, 0.9), bone: 'earL' });
+    }
+  } else if (kind === 'knot') {
+    // wrapped band at the base of the bun + a lacquered hairpin through it (both ride on the first coil's root)
+    const K0 = new V3(...style.knot.at).add(HEAD_C), Rb = style.knot.r;
+    if (!strandInfo[0] || hidden(K0)) return;
+    const kb = hb(0, 0), ax = new V3(...(style.knot.axis || [0, 1, 0])).normalize();
+    const kq = new THREE.Quaternion().setFromUnitVectors(new V3(0, 1, 0), ax);
+    const kp = (x, y, z) => new V3(x, y, z).applyQuaternion(kq).add(K0);
+    const band = torus(Rb * 1.08, 0.0082, 8, 28); band.rotateX(Math.PI / 2); band.scale(1, 1.3, 1);
+    band.translate(0, -Rb * 0.62, 0); band.applyQuaternion(kq); band.translate(K0.x, K0.y, K0.z);
+    B.add(band, { ex: GEAR.fabric, color: gcol(-3, 1.25), bone: kb });
+    const a = kp(-0.088, 0.002, 0.014), b = kp(0.09, 0.024, -0.014);
+    const pin = sweep([a, a.clone().lerp(b, 0.5).add(kp(0, 0.004, 0).sub(K0)), b], { seg: 6, radial: 6, capSteps: 2, radius: (t) => lerp(0.0036, 0.0027, t) });
+    B.add(pin.geo, { ex: GEAR.plastic, color: _c.setRGB(0.06, 0.06, 0.08), bone: kb });
+    const ball = superEllipsoid(0.011, 0.011, 0.011, 1, 1, 12, 8); const bc = b.clone().addScaledVector(b.clone().sub(a).normalize(), 0.007);
+    ball.translate(bc.x, bc.y, bc.z);
+    B.add(ball, { ex: GEAR.plastic, color: gcol(-1, 1.15), bone: kb });
+  } else if (kind === 'swoop') {
+    // two crossed enamel bobby pins holding the short side back (on the scalp above the left ear)
+    for (const [a0, tilt] of [[0.0, 0.55], [0.018, -0.5]]) {
+      const n = new V3(); const c = headSurf(1.2 + a0, 0.5, capOffset(1.2 + a0, 0.5) + 0.0045, new V3(), n);
+      if (hidden(c)) continue;
+      const along = new V3(0, 1, 0).addScaledVector(n, -n.y).normalize();
+      const side = new V3().crossVectors(n, along).normalize();
+      along.multiplyScalar(Math.cos(tilt)).addScaledVector(side, Math.sin(tilt)).normalize();
+      const pinG = superEllipsoid(0.0034, 0.024, 0.0022, 0.45, 0.6, 6, 10, (q) => { q.z -= 3.2 * q.y * q.y; });
+      placeBasis(pinG, new V3().crossVectors(along, n), along, c);
+      B.add(pinG, { ex: GEAR.plastic, color: gcol(-1, 1.12), bone: 'head' });
+    }
   }
+}
+/** Parameter of the curve point closest to `p` (coarse scan + refine). */
+function closestT(curve, p) {
+  let best = 0, bd = 1e9; const q = new V3();
+  for (let k = 0; k <= 200; k++) { curve.getPointAt(k / 200, q); const d = q.distanceToSquared(p); if (d < bd) { bd = d; best = k / 200; } }
+  return best;
+}
+/** Ruffled ring (scrunchie) around +Y: ring radius R, tube radius r with `n` puffs of amplitude `amp`. */
+function ruffledRing(R, r, n, amp, rs, ts) {
+  const g = new THREE.TorusGeometry(R, r, rs, ts);
+  const P = g.attributes.position; const v = new V3(), c = new V3();
+  for (let i = 0; i < P.count; i++) {
+    v.fromBufferAttribute(P, i);
+    const th = Math.atan2(v.y, v.x);
+    c.set(Math.cos(th) * R, Math.sin(th) * R, 0);
+    const d = v.clone().sub(c); const cp = d.dot(c) / (R * r); // cos(psi): +1 on the outer rim
+    const puff = 1 + (amp / r) * Math.cos(th * n) * (0.55 + 0.45 * cp);
+    d.multiplyScalar(puff); d.z *= 1.15;
+    v.copy(c).add(d); P.setXYZ(i, v.x, v.y, v.z);
+  }
+  g.rotateX(-Math.PI / 2);
+  return finalize(g);
 }
 // helpers for the headphone cup lathe (height along the cup axis / radius from it)
 function cgY(g, i, c, n) { const P = g.attributes.position; return (P.getX(i) - c.x) * n.x + (P.getY(i) - c.y) * n.y + (P.getZ(i) - c.z) * n.z; }
 function radial(g, i, c, n) { const P = g.attributes.position; const v = new V3(P.getX(i) - c.x, P.getY(i) - c.y, P.getZ(i) - c.z); const h = v.dot(n); return v.addScaledVector(n, -h).length(); }
 
 /** Hairline-aligned scalp cap with a thick rolled lip. */
-function buildCap() {
+function buildCap(pole = null, hat = null) {
   const nA = 48, K = 10;
   const rowsSpec = [[-0.012, 'in'], [-0.006, 'lip0'], [0.0, 'lip1'], [0.016, 'lip2'], [0.042, 'full']];
   const azs = []; for (let i = 0; i < nA; i++) azs.push(-Math.PI + (i / nA) * TAU);
@@ -1454,85 +1654,355 @@ function buildCap() {
       return [headSurf(az, el, capOffset(az, el), new V3()), el, clamp((el - h) / 0.25, 0, 1)];
     });
   }
-  const pole = headSurf(0, Math.PI / 2, capOffset(0, Math.PI / 2), new V3());
-  const g = gridGeo(rows, { wrapU: true, poles: { end: pole }, outward: HEAD_C, uv: (i, j) => [meta[j][i % nA][0], meta[j][i % nA][1]], poleUv: { end: [0, Math.PI / 2] } });
+  const top = headSurf(0, Math.PI / 2, capOffset(0, Math.PI / 2), new V3());
+  // under a dome hat the cap is never seen: drop every quad well inside the rim (and the pole fan)
+  const under = hat && hat.rim ? (i, j) => { for (const [di, dj] of [[0, 0], [1, 0], [0, 1], [1, 1]]) { const m = meta[Math.min(rows.length - 1, j + dj)][(i + di) % nA]; if (m[1] < hat.rim(m[0]) + 0.09) return false; } return true; } : null;
+  const g = gridGeo(rows, { wrapU: true, poles: under ? {} : { end: top }, skip: under, outward: HEAD_C, uv: (i, j) => [meta[j][i % nA][0], meta[j][i % nA][1]], poleUv: { end: [0, Math.PI / 2] } });
+  // uv = stereographic coordinates of the head direction about the style's groove pole (the crown by default; the
+  // ponytail tie or the side part for styles that gather their hair elsewhere). The shader rebuilds (az, el) about that
+  // pole per fragment, so the bundle grooves radiate from it with no interpolation seam.
+  {
+    const q = new THREE.Quaternion().setFromUnitVectors(new V3(...(pole || [0, 1, 0])).normalize(), new V3(0, 1, 0));
+    const UV = g.attributes.uv, d = new V3();
+    for (let i = 0; i < UV.count; i++) {
+      dirAE(UV.getX(i), UV.getY(i), d).applyQuaternion(q);
+      UV.setXY(i, d.x / (1 + d.y), d.z / (1 + d.y));
+    }
+  }
   const col = new Float32Array(g.attributes.position.count * 3);
   const nc = nA + 1;
   for (let j = 0; j < rows.length; j++) for (let i = 0; i < nc; i++) { const k = j * nc + i; col[k * 3] = 0; col[k * 3 + 1] = meta[j][i % nA][2]; col[k * 3 + 2] = 2.0; }
-  const last = g.attributes.position.count - 1; col[last * 3 + 1] = 1; col[last * 3 + 2] = 2.0;
+  if (!under) { const last = g.attributes.position.count - 1; col[last * 3 + 1] = 1; col[last * 3 + 2] = 2.0; }
   return { geo: g, col };
 }
 
-function buildHair(styleIdx) {
-  const style = STYLES[styleIdx % STYLES.length];
-  const B = new Builder();
-  const rest = {}; const meta = [];
-  // ---- scalp cap
-  {
-    const { geo, col } = buildCap();
-    B.add(geo, { bone: 'head', ex: -0.08, uv: true, color: (p, i) => _c.setRGB(col[i * 3], col[i * 3 + 1], col[i * 3 + 2]) });
-  }
-  // ---- brows: tapered, arched, thicker at the inner end
-  for (const [s, sx] of [['L', 1], ['R', -1]]) {
-    const pts = []; const q = new V3();
-    for (let i = 0; i <= 6; i++) { const t = i / 6; pts.push(headSurf(sx * lerp(BROW.az0, BROW.az1, t), BROW.el + 0.045 * Math.sin(Math.PI * (t * 0.8 + 0.12)) - 0.014 * t, 0.0035, q).clone()); }
-    const st = sweep(pts, { seg: 10, radial: 6, capSteps: 2, radius: (t) => 0.0092 * (0.5 + 0.5 * Math.sin(Math.PI * (0.22 + 0.72 * t))) * lerp(1.15, 0.7, t), flat: 0.5, outward: (P, o) => o.copy(P).sub(HEAD_C).normalize() });
-    B.add(st.geo, { bone: 'brow' + s, ex: -0.62, color: _c.setRGB(0, 0, 0) });
-  }
-  // ---- strands
-  const capCenter = HEAD_C.clone().add(new V3(0, -0.02, -0.005));
-  const strandInfo = [];
-  style.strands.forEach((sd, si) => {
-    const pts = sd.pts.map((cp) => strandPoint(cp, sd.r0, sd.flat, new V3()));
-    // curled tip: extend the last segment and roll it outward (away from the head) / upward
-    if (sd.curl) {
-      const a = pts[pts.length - 2], b = pts[pts.length - 1];
-      const d = b.clone().sub(a).normalize();
-      const out = b.clone().sub(capCenter); out.addScaledVector(d, -out.dot(d)).normalize();
-      const len = a.distanceTo(b) * 0.5;
-      const k = sd.curl * 0.75;
-      pts.push(b.clone().addScaledVector(d, len * 0.8).addScaledVector(out, len * 0.45 * k));
-      pts.push(b.clone().addScaledVector(d, len * 1.05).addScaledVector(out, len * 1.1 * k).add(new V3(0, len * 0.35 * Math.abs(k), 0)));
+// ------------------------------------------------------------------------------------------------
+// Headgear (style.hat). Dome hats built into the hair mesh (same skinning / material as the style's gear):
+//  • rim(az): the hat's edge as a head elevation per azimuth (clears the brows at the front and the ears at the sides);
+//  • every tentacle is re-rooted where it leaves the rim: the covered part is not built, the bone chain starts at the
+//    exit so the springs swing only what shows, and strands that would leave through the crown (spikes, crests, high
+//    buns — anything that exits more than exitMax off the scalp) are dropped; styles with a hat-compatible variant
+//    (`underHat`: low ponytail, low bun, low twin tails) switch to it;
+//  • the inner surface sits on the scalp cap and flares over the hair emerging at the rim (a blurred height field of
+//    the kept strands near their exits), so nothing pokes through at rest or when the strands swing outward.
+// ------------------------------------------------------------------------------------------------
+const rimTable = (tab) => { const k = tab.map((e) => e[0]), v = tab.map((e) => e[1]); return (az) => interpTable(k, v, Math.abs(az)); };
+export const HAT_KINDS = [
+  { name: 'none' },
+  { // snapback: structured six-panel crown (taller at the front), curved bill, strap + snaps at the back
+    name: 'cap', cls: 4, col: [-3, 1.22], thick: 0.0058, exitMax: 0.05, flare: 0.006, rows: [0, 0.025, 0.07, 0.14, 0.22, 0.32], crown: 8,
+    rim: rimTable([[0, 0.63], [0.6, 0.6], [1.2, 0.42], [1.6, 0.29], [2.3, 0.12], [Math.PI, 0.03]]),
+    lift: (az, el) => 0.019 * Math.max(0, Math.cos(az)) ** 1.5 * sstep(0.62, 1.05, el) * (1 - 0.35 * sstep(1.25, 1.57, el)) + 0.012 * sstep(0.75, 1.45, el),
+    shape: () => 0,
+  },
+  { // beanie: knit dome with a folded cuff (team stripe) and a pom-pom
+    name: 'beanie', cls: 5, col: [-2, 1.0], thick: 0.0085, exitMax: 0.052, flare: 0.009, rows: [0, 0.012, 0.09, 0.17, 0.186, 0.196, 0.206, 0.22, 0.27, 0.32], crown: 7,
+    rim: rimTable([[0, 0.67], [0.6, 0.62], [1.2, 0.43], [1.6, 0.28], [2.3, 0.05], [Math.PI, -0.05]]),
+    lift: (az, el) => 0.006 + 0.013 * Math.max(0, -Math.cos(az)) * sstep(0.3, 1.1, el) * (1 - 0.5 * sstep(1.2, 1.57, el)),
+    shape: (az, e) => 0.0068 * sstep(-0.01, 0.012, e) * (1 - sstep(0.188, 0.206, e)) + 0.0012 * gauss(e - 0.197, 0.008),
+  },
+  { // bucket hat: soft crown with a team band, stitched brim all the way round (sloping down)
+    name: 'bucket', cls: 6, col: [-4, 1.06], thick: 0.0062, exitMax: 0.05, flare: 0.008, rows: [0, 0.03, 0.08, 0.14, 0.22, 0.32], crown: 7,
+    rim: rimTable([[0, 0.63], [0.6, 0.59], [1.2, 0.43], [1.6, 0.31], [2.3, 0.12], [Math.PI, 0.04]]),
+    lift: (az, el) => 0.016 * sstep(0.45, 1.0, el) * (1 - 0.55 * sstep(1.15, 1.57, el)) + 0.004,
+    shape: () => 0,
+  },
+];
+
+/** Classify every strand against a dome hat and build the clearance field the hat's inner surface follows. */
+function analyseHat(hat, specs) {
+  const N = 180; const tmp = new V3(), d = new V3(), sk = new V3();
+  const cut = []; const hs = [];
+  for (const sp of specs) {
+    const S = []; let last = -1;
+    for (let k = 0; k <= N; k++) {
+      const t = k / N; sp.curve.getPointAt(t, tmp);
+      d.subVectors(tmp, HEAD_C); const r = d.length(); d.divideScalar(r);
+      const el = Math.asin(clamp(d.y, -1, 1)), az = Math.atan2(d.x, d.z);
+      const off = r - headShape(d.x, d.y, d.z, sk).length();
+      if (el > hat.rim(az)) last = k;
+      S.push({ az, el, top: off + sp.top(t), off, w: sp.radius(t) });
     }
-    const radius = (t) => {
-      let r = lerp(sd.r0, sd.r1 * 0.92, Math.pow(sstep(0.0, 0.88, t), 0.78));        // firm taper
-      r *= 1 + 0.24 * Math.exp(-(((t - 0.83) / 0.06) ** 2));                          // tentacle club near the tip
-      return r * lerp(1, 0.62, sstep(0.91, 1, t));
+    if (last < 0) { cut[sp.si] = { keep: true, tExit: 0 }; continue; }
+    const kx = Math.min(N, last + 1), tExit = kx / N;
+    if (tExit > 0.88 || S[kx].off > hat.exitMax) { cut[sp.si] = { keep: false, tExit }; continue; }
+    cut[sp.si] = { keep: true, tExit };
+    // the hidden stub (built from tExit - 0.045) and the first free stretch below the rim must clear the hat
+    for (let k = Math.max(0, kx - Math.ceil(0.075 * N)); k <= Math.min(N, kx + Math.ceil(0.035 * N)); k++) hs.push(S[k]);
+  }
+  // clearance field (radial height above the skin) on an (az, el) grid: splat, dilate, blur
+  const nA = 72, nE = 40, e0 = -0.4, e1 = 1.6;
+  let F = new Float32Array(nA * nE);
+  const ang = (a1, e1_, a2, e2) => { const da = Math.atan2(Math.sin(a1 - a2), Math.cos(a1 - a2)) * Math.cos((e1_ + e2) / 2); return Math.hypot(da, e1_ - e2); };
+  for (const sm of hs) {
+    const rho = sm.w / 0.17 + 0.05;
+    for (let j = 0; j < nE; j++) {
+      const el = e0 + (j / (nE - 1)) * (e1 - e0); if (Math.abs(el - sm.el) > rho) continue;
+      for (let i = 0; i < nA; i++) {
+        const az = -Math.PI + (i / nA) * TAU;
+        if (ang(az, el, sm.az, sm.el) < rho) F[j * nA + i] = Math.max(F[j * nA + i], sm.top);
+      }
+    }
+  }
+  const pass = (fn) => { const G = new Float32Array(nA * nE); for (let j = 0; j < nE; j++) for (let i = 0; i < nA; i++) { let acc = fn === 'max' ? 0 : 0, n = 0; for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) { const jj = clamp(j + dj, 0, nE - 1), ii = (i + di + nA) % nA; const v = F[jj * nA + ii]; if (fn === 'max') acc = Math.max(acc, v); else { acc += v; n++; } } G[j * nA + i] = fn === 'max' ? acc : acc / n; } F = G; };
+  pass('max'); pass('max'); pass('avg'); pass('avg');
+  const H = (az, el) => {
+    const fi = ((az + Math.PI) / TAU) * nA, fj = clamp(((el - e0) / (e1 - e0)) * (nE - 1), 0, nE - 1.001);
+    const i0 = Math.floor(fi), j0 = Math.floor(fj), a = fi - i0, b = fj - j0;
+    const at = (i, j) => F[j * nA + (((i % nA) + nA) % nA)];
+    return lerp(lerp(at(i0, j0), at(i0 + 1, j0), a), lerp(at(i0, j0 + 1), at(i0 + 1, j0 + 1), a), b);
+  };
+  // inner surface: sits on the scalp cap; near the rim it may flare (≤ hat.flare) over the hair that emerges there —
+  // the rest of that hair is tucked flat under the rim instead (see tuck), so the crown stays a clean shape
+  const base = (az, el) => capOffset(az, el) + 0.0045 + hat.lift(az, el);
+  const offIn = (az, el) => { const b = base(az, el); const rz = 1 - sstep(0.05, 0.2, el - hat.rim(az)); return b + rz * clamp(H(az, el) + 0.0028 - b, 0, hat.flare); };
+  // max radial offset allowed for hair geometry at (az, el): under the hat, just inside its inner surface; below the
+  // rim it opens up quickly so the tentacles fan out from under the edge
+  const tuck = (az, el) => {
+    const rim = hat.rim(az);
+    if (el >= rim) return offIn(az, el) - 0.0015;
+    const k = (rim - el) / 0.075; return k >= 1 ? Infinity : offIn(az, rim) - 0.0015 + 0.05 * k * k;
+  };
+  const hidden = (p) => {
+    d.subVectors(p, HEAD_C); const r = d.length(); d.divideScalar(r);
+    const el = Math.asin(clamp(d.y, -1, 1)), az = Math.atan2(d.x, d.z);
+    if (el < hat.rim(az) - 0.015) return false;
+    return r - headShape(d.x, d.y, d.z, sk).length() < offIn(az, el) + hat.thick + 0.004;
+  };
+  return { cut, H, offIn, tuck, hidden, hat };
+}
+
+/** Build the hat mesh (dome + its trims) into the hair builder. */
+function buildHat(B, hat, ctx) {
+  const nA = 48, T = hat.thick, offIn = ctx.offIn;
+  const azs = []; for (let i = 0; i < nA; i++) azs.push(-Math.PI + (i / nA) * TAU);
+  const at = (az, el, off, out = new V3(), nOut = undefined) => headSurf(az, el, off, out, nOut);
+  const outer = (az, e) => { const el = hat.rim(az) + e; return offIn(az, el) + T + hat.shape(az, e); };
+  // rows: hidden inner tuck → rounded lip → outer surface (dense near the rim for cuffs/bands) → crown → pole
+  const rowE = [], rowOff = [], rowV = [];
+  const addRow = (eFn, offFn, v) => { rowE.push(eFn); rowOff.push(offFn); rowV.push(v); };
+  addRow(() => 0.07, (az, e) => offIn(az, hat.rim(az) + e), -0.08);
+  addRow(() => 0.0, (az, e) => offIn(az, hat.rim(az) + e), -0.03);
+  addRow(() => -0.0055, (az, e) => offIn(az, hat.rim(az)) + T * 0.5 + hat.shape(az, 0) * 0.5, -0.015);
+  for (const e of hat.rows) addRow(() => e, (az, ee) => outer(az, ee), e);
+  const top = (az) => 1.5 - hat.rim(az) - 0.32;
+  for (let k = 1; k <= hat.crown; k++) { const f = k / hat.crown; addRow((az) => 0.32 + top(az) * Math.pow(f, 0.92), (az, ee) => outer(az, ee), 0.32 + f); }
+  const rows = rowE.map((eFn, j) => azs.map((az) => { const e = eFn(az); return at(az, hat.rim(az) + e, rowOff[j](az, e)); }));
+  const pole = at(0, Math.PI / 2, offIn(0, Math.PI / 2) + T);
+  const dome = gridGeo(rows, { wrapU: true, poles: { end: pole }, outward: HEAD_C, uv: (i, j) => [i / nA, rowV[j]], poleUv: { end: [0.5, 1.4] } });
+  const tint = -2 - hat.cls;
+  B.add(dome, { ex: tint, uv: true, color: gcol(hat.col[0], hat.col[1]), bone: 'head' });
+  const n = new V3(), p = new V3();
+  if (hat.name === 'cap') {
+    // bill: a curved half-ellipse plate hanging off the front rim (top in the crown colour, team underside)
+    const nu = 18, ns = 7, L0 = 0.084, TH = 0.0052;
+    const base = (u, out) => { const az = u * 0.98; const el = hat.rim(az); return at(az, el, offIn(az, el) + T * 0.6, out); };
+    const dirAt = (u) => { const az = u * 0.98; return new V3(Math.sin(az) * 1.0, -0.24, Math.cos(az)).normalize(); };
+    const topPt = (u, sN) => {
+      const L = L0 * Math.sqrt(Math.max(0, 1 - u * u)) + 0.004;
+      const q = base(u, new V3()).addScaledVector(dirAt(u), sN * L);
+      q.y -= 0.02 * u * u * sN + 0.004 * sN * sN;   // curved bill: sides droop
+      return q;
     };
-    // lens-shaped ribbon: thin crisp edges, a soft ridge along the top, flatter sucker side underneath
-    const section = (c, s, t) => {
+    const loop = []; // cross-section: top from base → edge, round the front edge, bottom back to base
+    const sTop = [0, 0.2, 0.45, 0.7, 0.88, 1.0];
+    for (const sN of sTop) loop.push([sN, 0]);
+    loop.push([1.02, 0.5]);
+    for (const sN of [...sTop].reverse()) loop.push([sN, 1]);
+    const rowsB = [];
+    for (let k = 0; k <= nu; k++) {
+      const u = -1 + (2 * k) / nu;
+      rowsB.push(loop.map(([sN, side]) => { const q = topPt(u, Math.min(1, sN)); if (side === 1) q.y -= TH; else if (side === 0.5) { q.y -= TH * 0.5; q.addScaledVector(dirAt(u), 0.0022); } return q; }));
+    }
+    const bill = gridGeo(rowsB, { wrapU: true, outward: (q, out) => { out.set(0, q.y + 0.5, 0); }, uv: (i, j) => [j / nu, 2 + (i < loop.length ? loop[i][0] + (loop[i][1] > 0.75 ? 1.2 : 0) : 0)] });
+    B.add(bill, { ex: tint, uv: true, color: (q, i) => { const uvA = bill.attributes.uv; return uvA.getY(i) > 3.1 ? gcol(-1, 0.86) : gcol(hat.col[0], hat.col[1]); }, bone: 'head' });
+    // top button
+    const btn = superEllipsoid(0.0105, 0.0052, 0.0105, 0.7, 1, 12, 6);
+    at(0, Math.PI / 2, offIn(0, Math.PI / 2) + T + 0.001, p); btn.translate(p.x, p.y, p.z);
+    B.add(btn, { ex: tint, color: gcol(-1, 1.0), bone: 'head' });
+    // back strap + snaps
+    {
+      const e = 0.04, az = Math.PI; const c = at(az, hat.rim(az) + e, outer(az, e) + 0.0012, new V3(), n);
+      const strap = superEllipsoid(0.034, 0.0072, 0.0022, 0.35, 0.4, 12, 6, (q) => { q.z -= 3.5 * q.x * q.x; });
+      placeBasis(strap, new V3(-1, 0, 0), new V3(0, 1, 0), c);
+      B.add(strap, { ex: GEAR.plastic, color: _c.setRGB(0.08, 0.08, 0.1), bone: 'head' });
+      for (const x of [-0.018, -0.006, 0.006, 0.018]) {
+        const snap = superEllipsoid(0.0026, 0.0026, 0.0014, 1, 1, 8, 4);
+        placeBasis(snap, new V3(-1, 0, 0), new V3(0, 1, 0), c.clone().add(new V3(x, 0, -0.0026)));
+        B.add(snap, { ex: GEAR.plastic, color: _c.setRGB(0.16, 0.16, 0.19), bone: 'head' });
+      }
+    }
+  } else if (hat.name === 'beanie') {
+    // pom-pom: a fluffy ball of yarn on top (team colour)
+    const pom = superEllipsoid(0.03, 0.027, 0.03, 1, 1, 14, 10, (q) => { const k = 1 + 0.09 * Math.sin(q.x * 420) * Math.sin(q.y * 390 + 1.3) * Math.sin(q.z * 410 + 2.1); q.multiplyScalar(k); });
+    at(0, 1.5, offIn(0, 1.5) + T + 0.018, p); pom.translate(p.x, p.y, p.z - 0.004);
+    B.add(pom, { ex: GEAR.fabric, color: gcol(-1, 1.08), bone: 'head' });
+  } else if (hat.name === 'bucket') {
+    // brim: a stitched ring sloping down and out from the rim, top + rolled edge + underside (wraps round)
+    const rowsR = [], vR = [];
+    const prof = [[0.0, 0, -0.002], [0.35, 0, 0], [0.75, 0, 0], [0.97, 0, 0], [1.02, 0.5, 0], [0.97, 1, 0], [0.6, 1, 0], [0.0, 1, -0.002]];
+    for (const [sN, side, inset] of prof) {
+      rowsR.push(azs.map((az) => {
+        const el = hat.rim(az); const q = at(az, el, offIn(az, el) + T * 0.7 + inset, new V3(), n);
+        const L = 0.05 + 0.006 * Math.max(0, Math.cos(az));
+        const dir = new V3(n.x, 0, n.z).normalize().multiplyScalar(Math.cos(0.62)).add(new V3(0, -Math.sin(0.62), 0));
+        q.addScaledVector(dir, Math.min(1, sN) * L);
+        const up = new V3(0, 1, 0).addScaledVector(dir, -dir.y).normalize();
+        if (side === 1) q.addScaledVector(up, -0.0048); else if (side === 0.5) q.addScaledVector(up, -0.0024).addScaledVector(dir, 0.0018);
+        return q;
+      }));
+      vR.push(2 + sN + (side > 0.75 ? 1.2 : 0));
+    }
+    const brim = gridGeo(rowsR, { wrapU: true, outward: (q, out) => out.set(HEAD_C.x, q.y + 0.3, HEAD_C.z), uv: (i, j) => [i / nA, vR[j]] });
+    B.add(brim, { ex: tint, uv: true, color: gcol(hat.col[0], hat.col[1]), bone: 'head' });
+  }
+}
+
+/** Everything needed to sweep one strand (built once per style variant; `si` = the style's strand index). */
+function strandSpec(sd, si, capCenter) {
+  const pts = sd.pts.map((cp) => strandPoint(cp, sd.r0, sd.flat, new V3()));
+  // curled tip: extend the last segment and roll it outward (away from the head) / upward
+  if (sd.curl) {
+    const a = pts[pts.length - 2], b = pts[pts.length - 1];
+    const d = b.clone().sub(a).normalize();
+    const out = b.clone().sub(capCenter); out.addScaledVector(d, -out.dot(d)).normalize();
+    const len = a.distanceTo(b) * 0.5;
+    const k = sd.curl * 0.75;
+    pts.push(b.clone().addScaledVector(d, len * 0.8).addScaledVector(out, len * 0.45 * k));
+    pts.push(b.clone().addScaledVector(d, len * 1.05).addScaledVector(out, len * 1.1 * k).add(new V3(0, len * 0.35 * Math.abs(k), 0)));
+  }
+  const radius = (t) => {
+    let r = lerp(sd.r0, sd.r1 * 0.92, Math.pow(sstep(0.0, 0.88, t), sd.taper ?? 0.78)); // firm taper (taper > 1 stays full longer)
+    if (!sd.noClub) r *= 1 + 0.24 * Math.exp(-(((t - 0.83) / 0.06) ** 2));          // tentacle club near the tip
+    return r * lerp(1, 0.62, sstep(0.91, 1, t));
+  };
+  // lens-shaped ribbon: thin crisp edges, a soft ridge along the top, flatter sucker side underneath.
+  // Fin strands (out: 'x') are flattened sideways instead (a mohawk blade) with a symmetric lens section.
+  const fin = sd.out === 'x';
+  const section = fin
+    ? (c, s) => [c * (1 - 0.3 * s * s), s]
+    : (c, s) => {
       let cc = c * (1 - 0.34 * s * s);
       if (c > 0) cc += 0.2 * c * Math.pow(1 - s * s, 2); else cc *= 0.82;
       return [cc, s];
     };
-    const tw = (si % 2 ? 1 : -1) * (0.22 + 0.12 * ((si * 37) % 5) / 4) * (sd.K > 2 ? 0.5 : 1);
-    const sw = sweep(pts, { seg: 18, radial: 9, capSteps: 3, transport: true, radius, section, twist: (t) => tw * sstep(0.12, 0.62, t) * (1 - 0.7 * sstep(0.7, 0.95, t)), flat: (t) => lerp(sd.flat * 0.62, Math.min(0.78, sd.flat + 0.24), sstep(0.5, 0.92, t)), outward: (P, o) => o.copy(P).sub(capCenter).normalize() });
-    strandInfo.push({ sw, sd });
-    const bt = [0, 0.34, 0.67];
-    for (let k = 0; k < HAIR_SEGS; k++) rest[`hair${si}_${k}`] = sw.curve.getPointAt(bt[k]);
-    rest[`hairTip${si}`] = sw.curve.getPointAt(0.86);
-    const len = sw.curve.getLength();
-    const tA = sw.t, cA = sw.cs, sA = sw.sn;
-    B.add(sw.geo, {
-      ex: 0,
-      color: (p, i) => _c.setRGB(tA[i], sd.suck ? 1 : 0, sA[i] * 0.5 + 0.5),
-      uv: (i) => [tA[i] * len, cA[i]],
-      weights: (p, i) => {
-        const t = tA[i]; const w = [];
-        for (let k = 0; k < HAIR_SEGS; k++) { const c = (k + 0.5) / HAIR_SEGS; w.push([`hair${si}_${k}`, Math.max(0, 1 - Math.abs(t - c) * HAIR_SEGS)]); }
-        if (t < 1 / 6) { w[0][1] = 1; w[1][1] = 0; }
-        if (t > 5 / 6) { w[2][1] = 1; w[1][1] = 0; }
-        const wt = sstep(0.84, 0.95, t);
-        if (wt > 0) { for (const e of w) e[1] *= 1 - wt; w.push([`hairTip${si}`, wt]); }
-        return w;
-      },
-    });
-    const dir = pts[pts.length - 1].clone().sub(pts[0]);
-    meta.push({ dir: dir.clone().normalize(), len: dir.length(), K: sd.K, G: sd.G });
+  const tw = sd.twist ?? (si % 2 ? 1 : -1) * (0.22 + 0.12 * ((si * 37) % 5) / 4) * (sd.K > 2 ? 0.5 : 1);
+  const twist = (t) => tw * sstep(0.12, 0.62, t) * (1 - 0.7 * sstep(0.7, 0.95, t));
+  const flat = (t) => lerp(sd.flat * 0.62, Math.min(0.78, sd.flat + 0.24), sstep(0.5, 0.92, t));
+  const outward = fin ? (P, o) => o.set(1, 0, 0) : (P, o) => o.copy(P).sub(capCenter).normalize();
+  const curve = new THREE.CatmullRomCurve3(pts.map((p) => p.clone()), false, 'centripetal');
+  // half-thickness toward the scalp normal (how far the strand's top stands off its centreline)
+  const top = (t) => (fin ? 1 : 1.2 * flat(t)) * radius(t);
+  return { sd, si, pts, radius, section, twist, flat, outward, fin, curve, top };
+}
+
+/**
+ * Sweep one strand into the hair mesh and set its bone chain. tExit > 0 re-roots it under a hat: the part before
+ * tExit is hidden under the hat (only a short stub is built), the bones start where it leaves the rim, and every
+ * profile (radius, flattening, twist, shading t) keeps the untrimmed strand's parametrisation so it looks the same.
+ */
+function buildStrand(B, sp, si, tExit, rest, meta, hatCtx = null) {
+  const { sd } = sp;
+  const t0 = tExit > 0 ? Math.max(0, tExit - 0.045) : 0;
+  const map = (t) => t0 + t * (1 - t0);
+  let pts = sp.pts;
+  if (t0 > 0) { pts = []; for (let k = 0; k <= 26; k++) pts.push(sp.curve.getPointAt(map(k / 26))); }
+  const sw = sweep(pts, {
+    seg: t0 > 0 ? Math.max(8, Math.round(18 * (1 - t0) + 2)) : 18, radial: 9, capSteps: 3, transport: !sp.fin, section: sp.section, outward: sp.outward,
+    radius: t0 > 0 ? (t) => sp.radius(map(t)) : sp.radius,
+    twist: t0 > 0 ? (t) => sp.twist(map(t)) : sp.twist,
+    flat: t0 > 0 ? (t) => sp.flat(map(t)) : sp.flat,
   });
-  for (let si = style.strands.length; si < HAIR_MAX; si++) { for (let k = 0; k < HAIR_SEGS; k++) rest[`hair${si}_${k}`] = HEAD_C.clone(); rest[`hairTip${si}`] = HEAD_C.clone(); }
-  addGear(B, style, strandInfo);
-  return { geo: B.build('aTint'), rest, meta, name: style.name };
+  if (hatCtx) {
+    // tuck: any vertex standing proud of the hat's inner surface (the hidden stub, a ribbon edge brushing the rim) is
+    // pulled radially under it; just below the rim the limit opens up so the tentacle fans out from under the edge
+    const P = sw.geo.attributes.position; const v = new V3(), d = new V3(), sk = new V3(); let moved = false;
+    for (let i = 0; i < P.count; i++) {
+      v.fromBufferAttribute(P, i); d.subVectors(v, HEAD_C); const r = d.length(); d.divideScalar(r);
+      const lim = hatCtx.tuck(Math.atan2(d.x, d.z), Math.asin(clamp(d.y, -1, 1))); if (!Number.isFinite(lim)) continue;
+      const skin = headShape(d.x, d.y, d.z, sk).length();
+      if (r - skin > lim) { v.copy(d).multiplyScalar(skin + Math.max(0.0005, lim)).add(HEAD_C); P.setXYZ(i, v.x, v.y, v.z); moved = true; }
+    }
+    if (moved) sw.geo.computeVertexNormals();
+  }
+  // bone chain on the free part [tExit, 1] (param of this sweep: tb)
+  const tb = (u) => (lerp(tExit, 1, u) - t0) / (1 - t0);
+  const bt = [0, 0.34, 0.67];
+  for (let k = 0; k < HAIR_SEGS; k++) rest[`hair${si}_${k}`] = sw.curve.getPointAt(tb(bt[k]));
+  rest[`hairTip${si}`] = sw.curve.getPointAt(tb(0.86));
+  const len = sp.curve.getLength();
+  const tA = sw.t, cA = sw.cs, sA = sw.sn;
+  B.add(sw.geo, {
+    ex: 0,
+    color: (p, i) => _c.setRGB(map(tA[i]), sd.suck ? 1 : 0, sA[i] * 0.5 + 0.5),
+    uv: (i) => [map(tA[i]) * len, cA[i]],
+    weights: (p, i) => {
+      const t = tExit > 0 ? clamp((map(tA[i]) - tExit) / (1 - tExit), 0, 1) : tA[i]; const w = [];
+      for (let k = 0; k < HAIR_SEGS; k++) { const c = (k + 0.5) / HAIR_SEGS; w.push([`hair${si}_${k}`, Math.max(0, 1 - Math.abs(t - c) * HAIR_SEGS)]); }
+      if (t < 1 / 6) { w[0][1] = 1; w[1][1] = 0; }
+      if (t > 5 / 6) { w[2][1] = 1; w[1][1] = 0; }
+      const wt = sstep(0.84, 0.95, t);
+      if (wt > 0) { for (const e of w) e[1] *= 1 - wt; w.push([`hairTip${si}`, wt]); }
+      // the stub hidden under a hat is pinned to the head (only what leaves the rim swings)
+      if (tExit > 0) { const kh = 1 - sstep(tExit - 0.016, tExit, map(tA[i])); if (kh > 0) { for (const e of w) e[1] *= 1 - kh; w.push(['head', kh]); } }
+      return w;
+    },
+  });
+  const first = tExit > 0 ? rest[`hair${si}_0`] : pts[0];
+  const dir = pts[pts.length - 1].clone().sub(first);
+  meta.push({ dir: dir.clone().normalize(), len: dir.length(), K: sd.K, G: sd.G });
+  // sample(t) in the ORIGINAL strand parametrisation (gear placement); null where the strand is hidden by a hat
+  const sample = (t) => (t < tExit + 0.02 ? null : sw.sample((t - t0) / (1 - t0)));
+  return { sw, sd, bi: si, t0, tExit, sample };
+}
+
+// Brow shapes (style.brows). t = 0 inner end (near the nose) → 1 outer end. el(t) is the stroke's elevation on the head,
+// r(t) its radius. 0 is the original stroke (unchanged); the others are painted-ink variants for the locker.
+export const BROW_KINDS = [
+  { name: 'classic', el: (t) => BROW.el + 0.045 * Math.sin(Math.PI * (t * 0.8 + 0.12)) - 0.014 * t, r: (t) => 0.0092 * (0.5 + 0.5 * Math.sin(Math.PI * (0.22 + 0.72 * t))) * lerp(1.15, 0.7, t), az1: BROW.az1 },
+  // bold: thick, low and level with a slight downward slant toward the nose (determined)
+  { name: 'bold', el: (t) => BROW.el - 0.004 + 0.022 * Math.sin(Math.PI * (t * 0.7 + 0.2)) + 0.01 * t, r: (t) => 0.0128 * (0.62 + 0.38 * Math.sin(Math.PI * (0.18 + 0.7 * t))) * lerp(1.12, 0.82, t), az1: BROW.az1 + 0.02 },
+  // arched: high, thin, elegant arch that tapers to a fine tail
+  { name: 'arched', el: (t) => BROW.el + 0.012 + 0.07 * Math.sin(Math.PI * (t * 0.86 + 0.08)) - 0.02 * t, r: (t) => 0.0078 * (0.55 + 0.45 * Math.sin(Math.PI * (0.2 + 0.75 * t))) * lerp(1.1, 0.55, t), az1: BROW.az1 + 0.03 },
+  // straight: short, blunt, perfectly level bars
+  { name: 'straight', el: (t) => BROW.el + 0.022 + 0.004 * Math.sin(Math.PI * t), r: (t) => 0.0104 * (0.82 + 0.18 * Math.sin(Math.PI * (0.1 + 0.8 * t))), az1: BROW.az1 - 0.05 },
+];
+
+function buildHair(styleIdx, hatIdx = 0, browIdx = 0) {
+  const style = STYLES[styleIdx % STYLES.length];
+  const hat = HAT_KINDS[hatIdx] || HAT_KINDS[0];
+  const B = new Builder();
+  const rest = {}; const meta = [];
+  // ---- scalp cap
+  {
+    const { geo, col } = buildCap(style.cap?.pole, hat);
+    B.add(geo, { bone: 'head', ex: -0.08, uv: true, color: (p, i) => _c.setRGB(col[i * 3], col[i * 3 + 1], col[i * 3 + 2]) });
+  }
+  // ---- brows: tapered ink strokes on the brow bones (shape per style.brows)
+  const bk = BROW_KINDS[browIdx] || BROW_KINDS[0];
+  for (const [s, sx] of [['L', 1], ['R', -1]]) {
+    const pts = []; const q = new V3();
+    for (let i = 0; i <= 6; i++) { const t = i / 6; pts.push(headSurf(sx * lerp(BROW.az0, bk.az1, t), bk.el(t), 0.0035, q).clone()); }
+    const st = sweep(pts, { seg: 10, radial: 6, capSteps: 2, radius: bk.r, flat: 0.5, outward: (P, o) => o.copy(P).sub(HEAD_C).normalize() });
+    B.add(st.geo, { bone: 'brow' + s, ex: -0.62, color: _c.setRGB(0, 0, 0) });
+  }
+  // ---- strands: specs first, so a hat can analyse (and re-root / drop) them before anything is built
+  const capCenter = HEAD_C.clone().add(new V3(0, -0.02, -0.005));
+  const vs = hat.rim && style.underHat ? { ...style, ...style.underHat } : style; // hat-compatible variant (low tail / bun)
+  const specs = vs.strands.map((sd, si) => strandSpec(sd, si, capCenter));
+  const hatCtx = hat.rim ? analyseHat(hat, specs) : null;
+  const strandInfo = []; let bi = 0; // strandInfo is indexed by the style's strand index (null = dropped under the hat)
+  for (const sp of specs) {
+    const cut = hatCtx ? hatCtx.cut[sp.si] : { keep: true, tExit: 0 };
+    if (!cut.keep) { strandInfo.push(null); continue; }
+    const si = bi++;
+    const info = buildStrand(B, sp, si, cut.tExit, rest, meta, hatCtx);
+    strandInfo.push(info);
+  }
+  for (let si = bi; si < HAIR_MAX; si++) { for (let k = 0; k < HAIR_SEGS; k++) rest[`hair${si}_${k}`] = HEAD_C.clone(); rest[`hairTip${si}`] = HEAD_C.clone(); }
+  addGear(B, vs, strandInfo, hatCtx);
+  if (hatCtx) buildHat(B, hat, hatCtx);
+  return { geo: B.build('aTint'), rest, meta, name: style.name, hat: hat.name, dropped: strandInfo.filter((x) => !x).length };
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -1637,22 +2107,34 @@ export function getKidShared() {
   if (!_shared) _shared = { skin: buildSkin(), cloth: buildCloth(), eyes: buildEyes(), tank: buildTankParts(), squid: buildSquid() };
   return _shared;
 }
-export function getHairStyle(i) {
-  const k = (((i | 0) % STYLES.length) + STYLES.length) % STYLES.length;
-  if (!_hair.has(k)) _hair.set(k, buildHair(k));
-  return _hair.get(k);
+/**
+ * Hair-mesh key of a style: accepts a style object ({ hair, hat, brows, … }) or a bare hair index (legacy callers).
+ * The hair mesh carries the tentacles, scalp cap, brows, style accessories and headgear, so all three select it.
+ */
+const wrapN = (v, n) => ((Math.round(+v || 0) % n) + n) % n;
+function hairKey(st) {
+  if (st && typeof st === 'object') return { hair: wrapN(st.hair, STYLES.length), hat: wrapN(st.hat, HAT_KINDS.length), brows: wrapN(st.brows, BROW_KINDS.length) };
+  return { hair: wrapN(st, STYLES.length), hat: 0, brows: 0 };
 }
-export function getRestPositions(styleIdx) {
-  const h = getHairStyle(styleIdx); const out = {};
+const keyStr = (k) => `${k.hair}.${k.hat}.${k.brows}`;
+export function getHairStyle(st) {
+  const k = hairKey(st), ks = keyStr(k);
+  if (!_hair.has(ks)) _hair.set(ks, buildHair(k.hair, k.hat, k.brows));
+  return _hair.get(ks);
+}
+export function getRestPositions(st) {
+  const h = getHairStyle(st); const out = {};
   for (const n of BONE_NAMES) out[n] = (REST_BODY[n] || h.rest[n] || HEAD_C).clone();
   return out;
 }
 const _inv = new Map();
-export function getBoneInverses(styleIdx) {
-  const k = (((styleIdx | 0) % STYLES.length) + STYLES.length) % STYLES.length;
-  if (!_inv.has(k)) { const rest = getRestPositions(k); _inv.set(k, BONE_NAMES.map((n) => new THREE.Matrix4().makeTranslation(-rest[n].x, -rest[n].y, -rest[n].z))); }
-  return _inv.get(k);
+export function getBoneInverses(st) {
+  const ks = keyStr(hairKey(st));
+  if (!_inv.has(ks)) { const rest = getRestPositions(st); _inv.set(ks, BONE_NAMES.map((n) => new THREE.Matrix4().makeTranslation(-rest[n].x, -rest[n].y, -rest[n].z))); }
+  return _inv.get(ks);
 }
+/** Cloth (garment) mesh for a style — every outfit currently shares the tee cut (patterns/colours are shader-side). */
+export function getClothGeo(st) { return getKidShared().cloth; }
 /** Triangle count of the visible meshes under an object (for budgets / the lab). */
 export function countTriangles(obj) {
   let n = 0;

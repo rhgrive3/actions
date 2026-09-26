@@ -9,7 +9,9 @@
 // + beam trail/impact, roller spray, bomb trails / bounces / danger zones / beep pulses, Tidal Slam launch / charge /
 // fall streaks / shockwaves, Ink Tempest start / puddles / flashes, super-jump charge / launch / trail / landing marker /
 // landing splash, spawn-pad pulses, special-ready sparkles, dry-fire wisps, shots plopping into the sea; ambient sea
-// spray on the deck edges, drifting gull feathers and sun glints on wet ink (+ the GPU dust motes inside fx.js).
+// spray on the deck edges and drifting gull feathers (+ the GPU dust motes inside fx.js).
+// Ink stays ink: flying droplets that land leave a speck in the paint atlas (fx.onSpeck → paint.speck) and every
+// splash / footstep / dive ripples the ink surface itself (fx.onRipple → paint.ripple) instead of drawing decals.
 import * as THREE from 'three';
 import { on } from '../core/ctx.js';
 import { PLAYER, SUB, SPECIALS, WEAPONS } from '../config.js';
@@ -38,9 +40,20 @@ class FxHooks {
     this.time = 0; this.stamp = 0;
     this.count = Object.create(null);    // per-system trigger counters (audits: __inkwave.fxHooks.stats())
     this.edges = []; this.edgeLevel = null;
-    this.sprayT = 0; this.featherT = 4 + rand() * 6; this.glintAcc = 0;
+    this.sprayT = 0; this.featherT = 4 + rand() * 6;
     this.flickT = new Map();
     this.enabled = true;
+    this._sp = new THREE.Vector3();
+    this.heads = new Map();              // slosh wave head globs in flight → last seen { x, y, z, vx, vz, t, team, color }
+    this.dropHits = [];                  // recent 'drop' impacts (pos, normal, time) — to find where a head glob landed
+    if (G.fx) {
+      G.fx.onSpeck = (p, n, col, size) => {
+        const P = this.G.paint, t = this._teamOf(col);
+        if (!P || t < 0 || size < 0.014) return;
+        P.speck(this._sp.copy(p).addScaledVector(n, 0.04), Math.min(0.11, size * 1.7), t);
+      };
+      G.fx.onRipple = (p, amp, wl, speed, life) => this.G.paint?.ripple?.(p, amp, wl, speed, life);
+    }
     const sub = (name, fn) => on(name, (e) => { this.seen[name] = true; if (!this.enabled || !G.fx || !e) return; try { fn(e); } catch (err) { console.warn('[fxHooks]', name, err); } });
     sub('actor:footstep', (e) => this._footstep(e.actor, e.pos, e.surface, e.speed));
     sub('actor:land', (e) => this._land(e.actor, e.pos || e.actor.pos, e.speed, e.surface));
@@ -61,6 +74,7 @@ class FxHooks {
     sub('lowink', (e) => this._dryFire(e.actor));
     sub('weapon:fire', (e) => this._weaponFire(e));
     sub('weapon:impact', (e) => this._impact(e));
+    sub('weapon:dodge', (e) => this._dodge(e));
     sub('storm:start', (e) => this._stormStart(e.pos, e.team));
     sub('bomb:explode', () => {});   // explosion() is drawn by weapons.js; polling handles danger rings + beeps
   }
@@ -74,7 +88,8 @@ class FxHooks {
     if (!s) {
       s = { init: false, born: -9, grounded: true, vy: 0, form: 'kid', sub: false, climb: false, alive: a.alive, onEnemy: false,
         stepAcc: 0, foot: 0, dripT: 0, sparkT: 0, sizzleT: 0, climbT: 0, bubbleT: 0, full: false, sj: null, sp: null, spT: 0,
-        sjLand: -9, hitT: -9, dryT: -9, climbEnd: -9, slamPending: false, lastSJTo: new THREE.Vector3(), vis: new THREE.Vector3() };
+        sjLand: -9, hitT: -9, dryT: -9, climbEnd: -9, slamPending: false, lastSJTo: new THREE.Vector3(), vis: new THREE.Vector3(),
+        swimYaw: null, carveT: 0, emergeT: -9, wetT: 0, spinFull: false, dodging: false, dodgeDir: new THREE.Vector3(0, 0, 1) };
       this.st.set(a, s);
     }
     return s;
@@ -86,6 +101,12 @@ class FxHooks {
     return out.set(Math.sin(a.yaw), 0, Math.cos(a.yaw));
   }
   _inkColor(a, surface) { return surface === 2 ? this.G.teamColors[a.enemyTeam] : a.color; }
+  _teamOf(c) {
+    const T = this.G.teamColors;
+    if (!T || !c) return -1;
+    for (let t = 0; t < 2; t++) { const k = T[t]; if (k && Math.abs(k.r - c.r) + Math.abs(k.g - c.g) + Math.abs(k.b - c.b) < 0.05) return t; }
+    return -1;
+  }
   _fresh(a) { const s = this._state(a); return this.time - s.born < 0.35 || !s.init; }
 
   // ------------------------------------------------------------------ discrete moments
@@ -126,6 +147,7 @@ class FxHooks {
     const s = this._state(a);
     if (s.climb || this.time - s.climbEnd < 0.25) { this.fx.climbPop?.(pos, this._heading(a, _dir), a.color); this._bump('climbPop'); return; }
     this.fx.emerge?.(pos, a.color, speed);
+    s.emergeT = this.time;   // the kid comes up wet: a few drips run off for half a second
     this._bump('emerge');
   }
   _climb(a, onWall) {
@@ -226,11 +248,13 @@ class FxHooks {
     if (!e.pos || !this._near(e.pos, 32)) return;
     const col = this.G.teamColors[e.team] || _c.set(0xffffff);
     const n = e.normal || UP;
-    if (e.kind === 'shot' || e.kind === 'drop') {
-      this.fx.ring?.(_v.copy(e.pos).addScaledVector(n, 0.02), n, col, { radius: 0.3 + (e.radius || 0.4) * 0.35, life: 0.3, style: 6, alpha: 0.9 });
-      this.fx.mist?.(_v, _v2.copy(n).multiplyScalar(0.8), col, 0.25, 0.22);
-    } else if (e.kind === 'charger') {
-      this.fx.beamImpact?.(e.pos, n, col, 1);
+    // shots / flick drops: weapons.js already bursts the splash (fx.burst) and the paint system ripples the ink —
+    // nothing is stacked on top here (no decal blots)
+    if (e.kind === 'charger') this.fx.beamImpact?.(e.pos, n, col, 1);
+    if (e.kind === 'drop' && !e.victim) {
+      const H = this.dropHits;
+      if (H.length >= 24) H.shift();
+      H.push({ x: e.pos.x, y: e.pos.y, z: e.pos.z, nx: n.x, ny: n.y, nz: n.z, t: this.time });
     }
     this._bump(IMPACT_KEY[e.kind] || 'impact:other');
   }
@@ -250,11 +274,25 @@ class FxHooks {
     this._bump('flick');
   }
 
+  // dualies dodge roll: push-off splash (the skid + plant are driven per frame from the runner's dodge state)
+  _dodge(e) {
+    const a = e.actor;
+    if (!a || !a.alive || !e.pos || !e.dir) return;
+    const s = this._state(a);
+    s.dodgeDir.set(e.dir.x, 0, e.dir.z);
+    if (s.dodgeDir.lengthSq() < 1e-4) s.dodgeDir.set(Math.sin(a.yaw), 0, Math.cos(a.yaw));
+    s.dodgeDir.normalize();
+    if (!this._near(e.pos, 34)) return;
+    this.fx.dodgeSplash?.(e.pos, s.dodgeDir, a.color);
+    this._bump('dodge');
+  }
+
   // ------------------------------------------------------------------ per frame
   update(dt) {
     const G = this.G, fx = G.fx;
     if (!fx || !this.enabled || !(dt > 0)) return;
     this.time += dt; this.stamp++;
+    if (G.paint && G.camera && G.paint.viewPos !== G.camera.position) G.paint.setView?.(G.camera.position);
     if (G.actors) for (let i = 0; i < G.actors.length; i++) this._actor(G.actors[i], dt);
     const P = G.projectiles;
     if (P) {
@@ -307,6 +345,33 @@ class FxHooks {
         s.climbT += dt;
         if (s.climbT > 0.07) { s.climbT = 0; _v.copy(pos); _v.y += 0.3; fx.climbDrip?.(_v, an.wallNormal, col); }
       }
+      // carving a hard turn in the ink: throw a fan off the outside of the turn
+      if (form === 'swim' && hs > 4.5) {
+        const yaw = Math.atan2(a.vel.x, a.vel.z);
+        if (s.swimYaw !== null && dt > 0) {
+          let dy = yaw - s.swimYaw; dy -= Math.round(dy / TAU) * TAU;
+          const rate = dy / dt;
+          s.carveT += dt * clamp((Math.abs(rate) - 3.2) / 5, 0, 1) * 22;
+          if (s.carveT >= 1) {
+            s.carveT = 0;
+            _dir.set(a.vel.x / hs, 0, a.vel.z / hs);
+            const sg = rate > 0 ? -1 : 1;   // positive yaw rate turns toward the right vector: spray flies left
+            _v.set(_dir.z * sg, 0, -_dir.x * sg);
+            this.fx.swimCarve?.(pos, _dir, _v, col, clamp(hs / 11.8, 0, 1));
+          }
+        }
+        s.swimYaw = yaw;
+      } else { s.swimYaw = null; s.carveT = 0; }
+      // just emerged: drips run off the body
+      if (form === 'kid' && this.time - s.emergeT < 0.5) {
+        s.wetT += dt * 26 * (1 - (this.time - s.emergeT) / 0.5);
+        while (s.wetT >= 1) {
+          s.wetT -= 1;
+          const ang = rand() * TAU, r = 0.14 + rand() * 0.08;
+          _v.set(pos.x + Math.cos(ang) * r, pos.y + 0.35 + rand() * 0.8, pos.z + Math.sin(ang) * r);
+          fx.hurtDrip?.(_v, col, 0.03);
+        }
+      } else s.wetT = 0;
       // idle swimming: bubbles
       if (form === 'swim' && hs < 2) {
         s.bubbleT += dt;
@@ -338,13 +403,36 @@ class FxHooks {
       // weapons: charger glow / laser / roller spray
       const wr = a.weaponRunner;
       if (wr) {
-        if (wr.charging && form === 'kid') {
+        const wk = a.weapon?.kind ?? 'charger';
+        // charger only — the splatling's spin-up also sets `charging` but has its own tells
+        if (wr.charging && form === 'kid' && wk === 'charger') {
           a.character?.getMuzzle?.(_v);
           if (Number.isFinite(_v.x)) {
             fx.chargeGlow?.(_v, col, wr.charge);
             if (wr.charge >= 0.999 && !s.full) { s.full = true; fx.chargeFull?.(_v, col); this._bump('chargeFull'); }
           }
         } else s.full = false;
+        // splatling: glow + ink slung off the barrels while spinning up, one crisp "full" cue, a steady sling while
+        // streaming (burstFrac = stream left)
+        if (wk === 'splatling' && form === 'kid' && (wr.charging || wr.streaming)) {
+          a.character?.getMuzzle?.(_v);
+          if (Number.isFinite(_v.x)) {
+            const aim = a.aimDir || _dir.set(Math.sin(a.yaw), 0, Math.cos(a.yaw));
+            if (wr.charging) {
+              fx.spinUp?.(_v, aim, col, wr.charge, false);
+              if (wr.charge >= 0.999 && !s.spinFull) { s.spinFull = true; fx.spinFull?.(_v, aim, col); this._bump('spinFull'); }
+            } else fx.spinUp?.(_v, aim, col, 0.35 + 0.65 * (wr.burstFrac || 0), true);
+          }
+        } else if (!wr.charging) s.spinFull = false;
+        // dualies: skid spray + body fling through the roll, a squelch when it plants
+        if (wr.dodge) {
+          if (!s.dodging) { s.dodging = true; if (s.dodgeDir.lengthSq() < 0.5) s.dodgeDir.set(Math.sin(a.yaw), 0, Math.cos(a.yaw)); }
+          fx.dodgeSkid?.(pos, s.dodgeDir, col, wr.dodge.dur ? wr.dodge.t / wr.dodge.dur : 0);
+        } else if (s.dodging) {
+          s.dodging = false;
+          fx.dodgePlant?.(pos, s.dodgeDir, col);
+          this._bump('dodgePlant');
+        }
         if (wr.rolling && a.grounded && hs > 0.8) {
           const w = a.weapon || WEAPONS.roller;
           _dir.set(Math.sin(a.yaw), 0, Math.cos(a.yaw));
@@ -404,15 +492,45 @@ class FxHooks {
       p._fxAge = p.age;
       const sp = Math.hypot(p.vel.x, p.vel.y, p.vel.z);
       p._fxD += sp * dt;
-      const step = p.type === 'blast' ? 0.55 : p.type === 'drop' ? 1.1 : 0.8;
+      const slosh = p.type === 'slosh';
+      if (slosh && p.head) {
+        let h = this.heads.get(p);
+        if (!h) { h = { x: 0, y: 0, z: 0, vx: 0, vz: 1, t: 0, color: null, born: this.time }; this.heads.set(p, h); }
+        h.x = p.pos.x; h.y = p.pos.y; h.z = p.pos.z; h.vx = p.vel.x; h.vz = p.vel.z; h.t = this.time; h.color = p.owner.color; h.stamp = this.stamp;
+      }
+      const step = p.type === 'blast' ? 0.55 : p.type === 'drop' ? 1.1 : slosh ? (p.head ? 0.45 : 1.0) : 0.8;
       if (p._fxD >= step) {
         p._fxD = 0;
-        if (budget > 0 && p.age > 0.03 && this._near(p.pos, 30)) { budget--; fx.shotTrail?.(p.pos, p.vel, p.owner.color, p.type === 'blast'); }
+        if (budget > 0 && p.age > 0.03 && (p.delay === undefined || p.age > p.delay) && this._near(p.pos, 30)) {
+          budget--;
+          if (slosh) fx.sloshTrail?.(p.pos, p.vel, p.owner.color, !!p.head); else fx.shotTrail?.(p.pos, p.vel, p.owner.color, p.type === 'blast');
+        }
       }
       if (p._fxY >= wy + 0.05 && p.pos.y < wy + 0.05 && this.G.level && this.G.level.groundHeight(p.pos.x, p.pos.z, p.pos.y + 3) === -Infinity) {
         if (this._near(p.pos, 45)) { fx.waterPlop?.(p.pos, p.type === 'blast' ? 0.6 : 0.3); this._bump('plop'); }
       }
       p._fxY = p.pos.y;
+    }
+    // slosh wave heads that landed since last frame: the heavy slap where their impact was reported
+    if (this.heads.size) {
+      this.heads.forEach(this._headFn || (this._headFn = (h, p) => {
+        if (h.stamp === this.stamp && p.type === 'slosh' && p.head) return;
+        this.heads.delete(p);
+        const H = this.dropHits;
+        for (let i = H.length - 1; i >= 0; i--) {
+          const d = H[i];
+          if (d.t < h.t - 1e-6) break;
+          const dx = d.x - h.x, dy = d.y - h.y, dz = d.z - h.z;
+          if (dx * dx + dy * dy + dz * dz > 1.3 * 1.3) continue;
+          if (this._near(_v.set(d.x, d.y, d.z), 34)) {
+            _n.set(d.nx, d.ny, d.nz); _v2.set(h.vx, 0, h.vz);
+            this.fx.sloshImpact?.(_v, _n, _v2, h.color);
+            this._bump('sloshHead');
+          }
+          H.splice(i, 1);
+          break;
+        }
+      }));
     }
   }
 
@@ -525,10 +643,13 @@ class FxHooks {
     const G = this.G, fx = this.fx, cam = G.camera;
     if (!cam) return;
     if (G.level !== this.edgeLevel) this._buildEdges();
-    // sea spray bursting against the deck edges: waves slap the edge somewhere in view every ~0.3–0.8 s
+    // sea spray bursting against the deck edges: waves slap the edge somewhere in view every ~0.3–0.8 s on the open
+    // sea; scaled by the environment's sea state (sheltered marina water ≈ 0.15 → no spray at all)
+    const sea = clamp(G.env?.seaState ?? 1, 0, 2);
     this.sprayT -= dt;
-    if (this.sprayT <= 0 && this.edges.length) {
-      this.sprayT = 0.3 + rand() * 0.5;
+    if (sea < 0.3) this.sprayT = Math.max(this.sprayT, 0.3);
+    else if (this.sprayT <= 0 && this.edges.length) {
+      this.sprayT = (0.3 + rand() * 0.5) / sea;
       cam.getWorldDirection(_dir);
       let best = null, bestS = -1;
       for (let tries = 0; tries < 14; tries++) {
@@ -542,7 +663,7 @@ class FxHooks {
       }
       if (best) {
         _v.set(best.x, PLAYER.waterY + 0.05, best.z); _n.set(best.nx, 0, best.nz);
-        this.fx.seaSpray?.(_v, _n, rand() < 0.18 ? 1.3 + rand() * 0.3 : 0.55 + rand() * 0.55);
+        this.fx.seaSpray?.(_v, _n, (rand() < 0.18 ? 1.3 + rand() * 0.3 : 0.55 + rand() * 0.55) * Math.min(1, sea));
         this._bump('seaSpray');
       }
     }
@@ -554,38 +675,6 @@ class FxHooks {
       _v.set(cam.position.x + _dir.x * (6 + rand() * 8) + (rand() - 0.5) * 8, cam.position.y + 5 + rand() * 4, cam.position.z + _dir.z * (6 + rand() * 8) + (rand() - 0.5) * 8);
       fx.feather?.(_v);
       this._bump('feather');
-    }
-    // sun glints on wet ink in front of the camera
-    this._glints(dt);
-  }
-
-  _glints(dt) {
-    const G = this.G, cam = G.camera, fx = this.fx;
-    if (!G.physics || !G.paint || !fx.glint) return;
-    const sun = fx.sunDir || UP;
-    this.glintAcc += dt * 60;
-    let tries = Math.min(8, Math.floor(this.glintAcc));
-    this.glintAcc -= tries;
-    cam.getWorldDirection(_dir);
-    const yaw = Math.atan2(_dir.x, _dir.z);
-    let made = 0;
-    while (tries-- > 0 && made < 2) {
-      const d = 2.5 + rand() * rand() * 22, a = yaw + (rand() - 0.5) * 1.6;
-      _v.set(cam.position.x + Math.sin(a) * d, cam.position.y + 6, cam.position.z + Math.cos(a) * d);
-      const h = G.physics.raycast(_v, DOWN, 26, this.hit, true);
-      if (!h.hit || h.normal.y < 0.7 || h.face < 0) continue;
-      const t = G.paint.sample(h.face, h.u, h.v);
-      if (!t) continue;
-      // perturbed ink normal (wobbly glossy surface) → mirror reflection of the view toward the sun?
-      _n.set(h.normal.x + (rand() - 0.5) * 0.22, h.normal.y, h.normal.z + (rand() - 0.5) * 0.22).normalize();
-      _v2.copy(cam.position).sub(h.point).normalize();
-      const nv = _n.dot(_v2);
-      _v3.copy(_n).multiplyScalar(2 * nv).sub(_v2);   // reflect(-V, N) = 2(N·V)N − V
-      if (_v3.dot(sun) < 0.965) continue;
-      _v.copy(h.point).addScaledVector(h.normal, 0.03);
-      fx.glint(_v, G.teamColors[t - 1], 0.1 + rand() * 0.1);
-      made++;
-      this._bump('glint');
     }
   }
 

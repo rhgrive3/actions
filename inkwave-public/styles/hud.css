@@ -174,6 +174,25 @@
 .iw-ret.is-flash { animation: iw-charge-flash .35s var(--spring); }
 @keyframes iw-charge-flash { 0% { scale: 1.35; filter: drop-shadow(0 0 6px #fff) drop-shadow(0 0 1px #000); } }
 
+/* dualies: twin rings (one per pistol, each jabs on its own shot); after a dodge roll a lock diamond snaps in and the
+   rings pull tight (turret mode); mid-roll the reticle fades back */
+.iw-ret__twin { transform-box: fill-box; transform-origin: center; }
+.iw-ret__lock { fill: none; stroke: var(--self-light); stroke-width: 2.4; opacity: 0; transform-box: fill-box; transform-origin: center; scale: 1.5; transition: opacity .12s, scale .22s var(--spring); }
+.iw-ret--dualies.is-lock .iw-ret__lock { opacity: 1; scale: 1; }
+.iw-ret--dualies.is-lock { color: var(--self-light); }
+.iw-ret--dualies.is-lock .iw-ret__twin.l { translate: 4px 0; }
+.iw-ret--dualies.is-lock .iw-ret__twin.r { translate: -4px 0; }
+.iw-ret__twin { transition: translate .18s var(--spring); }
+.iw-ret--dualies.is-roll { opacity: .45; }
+/* slosher: the arch lifts on each heave */
+.iw-ret--slosher .iw-ret__arch { transform-box: fill-box; transform-origin: 50% 100%; transform: translateY(calc(var(--kk, 0) * -4px)) scaleY(calc(1 + var(--kk, 0) * .35)); }
+/* splatling: 8-segment spin-up meter — fills while charging (white), full = your ink + flash, drains while streaming */
+.iw-ret--splatling .iw-ret__svg { transform: rotate(-90deg); }
+.iw-ret--splatling .iw-ret__track { stroke-width: 4.5; opacity: .28; }
+.iw-ret--splatling .iw-ret__charge { stroke: #fff; stroke-width: 4.5; stroke-linecap: butt; transition: stroke-dashoffset .05s linear; }
+.iw-ret--splatling .iw-ret__segs path { stroke: rgba(0, 0, 0, .55); stroke-width: 1.6; }
+.iw-ret--splatling.is-full .iw-ret__charge, .iw-ret--splatling.is-streaming .iw-ret__charge { stroke: var(--self-light); }
+.iw-ret--splatling.is-streaming { color: var(--self-light); }
 .iw-hit, .iw-kill { position: absolute; left: 0; top: 0; }
 .iw-hit { scale: var(--hs, 1); }
 .iw-hit i, .iw-kill i { position: absolute; left: -1.75px; top: -6px; width: 3.5px; height: 12px; border-radius: 2px; background: #fff; opacity: 0; box-shadow: 0 0 0 1px rgba(0, 0, 0, .6); }
@@ -182,7 +201,13 @@
 .iw-hit i:nth-child(3), .iw-kill i:nth-child(5) { rotate: 225deg; }
 .iw-hit i:nth-child(4), .iw-kill i:nth-child(6) { rotate: 315deg; }
 .iw-hit.is-on i { animation: iw-hit .24s ease-out; }
-@keyframes iw-hit { 0% { opacity: 1; transform: translateY(-10px) scale(1.3); } 100% { opacity: 0; transform: translateY(-18px) scale(1); } }
+@keyframes iw-hit { 0% { opacity: 1; transform: translateY(calc(-10px - var(--hn, 0) * 1px)) scale(1.3); } 100% { opacity: 0; transform: translateY(calc(-18px - var(--hn, 0) * 2px)) scale(1); } }
+/* combo: the 2nd…6th consecutive hit warms toward your ink colour; heavy hits (≥ 60 dmg) punch with fat ticks + a snap ring */
+.iw-hit i { background: color-mix(in srgb, var(--self-light, #fff) calc(var(--hn, 0) * 11%), #fff); }
+.iw-hit.is-heavy i { width: 5px; left: -2.5px; height: 15px; top: -7.5px; box-shadow: 0 0 0 1.5px rgba(0, 0, 0, .7); }
+.iw-hit::after { content: ''; position: absolute; left: -15px; top: -15px; width: 30px; height: 30px; border-radius: 50%; border: 2.5px solid #fff; opacity: 0; box-shadow: 0 0 0 1px rgba(0, 0, 0, .5); }
+.iw-hit.is-heavy.is-on::after { animation: iw-hit-ring .22s ease-out; }
+@keyframes iw-hit-ring { 0% { opacity: .95; scale: .55; } 100% { opacity: 0; scale: 1.45; border-width: 1px; } }
 .iw-kill i { height: 20px; top: -10px; width: 5px; left: -2.5px; background: var(--self-light); box-shadow: 0 0 0 1.5px var(--k); }
 .iw-kill.is-on i { animation: iw-kill .55s var(--out); }
 @keyframes iw-kill { 0% { opacity: 1; transform: translateY(-12px) scale(1.6); } 60% { opacity: 1; } 100% { opacity: 0; transform: translateY(-28px) scale(1); } }
@@ -578,3 +603,76 @@
   .iw-shield svg, .iw-mdot.is-self::after, .iw-sp.is-ready .iw-sp__icon, .iw-sp__ready { animation: none !important; }
   .iw-bn--go .iw-bn__drop, .iw-sp__rays { display: none; }
 }
+
+/* ------------------------------------------------------------------ map diorama (src/ui/diorama.js)
+   The 3D view itself is the real stage seen from above (CameraRig); this layer is the miniature finish + the pins. */
+.iw-dio { position: absolute; inset: 0; pointer-events: none; opacity: 0; display: none; --pinK: 0; }
+.iw-dio.is-on { display: block; }
+.iw-dio__tilt { position: absolute; left: 0; right: 0; -webkit-backdrop-filter: blur(6px) saturate(1.12); backdrop-filter: blur(6px) saturate(1.12); }
+.iw-dio__tilt--top { top: 0; height: 28%;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, .55) 42%, transparent 100%); mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, .55) 42%, transparent 100%); }
+.iw-dio__tilt--bot { bottom: 0; height: 22%;
+  -webkit-mask-image: linear-gradient(to top, #000 0%, rgba(0, 0, 0, .5) 40%, transparent 100%); mask-image: linear-gradient(to top, #000 0%, rgba(0, 0, 0, .5) 40%, transparent 100%); }
+.iw-dio__vig { position: absolute; inset: 0; background: radial-gradient(ellipse 70% 76% at 50% 54%, transparent 52%, rgba(14, 10, 28, .34) 100%); }
+
+.iw-dio__head { position: absolute; left: calc(var(--u) * 2.6); top: calc(var(--u) * 7.6); display: flex; flex-direction: column; gap: calc(var(--u) * .2);
+  translate: 0 calc((1 - var(--pinK)) * -12px); opacity: var(--pinK); }
+.iw-dio__kicker { font: 800 calc(var(--u) * .95)/1 'Rubik', system-ui, sans-serif; letter-spacing: .22em; color: #fff; opacity: .85; text-shadow: 0 1px 0 var(--k), 0 0 6px rgba(0, 0, 0, .35); }
+.iw-dio__name { font-size: calc(var(--u) * 3.1); color: #fff; line-height: .95; -webkit-text-stroke: calc(var(--u) * .28) var(--k); paint-order: stroke fill; rotate: -2deg; transform-origin: left center; }
+.iw-dio__when { align-self: flex-start; margin-top: calc(var(--u) * .35); padding: calc(var(--u) * .25) calc(var(--u) * .8); border-radius: 99px; background: var(--k); color: #fff;
+  font: 800 calc(var(--u) * .85)/1 'Rubik', system-ui, sans-serif; letter-spacing: .16em; box-shadow: inset 0 0 0 2px var(--c, #ff8a14); }
+.iw-dio__foot { position: absolute; left: 50%; bottom: calc(var(--u) * 2.2); translate: -50% calc((1 - var(--pinK)) * 14px); opacity: var(--pinK); white-space: nowrap;
+  display: flex; align-items: center; gap: calc(var(--u) * .55); padding: calc(var(--u) * .6) calc(var(--u) * 1.3); border-radius: 99px;
+  background: rgba(21, 18, 28, .82); color: #fff; font: 700 calc(var(--u) * 1.02)/1 'Rubik', system-ui, sans-serif; box-shadow: 0 4px 18px rgba(0, 0, 0, .28); }
+.iw-dio__foot em { font-style: normal; opacity: .45; }
+.iw-dio__foot .iw-key { font-size: .82em; margin: 0; }
+
+/* pins: a ground dot, a stem and a floating badge — scaled in by --pinK so they arrive after the swoop */
+.iw-pin { position: absolute; left: 0; top: 0; width: 0; height: 0; --s: calc(var(--u) * 2.9); opacity: var(--pinK); }
+.iw-pin__ground { position: absolute; left: calc(var(--u) * -.75); top: calc(var(--u) * -.34); width: calc(var(--u) * 1.5); height: calc(var(--u) * .68); border-radius: 50%;
+  background: radial-gradient(closest-side, var(--c), transparent); opacity: .9; }
+.iw-pin__stem { position: absolute; left: -1.5px; bottom: 0; width: 3px; height: calc(var(--u) * 2.2 * var(--pinK)); background: #fff; border-radius: 2px; box-shadow: 0 0 0 1.5px var(--k); }
+.iw-pin__badge { position: absolute; left: 0; bottom: calc(var(--u) * 2.2); width: var(--s); height: var(--s); translate: -50% 0; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--c) 72%, #fff), var(--c) 62%, color-mix(in srgb, var(--c) 70%, #000));
+  box-shadow: 0 0 0 calc(var(--u) * .22) #fff, 0 0 0 calc(var(--u) * .36) var(--k), 0 6px 14px rgba(0, 0, 0, .35);
+  display: grid; place-items: center; scale: calc(.4 + .6 * var(--pinK)); transition: scale .18s var(--spring2, ease-out); transform-origin: 50% 100%; }
+.iw-pin__icon { width: 64%; height: 64%; display: grid; place-items: center; color: #fff; }
+.iw-pin__icon svg { width: 100%; height: 100%; }
+.iw-pin__pulse { position: absolute; inset: -18%; border-radius: 50%; border: 3px solid var(--c); opacity: 0; }
+.iw-pin__key { position: absolute; left: calc(var(--s) * .34); bottom: calc(var(--u) * 2.2 + var(--s) * .62); }
+.iw-pin__key .iw-key { font-size: calc(var(--u) * .9); margin: 0; }
+.iw-pin__name { position: absolute; left: 0; bottom: calc(var(--u) * 2.2 + var(--s) + var(--u) * .45); translate: -50% 0; white-space: nowrap;
+  font: 800 calc(var(--u) * .95)/1 'Rubik', system-ui, sans-serif; color: #fff; letter-spacing: .02em;
+  text-shadow: 0 0 0 var(--k), 1.5px 1.5px 0 var(--k), -1.5px 1.5px 0 var(--k), 1.5px -1.5px 0 var(--k), -1.5px -1.5px 0 var(--k); }
+.iw-pin__state { position: absolute; left: 0; bottom: calc(var(--u) * 2.2 + var(--s) * .5); translate: -50% 50%; font: 900 calc(var(--u) * 1.3)/1 'Rubik', system-ui, sans-serif; color: #fff;
+  text-shadow: 0 0 4px var(--k), 0 0 2px var(--k); pointer-events: none; }
+.iw-pin.is-dead .iw-pin__badge { filter: grayscale(1) brightness(.72); }
+.iw-pin.is-dead .iw-pin__icon { opacity: .35; }
+.iw-pin.is-ok.is-hover .iw-pin__badge, .iw-pin--home.is-hover .iw-pin__badge { scale: 1.22; }
+.iw-pin.is-ok.is-hover .iw-pin__pulse, .iw-pin--home.is-hover .iw-pin__pulse { animation: iw-pin-pulse 1s ease-out infinite; }
+@keyframes iw-pin-pulse { 0% { opacity: .9; scale: .85; } 100% { opacity: 0; scale: 1.5; } }
+.iw-pin.is-press .iw-pin__badge { animation: iw-pin-press .42s var(--spring2, ease-out); }
+@keyframes iw-pin-press { 30% { scale: 1.45; } 100% { scale: 1; } }
+.iw-pin--home { --s: calc(var(--u) * 2.5); }
+.iw-pin--home .iw-pin__badge { background: var(--k); box-shadow: 0 0 0 calc(var(--u) * .22) var(--c), 0 6px 14px rgba(0, 0, 0, .35); }
+.iw-pin--self { --s: calc(var(--u) * 3.3); }
+.iw-pin--self .iw-pin__badge { background: var(--k); box-shadow: 0 0 0 calc(var(--u) * .28) var(--c), 0 0 0 calc(var(--u) * .42) #fff, 0 6px 16px rgba(0, 0, 0, .4); }
+.iw-pin--self .iw-pin__icon { width: 70%; height: 70%; transition: transform .08s linear; }
+.iw-pin--self .iw-pin__pulse { opacity: .8; animation: iw-pin-pulse 1.6s ease-out infinite; }
+.iw-pin--self .iw-pin__ground { width: calc(var(--u) * 2.2); left: calc(var(--u) * -1.1); }
+
+/* super-jump arc + map cursor */
+.iw-dio__arc { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; opacity: 0; transition: opacity .15s; }
+.iw-dio__arc.is-on { opacity: 1; }
+.iw-dio__arc path { fill: none; stroke-linecap: round; }
+.iw-dio__arc .o { stroke: var(--k); stroke-width: 9; opacity: .55; }
+.iw-dio__arc .i { stroke: var(--c); stroke-width: 5; stroke-dasharray: 2 13; animation: iw-dio-arc .6s linear infinite; }
+@keyframes iw-dio-arc { to { stroke-dashoffset: -15; } }
+.iw-dio__cur { position: absolute; left: 0; top: 0; width: 0; height: 0; opacity: 0; transition: opacity .15s; }
+.iw-dio__cur.is-on { opacity: calc(var(--pinK) * .95); }
+.iw-dio__cur i { position: absolute; left: calc(var(--u) * -1.1); top: calc(var(--u) * -1.1); width: calc(var(--u) * 2.2); height: calc(var(--u) * 2.2); border-radius: 50%;
+  border: 3px solid #fff; box-shadow: 0 0 0 2px var(--k), inset 0 0 0 2px var(--k); transition: scale .15s var(--spring2, ease-out); }
+.iw-dio__cur.is-snap i { scale: .55; border-color: var(--c); }
+
+/* while the diorama is up: no crosshair, name tags, corner minimap or prompts over the view */
+body.iw-dio-on .iw-xh, body.iw-dio-on .iw-mks, body.iw-dio-on .iw-map, body.iw-dio-on .iw-prompt, body.iw-dio-on .iw-callouts { opacity: 0; transition: opacity .12s; }

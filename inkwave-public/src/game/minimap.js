@@ -157,7 +157,7 @@ export class Minimap {
   _drawBase() {
     const W = this.w, H = this.h, N = W * H, hgt = this.hgt, top = this.topBlock, nrm = this.nrm, lvl = this.level, s = this.s;
     const img = this.bctx.createImageData(W, H), d = img.data;
-    const theme = G.game?.mapDef?.theme || 'day';
+    const theme = G.game?.theme || G.game?.mapDef?.theme || 'day';
     const dusk = theme === 'sunset';
     // sun from the top-left of the map; shadows fall toward the bottom-right
     const Lx = -0.62, Ly = -0.78;
@@ -312,7 +312,7 @@ export class Minimap {
     this.timer -= dt;
     const teamKey = G.teamHex ? G.teamHex[0] + G.teamHex[1] : '';
     if (teamKey !== this._teamKey) { this._teamKey = teamKey; this.version = -1; }
-    const theme = G.game?.mapDef?.theme || 'day';
+    const theme = G.game?.theme || G.game?.mapDef?.theme || 'day';
     if (theme !== this._theme) { const had = this._theme; this._theme = theme; if (had) this._drawBase(); }
     const BANDS = 3;
     if (this._band > 0) {

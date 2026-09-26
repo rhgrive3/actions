@@ -62,7 +62,8 @@ export class Level {
       if (n.y < 0) { n.negate(); side.negate(); }
       const cosT = n.y;
       const rise = H0.y - L0.y;
-      const thick = Math.max(d.thickness, rise * cosT + 0.35);
+      // thin: a free-spanning plank/gangway (keeps its own thickness instead of reaching down to the floor)
+      const thick = d.thin ? d.thickness : Math.max(d.thickness, rise * cosT + 0.35);
       const ext = 0.6; // extend under the floor at the low end
       const a = L0.clone().addScaledVector(s, -ext);
       const topMid = a.clone().add(H0).multiplyScalar(0.5);

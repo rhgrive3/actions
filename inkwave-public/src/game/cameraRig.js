@@ -12,7 +12,11 @@ import { G, clamp, damp, lerp, dampAngle } from '../core/ctx.js';
 import { Hit } from './physics.js';
 
 const _v = new THREE.Vector3(), _v2 = new THREE.Vector3(), _v3 = new THREE.Vector3(), _fwd = new THREE.Vector3(), _back = new THREE.Vector3();
-const _right = new THREE.Vector3(), _q = new THREE.Quaternion();
+const _right = new THREE.Vector3(), _q = new THREE.Quaternion(), _m4 = new THREE.Matrix4(), _dT = new THREE.Vector3();
+const _UP = new THREE.Vector3(0, 1, 0);
+// map diorama framing: a steep telephoto look down the stage from behind your base (your base at the bottom of the screen)
+const DIO_PITCH = 1.1, DIO_FOV = 30;
+const _gpT = new THREE.Vector3(), _bT = new THREE.Vector3(), _gF = new THREE.Vector3();
 const _probe = { hard: 0, soft: 0, floor: false };
 const _hit = new Hit();
 
@@ -80,7 +84,15 @@ export class CameraRig {
     this._prevMode = this.mode;
     this._prevTarget = null;
     this.spectateT = 0;
+    // map diorama: the rendered view blends to an overhead shot of the whole stage while the map is held. The gameplay
+    // view keeps running underneath (gameCam) — aim, audio and hit tests use it, so nothing about play changes.
+    this.mapOpen = false; this.mapK = 0;
+    this.gameCam = new THREE.PerspectiveCamera(60, 16 / 9, 0.15, 6500);
+    this.dioLook = { x: 0, y: 0 };   // -1…1: the map cursor, tilts the diorama a touch toward where you point
+    this._dio = { layout: null, aspect: 0, d: 150, zShift: 0, pos: new THREE.Vector3(), quat: new THREE.Quaternion(), target: new THREE.Vector3(), yaw: 0, pitch: 0 };
   }
+
+  setMap(open) { this.mapOpen = !!open; }
 
   // Visual recoil: a pitch impulse on a critically-damped spring (smooth ~45 ms rise, ~0.15 s settle) — only the heavy
   // single shots send it. No sideways pattern: yaw kicks read as the camera shaking. The aim is taken from the rendered
@@ -198,8 +210,84 @@ export class CameraRig {
       cam.position.addScaledVector(_right, nz(t * 1.07, p + 11) * 0.025 * sh);
       cam.position.y += nz(t * 0.93, p + 19) * 0.025 * sh;
     }
+    // gameplay view, captured before the diorama touches the rendered camera
+    const gc = this.gameCam;
+    gc.position.copy(cam.position); gc.quaternion.copy(cam.quaternion);
+    gc.fov = fov; gc.aspect = cam.aspect; gc.near = cam.near; gc.far = cam.far;
+    gc.updateMatrixWorld();
+    // map diorama (eased both ways; reverses smoothly if the key is released mid-swoop)
+    const inPlay = this.mode === 'follow' || this.mode === 'spectate';
+    const want = this.mapOpen && inPlay ? 1 : 0;
+    this.mapK = want > this.mapK ? Math.min(1, this.mapK + dt / 0.42) : Math.max(0, this.mapK - dt / 0.34);
+    if (this.mapK > 1e-4) {
+      this._diorama(dt);
+      const e = easeInOut(this.mapK);
+      const D = this._dio;
+      // crane: rise a little ahead of the travel so nothing clips on the way up, and keep the subject framed the whole
+      // way — the look point slides from what you were looking at to the stage centre while the lens climbs
+      const up = e + 0.35 * e * (1 - e);
+      _gF.set(0, 0, -1).applyQuaternion(gc.quaternion);
+      _gpT.copy(gc.position).addScaledVector(_gF, 12);
+      _bT.lerpVectors(_gpT, D.target, e);
+      cam.position.set(lerp(gc.position.x, D.pos.x, e), lerp(gc.position.y, D.pos.y, up), lerp(gc.position.z, D.pos.z, e));
+      _m4.lookAt(cam.position, _bT, _UP);
+      cam.quaternion.setFromRotationMatrix(_m4);
+      // exact at both ends: leave from the gameplay orientation (incl. any shake roll), land on the fitted pose
+      if (e < 0.15) { _q.copy(cam.quaternion); cam.quaternion.copy(gc.quaternion).slerp(_q, e / 0.15); }
+      if (e > 0.999) cam.quaternion.copy(D.quat); else if (e > 0.85) cam.quaternion.slerp(D.quat, (e - 0.85) / 0.15);
+      fov = lerp(fov, DIO_FOV, e);
+    }
     if (Math.abs(cam.fov - fov) > 0.01) { cam.fov = fov; cam.updateProjectionMatrix(); }
     cam.updateMatrixWorld();
+  }
+
+  // ---- map diorama pose ---------------------------------------------------------------------------------------------
+  _diorama(dt) {
+    const D = this._dio, L = G.level;
+    if (!L) return;
+    const B = L.bounds, aspect = this.camera.aspect;
+    if (D.layout !== L.layout || Math.abs(D.aspect - aspect) > 1e-3) { D.layout = L.layout; D.aspect = aspect; this._fitDiorama(B, aspect); }
+    D.yaw = damp(D.yaw, this.dioLook.x * 0.09, 4, dt);
+    D.pitch = damp(D.pitch, -this.dioLook.y * 0.05, 4, dt);
+    this._dioPose(D.d, D.zShift, B, D.yaw, DIO_PITCH + D.pitch, D.pos, D.quat);
+    D.target.copy(_dT);
+  }
+
+  _dioPose(d, zShift, B, yaw, pitch, outPos, outQuat) {
+    _dT.set((B.minX + B.maxX) / 2, 0, (B.minZ + B.maxZ) / 2 + zShift);
+    const cp = Math.cos(pitch);
+    outPos.set(_dT.x - Math.sin(yaw) * cp * d, Math.sin(pitch) * d, _dT.z - Math.cos(yaw) * cp * d);
+    _m4.lookAt(outPos, _dT, _UP);
+    outQuat.setFromRotationMatrix(_m4);
+  }
+
+  // distance + look offset that fit the whole stage (bounds box, floor to rooftops) into the free screen area
+  _fitDiorama(B, aspect) {
+    const D = this._dio;
+    const c = this._fitCam || (this._fitCam = new THREE.PerspectiveCamera());
+    c.fov = DIO_FOV; c.aspect = aspect; c.near = 1; c.far = 6000; c.updateProjectionMatrix();
+    const pts = [];
+    for (const x of [B.minX, B.maxX]) for (const z of [B.minZ, B.maxZ]) for (const y of [-1.2, 6]) pts.push(new THREE.Vector3(x, y, z));
+    const yLo = -0.72, yHi = 0.74, xLim = 0.92;
+    const place = (d, zs) => { this._dioPose(d, zs, B, 0, DIO_PITCH, c.position, c.quaternion); c.updateMatrixWorld(true); };
+    let zShift = 0, d = 150;
+    for (let pass = 0; pass < 4; pass++) {
+      let lo = 20, hi = 1500;
+      for (let it = 0; it < 28; it++) {
+        const mid = (lo + hi) / 2;
+        place(mid, zShift);
+        let ok = true;
+        for (const p of pts) { _v.copy(p).project(c); if (_v.x < -xLim || _v.x > xLim || _v.y < yLo || _v.y > yHi) { ok = false; break; } }
+        if (ok) hi = mid; else lo = mid;
+      }
+      d = hi;
+      place(d, zShift);
+      let ymin = 9, ymax = -9;
+      for (const p of pts) { _v.copy(p).project(c); ymin = Math.min(ymin, _v.y); ymax = Math.max(ymax, _v.y); }
+      const off = (yLo + yHi) / 2 - (ymin + ymax) / 2;          // + → the stage should sit higher on screen
+      zShift -= off * d * Math.tan((DIO_FOV * Math.PI) / 360) / Math.sin(DIO_PITCH);
+    }
+    D.d = d; D.zShift = zShift;
   }
 
   forward(out) {

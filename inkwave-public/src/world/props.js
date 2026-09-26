@@ -14,6 +14,8 @@
 // and one time uniform; it never allocates.
 import * as THREE from 'three';
 import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
+import { registerMarinaVessels } from './props-marina-vessels.js';
+import { registerMarinaDock } from './props-marina-dock.js';
 
 const PI = Math.PI, TAU = PI * 2, HP = PI / 2;
 
@@ -1152,7 +1154,7 @@ class Builder {
   add(mat, g, c, x, y, z, o = {}) {
     let cc = col(c);
     if (o.glow) cc = cc.clone().multiplyScalar(o.glow);
-    this.k._push(mat, { g, m: this._m(x, y, z, o), c: cc, uv: o.uv || null, uvs: o.uvs || null, ao: o.ao === false || mat === 'glow' || mat === 'blob' ? null : this.aoBase });
+    this.k._push(mat, { g, m: this._m(x, y, z, o), c: cc, uv: o.uv || null, uvs: o.uvs || null, ao: o.ao === false || mat.startsWith('glow') || mat.startsWith('blob') ? null : this.aoBase });
     this.tris += triCountOf(g);
   }
   box(mat, c, w, h, d, x, y, z, o = {}) {
@@ -3059,6 +3061,25 @@ function turbineTemplate() {
 const CASTS = { paint: true, gloss: true, metal: true, wood: true, rubber: true, foliage: true, fence: true, glow: false, blob: false };
 const _m1 = new THREE.Matrix4(), _m2 = new THREE.Matrix4(), _c1 = new THREE.Color(), _white = new THREE.Color(1, 1, 1);
 
+// Spinner templates registered by packs: kind → () => BufferGeometry (instanced with the metal material, spun about
+// local Y by B.spin(kind, …)). Built lazily once per kit, disposed with it.
+const SPIN_TEMPLATES = new Map();
+
+// ------------------------------------------------------------------------------------------------ stage prop packs
+// Stage-specific prop types live in their own files (one owner each). A pack only uses the builder API it is handed
+// (B.box / cyl / lathe / tube / sph / tor / blob / decal / col / push / pop / r …) plus these helpers — it never
+// imports this file, so there are no import cycles.
+const PACK_HELPERS = {
+  THREE, PALETTE, ACCENTS, PI, TAU, HP, P3, col, shade, mixc, mulberry32, chamferBox, roundBox, latheGeo, tubeGeo, extrudeGeo,
+  polyNormals, offsetPoly, blobGeo, puffGeo, rcylProf, flangeProf, circlePts, smoothPts, roundPoly, arcPts, woodCrate, drum,
+  pallet, rod, wheel, TIRE, LIFERING,
+  // route a part to a merged bucket that never casts shadows (sub-deck piles, small fittings, glass, lettering …)
+  noShadow: (m) => m + '~ns',
+  spinTemplate: (kind, make) => { SPIN_TEMPLATES.set(kind, make); },
+};
+registerMarinaVessels(D, PACK_HELPERS);
+registerMarinaDock(D, PACK_HELPERS);
+
 export class PropKit {
   constructor(scene, opts = {}) {
     this.scene = scene;
@@ -3113,7 +3134,7 @@ export class PropKit {
 
   _push(mat, part) { let a = this._buckets.get(mat); if (!a) { a = []; this._buckets.set(mat, a); } a.push(part); }
   _tplGeo(kind) {
-    if (!this._tpl[kind]) this._tpl[kind] = kind === 'fan' ? fanTemplate() : turbineTemplate();
+    if (!this._tpl[kind]) this._tpl[kind] = SPIN_TEMPLATES.has(kind) ? SPIN_TEMPLATES.get(kind)() : kind === 'fan' ? fanTemplate() : turbineTemplate();
     return this._tpl[kind];
   }
   _tplTris(kind) { return triCountOf(this._tplGeo(kind)); }
@@ -3152,11 +3173,12 @@ export class PropKit {
   build() {
     this._disposeMeshes();
     if (this._headless) return this;
-    for (const [key, parts] of this._buckets) {
+    for (const [bucket, parts] of this._buckets) {
       if (!parts.length) continue;
+      const [key, flag] = bucket.split('~');   // 'gloss~ns' = gloss material, no shadow casting
       const mesh = new THREE.Mesh(mergeParts(parts), this.mat[key]);
-      mesh.name = 'props:' + key;
-      mesh.castShadow = this.castShadow && CASTS[key];
+      mesh.name = 'props:' + bucket;
+      mesh.castShadow = this.castShadow && CASTS[key] && flag !== 'ns';
       mesh.receiveShadow = key !== 'glow' && key !== 'blob';
       if (key === 'blob') mesh.renderOrder = 1;
       mesh.matrixAutoUpdate = false;
@@ -3202,6 +3224,10 @@ export class PropKit {
       mesh.instanceColor.needsUpdate = true;
     }
   }
+
+  // Time of day: lit windows, signs, festoon globes and screens glow at full strength at dusk and read as "on but
+  // daylit" (half strength) by day. k = the environment's night factor (0 day/golden … 1 dusk).
+  setNight(k = 0) { if (this.mat?.glow) this.mat.glow.color.setScalar(0.5 + 0.5 * Math.min(1, Math.max(0, k))); }
 
   setTeamColors(a, b) {
     if (a != null) this.teamColors[0].set(a);

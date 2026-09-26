@@ -120,7 +120,8 @@ export class BotBrain {
       fightDist = dist;
       const range = this._range();
       // lead the target a little (projectile flight time)
-      const lead = w.kind === 'charger' ? 0 : dist / (w.projSpeed || 30);
+      // lead the target by the projectile's time to arrive (lobs: the heave windup + a slower, longer arc)
+      const lead = w.kind === 'charger' ? 0 : w.kind === 'slosher' ? (w.windup || 0.13) + dist / ((w.projSpeed || 15) * 0.88) : dist / (w.projSpeed || 30);
       _v.set(t.pos.x + t.vel.x * lead, t.pos.y + (t.smoothY || 0) + (t.form === 'squid' ? 0.3 : 0.85), t.pos.z + t.vel.z * lead);
       _v2.copy(_v); _v2.x -= a.pos.x; _v2.y -= a.pos.y + 1.1; _v2.z -= a.pos.z;
       idealYaw = Math.atan2(_v2.x, _v2.z);
@@ -156,6 +157,13 @@ export class BotBrain {
             if (a.weaponRunner.charging) move.multiplyScalar(0.3);
           } else if (w.kind === 'roller') {
             it.fire = dist < 5.5 || (a.weaponRunner.rolling && dist < 8);
+          } else if (w.kind === 'splatling') {
+            // spin up (a full charge at range, a quicker partial one up close), release, track while the stream runs
+            const wr = a.weaponRunner, want = dist > range * 0.55 ? this.chargeRelease : 0.55 + 0.25 * this.chargeRelease;
+            it.fire = !wr.streaming && dist < range * 1.1 && !(wr.charging && wr.charge >= want);
+            if (wr.charging) move.multiplyScalar(0.45);
+          } else if (w.kind === 'slosher') {
+            it.fire = dist < range * 1.05;   // the lob also reaches targets up on ledges / behind low cover
           } else {
             it.fire = dist < range * 1.08;
           }
@@ -164,13 +172,20 @@ export class BotBrain {
             it.sub = true; this.bombCd = 5 + Math.random() * 6;
             this._bombAim = true;
           }
-        } else if (w.kind === 'charger' && a.weaponRunner.charging && !enemyVisible) {
+        } else if ((w.kind === 'charger' || w.kind === 'splatling') && a.weaponRunner.charging && !enemyVisible) {
           it.fire = true; // keep charge while target briefly hidden
         }
         // out of range with own ink underfoot: swim in (fast, hard to hit) instead of walking
         if (!it.fire && !a.weaponRunner.charging && dist > range * 1.15 && a.groundTeam === 1) it.squid = true;
         // dodge: a strafe-hop right after taking a hit
-        if (a.lastDamage < 0.25 && this.dodgeCd <= 0 && a.grounded && w.kind !== 'charger' && Math.random() < 0.3) { it.jump = true; this.dodgeCd = 2 + Math.random() * 2.5; }
+        if (w.kind === 'dualies') {
+          // dodge roll: while firing, roll sideways when hit or when the fight gets close (the runner locks the turret after)
+          const wr = a.weaponRunner;
+          if (it.fire && this.dodgeCd <= 0 && a.grounded && !wr.dodge && wr.rollsLeft > 0 && (a.lastDamage < 0.3 || dist < 5.5) && Math.random() < 0.08 * dt * 60) {
+            const side = Math.random() < 0.5 ? -1 : 1;
+            if (!this._nearWater(a, 3.2)) { move.set(-nz * side, 0, nx * side); it.jump = true; this.dodgeCd = 1.4 + Math.random() * 1.6; }
+          }
+        } else if (a.lastDamage < 0.25 && this.dodgeCd <= 0 && a.grounded && w.kind !== 'charger' && Math.random() < 0.3 && !this._nearWater(a, 1.6)) { it.jump = true; this.dodgeCd = 2 + Math.random() * 2.5; }
         // special
         if (a.specialReady()) {
           if (w.special === 'slam' && dist < 4.5) it.special = true;
@@ -185,7 +200,7 @@ export class BotBrain {
       this.sweep += dt * (w.kind === 'charger' ? 0.8 : 2.1);
       const sweepAmt = w.kind === 'roller' ? 0 : 0.55;
       wantYaw += Math.sin(this.sweep) * sweepAmt;
-      wantPitch = w.kind === 'charger' ? -0.12 : w.kind === 'blaster' ? -0.28 : -0.42;
+      wantPitch = w.kind === 'charger' ? -0.12 : w.kind === 'blaster' ? -0.28 : w.kind === 'slosher' ? -0.16 : w.kind === 'splatling' ? -0.3 : -0.42;
       const aheadStats = G.paint.regionStats(a.pos.x + Math.sin(wantYaw) * 4, a.pos.y, a.pos.z + Math.cos(wantYaw) * 4, 3, a.team, _stats);
       const needPaint = aheadStats.n === 0 || aheadStats.own < 0.75;
       if (w.kind === 'roller') {
@@ -196,6 +211,12 @@ export class BotBrain {
           it.fire = a.weaponRunner.charge < 0.7;
           if (!it.fire) this.paintPause = 0.3 + Math.random() * 0.35;
         } else it.fire = needPaint && inkFrac > 0.3 && this.paintPause <= 0;
+      } else if (w.kind === 'splatling') {
+        // spin up ~60 %, hose the lane while the stream runs, breathe, repeat
+        const wr = a.weaponRunner;
+        if (wr.streaming) it.fire = false;
+        else if (wr.charging) { it.fire = wr.charge < 0.6; if (!it.fire) this.paintPause = 0.25 + Math.random() * 0.3; }
+        else it.fire = needPaint && inkFrac > 0.25 && this.paintPause <= 0;
       } else {
         it.fire = needPaint && inkFrac > 0.18;
       }
@@ -248,10 +269,13 @@ export class BotBrain {
     }
     this.mvMag += (ml - this.mvMag) * (1 - Math.exp(-14 * dt));
     it.move.set(Math.sin(this.mvYaw) * this.mvMag, 0, Math.cos(this.mvYaw) * this.mvMag);
+    // edge guard: never steer off a deck into the sea. Probe the ground a stopping distance ahead; if it's water, slide
+    // along the edge (whichever diagonal is safe) or stop.
+    if (this.mvMag > 0.05 && a.grounded) this._edgeGuard(a, it.move);
     // stuck recovery, based on progress toward the current waypoint: hop → skip the waypoint → replan
     const trying = this.path && wantMove && !(w.kind === 'charger' && a.weaponRunner.charging);
     if (!trying) this.noProg = 0;
-    if (this.noProg > 0.7 && this.jumpCd <= 0 && a.grounded) { it.jump = true; this.jumpCd = 1.0; }
+    if (this.noProg > 0.7 && this.jumpCd <= 0 && a.grounded && !this._nearWater(a, 1.2)) { it.jump = true; this.jumpCd = 1.0; }
     if (this.noProg > 1.5 && this.path && this.pi < this.path.length - 1 && !this._skipped) { this.pi++; this._skipped = true; this.bestD = Infinity; }
     if (this.noProg > 2.4) { this.noProg = 0; this._skipped = false; this.path = null; this.goalTimer = 0; this.repath = 0; }
     if (this.noProg === 0) this._skipped = false;
@@ -378,6 +402,31 @@ export class BotBrain {
   }
 
   // body-width line of sight at knee height (centre + both shoulders) so bots never cut corners they can't fit past
+  _wet(x, z, y) { const gy = G.level.groundHeight(x, z, y + 0.6); return gy === -Infinity || gy < PLAYER.fallDeathY; }
+  // ground all the way along a straight walk (samples every 0.45 m)
+  _dryLine(x0, y0, z0, x1, z1) {
+    const d = Math.hypot(x1 - x0, z1 - z0), n = Math.ceil(d / 0.45);
+    for (let i = 1; i <= n; i++) { const t = i / n; if (this._wet(x0 + (x1 - x0) * t, z0 + (z1 - z0) * t, y0)) return false; }
+    return true;
+  }
+  _nearWater(a, r) {
+    for (let k = 0; k < 8; k++) { const t = (k / 8) * Math.PI * 2; if (this._wet(a.pos.x + Math.cos(t) * r, a.pos.z + Math.sin(t) * r, a.pos.y)) return true; }
+    return false;
+  }
+  _edgeGuard(a, mv) {
+    const m = Math.hypot(mv.x, mv.z); if (m < 1e-4) return;
+    const dx = mv.x / m, dz = mv.z / m;
+    const look = 0.6 + Math.hypot(a.vel.x, a.vel.z) * 0.17;
+    const px = a.pos.x, py = a.pos.y, pz = a.pos.z;
+    const bad = (ux, uz) => this._wet(px + ux * 0.45, pz + uz * 0.45, py) || this._wet(px + ux * look, pz + uz * look, py);
+    if (!bad(dx, dz)) return;
+    for (const ang of [0.8, -0.8, 1.45, -1.45]) {
+      const c = Math.cos(ang), s = Math.sin(ang), nx = dx * c + dz * s, nz = -dx * s + dz * c;
+      if (!bad(nx, nz)) { mv.set(nx * m, 0, nz * m); return; }
+    }
+    mv.set(0, 0, 0);
+  }
+
   _fatLos(ax, ay, az, bx, by, bz) {
     let dx = bx - ax, dz = bz - az;
     const l = Math.hypot(dx, dz) || 1;
@@ -408,14 +457,21 @@ export class BotBrain {
       this.path = null; this.repath = 0; this.goalTimer = 0;
       return out;
     }
-    // look ahead: aim at the furthest waypoint we can walk to in a straight line on this level
+    // look ahead: aim at the furthest waypoint we can walk to in a straight line on this level (re-chosen every
+    // ~0.1 s or when the waypoint advances — the probes are the costly part, the heading still updates every frame)
     let ti = this.pi;
-    for (let k = this.pi + 1; k < Math.min(this.path.length, this.pi + 7); k++) {
-      const n = nav.nodes[this.path[k]];
-      if (Math.abs(n.y - a.pos.y) > 0.4) break;
-      if (nav.edgeType(this.path[k - 1], this.path[k]) !== 'walk') break;
-      if (!this._fatLos(a.pos.x, a.pos.y, a.pos.z, n.x, n.y, n.z)) break;
-      ti = k;
+    this._laT = (this._laT ?? 0) - dt;
+    if (this._laT > 0 && this._laPi === this.pi && this._laPath === this.path && this._laTi < this.path.length) ti = this._laTi;
+    else {
+      for (let k = this.pi + 1; k < Math.min(this.path.length, this.pi + 7); k++) {
+        const n = nav.nodes[this.path[k]];
+        if (Math.abs(n.y - a.pos.y) > 0.4) break;
+        if (nav.edgeType(this.path[k - 1], this.path[k]) !== 'walk') break;
+        if (!this._fatLos(a.pos.x, a.pos.y, a.pos.z, n.x, n.y, n.z)) break;
+        if (!this._dryLine(a.pos.x, a.pos.y, a.pos.z, n.x, n.z)) break;   // never cut a corner across water
+        ti = k;
+      }
+      this._laT = 0.1; this._laPi = this.pi; this._laPath = this.path; this._laTi = ti;
     }
     const n = nav.nodes[this.path[ti]];
     out.set(n.x - a.pos.x, 0, n.z - a.pos.z);

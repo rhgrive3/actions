@@ -57,7 +57,7 @@ export const PLAYER = {
   turnRate: 15, turnRateSlow: 1.5,                      // velocity heading slew (rad/s); faster when slow → carve, never dip
   airAccel: 20, airDecel: 4, airMinSpeed: 4.6,
   squidAccel: 34, squidDecel: 26, squidTurn: 13,        // squid hopping on dry ground (also the swim-exit glide)
-  swimAccel: 60, swimAccelIn: 0.55, swimDecel: 30, swimTurn: 9.5, swimOutKnee: 0.22,
+  swimAccel: 64, swimAccelIn: 0.75, swimDecel: 42, swimTurn: 11, swimOutKnee: 0.22,   // 90 % speed in 0.18 s, 1.6 m glide to a stop
   squidAirAccel: 14, squidAirDecel: 3,
   enemyInkDecel: 30, enemyInkAccel: 30,                 // wading into enemy ink: a quick but readable bog-down
   // jumping
@@ -89,7 +89,7 @@ export const PLAYER = {
 // stats.* are 0..1 display bars for the loadout screen.
 export const WEAPONS = {
   shooter: {
-    id: 'shooter', name: 'Spritzer', kind: 'shooter',
+    id: 'shooter', name: 'Spritzer', kind: 'shooter', class: 'Shooter', sub: 'bomb',
     blurb: 'Rapid-fire all-rounder. Sprays a steady stream of ink blobs.',
     stats: { range: 0.5, damage: 0.45, rate: 0.85, mobility: 0.7, paint: 0.6 },
     fireInterval: 0.1, damage: 36, inkPerShot: 0.95,
@@ -100,7 +100,7 @@ export const WEAPONS = {
     special: 'slam', specialCost: 190,
   },
   roller: {
-    id: 'roller', name: 'Swell Roller', kind: 'roller',
+    id: 'roller', name: 'Swell Roller', kind: 'roller', class: 'Roller', sub: 'bomb',
     blurb: 'Roll out wide stripes of turf. Flick for a crushing splash.',
     stats: { range: 0.35, damage: 0.95, rate: 0.3, mobility: 0.55, paint: 0.95 },
     rollSpeed: 4.4, rollWidth: 1.9, rollInkPerMeter: 1.1, rollDamage: 140,
@@ -111,7 +111,7 @@ export const WEAPONS = {
     special: 'slam', specialCost: 170,
   },
   charger: {
-    id: 'charger', name: 'Glint Charger', kind: 'charger',
+    id: 'charger', name: 'Glint Charger', kind: 'charger', class: 'Charger', sub: 'bomb',
     blurb: 'Hold to charge, release for a long piercing line. Full charge splats.',
     stats: { range: 1.0, damage: 1.0, rate: 0.25, mobility: 0.35, paint: 0.45 },
     chargeTime: 1.0, rangeMin: 11, rangeMax: 27, damageMin: 40, damageMax: 160,
@@ -120,7 +120,7 @@ export const WEAPONS = {
     special: 'storm', specialCost: 180,
   },
   blaster: {
-    id: 'blaster', name: 'Popper Blaster', kind: 'blaster',
+    id: 'blaster', name: 'Popper Blaster', kind: 'blaster', class: 'Blaster', sub: 'bomb',
     blurb: 'Slow shots that burst mid-air. Direct hits splat instantly.',
     stats: { range: 0.55, damage: 0.9, rate: 0.3, mobility: 0.6, paint: 0.5 },
     fireInterval: 0.78, directDamage: 125, splashDamageMax: 70, splashDamageMin: 30,
@@ -129,8 +129,42 @@ export const WEAPONS = {
     moveSpeedFiring: 4.0,
     special: 'storm', specialCost: 180,
   },
+  dualies: {
+    id: 'dualies', name: 'Twinfin Dualies', kind: 'dualies', class: 'Dualies', sub: 'bomb',
+    blurb: 'Twin pistols, alternating fire. Jump while firing to dodge-roll, then plant and unload.',
+    stats: { range: 0.42, damage: 0.4, rate: 0.95, mobility: 0.95, paint: 0.55 },
+    fireInterval: 0.083, damage: 30, inkPerShot: 0.85,        // hands alternate: 12 shots/s, 4 hits to splat
+    projSpeed: 32, straightTime: 0.11, range: 11,
+    spreadGround: 6.5, spreadAir: 12, spreadFirst: 0.5, bloomPerShot: 0.25, spreadLock: 2.2,
+    impactRadius: 0.75, trailRadius: 0.38, trailEvery: 1.15,
+    moveSpeedFiring: 5.0,
+    rollInk: 7, rollTime: 0.3, rollDist: 2.8, rolls: 2, lockTime: 0.5, lockInterval: 0.07,   // dodge roll → locked turret
+    special: 'slam', specialCost: 180,
+  },
+  slosher: {
+    id: 'slosher', name: 'Tidebucket Slosher', kind: 'slosher', class: 'Slosher', sub: 'bomb',
+    blurb: 'Heaves a heavy wave of ink in an arc: over cover, up ledges, a thick stripe where it lands.',
+    stats: { range: 0.58, damage: 0.8, rate: 0.4, mobility: 0.6, paint: 0.78 },
+    fireInterval: 0.62, windup: 0.13, inkPerShot: 7.5,
+    projSpeed: 15, grav: 22, range: 9.5, drops: 8,
+    damageHead: 70, damageTail: 34, splashRadius: 1.1, splashDamage: 26,
+    impactRadius: 1.05, trailRadius: 0.5, trailEvery: 1.4,
+    moveSpeedFiring: 4.2,
+    special: 'slam', specialCost: 175,
+  },
+  splatling: {
+    id: 'splatling', name: 'Gyre Splatling', kind: 'splatling', class: 'Splatling', sub: 'bomb',
+    blurb: 'Hold to spin up, release for a long high-speed stream. The more charge, the longer it lasts.',
+    stats: { range: 0.78, damage: 0.55, rate: 1.0, mobility: 0.38, paint: 0.7 },
+    chargeTime: 0.85, burstMin: 0.3, burstMax: 1.7, fireInterval: 0.066, damage: 28, inkPerShot: 0.6,
+    projSpeed: 40, straightTime: 0.16, range: 15,
+    spreadGround: 3.2, spreadAir: 7, spreadFirst: 0.6, bloomPerShot: 0.05,
+    impactRadius: 0.8, trailRadius: 0.42, trailEvery: 1.2,
+    moveSpeedCharging: 2.4, moveSpeedFiring: 3.4,
+    special: 'storm', specialCost: 195,
+  },
 };
-export const WEAPON_ORDER = ['shooter', 'roller', 'charger', 'blaster'];
+export const WEAPON_ORDER = ['shooter', 'dualies', 'splatling', 'roller', 'slosher', 'charger', 'blaster'];
 
 export const SUB = {
   bomb: {
@@ -160,10 +194,14 @@ export const DIFFICULTY = {
   hard:   { id: 'hard',   name: 'Fierce', reaction: 0.17, aimError: 0.03, fireDiscipline: 0.95, awareness: 26, aimOmega: 18, aimTurn: 14 },
 };
 
+// Every stage can be played by day or at dusk: `times` maps the time of day to an environment theme (`theme` is the
+// stage's day look, kept for older callers). Pick with mapTheme(map, time).
+export const TIMES = ['day', 'dusk'];
+export const mapTheme = (map, time = 'day') => (map && map.times && map.times[time]) || (map && map.theme) || 'day';
 export const MAPS = [
-  { id: 'tidewater', name: 'Tidewater Plaza', blurb: 'A sun-bleached harbor plaza on the edge of the sea.', theme: 'day' },
-  { id: 'kelpline', name: 'Kelpline Terminal', blurb: 'Container yard with grate catwalks, a sunken trench and a steel gantry deck.', theme: 'day' },
-  { id: 'sunset', name: 'Tidewater at Dusk', blurb: 'Same plaza, golden hour. Lights coming on across the bay.', theme: 'sunset', layout: 'tidewater' },
+  { id: 'tidewater', name: 'Tidewater Plaza', blurb: 'A sun-bleached harbor plaza on the edge of the sea.', theme: 'day', times: { day: 'day', dusk: 'sunset' } },
+  { id: 'kelpline', name: 'Kelpline Terminal', blurb: 'Container yard with grate catwalks, a sunken trench and a steel gantry deck.', theme: 'day', times: { day: 'day', dusk: 'sunset' } },
+  { id: 'halyard', name: 'Halyard Marina', blurb: 'Floating docks, a tug on blocks and a car ferry moored across the middle. Mind the water.', theme: 'golden', times: { day: 'golden', dusk: 'sunset' } },
 ];
 
 export const BOT_NAMES = [

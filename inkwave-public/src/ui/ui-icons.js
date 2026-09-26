@@ -58,6 +58,46 @@ export const WEAPON_ICONS = {
       <rect x="36.5" y="20.5" width="5.5" height="21" rx="2.2" fill="currentColor"/>
     </g>
     <ellipse cx="19.5" cy="24.5" rx="5.2" ry="3.6" fill="#fff" fill-opacity=".6"/>`),
+  // twin pistols: the back one offset down-right, both with the team fin on the slide
+  dualies: svg(`<g ${O}>
+      <g transform="translate(15 16)">
+        <path d="M9 21 L6 36.5 Q5.6 39 8 39 L13 39 Q15 39 15.5 37 L18 22 Z" fill="${DK}"/>
+        <path d="M17 4 L23 -1.5 L26 4 Z" fill="currentColor"/>
+        <rect x="3" y="4" width="33" height="12" rx="5" fill="${LT}"/>
+        <rect x="34.5" y="7" width="8" height="6.5" rx="2" fill="${DK}"/>
+        <path d="M5 16.5 L32 16.5 L30 21.5 L7 21.5 Z" fill="${DK}"/>
+      </g>
+      <path d="M11 25 L7.5 41.5 Q7 44 9.5 44 L15 44 Q17 44 17.5 42 L20.5 26 Z" fill="${DK}"/>
+      <path d="M19 8 L25.5 2 L28.5 8 Z" fill="currentColor"/>
+      <rect x="4.5" y="8" width="35" height="13" rx="5.5" fill="${LT}"/>
+      <rect x="38" y="11" width="9" height="7" rx="2.2" fill="${DK}"/>
+      <path d="M6.5 21 L35 21 L32.5 26 L9 26 Z" fill="${DK}"/>
+      <rect x="15" y="12" width="9" height="4" rx="2" fill="currentColor"/>
+    </g>
+    <path d="M9 12.5 L30 12.5" stroke="#fff" stroke-opacity=".6" stroke-width="2.6" stroke-linecap="round"/>`),
+  // bucket mid-heave: ink wave curling out over the lip with a trail of globs
+  slosher: svg(`<g ${O}>
+      <path d="M10 22 L7 25 Q6 27 8.5 28 L12 29" fill="none" stroke-width="3.4"/>
+      <path d="M12 24 L41 20 L44 51 Q44.5 55 40.5 55.5 L22.5 58 Q18.5 58.5 18 54.5 Z" fill="${LT}"/>
+      <path d="M14.4 34 L42.4 30.2 L43.2 38.6 L15.6 42.4 Z" fill="currentColor"/>
+      <path d="M11 24 Q26 12 42 19.5 Q49 11 58 13 Q53 17 52.5 22 Q51 27 45 27 Q38 26 33 22.5 Q22 26 11 24 Z" fill="currentColor"/>
+      <circle cx="56" cy="25" r="3.2" fill="currentColor"/><circle cx="59.5" cy="33" r="2.3" fill="currentColor"/>
+    </g>
+    <path d="M19 45 L38 42.6" stroke="${K}" stroke-opacity=".35" stroke-width="2" stroke-linecap="round"/>
+    <path d="M40 15.5 Q47 11.5 53 13" fill="none" stroke="#fff" stroke-opacity=".6" stroke-width="2.4" stroke-linecap="round"/>`),
+  // rotary splatling: windowed ink drum on top, housing, six-barrel cluster, grip + foregrip
+  splatling: svg(`<g ${O}>
+      <path d="M14 38 L11 51.5 Q10.6 54 13 54 L18 54 Q20 54 20.5 52 L23 39 Z" fill="${DK}"/>
+      <path d="M32 38 L31 47 Q31 49.5 33.5 49.5 L36 49.5 Q38 49.5 38 47.5 L38.5 38 Z" fill="${DK}"/>
+      <rect x="37" y="26.5" width="23" height="11" rx="2.5" fill="${DK}"/>
+      <rect x="6" y="24" width="34" height="15.5" rx="5" fill="${LT}"/>
+      <circle cx="21" cy="15" r="10.5" fill="currentColor"/>
+      <rect x="40" y="24.5" width="4.4" height="15" rx="1.6" fill="${LT}"/>
+      <rect x="51.5" y="25" width="4" height="14" rx="1.6" fill="${LT}"/>
+    </g>
+    <path d="M41 30 L60 30 M41 34 L60 34" stroke="${LT}" stroke-width="1.6"/>
+    <circle cx="21" cy="15" r="4.2" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="2.2"/>
+    <path d="M11 29.5 L33 29.5" stroke="#fff" stroke-opacity=".6" stroke-width="2.6" stroke-linecap="round"/>`),
 };
 
 export const SUB_ICONS = {
@@ -142,6 +182,18 @@ export const GLYPHS = {
   users: svg(`<circle cx="22" cy="22" r="9" fill="currentColor"/><circle cx="43" cy="22" r="9" fill="currentColor"/><path d="M6 52 Q6 36 22 36 Q38 36 38 52 Z M30 52 Q30 36 43 36 Q58 36 58 52 Z" fill="currentColor"/>`),
   drop: svg(`<path d="M32 6 C32 6 50 28 50 40 C50 51 42 58 32 58 C22 58 14 51 14 40 C14 28 32 6 32 6 Z" fill="currentColor"/>`),
   swords: svg(`<path d="M12 10 L40 38 M52 10 L24 38" ${G} stroke-width="6"/><path d="M34 44 L44 34 M20 34 L30 44 M42 42 L54 54 M22 42 L10 54" ${G} stroke-width="6"/>`),
+  // locker / stage select
+  hanger: svg(`<path d="M26 16 Q26 8.5 32 8.5 Q38 8.5 38 14.5 Q38 19.5 32 21.5 L32 26" ${G} stroke-width="5"/><path d="M32 25 L7 42.5 Q3.5 45.5 8.5 48 L55.5 48 Q60.5 45.5 57 42.5 Z" fill="currentColor" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><path d="M16 43 L48 43" stroke="var(--k, #15121c)" stroke-width="3" stroke-linecap="round" opacity=".45"/>`),
+  dice: svg(`<rect x="8" y="8" width="48" height="48" rx="12" fill="currentColor" transform="rotate(-8 32 32)"/><g fill="var(--k, #15121c)" transform="rotate(-8 32 32)"><circle cx="21" cy="21" r="4.6"/><circle cx="43" cy="21" r="4.6"/><circle cx="32" cy="32" r="4.6"/><circle cx="21" cy="43" r="4.6"/><circle cx="43" cy="43" r="4.6"/></g>`),
+  shirt: svg(`<path d="M23 9 L12 13 L3.5 26 L13 32.5 L17 27.5 L17 56 L47 56 L47 27.5 L51 32.5 L60.5 26 L52 13 L41 9 Q38 16.5 32 16.5 Q26 16.5 23 9 Z" fill="currentColor" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><path d="M17 36 L47 36" stroke="var(--k, #15121c)" stroke-width="4" opacity=".4"/>`),
+  eye: svg(`<path d="M4 32 Q32 5 60 32 Q32 59 4 32 Z" fill="currentColor"/><circle cx="32" cy="32" r="12" fill="var(--k, #15121c)"/><circle cx="36.5" cy="27.5" r="4" fill="currentColor"/>`),
+  hair: svg(`<path d="M12 36 Q10 11 32 9 Q54 11 52 36 Q47 30 43 34 Q40 26 32 29 Q24 26 21 34 Q17 30 12 36 Z" fill="currentColor" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><path d="M13 34 Q8 46 12 58 Q19 52 20 39 Z M44 39 Q45 52 52 58 Q56 46 51 34 Z M27 34 Q25 47 28 56 Q34 49 33 35 Z" fill="currentColor" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M20 20 Q24 15 30 14" stroke="var(--k, #15121c)" stroke-width="3.2" fill="none" stroke-linecap="round" opacity=".35"/>`),
+  palette: svg(`<path d="M32 6 C16 6 6 18 6 32 C6 46.5 18 58 32 58 C38.5 58 40.5 54 38.5 50 C36.5 46 38.5 42 44 42 L50 42 C56 42 58 36.5 58 32 C58 18 48 6 32 6 Z" fill="currentColor"/><g fill="var(--k, #15121c)"><circle cx="19" cy="31" r="4.6"/><circle cx="25" cy="19" r="4.6"/><circle cx="38.5" cy="16.5" r="4.6"/><circle cx="48" cy="26" r="4.6"/></g>`),
+  sparkle: svg(`<path d="M32 4 Q35 26 60 32 Q35 38 32 60 Q29 38 4 32 Q29 26 32 4 Z" fill="currentColor"/>`),
+  rotate: svg(`<path d="M50 23 A20 20 0 0 0 14 25" ${G} stroke-width="5.5"/><path d="M14 41 A20 20 0 0 0 50 39" ${G} stroke-width="5.5"/><path d="M52 10 L51 24 L37 22" ${G} stroke-width="5.5"/><path d="M12 54 L13 40 L27 42" ${G} stroke-width="5.5"/>`),
+  bolt: svg(`<path d="M36 4 L12 36 L30 36 L26 60 L52 26 L34 26 Z" fill="currentColor" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>`),
+  target: svg(`<circle cx="32" cy="32" r="22" ${G} stroke-width="5"/><circle cx="32" cy="32" r="10" ${G} stroke-width="5"/><path d="M32 2 L32 14 M32 50 L32 62 M2 32 L14 32 M50 32 L62 32" ${G} stroke-width="5"/>`),
+  feather: svg(`<path d="M52 8 Q22 12 16 40 L12 54 L17 50 Q46 44 52 8 Z" fill="currentColor" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><path d="M14 52 L40 22" stroke="var(--k, #15121c)" stroke-width="3" stroke-linecap="round" opacity=".45"/>`),
 };
 
 /** Kill-feed / stat glyphs */

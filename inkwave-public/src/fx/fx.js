@@ -3,6 +3,8 @@
 // const fx = new FX(scene, { quality: 'high' });      // quality: QUALITY key | QUALITY preset | particles multiplier
 // fx.setCollider((from, to) => ({ point, normal }) | null)
 // fx.onDropletLand = (point, normal, color, size) => {} // point/normal/color are scratch objects — copy if kept
+// fx.onSpeck = (point, normal, color, size) => {}      // optional: ink speck where a non-painting droplet lands
+// fx.onRipple = (pos, amp, wavelength, speed, life) => {} // optional: ripple in the ink surface (else a ring decal)
 // fx.update(dt, camera) · fx.clear() · fx.setLighting(env.getSkyColors()) · fx.stats()
 //
 // Contract API (docs/CONTRACTS.md §4): burst · drop · ring · explosion · splatted · wake · muzzle · spawnFlash · rain
@@ -19,6 +21,8 @@
 //   stormStart(pos, color, radius)   stormPuddle(pos, normal, color)   stormFlash(pos, color, radius)
 //   superJumpCharge(pos, color, k)   superJumpLaunch(pos, color)   superJumpTrail(pos, vel, color)
 //   jumpMarker(pos, color, t)   superJumpLand(pos, color)   ghost(pos, color)   waterSplash(pos, size)   waterPlop(pos, size)
+//   spinUp(pos, dir, color, k, streaming)   spinFull(pos, dir, color)   dodgeSplash(pos, dir, color)   dodgeSkid(pos, dir, color, k)
+//   dodgePlant(pos, dir, color)   sloshTrail(pos, vel, color, head)   sloshImpact(pos, normal, dir, color)
 //   specialSparkle(pos, color, height)   enemyInkSizzle(pos, color)   seaSpray(pos, outward, strength)   feather(pos)   glint(pos, color, size)
 // Immediate-mode (call every frame while visible; drawn next frame, never aged): dangerRing, jumpMarker, laserDot, mark(), pillar().
 // Ambient: a GPU dust-mote field around the camera (no CPU cost) — fx.motes.visible to toggle.
@@ -61,7 +65,9 @@ const OUT_CHUNKS = /* glsl */`
   #include <colorspace_fragment>
 `;
 
-// ---- droplets: velocity-stretched sphere impostors with glossy fake-PBR shading (aColA.a = gloss) ----
+// ---- droplets: velocity-stretched liquid impostors (aColA.a = gloss). Slow drops are spheres; fast ones become
+// teardrops (round head leading, tapered tail) — shaded as glossy translucent ink: dark lens rim, light transmitted
+// through the body glowing on the side away from the sun, sky reflection at grazing angles and a crisp sun glint.
 const DROP_VERT = /* glsl */`
 attribute vec4 aPosR;   // xyz, radius
 attribute vec4 aVelS;   // velocity, stretch
@@ -70,6 +76,7 @@ varying vec2 vUv;
 varying vec3 vCol;
 varying vec2 vAx;
 varying float vGloss;
+varying float vTail;
 void main() {
   vec4 c = viewMatrix * vec4(aPosR.xyz, 1.0);
   vec3 vv = mat3(viewMatrix) * aVelS.xyz;
@@ -84,6 +91,7 @@ void main() {
   vCol = aColA.rgb;
   vGloss = aColA.a;
   vAx = ax;
+  vTail = clamp((st - 1.15) / 1.1, 0.0, 1.0);
   gl_Position = projectionMatrix * c;
 }
 `;
@@ -97,28 +105,44 @@ varying vec2 vUv;
 varying vec3 vCol;
 varying vec2 vAx;
 varying float vGloss;
+varying float vTail;
 void main() {
-  float d2 = dot(vUv, vUv);
-  if (d2 > 1.0) discard;
-  float z = sqrt(1.0 - d2);
+  // silhouette: a sphere, pulled into a teardrop as the drop speeds up (head at +y = the direction of travel)
+  float yc = 0.42 * vTail, rh = 1.0 - yc, rt = mix(rh, 0.1, vTail);
+  vec2 A = vec2(0.0, yc), Bp = vec2(0.0, -1.0 + rt);      // the tail's end cap stays inside the quad
+  vec2 pa = vUv - A, ba = Bp - A;
+  float h = vTail > 0.0 ? clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0) : 0.0;
+  vec2 o = pa - ba * h;
+  float rad = mix(rh, rt, h);
+  float sd = length(o) - rad;
+  float fw = max(fwidth(sd), 1e-4);
+  float cov = 1.0 - smoothstep(-fw, fw, sd);
+  if (cov <= 0.0) discard;
+  vec2 q = o / max(rad, 1e-3);
+  float z = sqrt(max(1.0 - dot(q, q), 0.0));
   vec2 bx = vec2(vAx.y, -vAx.x);
-  vec3 n = normalize(vec3(bx * vUv.x + vAx * vUv.y, z));
+  vec3 n = normalize(vec3(bx * q.x + vAx * q.y, z + 0.05));
+  float g = vGloss;
   float ndl = dot(n, uSunDirV);
-  float wrap = clamp(ndl * 0.55 + 0.45, 0.0, 1.0);
   float up = dot(n, uUpV) * 0.5 + 0.5;
   vec3 amb = mix(uGroundCol, uSkyCol, up);
-  float g = vGloss;
-  vec3 base = vCol * (amb * 0.7 + uSunCol * wrap * 0.85 + 0.2);
-  base += vCol * pow(clamp(-ndl, 0.0, 1.0), 2.0) * 0.3 * (1.0 - z) * g;     // light glowing through the ink
+  vec3 base = vCol * (amb * 0.55 + uSunCol * clamp(ndl * 0.6 + 0.4, 0.0, 1.0) * 0.8 + 0.14);
+  float edge = 1.0 - z;
+  // light passes through the ink and exits on the far side: a saturated glow opposite the sun, strongest near the rim
+  vec2 sxy = normalize(vec2(dot(uSunDirV.xy, bx), dot(uSunDirV.xy, vAx)) + 1e-4);
+  float trans = pow(clamp(-dot(q, sxy), 0.0, 1.0), 1.5) * (0.35 + 0.65 * edge);
+  base += vCol * (vCol + 0.25) * trans * 0.7 * g;
+  // lens rim: the curved edge of the liquid reads darker and richer
+  base *= mix(1.0, 0.6, pow(edge, 2.2) * g);
   vec3 R = reflect(vec3(0.0, 0.0, -1.0), n);
   float rup = dot(R, uUpV);
-  vec3 env = mix(uGroundCol * 0.7, uSkyCol * 1.35, smoothstep(-0.15, 0.35, rup));
-  float fres = (0.05 + 0.95 * pow(1.0 - z, 3.5)) * g;
-  vec3 col = mix(base, env, fres * 0.5);
-  float spec = pow(clamp(dot(R, uSunDirV), 0.0, 1.0), 80.0);
-  col += uSunCol * spec * 5.0 * g;
-  col *= mix(0.82, 1.0, g);
-  gl_FragColor = vec4(col, smoothstep(1.0, 0.82, d2));
+  vec3 env = mix(uGroundCol * 0.7, uSkyCol * 1.4, smoothstep(-0.15, 0.35, rup));
+  float fres = (0.04 + 0.96 * pow(edge, 4.0)) * g;
+  vec3 col = mix(base, env, fres * 0.42);
+  float rl = clamp(dot(R, uSunDirV), 0.0, 1.0);
+  col += uSunCol * (pow(rl, 150.0) * 7.0 + pow(rl, 16.0) * 0.28) * g;
+  col *= mix(0.85, 1.0, g);
+  gl_FragColor = vec4(col, cov);
   ${OUT_CHUNKS}
 }
 `;
@@ -365,52 +389,92 @@ void main() {
 
 // ---- ink shells (translucent wobbly spheres: explosion shell, splat pop) ----
 const SHELL_VERT = /* glsl */`
+${GLSL_HASH}
+float fxH3v(vec3 p) { return fxHash(p.xy + p.z * vec2(37.13, 17.31)); }
+float fxN3v(vec3 p) {
+  vec3 i = floor(p), f = fract(p); vec3 u = f * f * (3.0 - 2.0 * f);
+  float a = mix(fxH3v(i), fxH3v(i + vec3(1.0, 0.0, 0.0)), u.x), b = mix(fxH3v(i + vec3(0.0, 1.0, 0.0)), fxH3v(i + vec3(1.0, 1.0, 0.0)), u.x);
+  float c = mix(fxH3v(i + vec3(0.0, 0.0, 1.0)), fxH3v(i + vec3(1.0, 0.0, 1.0)), u.x), d = mix(fxH3v(i + vec3(0.0, 1.0, 1.0)), fxH3v(i + vec3(1.0, 1.0, 1.0)), u.x);
+  return mix(mix(a, b, u.y), mix(c, d, u.y), u.z);
+}
 attribute vec4 aPosR;
 attribute vec4 aColA;
-attribute vec4 aMisc;   // x t, y seed, z kind (0 ink shell, 1 ghost), w wobble amount
+attribute vec4 aMisc;   // x t, y seed, z -, w wobble amount
+attribute vec4 aAxis;   // crown axis (the surface normal), crown amount (0 = free burst, 1 = crown splash)
 uniform float uTime;
 varying vec3 vN;
 varying vec3 vW;
 varying vec4 vCol;
 varying vec4 vMisc;
+varying vec4 vAxis;
+varying float vNear;
 void main() {
   vec3 n = normalize(position);
+  vNear = 1.0 - smoothstep(aPosR.w * 1.3, aPosR.w * 3.2 + 0.6, distance(cameraPosition, aPosR.xyz));
   float s = aMisc.y * 17.0;
   float w = sin(n.x * 5.1 + s + uTime * 7.0) * sin(n.y * 4.3 + s * 1.7 + uTime * 5.3) * sin(n.z * 4.7 + s * 0.6 - uTime * 6.1);
   w += 0.5 * sin(n.x * 11.0 - n.z * 9.0 + s * 2.1 + uTime * 9.0);
-  float rad = aPosR.w * (1.0 + w * aMisc.w);
-  if (aMisc.z > 0.5) rad *= 1.0 + 0.18 * n.y;
-  vec3 wp = aPosR.xyz + n * rad;
+  // jets: the sheet is pushed out into a few blunt spikes where the ink was thrown hardest
+  float jet = max(fxN3v(n * 3.3 + s) - 0.52, 0.0) * 2.1;
+  float rad = aPosR.w * (1.0 + w * aMisc.w + jet * jet * 0.55 * (1.0 - aAxis.w));
+  vec3 ax = aAxis.xyz; float cr = aAxis.w;
+  float up = dot(n, ax);
+  // crown splash: a squat bowl whose wall flares out toward the (torn-open) rim
+  vec3 off = mix(n, (n - ax * up) * (1.0 + 0.4 * smoothstep(0.0, 0.9, up)) + ax * up * 0.62, cr) * rad;
+  vec3 wp = aPosR.xyz + off;
   vN = n;
   vW = wp;
-  vCol = aColA; vMisc = aMisc;
+  vCol = aColA; vMisc = aMisc; vAxis = aAxis;
   gl_Position = projectionMatrix * viewMatrix * vec4(wp, 1.0);
 }
 `;
+// A burst of ink: an opaque glossy sheet that balloons out and tears open into holes and ribbons (3-D noise over the
+// sphere vs a threshold rising with age), with rolled, brighter rims at the tears. Drawn double-sided so the inside of
+// the sheet shows through the holes (darker — it is in its own shadow). Alpha = coverage for alpha-to-coverage AA.
 const SHELL_FRAG = /* glsl */`
+${GLSL_HASH}
 uniform vec3 uSunDir;
+uniform vec3 uSunCol;
+uniform vec3 uSkyCol;
 varying vec3 vN;
 varying vec3 vW;
 varying vec4 vCol;
 varying vec4 vMisc;
+varying vec4 vAxis;
+varying float vNear;
+float fxH3(vec3 p) { return fxHash(p.xy + p.z * vec2(37.13, 17.31)); }
+float fxN3(vec3 p) {
+  vec3 i = floor(p), f = fract(p); vec3 u = f * f * (3.0 - 2.0 * f);
+  float a = mix(fxH3(i), fxH3(i + vec3(1.0, 0.0, 0.0)), u.x), b = mix(fxH3(i + vec3(0.0, 1.0, 0.0)), fxH3(i + vec3(1.0, 1.0, 0.0)), u.x);
+  float c = mix(fxH3(i + vec3(0.0, 0.0, 1.0)), fxH3(i + vec3(1.0, 0.0, 1.0)), u.x), d = mix(fxH3(i + vec3(0.0, 1.0, 1.0)), fxH3(i + vec3(1.0, 1.0, 1.0)), u.x);
+  return mix(mix(a, b, u.y), mix(c, d, u.y), u.z);
+}
 void main() {
   vec3 N = normalize(vN);
+  float t = vMisc.x;
+  float s = vMisc.y * 17.0;
+  float nz = fxN3(N * 2.4 + s) * 0.6 + fxN3(N * 6.1 + s * 1.9) * 0.4;
+  float thr = mix(0.3, 1.04, smoothstep(0.0, 0.78, t)) + (1.0 - vCol.a) * 0.6;
+  thr += vAxis.w * 1.3 * smoothstep(0.3, 0.78, dot(N, vAxis.xyz));      // a crown is open at the top from the start
+  thr += vNear * (0.35 + 0.5 * t);                                        // right in front of the camera: mostly holes
+  float m = nz - thr;
+  float fw = max(fwidth(m), 1e-4);
+  float cov = smoothstep(-fw, fw, m);
+  if (cov <= 0.0) discard;
   vec3 V = normalize(cameraPosition - vW);
-  float f = 1.0 - clamp(abs(dot(N, V)), 0.0, 1.0);
-  vec3 R = reflect(-V, N);
-  float spec = pow(clamp(dot(R, uSunDir), 0.0, 1.0), 36.0);
-  float lit = 0.62 + 0.45 * clamp(dot(N, uSunDir), 0.0, 1.0) + 0.12 * N.y;
-  vec3 col = vCol.rgb * lit;
-  float a;
-  if (vMisc.z < 0.5) {
-    a = 0.02 + 0.9 * pow(f, 3.6);
-    col += vec3(1.0) * spec * 1.2 + vCol.rgb * pow(f, 3.0) * 0.5;
-  } else {
-    a = pow(f, 1.8) * 0.85;
-    col = mix(col, vec3(1.0), 0.18);
-  }
-  gl_FragColor = vec4(col, a * vCol.a);
-  if (gl_FragColor.a < 0.004) discard;
+  float facing = dot(N, V);
+  float inner = step(facing, 0.0);
+  vec3 Nf = facing >= 0.0 ? N : -N;
+  float rim = 1.0 - smoothstep(0.0, 0.09, m);
+  float ndl = dot(Nf, uSunDir);
+  vec3 col = vCol.rgb * (0.5 + 0.6 * clamp(ndl * 0.65 + 0.35, 0.0, 1.0));
+  col *= mix(1.0, 0.58, inner);
+  col *= 1.0 + 0.3 * rim;
+  vec3 R = reflect(-V, Nf);
+  float fres = pow(1.0 - abs(facing), 3.0) * (1.0 - inner);
+  col = mix(col, uSkyCol * 1.25, fres * 0.32);
+  col += uSunCol * (pow(clamp(dot(R, uSunDir), 0.0, 1.0), 70.0) * 3.2 + rim * 0.12) * (1.0 - inner);
+  gl_FragColor = vec4(col, cov);
   ${OUT_CHUNKS}
 }
 `;
@@ -606,6 +670,8 @@ export class FX {
     this.gravity = opts.gravity ?? 17;
     this.collider = null;
     this.onDropletLand = null;
+    this.onSpeck = null;       // (point, normal, color, size): cosmetic ink speck where a non-painting droplet lands
+    this.onRipple = null;      // (pos, amp, wavelength, speed, life): ripple through the ink surface (paint.ripple)
     this.paintEffects = true;  // explosion / splatted / flick droplets may leave cosmetic paint via onDropletLand
     this.maxChecks = Math.round(1100 * this.q);
     this._checks = 0;
@@ -633,7 +699,7 @@ export class FX {
     this._initDrops(Math.round(2600 * this.q));
     this._initSprites(Math.round(520 * this.q), Math.round(300 * this.q));
     this._initRings(Math.round(300 * this.q));
-    this._initShells(16);
+    this._initShells(32);
     this._initBeams(10);
     this._initMotes(Math.round(300 * this.q));
     // scheduler: [t, op, px, py, pz, nx, ny, nz, r, g, b, a0, a1, a2]
@@ -701,7 +767,14 @@ export class FX {
       this.dA.copyWithin(i * 8, last * 8, last * 8 + 8);
     }
   }
-  // Droplet hit something: paint callback, a quick flattening blot decal, and a couple of rebound beads.
+  // Ripple through the ink surface (the level shader draws it — fxHooks wires onRipple to paint.ripple); without a
+  // paint system (labs) a soft ring decal stands in.
+  _ripple(pos, amp, wavelength, speed, life, normal = UP, col = null) {
+    if (this.onRipple) { this.onRipple(pos, amp, wavelength, speed, life); return; }
+    if (col) this._ringRaw(pos, normal, col, speed * life * 0.8 + 0.1, life * 0.7, R_RIPPLE, 0.45, 1);
+  }
+  // Droplet hit something. Ink stays where it lands: paint droplets become real splats (onDropletLand), the rest
+  // leave a speck of ink (onSpeck, GPU-only micro splat) and a ripple; heavy drops kick up a couple of beads.
   _landDrop(i, px, py, pz, nx, ny, nz, water) {
     const i3 = i * 3, i8 = i * 8, A = this.dA;
     const size = A[i8], flags = A[i8 + 7];
@@ -712,21 +785,26 @@ export class FX {
       this._ringRaw(_cbP, UP, _cbC.lerp(_white, 0.55), 0.18 + size * 2.5, 0.45, R_RIPPLE, 0.7, 1);
       return;
     }
+    _cbP.set(px, py, pz); _cbN.set(nx, ny, nz);
     if ((flags & F_PAINT) && this.onDropletLand) {
-      _cbP.set(px, py, pz); _cbN.set(nx, ny, nz);
       this.onDropletLand(_cbP, _cbN, _cbC, size);
       _cbC.setRGB(this.dC[i3], this.dC[i3 + 1], this.dC[i3 + 2]);
+      _cbP.set(px, py, pz); _cbN.set(nx, ny, nz);
+    } else if (this.onSpeck && !(flags & F_MATTE) && size > 0.012 && this._near(_cbP, 26)) {
+      this.onSpeck(_cbP, _cbN, _cbC, size);
+      _cbC.setRGB(this.dC[i3], this.dC[i3 + 1], this.dC[i3 + 2]);
+      _cbP.set(px, py, pz); _cbN.set(nx, ny, nz);
     }
-    if (flags & (F_QUIET | F_MATTE)) return;
-    _cbP.set(px, py, pz); _cbN.set(nx, ny, nz);
-    this._ringRaw(_cbP, _cbN, _cbC, size * 2.3 + 0.03, 0.2 + size * 0.6, R_DISC, 0.95, 1);
-    if (flags & F_RING) this._ringRaw(_cbP, _cbN, _cbC, 0.14 + size * 1.8, 0.22, R_RIPPLE, 0.55, 1);
-    if (size > 0.085 && this.dN < this.dCap - 8 && rand() < 0.65) {
+    if (flags & F_MATTE) return;
+    if (!(flags & F_PAINT) && ((flags & F_RING) || size > 0.03)) this._ripple(_cbP, 0.0016 + size * 0.05, 0.07 + size * 0.5, 0.75, 0.42, _cbN, (flags & F_RING) ? _cbC : null);
+    if (flags & F_QUIET) return;
+    if (!this.onSpeck && !(flags & F_PAINT)) this._ringRaw(_cbP, _cbN, _cbC, size * 2.3 + 0.03, 0.2 + size * 0.6, R_DISC, 0.95, 1);
+    if (size > 0.075 && this.dN < this.dCap - 8 && rand() < 0.6) {
       const n = 1 + (rand() < 0.5 ? 1 : 0);
       for (let k = 0; k < n; k++) {
         coneDir(_cbN, 1.15, _v4);
         const sp = 1.3 + rand() * 1.9;
-        this._spawnDrop(px + nx * 0.03, py + ny * 0.03, pz + nz * 0.03, _v4.x * sp, _v4.y * sp, _v4.z * sp, _cbC, size * 0.32, 0.45, 1, 1, F_NOCOL);
+        this._spawnDrop(px + nx * 0.03, py + ny * 0.03, pz + nz * 0.03, _v4.x * sp, _v4.y * sp, _v4.z * sp, _cbC, size * 0.3, 0.45, 1, 1, F_NOCOL);
       }
     }
   }
@@ -772,7 +850,7 @@ export class FX {
       const vx = Vv[i3], vy = Vv[i3 + 1], vz = Vv[i3 + 2];
       const sp = Math.sqrt(vx * vx + vy * vy + vz * vz);
       const st = A[i8 + 4];
-      let stretch = 1 + Math.min(sp * 0.05 * st, 1.8 * st);
+      let stretch = 1 + Math.min(sp * 0.062 * st, 2.3 * st);
       stretch *= 1 + 0.14 * Math.sin(age * 38 + A[i8 + 5] * 20) * Math.min(1, age * 6);
       const grow = Math.min(1, age * 22 + 0.35);
       const fade = Math.min(1, (life - age) / 0.12);
@@ -940,17 +1018,19 @@ export class FX {
 
   // ------------------------------------------------------------------ shells
   _initShells(cap) {
-    const base = new THREE.IcosahedronGeometry(1, 2);
-    const geo = withInstanceAttrs(base, cap, [['aPosR', 4], ['aColA', 4], ['aMisc', 4]]);
-    this._shellUniforms = { uTime: { value: 0 }, uSunDir: { value: this.sunDir } };
-    const mat = new THREE.ShaderMaterial({ uniforms: this._shellUniforms, vertexShader: SHELL_VERT, fragmentShader: SHELL_FRAG, transparent: true, depthWrite: false, fog: false });
+    const base = new THREE.IcosahedronGeometry(1, 3);
+    const geo = withInstanceAttrs(base, cap, [['aPosR', 4], ['aColA', 4], ['aMisc', 4], ['aAxis', 4]]);
+    const L = this._light;
+    this._shellUniforms = { uTime: { value: 0 }, uSunDir: { value: this.sunDir }, uSunCol: { value: L.sunCol }, uSkyCol: { value: L.sky } };
+    const mat = new THREE.ShaderMaterial({ uniforms: this._shellUniforms, vertexShader: SHELL_VERT, fragmentShader: SHELL_FRAG, side: THREE.DoubleSide, alphaToCoverage: true, fog: false });
     const mesh = new THREE.Mesh(geo, mat);
-    mesh.frustumCulled = false; mesh.renderOrder = 10; mesh.name = 'FX_Shells';
+    mesh.frustumCulled = false; mesh.renderOrder = 5; mesh.name = 'FX_Shells';
     this.root.add(mesh);
     // P pos, V vel, C col, X: r0, r1, age, life, expand, alpha, kind, seed, wobble
-    this.shells = { cap, n: 0, geo, mesh, P: new Float32Array(cap * 3), V: new Float32Array(cap * 3), C: new Float32Array(cap * 3), X: new Float32Array(cap * 9) };
+    this.shells = { cap, n: 0, geo, mesh, P: new Float32Array(cap * 3), V: new Float32Array(cap * 3), C: new Float32Array(cap * 3), X: new Float32Array(cap * 9), A: new Float32Array(cap * 4) };
   }
-  _shell(pos, col, r0, r1, expand, life, alpha, kind, vy = 0, wobble = 0.08) {
+  // axis/crown: a crown splash opening along the surface normal (crown 1) instead of a free burst (0)
+  _shell(pos, col, r0, r1, expand, life, alpha, kind, vy = 0, wobble = 0.08, axis = null, crown = 0) {
     const S = this.shells;
     let i;
     if (S.n < S.cap) i = S.n++; else i = Math.floor(rand() * S.cap);
@@ -959,16 +1039,19 @@ export class FX {
     S.V[i3] = 0; S.V[i3 + 1] = vy; S.V[i3 + 2] = 0;
     S.C[i3] = col.r; S.C[i3 + 1] = col.g; S.C[i3 + 2] = col.b;
     S.X[x] = r0; S.X[x + 1] = r1; S.X[x + 2] = 0; S.X[x + 3] = life; S.X[x + 4] = expand; S.X[x + 5] = alpha; S.X[x + 6] = kind; S.X[x + 7] = rand(); S.X[x + 8] = wobble;
+    const i4 = i * 4;
+    if (axis) { S.A[i4] = axis.x; S.A[i4 + 1] = axis.y; S.A[i4 + 2] = axis.z; S.A[i4 + 3] = crown; }
+    else { S.A[i4] = 0; S.A[i4 + 1] = 1; S.A[i4 + 2] = 0; S.A[i4 + 3] = 0; }
   }
   _updateShells(dt) {
     const S = this.shells, X = S.X;
-    const aP = S.geo.attributes.aPosR.array, aC = S.geo.attributes.aColA.array, aM = S.geo.attributes.aMisc.array;
+    const aP = S.geo.attributes.aPosR.array, aC = S.geo.attributes.aColA.array, aM = S.geo.attributes.aMisc.array, aA = S.geo.attributes.aAxis.array;
     for (let i = 0; i < S.n; i++) {
       const x = i * 9, i3 = i * 3;
       X[x + 2] += dt;
       if (X[x + 2] >= X[x + 3]) {
         const last = --S.n;
-        if (i !== last) { S.P.copyWithin(i3, last * 3, last * 3 + 3); S.V.copyWithin(i3, last * 3, last * 3 + 3); S.C.copyWithin(i3, last * 3, last * 3 + 3); X.copyWithin(x, last * 9, last * 9 + 9); }
+        if (i !== last) { S.P.copyWithin(i3, last * 3, last * 3 + 3); S.V.copyWithin(i3, last * 3, last * 3 + 3); S.C.copyWithin(i3, last * 3, last * 3 + 3); X.copyWithin(x, last * 9, last * 9 + 9); S.A.copyWithin(i * 4, last * 4, last * 4 + 4); }
         i--; continue;
       }
       S.P[i3 + 1] += S.V[i3 + 1] * dt;
@@ -979,11 +1062,11 @@ export class FX {
       const te = Math.min(1, age / X[x + 4]);
       const r = X[x] + (X[x + 1] - X[x]) * easeOut(te);
       const t = age / life;
-      const fadeStart = X[x + 4] / life * 0.45;
-      const a = X[x + 5] * (t < fadeStart ? 1 : Math.pow(1 - (t - fadeStart) / (1 - fadeStart), 2.0));
+      // the sheet does not fade: it tears apart (t drives the holes in the shader); alpha = how intact it starts
       aP[i4] = S.P[i3]; aP[i4 + 1] = S.P[i3 + 1]; aP[i4 + 2] = S.P[i3 + 2]; aP[i4 + 3] = r;
-      aC[i4] = S.C[i3]; aC[i4 + 1] = S.C[i3 + 1]; aC[i4 + 2] = S.C[i3 + 2]; aC[i4 + 3] = a;
+      aC[i4] = S.C[i3]; aC[i4 + 1] = S.C[i3 + 1]; aC[i4 + 2] = S.C[i3 + 2]; aC[i4 + 3] = X[x + 5];
       aM[i4] = t; aM[i4 + 1] = X[x + 7]; aM[i4 + 2] = X[x + 6]; aM[i4 + 3] = X[x + 8] * (1 - te * 0.6);
+      aA[i4] = S.A[i4]; aA[i4 + 1] = S.A[i4 + 1]; aA[i4 + 2] = S.A[i4 + 2]; aA[i4 + 3] = S.A[i4 + 3];
     }
     S.geo.instanceCount = S.n;
     markUpdated(S.geo, S.n);
@@ -1152,6 +1235,9 @@ export class FX {
   _toCam(pos, out) { return out.copy(this._camPos).sub(pos).normalize(); }
 
   // =================================================================== contract API
+  // Impact splash: a small sheet of ink pops off the surface and tears (count ≥ 5 near the camera), droplets fly out in a
+  // crown — most low along the surface, a few higher — and a ripple runs through the wet ink. Ring decal / mist are
+  // opt-in (opts.ring / opts.mist === true).
   burst(pos, normal, color, opts = EMPTY) {
     const col = this._color(color, this._col);
     const count = Math.max(1, Math.round((opts.count ?? 12) * this.q));
@@ -1161,18 +1247,24 @@ export class FX {
     const px = pos.x + _v3.x * 0.04, py = pos.y + _v3.y * 0.04, pz = pos.z + _v3.z * 0.04;
     for (let i = 0; i < count; i++) {
       coneDir(_v3, Math.max(0.05, spread) * Math.PI * 0.5, _v1);
-      const sp = speed * (0.45 + rand() * 0.75);
-      const sz = size * (0.55 + rand() * 0.8);
-      this._spawnDrop(px, py, pz, _v1.x * sp, _v1.y * sp, _v1.z * sp, col, sz, 1.6 + rand() * 0.6, grav, 1, paint);
+      const sp = speed * (0.5 + rand() * 0.8);
+      const sz = size * (0.35 + rand() * 0.6);
+      this._spawnDrop(px, py, pz, _v1.x * sp, _v1.y * sp, _v1.z * sp, col, sz, 1.6 + rand() * 0.6, grav, 1.3, paint);
       if (rand() < 0.45) { // satellite
         const s2 = sp * (0.7 + rand() * 0.5);
-        this._spawnDrop(px, py, pz, _v1.x * s2 + (rand() - 0.5) * 0.8, _v1.y * s2 + (rand() - 0.5) * 0.8, _v1.z * s2 + (rand() - 0.5) * 0.8, col, sz * 0.42, 1.2, grav, 1, 0);
+        this._spawnDrop(px, py, pz, _v1.x * s2 + (rand() - 0.5) * 0.8, _v1.y * s2 + (rand() - 0.5) * 0.8, _v1.z * s2 + (rand() - 0.5) * 0.8, col, sz * 0.4, 1.2, grav, 1.3, 0);
       }
     }
-    if (opts.ring !== false) this._ringRaw(pos, _v3, col, 0.22 + size * 3.2, 0.26, R_WAVE, 0.9, 1.1);
-    if (opts.mist !== false && count >= 6) {
+    const splash = size * (1.6 + 0.5 * Math.sqrt(count));
+    if (count >= 4 && opts.sheet !== false && this._near(pos, 24)) {
+      _v2.copy(pos).addScaledVector(_v3, splash * 0.12);
+      this._shell(_v2, col, splash * 0.35, splash * 1.1, 0.07, 0.17 + splash * 0.12, 0.95, 0, 0, 0.2, _v3, 1);
+    }
+    this._ripple(pos, 0.0035 + size * 0.03, 0.1, 1.0, 0.5, _v3, null);
+    if (opts.ring === true) this._ringRaw(pos, _v3, col, 0.22 + size * 3.2, 0.26, R_WAVE, 0.9, 1.1);
+    if (opts.mist === true && count >= 6) {
       this._colB.copy(col).lerp(_white, 0.3);
-      this._sprite(this.puffs, px, py, pz, _v3.x * 1.2, _v3.y * 1.2, _v3.z * 1.2, this._colB, size * 2, size * 5, 0.35, 0.35, 5);
+      this._sprite(this.puffs, px, py, pz, _v3.x * 1.2, _v3.y * 1.2, _v3.z * 1.2, this._colB, size * 2, size * 5, 0.35, 0.3, 5);
     }
   }
 
@@ -1181,137 +1273,118 @@ export class FX {
     this._spawnDrop(pos.x, pos.y, pos.z, vel.x, vel.y, vel.z, col, opts.size ?? 0.1, opts.life ?? 1.2, opts.gravity ?? 1, opts.stretch ?? 1, (opts.paint ? F_PAINT : 0) | (opts.ring ? F_RING : 0) | (opts.quiet ? F_QUIET : 0) | (opts.noCollide ? F_NOCOL : 0));
   }
 
+  // A ring decal on a surface. Snapped onto the surface behind `pos` along the normal; skipped when there is none (a
+  // splash ring handed a point in mid-air — e.g. a body hit — would float).
   ring(pos, normal, color, opts = EMPTY) {
     const col = this._color(color, this._col);
-    this._ringRaw(pos, normal || UP, col, opts.radius ?? 1.5, opts.life ?? 0.35, opts.style ?? R_WAVE, opts.alpha ?? 0.95, opts.thickness ?? 1);
+    const n = normal || UP;
+    let p = pos;
+    if (this.collider && opts.snap !== false) {
+      _from.copy(pos).addScaledVector(n, 0.25); _to.copy(pos).addScaledVector(n, -1.4);
+      const h = this.collider(_from, _to);
+      if (!h) return;
+      p = _cbP.copy(h.point).addScaledVector(n, 0.02);
+    }
+    this._ringRaw(p, n, col, opts.radius ?? 1.5, opts.life ?? 0.35, opts.style ?? R_WAVE, opts.alpha ?? 0.95, opts.thickness ?? 1);
   }
 
+  // A bomb / blast / slam: a brief hot flash, then the ink itself — a glossy sheet that balloons out and tears into
+  // ribbons, ligaments flung off it, heavy gloops that paint satellite splats, fine spray, a fast ink wave over the
+  // ground and a ripple through the wet ink. Volumetric parts (flash, sheet, mist) are capped so a big blast (e.g.
+  // Tidal Slam) never swallows the camera; the ground wave + droplets still show the full radius.
   explosion(pos, color, radius = 3) {
     const col = this._color(color, this._col);
     const q = this.q, R = radius;
-    // volumetric parts (halo, shell, mist) are capped so a big blast (e.g. Tidal Slam) never swallows the camera;
-    // the ground rings + droplets still show the full radius
     const Rv = Math.min(R, 2.4);
     const paint = this.paintEffects ? F_PAINT : 0;
-    // flash: white-hot core (HDR → blooms) + team-coloured halo
-    this._colB.copy(col).multiplyScalar(4.5);
-    this._sprite(this.glows, pos.x, pos.y, pos.z, 0, 0, 0, this._colB, Rv * 0.7, Rv * 1.25, 0.2, 1, 2.2, 0, G_SOFT + 7.0, 0);
-    this._colB.copy(col).multiplyScalar(1.3);
-    this._sprite(this.glows, pos.x, pos.y, pos.z, 0, 0, 0, this._colB, Rv * 1.3, Rv * 2.1, 0.22, 0.7, 2.2, 0, G_SOFT, 0);
-    // bright halo ring flash in the air
-    this._colB.copy(col).lerp(_white, 0.35).multiplyScalar(2.2);
-    this._sprite(this.glows, pos.x, pos.y, pos.z, 0, 0, 0, this._colB, Rv * 0.9, Rv * 2.4, 0.2, 0.9, 0, 0, G_HALO + 2, 0, 0);
-    // thin translucent ink shell that pops out and fades fast
-    this._shell(pos, col, Rv * 0.3, Rv * 1.0, 0.1, 0.22, 0.55, 0, 0, 0.08);
-    // camera-facing air shockwave (reads for mid-air bursts where there is no ground ring)
-    this._toCam(pos, _v4);
-    this._ringRaw(pos, _v4, col, R * 1.15, 0.24, R_THIN, 0.95, 1.3);
-    // ground rings
-    if (this._probeDown(pos, R + 1.5, _v2, _v3)) {
-      this._ringRaw(_v2, _v3, col, R * 1.22, 0.5, R_WAVE, 0.95, 1.25);
-      this._ringRaw(_v2, _v3, col, R * 0.75, 0.3, R_DISC, 0.8, 1);
-      this._after(0.07, OP_RING, _v2, _v3, col, R * 1.6, 0.55, R_RIPPLE);
-    }
-    // droplets
-    const n = Math.round(46 * q);
     const spd = Math.sqrt(R / 3);
-    for (let i = 0; i < n; i++) {
-      randSphere(_v1); _v1.y = Math.abs(_v1.y) * 0.9 + 0.15; _v1.normalize();
-      const sp = (5 + rand() * 7.5) * spd;
-      const sz = rand() < 0.15 ? 0.11 + rand() * 0.05 : 0.04 + rand() * 0.07;
-      const o = R * 0.25;
-      this._spawnDrop(pos.x + _v1.x * o, pos.y + _v1.y * o, pos.z + _v1.z * o, _v1.x * sp, _v1.y * sp, _v1.z * sp, col, sz, 1.8, 1, 1, sz > 0.09 ? paint : 0);
+    this._colB.copy(col).multiplyScalar(4.5);
+    this._sprite(this.glows, pos.x, pos.y, pos.z, 0, 0, 0, this._colB, Rv * 0.4, Rv * 0.85, 0.12, 1, 2.2, 0, G_SOFT + 6.0, 0);
+    this._colB.copy(col).multiplyScalar(1.15);
+    this._sprite(this.glows, pos.x, pos.y, pos.z, 0, 0, 0, this._colB, Rv * 0.9, Rv * 1.6, 0.17, 0.5, 2.2, 0, G_SOFT, 0);
+    this._shell(pos, col, Rv * 0.2, Rv * 0.78, 0.09, 0.34, 1, 0, 0, 0.2);
+    this._burstDrops(pos, col, Rv, spd, paint, 26, 6, 18);
+    if (this._probeDown(pos, R + 1.5, _v2, _v3)) {
+      this._ripple(_v2, 0.011 + 0.0028 * R, 0.24 + 0.03 * R, 2.1 + 0.4 * R, 1.05, _v3, col);
     }
-    // heavy gloops lobbed in slow arcs: they paint little satellite splats around the blast
-    const nb = Math.round(7 * q);
-    for (let i = 0; i < nb; i++) {
-      const a = rand() * TAU, sp = (2.5 + rand() * 2.5) * spd;
-      this._spawnDrop(pos.x, pos.y + 0.2, pos.z, Math.cos(a) * sp, 3.5 + rand() * 3, Math.sin(a) * sp, col, 0.12 + rand() * 0.06, 2.2, 1, 1, paint);
-    }
-    // lingering mist
-    this._colB.copy(col).lerp(_white, 0.28);
-    const m = Math.round(10 * q);
+    this._colB.copy(col).lerp(_white, 0.42);
+    const m = Math.round(4 * q);
     for (let i = 0; i < m; i++) {
-      randSphere(_v1); _v1.y = Math.abs(_v1.y) * 0.6;
-      const d = R * (0.2 + rand() * 0.45);
-      this._sprite(this.puffs, pos.x + _v1.x * d, pos.y + _v1.y * d * 0.6, pos.z + _v1.z * d, _v1.x * 2.2, 0.6 + rand() * 0.8, _v1.z * 2.2, this._colB, Rv * (0.3 + rand() * 0.2), Rv * (0.62 + rand() * 0.3), 0.7 + rand() * 0.4, 0.34, 2.8, 0.2);
+      randSphere(_v1); _v1.y = Math.abs(_v1.y) * 0.5;
+      const d = R * (0.2 + rand() * 0.4);
+      this._sprite(this.puffs, pos.x + _v1.x * d, pos.y + _v1.y * d * 0.6, pos.z + _v1.z * d, _v1.x * 1.8, 0.5 + rand() * 0.6, _v1.z * 1.8, this._colB, Rv * (0.25 + rand() * 0.15), Rv * (0.55 + rand() * 0.25), 0.55 + rand() * 0.3, 0.12, 2.8, 0.2);
     }
-    // sparks + star glints
-    this._colB.copy(col).lerp(_white, 0.45).multiplyScalar(5);
-    for (let i = 0; i < 8; i++) {
-      randSphere(_v1); _v1.y = Math.abs(_v1.y);
-      const sp = 9 + rand() * 6;
-      this._sprite(this.glows, pos.x, pos.y, pos.z, _v1.x * sp, _v1.y * sp, _v1.z * sp, this._colB, 0.28, 0.08, 0.22, 1, 5, 0, G_SOFT + 1, 0);
+  }
+  // droplets of a burst: nl ligaments (fast, streaked, some paint), ng heavy gloops (slow arcs, all paint), nf fine spray
+  _burstDrops(pos, col, Rv, spd, paint, nl, ng, nf) {
+    const q = this.q;
+    let n = Math.round(nl * q);
+    for (let i = 0; i < n; i++) {
+      randSphere(_v1); _v1.y = Math.abs(_v1.y) * 0.85 + 0.12; _v1.normalize();
+      const sp = (6 + rand() * 7) * spd;
+      const o = Rv * 0.3;
+      this._spawnDrop(pos.x + _v1.x * o, pos.y + _v1.y * o, pos.z + _v1.z * o, _v1.x * sp, _v1.y * sp, _v1.z * sp, col, 0.03 + rand() * 0.03, 1.6, 1, 1.5, rand() < 0.3 ? paint : 0);
     }
-    this._colB.copy(col).lerp(_white, 0.5).multiplyScalar(2.2);
-    for (let i = 0; i < 4; i++) {
-      randSphere(_v1); _v1.y = Math.abs(_v1.y) * 0.8 + 0.2;
-      const d = Rv * (0.4 + rand() * 0.4);
-      this._sprite(this.glows, pos.x + _v1.x * d, pos.y + _v1.y * d, pos.z + _v1.z * d, 0, 0.6, 0, this._colB, 0.5, 0.25, 0.3, 1, 1, 0, G_STAR + 2, 0.02, 2);
+    n = Math.round(ng * q);
+    for (let i = 0; i < n; i++) {
+      const a = rand() * TAU, sp = (2.2 + rand() * 2.6) * spd;
+      this._spawnDrop(pos.x, pos.y + 0.2, pos.z, Math.cos(a) * sp, 3.2 + rand() * 3, Math.sin(a) * sp, col, 0.07 + rand() * 0.035, 2.2, 1, 1, paint);
+    }
+    n = Math.round(nf * q);
+    for (let i = 0; i < n; i++) {
+      randSphere(_v1); _v1.y = Math.abs(_v1.y) * 0.7 + 0.2; _v1.normalize();
+      const sp = (4 + rand() * 6) * spd;
+      this._spawnDrop(pos.x, pos.y, pos.z, _v1.x * sp, _v1.y * sp, _v1.z * sp, col, 0.011 + rand() * 0.016, 1.0, 1, 1.3, 0);
     }
   }
 
+  // A character bursting into ink: flash, a sheet of ink tearing open around the body, droplets, ground wave.
   splatted(pos, color) {
     const col = this._color(color, this._col);
     const q = this.q;
     const paint = this.paintEffects ? F_PAINT : 0;
-    this._colB.copy(col).multiplyScalar(4);
-    this._sprite(this.glows, pos.x, pos.y, pos.z, 0, 0, 0, this._colB, 1.1, 2.0, 0.18, 1, 2.2, 0, G_SOFT + 5.5, 0);
-    this._colB.copy(col).lerp(_white, 0.3).multiplyScalar(2);
-    this._sprite(this.glows, pos.x, pos.y, pos.z, 0, 0, 0, this._colB, 0.8, 2.6, 0.22, 0.9, 0, 0, G_HALO + 2, 0, 0);
-    this._shell(pos, col, 0.4, 1.35, 0.1, 0.24, 0.6, 0, 0, 0.11);
-    this._colB.copy(col).lerp(_white, 0.25);
-    for (let i = 0; i < Math.round(7 * q); i++) {
+    this._colB.copy(col).multiplyScalar(3.6);
+    this._sprite(this.glows, pos.x, pos.y, pos.z, 0, 0, 0, this._colB, 0.8, 1.6, 0.14, 1, 2.2, 0, G_SOFT + 5.0, 0);
+    this._shell(pos, col, 0.28, 0.9, 0.09, 0.34, 1, 0, 0, 0.2);
+    this._burstDrops(pos, col, 1.2, 1, paint, 30, 7, 22);
+    this._colB.copy(col).lerp(_white, 0.45);
+    for (let i = 0; i < Math.round(3 * q); i++) {
       randSphere(_v1);
-      this._sprite(this.puffs, pos.x + _v1.x * 0.35, pos.y + _v1.y * 0.3, pos.z + _v1.z * 0.35, _v1.x * 1.6, 0.9 + rand() * 0.6, _v1.z * 1.6, this._colB, 0.45, 1.1 + rand() * 0.4, 0.9 + rand() * 0.5, 0.5, 2, 0.5);
+      this._sprite(this.puffs, pos.x + _v1.x * 0.35, pos.y + _v1.y * 0.3, pos.z + _v1.z * 0.35, _v1.x * 1.4, 0.8 + rand() * 0.5, _v1.z * 1.4, this._colB, 0.4, 1.0 + rand() * 0.3, 0.6 + rand() * 0.3, 0.14, 2, 0.5);
     }
-    // droplets
-    const n = Math.round(66 * q);
-    for (let i = 0; i < n; i++) {
-      randSphere(_v1); _v1.y = _v1.y * 0.8 + 0.35; _v1.normalize();
-      const sp = 3.5 + rand() * 7;
-      const sz = rand() < 0.2 ? 0.11 + rand() * 0.05 : 0.045 + rand() * 0.07;
-      this._spawnDrop(pos.x + _v1.x * 0.3, pos.y + _v1.y * 0.3, pos.z + _v1.z * 0.3, _v1.x * sp, _v1.y * sp, _v1.z * sp, col, sz, 1.8, 1, 1, sz > 0.1 ? paint : 0);
-    }
-    if (this._probeDown(pos, 3, _v2, _v3)) {
-      this._ringRaw(_v2, _v3, col, 2.1, 0.45, R_WAVE, 0.95, 1.2);
-      this._ringRaw(_v2, _v3, col, 1.0, 0.35, R_DISC, 0.85, 1);
-      this._ringRaw(_v2, _v3, col, 0.9, 0.6, R_BLOT, 0.9, 1);
-      this._after(0.08, OP_RING, _v2, _v3, col, 2.9, 0.55, R_RIPPLE);
-    }
+    if (this._probeDown(pos, 3, _v2, _v3)) this._ripple(_v2, 0.014, 0.26, 2.4, 1.1, _v3, col);
   }
 
-  // Swimming wake: called ~every 0.05 s by the actor while submerged (dir = unit horizontal heading).
+  // Swimming wake: called ~every 0.05 s by the actor while submerged (dir = unit horizontal heading). The ripples and
+  // the mound live in the ink surface itself (swimWake.js → level shader); this adds what leaves the surface — a thin
+  // rooster tail of glossy drops kicked up off the tail (heavier the faster you swim) and bubbles popping in the trail.
   wake(pos, dir, color, speed = 8, normal = UP) {
     if (!this._near(pos, 45)) return;
     const col = this._color(color, this._col);
     const k = Math.min(1, speed / 11.8);
-    this._colB.copy(col).lerp(_white, 0.18);
-    // Kelvin-style V: two ripples shed behind the head, drifting outward so the trail opens into a V
     const rx = dir.z, rz = -dir.x;   // right vector (dir × up)
-    this._wakeFlip = !this._wakeFlip;
-    if (this._wakeFlip || this.q >= 1) for (let s = -1; s <= 1; s += 2) {
-      _v2.set(pos.x - dir.x * 0.32 + rx * s * 0.16, pos.y + 0.02, pos.z - dir.z * 0.32 + rz * s * 0.16);
-      const out = 0.55 + 0.6 * k;
-      this._ringRaw(_v2, normal, this._colB, 0.2 + 0.1 * k, 0.5 + rand() * 0.15, R_RIPPLE, 0.5, 1, rx * s * out - dir.x * 0.25, 0, rz * s * out - dir.z * 0.25);
-    }
-    if (rand() < 0.35) {
-      _v2.copy(pos).addScaledVector(normal, 0.02);
-      this._ringRaw(_v2, normal, this._colB, 0.45 + 0.35 * k + rand() * 0.2, 0.5 + rand() * 0.2, R_RIPPLE, 0.45, 1);
-    }
-    // spray kicked up behind
-    let n = Math.floor((0.5 + 1.6 * k) * this.q + rand());
+    let n = Math.floor((0.5 + 3.0 * k * k) * this.q + rand());
     while (n-- > 0) {
-      const back = speed * (0.1 + rand() * 0.14);
-      const up = 1.5 + rand() * 1.6;
-      const side = (rand() - 0.5) * 1.8;
+      const back = speed * (0.06 + rand() * 0.1);
+      const up = 1.5 + rand() * 1.3 + 1.5 * k;
+      const side = (rand() - 0.5) * (0.7 + 0.9 * k);
       _v1.set(-dir.x * back + normal.x * up + rx * side, -dir.y * back + normal.y * up, -dir.z * back + normal.z * up + rz * side);
-      this._spawnDrop(pos.x - dir.x * 0.2, pos.y + 0.05, pos.z - dir.z * 0.2, _v1.x, _v1.y, _v1.z, col, 0.028 + rand() * 0.032, 0.7, 1, 1, 0);
+      this._spawnDrop(pos.x - dir.x * 0.34, pos.y + 0.05, pos.z - dir.z * 0.34, _v1.x, _v1.y, _v1.z, col, 0.016 + rand() * 0.018 + 0.012 * k, 0.6, 1, 1.7, 0);
     }
-    // bubbles popping on the surface
-    if (rand() < 0.3 * this.q + 0.1) {
+    if (rand() < 0.28 * this.q + 0.08) {
       this._colB.copy(col).lerp(_white, 0.5).multiplyScalar(1.1);
-      this._sprite(this.glows, pos.x - dir.x * (0.3 + rand() * 0.5) + (rand() - 0.5) * 0.3, pos.y + 0.06, pos.z - dir.z * (0.3 + rand() * 0.5) + (rand() - 0.5) * 0.3, 0, 0.25, 0, this._colB, 0.05 + rand() * 0.04, 0.09, 0.3 + rand() * 0.15, 0.7, 1, 0, G_BUBBLE + 1, 0.03, 0);
+      this._sprite(this.glows, pos.x - dir.x * (0.35 + rand() * 0.6) + (rand() - 0.5) * 0.3, pos.y + 0.05, pos.z - dir.z * (0.35 + rand() * 0.6) + (rand() - 0.5) * 0.3, 0, 0.22, 0, this._colB, 0.045 + rand() * 0.04, 0.09, 0.3 + rand() * 0.15, 0.7, 1, 0, G_BUBBLE + 1, 0.03, 0);
+    }
+  }
+
+  // Carving a hard turn while submerged: a fan of ink thrown off the outside of the turn. out = unit outward vector.
+  swimCarve(pos, dir, out, color, k = 1) {
+    if (!this._near(pos, 32)) return;
+    const col = this._color(color, this._col);
+    let n = Math.max(1, Math.round((1 + 2.5 * k) * this.q));
+    while (n-- > 0) {
+      const o = 1.6 + rand() * 1.8 * k, up = 1.8 + rand() * 1.6 * k, f = (rand() - 0.3) * 1.2;
+      this._spawnDrop(pos.x + out.x * 0.18, pos.y + 0.05, pos.z + out.z * 0.18, out.x * o + dir.x * f, up, out.z * o + dir.z * f, col, 0.018 + rand() * 0.022, 0.65, 1, 1.6, 0);
     }
   }
 
@@ -1369,9 +1442,8 @@ export class FX {
     this._colB.copy(col).multiplyScalar(4);
     this._sprite(this.glows, pos.x, pos.y + 0.8, pos.z, 0, 0, 0, this._colB, 2.2, 3.8, 0.3, 1, 2.2, 0, G_SOFT + 5, 0);
     this._ringRaw(pos, UP, col, 2.8, 0.6, R_WAVE, 0.95, 1.3);
-    this._ringRaw(pos, UP, col, 1.6, 0.4, R_DISC, 0.8, 1);
     this._after(0.12, OP_RING, pos, UP, col, 3.6, 0.6, R_THIN);
-    this._after(0.24, OP_RING, pos, UP, col, 4.2, 0.7, R_RIPPLE);
+    this._ripple(pos, 0.012, 0.24, 2.6, 1.1, UP, col);
     const n = Math.round(40 * q);
     for (let k = 0; k < n; k++) {
       const a = rand() * TAU, r = rand() * 0.7;
@@ -1413,6 +1485,7 @@ export class FX {
 
   // =================================================================== VFX-stream recipes
   // Foot plant. surface: 0 dry, 1 own ink, 2 enemy ink (color = the ink under the foot). dir: unit horizontal heading.
+  // In ink the foot squelches: a few droplets kicked back and a ripple through the ink surface (no decals).
   footstep(pos, color, surface = 0, dir = null, speed = 5) {
     const col = this._color(color, this._col);
     const dx = dir ? dir.x : 0, dz = dir ? dir.z : 0;
@@ -1426,27 +1499,25 @@ export class FX {
     }
     const k = clamp(speed / 7, 0.3, 1.2);
     _v3.set(-dx * 0.55, 1, -dz * 0.55).normalize();
+    _v2.set(pos.x, pos.y + 0.01, pos.z);
     if (surface === 1) {
       const n = Math.max(1, Math.round((2 + 2.5 * k) * this.q));
       for (let i = 0; i < n; i++) {
         coneDir(_v3, 0.75, _v1);
         const sp = 1.4 + rand() * 1.5 * k;
-        this._spawnDrop(pos.x, pos.y + 0.03, pos.z, _v1.x * sp, _v1.y * sp, _v1.z * sp, col, 0.026 + rand() * 0.026, 0.6, 1, 1, 0);
+        this._spawnDrop(pos.x, pos.y + 0.03, pos.z, _v1.x * sp, _v1.y * sp, _v1.z * sp, col, 0.018 + rand() * 0.022, 0.6, 1, 1.2, 0);
       }
-      _v2.set(pos.x, pos.y + 0.01, pos.z);
-      this._ringRaw(_v2, UP, col, 0.15 + 0.05 * k, 0.2, R_BLOT, 0.9, 1);
       this._colB.copy(col).lerp(_white, 0.2);
-      this._ringRaw(_v2, UP, this._colB, 0.32 + 0.1 * k, 0.4, R_RIPPLE, 0.45, 1);
+      this._ripple(_v2, 0.0035 + 0.002 * k, 0.1, 0.9, 0.55, UP, this._colB);
     } else {
-      // enemy ink: gloopy, sticky, sizzling
+      // enemy ink: gloopy, sticky, sizzling — slow heavy strands and a sluggish ripple
       const n = Math.max(1, Math.round(3 * this.q));
       for (let i = 0; i < n; i++) {
         coneDir(_v3, 0.6, _v1);
         const sp = 0.9 + rand() * 0.9;
-        this._spawnDrop(pos.x, pos.y + 0.03, pos.z, _v1.x * sp, _v1.y * sp, _v1.z * sp, col, 0.03 + rand() * 0.025, 0.6, 1.3, 0.8, 0);
+        this._spawnDrop(pos.x, pos.y + 0.03, pos.z, _v1.x * sp, _v1.y * sp, _v1.z * sp, col, 0.026 + rand() * 0.022, 0.6, 1.3, 0.8, 0);
       }
-      _v2.set(pos.x, pos.y + 0.01, pos.z);
-      this._ringRaw(_v2, UP, col, 0.2, 0.32, R_BLOT, 0.95, 1);
+      this._ripple(_v2, 0.003, 0.08, 0.55, 0.5, UP, col);
       this.enemyInkSizzle(pos, col);
     }
   }
@@ -1464,13 +1535,14 @@ export class FX {
       if (k > 0.5) this._ringRaw(_v2, UP, _sc, 1.3 + k, 0.3, R_THIN, 0.55, 1);
       return;
     }
-    this._crown(pos, UP, col, 8 + 16 * k, 2.4 + 2.2 * k, 0.05 + 0.02 * k);
-    this._ringRaw(_v2, UP, col, 0.7 + 1.1 * k, 0.35, R_WAVE, 0.9, 1);
-    this._ringRaw(_v2, UP, col, 0.35 + 0.3 * k, 0.25, R_DISC, 0.9, 1);
+    // landing in ink: a crown of droplets, a sheet of ink slapped up around the feet, a strong ripple
+    this._crown(pos, UP, col, 8 + 16 * k, 2.4 + 2.2 * k, 0.04 + 0.018 * k);
+    if (k > 0.25) {
+      _v4.set(pos.x, pos.y + 0.05, pos.z);
+      this._shell(_v4, col, 0.15, 0.4 + 0.35 * k, 0.07, 0.22, 0.95, 0, 0, 0.2, UP, 1);
+    }
     this._colB.copy(col).lerp(_white, 0.2);
-    this._ringRaw(_v2, UP, this._colB, 1.1 + 1.2 * k, 0.55, R_RIPPLE, 0.5, 1);
-    this._colB.copy(col).lerp(_white, 0.35);
-    for (let i = 0; i < 2; i++) this._sprite(this.puffs, pos.x + (rand() - 0.5) * 0.4, pos.y + 0.15, pos.z + (rand() - 0.5) * 0.4, (rand() - 0.5) * 1.2, 0.6, (rand() - 0.5) * 1.2, this._colB, 0.15, 0.45 + k * 0.3, 0.35, 0.3, 4);
+    this._ripple(_v2, 0.007 + 0.006 * k, 0.16, 1.6 + k, 0.8, UP, this._colB);
   }
 
   jumpOff(pos, color, surface = 0, swim = false) {
@@ -1481,13 +1553,10 @@ export class FX {
       for (let i = 0; i < n; i++) {
         coneDir(UP, 0.5, _v1);
         const sp = 3 + rand() * 2.5;
-        this._spawnDrop(pos.x + (rand() - 0.5) * 0.3, pos.y + 0.05, pos.z + (rand() - 0.5) * 0.3, _v1.x * sp, _v1.y * sp, _v1.z * sp, col, 0.03 + rand() * 0.03, 0.9, 1, 1, 0);
+        this._spawnDrop(pos.x + (rand() - 0.5) * 0.3, pos.y + 0.05, pos.z + (rand() - 0.5) * 0.3, _v1.x * sp, _v1.y * sp, _v1.z * sp, col, 0.02 + rand() * 0.025, 0.9, 1, 1.3, 0);
       }
       this._colB.copy(col).lerp(_white, 0.2);
-      this._ringRaw(_v2, UP, this._colB, 0.8, 0.45, R_RIPPLE, 0.5, 1);
-      this._ringRaw(_v2, UP, col, 0.3, 0.2, R_DISC, 0.9, 1);
-      this._colB.copy(col).lerp(_white, 0.35);
-      this._sprite(this.puffs, pos.x, pos.y + 0.2, pos.z, 0, 1.2, 0, this._colB, 0.15, 0.45, 0.3, 0.3, 4);
+      this._ripple(_v2, 0.006, 0.13, 1.3, 0.7, UP, this._colB);
     } else if (surface === 2) {
       this.footstep(pos, col, 2, null, 5);
     } else {
@@ -1515,15 +1584,14 @@ export class FX {
     }
   }
 
-  // squid slips into its own ink (from the air or from kid form)
+  // squid slips into its own ink (from the air or from kid form): a crown, a slapped-up sheet, two ripples
   dive(pos, color, speed = 4) {
     const col = this._color(color, this._col);
     _v2.set(pos.x, pos.y + 0.01, pos.z);
-    this._crown(_v2, UP, col, 10 + speed * 0.6, 2.2 + Math.min(2.5, speed * 0.18), 0.045);
-    this._ringRaw(_v2, UP, col, 0.4, 0.2, R_DISC, 0.9, 1);
+    this._crown(_v2, UP, col, 10 + speed * 0.6, 2.2 + Math.min(2.5, speed * 0.18), 0.036);
+    if (speed > 3) { _v4.set(pos.x, pos.y + 0.04, pos.z); this._shell(_v4, col, 0.12, 0.34 + Math.min(0.25, speed * 0.02), 0.06, 0.2, 0.95, 0, 0, 0.2, UP, 1); }
     this._colB.copy(col).lerp(_white, 0.2);
-    this._ringRaw(_v2, UP, this._colB, 0.9, 0.5, R_RIPPLE, 0.55, 1);
-    this._after(0.09, OP_RING, _v2, UP, this._colB, 1.5, 0.75, R_RIPPLE);
+    this._ripple(_v2, 0.008 + Math.min(0.006, speed * 0.0006), 0.15, 1.5, 0.85, UP, this._colB);
     this.bubbles(pos, col, 3);
   }
   emerge(pos, color, speed = 4) {
@@ -1533,11 +1601,10 @@ export class FX {
     for (let i = 0; i < n; i++) {
       coneDir(UP, 0.55, _v1);
       const sp = 2.5 + rand() * 2;
-      this._spawnDrop(pos.x + (rand() - 0.5) * 0.25, pos.y + 0.08, pos.z + (rand() - 0.5) * 0.25, _v1.x * sp, _v1.y * sp, _v1.z * sp, col, 0.028 + rand() * 0.03, 0.9, 1, 1, 0);
+      this._spawnDrop(pos.x + (rand() - 0.5) * 0.25, pos.y + 0.08, pos.z + (rand() - 0.5) * 0.25, _v1.x * sp, _v1.y * sp, _v1.z * sp, col, 0.022 + rand() * 0.026, 0.9, 1, 1.3, 0);
     }
     this._colB.copy(col).lerp(_white, 0.2);
-    this._ringRaw(_v2, UP, this._colB, 0.8, 0.45, R_RIPPLE, 0.5, 1);
-    this._ringRaw(_v2, UP, col, 0.3, 0.2, R_DISC, 0.9, 1);
+    this._ripple(_v2, 0.007, 0.14, 1.3, 0.75, UP, this._colB);
   }
   bubbles(pos, color, n = 3) {
     const col = this._color(color, this._col);
@@ -1549,15 +1616,14 @@ export class FX {
     }
   }
 
-  // squid wall-climb: a drip sliding down the wall + a ripple on the wall
+  // squid wall-climb: a drip sliding down the wall + a ripple through the ink on the wall
   climbDrip(pos, normal, color) {
     const col = this._color(color, this._col);
     this._spawnDrop(pos.x + normal.x * 0.06 + (rand() - 0.5) * 0.2, pos.y + (rand() - 0.5) * 0.2, pos.z + normal.z * 0.06 + (rand() - 0.5) * 0.2,
-      normal.x * 0.25 + (rand() - 0.5) * 0.2, -0.4 - rand() * 0.6, normal.z * 0.25 + (rand() - 0.5) * 0.2, col, 0.028 + rand() * 0.024, 1.4, 0.5, 1.3, 0);
+      normal.x * 0.25 + (rand() - 0.5) * 0.2, -0.4 - rand() * 0.6, normal.z * 0.25 + (rand() - 0.5) * 0.2, col, 0.024 + rand() * 0.022, 1.4, 0.5, 1.3, 0);
     _v2.copy(pos).addScaledVector(normal, 0.03);
     this._colB.copy(col).lerp(_white, 0.2);
-    this._ringRaw(_v2, normal, this._colB, 0.35 + rand() * 0.1, 0.45, R_RIPPLE, 0.45, 1);
-    if (rand() < 0.4) this._ringRaw(_v2, normal, col, 0.14, 0.2, R_BLOT, 0.8, 1);
+    if (rand() < 0.5) this._ripple(_v2, 0.004, 0.12, 0.9, 0.55, normal, this._colB);
   }
   // squid pops over the top of a wall: spray flung up and forward
   climbPop(pos, dir, color) {
@@ -1577,28 +1643,30 @@ export class FX {
     const col = this._color(color, this._col);
     this._spawnDrop(pos.x, pos.y, pos.z, (rand() - 0.5) * 0.5, -0.2 - rand() * 0.4, (rand() - 0.5) * 0.5, col, size * (0.7 + rand() * 0.6), 1.6, 1, 1.3, 0);
   }
-  // ink hitting a body: splash crown facing the shooter, rebound + pass-through spray, a quick flash. dir = shot direction.
+  // ink hitting a body: a small sheet of ink bursts off the body and tears, most of the spray carries on through with
+  // the shot's momentum and some splashes back toward the shooter; a quick flash so the hit registers at range.
+  // dir = shot direction.
   hitSplash(pos, dir, color, amount = 30, killed = false) {
     const col = this._color(color, this._col);
     const k = clamp(amount / 60, 0.3, 1.5);
     _v3.copy(dir); _v3.y *= 0.5; if (_v3.lengthSq() < 1e-6) _v3.set(0, 0, 1); _v3.normalize();
     _v4.copy(_v3).negate();
-    _v2.copy(pos).addScaledVector(_v4, 0.3);
-    this._ringRaw(_v2, _v4, col, 0.4 + 0.25 * k, 0.2, R_BLOT, 0.95, 1);
-    this._colB.copy(col).lerp(_white, 0.3);
-    this._ringRaw(_v2, _v4, this._colB, 0.6 + 0.3 * k, 0.18, R_THIN, 0.85, 1);
-    const n = Math.max(2, Math.round((5 + 7 * k) * this.q));
+    _v2.copy(pos).addScaledVector(_v4, 0.28);
+    this._shell(_v2, col, 0.08, 0.26 + 0.12 * k, 0.06, 0.2, 0.95, 0, 0, 0.18);
+    const n = Math.max(3, Math.round((6 + 8 * k) * this.q));
     for (let i = 0; i < n; i++) {
-      const back = i & 1;
-      coneDir(back ? _v4 : _v3, back ? 1.1 : 0.6, _v1);
-      _v1.y += 0.35;
-      const sp = back ? 2 + rand() * 2 : 3 + rand() * 3;
-      this._spawnDrop(_v2.x, _v2.y, _v2.z, _v1.x * sp, _v1.y * sp, _v1.z * sp, col, 0.03 + rand() * 0.035 * k, 1.1, 1, 1, 0);
+      const back = i % 3 === 0;
+      coneDir(back ? _v4 : _v3, back ? 1.0 : 0.65, _v1);
+      _v1.y += 0.3;
+      const sp = back ? 1.8 + rand() * 1.8 : 3 + rand() * 3.2;
+      this._spawnDrop(_v2.x, _v2.y, _v2.z, _v1.x * sp, _v1.y * sp, _v1.z * sp, col, 0.02 + rand() * 0.03 * k, 1.1, 1, 1.4, 0);
     }
-    this._colB.copy(col).multiplyScalar(3);
-    this._sprite(this.glows, _v2.x, _v2.y, _v2.z, 0, 0, 0, this._colB, 0.3, 0.55 + 0.2 * k, 0.08, 1, 0, 0, G_SOFT + 2, 0);
-    this._colB.copy(col).lerp(_white, 0.35);
-    this._sprite(this.puffs, _v2.x, _v2.y, _v2.z, _v3.x * 1.5, 0.3, _v3.z * 1.5, this._colB, 0.2, 0.55 + 0.2 * k, 0.3, killed ? 0.2 : 0.35, 4);
+    this._colB.copy(col).multiplyScalar(2.6);
+    this._sprite(this.glows, _v2.x, _v2.y, _v2.z, 0, 0, 0, this._colB, 0.25, 0.45 + 0.15 * k, 0.07, 1, 0, 0, G_SOFT + 2, 0);
+    if (!killed) {
+      this._colB.copy(col).lerp(_white, 0.35);
+      this._sprite(this.puffs, _v2.x, _v2.y, _v2.z, _v3.x * 1.5, 0.3, _v3.z * 1.5, this._colB, 0.18, 0.45 + 0.15 * k, 0.28, 0.22, 4);
+    }
   }
   // one mist puff (shot trails, spray)
   mist(pos, vel, color, size = 0.2, alpha = 0.25) {
@@ -1743,9 +1811,139 @@ export class FX {
   }
   bounceSplash(pos, normal, color) {
     const col = this._color(color, this._col);
-    this._crown(pos, normal, col, 6, 2, 0.035);
+    this._crown(pos, normal, col, 6, 2, 0.03);
     _v2.copy(pos).addScaledVector(normal, 0.01);
-    this._ringRaw(_v2, normal, col, 0.35, 0.25, R_BLOT, 0.9, 1);
+    this._ripple(_v2, 0.006, 0.12, 1.2, 0.6, normal, col);
+  }
+
+  // ---- splatling
+  // Spin-up / stream (call every frame; k = spin 0..1): a hot glow in the barrel mouth that grows and whitens with the
+  // spin, and ink slung off the spinning barrel cluster — droplets leave tangentially (the barrels turn about the aim
+  // axis), more and faster as it winds up; while streaming they peel off steadily and carry forward with the stream.
+  spinUp(pos, dir, color, k = 0.5, streaming = false) {
+    const col = this._color(color, this._col);
+    const kk = clamp(k, 0, 1);
+    _v3.copy(dir); if (_v3.lengthSq() < 1e-6) _v3.set(0, 0, 1); _v3.normalize();
+    const g = (0.045 + 0.1 * kk) * (1 + 0.06 * kk * kk * Math.sin(this._time * 12));
+    this._colB.copy(col).lerp(_white, 0.2 + 0.4 * kk).multiplyScalar(1.1 + 3.4 * kk * kk);
+    this._sprite(this.glows, pos.x + _v3.x * 0.03, pos.y + _v3.y * 0.03, pos.z + _v3.z * 0.03, 0, 0, 0, this._colB, g, g, Math.max(0.03, this._dt * 1.6), 1, 0, 0, G_SOFT + 1 + 3 * kk, 0, 0);
+    let n = Math.floor((streaming ? 30 : 3 + 38 * kk * kk) * this._dt * Math.max(0.5, this.q) + rand());
+    if (n <= 0) return;
+    basis(_v3, _v1, _v2);
+    while (n-- > 0) {
+      const a = rand() * TAU, c = Math.cos(a), sn = Math.sin(a);
+      const rx = _v1.x * c + _v2.x * sn, ry = _v1.y * c + _v2.y * sn, rz = _v1.z * c + _v2.z * sn;      // radial
+      const tx = -_v1.x * sn + _v2.x * c, ty = -_v1.y * sn + _v2.y * c, tz = -_v1.z * sn + _v2.z * c;   // spin direction
+      const back = 0.06 + rand() * 0.16;
+      const sp = (1.2 + 3.6 * kk) * (0.7 + rand() * 0.6), fw = streaming ? 2 + rand() * 2 : 0.2 + rand() * 0.5;
+      this._spawnDrop(pos.x - _v3.x * back + rx * 0.065, pos.y - _v3.y * back + ry * 0.065, pos.z - _v3.z * back + rz * 0.065,
+        tx * sp + rx * sp * 0.35 + _v3.x * fw, ty * sp + ry * sp * 0.35 + _v3.y * fw + 0.5, tz * sp + rz * sp * 0.35 + _v3.z * fw,
+        col, 0.011 + rand() * 0.013 + 0.008 * kk, 0.75, 1, 1.5, rand() < 0.55 ? F_QUIET : 0);
+    }
+  }
+  // Spun up to full: one crisp cue — a hot flash, a thin ring snapping out around the barrel axis and a crown of ink
+  // flicked off the barrels all at once.
+  spinFull(pos, dir, color) {
+    const col = this._color(color, this._col);
+    _v3.copy(dir); if (_v3.lengthSq() < 1e-6) _v3.set(0, 0, 1); _v3.normalize();
+    this._colB.copy(col).lerp(_white, 0.55).multiplyScalar(3.2);
+    this._sprite(this.glows, pos.x, pos.y, pos.z, 0, 0, 0, this._colB, 0.34, 0.12, 0.16, 1, 0, 0, G_SOFT + 3, 0);
+    this._colB.copy(col).lerp(_white, 0.35);
+    this._ringRaw(_v4.copy(pos).addScaledVector(_v3, -0.08), _v3, this._colB, 0.46, 0.2, R_THIN, 0.85, 0.8);
+    basis(_v3, _v1, _v2);
+    const n = Math.max(6, Math.round(16 * this.q));
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * TAU + rand() * 0.3, c = Math.cos(a), sn = Math.sin(a);
+      const rx = _v1.x * c + _v2.x * sn, ry = _v1.y * c + _v2.y * sn, rz = _v1.z * c + _v2.z * sn;
+      const tx = -_v1.x * sn + _v2.x * c, ty = -_v1.y * sn + _v2.y * c, tz = -_v1.z * sn + _v2.z * c;
+      const sp = 3.2 + rand() * 1.6;
+      this._spawnDrop(pos.x - _v3.x * 0.1 + rx * 0.07, pos.y - _v3.y * 0.1 + ry * 0.07, pos.z - _v3.z * 0.1 + rz * 0.07,
+        (rx * 0.8 + tx * 0.6) * sp, (ry * 0.8 + ty * 0.6) * sp + 0.8, (rz * 0.8 + tz * 0.6) * sp, col, 0.016 + rand() * 0.014, 0.8, 1, 1.5, 0);
+    }
+  }
+
+  // ---- dualies dodge roll
+  // Push-off (once, at the start): ink slapped back against the roll and out to the sides, a low crown sheet at the
+  // feet, a ripple through the ink. The runner paints the trail stripe under the roll; this is only what flies.
+  dodgeSplash(pos, dir, color) {
+    const col = this._color(color, this._col);
+    _v2.set(pos.x, pos.y + 0.03, pos.z);
+    _v3.set(-dir.x * 0.8, 0.9, -dir.z * 0.8).normalize();
+    const n = Math.max(4, Math.round(14 * this.q));
+    for (let i = 0; i < n; i++) {
+      coneDir(_v3, 1.05, _v1);
+      const sp = 2.4 + rand() * 2.8;
+      this._spawnDrop(_v2.x, _v2.y + 0.05, _v2.z, _v1.x * sp, _v1.y * sp, _v1.z * sp, col, 0.02 + rand() * 0.026, 1.0, 1, 1.4, rand() < 0.25 ? F_PAINT : 0);
+    }
+    this._shell(_v2, col, 0.12, 0.5, 0.06, 0.2, 0.95, 0, 0, 0.2, UP, 1);
+    this._ripple(_v2, 0.008, 0.15, 1.6, 0.8, UP, col);
+  }
+  // Mid-roll (every frame, k = roll progress 0..1): a low skid spray fanned off the leading edge along the roll and
+  // ink flung off the tumbling body — both fading as the roll slows.
+  dodgeSkid(pos, dir, color, k = 0) {
+    const col = this._color(color, this._col);
+    const f = 1 - clamp(k, 0, 1);
+    const rx = dir.z, rz = -dir.x;
+    let n = Math.floor((10 + 46 * f) * this._dt * Math.max(0.5, this.q) + rand());
+    while (n-- > 0) {
+      const side = (rand() - 0.5) * 2, sp = (3 + rand() * 3) * (0.5 + 0.5 * f);
+      this._spawnDrop(pos.x + dir.x * 0.3 + rx * side * 0.25, pos.y + 0.05, pos.z + dir.z * 0.3 + rz * side * 0.25,
+        dir.x * sp + rx * side * 1.6, 0.5 + rand() * 1.1, dir.z * sp + rz * side * 1.6, col, 0.011 + rand() * 0.014, 0.55, 1, 1.7, F_QUIET);
+    }
+    n = Math.floor(22 * f * this._dt * Math.max(0.5, this.q) + rand());
+    while (n-- > 0) {
+      randSphere(_v1); _v1.y = Math.abs(_v1.y) * 0.8 + 0.3;
+      const sp = 1.5 + rand() * 2;
+      this._spawnDrop(pos.x + _v1.x * 0.25, pos.y + 0.35 + _v1.y * 0.2, pos.z + _v1.z * 0.25, _v1.x * sp + dir.x * 2.2, _v1.y * sp, _v1.z * sp + dir.z * 2.2, col, 0.015 + rand() * 0.018, 0.9, 1, 1.3, 0);
+    }
+  }
+  // Roll ends, the kid plants into the turret stance: a squelch — ink carried on by the momentum and a ripple.
+  dodgePlant(pos, dir, color) {
+    const col = this._color(color, this._col);
+    _v3.set(dir.x * 0.7, 1, dir.z * 0.7).normalize();
+    const n = Math.max(3, Math.round(9 * this.q));
+    for (let i = 0; i < n; i++) {
+      coneDir(_v3, 0.75, _v1);
+      const sp = 1.8 + rand() * 2;
+      this._spawnDrop(pos.x, pos.y + 0.04, pos.z, _v1.x * sp, _v1.y * sp, _v1.z * sp, col, 0.016 + rand() * 0.02, 0.8, 1, 1.3, 0);
+    }
+    _v2.set(pos.x, pos.y + 0.01, pos.z);
+    this._ripple(_v2, 0.0065, 0.13, 1.3, 0.7, UP, col);
+  }
+
+  // ---- slosher
+  // A wave glob in flight sheds glossy drops (no mist: it is a heavy pour, not a spray). Call every ~0.5 m.
+  sloshTrail(pos, vel, color, head = false) {
+    const col = this._color(color, this._col);
+    let n = head ? 2 : (rand() < 0.6 ? 1 : 0);
+    while (n-- > 0) {
+      this._spawnDrop(pos.x + (rand() - 0.5) * 0.08, pos.y - 0.04, pos.z + (rand() - 0.5) * 0.08,
+        vel.x * 0.25 + (rand() - 0.5) * 0.8, vel.y * 0.2 - 0.5, vel.z * 0.25 + (rand() - 0.5) * 0.8, col, (head ? 0.026 : 0.018) + rand() * 0.016, 1.1, 1, 1.5, 0);
+    }
+  }
+  // The head of a slosh wave slapping down: a wide crown sheet thrown up and forward, a surge of ink carried on by the
+  // wave's momentum along `dir`, heavy gloops that paint satellite splats, and a deep ripple. (Layered on the burst +
+  // ring weapons.js draws there — this is the weight.)
+  sloshImpact(pos, normal, dir, color) {
+    const col = this._color(color, this._col);
+    const n0 = normal || UP;
+    _v2.copy(pos).addScaledVector(n0, 0.03);
+    this._shell(_v2, col, 0.3, 1.05, 0.08, 0.3, 0.97, 0, 0, 0.22, n0, 1);
+    const hx = dir.x, hz = dir.z, hl = Math.hypot(hx, hz) || 1;
+    const fx = hx / hl, fz = hz / hl, rx = fz, rz = -fx;
+    const paint = this.paintEffects ? F_PAINT : 0;
+    let n = Math.max(6, Math.round(18 * this.q));
+    for (let i = 0; i < n; i++) {
+      const side = (rand() - 0.5) * 2, sp = 3.5 + rand() * 3.5;
+      this._spawnDrop(_v2.x + rx * side * 0.3, _v2.y + 0.05, _v2.z + rz * side * 0.3, fx * sp + rx * side * 2.2, 1.2 + rand() * 2.2, fz * sp + rz * side * 2.2,
+        col, 0.02 + rand() * 0.03, 1.2, 1, 1.5, rand() < 0.3 ? paint : 0);
+    }
+    n = Math.max(2, Math.round(5 * this.q));
+    for (let i = 0; i < n; i++) {
+      const a = rand() * TAU, sp = 1.6 + rand() * 1.8;
+      this._spawnDrop(_v2.x, _v2.y + 0.1, _v2.z, Math.cos(a) * sp + fx * 1.2, 3 + rand() * 2.2, Math.sin(a) * sp + fz * 1.2, col, 0.06 + rand() * 0.03, 1.8, 1, 1, paint);
+    }
+    this._ripple(_v2, 0.014, 0.26, 2.3, 1.05, n0, col);
   }
 
   // ---- Tidal Slam
@@ -1754,7 +1952,7 @@ export class FX {
     _v2.set(pos.x, pos.y + 0.02, pos.z);
     this._ringRaw(_v2, UP, col, 1.5, 0.4, R_WAVE, 0.9, 1.1);
     this._colB.copy(col).lerp(_white, 0.2);
-    this._ringRaw(_v2, UP, this._colB, 2.2, 0.6, R_RIPPLE, 0.5, 1);
+    this._ripple(_v2, 0.01, 0.2, 1.8, 0.9, UP, this._colB);
     const n = Math.max(6, Math.round(18 * this.q));
     for (let i = 0; i < n; i++) {
       coneDir(UP, 0.45, _v1);
@@ -1794,7 +1992,7 @@ export class FX {
     if (!this._probeDown(_v2.set(pos.x, pos.y + 0.5, pos.z), 2.5, _v5, _v6)) { _v5.copy(pos); _v6.copy(UP); }
     this._ringRaw(_v5, _v6, col, R * 1.45, 0.6, R_WAVE, 0.95, 1.4);
     this._after(0.1, OP_RING, _v5, _v6, col, R * 1.85, 0.5, R_THIN);
-    this._after(0.2, OP_RING, _v5, _v6, col, R * 2.25, 0.8, R_RIPPLE);
+    this._ripple(_v5, 0.016, 0.32, 3.2, 1.3, _v6, col);
     _sc.copy(DUST).lerp(col, 0.25);
     this._ringRaw(_v5, _v6, _sc, R * 1.1, 0.7, R_DUST, 0.55, 1);
     this._dustRing(_v5, _sc, 14, 6);
@@ -1835,7 +2033,7 @@ export class FX {
     const col = this._color(color, this._col);
     _v2.copy(pos).addScaledVector(normal || UP, 0.01);
     this._colB.copy(col).lerp(_white, 0.15);
-    this._ringRaw(_v2, normal || UP, this._colB, 0.25 + rand() * 0.25, 0.45, R_RIPPLE, 0.55, 1);
+    this._ripple(_v2, 0.004 + rand() * 0.003, 0.09, 0.8, 0.5, normal || UP, this._colB);
     if (rand() < 0.35) this._crown(_v2, normal || UP, col, 2, 1.4, 0.02, F_QUIET);
   }
   // a flicker inside the cloud
@@ -1908,8 +2106,10 @@ export class FX {
     _v2.set(pos.x, pos.y + 0.02, pos.z);
     this._ringRaw(_v2, UP, col, 2.4, 0.45, R_WAVE, 0.95, 1.2);
     this._ringRaw(_v2, UP, col, 3.0, 0.3, R_THIN, 0.8, 1);
-    this._ringRaw(_v2, UP, col, 0.9, 0.5, R_BLOT, 0.95, 1);
-    this._crown(_v2, UP, col, 26, 4.2, 0.06);
+    this._crown(_v2, UP, col, 26, 4.2, 0.045);
+    _v4.set(pos.x, pos.y + 0.1, pos.z);
+    this._shell(_v4, col, 0.2, 0.9, 0.08, 0.3, 0.95, 0, 0, 0.18, UP, 1);
+    this._ripple(_v2, 0.013, 0.24, 2.4, 1.1, UP, col);
     this._colB.copy(col).multiplyScalar(3);
     this._sprite(this.glows, pos.x, pos.y + 0.5, pos.z, 0, 0, 0, this._colB, 0.8, 1.8, 0.18, 1, 0, 0, G_SOFT + 3, 0);
     _sc.copy(DUST).lerp(col, 0.2);

@@ -86,7 +86,9 @@ export class NavGraph {
   _clear(x, y, z) {
     const L = this.level;
     const r = PLAYER.radius + 0.08;
-    for (const h of [0.15, 0.8, 1.4]) {
+    // lowest probe at knee height: anything shorter is a step-up, and a 0.15 m probe clipped the surface of any ramp
+    // steeper than ~17° (they got no nodes at all)
+    for (const h of [0.32, 0.8, 1.4]) {
       if (L.pointInside(_p.set(x, y + h, z), 0)) return false;
       for (let k = 0; k < 8; k++) {
         const a = (k / 8) * Math.PI * 2;
