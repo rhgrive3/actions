@@ -126,7 +126,4 @@
   .iw-sp{transform:scale(.82);transform-origin:top right}.iw-turf{transform:scale(.82);transform-origin:top left}
   .iw-map{transform:scale(.8);transform-origin:bottom right}
 }
-@media (pointer:coarse) and (orientation:portrait){
-  .iw-ui{display:none}
-}
 @media (prefers-reduced-motion:reduce){.iw-ui *,.iw-hud *{animation:none!important;transition:none!important}}
