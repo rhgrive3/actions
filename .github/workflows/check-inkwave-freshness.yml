@@ -1,0 +1,89 @@
+name: Check INKWAVE upstream freshness
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/check-inkwave-freshness.yml
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Compare live deployment with captured upstream snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os,re,urllib.parse,urllib.request,hashlib,subprocess,json
+          from pathlib import Path
+
+          BASE='https://inkwave-aah.pages.dev/'
+          HOST=urllib.parse.urlparse(BASE).netloc
+          BASELINE='a19dca44e094f9016ee66763b5e0c56fe679fb89'
+          PREFIX='inkwave-aah-fast/'
+          q=[BASE]; seen=set(); live={}; errors=[]
+
+          def get(url):
+              req=urllib.request.Request(url,headers={'User-Agent':'Mozilla/5.0 freshness-check/1.0','Cache-Control':'no-cache'})
+              with urllib.request.urlopen(req,timeout=12) as r:
+                  return r.read(),r.headers.get('content-type',''),r.geturl()
+
+          while q:
+              url=q.pop(0)
+              if url in seen: continue
+              seen.add(url)
+              try:
+                  data,ctype,final=get(url)
+              except Exception as e:
+                  errors.append((url,repr(e))); continue
+              u=urllib.parse.urlparse(final); path=u.path or '/index.html'
+              if path.endswith('/'): path+='index.html'
+              rel=path.lstrip('/')
+              live[rel]=data
+              if len(data)>8_000_000: continue
+              if not (('text' in ctype) or ('javascript' in ctype) or rel.endswith(('.html','.js','.mjs','.css','.json'))): continue
+              text=data.decode('utf-8','replace')
+              refs=set()
+              refs.update(re.findall(r'''(?:src|href)=["']([^"']+)["']''',text,flags=re.I))
+              refs.update(re.findall(r'''url\((?:["']?)([^)"']+)(?:["']?)\)''',text,flags=re.I))
+              refs.update(re.findall(r'''@import\s+(?:url\()?["']?([^"'\)\s]+)''',text,flags=re.I))
+              refs.update(re.findall(r'''(?:from\s*|import\s*\()\s*["']([^"']+)["']''',text))
+              refs.update(re.findall(r'''import\s*["']([^"']+)["']''',text))
+              refs.update(re.findall(r'''["']((?:\./|\.\./|/)[^"']+\.(?:js|mjs|css|json|svg|png|jpg|jpeg|webp|glb|gltf|bin|wasm|wav|mp3|ogg|woff2?|ttf))["']''',text,flags=re.I))
+              for ref in refs:
+                  ref=ref.strip()
+                  if not ref or ref.startswith(('data:','blob:','javascript:','#','mailto:','tel:')): continue
+                  if ref=='three': ref='/vendor/three/build/three.module.js'
+                  elif ref.startswith('three/addons/'): ref='/vendor/three/jsm/'+ref[len('three/addons/'):]
+                  absu=urllib.parse.urljoin(final,ref)
+                  pu=urllib.parse.urlparse(absu)
+                  if pu.scheme in ('http','https') and pu.netloc==HOST and absu not in seen:
+                      q.append(absu)
+
+          ls=subprocess.check_output(['git','ls-tree','-r','--name-only',BASELINE,PREFIX],text=True).splitlines()
+          baseline={}
+          for p in ls:
+              rel=p[len(PREFIX):]
+              if rel in ('FETCH_MANIFEST.json','README_FETCH.txt'): continue
+              baseline[rel]=subprocess.check_output(['git','show',f'{BASELINE}:{p}'])
+
+          live_keys=set(live); base_keys=set(baseline)
+          added=sorted(live_keys-base_keys)
+          removed=sorted(base_keys-live_keys)
+          changed=sorted(k for k in live_keys&base_keys if hashlib.sha256(live[k]).digest()!=hashlib.sha256(baseline[k]).digest())
+
+          print('LIVE_FILES',len(live))
+          print('BASELINE_FILES',len(baseline))
+          print('FETCH_ERRORS',len(errors))
+          print('ADDED',json.dumps(added))
+          print('REMOVED',json.dumps(removed))
+          print('CHANGED',json.dumps(changed))
+          if errors:
+              print('ERRORS',json.dumps(errors[:20]))
+          print('UPSTREAM_CHANGED',bool(added or removed or changed))
+          PY
