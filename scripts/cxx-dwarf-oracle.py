@@ -328,12 +328,19 @@ def main():
         dwarf_versions = []
         for cu in dwarf.iter_CUs():
             dwarf_versions.append(int(cu.header["version"]))
-            for die in cu.iter_DIEs():
-                if die.tag not in CLASS_TAGS or die_name(die) not in target_class_leaves:
+            # Class/member facts live under CU, namespace, and class scopes.
+            # Walking every DIE also decodes millions of function/local-variable
+            # records that this oracle never uses, so descend through type scopes only.
+            pending = list(cu.get_top_DIE().iter_children())
+            while pending:
+                die = pending.pop()
+                if die.tag not in SCOPE_TAGS:
                     continue
-                definition = class_definition(die)
-                if definition is not None and definition["className"] in target_class_names:
-                    definitions[definition["className"]].append(definition)
+                if die.tag in CLASS_TAGS and die_name(die) in target_class_leaves:
+                    definition = class_definition(die)
+                    if definition is not None and definition["className"] in target_class_names:
+                        definitions[definition["className"]].append(definition)
+                pending.extend(child for child in die.iter_children() if child.tag in SCOPE_TAGS)
 
         classes = []
         for name in sorted(target_class_names):
