@@ -34,9 +34,10 @@ html.iw-mobile #app canvas { touch-action: none; }
 
 /* ---- buttons */
 .iwm-b { position: absolute; left: 0; top: 0; display: grid; place-items: center; padding: 0; margin: 0; border-radius: 50%; border: 0; pointer-events: auto; touch-action: none;
-  color: #fff; background: rgba(16, 13, 26, .52); opacity: var(--iwm-op); will-change: transform;
+  color: #fff; background: rgba(16, 13, 26, .6); opacity: var(--iwm-op); will-change: transform;
   box-shadow: inset 0 0 0 2.5px rgba(255, 255, 255, .62), 0 0 0 2.5px rgba(21, 18, 28, .55), 0 6px 14px rgba(0, 0, 0, .32);
-  -webkit-backdrop-filter: blur(6px) saturate(1.3); backdrop-filter: blur(6px) saturate(1.3); font: inherit; -webkit-tap-highlight-color: transparent; }
+  font: inherit; -webkit-tap-highlight-color: transparent; }
+/* no backdrop blur: on iOS Safari a blurred button over the live 3D view is re-blurred every single frame */
 .iwm-b::after { content: ''; position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle at 50% 22%, rgba(255, 255, 255, .28), transparent 55%); pointer-events: none; }
 .iwm-b__ico { display: block; width: 54%; height: 54%; filter: drop-shadow(0 2px 0 rgba(21, 18, 28, .75)); pointer-events: none; }
 .iwm-b__ico svg { width: 100%; height: 100%; display: block; overflow: visible; }
@@ -57,11 +58,17 @@ html.iw-mobile #app canvas { touch-action: none; }
 
 /* SP: gauge ring + ready glow */
 .iwm-b__gauge { position: absolute; inset: -5px; width: calc(100% + 10px); height: calc(100% + 10px); transform: rotate(-90deg); pointer-events: none; overflow: visible; }
-.iwm-b__gauge circle { fill: none; stroke: var(--iwm-c); stroke-width: 7; stroke-linecap: round; stroke-dasharray: calc(var(--g, 0) * 100) 100; transition: stroke-dasharray .25s; filter: drop-shadow(0 0 2px rgba(0, 0, 0, .6)); }
+.iwm-b__gauge circle { fill: none; stroke: var(--iwm-c); stroke-width: 7; stroke-linecap: round; stroke-dasharray: calc(var(--g, 0) * 100) 100; transition: stroke-dasharray .25s; }
 .iwm-b--special .iwm-b__ico { opacity: .55; filter: grayscale(1) drop-shadow(0 2px 0 rgba(21, 18, 28, .75)); }
-.iwm-b--special.is-ready { background: var(--iwm-c); background: color-mix(in srgb, var(--iwm-c) 55%, rgba(16, 13, 26, .45)); animation: iwm-ready 1s ease-in-out infinite; }
+.iwm-b--special.is-ready { background: var(--iwm-c); background: color-mix(in srgb, var(--iwm-c) 55%, rgba(16, 13, 26, .45));
+  box-shadow: inset 0 0 0 3px #fff, 0 0 0 2.5px rgba(21, 18, 28, .6), 0 0 10px var(--iwm-c); }
+/* the READY pulse is a separate glow layer that only fades (composited — no repaint of the button every frame) */
+.iwm-b--special::before { content: ''; position: absolute; inset: -6px; border-radius: 50%; pointer-events: none; opacity: 0; will-change: opacity;
+  box-shadow: 0 0 22px 4px var(--iwm-c), 0 0 44px 8px color-mix(in srgb, var(--iwm-c) 55%, transparent); }
+.iwm-b--special.is-ready::before { animation: iwm-glow 1s ease-in-out infinite; }
 .iwm-b--special.is-ready .iwm-b__ico { opacity: 1; filter: drop-shadow(0 2px 0 rgba(21, 18, 28, .75)); animation: iwm-wiggle 1s ease-in-out infinite; }
-.iwm-b--special.is-active { animation: none; background: #fff; color: var(--iwm-k); }
+.iwm-b--special.is-active { background: #fff; color: var(--iwm-k); }
+.iwm-b--special.is-active::before { animation: none; opacity: 0; }
 
 /* small system buttons */
 .iwm-b--pause .iwm-b__ico, .iwm-b--map .iwm-b__ico, .iwm-b--gyro .iwm-b__ico { width: 58%; height: 58%; }
@@ -113,7 +120,7 @@ html.iw-mobile #app canvas { touch-action: none; }
 .iwm-eb.is-primary { background: var(--iwm-c); color: var(--iwm-k); box-shadow: inset 0 0 0 2px rgba(0, 0, 0, .25); }
 .iwm-eb:active { scale: .94; }
 
-@keyframes iwm-ready { 0%, 100% { box-shadow: inset 0 0 0 3px #fff, 0 0 0 2.5px rgba(21, 18, 28, .6), 0 0 10px var(--iwm-c); } 50% { box-shadow: inset 0 0 0 3px #fff, 0 0 0 2.5px rgba(21, 18, 28, .6), 0 0 26px var(--iwm-c), 0 0 44px color-mix(in srgb, var(--iwm-c) 60%, transparent); } }
+@keyframes iwm-glow { 50% { opacity: 1; } }
 @keyframes iwm-wiggle { 0%, 100% { rotate: -6deg; } 50% { rotate: 6deg; } }
 @keyframes iwm-blink { 50% { opacity: .35; } }
 @keyframes iwm-rot { 0%, 15% { rotate: 0deg; } 55%, 100% { rotate: -90deg; } }
@@ -121,11 +128,23 @@ html.iw-mobile #app canvas { touch-action: none; }
 
 /* ---- HUD while playing by touch (html.iw-touch-ui is set by the input layer) */
 html.iw-touch-ui .iw-hud .iw-sp { display: none; }                 /* the SP button is the gauge */
+/* frame budget: over the live 3D view nothing may repaint every frame — the top-bar "special ready" squids and the
+   ally name tags keep their glow as a static look and pulse by transform only */
+html.iw-touch-ui .iw-hud .iw-sq.is-ready .iw-sq__badge, html.iw-touch-ui .iw-hud .iw-sq.is-readyflash .iw-sq__badge {
+  filter: drop-shadow(0 calc(var(--u) * .18) 0 rgba(0, 0, 0, .45)) drop-shadow(0 0 calc(var(--u) * .6) var(--tc)) brightness(1.18);
+  animation: iwm-bob 1.1s ease-in-out infinite; will-change: translate; }
+html.iw-touch-ui .iw-hud .iw-mk.is-ready .iw-mk__tag { animation: none; box-shadow: 0 0 0 2px var(--k), 0 0 0 5px rgba(255, 255, 255, .7), 0 0 12px 3px var(--c); }
+@keyframes iwm-bob { 50% { translate: 0 calc(var(--u) * -.15); } }
 html.iw-touch-ui .iw-hud .iw-turf { top: calc(env(safe-area-inset-top, 0px) + 15vmin); right: calc(env(safe-area-inset-right, 0px) + 2.2vmin); font-size: max(12px, 2.6vmin); }
 html.iw-touch-ui .iw-hud .iw-feed { top: calc(env(safe-area-inset-top, 0px) + 23vmin); right: calc(env(safe-area-inset-right, 0px) + 2vmin); font-size: max(10px, 2.3vmin); }
 html.iw-touch-ui .iw-hud .iw-feed__item:nth-child(n+3) { display: none; }
 html.iw-touch-ui .iw-hud .iw-fps { left: 50%; top: calc(env(safe-area-inset-top, 0px) + 12vmin); translate: -50% 0; }
 html.iw-touch-ui .iw-hud .iw-map__label .iw-key, html.iw-touch-ui .iw-hud .iw-sp__ready .iw-key, html.iw-touch-ui .iw-hud .iw-bcn__key, html.iw-touch-ui .iw-hud .iw-lg__key { display: none; }
 html.iw-touch-ui .iw-hud .iw-map-dim.is-on { pointer-events: auto; }
+/* map (diorama): the corner minimap would sit on the map title — the big map replaces it while open */
+html.iw-touch-ui body.iw-dio-on .iw-hud .iw-map { opacity: 0; pointer-events: none; }
+/* map (diorama): teammate / base pins are the Super Jump buttons — finger-sized hit area around each badge */
+html.iw-touch-ui .iw-dio.is-on .iw-pin:not(.iw-pin--self) .iw-pin__badge { pointer-events: auto; cursor: pointer; }
+html.iw-touch-ui .iw-dio.is-on .iw-pin:not(.iw-pin--self) .iw-pin__badge::after { content: ''; position: absolute; inset: -14px; border-radius: 50%; }
 html.iw-touch-ui .iw-hud .iw-map.is-expanded .iw-bcn { scale: 1.18; }     /* fat-finger friendly super-jump targets */
 html.iw-touch-ui .iw-hud .iw-prompt { bottom: calc(env(safe-area-inset-bottom, 0px) + 3vmin); max-width: 44vw; white-space: normal; text-align: center; }

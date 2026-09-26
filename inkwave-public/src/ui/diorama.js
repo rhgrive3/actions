@@ -4,7 +4,7 @@
 //   · you (arrow = facing), your three teammates (weapon badge, name, [1]–[3]; greyed with a countdown while splatted),
 //     your base ([4]) — enemies are not shown
 //   · a virtual map cursor (pointer stays locked: mouse deltas / right stick) that snaps to pins and tilts the diorama a
-//     touch toward itself; click / A on a pin, or the number keys, to Super Jump — an ink arc previews the jump
+//     touch toward itself; click / A on a pin, the number keys, or a tap (touch) to Super Jump — an ink arc previews it
 //   · a miniature finish: tilt-shift blur bands, a soft vignette, the stage name
 // Per frame it only projects a handful of points and writes transforms / CSS vars when they change.
 import { h, clamp } from './ui-util.js';
@@ -53,6 +53,15 @@ export class DioramaOverlay {
       h('span', { class: 'iw-pin__badge' }, icon, h('span', { class: 'iw-pin__pulse' })),
       self ? null : h('span', { class: 'iw-pin__key', html: keycap(String(i + 1)) }),
       name, state);
+    // touch: tap a teammate / base pin to Super Jump (mouse and pad use the snapping cursor below)
+    if (!self) {
+      el.addEventListener('pointerdown', (e) => {
+        if (e.pointerType === 'mouse' || !this.on || this.k < 0.7) return;
+        e.preventDefault(); e.stopPropagation();
+        this.hover = i;
+        this._jump(i, G.match?.local);
+      });
+    }
     return { el, icon, name, state, x: 0, y: 0, vis: false, key: '', weapon: null, target: null, ok: false };
   }
 
