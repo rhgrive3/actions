@@ -23,6 +23,7 @@ permissions:
 
 jobs:
   plan:
+    if: inputs.games != 'cxxholdout'
     name: plan-matrix
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -74,6 +75,7 @@ jobs:
           NODE
 
   realgame:
+    if: inputs.games != 'cxxholdout'
     name: realgame-${{ matrix.game }}-arm64
     needs: plan
     strategy:
@@ -223,6 +225,7 @@ jobs:
           retention-days: 7
 
   realgame-aggregate:
+    if: inputs.games != 'cxxholdout'
     name: aggregate-realgame
     needs: realgame
     if: always()
@@ -272,3 +275,12 @@ jobs:
           name: realgame-final
           path: final/realgame.json
           retention-days: 7
+
+  cxx-dwarf-holdout:
+    if: inputs.games == 'cxxholdout'
+    name: cxx-dwarf-holdout
+    uses: ./.github/workflows/hex-cxx-debug-holdout.yml
+    with:
+      target_sha: ${{ inputs.target_sha }}
+    permissions:
+      contents: read
