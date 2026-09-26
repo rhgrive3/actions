@@ -2,7 +2,9 @@
 """Extract class members and GCC virtual-slot indices from one ELF DWARF image."""
 
 import argparse
+import gc
 import json
+import multiprocessing
 import os
 import subprocess
 from collections import defaultdict
@@ -310,27 +312,59 @@ def build_id(elf):
     return None
 
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--binary", required=True)
-    parser.add_argument("--out", required=True)
-    args = parser.parse_args()
+def collect_cu_offsets(binary):
+    """Return the byte offset of every compilation unit in .debug_info.
 
-    with open(args.binary, "rb") as stream:
+    Reading the unit-length fields directly avoids pyelftools materialising (and
+    caching) every CU header just to discover where the units start, which keeps
+    the parent process' memory flat before the workers fan out.
+    """
+    offsets = []
+    with open(binary, "rb") as stream:
         elf = ELFFile(stream)
-        if not elf.has_dwarf_info():
-            raise SystemExit("oracle-no-dwarf-info")
+        section = elf.get_section_by_name(".debug_info")
+        if section is None:
+            return offsets
+        size = section["sh_size"]
+        base = section["sh_offset"]
+        offset = 0
+        while offset < size:
+            offsets.append(offset)
+            stream.seek(base + offset)
+            first = stream.read(4)
+            if len(first) < 4:
+                break
+            value = int.from_bytes(first, "little")
+            header = 4
+            if value == 0xFFFFFFFF:
+                extended = stream.read(8)
+                if len(extended) < 8:
+                    break
+                value = int.from_bytes(extended, "little")
+                header = 12
+            if value <= 0:
+                break
+            offset += header + value
+    return offsets
+
+
+def definitions_for_offsets(offsets, binary, target_class_names, target_class_leaves):
+    """Extract class definitions for the given CU offsets.
+
+    Class/member facts live under CU, namespace, and class scopes. Walking every
+    DIE also decodes millions of function/local-variable records this oracle never
+    uses, so descend through type scopes only. Each CU's parsed DIE list is dropped
+    and the pyelftools CU cache is cleared after processing so peak memory stays
+    bounded to roughly one compilation unit per worker instead of the whole image.
+    """
+    definitions = defaultdict(list)
+    versions = []
+    with open(binary, "rb") as stream:
+        elf = ELFFile(stream)
         dwarf = elf.get_dwarf_info()
-        tables = vtable_symbols(elf)
-        target_class_names = vtable_class_names(tables)
-        target_class_leaves = {name.split("::")[-1] for name in target_class_names}
-        definitions = defaultdict(list)
-        dwarf_versions = []
-        for cu in dwarf.iter_CUs():
-            dwarf_versions.append(int(cu.header["version"]))
-            # Class/member facts live under CU, namespace, and class scopes.
-            # Walking every DIE also decodes millions of function/local-variable
-            # records that this oracle never uses, so descend through type scopes only.
+        for index, cu_offset in enumerate(offsets):
+            cu = dwarf.get_CU_at(cu_offset)
+            versions.append(int(cu.header["version"]))
             pending = list(cu.get_top_DIE().iter_children())
             while pending:
                 die = pending.pop()
@@ -341,6 +375,80 @@ def main():
                     if definition is not None and definition["className"] in target_class_names:
                         definitions[definition["className"]].append(definition)
                 pending.extend(child for child in die.iter_children() if child.tag in SCOPE_TAGS)
+            try:
+                cu._dielist.clear()
+            except Exception:
+                pass
+            try:
+                dwarf._cu_cache.clear()
+                dwarf._cu_offsets_map.clear()
+            except Exception:
+                pass
+            # DIE trees form reference cycles through _parent/cu, so reclaim them
+            # periodically; collecting after every CU re-walks the same objects.
+            if index % 8 == 7:
+                gc.collect()
+        gc.collect()
+    return dict(definitions), versions
+
+
+_WORKER_STATE = {}
+
+
+def _worker_init(binary, target_class_names, target_class_leaves):
+    _WORKER_STATE["binary"] = binary
+    _WORKER_STATE["names"] = target_class_names
+    _WORKER_STATE["leaves"] = target_class_leaves
+
+
+def _worker_run(offsets):
+    return definitions_for_offsets(
+        offsets, _WORKER_STATE["binary"], _WORKER_STATE["names"], _WORKER_STATE["leaves"])
+
+
+def collect_definitions(binary, target_class_names, target_class_leaves, offsets):
+    """Fan CU parsing out across processes; fall back to a single pass on failure."""
+    definitions = defaultdict(list)
+    versions = []
+    workers = min(max(len(offsets), 1), os.cpu_count() or 1, 16)
+    if workers > 1 and offsets:
+        chunks = [offsets[index::workers] for index in range(workers)]
+        try:
+            context = multiprocessing.get_context("fork")
+            with context.Pool(
+                processes=workers,
+                initializer=_worker_init,
+                initargs=(binary, target_class_names, target_class_leaves),
+            ) as pool:
+                for part, part_versions in pool.map(_worker_run, chunks):
+                    for name, rows in part.items():
+                        definitions[name].extend(rows)
+                    versions.extend(part_versions)
+            return definitions, versions
+        except Exception:
+            definitions = defaultdict(list)
+            versions = []
+    part, versions = definitions_for_offsets(offsets, binary, target_class_names, target_class_leaves)
+    for name, rows in part.items():
+        definitions[name].extend(rows)
+    return definitions, versions
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--binary", required=True)
+    parser.add_argument("--out", required=True)
+    args = parser.parse_args()
+
+    with open(args.binary, "rb") as stream:
+        elf = ELFFile(stream)
+        if not elf.has_dwarf_info():
+            raise SystemExit("oracle-no-dwarf-info")
+        tables = vtable_symbols(elf)
+        target_class_names = vtable_class_names(tables)
+        target_class_leaves = {name.split("::")[-1] for name in target_class_names}
+        definitions, dwarf_versions = collect_definitions(
+            args.binary, target_class_names, target_class_leaves, collect_cu_offsets(args.binary))
 
         classes = []
         for name in sorted(target_class_names):
