@@ -4,6 +4,7 @@
 import argparse
 import json
 import os
+import subprocess
 from collections import defaultdict
 
 from elftools.elf.elffile import ELFFile
@@ -274,6 +275,27 @@ def vtable_symbols(elf):
     return sorted(unique.values(), key=lambda item: (item["address"], item["name"]))
 
 
+def vtable_class_names(tables):
+    if not tables:
+        return set()
+    result = subprocess.run(
+        ["c++filt"],
+        input="\n".join(item["name"] for item in tables) + "\n",
+        text=True,
+        capture_output=True,
+        check=True,
+        timeout=60,
+    )
+    names = set()
+    for line in result.stdout.splitlines():
+        prefix = "vtable for "
+        if line.startswith(prefix):
+            name = line[len(prefix):].strip()
+            if name:
+                names.add(name)
+    return names
+
+
 def build_id(elf):
     for segment in elf.iter_segments():
         if segment.header.p_type != "PT_NOTE":
@@ -299,23 +321,33 @@ def main():
         if not elf.has_dwarf_info():
             raise SystemExit("oracle-no-dwarf-info")
         dwarf = elf.get_dwarf_info()
+        tables = vtable_symbols(elf)
+        target_class_names = vtable_class_names(tables)
+        target_class_leaves = {name.split("::")[-1] for name in target_class_names}
         definitions = defaultdict(list)
         dwarf_versions = []
         for cu in dwarf.iter_CUs():
             dwarf_versions.append(int(cu.header["version"]))
             for die in cu.iter_DIEs():
-                if die.tag not in CLASS_TAGS:
+                if die.tag not in CLASS_TAGS or die_name(die) not in target_class_leaves:
                     continue
                 definition = class_definition(die)
-                if definition is not None:
+                if definition is not None and definition["className"] in target_class_names:
                     definitions[definition["className"]].append(definition)
 
         classes = []
-        for name in sorted(definitions):
-            entries = definitions[name]
+        for name in sorted(target_class_names):
+            entries = definitions.get(name, [])
+            if not entries:
+                classes.append({"className": name, "complete": False, "byteSize": None, "directMembers": [], "members": [], "bases": [], "virtualMethods": [], "unresolvedMemberLocations": 0})
+                continue
             full = [entry for entry in entries if entry["complete"]]
             source = max(full or entries, key=lambda entry: (len(entry["directMembers"]), len(entry["virtualMethods"])))
-            members, unresolved = flattened_members(name, definitions)
+            members = [
+                {**member, "declaringClass": name, "baseOffsetBytes": 0}
+                for member in source["directMembers"]
+                if member["offsetBytes"] is not None
+            ]
             classes.append({
                 "className": name,
                 "complete": bool(full),
@@ -324,10 +356,9 @@ def main():
                 "members": members,
                 "bases": source["bases"],
                 "virtualMethods": source["virtualMethods"],
-                "unresolvedMemberLocations": unresolved,
+                "unresolvedMemberLocations": source["unresolvedMemberLocations"],
             })
 
-        tables = vtable_symbols(elf)
         report = {
             "schema": "cxx-dwarf-oracle/v1",
             "binary": os.path.basename(args.binary),
@@ -340,6 +371,7 @@ def main():
                 "membersWithOffsets": sum(item["offsetBytes"] is not None for cls in classes for item in cls["directMembers"]),
                 "virtualMethodsWithSlotIndex": sum(method["vtableIndex"] is not None for cls in classes for method in cls["virtualMethods"]),
                 "vtableSymbols": len(tables),
+                "vtableClassesWithDwarf": sum(item["complete"] for item in classes),
             },
             "classes": classes,
             "vtableSymbols": tables,

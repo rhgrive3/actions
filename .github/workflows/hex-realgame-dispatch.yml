@@ -17,9 +17,15 @@ on:
         required: false
         default: "openmw,openttd"
         type: string
+      artifact_run_id:
+        description: "For cxxholdout, reuse a prior run's preserved same-build ARM64 binaries"
+        required: false
+        default: ""
+        type: string
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   plan:
@@ -281,5 +287,7 @@ jobs:
     uses: ./.github/workflows/hex-cxx-debug-holdout.yml
     with:
       target_sha: ${{ inputs.target_sha }}
+      artifact_run_id: ${{ inputs.artifact_run_id }}
     permissions:
       contents: read
+      actions: read

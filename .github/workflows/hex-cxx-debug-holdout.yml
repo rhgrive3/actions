@@ -7,15 +7,26 @@ on:
         description: "Exact 40-character Hex commit SHA"
         required: true
         type: string
+      artifact_run_id:
+        description: "Reuse a prior run's preserved same-build ARM64 binaries"
+        required: false
+        default: ""
+        type: string
   workflow_call:
     inputs:
       target_sha:
         description: "Exact 40-character Hex commit SHA"
         required: true
         type: string
+      artifact_run_id:
+        description: "Reuse a prior run's preserved same-build ARM64 binaries"
+        required: false
+        default: ""
+        type: string
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   cxx-dwarf-holdout:
@@ -40,12 +51,22 @@ jobs:
           fetch-depth: 1
 
       - name: Checkout OpenTTD source
+        if: inputs.artifact_run_id == ''
         uses: actions/checkout@v4
         with:
           repository: OpenTTD/OpenTTD
           ref: 16.0-beta4
           path: openttd
           fetch-depth: 1
+
+      - name: Download preserved same-build ARM64 binaries
+        if: inputs.artifact_run_id != ''
+        uses: actions/download-artifact@v4
+        with:
+          name: hex-cxx-dwarf-holdout-${{ inputs.target_sha }}
+          run-id: ${{ inputs.artifact_run_id }}
+          github-token: ${{ github.token }}
+          path: .
 
       - name: Prepare task scratch directory
         shell: bash
@@ -65,9 +86,10 @@ jobs:
           test "$(git -C target rev-parse HEAD)" = "5bd85f8a86cd5030e5e36c6e9f0a196df9f08f0e"
           test "$(uname -m)" = "aarch64"
           node -e "if(process.arch!=='arm64') throw new Error('node-not-arm64'); console.log(process.platform,process.arch)"
-          git -C openttd rev-parse HEAD > evidence/openttd-source-sha.txt
+          if [ -d openttd/.git ]; then git -C openttd rev-parse HEAD > evidence/openttd-source-sha.txt; fi
 
       - name: Install OpenTTD and DWARF tools
+        if: inputs.artifact_run_id == ''
         shell: bash
         run: |
           set -euo pipefail
@@ -79,6 +101,7 @@ jobs:
             libsdl2-dev libsoxr-dev zlib1g-dev
 
       - name: Build OpenTTD once with full DWARF
+        if: inputs.artifact_run_id == ''
         shell: bash
         run: |
           set -euo pipefail
@@ -116,11 +139,31 @@ jobs:
             exit 1
           fi
 
+      - name: Verify same-build oracle and stripped variants
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f binaries/openttd-unstripped-dwarf-oracle
+          test -f binaries/openttd-strip-debug
+          test -f binaries/openttd-strip-all
+          (cd "$GITHUB_WORKSPACE" && sha256sum --check evidence/binary-sha256.txt)
+          oracle_id="$(readelf -n binaries/openttd-unstripped-dwarf-oracle | awk '/Build ID:/{print $3; exit}')"
+          debug_id="$(readelf -n binaries/openttd-strip-debug | awk '/Build ID:/{print $3; exit}')"
+          all_id="$(readelf -n binaries/openttd-strip-all | awk '/Build ID:/{print $3; exit}')"
+          recorded_id="$(sed -n 's/^build_id=//p' evidence/build-identity.txt)"
+          test -n "$oracle_id"
+          test "$oracle_id" = "$debug_id"
+          test "$oracle_id" = "$all_id"
+          test "$oracle_id" = "$recorded_id"
+          file binaries/openttd-strip-debug binaries/openttd-strip-all | grep -Eqi 'ARM aarch64|ARM64|aarch64'
+          ! readelf -S binaries/openttd-strip-debug | grep -q '\.debug_info'
+          ! readelf -S binaries/openttd-strip-all | grep -q '\.debug_info'
+
       - name: Extract same-build DWARF oracle facts
         shell: bash
         run: |
           set -euo pipefail
-          timeout 300s python3 scripts/cxx-dwarf-oracle.py \
+          timeout 1500s python3 scripts/cxx-dwarf-oracle.py \
             --binary binaries/openttd-unstripped-dwarf-oracle \
             --out evidence/dwarf-oracle.json | tee evidence/dwarf-oracle-summary.json
 

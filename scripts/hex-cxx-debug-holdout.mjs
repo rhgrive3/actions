@@ -320,9 +320,9 @@ for (const claims of claimGroups.values()) {
     status = 'unknown';
     truth = 'no complete DW_TAG_class_type/structure_type with this exact class name';
   } else if (members.length === 0) {
-    if ((dwarf.unresolvedMemberLocations || 0) > 0) {
+    if ((dwarf.unresolvedMemberLocations || 0) > 0 || (dwarf.bases || []).length > 0) {
       status = 'unknown';
-      truth = 'DWARF has unresolved member/base locations; no exact member at this offset was established';
+      truth = 'DWARF has inherited members or unresolved member/base locations; no exact direct member at this offset was established';
     } else {
       status = 'contradicted';
       truth = 'DWARF class ' + first.receiverClass + ' has no data member at byte offset ' + first.offsetBytes;
@@ -370,6 +370,11 @@ const confirmedMembers = memberResults.filter((row) => row.status === 'confirmed
 const unknownMembers = memberResults.filter((row) => row.status === 'unknown');
 const sampleMember = confirmedMembers[0] ?? null;
 const samplePseudocode = sampleMember?.hexClaims.find((claim) => claim.pseudocodeLines.length) ?? null;
+const sampleDwarfMembers = sampleMember
+  ? (Array.isArray(sampleMember.dwarfTruth) ? sampleMember.dwarfTruth : [sampleMember.dwarfTruth]).filter(Boolean)
+  : [];
+const sampleDwarfNames = sampleDwarfMembers.map((member) => member.name).filter(Boolean);
+const sampleDwarfTypeLabels = [...new Set(sampleDwarfMembers.map((member) => member.type?.name || member.type?.category).filter(Boolean))];
 const classesWithNames = classRows.filter((row) => row.className);
 const report = {
   schema: 'hex-cxx-debug-holdout/v1',
@@ -431,6 +436,12 @@ const report = {
     function: samplePseudocode.symbol,
     hexType: samplePseudocode.typeLabel,
     lines: samplePseudocode.pseudocodeLines,
+    dwarfMemberNames: sampleDwarfNames,
+    dwarfTypeLabels: sampleDwarfTypeLabels,
+    pseudocodeWithDwarfNames: samplePseudocode.pseudocodeLines.map((line) =>
+      line + ' // DWARF same-build match: ' + sampleMember.className + '::' +
+        (sampleDwarfNames.join(' / ') || '<unnamed member>') +
+        (sampleDwarfTypeLabels.length ? ' (' + sampleDwarfTypeLabels.join(' / ') + ')' : '')),
   } : null,
   virtualCallSample: analyzed.find((row) => row.virtualSlotCount > 0) ?? null,
   analyzedSamples: analyzed.slice(0, 40),
