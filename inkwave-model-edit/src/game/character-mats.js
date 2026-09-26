@@ -88,6 +88,8 @@ export function makeCharUniforms() {
     uHurtSeed: { value: 0 },
     uFlash: { value: new THREE.Color(0, 0, 0) },
     uGlow: { value: new THREE.Color(0, 0, 0) },
+    uHairTip: { value: new THREE.Color('#b8ff4d') },
+    uHairTipStrength: { value: 0 },
     uLook: { value: new THREE.Vector2(0, 0) },
     uIris: { value: new THREE.Color('#ffb21c') },
     uIris2: { value: new THREE.Color('#ff6a00') },
@@ -911,14 +913,14 @@ void iwHatShade(float cls, vec2 uv, vec3 bp, inout vec3 col, inout float h, inou
 export function makeHairMaterial(u) {
   const m = new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.3, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.08, sheen: 1, sheenRoughness: 0.4, sheenColor: new THREE.Color(1, 1, 1) });
   m.onBeforeCompile = (shader) => {
-    for (const k of ['uHurt', 'uHurtSeed', 'uFlash', 'uTeam', 'uGlow', 'uShirt', 'uShorts', 'uStrap']) shader.uniforms[k] = u[k];
+    for (const k of ['uHurt', 'uHurtSeed', 'uFlash', 'uTeam', 'uGlow', 'uHairTip', 'uHairTipStrength', 'uShirt', 'uShorts', 'uStrap']) shader.uniforms[k] = u[k];
     inject(shader, {
       vPars: `varying vec3 vBindPos; attribute float aTint; varying float vTint; varying vec4 vStrand; varying float vSinA; varying vec3 vGearCol;
         #ifndef USE_COLOR
         attribute vec3 color;
         #endif`,
       vBegin: 'vBindPos = position; vTint = aTint; vStrand = vec4(color.r, color.g, uv.x, uv.y); vSinA = color.b * 2.0 - 1.0; vGearCol = color;',
-      fPars: bodyFPars.replace('varying float vEx;', '') + 'uniform vec3 uTeam; uniform vec3 uGlow; uniform vec3 uShirt; uniform vec3 uShorts; uniform vec3 uStrap; varying float vTint; varying vec4 vStrand; varying float vSinA; varying vec3 vGearCol;' + EMBLEM + HAT_GLSL,
+      fPars: bodyFPars.replace('varying float vEx;', '') + 'uniform vec3 uTeam; uniform vec3 uGlow; uniform vec3 uHairTip; uniform float uHairTipStrength; uniform vec3 uShirt; uniform vec3 uShorts; uniform vec3 uStrap; varying float vTint; varying vec4 vStrand; varying float vSinA; varying vec3 vGearCol;' + EMBLEM + HAT_GLSL,
       fColor: /* glsl */`
         float iwSuck = 0.0; float iwGear = 0.0; float iwGearCls = 0.0; float iwH = 0.0; float iwTipK = 0.0; float iwAO = 1.0;
         {
@@ -958,6 +960,7 @@ export function makeHairMaterial(u) {
             // root → tip: deeper at the root, brighter toward the tip
             diffuseColor.rgb = mix(diffuseColor.rgb * mix(0.78, 1.0, smoothstep(0.0, 0.35, t)), mix(diffuseColor.rgb, light, 0.22), smoothstep(0.55, 1.0, t));
             iwTipK = smoothstep(0.6, 1.0, t);
+            diffuseColor.rgb = mix(diffuseColor.rgb, uHairTip, clamp(iwTipK * uHairTipStrength, 0.0, 1.0));
             // defined strand edges: a darker crease where neighbouring strands meet, a highlight ridge along the top
             float edgeK = smoothstep(0.66, 0.97, abs(vSinA)) * smoothstep(0.02, 0.12, t);
             diffuseColor.rgb *= 1.0 - 0.26 * edgeK;
