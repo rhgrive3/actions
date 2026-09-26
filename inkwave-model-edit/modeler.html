@@ -1,0 +1,908 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>INKWAVE AI Modeler</title>
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#090b10;--panel:#111722e8;--panel2:#0c1119;--line:#293244;
+  --text:#f5f7fb;--muted:#95a2b6;--accent:#67e8f9;--accent2:#a3ff5e;
+}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+#stage{position:fixed;inset:0;background:radial-gradient(circle at 50% 40%,#17202f 0,#0b1018 45%,#080a0e 100%)}
+#refLayer{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;overflow:hidden}
+#refImage{display:none;max-width:88%;max-height:88%;object-fit:contain;opacity:.45;filter:saturate(.8)}
+canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.topbar{
+  position:fixed;left:50%;top:12px;transform:translateX(-50%);z-index:20;
+  display:flex;gap:6px;padding:6px;border:1px solid #ffffff15;background:#0b1018df;
+  backdrop-filter:blur(16px);border-radius:14px;box-shadow:0 12px 40px #0007
+}
+button,select,input,textarea{font:inherit}
+button,.tool,select,input[type="number"],input[type="color"],input[type="range"]{
+  border:1px solid var(--line);background:#0b1018;color:var(--text);border-radius:9px
+}
+button{height:34px;padding:0 11px;cursor:pointer;font-weight:750}
+button.active{background:#27354a;border-color:#435674}
+button.primary{background:linear-gradient(180deg,#14586a,#104452);border-color:#2d91a8}
+button.good{background:linear-gradient(180deg,#395f21,#294719);border-color:#668d47}
+.left,.right{
+  position:fixed;top:12px;bottom:12px;z-index:15;width:300px;overflow:auto;
+  border:1px solid #ffffff14;background:var(--panel);backdrop-filter:blur(18px);
+  border-radius:18px;box-shadow:0 18px 65px #0009
+}
+.left{left:12px;padding:14px}.right{right:12px;width:340px}
+.title{font-size:17px;font-weight:850}.subtitle{font-size:11px;color:var(--muted);line-height:1.45;margin:4px 0 12px}
+.section{border-top:1px solid var(--line);padding-top:11px;margin-top:11px}
+.section:first-of-type{border-top:0;margin-top:0;padding-top:0}
+.section h3{margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:#c7d2e5}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:7px 0}
+.row.one{grid-template-columns:1fr}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field>span,.mini{font-size:10px;font-weight:750;color:var(--muted);letter-spacing:.04em}
+select,input[type="number"],input[type="color"]{height:34px;width:100%;padding:0 8px}
+input[type="color"]{padding:3px}
+.slider{display:grid;grid-template-columns:1fr 66px;gap:7px;align-items:center;margin:7px 0}
+.slider label{display:grid;grid-template-columns:1fr;gap:3px;font-size:11px;color:#d9e1ed}
+.slider input[type="range"]{width:100%;height:25px;accent-color:#68e2f3}
+.slider input[type="number"]{height:30px}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;padding:6px;position:sticky;top:0;background:#0f151fe8;backdrop-filter:blur(14px);z-index:3;border-bottom:1px solid var(--line)}
+.tabs button{border:0;background:transparent}
+.tabs button.active{background:#28354a}
+.tabbody{padding:13px}
+.toggle{display:flex;align-items:center;gap:8px;font-size:11px;color:#d7dfec;padding:8px 9px;border:1px solid var(--line);border-radius:9px;background:#0b1018}
+.toggle input{accent-color:#67e8f9}
+.checkgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.stats{font-size:11px;color:var(--muted);display:grid;gap:5px;padding:10px;border:1px solid var(--line);border-radius:11px;background:#080c12}
+.stats b{color:white}
+textarea{
+  width:100%;min-height:240px;resize:vertical;border:1px solid var(--line);border-radius:10px;
+  background:#070b11;color:#d8f3ff;padding:10px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;line-height:1.45
+}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:7px}
+.help{font-size:10px;color:var(--muted);line-height:1.45}
+.badge{
+  position:fixed;left:50%;bottom:12px;transform:translateX(-50%);z-index:12;
+  padding:7px 11px;border-radius:10px;border:1px solid #ffffff12;background:#0a0f16cc;
+  color:#a9b5c8;font-size:10px;backdrop-filter:blur(10px);pointer-events:none
+}
+.dropzone{
+  border:1px dashed #40506c;border-radius:10px;padding:10px;text-align:center;font-size:11px;color:#aeb9ca;
+  background:#0a0f16;cursor:pointer
+}
+.error{display:none;white-space:pre-wrap;color:#ffc5ce;background:#35171e;border:1px solid #8f3b49;border-radius:10px;padding:9px;font-size:10px;margin-top:8px}
+.kbd{border:1px solid #465166;border-radius:5px;padding:1px 5px;background:#161d29;color:#cbd5e3}
+@media(max-width:980px){
+  .left{width:250px}.right{width:300px}
+}
+@media(max-width:760px){
+  .left{top:auto;bottom:8px;left:8px;width:44vw;max-height:42vh}
+  .right{top:auto;bottom:8px;right:8px;width:50vw;max-height:42vh}
+  .topbar{top:8px;max-width:94vw;overflow:auto}
+  .badge{display:none}
+}
+</style>
+<script type="importmap">
+{
+  "imports":{
+    "three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+    "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+  }
+}
+</script>
+</head>
+<body>
+<div id="stage">
+  <div id="refLayer"><img id="refImage" alt=""></div>
+</div>
+
+<div class="topbar">
+  <button data-view="perspective" class="active">Perspective</button>
+  <button data-view="front">Front</button>
+  <button data-view="right">Right</button>
+  <button data-view="back">Back</button>
+  <button data-view="left">Left</button>
+  <button id="fitBtn">Fit</button>
+</div>
+
+<aside class="left">
+  <div class="title">INKWAVE · AI MODELER</div>
+  <div class="subtitle">プロシージャルモデルを非破壊で変形。人間のギズモ操作とAIのJSON編集を同じパラメータへ接続。</div>
+
+  <div class="section">
+    <h3>Editing target</h3>
+    <div class="row">
+      <label class="field"><span>MODE</span><select id="mode"><option value="character">Character</option><option value="weapon">Weapon</option></select></label>
+      <label class="field"><span>GIZMO TARGET</span><select id="gizmoTarget"><option value="whole">Whole</option><option value="head">Head</option><option value="hair">Hair</option><option value="torso">Torso</option><option value="shoes">Shoes</option></select></label>
+    </div>
+    <div class="row">
+      <button id="moveTool" class="active">Move</button>
+      <button id="scaleTool">Scale</button>
+    </div>
+  </div>
+
+  <div class="section" id="characterStyleBlock">
+    <h3>Character source</h3>
+    <div class="row">
+      <label class="field"><span>HAIR</span><select id="hair"></select></label>
+      <label class="field"><span>OUTFIT</span><select id="outfit"></select></label>
+    </div>
+    <div class="row">
+      <label class="field"><span>SKIN</span><select id="skin"></select></label>
+      <label class="field"><span>EYES</span><select id="eyes"></select></label>
+    </div>
+    <div class="row">
+      <label class="field"><span>HAT</span><select id="hat"></select></label>
+      <label class="field"><span>BROWS</span><select id="brows"></select></label>
+    </div>
+  </div>
+
+  <div class="section" id="weaponBlock" hidden>
+    <h3>Weapon source</h3>
+    <div class="row one"><label class="field"><span>WEAPON</span><select id="weapon"></select></label></div>
+  </div>
+
+  <div class="section">
+    <h3>Look</h3>
+    <div class="row">
+      <label class="field"><span>INK / HAIR</span><input id="ink" type="color"></label>
+      <label class="field"><span>GLOW</span><input id="glow" type="number" min="0" max="2" step=".05"></label>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Reference overlay</h3>
+    <label class="dropzone" for="refFile">画像を重ねる / click to load<input id="refFile" type="file" accept="image/*" hidden></label>
+    <div class="slider">
+      <label>Opacity<input id="refOpacity" type="range" min="0" max="1" step=".01"></label>
+      <input id="refOpacityN" type="number" min="0" max="1" step=".01">
+    </div>
+    <div class="row"><button id="clearRef">Clear image</button><button id="toggleRef">Hide / Show</button></div>
+  </div>
+
+  <div class="section">
+    <h3>Viewport</h3>
+    <div class="checkgrid">
+      <label class="toggle"><input id="wire" type="checkbox"> Wireframe</label>
+      <label class="toggle"><input id="grid" type="checkbox" checked> Grid</label>
+      <label class="toggle"><input id="axes" type="checkbox"> Axes</label>
+      <label class="toggle"><input id="rotate" type="checkbox"> Auto rotate</label>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>History</h3>
+    <div class="row"><button id="undoBtn">Undo</button><button id="redoBtn">Redo</button></div>
+    <button id="resetShape">Reset shape</button>
+  </div>
+
+  <div id="error" class="error"></div>
+</aside>
+
+<aside class="right">
+  <div class="tabs">
+    <button data-tab="shape" class="active">Shape</button>
+    <button data-tab="ai">AI JSON</button>
+    <button data-tab="info">Info</button>
+  </div>
+
+  <div class="tabbody" id="tab-shape">
+    <div id="shapeControls"></div>
+    <div id="weaponControls" hidden></div>
+  </div>
+
+  <div class="tabbody" id="tab-ai" hidden>
+    <div class="help">AIはこのJSONだけを編集してよい。変更後 <b>Apply JSON</b> で同じ3D変形を再現する。</div>
+    <textarea id="jsonEditor" spellcheck="false"></textarea>
+    <div class="actions">
+      <button id="applyJson" class="primary">Apply JSON</button>
+      <button id="syncJson">Sync from scene</button>
+      <button id="copyJson">Copy JSON</button>
+      <button id="downloadJson">Download JSON</button>
+      <button id="copyBrief" class="good">Copy AI brief</button>
+      <button id="reloadProfile">Reload profile</button>
+    </div>
+    <div class="help" style="margin-top:9px">
+      推奨: エージェントは <code>modeler-profile.json</code> を小刻みに変更し、スクリーンショットで正面/側面/背面を検証する。
+    </div>
+  </div>
+
+  <div class="tabbody" id="tab-info" hidden>
+    <div class="stats">
+      <div>Model: <b id="statModel">—</b></div>
+      <div>Triangles: <b id="statTris">—</b></div>
+      <div>Meshes: <b id="statMeshes">—</b></div>
+      <div>Profile version: <b id="statVersion">—</b></div>
+      <div>View: <b id="statView">—</b></div>
+    </div>
+    <div class="section">
+      <h3>AI workflow</h3>
+      <div class="help">
+        1. <code>modeler-profile.json</code> のみ編集<br>
+        2. HTMLを再読込して4方向を確認<br>
+        3. 形状を先に合わせ、色・材質は後<br>
+        4. 承認後に値を <code>character-geo.js</code> へ焼き込む<br><br>
+        目標画像をReferenceへ入れると、Front/Right/Backで輪郭を重ねて比較できる。
+      </div>
+    </div>
+  </div>
+</aside>
+
+<div class="badge"><span class="kbd">drag</span> rotate · <span class="kbd">wheel/pinch</span> zoom · <span class="kbd">right drag</span> pan · gizmo = semantic edit</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { TransformControls } from 'three/addons/controls/TransformControls.js';
+import * as GEO from './src/game/character-geo.js';
+import * as MAT from './src/game/character-mats.js';
+import * as WPN from './src/game/character-weapons.js';
+import * as STYLE from './src/game/character-style.js';
+
+const $ = id => document.getElementById(id);
+const deepClone = v => JSON.parse(JSON.stringify(v));
+const merge = (a,b) => {
+  if (!b || typeof b !== 'object') return a;
+  for (const [k,v] of Object.entries(b)) {
+    if (v && typeof v === 'object' && !Array.isArray(v)) {
+      if (!a[k] || typeof a[k] !== 'object') a[k] = {};
+      merge(a[k],v);
+    } else a[k] = v;
+  }
+  return a;
+};
+
+const DEFAULT = {
+  version:1,target:'inkwave-character',
+  notes:'AI-editable non-destructive modelling profile. Values are multipliers unless documented as offsets.',
+  style:{hair:0,outfit:0,skin:1,eyes:1,hat:0,brows:0},
+  look:{ink:'#17d9d0',glow:0},
+  shape:{
+    overallScale:1,
+    headWidth:1,headHeight:1,headDepth:1,
+    headOffsetX:0,headOffsetY:0,headOffsetZ:0,
+    jawWidth:1,cheekWidth:1,
+    eyeScale:1,eyeSpacing:1,eyeHeight:0,
+    earLength:1,
+    hairVolume:1,hairLength:1,hairLift:0,
+    shoulderWidth:1,torsoWidth:1,torsoDepth:1,torsoLength:1,
+    hipWidth:1,armLength:1,armThickness:1,
+    legLength:1,legThickness:1,shoeScale:1,shoeLength:1
+  },
+  weapon:{kind:'shooter',scaleX:1,scaleY:1,scaleZ:1,barrelLength:1},
+  view:{mode:'perspective',wireframe:false,grid:true,referenceOpacity:.45}
+};
+
+let profile = deepClone(DEFAULT);
+try {
+  const r = await fetch('./modeler-profile.json',{cache:'no-store'});
+  if (r.ok) merge(profile,await r.json());
+} catch {}
+
+const stage = $('stage');
+const renderer = new THREE.WebGLRenderer({antialias:true,alpha:true,powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(innerWidth,innerHeight);
+renderer.setClearColor(0x000000,0);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+stage.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.add(new THREE.HemisphereLight(0xe4efff,0x202531,1.9));
+const key = new THREE.DirectionalLight(0xffffff,4.0); key.position.set(3.5,5.5,4.5); key.castShadow=true; scene.add(key);
+const rim = new THREE.DirectionalLight(0x8de4ff,2.0); rim.position.set(-4,3,-3); scene.add(rim);
+const warm = new THREE.DirectionalLight(0xffd5b3,1.0); warm.position.set(3,1,-4); scene.add(warm);
+
+const persp = new THREE.PerspectiveCamera(34,innerWidth/innerHeight,.005,80);
+const ortho = new THREE.OrthographicCamera(-1,1,1,-1,.005,80);
+let camera = persp;
+let viewMode = profile.view?.mode || 'perspective';
+const controls = new OrbitControls(camera,renderer.domElement);
+controls.enableDamping=true; controls.dampingFactor=.07; controls.screenSpacePanning=true;
+controls.minDistance=.12; controls.maxDistance=12;
+
+const transform = new TransformControls(camera,renderer.domElement);
+transform.setSize(.78);
+scene.add(transform.getHelper ? transform.getHelper() : transform);
+transform.addEventListener('dragging-changed',e=>controls.enabled=!e.value);
+
+const grid = new THREE.GridHelper(8,32,0x40516d,0x202938); scene.add(grid);
+const axes = new THREE.AxesHelper(.55); axes.visible=false; scene.add(axes);
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(20,20),new THREE.ShadowMaterial({color:0x000000,opacity:.24}));
+floor.rotation.x=-Math.PI/2; floor.position.y=-.004; floor.receiveShadow=true; scene.add(floor);
+
+const modelLayer = new THREE.Group(); scene.add(modelLayer);
+const handle = new THREE.Object3D(); scene.add(handle);
+let current = null;
+let currentMode = 'character';
+let currentView = 'perspective';
+let refVisible = true;
+let history = [], future = [];
+let rebuildQueued = false;
+
+const HEAD = GEO.HEAD_C ? GEO.HEAD_C.clone() : new THREE.Vector3(0,1.214,.012);
+const HIP_Y = .64;
+const NECK_Y = 1.0;
+
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const smooth=(a,b,x)=>{
+  const t=clamp((x-a)/(b-a),0,1);
+  return t*t*(3-2*t);
+};
+const gauss=(x,s)=>Math.exp(-((x/s)**2));
+
+function mapY(y,s){
+  const leg=s.legLength, torso=s.torsoLength;
+  let out;
+  if(y<HIP_Y) out=y*leg;
+  else {
+    const hip2=HIP_Y*leg;
+    if(y<NECK_Y) out=hip2+(y-HIP_Y)*torso;
+    else out=hip2+(NECK_Y-HIP_Y)*torso+(y-NECK_Y);
+  }
+  return out;
+}
+function mappedHeadCenter(s){
+  return new THREE.Vector3(
+    HEAD.x+s.headOffsetX,
+    mapY(HEAD.y,s)+s.headOffsetY,
+    HEAD.z+s.headOffsetZ
+  );
+}
+function copyGeo(g){
+  const c=g.clone();
+  if(g.index) c.setIndex(g.index.clone());
+  for(const k of Object.keys(g.attributes)) c.setAttribute(k,g.attributes[k].clone());
+  return c;
+}
+function deformCharacterGeometry(source,kind,s){
+  const g=copyGeo(source);
+  const p=g.attributes.position;
+  const hc=mappedHeadCenter(s);
+  const baseHC=HEAD;
+  for(let i=0;i<p.count;i++){
+    let x=p.getX(i), y=p.getY(i), z=p.getZ(i);
+    const oy=y;
+    y=mapY(y,s);
+
+    const headK=smooth(.965,1.075,oy);
+    if(headK>0){
+      const bx=x-baseHC.x, by=oy-baseHC.y, bz=z-baseHC.z;
+      let sx=s.headWidth, sy=s.headHeight, sz=s.headDepth;
+      if(kind==='hair'){ sx*=s.hairVolume; sz*=s.hairVolume; }
+      x = x*(1-headK) + (hc.x + bx*sx)*headK;
+      y = y*(1-headK) + (hc.y + by*sy)*headK;
+      z = z*(1-headK) + (hc.z + bz*sz)*headK;
+
+      if(kind==='skin'){
+        const jawK=gauss(oy-1.09,.07)*headK;
+        x = hc.x + (x-hc.x)*(1+(s.jawWidth-1)*jawK);
+        const cheekK=gauss(oy-1.19,.08)*gauss(Math.abs(bx)-.105,.06)*headK;
+        x = hc.x + (x-hc.x)*(1+(s.cheekWidth-1)*cheekK);
+        const earK=smooth(.15,.205,Math.abs(bx))*gauss(oy-1.2,.12)*headK;
+        x = hc.x + (x-hc.x)*(1+(s.earLength-1)*earK);
+      }
+      if(kind==='hair'){
+        const dy=y-hc.y;
+        if(dy<0) y=hc.y+dy*s.hairLength;
+        else y+=s.hairLift*headK;
+        y+=s.hairLift*headK;
+      }
+    }
+
+    if(kind==='eyes'){
+      const side=x>=hc.x?1:-1;
+      const centerX=hc.x+side*.072*s.headWidth*s.eyeSpacing;
+      const centerY=mapY(1.235,s)+s.headOffsetY+s.eyeHeight;
+      x=centerX+(x-centerX)*s.eyeScale;
+      y=centerY+(y-centerY)*s.eyeScale;
+    }
+
+    const torsoK=(1-smooth(.58,.67,oy))*0 + smooth(.61,.70,oy)*(1-smooth(.98,1.04,oy));
+    if(torsoK>0 && (kind==='skin'||kind==='cloth')){
+      const shK=smooth(.86,.96,oy);
+      const width=s.torsoWidth*(1+(s.shoulderWidth-1)*shK);
+      x*=1+(width-1)*torsoK;
+      z*=1+(s.torsoDepth-1)*torsoK;
+    }
+
+    const hipK=gauss(oy-.64,.13);
+    if((kind==='skin'||kind==='cloth') && hipK>.001) x*=1+(s.hipWidth-1)*hipK;
+
+    const legK=1-smooth(.61,.69,oy);
+    if((kind==='skin'||kind==='cloth') && legK>0){
+      const side=x>=0?1:-1;
+      const cx=side*.08*s.hipWidth;
+      x=cx+(x-cx)*(1+(s.legThickness-1)*legK);
+    }
+
+    if(kind==='skin'){
+      const armZone=smooth(.50,.58,oy)*(1-smooth(.985,1.02,oy))*smooth(.105,.145,Math.abs(x));
+      if(armZone>0){
+        const side=x>=0?1:-1;
+        const shoulder=new THREE.Vector3(side*.145*s.shoulderWidth,mapY(.95,s),-.012);
+        let vx=x-shoulder.x, vy=y-shoulder.y, vz=z-shoulder.z;
+        const along=s.armLength;
+        x=shoulder.x+vx*along;
+        y=shoulder.y+vy*along;
+        z=shoulder.z+vz*along;
+        const thick=s.armThickness;
+        x=shoulder.x+(x-shoulder.x)*(1+(thick-1)*.55);
+        z=shoulder.z+(z-shoulder.z)*(1+(thick-1)*.8);
+      }
+    }
+
+    if(kind==='cloth'){
+      const shoeK=1-smooth(.15,.22,oy);
+      if(shoeK>0){
+        const side=x>=0?1:-1;
+        const cx=side*.084*s.hipWidth;
+        x=cx+(x-cx)*(1+(s.shoeScale-1)*shoeK);
+        y*=1+(s.shoeScale-1)*shoeK*.35;
+        const footZ=-.01;
+        z=footZ+(z-footZ)*(1+(s.shoeLength-1)*shoeK);
+      }
+    }
+
+    p.setXYZ(i,x*s.overallScale,y*s.overallScale,z*s.overallScale);
+  }
+  p.needsUpdate=true;
+  if(g.attributes.normal) g.computeVertexNormals();
+  g.computeBoundingBox(); g.computeBoundingSphere();
+  return g;
+}
+
+function deformWeaponGeometry(source,w){
+  if(!source) return null;
+  const g=copyGeo(source), p=g.attributes.position;
+  for(let i=0;i<p.count;i++){
+    let x=p.getX(i)*w.scaleX;
+    let y=p.getY(i)*w.scaleY;
+    let z=p.getZ(i);
+    const forward=smooth(.02,.18,z);
+    z*=w.scaleZ*(1+(w.barrelLength-1)*forward);
+    p.setXYZ(i,x,y,z);
+  }
+  p.needsUpdate=true;
+  if(g.attributes.normal) g.computeVertexNormals();
+  g.computeBoundingBox();g.computeBoundingSphere();
+  return g;
+}
+
+function ownedMaterial(m){ m.userData.modelerOwned=true; return m; }
+function makeCharacter(){
+  const st=STYLE.resolveStyle(profile.style,0);
+  const u=MAT.makeCharUniforms();
+  STYLE.applyStyleUniforms(u,st);
+  u.uTeam.value.set(profile.look.ink);
+  if(u.uGlow) u.uGlow.value.set(profile.look.ink).multiplyScalar(profile.look.glow||0);
+  const sh=GEO.getKidShared(), hair=GEO.getHairStyle(st), s=profile.shape;
+  const group=new THREE.Group(); group.name='character-modeler';
+  const skinM=ownedMaterial(MAT.makeSkinMaterial(u,STYLE.SKIN_TONES[st.skin]));
+  const clothM=ownedMaterial(MAT.makeClothMaterial(u));
+  const hairM=ownedMaterial(MAT.makeHairMaterial(u));
+  const eyeM=ownedMaterial(MAT.makeEyeMaterial(u));
+  const add=(geo,mat,kind)=>{
+    const m=new THREE.Mesh(deformCharacterGeometry(geo,kind,s),mat);
+    m.castShadow=true;m.receiveShadow=true;group.add(m);return m;
+  };
+  add(sh.skin,skinM,'skin');
+  add(sh.cloth,clothM,'cloth');
+  add(hair.geo,hairM,'hair');
+  add(sh.eyes,eyeM,'eyes');
+  if(sh.tank?.glass&&sh.tank?.fill){
+    const tank=new THREE.Group();
+    tank.position.copy(sh.tank.center);
+    tank.position.y=mapY(tank.position.y,s);
+    tank.scale.setScalar(s.overallScale);
+    tank.rotation.x=sh.tank.tilt;
+    const fillM=ownedMaterial(MAT.makeInkFillMaterial());fillM.color.set(profile.look.ink);
+    const ink=new THREE.Mesh(sh.tank.fill,fillM);ink.position.y=sh.tank.fillBottom;ink.scale.y=sh.tank.fillHeight;
+    const glass=new THREE.Mesh(sh.tank.glass,MAT.getGlassMaterial());glass.renderOrder=2;
+    tank.add(ink,glass);group.add(tank);
+  }
+  $('statModel').textContent='Character · '+(STYLE.HAIR_STYLE_NAMES[st.hair]||st.hair);
+  return group;
+}
+
+function makeWeapon(){
+  const kind=profile.weapon.kind;
+  const team=new THREE.Color(profile.look.ink);
+  const group=new THREE.Group();group.name='weapon-modeler:'+kind;
+  const plastic=MAT.getPlasticMaterial(), ink=MAT.getInkMaterial(team);
+  if(kind==='bomb'){
+    const d=WPN.getSubDef('bomb');
+    if(d.body) group.add(new THREE.Mesh(deformWeaponGeometry(d.body,profile.weapon),plastic));
+    if(d.ink) group.add(new THREE.Mesh(deformWeaponGeometry(d.ink,profile.weapon),ink));
+  }else{
+    const d=WPN.getWeaponDef(kind);
+    if(d.body) group.add(new THREE.Mesh(deformWeaponGeometry(d.body,profile.weapon),plastic));
+    if(d.ink) group.add(new THREE.Mesh(deformWeaponGeometry(d.ink,profile.weapon),ink));
+    if(d.glow){
+      const coil=ownedMaterial(WPN.makeCoilMaterial());coil.emissive.copy(team);
+      if(coil.userData?.u){coil.userData.u.uCharge.value=1;coil.userData.u.uFull.value=1;}
+      group.add(new THREE.Mesh(deformWeaponGeometry(d.glow,profile.weapon),coil));
+    }
+    if(d.drum){
+      const dg=new THREE.Group();dg.position.copy(d.drumAt);
+      dg.position.x*=profile.weapon.scaleX;dg.position.y*=profile.weapon.scaleY;dg.position.z*=profile.weapon.scaleZ;
+      dg.add(new THREE.Mesh(deformWeaponGeometry(d.drum,profile.weapon),ink));
+      if(d.drumCaps) dg.add(new THREE.Mesh(deformWeaponGeometry(d.drumCaps,profile.weapon),plastic));
+      group.add(dg);
+    }
+  }
+  group.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});
+  $('statModel').textContent='Weapon · '+kind;
+  return group;
+}
+
+function disposeCurrent(){
+  if(!current)return;
+  current.traverse(o=>{
+    if(o.geometry) o.geometry.dispose?.();
+    if(o.material?.userData?.modelerOwned) o.material.dispose?.();
+  });
+  current.removeFromParent();current=null;
+}
+
+function countStats(obj){
+  let tris=0,meshes=0;
+  obj.traverse(o=>{
+    if(!o.isMesh||!o.geometry)return;
+    meshes++;
+    tris+=(o.geometry.index?o.geometry.index.count:o.geometry.attributes.position.count)/3;
+  });
+  return {tris:Math.round(tris),meshes};
+}
+
+function applyWire(){
+  const on=$('wire').checked;
+  current?.traverse(o=>{if(o.isMesh&&o.material&&'wireframe'in o.material)o.material.wireframe=on;});
+}
+
+function rebuild(refit=false){
+  try{
+    disposeCurrent();
+    current=currentMode==='character'?makeCharacter():makeWeapon();
+    modelLayer.add(current);
+    applyWire();
+    const st=countStats(current);
+    $('statTris').textContent=st.tris.toLocaleString();
+    $('statMeshes').textContent=st.meshes;
+    $('statVersion').textContent=profile.version;
+    updateJson();
+    syncInputs();
+    syncHandle();
+    if(refit) fitCamera();
+    $('error').style.display='none';
+  }catch(err){
+    console.error(err);$('error').style.display='block';$('error').textContent=err.stack||String(err);
+  }
+}
+function queueRebuild(){
+  if(rebuildQueued)return;
+  rebuildQueued=true;
+  requestAnimationFrame(()=>{rebuildQueued=false;rebuild(false);});
+}
+
+function getBox(){
+  if(!current)return new THREE.Box3(new THREE.Vector3(-.3,0,-.3),new THREE.Vector3(.3,1.4,.3));
+  current.updateMatrixWorld(true);return new THREE.Box3().setFromObject(current);
+}
+function switchCamera(mode){
+  currentView=mode;
+  document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===mode));
+  if(mode==='perspective'){
+    camera=persp;
+  }else{
+    camera=ortho;
+  }
+  controls.object=camera;
+  transform.camera=camera;
+  $('statView').textContent=mode;
+  fitCamera();
+}
+function fitCamera(){
+  const box=getBox();if(box.isEmpty())return;
+  const c=box.getCenter(new THREE.Vector3()),sz=box.getSize(new THREE.Vector3()),m=Math.max(sz.x,sz.y,sz.z,.1);
+  if(camera===persp){
+    const f=THREE.MathUtils.degToRad(persp.fov);
+    const d=(m*.68/Math.tan(f/2))*1.32;
+    const dir=new THREE.Vector3(.8,.25,1.5).normalize().multiplyScalar(d);
+    persp.position.copy(c).add(dir);persp.near=Math.max(.002,d/150);persp.far=d*25;persp.updateProjectionMatrix();
+  }else{
+    const aspect=innerWidth/innerHeight,half=m*.72;
+    ortho.left=-half*aspect;ortho.right=half*aspect;ortho.top=half;ortho.bottom=-half;ortho.near=.001;ortho.far=80;
+    const d=5;
+    if(currentView==='front')ortho.position.set(c.x,c.y,c.z+d);
+    if(currentView==='back')ortho.position.set(c.x,c.y,c.z-d);
+    if(currentView==='right')ortho.position.set(c.x+d,c.y,c.z);
+    if(currentView==='left')ortho.position.set(c.x-d,c.y,c.z);
+    ortho.lookAt(c);ortho.updateProjectionMatrix();
+  }
+  controls.target.copy(c);controls.update();
+}
+
+const defs = [
+  ['overallScale','Overall scale',.65,1.45,.01],
+  ['headWidth','Head width',.65,1.5,.01],
+  ['headHeight','Head height',.65,1.5,.01],
+  ['headDepth','Head depth',.65,1.5,.01],
+  ['headOffsetX','Head X offset',-.15,.15,.002],
+  ['headOffsetY','Head Y offset',-.15,.15,.002],
+  ['headOffsetZ','Head Z offset',-.15,.15,.002],
+  ['jawWidth','Jaw width',.6,1.45,.01],
+  ['cheekWidth','Cheek width',.6,1.45,.01],
+  ['eyeScale','Eye size',.6,1.5,.01],
+  ['eyeSpacing','Eye spacing',.7,1.4,.01],
+  ['eyeHeight','Eye height',-.1,.1,.002],
+  ['earLength','Ear length',.6,1.7,.01],
+  ['hairVolume','Hair volume',.55,1.7,.01],
+  ['hairLength','Hair length',.5,1.8,.01],
+  ['hairLift','Hair lift',-.15,.2,.002],
+  ['shoulderWidth','Shoulder width',.7,1.4,.01],
+  ['torsoWidth','Torso width',.7,1.4,.01],
+  ['torsoDepth','Torso depth',.7,1.4,.01],
+  ['torsoLength','Torso length',.75,1.35,.01],
+  ['hipWidth','Hip width',.7,1.4,.01],
+  ['armLength','Arm length',.75,1.35,.01],
+  ['armThickness','Arm thickness',.65,1.45,.01],
+  ['legLength','Leg length',.75,1.35,.01],
+  ['legThickness','Leg thickness',.65,1.45,.01],
+  ['shoeScale','Shoe size',.65,1.55,.01],
+  ['shoeLength','Shoe length',.65,1.65,.01]
+];
+const weaponDefs=[
+  ['scaleX','Weapon width',.5,1.7,.01],
+  ['scaleY','Weapon height',.5,1.7,.01],
+  ['scaleZ','Weapon length',.5,1.7,.01],
+  ['barrelLength','Barrel emphasis',.6,1.8,.01]
+];
+function buildSliders(root,defs,scope){
+  root.innerHTML='';
+  for(const [key,label,min,max,step] of defs){
+    const wrap=document.createElement('div');wrap.className='slider';
+    wrap.innerHTML='<label>'+label+'<input data-range="'+key+'" type="range" min="'+min+'" max="'+max+'" step="'+step+'"></label><input data-number="'+key+'" type="number" min="'+min+'" max="'+max+'" step="'+step+'">';
+    root.appendChild(wrap);
+    const range=wrap.querySelector('[data-range]'),num=wrap.querySelector('[data-number]');
+    const set=v=>{
+      snapshot();
+      profile[scope][key]=clamp(+v,min,max);
+      range.value=profile[scope][key];num.value=profile[scope][key];
+      queueRebuild();
+    };
+    range.addEventListener('input',()=>{profile[scope][key]=+range.value;num.value=range.value;queueRebuild();});
+    range.addEventListener('change',()=>snapshot());
+    num.addEventListener('change',()=>set(num.value));
+  }
+}
+buildSliders($('shapeControls'),defs,'shape');
+buildSliders($('weaponControls'),weaponDefs,'weapon');
+
+function setOptions(el,labels){el.innerHTML=labels.map((x,i)=>'<option value="'+i+'">'+x+'</option>').join('');}
+setOptions($('hair'),STYLE.HAIR_STYLE_NAMES);
+setOptions($('outfit'),STYLE.OUTFIT_NAMES);
+setOptions($('skin'),STYLE.SKIN_NAMES);
+setOptions($('eyes'),STYLE.IRIS_NAMES);
+setOptions($('hat'),STYLE.HAT_NAMES);
+setOptions($('brows'),STYLE.BROW_NAMES);
+$('weapon').innerHTML=[...WPN.WEAPON_KINDS,'bomb'].map(x=>'<option value="'+x+'">'+x+'</option>').join('');
+
+function syncInputs(){
+  for(const [k] of defs){
+    document.querySelector('[data-range="'+k+'"]').value=profile.shape[k];
+    document.querySelector('[data-number="'+k+'"]').value=profile.shape[k];
+  }
+  for(const [k] of weaponDefs){
+    document.querySelector('[data-range="'+k+'"]').value=profile.weapon[k];
+    document.querySelector('[data-number="'+k+'"]').value=profile.weapon[k];
+  }
+  for(const k of ['hair','outfit','skin','eyes','hat','brows'])$(k).value=profile.style[k];
+  $('weapon').value=profile.weapon.kind;
+  $('ink').value=profile.look.ink;
+  $('glow').value=profile.look.glow||0;
+  $('wire').checked=!!profile.view.wireframe;
+  $('grid').checked=profile.view.grid!==false;
+  $('refOpacity').value=profile.view.referenceOpacity??.45;
+  $('refOpacityN').value=profile.view.referenceOpacity??.45;
+  grid.visible=$('grid').checked;
+  $('refImage').style.opacity=profile.view.referenceOpacity??.45;
+}
+
+function updateJson(){
+  $('jsonEditor').value=JSON.stringify(profile,null,2);
+}
+function snapshot(){
+  const now=JSON.stringify(profile);
+  if(history[history.length-1]!==now){history.push(now);if(history.length>80)history.shift();}
+  future=[];
+}
+function restore(raw){
+  profile=merge(deepClone(DEFAULT),JSON.parse(raw));
+  currentMode=profile.target==='inkwave-weapon'?'weapon':currentMode;
+  rebuild(true);
+}
+$('undoBtn').onclick=()=>{
+  if(!history.length)return;
+  future.push(JSON.stringify(profile));
+  restore(history.pop());
+};
+$('redoBtn').onclick=()=>{
+  if(!future.length)return;
+  history.push(JSON.stringify(profile));
+  restore(future.pop());
+};
+$('resetShape').onclick=()=>{snapshot();profile.shape=deepClone(DEFAULT.shape);profile.weapon={...profile.weapon,...deepClone(DEFAULT.weapon),kind:profile.weapon.kind};rebuild(true);};
+
+function syncHandle(){
+  transform.detach();
+  handle.position.set(0,0,0);handle.scale.set(1,1,1);handle.rotation.set(0,0,0);
+  const t=$('gizmoTarget').value,s=profile.shape;
+  if(currentMode==='weapon'||t==='whole'){
+    if(current){handle.position.copy(current.position);handle.scale.copy(current.scale);}
+  }else if(t==='head'){
+    const c=mappedHeadCenter(s);handle.position.copy(c).multiplyScalar(s.overallScale);handle.scale.set(s.headWidth,s.headHeight,s.headDepth);
+  }else if(t==='hair'){
+    const c=mappedHeadCenter(s);handle.position.copy(c).multiplyScalar(s.overallScale);handle.position.y+=s.hairLift*s.overallScale;handle.scale.set(s.hairVolume,s.hairLength,s.hairVolume);
+  }else if(t==='torso'){
+    handle.position.set(0,mapY(.82,s)*s.overallScale,0);handle.scale.set(s.torsoWidth,s.torsoLength,s.torsoDepth);
+  }else if(t==='shoes'){
+    handle.position.set(0,.08*s.legLength*s.overallScale,0);handle.scale.set(s.shoeScale,s.shoeScale,s.shoeLength);
+  }
+  transform.attach(handle);
+}
+transform.addEventListener('mouseDown',()=>snapshot());
+transform.addEventListener('mouseUp',()=>{
+  const t=$('gizmoTarget').value,s=profile.shape;
+  if(currentMode==='weapon'||t==='whole'){
+    if(current){
+      current.position.copy(handle.position);current.scale.copy(handle.scale);
+    }
+  }else if(t==='head'){
+    s.headWidth=clamp(handle.scale.x,.65,1.5);s.headHeight=clamp(handle.scale.y,.65,1.5);s.headDepth=clamp(handle.scale.z,.65,1.5);
+    const base=mappedHeadCenter({...s,headOffsetX:0,headOffsetY:0,headOffsetZ:0}).multiplyScalar(s.overallScale);
+    s.headOffsetX=(handle.position.x-base.x)/s.overallScale;
+    s.headOffsetY=(handle.position.y-base.y)/s.overallScale;
+    s.headOffsetZ=(handle.position.z-base.z)/s.overallScale;
+  }else if(t==='hair'){
+    s.hairVolume=clamp((handle.scale.x+handle.scale.z)*.5,.55,1.7);
+    s.hairLength=clamp(handle.scale.y,.5,1.8);
+    const base=mappedHeadCenter(s).multiplyScalar(s.overallScale);
+    s.hairLift=(handle.position.y-base.y)/s.overallScale;
+  }else if(t==='torso'){
+    s.torsoWidth=clamp(handle.scale.x,.7,1.4);s.torsoLength=clamp(handle.scale.y,.75,1.35);s.torsoDepth=clamp(handle.scale.z,.7,1.4);
+  }else if(t==='shoes'){
+    s.shoeScale=clamp((handle.scale.x+handle.scale.y)*.5,.65,1.55);s.shoeLength=clamp(handle.scale.z,.65,1.65);
+  }
+  rebuild(false);
+});
+
+$('moveTool').onclick=()=>{transform.setMode('translate');$('moveTool').classList.add('active');$('scaleTool').classList.remove('active');};
+$('scaleTool').onclick=()=>{transform.setMode('scale');$('scaleTool').classList.add('active');$('moveTool').classList.remove('active');};
+$('gizmoTarget').onchange=syncHandle;
+
+$('mode').onchange=()=>{
+  snapshot();currentMode=$('mode').value;
+  $('characterStyleBlock').hidden=currentMode!=='character';
+  $('weaponBlock').hidden=currentMode!=='weapon';
+  $('weaponControls').hidden=currentMode!=='weapon';
+  $('shapeControls').hidden=currentMode!=='character';
+  profile.target=currentMode==='character'?'inkwave-character':'inkwave-weapon';
+  rebuild(true);
+};
+
+for(const k of ['hair','outfit','skin','eyes','hat','brows']){
+  $(k).onchange=()=>{snapshot();profile.style[k]=+$(k).value;rebuild(true);};
+}
+$('weapon').onchange=()=>{snapshot();profile.weapon.kind=$('weapon').value;rebuild(true);};
+$('ink').oninput=()=>{profile.look.ink=$('ink').value;queueRebuild();};
+$('ink').onchange=snapshot;
+$('glow').onchange=()=>{snapshot();profile.look.glow=clamp(+$('glow').value,0,2);rebuild(false);};
+
+$('wire').onchange=()=>{profile.view.wireframe=$('wire').checked;applyWire();updateJson();};
+$('grid').onchange=()=>{profile.view.grid=$('grid').checked;grid.visible=$('grid').checked;updateJson();};
+$('axes').onchange=()=>axes.visible=$('axes').checked;
+$('rotate').onchange=()=>controls.autoRotate=$('rotate').checked;
+
+document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>switchCamera(b.dataset.view));
+$('fitBtn').onclick=fitCamera;
+
+document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{
+  const id=b.dataset.tab;
+  document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('active',x===b));
+  for(const t of ['shape','ai','info'])$('tab-'+t).hidden=t!==id;
+  if(id==='ai')updateJson();
+});
+
+$('applyJson').onclick=()=>{
+  try{
+    snapshot();
+    const next=JSON.parse($('jsonEditor').value);
+    profile=merge(deepClone(DEFAULT),next);
+    currentMode=profile.target==='inkwave-weapon'?'weapon':'character';
+    $('mode').value=currentMode;
+    $('characterStyleBlock').hidden=currentMode!=='character';
+    $('weaponBlock').hidden=currentMode!=='weapon';
+    $('weaponControls').hidden=currentMode!=='weapon';
+    $('shapeControls').hidden=currentMode!=='character';
+    rebuild(true);
+  }catch(e){$('error').style.display='block';$('error').textContent='Invalid JSON: '+e.message;}
+};
+$('syncJson').onclick=updateJson;
+$('copyJson').onclick=async()=>{updateJson();await navigator.clipboard.writeText($('jsonEditor').value);};
+$('downloadJson').onclick=()=>{
+  updateJson();const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([$('jsonEditor').value+'\n'],{type:'application/json'}));
+  a.download='modeler-profile.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+};
+$('copyBrief').onclick=async()=>{
+  updateJson();
+  const brief=`You are editing the INKWAVE character/weapon model through modeler-profile.json.
+Edit ONLY valid profile values first; do not touch gameplay code.
+Work in silhouette-first order: proportions -> face -> hair -> clothing -> materials.
+After each meaningful change, inspect Front, Right, Back and Perspective views.
+Keep edits small enough to identify regressions.
+Important parameter semantics:
+- multipliers use 1.0 as current source geometry
+- offsets are metres in kid space
+- head* affects the head region; hair* affects the procedural hair mesh
+- legLength and torsoLength change vertical proportions
+- shoeScale/shoeLength control footwear silhouette
+- weapon scaleX/Y/Z and barrelLength affect static weapon preview
+Target profile:
+${$('jsonEditor').value}`;
+  await navigator.clipboard.writeText(brief);
+};
+$('reloadProfile').onclick=async()=>{
+  const r=await fetch('./modeler-profile.json?'+Date.now());
+  if(!r.ok)return;profile=merge(deepClone(DEFAULT),await r.json());rebuild(true);
+};
+
+$('refFile').onchange=()=>{
+  const f=$('refFile').files?.[0];if(!f)return;
+  const u=URL.createObjectURL(f);$('refImage').src=u;$('refImage').style.display='block';refVisible=true;
+};
+$('clearRef').onclick=()=>{$('refImage').src='';$('refImage').style.display='none';};
+$('toggleRef').onclick=()=>{refVisible=!refVisible;$('refImage').style.display=refVisible&&$('refImage').src?'block':'none';};
+function setRefOpacity(v){
+  v=clamp(+v,0,1);profile.view.referenceOpacity=v;$('refOpacity').value=v;$('refOpacityN').value=v;$('refImage').style.opacity=v;updateJson();
+}
+$('refOpacity').oninput=()=>setRefOpacity($('refOpacity').value);
+$('refOpacityN').onchange=()=>setRefOpacity($('refOpacityN').value);
+
+function onResize(){
+  const w=innerWidth,h=innerHeight;renderer.setSize(w,h);
+  persp.aspect=w/h;persp.updateProjectionMatrix();
+  if(camera===ortho)fitCamera();
+}
+window.addEventListener('resize',onResize);
+
+const clock=new THREE.Clock();
+function frame(){
+  requestAnimationFrame(frame);
+  const dt=Math.min(clock.getDelta(),.05);
+  controls.update(dt);
+  if(currentMode==='character'&&profile.look.glow>0){
+    current?.traverse(o=>{
+      const u=o.material?.userData?.u;
+      if(u?.uTime)u.uTime.value+=dt;
+    });
+  }
+  renderer.render(scene,camera);
+}
+syncInputs();
+$('mode').value=currentMode;
+$('weaponControls').hidden=true;
+switchCamera(viewMode);
+rebuild(true);
+frame();
+</script>
+</body>
+</html>
