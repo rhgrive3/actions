@@ -1,0 +1,471 @@
+[
+  {
+    "url": "https://inkwave-aah.pages.dev/",
+    "final_url": "https://inkwave-aah.pages.dev/",
+    "path": "index.html",
+    "bytes": 2290,
+    "content_type": "text/html; charset=utf-8"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/src/main.js",
+    "final_url": "https://inkwave-aah.pages.dev/src/main.js",
+    "path": "src/main.js",
+    "bytes": 49871,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/vendor/three/build/three.module.js",
+    "final_url": "https://inkwave-aah.pages.dev/vendor/three/build/three.module.js",
+    "path": "vendor/three/build/three.module.js",
+    "bytes": 662772,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/src/world/decor.js",
+    "final_url": "https://inkwave-aah.pages.dev/src/world/decor.js",
+    "path": "src/world/decor.js",
+    "bytes": 28350,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/src/ui/diorama.js",
+    "final_url": "https://inkwave-aah.pages.dev/src/ui/diorama.js",
+    "path": "src/ui/diorama.js",
+    "bytes": 11287,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/src/game/nav.js",
+    "final_url": "https://inkwave-aah.pages.dev/src/game/nav.js",
+    "path": "src/game/nav.js",
+    "bytes": 8327,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/src/ui/menus.js",
+    "final_url": "https://inkwave-aah.pages.dev/src/ui/menus.js",
+    "path": "src/ui/menus.js",
+    "bytes": 136495,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/src/audio/audio.js",
+    "final_url": "https://inkwave-aah.pages.dev/src/audio/audio.js",
+    "path": "src/audio/audio.js",
+    "bytes": 66533,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/src/dev/stubs.js",
+    "final_url": "https://inkwave-aah.pages.dev/src/dev/stubs.js",
+    "path": "src/dev/stubs.js",
+    "bytes": 2123,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/src/world/levelMaterial.js",
+    "final_url": "https://inkwave-aah.pages.dev/src/world/levelMaterial.js",
+    "path": "src/world/levelMaterial.js",
+    "bytes": 37558,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/src/fx/screenfx.js",
+    "final_url": "https://inkwave-aah.pages.dev/src/fx/screenfx.js",
+    "path": "src/fx/screenfx.js",
+    "bytes": 53896,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/src/game/showcase.js",
+    "final_url": "https://inkwave-aah.pages.dev/src/game/showcase.js",
+    "path": "src/game/showcase.js",
+    "bytes": 87097,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/src/game/character.js",
+    "final_url": "https://inkwave-aah.pages.dev/src/game/character.js",
+    "path": "src/game/character.js",
+    "bytes": 182215,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/src/world/dressing.js",
+    "final_url": "https://inkwave-aah.pages.dev/src/world/dressing.js",
+    "path": "src/world/dressing.js",
+    "bytes": 21535,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/src/world/murals.js",
+    "final_url": "https://inkwave-aah.pages.dev/src/world/murals.js",
+    "path": "src/world/murals.js",
+    "bytes": 17896,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/src/core/renderer.js",
+    "final_url": "https://inkwave-aah.pages.dev/src/core/renderer.js",
+    "path": "src/core/renderer.js",
+    "bytes": 8927,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/src/game/physics.js",
+    "final_url": "https://inkwave-aah.pages.dev/src/game/physics.js",
+    "path": "src/game/physics.js",
+    "bytes": 16970,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/src/game/minimap.js",
+    "final_url": "https://inkwave-aah.pages.dev/src/game/minimap.js",
+    "path": "src/game/minimap.js",
+    "bytes": 23959,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/src/fx/fx.js",
+    "final_url": "https://inkwave-aah.pages.dev/src/fx/fx.js",
+    "path": "src/fx/fx.js",
+    "bytes": 122006,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/src/world/maps.js",
+    "final_url": "https://inkwave-aah.pages.dev/src/world/maps.js",
+    "path": "src/world/maps.js",
+    "bytes": 19139,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/src/world/texlib.js",
+    "final_url": "https://inkwave-aah.pages.dev/src/world/texlib.js",
+    "path": "src/world/texlib.js",
+    "bytes": 89899,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/src/core/input.js",
+    "final_url": "https://inkwave-aah.pages.dev/src/core/input.js",
+    "path": "src/core/input.js",
+    "bytes": 6465,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/src/fx/swimWake.js",
+    "final_url": "https://inkwave-aah.pages.dev/src/fx/swimWake.js",
+    "path": "src/fx/swimWake.js",
+    "bytes": 5123,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/src/config.js",
+    "final_url": "https://inkwave-aah.pages.dev/src/config.js",
+    "path": "src/config.js",
+    "bytes": 13206,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/src/world/mapThumb.js",
+    "final_url": "https://inkwave-aah.pages.dev/src/world/mapThumb.js",
+    "path": "src/world/mapThumb.js",
+    "bytes": 5501,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/src/ui/hud.js",
+    "final_url": "https://inkwave-aah.pages.dev/src/ui/hud.js",
+    "path": "src/ui/hud.js",
+    "bytes": 81338,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/src/world/paint.js",
+    "final_url": "https://inkwave-aah.pages.dev/src/world/paint.js",
+    "path": "src/world/paint.js",
+    "bytes": 35139,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/src/core/ctx.js",
+    "final_url": "https://inkwave-aah.pages.dev/src/core/ctx.js",
+    "path": "src/core/ctx.js",
+    "bytes": 1928,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/src/game/weapons.js",
+    "final_url": "https://inkwave-aah.pages.dev/src/game/weapons.js",
+    "path": "src/game/weapons.js",
+    "bytes": 70350,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/src/game/match.js",
+    "final_url": "https://inkwave-aah.pages.dev/src/game/match.js",
+    "path": "src/game/match.js",
+    "bytes": 6476,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/src/world/environment.js",
+    "final_url": "https://inkwave-aah.pages.dev/src/world/environment.js",
+    "path": "src/world/environment.js",
+    "bytes": 149462,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/src/game/cameraRig.js",
+    "final_url": "https://inkwave-aah.pages.dev/src/game/cameraRig.js",
+    "path": "src/game/cameraRig.js",
+    "bytes": 25047,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/src/audio/music.js",
+    "final_url": "https://inkwave-aah.pages.dev/src/audio/music.js",
+    "path": "src/audio/music.js",
+    "bytes": 58532,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/src/fx/fxHooks.js",
+    "final_url": "https://inkwave-aah.pages.dev/src/fx/fxHooks.js",
+    "path": "src/fx/fxHooks.js",
+    "bytes": 35277,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/src/world/props.js",
+    "final_url": "https://inkwave-aah.pages.dev/src/world/props.js",
+    "path": "src/world/props.js",
+    "bytes": 229900,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/src/world/level.js",
+    "final_url": "https://inkwave-aah.pages.dev/src/world/level.js",
+    "path": "src/world/level.js",
+    "bytes": 20012,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/vendor/three/build/three.core.js",
+    "final_url": "https://inkwave-aah.pages.dev/vendor/three/build/three.core.js",
+    "path": "vendor/three/build/three.core.js",
+    "bytes": 1458113,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/vendor/three/jsm/utils/BufferGeometryUtils.js",
+    "final_url": "https://inkwave-aah.pages.dev/vendor/three/jsm/utils/BufferGeometryUtils.js",
+    "path": "vendor/three/jsm/utils/BufferGeometryUtils.js",
+    "bytes": 37712,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/src/ui/ui-icons.js",
+    "final_url": "https://inkwave-aah.pages.dev/src/ui/ui-icons.js",
+    "path": "src/ui/ui-icons.js",
+    "bytes": 31781,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/src/ui/ui-util.js",
+    "final_url": "https://inkwave-aah.pages.dev/src/ui/ui-util.js",
+    "path": "src/ui/ui-util.js",
+    "bytes": 10106,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/src/game/character-style.js",
+    "final_url": "https://inkwave-aah.pages.dev/src/game/character-style.js",
+    "path": "src/game/character-style.js",
+    "bytes": 8481,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/src/ui/menu-art.js",
+    "final_url": "https://inkwave-aah.pages.dev/src/ui/menu-art.js",
+    "path": "src/ui/menu-art.js",
+    "bytes": 60065,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/src/world/inkShading.js",
+    "final_url": "https://inkwave-aah.pages.dev/src/world/inkShading.js",
+    "path": "src/world/inkShading.js",
+    "bytes": 17482,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/vendor/three/jsm/postprocessing/ShaderPass.js",
+    "final_url": "https://inkwave-aah.pages.dev/vendor/three/jsm/postprocessing/ShaderPass.js",
+    "path": "vendor/three/jsm/postprocessing/ShaderPass.js",
+    "bytes": 3228,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/src/game/character-geo.js",
+    "final_url": "https://inkwave-aah.pages.dev/src/game/character-geo.js",
+    "path": "src/game/character-geo.js",
+    "bytes": 137288,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/src/game/character-mats.js",
+    "final_url": "https://inkwave-aah.pages.dev/src/game/character-mats.js",
+    "path": "src/game/character-mats.js",
+    "bytes": 79411,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/src/game/character-weapons.js",
+    "final_url": "https://inkwave-aah.pages.dev/src/game/character-weapons.js",
+    "path": "src/game/character-weapons.js",
+    "bytes": 65448,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/src/world/props-marina-vessels.js",
+    "final_url": "https://inkwave-aah.pages.dev/src/world/props-marina-vessels.js",
+    "path": "src/world/props-marina-vessels.js",
+    "bytes": 151429,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/vendor/three/jsm/postprocessing/EffectComposer.js",
+    "final_url": "https://inkwave-aah.pages.dev/vendor/three/jsm/postprocessing/EffectComposer.js",
+    "path": "vendor/three/jsm/postprocessing/EffectComposer.js",
+    "bytes": 8501,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/vendor/three/jsm/postprocessing/OutputPass.js",
+    "final_url": "https://inkwave-aah.pages.dev/vendor/three/jsm/postprocessing/OutputPass.js",
+    "path": "vendor/three/jsm/postprocessing/OutputPass.js",
+    "bytes": 4184,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/vendor/three/jsm/postprocessing/UnrealBloomPass.js",
+    "final_url": "https://inkwave-aah.pages.dev/vendor/three/jsm/postprocessing/UnrealBloomPass.js",
+    "path": "vendor/three/jsm/postprocessing/UnrealBloomPass.js",
+    "bytes": 15397,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/vendor/three/jsm/postprocessing/RenderPass.js",
+    "final_url": "https://inkwave-aah.pages.dev/vendor/three/jsm/postprocessing/RenderPass.js",
+    "path": "vendor/three/jsm/postprocessing/RenderPass.js",
+    "bytes": 4280,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/vendor/three/jsm/postprocessing/GTAOPass.js",
+    "final_url": "https://inkwave-aah.pages.dev/vendor/three/jsm/postprocessing/GTAOPass.js",
+    "path": "vendor/three/jsm/postprocessing/GTAOPass.js",
+    "bytes": 19910,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/src/game/bots.js",
+    "final_url": "https://inkwave-aah.pages.dev/src/game/bots.js",
+    "path": "src/game/bots.js",
+    "bytes": 27396,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/src/game/actor.js",
+    "final_url": "https://inkwave-aah.pages.dev/src/game/actor.js",
+    "path": "src/game/actor.js",
+    "bytes": 43922,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/src/game/player.js",
+    "final_url": "https://inkwave-aah.pages.dev/src/game/player.js",
+    "path": "src/game/player.js",
+    "bytes": 10053,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/src/world/props-marina-dock.js",
+    "final_url": "https://inkwave-aah.pages.dev/src/world/props-marina-dock.js",
+    "path": "src/world/props-marina-dock.js",
+    "bytes": 137024,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/assets/fonts/Rubik-latin.woff2",
+    "final_url": "https://inkwave-aah.pages.dev/assets/fonts/Rubik-latin.woff2",
+    "path": "assets/fonts/Rubik-latin.woff2",
+    "bytes": 35324,
+    "content_type": "font/woff2"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/assets/fonts/TitanOne-latin.woff2",
+    "final_url": "https://inkwave-aah.pages.dev/assets/fonts/TitanOne-latin.woff2",
+    "path": "assets/fonts/TitanOne-latin.woff2",
+    "bytes": 10732,
+    "content_type": "font/woff2"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/vendor/three/jsm/postprocessing/Pass.js",
+    "final_url": "https://inkwave-aah.pages.dev/vendor/three/jsm/postprocessing/Pass.js",
+    "path": "vendor/three/jsm/postprocessing/Pass.js",
+    "bytes": 4218,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/vendor/three/jsm/shaders/CopyShader.js",
+    "final_url": "https://inkwave-aah.pages.dev/vendor/three/jsm/shaders/CopyShader.js",
+    "path": "vendor/three/jsm/shaders/CopyShader.js",
+    "bytes": 729,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/vendor/three/jsm/postprocessing/MaskPass.js",
+    "final_url": "https://inkwave-aah.pages.dev/vendor/three/jsm/postprocessing/MaskPass.js",
+    "path": "vendor/three/jsm/postprocessing/MaskPass.js",
+    "bytes": 4694,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/vendor/three/jsm/shaders/OutputShader.js",
+    "final_url": "https://inkwave-aah.pages.dev/vendor/three/jsm/shaders/OutputShader.js",
+    "path": "vendor/three/jsm/shaders/OutputShader.js",
+    "bytes": 1876,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/vendor/three/jsm/shaders/LuminosityHighPassShader.js",
+    "final_url": "https://inkwave-aah.pages.dev/vendor/three/jsm/shaders/LuminosityHighPassShader.js",
+    "path": "vendor/three/jsm/shaders/LuminosityHighPassShader.js",
+    "bytes": 1291,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/vendor/three/jsm/shaders/PoissonDenoiseShader.js",
+    "final_url": "https://inkwave-aah.pages.dev/vendor/three/jsm/shaders/PoissonDenoiseShader.js",
+    "path": "vendor/three/jsm/shaders/PoissonDenoiseShader.js",
+    "bytes": 7080,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/vendor/three/jsm/math/SimplexNoise.js",
+    "final_url": "https://inkwave-aah.pages.dev/vendor/three/jsm/math/SimplexNoise.js",
+    "path": "vendor/three/jsm/math/SimplexNoise.js",
+    "bytes": 15148,
+    "content_type": "application/javascript"
+  },
+  {
+    "url": "https://inkwave-aah.pages.dev/vendor/three/jsm/shaders/GTAOShader.js",
+    "final_url": "https://inkwave-aah.pages.dev/vendor/three/jsm/shaders/GTAOShader.js",
+    "path": "vendor/three/jsm/shaders/GTAOShader.js",
+    "bytes": 12166,
+    "content_type": "application/javascript"
+  }
+]
