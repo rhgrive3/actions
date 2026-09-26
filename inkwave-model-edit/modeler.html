@@ -261,6 +261,7 @@ textarea{
     <textarea id="jsonEditor" spellcheck="false"></textarea>
     <div class="actions">
       <button id="applyJson" class="primary">Apply JSON</button>
+      <button id="validateJson">Validate JSON</button>
       <button id="syncJson">Sync from scene</button>
       <button id="copyJson">Copy JSON</button>
       <button id="downloadJson">Download JSON</button>
@@ -1034,7 +1035,7 @@ function addSculptHandleFromHit(hit){
   addHandleArmed=false;$('addHandleBtn').classList.remove('good');$('addHandleBtn').textContent='Pick surface point';
   rebuild(false);
 }
-$('addHandleBtn').onclick=()=>{addHandleArmed=!addHandleArmed;$('addHandleBtn').classList.toggle('good',addHandleArmed);$('addHandleBtn').textContent=addHandleArmed?'Click the model…':'Pick surface point';};
+$('addHandleBtn').onclick=()=>{if(currentView==='quad'){switchCamera('perspective');}addHandleArmed=!addHandleArmed;$('addHandleBtn').classList.toggle('good',addHandleArmed);$('addHandleBtn').textContent=addHandleArmed?'Click the model…':'Pick surface point';};
 renderer.domElement.addEventListener('pointerdown',e=>{
   if(!addHandleArmed||!current)return;
   const rect=renderer.domElement.getBoundingClientRect();
@@ -1084,7 +1085,7 @@ $('rotate').onchange=()=>controls.autoRotate=$('rotate').checked;
 document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>switchCamera(b.dataset.view));
 $('fitBtn').onclick=fitCamera;
 $('captureBtn').onclick=()=>{
-  renderer.render(scene,camera===ortho?ortho:persp);
+  if(currentView==='quad')renderQuad(); else renderer.render(scene,camera===ortho?ortho:persp);
   const a=document.createElement('a');a.download='inkwave-model-'+Date.now()+'.png';a.href=renderer.domElement.toDataURL('image/png');a.click();
 };
 
@@ -1095,10 +1096,48 @@ document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{
   if(id==='ai')updateJson();
 });
 
+function validateProfileObject(p){
+  const errs=[];
+  const finite=(v,name,min,max)=>{
+    if(typeof v!=='number'||!Number.isFinite(v))errs.push(name+': finite number required');
+    else if(v<min||v>max)errs.push(name+': out of range ['+min+', '+max+']');
+  };
+  const shapeSpec=Object.fromEntries(defs.map(([k,,min,max])=>[k,[min,max]]));
+  const faceSpec=Object.fromEntries(faceDefs.map(([k,,min,max])=>[k,[min,max]]));
+  const matSpec=Object.fromEntries(materialDefs.map(([k,,min,max])=>[k,[min,max]]));
+  const wpSpec=Object.fromEntries(weaponDefs.map(([k,,min,max])=>[k,[min,max]]));
+  for(const [k,[a,b]] of Object.entries(shapeSpec))finite(p.shape?.[k],'shape.'+k,a,b);
+  for(const [k,[a,b]] of Object.entries(faceSpec))finite(p.face?.[k],'face.'+k,a,b);
+  for(const [k,[a,b]] of Object.entries(matSpec))finite(p.materials?.[k],'materials.'+k,a,b);
+  for(const [k,[a,b]] of Object.entries(wpSpec))finite(p.weapon?.[k],'weapon.'+k,a,b);
+  if(!/^#[0-9a-fA-F]{6}$/.test(p.look?.ink||''))errs.push('look.ink: #RRGGBB required');
+  if(!/^#[0-9a-fA-F]{6}$/.test(p.materials?.hairTipColor||''))errs.push('materials.hairTipColor: #RRGGBB required');
+  const ids=new Set();
+  for(const [i,h] of (p.sculpt?.handles||[]).entries()){
+    if(!h.id||ids.has(h.id))errs.push('sculpt.handles['+i+'].id: unique id required'); else ids.add(h.id);
+    if(!['skin','hair','cloth','eyes','weapon','all'].includes(h.part))errs.push(h.id+': invalid part');
+    for(const k of ['center','offset','scale'])if(!Array.isArray(h[k])||h[k].length!==3||h[k].some(v=>typeof v!=='number'||!Number.isFinite(v)))errs.push(h.id+'.'+k+': vec3 required');
+    finite(h.radius,h.id+'.radius',.005,.5);finite(h.strength,h.id+'.strength',0,2);
+  }
+  return errs;
+}
+$('validateJson').onclick=()=>{
+  try{
+    const p=JSON.parse($('jsonEditor').value);
+    const errs=validateProfileObject(p);
+    $('error').style.display='block';
+    $('error').style.background=errs.length?'#35171e':'#15351d';
+    $('error').style.borderColor=errs.length?'#8f3b49':'#3d8450';
+    $('error').style.color=errs.length?'#ffc5ce':'#c7ffd0';
+    $('error').textContent=errs.length?('Validation failed:\n'+errs.join('\n')):'Profile validation: OK';
+  }catch(e){$('error').style.display='block';$('error').textContent='Invalid JSON: '+e.message;}
+};
 $('applyJson').onclick=()=>{
   try{
     snapshot();
     const next=JSON.parse($('jsonEditor').value);
+    const errs=validateProfileObject(merge(deepClone(DEFAULT),next));
+    if(errs.length)throw new Error('Profile validation failed:\n'+errs.join('\n'));
     profile=merge(deepClone(DEFAULT),next);
     currentMode=profile.target==='inkwave-weapon'?'weapon':'character';
     $('mode').value=currentMode;
@@ -1120,6 +1159,7 @@ $('copyBrief').onclick=async()=>{
   updateJson();
   const brief=`You are editing the INKWAVE character/weapon model through modeler-profile.json.
 Edit ONLY valid profile values first; do not touch gameplay code.
+The canonical field contract is modeler-profile.schema.json. Never invent profile keys.
 Work in silhouette-first order: proportions -> face -> hair -> clothing -> materials.
 After each meaningful change, inspect Front, Right, Back and Perspective views.
 Keep edits small enough to identify regressions.
