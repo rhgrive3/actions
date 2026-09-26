@@ -41,42 +41,250 @@ function disassemble(symbolName, binary) {
   return instructions.length > 0 && instructions.length <= 700 ? instructions : null;
 }
 
-function dwarfTypeCompatible(member, truth) {
-  const category = member.category;
-  const type = truth?.type ?? null;
+const WIDTH_ONLY_CATEGORIES = new Set(['int8', 'int16', 'int32', 'int64']);
+
+/**
+ * Hex marks these claims `widthOnly: true`: the access proves the width but not
+ * the C type (reports/phase7/cxx-recovery/README.md), so the label is a hedge
+ * over every type of that width and never an assertion that it is *not* a
+ * class instance, typedef or bool.
+ */
+function isWidthOnlyClaim(claim) {
+  return WIDTH_ONLY_CATEGORIES.has(claim.category) && (claim.signedness ?? null) == null;
+}
+
+/**
+ * Kind verdict of one Hex claim against one DWARF type, ignoring width (the
+ * width is judged separately by `claimTypeVerdict`).
+ *  - 'match'     DWARF's kind is one of the alternatives the claim itself allows.
+ *  - 'unproven'  the claim proves only a width, or DWARF declares a composite
+ *                (class/struct/union/typedef-of-either) that carries no scalar kind.
+ *  - 'mismatch'  DWARF's definitive kind contradicts a kind Hex proved.
+ *  - 'unknown'   DWARF type unresolved or the claim carries no type.
+ */
+function claimKindVerdict(claim, type) {
+  const category = claim.category ?? null;
   if (!category || !type || type.category === 'unknown') return 'unknown';
-  const size = Number(member.sizeBytes ?? 0);
-  const dwarfSize = Number(type.sizeBytes ?? 0);
-  if (category === 'float' || category === 'double') {
-    return type.category === 'float' && dwarfSize === size ? 'match' : 'mismatch';
+  const dwarfCategory = type.category;
+  const size = Number(type.sizeBytes ?? 0);
+  const width = Number(claim.sizeBytes ?? 0);
+  // A composite type declares no scalar kind of its own, so it can neither
+  // confirm nor contradict a kind claim; only its extent decides below.
+  if (dwarfCategory === 'aggregate') return 'unproven';
+  switch (category) {
+    case 'pointer':
+      return dwarfCategory === 'pointer' && size === 8 ? 'match' : 'mismatch';
+    case 'float':
+      return dwarfCategory === 'float' && size === 4 ? 'match' : 'mismatch';
+    case 'double':
+      return dwarfCategory === 'float' && size === 8 ? 'match' : 'mismatch';
+    case 'bool-like':
+      return size === 1 && (dwarfCategory === 'boolean' || dwarfCategory === 'integer') ? 'match' : 'mismatch';
+    case 'array-like':
+      return dwarfCategory === 'array' ? 'match' : 'mismatch';
+    default: {
+      const widthMatch = /^int(8|16|32|64)$/.exec(category);
+      if (!widthMatch) return 'unknown';
+      const provesKind = !isWidthOnlyClaim(claim);
+      const scalarInt = (dwarfCategory === 'integer' || dwarfCategory === 'enum');
+      if (!scalarInt) {
+        if (provesKind) return 'mismatch';
+        // The 8-byte width-only label lists `pointer` as one of its own
+        // alternatives, so DWARF pointer confirms it rather than hedging past it.
+        if (dwarfCategory === 'pointer' && size === 8 && width === 8) return 'match';
+        return 'unproven';
+      }
+      if (provesKind) {
+        if (size !== Number(widthMatch[1]) / 8) return 'mismatch';
+        if (claim.signedness != null && type.signedness != null && claim.signedness !== type.signedness) return 'mismatch';
+        return 'match';
+      }
+      if (size === width) return 'match';
+      return 'unproven';
+    }
   }
-  if (category === 'pointer') {
-    return type.category === 'pointer' && dwarfSize === size ? 'match' : 'mismatch';
-  }
-  if (category === 'array-like') {
-    return type.category === 'array' ? 'match' : 'mismatch';
-  }
-  if (category === 'bool-like') {
-    return type.category === 'boolean' || (type.category === 'integer' && dwarfSize === 1)
-      ? 'match' : 'mismatch';
-  }
-  const widthMatch = /^int(8|16|32|64)$/.exec(category);
-  if (widthMatch) {
-    if (!['integer', 'enum'].includes(type.category) || dwarfSize !== Number(widthMatch[1]) / 8) return 'mismatch';
-    if (member.signedness != null && type.signedness != null && member.signedness !== type.signedness) return 'mismatch';
-    return 'match';
-  }
-  return 'unknown';
+}
+
+const CLAIM_RANK = { contradicted: 0, unknown: 1, notConfirmed: 2, confirmed: 3 };
+
+function bestVerdict(verdicts) {
+  return verdicts.reduce((best, verdict) => (CLAIM_RANK[verdict] > CLAIM_RANK[best] ? verdict : best), 'contradicted');
+}
+
+/**
+ * One Hex member claim against one same-build DWARF member.
+ *  - 'confirmed'    kind confirmed by DWARF and byte extents agree.
+ *  - 'notConfirmed' no contradiction, but DWARF does not confirm Hex's label
+ *                   (width-only hedge, composite type, or a DWARF member wider
+ *                   than the access Hex saw).
+ *  - 'contradicted' DWARF disproves something Hex proved: the member is narrower
+ *                   than Hex's access width, or a proven kind disagrees.
+ *  - 'unknown'      no resolvable DWARF type or width for the comparison.
+ */
+function claimTypeVerdict(claim, member) {
+  const type = member?.type ?? null;
+  if (!type || type.category === 'unknown' || type.sizeBytes == null) return 'unknown';
+  const dwarfSize = Number(type.sizeBytes);
+  const hexSize = Number(claim.sizeBytes ?? 0);
+  if (!Number.isSafeInteger(dwarfSize) || dwarfSize <= 0) return 'unknown';
+  if (!Number.isSafeInteger(hexSize) || hexSize <= 0) return 'unknown';
+  const kind = claimKindVerdict(claim, type);
+  if (kind === 'unknown') return 'unknown';
+  if (kind === 'mismatch') return 'contradicted';
+  // Hex's field extent is the access width: a DWARF member that ends inside it
+  // means Hex's field boundary overruns the real member.
+  if (dwarfSize < hexSize) return 'contradicted';
+  if (dwarfSize > hexSize) return 'notConfirmed';
+  return kind === 'match' ? 'confirmed' : 'notConfirmed';
+}
+
+/**
+ * Project judged claim groups into the reported metrics: the member-existence
+ * verdict the holdout gates on, the separate type verdict, every disagreement
+ * with its address and DWARF truth, and a confirmed-member pseudocode sample.
+ */
+function summariseJudgement(rows, claimRecords) {
+  const confirmedMembers = rows.filter((row) => row.status === 'confirmed');
+  const contradictedMembers = rows.filter((row) => row.status === 'contradicted');
+  const unknownMembers = rows.filter((row) => row.status === 'unknown');
+  const memberMetrics = {
+    claimed: rows.length,
+    confirmed: confirmedMembers.length,
+    contradicted: contradictedMembers.length,
+    unknown: unknownMembers.length,
+    claimRecords,
+    distinctClasses: new Set(rows.map((row) => row.className).filter(Boolean)).size,
+  };
+  const countType = (status) => rows.filter((row) => row.typeStatus === status).length;
+  const typeMetrics = {
+    judged: rows.length - countType('unknown'),
+    confirmed: countType('confirmed'),
+    notConfirmed: countType('notConfirmed'),
+    contradicted: countType('contradicted'),
+    unknown: countType('unknown'),
+  };
+  const claimShape = (row) => row.hexClaims.map((claim) => ({
+    typeLabel: claim.typeLabel,
+    category: claim.category,
+    widthOnly: isWidthOnlyClaim(claim),
+    sizeBytes: claim.sizeBytes,
+    rule: claim.rule,
+    pseudocodeLines: claim.pseudocodeLines,
+  }));
+  const location = (row) => ({
+    address: row.hexClaims[0]?.functionAddress ?? null,
+    function: row.hexClaims[0]?.symbol ?? null,
+    className: row.className,
+    memberOffsetBytes: row.offsetBytes,
+  });
+  const contradictions = contradictedMembers.map((row) => ({
+    ...location(row),
+    claim: claimShape(row),
+    dwarfTruth: row.dwarfTruth,
+  }));
+  const typeDisagreements = rows
+    .filter((row) => row.typeStatus === 'notConfirmed' || row.typeStatus === 'contradicted')
+    .map((row) => ({
+      ...location(row),
+      verdict: row.typeStatus,
+      claim: claimShape(row),
+      dwarfTruth: row.dwarfTruth,
+    }));
+  // The sample must be a member DWARF confirmed *and* one Hex actually rendered
+  // with `this->` lines, so the holdout can show names and pseudocode together.
+  // Prefer a member whose type DWARF confirmed too.
+  const withLines = (row) => row.hexClaims.some((claim) => claim.pseudocodeLines.length);
+  const sampleMember = confirmedMembers.find((row) => row.typeStatus === 'confirmed' && withLines(row))
+    ?? confirmedMembers.find(withLines)
+    ?? null;
+  const sampleClaim = sampleMember?.hexClaims.find((claim) => claim.pseudocodeLines.length) ?? null;
+  const sampleDwarfMembers = sampleMember
+    ? (Array.isArray(sampleMember.dwarfTruth) ? sampleMember.dwarfTruth : [sampleMember.dwarfTruth])
+      .filter((row) => row && typeof row === 'object')
+    : [];
+  const sampleDwarfNames = sampleDwarfMembers.map((member) => member.name).filter(Boolean);
+  const sampleDwarfTypeLabels = [...new Set(sampleDwarfMembers.map((member) => member.type?.name || member.type?.category).filter(Boolean))];
+  const samplePseudocode = sampleClaim ? {
+    className: sampleMember.className,
+    offsetBytes: sampleMember.offsetBytes,
+    dwarfMember: sampleMember.dwarfTruth,
+    address: sampleClaim.functionAddress,
+    function: sampleClaim.symbol,
+    hexType: sampleClaim.typeLabel,
+    lines: sampleClaim.pseudocodeLines,
+    dwarfMemberNames: sampleDwarfNames,
+    dwarfTypeLabels: sampleDwarfTypeLabels,
+    pseudocodeWithDwarfNames: sampleClaim.pseudocodeLines.map((line) =>
+      line + ' // DWARF same-build match: ' + sampleMember.className + '::' +
+        (sampleDwarfNames.join(' / ') || '<unnamed member>') +
+        (sampleDwarfTypeLabels.length ? ' (' + sampleDwarfTypeLabels.join(' / ') + ')' : '')),
+  } : null;
+  return {
+    memberMetrics,
+    typeMetrics,
+    contradictions,
+    typeDisagreements,
+    sampleMember,
+    samplePseudocode,
+    sampleDwarfNames,
+    sampleDwarfTypeLabels,
+  };
+}
+
+function writeReport(report, outPath) {
+  fs.mkdirSync(path.dirname(path.resolve(outPath)), { recursive: true });
+  fs.writeFileSync(path.resolve(outPath), JSON.stringify(report, null, 2) + '\n');
+  console.log(JSON.stringify({
+    variant: report.variant,
+    provider: report.provider,
+    candidateCount: report.candidateCount,
+    analyzedFunctions: report.analyzedFunctions,
+    classMetrics: report.classMetrics,
+    memberMetrics: report.memberMetrics,
+    typeMetrics: report.typeMetrics,
+    sample: report.samplePseudocode ? {
+      className: report.samplePseudocode.className,
+      offsetBytes: report.samplePseudocode.offsetBytes,
+      address: report.samplePseudocode.address,
+      function: report.samplePseudocode.function,
+    } : null,
+  }, null, 2));
 }
 
 const args = argsOf(process.argv.slice(2));
-for (const key of ['target-root', 'binary', 'oracle', 'out', 'variant']) {
+const requiredKeys = args['from-report'] ? ['oracle', 'out'] : ['target-root', 'binary', 'oracle', 'out', 'variant'];
+for (const key of requiredKeys) {
   if (!args[key]) throw new Error('missing-' + key);
 }
-const targetRoot = path.resolve(args['target-root']);
-const binary = path.resolve(args.binary);
+const targetRoot = args['target-root'] ? path.resolve(args['target-root']) : null;
+const binary = args.binary ? path.resolve(args.binary) : null;
 const oracle = JSON.parse(fs.readFileSync(args.oracle, 'utf8'));
 if (oracle.schema !== 'cxx-dwarf-oracle/v1') throw new Error('unexpected-dwarf-oracle-schema');
+const dwarfClasses = new Map(oracle.classes.map((item) => [item.className, item]));
+
+// Re-judge a stored report against the same oracle without re-running Hex, so
+// verdict-logic changes can be verified locally in seconds instead of paying
+// for a full CI cycle. The denominator (every stored claim) is unchanged.
+if (args['from-report']) {
+  const prior = JSON.parse(fs.readFileSync(path.resolve(args['from-report']), 'utf8'));
+  const rows = (prior.memberResults || []).map((row) => judgeGroup(row.className ?? null, row.offsetBytes, row.hexClaims || []));
+  const claimRecords = prior.memberMetrics?.claimRecords
+    ?? rows.reduce((total, row) => total + row.hexClaims.length, 0);
+  const summary = summariseJudgement(rows, claimRecords);
+  writeReport({
+    ...prior,
+    schema: 'hex-cxx-debug-holdout/v2',
+    rejudgedFrom: path.resolve(args['from-report']),
+    oracleBuildId: oracle.buildId,
+    memberMetrics: summary.memberMetrics,
+    typeMetrics: summary.typeMetrics,
+    memberResults: rows,
+    contradictions: summary.contradictions,
+    typeDisagreements: summary.typeDisagreements,
+    samplePseudocode: summary.samplePseudocode,
+  }, args.out);
+  process.exit(0);
+}
 
 const [{ openBinary }, { SymbolIndex }, { createCxxEvidenceProvider }, { parseOperands }, { analyzeSemanticFunction }] = await Promise.all([
   import(pathToFileURL(path.join(targetRoot, 'js/binary/index.js')).href),
@@ -136,7 +344,6 @@ const provider = createCxxEvidenceProvider({
 });
 await provider.build();
 const classEvidence = provider.classEvidence();
-const dwarfClasses = new Map(oracle.classes.map((item) => [item.className, item]));
 const dwarfVtables = new Map(oracle.vtableSymbols.map((item) => [item.name, item]));
 const classRows = (classEvidence?.classes || []).map((record) => {
   const dwarf = record.className ? dwarfClasses.get(record.className) : null;
@@ -272,6 +479,8 @@ for (const candidate of candidates.slice(0, maxFunctions)) {
         category: member.category,
         typeLabel: member.typeLabel,
         signedness: member.signedness,
+        widthOnly: isWidthOnlyClaim(member),
+        categoryCandidates: Array.isArray(member.categoryCandidates) ? [...member.categoryCandidates] : null,
         typeProven: member.typeProven,
         rule: member.rule,
         reason: member.reason,
@@ -302,19 +511,21 @@ for (const candidate of candidates.slice(0, maxFunctions)) {
   }
 }
 
-const claimGroups = new Map();
-for (const claim of allClaims) {
-  const key = String(claim.receiverClass) + '\u0000' + claim.offsetBytes;
-  const group = claimGroups.get(key) || [];
-  group.push(claim);
-  claimGroups.set(key, group);
-}
-const memberResults = [];
-for (const claims of claimGroups.values()) {
-  const first = claims[0];
-  const dwarf = first.receiverClass ? dwarfClasses.get(first.receiverClass) : null;
-  const members = (dwarf?.members || []).filter((member) => member.offsetBytes === first.offsetBytes);
-  let status = 'unknown';
+/**
+ * Judge one (class, offset) claim group against the same-build DWARF oracle.
+ *
+ * `status` is the member-existence verdict the holdout gates on: DWARF must
+ * carry a DW_TAG_member at exactly this class + byte offset, otherwise the
+ * member claim is contradicted (an invented member) or unknown (the class is
+ * incomplete / has unresolved inherited layout, so we fail closed).
+ * `typeStatus` judges Hex's type and width claim against that same member and
+ * is reported separately, so the existence verdict can never mask a type
+ * disagreement and a hedged width-only label can never mask an invented member.
+ */
+function judgeGroup(className, offsetBytes, claims) {
+  const dwarf = className ? dwarfClasses.get(className) : null;
+  const members = (dwarf?.members || []).filter((member) => member.offsetBytes === offsetBytes);
+  let status;
   let truth = null;
   if (!dwarf?.complete) {
     status = 'unknown';
@@ -325,59 +536,72 @@ for (const claims of claimGroups.values()) {
       truth = 'DWARF has inherited members or unresolved member/base locations; no exact direct member at this offset was established';
     } else {
       status = 'contradicted';
-      truth = 'DWARF class ' + first.receiverClass + ' has no data member at byte offset ' + first.offsetBytes;
+      truth = 'DWARF class ' + className + ' has no data member at byte offset ' + offsetBytes;
     }
-  } else if (members.length > 1) {
-    const typed = claims.filter((claim) => claim.category != null);
-    const checks = typed.map((claim) => members.map((member) => dwarfTypeCompatible(claim, member)));
-    if (checks.some((row) => row.every((check) => check === 'mismatch'))) status = 'contradicted';
-    else if (checks.every((row) => row.includes('match'))) status = 'confirmed';
-    else if (typed.length === 0) status = 'confirmed';
-    else status = 'unknown';
-    truth = members.map((member) => ({
-      name: member.name,
-      offsetBytes: member.offsetBytes,
-      type: member.type,
-      declaringClass: member.declaringClass,
-    }));
   } else {
-    const member = members[0];
-    const typed = claims.filter((claim) => claim.category != null);
-    const checks = typed.map((claim) => dwarfTypeCompatible(claim, member));
-    if (checks.some((check) => check === 'mismatch')) status = 'contradicted';
-    else if (checks.every((check) => check === 'match')) status = 'confirmed';
-    else status = 'unknown';
-    truth = {
-      name: member.name,
-      offsetBytes: member.offsetBytes,
-      type: member.type,
-      declaringClass: member.declaringClass,
-    };
+    status = 'confirmed';
+    truth = members.length > 1
+      ? members.map((member) => ({
+        name: member.name,
+        offsetBytes: member.offsetBytes,
+        type: member.type,
+        declaringClass: member.declaringClass,
+      }))
+      : {
+        name: members[0].name,
+        offsetBytes: members[0].offsetBytes,
+        type: members[0].type,
+        declaringClass: members[0].declaringClass,
+      };
   }
-  memberResults.push({
-    className: first.receiverClass,
-    offsetBytes: first.offsetBytes,
+  // Overlapping members at one offset: a claim survives when at least one of
+  // them confirms it, and only a claim every candidate contradicts is counted
+  // as contradicted.
+  const verdicts = members.length > 0
+    ? claims.map((claim) => bestVerdict(members.map((member) => claimTypeVerdict(claim, member))))
+    : [];
+  const typeStatus = verdicts.includes('contradicted') ? 'contradicted'
+    : verdicts.includes('notConfirmed') ? 'notConfirmed'
+      : verdicts.includes('confirmed') ? 'confirmed'
+        : 'unknown';
+  return {
+    className,
+    offsetBytes,
     status,
+    typeStatus,
     hexClaims: claims,
     dwarfTruth: truth,
-  });
+  };
+}
+
+const claimGroups = new Map();
+for (const claim of allClaims) {
+  const key = String(claim.receiverClass) + '\u0000' + claim.offsetBytes;
+  const group = claimGroups.get(key) || [];
+  group.push(claim);
+  claimGroups.set(key, group);
+}
+const memberResults = [];
+for (const claims of claimGroups.values()) {
+  const first = claims[0];
+  memberResults.push(judgeGroup(first.receiverClass, first.offsetBytes, claims));
 }
 
 const layoutComparisons = classRows.flatMap((row) => row.dwarfLayoutComparisons);
-const contradictedMembers = memberResults.filter((row) => row.status === 'contradicted');
 const vtableLayoutMismatches = layoutComparisons.filter((row) => row.status === 'mismatch');
-const confirmedMembers = memberResults.filter((row) => row.status === 'confirmed');
-const unknownMembers = memberResults.filter((row) => row.status === 'unknown');
-const sampleMember = confirmedMembers[0] ?? null;
-const samplePseudocode = sampleMember?.hexClaims.find((claim) => claim.pseudocodeLines.length) ?? null;
-const sampleDwarfMembers = sampleMember
-  ? (Array.isArray(sampleMember.dwarfTruth) ? sampleMember.dwarfTruth : [sampleMember.dwarfTruth]).filter(Boolean)
-  : [];
-const sampleDwarfNames = sampleDwarfMembers.map((member) => member.name).filter(Boolean);
-const sampleDwarfTypeLabels = [...new Set(sampleDwarfMembers.map((member) => member.type?.name || member.type?.category).filter(Boolean))];
 const classesWithNames = classRows.filter((row) => row.className);
+const {
+  memberMetrics,
+  typeMetrics,
+  contradictions,
+  typeDisagreements,
+  sampleMember,
+  samplePseudocode,
+  sampleDwarfNames,
+  sampleDwarfTypeLabels,
+} = summariseJudgement(memberResults, allClaims.length);
 const report = {
-  schema: 'hex-cxx-debug-holdout/v1',
+  schema: 'hex-cxx-debug-holdout/v2',
   variant: args.variant,
   binary: path.basename(binary),
   binaryBytes: bytes.length,
@@ -399,28 +623,11 @@ const report = {
     dwarfVirtualSlotsMatched: layoutComparisons.filter((row) => row.status === 'matched').length,
     dwarfVirtualSlotMismatches: layoutComparisons.filter((row) => row.status === 'mismatch').length,
   },
-  memberMetrics: {
-    claimed: memberResults.length,
-    confirmed: confirmedMembers.length,
-    contradicted: contradictedMembers.length,
-    unknown: unknownMembers.length,
-    claimRecords: allClaims.length,
-    distinctClasses: new Set(memberResults.map((row) => row.className).filter(Boolean)).size,
-  },
+  memberMetrics,
+  typeMetrics,
   memberResults,
-  contradictions: contradictedMembers.map((row) => ({
-    address: row.hexClaims[0]?.functionAddress ?? null,
-    function: row.hexClaims[0]?.symbol ?? null,
-    className: row.className,
-    memberOffsetBytes: row.offsetBytes,
-    claim: row.hexClaims.map((claim) => ({
-      typeLabel: claim.typeLabel,
-      category: claim.category,
-      sizeBytes: claim.sizeBytes,
-      pseudocodeLines: claim.pseudocodeLines,
-    })),
-    dwarfTruth: row.dwarfTruth,
-  })),
+  contradictions,
+  typeDisagreements,
   vtableContradictions: vtableLayoutMismatches.map((row) => ({
     address: row.targetAddress,
     className: classRows.find((cls) => cls.dwarfLayoutComparisons.includes(row))?.className ?? null,
@@ -428,38 +635,9 @@ const report = {
     dwarfTruth: { method: row.method, slotIndex: row.dwarfVtableIndex },
   })),
   classExamples: classRows.filter((row) => row.dwarfClassMatched || row.dwarfVtableMatched).slice(0, 24),
-  samplePseudocode: samplePseudocode ? {
-    className: sampleMember.className,
-    offsetBytes: sampleMember.offsetBytes,
-    dwarfMember: sampleMember.dwarfTruth,
-    address: samplePseudocode.functionAddress,
-    function: samplePseudocode.symbol,
-    hexType: samplePseudocode.typeLabel,
-    lines: samplePseudocode.pseudocodeLines,
-    dwarfMemberNames: sampleDwarfNames,
-    dwarfTypeLabels: sampleDwarfTypeLabels,
-    pseudocodeWithDwarfNames: samplePseudocode.pseudocodeLines.map((line) =>
-      line + ' // DWARF same-build match: ' + sampleMember.className + '::' +
-        (sampleDwarfNames.join(' / ') || '<unnamed member>') +
-        (sampleDwarfTypeLabels.length ? ' (' + sampleDwarfTypeLabels.join(' / ') + ')' : '')),
-  } : null,
+  samplePseudocode,
   virtualCallSample: analyzed.find((row) => row.virtualSlotCount > 0) ?? null,
   analyzedSamples: analyzed.slice(0, 40),
   recentFailures: failures,
 };
-fs.mkdirSync(path.dirname(path.resolve(args.out)), { recursive: true });
-fs.writeFileSync(path.resolve(args.out), JSON.stringify(report, null, 2) + '\n');
-console.log(JSON.stringify({
-  variant: report.variant,
-  provider: report.provider,
-  candidateCount: report.candidateCount,
-  analyzedFunctions: report.analyzedFunctions,
-  classMetrics: report.classMetrics,
-  memberMetrics: report.memberMetrics,
-  sample: report.samplePseudocode ? {
-    className: report.samplePseudocode.className,
-    offsetBytes: report.samplePseudocode.offsetBytes,
-    address: report.samplePseudocode.address,
-    function: report.samplePseudocode.function,
-  } : null,
-}, null, 2));
+writeReport(report, args.out);

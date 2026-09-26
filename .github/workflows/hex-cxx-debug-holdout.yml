@@ -42,7 +42,10 @@ jobs:
   cxx-dwarf-holdout:
     name: OpenTTD ARM64 same-build C++ holdout
     runs-on: ubuntu-24.04-arm
-    timeout-minutes: 60
+    # The two Hex analyses need ~25 minutes each on this runner (strip-debug
+    # measured 1461s), so the budget must cover both plus the oracle, the public
+    # query host and the 172 MB artifact upload with headroom.
+    timeout-minutes: 180
     env:
       TMPDIR: ${{ github.workspace }}/.task-tmp
       TMP: ${{ github.workspace }}/.task-tmp
@@ -197,7 +200,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          timeout 1500s node scripts/hex-cxx-debug-holdout.mjs \
+          timeout 2400s node scripts/hex-cxx-debug-holdout.mjs \
             --target-root target \
             --binary binaries/openttd-strip-debug \
             --oracle evidence/dwarf-oracle.json \
@@ -208,7 +211,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          timeout 900s node scripts/hex-cxx-debug-holdout.mjs \
+          timeout 3600s node scripts/hex-cxx-debug-holdout.mjs \
             --target-root target \
             --binary binaries/openttd-strip-all \
             --oracle evidence/dwarf-oracle.json \
@@ -238,6 +241,7 @@ jobs:
             console.log('- Classes matched: ' + report.classMetrics.dwarfClassesMatched + '/' + report.classMetrics.hexNamedClasses + '; vtables matched: ' + report.classMetrics.dwarfVtablesMatched + '/' + report.classMetrics.hexVtables);
             console.log('- DWARF virtual slots matched: ' + report.classMetrics.dwarfVirtualSlotsMatched + '/' + report.classMetrics.dwarfVirtualSlotComparisons + '; mismatches: ' + report.classMetrics.dwarfVirtualSlotMismatches);
             console.log('- Members claimed/confirmed/contradicted/unknown: ' + report.memberMetrics.claimed + '/' + report.memberMetrics.confirmed + '/' + report.memberMetrics.contradicted + '/' + report.memberMetrics.unknown);
+            console.log('- Member type judged/confirmed/notConfirmed/contradicted/unknown: ' + (report.typeMetrics?.judged ?? 0) + '/' + (report.typeMetrics?.confirmed ?? 0) + '/' + (report.typeMetrics?.notConfirmed ?? 0) + '/' + (report.typeMetrics?.contradicted ?? 0) + '/' + (report.typeMetrics?.unknown ?? 0));
             console.log('- Pseudocode sample: ' + (report.samplePseudocode ? report.samplePseudocode.className + '+' + report.samplePseudocode.offsetBytes + ' at ' + report.samplePseudocode.address : 'none'));
           }
           NODE
@@ -264,12 +268,25 @@ jobs:
           import fs from 'node:fs';
           const report = JSON.parse(fs.readFileSync('evidence/hex-strip-debug.json', 'utf8'));
           const problems = [];
+          // Member-existence verdict: DWARF must carry a DW_TAG_member at the
+          // exact class + byte offset for every claim Hex confirmed, and no
+          // claim may point at a class+offset DWARF disproves.
           if (report.memberMetrics.confirmed < 1) problems.push('no-field-member-confirmed-by-dwarf');
           if (report.memberMetrics.contradicted !== 0) problems.push('contradicted-members=' + report.memberMetrics.contradicted);
+          // Type verdict is judged separately against the same member; a type
+          // DWARF disproves is an invented fact too.
+          if (report.typeMetrics.contradicted !== 0) problems.push('contradicted-member-types=' + report.typeMetrics.contradicted);
           if (report.classMetrics.dwarfVirtualSlotMismatches !== 0) problems.push('dwarf-vtable-slot-mismatches=' + report.classMetrics.dwarfVirtualSlotMismatches);
           if (!report.samplePseudocode) problems.push('no-confirmed-member-pseudocode-sample');
           if (report.classMetrics.dwarfClassesMatched < 1) problems.push('no-hex-class-matched-to-dwarf');
           if (report.classMetrics.dwarfVtablesMatched < 1) problems.push('no-hex-vtable-matched-to-same-build-symbol');
-          console.log(JSON.stringify({ ok: problems.length === 0, problems, memberMetrics: report.memberMetrics, classMetrics: report.classMetrics }, null, 2));
+          console.log(JSON.stringify({
+            ok: problems.length === 0,
+            problems,
+            memberMetrics: report.memberMetrics,
+            typeMetrics: report.typeMetrics,
+            typeNotConfirmed: (report.typeDisagreements || []).filter((row) => row.verdict === 'notConfirmed').length,
+            classMetrics: report.classMetrics,
+          }, null, 2));
           if (problems.length) process.exit(1);
           NODE
