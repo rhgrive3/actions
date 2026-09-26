@@ -141,5 +141,10 @@ html.iw-touch-ui .iw-hud .iw-feed__item:nth-child(n+3) { display: none; }
 html.iw-touch-ui .iw-hud .iw-fps { left: 50%; top: calc(env(safe-area-inset-top, 0px) + 12vmin); translate: -50% 0; }
 html.iw-touch-ui .iw-hud .iw-map__label .iw-key, html.iw-touch-ui .iw-hud .iw-sp__ready .iw-key, html.iw-touch-ui .iw-hud .iw-bcn__key, html.iw-touch-ui .iw-hud .iw-lg__key { display: none; }
 html.iw-touch-ui .iw-hud .iw-map-dim.is-on { pointer-events: auto; }
+/* map (diorama): the corner minimap would sit on the map title — the big map replaces it while open */
+html.iw-touch-ui body.iw-dio-on .iw-hud .iw-map { opacity: 0; pointer-events: none; }
+/* map (diorama): teammate / base pins are the Super Jump buttons — finger-sized hit area around each badge */
+html.iw-touch-ui .iw-dio.is-on .iw-pin:not(.iw-pin--self) .iw-pin__badge { pointer-events: auto; cursor: pointer; }
+html.iw-touch-ui .iw-dio.is-on .iw-pin:not(.iw-pin--self) .iw-pin__badge::after { content: ''; position: absolute; inset: -14px; border-radius: 50%; }
 html.iw-touch-ui .iw-hud .iw-map.is-expanded .iw-bcn { scale: 1.18; }     /* fat-finger friendly super-jump targets */
 html.iw-touch-ui .iw-hud .iw-prompt { bottom: calc(env(safe-area-inset-bottom, 0px) + 3vmin); max-width: 44vw; white-space: normal; text-align: center; }
