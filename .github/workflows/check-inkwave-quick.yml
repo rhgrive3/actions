@@ -1,0 +1,48 @@
+name: Quick INKWAVE upstream check
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/check-inkwave-quick.yml
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Compare key live files
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=https://inkwave-aah.pages.dev
+          REF=a19dca44e094f9016ee66763b5e0c56fe679fb89
+          files=(
+            index.html
+            src/main.js
+            src/config.js
+            src/world/maps.js
+            src/world/paint.js
+            src/game/character.js
+            src/game/weapons.js
+            src/ui/menus.js
+            styles/ui.css
+            styles/hud.css
+          )
+          changed=0
+          for f in "${files[@]}"; do
+            mkdir -p "/tmp/live/$(dirname "$f")"
+            curl -fsSL --retry 1 --connect-timeout 8 --max-time 20 "$BASE/$f" -o "/tmp/live/$f"
+            live=$(sha256sum "/tmp/live/$f" | awk '{print $1}')
+            old=$(git show "$REF:inkwave-aah-fast/$f" | sha256sum | awk '{print $1}')
+            if [ "$live" = "$old" ]; then
+              echo "SAME $f $live"
+            else
+              echo "CHANGED $f old=$old live=$live"
+              changed=1
+            fi
+          done
+          echo "QUICK_UPSTREAM_CHANGED=$changed"
