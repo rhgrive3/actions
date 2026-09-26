@@ -1,5 +1,5 @@
 // usage: node render.mjs file.html outprefix [jobs.json]
-import { chromium } from '/opt/node22/lib/node_modules/playwright/index.mjs';
+import { chromium } from 'playwright';
 import fs from 'fs';
 const [,, file, out, jobsFile] = process.argv;
 const three = fs.readFileSync(new URL('./three.min.js', import.meta.url));

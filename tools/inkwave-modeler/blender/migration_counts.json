@@ -1,0 +1,136 @@
+{
+  "blender_version": "5.2.2 LTS",
+  "source_meshes": 229,
+  "source_triangles": 366476,
+  "source_materials": 129,
+  "material_roles": {
+    "brow": 1,
+    "cloth": 45,
+    "other": 2,
+    "eye": 7,
+    "hair": 47,
+    "shoe": 22,
+    "skin": 7
+  },
+  "blender_only_shading": {
+    "skin_subsurface": 1,
+    "hair_fresnel": 43,
+    "additive_cornea": 1
+  },
+  "bump_to_normal_maps": {
+    "clothes_texture": {
+      "bump_factor": 1.5,
+      "metres_per_uv": 0.47939,
+      "size": [
+        1024,
+        512
+      ],
+      "texels_per_pixel": 4.27,
+      "relief_mm": 3.0,
+      "mean_tilt_deg": 1.17
+    },
+    "clothes_texture_03": {
+      "bump_factor": 1.5,
+      "metres_per_uv": 0.23036,
+      "size": [
+        512,
+        512
+      ],
+      "texels_per_pixel": 4.45,
+      "relief_mm": 3.0,
+      "mean_tilt_deg": 0.59
+    },
+    "clothes_texture_04": {
+      "bump_factor": 1.5,
+      "metres_per_uv": 0.33538,
+      "size": [
+        512,
+        512
+      ],
+      "texels_per_pixel": 3.05,
+      "relief_mm": 3.0,
+      "mean_tilt_deg": 0.47
+    },
+    "clothes_texture_05": {
+      "bump_factor": 1.2,
+      "metres_per_uv": 0.31728,
+      "size": [
+        512,
+        512
+      ],
+      "texels_per_pixel": 3.23,
+      "relief_mm": 2.4,
+      "mean_tilt_deg": 0.04
+    },
+    "clothes_texture_07": {
+      "bump_factor": 1.5,
+      "metres_per_uv": 0.21478,
+      "size": [
+        256,
+        256
+      ],
+      "texels_per_pixel": 2.38,
+      "relief_mm": 3.0,
+      "mean_tilt_deg": 0.47
+    },
+    "clothes_texture_08": {
+      "bump_factor": 1.5,
+      "metres_per_uv": 0.21478,
+      "size": [
+        256,
+        256
+      ],
+      "texels_per_pixel": 2.38,
+      "relief_mm": 3.0,
+      "mean_tilt_deg": 0.47
+    },
+    "legwear_texture": {
+      "bump_factor": 2.5,
+      "metres_per_uv": 0.36134,
+      "size": [
+        512,
+        512
+      ],
+      "texels_per_pixel": 2.83,
+      "relief_mm": 5.0,
+      "mean_tilt_deg": 38.23
+    },
+    "legwear_texture_02": {
+      "bump_factor": 2.5,
+      "metres_per_uv": 0.33389,
+      "size": [
+        512,
+        512
+      ],
+      "texels_per_pixel": 3.07,
+      "relief_mm": 5.0,
+      "mean_tilt_deg": 29.85
+    }
+  },
+  "reference_empties": 4,
+  "perspective_reference": "persp.jpg",
+  "collections": [
+    "BODY",
+    "CLOTHES",
+    "HAIR",
+    "HEAD",
+    "HEADGEAR",
+    "LEGWEAR",
+    "SHOES"
+  ],
+  "studio_lights": [
+    "ENV_FLOOR",
+    "ENV_PANEL_BACK",
+    "ENV_PANEL_KEY",
+    "ENV_PANEL_SIDE",
+    "FILL",
+    "KEY",
+    "RIM",
+    "RIM2"
+  ],
+  "world_strength": 1.0,
+  "beauty_samples": 64,
+  "output_blend": "blender/INKWAVE_CHARACTER_MASTER.blend",
+  "output_glb": "blender/INKWAVE_CHARACTER_MASTER.glb",
+  "output_game_glb": "blender/INKWAVE_GAME.glb"
+}
