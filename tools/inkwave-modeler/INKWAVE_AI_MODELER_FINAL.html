@@ -33,10 +33,13 @@ ARCHITECTURE (generators are analytic, so every layer can be re-evaluated with o
   conformGeo (2-D shapes conformed onto any surface: decals, panels, marks), roundedBox.
 - Rig: BASE_BODIES registry (anatomy + default shape) → computeRig(shape, baseBody).
 - Body: torso / arm / leg lofts, hands (palm loft + finger chains), bare feet.
-- Head: horizontal-section loft (HEAD_TABLE) + face displacement field (nose, lips,
-  almond eye sockets with lid overhang, cheeks, chin) + ears.
-- Face features: curved sclera/iris eye caps, sculpted lid rims, three-dimensional
-  tapered eyelashes, conformed liner/wing and face paint,
+- Head: horizontal-section loft (HEAD_TABLE, 176x156 samples packed around the face) + face
+  relief field (nose, lips, cheeks, chin) + depth-only eye field: an ellipsoid eyeball per eye
+  (eyeballParams) with the lids wrapped over it (upper margin 2.1 mm, lower 0.9 mm, crease),
+  socket behind it. Ears: traced outline (EAR_OUTLINE) built as a closed pillow with concha,
+  antihelix, helix roll and lobe; direction fitted to the front/3-4/side sheets.
+- Face features: ellipsoid globe (painted sclera/iris/pupil, lid shadow, catch-lights) under an
+  additive-gloss cornea, 3-D lash fringe + tapered lashes, conformed liner/wing and face paint,
   brows, lid crease, lower lashes, mouth, lips, blush, cheek marks, nose shading.
 - Hair: strands = Catmull-Rom spines with per-point width/thickness, width-hint frames,
   twist, tip gradient + sucker dots (shader), scalp locks combed into tail roots,
@@ -80,7 +83,8 @@ QA TOOLS BUILT IN
 - Render modes: beauty / clay / flat colour / silhouette / normals.
 - Slot visibility + isolate, wireframe, triangle stats per slot.
 - window.__INKWAVE_QA: getProfile, setProfile, rebuild, setView, render(view, mode, only),
-  stats, errors — for automated agents.
+  renderPersp(az, el, dist, W, H, target, fov, only), stats, errors — for automated agents.
+  Face-matching workflow and measurements: docs/face-refinement/README.md next to this file.
 
 QUALITY GATES
 Front/side/back silhouettes intentional; no pinching at neck/shoulder; eyes/face readable
@@ -752,9 +756,11 @@ class Loft {
       // θ runs clockwise in (side, front) coords, so the outward normal is the tangent rotated +90°
       let nx = -(l2[1] - l[1]), nz = l2[0] - l[0];
       const L = Math.hypot(nx, nz) || 1; nx /= L; nz /= L;
-      const d = this.disp(t, th, out.x, out.y, out.z);
+      const d = this.disp(t, th, out.x, out.y, out.z, nx, nz);
       if (d) out.addScaledVector(f.B, nx * d).addScaledVector(f.N, nz * d);
     }
+    // optional depth-only field on the displaced point (a height field in front projection: never folds, never shifts x)
+    if (this.dispZ) out.z += this.dispZ(out.x, out.y, out.z);
     return out;
   }
   normal(t, th, out) {
@@ -779,9 +785,9 @@ class Loft {
     const closed = o.th0 == null && o.th1 == null;
     const th0 = o.th0 ?? 0, th1 = o.th1 ?? TAU;
     const off = o.off || 0, offFn = typeof off === 'function';
-    const tMap = o.tMap || ((v) => v);
+    const tMap = o.tMap || ((v) => v), thMap = o.thMap || ((u) => u);
     const g = gridGeo(nu, nv, (u, v, P) => {
-      const t = lerp(t0, t1, tMap(v)), th = lerp(th0, th1, u);
+      const t = lerp(t0, t1, tMap(v)), th = lerp(th0, th1, thMap(u));
       this.point(t, th, offFn ? off(t, th) : off, P);
     }, { closedU: closed, flip: !!o.flip });
     return g;
@@ -1336,6 +1342,10 @@ const HEAD_TABLE = tbl([ // hy, a, bf, bb, cz, nf, nb   (chin/jaw rows: widest p
   [0.1130, 0.0010, 0.0010, 0.0010, -0.010, 2.0, 2.0],
 ]);
 const HEAD_Y0 = -0.1065, HEAD_Y1 = 0.113;
+/** Head mesh parameter maps: ~2.6× denser around the face centre (θ = 0) than at the back, and denser
+ *  from chin to brow than over the cranium (which the hair covers). */
+const HEAD_TH_MAP = (u) => u - 0.62 * Math.sin(TAU * u) / TAU;
+const HEAD_T_MAP = (v) => v - 0.18 * Math.sin(Math.PI * v);
 const FACE = { eyeX: 0.0475, eyeY: -0.0170, browY: 0.0, mouthY: -0.0648, noseY: -0.0470, cheekY: -0.042 };
 
 function makeHeadLoft(R, faceModel, eyeShape = 'ref') {
@@ -1363,7 +1373,17 @@ function makeHeadLoft(R, faceModel, eyeShape = 'ref') {
     const win = sstep(0.12, 0.38, sa) * (1 - sstep(1.0, 1.25, sa));
     return lat * win * (-0.0033 * sstep(0.0, -0.017, sd) + 0.0007 * gauss(sd - 0.0030, 0.0040));
   };
-  const disp = (t, th, x, y, z) => {
+  // ---- eyeball + lids (ax = |x| so both eyes share the math; eye units = metres / eyeScale) -------------------
+  const es = s.eyeScale || 1, EL = eyeLidFrame(eyeShape), ecs = Math.cos(EL.slant), esn = Math.sin(EL.slant);
+  const eyeUV = (ax, y) => { const u = (ax - ex) / es, v = (y - ey) / es; return [u * ecs + v * esn, -u * esn + v * ecs]; };
+  const lidSD = (uu, vv) => { // signed distance to the lid opening in eye units (< 0 inside), and which lid is nearer
+    const up = EL.upper(uu), lo = EL.lower(uu), mid = (up + lo) / 2;
+    const dv = Math.max(vv - up, lo - vv), du = Math.max(EL.u0 - uu, uu - EL.u1, 0);
+    return [du > 0 ? Math.hypot(du, Math.max(dv, 0)) : dv, vv >= mid];
+  };
+  const EB = eyeballParams(es, EL); EB.cx = ex + EB.du; EB.cy = ey + EB.dv;
+  const zEye = (ax, y) => eyeballZ(EB, ax, y);
+  const relief = (x, y, z) => {
     const jd = y < -0.055 ? jaw(x, y, z) : 0;
     const front = sstep(0.02, 0.07, z);
     if (front <= 0) return jd;
@@ -1394,21 +1414,44 @@ function makeHeadLoft(R, faceModel, eyeShape = 'ref') {
     d += 0.0064 * gauss2(ax - 0.050, y - (FACE.cheekY + 0.006), 0.0175, 0.0150);        // cheek apple (upper cheek forward)
     d -= 0.0030 * sstep(0.008, 0.030, ax) * (1 - sstep(0.045, 0.070, ax)) * gauss(y - (FACE.mouthY + 0.002), 0.018); // muzzle wrap: mouth corners sit back
     d += 0.0016 * gauss2(ax - 0.066, y - (FACE.eyeY - 0.020), 0.012, 0.007);            // cheekbone
-    { // eye: socket + lids carved along the SAME slanted lid curves as the eye decal (35_face.js EYE_SHAPES)
-      const es = s.eyeScale || 1, EL = eyeLidFrame(eyeShape), cs = Math.cos(EL.slant), sn = Math.sin(EL.slant);
-      const u = (ax - ex) / es, v = (y - ey) / es, uu = u * cs + v * sn, vv = -u * sn + v * cs;
-      const up = EL.upper(uu), lo = EL.lower(uu), tt = (uu - EL.uc) / EL.hw, vc = (EL.upper(EL.uc) + EL.lower(EL.uc)) / 2;
-      d -= 0.0043 * es * Math.exp(-Math.pow(tt * tt + Math.pow((vv - vc) / 0.0140, 2), 1.5) * 0.85);      // socket dish behind the eye cap
-      d += 0.0029 * es * gauss(vv - (up + 0.0030), 0.0036) * gauss(tt, 0.75);                             // upper-lid overhang
-      d += 0.0013 * es * gauss(vv - (up + 0.0085), 0.0042) * gauss(tt, 0.8);                              // lid crease fold
-      d += 0.0010 * es * gauss(vv - (lo - 0.0024), 0.0028) * gauss(tt, 0.7);                              // lower lid
-      d -= 0.0018 * es * gauss(vv - (lo - 0.0090 - 0.0035 * clamp(-tt, 0, 1)), 0.0065) * gauss(tt + 0.15, 0.8); // under-eye hollow
+    { // under-eye hollow + lid crease shadow zone live here; the lid margins themselves come from eyeLid()
+      const [uu, vv] = eyeUV(ax, y), lo = EL.lower(uu), tt = (uu - EL.uc) / EL.hw;
+      d -= 0.0012 * es * gauss(vv - (lo - 0.0100 - 0.0035 * clamp(-tt, 0, 1)), 0.0070) * gauss(tt + 0.15, 0.85);
     }
     d += 0.0014 * gauss2(ax - 0.045, y - 0.022, 0.03, 0.012);                           // brow ridge
     d -= 0.0010 * gauss2(ax - 0.084, y - 0.02, 0.012, 0.02);                    // temples
     return d * front + jd;
   };
-  const L = new Loft(new VPath(HEAD_Y0, HEAD_Y1, (y) => y), sec, disp);
+  /** Head depth the lids must reach at (ax, y), given the natural (lid-free) depth zNat. The globe is an
+   *  ellipsoid (eyeballParams); inside the opening the socket drops behind it, at the margin the lid rests
+   *  on it with real thickness, and further out the lid skin blends back into the face (crease above). */
+  const eyeLid = (ax, y, zNat) => {
+    const [uu, vv] = eyeUV(ax, y), [sdU, isUp] = lidSD(uu, vv), sd = sdU * es;
+    const W = (isUp ? 0.0080 : 0.0048) * es;
+    if (sd > W) return zNat;
+    const ze = zEye(ax, y); if (!(ze > -1)) return zNat;
+    const tt = clamp((uu - EL.uc) / EL.hw, -1, 1), corner = sstep(0.55, 1.0, Math.abs(tt));
+    const T0 = (isUp ? 0.0021 : 0.0009) * es * (1 - 0.45 * corner);
+    if (sd <= 0) { // lid margin rolls inward, then the socket sits well behind the globe
+      const k = sstep(0, -0.0017 * es, sd);
+      return lerp(ze + T0, Math.min(zNat, ze - 0.0030 * es), k);
+    }
+    const x = sd / W, fold = isUp ? 0.0007 * es * Math.sin(Math.PI * clamp(sd / (0.0066 * es), 0, 1)) * (1 - corner) : 0;
+    const lid = ze + T0 + fold + (isUp ? 0.0008 : 0.0001) * es * x;
+    const near = 1 - sstep(0.0, 1.0, x);
+    return zNat + near * (lid - zNat);
+  };
+  const disp = (t, th, x, y, z) => relief(x, y, z);
+  /** Depth-only eye field evaluated on the relief-displaced point: lids + socket around the globe, lid crease. */
+  const dispZ = (x, y, z) => {
+    const ax = Math.abs(x);
+    if (z < 0.03 || Math.abs(ax - ex) > 0.05 * es || Math.abs(y - ey) > 0.04 * es) return 0;
+    let dz = eyeLid(ax, y, z) - z;
+    const [uu, vv] = eyeUV(ax, y), [sdU, isUp] = lidSD(uu, vv), tt = (uu - EL.uc) / EL.hw;
+    if (isUp) dz -= 0.0009 * es * gauss(sdU - 0.0072, 0.0016) * gauss(tt - 0.1, 0.85); // upper-lid crease
+    return dz;
+  };
+  const L = new Loft(new VPath(HEAD_Y0, HEAD_Y1, (y) => y), sec, disp); L.dispZ = dispZ;
   L.tOf = (hy) => clamp((hy - HEAD_Y0) / (HEAD_Y1 - HEAD_Y0), 0, 1);
   /** θ on the front half for a given lateral x at height hy (analytic superellipse inverse). */
   L.thetaX = (x, hy) => { const sc = L.sec(L.tOf(hy)); const r = clamp((x - sc.ox) / Math.max(1e-4, sc.a), -0.9999, 0.9999); return Math.asin(spow(r, sc.nf / 2)); };
@@ -1419,32 +1462,162 @@ function makeHeadLoft(R, faceModel, eyeShape = 'ref') {
   /** Angular map (u = θ, v = hy) */
   L.mapAng = (u, v, P, N) => { const t = L.tOf(v); L.point(t, u, 0, P); L.normal(t, u, N); };
   L.eye = { x: ex, y: ey };
+  { // eyeball apex: natural face depth at the opening centre (section superellipse + relief) plus a small proud
+    const t = L.tOf(EB.cy), o = L.sec(t), q = Math.pow(clamp(EB.cx / o.a, 0, 0.999), o.nf);
+    const z0 = o.oz + o.bf * Math.pow(1 - q, 1 / o.nf);
+    setEyeballApex(EB, z0 + relief(EB.cx, EB.cy, z0) * 0.85 + EB.proud);
+  }
+  L.eyeball = EB; L.eyeZ = zEye;
+  /** Exact front map: Newton on θ so the DISPLACED surface point lands on lateral x = u. Used by the eye
+   *  features, which must register to the lid margins to a fraction of a millimetre. */
+  const _q = new V3();
+  L.mapFrontX = (u, v, P, N) => {
+    const t = L.tOf(v); let th = L.thetaX(u, v);
+    for (let i = 0; i < 4; i++) {
+      L.base(t, th, P); const err = P.x - u; if (Math.abs(err) < 1e-5) break;
+      L.base(t, th + 1e-3, _q); const g = (_q.x - P.x) / 1e-3; if (Math.abs(g) < 1e-6) break; th -= err / g;
+    }
+    L.point(t, th, 0, P); L.normal(t, th, N);
+  };
   return L;
+}
+/** Eye globe: an ellipsoid (rx lateral, ry vertical, rz depth) whose apex sits at the lid-opening centre and
+ *  whose optical axis turns outward by `gam`. Axis-space: ax = |x| (both eyes). */
+function eyeballParams(es, EL) {
+  const cs = Math.cos(EL.slant), sn = Math.sin(EL.slant), uc = EL.uc, vc = (EL.upper(EL.uc) + EL.lower(EL.uc)) / 2;
+  return { es, gam: 0.30, rx: 0.0345 * es, ry: 0.0290 * es, rz: 0.0165 * es, proud: 0.0006 * es,
+    du: (uc * cs - vc * sn) * es, dv: (uc * sn + vc * cs) * es, cx: 0, cy: 0, C: [0, 0, 0] };
+}
+function setEyeballApex(EB, zA) {
+  const sg = Math.sin(EB.gam), cg = Math.cos(EB.gam);
+  EB.zA = zA; EB.C = [EB.cx - EB.rz * sg, EB.cy, zA - EB.rz * cg];
+  EB.A2 = sg * sg / (EB.rx * EB.rx) + cg * cg / (EB.rz * EB.rz);
+  EB.kB = 2 * sg * cg * (1 / (EB.rz * EB.rz) - 1 / (EB.rx * EB.rx));
+  EB.kC = cg * cg / (EB.rx * EB.rx) + sg * sg / (EB.rz * EB.rz);
+}
+/** Front-surface depth of the globe at (ax, y), NaN outside its footprint. */
+function eyeballZ(EB, ax, y) {
+  const dx = ax - EB.C[0], dy = y - EB.C[1];
+  const B = EB.kB * dx, Cq = dx * dx * EB.kC + dy * dy / (EB.ry * EB.ry) - 1, disc = B * B - 4 * EB.A2 * Cq;
+  if (disc < 0) return NaN;
+  return EB.C[2] + (-B + Math.sqrt(disc)) / (2 * EB.A2);
+}
+/** Globe surface point + normal at (ax, y) in axis space. */
+function eyeballPoint(EB, ax, y, P, N) {
+  let z = eyeballZ(EB, ax, y);
+  if (!(z > -1)) { // clamp to the footprint rim
+    const dx = ax - EB.C[0], dy = y - EB.C[1], k = 0.999 / Math.sqrt(dx * dx * EB.kC + dy * dy / (EB.ry * EB.ry));
+    ax = EB.C[0] + dx * k; y = EB.C[1] + dy * k; z = eyeballZ(EB, ax, y); if (!(z > -1)) z = EB.C[2];
+  }
+  const sg = Math.sin(EB.gam), cg = Math.cos(EB.gam), qx = ax - EB.C[0], qy = y - EB.C[1], qz = z - EB.C[2];
+  const a = (qx * cg - qz * sg) / (EB.rx * EB.rx), b = qy / (EB.ry * EB.ry), c = (qx * sg + qz * cg) / (EB.rz * EB.rz);
+  P.set(ax, y, z); N.set(a * cg + c * sg, b, -a * sg + c * cg).normalize();
 }
 
 // ---- ears ------------------------------------------------------------------------------------------
+/** Ear outline (left ear) in the ear plane: d along D from the root (m), w along U (m). Counter-clockwise
+ *  from the tip: upper helix rim → rounded helix top → root (buried in the head) → fleshy lobe → concave
+ *  lower rim. Traced from the 3/4 and side sheets, where the ear faces the camera. */
+const EAR_OUTLINE = [
+  [0.1050, 0.0030], [0.0860, 0.0120], [0.0650, 0.0200], [0.0450, 0.0275], [0.0280, 0.0335], [0.0140, 0.0360],
+  [0.0010, 0.0335], [-0.0100, 0.0250], [-0.0200, 0.0100], [-0.0215, -0.0060], [-0.0170, -0.0200],
+  [-0.0070, -0.0300], [0.0060, -0.0350], [0.0165, -0.0330], [0.0225, -0.0240], [0.0320, -0.0150],
+  [0.0560, -0.0075], [0.0820, -0.0015],
+];
+const EAR_CENTRE = [0.0185, -0.0040]; // concha
+const _earOutline = {};
+function earOutlineFn() {
+  if (_earOutline.f) return _earOutline.f;
+  const pts = smoothPoly(EAR_OUTLINE, 240); // closed centripetal Catmull-Rom → dense polygon
+  // angle-parametrised radial function around the concha centre (outline is star-shaped about it)
+  const ang = pts.map(([d, w]) => Math.atan2(w - EAR_CENTRE[1], d - EAR_CENTRE[0]));
+  const rad = pts.map(([d, w]) => Math.hypot(w - EAR_CENTRE[1], d - EAR_CENTRE[0]));
+  const order = ang.map((a, k) => k).sort((a, b) => ang[a] - ang[b]);
+  const A = order.map((k) => ang[k]), Rr = order.map((k) => rad[k]);
+  const f = (a) => { // periodic linear interpolation of radius over angle
+    a = Math.atan2(Math.sin(a), Math.cos(a));
+    let k = 0; while (k < A.length && A[k] < a) k++;
+    const k0 = (k - 1 + A.length) % A.length, k1 = k % A.length;
+    let a0 = A[k0], a1 = A[k1]; if (a1 < a0) a1 += TAU; let aa = a; if (aa < a0) aa += TAU;
+    const t = a1 > a0 ? (aa - a0) / (a1 - a0) : 0; return Rr[k0] + (Rr[k1] - Rr[k0]) * t;
+  };
+  return (_earOutline.f = f);
+}
+/** Pointed Inkling ear. A closed "pillow" around the traced outline: back sheet → rolled rim → front
+ *  sheet, with a deep concha bowl, antihelix ridge, scapha groove, helix roll and a thick lobe, so it
+ *  reads as an ear from the front, side and 3/4 views instead of a flat blade. */
 function buildEarL(R, headLoft) {
   const k = R.shape.earLength, fin = R.anat.ear === 'fin';
-  const root = new V3(0.091, -0.031, -0.012);
-  const tip = new V3(0.093 + (fin ? 0.06 : 0.080) * k, -0.030 + (fin ? 0.004 : -0.003) * k, -0.017 - (fin ? 0.05 : 0.071) * k);
+  if (fin) return buildFinEarL(R, headLoft);
+  const root = new V3(0.0930, -0.0290, -0.0120);
+  const tip = new V3(0.093 + 0.080 * k, -0.029 - 0.010 * k, -0.012 - 0.050 * k); // fitted to the ear tip in the front, 3/4 and side sheets
   const D = tip.clone().sub(root); const len = D.length(); D.normalize();
   const U = new V3(0, 1, 0).addScaledVector(D, -D.y).normalize();
   const Fn = new V3().crossVectors(D, U).normalize(); // outward-front face normal
+  const sd = len / EAR_OUTLINE[0][0], sw = 1.06 * k;   // outline is authored for len = 0.105 m; height scales with earLength
+  const rOf = earOutlineFn(), [c0, c1] = EAR_CENTRE;
+  const nu = 132, nv = 72, RIM = 0.9;
+  // v: back sheet (centre → rim) · rounded rim · front sheet (rim → centre); rings evenly spaced in ρ
+  const vmap = (v) => {
+    if (v < 0.44) return [RIM * v / 0.44, -1];
+    if (v > 0.56) return [RIM * (1 - v) / 0.44, 1];
+    const psi = (v - 0.44) / 0.12 * Math.PI; return [RIM + (1 - RIM) * Math.sin(psi), -Math.cos(psi)];
+  };
+  const geo = gridGeo(nu, nv, (u, v, P) => {
+    const a = -Math.PI + u * TAU, ca = Math.cos(a), sa = Math.sin(a);
+    const [rho, side] = vmap(v);
+    const R0 = rOf(a), r = R0 * rho;
+    const d = c0 + ca * r, w = c1 + sa * r;
+    const tipT = clamp(d / 0.105, 0, 1), rootT = 1 - sstep(0.0, 0.05, d);
+    const upper = sstep(-0.004, 0.012, w - c1);         // helix side (upper edge), position based → smooth at the pole
+    const lobeW = Math.exp(-Math.pow((d - 0.005) / 0.016, 2) - Math.pow((w + 0.027) / 0.011, 2));
+    const rimZ = sstep(RIM - 0.2, RIM, rho);           // 0 inside the plate → 1 at the rim
+    const half = 0.0018 * (1 - 0.5 * tipT) + 0.0030 * lobeW + 0.0011 * rimZ * (0.4 + 0.6 * upper) * (1 - 0.7 * tipT);
+    let f = side * half;
+    // whole blade: cups around the concha and curls outward toward the tip
+    const bowl = Math.exp(-Math.pow((d - c0) / 0.0150, 2) - Math.pow((w - c1 + 0.001) / 0.0125, 2));
+    f -= 0.0048 * bowl;
+    f += 0.0050 * tipT * tipT - 0.0020 * gauss(tipT - 0.35, 0.3) * upper * (1 - rimZ);
+    if (side > 0) {
+      const fr = side;
+      f += 0.0016 * rimZ * upper * (1 - 0.75 * tipT) * fr;                                                  // helix roll
+      f -= 0.0016 * gauss(rho - 0.70, 0.09) * upper * sstep(0.10, 0.25, tipT) * (1 - sstep(0.55, 0.8, tipT)) * fr; // scapha
+      f += 0.0018 * gauss(rho - 0.50, 0.11) * (1 - sstep(0.30, 0.55, tipT)) * sstep(-0.010, 0.004, w - c1 + 0.4 * (d - c0)) * fr; // antihelix around the concha
+      f -= 0.0050 * bowl * fr;                                                                              // concha
+      f += 0.0016 * Math.exp(-Math.pow((d + 0.003) / 0.006, 2) - Math.pow((w + 0.008) / 0.008, 2)) * fr;    // tragus
+      f += 0.0012 * Math.exp(-Math.pow((d - 0.020) / 0.006, 2) - Math.pow((w + 0.017) / 0.006, 2)) * fr;    // antitragus
+    } else {
+      f -= 0.0020 * bowl * rootT;                                                                           // back of the concha bulges toward the head
+    }
+    P.copy(root).addScaledVector(D, d * sd).addScaledVector(U, w * sw).addScaledVector(Fn, f * sd);
+  }, { closedU: true });
+  const lowerW = (s) => { // lower rim distance below the axis at s = d / len (piercing placement)
+    const d = s * 0.105; let best = 0;
+    for (let q = 0; q < 180; q++) { const a = -Math.PI + (q / 180) * TAU; const r = rOf(a); const dd = c0 + Math.cos(a) * r, ww = c1 + Math.sin(a) * r; if (ww < 0 && Math.abs(dd - d) < 0.0025) best = Math.max(best, -ww); }
+    return best * sw;
+  };
+  return { geo, root, tip: root.clone().addScaledVector(D, len), D, U, F: Fn, len, wLo: lowerW };
+}
+/** Octoling fin ear (unchanged style). */
+function buildFinEarL(R, headLoft) {
+  const k = R.shape.earLength;
+  const root = new V3(0.091, -0.031, -0.012);
+  const tip = new V3(0.093 + 0.06 * k, -0.030 + 0.004 * k, -0.017 - 0.05 * k);
+  const D = tip.clone().sub(root); const len = D.length(); D.normalize();
+  const U = new V3(0, 1, 0).addScaledVector(D, -D.y).normalize();
+  const Fn = new V3().crossVectors(D, U).normalize();
   const S0 = -0.22, nu = 28, nv = 30;
-  const wUp = (s) => (fin ? 0.03 : 0.035) * Math.pow(Math.max(0, 1 - s), fin ? 0.7 : 0.85) * (0.8 + 0.2 * sstep(-0.2, 0.1, s));
-  const wLo = (s) => ((fin ? 0.028 : 0.0385) * Math.pow(Math.max(0, 1 - s), fin ? 0.9 : 0.8) + 0.0090 * gauss(s - 0.06, 0.11)) * (0.8 + 0.2 * sstep(-0.2, 0.1, s));
-  const th = (s) => 0.0065 * Math.pow(Math.max(0, 1 - s), 0.55) + 0.0018;
+  const wUp = (s) => 0.03 * Math.pow(Math.max(0, 1 - s), 0.7) * (0.8 + 0.2 * sstep(-0.2, 0.1, s));
+  const wLo = (s) => (0.028 * Math.pow(Math.max(0, 1 - s), 0.9) + 0.0090 * gauss(s - 0.06, 0.11)) * (0.8 + 0.2 * sstep(-0.2, 0.1, s));
+  const th = (s) => 0.0058 * Math.pow(Math.max(0, 1 - s), 0.55) + 0.0018;
   const geo = gridGeo(nu, nv, (u, v, P) => {
     const s = lerp(S0, 1, v), a = u * TAU, c = Math.cos(a), si = Math.sin(a);
     const w = c >= 0 ? wUp(s) : wLo(s);
     const cup = si > 0 ? -0.0070 * Math.pow(1 - c * c, 1.5) * sstep(-0.05, 0.12, s) * (1 - sstep(0.55, 0.9, s)) : 0;
-    // Rounded helix and antihelix live in the mesh rather than painted on a fin.
-    const helix = si > 0 ? 0.0027 * gauss(c - (0.75 - 0.19 * s), 0.15) * sstep(-0.05, 0.08, s) * (1 - sstep(0.72, 0.95, s)) : 0;
-    const antihelix = si > 0 ? 0.0024 * gauss(c - (0.10 + 0.17 * s), 0.16) * gauss(s - 0.29, 0.27) : 0;
-    const bend = 0.006 * s * s; // tip curls slightly outward
-    P.copy(root).addScaledVector(D, s * len).addScaledVector(U, w * spow(c, 0.8)).addScaledVector(Fn, th(s) * si * (0.55 + 0.45 * c * c) + cup * 1.2 + helix + antihelix + bend + 0.0025 * c * c * sstep(0, 0.3, s) * (1 - sstep(0.7, 1, s)));
+    const bend = 0.006 * s * s;
+    P.copy(root).addScaledVector(D, s * len).addScaledVector(U, w * spow(c, 0.8)).addScaledVector(Fn, th(s) * si * (0.55 + 0.45 * c * c) + cup * 1.2 + bend + 0.0025 * c * c * sstep(0, 0.3, s) * (1 - sstep(0.7, 1, s)));
   }, { closedU: true });
-  return { geo, root, tip: root.clone().addScaledVector(D, len), D, U, F: Fn, len };
+  return { geo, root, tip: root.clone().addScaledVector(D, len), D, U, F: Fn, len, wLo };
 }
 
 // ===== module 35_face =====
@@ -1508,43 +1681,55 @@ function eyeLidFrame(shape) {
 const EYE_BOX = [-0.031, -0.022, 0.031, 0.022];
 
 function drawEyeTexture(preset, lookX, lookY, sideSign) {
-  const W = 320, H = Math.round(320 * (EYE_BOX[3] - EYE_BOX[1]) / (EYE_BOX[2] - EYE_BOX[0]));
+  const W = 384, H = Math.round(384 * (EYE_BOX[3] - EYE_BOX[1]) / (EYE_BOX[2] - EYE_BOX[0]));
   const { c, ctx } = makeCanvas(W, H);
   const px = (x) => ((x - EYE_BOX[0]) / (EYE_BOX[2] - EYE_BOX[0])) * W, py = (y) => (1 - (y - EYE_BOX[1]) / (EYE_BOX[3] - EYE_BOX[1])) * H;
   const sc = W / (EYE_BOX[2] - EYE_BOX[0]);
-  const ref = preset.shape === 'ref';
-  // sclera: warm off-white, darker toward the corners
-  const g0 = ctx.createRadialGradient(px(0), py(-0.002), 2, px(0), py(-0.002), 0.03 * sc);
-  g0.addColorStop(0, '#fbfaf8'); g0.addColorStop(0.65, '#f0ecea'); g0.addColorStop(1, '#d0c2c0');
+  const ref = preset.shape === 'ref', nasal = -sideSign; // texture x is world-aligned; nasal side = toward the nose
+  // sclera: warm off-white, cooler and darker toward the corners and under the upper lid
+  const g0 = ctx.createRadialGradient(px(0), py(-0.003), 2, px(0), py(-0.003), 0.029 * sc);
+  g0.addColorStop(0, '#fbf8f5'); g0.addColorStop(0.55, '#eee8e6'); g0.addColorStop(1, '#bfaeb0');
   ctx.fillStyle = g0; ctx.fillRect(0, 0, W, H);
-  const ir = ref ? 0.0152 : 0.0105, dx = (ref ? -0.0012 : 0) * sideSign + lookX * 0.016, cy = (ref ? 0.0010 : -0.0004) + lookY * 0.012;
+  // pink caruncle at the inner corner
+  const car = ctx.createRadialGradient(px(0.0215 * nasal), py(-0.0035), 1, px(0.0215 * nasal), py(-0.0035), 0.0075 * sc);
+  car.addColorStop(0, 'rgba(214,120,112,0.85)'); car.addColorStop(1, 'rgba(214,120,112,0)');
+  ctx.fillStyle = car; ctx.fillRect(0, 0, W, H);
+  const ir = ref ? 0.0152 : 0.0105, dx = (ref ? 0.0012 : 0) * nasal + lookX * 0.016, cy = (ref ? 0.0010 : -0.0004) + lookY * 0.012;
   const X = px(dx), Y = py(cy), r = ir * sc;
   const [cL, cM, cD] = preset.iris;
-  // iris body
-  const g = ctx.createRadialGradient(X, Y + r * 0.35, r * 0.05, X, Y, r);
-  g.addColorStop(0, cL); g.addColorStop(0.38, cL); g.addColorStop(0.68, cM); g.addColorStop(0.86, cD); g.addColorStop(1, '#021a1e');
+  // iris body: bright lower crescent, deeper colour at the top where the lid shades it
+  const g = ctx.createRadialGradient(X, Y + r * 0.42, r * 0.05, X, Y, r);
+  g.addColorStop(0, cL); g.addColorStop(0.42, cL); g.addColorStop(0.70, cM); g.addColorStop(0.88, cD); g.addColorStop(1, '#021417');
   ctx.fillStyle = g; ctx.beginPath(); ctx.arc(X, Y, r, 0, TAU); ctx.fill();
-  // iris fibres + inner ring
   ctx.save(); ctx.beginPath(); ctx.arc(X, Y, r, 0, TAU); ctx.clip();
-  ctx.globalAlpha = 0.10; ctx.strokeStyle = '#d8fff8'; ctx.lineWidth = 1;
-  for (let i = 0; i < 64; i++) { const a = (i / 64) * TAU + hash1(i) * 0.08, r0 = r * 0.5, r1 = r * (0.78 + 0.14 * hash1(i + 9)); ctx.beginPath(); ctx.moveTo(X + Math.cos(a) * r0, Y + Math.sin(a) * r0); ctx.lineTo(X + Math.cos(a) * r1, Y + Math.sin(a) * r1); ctx.stroke(); }
-  ctx.globalAlpha = 0.9; ctx.strokeStyle = '#03343a'; ctx.lineWidth = r * 0.07; ctx.beginPath(); ctx.arc(X, Y, r * 0.965, 0, TAU); ctx.stroke();
+  // radial fibres (light and dark), collarette ring around the pupil
+  for (let i = 0; i < 96; i++) {
+    const a = (i / 96) * TAU + hash1(i) * 0.06, r0 = r * (0.46 + 0.05 * hash1(i + 3)), r1 = r * (0.74 + 0.2 * hash1(i + 9));
+    ctx.globalAlpha = 0.07 + 0.08 * hash1(i + 5); ctx.strokeStyle = i % 3 ? '#e4fff9' : '#033238'; ctx.lineWidth = 1 + hash1(i + 7);
+    ctx.beginPath(); ctx.moveTo(X + Math.cos(a) * r0, Y + Math.sin(a) * r0); ctx.lineTo(X + Math.cos(a) * r1, Y + Math.sin(a) * r1); ctx.stroke();
+  }
+  ctx.globalAlpha = 0.35; ctx.strokeStyle = cL; ctx.lineWidth = r * 0.06; ctx.beginPath(); ctx.arc(X, Y, r * 0.55, 0, TAU); ctx.stroke();
+  ctx.globalAlpha = 0.95; ctx.strokeStyle = '#022a30'; ctx.lineWidth = r * 0.10; ctx.beginPath(); ctx.arc(X, Y, r * 0.955, 0, TAU); ctx.stroke(); // limbal ring
   // lid shadow over the top of the iris
-  const g2 = ctx.createLinearGradient(0, Y - r, 0, Y + r * 0.1);
-  g2.addColorStop(0, 'rgba(0,30,36,0.55)'); g2.addColorStop(1, 'rgba(0,30,36,0)');
+  const g2 = ctx.createLinearGradient(0, Y - r, 0, Y + r * 0.15);
+  g2.addColorStop(0, 'rgba(0,22,28,0.72)'); g2.addColorStop(0.55, 'rgba(0,22,28,0.25)'); g2.addColorStop(1, 'rgba(0,22,28,0)');
   ctx.globalAlpha = 1; ctx.fillStyle = g2; ctx.fillRect(X - r, Y - r, 2 * r, 2 * r);
   ctx.restore();
   // pupil
-  ctx.fillStyle = '#040a0c'; ctx.beginPath(); ctx.ellipse(X, Y, r * 0.43, r * 0.46, 0, 0, TAU); ctx.fill();
-  // upper-lid shadow across the whole eye
-  const g3 = ctx.createLinearGradient(0, py(0.0145), 0, py(0.0010));
-  g3.addColorStop(0, 'rgba(38,24,30,0.75)'); g3.addColorStop(0.45, 'rgba(38,24,30,0.25)'); g3.addColorStop(1, 'rgba(38,24,30,0)');
-  ctx.fillStyle = g3; ctx.fillRect(0, 0, W, py(0.0010));
-  // highlights (same light direction for both eyes)
-  ctx.fillStyle = 'rgba(255,255,255,0.96)';
-  ctx.beginPath(); ctx.ellipse(X - r * 0.34, Y - r * 0.32, r * 0.22, r * 0.18, -0.4, 0, TAU); ctx.fill();
-  ctx.fillStyle = 'rgba(255,255,255,0.8)';
-  ctx.beginPath(); ctx.arc(X + r * 0.38, Y + r * 0.34, r * 0.08, 0, TAU); ctx.fill();
+  ctx.fillStyle = '#03080a'; ctx.beginPath(); ctx.ellipse(X, Y, r * 0.44, r * 0.47, 0, 0, TAU); ctx.fill();
+  // upper-lid shadow across the whole eye (the lid and lash fringe overhang the globe)
+  const g3 = ctx.createLinearGradient(0, py(0.0150), 0, py(-0.0005));
+  g3.addColorStop(0, 'rgba(34,20,26,0.85)'); g3.addColorStop(0.35, 'rgba(34,20,26,0.40)'); g3.addColorStop(1, 'rgba(34,20,26,0)');
+  ctx.fillStyle = g3; ctx.fillRect(0, 0, W, py(-0.0005));
+  // soft occlusion under the lower lid
+  const g4 = ctx.createLinearGradient(0, py(-0.0125), 0, py(-0.0060));
+  g4.addColorStop(0, 'rgba(60,34,36,0.45)'); g4.addColorStop(1, 'rgba(60,34,36,0)');
+  ctx.fillStyle = g4; ctx.fillRect(0, py(-0.0060), W, H);
+  // painted catch-lights: a large one high on the nasal side, a small one low on the temporal side
+  ctx.fillStyle = 'rgba(255,255,255,0.97)';
+  ctx.beginPath(); ctx.ellipse(X + r * 0.30 * nasal, Y - r * 0.34, r * 0.20, r * 0.16, -0.5 * nasal, 0, TAU); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.75)';
+  ctx.beginPath(); ctx.arc(X - r * 0.36 * nasal, Y + r * 0.36, r * 0.07, 0, TAU); ctx.fill();
   return canvasTex(c);
 }
 
@@ -1594,6 +1779,28 @@ function sculptedLashGeo(base, tip, point, width, lift, rootOff = 0.0027) {
   }, { nu: 7, nv: 15 });
 }
 
+/** Upper lash fringe: a double-sided ribbon from the lid margin, sweeping away from the opening and forward.
+ *  Height grows toward the outer corner and the top edge is scalloped into clumps. */
+function lashFringeGeo(line, map, es, side, amount = 1) {
+  const n = line.length, pos = [], idx = [], P = new V3(), N = new V3(), Q = new V3(), Nq = new V3();
+  for (let i = 0; i < n; i++) {
+    const t = i / (n - 1), [x, y] = line[i];
+    map(x, y, P, N);
+    // in-surface "away from the opening" direction: finite difference toward +y (upper lid), orthogonalised
+    map(x, y + 0.0015 * es, Q, Nq); const up = Q.sub(P); up.addScaledVector(N, -up.dot(N)).normalize();
+    const clump = 0.78 + 0.22 * Math.abs(Math.sin(t * Math.PI * 9.5));
+    const len = (0.0014 + 0.0030 * amount * sstep(0.02, 0.7, t)) * es * clump * (1 - 0.3 * sstep(0.93, 1, t)) * sstep(-0.05, 0.08, t);
+    const lift = 0.75 - 0.3 * t; // more forward at the inner corner, sweeping up at the outer
+    const root = P.clone().addScaledVector(N, 0.00025 * es);
+    const tip = root.clone().addScaledVector(up, len * Math.cos(lift)).addScaledVector(N, len * Math.sin(lift));
+    pos.push(root.x, root.y, root.z, tip.x, tip.y, tip.z);
+    if (i < n - 1) { const a = i * 2; idx.push(a, a + 2, a + 1, a + 1, a + 2, a + 3); }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
+  return g;
+}
+
 /** Build all face features for the current slots. Returns [{geo, kind, slot, mat:{...}}] in head-local space. */
 function buildFaceFeatures(R, head, st, profile) {
   const out = [];
@@ -1602,59 +1809,65 @@ function buildFaceFeatures(R, head, st, profile) {
   const browP = BROW_PRESETS[clamp(st.brows, 0, BROW_PRESETS.length - 1)];
   const skinP = SKIN_PRESETS[clamp(st.skin, 0, SKIN_PRESETS.length - 1)];
   const es = s.eyeScale, ex = head.eye.x, ey = head.eye.y;
-  const mapF = head.mapFront;
+  const mapF = head.mapFront, mapX = head.mapFrontX || head.mapFront, EB = head.eyeball;
   for (const side of [1, -1]) {
     const cx = ex * side;
     const P = (p) => [cx + p[0] * es * side, ey + p[1] * es];
     const point = (x, y, off) => {
-      const p = new V3(), n = new V3(); mapF(x, y, p, n);
+      const p = new V3(), n = new V3(); mapX(x, y, p, n);
       return p.addScaledVector(n, off * es);
     };
-    // Sclera and iris share a convex shell; texture, UV and gaze controls remain intact.
-    const outline = eyeOutline(eyeP.shape).map(P);
+    const shape = eyeP.shape, lid = upperLidLine(shape), lower = lowerLidLine(shape);
     const box = [cx + EYE_BOX[0] * es, ey + EYE_BOX[1] * es, cx + EYE_BOX[2] * es, ey + EYE_BOX[3] * es];
-    const globe = conformGeo(outline, eyeCapMap(head, eyeP.shape, cx, ey, es, side), { off: 0.00045, sub: 3, uvBox: box });
-    globe.computeVertexNormals();
-    out.push({ geo: globe, kind: 'eyes', slot: 'eyes', mat: { type: 'eye', map: drawEyeTexture(eyeP, face.lookX || 0, face.lookY || 0, side) } });
-    // Rolled upper and lower eyelids give the socket a real edge and occlude
-    // the globe at glancing angles. Liner roots sit on top of the upper roll.
-    const lid = upperLidLine(eyeP.shape);
-    const lower = lowerLidLine(eyeP.shape);
-    out.push({ geo: eyeRimGeo(lid.map(P), point, true, true, es), kind: 'eyes', slot: 'eyes', mat: { type: 'skin' } });
-    out.push({ geo: eyeRimGeo(lower.map(P), point, true, false, es), kind: 'eyes', slot: 'eyes', mat: { type: 'skin' } });
-    out.push({ geo: eyeRimGeo(lid.map(P), point, false, true, es), kind: 'eyes', slot: 'eyes', mat: { type: 'lash' } });
+    const eyeTex = drawEyeTexture(eyeP, face.lookX || 0, face.lookY || 0, side);
+    // Globe: the ellipsoid the lids are carved around, overscanned ~2.5 mm under the lids so no seam shows.
+    const globeMap = EB ? (x, y, Pp, Nn) => { eyeballPoint(EB, Math.abs(x), y, Pp, Nn); if (x < 0) { Pp.x = -Pp.x; Nn.x = -Nn.x; } } : eyeCapMap(head, shape, cx, ey, es, side);
+    const E = eyeShapeDef(shape), oc = [(E.upper[0][0] + E.upper[E.upper.length - 1][0]) / 2, 0];
+    const over = eyeOutline(shape).map(([x, y]) => { const dx = x - oc[0], dy = y - oc[1], l = Math.hypot(dx, dy) || 1, k = (l + 0.0030) / l; return [oc[0] + dx * k, oc[1] + dy * k * 1.15]; });
+    out.push({ geo: conformGeo(over.map(P), globeMap, { off: 0, sub: 3, uvBox: box }), kind: 'eyes', slot: 'eyes', mat: { type: 'eye', map: eyeTex } });
+    // Cornea: a clear dome over the iris; additive gloss so real, view-dependent highlights ride on the eye.
+    if (EB) {
+      const ref = shape === 'ref', ir = (ref ? 0.0152 : 0.0105) * 1.1, icx = (ref ? -0.0012 : 0) + (face.lookX || 0) * 0.016 * side, icy = (ref ? 0.0010 : -0.0004) + (face.lookY || 0) * 0.012;
+      const circ = []; for (let q = 0; q < 40; q++) { const a = (q / 40) * TAU; circ.push([icx + Math.cos(a) * ir, icy + Math.sin(a) * ir]); }
+      const cMap = (x, y, Pp, Nn) => { globeMap(x, y, Pp, Nn); const r2 = (Math.pow((Math.abs(x) - (ex + icx * es)) / (ir * es), 2) + Math.pow((y - (ey + icy * es)) / (ir * es), 2)); Pp.addScaledVector(Nn, (0.00035 + 0.0011 * Math.max(0, 1 - r2)) * es); };
+      const cornea = conformGeo(circ.map(P), cMap, { off: 0, sub: 3 }); cornea.computeVertexNormals();
+      out.push({ geo: cornea, kind: 'eyes', slot: 'eyes', mat: { type: 'cornea' } });
+    }
     // Upper liner and sharp wing continue onto the skin beyond the eye corner.
     const lw = eyeP.liner;
     const top = [], bot = [];
     for (let i = 0; i < lid.length; i++) {
       const t = i / (lid.length - 1), a = lid[Math.max(0, i - 1)], b = lid[Math.min(lid.length - 1, i + 1)];
       let tx = b[0] - a[0], ty = b[1] - a[1]; const l = Math.hypot(tx, ty) || 1; tx /= l; ty /= l;
-      const w = (0.0011 + 0.0030 * lw * sstep(0.02, 0.72, t)) * (1 - 0.2 * sstep(0.9, 1, t));
-      top.push([lid[i][0] - ty * w, lid[i][1] + tx * w]); bot.push([lid[i][0] + ty * 0.00045, lid[i][1] - tx * 0.00045]);
+      const w = (0.0019 + 0.0030 * lw * sstep(0.0, 0.62, t)) * (1 - 0.15 * sstep(0.92, 1, t));
+      top.push([lid[i][0] - ty * w, lid[i][1] + tx * w]); bot.push([lid[i][0] + ty * 0.00035, lid[i][1] - tx * 0.00035]);
     }
     const last = lid[lid.length - 1];
-    const wing = eyeP.shape === 'ref' ? [[last[0] + 0.0095 * lw, last[1] + 0.0040 * lw]] : [[last[0] + 0.004 * lw, last[1] + 0.0022 * lw]];
-    const liner = top.concat(wing).concat(eyeP.shape === 'ref' ? [[last[0] + 0.0052 * lw, last[1] + 0.0003], [last[0] + 0.001, last[1] - 0.0009]] : [[last[0] + 0.001, last[1] - 0.0009]]).concat(bot.reverse());
-    out.push({ geo: conformGeo(liner.map(P), mapF, { off: 0.0009, sub: 2 }), kind: 'eyes', slot: 'eyes', mat: { type: 'decal', color: '#0c0b0e', rough: 0.35 } });
+    const wing = shape === 'ref' ? [[last[0] + 0.0095 * lw, last[1] + 0.0040 * lw]] : [[last[0] + 0.004 * lw, last[1] + 0.0022 * lw]];
+    const liner = top.concat(wing).concat(shape === 'ref' ? [[last[0] + 0.0052 * lw, last[1] + 0.0003], [last[0] + 0.001, last[1] - 0.0009]] : [[last[0] + 0.001, last[1] - 0.0009]]).concat(bot.reverse());
+    out.push({ geo: conformGeo(liner.map(P), mapX, { off: 0.00035, sub: 2 }), kind: 'eyes', slot: 'eyes', mat: { type: 'decal', color: '#0c0b0e', rough: 0.35 } });
+    // Lash fringe: a dark ribbon rooted on the upper lid margin, sweeping up and forward — the thick lash
+    // band of the reference in front view, a real overhang with depth in 3/4 and profile.
+    out.push({ geo: lashFringeGeo(lid.map(P), mapX, es, side, shape === 'ref' ? lw : 0.6), kind: 'eyes', slot: 'eyes', mat: { type: 'lash' } });
     // Separate curved fibres, rooted along the raised eyeliner and visible in profile.
-    const lashes = eyeP.shape === 'ref' ? [[0.40, 0.0046, 1.30], [0.50, 0.0053, 1.20], [0.60, 0.0061, 1.07], [0.70, 0.0068, 0.91], [0.78, 0.0074, 0.77], [0.86, 0.0079, 0.61], [0.93, 0.0081, 0.46]] : [[0.66, 0.0045, 0.9], [0.84, 0.0053, 0.7]];
+    const lashes = shape === 'ref' ? [[0.46, 0.0050, 1.28], [0.55, 0.0058, 1.16], [0.64, 0.0066, 1.03], [0.72, 0.0074, 0.89], [0.80, 0.0080, 0.75], [0.87, 0.0086, 0.60], [0.94, 0.0088, 0.46]] : [[0.66, 0.0045, 0.9], [0.84, 0.0053, 0.7]];
     for (const [t, len, ang] of lashes) {
       const i = Math.round(t * (lid.length - 1)), p = lid[i];
-      const base = P([p[0], p[1] + 0.00035]);
+      const base = P([p[0], p[1] + 0.0004]);
       const tip = P([p[0] + Math.cos(ang) * len, p[1] + Math.sin(ang) * len]);
-      out.push({ geo: sculptedLashGeo(base, tip, point, (0.00075 + 0.00022 * t) * es, (0.0029 + 0.0015 * t) * es), kind: 'eyes', slot: 'eyes', mat: { type: 'lash' } });
+      out.push({ geo: sculptedLashGeo(base, tip, point, (0.00080 + 0.00024 * t) * es, (0.0034 + 0.0016 * t) * es, 0.0006), kind: 'eyes', slot: 'eyes', mat: { type: 'lash' } });
     }
-    // lid crease (soft, above the lash line)
-    const crease = lid.slice(6, 31).map((p) => [p[0] * 1.02, p[1] + 0.0052 + 0.001 * Math.sin(p[0] * 80)]);
-    out.push({ geo: conformGeo(strokePoly(crease, (t) => 0.00055 * Math.sin(Math.PI * t) + 0.0001).map(P), mapF, { off: 0.0004, sub: 1 }), kind: 'eyes', slot: 'eyes', mat: { type: 'decal', color: '#6e3b2c', rough: 0.6, opacity: 0.4 } });
+    // lid crease (soft shadow line along the sculpted fold)
+    const crease = lid.slice(5, 31).map((p) => [p[0] * 1.02, p[1] + 0.0070 + 0.0008 * Math.sin(p[0] * 80)]);
+    out.push({ geo: conformGeo(strokePoly(crease, (t) => 0.00065 * Math.sin(Math.PI * t) + 0.0001).map(P), mapX, { off: 0.0003, sub: 1 }), kind: 'eyes', slot: 'eyes', mat: { type: 'decal', color: '#6e3b2c', rough: 0.6, opacity: 0.35 } });
     // lower lash line (outer 60%)
     const low = lower.slice(0, 15);
-    const lowPoly = strokePoly(low, (t) => 0.0007 * (1 - t) + 0.00015);
-    if (eyeP.shape === 'ref') for (const [t, len] of [[0.12, 0.0022], [0.26, 0.0019], [0.4, 0.0015]]) {
+    const lowPoly = strokePoly(low.map(([x, y]) => [x, y - 0.0006]), (t) => 0.0007 * (1 - t) + 0.00015);
+    if (shape === 'ref') for (const [t, len] of [[0.10, 0.0024], [0.22, 0.0021], [0.34, 0.0017], [0.46, 0.0012]]) {
       const i = Math.round(t * (low.length - 1)), p = low[i];
-      out.push({ geo: sculptedLashGeo(P(p), P([p[0] + 0.0012, p[1] - len]), point, 0.00045 * es, 0.0012 * es, 0.0012), kind: 'eyes', slot: 'eyes', mat: { type: 'lash' } });
+      out.push({ geo: sculptedLashGeo(P([p[0], p[1] - 0.0006]), P([p[0] + 0.0013, p[1] - 0.0006 - len]), point, 0.00045 * es, 0.0010 * es, 0.0004), kind: 'eyes', slot: 'eyes', mat: { type: 'lash' } });
     }
-    out.push({ geo: conformGeo(lowPoly.map(P), mapF, { off: 0.0007, sub: 1 }), kind: 'eyes', slot: 'eyes', mat: { type: 'decal', color: '#2a1d1c', rough: 0.5, opacity: 0.8 } });
+    out.push({ geo: conformGeo(lowPoly.map(P), mapX, { off: 0.0003, sub: 1 }), kind: 'eyes', slot: 'eyes', mat: { type: 'decal', color: '#2a1d1c', rough: 0.5, opacity: 0.8 } });
     // brows
     const bl = smoothLine(browP.pts.map((p) => [p[0], (browP.abs ? 0 : 0.018) + p[1]]), 28);
     const wf = mono(browP.pts.map((_, i) => i / (browP.pts.length - 1)), browP.w);
@@ -2837,7 +3050,7 @@ function buildPiercings(R, head, ear) {
   const out = [], silver = [], teal = [];
   const earR = { ...ear, root: new V3(-ear.root.x, ear.root.y, ear.root.z), D: new V3(-ear.D.x, ear.D.y, ear.D.z), U: new V3(-ear.U.x, ear.U.y, ear.U.z), F: new V3(-ear.F.x, ear.F.y, ear.F.z) };
   const hoop = (e, s, r, tube, spin, arc = TAU) => {
-    const lobe = earPoint(e, s, -0.024, 0.0);
+    const lobe = earPoint(e, s, -((e.wLo ? e.wLo(s) : 0.027) - 0.0032), 0.0);
     const g = new THREE.TorusGeometry(r, tube, 8, 28, arc);
     // ring plane spanned by U (down) and F; axis along D
     const X = e.F.clone(), Y = e.U.clone(), Z = new V3().crossVectors(X, Y).normalize();
@@ -2847,11 +3060,13 @@ function buildPiercings(R, head, ear) {
   };
   // character's LEFT ear (+x): double hoops + two teal studs
   silver.push(hoop(ear, 0.08, 0.0098, 0.0013, 0), hoop(ear, 0.19, 0.0082, 0.0012, 0.25));
-  for (const s of [0.34, 0.5]) { const p = earPoint(ear, s, 0.013 * (1 - s) + 0.002, 0.0028); teal.push(new THREE.SphereGeometry(0.0021, 10, 8).translate(p.x, p.y, p.z)); }
+  const lowRim = (e, s, inset) => -((e.wLo ? e.wLo(s) : 0.012) - inset); // just inside the lower rim
+  for (const s of [0.16, 0.30]) { const p = earPoint(ear, s, lowRim(ear, s, 0.0045), 0.0026); teal.push(new THREE.SphereGeometry(0.0021, 10, 8).translate(p.x, p.y, p.z)); }
   // character's RIGHT ear (-x): hoop + hook hoop, three studs, industrial bar
   silver.push(hoop(earR, 0.08, 0.0098, 0.0013, 0), hoop(earR, 0.19, 0.0085, 0.0012, 0.6, Math.PI * 1.45));
-  for (const s of [0.3, 0.44, 0.58]) { const p = earPoint(earR, s, 0.0125 * (1 - s) + 0.002, 0.0028); teal.push(new THREE.SphereGeometry(0.0021, 10, 8).translate(p.x, p.y, p.z)); }
-  const b0 = earPoint(earR, 0.22, 0.004, 0.0035), b1 = earPoint(earR, 0.62, 0.003, 0.0035);
+  for (const s of [0.13, 0.26]) { const p = earPoint(earR, s, lowRim(earR, s, 0.0045), 0.0026); teal.push(new THREE.SphereGeometry(0.0021, 10, 8).translate(p.x, p.y, p.z)); }
+  // industrial bar along the lower rim, from mid-ear toward the lobe
+  const b0 = earPoint(earR, 0.30, lowRim(earR, 0.30, 0.0035), 0.0034), b1 = earPoint(earR, 0.62, lowRim(earR, 0.62, 0.0022), 0.0030);
   const bar = new THREE.CylinderGeometry(0.0011, 0.0011, b0.distanceTo(b1), 8); alignY(bar, b0.clone().lerp(b1, 0.5), b1.clone().sub(b0));
   teal.push(bar, new THREE.SphereGeometry(0.0019, 8, 6).translate(b0.x, b0.y, b0.z), new THREE.SphereGeometry(0.0019, 8, 6).translate(b1.x, b1.y, b1.z));
   // nose stud (character's left nostril)
@@ -2996,7 +3211,8 @@ function makeMat(d, ctx) {
     case 'skin': m = ctx.skinM; break;
     case 'hair': m = ctx.hairM; break;
     case 'lash': m = new THREE.MeshStandardMaterial({ color: '#100d10', roughness: 0.36, metalness: 0, side: THREE.DoubleSide }); break;
-    case 'eye': m = po(new THREE.MeshPhysicalMaterial({ map: d.map, roughness: 0.42, clearcoat: 0.55, clearcoatRoughness: 0.08, envMapIntensity: 0.35, specularIntensity: 0.5 }), -2); break;
+    case 'cornea': m = new THREE.MeshPhysicalMaterial({ color: '#000000', roughness: 0.06, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.03, specularIntensity: 1, envMapIntensity: 1.1, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }); break;
+    case 'eye': m = new THREE.MeshPhysicalMaterial({ map: d.map, roughness: 0.45, clearcoat: 0.35, clearcoatRoughness: 0.12, envMapIntensity: 0.3, specularIntensity: 0.4 }); break; // real globe geometry, no depth offset
     case 'decal': m = po(new THREE.MeshStandardMaterial({ color: d.color, roughness: d.rough ?? 0.5, transparent: (d.opacity ?? 1) < 1, opacity: d.opacity ?? 1, depthWrite: (d.opacity ?? 1) >= 1 }), -3); break;
     case 'brow': m = po(new THREE.MeshStandardMaterial({ color: d.color === 'ink' ? new THREE.Color(ctx.look.brow || ctx.look.ink).multiplyScalar(0.78) : d.color, roughness: 0.6 }), -2); break;
     case 'blush': m = po(new THREE.MeshStandardMaterial({ color: d.color || '#d8664f', roughness: 0.6, alphaMap: blushTexture(), transparent: true, opacity: d.amount ?? 0.3, depthWrite: false }), -1); break;
@@ -3050,7 +3266,8 @@ function assembleCharacter(profile, env) {
   const body = buildBody(R, { feet: !shoesOn });
   parts.push({ geo: body.geo, kind: 'skin', slot: 'body', mat: { type: 'skin' } });
   const head = makeHeadLoft(R, profile.faceModel, (EYE_PRESETS[clamp(profile.style.eyes | 0, 0, EYE_PRESETS.length - 1)] || {}).shape);
-  parts.push({ geo: head.geo({ nu: 88, nv: 72, tMap: (v) => v }), kind: 'skin', slot: 'body', mat: { type: 'skin' }, space: 'head' });
+  // Dense sampling over the face (θ≈0 and the lower 60 % of the head) so lids, nostrils and lips resolve.
+  parts.push({ geo: head.geo({ nu: 176, nv: 156, thMap: HEAD_TH_MAP, tMap: HEAD_T_MAP }), kind: 'skin', slot: 'body', mat: { type: 'skin' }, space: 'head' });
   const ear = buildEarL(R, head);
   parts.push({ geo: ear.geo, kind: 'skin', slot: 'body', mat: { type: 'skin' }, space: 'head' });
   parts.push({ geo: mirrorGeoX(ear.geo), kind: 'skin', slot: 'body', mat: { type: 'skin' }, space: 'head' });
@@ -3063,7 +3280,7 @@ function assembleCharacter(profile, env) {
     if (p.space === 'head') p.geo.applyMatrix4(headM);
     const mat = makeMat(p.mat, ctx);
     const mesh = new THREE.Mesh(p.geo, mat);
-    const flat = ['decal', 'eye', 'brow', 'blush', 'stubble'].includes(p.mat.type);
+    const flat = ['decal', 'eye', 'cornea', 'brow', 'blush', 'stubble'].includes(p.mat.type);
     mesh.castShadow = !flat; mesh.receiveShadow = true;
     mesh.userData.modelPart = p.kind; mesh.userData.gearSlot = p.slot;
     if (p.mat.type === 'blush' || p.mat.type === 'stubble' || (p.mat.opacity ?? 1) < 1) mesh.renderOrder = 2;
@@ -4139,13 +4356,16 @@ window.__INKWAVE_QA = {
     renderer.setPixelRatio(prevPR); renderer.setSize(prevSize.x, prevSize.y, true);
     return url;
   },
-  renderPersp: (az = -0.55, el = 0.08, dist = 3.3, W = 700, H = 875, target = [0, 0.8, 0], fov = 30) => {
+  /** Perspective orbit render; `only` limits it to model parts / gear slots (e.g. ['skin','eyes','brows'] for a bare head). */
+  renderPersp: (az = -0.55, el = 0.08, dist = 3.3, W = 700, H = 875, target = [0, 0.8, 0], fov = 30, only = null) => {
     const cam = new THREE.PerspectiveCamera(fov, W / H, 0.01, 50);
     cam.position.set(target[0] + Math.sin(az) * Math.cos(el) * dist, target[1] + Math.sin(el) * dist, target[2] + Math.cos(az) * Math.cos(el) * dist); cam.lookAt(...target);
     const prevSize = renderer.getSize(new THREE.Vector2()), prevPR = renderer.getPixelRatio();
     const hidden = [grid, axes, sculptLayer, refLayer3D, transform].filter((o) => o.visible); hidden.forEach((o) => (o.visible = false));
+    const vis = []; if (only) current?.traverse((o) => { if (o.isMesh) { vis.push([o, o.visible]); o.visible = o.visible && (only.includes(o.userData.modelPart) || only.includes(o.userData.gearSlot)); } });
     renderer.setPixelRatio(1); renderer.setSize(W, H, false); renderer.setClearColor(0xb4b6bd, 1);
     renderer.render(scene, cam); const url = renderer.domElement.toDataURL('image/png');
+    vis.forEach(([o, v]) => (o.visible = v));
     renderer.setClearColor(0x000000, 0); hidden.forEach((o) => (o.visible = true)); renderer.setPixelRatio(prevPR); renderer.setSize(prevSize.x, prevSize.y, true);
     return url;
   },
