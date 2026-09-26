@@ -1,0 +1,62 @@
+{
+  "version": 1,
+  "target": "inkwave-character",
+  "notes": "AI-editable non-destructive modelling profile. Values are multipliers unless documented as offsets.",
+  "style": {
+    "hair": 0,
+    "outfit": 0,
+    "skin": 1,
+    "eyes": 1,
+    "hat": 0,
+    "brows": 0
+  },
+  "look": {
+    "ink": "#17d9d0",
+    "hairTip": "#b8ff4d",
+    "hairTipStrength": 0,
+    "hairTranslucency": 0,
+    "glow": 0
+  },
+  "shape": {
+    "overallScale": 1,
+    "headWidth": 1,
+    "headHeight": 1,
+    "headDepth": 1,
+    "headOffsetX": 0,
+    "headOffsetY": 0,
+    "headOffsetZ": 0,
+    "jawWidth": 1,
+    "cheekWidth": 1,
+    "eyeScale": 1,
+    "eyeSpacing": 1,
+    "eyeHeight": 0,
+    "earLength": 1,
+    "hairVolume": 1,
+    "hairLength": 1,
+    "hairLift": 0,
+    "shoulderWidth": 1,
+    "torsoWidth": 1,
+    "torsoDepth": 1,
+    "torsoLength": 1,
+    "hipWidth": 1,
+    "armLength": 1,
+    "armThickness": 1,
+    "legLength": 1,
+    "legThickness": 1,
+    "shoeScale": 1,
+    "shoeLength": 1
+  },
+  "weapon": {
+    "kind": "shooter",
+    "scaleX": 1,
+    "scaleY": 1,
+    "scaleZ": 1,
+    "barrelLength": 1
+  },
+  "view": {
+    "mode": "perspective",
+    "wireframe": false,
+    "grid": true,
+    "referenceOpacity": 0.45
+  }
+}
