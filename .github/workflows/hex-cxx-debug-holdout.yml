@@ -89,16 +89,20 @@ jobs:
           if [ -d openttd/.git ]; then git -C openttd rev-parse HEAD > evidence/openttd-source-sha.txt; fi
 
       - name: Install OpenTTD and DWARF tools
-        if: inputs.artifact_run_id == ''
+        env:
+          ARTIFACT_RUN_ID: ${{ inputs.artifact_run_id }}
         shell: bash
         run: |
           set -euo pipefail
           timeout 300s sudo apt-get update -qq
-          timeout 300s sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-            binutils cmake file llvm ninja-build python3-pyelftools \
-            libcurl4-openssl-dev libfontconfig-dev libfreetype-dev libharfbuzz-dev libicu-dev \
-            liblzma-dev liblzo2-dev libogg-dev libopus-dev libopusfile-dev libpng-dev \
-            libsdl2-dev libsoxr-dev zlib1g-dev
+          packages=(binutils file llvm python3-pyelftools)
+          if [ -z "$ARTIFACT_RUN_ID" ]; then
+            packages+=(cmake ninja-build \
+              libcurl4-openssl-dev libfontconfig-dev libfreetype-dev libharfbuzz-dev libicu-dev \
+              liblzma-dev liblzo2-dev libogg-dev libopus-dev libopusfile-dev libpng-dev \
+              libsdl2-dev libsoxr-dev zlib1g-dev)
+          fi
+          timeout 300s sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends "${packages[@]}"
 
       - name: Build OpenTTD once with full DWARF
         if: inputs.artifact_run_id == ''
