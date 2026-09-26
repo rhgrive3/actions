@@ -12,13 +12,14 @@
     "face",
     "materials",
     "sculpt",
+    "hairSpline",
     "shape",
     "weapon",
     "view"
   ],
   "properties": {
     "version": {
-      "const": 4
+      "const": 5
     },
     "target": {
       "enum": [
@@ -557,6 +558,50 @@
         },
         "quad": {
           "type": "boolean"
+        }
+      }
+    },
+    "hairSpline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "enabled",
+        "strands"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "strands": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "offsets": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/vec3"
+                }
+              },
+              "points": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/vec3"
+                }
+              },
+              "radiusScale": {
+                "type": "number",
+                "minimum": 0.25,
+                "maximum": 3
+              },
+              "flatScale": {
+                "type": "number",
+                "minimum": 0.25,
+                "maximum": 3
+              }
+            }
+          }
         }
       }
     }
