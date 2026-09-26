@@ -12,6 +12,11 @@ on:
         required: false
         default: ""
         type: string
+      artifact_name:
+        description: "Artifact name holding the preserved same-build ARM64 binaries"
+        required: false
+        default: "hex-cxx-dwarf-holdout-5bd85f8a86cd5030e5e36c6e9f0a196df9f08f0e"
+        type: string
   workflow_call:
     inputs:
       target_sha:
@@ -22,6 +27,11 @@ on:
         description: "Reuse a prior run's preserved same-build ARM64 binaries"
         required: false
         default: ""
+        type: string
+      artifact_name:
+        description: "Artifact name holding the preserved same-build ARM64 binaries"
+        required: false
+        default: "hex-cxx-dwarf-holdout-5bd85f8a86cd5030e5e36c6e9f0a196df9f08f0e"
         type: string
 
 permissions:
@@ -63,7 +73,7 @@ jobs:
         if: inputs.artifact_run_id != ''
         uses: actions/download-artifact@v4
         with:
-          name: hex-cxx-dwarf-holdout-${{ inputs.target_sha }}
+          name: ${{ inputs.artifact_name }}
           run-id: ${{ inputs.artifact_run_id }}
           github-token: ${{ github.token }}
           path: .
@@ -83,7 +93,8 @@ jobs:
           set -euo pipefail
           mkdir -p "$TMPDIR" evidence binaries
           test "$(git -C target rev-parse HEAD)" = "$TARGET_SHA"
-          test "$(git -C target rev-parse HEAD)" = "5bd85f8a86cd5030e5e36c6e9f0a196df9f08f0e"
+          test "${#TARGET_SHA}" = "40"
+          case "$TARGET_SHA" in *[!0-9a-f]*) echo "target_sha must be 40 lowercase hex characters" >&2; exit 1;; esac
           test "$(uname -m)" = "aarch64"
           node -e "if(process.arch!=='arm64') throw new Error('node-not-arm64'); console.log(process.platform,process.arch)"
           if [ -d openttd/.git ]; then git -C openttd rev-parse HEAD > evidence/openttd-source-sha.txt; fi

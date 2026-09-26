@@ -22,6 +22,11 @@ on:
         required: false
         default: ""
         type: string
+      artifact_name:
+        description: "For cxxholdout, name of the preserved same-build ARM64 binaries artifact"
+        required: false
+        default: "hex-cxx-dwarf-holdout-5bd85f8a86cd5030e5e36c6e9f0a196df9f08f0e"
+        type: string
 
 permissions:
   contents: read
@@ -288,6 +293,7 @@ jobs:
     with:
       target_sha: ${{ inputs.target_sha }}
       artifact_run_id: ${{ inputs.artifact_run_id }}
+      artifact_name: ${{ inputs.artifact_name }}
     permissions:
       contents: read
       actions: read
