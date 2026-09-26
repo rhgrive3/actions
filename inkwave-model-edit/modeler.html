@@ -997,7 +997,8 @@ const DEFAULT = {
     legLength:1,legThickness:1,shoeScale:1,shoeLength:1
   },
   weapon:{kind:'shooter',scaleX:1,scaleY:1,scaleZ:1,barrelLength:1},
-  view:{mode:'perspective',wireframe:false,grid:true,referenceOpacity:.45,referenceScale:1,referenceX:0,referenceY:0,isolatePart:'all',showHandles:true,xrayHandles:true,quad:false} };
+  view:{mode:'perspective',wireframe:false,grid:true,referenceOpacity:.45,referenceScale:1,referenceX:0,referenceY:0,isolatePart:'all',showHandles:true,xrayHandles:true,quad:false}
+ };
 
 const BASE_BODY_PRESETS=[
   {shape:{headWidth:1.00,headHeight:.98,headDepth:.96,jawWidth:.84,cheekWidth:1.06,eyeScale:1.12,eyeSpacing:1.00,earLength:1.18,shoulderWidth:.94,torsoWidth:.94,torsoDepth:.94,torsoLength:.98,hipWidth:.96,armLength:.98,armThickness:.94,legLength:1.06,legThickness:.93,shoeScale:1.14,shoeLength:1.10},faceModel:{noseDepth:.010,noseWidth:.92,noseHeight:.92,mouthDepth:.004,lipVolume:.10}},
@@ -1996,7 +1997,8 @@ function refreshDetailUI(){
   const p=getDetailPart(), fields=['detailName','detailPrimitive','detailAnchor','detailMaterial','detailColor','detailRoughness','detailMetalness','detailOpacity','detailWidth','detailMirror','detailVisible','detailPoints'];
   for(const id of fields)$(id).disabled=!p;
   if(p){
-    $('detailName').value=p.name||p.id;$('detailPrimitive').value=p.primitive||'roundedBox';$('detailAnchor').value=p.anchor||'world';$('detailMaterial').value=p.material||'custom';$('detailColor').value=p.color||'#e8edf4';$('detailRoughness').value=p.roughness??.5;$('detailMetalness').value=p.metalness??0;$('detailOpacity').value=p.opacity??1;$('detailWidth').value=p.width??.03;$('detailMirror').checked=!!p.mirrorX;$('detailVisible').checked=p.visible!==false;$('detailPoints').value=JSON.stringify(p.points||[],null,2);  }else $('detailPoints').value='[]';
+    $('detailName').value=p.name||p.id;$('detailPrimitive').value=p.primitive||'roundedBox';$('detailAnchor').value=p.anchor||'world';$('detailMaterial').value=p.material||'custom';$('detailColor').value=p.color||'#e8edf4';$('detailRoughness').value=p.roughness??.5;$('detailMetalness').value=p.metalness??0;$('detailOpacity').value=p.opacity??1;$('detailWidth').value=p.width??.03;$('detailMirror').checked=!!p.mirrorX;$('detailVisible').checked=p.visible!==false;$('detailPoints').value=JSON.stringify(p.points||[],null,2);
+  }else $('detailPoints').value='[]';
   $('detailList').innerHTML=parts.map(p=>'<div class="handle-item '+(p.id===selectedDetailId?'active':'')+'"><span>'+p.id+' · '+(p.name||p.primitive)+' · '+p.anchor+'</span><button data-pick-detail="'+p.id+'">Select</button></div>').join('');
   $('detailList').querySelectorAll('[data-pick-detail]').forEach(b=>b.onclick=()=>{selectedDetailId=b.dataset.pickDetail;$('gizmoTarget').value='detail';refreshDetailUI();syncHandle();});
 }
