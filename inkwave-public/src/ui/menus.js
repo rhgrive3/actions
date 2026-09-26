@@ -6,7 +6,7 @@
 // nav('tab_prev'|'tab_next') for LB/RB tab switching, menus.timeScale (debug slow-motion for JS-driven motion).
 import {
   h, clamp, Spring, colorVars, toHex, splatSVG, fmtInt, fmtTime, pct, safeCall, restartAnim,
-  prefersReducedMotion, easeOutCubic, easeInOutCubic, esc,
+  prefersReducedMotion, easeOutCubic, easeInOutCubic, esc, fitText,
 } from './ui-util.js';
 import {
   WEAPON_ICONS, SUB_ICONS, SQUID, GLYPHS, SPLAT_ICON, DEATH_ICON, keycap, mouseGlyph, padGlyph,
@@ -18,6 +18,8 @@ import {
 } from '../config.js';
 import * as LOOK from '../game/character-style.js';
 import { G } from '../core/ctx.js';
+import { t, t as tr, TXT, setTextMode, LANG } from '../i18n.js';
+import { touchPrimary, touchCapable } from '../core/device.js';
 import {
   computeAwards, medalMarkup, awardBadge, awardIcon, rankEmblem, rankTier, RANK_TIERS, inkBurst, InkWipe, createPreview,
   sweepEdge, sweepClip, splatClip, splatCover, skinSwatch, irisSwatch, outfitIcon,
@@ -74,13 +76,27 @@ const MENU_DESC = {
 };
 
 const pctFmt = (v) => Math.round(v * 100) + '%';
+const sgnFmt = (v) => (v > 0 ? '+' : v < 0 ? '−' : '±') + Math.abs(v).toFixed(1);
+// Touch + gyro: only shown on devices that can be touched (phones, tablets, touch laptops).
+const TOUCH_TAB = { id: 'touch', label: 'Touch', icon: 'hand', rows: [
+  { key: 'gyro', label: 'Gyro aim', type: 'toggle', help: 'Tilt and turn the device to aim, like Splatoon handheld mode. Swipes still work.' },
+  { key: 'gyroSens', label: 'Gyro sensitivity', type: 'slider', min: -5, max: 5, step: 0.5, fmt: sgnFmt, help: 'Same scale as the Switch game: 0 = 132° of device turn per 360°, +5 = 110°, −5 = 278°.' },
+  { key: 'gyroInvertY', label: 'Gyro vertical', type: 'seg', options: [[false, 'Normal'], [true, 'Invert']], help: 'Normal: tilt the top toward you to look up (like a window). Invert flips it.' },
+  { key: 'gyroInvertX', label: 'Gyro horizontal', type: 'seg', options: [[false, 'Normal'], [true, 'Invert']], help: 'Normal: turn the device left to look left.' },
+  { key: 'touchSens', label: 'Swipe sensitivity', type: 'slider', min: -5, max: 5, step: 0.5, fmt: sgnFmt, help: 'How far the camera turns when you drag on the right side of the screen.' },
+  { key: 'fireAim', label: 'Aim while firing', type: 'toggle', help: 'Slide your thumb on the FIRE button to aim while you shoot.' },
+  { key: 'stickMode', label: 'Move stick', type: 'seg', options: [['float', 'Floating'], ['fixed', 'Fixed']], help: 'Floating: the stick appears wherever your left thumb lands. Fixed: it stays put.' },
+  { key: 'touchScale', label: 'Button size', type: 'slider', min: 0.7, max: 1.4, step: 0.05, fmt: pctFmt, help: 'Scales every on-screen control. Fine-tune single buttons in the layout editor.' },
+  { key: 'touchOpacity', label: 'Button opacity', type: 'slider', min: 0.25, max: 1, step: 0.05, fmt: pctFmt, help: 'How solid the on-screen controls look.' },
+  { key: '_layout', label: 'Edit button layout', type: 'link', linkLabel: 'EDIT', help: 'Drag buttons where you want them and resize them. Saved per device.' },
+] };
 const SETTINGS_TABS = [
   { id: 'controls', label: 'Controls', icon: 'gamepad', rows: [
-    { key: 'sensitivity', label: 'Mouse sensitivity', type: 'slider', min: 0.2, max: 3, step: 0.05, fmt: (v) => v.toFixed(2) + '×', help: 'How far the camera turns for each bit of mouse movement.' },
+    { key: 'sensitivity', label: 'Mouse sensitivity', kbm: true, type: 'slider', min: 0.2, max: 3, step: 0.05, fmt: (v) => v.toFixed(2) + '×', help: 'How far the camera turns for each bit of mouse movement.' },
     { key: 'padSensitivity', label: 'Controller sensitivity', type: 'slider', min: 0.2, max: 3, step: 0.05, fmt: (v) => v.toFixed(2) + '×', help: 'Camera turn speed with the right stick.' },
     { key: 'invertY', label: 'Invert vertical look', type: 'toggle', help: 'Push up to look down, like a flight stick.' },
     { key: 'aimAssist', label: 'Aim assist (controller)', type: 'slider', min: 0, max: 1, step: 0.05, fmt: pctFmt, help: 'Gently slows and steers your aim onto nearby rivals when you play with a controller.' },
-    { key: 'aimAssistMouse', label: 'Aim assist for mouse', type: 'toggle', help: 'Also apply a lighter aim assist when aiming with a mouse. Off by default.' },
+    { key: 'aimAssistMouse', label: 'Aim assist for mouse', kbm: true, type: 'toggle', help: 'Also apply a lighter aim assist when aiming with a mouse. Off by default.' },
     { key: '_howto', label: 'Controls reference', type: 'link', help: 'Every keyboard, mouse and controller binding in one place.' },
   ] },
   { id: 'video', label: 'Video', icon: 'monitor', rows: [
@@ -102,16 +118,20 @@ const SETTINGS_TABS = [
     { key: 'minimap', label: 'Minimap', type: 'toggle', help: 'Show the turf minimap in the corner during matches.' },
     { key: 'difficulty', label: 'Default bot skill', type: 'seg', options: null, help: 'Starting difficulty for new matches.' },
     { key: 'matchLength', label: 'Default match length', type: 'seg', options: null, help: 'How long each Turf War lasts.' },
+    { key: 'lang', label: 'Language', type: 'seg', options: [['ja', '日本語'], ['en', 'English']], help: 'Menu and HUD language. The game reloads to apply it.' },
   ] },
 ];
+// phones / tablets open on the touch tab; touch laptops get it after the keyboard/mouse controls
+if (touchCapable) SETTINGS_TABS.splice(touchPrimary ? 0 : 1, 0, TOUCH_TAB);
 const TAB_BLURB = {
   controls: 'Look speed, invert, aim assist and the full control reference.',
+  touch: 'Gyro aim, swipe speed and the on-screen buttons.',
   video: 'Quality tier, field of view and screen effects.',
   audio: 'Master, music and sound-effect levels.',
   gameplay: 'Shake, vibration, colour-safe inks, minimap and match defaults.',
 };
 
-const durLabel = (s) => (s < 120 ? `${s} SEC` : `${Math.round(s / 60)} MIN`);
+const durLabel = (s) => (s < 120 ? t('{n} SEC', { n: s }) : t('{n} MIN', { n: Math.round(s / 60) }));
 // FNV-1a — the Character's style seed (character.js hashStr) so an unsaved look resolves identically here
 const fnv = (str) => { let x = 2166136261; for (let i = 0; i < str.length; i++) { x ^= str.charCodeAt(i); x = Math.imul(x, 16777619); } return x >>> 0; };
 
@@ -135,10 +155,14 @@ export class Menus {
     this._focusMem = {};
     this._binds = new WeakMap();
     this._modal = null;
-    this._loading = { target: 0, shown: 0, label: 'Mixing the ink…' };
+    this._loading = { target: 0, shown: 0, label: t('Mixing the ink…') };
     this._results = null;
     this._resultsDirty = false;
-    this._input = 'kbm';
+    // phones / tablets start in touch mode: no keyboard or pad prompts anywhere (they come back as soon as a key or
+    // a controller button is actually used)
+    this._input = touchPrimary ? 'touch' : 'kbm';
+    this.el.classList.toggle('is-touch', this._input === 'touch');
+    setTextMode(this._input);
     this._lastMove = 0;
     this._shownAt = 0;
     this._extTick = 0;
@@ -149,11 +173,22 @@ export class Menus {
     this._cur = { x: new Spring(0, 560, 34), y: new Spring(0, 560, 34), w: new Spring(0, 560, 34), h: new Spring(0, 560, 34), on: false, r: '' };
 
     this._applyAccent();
-    this.el.addEventListener('pointermove', () => {
+    this.el.addEventListener('pointermove', (e) => {
+      // only a real mouse counts as "keyboard & mouse" (touch drags fire pointermove too)
+      if (e.pointerType !== 'mouse') return;
       this._lastMove = performance.now();
       if (this._input !== 'kbm') this.setInputMode('kbm');
     }, { passive: true });
+    this.el.addEventListener('pointerdown', (e) => {
+      if (e.pointerType === 'touch' || e.pointerType === 'pen') { if (this._input !== 'touch') this.setInputMode('touch'); }
+    }, { passive: true, capture: true });
     this.el.addEventListener('contextmenu', (e) => e.preventDefault());
+    // one-line names that must never truncate ([data-fit]) shrink to fit: re-measured on resize and as web fonts land
+    this._fitQ = 0;
+    this._refit = () => { if (!this._fitQ) this._fitQ = requestAnimationFrame(() => { this._fitQ = 0; if (this._scr) this._fitAll(this._scr.el); }); };
+    if (typeof ResizeObserver !== 'undefined') new ResizeObserver(this._refit).observe(this.el);
+    else window.addEventListener('resize', this._refit);
+    if (document.fonts) { document.fonts.ready.then(this._refit); document.fonts.addEventListener?.('loadingdone', this._refit); }
 
     this._lastT = performance.now();
     this._loop = this._loop.bind(this);
@@ -262,11 +297,16 @@ export class Menus {
     colorVars(this.el, 'b', toHex(b));
   }
 
+  /** The engine changed a setting on its own (e.g. gyro permission refused): resync the visible control. */
+  refreshSetting(key) { if (this._scr && this._scr.refreshControl) safeCall(() => this._scr.refreshControl(key)); }
+
   setInputMode(mode) {
-    if (mode !== 'kbm' && mode !== 'pad') return;
+    if (mode !== 'kbm' && mode !== 'pad' && mode !== 'touch') return;
     if (this._input === mode) return;
     this._input = mode;
+    setTextMode(mode);
     this.el.classList.toggle('is-pad', mode === 'pad');
+    this.el.classList.toggle('is-touch', mode === 'touch');
     if (this._scr && this._scr.onInputMode) this._scr.onInputMode(mode);
   }
 
@@ -313,6 +353,12 @@ export class Menus {
     return { ...DEFAULT_SETTINGS, ...(s || {}) };
   }
   _setSetting(key, value) {
+    if (key === 'lang') {
+      // the whole UI is built from localised strings: save, then reload into the new language
+      safeCall(() => this.api.setSettings && this.api.setSettings({ lang: value }));
+      if (value !== LANG) setTimeout(() => location.reload(), 180);
+      return;
+    }
     safeCall(() => this.api.setSettings && this.api.setSettings({ [key]: value }));
     if (key === 'colorblind' && !this._accentExternal) this._applyAccent();
     if (this._scr && this._scr.onSetting) safeCall(() => this._scr.onSetting(key, value));
@@ -389,6 +435,19 @@ export class Menus {
     if (!f) f = scr.el.querySelector('[data-nav]');
     if (f) this._setFocus(f, { snap: true });
     if (scr.afterMount) scr.afterMount();
+    this._fitAll(scr.el);
+    this._refit();
+  }
+  _fitAll(root) {
+    for (const e of root.querySelectorAll('[data-fit]')) fitText(e, +e.dataset.fit || undefined);
+    // siblings in one control / grid read as a set: they all take the smallest fitted size
+    for (const g of root.querySelectorAll('[data-fit-group]')) {
+      const items = [...g.querySelectorAll('[data-fit]')].filter((e) => e.closest('[data-fit-group]') === g);
+      const sizes = items.map((e) => parseFloat(getComputedStyle(e).fontSize) || 0).filter(Boolean);
+      if (!sizes.length) continue;
+      const min = Math.min(...sizes);
+      if (Math.max(...sizes) - min > 0.2) for (const e of items) e.style.fontSize = `${min.toFixed(2)}px`;
+    }
   }
 
   /** mode: 'full' (organic ink pour; mid ≈ 380 ms, clear ≈ 1000 ms) · 'light' (quick swipe) · reduced motion → 'fade'. */
@@ -433,6 +492,10 @@ export class Menus {
     el.addEventListener('pointerenter', () => {
       if (performance.now() - this._lastMove < 150 && !(this._modal && !this._modal.contains(el))) this._setFocus(el, { sound: true });
     });
+    // a finger has no hover: touching a row focuses it (settings preview, stage info) before any slider drag
+    el.addEventListener('pointerdown', (e) => {
+      if (e.pointerType !== 'mouse' && !(this._modal && !this._modal.contains(el))) this._setFocus(el);
+    }, { passive: true });
     if (opts.accept && opts.click !== false) {
       el.addEventListener('click', (e) => {
         if (this._modal && !this._modal.contains(el)) return;
@@ -527,6 +590,14 @@ export class Menus {
   /** Keyboard / pad focus move: ink floods in from the side we arrived from; screens see `_navFocus` in onFocus. */
   _moveFocus(next, dir) {
     if (!next) return false;
+    // keep a key/pad-focused row visible inside a scrolling list (short phone screens)
+    const sc = next.closest('.iw-rows');
+    if (sc && sc.scrollHeight > sc.clientHeight) {
+      // bring it fully clear of the edge fade, with a peek of the row beyond so the list reads as continuing
+      const r = next.getBoundingClientRect(), b = sc.getBoundingClientRect(), m = Math.min(r.height * 0.75, b.height * 0.2);
+      const d = r.top < b.top + m ? r.top - b.top - m : r.bottom > b.bottom - m ? r.bottom - b.bottom + m : 0;
+      if (d) sc.scrollTo({ top: sc.scrollTop + d, behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
+    }
     next.style.setProperty('--mx', dir === 'left' ? '100%' : dir === 'right' ? '0%' : '50%');
     next.style.setProperty('--my', dir === 'up' ? '100%' : dir === 'down' ? '0%' : '50%');
     this._navFocus = true;
@@ -592,7 +663,9 @@ export class Menus {
     const C = this._cur, f = this._focus;
     // hide while the focused element is still popping in (staggered entrance keeps it transparent);
     // elements with their own focus ring (tilting cards) opt out with data-cur="own"
-    const want = !!(f && f.isConnected && !(this._scr && this._scr.noCursor) && f.dataset.cur !== 'own' && !f.closest('.is-leaving') && parseFloat(getComputedStyle(f).opacity) > 0.6);
+    // on touch, rows and tabs show their own selected state (tint / pill): no console-style ring after a tap
+    const touchOwn = this._input === 'touch' && f && (f.dataset.nav === 'row' || f.dataset.nav === 'tab');
+    const want = !!(f && f.isConnected && !touchOwn && !(this._scr && this._scr.noCursor) && f.dataset.cur !== 'own' && !f.closest('.is-leaving') && parseFloat(getComputedStyle(f).opacity) > 0.6);
     if (!want) {
       if (C.on) { this.cursorEl.classList.remove('is-on'); C.on = false; }
       C.snapNext = true;
@@ -612,6 +685,15 @@ export class Menus {
     const rad = parseFloat(C.r) || 0;
     const rr = `${Math.round(rad + pad)}px`;
     if (st.borderRadius !== rr) st.borderRadius = rr;
+    // a row scrolled part-way out of its list: cut the ring at the list edge along with the row
+    let clip = '';
+    const sc = f.closest('.iw-rows');
+    if (sc && sc.scrollHeight > sc.clientHeight + 1) {
+      const b = sc.getBoundingClientRect();
+      const ct = r.top < b.top - 0.5 ? b.top - C.y.x : 0, cb = r.bottom > b.bottom + 0.5 ? C.y.x + C.h.x - b.bottom : 0;
+      if (ct > 0 || cb > 0) clip = `inset(${Math.max(0, ct).toFixed(1)}px -24px ${Math.max(0, cb).toFixed(1)}px -24px)`;
+    }
+    if (C.clip !== clip) { C.clip = clip; st.clipPath = clip; }
   }
 
   // ================================================================ modal
@@ -712,9 +794,11 @@ export class Menus {
 
   // ================================================================ SCREEN: title
   _scr_title() {
+    const pressTxt = (m) => t(m === 'pad' ? 'PRESS ANY BUTTON' : m === 'touch' ? 'TAP TO START' : 'PRESS ANY KEY');
+    const subTxt = (m) => (m === 'kbm' ? t('or click to start') : '');
     const press = h('div', { class: 'iw-title__press iw-in iw-in--up' },
-      h('span', { class: 'iw-title__presstext' }, this._input === 'pad' ? 'PRESS ANY BUTTON' : 'PRESS ANY KEY'),
-      h('span', { class: 'iw-title__presssub' }, this._input === 'pad' ? '' : 'or click to start'));
+      h('span', { class: 'iw-title__presstext' }, pressTxt(this._input)),
+      h('span', { class: 'iw-title__presssub' }, subTxt(this._input)));
     const el = h('div', { class: 'iw-screen iw-title', onclick: () => this._titleGo() },
       h('div', { class: 'iw-title__scrim' }),
       h('div', { class: 'iw-title__logo iw-in iw-in--logo' }, h('i', { class: 'iw-title__shock' }), h('div', { class: 'iw-title__logoin', html: logoMarkup(GAME_TITLE, GAME_SUBTITLE, 'xl') })),
@@ -724,8 +808,8 @@ export class Menus {
     return {
       el, noCursor: true,
       onInputMode: (m) => {
-        press.firstChild.textContent = m === 'pad' ? 'PRESS ANY BUTTON' : 'PRESS ANY KEY';
-        press.lastChild.textContent = m === 'pad' ? '' : 'or click to start';
+        press.firstChild.textContent = pressTxt(m);
+        press.lastChild.textContent = subTxt(m);
       },
     };
   }
@@ -759,7 +843,7 @@ export class Menus {
     const profile = this._panel('iw-profile iw-in iw-in--right',
       avatar,
       h('div', { class: 'iw-profile__info' },
-        h('div', { class: 'iw-profile__name' }, prof.name),
+        h('div', { class: 'iw-profile__name', 'data-fit': true }, prof.name),
         h('div', { class: `iw-profile__rank ${rank.cls}` }, h('i', { class: 'iw-profile__emblem', html: rankEmblem(tier) }), h('span', null, rank.name))),
       h('div', { class: 'iw-profile__xp' },
         h('span', { class: 'iw-lvl' }, h('small', null, 'LV'), String(prof.level)),
@@ -773,7 +857,7 @@ export class Menus {
       h('div', { class: 'iw-kitcard__label' }, 'CURRENT LOADOUT'),
       h('div', { class: 'iw-kitcard__main' },
         h('span', { class: 'iw-kitcard__icon', html: weaponIcon(W.kind || lo.weapon) }),
-        h('div', null, h('div', { class: 'iw-kitcard__name' }, W.name), h('div', { class: 'iw-kitcard__kind' }, W.class || KIND_LABEL[W.kind] || ''))),
+        h('div', { class: 'iw-kitcard__id' }, h('div', { class: 'iw-kitcard__name', 'data-fit': true }, W.name), h('div', { class: 'iw-kitcard__kind' }, W.class || KIND_LABEL[W.kind] || ''))),
       h('div', { class: 'iw-kitcard__chips' },
         h('span', { class: 'iw-chip' }, h('i', { html: SUB_ICONS.bomb }), sub.name),
         h('span', { class: 'iw-chip' }, h('i', { html: specialIcon(sp.id) }), sp.name)));
@@ -788,8 +872,8 @@ export class Menus {
     return {
       el, wrap: true, initial: btns[0],
       onFocus: (f) => {
-        const t = MENU_DESC[f.dataset.id];
-        if (t && descText.textContent !== t) { descText.textContent = t; restartAnim(desc, 'is-swap'); }
+        const d = t(MENU_DESC[f.dataset.id]);
+        if (d && descText.textContent !== d) { descText.textContent = d; restartAnim(desc, 'is-swap'); }
       },
       onBack: () => { this._sfx('ui_back'); this.show('title', { back: true }); },
     };
@@ -809,7 +893,8 @@ export class Menus {
     this._stageImgs = [];
     for (const m of this._maps()) {
       for (const t of ['day', 'dusk']) {
-        for (const sm of [true, false]) {
+        // phones/tablets only warm the small cards; the big hero art streams in on demand (≈2 MB less on mobile data)
+        for (const sm of (touchPrimary ? [true] : [true, false])) {
           const im = new Image();
           im.decoding = 'async';
           im.src = stageArt(m.id, t, sm);
@@ -987,10 +1072,10 @@ export class Menus {
     const dOpts = Object.values(diffs).map((d) => [d.id, h('span', { class: 'iw-diffopt' }, h('span', { class: 'iw-pips' }, Array.from({ length: 3 }, (_, k) => h('i', { class: k < (DIFF_INFO[d.id]?.pips || 2) ? 'on' : '' }))), d.name)]);
     const dText = h('div', { class: 'iw-setup__desc' });
     const diffSeg = this._seg(dOpts, st.difficulty, (v) => {
-      st.difficulty = v; dText.textContent = DIFF_INFO[v]?.text || ''; restartAnim(dText, 'is-in');
+      st.difficulty = v; dText.textContent = t(DIFF_INFO[v]?.text || ''); restartAnim(dText, 'is-in');
       safeCall(() => this.api.setSettings && this.api.setSettings({ difficulty: v })); updateStart();
     });
-    dText.textContent = DIFF_INFO[st.difficulty]?.text || '';
+    dText.textContent = t(DIFF_INFO[st.difficulty]?.text || '');
     const diffRow = h('div', { class: 'iw-setrow iw-setrow--stack' }, h('div', { class: 'iw-setrow__label' }, h('i', { html: GLYPHS.bot }), 'BOT SKILL'), diffSeg.el);
     this._bind(diffRow, { id: 'difficulty', type: 'row', adjust: diffSeg.adjust, accept: diffSeg.cycle });
     const lOpts = durations.map((d) => [d, durLabel(d)]);
@@ -1006,14 +1091,14 @@ export class Menus {
     const W = this._weapons()[lo.weapon];
     const weaponChip = h('button', { class: 'iw-wchip iw-in' },
       h('span', { class: 'iw-wchip__icon', html: weaponIcon(W.kind || lo.weapon) }),
-      h('span', { class: 'iw-wchip__text' }, h('small', null, 'WEAPON'), h('b', null, W.name)),
+      h('span', { class: 'iw-wchip__text' }, h('small', null, 'WEAPON'), h('b', { 'data-fit': true }, W.name)),
       h('span', { class: 'iw-wchip__edit' }, h('i', { html: GLYPHS.pencil })));
     this._fx(weaponChip);
     this._bind(weaponChip, { id: 'weapon', accept: () => { this._sfx('ui_click'); this._go('loadout'); } });
     const prof = this._profile();
     const lookAv = h('span', { class: 'iw-lchip__av' }, h('span', { class: 'iw-lchip__blob', html: splatSVG({ seed: 17, cls: 'iw-fa', r: 62, arms: 8, drops: 0 }) }), h('span', { class: 'iw-lchip__squid', html: SQUID }));
     const lookChip = h('button', { class: 'iw-wchip iw-lchip iw-in' }, lookAv,
-      h('span', { class: 'iw-wchip__text' }, h('small', null, 'SQUIDKID'), h('b', null, prof.name)),
+      h('span', { class: 'iw-wchip__text' }, h('small', null, 'SQUIDKID'), h('b', { 'data-fit': true }, prof.name)),
       h('span', { class: 'iw-wchip__edit' }, h('i', { html: GLYPHS.hanger })));
     this._fx(lookChip);
     this._bind(lookChip, { id: 'look', accept: () => { this._sfx('ui_click'); this._go('locker'); } });
@@ -1021,19 +1106,23 @@ export class Menus {
 
     const startSub = h('span');
     const start = this._btn({ id: 'start', label: 'START!', icon: GLYPHS.play, cls: 'iw-btn--start iw-in iw-in--pop', sound: 'ui_confirm', accept: () => this._startMatch() });
-    start.querySelector('.iw-btn__text').appendChild(h('span', { class: 'iw-btn__sub' }, startSub));
+    start.querySelector('.iw-btn__label').dataset.fit = '.7';
+    const startSubEl = h('span', { class: 'iw-btn__sub', 'data-fit': '.72' }, startSub);
+    start.querySelector('.iw-btn__text').appendChild(startSubEl);
     start.append(h('span', { class: 'iw-start__charge' }, h('i')), h('span', { class: 'iw-start__ready' }, h('i', { html: GLYPHS.check }), 'READY'), h('span', { class: 'iw-start__chev' }, h('i'), h('i'), h('i')));
     const updateStart = () => {
       const m = byId(st.mapId);
-      startSub.textContent = `${m ? m.name : ''} · ${TIME_INFO[timeOf(st.mapId)].label} · ${diffs[st.difficulty].name} · ${durLabel(st.duration)}`;
+      // the stage name drops out on short screens (it is right above, big, in the hero)
+      startSub.innerHTML = `<span class="iw-start__map">${esc(m ? m.name : '')} · </span>${esc(`${t(TIME_INFO[timeOf(st.mapId)].label)} · ${diffs[st.difficulty].name} · ${durLabel(st.duration)}`)}`;
+      fitText(startSubEl, 0.72);
     };
 
     // ---- state changes
     const renderTime = (anim) => {
-      const t = timeOf(st.mapId);
-      tgl.dataset.time = t; hero.dataset.time = t; el.dataset.time = t;
-      optDay.classList.toggle('is-on', t === 'day'); optDusk.classList.toggle('is-on', t === 'dusk');
-      timeText.textContent = TIME_INFO[t].text;
+      const tm = timeOf(st.mapId);
+      tgl.dataset.time = tm; hero.dataset.time = tm; el.dataset.time = tm;
+      optDay.classList.toggle('is-on', tm === 'day'); optDusk.classList.toggle('is-on', tm === 'dusk');
+      timeText.textContent = t(TIME_INFO[tm].text);
       if (anim) { restartAnim(tgl, 'is-flip'); restartAnim(timeText, 'is-in'); }
       updateStart();
     };
@@ -1041,7 +1130,7 @@ export class Menus {
       const m = byId(st.mapId), i = maps.indexOf(m);
       nameEl.innerHTML = m.name.split(' ').map((w, wi) => `<span class="iw-ss__word">${[...w].map((ch, k) => `<span style="--i:${wi * 4 + k}">${esc(ch)}</span>`).join('')}</span>`).join(' ');
       blurbEl.textContent = m.blurb || '';
-      counter.innerHTML = `STAGE <b>${String(i + 1).padStart(2, '0')}</b><em>/ ${String(maps.length).padStart(2, '0')}</em>`;
+      counter.innerHTML = `${t('STAGE')} <b>${String(i + 1).padStart(2, '0')}</b><em>/ ${String(maps.length).padStart(2, '0')}</em>`;
       layoutMap.innerHTML = m.thumb || mapThumb(m, i + 2);
       if (anim) { restartAnim(caption, 'is-in'); restartAnim(layoutEl, 'is-in'); restartAnim(counter, 'is-in'); }
       renderTime(false);
@@ -1135,6 +1224,7 @@ export class Menus {
   _startMatch() {
     if (this._starting) return;
     this._starting = true;
+    safeCall(() => this.api.prepareMatch && this.api.prepareMatch());   // still inside the tap: iOS motion permission
     const st = this._setup;
     const time = this._stageTime(st.mapId);
     const cfg = { mapId: st.mapId, time, difficulty: st.difficulty, duration: st.duration };
@@ -1304,7 +1394,7 @@ export class Menus {
       const t = h('button', { class: `iw-ltile iw-ltile--${sec.art === 'portrait' ? sec.kind : sec.art} iw-rowin`, style: { '--i': n, '--tilt': `${[-1.4, 1, -0.6, 1.3, -1, 0.7][n % 6]}deg` } },
         h('span', { class: 'iw-ltile__blob', html: splatSVG({ seed: 90 + n * 7, cls: 'iw-fa', r: 58, arms: 8, drops: 0 }) }),
         h('span', { class: 'iw-ltile__art', html: fallbackArt(sec, i) }),
-        sec.art === 'portrait' || sec.key === '_presets' ? h('span', { class: 'iw-ltile__name' }, optName(sec, i)) : null,
+        sec.art === 'portrait' || sec.key === '_presets' ? h('span', { class: 'iw-ltile__name', 'data-fit': '.7' }, optName(sec, i)) : null,
         h('span', { class: 'iw-ltile__eq', html: GLYPHS.check }));
       t._sec = sec; t._i = i;
       t.dataset.cur = 'own';
@@ -1321,13 +1411,17 @@ export class Menus {
       const tab = tabs[tabIdx];
       for (const k of tab.sections) {
         const sec = k === '_presets' ? { key: '_presets', title: 'CHOOSE YOUR SQUIDKID', count: presets.length, art: 'portrait', kind: 'bust', cause: 'preset' } : slots[k];
-        const grid = h('div', { class: `iw-lgrid iw-lgrid--${sec.art === 'portrait' ? sec.kind : 'swatch'}`, style: { '--cols': cols(sec) } });
+        const grid = h('div', { class: `iw-lgrid iw-lgrid--${sec.art === 'portrait' ? sec.kind : 'swatch'}`, 'data-fit-group': true, style: { '--cols': cols(sec) } });
         for (let i = 0; i < sec.count; i++) { const t = makeTile(sec, i, tiles.length); tiles.push(t); grid.appendChild(t); }
         gridWrap.appendChild(h('section', { class: 'iw-lsec', style: { '--dir': dirSign } },
-          h('div', { class: 'iw-lsec__title' }, h('span', null, sec.title), h('small', null, `${sec.count} ${sec.key === '_presets' ? 'LOOKS' : 'OPTIONS'}`)), grid));
+          h('div', { class: 'iw-lsec__title' }, h('span', null, sec.title), h('small', null, tr(sec.key === '_presets' ? '{n} LOOKS' : '{n} OPTIONS', { n: sec.count }))), grid));
       }
       refresh();
+      // the info bar follows the tab: what you wear in its first section (until a tile is focused)
+      const worn = tiles.find(isOn) || tiles[0];
+      if (worn) showInfo(worn);
       requestPortraits();
+      if (gridWrap.isConnected) this._fitAll(gridWrap);
     };
     const refresh = () => {
       for (const t of tiles) t.classList.toggle('is-on', isOn(t));
@@ -1358,9 +1452,9 @@ export class Menus {
     };
     const showInfo = (t) => {
       const sec = t._sec, i = t._i;
-      infoSub.textContent = sec.key === '_presets' ? 'SQUIDKID' : sec.title;
+      infoSub.textContent = tr(sec.key === '_presets' ? 'SQUIDKID' : sec.title);
       infoName.textContent = optName(sec, i);
-      infoText.textContent = sec.key === '_presets' ? (presets[i].blurb || '') : `${i + 1} of ${sec.count}`;
+      infoText.textContent = sec.key === '_presets' ? (presets[i].blurb || '') : tr('{i} of {n}', { i: i + 1, n: sec.count });
       info.classList.toggle('is-on', isOn(t));
       restartAnim(info, 'is-swap');
     };
@@ -1373,7 +1467,7 @@ export class Menus {
         const dot = sec.art === 'skin' ? `<i class="iw-lsheet__dot" style="background:${LOOK.SKIN_TONES[i]}"></i>`
           : sec.art === 'iris' ? `<i class="iw-lsheet__dot" style="background:linear-gradient(${LOOK.IRIS[i][0]},${LOOK.IRIS[i][1]})"></i>`
             : k === 'outfit' ? `<i class="iw-lsheet__dot" style="background:linear-gradient(135deg,${LOOK.OUTFITS[i].shirt} 50%,${LOOK.OUTFITS[i].shorts} 50%)"></i>` : '';
-        sheet.appendChild(h('div', { class: 'iw-lsheet__row', html: `<small>${label}</small>${dot}<b>${esc(optName(sec, i))}</b>` }));
+        sheet.appendChild(h('div', { class: 'iw-lsheet__row', html: `<small>${esc(tr(label))}</small>${dot}<b>${esc(optName(sec, i))}</b>` }));
       }
     };
 
@@ -1483,7 +1577,7 @@ export class Menus {
         h('span', { class: 'iw-wcard__ink' }),
         h('span', { class: 'iw-wcard__blob', html: splatSVG({ seed: 40 + i * 3, cls: 'iw-fa', r: 58, arms: 8, drops: 0 }) }),
         h('span', { class: 'iw-wcard__icon', html: weaponIcon(w.kind || id) }),
-        h('span', { class: 'iw-wcard__name' }, w.name),
+        h('span', { class: 'iw-wcard__name', 'data-fit': '.6' }, w.name),
         h('span', { class: 'iw-wcard__kind' }, classOf(w)),
         h('span', { class: 'iw-wcard__eq', html: GLYPHS.check }),
         isNew ? h('span', { class: 'iw-wcard__new' }, 'NEW!') : null,
@@ -1506,7 +1600,7 @@ export class Menus {
 
     // ---- detail panel
     const kind = h('span', { class: 'iw-wd__kind' });
-    const nm = h('span', { class: 'iw-wd__name iw-display' });
+    const nm = h('span', { class: 'iw-wd__name iw-display', 'data-fit': true });
     const eqBadge = h('span', { class: 'iw-wd__eq' }, h('i', { html: GLYPHS.check }), 'EQUIPPED');
     const cmpBadge = h('span', { class: 'iw-wd__cmp' }, h('i', { class: 'iw-wd__cmpdot' }), 'vs ', h('b'));
     const blurb = h('p', { class: 'iw-wd__blurb' });
@@ -1537,6 +1631,7 @@ export class Menus {
       const w = Ws[id], eqW = Ws[equipped];
       kind.textContent = classOf(w).toUpperCase();
       nm.textContent = w.name;
+      fitText(nm);
       blurb.textContent = w.blurb || '';
       detail.classList.toggle('is-equipped', id === equipped);
       detail.classList.toggle('is-compare', id !== equipped);
@@ -1557,13 +1652,13 @@ export class Menus {
       const sub = subOf(w);
       subIcon.innerHTML = SUB_ICONS[sub.id] || SUB_ICONS.bomb;
       subName.textContent = sub.name;
-      subText.textContent = `Costs ${Math.round(sub.inkCost || 70)}% of your ink tank. Hold to aim, release to throw.`;
+      subText.textContent = tr('Costs {n}% of your ink tank. Hold to aim, release to throw.', { n: Math.round(sub.inkCost || 70) });
       const sp = specials[w.special] || Object.values(specials)[0];
       spIcon.innerHTML = specialIcon(sp.id);
       spName.textContent = sp.name;
       spBlurb.textContent = sp.blurb || '';
       spCost.textContent = w.specialCost ? `${Math.round(w.specialCost)}p` : '';
-      spCost.title = 'Turf points to fill the special gauge';
+      spCost.title = tr('Turf points to fill the special gauge');
       if (!first) restartAnim(detail, 'is-swap');
       markSeen(id);
     };
@@ -1573,16 +1668,16 @@ export class Menus {
     const prof = this._profile();
     const lookAv = h('span', { class: 'iw-lchip__av' }, h('span', { class: 'iw-lchip__blob', html: splatSVG({ seed: 17, cls: 'iw-fa', r: 62, arms: 8, drops: 0 }) }), h('span', { class: 'iw-lchip__squid', html: SQUID }));
     const lookChip = h('button', { class: 'iw-wchip iw-lchip iw-lchip--sm iw-in iw-in--down' }, lookAv,
-      h('span', { class: 'iw-wchip__text' }, h('small', null, 'SQUIDKID'), h('b', null, prof.name)),
+      h('span', { class: 'iw-wchip__text' }, h('small', null, 'SQUIDKID'), h('b', { 'data-fit': true }, prof.name)),
       h('span', { class: 'iw-wchip__edit' }, h('i', { html: GLYPHS.hanger }), 'LOCKER'));
     this._fx(lookChip);
     this._bind(lookChip, { id: 'look', accept: () => { this._sfx('ui_click'); this._go('locker'); } });
     this._portraitInto(lookAv, { kind: 'head', size: 128 });
 
-    const grid = h('div', { class: 'iw-wgrid' + (compact ? ' is-compact' : ''), style: { '--cols': cols } }, cards);
+    const grid = h('div', { class: 'iw-wgrid' + (compact ? ' is-compact' : ''), 'data-fit-group': true, style: { '--cols': cols } }, cards);
     const el = h('div', { class: 'iw-screen iw-loadout' },
       h('div', { class: 'iw-scrim-left' }),
-      this._header('LOADOUT', { sub: `${n} weapons · every one comes with a sub and a special` }),
+      this._header('LOADOUT', { sub: tr('{n} weapons · every one comes with a sub and a special', { n }) }),
       h('div', { class: 'iw-loadout__body' },
         h('div', { class: 'iw-seclabel iw-in' }, h('i', { html: WEAPON_ICONS.shooter }), 'WEAPON', h('span', { class: 'iw-seclabel__count' }, `${order.indexOf(equipped) + 1} / ${n}`)),
         grid,
@@ -1623,11 +1718,11 @@ export class Menus {
   _seg(options, value, onChange) {
     let idx = Math.max(0, options.findIndex((o) => o[0] === value));
     const opts = options.map(([v, label], i) => {
-      const o = h('span', { class: 'iw-seg__opt' + (i === idx ? ' is-sel' : '') }, label);
+      const o = h('span', { class: 'iw-seg__opt' + (i === idx ? ' is-sel' : ''), 'data-fit': '.6' }, label);
       o.addEventListener('click', (e) => { e.stopPropagation(); set(i, true); });
       return o;
     });
-    const el = h('span', { class: 'iw-seg', style: { '--n': options.length, '--idx': idx } }, h('span', { class: 'iw-seg__hl' }), opts);
+    const el = h('span', { class: 'iw-seg', 'data-fit-group': true, style: { '--n': options.length, '--idx': idx } }, h('span', { class: 'iw-seg__hl' }), opts);
     const set = (i, sound) => {
       i = clamp(i, 0, options.length - 1);
       if (i === idx) { if (sound) this._sfx('ui_click'); return false; }
@@ -1743,7 +1838,7 @@ export class Menus {
       const o = (r.options || []).find((x) => x[0] === v);
       return o ? o[1] : String(v);
     };
-    const fmtVal = (r, v) => (!r ? '' : r.type === 'slider' ? r.fmt(+v) : r.type === 'toggle' ? (v ? 'ON' : 'OFF') : r.type === 'seg' ? optLabel(r, v).toUpperCase() : '');
+    const fmtVal = (r, v) => (!r ? '' : r.type === 'slider' ? r.fmt(+v) : r.type === 'toggle' ? (v ? 'ON' : 'OFF') : r.type === 'seg' ? tr(optLabel(r, v)).toUpperCase() : '');
     const showPreview = (key, { label, help, tab } = {}) => {
       if (P.key === key) return;
       P.key = key;
@@ -1757,21 +1852,28 @@ export class Menus {
       for (const old of [...pvStage.children]) { if (old._out) continue; old._out = true; old.classList.add('is-out'); setTimeout(() => old.remove(), 260); }
       pvStage.appendChild(pv.el);
       P.cur = pv;
-      pvLabel.textContent = label || (r ? r.label : '');
+      pvLabel.textContent = tr(label || (r ? r.label : ''));
       pvVal.textContent = fmtVal(r, r ? s[key] : null);
       pvVal.classList.toggle('is-empty', !pvVal.textContent);
-      pvHelp.textContent = help || (r ? r.help : '');
+      pvHelp.textContent = tr(help || (r ? r.help : ''));
       restartAnim(card, 'is-swap');
     };
 
     const buildRows = (dirSign) => {
       rowsEl.innerHTML = '';
+      rowsEl.scrollTop = 0;
       controls.clear();
       const s = this._settings();
       const tab = SETTINGS_TABS[tabIdx];
-      tab.rows.forEach((r, i) => {
+      // mouse-only rows mean nothing to a thumb: they return as soon as a mouse is used
+      tab.rows.filter((r) => !(r.kbm && this._input === 'touch')).forEach((r, i) => {
         let ctrl;
-        if (r.type === 'link') ctrl = { el: h('span', { class: 'iw-row__link' }, 'VIEW', h('i', { html: GLYPHS.next })), accept: () => { this._sfx('ui_click'); this._go('howto'); } };
+        if (r.type === 'link') {
+          const go = r.key === '_layout'
+            ? () => { this._sfx('ui_click'); safeCall(() => this.api.editTouchLayout && this.api.editTouchLayout()); }
+            : () => { this._sfx('ui_click'); this._go('howto'); };
+          ctrl = { el: h('span', { class: 'iw-row__link' }, r.linkLabel || 'VIEW', h('i', { html: GLYPHS.next })), accept: go };
+        }
         else if (r.type === 'slider') ctrl = this._slider(r, s[r.key]);
         else if (r.type === 'toggle') ctrl = this._toggle(r, s[r.key]);
         else {
@@ -1821,12 +1923,12 @@ export class Menus {
     const reset = this._btn({ id: 'reset', label: 'RESET TO DEFAULTS', icon: GLYPHS.reset, cls: 'iw-btn--ghost iw-btn--small', sound: null, accept: () => {
       if (!resetArmed) {
         resetArmed = 2.6; reset.classList.add('is-armed');
-        reset.querySelector('.iw-btn__label').textContent = 'PRESS AGAIN TO CONFIRM';
+        reset.querySelector('.iw-btn__label').textContent = tr('PRESS AGAIN TO CONFIRM');
         this._sfx('ui_click');
         return;
       }
       resetArmed = 0; reset.classList.remove('is-armed');
-      reset.querySelector('.iw-btn__label').textContent = 'RESET TO DEFAULTS';
+      reset.querySelector('.iw-btn__label').textContent = tr('RESET TO DEFAULTS');
       safeCall(() => this.api.setSettings && this.api.setSettings({ ...DEFAULT_SETTINGS }));
       if (!this._accentExternal) this._applyAccent();
       const s = this._settings();
@@ -1836,7 +1938,7 @@ export class Menus {
       savedPulse();
     } });
     const saved = h('div', { class: 'iw-saved' }, h('i', { html: GLYPHS.check }), h('span', null, 'Changes save automatically'));
-    const savedPulse = () => { saved.lastChild.textContent = 'Saved!'; restartAnim(saved, 'is-on'); clearTimeout(this._savedT); this._savedT = setTimeout(() => { if (saved.isConnected) saved.lastChild.textContent = 'Changes save automatically'; }, 1400); };
+    const savedPulse = () => { saved.lastChild.textContent = tr('Saved!'); restartAnim(saved, 'is-on'); clearTimeout(this._savedT); this._savedT = setTimeout(() => { if (saved.isConnected) saved.lastChild.textContent = tr('Changes save automatically'); }, 1400); };
 
     const panel = this._panel('iw-settings__panel iw-in', tabsEl, rowsEl, h('div', { class: 'iw-settings__foot' }, saved, reset));
     const el = h('div', { class: 'iw-screen iw-settings' },
@@ -1849,6 +1951,7 @@ export class Menus {
       el,
       initial: () => rowsEl.querySelector('[data-nav]'),
       afterMount: () => movePill(true),
+      refreshControl: (key) => { const c = controls.get(key); if (c) safeCall(() => c.refresh(this._settings()[key])); if (P.key === key && P.cur) { safeCall(() => P.cur.set(this._settings()[key], this._settings())); pvVal.textContent = fmtVal(rowDef(key), this._settings()[key]); } },
       onFocus: (f) => {
         if (f._key) showPreview(f._key);
         else if (f.dataset.nav === 'tab') { const t = SETTINGS_TABS[tabBtns.indexOf(f)]; if (t) showPreview('_tab_' + t.id, { label: t.label, help: TAB_BLURB[t.id], tab: t }); }
@@ -1856,6 +1959,9 @@ export class Menus {
       },
       onSetting: (key, value) => {
         savedPulse();
+        // the engine may refuse a value (gyro permission denied): mirror what was actually stored
+        const real = this._settings()[key];
+        if (real !== value && controls.has(key)) { safeCall(() => controls.get(key).refresh(real)); value = real; }
         if (P.key === key && P.cur) {
           const s = this._settings();
           safeCall(() => P.cur.set(value, s));
@@ -1874,9 +1980,14 @@ export class Menus {
       },
       tick: (dt) => {
         if (P.cur && P.cur.tick) P.cur.tick(dt);
+        // soft fade on whichever edge of the row list still has rows beyond it
+        const more = rowsEl.scrollHeight - rowsEl.clientHeight > 1;
+        const up = more && rowsEl.scrollTop > 1, down = more && rowsEl.scrollTop < rowsEl.scrollHeight - rowsEl.clientHeight - 1;
+        if (up !== rowsEl._up) { rowsEl._up = up; rowsEl.classList.toggle('is-more-up', up); }
+        if (down !== rowsEl._down) { rowsEl._down = down; rowsEl.classList.toggle('is-more-down', down); }
         if (resetArmed > 0) {
           resetArmed -= dt;
-          if (resetArmed <= 0) { resetArmed = 0; reset.classList.remove('is-armed'); reset.querySelector('.iw-btn__label').textContent = 'RESET TO DEFAULTS'; }
+          if (resetArmed <= 0) { resetArmed = 0; reset.classList.remove('is-armed'); reset.querySelector('.iw-btn__label').textContent = tr('RESET TO DEFAULTS'); }
         }
       },
     };
@@ -1884,23 +1995,25 @@ export class Menus {
 
   // ================================================================ SCREEN: howto
   _controlsList(mode, compact = false) {
-    const K = (...ks) => ks.map((k) => (k === 'or' ? '<em>or</em>' : k === 'LMB' ? mouseGlyph('L') : k === 'RMB' ? mouseGlyph('R') : k === 'MOUSE' ? mouseGlyph('M') : keycap(k))).join('');
+    const K = (...ks) => ks.map((k) => (k === 'or' ? `<em>${esc(t('or'))}</em>` : k === 'LMB' ? mouseGlyph('L') : k === 'RMB' ? mouseGlyph('R') : k === 'MOUSE' ? mouseGlyph('M') : keycap(k))).join('');
+    const T = (label) => `<span class="iw-tchip">${esc(t(label))}</span>`;
     const rows = [
-      ['Move', null, K('W', 'A', 'S', 'D'), padGlyph('LS')],
-      ['Aim', null, K('MOUSE'), padGlyph('RS')],
-      ['Fire', null, K('LMB'), padGlyph('RT')],
-      ['Swim · squid form', 'hold', K('SHIFT'), padGlyph('LT')],
-      ['Jump', null, K('SPACE'), padGlyph('A')],
-      ['Aim bomb · release to throw', 'hold', K('RMB', 'or', 'E'), padGlyph('RB')],
-      ['Special', null, K('F', 'or', 'Q'), padGlyph('Y')],
-      ['Map', 'hold', K('TAB'), padGlyph('View')],
-      ['Pause', null, K('ESC'), padGlyph('Start')],
+      ['Move', null, K('W', 'A', 'S', 'D'), padGlyph('LS'), T('Left side · drag')],
+      ['Aim', null, K('MOUSE'), padGlyph('RS'), T('Right side · drag / gyro')],
+      ['Fire', null, K('LMB'), padGlyph('RT'), T('FIRE button')],
+      ['Swim · squid form', 'hold', K('SHIFT'), padGlyph('LT'), T('SQUID button')],
+      ['Jump', null, K('SPACE'), padGlyph('A'), T('JUMP button')],
+      ['Aim bomb · release to throw', 'hold', K('RMB', 'or', 'E'), padGlyph('RB'), T('SUB button')],
+      ['Special', null, K('F', 'or', 'Q'), padGlyph('Y'), T('SP button')],
+      ['Map', 'hold', K('TAB'), padGlyph('View'), T('MAP button')],
+      ['Pause', null, K('ESC'), padGlyph('Start'), T('Ⅱ button')],
     ];
     const list = compact ? rows.filter((r) => ['Move', 'Fire', 'Swim · squid form', 'Jump', 'Aim bomb · release to throw', 'Special'].includes(r[0])) : rows;
-    return h('div', { class: 'iw-ctl' + (compact ? ' iw-ctl--compact' : '') }, list.map(([act, hold, kb, pad]) =>
+    const short = { 'Aim bomb · release to throw': 'Aim bomb · release to throw', 'Swim · squid form': 'Swim · squid form' };
+    return h('div', { class: 'iw-ctl' + (compact ? ' iw-ctl--compact' : '') + (mode === 'touch' ? ' iw-ctl--touch' : '') }, list.map(([act, hold, kb, pad, touch]) =>
       h('div', { class: 'iw-ctl__row' },
-        h('span', { class: 'iw-ctl__act' }, compact ? act.replace(' · release to throw', '').replace(' · squid form', '') : act, hold ? h('em', null, hold) : null),
-        h('span', { class: 'iw-ctl__keys', html: mode === 'pad' ? pad : kb }))));
+        h('span', { class: 'iw-ctl__act' }, short[act] || act, hold && mode !== 'touch' ? h('em', null, hold) : null),
+        h('span', { class: 'iw-ctl__keys', html: mode === 'pad' ? pad : mode === 'touch' ? touch : kb }))));
   }
 
   _scr_howto() {
@@ -1918,7 +2031,9 @@ export class Menus {
     let mode = this._input;
     const listWrap = h('div', { class: 'iw-ctl-wrap' });
     const renderList = () => { listWrap.innerHTML = ''; listWrap.appendChild(this._controlsList(mode)); restartAnim(listWrap, 'is-in'); };
-    const seg = this._seg([['kbm', h('span', { class: 'iw-segico' }, h('i', { html: GLYPHS.keyboard }), 'KEYBOARD & MOUSE')], ['pad', h('span', { class: 'iw-segico' }, h('i', { html: GLYPHS.gamepad }), 'CONTROLLER')]], mode, (v) => { mode = v; renderList(); });
+    const schemes = [['kbm', h('span', { class: 'iw-segico' }, h('i', { html: GLYPHS.keyboard }), 'KEYBOARD & MOUSE')], ['pad', h('span', { class: 'iw-segico' }, h('i', { html: GLYPHS.gamepad }), 'CONTROLLER')]];
+    if (touchCapable) schemes.unshift(['touch', h('span', { class: 'iw-segico' }, h('i', { html: GLYPHS.hand }), 'TOUCH')]);
+    const seg = this._seg(schemes, mode, (v) => { mode = v; renderList(); });
     const segRow = h('div', { class: 'iw-ctl-switch' }, seg.el);
     this._bind(segRow, { id: 'scheme', type: 'row', adjust: seg.adjust, accept: seg.cycle });
     renderList();
@@ -2030,6 +2145,7 @@ export class Menus {
       { id: 'resume', label: 'RESUME', icon: GLYPHS.play, cls: 'iw-btn--menu iw-btn--primary', accept: () => this._resume(), sound: null },
       { id: 'settings', label: 'SETTINGS', icon: GLYPHS.gear, cls: 'iw-btn--menu', accept: () => this._go('settings') },
       { id: 'howto', label: 'HOW TO PLAY', icon: GLYPHS.question, cls: 'iw-btn--menu', accept: () => this._go('howto') },
+      ...(touchCapable ? [{ id: 'layout', label: 'LAYOUT EDIT', icon: GLYPHS.hand, cls: 'iw-btn--menu', accept: () => safeCall(() => this.api.editTouchLayout && this.api.editTouchLayout()) }] : []),
       { id: 'quit', label: 'QUIT MATCH', icon: GLYPHS.close, cls: 'iw-btn--menu iw-btn--danger', accept: () => this._openModal({
         title: 'QUIT MATCH?', text: 'You will leave this Turf War and head back to the lobby. Your turf will not count.', danger: true,
         buttons: [
@@ -2042,7 +2158,7 @@ export class Menus {
         ],
       }) },
     ];
-    const tilts = [-1.8, 1.2, -1, 1.4];
+    const tilts = [-1.8, 1.2, -1, 1.4, -1.2];
     const btns = items.map((it, i) => { const b = this._btn({ ...it, tilt: tilts[i] }); b.classList.add('iw-in', 'iw-in--left'); return b; });
 
     // ---- live match panel
@@ -2082,7 +2198,7 @@ export class Menus {
     const matchPanel = this._panel('iw-pmatch iw-panel--flat iw-in iw-in--right',
       h('div', { class: 'iw-pmatch__top' },
         h('div', { class: 'iw-pmatch__info' },
-          h('div', { class: 'iw-pmatch__mode' }, h('span', { class: 'iw-pmatch__tag' }, 'TURF WAR'), diff ? h('span', { class: 'iw-pmatch__diff' }, h('i', { html: GLYPHS.bot }), `${diff.name} bots`) : null),
+          h('div', { class: 'iw-pmatch__mode' }, h('span', { class: 'iw-pmatch__tag' }, 'TURF WAR'), diff ? h('span', { class: 'iw-pmatch__diff' }, h('i', { html: GLYPHS.bot }), tr('{name} bots', { name: diff.name })) : null),
           h('div', { class: 'iw-pmatch__map' }, h('i', { html: GLYPHS.map }), snap.map || 'Turf War')),
         clock),
       you, teams, ctlWrap);
@@ -2099,7 +2215,7 @@ export class Menus {
       sTurf.b.innerHTML = `${fmtInt(me.turf || 0)}<small>p</small>`;
       sSplat.b.textContent = String(me.splats || 0);
       sDeath.b.textContent = String(me.deaths || 0);
-      sSp.b.textContent = me.special ? 'READY' : `${Math.round(clamp(me.specialFrac || 0) * 100)}%`;
+      sSp.b.textContent = me.special ? tr('READY') : `${Math.round(clamp(me.specialFrac || 0) * 100)}%`;
       sSp.el.classList.toggle('is-ready', !!me.special);
       sSp.el.style.setProperty('--sp', clamp(me.specialFrac || 0).toFixed(3));
       for (const r of rosterRows) {
@@ -2111,7 +2227,7 @@ export class Menus {
         r.row.classList.toggle('is-dead', !p.alive);
         r.row.classList.toggle('is-sp', p.alive && p.special);
         if (!p.alive) r.st.innerHTML = `<span class="iw-st iw-st--dead"><i>${DEATH_ICON}</i><b>${Math.max(1, Math.ceil(p.respawn))}s</b></span>`;
-        else if (p.special) r.st.innerHTML = `<span class="iw-st iw-st--sp"><i>${specialIcon((this._weapons()[p.weapon] || {}).special)}</i>READY</span>`;
+        else if (p.special) r.st.innerHTML = `<span class="iw-st iw-st--sp"><i>${specialIcon((this._weapons()[p.weapon] || {}).special)}</i>${tr('READY')}</span>`;
         else r.st.innerHTML = `<span class="iw-st iw-st--alive"><i>${SQUID}</i></span>`;
       }
     };
@@ -2163,7 +2279,7 @@ export class Menus {
     const head = h('div', { class: 'iw-res__head iw-in iw-in--pop' + (win ? ' is-win' : ' is-lose') },
       h('div', { class: 'iw-res__splat', html: splatSVG({ seed: win ? 9 : 14, cls: 'iw-fta', r: 60, arms: 10, drops: 4 }) }),
       titleEl,
-      h('div', { class: 'iw-res__metarow' }, h('div', { class: 'iw-res__meta' }, h('i', { html: GLYPHS.map }), `${d.mapName || 'Turf War'} · Turf War`), tags),
+      h('div', { class: 'iw-res__metarow' }, h('div', { class: 'iw-res__meta' }, h('i', { html: GLYPHS.map }), tr('{map} · Turf War', { map: d.mapName || tr('Turf War') })), tags),
       medalRow);
 
     // ---- coverage bar (JS-driven growth so the numbers + sound land together)
@@ -2234,6 +2350,7 @@ export class Menus {
         bdEls.length ? h('div', { class: 'iw-xp__bd' }, bdEls.map((b) => b.el)) : null));
 
     const rematch = this._btn({ id: 'rematch', label: 'REMATCH', icon: GLYPHS.reset, cls: 'iw-btn--wide iw-btn--primary iw-in iw-in--pop', sound: 'ui_confirm', accept: () => {
+      safeCall(() => this.api.prepareMatch && this.api.prepareMatch());
       safeCall(() => this.api.rematch && this.api.rematch());
     } });
     const home = this._btn({ id: 'home', label: 'MAIN MENU', icon: GLYPHS.back, cls: 'iw-btn--wide iw-in iw-in--pop', sound: 'ui_click', accept: () => {
@@ -2325,7 +2442,7 @@ export class Menus {
     }
     const totalFill = segs.reduce((a, s) => a + Math.max(0, s.to - s.from), 0) || 1;
     let si = 0, cur = segs[0].from, filled = 0, pause = 0, xpTick = 0, done = false;
-    const setBar = (v, max) => { bar.style.setProperty('--t', clamp(v / Math.max(1, max)).toFixed(4)); nextEl.textContent = `${fmtInt(Math.max(0, max - v))} XP to next level`; };
+    const setBar = (v, max) => { bar.style.setProperty('--t', clamp(v / Math.max(1, max)).toFixed(4)); nextEl.textContent = tr('{n} XP to next level', { n: fmtInt(Math.max(0, max - v)) }); };
     setBar(cur, segs[0].max);
     const showBd = (frac) => { for (const b of bdEls) if (!b.shown && frac >= b.at - 1e-6) { b.shown = true; b.el.classList.add('is-in'); } };
     const finish = () => {

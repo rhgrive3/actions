@@ -38,9 +38,10 @@ export class PlayerController {
     if (!this.enabled) {
       it.move.set(0, 0, 0); it.fire = it.jump = it.squid = it.sub = it.special = false;
       this.assist.has = false;
+      this.input.mobile?.gyro?.discard();
       return;
     }
-    const touch = inp.mobile?.active ? inp.mobile : null;
+    const touch = inp.mobile?.active && inp.mobile.root ? inp.mobile : null;
     const usingPad = !!inp.pad && inp.lastDevice === 'pad';
     const usingTouch = !!touch && inp.lastDevice === 'touch';
     // Touch gets the controller-class assist friction; it does not add hard snapping.
@@ -51,13 +52,28 @@ export class PlayerController {
     let lookActive = false;
     // while the map diorama is up the mouse / right stick steer the map cursor, not your camera
     const mapUp = (G.rig?.mapK ?? 0) > 0.05 || inp.down('Tab') || inp.down('KeyM') || inp.padButton(8) || !!touch?.mapOpen;
-    const mdx = mapUp ? 0 : inp.mouse.dx + (touch?.lookDX || 0), mdy = mapUp ? 0 : inp.mouse.dy + (touch?.lookDY || 0);
+    const mdx = mapUp ? 0 : inp.mouse.dx, mdy = mapUp ? 0 : inp.mouse.dy;
     if (mdx || mdy) {
-      const touchScale = usingTouch ? 1.12 : 1;
-      const sens = 0.0021 * touchScale * (s.sensitivity ?? 1) * ((s.aimAssistMouse || usingTouch) ? friction : 1);
+      const sens = 0.0021 * (s.sensitivity ?? 1) * (s.aimAssistMouse ? friction : 1);
       rig.yaw -= mdx * sens;
       rig.pitch -= mdy * sens * inv;
       lookActive = true;
+    }
+    // touch swipes arrive already in radians (scaled to the screen size + swipe sensitivity in mobile.js)
+    if (touch && !mapUp && (touch.lookDX || touch.lookDY)) {
+      rig.yaw -= touch.lookDX * friction;
+      rig.pitch -= touch.lookDY * friction * inv;
+      lookActive = true;
+    }
+    // gyro: device turn → camera turn (its own invert settings; the Splatoon handheld feel)
+    if (touch && touch.gyro.enabled) {
+      const g = touch.gyro.consume(this._gyro || (this._gyro = { yaw: 0, pitch: 0 }));
+      if (!mapUp && (g.yaw || g.pitch)) {
+        const gf = lerp(1, friction, 0.6);    // gyro is precise already: only a little assist friction
+        rig.yaw += g.yaw * gf;
+        rig.pitch += g.pitch * gf;
+        if (Math.abs(g.yaw) + Math.abs(g.pitch) > 0.0015) lookActive = true;
+      }
     }
     if (inp.pad && !mapUp) {
       inp.padStick(2, 3, _stick, 0.11, 0.96);

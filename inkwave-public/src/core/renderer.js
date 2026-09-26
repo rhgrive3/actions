@@ -8,7 +8,7 @@ import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
 import { QUALITY } from '../config.js';
 import { G } from './ctx.js';
-import { mobileProfile } from './mobile.js';
+import { deviceProfile } from './device.js';
 
 const GradeShader = {
   uniforms: {
@@ -82,7 +82,7 @@ export class Renderer {
     this.container = container;
     this.scene = null; this.camera = null;
     this.settings = settings;
-    this.mobile = G.mobile || mobileProfile();
+    this.mobile = G.mobile || deviceProfile();
     this.q = QUALITY[settings.quality] || QUALITY.high;
     this._w = 0; this._h = 0;
   }

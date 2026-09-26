@@ -1,29 +1,131 @@
-/* Mobile/iOS input layer. Kept isolated so desktop rendering/UI is untouched. */
-html.iw-mobile, html.iw-mobile body { overscroll-behavior: none; touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
-html.iw-mobile #game-canvas { touch-action: none; }
-#iw-mobile-controls { visibility:hidden; position: fixed; inset: 0; z-index: 9000; pointer-events: none; font: 800 12px/1 system-ui,-apple-system,sans-serif; color:#fff; --safe-l:max(10px,env(safe-area-inset-left)); --safe-r:max(10px,env(safe-area-inset-right)); --safe-t:max(8px,env(safe-area-inset-top)); --safe-b:max(8px,env(safe-area-inset-bottom)); }
-#iw-mobile-controls.is-active { visibility:visible; }
-#iw-mobile-controls button { border: 1px solid #ffffff42; color:#fff; background:#0c1220a8; backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); box-shadow: inset 0 0 0 1px #0005, 0 3px 12px #0007; pointer-events:auto; touch-action:none; -webkit-tap-highlight-color:transparent; }
-.iwm-look { position:absolute; left:40%; right:0; top:0; bottom:0; pointer-events:auto; touch-action:none; }
-.iwm-stick { position:absolute; left:calc(var(--safe-l) + 18px); bottom:calc(var(--safe-b) + 18px); width:min(28vw,160px); height:min(28vw,160px); max-width:32vh; max-height:32vh; border-radius:50%; background:#08111a47; border:2px solid #ffffff33; box-shadow:inset 0 0 25px #0008; pointer-events:auto; touch-action:none; }
-.iwm-stick i { position:absolute; left:50%; top:50%; width:42%; aspect-ratio:1; margin:-21%; border-radius:50%; background:#ffffff38; border:2px solid #ffffff70; box-shadow:0 3px 14px #0008; will-change:transform; }
-.iwm-actions { position:absolute; right:calc(var(--safe-r) + 14px); bottom:calc(var(--safe-b) + 16px); width:min(42vw,255px); height:min(36vw,215px); max-height:40vh; pointer-events:none; }
-.iwm-actions button { position:absolute; border-radius:999px; display:grid; place-items:center; font-size:11px; }
-.iwm-fire { right:0; bottom:24%; width:84px; height:84px; background:#ff4a3cbd!important; font-size:14px!important; }
-.iwm-squid { right:88px; bottom:0; width:72px; height:72px; background:#1ba4ffad!important; }
-.iwm-jump { right:92px; bottom:78px; width:62px; height:62px; }
-.iwm-sub { right:2px; bottom:0; width:55px; height:55px; }
-.iwm-special { right:153px; bottom:30px; width:58px; height:58px; font-size:9px!important; }
-.iwm-map,.iwm-pause,.iwm-gyro { position:absolute; top:var(--safe-t); height:38px; padding:0 13px; border-radius:13px; }
-.iwm-map { left:50%; transform:translateX(-50%); }
-.iwm-pause { right:var(--safe-r); width:42px; padding:0; font-size:18px; }
-.iwm-gyro { right:calc(var(--safe-r) + 50px); font-size:9px; }
-.iwm-gyro.is-on { background:#15935ccc!important; }
-.iwm-jumps { position:absolute; left:50%; top:calc(var(--safe-t) + 48px); transform:translateX(-50%); display:none; gap:7px; pointer-events:auto; }
-.is-map .iwm-jumps { display:flex; }
-.iwm-jumps button { min-width:44px; height:42px; border-radius:12px; }
-.iwm-rotate { display:none; position:absolute; inset:0; background:#080d16ed; place-items:center; align-content:center; gap:14px; text-align:center; font-size:40px; pointer-events:auto; }
-.iwm-rotate b { display:block; font-size:15px; letter-spacing:.08em; }
-@media (orientation:portrait) and (pointer:coarse) { .iwm-rotate { display:grid; } .iwm-stick,.iwm-actions,.iwm-map,.iwm-pause,.iwm-gyro,.iwm-look,.iwm-jumps { visibility:hidden; } }
-@media (max-height:430px) { .iwm-stick { width:118px;height:118px; } .iwm-actions { transform:scale(.82); transform-origin:right bottom; } }
-@media (prefers-reduced-motion:reduce) { #iw-mobile-controls * { transition:none!important; animation:none!important; } }
+/* INKWAVE — touch controls (phones / tablets). Isolated: desktop rendering and UI are untouched.
+   Positions and sizes are written by src/core/mobile.js (anchored layout, editable); this file is the look. */
+html.iw-mobile, html.iw-mobile body { overscroll-behavior: none; touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-text-size-adjust: 100%; }
+html.iw-mobile #app canvas { touch-action: none; }
+
+#iw-mobile-controls {
+  --iwm-c: #ff8a14;        /* your team's ink (set per match) */
+  --iwm-k: #15121c;
+  --iwm-op: .85;
+  position: fixed; inset: 0; z-index: 9000; pointer-events: none; visibility: hidden;
+  font: 800 12px/1 'Rubik', 'Hiragino Maru Gothic ProN', 'Hiragino Sans', 'BIZ UDPGothic', 'Noto Sans JP', system-ui, sans-serif;
+  color: #fff; -webkit-tap-highlight-color: transparent;
+}
+#iw-mobile-controls.is-active { visibility: visible; }
+#iw-mobile-controls .iwm-safe { position: fixed; left: env(safe-area-inset-left, 0px); right: env(safe-area-inset-right, 0px); top: env(safe-area-inset-top, 0px); bottom: env(safe-area-inset-bottom, 0px); visibility: hidden; pointer-events: none; }
+
+/* ---- zones */
+.iwm-look, .iwm-movezone { position: absolute; top: 0; bottom: 0; pointer-events: auto; touch-action: none; }
+.iwm-look { left: 0; right: 0; }
+.iwm-movezone { left: 0; width: 42%; }
+
+/* ---- move stick */
+.iwm-stick { position: absolute; left: 0; top: 0; border-radius: 50%; pointer-events: none; will-change: transform; opacity: calc(var(--iwm-op) * .55); transition: opacity .18s; }
+.iwm-stick.is-on { opacity: calc(.35 + var(--iwm-op) * .65); transition: none; }
+.iwm-stick__ring { position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle at 50% 50%, rgba(10, 8, 18, .05) 52%, rgba(10, 8, 18, .38) 100%);
+  border: 2.5px solid rgba(255, 255, 255, .55); box-shadow: 0 0 0 2px rgba(21, 18, 28, .45), inset 0 0 18px rgba(0, 0, 0, .35); }
+.iwm-stick.is-run .iwm-stick__ring { border-color: var(--iwm-c); box-shadow: 0 0 0 2px rgba(21, 18, 28, .45), 0 0 16px color-mix(in srgb, var(--iwm-c) 55%, transparent), inset 0 0 18px rgba(0, 0, 0, .3); }
+.iwm-stick__dir { position: absolute; inset: 0; border-radius: 50%; opacity: 0; pointer-events: none;
+  background: conic-gradient(from 60deg, transparent 0 60deg, color-mix(in srgb, var(--iwm-c) 70%, #fff) 90deg, transparent 120deg 360deg);
+  -webkit-mask: radial-gradient(circle, transparent 60%, #000 62%, #000 70%, transparent 72%); mask: radial-gradient(circle, transparent 60%, #000 62%, #000 70%, transparent 72%); }
+.iwm-stick__knob { position: absolute; left: 50%; top: 50%; width: 44%; height: 44%; margin: -22% 0 0 -22%; border-radius: 50%; will-change: transform;
+  background: radial-gradient(circle at 38% 32%, #fff 0 18%, #e9e6f2 55%, #b9b4cc 100%); border: 3px solid var(--iwm-k); box-shadow: 0 4px 10px rgba(0, 0, 0, .45); }
+.iwm-stick.is-on .iwm-stick__knob { background: radial-gradient(circle at 38% 32%, #fff 0 16%, color-mix(in srgb, var(--iwm-c) 55%, #fff) 60%, var(--iwm-c) 100%); }
+
+/* ---- buttons */
+.iwm-b { position: absolute; left: 0; top: 0; display: grid; place-items: center; padding: 0; margin: 0; border-radius: 50%; border: 0; pointer-events: auto; touch-action: none;
+  color: #fff; background: rgba(16, 13, 26, .52); opacity: var(--iwm-op); will-change: transform;
+  box-shadow: inset 0 0 0 2.5px rgba(255, 255, 255, .62), 0 0 0 2.5px rgba(21, 18, 28, .55), 0 6px 14px rgba(0, 0, 0, .32);
+  -webkit-backdrop-filter: blur(6px) saturate(1.3); backdrop-filter: blur(6px) saturate(1.3); font: inherit; -webkit-tap-highlight-color: transparent; }
+.iwm-b::after { content: ''; position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle at 50% 22%, rgba(255, 255, 255, .28), transparent 55%); pointer-events: none; }
+.iwm-b__ico { display: block; width: 54%; height: 54%; filter: drop-shadow(0 2px 0 rgba(21, 18, 28, .75)); pointer-events: none; }
+.iwm-b__ico svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.iwm-b.is-down { background: rgba(255, 255, 255, .34); box-shadow: inset 0 0 0 3px #fff, 0 0 0 2.5px rgba(21, 18, 28, .6), 0 0 18px rgba(255, 255, 255, .35); scale: .92; transition: scale 40ms; }
+.iwm-b { transition: scale .12s cubic-bezier(.34, 1.8, .64, 1), background .12s; }
+
+/* FIRE: the big one, in your ink; the ring shows your ink tank */
+.iwm-b--fire { background: var(--iwm-c); background: color-mix(in srgb, var(--iwm-c) 78%, rgba(16, 13, 26, .4)); color: #fff;
+  box-shadow: inset 0 0 0 3px rgba(255, 255, 255, .85), 0 0 0 3px rgba(21, 18, 28, .7), 0 8px 18px rgba(0, 0, 0, .35); }
+.iwm-b--fire .iwm-b__ico { width: 62%; height: 62%; }
+.iwm-b__ink { position: absolute; inset: -7px; border-radius: 50%; pointer-events: none; opacity: .95;
+  background: conic-gradient(from 210deg, #fff 0 calc(var(--ink, 1) * 300deg), rgba(255, 255, 255, .12) 0 300deg, transparent 0);
+  -webkit-mask: radial-gradient(circle, transparent calc(50% + 2px), #000 calc(50% + 3px)); mask: radial-gradient(circle, transparent calc(50% + 2px), #000 calc(50% + 3px)); }
+.iwm-b--fire.is-low .iwm-b__ink { background: conic-gradient(from 210deg, #ff4d5e 0 calc(var(--ink, 1) * 300deg), rgba(255, 77, 94, .2) 0 300deg, transparent 0); animation: iwm-blink .5s steps(2) infinite; }
+.iwm-b--fire.is-down { background: color-mix(in srgb, var(--iwm-c) 60%, #fff); }
+.iwm-b--squid .iwm-b__ico { color: color-mix(in srgb, var(--iwm-c) 65%, #fff); }
+.iwm-b--sub.is-dim { filter: grayscale(.8) brightness(.75); }
+
+/* SP: gauge ring + ready glow */
+.iwm-b__gauge { position: absolute; inset: -5px; width: calc(100% + 10px); height: calc(100% + 10px); transform: rotate(-90deg); pointer-events: none; overflow: visible; }
+.iwm-b__gauge circle { fill: none; stroke: var(--iwm-c); stroke-width: 7; stroke-linecap: round; stroke-dasharray: calc(var(--g, 0) * 100) 100; transition: stroke-dasharray .25s; filter: drop-shadow(0 0 2px rgba(0, 0, 0, .6)); }
+.iwm-b--special .iwm-b__ico { opacity: .55; filter: grayscale(1) drop-shadow(0 2px 0 rgba(21, 18, 28, .75)); }
+.iwm-b--special.is-ready { background: var(--iwm-c); background: color-mix(in srgb, var(--iwm-c) 55%, rgba(16, 13, 26, .45)); animation: iwm-ready 1s ease-in-out infinite; }
+.iwm-b--special.is-ready .iwm-b__ico { opacity: 1; filter: drop-shadow(0 2px 0 rgba(21, 18, 28, .75)); animation: iwm-wiggle 1s ease-in-out infinite; }
+.iwm-b--special.is-active { animation: none; background: #fff; color: var(--iwm-k); }
+
+/* small system buttons */
+.iwm-b--pause .iwm-b__ico, .iwm-b--map .iwm-b__ico, .iwm-b--gyro .iwm-b__ico { width: 58%; height: 58%; }
+.iwm-b--map.is-on { background: #fff; color: var(--iwm-k); box-shadow: inset 0 0 0 3px var(--iwm-c), 0 0 0 2.5px rgba(21, 18, 28, .6); }
+.iwm-b--gyro .iwm-b__ico { opacity: .6; }
+.iwm-b--gyro.is-on { background: rgba(38, 190, 116, .85); }
+.iwm-b--gyro.is-on .iwm-b__ico { opacity: 1; }
+
+/* ---- big map open: everything except MAP lets taps through to the super-jump beacons */
+#iw-mobile-controls.is-map .iwm-look, #iw-mobile-controls.is-map .iwm-movezone, #iw-mobile-controls.is-map .iwm-stick,
+#iw-mobile-controls.is-map .iwm-b:not(.iwm-b--map) { pointer-events: none; visibility: hidden; }
+
+/* ---- toast */
+.iwm-toast { position: absolute; left: 50%; top: 22%; translate: -50% 0; max-width: min(78vw, 520px); padding: .7em 1.1em; border-radius: 999px; background: rgba(16, 13, 26, .88);
+  box-shadow: 0 0 0 2.5px var(--iwm-c); font-size: clamp(12px, 2.4vmin, 15px); line-height: 1.35; text-align: center; opacity: 0; scale: .9; transition: opacity .18s, scale .25s cubic-bezier(.34, 1.8, .64, 1); pointer-events: none; }
+.iwm-toast.is-on { opacity: 1; scale: 1; }
+
+/* ---- rotate prompt (live match / editor only) */
+.iwm-rotate { display: none; position: absolute; inset: 0; background: rgba(8, 6, 16, .94); place-items: center; pointer-events: auto; z-index: 5; }
+.iwm-rotate__card { display: grid; justify-items: center; gap: 18px; font-size: 16px; letter-spacing: .06em; }
+.iwm-rotate__phone { width: 54px; height: 92px; border-radius: 12px; border: 4px solid #fff; box-shadow: 0 0 0 3px var(--iwm-c); animation: iwm-rot 1.8s cubic-bezier(.6, 0, .3, 1) infinite; }
+@media (orientation: portrait) { html.iw-touch .iwm-rotate { display: grid; } html.iw-touch #iw-mobile-controls.is-active > :not(.iwm-rotate):not(.iwm-safe) { visibility: hidden; } }
+
+/* ---- layout editor */
+.iwm-edit { display: none; }
+/* the scrim sits behind the controls (::before, z −1); the edit bars float above them */
+#iw-mobile-controls.is-editing .iwm-edit { display: block; position: absolute; inset: 0; pointer-events: auto; }
+#iw-mobile-controls.is-editing .iwm-edit::before { content: ''; position: absolute; inset: 0; z-index: -1;
+  background: repeating-linear-gradient(0deg, rgba(255, 255, 255, .05) 0 1px, transparent 1px 24px), repeating-linear-gradient(90deg, rgba(255, 255, 255, .05) 0 1px, transparent 1px 24px), rgba(8, 6, 16, .72); }
+#iw-mobile-controls.is-editing .iwm-edit__bar, #iw-mobile-controls.is-editing .iwm-edit__sel { z-index: 3; }
+#iw-mobile-controls.is-editing { z-index: 9500; }
+#iw-mobile-controls.is-editing .iwm-look, #iw-mobile-controls.is-editing .iwm-movezone { display: none; }
+#iw-mobile-controls.is-editing .iwm-stick { opacity: .95; }
+#iw-mobile-controls.is-editing .iwm-b { opacity: 1; animation: none; }
+#iw-mobile-controls.is-editing .iwm-b, #iw-mobile-controls.is-editing .iwm-stick { outline: 2px dashed rgba(255, 255, 255, .35); outline-offset: 5px; border-radius: 50%; }
+#iw-mobile-controls.is-editing .is-sel { outline: 3px solid var(--iwm-c); outline-offset: 6px; }
+.iwm-edit__bar, .iwm-edit__sel { position: absolute; left: 50%; translate: -50% 0; display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 16px;
+  background: rgba(16, 13, 26, .94); box-shadow: 0 0 0 2.5px rgba(255, 255, 255, .16), 0 10px 26px rgba(0, 0, 0, .45); white-space: nowrap; }
+.iwm-edit__bar { top: max(8px, env(safe-area-inset-top, 0px)); }
+.iwm-edit__sel { bottom: max(8px, env(safe-area-inset-bottom, 0px)); }
+.iwm-edit__title { font-size: 15px; }
+.iwm-edit__hint { font-weight: 600; font-size: 11px; opacity: .7; }
+@media (max-width: 760px) { .iwm-edit__hint { display: none; } }
+.iwm-edit__name { min-width: 4.5em; font-size: 14px; color: var(--iwm-c); }
+.iwm-edit__sel label { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.iwm-edit__size { width: clamp(120px, 26vw, 260px); accent-color: var(--iwm-c); }
+.iwm-edit__pct { font-style: normal; min-width: 3em; font-variant-numeric: tabular-nums; }
+.iwm-eb { appearance: none; border: 0; border-radius: 999px; padding: 9px 14px; font: 800 12px/1 inherit; font-family: inherit; color: #fff; background: rgba(255, 255, 255, .12); box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .25); }
+.iwm-eb.is-primary { background: var(--iwm-c); color: var(--iwm-k); box-shadow: inset 0 0 0 2px rgba(0, 0, 0, .25); }
+.iwm-eb:active { scale: .94; }
+
+@keyframes iwm-ready { 0%, 100% { box-shadow: inset 0 0 0 3px #fff, 0 0 0 2.5px rgba(21, 18, 28, .6), 0 0 10px var(--iwm-c); } 50% { box-shadow: inset 0 0 0 3px #fff, 0 0 0 2.5px rgba(21, 18, 28, .6), 0 0 26px var(--iwm-c), 0 0 44px color-mix(in srgb, var(--iwm-c) 60%, transparent); } }
+@keyframes iwm-wiggle { 0%, 100% { rotate: -6deg; } 50% { rotate: 6deg; } }
+@keyframes iwm-blink { 50% { opacity: .35; } }
+@keyframes iwm-rot { 0%, 15% { rotate: 0deg; } 55%, 100% { rotate: -90deg; } }
+@media (prefers-reduced-motion: reduce) { #iw-mobile-controls * { animation: none !important; transition: none !important; } }
+
+/* ---- HUD while playing by touch (html.iw-touch-ui is set by the input layer) */
+html.iw-touch-ui .iw-hud .iw-sp { display: none; }                 /* the SP button is the gauge */
+html.iw-touch-ui .iw-hud .iw-turf { top: calc(env(safe-area-inset-top, 0px) + 15vmin); right: calc(env(safe-area-inset-right, 0px) + 2.2vmin); font-size: max(12px, 2.6vmin); }
+html.iw-touch-ui .iw-hud .iw-feed { top: calc(env(safe-area-inset-top, 0px) + 23vmin); right: calc(env(safe-area-inset-right, 0px) + 2vmin); font-size: max(10px, 2.3vmin); }
+html.iw-touch-ui .iw-hud .iw-feed__item:nth-child(n+3) { display: none; }
+html.iw-touch-ui .iw-hud .iw-fps { left: 50%; top: calc(env(safe-area-inset-top, 0px) + 12vmin); translate: -50% 0; }
+html.iw-touch-ui .iw-hud .iw-map__label .iw-key, html.iw-touch-ui .iw-hud .iw-sp__ready .iw-key, html.iw-touch-ui .iw-hud .iw-bcn__key, html.iw-touch-ui .iw-hud .iw-lg__key { display: none; }
+html.iw-touch-ui .iw-hud .iw-map-dim.is-on { pointer-events: auto; }
+html.iw-touch-ui .iw-hud .iw-map.is-expanded .iw-bcn { scale: 1.18; }     /* fat-finger friendly super-jump targets */
+html.iw-touch-ui .iw-hud .iw-prompt { bottom: calc(env(safe-area-inset-bottom, 0px) + 3vmin); max-width: 44vw; white-space: normal; text-align: center; }

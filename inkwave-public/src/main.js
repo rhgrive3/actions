@@ -3,7 +3,9 @@ import * as THREE from 'three';
 import { G, on, emit, clamp, damp } from './core/ctx.js';
 import { Renderer } from './core/renderer.js';
 import { Input } from './core/input.js';
-import { mobileProfile } from './core/mobile.js';
+import { deviceProfile } from './core/device.js';
+import { ShadowCache } from './core/shadowcache.js';
+import { t, setTextMode } from './i18n.js';
 import { mapTheme,
   DEFAULT_SETTINGS, QUALITY, TEAM_PALETTES, COLORBLIND_PALETTE, TEAM_NAMES, WEAPONS, WEAPON_ORDER, SUB, SPECIALS,
   MAPS, DIFFICULTY, PLAYER, PROGRESSION, VERSION, MATCH,
@@ -31,7 +33,7 @@ const nextFrame = () => new Promise((r) => requestAnimationFrame(() => r()));
 // ------------------------------------------------------------------------------------------ persistence
 function loadJSON(key, def) { try { const v = JSON.parse(localStorage.getItem(key)); return v ? { ...def, ...v } : { ...def }; } catch { return { ...def }; } }
 function saveJSON(key, v) { try { localStorage.setItem(key, JSON.stringify(v)); } catch { /* private mode */ } }
-const DEFAULT_PROFILE = { name: 'Player', level: 1, xp: 0, wins: 0, matches: 0, totalTurf: 0, weapon: 'shooter' };
+const DEFAULT_PROFILE = { name: t('Player'), level: 1, xp: 0, wins: 0, matches: 0, totalTurf: 0, weapon: 'shooter' };
 
 async function loadModule(path, stubName) {
   try { return await import(path); }
@@ -48,7 +50,7 @@ class Game {
     // real top-down thumbnails for the stage cards, generated from each layout's geometry
     for (const m of MAPS) { try { m.thumb = layoutThumbSVG(MAP_LAYOUTS[m.layout || m.id], m.theme); } catch (e) { console.warn('thumb', m.id, e); } }
     this.settings = G.settings = loadJSON('inkwave.settings', DEFAULT_SETTINGS);
-    this.mobile = G.mobile = mobileProfile();
+    this.mobile = G.mobile = deviceProfile();
     // v1.1: fov became horizontal — migrate old vertical values once
     if (this.settings.fovMode !== 'h') { this.settings.fov = DEFAULT_SETTINGS.fov; this.settings.fovMode = 'h'; saveJSON('inkwave.settings', this.settings); }
     this.profile = loadJSON('inkwave.profile', DEFAULT_PROFILE);
@@ -66,11 +68,13 @@ class Game {
     this.menus?.show('loading');
     this.bootMarks = [];
     const progress = async (p, label) => { this.bootMarks.push([label, Math.round(performance.now() - t0)]); this.menus?.setLoading(p, label); await nextFrame(); };
-    await progress(0.05, 'Mixing ink…');
+    await progress(0.05, t('Mixing ink…'));
 
     // renderer / scene
     this.R = new Renderer(app, this.settings);
     G.renderer = this.R.renderer;
+    // static-caster shadow cache + off-screen squidkid shadow skip (same image, far fewer shadow triangles)
+    if (!params.has('noshadowcache')) this.shadowCache = new ShadowCache(G.renderer);
     const scene = (G.scene = new THREE.Scene());
     const camera = (G.camera = new THREE.PerspectiveCamera(this.settings.fov, innerWidth / innerHeight, 0.15, 6500));
     camera.position.set(0, 40, -60);
@@ -78,11 +82,17 @@ class Game {
     this.input = G.input = new Input(this.R.renderer.domElement);
     this.input.onKey = (e, repeat) => this._onKey(e, repeat);
     this.input.onUnlock = () => this._onPointerUnlock();
+    this.input.onDevice = (mode) => this._onDevice(mode);
+    this._onDevice(this.input.lastDevice);
     if (this.input.mobile) {
-      this.input.mobile.setVisible(false);
-      this.input.mobile.onPause = () => {
+      const mob = this.input.mobile;
+      mob.setVisible(false);
+      mob.applySettings(this.settings);
+      mob.onPause = () => {
         if (this.match?.paused) this.resume(); else if (G.mode === 'match') this.pause();
       };
+      // the in-match GYRO button keeps the saved setting in sync
+      mob.onGyroToggle = (on) => { this.settings.gyro = !!on; saveJSON('inkwave.settings', this.settings); this.menus?.refreshSetting?.('gyro'); };
     }
     // after a focus steal while the map was held, the next click on the game takes the mouse back (no pause detour)
     this.R.renderer.domElement.addEventListener('mousedown', () => {
@@ -97,7 +107,7 @@ class Game {
     this.CharacterClass = charMod.Character;
     try { this.PropKit = (await import('./world/props.js')).PropKit; } catch (e) { console.error('[inkwave] prop kit failed to load', e); this.PropKit = null; }
     G.audio = audioMod.audio; G.music = musicMod.music;
-    await progress(0.15, 'Building the plaza…');
+    await progress(0.15, t('Building the plaza…'));
 
     // world
     // (old ?map=sunset links = Tidewater at dusk)
@@ -113,15 +123,16 @@ class Game {
       this.texlib = await createTextureLibrary(G.renderer, { size: q.paintAtlas >= 4096 ? 512 : 256 });
     } catch (e) { console.error('[inkwave] texture library failed — procedural fallback', e); this.texlib = null; }
     await this._buildWorld(map);
-    await progress(0.4, 'Filling the harbor…');
+    await progress(0.4, t('Filling the harbor…'));
     const B = G.level.bounds;
     G.env = new envMod.Environment(G.renderer, scene, { bounds: B, theme: this.theme, shadowSize: q.shadowSize, footprint: this._footprint(G.level) });
     if (G.env.envMap) scene.environment = G.env.envMap;
+    this._shadowRoots();
     // lighting balance: less omnidirectional sky flood, more directional sky/ground fill → surfaces keep their form
     scene.environmentIntensity = 0.66;
     G.renderer.toneMappingExposure = 0.94;
     if (G.env.hemi) G.env.hemi.intensity = Math.max(G.env.hemi.intensity, 0.38);
-    await progress(0.55, 'Teaching squids to swim…');
+    await progress(0.55, t('Teaching squids to swim…'));
     G.projectiles = new Projectiles(scene);
     G.fx = new fxMod.FX(scene, { quality: q });
     G.fx.setLighting?.(G.env.getSkyColors?.());
@@ -139,19 +150,19 @@ class Game {
     try { const m = await import('./fx/fxHooks.js'); this.fxHooks = m.initFxHooks?.(G) || null; } catch (e) { if (!/Failed to fetch|Cannot find module|404/i.test(String(e))) console.error('[inkwave] fxHooks', e); }
     try { const m = await import('./fx/screenfx.js'); this.screenfx = m.ScreenFX ? new m.ScreenFX(this.R, G) : null; } catch (e) { if (!/Failed to fetch|Cannot find module|404/i.test(String(e))) console.error('[inkwave] screenfx', e); }
     this.showcase = new Showcase(G.renderer, this.CharacterClass);
-    await progress(0.7, 'Tuning the tentacles…');
+    await progress(0.7, t('Tuning the tentacles…'));
 
     this._setPalette(this._pickPalette());
     this._bindEvents();
     this._startAttract();
     // warm up: compile every shader now so the first shot/splat never hitches
-    await progress(0.85, 'Warming up…');
+    await progress(0.85, t('Warming up…'));
     this._warmup();
     // compile in parallel (KHR_parallel_shader_compile) so the loading screen keeps animating instead of freezing
     try { await G.renderer.compileAsync(scene, camera); } catch { G.renderer.compile(scene, camera); }
-    await progress(0.93, 'Warming up…');
+    await progress(0.93, t('Warming up…'));
     for (let i = 0; i < 3; i++) { this._frame(1 / 60); await nextFrame(); }
-    await progress(1, 'Ready!');
+    await progress(1, t('Ready!'));
     await new Promise((r) => setTimeout(r, 250));
 
     this.timer = new THREE.Timer(); this.timer.connect?.(document);
@@ -230,8 +241,11 @@ class Game {
     this.minimap = new Minimap(level, G.paint);
     if (G.env?.rebuildForArena) G.env.rebuildForArena(level.bounds, this._footprint(level));
     else if (G.env?.setFootprint) G.env.setFootprint(this._footprint(level));
+    this._shadowRoots();
     if (G.teamColors[0]) this._setPalette(this.palette || this._pickPalette());
   }
+
+  _shadowRoots() { this.shadowCache?.setStaticRoots([this.levelMesh, this.props?.group, this.decor?.group, G.env?.root]); }
 
   // Baked AO (tools/bake-ao.mjs). Applied only when the bake matches this exact layout.
   async _loadLightmap(level, layoutId) {
@@ -283,6 +297,7 @@ class Game {
     // ink self-light: more at dusk, a touch more in golden hour's long shadows
     this.levelMat.userData.uniforms.uInkGlow.value = { sunset: 0.2, golden: 0.1 }[this.theme] ?? 0.07;
     this.decor.setTeamColors(G.teamColors);
+    this.input?.mobile?.setColor(p.a);
     this.props?.setTeamColors?.(G.teamColors[0], G.teamColors[1]);
     G.projectiles.refreshColors();
     for (const a of G.actors) a.character.setColor(G.teamColors[a.team]);
@@ -317,6 +332,9 @@ class Game {
         if (self.menus?.current === 'loadout') self.showcase.showLoadout(weapon, G.teamColors[0], self.profile.style);
       },
       startMatch: (o) => self.startMatch(o),
+      // called synchronously from the START / REMATCH tap: iOS only grants motion access inside a user gesture
+      prepareMatch: () => self._prepareGyro(),
+      editTouchLayout: () => self.input.mobile?.openEditor?.(),
       resumeMatch: () => self.resume(),
       quitMatch: () => self.quitToMenu(),
       rematch: () => self.startMatch(self.lastMatchOpts || {}),
@@ -330,6 +348,23 @@ class Game {
   _setSettings(partial) {
     Object.assign(this.settings, partial);
     saveJSON('inkwave.settings', this.settings);
+    const mob = this.input?.mobile;
+    if (mob) {
+      mob.applySettings(this.settings);
+      if ('gyro' in partial) {
+        // turning gyro on from the settings toggle: that tap is the user gesture iOS needs for the permission prompt
+        if (partial.gyro) {
+          const ask = mob.gyro.needsPermission ? mob.gyro.request() : Promise.resolve(mob.gyro.supported);
+          ask.then((ok) => {
+            if (!ok) {
+              this.settings.gyro = false; saveJSON('inkwave.settings', this.settings);
+              this.menus?.refreshSetting?.('gyro');
+              mob.toast(t(mob.gyro.supported ? 'Gyro permission was denied. Allow motion access in Safari settings.' : 'Gyro is not available on this device.'), 3.2);
+            } else if (G.mode === 'match' && this.match?.state === 'playing') mob.setGyro(true);
+          });
+        } else mob.setGyro(false);
+      }
+    }
     if ('quality' in partial || 'shadows' in partial || 'bloom' in partial) this.R?.applySettings(this.settings);
     if ('master' in partial || 'music' in partial || 'sfx' in partial) this._applyAudioVolumes();
     if ('colorblind' in partial && G.mode !== 'match') this._setPalette(this._pickPalette());
@@ -418,31 +453,33 @@ class Game {
       const local = this.match.local;
       if (attacker?.isLocal) {
         G.audio?.play('splat_enemy', { volume: 0.9 });
-        this.hud?.feed({ text: `You splatted ${victim.name}!`, color: G.teamHex[local.team], kind: 'kill' });
+        this.hud?.feed({ text: t('You splatted {name}!', { name: victim.name }), color: G.teamHex[local.team], kind: 'kill' });
       } else if (victim.isLocal) {
         G.audio?.play('splatted_self');
         G.audio?.duck?.(0.45, 2.2);
-        const by = attacker ? attacker.name : cause === 'water' ? 'the sea' : 'enemy ink';
+        const by = attacker ? attacker.name : t(cause === 'water' ? 'the sea' : 'enemy ink');
         this.hud?.showSplatted({ by, byColor: attacker ? G.teamHex[attacker.team] : '#6fd0ff', respawn: PLAYER.respawnTime });
         this.rig.mode = 'spectate';
         this.rig.spectate = { actor: attacker && attacker.alive ? attacker : null, pos: victim.pos.clone(), from: victim.pos.clone() };
         this.rig.lookAt.copy(victim.pos);
       } else if (victim.team === local?.team) {
         G.audio?.play('ally_splatted', { volume: 0.5 });
-        this.hud?.feed({ text: `${victim.name} was splatted${attacker ? ' by ' + attacker.name : ''}`, color: G.teamHex[victim.enemyTeam], kind: 'death' });
+        this.hud?.feed({ text: attacker ? t('{victim} was splatted by {attacker}', { victim: victim.name, attacker: attacker.name }) : t('{victim} was splatted', { victim: victim.name }), color: G.teamHex[victim.enemyTeam], kind: 'death' });
       } else if (attacker && attacker.team === local?.team) {
-        this.hud?.feed({ text: `${attacker.name} splatted ${victim.name}`, color: G.teamHex[attacker.team], kind: 'ally' });
+        this.hud?.feed({ text: t('{attacker} splatted {victim}', { attacker: attacker.name, victim: victim.name }), color: G.teamHex[attacker.team], kind: 'ally' });
       }
     });
     on('respawn', ({ actor }) => {
       if (!this.match || this.match.attract) return;
       if (actor.isLocal) { this.hud?.hideSplatted(); this.rig.follow(actor, true); this.rig.yaw = actor.yaw; this.rig.pitch = -0.12; }
     });
+    // a super jump from the (touch) big map closes it again
+    on('superjump', ({ actor, phase }) => { if (actor?.isLocal && phase === 'charge') this.input.mobile?.setMap(false); });
     on('special:ready', ({ actor }) => {
       if (actor.isLocal && !this.match?.attract) { G.audio?.play('special_ready'); }
     });
     on('special:use', ({ actor, id }) => {
-      if (actor.isLocal && !this.match?.attract) this.hud?.banner('special', SPECIALS[id].name.toUpperCase() + '!');
+      if (actor.isLocal && !this.match?.attract) this.hud?.banner('special', t('{name}!', { name: SPECIALS[id].name.toUpperCase() }));
     });
     on('shake', ({ amount, pos }) => { if (!this.match?.attract) this.rig.addShake(amount, pos); });
     on('recoil', ({ amount }) => { if (!this.match?.attract) this.rig.recoil(amount); });
@@ -463,12 +500,14 @@ class Game {
       if (state === 'intro') this._intro();
       if (state === 'playing') {
         this.input.mobile?.setVisible(true);
+        this._startGyro();
         this.hud?.banner('go'); G.audio?.play('go_horn');
         this._playMusic('battle');
         if (this.match.local) { this.rig.follow(this.match.local, true); }
       }
       if (state === 'finish') {
         this.input.mobile?.setVisible(false);
+        this.input.mobile?.gyro.stop();
         this.hud?.banner('timesup'); G.audio?.play('times_up'); G.music?.stop?.(0.4); this._musicTrack = null;
         this.input.exitLock();
       }
@@ -597,6 +636,7 @@ class Game {
     this.match.paused = false;
     this.input.requestLock();
     this.input.mobile?.setVisible(true);
+    this.input.mobile?.gyro.resync();
     G.audio?.duck?.(1, 0.01);
   }
   async quitToMenu() {
@@ -608,6 +648,7 @@ class Game {
     this.showcase.hide();
     G.mode = 'menu';
     this.input.mobile?.setVisible(false);
+    this.input.mobile?.gyro.stop();
     this._setPalette(this._pickPalette());
     this._startAttract();
     this.menus?.show('main');
@@ -714,6 +755,7 @@ class Game {
     this.input.pollPad();
     this._padMenus();
     const m = this.match;
+    if (!m || !m.controller) this.input.mobile?.gyro.discard();
     if (m) {
       m.updateController(dt);
       const sub = dt > 1 / 45 ? 2 : 1; // substep physics on slow frames
@@ -872,15 +914,15 @@ class Game {
     const coneDeg = a.weaponRunner.spread ?? (w.kind === 'shooter' ? 5.5 : w.kind === 'blaster' ? 1.2 : 0);
     const spread = w.kind === 'roller' ? 28 : Math.min(90, (Math.tan((coneDeg * Math.PI) / 180) / Math.tan(vHalf)) * (innerHeight / 2));
     const players = [];
-    const t = { x: 0, y: 0 };
+    const tc = { x: 0, y: 0 };
     for (const o of m.actors) {
       if (!o.alive) continue;
       if (o.team !== a.team && !o.isLocal) {
         // enemies only show on the map when visible to your team (not submerged far away)
         if (o.anim.form === 'swim') continue;
       }
-      this.minimap.toCanvas(o.pos.x, o.pos.z, t);
-      players.push({ x: t.x / this.minimap.w, y: t.y / this.minimap.h, team: o.team, isSelf: o.isLocal, yaw: -o.yaw + (this.minimap.flip ? Math.PI : 0), alive: o.alive, color: G.teamHex[o.team] });
+      this.minimap.toCanvas(o.pos.x, o.pos.z, tc);
+      players.push({ x: tc.x / this.minimap.w, y: tc.y / this.minimap.h, team: o.team, isSelf: o.isLocal, yaw: -o.yaw + (this.minimap.flip ? Math.PI : 0), alive: o.alive, color: G.teamHex[o.team] });
     }
     // ally markers
     const markers = [];
@@ -911,10 +953,10 @@ class Game {
     if (m.state === 'playing' && a.alive) {
       if (m.controller?.mapHeld) prompt = null;   // the map diorama carries its own super-jump hints
       else if (a.superJumpState) prompt = null;
-      else if (this._lowInkFlash > 0) { this._lowInkFlash -= dt; prompt = 'Low ink! Hold SHIFT in your ink to refill'; }
-      else if (a.specialReady() && (this._hints.specialT = (this._hints.specialT || 0) + dt) > 2) prompt = `Special ready! Press F`;
-      else if (inkF < 0.25 && a.form !== 'squid') prompt = 'Hold SHIFT to swim in your ink and refill';
-      else if (m.duration - m.time < 8 && !this._hints.shot) prompt = 'Paint the ground — most turf wins!';
+      else if (this._lowInkFlash > 0) { this._lowInkFlash -= dt; prompt = t('Low ink! Hold SHIFT in your ink to refill'); }
+      else if (a.specialReady() && (this._hints.specialT = (this._hints.specialT || 0) + dt) > 2) prompt = t('Special ready! Press F');
+      else if (inkF < 0.25 && a.form !== 'squid') prompt = t('Hold SHIFT to swim in your ink and refill');
+      else if (m.duration - m.time < 8 && !this._hints.shot) prompt = t('Paint the ground — most turf wins!');
       if (!a.specialReady()) this._hints.specialT = 0;
       if (a.intent.fire) this._hints.shot = true;
     }
@@ -933,6 +975,24 @@ class Game {
       fps: this.settings.showFps ? this.fps : undefined,
     };
     this.hud.update(dt, frame);
+    this.input.mobile?.setHud({ special: frame.special, ready: frame.specialReady, activeSp: frame.specialActive, weapon: w.kind || a.weaponId, specialId: w.special, ink: frame.ink, subCost: frame.subCost });
+  }
+
+  // ---------------------------------------------------------------------------------------- touch / gyro
+  _onDevice(mode) {
+    setTextMode(mode);
+    document.documentElement.classList.toggle('iw-touch-ui', mode === 'touch');
+    this.menus?.setInputMode?.(mode);
+  }
+  _prepareGyro() {
+    const mob = this.input?.mobile;
+    if (mob && this.settings.gyro && mob.gyro.needsPermission) mob.gyro.request();
+  }
+  _startGyro() {
+    const mob = this.input?.mobile;
+    if (!mob || !this.settings.gyro) return;
+    if (mob.gyro.needsPermission) { mob.toast(t('Tap GYRO to turn on gyro aim'), 2.4); return; }
+    mob.setGyro(true);
   }
 }
 
@@ -940,5 +1000,5 @@ const game = new Game();
 game.boot().catch((e) => {
   console.error(e);
   const el = document.getElementById('boot-error');
-  if (el) { el.textContent = 'Something went wrong while loading: ' + e.message; el.style.display = 'block'; }
+  if (el) { el.textContent = t('Something went wrong while loading: ') + e.message; el.style.display = 'block'; }
 });

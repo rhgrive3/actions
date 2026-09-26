@@ -24,6 +24,7 @@ import { h, clamp, colorVars, toHex, fmtTime, fmtInt, splatSVG, splatShape, pct,
 import { SQUID, SPLAT_ICON, DEATH_ICON, GLYPHS, SUB_ICONS, richText, keycap, specialIcon, weaponIcon } from './ui-icons.js';
 import { WEAPONS, SPECIALS, TEAM_NAMES, SUB, PLAYER, MATCH } from '../config.js';
 import { on, G } from '../core/ctx.js';
+import { t as tr, isJa } from '../i18n.js';
 
 let HUD_ID = 0;
 const BUMP = { duration: 320, easing: 'cubic-bezier(.34,1.8,.64,1)' };
@@ -186,6 +187,8 @@ export class HUD {
       h('div', { class: 'iw-lg__foot', html: richText('Press [1] – [4] or click · release [TAB] to cancel') }));
     this.map = h('div', { class: 'iw-map' }, this.mapFrame, this.mapJumpLine, h('div', { class: 'iw-map__bcns' }, this.beacons), this.mapCursor, this.mapLabel, this.mapLegend);
     this.mapDim = h('div', { class: 'iw-map-dim' });
+    // touch: tapping outside the big map closes it (keyboard players release TAB)
+    this.mapDim.addEventListener('click', () => G.input?.mobile?.setMap(false));
     this._mapT = 0; this._mapV = 0;
 
     this.markers = Array.from({ length: 8 }, () => h('div', { class: 'iw-mk' }, h('span', { class: 'iw-mk__tag' }, h('i', { class: 'iw-mk__w' }), h('b')), h('i', { class: 'iw-mk__arrow' })));
@@ -258,7 +261,7 @@ export class HUD {
   banner(kind = 'custom', text) {
     const k = ['ready', 'go', 'one_minute', 'timesup', 'special', 'custom'].includes(kind) ? kind : 'custom';
     const defaults = { ready: 'READY?', go: 'GO!', one_minute: '1 minute left!', timesup: "TIME'S UP!", special: 'SPECIAL!', custom: '' };
-    const label = text != null && text !== '' ? String(text) : defaults[k];
+    const label = text != null && text !== '' ? String(text) : tr(defaults[k]);
     const group = k === 'one_minute' ? 'side' : k === 'special' ? 'low' : 'center';
     this.bannerLayer.querySelectorAll(`.iw-bn[data-g="${group}"]`).forEach((b) => b.remove());
     let el;
@@ -397,7 +400,7 @@ export class HUD {
       const barB = h('div', { class: 'iw-jd__bar b' });
       const edgeA = h('i', { class: 'iw-jd__edge a' }), edgeB = h('i', { class: 'iw-jd__edge b' });
       const clash = h('div', { class: 'iw-jd__clash', html: splatSVG({ seed: 99, fill: '#fff', r: 50, arms: 10, drops: 8 }) });
-      const wText = winner < 0 ? "IT'S A TIE!" : `${(names[winner] || TEAM_NAMES[winner] || '').toUpperCase()} WINS!`;
+      const wText = winner < 0 ? tr("IT'S A TIE!") : tr('{team} WINS!', { team: (names[winner] || TEAM_NAMES[winner] || '').toUpperCase() });
       const win = h('div', { class: 'iw-jd__win' + (winner === 1 ? ' is-b' : winner === 0 ? ' is-a' : ' is-tie') },
         h('div', { class: 'iw-jd__winsplat', html: splatSVG({ seed: 5, cls: 'iw-fwin', r: 58, arms: 11, drops: 5 }) }),
         h('div', { class: 'iw-jd__wintext iw-display' }, wText));
@@ -554,14 +557,15 @@ export class HUD {
       // callouts, most important first
       let call = null, sub = null;
       const enemies = this._actors().filter((a) => a.team !== me.team);
-      if (enemies.length >= 4 && enemies.every((a) => !a.alive)) { call = 'WIPEOUT!'; sub = 'The whole team is splatted'; }
-      else if (multi >= 2) call = STREAKS[Math.min(4, multi)];
-      else if (!K.first) { call = 'FIRST SPLAT!'; }
-      else if (K.lastKiller && victim === K.lastKiller) { call = 'REVENGE!'; K.lastKiller = null; }
-      else if (vStreak >= 3) { call = 'SHUTDOWN!'; sub = `Ended ${victim.name}'s streak`; }
-      else if (K.streak >= 3 && K.streak % 2 === 1) { call = `SPLAT STREAK ×${K.streak}`; }
+      let big = false;
+      if (enemies.length >= 4 && enemies.every((a) => !a.alive)) { call = tr('WIPEOUT!'); sub = tr('The whole team is splatted'); big = true; }
+      else if (multi >= 2) call = tr(STREAKS[Math.min(4, multi)]);
+      else if (!K.first) { call = tr('FIRST SPLAT!'); }
+      else if (K.lastKiller && victim === K.lastKiller) { call = tr('REVENGE!'); K.lastKiller = null; }
+      else if (vStreak >= 3) { call = tr('SHUTDOWN!'); sub = tr("Ended {name}'s streak", { name: victim.name }); }
+      else if (K.streak >= 3 && K.streak % 2 === 1) { call = tr('SPLAT STREAK ×{n}', { n: K.streak }); }
       K.first = true;
-      if (call) this._callout(call, sub, multi >= 3 || call === 'WIPEOUT!');
+      if (call) this._callout(call, sub, multi >= 3 || big);
       return;
     }
     if (me && attacker && attacker.team === me.team && K.dealt.has(victim) && now - K.dealt.get(victim) < 4) {
@@ -578,7 +582,7 @@ export class HUD {
       h('span', { class: 'iw-kcard__splat', html: splatSVG({ seed: 30 + ((Math.random() * 40) | 0), cls: 'iw-fself', r: 56, arms: 9, drops: 4 }) }),
       h('span', { class: 'iw-kcard__w', html: weaponIcon(kindOf(victim.weaponId)) }),
       h('span', { class: 'iw-kcard__txt' },
-        h('small', null, kind === 'assist' ? 'ASSIST' : 'SPLATTED'),
+        h('small', null, kind === 'assist' ? 'ASSIST' : (isJa ? 'たおした！' : 'SPLATTED')),
         h('b', null, victim.name || 'Squidkid')));
     colorVars(card, 'v', col);
     this.kcards.prepend(card);
@@ -1091,7 +1095,11 @@ export class HUD {
     const [w0, h0] = fit(14.5 * u), [w1, h1] = fit(Math.min(H * 0.78, W * 0.6));
     const t = this._mapT;
     const bw = lerp(w0, w1, t), bh = lerp(h0, h1, t);
-    const x = lerp(2.2 * u, (W - w1) / 2, t), y = lerp(H - 2.2 * u - h0, (H - h1) / 2 + u * 1.2, t);
+    // touch: the move stick owns the bottom-left, so the small map lives top-left (tap it to open the big map)
+    const touchUI = G.input?.lastDevice === 'touch';
+    const sb = touchUI ? (G.input?.mobile?._safeBox || null) : null;
+    const x0 = touchUI ? Math.max(2.2 * u, (sb?.l ?? 8) + 4) : 2.2 * u, y0 = touchUI ? Math.max(1.6 * u, (sb?.t ?? 6) + 4) : H - 2.2 * u - h0;
+    const x = lerp(x0, (W - w1) / 2, t), y = lerp(y0, (H - h1) / 2 + u * 1.2, t);
     const inside = (W - w1) / 2 < 22 * u;
     if (inside !== L.lgIn) { L.lgIn = inside; this.mapLegend.classList.toggle('is-inside', inside); }
     const box = `${x.toFixed(1)},${y.toFixed(1)},${bw.toFixed(1)},${bh.toFixed(1)}`;
@@ -1142,7 +1150,7 @@ export class HUD {
       out[i] = { x: tc.x / mm.w, y: tc.y / mm.h, name: o.name, weapon: o.weaponId, ok: !!(o.alive && !o.superJumpState), respawn: o.alive ? 0 : Math.ceil(o.respawnTimer || 0), actor: o };
     }
     const pad = G.level && G.level.spawnPads && G.level.spawnPads[me.team];
-    if (pad && mm) { mm.toCanvas(pad.x, pad.z, tc); out[3] = { x: tc.x / mm.w, y: tc.y / mm.h, name: 'Base', ok: true, home: true, pad }; }
+    if (pad && mm) { mm.toCanvas(pad.x, pad.z, tc); out[3] = { x: tc.x / mm.w, y: tc.y / mm.h, name: tr('Base'), ok: true, home: true, pad }; }
     return out;
   }
 
@@ -1229,7 +1237,7 @@ export class HUD {
     if (!b) return;
     if (!b.home && row._w !== b.weapon) { row._w = b.weapon; row.querySelector('.iw-lg__w').innerHTML = weaponIcon(kindOf(b.weapon)); }
     row.querySelector('.iw-lg__name').textContent = b.name;
-    const st = !canJump ? '—' : b.ok ? 'READY' : b.respawn ? `${b.respawn}s` : 'BUSY';
+    const st = !canJump ? '—' : b.ok ? tr('READY') : b.respawn ? `${b.respawn}s` : tr('BUSY');
     row.querySelector('.iw-lg__st').textContent = st;
     row.classList.toggle('is-off', !b.ok || !canJump);
     row.classList.toggle('is-hover', M.hover === i && b.ok && canJump);

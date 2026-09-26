@@ -60,3 +60,13 @@ Hex completion work has three bounded measurement lanes that can run concurrentl
 All three use `.github/workflows/hex-lane-worker-reusable.yml`, enforce a finite hard watchdog, verify the exact target SHA, and upload only bounded evidence (structured JSON plus the last 200 command lines). See `lanes/README.md`.
 
 A one-shot bootstrap for permanent worker repositories is also present at `.github/workflows/bootstrap-hex-worker-repos.yml` with its requested repository list in `bootstrap/worker-repos.json`.
+
+
+## INKWAVE（GitHub Pages）
+
+`inkwave-public/` が公開ソース（読みやすい未圧縮のまま管理）。`main` への push で `.github/workflows/pages-inkwave.yml` が
+`scripts/build-inkwave.mjs` を実行し、JS/CSS の最小化・three.js の未使用部分の除去・モジュールの先読みヒントを付けた `_site/` を公開する（挙動は変わらない）。
+
+- ローカル確認: `npm i --no-save esbuild && node scripts/build-inkwave.mjs inkwave-public _site`
+- 既定言語は日本語（オプション → ゲーム → 言語 で English）。スマホ／タブレットはタッチ操作・ジャイロ（本家と同じ −5〜+5 感度）・ボタン配置編集に対応。
+- 注意: `Fetch INKWAVE public source` ワークフローを手動実行すると `inkwave-public/` が上流で上書きされ、ここでの改修が消える。

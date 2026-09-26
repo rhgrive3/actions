@@ -232,8 +232,18 @@ export const DEFAULT_SETTINGS = {
   matchLength: 180,
   difficulty: 'normal',
   rumble: 1.0,              // gamepad vibration 0..1 (only while the pad is the last-used device)
-  aimAssist: 1.0,           // gamepad aim assist 0..1
+  aimAssist: 1.0,           // gamepad / touch aim assist 0..1
   aimAssistMouse: false,    // optional aim assist for mouse
+  lang: 'ja',               // 'ja' | 'en' (menus + HUD)
+  // ---- touch (phones / tablets)
+  gyro: false,              // gyro aim (iOS asks for motion permission when switched on)
+  gyroSens: 0,              // −5..+5, Splatoon 3 scale (0 = 132° of device turn per in-game 360°)
+  gyroInvertX: false, gyroInvertY: false,
+  touchSens: 0,             // swipe look −5..+5 (0 ≈ 360° per 2.8 screen heights of swipe)
+  fireAim: true,            // slide on FIRE / SQUID / SUB to keep aiming
+  stickMode: 'float',       // 'float' | 'fixed'
+  touchScale: 1.0,          // on-screen buttons 0.7..1.4
+  touchOpacity: 0.85,       // 0.25..1
 };
 
 // Quality presets consumed by the renderer + fx.
