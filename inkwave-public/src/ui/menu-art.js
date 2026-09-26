@@ -7,6 +7,8 @@
 import {
   h, clamp, lerp, easeInOutCubic, easeOutBack, easeOutCubic, rng, splatShape, splatSVG, shade, fmtInt, safeCall,
 } from './ui-util.js';
+import { t as tr } from '../i18n.js';
+import { gyroTurnDeg, touchSensMul } from '../core/gyro.js';
 import { SQUID, GLYPHS, WEAPON_ICONS, SPLAT_ICON, SPECIAL_ICONS, mouseGlyph, padGlyph, keycap } from './ui-icons.js';
 
 const K = '#15121c';
@@ -68,34 +70,34 @@ export const MATCH_TAGS = {
 export function computeAwards(players = [], { win = true, percents = [50, 50] } = {}) {
   const P = players.map((p, i) => ({ i, team: p.team | 0, turf: Math.max(0, +p.turf || 0), splats: Math.max(0, +p.splats || 0), deaths: Math.max(0, +p.deaths || 0), isSelf: !!p.isSelf }));
   const by = P.map(() => []);
-  const give = (p, id, value) => { if (!by[p.i].some((a) => a.id === id)) by[p.i].push({ id, ...AWARDS[id], value }); };
+  const give = (p, id, value) => { if (!by[p.i].some((a) => a.id === id)) by[p.i].push({ id, ...AWARDS[id], label: tr(AWARDS[id].label), desc: tr(AWARDS[id].desc), value }); };
   const maxOf = (k, arr = P) => (arr.length ? Math.max(...arr.map((p) => p[k])) : 0);
   if (P.length) {
     // Turf King — most turf in the lobby (ties share the crown)
     const mt = maxOf('turf');
     const kings = mt > 0 ? P.filter((p) => p.turf === mt) : [];
-    kings.forEach((p) => give(p, 'turf', `${fmtInt(p.turf)}p inked`));
+    kings.forEach((p) => give(p, 'turf', tr('{n}p inked', { n: fmtInt(p.turf) })));
     // Top Inker — best painter on each team that doesn't already hold the crown
     for (const t of [0, 1]) {
       const team = P.filter((p) => p.team === t);
       if (!team.length || team.some((p) => kings.includes(p))) continue;
       const m = maxOf('turf', team);
-      if (m > 0) team.filter((p) => p.turf === m).forEach((p) => give(p, 'inker', `${fmtInt(p.turf)}p inked`));
+      if (m > 0) team.filter((p) => p.turf === m).forEach((p) => give(p, 'inker', tr('{n}p inked', { n: fmtInt(p.turf) })));
     }
     // Top Splatter
     const ms = maxOf('splats');
-    if (ms > 0) P.filter((p) => p.splats === ms).forEach((p) => give(p, 'splats', `${ms} splat${ms === 1 ? '' : 's'}`));
+    if (ms > 0) P.filter((p) => p.splats === ms).forEach((p) => give(p, 'splats', tr(ms === 1 ? '{n} splat' : '{n} splats', { n: ms })));
     // Untouchable (never splatted — only special when few managed it) / Survivor (unique fewest)
     const active = P.filter((p) => p.turf >= 30 || p.splats > 0);
     const zero = active.filter((p) => p.deaths === 0);
-    if (zero.length && zero.length <= 3) zero.forEach((p) => give(p, 'untouchable', 'Never splatted'));
+    if (zero.length && zero.length <= 3) zero.forEach((p) => give(p, 'untouchable', tr('Never splatted')));
     else if (!zero.length && active.length) {
       const md = Math.min(...active.map((p) => p.deaths));
       const s = active.filter((p) => p.deaths === md);
-      if (s.length === 1) give(s[0], 'survivor', `Splatted ${md}×`);
+      if (s.length === 1) give(s[0], 'survivor', tr('Splatted {n}×', { n: md }));
     }
     // Pure Painter — top-3 turf with zero splats
-    [...P].sort((a, b) => b.turf - a.turf).slice(0, 3).filter((p) => p.splats === 0 && p.turf > 0).forEach((p) => give(p, 'pure', `${fmtInt(p.turf)}p · 0 splats`));
+    [...P].sort((a, b) => b.turf - a.turf).slice(0, 3).filter((p) => p.splats === 0 && p.turf > 0).forEach((p) => give(p, 'pure', tr('{n}p · 0 splats', { n: fmtInt(p.turf) })));
     // MVP — best normalised all-round score on the winning team
     const self = P.find((p) => p.isSelf);
     const selfTeam = self ? self.team : 0;
@@ -105,7 +107,7 @@ export function computeAwards(players = [], { win = true, percents = [50, 50] } 
     const winners = P.filter((p) => p.team === wt && (p.turf > 0 || p.splats > 0));
     if (winners.length) {
       const best = winners.reduce((b, p) => (score(p) > score(b) + 1e-9 || (Math.abs(score(p) - score(b)) < 1e-9 && p.turf > b.turf) ? p : b));
-      give(best, 'mvp', 'Top all-round score');
+      give(best, 'mvp', tr('Top all-round score'));
     }
     for (const list of by) list.sort((x, y) => AWARD_ORDER.indexOf(x.id) - AWARD_ORDER.indexOf(y.id));
   }
@@ -114,7 +116,8 @@ export function computeAwards(players = [], { win = true, percents = [50, 50] } 
   if (pa <= 1.0001 && pb <= 1.0001) { pa *= 100; pb *= 100; }
   const margin = Math.abs(pa - pb);
   const match = [];
-  if (margin < 3) match.push({ ...MATCH_TAGS.close, value: `${margin.toFixed(1)}% margin` });
+  for (const k in MATCH_TAGS) MATCH_TAGS[k].label = tr(MATCH_TAGS[k].label);
+  if (margin < 3) match.push({ ...MATCH_TAGS.close, value: tr('{n}% margin', { n: margin.toFixed(1) }) });
   else if (margin >= 20) match.push({ ...MATCH_TAGS.landslide, value: `+${margin.toFixed(1)}%` });
   return { byPlayer: by, match };
 }
@@ -508,8 +511,8 @@ function previewLook(ctx, pad) {
   let v = +ctx.value || 1, ph = 0, shown = v;
   const set = (nv) => {
     v = +nv || 1;
-    if (pad) stat.innerHTML = `Full-stick 360° turn in <b>${(TAU / (PAD_YAW_RATE * v)).toFixed(2)} s</b>`;
-    else stat.innerHTML = `<b>${fmtInt(TAU / (MOUSE_RAD_PER_PX * v))} px</b> of mouse travel per 360° turn`;
+    if (pad) stat.innerHTML = tr('Full-stick 360° turn in <b>{s} s</b>', { s: (TAU / (PAD_YAW_RATE * v)).toFixed(2) });
+    else stat.innerHTML = tr('<b>{n} px</b> of mouse travel per 360° turn', { n: fmtInt(TAU / (MOUSE_RAD_PER_PX * v)) });
   };
   set(v);
   return {
@@ -534,7 +537,7 @@ function previewInvert(ctx) {
       <g transform="translate(160 90)"><circle r="11" fill="none" stroke="#fff" stroke-width="4"/><circle r="11" fill="none" stroke="${K}" stroke-width="1.5"/><circle r="2.6" fill="#fff" stroke="${K}" stroke-width="1.2"/></g>`, 'iw-pv-inv__screen')}
     <div class="iw-pv-cap"></div>` });
   const cap = el.querySelector('.iw-pv-cap');
-  const set = (v) => { el.classList.toggle('is-on', !!v); cap.innerHTML = v ? 'Push up <b>→ look DOWN</b>' : 'Push up <b>→ look UP</b>'; };
+  const set = (v) => { el.classList.toggle('is-on', !!v); cap.innerHTML = tr(v ? 'Push up <b>→ look DOWN</b>' : 'Push up <b>→ look UP</b>'); };
   set(ctx.value);
   return { el, set };
 }
@@ -568,7 +571,7 @@ function previewFov(ctx) {
     wedgeEl.setAttribute('d', wedge(cur));
     let n = 0;
     tEls.forEach((g, i) => { const inside = Math.abs(T[i][0]) <= cur / 2 && T[i][1] <= R; g.classList.toggle('is-in', inside); if (inside) n++; });
-    if (n !== lastN) { lastN = n; cap.innerHTML = `<b>${n} of ${T.length}</b> squidkids in view`; }
+    if (n !== lastN) { lastN = n; cap.innerHTML = tr('<b>{n} of {m}</b> squidkids in view', { n, m: T.length }); }
   };
   apply();
   return {
@@ -588,15 +591,15 @@ function previewQuality(ctx) {
     const q = Q[v] || Q.high || {};
     ladder.querySelectorAll('.iw-pv-ladder__col').forEach((c) => c.classList.toggle('is-on', c.dataset.q === v));
     const rows = [
-      ['Pixel density', `up to ${(+q.pixelRatio || 1).toFixed(q.pixelRatio % 1 ? 2 : 1).replace(/0$/, '')}×`],
+      ['Pixel density', tr('up to {n}×', { n: (+q.pixelRatio || 1).toFixed(q.pixelRatio % 1 ? 2 : 1).replace(/0$/, '') })],
       ['Shadow map', `${q.shadowSize || 0}px`],
       ['Anti-aliasing', q.msaa ? `${q.msaa}× MSAA` : 'Off'],
-      ['Ink detail', `${Math.round((q.paintAtlas || 2048) / 1024)}K atlas`],
+      ['Ink detail', tr('{n}K atlas', { n: Math.round((q.paintAtlas || 2048) / 1024) })],
       ['Ambient occlusion', q.ao ? 'On' : 'Off'],
       ['Particles', `${Math.round((q.particles ?? 1) * 100)}%`],
     ];
     chips.innerHTML = '';
-    rows.forEach(([k, val], i) => chips.appendChild(h('span', { class: 'iw-pv-chip' + (/Off|0%/.test(val) ? ' is-off' : ''), style: { '--i': i } }, h('small', null, k), h('b', null, val))));
+    rows.forEach(([k, val], i) => chips.appendChild(h('span', { class: 'iw-pv-chip' + (/^Off$|^0%$/.test(val) ? ' is-off' : ''), style: { '--i': i } }, h('small', null, k), h('b', null, val))));
   };
   set(ctx.value);
   return { el, set };
@@ -611,7 +614,7 @@ function previewShadows(ctx) {
     <g transform="translate(160 74) scale(.5)" style="color:var(--a)">${SQUID.replace('class="iw-ico iw-squid"', 'x="0" y="0" width="64" height="64"')}</g>
     <path class="iw-fa" d="M60 150 q20 -9 40 0 q10 6 -6 12 q-20 7 -34 -2 q-8 -6 0 -10z"/>`) + '<div class="iw-pv-cap"></div>' });
   const cap = el.querySelector('.iw-pv-cap');
-  const set = (v) => { el.classList.toggle('is-on', !!v); cap.innerHTML = v ? 'Soft sun shadows <b>ON</b>' : 'Shadows <b>OFF</b> — faster on older machines'; };
+  const set = (v) => { el.classList.toggle('is-on', !!v); cap.innerHTML = tr(v ? 'Soft sun shadows <b>ON</b>' : 'Shadows <b>OFF</b> — faster on older machines'); };
   set(ctx.value);
   return { el, set };
 }
@@ -627,7 +630,7 @@ function previewBloom(ctx) {
       <g transform="translate(136 66) scale(.75)" style="color:#fff">${SPECIAL_ICONS.slam.replace('class="iw-ico "', 'x="0" y="0" width="64" height="64"')}</g>
       <rect x="1" y="1" width="318" height="178" rx="14" fill="none" stroke="${K}" stroke-width="3"/></svg><div class="iw-pv-cap"></div>` });
   const cap = el.querySelector('.iw-pv-cap');
-  const set = (v) => { el.classList.toggle('is-on', !!v); cap.innerHTML = v ? 'Bright ink and specials <b>glow</b>' : 'Glow <b>OFF</b>'; };
+  const set = (v) => { el.classList.toggle('is-on', !!v); cap.innerHTML = tr(v ? 'Bright ink and specials <b>glow</b>' : 'Glow <b>OFF</b>'); };
   set(ctx.value);
   return { el, set };
 }
@@ -642,7 +645,7 @@ function hudFrame(inner) {
 function previewFps(ctx) {
   const el = h('div', { class: 'iw-pv iw-pv--fps', html: hudFrame(`<g class="iw-pv-pop"><rect x="12" y="10" width="58" height="18" rx="6" fill="${K}"/><text x="41" y="23" text-anchor="middle" font-family="Rubik, sans-serif" font-weight="800" font-size="10.5" fill="#7dffa8">60 FPS</text></g>`) + '<div class="iw-pv-cap"></div>' });
   const cap = el.querySelector('.iw-pv-cap');
-  const set = (v) => { el.classList.toggle('is-on', !!v); cap.innerHTML = v ? 'Frame counter <b>shown</b> in matches' : 'Frame counter <b>hidden</b>'; };
+  const set = (v) => { el.classList.toggle('is-on', !!v); cap.innerHTML = tr(v ? 'Frame counter <b>shown</b> in matches' : 'Frame counter <b>hidden</b>'); };
   set(ctx.value);
   return { el, set };
 }
@@ -651,18 +654,18 @@ function previewMinimap(ctx) {
       <path class="iw-fa" d="M238 118 q10 -6 20 0 q6 5 -4 10 q-10 4 -16 -2z M244 140 q9 -5 16 2 q4 6 -6 8 q-9 1 -10 -10z"/><path class="iw-fb" d="M280 112 q9 -4 16 2 q4 6 -6 9 q-9 2 -10 -11z M276 140 q10 -6 20 1 q5 6 -6 10 q-11 2 -14 -11z"/>
       <circle cx="252" cy="132" r="4" fill="#fff" stroke="${K}" stroke-width="2"/></g>`) + '<div class="iw-pv-cap"></div>' });
   const cap = el.querySelector('.iw-pv-cap');
-  const set = (v) => { el.classList.toggle('is-on', !!v); cap.innerHTML = v ? 'Turf minimap <b>in the corner</b>' : 'Minimap <b>hidden</b> — hold TAB for the big map'; };
+  const set = (v) => { el.classList.toggle('is-on', !!v); cap.innerHTML = tr(v ? 'Turf minimap <b>in the corner</b>' : 'Minimap <b>hidden</b> — hold TAB for the big map'); };
   set(ctx.value);
   return { el, set };
 }
 
 function previewShake(ctx) {
-  const el = h('div', { class: 'iw-pv iw-pv--shake', html: `<div class="iw-pv-shake__frame">${hudFrame(`<g transform="translate(212 112)"><g class="iw-pv-boom"><path class="iw-fb" d="${splatShape(0, 0, 22, { seed: 9, arms: 9, drops: 0 }).core}"/><text y="5" text-anchor="middle" font-family="Titan One, sans-serif" font-size="13" fill="#fff" stroke="${K}" stroke-width="3" paint-order="stroke">BOOM</text></g></g>`)}</div><div class="iw-pv-cap"></div>` });
+  const el = h('div', { class: 'iw-pv iw-pv--shake', html: `<div class="iw-pv-shake__frame">${hudFrame(`<g transform="translate(212 112)"><g class="iw-pv-boom"><path class="iw-fb" d="${splatShape(0, 0, 22, { seed: 9, arms: 9, drops: 0 }).core}"/><text y="5" text-anchor="middle" font-family="Titan One, sans-serif" font-size="13" fill="#fff" stroke="${K}" stroke-width="3" paint-order="stroke">${tr('BOOM')}</text></g></g>`)}</div><div class="iw-pv-cap"></div>` });
   const frame = el.querySelector('.iw-pv-shake__frame');
   const boom = el.querySelector('.iw-pv-boom');
   const cap = el.querySelector('.iw-pv-cap');
   let v = +ctx.value, t = 0.6;
-  const set = (nv) => { v = clamp(+nv || 0); cap.innerHTML = v <= 0 ? 'Screen shake <b>OFF</b>' : `Shake strength <b>${Math.round(v * 100)}%</b>`; };
+  const set = (nv) => { v = clamp(+nv || 0); cap.innerHTML = v <= 0 ? tr('Screen shake <b>OFF</b>') : tr('Shake strength <b>{n}%</b>', { n: Math.round(v * 100) }); };
   set(v);
   return {
     el, set,
@@ -694,7 +697,7 @@ function previewAudio(ctx, key) {
   const set = (nv, ss) => {
     v = clamp(+nv || 0); if (ss) s = ss;
     const e = eff();
-    cap.innerHTML = key === 'master' ? `Overall output <b>${Math.round(v * 100)}%</b>` : `Heard at <b>${Math.round(e * 100)}%</b> after master volume`;
+    cap.innerHTML = key === 'master' ? tr('Overall output <b>{n}%</b>', { n: Math.round(v * 100) }) : tr('Heard at <b>{n}%</b> after master volume', { n: Math.round(e * 100) });
     el.classList.toggle('is-mute', e <= 0.001);
   };
   set(v);
@@ -725,7 +728,7 @@ function previewAimAssist(ctx) {
       <path d="M0 -21 V-15 M0 21 V15 M-21 0 H-15 M21 0 H15" stroke="#fff" stroke-width="3.2" stroke-linecap="round"/></g>`) + '<div class="iw-pv-cap"></div>' });
   const xEl = el.querySelector('.iw-pv-aim__x'), trail = el.querySelector('.iw-pv-aim__trail'), cap = el.querySelector('.iw-pv-cap');
   let v = clamp(+ctx.value || 0), t = 0;
-  const set = (nv) => { v = clamp(+nv || 0); cap.innerHTML = v <= 0.001 ? 'Aim assist <b>OFF</b>' : `Pull strength <b>${Math.round(v * 100)}%</b>`; };
+  const set = (nv) => { v = clamp(+nv || 0); cap.innerHTML = v <= 0.001 ? tr('Aim assist <b>OFF</b>') : tr('Pull strength <b>{n}%</b>', { n: Math.round(v * 100) }); };
   set(v);
   return {
     el, set,
@@ -742,9 +745,9 @@ function previewAimAssist(ctx) {
 }
 
 function previewAimMouse(ctx) {
-  const el = h('div', { class: 'iw-pv iw-pv--aimm', html: `<div class="iw-pv-aimm__row"><span class="iw-pv-aimm__dev is-pad">${GLYPHS.gamepad}<b>ASSIST</b></span><span class="iw-pv-aimm__dev is-mouse">${mouseGlyph('M')}<b>ASSIST</b></span></div><div class="iw-pv-cap"></div>` });
+  const el = h('div', { class: 'iw-pv iw-pv--aimm', html: `<div class="iw-pv-aimm__row"><span class="iw-pv-aimm__dev is-pad">${GLYPHS.gamepad}<b>${tr('ASSIST')}</b></span><span class="iw-pv-aimm__dev is-mouse">${mouseGlyph('M')}<b>${tr('ASSIST')}</b></span></div><div class="iw-pv-cap"></div>` });
   const cap = el.querySelector('.iw-pv-cap');
-  const set = (v) => { el.classList.toggle('is-on', !!v); cap.innerHTML = v ? 'Assist on <b>controller and mouse</b> (lighter on mouse)' : 'Assist on <b>controller only</b>'; };
+  const set = (v) => { el.classList.toggle('is-on', !!v); cap.innerHTML = tr(v ? 'Assist on <b>controller and mouse</b> (lighter on mouse)' : 'Assist on <b>controller only</b>'); };
   set(ctx.value);
   return { el, set };
 }
@@ -753,7 +756,7 @@ function previewRumble(ctx) {
   const el = h('div', { class: 'iw-pv iw-pv--rumble', html: `<div class="iw-pv-rumble__pad">${GLYPHS.gamepad}<i class="l"></i><i class="r"></i></div><div class="iw-pv-cap"></div>` });
   const pad = el.querySelector('.iw-pv-rumble__pad'), cap = el.querySelector('.iw-pv-cap');
   let v = clamp(+ctx.value || 0), t = 0.4;
-  const set = (nv) => { v = clamp(+nv || 0); cap.innerHTML = v <= 0 ? 'Vibration <b>OFF</b>' : `Rumble strength <b>${Math.round(v * 100)}%</b>`; el.classList.toggle('is-off', v <= 0); };
+  const set = (nv) => { v = clamp(+nv || 0); cap.innerHTML = v <= 0 ? tr('Vibration <b>OFF</b>') : tr('Rumble strength <b>{n}%</b>', { n: Math.round(v * 100) }); el.classList.toggle('is-off', v <= 0); };
   set(v);
   return {
     el, set,
@@ -776,8 +779,8 @@ function previewColorblind(ctx) {
   const cb = ctx.cbPalette || { a: '#ffd21a', b: '#2a52ff' };
   const pair = (a, b) => `<span class="iw-pv-pair"><i style="background:${a}"></i><i style="background:${b}"></i></span>`;
   const el = h('div', { class: 'iw-pv iw-pv--cb', html: `
-    <div class="iw-pv-pal iw-pv-pal--std"><small>STANDARD INKS · rotate each match</small><div class="iw-pv-pal__row">${pals.map((p) => pair(p.a, p.b)).join('')}</div><i class="iw-pv-pal__check">${GLYPHS.check}</i></div>
-    <div class="iw-pv-pal iw-pv-pal--cb"><small>COLORBLIND-SAFE · always</small><div class="iw-pv-pal__row">${pair(cb.a, cb.b)}<span class="iw-pv-pal__name">${(cb.names || ['Sun', 'Sea']).join(' vs ')}</span></div><i class="iw-pv-pal__check">${GLYPHS.check}</i></div>` });
+    <div class="iw-pv-pal iw-pv-pal--std"><small>${tr('STANDARD INKS · rotate each match')}</small><div class="iw-pv-pal__row">${pals.map((p) => pair(p.a, p.b)).join('')}</div><i class="iw-pv-pal__check">${GLYPHS.check}</i></div>
+    <div class="iw-pv-pal iw-pv-pal--cb"><small>${tr('COLORBLIND-SAFE · always')}</small><div class="iw-pv-pal__row">${pair(cb.a, cb.b)}<span class="iw-pv-pal__name">${(cb.names || ['Sun', 'Sea']).join(' vs ')}</span></div><i class="iw-pv-pal__check">${GLYPHS.check}</i></div>` });
   const set = (v) => el.classList.toggle('is-on', !!v);
   set(ctx.value);
   return { el, set };
@@ -808,7 +811,7 @@ function previewLength(ctx) {
     v = +v || 180;
     num.textContent = `${Math.floor(v / 60)}:${String(v % 60).padStart(2, '0')}`;
     arc.setAttribute('stroke-dasharray', `${((v / max) * 100).toFixed(1)} 100`);
-    cap.innerHTML = v < 120 ? 'A quick <b>sprint</b> — every second counts' : 'The full <b>turf war</b> — room for comebacks';
+    cap.innerHTML = tr(v < 120 ? 'A quick <b>sprint</b> — every second counts' : 'The full <b>turf war</b> — room for comebacks');
     num.classList.remove('is-pop'); void num.offsetWidth; num.classList.add('is-pop'); // eslint-disable-line no-void
   };
   set(ctx.value);
@@ -818,25 +821,132 @@ function previewLength(ctx) {
 function previewLink() {
   const el = h('div', { class: 'iw-pv iw-pv--link', html: `<div class="iw-pv-link__art"><i>${GLYPHS.keyboard}</i><i>${GLYPHS.gamepad}</i></div>
     <div class="iw-pv-link__keys">${keycap('W')}${keycap('A')}${keycap('S')}${keycap('D')}<em>+</em>${mouseGlyph('L')}<em>·</em>${padGlyph('LS')}${padGlyph('RT')}</div>
-    <div class="iw-pv-cap">Every binding for <b>keyboard, mouse and controller</b></div>` });
+    <div class="iw-pv-cap">${tr('Every binding for <b>keyboard, mouse and controller</b>')}</div>` });
   return { el, set() {} };
 }
 
 function previewTab(ctx) {
   const t = ctx.tab || {};
   const el = h('div', { class: 'iw-pv iw-pv--tab', html: `<div class="iw-pv-tab__icon">${GLYPHS[t.icon] || GLYPHS.gear}</div>
-    <div class="iw-pv-tab__list">${(t.rows || []).map((r) => `<span>${r.label}</span>`).join('')}</div>` });
+    <div class="iw-pv-tab__list">${(t.rows || []).map((r) => `<span>${tr(r.label)}</span>`).join('')}</div>` });
   return { el, set() {} };
 }
 function previewReset() {
   const el = h('div', { class: 'iw-pv iw-pv--tab', html: `<div class="iw-pv-tab__icon iw-pv-tab__icon--reset">${GLYPHS.reset}</div>
-    <div class="iw-pv-cap">Press twice to restore <b>every setting</b> on every tab</div>` });
+    <div class="iw-pv-cap">${tr('Press twice to restore <b>every setting</b> on every tab')}</div>` });
   return { el, set() {} };
 }
 
+// ---- touch + gyro previews
+const PHONE = (cls = '') => `<svg class="iw-pv-phone ${cls}" viewBox="0 0 120 70" aria-hidden="true"><rect x="4" y="4" width="112" height="62" rx="12" fill="${K}"/>
+  <rect x="11" y="10" width="98" height="50" rx="6" fill="#8fd3f5"/><rect x="11" y="38" width="98" height="22" fill="#e6d8bd"/>
+  <path class="iw-fa" d="M30 48 q10 -6 20 0 q6 5 -4 8 q-10 3 -16 -2z"/><circle cx="60" cy="33" r="5" fill="none" stroke="#fff" stroke-width="2.4"/>
+  <circle cx="24" cy="50" r="7" fill="rgba(255,255,255,.35)"/><circle cx="96" cy="50" r="8" fill="rgba(255,255,255,.55)"/></svg>`;
+function previewGyro(ctx, key) {
+  const el = h('div', { class: `iw-pv iw-pv--gyro is-${key}`, html: `<div class="iw-pv-gyro__stage"><i class="iw-pv-gyro__arc"></i>${PHONE('iw-pv-gyro__dev')}</div><div class="iw-pv-cap"></div>` });
+  const dev = el.querySelector('.iw-pv-gyro__dev'), cap = el.querySelector('.iw-pv-cap');
+  let v = ctx.value, t = 0;
+  const set = (nv) => {
+    v = nv;
+    if (key === 'gyro') cap.innerHTML = tr(v ? 'Gyro ON' : 'Gyro OFF');
+    else if (key === 'gyroSens') cap.innerHTML = tr('<b>{n}°</b> of device turn = one full turn', { n: Math.round(gyroTurnDeg(v)) });
+    else cap.innerHTML = tr(v ? 'Invert' : 'Normal');
+    el.classList.toggle('is-off', key === 'gyro' && !v);
+  };
+  set(v);
+  return {
+    el, set,
+    tick: (dt) => {
+      t += dt;
+      const s = Math.sin(t * 1.9);
+      if (key === 'gyroInvertY') dev.style.transform = `perspective(300px) rotateX(${(s * 26).toFixed(1)}deg)`;
+      else dev.style.transform = `perspective(300px) rotateY(${(s * 30).toFixed(1)}deg)`;
+    },
+  };
+}
+// On-screen controls mock-up. Each key animates the part it changes: the stick hopping to the thumb (floating) or
+// staying put (fixed), the FIRE thumb sliding to steer the reticle, a swipe turning the view, the editor's handles.
+function previewTouchPad(ctx, key) {
+  const btn = (x, y, r, cls, id = '') => `<g class="${id}" transform="translate(${x} ${y})"><circle r="${r}" class="${cls}" stroke="${K}" stroke-width="3"/><circle r="${(r * 0.36).toFixed(1)}" fill="#fff" opacity=".85"/></g>`;
+  const SUBS = [[222, 150, 17], [232, 104, 15], [282, 82, 14], [188, 116, 15]];
+  const box = (x, y, r, cls = '') => `<rect class="iw-pv-pad__box ${cls}" x="${x - r - 5}" y="${y - r - 5}" width="${2 * r + 10}" height="${2 * r + 10}" rx="8"/>`;
+  const thumb = '<ellipse class="iw-pv-pad__thumb" rx="15" ry="18"/>';
+  let over = '';
+  if (key === 'stickMode') over = `<rect class="iw-pv-pad__zone" x="10" y="40" width="136" height="130" rx="12"/>`;
+  if (key === 'fireAim') over = `<g class="iw-pv-pad__ret" transform="translate(150 50)"><circle r="13" fill="none" stroke="${K}" stroke-width="6" opacity=".35"/><circle r="13" fill="none" stroke="#fff" stroke-width="3"/><circle r="3" fill="#fff" stroke="${K}" stroke-width="1"/></g>`;
+  if (key === 'touchSens') over = `<path class="iw-pv-pad__swipe" d="M196 58 H300 M204 50 l-9 8 9 8 M292 50 l9 8 -9 8"/><g class="iw-pv-pad__sfinger" transform="translate(248 58)">${thumb}</g>`;
+  if (key === '_layout') over = [[58, 128, 30], ...SUBS].map(([x, y, r]) => box(x, y, r)).join('');
+  const el = h('div', { class: `iw-pv iw-pv--pad is-${key}`, html: `<div class="iw-pv-pad__frame">${frameSVG(`${key === 'touchSens' ? `<g class="iw-pv-pad__view">${skyline(640, 29)}</g>` : ''}${over}<g class="iw-pv-pad__btns">
+      <g class="pv-stk" transform="translate(58 128)"><circle r="30" fill="rgba(255,255,255,.28)" stroke="#fff" stroke-width="3"/><circle class="pv-knob" r="13" fill="#fff" stroke="${K}" stroke-width="2.5"/></g>
+      ${SUBS.map(([x, y, r]) => btn(x, y, r, 'iw-pv-pad__w')).join('')}
+      <g class="pv-fire" transform="translate(272 132)">${key === '_layout' ? box(0, 0, 26, 'is-sel') : ''}<circle r="26" class="iw-fa" stroke="${K}" stroke-width="3"/><circle r="9.4" fill="#fff" opacity=".85"/></g>
+      ${key === 'stickMode' || key === 'fireAim' ? `<g class="pv-thumb">${thumb}</g>` : ''}</g>`)}</div><div class="iw-pv-cap"></div>` });
+  const q = (s) => el.querySelector(s);
+  const g = q('.iw-pv-pad__btns'), cap = q('.iw-pv-cap'), stk = q('.pv-stk'), knob = q('.pv-knob'), fire = q('.pv-fire'), th = q('.pv-thumb');
+  const ret = q('.iw-pv-pad__ret'), view = q('.iw-pv-pad__view'), sf = q('.iw-pv-pad__sfinger');
+  let v = ctx.value, t = 0, hop = -1, sx = 58, sy = 128, sens = 1;
+  const HOPS = [[58, 128], [104, 92], [72, 146], [120, 138], [44, 84]];
+  const set = (nv, s) => {
+    v = nv;
+    const S = s || ctx.settings || {};
+    const sc = key === 'touchScale' ? +nv : +(S.touchScale ?? 1), op = key === 'touchOpacity' ? +nv : +(S.touchOpacity ?? 0.85);
+    g.style.opacity = op.toFixed(2);
+    g.style.transform = `scale(${sc.toFixed(3)})`;
+    g.style.transformOrigin = '50% 70%';
+    if (key === 'touchScale') cap.innerHTML = tr('Buttons at <b>{n}%</b> size', { n: Math.round(sc * 100) });
+    else if (key === 'touchOpacity') cap.innerHTML = tr('Buttons at <b>{n}%</b> opacity', { n: Math.round(op * 100) });
+    else if (key === 'touchSens') { sens = touchSensMul(nv); cap.innerHTML = tr('<b>{n} px</b> of swipe per 360° turn', { n: fmtInt((2.8 * clamp(Math.min(innerWidth, innerHeight), 300, 460)) / sens) }); }   // = src/core/mobile.js
+    else if (key === 'stickMode') { cap.innerHTML = tr(nv === 'fixed' ? 'The stick stays in one place' : 'The stick appears under your thumb'); el.classList.toggle('is-fixed', nv === 'fixed'); hop = -1; }
+    else if (key === 'fireAim') { cap.innerHTML = tr(nv ? 'Hold FIRE and slide to aim' : 'FIRE only shoots · aim on the right side'); el.classList.toggle('is-off', !nv); }
+    else cap.innerHTML = tr('Drag to move · pinch to resize');
+  };
+  set(v);
+  const tf = (e, x, y, s = 1) => e && e.setAttribute('transform', `translate(${x.toFixed(1)} ${y.toFixed(1)})${s !== 1 ? ` scale(${s.toFixed(3)})` : ''}`);
+  return {
+    el, set,
+    tick: (dt) => {
+      t += dt;
+      if (key === 'stickMode') {
+        // floating: every 1.6 s the thumb lands somewhere new in the zone and the stick pops up under it
+        const k = Math.floor(t / 1.6), p = t / 1.6 - k;
+        if (v !== 'fixed' && k !== hop) { hop = k; [sx, sy] = HOPS[k % HOPS.length]; }
+        if (v === 'fixed') { sx = 58; sy = 128; }
+        const a = t * 2.4, push = smooth(0.08, 0.3, p) * (1 - smooth(0.85, 1, p)) * 14;
+        const kx = Math.cos(a) * push, ky = Math.sin(a) * push;
+        tf(stk, sx, sy, v === 'fixed' ? 1 : 0.7 + 0.3 * easeOutBack(clamp(p / 0.18)));
+        tf(knob, kx, ky);
+        tf(th, sx + kx + 4, sy + ky + 6);
+      } else if (key === 'fireAim') {
+        const dx = v ? Math.sin(t * 1.3) * 11 : 0, dy = v ? Math.sin(t * 2.1) * 7 : 0;
+        tf(th, 276 + dx, 138 + dy);
+        tf(ret, 150 + dx * 4, 50 + dy * 2.6, 1 + 0.08 * Math.max(0, Math.sin(t * 9)));
+        tf(fire, 272, 132, 1 - 0.05 * Math.max(0, Math.sin(t * 9)));
+      } else if (key === 'touchSens') {
+        const s = Math.sin(t * 1.5);
+        tf(sf, 248 + s * 44, 58);
+        tf(view, -160 - s * 44 * sens * 1.6, 0);
+      } else if (key === '_layout') {
+        tf(fire, 272 + Math.sin(t * 1.2) * 16, 132 - Math.abs(Math.sin(t * 1.2)) * 10, 1 + 0.14 * Math.sin(t * 0.8));
+      }
+    },
+  };
+}
+/** Language: the main menu as it reads in each language; the one in use is lit. */
+function previewLang(ctx) {
+  // raw text nodes: each card shows its own language, never the translated UI copy
+  const raw = (s) => document.createTextNode(s);
+  const card = (id, name, items) => h('div', { class: 'iw-pv-lang__card', data: { l: id } }, h('b', { class: 'iw-pv-lang__name' }, raw(name)), ...items.map((x, i) => h('i', { class: 'iw-pv-lang__item' + (i ? '' : ' is-first') }, raw(x))));
+  const el = h('div', { class: 'iw-pv iw-pv--lang' }, h('div', { class: 'iw-pv-lang' },
+    card('ja', '日本語', ['バトル', 'ブキ', 'オプション']), card('en', 'English', ['PLAY', 'LOADOUT', 'SETTINGS'])));
+  const set = (nv) => { for (const c of el.querySelectorAll('.iw-pv-lang__card')) c.classList.toggle('is-on', c.dataset.l === nv); };
+  set(ctx.value);
+  return { el, set };
+}
 /** ctx: { value, settings, qualityTable, palettes, cbPalette, diffs, diffInfo, durations, tab } */
 export function createPreview(key, ctx = {}) {
   switch (key) {
+    case 'gyro': case 'gyroSens': case 'gyroInvertY': case 'gyroInvertX': return previewGyro(ctx, key);
+    case 'touchScale': case 'touchOpacity': case 'touchSens': case 'stickMode': case 'fireAim': case '_layout': return previewTouchPad(ctx, key);
     case 'sensitivity': return previewLook(ctx, false);
     case 'padSensitivity': return previewLook(ctx, true);
     case 'invertY': return previewInvert(ctx);
@@ -854,6 +964,7 @@ export function createPreview(key, ctx = {}) {
     case 'colorblind': return previewColorblind(ctx);
     case 'difficulty': return previewDifficulty(ctx);
     case 'matchLength': return previewLength(ctx);
+    case 'lang': return previewLang(ctx);
     case '_howto': return previewLink(ctx);
     case '_reset': return previewReset(ctx);
     default: return previewTab(ctx);

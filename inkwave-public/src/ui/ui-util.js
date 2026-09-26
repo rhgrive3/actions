@@ -1,7 +1,9 @@
 // INKWAVE UI — tiny DOM / colour / motion helpers shared by menus.js and hud.js.
-// Pure DOM; no three.js dependency.
+// Pure DOM; no three.js dependency. Literal text passed to h() is localised (src/i18n.js).
+import { tx } from '../i18n.js';
 
 // ---------------------------------------------------------------- DOM
+const TR_ATTRS = new Set(['title', 'aria-label', 'placeholder']);
 export function h(tag, props = null, ...kids) {
   const el = document.createElement(tag);
   if (props) {
@@ -14,10 +16,10 @@ export function h(tag, props = null, ...kids) {
         else for (const s in v) { if (s.startsWith('--')) el.style.setProperty(s, v[s]); else el.style[s] = v[s]; }
       } else if (k === 'data') { for (const d in v) el.dataset[d] = v[d]; }
       else if (k === 'html') el.innerHTML = v;
-      else if (k === 'text') el.textContent = v;
+      else if (k === 'text') el.textContent = tx(v);
       else if (k.startsWith('on') && typeof v === 'function') el.addEventListener(k.slice(2).toLowerCase(), v);
       else if (v === true) el.setAttribute(k, '');
-      else el.setAttribute(k, v);
+      else el.setAttribute(k, TR_ATTRS.has(k) ? tx(v) : v);
     }
   }
   appendKids(el, kids);
@@ -27,8 +29,30 @@ function appendKids(el, kids) {
   for (const c of kids) {
     if (c == null || c === false) continue;
     if (Array.isArray(c)) appendKids(el, c);
-    else el.appendChild(typeof c === 'string' || typeof c === 'number' ? document.createTextNode(String(c)) : c);
+    else el.appendChild(typeof c === 'string' ? document.createTextNode(tx(c)) : typeof c === 'number' ? document.createTextNode(String(c)) : c);
   }
+}
+/**
+ * Shrink a one-line label's font just enough for all of it to show (never grows; floor = `min` × its CSS size, past
+ * which the stylesheet's ellipsis takes over). The element must be block-level with a bounded width and nowrap.
+ * Long localized names (「ツインフィンマニューバー」) stay whole instead of turning into "ツインフィンマニュー…".
+ */
+export function fitText(e, min = 0.62) {
+  if (!e || !e.isConnected) return;
+  if (e.style.fontSize) e.style.fontSize = '';
+  const cw = e.clientWidth;
+  if (!cw) return;
+  // scrollWidth misses what a centred flex box pushes out on the left, so also measure the laid-out contents
+  // (a Range, with any scale transform on the way in undone)
+  const cs = getComputedStyle(e);
+  const avail = cw - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+  const box = e.getBoundingClientRect();
+  const rg = document.createRange(); rg.selectNodeContents(e);
+  const content = rg.getBoundingClientRect().width * (box.width ? e.offsetWidth / box.width : 1);
+  const over = Math.max(e.scrollWidth / cw, avail > 0 ? content / avail : 1);
+  if (over <= 1.005) return;
+  const base = parseFloat(getComputedStyle(e).fontSize) || 0;
+  if (base) e.style.fontSize = `${Math.max(base * min, (base / over) * 0.97).toFixed(2)}px`;
 }
 /** Parse an HTML/SVG string into its first element. */
 export function frag(markup) {

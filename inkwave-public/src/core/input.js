@@ -3,6 +3,7 @@
 // settings.rumble (0..1, default 1) and only while the pad is the active device.
 import { G } from './ctx.js';
 import { MobileInput } from './mobile.js';
+import { touchPrimary } from './device.js';
 
 // keys whose browser default (focus moves, page scroll) must never fire while the game has the mouse
 const GAME_KEYS = new Set(['Tab', 'Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Slash', 'Quote']);
@@ -18,7 +19,8 @@ export class Input {
     this.pad = null;
     this.padPrev = [];
     this.padPressed = new Set();
-    this.lastDevice = 'kbm';
+    this._dev = touchPrimary ? 'touch' : 'kbm';   // phones / tablets start on touch (never shown key prompts)
+    this.onDevice = null;           // (mode) => void  when the last-used device changes (menus prompts, touch UI)
     this.onKey = null;              // (e) => bool consumed  (menus)
     window.addEventListener('keydown', (e) => {
       // the menus call preventDefault themselves when needed (text fields must still receive keystrokes)
@@ -43,6 +45,8 @@ export class Input {
       this.mouse.dx += e.movementX; this.mouse.dy += e.movementY;
       this.lastDevice = 'kbm';
     });
+    // a real touch anywhere switches hybrids (touch laptops, iPad + keyboard) back to touch mode
+    window.addEventListener('pointerdown', (e) => { if (e.pointerType === 'touch') this.lastDevice = 'touch'; }, { capture: true, passive: true });
     window.addEventListener('mousedown', (e) => {
       if (!this.locked) return;
       if (e.button === 0) { this.mouse.left = true; this.mouse.leftPressed = true; }
@@ -60,15 +64,23 @@ export class Input {
     this.mobile = new MobileInput(canvas, this);
   }
 
+  get lastDevice() { return this._dev; }
+  set lastDevice(v) {
+    if (v === this._dev) return;
+    this._dev = v;
+    this.mobile?.onDeviceChange?.();
+    try { this.onDevice?.(v); } catch (e) { console.error('[input] onDevice', e); }
+  }
+
   requestLock() {
-    if (this.mobile?.active || this.locked) return;
+    if (this._dev === 'touch' || this.locked) return;
     try {
       const p = this.canvas.requestPointerLock({ unadjustedMovement: true });
       // some platforms reject unadjustedMovement: fall back to a plain request
       if (p && p.catch) p.catch(() => { try { const q = this.canvas.requestPointerLock(); if (q && q.catch) q.catch(() => {}); } catch { /* ignore */ } });
     } catch { /* not allowed without a gesture */ }
   }
-  exitLock() { if (this.mobile?.active) return; if (document.pointerLockElement) document.exitPointerLock(); }
+  exitLock() { if (document.pointerLockElement) document.exitPointerLock(); }
 
   down(code) { return this.keys.has(code); }
   wasPressed(code) { return this.pressed.has(code); }

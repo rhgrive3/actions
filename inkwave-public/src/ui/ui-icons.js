@@ -2,6 +2,7 @@
 // Everything is a markup string (cheap to clone via innerHTML) using currentColor / CSS classes for team ink:
 //   .iw-fa = accent/team A ink, .iw-fb = accent/team B ink (see ui.css).
 import { esc, splatShape, blobPath } from './ui-util.js';
+import { tx } from '../i18n.js';
 
 const K = '#15121c';        // outline ink
 const DK = '#2b2735';       // dark plastic
@@ -192,6 +193,10 @@ export const GLYPHS = {
   sparkle: svg(`<path d="M32 4 Q35 26 60 32 Q35 38 32 60 Q29 38 4 32 Q29 26 32 4 Z" fill="currentColor"/>`),
   rotate: svg(`<path d="M50 23 A20 20 0 0 0 14 25" ${G} stroke-width="5.5"/><path d="M14 41 A20 20 0 0 0 50 39" ${G} stroke-width="5.5"/><path d="M52 10 L51 24 L37 22" ${G} stroke-width="5.5"/><path d="M12 54 L13 40 L27 42" ${G} stroke-width="5.5"/>`),
   bolt: svg(`<path d="M36 4 L12 36 L30 36 L26 60 L52 26 L34 26 Z" fill="currentColor" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>`),
+  // touch: a fingertip tapping a phone (settings tab / touch control scheme)
+  hand: svg(`<rect x="8" y="6" width="30" height="50" rx="6" ${G} stroke-width="5"/><path d="M17 48 H29" ${G} stroke-width="4"/>
+    <path d="M34 60 L30 44 Q28.5 38 33 37 Q36.5 36.5 38 41 L40 46 L40 30 Q40 25.5 44 25.5 Q48 25.5 48 30 L48 38 Q52.5 36 55 40 L57 50 Q58 57 53 61 Z" fill="currentColor" stroke="var(--k, #15121c)" stroke-width="2.6" stroke-linejoin="round"/>`),
+  gyro: svg(`<rect x="12" y="20" width="40" height="24" rx="6" ${G} stroke-width="5" transform="rotate(-14 32 32)"/><path d="M8 18 A28 28 0 0 1 30 5" ${G} stroke-width="4.5"/><path d="M24 2 L31 5 L27 11" ${G} stroke-width="4.5"/><path d="M56 46 A28 28 0 0 1 34 59" ${G} stroke-width="4.5"/><path d="M40 62 L33 59 L37 53" ${G} stroke-width="4.5"/>`),
   target: svg(`<circle cx="32" cy="32" r="22" ${G} stroke-width="5"/><circle cx="32" cy="32" r="10" ${G} stroke-width="5"/><path d="M32 2 L32 14 M32 50 L32 62 M2 32 L14 32 M50 32 L62 32" ${G} stroke-width="5"/>`),
   feather: svg(`<path d="M52 8 Q22 12 16 40 L12 54 L17 50 Q46 44 52 8 Z" fill="currentColor" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><path d="M14 52 L40 22" stroke="var(--k, #15121c)" stroke-width="3" stroke-linecap="round" opacity=".45"/>`),
 };
@@ -236,9 +241,9 @@ export function padGlyph(b) {
   if (b === 'DPad') return `<span class="iw-pad iw-pad--sys"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3 H15 V9 H21 V15 H15 V21 H9 V15 H3 V9 H9 Z" fill="currentColor"/></svg></span>`;
   return `<span class="iw-pad iw-pad--bumper">${esc(b)}</span>`;
 }
-/** Renders "Hold [SHIFT] to swim" → text with keycaps. `{A}` renders a gamepad glyph. */
+/** Renders "Hold [SHIFT] to swim" → text with keycaps. `{A}` renders a gamepad glyph. Localised first. */
 export function richText(str) {
-  return esc(str)
+  return esc(tx(str))
     .replace(/\[([^\]]{1,10})\]/g, (_, k) => (k === 'LMB' ? mouseGlyph('L') : k === 'RMB' ? mouseGlyph('R') : keycap(k)))
     .replace(/\{([A-Za-z]{1,5})\}/g, (_, k) => padGlyph(k));
 }

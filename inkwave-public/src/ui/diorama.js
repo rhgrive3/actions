@@ -9,6 +9,8 @@
 // Per frame it only projects a handful of points and writes transforms / CSS vars when they change.
 import { h, clamp } from './ui-util.js';
 import { keycap, weaponIcon, richText } from './ui-icons.js';
+import { t } from '../i18n.js';
+import { esc } from './ui-util.js';
 import { G } from '../core/ctx.js';
 import * as THREE from 'three';
 
@@ -183,11 +185,14 @@ export class DioramaOverlay {
 
   _head() {
     const m = G.game?.mapDef;
-    this.title.textContent = (m?.name || 'Stage').toUpperCase();
-    this.when.textContent = G.game?.time === 'dusk' ? 'DUSK' : 'DAY';
-    const pad = G.input?.lastDevice === 'pad';
-    this.foot.innerHTML = pad
+    this.title.textContent = (m?.name || t('Stage')).toUpperCase();
+    this.when.textContent = t(G.game?.time === 'dusk' ? 'DUSK' : 'DAY');
+    const dev = G.input?.lastDevice;
+    const S = (x) => `<span>${esc(t(x))}</span>`;
+    this.foot.innerHTML = dev === 'pad'
       ? richText('Right stick to point · A or D-pad to Super Jump · release VIEW to close')
-      : `${keycap('1')}${keycap('2')}${keycap('3')} <span>Super Jump to a teammate</span> ${keycap('4')} <span>Base</span> <em>·</em> <span>Point + click a pin</span> <em>·</em> <span>release</span> ${keycap('TAB')}`;
+      : dev === 'touch'
+        ? S('Tap a pin to Super Jump · tap MAP to close')
+        : `${keycap('1')}${keycap('2')}${keycap('3')} ${S('Super Jump to a teammate')} ${keycap('4')} ${S('Base')} <em>·</em> ${S('Point + click a pin')} <em>·</em> ${S('release')} ${keycap('TAB')}`;
   }
 }
