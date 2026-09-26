@@ -1968,7 +1968,25 @@ export const BROW_KINDS = [
   { name: 'straight', el: (t) => BROW.el + 0.022 + 0.004 * Math.sin(Math.PI * t), r: (t) => 0.0104 * (0.82 + 0.18 * Math.sin(Math.PI * (0.1 + 0.8 * t))), az1: BROW.az1 - 0.05 },
 ];
 
-function buildHair(styleIdx, hatIdx = 0, browIdx = 0) {
+function applyHairModelerOverride(sp, ov) {
+  if (!ov || typeof ov !== 'object') return sp;
+  if (Array.isArray(ov.points) && ov.points.length) {
+    sp.pts = ov.points.map((p, i) => Array.isArray(p) && p.length >= 3 ? new V3(+p[0] || 0, +p[1] || 0, +p[2] || 0) : (sp.pts[i] || sp.pts[sp.pts.length - 1]).clone());
+  } else if (Array.isArray(ov.offsets)) {
+    sp.pts = sp.pts.map((p, i) => {
+      const o = ov.offsets[i];
+      return Array.isArray(o) && o.length >= 3 ? p.clone().add(new V3(+o[0] || 0, +o[1] || 0, +o[2] || 0)) : p.clone();
+    });
+  }
+  const rs = Number.isFinite(+ov.radiusScale) ? Math.max(0.25, Math.min(3, +ov.radiusScale)) : 1;
+  const fs = Number.isFinite(+ov.flatScale) ? Math.max(0.25, Math.min(3, +ov.flatScale)) : 1;
+  if (rs !== 1) { const base = sp.radius; sp.radius = (t) => base(t) * rs; }
+  if (fs !== 1) { const base = sp.flat; sp.flat = (t) => base(t) * fs; }
+  sp.curve = new THREE.CatmullRomCurve3(sp.pts.map((p) => p.clone()), false, 'centripetal');
+  return sp;
+}
+
+function buildHair(styleIdx, hatIdx = 0, browIdx = 0, modelerHair = null) {
   const style = STYLES[styleIdx % STYLES.length];
   const hat = HAT_KINDS[hatIdx] || HAT_KINDS[0];
   const B = new Builder();
@@ -1989,7 +2007,7 @@ function buildHair(styleIdx, hatIdx = 0, browIdx = 0) {
   // ---- strands: specs first, so a hat can analyse (and re-root / drop) them before anything is built
   const capCenter = HEAD_C.clone().add(new V3(0, -0.02, -0.005));
   const vs = hat.rim && style.underHat ? { ...style, ...style.underHat } : style; // hat-compatible variant (low tail / bun)
-  const specs = vs.strands.map((sd, si) => strandSpec(sd, si, capCenter));
+  const specs = vs.strands.map((sd, si) => applyHairModelerOverride(strandSpec(sd, si, capCenter), modelerHair?.strands?.[si] ?? modelerHair?.strands?.[String(si)]));
   const hatCtx = hat.rim ? analyseHat(hat, specs) : null;
   const strandInfo = []; let bi = 0; // strandInfo is indexed by the style's strand index (null = dropped under the hat)
   for (const sp of specs) {
@@ -2119,8 +2137,31 @@ function hairKey(st) {
 const keyStr = (k) => `${k.hair}.${k.hat}.${k.brows}`;
 export function getHairStyle(st) {
   const k = hairKey(st), ks = keyStr(k);
+  const modelerHair = st && typeof st === 'object' ? st.modelerHair : null;
+  if (modelerHair?.enabled && modelerHair.strands && Object.keys(modelerHair.strands).length) return buildHair(k.hair, k.hat, k.brows, modelerHair);
   if (!_hair.has(ks)) _hair.set(ks, buildHair(k.hair, k.hat, k.brows));
   return _hair.get(ks);
+}
+
+/** Modeler-facing resolved hair curve controls. points are absolute kid-space curve points before skinning. */
+export function getHairControlSpec(st) {
+  const k = hairKey(st);
+  const style = STYLES[k.hair % STYLES.length];
+  const hat = HAT_KINDS[k.hat] || HAT_KINDS[0];
+  const vs = hat.rim && style.underHat ? { ...style, ...style.underHat } : style;
+  const capCenter = HEAD_C.clone().add(new V3(0, -0.02, -0.005));
+  const modelerHair = st && typeof st === 'object' ? st.modelerHair : null;
+  return vs.strands.map((sd, si) => {
+    const sp = applyHairModelerOverride(strandSpec(sd, si, capCenter), modelerHair?.strands?.[si] ?? modelerHair?.strands?.[String(si)]);
+    return {
+      strand: si,
+      points: sp.pts.map((p) => [p.x, p.y, p.z]),
+      radiusStart: sd.r0,
+      radiusEnd: sd.r1,
+      flat: sd.flat,
+      suckers: !!sd.suck,
+    };
+  });
 }
 export function getRestPositions(st) {
   const h = getHairStyle(st); const out = {};
@@ -2129,6 +2170,11 @@ export function getRestPositions(st) {
 }
 const _inv = new Map();
 export function getBoneInverses(st) {
+  const modelerHair = st && typeof st === 'object' ? st.modelerHair : null;
+  if (modelerHair?.enabled && modelerHair.strands && Object.keys(modelerHair.strands).length) {
+    const rest = getRestPositions(st);
+    return BONE_NAMES.map((n) => new THREE.Matrix4().makeTranslation(-rest[n].x, -rest[n].y, -rest[n].z));
+  }
   const ks = keyStr(hairKey(st));
   if (!_inv.has(ks)) { const rest = getRestPositions(st); _inv.set(ks, BONE_NAMES.map((n) => new THREE.Matrix4().makeTranslation(-rest[n].x, -rest[n].y, -rest[n].z))); }
   return _inv.get(ks);
