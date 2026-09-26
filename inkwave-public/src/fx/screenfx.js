@@ -798,9 +798,10 @@ export class ScreenFX {
     this._aspect = W / Math.max(1, H);
     U.uAspect.value = this._aspect;
     const q = QUALITY[G.settings?.quality] || QUALITY.high;
-    const taps = q.particles >= 1 ? 8 : q.particles >= 0.7 ? 6 : 5;
+    const mobile = !!this.G.mobile?.touch;
+    const taps = mobile ? 4 : q.particles >= 1 ? 8 : q.particles >= 0.7 ? 6 : 5;
     if (taps !== this.taps) { this.taps = taps; this.mat.defines.TAPS = taps; this.mat.needsUpdate = true; }
-    this.lens.resize(W, H, q.particles >= 1 ? 1 / 3 : 1 / 4);
+    this.lens.resize(W, H, mobile ? 1 / 4 : (q.particles >= 1 ? 1 / 3 : 1 / 4));
 
     // intensity scaling for the intense (motion) effects
     const shake = clamp(G.settings?.cameraShake ?? 1, 0, 1);

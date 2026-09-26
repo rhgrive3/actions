@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { G, on, emit, clamp, damp } from './core/ctx.js';
 import { Renderer } from './core/renderer.js';
 import { Input } from './core/input.js';
+import { mobileProfile } from './core/mobile.js';
 import {
   DEFAULT_SETTINGS, QUALITY, TEAM_PALETTES, COLORBLIND_PALETTE, TEAM_NAMES, WEAPONS, WEAPON_ORDER, SUB, SPECIALS,
   MAPS, DIFFICULTY, PLAYER, PROGRESSION, VERSION, MATCH,
@@ -46,6 +47,7 @@ class Game {
     // real top-down thumbnails for the stage cards, generated from each layout's geometry
     for (const m of MAPS) { try { m.thumb = layoutThumbSVG(MAP_LAYOUTS[m.layout || m.id], m.theme); } catch (e) { console.warn('thumb', m.id, e); } }
     this.settings = G.settings = loadJSON('inkwave.settings', DEFAULT_SETTINGS);
+    this.mobile = G.mobile = mobileProfile();
     // v1.1: fov became horizontal — migrate old vertical values once
     if (this.settings.fovMode !== 'h') { this.settings.fov = DEFAULT_SETTINGS.fov; this.settings.fovMode = 'h'; saveJSON('inkwave.settings', this.settings); }
     this.profile = loadJSON('inkwave.profile', DEFAULT_PROFILE);
@@ -73,6 +75,12 @@ class Game {
     this.input = G.input = new Input(this.R.renderer.domElement);
     this.input.onKey = (e, repeat) => this._onKey(e, repeat);
     this.input.onUnlock = () => this._onPointerUnlock();
+    if (this.input.mobile) {
+      this.input.mobile.setVisible(false);
+      this.input.mobile.onPause = () => {
+        if (this.match?.paused) this.resume(); else if (G.mode === 'match') this.pause();
+      };
+    }
 
     // modules built by other authors
     const [charMod, fxMod, envMod, audioMod, musicMod] = await Promise.all([
@@ -86,7 +94,8 @@ class Game {
 
     // world
     const map = MAPS.find((m) => m.id === params.get('map')) || MAPS[0];
-    const q = QUALITY[this.settings.quality] || QUALITY.high;
+    const qb = QUALITY[this.settings.quality] || QUALITY.high;
+    const q = this.mobile?.touch ? { ...qb, paintAtlas: Math.min(qb.paintAtlas, 2048), shadowSize: Math.min(qb.shadowSize, 2048), particles: Math.min(qb.particles, 0.7), msaa: 0, ao: false, bloom: false, pixelRatio: Math.min(qb.pixelRatio, this.mobile.ios ? 1.2 : 1.35) } : qb;
     this.murals = await createMuralTexture();
     try {
       const { createTextureLibrary } = await import('./world/texlib.js');
@@ -174,12 +183,13 @@ class Game {
     G.paint?.dispose();
     this.layoutId = layoutId;
     this.mapDef = map;
-    const q = QUALITY[this.settings.quality] || QUALITY.high;
+    const qb = QUALITY[this.settings.quality] || QUALITY.high;
+    const q = this.mobile?.touch ? { ...qb, paintAtlas: Math.min(qb.paintAtlas, 2048), shadowSize: Math.min(qb.shadowSize, 2048), particles: Math.min(qb.particles, 0.7), msaa: 0, ao: false, bloom: false, pixelRatio: Math.min(qb.pixelRatio, this.mobile.ios ? 1.2 : 1.35) } : qb;
     // set dressing first: solid props hand back collision boxes that become part of the level (physics, nav, paint)
     const colliders = [];
     if (this.PropKit) {
       try {
-        this.props = new this.PropKit(scene, { castShadow: true, quality: this.settings.quality });
+        this.props = new this.PropKit(scene, { castShadow: true, quality: this.mobile?.touch && this.settings.quality !== 'low' ? 'medium' : this.settings.quality });
         for (const it of dressingFor(layoutId)) {
           const r = this.props.add(it.type, it);
           if (r && r.colliders) colliders.push(...r.colliders);
@@ -335,7 +345,7 @@ class Game {
   }
   _onPointerUnlock() {
     // only a live round pauses on focus loss; intro / time's up / judge / results release the mouse on purpose
-    if (G.mode === 'match' && this.match && !this.match.paused && this.match.state === 'playing' && !this.menus?.current) this.pause();
+    if (!this.mobile?.touch && G.mode === 'match' && this.match && !this.match.paused && this.match.state === 'playing' && !this.menus?.current) this.pause();
   }
 
   // ---------------------------------------------------------------------------------------- events → HUD/audio
@@ -414,11 +424,13 @@ class Game {
       if (match.attract || match !== this.match) return;
       if (state === 'intro') this._intro();
       if (state === 'playing') {
+        this.input.mobile?.setVisible(true);
         this.hud?.banner('go'); G.audio?.play('go_horn');
         this._playMusic('battle');
         if (this.match.local) { this.rig.follow(this.match.local, true); }
       }
       if (state === 'finish') {
+        this.input.mobile?.setVisible(false);
         this.hud?.banner('timesup'); G.audio?.play('times_up'); G.music?.stop?.(0.4); this._musicTrack = null;
         this.input.exitLock();
       }
@@ -498,6 +510,7 @@ class Game {
     m.setup();
     this.minimap.setViewerTeam(0);
     G.mode = 'match';
+    this.input.mobile?.setVisible(true);
     this.hud?.setVisible(false);
     this.hudPrompt = null; this._hintT = 0; this._hints = {};
     m.start();
@@ -524,6 +537,7 @@ class Game {
     if (this.match.state !== 'playing' && this.match.state !== 'intro') return;
     this.match.paused = true;
     this.input.exitLock();
+    this.input.mobile?.setVisible(false);
     this.menus?.show('pause');
     G.audio?.duck?.(0.5, 99);
   }
@@ -532,6 +546,7 @@ class Game {
     this.menus?.show(null);
     this.match.paused = false;
     this.input.requestLock();
+    this.input.mobile?.setVisible(true);
     G.audio?.duck?.(1, 0.01);
   }
   async quitToMenu() {
@@ -542,6 +557,7 @@ class Game {
     this.hud?.hideSplatted?.();
     this.showcase.hide();
     G.mode = 'menu';
+    this.input.mobile?.setVisible(false);
     this._setPalette(this._pickPalette());
     this._startAttract();
     this.menus?.show('main');
@@ -597,8 +613,19 @@ class Game {
   }
 
   // ---------------------------------------------------------------------------------------- loop
-  _loop() {
-    requestAnimationFrame(() => this._loop());
+  _loop(now = performance.now()) {
+    requestAnimationFrame((t) => this._loop(t));
+    // ProMotion iPhones commonly deliver ~120 rAF callbacks. Run the game at 60 Hz instead of wasting GPU/CPU.
+    if (this.mobile?.touch) {
+      if (this._rafLast != null) {
+        const rd = now - this._rafLast;
+        this._rafAvg = this._rafAvg == null ? rd : this._rafAvg * 0.9 + rd * 0.1;
+      }
+      this._rafLast = now;
+      if ((this._rafAvg || 16.7) < 10.5) { this._mobileGate = !this._mobileGate; if (this._mobileGate) return; }
+      // Attract/menu rendering is cosmetic; 30 fps halves thermal load on phones.
+      if (G.mode === 'menu') { this._menuGate = !this._menuGate; if (this._menuGate) return; }
+    }
     this.timer.update(); let dt = this.timer.getDelta();
     if (this.frozen) return;
     this.fpsAcc += dt; this.fpsN++;
@@ -615,14 +642,18 @@ class Game {
     if (dt <= 0 || dt > 0.25) return;
     const d = this._dyn || (this._dyn = { acc: 0, n: 0, t: 0, fast: 0, ups: 0 });
     d.acc += dt; d.n++; d.t += dt;
-    if (d.t < 4) return;
+    if (d.t < (this.mobile?.touch ? 2 : 4)) return;
     const avg = d.acc / d.n;
     d.acc = 0; d.n = 0; d.t = 0;
     const m = this.match;
     if (this.settings.quality === 'ultra' || document.hidden || !m || m.attract || m.state !== 'playing') { d.fast = 0; return; }
     const s = this.R.dynScale || 1;
-    if (avg > 1 / 40 && s > 0.76) { this.R.setDynamicScale(s - 0.125); d.fast = 0; }
-    else if (avg < 1 / 75 && s < 1 && d.ups < 2) { if (++d.fast >= 3) { this.R.setDynamicScale(s + 0.125); d.fast = 0; d.ups++; } }
+    const downFps = this.mobile?.touch ? 52 : 40;
+    const upFps = this.mobile?.touch ? 59 : 75;
+    const floor = this.mobile?.touch ? 0.61 : 0.76;
+    const step = this.mobile?.touch ? 0.1 : 0.125;
+    if (avg > 1 / downFps && s > floor) { this.R.setDynamicScale(s - step); d.fast = 0; }
+    else if (avg < 1 / upFps && s < 1 && d.ups < 2) { if (++d.fast >= 3) { this.R.setDynamicScale(s + step); d.fast = 0; d.ups++; } }
     else d.fast = 0;
   }
 
@@ -685,7 +716,8 @@ class Game {
     const sm = G.renderer.shadowMap;
     sm.autoUpdate = false;
     this._frameN = (this._frameN || 0) + 1;
-    if (this.settings.quality !== 'low' || (this._frameN & 1)) sm.needsUpdate = true;
+    const shadowStride = this.mobile?.touch ? (this.settings.quality === 'low' ? 4 : 2) : (this.settings.quality === 'low' ? 2 : 1);
+    if ((this._frameN % shadowStride) === 0) sm.needsUpdate = true;
     if (!this._skipRender) {
       this.R.render();
       if (this.showcase.mode) sm.needsUpdate = true;
@@ -696,7 +728,10 @@ class Game {
     ps.sim += (tB - tA - ps.sim) * 0.05; ps.render += (tC - tB - ps.render) * 0.05;
     ps.calls = G.renderer.info.render.calls; ps.tris = G.renderer.info.render.triangles;
     // HUD
-    if (m && !m.attract && this.hud && (m.state === 'playing' || m.state === 'intro' || m.state === 'finish')) this._updateHud(dt);
+    if (m && !m.attract && this.hud && (m.state === 'playing' || m.state === 'intro' || m.state === 'finish')) {
+      this._hudDt = (this._hudDt || 0) + dt;
+      if (!this.mobile?.touch || (this._frameN & 1) === 0 || m.state !== 'playing') { this._updateHud(this._hudDt); this._hudDt = 0; }
+    }
     this.menus?.update?.(dt);
     this.input.endFrame();
   }

@@ -40,16 +40,19 @@ export class PlayerController {
       this.assist.has = false;
       return;
     }
+    const touch = inp.mobile?.active ? inp.mobile : null;
     const usingPad = !!inp.pad && inp.lastDevice === 'pad';
-    // ---- aim assist target (computed from last frame's camera; cheap)
-    const as = this._assistTarget(usingPad ? (s.aimAssist ?? 1) : (s.aimAssistMouse ? 0.5 : 0));
+    const usingTouch = !!touch && inp.lastDevice === 'touch';
+    // Touch gets the same friction/tracking class as a controller; no auto-snap is introduced.
+    const as = this._assistTarget((usingPad || usingTouch) ? (s.aimAssist ?? 1) : (s.aimAssistMouse ? 0.5 : 0));
     // ---- look
     const inv = s.invertY ? -1 : 1;
     const friction = as ? lerp(1, 0.58, as.closeness * as.strength) : 1;
     let lookActive = false;
-    const mdx = inp.mouse.dx, mdy = inp.mouse.dy;
+    const mdx = inp.mouse.dx + (touch?.lookDX || 0), mdy = inp.mouse.dy + (touch?.lookDY || 0);
     if (mdx || mdy) {
-      const sens = 0.0021 * (s.sensitivity ?? 1) * (s.aimAssistMouse ? friction : 1);
+      const touchScale = usingTouch ? 1.12 : 1;
+      const sens = 0.0021 * touchScale * (s.sensitivity ?? 1) * ((s.aimAssistMouse || usingTouch) ? friction : 1);
       rig.yaw -= mdx * sens;
       rig.pitch -= mdy * sens * inv;
       lookActive = true;
@@ -75,6 +78,7 @@ export class PlayerController {
     if (inp.down('KeyA') || inp.down('ArrowLeft')) mx -= 1;
     if (inp.down('KeyD') || inp.down('ArrowRight')) mx += 1;
     if (inp.pad) { inp.padStick(0, 1, _stick, 0.14, 0.95); mx += _stick.x; mz -= _stick.y; }
+    if (touch) { mx += touch.moveX; mz += touch.moveY; }
     const ml = Math.hypot(mx, mz);
     if (ml > 1) { mx /= ml; mz /= ml; }
     // tracking assist: carry a share of the target's angular motion while the player is engaging (look or move input)
@@ -90,22 +94,23 @@ export class PlayerController {
     // forward = (sy, 0, cy); right = (-cy, 0, sy)
     it.move.set(sy * mz - cy * mx, 0, cy * mz + sy * mx);
 
-    it.jump = inp.down('Space') || inp.padButton(0);
-    it.squid = inp.down('ShiftLeft') || inp.down('ShiftRight') || inp.padValue(6) > 0.3;
-    it.fire = inp.mouse.left || inp.padValue(7) > 0.3;
-    it.sub = inp.mouse.right || inp.down('KeyE') || inp.padButton(5);
-    it.special = inp.down('KeyF') || inp.down('KeyQ') || inp.padButton(3) || inp.padButton(11);
-    this.mapHeld = inp.down('Tab') || inp.padButton(8);
+    it.jump = inp.down('Space') || inp.padButton(0) || !!touch?.down('jump');
+    it.squid = inp.down('ShiftLeft') || inp.down('ShiftRight') || inp.padValue(6) > 0.3 || !!touch?.down('squid');
+    it.fire = inp.mouse.left || inp.padValue(7) > 0.3 || !!touch?.down('fire');
+    it.sub = inp.mouse.right || inp.down('KeyE') || inp.padButton(5) || !!touch?.down('sub');
+    it.special = inp.down('KeyF') || inp.down('KeyQ') || inp.padButton(3) || inp.padButton(11) || !!touch?.down('special');
+    this.mapHeld = inp.down('Tab') || inp.padButton(8) || !!touch?.mapOpen;
     // the TAB map is a targeting UI (clicking a teammate beacon super jumps) — never fire or throw through it
     if (this.mapHeld) { it.fire = false; it.sub = false; }
     // super jump: while the map is open, 1-3 (or d-pad left/up/right) jumps to that teammate, 4 / d-pad down to spawn
     if (this.mapHeld && a.canSuperJump()) {
       const allies = G.actors.filter((o) => o.team === a.team && o !== a);
       const pick = (i) => { const o = allies[i]; if (o && o.alive && !o.superJumpState) a.superJump(o); };
-      if (inp.wasPressed('Digit1') || inp.padPressed.has(14)) pick(0);
-      if (inp.wasPressed('Digit2') || inp.padPressed.has(12)) pick(1);
-      if (inp.wasPressed('Digit3') || inp.padPressed.has(15)) pick(2);
-      if (inp.wasPressed('Digit4') || inp.padPressed.has(13)) { const p = G.level.spawnPads[a.team]; a.superJump(p.clone()); }
+      const tj = touch?.consumeJumpTarget?.() ?? -1;
+      if (inp.wasPressed('Digit1') || inp.padPressed.has(14) || tj === 0) pick(0);
+      if (inp.wasPressed('Digit2') || inp.padPressed.has(12) || tj === 1) pick(1);
+      if (inp.wasPressed('Digit3') || inp.padPressed.has(15) || tj === 2) pick(2);
+      if (inp.wasPressed('Digit4') || inp.padPressed.has(13) || tj === 3) { const p = G.level.spawnPads[a.team]; a.superJump(p.clone()); }
     }
 
     // ---- aim point from the camera centre ray

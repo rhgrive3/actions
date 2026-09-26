@@ -8,6 +8,7 @@ import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
 import { QUALITY } from '../config.js';
 import { G } from './ctx.js';
+import { mobileProfile } from './mobile.js';
 
 const GradeShader = {
   uniforms: {
@@ -81,6 +82,7 @@ export class Renderer {
     this.container = container;
     this.scene = null; this.camera = null;
     this.settings = settings;
+    this.mobile = G.mobile || mobileProfile();
     this.q = QUALITY[settings.quality] || QUALITY.high;
     this._w = 0; this._h = 0;
   }
@@ -94,18 +96,19 @@ export class Renderer {
     const r = this.renderer, q = this.q;
     if (this.composer) { this.composer.renderTarget1.dispose(); this.composer.renderTarget2.dispose(); }
     this.dynScale = this.dynScale || 1;
-    const pr = Math.min(window.devicePixelRatio || 1, q.pixelRatio) * this.dynScale;
+    const mobileCap = this.mobile.touch ? (this.mobile.ios ? 1.2 : 1.35) : Infinity;
+    const pr = Math.min(window.devicePixelRatio || 1, q.pixelRatio, mobileCap) * this.dynScale;
     r.setPixelRatio(pr);
     const w = window.innerWidth, h = window.innerHeight;
     r.setSize(w, h);
-    const rt = new THREE.WebGLRenderTarget(w * pr, h * pr, { type: THREE.HalfFloatType, samples: q.msaa || 0 });
+    const rt = new THREE.WebGLRenderTarget(w * pr, h * pr, { type: THREE.HalfFloatType, samples: this.mobile.touch ? 0 : (q.msaa || 0) });
     const comp = (this.composer = new EffectComposer(r, rt));
     comp.setPixelRatio(pr);
     comp.setSize(w, h);
     this.renderPass = new RenderPass(this.scene, this.camera);
     comp.addPass(this.renderPass);
     this.gtao = null;
-    if (q.ao) {
+    if (q.ao && !this.mobile.touch) {
       const ao = (this.gtao = new GTAOPass(this.scene, this.camera, w, h));
       ao.output = GTAOPass.OUTPUT.Default;
       ao.blendIntensity = 1.0;
@@ -114,7 +117,7 @@ export class Renderer {
       comp.addPass(ao);
     }
     this.bloom = new UnrealBloomPass(new THREE.Vector2(w, h), 0.28, 0.45, 2.4);
-    this.bloom.enabled = !!(q.bloom && this.settings.bloom);
+    this.bloom.enabled = !!(q.bloom && this.settings.bloom && !this.mobile.ios);
     comp.addPass(this.bloom);
     this.grade = new ShaderPass(GradeShader);
     this._gradeSrc = null;
@@ -143,15 +146,16 @@ export class Renderer {
       this._buildComposer();
       this.scene?.traverse((o) => { if (o.material) { const m = Array.isArray(o.material) ? o.material : [o.material]; m.forEach((mm) => (mm.needsUpdate = true)); } });
     }
-    if (this.bloom) this.bloom.enabled = !!(this.q.bloom && settings.bloom);
+    if (this.bloom) this.bloom.enabled = !!(this.q.bloom && settings.bloom && !this.mobile.ios);
   }
 
   // Dynamic resolution (never on ultra): scale the render density between 0.75 and 1 of the quality preset.
   setDynamicScale(s) {
-    s = Math.max(0.75, Math.min(1, s));
+    s = Math.max(this.mobile.touch ? 0.6 : 0.75, Math.min(1, s));
     if (Math.abs(s - this.dynScale) < 0.01) return;
     this.dynScale = s;
-    const pr = Math.min(window.devicePixelRatio || 1, this.q.pixelRatio) * s;
+    const mobileCap = this.mobile.touch ? (this.mobile.ios ? 1.2 : 1.35) : Infinity;
+    const pr = Math.min(window.devicePixelRatio || 1, this.q.pixelRatio, mobileCap) * s;
     this.renderer.setPixelRatio(pr);
     this.composer.setPixelRatio(pr);
     this.composer.setSize(this._w, this._h);

@@ -374,9 +374,9 @@ export class PaintSystem {
     let v0 = Math.max(-padM, lv - ext - (f.wall ? rr * 1.9 : 0)), v1 = Math.min(f.sv + padM, lv + ext);
     if (u1 <= u0 || v1 <= v0) return;
     const q = this.quads++;
-    const corners = [[u0, v0], [u1, v0], [u1, v1], [u0, v1]];
     for (let c = 0; c < 4; c++) {
-      const cu = corners[c][0], cv = corners[c][1];
+      const cu = (c === 0 || c === 3) ? u0 : u1;
+      const cv = c < 2 ? v0 : v1;
       const vi = q * 4 + c;
       const px = a.x + a.pad + cu * a.ppm, py = a.y + a.pad + cv * a.ppm;
       this.aPos[vi * 2] = (px / S) * 2 - 1;
