@@ -360,10 +360,11 @@ class Game {
     return false;
   }
   _onPointerUnlock() {
+    if (this.mobile?.touch) return;
     // only a live round pauses on focus loss; intro / time's up / judge / results release the mouse on purpose.
     // Holding the map is never a reason to pause (some browsers/embeds steal focus on TAB): relock on the next click.
     if (this.match?.controller?.mapHeld || this.rig.mapK > 0) { this._relock = true; return; }
-    if (!this.mobile?.touch && G.mode === 'match' && this.match && !this.match.paused && this.match.state === 'playing' && !this.menus?.current) this.pause();
+    if (G.mode === 'match' && this.match && !this.match.paused && this.match.state === 'playing' && !this.menus?.current) this.pause();
   }
 
   // pull the fog back while the view is overhead (the stage is ~150 m away up there), restore it exactly after
@@ -558,7 +559,7 @@ class Game {
     m.setup();
     this.minimap.setViewerTeam(0);
     G.mode = 'match';
-    this.input.mobile?.setVisible(true);
+    this.input.mobile?.setVisible(false);
     this.hud?.setVisible(false);
     this.hudPrompt = null; this._hintT = 0; this._hints = {};
     m.start();
@@ -664,6 +665,7 @@ class Game {
   // ---------------------------------------------------------------------------------------- loop
   _loop(now = performance.now()) {
     requestAnimationFrame((t) => this._loop(t));
+    // ProMotion iPhones may schedule ~120 callbacks/s. Avoid rendering/simulating duplicate visual frames.
     if (this.mobile?.touch) {
       if (this._rafLast != null) {
         const rd = now - this._rafLast;
@@ -671,6 +673,7 @@ class Game {
       }
       this._rafLast = now;
       if ((this._rafAvg || 16.7) < 10.5) { this._mobileGate = !this._mobileGate; if (this._mobileGate) return; }
+      // Menu/attract mode does not need gameplay refresh rates and is a major thermal source on phones.
       if (G.mode === 'menu') { this._menuGate = !this._menuGate; if (this._menuGate) return; }
     }
     this.timer.update(); let dt = this.timer.getDelta();
@@ -693,7 +696,7 @@ class Game {
     const avg = d.acc / d.n;
     d.acc = 0; d.n = 0; d.t = 0;
     const m = this.match;
-    if (this.settings.quality === 'ultra' || document.hidden || !m || m.attract || m.state !== 'playing') { d.fast = 0; return; }
+    if ((this.settings.quality === 'ultra' && !this.mobile?.touch) || document.hidden || !m || m.attract || m.state !== 'playing') { d.fast = 0; return; }
     const s = this.R.dynScale || 1;
     const downFps = this.mobile?.touch ? 52 : 40;
     const upFps = this.mobile?.touch ? 59 : 75;

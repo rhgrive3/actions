@@ -43,7 +43,7 @@ export class PlayerController {
     const touch = inp.mobile?.active ? inp.mobile : null;
     const usingPad = !!inp.pad && inp.lastDevice === 'pad';
     const usingTouch = !!touch && inp.lastDevice === 'touch';
-    // ---- aim assist target (computed from last frame's camera; cheap)
+    // Touch gets the controller-class assist friction; it does not add hard snapping.
     const as = this._assistTarget((usingPad || usingTouch) ? (s.aimAssist ?? 1) : (s.aimAssistMouse ? 0.5 : 0));
     // ---- look
     const inv = s.invertY ? -1 : 1;
@@ -51,7 +51,7 @@ export class PlayerController {
     let lookActive = false;
     // while the map diorama is up the mouse / right stick steer the map cursor, not your camera
     const mapUp = (G.rig?.mapK ?? 0) > 0.05 || inp.down('Tab') || inp.down('KeyM') || inp.padButton(8) || !!touch?.mapOpen;
-    const mdx = mapUp ? 0 : (inp.mouse.dx + (touch?.lookDX || 0)), mdy = mapUp ? 0 : (inp.mouse.dy + (touch?.lookDY || 0));
+    const mdx = mapUp ? 0 : inp.mouse.dx + (touch?.lookDX || 0), mdy = mapUp ? 0 : inp.mouse.dy + (touch?.lookDY || 0);
     if (mdx || mdy) {
       const touchScale = usingTouch ? 1.12 : 1;
       const sens = 0.0021 * touchScale * (s.sensitivity ?? 1) * ((s.aimAssistMouse || usingTouch) ? friction : 1);
