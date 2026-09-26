@@ -1,0 +1,47 @@
+name: Validate INKWAVE update
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/validate-inkwave-update.yml
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check JavaScript syntax
+        run: |
+          set -euo pipefail
+          find inkwave-public/src inkwave-public/vendor -type f \( -name '*.js' -o -name '*.mjs' \) -print0 |
+            while IFS= read -r -d '' f; do node --check "$f"; done
+      - name: Check local module and stylesheet references
+        run: |
+          python3 - <<'PY'
+          import re, pathlib, sys
+          root=pathlib.Path('inkwave-public')
+          missing=[]
+          for p in root.rglob('*'):
+            if not p.is_file() or p.suffix not in {'.js','.mjs','.html','.css'}: continue
+            try: s=p.read_text(encoding='utf-8')
+            except: continue
+            refs=set()
+            if p.suffix in {'.js','.mjs'}:
+              refs.update(re.findall(r'''(?:from\s*|import\s*\()\s*["']([^"']+)["']''',s))
+              refs.update(re.findall(r'''import\s*["']([^"']+)["']''',s))
+            if p.suffix in {'.html','.css'}:
+              refs.update(re.findall(r'''(?:src|href)=["']([^"']+)["']''',s))
+              refs.update(re.findall(r'''@import\s+(?:url\()?["']?([^"'\)\s]+)''',s))
+            for ref in refs:
+              if ref.startswith(('http:','https:','data:','blob:','#')) or ref in {'three'} or ref.startswith('three/addons/'): continue
+              if not ref.startswith(('./','../','/')) and p.suffix in {'.js','.mjs'}: continue
+              q=(root/ref.lstrip('/')) if ref.startswith('/') else (p.parent/ref)
+              q=pathlib.Path(str(q).split('?',1)[0].split('#',1)[0])
+              if not q.exists(): missing.append((str(p),ref,str(q)))
+          if missing:
+            for x in missing: print('MISSING',*x)
+            sys.exit(1)
+          print('references OK')
+          PY
