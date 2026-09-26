@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "target": "inkwave-character",
   "notes": "AI-editable non-destructive modelling profile. Shape values are semantic; sculpt handles provide local soft deformation.",
   "style": {
@@ -60,7 +60,11 @@
     "referenceOpacity": 0.45,
     "showHandles": true,
     "xrayHandles": true,
-    "quad": false
+    "quad": false,
+    "referenceScale": 1,
+    "referenceX": 0,
+    "referenceY": 0,
+    "isolatePart": "all"
   },
   "materials": {
     "skinRoughness": 0.52,
