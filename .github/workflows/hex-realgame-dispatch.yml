@@ -225,10 +225,9 @@ jobs:
           retention-days: 7
 
   realgame-aggregate:
-    if: inputs.games != 'cxxholdout'
     name: aggregate-realgame
     needs: realgame
-    if: always()
+    if: always() && inputs.games != 'cxxholdout'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
