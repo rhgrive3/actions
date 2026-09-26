@@ -1,7 +1,7 @@
 {
-  "version": 1,
+  "version": 2,
   "target": "inkwave-character",
-  "notes": "AI-editable non-destructive modelling profile. Values are multipliers unless documented as offsets.",
+  "notes": "AI-editable non-destructive modelling profile. Shape values are semantic; sculpt handles provide local soft deformation.",
   "style": {
     "hair": 0,
     "outfit": 0,
@@ -57,6 +57,26 @@
     "mode": "perspective",
     "wireframe": false,
     "grid": true,
-    "referenceOpacity": 0.45
+    "referenceOpacity": 0.45,
+    "showHandles": true,
+    "xrayHandles": true,
+    "quad": false
+  },
+  "materials": {
+    "skinRoughness": 0.52,
+    "skinClearcoat": 0.06,
+    "clothRoughness": 0.82,
+    "hairRoughness": 0.3,
+    "hairClearcoat": 1,
+    "hairTipColor": "#b8ff4d",
+    "hairTipStrength": 0,
+    "hairTranslucency": 0,
+    "weaponRoughness": 0.4
+  },
+  "sculpt": {
+    "enabled": true,
+    "mirror": true,
+    "defaultRadius": 0.08,
+    "handles": []
   }
 }
