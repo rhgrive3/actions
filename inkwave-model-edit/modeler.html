@@ -34,7 +34,7 @@ button.good{background:linear-gradient(180deg,#395f21,#294719);border-color:#668
   border:1px solid #ffffff14;background:var(--panel);backdrop-filter:blur(18px);
   border-radius:18px;box-shadow:0 18px 65px #0009
 }
-.left{left:12px;padding:14px}.right{right:12px;width:340px}
+.left{left:12px;padding:14px}.right{right:12px;width:390px}
 .title{font-size:17px;font-weight:850}.subtitle{font-size:11px;color:var(--muted);line-height:1.45;margin:4px 0 12px}
 .section{border-top:1px solid var(--line);padding-top:11px;margin-top:11px}
 .section:first-of-type{border-top:0;margin-top:0;padding-top:0}
@@ -49,7 +49,7 @@ input[type="color"]{padding:3px}
 .slider label{display:grid;grid-template-columns:1fr;gap:3px;font-size:11px;color:#d9e1ed}
 .slider input[type="range"]{width:100%;height:25px;accent-color:#68e2f3}
 .slider input[type="number"]{height:30px}
-.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;padding:6px;position:sticky;top:0;background:#0f151fe8;backdrop-filter:blur(14px);z-index:3;border-bottom:1px solid var(--line)}
+.tabs{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;padding:6px;position:sticky;top:0;background:#0f151fe8;backdrop-filter:blur(14px);z-index:3;border-bottom:1px solid var(--line)}
 .tabs button{border:0;background:transparent}
 .tabs button.active{background:#28354a}
 .tabbody{padding:13px}
@@ -75,6 +75,15 @@ textarea{
 }
 .error{display:none;white-space:pre-wrap;color:#ffc5ce;background:#35171e;border:1px solid #8f3b49;border-radius:10px;padding:9px;font-size:10px;margin-top:8px}
 .kbd{border:1px solid #465166;border-radius:5px;padding:1px 5px;background:#161d29;color:#cbd5e3}
+.sculpt-tools{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.handle-list{display:grid;gap:5px;max-height:180px;overflow:auto;margin-top:8px}
+.handle-item{display:grid;grid-template-columns:1fr auto;gap:5px;align-items:center;border:1px solid var(--line);border-radius:9px;background:#0a0f16;padding:6px}
+.handle-item button{height:28px;padding:0 8px}
+.handle-item.active{border-color:#5b789c;background:#111c29}
+.material-grid{display:grid;gap:6px}
+#quadLabels{display:none;position:fixed;inset:0;z-index:8;pointer-events:none}
+.quad-label{position:absolute;padding:4px 7px;border-radius:7px;background:#070b10b8;border:1px solid #ffffff18;color:#dce6f6;font-size:10px}
+.quad-label.q1{left:51%;top:8px}.quad-label.q2{left:8px;top:8px}.quad-label.q3{left:8px;top:51%}.quad-label.q4{left:51%;top:51%}
 @media(max-width:980px){
   .left{width:250px}.right{width:300px}
 }
@@ -105,6 +114,8 @@ textarea{
   <button data-view="right">Right</button>
   <button data-view="back">Back</button>
   <button data-view="left">Left</button>
+  <button data-view="quad">Quad</button>
+  <button id="captureBtn">Capture</button>
   <button id="fitBtn">Fit</button>
 </div>
 
@@ -116,12 +127,26 @@ textarea{
     <h3>Editing target</h3>
     <div class="row">
       <label class="field"><span>MODE</span><select id="mode"><option value="character">Character</option><option value="weapon">Weapon</option></select></label>
-      <label class="field"><span>GIZMO TARGET</span><select id="gizmoTarget"><option value="whole">Whole</option><option value="head">Head</option><option value="hair">Hair</option><option value="torso">Torso</option><option value="shoes">Shoes</option></select></label>
+      <label class="field"><span>GIZMO TARGET</span><select id="gizmoTarget"><option value="whole">Whole</option><option value="head">Head</option><option value="hair">Hair</option><option value="torso">Torso</option><option value="shoes">Shoes</option><option value="sculpt">Sculpt handle</option></select></label>
     </div>
     <div class="row">
       <button id="moveTool" class="active">Move</button>
       <button id="scaleTool">Scale</button>
     </div>
+  </div>
+
+  <div class="section" id="sculptQuick">
+    <h3>Local sculpt</h3>
+    <div class="row">
+      <label class="field"><span>PART</span><select id="sculptPart"><option value="skin">Skin / face</option><option value="hair">Hair</option><option value="cloth">Clothes / shoes</option><option value="eyes">Eyes</option><option value="weapon">Weapon</option><option value="all">All</option></select></label>
+      <label class="field"><span>RADIUS</span><input id="sculptRadius" type="number" min=".01" max=".35" step=".005"></label>
+    </div>
+    <div class="row">
+      <label class="toggle"><input id="sculptMirror" type="checkbox"> Mirror X</label>
+      <label class="toggle"><input id="showHandles" type="checkbox" checked> Show handles</label>
+    </div>
+    <button id="addHandleBtn" class="primary">Pick surface point</button>
+    <div class="help" style="margin-top:7px">押してからモデルをクリック。局所変形ハンドルを追加する。</div>
   </div>
 
   <div class="section" id="characterStyleBlock">
@@ -185,13 +210,41 @@ textarea{
 <aside class="right">
   <div class="tabs">
     <button data-tab="shape" class="active">Shape</button>
+    <button data-tab="sculpt">Sculpt</button>
+    <button data-tab="materials">Materials</button>
     <button data-tab="ai">AI JSON</button>
     <button data-tab="info">Info</button>
   </div>
 
   <div class="tabbody" id="tab-shape">
     <div id="shapeControls"></div>
+    <div class="section"><h3>Face / expression</h3><div id="faceControls"></div></div>
     <div id="weaponControls" hidden></div>
+  </div>
+
+  <div class="tabbody" id="tab-sculpt" hidden>
+    <div class="help">クリック追加したハンドルは、中心・オフセット・局所スケール・半径をJSONに保存する。髪先や頬などを個別に詰める用途。</div>
+    <div class="row">
+      <label class="field"><span>SELECTED</span><select id="handleSelect"></select></label>
+      <label class="field"><span>PART</span><select id="handlePart"><option value="skin">skin</option><option value="hair">hair</option><option value="cloth">cloth</option><option value="eyes">eyes</option><option value="weapon">weapon</option><option value="all">all</option></select></label>
+    </div>
+    <div class="row">
+      <label class="field"><span>RADIUS</span><input id="handleRadius" type="number" min=".005" max=".5" step=".005"></label>
+      <label class="field"><span>STRENGTH</span><input id="handleStrength" type="number" min="0" max="2" step=".05"></label>
+    </div>
+    <div class="row">
+      <label class="toggle"><input id="handleMirror" type="checkbox"> Mirror X</label>
+      <button id="deleteHandle">Delete handle</button>
+    </div>
+    <div class="row">
+      <button id="zeroHandle">Zero offset</button>
+      <button id="resetHandleScale">Reset local scale</button>
+    </div>
+    <div id="handleList" class="handle-list"></div>
+  </div>
+
+  <div class="tabbody" id="tab-materials" hidden>
+    <div id="materialControls" class="material-grid"></div>
   </div>
 
   <div class="tabbody" id="tab-ai" hidden>
@@ -231,6 +284,7 @@ textarea{
   </div>
 </aside>
 
+<div id="quadLabels"><div class="quad-label q1">Perspective</div><div class="quad-label q2">Front</div><div class="quad-label q3">Right</div><div class="quad-label q4">Back</div></div>
 <div class="badge"><span class="kbd">drag</span> rotate · <span class="kbd">wheel/pinch</span> zoom · <span class="kbd">right drag</span> pan · gizmo = semantic edit</div>
 
 <script type="module">
@@ -256,10 +310,13 @@ const merge = (a,b) => {
 };
 
 const DEFAULT = {
-  version:1,target:'inkwave-character',
-  notes:'AI-editable non-destructive modelling profile. Values are multipliers unless documented as offsets.',
+  version:3,target:'inkwave-character',
+  notes:'AI-editable non-destructive modelling profile. Shape values are semantic; sculpt handles provide local soft deformation.',
   style:{hair:0,outfit:0,skin:1,eyes:1,hat:0,brows:0},
   look:{ink:'#17d9d0',glow:0},
+  face:{mouthCurve:.75,mouthWidth:1,mouthOpen:0,mouthTilt:0,lookX:0,lookY:0},
+  materials:{skinRoughness:.52,skinClearcoat:.06,clothRoughness:.82,hairRoughness:.3,hairClearcoat:1,hairTipColor:'#b8ff4d',hairTipStrength:0,hairTranslucency:0,weaponRoughness:.4},
+  sculpt:{enabled:true,mirror:true,defaultRadius:.08,handles:[]},
   shape:{
     overallScale:1,
     headWidth:1,headHeight:1,headDepth:1,
@@ -273,7 +330,7 @@ const DEFAULT = {
     legLength:1,legThickness:1,shoeScale:1,shoeLength:1
   },
   weapon:{kind:'shooter',scaleX:1,scaleY:1,scaleZ:1,barrelLength:1},
-  view:{mode:'perspective',wireframe:false,grid:true,referenceOpacity:.45}
+  view:{mode:'perspective',wireframe:false,grid:true,referenceOpacity:.45,showHandles:true,xrayHandles:true,quad:false}
 };
 
 let profile = deepClone(DEFAULT);
@@ -319,13 +376,19 @@ const floor = new THREE.Mesh(new THREE.PlaneGeometry(20,20),new THREE.ShadowMate
 floor.rotation.x=-Math.PI/2; floor.position.y=-.004; floor.receiveShadow=true; scene.add(floor);
 
 const modelLayer = new THREE.Group(); scene.add(modelLayer);
+const sculptLayer = new THREE.Group(); scene.add(sculptLayer);
 const handle = new THREE.Object3D(); scene.add(handle);
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
 let current = null;
 let currentMode = 'character';
 let currentView = 'perspective';
 let refVisible = true;
 let history = [], future = [];
 let rebuildQueued = false;
+let addHandleArmed = false;
+let selectedSculptId = null;
+let handleCounter = 1;
 
 const HEAD = GEO.HEAD_C ? GEO.HEAD_C.clone() : new THREE.Vector3(0,1.214,.012);
 const HIP_Y = .64;
@@ -361,6 +424,38 @@ function copyGeo(g){
   if(g.index) c.setIndex(g.index.clone());
   for(const k of Object.keys(g.attributes)) c.setAttribute(k,g.attributes[k].clone());
   return c;
+}
+function partMatches(handlePart,kind){
+  return handlePart==='all' || handlePart===kind || (handlePart==='cloth' && kind==='cloth');
+}
+function sculptOne(v,c,o,scale,radius,strength){
+  const dx=v.x-c.x,dy=v.y-c.y,dz=v.z-c.z;
+  const d=Math.hypot(dx,dy,dz);
+  if(d>=radius||radius<=1e-6)return v;
+  let t=1-d/radius;
+  let w=t*t*(3-2*t)*strength;
+  w=clamp(w,0,1.5);
+  const q=new THREE.Vector3(c.x+dx*scale.x+o.x,c.y+dy*scale.y+o.y,c.z+dz*scale.z+o.z);
+  v.lerp(q,w);
+  return v;
+}
+function applySculptPoint(x,y,z,kind){
+  if(!profile.sculpt?.enabled || !profile.sculpt.handles?.length)return [x,y,z];
+  const v=new THREE.Vector3(x,y,z);
+  for(const h of profile.sculpt.handles){
+    if(!partMatches(h.part||'all',kind))continue;
+    const c=new THREE.Vector3(...(h.center||[0,0,0]));
+    const o=new THREE.Vector3(...(h.offset||[0,0,0]));
+    const sc=new THREE.Vector3(...(h.scale||[1,1,1]));
+    const radius=Math.max(.001,+h.radius||.08),strength=h.strength??1;
+    sculptOne(v,c,o,sc,radius,strength);
+    if(h.mirror && Math.abs(c.x)>.002){
+      const mc=new THREE.Vector3(-c.x,c.y,c.z);
+      const mo=new THREE.Vector3(-o.x,o.y,o.z);
+      sculptOne(v,mc,mo,sc,radius,strength);
+    }
+  }
+  return [v.x,v.y,v.z];
 }
 function deformCharacterGeometry(source,kind,s){
   const g=copyGeo(source);
@@ -450,6 +545,7 @@ function deformCharacterGeometry(source,kind,s){
       }
     }
 
+    [x,y,z]=applySculptPoint(x,y,z,kind);
     p.setXYZ(i,x*s.overallScale,y*s.overallScale,z*s.overallScale);
   }
   p.needsUpdate=true;
@@ -467,6 +563,7 @@ function deformWeaponGeometry(source,w){
     let z=p.getZ(i);
     const forward=smooth(.02,.18,z);
     z*=w.scaleZ*(1+(w.barrelLength-1)*forward);
+    [x,y,z]=applySculptPoint(x,y,z,'weapon');
     p.setXYZ(i,x,y,z);
   }
   p.needsUpdate=true;
@@ -482,15 +579,25 @@ function makeCharacter(){
   STYLE.applyStyleUniforms(u,st);
   u.uTeam.value.set(profile.look.ink);
   if(u.uGlow) u.uGlow.value.set(profile.look.ink).multiplyScalar(profile.look.glow||0);
+  if(u.uHairTip) u.uHairTip.value.set(profile.materials.hairTipColor||'#b8ff4d');
+  if(u.uHairTipStrength) u.uHairTipStrength.value=profile.materials.hairTipStrength||0;
+  if(u.uMouth) u.uMouth.value.set(profile.face.mouthCurve,profile.face.mouthWidth,profile.face.mouthOpen,profile.face.mouthTilt);
+  if(u.uLook) u.uLook.value.set(profile.face.lookX,profile.face.lookY);
   const sh=GEO.getKidShared(), hair=GEO.getHairStyle(st), s=profile.shape;
   const group=new THREE.Group(); group.name='character-modeler';
   const skinM=ownedMaterial(MAT.makeSkinMaterial(u,STYLE.SKIN_TONES[st.skin]));
   const clothM=ownedMaterial(MAT.makeClothMaterial(u));
   const hairM=ownedMaterial(MAT.makeHairMaterial(u));
   const eyeM=ownedMaterial(MAT.makeEyeMaterial(u));
+  skinM.roughness=profile.materials.skinRoughness; skinM.clearcoat=profile.materials.skinClearcoat;
+  clothM.roughness=profile.materials.clothRoughness;
+  hairM.roughness=profile.materials.hairRoughness; hairM.clearcoat=profile.materials.hairClearcoat;
+  hairM.transparent=(profile.materials.hairTranslucency||0)>0.001;
+  hairM.opacity=1-clamp(profile.materials.hairTranslucency||0,0,.8)*.45;
+  hairM.depthWrite=(profile.materials.hairTranslucency||0)<.15;
   const add=(geo,mat,kind)=>{
     const m=new THREE.Mesh(deformCharacterGeometry(geo,kind,s),mat);
-    m.castShadow=true;m.receiveShadow=true;group.add(m);return m;
+    m.castShadow=true;m.receiveShadow=true;m.userData.modelPart=kind;group.add(m);return m;
   };
   add(sh.skin,skinM,'skin');
   add(sh.cloth,clothM,'cloth');
@@ -515,7 +622,8 @@ function makeWeapon(){
   const kind=profile.weapon.kind;
   const team=new THREE.Color(profile.look.ink);
   const group=new THREE.Group();group.name='weapon-modeler:'+kind;
-  const plastic=MAT.getPlasticMaterial(), ink=MAT.getInkMaterial(team);
+  const plastic=ownedMaterial(MAT.getPlasticMaterial().clone()), ink=MAT.getInkMaterial(team);
+  plastic.roughness=profile.materials.weaponRoughness;
   if(kind==='bomb'){
     const d=WPN.getSubDef('bomb');
     if(d.body) group.add(new THREE.Mesh(deformWeaponGeometry(d.body,profile.weapon),plastic));
@@ -537,7 +645,7 @@ function makeWeapon(){
       group.add(dg);
     }
   }
-  group.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});
+  group.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;o.userData.modelPart='weapon';}});
   $('statModel').textContent='Weapon · '+kind;
   return group;
 }
@@ -578,6 +686,8 @@ function rebuild(refit=false){
     $('statVersion').textContent=profile.version;
     updateJson();
     syncInputs();
+    refreshHandleUI();
+    rebuildSculptVisuals();
     syncHandle();
     if(refit) fitCamera();
     $('error').style.display='none';
@@ -598,6 +708,16 @@ function getBox(){
 function switchCamera(mode){
   currentView=mode;
   document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===mode));
+  if(mode==='quad'){
+    currentView='quad';
+    $('quadLabels').style.display='block';
+    transform.detach();
+    controls.enabled=false;
+    $('statView').textContent='quad';
+    return;
+  }
+  $('quadLabels').style.display='none';
+  controls.enabled=true;
   if(mode==='perspective'){
     camera=persp;
   }else{
@@ -664,6 +784,24 @@ const weaponDefs=[
   ['scaleZ','Weapon length',.5,1.7,.01],
   ['barrelLength','Barrel emphasis',.6,1.8,.01]
 ];
+const faceDefs=[
+  ['mouthCurve','Mouth curve',-.2,1.5,.01],
+  ['mouthWidth','Mouth width',.55,1.6,.01],
+  ['mouthOpen','Mouth open',0,1,.01],
+  ['mouthTilt','Mouth tilt',-.7,.7,.01],
+  ['lookX','Eye look X',-.35,.35,.01],
+  ['lookY','Eye look Y',-.25,.25,.01]
+];
+const materialDefs=[
+  ['skinRoughness','Skin roughness',.05,1,.01],
+  ['skinClearcoat','Skin clearcoat',0,1,.01],
+  ['clothRoughness','Cloth roughness',.1,1,.01],
+  ['hairRoughness','Hair roughness',.02,1,.01],
+  ['hairClearcoat','Hair clearcoat',0,1,.01],
+  ['hairTipStrength','Hair tip gradient',0,1,.01],
+  ['hairTranslucency','Hair translucency',0,.8,.01],
+  ['weaponRoughness','Weapon roughness',.02,1,.01]
+];
 function buildSliders(root,defs,scope){
   root.innerHTML='';
   for(const [key,label,min,max,step] of defs){
@@ -683,7 +821,15 @@ function buildSliders(root,defs,scope){
   }
 }
 buildSliders($('shapeControls'),defs,'shape');
+buildSliders($('faceControls'),faceDefs,'face');
 buildSliders($('weaponControls'),weaponDefs,'weapon');
+buildSliders($('materialControls'),materialDefs,'materials');
+const tipColorWrap=document.createElement('div');
+tipColorWrap.className='row one';
+tipColorWrap.innerHTML='<label class="field"><span>HAIR TIP COLOR</span><input id="hairTipColor" type="color"></label>';
+$('materialControls').prepend(tipColorWrap);
+$('hairTipColor').addEventListener('input',()=>{profile.materials.hairTipColor=$('hairTipColor').value;queueRebuild();});
+$('hairTipColor').addEventListener('pointerdown',()=>snapshot());
 
 function setOptions(el,labels){el.innerHTML=labels.map((x,i)=>'<option value="'+i+'">'+x+'</option>').join('');}
 setOptions($('hair'),STYLE.HAIR_STYLE_NAMES);
@@ -703,10 +849,22 @@ function syncInputs(){
     document.querySelector('[data-range="'+k+'"]').value=profile.weapon[k];
     document.querySelector('[data-number="'+k+'"]').value=profile.weapon[k];
   }
+  for(const [k] of faceDefs){
+    document.querySelector('[data-range="'+k+'"]').value=profile.face[k];
+    document.querySelector('[data-number="'+k+'"]').value=profile.face[k];
+  }
+  for(const [k] of materialDefs){
+    document.querySelector('[data-range="'+k+'"]').value=profile.materials[k];
+    document.querySelector('[data-number="'+k+'"]').value=profile.materials[k];
+  }
   for(const k of ['hair','outfit','skin','eyes','hat','brows'])$(k).value=profile.style[k];
   $('weapon').value=profile.weapon.kind;
   $('ink').value=profile.look.ink;
   $('glow').value=profile.look.glow||0;
+  $('hairTipColor').value=profile.materials.hairTipColor||'#b8ff4d';
+  $('sculptRadius').value=profile.sculpt.defaultRadius||.08;
+  $('sculptMirror').checked=profile.sculpt.mirror!==false;
+  $('showHandles').checked=profile.view.showHandles!==false;
   $('wire').checked=!!profile.view.wireframe;
   $('grid').checked=profile.view.grid!==false;
   $('refOpacity').value=profile.view.referenceOpacity??.45;
@@ -754,6 +912,12 @@ function syncHandle(){
     handle.position.set(0,mapY(.82,s)*s.overallScale,0);handle.scale.set(s.torsoWidth,s.torsoLength,s.torsoDepth);
   }else if(t==='shoes'){
     handle.position.set(0,.08*s.legLength*s.overallScale,0);handle.scale.set(s.shoeScale,s.shoeScale,s.shoeLength);
+  }else if(t==='sculpt'){
+    const h=getSelectedHandle();
+    if(!h)return;
+    const k=currentMode==='character'?s.overallScale:1;
+    handle.position.fromArray(h.center||[0,0,0]).add(new THREE.Vector3(...(h.offset||[0,0,0]))).multiplyScalar(k);
+    handle.scale.fromArray(h.scale||[1,1,1]);
   }
   transform.attach(handle);
 }
@@ -779,6 +943,15 @@ transform.addEventListener('mouseUp',()=>{
     s.torsoWidth=clamp(handle.scale.x,.7,1.4);s.torsoLength=clamp(handle.scale.y,.75,1.35);s.torsoDepth=clamp(handle.scale.z,.7,1.4);
   }else if(t==='shoes'){
     s.shoeScale=clamp((handle.scale.x+handle.scale.y)*.5,.65,1.55);s.shoeLength=clamp(handle.scale.z,.65,1.65);
+  }else if(t==='sculpt'){
+    const h=getSelectedHandle();
+    if(h){
+      const k=currentMode==='character'?s.overallScale:1;
+      const c=new THREE.Vector3(...(h.center||[0,0,0]));
+      const pos=handle.position.clone().multiplyScalar(1/k);
+      h.offset=pos.sub(c).toArray();
+      h.scale=[handle.scale.x,handle.scale.y,handle.scale.z];
+    }
   }
   rebuild(false);
 });
@@ -786,6 +959,79 @@ transform.addEventListener('mouseUp',()=>{
 $('moveTool').onclick=()=>{transform.setMode('translate');$('moveTool').classList.add('active');$('scaleTool').classList.remove('active');};
 $('scaleTool').onclick=()=>{transform.setMode('scale');$('scaleTool').classList.add('active');$('moveTool').classList.remove('active');};
 $('gizmoTarget').onchange=syncHandle;
+
+function getSelectedHandle(){
+  return profile.sculpt.handles.find(h=>h.id===selectedSculptId)||null;
+}
+function refreshHandleUI(){
+  const hs=profile.sculpt.handles||[];
+  if(!selectedSculptId && hs.length) selectedSculptId=hs[0].id;
+  if(selectedSculptId && !hs.some(h=>h.id===selectedSculptId)) selectedSculptId=hs[0]?.id||null;
+  $('handleSelect').innerHTML=hs.length?hs.map(h=>'<option value="'+h.id+'">'+h.id+' · '+h.part+'</option>').join(''):'<option value="">No handles</option>';
+  $('handleSelect').value=selectedSculptId||'';
+  const h=getSelectedHandle();
+  if(h){
+    $('handlePart').value=h.part||'all';$('handleRadius').value=h.radius??.08;$('handleStrength').value=h.strength??1;$('handleMirror').checked=!!h.mirror;
+  }
+  $('handleList').innerHTML=hs.map(h=>'<div class="handle-item '+(h.id===selectedSculptId?'active':'')+'"><span>'+h.id+' · '+h.part+' · r '+Number(h.radius||.08).toFixed(3)+'</span><button data-pick-handle="'+h.id+'">Select</button></div>').join('');
+  $('handleList').querySelectorAll('[data-pick-handle]').forEach(b=>b.onclick=()=>{selectedSculptId=b.dataset.pickHandle;$('gizmoTarget').value='sculpt';refreshHandleUI();rebuildSculptVisuals();syncHandle();});
+}
+function rebuildSculptVisuals(){
+  sculptLayer.clear();
+  if(profile.view.showHandles===false)return;
+  const k=currentMode==='character'?profile.shape.overallScale:1;
+  for(const h of profile.sculpt.handles||[]){
+    if(currentMode==='character' && h.part==='weapon')continue;
+    if(currentMode==='weapon' && h.part!=='weapon' && h.part!=='all')continue;
+    const c=new THREE.Vector3(...(h.center||[0,0,0])).add(new THREE.Vector3(...(h.offset||[0,0,0]))).multiplyScalar(k);
+    const mat=new THREE.MeshBasicMaterial({color:h.id===selectedSculptId?0xffd95e:0x66e7ff,depthTest:profile.view.xrayHandles===false});
+    const m=new THREE.Mesh(new THREE.SphereGeometry(.012*k,12,8),mat);m.position.copy(c);m.userData.sculptId=h.id;sculptLayer.add(m);
+    const ring=new THREE.Mesh(new THREE.SphereGeometry((h.radius||.08)*k,16,10),new THREE.MeshBasicMaterial({color:0x67e8f9,wireframe:true,transparent:true,opacity:.13,depthTest:false}));
+    ring.position.copy(c);sculptLayer.add(ring);
+    if(h.mirror&&Math.abs((h.center||[0])[0])>.002){
+      const mc=new THREE.Vector3(-(h.center?.[0]||0)-(h.offset?.[0]||0),(h.center?.[1]||0)+(h.offset?.[1]||0),(h.center?.[2]||0)+(h.offset?.[2]||0)).multiplyScalar(k);
+      const mm=new THREE.Mesh(new THREE.SphereGeometry(.009*k,10,7),new THREE.MeshBasicMaterial({color:0xa3ff5e,depthTest:false}));mm.position.copy(mc);sculptLayer.add(mm);
+    }
+  }
+}
+function addSculptHandleFromHit(hit){
+  const part=hit.object.userData.modelPart||$('sculptPart').value;
+  if(part==='weapon'&&currentMode!=='weapon')return;
+  const p=hit.point.clone();
+  current.worldToLocal(p);
+  const k=currentMode==='character'?profile.shape.overallScale:1;
+  p.multiplyScalar(1/k);
+  const id='h'+String(handleCounter++).padStart(3,'0');
+  const h={id,part:$('sculptPart').value==='all'?'all':part,center:p.toArray(),offset:[0,0,0],scale:[1,1,1],radius:+$('sculptRadius').value||profile.sculpt.defaultRadius||.08,strength:1,mirror:$('sculptMirror').checked};
+  profile.sculpt.handles.push(h);
+  selectedSculptId=id;
+  $('gizmoTarget').value='sculpt';
+  addHandleArmed=false;$('addHandleBtn').classList.remove('good');$('addHandleBtn').textContent='Pick surface point';
+  rebuild(false);
+}
+$('addHandleBtn').onclick=()=>{addHandleArmed=!addHandleArmed;$('addHandleBtn').classList.toggle('good',addHandleArmed);$('addHandleBtn').textContent=addHandleArmed?'Click the model…':'Pick surface point';};
+renderer.domElement.addEventListener('pointerdown',e=>{
+  if(!addHandleArmed||!current)return;
+  const rect=renderer.domElement.getBoundingClientRect();
+  pointer.x=((e.clientX-rect.left)/rect.width)*2-1;pointer.y=-((e.clientY-rect.top)/rect.height)*2+1;
+  raycaster.setFromCamera(pointer,camera===ortho?ortho:persp);
+  const hits=raycaster.intersectObject(current,true).filter(h=>h.object.userData.modelPart);
+  if(hits.length){snapshot();addSculptHandleFromHit(hits[0]);e.preventDefault();e.stopPropagation();}
+},{capture:true});
+$('handleSelect').onchange=()=>{selectedSculptId=$('handleSelect').value||null;$('gizmoTarget').value='sculpt';refreshHandleUI();rebuildSculptVisuals();syncHandle();};
+for(const id of ['handlePart','handleRadius','handleStrength','handleMirror']){
+  $(id).onchange=()=>{
+    const h=getSelectedHandle();if(!h)return;snapshot();
+    h.part=$('handlePart').value;h.radius=+$('handleRadius').value||.08;h.strength=+$('handleStrength').value||1;h.mirror=$('handleMirror').checked;
+    rebuild(false);
+  };
+}
+$('deleteHandle').onclick=()=>{const h=getSelectedHandle();if(!h)return;snapshot();profile.sculpt.handles=profile.sculpt.handles.filter(x=>x.id!==h.id);selectedSculptId=null;rebuild(false);};
+$('zeroHandle').onclick=()=>{const h=getSelectedHandle();if(!h)return;snapshot();h.offset=[0,0,0];rebuild(false);};
+$('resetHandleScale').onclick=()=>{const h=getSelectedHandle();if(!h)return;snapshot();h.scale=[1,1,1];rebuild(false);};
+$('sculptRadius').onchange=()=>profile.sculpt.defaultRadius=+$('sculptRadius').value||.08;
+$('sculptMirror').onchange=()=>profile.sculpt.mirror=$('sculptMirror').checked;
+$('showHandles').onchange=()=>{profile.view.showHandles=$('showHandles').checked;rebuildSculptVisuals();updateJson();};
 
 $('mode').onchange=()=>{
   snapshot();currentMode=$('mode').value;
@@ -812,11 +1058,15 @@ $('rotate').onchange=()=>controls.autoRotate=$('rotate').checked;
 
 document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>switchCamera(b.dataset.view));
 $('fitBtn').onclick=fitCamera;
+$('captureBtn').onclick=()=>{
+  renderer.render(scene,camera===ortho?ortho:persp);
+  const a=document.createElement('a');a.download='inkwave-model-'+Date.now()+'.png';a.href=renderer.domElement.toDataURL('image/png');a.click();
+};
 
 document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{
   const id=b.dataset.tab;
   document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('active',x===b));
-  for(const t of ['shape','ai','info'])$('tab-'+t).hidden=t!==id;
+  for(const t of ['shape','sculpt','materials','ai','info'])$('tab-'+t).hidden=t!==id;
   if(id==='ai')updateJson();
 });
 
@@ -855,6 +1105,10 @@ Important parameter semantics:
 - legLength and torsoLength change vertical proportions
 - shoeScale/shoeLength control footwear silhouette
 - weapon scaleX/Y/Z and barrelLength affect static weapon preview
+- sculpt.handles are local soft-deformation controls; center is a local-space anchor, offset moves nearby vertices, scale reshapes around the anchor, radius controls falloff
+- use mirror=true for symmetric face/body work; use mirror=false for intentional asymmetry and individual hair locks
+- materials.hairTipColor + hairTipStrength control the strand-tip gradient
+- prefer several small sculpt handles over one huge-radius deformation
 Target profile:
 ${$('jsonEditor').value}`;
   await navigator.clipboard.writeText(brief);
@@ -883,6 +1137,21 @@ function onResize(){
 }
 window.addEventListener('resize',onResize);
 
+function renderQuad(){
+  const w=renderer.domElement.width,h=renderer.domElement.height,hw=Math.floor(w/2),hh=Math.floor(h/2);
+  const box=getBox(),c=box.getCenter(new THREE.Vector3()),sz=box.getSize(new THREE.Vector3()),m=Math.max(sz.x,sz.y,sz.z,.1);
+  const aspect=hw/hh,half=m*.72;
+  const makeO=(dir)=>{
+    const cam=new THREE.OrthographicCamera(-half*aspect,half*aspect,half,-half,.001,80);
+    cam.position.copy(c).add(dir.clone().multiplyScalar(5));cam.lookAt(c);cam.updateProjectionMatrix();return cam;
+  };
+  const fp=persp.clone();fp.aspect=aspect;const f=THREE.MathUtils.degToRad(fp.fov),d=(m*.68/Math.tan(f/2))*1.32;fp.position.copy(c).add(new THREE.Vector3(.8,.25,1.5).normalize().multiplyScalar(d));fp.lookAt(c);fp.updateProjectionMatrix();
+  const cams=[fp,makeO(new THREE.Vector3(0,0,1)),makeO(new THREE.Vector3(1,0,0)),makeO(new THREE.Vector3(0,0,-1))];
+  const rects=[[hw,hh,hw,hh],[0,hh,hw,hh],[0,0,hw,hh],[hw,0,hw,hh]];
+  renderer.setScissorTest(true);
+  for(let i=0;i<4;i++){const [x,y,vw,vh]=rects[i];renderer.setViewport(x,y,vw,vh);renderer.setScissor(x,y,vw,vh);renderer.render(scene,cams[i]);}
+  renderer.setScissorTest(false);renderer.setViewport(0,0,w,h);
+}
 const clock=new THREE.Clock();
 function frame(){
   requestAnimationFrame(frame);
@@ -894,12 +1163,13 @@ function frame(){
       if(u?.uTime)u.uTime.value+=dt;
     });
   }
-  renderer.render(scene,camera);
+  if(currentView==='quad')renderQuad();
+  else renderer.render(scene,camera);
 }
 syncInputs();
 $('mode').value=currentMode;
 $('weaponControls').hidden=true;
-switchCamera(viewMode);
+switchCamera(profile.view?.quad?'quad':viewMode);
 rebuild(true);
 frame();
 </script>
