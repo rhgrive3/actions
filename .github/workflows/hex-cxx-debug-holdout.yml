@@ -1,0 +1,211 @@
+name: Hex C++ DWARF debug holdout
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_sha:
+        description: "Exact 40-character Hex commit SHA"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  cxx-dwarf-holdout:
+    name: OpenTTD ARM64 same-build C++ holdout
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 60
+    env:
+      TMPDIR: ${{ github.workspace }}/.task-tmp
+      TMP: ${{ github.workspace }}/.task-tmp
+      TEMP: ${{ github.workspace }}/.task-tmp
+      TARGET_SHA: ${{ inputs.target_sha }}
+    steps:
+      - name: Checkout actions harness
+        uses: actions/checkout@v4
+
+      - name: Checkout exact Hex revision
+        uses: actions/checkout@v4
+        with:
+          repository: rhgrive3/hex-ida
+          ref: ${{ inputs.target_sha }}
+          path: target
+          fetch-depth: 1
+
+      - name: Checkout OpenTTD source
+        uses: actions/checkout@v4
+        with:
+          repository: OpenTTD/OpenTTD
+          ref: 16.0-beta4
+          path: openttd
+          fetch-depth: 1
+
+      - name: Prepare task scratch directory
+        shell: bash
+        run: mkdir -p "$TMPDIR"
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Verify pinned Hex and ARM64 runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$TMPDIR" evidence binaries
+          test "$(git -C target rev-parse HEAD)" = "$TARGET_SHA"
+          test "$(git -C target rev-parse HEAD)" = "5bd85f8a86cd5030e5e36c6e9f0a196df9f08f0e"
+          test "$(uname -m)" = "aarch64"
+          node -e "if(process.arch!=='arm64') throw new Error('node-not-arm64'); console.log(process.platform,process.arch)"
+          git -C openttd rev-parse HEAD > evidence/openttd-source-sha.txt
+
+      - name: Install OpenTTD and DWARF tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 300s sudo apt-get update -qq
+          timeout 300s sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            binutils cmake file llvm ninja-build python3-pyelftools \
+            libcurl4-openssl-dev libfontconfig-dev libfreetype-dev libharfbuzz-dev libicu-dev \
+            liblzma-dev liblzo2-dev libogg-dev libopus-dev libopusfile-dev libpng-dev \
+            libsdl2-dev libsoxr-dev zlib1g-dev
+
+      - name: Build OpenTTD once with full DWARF
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 180s cmake -S openttd -B openttd/build -G Ninja \
+            -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+            -DOPTION_USE_ASSERTS=OFF \
+            -DCMAKE_DISABLE_PRECOMPILE_HEADERS=ON
+          timeout 900s cmake --build openttd/build --target openttd -j 4
+          oracle=openttd/build/openttd
+          test -x "$oracle"
+          file "$oracle" | tee evidence/oracle-file.txt
+          file "$oracle" | grep -Eqi 'ARM aarch64|ARM64|aarch64'
+          readelf -S "$oracle" | grep -q '\.debug_info'
+          mkdir -p binaries
+          cp "$oracle" binaries/openttd-unstripped-dwarf-oracle
+          cp "$oracle" binaries/openttd-strip-debug
+          cp "$oracle" binaries/openttd-strip-all
+          strip --strip-debug binaries/openttd-strip-debug
+          strip --strip-all binaries/openttd-strip-all
+          oracle_id="$(readelf -n binaries/openttd-unstripped-dwarf-oracle | awk '/Build ID:/{print $3; exit}')"
+          debug_id="$(readelf -n binaries/openttd-strip-debug | awk '/Build ID:/{print $3; exit}')"
+          all_id="$(readelf -n binaries/openttd-strip-all | awk '/Build ID:/{print $3; exit}')"
+          test -n "$oracle_id"
+          test "$oracle_id" = "$debug_id"
+          test "$oracle_id" = "$all_id"
+          printf 'build_id=%s\n' "$oracle_id" > evidence/build-identity.txt
+          sha256sum binaries/openttd-unstripped-dwarf-oracle binaries/openttd-strip-debug binaries/openttd-strip-all > evidence/binary-sha256.txt
+          file binaries/openttd-strip-debug binaries/openttd-strip-all > evidence/stripped-files.txt
+          if readelf -S binaries/openttd-strip-debug | grep -q '\.debug_info'; then
+            echo "debug-stripped binary unexpectedly retains .debug_info" >&2
+            exit 1
+          fi
+          if readelf -S binaries/openttd-strip-all | grep -q '\.debug_info'; then
+            echo "fully stripped binary unexpectedly retains .debug_info" >&2
+            exit 1
+          fi
+
+      - name: Extract same-build DWARF oracle facts
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 300s python3 scripts/cxx-dwarf-oracle.py \
+            --binary binaries/openttd-unstripped-dwarf-oracle \
+            --out evidence/dwarf-oracle.json | tee evidence/dwarf-oracle-summary.json
+
+      - name: Run the public Hex query host on --strip-debug binary
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 1200s node scripts/hex-realgame-holdout.mjs \
+            --target-root target \
+            --binary binaries/openttd-strip-debug \
+            --game openttd \
+            --target-sha "$TARGET_SHA" \
+            --out evidence/hex-public-strip-debug.json | tee evidence/hex-public-strip-debug-summary.json
+
+      - name: Analyze --strip-debug binary with Hex
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 1500s node scripts/hex-cxx-debug-holdout.mjs \
+            --target-root target \
+            --binary binaries/openttd-strip-debug \
+            --oracle evidence/dwarf-oracle.json \
+            --variant strip-debug \
+            --out evidence/hex-strip-debug.json | tee evidence/hex-strip-debug-summary.json
+
+      - name: Analyze --strip-all binary with Hex
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 900s node scripts/hex-cxx-debug-holdout.mjs \
+            --target-root target \
+            --binary binaries/openttd-strip-all \
+            --oracle evidence/dwarf-oracle.json \
+            --variant strip-all \
+            --out evidence/hex-strip-all.json | tee evidence/hex-strip-all-summary.json
+
+      - name: Publish concise holdout summary
+        if: always()
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE' >> "$GITHUB_STEP_SUMMARY"
+          import fs from 'node:fs';
+          const read = (name) => fs.existsSync(name) ? JSON.parse(fs.readFileSync(name, 'utf8')) : null;
+          const oracle = read('evidence/dwarf-oracle.json');
+          const publicHex = read('evidence/hex-public-strip-debug.json');
+          const variants = ['evidence/hex-strip-debug.json', 'evidence/hex-strip-all.json'].map(read).filter(Boolean);
+          console.log('# C++ same-build DWARF holdout');
+          console.log('');
+          console.log('- Hex SHA: ' + process.env.TARGET_SHA);
+          console.log('- OpenTTD source SHA: ' + (fs.existsSync('evidence/openttd-source-sha.txt') ? fs.readFileSync('evidence/openttd-source-sha.txt', 'utf8').trim() : 'unavailable'));
+          console.log('- Oracle Build ID: ' + (oracle?.buildId ?? 'unavailable') + '; DWARF classes: ' + (oracle?.counts?.completeClasses ?? 0) + '; DWARF members with offsets: ' + (oracle?.counts?.membersWithOffsets ?? 0));
+          console.log('- Public Hex query host: ' + (publicHex ? JSON.stringify(publicHex.totals) : 'unavailable'));
+          for (const report of variants) {
+            console.log('');
+            console.log('## ' + report.variant);
+            console.log('');
+            console.log('- Classes matched: ' + report.classMetrics.dwarfClassesMatched + '/' + report.classMetrics.hexNamedClasses + '; vtables matched: ' + report.classMetrics.dwarfVtablesMatched + '/' + report.classMetrics.hexVtables);
+            console.log('- DWARF virtual slots matched: ' + report.classMetrics.dwarfVirtualSlotsMatched + '/' + report.classMetrics.dwarfVirtualSlotComparisons + '; mismatches: ' + report.classMetrics.dwarfVirtualSlotMismatches);
+            console.log('- Members claimed/confirmed/contradicted/unknown: ' + report.memberMetrics.claimed + '/' + report.memberMetrics.confirmed + '/' + report.memberMetrics.contradicted + '/' + report.memberMetrics.unknown);
+            console.log('- Pseudocode sample: ' + (report.samplePseudocode ? report.samplePseudocode.className + '+' + report.samplePseudocode.offsetBytes + ' at ' + report.samplePseudocode.address : 'none'));
+          }
+          NODE
+
+      - name: Upload oracle, stripped binaries, and full reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hex-cxx-dwarf-holdout-${{ inputs.target_sha }}
+          path: |
+            binaries/openttd-unstripped-dwarf-oracle
+            binaries/openttd-strip-debug
+            binaries/openttd-strip-all
+            evidence/
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Enforce one contradiction-free field holdout
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const report = JSON.parse(fs.readFileSync('evidence/hex-strip-debug.json', 'utf8'));
+          const problems = [];
+          if (report.memberMetrics.confirmed < 1) problems.push('no-field-member-confirmed-by-dwarf');
+          if (report.memberMetrics.contradicted !== 0) problems.push('contradicted-members=' + report.memberMetrics.contradicted);
+          if (report.classMetrics.dwarfVirtualSlotMismatches !== 0) problems.push('dwarf-vtable-slot-mismatches=' + report.classMetrics.dwarfVirtualSlotMismatches);
+          if (!report.samplePseudocode) problems.push('no-confirmed-member-pseudocode-sample');
+          if (report.classMetrics.dwarfClassesMatched < 1) problems.push('no-hex-class-matched-to-dwarf');
+          if (report.classMetrics.dwarfVtablesMatched < 1) problems.push('no-hex-vtable-matched-to-same-build-symbol');
+          console.log(JSON.stringify({ ok: problems.length === 0, problems, memberMetrics: report.memberMetrics, classMetrics: report.classMetrics }, null, 2));
+          if (problems.length) process.exit(1);
+          NODE

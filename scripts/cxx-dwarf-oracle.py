@@ -1,0 +1,355 @@
+#!/usr/bin/env python3
+"""Extract class members and GCC virtual-slot indices from one ELF DWARF image."""
+
+import argparse
+import json
+import os
+from collections import defaultdict
+
+from elftools.elf.elffile import ELFFile
+from elftools.dwarf.dwarf_expr import DWARFExprParser
+
+
+SCOPE_TAGS = {
+    "DW_TAG_namespace", "DW_TAG_class_type", "DW_TAG_structure_type",
+    "DW_TAG_union_type",
+}
+CLASS_TAGS = {"DW_TAG_class_type", "DW_TAG_structure_type", "DW_TAG_union_type"}
+
+
+def attr(die, name):
+    return die.attributes.get(name)
+
+
+def text_attr(die, name):
+    item = attr(die, name)
+    if item is None:
+        return None
+    value = item.value
+    if isinstance(value, bytes):
+        return value.decode("utf-8", "replace")
+    return str(value)
+
+
+def unsigned_integer(value):
+    if isinstance(value, bool):
+        return int(value)
+    if isinstance(value, int) and value >= 0:
+        return value
+    return None
+
+
+def expression_integer(die, value):
+    """Evaluate the constant subset used by GCC data-member/vtable attributes."""
+    if isinstance(value, int):
+        return value if value >= 0 else None
+    if not isinstance(value, bytes):
+        return None
+    try:
+        ops = DWARFExprParser(die.cu.structs).parse_expr(value)
+    except Exception:
+        return None
+    stack = []
+    for op in ops:
+        name = op.op_name
+        args = op.args
+        if name in ("DW_OP_constu", "DW_OP_consts") and args:
+            stack.append(int(args[0]))
+        elif name.startswith("DW_OP_lit"):
+            try:
+                stack.append(int(name.removeprefix("DW_OP_lit")))
+            except ValueError:
+                return None
+        elif name == "DW_OP_plus_uconst" and args:
+            if stack:
+                stack[-1] += int(args[0])
+            else:
+                stack.append(int(args[0]))
+        elif name == "DW_OP_plus":
+            if len(stack) < 2:
+                return None
+            right = stack.pop()
+            stack[-1] += right
+        elif name == "DW_OP_stack_value":
+            continue
+        else:
+            return None
+    return stack[-1] if len(stack) == 1 and stack[-1] >= 0 else None
+
+
+def die_name(die):
+    return text_attr(die, "DW_AT_name")
+
+
+def qualified_name(die):
+    parts = []
+    current = die
+    while current is not None:
+        if current.tag in SCOPE_TAGS:
+            name = die_name(current)
+            if name and name not in ("<anonymous>", "(anonymous namespace)"):
+                parts.append(name)
+        current = current.get_parent()
+    if not parts:
+        return None
+    return "::".join(reversed(parts))
+
+
+def resolve_type(die, seen=None):
+    if die is None:
+        return {"name": None, "category": "unknown", "sizeBytes": None, "signedness": None, "tag": None}
+    seen = set() if seen is None else seen
+    identity = (die.cu.cu_offset, die.offset)
+    if identity in seen:
+        return {"name": die_name(die), "category": "unknown", "sizeBytes": None, "signedness": None, "tag": die.tag}
+    seen.add(identity)
+
+    own_name = die_name(die)
+    size_attr = attr(die, "DW_AT_byte_size")
+    size = unsigned_integer(size_attr.value) if size_attr else None
+    category = "unknown"
+    signedness = None
+
+    if die.tag in ("DW_TAG_pointer_type", "DW_TAG_reference_type", "DW_TAG_rvalue_reference_type"):
+        category = "pointer"
+    elif die.tag == "DW_TAG_array_type":
+        category = "array"
+    elif die.tag == "DW_TAG_enumeration_type":
+        category = "enum"
+        base = die.get_DIE_from_attribute("DW_AT_type") if attr(die, "DW_AT_type") else None
+        if base is not None:
+            base_info = resolve_type(base, seen)
+            size = size or base_info.get("sizeBytes")
+            signedness = base_info.get("signedness")
+    elif die.tag == "DW_TAG_base_type":
+        encoding_attr = attr(die, "DW_AT_encoding")
+        encoding = unsigned_integer(encoding_attr.value) if encoding_attr else None
+        if encoding == 0x02:
+            category = "boolean"
+        elif encoding == 0x04:
+            category = "float"
+        elif encoding in (0x05, 0x06):
+            category, signedness = "integer", True
+        elif encoding in (0x07, 0x08):
+            category, signedness = "integer", False
+    elif die.tag in ("DW_TAG_class_type", "DW_TAG_structure_type", "DW_TAG_union_type"):
+        category = "aggregate"
+
+    if category == "unknown" and die.tag in (
+        "DW_TAG_typedef", "DW_TAG_const_type", "DW_TAG_volatile_type",
+        "DW_TAG_restrict_type", "DW_TAG_atomic_type",
+    ):
+        base = die.get_DIE_from_attribute("DW_AT_type") if attr(die, "DW_AT_type") else None
+        if base is not None:
+            base_info = resolve_type(base, seen)
+            category = base_info.get("category", "unknown")
+            signedness = base_info.get("signedness")
+            size = size or base_info.get("sizeBytes")
+            if not own_name:
+                own_name = base_info.get("name")
+
+    return {
+        "name": own_name,
+        "category": category,
+        "sizeBytes": size,
+        "signedness": signedness,
+        "tag": die.tag,
+    }
+
+
+def type_for_member(die):
+    type_die = die.get_DIE_from_attribute("DW_AT_type") if attr(die, "DW_AT_type") else None
+    return resolve_type(type_die)
+
+
+def member_row(die):
+    location = attr(die, "DW_AT_data_member_location")
+    if location is None:
+        return None
+    offset = expression_integer(die, location.value)
+    if offset is None:
+        return {"name": die_name(die), "offsetBytes": None, "locationUnresolved": True, "type": type_for_member(die)}
+    return {"name": die_name(die), "offsetBytes": offset, "locationUnresolved": False, "type": type_for_member(die)}
+
+
+def vtable_index(die):
+    item = attr(die, "DW_AT_vtable_elem_location")
+    if item is None:
+        return None
+    return expression_integer(die, item.value)
+
+
+def class_definition(die):
+    name = qualified_name(die)
+    if not name:
+        return None
+    declaration_attr = attr(die, "DW_AT_declaration")
+    declaration = bool(declaration_attr and declaration_attr.value)
+    direct_members = []
+    unresolved_members = 0
+    bases = []
+    virtual_methods = []
+    for child in die.iter_children():
+        if child.tag == "DW_TAG_member":
+            row = member_row(child)
+            if row is None:
+                continue
+            if row["locationUnresolved"]:
+                unresolved_members += 1
+            direct_members.append(row)
+        elif child.tag == "DW_TAG_inheritance":
+            base_die = child.get_DIE_from_attribute("DW_AT_type") if attr(child, "DW_AT_type") else None
+            base_name = qualified_name(base_die) if base_die is not None else None
+            location = attr(child, "DW_AT_data_member_location")
+            base_offset = expression_integer(child, location.value) if location is not None else None
+            bases.append({"className": base_name, "offsetBytes": base_offset})
+        elif child.tag == "DW_TAG_subprogram":
+            virtuality = attr(child, "DW_AT_virtuality")
+            if virtuality is None or int(virtuality.value) == 0:
+                continue
+            virtual_methods.append({
+                "name": die_name(child),
+                "linkageName": text_attr(child, "DW_AT_linkage_name") or text_attr(child, "DW_AT_MIPS_linkage_name"),
+                "vtableIndex": vtable_index(child),
+            })
+    complete = not declaration
+    byte_size_attr = attr(die, "DW_AT_byte_size")
+    return {
+        "className": name,
+        "complete": complete,
+        "byteSize": unsigned_integer(byte_size_attr.value) if byte_size_attr else None,
+        "directMembers": direct_members,
+        "members": [],
+        "bases": bases,
+        "virtualMethods": virtual_methods,
+        "unresolvedMemberLocations": unresolved_members,
+    }
+
+
+def flattened_members(name, definitions, active=None):
+    active = set() if active is None else active
+    if name in active:
+        return [], 1
+    active.add(name)
+    rows = []
+    unresolved = 0
+    for definition in definitions.get(name, []):
+        for item in definition["directMembers"]:
+            if item["offsetBytes"] is None:
+                unresolved += 1
+                continue
+            rows.append({**item, "declaringClass": name, "baseOffsetBytes": 0})
+        unresolved += definition["unresolvedMemberLocations"]
+        for base in definition["bases"]:
+            if base["className"] is None or base["offsetBytes"] is None:
+                unresolved += 1
+                continue
+            base_rows, base_unresolved = flattened_members(base["className"], definitions, active.copy())
+            unresolved += base_unresolved
+            for item in base_rows:
+                rows.append({
+                    **item,
+                    "offsetBytes": item["offsetBytes"] + base["offsetBytes"],
+                    "baseOffsetBytes": item.get("baseOffsetBytes", 0) + base["offsetBytes"],
+                })
+    unique = {}
+    for row in rows:
+        key = (row["offsetBytes"], row.get("name"), row["type"].get("name"), row["type"].get("category"), row.get("declaringClass"))
+        unique[key] = row
+    return list(unique.values()), unresolved
+
+
+def vtable_symbols(elf):
+    result = []
+    for section_name in (".symtab", ".dynsym"):
+        section = elf.get_section_by_name(section_name)
+        if section is None:
+            continue
+        for symbol in section.iter_symbols():
+            name = symbol.name
+            if not name.startswith("_ZTV") or not name:
+                continue
+            result.append({"name": name, "address": int(symbol["st_value"]), "size": int(symbol["st_size"])})
+    unique = {(item["name"], item["address"]): item for item in result}
+    return sorted(unique.values(), key=lambda item: (item["address"], item["name"]))
+
+
+def build_id(elf):
+    for segment in elf.iter_segments():
+        if segment.header.p_type != "PT_NOTE":
+            continue
+        try:
+            for note in segment.iter_notes():
+                if note.get("n_type") == "NT_GNU_BUILD_ID":
+                    value = note.get("n_desc")
+                    return value.hex() if isinstance(value, bytes) else str(value)
+        except Exception:
+            continue
+    return None
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--binary", required=True)
+    parser.add_argument("--out", required=True)
+    args = parser.parse_args()
+
+    with open(args.binary, "rb") as stream:
+        elf = ELFFile(stream)
+        if not elf.has_dwarf_info():
+            raise SystemExit("oracle-no-dwarf-info")
+        dwarf = elf.get_dwarf_info()
+        definitions = defaultdict(list)
+        dwarf_versions = []
+        for cu in dwarf.iter_CUs():
+            dwarf_versions.append(int(cu.header["version"]))
+            for die in cu.iter_DIEs():
+                if die.tag not in CLASS_TAGS:
+                    continue
+                definition = class_definition(die)
+                if definition is not None:
+                    definitions[definition["className"]].append(definition)
+
+        classes = []
+        for name in sorted(definitions):
+            entries = definitions[name]
+            full = [entry for entry in entries if entry["complete"]]
+            source = max(full or entries, key=lambda entry: (len(entry["directMembers"]), len(entry["virtualMethods"])))
+            members, unresolved = flattened_members(name, definitions)
+            classes.append({
+                "className": name,
+                "complete": bool(full),
+                "byteSize": source["byteSize"],
+                "directMembers": source["directMembers"],
+                "members": members,
+                "bases": source["bases"],
+                "virtualMethods": source["virtualMethods"],
+                "unresolvedMemberLocations": unresolved,
+            })
+
+        tables = vtable_symbols(elf)
+        report = {
+            "schema": "cxx-dwarf-oracle/v1",
+            "binary": os.path.basename(args.binary),
+            "buildId": build_id(elf),
+            "architecture": elf.get_machine_arch(),
+            "dwarfVersions": sorted(set(dwarf_versions)),
+            "counts": {
+                "classes": len(classes),
+                "completeClasses": sum(item["complete"] for item in classes),
+                "membersWithOffsets": sum(item["offsetBytes"] is not None for cls in classes for item in cls["directMembers"]),
+                "virtualMethodsWithSlotIndex": sum(method["vtableIndex"] is not None for cls in classes for method in cls["virtualMethods"]),
+                "vtableSymbols": len(tables),
+            },
+            "classes": classes,
+            "vtableSymbols": tables,
+        }
+
+    with open(args.out, "w", encoding="utf-8") as output:
+        json.dump(report, output, indent=2, sort_keys=True)
+        output.write("\n")
+    print(json.dumps({"buildId": report["buildId"], "architecture": report["architecture"], "counts": report["counts"]}, sort_keys=True))
+
+
+if __name__ == "__main__":
+    main()
