@@ -726,26 +726,34 @@ class Game {
     this._frame(dt);
   }
 
-  // keep weaker GPUs playable: when a 4 s window of a live round averages under ~40 fps, drop render density one notch.
-  // Stepping back up needs 12 s of real headroom and happens at most twice, so the image never pumps between sizes
-  // (re-sizing every couple of seconds read as flicker).
+  // keep weaker GPUs playable: when a window of a live round averages under the target, drop render density one notch.
+  // Stepping back up needs three windows of real headroom and a cool-down that doubles every time an up-step had to be
+  // taken back, so a device that only hitched once (a GC, a burst of splats) gets its sharp image back, while one that
+  // truly sits at the edge settles instead of pumping between sizes (re-sizing every few seconds reads as flicker).
   _dynRes(dt) {
     if (dt <= 0 || dt > 0.25) return;
-    const d = this._dyn || (this._dyn = { acc: 0, n: 0, t: 0, fast: 0, ups: 0 });
-    d.acc += dt; d.n++; d.t += dt;
-    if (d.t < (this.mobile?.touch ? 2 : 4)) return;
+    const d = this._dyn || (this._dyn = { acc: 0, n: 0, t: 0, fast: 0, cool: 0, fails: 0, sinceUp: 1e9 });
+    d.acc += dt; d.n++; d.t += dt; d.cool -= dt; d.sinceUp += dt;
+    const touch = !!this.mobile?.touch;
+    const win = touch ? 2 : 4;
+    if (d.t < win) return;
     const avg = d.acc / d.n;
     d.acc = 0; d.n = 0; d.t = 0;
     const m = this.match;
-    if ((this.settings.quality === 'ultra' && !this.mobile?.touch) || document.hidden || !m || m.attract || m.state !== 'playing') { d.fast = 0; return; }
+    if ((this.settings.quality === 'ultra' && !touch) || document.hidden || !m || m.attract || m.state !== 'playing') { d.fast = 0; return; }
     const s = this.R.dynScale || 1;
-    const downFps = this.mobile?.touch ? 52 : 40;
-    const upFps = this.mobile?.touch ? 59 : 75;
-    const floor = this.mobile?.touch ? 0.61 : 0.76;
-    const step = this.mobile?.touch ? 0.1 : 0.125;
-    if (avg > 1 / downFps && s > floor) { this.R.setDynamicScale(s - step); d.fast = 0; }
-    else if (avg < 1 / upFps && s < 1 && d.ups < 2) { if (++d.fast >= 3) { this.R.setDynamicScale(s + step); d.fast = 0; d.ups++; } }
-    else d.fast = 0;
+    // touch: hold a steady 60 (Safari presents at 60 Hz — anything below judders between 60 and 30); FXAA covers the edges
+    const downFps = touch ? 55 : 40;
+    const upFps = touch ? 58.5 : 75;
+    const floor = touch ? 0.61 : 0.76;
+    const step = touch ? 0.1 : 0.125;
+    if (avg > 1 / downFps && s > floor) {
+      this.R.setDynamicScale(s - step); d.fast = 0;
+      if (d.sinceUp < 12) d.fails++;                     // the last step up did not hold
+      d.cool = 15 * 2 ** Math.min(d.fails, 4);
+    } else if (avg < 1 / upFps && s < 1 && d.cool <= 0) {
+      if (++d.fast >= 3) { this.R.setDynamicScale(s + step); d.fast = 0; d.sinceUp = 0; }
+    } else d.fast = 0;
   }
 
   _frame(dt) {

@@ -1,4 +1,4 @@
-// Renderer + post stack (MSAA HDR target → optional GTAO → bloom → grade/vignette → output).
+// Renderer + post stack (MSAA HDR target → optional GTAO → bloom → grade/vignette → output → FXAA when there is no MSAA).
 import * as THREE from 'three';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
@@ -55,6 +55,35 @@ const GradeShader = {
     }`,
 };
 
+// FXAA (the classic 9-tap "reduce/span" variant) on the final sRGB image. Phones and tablets render without MSAA, so
+// without it every railing, hair strand and ink edge stair-steps — and more so once dynamic resolution steps down.
+// Flat areas exit after 5 taps; one light full-screen pass in all.
+const FXAAShader = {
+  uniforms: { tDiffuse: { value: null }, uTexel: { value: new THREE.Vector2(1 / 1280, 1 / 720) } },
+  vertexShader: /* glsl */`varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+  fragmentShader: /* glsl */`
+    uniform sampler2D tDiffuse; uniform vec2 uTexel; varying vec2 vUv;
+    float lum(vec3 c) { return dot(c, vec3(0.299, 0.587, 0.114)); }
+    void main() {
+      vec4 cM = texture2D(tDiffuse, vUv);
+      float lM = lum(cM.rgb);
+      float lNW = lum(texture2D(tDiffuse, vUv + vec2(-1.0, -1.0) * uTexel).rgb);
+      float lNE = lum(texture2D(tDiffuse, vUv + vec2(1.0, -1.0) * uTexel).rgb);
+      float lSW = lum(texture2D(tDiffuse, vUv + vec2(-1.0, 1.0) * uTexel).rgb);
+      float lSE = lum(texture2D(tDiffuse, vUv + vec2(1.0, 1.0) * uTexel).rgb);
+      float lMin = min(lM, min(min(lNW, lNE), min(lSW, lSE)));
+      float lMax = max(lM, max(max(lNW, lNE), max(lSW, lSE)));
+      if (lMax - lMin < max(0.0312, lMax * 0.125)) { gl_FragColor = vec4(cM.rgb, 1.0); return; }
+      vec2 dir = vec2(-((lNW + lNE) - (lSW + lSE)), (lNW + lSW) - (lNE + lSE));
+      float reduce = max((lNW + lNE + lSW + lSE) * 0.03125, 1.0 / 128.0);
+      dir = clamp(dir / (min(abs(dir.x), abs(dir.y)) + reduce), -8.0, 8.0) * uTexel;
+      vec3 a = 0.5 * (texture2D(tDiffuse, vUv - dir / 6.0).rgb + texture2D(tDiffuse, vUv + dir / 6.0).rgb);
+      vec3 b = a * 0.5 + 0.25 * (texture2D(tDiffuse, vUv - dir * 0.5).rgb + texture2D(tDiffuse, vUv + dir * 0.5).rgb);
+      float lB = lum(b);
+      gl_FragColor = vec4((lB < lMin || lB > lMax) ? a : b, 1.0);
+    }`,
+};
+
 // r186's PCF filter uses a 5-tap rotated Vogel disk with per-pixel noise, which reads as grainy stipple on every soft
 // shadow edge. Swap it for a noise-free 3×3 grid of hardware-compared (bilinear) taps: smooth and temporally stable.
 (function patchShadowFilter() {
@@ -101,7 +130,8 @@ export class Renderer {
     r.setPixelRatio(pr);
     const w = window.innerWidth, h = window.innerHeight;
     r.setSize(w, h);
-    const rt = new THREE.WebGLRenderTarget(w * pr, h * pr, { type: THREE.HalfFloatType, samples: this.mobile.touch ? 0 : (q.msaa || 0) });
+    const samples = this.mobile.touch ? 0 : (q.msaa || 0);
+    const rt = new THREE.WebGLRenderTarget(w * pr, h * pr, { type: THREE.HalfFloatType, samples });
     const comp = (this.composer = new EffectComposer(r, rt));
     comp.setPixelRatio(pr);
     comp.setSize(w, h);
@@ -125,6 +155,9 @@ export class Renderer {
     // optional screen-FX pass (src/fx/screenfx.js) — runs in HDR linear space before tone mapping/output
     if (this.extraPass) comp.addPass(this.extraPass);
     comp.addPass(new OutputPass());
+    this.fxaa = null;
+    if (!samples && !/[?&]nofxaa\b/.test(location.search)) { this.fxaa = new ShaderPass(FXAAShader); comp.addPass(this.fxaa); }   // ?nofxaa: A/B
+    this._fxaaTexel(w, h, pr);
     r.shadowMap.enabled = this.settings.shadows !== false;
     this._w = w; this._h = h;
     this.grade.uniforms.uAspect.value = w / h;
@@ -159,6 +192,10 @@ export class Renderer {
     this.renderer.setPixelRatio(pr);
     this.composer.setPixelRatio(pr);
     this.composer.setSize(this._w, this._h);
+    this._fxaaTexel(this._w, this._h, pr);
+  }
+  _fxaaTexel(w, h, pr = this.renderer.getPixelRatio()) {
+    if (this.fxaa) this.fxaa.uniforms.uTexel.value.set(1 / Math.max(1, Math.round(w * pr)), 1 / Math.max(1, Math.round(h * pr)));
   }
 
   resize() {
@@ -167,6 +204,7 @@ export class Renderer {
     this._w = w; this._h = h;
     this.renderer.setSize(w, h);
     this.composer.setSize(w, h);
+    this._fxaaTexel(w, h);
     this.gtao?.setSize(w, h);
     this.grade.uniforms.uAspect.value = w / h;
     if (this.camera) { this.camera.aspect = w / h; this.camera.updateProjectionMatrix(); }

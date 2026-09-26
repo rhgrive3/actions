@@ -351,6 +351,7 @@
 .iw-mcur.is-snap i { scale: 1.7; border-color: var(--self-light); }
 .iw-map__jline { position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity .15s; }
 .iw-map__jline.is-on { opacity: 1; }
+.iw-map__jline:not(.is-on) path { animation: none; }           /* hidden → no per-frame repaint of the dashed path */
 .iw-map__jline svg { position: absolute; left: 0; top: 0; overflow: visible; }
 .iw-map__jline path { fill: none; stroke: #fff; stroke-width: 3.5; stroke-dasharray: 2 9; stroke-linecap: round; filter: drop-shadow(0 0 1.5px var(--k)) drop-shadow(0 0 1.5px var(--k)); animation: iw-jline .5s linear infinite; }
 @keyframes iw-jline { to { stroke-dashoffset: -11; } }
