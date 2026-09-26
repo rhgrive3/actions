@@ -392,7 +392,6 @@ function deformCharacterGeometry(source,kind,s){
       if(kind==='hair'){
         const dy=y-hc.y;
         if(dy<0) y=hc.y+dy*s.hairLength;
-        else y+=s.hairLift*headK;
         y+=s.hairLift*headK;
       }
     }
@@ -678,8 +677,8 @@ function buildSliders(root,defs,scope){
       range.value=profile[scope][key];num.value=profile[scope][key];
       queueRebuild();
     };
+    range.addEventListener('pointerdown',()=>snapshot());
     range.addEventListener('input',()=>{profile[scope][key]=+range.value;num.value=range.value;queueRebuild();});
-    range.addEventListener('change',()=>snapshot());
     num.addEventListener('change',()=>set(num.value));
   }
 }
@@ -802,8 +801,8 @@ for(const k of ['hair','outfit','skin','eyes','hat','brows']){
   $(k).onchange=()=>{snapshot();profile.style[k]=+$(k).value;rebuild(true);};
 }
 $('weapon').onchange=()=>{snapshot();profile.weapon.kind=$('weapon').value;rebuild(true);};
+$('ink').onpointerdown=()=>snapshot();
 $('ink').oninput=()=>{profile.look.ink=$('ink').value;queueRebuild();};
-$('ink').onchange=snapshot;
 $('glow').onchange=()=>{snapshot();profile.look.glow=clamp(+$('glow').value,0,2);rebuild(false);};
 
 $('wire').onchange=()=>{profile.view.wireframe=$('wire').checked;applyWire();updateJson();};
