@@ -1,0 +1,29 @@
+{
+ "side_sheet": {
+  "az_rad": -1.3,
+  "el_rad": -0.07,
+  "previous": {
+   "az_rad": -0.95,
+   "el_rad": -0.15
+  },
+  "cues": "far pupil hidden (lashes only), nose silhouette, near-ear overlap, brow line, chin; landmark rms incl. ear tip/low, outer eye corner, brow tail 13.0 px at -0.95/0 -> 6.1 px at -1.30/-0.05",
+  "fit_points": [
+   "pupil",
+   "brow_inner",
+   "nose_tip",
+   "mouth_corner",
+   "lower_lip",
+   "chin_front"
+  ]
+ },
+ "q34_sheet": {
+  "az_rad": -0.4,
+  "el_rad": -0.15,
+  "previous": {
+   "az_rad": -0.35,
+   "el_rad": -0.28
+  },
+  "cues": "11 landmarks (both pupils, both brows, nose tip, mouth corner, lower lip, near ear tip/low, far ear tip): rms 11.5 px -> 7.9 px"
+ },
+ "camera": "orbit around (0, 0, 1.365) world, distance 3.3 m, vertical FOV 5.5 deg (scripts/inkwave_face_views.py); diagnostic renders hide HAIR, HEADGEAR, CLOTHES"
+}

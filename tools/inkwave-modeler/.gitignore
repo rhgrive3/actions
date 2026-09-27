@@ -9,3 +9,5 @@ __pycache__/
 # Blender's automatic .blend1 rollback copy and the importer's fallback scratch directory
 blender/*.blend1
 blender/.scratch/
+# multi-view fit: head geometry exported from the .blend (python3 export_geom.py)
+analysis/multiview/geom_*.npz

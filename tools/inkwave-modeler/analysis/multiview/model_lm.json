@@ -1,0 +1,122 @@
+{
+"nose_tip": [
+"HEAD_face",
+12390
+],
+"upper_lip": [
+"HEAD_face",
+10089
+],
+"subnasale": [
+"HEAD_face",
+10974
+],
+"stomion": [
+"HEAD_face",
+9381
+],
+"lower_lip": [
+"HEAD_face",
+8673
+],
+"sulcus": [
+"HEAD_face",
+6018
+],
+"pogonion": [
+"HEAD_face",
+3363
+],
+"menton": [
+"HEAD_face",
+2478
+],
+"nasion": [
+"HEAD_face",
+15576
+],
+"glabella": [
+"HEAD_face",
+19470
+],
+"eye_in_L": [
+"HEAD_face",
+15420
+],
+"eye_out_L": [
+"HEAD_face",
+16681
+],
+"pupil_L": [
+"HEAD_eyes_02",
+384
+],
+"brow_in_L": [
+"HEAD_brows",
+176
+],
+"brow_tail_L": [
+"HEAD_brows",
+212
+],
+"brow_peak_L": [
+"HEAD_brows",
+40
+],
+"ear_tip_L": [
+"HEAD_face_02",
+4856
+],
+"ear_low_L": [
+"HEAD_face_02",
+4815
+],
+"nostril_L": [
+"HEAD_skin_03",
+44
+],
+"eye_in_R": [
+"HEAD_face",
+15554
+],
+"eye_out_R": [
+"HEAD_face",
+16771
+],
+"pupil_R": [
+"HEAD_eyes_19",
+384
+],
+"brow_in_R": [
+"HEAD_brows_02",
+179
+],
+"brow_tail_R": [
+"HEAD_brows_02",
+302
+],
+"brow_peak_R": [
+"HEAD_brows_02",
+17
+],
+"ear_tip_R": [
+"HEAD_face_03",
+4856
+],
+"ear_low_R": [
+"HEAD_face_03",
+4815
+],
+"nostril_R": [
+"HEAD_skin_06",
+44
+],
+"mouth_L": [
+"HEAD_skin_09",
+24
+],
+"mouth_R": [
+"HEAD_skin_09",
+0
+]
+}

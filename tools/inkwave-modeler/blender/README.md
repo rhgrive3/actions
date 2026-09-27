@@ -2,8 +2,9 @@
 
 対象: `../INKWAVE_AI_MODELER_FINAL.html` の Aqua Tech リファレンスキャラ（`inkwave-ref-aquatech`、366,476 三角形）。
 状態: **移行は完了**。元の `inkwave_character_source.glb` は Three.js の形状を保持する基準データ。
-現在の Blender マスターには、その後の顔のスカルプトと靴下の色柄修正が入っているため、元データとは意図的に差がある。
+現在の Blender マスターには、その後の顔のスカルプト、顔の見た目の仕上げ（`scripts/inkwave_face_look.py`）と靴下の色柄修正が入っているため、元データとは意図的に差がある。
 顔の測定と残差は `../docs/face-refinement/README.md` に記録する。
+2026-09-28: 5 方向の参照シートに合わせる多視点フィット、目頭〜頬のならし、上唇、下まつ毛を入れた（`../scripts/inkwave_face_multiview_fit.py`、記録は `../docs/face-multiview-fit/README.md`）。元の状態はマスターの中の `FACE_FIT` コレクションと属性に残り、`--restore` で戻る。
 
 Blender 側で作り直したものはない。ブラウザのランタイムが作った最終バッファ（スカルプト、ヘアスプライン、ディテールの変換を適用済み）を
 そのまま GLB に書き出し、Blender はそれを読み込んで、glTF が運べない部分だけを足している。
@@ -155,5 +156,5 @@ dRGB はシルエットの内側での平均の差（0〜255）、明るさの�
 | 形を直す | Blender の `INKWAVE_MASTER` の各コレクション。ランタイムに戻す場合は HTML の生成コード（`buildBody`、`makeHeadLoft`、`buildHair` など）を直して、2 章の手順で作り直す |
 | 材料を直す | Principled BSDF（GLB に入る値）。Blender だけの見た目は `INKWAVE_CYCLES_OUTPUT` 側 |
 | ヘアの色 | HTML の `profile.materials`（`hairTipColor` など）を変えて書き出し直す。焼き込みマップは書き出しのたびに作り直される |
-| 顔 | `HEAD_face` を Edit / Sculpt Mode で編集する。`../docs/face-refinement/README.md` に較正レンダーと輪郭の測定、再現スクリプトがある |
+| 顔 | `HEAD_face` を Edit / Sculpt Mode で編集する。`../docs/face-refinement/README.md` に較正レンダーと輪郭の測定、再現スクリプトがある。見た目の仕上げ（まぶた、鼻、口、チーク、目、肌）は `scripts/inkwave_face_look.py`（同 README の 7 章）。`inkwave_face_refine.py` を再実行する前に `inkwave_face_look.py -- --restore` |
 | ゲーム用の最適化 | まだしていない（LOD、テクスチャの圧縮、Draco/Meshopt、リグ）。`INKWAVE_GAME.glb` は現在マスターと同じ |

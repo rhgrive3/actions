@@ -7,6 +7,10 @@
 // --edited/--edit-budget-mm declare intentional sculpt edits (scripts/inkwave_face_refine.py): matching meshes may
 // move, but only within the budget (two-way nearest-point distance), with the same triangle count and the same UV
 // coordinates; every other mesh keeps the exact checks.
+// --rebuilt <regex> declares meshes whose topology an edit changed (scripts/inkwave_face_look.py: subdivided decals,
+// added lashes, a removed stud): any triangle count and UVs, but every point of the new mesh must lie within the
+// budget of the old one (one-way), and the same material. --restyled <regex> names materials whose values were
+// retuned on purpose; their differences are reported as documented instead of failing.
 //
 // The browser QA hook __INKWAVE_QA.exportTree() is the contract: per-mesh world-space vertex bounds, triangle
 // and vertex counts, and material names straight out of the live Three.js runtime. Every GLB in the chain must
@@ -226,7 +230,8 @@ function compareMaterials(label, baseline, actual, { corneaAlpha = 0.01, toleran
       if (key === 'extras') continue;
       if (same(want[key], got[key])) continue;
       const entry = { material: source.name, field: key, source: want[key], [label]: got[key] };
-      if (want.bumpTexture && ((key === 'bumpTexture' && !got.bumpTexture) || (key === 'normalTexture' && got.normalTexture))) documented.push({ ...entry, why: 'EXT_materials_bump baked to tangent normalTexture' });
+      if (restyled && restyled.test(source.name)) documented.push({ ...entry, why: 'restyled on purpose (--restyled)' });
+      else if (want.bumpTexture && ((key === 'bumpTexture' && !got.bumpTexture) || (key === 'normalTexture' && got.normalTexture))) documented.push({ ...entry, why: 'EXT_materials_bump baked to tangent normalTexture' });
       else if (want.extras.inkwaveBlend === 'additive' && key === 'baseColor' && same(want.baseColor.slice(0, 3), got.baseColor.slice(0, 3)) && Math.abs(got.baseColor[3] - corneaAlpha) <= tolerance) documented.push({ ...entry, why: 'additive cornea exported as BLEND alpha ' + corneaAlpha });
       else differences.push(entry);
     }
@@ -259,7 +264,7 @@ const norm = (name) => name.replace(/\.\d{3}$/, '');
 function compare(label, expected, actual, tolerance, { exactVerts = true } = {}) {
   const issues = [];
   const add = (message) => issues.push(message);
-  if (expected.tris !== actual.tris) add(`triangles ${actual.tris} != ${expected.tris}`);
+  if (expected.tris !== actual.tris && !rebuilt) add(`triangles ${actual.tris} != ${expected.tris}`);
   // Vertex count is an encoding detail once a mesh has been through Blender: the importer welds and the
   // exporter re-splits at normal/UV seams. compareSurface() is what guarantees the surface itself.
   if (expected.verts !== actual.verts && exactVerts) add(`vertices ${actual.verts} != ${expected.verts}`);
@@ -282,7 +287,8 @@ function compare(label, expected, actual, tolerance, { exactVerts = true } = {})
     if (!got) { missing++; if (missing <= 5) add(`missing mesh ${want.name}`); continue; }
     used.add(got);
     if (want.material && got.material !== want.material) { mismatched++; if (mismatched <= 5) add(`${want.name}: material ${got.material} != ${want.material}`); }
-    if (got.tris !== want.tris || (exactVerts && got.verts !== want.verts)) {
+    const isRebuilt = rebuilt && rebuilt.test(want.name);
+    if (!isRebuilt && (got.tris !== want.tris || (exactVerts && got.verts !== want.verts))) {
       mismatched++; if (mismatched <= 5) add(`${want.name}: ${got.tris}t/${got.verts}v != ${want.tris}t/${want.verts}v`);
     }
     if (want.uv && !got.uv) noUV++;
@@ -290,6 +296,11 @@ function compare(label, expected, actual, tolerance, { exactVerts = true } = {})
     for (let k = 0; k < 3; k++) {
       for (const key of ['min', 'max']) {
         const delta = Math.abs(want[key][k] - got[key][k]);
+        if (isRebuilt) {  // removed parts may shrink the bounds; the mesh may not grow past the budget
+          const grow = key === 'min' ? want.min[k] - got.min[k] : got.max[k] - want.max[k];
+          if (grow > rebuiltBudget) add(`${want.name}: rebuilt bounds ${key}[${k}] grew ${(grow * 1000).toFixed(2)} mm > budget`);
+          continue;
+        }
         if (edited && edited.test(want.name)) {
           if (delta > editBudget) add(`${want.name}: edited bounds ${key}[${k}] moved ${(delta * 1000).toFixed(2)} mm > budget`);
           if (delta > worstEdit) worstEdit = delta;
@@ -306,7 +317,7 @@ function compare(label, expected, actual, tolerance, { exactVerts = true } = {})
   if (actual.cameras) add(`${actual.cameras} camera(s) exported`);
   if (actual.lights) add(`${actual.lights} punctual light(s) exported`);
   return { label, file: actual.file, bytes: actual.bytes, meshes: actual.meshes, tris: actual.tris, verts: actual.verts,
-    vertexDelta: actual.verts - expected.verts, rootExtraKeys: actual.rootExtras ? Object.keys(actual.rootExtras) : [],
+    vertexDelta: actual.verts - expected.verts, triangleDelta: actual.tris - expected.tris, rootExtraKeys: actual.rootExtras ? Object.keys(actual.rootExtras) : [],
     materials: actual.materials, images: actual.images, textures: actual.textures, extensionsUsed: actual.extensionsUsed,
     roots: actual.roots, min: actual.min, max: actual.max, worstBoundDrift: worstBound, worstBoundAt: worstPart,
     editedBoundDriftMm: Math.round(worstEdit * 1e6) / 1e3,
@@ -319,12 +330,20 @@ function compareSurface(label, baseline, actual, maxNormalDrift) {
   const issues = [];
   const index = new Map(actual.parts.map((part) => [norm(part.name), part]));
   let differingTriangles = 0, missing = 0, maxAngle = 0, maxAngleAt = null, checked = 0, unmatchedPositions = 0;
-  const editedParts = [];
+  const editedParts = [], rebuiltParts = [];
   const drift = { over1: 0, over5: 0, over15: 0 }, worst = [], strictWorst = [];
   let strictChecked = 0, strictOver15 = 0;
   for (const want of baseline.parts) {
     const got = index.get(norm(want.name));
     if (!got) { missing++; if (missing <= 5) issues.push(`missing mesh ${want.name}`); continue; }
+    if (rebuilt && rebuilt.test(want.name)) {
+      // Old surface = every baseline mesh with the same material (new lashes lie between the old ones).
+      const pool = baseline.parts.filter((p) => p.material === want.material && p.points).map((p) => p.points);
+      const report = rebuiltPart(want, got, pool);
+      rebuiltParts.push(report);
+      if (!report.pass) issues.push(`${want.name}: rebuilt mesh leaves the old surface (${report.maxMm} mm)`);
+      continue;
+    }
     if (got.tris !== want.tris) { issues.push(`${want.name}: ${got.tris} triangles != ${want.tris}`); continue; }
     if (edited && edited.test(want.name)) {
       const report = editedPart(want, got);
@@ -379,7 +398,36 @@ function compareSurface(label, baseline, actual, maxNormalDrift) {
     maxShadingNormalDeg: Math.round(maxAngle * 1000) / 1000, maxShadingNormalAt: maxAngleAt,
     normalsChecked: checked, unmatchedPositions, normalDrift: drift, worstParts: worst.slice(0, 5),
     perLoopNormals: { checked: strictChecked, over15: strictOver15, share: strictChecked ? Math.round(strictOver15 / strictChecked * 1e5) / 1e5 : 0, worstParts: strictWorst.slice(0, 6) },
-    edited: editedParts, pass: issues.length === 0, issues };
+    edited: editedParts, rebuilt: rebuiltParts, pass: issues.length === 0, issues };
+}
+
+/** Rebuilt mesh (new topology): every new vertex within --rebuilt-budget-mm of an old vertex of the same material
+ *  (one-way; vertex to vertex, so a subdivided coarse decal needs about half its old edge length on top). */
+function rebuiltPart(want, got, pool) {
+  const tris = want.tris;
+  const cell = 0.005, grid = new Map(), at = (x) => Math.floor(x / cell);
+  const all = [];
+  for (const pts of pool) for (let i = 0; i < pts.length; i += 3) all.push(pts[i], pts[i + 1], pts[i + 2]);
+  const old = { points: all };
+  for (let i = 0; i < old.points.length; i += 3) {
+    const key = at(old.points[i]) + ',' + at(old.points[i + 1]) + ',' + at(old.points[i + 2]);
+    if (grid.has(key)) grid.get(key).push(i); else grid.set(key, [i]);
+  }
+  want = old;
+  let worst = 0;
+  for (let i = 0; i < got.points.length; i += 3) {
+    let best = Infinity;
+    const [cx, cy, cz] = [at(got.points[i]), at(got.points[i + 1]), at(got.points[i + 2])];
+    for (let dx = -3; dx <= 3; dx++) for (let dy = -3; dy <= 3; dy++) for (let dz = -3; dz <= 3; dz++) {
+      for (const j of grid.get((cx + dx) + ',' + (cy + dy) + ',' + (cz + dz)) || []) {
+        const d = Math.hypot(got.points[i] - want.points[j], got.points[i + 1] - want.points[j + 1], got.points[i + 2] - want.points[j + 2]);
+        if (d < best) best = d;
+      }
+    }
+    if (best > worst) worst = best;
+  }
+  return { part: got.name, trianglesBefore: tris, trianglesAfter: got.tris, maxMm: Math.round(worst * 1e6) / 1e3,
+    pass: worst <= rebuiltBudget + 1e-9 };
 }
 
 /** Intentional edit: same triangle count and UV set (topology and UVs untouched), and every point of either
@@ -403,7 +451,7 @@ function editedPart(want, got) {
     for (let i = 0; i < from.length; i += 3) {
       let best = Infinity;
       const [cx, cy, cz] = [at(from[i]), at(from[i + 1]), at(from[i + 2])];
-      for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) for (let dz = -1; dz <= 1; dz++) {
+      for (let dx = -3; dx <= 3; dx++) for (let dy = -3; dy <= 3; dy++) for (let dz = -3; dz <= 3; dz++) {  // up to 15 mm
         for (const j of grid.get((cx + dx) + ',' + (cy + dy) + ',' + (cz + dz)) || []) {
           const d = Math.hypot(from[i] - to[j], from[i + 1] - to[j + 1], from[i + 2] - to[j + 2]);
           if (d < best) best = d;
@@ -440,7 +488,10 @@ const corneaAlpha = Number(read('--cornea-alpha') || 0.01);
 const maxStrictDrift = Number(read('--max-loop-normal-drift') || 0.005); // CORNEA_EXPORT_ALPHA in inkwave_blender_import.py
 const edited = read('--edited') ? new RegExp(read('--edited')) : null;
 const editBudget = Number(read('--edit-budget-mm') || 0) / 1000;
-if (edited && !(editBudget > 0)) { console.error('--edited needs --edit-budget-mm > 0'); process.exit(2); }
+const rebuilt = read('--rebuilt') ? new RegExp(read('--rebuilt')) : null;
+const rebuiltBudget = Number(read('--rebuilt-budget-mm') || read('--edit-budget-mm') || 0) / 1000;
+const restyled = read('--restyled') ? new RegExp(read('--restyled')) : null;
+if ((edited || rebuilt) && !(editBudget > 0)) { console.error('--edited/--rebuilt need --edit-budget-mm > 0'); process.exit(2); }
 if (!treePath || !glbs.length) {
   console.error('usage: --tree <export_tree.json> --glb label=file.glb [...] [--baseline base.glb] [--out report.json]');
   process.exit(2);
@@ -491,6 +542,7 @@ for (const r of summary.contracts) {
 for (const r of summary.surfaces) {
   console.log(`${r.pass ? 'PASS' : 'FAIL'} surface  ${r.label.padEnd(7)} ${r.file} vs ${r.baseline} triDiff=${r.differingTriangles} normals>15deg=${r.normalDrift.over15}/${r.normalsChecked} max=${r.maxShadingNormalDeg} vertSplit=${r.vertexSplitDelta >= 0 ? '+' : ''}${r.vertexSplitDelta} tex=${r.materialsWithTexture}/${r.baselineMaterialsWithTexture}`);
   console.log(`     per-loop normals >15deg ${r.perLoopNormals.over15}/${r.perLoopNormals.checked} (${r.perLoopNormals.worstParts.map((w) => w.part + ':' + w.normals).join(', ')})`);
+  for (const e of r.rebuilt) console.log(`     rebuilt ${e.part}: ${e.trianglesBefore} -> ${e.trianglesAfter} triangles, max ${e.maxMm} mm from the old mesh ${e.pass ? 'within budget' : 'OUTSIDE BUDGET'}`);
   for (const e of r.edited) console.log(`     edited ${e.part}: ${e.verticesMoved} verts moved, max ${e.hausdorffMm} mm, uv diff ${e.uvDifferences} ${e.pass ? 'within budget' : 'OUTSIDE BUDGET'}`);
   console.log(`     materials ${r.materials.compared} compared, ${r.materials.differenceCount} undocumented diffs, ${r.materials.documented} documented (${r.materials.documentedKinds.join('; ')}); swaps=${r.assignments.materialSwaps} extras ${r.assignments.nodesWithExtras}/${r.assignments.baselineNodesWithExtras}`);
   for (const issue of r.issues) console.log(`     - ${issue}`);
