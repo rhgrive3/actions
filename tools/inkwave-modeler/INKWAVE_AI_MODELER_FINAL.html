@@ -4591,10 +4591,7 @@ async function showGLBPreview(url) {
 }
 $('exportBlender').onclick = async () => { const button = $('exportBlender'); button.disabled = true; button.textContent = 'Exporting…'; try { await exportBlenderGLB(true); button.textContent = 'Export to Blender (.glb)'; } catch (e) { console.error(e); $('error').style.display = 'block'; $('error').textContent = 'GLB export failed: ' + e.message; button.textContent = 'Export to Blender (.glb)'; } finally { button.disabled = false; } };
 let localPreviewURL = null;
-$('loadWorkspaceGLB').onclick = async () => {
-  const button = $('loadWorkspaceGLB');
-  button.disabled = true;
-  button.textContent = 'Loading Blender model…';
+async function loadWorkspaceBlenderModel({ showError = true } = {}) {
   const url = new URL('blender/INKWAVE_GAME.glb', document.baseURI);
   url.searchParams.set('v', String(Date.now()));
   try {
@@ -4604,11 +4601,23 @@ $('loadWorkspaceGLB').onclick = async () => {
     $('viewBlenderGLB').value = '';
     $('error').style.display = 'none';
     $('blenderPreviewStatus').textContent = `Viewing workspace INKWAVE_GAME.glb: ${info.meshes} meshes, ${Math.round(info.tris).toLocaleString()} triangles.`;
+    return { ok: true, info };
   } catch (e) {
     await showGLBPreview(null);
     $('blenderPreviewStatus').textContent = '';
-    $('error').style.display = 'block';
-    $('error').textContent = 'Workspace GLB could not load. Open this page through the workspace HTTP preview server: ' + e.message;
+    if (showError) {
+      $('error').style.display = 'block';
+      $('error').textContent = 'Workspace GLB could not load. Open this page through the workspace HTTP preview server: ' + e.message;
+    }
+    return { ok: false, error: e };
+  }
+}
+$('loadWorkspaceGLB').onclick = async () => {
+  const button = $('loadWorkspaceGLB');
+  button.disabled = true;
+  button.textContent = 'Loading Blender model…';
+  try {
+    await loadWorkspaceBlenderModel({ showError: true });
   } finally {
     button.disabled = false;
     button.textContent = 'View workspace Blender model';
@@ -4704,7 +4713,21 @@ $('mode').value = currentMode;
 rebuild(false);
 switchCamera(profile.view?.mode || 'perspective');
 frame();
-{ const boot = $('bootStatus'); if (boot) { boot.innerHTML = '<b>INKWAVE ready</b><small>Aqua Tech reference preset loaded</small>'; boot.className = 'ok'; setTimeout(() => boot.remove(), 450); } }
+
+// Default viewport is the Blender-authored game GLB. Keep the procedural generator alive behind it for editing,
+// export/QA hooks and as a fail-safe when the page is opened without an HTTP server.
+{
+  const boot = $('bootStatus');
+  if (boot) boot.innerHTML = '<b>INKWAVEを起動中…</b><small>Blender workspace model を読み込んでいます。</small>';
+  const blenderBoot = await loadWorkspaceBlenderModel({ showError: false });
+  if (boot) {
+    boot.innerHTML = blenderBoot.ok
+      ? '<b>INKWAVE ready</b><small>Blender workspace model loaded</small>'
+      : '<b>INKWAVE ready</b><small>Blender GLB unavailable — procedural fallback loaded</small>';
+    boot.className = 'ok';
+    setTimeout(() => boot.remove(), 450);
+  }
+}
 window.__INKWAVE_READY = true;
 
 })().catch(err=>{
