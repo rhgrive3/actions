@@ -1,0 +1,6 @@
+{
+  "pass": true,
+  "reapply_glb_byte_identical": true,
+  "missing_removal_manifest_rejected": true,
+  "invalid_output_written": false
+}

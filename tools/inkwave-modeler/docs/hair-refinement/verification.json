@@ -1,0 +1,37 @@
+{
+  "saved-master-check": {
+    "pass": true,
+    "meshes": 229,
+    "hair_meshes": 50,
+    "triangles": 384912,
+    "non_hair_meshes": 179,
+    "non_hair_objects_unchanged": 199,
+    "non_hair_materials_unchanged": 86,
+    "unpacked_images": [],
+    "all_vertices_finite": true,
+    "blender": "5.2.2 LTS"
+  },
+  "glb-check": {
+    "pass": true,
+    "mesh_nodes": 229,
+    "hair_meshes": 50,
+    "non_hair_meshes_all_attributes_and_indices_identical": 179,
+    "glb_sha256": "55158b8805a51808dddfd6537b143f0981568a5ca7713d36bca87acc6f31c5aa",
+    "materials": 129,
+    "images": 109
+  },
+  "publication": {
+    "before": {
+      "INKWAVE_CHARACTER_MASTER.blend": "8dcf395ad9f245605fd705d7eb193bebcdd86e06ea1bf177033ed1f490d6fd15",
+      "INKWAVE_CHARACTER_MASTER.glb": "d89bce608e3a174d8310640bf5945ecafbe9b5caf2564858be8724dada5fbee5",
+      "INKWAVE_GAME.glb": "d89bce608e3a174d8310640bf5945ecafbe9b5caf2564858be8724dada5fbee5"
+    },
+    "after": {
+      "INKWAVE_CHARACTER_MASTER.blend": "5e185ad0b2a1d6159efaf9eb32f3c083ffafeba5ab7cf48d15140f3058ae8d93",
+      "INKWAVE_CHARACTER_MASTER.glb": "55158b8805a51808dddfd6537b143f0981568a5ca7713d36bca87acc6f31c5aa",
+      "INKWAVE_GAME.glb": "55158b8805a51808dddfd6537b143f0981568a5ca7713d36bca87acc6f31c5aa"
+    },
+    "hair_library_sha256": "9f742d95ed110748aae38562ee77807c1bf09357b5afdb0ba2155cdcbcb69dbd",
+    "revision": "20260927-v5"
+  }
+}

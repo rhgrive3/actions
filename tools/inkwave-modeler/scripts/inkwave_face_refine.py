@@ -202,6 +202,9 @@ def current_coords(obj):
 
 def check_record(force):
     """The meshes must be exactly what the stored record produces, or a re-run would erase unrecorded edits."""
+    if any(m.name.endswith('__prelook') for m in bpy.data.meshes):
+        raise RuntimeError('the face look pass is applied: run scripts/inkwave_face_look.py -- --restore first, '
+                           'then this script, then inkwave_face_look.py again')
     stored = bpy.data.objects['HEAD_face'].get('inkwave_face_refine')
     record = json.loads(stored) if stored else {'params': {}, 'fields': []}
     p = dict(PARAMS)
