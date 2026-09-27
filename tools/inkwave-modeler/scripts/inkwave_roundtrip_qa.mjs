@@ -2,7 +2,11 @@
 //
 //   node scripts/inkwave_roundtrip_qa.mjs --tree <export_tree.json> \
 //     --glb source=blender/inkwave_character_source.glb --glb master=blender/INKWAVE_CHARACTER_MASTER.glb \
-//     --glb game=blender/INKWAVE_GAME.glb --out <report.json>
+//     --glb game=blender/INKWAVE_GAME.glb --out <report.json> [--edited '^HEAD_(face|skin)' --edit-budget-mm 5]
+//
+// --edited/--edit-budget-mm declare intentional sculpt edits (scripts/inkwave_face_refine.py): matching meshes may
+// move, but only within the budget (two-way nearest-point distance), with the same triangle count and the same UV
+// coordinates; every other mesh keeps the exact checks.
 //
 // The browser QA hook __INKWAVE_QA.exportTree() is the contract: per-mesh world-space vertex bounds, triangle
 // and vertex counts, and material names straight out of the live Three.js runtime. Every GLB in the chain must
@@ -130,7 +134,12 @@ function surfaceFingerprint(world, pos, nrm, idx, count, uv) {
       + '#' + cross.map((x) => Math.round((x / len) * 1e3)).join(',');
     surface.set(key, (surface.get(key) || 0) + 1);
   }
-  return { surface, normals, strict };
+  let uvs = null;
+  if (uv) {
+    uvs = new Map();
+    for (let i = 0; i < count; i++) { const k = Math.round(uv[i * 2] * 1e4) + ',' + Math.round(uv[i * 2 + 1] * 1e4); uvs.set(k, (uvs.get(k) || 0) + 1); }
+  }
+  return { surface, normals, strict, points: worldPos, uvs };
 }
 
 function glbTree(file, { keepSurface = false } = {}) {
@@ -166,6 +175,7 @@ function glbTree(file, { keepSurface = false } = {}) {
         const print = keepSurface ? surfaceFingerprint(world, pos, nrm, idx, count, uvs) : null;
         parts.push({ name, depth, chain: chain.join('/'), tris: Math.round(triangles), verts: count,
           surface: print?.surface || null, normals: print?.normals || null, strict: print?.strict || null,
+          points: print?.points || null, uvs: print?.uvs || null,
           material: material ? material.name || `material_${prim.material}` : '',
           map: !!material?.pbrMetallicRoughness?.baseColorTexture,
           uv: prim.attributes.TEXCOORD_0 !== undefined, normal: prim.attributes.NORMAL !== undefined,
@@ -264,7 +274,7 @@ function compare(label, expected, actual, tolerance, { exactVerts = true } = {})
     if (!byName.has(key)) byName.set(key, []);
     byName.get(key).push(part);
   }
-  let worstBound = 0, worstPart = null, missing = 0, mismatched = 0, noUV = 0, noNormal = 0;
+  let worstBound = 0, worstPart = null, missing = 0, mismatched = 0, noUV = 0, noNormal = 0, worstEdit = 0;
   const used = new Set(); // one GLB mesh can satisfy one contract entry only
   for (const want of expected.parts) {
     const candidates = (byName.get(norm(want.name)) || []).filter((c) => !used.has(c));
@@ -280,6 +290,11 @@ function compare(label, expected, actual, tolerance, { exactVerts = true } = {})
     for (let k = 0; k < 3; k++) {
       for (const key of ['min', 'max']) {
         const delta = Math.abs(want[key][k] - got[key][k]);
+        if (edited && edited.test(want.name)) {
+          if (delta > editBudget) add(`${want.name}: edited bounds ${key}[${k}] moved ${(delta * 1000).toFixed(2)} mm > budget`);
+          if (delta > worstEdit) worstEdit = delta;
+          continue;
+        }
         if (delta > worstBound) { worstBound = delta; worstPart = `${want.name}.${key}[${k}] ${got[key][k]} vs ${want[key][k]}`; }
       }
     }
@@ -294,6 +309,7 @@ function compare(label, expected, actual, tolerance, { exactVerts = true } = {})
     vertexDelta: actual.verts - expected.verts, rootExtraKeys: actual.rootExtras ? Object.keys(actual.rootExtras) : [],
     materials: actual.materials, images: actual.images, textures: actual.textures, extensionsUsed: actual.extensionsUsed,
     roots: actual.roots, min: actual.min, max: actual.max, worstBoundDrift: worstBound, worstBoundAt: worstPart,
+    editedBoundDriftMm: Math.round(worstEdit * 1e6) / 1e3,
     missing, mismatched, tolerance, pass: issues.length === 0, issues };
 }
 
@@ -303,12 +319,19 @@ function compareSurface(label, baseline, actual, maxNormalDrift) {
   const issues = [];
   const index = new Map(actual.parts.map((part) => [norm(part.name), part]));
   let differingTriangles = 0, missing = 0, maxAngle = 0, maxAngleAt = null, checked = 0, unmatchedPositions = 0;
+  const editedParts = [];
   const drift = { over1: 0, over5: 0, over15: 0 }, worst = [], strictWorst = [];
   let strictChecked = 0, strictOver15 = 0;
   for (const want of baseline.parts) {
     const got = index.get(norm(want.name));
     if (!got) { missing++; if (missing <= 5) issues.push(`missing mesh ${want.name}`); continue; }
     if (got.tris !== want.tris) { issues.push(`${want.name}: ${got.tris} triangles != ${want.tris}`); continue; }
+    if (edited && edited.test(want.name)) {
+      const report = editedPart(want, got);
+      editedParts.push(report);
+      if (!report.pass) issues.push(`${want.name}: edit outside budget (${report.hausdorffMm} mm, uv diff ${report.uvDifferences})`);
+      continue;
+    }
     let differs = 0;
     for (const [key, count] of want.surface) differs += Math.abs(count - (got.surface.get(key) || 0));
     for (const key of got.surface.keys()) if (!want.surface.has(key)) differs += got.surface.get(key);
@@ -356,7 +379,45 @@ function compareSurface(label, baseline, actual, maxNormalDrift) {
     maxShadingNormalDeg: Math.round(maxAngle * 1000) / 1000, maxShadingNormalAt: maxAngleAt,
     normalsChecked: checked, unmatchedPositions, normalDrift: drift, worstParts: worst.slice(0, 5),
     perLoopNormals: { checked: strictChecked, over15: strictOver15, share: strictChecked ? Math.round(strictOver15 / strictChecked * 1e5) / 1e5 : 0, worstParts: strictWorst.slice(0, 6) },
-    pass: issues.length === 0, issues };
+    edited: editedParts, pass: issues.length === 0, issues };
+}
+
+/** Intentional edit: same triangle count and UV set (topology and UVs untouched), and every point of either
+ *  surface within the budget of the other one (two-way nearest-vertex distance, 5 mm hash grid). */
+function editedPart(want, got) {
+  // UV coordinates as a set: Blender re-splits seam vertices (see vertexSplitDelta), so per-vertex counts differ
+  // even on untouched meshes; a UV missing on either side is a real change of the layout.
+  let uvDifferences = 0;
+  if (want.uvs && got.uvs) {
+    for (const key of want.uvs.keys()) if (!got.uvs.has(key)) uvDifferences++;
+    for (const key of got.uvs.keys()) if (!want.uvs.has(key)) uvDifferences++;
+  }
+  const oneWay = (from, to) => {
+    const cell = 0.005, grid = new Map();
+    const at = (x) => Math.floor(x / cell);
+    for (let i = 0; i < to.length; i += 3) {
+      const key = at(to[i]) + ',' + at(to[i + 1]) + ',' + at(to[i + 2]);
+      if (grid.has(key)) grid.get(key).push(i); else grid.set(key, [i]);
+    }
+    let worst = 0, moved = 0;
+    for (let i = 0; i < from.length; i += 3) {
+      let best = Infinity;
+      const [cx, cy, cz] = [at(from[i]), at(from[i + 1]), at(from[i + 2])];
+      for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) for (let dz = -1; dz <= 1; dz++) {
+        for (const j of grid.get((cx + dx) + ',' + (cy + dy) + ',' + (cz + dz)) || []) {
+          const d = Math.hypot(from[i] - to[j], from[i + 1] - to[j + 1], from[i + 2] - to[j + 2]);
+          if (d < best) best = d;
+        }
+      }
+      if (best > 1e-6) moved++;
+      if (best > worst) worst = best;
+    }
+    return { worst, moved };
+  };
+  const a = oneWay(want.points, got.points), b = oneWay(got.points, want.points);
+  const hausdorff = Math.max(a.worst, b.worst);
+  return { part: want.name, triangles: got.tris, uvDifferences, verticesMoved: b.moved,
+    hausdorffMm: Math.round(hausdorff * 1e6) / 1e3, pass: hausdorff <= editBudget + 1e-9 && uvDifferences === 0 };
 }
 
 /** Material -> base-colour-texture map, so a lost or merged image shows up as a named difference. */
@@ -377,6 +438,9 @@ const maxNormalDrift = Number(read('--max-normal-drift') || 0.0005); // share of
 const corneaAlpha = Number(read('--cornea-alpha') || 0.01);
 // Per-loop (position + UV) normals may drift only where Blender cannot encode the runtime normal: see blender/README.md.
 const maxStrictDrift = Number(read('--max-loop-normal-drift') || 0.005); // CORNEA_EXPORT_ALPHA in inkwave_blender_import.py
+const edited = read('--edited') ? new RegExp(read('--edited')) : null;
+const editBudget = Number(read('--edit-budget-mm') || 0) / 1000;
+if (edited && !(editBudget > 0)) { console.error('--edited needs --edit-budget-mm > 0'); process.exit(2); }
 if (!treePath || !glbs.length) {
   console.error('usage: --tree <export_tree.json> --glb label=file.glb [...] [--baseline base.glb] [--out report.json]');
   process.exit(2);
@@ -427,6 +491,7 @@ for (const r of summary.contracts) {
 for (const r of summary.surfaces) {
   console.log(`${r.pass ? 'PASS' : 'FAIL'} surface  ${r.label.padEnd(7)} ${r.file} vs ${r.baseline} triDiff=${r.differingTriangles} normals>15deg=${r.normalDrift.over15}/${r.normalsChecked} max=${r.maxShadingNormalDeg} vertSplit=${r.vertexSplitDelta >= 0 ? '+' : ''}${r.vertexSplitDelta} tex=${r.materialsWithTexture}/${r.baselineMaterialsWithTexture}`);
   console.log(`     per-loop normals >15deg ${r.perLoopNormals.over15}/${r.perLoopNormals.checked} (${r.perLoopNormals.worstParts.map((w) => w.part + ':' + w.normals).join(', ')})`);
+  for (const e of r.edited) console.log(`     edited ${e.part}: ${e.verticesMoved} verts moved, max ${e.hausdorffMm} mm, uv diff ${e.uvDifferences} ${e.pass ? 'within budget' : 'OUTSIDE BUDGET'}`);
   console.log(`     materials ${r.materials.compared} compared, ${r.materials.differenceCount} undocumented diffs, ${r.materials.documented} documented (${r.materials.documentedKinds.join('; ')}); swaps=${r.assignments.materialSwaps} extras ${r.assignments.nodesWithExtras}/${r.assignments.baselineNodesWithExtras}`);
   for (const issue of r.issues) console.log(`     - ${issue}`);
 }

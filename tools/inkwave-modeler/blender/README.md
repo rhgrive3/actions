@@ -1,7 +1,9 @@
 # INKWAVE — Blender 5.2 マスターへの移行レポート
 
 対象: `../INKWAVE_AI_MODELER_FINAL.html` の Aqua Tech リファレンスキャラ（`inkwave-ref-aquatech`、366,476 三角形）。
-状態: **移行は完了**。ジオメトリは完全一致。材料は下の「変換」の表のとおり。顔の作り込みはまだ途中（`../docs/face-refinement/README.md`）。
+状態: **移行は完了**。元の `inkwave_character_source.glb` は Three.js の形状を保持する基準データ。
+現在の Blender マスターには、その後の顔のスカルプトと靴下の色柄修正が入っているため、元データとは意図的に差がある。
+顔の測定と残差は `../docs/face-refinement/README.md` に記録する。
 
 Blender 側で作り直したものはない。ブラウザのランタイムが作った最終バッファ（スカルプト、ヘアスプライン、ディテールの変換を適用済み）を
 そのまま GLB に書き出し、Blender はそれを読み込んで、glTF が運べない部分だけを足している。
@@ -18,7 +20,19 @@ Blender 側で作り直したものはない。ブラウザのランタイムが
 | `references/` | HTML に埋め込まれた参照画像を取り出したもの（front / back / left / persp）。 |
 | `../docs/blender-migration/` | Three.js と Blender の 5 方向比較画像と `view_compare.json`、ヘアの影の証拠、ゲーム GLB を Three.js で表示した比較。 |
 
-## 2. 作り直す手順
+### ブラウザで Blender 版を見る
+
+`tools/inkwave-modeler` で `python3 -m http.server 8765 --bind 0.0.0.0` を起動し、
+`http://localhost:8765/INKWAVE_AI_MODELER_FINAL.html` をブラウザで開く。
+リモート VS Code ならポート 8765 を転送する。左の **View workspace Blender model** を押すと、
+隣の `blender/INKWAVE_GAME.glb` が直接読み込まれる（実機側のファイルピッカーは不要）。
+画面のドラッグで回転でき、Front / Right / Back / Left / Perspective でも確認できる。
+**Show procedural model** で生成版へ戻る。
+比較画像は `../docs/blender-migration/compare_*.jpg` にある。
+
+## 2. 元の Three.js モデルから移行し直す手順
+
+この節は**初回移行の再現**用。現在の編集済みマスターに対して実行すると、Blender で行った顔の造形が移行時点に戻る。
 
 `TMPDIR` などは永続ディレクトリに向けること（`/tmp` は使わない）。Playwright は `playwright` として import できること、
 `../analysis/three.min.js` があること（`../analysis/README.md` の Setup）。
@@ -69,6 +83,11 @@ QA は 129 材料をすべて値で比べて、記録していない差は 0。B
 | 角膜: AdditiveBlending の黒いクリアコート面 | Transparent + 光沢面の加算（ランタイムと同じ） | BLEND、アルファ 0.01、クリアコートあり。スペキュラを残すエンジン（Filament、Unity HDRP、Unreal）ではハイライトが出る。three.js では虹彩がそのまま見える。以前の「不透明な黒いふた」は解消 |
 | 服と脚の bumpMap（`EXT_materials_bump`、8 材料） | タンジェント空間の法線マップ（Normal Map ノード）。元の高さ画像も `INKWAVE_BUMP_HEIGHT` として材料に残す | `normalTexture`（glTF コア） |
 
+移行後の小修正: `textures/legwear_teal_refined.png` を `scripts/inkwave_legwear_refine.py` で
+`legwear_texture` にパックした。正面の脚のティール色の帯を参照どおり足首近くまで伸ばした。
+この工程で変わるのは該当画像だけで、229 メッシュの頂点・法線・UV・面の index は全て同一だった。
+較正した正面の脚領域におけるティール色の画素数は、参照 441、移行時 0、修正後 486（同じ HSV 閾値）。
+
 法線マップの強さ: Three r159 のバンプは **画面の 1 ピクセルあたりの高さの差** で計算する（`perturbNormalArb` が位置の微分を正規化する）。
 そのためランタイムの見た目は画面の解像度で変わる。変換は全身を映すモデラーの構図（約 500 px/m、検証カメラは 420〜500 px/m）に合わせた:
 高さ = `bumpScale / 500` m、1 ピクセルが覆うテクセル数でボックスフィルタをかけてから微分。結果は `migration_counts.json` の `bump_to_normal_maps`。
@@ -78,9 +97,11 @@ QA は 129 材料をすべて値で比べて、記録していない差は 0。B
 
 ## 5. QA の結果（2026-09-27、Blender 5.2.2 LTS）
 
-### 5.1 ジオメトリと材料（`scripts/inkwave_roundtrip_qa.mjs`）
+### 5.1 移行時点のジオメトリと材料（`scripts/inkwave_roundtrip_qa.mjs`）
 
-source / master / game / 再オープン後の再書き出し の 4 つとも **ROUNDTRIP PASS**。
+移行直後の source / master / game / 再オープン後の再書き出し の 4 つとも **ROUNDTRIP PASS**。
+以下の「完全一致」は**移行時点**の記録であり、現在の編集済みマスターには当てはまらない。
+現在の顔の検査では `--edited '^HEAD_(face|skin(_0[2-9])?)$' --edit-budget-mm 5` を使い、顔以外の形状・UV・階層の保存と、顔の意図的な変位量を別々に検証する。
 
 | 項目 | 結果 |
 |---|---|
@@ -98,7 +119,7 @@ source / master / game / 再オープン後の再書き出し の 4 つとも **
 再オープンの検査（`scripts/inkwave_blender_reopen_check.py`、別プロセス）: .blend を開き、229 メッシュ / 366,476 三角形 / 129 材料、
 参照 Empty 4 つ（パック済み）、パックされていない画像 0、1 フレームのレンダー成功、GLB の再書き出しも上の QA に合格。
 
-### 5.2 5 方向の比較（`scripts/inkwave_view_compare.py`）
+### 5.2 移行時点の 5 方向の比較（`scripts/inkwave_view_compare.py`）
 
 Blender はシーンリニアの EXR を出し、両方に Three r159 と同じ ACES Filmic（露出 0.92）と sRGB を適用して、同じ背景色で比べた。
 dRGB はシルエットの内側での平均の差（0〜255）、明るさの比は Blender / Three.js。
@@ -134,5 +155,5 @@ dRGB はシルエットの内側での平均の差（0〜255）、明るさの�
 | 形を直す | Blender の `INKWAVE_MASTER` の各コレクション。ランタイムに戻す場合は HTML の生成コード（`buildBody`、`makeHeadLoft`、`buildHair` など）を直して、2 章の手順で作り直す |
 | 材料を直す | Principled BSDF（GLB に入る値）。Blender だけの見た目は `INKWAVE_CYCLES_OUTPUT` 側 |
 | ヘアの色 | HTML の `profile.materials`（`hairTipColor` など）を変えて書き出し直す。焼き込みマップは書き出しのたびに作り直される |
-| 顔 | `../docs/face-refinement/README.md` の「残り」。顎、頬、鼻は第 1 段階だけ入っていて、参照との照合はまだ |
+| 顔 | `HEAD_face` を Edit / Sculpt Mode で編集する。`../docs/face-refinement/README.md` に較正レンダーと輪郭の測定、再現スクリプトがある |
 | ゲーム用の最適化 | まだしていない（LOD、テクスチャの圧縮、Draco/Meshopt、リグ）。`INKWAVE_GAME.glb` は現在マスターと同じ |

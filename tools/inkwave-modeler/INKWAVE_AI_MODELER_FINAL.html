@@ -385,6 +385,10 @@ textarea{
     <div class="row"><button id="undoBtn">Undo</button><button id="redoBtn">Redo</button></div>
     <button id="resetShape">Reset shape to base body</button>
     <button id="exportBlender" type="button">Export to Blender (.glb)</button>
+    <button id="loadWorkspaceGLB" type="button">View workspace Blender model</button>
+    <label class="field" style="margin-top:8px"><span>LOCAL GLB (OPTIONAL)</span><input id="viewBlenderGLB" type="file" accept=".glb,model/gltf-binary"></label>
+    <button id="restoreProcedural" type="button">Show procedural model</button>
+    <div id="blenderPreviewStatus" class="help" aria-live="polite"></div>
   </div>
 
   <div id="error" class="error"></div>
@@ -4586,6 +4590,55 @@ async function showGLBPreview(url) {
   return { meshes, tris };
 }
 $('exportBlender').onclick = async () => { const button = $('exportBlender'); button.disabled = true; button.textContent = 'Exporting…'; try { await exportBlenderGLB(true); button.textContent = 'Export to Blender (.glb)'; } catch (e) { console.error(e); $('error').style.display = 'block'; $('error').textContent = 'GLB export failed: ' + e.message; button.textContent = 'Export to Blender (.glb)'; } finally { button.disabled = false; } };
+let localPreviewURL = null;
+$('loadWorkspaceGLB').onclick = async () => {
+  const button = $('loadWorkspaceGLB');
+  button.disabled = true;
+  button.textContent = 'Loading Blender model…';
+  const url = new URL('blender/INKWAVE_GAME.glb', document.baseURI);
+  url.searchParams.set('v', String(Date.now()));
+  try {
+    const info = await showGLBPreview(url.href);
+    if (localPreviewURL) URL.revokeObjectURL(localPreviewURL);
+    localPreviewURL = null;
+    $('viewBlenderGLB').value = '';
+    $('error').style.display = 'none';
+    $('blenderPreviewStatus').textContent = `Viewing workspace INKWAVE_GAME.glb: ${info.meshes} meshes, ${Math.round(info.tris).toLocaleString()} triangles.`;
+  } catch (e) {
+    await showGLBPreview(null);
+    $('blenderPreviewStatus').textContent = '';
+    $('error').style.display = 'block';
+    $('error').textContent = 'Workspace GLB could not load. Open this page through the workspace HTTP preview server: ' + e.message;
+  } finally {
+    button.disabled = false;
+    button.textContent = 'View workspace Blender model';
+  }
+};
+$('viewBlenderGLB').onchange = async (event) => {
+  const file = event.target.files?.[0]; if (!file) return;
+  const url = URL.createObjectURL(file);
+  try {
+    const info = await showGLBPreview(url);
+    if (localPreviewURL) URL.revokeObjectURL(localPreviewURL);
+    localPreviewURL = url;
+    $('error').style.display = 'none';
+    $('blenderPreviewStatus').textContent = `Viewing ${file.name}: ${info.meshes} meshes, ${Math.round(info.tris).toLocaleString()} triangles. Choose another GLB or select “Show procedural model” to restore.`;
+  } catch (e) {
+    URL.revokeObjectURL(url);
+    await showGLBPreview(null);
+    $('blenderPreviewStatus').textContent = '';
+    $('error').style.display = 'block';
+    $('error').textContent = 'GLB preview failed: ' + e.message;
+  }
+};
+$('restoreProcedural').onclick = async () => {
+  await showGLBPreview(null);
+  if (localPreviewURL) URL.revokeObjectURL(localPreviewURL);
+  localPreviewURL = null;
+  $('viewBlenderGLB').value = '';
+  $('blenderPreviewStatus').textContent = '';
+  $('error').style.display = 'none';
+};
 
 // ---- QA hooks for automated agents --------------------------------------------------------------------------------
 window.__INKWAVE_QA = {

@@ -7,7 +7,7 @@ const errs = [];
 page.on('pageerror', (e) => errs.push('pageerror: ' + e.message));
 page.on('console', (m) => { if (m.type() === 'error') errs.push('console: ' + m.text()); });
 await page.route('**/three.min.js', (r) => r.fulfill({ body: three, contentType: 'application/javascript' }));
-await page.goto('file://' + fs.realpathSync(process.argv[2]));
+await page.goto(/^https?:\/\//.test(process.argv[2]) ? process.argv[2] : 'file://' + fs.realpathSync(process.argv[2]));
 await page.waitForFunction(() => window.__INKWAVE_READY || (window.__INKWAVE_BOOT_ERRORS || []).length, null, { timeout: 120000 });
 const r = await page.evaluate(() => {
   const Q = window.__INKWAVE_QA, out = { boot: [...(window.__INKWAVE_BOOT_ERRORS || [])], presets: [] };
@@ -23,5 +23,19 @@ const r = await page.evaluate(() => {
   }
   Q.setProfile(base); out.sweepErrors = bad; out.final = Q.stats(); return out;
 });
+if (process.argv[3]) {
+  if (page.url().startsWith('http')) {
+    await page.locator('#loadWorkspaceGLB').click();
+    await page.waitForFunction(() => document.querySelector('#blenderPreviewStatus')?.textContent?.startsWith('Viewing workspace '), null, { timeout: 120000 });
+    r.workspaceGLBPreview = await page.locator('#blenderPreviewStatus').textContent();
+    await page.locator('#restoreProcedural').click();
+    r.workspaceGLBRestored = await page.locator('#blenderPreviewStatus').evaluate((el) => el.textContent === '');
+  }
+  await page.locator('#viewBlenderGLB').setInputFiles(fs.realpathSync(process.argv[3]));
+  await page.waitForFunction(() => document.querySelector('#blenderPreviewStatus')?.textContent?.startsWith('Viewing '), null, { timeout: 120000 });
+  r.glbPreview = await page.locator('#blenderPreviewStatus').textContent();
+  await page.locator('#restoreProcedural').click();
+  r.glbRestored = await page.locator('#viewBlenderGLB').evaluate((el) => el.value === '');
+}
 console.log(JSON.stringify(r, null, 1)); console.log('page errors:', errs.slice(0, 10));
 await browser.close();
