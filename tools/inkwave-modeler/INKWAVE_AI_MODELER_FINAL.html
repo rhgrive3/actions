@@ -84,7 +84,10 @@ QA TOOLS BUILT IN
 - Slot visibility + isolate, wireframe, triangle stats per slot.
 - window.__INKWAVE_QA: getProfile, setProfile, rebuild, setView, render(view, mode, only),
   renderPersp(az, el, dist, W, H, target, fov, only), stats, errors — for automated agents.
+  tree / exportTree give the exact per-mesh world bounds + material contract, exportGLB writes the
+  Blender source GLB (same as the "Export to Blender" button).
   Face-matching workflow and measurements: docs/face-refinement/README.md next to this file.
+  Blender 5.2 editable master, migration report and roundtrip QA: blender/README.md.
 
 QUALITY GATES
 Front/side/back silhouettes intentional; no pinching at neck/shoulder; eyes/face readable
@@ -201,6 +204,7 @@ textarea{
 #bootStatus.ok{opacity:0;pointer-events:none;transition:opacity .25s ease}
 #bootStatus.err{background:#28141a;border-color:#8f3b49;color:#ffd6dc}
 </style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.159.0/build/three.module.js"}}</script>
 <script>
 (function(){
   window.__INKWAVE_BOOT_ERRORS=[];
@@ -380,6 +384,11 @@ textarea{
     <h3>History</h3>
     <div class="row"><button id="undoBtn">Undo</button><button id="redoBtn">Redo</button></div>
     <button id="resetShape">Reset shape to base body</button>
+    <button id="exportBlender" type="button">Export to Blender (.glb)</button>
+    <button id="loadWorkspaceGLB" type="button">View workspace Blender model</button>
+    <label class="field" style="margin-top:8px"><span>LOCAL GLB (OPTIONAL)</span><input id="viewBlenderGLB" type="file" accept=".glb,model/gltf-binary"></label>
+    <button id="restoreProcedural" type="button">Show procedural model</button>
+    <div id="blenderPreviewStatus" class="help" aria-live="polite"></div>
   </div>
 
   <div id="error" class="error"></div>
@@ -1004,6 +1013,15 @@ function mergeGeos(list) {
   for (const g of list) g.dispose();
   return out;
 }
+/** Original component boundaries survive merge and later sculpting; export can split the final buffers. */
+function segmentRanges(geos, labels) {
+  let vertex = 0, index = 0;
+  return geos.map((g, i) => {
+    const vertexCount = g.attributes.position.count, indexCount = g.index ? g.index.count : vertexCount;
+    const range = { name: labels[i] || 'part_' + i, vertex, vertexCount, index, indexCount };
+    vertex += vertexCount; index += indexCount; return range;
+  });
+}
 /** Mirror a geometry across X (flips winding + normals). */
 function mirrorGeoX(g) {
   const c = g.clone();
@@ -1309,7 +1327,9 @@ function buildBody(R, opts = {}) {
   geos.push(legL.geo({ nu: 28, nv: 56 }), legR.geo({ nu: 28, nv: 56 }));
   geos.push(handL.geo, mirrorGeoX(handL.geo));
   if (opts.feet) { const f = buildFootL(R); geos.push(f, mirrorGeoX(f)); }
-  return { geo: mergeGeos(geos), torso, armL, armR, legL, legR, handFrameL: handL.frame };
+  const geo = mergeGeos(geos);
+  geo.userData.inkwaveSegments = segmentRanges(geos, ['torso', 'arm_L', 'arm_R', 'leg_L', 'leg_R', 'hand_L', 'hand_R', 'foot_L', 'foot_R']);
+  return { geo, torso, armL, armR, legL, legR, handFrameL: handL.frame };
 }
 
 // ===== module 30_head =====
@@ -1321,15 +1341,15 @@ function buildBody(R, opts = {}) {
 // =====================================================================================================
 const HEAD_TABLE = tbl([ // hy, a, bf, bb, cz, nf, nb   (chin/jaw rows: widest point walks forward → jaw line)
   [-0.1065, 0.0010, 0.0010, 0.0010, 0.068, 2.0, 2.0],
-  [-0.1055, 0.0075, 0.0180, 0.0140, 0.066, 1.9, 2.0],
-  [-0.1035, 0.0150, 0.0330, 0.0200, 0.060, 1.9, 2.0],
-  [-0.1000, 0.0240, 0.0450, 0.0240, 0.048, 1.9, 2.0],
-  [-0.0970, 0.0340, 0.0590, 0.0220, 0.034, 1.95, 2.0],
-  [-0.0910, 0.0435, 0.0725, 0.0220, 0.022, 1.95, 2.0],
-  [-0.0840, 0.0525, 0.0840, 0.0270, 0.014, 1.8, 2.0],
-  [-0.0770, 0.0610, 0.0965, 0.0320, 0.006, 1.75, 2.0],
-  [-0.0700, 0.0690, 0.1070, 0.0330, -0.003, 1.75, 2.0],
-  [-0.0630, 0.0770, 0.1080, 0.0480, -0.002, 1.75, 2.05],
+  [-0.1055, 0.0090, 0.0180, 0.0140, 0.066, 1.9, 2.0],
+  [-0.1035, 0.0200, 0.0330, 0.0200, 0.060, 1.9, 2.0],
+  [-0.1000, 0.0300, 0.0450, 0.0240, 0.048, 1.9, 2.0],
+  [-0.0970, 0.0380, 0.0590, 0.0220, 0.034, 1.95, 2.0],
+  [-0.0910, 0.0460, 0.0725, 0.0220, 0.022, 1.95, 2.0],
+  [-0.0840, 0.0510, 0.0840, 0.0270, 0.014, 1.8, 2.0],
+  [-0.0770, 0.0590, 0.0965, 0.0320, 0.006, 1.75, 2.0],
+  [-0.0700, 0.0670, 0.1070, 0.0330, -0.003, 1.75, 2.0],
+  [-0.0630, 0.0760, 0.1080, 0.0480, -0.002, 1.75, 2.05],
   [-0.0550, 0.0850, 0.1020, 0.0730, 0.004, 1.85, 2.1],
   [-0.0350, 0.0935, 0.1085, 0.1000, -0.002, 1.8, 2.15],
   [-0.0100, 0.0960, 0.1105, 0.1080, -0.005, 1.8, 2.2],
@@ -1347,6 +1367,8 @@ const HEAD_Y0 = -0.1065, HEAD_Y1 = 0.113;
 const HEAD_TH_MAP = (u) => u - 0.62 * Math.sin(TAU * u) / TAU;
 const HEAD_T_MAP = (v) => v - 0.18 * Math.sin(Math.PI * v);
 const FACE = { eyeX: 0.0475, eyeY: -0.0170, browY: 0.0, mouthY: -0.0648, noseY: -0.0470, cheekY: -0.042 };
+const JAW_SIDE_Z = tbl1([[-0.1065, 0.068], [-0.100, 0.048], [-0.091, 0.022], [-0.077, 0.006], [-0.063, -0.002], [-0.035, -0.002]]);
+const JAW_FRONT_Z = tbl1([[-0.1065, 0.069], [-0.100, 0.093], [-0.091, 0.0945], [-0.077, 0.1025], [-0.063, 0.106], [-0.035, 0.1065]]);
 
 function makeHeadLoft(R, faceModel, eyeShape = 'ref') {
   const s = R.shape, A = R.anat, fm = faceModel || {};
@@ -1355,11 +1377,16 @@ function makeHeadLoft(R, faceModel, eyeShape = 'ref') {
     const hy = lerp(HEAD_Y0, HEAD_Y1, t);
     HEAD_TABLE(hy, tmp);
     let a = tmp[0];
+    if (hy < -0.035) {
+      const k = clamp((hy - HEAD_Y0) / (-0.035 - HEAD_Y0), 0, 1);
+      a = 0.001 + 0.0925 * Math.pow(k, 0.47) + 0.0056 * gauss(hy + 0.055, 0.012);
+    }
     a *= 1 + (s.jawWidth * A.jaw - 1) * sstep(-0.045, -0.095, hy);
     a *= 1 + (s.cheekWidth - 1) * gauss(hy + 0.045, 0.028);
-    // A little more width through the lower cheek; retain the small pointed chin.
-    a += 0.0026 * gauss(hy + 0.065, 0.025);
-    o.a = a; o.bf = tmp[1]; o.bb = tmp[2]; o.oz = tmp[3]; o.nf = tmp[4]; o.nb = tmp[5];
+    // The reference keeps width through the chin, then rounds into a soft lower cheek.
+    a += 0.0014 * gauss(hy + 0.065, 0.025);
+    o.a = a; o.bf = hy < -0.035 ? JAW_FRONT_Z(hy) - JAW_SIDE_Z(hy) : tmp[1];
+    o.bb = tmp[2]; o.oz = hy < -0.035 ? JAW_SIDE_Z(hy) : tmp[3]; o.nf = tmp[4]; o.nb = tmp[5];
   };
   const nW = fm.noseWidth ?? 1, nH = fm.noseHeight ?? 1, nY = fm.noseTipY ?? 0;
   const ex = FACE.eyeX * s.eyeSpacing, ey = FACE.eyeY + s.eyeHeight;
@@ -1371,7 +1398,7 @@ function makeHeadLoft(R, faceModel, eyeShape = 'ref') {
     if (lat <= 0) return 0;
     const pz = z - J1z, py = y - J1y, sd = pz * juy - py * jux, sa = (pz * jux + py * juy) / jl;
     const win = sstep(0.12, 0.38, sa) * (1 - sstep(1.0, 1.25, sa));
-    return lat * win * (-0.0033 * sstep(0.0, -0.017, sd) + 0.0007 * gauss(sd - 0.0030, 0.0040));
+    return 0;
   };
   // ---- eyeball + lids (ax = |x| so both eyes share the math; eye units = metres / eyeScale) -------------------
   const es = s.eyeScale || 1, EL = eyeLidFrame(eyeShape), ecs = Math.cos(EL.slant), esn = Math.sin(EL.slant);
@@ -1384,20 +1411,20 @@ function makeHeadLoft(R, faceModel, eyeShape = 'ref') {
   const EB = eyeballParams(es, EL); EB.cx = ex + EB.du; EB.cy = ey + EB.dv;
   const zEye = (ax, y) => eyeballZ(EB, ax, y);
   const relief = (x, y, z) => {
-    const jd = y < -0.055 ? jaw(x, y, z) : 0;
+    const jd = jaw(x, y, z);
     const front = sstep(0.02, 0.07, z);
     if (front <= 0) return jd;
     const ax = Math.abs(x);
     let d = 0;
     // forehead → radix: rounded glabella flowing into a scooped bridge
-    d -= 0.0045 * gauss2(x, y + 0.0080, 0.030, 0.012);                                  // brow/forehead sits back → one smooth curve into the bridge
+    d -= 0.0040 * gauss2(x, y + 0.0080, 0.030, 0.014);                                  // soft radix
     // nose: small rounded ball tip on a low dorsum, underside tucked back to the lip
     const tipY = FACE.noseY + nY, ny = y - tipY;
-    const syN = (ny > 0 ? 0.0065 : 0.0075) * nH;
-    d += (0.0086 + (fm.noseDepth || 0)) * gauss(x, 0.0072 * nW) * gauss(ny + 0.0005, syN);           // ball
-    d += 0.0042 * gauss(x, 0.0068 * nW) * sstep(0.034 * nH, 0.012 * nH, ny) * (1 - sstep(0.0, -0.007, ny)); // dorsum: bridge rises smoothly from between the eyes
-    d += 0.0025 * gauss2(ax - 0.0095 * nW, ny + 0.0040, 0.0048 * nW, 0.0040);           // alae
-    d -= 0.0010 * gauss2(ax - 0.0150 * nW, ny + 0.0030, 0.0032, 0.0055);                // alar crease
+    const syN = (ny > 0 ? 0.0070 : 0.0065) * nH;
+    d += (0.0076 + (fm.noseDepth || 0)) * gauss(x, 0.0080 * nW) * gauss(ny + 0.0005, syN);           // rounded button tip
+    d += 0.0033 * gauss(x, 0.0075 * nW) * sstep(0.032 * nH, 0.010 * nH, ny) * (1 - sstep(0.0, -0.007, ny)); // low bridge
+    d += 0.0028 * gauss2(ax - 0.0100 * nW, ny + 0.0040, 0.0045 * nW, 0.0040);           // soft alae
+    d -= 0.0007 * gauss2(ax - 0.0150 * nW, ny + 0.0030, 0.0030, 0.0050);                // alar crease
     d += 0.0009 * gauss2(x, y - (FACE.mouthY + 0.0105), 0.0038, 0.0055);                // philtrum
     // lips / mouth: bounded to the mouth width (smooth zero at the corners), following the smile line
     const mw = 0.0255, mu = ax / mw, lipX = mu < 1 ? Math.pow(1 - mu * mu, 1.5) : 0;
@@ -1411,7 +1438,7 @@ function makeHeadLoft(R, faceModel, eyeShape = 'ref') {
     // chin pad + mentolabial fold, jaw line, cheek apples, under-eye hollow, cheekbone
     d += 0.0030 * gauss2(x, y + 0.0960, 0.0150, 0.0075);
     d -= 0.0011 * gauss2(x, y - (FACE.mouthY - 0.0150), 0.0140, 0.0030);
-    d += 0.0064 * gauss2(ax - 0.050, y - (FACE.cheekY + 0.006), 0.0175, 0.0150);        // cheek apple (upper cheek forward)
+    d += 0.0080 * gauss2(ax - 0.050, y - (FACE.cheekY + 0.006), 0.0175, 0.0150);        // cheek apple (upper cheek forward)
     d -= 0.0030 * sstep(0.008, 0.030, ax) * (1 - sstep(0.045, 0.070, ax)) * gauss(y - (FACE.mouthY + 0.002), 0.018); // muzzle wrap: mouth corners sit back
     d += 0.0016 * gauss2(ax - 0.066, y - (FACE.eyeY - 0.020), 0.012, 0.007);            // cheekbone
     { // under-eye hollow + lid crease shadow zone live here; the lid margins themselves come from eyeLid()
@@ -1886,12 +1913,12 @@ function buildFaceFeatures(R, head, st, profile) {
     }
     // nostril
     const nc = [0.0068 * side, FACE.noseY - 0.0050 + (profile.faceModel?.noseTipY || 0)];
-    const np = []; for (let i = 0; i < 16; i++) { const a = (i / 16) * TAU; np.push([nc[0] + Math.cos(a) * 0.0021, nc[1] + Math.sin(a) * 0.0010]); }
-    out.push({ geo: conformGeo(np, mapF, { off: 0.0003, sub: 2 }), kind: 'skin', slot: 'skin', mat: { type: 'decal', color: '#6a3526', rough: 0.7, opacity: 0.16 } });
+    const np = []; for (let i = 0; i < 16; i++) { const a = (i / 16) * TAU; np.push([nc[0] + Math.cos(a) * 0.0017, nc[1] + Math.sin(a) * 0.0009]); }
+    out.push({ geo: conformGeo(np, mapF, { off: 0.0003, sub: 2 }), kind: 'skin', slot: 'skin', mat: { type: 'decal', color: '#6a3526', rough: 0.7, opacity: 0.23 } });
   }
   // soft shading under the nose
-  { const ny0 = FACE.noseY - 0.0085 + (profile.faceModel?.noseTipY || 0); const poly = []; for (let i = 0; i < 24; i++) { const a = (i / 24) * TAU; poly.push([Math.cos(a) * 0.0105, ny0 + Math.sin(a) * 0.0032]); }
-    out.push({ geo: conformGeo(poly, mapF, { off: 0.00028, sub: 2 }), kind: 'skin', slot: 'skin', mat: { type: 'blush', amount: 0.12, color: '#6a3322' } }); }
+  { const ny0 = FACE.noseY - 0.0085 + (profile.faceModel?.noseTipY || 0); const poly = []; for (let i = 0; i < 24; i++) { const a = (i / 24) * TAU; poly.push([Math.cos(a) * 0.0080, ny0 + Math.sin(a) * 0.0025]); }
+    out.push({ geo: conformGeo(poly, mapF, { off: 0.00028, sub: 2 }), kind: 'skin', slot: 'skin', mat: { type: 'blush', amount: 0.08, color: '#6a3322' } }); }
   // mouth
   const mw = 0.0252 * (face.mouthWidth ?? 1), curve = face.mouthCurve ?? 0.75, open = face.mouthOpen || 0, tilt = face.mouthTilt || 0;
   const my = FACE.mouthY;
@@ -2184,7 +2211,10 @@ function buildHair(R, head, st, profile) {
   const style = resolveHairSpec(st.hair, profile.hairSpline, R.shape, head);
   const out = [];
   const strands = style.strands.map((sp, i) => strandGeo(sp, hash1(i + 3)));
-  out.push({ geo: mergeGeos([capGeo(style, head, style.vol), ...strands]), kind: 'hair', slot: 'hair', mat: { type: 'hair' } });
+  const cap = capGeo(style, head, style.vol), hairGeos = [cap, ...strands];
+  const hairGeo = mergeGeos(hairGeos);
+  hairGeo.userData.inkwaveSegments = segmentRanges(hairGeos, ['scalp', ...style.strands.map((sp, i) => 'strand_' + String(i).padStart(2, '0') + '_' + sp.name.replace(/[^a-zA-Z0-9]+/g, '_'))]);
+  out.push({ geo: hairGeo, kind: 'hair', slot: 'hair', mat: { type: 'hair' } });
   if (style.undercut) out.push({ geo: undercutGeo(style, head), kind: 'hair', slot: 'hair', mat: { type: 'stubble' } });
   for (const b of style.bands) {
     const { cuff, plate, slot } = bandGeo(b, style, head);
@@ -4323,15 +4353,307 @@ function frame() {
   if (currentView === 'quad') renderQuad(); else renderer.render(scene, camera);
 }
 
+// ---- Blender bridge: copy the already-built runtime buffers, never regenerate or mutate the scene ----
+function sliceRuntimeGeometry(src, range) {
+  const out = new THREE.BufferGeometry();
+  for (const [key, attr] of Object.entries(src.attributes)) {
+    if (!['position', 'normal', 'uv', 'uv1', 'color', 'tangent', 'skinIndex', 'skinWeight'].includes(key)) continue;
+    const values = attr.array.slice(range.vertex * attr.itemSize, (range.vertex + range.vertexCount) * attr.itemSize);
+    out.setAttribute(key, new THREE.BufferAttribute(values, attr.itemSize, attr.normalized));
+  }
+  const original = src.index.array.subarray(range.index, range.index + range.indexCount);
+  const indices = new (range.vertexCount > 65535 ? Uint32Array : Uint16Array)(original.length);
+  for (let i = 0; i < original.length; i++) indices[i] = original[i] - range.vertex;
+  out.setIndex(new THREE.BufferAttribute(indices, 1));
+  out.computeBoundingSphere();
+  return out;
+}
+/** Bakes the runtime hair shader (inkwave-hair-v2) of one strand into UV space: `map` is diffuseColor, `emissiveMap` its
+ *  view-independent emissive terms (translucency floor, lime tip glow, ink glow). Only the Fresnel part of the
+ *  translucency depends on the view; it cannot live in a texture and is rebuilt as a Blender-only node branch. */
+function hairBakeTexture(src, range, ink, tip, strength, trans, glow) {
+  const W = 256, H = 512, { c, ctx } = makeCanvas(W, H), im = ctx.createImageData(W, H);
+  const glowCanvas = makeCanvas(W, H), glowImage = glowCanvas.ctx.createImageData(W, H);
+  const a = src.attributes.aHair, b = src.attributes.aHairUV, uv = src.attributes.uv;
+  let cols = 2; while (cols < range.vertexCount && uv.getY(range.vertex + cols) === uv.getY(range.vertex)) cols++;
+  const rows = Math.round(range.vertexCount / cols);
+  const srgb = (x) => Math.round(255 * clamp(x <= 0.0031308 ? 12.92 * x : 1.055 * Math.pow(x, 1 / 2.4) - 0.055, 0, 1));
+  const hash = (x, y) => { const z = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453; return z - Math.floor(z); };
+  function sample(attr, c0, x, y) {
+    const fx = x * (cols - 1), fy = y * (rows - 1), ix = Math.min(cols - 2, Math.floor(fx)), iy = Math.min(rows - 2, Math.floor(fy));
+    const tx = fx - ix, ty = fy - iy, n = range.vertex + iy * cols + ix;
+    return (1 - ty) * ((1 - tx) * attr.array[(n) * 4 + c0] + tx * attr.array[(n + 1) * 4 + c0]) + ty * ((1 - tx) * attr.array[(n + cols) * 4 + c0] + tx * attr.array[(n + cols + 1) * 4 + c0]);
+  }
+  for (let py = 0; py < H; py++) for (let px = 0; px < W; px++) {
+    const u = (px + 0.5) / W, v = 1 - (py + 0.5) / H;
+    const ht = sample(a, 0, u, v), tipS = sample(a, 1, u, v), dotS = sample(a, 2, u, v), seed = sample(a, 3, u, v);
+    const arc = sample(b, 0, u, v), latPos = sample(b, 1, u, v), halfWidth = sample(b, 2, u, v);
+    const grad = Math.pow(sstep(tipS, 1, ht), 0.85) * strength;
+    const root = 0.62 + 0.38 * sstep(0, 0.3, ht);
+    const stripeCoord = latPos / Math.max(halfWidth, 1e-4) * 1.35 + seed * 3.1;
+    const stripe = 0.93 + 0.12 * sstep(0.15, 0, Math.abs(stripeCoord - Math.floor(stripeCoord) - 0.5));
+    let dot = 0;
+    if (dotS > 0) {
+      const sp = 0.041, sa = 0.038, row = Math.floor(arc / sp), fr = arc / sp - row - 0.5;
+      const cq = latPos / sa + ((row % 2 + 2) % 2) * 0.5, cell = Math.floor(cq), fc = cq - cell - 0.5;
+      const hh = hash(row + seed * 7, cell + seed * 7);
+      const rad = (0.24 + 0.16 * hh) * (1 - 0.45 * clamp(Math.abs(latPos) / Math.max(halfWidth, 1e-3), 0, 1));
+      const dist = Math.hypot(fr * sp / sa, fc);
+      dot = (1 - sstep(rad - 0.035, rad, dist)) * sstep(dotS, dotS + 0.08, ht) * (1 - sstep(0.965, 0.995, ht)) * (Math.abs(latPos) <= halfWidth * 0.86 ? 1 : 0) * (hh + 0.35 >= 0.2 ? 1 : 0);
+    }
+    const k = (py * W + px) * 4, tipGlow = trans * 0.22 * Math.pow(sstep(tipS, 1, ht), 1.5) * strength;
+    for (let ch = 0; ch < 3; ch++) {
+      const base = (ink[ch] * (1 - grad) + tip[ch] * grad) * root + ink[ch] * 0.36 * (1 - root);
+      const lit = base * stripe;
+      const dotColor = [0.863, 1.0, 0.871][ch];
+      const albedo = lit * (1 - dot * 0.78) + dotColor * dot * 0.78;
+      im.data[k + ch] = srgb(albedo);
+      glowImage.data[k + ch] = srgb(albedo * trans * 0.04 + tip[ch] * tipGlow + ink[ch] * glow * 0.5);
+    }
+    im.data[k + 3] = 255; glowImage.data[k + 3] = 255;
+  }
+  ctx.putImageData(im, 0, 0); glowCanvas.ctx.putImageData(glowImage, 0, 0);
+  const texture = (canvas) => { const t = new THREE.CanvasTexture(canvas); t.colorSpace = THREE.SRGBColorSpace; t.needsUpdate = true; return t; };
+  return { map: texture(c), emissiveMap: texture(glowCanvas.c) };
+}
+function blenderExportRoot() {
+  if (!current) throw new Error('No built model');
+  const root = new THREE.Group(); root.name = currentMode === 'character' ? 'INKWAVE_CHARACTER' : 'INKWAVE_WEAPON';
+  root.scale.copy(current.scale); root.position.copy(current.position); root.quaternion.copy(current.quaternion);
+  root.userData = { inkWaveVersion: 1, sourceRoot: current.name, profile: deepClone(profile), units: 'metres', axis: 'Y_UP' };
+  const categories = {};
+  const groupFor = (name) => { if (!categories[name]) { categories[name] = new THREE.Group(); categories[name].name = name; root.add(categories[name]); } return categories[name]; };
+  const serial = {};
+  const ink = new THREE.Color(profile.look.ink), tip = new THREE.Color(profile.materials.hairTipColor);
+  const inkRGB = [ink.r, ink.g, ink.b], tipRGB = [tip.r, tip.g, tip.b];
+  const hairTrans = profile.materials.hairTranslucency ?? 0.5, hairGlow = profile.look.glow || 0;
+  // One exported material per distinct runtime *look* per gear slot. The generator allocates a fresh material
+  // object for nearly every part, so cloning per mesh would hand Blender hundreds of identical slots to keep in
+  // sync; merging by value gives one editable material per real look. The slot stays in the key so a black shoe
+  // and a black jacket never collapse into each other. Per-strand hair is the deliberate exception: every strand
+  // carries its own baked gradient/streak/sucker-dot map, so each one keeps its own material.
+  const materials = new Map(), taken = new Map();
+  const nameMaterial = (material, wanted) => {
+    let name = wanted;
+    for (let i = 2; taken.has(name); i++) name = wanted + '_' + String(i).padStart(2, '0');
+    taken.set(name, material); material.name = name; return material;
+  };
+  const signature = (material) => {
+    const out = [material.type, material.customProgramCacheKey?.() || ''];
+    for (const key of Object.keys(material).sort()) {
+      if (['uuid', 'name', 'version', 'userData', '_listeners'].includes(key)) continue;
+      const value = material[key];
+      if (value === null || value === undefined || typeof value !== 'object') out.push(key + '=' + (typeof value === 'function' ? value.toString() : value));
+      else if (value.isColor) out.push(key + '=' + value.getHexString());
+      else if (value.isTexture) out.push(key + '=' + value.uuid);
+      else if (typeof value.toArray === 'function') out.push(key + '=' + value.toArray().join(','));
+      else out.push(key + '=' + JSON.stringify(value));
+    }
+    const uniforms = material.userData?.u;
+    if (uniforms) for (const key of Object.keys(uniforms).sort()) {
+      const value = uniforms[key].value;
+      out.push('u.' + key + '=' + (value?.isColor ? value.getHexString() : value?.toArray ? value.toArray().join(',') : value));
+    }
+    return out.join(';');
+  };
+  const isSkin = (material) => material.customProgramCacheKey?.() === 'inkwave-skin-v1';
+  // glTF has no slot for the runtime-only shading (custom skin shader, additive blending); these extras tell the
+  // Blender importer which materials need a Blender-side rebuild of that term. Replace, never merge: the runtime
+  // userData can hold live shader uniforms that must not be serialised.
+  const shaderTag = (material) => ({ ...(isSkin(material) ? { inkwaveShader: 'skin' } : {}),
+    ...(material.blending === THREE.AdditiveBlending ? { inkwaveBlend: 'additive' } : {}) });
+  const sharedMaterial = (src, slot, part) => {
+    const key = slot + '|' + signature(src.material);
+    if (!materials.has(key)) {
+      const material = src.material.clone();
+      material.wireframe = false; // the viewport wireframe toggle writes into the live materials
+      material.userData = shaderTag(src.material);
+      materials.set(key, nameMaterial(material, isSkin(src.material)
+        ? 'skin_' + src.material.color.getHexString()
+        : src.material.name || (slot || part || 'material') + '_' + (src.material.map ? 'texture' : src.material.color?.getHexString() || 'plain')));
+    }
+    return materials.get(key);
+  };
+  current.updateMatrixWorld(true);
+  const toRoot = new THREE.Matrix4().copy(current.matrixWorld).invert(), localMatrix = new THREE.Matrix4();
+  current.traverse((src) => {
+    // Viewport isolation, hidden-slot toggles and render-mode decal hiding only change what is on screen; the model
+    // is everything the generator built except detail parts the profile itself switches off.
+    if (!src.isMesh || !src.geometry) return;
+    if (src.userData.detailId && profile.details?.parts?.find((p) => p.id === src.userData.detailId)?.visible === false) return;
+    const slot = src.userData.gearSlot || '', part = src.userData.modelPart || '';
+    const category = currentMode === 'weapon' ? 'WEAPON' : slot === 'hair' ? 'HAIR' : ['eyes', 'brows', 'skin'].includes(slot) ? 'HEAD' : slot === 'body' && src.geometry.userData.inkwaveSegments ? 'BODY' : slot === 'body' ? 'HEAD' : slot === 'detail' ? 'DETAILS' : (slot || 'OTHER').toUpperCase();
+    const parent = groupFor(category), ranges = src.geometry.userData.inkwaveSegments;
+    const create = (range) => {
+      const strand = slot === 'hair' && ranges && range?.name.startsWith('strand_');
+      const scalp = slot === 'hair' && ranges && range?.name === 'scalp';
+      let material;
+      if (strand) {
+        const baked = hairBakeTexture(src.geometry, range, inkRGB, tipRGB, profile.materials.hairTipStrength, hairTrans, hairGlow);
+        material = nameMaterial(new THREE.MeshPhysicalMaterial({ color: 0xffffff, map: baked.map,
+          roughness: profile.materials.hairRoughness, metalness: 0, clearcoat: profile.materials.hairClearcoat,
+          clearcoatRoughness: 0.05, ior: src.material.ior, specularIntensity: src.material.specularIntensity,
+          side: src.material.side, emissive: 0xffffff, emissiveMap: baked.emissiveMap }), 'hair_' + range.name);
+        material.userData = { inkwaveShader: 'hair-strand', translucency: hairTrans };
+      } else if (scalp) {
+        // The cap shares the strand shader at hair height 0: root-darkened ink (0.62 + 0.36 * 0.38 = 0.7568) and
+        // the same emissive floor.
+        const key = 'scalp:' + src.material.uuid;
+        if (!materials.has(key)) materials.set(key, nameMaterial(new THREE.MeshPhysicalMaterial({
+          color: new THREE.Color(profile.look.ink).multiplyScalar(0.7568), roughness: profile.materials.hairRoughness,
+          clearcoat: profile.materials.hairClearcoat, clearcoatRoughness: 0.05, side: src.material.side,
+          ior: src.material.ior, specularIntensity: src.material.specularIntensity, emissive: new THREE.Color(profile.look.ink).multiplyScalar(0.7568 * hairTrans * 0.04 + hairGlow * 0.5) }), 'hair_scalp'));
+        materials.get(key).userData = { inkwaveShader: 'hair-scalp', translucency: hairTrans };
+        material = materials.get(key);
+      } else material = sharedMaterial(src, slot, part);
+      const out = new THREE.Mesh(range ? sliceRuntimeGeometry(src.geometry, range) : src.geometry, material);
+      const base = range?.name || src.userData.detailId || (slot === 'body' ? 'face' : part || slot || 'part');
+      // Blender object names are global. The generator reuses segment names across slots (two different parts
+      // are both called `cloth_40`), so prefix the category: without it Blender silently renames on import to
+      // `.001` and the link back to the runtime part is lost.
+      const key = category + '_' + base;
+      serial[key] = (serial[key] || 0) + 1;
+      out.name = key + (serial[key] > 1 ? '_' + String(serial[key]).padStart(2, '0') : '');
+      // Some runtime parts sit under transformed groups, so copying only the mesh's own transform would move
+      // them. Bake the whole current→mesh matrix instead; the root already carries `current`'s own transform.
+      localMatrix.multiplyMatrices(toRoot, src.matrixWorld).decompose(out.position, out.quaternion, out.scale);
+      out.userData = { ...src.userData, sourceUUID: src.uuid, sourceMaterial: src.material.name || src.material.type };
+      if (strand) {
+        out.userData.hairShader = { rootColor: profile.look.ink, tipColor: profile.materials.hairTipColor,
+          tipStrength: profile.materials.hairTipStrength, translucency: profile.materials.hairTranslucency,
+          clearcoat: profile.materials.hairClearcoat, roughness: profile.materials.hairRoughness,
+          baked: ['gradient', 'streak', 'dots', 'emissive-floor', 'tip-glow', 'ink-glow'], blenderOnly: ['fresnel-translucency'] };
+      } else if (isSkin(src.material)) {
+        out.userData.skinShader = { softShadowWarmth: 0.22, sheen: 0.18, subsurfaceApproximation: true };
+      }
+      parent.add(out);
+    };
+    if (ranges) ranges.forEach(create); else create(null);
+  });
+  root.updateMatrixWorld(true);
+  return root;
+}
+/** Exact structural contract of a model root: per-mesh world-space vertex bounds, triangle counts, attribute
+ *  presence and material identity. The Blender master must reproduce this report (see blender/README.md). */
+function qaTreeReport(root) {
+  root.updateMatrixWorld(true);
+  const round = (v) => Math.round(v * 1e6) / 1e6, point = new V3();
+  const parts = []; let tris = 0, verts = 0;
+  const lo = [Infinity, Infinity, Infinity], hi = [-Infinity, -Infinity, -Infinity];
+  root.traverse((o) => {
+    if (!o.isMesh || !o.geometry) return;
+    const material = Array.isArray(o.material) ? o.material[0] : o.material;
+    let depth = 0; for (let a = o; a.parent && a !== root; a = a.parent) depth++;
+    const pos = o.geometry.attributes.position, min = [Infinity, Infinity, Infinity], max = [-Infinity, -Infinity, -Infinity];
+    for (let i = 0; i < pos.count; i++) {
+      point.fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld);
+      for (let k = 0; k < 3; k++) { const v = point.getComponent(k); if (v < min[k]) min[k] = v; if (v > max[k]) max[k] = v; }
+    }
+    for (let k = 0; k < 3; k++) { if (min[k] < lo[k]) lo[k] = min[k]; if (max[k] > hi[k]) hi[k] = max[k]; }
+    const count = Math.round((o.geometry.index ? o.geometry.index.count : pos.count) / 3);
+    tris += count; verts += pos.count;
+    parts.push({ name: o.name, slot: o.userData.gearSlot || '', part: o.userData.modelPart || '', depth,
+      tris: count, verts: pos.count, material: material.name || material.type, materialUUID: material.uuid,
+      map: !!material.map, uv: !!o.geometry.attributes.uv, normal: !!o.geometry.attributes.normal,
+      segments: o.geometry.userData.inkwaveSegments ? o.geometry.userData.inkwaveSegments.length : 0,
+      min: min.map(round), max: max.map(round) });
+  });
+  return { root: root.name, meshes: parts.length, tris, verts, materials: new Set(parts.map((m) => m.materialUUID)).size,
+    min: lo.map(round), max: hi.map(round), parts };
+}
+/** Clay/flat/normals/silhouette render modes swap the live materials, so export from a temporary beauty rebuild. */
+async function withBeautyModel(fn) {
+  const mode = profile.view.renderMode || 'beauty';
+  if (mode === 'beauty') return fn();
+  profile.view.renderMode = 'beauty'; rebuild(false);
+  try { return await fn(); } finally { profile.view.renderMode = mode; rebuild(false); }
+}
+async function exportBlenderGLB(download = true) {
+  // The current buffers already include sculpt handles, hair splines, head frame and detail transforms.
+  const { GLTFExporter } = await import('https://cdn.jsdelivr.net/npm/three@0.159.0/examples/jsm/exporters/GLTFExporter.js');
+  const glb = await withBeautyModel(() => new GLTFExporter().parseAsync(blenderExportRoot(), { binary: true, onlyVisible: true, trs: true, includeCustomExtensions: true, maxTextureSize: 2048 }));
+  if (download) { const url = URL.createObjectURL(new Blob([glb], { type: 'model/gltf-binary' })); const link = document.createElement('a'); link.href = url; link.download = currentMode === 'character' ? 'inkwave_character_source.glb' : 'inkwave_weapon_source.glb'; link.click(); setTimeout(() => URL.revokeObjectURL(url), 60000); }
+  return glb;
+}
+/** QA: show a GLB (e.g. the Blender master/game export) in place of the runtime model, lit by the same studio, so
+ *  exported materials can be judged in a web engine next to the generator's own shaders. `null` restores the model. */
+let glbPreview = null;
+async function showGLBPreview(url) {
+  if (glbPreview) { modelLayer.remove(glbPreview); glbPreview = null; }
+  if (current) current.visible = !url;
+  if (!url) return null;
+  const { GLTFLoader } = await import('https://cdn.jsdelivr.net/npm/three@0.159.0/examples/jsm/loaders/GLTFLoader.js');
+  glbPreview = (await new GLTFLoader().loadAsync(url)).scene;
+  let meshes = 0, tris = 0;
+  glbPreview.traverse((o) => { if (!o.isMesh) return; o.castShadow = o.receiveShadow = true; meshes++; tris += (o.geometry.index ? o.geometry.index.count : o.geometry.attributes.position.count) / 3; });
+  modelLayer.add(glbPreview);
+  return { meshes, tris };
+}
+$('exportBlender').onclick = async () => { const button = $('exportBlender'); button.disabled = true; button.textContent = 'Exporting…'; try { await exportBlenderGLB(true); button.textContent = 'Export to Blender (.glb)'; } catch (e) { console.error(e); $('error').style.display = 'block'; $('error').textContent = 'GLB export failed: ' + e.message; button.textContent = 'Export to Blender (.glb)'; } finally { button.disabled = false; } };
+let localPreviewURL = null;
+$('loadWorkspaceGLB').onclick = async () => {
+  const button = $('loadWorkspaceGLB');
+  button.disabled = true;
+  button.textContent = 'Loading Blender model…';
+  const url = new URL('blender/INKWAVE_GAME.glb', document.baseURI);
+  url.searchParams.set('v', String(Date.now()));
+  try {
+    const info = await showGLBPreview(url.href);
+    if (localPreviewURL) URL.revokeObjectURL(localPreviewURL);
+    localPreviewURL = null;
+    $('viewBlenderGLB').value = '';
+    $('error').style.display = 'none';
+    $('blenderPreviewStatus').textContent = `Viewing workspace INKWAVE_GAME.glb: ${info.meshes} meshes, ${Math.round(info.tris).toLocaleString()} triangles.`;
+  } catch (e) {
+    await showGLBPreview(null);
+    $('blenderPreviewStatus').textContent = '';
+    $('error').style.display = 'block';
+    $('error').textContent = 'Workspace GLB could not load. Open this page through the workspace HTTP preview server: ' + e.message;
+  } finally {
+    button.disabled = false;
+    button.textContent = 'View workspace Blender model';
+  }
+};
+$('viewBlenderGLB').onchange = async (event) => {
+  const file = event.target.files?.[0]; if (!file) return;
+  const url = URL.createObjectURL(file);
+  try {
+    const info = await showGLBPreview(url);
+    if (localPreviewURL) URL.revokeObjectURL(localPreviewURL);
+    localPreviewURL = url;
+    $('error').style.display = 'none';
+    $('blenderPreviewStatus').textContent = `Viewing ${file.name}: ${info.meshes} meshes, ${Math.round(info.tris).toLocaleString()} triangles. Choose another GLB or select “Show procedural model” to restore.`;
+  } catch (e) {
+    URL.revokeObjectURL(url);
+    await showGLBPreview(null);
+    $('blenderPreviewStatus').textContent = '';
+    $('error').style.display = 'block';
+    $('error').textContent = 'GLB preview failed: ' + e.message;
+  }
+};
+$('restoreProcedural').onclick = async () => {
+  await showGLBPreview(null);
+  if (localPreviewURL) URL.revokeObjectURL(localPreviewURL);
+  localPreviewURL = null;
+  $('viewBlenderGLB').value = '';
+  $('blenderPreviewStatus').textContent = '';
+  $('error').style.display = 'none';
+};
+
 // ---- QA hooks for automated agents --------------------------------------------------------------------------------
 window.__INKWAVE_QA = {
-  version: 11,
+  version: 12,
   getProfile: () => deepClone(profile),
   setProfile: (p) => { applyProfileJson(typeof p === 'string' ? p : JSON.stringify(p)); return validateProfileObject(profile); },
   validate: (p) => validateProfileObject(merge(deepClone(DEFAULT), p || profile)),
   rebuild: () => { rebuild(false); return countStats(current); },
   setView: (v) => { switchCamera(v); return currentView; },
   stats: () => ({ ...countStats(current), buildMs: lastBuildMs, errors: [...(window.__INKWAVE_BOOT_ERRORS || [])] }),
+  exportGLB: () => exportBlenderGLB(true),
+  showGLB: (url) => showGLBPreview(url),
+  exportRootStats: () => withBeautyModel(() => countStats(blenderExportRoot())),
+  tree: () => qaTreeReport(current),
+  exportTree: () => withBeautyModel(() => qaTreeReport(blenderExportRoot())),
   presets: () => AVATAR_PRESETS.map((p) => ({ id: p.id, name: p.name })),
   applyPreset: (id) => { snapshot(); applyPreset(id); rebuild(true); return profile.avatarPreset; },
   /** Render a calibrated orthographic view matching the embedded reference image framing (1122×1402 px space). */
@@ -4344,7 +4666,7 @@ window.__INKWAVE_QA = {
     const dir = { front: [0, 0, 1], back: [0, 0, -1], left: [-1, 0, 0], right: [1, 0, 0] }[view];
     cam.position.set(dir[0] * 10, 0, dir[2] * 10); cam.up.set(0, 1, 0); cam.lookAt(0, 0, 0); cam.updateProjectionMatrix();
     const prevSize = renderer.getSize(new THREE.Vector2()), prevPR = renderer.getPixelRatio();
-    const hidden = [grid, axes, sculptLayer, refLayer3D, ref3dGroup, transform].filter((o) => o.visible); hidden.forEach((o) => (o.visible = false));
+    const hidden = [grid, axes, floor, sculptLayer, refLayer3D, ref3dGroup, transform].filter((o) => o.visible); hidden.forEach((o) => (o.visible = false));
     const vis = []; current?.traverse((o) => { if (o.isMesh) { vis.push([o, o.visible]); if (only) o.visible = o.visible && (only.includes(o.userData.modelPart) || only.includes(o.userData.gearSlot)); } });
     const maskMat = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide });
     renderer.setPixelRatio(1); renderer.setSize(W, H, false);
@@ -4357,14 +4679,17 @@ window.__INKWAVE_QA = {
     return url;
   },
   /** Perspective orbit render; `only` limits it to model parts / gear slots (e.g. ['skin','eyes','brows'] for a bare head). */
-  renderPersp: (az = -0.55, el = 0.08, dist = 3.3, W = 700, H = 875, target = [0, 0.8, 0], fov = 30, only = null) => {
+  renderPersp: (az = -0.55, el = 0.08, dist = 3.3, W = 700, H = 875, target = [0, 0.8, 0], fov = 30, only = null, mode = 'beauty') => {
     const cam = new THREE.PerspectiveCamera(fov, W / H, 0.01, 50);
     cam.position.set(target[0] + Math.sin(az) * Math.cos(el) * dist, target[1] + Math.sin(el) * dist, target[2] + Math.cos(az) * Math.cos(el) * dist); cam.lookAt(...target);
     const prevSize = renderer.getSize(new THREE.Vector2()), prevPR = renderer.getPixelRatio();
-    const hidden = [grid, axes, sculptLayer, refLayer3D, transform].filter((o) => o.visible); hidden.forEach((o) => (o.visible = false));
+    const hidden = [grid, axes, floor, sculptLayer, refLayer3D, ref3dGroup, transform].filter((o) => o.visible); hidden.forEach((o) => (o.visible = false));
     const vis = []; if (only) current?.traverse((o) => { if (o.isMesh) { vis.push([o, o.visible]); o.visible = o.visible && (only.includes(o.userData.modelPart) || only.includes(o.userData.gearSlot)); } });
-    renderer.setPixelRatio(1); renderer.setSize(W, H, false); renderer.setClearColor(0xb4b6bd, 1);
+    renderer.setPixelRatio(1); renderer.setSize(W, H, false);
+    if (mode === 'mask') { scene.overrideMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide }); renderer.setClearColor(0x000000, 1); }
+    else renderer.setClearColor(0xb4b6bd, 1);
     renderer.render(scene, cam); const url = renderer.domElement.toDataURL('image/png');
+    scene.overrideMaterial = null;
     vis.forEach(([o, v]) => (o.visible = v));
     renderer.setClearColor(0x000000, 0); hidden.forEach((o) => (o.visible = true)); renderer.setPixelRatio(prevPR); renderer.setSize(prevSize.x, prevSize.y, true);
     return url;

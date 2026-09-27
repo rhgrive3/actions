@@ -18,8 +18,8 @@ cp ../INKWAVE_AI_MODELER_FINAL.html work.html
 # Sapiens 1B normals (4.4 GB): huggingface facebook/sapiens-normal-1b-torchscript → export SAPIENS_PT=<path>
 ```
 
-Playwright with the preinstalled Chromium (`/opt/node22/lib/node_modules/playwright`) is used by the `.mjs` scripts;
-adjust the import path if Playwright lives elsewhere.
+The `.mjs` scripts (and `../scripts/*.mjs`) `import { chromium } from 'playwright'`: Playwright must resolve from this
+directory (a `node_modules` here or in a parent directory) with its Chromium installed (`npx playwright install chromium`).
 
 ## Scripts
 
