@@ -308,6 +308,18 @@ export class Minimap {
   }
 
   // ------------------------------------------------------------------------------------------ per frame
+  // When the corner map is disabled, keep only logical effect time moving. No raster build or Canvas2D composite.
+  tickHidden(dt) {
+    this.time += dt;
+    this.timer -= dt;
+    this.flashT += dt;
+    for (let i = fxList.length - 1; i >= 0; i--) {
+      const f = fxList[i];
+      f.t += dt;
+      if (f.t >= f.life) fxList.splice(i, 1);
+    }
+  }
+
   update(dt, force = false) {
     if (!this._built) this._build();
     this.time += dt;
