@@ -900,9 +900,11 @@ export class Character {
     if (!renderer || !camera || !target || !renderer.compileAsync) return false;
     const done = this._warmed = (async () => {
       const q = G.settings?.quality || 'high';
-      // build every tier + the dither twins (warm-only meshes on this skeleton; the materials stay with the kid)
+      // Low quality never selects the hero tier (hero/heroLocal = Infinity), so do not build/compile it just to throw
+      // it away. Other presets can legitimately reach all three tiers and keep the full warm-up.
+      const warmTiers = q === 'low' ? [T_GAME, T_FAR] : [T_HERO, T_GAME, T_FAR];
       const grp = new THREE.Group(); grp.name = 'warm';
-      for (let t = 0; t < 3; t++) for (const m of this._tierSet(t).list) for (let side = 0; side < 2; side++) {
+      for (const t of warmTiers) for (const m of this._tierSet(t).list) for (let side = 0; side < 2; side++) {
         const w = new THREE.SkinnedMesh(m.geometry, this._ditherMat(m.userData.iwMat, side));
         w.bind(this.skeleton, IDENT); w.castShadow = m.userData.iwShadow; w.receiveShadow = true; w.frustumCulled = false; grp.add(w);
       }
