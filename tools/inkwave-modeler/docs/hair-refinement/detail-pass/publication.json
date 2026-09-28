@@ -1,0 +1,16 @@
+{
+  "revision": "20260927-v6-detail",
+  "applied_with": "scripts/inkwave_hair_apply.py",
+  "before": {
+    "INKWAVE_CHARACTER_MASTER.blend": "e0426c94516fef5a59a17116ae75e652d476369ec8c42cf8ef274ef3fb65d561",
+    "INKWAVE_CHARACTER_MASTER.glb": "3a16ebb272cf8ee2b006d01bd889efa3b8ad8f956d9e7c4027ea2ab5bae945ab",
+    "INKWAVE_GAME.glb": "3a16ebb272cf8ee2b006d01bd889efa3b8ad8f956d9e7c4027ea2ab5bae945ab",
+    "INKWAVE_HAIR_REFINED.blend": "9f742d95ed110748aae38562ee77807c1bf09357b5afdb0ba2155cdcbcb69dbd"
+  },
+  "after": {
+    "INKWAVE_CHARACTER_MASTER.blend": "5be5f7345f858a92bfc7865ee20be85dbbded5b81cdf71416a8c2f0965737ba5",
+    "INKWAVE_CHARACTER_MASTER.glb": "250e11ea29b549f5768ab6b1f9d98ad269be67ebb9abad3ff8f161f95c963067",
+    "INKWAVE_GAME.glb": "250e11ea29b549f5768ab6b1f9d98ad269be67ebb9abad3ff8f161f95c963067",
+    "INKWAVE_HAIR_REFINED.blend": "4b91a0cb5a3301447ca4c9ac22c3f518cfbf5d43ad2af1d4385156e377f2f319"
+  }
+}

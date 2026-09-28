@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "inkwave-public/**"
+      - "scripts/build-inkwave.mjs"
       - ".github/workflows/pages-inkwave.yml"
   workflow_run:
     workflows: ["Fetch INKWAVE public source"]
@@ -36,10 +37,23 @@ jobs:
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # Minify every JS/CSS file in place (same module layout, same behaviour), tree-shake three.js to the symbols
+      # the game uses and preload the module graph. Source of truth stays the readable inkwave-public/.
+      - name: Build optimized site
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock --no-audit --no-fund esbuild@0.25.12
+          node scripts/build-inkwave.mjs inkwave-public _site
+
       - name: Upload INKWAVE site
         uses: actions/upload-pages-artifact@v4
         with:
-          path: inkwave-public
+          path: _site
 
       - name: Deploy to GitHub Pages
         id: deployment

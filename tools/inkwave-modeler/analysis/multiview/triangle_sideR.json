@@ -1,0 +1,56 @@
+{
+ "reference": {
+  "forehead": [
+   2096.5,
+   318.0
+  ],
+  "radix": [
+   2088.5,
+   375.0
+  ],
+  "tip": [
+   2107.5,
+   390.0
+  ],
+  "tip_radix_deg": 51.7,
+  "tip_forehead_deg": 8.7,
+  "radix_forehead_deg": 8.0,
+  "radix_depth_px": 16.52
+ },
+ "before": {
+  "forehead": [
+   2097.25,
+   318.0
+  ],
+  "radix": [
+   2092.0,
+   377.0
+  ],
+  "tip": [
+   2106.5,
+   395.0
+  ],
+  "tip_radix_deg": 38.9,
+  "tip_forehead_deg": 6.9,
+  "radix_forehead_deg": 5.1,
+  "radix_depth_px": 12.25
+ },
+ "after": {
+  "forehead": [
+   2097.75,
+   318.0
+  ],
+  "radix": [
+   2090.75,
+   378.0
+  ],
+  "tip": [
+   2107.0,
+   393.0
+  ],
+  "tip_radix_deg": 47.3,
+  "tip_forehead_deg": 7.0,
+  "radix_forehead_deg": 6.7,
+  "radix_depth_px": 14.29
+ }
+}

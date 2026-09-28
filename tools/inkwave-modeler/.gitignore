@@ -1,0 +1,13 @@
+# Face-analysis downloads and derived arrays: re-created by analysis/README.md (Setup)
+analysis/three.min.js
+analysis/face_landmarker.task
+analysis/ref_*_hi.png
+analysis/sn_*.npy
+analysis/sn_*.png
+analysis/work.html
+__pycache__/
+# Blender's automatic .blend1 rollback copy and the importer's fallback scratch directory
+blender/*.blend1
+blender/.scratch/
+# multi-view fit: head geometry exported from the .blend (python3 export_geom.py)
+analysis/multiview/geom_*.npz
