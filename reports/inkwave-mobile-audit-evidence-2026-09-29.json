@@ -1,6 +1,6 @@
 {
   "kind": "post-fix source-level deterministic probes plus GitHub Pages build result; no real-device FPS, GPU timing, power or network measurement",
-  "targetCommit": "pending merge of fix/inkwave-mobile-p2-p3-20260929",
+  "targetCommit": "pending final Boss preload tail merge",
   "syntax": {
     "src/config.js": "ok",
     "src/main.js": "ok",
@@ -11,7 +11,8 @@
     "reports/inkwave-mobile-audit-probe-2026-09-29.mjs": "ok",
     "src/game/match.js": "ok",
     "src/game/minimap.js": "ok",
-    "src/ui/menus.js": "ok"
+    "src/ui/menus.js": "ok",
+    "src/net/netmatch.js": "ok"
   },
   "effectiveQuality": {
     "androidHigh": {
@@ -147,12 +148,13 @@
     "stageLightmapTrackedAndDisposed": true
   },
   "pagesBuild": {
-    "status": "pending merge/deploy validation"
+    "status": "pending final merge/deploy validation"
   },
   "notes": [
     "The 50 Hz synthetic case sits on the degradation boundary and resolves to the lower-quality side because the controller intentionally targets headroom toward 60 Hz.",
     "P2/P3 source checks are deterministic but are not substitutes for Android/iPhone GPU, thermal, battery, or frame-time measurements.",
-    "Grade/Output/FXAA fusion is intentionally not performed without GPU evidence; only quality-disabled BloomPass allocation is removed."
+    "Grade/Output/FXAA fusion is intentionally not performed without GPU evidence; only quality-disabled BloomPass allocation is removed.",
+    "An artifact inspection after the first P2/P3 merge found net/netmatch.js still statically importing boss.js; the final patch removes that edge and uses the already-loaded boss instance constructor for snapshot decoding."
   ],
   "frameCap": {
     "touchAuto": {
@@ -199,6 +201,8 @@
     "minimapHiddenLogicalTick": true,
     "hudMapArraysReused": true,
     "bloomPassSkippedWhenEffectiveQualityDisablesBloom": true,
-    "fullscreenGradeOutputFxaaFusion": false
+    "fullscreenGradeOutputFxaaFusion": false,
+    "bossStaticImportInNetmatch": false,
+    "bossSnapshotUsesLoadedInstance": true
   }
 }
