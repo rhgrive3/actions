@@ -49,7 +49,7 @@ export const PLAYER = {
   fallDeathY: -1.45,  // touching the sea (surface y = -1.6) splats you
   waterY: -1.6,
 
-  // ---- handling (stream 4; see actor.js _horizontal / _integrate). Measured with tools/measure-handling.mjs.
+  // ---- handling (see actor.js _horizontal / _integrate). Measured with tools/measure-handling.mjs.
   // ground run: S-curve accel (ease-in over the first ~1.6 m/s, ease-out over the last 28 % of top speed)
   runAccel: 70, runAccelIn: 0.5, runInKnee: 1.6, runOutKnee: 0.28, runOutMin: 0.22,
   runDecel: 58, runDecelMin: 0.4, runDecelKnee: 2.2,   // brake: strong at speed, eases into the stop (no hard corner)
@@ -202,7 +202,29 @@ export const MAPS = [
   { id: 'tidewater', name: 'Tidewater Plaza', blurb: 'A sun-bleached harbor plaza on the edge of the sea.', theme: 'day', times: { day: 'day', dusk: 'sunset' } },
   { id: 'kelpline', name: 'Kelpline Terminal', blurb: 'Container yard with grate catwalks, a sunken trench and a steel gantry deck.', theme: 'day', times: { day: 'day', dusk: 'sunset' } },
   { id: 'halyard', name: 'Halyard Marina', blurb: 'Floating docks, a tug on blocks and a car ferry moored across the middle. Mind the water.', theme: 'golden', times: { day: 'golden', dusk: 'sunset' } },
+  // (src/world/stages/cargo, ported from PR #8's rebuilt Kelpline) — online only, humans only, never a Boss Battle
+  { id: 'cargo', name: 'Cargo Terminal', blurb: 'A container terminal at shift change: a gantry crane straddles the pier between two moored box ships.', theme: 'day', times: { day: 'day', dusk: 'sunset' }, onlineOnly: true, noBots: true, noBoss: true },
 ];
+// Stage rules (a MAPS entry's flags), enforced by the lobby host (net/session.js, net/mock.js), the menus and main.js:
+//   onlineOnly  only in the online lobby's stage picker — never the offline Play flow (Turf War or Boss Battle)
+//   noBots      humans only: "fill with bots" is forced off, a match needs 2+ players with one on each side, and a player
+//               who leaves mid-match is removed instead of handed to a bot; the menu backdrop runs without bots too
+//   noBoss      never a Boss Battle stage (a boss room switches away from it)
+export const mapById = (id) => MAPS.find((m) => m.id === id) || null;
+export const mapNoBots = (id) => !!mapById(id)?.noBots;
+export const mapBossOk = (id) => !!mapById(id) && !mapById(id).noBoss;
+export const mapOfflineOk = (id) => !!mapById(id) && !mapById(id).onlineOnly;
+export const OFFLINE_MAPS = MAPS.filter((m) => !m.onlineOnly);
+// a boss-eligible stage to fall back to (the preferred one if it qualifies)
+export const bossFallbackMap = (prefer) => (mapBossOk(prefer) ? prefer : (MAPS.find((m) => !m.noBoss && !m.onlineOnly) || MAPS[0]).id);
+// Why a humans-only room can't start yet (null when it can, or when the stage allows bots): lobby = { map, players }
+export function noBotsStartBlock(lobby) {
+  if (!lobby || !mapNoBots(lobby.map)) return null;
+  const ps = lobby.players || [];
+  if (ps.length < 2) return 'Needs 2+ players — no bots on this stage';
+  if (!ps.some((p) => p.team === 0) || !ps.some((p) => p.team === 1)) return 'Needs a player on each team';
+  return null;
+}
 
 export const BOT_NAMES = [
   'Squiddo', 'Blotch', 'Marlo', 'Inky Vee', 'Pip', 'Coral', 'Riptide', 'Nori', 'Suki', 'Zest',

@@ -1,4 +1,4 @@
-// INKWAVE — screen FX (stream 6). One full-screen composite pass inserted after the grade pass, before OutputPass
+// INKWAVE — screen FX. One full-screen composite pass inserted after the grade pass, before OutputPass
 // (linear HDR), plus a GPU "lens ink" field: glossy metaball ink blobs on the camera lens that splat, drip and slide.
 //
 //   const sfx = new ScreenFX(R, G)      // R = core/renderer.js wrapper; installs itself with R.setExtraPass()
@@ -623,7 +623,7 @@ export class ScreenFX {
       this.s.chroma = Math.min(1, this.s.chroma + 0.25);
       if (id === 'storm') this.s.aura = Math.max(this.s.aura, 0.9);
     });
-    // explosions: typed events when stream 4 emits them, otherwise the positional 'shake' requests (bombs, slams)
+    // explosions: typed events when the weapons emit them, otherwise the positional 'shake' requests (bombs, slams)
     const blast = (pos, amount, color) => {
       if (!pos || !live()) return;
       const lb = this.s.lastBlast;
@@ -798,10 +798,9 @@ export class ScreenFX {
     this._aspect = W / Math.max(1, H);
     U.uAspect.value = this._aspect;
     const q = QUALITY[G.settings?.quality] || QUALITY.high;
-    const mobile = !!this.G.mobile?.touch;
-    const taps = mobile ? 4 : q.particles >= 1 ? 8 : q.particles >= 0.7 ? 6 : 5;
+    const taps = q.particles >= 1 ? 8 : q.particles >= 0.7 ? 6 : 5;
     if (taps !== this.taps) { this.taps = taps; this.mat.defines.TAPS = taps; this.mat.needsUpdate = true; }
-    this.lens.resize(W, H, mobile ? 1 / 4 : (q.particles >= 1 ? 1 / 3 : 1 / 4));
+    this.lens.resize(W, H, q.particles >= 1 ? 1 / 3 : 1 / 4);
 
     // intensity scaling for the intense (motion) effects
     const shake = clamp(G.settings?.cameraShake ?? 1, 0, 1);

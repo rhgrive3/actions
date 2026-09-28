@@ -1,4 +1,4 @@
-// Halyard Marina — dock / shore prop pack (owner: docks stream). Pilings, cleats, fenders, fuel pumps, dock boxes,
+// Halyard Marina — dock / shore prop pack. Pilings, cleats, fenders, fuel pumps, dock boxes,
 // clubhouse + quay furniture, boatyard kit, the harbour beacon. Registered into the PropKit by props.js; placements go
 // in DRESSING.halyard (src/world/dressing.js).
 //

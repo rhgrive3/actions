@@ -2,7 +2,7 @@
 // Character visual. Controllers (player input / bot AI) only write `intent` + aim; everything else lives here so
 // bots and the player play by exactly the same rules.
 //
-// Movement = a kinematic character controller (stream 4):
+// Movement = a kinematic character controller:
 //  · feet: flat-footprint ground probe (physics.groundProbe) — exact on slopes, ledges hold until the whole
 //    footprint is off, curbs ≤ stepUp are walked onto, ground is stuck to within stepDown (ramps, steps down)
 //  · body: a capsule lifted above the step height, pushed out horizontally while grounded (walls never fight the feet)
@@ -146,6 +146,7 @@ export class Actor {
     const p = _v.set(pad.x + Math.cos(a) * 1.1, pad.y + 4.5, pad.z + Math.sin(a) * 1.1);
     const yaw = this.team === 0 ? 0 : Math.PI;
     this.spawnAt(p, yaw);
+    this.netTp = (this.netTp || 0) + 1;     // online: a genuine teleport — proxies snap instead of gliding across the map
     this.grounded = false;
     this.vel.set(0, -4, 0);
     this.character.trigger('spawn');
@@ -444,6 +445,11 @@ export class Actor {
       return;
     }
     const wasGrounded = this.grounded && !jumped;
+    // off-limits tops (roofs, crane legs …): nobody can stand there — you slide off. Balancing on a railing: the feet
+    // settle onto its line. (Only stages that have such blocks — Cargo Terminal — ever take these branches.)
+    const rb = wasGrounded && this.ground.hit && this.ground.block >= 0 ? G.level.blocks[this.ground.block] : null;
+    if (rb && rb.roof) this._roofSlide(rb, dt); else if (this.roofT) { this.roofT = 0; this.roofDir = null; }
+    if (rb && rb.rail && !isSquid) this._railCentre(rb, dt);
     if (wasGrounded) {
       // follow the ground plane: the vertical component keeps the feet on the surface at the current horizontal speed
       const n = this.groundN;
@@ -457,6 +463,69 @@ export class Actor {
     const prevY = this.pos.y;
     this.pos.addScaledVector(this.vel, dt);
     this._resolve(isSquid, prevY, wasGrounded);
+  }
+
+  // Standing on a roof block: pushed toward its nearest edge (a pitched top: downhill), picking up speed until you drop
+  // off. The direction sticks for the whole slide (adjacent roof boxes would otherwise push back and forth at a seam);
+  // blocked by a wall for a moment → turn 90° and try the next way out. Input still steers across the slide.
+  _roofSlide(b, dt) {
+    const n = b.axes[1];
+    if (!this.roofDir || !this.roofT) {
+      this.roofDir = new THREE.Vector3(); this.roofStall = 0; this.roofP = this.pos.clone();
+      if (n.y < 0.995) this.roofDir.set(n.x, 0, n.z).normalize();
+      else {
+        const ax = b.axes[0], az = b.axes[2], dx = this.pos.x - b.center.x, dz = this.pos.z - b.center.z;
+        const lx = dx * ax.x + dz * ax.z, lz = dx * az.x + dz * az.z;
+        const s = (b.half.x - Math.abs(lx) < b.half.z - Math.abs(lz)) ? [ax, Math.sign(lx) || 1] : [az, Math.sign(lz) || 1];
+        this.roofDir.set(s[0].x * s[1], 0, s[0].z * s[1]);
+      }
+    }
+    const d = this.roofDir;
+    this.roofT = (this.roofT || 0) + dt;
+    const moved = (this.pos.x - this.roofP.x) * d.x + (this.pos.z - this.roofP.z) * d.z;
+    this.roofP.copy(this.pos);
+    this.roofStall = this.roofT > 0.1 && moved < 0.3 * dt ? this.roofStall + dt : 0;
+    if (this.roofStall > 0.25) { d.set(-d.z, 0, d.x); this.roofStall = 0; }
+    const want = Math.min(9, 3 + 14 * this.roofT);
+    const along = this.vel.x * d.x + this.vel.z * d.z;
+    if (along < want) { this.vel.x += d.x * (want - along); this.vel.z += d.z * (want - along); }
+  }
+
+  // Railings are only a few cm thick, so the ground probe's discrete footprint ring can straddle one and miss it. A kid's
+  // feet are also held by any level rail top the flat footprint (a circle of footRadius) overlaps, within [lo, hi]:
+  // hopping onto a railing lands wherever the feet cover it, and standing / walking along it holds. Squids fall through
+  // rails (never called for them). Overwrites the probe result `gh` when the rail top is the higher support.
+  _railFeet(gh, lo, hi) {
+    const L = G.level;
+    if (!L.hasRails) return;
+    const x = this.pos.x, z = this.pos.z, fr = PLAYER.footRadius;
+    const ids = L.queryBlocks(x - fr - 0.05, z - fr - 0.05, x + fr + 0.05, z + fr + 0.05, this._railIds || (this._railIds = []));
+    let best = null, bestY = gh.hit ? gh.y + 1e-3 : -Infinity;
+    for (let i = 0; i < ids.length; i++) {
+      const b = L.blocks[ids[i]];
+      if (!b.rail || !b.solid || b.axes[1].y < 0.999) continue;
+      const topY = b.center.y + b.half.y;
+      if (topY < lo || topY > hi || topY <= bestY) continue;
+      const dx = x - b.center.x, dz = z - b.center.z;
+      const ex = Math.max(0, Math.abs(dx * b.axes[0].x + dz * b.axes[0].z) - b.half.x), ez = Math.max(0, Math.abs(dx * b.axes[2].x + dz * b.axes[2].z) - b.half.z);
+      if (ex * ex + ez * ez > fr * fr) continue;   // the footprint misses its top
+      best = b; bestY = topY;
+    }
+    if (!best) return;
+    gh.hit = true; gh.y = bestY; gh.normal.set(0, 1, 0); gh.block = best.id; gh.face = -1; gh.u = 0; gh.v = 0; gh.center = false; gh.grate = true;
+  }
+
+  // Standing on a railing with the feet off its line: ease onto it (≤ 1.1 m/s across) — reads as balancing on the rail
+  // instead of hovering beside it. Pushing the stick further off the line steps off as usual.
+  _railCentre(b, dt) {
+    const alongX = b.half.x >= b.half.z, ax = alongX ? b.axes[2] : b.axes[0], hw = alongX ? b.half.z : b.half.x;   // across the rail
+    const off = (this.pos.x - b.center.x) * ax.x + (this.pos.z - b.center.z) * ax.z;
+    const out = Math.abs(off) - Math.max(0, hw - 0.02);
+    if (out <= 0) return;
+    const mv = this.intent.move, sg = Math.sign(off);
+    if ((mv.x * ax.x + mv.z * ax.z) * sg > 0.25) return;
+    const s = Math.min(out, 1.1 * dt) * sg;
+    this.pos.x -= ax.x * s; this.pos.z -= ax.z * s;
   }
 
   // Body (walls/ceilings) then feet (ground stick / landing). `stick` = we were grounded and did not jump.
@@ -477,6 +546,7 @@ export class Actor {
     let grounded = false;
     if (stick) {
       G.physics.groundProbe(this.pos.x, this.pos.y, this.pos.z, up, P.stepDown, P.footRadius, gh, isSquid);
+      if (!isSquid) this._railFeet(gh, this.pos.y - P.stepDown, this.pos.y + up);
       if (gh.hit) {
         const dy = gh.y - this.pos.y;
         this.pos.y = gh.y;
@@ -489,6 +559,7 @@ export class Actor {
       const top = Math.max(prevY, this.pos.y);
       const assist = isSquid ? P.squidStepUp : P.ledgeAssist;
       G.physics.groundProbe(this.pos.x, this.pos.y, this.pos.z, (top - this.pos.y) + assist, 0.02, P.footRadius, gh, isSquid);
+      if (!isSquid) this._railFeet(gh, this.pos.y - 0.02, top + assist);
       if (gh.hit && gh.y >= this.pos.y - 0.02 && (this.vel.y <= 0 || gh.y - this.pos.y < 0.02)) {
         // touching down from above is continuous; only a ledge-assist pop (feet were already below the top last
         // frame) is a visual step to ease
@@ -822,7 +893,9 @@ export class Actor {
   _finishFrame(dt) {
     const a = this.anim;
     const isSquid = this.form === 'squid';
-    this._face(dt, isSquid);
+    // online proxies arrive already facing the owner's way (net/netmatch.js applyRemote)
+    if (this.remote) a.turnRate = this.netTurnRate || 0;
+    else this._face(dt, isSquid);
     const hs = Math.hypot(this.vel.x, this.vel.z);
     const cy = Math.cos(this.yaw), sy = Math.sin(this.yaw);
     a.speed = hs;
@@ -836,7 +909,7 @@ export class Actor {
     a.firing = this.weaponRunner.firingPose();
     a.charge = this.weaponRunner.charge;
     a.rolling = this.weaponRunner.rolling;
-    a.subAim = !!this.weaponRunner.aimingSub;      // bomb cocked (stream 2 request)
+    a.subAim = !!this.weaponRunner.aimingSub;      // bomb cocked
     a.form = !isSquid ? 'kid' : this.climbing ? 'climb' : this.submerged ? 'swim' : 'squid';
     if (this.specialActive) a.form = 'kid';
     a.ink = this.ink / PLAYER.inkMax;
@@ -846,7 +919,8 @@ export class Actor {
     a.hp = clamp(this.hp / PLAYER.hp, 0, 1);
     a.inEnemyInk = !!this.onEnemy;
     a.surface = this.grounded ? this.groundTeam : 0;
-    // visual step smoothing (critically damped, ~0.12 s)
+    // visual step smoothing (critically damped, ~0.12 s) — proxies already carry the owner's smoothed height
+    if (this.remote) { this.smoothY = 0; this.smoothYV = 0; }
     const w = 24;
     const acc = -w * w * this.smoothY - 2 * w * this.smoothYV;
     this.smoothYV += acc * dt; this.smoothY += this.smoothYV * dt;
@@ -866,7 +940,7 @@ export class Actor {
     }
   }
 
-  // state-change events for the FX / HUD / audio streams (docs/EVENTS.md)
+  // state-change events for the FX / HUD / audio systems (docs/EVENTS.md)
   _events(a) {
     const kidForm = this.form === 'squid' ? 'squid' : 'kid';
     if (kidForm !== this._evForm) { this._evForm = kidForm; emit('actor:form', { actor: this, form: kidForm, surface: this.groundTeam }); }

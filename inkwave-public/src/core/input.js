@@ -2,7 +2,6 @@
 // Gamepad: radial dead zone + response curve sticks (padStick) and subtle dual-rumble (rumble), scaled by
 // settings.rumble (0..1, default 1) and only while the pad is the active device.
 import { G } from './ctx.js';
-import { MobileInput } from './mobile.js';
 
 // keys whose browser default (focus moves, page scroll) must never fire while the game has the mouse
 const GAME_KEYS = new Set(['Tab', 'Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Slash', 'Quote']);
@@ -57,18 +56,17 @@ export class Input {
       this.locked = document.pointerLockElement === this.canvas;
       if (!this.locked) { this.mouse.left = this.mouse.right = false; this.onUnlock?.(); }
     });
-    this.mobile = new MobileInput(canvas, this);
   }
 
   requestLock() {
-    if (this.mobile?.active || this.locked) return;
+    if (this.locked) return;
     try {
       const p = this.canvas.requestPointerLock({ unadjustedMovement: true });
       // some platforms reject unadjustedMovement: fall back to a plain request
       if (p && p.catch) p.catch(() => { try { const q = this.canvas.requestPointerLock(); if (q && q.catch) q.catch(() => {}); } catch { /* ignore */ } });
     } catch { /* not allowed without a gesture */ }
   }
-  exitLock() { if (this.mobile?.active) return; if (document.pointerLockElement) document.exitPointerLock(); }
+  exitLock() { if (document.pointerLockElement) document.exitPointerLock(); }
 
   down(code) { return this.keys.has(code); }
   wasPressed(code) { return this.pressed.has(code); }
@@ -136,8 +134,5 @@ export class Input {
     this.pressed.clear();
     this.mouse.dx = 0; this.mouse.dy = 0;
     this.mouse.leftPressed = false; this.mouse.rightPressed = false;
-    this.mobile?.endFrame();
   }
-
-  destroy() { this.mobile?.destroy(); }
 }

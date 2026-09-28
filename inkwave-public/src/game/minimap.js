@@ -1,4 +1,4 @@
-// Top-down turf map (stream 6). The HUD frames `canvas` (corner + TAB-expanded) and draws player dots / super-jump
+// Top-down turf map. The HUD frames `canvas` (corner + TAB-expanded) and draws player dots / super-jump
 // beacons on top in normalised canvas space, so `w/h` === canvas size and `toCanvas` is the only projection.
 //
 // Layers (all 2D canvas, allocation-free per frame):
@@ -87,6 +87,7 @@ export class Minimap {
     // 1) rasterise every solid block's top surface (ramps included) → height + owning block + normal
     for (const b of lvl.blocks) {
       if (!b.solid) continue;
+      if (b.hidden && (b.roof || b.perch) && b.aabbMin.y > 3) continue;   // overhead steel (crane girders, booms): not over the turf
       const n = b.axes[1];
       if (n.y < 0.45) continue;
       const tx = b.center.x + n.x * b.half.y, ty = b.center.y + n.y * b.half.y, tz = b.center.z + n.z * b.half.y;

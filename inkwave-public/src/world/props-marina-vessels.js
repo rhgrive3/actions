@@ -1,4 +1,4 @@
-// Halyard Marina — vessel prop pack (owner: vessels stream). Detail meshes that dress the playable vessel blocks of
+// Halyard Marina — vessel prop pack. Detail meshes that dress the playable vessel blocks of
 // the HALYARD layout (ferry, tug on blocks, houseboat, dinghy) plus the non-playable moored boats around the arena.
 // Registered into the PropKit by props.js; placements are exported below and merged into the stage dressing.
 //
@@ -6,7 +6,7 @@
 // by the map's 180° rotation unless `mirror: false`, so the "half" props (ferry_hull, ferry_cabin, …) dress one long
 // side + one end and the mirror copy dresses the other. The playable blocks stay the paint/collision truth: detail on
 // playable walls stands off the face by ≤ 0.12 m, never covers floors, and colliders exist only where listed in
-// docs/HALYARD.md (cover pieces) or where a prop is genuinely solid and out of the lanes.
+// the cover pieces in src/world/dressing.js or where a prop is genuinely solid and out of the lanes.
 
 export function registerMarinaVessels(D, H) {
   const { THREE, PI, TAU, HP, P3, col, shade, mixc, extrudeGeo, TIRE, LIFERING } = H;
@@ -618,7 +618,7 @@ export function registerMarinaVessels(D, H) {
     build(B) {
       B.aoBase = null;
       // long wall z = -2.9 (face -Z); local frame: +Z out of the wall, +X = world -X. The livery stripe band (y 1.3…2.1)
-      // and the cabin ends belong to the surfaces stream: everything here sits above y 2.15.
+      // and the cabin ends carry the livery texture: everything here sits above y 2.15.
       B.push(0, DECK, -2.9, PI);
       glazing(B, -5.6, 5.6, 1.0, 1.9, 7);
       B.cyl('metal', C.galv, 0.02, 11.6, 0, 0.89, 0.075, { rz: HP, seg: 8 });                         // handrail under the sills
@@ -909,8 +909,8 @@ export function registerMarinaVessels(D, H) {
 
   // Tug ramp (Alpha: x 16.4…18.6, slope from z -7.6 (y 0) up to the stern at z -13 (y 2.6); the mirror dresses Bravo's).
   // Scaffold-tube guardrails on standards set just outside both edges (sole boards + base plates on the yard), top rail
-  // 0.95 m and mid rail 0.5 m above the slope, scaffold-board toe boards, couplers; the east rail is tied into the docks
-  // stream's scaffold tower (posts x 19.05, z -12.87 / -11.85) at its ledger heights and the west rail to the tug's deck
+  // 0.95 m and mid rail 0.5 m above the slope, scaffold-board toe boards, couplers; the east rail is tied into the dock
+  // kit's scaffold tower (posts x 19.05, z -12.87 / -11.85) at its ledger heights and the west rail to the tug's deck
   // rail end. Nothing over the 2.2 m walking width.
   D.tug_ramp_rails = {
     desc: 'Scaffold-style guardrails for the tug ramp (place at the origin; mirrored): galvanised standards on sole boards, sloped top + mid rails, timber toe boards, couplers, ties into the adjacent scaffold tower and the tug deck rail. Non-colliding.',
@@ -1974,7 +1974,7 @@ export const HALYARD_VESSELS = [
   { type: 'ferry_hull', pos: [0, 0, 0] },
   { type: 'ferry_cabin', pos: [0, 0, 0] },
   { type: 'ferry_bridge', pos: [0, 3.8, 0], mirror: false },
-  // cover pieces from docs/HALYARD.md (Alpha half; mirrored)
+  // cover pieces (Alpha half; mirrored)
   { type: 'ferry_locker', pos: [11.75, 1.3, 2.15] },
   { type: 'ferry_cargo', pos: [14.2, 1.3, 0.4] },
   // ---- the tug on blocks in the boatyard
@@ -1990,7 +1990,7 @@ export const HALYARD_VESSELS = [
   ...marina(),
 ];
 
-// The marina layout (Alpha half, x > 24; mirrored). It lives in the basin behind the docks stream's breakwater (rocks
+// The marina layout (Alpha half, x > 24; mirrored). It lives in the basin behind the dock kit's breakwater (rocks
 // from x ≈ 38.7, head at z 10) and south of its channel markers (z 17…22): a walkway along Z at x 26.7…28.5 reached by a
 // gated gangway from the quay at z -37.9, fingers off its outer side every 4.2 m, boats in the berths (sterns to the
 // walkway, bows toward the breakwater, ≤ 8.6 m so they clear the rocks), a RIB + kayaks alongside its inner side.
