@@ -26,7 +26,6 @@ import { CameraRig } from './game/cameraRig.js';
 import { Match } from './game/match.js';
 import { Minimap } from './game/minimap.js';
 import { Showcase } from './game/showcase.js';
-import { BOSS_MODE } from './boss/bossMode.js';
 
 const params = new URLSearchParams(location.search);
 // dev-only: ?devstage lets an online-only stage (config onlineOnly — Cargo Terminal) boot as the backdrop and be walked
@@ -47,6 +46,8 @@ async function loadModule(path, stubName) {
     return stubName ? stubs : {};
   }
 }
+// Deliberately opaque to the Pages preload graph: optional mode code should load only when the mode is selected.
+const loadLazyModule = (path) => import(path);
 
 class Game {
   async boot() {
@@ -600,6 +601,11 @@ class Game {
   }
 
   // ---------------------------------------------------------------------------------------- match flow
+  async _loadBoss() {
+    if (!this._bossMod) this._bossMod = loadLazyModule('./boss/bossMode.js');
+    return this._bossMod;
+  }
+
   // lamps, signs, lit windows: follow the environment's night factor (0 day / golden … 1 dusk)
   _applyNight() {
     const k = G.env?.getSkyColors?.()?.night ?? 0;
@@ -616,8 +622,7 @@ class Game {
       difficulty: o.difficulty || this.settings.difficulty,
       mode: o.mode === 'boss' ? 'boss' : 'turf',
     };
-    opts.duration = o.duration || (opts.mode === 'boss' ? BOSS_MODE.duration : this.settings.matchLength || MATCH.defaultDuration);
-    this.lastMatchOpts = opts;
+    const requestedDuration = o.duration || 0;
     G.audio?.init?.();
     this.input.requestLock();
     this.menus?.show(null);
@@ -634,6 +639,9 @@ class Game {
       map = OFFLINE_MAPS[0];
     }
     if (opts.mode === 'boss' && !mapBossOk(map.id)) opts.mode = 'turf';
+    const bossModule = opts.mode === 'boss' ? await this._loadBoss() : null;
+    opts.duration = requestedDuration || (bossModule ? bossModule.BOSS_MODE.duration : this.settings.matchLength || MATCH.defaultDuration);
+    this.lastMatchOpts = { ...opts };
     if ((map.layout || map.id) !== this.layoutId) await this._buildWorld(map);
     const theme = mapTheme(map, opts.time);
     this.time = opts.time === 'dusk' ? 'dusk' : 'day';
@@ -648,7 +656,7 @@ class Game {
     this._setPalette(this._pickPalette());
     const m = (this.match = G.match = new Match({
       attract: false, duration: opts.duration, difficulty: opts.difficulty, mode: opts.mode, weapon: this.profile.weapon || 'shooter',
-      playerName: this.profile.name || 'Player', CharacterClass: this.CharacterClass, rig: this.rig, input: this.input,
+      bossModule, playerName: this.profile.name || 'Player', CharacterClass: this.CharacterClass, rig: this.rig, input: this.input,
       autopilot: params.has('autopilot'), style: this.profile.style || null, noBots: mapNoBots(map.id),   // (devstage: a solo walk)
     }));
     m.setup();
@@ -674,6 +682,7 @@ class Game {
     if (this.match) this.match.dispose();
     G.projectiles.clear(); G.fx.clear?.(); G.paint.clear();
     const map = MAPS.find((m) => m.id === cfg.map) || MAPS[0];
+    const bossModule = cfg.mode === 'boss' ? await this._loadBoss() : null;
     if ((map.layout || map.id) !== this.layoutId) await this._buildWorld(map);
     const theme = mapTheme(map, cfg.time);
     this.time = cfg.time === 'dusk' ? 'dusk' : 'day';
@@ -687,7 +696,7 @@ class Game {
     this.mapDef = map;
     this._setPalette(this.settings.colorblind ? COLORBLIND_PALETTE : TEAM_PALETTES[cfg.palette] || TEAM_PALETTES[0]);
     const m = (this.match = G.match = new Match({
-      attract: false, duration: cfg.duration, difficulty: cfg.difficulty, mode: cfg.mode, CharacterClass: this.CharacterClass, rig: this.rig, input: this.input,
+      attract: false, duration: cfg.duration, difficulty: cfg.difficulty, mode: cfg.mode, bossModule, CharacterClass: this.CharacterClass, rig: this.rig, input: this.input,
       roster: cfg.roster, myId: G.net.myId, host: G.net.isHost, autopilot: params.has('autopilot'),
     }));
     m.setup();
@@ -925,8 +934,27 @@ class Game {
   // ---------------------------------------------------------------------------------------- loop
   _loop() {
     requestAnimationFrame(() => this._loop());
-    this.timer.update(); let dt = this.timer.getDelta();
+    this.timer.update();
+    const rawDt = this.timer.getDelta();
     if (this.frozen) return;
+
+    // Auto = battery-friendly 60 fps on touch hardware, native display refresh elsewhere.
+    // Accumulate rAF time instead of dropping every Nth callback: 90 Hz therefore averages 60, not 45 fps.
+    const fr = this.settings.frameRate ?? 'auto';
+    const capHz = fr === 'display' ? 0 : fr === 60 ? 60 : (this.mobile?.touch ? 60 : 0);
+    let dt = rawDt;
+    if (capHz > 0) {
+      const step = 1 / capHz;
+      this._frameCapAcc = (this._frameCapAcc || 0) + rawDt;
+      this._frameCapElapsed = (this._frameCapElapsed || 0) + rawDt;
+      if (this._frameCapAcc + 1e-6 < step) return;
+      this._frameCapAcc = Math.min(step, Math.max(0, this._frameCapAcc - step));
+      dt = this._frameCapElapsed;
+      this._frameCapElapsed = 0;
+    } else {
+      this._frameCapAcc = 0; this._frameCapElapsed = 0;
+    }
+
     this.fpsAcc += dt; this.fpsN++;
     if (this.fpsAcc > 0.5) { this.fps = Math.round(this.fpsN / this.fpsAcc); this.fpsAcc = 0; this.fpsN = 0; }
     this._dynRes(dt);
@@ -1011,38 +1039,45 @@ class Game {
       if (m.attract) this._updateAttract(dt);
       else if (m.state === 'playing' && m.local?.alive && this.rig.mode !== 'follow' && this.rig.mode !== 'path') this.rig.follow(m.local, true);
     }
-    if (!m || !m.paused) G.fx.update(dt, G.camera);
-    if (!m || !m.paused) this.fxHooks?.update?.(dt);
-    this.screenfx?.update?.(dt, this);
-    G.env.update?.(dt, G.camera);
-    this.decor.update(dt);
-    this.props?.update?.(dt, G.time);
-    // map diorama: held map key during live play (or while waiting to respawn) swoops the view overhead
-    this.rig.setMap?.(!!(m && !m.attract && !m.paused && m.state === 'playing' && m.controller?.mapHeld && !this.menus?.current));
-    this.rig.update(dt);
-    this._dioFog();
-    this.diorama?.update(dt, this.rig.mapK);
-    // local player camera-dependent aim must use this frame's camera
-    if (m && m.controller && m.state === 'playing') m.controller.computeAim?.();
-    // bomb arc preview
+    // A full-frame lobby/showcase completely covers the arena. Keep input/net/audio/showcase alive, but suspend
+    // hidden-world visual work (FX, environment, decor, paint atlas, game camera) until the arena is visible again.
+    const worldHidden = setUp;
     const loc = m?.local;
-    G.projectiles.updateArc(loc, !!(loc && loc.alive && loc.weaponRunner.aimingSub && m.state === 'playing' && !m.paused));
-    const tB = performance.now();
-    // paint → atlas, shader uniforms
-    G.paint.flush(dt);
-    this.levelMat.userData.uniforms.uTime.value = G.time;
-    // see-through window toward the local player
-    {
-      const lu = this.levelMat.userData.uniforms;
-      const on = !!(m && !m.attract && loc && loc.alive && this.rig.mode === 'follow' && this.rig.target === loc && this.rig.mapK < 0.3);
-      lu.uSeeOn.value = damp(lu.uSeeOn.value, on ? 1 : 0, 10, dt);
-      lu.uSeeA.value.copy(G.camera.position);
-      if (loc) lu.uSeeB.value.set(loc.pos.x, loc.pos.y + (loc.form === 'squid' ? 0.4 : 1.0), loc.pos.z);
-      if (this.grateMat) { const gu = this.grateMat.userData.uniforms; gu.uSeeOn.value = lu.uSeeOn.value; gu.uSeeA.value.copy(lu.uSeeA.value); gu.uSeeB.value.copy(lu.uSeeB.value); }
+    if (!worldHidden) {
+      if (!m || !m.paused) G.fx.update(dt, G.camera);
+      if (!m || !m.paused) this.fxHooks?.update?.(dt);
+      this.screenfx?.update?.(dt, this);
+      G.env.update?.(dt, G.camera);
+      this.decor.update(dt);
+      this.props?.update?.(dt, G.time);
+      // map diorama: held map key during live play (or while waiting to respawn) swoops the view overhead
+      this.rig.setMap?.(!!(m && !m.attract && !m.paused && m.state === 'playing' && m.controller?.mapHeld && !this.menus?.current));
+      this.rig.update(dt);
+      this._dioFog();
+      this.diorama?.update(dt, this.rig.mapK);
+      // local player camera-dependent aim must use this frame's camera
+      if (m && m.controller && m.state === 'playing') m.controller.computeAim?.();
+      // bomb arc preview
+      G.projectiles.updateArc(loc, !!(loc && loc.alive && loc.weaponRunner.aimingSub && m.state === 'playing' && !m.paused));
     }
-    if (this.grateMat) this.grateMat.userData.uniforms.uTime.value = G.time;
-    // swimmers' wakes in the ink surface
-    if (this.swimWake && (!m || !m.paused)) this.swimWake.update(dt, this.levelMat.userData.uniforms, G.camera.position);
+    const tB = performance.now();
+    if (!worldHidden) {
+      // paint → atlas, shader uniforms
+      G.paint.flush(dt);
+      this.levelMat.userData.uniforms.uTime.value = G.time;
+      // see-through window toward the local player
+      {
+        const lu = this.levelMat.userData.uniforms;
+        const on = !!(m && !m.attract && loc && loc.alive && this.rig.mode === 'follow' && this.rig.target === loc && this.rig.mapK < 0.3);
+        lu.uSeeOn.value = damp(lu.uSeeOn.value, on ? 1 : 0, 10, dt);
+        lu.uSeeA.value.copy(G.camera.position);
+        if (loc) lu.uSeeB.value.set(loc.pos.x, loc.pos.y + (loc.form === 'squid' ? 0.4 : 1.0), loc.pos.z);
+        if (this.grateMat) { const gu = this.grateMat.userData.uniforms; gu.uSeeOn.value = lu.uSeeOn.value; gu.uSeeA.value.copy(lu.uSeeA.value); gu.uSeeB.value.copy(lu.uSeeB.value); }
+      }
+      if (this.grateMat) this.grateMat.userData.uniforms.uTime.value = G.time;
+      // swimmers' wakes in the ink surface
+      if (this.swimWake && (!m || !m.paused)) this.swimWake.update(dt, this.levelMat.userData.uniforms, G.camera.position);
+    }
     this.showcase.update(dt);
     this._updateLocalLoops(dt);
     this._updateAmbience(dt);
@@ -1061,7 +1096,7 @@ class Game {
     const sm = G.renderer.shadowMap;
     sm.autoUpdate = false;
     this._frameN = (this._frameN || 0) + 1;
-    if (this.settings.quality !== 'low' || (this._frameN & 1)) sm.needsUpdate = true;
+    if (!worldHidden && (this.settings.quality !== 'low' || (this._frameN & 1))) sm.needsUpdate = true;
     if (!this._skipRender) {
       if (!setUp) this.R.render();
       if (this.showcase.mode) sm.needsUpdate = true;
@@ -1155,25 +1190,34 @@ class Game {
 
   _updateHud(dt) {
     const m = this.match, a = m.local, cam = G.camera;
-    this.minimap.update(dt);
+    const showMinimap = this.settings.minimap !== false;
+    if (showMinimap) this.minimap.update(dt);
     const w = a.weapon;
     // crosshair spread = the weapon's live cone (first-shot accurate, blooms with sustained fire / in the air)
     const vHalf = (G.camera.fov * Math.PI) / 360;
     const coneDeg = a.weaponRunner.spread ?? (w.kind === 'shooter' ? 5.5 : w.kind === 'blaster' ? 1.2 : 0);
     const spread = w.kind === 'roller' ? 28 : Math.min(90, (Math.tan((coneDeg * Math.PI) / 180) / Math.tan(vHalf)) * (innerHeight / 2));
-    const players = [];
-    const tc = { x: 0, y: 0 };
-    for (const o of m.actors) {
-      if (!o.alive) continue;
-      if (o.team !== a.team && !o.isLocal) {
-        // enemies only show on the map when visible to your team (not submerged far away)
-        if (o.anim.form === 'swim') continue;
+    const players = this._hudPlayers || (this._hudPlayers = []);
+    let playerN = 0;
+    const tc = this._hudMapPt || (this._hudMapPt = { x: 0, y: 0 });
+    if (showMinimap) {
+      for (const o of m.actors) {
+        if (!o.alive) continue;
+        if (o.team !== a.team && !o.isLocal) {
+          // enemies only show on the map when visible to your team (not submerged far away)
+          if (o.anim.form === 'swim') continue;
+        }
+        this.minimap.toCanvas(o.pos.x, o.pos.z, tc);
+        const p = players[playerN] || (players[playerN] = {});
+        p.x = tc.x / this.minimap.w; p.y = tc.y / this.minimap.h; p.team = o.team; p.isSelf = o.isLocal;
+        p.yaw = -o.yaw + (this.minimap.flip ? Math.PI : 0); p.alive = o.alive; p.color = G.teamHex[o.team];
+        playerN++;
       }
-      this.minimap.toCanvas(o.pos.x, o.pos.z, tc);
-      players.push({ x: tc.x / this.minimap.w, y: tc.y / this.minimap.h, team: o.team, isSelf: o.isLocal, yaw: -o.yaw + (this.minimap.flip ? Math.PI : 0), alive: o.alive, color: G.teamHex[o.team] });
     }
+    players.length = playerN;
     // ally markers
-    const markers = [];
+    const markers = this._hudMarkers || (this._hudMarkers = []);
+    let markerN = 0;
     const v = this._mv || (this._mv = new THREE.Vector3());
     const W = innerWidth, H = innerHeight;
     for (const o of m.actors) {
@@ -1192,8 +1236,11 @@ class Game {
         const k = Math.min((W / 2 - 40) / Math.max(1e-3, Math.abs(Math.cos(angle))), (H / 2 - 40) / Math.max(1e-3, Math.abs(Math.sin(angle))));
         x = W / 2 + Math.cos(angle) * k; y = H / 2 + Math.sin(angle) * k;
       }
-      markers.push({ x, y, name: o.name, color: G.teamHex[o.team], onScreen, angle, dist: o.pos.distanceTo(a.pos) });
+      const mk = markers[markerN] || (markers[markerN] = {});
+      mk.x = x; mk.y = y; mk.name = o.name; mk.color = G.teamHex[o.team]; mk.onScreen = onScreen; mk.angle = angle; mk.dist = o.pos.distanceTo(a.pos);
+      markerN++;
     }
+    markers.length = markerN;
     // contextual prompts (light tutorial)
     this._hintT += dt;
     let prompt = null;
@@ -1217,7 +1264,7 @@ class Game {
       weapon: a.weaponId, charge: a.weaponRunner.charge,
       crosshair: { spread, onTarget: m.controller?.onTarget ? 'enemy' : null, inRange: m.controller ? m.controller.inRange !== false : true },
       // corner minimap follows the setting; the TAB map (needed for super jumps) is always available
-      map: (this.settings.minimap !== false) ? { canvas: this.minimap.canvas, expanded: false, players } : null,
+      map: showMinimap ? { canvas: this.minimap.canvas, expanded: false, players } : null,
       markers,
       prompt,
       fps: this.settings.showFps ? this.fps : undefined,
