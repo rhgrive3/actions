@@ -1,0 +1,9 @@
+{
+  "source": "docs/face-multiview-fit/refs/sheet_5view.png",
+  "note": "Upper-lash spikes of the minus-side eye, sheet-box pixels of each fitted camera, outer to inner. Detected as thin dark components above the opened liner body (iteration-34); sideR hides the third front lash.",
+  "upper": {
+    "front": [[[92.9, 107.2], [94.6, 109.0]], [[101.2, 106.5], [103.8, 108.6]], [[110.2, 107.0], [111.1, 107.8]], [[119.1, 105.9], [120.2, 107.1]]],
+    "q34R": [[[169.2, 107.8], [172.8, 110.1]], [[184.0, 108.0], [186.5, 110.4]], [[195.6, 109.4], [196.9, 110.2]], [[208.6, 108.1], [209.4, 110.4]]],
+    "sideR": [[[250.0, 108.6], [252.6, 110.4]], [[263.0, 108.6], [264.9, 110.8]], null, [[281.6, 108.5], [282.2, 110.9]]]
+  }
+}
