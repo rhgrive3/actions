@@ -276,3 +276,28 @@ export const QUALITY = {
   high:   { pixelRatio: 1.5,  shadowSize: 4096, msaa: 4, bloom: true,  ao: true,  paintAtlas: 4096, particles: 1.0 },
   ultra:  { pixelRatio: 2.0,  shadowSize: 4096, msaa: 4, bloom: true,  ao: true,  paintAtlas: 4096, particles: 1.0 },
 };
+
+// One source of truth for the quality actually used by rendering/FX.
+// Mobile variants are cached so callers can compare them by identity without forcing rebuilds.
+const EFFECTIVE_QUALITY = new Map();
+export function effectiveQuality(settings, mobile) {
+  const name = QUALITY[settings?.quality] ? settings.quality : 'high';
+  const base = QUALITY[name];
+  if (!mobile?.touch) return base;
+  const key = name + ':' + (mobile.ios ? 'ios' : 'touch');
+  let q = EFFECTIVE_QUALITY.get(key);
+  if (!q) {
+    q = Object.freeze({
+      ...base,
+      paintAtlas: Math.min(base.paintAtlas, 2048),
+      shadowSize: Math.min(base.shadowSize, 2048),
+      particles: Math.min(base.particles, 0.7),
+      msaa: 0,
+      ao: false,
+      bloom: false,
+      pixelRatio: Math.min(base.pixelRatio, mobile.ios ? 1.2 : 1.35),
+    });
+    EFFECTIVE_QUALITY.set(key, q);
+  }
+  return q;
+}
