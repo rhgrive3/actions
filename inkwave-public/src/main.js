@@ -3,6 +3,9 @@ import * as THREE from 'three';
 import { G, on, emit, clamp, damp } from './core/ctx.js';
 import { Renderer } from './core/renderer.js';
 import { Input } from './core/input.js';
+import { deviceProfile } from './core/device.js';
+import { ShadowCache } from './core/shadowcache.js';
+import { t, setTextMode } from './i18n.js';
 import { mapTheme,
   DEFAULT_SETTINGS, QUALITY, TEAM_PALETTES, COLORBLIND_PALETTE, TEAM_NAMES, WEAPONS, WEAPON_ORDER, SUB, SPECIALS,
   MAPS, DIFFICULTY, PLAYER, PROGRESSION, VERSION, MATCH, OFFLINE_MAPS, mapOfflineOk, mapNoBots, mapBossOk,
@@ -51,6 +54,7 @@ class Game {
     // real top-down thumbnails for the stage cards, generated from each layout's geometry
     for (const m of MAPS) { try { m.thumb = layoutThumbSVG(MAP_LAYOUTS[m.layout || m.id], m.theme); } catch (e) { console.warn('thumb', m.id, e); } }
     this.settings = G.settings = loadJSON('inkwave.settings', DEFAULT_SETTINGS);
+    this.mobile = G.mobile = deviceProfile();
     // v1.1: fov became horizontal — migrate old vertical values once
     if (this.settings.fovMode !== 'h') { this.settings.fov = DEFAULT_SETTINGS.fov; this.settings.fovMode = 'h'; saveJSON('inkwave.settings', this.settings); }
     this.profile = loadJSON('inkwave.profile', DEFAULT_PROFILE);
@@ -82,6 +86,21 @@ class Game {
     this.input = G.input = new Input(this.R.renderer.domElement);
     this.input.onKey = (e, repeat) => this._onKey(e, repeat);
     this.input.onUnlock = () => this._onPointerUnlock();
+    this.input.onDevice = (mode) => this._onDevice(mode);
+    this._onDevice(this.input.lastDevice);
+    if (this.input.mobile) {
+      const mob = this.input.mobile;
+      mob.setVisible(false);
+      mob.applySettings(this.settings);
+      mob.onPause = () => {
+        if (this.match?.paused) this.resume(); else if (G.mode === 'match') this.pause();
+      };
+      mob.onGyroToggle = (on) => {
+        this.settings.gyro = !!on;
+        saveJSON('inkwave.settings', this.settings);
+        this.menus?.refreshSetting?.('gyro');
+      };
+    }
     // after a focus steal while the map was held, the next click on the game takes the mouse back (no pause detour)
     this.R.renderer.domElement.addEventListener('mousedown', () => {
       if (this._relock && G.mode === 'match' && this.match && !this.match.paused && !this.menus?.current) { this._relock = false; this.input.requestLock(); }
@@ -104,7 +123,8 @@ class Game {
     if (!mapOfflineOk(map.id) && !DEV_STAGE) { console.info(`[inkwave] ${map.name} is online only — booting ${OFFLINE_MAPS[0].name}`); map = OFFLINE_MAPS[0]; }
     this.time = params.get('time') === 'dusk' || params.get('map') === 'sunset' ? 'dusk' : (this.settings.timeOfDay === 'dusk' ? 'dusk' : 'day');
     this.theme = mapTheme(map, this.time);
-    const q = QUALITY[this.settings.quality] || QUALITY.high;
+    const qb = QUALITY[this.settings.quality] || QUALITY.high;
+    const q = this.mobile?.touch ? { ...qb, paintAtlas: Math.min(qb.paintAtlas, 2048), shadowSize: Math.min(qb.shadowSize, 2048), particles: Math.min(qb.particles, 0.7), msaa: 0, ao: false, bloom: false, pixelRatio: Math.min(qb.pixelRatio, this.mobile.ios ? 1.2 : 1.35) } : qb;
     this.murals = await createMuralTexture();
     try {
       const { createTextureLibrary } = await import('./world/texlib.js');
@@ -115,6 +135,7 @@ class Game {
     const B = G.level.bounds;
     G.env = new envMod.Environment(G.renderer, scene, { bounds: B, theme: this.theme, shadowSize: q.shadowSize, footprint: this._footprint(G.level) });
     if (G.env.envMap) scene.environment = G.env.envMap;
+    this._shadowRoots();
     // sky-fill balance (scene.environmentIntensity, hemisphere) + per-theme exposure are the environment theme's job
     // (Environment.setTheme), so a stage/time looks the same booted into or switched to mid-session
     G.renderer.toneMappingExposure = 0.94;
@@ -200,7 +221,8 @@ class Game {
     G.paint?.dispose();
     this.layoutId = layoutId;
     this.mapDef = map;
-    const q = QUALITY[this.settings.quality] || QUALITY.high;
+    const qb = QUALITY[this.settings.quality] || QUALITY.high;
+    const q = this.mobile?.touch ? { ...qb, paintAtlas: Math.min(qb.paintAtlas, 2048), shadowSize: Math.min(qb.shadowSize, 2048), particles: Math.min(qb.particles, 0.7), msaa: 0, ao: false, bloom: false, pixelRatio: Math.min(qb.pixelRatio, this.mobile.ios ? 1.2 : 1.35) } : qb;
     // set dressing first: solid props hand back collision boxes that become part of the level (physics, nav, paint)
     const colliders = [];
     if (this.PropKit) {
@@ -385,6 +407,12 @@ class Game {
   _applyAudioVolumes() { G.audio?.setVolumes?.({ master: this.settings.master, music: this.settings.music, sfx: this.settings.sfx }); }
 
   _onScreen(s) {
+    const mob = this.input?.mobile;
+    if (mob) {
+      const playTouch = !s && G.mode === 'match';
+      mob.setVisible(playTouch);
+      if (!playTouch) mob.gyro?.discard?.();
+    }
     if (!this.showcase) return;
     if (s === 'loadout') this.showcase.showLoadout(this.profile.weapon || 'shooter', G.teamColors[0], this.profile.style);
     else if (s !== 'results') { if (this.showcase.mode === 'loadout') this.showcase.hide(); }
@@ -630,6 +658,8 @@ class Game {
     this.hud?.setVisible(false);
     this.hudPrompt = null; this._hintT = 0; this._hints = {};
     m.start();
+    this.input.mobile?.setVisible(true);
+    this._startGyro();
     this._fade(0, 500);
   }
 
@@ -686,6 +716,8 @@ class Game {
     if (!m || m.state !== 'init') return;
     this.input.requestLock();
     m.start();
+    this.input.mobile?.setVisible(true);
+    this._startGyro();
   }
   // results done → everyone back in the room's lobby
   async netMatchEnd() {
