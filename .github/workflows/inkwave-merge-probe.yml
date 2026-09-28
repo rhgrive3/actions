@@ -1,4 +1,4 @@
-name: INKWAVE Merge Probe
+name: INKWAVE Integration Probe
 on:
   push:
     branches: [update/inkwave-upstream-20260928]
@@ -6,28 +6,57 @@ permissions:
   contents: read
 jobs:
   probe:
-    if: contains(github.event.head_commit.message, 'probe INKWAVE merge conflicts')
+    if: contains(github.event.head_commit.message, 'probe INKWAVE integration replay')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Probe merge conflicts
+      - name: Replay local mobile optimizations over upstream
         shell: bash
         run: |
-          set +e
-          git config user.name "merge-probe"
-          git config user.email "merge-probe@users.noreply.github.com"
-          git fetch origin main
-          git merge --no-commit --no-ff origin/main
-          rc=$?
-          echo "MERGE_RC=$rc"
-          echo "=== CONFLICT FILES ==="
-          git diff --name-only --diff-filter=U
-          echo "=== CONFLICT HUNKS ==="
-          while IFS= read -r f; do
-            [ -z "$f" ] && continue
-            echo "===== $f ====="
-            git diff --cc -U8 -- "$f" | head -n 600
-          done < <(git diff --name-only --diff-filter=U)
-          exit 0
+          set -euo pipefail
+          git config user.name "integration-probe"
+          git config user.email "integration-probe@users.noreply.github.com"
+          for c in             cbe8f01b84c2df5ab84c7020075ece36663af619             87a221dbf6ec4b4f1cda5810ccde146f163545a3             217fa61d5e0f43ee9253014a52a62717dfccd106             c7d6349f273f655981a712f2879e1bd347e5f0f7             ea1a7185d6b8014d43ebea81f47e6f8d0e144020
+          do
+            echo "APPLY $c"
+            git cherry-pick -n -Xours "$c"
+          done
+
+          # Keep this integration scoped to the mirrored runtime.
+          git diff --name-only HEAD | grep -v '^inkwave-public/' | while IFS= read -r f; do
+            [ -z "$f" ] || git restore --staged --worktree --source=HEAD -- "$f"
+          done
+
+          echo "=== REQUIRED MOBILE FILES ==="
+          for f in             inkwave-public/src/core/device.js             inkwave-public/src/core/gyro.js             inkwave-public/src/core/mobile.js             inkwave-public/src/core/shadowcache.js             inkwave-public/src/i18n.js             inkwave-public/styles/mobile.css
+          do test -s "$f" && echo "OK $f" || { echo "MISSING $f"; exit 1; }; done
+
+          echo "=== INTEGRATION HOOKS ==="
+          checks=(
+            "inkwave-public/src/core/input.js|MobileInput"
+            "inkwave-public/src/core/input.js|touchPrimary"
+            "inkwave-public/src/core/renderer.js|deviceProfile"
+            "inkwave-public/src/core/renderer.js|FXAAShader"
+            "inkwave-public/src/core/renderer.js|mobileCap"
+            "inkwave-public/src/game/player.js|touch.gyro"
+            "inkwave-public/src/main.js|ShadowCache"
+            "inkwave-public/src/main.js|_startGyro"
+            "inkwave-public/src/main.js|BOSS_MODE"
+            "inkwave-public/src/main.js|G.net"
+            "inkwave-public/src/ui/menus.js|TOUCH_TAB"
+            "inkwave-public/src/ui/menus.js|online"
+            "inkwave-public/src/ui/hud.js|isJa"
+            "inkwave-public/index.html|styles/mobile.css"
+          )
+          for c in "${checks[@]}"; do
+            f="${c%%|*}"; p="${c#*|}"
+            grep -Fq "$p" "$f" && echo "OK $f :: $p" || { echo "MISSING $f :: $p"; exit 1; }
+          done
+
+          echo "=== SYNTAX ==="
+          while IFS= read -r f; do node --check "$f" >/dev/null; done < <(find inkwave-public/src -type f -name '*.js' | sort)
+          git diff --check
+          echo "=== CHANGED FILES ==="
+          git diff --name-only HEAD
