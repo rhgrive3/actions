@@ -34,7 +34,20 @@ P1は先に対応する候補、P2は処理時間を比較しながら対応す�
 | F05 | P2 | 水面反射はスマホでも毎フレーム別シーン描画 | ソース確認。GPU/CPU時間は未測定 | Marinaステージの描画負荷 |
 | F06 | P1 | ミニマップの最後のボム/flashを消す合成が抜ける | updateメソッドで終了後の合成停止を再現 | 最適化後の表示正確性 |
 
-## F01. ボム・雲を消しても個別materialが解放されない
+## 今回の実装結果（画質・見た目を落とさないものだけ）
+
+ユーザー指定により、画質・演出密度・反射品質を下げる可能性がある変更は入れていない。
+
+- **F01 実装済み:** ボム/Storm雲の所有materialを終了経路で一度だけdisposeし、雲のloop音もclear時に停止。共有geometry・共有bomb material cacheは維持。
+- **F03 実装済み:** 弾0個ではInstanced属性の更新要求を出さない。弾がある場合もlive個数分だけupdateRangeを指定し、描画個数・弾道・色・影は変更しない。
+- **F04 実装済み:** 発射位置・初速・Physics instanceが完全一致する間だけ投擲軌跡を再利用。色/点滅は従来どおり毎フレーム更新し、位置・照準由来初速・ステージPhysicsが変われば同フレームで再計算。
+- **F06 実装済み:** 最後のbomb/cloud/flash等が消えた遷移で消去用composeを1回だけ実行し、その後は静止時の30Hz/dirty最適化へ戻る。
+- **F02 見送り:** lowへ影サイズ/FX密度を実際に下げる変更は、ユーザー選択時とはいえ映像品質を下げるため今回の「デメリットなし」条件から除外。
+- **F05 見送り:** 水面反射の解像度・更新頻度・参加オブジェクト削減は見た目の変化余地があるため未変更。
+
+追加の関数単位検証では、F01の所有material/loop終了、F03の空状態600回で属性version増加0、F04の固定入力60回でsegment 126回・lineDistance再生成1回、F06の最終消去compose 1回を確認した。F04は位置・初速・Physicsを変更すると即再計算されることも確認した。
+
+## F01. ボム・雲を消しても個別materialが解放されない【実装済み】
 
 **根拠:** [weapons.js L1001–1033](https://github.com/rhgrive3/actions/blob/b4d6da439b6525ba18eb0a4e9b0e7807c9b3b1bd/inkwave-public/src/game/weapons.js#L1001-L1033) は通常ボム1個ごとにbody materialのcloneとcap materialを生成する。Storm投擲物にもcloneがあり、雲生成は [L1062–1092](https://github.com/rhgrive3/actions/blob/b4d6da439b6525ba18eb0a4e9b0e7807c9b3b1bd/inkwave-public/src/game/weapons.js#L1062-L1092) でbase/top materialと音のループを作る。
 
@@ -48,7 +61,7 @@ P1は先に対応する候補、P2は処理時間を比較しながら対応す�
 
 **合格条件:** 投擲/自然終了/水没/試合終了を各20回。個別materialの生成・破棄が対応し、clear後にstorm_rainの再生ハンドルが残らない。実描画済みの状態でrenderer.infoの資源数も観察する。
 
-## F02. 品質をlowに変えても、既存の影とFXは起動時の設定が残る
+## F02. 品質をlowに変えても、既存の影とFXは起動時の設定が残る【今回は未変更】
 
 **根拠:** [main.js L384–407](https://github.com/rhgrive3/actions/blob/b4d6da439b6525ba18eb0a4e9b0e7807c9b3b1bd/inkwave-public/src/main.js#L384-L407) の設定変更はRendererへ渡すが、既存G.envの影サイズやG.fxの粒子設定を更新しない。
 
@@ -60,7 +73,7 @@ Environment/FXはmain.js L136/L144で起動時に生成。[environment.js L1413]
 
 **合格条件:** 同一ステージでhigh→low→highと往復し、Rendererだけでなく実際の影RT寸法、G.fx.q、maxChecksを記録する。影2048→1024なら画素数は1/4だが、ゲーム全体の4倍高速化ではない。射撃・塗り・得点を変えず、意図しないエフェクト増殖や欠落も確認する。
 
-## F03. 弾0個でも700個分の属性を更新対象にしている
+## F03. 弾0個でも700個分の属性を更新対象にしている【実装済み】
 
 **根拠:** MAX_BLOBS=700（weapons.js L387）。[生成 L537–549](https://github.com/rhgrive3/actions/blob/b4d6da439b6525ba18eb0a4e9b0e7807c9b3b1bd/inkwave-public/src/game/weapons.js#L537-L549) ではfrustumCulled=falseで、[_draw L1409–1460](https://github.com/rhgrive3/actions/blob/b4d6da439b6525ba18eb0a4e9b0e7807c9b3b1bd/inkwave-public/src/game/weapons.js#L1409-L1460) の末尾は数にかかわらずinstanceMatrix・instanceColor・blobShapeをneedsUpdateにする。更新範囲の指定はない。
 
@@ -70,7 +83,7 @@ Environment/FXはmain.js L136/L144で起動時に生成。[environment.js L1413]
 
 **合格条件:** 0→1→多数→0の遷移、影、色替えを確認。GPUバッファ更新の範囲がlive個数に比例し、0個の間は新しいversionが増えない。弾道・命中判定・弾の最大数は変更しない。
 
-## F04. ボム予測線は照準が動かなくても最大126回の衝突照会
+## F04. ボム予測線は照準が動かなくても最大126回の衝突照会【実装済み】
 
 **根拠:** [weapons.js L1376–1404](https://github.com/rhgrive3/actions/blob/b4d6da439b6525ba18eb0a4e9b0e7807c9b3b1bd/inkwave-public/src/game/weapons.js#L1376-L1404) はarcN=64、頂点間2ステップで予測する。衝突がなければ毎回126回G.physics.segmentを呼ぶ。main.js L1061から投擲ボタン保持中に毎フレーム呼ばれる。
 
@@ -80,7 +93,7 @@ Environment/FXはmain.js L136/L144で起動時に生成。[environment.js L1413]
 
 **合格条件:** 固定照準では初回だけ軌跡計算、移動/照準変更では即更新。元と同じ入力で着地点・段差判定が一致すること。軌跡予測と実際のボム物理の精度は下げない。
 
-## F05. Marina水面反射の追加描画を端末別に制御できる
+## F05. Marina水面反射の追加描画を端末別に制御できる【今回は未変更】
 
 **根拠:** [environment.js L1637–1712](https://github.com/rhgrive3/actions/blob/b4d6da439b6525ba18eb0a4e9b0e7807c9b3b1bd/inkwave-public/src/world/environment.js#L1637-L1712)。水面のonBeforeRenderで鏡像カメラを使いrenderer.render(scene, rc)を呼ぶ。Marinaのみ、1フレーム1回、low/水中/override時は除外済み。highは縦横0.4倍、medium0.28倍、ultra0.5倍の反射RTを使い、端末別の更新頻度制限はない。
 
@@ -90,7 +103,7 @@ Environment/FXはmain.js L136/L144で起動時に生成。[environment.js L1413]
 
 **合格条件:** Halyard等で静止/旋回/水際/昼夕を比較し、水面のずれ・ちらつき・残像を確認。非Marinaに効果を一般化しない。GPU実測がない段階で反射を一律OFFにする優先度ではない。
 
-## F06. 最後のミニマップ表示を消すためのdirty更新が必要
+## F06. 最後のミニマップ表示を消すためのdirty更新が必要【実装済み】
 
 これは追加軽量化そのものではなく、**今回入った間引きを維持するための境界修正**。
 
