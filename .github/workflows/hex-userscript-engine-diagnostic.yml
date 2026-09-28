@@ -1,13 +1,13 @@
-name: Hex userscript engine diagnostic
+name: Hex userscript generated sync
 on:
   push:
     paths:
       - .github/workflows/hex-userscript-engine-diagnostic.yml
 
 jobs:
-  diagnose:
+  build:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 8
     steps:
       - name: Checkout diagnostic repo
         uses: actions/checkout@v4
@@ -21,52 +21,22 @@ jobs:
         working-directory: hex-ida
         timeout-minutes: 4
         run: npm ci --silent > /tmp/npm-ci.log 2>&1
-      - name: Install Playwright browsers
-        working-directory: hex-ida
-        timeout-minutes: 5
-        run: npx playwright install --with-deps chromium webkit > /tmp/playwright-install.log 2>&1
-      - name: Run origin-guard regression
-        working-directory: hex-ida
-        timeout-minutes: 2
-        run: node tests/issue-5016-protected-workers-origin-guard.mjs
       - name: Build userscript
         working-directory: hex-ida
         timeout-minutes: 3
         run: npm run userscript:build > /tmp/userscript-build.log 2>&1
-      - name: Restrict browser E2E to legacy ARM64 probe
+      - name: Record generated diff
         working-directory: hex-ida
-        shell: bash
         run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          p = Path('tests/userscript-sandbox-browser-e2e.mjs')
-          s = p.read_text()
-          needle = "    assert.equal(legacyArm64Probe.ok, true,\n      `${name}: protected legacy ARM64 worker probe failed: ${JSON.stringify(legacyArm64Probe)}`);\n"
-          replacement = needle + "    console.log(`legacy-arm64-probe ${name}: ${JSON.stringify(legacyArm64Probe)}`);\n    return;\n"
-          if needle not in s:
-              raise SystemExit('legacy probe assertion marker not found')
-          p.write_text(s.replace(needle, replacement, 1))
-          PY
-      - name: Run Chromium and WebKit legacy probe
-        id: diag
-        working-directory: hex-ida
-        timeout-minutes: 4
-        shell: bash
-        run: |
-          set +e
-          node tests/userscript-sandbox-browser-e2e.mjs > /tmp/e2e.log 2>&1
-          code=$?
-          {
-            echo "exit_code=$code"
-            echo "--- focused output ---"
-            tail -n 80 /tmp/e2e.log
-          } > engine-diagnostic.txt
-          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
-          exit 0
-      - name: Upload diagnostic
-        if: always()
+          git diff -- userscript/hex.user.template.js userscript/release-version.json > userscript-generated.patch
+          git status --short -- userscript/hex.user.template.js userscript/release-version.json > userscript-generated.status
+      - name: Upload generated userscript files
         uses: actions/upload-artifact@v4
         with:
-          name: hex-userscript-engine-diagnostic
-          path: hex-ida/engine-diagnostic.txt
+          name: hex-userscript-generated
+          path: |
+            hex-ida/userscript/hex.user.template.js
+            hex-ida/userscript/release-version.json
+            hex-ida/userscript-generated.patch
+            hex-ida/userscript-generated.status
           retention-days: 1
