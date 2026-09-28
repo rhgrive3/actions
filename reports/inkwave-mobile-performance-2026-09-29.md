@@ -32,14 +32,14 @@ P1のID01〜05を、既存のDPR上限・MSAA/GTAO無効化・FXAA・LOD・Shado
 - **ID06:** `frameRate` を追加。モバイルの既定 `Auto` は60fps、`Display` を選べば90/120Hz等の画面更新を使える。rAFを単純に1回おきに捨てず、経過時間を蓄積するため75/90/120/144Hzでも平均60fpsかつゲーム時間を失わない。デスクトップのAutoは従来どおり画面更新に追従する。
 - **ID07:** Minimapの最終Canvas合成をdirty/アニメーション時だけ最大30Hzに制限。Minimap OFFでは高価な初期ラスタ構築とCanvas合成を行わず、軽量な論理タイマーだけ進める。HUDのmap player/marker配列も再利用し、毎フレームの一時オブジェクト生成を削減。
 - **ID08:** `showcase.fullFrame` でロビー/オンラインセットが全画面を覆っている間、背後のarenaのFX・environment・Decor・props・camera/diorama・paint atlas・surface visual更新とarena shadow更新を休止。入力、ネットワーク、時刻、音声、showcase自体は継続する。
-- **ID09:** Boss Battleランタイムを通常起動グラフから分離。`main.js` / `match.js` のBoss静的importをなくし、Boss選択時だけ `bossMode.js` を遅延ロードする。通常Turfの初回依存グラフからBoss系モジュールを外す。Characterの全LOD warm-upは、試合中Low→High変更時の初回ヒッチを避けるため維持した。
+- **ID09:** Boss Battleランタイムを通常起動グラフから分離。`main.js` / `match.js` / `net/netmatch.js` のBoss runtime静的importをなくし、Boss選択時だけ `bossMode.js` を遅延ロードする。通常Turfの初回依存グラフからBoss系モジュールを外す。Characterの全LOD warm-upは、試合中Low→High変更時の初回ヒッチを避けるため維持した。
 - **ID10:** モバイルでは実効品質上BloomがOFFなので、`UnrealBloomPass` 自体を生成しないよう変更。Grade → ScreenFX → Output → FXAAの順序は保持し、GPU実測なしのPass融合は実施していない。
 
 ### 追加のソースレベル検証
 
 - touch Autoのフレーム上限を60/75/90/120/144Hz入力で10秒シミュレーションし、すべて60fps出力・約10秒のシミュレーション経過を確認。
 - `Display` 120Hzとdesktop Auto 120Hzは120fpsのままになることを確認。
-- `main.js` / `match.js` にBoss runtimeの静的importが無いこと、遅延ローダーがビルドの静的preload探索形式に一致しないことを確認。
+- `main.js` / `match.js` / `net/netmatch.js` にBoss runtimeの静的importが無いこと、遅延ローダーがビルドの静的preload探索形式に一致しないことを確認。
 - Minimap 30Hz合成、OFF時のidle build抑止、hidden tick、ロビーworld guard、touch BloomPass非生成をソース上で確認。
 - 変更した主要JSの構文確認を実施。最終的な公開ビルドはmain反映後のPages workflowで確認する。
 
@@ -160,7 +160,7 @@ lightmapも [main.js L267–276](https://github.com/rhgrive3/actions/blob/bba6ea
 
 さらに [character.js L898–918](https://github.com/rhgrive3/actions/blob/bba6eab9277e28cbdab89c6b2cff9a03dcdb6e3d/inkwave-public/src/game/character.js#L898-L918) のwarmAllは全3 tierとdither材質を準備し、武器のfar形状も事前生成する。[character-lod.js](https://github.com/rhgrive3/actions/blob/bba6eab9277e28cbdab89c6b2cff9a03dcdb6e3d/inkwave-public/src/game/character-lod.js) は頂点クラスタリングとキャッシュを既に持つ。LOD自体を新規導入する必要はない。
 
-**反映済み:** `main.js` と `match.js` からBoss runtimeの静的importを除去し、Boss選択時だけロードする境界へ変更した。Characterの全LOD warm-upは、品質をLow→Highへ変更した直後の初回Hero生成ヒッチを避けるため維持する。追加のLOD事前生成削減は実測で必要性が出た場合だけ行う。
+**反映済み:** `main.js`、`match.js`、`net/netmatch.js` からBoss runtimeの静的importを除去した。ネット同期のsnapshot decodeは、Boss選択時に生成済みのinstanceのconstructorを使うため、通常起動からBoss実装を引き込まない。Boss選択時だけロードする境界へ変更した。Characterの全LOD warm-upは、品質をLow→Highへ変更した直後の初回Hero生成ヒッチを避けるため維持する。追加のLOD事前生成削減は実測で必要性が出た場合だけ行う。
 
 なお、調査対象のゲームsrcにはGLTFLoader/GLB読み込みが見つからず、現行キャラはJS生成経路。`tools/inkwave-modeler/` のBlender成果物のサイズを、そのままゲーム中の負荷と結び付けない。
 
