@@ -4,7 +4,10 @@
 // ferris wheel, sailboats, buoys, gulls). All far scenery fades into the sky with a sky-matched aerial haze.
 //
 // const env = new Environment(renderer, scene, { bounds, theme: 'day'|'sunset'|'golden', shadowSize, footprint })
-//   footprint (optional): array of {minX,maxX,minZ,maxZ} rects = the deck slab's XZ outline (default [bounds]).
+//   footprint (optional): array of deck rects = the deck slab's XZ outline (default [bounds]). Each rect is either an
+//   axis-aligned {minX,maxX,minZ,maxZ} or an oriented rect {cx,cz,hx,hz,ax,az} (centre, half extents along its local
+//   axes, local x axis (ax,az) unit; local z = (−az,ax)) — slabs turned about Y (Cargo Terminal). Internally every rect
+//   carries both (orect()): axis-aligned ones keep their exact min/max and code paths, so those stages are unchanged.
 //   Used for pilings, water foam, under-deck shading and the analytic deck shadow on the water.
 //   setTheme(name) switches light/sky/sea in place; rebuildForArena(bounds, footprint) follows a stage change.
 //
@@ -21,18 +24,19 @@ import { G } from '../core/ctx.js';
 
 const WATER_Y = PLAYER.waterY; // -1.6
 const DEG = Math.PI / 180;
-const MAX_RECTS = 24;   // deck slabs (Halyard has 16: every pier/quay slab of both halves)
+const MAX_RECTS = 32;   // deck slabs (Halyard has 16: every pier/quay slab of both halves; Cargo Terminal 29)
 const MAX_WET = 12;     // marina: solids piercing the surface (hulls) or sunk below it
-const HEMI_FLOOR = 0.38; // = the sky-fill floor main.js applies after construction
 
 // ---------------------------------------------------------------------------------------------------------------
 // Themes (colours are sRGB hex; converted to linear once)
 // ---------------------------------------------------------------------------------------------------------------
 const THEMES = {
   day: {
-    sunAz: 222, sunEl: 43,
-    sunColor: '#fff4e4', sunIntensity: 2.75,
-    hemiSky: '#cfe4ff', hemiGround: '#bda98f', hemiIntensity: 0.2,
+    // key : fill ≈ 3.5 : 1 on the deck — a warm key a little lower than noon (longer shadows model the blocks), a cool
+    // sky fill, and a warm bounce off the sunlit deck (hemi ground) so walls turned from the sun keep their form
+    sunAz: 222, sunEl: 39,
+    sunColor: '#fff0dc', sunIntensity: 3.3, skySun: 2.75,
+    hemiSky: '#b4d0ff', hemiGround: '#dcc3a0', hemiGroundK: 2.2, hemiIntensity: 0.45, envK: 0.45,
     zenith: '#1d6fdc', skyMid: '#5aa8f2', horizon: '#d4ecfa', ground: '#6fa4bd',
     horizonGlow: '#fff4dc', horizonGlowK: 0.05, glowColor: '#fff0cc',
     glow: [900, 0.9, 7.0, 0.06],
@@ -41,26 +45,31 @@ const THEMES = {
     seaDeep: '#0a4f8a', seaShallow: '#12a7b8', seaCrest: '#48e2d6', foam: '#f7fcff',
     seaAmbientK: 0.62, sunSpec: 1.0, waveStrength: 1.0,
     haze: [1 / 1850, 0.9, 260],
-    fog: [70, 1500],
+    fog: [25, 900],   // a breath of aerial perspective across the arena itself (≈ 4 % at the far spawn)
     night: 0,
-    grade: { uSat: 1.06, uVib: 0.12, uContrast: 1.07, uLift: 0.0, uVignette: 0.2, uShadowTint: [0.97, 0.99, 1.04], uHighTint: [1.025, 1.0, 0.97] },
+    grade: { uExposure: 0.9, uSat: 1.1, uVib: 0.12, uContrast: 1.09, uLift: 0.0, uVignette: 0.2, uShadowTint: [0.92, 0.97, 1.1], uHighTint: [1.035, 1.0, 0.955] },
     marina: { channel: '#0b4552', shade: '#05121a', calm: 0.55, lap: 1.0, caustic: 2.0, wet: 0.5 },
   },
   sunset: {
+    // golden key vs indigo fill: the low sun paints every face that turns to it orange, shade falls to a cool blue (the
+    // sky IBL is kept low so the purple sky doesn't flood the shade magenta); street lamps pool warm light (night: 1)
     sunAz: 206, sunEl: 15,
-    sunColor: '#ffb277', sunIntensity: 3.7,
-    hemiSky: '#9c8bd6', hemiGround: '#a8735c', hemiIntensity: 0.25,
-    zenith: '#1f2766', skyMid: '#6b4a9e', horizon: '#ff9f72', ground: '#4a4f7a',
+    sunColor: '#ffac4c', sunIntensity: 4.6, skySun: 3.7,
+    hemiSky: '#5e7fd6', hemiGround: '#c08a66', hemiGroundK: 1.6, hemiIntensity: 0.6, envK: 0.42,
+    zenith: '#1b2768', skyMid: '#56509e', horizon: '#ffa266', ground: '#4a4f7a',
     horizonGlow: '#ff8a4a', horizonGlowK: 0.55, glowColor: '#ffb35c',
     glow: [260, 2.2, 5.5, 0.55],
     sunDisk: '#ffd9a0', sunDiskK: 22, sunRadius: 1.7,
-    cloudLit: '#ffc39a', cloudLitK: 0.95, cloudShade: '#6d5a93', cloud: [0.4, 1.0, 1.0, 0.44],
+    cloudLit: '#ffc39a', cloudLitK: 0.95, cloudShade: '#62598f', cloud: [0.4, 1.0, 1.0, 0.44],
     seaDeep: '#1a2c5e', seaShallow: '#2f6f8f', seaCrest: '#6a8fc4', foam: '#ffe2cf',
     seaAmbientK: 0.5, sunSpec: 1.35, waveStrength: 1.0,
-    haze: [1 / 900, 0.96, 260],
-    fog: [60, 1300],
+    haze: [1 / 1100, 0.9, 260],
+    fog: [25, 800],
     night: 1,
-    grade: { uSat: 1.05, uVib: 0.1, uContrast: 1.08, uLift: 0.0, uVignette: 0.26, uShadowTint: [0.95, 0.96, 1.07], uHighTint: [1.04, 1.0, 0.95] },
+    grade: {
+      uExposure: 1.0, uSat: 1.05, uVib: 0.1, uContrast: 1.07, uLift: 0.0, uVignette: 0.28, uShadowTint: [0.88, 0.96, 1.16], uHighTint: [1.07, 1.0, 0.88],
+      bloom: [0.4, 0.55, 1.7],   // lanterns, lit windows and the sun's halo bloom a little at dusk
+    },
     // marina stages at dusk (Halyard): ink-blue channels, near-black under the decks, orange caustics off the low sun
     marina: { channel: '#132140', shade: '#04060d', calm: 0.55, lap: 1.0, caustic: 1.7, wet: 0.55 },
   },
@@ -69,8 +78,8 @@ const THEMES = {
   // harbour water of the `marina` block (planar reflections, hull contact foam, caustics, under-deck shade).
   golden: {
     sunAz: 194, sunEl: 28,
-    sunColor: '#ffd9ae', sunIntensity: 3.35,
-    hemiSky: '#bcd2f0', hemiGround: '#b39a7c', hemiIntensity: 0.4,
+    sunColor: '#ffd9ae', sunIntensity: 3.6, skySun: 3.35,
+    hemiSky: '#aecaf0', hemiGround: '#cfb08a', hemiGroundK: 1.8, hemiIntensity: 0.42, envK: 0.5,
     zenith: '#2a62b2', skyMid: '#72a3d6', horizon: '#f0d8b8', ground: '#5b7d90',
     horizonGlow: '#ffbf80', horizonGlowK: 0.3, glowColor: '#ffd29a',
     glow: [480, 1.5, 6.0, 0.24],
@@ -79,10 +88,10 @@ const THEMES = {
     seaDeep: '#0a3f53', seaShallow: '#16707a', seaCrest: '#5fc9b6', foam: '#fff6ea',
     seaAmbientK: 0.6, sunSpec: 1.2, waveStrength: 0.8,
     haze: [1 / 1650, 0.9, 240],
-    fog: [60, 1400],
+    fog: [30, 1000],
     night: 0,
     shafts: 1,
-    grade: { uSat: 1.05, uVib: 0.12, uContrast: 1.08, uLift: 0.0, uVignette: 0.22, uShadowTint: [0.94, 0.98, 1.07], uHighTint: [1.06, 1.0, 0.925] },
+    grade: { uExposure: 0.95, uSat: 1.05, uVib: 0.12, uContrast: 1.1, uLift: 0.0, uVignette: 0.22, uShadowTint: [0.93, 0.98, 1.09], uHighTint: [1.06, 1.0, 0.925] },
     marina: {
       channel: '#0d3a37',   // water colour hugging hulls / quay faces (bottle green, darker)
       shade: '#06110f',     // water under the floating decks
@@ -159,6 +168,10 @@ vec3 skyGradient(vec3 d) {
   c += uHorizonGlow * band * (0.2 + 0.8 * az * az * az);
   float sd = max(dot(normalize(vec3(d.x, hp, d.z)), uSunDir), 0.0);
   c += uGlowColor * (pow(sd, uGlowParams.x) * uGlowParams.y + pow(sd, 6.0) * uGlowParams.w);
+  // dusk: the horizon opposite the sun lies in the earth's shadow — cooler and dimmer than the sunward side, so the
+  // far shore / skyline away from the sun hazes into lavender-blue instead of glowing salmon (sky, env map and haze)
+  float anti = (1.0 - az) * (1.0 - az);
+  c *= mix(vec3(1.0), vec3(0.7, 0.74, 0.95), uNight * anti * exp(-hp * 2.5));
   c = mix(c, uGround, smoothstep(0.0, -0.22, h));
   return c;
 }
@@ -398,27 +411,39 @@ void main() {
 }
 `;
 
+// Deck / hull rects are oriented: uRects[i] = (centre x, centre z, half extent along local x, along local z),
+// uRectAx[i] = the local x axis (unit, world xz); local z = (−ax.y, ax.x). Axis-aligned slabs pass (1, 0), for which the
+// rotation below is exact (x·1 + z·0), so they shade exactly as the old min/max rects did.
 const GLSL_DECK = /* glsl */`
 uniform vec4 uRects[${MAX_RECTS}];
+uniform vec2 uRectAx[${MAX_RECTS}];
 uniform int uRectCount;
+// axis-aligned rect given as (minX, minZ, maxX, maxZ) — the arena bounds
 float sdRect(vec2 p, vec4 r) {
   vec2 c = (r.xy + r.zw) * 0.5; vec2 h = (r.zw - r.xy) * 0.5;
   vec2 q = abs(p - c) - h;
   return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0);
 }
+// oriented rect: r = (centre, half extents), a = local x axis
+float sdORect(vec2 p, vec4 r, vec2 a) {
+  vec2 d = p - r.xy;
+  vec2 q = abs(vec2(dot(d, a), dot(d, vec2(-a.y, a.x)))) - r.zw;
+  return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0);
+}
 float sdDeck(vec2 p) {
   float d = 1e5;
-  for (int i = 0; i < ${MAX_RECTS}; i++) { if (i >= uRectCount) break; d = min(d, sdRect(p, uRects[i])); }
+  for (int i = 0; i < ${MAX_RECTS}; i++) { if (i >= uRectCount) break; d = min(d, sdORect(p, uRects[i], uRectAx[i])); }
   return d;
 }
 #ifdef MARINA
 uniform vec4 uWet[${MAX_WET}];
+uniform vec2 uWetAx[${MAX_WET}];
 uniform int uWetCount;
 uniform vec4 uArena;        // arena bounds (minX, minZ, maxX, maxZ): the harbour basin around it is sheltered
 float basinK(vec2 p) { return smoothstep(60.0, 210.0, sdRect(p, uArena)); }   // 0 in the basin → 1 open sea
 float sdWet(vec2 p) {
   float d = 1e5;
-  for (int i = 0; i < ${MAX_WET}; i++) { if (i >= uWetCount) break; d = min(d, sdRect(p, uWet[i])); }
+  for (int i = 0; i < ${MAX_WET}; i++) { if (i >= uWetCount) break; d = min(d, sdORect(p, uWet[i], uWetAx[i])); }
   return d;
 }
 #endif
@@ -456,23 +481,27 @@ uniform vec4 uCloudParams;
 uniform vec3 uChannelCol;
 uniform vec3 uShadeCol;
 uniform vec4 uMarinaK;     // x calm (wave-normal scale hugging faces), y face-ripple strength, z reflection distortion (m)
-// distance (m) + outward unit gradient to a rect / the nearest rect of a set
-vec3 sdRectG(vec2 p, vec4 r) {
-  vec2 c = (r.xy + r.zw) * 0.5, h = (r.zw - r.xy) * 0.5;
-  vec2 d = p - c;
-  vec2 s = vec2(d.x < 0.0 ? -1.0 : 1.0, d.y < 0.0 ? -1.0 : 1.0);
-  vec2 q = abs(d) - h;
-  if (max(q.x, q.y) > 0.0) { vec2 m = max(q, 0.0); float l = max(length(m), 1e-4); return vec3(l, s * m / l); }
-  return q.x > q.y ? vec3(q.x, s.x, 0.0) : vec3(q.y, 0.0, s.y);
+// distance (m) + outward unit gradient (world xz) to an oriented rect / the nearest rect of a set. The gradient is
+// found in the rect's frame and rotated back (g.x·a + g.y·(−a.y, a.x)); exact for axis-aligned rects (a = (1, 0)).
+vec3 sdORectG(vec2 p, vec4 r, vec2 a) {
+  vec2 b = vec2(-a.y, a.x);
+  vec2 d = p - r.xy;
+  vec2 l = vec2(dot(d, a), dot(d, b));
+  vec2 s = vec2(l.x < 0.0 ? -1.0 : 1.0, l.y < 0.0 ? -1.0 : 1.0);
+  vec2 q = abs(l) - r.zw;
+  vec3 o;
+  if (max(q.x, q.y) > 0.0) { vec2 m = max(q, 0.0); float len = max(length(m), 1e-4); o = vec3(len, s * m / len); }
+  else o = q.x > q.y ? vec3(q.x, s.x, 0.0) : vec3(q.y, 0.0, s.y);
+  return vec3(o.x, o.y * a + o.z * b);
 }
 vec3 sdDeckG(vec2 p) {
   vec3 b = vec3(1e5, 0.0, 1.0);
-  for (int i = 0; i < ${MAX_RECTS}; i++) { if (i >= uRectCount) break; vec3 r = sdRectG(p, uRects[i]); if (r.x < b.x) b = r; }
+  for (int i = 0; i < ${MAX_RECTS}; i++) { if (i >= uRectCount) break; vec3 r = sdORectG(p, uRects[i], uRectAx[i]); if (r.x < b.x) b = r; }
   return b;
 }
 vec3 sdWetG(vec2 p) {
   vec3 b = vec3(1e5, 0.0, 1.0);
-  for (int i = 0; i < ${MAX_WET}; i++) { if (i >= uWetCount) break; vec3 r = sdRectG(p, uWet[i]); if (r.x < b.x) b = r; }
+  for (int i = 0; i < ${MAX_WET}; i++) { if (i >= uWetCount) break; vec3 r = sdORectG(p, uWet[i], uWetAx[i]); if (r.x < b.x) b = r; }
   return b;
 }
 vec3 skyRefl(vec3 R) {
@@ -903,7 +932,7 @@ const HZ_FRAG_EMISSIVE = /* glsl */`
   hzEmit += vColor.rgb * gAmt * (vGlow > 1.5 ? max(uNight, 0.35) : uNight) * 7.0;
 #endif
 #ifdef HZ_CITY
-  hzEmit += uNight * hzLitCol * 3.0;
+  hzEmit += uNight * hzLitCol * 1.5;   // warm lit windows, not white: 3.0 blew them out through the tone curve
 #endif
 #ifdef HZ_WATERLINE
   float wl2 = vHzWorld.y - ${WATER_Y.toFixed(3)};
@@ -925,6 +954,8 @@ const HZ_FRAG_HAZE = /* glsl */`
   float fres = 0.05 + 0.95 * pow(1.0 - clamp(dot(-V, wn2), 0.0, 1.0), 5.0);
   vec3 refl = min(skyGradient(normalize(vec3(Rr.x, max(Rr.y, 0.02), Rr.z))), vec3(1.1));
   gl_FragColor.rgb = mix(gl_FragColor.rgb, refl * mix(0.92, 0.55, uNight), hzWin * clamp(0.18 + fres * 0.75, 0.0, 0.85) * (1.0 - uNight * 0.75));
+  // dusk: the skyline across the bay settles a stop darker so its lit windows carry it (was one flat salmon glow)
+  gl_FragColor.rgb *= 1.0 - 0.38 * uNight;
 }
 #endif
 gl_FragColor.rgb = applyHaze(gl_FragColor.rgb, vHzWorld) + hzEmit * exp(-length(vHzWorld - cameraPosition) * uHaze.x * 0.35);
@@ -1072,6 +1103,45 @@ function vnoise(x, y) {
 function fbm(x, y, oct = 4) { let s = 0, a = 0.5, n = 0; for (let i = 0; i < oct; i++) { s += a * vnoise(x, y); n += a; x = x * 2.03 + 5.3; y = y * 2.03 - 1.7; a *= 0.5; } return s / n; }
 const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
 const polar = (deg, d) => [Math.cos(deg * DEG) * d, Math.sin(deg * DEG) * d];
+
+// ---- oriented deck rects (footprint / marina deck + wet sets) -------------------------------------------------
+// { cx, cz, hx, hz, ax, az, minX, maxX, minZ, maxZ, aligned }: centre, half extents along the local axes, local x axis
+// (ax, az) (unit), local z = (−az, ax), plus the XZ AABB. `aligned` rects keep their exact min/max and take the exact
+// axis-aligned code paths below (so axis-aligned stages build exactly what they always did). Accepts a legacy
+// {minX..maxZ} rect or an oriented {cx,cz,hx,hz,ax,az} one; extra fields (y0, y1 …) are kept.
+function orect(r) {
+  if (r.hx === undefined) return { ...r, cx: (r.minX + r.maxX) / 2, cz: (r.minZ + r.maxZ) / 2, hx: (r.maxX - r.minX) / 2, hz: (r.maxZ - r.minZ) / 2, ax: 1, az: 0, aligned: true };
+  let ax = r.ax ?? 1, az = r.az ?? 0, hx = r.hx, hz = r.hz;
+  const l = Math.hypot(ax, az) || 1; ax /= l; az /= l;
+  // quarter turns are axis-aligned rects (swap the extents for 90° / 270°)
+  if (Math.abs(az) < 1e-7) { ax = 1; az = 0; } else if (Math.abs(ax) < 1e-7) { ax = 1; az = 0; [hx, hz] = [hz, hx]; }
+  const aligned = ax === 1 && az === 0;
+  const ex = Math.abs(ax) * hx + Math.abs(az) * hz, ez = Math.abs(az) * hx + Math.abs(ax) * hz;
+  return { ...r, hx, hz, ax, az, aligned, minX: r.cx - ex, maxX: r.cx + ex, minZ: r.cz - ez, maxZ: r.cz + ez };
+}
+// point strictly inside rect r grown by pad
+function inRect(r, x, z, pad = 0) {
+  if (r.aligned) return x > r.minX - pad && x < r.maxX + pad && z > r.minZ - pad && z < r.maxZ + pad;
+  const dx = x - r.cx, dz = z - r.cz;
+  return Math.abs(dx * r.ax + dz * r.az) < r.hx + pad && Math.abs(dz * r.ax - dx * r.az) < r.hz + pad;
+}
+// world (x, z) of the rect-local point (lx, lz)
+const rectPt = (r, lx, lz) => [r.cx + lx * r.ax - lz * r.az, r.cz + lx * r.az + lz * r.ax];
+// the four edges, counter-clockwise from the (−x, −z) corner, with outward unit normals: aligned rects keep the exact
+// min/max corners and (0, ±1) / (±1, 0) normals (the order the dock builder always used)
+function rectEdges(r) {
+  if (r.aligned) {
+    return [
+      { ax: r.minX, az: r.minZ, bx: r.maxX, bz: r.minZ, nx: 0, nz: -1 },
+      { ax: r.maxX, az: r.minZ, bx: r.maxX, bz: r.maxZ, nx: 1, nz: 0 },
+      { ax: r.maxX, az: r.maxZ, bx: r.minX, bz: r.maxZ, nx: 0, nz: 1 },
+      { ax: r.minX, az: r.maxZ, bx: r.minX, bz: r.minZ, nx: -1, nz: 0 },
+    ];
+  }
+  const c = [rectPt(r, -r.hx, -r.hz), rectPt(r, r.hx, -r.hz), rectPt(r, r.hx, r.hz), rectPt(r, -r.hx, r.hz)];
+  const n = [[r.az, -r.ax], [r.ax, r.az], [-r.az, r.ax], [-r.ax, -r.az]];
+  return c.map((p, i) => ({ ax: p[0], az: p[1], bx: c[(i + 1) & 3][0], bz: c[(i + 1) & 3][1], nx: n[i][0] + 0, nz: n[i][1] + 0 }));
+}
 
 const _m4 = new THREE.Matrix4(), _q = new THREE.Quaternion(), _e = new THREE.Euler(), _v = new THREE.Vector3(), _s = new THREE.Vector3();
 // planar-reflection scratch
@@ -1333,12 +1403,13 @@ function makeIsland(o) {
 // Environment
 // ---------------------------------------------------------------------------------------------------------------
 export class Environment {
+  static get THEMES() { return THEMES; }   // audit / lab hook: tweak a theme live, then setTheme(name)
   constructor(renderer, scene, opts = {}) {
     this.renderer = renderer;
     this.scene = scene;
     const b = opts.bounds || { minX: -25, maxX: 25, minZ: -44, maxZ: 44 };
     this.bounds = { minX: b.minX, maxX: b.maxX, minZ: b.minZ, maxZ: b.maxZ };
-    this.footprint = (opts.footprint && opts.footprint.length ? opts.footprint : [this.bounds]).slice(0, MAX_RECTS).map((r) => ({ ...r }));
+    this.footprint = (opts.footprint && opts.footprint.length ? opts.footprint : [this.bounds]).slice(0, MAX_RECTS).map(orect);
     this.shadowSize = opts.shadowSize || 4096;
     this.waterY = WATER_Y;
     this.time = 0;
@@ -1378,12 +1449,14 @@ export class Environment {
       uGlowParams: { value: new THREE.Vector4() }, uHaze: { value: new THREE.Vector4() }, uNight: { value: 0 },
       uSunDisk: C(), uSunCos: { value: 0.9998 }, uCloudLit: C(), uCloudShade: C(), uCloudParams: { value: new THREE.Vector4() },
       uRects: { value: Array.from({ length: MAX_RECTS }, () => new THREE.Vector4()) }, uRectCount: { value: 0 },
+      uRectAx: { value: Array.from({ length: MAX_RECTS }, () => new THREE.Vector2(1, 0)) },
       uWaveTex: { value: null }, uFoamTex: { value: null }, uFoamRect: { value: new THREE.Vector4() },
       uSeaDeep: C(), uSeaShallow: C(), uSeaCrest: C(), uFoamColor: C(), uSunLight: C(), uSeaAmbient: C(),
       uSunSpec: { value: 1 }, uWaveStrength: { value: 1 },
       uCloudTex: { value: null },
       // marina water (theme.marina)
       uWet: { value: Array.from({ length: MAX_WET }, () => new THREE.Vector4()) }, uWetCount: { value: 0 }, uArena: { value: new THREE.Vector4() },
+      uWetAx: { value: Array.from({ length: MAX_WET }, () => new THREE.Vector2(1, 0)) },
       uReflTex: { value: null }, uReflMat: { value: new THREE.Matrix4() }, uReflOn: { value: 0 },
       uFarCube: { value: null }, uFarOn: { value: 0 },
       uChannelCol: C(), uShadeCol: C(), uMarinaK: { value: new THREE.Vector4(1, 1, 0.3, 0) },
@@ -1392,10 +1465,16 @@ export class Environment {
     this._writeRects();
   }
 
-  _writeRects() {
-    const u = this.U.uRects.value;
-    this.footprint.forEach((r, i) => u[i].set(r.minX, r.minZ, r.maxX, r.maxZ));
-    this.U.uRectCount.value = this.footprint.length;
+  // deck rects → uRects (centre, half extents) + uRectAx (local x axis); marina hulls → uWet + uWetAx
+  _writeRects(rects = this.footprint) {
+    const U = this.U;
+    rects.forEach((r, i) => { U.uRects.value[i].set(r.cx, r.cz, r.hx, r.hz); U.uRectAx.value[i].set(r.ax, r.az); });
+    U.uRectCount.value = rects.length;
+  }
+  _writeWet(rects) {
+    const U = this.U;
+    rects.forEach((r, i) => { U.uWet.value[i].set(r.cx, r.cz, r.hx, r.hz); U.uWetAx.value[i].set(r.ax, r.az); });
+    U.uWetCount.value = rects.length;
   }
 
   // ------------------------------------------------------------------ lights
@@ -1490,7 +1569,7 @@ export class Environment {
   // single GPU job runs long; ~0.1–0.3 s once per theme change.
   _bakeClouds(T) {
     const r = this.renderer, u = this._cloudMat.uniforms;
-    u.uSunCol.value.copy(lin(T.sunColor, T.sunIntensity / 2.75));
+    u.uSunCol.value.copy(lin(T.sunColor, (T.skySun ?? T.sunIntensity) / 2.75));
     u.uCov.value = T.cloudCov ?? 0.46;
     u.uSeed.value = T.cloudSeed ?? 3.0;
     const prev = r.getRenderTarget(), ac = r.autoClear, xr = r.xr.enabled;
@@ -1699,7 +1778,7 @@ export class Environment {
     if (L) for (const b of L.blocks) {
       if (!b.solid || b.hidden || !b.aligned || b.grate) continue;
       const lo = b.aabbMin, hi = b.aabbMax;
-      const r = { minX: lo.x, maxX: hi.x, minZ: lo.z, maxZ: hi.z, y0: lo.y, y1: hi.y };
+      const r = orect({ minX: lo.x, maxX: hi.x, minZ: lo.z, maxZ: hi.z, y0: lo.y, y1: hi.y });
       if (lo.y < WATER_Y - 0.02 && hi.y > -30) wet.push(r);          // pierces the surface / sunk below it
       else if (lo.y >= WATER_Y - 0.02 && lo.y < WATER_Y + 0.9) decks.push(r);
     }
@@ -1722,10 +1801,8 @@ export class Environment {
     if (!on) { this._marinaData = null; U.uWetCount.value = 0; U.uReflOn.value = 0; this._writeRects(); return; }
     const M = (this._marinaData = this._marinaSets());
     U.uArena.value.set(this.bounds.minX, this.bounds.minZ, this.bounds.maxX, this.bounds.maxZ);
-    M.decks.forEach((r, i) => U.uRects.value[i].set(r.minX, r.minZ, r.maxX, r.maxZ));
-    U.uRectCount.value = M.decks.length;
-    M.wet.forEach((r, i) => U.uWet.value[i].set(r.minX, r.minZ, r.maxX, r.maxZ));
-    U.uWetCount.value = M.wet.length;
+    this._writeRects(M.decks);
+    this._writeWet(M.wet);
     this._buildFoamField([...(this._foamShapes || []), ...this._waterContours(M.wet)]);
     this._buildMarinaFx(M);
   }
@@ -1906,19 +1983,13 @@ export class Environment {
   }
 
   // ------------------------------------------------------------------ dock: pilings, fenders, ladders, moored boats
-  _insideFootprint(x, z) { return this.footprint.some((r) => x > r.minX && x < r.maxX && z > r.minZ && z < r.maxZ); }
+  _insideFootprint(x, z) { return this.footprint.some((r) => inRect(r, x, z)); }
   _insideBounds(x, z) { const b = this.bounds; return x > b.minX + 0.01 && x < b.maxX - 0.01 && z > b.minZ + 0.01 && z < b.maxZ - 0.01; }
 
   _boundaryRuns() {
     const runs = [];
     for (const r of this.footprint) {
-      const edges = [
-        { ax: r.minX, az: r.minZ, bx: r.maxX, bz: r.minZ, nx: 0, nz: -1 },
-        { ax: r.maxX, az: r.minZ, bx: r.maxX, bz: r.maxZ, nx: 1, nz: 0 },
-        { ax: r.maxX, az: r.maxZ, bx: r.minX, bz: r.maxZ, nx: 0, nz: 1 },
-        { ax: r.minX, az: r.maxZ, bx: r.minX, bz: r.minZ, nx: -1, nz: 0 },
-      ];
-      for (const e of edges) {
+      for (const e of rectEdges(r)) {
         const len = Math.hypot(e.bx - e.ax, e.bz - e.az);
         const step = 0.25;
         let start = -1;
@@ -1961,15 +2032,23 @@ export class Environment {
         foamShapes.push({ ax: x, az: z, bx: x, bz: z, r: rad });
       }
     }
-    // interior grid under the slab (seen from the water)
+    // interior grid under the slab (seen from the water), on the slab's own (possibly turned) grid
     for (const r of this.footprint) {
-      for (let x = r.minX + 3.5; x <= r.maxX - 3.5; x += 7) for (let z = r.minZ + 3.5; z <= r.maxZ - 3.5; z += 7) {
-        pilings.push([x, z, 0.3, -1.2]);
+      if (r.aligned) {
+        for (let x = r.minX + 3.5; x <= r.maxX - 3.5; x += 7) for (let z = r.minZ + 3.5; z <= r.maxZ - 3.5; z += 7) {
+          pilings.push([x, z, 0.3, -1.2]);
+        }
+      } else {
+        for (let u = -r.hx + 3.5; u <= r.hx - 3.5 + 1e-6; u += 7) for (let v = -r.hz + 3.5; v <= r.hz - 3.5 + 1e-6; v += 7) {
+          const [x, z] = rectPt(r, u, v);
+          pilings.push([x, z, 0.3, -1.2]);
+        }
       }
     }
 
     // ---- moored boats + dolphins (outside the bounds) ----
-    const boatsSpec = marina ? [] : [
+    // (a stage that dresses its own water can switch these off: layout.envBoats === false — Cargo Terminal's ships)
+    const boatsSpec = marina || G.level?.layout?.envBoats === false ? [] : [
       { kind: 'fishing', x: b.maxX + 3.25, z: b.minZ + (b.maxZ - b.minZ) * 0.77, yaw: 0 },
       { kind: 'launch', x: b.minX - 2.85, z: b.minZ + (b.maxZ - b.minZ) * 0.2, yaw: Math.PI },
       { kind: 'row', x: b.minX - 1.75, z: b.minZ + (b.maxZ - b.minZ) * 0.86, yaw: 0.12 },
@@ -2034,7 +2113,7 @@ export class Environment {
       // grab rail loop over the top edge
       dockParts.push(tube([[x + nx * off + tx * 0.28, -0.1, z + nz * off + tz * 0.28], [x + nx * 0.02 + tx * 0.28, 0.02, z + nz * 0.02 + tz * 0.28]], 0.035, '#aab3bb'));
     };
-    if (!marina) {
+    if (!marina && boatsSpec.length) {
       ladderAt(b.maxX, boatsSpec[0].z - 5.5, 1, 0);
       ladderAt(b.minX, boatsSpec[1].z + 4.5, -1, 0);
     }
@@ -2666,8 +2745,10 @@ export class Environment {
     let d = 1e5;
     const M = this._marinaData;
     for (const set of M ? [M.decks, M.wet] : [this.footprint]) for (const r of set) {
+      // (turned rects: the distance in the rect's own frame, matching sdORect in the sea shaders)
       const cx = (r.minX + r.maxX) / 2, cz = (r.minZ + r.maxZ) / 2, hx = (r.maxX - r.minX) / 2, hz = (r.maxZ - r.minZ) / 2;
-      const qx = Math.abs(x - cx) - hx, qz = Math.abs(z - cz) - hz;
+      const qx = r.aligned ? Math.abs(x - cx) - hx : Math.abs((x - r.cx) * r.ax + (z - r.cz) * r.az) - r.hx;
+      const qz = r.aligned ? Math.abs(z - cz) - hz : Math.abs((z - r.cz) * r.ax - (x - r.cx) * r.az) - r.hz;
       const dd = Math.hypot(Math.max(qx, 0), Math.max(qz, 0)) + Math.min(Math.max(qx, qz), 0);
       d = Math.min(d, dd);
     }
@@ -2700,7 +2781,7 @@ export class Environment {
   rebuildForArena(bounds, rects) {
     this._marina = this._stageMarina();
     this.bounds = { ...bounds };
-    this.footprint = (rects && rects.length ? rects : [this.bounds]).slice(0, MAX_RECTS).map((r) => ({ ...r }));
+    this.footprint = (rects && rects.length ? rects : [this.bounds]).slice(0, MAX_RECTS).map(orect);
     this._writeRects();
     this._rebuildDock();
     this._applyMarina();
@@ -2722,7 +2803,7 @@ export class Environment {
 
   // Replace the deck outline (array of {minX,maxX,minZ,maxZ}) → foam/under-deck shading follow. Pilings are built once.
   setFootprint(rects) {
-    this.footprint = rects.slice(0, MAX_RECTS).map((r) => ({ ...r }));
+    this.footprint = rects.slice(0, MAX_RECTS).map(orect);
     this._writeRects();
   }
 
@@ -2743,7 +2824,9 @@ export class Environment {
     U.uCloudLit.value.copy(lin(T.cloudLit, T.cloudLitK)); U.uCloudShade.value.set(T.cloudShade);
     U.uCloudParams.value.set(...T.cloud);
     U.uSeaDeep.value.set(T.seaDeep); U.uSeaShallow.value.set(T.seaShallow); U.uSeaCrest.value.set(T.seaCrest); U.uFoamColor.value.set(T.foam);
-    U.uSunLight.value.copy(lin(T.sunColor, T.sunIntensity / Math.PI));
+    // sky / clouds / sea keep the sun strength they were tuned with (skySun) — the key light on the world is balanced on
+    // its own (sunIntensity vs hemi + envK) without re-exposing the sky
+    U.uSunLight.value.copy(lin(T.sunColor, (T.skySun ?? T.sunIntensity) / Math.PI));
     U.uSeaAmbient.value.copy(U.uSkyMid.value).lerp(U.uHorizon.value, 0.5).multiplyScalar(T.seaAmbientK);
     U.uSunSpec.value = T.sunSpec; U.uWaveStrength.value = T.waveStrength;
     this.grade = T.grade;    // colour grade the renderer applies for this theme
@@ -2766,10 +2849,13 @@ export class Environment {
 
     this.sun.color.set(T.sunColor);
     this.sun.intensity = T.sunIntensity;
-    // main.js lifts the sky fill once after construction (max(theme, HEMI_FLOOR)); apply the same floor on every theme
-    // change so a stage/time looks identical whether it was booted into or switched to mid-session
-    this.hemi.color.set(T.hemiSky); this.hemi.groundColor.set(T.hemiGround);
-    this.hemi.intensity = Math.max(T.hemiIntensity, HEMI_FLOOR);
+    // sky fill = directional hemisphere (sky above, warm ground bounce below) + the omnidirectional sky IBL; both set
+    // here on every theme change so a stage/time looks identical whether it was booted into or switched to
+    // hemiGroundK: the ground term is the sunlit deck's bounce (fake GI) — brighter than the sky term, which the IBL
+    // already carries — so walls and faces turned away from the sun keep their form instead of crushing to black
+    this.hemi.color.set(T.hemiSky); this.hemi.groundColor.set(T.hemiGround).multiplyScalar(T.hemiGroundK ?? 1);
+    this.hemi.intensity = T.hemiIntensity;
+    this.scene.environmentIntensity = T.envK ?? 0.66;
     this.fogColor.copy(U.uHorizon.value).lerp(U.uSkyMid.value, 0.15);
     if (this.scene.fog && this.scene.fog.isFog) { this.scene.fog.color.copy(this.fogColor); this.scene.fog.near = T.fog[0]; this.scene.fog.far = T.fog[1]; }
     this.lhBeam.visible = T.night > 0.01;

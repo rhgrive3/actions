@@ -27,7 +27,7 @@ export class NavGraph {
         L.queryBlocks(x - 0.01, z - 0.01, x + 0.01, z + 0.01, ids);
         for (const id of ids) {
           const b = L.blocks[id];
-          if (!b.solid || b.axes[1].y < 0.6) continue;
+          if (!b.solid || b.axes[1].y < 0.6 || b.roof || b.rail || b.noNav) continue;   // (roofs: off limits; rail tops: no route runs along them)
           const n = b.axes[1];
           const top = _p.copy(b.center).addScaledVector(n, b.half.y);
           const y = top.y - (n.x * (x - top.x) + n.z * (z - top.z)) / n.y;

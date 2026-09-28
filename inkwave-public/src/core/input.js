@@ -3,7 +3,6 @@
 // settings.rumble (0..1, default 1) and only while the pad is the active device.
 import { G } from './ctx.js';
 import { MobileInput } from './mobile.js';
-import { touchPrimary } from './device.js';
 
 // keys whose browser default (focus moves, page scroll) must never fire while the game has the mouse
 const GAME_KEYS = new Set(['Tab', 'Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Slash', 'Quote']);
@@ -73,7 +72,7 @@ export class Input {
   }
 
   requestLock() {
-    if (this._dev === 'touch' || this.locked) return;
+    if (this.locked) return;
     try {
       const p = this.canvas.requestPointerLock({ unadjustedMovement: true });
       // some platforms reject unadjustedMovement: fall back to a plain request
@@ -148,8 +147,5 @@ export class Input {
     this.pressed.clear();
     this.mouse.dx = 0; this.mouse.dy = 0;
     this.mouse.leftPressed = false; this.mouse.rightPressed = false;
-    this.mobile?.endFrame();
   }
-
-  destroy() { this.mobile?.destroy(); }
 }

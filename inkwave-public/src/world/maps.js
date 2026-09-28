@@ -6,11 +6,11 @@
 //   R([x,y,z] low, [x,y,z] high, width, opts) ramp slab whose top surface runs from low edge-centre to high edge-centre
 // opts: { color, pattern, paint (default true), solid (default true), tag }
 
-export const PATTERN = { plain: 0, deck: 1, tiles: 2, concrete: 3, hazard: 4, container: 5, wood: 6, metal: 7, spawn: 8, planter: 9, asphalt: 10, metalpanel: 11, grate: 12, brick: 13, rubber: 14, glasstile: 15, pavers: 16,
-  // marina set (texlib: planks = hardwood dock decking in its own colours; the rest take the block colour as paint)
-  planks: 17, hullpaint: 18, nonslip: 19, gelcoat: 20, yard: 21, weatherboard: 22, render: 23,
-  // stairs + ramps (ramp tops are textured in the ramp's own frame: treads / cleats always run across the slope)
-  treads: 24, stonestep: 25, rampboard: 26, gangdeck: 27 };
+// PATTERN (the shared surface slots) lives in mapkit.js, the kit the stage folders build with; re-exported here for the
+// original layouts and every existing importer
+import { PATTERN } from './mapkit.js';
+import { LAYOUT as CARGO } from './stages/cargo/layout.js';
+export { PATTERN };
 
 const C = {
   deck: '#d8d2c4', deckEdge: '#c9c1b0', tile: '#d9dfe0', cream: '#ece4d4', sand: '#e6d3b3', slate: '#a9b4bc',
@@ -266,7 +266,7 @@ export const HALYARD = {
     B(-16, -1.8, 1.3, 2.0, -5, -4.6, { tag: 'ferry-bulwark', color: M.navy, pattern: PATTERN.hullpaint }),
     B(1.8, 16, 1.3, 2.0, -5, -4.6, { tag: 'ferry-bulwark', color: M.navy, pattern: PATTERN.hullpaint }),
     // sun-deck stair (Alpha's, at its left end). Small cover (fuel pumps, dock box, pump-out station, crates, keel
-    // blocks, dinghy, ferry locker + cargo) is set dressing with colliders — see docs/HALYARD.md
+    // blocks, dinghy, ferry locker + cargo) is set dressing with colliders — see src/world/dressing.js
     R([12.6, 1.3, -1.9], [6.5, 3.8, -1.9], 2.0, { tag: 'ferry-stair', color: M.steel, pattern: PATTERN.treads }),
   ],
   decor: {
@@ -276,4 +276,4 @@ export const HALYARD = {
   },
 };
 
-export const MAP_LAYOUTS = { tidewater: TIDEWATER, kelpline: KELPLINE, halyard: HALYARD };
+export const MAP_LAYOUTS = { tidewater: TIDEWATER, kelpline: KELPLINE, halyard: HALYARD, cargo: CARGO };

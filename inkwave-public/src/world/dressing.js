@@ -2,6 +2,7 @@
 // by the map's 180° rotation (x,z → -x,-z, rotY + π) exactly like the level blocks, so both sides stay identical.
 // Only `mirror: false` items are placed once.
 import { HALYARD_VESSELS } from './props-marina-vessels.js';
+import { STAGES } from './stages/index.js';
 
 const P = Math.PI;
 
@@ -35,7 +36,7 @@ export const DRESSING = {
     { type: 'planter', pos: [13.5, 0, -8], variant: 1 },
     { type: 'lightpole', pos: [-24.1, 1.05, -8], rotY: P / 2 },
     { type: 'neon', pos: [0, 2.6, -43.35], rotY: 0, width: 4, variant: 0, mirror: true },
-    // ---- street-level detail pass (stream 5): walls, overhead, dead ends, spawn-deck corners
+    // ---- street-level detail pass: walls, overhead, dead ends, spawn-deck corners
     // back wall (face z = -43.4): cable tray, posters, fuse box, hose reel; a cluttered dead-end alley behind the left ramp
     { type: 'cable', pos: [-24.6, 0, -43.4], variant: 1, length: 15.2, height: 3.35 },
     { type: 'poster', pos: [-21.4, 1.45, -43.4], count: 4, variant: 0 },
@@ -91,7 +92,7 @@ export const DRESSING = {
     { type: 'hydrant', pos: [9.5, 0.75, -1.7], rotY: -P / 2, variant: 1 },
   ],
   halyard: [
-    // owner: docks stream (src/world/props-marina-dock.js). Alpha half; every entry is mirrored (x,z → -x,-z).
+    // Prop types live in src/world/props-marina-dock.js. Alpha half; every entry is mirrored (x,z → -x,-z).
     // ---- pier edges: `pieredge` runs start on the deck edge and run along local +X with the water on local +Z.
     //      Concave corners: one run keeps its whaler to the corner (ext 0, first pile 0.75 in), the other butts into it
     //      (ext -0.1); convex corners: one run wraps the corner (ext 0.1). Jump edges carry nothing on the deck.
@@ -177,7 +178,7 @@ export const DRESSING = {
     { type: 'breakwater', pos: [42, 0, -62], rotY: 0, length: 72 },
     { type: 'channelmarker', pos: [37.0, -1.6, 21.5], variant: 0 },
     { type: 'channelmarker', pos: [31.0, -1.6, 17.0], variant: 1 },
-    // ---- required cover (gameplay footprints from docs/HALYARD.md — colliders are exact)
+    // ---- required cover (gameplay footprints — colliders are exact)
     { type: 'fuelpump', pos: [3.5, 0, -13.8], rotY: 0, price: '1.89' },
     { type: 'fuelpump', pos: [-3.5, 0, -13.8], rotY: P, price: '1.89' },
     { type: 'dockbox', pos: [-23.1, 0, -7.5], rotY: P / 2 },
@@ -224,7 +225,7 @@ export const DRESSING = {
     { type: 'cone', pos: [6.8, 0, -15.2] }, { type: 'cone', pos: [7.6, 0, -15.6] },
     { type: 'sign', pos: [-2, 4.2, -47.3], rotY: 0, width: 4.2, height: 1.2, variant: 0 },
     { type: 'neon', pos: [11, 1.9, -47.35], rotY: 0, width: 3.2, variant: 1 },
-    // ---- street-level detail pass (stream 5)
+    // ---- street-level detail pass
     // back wall (face z = -47.4): cable tray, posters, hose reel, fuse box; dead-end alley behind the left ramp
     { type: 'cable', pos: [-23.6, 0, -47.4], variant: 1, length: 13.2, height: 3.9 },
     { type: 'poster', pos: [-15.6, 1.5, -47.4], count: 4, variant: 3 },
@@ -276,6 +277,7 @@ export const DRESSING = {
 
 // stage packs that own their own placement lists
 const EXTRA = { halyard: HALYARD_VESSELS };
+for (const [id, st] of Object.entries(STAGES)) if (st.PLACEMENTS) EXTRA[id] = st.PLACEMENTS;
 
 // Expand the half-list into world placements for both halves.
 export function dressingFor(layoutId) {
