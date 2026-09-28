@@ -130,9 +130,7 @@ lightmapも [main.js L267–276](https://github.com/rhgrive3/actions/blob/bba6ea
 
 ## 6. 90/120Hz端末向けの描画上限
 
-**コード上、ゲームループに60fps上限がない。** main.js L926–936はrAFごとに全 `_frame()` を実行する。ブラウザが90/120Hzでコールバックを発行し処理が間に合えば、60Hzより多くの描画・HUD・シミュレーション更新が走る。
-
-**提案:** モバイル既定60fpsと、高Hzを選べる設定を用意する。rAFの経過時間を蓄積し、スキップ分を失わず描画を制御する。90Hzで単純に1回おきに描くと45fpsになるため、実時間ベースで処理する。
+**初回調査で確認後、実装済み。** モバイルの `Auto` は60fpsを上限とし、`Display` で高Hzを選択できる。rAF経過時間を蓄積する方式なので、90Hzで単純な1回おき描画による45fps化を起こさず、ゲーム時間も捨てない。
 
 ネットワークは既に約20Hz送信（net/netmatch.js L162–167）。描画上限をそのまま送信・タイマーの変更にしない。バックグラウンドからの復帰も別扱いにする。60Hz端末では上限導入だけによる高速化は期待しない。
 
@@ -142,7 +140,7 @@ lightmapも [main.js L267–276](https://github.com/rhgrive3/actions/blob/bba6ea
 
 [main.js L1117–1135](https://github.com/rhgrive3/actions/blob/bba6eab9277e28cbdab89c6b2cff9a03dcdb6e3d/inkwave-public/src/main.js#L1117-L1135) はHUD更新時にミニマップを常に更新し、プレイヤー配列等を新しく作る。小マップOFFでもこの呼出は残る。HUD側には既に差分更新が多数あるので、全体を未最適化とは評価しない。
 
-**提案:** 小マップ/大マップを含む実際の表示先を確認し、どこにも表示されていない時は合成を止める。静的な背景・塗り合成と、プレイヤー/スポーン演出を分け、前者はdirty時だけ、後者は15～30Hzなどを比較する。HUDは得点・名簿等の低頻度項目と照準・被弾等を分け、前者だけ間引く。
+**反映済み:** Canvas合成はdirty/アニメーション時だけ最大30Hzにし、dirty状態は次の合成まで保持する。Minimap OFFでは初期ラスタ構築とCanvas合成を止め、transient effectの寿命だけ軽量に進める。HUDのmap player/marker配列も再利用する。照準・被弾・味方マーカー等の入力直結表示は間引かない。
 
 **確認方法:** マップOFF/ON、大マップ、スーパージャンプ、味方死亡/復帰を比較する。入力に直結する表示は反応を維持する。GC負荷はallocation profileで確認してから配列再利用を広げる。
 
@@ -150,7 +148,7 @@ lightmapも [main.js L267–276](https://github.com/rhgrive3/actions/blob/bba6ea
 
 [main.js L961–1029](https://github.com/rhgrive3/actions/blob/bba6eab9277e28cbdab89c6b2cff9a03dcdb6e3d/inkwave-public/src/main.js#L961-L1029) は `showcase.fullFrame` のときattract試合のシミュレーションとゲーム世界の描画を既に止める。ただしFX、環境、Decor、props、paint.flush等は引き続き呼び出される。
 
-**提案:** 完全に隠れたワールドの視覚更新を停止する。ロビーの照明・音・通信など必要な共有部分は分離する。再表示時に蓄積dtをまとめて処理せず、視覚時間の再同期規則を決める。
+**反映済み:** `showcase.fullFrame` 中は背後arenaのFX、環境、Decor、props、game camera/diorama、paint atlas、surface visual、arena shadow更新を停止する。入力・ネットワーク・時刻・音声・showcaseは継続し、再表示時に隠れていた時間をvisual処理へまとめて流し込まない。
 
 **確認方法:** ロビー30～60秒のCPU profileを取得し、まず実時間を使っている関数だけを対象にする。元から軽い関数の呼出削減を大きな効果と誇張しない。
 
@@ -158,11 +156,11 @@ lightmapも [main.js L267–276](https://github.com/rhgrive3/actions/blob/bba6ea
 
 公開経路は [.github/workflows/pages-inkwave.yml](https://github.com/rhgrive3/actions/blob/bba6eab9277e28cbdab89c6b2cff9a03dcdb6e3d/.github/workflows/pages-inkwave.yml) → [scripts/build-inkwave.mjs](https://github.com/rhgrive3/actions/blob/bba6eab9277e28cbdab89c6b2cff9a03dcdb6e3d/scripts/build-inkwave.mjs)。minify、Three.js tree-shaking、modulepreloadは既にある。
 
-現行ビルドの依存グラフ探索を実行すると**102モジュール**、その中に**Boss関連10モジュール**が含まれる。ビルド前の対象グラフは6,160,035 bytes、srcのJS全体は85ファイル・3,894,389 bytes。**これらは非圧縮ソースの値であり、公開サイトの転送量ではない。** 今回はminify後サイズ・HTTP圧縮・キャッシュ状態を実測していない。
+初回調査時の依存グラフは**102モジュール**で、その中に**Boss関連10モジュール**が含まれていた。ビルド前の対象グラフは6,160,035 bytes、srcのJS全体は85ファイル・3,894,389 bytesだった。**これらは初回調査時の非圧縮ソース値であり、公開サイトの転送量ではない。** 今回、Boss runtimeの静的importを外し、Boss選択時の遅延ロードへ変更した。最終グラフは本番build結果と再現プローブで確認する。
 
 さらに [character.js L898–918](https://github.com/rhgrive3/actions/blob/bba6eab9277e28cbdab89c6b2cff9a03dcdb6e3d/inkwave-public/src/game/character.js#L898-L918) のwarmAllは全3 tierとdither材質を準備し、武器のfar形状も事前生成する。[character-lod.js](https://github.com/rhgrive3/actions/blob/bba6eab9277e28cbdab89c6b2cff9a03dcdb6e3d/inkwave-public/src/game/character-lod.js) は頂点クラスタリングとキャッシュを既に持つ。LOD自体を新規導入する必要はない。
 
-**提案:** タイトル表示・通常対戦・Bossで依存を分ける。BossはMatchからの静的importもあるため、preloadタグを消すだけでは遅延化できない。コードの依存境界を変更する必要がある。モード決定後の先読みとloading画面内warm-upを使い、初射撃時の処理詰まりを防ぐ。low設定で使用しないhero等の事前生成を省けるか、品質変更時の再warmも含めて検討する。CPU側のLOD生成は必要ならビルド時生成か分割実行へ移す。
+**反映済み:** `main.js` と `match.js` からBoss runtimeの静的importを除去し、Boss選択時だけロードする境界へ変更した。Characterの全LOD warm-upは、品質をLow→Highへ変更した直後の初回Hero生成ヒッチを避けるため維持する。追加のLOD事前生成削減は実測で必要性が出た場合だけ行う。
 
 なお、調査対象のゲームsrcにはGLTFLoader/GLB読み込みが見つからず、現行キャラはJS生成経路。`tools/inkwave-modeler/` のBlender成果物のサイズを、そのままゲーム中の負荷と結び付けない。
 
@@ -183,7 +181,7 @@ RendererではBloom等を除いても、scene→grade→（演出時ScreenFX）�
 - ビルドminify、Three.js tree-shaking、シェーダー事前compile、ロビーで覆われたattract試合の停止。
 - タッチ、ジャイロ、Safe Area、移動/射撃/塗り/得点、オンライン同期。
 
-Android BloomとScreenFXの伝達漏れ、全ループの60fps上限未実装については、設定オブジェクトや過去説明の存在だけで「対応済み」と判断しない。
+Android BloomとScreenFXの伝達漏れ、モバイル60fps上限は今回の実装で解消した。今後も設定オブジェクトの存在だけでなく、実際の利用経路と再現プローブで確認する。
 
 ## 実装する場合の順序と合格条件
 
