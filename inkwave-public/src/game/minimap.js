@@ -52,6 +52,7 @@ export class Minimap {
     fxList.length = 0;
     this._built = false;
     this._band = 0;
+    this._composeAcc = 1 / 30;   // first visible update composes immediately
     // the raster + shading pass (~0.1–0.3 s) runs when the browser is idle after loading; a match forces it early
     const idle = typeof requestIdleCallback === 'function' ? (fn) => requestIdleCallback(fn, { timeout: 1500 }) : (fn) => setTimeout(fn, 60);
     idle(() => { if (!this._built && CURRENT === this) this._build(); });
@@ -311,14 +312,16 @@ export class Minimap {
     if (!this._built) this._build();
     this.time += dt;
     this.timer -= dt;
+    let dirty = false;
     const teamKey = G.teamHex ? G.teamHex[0] + G.teamHex[1] : '';
     if (teamKey !== this._teamKey) { this._teamKey = teamKey; this.version = -1; }
     const theme = G.game?.theme || G.game?.mapDef?.theme || 'day';
-    if (theme !== this._theme) { const had = this._theme; this._theme = theme; if (had) this._drawBase(); }
+    if (theme !== this._theme) { const had = this._theme; this._theme = theme; if (had) { this._drawBase(); dirty = true; } }
     const BANDS = 3;
     if (this._band > 0) {
       const b = this._band;
       this._drawInk(Math.floor((this.h * b) / BANDS), Math.floor((this.h * (b + 1)) / BANDS));
+      dirty = true;
       this._band = b + 1 >= BANDS ? 0 : b + 1;
       if (!this._band) this._quiet = false;
     } else if (force || (this.timer <= 0 && this.version !== this.paint.version)) {
@@ -327,9 +330,20 @@ export class Minimap {
       this.version = this.paint.version;
       if (first || force) { this._quiet = first; this._drawInk(0, this.h); this._quiet = false; if (first) this.flashT = 9; }
       else { this._drawInk(0, Math.floor(this.h / BANDS)); this._band = 1; }
+      dirty = true;
     }
     this.flashT += dt;
-    this._compose(dt);
+
+    // The final live-canvas composite is the expensive Canvas2D part. Static maps redraw only when a layer changed;
+    // bombs/clouds/flash/transient markers are sampled at 30 Hz, which is visually smooth but halves this work at 60 fps.
+    const P = G.projectiles;
+    const animated = this.flashT < 0.45 || fxList.length > 0 || !!(P?.bombs?.length) || !!(P?.clouds?.length);
+    this._composeAcc = Math.min(0.12, this._composeAcc + dt);
+    if ((dirty || animated || force) && (force || this._composeAcc >= 1 / 30)) {
+      const cdt = this._composeAcc;
+      this._composeAcc = 0;
+      this._compose(cdt);
+    }
   }
 
   _compose(dt) {
