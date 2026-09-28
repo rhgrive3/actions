@@ -23,7 +23,6 @@ import * as THREE from 'three';
 import { G, emit, on } from '../core/ctx.js';
 import { PLAYER, WEAPONS, mapNoBots } from '../config.js';
 import { BotBrain } from '../game/bots.js';
-import { Boss } from '../boss/boss.js';
 
 const TICK = 1 / 20;
 
@@ -234,7 +233,7 @@ export class NetMatch {
     // the boss: the host's snapshot, on the host's playback timeline
     const boss = this.match?.boss;
     if (d.B && from === this.s.hostId && boss && !boss.sim) {
-      const buf = boss.net.buf, snap = Boss.unpack(d.B, d.ts);
+      const buf = boss.net.buf, snap = boss.constructor.unpack(d.B, d.ts);
       if (!buf.length || snap.t > buf[buf.length - 1].t) { buf.push(snap); if (buf.length > 40) buf.splice(0, buf.length - 40); }
     }
   }
