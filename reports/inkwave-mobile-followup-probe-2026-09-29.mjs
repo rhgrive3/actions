@@ -16,7 +16,7 @@ function method(source,start,end,context={}) {
 }
 const G={time:0,physics:{segment(){return {hit:false};}}};
 const common={THREE,SUB,G,SIM_DT:1/60,MAX_BLOBS:700,UP:new THREE.Vector3(0,1,0),ZAX:new THREE.Vector3(0,0,1),_v:new THREE.Vector3(),_v2:new THREE.Vector3(),_v3:new THREE.Vector3(),_dir:new THREE.Vector3(),_q:new THREE.Quaternion(),_m:new THREE.Matrix4(),_s:new THREE.Vector3(),_c:new THREE.Color(),_hit:{},emit(){}};
-const clear=method(weapons,'  clear() {','\n  _new()',common);
+const clear=method(weapons,'  clear() {','\n\n  // Bomb/cloud meshes',common);
 const releaseBomb=method(weapons,'  _releaseBomb(b) {','\n\n  _releaseCloud(',common);
 const releaseCloud=method(weapons,'  _releaseCloud(c, fade = 0) {','\n\n  _new()',common);
 const throwBomb=method(weapons,'  throwBomb(a) {','\n  throwStorm(',common);
