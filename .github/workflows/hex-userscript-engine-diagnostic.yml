@@ -1,25 +1,27 @@
-name: Hex userscript generated push
+name: Hex userscript stage generated files
 on:
   push:
     paths:
       - .github/workflows/hex-userscript-engine-diagnostic.yml
 
+permissions:
+  contents: write
+
 jobs:
-  sync:
+  stage:
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
-      - name: Clone target branch
-        env:
-          GH_PAT: ${{ secrets.GH_PAT }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          if [[ -n "${GH_PAT:-}" ]]; then
-            git clone --depth 1 --branch fix/userscript-protected-worker-sentinel-origin               "https://x-access-token:${GH_PAT}@github.com/rhgrive3/hex-ida.git" hex-ida
-          else
-            git clone --depth 1 --branch fix/userscript-protected-worker-sentinel-origin               "https://github.com/rhgrive3/hex-ida.git" hex-ida
-          fi
+      - name: Checkout actions repo
+        uses: actions/checkout@v4
+        with:
+          path: actions-repo
+      - name: Checkout hex-ida fix branch
+        uses: actions/checkout@v4
+        with:
+          repository: rhgrive3/hex-ida
+          ref: fix/userscript-protected-worker-sentinel-origin
+          path: hex-ida
       - name: Install Node deps
         working-directory: hex-ida
         timeout-minutes: 4
@@ -28,22 +30,20 @@ jobs:
         working-directory: hex-ida
         timeout-minutes: 3
         run: npm run userscript:build > /tmp/userscript-build.log 2>&1
-      - name: Commit and push generated files
-        working-directory: hex-ida
+      - name: Stage generated files in actions repo
         shell: bash
-        env:
-          GH_PAT: ${{ secrets.GH_PAT }}
         run: |
           set -euo pipefail
-          git diff --check
-          if git diff --quiet -- userscript/hex.user.template.js userscript/release-version.json; then
-            echo "generated files already synchronized"
+          mkdir -p actions-repo/tmp/hex-userscript-sync
+          cp hex-ida/userscript/hex.user.template.js actions-repo/tmp/hex-userscript-sync/hex.user.template.js
+          cp hex-ida/userscript/release-version.json actions-repo/tmp/hex-userscript-sync/release-version.json
+          cd actions-repo
+          git config user.name "actions-userscript-stage"
+          git config user.email "actions-userscript-stage@users.noreply.github.com"
+          git add tmp/hex-userscript-sync/hex.user.template.js tmp/hex-userscript-sync/release-version.json
+          if git diff --cached --quiet; then
+            echo "staged files already current"
             exit 0
           fi
-          test -n "${GH_PAT:-}"
-          git config user.name "actions-userscript-sync"
-          git config user.email "actions-userscript-sync@users.noreply.github.com"
-          git add userscript/hex.user.template.js userscript/release-version.json
-          git commit -m "build(userscript): sync protected worker fix"
-          git config remote.origin.url "https://x-access-token:${GH_PAT}@github.com/rhgrive3/hex-ida.git"
-          git push --no-verify origin HEAD:refs/heads/fix/userscript-protected-worker-sentinel-origin
+          git commit -m "diag: stage hex userscript generated files"
+          git push --no-verify origin HEAD:main
