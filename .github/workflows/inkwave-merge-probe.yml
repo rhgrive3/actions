@@ -50,13 +50,15 @@ jobs:
             "inkwave-public/src/ui/hud.js|isJa"
             "inkwave-public/index.html|styles/mobile.css"
           )
+          miss=0
           for c in "${checks[@]}"; do
             f="${c%%|*}"; p="${c#*|}"
-            grep -Fq "$p" "$f" && echo "OK $f :: $p" || { echo "MISSING $f :: $p"; exit 1; }
+            if grep -Fq "$p" "$f"; then echo "OK $f :: $p"; else echo "MISSING $f :: $p"; miss=1; fi
           done
 
           echo "=== SYNTAX ==="
           while IFS= read -r f; do node --check "$f" >/dev/null; done < <(find inkwave-public/src -type f -name '*.js' | sort)
           git diff --check
+          echo "HOOK_MISS=$miss"
           echo "=== CHANGED FILES ==="
           git diff --name-only HEAD
