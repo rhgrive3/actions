@@ -1192,6 +1192,7 @@ class Game {
     const m = this.match, a = m.local, cam = G.camera;
     const showMinimap = this.settings.minimap !== false;
     if (showMinimap) this.minimap.update(dt);
+    else this.minimap.tickHidden?.(dt);
     const w = a.weapon;
     // crosshair spread = the weapon's live cone (first-shot accurate, blooms with sustained fire / in the air)
     const vHalf = (G.camera.fov * Math.PI) / 360;
