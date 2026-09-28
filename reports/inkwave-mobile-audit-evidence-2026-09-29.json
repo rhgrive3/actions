@@ -1,0 +1,116 @@
+{
+  "kind": "source-level deterministic probes; no real device FPS, GPU timing, power or network measurement",
+  "sourceSha256": {
+    "src/main.js": "d79d9f0d42b188ef070d18b84f5e16e9c60d1432d8d7d60b841304467fc91b68",
+    "src/core/renderer.js": "be8c03065ad2c1cd4173c6e55ec604ba254a1966ef3b6285f4b7a969f8a0f6bb",
+    "src/world/paint.js": "d791e100a134a5c9ca7fb85398ea3ac324e1b509fde38a2d76599e410c06d79a",
+    "src/fx/screenfx.js": "6db9b91a97d84e64a567c5c942f59f97f03450f5bea2e29154840bde8d42721a"
+  },
+  "dynamicResolution": {
+    "slowThen60": {
+      "windows": [
+        [
+          30,
+          20
+        ],
+        [
+          60,
+          120
+        ]
+      ],
+      "initial": 1,
+      "final": 0.75,
+      "changes": [
+        0.875,
+        0.75
+      ],
+      "upCount": 0
+    },
+    "sustained30": {
+      "windows": [
+        [
+          30,
+          60
+        ]
+      ],
+      "initial": 1,
+      "final": 0.75,
+      "changes": [
+        0.875,
+        0.75
+      ],
+      "upCount": 0
+    },
+    "normal50": {
+      "windows": [
+        [
+          50,
+          60
+        ]
+      ],
+      "initial": 1,
+      "final": 1,
+      "changes": [],
+      "upCount": 0
+    },
+    "twoRecoveriesThenSlow": {
+      "windows": [
+        [
+          30,
+          20
+        ],
+        [
+          120,
+          40
+        ],
+        [
+          30,
+          20
+        ],
+        [
+          120,
+          60
+        ]
+      ],
+      "initial": 1,
+      "final": 0.75,
+      "changes": [
+        0.875,
+        0.75,
+        0.875,
+        1,
+        0.875,
+        0.75
+      ],
+      "upCount": 2
+    }
+  },
+  "bloomWithSettingOn": {
+    "androidHigh": true,
+    "androidLow": false,
+    "iosHigh": false
+  },
+  "emptyPaintAt60HzFor10Seconds": {
+    "dryDrawSubmissions": 200
+  },
+  "buildPreloadGraph": {
+    "modules": 102,
+    "bossModules": [
+      "src/boss/bossModelGeo.js",
+      "src/boss/bossMats.js",
+      "src/boss/bossAnim.js",
+      "src/boss/bossModelFx.js",
+      "src/boss/bossModel.js",
+      "src/boss/bossNav.js",
+      "src/boss/bossHazards.js",
+      "src/boss/bossBrain.js",
+      "src/boss/boss.js",
+      "src/boss/bossMode.js"
+    ],
+    "bytesBeforeBuild": 6160035
+  },
+  "allSourceJs": {
+    "files": 85,
+    "bytesBeforeBuild": 3894389
+  }
+}
