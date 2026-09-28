@@ -1,6 +1,6 @@
 {
   "kind": "post-fix source-level deterministic probes plus GitHub Pages build result; no real-device FPS, GPU timing, power or network measurement",
-  "targetCommit": "f746d05741996523a715ceea5ef93d93d9cf088a",
+  "targetCommit": "pending merge of fix/inkwave-mobile-p2-p3-20260929",
   "syntax": {
     "src/config.js": "ok",
     "src/main.js": "ok",
@@ -8,7 +8,10 @@
     "src/fx/screenfx.js": "ok",
     "src/world/paint.js": "ok",
     "src/world/decor.js": "ok",
-    "reports/inkwave-mobile-audit-probe-2026-09-29.mjs": "ok"
+    "reports/inkwave-mobile-audit-probe-2026-09-29.mjs": "ok",
+    "src/game/match.js": "ok",
+    "src/game/minimap.js": "ok",
+    "src/ui/menus.js": "ok"
   },
   "effectiveQuality": {
     "androidHigh": {
@@ -144,15 +147,58 @@
     "stageLightmapTrackedAndDisposed": true
   },
   "pagesBuild": {
-    "runId": 36447071782,
-    "workflow": "Publish INKWAVE to Pages",
-    "conclusion": "success",
-    "buildOptimizedSite": "success",
-    "uploadSite": "success",
-    "deployPages": "success"
+    "status": "pending merge/deploy validation"
   },
   "notes": [
     "The 50 Hz synthetic case sits on the degradation boundary and resolves to the lower-quality side because the controller intentionally targets headroom toward 60 Hz.",
-    "Performance deltas are not claimed until device measurements are collected."
-  ]
+    "P2/P3 source checks are deterministic but are not substitutes for Android/iPhone GPU, thermal, battery, or frame-time measurements.",
+    "Grade/Output/FXAA fusion is intentionally not performed without GPU evidence; only quality-disabled BloomPass allocation is removed."
+  ],
+  "frameCap": {
+    "touchAuto": {
+      "60Hz": {
+        "outputHz": 60,
+        "simSeconds": 10.000000000000076
+      },
+      "75Hz": {
+        "outputHz": 60,
+        "simSeconds": 10.00000000000008
+      },
+      "90Hz": {
+        "outputHz": 60,
+        "simSeconds": 9.999999999999968
+      },
+      "120Hz": {
+        "outputHz": 60,
+        "simSeconds": 10.000000000000076
+      },
+      "144Hz": {
+        "outputHz": 60,
+        "simSeconds": 10.000000000000085
+      }
+    },
+    "touchDisplay120": {
+      "outputHz": 120,
+      "simSeconds": 10.000000000000073
+    },
+    "desktopAuto120": {
+      "outputHz": 120,
+      "simSeconds": 10.000000000000073
+    },
+    "elapsedTimeAccumulator": true
+  },
+  "p2p3": {
+    "frameRateSettingExposed": true,
+    "bossStaticImportInMain": false,
+    "bossStaticImportInMatch": false,
+    "bossLazyLoad": true,
+    "bossLazyCallIgnoredByStaticPreloadPattern": true,
+    "lobbyHiddenWorldGuard": true,
+    "minimapCompositeMaxHz": 30,
+    "minimapDisabledSkipsIdleBuild": true,
+    "minimapHiddenLogicalTick": true,
+    "hudMapArraysReused": true,
+    "bloomPassSkippedWhenEffectiveQualityDisablesBloom": true,
+    "fullscreenGradeOutputFxaaFusion": false
+  }
 }
