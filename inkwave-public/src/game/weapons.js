@@ -1409,10 +1409,11 @@ export class Projectiles {
     const vel = this._arcVel || (this._arcVel = new THREE.Vector3());
     this.throwVelocity(a, SUB.bomb.throwSpeed, vel);
     const p = _v.copy(a.pos); p.y += 1.35;
+    const ipx = p.x, ipy = p.y, ipz = p.z;
     const ivx = vel.x, ivy = vel.y, ivz = vel.z;
     const cache = this._arcCache || (this._arcCache = { physics: null, px: NaN, py: NaN, pz: NaN, vx: NaN, vy: NaN, vz: NaN, landed: false });
     const same = cache.physics === G.physics &&
-      cache.px === p.x && cache.py === p.y && cache.pz === p.z &&
+      cache.px === ipx && cache.py === ipy && cache.pz === ipz &&
       cache.vx === ivx && cache.vy === ivy && cache.vz === ivz;
     let landed = cache.landed;
     if (!same) {
@@ -1435,7 +1436,7 @@ export class Projectiles {
       this.arcGeo.setDrawRange(0, n);
       this.arcLine.computeLineDistances();
       cache.physics = G.physics;
-      cache.px = p.x; cache.py = p.y; cache.pz = p.z;
+      cache.px = ipx; cache.py = ipy; cache.pz = ipz;
       cache.vx = ivx; cache.vy = ivy; cache.vz = ivz;
       cache.landed = landed;
     }
