@@ -170,8 +170,9 @@ export class Renderer {
       comp.addPass(ao);
     }
     this.bloom = null;
-    // Touch effective quality disables bloom. Do not even construct its pyramid of render targets on those devices.
-    if (!this.mobile.touch || q.bloom) {
+    // Effective quality decides whether bloom exists at all. Skip its render-target pyramid when the preset/device
+    // forbids bloom; quality tiers that support it keep the pass so the user's Bloom toggle stays instant.
+    if (q.bloom) {
       this.bloom = new UnrealBloomPass(new THREE.Vector2(w, h), ...BLOOM);
       this.bloom.enabled = !!(q.bloom && this.settings.bloom);
       comp.addPass(this.bloom);
