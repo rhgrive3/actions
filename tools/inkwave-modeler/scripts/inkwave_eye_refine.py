@@ -729,6 +729,10 @@ def args():
     p.add_argument('--caruncle', choices=CARUNCLE_VARIANTS)
     p.add_argument('--save', type=Path, required=True)
     p.add_argument('--restore', action='store_true')
+    # with --restore: also delete the backups. Backups are only taken on the first run, so before an earlier face
+    # pass (face_refine / face_look / face_multiview_fit) is re-run, drop them; the next eye pass then backs up the
+    # new face instead of bringing the old one back.
+    p.add_argument('--drop-backups', action='store_true')
     p.add_argument('--export', type=Path)
     p.add_argument('--game', type=Path)
     return p.parse_args(sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else [])
@@ -3592,6 +3596,15 @@ def main():
                 bsdf.inputs['Specular IOR Level'].default_value = MATTE_VARIANTS[a.matte]['specular']
     else:
         wing_max = None
+        if a.drop_backups:
+            dropped = 0
+            for coll in (bpy.data.meshes, bpy.data.images):
+                for d in [d for d in coll if d.name.endswith(BACKUP_SUFFIX)]:
+                    if d.users - int(d.use_fake_user) > 0:
+                        raise SystemExit(f'backup {d.name} is still in use')
+                    coll.remove(d)
+                    dropped += 1
+            print('EYE_REFINEMENT dropped backups', dropped)
     txt = bpy.data.texts.get('INKWAVE_EYE_REFINEMENT.json') or bpy.data.texts.new('INKWAVE_EYE_REFINEMENT.json')
     txt.from_string(json.dumps({'variant': None if a.restore else a.variant,
                                 'parameters': None if a.restore else LASH_VARIANTS[a.variant],
