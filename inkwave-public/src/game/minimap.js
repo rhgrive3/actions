@@ -6,7 +6,7 @@
 //                                      soft sun shadows cast by tall blocks, contact AO, crisp rims, grates, props
 //   ink    (≤ 6 Hz, on paint.version)  bilinear team field → smooth anti-aliased blobs, glossy embossed rims
 //   flash  (with ink)                  freshly claimed pixels, faded out over ~0.4 s
-//   live   (every frame)               spawn pads, bombs (arming blink), tempest clouds + rain radius, slam shock rings,
+//   live   (≤ 30 Hz)                    spawn pads, bombs (arming blink), tempest clouds + rain radius, slam shock rings,
 //                                      super-jump landing targets, respawn pulses, splat bursts
 import { G, on } from '../core/ctx.js';
 import { SPECIALS, SUB } from '../config.js';
@@ -351,9 +351,11 @@ export class Minimap {
     const P = G.projectiles;
     const animated = this.flashT < 0.45 || fxList.length > 0 || !!(P?.bombs?.length) || !!(P?.clouds?.length);
     this._composeAcc = Math.min(0.12, this._composeAcc + dt);
-    if ((dirty || animated || force) && (force || this._composeAcc >= 1 / 30)) {
+    this._composeDirty = this._composeDirty || dirty;
+    if ((this._composeDirty || animated || force) && (force || this._composeAcc >= 1 / 30)) {
       const cdt = this._composeAcc;
       this._composeAcc = 0;
+      this._composeDirty = false;
       this._compose(cdt);
     }
   }
