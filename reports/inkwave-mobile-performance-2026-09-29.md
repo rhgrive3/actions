@@ -45,6 +45,13 @@ P1のID01〜05を、既存のDPR上限・MSAA/GTAO無効化・FXAA・LOD・Shado
 
 **実機でのFPS p50/p95/p99、GPU時間、端末温度、消費電力についてはまだ測定していない。** したがって「何％高速化した」という数値はここでは主張しない。
 
+### 最終本番検証
+
+- コード最終コミット: `7e1f2994b71c6e443dfc063903c539c577910444`。
+- GitHub Actions `Publish INKWAVE to Pages` run `36451227677` は、optimized build / artifact upload / Pages deploy を含む全ステップ成功。
+- 本番artifactの `index.html` を直接確認し、`modulepreload` は **91件**、`src/boss/*` は **0件**。Boss runtimeファイル自体は配布物に残し、Boss選択時の遅延ロードにだけ使用する。
+- 最初のP2/P3 buildで `net/netmatch.js -> boss.js` の静的依存が1本残っていることをartifactから発見したため、追加修正してから再ビルド・再確認した。最終版ではその経路も除去済み。
+
 ## 優先順位
 
 P1は最初に直す候補、P2は次の段階、P3は計測後に判断する候補。効果の大きさはコードからの見込みであり、実測順位ではない。
@@ -156,7 +163,7 @@ lightmapも [main.js L267–276](https://github.com/rhgrive3/actions/blob/bba6ea
 
 公開経路は [.github/workflows/pages-inkwave.yml](https://github.com/rhgrive3/actions/blob/bba6eab9277e28cbdab89c6b2cff9a03dcdb6e3d/.github/workflows/pages-inkwave.yml) → [scripts/build-inkwave.mjs](https://github.com/rhgrive3/actions/blob/bba6eab9277e28cbdab89c6b2cff9a03dcdb6e3d/scripts/build-inkwave.mjs)。minify、Three.js tree-shaking、modulepreloadは既にある。
 
-初回調査時の依存グラフは**102モジュール**で、その中に**Boss関連10モジュール**が含まれていた。ビルド前の対象グラフは6,160,035 bytes、srcのJS全体は85ファイル・3,894,389 bytesだった。**これらは初回調査時の非圧縮ソース値であり、公開サイトの転送量ではない。** 今回、Boss runtimeの静的importを外し、Boss選択時の遅延ロードへ変更した。最終グラフは本番build結果と再現プローブで確認する。
+初回調査時の依存グラフは**102モジュール**で、その中に**Boss関連10モジュール**が含まれていた。ビルド前の対象グラフは6,160,035 bytes、srcのJS全体は85ファイル・3,894,389 bytesだった。**これらは初回調査時の非圧縮ソース値であり、公開サイトの転送量ではない。** 今回、Boss runtimeの静的importを外し、Boss選択時の遅延ロードへ変更した。最終本番artifactでは `modulepreload` 91件、`src/boss/*` preload 0件を確認した。
 
 さらに [character.js L898–918](https://github.com/rhgrive3/actions/blob/bba6eab9277e28cbdab89c6b2cff9a03dcdb6e3d/inkwave-public/src/game/character.js#L898-L918) のwarmAllは全3 tierとdither材質を準備し、武器のfar形状も事前生成する。[character-lod.js](https://github.com/rhgrive3/actions/blob/bba6eab9277e28cbdab89c6b2cff9a03dcdb6e3d/inkwave-public/src/game/character-lod.js) は頂点クラスタリングとキャッシュを既に持つ。LOD自体を新規導入する必要はない。
 
