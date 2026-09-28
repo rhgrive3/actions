@@ -577,15 +577,44 @@ export class Projectiles {
   clear() {
     for (const p of this.list) this.pool.push(p);
     this.list.length = 0;
-    for (const b of this.bombs) this.scene.remove(b.mesh);
+    for (const b of this.bombs) this._releaseBomb(b);
     this.bombs.length = 0;
-    for (const c of this.clouds) this.scene.remove(c.group);
+    for (const c of this.clouds) this._releaseCloud(c);
     this.clouds.length = 0;
     for (const b of this.beams) { b.mesh.visible = false; this.beamPool.push(b.mesh); }
     this.beams.length = 0;
     for (const [, s] of this.sights) { this.scene.remove(s); s.material.dispose(); }
     this.sights.clear();
     this.blobs.count = 0;
+  }
+
+  // Bomb/cloud meshes own per-instance materials even though their geometry is shared.
+  // Release only those owned materials; the shared geometry + bomb material cache stay alive.
+  _releaseBomb(b) {
+    if (!b?.mesh || b._released) return;
+    b._released = true;
+    const mats = new Set();
+    b.mesh.traverse((o) => {
+      const m = o.material;
+      if (Array.isArray(m)) for (const x of m) if (x) mats.add(x);
+      else if (m) mats.add(m);
+    });
+    this.scene.remove(b.mesh);
+    for (const m of mats) m.dispose?.();
+  }
+
+  _releaseCloud(c, fade = 0) {
+    if (!c?.group || c._released) return;
+    c._released = true;
+    c.loop?.stop(fade);
+    const mats = new Set();
+    c.group.traverse((o) => {
+      const m = o.material;
+      if (Array.isArray(m)) for (const x of m) if (x) mats.add(x);
+      else if (m) mats.add(m);
+    });
+    this.scene.remove(c.group);
+    for (const m of mats) m.dispose?.();
   }
 
   _new() {
@@ -1263,7 +1292,7 @@ export class Projectiles {
         }
       }
       if (hit.hit) {
-        if (b.kind === 'storm') { this._spawnCloud(b); if (b.ghost) this.clouds[this.clouds.length - 1].ghost = true; this.scene.remove(b.mesh); this.bombs.splice(i, 1); continue; }
+        if (b.kind === 'storm') { this._spawnCloud(b); if (b.ghost) this.clouds[this.clouds.length - 1].ghost = true; this._releaseBomb(b); this.bombs.splice(i, 1); continue; }
         b.pos.copy(hit.point).addScaledVector(hit.normal, 0.21);
         const vn = b.vel.dot(hit.normal);
         b.vel.addScaledVector(hit.normal, -vn * 1.35);
@@ -1274,7 +1303,7 @@ export class Projectiles {
           emit('bomb:arm', { actor: b.owner, pos: b.pos.clone(), team: b.team, radius: SUB.bomb.radius });
         }
       }
-      if (b.kind === 'storm' && b.age > 1.1) { this._spawnCloud(b); if (b.ghost) this.clouds[this.clouds.length - 1].ghost = true; this.scene.remove(b.mesh); this.bombs.splice(i, 1); continue; }
+      if (b.kind === 'storm' && b.age > 1.1) { this._spawnCloud(b); if (b.ghost) this.clouds[this.clouds.length - 1].ghost = true; this._releaseBomb(b); this.bombs.splice(i, 1); continue; }
       if (b.fuse >= 0) {
         b.fuse -= dt;
         b.beepT -= dt;
@@ -1285,9 +1314,9 @@ export class Projectiles {
           b.beepT = 0.3 - k * 0.2;
           if (G.camera.position.distanceToSquared(b.pos) < 30 * 30) G.audio?.play('bomb_beep', { pos: b.pos, volume: 0.35 + k * 0.4, pitch: 1 + k * 0.25 });
         }
-        if (b.fuse <= 0) { const nm = G.netm; if (b.ghost && nm) nm.mute++; try { this._explodeBomb(b); } finally { if (b.ghost && nm) nm.mute--; } this.scene.remove(b.mesh); this.bombs.splice(i, 1); continue; }
+        if (b.fuse <= 0) { const nm = G.netm; if (b.ghost && nm) nm.mute++; try { this._explodeBomb(b); } finally { if (b.ghost && nm) nm.mute--; } this._releaseBomb(b); this.bombs.splice(i, 1); continue; }
       }
-      if (b.pos.y < PLAYER.waterY - 1.8) { this.scene.remove(b.mesh); this.bombs.splice(i, 1); continue; }
+      if (b.pos.y < PLAYER.waterY - 1.8) { this._releaseBomb(b); this.bombs.splice(i, 1); continue; }
       b.mesh.position.copy(b.pos);
       b.mesh.rotation.x += b.spin.x * dt * (b.fuse < 0 ? 1 : 0.2);
       b.mesh.rotation.z += b.spin.y * dt * (b.fuse < 0 ? 1 : 0.2);
@@ -1327,7 +1356,7 @@ export class Projectiles {
           if (killed) emit('hit', { attacker: c.owner, victim: e, damage: 0, killed: true, weaponId: 'storm' });
         }
       }
-      if (c.t >= c.dur) { c.loop?.stop(0.3); emit('storm:end', { pos: c.group.position.clone(), team: c.team, actor: c.owner }); this.scene.remove(c.group); this.clouds.splice(i, 1); }
+      if (c.t >= c.dur) { emit('storm:end', { pos: c.group.position.clone(), team: c.team, actor: c.owner }); this._releaseCloud(c, 0.3); this.clouds.splice(i, 1); }
     }
   }
 
@@ -1378,24 +1407,36 @@ export class Projectiles {
     const vel = this._arcVel || (this._arcVel = new THREE.Vector3());
     this.throwVelocity(a, SUB.bomb.throwSpeed, vel);
     const p = _v.copy(a.pos); p.y += 1.35;
-    const pos = this.arcGeo.attributes.position;
-    let n = 0, landed = false;
-    // same integrator + step as _updateBombs (60 Hz semi-implicit Euler), one vertex every 2 steps → exact landing
-    const dt = SIM_DT, per = 2;
-    const prev = this._arcPrev || (this._arcPrev = new THREE.Vector3());
-    pos.setXYZ(0, p.x, p.y, p.z); n = 1;
-    for (let i = 0; i < (this.arcN - 1) * per; i++) {
-      prev.copy(p);
-      vel.y -= 24 * dt;
-      p.addScaledVector(vel, dt);
-      const h = G.physics.segment(prev, p, _hit);
-      if (h.hit) { pos.setXYZ(n, h.point.x, h.point.y, h.point.z); n++; landed = true; this.arcRing.position.copy(h.point).addScaledVector(h.normal, 0.03); this.arcRing.quaternion.setFromUnitVectors(UP, h.normal); break; }
-      if ((i + 1) % per === 0) { pos.setXYZ(n, p.x, p.y, p.z); n++; }
-      if (n >= this.arcN) break;
+    const ivx = vel.x, ivy = vel.y, ivz = vel.z;
+    const cache = this._arcCache || (this._arcCache = { physics: null, px: NaN, py: NaN, pz: NaN, vx: NaN, vy: NaN, vz: NaN, landed: false });
+    const same = cache.physics === G.physics &&
+      cache.px === p.x && cache.py === p.y && cache.pz === p.z &&
+      cache.vx === ivx && cache.vy === ivy && cache.vz === ivz;
+    let landed = cache.landed;
+    if (!same) {
+      const pos = this.arcGeo.attributes.position;
+      let n = 0; landed = false;
+      // same integrator + step as _updateBombs (60 Hz semi-implicit Euler), one vertex every 2 steps → exact landing
+      const dt = SIM_DT, per = 2;
+      const prev = this._arcPrev || (this._arcPrev = new THREE.Vector3());
+      pos.setXYZ(0, p.x, p.y, p.z); n = 1;
+      for (let i = 0; i < (this.arcN - 1) * per; i++) {
+        prev.copy(p);
+        vel.y -= 24 * dt;
+        p.addScaledVector(vel, dt);
+        const h = G.physics.segment(prev, p, _hit);
+        if (h.hit) { pos.setXYZ(n, h.point.x, h.point.y, h.point.z); n++; landed = true; this.arcRing.position.copy(h.point).addScaledVector(h.normal, 0.03); this.arcRing.quaternion.setFromUnitVectors(UP, h.normal); break; }
+        if ((i + 1) % per === 0) { pos.setXYZ(n, p.x, p.y, p.z); n++; }
+        if (n >= this.arcN) break;
+      }
+      pos.needsUpdate = true;
+      this.arcGeo.setDrawRange(0, n);
+      this.arcLine.computeLineDistances();
+      cache.physics = G.physics;
+      cache.px = p.x; cache.py = p.y; cache.pz = p.z;
+      cache.vx = ivx; cache.vy = ivy; cache.vz = ivz;
+      cache.landed = landed;
     }
-    pos.needsUpdate = true;
-    this.arcGeo.setDrawRange(0, n);
-    this.arcLine.computeLineDistances();
     const col = a.ink >= SUB.bomb.inkCost ? a.color : new THREE.Color(0.6, 0.6, 0.6);
     this.arcLine.material.color.copy(col).multiplyScalar(1.4);
     this.arcRing.material.color.copy(col).multiplyScalar(1.4);
@@ -1453,8 +1494,21 @@ export class Projectiles {
       }
     }
     B.count = n;
+    // count=0 already suppresses the draw; do not upload unchanged backing buffers.
+    if (!n) return;
+    const mr = this._blobMatrixRange || (this._blobMatrixRange = { start: 0, count: 0 });
+    mr.count = n * B.instanceMatrix.itemSize;
+    B.instanceMatrix.updateRanges.length = 0; B.instanceMatrix.updateRanges.push(mr);
     B.instanceMatrix.needsUpdate = true;
-    if (B.instanceColor) B.instanceColor.needsUpdate = true;
+    if (B.instanceColor) {
+      const cr = this._blobColorRange || (this._blobColorRange = { start: 0, count: 0 });
+      cr.count = n * B.instanceColor.itemSize;
+      B.instanceColor.updateRanges.length = 0; B.instanceColor.updateRanges.push(cr);
+      B.instanceColor.needsUpdate = true;
+    }
+    const sr = this._blobShapeRange || (this._blobShapeRange = { start: 0, count: 0 });
+    sr.count = n * this.blobShape.itemSize;
+    this.blobShape.updateRanges.length = 0; this.blobShape.updateRanges.push(sr);
     this.blobShape.needsUpdate = true;
   }
 }
