@@ -11,7 +11,7 @@ jobs:
     steps:
       - name: Checkout diagnostic repo
         uses: actions/checkout@v4
-      - name: Checkout hex-ida
+      - name: Checkout hex-ida fix branch
         uses: actions/checkout@v4
         with:
           repository: rhgrive3/hex-ida
@@ -33,7 +33,7 @@ jobs:
         working-directory: hex-ida
         timeout-minutes: 3
         run: npm run userscript:build > /tmp/userscript-build.log 2>&1
-      - name: Inject legacy ARM64 worker probe
+      - name: Restrict browser E2E to legacy ARM64 probe
         working-directory: hex-ida
         shell: bash
         run: |
@@ -41,35 +41,13 @@ jobs:
           from pathlib import Path
           p = Path('tests/userscript-sandbox-browser-e2e.mjs')
           s = p.read_text()
-          marker = "    const x86WorkerState = await child.evaluate(async () => {"
-          insert_lines = [
-              "    const legacyArm64Probe = await child.evaluate(async () => {",
-              "      const worker = new Worker(new URL('https://hex.invalid/js/worker.js'));",
-              "      try {",
-              "        return await new Promise((resolve) => {",
-              "          const timer = setTimeout(() => resolve({ ok: false, error: 'legacy probe timeout' }), 20000);",
-              "          worker.onmessage = (event) => {",
-              "            const data = event.data;",
-              "            if (!data || data.id !== 991) return;",
-              "            clearTimeout(timer);",
-              "            resolve(data.t === 'ok' ? { ok: data.result?.ok === true, result: data.result || null } : { ok: false, error: data.error || data.t || 'legacy probe failed' });",
-              "          };",
-              "          worker.onerror = (event) => { clearTimeout(timer); resolve({ ok: false, error: event.message || event.error?.message || 'legacy worker error' }); };",
-              "          worker.onmessageerror = () => { clearTimeout(timer); resolve({ ok: false, error: 'legacy worker message error' }); };",
-              "          worker.postMessage({ t: 'probe', id: 991, epoch: 0 });",
-              "        });",
-              "      } finally { worker.terminate(); }",
-              "    });",
-              "    console.log('legacy-arm64-probe ' + name + ': ' + JSON.stringify(legacyArm64Probe));",
-              "    assert.equal(legacyArm64Probe.ok, true, name + ': protected legacy ARM64 worker probe failed: ' + JSON.stringify(legacyArm64Probe));",
-              "",
-          ]
-          insert = "\n".join(insert_lines) + "\n"
-          if marker not in s:
-              raise SystemExit('insertion marker not found')
-          p.write_text(s.replace(marker, insert + marker, 1))
+          needle = "    assert.equal(legacyArm64Probe.ok, true,\n      `${name}: protected legacy ARM64 worker probe failed: ${JSON.stringify(legacyArm64Probe)}`);\n"
+          replacement = needle + "    console.log(`legacy-arm64-probe ${name}: ${JSON.stringify(legacyArm64Probe)}`);\n    return;\n"
+          if needle not in s:
+              raise SystemExit('legacy probe assertion marker not found')
+          p.write_text(s.replace(needle, replacement, 1))
           PY
-      - name: Run legacy ARM64 browser probe
+      - name: Run Chromium and WebKit legacy probe
         id: diag
         working-directory: hex-ida
         timeout-minutes: 4
@@ -80,8 +58,8 @@ jobs:
           code=$?
           {
             echo "exit_code=$code"
-            echo "--- focused output tail ---"
-            tail -n 120 /tmp/e2e.log
+            echo "--- focused output ---"
+            tail -n 80 /tmp/e2e.log
           } > engine-diagnostic.txt
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"
           exit 0
