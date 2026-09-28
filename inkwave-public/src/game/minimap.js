@@ -350,6 +350,10 @@ export class Minimap {
     // bombs/clouds/flash/transient markers are sampled at 30 Hz, which is visually smooth but halves this work at 60 fps.
     const P = G.projectiles;
     const animated = this.flashT < 0.45 || fxList.length > 0 || !!(P?.bombs?.length) || !!(P?.clouds?.length);
+    // When the final animated overlay disappears, compose once more to erase its last pixels.
+    // After that single cleanup composite, static maps return to the existing idle path.
+    if (this._animatedLast && !animated) dirty = true;
+    this._animatedLast = animated;
     this._composeAcc = Math.min(0.12, this._composeAcc + dt);
     this._composeDirty = this._composeDirty || dirty;
     if ((this._composeDirty || animated || force) && (force || this._composeAcc >= 1 / 30)) {
