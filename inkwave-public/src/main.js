@@ -1037,7 +1037,10 @@ class Game {
       for (let i = 0; i < sub; i++) m.update(dt / sub);
       if (!m.paused) G.projectiles.update(dt);
       if (m.attract) this._updateAttract(dt);
-      else if (m.state === 'playing' && m.local?.alive && this.rig.mode !== 'follow' && this.rig.mode !== 'path') this.rig.follow(m.local, true);
+      // Live gameplay invariant: a living local player must own the gameplay camera.
+      // Recover from a missed state-transition callback, a stale attract/previous-match target, or a cinematic
+      // path that failed to hand control back. Only snap when mode/target is wrong, never every frame.
+      else if (m.state === 'playing' && m.local?.alive && (this.rig.mode !== 'follow' || this.rig.target !== m.local)) this.rig.follow(m.local, true);
     }
     // A full-frame lobby/showcase completely covers the arena. Keep input/net/audio/showcase alive, but suspend
     // hidden-world visual work (FX, environment, decor, paint atlas, game camera) until the arena is visible again.
