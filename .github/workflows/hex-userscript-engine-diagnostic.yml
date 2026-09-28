@@ -1,22 +1,22 @@
-name: Hex userscript generated sync
+name: Hex userscript generated push
 on:
   push:
     paths:
       - .github/workflows/hex-userscript-engine-diagnostic.yml
 
 jobs:
-  build:
+  sync:
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
-      - name: Checkout diagnostic repo
-        uses: actions/checkout@v4
       - name: Checkout hex-ida fix branch
         uses: actions/checkout@v4
         with:
           repository: rhgrive3/hex-ida
           ref: fix/userscript-protected-worker-sentinel-origin
+          token: ${{ secrets.GH_PAT }}
           path: hex-ida
+          fetch-depth: 1
       - name: Install Node deps
         working-directory: hex-ida
         timeout-minutes: 4
@@ -25,18 +25,22 @@ jobs:
         working-directory: hex-ida
         timeout-minutes: 3
         run: npm run userscript:build > /tmp/userscript-build.log 2>&1
-      - name: Record generated diff
+      - name: Commit generated userscript only
         working-directory: hex-ida
+        shell: bash
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
         run: |
-          git diff -- userscript/hex.user.template.js userscript/release-version.json > userscript-generated.patch
-          git status --short -- userscript/hex.user.template.js userscript/release-version.json > userscript-generated.status
-      - name: Upload generated userscript files
-        uses: actions/upload-artifact@v4
-        with:
-          name: hex-userscript-generated
-          path: |
-            hex-ida/userscript/hex.user.template.js
-            hex-ida/userscript/release-version.json
-            hex-ida/userscript-generated.patch
-            hex-ida/userscript-generated.status
-          retention-days: 1
+          set -euo pipefail
+          test -n "${GH_PAT:-}"
+          git diff --check
+          git status --short -- userscript/hex.user.template.js userscript/release-version.json
+          if git diff --quiet -- userscript/hex.user.template.js userscript/release-version.json; then
+            echo "generated files already synchronized"
+            exit 0
+          fi
+          git config user.name "actions-userscript-sync"
+          git config user.email "actions-userscript-sync@users.noreply.github.com"
+          git add userscript/hex.user.template.js userscript/release-version.json
+          git commit -m "build(userscript): sync protected worker fix"
+          git push --no-verify origin HEAD:refs/heads/fix/userscript-protected-worker-sentinel-origin
