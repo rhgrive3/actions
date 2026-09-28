@@ -98,7 +98,7 @@ const output={
     minimapHiddenTick:minimap.includes('tickHidden(dt)') && main.includes('this.minimap.tickHidden?.(dt)'),
     minimapDisabledSkipsIdleBuild:minimap.includes("if (G.settings?.minimap !== false) idle("),
     hudReusesArrays:main.includes('this._hudPlayers ||') && main.includes('this._hudMarkers ||'),
-    touchSkipsBloomAllocation:renderer.includes('if (!this.mobile.touch || q.bloom)'),
+    effectiveQualitySkipsBloomAllocation:renderer.includes('if (q.bloom)'),
   },
   lifecycle:{
     composerDisposesPasses:renderer.includes('pass.dispose?.()') && renderer.includes('comp.dispose?.()') && renderer.includes('pass === this.extraPass'),
