@@ -38,6 +38,7 @@ export class PlayerController {
     if (!this.enabled) {
       it.move.set(0, 0, 0); it.fire = it.jump = it.squid = it.sub = it.special = false;
       this.assist.has = false;
+      this.input.mobile?.gyro?.discard();
       return;
     }
     const usingPad = !!inp.pad && inp.lastDevice === 'pad';
@@ -55,6 +56,22 @@ export class PlayerController {
       rig.yaw -= mdx * sens;
       rig.pitch -= mdy * sens * inv;
       lookActive = true;
+    }
+    // touch swipes arrive already in radians (scaled to the screen size + swipe sensitivity in mobile.js)
+    if (touch && !mapUp && (touch.lookDX || touch.lookDY)) {
+      rig.yaw -= touch.lookDX * friction;
+      rig.pitch -= touch.lookDY * friction * inv;
+      lookActive = true;
+    }
+    // gyro: device turn → camera turn (its own invert settings; the Splatoon handheld feel)
+    if (touch && touch.gyro.enabled) {
+      const g = touch.gyro.consume(this._gyro || (this._gyro = { yaw: 0, pitch: 0 }));
+      if (!mapUp && (g.yaw || g.pitch)) {
+        const gf = lerp(1, friction, 0.6);    // gyro is precise already: only a little assist friction
+        rig.yaw += g.yaw * gf;
+        rig.pitch += g.pitch * gf;
+        if (Math.abs(g.yaw) + Math.abs(g.pitch) > 0.0015) lookActive = true;
+      }
     }
     if (inp.pad && !mapUp) {
       inp.padStick(2, 3, _stick, 0.11, 0.96);

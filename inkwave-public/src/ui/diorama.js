@@ -4,11 +4,13 @@
 //   · you (arrow = facing), your three teammates (weapon badge, name, [1]–[3]; greyed with a countdown while splatted),
 //     your base ([4]) — enemies are not shown
 //   · a virtual map cursor (pointer stays locked: mouse deltas / right stick) that snaps to pins and tilts the diorama a
-//     touch toward itself; click / A on a pin, or the number keys, to Super Jump — an ink arc previews the jump
+//     touch toward itself; click / A on a pin, the number keys, or a tap (touch) to Super Jump — an ink arc previews it
 //   · a miniature finish: tilt-shift blur bands, a soft vignette, the stage name
 // Per frame it only projects a handful of points and writes transforms / CSS vars when they change.
 import { h, clamp } from './ui-util.js';
 import { keycap, weaponIcon, richText } from './ui-icons.js';
+import { t } from '../i18n.js';
+import { esc } from './ui-util.js';
 import { G } from '../core/ctx.js';
 import * as THREE from 'three';
 
@@ -51,6 +53,15 @@ export class DioramaOverlay {
       h('span', { class: 'iw-pin__badge' }, icon, h('span', { class: 'iw-pin__pulse' })),
       self ? null : h('span', { class: 'iw-pin__key', html: keycap(String(i + 1)) }),
       name, state);
+    // touch: tap a teammate / base pin to Super Jump (mouse and pad use the snapping cursor below)
+    if (!self) {
+      el.addEventListener('pointerdown', (e) => {
+        if (e.pointerType === 'mouse' || !this.on || this.k < 0.7) return;
+        e.preventDefault(); e.stopPropagation();
+        this.hover = i;
+        this._jump(i, G.match?.local);
+      });
+    }
     return { el, icon, name, state, x: 0, y: 0, vis: false, key: '', weapon: null, target: null, ok: false };
   }
 
@@ -183,11 +194,14 @@ export class DioramaOverlay {
 
   _head() {
     const m = G.game?.mapDef;
-    this.title.textContent = (m?.name || 'Stage').toUpperCase();
-    this.when.textContent = G.game?.time === 'dusk' ? 'DUSK' : 'DAY';
-    const pad = G.input?.lastDevice === 'pad';
-    this.foot.innerHTML = pad
+    this.title.textContent = (m?.name || t('Stage')).toUpperCase();
+    this.when.textContent = t(G.game?.time === 'dusk' ? 'DUSK' : 'DAY');
+    const dev = G.input?.lastDevice;
+    const S = (x) => `<span>${esc(t(x))}</span>`;
+    this.foot.innerHTML = dev === 'pad'
       ? richText('Right stick to point · A or D-pad to Super Jump · release VIEW to close')
-      : `${keycap('1')}${keycap('2')}${keycap('3')} <span>Super Jump to a teammate</span> ${keycap('4')} <span>Base</span> <em>·</em> <span>Point + click a pin</span> <em>·</em> <span>release</span> ${keycap('TAB')}`;
+      : dev === 'touch'
+        ? S('Tap a pin to Super Jump · tap MAP to close')
+        : `${keycap('1')}${keycap('2')}${keycap('3')} ${S('Super Jump to a teammate')} ${keycap('4')} ${S('Base')} <em>·</em> ${S('Point + click a pin')} <em>·</em> ${S('release')} ${keycap('TAB')}`;
   }
 }
