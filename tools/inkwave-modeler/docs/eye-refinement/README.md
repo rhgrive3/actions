@@ -56,7 +56,7 @@ Blender の標準の機能だけを使います（`lid_smooth()`）。
 
 - 元にもどす: `--restore`。
 - もう一度かけても、結果は同じです（元にもどしてから、かけなおすため）。
-- 顔の他の手順（`inkwave_face_refine.py`、`inkwave_face_look.py`、`inkwave_face_multiview_fit.py`）をかけなおすときは、先にこのスクリプトの `--restore` をかけてください。
+- 顔の他の手順（`inkwave_face_refine.py`、`inkwave_face_look.py`、`inkwave_face_multiview_fit.py`）をかけなおすときは、先にこのスクリプトの `--restore --drop-backups` をかけてください。控えは最初の実行でしか作られないので、控えを消さないと、次の実行で古い顔にもどります（`../face-soften/README.md` 3 章）。
 
 ## 5. 検査
 

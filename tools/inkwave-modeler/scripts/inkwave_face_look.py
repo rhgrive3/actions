@@ -67,10 +67,13 @@ P = {
     'lid_cover': 0.0003, 'lid_edge_band': 0.0006, 'lid_bending_iters': 3000, 'lid_tuck_outside': 0.0008, 'lid_tuck_gap': 0.0003, 'eyeball_subdiv': 2,
     'corner_pts': [(0.024, -0.024), (0.027, -0.028), (0.031, -0.030)], 'corner_sigma': 0.003, 'corner_iters': 30,
     # (x, y, sigma_x, sigma_y, mm along the normal); x > 0 is mirrored
-    'nose': [(0.0, -0.0485, 0.0058, 0.0052, 1.8), (0.009, -0.052, 0.0036, 0.0036, 1.3), (0.0055, -0.0548, 0.0022, 0.0018, -1.5)],
+    # 2026-09-29 (docs/face-soften): the reference nose is small and round with faint nostrils; softer tip, alae and
+    # nostril dents than the first look pass (1.8 / 1.3 / -1.5 mm) read less adult in all five fitted views.
+    'nose': [(0.0, -0.0485, 0.0058, 0.0052, 1.2), (0.009, -0.052, 0.0036, 0.0036, 0.6), (0.0055, -0.0548, 0.0022, 0.0018, -0.7)],
     'cheek': [(0.043, -0.049, 0.016, 0.013, 1.8)],
     'mouth_k': 1.2, 'mouth_sy': 0.007, 'mouth_x0': 0.022, 'mouth_x1': 0.040, 'mouth_line_thick': 1.5,
-    'dimple_mm': -0.7, 'dimple_sx': 0.0022, 'dimple_sy': 0.0028,
+    # no dent at the mouth corners (2026-09-29, docs/face-soften: the reference corners are soft; was -0.7 mm)
+    'dimple_mm': 0.0, 'dimple_sx': 0.0022, 'dimple_sy': 0.0028,
     'jaw_pts': [(0.0, -0.100), (0.02, -0.097), (0.035, -0.090), (0.05, -0.078)], 'jaw_sigma': 0.008, 'jaw_iters': 25,
     # Profile: in the side sheet (fitted with a level camera on pupil, brow, nose, mouth corner and lower lip) the
     # front of the chin lies ~6 px (~7 mm) further forward and ~18 mm below the lower lip; the model chin slopes back
@@ -111,7 +114,7 @@ P = {
     # the upper lip sits 1-2 px back; the chin already follows.
     'front_push': [(0.0, -0.0535, 0.0070, 0.0035, 0.5), (0.0, -0.0610, 0.0140, 0.0055, 2.2)],
     # the 54 deg side sheet sees the far side of the nose, not its midline: the tip also gains volume along its normal
-    'nose_volume': [(0.0, -0.0475, 0.0070, 0.0060, 1.8)],
+    'nose_volume': [(0.0, -0.0475, 0.0070, 0.0060, 1.2)],   # 1.8 before 2026-09-29 (smaller nose bulb)
     # Forehead -> nose line (side sheet at the re-estimated camera): the brow ridge / lower forehead lies 6-9 px
     # (~8-11 mm) further forward in the reference and recedes later; the nasion stays, so the dip before the nose
     # appears. Forward push around the midline, zero at the eyes (y < fh_y0) and above the hairline (y > fh_y3).

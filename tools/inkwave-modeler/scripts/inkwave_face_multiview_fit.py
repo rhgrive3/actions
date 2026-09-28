@@ -45,8 +45,12 @@ SKIP = ('HEAD_eyes', 'HEAD_brows', 'HEAD_face_02', 'HEAD_face_03')
 # weighted vertex group of HEAD_face; the Laplacian Smooth modifier does not move this metre-scale mesh).
 # Region: within `near` of the segment p0 -> p1 (head space |x|, y), fading out by `far`; 0 at the eye parts (within
 # `eye0`, full from `eye1`) so the lid rim and the eyeball stay; front of the face only.
+# `extra` adds more segments (same weighting, the largest weight wins): the nasolabial fold (ala -> mouth corner) and
+# the flat cheek plane below the eye (2026-09-29, docs/face-soften: the creases read as an older, harder face).
 SMOOTH = {'p0': (0.026, -0.026), 'p1': (0.044, -0.050), 'near': 0.007, 'far': 0.016, 'eye0': 0.0015, 'eye1': 0.005,
-          'iterations': 30, 'factor': 0.5}
+          'iterations': 30, 'factor': 0.5,
+          'extra': [{'p0': (0.013, -0.050), 'p1': (0.030, -0.066), 'near': 0.005, 'far': 0.012},
+                    {'p0': (0.040, -0.042), 'p1': (0.058, -0.058), 'near': 0.008, 'far': 0.016}]}
 # Blush decals are re-laid on the skin (Shrinkwrap, nearest surface point) and take the skin's shading normals
 # (Data Transfer, custom normals): their own normals were up to 90 deg off the skin (a scaly pattern under the eyes).
 BLUSH = ('HEAD_skin', 'HEAD_skin_04'); BLUSH_OFFSET = 0.0003
@@ -261,10 +265,12 @@ def apply_field(field):
 
 def smooth_weights(field, q):
     ax, y = np.abs(q[:, 0]), q[:, 1]
-    p0, p1 = np.array(SMOOTH['p0']), np.array(SMOOTH['p1'])
-    d = p1 - p0; t = np.clip(((np.c_[ax, y] - p0) @ d) / (d @ d), 0, 1)
-    dseg = np.linalg.norm(np.c_[ax, y] - (p0 + t[:, None] * d), axis=1)
-    w = 1 - smoothstep(SMOOTH['near'], SMOOTH['far'], dseg)
+    w = np.zeros(len(q))
+    for seg in [SMOOTH] + SMOOTH.get('extra', []):
+        p0, p1 = np.array(seg['p0']), np.array(seg['p1'])
+        d = p1 - p0; t = np.clip(((np.c_[ax, y] - p0) @ d) / (d @ d), 0, 1)
+        dseg = np.linalg.norm(np.c_[ax, y] - (p0 + t[:, None] * d), axis=1)
+        w = np.maximum(w, 1 - smoothstep(seg['near'], seg['far'], dseg))
     w *= smoothstep(SMOOTH['eye0'], SMOOTH['eye1'], field._dist(field.t_eye, q))
     return w * (q[:, 2] > 0.03)
 
