@@ -29,6 +29,8 @@ import { G } from '../core/ctx.js';
 
 const MAX_QUADS = 6000;
 const RIP_N = 24;
+// Wetness falls by 40/255 per second. Keep a small margin for the 2-step batching cadence.
+const DRY_SECONDS = 255 / 40 + 0.1;
 const _rel = new THREE.Vector3();
 
 const K = { shot: 0, line: 1, blast: 2, bomb: 3, trail: 4, drop: 5, roll: 6, speck: 7 };
@@ -232,6 +234,7 @@ export class PaintSystem {
     this.ripP = new Float32Array(RIP_N * 4);
     this._ripS = new Float32Array(RIP_N);
     this._dryAcc = 0;
+    this._wetUntil = 0;
     this._initGPU();
   }
 
@@ -372,6 +375,7 @@ export class PaintSystem {
     if (this.growing) this.growing.length = 0;
     if (this.rip) { for (let i = 0; i < RIP_N; i++) { this.rip[i * 4 + 3] = -99; this.ripP[i * 4 + 3] = 0.01; this._ripS[i] = 0; } }
     this._dryAcc = 0;
+    this._wetUntil = this.clock;
     this.version++;
   }
 
@@ -459,6 +463,10 @@ export class PaintSystem {
         dripDur: drips ? 1.1 + Math.min(2.2, radius * 1.5) : 0,
         cx: center.x, cy: center.y, cz: center.z,
       };
+      // Every growth draw writes wetness back to 1. Keep drying alive until the final possible
+      // growth/drip draw plus one full wetness decay. This is conservative and requires no GPU readback.
+      const growthEnd = opts.instant ? 0 : Math.max(g.dur * 1.75, g.dripDur);
+      this._wetUntil = Math.max(this._wetUntil, this.clock + growthEnd + DRY_SECONDS);
       if (opts.instant) this._emitGrowth(g, 3, 1, false);
       else this.growing.push(g);
       if (!cosmetic && radius >= 0.15 && !this._rippledNear(center, radius)) {
@@ -617,14 +625,20 @@ export class PaintSystem {
       }
       this._emitGrowth(g, Math.min(tn, 3), dT, bodyDone);
     }
-    // drying: 1/255 of wetness every 1/40 s (≈ 6.4 s from landing to dry), applied in steps of ≥ 2
-    this._dryAcc += dt;
-    const n = Math.floor(this._dryAcc * 40);
-    if (n >= 2) {
-      const k = Math.min(n, 12);
-      this._dryAcc -= k / 40;
-      this._dryU.uDry.value = k / 255;
-      this.dryMesh.visible = true;
+    // drying: 1/255 of wetness every 1/40 s (≈ 6.4 s from landing to dry), applied in steps of ≥ 2.
+    // Once the conservative wetness deadline passes, do not keep redrawing an unchanged atlas.
+    const drying = this.growing.length > 0 || this.quads > 0 || this.clock < this._wetUntil;
+    if (drying) {
+      this._dryAcc += dt;
+      const n = Math.floor(this._dryAcc * 40);
+      if (n >= 2) {
+        const k = Math.min(n, 12);
+        this._dryAcc -= k / 40;
+        this._dryU.uDry.value = k / 255;
+        this.dryMesh.visible = true;
+      }
+    } else {
+      this._dryAcc = 0;
     }
     this._drawQuads();
     this.dryMesh.visible = false;
