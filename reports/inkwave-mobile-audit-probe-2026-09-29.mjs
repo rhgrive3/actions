@@ -28,6 +28,9 @@ for(let i=0;i<600;i++)flush.call(p,1/60);
 const renderer = read('src/core/renderer.js');
 const screenfx = read('src/fx/screenfx.js');
 const decor = read('src/world/decor.js');
+const minimap = read('src/game/minimap.js');
+const match = read('src/game/match.js');
+const menus = read('src/ui/menus.js');
 const config = read('src/config.js');
 const qStart = config.indexOf('export const QUALITY =');
 if (qStart < 0) throw new Error('QUALITY block missing');
@@ -36,13 +39,34 @@ const qCode = config.slice(qStart)
   .replace('export function effectiveQuality', 'function effectiveQuality');
 const qualityApi = vm.runInNewContext(qCode + '\n({QUALITY,effectiveQuality});');
 const mobileQ = (quality, ios=false) => qualityApi.effectiveQuality({quality}, {touch:true,ios});
+
+function simulateFrameCap(hz, seconds, frameRate = 'auto', touch = true) {
+  let acc = 0, elapsed = 0, frames = 0, simSeconds = 0;
+  const capHz = frameRate === 'display' ? 0 : frameRate === 60 ? 60 : (touch ? 60 : 0);
+  const rawDt = 1 / hz;
+  for (let i = 0; i < Math.round(hz * seconds); i++) {
+    let dt = rawDt;
+    if (capHz > 0) {
+      const step = 1 / capHz;
+      acc += rawDt; elapsed += rawDt;
+      if (acc + 1e-6 < step) continue;
+      acc = Math.min(step, Math.max(0, acc - step));
+      dt = elapsed; elapsed = 0;
+    } else {
+      acc = 0; elapsed = 0;
+    }
+    frames++;
+    simSeconds += dt;
+  }
+  return { inputHz: hz, seconds, frames, outputHz: frames / seconds, simSeconds, carrySeconds: elapsed };
+}
 // Execute the existing build script's graph walker, without minification or writing build files.
 const build = fs.readFileSync('scripts/build-inkwave.mjs','utf8');
 const graphCode = build.slice(build.indexOf('const html0 ='), build.indexOf('const preload ='));
 const graph = vm.runInNewContext(graphCode+'\norder;', {fs,path,SRC:path.resolve(root)});
 const walk = dir => fs.readdirSync(dir,{withFileTypes:true}).flatMap(e=>e.isDirectory()?walk(path.join(dir,e.name)):[path.join(dir,e.name)]);
 const js = walk(`${root}/src`).filter(f=>f.endsWith('.js'));
-const selected = ['src/main.js','src/config.js','src/core/renderer.js','src/world/paint.js','src/world/decor.js','src/fx/screenfx.js'];
+const selected = ['src/main.js','src/config.js','src/core/renderer.js','src/world/paint.js','src/world/decor.js','src/fx/screenfx.js','src/game/minimap.js','src/game/match.js','src/ui/menus.js'];
 const output={
   kind:'source-level deterministic probes; no real device FPS, GPU timing, power or network measurement',
   sourceSha256:Object.fromEntries(selected.map(f=>[f,crypto.createHash('sha256').update(read(f)).digest('hex')])),
@@ -54,6 +78,28 @@ const output={
     screenfxUsesShared:screenfx.includes('effectiveQuality(G.settings, G.mobile)'),
   },
   idlePaintAt60HzFor10Seconds:{dryDrawSubmissions:drySubmissions},
+  frameCap:{
+    touchAuto60:simulateFrameCap(60,10),
+    touchAuto75:simulateFrameCap(75,10),
+    touchAuto90:simulateFrameCap(90,10),
+    touchAuto120:simulateFrameCap(120,10),
+    touchAuto144:simulateFrameCap(144,10),
+    touchDisplay120:simulateFrameCap(120,10,'display',true),
+    desktopAuto120:simulateFrameCap(120,10,'auto',false),
+    sourceUsesElapsedAccumulator:main.includes('this._frameCapElapsed') && main.includes('this._frameCapAcc'),
+    menuExposesControl:menus.includes("key: 'frameRate'"),
+  },
+  p2p3:{
+    bossStaticImportInMain:/from ['"]\.\/boss\/bossMode\.js['"]/.test(main),
+    bossStaticImportInMatch:/from ['"]\.\.\/boss\/bossMode\.js['"]/.test(match),
+    bossLazyLoad:main.includes("loadLazyModule('./boss/bossMode.js')"),
+    lobbyWorldGuard:main.includes('const worldHidden = setUp') && main.includes('if (!worldHidden)'),
+    minimapDirty30Hz:minimap.includes('this._composeAcc >= 1 / 30'),
+    minimapHiddenTick:minimap.includes('tickHidden(dt)') && main.includes('this.minimap.tickHidden?.(dt)'),
+    minimapDisabledSkipsIdleBuild:minimap.includes("if (G.settings?.minimap !== false) idle("),
+    hudReusesArrays:main.includes('this._hudPlayers ||') && main.includes('this._hudMarkers ||'),
+    effectiveQualitySkipsBloomAllocation:renderer.includes('if (q.bloom)'),
+  },
   lifecycle:{
     composerDisposesPasses:renderer.includes('pass.dispose?.()') && renderer.includes('comp.dispose?.()') && renderer.includes('pass === this.extraPass'),
     decorHasDispose:decor.includes('dispose()') && decor.includes('this.emblem?.dispose?.()') && decor.includes('this.flagTex?.dispose?.()'),

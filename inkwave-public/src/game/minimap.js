@@ -6,7 +6,7 @@
 //                                      soft sun shadows cast by tall blocks, contact AO, crisp rims, grates, props
 //   ink    (≤ 6 Hz, on paint.version)  bilinear team field → smooth anti-aliased blobs, glossy embossed rims
 //   flash  (with ink)                  freshly claimed pixels, faded out over ~0.4 s
-//   live   (every frame)               spawn pads, bombs (arming blink), tempest clouds + rain radius, slam shock rings,
+//   live   (≤ 30 Hz)                    spawn pads, bombs (arming blink), tempest clouds + rain radius, slam shock rings,
 //                                      super-jump landing targets, respawn pulses, splat bursts
 import { G, on } from '../core/ctx.js';
 import { SPECIALS, SUB } from '../config.js';
@@ -52,9 +52,10 @@ export class Minimap {
     fxList.length = 0;
     this._built = false;
     this._band = 0;
+    this._composeAcc = 1 / 30;   // first visible update composes immediately
     // the raster + shading pass (~0.1–0.3 s) runs when the browser is idle after loading; a match forces it early
     const idle = typeof requestIdleCallback === 'function' ? (fn) => requestIdleCallback(fn, { timeout: 1500 }) : (fn) => setTimeout(fn, 60);
-    idle(() => { if (!this._built && CURRENT === this) this._build(); });
+    if (G.settings?.minimap !== false) idle(() => { if (!this._built && CURRENT === this) this._build(); });
   }
 
   setViewerTeam(team) {
@@ -307,18 +308,32 @@ export class Minimap {
   }
 
   // ------------------------------------------------------------------------------------------ per frame
+  // When the corner map is disabled, keep only logical effect time moving. No raster build or Canvas2D composite.
+  tickHidden(dt) {
+    this.time += dt;
+    this.timer -= dt;
+    this.flashT += dt;
+    for (let i = fxList.length - 1; i >= 0; i--) {
+      const f = fxList[i];
+      f.t += dt;
+      if (f.t >= f.life) fxList.splice(i, 1);
+    }
+  }
+
   update(dt, force = false) {
     if (!this._built) this._build();
     this.time += dt;
     this.timer -= dt;
+    let dirty = false;
     const teamKey = G.teamHex ? G.teamHex[0] + G.teamHex[1] : '';
     if (teamKey !== this._teamKey) { this._teamKey = teamKey; this.version = -1; }
     const theme = G.game?.theme || G.game?.mapDef?.theme || 'day';
-    if (theme !== this._theme) { const had = this._theme; this._theme = theme; if (had) this._drawBase(); }
+    if (theme !== this._theme) { const had = this._theme; this._theme = theme; if (had) { this._drawBase(); dirty = true; } }
     const BANDS = 3;
     if (this._band > 0) {
       const b = this._band;
       this._drawInk(Math.floor((this.h * b) / BANDS), Math.floor((this.h * (b + 1)) / BANDS));
+      dirty = true;
       this._band = b + 1 >= BANDS ? 0 : b + 1;
       if (!this._band) this._quiet = false;
     } else if (force || (this.timer <= 0 && this.version !== this.paint.version)) {
@@ -327,9 +342,22 @@ export class Minimap {
       this.version = this.paint.version;
       if (first || force) { this._quiet = first; this._drawInk(0, this.h); this._quiet = false; if (first) this.flashT = 9; }
       else { this._drawInk(0, Math.floor(this.h / BANDS)); this._band = 1; }
+      dirty = true;
     }
     this.flashT += dt;
-    this._compose(dt);
+
+    // The final live-canvas composite is the expensive Canvas2D part. Static maps redraw only when a layer changed;
+    // bombs/clouds/flash/transient markers are sampled at 30 Hz, which is visually smooth but halves this work at 60 fps.
+    const P = G.projectiles;
+    const animated = this.flashT < 0.45 || fxList.length > 0 || !!(P?.bombs?.length) || !!(P?.clouds?.length);
+    this._composeAcc = Math.min(0.12, this._composeAcc + dt);
+    this._composeDirty = this._composeDirty || dirty;
+    if ((this._composeDirty || animated || force) && (force || this._composeAcc >= 1 / 30)) {
+      const cdt = this._composeAcc;
+      this._composeAcc = 0;
+      this._composeDirty = false;
+      this._compose(cdt);
+    }
   }
 
   _compose(dt) {

@@ -25,6 +25,26 @@ P1のID01〜05を、既存のDPR上限・MSAA/GTAO無効化・FXAA・LOD・Shado
 
 再現プローブも新版の期待値へ更新した。**実機FPS、GPU時間、発熱、電池消費の改善率は引き続き未測定**であり、実装済みであることと実機効果の大きさは分けて扱う。
 
+## P2/P3 実装反映 — 2026-09-29
+
+残りのID06〜09も、入力・オンライン同期・既存の画質順序を崩さない形で実装した。ID10はGPU実測なしでGrade/Output/FXAAを融合すると色空間やHDR順序を変える危険があるため、危険な統合は行わず、確実に不要なPass生成だけを除去した。
+
+- **ID06:** `frameRate` を追加。モバイルの既定 `Auto` は60fps、`Display` を選べば90/120Hz等の画面更新を使える。rAFを単純に1回おきに捨てず、経過時間を蓄積するため75/90/120/144Hzでも平均60fpsかつゲーム時間を失わない。デスクトップのAutoは従来どおり画面更新に追従する。
+- **ID07:** Minimapの最終Canvas合成をdirty/アニメーション時だけ最大30Hzに制限。Minimap OFFでは高価な初期ラスタ構築とCanvas合成を行わず、軽量な論理タイマーだけ進める。HUDのmap player/marker配列も再利用し、毎フレームの一時オブジェクト生成を削減。
+- **ID08:** `showcase.fullFrame` でロビー/オンラインセットが全画面を覆っている間、背後のarenaのFX・environment・Decor・props・camera/diorama・paint atlas・surface visual更新とarena shadow更新を休止。入力、ネットワーク、時刻、音声、showcase自体は継続する。
+- **ID09:** Boss Battleランタイムを通常起動グラフから分離。`main.js` / `match.js` のBoss静的importをなくし、Boss選択時だけ `bossMode.js` を遅延ロードする。通常Turfの初回依存グラフからBoss系モジュールを外す。Characterの全LOD warm-upは、試合中Low→High変更時の初回ヒッチを避けるため維持した。
+- **ID10:** モバイルでは実効品質上BloomがOFFなので、`UnrealBloomPass` 自体を生成しないよう変更。Grade → ScreenFX → Output → FXAAの順序は保持し、GPU実測なしのPass融合は実施していない。
+
+### 追加のソースレベル検証
+
+- touch Autoのフレーム上限を60/75/90/120/144Hz入力で10秒シミュレーションし、すべて60fps出力・約10秒のシミュレーション経過を確認。
+- `Display` 120Hzとdesktop Auto 120Hzは120fpsのままになることを確認。
+- `main.js` / `match.js` にBoss runtimeの静的importが無いこと、遅延ローダーがビルドの静的preload探索形式に一致しないことを確認。
+- Minimap 30Hz合成、OFF時のidle build抑止、hidden tick、ロビーworld guard、touch BloomPass非生成をソース上で確認。
+- 変更した主要JSの構文確認を実施。最終的な公開ビルドはmain反映後のPages workflowで確認する。
+
+**実機でのFPS p50/p95/p99、GPU時間、端末温度、消費電力についてはまだ測定していない。** したがって「何％高速化した」という数値はここでは主張しない。
+
 ## 優先順位
 
 P1は最初に直す候補、P2は次の段階、P3は計測後に判断する候補。効果の大きさはコードからの見込みであり、実測順位ではない。
@@ -36,11 +56,11 @@ P1は最初に直す候補、P2は次の段階、P3は計測後に判断する�
 | 03 | P1 / 実装済み | Composer再構築時の旧Passを解放 | 品質・影設定を何度も変更 | 再利用するScreenFX Passを解放しない |
 | 04 | P1 / 実装済み | ステージ切替時のDecor・lightmapを解放 | 連戦、ステージ往復 | 共有資源の二重解放を防ぐ |
 | 05 | P1 / 実装済み | 無塗装・乾燥済みインクの更新停止 | 待機、塗装の少ない場面 | 塗り判定・得点・濡れ表現を変えない |
-| 06 | P2 | 高Hz端末向け60fps描画上限を用意 | 90/120Hz画面、電池消費 | 入力・ネット・経過時間を正しく維持 |
-| 07 | P2 | ミニマップの合成とHUDの低頻度部分を整理 | 試合中のCPU・Canvas負荷 | 照準やダメージ反応は遅延させない |
-| 08 | P2 | ロビーで隠れたワールド処理を休止 | ロビー放置時の発熱 | ロビーに必要な共有処理は継続 |
-| 09 | P2 | 初回依存グラフ・事前生成を分割 | 初回起動、試合開始の引っ掛かり | 初射撃のシェーダー待ちを再発させない |
-| 10 | P3 | 全画面Passの統合を検討 | GPU帯域が限界の端末 | HDR・色変換・FXAAの順序を保持 |
+| 06 | P2 / 実装済み | 高Hz端末向け60fps描画上限を用意 | 90/120Hz画面、電池消費 | 入力・ネット・経過時間を正しく維持 |
+| 07 | P2 / 実装済み | ミニマップの合成とHUDの低頻度部分を整理 | 試合中のCPU・Canvas負荷 | 照準やダメージ反応は遅延させない |
+| 08 | P2 / 実装済み | ロビーで隠れたワールド処理を休止 | ロビー放置時の発熱 | ロビーに必要な共有処理は継続 |
+| 09 | P2 / 実装済み | 初回依存グラフ・事前生成を分割 | 初回起動、試合開始の引っ掛かり | 初射撃のシェーダー待ちを再発させない |
+| 10 | P3 / 安全策反映 | 全画面Passの統合を検討 | GPU帯域が限界の端末 | HDR・色変換・FXAAの順序を保持 |
 
 ## 1. モバイル品質設定が一部で使われていない
 
@@ -110,9 +130,7 @@ lightmapも [main.js L267–276](https://github.com/rhgrive3/actions/blob/bba6ea
 
 ## 6. 90/120Hz端末向けの描画上限
 
-**コード上、ゲームループに60fps上限がない。** main.js L926–936はrAFごとに全 `_frame()` を実行する。ブラウザが90/120Hzでコールバックを発行し処理が間に合えば、60Hzより多くの描画・HUD・シミュレーション更新が走る。
-
-**提案:** モバイル既定60fpsと、高Hzを選べる設定を用意する。rAFの経過時間を蓄積し、スキップ分を失わず描画を制御する。90Hzで単純に1回おきに描くと45fpsになるため、実時間ベースで処理する。
+**初回調査で確認後、実装済み。** モバイルの `Auto` は60fpsを上限とし、`Display` で高Hzを選択できる。rAF経過時間を蓄積する方式なので、90Hzで単純な1回おき描画による45fps化を起こさず、ゲーム時間も捨てない。
 
 ネットワークは既に約20Hz送信（net/netmatch.js L162–167）。描画上限をそのまま送信・タイマーの変更にしない。バックグラウンドからの復帰も別扱いにする。60Hz端末では上限導入だけによる高速化は期待しない。
 
@@ -122,7 +140,7 @@ lightmapも [main.js L267–276](https://github.com/rhgrive3/actions/blob/bba6ea
 
 [main.js L1117–1135](https://github.com/rhgrive3/actions/blob/bba6eab9277e28cbdab89c6b2cff9a03dcdb6e3d/inkwave-public/src/main.js#L1117-L1135) はHUD更新時にミニマップを常に更新し、プレイヤー配列等を新しく作る。小マップOFFでもこの呼出は残る。HUD側には既に差分更新が多数あるので、全体を未最適化とは評価しない。
 
-**提案:** 小マップ/大マップを含む実際の表示先を確認し、どこにも表示されていない時は合成を止める。静的な背景・塗り合成と、プレイヤー/スポーン演出を分け、前者はdirty時だけ、後者は15～30Hzなどを比較する。HUDは得点・名簿等の低頻度項目と照準・被弾等を分け、前者だけ間引く。
+**反映済み:** Canvas合成はdirty/アニメーション時だけ最大30Hzにし、dirty状態は次の合成まで保持する。Minimap OFFでは初期ラスタ構築とCanvas合成を止め、transient effectの寿命だけ軽量に進める。HUDのmap player/marker配列も再利用する。照準・被弾・味方マーカー等の入力直結表示は間引かない。
 
 **確認方法:** マップOFF/ON、大マップ、スーパージャンプ、味方死亡/復帰を比較する。入力に直結する表示は反応を維持する。GC負荷はallocation profileで確認してから配列再利用を広げる。
 
@@ -130,7 +148,7 @@ lightmapも [main.js L267–276](https://github.com/rhgrive3/actions/blob/bba6ea
 
 [main.js L961–1029](https://github.com/rhgrive3/actions/blob/bba6eab9277e28cbdab89c6b2cff9a03dcdb6e3d/inkwave-public/src/main.js#L961-L1029) は `showcase.fullFrame` のときattract試合のシミュレーションとゲーム世界の描画を既に止める。ただしFX、環境、Decor、props、paint.flush等は引き続き呼び出される。
 
-**提案:** 完全に隠れたワールドの視覚更新を停止する。ロビーの照明・音・通信など必要な共有部分は分離する。再表示時に蓄積dtをまとめて処理せず、視覚時間の再同期規則を決める。
+**反映済み:** `showcase.fullFrame` 中は背後arenaのFX、環境、Decor、props、game camera/diorama、paint atlas、surface visual、arena shadow更新を停止する。入力・ネットワーク・時刻・音声・showcaseは継続し、再表示時に隠れていた時間をvisual処理へまとめて流し込まない。
 
 **確認方法:** ロビー30～60秒のCPU profileを取得し、まず実時間を使っている関数だけを対象にする。元から軽い関数の呼出削減を大きな効果と誇張しない。
 
@@ -138,19 +156,21 @@ lightmapも [main.js L267–276](https://github.com/rhgrive3/actions/blob/bba6ea
 
 公開経路は [.github/workflows/pages-inkwave.yml](https://github.com/rhgrive3/actions/blob/bba6eab9277e28cbdab89c6b2cff9a03dcdb6e3d/.github/workflows/pages-inkwave.yml) → [scripts/build-inkwave.mjs](https://github.com/rhgrive3/actions/blob/bba6eab9277e28cbdab89c6b2cff9a03dcdb6e3d/scripts/build-inkwave.mjs)。minify、Three.js tree-shaking、modulepreloadは既にある。
 
-現行ビルドの依存グラフ探索を実行すると**102モジュール**、その中に**Boss関連10モジュール**が含まれる。ビルド前の対象グラフは6,160,035 bytes、srcのJS全体は85ファイル・3,894,389 bytes。**これらは非圧縮ソースの値であり、公開サイトの転送量ではない。** 今回はminify後サイズ・HTTP圧縮・キャッシュ状態を実測していない。
+初回調査時の依存グラフは**102モジュール**で、その中に**Boss関連10モジュール**が含まれていた。ビルド前の対象グラフは6,160,035 bytes、srcのJS全体は85ファイル・3,894,389 bytesだった。**これらは初回調査時の非圧縮ソース値であり、公開サイトの転送量ではない。** 今回、Boss runtimeの静的importを外し、Boss選択時の遅延ロードへ変更した。最終グラフは本番build結果と再現プローブで確認する。
 
 さらに [character.js L898–918](https://github.com/rhgrive3/actions/blob/bba6eab9277e28cbdab89c6b2cff9a03dcdb6e3d/inkwave-public/src/game/character.js#L898-L918) のwarmAllは全3 tierとdither材質を準備し、武器のfar形状も事前生成する。[character-lod.js](https://github.com/rhgrive3/actions/blob/bba6eab9277e28cbdab89c6b2cff9a03dcdb6e3d/inkwave-public/src/game/character-lod.js) は頂点クラスタリングとキャッシュを既に持つ。LOD自体を新規導入する必要はない。
 
-**提案:** タイトル表示・通常対戦・Bossで依存を分ける。BossはMatchからの静的importもあるため、preloadタグを消すだけでは遅延化できない。コードの依存境界を変更する必要がある。モード決定後の先読みとloading画面内warm-upを使い、初射撃時の処理詰まりを防ぐ。low設定で使用しないhero等の事前生成を省けるか、品質変更時の再warmも含めて検討する。CPU側のLOD生成は必要ならビルド時生成か分割実行へ移す。
+**反映済み:** `main.js` と `match.js` からBoss runtimeの静的importを除去し、Boss選択時だけロードする境界へ変更した。Characterの全LOD warm-upは、品質をLow→Highへ変更した直後の初回Hero生成ヒッチを避けるため維持する。追加のLOD事前生成削減は実測で必要性が出た場合だけ行う。
 
 なお、調査対象のゲームsrcにはGLTFLoader/GLB読み込みが見つからず、現行キャラはJS生成経路。`tools/inkwave-modeler/` のBlender成果物のサイズを、そのままゲーム中の負荷と結び付けない。
 
 ## 10. 全画面Passの削減は計測後に
 
-RendererではBloom等を除いても、scene→grade→（演出時ScreenFX）→Output→FXAAの経路がある（renderer.js L159–169）。スマホでGPU帯域が律速ならgradeとoutputの統合などに余地がある。
+RendererではBloom等を除いても、scene→grade→（演出時ScreenFX）→Output→FXAAの経路がある。GPU実測がない状態でGrade/Output/FXAAを融合すると、HDR入力・tone mapping・色空間・AAの順序を変えてしまう可能性があるため、今回は融合しない。
 
-**提案:** GPU時間を測って優先度を判断する。ScreenFXはHDR入力を前提とし、FXAAは出力色空間側なので、順序を変えずに統合できる範囲だけを対象にする。単にHDRを8bitへ変えたりFXAAを削ったりしない。
+**反映済みの安全策:** モバイルの実効品質ではBloomが常時OFFなので、無効な `UnrealBloomPass` を生成してComposerへ追加する処理自体を省いた。これにより見た目やPass順序を変えず、不要なBloom内部ターゲットの生成経路を除去した。
+
+**今後:** 実機GPU timingで全画面Passが支配的と確認できた場合だけ、Grade/Output等の融合をA/Bする。単にHDRを8bitへ変えたりFXAAを削ったりしない。
 
 ## 維持する既存最適化・仕様
 
@@ -161,15 +181,16 @@ RendererではBloom等を除いても、scene→grade→（演出時ScreenFX）�
 - ビルドminify、Three.js tree-shaking、シェーダー事前compile、ロビーで覆われたattract試合の停止。
 - タッチ、ジャイロ、Safe Area、移動/射撃/塗り/得点、オンライン同期。
 
-Android BloomとScreenFXの伝達漏れ、全ループの60fps上限未実装については、設定オブジェクトや過去説明の存在だけで「対応済み」と判断しない。
+Android BloomとScreenFXの伝達漏れ、モバイル60fps上限は今回の実装で解消した。今後も設定オブジェクトの存在だけでなく、実際の利用経路と再現プローブで確認する。
 
 ## 実装する場合の順序と合格条件
 
 1. **ID01・02:** 実効品質の統一と解像度制御。端末別条件を確認し、60Hz回復・持続負荷・再低下後の再回復を確認。
 2. **ID03・04:** 資源の所有権と破棄。設定20往復・ステージ10往復でwarm-up後の資源数が増え続けない。
 3. **ID05:** 無変化時のpaint更新停止。未塗装/乾燥後は乾燥描画0、塗り始めと滴りは従来どおり。
-4. **ID06～08:** 上限・HUD・ロビー。入力応答とオンライン同期を保持したままCPU/描画回数を減らす。
-5. **ID09・10:** 起動とGPU律速を実測後に変更。初回戦闘の引っ掛かりや色の変化を増やさない。
+4. **ID06～08:** 実装済み。上限・HUD/Minimap・ロビー休止について、入力応答とオンライン同期を保持する。
+5. **ID09:** Boss依存分割を実装済み。通常TurfからBoss preloadを除外し、初回戦闘のwarm-upは維持。
+6. **ID10:** 安全策のみ反映。モバイルBloomPass非生成。全画面Pass融合はGPU実測後に判断。
 
 比較は**1項目ずつ**行い、同じステージ・キャラ数・武器・画角・設定で旧版と新版を往復測定する。
 

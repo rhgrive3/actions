@@ -6,7 +6,6 @@ import { Actor } from './actor.js';
 import { BotBrain } from './bots.js';
 import { randomStyle } from './character-style.js';
 import { PlayerController } from './player.js';
-import { BossMode, BOSS_MODE } from '../boss/bossMode.js';
 
 const _v = new THREE.Vector3(), _up = new THREE.Vector3(0, 1, 0);
 
@@ -15,7 +14,10 @@ export class Match {
     this.opts = opts;          // { duration, difficulty, attract, playerName, weapon, CharacterClass, input, rig, mode }
     this.attract = !!opts.attract;
     this.mode = opts.mode === 'boss' && !this.attract ? 'boss' : 'turf';   // boss: one squad (team 0) vs HULLBREAKER
-    this.duration = opts.duration || (this.mode === 'boss' ? BOSS_MODE.duration : MATCH.defaultDuration);
+    this.bossModule = this.mode === 'boss' ? opts.bossModule : null;
+    this.bossCfg = this.bossModule?.BOSS_MODE || null;
+    if (this.mode === 'boss' && (!this.bossModule?.BossMode || !this.bossCfg)) throw new Error('Boss mode module was not loaded');
+    this.duration = opts.duration || (this.bossCfg ? this.bossCfg.duration : MATCH.defaultDuration);
     this.time = this.duration;
     this.state = 'init';
     this.stateT = 0;
@@ -34,6 +36,7 @@ export class Match {
   setup() {
     const o = this.opts;
     const CharacterClass = o.CharacterClass;
+    const bossCfg = this.bossCfg;
     if (o.roster) { this._setupRoster(o, CharacterClass); return; }
     // weapons: each team gets a balanced mix
     const pickTeam = (first) => {
@@ -55,7 +58,7 @@ export class Match {
     for (let team = 0; team < (boss ? 1 : 2); team++) {
       const weapons = pickTeam(team === 0 && !this.attract ? o.weapon : null);
       if (boss) weapons.push(...pickTeam(null));   // the whole squad on one side: 8 kids, every weapon kind
-      for (let s = 0; s < (boss ? BOSS_MODE.squad : MATCH.teamSize); s++) {
+      for (let s = 0; s < (boss ? bossCfg.squad : MATCH.teamSize); s++) {
         const isLocal = team === 0 && s === 0 && !this.attract;
         if (noBots && !isLocal && !(this.attract && o.mannequins)) continue;
         const a = new Actor({
@@ -76,7 +79,7 @@ export class Match {
     // initial placement on the spawn decks (standing, no drop)
     for (const a of this.actors) {
       const pad = G.level.spawnPads[a.team];
-      const ang = (a.slot / (this.mode === 'boss' ? BOSS_MODE.squad : 4)) * Math.PI * 2 + 0.6, rr = this.mode === 'boss' ? 1.7 : 1.2;
+      const ang = (a.slot / (this.mode === 'boss' ? this.bossCfg.squad : 4)) * Math.PI * 2 + 0.6, rr = this.mode === 'boss' ? 1.7 : 1.2;
       _v.set(pad.x + Math.cos(ang) * rr, pad.y, pad.z + Math.sin(ang) * rr);
       a.spawnAt(_v, a.team === 0 ? 0 : Math.PI);
       a.invuln = 0;
@@ -85,7 +88,7 @@ export class Match {
     this.unsubs = [
       on('splatted', (e) => this._onSplatted(e)),
     ];
-    if (this.mode === 'boss') { this.bossMode = new BossMode(this); this.boss = this.bossMode.boss; }
+    if (this.mode === 'boss') { this.bossMode = new this.bossModule.BossMode(this); this.boss = this.bossMode.boss; }
   }
 
   // Online: the host's roster — who owns which squidkid (players their own, the host the bots).
@@ -106,14 +109,14 @@ export class Match {
     if (this.local && !o.autopilot) this.controller = new PlayerController(this.local, o.rig, o.input);
     for (const a of this.actors) {
       const pad = G.level.spawnPads[a.team];
-      const ang = (a.slot / (this.mode === 'boss' ? BOSS_MODE.squad : 4)) * Math.PI * 2 + 0.6, rr = this.mode === 'boss' ? 1.7 : 1.2;
+      const ang = (a.slot / (this.mode === 'boss' ? this.bossCfg.squad : 4)) * Math.PI * 2 + 0.6, rr = this.mode === 'boss' ? 1.7 : 1.2;
       _v.set(pad.x + Math.cos(ang) * rr, pad.y, pad.z + Math.sin(ang) * rr);
       a.spawnAt(_v, a.team === 0 ? 0 : Math.PI);
       a.invuln = 0;
       if (a.bot) { a.bot.aimYaw = a.yaw; a.bot.aimPitch = 0; }
     }
     this.unsubs = [on('splatted', (e) => this._onSplatted(e))];
-    if (this.mode === 'boss') { this.bossMode = new BossMode(this); this.boss = this.bossMode.boss; }
+    if (this.mode === 'boss') { this.bossMode = new this.bossModule.BossMode(this); this.boss = this.bossMode.boss; }
   }
 
   start() {
@@ -160,7 +163,7 @@ export class Match {
     this.stateT += dt;
     switch (this.state) {
       case 'intro':
-        if (this.stateT > (this.bossMode ? BOSS_MODE.intro : 4.2)) this.setState('playing');
+        if (this.stateT > (this.bossMode ? this.bossCfg.intro : 4.2)) this.setState('playing');
         break;
       case 'playing': {
         this.time -= dt;
@@ -176,7 +179,7 @@ export class Match {
         break;
       }
       case 'finish':
-        if (this.stateT > (this.bossMode ? (this.bossMode.boss.dead ? BOSS_MODE.finishWin : BOSS_MODE.finishLose) : 2.6) && !this.follower && !this.result) this._judge();
+        if (this.stateT > (this.bossMode ? (this.bossMode.boss.dead ? this.bossCfg.finishWin : this.bossCfg.finishLose) : 2.6) && !this.follower && !this.result) this._judge();
         break;
     }
     // actors (the local controller runs once per rendered frame via updateController)

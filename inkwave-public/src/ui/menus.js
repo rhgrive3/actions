@@ -134,6 +134,7 @@ const SETTINGS_TABS = [
   ] },
   { id: 'video', label: 'Video', icon: 'monitor', rows: [
     { key: 'quality', label: 'Graphics quality', type: 'seg', options: [['low', 'Low'], ['medium', 'Med'], ['high', 'High'], ['ultra', 'Ultra']], help: 'Resolution scale, shadow detail, anti-aliasing and particle counts.' },
+    { key: 'frameRate', label: 'Frame rate', type: 'seg', options: [['auto', 'Auto'], [60, '60 FPS'], ['display', 'Display']], help: 'Auto caps touch devices at 60 FPS to reduce heat and battery use. Display uses the screen refresh rate.' },
     { key: 'fov', label: 'Field of view', type: 'slider', min: 65, max: 100, step: 1, fmt: (v) => Math.round(v) + '°', help: 'Wider shows more of the turf around you.' },
     { key: 'shadows', label: 'Shadows', type: 'toggle', help: 'Soft sun shadows. Turn off for extra speed on older machines.' },
     { key: 'bloom', label: 'Bloom glow', type: 'toggle', help: 'A soft glow around bright ink and specials.' },

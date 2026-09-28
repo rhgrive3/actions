@@ -169,9 +169,14 @@ export class Renderer {
       ao.updatePdMaterial({ lumaPhi: 10, depthPhi: 2, normalPhi: 3, radius: 6, rings: 2, samples: 16 });
       comp.addPass(ao);
     }
-    this.bloom = new UnrealBloomPass(new THREE.Vector2(w, h), ...BLOOM);
-    this.bloom.enabled = !!(q.bloom && this.settings.bloom);
-    comp.addPass(this.bloom);
+    this.bloom = null;
+    // Effective quality decides whether bloom exists at all. Skip its render-target pyramid when the preset/device
+    // forbids bloom; quality tiers that support it keep the pass so the user's Bloom toggle stays instant.
+    if (q.bloom) {
+      this.bloom = new UnrealBloomPass(new THREE.Vector2(w, h), ...BLOOM);
+      this.bloom.enabled = !!(q.bloom && this.settings.bloom);
+      comp.addPass(this.bloom);
+    }
     this.grade = new ShaderPass(GradeShader);
     this._gradeSrc = null;   // (re)apply the theme grade + bloom to the new passes
     comp.addPass(this.grade);
@@ -245,7 +250,7 @@ export class Renderer {
       u.uHighTint.value.set(...(gr.uHighTint || [1.025, 1.0, 0.972]));
       // bloom per theme: [strength, radius, threshold] — dusk lets lamps / lit windows bloom, daylight keeps it to the sun
       const bl = gr.bloom || BLOOM;
-      this.bloom.strength = bl[0]; this.bloom.radius = bl[1]; this.bloom.threshold = bl[2];
+      if (this.bloom) { this.bloom.strength = bl[0]; this.bloom.radius = bl[1]; this.bloom.threshold = bl[2]; }
     }
     this.composer.render();
   }
