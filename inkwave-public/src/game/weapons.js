@@ -596,8 +596,9 @@ export class Projectiles {
     const mats = new Set();
     b.mesh.traverse((o) => {
       const m = o.material;
-      if (Array.isArray(m)) for (const x of m) if (x) mats.add(x);
-      else if (m) mats.add(m);
+      if (Array.isArray(m)) {
+        for (const x of m) if (x) mats.add(x);
+      } else if (m) mats.add(m);
     });
     this.scene.remove(b.mesh);
     for (const m of mats) m.dispose?.();
@@ -610,8 +611,9 @@ export class Projectiles {
     const mats = new Set();
     c.group.traverse((o) => {
       const m = o.material;
-      if (Array.isArray(m)) for (const x of m) if (x) mats.add(x);
-      else if (m) mats.add(m);
+      if (Array.isArray(m)) {
+        for (const x of m) if (x) mats.add(x);
+      } else if (m) mats.add(m);
     });
     this.scene.remove(c.group);
     for (const m of mats) m.dispose?.();
