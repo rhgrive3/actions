@@ -244,6 +244,7 @@ export const DEFAULT_SETTINGS = {
   invertY: false,
   fov: 82,                  // horizontal FOV at 16:9, 65..100
   quality: 'high',          // 'low' | 'medium' | 'high' | 'ultra'
+  frameRate: 'auto',       // 'auto' = 60 fps on touch, display refresh elsewhere; 60 = cap everywhere; 'display' = uncapped rAF
   shadows: true,
   bloom: true,
   cameraShake: 1.0,         // 0..1
