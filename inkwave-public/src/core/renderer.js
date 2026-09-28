@@ -169,9 +169,13 @@ export class Renderer {
       ao.updatePdMaterial({ lumaPhi: 10, depthPhi: 2, normalPhi: 3, radius: 6, rings: 2, samples: 16 });
       comp.addPass(ao);
     }
-    this.bloom = new UnrealBloomPass(new THREE.Vector2(w, h), ...BLOOM);
-    this.bloom.enabled = !!(q.bloom && this.settings.bloom);
-    comp.addPass(this.bloom);
+    this.bloom = null;
+    // Touch effective quality disables bloom. Do not even construct its pyramid of render targets on those devices.
+    if (!this.mobile.touch || q.bloom) {
+      this.bloom = new UnrealBloomPass(new THREE.Vector2(w, h), ...BLOOM);
+      this.bloom.enabled = !!(q.bloom && this.settings.bloom);
+      comp.addPass(this.bloom);
+    }
     this.grade = new ShaderPass(GradeShader);
     this._gradeSrc = null;   // (re)apply the theme grade + bloom to the new passes
     comp.addPass(this.grade);
@@ -245,7 +249,7 @@ export class Renderer {
       u.uHighTint.value.set(...(gr.uHighTint || [1.025, 1.0, 0.972]));
       // bloom per theme: [strength, radius, threshold] — dusk lets lamps / lit windows bloom, daylight keeps it to the sun
       const bl = gr.bloom || BLOOM;
-      this.bloom.strength = bl[0]; this.bloom.radius = bl[1]; this.bloom.threshold = bl[2];
+      if (this.bloom) { this.bloom.strength = bl[0]; this.bloom.radius = bl[1]; this.bloom.threshold = bl[2]; }
     }
     this.composer.render();
   }
