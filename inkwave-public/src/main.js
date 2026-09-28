@@ -7,7 +7,7 @@ import { deviceProfile } from './core/device.js';
 import { ShadowCache } from './core/shadowcache.js';
 import { t, setTextMode } from './i18n.js';
 import { mapTheme,
-  DEFAULT_SETTINGS, QUALITY, TEAM_PALETTES, COLORBLIND_PALETTE, TEAM_NAMES, WEAPONS, WEAPON_ORDER, SUB, SPECIALS,
+  DEFAULT_SETTINGS, effectiveQuality, TEAM_PALETTES, COLORBLIND_PALETTE, TEAM_NAMES, WEAPONS, WEAPON_ORDER, SUB, SPECIALS,
   MAPS, DIFFICULTY, PLAYER, PROGRESSION, VERSION, MATCH, OFFLINE_MAPS, mapOfflineOk, mapNoBots, mapBossOk,
 } from './config.js';
 import { Level } from './world/level.js';
@@ -123,8 +123,7 @@ class Game {
     if (!mapOfflineOk(map.id) && !DEV_STAGE) { console.info(`[inkwave] ${map.name} is online only — booting ${OFFLINE_MAPS[0].name}`); map = OFFLINE_MAPS[0]; }
     this.time = params.get('time') === 'dusk' || params.get('map') === 'sunset' ? 'dusk' : (this.settings.timeOfDay === 'dusk' ? 'dusk' : 'day');
     this.theme = mapTheme(map, this.time);
-    const qb = QUALITY[this.settings.quality] || QUALITY.high;
-    const q = this.mobile?.touch ? { ...qb, paintAtlas: Math.min(qb.paintAtlas, 2048), shadowSize: Math.min(qb.shadowSize, 2048), particles: Math.min(qb.particles, 0.7), msaa: 0, ao: false, bloom: false, pixelRatio: Math.min(qb.pixelRatio, this.mobile.ios ? 1.2 : 1.35) } : qb;
+    const q = effectiveQuality(this.settings, this.mobile);
     this.murals = await createMuralTexture();
     try {
       const { createTextureLibrary } = await import('./world/texlib.js');
@@ -221,8 +220,7 @@ class Game {
     G.paint?.dispose();
     this.layoutId = layoutId;
     this.mapDef = map;
-    const qb = QUALITY[this.settings.quality] || QUALITY.high;
-    const q = this.mobile?.touch ? { ...qb, paintAtlas: Math.min(qb.paintAtlas, 2048), shadowSize: Math.min(qb.shadowSize, 2048), particles: Math.min(qb.particles, 0.7), msaa: 0, ao: false, bloom: false, pixelRatio: Math.min(qb.pixelRatio, this.mobile.ios ? 1.2 : 1.35) } : qb;
+    const q = effectiveQuality(this.settings, this.mobile);
     // set dressing first: solid props hand back collision boxes that become part of the level (physics, nav, paint)
     const colliders = [];
     if (this.PropKit) {
@@ -940,17 +938,56 @@ class Game {
   // truly sits at the edge settles instead of pumping between sizes (re-sizing every few seconds reads as flicker).
   _dynRes(dt) {
     if (dt <= 0 || dt > 0.25) return;
-    const d = this._dyn || (this._dyn = { acc: 0, n: 0, t: 0, fast: 0, ups: 0 });
+    const d = this._dyn || (this._dyn = {
+      acc: 0, n: 0, t: 0, good: 0, cooldown: 0, failures: 0, probe: false,
+      match: null, quality: null,
+    });
+    const match = this.match;
+    const quality = this.settings.quality;
+    // A new match/quality starts with fresh history. Keep the current scale; stable headroom can recover it.
+    if (d.match !== match || d.quality !== quality) {
+      d.acc = 0; d.n = 0; d.t = 0; d.good = 0; d.cooldown = 0; d.failures = 0; d.probe = false;
+      d.match = match; d.quality = quality;
+    }
     d.acc += dt; d.n++; d.t += dt;
     if (d.t < 4) return;
-    const avg = d.acc / d.n;
+    const avg = d.acc / Math.max(1, d.n);
     d.acc = 0; d.n = 0; d.t = 0;
-    const m = this.match;
-    if (this.settings.quality === 'ultra' || document.hidden || !m || m.attract || m.state !== 'playing') { d.fast = 0; return; }
+
+    const live = quality !== 'ultra' && !document.hidden && match && !match.attract && match.state === 'playing';
+    if (!live) { d.good = 0; d.probe = false; return; }
+    if (d.cooldown > 0) d.cooldown--;
+
     const s = this.R.dynScale || 1;
-    if (avg > 1 / 40 && s > 0.76) { this.R.setDynamicScale(s - 0.125); d.fast = 0; }
-    else if (avg < 1 / 75 && s < 1 && d.ups < 2) { if (++d.fast >= 3) { this.R.setDynamicScale(s + 0.125); d.fast = 0; d.ups++; } }
-    else d.fast = 0;
+    const floor = this.mobile?.touch ? 0.6 : 0.75;
+    // Hysteresis around the 60 Hz budget: degrade below ~50 fps, recover only after ~58+ fps is stable.
+    const overloaded = avg > 1 / 50;
+    const headroom = avg < 1 / 58;
+
+    if (overloaded && s > floor + 0.01) {
+      if (d.probe) {
+        d.failures = Math.min(3, d.failures + 1);
+        d.cooldown = Math.min(8, 1 << d.failures); // 8 s, 16 s, 32 s between failed recovery probes
+      }
+      this.R.setDynamicScale(Math.max(floor, s - 0.125));
+      d.good = 0; d.probe = false;
+      return;
+    }
+
+    if (headroom && s < 0.99 && d.cooldown === 0) {
+      if (++d.good >= 3) {
+        this.R.setDynamicScale(Math.min(1, s + 0.125));
+        d.good = 0;
+        d.probe = true;
+      }
+    } else if (!headroom) {
+      d.good = 0;
+    }
+
+    if (d.probe && headroom && s >= 0.99) {
+      d.probe = false;
+      d.failures = Math.max(0, d.failures - 1);
+    }
   }
 
   _frame(dt) {
