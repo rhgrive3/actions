@@ -1,6 +1,6 @@
 {
   "kind": "post-fix source-level deterministic probes plus GitHub Pages build result; no real-device FPS, GPU timing, power or network measurement",
-  "targetCommit": "pending final Boss preload tail merge",
+  "targetCommit": "7e1f2994b71c6e443dfc063903c539c577910444",
   "syntax": {
     "src/config.js": "ok",
     "src/main.js": "ok",
@@ -148,13 +148,18 @@
     "stageLightmapTrackedAndDisposed": true
   },
   "pagesBuild": {
-    "status": "pending final merge/deploy validation"
+    "runId": 36451227677,
+    "workflow": "Publish INKWAVE to Pages",
+    "conclusion": "success",
+    "buildOptimizedSite": "success",
+    "uploadSite": "success",
+    "deployPages": "success"
   },
   "notes": [
     "The 50 Hz synthetic case sits on the degradation boundary and resolves to the lower-quality side because the controller intentionally targets headroom toward 60 Hz.",
     "P2/P3 source checks are deterministic but are not substitutes for Android/iPhone GPU, thermal, battery, or frame-time measurements.",
     "Grade/Output/FXAA fusion is intentionally not performed without GPU evidence; only quality-disabled BloomPass allocation is removed.",
-    "An artifact inspection after the first P2/P3 merge found net/netmatch.js still statically importing boss.js; the final patch removes that edge and uses the already-loaded boss instance constructor for snapshot decoding."
+    "The final production artifact was inspected directly: 91 modulepreload entries and zero src/boss/* modulepreloads. Boss runtime files remain deployed for on-demand loading."
   ],
   "frameCap": {
     "touchAuto": {
@@ -204,5 +209,16 @@
     "fullscreenGradeOutputFxaaFusion": false,
     "bossStaticImportInNetmatch": false,
     "bossSnapshotUsesLoadedInstance": true
+  },
+  "productionArtifact": {
+    "artifactId": 10983751954,
+    "digest": "sha256:afc692610e5eb3430764da4261c926d36200d13749519050f7e6f8062ce8b789",
+    "modulepreloads": 91,
+    "bossRuntimeModulepreloads": 0,
+    "bossRuntimeFilesStillAvailableForLazyLoad": true,
+    "nonBossBuiltFilesContainingBossPathLiteral": [
+      "src/main.js"
+    ],
+    "note": "The remaining main.js Boss path is the intentional dynamic lazy-load entry; no src/boss/* file is modulepreloaded."
   }
 }
