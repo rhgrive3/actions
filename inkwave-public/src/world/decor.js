@@ -465,6 +465,7 @@ export class Decor {
   }
 
   update(dt) {
+    if (this._disposed) return;
     this.time += dt;
     this.uTime.value = this.time;
     for (const p of this.pads) {
@@ -482,5 +483,32 @@ export class Decor {
       }
       b.uAlpha.value = 0.12 + near * 0.55;
     }
+  }
+
+  dispose() {
+    if (this._disposed) return;
+    this._disposed = true;
+    const geometries = new Set();
+    const materials = new Set();
+    this.group.traverse((o) => {
+      if (o.geometry) geometries.add(o.geometry);
+      const addMat = (m) => {
+        if (!m) return;
+        if (Array.isArray(m)) m.forEach(addMat);
+        else materials.add(m);
+      };
+      addMat(o.material);
+      addMat(o.customDepthMaterial);
+      addMat(o.customDistanceMaterial);
+    });
+    for (const g of geometries) g.dispose?.();
+    for (const m of materials) m.dispose?.();
+    this.emblem?.dispose?.();
+    this.flagTex?.dispose?.();
+    this.scene?.remove(this.group);
+    this.group.clear();
+    this.pads.length = 0;
+    this.flags.length = 0;
+    this.barriers.length = 0;
   }
 }
