@@ -18,7 +18,7 @@
 P1のID01〜05を、既存のDPR上限・MSAA/GTAO無効化・FXAA・LOD・ShadowCache・タッチ/ジャイロ処理を維持したまま実装した。
 
 - **ID01:** `effectiveQuality(settings, mobile)` を共通化し、main / Renderer / ScreenFX が同じモバイル上限を使用。Androidでも既定Bloom OFF、high/ultraのScreenFXはparticles上限0.7を受けて6 taps・Lens 1/4になる。
-- **ID02:** 動的解像度を50fps未満で低下、58fps以上が3窓安定したら一段階回復するヒステリシス方式へ変更。タッチ端末はRendererと同じ0.6まで低下可能で、回復失敗時は8/16/32秒の段階的クールダウンを使う。回復回数の生涯上限は撤廃。
+- **ID02:** 動的解像度を約50fps以下で低下、58fps以上が3窓安定したら一段階回復するヒステリシス方式へ変更。タッチ端末はRendererと同じ0.6まで低下可能で、回復失敗時は8/16/32秒の段階的クールダウンを使う。回復回数の生涯上限は撤廃。
 - **ID03:** Composer再構築時に各Passの`dispose()`とComposerの`dispose()`を実行。ただしScreenFX所有の`extraPass`は継続利用するため除外。
 - **ID04:** `Decor.dispose()`を追加し、ステージ固有geometry/material/CanvasTextureを重複排除して破棄。lightmapもステージ所有として追跡し、切替時に明示的にdispose。
 - **ID05:** 最後のsplat/滴り終了時刻 + 約6.5秒を保守的なwetness期限として管理し、未塗装・完全乾燥後はdry atlas passを停止。GPU readbackやCPU塗り判定は追加していない。
@@ -189,9 +189,9 @@ Android BloomとScreenFXの伝達漏れ、全ループの60fps上限未実装に
 ## 再現資料と調査履歴
 
 - [再現スクリプト](./inkwave-mobile-audit-probe-2026-09-29.mjs): 現行コードの関数本体・条件式・ビルドの依存探索を読み出して実行。ブラウザ/GPUのベンチマークではない。
-- [再現結果JSON](./inkwave-mobile-audit-evidence-2026-09-29.json): 条件、結果、主要ソースのSHA-256を記録。
+- [再現結果JSON](./inkwave-mobile-audit-evidence-2026-09-29.json): 修正後の関数再現結果、構文確認、資源寿命の配線確認、Pages本番ビルド結果を記録。
 - 実行: リポジトリルートで `node reports/inkwave-mobile-audit-probe-2026-09-29.mjs`。
 - 中間報告はコミット `82656c51319f4a4e7a0a375c7336c425bfa68f81` で先行保存。その後、本最終報告に更新。
 - レポートと資料は `reports/` に置き、既存のゲーム公開対象やPagesのパス条件に追加していない。
 
-ソースから確認できた処理条件と、実機で効果を確認する必要がある提案を分けて記載した。現時点で「何倍速くなる」「すべて60fpsになる」とは結論付けない。
+ソースから確認できた処理条件と、実機で効果を確認する必要がある提案を分けて記載した。P1修正後のPages本番ビルドは成功済みだが、現時点で「何倍速くなる」「すべて60fpsになる」とは結論付けない。
