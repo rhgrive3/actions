@@ -55,7 +55,7 @@ export class Minimap {
     this._composeAcc = 1 / 30;   // first visible update composes immediately
     // the raster + shading pass (~0.1–0.3 s) runs when the browser is idle after loading; a match forces it early
     const idle = typeof requestIdleCallback === 'function' ? (fn) => requestIdleCallback(fn, { timeout: 1500 }) : (fn) => setTimeout(fn, 60);
-    idle(() => { if (!this._built && CURRENT === this) this._build(); });
+    if (G.settings?.minimap !== false) idle(() => { if (!this._built && CURRENT === this) this._build(); });
   }
 
   setViewerTeam(team) {
