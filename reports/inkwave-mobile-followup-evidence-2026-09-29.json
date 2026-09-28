@@ -54,5 +54,72 @@
     "unchangedExistingFxMultiplier": 0.7,
     "expectedLowTouchShadowSize": 1024,
     "note": "actual _buildLights and _setSettings bodies with controlled Environment/FX state; not a full game boot"
+  },
+  "postFixValidation": {
+    "branch": "fix/inkwave-followup-no-quality-regression-20260929",
+    "policy": "Only optimizations/correctness fixes with no intended reduction in image quality, effect density, reflection quality, input response, physics precision or network behavior.",
+    "syntax": {
+      "src/game/weapons.js": "ok",
+      "src/game/minimap.js": "ok",
+      "reports/inkwave-mobile-followup-probe-2026-09-29.mjs": "ok"
+    },
+    "F01": {
+      "status": "implemented",
+      "ownedMaterialsDisposed": true,
+      "cloudLoopStoppedOnClear": true,
+      "sharedGeometryDisposed": false,
+      "sharedBombMaterialCacheDisposed": false,
+      "fixture": {
+        "ownedMaterialDisposals": 5,
+        "cloudLoopStops": 1,
+        "removedGroups": 3
+      }
+    },
+    "F03": {
+      "status": "implemented",
+      "emptyDrawCalls": 600,
+      "attributeVersionIncreases": [
+        0,
+        0,
+        0
+      ],
+      "emptyUpdateRanges": [
+        0,
+        0,
+        0
+      ],
+      "liveRangeUpdates": true
+    },
+    "F04": {
+      "status": "implemented",
+      "stableLaunchState": {
+        "calls": 60,
+        "segmentQueries": 126,
+        "lineDistanceRebuilds": 1
+      },
+      "invalidation": {
+        "positionChange": "immediate",
+        "launchVelocityChange": "immediate",
+        "physicsInstanceChange": "immediate"
+      },
+      "visualAnimationStillPerFrame": true
+    },
+    "F06": {
+      "status": "implemented",
+      "bombRemoval": {
+        "composeCalls": 2,
+        "lastComposedBombCount": 0
+      },
+      "flashExpiry": {
+        "composeCalls": 2,
+        "lastComposedHadFlash": false
+      },
+      "returnsToIdleAfterCleanup": true
+    },
+    "intentionallyUnchanged": {
+      "F02": "Skipped because applying lower shadow resolution / FX density can reduce visual quality.",
+      "F05": "Skipped because reflection resolution/frequency/object-budget changes can alter water-reflection quality."
+    },
+    "note": "Post-fix method-body fixtures were executed against the branch source loaded from GitHub. Real-device FPS/GPU/power measurements remain outside this evidence."
   }
 }
