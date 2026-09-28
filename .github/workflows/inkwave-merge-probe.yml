@@ -1,0 +1,31 @@
+name: INKWAVE Merge Probe
+on:
+  push:
+    branches: [update/inkwave-upstream-20260928]
+permissions:
+  contents: read
+jobs:
+  probe:
+    if: contains(github.event.head_commit.message, 'probe INKWAVE merge conflicts')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Probe merge conflicts
+        shell: bash
+        run: |
+          set +e
+          git fetch origin main
+          git merge --no-commit --no-ff origin/main
+          rc=$?
+          echo "MERGE_RC=$rc"
+          echo "=== CONFLICT FILES ==="
+          git diff --name-only --diff-filter=U
+          echo "=== CONFLICT HUNKS ==="
+          while IFS= read -r f; do
+            [ -z "$f" ] && continue
+            echo "===== $f ====="
+            git diff --cc -U8 -- "$f" | head -n 600
+          done < <(git diff --name-only --diff-filter=U)
+          exit 0
