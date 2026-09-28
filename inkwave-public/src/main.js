@@ -215,7 +215,8 @@ class Game {
     const layoutId = map.layout || map.id;
     if (this.layoutId === layoutId) { this.mapDef = map; return; }
     if (this.levelMesh) { scene.remove(this.levelMesh, this.grateMesh); this.levelMesh.geometry.dispose(); this.grateMesh?.geometry.dispose(); this.levelMat.dispose(); this.grateMat?.dispose(); }
-    if (this.decor) { scene.remove(this.decor.group); }
+    this.decor?.dispose?.();
+    if (this.stageLightmap) { this.stageLightmap.dispose(); this.stageLightmap = null; }
     if (this.props) { this.props.dispose?.(); this.props = null; }
     G.paint?.dispose();
     this.layoutId = layoutId;
@@ -236,6 +237,7 @@ class Game {
     const level = (G.level = new Level(MAP_LAYOUTS[layoutId], colliders));
     G.physics = new Physics(level);
     const lightmap = await this._loadLightmap(level, layoutId);
+    this.stageLightmap = lightmap;
     this.murals.userData.setStage?.(layoutId);   // the mural atlas's stage decals (ids 4…11) for this layout
     G.paint = new PaintSystem(G.renderer, level, { atlasSize: q.paintAtlas, maxDensity: q.paintAtlas >= 4096 ? 30 : 18 });
     this.levelMat = createLevelMaterial(G.paint.texture, G.paint.size, this.murals, { lightmap, texlib: this.texlib });
