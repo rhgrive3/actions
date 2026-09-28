@@ -1,0 +1,58 @@
+{
+  "basis": "b4d6da439b6525ba18eb0a4e9b0e7807c9b3b1bd",
+  "scope": "Method-body fixtures; no real GPU allocation, FPS or audible/pixel output measurement",
+  "sourceSha256": {
+    "main.js": "19846ec6059a8ea035cf84567012af76c841a52017866c268a87ca3af625b6fc",
+    "config.js": "1ad69a27c47c74a8db2f6193fd369afb4ae7069d4902a5480bc365338097f164",
+    "game/weapons.js": "bf6f03940eb7ce6ddb8ec67052b1761082c30329d974779ee962d195aac37ec8",
+    "game/minimap.js": "8e2e74976b63bacecdcabd03acd55f1a3208c71a84f2013646d4b2297f7aef3d",
+    "world/environment.js": "0067e10ebbfe87edafb6f68ce20f695b10661d98beaf66b198592b15803cbe24",
+    "fx/fx.js": "912bae5284a21d7b255fd5fc16ed8045390aceaa9fd13755792f6df0bf54dcd5",
+    "audio/audio.js": "3c44013d165dc632a217078470b3930e39c88592217710a60dd5ee2b6bdfa1c3"
+  },
+  "projectileLifetime": {
+    "bombsThrownAndCleared": 20,
+    "createdMaterials": 40,
+    "disposedMaterials": 0,
+    "cloudStopsOnClear": 0,
+    "cloudMaterialDisposes": 0,
+    "remainingSceneChildren": 0
+  },
+  "emptyProjectileDraw": {
+    "calls": 600,
+    "count": 0,
+    "attributeVersionIncreases": [
+      600,
+      600,
+      600
+    ],
+    "noUpdateRanges": true,
+    "fullAttributeBytes": 64400,
+    "theoreticalBytesPerSecondAt60Hz": 3864000
+  },
+  "fixedAimArc": {
+    "frames": 60,
+    "fixture": "constant actor and launch velocity; no collisions",
+    "segmentQueries": 7560,
+    "uniqueLineDistanceAttributes": 60
+  },
+  "minimapFinalInvalidation": {
+    "bombRemoved": {
+      "composeCalls": 1,
+      "lastComposedBombCount": 1,
+      "actualBombs": 0
+    },
+    "flashExpired": {
+      "composeCalls": 1,
+      "lastComposedHadFlash": true,
+      "actualFlashActive": false
+    }
+  },
+  "qualityChangeRouting": {
+    "rendererUpdates": 1,
+    "unchangedExistingShadowSize": 2048,
+    "unchangedExistingFxMultiplier": 0.7,
+    "expectedLowTouchShadowSize": 1024,
+    "note": "actual _buildLights and _setSettings bodies with controlled Environment/FX state; not a full game boot"
+  }
+}
