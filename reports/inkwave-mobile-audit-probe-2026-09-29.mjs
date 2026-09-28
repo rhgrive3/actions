@@ -30,6 +30,7 @@ const screenfx = read('src/fx/screenfx.js');
 const decor = read('src/world/decor.js');
 const minimap = read('src/game/minimap.js');
 const match = read('src/game/match.js');
+const netmatch = read('src/net/netmatch.js');
 const menus = read('src/ui/menus.js');
 const config = read('src/config.js');
 const qStart = config.indexOf('export const QUALITY =');
@@ -66,7 +67,7 @@ const graphCode = build.slice(build.indexOf('const html0 ='), build.indexOf('con
 const graph = vm.runInNewContext(graphCode+'\norder;', {fs,path,SRC:path.resolve(root)});
 const walk = dir => fs.readdirSync(dir,{withFileTypes:true}).flatMap(e=>e.isDirectory()?walk(path.join(dir,e.name)):[path.join(dir,e.name)]);
 const js = walk(`${root}/src`).filter(f=>f.endsWith('.js'));
-const selected = ['src/main.js','src/config.js','src/core/renderer.js','src/world/paint.js','src/world/decor.js','src/fx/screenfx.js','src/game/minimap.js','src/game/match.js','src/ui/menus.js'];
+const selected = ['src/main.js','src/config.js','src/core/renderer.js','src/world/paint.js','src/world/decor.js','src/fx/screenfx.js','src/game/minimap.js','src/game/match.js','src/net/netmatch.js','src/ui/menus.js'];
 const output={
   kind:'source-level deterministic probes; no real device FPS, GPU timing, power or network measurement',
   sourceSha256:Object.fromEntries(selected.map(f=>[f,crypto.createHash('sha256').update(read(f)).digest('hex')])),
@@ -92,6 +93,8 @@ const output={
   p2p3:{
     bossStaticImportInMain:/from ['"]\.\/boss\/bossMode\.js['"]/.test(main),
     bossStaticImportInMatch:/from ['"]\.\.\/boss\/bossMode\.js['"]/.test(match),
+    bossStaticImportInNetmatch:/from ['"]\.\.\/boss\/boss\.js['"]/.test(netmatch),
+    bossSnapshotUsesLoadedInstance:netmatch.includes('boss.constructor.unpack(d.B, d.ts)'),
     bossLazyLoad:main.includes("loadLazyModule('./boss/bossMode.js')"),
     lobbyWorldGuard:main.includes('const worldHidden = setUp') && main.includes('if (!worldHidden)'),
     minimapDirty30Hz:minimap.includes('this._composeAcc >= 1 / 30'),
