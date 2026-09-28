@@ -1,0 +1,57 @@
+name: INKWAVE Merge Main Final
+on:
+  push:
+    branches: [update/inkwave-upstream-20260928]
+permissions:
+  contents: write
+jobs:
+  merge:
+    if: contains(github.event.head_commit.message, 'merge main into INKWAVE integration')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Merge main and keep verified INKWAVE integration on runtime conflicts
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          set +e
+          git merge --no-commit --no-ff origin/main
+          rc=$?
+          set -e
+          if [ "$rc" -ne 0 ]; then
+            while IFS= read -r p; do
+              [ -z "$p" ] && continue
+              case "$p" in
+                inkwave-public/*) git checkout --ours -- "$p" ;;
+                *) git checkout --theirs -- "$p" ;;
+              esac
+              git add "$p"
+            done < <(git diff --name-only --diff-filter=U)
+          fi
+          test -z "$(git diff --name-only --diff-filter=U)"
+
+          # Integration invariants: new upstream systems AND local mobile performance work.
+          for p in             inkwave-public/src/boss/boss.js             inkwave-public/src/net/netmatch.js             inkwave-public/src/game/lobbySet.js             inkwave-public/src/world/stages/cargo/layout.js             inkwave-public/src/core/mobile.js             inkwave-public/src/core/gyro.js             inkwave-public/src/core/shadowcache.js             inkwave-public/styles/mobile.css
+          do test -s "$p"; done
+          grep -Fq "new MobileInput" inkwave-public/src/core/input.js
+          grep -Fq "FXAAShader" inkwave-public/src/core/renderer.js
+          grep -Fq "mobileCap" inkwave-public/src/core/renderer.js
+          grep -Fq "touch.gyro" inkwave-public/src/game/player.js
+          grep -Fq "ShadowCache" inkwave-public/src/main.js
+          grep -Fq "BOSS_MODE" inkwave-public/src/main.js
+          grep -Fq "G.net" inkwave-public/src/main.js
+          grep -Fq "TOUCH_TAB" inkwave-public/src/ui/menus.js
+          grep -Fq "styles/mobile.css" inkwave-public/index.html
+          while IFS= read -r p; do node --check "$p" >/dev/null; done < <(find inkwave-public/src -type f -name '*.js' | sort)
+          git diff --check
+
+          git rm .github/workflows/inkwave-merge-main.yml
+          git add -A
+          git diff --cached --check
+          git commit -m "Merge main into INKWAVE upstream integration"
+          git push origin HEAD:update/inkwave-upstream-20260928
