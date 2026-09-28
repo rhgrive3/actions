@@ -6,7 +6,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
-import { QUALITY } from '../config.js';
+import { effectiveQuality } from '../config.js';
 import { G } from './ctx.js';
 import { deviceProfile } from './device.js';
 
@@ -120,7 +120,7 @@ export class Renderer {
     this.scene = null; this.camera = null;
     this.settings = settings;
     this.mobile = G.mobile || deviceProfile();
-    this.q = QUALITY[settings.quality] || QUALITY.high;
+    this.q = effectiveQuality(settings, this.mobile);
     this._w = 0; this._h = 0;
   }
 
@@ -129,9 +129,22 @@ export class Renderer {
     this._buildComposer();
   }
 
+  _disposeComposer() {
+    const comp = this.composer;
+    if (!comp) return;
+    // ScreenFX owns extraPass and intentionally survives quality rebuilds.
+    for (const pass of comp.passes || []) {
+      if (!pass || pass === this.extraPass) continue;
+      try { pass.dispose?.(); } catch (e) { console.warn('[inkwave] post pass dispose', e); }
+    }
+    comp.dispose?.();
+    this.composer = null;
+    this.renderPass = this.gtao = this.bloom = this.grade = this.fxaa = null;
+  }
+
   _buildComposer() {
     const r = this.renderer, q = this.q;
-    if (this.composer) { this.composer.renderTarget1.dispose(); this.composer.renderTarget2.dispose(); }
+    this._disposeComposer();
     this.dynScale = this.dynScale || 1;
     const mobileCap = this.mobile.touch ? (this.mobile.ios ? 1.2 : 1.35) : Infinity;
     const pr = Math.min(window.devicePixelRatio || 1, q.pixelRatio, mobileCap) * this.dynScale;
@@ -157,7 +170,7 @@ export class Renderer {
       comp.addPass(ao);
     }
     this.bloom = new UnrealBloomPass(new THREE.Vector2(w, h), ...BLOOM);
-    this.bloom.enabled = !!(q.bloom && this.settings.bloom && !this.mobile.ios);
+    this.bloom.enabled = !!(q.bloom && this.settings.bloom);
     comp.addPass(this.bloom);
     this.grade = new ShaderPass(GradeShader);
     this._gradeSrc = null;   // (re)apply the theme grade + bloom to the new passes
@@ -182,17 +195,17 @@ export class Renderer {
   applySettings(settings) {
     const prevQ = this.q;
     this.settings = settings;
-    this.q = QUALITY[settings.quality] || QUALITY.high;
+    this.q = effectiveQuality(settings, this.mobile);
     const shadowChanged = this.renderer.shadowMap.enabled !== (settings.shadows !== false);
     if (prevQ !== this.q || shadowChanged) {
       if (prevQ !== this.q) this.dynScale = 1;
       this._buildComposer();
       this.scene?.traverse((o) => { if (o.material) { const m = Array.isArray(o.material) ? o.material : [o.material]; m.forEach((mm) => (mm.needsUpdate = true)); } });
     }
-    if (this.bloom) this.bloom.enabled = !!(this.q.bloom && settings.bloom && !this.mobile.ios);
+    if (this.bloom) this.bloom.enabled = !!(this.q.bloom && settings.bloom);
   }
 
-  // Dynamic resolution (never on ultra): scale the render density between 0.75 and 1 of the quality preset.
+  // Dynamic resolution (never on ultra): scale render density to 0.6 on touch devices, 0.75 on desktop.
   setDynamicScale(s) {
     s = Math.max(this.mobile.touch ? 0.6 : 0.75, Math.min(1, s));
     if (Math.abs(s - this.dynScale) < 0.01) return;
