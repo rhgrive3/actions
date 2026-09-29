@@ -26,14 +26,17 @@ R = {'rim': 'HEAD_eyes_30', 'liner': 'HEAD_eyes_20', 'lashes': [f'HEAD_eyes_{i:0
 L = {'rim': 'HEAD_eyes_13', 'liner': 'HEAD_eyes_03', 'lashes': [f'HEAD_eyes_{i:02d}' for i in range(5, 12)]}
 LINER_LIFT_MM = 0.8
 MIN_CLEAR_MM = 0.5
+MAX_FLOAT_MM = 1.2
 LINER_ROWS = 14
 SMOOTH_ITERS = 40
 LINER_THICK_MM = 0.12
 LASH_ROOT_LIFT_MM = 0.85
 UPPER_R_SCALE = 3.6
-LOWER_LEN_MM = 3.6
-LOWER_ROOT_MM = 0.42
-LOWER_LIFT_MM = 0.6
+LOWER_LEN_MM = 2.6
+LOWER_ROOT_MM = 0.6
+LOWER_LIFT_MM = 0.3
+LOWER_START_PX = 1.0
+LOWER_LEAN = 0.45
 MM_PER_PX = 1.1
 
 
@@ -53,9 +56,16 @@ def surface_tree():
     return BVHTree.FromPolygons([Vector(v) for v in np.vstack(verts)], polys)
 
 
+def shell_tree():
+    """The scalp shell lies just over the skin at the temple; the liner must stay in front of it."""
+    obj = bpy.data.objects['HAIR_hair']
+    return BVHTree.FromPolygons([Vector(v) for v in er.world(obj)], [list(p.vertices) for p in obj.data.polygons])
+
+
 class FrontRays:
-    def __init__(self, tree):
+    def __init__(self, tree, shell=None):
         self.tree = tree
+        self.shell = shell
         mat, self.w, self.h = er.camera_matrix('front')
         self.inv = np.linalg.inv(mat)
 
@@ -67,6 +77,16 @@ class FrontRays:
         if hit[0] is None:
             raise ValueError(f'ray misses the skin at {u:.2f},{v:.2f}')
         return np.array(hit[0]), d, hit[3]
+
+    def near(self, u, v, reach_mm=5.0):
+        """Distance to the skin, or to the scalp shell where it lies within reach_mm in front of the skin."""
+        p, d, t = self.cast(u, v)
+        if self.shell is not None:
+            origin = p - d * t
+            hit = self.shell.ray_cast(Vector(origin), Vector(d), 50)
+            if hit[0] is not None and t - reach_mm / 1000 < hit[3] < t:
+                return hit[3]
+        return t
 
     def lifted(self, uv, lift_mm):
         p, d, _ = self.cast(*uv)
@@ -91,9 +111,38 @@ def bezier(root, mid, tip, n):
     return (1 - t) ** 2 * root + 2 * (1 - t) * t * ctrl + t ** 2 * tip
 
 
-def build_liner(rays, design):
+def rim_pixels():
+    cfg = json.loads(json.dumps(er.LASH_VARIANTS['lp40']['lower_paint']))
+    U, curve = er.lower_lid_curve(cfg)
+    ux, uy = er.camera_pixels('front', M.to_world(curve / 1000))
+    return np.c_[ux, uy][::3]
+
+
+def corner_join(rim_px):
+    """Outer eye corner where the wing's lower edge turns into the lower lid line (slightly past the rim start)."""
+    d = rim_px[0] - rim_px[3]
+    return rim_px[0] + 0.4 * d / np.linalg.norm(d)
+
+
+def corner_bottom(bot, join, rim_px):
+    """The wing's lower edge runs straight down to the lower lid line, follows it a little way (over the skin
+    wedge in the eye corner) and goes back up along the white of the eye to the old chain, so no skin shows
+    between the wing, the lower line and the eyeball."""
+    bot = bot.copy()
+    k1 = int(np.argmax(bot[:, 1] > join[1] - 14.0))
+    k2 = int(np.argmax(bot[:, 0] > join[0] + 6.0))
+    along = rim_px[rim_px[:, 0] <= join[0] + 4.2]
+    path = np.vstack([bot[k1], join, along, bot[k2] + [-1.9, 1.5], bot[k2]])
+    seg = np.r_[0, np.cumsum(np.linalg.norm(np.diff(path, axis=0), axis=1))]
+    t = np.linspace(0, seg[-1], k2 - k1 + 1)
+    new = np.c_[np.interp(t, seg, path[:, 0]), np.interp(t, seg, path[:, 1])]
+    bot[k1:k2 + 1] = new
+    return bot
+
+
+def build_liner(rays, design, bot, join):
     """Lofted ribbon between the reference top and bottom chains, lifted onto the skin with front rays."""
-    top, bot = np.array(design['liner_top']), np.array(design['liner_bottom'])
+    top = np.array(design['liner_top'])
     k = np.ones(9) / 9
     sm = lambda c: np.c_[[np.convolve(np.pad(c[:, i], 4, mode='edge'), k, mode='valid') for i in (0, 1)]].T
     top = np.vstack([top[:1], sm(top)[1:-1], top[-1:]])
@@ -103,17 +152,28 @@ def build_liner(rays, design):
     cast = [[rays.ray(p) for p in col] for col in px]
     origin = np.array([[c[0] for c in col] for col in cast])
     direction = np.array([[c[1] for c in col] for col in cast])
-    hit = np.array([[c[2] for c in col] for col in cast])
-    # nearest skin within a small pixel neighbourhood limits how deep the ribbon may lie; the depth is smoothed
-    # over and over, and pushed back to that limit after every pass, so it stays clear of the skin without lumps
+    hit = np.array([[rays.near(*p) for p in col] for col in px])
+    # the skin can bulge forward between samples.  Away from the eye corner the nearest skin in a small pixel
+    # neighbourhood limits how deep the ribbon may lie (this also keeps the wing over the scalp shell at the
+    # temple).  In the steep eye corner that would float the ribbon off the skin, so there only a few sub-pixel
+    # rays around each sample are used, plus a maximum gap.  The depth is smoothed and pushed back between the
+    # limits after every pass, so it stays clear of the skin without lumps.
     pad = np.pad(hit, ((2, 2), (1, 1)), mode='edge')
-    near = np.min([pad[a:a + n, b:b + rows] for a in range(5) for b in range(3)], axis=0)
-    limit = near - MIN_CLEAR_MM / 1000
+    wide = np.min([pad[a:a + n, b:b + rows] for a in range(5) for b in range(3)], axis=0)
+    x, y = px[:, :, 0] - join[0], px[:, :, 1] - join[1]
+    corner = (x > -2.5) & (x < 7.0) & (y > -9.0)
+    local = hit.copy()
+    for i, j in zip(*np.nonzero(corner)):
+        u, v = px[i, j]
+        local[i, j] = min(rays.near(u + du, v + dv) for du in (-0.5, 0.0, 0.5) for dv in (-0.5, 0.0, 0.5))
+    limit = np.where(corner, local, wide) - MIN_CLEAR_MM / 1000
+    floor = np.where(corner, np.minimum(hit - MAX_FLOAT_MM / 1000, limit), -np.inf)
     depth = np.minimum(hit - LINER_LIFT_MM / 1000, limit)
     for _ in range(SMOOTH_ITERS):
         p = np.pad(depth, 1, mode='edge')
         depth = 0.4 * depth + 0.15 * (p[:-2, 1:-1] + p[2:, 1:-1] + p[1:-1, :-2] + p[1:-1, 2:])
-        depth = np.minimum(depth, limit)
+        depth = np.clip(depth, floor, limit)
+    print('LINER gap mm: median %.2f  max %.2f' % (np.median(hit - depth) * 1000, (hit - depth).max() * 1000))
     pts = (origin + direction * depth[..., None]).reshape(-1, 3)
     verts = M.to_local(pts) * 1000
     faces = []
@@ -130,12 +190,12 @@ def build_liner(rays, design):
     return er.solid_sheet(verts, faces, LINER_THICK_MM)
 
 
-def build_rim(rays, design):
-    """Lower lid line as a thin tapered round part resting on the skin (minus eye = right eye)."""
-    cfg = json.loads(json.dumps(er.LASH_VARIANTS['lp40']['lower_paint']))
-    U, curve = er.lower_lid_curve(cfg)
-    ux, uy = er.camera_pixels('front', M.to_world(curve / 1000))
-    px = np.c_[ux, uy][::3]
+def build_rim(rays, design, join, tip):
+    """Lower lid line as a thin tapered round part resting on the skin (minus eye = right eye).  It starts
+    under the wing, so the wing and the lower line are one connected line at the outer corner."""
+    px = rim_pixels()
+    d = (tip - join) / np.linalg.norm(tip - join)
+    px = np.vstack([join + d * 2.5, join + d * 1.2, join, px])
     cast = [rays.ray(p) for p in px]
     origin = np.array([c[0] for c in cast])
     direction = np.array([c[1] for c in cast])
@@ -143,7 +203,6 @@ def build_rim(rays, design):
     depth = er.smooth_rows(hit, 2.0)
     s = np.linspace(0, 1, len(px))
     r = design.get('rim_r_mm', 0.36) * (1 - s) ** 1.2 + design.get('rim_end_mm', 0.07)
-    r *= np.clip(s / 0.03, 0.5, 1.0) ** 0.5
     r *= np.clip((1 - s) / 0.10, 0.25, 1.0)
     depth = np.minimum(depth - (0.15 + 0.5 * r) / 1000, hit - 0.10 / 1000)
     pts = M.to_local(origin + direction * depth[:, None]) * 1000
@@ -160,25 +219,33 @@ def build_lash(rays, spec):
     return er.tube(pts, radius, sides=6)
 
 
-def build_lower(rays, design, rim_px):
-    """Short lower lashes: each grows from the lower lid line, away from the eye and leaning to the outer corner."""
+def build_lower(rays, design, rim_px, join):
+    """Short thick lower lashes along the lower lid line, starting at the wing corner: the reference spacing
+    (measured along its lower line) is laid along the model's line from the corner; each lash leaves the line
+    away from the eye and leans to the outer corner."""
+    c = np.array([st['centre'] for st in design['lower']])
+    gaps = np.r_[0, np.cumsum(np.linalg.norm(np.diff(c, axis=0), axis=1))] + LOWER_START_PX
+    line = rim_px[np.argmin(np.linalg.norm(rim_px - join, axis=1)):]
+    arc = np.r_[0, np.cumsum(np.linalg.norm(np.diff(line, axis=0), axis=1))]
     verts, faces = [], []
-    for st in design['lower']:
-        c = np.array(st['centre'])
-        root = rim_px[np.argmin(np.linalg.norm(rim_px - c, axis=1))]
-        d = c - root
-        if np.linalg.norm(d) < 1.0:
-            d = np.array([-0.45, 0.9])
-        d /= np.linalg.norm(d)
+    for g in gaps:
+        root = np.array([np.interp(g, arc, line[:, 0]), np.interp(g, arc, line[:, 1])])
+        k = min(int(np.searchsorted(arc, g)), len(line) - 1)
+        tng = line[min(k + 1, len(line) - 1)] - line[max(k - 1, 0)]
+        tng /= np.linalg.norm(tng)
+        out = np.array([tng[1], -tng[0]])
+        if out[1] < 0:
+            out = -out
+        d = out * np.cos(LOWER_LEAN) - tng * np.sin(LOWER_LEAN)
         length = LOWER_LEN_MM / MM_PER_PX
         tip = root + d * length
-        mid = root + d * length * 0.5 + np.array([-d[1], d[0]]) * length * 0.08
+        mid = root + d * length * 0.5 - tng * length * 0.06
         n = 8
         path_px = bezier(root, mid, tip, n)
-        pts = np.array([rays.lifted(q, LOWER_LIFT_MM) for q in path_px])
         t = np.linspace(0, 1, n)
-        radius = np.maximum(LOWER_ROOT_MM * (1 - t) ** 0.9, 0.04)
-        v, f = er.tube(pts, radius, sides=5)
+        radius = np.maximum(LOWER_ROOT_MM * (1 - t) ** 0.6, 0.05)
+        pts = np.array([rays.lifted(q, LOWER_LIFT_MM + r) for q, r in zip(path_px, radius)])
+        v, f = er.tube(pts, radius, sides=6)
         faces += [tuple(i + len(verts) for i in fc) for fc in f]
         verts += list(v)
     return np.array(verts), faces
@@ -238,13 +305,16 @@ def main():
     ap.add_argument('--shape-only', action='store_true', help='liner, wing and lower line only: no upper lashes, no lower strokes')
     args = ap.parse_args(argv)
     design = json.loads(Path(args.design).read_text())
-    rays = FrontRays(surface_tree())
+    rays = FrontRays(surface_tree(), shell_tree())
     mat = er.lash_material()
     mat.node_tree.nodes['Principled BSDF'].inputs['Specular IOR Level'].default_value = 0.0
-    liner = build_liner(rays, design)
-    rim, rim_px = build_rim(rays, design)
+    join = corner_join(rim_pixels())
+    bot = corner_bottom(np.array(design['liner_bottom']), join, rim_pixels())
+    up = bot[np.argmin(np.linalg.norm(bot - (join - [0.0, 4.0]), axis=1))]
+    liner = build_liner(rays, design, bot, join)
+    rim, rim_px = build_rim(rays, design, join, up)
     lashes = [] if args.shape_only else [build_lash(rays, spec) for spec in design['lashes']]
-    lower = None if args.shape_only else build_lower(rays, design, rim_px)
+    lower = None if args.shape_only else build_lower(rays, design, rim_px, join)
     brown = brown_material()
     set_side(R, liner, rim, lashes, lower, mat, brown, False)
     set_side(L, liner, rim, lashes, lower, mat, brown, True)
