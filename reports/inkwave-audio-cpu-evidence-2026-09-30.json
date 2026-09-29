@@ -7,7 +7,7 @@
     },
     "music": {
       "before": "cc229d7378ed381503970db339c5c0ce18734e604c62b67afc5109890b6088d5",
-      "after": "2b3ccef7f468dd073b9626ace93261fd18031412291208b835e61b55edbd07fd"
+      "after": "a639b8c2ae88a37a8ce35f7adbc3a74ace1711cd1f2c2157bdf21b040da3cd15"
     }
   },
   "voices": {
@@ -44,13 +44,15 @@
         "exp": 285696,
         "sin": 0,
         "cos": 0,
-        "random": 142848
+        "random": 142848,
+        "generatedArrayBytes": 0
       },
       "fixed": {
         "exp": 142848,
         "sin": 0,
         "cos": 0,
-        "random": 142848
+        "random": 142848,
+        "generatedArrayBytes": 0
       },
       "stereoBytesEqual": true,
       "stereoSha256": "5ee5a28d00dce72a41005da2da9ceb34fdc5266412d63670144fcc7f465c9d44"
@@ -65,13 +67,15 @@
         "exp": 280476,
         "sin": 0,
         "cos": 0,
-        "random": 140238
+        "random": 140238,
+        "generatedArrayBytes": 0
       },
       "fixed": {
         "exp": 140238,
         "sin": 0,
         "cos": 0,
-        "random": 140238
+        "random": 140238,
+        "generatedArrayBytes": 0
       },
       "stereoBytesEqual": true,
       "stereoSha256": "4cbbe509bbfcca38c3eed2699ec32411ae4d0d8989094408b64ec3233e04dc5d"
@@ -91,13 +95,15 @@
         "exp": 69120,
         "sin": 0,
         "cos": 0,
-        "random": 34560
+        "random": 34560,
+        "generatedArrayBytes": 0
       },
       "fixed": {
         "exp": 34560,
         "sin": 0,
         "cos": 0,
-        "random": 34560
+        "random": 34560,
+        "generatedArrayBytes": 0
       },
       "stereoBytesEqual": true,
       "stereoSha256": "58be45955f04927e5b2a7417076cacf3d0524d9a7f4fccdf9f29679c8010b48e"
@@ -125,13 +131,15 @@
         "exp": 4056,
         "sin": 0,
         "cos": 0,
-        "random": 2028
+        "random": 2028,
+        "generatedArrayBytes": 0
       },
       "fixed": {
         "exp": 2028,
         "sin": 0,
         "cos": 0,
-        "random": 2028
+        "random": 2028,
+        "generatedArrayBytes": 0
       },
       "stereoBytesEqual": true,
       "stereoSha256": "1a9ce239397c9373474c517a7751185c73f46679ad485a5139ca8a4d378bf126"
@@ -148,13 +156,15 @@
         "exp": 0,
         "sin": 0,
         "cos": 0,
-        "random": 0
+        "random": 0,
+        "generatedArrayBytes": 0
       },
       "fixed": {
         "exp": 0,
         "sin": 0,
         "cos": 0,
-        "random": 0
+        "random": 0,
+        "generatedArrayBytes": 0
       },
       "stereoBytesEqual": true,
       "stereoSha256": "9e132485d5107211de325a45e7917cbe3e4b5b9cde3e4ee91d7d2102317759ee"
@@ -171,13 +181,15 @@
         "exp": 4,
         "sin": 0,
         "cos": 0,
-        "random": 2
+        "random": 2,
+        "generatedArrayBytes": 0
       },
       "fixed": {
         "exp": 2,
         "sin": 0,
         "cos": 0,
-        "random": 2
+        "random": 2,
+        "generatedArrayBytes": 0
       },
       "stereoBytesEqual": true,
       "stereoSha256": "e6ad6c9a3a3b7658c35bacf6553fcb8ffe34387534a648fe18f875b8f7a86ddb"
@@ -197,13 +209,15 @@
         "exp": 1920,
         "sin": 0,
         "cos": 0,
-        "random": 960
+        "random": 960,
+        "generatedArrayBytes": 0
       },
       "fixed": {
         "exp": 960,
         "sin": 0,
         "cos": 0,
-        "random": 960
+        "random": 960,
+        "generatedArrayBytes": 0
       },
       "stereoBytesEqual": true,
       "stereoSha256": "5d03963017608b42fb553b246458c4110c8fdde2426b724f254355df10b0edb0"
@@ -216,13 +230,15 @@
         "exp": 81920,
         "sin": 81920,
         "cos": 81920,
-        "random": 0
+        "random": 0,
+        "generatedArrayBytes": 328
       },
       "fixed": {
-        "exp": 2048,
+        "exp": 20480,
         "sin": 81920,
         "cos": 81920,
-        "random": 0
+        "random": 0,
+        "generatedArrayBytes": 328
       },
       "float32CoefficientsEqual": true,
       "cachedIdentityUnchanged": true,
@@ -234,13 +250,15 @@
         "exp": 81920,
         "sin": 81920,
         "cos": 81920,
-        "random": 0
+        "random": 0,
+        "generatedArrayBytes": 328
       },
       "fixed": {
-        "exp": 2048,
+        "exp": 20480,
         "sin": 81920,
         "cos": 81920,
-        "random": 0
+        "random": 0,
+        "generatedArrayBytes": 328
       },
       "float32CoefficientsEqual": true,
       "cachedIdentityUnchanged": true,
@@ -252,13 +270,15 @@
         "exp": 81920,
         "sin": 81920,
         "cos": 81920,
-        "random": 0
+        "random": 0,
+        "generatedArrayBytes": 328
       },
       "fixed": {
-        "exp": 2048,
+        "exp": 20480,
         "sin": 81920,
         "cos": 81920,
-        "random": 0
+        "random": 0,
+        "generatedArrayBytes": 328
       },
       "float32CoefficientsEqual": true,
       "cachedIdentityUnchanged": true,
@@ -270,13 +290,15 @@
         "exp": 81920,
         "sin": 81920,
         "cos": 81920,
-        "random": 0
+        "random": 0,
+        "generatedArrayBytes": 328
       },
       "fixed": {
-        "exp": 2048,
+        "exp": 20480,
         "sin": 81920,
         "cos": 81920,
-        "random": 0
+        "random": 0,
+        "generatedArrayBytes": 328
       },
       "float32CoefficientsEqual": true,
       "cachedIdentityUnchanged": true,
@@ -288,13 +310,15 @@
         "exp": 81920,
         "sin": 81920,
         "cos": 81920,
-        "random": 0
+        "random": 0,
+        "generatedArrayBytes": 328
       },
       "fixed": {
-        "exp": 2048,
+        "exp": 20480,
         "sin": 81920,
         "cos": 81920,
-        "random": 0
+        "random": 0,
+        "generatedArrayBytes": 328
       },
       "float32CoefficientsEqual": true,
       "cachedIdentityUnchanged": true,
@@ -306,13 +330,15 @@
         "exp": 81920,
         "sin": 81920,
         "cos": 81920,
-        "random": 0
+        "random": 0,
+        "generatedArrayBytes": 328
       },
       "fixed": {
-        "exp": 2048,
+        "exp": 20480,
         "sin": 81920,
         "cos": 81920,
-        "random": 0
+        "random": 0,
+        "generatedArrayBytes": 328
       },
       "float32CoefficientsEqual": true,
       "cachedIdentityUnchanged": true,
@@ -324,13 +350,15 @@
         "exp": 81920,
         "sin": 81920,
         "cos": 81920,
-        "random": 0
+        "random": 0,
+        "generatedArrayBytes": 328
       },
       "fixed": {
-        "exp": 2048,
+        "exp": 20480,
         "sin": 81920,
         "cos": 81920,
-        "random": 0
+        "random": 0,
+        "generatedArrayBytes": 328
       },
       "float32CoefficientsEqual": true,
       "cachedIdentityUnchanged": true,
@@ -342,13 +370,15 @@
         "exp": 81920,
         "sin": 81920,
         "cos": 81920,
-        "random": 0
+        "random": 0,
+        "generatedArrayBytes": 328
       },
       "fixed": {
-        "exp": 2048,
+        "exp": 20480,
         "sin": 81920,
         "cos": 81920,
-        "random": 0
+        "random": 0,
+        "generatedArrayBytes": 328
       },
       "float32CoefficientsEqual": true,
       "cachedIdentityUnchanged": true,
@@ -360,13 +390,15 @@
         "exp": 81920,
         "sin": 81920,
         "cos": 81920,
-        "random": 0
+        "random": 0,
+        "generatedArrayBytes": 328
       },
       "fixed": {
-        "exp": 2048,
+        "exp": 20480,
         "sin": 81920,
         "cos": 81920,
-        "random": 0
+        "random": 0,
+        "generatedArrayBytes": 328
       },
       "float32CoefficientsEqual": true,
       "cachedIdentityUnchanged": true,
@@ -378,13 +410,15 @@
         "exp": 81920,
         "sin": 81920,
         "cos": 81920,
-        "random": 0
+        "random": 0,
+        "generatedArrayBytes": 328
       },
       "fixed": {
-        "exp": 2048,
+        "exp": 20480,
         "sin": 81920,
         "cos": 81920,
-        "random": 0
+        "random": 0,
+        "generatedArrayBytes": 328
       },
       "float32CoefficientsEqual": true,
       "cachedIdentityUnchanged": true,
