@@ -1,3 +1,6 @@
+Warning: truncated output (original token count: 30508)
+Total output lines: 2268
+
 // INKWAVE — ink particle FX. Pooled, allocation-free per frame, 7 draw calls total.
 //
 // const fx = new FX(scene, { quality: 'high' });      // quality: QUALITY key | QUALITY preset | particles multiplier
@@ -643,6 +646,7 @@ function withInstanceAttrs(base, cap, attrs) {
 }
 // Upload only the live part of every dynamic attribute. Reuses one range object per attribute (no per-frame garbage).
 function markUpdated(geo, count) {
+  if (count === 0) return;
   const list = geo.userData.dyn;
   for (let i = 0; i < list.length; i++) {
     const a = list[i];
@@ -1198,43 +1202,7 @@ export class FX {
     return false;
   }
 
-  // ------------------------------------------------------------------ internal building blocks
-  // radial splash crown on a surface: droplets thrown outward + upward along the normal
-  _crown(pos, normal, col, n, speed, size, flags = 0) {
-    basis(normal, _tA, _v4);
-    const count = Math.max(1, Math.round(n * this.q));
-    const a0 = rand() * TAU;
-    for (let i = 0; i < count; i++) {
-      const a = a0 + (i / count) * TAU + (rand() - 0.5) * 0.5;
-      const c = Math.cos(a), s = Math.sin(a);
-      const up = 0.7 + rand() * 0.9, out = 0.6 + rand() * 0.6;
-      const sp = speed * (0.6 + rand() * 0.6);
-      const dx = (_tA.x * c + _v4.x * s) * out + normal.x * up, dy = (_tA.y * c + _v4.y * s) * out + normal.y * up, dz = (_tA.z * c + _v4.z * s) * out + normal.z * up;
-      const sz = size * (0.55 + rand() * 0.8);
-      this._spawnDrop(pos.x + normal.x * 0.04, pos.y + normal.y * 0.04, pos.z + normal.z * 0.04, dx * sp, dy * sp, dz * sp, col, sz, 1.2, 1, 1, flags);
-    }
-  }
-  // puffs of dust thrown radially along the ground
-  _dustRing(pos, col, n, speed) {
-    const count = Math.max(2, Math.round(n * this.q));
-    const a0 = rand() * TAU;
-    for (let i = 0; i < count; i++) {
-      const a = a0 + (i / count) * TAU + (rand() - 0.5) * 0.4, sp = speed * (0.6 + rand() * 0.6);
-      this._sprite(this.puffs, pos.x + Math.cos(a) * 0.25, pos.y + 0.12 + rand() * 0.12, pos.z + Math.sin(a) * 0.25, Math.cos(a) * sp, 0.3 + rand() * 0.5, Math.sin(a) * sp,
-        col, 0.16 + rand() * 0.1, 0.5 + rand() * 0.35, 0.55 + rand() * 0.35, 0.3, 3.2, 0.25, P_DUST, 0.05, 1.2);
-    }
-  }
-  _grains(pos, dir, n, speed) {
-    const count = Math.max(1, Math.round(n * this.q));
-    for (let i = 0; i < count; i++) {
-      coneDir(dir, 0.9, _v1);
-      const sp = speed * (0.6 + rand() * 0.7);
-      this._spawnDrop(pos.x, pos.y + 0.03, pos.z, _v1.x * sp, _v1.y * sp, _v1.z * sp, GRAIN, 0.01 + rand() * 0.012, 0.3 + rand() * 0.2, 1.1, 1, F_NOCOL | F_MATTE);
-    }
-  }
-  _toCam(pos, out) { return out.copy(this._camPos).sub(pos).normalize(); }
-
-  // =================================================================== contract API
+  // ----------------------------------------…508 tokens truncated…========================================= contract API
   // Impact splash: a small sheet of ink pops off the surface and tears (count ≥ 5 near the camera), droplets fly out in a
   // crown — most low along the surface, a few higher — and a ripple runs through the wet ink. Ring decal / mist are
   // opt-in (opts.ring / opts.mist === true).
@@ -2212,8 +2180,8 @@ export class FX {
     this._ringU.uTime.value = this._time;
     this._beamU.uTime.value = this._time;
     if (camera) {
-      camera.getWorldPosition(this._camPos);
       camera.getWorldDirection(this._camDir);
+      this._camPos.setFromMatrixPosition(camera.matrixWorld);
       const inv = camera.matrixWorldInverse;
       this._dropU.uSunDirV.value.copy(this._light.sunDir).transformDirection(inv);
       this._dropU.uUpV.value.copy(UP).transformDirection(inv);
