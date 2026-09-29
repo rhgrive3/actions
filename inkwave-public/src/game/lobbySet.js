@@ -81,7 +81,9 @@ export class LobbySet {
     this._build();
     this._lights();
     this._reflection();
-    this.setTeamColors(this.U.uTeamA.value, this.U.uTeamB.value);
+    // Initial PMREM already uses the current team colours. Keep the initial runtime update,
+    // but do not bake the exact same environment a second time.
+    this.update(0, this._t);
     this.setQuality(this.quality);
     this.ready = Promise.all([this.tex.decal.userData.ready, this.tex.lit.userData.ready, loadSetFonts()]).then(() => this);
   }
@@ -770,6 +772,9 @@ export class LobbySet {
   }
 
   dispose() {
+    // LightShadow owns its render targets independently of the light node. Removing the set from
+    // the scene does not release them, so close that lifetime explicitly when the lobby is truly released.
+    this.lights?.key?.shadow?.dispose?.();
     this.root.traverse((o) => { if (o.geometry) o.geometry.dispose(); if (o.material) [].concat(o.material).forEach((m) => m.dispose()); });
     for (const t of Object.values(this.tex)) t.dispose();
     this.halos?.forEach((h) => h.material.uniforms.map.value.dispose());
