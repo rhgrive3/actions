@@ -38,8 +38,9 @@ LOWER_LIFT_MM = 0.3
 LOWER_LEAN = 0.45
 MM_PER_PX = 1.1
 SIDE_STEP_PX = 0.2
-SIDE_LIFT_MM = 0.45
-SIDE_MAX_EDGE_MM = 1.2
+SIDE_LIFT_MM = 0.7
+SIDE_STANDOFF_MM = 10.0
+SIDE_MAX_EDGE_MM = 3.0
 SIDE_MAX_FRONT_COS = 0.35
 COVER_STEP_PX = 0.2
 COVER_LIFT_MM = 0.3
@@ -256,7 +257,7 @@ def inside(poly, pts):
     return res
 
 
-def build_side_corner(design, tree, skin):
+def build_side_corner(design, tree, views, side, black):
     """The outer eye corner seen from the side: the reference fills the triangle from the wing down to the
     white's outer corner with black.  That skin (the outer corner fold) faces sideways, so it hardly shows from
     the front.  The reference's black outline in the side and 3/4 views is cast onto the skin with those
@@ -264,7 +265,32 @@ def build_side_corner(design, tree, skin):
     verts, faces = [], []
     cam = bpy.data.objects['FACE_FIT_CAM_front']
     front_dir = np.array(cam.matrix_world.to_3x3() @ Vector((0, 0, -1)))
+    front_pos = np.array(cam.matrix_world.translation)
+    fi = np.load(er.ROOT / 'analysis/lash_rebuild/fit/front_ink.npz')
+    ink, ink_o, ink_k = fi['mask'], fi['origin'], float(fi['scale'])
+
+    def front_black(p):
+        """Seen from the front, this pixel already shows the liner / lower line (black), or lies inside the
+        solid liner black of the front reference (its thin lower-lash strokes are not included)."""
+        fx, fy = er.camera_pixels('front', p[None])
+        c = int(round((fx[0] - ink_o[0]) * ink_k))
+        r = int(round((fy[0] - ink_o[1]) * ink_k))
+        if 0 <= r < ink.shape[0] and 0 <= c < ink.shape[1] and ink[r, c]:
+            return True
+        fd = p - front_pos
+        fd /= np.linalg.norm(fd)
+        h_skin = tree.ray_cast(Vector(front_pos), Vector(fd), 50)
+        h_ink = black.ray_cast(Vector(front_pos), Vector(fd), 50)
+        return h_ink[0] is not None and (h_skin[0] is None or h_ink[3] < h_skin[3] + 0.0003)
+
+    def front_hidden(p):
+        fd = p - front_pos
+        fl = np.linalg.norm(fd)
+        fh = tree.ray_cast(Vector(front_pos), Vector(fd / fl), fl + 0.01)
+        return fh[0] is not None and fh[3] < fl - 0.0003
     for view, poly in design.get('side_corner', {}).items():
+        if view not in views:
+            continue
         poly = np.array(poly)
         mat, w, h = er.camera_matrix(view)
         inv = np.linalg.inv(mat)
@@ -280,10 +306,17 @@ def build_side_corner(design, tree, skin):
                 hit = tree.ray_cast(Vector(a), Vector(d), 50)
                 if hit[0] is None or hit[2] in EYE_POLYS:
                     continue
-                # only skin that faces sideways: it hardly shows from the front
-                if abs(np.dot(np.array(hit[1]), front_dir)) > SIDE_MAX_FRONT_COS:
+                # the front view is final: a point seen from the front must fall on black there; otherwise the
+                # black stands off the skin toward this view's camera until it does or is hidden (a 3D part)
+                hp = np.array(hit[0]) + np.array(hit[1]) * SIDE_LIFT_MM / 1000
+                if not (front_hidden(hp) or front_black(hp)):
+                    for t in np.arange(0.25, SIDE_STANDOFF_MM + 1e-6, 0.25):
+                        q = hp - d * t / 1000
+                        if front_black(q) or front_hidden(q):
+                            grid[j, i] = q
+                            break
                     continue
-                grid[j, i] = np.array(hit[0]) + np.array(hit[1]) * SIDE_LIFT_MM / 1000
+                grid[j, i] = hp
         base = len(verts)
         idx = -np.ones(grid.shape[:2], int)
         for (j, i) in zip(*np.nonzero(~np.isnan(grid[..., 0]))):
@@ -305,7 +338,7 @@ def build_side_corner(design, tree, skin):
     verts = verts[used]
     faces = [tuple(remap[k] for k in f) for f in faces]
     tot = sum(np.cross(verts[f[1]] - verts[f[0]], verts[f[2]] - verts[f[0]]) for f in faces)
-    if tot[0] > 0:            # face away from the head (the right eye's outside is -x)
+    if tot[0] * side > 0:      # face away from the head (the right eye's outside is -x)
         faces = [f[::-1] for f in faces]
     return verts, faces
 
@@ -351,18 +384,6 @@ def build_corner_cover(rays, design):
     if tot[2] < 0:
         faces = [f[::-1] for f in faces]
     return er.solid_sheet(verts, faces, 0.05)
-
-
-def to_left(verts_mm, skin):
-    """Mirror right-eye corner geometry to the left eye and put it back on the left skin (the face is not
-    exactly symmetric)."""
-    out = np.array(verts_mm, float).copy()
-    out[:, 0] *= -1
-    world = M.to_world(out / 1000)
-    for i, p in enumerate(world):
-        h = skin.find_nearest(Vector(p))
-        world[i] = np.array(h[0]) + np.array(h[1]) * SIDE_LIFT_MM / 1000
-    return M.to_local(world) * 1000
 
 
 def build_liner(rays, design, bot, join):
@@ -571,6 +592,40 @@ def brown_material():
     return mat
 
 
+def open_inner_corner(face, ic):
+    """Show as much white at the inner corner as the reference: the lid skin round the inner corner slides
+    toward the nose (Blender's Warp modifier, one per eye, weighted by a smooth pixel falloff).  The eyeball
+    reaches further in under the skin, so the white follows the new lid edge."""
+    mm = ic.get('open_mm', 0.0)
+    if not mm:
+        return
+    loc = M.to_local(er.world(face)) * 1000
+    mir = loc.copy()
+    mir[:, 0] = -np.abs(mir[:, 0])
+    ux, uy = er.camera_pixels('front', M.to_world(mir / 1000))
+    c = np.array(ic['open_centre'])
+    d = np.hypot((ux - c[0]) / ic['open_rx'], (uy - c[1]) / ic['open_ry'])
+    wgt = np.clip(1 - d, 0, 1)
+    wgt = wgt * wgt * (3 - 2 * wgt)
+    origin = M.to_world(np.zeros((1, 3)))[0]
+    for side in (-1, 1):
+        w = wgt * (np.sign(loc[:, 0]) == side)
+        step = M.to_world(np.array([[-side * mm / 1000, -ic.get('open_down_mm', 0.0) / 1000, 0.0]]))[0] - origin
+        a = bpy.data.objects.new('INKWAVE_open_from', None)
+        b = bpy.data.objects.new('INKWAVE_open_to', None)
+        for e in (a, b):
+            bpy.context.scene.collection.objects.link(e)
+        b.location = Vector(step)
+        bpy.context.view_layer.update()
+        before = er.world(face)
+        er.apply_weighted_modifier(face, w, 'WARP', object_from=a, object_to=b, falloff_type='NONE',
+                                   use_volume_preserve=False)
+        print('INNER_OPEN side', side, 'vertices', int((w > 0).sum()), 'max move mm',
+              round(float(np.linalg.norm(er.world(face) - before, axis=1).max() * 1000), 3))
+        for e in (a, b):
+            bpy.data.objects.remove(e)
+
+
 def smooth_inner_corner(design):
     """Inner eye corner: the lid edge of HEAD_face there is stepped (a jagged white edge).  Blender's Smooth
     modifier on a weighted vertex group round the inner corner (both eyes, lid skin near the eyeball only);
@@ -590,6 +645,7 @@ def smooth_inner_corner(design):
         if not mod.is_bound:
             raise RuntimeError(f'Surface Deform could not bind {obj.name} to the face')
         binds.append((obj, mod))
+    open_inner_corner(face, ic)
     eye = mesh_tree(sorted(EYEBALLS))
     w_pts = er.world(face)
     loc = M.to_local(w_pts)
@@ -639,15 +695,26 @@ def main():
     join = corner_join(rim_pixels())
     bot = corner_bottom(np.array(design['liner_bottom']), join, design)
     right_rays = FrontRays(tree, shell)
-    side_r = build_side_corner(design, tree, right_rays.skin_tree)
-    side_l = (to_left(side_r[0], right_rays.skin_tree), [f[::-1] for f in side_r[1]])
-    for objs, rays, d, side in ((R, right_rays, design, side_r), (L, MirrorRays(tree, shell), left, side_l)):
+    built = []
+    for objs, rays, d in ((R, right_rays, design), (L, MirrorRays(tree, shell), left)):
         liner = build_liner(rays, d, bot, join)
-        for sv, sf in (er.solid_sheet(*side, LINER_THICK_MM * 0.6), build_corner_cover(rays, d)):
-            liner = (np.r_[liner[0], sv], list(liner[1]) + [tuple(i + len(liner[0]) for i in fc) for fc in sf])
+        cv, cf = build_corner_cover(rays, d)
+        liner = (np.r_[liner[0], cv], list(liner[1]) + [tuple(i + len(liner[0]) for i in fc) for fc in cf])
         rim, _ = build_rim(rays, d)
         lashes = [] if args.shape_only else [build_lash(rays, d, spec) for spec in d['lashes']]
         lower = None if args.shape_only else build_lower(rays, d)
+        built.append([objs, liner, rim, lashes, lower])
+    verts, polys = [], []
+    for _, liner, rim, _, _ in built:
+        for v, f in (liner, rim):
+            polys += [[i + sum(len(x) for x in verts) for i in fc] for fc in f]
+            verts.append(M.to_world(np.asarray(v) / 1000))
+    black = BVHTree.FromPolygons([Vector(v) for v in np.vstack(verts)], polys)
+    for part, views, side in zip(built, (('sideR', 'q34R'), ('q34L', 'sideL')), (-1, 1)):
+        sv, sf = er.solid_sheet(*build_side_corner(design, tree, views, side, black), LINER_THICK_MM * 0.6)
+        v, f = part[1]
+        part[1] = (np.r_[v, sv], list(f) + [tuple(i + len(v) for i in fc) for fc in sf])
+    for objs, liner, rim, lashes, lower in built:
         set_side(objs, liner, rim, lashes, lower, mat, brown)
     remove_lower_paint()
     if args.save:
