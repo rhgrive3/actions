@@ -40,6 +40,9 @@ MM_PER_PX = 1.1
 SIDE_STEP_PX = 0.2
 SIDE_LIFT_MM = 0.7
 SIDE_STANDOFF_MM = 10.0
+SIDE_FILL_UP_PX = 8.0
+SIDE_NOTCH_PX = 3.0
+SIDE_REF_OUTER_MM = 72.5
 SIDE_MAX_EDGE_MM = 3.0
 SIDE_MAX_FRONT_COS = 0.35
 COVER_STEP_PX = 0.2
@@ -269,13 +272,13 @@ def build_side_corner(design, tree, views, side, black):
     fi = np.load(er.ROOT / 'analysis/lash_rebuild/fit/front_ink.npz')
     ink, ink_o, ink_k = fi['mask'], fi['origin'], float(fi['scale'])
 
-    def front_black(p):
-        """Seen from the front, this pixel already shows the liner / lower line (black), or lies inside the
-        solid liner black of the front reference (its thin lower-lash strokes are not included)."""
+    def front_black(p, use_ref=True):
+        """Seen from the front, this pixel already shows the liner / lower line (black), or (use_ref) lies inside
+        the solid liner black of the front reference (its thin lower-lash strokes are not included)."""
         fx, fy = er.camera_pixels('front', p[None])
         c = int(round((fx[0] - ink_o[0]) * ink_k))
         r = int(round((fy[0] - ink_o[1]) * ink_k))
-        if 0 <= r < ink.shape[0] and 0 <= c < ink.shape[1] and ink[r, c]:
+        if use_ref and 0 <= r < ink.shape[0] and 0 <= c < ink.shape[1] and ink[r, c]:
             return True
         fd = p - front_pos
         fd /= np.linalg.norm(fd)
@@ -295,24 +298,81 @@ def build_side_corner(design, tree, views, side, black):
         mat, w, h = er.camera_matrix(view)
         inv = np.linalg.inv(mat)
         us = np.arange(poly[:, 0].min(), poly[:, 0].max() + 0.01, SIDE_STEP_PX)
-        vs = np.arange(poly[:, 1].min(), poly[:, 1].max() + 0.01, SIDE_STEP_PX)
+        vs = np.arange(poly[:, 1].min() - SIDE_FILL_UP_PX, poly[:, 1].max() + 0.01, SIDE_STEP_PX)
         grid = np.full((len(vs), len(us), 3), np.nan)
+
+        def view_ray(u, v):
+            nd = [np.array([2 * u / w - 1, 1 - 2 * v / h, z, 1]) @ inv.T for z in (-1, 1)]
+            a, b = [q[:3] / q[3] for q in nd]
+            return a, (b - a) / np.linalg.norm(b - a)
+
+        def liner_above(u, v):
+            """This view already shows the liner a little above (u, v): the pixel lies under the liner."""
+            for k in np.arange(0.5, SIDE_FILL_UP_PX + 1e-6, 0.5):
+                a, d = view_ray(u, v - k)
+                hs = tree.ray_cast(Vector(a), Vector(d), 50)
+                hb = black.ray_cast(Vector(a), Vector(d), 50)
+                if hb[0] is not None and (hs[0] is None or hb[3] < hs[3] + 0.0003):
+                    return True
+            return False
+
+        # where the reference is hidden by its hair, the reference outline stops at the hair: the band between
+        # the model's liner and that outline is filled too (never above the liner)
+        below = np.zeros((len(vs), len(us)), bool)
+        inside_grid = np.array([inside(poly, np.c_[us, np.full(len(us), v)]) for v in vs])
+        for i in range(len(us)):
+            col = np.nonzero(inside_grid[:, i])[0]
+            if len(col):
+                below[:col[0], i] = True
+                below[:max(col[0] - int(SIDE_FILL_UP_PX / SIDE_STEP_PX), 0), i] = False
+        def dark(u, v):
+            """This view shows black (liner / lower line / corner cover) or the eyeball at (u, v)."""
+            a, d = view_ray(u, v)
+            hs = tree.ray_cast(Vector(a), Vector(d), 50)
+            if hs[0] is not None and hs[2] in EYE_POLYS:
+                return True
+            hb = black.ray_cast(Vector(a), Vector(d), 50)
+            return hb[0] is not None and (hs[0] is None or hb[3] < hs[3] + 0.0003)
+
+        def enclosed(u, v):
+            """A small skin notch: black or the eyeball within SIDE_NOTCH_PX in at least three directions."""
+            steps = np.arange(0.5, SIDE_NOTCH_PX + 1e-6, 0.5)
+            hits = sum(any(dark(u + du * k, v + dv * k) for k in steps)
+                       for du, dv in ((1, 0), (-1, 0), (0, 1), (0, -1)))
+            return hits >= 3
+
+        near = np.zeros_like(inside_grid)
+        r = int(SIDE_NOTCH_PX / SIDE_STEP_PX)
+        for j, i in zip(*np.nonzero(inside_grid)):
+            near[max(j - r, 0):j + r + 1, max(i - r, 0):i + r + 1] = True
+        near &= ~inside_grid
+        fill = np.zeros_like(inside_grid)
         for j, v in enumerate(vs):
-            ok = inside(poly, np.c_[us, np.full(len(us), v)])
+            for i in range(len(us)):
+                if inside_grid[j, i]:
+                    fill[j, i] = True
+                elif below[j, i] and liner_above(us[i], v):
+                    fill[j, i] = True
+                elif near[j, i] and not dark(us[i], v) and enclosed(us[i], v):
+                    # a notch may be a single sample wide: take its neighbours too so the sheet has faces
+                    fill[max(j - 1, 0):j + 2, max(i - 1, 0):i + 2] = True
+        for j, v in enumerate(vs):
+            ok = fill[j]
             for i in np.nonzero(ok)[0]:
-                nd = [np.array([2 * us[i] / w - 1, 1 - 2 * v / h, z, 1]) @ inv.T for z in (-1, 1)]
-                a, b = [q[:3] / q[3] for q in nd]
-                d = (b - a) / np.linalg.norm(b - a)
+                a, d = view_ray(us[i], v)
                 hit = tree.ray_cast(Vector(a), Vector(d), 50)
                 if hit[0] is None or hit[2] in EYE_POLYS:
                     continue
                 # the front view is final: a point seen from the front must fall on black there; otherwise the
                 # black stands off the skin toward this view's camera until it does or is hidden (a 3D part)
                 hp = np.array(hit[0]) + np.array(hit[1]) * SIDE_LIFT_MM / 1000
-                if not (front_hidden(hp) or front_black(hp)):
+                # extra fills (under the liner, notches) use the front reference only near the outer corner;
+                # further in, the liner stands off the skin and they would peek over its top edge in front
+                ref = bool(inside_grid[j, i]) or abs(M.to_local(hp[None])[0, 0] * 1000) > SIDE_REF_OUTER_MM
+                if not (front_hidden(hp) or front_black(hp, ref)):
                     for t in np.arange(0.25, SIDE_STANDOFF_MM + 1e-6, 0.25):
                         q = hp - d * t / 1000
-                        if front_black(q) or front_hidden(q):
+                        if front_black(q, ref) or front_hidden(q):
                             grid[j, i] = q
                             break
                     continue
@@ -325,7 +385,8 @@ def build_side_corner(design, tree, views, side, black):
         for j in range(len(vs) - 1):
             for i in range(len(us) - 1):
                 q = [idx[j, i], idx[j, i + 1], idx[j + 1, i + 1], idx[j + 1, i]]
-                if min(q) < 0:
+                q = [k for k in q if k >= 0]
+                if len(q) < 3:
                     continue
                 pts = np.array([verts[k] for k in q])
                 if np.linalg.norm(pts - np.roll(pts, 1, 0), axis=1).max() > SIDE_MAX_EDGE_MM / 1000:
