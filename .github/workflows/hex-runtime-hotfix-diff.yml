@@ -20,40 +20,62 @@ jobs:
           repository: rhgrive3/hex-ida
           ref: main
           path: new
-      - name: Capture old runtime
+      - name: Install old dependencies
         working-directory: old
         timeout-minutes: 4
         shell: bash
         run: |
           set -euo pipefail
-          npm ci --silent
-          python3 - <<'PY'
-          from pathlib import Path
-          p=Path('scripts/build-userscript.mjs')
-          s=p.read_text()
-          needle="  const runtime = await bundle('js/userscript/protected-entry.js', { format: 'esm', rewriteImportMeta: true, inventory: 'standard-runtime', graph: 'standard' });"
-          repl=needle+"\n  await writeFile('/tmp/runtime-old.js', runtime);"
-          if needle not in s: raise SystemExit('old injection target missing')
-          p.write_text(s.replace(needle,repl,1))
-          PY
-          timeout 120s npm run userscript:build >/tmp/old-build.log 2>&1
-      - name: Capture new runtime
-        working-directory: new
-        timeout-minutes: 4
+          npm ci --silent --no-audit --no-fund >/tmp/old-install.log 2>&1 || {
+            tail -n 30 /tmp/old-install.log > /tmp/first-failure.txt
+            exit 1
+          }
+      - name: Inject old runtime capture
+        working-directory: old
         shell: bash
         run: |
           set -euo pipefail
-          npm ci --silent
           python3 - <<'PY'
           from pathlib import Path
           p=Path('scripts/build-userscript.mjs')
           s=p.read_text()
-          needle="  const runtime = await bundle('js/userscript/protected-entry.js', { format: 'esm', rewriteImportMeta: true, inventory: 'standard-runtime', graph: 'standard' });"
-          repl=needle+"\n  await writeFile('/tmp/runtime-new.js', runtime);"
+          needle="const runtime = await bundle('js/userscript/protected-entry.js', { format: 'esm', rewriteImportMeta: true, inventory: 'standard-runtime', graph: 'standard' });"
+          repl=needle+"\nawait writeFile('/tmp/runtime-old.js', runtime);"
+          if needle not in s: raise SystemExit('old injection target missing')
+          p.write_text(s.replace(needle,repl,1))
+          PY
+      - name: Build old runtime
+        working-directory: old
+        timeout-minutes: 3
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 120s npm run userscript:build >/tmp/old-build.log 2>&1 || {
+            tail -n 40 /tmp/old-build.log > /tmp/first-failure.txt
+            exit 1
+          }
+      - name: Install new dependencies
+        working-directory: new
+        timeout-minutes: 4
+        run: npm ci --silent --no-audit --no-fund >/tmp/new-install.log 2>&1
+      - name: Inject new runtime capture
+        working-directory: new
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('scripts/build-userscript.mjs')
+          s=p.read_text()
+          needle="const runtime = await bundle('js/userscript/protected-entry.js', { format: 'esm', rewriteImportMeta: true, inventory: 'standard-runtime', graph: 'standard' });"
+          repl=needle+"\nawait writeFile('/tmp/runtime-new.js', runtime);"
           if needle not in s: raise SystemExit('new injection target missing')
           p.write_text(s.replace(needle,repl,1))
           PY
-          timeout 120s npm run userscript:build >/tmp/new-build.log 2>&1
+      - name: Build new runtime
+        working-directory: new
+        timeout-minutes: 3
+        run: timeout 120s npm run userscript:build >/tmp/new-build.log 2>&1
       - name: Extract focused diff
         shell: bash
         run: |
@@ -65,23 +87,22 @@ jobs:
           marker='https://hex.invalid'
           i=new.find(marker)
           if i<0: raise SystemExit('new sentinel missing')
-          lo=max(0,i-500); hi=min(len(new),i+700)
-          Path('/tmp/new-snippet.txt').write_text(new[lo:hi])
-          # find nearest old origin comparison around a matching stable tail
+          Path('/tmp/new-snippet.txt').write_text(new[max(0,i-700):min(len(new),i+900)])
           import re
-          m=re.search(r'origin.{0,220}pathname', old)
-          if not m: raise SystemExit('old logicalPath pattern missing')
-          olo=max(0,m.start()-500); ohi=min(len(old),m.end()+700)
-          Path('/tmp/old-snippet.txt').write_text(old[olo:ohi])
-          Path('/tmp/runtime-sha.txt').write_text(
-            f'old_bytes={len(old)}\nnew_bytes={len(new)}\n'
-          )
+          matches=list(re.finditer(r'origin.{0,260}pathname', old))
+          if not matches: raise SystemExit('old logicalPath pattern missing')
+          m=min(matches, key=lambda x: abs(x.start()-i))
+          Path('/tmp/old-snippet.txt').write_text(old[max(0,m.start()-700):min(len(old),m.end()+900)])
+          Path('/tmp/runtime-sha.txt').write_text(f'old_bytes={len(old)}\nnew_bytes={len(new)}\n')
           PY
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: hex-runtime-hotfix-diff
           path: |
             /tmp/old-snippet.txt
             /tmp/new-snippet.txt
             /tmp/runtime-sha.txt
+            /tmp/first-failure.txt
+          if-no-files-found: ignore
           retention-days: 1
