@@ -2791,11 +2791,22 @@ export class Environment {
 
   // pilings / dock kit / moored boats / foam field for the current footprint + mode
   _rebuildDock() {
-    for (const o of [this.pilings, this.dockProps, ...(this.moored || []).map((m) => m.mesh)]) {
+    const old = [this.pilings, this.dockProps, ...(this.moored || []).map((m) => m.mesh)];
+    const materials = new Set();
+    const addMat = (m) => {
+      if (!m) return;
+      if (Array.isArray(m)) for (const x of m) addMat(x);
+      else materials.add(m);
+    };
+    for (const o of old) {
       if (!o) continue;
+      addMat(o.material);
       this.root.remove(o);
+      if (o.isInstancedMesh) o.dispose?.();
       o.geometry?.dispose();
     }
+    // These materials belong to the discarded dock generation. Shared uniforms/textures remain owned by Environment.
+    for (const m of materials) m.dispose?.();
     this._buildDock();
     for (const s of this.buoys || []) this._foamShapes.push({ ax: s.x, az: s.z, bx: s.x, bz: s.z, r: 0.55 * s.s });
     if (!this._marina) this._buildFoamField(this._foamShapes);   // marina: _applyMarina builds it with the contours
