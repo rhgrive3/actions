@@ -490,8 +490,10 @@ export class Decor {
     this._disposed = true;
     const geometries = new Set();
     const materials = new Set();
+    const instanced = new Set();
     this.group.traverse((o) => {
       if (o.geometry) geometries.add(o.geometry);
+      if (o.isInstancedMesh) instanced.add(o);
       const addMat = (m) => {
         if (!m) return;
         if (Array.isArray(m)) m.forEach(addMat);
@@ -501,6 +503,9 @@ export class Decor {
       addMat(o.customDepthMaterial);
       addMat(o.customDistanceMaterial);
     });
+    // InstancedMesh owns instanceMatrix/instanceColor outside BufferGeometry.
+    // Close those object-owned buffers only on final Decor teardown.
+    for (const o of instanced) o.dispose?.();
     for (const g of geometries) g.dispose?.();
     for (const m of materials) m.dispose?.();
     this.emblem?.dispose?.();
