@@ -1,0 +1,59 @@
+{
+  "baseCommit": "d5d54d1d37274dfa82467b37b9b8009719783ed3",
+  "sha256": {
+    "before": "59952bc2696b4db998a0b072ede2306f0bba23a9a86ff85e002609ae1f7260f2",
+    "fixed": "b1a4e4a2369b552e1d745cfcf0b214ef38aac15ce71d84f13dae209cf04d4dff",
+    "vendor": "9052042d676cb0fdc1ddfefe193053f34b7ac0513a616fdac4535d49987812ea"
+  },
+  "cases": [
+    {
+      "quality": "low",
+      "frames": 900,
+      "emptyFrames": 408,
+      "maxInk": 128,
+      "maxSteam": 56,
+      "baseline": {
+        "init": 5,
+        "uploads": 1494,
+        "bytes": 4020832
+      },
+      "fixed": {
+        "init": 5,
+        "uploads": 1494,
+        "bytes": 1043060
+      },
+      "comparedLiveAttrs": 1839,
+      "activeBytesSha256": "fa9c0687dccfe9e0dae702298523039f2a251dc0efd080daf701b0ca5397aa48",
+      "instancedMeshDisposeEvents": [
+        0,
+        1
+      ],
+      "allCpuArraysLogicalStateAndLiveGpuBytesEqual": true
+    },
+    {
+      "quality": "high",
+      "frames": 900,
+      "emptyFrames": 333,
+      "maxInk": 320,
+      "maxSteam": 140,
+      "baseline": {
+        "init": 5,
+        "uploads": 1769,
+        "bytes": 11286080
+      },
+      "fixed": {
+        "init": 5,
+        "uploads": 1769,
+        "bytes": 2603560
+      },
+      "comparedLiveAttrs": 2189,
+      "activeBytesSha256": "a2114188ef6473c4ab7dcf5ea09c8030b818e3799b1f2ebc74a3dd2f5187e9c4",
+      "instancedMeshDisposeEvents": [
+        0,
+        1
+      ],
+      "allCpuArraysLogicalStateAndLiveGpuBytesEqual": true
+    }
+  ],
+  "scope": "simulated GL uploads with production methods; no GPU/device timing"
+}
