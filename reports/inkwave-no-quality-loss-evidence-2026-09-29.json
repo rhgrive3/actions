@@ -128,5 +128,41 @@
       ]
     },
     "note": "Real constructor and environment methods; _build, _lights, _reflection, texture/font generation and update body are stubbed. Static inspection confirms intervening methods do not change the proxy environment scene."
+  },
+  "postFixValidation": {
+    "branch": "fix/inkwave-no-quality-loss-q01-q03-q02-20260929",
+    "policy": "No reduction in image quality, shadow quality, reflection quality, effect density, input response, physics precision, or network behavior.",
+    "Q01": {
+      "status": "implemented",
+      "productionDisposeCallsLightShadowDispose": true,
+      "fixture": {
+        "shadowDisposeCalls": 1,
+        "cookieDisposeCalls": 1,
+        "rootRemoved": 1
+      },
+      "expectedLightShadowEffect": "shadow.map and optional shadow.mapPass are released by THREE.LightShadow.dispose()"
+    },
+    "Q02": {
+      "status": "implemented",
+      "frames": 180,
+      "physicsSegmentCalls": 10626,
+      "previousUniqueLineDistanceAttributes": 121,
+      "currentUniqueLineDistanceAttributes": 1,
+      "distanceFrameMismatchesAgainstLegacyAlgorithm": 0,
+      "trajectoryCachePreserved": true,
+      "note": "Distance accumulation remains JS Number precision and only rounds on Float32 store, matching the previous THREE.Line.computeLineDistances() data."
+    },
+    "Q03": {
+      "status": "implemented",
+      "constructorInitialEnvironmentBakes": 1,
+      "constructorSameColorSetTeamColorsCalls": 0,
+      "constructorInitialUpdateCalls": 1,
+      "realTeamColorChangeStillRebakes": true,
+      "realTeamColorChangeStillUpdates": true
+    },
+    "syntax": {
+      "src/game/lobbySet.js": "ok",
+      "src/game/weapons.js": "ok"
+    }
   }
 }
