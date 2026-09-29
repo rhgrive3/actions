@@ -407,7 +407,7 @@ class InkFX {
   }
   clear() {
     this.K.fill(0); this.SA.fill(1e9); this.RA.fill(1e9);
-    for (const m of [this.mesh, this.splats, this.rings]) { for (let i = 0; i < m.instanceMatrix.count; i++) m.setMatrixAt(i, ZERO_M); m.count = 0; m.instanceMatrix.needsUpdate = true; }
+    for (const m of [this.mesh, this.splats, this.rings]) { for (let i = 0; i < m.instanceMatrix.count; i++) m.setMatrixAt(i, ZERO_M); m.count = 0; }
   }
   _land(i, k, x, y, z) {
     const r = this.R[i], rnd = this.rand;
@@ -475,7 +475,7 @@ class InkFX {
       top = i;
     }
     this.mesh.count = top + 1;
-    this.mesh.instanceMatrix.needsUpdate = true;
+    if (this.mesh.count > 0) this.mesh.instanceMatrix.needsUpdate = true;
     // splats: pop in with overshoot, sink back into the surface
     let sTop = -1;
     for (let j = 0; j < this.SN; j++) {
@@ -508,8 +508,8 @@ class InkFX {
     // keep counts covering every live slot (dead slots in between hold zero matrices)
     this.splats.count = this._span(this.SA, this.SL, this.SN, sTop);
     this.rings.count = this._span(this.RA, this.RL, this.RN, rTop);
-    this.splats.instanceMatrix.needsUpdate = true;
-    this.rings.instanceMatrix.needsUpdate = true;
+    if (this.splats.count > 0) this.splats.instanceMatrix.needsUpdate = true;
+    if (this.rings.count > 0) this.rings.instanceMatrix.needsUpdate = true;
   }
   _span(A, L, n, top) { for (let j = n - 1; j > top; j--) if (A[j] < L[j]) return j + 1; return top + 1; }
 }
@@ -586,7 +586,7 @@ class Confetti {
   }
   clear() {
     this.ST.fill(0); this.acc = 0;
-    for (const m of [this.paper, this.foil]) { for (let i = 0; i < m.instanceMatrix.count; i++) m.setMatrixAt(i, ZERO_M); m.count = 0; m.instanceMatrix.needsUpdate = true; }
+    for (const m of [this.paper, this.foil]) { for (let i = 0; i < m.instanceMatrix.count; i++) m.setMatrixAt(i, ZERO_M); m.count = 0; }
   }
   update(dt, decks) {
     const P = this.P, V = this.V;
@@ -631,7 +631,8 @@ class Confetti {
       if (foil) topF = mi; else topP = mi;
     }
     this.paper.count = topP + 1; this.foil.count = topF + 1;
-    this.paper.instanceMatrix.needsUpdate = true; this.foil.instanceMatrix.needsUpdate = true;
+    if (this.paper.count > 0) this.paper.instanceMatrix.needsUpdate = true;
+    if (this.foil.count > 0) this.foil.instanceMatrix.needsUpdate = true;
   }
 }
 
@@ -654,7 +655,7 @@ class Sparkles {
     this.A[i] = 0; this.L[i] = life; this.S[i] = size;
     this.mesh.setColorAt(i, color); this.mesh.instanceColor.needsUpdate = true;
   }
-  clear() { this.A.fill(1e9); this.acc = 0; for (let i = 0; i < this.N; i++) this.mesh.setMatrixAt(i, ZERO_M); this.mesh.count = 0; this.mesh.instanceMatrix.needsUpdate = true; }
+  clear() { this.A.fill(1e9); this.acc = 0; for (let i = 0; i < this.N; i++) this.mesh.setMatrixAt(i, ZERO_M); this.mesh.count = 0; }
   update(dt) {
     let top = -1;
     for (let i = 0; i < this.N; i++) {
@@ -670,7 +671,7 @@ class Sparkles {
     let n = top + 1;
     for (let i = this.N - 1; i >= n; i--) if (this.A[i] < this.L[i]) { n = i + 1; break; }
     this.mesh.count = n;
-    this.mesh.instanceMatrix.needsUpdate = true;
+    if (this.mesh.count > 0) this.mesh.instanceMatrix.needsUpdate = true;
   }
 }
 
@@ -697,7 +698,7 @@ class InkTrail {
     this.Y[i] = yaw; this.W[i] = w; this.Ln[i] = len; this.A[i] = 0; this.L[i] = life;
     this.mesh.setColorAt(i, color); this.mesh.instanceColor.needsUpdate = true;
   }
-  clear() { this.A.fill(1e9); for (let i = 0; i < this.N; i++) this.mesh.setMatrixAt(i, ZERO_M); this.mesh.count = 0; this.mesh.instanceMatrix.needsUpdate = true; }
+  clear() { this.A.fill(1e9); for (let i = 0; i < this.N; i++) this.mesh.setMatrixAt(i, ZERO_M); this.mesh.count = 0; }
   update(dt) {
     let top = -1;
     for (let i = 0; i < this.N; i++) {
@@ -715,9 +716,9 @@ class InkTrail {
     let n = top + 1;
     for (let i = this.N - 1; i >= n; i--) if (this.A[i] < this.L[i]) { n = i + 1; break; }
     this.mesh.count = n;
-    this.mesh.instanceMatrix.needsUpdate = true;
+    if (this.mesh.count > 0) this.mesh.instanceMatrix.needsUpdate = true;
   }
-  dispose() { this.mesh.geometry.dispose(); this.mat.dispose(); this.mesh.removeFromParent(); }
+  dispose() { this.mesh.dispose?.(); this.mesh.geometry.dispose(); this.mat.dispose(); this.mesh.removeFromParent(); }
 }
 
 // Swim paths (set polylines → arc-length tables). Plan shape: centripetal Catmull-Rom through the points in xz,
@@ -1655,10 +1656,15 @@ export class Showcase {
     for (const M of L.members.values()) if (M.c) { M.c.dispose?.(); M.c = null; }
     L.members.clear();
     if (L.set) { L.set.dispose(); L.set = null; }
-    for (const f of L.fx) { f.mesh.geometry.dispose(); f.splats.geometry.dispose(); f.rings.geometry.dispose(); }
+    for (const f of L.fx) {
+      for (const m of [f.mesh, f.splats, f.rings]) m.dispose?.();
+      f.mesh.geometry.dispose(); f.splats.geometry.dispose(); f.rings.geometry.dispose();
+    }
     for (const m of L.ink) m.dispose();
-    L.sparks.mesh.geometry.dispose(); L.sparks.mesh.material.dispose();
+    L.sparks.mesh.dispose?.(); L.sparks.mesh.geometry.dispose(); L.sparks.mesh.material.dispose();
     L.trail.dispose();
+    // contact borrows the studio geometry/material; dispose only its per-object instance buffers here.
+    L.contact?.dispose?.();
     L.scene.clear();
   }
 
