@@ -1,0 +1,395 @@
+{
+  "baseCommit": "d5d54d1d37274dfa82467b37b9b8009719783ed3",
+  "sourceSha256": {
+    "netmatch": {
+      "before": "3ff55dd0287ea41d9afbdaa2b10a8b1d4a29c39ed354e3242a1af49b4f3fc76a",
+      "after": "5a08210a2a7e5b1910494b70982f576ff6026340e9fab69834869a2ac0d598e6"
+    },
+    "music": {
+      "before": "cc229d7378ed381503970db339c5c0ce18734e604c62b67afc5109890b6088d5",
+      "after": "2b3ccef7f468dd073b9626ace93261fd18031412291208b835e61b55edbd07fd"
+    }
+  },
+  "voices": {
+    "frames": 3600,
+    "actors": 7,
+    "baseline": {
+      "closures": 99200,
+      "nearQueries": 23333,
+      "starts": 458,
+      "sets": 13124,
+      "stops": 458
+    },
+    "fixed": {
+      "closures": 0,
+      "nearQueries": 23333,
+      "starts": 458,
+      "sets": 13124,
+      "stops": 458
+    },
+    "allLoopCallsAndHandleStatesEqual": true,
+    "callTraceSha256": "14f176c23644c5cd9c24ade6ceebdf5b7e776623b9c2b0aa11fcd8f6f5e3e891"
+  },
+  "impulse": [
+    {
+      "sampleRate": 48000,
+      "seconds": 1.5,
+      "decay": 3.4,
+      "opts": {
+        "pre": 0.012,
+        "seed": 3
+      },
+      "samplesPerChannel": 72000,
+      "baseline": {
+        "exp": 285696,
+        "sin": 0,
+        "cos": 0,
+        "random": 142848
+      },
+      "fixed": {
+        "exp": 142848,
+        "sin": 0,
+        "cos": 0,
+        "random": 142848
+      },
+      "stereoBytesEqual": true,
+      "stereoSha256": "5ee5a28d00dce72a41005da2da9ceb34fdc5266412d63670144fcc7f465c9d44"
+    },
+    {
+      "sampleRate": 44100,
+      "seconds": 1.6,
+      "decay": 3.2,
+      "opts": {},
+      "samplesPerChannel": 70560,
+      "baseline": {
+        "exp": 280476,
+        "sin": 0,
+        "cos": 0,
+        "random": 140238
+      },
+      "fixed": {
+        "exp": 140238,
+        "sin": 0,
+        "cos": 0,
+        "random": 140238
+      },
+      "stereoBytesEqual": true,
+      "stereoSha256": "4cbbe509bbfcca38c3eed2699ec32411ae4d0d8989094408b64ec3233e04dc5d"
+    },
+    {
+      "sampleRate": 96000,
+      "seconds": 0.18,
+      "decay": 0.4,
+      "opts": {
+        "pre": 0,
+        "seed": 19,
+        "bright": 0.4,
+        "dark": 0.03
+      },
+      "samplesPerChannel": 17280,
+      "baseline": {
+        "exp": 69120,
+        "sin": 0,
+        "cos": 0,
+        "random": 34560
+      },
+      "fixed": {
+        "exp": 34560,
+        "sin": 0,
+        "cos": 0,
+        "random": 34560
+      },
+      "stereoBytesEqual": true,
+      "stereoSha256": "58be45955f04927e5b2a7417076cacf3d0524d9a7f4fccdf9f29679c8010b48e"
+    },
+    {
+      "sampleRate": 22050,
+      "seconds": 0.05,
+      "decay": 8,
+      "opts": {
+        "pre": 0.004,
+        "seed": -17,
+        "taps": [
+          [
+            0,
+            0.7
+          ],
+          [
+            0.007,
+            -0.2
+          ]
+        ]
+      },
+      "samplesPerChannel": 1102,
+      "baseline": {
+        "exp": 4056,
+        "sin": 0,
+        "cos": 0,
+        "random": 2028
+      },
+      "fixed": {
+        "exp": 2028,
+        "sin": 0,
+        "cos": 0,
+        "random": 2028
+      },
+      "stereoBytesEqual": true,
+      "stereoSha256": "1a9ce239397c9373474c517a7751185c73f46679ad485a5139ca8a4d378bf126"
+    },
+    {
+      "sampleRate": 8000,
+      "seconds": 0.01,
+      "decay": 3.2,
+      "opts": {
+        "pre": 0.1
+      },
+      "samplesPerChannel": 80,
+      "baseline": {
+        "exp": 0,
+        "sin": 0,
+        "cos": 0,
+        "random": 0
+      },
+      "fixed": {
+        "exp": 0,
+        "sin": 0,
+        "cos": 0,
+        "random": 0
+      },
+      "stereoBytesEqual": true,
+      "stereoSha256": "9e132485d5107211de325a45e7917cbe3e4b5b9cde3e4ee91d7d2102317759ee"
+    },
+    {
+      "sampleRate": 48000,
+      "seconds": 0,
+      "decay": 3.2,
+      "opts": {
+        "pre": 0
+      },
+      "samplesPerChannel": 1,
+      "baseline": {
+        "exp": 4,
+        "sin": 0,
+        "cos": 0,
+        "random": 2
+      },
+      "fixed": {
+        "exp": 2,
+        "sin": 0,
+        "cos": 0,
+        "random": 2
+      },
+      "stereoBytesEqual": true,
+      "stereoSha256": "e6ad6c9a3a3b7658c35bacf6553fcb8ffe34387534a648fe18f875b8f7a86ddb"
+    },
+    {
+      "sampleRate": 16000,
+      "seconds": 0.04,
+      "decay": 1.2,
+      "opts": {
+        "seed": "3",
+        "bright": 0,
+        "dark": 1,
+        "taps": []
+      },
+      "samplesPerChannel": 640,
+      "baseline": {
+        "exp": 1920,
+        "sin": 0,
+        "cos": 0,
+        "random": 960
+      },
+      "fixed": {
+        "exp": 960,
+        "sin": 0,
+        "cos": 0,
+        "random": 960
+      },
+      "stereoBytesEqual": true,
+      "stereoSha256": "5d03963017608b42fb553b246458c4110c8fdde2426b724f254355df10b0edb0"
+    }
+  ],
+  "waves": [
+    {
+      "sharp": 0,
+      "baseline": {
+        "exp": 81920,
+        "sin": 81920,
+        "cos": 81920,
+        "random": 0
+      },
+      "fixed": {
+        "exp": 2048,
+        "sin": 81920,
+        "cos": 81920,
+        "random": 0
+      },
+      "float32CoefficientsEqual": true,
+      "cachedIdentityUnchanged": true,
+      "coefficientSha256": "9767ec778ebccbc4104edd6f69102015bc649b1a479fc9a884a2434ae6510138"
+    },
+    {
+      "sharp": 0.25,
+      "baseline": {
+        "exp": 81920,
+        "sin": 81920,
+        "cos": 81920,
+        "random": 0
+      },
+      "fixed": {
+        "exp": 2048,
+        "sin": 81920,
+        "cos": 81920,
+        "random": 0
+      },
+      "float32CoefficientsEqual": true,
+      "cachedIdentityUnchanged": true,
+      "coefficientSha256": "5e86127226d2d2ef594599cd26b207bb9cbc321d97b30787e7a11e70763a22b3"
+    },
+    {
+      "sharp": 1,
+      "baseline": {
+        "exp": 81920,
+        "sin": 81920,
+        "cos": 81920,
+        "random": 0
+      },
+      "fixed": {
+        "exp": 2048,
+        "sin": 81920,
+        "cos": 81920,
+        "random": 0
+      },
+      "float32CoefficientsEqual": true,
+      "cachedIdentityUnchanged": true,
+      "coefficientSha256": "45a30a4dea088050d35b829658e9ae96dc15872abd09dfa96b095dfb24a69172"
+    },
+    {
+      "sharp": 4,
+      "baseline": {
+        "exp": 81920,
+        "sin": 81920,
+        "cos": 81920,
+        "random": 0
+      },
+      "fixed": {
+        "exp": 2048,
+        "sin": 81920,
+        "cos": 81920,
+        "random": 0
+      },
+      "float32CoefficientsEqual": true,
+      "cachedIdentityUnchanged": true,
+      "coefficientSha256": "755a13e06880d4ed92df0a72297d2906c1a7193d59f14fce243aae90f4401ed7"
+    },
+    {
+      "sharp": 7,
+      "baseline": {
+        "exp": 81920,
+        "sin": 81920,
+        "cos": 81920,
+        "random": 0
+      },
+      "fixed": {
+        "exp": 2048,
+        "sin": 81920,
+        "cos": 81920,
+        "random": 0
+      },
+      "float32CoefficientsEqual": true,
+      "cachedIdentityUnchanged": true,
+      "coefficientSha256": "a500db4f68394c96317436ad3ea93d23a7c1ea2fe5d1dcff451f72c59f6473a6"
+    },
+    {
+      "sharp": 9,
+      "baseline": {
+        "exp": 81920,
+        "sin": 81920,
+        "cos": 81920,
+        "random": 0
+      },
+      "fixed": {
+        "exp": 2048,
+        "sin": 81920,
+        "cos": 81920,
+        "random": 0
+      },
+      "float32CoefficientsEqual": true,
+      "cachedIdentityUnchanged": true,
+      "coefficientSha256": "f337ec67d999c4480be9311a2a15031b96be3147ca7f3dfe483280ea27e4baf3"
+    },
+    {
+      "sharp": 12,
+      "baseline": {
+        "exp": 81920,
+        "sin": 81920,
+        "cos": 81920,
+        "random": 0
+      },
+      "fixed": {
+        "exp": 2048,
+        "sin": 81920,
+        "cos": 81920,
+        "random": 0
+      },
+      "float32CoefficientsEqual": true,
+      "cachedIdentityUnchanged": true,
+      "coefficientSha256": "4f6faec190e0373c812fbb37116d7e322b6f7179c3a0b544047a1941057a0b1d"
+    },
+    {
+      "sharp": 25,
+      "baseline": {
+        "exp": 81920,
+        "sin": 81920,
+        "cos": 81920,
+        "random": 0
+      },
+      "fixed": {
+        "exp": 2048,
+        "sin": 81920,
+        "cos": 81920,
+        "random": 0
+      },
+      "float32CoefficientsEqual": true,
+      "cachedIdentityUnchanged": true,
+      "coefficientSha256": "3c56bda6c0d44fcf0e65b50ad8ab6152e2e7e4e9d5cb67d2033b7dcbe9206f6b"
+    },
+    {
+      "sharp": 80,
+      "baseline": {
+        "exp": 81920,
+        "sin": 81920,
+        "cos": 81920,
+        "random": 0
+      },
+      "fixed": {
+        "exp": 2048,
+        "sin": 81920,
+        "cos": 81920,
+        "random": 0
+      },
+      "float32CoefficientsEqual": true,
+      "cachedIdentityUnchanged": true,
+      "coefficientSha256": "050e995e4e8a624f30a1267342f46d32111f1b72da7258fb2116b86bd3e973c0"
+    },
+    {
+      "sharp": -2,
+      "baseline": {
+        "exp": 81920,
+        "sin": 81920,
+        "cos": 81920,
+        "random": 0
+      },
+      "fixed": {
+        "exp": 2048,
+        "sin": 81920,
+        "cos": 81920,
+        "random": 0
+      },
+      "float32CoefficientsEqual": true,
+      "cachedIdentityUnchanged": true,
+      "coefficientSha256": "46c68431d38eadcf4e03ad8b170a0250031c44c5a4eed3c8d73ba890ec789ae4"
+    }
+  ],
+  "scope": "Actual JS functions in Node VM. Audio handles/context stubbed; compare call order, Float32 impulse bytes and PeriodicWave coefficients. No audio playback, OfflineAudioContext, mobile/FPS/GC timing measurement."
+}
