@@ -19,6 +19,28 @@ Q13はori、校正不成立、rrA/rrBのdegree/radianの6ケースを使用。�
 
 Q14では時間順のlate/gap配列を並べ替えず、作業配列にコピーしてから従来と同じ数値順でsortする。ギャップの上下限、百分位の選択位置、60サンプルの窓、遅延の計算式は同じ。空配列・重複・非有限値などの百分位20ケースも一致。作業配列は最大7×60個の数値参照をNetMatch内に保持し、試合終了後はそのインスタンスとともに回収される。
 
+## 第2回の反映：Q15〜Q17
+
+| ID | 修正 | 確認した効果と出力 |
+|---|---|---|
+| Q15 | [`net/netmatch.js`](../inkwave-public/src/net/netmatch.js)：リモート音声のwant関数と3コールバックをクラスメソッドと直接呼出へ移す | 7actor・3,600フレームでソース上の一時関数生成99,200→0回。近傍判定23,333回、開始458回、設定13,124回、停止458回と全引数・順序・ハンドル状態が一致。 |
+| Q16 | [`audio/music.js`](../inkwave-public/src/audio/music.js)：左右の残響で同じ包絡線・減衰係数を1回計算 | 実際の初期化条件48kHz・1.5秒でexp 285,696→142,848回。7ケースの左右Float32データが全バイト一致。各耳の乱数列・フィルタ状態・初期反射は維持。 |
+| Q17 | [`audio/music.js`](../inkwave-public/src/audio/music.js)：strokeWaveの包絡線を40倍音で共有して計算 | 初回生成のexp 81,920→2,048回。sin/cos各81,920回は維持。sharp 7/9（実際の使用値）を含む10ケースでFloat32係数とキャッシュの同一性が一致。 |
+
+Q15は相手の武器切替、生死・距離・所有権の変化、音声システム不在、ハンドル取得不成立を含めた。音量、ピッチ、位置、停止fadeとその計算タイミングは同じ。
+
+Q16は2つの独立した乱数生成器を残し、サンプル時刻ごとに両耳を処理する。追加のサンプル配列は使わない。サンプルレート8〜96kHz、0長・preが長さ以上、任意のtap、文字列seedも確認した。
+
+Q17は各倍音への加算順を従来と同じサンプル順に保ち、Float64で蓄積してからFloat32へ格納する。生成中だけ41要素×2本のFloat64作業配列（計656 bytes）を使う。キャッシュされる波形の長さ・係数・形式は同じで、再生中の処理を増やさない。この小さな一時メモリ増加は伴うため、メモリ使用量を1 byteも増やさないという意味の「完全にコスト0」ではない。
+
+第2回の[比較コード](inkwave-audio-cpu-probe-2026-09-30.mjs)と[証拠JSON](inkwave-audio-cpu-evidence-2026-09-30.json)を保存。音声APIを記録する模擬ハンドル/コンテキストで検証しており、実際の再生や聴感測定はしていない。
+
+```sh
+node reports/inkwave-audio-cpu-probe-2026-09-30.mjs
+node --check inkwave-public/src/audio/music.js
+node --check inkwave-public/src/net/netmatch.js
+```
+
 ## 再現方法・測定の範囲
 
 [比較用コード](inkwave-input-network-probe-2026-09-30.mjs)と[証拠JSON](inkwave-input-network-evidence-2026-09-30.json)を保存した。
