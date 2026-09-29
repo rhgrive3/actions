@@ -1,0 +1,202 @@
+{
+ "eye_keep_mm": [
+  3.0,
+  8.0
+ ],
+ "lips": {
+  "cy": -65.0,
+  "rx": 18.0,
+  "ry": 7.0,
+  "fade": 0.8
+ },
+ "steps": [
+  {
+   "name": "lower_face_smooth",
+   "kind": "smooth",
+   "factor": 0.5,
+   "iters": 60,
+   "protect_lips": true,
+   "bumps": [
+    {
+     "centre": [
+      30.0,
+      -62.0
+     ],
+     "rx": 34.0,
+     "ry": 40.0,
+     "x_fade": [
+      9.0,
+      18.0
+     ],
+     "front_only": false
+    }
+   ]
+  },
+  {
+   "name": "cheek_forward",
+   "kind": "warp",
+   "vec_mm": [
+    0,
+    0,
+    4.5
+   ],
+   "weight_smooth": 10,
+   "bumps": [
+    {
+     "centre": [
+      30.0,
+      -58.0
+     ],
+     "rx": 30.0,
+     "ry": 34.0,
+     "x_fade": [
+      8.0,
+      18.0
+     ]
+    }
+   ],
+   "keep_q34": true,
+   "margin_px": 0.3
+  },
+  {
+   "name": "under_eye_curve",
+   "kind": "arc_v",
+   "mm_sign": 1,
+   "x": [
+    28.0,
+    52.0
+   ],
+   "fade": 5.0,
+   "ya": -25.5,
+   "yb": -42.0,
+   "p": 2.0,
+   "weight_smooth": 25,
+   "eye_keep_mm": [
+    1.5,
+    4.0
+   ]
+  },
+  {
+   "name": "bridge_ridge",
+   "kind": "warp",
+   "vec_mm": [
+    0,
+    0,
+    -3.0
+   ],
+   "weight_smooth": 15,
+   "bumps": [
+    {
+     "centre": [
+      0.0,
+      -18.0
+     ],
+     "rx": 1000.0,
+     "ry": 1000.0,
+     "ridge_sigma": 11.0,
+     "x_out": [
+      21.0,
+      26.0
+     ],
+     "y_band": [
+      -28.0,
+      -12.0,
+      12.0
+     ]
+    }
+   ],
+   "eye_keep_mm": [
+    0.8,
+    2.5
+   ]
+  },
+  {
+   "name": "nose_sides",
+   "kind": "displace",
+   "mm": 1.8,
+   "protect_lips": false,
+   "bumps": [
+    {
+     "centre": [
+      6.0,
+      -45.0
+     ],
+     "rx": 7.0,
+     "ry": 8.0,
+     "x_fade": [
+      1.5,
+      5.0
+     ],
+     "lateral": [
+      0.3,
+      0.7
+     ]
+    }
+   ]
+  },
+  {
+   "name": "alae_wider",
+   "kind": "warp",
+   "vec_mm": [
+    1.2,
+    0,
+    0
+   ],
+   "protect_lips": false,
+   "bumps": [
+    {
+     "centre": [
+      9.0,
+      -50.0
+     ],
+     "rx": 5.0,
+     "ry": 5.0
+    }
+   ]
+  },
+  {
+   "name": "jaw_round",
+   "kind": "smooth",
+   "factor": 0.5,
+   "iters": 40,
+   "protect_lips": false,
+   "bumps": [
+    {
+     "centre": [
+      52.0,
+      -85.0,
+      40.0
+     ],
+     "rx": 22.0,
+     "ry": 18.0,
+     "rz": 40.0,
+     "front_only": false
+    }
+   ]
+  },
+  {
+   "name": "jaw_mid_out",
+   "kind": "displace",
+   "mm": 1.8,
+   "weight_smooth": 15,
+   "protect_lips": false,
+   "bumps": [
+    {
+     "centre": [
+      56.0,
+      -80.0,
+      35.0
+     ],
+     "rx": 14.0,
+     "ry": 13.0,
+     "rz": 35.0,
+     "front_only": false,
+     "lateral": [
+      0.45,
+      0.75
+     ]
+    }
+   ]
+  }
+ ]
+}
