@@ -1,0 +1,118 @@
+name: Hex live hotfix browser probe
+on:
+  push:
+    paths:
+      - .github/workflows/hex-live-hotfix-browser.yml
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: rhgrive3/hex-ida
+          ref: hotfix/live-2213-runtime-worker
+          path: hex
+      - name: Install dependencies
+        working-directory: hex
+        timeout-minutes: 4
+        run: npm ci --silent --no-audit --no-fund >/tmp/npm.log 2>&1
+      - name: Install browsers
+        working-directory: hex
+        timeout-minutes: 5
+        run: npx playwright install --with-deps chromium webkit >/tmp/pw.log 2>&1
+      - name: Run live hotfix probe
+        working-directory: hex
+        timeout-minutes: 3
+        shell: bash
+        run: |
+          cat > /tmp/live-hotfix.mjs <<'NODE'
+          import { readFile } from 'node:fs/promises';
+          import { chromium, webkit } from 'playwright';
+          const template=await readFile('userscript/hex-live-worker-hotfix.user.js','utf8');
+          const CHATGPT='https://chatgpt.com';
+          const WORKER='https://ida.rhgrive.workers.dev';
+          const PARENT=CHATGPT+'/__hex_live_hotfix__';
+          const NONCE='hex-live-hotfix';
+          const CSP=[
+            "default-src 'self'",
+            "script-src 'nonce-"+NONCE+"' 'self' blob: 'wasm-unsafe-eval'",
+            "script-src-elem 'nonce-"+NONCE+"' 'self' blob:",
+            "style-src 'self' 'unsafe-inline' blob:",
+            "connect-src 'self' "+WORKER,
+            "frame-src 'self' https://*.embed.chatgpt.site https://*.web-sandbox.oaiusercontent.com",
+            "worker-src 'self' blob:",
+            "img-src 'self' data: blob:",
+          ].join('; ');
+          const results=[];
+          for (const [name,type] of [['chromium',chromium],['webkit',webkit]]) {
+            const browser=await type.launch({headless:true,args:name==='chromium'?['--no-sandbox']:[]});
+            const context=await browser.newContext({ignoreHTTPSErrors:true,viewport:{width:1024,height:768},locale:'ja-JP'});
+            await context.addInitScript({content:"addEventListener('DOMContentLoaded',()=>{"+template+"\n},{once:true});"});
+            const page=await context.newPage();
+            const errors=[];
+            page.on('pageerror',e=>errors.push('pageerror:'+e.message));
+            page.on('requestfailed',r=>errors.push('requestfailed:'+r.url()+':'+(r.failure()?.errorText||'')));
+            await context.route('**/*', async route => {
+              const req=route.request(), url=new URL(req.url());
+              if (req.url()===PARENT) return route.fulfill({
+                status:200,contentType:'text/html; charset=utf-8',
+                headers:{'content-security-policy':CSP,'cache-control':'no-store'},
+                body:'<!doctype html><html><head><meta charset="utf-8"><script nonce="'+NONCE+'">globalThis.__CHATGPT_TEST__=1<\/script></head><body><div id="prompt-textarea" role="textbox" contenteditable="true"></div><button data-testid="send-button">Send</button></body></html>'
+              });
+              if (url.origin===WORKER || ['blob:','data:','about:'].includes(url.protocol)) return route.continue();
+              return route.abort('blockedbyclient');
+            });
+            try {
+              await page.goto(PARENT,{waitUntil:'domcontentloaded',timeout:45000});
+              const deadline=Date.now()+45000; let child=null;
+              while(Date.now()<deadline){
+                const h=await page.$('#hex-userscript-iframe');
+                const f=h?await h.contentFrame():null;
+                if(f){
+                  try{
+                    if(await f.evaluate(()=>!!globalThis.__app&&!!globalThis.__HEX_CHATGPT_BRIDGE__)){child=f;break;}
+                  }catch{}
+                }
+                const loader=await page.evaluate(()=>document.getElementById('hex-secure-loader')?.textContent||'').catch(()=> '');
+                if(loader.includes('failed')) throw new Error(loader);
+                await page.waitForTimeout(100);
+              }
+              if(!child) throw new Error('sandbox readiness timeout');
+              const probe=await child.evaluate(async()=>{
+                const worker=new Worker(new URL('https://hex.invalid/js/worker.js'));
+                try{return await new Promise(resolve=>{
+                  const timer=setTimeout(()=>resolve({ok:false,error:'timeout'}),20000);
+                  worker.onmessage=e=>{const d=e.data;if(!d||d.id!==991)return;clearTimeout(timer);resolve(d.t==='ok'?{ok:d.result?.ok===true,result:d.result||null}:{ok:false,error:d.error||d.t});};
+                  worker.onerror=e=>{clearTimeout(timer);resolve({ok:false,error:e.message||e.error?.message||'worker error'});};
+                  worker.postMessage({t:'probe',id:991,epoch:0});
+                });}finally{worker.terminate();}
+              });
+              results.push({browser:name,ready:true,probe,errors:errors.slice(-8)});
+            } catch(e) {
+              const loader=await page.evaluate(()=>document.getElementById('hex-secure-loader')?.textContent||null).catch(()=>null);
+              results.push({browser:name,ready:false,error:String(e?.message||e),loader,errors:errors.slice(-8)});
+            } finally {await context.close();await browser.close();}
+          }
+          console.log(JSON.stringify(results,null,2));
+          if(results.some(r=>!r.ready||r.probe?.ok!==true)) process.exitCode=1;
+          NODE
+          set +e
+          node /tmp/live-hotfix.mjs > /tmp/live-hotfix-result.json 2>/tmp/live-hotfix-stderr.txt
+          code=$?
+          cp /tmp/live-hotfix-result.json live-hotfix-result.json
+          if [[ $code -ne 0 ]]; then
+            tail -n 40 /tmp/live-hotfix-stderr.txt > live-hotfix-error.txt
+            exit $code
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hex-live-hotfix-browser
+          path: |
+            hex/live-hotfix-result.json
+            hex/live-hotfix-error.txt
+          if-no-files-found: ignore
+          retention-days: 1
