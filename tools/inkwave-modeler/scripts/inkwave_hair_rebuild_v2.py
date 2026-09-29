@@ -22,9 +22,10 @@ Anchor coordinates come from two sources, never from the old HAIR mesh:
 blender -b blender/INKWAVE_HAIR_REBUILD_CANDIDATE.blend --python-exit-code 1 \
   --python scripts/inkwave_hair_rebuild_v2.py -- --out blender/INKWAVE_HAIR_REBUILD_CANDIDATE.blend [--stage h1]
 """
-import argparse, math, sys
+import argparse, json, math, sys
 from pathlib import Path
 import bpy, bmesh
+import numpy as np
 from mathutils import Vector
 
 V2 = 'HAIR_REBUILD_V2'
@@ -136,9 +137,9 @@ def gradient_hair_material(name, root_color, tip_color, tip_start=0.6):
         bsdf.inputs['Coat Roughness'].default_value = 0.15
     links.new(bsdf.outputs['BSDF'], out.inputs['Surface'])
     ramp = nodes.new('ShaderNodeValToRGB'); ramp.location = (-150, 0)
-    ramp.color_ramp.elements[0].position = tip_start * 0.55
+    ramp.color_ramp.elements[0].position = tip_start - 0.2
     ramp.color_ramp.elements[0].color = (*root_color, 1)
-    ramp.color_ramp.elements[1].position = min(tip_start + 0.15, 0.98)
+    ramp.color_ramp.elements[1].position = min(tip_start + 0.12, 0.98)
     ramp.color_ramp.elements[1].color = (*tip_color, 1)
     links.new(ramp.outputs['Color'], bsdf.inputs['Base Color'])
     uvnode = nodes.new('ShaderNodeUVMap'); uvnode.location = (-550, 0); uvnode.uv_map = 'UVMap'
@@ -187,109 +188,123 @@ HEAD = dict(
 )
 
 
-def build_tail(col, side, bevel_paddle, material):
-    """side: +1 = character's left (world +X), -1 = character's right.
-    Centreline X/Z from front.jpg pixel picks (inkwave_ref_calibration.py); Y is a modelled
-    drape: the tail leaves the scalp near the ear/occiput, swings just in front of the
-    shoulder line, then the flared tip sits slightly forward of the body -- checked against
-    left.jpg/persp.jpg for plausible volume, not pixel-matched (different pose, see module
-    docstring)."""
-    # front.jpg pixel picks -> world X,Z (side==+1 picks; mirrored for side==-1)
-    pix = [(280, 60), (300, 90), (330, 118), (365, 148), (395, 172), (415, 192), (424, 207), (410, 222), (372, 226)]
+def build_tails_hull(col, material, params, points_path, decimate_ratio=0.25):
+    """The twin tails as ONE measured volume: inkwave_hair_rebuild_v2_tail_hull.npy holds the
+    6 mm voxel centres left by space carving against the hair silhouettes of front/back/left
+    (analysis/hair-rebuild/carve.py: carve where a view shows background, or shows the body in
+    front of the voxel; keep only voxels seen as hair in >= 2 views; round the cross-section).
+    Turned into a surface with built-in Geometry Nodes (Mesh to Points -> Points to Volume ->
+    Volume to Mesh), then built-in Smooth and Decimate. Root->tip colour fraction t comes from
+    the measured centre lines (tail_bundle / tail_lobes) via the built-in KDTree, written to
+    UVMap as V = 1 - t (gradient_hair_material inverts V)."""
+    from mathutils.kdtree import KDTree
+    pts = np.load(points_path)
+    me = bpy.data.meshes.new('HAIR2_tails')
+    me.vertices.add(len(pts)); me.vertices.foreach_set('co', pts.ravel())
+    ob = bpy.data.objects.new('HAIR2_tails', me); col.objects.link(ob)
+    ng = bpy.data.node_groups.new('HAIR2_hull_to_mesh', 'GeometryNodeTree')
+    ng.interface.new_socket('Geometry', in_out='INPUT', socket_type='NodeSocketGeometry')
+    ng.interface.new_socket('Geometry', in_out='OUTPUT', socket_type='NodeSocketGeometry')
+    n, L = ng.nodes, ng.links
+    gi, go = n.new('NodeGroupInput'), n.new('NodeGroupOutput')
+    m2p = n.new('GeometryNodeMeshToPoints'); m2p.inputs['Radius'].default_value = 0.0055
+    p2v = n.new('GeometryNodePointsToVolume')
+    p2v.inputs['Resolution Mode'].default_value = 'Size'; p2v.inputs['Voxel Size'].default_value = 0.004
+    p2v.inputs['Radius'].default_value = 0.0055
+    v2m = n.new('GeometryNodeVolumeToMesh'); v2m.inputs['Threshold'].default_value = 0.3
+    L.new(gi.outputs[0], m2p.inputs['Mesh']); L.new(m2p.outputs['Points'], p2v.inputs['Points'])
+    L.new(p2v.outputs['Volume'], v2m.inputs['Volume']); L.new(v2m.outputs['Mesh'], go.inputs[0])
+    bpy.context.view_layer.objects.active = ob
+    for name, kind, setup in (('hull', 'NODES', lambda m: setattr(m, 'node_group', ng)),
+                              ('smooth', 'SMOOTH', lambda m: (setattr(m, 'factor', 0.9), setattr(m, 'iterations', 40))),
+                              ('decimate', 'DECIMATE', lambda m: setattr(m, 'ratio', decimate_ratio))):
+        m = ob.modifiers.new(name, kind); setup(m)
+        bpy.ops.object.modifier_apply(modifier=name)
+    bpy.data.node_groups.remove(ng)
+    B, tie = params['tail_bundle'], np.array(params['tie'])
+    samples = []
+    for sx in (1, -1):
+        bp = np.r_[[tie * [sx, 1, 1]], np.c_[sx * np.array(B['x']), B['y'], B['z']]]
+        bl = np.r_[0, np.cumsum(np.linalg.norm(np.diff(bp, axis=0), axis=1))]
+        for t in params['tail_lobes']:
+            lp = np.c_[sx * np.array(t['x']), t['y'], t['z']]
+            ll = bl[-1] + np.r_[0, np.cumsum(np.linalg.norm(np.diff(lp, axis=0), axis=1))]
+            samples += [(p, l / ll[-1]) for p, l in list(zip(bp, bl)) + list(zip(lp, ll))]
+    kd = KDTree(len(samples))
+    for i, (p, _) in enumerate(samples):
+        kd.insert(Vector(p), i)
+    kd.balance()
+    tv = np.array([samples[kd.find(v.co)[1]][1] for v in ob.data.vertices])
+    loops = np.empty(len(ob.data.loops), int); ob.data.loops.foreach_get('vertex_index', loops)
+    uvl = ob.data.uv_layers.get('UVMap') or ob.data.uv_layers.new(name='UVMap')
+    uv = np.zeros((len(loops), 2)); uv[:, 0] = 0.5; uv[:, 1] = 1 - tv[loops]
+    uvl.data.foreach_set('uv', uv.ravel())
+    ob.data.materials.clear(); ob.data.materials.append(material)
+    for poly in ob.data.polygons:
+        poly.use_smooth = True
+    return ob
+
+
+HEAD_MESHES = ['HEAD_face', 'HEAD_skin', 'HEAD_skin_02', 'HEAD_skin_03', 'HEAD_skin_04',
+               'HEAD_skin_05', 'HEAD_skin_06', 'HEAD_skin_07', 'HEAD_skin_08', 'HEAD_skin_09']
+
+
+def head_bvh():
+    from mathutils.bvhtree import BVHTree
+    verts, polys = [], []
+    for n in HEAD_MESHES:
+        o = bpy.data.objects.get(n)
+        if not o:
+            continue
+        base = len(verts)
+        verts += [o.matrix_world @ v.co for v in o.data.vertices]
+        polys += [[i + base for i in f.vertices] for f in o.data.polygons]
+    return BVHTree.FromPolygons(verts, polys)
+
+
+def build_bangs(col, bevel, material, params, bvh):
+    """Front locks, all positions measured (params['bangs'], see its "source"). Roots sit on
+    the scalp at the part (downward ray cast onto the head), tips at the picked front.jpg
+    pixels; the intermediate points are pushed off the skull along the surface normal
+    (BVH nearest point), so each lock follows the head instead of cutting through it."""
     from inkwave_ref_calibration import px_to_world_partial
-    xz = [px_to_world_partial('front', px, py) for px, py in pix]
-    # One hand-placed point before the pixel-derived sweep: the scalp root (near
-    # occiput_upper, head_probe.py). Z then comes ONLY from the root + front.jpg picks, so it
-    # decreases smoothly all the way to the tip -- no separate "up and over" apex point, which
-    # produced a hook that crossed the face in the side render.
-    xs = [0.03] + [v for _, v, _ in xz]
-    zs = [1.460] + [z for _, _, z in xz]
-    # Depth: a real, single-humped S-curve, not a flat sheet in Y. It bulges BACK first (the
-    # poof the reference shows just past the tie, also visible bulging in left.jpg/persp.jpg),
-    # then arcs forward past the shoulder as it sweeps out and down, easing back slightly at
-    # the flared tip (the reference's tip curls rather than pointing straight out). left.jpg is
-    # a different pose (see module docstring) so this is a modelled compromise, not a pixel
-    # fit; it is sized to give genuine side-view volume, arcing clear of the face, instead of
-    # the flat "paddle" the brief warns against.
-    # Stays solidly BEHIND the head plane (positive Y) all the way down to shoulder height
-    # (index 4, Z~1.14) -- the earlier version crossed to the front while Z was still at
-    # face height, which reads as a hook cutting across the cheek in the side render. The
-    # front-ward sweep now only happens below the shoulder, clear of the face.
-    ys = [0.070, 0.085, 0.090, 0.080, 0.060, 0.020, -0.020, -0.050, -0.062, -0.040]
-    # The reference's tails are a fairly even tube that FLARES into a wide, blunt, bulbous
-    # fin near the tip (not a point) -- radius rises almost to the end, then only rounds off
-    # over the last point.
-    radii = [0.010, 0.022, 0.030, 0.038, 0.046, 0.054, 0.064, 0.076, 0.082, 0.055]
-    assert len(xs) == len(zs) == len(ys) == len(radii) == 10
-    pts = [(side * x, y, z) for x, y, z in zip(xs, ys, zs)]
-    # VECTOR handles: the path bends sharply near the root (poof back, then out and down), and
-    # Blender's AUTO handle smoothing overshoots that turn into a loop that hooks across the
-    # face in the side render. Straight segments between 10 close-set points avoid that.
-    name = f'HAIR2_tail_{"L" if side > 0 else "R"}_main'
-    obj = strand(name, col, pts, radii, bevel_paddle, material, handle='VECTOR')
-    # A slimmer inner strand riding just inside the main paddle for layered depth (the old
-    # library's "second_club" idea, rebuilt as its own curve, not a copy of old geometry).
-    pts2 = [(side * (x - 0.006), y + 0.01, z + 0.006) for x, y, z in zip(xs, ys, zs)]
-    radii2 = [r * 0.72 for r in radii]
-    name2 = f'HAIR2_tail_{"L" if side > 0 else "R"}_inner'
-    obj2 = strand(name2, col, pts2, radii2, bevel_paddle, material, handle='VECTOR')
-    return obj, obj2
-
-
-def build_bangs(col, bevel_thin, material):
-    """A fan of thin fringe strands, centre-parted, matching the many-thin-spikes look of
-    the reference (not the old library's 6 thick locks). Hairline anchors from head_probe;
-    tip spread/length read off front.jpg's fringe silhouette (x about 165-290, y 15-105)."""
-    from inkwave_ref_calibration import px_to_world_partial
     objs = []
-    # (root side offset along hairline as a 0..1 fraction from centre to temple, tip pixel, length factor)
-    plan = [
-        (0.04, (230, 15), 1.00), (0.10, (238, 22), 0.85), (0.16, (245, 30), 0.95),
-        (0.22, (250, 38), 0.80), (0.27, (256, 45), 1.10), (0.33, (262, 53), 0.85),
-        (0.38, (268, 62), 0.95), (0.44, (273, 72), 1.05), (0.50, (278, 82), 0.90),
-        (0.56, (282, 92), 1.10), (0.62, (285, 100), 0.85), (0.68, (289, 96), 1.00),
-        (0.74, (292, 90), 0.90), (0.80, (295, 80), 1.05), (0.86, (298, 72), 0.75),
-    ]
-    for i, (frac, (tpx, tpy), lf) in enumerate(plan):
-        for side in (1, -1):
-            axis, tx, tz = px_to_world_partial('front', tpx, tpy)
-            tx *= side
-            root = (side * (0.006 + frac * 0.10), HEAD['hairline_c'][1] + 0.006, HEAD['hairline_u'][2] - frac * 0.012)
-            mid = ((root[0] + tx) / 2, root[1] - 0.028 * lf, (root[2] + tz) / 2 - 0.01)
-            tip = (tx, root[1] - 0.050 * lf, tz - 0.015 * lf)
-            pts = [root, mid, tip]
-            radii = [0.014, 0.011, 0.003]
-            name = f'HAIR2_bang_{"L" if side > 0 else "R"}_{i:02d}'
-            objs.append(strand(name, col, pts, radii, bevel_thin, material, handle='VECTOR'))
-    return objs
 
+    def front_xz(px):
+        _, x, z = px_to_world_partial('front', *px)
+        return x, z
 
-def build_temple_locks(col, bevel_thin, material):
-    objs = []
-    for side, key in [(1, 'templeL'), (-1, 'templeR')]:
-        root = HEAD[key]
-        low = HEAD[key + '_low']
-        tip = (root[0] * 1.05, root[1] - 0.04, low[2] - 0.045)
-        pts = [root, ((root[0] + low[0]) / 2, root[1] - 0.02, (root[2] + low[2]) / 2), low, tip]
-        radii = [0.012, 0.014, 0.012, 0.004]
-        objs.append(strand(f'HAIR2_temple_{"L" if side > 0 else "R"}', col, pts, radii, bevel_thin, material))
-    return objs
+    def in_front_of_face(x, z, gap):
+        hit = bvh.ray_cast(Vector((x, -2.0, z)), Vector((0, 1, 0)))[0]
+        if hit is not None:
+            return hit.y - gap
+        q = bvh.find_nearest(Vector((x, 0.0, z)))[0]
+        return q.y - gap
 
+    def off_skull(p, gap):
+        q, n, _, _ = bvh.find_nearest(p)          # n = outward face normal of the head mesh
+        inside_or_close = n.dot(p - q) < gap
+        return q + n * gap if inside_or_close else p
 
-def build_crown_poofs(col, bevel_thin, material):
-    """Short thick curls giving volume where each tail leaves the scalp (the puffed
-    crown seen in front.jpg/left.jpg above each tie), independent of the tail curves."""
-    objs = []
-    for side in (1, -1):
-        # Monotonic up-and-slightly-out path (VECTOR handles): the previous version doubled
-        # back in Z after the apex, and AUTO-handle smoothing turned that reversal into a loop
-        # big enough to read as a hook in the side render.
-        root = (side * 0.02, 0.03, 1.495)
-        mid = (side * 0.045, 0.03, 1.535)
-        apex = (side * 0.065, 0.015, 1.565)
-        pts = [root, mid, apex]
-        radii = [0.038, 0.055, 0.032]
-        objs.append(strand(f'HAIR2_poof_{"L" if side > 0 else "R"}', col, pts, radii, bevel_thin, material, handle='VECTOR'))
+    for lock in params['bangs']['locks']:
+        r = lock['radius']
+        rx, _ = front_xz(lock['root_px'])
+        hit = bvh.ray_cast(Vector((rx, -0.01, 2.0)), Vector((0, 0, -1)))
+        root = hit[0] + hit[1] * 0.004
+        tx, tz = front_xz(lock['tip_px'])
+        if 'side_tip_px' in lock:
+            _, ty, _ = px_to_world_partial('left', *lock['side_tip_px'])
+        else:
+            ty = in_front_of_face(tx, tz, r[3] + 0.008)
+        tip = Vector((tx, ty, tz))
+        if 'mid_px' in lock:
+            mx, mz = front_xz(lock['mid_px'])
+            mid = Vector((mx, in_front_of_face(mx, mz, r[2] + 0.008), mz))
+        else:
+            mid = off_skull(root.lerp(tip, 0.55), r[2] + 0.006)
+        p1 = off_skull(root.lerp(mid, 0.45), r[1] + 0.006)
+        pts = [tuple(root), tuple(p1), tuple(mid), tuple(tip)]
+        objs.append(strand(f'HAIR2_bang_{lock["name"]}', col, pts, r, bevel, material, resolution=8))
     return objs
 
 
@@ -335,26 +350,23 @@ def main():
     col = get_collection()
     clear_collection(col)
 
-    paddle = oval_profile('HAIR2_PROFILE_paddle', 1.0, 0.44, n=14)
-    thin = round_profile('HAIR2_PROFILE_thin', 1.0, n=8)
+    params = json.loads((Path(__file__).resolve().parent / 'inkwave_hair_rebuild_v2_params.json').read_text())
+    paddle = round_profile('HAIR2_PROFILE_paddle', 1.0, n=16)
 
-    # Root teal -> tip lime, matching the reference's colouring (see docs/hair-rebuild-v2).
-    mat_hair = gradient_hair_material('HAIR2_GRADIENT', (0.05, 0.42, 0.46), (0.72, 0.86, 0.30), tip_start=0.62)
+    # Root teal -> tip lime. Colours = mean linear RGB of the teal / lime hair pixels of front.jpg
+    # (measured, highlights included); the switch sits on the fins (root->tip fraction 0.5-0.82).
+    mat_hair = gradient_hair_material('HAIR2_GRADIENT', (0.093, 0.314, 0.319), (0.655, 0.79, 0.286), tip_start=0.80)
     mat_scalp = clay_material('HAIR2_CLAY_scalp', (0.06, 0.32, 0.36))
 
-    build_tail(col, +1, paddle, mat_hair)
-    build_tail(col, -1, paddle, mat_hair)
-    build_bangs(col, thin, mat_hair)
-    build_temple_locks(col, thin, mat_hair)
-    build_crown_poofs(col, thin, mat_hair)
-    cap = build_scalp_cap(col, mat_scalp)
+    build_tails_hull(col, mat_hair, params, Path(__file__).resolve().parent / 'inkwave_hair_rebuild_v2_tail_hull.npy')
+    build_bangs(col, paddle, mat_hair, params, head_bvh())
+    build_scalp_cap(col, mat_scalp)
 
     for o in list(col.objects):
         if o.type == 'CURVE':
             convert_to_mesh(o)
 
-    for p in (paddle, thin):
-        bpy.data.objects.remove(p, do_unlink=True)
+    bpy.data.objects.remove(paddle, do_unlink=True)
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
     bpy.ops.wm.save_as_mainfile(filepath=str(args.out))

@@ -1,37 +1,46 @@
-# INKWAVE hair -- full reconstruction (H2), 2026-09-29
+# INKWAVE hair -- full reconstruction, 2026-09-29 (rev 3: measured)
 
-Status: **H2, stopped for the visual gate.** Not merged, not exported, production master and
-production GLBs untouched. This is a from-zero rebuild, not a nudge of the old mesh -- see
-"Why a rebuild, not another refinement pass" below for the evidence that made that the right
-call. H1 (blockout, grey clay) was shown to the user first; this pass adds the root-to-tip
-colour, denser/fuller bangs, and bigger crown/scalp coverage, per their go-ahead to continue
-in this direction.
+Status: **stopped for the visual gate.** Not merged, not exported; production master and
+production GLBs untouched. Rev 1-2 (hand-placed curves) produced a different hairstyle and were
+rejected by the user; rev 3 replaces them with a measured reconstruction.
 
-### Known-broken, left for the next pass
+## Rev 3 method (all measured from blender/references/*.jpg)
 
-A procedural polka-dot shader (Voronoi cell pattern, built-in nodes, no baked PNG) was built
-and its node graph verified correct link-by-link, but it produced **no visible change** in
-render across several very different Voronoi scales -- a real bug, not a tuning issue, that
-wasn't found in the time available. It was removed rather than shipped non-functional. The
-tip currently has the colour gradient and a soft emissive glow but no dots.
+1. `analysis/hair-rebuild/hairmask.py`: hair mask per view = reference person silhouette minus our
+   body/clothes rendered through the validated camera (`refcam.py`, same constants as
+   `scripts/inkwave_blender_import.py:set_camera`), plus hair-coloured pixels over the head.
+2. `render_body_depth.py`: body depth per pixel (BVH rays).
+3. `carve.py`: space carving (visual hull) of the twin tails at 6 mm: carve where a view shows
+   background, or shows the body in front of the voxel; keep voxels seen as hair in >= 2 views;
+   round the cross-section (two-view elliptical test). Output
+   `scripts/inkwave_hair_rebuild_v2_tail_hull.npy`.
+4. `scripts/inkwave_hair_rebuild_v2.py`: surface from the voxels with built-in Geometry Nodes
+   (Mesh to Points -> Points to Volume -> Volume to Mesh), built-in Smooth + Decimate (0.25).
+   Root->tip colour from the measured centre lines (`fit3.py`, `fit6.py`, params
+   `tail_bundle`/`tail_lobes`) via the built-in KDTree, written to UVMap.
+   Colours = mean linear RGB of the teal / lime hair pixels of front.jpg.
+5. `compare_hair.py`: hair-silhouette IoU outside the head/body, same metric for old and new.
 
-## Files
+| view | new (rev 3) | old master hair |
+|---|---|---|
+| front | 0.75 | 0.75 |
+| back | 0.71 | 0.63 |
+| left | 0.88 | 0.76 |
+| persp | 0.30 | 0.33 |
 
-- Candidate: `blender/INKWAVE_HAIR_REBUILD_CANDIDATE.blend` (copy of the production master;
-  never opened as a working file for anything else).
-  - `HAIR_LEGACY_REFERENCE` collection: the old 22 hair/scalp objects, hidden from render,
-    kept only as a before baseline.
-  - `HAIR_REBUILD_V2` collection: the new geometry (25 objects, all fresh datablocks).
-- Build script: `scripts/inkwave_hair_rebuild_v2.py` -- deterministic, run on a fresh copy of
-  the master reproduces the same hair (`blender -b <master.blend> --python-exit-code 1
-  --python scripts/inkwave_hair_rebuild_v2.py -- --out <candidate.blend>`).
-- Calibration module: `scripts/inkwave_ref_calibration.py` -- the front/back/left/right
-  orthographic camera constants copied from `scripts/inkwave_blender_import.py:set_camera`
-  (the setup proven to match the Three.js runtime render at silhouette IoU ~0.98, see
-  `blender/README.md` section 5.2), reused here as pure numpy so reference pixels can be
-  converted to world coordinates before ever opening Blender.
-- Anchors: `HEAD` dict in the build script, all ray-cast against `HEAD_face`/`HEAD_skin*`
-  (ground truth = the head mesh, never the old hair mesh).
+persp.jpg is a different pose (the old hair also scores only 0.33), so it is a visual check only.
+Tails: 26,250 vertices / 52,536 triangles after Decimate. Comparison: `h2_gate_sheet.png`
+(reference | old | new).
+
+## Remaining before this can replace the old hair
+
+- Lime tips read too pale and the teal->lime switch is not yet placed like the reference.
+- No spots (dots) on the fins.
+- Surface near the head/puffs is lumpy (the carved volume is fat where the three views cannot
+  see concavities); the front bangs (5 measured curve locks) still look unlike the reference.
+- No QA/GLB pass yet (reopen check, roundtrip QA, face-object diff).
+
+---
 
 ## Why a rebuild, not another refinement pass
 
