@@ -150,5 +150,97 @@
     "maxCountSeen": 520,
     "matrixCapacityBytes": 85760,
     "lobbyMatrixCapacityBytes": 63232
+  },
+  "postFixValidation": {
+    "branch": "fix/inkwave-zero-tradeoff-q04-q06-20260929",
+    "policy": "No intentional reduction in image quality, shadow/reflection quality, effect density, update frequency, input response, physics precision, or network behavior.",
+    "Q04": {
+      "status": "implemented",
+      "decor": {
+        "instancedObjectDisposesPerFixture": 1,
+        "geometryDisposesPerFixture": 1,
+        "materialDisposesPerFixture": 1
+      },
+      "lobbySet": {
+        "instancedObjectDisposesPerFixture": 1,
+        "shadowDisposePreserved": true,
+        "geometryDisposesPerFixture": 1,
+        "materialDisposesPerFixture": 1
+      },
+      "lobbyFx": {
+        "inkFxObjectDisposesPerFixture": 3,
+        "sparkObjectDisposesPerFixture": 1,
+        "trailObjectDisposesPerFixture": 1,
+        "contactObjectDisposesPerFixture": 1,
+        "sharedContactGeometryMaterialDisposed": false
+      }
+    },
+    "Q05": {
+      "status": "implemented",
+      "fixture": {
+        "geometryDisposes": 4,
+        "uniqueMaterialDisposes": 3,
+        "pilingsObjectDisposes": 1,
+        "rebuildCalls": 1,
+        "foamBuildCalls": 1
+      },
+      "sharedBoatMaterialDisposedOnce": true
+    },
+    "Q06": {
+      "status": "implemented",
+      "emptyUpdateMatrixVersionIncreases": {
+        "ink": [
+          0,
+          0,
+          0
+        ],
+        "confetti": [
+          0,
+          0
+        ],
+        "sparkles": 0,
+        "trail": 0
+      },
+      "reappearanceSameFrame": {
+        "ink": {
+          "counts": [
+            0,
+            1,
+            0
+          ],
+          "matrixVersionIncreases": [
+            0,
+            1,
+            0
+          ]
+        },
+        "confetti": {
+          "counts": [
+            1,
+            0
+          ],
+          "matrixVersionIncreases": [
+            1,
+            0
+          ]
+        },
+        "sparkles": {
+          "count": 1,
+          "matrixVersionIncrease": 1
+        },
+        "trail": {
+          "count": 1,
+          "matrixVersionIncrease": 1
+        }
+      },
+      "cpuSimulationAndLifetimeLogicChanged": false,
+      "note": "Only instanceMatrix upload requests are suppressed when the resulting mesh count is zero."
+    },
+    "syntax": {
+      "src/world/decor.js": "ok",
+      "src/game/lobbySet.js": "ok",
+      "src/world/environment.js": "ok",
+      "src/game/showcase.js": "ok"
+    }
   }
 }

@@ -775,7 +775,13 @@ export class LobbySet {
     // LightShadow owns its render targets independently of the light node. Removing the set from
     // the scene does not release them, so close that lifetime explicitly when the lobby is truly released.
     this.lights?.key?.shadow?.dispose?.();
-    this.root.traverse((o) => { if (o.geometry) o.geometry.dispose(); if (o.material) [].concat(o.material).forEach((m) => m.dispose()); });
+    this.root.traverse((o) => {
+      // InstancedMesh keeps instanceMatrix/instanceColor outside geometry; its dispose event
+      // releases those object-owned buffers. Geometry/material lifetimes remain unchanged.
+      if (o.isInstancedMesh) o.dispose?.();
+      if (o.geometry) o.geometry.dispose();
+      if (o.material) [].concat(o.material).forEach((m) => m.dispose());
+    });
     for (const t of Object.values(this.tex)) t.dispose();
     this.halos?.forEach((h) => h.material.uniforms.map.value.dispose());
     this._rRT?.dispose(); this._envRT?.dispose(); this._envOld?.dispose(); this._pmrem?.dispose();
