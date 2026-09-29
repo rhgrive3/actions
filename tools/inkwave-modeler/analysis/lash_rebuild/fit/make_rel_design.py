@@ -7,7 +7,7 @@ sys.path.insert(0,'/mnt/workspace/.dev-state/agent-work/checkouts/ink-identity/t
 import numpy as np, bpy
 import inkwave_lash_rebuild as lr
 EV='/mnt/workspace/.dev-state/agent-work/evidence/inkwave-face-identity-20260929'
-d=json.load(open(str(lr.DESIGN)));T=json.load(open(f'{EV}/lr/tri_lashes.json'))
+d=json.load(open(str(lr.er.ROOT/'analysis/lash_rebuild/design.json')));T=json.load(open(f'{EV}/lr/tri_lashes.json'))
 rays=lr.FrontRays(lr.surface_tree(),lr.shell_tree())
 out=sys.argv[sys.argv.index('--')+1]
 LASH_GAIN=1.3   # the front reference sits ~2 px above the 3/4 and side views: triangulated lashes come out short in front
