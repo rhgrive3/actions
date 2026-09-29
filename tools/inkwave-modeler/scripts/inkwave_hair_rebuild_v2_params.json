@@ -612,5 +612,190 @@
    0.0815,
    0.082
   ]
+ },
+ "junction": {
+  "source": "Hand-picked on docs/face-multiview-fit/refs/sheet_5view.png (sideL/sideR, 10 px grid zooms), ray-cast onto HEAD_face through the fitted sheet cameras (analysis/hair-rebuild/pick_to_head.py, analysis/multiview/field.json), expressed in the head-local frame of analysis/multiview/mvcore.py as azimuth phi (deg, 0 = front, + = character left) -> height y (mm above the head centre). Front = forehead hairline probe; back = nape line of back.jpg (y 55 px, Z 1.417).",
+  "cap_edge": [
+   [
+    -180,
+    28
+   ],
+   [
+    -114,
+    63
+   ],
+   [
+    -108,
+    67
+   ],
+   [
+    -96,
+    72
+   ],
+   [
+    -83,
+    75
+   ],
+   [
+    -69,
+    78
+   ],
+   [
+    -49,
+    81
+   ],
+   [
+    0,
+    64
+   ],
+   [
+    47,
+    68
+   ],
+   [
+    61,
+    72
+   ],
+   [
+    73,
+    75
+   ],
+   [
+    86,
+    75
+   ],
+   [
+    98,
+    71
+   ],
+   [
+    108,
+    65
+   ],
+   [
+    116,
+    57
+   ],
+   [
+    180,
+    28
+   ]
+  ],
+  "shaved_bottom": [
+   [
+    -180,
+    -35
+   ],
+   [
+    -100,
+    -9
+   ],
+   [
+    -84,
+    -1
+   ],
+   [
+    -68,
+    15
+   ],
+   [
+    -51,
+    36
+   ],
+   [
+    -45,
+    60
+   ],
+   [
+    45,
+    60
+   ],
+   [
+    51,
+    34
+   ],
+   [
+    65,
+    32
+   ],
+   [
+    79,
+    6
+   ],
+   [
+    94,
+    -7
+   ],
+   [
+    110,
+    -16
+   ],
+   [
+    180,
+    -35
+   ]
+  ],
+  "shaved_front_limit_deg": 45,
+  "cap_thickness_m": 0.012,
+  "shaved_offset_m": 0.0006,
+  "cap_rim_fraction": 0.3,
+  "cap_crown_height_mm": 100,
+  "shaved_color_linear": [
+   0.22,
+   0.39,
+   0.41
+  ],
+  "shaved": {
+   "stubble_color_linear": [
+    0.22,
+    0.33,
+    0.37
+   ],
+   "line_color_linear": [
+    0.05,
+    0.2,
+    0.24
+   ],
+   "stubble_alpha": 0.8,
+   "line_alpha": 0.0,
+   "line_spacing_m": 0.012,
+   "note": "stubble streaks + diamond line pattern read off sideL/sideR/q34R of the sheet"
+  },
+  "cap_lines": {
+   "base_linear": [
+    0.093,
+    0.314,
+    0.319
+   ],
+   "line_linear": [
+    0.2,
+    0.45,
+    0.47
+   ],
+   "spacing_m": 0.014,
+   "note": "the diamond (woven) line pattern is on the slicked-back teal layer above the shaved zone, not on the skin (sheet sideL/sideR/q34R)"
+  }
+ },
+ "headband": {
+  "source": "One headband over the head from ear to ear (buckle on each side) - not two ponytail ties. Centre-line points hand-picked on all 5 views of the sheet (analysis/hair-rebuild/fit_ties.py PICKS), fitted as one planar ellipse through the fitted sheet cameras: rms 3.4 px, max 8.9 px. Head-local frame of mvcore.",
+  "centre_local_m": [
+   0.010060400784604311,
+   0.04071450484502302,
+   -0.0852905859318931
+  ],
+  "normal_local": [
+   -0.010912998589940518,
+   0.23137309886036608,
+   -0.9728038834140863
+  ],
+  "a_m": 0.12862446474941666,
+  "b_m": 0.1344979688298962,
+  "rot": 0.0784360434344697,
+  "arc_deg": [
+   165,
+   375
+  ],
+  "width_m": 0.02,
+  "thickness_m": 0.006
  }
 }
