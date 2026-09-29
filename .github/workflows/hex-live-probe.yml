@@ -8,51 +8,75 @@ permissions:
 jobs:
   probe:
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 5
     steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: rhgrive3/hex-ida
+          ref: main
+          fetch-depth: 100
+          path: hex
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Probe bootstrap build identity
+      - name: Build release candidate table
+        working-directory: hex
+        shell: bash
+        run: |
+          set -euo pipefail
+          : > /tmp/candidates.tsv
+          git log --format='%H' -- userscript/release-version.json | head -n 80 | while read -r sha; do
+            raw="$(git show "$sha:userscript/release-version.json" 2>/dev/null || true)"
+            [[ -n "$raw" ]] || continue
+            serial="$(printf '%s' "$raw" | jq -r '.serial // empty')"
+            build="$(printf '%s' "$raw" | jq -r '.buildId // empty')"
+            if [[ "$serial" =~ ^[0-9]+$ ]] && (( serial >= 2322242213 && serial <= 2322242259 )) && [[ "$build" =~ ^[0-9a-f]{24}$ ]]; then
+              printf '%s\t%s\t%s\n' "$serial" "$build" "$sha" >> /tmp/candidates.tsv
+            fi
+          done
+          sort -u -n /tmp/candidates.tsv -o /tmp/candidates.tsv
+      - name: Identify live Worker build
+        timeout-minutes: 2
         shell: bash
         run: |
           set -euo pipefail
           cat > /tmp/probe.mjs <<'NODE'
-          import { webcrypto, randomUUID } from 'node:crypto';
-          const subtle=webcrypto.subtle;
-          const key=await subtle.generateKey({name:'ECDH',namedCurve:'P-256'},true,['deriveBits']);
-          const jwk=await subtle.exportKey('jwk',key.publicKey);
-          const builds=[
-            ['live-loader-2213','7f189ed72b8ac0801da206ca'],
-            ['main-2259','842f2f6aba22b96b9564d6c1'],
-          ];
-          for(const [label,buildId] of builds){
-            const bytes=webcrypto.getRandomValues(new Uint8Array(18));
-            const b64=v=>Buffer.from(v).toString('base64url');
-            const body={
-              nonce:b64(webcrypto.getRandomValues(new Uint8Array(24))),
-              loaderVersion:label==='live-loader-2213'?'2.0.2322242213':'2.0.2322242259',
-              buildId,
-              requestId:b64(bytes),
-              sessionIdentity:b64(webcrypto.getRandomValues(new Uint8Array(18))),
-              clientPublicKey:jwk,
-            };
-            const r=await fetch('https://ida.rhgrive.workers.dev/runtime/bootstrap',{
-              method:'POST',
-              headers:{'content-type':'application/json','origin':'https://chatgpt.com'},
-              body:JSON.stringify(body),
-            });
-            const text=await r.text();
-            console.log(JSON.stringify({
-              label,buildId,status:r.status,
-              allowOrigin:r.headers.get('access-control-allow-origin'),
-              body:text.slice(0,300)
-            }));
+          import fs from 'node:fs';
+          import { webcrypto } from 'node:crypto';
+          const rows=fs.readFileSync('/tmp/candidates.tsv','utf8').trim().split(/\n+/).filter(Boolean).map(line=>{
+            const [serial,buildId,sha]=line.split('\t'); return {serial:Number(serial),buildId,sha};
+          });
+          const key=await webcrypto.subtle.generateKey({name:'ECDH',namedCurve:'P-256'},true,['deriveBits']);
+          const jwk=await webcrypto.subtle.exportKey('jwk',key.publicKey);
+          const b64=n=>Buffer.from(webcrypto.getRandomValues(new Uint8Array(n))).toString('base64url');
+          const out=[];
+          for(const row of rows){
+            const body={nonce:b64(24),loaderVersion:'2.0.'+row.serial,buildId:row.buildId,requestId:b64(18),sessionIdentity:b64(18),clientPublicKey:jwk};
+            let result;
+            try {
+              const r=await fetch('https://ida.rhgrive.workers.dev/runtime/bootstrap',{
+                method:'POST',headers:{'content-type':'application/json','origin':'https://chatgpt.com'},body:JSON.stringify(body),
+                signal:AbortSignal.timeout(10000),
+              });
+              let error=null;
+              if(r.status!==200){ try{ error=(await r.json())?.error??null; }catch{} }
+              result={...row,status:r.status,error,accepted:r.status!==409};
+            } catch(e) {
+              result={...row,status:null,error:String(e?.message||e),accepted:false,transport:true};
+            }
+            out.push(result);
+            if(result.accepted && !result.transport) break;
           }
+          fs.writeFileSync('live-worker-build.json',JSON.stringify(out,null,2));
+          const hit=out.find(x=>x.accepted&&!x.transport);
+          if(!hit) process.exitCode=2;
           NODE
-          node /tmp/probe.mjs > bootstrap-build-probe.jsonl
+          cd "$GITHUB_WORKSPACE/hex"
+          node /tmp/probe.mjs
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: hex-live-probe
-          path: bootstrap-build-probe.jsonl
+          path: hex/live-worker-build.json
+          if-no-files-found: ignore
           retention-days: 1
