@@ -20,7 +20,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import inkwave_eye_refine as er  # noqa: E402
 
 M = er.M
-DESIGN = er.ROOT / 'analysis/lash_rebuild/design.json'
+DESIGN = er.ROOT / 'analysis/lash_rebuild/design_3d.json'
 SURFACES = ['HEAD_face', 'HEAD_skin', 'HEAD_skin_04', 'HEAD_eyes', 'HEAD_eyes_18', 'HEAD_eyes_02', 'HEAD_eyes_19']
 R = {'rim': 'HEAD_eyes_30', 'liner': 'HEAD_eyes_20', 'lashes': [f'HEAD_eyes_{i:02d}' for i in range(22, 29)]}
 L = {'rim': 'HEAD_eyes_13', 'liner': 'HEAD_eyes_03', 'lashes': [f'HEAD_eyes_{i:02d}' for i in range(5, 12)]}
@@ -31,11 +31,11 @@ LINER_ROWS = 14
 SMOOTH_ITERS = 40
 LINER_THICK_MM = 0.12
 LASH_ROOT_LIFT_MM = 0.85
-UPPER_R_SCALE = 3.6
-LOWER_LEN_MM = 2.6
-LOWER_ROOT_MM = 0.6
+UPPER_R_SCALE = 5.5
+LOWER_LEN_MM = 2.2
+LOWER_ROOT_MM = 0.7
 LOWER_LIFT_MM = 0.3
-LOWER_START_PX = 1.0
+LOWER_START_PX = 2.0
 LOWER_LEAN = 0.45
 MM_PER_PX = 1.1
 
@@ -153,27 +153,30 @@ def build_liner(rays, design, bot, join):
     origin = np.array([[c[0] for c in col] for col in cast])
     direction = np.array([[c[1] for c in col] for col in cast])
     hit = np.array([[rays.near(*p) for p in col] for col in px])
-    # the skin can bulge forward between samples.  Away from the eye corner the nearest skin in a small pixel
-    # neighbourhood limits how deep the ribbon may lie (this also keeps the wing over the scalp shell at the
-    # temple).  In the steep eye corner that would float the ribbon off the skin, so there only a few sub-pixel
-    # rays around each sample are used, plus a maximum gap.  The depth is smoothed and pushed back between the
-    # limits after every pass, so it stays clear of the skin without lumps.
-    pad = np.pad(hit, ((2, 2), (1, 1)), mode='edge')
-    wide = np.min([pad[a:a + n, b:b + rows] for a in range(5) for b in range(3)], axis=0)
-    x, y = px[:, :, 0] - join[0], px[:, :, 1] - join[1]
-    corner = (x > -2.5) & (x < 7.0) & (y > -9.0)
+    # the skin can bulge forward between samples: a few sub-pixel rays around each sample (skin, or the scalp
+    # shell where it lies just over the skin) limit how deep the ribbon may lie, and a maximum gap keeps it from
+    # floating off steep skin (a floating wing looks far too big in the 3/4 and side views).  The depth is
+    # smoothed and pushed back between the two limits after every pass, so it stays clear without lumps.
     local = hit.copy()
-    for i, j in zip(*np.nonzero(corner)):
-        u, v = px[i, j]
-        local[i, j] = min(rays.near(u + du, v + dv) for du in (-0.5, 0.0, 0.5) for dv in (-0.5, 0.0, 0.5))
-    limit = np.where(corner, local, wide) - MIN_CLEAR_MM / 1000
-    floor = np.where(corner, np.minimum(hit - MAX_FLOAT_MM / 1000, limit), -np.inf)
+    for i in range(n):
+        for j in range(rows):
+            u, v = px[i, j]
+            local[i, j] = min(rays.near(u + du, v + dv) for du in (-0.5, 0.0, 0.5) for dv in (-0.5, 0.0, 0.5))
+    limit = local - MIN_CLEAR_MM / 1000
+    floor = np.minimum(hit - MAX_FLOAT_MM / 1000, limit)
     depth = np.minimum(hit - LINER_LIFT_MM / 1000, limit)
     for _ in range(SMOOTH_ITERS):
         p = np.pad(depth, 1, mode='edge')
         depth = 0.4 * depth + 0.15 * (p[:-2, 1:-1] + p[2:, 1:-1] + p[1:-1, :-2] + p[1:-1, 2:])
         depth = np.clip(depth, floor, limit)
     print('LINER gap mm: median %.2f  max %.2f' % (np.median(hit - depth) * 1000, (hit - depth).max() * 1000))
+    if 'float_top' in design:
+        # the wing and the lash line stand off the face (3D, not a decal): the stand-off fitted to the 3/4 and side
+        # views is added along the front ray, so the front view does not change
+        ft = np.array(design['float_top'])
+        fb = np.zeros(n)
+        fb[:design['float_k1'] + 1] = design['float_wing']
+        depth = depth - (ft[:, None] * (1 - f[None]) + fb[:, None] * f[None]) / 1000
     pts = (origin + direction * depth[..., None]).reshape(-1, 3)
     verts = M.to_local(pts) * 1000
     faces = []
@@ -209,12 +212,36 @@ def build_rim(rays, design, join, tip):
     return er.tube(pts, r, sides=6), px
 
 
-def build_lash(rays, spec):
+def top_float(design, x):
+    """Stand-off (mm) of the liner top edge at front-view column x (0 when the design has none)."""
+    if 'float_top' not in design:
+        return 0.0 * np.asarray(x, float)
+    top = np.array(design['liner_top'])
+    order = np.argsort(top[:, 0])
+    return np.interp(x, top[order, 0], np.array(design['float_top'])[order])
+
+
+def lash_points(rays, design, spec, standoff=None):
+    """Upper lash centre line.  The root sits on the (standing-off) liner top edge.  When the design gives the
+    tip in 3D (triangulated from the front, 3/4 and side references), the lash runs to it with a slight upward
+    curl: lashes stand off the face.  Otherwise the front-view path is used, its stand-off growing to the tip."""
     n = 14
-    path_px = bezier(spec['root'], spec['mid'], spec['tip'], n)
     t = np.linspace(0, 1, n)
+    if 'tip3d_mm' in spec:
+        root = rays.lifted(spec['root'], LASH_ROOT_LIFT_MM + float(top_float(design, spec['root'][0])))
+        tip = np.array(spec['tip3d_mm'], float)
+        ctrl = 0.5 * (root + tip) + np.array([0.0, 0.12 * np.linalg.norm(tip - root), 0.0])
+        pts = (1 - t)[:, None] ** 2 * root + 2 * ((1 - t) * t)[:, None] * ctrl + t[:, None] ** 2 * tip
+        return pts, t
+    path_px = bezier(spec['root'], spec['mid'], spec['tip'], n)
     lift = LASH_ROOT_LIFT_MM + (spec['lift_mm'] - LASH_ROOT_LIFT_MM) * t ** 1.5
-    pts = np.array([rays.lifted(p, l) for p, l in zip(path_px, lift)])
+    s = spec.get('standoff_mm', 0.0) if standoff is None else standoff
+    lift = lift + top_float(design, path_px[:, 0]) + s * t ** 1.5
+    return np.array([rays.lifted(p, l) for p, l in zip(path_px, lift)]), t
+
+
+def build_lash(rays, design, spec):
+    pts, t = lash_points(rays, design, spec)
     radius = np.maximum(UPPER_R_SCALE * spec['r_mm'] * (1 - t) ** 0.6, 0.04)
     return er.tube(pts, radius, sides=6)
 
@@ -244,14 +271,33 @@ def build_lower(rays, design, rim_px, join):
         path_px = bezier(root, mid, tip, n)
         t = np.linspace(0, 1, n)
         radius = np.maximum(LOWER_ROOT_MM * (1 - t) ** 0.6, 0.05)
-        pts = np.array([rays.lifted(q, LOWER_LIFT_MM + r) for q, r in zip(path_px, radius)])
+        s = design.get('lower_standoff_mm', 0.0) * t ** 1.2
+        pts = np.array([rays.lifted(q, LOWER_LIFT_MM + r + si) for q, r, si in zip(path_px, radius, s)])
         v, f = er.tube(pts, radius, sides=6)
         faces += [tuple(i + len(verts) for i in fc) for fc in f]
         verts += list(v)
     return np.array(verts), faces
 
 
-def set_side(objs, liner, rim, lashes, lower, mat, brown, flip):
+def clear_shell(verts_mm, shell, reach_mm=5.0, gap_mm=0.3):
+    """Hair is not symmetric: after mirroring, move any vertex that lies just under the scalp shell (seen from
+    the front camera) to just in front of it."""
+    cam = np.array(bpy.data.objects['FACE_FIT_CAM_front'].matrix_world.translation)
+    world = M.to_world(np.asarray(verts_mm) / 1000)
+    moved = 0
+    for i, p in enumerate(world):
+        d = p - cam
+        L = np.linalg.norm(d)
+        d /= L
+        hit = shell.ray_cast(Vector(cam), Vector(d), L)
+        if hit[0] is not None and L - hit[3] < reach_mm / 1000:
+            world[i] = cam + d * (hit[3] - gap_mm / 1000)
+            moved += 1
+    print('CLEAR_SHELL moved', moved, 'of', len(world))
+    return M.to_local(world) * 1000
+
+
+def set_side(objs, liner, rim, lashes, lower, mat, brown, flip, shell=None):
     obj = bpy.data.objects[objs['rim']]
     er.back_up(obj)
     v, f = rim
@@ -260,6 +306,8 @@ def set_side(objs, liner, rim, lashes, lower, mat, brown, flip):
     v, f = liner
     if flip:
         v = mirror(v)
+        if shell is not None:
+            v = clear_shell(v, shell)
     er.set_mesh(bpy.data.objects[objs['liner']], v, f, mat, '_lr_liner')
     for k, name in enumerate(objs['lashes']):
         obj = bpy.data.objects[name]
@@ -313,11 +361,11 @@ def main():
     up = bot[np.argmin(np.linalg.norm(bot - (join - [0.0, 4.0]), axis=1))]
     liner = build_liner(rays, design, bot, join)
     rim, rim_px = build_rim(rays, design, join, up)
-    lashes = [] if args.shape_only else [build_lash(rays, spec) for spec in design['lashes']]
+    lashes = [] if args.shape_only else [build_lash(rays, design, spec) for spec in design['lashes']]
     lower = None if args.shape_only else build_lower(rays, design, rim_px, join)
     brown = brown_material()
     set_side(R, liner, rim, lashes, lower, mat, brown, False)
-    set_side(L, liner, rim, lashes, lower, mat, brown, True)
+    set_side(L, liner, rim, lashes, lower, mat, brown, True, rays.shell)
     remove_lower_paint()
     if args.save:
         bpy.ops.wm.save_as_mainfile(filepath=args.save)
