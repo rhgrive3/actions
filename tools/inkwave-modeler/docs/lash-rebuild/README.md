@@ -1,18 +1,27 @@
-# まつ毛とライナーの作り直し（候補 L67。まだマージしない）
+# まつ毛とライナーの作り直し（マスターに反映済み、2026-09-29）
 
-- 目の開き（眼裂）と目玉は変えない。髪、頬、口、鼻、あごも触らない。
+- 目の開き（眼裂）と目玉は変えない（目頭の白目の端だけ直した）。髪、頬、口、鼻、あごも触らない。
 - ライナー、上まつ毛 4 本、下まつ毛 5 本、下の線は、それぞれ別パーツ。
 - 古い下まつ毛の塗りは、顔の材料スロットを戻して消した。
-- 基準（マスター）と比べて変わった部品: 19（目のライナー・まつ毛・下の線と、`HEAD_face` の材料スロット）。ほかの 205 は同じ。
+- 顔の形で変えたのは目頭だけ（L61 の章）。
 
 ## 作り方
 
+`inkwave_eye_refine.py` のあとにかける（`../face-soften/README.md` 3 章の順番の最後）。
+
 ```bash
 cd tools/inkwave-modeler
-blender -b <マスターのコピー.blend> --python scripts/inkwave_lash_rebuild.py -- --save <out.blend>
+M=blender/INKWAVE_CHARACTER_MASTER.blend
+blender -b $M --python scripts/inkwave_lash_rebuild.py -- --save $M \
+  --export blender/INKWAVE_CHARACTER_MASTER.glb --game blender/INKWAVE_GAME.glb
+blender -b $M --python scripts/inkwave_lash_rebuild.py -- --restore --save <out.blend>   # 元に戻す
 ```
 
-設計: `analysis/lash_rebuild/design_3d.json`（正面の形 + 立体の情報）。元の正面の形は `design.json`。
+変える部品の控え（`__pre_lash_rebuild`）を最初に作り、毎回そこから戻してから作る。だから何回かけても同じ。
+`inkwave_eye_refine.py` をかけ直したら、このスクリプトもかけ直す。
+ライナーは細かい格子なので、最後に Blender の Decimate（collapse、0.2）で三角形を減らす（片目 5〜7 万 → 1〜1.4 万。見た目の差は 5 視点で 4 画素以下）。
+
+設計: `analysis/lash_rebuild/design_3d.json`（スクリプトが読む）。`design.json` は立体の情報を足す前の正面の形（`fit/make_rel_design.py` の入力）。
 立体の情報の作り方は `analysis/lash_rebuild/fit/`（`triang2.py` → `tri_lashes.json`、`make_rel_design.py`）。
 
 ## 形の決め方
@@ -64,6 +73,19 @@ blender -b <マスターのコピー.blend> --python scripts/inkwave_lash_rebuil
 - ライナーの下を埋める面は、目じりの近く（頭の中心から 72.5 mm より外）だけ、正面の参照の黒を使ってよい。
   それより内側では、正面でライナーの上のふちの上に小さなかけらが見えたので使わない。
 - 正面で L61 から変わった所: 左目の目じりの黒（参照でも黒）と、1 画素ほどの所が 2 か所。
+
+## マスターへの反映と検査
+
+| 検査 | 結果 |
+|---|---|
+| マスターと候補 L67（Decimate 後の L68） | 224 部品すべて同じ |
+| 前のマスターと比べて変わった部品 | 21（`HEAD_face`、`HEAD_skin` / `HEAD_skin_04`、目のライナー・まつ毛・下の線）。ほかの 203 は同じ。画像は変わらない |
+| 2 回かけた結果 / `--restore` の結果 | 1 回目と 224 部品同じ / 前のマスターと 224 部品同じ |
+| 開き直しの検査（`inkwave_blender_reopen_check.py`） | 合格（208 メッシュ、516,436 三角形、パックされていない画像 0） |
+| GLB の往復検査（`inkwave_roundtrip_qa.mjs`、前回と同じ条件） | 前のマスターとの差は、まつ毛の部品の形と数（空の `HEAD_eyes_10/11/27/28` は書き出されない）、三角形 493,820 → 529,685、顔の塗り材料が消えたこと（元の `skin_b27050` に戻った）だけ。新しい種類の問題 0 |
+| 開き直して書き出した GLB | 往復検査の結果がマスターの GLB と同じ |
+| `INKWAVE_GAME.glb` | `INKWAVE_CHARACTER_MASTER.glb` とバイト単位で同じ |
+| ゲームのコード | `HEAD_eyes*` の名前を使っていない |
 
 ## 画像
 

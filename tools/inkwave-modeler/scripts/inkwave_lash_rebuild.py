@@ -1,10 +1,15 @@
-"""Rebuild the upper liner / wing / upper lashes / lower lashes from the reference (CANDIDATE only).
+"""Rebuild the upper liner / wing / upper lashes / lower lashes / lower line as separate 3D parts (from the reference).
 
-The eyeball aperture is not touched.  The design (analysis/lash_rebuild/design.json) is measured on the
-reference front view of the right eye (image-left); it is lifted onto the skin with front-camera rays and
-mirrored to the left eye.  Run on a copy of the master:
+The eye opening is not touched, except the inner corner (the lid skin slides toward the nose so the white ends in
+a sharp point, then Blender's Smooth; the skin layers follow with Surface Deform).  The design
+(analysis/lash_rebuild/design_3d.json) is measured on the reference front, 3/4 and side views of the right eye;
+the left eye is built with mirrored rays on its own skin.  Runs never stack: the meshes it changes are backed up
+(`__pre_lash_rebuild`) on the first run and restored at the start of every run.  Run after inkwave_eye_refine.py:
 
-  blender -b <in.blend> --python scripts/inkwave_lash_rebuild.py -- --save <out.blend>
+  blender -b blender/INKWAVE_CHARACTER_MASTER.blend --python scripts/inkwave_lash_rebuild.py -- \
+    --save blender/INKWAVE_CHARACTER_MASTER.blend \
+    --export blender/INKWAVE_CHARACTER_MASTER.glb --game blender/INKWAVE_GAME.glb
+  ... -- --restore --save <out.blend>      # undo (drops the backups)
 """
 import argparse
 import json
@@ -37,6 +42,7 @@ LOWER_ROOT_MM = 0.7
 LOWER_LIFT_MM = 0.3
 LOWER_LEAN = 0.45
 MM_PER_PX = 1.1
+LINER_DECIMATE = 0.2
 SIDE_STEP_PX = 0.2
 SIDE_LIFT_MM = 0.7
 SIDE_STANDOFF_MM = 10.0
@@ -734,13 +740,87 @@ def remove_lower_paint():
             face.data.materials[i] = skin
 
 
+LR_SUFFIX = '__pre_lash_rebuild'
+
+
+def touched_names():
+    names = ['HEAD_face'] + list(er.FACE_LAYER_NAMES)
+    for objs in (R, L):
+        names += [objs['rim'], objs['liner']] + objs['lashes']
+    return names
+
+
+def lr_restore(drop=False):
+    """Bring back every mesh this script changes, as it was before the first run (so runs never stack)."""
+    count = 0
+    for name in touched_names():
+        backup = bpy.data.meshes.get(name + LR_SUFFIX)
+        if backup is None:
+            continue
+        obj = bpy.data.objects[name]
+        current = obj.data
+        obj.data = backup.copy()
+        if current.users == 0:
+            old = current.name
+            bpy.data.meshes.remove(current)
+            obj.data.name = old
+        if drop:
+            bpy.data.meshes.remove(backup)
+        count += 1
+    if drop:
+        mat = bpy.data.materials.get('INKWAVE_lash_brown')
+        if mat is not None and mat.users == 0:
+            bpy.data.materials.remove(mat)
+    return count
+
+
+def lr_back_up():
+    for name in touched_names():
+        if bpy.data.meshes.get(name + LR_SUFFIX) is None:
+            backup = bpy.data.objects[name].data.copy()
+            backup.name = name + LR_SUFFIX
+            backup.use_fake_user = True
+
+
+def decimate(obj):
+    """The liner is a fine grid (the corner sheets are sampled at 0.2 px): Blender's Decimate (collapse) keeps
+    its outline and cuts the triangles for the game."""
+    before = len(obj.data.polygons)
+    mod = obj.modifiers.new('INKWAVE_liner_decimate', 'DECIMATE')
+    mod.decimate_type = 'COLLAPSE'
+    mod.ratio = LINER_DECIMATE
+    mod.use_collapse_triangulate = True
+    er.apply_modifier(obj, mod)
+    print('DECIMATE', obj.name, before, '->', len(obj.data.polygons), 'faces')
+
+
+def save_and_export(args):
+    if args.save:
+        bpy.ops.wm.save_as_mainfile(filepath=args.save, compress=True)
+    if args.export:
+        import shutil
+        import inkwave_face_refine as fr
+        fr.export_character(args.export)
+        if args.game:
+            shutil.copyfile(args.export, args.game)
+
+
 def main():
     argv = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else []
     ap = argparse.ArgumentParser()
     ap.add_argument('--save')
     ap.add_argument('--design', default=str(DESIGN))
     ap.add_argument('--shape-only', action='store_true', help='liner, wing and lower line only: no upper lashes, no lower strokes')
+    ap.add_argument('--restore', action='store_true', help='undo this script (drops its backups) and stop')
+    ap.add_argument('--export')
+    ap.add_argument('--game')
     args = ap.parse_args(argv)
+    restored = lr_restore(drop=args.restore)
+    print('LASH_REBUILD restored', restored, 'meshes')
+    if args.restore:
+        save_and_export(args)
+        return
+    lr_back_up()
     design = json.loads(Path(args.design).read_text())
     if 'inner_corner' in design:
         smooth_inner_corner(design)
@@ -778,8 +858,9 @@ def main():
     for objs, liner, rim, lashes, lower in built:
         set_side(objs, liner, rim, lashes, lower, mat, brown)
     remove_lower_paint()
-    if args.save:
-        bpy.ops.wm.save_as_mainfile(filepath=args.save)
+    for objs in (R, L):
+        decimate(bpy.data.objects[objs['liner']])
+    save_and_export(args)
     print('LASH_REBUILD done', len(liner[0]), 'liner verts,', len(rim[0]), 'rim verts,', len(lashes), 'lashes')
 
 
