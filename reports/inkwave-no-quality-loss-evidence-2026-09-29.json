@@ -1,0 +1,132 @@
+{
+  "basis": "2075e6468b99c901ff0817b5858c7bae2d1a6095",
+  "scope": "Pinned source method fixtures, real THREE data objects, mocked GL and PMREM. No real GPU allocations, pixel comparisons, device FPS or power measurements.",
+  "sourceSha256": {
+    "src/game/weapons.js": "ffdf976caeec5e1dd3ca32356588b9610af355490d5a2d45cc8a58ce1be6daf5",
+    "src/game/lobbySet.js": "5950d1615e3dedf4a8871400af761273518e3ed4289d4f5185655394e72fa673",
+    "src/game/lobbySet-mats.js": "8bcbdd73574ca4960197a08c0ba424543f55d0ac8121d301a083fdd64707a3cc",
+    "src/game/showcase.js": "0483de89e670ffbb592c930c57ba61a9288c4d88f9f63b0fe2f5964198451fe7",
+    "src/config.js": "1ad69a27c47c74a8db2f6193fd369afb4ae7069d4902a5480bc365338097f164",
+    "vendor/three/build/three.module.js": "9052042d676cb0fdc1ddfefe193053f34b7ac0513a616fdac4535d49987812ea",
+    "vendor/three/build/three.core.js": "9edde002b066a9a05676a6127f67735b62baf399bdea529f2f7e31657da769e6"
+  },
+  "lobbyShadowRelease": {
+    "before": {
+      "releases": 20,
+      "mapDisposes": 0,
+      "optionalMapPassDisposes": 0,
+      "cookieDisposes": 20
+    },
+    "proposed": {
+      "releases": 20,
+      "mapDisposes": 20,
+      "optionalMapPassDisposes": 20,
+      "cookieDisposes": 20
+    }
+  },
+  "arcDistanceReuse": {
+    "before": {
+      "frames": 180,
+      "physicsSegmentCalls": 10626,
+      "distinctDrawCounts": [
+        26,
+        64
+      ],
+      "uniqueLineDistanceAttributes": 121,
+      "mockedGL": {
+        "createBuffer": 122,
+        "deleteBuffer": 2,
+        "bufferData": 122,
+        "bufferSubData": 120
+      },
+      "frameDataSha256": "8ced3f569fb511f7f921fd87e2ef1c0da970009aa09205ae0be30f41ccd9f44e"
+    },
+    "proposed": {
+      "frames": 180,
+      "physicsSegmentCalls": 10626,
+      "distinctDrawCounts": [
+        26,
+        64
+      ],
+      "uniqueLineDistanceAttributes": 1,
+      "mockedGL": {
+        "createBuffer": 2,
+        "deleteBuffer": 2,
+        "bufferData": 2,
+        "bufferSubData": 240
+      },
+      "frameDataSha256": "8ced3f569fb511f7f921fd87e2ef1c0da970009aa09205ae0be30f41ccd9f44e"
+    },
+    "allFrameDataBitIdentical": true,
+    "scenarios": [
+      "60 changing-aim frames without collision",
+      "60 changing-aim frames with ground collision",
+      "60 fixed-aim frames without collision"
+    ],
+    "note": "Attribute identities are retained to count them. Missing deleteBuffer calls do not establish permanent browser GPU memory retention; GC/driver behavior is not modeled."
+  },
+  "duplicateEnvironmentBake": {
+    "before": {
+      "constructorBakes": 2,
+      "initialInputs": [
+        "32094ae1ecf14d3a87a4e83912dcdea5b8798caf05c851886d5359b678b339cd",
+        "32094ae1ecf14d3a87a4e83912dcdea5b8798caf05c851886d5359b678b339cd"
+      ],
+      "initialMaterialInputs": [
+        "32094ae1ecf14d3a87a4e83912dcdea5b8798caf05c851886d5359b678b339cd",
+        "32094ae1ecf14d3a87a4e83912dcdea5b8798caf05c851886d5359b678b339cd",
+        "32094ae1ecf14d3a87a4e83912dcdea5b8798caf05c851886d5359b678b339cd",
+        "32094ae1ecf14d3a87a4e83912dcdea5b8798caf05c851886d5359b678b339cd"
+      ],
+      "additionalBakesAfterRealColorChange": 1,
+      "changedInput": "30618696365b2588ee554457580daf1b6a4e938ef3b2d805bceb67ea73a7ba53",
+      "changedMaterialInputs": [
+        "30618696365b2588ee554457580daf1b6a4e938ef3b2d805bceb67ea73a7ba53",
+        "30618696365b2588ee554457580daf1b6a4e938ef3b2d805bceb67ea73a7ba53",
+        "30618696365b2588ee554457580daf1b6a4e938ef3b2d805bceb67ea73a7ba53",
+        "30618696365b2588ee554457580daf1b6a4e938ef3b2d805bceb67ea73a7ba53"
+      ],
+      "updateCalls": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ]
+      ]
+    },
+    "proposed": {
+      "constructorBakes": 1,
+      "initialInputs": [
+        "32094ae1ecf14d3a87a4e83912dcdea5b8798caf05c851886d5359b678b339cd"
+      ],
+      "initialMaterialInputs": [
+        "32094ae1ecf14d3a87a4e83912dcdea5b8798caf05c851886d5359b678b339cd",
+        "32094ae1ecf14d3a87a4e83912dcdea5b8798caf05c851886d5359b678b339cd",
+        "32094ae1ecf14d3a87a4e83912dcdea5b8798caf05c851886d5359b678b339cd",
+        "32094ae1ecf14d3a87a4e83912dcdea5b8798caf05c851886d5359b678b339cd"
+      ],
+      "additionalBakesAfterRealColorChange": 1,
+      "changedInput": "30618696365b2588ee554457580daf1b6a4e938ef3b2d805bceb67ea73a7ba53",
+      "changedMaterialInputs": [
+        "30618696365b2588ee554457580daf1b6a4e938ef3b2d805bceb67ea73a7ba53",
+        "30618696365b2588ee554457580daf1b6a4e938ef3b2d805bceb67ea73a7ba53",
+        "30618696365b2588ee554457580daf1b6a4e938ef3b2d805bceb67ea73a7ba53",
+        "30618696365b2588ee554457580daf1b6a4e938ef3b2d805bceb67ea73a7ba53"
+      ],
+      "updateCalls": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ]
+      ]
+    },
+    "note": "Real constructor and environment methods; _build, _lights, _reflection, texture/font generation and update body are stubbed. Static inspection confirms intervening methods do not change the proxy environment scene."
+  }
+}
