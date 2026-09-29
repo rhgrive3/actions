@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import crypto from 'node:crypto';
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
 import * as THREE from '../inkwave-public/vendor/three/build/three.module.js';
 import { PLAYER, QUALITY } from '../inkwave-public/src/config.js';
 import { MAP_LAYOUTS, PATTERN } from '../inkwave-public/src/world/maps.js';
@@ -12,6 +13,11 @@ const root = 'inkwave-public/';
 const paths = ['src/fx/fx.js', 'src/game/nav.js', 'src/world/level.js',
   'src/world/maps.js', 'src/config.js', 'vendor/three/build/three.module.js', 'vendor/three/build/three.core.js'];
 const src = Object.fromEntries(paths.map(p => [p, fs.readFileSync(root + p, 'utf8')]));
+const postfix = process.argv.includes('--postfix');
+const fixed = postfix ? { fx: src['src/fx/fx.js'], nav: src['src/game/nav.js'] } : null;
+if (postfix) for (const p of ['src/fx/fx.js', 'src/game/nav.js']) {
+  src[p] = execFileSync('git', ['show', 'd5d54d1d37274dfa82467b37b9b8009719783ed3:' + root + p], { encoding: 'utf8' });
+}
 const hash = x => crypto.createHash('sha256').update(x).digest('hex');
 const plain = x => JSON.parse(JSON.stringify(x));
 const types = { Float32Array, Uint8Array, Uint16Array, Uint32Array, Int8Array, Int16Array, Int32Array, Uint8ClampedArray };
@@ -38,7 +44,7 @@ function uploader() {
   const attributes = WebGLAttributes(gl);
   return { counters, attributes, upload(g) { for (const a of g.userData.dyn) attributes.update(a, 34962); } };
 }
-const fxProposal = replace(src['src/fx/fx.js'], 'function markUpdated(geo, count) {',
+const fxProposal = postfix ? fixed.fx : replace(src['src/fx/fx.js'], 'function markUpdated(geo, count) {',
   'function markUpdated(geo, count) {\n  if (count === 0) return;');
 const rndA = rng(), rndB = rng();
 const FXa = evaluate(src['src/fx/fx.js'], 'FX', { Math: mathWith({ random: () => rndA.next() }) });
@@ -87,9 +93,9 @@ const fxResult = { frames: 1800, idle, overall: { baseline: ua.counters, proposa
 fa.dispose(); fb.dispose();
 
 // Q08: fixed directions retain JS Number precision and exactly the existing angle expression.
-let navProposal = replace(src['src/game/nav.js'], 'const _p =',
+let navProposal = postfix ? fixed.nav : replace(src['src/game/nav.js'], 'const _p =',
   'const RING = Array.from({ length: 8 }, (_, k) => { const a = (k / 8) * Math.PI * 2; return [Math.cos(a), Math.sin(a)]; });\nconst _p =');
-navProposal = replace(navProposal, '        const a = (k / 8) * Math.PI * 2;\n        if (L.pointInside(_p.set(x + Math.cos(a) * r, y + h, z + Math.sin(a) * r), 0)) return false;',
+if (!postfix) navProposal = replace(navProposal, '        const a = (k / 8) * Math.PI * 2;\n        if (L.pointInside(_p.set(x + Math.cos(a) * r, y + h, z + Math.sin(a) * r), 0)) return false;',
   '        if (L.pointInside(_p.set(x + RING[k][0] * r, y + h, z + RING[k][1] * r), 0)) return false;');
 function navType(s) {
   const calls = { sin: 0, cos: 0 };
@@ -124,7 +130,7 @@ for (const [id, layout] of Object.entries(MAP_LAYOUTS)) {
 
 // Q09: extract the actual complete FX.update; stub only unrelated pool updaters.
 const updateSource = between(src['src/fx/fx.js'], '  update(dt, camera) {', '\n  clear() {');
-const updateProposal = replace(updateSource, '      camera.getWorldPosition(this._camPos);\n      camera.getWorldDirection(this._camDir);',
+const updateProposal = postfix ? between(fixed.fx, '  update(dt, camera) {', '\n  clear() {') : replace(updateSource, '      camera.getWorldPosition(this._camPos);\n      camera.getWorldDirection(this._camDir);',
   '      camera.getWorldDirection(this._camDir);\n      this._camPos.setFromMatrixPosition(camera.matrixWorld);');
 const method = s => vm.runInNewContext('({' + s + '}).update', { UP: up });
 const updateA = method(updateSource), updateB = method(updateProposal);
@@ -159,7 +165,9 @@ for (let i = 0; i < 2400; i++) {
   assert.deepEqual(state(ca, ra), state(cb, rb)); cameraHash.update(JSON.stringify(state(ca, ra)));
 }
 const result = { auditedCommit: '8b5954be5eb0eb66da0a240a5b23061bc116f642', node: process.version,
+  mode: postfix ? 'postfix versus committed d5d54d1 baseline' : 'audit-only proposed edits',
   method: 'Node VM, actual source and vendored Three.js; simulated GL buffers, no browser/GPU/smartphone timing',
   sourceSha256: Object.fromEntries(paths.map(p => [p, hash(src[p])])), Q07: fxResult, Q08: navResult,
+  ...(postfix ? { fixedSourceSha256: { 'src/fx/fx.js': hash(fixed.fx), 'src/game/nav.js': hash(fixed.nav) } } : {}),
   Q09: { frames: 2400, baseline: ra.counts, proposal: rb.counts, exact: true, stateSha256: cameraHash.digest('hex') } };
 console.log(JSON.stringify(result, null, 2));
