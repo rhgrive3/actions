@@ -511,7 +511,16 @@ class LensInk {
       A[i * 4] = p.x; A[i * 4 + 1] = p.y; A[i * 4 + 2] = p.rx * g; A[i * 4 + 3] = p.ry * g;
       B[i * 4] = p.rot; B[i * 4 + 1] = p.I; B[i * 4 + 2] = p.ch; B[i * 4 + 3] = 0;
     }
-    this.aA.needsUpdate = true; this.aB.needsUpdate = true;
+    if (n) {
+      // Only live lens sprites can be drawn. Keep one range per attribute to avoid per-frame allocations.
+      const count = n * 4;
+      const a = this.aA, b = this.aB;
+      const ar = a._lensRange || (a._lensRange = { start: 0, count: 0 });
+      const br = b._lensRange || (b._lensRange = { start: 0, count: 0 });
+      ar.count = br.count = count;
+      a.updateRanges.length = 0; a.updateRanges.push(ar); a.needsUpdate = true;
+      b.updateRanges.length = 0; b.updateRanges.push(br); b.needsUpdate = true;
+    }
     this.geo.instanceCount = n;
     this.mat.uniforms.uAspect.value = aspect;
     const r = this.r;
