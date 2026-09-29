@@ -3,7 +3,7 @@
 - 調査日: 2026-09-29 JST
 - 対象: `rhgrive3/actions / inkwave-public/`
 - 基準コミット: `2f12f1715ac4a36e5744bb9d7fe537996c885a2e`
-- 状態: 調査・関数単位の比較検証完了。**下記3件は本体未実装。**
+- 状態: 調査・関数単位の比較検証完了。**Q04/Q05/Q06 はゲーム本体へ実装済み。**
 - ゲーム本体への修正ではなく、追加改善の調査レポート。
 
 ## 確認できた追加候補
@@ -28,7 +28,17 @@ Q06では10 meshの空状態120フレームで、初回確保を除く模擬buff
 
 今回の調査はゲーム本体、特に `showcase.js`、`lobbySet.js`、`environment.js`、`decor.js` と同梱Three.jsを対象とした。モデリングツールのGLB容量を根拠にはしていない。網羅的な全コード無欠陥の証明ではない。
 
-## Q04. 最終終了時にInstancedMesh本体も解放する
+## 実装結果
+
+3件とも、画質・影・反射・演出数・物理精度・操作応答を落とさない形で実装した。
+
+- **Q04 実装済み:** Decor / LobbySet / ロビーFXの最終解放で、所有するInstancedMesh本体もdispose。ロビーcontactは共有geometry/materialを残し、object本体だけ解放する。
+- **Q05 実装済み:** ステージ切り替え時、旧dock世代のmaterialをSetで集め一度ずつdisposeし、旧pilingsのInstancedMesh本体もdispose。新世代の構築・泡場生成は従来どおり。
+- **Q06 実装済み:** InkFX / Confetti / Sparkles / InkTrailは、計算後のcountが0ならinstanceMatrixのGPU更新要求を出さない。CPU上の寿命・乱数・matrixゼロ化は維持し、0→有効の同フレームでは更新要求が出る。
+
+修正後fixtureでは、空状態のmatrix version増加は全対象0。再出現時は描画対象になったmeshだけ同フレームでversionが1増える。Q05では旧geometry 4件、固有material 3件、pilings object 1件を解放し、次世代build/foam呼出は各1回維持した。
+
+## Q04. 最終終了時にInstancedMesh本体も解放する【実装済み】
 
 ### 根拠
 
@@ -65,7 +75,7 @@ Props側の `_inst` は既に[clear L3297](https://github.com/rhgrive3/actions/b
 
 **実装後の確認:** ステージ往復、ロビー完全退出→再入場を20回。旗・発光・水滴・足元の影・ロビー演出が正常で、ロビー保持中には解放されないこと。実描画後の資源推移も観察する。
 
-## Q05. ステージ切り替えで捨てる桟橋・杭・係留船の材質を解放する
+## Q05. ステージ切り替えで捨てる桟橋・杭・係留船の材質を解放する【実装済み】
 
 ### 根拠
 
@@ -97,7 +107,7 @@ Props側の `_inst` は既に[clear L3297](https://github.com/rhgrive3/actions/b
 
 **実装後の確認:** Marina系とそれ以外を往復し、杭・桟橋・船の材質、船の揺れ、泡・反射が同じこと。旧世代のmaterialだけが一度ずつ解放されること。
 
-## Q06. 演出が0個のときはmatrixのGPU更新要求を出さない
+## Q06. 演出が0個のときはmatrixのGPU更新要求を出さない【実装済み】
 
 ### 根拠
 
