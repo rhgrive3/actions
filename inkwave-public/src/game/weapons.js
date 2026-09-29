@@ -564,6 +564,9 @@ export class Projectiles {
     const arcN = 64;
     this.arcGeo = new THREE.BufferGeometry();
     this.arcGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(arcN * 3), 3));
+    // Line.computeLineDistances() allocates a fresh attribute every call. The guide has a fixed
+    // 64-vertex layout, so keep one distance buffer and update its values in place instead.
+    this.arcGeo.setAttribute('lineDistance', new THREE.BufferAttribute(new Float32Array(arcN), 1));
     this.arcN = arcN;
     this.arcLine = new THREE.Line(this.arcGeo, new THREE.LineDashedMaterial({ color: 0xffffff, dashSize: 0.25, gapSize: 0.18, transparent: true, opacity: 0.95, depthTest: false }));
     this.arcLine.renderOrder = 10; this.arcLine.frustumCulled = false; this.arcLine.visible = false;
@@ -1434,7 +1437,18 @@ export class Projectiles {
       }
       pos.needsUpdate = true;
       this.arcGeo.setDrawRange(0, n);
-      this.arcLine.computeLineDistances();
+      // Match THREE.Line.computeLineDistances() exactly, but reuse the fixed BufferAttribute.
+      // Accumulate in JS Number precision and only round on Float32 store, preserving the old data bytes.
+      const dist = this.arcGeo.attributes.lineDistance;
+      let total = 0;
+      dist.setX(0, 0);
+      for (let i = 1; i < pos.count; i++) {
+        _v2.fromBufferAttribute(pos, i - 1);
+        _v3.fromBufferAttribute(pos, i);
+        total += _v2.distanceTo(_v3);
+        dist.setX(i, total);
+      }
+      dist.needsUpdate = true;
       cache.physics = G.physics;
       cache.px = ipx; cache.py = ipy; cache.pz = ipz;
       cache.vx = ivx; cache.vy = ivy; cache.vz = ivz;
