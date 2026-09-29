@@ -75,6 +75,7 @@ export class Gyro {
     this._src = 'ori';          // 'ori' | 'rrA' | 'rrB'
     this._rrScale = 1;          // deg/s (1) or rad/s (57.3) → deg/s
     this._rr = null; this._tRR = 0;
+    this._screenAngle = NaN; this._gainSens = NaN;
     this._cal = { n: 0, a: 0, b: 0, ra: 0, rb: 0 };
     this._onOri = (e) => this._orientation(e);
     this._onMot = (e) => this._motion(e);
@@ -159,7 +160,8 @@ export class Gyro {
     const t = e.timeStamp || performance.now();
     const prevT = this._tRR;
     this._tRR = t;
-    this._rr = [r.alpha, r.beta, r.gamma];
+    const rr = this._rr || (this._rr = [0, 0, 0]);
+    rr[0] = r.alpha; rr[1] = r.beta; rr[2] = r.gamma;
     if (this._src === 'ori' || !this._hasQ) return;
     const dt = (t - prevT) / 1000;
     if (!(dt > 0.002 && dt < 0.25)) return;
@@ -176,11 +178,10 @@ export class Gyro {
     const wl = Math.hypot(wx, wy, wz);
     if (wl < 0.9) return;                                   // needs a real turn (> ~50°/s)
     const [a, b, g] = this._rr;
-    const A = [b, g, a], B = [a, b, g];
-    const la = Math.hypot(A[0], A[1], A[2]) || 1e-9, lb = Math.hypot(B[0], B[1], B[2]) || 1e-9;
+    const la = Math.hypot(b, g, a) || 1e-9, lb = Math.hypot(a, b, g) || 1e-9;
     const C = this._cal;
-    C.a += (A[0] * wx + A[1] * wy + A[2] * wz) / (la * wl);
-    C.b += (B[0] * wx + B[1] * wy + B[2] * wz) / (lb * wl);
+    C.a += (b * wx + g * wy + a * wz) / (la * wl);
+    C.b += (a * wx + b * wy + g * wz) / (lb * wl);
     C.ra += (wl / D2R) / la; C.rb += (wl / D2R) / lb;
     C.n++;
     if (C.n < 30) return;
@@ -195,7 +196,11 @@ export class Gyro {
   // ---------------------------------------------------------------------------------------- processing
   _sample(wx, wy, wz, dt) {
     // device → screen space (screen rotated θ counter-clockwise from natural)
-    const th = screenAngle() * D2R, c = Math.cos(th), s = Math.sin(th);
+    const th = screenAngle() * D2R;
+    if (th !== this._screenAngle) {
+      this._screenAngle = th; this._screenCos = Math.cos(th); this._screenSin = Math.sin(th);
+    }
+    const c = this._screenCos, s = this._screenSin;
     const px = wx * c - wy * s, py = wx * s + wy * c, pz = wz;            // ω about screen-right / screen-up / out-of-screen
     const d = this._down;
     const gy = d[0] * s + d[1] * c, gz = d[2];
@@ -213,7 +218,8 @@ export class Gyro {
     yaw = yaw * direct + this._sm.y * (1 - direct);
     pitch = pitch * direct + this._sm.p * (1 - direct);
     if (sp < 0.8) { const f = sp / 0.8; yaw *= f; pitch *= f; }
-    const gain = 360 / gyroTurnDeg(this.sens);
+    if (this.sens !== this._gainSens) { this._gainSens = this.sens; this._gain = 360 / gyroTurnDeg(this.sens); }
+    const gain = this._gain;
     this.dYaw += yaw * dt * gain * (this.invX ? -1 : 1);
     this.dPitch += pitch * dt * gain * (this.invY ? -1 : 1);
   }
