@@ -93,17 +93,19 @@ export function makeImpulse(ctx, seconds = 1.6, decay = 3.2, opt = {}) {
   const buf = ctx.createBuffer(2, len, sr);
   const pre = Math.floor((opt.pre ?? 0.01) * sr);
   const bright = opt.bright ?? 0.85, dark = opt.dark ?? 0.12;
+  const d0 = buf.getChannelData(0), d1 = buf.getChannelData(1);
+  const rnd0 = mulberry32((opt.seed ?? 71) + 0), rnd1 = mulberry32((opt.seed ?? 71) + 101);
+  let lp0 = 0, lp1 = 0;
+  // Envelope and damping are identical in both ears; retain each ear's independent noise and filter state.
+  for (let i = pre; i < len; i++) {
+    const x = (i - pre) / (len - pre);
+    const env = Math.exp(-x * decay * 2.3) * (1 - x) * Math.min(1, (i - pre) / (0.002 * sr));
+    const a = dark + (bright - dark) * Math.exp(-x * 4);
+    lp0 += ((rnd0() * 2 - 1) - lp0) * a; d0[i] = lp0 * env;
+    lp1 += ((rnd1() * 2 - 1) - lp1) * a; d1[i] = lp1 * env;
+  }
   for (let ch = 0; ch < 2; ch++) {
-    const d = buf.getChannelData(ch);
-    const rnd = mulberry32((opt.seed ?? 71) + ch * 101);
-    let lp = 0;
-    for (let i = pre; i < len; i++) {
-      const x = (i - pre) / (len - pre);
-      const env = Math.exp(-x * decay * 2.3) * (1 - x) * Math.min(1, (i - pre) / (0.002 * sr));
-      const a = dark + (bright - dark) * Math.exp(-x * 4);
-      lp += ((rnd() * 2 - 1) - lp) * a;
-      d[i] = lp * env;
-    }
+    const d = ch === 0 ? d0 : d1;
     // early reflections (plaza walls), different per ear
     const taps = opt.taps ?? [[0.011, 0.5], [0.019, 0.36], [0.027, 0.3], [0.041, 0.22], [0.058, 0.15]];
     for (const [tt, amp] of taps) {
@@ -148,15 +150,16 @@ export function strokeWave(ctx, sharp = 7) {
   const c = cache(ctx), key = 'stroke:' + sharp;
   let w = c.get(key);
   if (w) return w;
-  const N = 40, M = 2048, re = new Float32Array(N + 1), im = new Float32Array(N + 1);
-  for (let n = 1; n <= N; n++) {
-    let a = 0, b = 0;
-    for (let i = 0; i < M; i++) {
-      const ph = i / M, e = Math.exp(-ph * sharp) * Math.min(1, ph * 60);
-      a += e * Math.cos(2 * Math.PI * n * ph); b += e * Math.sin(2 * Math.PI * n * ph);
+  const N = 40, M = 2048, real = new Float64Array(N + 1), imag = new Float64Array(N + 1);
+  // Each harmonic still accumulates samples in ascending i, at JS Number precision.
+  for (let i = 0; i < M; i++) {
+    const ph = i / M, e = Math.exp(-ph * sharp) * Math.min(1, ph * 60);
+    for (let n = 1; n <= N; n++) {
+      real[n] += e * Math.cos(2 * Math.PI * n * ph); imag[n] += e * Math.sin(2 * Math.PI * n * ph);
     }
-    re[n] = (2 * a) / M; im[n] = (2 * b) / M;
   }
+  const re = new Float32Array(N + 1), im = new Float32Array(N + 1);
+  for (let n = 1; n <= N; n++) { re[n] = (2 * real[n]) / M; im[n] = (2 * imag[n]) / M; }
   w = ctx.createPeriodicWave(re, im);
   c.set(key, w);
   return w;
