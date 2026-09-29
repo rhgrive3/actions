@@ -69,13 +69,16 @@ for (const r of voice) for (const a of r.nm.byNid.values()) r.nm._stopLoops(a);
 assert.deepEqual(voice[0].log, voice[1].log);
 
 function dsp(source) {
-  const counts = { exp: 0, sin: 0, cos: 0, random: 0 };
+  const counts = { exp: 0, sin: 0, cos: 0, random: 0, generatedArrayBytes: 0 };
   const math = Object.create(Math);
   for (const name of ['exp', 'sin', 'cos']) math[name] = (...args) => { counts[name]++; return Math[name](...args); };
   source = source.replace('return function () {', 'return function () { counts.random++;');
   const end = source.indexOf('\nconst fmin ='); assert(end > 0);
+  const countedArray = Type => new Proxy(Type, { construct(target, args) {
+    const array = Reflect.construct(target, args); counts.generatedArrayBytes += array.byteLength; return array;
+  } });
   const api = vm.runInNewContext(strip(source.slice(0, end)) + '\n({makeImpulse, strokeWave})',
-    { Math: math, counts, Float32Array, Float64Array });
+    { Math: math, counts, Float32Array: countedArray(Float32Array), Float64Array: countedArray(Float64Array) });
   return { ...api, counts };
 }
 const impulseCases = [
@@ -113,6 +116,7 @@ for (const sharp of [0, 0.25, 1, 4, 7, 9, 12, 25, 80, -2]) {
   const contexts = [context(), context()];
   const a = runtimes[0].strokeWave(contexts[0], sharp), b = runtimes[1].strokeWave(contexts[1], sharp);
   assert.deepEqual(a.re, b.re); assert.deepEqual(a.im, b.im);
+  assert.equal(runtimes[0].counts.generatedArrayBytes, runtimes[1].counts.generatedArrayBytes);
   const trace = crypto.createHash('sha256'); trace.update(new Uint8Array(a.re.buffer)); trace.update(new Uint8Array(a.im.buffer));
   const beforeCounts = runtimes.map(r => ({ ...r.counts }));
   for (let i = 0; i < 2; i++) {
