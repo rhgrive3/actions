@@ -10,20 +10,49 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:
-      - name: Probe live worker asset routes
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Probe bootstrap build identity
         shell: bash
         run: |
           set -euo pipefail
-          base=https://ida.rhgrive.workers.dev
-          : > live-probe.txt
-          for p in             /hex.meta.js             /hex.user.js             /js/worker.js             /js/platform/worker.js             /js/platform/capstone-probe-worker.js             /js/platform/capstone-disasm-worker.js             /capstone.wasm             /userscript-assets/js/worker.js             /userscript-assets/capstone.wasm; do
-            code=$(curl -sS -L --connect-timeout 8 --max-time 15 -o /tmp/body -w '%{http_code}' "$base$p" || true)
-            bytes=$(wc -c </tmp/body 2>/dev/null || echo 0)
-            printf '%s %s %s\n' "$code" "$bytes" "$p" >> live-probe.txt
-          done
-          curl -fsS --connect-timeout 8 --max-time 15 "$base/hex.meta.js" | grep -E '^// @(version|updateURL|downloadURL)' >> live-probe.txt || true
+          cat > /tmp/probe.mjs <<'NODE'
+          import { webcrypto, randomUUID } from 'node:crypto';
+          const subtle=webcrypto.subtle;
+          const key=await subtle.generateKey({name:'ECDH',namedCurve:'P-256'},true,['deriveBits']);
+          const jwk=await subtle.exportKey('jwk',key.publicKey);
+          const builds=[
+            ['live-loader-2213','7f189ed72b8ac0801da206ca'],
+            ['main-2259','842f2f6aba22b96b9564d6c1'],
+          ];
+          for(const [label,buildId] of builds){
+            const bytes=webcrypto.getRandomValues(new Uint8Array(18));
+            const b64=v=>Buffer.from(v).toString('base64url');
+            const body={
+              nonce:b64(webcrypto.getRandomValues(new Uint8Array(24))),
+              loaderVersion:label==='live-loader-2213'?'2.0.2322242213':'2.0.2322242259',
+              buildId,
+              requestId:b64(bytes),
+              sessionIdentity:b64(webcrypto.getRandomValues(new Uint8Array(18))),
+              clientPublicKey:jwk,
+            };
+            const r=await fetch('https://ida.rhgrive.workers.dev/runtime/bootstrap',{
+              method:'POST',
+              headers:{'content-type':'application/json','origin':'https://chatgpt.com'},
+              body:JSON.stringify(body),
+            });
+            const text=await r.text();
+            console.log(JSON.stringify({
+              label,buildId,status:r.status,
+              allowOrigin:r.headers.get('access-control-allow-origin'),
+              body:text.slice(0,300)
+            }));
+          }
+          NODE
+          node /tmp/probe.mjs > bootstrap-build-probe.jsonl
       - uses: actions/upload-artifact@v4
         with:
           name: hex-live-probe
-          path: live-probe.txt
+          path: bootstrap-build-probe.jsonl
           retention-days: 1
