@@ -1,0 +1,187 @@
+{
+  "baseCommit": "d5d54d1d37274dfa82467b37b9b8009719783ed3",
+  "baselineMatchesMainAt": "43539687b87070c3a950ce55b18a679423c5413f",
+  "sourceSha256": {
+    "gyro": {
+      "before": "f0435967e8d622436208e3df8ec16dc4e9349a7dad6811bf77c672f44bebe422",
+      "after": "2dcdc2591c157c0dd63fcbef7847a09c5bca524750d6337d674ff80467e4ea9e"
+    },
+    "netmatch": {
+      "before": "3ff55dd0287ea41d9afbdaa2b10a8b1d4a29c39ed354e3242a1af49b4f3fc76a",
+      "after": "efca37fc8be77a37aaccf4b235a256b9b547119e8fec163ae20dc2320775a3bc"
+    }
+  },
+  "gyro": [
+    {
+      "kind": "ori",
+      "samples": 2500,
+      "sourcesUsed": [
+        "ori"
+      ],
+      "baseline": {
+        "sin": 10003,
+        "cos": 10003,
+        "gainCalls": 2503,
+        "rateArrays": 0,
+        "calibrationArrays": 0
+      },
+      "fixed": {
+        "sin": 7505,
+        "cos": 7505,
+        "gainCalls": 11,
+        "rateArrays": 0,
+        "calibrationArrays": 0
+      },
+      "statesAndConsumedDeltasEqual": true,
+      "stateSha256": "d0a3cc794570013c8db0bb6341bff867d8d03734e97ec1393ffabcdad6e0259d"
+    },
+    {
+      "kind": "inconclusive",
+      "samples": 2500,
+      "sourcesUsed": [
+        "ori"
+      ],
+      "baseline": {
+        "sin": 10003,
+        "cos": 10003,
+        "gainCalls": 2503,
+        "rateArrays": 2500,
+        "calibrationArrays": 1598
+      },
+      "fixed": {
+        "sin": 7505,
+        "cos": 7505,
+        "gainCalls": 11,
+        "rateArrays": 3,
+        "calibrationArrays": 0
+      },
+      "statesAndConsumedDeltasEqual": true,
+      "stateSha256": "b2759b68cef7877815c5200a20cd195290a15a1f9c7cfabc913a68e69de55e72"
+    },
+    {
+      "kind": "rrA-deg",
+      "samples": 2500,
+      "sourcesUsed": [
+        "ori",
+        "rrA"
+      ],
+      "baseline": {
+        "sin": 10003,
+        "cos": 10003,
+        "gainCalls": 2503,
+        "rateArrays": 2500,
+        "calibrationArrays": 120
+      },
+      "fixed": {
+        "sin": 7505,
+        "cos": 7505,
+        "gainCalls": 11,
+        "rateArrays": 3,
+        "calibrationArrays": 0
+      },
+      "statesAndConsumedDeltasEqual": true,
+      "stateSha256": "3f1a12833ad9baaa60ee09376fa6f8a2001efcd3132f900ca8531ff6fe9b2f32"
+    },
+    {
+      "kind": "rrA-rad",
+      "samples": 2500,
+      "sourcesUsed": [
+        "ori",
+        "rrA"
+      ],
+      "baseline": {
+        "sin": 10003,
+        "cos": 10003,
+        "gainCalls": 2503,
+        "rateArrays": 2500,
+        "calibrationArrays": 120
+      },
+      "fixed": {
+        "sin": 7505,
+        "cos": 7505,
+        "gainCalls": 11,
+        "rateArrays": 3,
+        "calibrationArrays": 0
+      },
+      "statesAndConsumedDeltasEqual": true,
+      "stateSha256": "0e4b0ab97e13bee3121401c531229e7c9a8b75b649e90c4b2b282a403e70f56d"
+    },
+    {
+      "kind": "rrB-deg",
+      "samples": 2500,
+      "sourcesUsed": [
+        "ori",
+        "rrB"
+      ],
+      "baseline": {
+        "sin": 10003,
+        "cos": 10003,
+        "gainCalls": 2503,
+        "rateArrays": 2500,
+        "calibrationArrays": 120
+      },
+      "fixed": {
+        "sin": 7505,
+        "cos": 7505,
+        "gainCalls": 11,
+        "rateArrays": 3,
+        "calibrationArrays": 0
+      },
+      "statesAndConsumedDeltasEqual": true,
+      "stateSha256": "3ca5dcc9533983afdf0d2530dc6e690f6f584e08347c3bccbe99372470c826c5"
+    },
+    {
+      "kind": "rrB-rad",
+      "samples": 2500,
+      "sourcesUsed": [
+        "ori",
+        "rrB"
+      ],
+      "baseline": {
+        "sin": 10003,
+        "cos": 10003,
+        "gainCalls": 2503,
+        "rateArrays": 2500,
+        "calibrationArrays": 120
+      },
+      "fixed": {
+        "sin": 7505,
+        "cos": 7505,
+        "gainCalls": 11,
+        "rateArrays": 3,
+        "calibrationArrays": 0
+      },
+      "statesAndConsumedDeltasEqual": true,
+      "stateSha256": "89bec8fc3931398af7d4f203e17b14a576c58053edd2cd29c040c7dea63e7bb3"
+    }
+  ],
+  "network": {
+    "frames": 6000,
+    "peers": 7,
+    "packets": 13995,
+    "baseline": {
+      "quantileArrays": 27990,
+      "pathModes": [
+        80681,
+        241,
+        2696,
+        0
+      ]
+    },
+    "fixed": {
+      "quantileArrays": 0,
+      "pathModes": [
+        80681,
+        241,
+        2696,
+        0
+      ]
+    },
+    "additionalQuantileEdgeCases": 20,
+    "persistentScratchArrays": 7,
+    "maximumScratchLength": 60,
+    "quantileAndPlaybackAndActorSampleStatesEqual": true,
+    "stateSha256": "96ad4d9d17a78c92aeb4f5104d7a714b57a9a302c16680a685d497dd55aec200"
+  },
+  "scope": "Actual classes in Node VM, synthetic sensor/packet events and vendored Three.js; no real browser, device, WebSocket, FPS or GC timing measurement."
+}
