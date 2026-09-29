@@ -1,0 +1,52 @@
+{
+ "HEAD_skin offset over HEAD_face (mm)": {
+  "min": -0.331,
+  "p5": 0.298,
+  "median": 0.3,
+  "under_face_below_0p35mm": 0,
+  "n": 3553
+ },
+ "HEAD_skin_04 offset over HEAD_face (mm)": {
+  "min": -1.186,
+  "p5": 0.297,
+  "median": 0.3,
+  "under_face_below_0p35mm": 6,
+  "n": 3553
+ },
+ "HEAD_eyes_03 offset over HEAD_face (mm)": {
+  "min": -7.657,
+  "p5": -0.108,
+  "median": 2.455,
+  "under_face_below_0p35mm": 91,
+  "n": 2184
+ },
+ "HEAD_eyes_20 offset over HEAD_face (mm)": {
+  "min": -4.525,
+  "p5": 0.233,
+  "median": 2.589,
+  "under_face_below_0p35mm": 69,
+  "n": 2184
+ },
+ "HEAD_eyes_12 offset over HEAD_face (mm)": {
+  "min": 0.3,
+  "p5": 0.3,
+  "median": 0.3,
+  "under_face_below_0p35mm": 0,
+  "n": 153
+ },
+ "HEAD_eyes_29 offset over HEAD_face (mm)": {
+  "min": 0.3,
+  "p5": 0.3,
+  "median": 0.3,
+  "under_face_below_0p35mm": 0,
+  "n": 153
+ },
+ "face verts within 1.5mm of HEAD_eyes: below cap surface >0.2mm": {
+  "count": 41,
+  "worst_mm": -1.487
+ },
+ "face verts within 1.5mm of HEAD_eyes_18: below cap surface >0.2mm": {
+  "count": 39,
+  "worst_mm": -1.483
+ }
+}
