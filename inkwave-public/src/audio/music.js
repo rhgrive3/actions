@@ -150,16 +150,23 @@ export function strokeWave(ctx, sharp = 7) {
   const c = cache(ctx), key = 'stroke:' + sharp;
   let w = c.get(key);
   if (w) return w;
-  const N = 40, M = 2048, real = new Float64Array(N + 1), imag = new Float64Array(N + 1);
-  // Each harmonic still accumulates samples in ascending i, at JS Number precision.
-  for (let i = 0; i < M; i++) {
-    const ph = i / M, e = Math.exp(-ph * sharp) * Math.min(1, ph * 60);
-    for (let n = 1; n <= N; n++) {
-      real[n] += e * Math.cos(2 * Math.PI * n * ph); imag[n] += e * Math.sin(2 * Math.PI * n * ph);
+  const N = 40, M = 2048, re = new Float32Array(N + 1), im = new Float32Array(N + 1);
+  // Share each envelope across four harmonics without a scratch buffer. Each sum retains the same sample order
+  // and JS Number precision, with Float32 rounding only when storing the completed coefficients.
+  for (let n = 1; n <= N; n += 4) {
+    let a0 = 0, b0 = 0, a1 = 0, b1 = 0, a2 = 0, b2 = 0, a3 = 0, b3 = 0;
+    for (let i = 0; i < M; i++) {
+      const ph = i / M, e = Math.exp(-ph * sharp) * Math.min(1, ph * 60);
+      a0 += e * Math.cos(2 * Math.PI * n * ph); b0 += e * Math.sin(2 * Math.PI * n * ph);
+      a1 += e * Math.cos(2 * Math.PI * (n + 1) * ph); b1 += e * Math.sin(2 * Math.PI * (n + 1) * ph);
+      a2 += e * Math.cos(2 * Math.PI * (n + 2) * ph); b2 += e * Math.sin(2 * Math.PI * (n + 2) * ph);
+      a3 += e * Math.cos(2 * Math.PI * (n + 3) * ph); b3 += e * Math.sin(2 * Math.PI * (n + 3) * ph);
     }
+    re[n] = (2 * a0) / M; im[n] = (2 * b0) / M;
+    re[n + 1] = (2 * a1) / M; im[n + 1] = (2 * b1) / M;
+    re[n + 2] = (2 * a2) / M; im[n + 2] = (2 * b2) / M;
+    re[n + 3] = (2 * a3) / M; im[n + 3] = (2 * b3) / M;
   }
-  const re = new Float32Array(N + 1), im = new Float32Array(N + 1);
-  for (let n = 1; n <= N; n++) { re[n] = (2 * real[n]) / M; im[n] = (2 * imag[n]) / M; }
   w = ctx.createPeriodicWave(re, im);
   c.set(key, w);
   return w;
