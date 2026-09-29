@@ -52,6 +52,7 @@ const bytes=attrs.reduce((n,a)=>n+a.array.byteLength,0);
 let segmentQueries=0;G.physics.segment=()=>{segmentQueries++;return {hit:false};};
 const arc=method(weapons,'  updateArc(a, show) {','\n  // Every projectile',common);
 const arcGeo=new THREE.BufferGeometry();arcGeo.setAttribute('position',new THREE.Float32BufferAttribute(new Float32Array(64*3),3));
+arcGeo.setAttribute('lineDistance',new THREE.BufferAttribute(new Float32Array(64),1));
 const arcLine=new THREE.Line(arcGeo,new THREE.LineDashedMaterial());
 const arcRing=new THREE.Mesh(new THREE.BufferGeometry(),new THREE.MeshBasicMaterial());
 const ar={arcN:64,arcGeo,arcLine,arcRing,throwVelocity(a,s,out){return out.set(0,8,-s);}};
