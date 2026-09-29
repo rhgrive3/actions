@@ -10,17 +10,18 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:
-      - name: Probe live userscript
+      - name: Probe live worker asset routes
         shell: bash
         run: |
           set -euo pipefail
-          curl -fsS --connect-timeout 10 --max-time 20 https://ida.rhgrive.workers.dev/hex.meta.js -o /tmp/meta.js
-          curl -fsS --connect-timeout 10 --max-time 20 https://ida.rhgrive.workers.dev/health -o /tmp/health.txt || true
-          {
-            grep -E '^// @(name|version|updateURL|downloadURL)' /tmp/meta.js || true
-            echo '---health---'
-            cat /tmp/health.txt || true
-          } > live-probe.txt
+          base=https://ida.rhgrive.workers.dev
+          : > live-probe.txt
+          for p in             /hex.meta.js             /hex.user.js             /js/worker.js             /js/platform/worker.js             /js/platform/capstone-probe-worker.js             /js/platform/capstone-disasm-worker.js             /capstone.wasm             /userscript-assets/js/worker.js             /userscript-assets/capstone.wasm; do
+            code=$(curl -sS -L --connect-timeout 8 --max-time 15 -o /tmp/body -w '%{http_code}' "$base$p" || true)
+            bytes=$(wc -c </tmp/body 2>/dev/null || echo 0)
+            printf '%s %s %s\n' "$code" "$bytes" "$p" >> live-probe.txt
+          done
+          curl -fsS --connect-timeout 8 --max-time 15 "$base/hex.meta.js" | grep -E '^// @(version|updateURL|downloadURL)' >> live-probe.txt || true
       - uses: actions/upload-artifact@v4
         with:
           name: hex-live-probe
