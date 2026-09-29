@@ -3,6 +3,10 @@
 import * as THREE from 'three';
 import { PLAYER } from '../config.js';
 
+const RING = Array.from({ length: 8 }, (_, k) => {
+  const a = (k / 8) * Math.PI * 2;
+  return [Math.cos(a), Math.sin(a)];
+});
 const _p = new THREE.Vector3(), _d = new THREE.Vector3();
 
 export class NavGraph {
@@ -91,8 +95,7 @@ export class NavGraph {
     for (const h of [0.32, 0.8, 1.4]) {
       if (L.pointInside(_p.set(x, y + h, z), 0)) return false;
       for (let k = 0; k < 8; k++) {
-        const a = (k / 8) * Math.PI * 2;
-        if (L.pointInside(_p.set(x + Math.cos(a) * r, y + h, z + Math.sin(a) * r), 0)) return false;
+        if (L.pointInside(_p.set(x + RING[k][0] * r, y + h, z + RING[k][1] * r), 0)) return false;
       }
     }
     return true;
