@@ -63,7 +63,7 @@ def make_profile(name, points_xy):
 def oval_profile(name, half_w, half_t, n=12):
     pts = []
     for i in range(n):
-        a = 2 * math.pi * i / n
+        a = -2 * math.pi * i / n   # clockwise: Blender's bevel then gives outward-facing normals
         pts.append((half_w * math.cos(a), half_t * math.sin(a)))
     return make_profile(name, pts)
 
@@ -308,36 +308,239 @@ def build_bangs(col, bevel, material, params, bvh):
     return objs
 
 
-def build_scalp_cap(col, material):
-    """Fresh base-of-hair shell: an icosphere subset, shrinkwrapped onto HEAD_face/HEAD_skin*
-    (built-in Shrinkwrap modifier, then applied) -- a new datablock, not a deformed copy of
-    the old HAIR_scalp."""
-    bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=3, radius=0.128, location=(HEAD['crown_top'][0], 0.01, 1.40))
-    cap = bpy.context.active_object
-    cap.name = 'HAIR2_scalp'
-    bm = bmesh.new(); bm.from_mesh(cap.data)
-    # Keep only the upper shell that should carry hair (down past ear height at the back/sides,
-    # higher at the front), matching the reference's shaved-side/undercut silhouette -- back.jpg
-    # shows the shaved patch only right around/below the ear, not half the head.
-    to_del = [v for v in bm.verts if (v.co.z < -0.055) or (v.co.y < -0.05 and v.co.z < 0.02)]
-    bmesh.ops.delete(bm, geom=to_del, context='VERTS')
-    bm.to_mesh(cap.data); bm.free()
-    for old in list(cap.users_collection):
-        old.objects.unlink(cap)
-    col.objects.link(cap)
-    targets = [n for n in ['HEAD_face', 'HEAD_skin', 'HEAD_skin_02', 'HEAD_skin_03', 'HEAD_skin_04',
-                            'HEAD_skin_05', 'HEAD_skin_06', 'HEAD_skin_07', 'HEAD_skin_08', 'HEAD_skin_09']
-               if n in bpy.data.objects]
-    mod = cap.modifiers.new('Shrinkwrap', 'SHRINKWRAP')
-    mod.target = bpy.data.objects[targets[0]]
-    mod.offset = 0.004
-    mod.wrap_method = 'NEAREST_SURFACEPOINT'
+def head_local(points):
+    """World -> head-local frame of analysis/multiview/mvcore.py (x = character left, y = up,
+    z = forward, metres, origin at the head centre)."""
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent / 'analysis' / 'multiview'))
+    import mvcore
+    return mvcore.to_local(np.asarray(points, float))
+
+
+def junction_material(name, color, alpha_ramp=None, roughness=0.2, coat=0.8):
+    m = bpy.data.materials.get(name) or bpy.data.materials.new(name)
+    m.use_nodes = True
+    nodes, links = m.node_tree.nodes, m.node_tree.links
+    nodes.clear()
+    out = nodes.new('ShaderNodeOutputMaterial')
+    bsdf = nodes.new('ShaderNodeBsdfPrincipled')
+    bsdf.inputs['Base Color'].default_value = (*color, 1)
+    bsdf.inputs['Roughness'].default_value = roughness
+    bsdf.inputs['Coat Weight'].default_value = coat
+    bsdf.inputs['Coat Roughness'].default_value = 0.1
+    links.new(bsdf.outputs['BSDF'], out.inputs['Surface'])
+    if alpha_ramp:
+        uvn = nodes.new('ShaderNodeUVMap'); uvn.uv_map = 'UVMap'
+        sep = nodes.new('ShaderNodeSeparateXYZ'); links.new(uvn.outputs['UV'], sep.inputs['Vector'])
+        ramp = nodes.new('ShaderNodeValToRGB')
+        (p0, a0), (p1, a1) = alpha_ramp
+        ramp.color_ramp.elements[0].position, ramp.color_ramp.elements[0].color = p0, (a0, a0, a0, 1)
+        ramp.color_ramp.elements[1].position, ramp.color_ramp.elements[1].color = p1, (a1, a1, a1, 1)
+        links.new(sep.outputs['Y'], ramp.inputs['Fac']); links.new(ramp.outputs['Color'], bsdf.inputs['Alpha'])
+        m.surface_render_method = 'BLENDED'
+    return m
+
+
+def cap_material(name, C):
+    """Slicked-back teal layer above the shaved zone: glossy teal with the pale diamond (woven)
+    line pattern of the reference - two built-in Wave Textures in bands at +-45 deg."""
+    m = bpy.data.materials.get(name) or bpy.data.materials.new(name)
+    m.use_nodes = True
+    N, L = m.node_tree.nodes, m.node_tree.links
+    N.clear()
+    out = N.new('ShaderNodeOutputMaterial'); bsdf = N.new('ShaderNodeBsdfPrincipled')
+    bsdf.inputs['Roughness'].default_value = 0.2; bsdf.inputs['Coat Weight'].default_value = 0.8
+    bsdf.inputs['Coat Roughness'].default_value = 0.1
+    L.new(bsdf.outputs['BSDF'], out.inputs['Surface'])
+    tc = N.new('ShaderNodeTexCoord')
+    lines = []
+    for ang in (0.785, -0.785):
+        mp = N.new('ShaderNodeMapping'); mp.inputs['Rotation'].default_value = (ang, 0.0, 0.0)
+        L.new(tc.outputs['Object'], mp.inputs['Vector'])
+        wv = N.new('ShaderNodeTexWave'); wv.wave_type = 'BANDS'; wv.bands_direction = 'Z'
+        wv.inputs['Scale'].default_value = 1.0 / C['spacing_m'] / 10.0; wv.inputs['Distortion'].default_value = 0.0
+        L.new(mp.outputs['Vector'], wv.inputs['Vector'])
+        th = N.new('ShaderNodeMapRange'); th.inputs['From Min'].default_value = 0.955; th.inputs['From Max'].default_value = 0.995
+        L.new(wv.outputs['Fac'], th.inputs['Value']); lines.append(th)
+    mx = N.new('ShaderNodeMath'); mx.operation = 'MAXIMUM'
+    L.new(lines[0].outputs['Result'], mx.inputs[0]); L.new(lines[1].outputs['Result'], mx.inputs[1])
+    col = N.new('ShaderNodeMix'); col.data_type = 'RGBA'
+    col.inputs['A'].default_value = (*C['base_linear'], 1); col.inputs['B'].default_value = (*C['line_linear'], 1)
+    L.new(mx.outputs[0], col.inputs['Factor']); L.new(col.outputs['Result'], bsdf.inputs['Base Color'])
+    return m
+
+
+def shaved_material(name, S):
+    """Undercut: skin shows through; short blue-grey stubble streaks (built-in Noise Texture
+    stretched along the head's up axis) plus the diamond line pattern of the reference (two
+    built-in Wave Textures, bands at +-45 deg). Alpha fades to 0 at the shaved bottom (UV V)."""
+    m = bpy.data.materials.get(name) or bpy.data.materials.new(name)
+    m.use_nodes = True
+    N, L = m.node_tree.nodes, m.node_tree.links
+    N.clear()
+    out = N.new('ShaderNodeOutputMaterial'); bsdf = N.new('ShaderNodeBsdfPrincipled')
+    bsdf.inputs['Roughness'].default_value = 0.65
+    L.new(bsdf.outputs['BSDF'], out.inputs['Surface'])
+    tc = N.new('ShaderNodeTexCoord')
+    mp = N.new('ShaderNodeMapping'); mp.inputs['Scale'].default_value = (1.0, 1.0, 0.05)
+    L.new(tc.outputs['Object'], mp.inputs['Vector'])
+    nz = N.new('ShaderNodeTexNoise'); nz.inputs['Scale'].default_value = 900.0; nz.inputs['Detail'].default_value = 2.0
+    L.new(mp.outputs['Vector'], nz.inputs['Vector'])
+    st = N.new('ShaderNodeMapRange'); st.inputs['From Min'].default_value = 0.55; st.inputs['From Max'].default_value = 0.66
+    L.new(nz.outputs['Fac'], st.inputs['Value'])
+    lines = []
+    for ang in (0.785, -0.785):
+        mp2 = N.new('ShaderNodeMapping'); mp2.inputs['Rotation'].default_value = (ang, 0.0, 0.0)
+        L.new(tc.outputs['Object'], mp2.inputs['Vector'])
+        wv = N.new('ShaderNodeTexWave'); wv.wave_type = 'BANDS'; wv.bands_direction = 'Z'
+        wv.inputs['Scale'].default_value = 1.0 / S['line_spacing_m'] / 10.0; wv.inputs['Distortion'].default_value = 0.0
+        L.new(mp2.outputs['Vector'], wv.inputs['Vector'])
+        th = N.new('ShaderNodeMapRange'); th.inputs['From Min'].default_value = 0.93; th.inputs['From Max'].default_value = 0.99
+        L.new(wv.outputs['Fac'], th.inputs['Value']); lines.append(th)
+    mx = N.new('ShaderNodeMath'); mx.operation = 'MAXIMUM'
+    L.new(lines[0].outputs['Result'], mx.inputs[0]); L.new(lines[1].outputs['Result'], mx.inputs[1])
+    col = N.new('ShaderNodeMix'); col.data_type = 'RGBA'
+    col.inputs['A'].default_value = (*S['stubble_color_linear'], 1); col.inputs['B'].default_value = (*S['line_color_linear'], 1)
+    L.new(mx.outputs[0], col.inputs['Factor']); L.new(col.outputs['Result'], bsdf.inputs['Base Color'])
+    a_st = N.new('ShaderNodeMath'); a_st.operation = 'MULTIPLY'; a_st.inputs[1].default_value = S['stubble_alpha']
+    L.new(st.outputs['Result'], a_st.inputs[0])
+    a_ln = N.new('ShaderNodeMath'); a_ln.operation = 'MULTIPLY'; a_ln.inputs[1].default_value = S['line_alpha']
+    L.new(mx.outputs[0], a_ln.inputs[0])
+    a = N.new('ShaderNodeMath'); a.operation = 'MAXIMUM'
+    L.new(a_st.outputs[0], a.inputs[0]); L.new(a_ln.outputs[0], a.inputs[1])
+    uvn = N.new('ShaderNodeUVMap'); uvn.uv_map = 'UVMap'; sep = N.new('ShaderNodeSeparateXYZ')
+    L.new(uvn.outputs['UV'], sep.inputs['Vector'])
+    fade = N.new('ShaderNodeMapRange'); fade.inputs['From Min'].default_value = 0.0; fade.inputs['From Max'].default_value = 0.5
+    L.new(sep.outputs['Y'], fade.inputs['Value'])
+    af = N.new('ShaderNodeMath'); af.operation = 'MULTIPLY'
+    L.new(a.outputs[0], af.inputs[0]); L.new(fade.outputs['Result'], af.inputs[1])
+    L.new(af.outputs[0], bsdf.inputs['Alpha'])
+    m.surface_render_method = 'BLENDED'
+    return m
+
+
+def build_scalp_junction(col, params):
+    """Where the hair meets the head, from the hand-picked boundary in params['junction'].
+    Both shells are copies of HEAD_face faces, so they sit exactly on the head:
+    - HAIR2_cap: the long-hair base above the cap edge; built-in Solidify (thickness outward)
+      and Subdivision give it real thickness and a thick, rounded rim that sits on the shaved
+      zone, as in the reference sheet.
+    - HAIR2_shaved: the undercut between the cap edge and the shaved bottom, 0.6 mm off the
+      skin; V of UVMap runs 0 (bottom) -> 1 (cap edge) and drives the fade to skin."""
+    J = params['junction']
+    src = bpy.data.objects['HEAD_face']
+    co = np.array([src.matrix_world @ v.co for v in src.data.vertices])
+    L = head_local(co) * 1000.0
+    phi = np.degrees(np.arctan2(L[:, 0], L[:, 2])); y = L[:, 1]
+    ce = np.array(J['cap_edge'], float); sb = np.array(J['shaved_bottom'], float)
+    y_cap = np.interp(phi, ce[:, 0], ce[:, 1]); y_bot = np.interp(phi, sb[:, 0], sb[:, 1])
+    in_cap = y > y_cap
+    in_shaved = (~in_cap) & (y > y_bot) & (np.abs(phi) >= J['shaved_front_limit_deg'])
+    fade = np.clip((y - y_bot) / np.maximum(y_cap - y_bot, 1e-3), 0, 1)
+    from mathutils.bvhtree import BVHTree
+    head_bvh_local = BVHTree.FromPolygons([Vector(p) for p in co], [list(f.vertices) for f in src.data.polygons])
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent / 'analysis' / 'multiview'))
+    import mvcore
+
+    def clean_edge(bm, target_y):
+        """Move the open-boundary vertices onto the picked edge height (same azimuth, local y =
+        target), then back onto the head surface (BVH nearest): a smooth rim instead of the
+        zig-zag of whole triangles."""
+        for v in [v for v in bm.verts if v.is_boundary]:
+            l = mvcore.to_local(np.array([v.co[:]]))[0]
+            ph = np.degrees(np.arctan2(l[0], l[2]))
+            ty = np.interp(ph, *target_y) / 1000.0
+            l2 = np.array([l[0], ty, l[2]])
+            w = mvcore.to_world(l2[None])[0]
+            q = head_bvh_local.find_nearest(Vector(w))[0]
+            v.co = q if q is not None else Vector(w)
+
+    objs = []
+    for name, sel_v, edges in (('HAIR2_cap', in_cap, [(ce[:, 0], ce[:, 1])]),
+                               ('HAIR2_shaved', in_shaved, None)):
+        bm = bmesh.new(); bm.from_mesh(src.data); bm.transform(src.matrix_world)
+        bm.verts.ensure_lookup_table()
+        drop = [f for f in bm.faces if sel_v[[v.index for v in f.verts]].mean() <= 0.5]
+        bmesh.ops.delete(bm, geom=drop, context='FACES')
+        bmesh.ops.delete(bm, geom=[v for v in bm.verts if not v.link_faces], context='VERTS')
+        # HEAD_face is split along the centre line; weld it so Solidify does not make a rim there.
+        bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=0.0005)
+        if edges:
+            clean_edge(bm, edges[0])
+        uvl = bm.loops.layers.uv.new('UVMap')
+        for f in bm.faces:
+            for lp in f.loops:
+                lp[uvl].uv = (0.5, float(fade[lp.vert.index]) if lp.vert.index < len(fade) else 1.0)
+        me = bpy.data.meshes.new(name); bm.to_mesh(me); bm.free()
+        ob = bpy.data.objects.new(name, me); col.objects.link(ob)
+        for p in me.polygons:
+            p.use_smooth = True
+        objs.append(ob)
+    cap, shaved = objs
+    # Thickness grows from the rim to the crown (vertex-group factor of the built-in Solidify):
+    # the reference hair is a thin rolled rim on the shaved zone but a thick mass on top.
+    cl = mvcore.to_local(np.array([v.co[:] for v in cap.data.vertices])) * 1000.0
+    cphi = np.degrees(np.arctan2(cl[:, 0], cl[:, 2]))
+    edge_y = np.interp(cphi, ce[:, 0], ce[:, 1])
+    t = np.clip((cl[:, 1] - edge_y) / np.maximum(J['cap_crown_height_mm'] - edge_y, 1.0), 0, 1)
+    wgt = J['cap_rim_fraction'] + (1 - J['cap_rim_fraction']) * (t * t * (3 - 2 * t))
+    vg = cap.vertex_groups.new(name='thickness')
+    for i, w in enumerate(wgt):
+        vg.add([i], float(w), 'REPLACE')
     bpy.context.view_layer.objects.active = cap
-    bpy.ops.object.modifier_apply(modifier=mod.name)
-    cap.data.materials.append(material)
-    for p in cap.data.polygons:
-        p.use_smooth = True
-    return cap
+    so = cap.modifiers.new('thickness', 'SOLIDIFY'); so.thickness = J['cap_thickness_m']; so.offset = 1.0
+    so.use_even_offset = False; so.use_quality_normals = True; so.vertex_group = 'thickness'
+    sd = cap.modifiers.new('round', 'SUBSURF'); sd.levels = 1; sd.render_levels = 1
+    for m in ('thickness', 'round'):
+        bpy.ops.object.modifier_apply(modifier=m)
+    bpy.context.view_layer.objects.active = shaved
+    dp = shaved.modifiers.new('lift', 'DISPLACE'); dp.strength = J['shaved_offset_m']; dp.mid_level = 0.0
+    bpy.ops.object.modifier_apply(modifier='lift')
+    cap.data.materials.append(cap_material('HAIR2_CAP', J['cap_lines']))
+    # Shaved colour: the undercut pixels just below the cap edge in the sheet side views
+    # (H 184, S 0.26, V 0.68), opaque near the cap edge, fading to transparent at the bottom.
+    shaved.data.materials.append(shaved_material('HAIR2_SHAVED', J['shaved']))
+    return cap, shaved
+
+
+def band_points(H, n_pts=90):
+    """Headband centre line in world space, from the fitted ellipse (params['headband'])."""
+    c = np.array(H['centre_local_m']); n = np.array(H['normal_local'])
+    u = np.cross(n, [0, 0, 1.0]); u /= np.linalg.norm(u); v = np.cross(n, u)
+    r = H['rot']; u, v = np.cos(r) * u + np.sin(r) * v, -np.sin(r) * u + np.cos(r) * v
+    t = np.radians(np.linspace(H['arc_deg'][0], H['arc_deg'][1], n_pts))
+    local = c + np.outer(H['a_m'] * np.cos(t), u) + np.outer(H['b_m'] * np.sin(t), v)
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent / 'analysis' / 'multiview'))
+    import mvcore
+    return mvcore.to_world(local)
+
+
+def build_headband(col, params):
+    """The black headband: a curve along the fitted ellipse arc with a rounded-rectangle bevel
+    (width across the band plane, thickness radial), the band's own material colour."""
+    H = params['headband']
+    w, t = H['width_m'] / 2, H['thickness_m'] / 2
+    ring = [(t * math.cos(a) * 1.0, w * (1 if math.sin(a) >= 0 else -1) * min(1.0, abs(math.sin(a)) * 3))
+            for a in np.linspace(0, -2 * math.pi, 24, endpoint=False)]
+    prof = make_profile('HAIR2_PROFILE_band', ring)
+    pts = [tuple(p) for p in band_points(H)]
+    mat = bpy.data.materials.get('hair_1b1d21') or junction_material('HAIR2_BAND', (0.02, 0.02, 0.022), roughness=0.35, coat=0.3)
+    o = strand('HAIR2_headband', col, pts, [1.0] * len(pts), prof, mat, resolution=2, handle='AUTO')
+    o.data.twist_mode = 'MINIMUM'
+    return o, prof
+
+
+def surface_at(bvh, phi_deg, y_m):
+    """Head surface point and outward normal at head-local azimuth phi and height y (ray from
+    outside toward the vertical axis of the head frame)."""
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent / 'analysis' / 'multiview'))
+    import mvcore
+    ph = math.radians(phi_deg)
+    o_l = np.array([[0.4 * math.sin(ph), y_m, 0.4 * math.cos(ph)], [0.0, y_m, 0.0]])
+    ow, tw = mvcore.to_world(o_l)
+    hit = bvh.ray_cast(Vector(ow), (Vector(tw) - Vector(ow)).normalized())
+    if hit[0] is None:
+        return None, None
+    return hit[0], hit[1]
 
 
 def main():
@@ -356,17 +559,18 @@ def main():
     # Root teal -> tip lime. Colours = mean linear RGB of the teal / lime hair pixels of front.jpg
     # (measured, highlights included); the switch sits on the fins (root->tip fraction 0.5-0.82).
     mat_hair = gradient_hair_material('HAIR2_GRADIENT', (0.093, 0.314, 0.319), (0.655, 0.79, 0.286), tip_start=0.80)
-    mat_scalp = clay_material('HAIR2_CLAY_scalp', (0.06, 0.32, 0.36))
 
     build_tails_hull(col, mat_hair, params, Path(__file__).resolve().parent / 'inkwave_hair_rebuild_v2_tail_hull.npy')
     build_bangs(col, paddle, mat_hair, params, head_bvh())
-    build_scalp_cap(col, mat_scalp)
+    build_scalp_junction(col, params)
+    band, bandprof = build_headband(col, params)
 
     for o in list(col.objects):
         if o.type == 'CURVE':
             convert_to_mesh(o)
 
-    bpy.data.objects.remove(paddle, do_unlink=True)
+    for p in (paddle, bandprof):
+        bpy.data.objects.remove(p, do_unlink=True)
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
     bpy.ops.wm.save_as_mainfile(filepath=str(args.out))
