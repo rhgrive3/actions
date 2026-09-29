@@ -294,7 +294,6 @@ export class MobileInput {
     if (!p) return;
     stop(e);
     if (p.kind === 'look' || (p.kind === 'btn' && CONTROLS[p.id].aim && this.s.fireAim)) {
-      const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : null;
       const ex = e.clientX, ey = e.clientY;
       let dx = ex - p.x, dy = ey - p.y;
       p.x = ex; p.y = ey;
@@ -305,7 +304,6 @@ export class MobileInput {
         p.aiming = true;
       }
       dx = clamp(dx, -140, 140); dy = clamp(dy, -140, 140);
-      void evs;
       const k = (Math.PI * 2) / (2.8 * (this._H || layoutUnit())) * touchSensMul(this.s.touchSens);
       this.lookDX += dx * k; this.lookDY += dy * k * 0.9;
     }
