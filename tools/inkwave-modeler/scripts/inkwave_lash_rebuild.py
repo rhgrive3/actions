@@ -571,6 +571,43 @@ def brown_material():
     return mat
 
 
+def smooth_inner_corner(design):
+    """Inner eye corner: the lid edge of HEAD_face there is stepped (a jagged white edge).  Blender's Smooth
+    modifier on a weighted vertex group round the inner corner (both eyes, lid skin near the eyeball only);
+    the skin layers follow with Surface Deform bound before the smoothing."""
+    ic = design['inner_corner']
+    face = bpy.data.objects['HEAD_face']
+    layers = [bpy.data.objects[n] for n in er.FACE_LAYER_NAMES]
+    for obj in [face] + layers:
+        er.back_up(obj)
+    binds = []
+    for obj in layers:
+        mod = obj.modifiers.new('INKWAVE_inner_follow', 'SURFACE_DEFORM')
+        mod.target = face
+        while obj.modifiers[0] != mod:
+            er.with_object(obj, lambda: bpy.ops.object.modifier_move_up(modifier=mod.name))
+        er.with_object(obj, lambda: bpy.ops.object.surfacedeform_bind(modifier=mod.name))
+        if not mod.is_bound:
+            raise RuntimeError(f'Surface Deform could not bind {obj.name} to the face')
+        binds.append((obj, mod))
+    eye = mesh_tree(sorted(EYEBALLS))
+    w_pts = er.world(face)
+    loc = M.to_local(w_pts)
+    loc[:, 0] = -np.abs(loc[:, 0])                      # both eyes measured in the right eye's front pixels
+    ux, uy = er.camera_pixels('front', M.to_world(loc))
+    d = np.hypot(ux - ic['centre'][0], uy - ic['centre'][1])
+    f = np.clip((ic['radius_px'] - d) / (ic['radius_px'] - ic['full_px']), 0, 1)
+    near = np.array([eye.find_nearest(Vector(p))[3] for p in w_pts]) * 1000
+    f *= np.clip((ic['eye_mm'] - near) / 1.0, 0, 1)
+    f = f * f * (3 - 2 * f)
+    before = er.world(face)
+    er.apply_weighted_modifier(face, f, 'SMOOTH', factor=ic['factor'], iterations=ic['iters'])
+    print('INNER_CORNER face vertices', int((f > 0).sum()), 'max move mm',
+          round(float(np.linalg.norm(er.world(face) - before, axis=1).max() * 1000), 3))
+    for obj, mod in binds:
+        er.apply_modifier(obj, mod)
+
+
 def remove_lower_paint():
     """The lower line is a real part now: give the face its plain skin material back (geometry unchanged)."""
     face = bpy.data.objects['HEAD_face']
@@ -588,6 +625,8 @@ def main():
     ap.add_argument('--shape-only', action='store_true', help='liner, wing and lower line only: no upper lashes, no lower strokes')
     args = ap.parse_args(argv)
     design = json.loads(Path(args.design).read_text())
+    if 'inner_corner' in design:
+        smooth_inner_corner(design)
     tree, shell = surface_tree(), shell_tree()
     mat = er.lash_material()
     mat.node_tree.nodes['Principled BSDF'].inputs['Specular IOR Level'].default_value = 0.0
