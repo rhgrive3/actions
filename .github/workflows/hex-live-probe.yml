@@ -1,0 +1,28 @@
+name: Hex live publication probe
+on:
+  push:
+    paths:
+      - .github/workflows/hex-live-probe.yml
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Probe live userscript
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsS --connect-timeout 10 --max-time 20 https://ida.rhgrive.workers.dev/hex.meta.js -o /tmp/meta.js
+          curl -fsS --connect-timeout 10 --max-time 20 https://ida.rhgrive.workers.dev/health -o /tmp/health.txt || true
+          {
+            grep -E '^// @(name|version|updateURL|downloadURL)' /tmp/meta.js || true
+            echo '---health---'
+            cat /tmp/health.txt || true
+          } > live-probe.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hex-live-probe
+          path: live-probe.txt
+          retention-days: 1
