@@ -3,8 +3,10 @@
 - 日付：2026-09-30（日本時間）
 - 対象：`rhgrive3/actions` / `inkwave-public`
 - 調査基準：[8b5954be5eb0eb66da0a240a5b23061bc116f642](https://github.com/rhgrive3/actions/commit/8b5954be5eb0eb66da0a240a5b23061bc116f642)
-- 状態：**追加3件を検証。今回の保存物はレポート・証拠・検証コードで、ゲーム本体への修正は未実装。**
+- 状態：**Q07/Q08/Q09をゲーム本体へ実装済み。** 実ソースと元版の比較結果は[修正後の証拠](inkwave-extra-cpu-upload-postfix-evidence-2026-09-30.json)に保存した。
 - 前回のQ04/Q05/Q06は、この基準コミットでは反映済み。既存対策を再度提案したものではない。
+
+> 以下の「根拠」は修正前の基準コミットを説明する。実装差分と追加のQ10/Q11は[実装レポート](inkwave-quality-preserving-implementation-2026-09-30.md)を参照。
 
 ## 結果
 
@@ -141,6 +143,6 @@ this._camPos.setFromMatrixPosition(camera.matrixWorld);
 node reports/inkwave-extra-cpu-upload-probe-2026-09-30.mjs
 ```
 
-Node v24.19.0で成功。検証コードは本体を編集せず、読み込んだ実ソースの監査用コピーへ最小変更を与えて元版と比較する。出力不一致ならassertで停止する。対象コードが更新済みの場合は置換境界のassertが止まるため、修正後検証用へ更新する必要がある。
+Node v24.19.0で成功。検証コードは本体を編集せず、元版と変更版を比較する。出力不一致ならassertで停止する。`--postfix`を付けると、基準コミットの元版と現在の実ソースを比較する。
 
 WebGLAttributesは同梱実装を使うが、ブラウザ・実GPUによる描画比較やスマートフォン計測ではない。Q07はCPUの生成結果と転送済みの有効バイトの一致、Q08は判定列とグラフと経路の一致、Q09はカメラ数値とuniformの一致を確認した。これらの範囲で出力を保ちながら削れる処理を示している。
