@@ -1,0 +1,87 @@
+name: Hex runtime hotfix diff
+on:
+  push:
+    paths:
+      - .github/workflows/hex-runtime-hotfix-diff.yml
+permissions:
+  contents: read
+jobs:
+  diff:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: rhgrive3/hex-ida
+          ref: 217233649207ad9e0477f2bc113fbe9d72d70bf7
+          path: old
+      - uses: actions/checkout@v4
+        with:
+          repository: rhgrive3/hex-ida
+          ref: main
+          path: new
+      - name: Capture old runtime
+        working-directory: old
+        timeout-minutes: 4
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --silent
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('scripts/build-userscript.mjs')
+          s=p.read_text()
+          needle="  const runtime = await bundle('js/userscript/protected-entry.js', { format: 'esm', rewriteImportMeta: true, inventory: 'standard-runtime', graph: 'standard' });"
+          repl=needle+"\n  await writeFile('/tmp/runtime-old.js', runtime);"
+          if needle not in s: raise SystemExit('old injection target missing')
+          p.write_text(s.replace(needle,repl,1))
+          PY
+          timeout 120s npm run userscript:build >/tmp/old-build.log 2>&1
+      - name: Capture new runtime
+        working-directory: new
+        timeout-minutes: 4
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --silent
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('scripts/build-userscript.mjs')
+          s=p.read_text()
+          needle="  const runtime = await bundle('js/userscript/protected-entry.js', { format: 'esm', rewriteImportMeta: true, inventory: 'standard-runtime', graph: 'standard' });"
+          repl=needle+"\n  await writeFile('/tmp/runtime-new.js', runtime);"
+          if needle not in s: raise SystemExit('new injection target missing')
+          p.write_text(s.replace(needle,repl,1))
+          PY
+          timeout 120s npm run userscript:build >/tmp/new-build.log 2>&1
+      - name: Extract focused diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          old=Path('/tmp/runtime-old.js').read_text()
+          new=Path('/tmp/runtime-new.js').read_text()
+          marker='https://hex.invalid'
+          i=new.find(marker)
+          if i<0: raise SystemExit('new sentinel missing')
+          lo=max(0,i-500); hi=min(len(new),i+700)
+          Path('/tmp/new-snippet.txt').write_text(new[lo:hi])
+          # find nearest old origin comparison around a matching stable tail
+          import re
+          m=re.search(r'origin.{0,220}pathname', old)
+          if not m: raise SystemExit('old logicalPath pattern missing')
+          olo=max(0,m.start()-500); ohi=min(len(old),m.end()+700)
+          Path('/tmp/old-snippet.txt').write_text(old[olo:ohi])
+          Path('/tmp/runtime-sha.txt').write_text(
+            f'old_bytes={len(old)}\nnew_bytes={len(new)}\n'
+          )
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hex-runtime-hotfix-diff
+          path: |
+            /tmp/old-snippet.txt
+            /tmp/new-snippet.txt
+            /tmp/runtime-sha.txt
+          retention-days: 1
