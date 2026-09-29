@@ -1,0 +1,154 @@
+{
+  "base": "2f12f1715ac4a36e5744bb9d7fe537996c885a2e",
+  "node": "v24.19.0",
+  "method": "Production methods/classes and bundled Three.js resource managers; simulated GL, no real browser or GPU.",
+  "sourceSha256": {
+    "src/game/showcase.js": "0483de89e670ffbb592c930c57ba61a9288c4d88f9f63b0fe2f5964198451fe7",
+    "src/game/lobbySet.js": "6fd72a985521b6470c53e6faca41c1fd7aac09360df76c2133381cac5803147f",
+    "src/world/decor.js": "40ece446c3b84c3b8794f1994629e2f039f6646b9acf6885658504ee8a4f54d9",
+    "src/world/environment.js": "0067e10ebbfe87edafb6f68ce20f695b10661d98beaf66b198592b15803cbe24",
+    "src/main.js": "af8d0c1e0d5850ba10b5a1e5f1b5be15860927aab78fd85390775876bd41bcd1",
+    "src/world/props.js": "5bce560c73b3adba379719f424a4bbb5ad87fa3e3ca2f2d42f278b2ff363420c",
+    "vendor/three/build/three.module.js": "9052042d676cb0fdc1ddfefe193053f34b7ac0513a616fdac4535d49987812ea",
+    "vendor/three/build/three.core.js": "9edde002b066a9a05676a6127f67735b62baf399bdea529f2f7e31657da769e6",
+    "vendor/three/jsm/utils/BufferGeometryUtils.js": "9fb63427ce6641fa14fd0baff9cc4d1b5f9c3d85fd084bf2e90e803c44ec1797",
+    "src/core/ctx.js": "3bac560e4a49b949890b54f7cbbdf9c7ed378aa2c9a1c3878b1d6df2589e5c04"
+  },
+  "instancedLifetimes": {
+    "decor": {
+      "before": {
+        "cycles": 20,
+        "created": 100,
+        "deleted": 60,
+        "subCalls": 0,
+        "subBytes": 0,
+        "objectReleases": 0,
+        "retainedMockBuffers": 40,
+        "sharedContactPrematureDisposes": 0
+      },
+      "proposal": {
+        "cycles": 20,
+        "created": 100,
+        "deleted": 100,
+        "subCalls": 0,
+        "subBytes": 0,
+        "objectReleases": 20,
+        "retainedMockBuffers": 0,
+        "sharedContactPrematureDisposes": 0
+      }
+    },
+    "lobby-set": {
+      "before": {
+        "cycles": 20,
+        "created": 280,
+        "deleted": 180,
+        "subCalls": 0,
+        "subBytes": 0,
+        "objectReleases": 0,
+        "retainedMockBuffers": 100,
+        "sharedContactPrematureDisposes": 0
+      },
+      "proposal": {
+        "cycles": 20,
+        "created": 280,
+        "deleted": 280,
+        "subCalls": 0,
+        "subBytes": 0,
+        "objectReleases": 60,
+        "retainedMockBuffers": 0,
+        "sharedContactPrematureDisposes": 0
+      }
+    },
+    "lobby-fx": {
+      "before": {
+        "cycles": 20,
+        "created": 780,
+        "deleted": 540,
+        "subCalls": 0,
+        "subBytes": 0,
+        "objectReleases": 0,
+        "retainedMockBuffers": 240,
+        "sharedContactPrematureDisposes": 0
+      },
+      "proposal": {
+        "cycles": 20,
+        "created": 780,
+        "deleted": 780,
+        "subCalls": 0,
+        "subBytes": 0,
+        "objectReleases": 180,
+        "retainedMockBuffers": 0,
+        "sharedContactPrematureDisposes": 0
+      }
+    }
+  },
+  "dock": {
+    "before": {
+      "cycles": 20,
+      "geometryDisposes": 80,
+      "uniqueMaterialDisposes": 0,
+      "instanceDisposes": 0,
+      "rebuilds": 20,
+      "foams": 20
+    },
+    "proposal": {
+      "cycles": 20,
+      "geometryDisposes": 80,
+      "uniqueMaterialDisposes": 60,
+      "instanceDisposes": 20,
+      "rebuilds": 20,
+      "foams": 20
+    }
+  },
+  "uploads": {
+    "comparedFrames": 2040,
+    "meshes": 10,
+    "allCpuMatrixAndColorBytesEqual": true,
+    "allSubmittedLiveGpuMatrixBytesEqual": true,
+    "phases": [
+      {
+        "scenario": "empty",
+        "frames": 120,
+        "beforeSubBytes": 9347840,
+        "proposalSubBytes": 0,
+        "beforeSubCalls": 1090,
+        "proposalSubCalls": 0
+      },
+      {
+        "scenario": "mixed",
+        "frames": 600,
+        "beforeSubBytes": 48364544,
+        "proposalSubBytes": 25569280,
+        "beforeSubCalls": 5743,
+        "proposalSubCalls": 3147
+      },
+      {
+        "scenario": "wrap",
+        "frames": 600,
+        "beforeSubBytes": 51114896,
+        "proposalSubBytes": 25114512,
+        "beforeSubCalls": 6636,
+        "proposalSubCalls": 2334
+      },
+      {
+        "scenario": "after-clear",
+        "frames": 120,
+        "beforeSubBytes": 9433600,
+        "proposalSubBytes": 0,
+        "beforeSubCalls": 1100,
+        "proposalSubCalls": 0
+      },
+      {
+        "scenario": "mixed",
+        "frames": 600,
+        "beforeSubBytes": 48363680,
+        "proposalSubBytes": 25370144,
+        "beforeSubCalls": 5742,
+        "proposalSubCalls": 3089
+      }
+    ],
+    "maxCountSeen": 520,
+    "matrixCapacityBytes": 85760,
+    "lobbyMatrixCapacityBytes": 63232
+  }
+}
