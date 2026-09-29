@@ -49,6 +49,8 @@ blender -b $M --python scripts/inkwave_eye_refine.py -- --variant lp40 --brow m3
   --export blender/INKWAVE_CHARACTER_MASTER.glb --game blender/INKWAVE_GAME.glb
 ```
 
+このあと、まつ毛とライナーの作り直し（`../lash-rebuild/README.md`）をかける。
+
 ## 4. 結果
 
 ![参照 / 前 / 後（Cycles）](img/01_reference_before_after_beauty.jpg)
