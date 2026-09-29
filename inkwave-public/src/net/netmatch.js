@@ -212,11 +212,11 @@ export class NetMatch {
     else p.off += (o - p.off) * 0.0025;                 // creep up slowly (clock drift / route change)
     // buffer need from the last ~3 s: how late packets run (90th percentile — a rare hiccup must not drag the delay
     // around; the playback clock rides those out) plus the sender's tick spacing (95th: its frames aren't regular)
-    const W = p.win || (p.win = { late: [], gap: [] });
+    const W = p.win || (p.win = { late: [], gap: [], sorted: [] });
     W.late.push(o - p.off); W.gap.push(p.prevTs !== undefined ? Math.min(0.25, Math.max(0, d.ts - p.prevTs)) : TICK);
     p.prevTs = d.ts;
     if (W.late.length > 60) { W.late.shift(); W.gap.shift(); }
-    p.want = Math.min(0.3, Math.max(0.07, quantile(W.gap, 0.95) + quantile(W.late, 0.9) + 0.012));
+    p.want = Math.min(0.3, Math.max(0.07, quantile(W.gap, 0.95, W.sorted) + quantile(W.late, 0.9, W.sorted) + 0.012));
     // actors
     if (d.a) for (const s of d.a) {
       const a = this.byNid.get(s[0]);
@@ -712,8 +712,12 @@ function blankSample() { return { t: 0, x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, y
 function copySample(s, o) { for (const k in s) o[k] = s[k]; return o; }
 
 // cubic Hermite on position (owner velocities as tangents), linear on velocity/angles, discrete state from the earlier
-function quantile(arr, q) {
-  const s = arr.slice().sort((x, y) => x - y);
+const ascending = (x, y) => x - y;
+function quantile(arr, q, s) {
+  // Both windows are dense and bounded to 60 samples. Copy before sorting so their time order stays intact.
+  s.length = arr.length;
+  for (let i = 0; i < arr.length; i++) s[i] = arr[i];
+  s.sort(ascending);
   return s.length ? s[Math.min(s.length - 1, Math.floor(q * s.length))] : 0;
 }
 
