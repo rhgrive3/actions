@@ -322,6 +322,32 @@ def seam_normals(face, pairs):
     print('FACE_VOLUME seam normals averaged on', len(avg), 'vertices')
 
 
+def delta_smooth_bind(face):
+    """Blender's Corrective Smooth, bound to the face as it is before the edits: at the end it smooths only
+    the edit (the difference to this rest shape), so the added volume has no lumps or facets, while the
+    face's own detail stays."""
+    mod = face.modifiers.new('INKWAVE_volume_delta_smooth', 'CORRECTIVE_SMOOTH')
+    mod.rest_source = 'BIND'
+    mod.smooth_type = 'LENGTH_WEIGHTED'
+    er.with_object(face, lambda: bpy.ops.object.correctivesmooth_bind(modifier=mod.name))
+    return mod
+
+
+def delta_smooth_apply(face, mod, weights, cfg):
+    vg = face.vertex_groups.new(name='INKWAVE_volume_delta')
+    for val in np.unique(np.round(weights[weights > 0], 3)):
+        vg.add([int(i) for i in np.nonzero(np.abs(np.round(weights, 3) - val) < 1e-9)[0]], float(val), 'REPLACE')
+    mod.vertex_group = vg.name
+    mod.factor = cfg['factor']
+    mod.iterations = cfg['iters']
+    mod.use_only_smooth = False
+    mod.use_pin_boundary = True     # eye openings and the open midline stay
+    before = er.world(face)
+    er.apply_modifier(face, mod)
+    face.vertex_groups.remove(face.vertex_groups['INKWAVE_volume_delta'])
+    print('FACE_VOLUME delta smooth max move mm', round(float(np.linalg.norm(er.world(face) - before, axis=1).max() * 1000), 2))
+
+
 def bind(objs, face):
     mods = []
     for obj in objs:
@@ -357,6 +383,8 @@ def main():
         mods = bind([bpy.data.objects[n] for n in FOLLOWERS], face)
         global NORMALS
         pairs = seam_pairs(face)
+        ds = p.get('delta_smooth')
+        ds_mod = delta_smooth_bind(face) if ds else None
         print('FACE_VOLUME midline pairs', len(pairs))
         for step in p['steps']:
             loc = M.to_local(er.world(face)) * 1000
@@ -397,6 +425,17 @@ def main():
             gap = join_seam(face, pairs)
             move = np.linalg.norm(er.world(face) - before, axis=1) * 1000
             print('FACE_VOLUME', step['name'], 'vertices', int((w > 0.001).sum()), 'max move mm', round(float(move.max()), 2), 'seam gap closed mm', round(float(gap), 3))
+        if ds_mod is not None:
+            loc = M.to_local(er.world(face)) * 1000
+            w = np.clip((loc[:, 2] - 40) / 20, 0, 1) * np.clip((loc[:, 1] + 115) / 10, 0, 1) * np.clip((5 - loc[:, 1]) / 10, 0, 1)
+            e0, e1 = ds['eye_keep_mm']
+            w *= np.clip((eye_distance(er.world(face)) - e0) / (e1 - e0), 0, 1)
+            # the halves are not joined at the midline: smoothing there sees one side only and folds the crest,
+            # so the midline keeps the (already smooth) edit
+            t = np.clip((np.abs(loc[:, 0]) - 1.0) / 5.0, 0, 1)
+            w *= t * t * (3 - 2 * t)
+            delta_smooth_apply(face, ds_mod, w, ds)
+            print('FACE_VOLUME delta smooth seam gap closed mm', round(float(join_seam(face, pairs)), 3))
         for obj, mod in mods:
             er.apply_modifier(obj, mod)
         seam_normals(face, pairs)

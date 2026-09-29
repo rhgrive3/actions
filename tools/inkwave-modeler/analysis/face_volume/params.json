@@ -84,7 +84,7 @@
     0,
     -3.0
    ],
-   "weight_smooth": 15,
+   "weight_smooth": 0,
    "bumps": [
     {
      "centre": [
@@ -93,7 +93,7 @@
      ],
      "rx": 1000.0,
      "ry": 1000.0,
-     "ridge_sigma": 11.0,
+     "ridge_sigma": 8.0,
      "x_out": [
       21.0,
       26.0
@@ -198,5 +198,13 @@
     }
    ]
   }
- ]
+ ],
+ "delta_smooth": {
+  "factor": 0.5,
+  "iters": 40,
+  "eye_keep_mm": [
+   2.0,
+   5.0
+  ]
+ }
 }
