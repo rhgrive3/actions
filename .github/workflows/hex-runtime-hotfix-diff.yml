@@ -8,30 +8,20 @@ permissions:
 jobs:
   diff:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 7
     steps:
       - uses: actions/checkout@v4
         with:
           repository: rhgrive3/hex-ida
           ref: 217233649207ad9e0477f2bc113fbe9d72d70bf7
           path: old
-      - uses: actions/checkout@v4
-        with:
-          repository: rhgrive3/hex-ida
-          ref: main
-          path: new
       - name: Install old dependencies
         working-directory: old
         timeout-minutes: 4
-        shell: bash
-        run: |
-          set -euo pipefail
-          npm ci --silent --no-audit --no-fund >/tmp/old-install.log 2>&1 || {
-            tail -n 30 /tmp/old-install.log > /tmp/first-failure.txt
-            exit 1
-          }
-      - name: Inject old runtime capture
+        run: npm ci --silent --no-audit --no-fund >/tmp/old-install.log 2>&1
+      - name: Capture old runtime
         working-directory: old
+        timeout-minutes: 3
         shell: bash
         run: |
           set -euo pipefail
@@ -44,65 +34,31 @@ jobs:
           if needle not in s: raise SystemExit('old injection target missing')
           p.write_text(s.replace(needle,repl,1))
           PY
-      - name: Build old runtime
-        working-directory: old
-        timeout-minutes: 3
-        shell: bash
-        run: |
-          set -euo pipefail
-          timeout 120s npm run userscript:build >/tmp/old-build.log 2>&1 || {
-            tail -n 40 /tmp/old-build.log > /tmp/first-failure.txt
-            exit 1
-          }
-      - name: Install new dependencies
-        working-directory: new
-        timeout-minutes: 4
-        run: npm ci --silent --no-audit --no-fund >/tmp/new-install.log 2>&1
-      - name: Inject new runtime capture
-        working-directory: new
+          timeout 120s npm run userscript:build >/tmp/old-build.log 2>&1
+      - name: Extract old logicalPath candidates
         shell: bash
         run: |
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
-          p=Path('scripts/build-userscript.mjs')
-          s=p.read_text()
-          needle="const runtime = await bundle('js/userscript/protected-entry.js', { format: 'esm', rewriteImportMeta: true, inventory: 'standard-runtime', graph: 'standard' });"
-          repl=needle+"\nawait writeFile('/tmp/runtime-new.js', runtime);"
-          if needle not in s: raise SystemExit('new injection target missing')
-          p.write_text(s.replace(needle,repl,1))
-          PY
-      - name: Build new runtime
-        working-directory: new
-        timeout-minutes: 3
-        run: timeout 120s npm run userscript:build >/tmp/new-build.log 2>&1
-      - name: Extract focused diff
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 - <<'PY'
-          from pathlib import Path
-          old=Path('/tmp/runtime-old.js').read_text()
-          new=Path('/tmp/runtime-new.js').read_text()
-          marker='https://hex.invalid'
-          i=new.find(marker)
-          if i<0: raise SystemExit('new sentinel missing')
-          Path('/tmp/new-snippet.txt').write_text(new[max(0,i-700):min(len(new),i+900)])
           import re
-          matches=list(re.finditer(r'origin.{0,260}pathname', old))
-          if not matches: raise SystemExit('old logicalPath pattern missing')
-          m=min(matches, key=lambda x: abs(x.start()-i))
-          Path('/tmp/old-snippet.txt').write_text(old[max(0,m.start()-700):min(len(old),m.end()+900)])
-          Path('/tmp/runtime-sha.txt').write_text(f'old_bytes={len(old)}\nnew_bytes={len(new)}\n')
+          old=Path('/tmp/runtime-old.js').read_text()
+          out=[]
+          for m in re.finditer(r'origin', old):
+              lo=max(0,m.start()-260)
+              hi=min(len(old),m.start()+520)
+              s=old[lo:hi]
+              if 'pathname' in s and 'new URL' in s:
+                  out.append(s)
+          if not out:
+              raise SystemExit('logicalPath candidate missing')
+          Path('/tmp/old-logicalpath-candidates.txt').write_text('\n\n---CANDIDATE---\n\n'.join(out[:12]))
+          Path('/tmp/runtime-size.txt').write_text(f'old_bytes={len(old)}\n')
           PY
       - uses: actions/upload-artifact@v4
-        if: always()
         with:
           name: hex-runtime-hotfix-diff
           path: |
-            /tmp/old-snippet.txt
-            /tmp/new-snippet.txt
-            /tmp/runtime-sha.txt
-            /tmp/first-failure.txt
-          if-no-files-found: ignore
+            /tmp/old-logicalpath-candidates.txt
+            /tmp/runtime-size.txt
           retention-days: 1
