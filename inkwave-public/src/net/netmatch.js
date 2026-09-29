@@ -399,19 +399,23 @@ export class NetMatch {
   _voices(dt) {
     for (const a of this.byNid.values()) {
       if (!a.remote) continue;
-      const L = a.net.loops, wr = a.weaponRunner, near = a.alive && a._nearCamera();
-      const want = (key, on, snd, set) => {
-        if (on && near && !L[key]) L[key] = G.audio?.loop?.(snd, { pos: a.pos, volume: 0 });
-        const h = L[key];
-        if (!h) return;
-        if (!on || !near) { h.stop(0.1); L[key] = null; return; }
-        set(h);
-      };
+      const wr = a.weaponRunner, near = a.alive && a._nearCamera();
       const k = a.weapon.kind;
-      want('charge', wr.charging && k === 'charger', 'charger_charge', (h) => h.set({ pos: a.pos, volume: 0.35, pitch: 1 + wr.charge * 1.5 }));
-      want('spin', (wr.charging || wr.streaming) && k === 'splatling', 'splatling_spin', (h) => h.set({ pos: a.pos, volume: 0.4, pitch: wr.streaming ? 1.5 : 0.6 + 0.85 * wr.charge }));
-      want('roll', wr.rolling, 'roll', (h) => { const s = Math.min(1, Math.hypot(a.vel.x, a.vel.z) / (a.weapon.rollSpeed || 5)); h.set({ pos: a.pos, volume: s * 0.45, pitch: 0.6 + s }); });
+      let h = this._voiceLoop(a, near, 'charge', wr.charging && k === 'charger', 'charger_charge');
+      if (h) h.set({ pos: a.pos, volume: 0.35, pitch: 1 + wr.charge * 1.5 });
+      h = this._voiceLoop(a, near, 'spin', (wr.charging || wr.streaming) && k === 'splatling', 'splatling_spin');
+      if (h) h.set({ pos: a.pos, volume: 0.4, pitch: wr.streaming ? 1.5 : 0.6 + 0.85 * wr.charge });
+      h = this._voiceLoop(a, near, 'roll', wr.rolling, 'roll');
+      if (h) { const s = Math.min(1, Math.hypot(a.vel.x, a.vel.z) / (a.weapon.rollSpeed || 5)); h.set({ pos: a.pos, volume: s * 0.45, pitch: 0.6 + s }); }
     }
+  }
+  _voiceLoop(a, near, key, on, snd) {
+    const L = a.net.loops;
+    if (on && near && !L[key]) L[key] = G.audio?.loop?.(snd, { pos: a.pos, volume: 0 });
+    const h = L[key];
+    if (!h) return null;
+    if (!on || !near) { h.stop(0.1); L[key] = null; return null; }
+    return h;
   }
   _stopLoops(a) { const L = a.net?.loops; if (L) for (const k in L) { L[k]?.stop?.(0.05); L[k] = null; } }
 
