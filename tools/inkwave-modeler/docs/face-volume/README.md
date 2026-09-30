@@ -1,4 +1,4 @@
-# 顔の立体感（頬・目の下・鼻筋・あご・鼻）候補 V41（まだマージしない）
+# 顔の立体感（頬・目の下・鼻筋・あご・鼻）候補 V46（まだマージしない）
 
 横から見た輪郭（口・鼻・あごの高さ）は参照と合っているので変えない。横から見えない面のふくらみを直す。
 目、まつ毛、髪は変えない（まつ毛とライナーは新しい肌の上で作り直すだけ）。
@@ -79,6 +79,18 @@ blender -b $M --python scripts/inkwave_lash_rebuild.py -- --save $M \
 
 5 視点の平均の色は V37 とほぼ同じ（差 0.8/255 以下）。
 
+## V46 での直し（目頭の先、横顔のあご、鼻先）
+
+- 目頭の先: 参照は白目が鼻の方へとがった三角で、上のライナーが細い線になって先まで続く。モデルは約 6 px 短く、先が丸かった。
+  顔の面は目の穴で切れず目玉の後ろへ続くので、参照の三角の中の肌を、正面カメラの光線にそって目玉の 0.3 mm 後ろまで下げた（`inner_corner.tip_wedge`、ならしと 3 回くり返し）。ライナーの先に細い線を足した（`liner_tail`）。どちらも `inkwave_lash_rebuild.py`。
+- 横顔のあご: 口の角から後ろの頬とあごの横の溝と波は、肌の形（貼り物を消しても残る）。その範囲を Smooth（80 回、唇は守る）でならした（`side_jaw_smooth`）。粘土表示だけに見える頬の細いすじは、口の線とほお紅の層のふち。
+- 鼻先: 横の輪郭で、鼻筋は合っていて、鼻先の下が参照より約 1.5 px 引っこんでいた。鼻先の下を 1 mm ふくらませた（`nose_infratip`）。
+
+## 次にすること（まだ）
+
+- 鼻先: 正面で、参照は鼻先が大きく丸い玉。もう少し大きくする余地がある。
+- QA（開き直しの検査、GLB の往復検査）をしてからマスターへ。
+
 ## 結果
 
 | 項目 | 前 | V23 |
@@ -92,7 +104,7 @@ blender -b $M --python scripts/inkwave_lash_rebuild.py -- --save $M \
 | 目のまわりの黒の面積（5 視点） | — | 前と 4 px² 以内 |
 
 画像（`img/`）: `sections_before_after.jpg`（点線 = 前）、`move_map.jpg`（動いた量）、`clay_*_before_after.jpg`（左 前 | 右 後）、
-`face_*_ref_master_V41.jpg`（参照 | 今のマスター | V41）、`eyes_ref_V37_V41.jpg`（参照 | V37 | V41）、`inner_corner_ref_V40_V41.jpg`、`limbal_ring_zoom_ref_model.jpg`、`inner_corner_to_nose_V35_V36.jpg`、`nose_ref_V23_V30.png`、`mouth_ref_V30_V31.jpg`、`cornea_settings.jpg`、`evidence_*`（診断）。
+`face_*_ref_master_V46.jpg`（参照 | 今のマスター | V46）、`inner_tip_*_ref_V46.jpg`、`side_jaw_ref_V45_V46.jpg`、`nose_ref_V41_V46.jpg`、`eyes_ref_V37_V41.jpg`（参照 | V37 | V41）、`inner_corner_ref_V40_V41.jpg`、`limbal_ring_zoom_ref_model.jpg`、`inner_corner_to_nose_V35_V36.jpg`、`nose_ref_V23_V30.png`、`mouth_ref_V30_V31.jpg`、`cornea_settings.jpg`、`evidence_*`（診断）。
 
 ## 残り
 

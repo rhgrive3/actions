@@ -453,6 +453,20 @@ def build_corner_cover(rays, design):
     return er.solid_sheet(verts, faces, 0.05)
 
 
+def build_liner_tail(rays, design):
+    """The reference liner runs on as a thin line down the upper edge of the inner-corner wedge to its tip.
+    A tapered tube on the lid edge (design pixels, lifted over the first surface)."""
+    lt = design['liner_tail']
+    ctrl = np.array(lt['px'], float)
+    seg = np.r_[0, np.cumsum(np.linalg.norm(np.diff(ctrl, axis=0), axis=1))]
+    t = np.linspace(0, seg[-1], lt.get('n', 16))
+    px = np.c_[np.interp(t, seg, ctrl[:, 0]), np.interp(t, seg, ctrl[:, 1])]
+    s = t / seg[-1]
+    r = lt['r_mm'][0] * (1 - s) ** 0.8 + lt['r_mm'][1] * s
+    pts = np.array([rays.lifted(q, lt['lift_mm'] + ri) for q, ri in zip(px, r)])
+    return er.tube(pts, r, sides=6)
+
+
 def build_liner(rays, design, bot, join):
     """Lofted ribbon between the reference top and bottom chains, lifted onto the skin with front rays."""
     top = np.array(design['liner_top'])
@@ -693,6 +707,61 @@ def open_inner_corner(face, ic):
             bpy.data.objects.remove(e)
 
 
+def carve_inner_tip(face, ic, eye):
+    """The reference inner corner is a sharp wedge of white pointing to the nose; the model's white ends
+    ~6 px earlier with a round end.  The face skin does not end at the eye (it runs on behind the eyeball),
+    so the white shows where the skin passes behind the eyeball.  Every face vertex whose front pixel (right
+    eye design pixels, both eyes) lies inside the reference wedge is moved back along its front-camera ray
+    to just behind the eyeball; a band round the wedge slopes into it (smoothstep in pixels)."""
+    ct = ic['tip_wedge']
+    poly = np.array(ct['poly'])
+    cam = np.array(bpy.data.objects['FACE_FIT_CAM_front'].matrix_world.translation)
+    W = er.world(face)
+    loc = M.to_local(W)
+    loc[:, 0] = -np.abs(loc[:, 0])
+    ux, uy = er.camera_pixels('front', M.to_world(loc))
+    pts = np.c_[ux, uy]
+    box = (ux > poly[:, 0].min() - ct['band_px']) & (ux < poly[:, 0].max() + ct['band_px']) & \
+          (uy > poly[:, 1].min() - ct['band_px']) & (uy < poly[:, 1].max() + ct['band_px'])
+    idx = np.nonzero(box)[0]
+    ins = inside(poly, pts[idx])
+    # distance (px) to the wedge for the vertices outside it
+    def seg_dist(q):
+        best = 1e9
+        for a, b in zip(poly, np.roll(poly, -1, 0)):
+            ab = b - a
+            t = np.clip(np.dot(q - a, ab) / np.dot(ab, ab), 0, 1)
+            best = min(best, np.linalg.norm(q - (a + ab * t)))
+        return best
+    moved = 0
+    new = W.copy()
+    for k, i in enumerate(idx):
+        if ins[k]:
+            w = 1.0
+        else:
+            dpx = seg_dist(pts[i])
+            if dpx > ct['band_px']:
+                continue
+            t = 1 - dpx / ct['band_px']
+            w = t * t * (3 - 2 * t) * ct['band_depth']
+        d = W[i] - cam
+        L = np.linalg.norm(d)
+        d /= L
+        hit = eye.ray_cast(Vector(cam), Vector(d), 50)
+        if hit[0] is None:
+            continue
+        target = hit[3] + ct['behind_mm'] / 1000
+        if L >= target:
+            continue
+        new[i] = cam + d * (L + (target - L) * w)
+        moved += 1
+    mw_inv = np.array(face.matrix_world.inverted())
+    co = (np.c_[new, np.ones(len(new))] @ mw_inv.T)[:, :3]
+    face.data.vertices.foreach_set('co', co.ravel())
+    face.data.update()
+    print('INNER_TIP vertices moved', moved, 'max move mm', round(float(np.linalg.norm(new - W, axis=1).max() * 1000), 2))
+
+
 def smooth_inner_corner(design):
     """Inner eye corner: the lid edge of HEAD_face there is stepped (a jagged white edge).  Blender's Smooth
     modifier on a weighted vertex group round the inner corner (both eyes, lid skin near the eyeball only);
@@ -761,6 +830,22 @@ def smooth_inner_corner(design):
         er.apply_weighted_modifier(face, g, 'SMOOTH', factor=cs['factor'], iterations=cs['iters'])
         print('CANTHUS face vertices', int((g > 0).sum()), 'max move mm',
               round(float(np.linalg.norm(er.world(face) - before, axis=1).max() * 1000), 3))
+    if ic.get('tip_wedge'):
+        ct = ic['tip_wedge']
+        for _ in range(ct.get('rounds', 1)):
+            carve_inner_tip(face, ic, eye)
+            if ct.get('smooth_iters'):
+                # smooth the carved area and its band, then carve again: an even edge where the skin passes
+                # behind the eyeball instead of the mesh's zigzag
+                loc = M.to_local(er.world(face))
+                loc[:, 0] = -np.abs(loc[:, 0])
+                ux, uy = er.camera_pixels('front', M.to_world(loc))
+                c = np.array(ct['poly']).mean(0)
+                d = np.hypot((ux - c[0]) / ct['smooth_rx_px'], (uy - c[1]) / ct['smooth_ry_px'])
+                g = np.clip((1 - d) / 0.5, 0, 1)
+                g = g * g * (3 - 2 * g)
+                er.apply_weighted_modifier(face, g, 'SMOOTH', factor=0.5, iterations=ct['smooth_iters'])
+        carve_inner_tip(face, ic, eye)
     for obj, mod in binds:
         er.apply_modifier(obj, mod)
 
@@ -876,6 +961,9 @@ def main():
         liner = build_liner(rays, d, bot, join)
         cv, cf = build_corner_cover(rays, d)
         liner = (np.r_[liner[0], cv], list(liner[1]) + [tuple(i + len(liner[0]) for i in fc) for fc in cf])
+        if 'liner_tail' in d:
+            tv, tf = build_liner_tail(rays, d)
+            liner = (np.r_[liner[0], tv], list(liner[1]) + [tuple(i + len(liner[0]) for i in fc) for fc in tf])
         rim, _ = build_rim(rays, d)
         lashes = [] if args.shape_only else [build_lash(rays, d, spec) for spec in d['lashes']]
         lower = None if args.shape_only else build_lower(rays, d)
