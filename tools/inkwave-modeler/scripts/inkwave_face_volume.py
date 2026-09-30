@@ -1,5 +1,7 @@
 """Face volume: fuller cheeks round the mouth, a longer eye-to-cheek curve, a rounded nose bridge, a rounder jaw
-outline from the front and more nose volume (analysis/face_volume/params.json).
+outline from the front, the chin and its underside on the side reference, a nose with a tip ball, wings and
+nostril dents, and the nose shading / lips / mouth line of the front reference painted on two decals
+(analysis/face_volume/params.json).
 
 Every edit is Blender's Displace modifier (along the normal) limited to a vertex group whose weights are smooth
 bumps in the head frame (mvcore.to_local, mm; both sides, |x|), then a weighted Smooth.  The eye region (near the
@@ -13,6 +15,11 @@ The lash rebuild places its parts on this skin, so it runs after this script:
   blender -b M.blend --python scripts/inkwave_face_volume.py -- --save M.blend
   blender -b M.blend --python scripts/inkwave_lash_rebuild.py -- --save M.blend --export ... --game ...
   ... inkwave_face_volume.py -- --restore --save M.blend      # undo (drops the backups)
+
+The paint of the nose and mouth uses analysis/face_volume/bare_front.png: the front render of the bare skin of
+this same shape (analysis/face_volume/tools/bake_front.py on a build without `paint_nose` / `paint_mouth`), so
+the paint adds only what the shape does not already show.  Make it again when a step that shapes the nose or
+the mouth changes.
 """
 import argparse
 import json
@@ -163,7 +170,25 @@ def arc_offsets(loc, st):
             o = (zt - loc[m, 2]) * ((loc[m, 1] > yb) & (loc[m, 1] < ya + st['fade']))
             o *= fade(ax[m], x0, x1, st['fade']) * fade(loc[m, 1], yb, ya, st['fade'])
             off[m] = o
+    off *= st.get('scale', 1.0)
     return np.maximum(off, 0) if st['mm_sign'] > 0 else np.minimum(off, 0)
+
+
+def ceiling_offsets(loc, st):
+    """Upward move (mm, head y) that lifts the underside of the jaw behind the chin to a straight line in the
+    side view.  st['line'] = [[z0, y0], [z1, y1]]: the line starts at the chin's lowest point (z0, y0) and rises
+    toward the neck through (z1, y1).  Every vertex under the line goes up to it (soft over st['soft'] mm, so no
+    crease where the lifted part meets the jaw); nothing moves in front of z0 (fade over st['z_fade'] mm)."""
+    (z0, y0), (z1, y1) = st['line']
+    yc = y0 + (y1 - y0) * (z0 - loc[:, 2]) / (z0 - z1)
+    d = yc - loc[:, 1]
+    s = st['soft']
+    off = np.where(d > s, d, np.where(d > -s, (d + s) ** 2 / (4 * s), 0.0))
+    t = np.clip((z0 - loc[:, 2]) / st['z_fade'], 0, 1)
+    off *= t * t * (3 - 2 * t)
+    zb0, zb1 = st['z_back']
+    t = np.clip((loc[:, 2] - zb0) / (zb1 - zb0), 0, 1)
+    return off * t * t * (3 - 2 * t) * (loc[:, 1] < y0 + 25)
 
 
 def ridge_v(loc, xq, yq):
@@ -422,58 +447,442 @@ def tuck_clear_edges(face, names, cfg):
         print('FACE_VOLUME tuck', name, 'folded', len(folded), 'hidden', len(under), 'blend ring', len(onto))
 
 
-def thin_ribbon(name, cfg):
+def thin_ribbon(name, cfg, face=None):
     """The mouth line (HEAD_skin_09) is a flat band on the skin: about 1.2 mm wide and flaring into 4.6 mm
-    triangle hooks at both corners, where the reference has a thin line with thin upturned ends.  Its outer
-    loop is split at the two corner tips into an upper and a lower edge; every vertex moves toward the middle
-    of the two edges (scaled by cfg['keep']), so the band keeps its path and ends but gets thin."""
-    import bmesh
+    triangle hooks at both corners, where the reference has a thin soft line that fades out at the corners.
+    The band's middle path (height over |x| in the head frame, from the middle of its upper and lower edge) is
+    kept; every vertex moves toward (or away from) that path so the band is cfg['width_mm'] wide in the middle,
+    cfg['mid_width_mm'] at cfg['mid_at'] of each half, and narrows to cfg['end_width_mm'] over the outer
+    cfg['taper'] part (the hooks fold into the line).
+    cfg['widen'] stretches the line sideways along its own (extended) path; then Blender's Shrinkwrap lays it
+    back on the skin at its old height."""
     obj = bpy.data.objects[name]
     W = er.world(obj)
     L = M.to_local(W) * 1000
-    bm = bmesh.new()
-    bm.from_mesh(obj.data)
-    adj = {}
-    for e in bm.edges:
-        if e.is_boundary:
-            a, b = e.verts[0].index, e.verts[1].index
-            adj.setdefault(a, []).append(b)
-            adj.setdefault(b, []).append(a)
-    bm.free()
-    start = next(iter(adj))
-    loop, prev = [start], None
-    while True:
-        nxt = [n for n in adj[loop[-1]] if n != prev][0]
-        if nxt == start:
-            break
-        prev = loop[-1]
-        loop.append(nxt)
-    loop = np.array(loop)
-    tips = [int(np.argmin(L[loop, 0])), int(np.argmax(L[loop, 0]))]
-    i0, i1 = sorted(tips)
-    a_side, b_side = loop[i0:i1 + 1], np.r_[loop[i1:], loop[:i0 + 1]]
-
-    def nearest_on(chain, q):
-        P = W[chain]
-        best, bd = None, 1e9
-        for k in range(len(P) - 1):
-            seg = P[k + 1] - P[k]
-            t = np.clip(np.dot(q - P[k], seg) / max(np.dot(seg, seg), 1e-18), 0, 1)
-            c = P[k] + seg * t
-            d = np.linalg.norm(q - c)
-            if d < bd:
-                best, bd = c, d
-        return best
-    new = W.copy()
-    keep = cfg['keep']
-    for i, q in enumerate(W):
-        c = 0.5 * (nearest_on(a_side, q) + nearest_on(b_side, q))
-        new[i] = c + (q - c) * keep
+    height = None
+    if face is not None:
+        tree = BVHTree.FromPolygons([Vector(v) for v in er.world(face)], [list(p.vertices) for p in face.data.polygons])
+        height = float(np.median([tree.find_nearest(Vector(q))[3] for q in W]))
+    xmax = float(np.abs(L[:, 0]).max())
+    edges = np.linspace(-xmax, xmax, 61)
+    mid = 0.5 * (edges[:-1] + edges[1:])
+    lo = np.array([L[(L[:, 0] >= a) & (L[:, 0] <= b), 1].min() for a, b in zip(edges[:-1], edges[1:])])
+    hi = np.array([L[(L[:, 0] >= a) & (L[:, 0] <= b), 1].max() for a, b in zip(edges[:-1], edges[1:])])
+    inner = np.abs(mid) < 0.85 * xmax                     # the hooks do not steer the path
+    path = np.polyfit(mid[inner], 0.5 * (lo + hi)[inner], 4)
+    width = np.interp(L[:, 0], mid, np.maximum(hi - lo, 1e-3))
+    def ss(t):
+        t = np.clip(t, 0, 1)
+        return t * t * (3 - 2 * t)
+    t = np.abs(L[:, 0]) / xmax
+    mid_w, mid_at = cfg.get('mid_width_mm', cfg['width_mm']), cfg.get('mid_at', 0.4)
+    start = 1 - cfg['taper']
+    want = cfg['width_mm'] + (mid_w - cfg['width_mm']) * ss(t / mid_at)
+    want = want + (cfg['end_width_mm'] - want) * ss((t - start) / cfg['taper'])
+    keep = np.minimum(cfg.get('max_scale', 1.0), want / width)
+    new = L.copy()
+    k = cfg.get('widen', 1.0)
+    new[:, 0] = L[:, 0] * k
+    new[:, 1] = np.polyval(path, new[:, 0]) + (L[:, 1] - np.polyval(path, L[:, 0])) * keep
+    world = M.to_world(new / 1000)
     mw_inv = np.array(obj.matrix_world.inverted())
-    co = (np.c_[new, np.ones(len(new))] @ mw_inv.T)[:, :3]
+    co = (np.c_[world, np.ones(len(world))] @ mw_inv.T)[:, :3]
     obj.data.vertices.foreach_set('co', co.ravel())
     obj.data.update()
-    print('FACE_VOLUME thin', name, 'keep', keep, 'max move mm', round(float(np.linalg.norm(new - W, axis=1).max() * 1000), 2))
+    if cfg.get('ref_path') and face is not None:
+        follow_reference_line(obj, cfg['ref_path'])
+        obj.visible_shadow = False      # a thin soft line: its own shadow on the skin made it twice as dark
+    if face is not None:
+        mod = obj.modifiers.new('INKWAVE_line_seat', 'SHRINKWRAP')
+        mod.target = face
+        mod.wrap_method = 'NEAREST_SURFACEPOINT'
+        mod.wrap_mode = 'ABOVE_SURFACE'
+        mod.offset = height
+        er.apply_modifier(obj, mod)
+    print('FACE_VOLUME thin', name, 'max move mm', round(float(np.linalg.norm(er.world(obj) - W, axis=1).max() * 1000), 2),
+          'half width mm', round(xmax * k, 1))
+
+
+def follow_reference_line(obj, rp):
+    """Put the mouth-line band on the mouth line of the front reference: per image column the darkest row of
+    the reference inside rp['rows'] is the line; the band's own middle path (front camera pixels) is moved onto
+    it, and its ends onto the reference's mouth corners rp['corners'].  The moves are made in the head frame
+    (pixels -> mm measured with the camera); Shrinkwrap lays the band back on the skin afterwards."""
+    L = _blur(lum(front_reference()), 0.8)
+    (xa, xb), (ra, rb) = rp['corners'], rp['rows']
+    cols = np.arange(int(np.ceil(xa)), int(np.floor(xb)) + 1)
+    rows = []
+    for c in cols:
+        seg = L[ra:rb + 1, c]
+        i = int(np.clip(np.argmin(seg), 1, len(seg) - 2))
+        d = seg[i - 1] - 2 * seg[i] + seg[i + 1]
+        rows.append(ra + i + 0.5 + (0.5 * (seg[i - 1] - seg[i + 1]) / d if abs(d) > 1e-9 else 0.0))
+    ref_path = np.polyfit(cols + 0.5, rows, rp.get('degree', 6))
+    mw_inv = np.array(obj.matrix_world.inverted())
+    for _ in range(3):
+        W = er.world(obj)
+        Lh = M.to_local(W)
+        u, v = er.camera_pixels('front', W)
+        mid = np.abs(Lh[:, 0]) < 0.0015
+        shift = rp['centre'] - float(np.median(u[mid]))
+        # pixels per mm at the mouth (head x -> u, head y -> v)
+        probe = M.to_world(Lh[mid][:1] + np.array([[0.001, 0.0, 0.0], [0.0, 0.001, 0.0]]))
+        pu, pv = er.camera_pixels('front', np.vstack([M.to_world(Lh[mid][:1]), probe]))
+        du_dx, dv_dy = pu[1] - pu[0], pv[2] - pv[0]
+        own = np.polyfit(u, v, 4)
+        ua, ub = u.min(), u.max()
+        target_u = (xa - shift) + (u - ua) / (ub - ua) * (xb - xa)
+        target_v = np.polyval(ref_path, np.clip(target_u + shift, xa, xb)) - rp.get('shift_y', 0.0) + (v - np.polyval(own, u))
+        Lh = Lh + np.c_[(target_u - u) / du_dx, (target_v - v) / dv_dy, np.zeros(len(u))] / 1000
+        world = M.to_world(Lh)
+        obj.data.vertices.foreach_set('co', ((np.c_[world, np.ones(len(world))] @ mw_inv.T)[:, :3]).ravel())
+        obj.data.update()
+    print('FACE_VOLUME mouth line on the reference path: last move px', round(float(np.abs(target_v - v).max()), 2),
+          'corners px', round(float(ua + shift), 1), round(float(ub + shift), 1))
+
+
+DECAL_MATERIALS = {'lips': 'skin_b0584a', 'mouth_line': 'skin_5b2922', 'nostrils': 'skin_6a3526'}
+LIP_PATCH, MOUTH_LINE = 'HEAD_skin_08', 'HEAD_skin_09'
+NOSE_PATCH = 'HEAD_skin_07'
+PAINT_IMAGES = ('INKWAVE_NOSE_SHADE', 'INKWAVE_LIP_PAINT')
+
+
+def keep_material(mat):
+    """Remember a decal material's colour, alpha and roughness once (for --restore)."""
+    if SUFFIX not in mat:
+        n = next(n for n in mat.node_tree.nodes if n.type == 'BSDF_PRINCIPLED')
+        mat[SUFFIX] = list(n.inputs['Base Color'].default_value) + [
+            n.inputs['Alpha'].default_value, n.inputs['Roughness'].default_value,
+            n.inputs['Specular IOR Level'].default_value]
+
+
+def restore_materials():
+    for name in DECAL_MATERIALS.values():
+        mat = bpy.data.materials.get(name)
+        if mat is None or SUFFIX not in mat:
+            continue
+        vals = list(mat[SUFFIX])
+        n = next(n for n in mat.node_tree.nodes if n.type == 'BSDF_PRINCIPLED')
+        for tex in [t for t in mat.node_tree.nodes
+                    if t.type == 'TEX_IMAGE' and t.image and t.image.name in PAINT_IMAGES]:
+            mat.node_tree.nodes.remove(tex)
+        n.inputs['Base Color'].default_value = vals[:4]
+        n.inputs['Alpha'].default_value = vals[4]
+        n.inputs['Roughness'].default_value = vals[5]
+        n.inputs['Specular IOR Level'].default_value = vals[6]
+        del mat[SUFFIX]
+    mat = bpy.data.materials.get('skin_6a3322')
+    if mat is not None:
+        if SUFFIX + '_image' in mat:
+            tex = next(n for n in mat.node_tree.nodes if n.type == 'TEX_IMAGE')
+            tex.image = bpy.data.images[mat[SUFFIX + '_image']]
+            tex.image.use_fake_user = False
+            del mat[SUFFIX + '_image']
+        if SUFFIX in mat:
+            n = next(n for n in mat.node_tree.nodes if n.type == 'BSDF_PRINCIPLED')
+            n.inputs['Specular IOR Level'].default_value = list(mat[SUFFIX])[6]
+            del mat[SUFFIX]
+    for name in (NOSE_PATCH, LIP_PATCH, MOUTH_LINE):
+        if bpy.data.objects.get(name) is not None:
+            bpy.data.objects[name].visible_shadow = True
+    for image in PAINT_IMAGES:
+        img = bpy.data.images.get(image)
+        if img is not None and img.users == 0:
+            bpy.data.images.remove(img)
+
+
+def alpha_image_material(mat, bsdf, img, roughness):
+    """Colour and alpha of a decal from an image (as the blush and the under-nose shadow)."""
+    t = mat.node_tree
+    tex = next((n for n in t.nodes if n.type == 'TEX_IMAGE'), None) or t.nodes.new('ShaderNodeTexImage')
+    tex.image, tex.extension = img, 'CLIP'
+    t.links.new(tex.outputs['Color'], bsdf.inputs['Base Color'])
+    t.links.new(tex.outputs['Alpha'], bsdf.inputs['Alpha'])
+    bsdf.inputs['Alpha'].default_value = 1.0
+    bsdf.inputs['Roughness'].default_value = roughness
+    mat.surface_render_method = 'BLENDED'
+
+
+def decal_look(key, cfg):
+    mat = bpy.data.materials[DECAL_MATERIALS[key]]
+    keep_material(mat)
+    n = next(n for n in mat.node_tree.nodes if n.type == 'BSDF_PRINCIPLED')
+    if 'alpha' in cfg:
+        n.inputs['Alpha'].default_value = cfg['alpha']
+    if 'colour' in cfg:
+        n.inputs['Base Color'].default_value = list(cfg['colour']) + [1.0]
+    if 'specular' in cfg:
+        n.inputs['Specular IOR Level'].default_value = cfg['specular']
+    return mat, n
+
+
+# ------------------------------------------------------------------ reference paint (front view)
+# The nose and the mouth of the front reference are painted onto two decals that lie on the skin: what the
+# front camera sees there (shading of the nose, lip colour, mouth line) is taken from the reference sheet and
+# projected through the fitted front camera (projection painting).  Pure numpy below (Blender has no cv2).
+SHEET = er.ROOT / 'docs/face-multiview-fit/refs/sheet_5view.png'
+FRONT_BOX = (60, 230, 430, 520)
+
+
+def _blur(a, sigma):
+    r = int(np.ceil(3 * sigma))
+    k = np.exp(-0.5 * (np.arange(-r, r + 1) / sigma) ** 2)
+    k /= k.sum()
+    out = a.astype(np.float64)
+    for ax in (0, 1):
+        pad = [(0, 0)] * out.ndim
+        pad[ax] = (r, r)
+        p = np.pad(out, pad, mode='edge')
+        out = np.apply_along_axis(lambda m: np.convolve(m, k, mode='valid'), ax, p)
+    return out
+
+
+def upsample(a, k):
+    """Bilinear upsample by an integer factor (pixel centres)."""
+    h, w = a.shape[:2]
+    ys = (np.arange(h * k) + 0.5) / k - 0.5
+    xs = (np.arange(w * k) + 0.5) / k - 0.5
+    y0 = np.clip(np.floor(ys).astype(int), 0, h - 2); fy = np.clip(ys - y0, 0, 1)
+    x0 = np.clip(np.floor(xs).astype(int), 0, w - 2); fx = np.clip(xs - x0, 0, 1)
+    a = a.reshape(h, w, -1)
+    top = a[y0][:, x0] * (1 - fx)[None, :, None] + a[y0][:, x0 + 1] * fx[None, :, None]
+    bot = a[y0 + 1][:, x0] * (1 - fx)[None, :, None] + a[y0 + 1][:, x0 + 1] * fx[None, :, None]
+    return (top * (1 - fy)[:, None, None] + bot * fy[:, None, None]).squeeze()
+
+
+def mirror_mean(a, centre, x0):
+    """Mean of a map and its left-right mirror about the camera column `centre` (map column 0 = camera x0 + 0.5)."""
+    h, w = a.shape[:2]
+    cols = x0 + 0.5 + np.arange(w)
+    src = 2 * centre - cols                       # camera x of the mirrored sample
+    idx = src - x0 - 0.5
+    i0 = np.clip(np.floor(idx).astype(int), 0, w - 2); f = np.clip(idx - i0, 0, 1)
+    f = f.reshape((1, w) + (1,) * (a.ndim - 2))
+    mir = a[:, i0] * (1 - f) + a[:, i0 + 1] * f
+    return 0.5 * (a + mir)
+
+
+def lum(rgb):
+    return rgb @ np.array([0.2126, 0.7152, 0.0722])
+
+
+def skin_base(img, box, m, mask, sigma):
+    """Smooth skin tone under a feature: the image outside the feature's ellipse (mask = centre x, y, rx, ry in camera
+    px), blurred across it (normalised convolution)."""
+    x0, y0, x1, y1 = box
+    yy, xx = np.mgrid[y0 - m:y1 + m, x0 - m:x1 + m] + 0.5
+    cx, cy, rx, ry = mask
+    keep = (((xx - cx) / rx) ** 2 + ((yy - cy) / ry) ** 2 > 1).astype(np.float64)
+    den = np.maximum(_blur(keep, sigma), 1e-6)
+    if img.ndim == 3:
+        return np.stack([_blur(img[..., c] * keep, sigma) / den for c in range(img.shape[2])], -1)
+    return _blur(img * keep, sigma) / den
+
+
+def rim_fade(shape, rim):
+    yy, xx = np.mgrid[0:shape[0], 0:shape[1]]
+    e = np.clip(np.minimum(np.minimum(xx + 0.5, shape[1] - xx - 0.5), np.minimum(yy + 0.5, shape[0] - yy - 0.5)) / rim, 0, 1)
+    return e * e * (3 - 2 * e)
+
+
+def tint_map(ref, box, centre, cfg, skin_model, bare=None):
+    """Colour and alpha of a decal that turns the model's skin into the reference's nose shading / lips / mouth
+    line: the ratio of the reference to its own smooth skin tone, applied to the model's skin colour (linear).
+    bare: the model's own front render of the same box (+ margin) without the decals; its own shading (ratio
+    to its smooth tone) is divided out, so the decal adds only what the shape does not already show."""
+    x0, y0, x1, y1 = box
+    m = cfg.get('margin', 16)
+    big = ref[y0 - m:y1 + m, x0 - m:x1 + m]
+    ratio = big / np.maximum(skin_base(big, box, m, cfg['mask'], cfg['base_sigma']), 1e-6)
+    if bare is not None:
+        # brightness only: the model's render has its own colour cast (sky light), which must not tint the paint
+        own = lum(bare)
+        own = _blur(own / np.maximum(skin_base(own, box, m, cfg['mask'], cfg['base_sigma']), 1e-6), cfg.get('own_blur', 0.6))
+        # only where the shape is already dark: there the paint adds just the rest (never lighter than the
+        # reference itself).  Where the shape is brighter than its surroundings (a lit bulge) nothing is taken
+        # off: darkening a highlight gives a grey band.
+        own = np.clip(own, 0.5, 1.0) ** cfg.get('own', 1.0)
+        ratio = np.minimum(ratio / own[..., None], np.maximum(ratio, 1.0))
+    if cfg.get('desaturate'):
+        # the reference's shading is warmer than its skin; on this skin that reads as a red nose: keep mostly
+        # the brightness of the shading
+        grey = lum(ratio)[..., None]
+        ratio = grey + (ratio - grey) * (1 - cfg['desaturate'])
+    if centre is not None:
+        ratio = mirror_mean(ratio, centre, x0 - m)
+    ratio = np.clip(ratio[m:-m, m:-m], 0.0, cfg.get('max_ratio', 1.1))
+    diff = np.abs(ratio - 1).max(-1)
+    alpha = np.clip((diff - cfg.get('floor', 0.02)) / cfg['full'], 0, 1) * rim_fade((y1 - y0, x1 - x0), cfg.get('rim', 4.0))
+    a = np.maximum(alpha, 0.2)[..., None]
+    colour = np.clip(skin_model * (1 + (ratio - 1) * cfg.get('strength', 1.0) / a), 0, 1)
+    k = cfg['up']
+    return upsample(colour, k), np.clip(upsample(alpha, k), 0, 1)
+
+
+def to_linear(c):
+    c = np.asarray(c, np.float64)
+    return np.where(c <= 0.04045, c / 12.92, ((c + 0.055) / 1.055) ** 2.4)
+
+
+def to_srgb(c):
+    c = np.clip(np.asarray(c, np.float64), 0, 1)
+    return np.where(c <= 0.0031308, c * 12.92, 1.055 * c ** (1 / 2.4) - 0.055)
+
+
+def front_reference():
+    """Front reference crop (camera pixels, rows top -> bottom), linear light."""
+    img = bpy.data.images.load(str(SHEET), check_existing=False)
+    w, h = img.size
+    px = np.empty(w * h * 4, np.float32)
+    img.pixels.foreach_get(px)
+    bpy.data.images.remove(img)
+    px = px.reshape(h, w, 4)[::-1, :, :3].astype(np.float64)
+    x0, y0, x1, y1 = FRONT_BOX
+    return to_linear(px[y0:y1, x0:x1])
+
+
+def skin_patch(face, obj, region, offset_mm):
+    """Replace obj's mesh by a copy of the face's own faces inside region (head frame mm: |x| max, y min, y max,
+    z min), welded at the midline and lifted offset_mm along the normals (Blender's Displace), so the decal lies
+    exactly on the skin."""
+    import bmesh
+    W = er.world(face)
+    L = M.to_local(W) * 1000
+    xm, ya, yb, zm = region
+    inside = (np.abs(L[:, 0]) <= xm) & (L[:, 1] >= ya) & (L[:, 1] <= yb) & (L[:, 2] >= zm)
+    polys = [list(p.vertices) for p in face.data.polygons if all(inside[v] for v in p.vertices)]
+    used = sorted({v for p in polys for v in p})
+    remap = {v: i for i, v in enumerate(used)}
+    mw_inv = np.array(obj.matrix_world.inverted())
+    co = (np.c_[W[used], np.ones(len(used))] @ mw_inv.T)[:, :3]
+    me = bpy.data.meshes.new(obj.data.name + '_paint')
+    me.from_pydata([tuple(c) for c in co], [], [[remap[v] for v in p] for p in polys])
+    bm = bmesh.new()
+    bm.from_mesh(me)
+    bmesh.ops.remove_doubles(bm, verts=bm.verts[:], dist=1e-6)
+    bm.to_mesh(me)
+    bm.free()
+    for poly in me.polygons:
+        poly.use_smooth = True
+    me.uv_layers.new(name='UVMap')
+    for mat in obj.data.materials:
+        me.materials.append(mat)
+    old = obj.data
+    name = old.name
+    obj.data = me
+    if old.users == 0:
+        bpy.data.meshes.remove(old)
+    me.name = name
+    mod = obj.modifiers.new('INKWAVE_paint_lift', 'DISPLACE')
+    mod.direction = 'NORMAL'
+    mod.mid_level = 0.0
+    mod.strength = offset_mm / 1000
+    er.apply_modifier(obj, mod)
+    return obj.data
+
+
+def camera_uv(obj, box, centre, shift_y=0.0):
+    """UV map = what the front camera sees, in the pixel box of the reference (x0, y0, x1, y1).  The model's
+    midline is put on the reference feature's own middle column `centre` (the sheet's front view is not
+    perfectly centred on the fitted camera)."""
+    me = obj.data
+    W = er.world(obj)
+    u, v = er.camera_pixels('front', W)
+    mid = np.abs(M.to_local(W)[:, 0]) < 0.0012
+    shift = centre - float(np.median(u[mid]))
+    x0, y0, x1, y1 = box
+    lv = np.empty(len(me.loops), np.int32)
+    me.loops.foreach_get('vertex_index', lv)
+    uv = np.empty((len(me.loops), 2), np.float32)
+    uv[:, 0] = (u[lv] + shift - x0) / (x1 - x0)
+    uv[:, 1] = 1 - (v[lv] + shift_y - y0) / (y1 - y0)
+    me.uv_layers.active.data.foreach_set('uv', uv.ravel())
+    me.update()
+    return shift
+
+
+def paint_image(name, colour, alpha):
+    """RGBA image from maps given rows top -> bottom."""
+    h, w = alpha.shape
+    px = np.empty((h, w, 4), np.float32)
+    px[..., :3] = colour
+    px[..., 3] = alpha
+    img = bpy.data.images.get(name)
+    if img is not None and tuple(img.size) != (w, h):
+        bpy.data.images.remove(img)
+        img = None
+    img = img or bpy.data.images.new(name, w, h, alpha=True)
+    img.colorspace_settings.name = 'sRGB'
+    img.pixels.foreach_set(px[::-1].ravel())
+    img.pack()
+    return img
+
+
+BARE_BOX, BARE_SCALE = (120, 125, 245, 225), 4
+
+
+def bare_crop(path, box, m, shift, shift_y):
+    """The model's bare front render (tools/bake_front.py: camera box BARE_BOX at BARE_SCALE) for the reference
+    box + margin: the model pixel that shows the reference pixel r is r - shift."""
+    img = bpy.data.images.load(str(er.ROOT / path), check_existing=False)
+    w, h = img.size
+    px = np.empty(w * h * 4, np.float32)
+    img.pixels.foreach_get(px)
+    bpy.data.images.remove(img)
+    px = to_linear(px.reshape(h, w, 4)[::-1, :, :3].astype(np.float64))
+    k = BARE_SCALE
+    x0, y0, x1, y1 = box
+    c0 = int(round((x0 - m - shift - BARE_BOX[0]) * k))
+    r0 = int(round((y0 - m - shift_y - BARE_BOX[1]) * k))
+    hh, ww = (y1 - y0 + 2 * m), (x1 - x0 + 2 * m)
+    crop = px[r0:r0 + hh * k, c0:c0 + ww * k]
+    return crop.reshape(hh, k, ww, k, 3).mean((1, 3))
+
+
+def paint_front(face, obj, image_name, cfg):
+    skin_patch(face, obj, cfg['region'], cfg['offset_mm'])
+    # a see-through decal also shades the skin under it (the light passes it twice): the paint would come out
+    # about twice as dark as painted.  The patch casts no shadow (restored by --restore).
+    obj.visible_shadow = False
+    shift = camera_uv(obj, cfg['box'], cfg['centre'], cfg.get('shift_y', 0.0))
+    skin = next(n for n in face.data.materials[0].node_tree.nodes if n.type == 'BSDF_PRINCIPLED')
+    skin = np.array(skin.inputs['Base Color'].default_value[:3], np.float64)           # linear
+    bare = bare_crop(cfg['bare'], cfg['box'], cfg.get('margin', 16), shift, cfg.get('shift_y', 0.0)) if cfg.get('bare') else None
+    colour, alpha = tint_map(front_reference(), cfg['box'], cfg['centre'] if cfg.get('mirror') else None, cfg, skin, bare)
+    img = paint_image(image_name, to_srgb(colour).astype(np.float32), alpha * cfg.get('alpha', 1.0))
+    print('FACE_VOLUME paint', obj.name, 'faces', len(obj.data.polygons), 'camera shift px', round(shift, 2),
+          'max alpha', round(float(alpha.max()), 2), 'residual' if bare is not None else 'reference only')
+    return img
+
+
+def paint_nose(face, cfg):
+    """Nose from the front reference (nostrils, the rim of the wings, the V under the tip) on the under-nose
+    decal, which becomes a patch of the skin itself."""
+    obj = bpy.data.objects[NOSE_PATCH]
+    img = paint_front(face, obj, 'INKWAVE_NOSE_SHADE', cfg)
+    mat = obj.data.materials[0]
+    keep_material(mat)
+    tex = next(n for n in mat.node_tree.nodes if n.type == 'TEX_IMAGE')
+    if SUFFIX + '_image' not in mat:
+        mat[SUFFIX + '_image'] = tex.image.name
+        tex.image.use_fake_user = True      # the old image has no user now: keep it in the file for --restore
+    tex.image, tex.extension = img, 'CLIP'
+    # no gloss of its own (the skin under it keeps its gloss; the nostrils are holes, not shiny)
+    next(n for n in mat.node_tree.nodes if n.type == 'BSDF_PRINCIPLED').inputs['Specular IOR Level'].default_value = 0.0
+
+
+def paint_mouth(face, cfg):
+    """Lips and mouth line from the front reference on the lip decal (a patch of the skin itself)."""
+    obj = bpy.data.objects[LIP_PATCH]
+    img = paint_front(face, obj, 'INKWAVE_LIP_PAINT', cfg)
+    mat, bsdf = decal_look('lips', {})
+    alpha_image_material(mat, bsdf, img, cfg.get('roughness', 0.55))
+    bsdf.inputs['Specular IOR Level'].default_value = cfg.get('specular', 0.15)
+
+
+def hide_decal(key):
+    """A decal the paint replaces stays in the file but shows nothing."""
+    decal_look(key, {'alpha': 0.0})
 
 
 CORNEA_MATERIAL = 'eyes_000000'
@@ -634,12 +1043,14 @@ def main():
     ap.add_argument('--params', default=str(PARAMS))
     ap.add_argument('--save')
     ap.add_argument('--restore', action='store_true')
+    ap.add_argument('--no-paint', action='store_true', help='skip the reference paint (to render bare_front.png)')
     args = ap.parse_args(argv)
     if any(m.name.endswith('__pre_lash_rebuild') for m in bpy.data.meshes):
         raise SystemExit('run inkwave_lash_rebuild.py --restore first (the lashes are rebuilt on the new skin)')
     print('FACE_VOLUME restored', restore(drop=args.restore), 'meshes')
     restore_cornea()
     restore_images()
+    restore_materials()
     if not args.restore:
         back_up()
         p = json.loads(Path(args.params).read_text())
@@ -665,12 +1076,23 @@ def main():
                 peak = float(np.abs(off).max())
                 w, step = np.abs(off) / max(peak, 1e-9), dict(step, kind='warp', vec_mm=[0, 0, np.sign(step['mm_sign']) * peak])
                 print('FACE_VOLUME', step['name'], 'arc peak mm', round(peak, 2))
+            elif step['kind'] == 'ceiling':
+                off = ceiling_offsets(loc, step)
+                peak = float(off.max())
+                w, step = off / max(peak, 1e-9), dict(step, kind='warp', vec_mm=[0, peak, 0])
+                print('FACE_VOLUME', step['name'], 'ceiling peak mm', round(peak, 2))
             else:
                 w = sum(bump(loc, b) * b.get('scale', 1.0) for b in step['bumps'])
                 if step.get('keep_q34') and step['kind'] == 'warp':
                     w = np.clip(w, 0, 1) * keep_eye * (keep_lip if step.get('protect_lips', True) else 1)
                     off = clamp_to_silhouette(er.world(face), loc, w * step['vec_mm'][2], step.get('margin_px', 0.3))
                     w = off / step['vec_mm'][2]
+            if 'pin_xz' in step:
+                # the ring grid of HEAD_face ends in a tiny open ring under the chin (its pole); smoothing would
+                # spread those crowded rings into a flat disc, so they stay
+                (px, pz), (r0, r1) = step['pin_xz']['centre'], step['pin_xz']['r']
+                t = np.clip((np.hypot(loc[:, 0] - px, loc[:, 2] - pz) - r0) / (r1 - r0), 0, 1)
+                w = w * t * t * (3 - 2 * t)
             if 'eye_keep_mm' in step:
                 e0, e1 = step['eye_keep_mm']
                 w = np.clip(w, 0, 1) * np.clip((d_eye - e0) / (e1 - e0), 0, 1)
@@ -689,7 +1111,15 @@ def main():
                 er.apply_weighted_modifier(face, w, 'DISPLACE', direction='NORMAL', strength=step['mm'] / 1000,
                                            mid_level=0.0)
             else:
-                er.apply_weighted_modifier(face, w, 'SMOOTH', factor=step['factor'], iterations=step['iters'])
+                # seam_chunks > 1: smooth across the open midline too.  Each half is smoothed on its own for a few
+                # iterations, then the midline pairs are joined again, so the joint never drifts far and no fold
+                # forms there (one long run pulls both open edges inward and leaves a crease).
+                chunks = step.get('seam_chunks', 1)
+                for _ in range(chunks):
+                    er.apply_weighted_modifier(face, w, 'SMOOTH', factor=step['factor'],
+                                               iterations=max(1, step['iters'] // chunks))
+                    if chunks > 1:
+                        join_seam(face, pairs)
             gap = join_seam(face, pairs)
             move = np.linalg.norm(er.world(face) - before, axis=1) * 1000
             print('FACE_VOLUME', step['name'], 'vertices', int((w > 0.001).sum()), 'max move mm', round(float(move.max()), 2), 'seam gap closed mm', round(float(gap), 3))
@@ -709,7 +1139,15 @@ def main():
         for obj, mod in mods:
             er.apply_modifier(obj, mod)
         if p.get('mouth_line'):
-            thin_ribbon('HEAD_skin_09', p['mouth_line'])
+            thin_ribbon(MOUTH_LINE, p['mouth_line'], face if 'width_mm' in p['mouth_line'] else None)
+            decal_look('mouth_line', p['mouth_line'])
+        if p.get('paint_nose') and not args.no_paint:
+            paint_nose(face, p['paint_nose'])
+            hide_decal('nostrils')
+        if p.get('paint_mouth') and not args.no_paint:
+            paint_mouth(face, p['paint_mouth'])
+            if not p.get('mouth_line'):
+                hide_decal('mouth_line')
         if p.get('limbal_ring'):
             thin_limbal_ring(p['limbal_ring'])
         if p.get('iris_up'):
