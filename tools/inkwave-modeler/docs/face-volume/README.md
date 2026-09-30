@@ -1,4 +1,4 @@
-# 顔の立体感（頬・目の下・鼻筋・あご・鼻）候補 V37（まだマージしない）
+# 顔の立体感（頬・目の下・鼻筋・あご・鼻）候補 V41（まだマージしない）
 
 横から見た輪郭（口・鼻・あごの高さ）は参照と合っているので変えない。横から見えない面のふくらみを直す。
 目、まつ毛、髪は変えない（まつ毛とライナーは新しい肌の上で作り直すだけ）。
@@ -71,6 +71,14 @@ blender -b $M --python scripts/inkwave_lash_rebuild.py -- --save $M \
 目玉の形は動かさない（まぶたに当たっているので、動かすとまぶたから出る）。目玉の UV（絵の位置）をずらして、黒目を正面で 4.5 px 上へ動かした（少し上を見る形）。
 ずらす量は、正面カメラの光線で黒目の中心の UV を測って決める（`iris_up`）。3 px の案と比べて、4.5 px が参照に近い（`img/iris_up_ref_3px_4p5px.jpg`）。
 
+## V41 での直し（黒目のふちの輪、目頭）
+
+- 黒目のふちの黒い輪: 目玉の絵（`Image_0` / `Image_1`）で幅 11 画素、参照の約 2 倍だった。絵を極座標で並べ直し、黒目の模様を外へ少し広げて輪を半分（5.5 画素）にした。輪を参照のような暗い青緑に寄せ、輪の内側で暗くなっていた帯を少し明るくした（`limbal_ring`）。絵の控えは `Image_*__pre_face_volume`、`--restore` で戻る。
+- 目頭: 前の版は「目玉の近くは動かさない」としていたので、目頭のすぐ横のくぼみにならしが届いていなかった。目頭のまわりを、目玉からの距離によらずにならす（`canthus_smooth.pin_rings = 0`、60 回）。顔の面は目の穴で切れていない（目玉の後ろへ続く）ので、白目の形は変わらない。
+  3/4 左の目頭に残る影は、目頭の自然なくぼみ（参照にも同じ影がある）。前のマスターより大きくなめらか（`img/inner_corner_q34L_A_master_V41.jpg`）。
+
+5 視点の平均の色は V37 とほぼ同じ（差 0.8/255 以下）。
+
 ## 結果
 
 | 項目 | 前 | V23 |
@@ -84,7 +92,7 @@ blender -b $M --python scripts/inkwave_lash_rebuild.py -- --save $M \
 | 目のまわりの黒の面積（5 視点） | — | 前と 4 px² 以内 |
 
 画像（`img/`）: `sections_before_after.jpg`（点線 = 前）、`move_map.jpg`（動いた量）、`clay_*_before_after.jpg`（左 前 | 右 後）、
-`face_*_ref_master_V37.jpg`（参照 | 今のマスター | V37）、`eyes_ref_V36_V37.jpg`（参照 | V36 | V37）、`inner_corner_to_nose_V35_V36.jpg`、`nose_ref_V23_V30.png`、`mouth_ref_V30_V31.jpg`、`cornea_settings.jpg`、`evidence_*`（診断）。
+`face_*_ref_master_V41.jpg`（参照 | 今のマスター | V41）、`eyes_ref_V37_V41.jpg`（参照 | V37 | V41）、`inner_corner_ref_V40_V41.jpg`、`limbal_ring_zoom_ref_model.jpg`、`inner_corner_to_nose_V35_V36.jpg`、`nose_ref_V23_V30.png`、`mouth_ref_V30_V31.jpg`、`cornea_settings.jpg`、`evidence_*`（診断）。
 
 ## 残り
 

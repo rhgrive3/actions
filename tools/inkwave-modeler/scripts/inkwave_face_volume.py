@@ -536,6 +536,84 @@ def raise_iris(cfg):
         print('FACE_VOLUME iris', name, 'up px', cfg['px'], 'uv shift', np.round(duv, 4).tolist())
 
 
+IRIS_IMAGES = {'Image_0': (184.5, 134.0), 'Image_1': (198.5, 134.0)}
+
+
+def restore_images():
+    for name in IRIS_IMAGES:
+        img, bak = bpy.data.images.get(name), bpy.data.images.get(name + SUFFIX)
+        if img is None or bak is None:
+            continue
+        px = np.empty(len(bak.pixels), np.float32)
+        bak.pixels.foreach_get(px)
+        img.pixels.foreach_set(px)
+        img.pack()
+        bpy.data.images.remove(bak)
+
+
+def thin_limbal_ring(cfg):
+    """The dark ring round the iris (limbus) is painted about 8-10 texels wide; the reference ring is about half
+    as wide and teal-black.  Polar remap of the eye texture: the iris from t0 of its radius outward is
+    stretched to fill the inner part of the old ring, and the ring is squeezed into its outer part (pupil and
+    white untouched).  The iris edge radius per angle is found where the texture turns to the white."""
+    for name, (cx, cyb) in IRIS_IMAGES.items():
+        img = bpy.data.images[name]
+        if bpy.data.images.get(name + SUFFIX) is None:
+            bak = img.copy()
+            bak.name = name + SUFFIX
+            bak.use_fake_user = True
+            bak.pack()
+        w, h = img.size
+        src = np.empty(w * h * 4, np.float32)
+        img.pixels.foreach_get(src)
+        src = src.reshape(h, w, 4)
+        lum = src[..., :3].mean(2)
+        # iris edge on the upper half (white above is bright): first radius past the ring where lum jumps
+        angs = np.radians(np.arange(10, 171, 5))
+        edge = []
+        for a in angs:
+            rs = np.arange(80, 115, 0.5)
+            xs = cx + rs * np.cos(a)
+            ys = cyb + rs * np.sin(a)
+            l = lum[np.clip(ys.round().astype(int), 0, h - 1), np.clip(xs.round().astype(int), 0, w - 1)]
+            k = np.argmax(l > cfg['white_lum'])
+            edge.append(rs[k])
+        R = float(np.median(edge))
+        yy, xx = np.mgrid[0:h, 0:w].astype(float)
+        dx, dy = xx - cx, yy - cyb
+        r = np.hypot(dx, dy) / R
+        t0, tin, k = cfg['t0'], cfg['ring_in'], cfg['keep']
+        tnew = 1 - (1 - tin) * k                       # new inner edge of the ring
+        rs = r.copy()
+        m1 = (r >= t0) & (r < tnew)
+        rs[m1] = t0 + (r[m1] - t0) * (tin - t0) / (tnew - t0)
+        m2 = (r >= tnew) & (r < 1)
+        rs[m2] = tin + (r[m2] - tnew) * (1 - tin) / (1 - tnew)
+        scale = np.where(r > 1e-6, rs / np.maximum(r, 1e-6), 1)
+        sx, sy = cx + dx * scale, cyb + dy * scale
+        x0, y0 = np.clip(np.floor(sx).astype(int), 0, w - 2), np.clip(np.floor(sy).astype(int), 0, h - 2)
+        fx, fy = (sx - x0)[..., None], (sy - y0)[..., None]
+        out = (src[y0, x0] * (1 - fx) * (1 - fy) + src[y0, x0 + 1] * fx * (1 - fy) +
+               src[y0 + 1, x0] * (1 - fx) * fy + src[y0 + 1, x0 + 1] * fx * fy)
+        ring = (r >= tnew) & (r < 1)
+        if cfg.get('edge_lift'):
+            # the iris darkens toward the ring over a wide band; the reference stays bright teal up to the ring
+            tl = cfg['edge_lift_from']
+            band = (r >= tl) & (r < tnew)
+            f = ((r[band] - tl) / (tnew - tl))[:, None]
+            out[band, :3] = np.clip(out[band, :3] * (1 + cfg['edge_lift'] * f), 0, 1)
+        if cfg.get('ring_tint'):
+            tint = np.array(cfg['ring_tint'] + [1.0], np.float32)
+            out[ring] = out[ring] * (1 - cfg['ring_tint_amount']) + tint * cfg['ring_tint_amount']
+        change = r < 1
+        res = src.copy()
+        res[change] = out[change]
+        img.pixels.foreach_set(res.ravel())
+        img.pack()
+        img.update()
+        print('FACE_VOLUME limbal ring', name, 'iris radius texels', round(R, 1), 'ring', round((1 - tin) * R, 1), '->', round((1 - tnew) * R, 1))
+
+
 def bind(objs, face):
     mods = []
     for obj in objs:
@@ -561,6 +639,7 @@ def main():
         raise SystemExit('run inkwave_lash_rebuild.py --restore first (the lashes are rebuilt on the new skin)')
     print('FACE_VOLUME restored', restore(drop=args.restore), 'meshes')
     restore_cornea()
+    restore_images()
     if not args.restore:
         back_up()
         p = json.loads(Path(args.params).read_text())
@@ -631,6 +710,8 @@ def main():
             er.apply_modifier(obj, mod)
         if p.get('mouth_line'):
             thin_ribbon('HEAD_skin_09', p['mouth_line'])
+        if p.get('limbal_ring'):
+            thin_limbal_ring(p['limbal_ring'])
         if p.get('iris_up'):
             raise_iris(p['iris_up'])
         if p.get('cornea'):

@@ -738,9 +738,25 @@ def smooth_inner_corner(design):
         ux, uy = er.camera_pixels('front', M.to_world(loc))
         d = np.hypot((ux - cs['centre'][0]) / cs['rx_px'], (uy - cs['centre'][1]) / cs['ry_px'])
         g = np.clip((1 - d) / (1 - cs['full']), 0, 1)
-        near = np.array([eye.find_nearest(Vector(p))[3] for p in w_pts]) * 1000
-        g *= np.clip((near - cs['eye_min_mm']) / (cs['eye_full_mm'] - cs['eye_min_mm']), 0, 1)
         g = g * g * (3 - 2 * g)
+        if cs.get('pin_rings') is not None:
+            # keep only the eye-opening edge (and pin_rings rings round it) in place, so the white keeps its
+            # shape and the skin right next to the corner is smoothed too
+            import bmesh
+            bm = bmesh.new()
+            bm.from_mesh(face.data)
+            bm.verts.ensure_lookup_table()
+            near_b = np.array([eye.find_nearest(Vector(p))[3] for p in w_pts]) * 1000
+            pinned = {v.index for v in bm.verts if v.is_boundary and near_b[v.index] < cs.get('pin_eye_mm', 1e9)}
+            front = set(pinned)
+            for _ in range(cs['pin_rings']):
+                front = {e.other_vert(bm.verts[i]).index for i in front for e in bm.verts[i].link_edges} - pinned
+                pinned |= front
+            bm.free()
+            g[list(pinned)] = 0
+        else:
+            near = np.array([eye.find_nearest(Vector(p))[3] for p in w_pts]) * 1000
+            g *= np.clip((near - cs['eye_min_mm']) / (cs['eye_full_mm'] - cs['eye_min_mm']), 0, 1)
         before = er.world(face)
         er.apply_weighted_modifier(face, g, 'SMOOTH', factor=cs['factor'], iterations=cs['iters'])
         print('CANTHUS face vertices', int((g > 0).sum()), 'max move mm',
