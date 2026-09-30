@@ -1,4 +1,4 @@
-# 顔の立体感（頬・目の下・鼻筋・あご・鼻）候補 V36（まだマージしない）
+# 顔の立体感（頬・目の下・鼻筋・あご・鼻）候補 V37（まだマージしない）
 
 横から見た輪郭（口・鼻・あごの高さ）は参照と合っているので変えない。横から見えない面のふくらみを直す。
 目、まつ毛、髪は変えない（まつ毛とライナーは新しい肌の上で作り直すだけ）。
@@ -65,6 +65,12 @@ blender -b $M --python scripts/inkwave_lash_rebuild.py -- --save $M \
 5 視点の平均の色は V23 とほぼ同じ（差 0.8/255 以下。暗くなったのは瞳の分）。輪郭の差は前と同じ。
 目頭のならしは `inkwave_lash_rebuild.py`（`inner_corner.canthus_smooth`）、それ以外は `inkwave_face_volume.py`。
 
+## V37 での直し（黒目の高さ）
+
+正面で、参照は黒目の上端がライナー（まつ毛）に接し、黒目の下に白目が少し見える。モデルは黒目の中心が約 5 px 低く、下が下まぶたにかかっていた。
+目玉の形は動かさない（まぶたに当たっているので、動かすとまぶたから出る）。目玉の UV（絵の位置）をずらして、黒目を正面で 4.5 px 上へ動かした（少し上を見る形）。
+ずらす量は、正面カメラの光線で黒目の中心の UV を測って決める（`iris_up`）。3 px の案と比べて、4.5 px が参照に近い（`img/iris_up_ref_3px_4p5px.jpg`）。
+
 ## 結果
 
 | 項目 | 前 | V23 |
@@ -78,7 +84,7 @@ blender -b $M --python scripts/inkwave_lash_rebuild.py -- --save $M \
 | 目のまわりの黒の面積（5 視点） | — | 前と 4 px² 以内 |
 
 画像（`img/`）: `sections_before_after.jpg`（点線 = 前）、`move_map.jpg`（動いた量）、`clay_*_before_after.jpg`（左 前 | 右 後）、
-`face_*_ref_master_V36.jpg`（参照 | 今のマスター | V36）、`eyes_master_V36.jpg`、`inner_corner_to_nose_V35_V36.jpg`、`nose_ref_V23_V30.png`、`mouth_ref_V30_V31.jpg`、`cornea_settings.jpg`、`evidence_*`（診断）。
+`face_*_ref_master_V37.jpg`（参照 | 今のマスター | V37）、`eyes_ref_V36_V37.jpg`（参照 | V36 | V37）、`inner_corner_to_nose_V35_V36.jpg`、`nose_ref_V23_V30.png`、`mouth_ref_V30_V31.jpg`、`cornea_settings.jpg`、`evidence_*`（診断）。
 
 ## 残り
 

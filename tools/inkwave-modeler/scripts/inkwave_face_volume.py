@@ -36,11 +36,12 @@ FOLLOWERS = ['HEAD_skin', 'HEAD_skin_04', 'HEAD_skin_02', 'HEAD_skin_03', 'HEAD_
              'HEAD_skin_07', 'HEAD_skin_08', 'HEAD_skin_09', 'HEAD_brows', 'HEAD_brows_02', 'HEAD_eyes_12',
              'HEAD_eyes_29']
 EYEBALLS = ['HEAD_eyes', 'HEAD_eyes_02', 'HEAD_eyes_18', 'HEAD_eyes_19']
+IRIS_BALLS = {'HEAD_eyes_18': -1, 'HEAD_eyes': 1}
 
 
 def restore(drop=False):
     count = 0
-    for name in [FACE] + FOLLOWERS:
+    for name in [FACE] + FOLLOWERS + list(IRIS_BALLS):
         backup = bpy.data.meshes.get(name + SUFFIX)
         if backup is None:
             continue
@@ -58,7 +59,7 @@ def restore(drop=False):
 
 
 def back_up():
-    for name in [FACE] + FOLLOWERS:
+    for name in [FACE] + FOLLOWERS + list(IRIS_BALLS):
         if bpy.data.meshes.get(name + SUFFIX) is None:
             backup = bpy.data.objects[name].data.copy()
             backup.name = name + SUFFIX
@@ -503,6 +504,38 @@ def restore_cornea():
     del mat[SUFFIX]
 
 
+def raise_iris(cfg):
+    """The iris sits lower in the eye opening than in the reference (front view: its top edge is under the
+    liner's shadow, its centre about 5 px lower).  The eyeballs are not moved (they rest against the lids);
+    their UV map slides so the painted iris moves up on the ball, like the eye looking a little up.  The UV
+    step per front pixel is measured with a front-camera ray at the iris centre."""
+    mat, w, h = er.camera_matrix('front')
+    inv = np.linalg.inv(mat)
+    for name, side in IRIS_BALLS.items():
+        obj = bpy.data.objects[name]
+        me = obj.data
+        W = er.world(obj)
+        tree = BVHTree.FromPolygons([Vector(v) for v in W], [list(p.vertices) for p in me.polygons])
+        uvl = me.uv_layers.active.data
+        u0, v0 = cfg['centre_px'] if side < 0 else (cfg['centre_px_left'])
+
+        def uv_at(u, v):
+            nd = [np.array([2 * u / w - 1, 1 - 2 * v / h, z, 1]) @ inv.T for z in (-1, 1)]
+            a, b = [q[:3] / q[3] for q in nd]
+            hit = tree.ray_cast(Vector(a), Vector((b - a) / np.linalg.norm(b - a)), 50)
+            p = me.polygons[hit[2]]
+            P = W[list(p.vertices)]
+            wts = 1 / (np.linalg.norm(P - np.array(hit[0]), axis=1) + 1e-9)
+            return (np.array([uvl[li].uv[:] for li in p.loop_indices]) * wts[:, None]).sum(0) / wts.sum()
+        duv = uv_at(u0, v0 + cfg['px']) - uv_at(u0, v0)      # the texel now shown px lower comes to the centre
+        uv = np.empty(len(uvl) * 2)
+        uvl.foreach_get('uv', uv)
+        uv = uv.reshape(-1, 2) + duv
+        uvl.foreach_set('uv', uv.ravel())
+        me.update()
+        print('FACE_VOLUME iris', name, 'up px', cfg['px'], 'uv shift', np.round(duv, 4).tolist())
+
+
 def bind(objs, face):
     mods = []
     for obj in objs:
@@ -598,6 +631,8 @@ def main():
             er.apply_modifier(obj, mod)
         if p.get('mouth_line'):
             thin_ribbon('HEAD_skin_09', p['mouth_line'])
+        if p.get('iris_up'):
+            raise_iris(p['iris_up'])
         if p.get('cornea'):
             set_cornea(p['cornea'])
         if p.get('tuck'):

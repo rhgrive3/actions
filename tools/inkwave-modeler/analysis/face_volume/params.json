@@ -325,5 +325,16 @@
  "cornea": {
   "coat": 0.0,
   "specular": 0.1
+ },
+ "iris_up": {
+  "px": 4.5,
+  "centre_px": [
+   136.7,
+   131.2
+  ],
+  "centre_px_left": [
+   219.0,
+   131.2
+  ]
  }
 }
