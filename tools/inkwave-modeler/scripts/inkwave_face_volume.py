@@ -713,6 +713,15 @@ def tint_map(ref, box, centre, cfg, skin_model, bare=None):
     ratio = np.clip(ratio[m:-m, m:-m], 0.0, cfg.get('max_ratio', 1.1))
     diff = np.abs(ratio - 1).max(-1)
     alpha = np.clip((diff - cfg.get('floor', 0.02)) / cfg['full'], 0, 1) * rim_fade((y1 - y0, x1 - x0), cfg.get('rim', 4.0))
+    if cfg.get('spots'):
+        # only round these places (camera px: centre x, y, radius x, y; full inside, gone at 1.6 radii): the
+        # rest of the reference's shading there is left to the shape and the light
+        yy, xx = np.mgrid[y0:y1, x0:x1] + 0.5
+        keep = np.zeros(alpha.shape)
+        for cx, cy, rx, ry in cfg['spots']:
+            t = np.clip((1.6 - np.hypot((xx - cx) / rx, (yy - cy) / ry)) / 0.6, 0, 1)
+            keep = np.maximum(keep, t * t * (3 - 2 * t))
+        alpha = alpha * keep
     a = np.maximum(alpha, 0.2)[..., None]
     colour = np.clip(skin_model * (1 + (ratio - 1) * cfg.get('strength', 1.0) / a), 0, 1)
     k = cfg['up']
@@ -801,6 +810,94 @@ def camera_uv(obj, box, centre, shift_y=0.0):
     return shift
 
 
+def facing_weights(obj, face, f0, f1):
+    """Per vertex: 1 where the front camera sees the patch squarely, 0 where the surface turns away from it
+    (facing < f0) or is hidden behind another part of the face.  A picture projected from the front smears into
+    a long streak on such surfaces (seen from the side: a dark line up the side of the nose)."""
+    me = obj.data
+    W = er.world(obj)
+    cam = np.array(bpy.data.objects['FACE_FIT_CAM_front'].matrix_world.translation)
+    nw = np.array([obj.matrix_world.to_3x3() @ v.normal for v in me.vertices])
+    nw /= np.linalg.norm(nw, axis=1, keepdims=True) + 1e-12
+    to_cam = cam[None] - W
+    dist = np.linalg.norm(to_cam, axis=1)
+    to_cam /= dist[:, None]
+    t = np.clip(((nw * to_cam).sum(1) - f0) / (f1 - f0), 0, 1)
+    w = t * t * (3 - 2 * t)
+    tree = BVHTree.FromPolygons([Vector(v) for v in er.world(face)], [list(p.vertices) for p in face.data.polygons])
+    for i in np.nonzero(w > 0)[0]:
+        if tree.ray_cast(Vector(W[i] + to_cam[i] * 0.0015), Vector(to_cam[i]), float(dist[i]))[0] is not None:
+            w[i] = 0.0
+    nb = [[] for _ in me.vertices]
+    for e in me.edges:
+        i, j = e.vertices
+        nb[i].append(j)
+        nb[j].append(i)
+    for _ in range(2):                      # no hard step where a vertex is hidden
+        w = np.minimum(w, np.array([0.5 * w[i] + 0.5 * np.mean(w[nb[i]]) if nb[i] else w[i] for i in range(len(w))]))
+    return w
+
+
+def bake_projection(obj, face, colour, alpha, box, up, shift, shift_y, cfg):
+    """Bake the front projection into a texture of the patch's own UV map (round the vertical axis through
+    cfg['axis_z'] mm: angle, height), multiplied by the facing weights.  Returns colour, alpha (rows top -> bottom)."""
+    me = obj.data
+    W = er.world(obj)
+    L = M.to_local(W) * 1000
+    cu, cv = er.camera_pixels('front', W)
+    sx = (cu + shift - box[0]) * up - 0.5                 # source texel of every vertex
+    sy = (cv + shift_y - box[1]) * up - 0.5
+    wf = facing_weights(obj, face, *cfg['facing'])
+    th = np.arctan2(L[:, 0], L[:, 2] - cfg['axis_z'])
+    tm = np.abs(th).max() * 1.04
+    ya, yb = L[:, 1].min() - 1.0, L[:, 1].max() + 1.0
+    uv = np.c_[0.5 + 0.5 * th / tm, (L[:, 1] - ya) / (yb - ya)]
+    T = cfg.get('size', 512)
+    px, py = uv[:, 0] * T - 0.5, (1 - uv[:, 1]) * T - 0.5     # texel position, rows top -> bottom
+    out_c = np.zeros((T, T, 3))
+    out_a = np.zeros((T, T))
+    done = np.zeros((T, T), bool)
+    hs, ws = alpha.shape
+    me.calc_loop_triangles()
+    for tri in me.loop_triangles:
+        i, j, k = tri.vertices
+        x0, x1 = int(max(np.floor(min(px[i], px[j], px[k])), 0)), int(min(np.ceil(max(px[i], px[j], px[k])), T - 1))
+        y0, y1 = int(max(np.floor(min(py[i], py[j], py[k])), 0)), int(min(np.ceil(max(py[i], py[j], py[k])), T - 1))
+        if x1 < x0 or y1 < y0:
+            continue
+        xx, yy = np.meshgrid(np.arange(x0, x1 + 1), np.arange(y0, y1 + 1))
+        d = (py[j] - py[k]) * (px[i] - px[k]) + (px[k] - px[j]) * (py[i] - py[k])
+        if abs(d) < 1e-12:
+            continue
+        a = ((py[j] - py[k]) * (xx - px[k]) + (px[k] - px[j]) * (yy - py[k])) / d
+        b = ((py[k] - py[i]) * (xx - px[k]) + (px[i] - px[k]) * (yy - py[k])) / d
+        c = 1 - a - b
+        ins = (a >= -0.02) & (b >= -0.02) & (c >= -0.02)
+        if not ins.any():
+            continue
+        a, b, c = a[ins], b[ins], c[ins]
+        qx = np.clip(a * sx[i] + b * sx[j] + c * sx[k], 0, ws - 1.001)
+        qy = np.clip(a * sy[i] + b * sy[j] + c * sy[k], 0, hs - 1.001)
+        inside = (a * sx[i] + b * sx[j] + c * sx[k] >= 0) & (a * sx[i] + b * sx[j] + c * sx[k] <= ws - 1) & \
+                 (a * sy[i] + b * sy[j] + c * sy[k] >= 0) & (a * sy[i] + b * sy[j] + c * sy[k] <= hs - 1)
+        ix, iy = np.floor(qx).astype(int), np.floor(qy).astype(int)
+        fx, fy = qx - ix, qy - iy
+        def tap(src):
+            return (src[iy, ix].T * (1 - fx) * (1 - fy) + src[iy, ix + 1].T * fx * (1 - fy) +
+                    src[iy + 1, ix].T * (1 - fx) * fy + src[iy + 1, ix + 1].T * fx * fy).T
+        out_c[yy[ins], xx[ins]] = tap(colour)
+        out_a[yy[ins], xx[ins]] = tap(alpha) * (a * wf[i] + b * wf[j] + c * wf[k]) * inside
+        done[yy[ins], xx[ins]] = True
+    out_c[~done] = out_c[done].mean(0)
+    lv = np.empty(len(me.loops), np.int32)
+    me.loops.foreach_get('vertex_index', lv)
+    me.uv_layers.active.data.foreach_set('uv', uv[lv].astype(np.float32).ravel())
+    me.update()
+    print('FACE_VOLUME bake', obj.name, 'texels used', int(done.sum()), 'vertices turned away or hidden',
+          int((wf < 0.5).sum()), 'of', len(wf))
+    return out_c, out_a
+
+
 def paint_image(name, colour, alpha):
     """RGBA image from maps given rows top -> bottom."""
     h, w = alpha.shape
@@ -849,6 +946,8 @@ def paint_front(face, obj, image_name, cfg):
     skin = np.array(skin.inputs['Base Color'].default_value[:3], np.float64)           # linear
     bare = bare_crop(cfg['bare'], cfg['box'], cfg.get('margin', 16), shift, cfg.get('shift_y', 0.0)) if cfg.get('bare') else None
     colour, alpha = tint_map(front_reference(), cfg['box'], cfg['centre'] if cfg.get('mirror') else None, cfg, skin, bare)
+    if cfg.get('facing'):
+        colour, alpha = bake_projection(obj, face, colour, alpha, cfg['box'], cfg['up'], shift, cfg.get('shift_y', 0.0), cfg)
     img = paint_image(image_name, to_srgb(colour).astype(np.float32), alpha * cfg.get('alpha', 1.0))
     print('FACE_VOLUME paint', obj.name, 'faces', len(obj.data.polygons), 'camera shift px', round(shift, 2),
           'max alpha', round(float(alpha.max()), 2), 'residual' if bare is not None else 'reference only')
@@ -883,6 +982,34 @@ def paint_mouth(face, cfg):
 def hide_decal(key):
     """A decal the paint replaces stays in the file but shows nothing."""
     decal_look(key, {'alpha': 0.0})
+
+
+SKIN_MATERIAL = 'skin_b27050'
+
+
+def set_skin(cfg):
+    """Skin tone (face, ears, body share one material).  The reference skin is a warmer tan: against the scene's
+    own lights the old tone renders too pink (too little green).  Old value kept on the material for --restore."""
+    mat = bpy.data.materials[SKIN_MATERIAL]
+    n = next(n for n in mat.node_tree.nodes if n.type == 'BSDF_PRINCIPLED')
+    if SUFFIX + '_skin' not in mat:
+        mat[SUFFIX + '_skin'] = list(n.inputs['Base Color'].default_value)
+    n.inputs['Base Color'].default_value = list(cfg['base_colour']) + [1.0]
+    paint = bpy.data.materials.get(er.FACE_PAINT_MATERIAL)
+    if paint is not None:                  # its default value is what the reference paint reads as the skin tone
+        next(n for n in paint.node_tree.nodes if n.type == 'BSDF_PRINCIPLED').inputs['Base Color'].default_value = \
+            list(cfg['base_colour']) + [1.0]
+
+
+def restore_skin():
+    mat = bpy.data.materials.get(SKIN_MATERIAL)
+    if mat is None or SUFFIX + '_skin' not in mat:
+        return
+    old = list(mat[SUFFIX + '_skin'])
+    for m in (mat, bpy.data.materials.get(er.FACE_PAINT_MATERIAL)):
+        if m is not None:
+            next(n for n in m.node_tree.nodes if n.type == 'BSDF_PRINCIPLED').inputs['Base Color'].default_value = old
+    del mat[SUFFIX + '_skin']
 
 
 CORNEA_MATERIAL = 'eyes_000000'
@@ -1051,6 +1178,7 @@ def main():
     restore_cornea()
     restore_images()
     restore_materials()
+    restore_skin()
     if not args.restore:
         back_up()
         p = json.loads(Path(args.params).read_text())
@@ -1138,6 +1266,8 @@ def main():
             print('FACE_VOLUME delta smooth seam gap closed mm', round(float(join_seam(face, pairs)), 3))
         for obj, mod in mods:
             er.apply_modifier(obj, mod)
+        if p.get('skin'):
+            set_skin(p['skin'])
         if p.get('mouth_line'):
             thin_ribbon(MOUTH_LINE, p['mouth_line'], face if 'width_mm' in p['mouth_line'] else None)
             decal_look('mouth_line', p['mouth_line'])
