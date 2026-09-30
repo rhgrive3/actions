@@ -444,7 +444,53 @@ def tuck_clear_edges(face, names, cfg):
                                        wrap_mode='ON_SURFACE', offset=val / 1000)
             moved += int(wt.sum())
         under, onto = np.array(hidden), np.nonzero(steps < cfg['over_mm'] - 1e-6)[0]
+        if cfg.get('fade_mm'):
+            # where the layer dips under the skin its crossing zigzags with the mesh, and the little blush colour
+            # still there draws a jagged line: the layer's colour fades out before it reaches the skin
+            a, b = cfg['fade_mm']
+            t = np.clip((off - a) / (b - a), 0, 1)
+            attr = me.color_attributes.get(BLUSH_FADE) or me.color_attributes.new(BLUSH_FADE, 'FLOAT_COLOR', 'POINT')
+            f = t * t * (3 - 2 * t)
+            attr.data.foreach_set('color', np.repeat(f, 4).astype(np.float32))
+            me.update()
         print('FACE_VOLUME tuck', name, 'folded', len(folded), 'hidden', len(under), 'blend ring', len(onto))
+    if cfg.get('fade_mm'):
+        blush_fade_node(bpy.data.objects[names[0]].data.materials[0])
+
+
+BLUSH_FADE = 'INKWAVE_blush_fade'
+
+
+def blush_fade_node(mat):
+    """Alpha of the blush = image alpha x the per-vertex fade (Attribute node x Math multiply)."""
+    t = mat.node_tree
+    if t.nodes.get(BLUSH_FADE) is not None:
+        return
+    bsdf = next(n for n in t.nodes if n.type == 'BSDF_PRINCIPLED')
+    link = bsdf.inputs['Alpha'].links[0]
+    src = link.from_socket
+    attr = t.nodes.new('ShaderNodeAttribute')
+    attr.name = attr.label = BLUSH_FADE
+    attr.attribute_name = BLUSH_FADE
+    mul = t.nodes.new('ShaderNodeMath')
+    mul.name = mul.label = BLUSH_FADE + '_mul'
+    mul.operation = 'MULTIPLY'
+    t.links.new(src, mul.inputs[0])
+    t.links.new(attr.outputs['Fac'], mul.inputs[1])
+    t.links.new(mul.outputs['Value'], bsdf.inputs['Alpha'])
+
+
+def remove_blush_fade_node():
+    for mat in bpy.data.materials:
+        if not mat.use_nodes or mat.node_tree.nodes.get(BLUSH_FADE) is None:
+            continue
+        t = mat.node_tree
+        mul = t.nodes[BLUSH_FADE + '_mul']
+        src = mul.inputs[0].links[0].from_socket
+        bsdf = next(n for n in t.nodes if n.type == 'BSDF_PRINCIPLED')
+        t.nodes.remove(mul)
+        t.nodes.remove(t.nodes[BLUSH_FADE])
+        t.links.new(src, bsdf.inputs['Alpha'])
 
 
 def thin_ribbon(name, cfg, face=None):
@@ -996,13 +1042,24 @@ SKIN_MATERIAL = 'skin_b27050'
 
 
 def set_skin(cfg):
-    """Skin tone (face, ears, body share one material).  The reference skin is a warmer tan: against the scene's
-    own lights the old tone renders too pink (too little green).  Old value kept on the material for --restore."""
-    mat = bpy.data.materials[SKIN_MATERIAL]
-    n = next(n for n in mat.node_tree.nodes if n.type == 'BSDF_PRINCIPLED')
-    if SUFFIX + '_skin' not in mat:
-        mat[SUFFIX + '_skin'] = list(n.inputs['Base Color'].default_value)
-    n.inputs['Base Color'].default_value = list(cfg['base_colour']) + [1.0]
+    """Skin (face, ears, body share one material).  base_colour: the reference skin is a warmer tan (the old tone
+    renders too pink).  bsdf: the look of soft, plump skin - more subsurface light (the shadow side glows warm
+    instead of turning grey), a rougher, weaker specular (no plastic glints) and a light, pale sheen instead of
+    the strong orange one that drew a hard rim along the jaw.  The same surface settings go to the see-through
+    layers lying on the skin (cfg['layers'], the blush): otherwise they shade differently from the skin under them
+    and their edges show as lines.  Old values are kept on each material for --restore."""
+    for name in [SKIN_MATERIAL] + cfg.get('layers', []):
+        mat = bpy.data.materials[name]
+        n = next(n for n in mat.node_tree.nodes if n.type == 'BSDF_PRINCIPLED')
+        sockets = dict(cfg.get('bsdf', {}))
+        if name == SKIN_MATERIAL:
+            sockets['Base Color'] = list(cfg['base_colour']) + [1.0]
+        if SUFFIX + '_skin' not in mat:
+            mat[SUFFIX + '_skin'] = json.dumps({k: (list(n.inputs[k].default_value)
+                                                    if hasattr(n.inputs[k].default_value, '__len__')
+                                                    else n.inputs[k].default_value) for k in sockets})
+        for k, v in sockets.items():
+            n.inputs[k].default_value = v
     paint = bpy.data.materials.get(er.FACE_PAINT_MATERIAL)
     if paint is not None:                  # its default value is what the reference paint reads as the skin tone
         next(n for n in paint.node_tree.nodes if n.type == 'BSDF_PRINCIPLED').inputs['Base Color'].default_value = \
@@ -1010,14 +1067,20 @@ def set_skin(cfg):
 
 
 def restore_skin():
-    mat = bpy.data.materials.get(SKIN_MATERIAL)
-    if mat is None or SUFFIX + '_skin' not in mat:
-        return
-    old = list(mat[SUFFIX + '_skin'])
-    for m in (mat, bpy.data.materials.get(er.FACE_PAINT_MATERIAL)):
-        if m is not None:
-            next(n for n in m.node_tree.nodes if n.type == 'BSDF_PRINCIPLED').inputs['Base Color'].default_value = old
-    del mat[SUFFIX + '_skin']
+    for mat in bpy.data.materials:
+        if SUFFIX + '_skin' not in mat:
+            continue
+        old = mat[SUFFIX + '_skin']
+        old = json.loads(old) if isinstance(old, str) else {'Base Color': list(old)}
+        n = next(n for n in mat.node_tree.nodes if n.type == 'BSDF_PRINCIPLED')
+        for k, v in old.items():
+            n.inputs[k].default_value = v
+        if mat.name == SKIN_MATERIAL:
+            paint = bpy.data.materials.get(er.FACE_PAINT_MATERIAL)
+            if paint is not None:
+                next(n for n in paint.node_tree.nodes if n.type == 'BSDF_PRINCIPLED').inputs['Base Color'].default_value = \
+                    old['Base Color']
+        del mat[SUFFIX + '_skin']
 
 
 CORNEA_MATERIAL = 'eyes_000000'
@@ -1187,6 +1250,7 @@ def main():
     restore_images()
     restore_materials()
     restore_skin()
+    remove_blush_fade_node()
     if not args.restore:
         back_up()
         p = json.loads(Path(args.params).read_text())
