@@ -699,7 +699,7 @@ def smooth_inner_corner(design):
     the skin layers follow with Surface Deform bound before the smoothing."""
     ic = design['inner_corner']
     face = bpy.data.objects['HEAD_face']
-    layers = [bpy.data.objects[n] for n in er.FACE_LAYER_NAMES]
+    layers = [bpy.data.objects[n] for n in list(er.FACE_LAYER_NAMES) + CANTHUS_FOLLOWERS]
     for obj in [face] + layers:
         er.back_up(obj)
     binds = []
@@ -727,6 +727,24 @@ def smooth_inner_corner(design):
     er.apply_weighted_modifier(face, f, 'SMOOTH', factor=ic['factor'], iterations=ic['iters'])
     print('INNER_CORNER face vertices', int((f > 0).sum()), 'max move mm',
           round(float(np.linalg.norm(er.world(face) - before, axis=1).max() * 1000), 3))
+    cs = ic.get('canthus_smooth')
+    if cs:
+        # the pull toward the nose presses the skin between the inner corner and the nose together (lumps and
+        # wrinkles, worse than the source).  Smooth that whole slope; the lid edge (within eye_min_mm of the
+        # eyeball) stays, so the white keeps its shape
+        w_pts = er.world(face)
+        loc = M.to_local(w_pts)
+        loc[:, 0] = -np.abs(loc[:, 0])
+        ux, uy = er.camera_pixels('front', M.to_world(loc))
+        d = np.hypot((ux - cs['centre'][0]) / cs['rx_px'], (uy - cs['centre'][1]) / cs['ry_px'])
+        g = np.clip((1 - d) / (1 - cs['full']), 0, 1)
+        near = np.array([eye.find_nearest(Vector(p))[3] for p in w_pts]) * 1000
+        g *= np.clip((near - cs['eye_min_mm']) / (cs['eye_full_mm'] - cs['eye_min_mm']), 0, 1)
+        g = g * g * (3 - 2 * g)
+        before = er.world(face)
+        er.apply_weighted_modifier(face, g, 'SMOOTH', factor=cs['factor'], iterations=cs['iters'])
+        print('CANTHUS face vertices', int((g > 0).sum()), 'max move mm',
+              round(float(np.linalg.norm(er.world(face) - before, axis=1).max() * 1000), 3))
     for obj, mod in binds:
         er.apply_modifier(obj, mod)
 
@@ -741,10 +759,11 @@ def remove_lower_paint():
 
 
 LR_SUFFIX = '__pre_lash_rebuild'
+CANTHUS_FOLLOWERS = ['HEAD_eyes_12', 'HEAD_eyes_29']
 
 
 def touched_names():
-    names = ['HEAD_face'] + list(er.FACE_LAYER_NAMES)
+    names = ['HEAD_face'] + list(er.FACE_LAYER_NAMES) + CANTHUS_FOLLOWERS
     for objs in (R, L):
         names += [objs['rim'], objs['liner']] + objs['lashes']
     return names

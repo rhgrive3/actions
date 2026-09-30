@@ -1,4 +1,4 @@
-# 顔の立体感（頬・目の下・鼻筋・あご・鼻）候補 V30（まだマージしない）
+# 顔の立体感（頬・目の下・鼻筋・あご・鼻）候補 V36（まだマージしない）
 
 横から見た輪郭（口・鼻・あごの高さ）は参照と合っているので変えない。横から見えない面のふくらみを直す。
 目、まつ毛、髪は変えない（まつ毛とライナーは新しい肌の上で作り直すだけ）。
@@ -54,6 +54,17 @@ blender -b $M --python scripts/inkwave_lash_rebuild.py -- --save $M \
 肌の色: 5 視点の平均の色が V23 と同じ（差 0.1/255 以下）。目のまわりの黒の面積の差 2 px² 以内。
 仕上げのならし（Corrective Smooth）は鼻にはかけない（小さなふくらみが消えるため）。
 
+## V36 での直し（雰囲気、目頭から鼻の凸凹）
+
+| 見えた所 | 原因（確かめ方） | 直し |
+|---|---|---|
+| 黒目（瞳）が灰色でぼやけ、上に横すじ。参照は真っ黒で澄んだ青緑 | 瞳のテクスチャは黒。上にかぶせた角膜（`eyes_000000`）が空を強く映していた（角膜を隠すと黒になることで確認） | 角膜の Coat 1.0 → 0、Specular 0.5 → 0.1。小さい光の点は残る。`--restore` で元の値に戻る |
+| 口の線が太い帯で、両端が三角の鉤 | 口の線の貼り物 `HEAD_skin_09` は幅 1.2 mm、両端 4.6 mm | 帯の中心線を残して幅を半分に（端も細くなる） |
+| 目頭から鼻にかけての凸凹 | 元のモデルからあった。目頭の白目を広げる引っぱり（L61）で強くなった（前のマスターと比べて確認）。とがった切れ目は、ほお紅の層の透明な内側のふち | 目頭から鼻の横の坂を Smooth（60〜80 回、目玉から 0.25〜1.2 mm の所は動かさない。まぶたの溝の帯も Surface Deform で追従）。ほお紅の層の透明な内側（中心から 32 mm 以内）も肌の下へ。色のある所との間は段にならないよう、高さをなめらかにつなぐ |
+
+5 視点の平均の色は V23 とほぼ同じ（差 0.8/255 以下。暗くなったのは瞳の分）。輪郭の差は前と同じ。
+目頭のならしは `inkwave_lash_rebuild.py`（`inner_corner.canthus_smooth`）、それ以外は `inkwave_face_volume.py`。
+
 ## 結果
 
 | 項目 | 前 | V23 |
@@ -67,7 +78,7 @@ blender -b $M --python scripts/inkwave_lash_rebuild.py -- --save $M \
 | 目のまわりの黒の面積（5 視点） | — | 前と 4 px² 以内 |
 
 画像（`img/`）: `sections_before_after.jpg`（点線 = 前）、`move_map.jpg`（動いた量）、`clay_*_before_after.jpg`（左 前 | 右 後）、
-`face_*_ref_master_V30.jpg`（参照 | 今のマスター | V30）、`eyes_master_V30.jpg`、`zoom_front_*_master_V30.jpg`（正面の拡大、左 マスター | 右 V30）、`nose_ref_V23_V30.png`（参照 | V23 色・粘土 | V30 色・粘土）、`undereye_marks_V23_V30.jpg`、`evidence_*`（診断）。
+`face_*_ref_master_V36.jpg`（参照 | 今のマスター | V36）、`eyes_master_V36.jpg`、`inner_corner_to_nose_V35_V36.jpg`、`nose_ref_V23_V30.png`、`mouth_ref_V30_V31.jpg`、`cornea_settings.jpg`、`evidence_*`（診断）。
 
 ## 残り
 

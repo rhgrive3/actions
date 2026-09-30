@@ -311,9 +311,19 @@
  },
  "tuck": {
   "alpha": 0.06,
+  "colour_alpha": 0.12,
   "rings": 3,
-  "blend_rings": 2,
+  "inner_x_mm": 32.0,
   "under_mm": -0.15,
-  "blend_mm": 0.1
+  "over_mm": 0.3,
+  "relax": 60,
+  "step_mm": 0.05
+ },
+ "mouth_line": {
+  "keep": 0.5
+ },
+ "cornea": {
+  "coat": 0.0,
+  "specular": 0.1
  }
 }

@@ -381,23 +381,126 @@ def tuck_clear_edges(face, names, cfg):
         bm.verts.ensure_lookup_table()
         ring = {i: 0 for i in folded}
         front = set(folded)
-        for r in range(1, cfg['rings'] + cfg['blend_rings'] + 1):
+        for r in range(1, cfg['rings'] + 1):
             nxt = {e.other_vert(bm.verts[i]).index for i in front for e in bm.verts[i].link_edges} - set(ring)
             for i in nxt:
                 ring[i] = r
             front = nxt
         bm.free()
         clear = amax < cfg['alpha']
-        under = np.array([i for i, r in ring.items() if r <= cfg['rings'] and clear[i]], int)
-        onto = np.array([i for i, r in ring.items() if r > cfg['rings'] and clear[i]], int)
-        for idx, off in ((under, cfg['under_mm']), (onto, cfg['blend_mm'])):
-            if len(idx) == 0:
+        # the clear inner edge (toward the nose): its step shows as a line down the side of the nose
+        L = M.to_local(W) * 1000
+        for i in np.nonzero(clear & (np.abs(L[:, 0]) < cfg.get('inner_x_mm', 0)))[0]:
+            ring.setdefault(int(i), 0)
+        # target height over the skin: hidden where clear and folded / inner, 0.3 mm where the blush has colour;
+        # everything between is relaxed over the mesh (no steps, no slivers poking out)
+        target = np.full(len(me.vertices), np.nan)
+        hidden = [i for i, r in ring.items() if r <= cfg['rings'] and clear[i]]
+        target[hidden] = cfg['under_mm']
+        target[amax >= cfg['colour_alpha']] = cfg['over_mm']
+        free = np.isnan(target)
+        off = np.where(free, cfg['over_mm'], target)
+        nb = [[] for _ in range(len(me.vertices))]
+        for e in me.edges:
+            a, b = e.vertices
+            nb[a].append(b)
+            nb[b].append(a)
+        idx = np.nonzero(free)[0]
+        for _ in range(cfg['relax']):
+            off[idx] = [np.mean(off[nb[i]]) if nb[i] else off[i] for i in idx]
+        steps = np.round(off / cfg['step_mm']) * cfg['step_mm']
+        moved = 0
+        for val in np.unique(steps):
+            if val >= cfg['over_mm'] - 1e-6:
                 continue
-            wt = np.zeros(len(me.vertices))
-            wt[idx] = 1.0
+            wt = (np.abs(steps - val) < 1e-6).astype(float)
             er.apply_weighted_modifier(obj, wt, 'SHRINKWRAP', target=face, wrap_method='NEAREST_SURFACEPOINT',
-                                       wrap_mode='ON_SURFACE', offset=off / 1000)
+                                       wrap_mode='ON_SURFACE', offset=val / 1000)
+            moved += int(wt.sum())
+        under, onto = np.array(hidden), np.nonzero(steps < cfg['over_mm'] - 1e-6)[0]
         print('FACE_VOLUME tuck', name, 'folded', len(folded), 'hidden', len(under), 'blend ring', len(onto))
+
+
+def thin_ribbon(name, cfg):
+    """The mouth line (HEAD_skin_09) is a flat band on the skin: about 1.2 mm wide and flaring into 4.6 mm
+    triangle hooks at both corners, where the reference has a thin line with thin upturned ends.  Its outer
+    loop is split at the two corner tips into an upper and a lower edge; every vertex moves toward the middle
+    of the two edges (scaled by cfg['keep']), so the band keeps its path and ends but gets thin."""
+    import bmesh
+    obj = bpy.data.objects[name]
+    W = er.world(obj)
+    L = M.to_local(W) * 1000
+    bm = bmesh.new()
+    bm.from_mesh(obj.data)
+    adj = {}
+    for e in bm.edges:
+        if e.is_boundary:
+            a, b = e.verts[0].index, e.verts[1].index
+            adj.setdefault(a, []).append(b)
+            adj.setdefault(b, []).append(a)
+    bm.free()
+    start = next(iter(adj))
+    loop, prev = [start], None
+    while True:
+        nxt = [n for n in adj[loop[-1]] if n != prev][0]
+        if nxt == start:
+            break
+        prev = loop[-1]
+        loop.append(nxt)
+    loop = np.array(loop)
+    tips = [int(np.argmin(L[loop, 0])), int(np.argmax(L[loop, 0]))]
+    i0, i1 = sorted(tips)
+    a_side, b_side = loop[i0:i1 + 1], np.r_[loop[i1:], loop[:i0 + 1]]
+
+    def nearest_on(chain, q):
+        P = W[chain]
+        best, bd = None, 1e9
+        for k in range(len(P) - 1):
+            seg = P[k + 1] - P[k]
+            t = np.clip(np.dot(q - P[k], seg) / max(np.dot(seg, seg), 1e-18), 0, 1)
+            c = P[k] + seg * t
+            d = np.linalg.norm(q - c)
+            if d < bd:
+                best, bd = c, d
+        return best
+    new = W.copy()
+    keep = cfg['keep']
+    for i, q in enumerate(W):
+        c = 0.5 * (nearest_on(a_side, q) + nearest_on(b_side, q))
+        new[i] = c + (q - c) * keep
+    mw_inv = np.array(obj.matrix_world.inverted())
+    co = (np.c_[new, np.ones(len(new))] @ mw_inv.T)[:, :3]
+    obj.data.vertices.foreach_set('co', co.ravel())
+    obj.data.update()
+    print('FACE_VOLUME thin', name, 'keep', keep, 'max move mm', round(float(np.linalg.norm(new - W, axis=1).max() * 1000), 2))
+
+
+CORNEA_MATERIAL = 'eyes_000000'
+
+
+def set_cornea(cfg):
+    """The cornea shell mirrors the sky: a grey haze with a sharp horizon line over the upper iris and pupil,
+    where the reference has a black pupil and a clear teal iris.  Its coat and specular go down (a small
+    sharp glint stays).  The old values are kept on the material for --restore."""
+    mat = bpy.data.materials[CORNEA_MATERIAL]
+    if SUFFIX not in mat:
+        mat[SUFFIX] = {n.name: [n.inputs['Coat Weight'].default_value, n.inputs['Specular IOR Level'].default_value]
+                       for n in mat.node_tree.nodes if n.type == 'BSDF_PRINCIPLED'}
+    for n in mat.node_tree.nodes:
+        if n.type == 'BSDF_PRINCIPLED':
+            n.inputs['Coat Weight'].default_value = cfg['coat']
+            n.inputs['Specular IOR Level'].default_value = cfg['specular']
+
+
+def restore_cornea():
+    mat = bpy.data.materials.get(CORNEA_MATERIAL)
+    if mat is None or SUFFIX not in mat:
+        return
+    for name, (coat, spec) in mat[SUFFIX].to_dict().items():
+        n = mat.node_tree.nodes[name]
+        n.inputs['Coat Weight'].default_value = coat
+        n.inputs['Specular IOR Level'].default_value = spec
+    del mat[SUFFIX]
 
 
 def bind(objs, face):
@@ -424,6 +527,7 @@ def main():
     if any(m.name.endswith('__pre_lash_rebuild') for m in bpy.data.meshes):
         raise SystemExit('run inkwave_lash_rebuild.py --restore first (the lashes are rebuilt on the new skin)')
     print('FACE_VOLUME restored', restore(drop=args.restore), 'meshes')
+    restore_cornea()
     if not args.restore:
         back_up()
         p = json.loads(Path(args.params).read_text())
@@ -492,6 +596,10 @@ def main():
             print('FACE_VOLUME delta smooth seam gap closed mm', round(float(join_seam(face, pairs)), 3))
         for obj, mod in mods:
             er.apply_modifier(obj, mod)
+        if p.get('mouth_line'):
+            thin_ribbon('HEAD_skin_09', p['mouth_line'])
+        if p.get('cornea'):
+            set_cornea(p['cornea'])
         if p.get('tuck'):
             tuck_clear_edges(face, ['HEAD_skin_04', 'HEAD_skin'], p['tuck'])
         seam_normals(face, pairs)
