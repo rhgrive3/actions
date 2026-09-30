@@ -762,6 +762,87 @@ def carve_inner_tip(face, ic, eye):
     print('INNER_TIP vertices moved', moved, 'max move mm', round(float(np.linalg.norm(new - W, axis=1).max() * 1000), 2))
 
 
+def seat_inner_tip(face, ic, eye):
+    """Last pass of the inner-corner wedge.  The white shows where the skin passes behind the eyeball, so the edge
+    of the white is the line where skin and eyeball cross; with a coarse mesh (2 mm edges) that line zigzags and
+    the wedge tip becomes a one-vertex pit 3 mm deep.  Here the skin round the wedge edge is laid on the
+    eyeball with a height that is proportional to the signed pixel distance to the edge (behind inside, in
+    front outside): the crossing then lies on the reference edge whatever the mesh, and the tip is shallow.
+    Outside vertices further than `exact_px` blend back to where they were (no cliff) by `band_px`."""
+    ct = ic['tip_wedge']
+    st = ct['seat']
+    poly = np.array(ct['poly'])
+    edges = [(poly[i], poly[(i + 1) % len(poly)], i) for i in range(len(poly))]
+    cam = np.array(bpy.data.objects['FACE_FIT_CAM_front'].matrix_world.translation)
+    W = er.world(face)
+    loc = M.to_local(W)
+    loc[:, 0] = -np.abs(loc[:, 0])
+    ux, uy = er.camera_pixels('front', M.to_world(loc))
+    pts = np.c_[ux, uy]
+    band = st['band_px']
+    box = (ux > poly[:, 0].min() - band) & (ux < poly[:, 0].max() + band) & \
+          (uy > poly[:, 1].min() - band) & (uy < poly[:, 1].max() + band)
+    idx = np.nonzero(box)[0]
+    ins = inside(poly, pts[idx])
+
+    def edge_dist(q):
+        best, edge = 1e9, -1
+        for a, b, i in edges:
+            ab = b - a
+            t = np.clip(np.dot(q - a, ab) / np.dot(ab, ab), 0, 1)
+            d = np.linalg.norm(q - (a + ab * t))
+            if d < best:
+                best, edge = d, i
+        return best, edge
+    new = W.copy()
+    moved = 0
+    g = st['slope_mm_per_px'] / 1000
+    for k, i in enumerate(idx):
+        dpx, edge = edge_dist(pts[i])
+        if edge in st['closing_edges']:
+            continue                                   # the eye-opening side of the wedge: no edge there
+        d = W[i] - cam
+        length = np.linalg.norm(d)
+        d /= length
+        hit = eye.ray_cast(Vector(cam), Vector(d), 50)
+        if hit[0] is None or abs(hit[3] - length) > st.get('reach_mm', 5.0) / 1000:
+            continue                                   # no eyeball right behind / in front of this vertex
+        if ins[k]:
+            want = hit[3] + min(ct['behind_mm'] / 1000, max(st['min_behind_mm'] / 1000, g * dpx))
+            if length >= want:
+                continue                               # already behind: never pulled forward (the iris and the
+                                                       # cornea bulge in front of the eyeball shell)
+            target = want
+        else:
+            if dpx > band or (length > hit[3] and edge not in st['pull_edges']):
+                continue      # far away, or behind the eyeball under the upper lid (the eye opening).  Below the
+                              # wedge and past its tip the skin must be in front: holes there show the white
+            exact = hit[3] - g * dpx
+            t = np.clip((dpx - st['exact_px']) / (band - st['exact_px']), 0, 1)
+            target = exact + (length - exact) * t * t * (3 - 2 * t)
+        new[i] = cam + d * target
+        moved += 1
+    mw_inv = np.array(face.matrix_world.inverted())
+    co = (np.c_[new, np.ones(len(new))] @ mw_inv.T)[:, :3]
+    face.data.vertices.foreach_set('co', co.ravel())
+    face.data.update()
+    ps = st.get('post_smooth')
+    if ps:
+        # the skin below the wedge dips to the eyeball (the eyeball lies ~6 mm under the skin there): smooth that
+        # trench outside the exact band, so its walls carry no glints; the edge itself stays where it was put
+        w = np.zeros(len(W))
+        for k, i in enumerate(idx):
+            if ins[k]:
+                continue
+            dpx, edge = edge_dist(pts[i])
+            if edge in st['closing_edges']:
+                continue
+            a = np.clip((dpx - ps['from_px']) / 1.0, 0, 1) * np.clip((ps['to_px'] - dpx) / 2.0, 0, 1)
+            w[i] = a * a * (3 - 2 * a)
+        er.apply_weighted_modifier(face, w, 'SMOOTH', factor=0.5, iterations=ps['iters'])
+    print('INNER_TIP seat vertices', moved, 'max move mm', round(float(np.linalg.norm(new - W, axis=1).max() * 1000), 2))
+
+
 def smooth_inner_corner(design):
     """Inner eye corner: the lid edge of HEAD_face there is stepped (a jagged white edge).  Blender's Smooth
     modifier on a weighted vertex group round the inner corner (both eyes, lid skin near the eyeball only);
@@ -845,7 +926,10 @@ def smooth_inner_corner(design):
                 g = np.clip((1 - d) / 0.5, 0, 1)
                 g = g * g * (3 - 2 * g)
                 er.apply_weighted_modifier(face, g, 'SMOOTH', factor=0.5, iterations=ct['smooth_iters'])
-        carve_inner_tip(face, ic, eye)
+        if ct.get('seat'):
+            seat_inner_tip(face, ic, eye)
+        else:
+            carve_inner_tip(face, ic, eye)
     for obj, mod in binds:
         er.apply_modifier(obj, mod)
 

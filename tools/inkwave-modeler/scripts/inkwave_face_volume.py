@@ -713,6 +713,14 @@ def tint_map(ref, box, centre, cfg, skin_model, bare=None):
     ratio = np.clip(ratio[m:-m, m:-m], 0.0, cfg.get('max_ratio', 1.1))
     diff = np.abs(ratio - 1).max(-1)
     alpha = np.clip((diff - cfg.get('floor', 0.02)) / cfg['full'], 0, 1) * rim_fade((y1 - y0, x1 - x0), cfg.get('rim', 4.0))
+    if cfg.get('below_lip'):
+        # nothing under the lower lip: the reference's soft shadow there is the shape's own; painted, it shows
+        # as a dark patch beside the chin in the side view
+        bl = cfg['below_lip']
+        yy, xx = np.mgrid[y0:y1, x0:x1] + 0.5
+        limit = bl['y'] - bl['rise'] * np.clip(((xx - bl['centre']) / bl['half_width']) ** 2, 0, 1)
+        t = np.clip((yy - limit) / bl['fade'], 0, 1)
+        alpha = alpha * (1 - t * t * (3 - 2 * t))
     if cfg.get('spots'):
         # only round these places (camera px: centre x, y, radius x, y; full inside, gone at 1.6 radii): the
         # rest of the reference's shading there is left to the shape and the light
