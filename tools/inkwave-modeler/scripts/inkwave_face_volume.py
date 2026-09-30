@@ -348,6 +348,58 @@ def delta_smooth_apply(face, mod, weights, cfg):
     print('FACE_VOLUME delta smooth max move mm', round(float(np.linalg.norm(er.world(face) - before, axis=1).max() * 1000), 2))
 
 
+def tuck_clear_edges(face, names, cfg):
+    """The blush layers (HEAD_skin / HEAD_skin_04, 0.3 mm over the face) are folded like crumpled paper along
+    their top edge under the lower eyelids (from the source model): those faces point into the head and render
+    as dark flakes.  The blush there is clear (alpha < 0.05), so it adds no colour.  The folded faces and a few
+    rings round them, where the blush is clear, go just under the skin (hidden); a ring more goes onto the
+    skin; everything else stays 0.3 mm over the face, so the blush colour does not change.  Blender's
+    Shrinkwrap on those vertices only."""
+    import bmesh
+    tree = BVHTree.FromPolygons([Vector(v) for v in er.world(face)], [list(p.vertices) for p in face.data.polygons])
+    for name in names:
+        obj = bpy.data.objects[name]
+        me = obj.data
+        img = [n.image for n in me.materials[0].node_tree.nodes if getattr(n, 'image', None)][0]
+        w, h = img.size
+        px = np.array(img.pixels[:]).reshape(h, w, 4)
+        uvl = me.uv_layers.active.data
+        amax = np.zeros(len(me.vertices))
+        for p in me.polygons:
+            for li, vi in zip(p.loop_indices, p.vertices):
+                u, v = uvl[li].uv
+                amax[vi] = max(amax[vi], px[int(np.clip(v, 0, 1) * (h - 1)), int(np.clip(u, 0, 1) * (w - 1)), 3])
+        W = er.world(obj)
+        mw = obj.matrix_world.to_3x3()
+        folded = set()
+        for p in me.polygons:
+            hh = tree.find_nearest(Vector(W[list(p.vertices)].mean(0)))
+            if np.dot(np.array(mw @ p.normal), np.array(hh[1])) < 0:
+                folded.update(p.vertices)
+        bm = bmesh.new()
+        bm.from_mesh(me)
+        bm.verts.ensure_lookup_table()
+        ring = {i: 0 for i in folded}
+        front = set(folded)
+        for r in range(1, cfg['rings'] + cfg['blend_rings'] + 1):
+            nxt = {e.other_vert(bm.verts[i]).index for i in front for e in bm.verts[i].link_edges} - set(ring)
+            for i in nxt:
+                ring[i] = r
+            front = nxt
+        bm.free()
+        clear = amax < cfg['alpha']
+        under = np.array([i for i, r in ring.items() if r <= cfg['rings'] and clear[i]], int)
+        onto = np.array([i for i, r in ring.items() if r > cfg['rings'] and clear[i]], int)
+        for idx, off in ((under, cfg['under_mm']), (onto, cfg['blend_mm'])):
+            if len(idx) == 0:
+                continue
+            wt = np.zeros(len(me.vertices))
+            wt[idx] = 1.0
+            er.apply_weighted_modifier(obj, wt, 'SHRINKWRAP', target=face, wrap_method='NEAREST_SURFACEPOINT',
+                                       wrap_mode='ON_SURFACE', offset=off / 1000)
+        print('FACE_VOLUME tuck', name, 'folded', len(folded), 'hidden', len(under), 'blend ring', len(onto))
+
+
 def bind(objs, face):
     mods = []
     for obj in objs:
@@ -434,10 +486,14 @@ def main():
             # so the midline keeps the (already smooth) edit
             t = np.clip((np.abs(loc[:, 0]) - 1.0) / 5.0, 0, 1)
             w *= t * t * (3 - 2 * t)
+            for b in ds.get('exclude', []):
+                w *= 1 - bump(loc, dict(b, front_only=False))
             delta_smooth_apply(face, ds_mod, w, ds)
             print('FACE_VOLUME delta smooth seam gap closed mm', round(float(join_seam(face, pairs)), 3))
         for obj, mod in mods:
             er.apply_modifier(obj, mod)
+        if p.get('tuck'):
+            tuck_clear_edges(face, ['HEAD_skin_04', 'HEAD_skin'], p['tuck'])
         seam_normals(face, pairs)
     if args.save:
         bpy.ops.wm.save_as_mainfile(filepath=args.save, compress=True)
