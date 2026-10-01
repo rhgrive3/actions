@@ -180,5 +180,82 @@
   ],
   "sheen": 0.15,
   "normal_strength": 0.6
- }
+ },
+ "squash": [
+  {
+   "name": "panel_back",
+   "meshes": [
+    "CLOTHES_cloth_45",
+    "CLOTHES_cloth_46",
+    "CLOTHES_cloth_47",
+    "CLOTHES_cloth_48",
+    "CLOTHES_cloth_49",
+    "CLOTHES_cloth_50",
+    "CLOTHES_cloth_51",
+    "CLOTHES_cloth_52"
+   ],
+   "axis": "y",
+   "side": 1,
+   "at": -0.06,
+   "span": 0.214,
+   "keep": 0.5,
+   "z": [
+    0.7,
+    0.78
+   ],
+   "z_fade": [
+    0.05,
+    0.17
+   ]
+  },
+  {
+   "name": "panel_out",
+   "meshes": [
+    "CLOTHES_cloth_45",
+    "CLOTHES_cloth_46",
+    "CLOTHES_cloth_47",
+    "CLOTHES_cloth_48",
+    "CLOTHES_cloth_49",
+    "CLOTHES_cloth_50",
+    "CLOTHES_cloth_51",
+    "CLOTHES_cloth_52"
+   ],
+   "axis": "x",
+   "side": 1,
+   "at": 0.15,
+   "span": 0.063,
+   "keep": 0.6,
+   "mirror_x": true,
+   "z": [
+    0.7,
+    0.78
+   ],
+   "z_fade": [
+    0.05,
+    0.17
+   ]
+  },
+  {
+   "name": "hood_back",
+   "meshes": [
+    "CLOTHES_cloth_15",
+    "CLOTHES_cloth_16",
+    "CLOTHES_cloth_17",
+    "CLOTHES_cloth_14"
+   ],
+   "axis": "y",
+   "side": 1,
+   "at": 0.11,
+   "span": 0.065,
+   "keep": 0.55,
+   "z": [
+    1.08,
+    1.3
+   ],
+   "z_fade": [
+    0.02,
+    0.02
+   ]
+  }
+ ]
 }
