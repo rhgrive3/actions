@@ -249,7 +249,17 @@ Subsurface は glTF に入らないので、GLB では Roughness / Specular / Sh
 
 画像: `clothes_front_ref_V74_V75.jpg`、`clothes_side_ref_V74_V75.jpg`、`clothes_back_ref_V74_V75.jpg`（参照 | V74 | V75）、`clothes_close_V74_V75.jpg`（近くから、上 V74 / 下 V75）。
 
-残り: そでは参照より丸く大きい（肩から上腕の風船の形）。上腕のベルトがそでに乗っているので、そでを縮めるときはベルトも一緒に動かす必要がある。
+残り: そでは V76 で細くした（下の節）。
+
+## V76 での直し（上着のそで）— マスターに入れた
+
+| 見えた所 | 原因 | 直し（`slim_sleeves`、設定 `sleeves`） |
+|---|---|---|
+| そでが風船のように丸く大きい | 上腕からひじで、そで（`CLOTHES_cloth_18` / `_23`）が腕より前後・左右とも約 4 cm 外にふくらんでいた | Blender の Shrinkwrap（腕の面から 2 cm）を重み 0.5 で。ひじの上で最大、肩の合わせ目とそで口へ向けて 0。上腕のベルト（`CLOTHES_cloth_21/22`）は Surface Deform でそでについていく。そでの合わせ目（同じ位置の 2 点）は一緒に動かす（別々だと合わせ目が開いて肌が見えた） |
+
+検査: もう一度作り直すと 236 部品同じ・GLB 同じ。`--restore` で前のマスターと 224 部品同じ。開き直しの検査は合格。往復検査（`--rebuilt` にそでとベルトを追加）の問題の一覧は前と同じ 24 行。
+
+画像: `sleeves_front_ref_V75_V76.jpg`、`sleeves_side_ref_V75_V76.jpg`、`sleeves_back_ref_V75_V76.jpg`（参照 | V75 | V76）、`sleeves_close_V75_V76.jpg`（上 V75 / 下 V76）。
 
 ### 残っていること（V72）
 
