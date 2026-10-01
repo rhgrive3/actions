@@ -1281,6 +1281,13 @@ def eye_look(cfg):
         t.links.new(src, mul.inputs[6])
         t.links.new(rng.outputs['Result'], mul.inputs[7])
         t.links.new(mul.outputs[2], bsdf.inputs['Base Color'])
+        if cfg.get('emission'):
+            # the white behind the iris lies in the socket's shadow and went black in the side view, where the
+            # reference shows it white: a little of the eye's own colour as emission (old value kept)
+            if SUFFIX + '_emit' not in bpy.data.materials[mat_name]:
+                bpy.data.materials[mat_name][SUFFIX + '_emit'] = bsdf.inputs['Emission Strength'].default_value
+            t.links.new(mul.outputs[2], bsdf.inputs['Emission Color'])
+            bsdf.inputs['Emission Strength'].default_value = cfg['emission']
 
 
 def restore_eye_look():
@@ -1295,6 +1302,9 @@ def restore_eye_look():
         mul = next(n for n in mine if n.bl_idname == 'ShaderNodeMix')
         src = mul.inputs[6].links[0].from_socket
         bsdf = next(n for n in t.nodes if n.type == 'BSDF_PRINCIPLED')
+        if SUFFIX + '_emit' in mat:
+            bsdf.inputs['Emission Strength'].default_value = mat[SUFFIX + '_emit']
+            del mat[SUFFIX + '_emit']
         for n in mine:
             t.nodes.remove(n)
         t.links.new(src, bsdf.inputs['Base Color'])

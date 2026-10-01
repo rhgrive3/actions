@@ -1454,6 +1454,7 @@
   ],
   "shade_from_m": 0.004,
   "shade_to_m": 0.011,
-  "shade_min": 0.62
+  "shade_min": 0.62,
+  "emission": 0.15
  }
 }
