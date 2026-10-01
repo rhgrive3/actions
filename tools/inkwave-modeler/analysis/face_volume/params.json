@@ -1392,8 +1392,8 @@
     0.22
    ],
    "Subsurface Scale": 0.006,
-   "Roughness": 0.58,
-   "Specular IOR Level": 0.3,
+   "Roughness": 0.68,
+   "Specular IOR Level": 0.12,
    "Sheen Weight": 0.3,
    "Sheen Tint": [
     1.0,
@@ -1437,5 +1437,23 @@
    0.502,
    0.416
   ]
+ },
+ "eye_look": {
+  "suns": [
+   "KEY",
+   "FILL",
+   "RIM",
+   "RIM2"
+  ],
+  "catch_energy": 6.0,
+  "catch_angle": 0.03,
+  "catch_dir": [
+   -0.45,
+   0.55,
+   0.7
+  ],
+  "shade_from_m": 0.004,
+  "shade_to_m": 0.011,
+  "shade_min": 0.62
  }
 }

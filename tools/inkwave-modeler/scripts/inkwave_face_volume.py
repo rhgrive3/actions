@@ -1222,6 +1222,95 @@ def soften_lights(cfg):
         light.angle = cfg['angle']
 
 
+EYE_LOOK = 'INKWAVE_eye_look'
+CORNEAS = ('HEAD_eyes_02', 'HEAD_eyes_19')
+EYE_BALLS = {'HEAD_eyes': 'eyes_texture', 'HEAD_eyes_18': 'eyes_texture_02'}
+
+
+def eye_look(cfg):
+    """Eyes that sit in the face like the reference:
+    - the soft suns drew a big blurred disc on the glossy cornea: the suns no longer light the corneas (Blender's
+      light linking); one small sharp sun lights only them, for the small white catch lights of the reference;
+    - the upper lid shades the eye: the eyeball colour is darkened from cfg['shade_from_m'] above the eyeball's
+      centre to cfg['shade_to_m'] (to cfg['shade_min']), measured along the head's up axis (Geometry > Position,
+      Vector Math dot, Map Range, Mix multiply).  The eyeballs are not moved."""
+    up = M.to_world(np.array([[0, 1.0, 0]]))[0] - M.to_world(np.zeros((1, 3)))[0]
+    up /= np.linalg.norm(up)
+    corneas = [bpy.data.objects[n] for n in CORNEAS]
+    off = bpy.data.collections.new(EYE_LOOK + '_corneas')
+    for o in corneas:
+        off.objects.link(o)
+    for item in off.collection_objects:
+        item.light_linking.link_state = 'EXCLUDE'
+    for name in cfg['suns']:
+        bpy.data.objects[name].light_linking.receiver_collection = off
+    only = bpy.data.collections.new(EYE_LOOK + '_catch')
+    for o in corneas:
+        only.objects.link(o)
+    light = bpy.data.lights.new(EYE_LOOK, 'SUN')
+    light.energy, light.angle = cfg['catch_energy'], cfg['catch_angle']
+    sun = bpy.data.objects.new(EYE_LOOK, light)
+    bpy.data.objects[cfg['suns'][0]].users_collection[0].objects.link(sun)
+    d = M.to_world(np.array([cfg['catch_dir']]))[0] - M.to_world(np.zeros((1, 3)))[0]
+    sun.rotation_euler = Vector(d / np.linalg.norm(d)).to_track_quat('Z', 'Y').to_euler()
+    sun.light_linking.receiver_collection = only
+    for obj_name, mat_name in EYE_BALLS.items():
+        W = er.world(bpy.data.objects[obj_name])
+        sol = np.linalg.lstsq(np.c_[2 * W, np.ones(len(W))], (W ** 2).sum(1), rcond=None)[0]
+        h0 = float(sol[:3] @ up)
+        t = bpy.data.materials[mat_name].node_tree
+        bsdf = next(n for n in t.nodes if n.type == 'BSDF_PRINCIPLED')
+        src = bsdf.inputs['Base Color'].links[0].from_socket
+        geo = t.nodes.new('ShaderNodeNewGeometry')
+        dot = t.nodes.new('ShaderNodeVectorMath')
+        dot.operation = 'DOT_PRODUCT'
+        dot.inputs[1].default_value = tuple(up)
+        rng = t.nodes.new('ShaderNodeMapRange')
+        rng.clamp = True
+        rng.inputs['From Min'].default_value = h0 + cfg['shade_from_m']
+        rng.inputs['From Max'].default_value = h0 + cfg['shade_to_m']
+        rng.inputs['To Min'].default_value = 1.0
+        rng.inputs['To Max'].default_value = cfg['shade_min']
+        mul = t.nodes.new('ShaderNodeMix')
+        mul.data_type, mul.blend_type = 'RGBA', 'MULTIPLY'
+        mul.inputs['Factor'].default_value = 1.0
+        for n in (geo, dot, rng, mul):
+            n.name = n.label = EYE_LOOK + '_' + n.bl_idname
+        t.links.new(geo.outputs['Position'], dot.inputs[0])
+        t.links.new(dot.outputs['Value'], rng.inputs['Value'])
+        t.links.new(src, mul.inputs[6])
+        t.links.new(rng.outputs['Result'], mul.inputs[7])
+        t.links.new(mul.outputs[2], bsdf.inputs['Base Color'])
+
+
+def restore_eye_look():
+    for mat_name in EYE_BALLS.values():
+        mat = bpy.data.materials.get(mat_name)
+        if mat is None:
+            continue
+        t = mat.node_tree
+        mine = [n for n in t.nodes if n.name.startswith(EYE_LOOK)]
+        if not mine:
+            continue
+        mul = next(n for n in mine if n.bl_idname == 'ShaderNodeMix')
+        src = mul.inputs[6].links[0].from_socket
+        bsdf = next(n for n in t.nodes if n.type == 'BSDF_PRINCIPLED')
+        for n in mine:
+            t.nodes.remove(n)
+        t.links.new(src, bsdf.inputs['Base Color'])
+    obj = bpy.data.objects.get(EYE_LOOK)
+    if obj is not None:
+        light = obj.data
+        bpy.data.objects.remove(obj)
+        bpy.data.lights.remove(light)
+    for o in bpy.data.objects:
+        if o.type == 'LIGHT' and o.light_linking.receiver_collection is not None and \
+                o.light_linking.receiver_collection.name.startswith(EYE_LOOK):
+            o.light_linking.receiver_collection = None
+    for c in [c for c in bpy.data.collections if c.name.startswith(EYE_LOOK)]:
+        bpy.data.collections.remove(c)
+
+
 def restore_lights():
     for light in bpy.data.lights:
         if SUFFIX in light:
@@ -1399,6 +1488,7 @@ def main():
     remove_blush_fade_node()
     restore_blush_image()
     restore_lights()
+    restore_eye_look()
     if not args.restore:
         back_up()
         p = json.loads(Path(args.params).read_text())
@@ -1490,6 +1580,8 @@ def main():
             set_skin(p['skin'])
         if p.get('lights'):
             soften_lights(p['lights'])
+        if p.get('eye_look'):
+            eye_look(p['eye_look'])
         if p.get('mouth_line'):
             thin_ribbon(MOUTH_LINE, p['mouth_line'], face if 'width_mm' in p['mouth_line'] else None)
             decal_look('mouth_line', p['mouth_line'])
