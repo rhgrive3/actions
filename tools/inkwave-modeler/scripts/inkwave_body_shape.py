@@ -1,4 +1,5 @@
-"""Body shape: a fuller belly, a navel, a soft ab line and a visible waist (analysis/body_shape/params.json).
+"""Body shape: a fuller belly, a navel, a soft ab line, a visible waist, knees, gloves that wrap the hands and
+finger nails (analysis/body_shape/params.json).
 
 Measured on the full-body reference sheets (docs/face-refinement/refs, the REFERENCE_FRONT / REFERENCE_LEFT
 empties of the master): seen from the side the belly is about 2 cm further forward than the model's (the chin and the
@@ -144,6 +145,342 @@ def navel(obj, cfg):
     warp(obj, line, (0.0, lc['depth'], 0.0))
 
 
+def knees(names, cfg):
+    """Knee: a kneecap (forward), a soft hollow above it and two small hollows beside its lower edge, for both
+    legs (x mirrored).  The same field moves the skin and the socks lying on it."""
+    for name in names:
+        obj = bpy.data.objects[name]
+        for part in cfg['parts']:
+            W = er.world(obj)
+            for side in (-1, 1):
+                cx, cz = part['centre_xz']
+                d = np.hypot((W[:, 0] - side * cx) / part['rx'], (W[:, 2] - cz) / part['rz'])
+                w = np.where(d < 1, np.cos(np.clip(d, 0, 1) * np.pi / 2) ** 2, 0.0)
+                w *= smoothstep((cfg['y_front'] - W[:, 1]) / 0.02) * (np.sign(W[:, 0]) == side)
+                warp(obj, w, (0.0, -part['forward_m'], 0.0))
+
+
+SHELL, NAIL, NAIL_MAT, NAIL_IMG = 'INKWAVE_glove_shell_', 'INKWAVE_nail_', 'INKWAVE_nail', 'INKWAVE_NAIL_ALPHA'
+
+
+def orientation(obj):
+    """+1 when the mesh's faces point outward, -1 when it is inside out (the source hands are: their signed
+    volume is negative; they render the same, but their face normals point into the hand)."""
+    me = obj.data
+    me.calc_loop_triangles()
+    co = np.array([v.co for v in me.vertices])
+    t = np.array([lt.vertices[:] for lt in me.loop_triangles])
+    vol = np.einsum('ij,ij->i', co[t[:, 0]], np.cross(co[t[:, 1]], co[t[:, 2]])).sum()
+    return 1.0 if vol >= 0 else -1.0
+
+
+def hand_frame(hand):
+    co = er.world(hand)
+    top = co[co[:, 2] > co[:, 2].max() - 0.01].mean(0)
+    tip = co[co[:, 2] < co[:, 2].min() + 0.01].mean(0)
+    ax = tip - top
+    length = float(np.linalg.norm(ax))
+    return co, top, ax / length, length
+
+
+def glove_shell(hand, cfg, material):
+    """A glove that wraps the whole hand from under the wrist strap to the middle of the first finger bones: a
+    copy of the hand skin and of the wrist part of the arm skin (joined with Merge by Distance), cut with Blender's
+    Bisect across the hand axis at both ends, pushed out along the normals (Displace) and given a thickness
+    (Solidify, so the openings show a rim)."""
+    co, top, ax, length = hand_frame(hand)
+    bm = bmesh.new()
+    bm.from_mesh(hand.data)
+    bm.transform(hand.matrix_world)
+    arm = bpy.data.objects[hand.name.replace('hand', 'arm')]
+    tmp = arm.data.copy()
+    tmp.transform(arm.matrix_world)
+    bm.from_mesh(tmp)
+    bpy.data.meshes.remove(tmp)
+    bmesh.ops.remove_doubles(bm, verts=bm.verts[:], dist=1e-5)
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])         # one outward winding (the hand is inside out)
+    cut = top + ax * length * cfg['t_cut']
+    geom = bm.verts[:] + bm.edges[:] + bm.faces[:]
+    bmesh.ops.bisect_plane(bm, geom=geom, plane_co=Vector(cut), plane_no=Vector(ax), clear_outer=True)
+    upper = top - ax * cfg['wrist_m']
+    geom = bm.verts[:] + bm.edges[:] + bm.faces[:]
+    bmesh.ops.bisect_plane(bm, geom=geom, plane_co=Vector(upper), plane_no=Vector(-ax), clear_outer=True)
+    me = bpy.data.meshes.new(SHELL + hand.name[-1])
+    if cfg.get('thumb_keep_m'):
+        # the reference glove covers only the base of the thumb: drop the shell over the rest of it (the thumb is
+        # the smallest of the five pieces that reach past finger_t; distance measured from its tip)
+        thumb, tip = thumb_part(hand, cfg)
+        from mathutils.kdtree import KDTree
+        kd = KDTree(len(co))
+        for i, c in enumerate(co):
+            kd.insert(Vector(c), i)
+        kd.balance()
+        cut_faces = []
+        for f in bm.faces:
+            c = f.calc_center_median()
+            _, i, _ = kd.find(c)
+            if thumb[i] and (Vector(tip) - c).length < cfg['thumb_tip_m'] - cfg['thumb_keep_m']:
+                cut_faces.append(f)
+        bmesh.ops.delete(bm, geom=cut_faces, context='FACES')
+        print('BODY_SHAPE glove: thumb faces removed', len(cut_faces), 'thumb vertices', int(thumb.sum()), 'tip', np.round(tip, 3).tolist())
+    bm.to_mesh(me)
+    bm.free()
+    for poly in me.polygons:
+        poly.use_smooth = True
+    me.materials.append(material)
+    obj = bpy.data.objects.new(me.name, me)
+    if orientation(obj) < 0:                                       # open at both ends: make sure it points out
+        me.flip_normals()
+    like = bpy.data.objects[cfg['collection_like']]
+    for col in like.users_collection:
+        col.objects.link(obj)
+    adopt(obj, like)
+    mod = obj.modifiers.new('offset', 'DISPLACE')
+    mod.direction, mod.mid_level, mod.strength = 'NORMAL', 0.0, cfg['offset_m']
+    er.apply_modifier(obj, mod)
+    mod = obj.modifiers.new('thickness', 'SOLIDIFY')
+    mod.thickness, mod.offset, mod.use_rim = cfg['thickness_m'], 1.0, True
+    er.apply_modifier(obj, mod)
+    print('BODY_SHAPE glove shell', obj.name, 'vertices', len(me.vertices))
+    return obj
+
+
+def finger_parts(hand, finger_t):
+    """Connected pieces of the hand past finger_t of its length (fingers), largest first."""
+    co, top, ax, length = hand_frame(hand)
+    t = (co - top) @ ax / length
+    nb = [[] for _ in co]
+    for e in hand.data.edges:
+        i, j = e.vertices
+        nb[i].append(j)
+        nb[j].append(i)
+    sel = t > finger_t
+    comp = -np.ones(len(co), int)
+    k = 0
+    for s0 in np.nonzero(sel)[0]:
+        if comp[s0] >= 0:
+            continue
+        stack, comp[s0] = [s0], k
+        while stack:
+            u = stack.pop()
+            for w in nb[u]:
+                if sel[w] and comp[w] < 0:
+                    comp[w] = k
+                    stack.append(w)
+        k += 1
+    sizes = sorted(((int((comp == c).sum()), c) for c in range(k)), reverse=True)
+    return co, comp, [c for _, c in sizes]
+
+
+def hand_pieces(hand, cfg):
+    """(four fingers, thumb) as piece ids: the fingers are the pieces that reach past 0.8 of the hand length;
+    the thumb is, of the other pieces with enough vertices, the one whose far end lies most to the front (-y).
+    (A piece of the palm's edge behind the fingers also sticks out past finger_t.)"""
+    co, comp, order = finger_parts(hand, cfg['finger_t'])
+    _, top, ax, length = hand_frame(hand)
+    t = (co - top) @ ax / length
+    fingers, rest = [], []
+    for c in order:
+        idx = np.nonzero(comp == c)[0]
+        if len(idx) < cfg['min_vertices']:
+            continue
+        far = idx[np.argmax(np.linalg.norm(co[idx] - top, axis=1))]
+        (fingers if t[idx].max() > 0.8 else rest).append((c, co[far][1]))
+    thumb = min(rest, key=lambda r: r[1])[0]
+    return co, comp, [c for c, _ in fingers], thumb
+
+
+def thumb_part(hand, cfg):
+    """Thumb vertices (the whole thumb, grown back from its tip piece along the mesh) and its tip point."""
+    co, comp, _, piece = hand_pieces(hand, cfg)
+    idx = np.nonzero(comp == piece)[0]
+    _, top, ax, length = hand_frame(hand)
+    far = idx[np.argmax(np.linalg.norm(co[idx] - top, axis=1))]
+    tip = co[far]
+    thumb = np.linalg.norm(co - tip, axis=1) < cfg['thumb_tip_m'] + 0.01
+    thumb &= np.isin(comp, [piece, -1]) & (np.linalg.norm(co - co[idx].mean(0), axis=1) < cfg['thumb_tip_m'])
+    return thumb, tip
+
+
+def nail_image(cfg):
+    img = bpy.data.images.get(NAIL_IMG)
+    size = 128
+    if img is None:
+        img = bpy.data.images.new(NAIL_IMG, size, size, alpha=True)
+    yy, xx = (np.mgrid[0:size, 0:size] + 0.5) / size * 2 - 1        # u across, v along the finger (+v = tip)
+    # rounded nail: a superellipse; the free edge (v > 0.55) is lighter
+    r = (np.abs(xx) ** 2.6 + np.abs(yy) ** 2.6) ** (1 / 2.6)
+    a = np.clip((1 - r) / 0.06, 0, 1)
+    px = np.empty((size, size, 4), np.float32)
+    base, tip = np.array(cfg['colour'], np.float32), np.array(cfg['tip_colour'], np.float32)
+    f = np.clip((yy - 0.45) / 0.3, 0, 1)[..., None]
+    px[..., :3] = base * (1 - f) + tip * f
+    px[..., 3] = a * a * (3 - 2 * a)
+    img.colorspace_settings.name = 'sRGB'
+    img.pixels.foreach_set(px.ravel())
+    img.pack()
+    return img
+
+
+def nail_material(cfg):
+    mat = bpy.data.materials.get(NAIL_MAT) or bpy.data.materials.new(NAIL_MAT)
+    mat.use_nodes = True
+    t = mat.node_tree
+    bsdf = next(n for n in t.nodes if n.type == 'BSDF_PRINCIPLED')
+    tex = next((n for n in t.nodes if n.type == 'TEX_IMAGE'), None) or t.nodes.new('ShaderNodeTexImage')
+    tex.image, tex.extension = nail_image(cfg), 'CLIP'
+    t.links.new(tex.outputs['Color'], bsdf.inputs['Base Color'])
+    t.links.new(tex.outputs['Alpha'], bsdf.inputs['Alpha'])
+    bsdf.inputs['Roughness'].default_value = cfg['roughness']
+    bsdf.inputs['Coat Weight'].default_value = cfg['coat']
+    bsdf.inputs['Specular IOR Level'].default_value = cfg.get('specular', 0.4)
+    mat.surface_render_method = 'BLENDED'
+    mat['inkwave_role'] = 'skin'
+    return mat
+
+
+def nails(hand, cfg, material):
+    """A nail on each finger tip: the skin of the tip's back (away from the palm), copied, subdivided once and laid
+    0.3 mm over the skin, with a UV map along / across the finger and a rounded alpha image, so its outline is
+    smooth whatever the mesh."""
+    me = hand.data
+    co, top, ax, length = hand_frame(hand)
+    sgn = orientation(hand)
+    nw = sgn * np.array([(hand.matrix_world.to_3x3() @ v.normal).normalized() for v in me.vertices])
+    t = (co - top) @ ax / length
+    nb = [[] for _ in co]
+    for e in me.edges:
+        i, j = e.vertices
+        nb[i].append(j)
+        nb[j].append(i)
+    sel = t > cfg['finger_t']
+    comp = -np.ones(len(co), int)
+    k = 0
+    for s in np.nonzero(sel)[0]:
+        if comp[s] >= 0:
+            continue
+        stack, comp[s] = [s], k
+        while stack:
+            u = stack.pop()
+            for w in nb[u]:
+                if sel[w] and comp[w] < 0:
+                    comp[w] = k
+                    stack.append(w)
+        k += 1
+    side = 1.0 if co[:, 0].mean() > 0 else -1.0
+    back = np.array([side, 0.0, 0.0])
+    made = 0
+    # the five largest pieces past finger_t are the fingers (a small piece of the palm's edge can also stick out)
+    _, _, four, thumb = hand_pieces(hand, cfg)
+    for c in four + [thumb]:
+        idx = np.nonzero(comp == c)[0]
+        far = idx[np.argmax(np.linalg.norm(co[idx] - top, axis=1))]
+        near_tip = idx[np.linalg.norm(co[idx] - co[far], axis=1) < 0.03]
+        fa = co[far] - co[near_tip].mean(0)
+        fa /= np.linalg.norm(fa)                                   # finger direction near the tip
+        guess = back if t[far] > cfg['thumb_t'] else back + np.array([0.0, -1.0, 0.0])
+        cand = near_tip[(nw[near_tip] @ guess) > 0]
+        dorsal = nw[cand].sum(0)
+        dorsal -= fa * (dorsal @ fa)
+        dorsal /= np.linalg.norm(dorsal)
+        across = np.cross(fa, dorsal)
+        rel = co - co[far]
+        along = rel @ fa                                          # 0 at the tip, negative toward the hand
+        lat = rel @ across
+        L, Wd = cfg['length_m'], cfg['width_m']
+        region = set(int(i) for i in idx if (nw[i] @ dorsal) > 0.15 and -L * 1.25 < along[i] < 0.002 and abs(lat[i]) < Wd * 0.75)
+        faces = [p for p in me.polygons if all(v in region for v in p.vertices)]
+        if not faces:
+            continue
+        bm = bmesh.new()
+        vmap = {}
+        for p in faces:
+            for v in p.vertices:
+                if v not in vmap:
+                    vmap[v] = bm.verts.new(Vector(co[v]))
+            bm.faces.new([vmap[v] for v in p.vertices])
+        bmesh.ops.subdivide_edges(bm, edges=bm.edges[:], cuts=2, use_grid_fill=True)
+        if sgn < 0:
+            bmesh.ops.reverse_faces(bm, faces=bm.faces[:])
+        nme = bpy.data.meshes.new(f'{NAIL}{hand.name[-1]}_{made}')
+        bm.to_mesh(nme)
+        bm.free()
+        for poly in nme.polygons:
+            poly.use_smooth = True
+        nme.materials.append(material)
+        obj = bpy.data.objects.new(nme.name, nme)
+        for col in hand.users_collection:
+            col.objects.link(obj)
+        adopt(obj, hand)
+        sm = obj.modifiers.new('round', 'SMOOTH')                   # round off the finger mesh's facets
+        sm.factor, sm.iterations = 0.5, cfg.get('smooth_iters', 8)
+        er.apply_modifier(obj, sm)
+        sw = obj.modifiers.new('seat', 'SHRINKWRAP')
+        # the offset is along the target's normals, which point into the hand when it is inside out
+        sw.target, sw.wrap_method, sw.wrap_mode, sw.offset = hand, 'NEAREST_SURFACEPOINT', 'ON_SURFACE', sgn * cfg['offset_m']
+        er.apply_modifier(obj, sw)
+        P = er.world(obj)
+        rel = P - co[far]
+        # the nail runs from L back from the tip (cfg) to just short of it; u across, v along (+ toward the tip)
+        u = 0.5 + 0.5 * (rel @ across) / (Wd / 2)
+        v = 0.5 + 0.5 * ((rel @ fa) + cfg['tip_gap_m'] + L / 2) / (L / 2)
+        nme.uv_layers.new(name='UVMap')
+        lv = np.empty(len(nme.loops), np.int32)
+        nme.loops.foreach_get('vertex_index', lv)
+        nme.uv_layers.active.data.foreach_set('uv', np.c_[u[lv], v[lv]].astype(np.float32).ravel())
+        obj.visible_shadow = False
+        made += 1
+    print('BODY_SHAPE nails', hand.name, made)
+
+
+def adopt(obj, like):
+    """Same parent as `like` (the character root's hierarchy is what the GLB export takes), world position kept."""
+    obj.parent = like.parent
+    obj.matrix_parent_inverse = like.parent.matrix_world.inverted() if like.parent else obj.matrix_parent_inverse
+
+
+def legwear_tone(cfg):
+    """The socks render light grey with white streaks where the reference is near-black knit: the knit's sheen
+    (1.0) lights every rib edge.  Less sheen and a softer rib normal; old values kept on the material."""
+    for name in cfg['materials']:
+        mat = bpy.data.materials[name]
+        n = next(x for x in mat.node_tree.nodes if x.type == 'BSDF_PRINCIPLED')
+        nm = next((x for x in mat.node_tree.nodes if x.type == 'NORMAL_MAP'), None)
+        if SUFFIX not in mat:
+            mat[SUFFIX] = json.dumps({'sheen': n.inputs['Sheen Weight'].default_value,
+                                      'normal': nm.inputs['Strength'].default_value if nm else None})
+        n.inputs['Sheen Weight'].default_value = cfg['sheen']
+        if nm is not None:
+            nm.inputs['Strength'].default_value = cfg['normal_strength']
+
+
+def restore_legwear():
+    for mat in bpy.data.materials:
+        if SUFFIX not in mat or not mat.use_nodes:
+            continue
+        old = json.loads(mat[SUFFIX])
+        n = next(x for x in mat.node_tree.nodes if x.type == 'BSDF_PRINCIPLED')
+        n.inputs['Sheen Weight'].default_value = old['sheen']
+        nm = next((x for x in mat.node_tree.nodes if x.type == 'NORMAL_MAP'), None)
+        if nm is not None and old['normal'] is not None:
+            nm.inputs['Strength'].default_value = old['normal']
+        del mat[SUFFIX]
+
+
+def remove_made():
+    for o in [o for o in bpy.data.objects if o.name.startswith((SHELL, NAIL))]:
+        me = o.data
+        bpy.data.objects.remove(o)
+        if me.users == 0:
+            bpy.data.meshes.remove(me)
+    for name in (NAIL_MAT,):
+        if bpy.data.materials.get(name) is not None and bpy.data.materials[name].users == 0:
+            bpy.data.materials.remove(bpy.data.materials[name])
+    img = bpy.data.images.get(NAIL_IMG)
+    if img is not None and img.users == 0:
+        bpy.data.images.remove(img)
+
+
 def main():
     argv = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else []
     ap = argparse.ArgumentParser()
@@ -153,6 +490,9 @@ def main():
     args = ap.parse_args(argv)
     p = json.loads(Path(args.params).read_text())
     names = [p['torso']] + p['belly']['garments'] + p['jacket']['garments']
+    names += p.get('knees', {}).get('meshes', []) + p.get('gloves', {}).get('plates', [])
+    remove_made()
+    restore_legwear()
     print('BODY_SHAPE restored', restore(names, drop=args.restore), 'meshes')
     if not args.restore:
         back_up(names)
@@ -192,6 +532,26 @@ def main():
                 er.apply_weighted_modifier(torso, w, 'SMOOTH', factor=0.5, iterations=sm['iters'])
             navel(torso, p['navel'])
             print('BODY_SHAPE navel done')
+        if p.get('knees'):
+            knees(p['knees']['meshes'], p['knees'])
+            print('BODY_SHAPE knees done')
+        if p.get('gloves'):
+            g = p['gloves']
+            mat = bpy.data.materials[g['material']]
+            for hand in g['hands']:
+                glove_shell(bpy.data.objects[hand], g, mat)
+            for name in g['plates']:
+                # the plates on the back of the hand sit on the old glove: out by the new shell's extra height
+                obj = bpy.data.objects[name]
+                W = er.world(obj)
+                for side in (-1.0, 1.0):
+                    warp(obj, (np.sign(W[:, 0]) == side).astype(float), (side * g['plate_out_m'], 0.0, 0.0))
+        if p.get('legwear'):
+            legwear_tone(p['legwear'])
+        if p.get('nails'):
+            mat = nail_material(p['nails'])
+            for hand in p['nails']['hands']:
+                nails(bpy.data.objects[hand], p['nails'], mat)
     if args.save:
         bpy.ops.wm.save_as_mainfile(filepath=args.save, compress=True)
 
