@@ -1,0 +1,181 @@
+{
+  "auditedCommit": "8b5954be5eb0eb66da0a240a5b23061bc116f642",
+  "node": "v24.19.0",
+  "mode": "postfix versus committed d5d54d1 baseline",
+  "method": "Node VM, actual source and vendored Three.js; simulated GL buffers, no browser/GPU/smartphone timing",
+  "sourceSha256": {
+    "src/fx/fx.js": "912bae5284a21d7b255fd5fc16ed8045390aceaa9fd13755792f6df0bf54dcd5",
+    "src/game/nav.js": "9f0dc0c7f10f42fd7e8f956ce76d3ab59326d6e32ed692e3d90f88fb3abb08db",
+    "src/world/level.js": "1f0be17b95da18b1ad73ae49427314b553c3f50bde0e7b1f75f326fd92ee3cf1",
+    "src/world/maps.js": "313a89514a404297c3718f741f796a7d33f5a8f89116abb727206c70df11710e",
+    "src/config.js": "1ad69a27c47c74a8db2f6193fd369afb4ae7069d4902a5480bc365338097f164",
+    "vendor/three/build/three.module.js": "9052042d676cb0fdc1ddfefe193053f34b7ac0513a616fdac4535d49987812ea",
+    "vendor/three/build/three.core.js": "9edde002b066a9a05676a6127f67735b62baf399bdea529f2f7e31657da769e6"
+  },
+  "Q07": {
+    "frames": 1800,
+    "idle": {
+      "frames": 600,
+      "baseline": {
+        "dataCalls": 20,
+        "subCalls": 12000,
+        "subBytes": 192000
+      },
+      "proposal": {
+        "dataCalls": 20,
+        "subCalls": 0,
+        "subBytes": 0
+      }
+    },
+    "overall": {
+      "baseline": {
+        "dataCalls": 20,
+        "subCalls": 36000,
+        "subBytes": 2164432
+      },
+      "proposal": {
+        "dataCalls": 20,
+        "subCalls": 3417,
+        "subBytes": 1643104
+      }
+    },
+    "allSixPoolsExercised": true,
+    "zeroToLivePools": 13,
+    "gpuLiveComparisons": 3417,
+    "activeBytesSha256": "a4293376a2ba6d4ae50e3a3023deb29d918316ae31ad0096476c9810c6ad16b8",
+    "randomState": {
+      "state": 1851246506,
+      "calls": 3871
+    },
+    "cpuArraysStatsAndRandomExactlyEqual": true
+  },
+  "Q08": {
+    "tableInitialization": {
+      "sin": 8,
+      "cos": 8
+    },
+    "cases": [
+      {
+        "map": "tidewater",
+        "syntheticExtraColliders": false,
+        "nodes": 4250,
+        "edges": 29212,
+        "pointInsideCalls": 117059,
+        "pointInsideTraceSha256": "a77373772df92d61b6b225913274aa6d57b15498876a8386d020d9e753bc0e2f",
+        "baselineTrig": 205494,
+        "proposalTrig": 0,
+        "graphSha256": "67dea76bf7ad98adb4add52e25e57b8a94d2163189f84e384972d0780ccde2de",
+        "pathQueries": 32,
+        "exact": true
+      },
+      {
+        "map": "tidewater",
+        "syntheticExtraColliders": true,
+        "nodes": 4226,
+        "edges": 28958,
+        "pointInsideCalls": 116481,
+        "pointInsideTraceSha256": "5603f1f18500fc1ce5104f14e0494ba4ced0fcba375e4c6bc281d64e8073e8c6",
+        "baselineTrig": 204402,
+        "proposalTrig": 0,
+        "graphSha256": "f6e394cf5158ab2c673ae124a6e3abe26f027783c992c85b23ec01bc7b4e21bd",
+        "pathQueries": 32,
+        "exact": true
+      },
+      {
+        "map": "kelpline",
+        "syntheticExtraColliders": false,
+        "nodes": 4740,
+        "edges": 33406,
+        "pointInsideCalls": 130345,
+        "pointInsideTraceSha256": "d153ca456ec963b2b2a203c01e0ee6bc9036873a545d8dec7c2edf640a411c03",
+        "baselineTrig": 229066,
+        "proposalTrig": 0,
+        "graphSha256": "26b543e567fee0d511e2c865213e96cae18ead8e714c0db389f4bb0d5262f6b2",
+        "pathQueries": 32,
+        "exact": true
+      },
+      {
+        "map": "kelpline",
+        "syntheticExtraColliders": true,
+        "nodes": 4722,
+        "edges": 33208,
+        "pointInsideCalls": 129922,
+        "pointInsideTraceSha256": "14aa19a36cc8ddf6d67e0835480051c3e2ae822f62b66f15ee96a5a2c0910700",
+        "baselineTrig": 228260,
+        "proposalTrig": 0,
+        "graphSha256": "8f88427e5b64a8e826a10fdda84629d0c2c0193e00d16a81e8cab8806f5f1e49",
+        "pathQueries": 32,
+        "exact": true
+      },
+      {
+        "map": "halyard",
+        "syntheticExtraColliders": false,
+        "nodes": 3698,
+        "edges": 28202,
+        "pointInsideCalls": 102619,
+        "pointInsideTraceSha256": "b0c40371a157483df3b6bd7983c462f3061d331aa1e900ca9949a931631ca64d",
+        "baselineTrig": 180422,
+        "proposalTrig": 0,
+        "graphSha256": "6312f59aa00d1a46db454b7347cfeb8be409534a9110f92a6d99f5231d4ef79e",
+        "pathQueries": 32,
+        "exact": true
+      },
+      {
+        "map": "halyard",
+        "syntheticExtraColliders": true,
+        "nodes": 3698,
+        "edges": 28202,
+        "pointInsideCalls": 102631,
+        "pointInsideTraceSha256": "583afa311cc80fc287088c87722718ef920fee81eb9f9224e1b0051ade0f2fd7",
+        "baselineTrig": 180414,
+        "proposalTrig": 0,
+        "graphSha256": "6312f59aa00d1a46db454b7347cfeb8be409534a9110f92a6d99f5231d4ef79e",
+        "pathQueries": 32,
+        "exact": true
+      },
+      {
+        "map": "cargo",
+        "syntheticExtraColliders": false,
+        "nodes": 4950,
+        "edges": 35542,
+        "pointInsideCalls": 138510,
+        "pointInsideTraceSha256": "901fe600a8531077930f1c4fbaec1254e0f9d422bfb16659ebd41327280f417e",
+        "baselineTrig": 242308,
+        "proposalTrig": 0,
+        "graphSha256": "ceb5cd8c9bdd0d41c8f09eee8644bb04a7ea1610b0bc6df21347dbda6de1accd",
+        "pathQueries": 32,
+        "exact": true
+      },
+      {
+        "map": "cargo",
+        "syntheticExtraColliders": true,
+        "nodes": 4926,
+        "edges": 35274,
+        "pointInsideCalls": 137932,
+        "pointInsideTraceSha256": "fdbd2b1f880795e9af1b49312df19e12882e14b13e6bf646e8cf6afe244ac0e9",
+        "baselineTrig": 241216,
+        "proposalTrig": 0,
+        "graphSha256": "0c04bd58e4bfc6dcd4238873e610c9e2109233e47437a3481f291865ffbd2c6f",
+        "pathQueries": 32,
+        "exact": true
+      }
+    ]
+  },
+  "fixedSourceSha256": {
+    "src/fx/fx.js": "4f73310a0d6d190601a29811eb39548f223b68226c2d8581ea9e3388e6e0cb90",
+    "src/game/nav.js": "f0118dd3cd23a2515148de8e2fb821b771ddf799262e5eaeb6c01a2cd85b78b2"
+  },
+  "Q09": {
+    "frames": 2400,
+    "baseline": {
+      "updates": 4800,
+      "inversions": 4800
+    },
+    "proposal": {
+      "updates": 2400,
+      "inversions": 2400
+    },
+    "exact": true,
+    "stateSha256": "fedff1172fe4fbd115806f8f8fd7ae48a1995a83ebe551495b4d654a2add9fd3"
+  }
+}

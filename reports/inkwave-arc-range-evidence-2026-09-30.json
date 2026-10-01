@@ -1,0 +1,33 @@
+{
+  "baseCommit": "d5d54d1d37274dfa82467b37b9b8009719783ed3",
+  "sourceSha256": {
+    "before": "32181d5802b33512bdd86a776dadd275cb56eac3f7a4b2b2f862404c3fbcdcd9",
+    "after": "9c679a037f5b53fe6bc9c499923c092351356b2c66ef22f7e15ddcb6d498d6aa",
+    "vendor": "9052042d676cb0fdc1ddfefe193053f34b7ac0513a616fdac4535d49987812ea"
+  },
+  "frames": 1800,
+  "shown": 1548,
+  "hidden": 252,
+  "visibleVertexCountHistogram": {
+    "2": 440,
+    "3": 217,
+    "10": 215,
+    "33": 224,
+    "45": 226,
+    "64": 226
+  },
+  "segmentQueries": 18241,
+  "baseline": {
+    "initialBuffers": 2,
+    "uploads": 856,
+    "bytes": 438272
+  },
+  "fixed": {
+    "initialBuffers": 2,
+    "uploads": 856,
+    "bytes": 155216
+  },
+  "allCpuArraysAndAttributeVersionsAndVisualStateAndLiveGpuBytesEqual": true,
+  "liveBufferSha256": "d47f1d9316ffe4dc757b8b70073a892f29c6acc0cb8e6fca12c29677cab8313b",
+  "scope": "Actual updateArc and throwVelocity with synthetic collision answers; vendored WebGLAttributes with byte-retaining simulated GL. No browser/GPU/FPS measurement."
+}

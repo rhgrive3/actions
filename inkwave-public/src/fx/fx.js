@@ -643,6 +643,7 @@ function withInstanceAttrs(base, cap, attrs) {
 }
 // Upload only the live part of every dynamic attribute. Reuses one range object per attribute (no per-frame garbage).
 function markUpdated(geo, count) {
+  if (count === 0) return;
   const list = geo.userData.dyn;
   for (let i = 0; i < list.length; i++) {
     const a = list[i];
@@ -2212,8 +2213,8 @@ export class FX {
     this._ringU.uTime.value = this._time;
     this._beamU.uTime.value = this._time;
     if (camera) {
-      camera.getWorldPosition(this._camPos);
       camera.getWorldDirection(this._camDir);
+      this._camPos.setFromMatrixPosition(camera.matrixWorld);
       const inv = camera.matrixWorldInverse;
       this._dropU.uSunDirV.value.copy(this._light.sunDir).transformDirection(inv);
       this._dropU.uUpV.value.copy(UP).transformDirection(inv);

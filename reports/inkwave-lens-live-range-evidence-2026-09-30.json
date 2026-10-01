@@ -1,0 +1,33 @@
+{
+  "baseCommit": "d5d54d1d37274dfa82467b37b9b8009719783ed3",
+  "sourceSha256": {
+    "before": "84176f9bfead973abd1034e78d68f2d8b97a89bccb2c7dbd488cdd1f158bf20b",
+    "after": "5070e4c7bfed0211f5f9312a38df04b76c3bfc7239b4ddacd8cc4d168773bdf4",
+    "vendor": "9052042d676cb0fdc1ddfefe193053f34b7ac0513a616fdac4535d49987812ea"
+  },
+  "frames": 1200,
+  "activeFrames": 502,
+  "emptyFrames": 698,
+  "maxInstances": 220,
+  "baseline": {
+    "initialBuffers": 2,
+    "uploads": 1004,
+    "bytes": 3534080,
+    "clears": 1200,
+    "draws": 502
+  },
+  "fixed": {
+    "initialBuffers": 2,
+    "uploads": 1004,
+    "bytes": 558528,
+    "clears": 1200,
+    "draws": 502
+  },
+  "random": {
+    "x": 1106601738,
+    "n": 529
+  },
+  "liveBufferSha256": "f870bf1e034cc7b312332499c748b0871ec3a77ca9570b2cc74732e33d7a7ec0",
+  "allPartsAndCpuArraysAndLiveBytesEqual": true,
+  "scope": "simulated GL bufferSubData using vendored uploader; no browser/GPU/fps measurement"
+}

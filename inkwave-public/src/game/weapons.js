@@ -1435,6 +1435,9 @@ export class Projectiles {
         if ((i + 1) % per === 0) { pos.setXYZ(n, p.x, p.y, p.z); n++; }
         if (n >= this.arcN) break;
       }
+      const pr = pos._arcRange || (pos._arcRange = { start: 0, count: 0 });
+      pr.count = n * pos.itemSize;
+      pos.updateRanges.length = 0; pos.updateRanges.push(pr);
       pos.needsUpdate = true;
       this.arcGeo.setDrawRange(0, n);
       // Match THREE.Line.computeLineDistances() exactly, but reuse the fixed BufferAttribute.
@@ -1448,6 +1451,9 @@ export class Projectiles {
         total += _v2.distanceTo(_v3);
         dist.setX(i, total);
       }
+      const dr = dist._arcRange || (dist._arcRange = { start: 0, count: 0 });
+      dr.count = n * dist.itemSize;
+      dist.updateRanges.length = 0; dist.updateRanges.push(dr);
       dist.needsUpdate = true;
       cache.physics = G.physics;
       cache.px = ipx; cache.py = ipy; cache.pz = ipz;

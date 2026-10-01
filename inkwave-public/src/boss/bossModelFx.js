@@ -5,6 +5,7 @@ import * as THREE from 'three';
 
 const _m = new THREE.Matrix4(), _q = new THREE.Quaternion(), _s = new THREE.Vector3(), _p = new THREE.Vector3(), _d = new THREE.Vector3();
 const Z = new THREE.Vector3(0, 0, 1);
+const STEAM_DYNAMIC = ['position', 'aSize', 'aAlpha'];
 
 function rng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 
@@ -82,7 +83,11 @@ export class BossFX {
       S.v[j] = (dir.x + (r() - 0.5) * 0.5) * sp; S.v[j + 1] = (dir.y + (r() - 0.5) * 0.3) * sp + 0.6; S.v[j + 2] = (dir.z + (r() - 0.5) * 0.5) * sp;
       S.life[i] = 0; S.max[i] = life * (0.7 + r() * 0.6); S.s0[i] = size * (0.6 + r() * 0.8); this.sseed[i] = r() * 10;
     }
-    this.steam.geometry.attributes.aSeed.needsUpdate = true;
+    const seed = this.steam.geometry.attributes.aSeed;
+    const sr = seed._bossRange || (seed._bossRange = { start: 0, count: 0 });
+    sr.count = this.ns;
+    seed.updateRanges.length = 0; seed.updateRanges.push(sr);
+    seed.needsUpdate = true;
   }
   geyser(pos, dur = 3.6) { this.geyserT = dur; this.geyserDur = dur; this.geyserPos.copy(pos); }
 
@@ -119,7 +124,13 @@ export class BossFX {
       this.inkMesh.setMatrixAt(live++, _m);
     }
     this.inkMesh.count = live; this.inkMesh.visible = live > 0;
-    if (live) this.inkMesh.instanceMatrix.needsUpdate = true;
+    if (live) {
+      const attr = this.inkMesh.instanceMatrix;
+      const range = attr._bossRange || (attr._bossRange = { start: 0, count: 0 });
+      range.count = live * attr.itemSize;
+      attr.updateRanges.length = 0; attr.updateRanges.push(range);
+      attr.needsUpdate = true;
+    }
     if (live === 0) this.ni = 0;
     // steam
     const S = this.S; let ls = 0;
@@ -137,7 +148,15 @@ export class BossFX {
     if (ls === 0) this.ns = 0;
     const sg = this.steam.geometry;
     sg.setDrawRange(0, this.ns); this.steam.visible = this.ns > 0;
-    if (this.ns) { sg.attributes.position.needsUpdate = true; sg.attributes.aSize.needsUpdate = true; sg.attributes.aAlpha.needsUpdate = true; }
+    if (this.ns) {
+      for (const name of STEAM_DYNAMIC) {
+        const attr = sg.attributes[name];
+        const range = attr._bossRange || (attr._bossRange = { start: 0, count: 0 });
+        range.count = this.ns * attr.itemSize;
+        attr.updateRanges.length = 0; attr.updateRanges.push(range);
+        attr.needsUpdate = true;
+      }
+    }
   }
-  dispose() { this.inkMesh.geometry.dispose(); this.inkMat.dispose(); this.steam.geometry.dispose(); this.steamMat.dispose(); this.group.removeFromParent(); }
+  dispose() { this.inkMesh.dispose(); this.inkMesh.geometry.dispose(); this.inkMat.dispose(); this.steam.geometry.dispose(); this.steamMat.dispose(); this.group.removeFromParent(); }
 }
