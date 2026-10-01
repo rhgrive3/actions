@@ -94,6 +94,11 @@ def bump(loc, b):
         w *= t * t * (3 - 2 * t)
     if 'ridge_sigma' in b:
         w *= 1 - np.exp(-(np.abs(loc[:, 0]) / b['ridge_sigma']) ** 2)
+    if 'facing' in b:
+        # only the parts that face the front: the move rounds the cheek without pushing the outline out
+        a, c = b['facing']
+        t = np.clip((NORMALS[:, 2] - a) / (c - a), 0, 1)
+        w *= t * t * (3 - 2 * t)
     if 'lateral' in b:
         a, c = b['lateral']
         t = np.clip((np.abs(NORMALS[:, 0]) - a) / (c - a), 0, 1)
@@ -1083,6 +1088,24 @@ def restore_skin():
         del mat[SUFFIX + '_skin']
 
 
+def soften_lights(cfg):
+    """The scene's sun lights have a tiny angle (0.04 rad): hard shadow edges (a sharp shadow under the nose, a hard
+    light/shadow line on the cheeks).  The reference is lit softly.  Wider suns give soft edges; strength and
+    direction stay.  Old angles are kept on each light for --restore."""
+    for name in cfg['names']:
+        light = bpy.data.objects[name].data
+        if SUFFIX not in light:
+            light[SUFFIX] = light.angle
+        light.angle = cfg['angle']
+
+
+def restore_lights():
+    for light in bpy.data.lights:
+        if SUFFIX in light:
+            light.angle = light[SUFFIX]
+            del light[SUFFIX]
+
+
 CORNEA_MATERIAL = 'eyes_000000'
 
 
@@ -1251,6 +1274,7 @@ def main():
     restore_materials()
     restore_skin()
     remove_blush_fade_node()
+    restore_lights()
     if not args.restore:
         back_up()
         p = json.loads(Path(args.params).read_text())
@@ -1340,6 +1364,8 @@ def main():
             er.apply_modifier(obj, mod)
         if p.get('skin'):
             set_skin(p['skin'])
+        if p.get('lights'):
+            soften_lights(p['lights'])
         if p.get('mouth_line'):
             thin_ribbon(MOUTH_LINE, p['mouth_line'], face if 'width_mm' in p['mouth_line'] else None)
             decal_look('mouth_line', p['mouth_line'])
