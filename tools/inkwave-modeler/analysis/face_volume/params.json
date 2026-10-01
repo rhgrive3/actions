@@ -1415,5 +1415,27 @@
    "RIM2"
   ],
   "angle": 0.35
+ },
+ "blush": {
+  "views": [
+   "front",
+   "q34R",
+   "q34L",
+   "sideR",
+   "sideL"
+  ],
+  "sigma_px": 2.5,
+  "min_facing": 0.35,
+  "gain": 0.06,
+  "floor": 0.5,
+  "max": 0.45,
+  "max_factor": 3.0,
+  "relax": 6,
+  "combine": "max",
+  "colour": [
+   0.961,
+   0.502,
+   0.416
+  ]
  }
 }

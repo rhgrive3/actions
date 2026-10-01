@@ -1,0 +1,78 @@
+{
+ "torso": "BODY_torso",
+ "belly": {
+  "forward_m": 0.015,
+  "z": [
+   1.0,
+   1.08
+  ],
+  "z_fade": [
+   0.07,
+   0.07
+  ],
+  "x_full": 0.03,
+  "x_out": 0.085,
+  "y_front": -0.02,
+  "garments": [
+   "CLOTHES_cloth",
+   "CLOTHES_cloth_02",
+   "CLOTHES_cloth_03",
+   "CLOTHES_cloth_05",
+   "CLOTHES_cloth_34",
+   "CLOTHES_cloth_37",
+   "CLOTHES_cloth_38",
+   "CLOTHES_cloth_39",
+   "CLOTHES_cloth_40",
+   "CLOTHES_cloth_41",
+   "CLOTHES_cloth_42",
+   "CLOTHES_cloth_44"
+  ]
+ },
+ "jacket": {
+  "outward_m": 0.015,
+  "z": [
+   0.9,
+   1.06
+  ],
+  "z_fade": [
+   0.02,
+   0.12
+  ],
+  "y_front": 0.0,
+  "x_out": 0.135,
+  "garments": [
+   "CLOTHES_cloth_08",
+   "CLOTHES_cloth_09",
+   "CLOTHES_cloth_10",
+   "CLOTHES_cloth_11",
+   "CLOTHES_cloth_12",
+   "CLOTHES_cloth_13"
+  ],
+  "y_fade": 0.07
+ },
+ "navel": {
+  "centre_xz": [
+   0.0,
+   1.016
+  ],
+  "rx": 0.005,
+  "rz": 0.0075,
+  "depth": 0.005,
+  "rim": 0.0008,
+  "y_front": -0.02,
+  "subdivide_radius": 0.03,
+  "subdivide_levels": 2,
+  "smooth": {
+   "radius": 0.05,
+   "iters": 10
+  },
+  "ab_line": {
+   "half_width": 0.006,
+   "z": [
+    1.04,
+    1.09
+   ],
+   "depth": 0.0015
+  }
+ }
+}

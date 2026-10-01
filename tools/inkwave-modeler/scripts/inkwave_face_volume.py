@@ -466,6 +466,129 @@ def tuck_clear_edges(face, names, cfg):
 BLUSH_FADE = 'INKWAVE_blush_fade'
 
 
+def sheet_view(view):
+    """Reference sheet crop of one fitted camera (camera pixels, rows top -> bottom, sRGB 0..1)."""
+    img = bpy.data.images.load(str(SHEET), check_existing=False)
+    w, h = img.size
+    px = np.empty(w * h * 4, np.float32)
+    img.pixels.foreach_get(px)
+    bpy.data.images.remove(img)
+    x0, y0, x1, y1 = VIEW_BOXES[view]
+    return px.reshape(h, w, 4)[::-1, :, :3][y0:y1, x0:x1].astype(np.float64)
+
+
+VIEW_BOXES = {'front': (60, 230, 430, 520), 'q34L': (470, 230, 840, 520), 'sideL': (880, 230, 1250, 520),
+              'q34R': (1370, 230, 1740, 520), 'sideR': (1790, 230, 2160, 520)}
+
+
+def redness_map(rgb, sigma):
+    """CIELAB a* (redness) of an sRGB image minus the median a* of its skin, blurred; NaN off the skin."""
+    c = np.where(rgb <= 0.04045, rgb / 12.92, ((rgb + 0.055) / 1.055) ** 2.4)
+    X = c @ np.array([0.4124, 0.2126, 0.0193]) / 0.9505
+    Y = c @ np.array([0.3576, 0.7152, 0.1192])
+    f = lambda t: np.where(t > 0.008856, np.cbrt(t), 7.787 * t + 16 / 116)
+    a = 500 * (f(X) - f(Y))
+    hsv_max, hsv_min = rgb.max(-1), rgb.min(-1)
+    sat = (hsv_max - hsv_min) / np.maximum(hsv_max, 1e-6)
+    hue_ok = (rgb[..., 0] >= rgb[..., 1]) & (rgb[..., 1] >= rgb[..., 2] - 0.02)     # orange-red skin hues only
+    skin = hue_ok & (sat > 0.25) & (hsv_max > 0.3)
+    base = np.median(a[skin])
+    w = _blur(skin.astype(float), sigma)
+    out = _blur(np.where(skin, a - base, 0.0), sigma) / np.maximum(w, 1e-6)
+    return np.where(w > 0.5, out, np.nan)
+
+
+def paint_blush(face, names, cfg):
+    """Blush from the reference: every blush-layer vertex is seen by the fitted cameras; the reference's redness
+    there (a* over the skin's median, the view that faces the vertex most) sets the blush opacity:
+    alpha = gain x (redness - floor).  The layer keeps its colour image; its per-vertex factor (the same
+    attribute that fades the layer edge) becomes alpha / image alpha, so the blush ends up where and as strong
+    as the reference shows it."""
+    maps = {v: redness_map(sheet_view(v), cfg['sigma_px']) for v in cfg['views']}
+    for name in names:
+        obj = bpy.data.objects[name]
+        me = obj.data
+        W = er.world(obj)
+        nw = np.array([obj.matrix_world.to_3x3() @ v.normal for v in me.vertices])
+        acc, wsum, best = np.zeros(len(W)), np.zeros(len(W)), np.full(len(W), -np.inf)
+        for view, red in maps.items():
+            cam = np.array(bpy.data.objects['FACE_FIT_CAM_' + view].matrix_world.translation)
+            to_cam = cam[None] - W
+            to_cam /= np.linalg.norm(to_cam, axis=1, keepdims=True)
+            facing = np.clip((nw * to_cam).sum(1), 0, 1)
+            u, v = er.camera_pixels(view, W)
+            iu, iv = np.clip(u.astype(int), 0, red.shape[1] - 1), np.clip(v.astype(int), 0, red.shape[0] - 1)
+            val = red[iv, iu]
+            wt = np.where(np.isnan(val) | (facing < cfg['min_facing']), 0.0, facing ** 4)
+            acc += wt * np.nan_to_num(val)
+            wsum += wt
+            best = np.where(wt > 0, np.maximum(best, np.nan_to_num(val)), best)
+        e = np.where(wsum > 0, acc / np.maximum(wsum, 1e-9), 0.0)
+        if cfg.get('combine') == 'max':
+            # the blush the reference shows in any view that sees the skin squarely (the painted sheet is not
+            # perfectly consistent between views; the union gives the wide soft blush of the front view)
+            e = np.where(np.isfinite(best), best, 0.0)
+        target = np.clip(cfg['gain'] * (e - cfg['floor']), 0, cfg['max'])
+        nb = [[] for _ in me.vertices]
+        for ed in me.edges:
+            i, j = ed.vertices
+            nb[i].append(j)
+            nb[j].append(i)
+        for _ in range(cfg.get('relax', 6)):
+            target = np.array([0.5 * target[i] + 0.5 * np.mean(target[nb[i]]) if nb[i] else target[i] for i in range(len(target))])
+        img = [n.image for n in me.materials[0].node_tree.nodes if getattr(n, 'image', None)][0]
+        w, h = img.size
+        px = np.array(img.pixels[:]).reshape(h, w, 4)
+        uvl = me.uv_layers.active.data
+        amax = np.zeros(len(me.vertices))
+        for poly in me.polygons:
+            for li, vi in zip(poly.loop_indices, poly.vertices):
+                uu, vv = uvl[li].uv
+                amax[vi] = max(amax[vi], px[int(np.clip(vv, 0, 1) * (h - 1)), int(np.clip(uu, 0, 1) * (w - 1)), 3])
+        attr = me.color_attributes.get(BLUSH_FADE)
+        fade = np.ones(len(W))
+        if attr is not None:
+            col = np.empty(len(W) * 4, np.float32)
+            attr.data.foreach_get('color', col)
+            fade = col[0::4].astype(np.float64)
+        else:
+            attr = me.color_attributes.new(BLUSH_FADE, 'FLOAT_COLOR', 'POINT')
+        factor = fade * np.clip(target / np.maximum(amax, 1e-3), 0, cfg['max_factor'])
+        attr.data.foreach_set('color', np.repeat(factor, 4).astype(np.float32))
+        me.update()
+        print('FACE_VOLUME blush from the reference', name, 'alpha max %.2f mean on layer %.3f' % (target.max(), target.mean()))
+    blush_fade_node(bpy.data.objects[names[0]].data.materials[0])
+    if cfg.get('colour'):
+        # the reference blush is lighter and pinker than the old colour (CIELAB measured over the skin):
+        # the blush image keeps its alpha, its colour becomes cfg['colour'] (sRGB); kept for --restore
+        img = bpy.data.images[BLUSH_IMAGE]
+        if bpy.data.images.get(BLUSH_IMAGE + SUFFIX) is None:
+            bak = img.copy()
+            bak.name = BLUSH_IMAGE + SUFFIX
+            bak.use_fake_user = True
+            bak.pack()
+        px = np.empty(len(img.pixels), np.float32)
+        img.pixels.foreach_get(px)
+        px = px.reshape(-1, 4)
+        px[:, :3] = np.array(cfg['colour'], np.float32)
+        img.pixels.foreach_set(px.ravel())
+        img.pack()
+
+
+BLUSH_IMAGE = 'INKWAVE_BLUSH_ALPHA'
+
+
+def restore_blush_image():
+    img, bak = bpy.data.images.get(BLUSH_IMAGE), bpy.data.images.get(BLUSH_IMAGE + SUFFIX)
+    if img is None or bak is None:
+        return
+    px = np.empty(len(bak.pixels), np.float32)
+    bak.pixels.foreach_get(px)
+    img.pixels.foreach_set(px)
+    img.pack()
+    bpy.data.images.remove(bak)
+
+
 def blush_fade_node(mat):
     """Alpha of the blush = image alpha x the per-vertex fade (Attribute node x Math multiply)."""
     t = mat.node_tree
@@ -1274,6 +1397,7 @@ def main():
     restore_materials()
     restore_skin()
     remove_blush_fade_node()
+    restore_blush_image()
     restore_lights()
     if not args.restore:
         back_up()
@@ -1384,6 +1508,8 @@ def main():
             set_cornea(p['cornea'])
         if p.get('tuck'):
             tuck_clear_edges(face, ['HEAD_skin_04', 'HEAD_skin'], p['tuck'])
+        if p.get('blush'):
+            paint_blush(face, ['HEAD_skin_04', 'HEAD_skin'], p['blush'])
         seam_normals(face, pairs)
     if args.save:
         bpy.ops.wm.save_as_mainfile(filepath=args.save, compress=True)
