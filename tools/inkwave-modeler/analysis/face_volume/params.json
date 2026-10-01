@@ -410,6 +410,25 @@
    ]
   },
   {
+   "name": "bridge_glabella_fill",
+   "kind": "arc_v",
+   "mm_sign": 1,
+   "x": [
+    0.0,
+    16.0
+   ],
+   "ya": 2.0,
+   "yb": -32.0,
+   "p": 1.0,
+   "fade": 4.0,
+   "scale": 0.45,
+   "weight_smooth": 8,
+   "eye_keep_mm": [
+    1.2,
+    3.5
+   ]
+  },
+  {
    "name": "nose_sides",
    "kind": "displace",
    "mm": 1.0,
