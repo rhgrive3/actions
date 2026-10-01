@@ -74,5 +74,99 @@
    ],
    "depth": 0.0015
   }
+ },
+ "knees": {
+  "meshes": [
+   "BODY_leg_L",
+   "BODY_leg_R",
+   "LEGWEAR_cloth",
+   "LEGWEAR_cloth_02",
+   "LEGWEAR_cloth_03",
+   "LEGWEAR_cloth_04"
+  ],
+  "y_front": -0.035,
+  "parts": [
+   {
+    "centre_xz": [
+     0.107,
+     0.552
+    ],
+    "rx": 0.026,
+    "rz": 0.033,
+    "forward_m": 0.0035
+   },
+   {
+    "centre_xz": [
+     0.105,
+     0.608
+    ],
+    "rx": 0.032,
+    "rz": 0.024,
+    "forward_m": -0.002
+   },
+   {
+    "centre_xz": [
+     0.087,
+     0.522
+    ],
+    "rx": 0.013,
+    "rz": 0.014,
+    "forward_m": -0.0012
+   },
+   {
+    "centre_xz": [
+     0.129,
+     0.522
+    ],
+    "rx": 0.013,
+    "rz": 0.014,
+    "forward_m": -0.0012
+   }
+  ]
+ },
+ "gloves": {
+  "hands": [
+   "BODY_hand_L",
+   "BODY_hand_R"
+  ],
+  "material": "clothes_202226",
+  "collection_like": "CLOTHES_cloth_59",
+  "t_cut": 0.55,
+  "offset_m": 0.0022,
+  "thickness_m": 0.0012,
+  "plates": [
+   "CLOTHES_cloth_60",
+   "CLOTHES_cloth_61",
+   "CLOTHES_cloth_62"
+  ],
+  "plate_out_m": 0.002,
+  "wrist_m": 0.03
+ },
+ "nails": {
+  "hands": [
+   "BODY_hand_L",
+   "BODY_hand_R"
+  ],
+  "finger_t": 0.45,
+  "min_vertices": 50,
+  "thumb_t": 0.8,
+  "length_m": 0.0095,
+  "width_m": 0.008,
+  "offset_m": 0.0006,
+  "tip_gap_m": 0.0006,
+  "colour": [
+   0.95,
+   0.72,
+   0.64
+  ],
+  "tip_colour": [
+   0.98,
+   0.88,
+   0.82
+  ],
+  "roughness": 0.4,
+  "coat": 0.12,
+  "specular": 0.35,
+  "smooth_iters": 8
  }
 }
