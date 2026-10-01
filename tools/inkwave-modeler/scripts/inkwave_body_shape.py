@@ -460,6 +460,57 @@ def squash(names, cfg):
         print('BODY_SHAPE squash', cfg.get('name', ''), name, 'max move mm', round(float(np.linalg.norm(er.world(obj) - before, axis=1).max() * 1000), 2))
 
 
+def slim_sleeves(cfg):
+    """Puffy sleeves pulled toward the arm: Blender's Shrinkwrap (nearest surface point of the arm, offset
+    cfg['offset_m']) on a vertex group whose weight is cfg['amount'] over the upper arm and fades out toward
+    the shoulder seam and the cuff, so the sleeve keeps part of its puff.  Everything riding on the sleeve
+    (the upper-arm strap and its buckle) follows with Surface Deform bound before."""
+    for sleeve_name, arm_name, riders in cfg['pairs']:
+        sleeve, arm = bpy.data.objects[sleeve_name], bpy.data.objects[arm_name]
+        mods = []
+        for r in riders:
+            obj = bpy.data.objects[r]
+            mod = obj.modifiers.new('INKWAVE_sleeve_follow', 'SURFACE_DEFORM')
+            mod.target = sleeve
+            er.with_object(obj, lambda: bpy.ops.object.surfacedeform_bind(modifier=mod.name))
+            if not mod.is_bound:
+                raise RuntimeError(f'Surface Deform could not bind {r}')
+            mods.append((obj, mod))
+        W = er.world(sleeve)
+        (za, zb), (fl, fh) = cfg['z'], cfg['z_fade']
+        w = cfg['amount'] * band(W[:, 2], za, zb, fl, fh)
+        before = W.copy()
+        # the sleeve's seams are split edges (two vertices at one point): they must move together or the seam
+        # opens (Shrinkwrap finds a different nearest point for each)
+        from mathutils.kdtree import KDTree
+        kd = KDTree(len(W))
+        for i, c in enumerate(W):
+            kd.insert(Vector(c), i)
+        kd.balance()
+        groups = {}
+        for i, c in enumerate(W):
+            near = sorted(j for _, j, _ in kd.find_range(Vector(c), 1e-6))
+            if len(near) > 1:
+                groups[near[0]] = near
+        er.apply_weighted_modifier(sleeve, w, 'SHRINKWRAP', target=arm, wrap_method='NEAREST_SURFACEPOINT',
+                                   wrap_mode='OUTSIDE_SURFACE', offset=cfg['offset_m'])
+        if cfg.get('smooth_iters'):
+            er.apply_weighted_modifier(sleeve, np.clip(w / max(cfg['amount'], 1e-6), 0, 1), 'SMOOTH', factor=0.5,
+                                       iterations=cfg['smooth_iters'])
+        if groups:
+            me = sleeve.data
+            co = np.empty(len(me.vertices) * 3)
+            me.vertices.foreach_get('co', co)
+            co = co.reshape(-1, 3)
+            for g in groups.values():
+                co[g] = co[g].mean(0)
+            me.vertices.foreach_set('co', co.ravel())
+            me.update()
+        for obj, mod in mods:
+            er.apply_modifier(obj, mod)
+        print('BODY_SHAPE sleeve', sleeve_name, 'max move mm', round(float(np.linalg.norm(er.world(sleeve) - before, axis=1).max() * 1000), 2))
+
+
 def adopt(obj, like):
     """Same parent as `like` (the character root's hierarchy is what the GLB export takes), world position kept."""
     obj.parent = like.parent
@@ -520,6 +571,8 @@ def main():
     names += p.get('knees', {}).get('meshes', []) + p.get('gloves', {}).get('plates', [])
     for sq in p.get('squash', []):
         names += [n for n in sq['meshes'] if n not in names]
+    for sl, _, riders in p.get('sleeves', {}).get('pairs', []):
+        names += [n for n in [sl] + riders if n not in names]
     remove_made()
     restore_legwear()
     print('BODY_SHAPE restored', restore(names, drop=args.restore), 'meshes')
@@ -579,6 +632,8 @@ def main():
             legwear_tone(p['legwear'])
         for sq in p.get('squash', []):
             squash(sq['meshes'], sq)
+        if p.get('sleeves'):
+            slim_sleeves(p['sleeves'])
         if p.get('nails'):
             mat = nail_material(p['nails'])
             for hand in p['nails']['hands']:

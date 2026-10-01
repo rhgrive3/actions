@@ -257,5 +257,33 @@
     0.02
    ]
   }
- ]
+ ],
+ "sleeves": {
+  "pairs": [
+   [
+    "CLOTHES_cloth_18",
+    "BODY_arm_L",
+    [
+     "CLOTHES_cloth_21",
+     "CLOTHES_cloth_22"
+    ]
+   ],
+   [
+    "CLOTHES_cloth_23",
+    "BODY_arm_R",
+    []
+   ]
+  ],
+  "offset_m": 0.02,
+  "amount": 0.5,
+  "z": [
+   1.02,
+   1.16
+  ],
+  "z_fade": [
+   0.05,
+   0.06
+  ],
+  "smooth_iters": 5
+ }
 }
