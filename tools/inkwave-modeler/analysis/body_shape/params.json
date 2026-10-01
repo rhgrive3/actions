@@ -140,7 +140,11 @@
    "CLOTHES_cloth_62"
   ],
   "plate_out_m": 0.002,
-  "wrist_m": 0.03
+  "wrist_m": 0.05,
+  "finger_t": 0.45,
+  "thumb_tip_m": 0.045,
+  "thumb_keep_m": 0.02,
+  "min_vertices": 50
  },
  "nails": {
   "hands": [
@@ -168,5 +172,13 @@
   "coat": 0.12,
   "specular": 0.35,
   "smooth_iters": 8
+ },
+ "legwear": {
+  "materials": [
+   "legwear_texture",
+   "legwear_texture_02"
+  ],
+  "sheen": 0.15,
+  "normal_strength": 0.6
  }
 }

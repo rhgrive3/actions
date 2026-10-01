@@ -214,7 +214,7 @@ Subsurface は glTF に入らないので、GLB では Roughness / Specular / Sh
 
 画像: `face_*_ref_V71_V72.jpg`（参照 | V71 | V72）、`belly_front_ref_V71_V72.jpg`、`belly_side_ref_V71_V72.jpg`（おなか）、`body_front_ref_V72.jpg`、`body_side_ref_V72.jpg`（全身、参照 | V72）。
 
-## V73 での直し（膝、手袋、爪）— 候補（マスターにはまだ入れていない）
+## V74 での直し（膝、手袋、爪、靴下）— マスターに入れた
 
 `scripts/inkwave_body_shape.py` に足した（設定 `analysis/body_shape/params.json` の `knees`、`gloves`、`nails`）。
 
@@ -222,15 +222,17 @@ Subsurface は glTF に入らないので、GLB では Roughness / Specular / Sh
 |---|---|---|
 | 膝がない（まっすぐな筒） | 脚のメッシュに膝のふくらみがない | 膝のお皿を 3.5 mm 前へ、その上を 2 mm、下の両わきを 1.2 mm へこませる（Warp、左右同じ）。上にのる靴下も同じだけ動かす |
 | 手袋が手を包んでいない | 元の手袋（`CLOTHES_cloth_59`）は手の甲と手のひらに貼られた板で、横から指と手の肉が見えていた。元の手のメッシュは裏返し（体積がマイナス）で、面の向きが内がわ | 手と手首の肌をコピーして、手首から指の付け根の先まで Bisect で切り、外へ 2.2 mm（Displace）、厚み 1.2 mm（Solidify）。材質は元の手袋と同じ。手の甲の板は 2 mm 外へ |
+| 親指 | 手袋が親指の先近くまで包んでいた（参照は付け根だけ） | 親指（手の先の部分のうち、先が一番前にあるもの）の先から 2.5 cm の手袋の面を消す（`thumb_tip_m`、`thumb_keep_m`）。手首は 5 cm 上まで包む |
+| 靴下が明るい灰色で白いしま | 編み目の Sheen が 1.0 で、うねの角が全部明るくなっていた | Sheen 1.0 → 0.15、うねの法線の強さ 0.6（`legwear`、`--restore` で戻る） |
 | 爪がない | — | 各指の先の背中がわの肌をコピーして細かく分け（Subdivide）、ならして（Smooth）、肌の 0.6 mm 上に Shrinkwrap。丸い爪の絵（先は白っぽい）を UV で貼る。指は手の先の 5 つの大きな部分 |
 
 新しい部品（`INKWAVE_glove_shell_L/R`、`INKWAVE_nail_*`）は手と同じ親に入れたので、GLB に入る（194 → 206 部品）。`--restore` で消える。
 
-検査: もう一度作り直すと 236 部品すべて同じ・GLB もバイト単位で同じ。`--restore` で前のマスターと 224 部品同じ、新しい部品・材料・画像も消える。開き直しの検査は合格。往復検査（`--rebuilt` に脚・靴下・手の甲の板を追加）の問題の一覧は前と同じ 24 行。
+検査（V74）: もう一度作り直すと 236 部品すべて同じ・GLB もバイト単位で同じ。`--restore` で前のマスターと 224 部品同じ、新しい部品・材料・画像も消える。開き直しの検査は合格。往復検査（`--rebuilt` に脚・靴下・手の甲の板を追加）の問題の一覧は前と同じ 24 行。
 
-画像: `knee_front_ref_V72_V73.jpg`、`knee_side_ref_V72_V73.jpg`、`hand_front_ref_V72_V73.jpg`、`hand_side_ref_V72_V73.jpg`（参照 | V72 | V73）、`hand_views_V72_V73.jpg`、`nails_V73.jpg`。
+画像: `legs_front_ref_V72_V74.jpg`、`knee_side_ref_V72_V74.jpg`、`hand_front_ref_V72_V74.jpg`、`hand_side_ref_V72_V74.jpg`（参照 | V72 | V74）、`hand_views_V72_V74.jpg`。
 
-残り: 親指は手袋が先近くまで包む（参照は付け根だけ）。手袋の上のふちと手首のベルトの間に、肌が少し見える所がある。
+残り: 手の甲の上の方で、手袋と手首のベルトの間に肌が少し見える所がある。
 
 ### 残っていること（V72）
 
