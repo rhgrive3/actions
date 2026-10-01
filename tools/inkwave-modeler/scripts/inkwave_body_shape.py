@@ -433,6 +433,33 @@ def nails(hand, cfg, material):
     print('BODY_SHAPE nails', hand.name, made)
 
 
+def squash(names, cfg):
+    """Pull the far part of a garment toward a plane along one world axis (Warp with a weight that grows with the
+    distance past the plane, so the distances shrink by cfg['keep']), only over a height band:
+      axis, side (+1: the part past `at` toward +axis), at (m), keep (0..1), z = [z_full_from, z_full_to] with
+      z_fade [below, above], and optional mirror_x (x < 0 moves with the mirrored field: same for both sides).
+    Every listed mesh gets the same field, so layers lying on each other keep their spacing."""
+    ax = 'xyz'.index(cfg['axis'])
+    for name in names:
+        obj = bpy.data.objects[name]
+        W = er.world(obj)
+        sides = (-1.0, 1.0) if cfg.get('mirror_x') else (None,)
+        before = W.copy()
+        for sx in sides:
+            v = W[:, ax] * (sx if (sx is not None and ax == 0) else 1.0)
+            d = cfg['side'] * (v - cfg['at'])
+            span = cfg['span']
+            w = np.clip(d / span, 0, None)
+            (za, zb), (fl, fh) = cfg['z'], cfg['z_fade']
+            w = w * band(W[:, 2], za, zb, fl, fh)
+            if sx is not None:
+                w = w * (np.sign(W[:, 0]) == sx)
+            vec = [0.0, 0.0, 0.0]
+            vec[ax] = -cfg['side'] * (1 - cfg['keep']) * span * (sx if (sx is not None and ax == 0) else 1.0)
+            warp(obj, w, tuple(vec))
+        print('BODY_SHAPE squash', cfg.get('name', ''), name, 'max move mm', round(float(np.linalg.norm(er.world(obj) - before, axis=1).max() * 1000), 2))
+
+
 def adopt(obj, like):
     """Same parent as `like` (the character root's hierarchy is what the GLB export takes), world position kept."""
     obj.parent = like.parent
@@ -491,6 +518,8 @@ def main():
     p = json.loads(Path(args.params).read_text())
     names = [p['torso']] + p['belly']['garments'] + p['jacket']['garments']
     names += p.get('knees', {}).get('meshes', []) + p.get('gloves', {}).get('plates', [])
+    for sq in p.get('squash', []):
+        names += [n for n in sq['meshes'] if n not in names]
     remove_made()
     restore_legwear()
     print('BODY_SHAPE restored', restore(names, drop=args.restore), 'meshes')
@@ -548,6 +577,8 @@ def main():
                     warp(obj, (np.sign(W[:, 0]) == side).astype(float), (side * g['plate_out_m'], 0.0, 0.0))
         if p.get('legwear'):
             legwear_tone(p['legwear'])
+        for sq in p.get('squash', []):
+            squash(sq['meshes'], sq)
         if p.get('nails'):
             mat = nail_material(p['nails'])
             for hand in p['nails']['hands']:
