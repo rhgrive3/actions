@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { G, on, emit } from '../../../src/core/ctx.js';
 import { PLAYER, WEAPONS, SUB, SPECIALS, DEFAULT_SETTINGS } from '../../../src/config.js';
 import { Actor } from '../../../src/game/actor.js';
+import { Character, CHARACTER_CHANNELS, CHARACTER_TIMERS } from '../../../src/game/character.js';
 import { WeaponRunner, Projectiles } from '../../../src/game/weapons.js';
 import { PaintSystem } from '../../../src/world/paint.js';
 import { PlayerController } from '../../../src/game/player.js';
@@ -17,12 +18,13 @@ import { installClock } from './clock.mjs';
 import { installScoring } from './scoring.mjs';
 import { installUi } from './ui.mjs';
 import { installRendering } from './render.mjs';
+import { installRollerMotion } from './roller.mjs';
 
 let installed = false;
 export function install(profile) {
   if (installed) throw new Error('INKWAVE patches already installed');
   if (profile.schema !== 1 || profile.referenceVersion !== '11.3.0') throw new Error('Unsupported gameplay profile');
-  const api = { THREE, G, on, emit, PLAYER, WEAPONS, SUB, SPECIALS, Actor, WeaponRunner, Projectiles, PaintSystem, PlayerController, Menus, ShadowCache, Physics, Hit };
+  const api = { THREE, G, on, emit, PLAYER, WEAPONS, SUB, SPECIALS, Actor, Character, CHARACTER_CHANNELS, CHARACTER_TIMERS, WeaponRunner, Projectiles, PaintSystem, PlayerController, Menus, ShadowCache, Physics, Hit };
   Object.assign(PLAYER, profile.player);
   for (const [kind, data] of Object.entries(profile.weapons)) {
     if (!WEAPONS[kind]) throw new Error(`Missing upstream weapon ${kind}`);
@@ -31,6 +33,7 @@ export function install(profile) {
   Object.assign(SUB.bomb, profile.bomb);
   for (const [id, data] of Object.entries(profile.specials || {})) Object.assign(SPECIALS[id], data);
   installWeapons(api, profile);
+  installRollerMotion(api, profile);
   installMovement(api, profile);
   installGear(api, profile);
   installFlow(api, profile);

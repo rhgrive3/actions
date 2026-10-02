@@ -76,6 +76,16 @@ export function adaptSource(rel, code) {
     code = code.slice(0, start) + '    updateResources(this, dt, onEnemy, isSquid);\n\n' + code.slice(end);
     return `import { beforeActions } from '../../patches/splatoon3/runtime/movement.mjs';\nimport { updateResources } from '../../patches/splatoon3/runtime/resources.mjs';\n` + code;
   }
+  if (rel === 'src/game/character.js') {
+    code = replaceOnce(code, 'const PN = _k;', `const PN = _k;
+export const CHARACTER_CHANNELS = Object.freeze({ HIPS_P, HIPS, SPINE, CHEST, NECK, HEAD, CLAVL, CLAVR, UARML, UARMR, FARML, FARMR, HANDL, HANDR, FOOTL, FOOTLR, FOOTR, FOOTRR, ANC, ANCR, POLER, POLEL, IKR, IKL, LTGT, LTGTR, LTW, LTROT, KNEEL, KNEER, STAB, AFOLT, AFOLR, MODEL, MODELR, SQY, SQXZ, HLP });`, 'character pose channels');
+    code = replaceOnce(code, 'const TN = _tk;', 'const TN = _tk;\nexport const CHARACTER_TIMERS = Object.freeze({ T_FLICK, T_LEAP, T_SLAM, T_DODGE, T_SPAWN, T_LAND });', 'character flick timer');
+    code = replaceOnce(code, 'st.sinceFlick = this.tr[T_FLICK];', 'st.sinceFlick = this.s3RollerFlick?.elapsed ?? this.tr[T_FLICK];', 'roller weapon elapsed clock');
+    return replaceOnce(code, "    if (tr[T_FLICK] < 0.7 && this.weaponKind === 'roller') this._poseFlick(P, tr[T_FLICK]);", "    if (this.weaponKind === 'roller' && (this.s3RollerFlick ? this.s3RollerFlick.elapsed < this.s3RollerFlick.interval : tr[T_FLICK] < 0.7)) this._poseFlick(P, tr[T_FLICK]);", 'roller recovery pose duration');
+  }
+  if (rel === 'src/game/character-weapons.js') {
+    return replaceOnce(code, '    if (ft >= 0.15 && ft - dt < 0.15) w.drumW += 34;', '    const release = st.flickReleaseTime ?? 0.15;\n    if (ft >= release && ft - dt < release) w.drumW += 34;', 'roller drum release impulse');
+  }
   if (rel === 'src/main.js') {
     const start = code.indexOf('    G.time += dt;\n', code.indexOf('  _frame(dt) {'));
     const end = code.indexOf('    // A full-frame lobby/showcase completely covers', start);

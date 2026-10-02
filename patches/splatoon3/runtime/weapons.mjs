@@ -1,3 +1,4 @@
+import { installRollerLogic } from './roller.mjs';
 let api;
 export function splatlingBurst(w, charge) {
   const boundary = w.firstChargeTime / w.chargeTime, c = Math.max(0, Math.min(1, charge));
@@ -83,12 +84,7 @@ export function installWeapons(context, profile) {
     }
     return charger.call(this, dt, inp, w);
   };
-  const roller = WeaponRunner.prototype._roller;
-  WeaponRunner.prototype._roller = function (dt, inp, w) {
-    if (this.flick < 0 && inp.firePressed && this.cooldown <= 0) this.s3FlickVertical = !this.a.grounded;
-    const mode = this.s3FlickVertical ? { ...w, flickWindup: w.verticalWindup, flickInterval: w.verticalInterval ?? w.flickInterval, flickInk: w.verticalInk } : w;
-    return roller.call(this, dt, inp, mode);
-  };
+  installRollerLogic(api, profile);
   for (const method of ['fireFlick', 'fireSlosh']) {
     const original = Projectiles.prototype[method];
     Projectiles.prototype[method] = function (a, weapon) {
