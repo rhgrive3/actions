@@ -597,6 +597,8 @@ def paint_blush(face, names, cfg):
         factor = fade * np.clip(target / np.maximum(amax, 1e-3), 0, cfg['max_factor'])
         attr.data.foreach_set('color', np.repeat(factor, 4).astype(np.float32))
         me.update()
+        if cfg.get('lift_alpha'):
+            lift_coloured(obj, face, amax * factor, cfg)
         print('FACE_VOLUME blush from the reference', name, 'alpha max %.2f mean on layer %.3f' % (target.max(), target.mean()))
     blush_fade_node(bpy.data.objects[names[0]].data.materials[0])
     if cfg.get('colour'):
@@ -617,6 +619,30 @@ def paint_blush(face, names, cfg):
 
 
 BLUSH_IMAGE = 'INKWAVE_BLUSH_ALPHA'
+
+
+def lift_coloured(obj, face, alpha, cfg):
+    """Where a blush face with colour (alpha over lift_alpha at a corner) dips under the skin, the skin cuts the
+    blush along a ragged line (a pale patch under the eye in the 3/4 views).  Its corners under the skin go to
+    the layer height over the skin (Blender's Shrinkwrap), so the blush fades out over the skin instead."""
+    me = obj.data
+    tree = BVHTree.FromPolygons([Vector(v) for v in er.world(face)], [list(p.vertices) for p in face.data.polygons])
+    meas = np.zeros(len(me.vertices))
+    for i, q in enumerate(er.world(obj)):
+        hh = tree.find_nearest(Vector(q))
+        meas[i] = np.sign(np.dot(np.array(q) - np.array(hh[0]), np.array(hh[1]))) * hh[3] * 1000
+    over = cfg.get('lift_mm', 0.3)
+    low = np.zeros(len(me.vertices), bool)
+    for poly in me.polygons:
+        vs = list(poly.vertices)
+        if alpha[vs].max() > cfg['lift_alpha']:
+            low[vs] = True
+    low &= meas < over - 0.05
+    if low.any():
+        # Above Surface: the offset goes along the skin normal (On Surface keeps the side the vertex is on)
+        er.apply_weighted_modifier(obj, low.astype(float), 'SHRINKWRAP', target=face, wrap_method='NEAREST_SURFACEPOINT',
+                                   wrap_mode='ABOVE_SURFACE', offset=over / 1000)
+    print('FACE_VOLUME blush lift', obj.name, int(low.sum()), 'vertices')
 
 
 def restore_blush_image():
