@@ -41,8 +41,9 @@ test('refill respects weapon recovery wait and cannot refill in enemy-ink squid 
     enemyInkRegenSuppression: .4, enemyInkRecovery: 30, enemyInkGrace: 0 };
   installResources({ G: { time: 0 }, PLAYER: { hp: 100, inkMax: 100 } }, { resources });
   const a = { hp: 100, ink: 0, lastFire: .1, lastDamage: 99, submerged: true, climbing: false,
+    form: 'squid', grounded: true, groundTeam: 1, _surface() {},
     weapon: { inkRecoverStop: .4 }, weaponRunner: { busy: () => false }, damageFromInk: 0, invuln: 0 };
-  updateResources(a, 1 / 60, false, true); assert.equal(a.ink, 0);
-  a.lastFire = .4; updateResources(a, 1 / 60, false, true); assert.ok(a.ink > 0);
-  a.ink = 0; a.submerged = false; updateResources(a, 1, true, true); assert.equal(a.ink, 0);
+  updateResources(a, 1 / 60); assert.equal(a.ink, 0);
+  a.lastFire = .4; updateResources(a, 1 / 60); assert.ok(a.ink > 0);
+  a.ink = 0; a.groundTeam = 2; updateResources(a, 1); assert.equal(a.ink, 0);
 });

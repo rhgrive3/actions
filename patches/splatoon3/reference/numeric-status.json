@@ -1501,13 +1501,23 @@
   },
   "resources.enemyInkDps": {
     "value": 18,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/misc/params.json#/OpInk_DamagePerFrame",
+      "index": 2,
+      "factor": 6000,
+      "rawValue": 0.003
+    }
   },
   "resources.enemyInkDamageCap": {
     "value": 40,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/misc/params.json#/OpInk_DamageLmt",
+      "index": 2,
+      "factor": 100,
+      "rawValue": 0.4
+    }
   },
   "resources.enemyInkGrace": {
     "value": 0,
@@ -1566,8 +1576,13 @@
   },
   "movement.roll.chainRetention": {
     "value": 0.85,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/misc/params.json#/Somersault_MoveVelKd",
+      "index": 2,
+      "factor": 1,
+      "rawValue": 0.85
+    }
   },
   "movement.roll.chainReset": {
     "value": 1,
@@ -1676,13 +1691,23 @@
   },
   "superJump.chargeTime": {
     "value": 1.3333333333333333,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/misc/params.json#/SuperJump_ChargeFrm",
+      "index": 2,
+      "factor": 0.016666666666666666,
+      "rawValue": 80
+    }
   },
   "superJump.flightTime": {
     "value": 2.3,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/misc/params.json#/SuperJump_MoveFrm",
+      "index": 2,
+      "factor": 0.016666666666666666,
+      "rawValue": 138
+    }
   },
   "gearExtra.inkRecoveryKid.0": {
     "value": 600,
