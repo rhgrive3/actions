@@ -64,11 +64,12 @@ async function production() {
   G.actors = []; G.time = 0;
   cached = api; return api;
 }
-function rig(api, kind = 'shooter', enabled = true) {
+function rig(api, kind = 'shooter', enabled = true, carry = true) {
   const { Actor, Character, G, THREE } = api;
   const a = new Actor({ team: 0, name: 'form production regression', weapon: kind,
     CharacterClass: Character, style: { hair: 0, skin: 2, outfit: 0, eyes: 0 } });
   const ch = a.character; ch.actor = a; ch.onEvent = null; ch.s3FormMotionEnabled = enabled;
+  ch.s3CarryMotionEnabled = carry;
   G.scene.add(ch.root); G.actors.push(a); a.grounded = a.ground.hit = true;
   let shots = 0;
   const projectiles = Object.fromEntries(['fireShooter', 'fireDualies', 'fireCharger', 'fireSplatling',
@@ -95,7 +96,7 @@ function grip(r, side = 'R') {
   return w.off.localToWorld(h.pos.clone()).distanceTo(bone.getWorldPosition(new r.api.THREE.Vector3()));
 }
 const hash = data => createHash('sha256').update(data).digest('hex');
-function geometry(r) {
+function geometry(r, captureVertices = false) {
   const meshes = [], v = new r.api.THREE.Vector3();
   r.ch.root.traverse(mesh => {
     if (!mesh.isMesh || !mesh.geometry.index) return;
@@ -119,7 +120,8 @@ function geometry(r) {
     meshes.push({ name: mesh.name, indexedDrawCount: index.count, skinned: !!mesh.isSkinnedMesh,
       topologySha256: hash(Buffer.from(index.array.buffer, index.array.byteOffset, index.array.byteLength)),
       positionsSha256: hash(Buffer.from(position.array.buffer, position.array.byteOffset, position.array.byteLength)),
-      posedIndexedSha256: hash(bytes), sampledTriangles: vertices });
+      posedIndexedSha256: hash(bytes), sampledTriangles: vertices,
+      ...(captureVertices ? { posedIndexedVertices: posed } : {}) });
   });
   return meshes;
 }
@@ -150,8 +152,12 @@ function gameplay(r) {
     runner: Object.fromEntries(Object.entries(runner).filter(([, v]) => typeof v !== 'object' && typeof v !== 'function')) };
 }
 
-test('production form patch composes once, retains native IK and removes the long emerge flourish', async () => {
-  const api = await production(), old = rig(api, 'shooter', false), r = rig(api), rows = [];
+test('production form patch removes the legacy free-arm emerge flourish and retains native IK', async () => {
+  // Supported carry already suppresses the native free-arm flourish through
+  // wTwo. Isolate this counterfactual explicitly, rather than crediting the
+  // form layer for another installer's hand constraint.
+  const api = await production(), old = rig(api, 'shooter', false, false),
+    r = rig(api, 'shooter', true, false), rows = [];
   try {
     for (const x of [old, r]) { form(x, 'swim'); for (let i = 0; i < 45; i++) x.step(); form(x, 'kid'); }
     for (let i = 0; i < 7; i++) { old.step(); r.step(); }
@@ -175,6 +181,71 @@ test('production form patch composes once, retains native IK and removes the lon
     assert.equal(r.ch.kid.visible, false); assert.equal(r.ch.squidRoot.visible, true);
     assert.equal(r.ch.sqSY, 1); assert.equal(r.ch.sqSXZ, 1);
     assert.deepEqual(gameplay(old), gameplay(r)); save(rows);
+  } finally { old.close(); r.close(); }
+});
+
+test('supported production carry keeps both actual grips through compact form return and pause', async t => {
+  const api = await production();
+  if (!Object.hasOwn(api.Character.prototype, Symbol.for('inkwave.s3.carry-motion.v1'))) {
+    t.skip('Frozen review base has no carry installer; this branch is checked on the parent carry composition');
+    return;
+  }
+  const old = rig(api, 'shooter', false), r = rig(api), rows = [];
+  try {
+    const ready = [old, r].map(x => x.ch.bones.spine.getWorldQuaternion(new api.THREE.Quaternion()));
+    for (const x of [old, r]) { form(x, 'swim'); for (let i = 0; i < 45; i++) x.step(); form(x, 'kid'); }
+    for (let i = 0; i < 7; i++) { old.step(); r.step(); }
+    const C = api.CHARACTER_CHANNELS, returnAngles = [];
+    for (const [i, x] of [old, r].entries()) {
+      assert.equal(x.ch.wTwo, 1); assert.ok(x.ch.P[C.IKL] > .99); assert.ok(x.ch.P[C.LTW] < .001);
+      assert.ok(grip(x, 'L') < .025); assert.ok(grip(x) < .025);
+      assert.ok(x.ch.ikErr[0] < .001); assert.ok(x.ch.ikErr[1] < .001);
+      const hand = x.ch.bones.handL.getWorldPosition(new api.THREE.Vector3());
+      const head = x.ch.bones.head.getWorldPosition(new api.THREE.Vector3());
+      assert.ok(hand.y < head.y, 'actual supported hand remains below the head');
+      returnAngles.push(x.ch.bones.spine.getWorldQuaternion(new api.THREE.Quaternion()).angleTo(ready[i]));
+    }
+    assert.ok(returnAngles[0] > returnAngles[1] + .01,
+      'actual torso return is more compact while native supported hands stay constrained');
+    rows.push(row(old, 'supported-native-emerge'), row(r, 'supported-compact-emerge'));
+    assert.ok(rows[0].geometry.some((mesh, i) => mesh.skinned &&
+      mesh.posedIndexedSha256 !== rows[1].geometry[i]?.posedIndexedSha256));
+    assert.deepEqual(gameplay(old), gameplay(r));
+    const paused = row(r, 'supported-compact-emerge'), game = gameplay(r),
+      pausedDraw = geometry(r, true), nativeDraw = geometry(old, true);
+    for (let i = 0; i < 4; i++) { old.step(0); r.step(0); }
+    const resumed = row(r, 'supported-compact-emerge');
+    for (const field of ['form', 'formT', 'snapshot', 'kidMatrix', 'weaponMatrix', 'squidMatrix']) {
+      assert.deepEqual(resumed[field], paused[field]);
+    }
+    assert.deepEqual(gameplay(r), game);
+    // Raw zero-dt calls still run native leg IK. Its float32 channels can
+    // differ by a few ulps, so byte-identical hashes are the wrong oracle.
+    // Compare every actually drawn indexed vertex on both real source rigs.
+    const drift = (before, after) => {
+      assert.equal(after.length, before.length); let maximum = 0, coordinates = 0;
+      for (const [i, mesh] of after.entries()) {
+        for (const key of ['indexedDrawCount', 'topologySha256', 'positionsSha256']) {
+          assert.equal(mesh[key], before[i][key]);
+        }
+        const points = mesh.posedIndexedVertices, previous = before[i].posedIndexedVertices;
+        assert.equal(points.length, previous.length); coordinates += points.length;
+        for (let j = 0; j < points.length; j++) maximum = Math.max(maximum, Math.abs(points[j] - previous[j]));
+      }
+      assert.ok(coordinates > 10000); assert.ok(maximum < 1e-7, `native zero-dt drawn-vertex drift ${maximum}`);
+      return { maximum, coordinates, tolerance: 1e-7 };
+    };
+    const pause = { native: drift(nativeDraw, geometry(old, true)),
+      corrected: drift(pausedDraw, geometry(r, true)) };
+    for (const [name, matrix] of Object.entries(resumed.bones)) {
+      matrix.forEach((value, i) => assert.ok(Math.abs(value - paused.bones[name][i]) < 1e-7));
+    }
+    rows.push({ stage: 'supported-raw-zero-dt-native-IK-tolerance', pause });
+    for (let i = 0; i < 30; i++) { old.step(); r.step(); }
+    assert.equal(r.ch.kidSY, 1); assert.equal(r.ch.kidSXZ, 1);
+    assert.ok(grip(r, 'L') < .025); assert.ok(grip(r) < .025);
+    assert.deepEqual(gameplay(old), gameplay(r));
+    save(rows, 'supported-carry-form-native-output.json');
   } finally { old.close(); r.close(); }
 });
 
