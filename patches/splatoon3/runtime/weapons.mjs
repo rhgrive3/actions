@@ -56,7 +56,8 @@ export function installWeapons(context, profile) {
   const reset = WeaponRunner.prototype.reset, busy = WeaponRunner.prototype.busy;
   WeaponRunner.prototype.reset = function (...args) {
     const result = reset.apply(this, args);
-    this.s3Stored = null; this.s3Turret = false; this.s3FlickVertical = false; this.s3BlasterWindup = 0; return result;
+    this.s3Stored = null; this.s3Turret = false; this.s3FlickVertical = false; this.s3BlasterWindup = 0;
+    this.s3SloshRecovery = false; return result;
   };
   WeaponRunner.prototype.busy = function () {
     if (['charger','splatling'].includes(this.a.weapon.kind) && this.a.intent.squid && this.a._squidPressT > this.a._firePressT) return false;
@@ -83,6 +84,36 @@ export function installWeapons(context, profile) {
       this.charge = this.s3Stored.charge; this.chargeT = 1; this.charging = true; this.s3Stored = null;
     }
     return charger.call(this, dt, inp, w);
+  };
+  WeaponRunner.prototype._slosher = function (dt, inp, w) {
+    const a = this.a, epsilon = 1e-10;
+    const release = () => {
+      // Preserve fractional seconds at both boundaries. Without the epsilon,
+      // 12 * (1/60) misses .2 and the 17F recovery also gains an extra tick.
+      const carry = Math.max(0, this.slosh - w.windup);
+      this.slosh = -1; G.projectiles.fireSlosh(a, w);
+      this.cooldown = w.fireInterval - w.windup - carry;
+      this.s3SloshRecovery = !!inp.fire;
+    };
+    if (!inp.fire) this.s3SloshRecovery = false;
+    if (this.slosh >= 0) {
+      this.slosh += dt; a.fireFacing = .5; this.firingT = .35;
+      if (this.slosh + epsilon >= w.windup) release();
+      return;
+    }
+    if (!inp.fire || this.cooldown > epsilon) return;
+    if (a.ink < w.inkPerShot) { this._empty(); this.cooldown = .2; this.s3SloshRecovery = false; return; }
+    // update() already subtracted dt from cooldown. Carry only a continuously
+    // held attack's late deadline, never an arbitrarily overdue idle clock.
+    const carry = this.s3SloshRecovery ? Math.max(0, -this.cooldown) : 0;
+    this.s3SloshRecovery = false;
+    a.ink -= w.inkPerShot; a.lastFire = 0;
+    this.slosh = carry <= epsilon ? 0 : carry; this.firingT = .35; a.fireFacing = .5;
+    a.character.trigger('slosh');
+    if (a.isLocal || a._nearCamera()) G.audio?.play('slosh_throw', {
+      pos: a.isLocal ? undefined : a.pos, volume: a.isLocal ? .75 : .55,
+    });
+    if (this.slosh + epsilon >= w.windup) release();
   };
   installRollerLogic(api, profile);
   for (const method of ['fireFlick', 'fireSlosh']) {
