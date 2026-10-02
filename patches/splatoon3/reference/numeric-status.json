@@ -2040,7 +2040,27 @@
     "binding": null
   },
   "walkMotion.runLift": {
-    "value": 0.115,
+    "value": 0.16,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "walkMotion.walkPickupPeak": {
+    "value": 0.42,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "walkMotion.runPickupPeak": {
+    "value": 0.32,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "walkMotion.swingPitchWalk": {
+    "value": 0.32,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "walkMotion.swingPitchRun": {
+    "value": 1.05,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },

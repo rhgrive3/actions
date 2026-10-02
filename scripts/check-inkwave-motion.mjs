@@ -39,11 +39,12 @@ const result=await page.evaluate(async({prefix,contentHash})=>{
  Object.assign(G,{scene,camera,renderer,settings:{quality:'high',shadows:false},mode:'match',actors:[]});
  scene.add(new THREE.HemisphereLight(0xffffff,0x667477,2.2));const light=new THREE.DirectionalLight(0xffffff,2.5);light.position.set(3,5,4);scene.add(light);
  const floor=new THREE.Mesh(new THREE.PlaneGeometry(200,200),new THREE.MeshStandardMaterial({color:0xbfcbd0,roughness:1}));floor.rotation.x=-Math.PI/2;floor.position.y=-.004;scene.add(floor);
- const cases=[{name:'slow',v:.35,d:[0,1]},{name:'walk',v:1.5,d:[0,1]},{name:'run',v:5.76,d:[0,1]},{name:'back',v:4.2,d:[0,-1]},{name:'strafe',v:4.2,d:[1,0]},{name:'stop',v:5.76,d:[0,1],stop:true},{name:'turn',v:4.2,d:[0,1],turn:true}];
+ const firingSpeed=profile.weapons.shooter.moveSpeedFiring;
+ const cases=[{name:'slow',v:.35,d:[0,1]},{name:'walk',v:1.5,d:[0,1]},{name:'run',v:5.76,d:[0,1]},{name:'back',v:4.2,d:[0,-1]},{name:'strafe',v:4.2,d:[1,0]},{name:'stop',v:5.76,d:[0,1],stop:true},{name:'turn',v:4.2,d:[0,1],turn:true},{name:'fire-forward',v:firingSpeed,d:[0,1],firing:true},{name:'fire-back',v:firingSpeed,d:[0,-1],firing:true},{name:'fire-strafe',v:firingSpeed,d:[1,0],firing:true}];
  const data=[], images=[];
  for(const scenario of cases){
   const ch=new Character({name:'Motion fixture',style:{hair:0,skin:2,outfit:0,eyes:0},weapon:'shooter'});scene.add(ch.root);ch.onEvent=null;
-  const state={form:'kid',grounded:true,speed:0,localMove:{x:0,z:0},firing:false,charge:0,ink:1,hp:1,vy:0};
+  const state={form:'kid',grounded:true,speed:0,localMove:{x:0,z:0},firing:!!scenario.firing,charge:0,ink:1,hp:1,vy:0};
   for(let i=0;i<90;i++)ch.update(1/60,state);
   const samples=[],last=[null,null];
   for(let frame=0;frame<180;frame++){
@@ -52,15 +53,20 @@ const result=await page.evaluate(async({prefix,contentHash})=>{
    if(scenario.stop&&time>=1.4)v=scenario.v*Math.max(0,1-(time-1.4)/.15);
    if(scenario.turn&&time>=1.4){dx=1;dz=0;}
    ch.root.position.x+=dx*v/60;ch.root.position.z+=dz*v/60;
-   state.speed=v;state.localMove.x=-dx;state.localMove.z=dz;G.time+=1/60;ch.update(1/60,state);ch.root.updateMatrixWorld(true);
+   state.speed=v;state.localMove.x=-dx;state.localMove.z=dz;G.time+=1/60;
+   if(scenario.firing&&frame%Math.round(profile.weapons.shooter.fireInterval*60)===0)ch.trigger('shoot');
+   ch.update(1/60,state);ch.root.updateMatrixWorld(true);
    const feet=ch.feet.map((f,i)=>{
     const pitch=f.pitch, h=.085, ball=.11,heel=.065;
     const ay=h*Math.cos(pitch)+(pitch>=0?ball:-heel)*Math.sin(pitch),az=pitch>=0?ball+h*Math.sin(pitch)-ball*Math.cos(pitch):-heel+h*Math.sin(pitch)+heel*Math.cos(pitch);
     const expected=f.cw.clone().add(new THREE.Vector3(0,ay,az).applyAxisAngle(new THREE.Vector3(0,1,0),f.cyaw));
     const actual=ch.bones[i===0?'footL':'footR'].getWorldPosition(new THREE.Vector3());
+    const leg=i===0?ch.limbs.legL:ch.limbs.legR,hip=leg.up.getWorldPosition(new THREE.Vector3()),knee=leg.lo.getWorldPosition(new THREE.Vector3());
+    const kneeFlex=Math.PI-knee.clone().sub(hip).angleTo(knee.clone().sub(actual));
+    const soleForward=new THREE.Vector3(0,0,1).applyQuaternion(leg.end.getWorldQuaternion(new THREE.Quaternion()));
     const plantedDrift=f.planted&&last[i]?.planted?f.cw.distanceTo(last[i].cw):0;
     last[i]={planted:f.planted,cw:f.cw.clone()};
-    return {planted:f.planted,mode:f.mode,su:f.su,cw:f.cw.toArray(),actual:actual.toArray(),ankleError:actual.distanceTo(expected),plantedDrift,pitch};
+    return {planted:f.planted,mode:f.mode,su:f.su,cw:f.cw.toArray(),actual:actual.toArray(),knee:knee.toArray(),kneeFlex,solePitch:Math.atan2(soleForward.y,Math.hypot(soleForward.x,soleForward.z)),ankleError:actual.distanceTo(expected),plantedDrift,pitch};
    });
    samples.push({frame,time,v,phase:ch.phase,cad:ch.cad,duty:ch.duty,hipDrop:ch.hipDrop,hipY:ch.bones.hips.position.y,feet});
    if(frame>=60&&frame<108&&frame%6===0 || scenario.stop&&frame>=96&&frame<150&&frame%9===0){
@@ -68,13 +74,13 @@ const result=await page.evaluate(async({prefix,contentHash})=>{
     images.push({name:scenario.name+'-'+String(frame).padStart(3,'0'),image:renderer.domElement.toDataURL('image/png')});
    }
   }
-  data.push({name:scenario.name,samples});scene.remove(ch.root);ch.dispose();
+  data.push({name:scenario.name,firing:!!scenario.firing,speed:scenario.v,samples});scene.remove(ch.root);ch.dispose();
  }
  const summary=data.map(({name,samples})=>{const steady=samples.filter(s=>s.time>=.8);return {name,maxAnkleError:Math.max(...steady.flatMap(s=>s.feet.filter(f=>f.planted).map(f=>f.ankleError))),maxHipDrop:Math.max(...steady.map(s=>s.hipDrop)),hipTravel:Math.max(...steady.map(s=>s.hipY))-Math.min(...steady.map(s=>s.hipY)),plantSlide:Math.max(...steady.flatMap(s=>s.feet.map(f=>f.plantedDrift))),catchFrames:steady.filter(s=>s.feet.some(f=>!f.planted&&f.mode===1)).length};});
  renderer.dispose();return {contentHash,data,summary,images};
 },{prefix,contentHash:manifest.contentHash});
 for(const entry of result.images)fs.writeFileSync(path.join(output,entry.name+'.png'),Buffer.from(entry.image.split(',')[1],'base64'));delete result.images;
-result.errors=errors;result.build=manifest.build;result.loaded=[...new Set(loaded)];result.fixture={source:'complete actual Character rig + actual Three.js renderer',terrain:'flat plane',device:'Chromium software WebGL; not Switch or iOS',scenarios:7,framesPerScenario:180,hz:60};fs.writeFileSync(path.join(output,'motion-result.json'),JSON.stringify(result,null,2));console.log(JSON.stringify({contentHash:result.contentHash,summary:result.summary,errors}));
+result.errors=errors;result.build=manifest.build;result.loaded=[...new Set(loaded)];result.fixture={source:'complete actual Character rig + actual Three.js renderer; firing uses the real Character recoil events',terrain:'flat plane',device:'Chromium software WebGL; not Switch or iOS',scenarios:result.data.length,framesPerScenario:180,hz:60};fs.writeFileSync(path.join(output,'motion-result.json'),JSON.stringify(result,null,2));console.log(JSON.stringify({contentHash:result.contentHash,summary:result.summary,errors}));
 if(errors.length)throw Error('Browser animation error');
 for(const row of result.summary){
  if(row.plantSlide>1e-8||row.maxHipDrop>.10||row.hipTravel>(row.name==='run'?.075:.11))throw Error('Motion regression: '+row.name);

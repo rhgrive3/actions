@@ -5,7 +5,7 @@ const states = new WeakMap();
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 const mix=(a,b,t)=>a+(b-a)*t;
 const smooth=(a,b,x)=>{const t=clamp((x-a)/(b-a),0,1);return t*t*(3-2*t);};
-const fraction=x=>x-Math.floor(x);
+const ease=x=>{const u=clamp(x,0,1);return u*u*u*(10+u*(6*u-15));};
 const damp=(a,b,rate,dt)=>mix(a,b,1-Math.exp(-rate*dt));
 const angle=x=>Math.atan2(Math.sin(x),Math.cos(x));
 const state=ch=>{let s=states.get(ch);if(!s){s={active:false,pitch:0,pitchV:0,roll:0,rollV:0,vx:0,vz:0,target:new api.THREE.Vector3()};states.set(ch,s);}return s;};
@@ -22,6 +22,8 @@ function startSwing(ch,f,settle=false,remaining){
   const forward=clamp(ch.mdz*Math.cos(ch.hipTwist)+ch.mdx*Math.sin(ch.hipTwist),-1,1);
   f.toe=mix(tuning.toeWalk,tuning.toeRun,ch.runW)*forward;
   f.land=mix(tuning.heelWalk,tuning.heelRun,ch.runW)*forward;
+  f.fold=settle?0:mix(tuning.swingPitchWalk,tuning.swingPitchRun,ch.runW)*Math.max(0,forward);
+  f.peak=settle?.5:mix(tuning.walkPickupPeak,tuning.runPickupPeak,ch.runW);
   f.toYaw=settle?ch._idealFoot(f,f.to):ch._gaitTarget(f,f.dur,f.to);
   f.to.y=ch._ground(f.to.x,f.to.z,f.tn);
 }
@@ -49,27 +51,30 @@ function updateFeet(ch,dt){
       const first=along(F[0])<=along(F[1])?0:1;
       ch.phase=ch.duty+.001-first*.5;
       if(!F[first].sw)startSwing(ch,F[first],false,Math.min(tuning.firstStepTime,(1-ch.duty)/ch.cad));
-      F[first].inSt=false;F[1-first].inSt=fraction(ch.phase+(1-first)*.5)<ch.duty;
+      // Stagger the other leg by half a cycle, including the shorter first step.
+      // Each contact then owns its elapsed time; a display phase cannot cut a
+      // freshly planted step short or change the rhythm at a phase wrap.
+      F[1-first].stT=0;F[1-first].stU=1-Math.max(0,F[first].dur*ch.cad+ch.duty-.5)/ch.duty;
       for(const f of F)if(f.sw&&f.mode===M.M_SETTLE)startSwing(ch,f,false,Math.min(tuning.firstStepTime,(1-ch.duty)/ch.cad));
     }
     ch.phase+=ch.cad*dt;
     for(let i=0;i<2;i++){
-      const f=F[i],other=F[1-i],p=fraction(ch.phase+i*.5),inSt=p<ch.duty,wasSt=f.inSt;f.inSt=inSt;
+      const f=F[i];let elapsed=dt;
       if(f.planted){
-        f.stT+=dt;f.stU=clamp(f.stT/(ch.duty/ch.cad),0,1);
+        f.stT+=dt;f.stU+=dt*ch.cad/ch.duty;
         const far=Math.hypot(f.pw.x-R.x,f.pw.z-R.z)>tuning.catchDistance;
-        if(wasSt&&!inSt||!inSt&&other.planted&&f.stT>.06)startSwing(ch,f);
-        else if(far||f.stT>ch.duty/ch.cad)startSwing(ch,f,false,Math.min(tuning.firstStepTime,(1-ch.duty)/ch.cad));
+        if(f.stU>=1){elapsed=(f.stU-1)*ch.duty/ch.cad;startSwing(ch,f);}
+        else if(far&&f.stT>.06){startSwing(ch,f,false,Math.min(tuning.firstStepTime,(1-ch.duty)/ch.cad));elapsed=0;}
       }
       if(f.sw){
-        f.su=Math.min(1,f.su+dt/f.dur);
+        f.su+=elapsed/f.dur;
         // Retarget early, then commit to the landing. A turn cannot drag a shoe
         // sideways in the final frames of a step.
         if(f.su<tuning.landingLock){
           const target=state(ch).target,yaw=ch._gaitTarget(f,(1-f.su)*f.dur,target);
           f.to.lerp(target,1-Math.exp(-tuning.targetFollow*dt));f.toYaw+=angle(yaw-f.toYaw)*(1-Math.exp(-tuning.targetFollow*dt));
         }
-        if(f.su>=1)land(ch,f,1);
+        if(f.su>=1){const carry=(f.su-1)*f.dur;land(ch,f,1);f.stT=carry;f.stU=clamp(carry/(ch.duty/ch.cad),0,1);}
       }
     }
   }else{
@@ -100,11 +105,12 @@ function footPose(ch,f){
     const next=damp(f.pitch,desired,ch.moving?30:12,ch._dt),limit=tuning.footPitchRate*ch._dt;f.pitch+=clamp(next-f.pitch,-limit,limit);
     return;
   }
-  const u=f.su,e=u*u*u*(10+u*(6*u-15));
+  const u=clamp(f.su,0,1),e=ease(u);
   f.cw.copy(f.from).lerp(f.to,e);
-  f.cw.y+=(f.lift+Math.max(0,f.to.y-f.from.y)*.35)*16*u*u*(1-u)*(1-u);
-  f.cyaw=f.fromYaw+angle(f.toYaw-f.fromYaw)*e;f.cn.copy(f.n).lerp(f.tn,e);
-  f.pitch=mix(f.startPitch??f.toe,0,smooth(0,.5,u))-f.land*smooth(.55,.96,u);
+  const peak=f.peak??.5,lift=u<peak?ease(u/peak):ease((1-u)/(1-peak));
+  f.cw.y+=(f.lift+Math.max(0,f.to.y-f.from.y)*.35)*lift;
+  f.cyaw=f.fromYaw+angle(f.toYaw-f.fromYaw)*e;f.cn.copy(f.n).lerp(f.tn,e).normalize();
+  f.pitch=mix(f.startPitch??f.toe,0,smooth(0,.5,u))+(f.fold??0)*smooth(0,.22,u)*(1-smooth(.38,.78,u))-f.land*smooth(.55,.96,u);
 }
 export function installWalkMotion(context,profile){
   api=context;tuning=profile.walkMotion;

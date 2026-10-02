@@ -76,4 +76,4 @@ CI の取得・検証・Pages ビルドもこの互換性チェックを通る�
 
 `runtime/walk.mjs` の表示設定は `profile.walkMotion` に集約する。[歩行参照](reference/walk-motion-2026-10-02.md)、[ローラー](roller-behavior.md)、[移動・回復](../../reports/inkwave-movement-resources-2026-10-02.md)、[ブキ・ギア・Flow](reference/weapons-gear-flow-audit-2026-10-02.md)を変更時に見直す。数値の根拠が得られるまで校正値を抽出済み値へ昇格しない。
 
-通常ゲームのブラウザ確認に加え、同じビルドを `node scripts/check-inkwave-motion.mjs --site _site --evidence-dir <永続保存先> --profile-dir <専用プロファイル>` で描画する。小さな入力、前後・横移動、停止、方向転換の骨/IK値と画像を保存し、遊脚・接地・腰揺れの回帰を検出する。
+通常ゲームのブラウザ確認に加え、同じビルドを `node scripts/check-inkwave-motion.mjs --site _site --evidence-dir <永続保存先> --profile-dir <専用プロファイル>` で描画する。小さな入力、前後・横移動、停止、方向転換、前後・横の移動射撃の10条件で、実際の膝・足首・靴底・IK値と画像を保存し、遊脚・接地・腰揺れの回帰を検出する。歩調の整合と後ろ脚の畳み方の数値は内部校正であり、公式の非公開関節曲線とは区別する。
