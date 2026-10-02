@@ -100,6 +100,19 @@ test('walking keeps shoe contact and handles slow input, stops and turns on the 
    for(const hz of [30,60,120]){f.pitch=.5;ch._dt=1/hz;for(let i=0;i<hz/2;i++)ch._footPose(f);results.push(f.pitch);}
    assert.ok(Math.max(...results)-Math.min(...results)<1e-10);
   });
+  await t.test('stationary public previews retain their moving-ground treadmill',()=>{
+   ch.root.position.set(0,0,0);ch.rootInit=false;ch.feetValid=false;ch.replant=true;
+   Object.assign(state,{form:'kid',grounded:true,speed:4,localMove:{x:0,z:1},firing:false});
+   for(let i=0;i<60;i++)ch.update(1/60,state);
+   assert.equal(ch.tread,true);assert.equal(ch.hs,0);assert.equal(ch.moving,true);
+   const root=ch.root.position.clone();let support=0;
+   for(let tick=0;tick<30;tick++){
+    const previous=ch.feet.map(f=>({planted:f.planted,point:f.cw.clone()}));
+    ch.update(1/60,state);assert.ok(ch.root.position.equals(root),'preview does not change its root');
+    ch.feet.forEach((f,i)=>{if(f.planted&&previous[i].planted){support++;assert.ok(Math.abs(f.cw.z-previous[i].point.z+4/60)<1e-9,'preview ground keeps its supplied speed');}});
+   }
+   assert.ok(support>10,'support phases across the actual preview gait');
+  });
   await t.test('lean settles through air, fully hidden squid and invisible bodies',()=>{
    for(const action of ['air','squid','hidden']){
     ch.root.visible=true;Object.assign(state,{form:'kid',grounded:true,speed:0,localMove:{x:0,z:0}});

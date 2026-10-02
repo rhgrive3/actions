@@ -174,17 +174,27 @@ test('storm aligns empty-hand follow-through to actual immediate deployment, ord
   try {
     assert.equal(r.a.weapon.special, 'storm');
     let deployments = 0; api.G.projectiles.throwStorm = () => { deployments++; };
+    // The opted-out native Storm has its original event age. Build the paired
+    // native counterfactual with only the calibrated throw offset, rather than
+    // assuming the independent Bomb owner applies it to another special.
+    const beforeThrow = before.ch._poseThrow, beforeBuild = before.ch._buildPose;
+    before.ch._poseThrow = () => {};
+    before.ch._buildPose = function (...args) {
+      const result = beforeBuild.apply(this, args);
+      api.CHARACTER_BOMB_POSE.throw.call(this, this.P, this.tr[api.CHARACTER_TIMERS.T_THROW] + .10);
+      return result;
+    };
     for (const x of [before, r]) { start(x, 'storm'); x.visual(); }
     assert.equal(deployments, 2);
     const C = api.CHARACTER_CHANNELS;
-    // Full production Bomb already applies this same 0.10 release offset.
-    // The old standalone comparison claimed a difference that does not exist.
     assert.deepEqual(Array.from(r.ch.P), Array.from(before.ch.P), 'one calibrated native follow-through, no extra or double throw');
     const nativeThrow = posed(before, 'before-storm'), releaseThrow = posed(r, 'after-storm');
     assert.deepEqual(releaseThrow.bones.handL, nativeThrow.bones.handL);
     assert.deepEqual(releaseThrow.meshes, nativeThrow.meshes, 'same actual indexed native release geometry');
     assert.ok(r.ch.ikErr[1] < .0005, 'native right-hand weapon IK stays reachable');
     evidence.push(nativeThrow, releaseThrow); save(evidence);
+    before.ch._poseThrow = beforeThrow;
+    before.ch._buildPose = beforeBuild;
     for (const x of [before, r]) {
       x.a.specialActive = null; x.a.weaponRunner.aimingSub = true; x.visual();
       x.ch.trigger('throw'); x.a.weaponRunner.aimingSub = false; x.visual();
@@ -330,6 +340,10 @@ test('foot-plant hook observes mapped Slam ownership and preserves native fallba
     r.ch.s3SpecialMotionEnabled = true; start(r); r.visual(); assert.equal(eligible(true), false);
     r.a.specialActive = { id: 'slam', net: true }; r.visual(); assert.equal(eligible(false), false);
     assert.equal(eligible(true), true, 'unmapped network phase keeps supplied native gate');
+    r.a.weaponRunner.aimingSub = true; r.visual();
+    assert.equal(r.snapshot().phase, null, 'sub interrupts the unmapped presentation observer');
+    assert.equal(eligible(false), false, 'an interrupted unmapped live token still keeps its native foot gate');
+    r.a.weaponRunner.aimingSub = false;
     r.a.specialActive = null; r.visual(); assert.equal(eligible(false), true, 'cancelled mapped hooks no longer leave timer-only planting locks');
     assert.equal(duplicateFootPlant(r.ch, false), true, 'cross-realm eligibility reads the installed registry');
     r.a.setWeapon('charger'); start(r, 'storm'); r.visual(); assert.equal(eligible(true), true, 'Storm adds no planting restriction');

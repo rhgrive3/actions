@@ -30,6 +30,7 @@ async function production() {
   const entry = new vm.SourceTextModule(`
     export { install } from './patches/splatoon3/runtime/install.mjs';
     export { installIdleMotion, idleMotionSnapshot } from './patches/splatoon3/runtime/idle-motion.mjs';
+    export { carryMotionSnapshot } from './patches/splatoon3/runtime/carry-motion.mjs';
     export { FixedClock } from './patches/splatoon3/runtime/clock.mjs';
   `, { context, identifier: path.join(ROOT, 'idle-composition-entry.mjs') });
   await entry.link((specifier, from) => load(specifier === 'three'
@@ -231,9 +232,10 @@ test('quiet match carry remains ready instead of a weapon flourish; looking, bre
           assert.ok(after.gripDistances[0] < .025, `${kind}: actual right-hand grip`);
           if (kind === 'dualies') assert.ok(after.gripDistances[1] < .025);
           if (kind === 'shooter') {
-            // A zero solver residual with IK disabled proves no foregrip
-            // contact. Keep this shared carry gap explicit for the parent.
-            assert.equal(after.armIKWeights[1], 0); assert.ok(after.gripDistances[1] > .1);
+            assert.equal(r.ch.hold.twoCarry, 0, 'native hold definition remains intact');
+            assert.equal(api.carryMotionSnapshot(r.ch)?.active, true, 'production carry owns the support');
+            assert.equal(after.armIKWeights[1], 1);
+            assert.ok(after.gripDistances[1] < .025, 'drawn support hand meets the actual foregrip');
           }
         } else assert.ok(swing > .015, `${kind} native flourish reproduction (${swing})`);
       } finally { r.close(); }

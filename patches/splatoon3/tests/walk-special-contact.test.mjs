@@ -123,11 +123,15 @@ test('native input turns and reversals keep actual planted shoes on their heel/t
  const api=await production();world(api);const r=rig(api);let contacts=0;
  try{
   for(let i=0;i<210;i++){
+   const previous=r.ch.feet.map(f=>({planted:f.planted,point:f.cw.clone()}));
    const speed=i<25?.15:i<65?1.2:i<105?5.76:i<165?2.4:0;
    const [x,z]=i<70?[0,1]:i<90?[1,0]:i<105?[0,-1]:[0,1];
    const top=r.a.weaponRunner.moveSpeed();r.a.intent.move.set(x*speed/top,0,z*speed/top);
    r.a._horizontal(1/60,false,false);r.a._integrate(1/60,false,false);
    r.a.intent.fire=i>=105&&i<145;r.a.weaponRunner.update(1/60,{fire:r.a.intent.fire});r.visual();
+   for(const [j,f]of r.ch.feet.entries())if(f.planted&&previous[j].planted){
+    assert.ok(f.cw.distanceTo(previous[j].point)<1e-8,'actual moving root cannot slide a planted world contact at tick '+i);
+   }
    try{contact(api,r.ch,true);}catch(e){e.message+=' frame '+i;throw e;}
    contacts+=r.ch.feet.filter(f=>f.planted).length;
   }

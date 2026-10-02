@@ -47,6 +47,12 @@ export function specialMotionAllowsFootPlant(ch, nativeEligible) {
   const m = stateMap(ch).get(ch);
   if (!ch?.[INSTALL] || ch.s3SpecialMotionEnabled === false || !m?.controlled || m.nativeOnly)
     return nativeEligible;
+  // An interruption can clear nativeOnly while an incomplete network token
+  // remains live. Read its mapping without running native owner lookup clocks.
+  const live = ch.actor?.character === ch ? ch.actor.specialActive : null;
+  if (live && (!Number.isFinite(live.t) || !(live.id === 'storm'
+    || live.id === 'slam' && ['rise', 'hang', 'fall'].includes(live.phase))
+    || m.token !== live && m.blocked !== live)) return nativeEligible;
   return !(m.kind === 'slam' && m.phase);
 }
 

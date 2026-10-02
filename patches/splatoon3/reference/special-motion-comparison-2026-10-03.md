@@ -178,3 +178,9 @@ trajectories are tested separately against floor and low-ceiling geometry.
 Projectile calls outside the motion scope are instrumented in these fixtures;
 these checks do not measure airborne device/cloud/fuse gameplay or GPU shader
 deformation. Those remain parent/product or separate-lane evidence.
+
+### 観察中断と未完全な通信トークン
+
+未完全な network Special トークンを sub で中断すると、表示の `nativeOnly` が消えてもトークンが live のまま残る。旧足接地ゲートを誤って解除する回帰を実本番 VM で再現し、公開足所有判定が live トークンの id/t/phase を再確認するよう修正した。owner lookup の時計は進めず、未観察・未対応状態の native fallback を保つ。
+
+全体 CI で Storm の比較基準も更新した。Bomb は別の Special の throw を所有しないため、Special 無効のネイティブ比較に offset が適用されるという旧前提を廃止。比較側は native build 完了後に実 native throw を `.10` 校正 offset で一度だけ適用する。全 pose・実骨と indexed skin が一致することを調べ、二重投擲や実配置の回数・時計は変えない。

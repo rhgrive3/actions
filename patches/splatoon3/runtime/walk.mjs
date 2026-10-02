@@ -119,6 +119,7 @@ export function installWalkMotion(context,profile){
   const C=api.Character.prototype,oldTrack=C._trackRoot,oldStates=C._updateStates,oldFeet=C._updateFeet,oldPose=C._footPose,oldTarget=C._gaitTarget;
   C._trackRoot=function(dt,s){
     const w=state(this),valid=this.rootInit&&this.root.position.distanceToSquared(this.rp)<=9;
+    w.rootMotionKnown=valid&&dt>0;
     w.vx=valid&&dt>0?(this.root.position.x-this.rp.x)/dt:0;w.vz=valid&&dt>0?(this.root.position.z-this.rp.z)/dt:0;
     oldTrack.call(this,dt,s);if(this.tread){w.vx=this.tvx;w.vz=this.tvz;}
   };
@@ -199,6 +200,14 @@ export function walkPelvisDrop(ch,nativeDrop){
 }
 
 export function walkActive(ch){return !!states.get(ch)?.active;}
+
+// A reversing filtered velocity can pass through zero while the real root
+// still travels. Only an actually stationary root uses preview tread motion.
+export function walkTreadAllowed(ch,nativeTread){
+  const w=states.get(ch);
+  if(!nativeTread||!w?.rootMotionKnown||!ch.kidForm||!ch.grounded||ch.dance)return nativeTread;
+  return Math.hypot(w.vx,w.vz)<=1e-6;
+}
 
 // _updateStates advances these once per tick, including hidden/squid bodies.
 export function walkLean(ch,axis){return api&&eligible(ch)?state(ch)[axis==='pitch'?'pitch':'roll']:null;}

@@ -49,3 +49,7 @@ production installer の既存 walk / weapon hooks の後に `installIdleMotion(
 シューター両手保持・歩行との連続性は引き続き親の共有範囲。今回の registry 修正は持ち方・歩調・入力・Actor/Runner・時計へ介入しない。証拠と接続要求は `/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/review-body/`。CPU 実骨格/IK/頂点、ブラウザ GPU、Actions、原作実機を引き続き区別する。
 
 The independent final tests also check cross-realm snapshots and direct frame-rate boundaries where relevant. Fixed 60 Hz production scheduling and direct 30/60/120 Hz native integration are recorded as separate CPU evidence; no equality of arbitrary native spring trajectories or Nintendo timings is inferred.
+
+### 統合された Carry の支持手
+
+全体 CI で残っていた「静止シューターの IKL=0／手が前持ち部から離れる」という旧比較を、公式映像から追加した Carry を含む本番条件へ更新した。native HOLD.twoCarry=0 は保ち、Carry の所有記録・実 IKL=1・描画された左右の native グリップ接触を検証する。fidget 抑制と視線・呼吸・足の調整、native flourish の比較もそのまま検証する。IK を切った状態のゼロ残差を支持手の接触証明には使わない。
