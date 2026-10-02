@@ -6,7 +6,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
 import crypto from 'node:crypto';
-import { pathToFileURL } from 'node:url';
+import { execFileSync } from 'node:child_process';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { pixelDifference } from './check-inkwave-motion-detail.mjs';
 
 export const CATALOG_MODULES = Object.freeze([
@@ -56,6 +57,46 @@ export function catalogRenderFrames(s) {
   return [...new Set([0, 6, 12, 21, 26, 30, 45, 60, 90, 120, 179, s.frames - 1, ...(s.probes || [])].filter(f => f < s.frames))].sort((a, b) => a - b);
 }
 const fail = message => { throw Error('Catalog ' + message); };
+const contains = (parent, child) => parent === child || child.startsWith(parent.endsWith(path.sep) ? parent : parent + path.sep);
+const physicalPath = name => {
+  const absolute = path.resolve(name);
+  let exists = false;
+  try { fs.lstatSync(absolute); exists = true; }
+  catch (error) { if (error.code !== 'ENOENT') throw error; }
+  if (exists) return fs.realpathSync(absolute);
+  // realpath must fail on dangling links, rather than treating them as a new
+  // persistent directory. Resolve existing ancestors before creating anything.
+  if (fs.existsSync(path.dirname(absolute))) return path.join(fs.realpathSync(path.dirname(absolute)), path.basename(absolute));
+  return path.join(physicalPath(path.dirname(absolute)), path.basename(absolute));
+};
+export function catalogStoragePath(dir, workspaceRoots = [process.cwd(), process.env.GITHUB_WORKSPACE, '/mnt/workspace'].filter(Boolean)) {
+  const resolved = physicalPath(dir);
+  if (['/tmp', '/var/tmp', '/dev/shm'].some(root => contains(root, resolved)) || !workspaceRoots.some(root => contains(physicalPath(root), resolved))) fail('persistent workspace storage required');
+  return resolved;
+}
+export function catalogInputPath(key) {
+  const roots = { upstream: 'inkwave-public', patch: 'patches/splatoon3', 'touch-layout': 'patches/touch-layout', reliability: 'patches/reliability' };
+  const [namespace, ...parts] = key.split('/');
+  if (!Object.hasOwn(roots, namespace) || !parts.length || parts.some(part => !part || part === '.' || part === '..' || part.includes('\\'))) fail('input namespace/path ' + key);
+  return roots[namespace] + '/' + parts.join('/');
+}
+export function validateCatalogInputReceipts(manifest, receipts) {
+  if (!manifest?.files || !Object.keys(manifest.files).length || !Array.isArray(receipts) || receipts.length !== Object.keys(manifest.files).length || new Set(receipts.map(r => r.key)).size !== receipts.length) fail('source input denominator');
+  if (crypto.createHash('sha256').update(JSON.stringify(manifest.files)).digest('hex') !== manifest.inputHash) fail('source input hash');
+  for (const [key, sha256] of Object.entries(manifest.files)) {
+    const file = catalogInputPath(key), receipt = receipts.find(r => r.key === key);
+    if (!/^[a-f0-9]{64}$/.test(sha256) || receipt?.file !== file || receipt.sha256 !== sha256 || receipt.committedSHA256 !== sha256 || !Number.isInteger(receipt.bytes) || receipt.bytes < 0) fail('committed source input identity ' + key);
+  }
+}
+export function catalogFootLayout(nativeCharacter, source) {
+  const sha256 = crypto.createHash('sha256').update(nativeCharacter).digest('hex');
+  if (/WPL:[\w$]+/.test(nativeCharacter) && /WPR:[\w$]+/.test(nativeCharacter)) return { named: true, source, sha256, verified: 'native CHARACTER_CHANNELS.WPL/WPR exports' };
+  const stab = nativeCharacter.match(/STAB:([\w$]+)/)?.[1];
+  const escape = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const adjacent = stab && nativeCharacter.match(new RegExp('([\\w$]+)=([\\w$]+)\\(\\),([\\w$]+)=\\2\\(\\),' + escape(stab) + '=\\2\\(\\)'));
+  if (!adjacent || !new RegExp('\\([\\w$]+===0\\?[\\w$]+\\[' + escape(adjacent[1]) + '\\]:[\\w$]+\\[' + escape(adjacent[3]) + '\\]\\)\\*[\\w$]+\\*\\(this.feetValid\\?1:0\\)').test(nativeCharacter)) fail('native foot contact binding changed; export WPL/WPR or review compiled layout');
+  return { named: false, leftBeforeStab: 2, rightBeforeStab: 1, source, sha256, verified: 'adjacent scalar allocation plus actual native feetValid/plantW blend expression' };
+}
 const finite = (value, label) => { if (typeof value !== 'number' || !Number.isFinite(value)) fail('non-finite ' + label); };
 function numericTree(value, label) {
   if (typeof value === 'number') finite(value, label);
@@ -167,20 +208,26 @@ export function validateCatalogResult(result) {
     if (label === 'wall-surge-ready-crest') need(phase('wall', 'charge') >= 20 && count(s => s.snapshots.wall?.ready && s.snapshots.wall?.glow > 0) >= 1 && phase('wall', 'launch') >= 1 && phase('wall', 'crest') >= 1 && row.renders.some(r => r.glint?.changedPixels > 0), 'native surge readiness/launch/crest');
     if (label === 'form-both-directions-interrupt') need(phase('form', 'dive') >= 5 && phase('form', 'emerge') >= 5 && count(s => s.snapshots.form?.reversing) >= 1 && count(s => s.snapshots.form?.actionBlocked) >= 1, 'form directions/reversal/interruption');
     if (label === 'dualies-roll-lock-interrupt') need(phase('dualies', 'roll') >= 5 && phase('dualies', 'plant') >= 10 && count(s => s.snapshots.dualies?.blockedRoll) >= 1 && row.events.some(e => e.name === 'fireDualies'), 'actual dualies roll/lock/interruption');
-    if (label.startsWith('roller-')) need(phase('roller-detail', 'startup') >= 1 && phase('roller-detail', 'recovery') >= 2 && row.events.some(e => e.name === 'fireFlick') && (label.includes('horizontal') ? count(s => s.rolling) >= 10 : count(s => s.snapshots['roller-detail']?.vertical) >= 10), 'native roller startup/release/recovery/push');
+    if (label.startsWith('roller-')) need(phase('roller-detail', 'startup') >= 1 && phase('roller-detail', 'recovery') >= 2 && row.events.filter(e => e.name === 'fireFlick').length === 1 && (label.includes('horizontal') ? count(s => s.rolling) >= 10 : count(s => s.snapshots['roller-detail']?.vertical) >= 10), 'native roller startup/release/recovery/push');
     if (label.startsWith('superjump-')) need(phase('superjump', 'charge') >= 10 && phase('superjump', 'flight') >= 10 && phase('superjump', 'descent') >= 1 && phase('superjump', 'touchdown') >= 1 && row.samples.at(-1).snapshots.superjump?.phase === null, 'native superjump flight/landing');
     if (label.startsWith('squidroll-')) need(phase('squidroll', 'roll') >= 5 && row.samples.at(-1).snapshots.squidroll?.phase === null && (label.endsWith('finish') || row.samples[13].snapshots.squidroll?.phase === null), 'roll finish/interruption');
     if (label === 'hit-spawn-reset') need(count(s => s.hp < 100) >= 1 && phase('hit-spawn', 'protected') >= 5 && row.samples.at(-1).snapshots['hit-spawn']?.coating === 0 && row.renders.some(r => r.coating?.changedPixels > 0), 'native damage/spawn coating/reset');
-    if (label === 'quiet-idle-held-sub') need(count(s => s.snapshots.idle?.quiet) >= 10 && count(s => s.heldBomb && !s.grip.left.held) >= 10 && row.events.some(e => e.name === 'throwBomb') && row.samples.at(-1).snapshots.carry?.active, 'idle/sub detachment/return');
+    if (label === 'quiet-idle-held-sub') need(count(s => s.snapshots.idle?.quiet) >= 10 && count(s => s.heldBomb && !s.grip.left.held) >= 10 && row.events.filter(e => e.name === 'throwBomb').length === 1 && row.samples.at(-1).snapshots.carry?.active, 'idle/sub detachment/return');
     if (label.startsWith('victory-')) need(phase('emotes', 'action') >= 20 && phase('emotes', 'hold') >= 10 && count(s => s.dance === 'lobby_pose') >= 20 && row.renders.some(r => row.samples[r.tick].dance === null && row.samples[r.tick].danceWeight > .01) && row.renders.some(r => row.samples[r.tick].dance === 'lobby_pose'), 'victory hold/fade/lobby');
-    if (label === 'native-slam-phases') { for (const p of ['rise', 'hang', 'fall', 'slam-recovery']) need(phase('special', p) >= 1, 'native special ' + p); need(row.samples.at(-1).snapshots.special?.phase === null, 'special expiry'); }
+    if (label === 'native-slam-phases') {
+      for (const p of ['rise', 'hang', 'fall', 'slam-recovery']) need(phase('special', p) >= 1, 'native special ' + p);
+      need(row.samples.at(-1).snapshots.special?.phase === null, 'special expiry');
+      const returned = row.samples.filter(s => s.snapshots.special?.phase === null && s.grounded && s.kidScale > .999 && Math.hypot(s.velocity[0], s.velocity[2]) > 1);
+      need(returned.length >= 30 && returned.every(s => s.walkActive), 'post-special native walking owner');
+    }
     if (label === 'native-storm-deploy') need(row.events.filter(e => e.name === 'throwStorm').length === 1 && phase('special', 'storm-deploy') >= 5 && phase('special', 'storm-recovery') >= 1 && row.samples.at(-1).snapshots.special?.phase === null, 'native Storm deploy/recovery');
     if (label === 'gaze-face-actions') { for (const mode of ['fire', 'sub-aim', 'throw']) need(count(s => s.snapshots.face?.mode === mode) >= 2, 'native face ' + mode); need(count(s => s.snapshots.face?.blink.some(x => x > .5)) >= 1 && row.renders.some(r => r.face?.changedPixels > 0), 'native face/blink RGB'); }
     if (label === 'lifecycle-interruptions') need(['form', 'sub', 'dance', 'reset', 'death', 'hide', 'weapon'].every(name => row.transitions.includes(name)) && row.renders.some(r => !r.visible) && row.samples.at(-1).visible, 'lifecycle interruption denominator');
     if (!row.pause || row.pause.unchangedClocks !== true || row.pause.sameRgb.changedPixels !== 0) fail('pause denominator ' + label);
     if (!row.zeroDt || row.zeroDt.unchangedClocks !== true || row.zeroDt.gameplayInvariant !== true) fail('zero-dt native clock/physics invariant ' + label);
     finite(row.zeroDt.poseDelta, label + '.zeroDt.poseDelta');
-    summaries.push({ name: label, frames: row.samples.length, renderPairs: row.renders.length, visibleFrames: count(s => s.visible), maximumHeldGrip: Math.max(...row.samples.flatMap(s => Object.values(s.grip).filter(g => g.held).map(g => g.gap))), nativeIKMaximum: Math.max(...row.samples.flatMap(s => s.ik)) });
+    const contacts = row.samples.flatMap(s => Object.values(s.grip).filter(g => g.held).map(g => g.gap));
+    summaries.push({ name: label, frames: row.samples.length, renderPairs: row.renders.length, visibleFrames: count(s => s.visible), heldHandSamples: contacts.length, maximumHeldGrip: contacts.length ? Math.max(...contacts) : null, nativeIKMaximum: Math.max(...row.samples.flatMap(s => s.ik)) });
   };
   // A real candidate can have multiple composition failures. Audit every case
   // before failing publication, so the first walking error hides no other gate.
@@ -200,10 +247,10 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout 
   const profile = await fetch(prefix + 'patches/splatoon3/profile.json').then(r => r.json());
   const { install } = await import(prefix + 'patches/splatoon3/runtime/install.mjs');
   const api = install(profile), { Actor, Character, Projectiles, Physics, G, CHARACTER_CHANNELS: C, CHARACTER_FOOT_METRICS: F } = api;
-  // The adapter exports STAB but not WPL/WPR. main verifies the adjacent native
-  // slots and their actual contact-blend use against immutable compiled bytes.
-  // Prefer named exports when the parent adds the requested diagnostic hooks.
-  const contactChannels = [C.WPL ?? C.STAB - footLayout.leftBeforeStab, C.WPR ?? C.STAB - footLayout.rightBeforeStab];
+  // Prefer native named exports. Only older frozen builds need the strictly
+  // source-verified adjacent-slot fallback, never an unverified inferred index.
+  const contactChannels = footLayout.named ? [C.WPL, C.WPR] : [C.WPL ?? C.STAB - footLayout.leftBeforeStab, C.WPR ?? C.STAB - footLayout.rightBeforeStab];
+  if (!contactChannels.every(Number.isInteger)) throw Error('Native foot channel exports missing');
   const snapshots = {};
   for (const [id, snapshot] of modules) snapshots[id] = (await import(prefix + 'patches/splatoon3/runtime/' + id + '-motion.mjs'))[snapshot];
   const { walkActive } = await import(prefix + 'patches/splatoon3/runtime/walk.mjs');
@@ -249,7 +296,13 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout 
     return save(row.name + '-contact-sheet', canvas.toDataURL('image/png'));
   }
   const snap = ch => Object.fromEntries(Object.entries(snapshots).map(([id, fn]) => [id, fn(ch)]));
-  const gameState = a => a ? JSON.stringify({ pos: a.pos.toArray(), vel: a.vel.toArray(), ink: a.ink, hp: a.hp, alive: a.alive, invuln: a.invuln, special: a.special, active: a.specialActive, form: a.form, jump: a.superJumpState && { phase: a.superJumpState.phase, t: a.superJumpState.t }, input: a.intent, runner: Object.fromEntries(Object.entries(a.weaponRunner).filter(([, v]) => v === null || ['number', 'string', 'boolean'].includes(typeof v))), actions: a.s3?.actions, time: G.time, bombs: projectiles.bombs.map(b => [b.fuse, b.pos.toArray(), b.vel.toArray()]) }) : null;
+  const primitives = object => Object.fromEntries(Object.entries(object).filter(([, v]) => v === null || ['number', 'string', 'boolean'].includes(typeof v)));
+  const gameState = a => JSON.stringify({
+    // Include all primitive native clocks, rather than a selected timer list.
+    actor: a ? primitives(a) : null, pos: a?.pos.toArray(), vel: a?.vel.toArray(), aimDir: a?.aimDir.toArray(), aimPoint: a?.aimPoint.toArray(),
+    active: a?.specialActive, jump: a?.superJumpState, input: a?.intent, runner: a ? primitives(a.weaponRunner) : null, actions: a?.s3?.actions, time: G.time,
+    projectiles: primitives(projectiles), projectileClocks: Object.fromEntries(Object.entries(projectiles).filter(([, v]) => Array.isArray(v)).map(([k, list]) => [k, list.map(p => p && typeof p === 'object' ? { clocks: primitives(p), pos: p.pos?.toArray(), vel: p.vel?.toArray() } : p)])),
+  });
   function collect(root) { root.traverse(node => { if (node.geometry) ownedGeometries.add(node.geometry); for (const m of (Array.isArray(node.material) ? node.material : [node.material])) if (m) allMaterials.add(m); }); }
   function geometry(ch) {
     // getVertexPosition executes real native skinning, but custom vertex-shader
@@ -475,10 +528,9 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout 
 async function main() {
   const option = name => { const i = process.argv.indexOf(name); if (i < 0 || !process.argv[i + 1]) throw Error('Required ' + name); return path.resolve(process.argv[i + 1]); };
   let site = option('--site'); const output = option('--evidence-dir'), profileDir = option('--profile-dir');
-  const physical = p => fs.existsSync(p) ? fs.realpathSync(p) : path.join(physical(path.dirname(p)), path.basename(p));
-  // Reject persistent-looking symlinks too. Profiles and evidence must resolve
-  // under persistent workspace storage, not merely outside the three temp dirs.
-  for (const dir of [output, profileDir]) { if (!physical(dir).startsWith('/mnt/workspace/')) throw Error('Persistent workspace storage required'); fs.mkdirSync(dir, { recursive: true }); }
+  // Canonical CI checkouts can live at /home/runner/work. Resolve ownership and
+  // reject temporary destinations (including symlinks) before any write.
+  for (const dir of [output, profileDir]) { catalogStoragePath(dir); fs.mkdirSync(dir, { recursive: true }); }
   const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
   const publish = (name, value) => { const file = path.join(output, name); fs.writeFileSync(file + '.writing', JSON.stringify(value, null, 2) + '\n'); fs.renameSync(file + '.writing', file); };
   const errors = [], loaded = new Map(); let manifest, server, browser, page, result, failure;
@@ -488,13 +540,20 @@ async function main() {
     site = fs.realpathSync(site); manifest = JSON.parse(fs.readFileSync(path.join(site, 'inkwave-build.json')));
     if (hash(JSON.stringify(manifest.artifacts)) !== manifest.contentHash) throw Error('Build identity mismatch');
     for (const [file, digest] of Object.entries(manifest.artifacts)) if (hash(fs.readFileSync(path.join(site, file))) !== digest) throw Error('Artifact mismatch ' + file);
+    const sourceRoot = fileURLToPath(new URL('../', import.meta.url));
+    const sourceHead = execFileSync('git', ['-C', sourceRoot, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+    const blob = file => execFileSync('git', ['-C', sourceRoot, 'cat-file', 'blob', sourceHead + ':' + file], { maxBuffer: 64 * 1024 * 1024, stdio: ['ignore', 'pipe', 'pipe'] });
+    const sourceInputs = Object.entries(manifest.files || {}).map(([key]) => {
+      const file = catalogInputPath(key), bytes = fs.readFileSync(path.join(sourceRoot, file));
+      return { key, file, sha256: hash(bytes), committedSHA256: hash(blob(file)), bytes: bytes.length };
+    });
+    validateCatalogInputReceipts(manifest, sourceInputs);
+    const builder = 'scripts/build-inkwave.mjs';
+    if (manifest.build.script !== hash(fs.readFileSync(path.join(sourceRoot, builder))) || manifest.build.script !== hash(blob(builder))) throw Error('Committed builder source identity');
+    publish('motion-catalog-source-inputs.json', { sourceHead, inputHash: manifest.inputHash, builderSHA256: manifest.build.script, sourceInputs });
     const prefix = '/_versions/' + manifest.build.revision + '/';
     const nativeCharacter = fs.readFileSync(path.join(site, prefix.slice(1), 'src/game/character.js'), 'utf8');
-    const stab = nativeCharacter.match(/STAB:([\w$]+)/)?.[1];
-    const escape = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const adjacent = stab && nativeCharacter.match(new RegExp('([\\w$]+)=([\\w$]+)\\(\\),([\\w$]+)=\\2\\(\\),' + escape(stab) + '=\\2\\(\\)'));
-    if (!adjacent || !new RegExp('\\([\\w$]+===0\\?[\\w$]+\\[' + escape(adjacent[1]) + '\\]:[\\w$]+\\[' + escape(adjacent[3]) + '\\]\\)\\*[\\w$]+\\*\\(this.feetValid\\?1:0\\)').test(nativeCharacter)) throw Error('Native foot contact binding changed; export WPL/WPR or review compiled layout');
-    const footLayout = { leftBeforeStab: 2, rightBeforeStab: 1, source: prefix.slice(1) + 'src/game/character.js', sha256: hash(nativeCharacter), verified: 'adjacent scalar allocation plus actual native feetValid/plantW blend expression' };
+    const footLayout = catalogFootLayout(nativeCharacter, prefix.slice(1) + 'src/game/character.js');
     server = http.createServer((req, res) => {
       if (req.url === '/motion-catalog') { res.writeHead(200, { 'content-type': 'text/html' }); res.end(`<html><head><script type="importmap">{"imports":{"three":"${prefix}vendor/three/build/three.module.js","three/addons/":"${prefix}vendor/three/jsm/"}}</script></head><body style="margin:0"></body></html>`); return; }
       const file = path.resolve(site, '.' + decodeURIComponent(new URL(req.url, 'http://localhost').pathname));
@@ -524,7 +583,7 @@ async function main() {
     // finally executes after the returned object was built; fetch its cleanup
     // snapshot explicitly so a missing cleanup cannot pass as a successful run.
     result.cleanup = await page.evaluate(() => globalThis.catalogPartial?.cleanup || null);
-    Object.assign(result, { errors, loaded: [...loaded.values()], artifacts: manifest.artifacts, build: manifest.build, footLayout });
+    Object.assign(result, { errors, loaded: [...loaded.values()], artifacts: manifest.artifacts, build: manifest.build, footLayout, sourceHead, inputHash: manifest.inputHash, sourceInputs });
     // Retain real images and full native traces even on a failed validation;
     // only the separately validated result may be published as passed.
     publish('motion-catalog-diagnostic.json', result);
