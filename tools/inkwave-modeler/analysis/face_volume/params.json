@@ -1195,6 +1195,31 @@
     "factor": 0.5,
     "iters": 20
    }
+  },
+  {
+   "name": "canthus_shelf_smooth",
+   "kind": "smooth",
+   "factor": 0.5,
+   "iters": 250,
+   "protect_lips": false,
+   "after_delta_smooth": true,
+   "eye_keep_mm": [
+    1.0,
+    3.0
+   ],
+   "bumps": [
+    {
+     "centre": [
+      82.0,
+      -15.0,
+      52.0
+     ],
+     "rx": 11.0,
+     "ry": 11.0,
+     "rz": 22.0,
+     "front_only": false
+    }
+   ]
   }
  ],
  "delta_smooth": {
