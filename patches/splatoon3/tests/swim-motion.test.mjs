@@ -174,11 +174,14 @@ function saveTrace(rows, summary) {
   const file = path.join(folder, path.basename(destination));
   const hashes = Object.fromEntries(['patches/splatoon3/runtime/swim-motion.mjs',
     'patches/splatoon3/tests/swim-motion.test.mjs', 'inkwave-public/src/game/character.js',
-    'inkwave-public/src/game/character-mats.js'].map(name => [name,
-    createHash('sha256').update(fs.readFileSync(path.join(ROOT, name))).digest('hex')]));
+    'inkwave-public/src/game/character-mats.js'].map(name => {
+    const file = name.startsWith('inkwave-public/')
+      ? path.join(SRC, name.slice('inkwave-public/'.length)) : path.join(ROOT, name);
+    return [name, createHash('sha256').update(fs.readFileSync(file)).digest('hex')];
+  }));
   fs.writeFileSync(file + '.pending', JSON.stringify({ schema: 1,
     evidence: 'native-source VM pose + actual indexed geometry with native vertex shader evaluated on CPU; GPU/console parity not asserted',
-    hashes, summary, rows }, null, 2) + '\n');
+    sourceRoot: SRC, hashes, summary, rows }, null, 2) + '\n');
   fs.renameSync(file + '.pending', file);
 }
 
