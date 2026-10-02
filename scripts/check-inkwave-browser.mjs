@@ -104,6 +104,43 @@ try {
     return {state:g.match.state, elapsedAt20Hz:initial-g.match.time-.5, movement:actor.pos.distanceTo(before), hp:actor.hp, gear:actor.s3.loadout, velocityFinite:[actor.vel.x,actor.vel.y,actor.vel.z].every(Number.isFinite), clockTicks:g.s3Clock.ticks, paintedFloorArea, coverage:G.paint.coverage()};
   });
   if (Math.abs(result.gameplay.elapsedAt20Hz-3)>1e-8 || !result.gameplay.velocityFinite || result.gameplay.movement<=0 || result.gameplay.paintedFloorArea<=0 || result.gameplay.coverage[0]<=0 || result.gameplay.coverage[0]>1) throw new Error('Actual browser gameplay regression');
+  result.weaponMotion = await page.evaluate(() => {
+    const G=globalThis.s3ProbeG,a=G.game.match.local,ch=a.character,dt=1/60;
+    // The already loaded match's real runner and Actor frame drive the actual
+    // rig. Position is held for these pose/timing checks; slide collision and
+    // travel are covered separately by the actual-Physics regressions.
+    const tick=(input={})=>{
+      a.ink=100;a.intent.fire=!!input.fire;a.intent.sub=!!input.sub;
+      G.time+=dt;a.weaponRunner.update(dt,input);a._finishFrame(dt);ch.root.updateMatrixWorld(true);
+      if(!Array.from(ch.P).every(Number.isFinite))throw Error('Non-finite compiled weapon pose');
+    };
+    const prepare=kind=>{
+      a.setWeapon(kind);a.form='kid';a.grounded=true;a.climbing=false;a.submerged=false;
+      a.vel.set(0,0,0);a.intent.move.set(0,0,0);a.intent.fire=false;a.intent.sub=false;
+      for(let i=0;i<90;i++)tick();
+    };
+    prepare('dualies');a.intent.fire=true;a.intent.move.set(1,0,0);
+    if(!a.weaponRunner.tryDodge(a.intent.move))throw Error('Actual compiled dualies could not slide');
+    a.intent.move.set(0,0,0);
+    for(let i=0;i<120;i++)tick({fire:true});
+    const dualies={turret:a.weaponRunner.s3Turret,lockTime:a.weaponRunner.lockT,poseWeight:ch.lockW,hipY:ch.bones.hips.position.y};
+    if(!dualies.turret||dualies.lockTime!==0||dualies.poseWeight<.99)throw Error('Compiled stationary turret pose expired before the runner state');
+    for(let i=0;i<60;i++)tick();
+    dualies.releasedPoseWeight=ch.lockW;
+    if(a.weaponRunner.s3Turret||ch.lockW>.002)throw Error('Compiled turret pose survived firing release');
+    prepare('slosher');tick({fire:true});
+    const windup=[];
+    for(let i=0;i<36;i++){windup.push({frame:i+1,runnerTime:a.weaponRunner.slosh,weaponWorld:ch.weapon.off.matrixWorld.elements.slice()});tick();}
+    if(!windup.some(s=>s.runnerTime>=0)||!windup.some(s=>s.runnerTime<0))throw Error('Compiled bucket never completed its actual windup');
+    a.weaponRunner.reset();tick();
+    if(ch.lastShot<1||ch.chargeFlash!==0)throw Error('Compiled reset left weapon motion clocks active');
+    prepare('shooter');a.special=0;a.s3.flow.active=true;a.s3.flow.remaining=10;tick();
+    const glow=()=>{const c=ch.u.uGlow.value;return Math.hypot(c.r,c.g,c.b);};
+    const flow={activeGlow:glow(),specialGlow:ch.wGlow};
+    a.s3.flow.active=false;a.s3.flow.remaining=0;tick();flow.inactiveGlow=glow();
+    if(!Number.isFinite(flow.activeGlow)||flow.activeGlow<=0||flow.specialGlow>.001||flow.inactiveGlow>=.001)throw Error('Compiled Flow material did not follow actual actor state');
+    return {fixture:'loaded match Actor/WeaponRunner -> complete Character; fixed pose position; Chromium WebGL',dualies,slosher:windup,flow};
+  });
   result.status = 'passed';
 } catch (error) {
   result = { ...(result || {}), status: 'failed', error: error.message };
@@ -112,7 +149,7 @@ try {
 } finally {
   
   result.sourceSha = sourceSha; result.verifiedResponses = receipts.length;
-  for (const required of ['patches/splatoon3/bootstrap.mjs','patches/splatoon3/profile.json','patches/splatoon3/runtime/install.mjs','src/main.js','src/game/actor.js','src/game/weapons.js']) if(!receipts.includes(required)) errors.push('Required runtime was not verified: '+required);
+  for (const required of ['patches/splatoon3/bootstrap.mjs','patches/splatoon3/profile.json','patches/splatoon3/runtime/install.mjs','patches/splatoon3/runtime/walk.mjs','patches/splatoon3/runtime/roller.mjs','patches/splatoon3/runtime/movement-motion.mjs','patches/splatoon3/runtime/weapon-motion.mjs','src/main.js','src/game/actor.js','src/game/character.js','src/game/weapons.js']) if(!receipts.includes(required)) errors.push('Required runtime was not verified: '+required);
   if(errors.length || consoleErrors.length || failures.length) result.status = 'failed';
   result.errors = errors; result.consoleErrors = consoleErrors; result.requestFailures = failures;
   fs.writeFileSync(evidence + '/browser-result.json.writing', JSON.stringify(result, null, 2));

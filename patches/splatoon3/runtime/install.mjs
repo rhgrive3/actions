@@ -21,6 +21,7 @@ import { installUi } from './ui.mjs';
 import { installRendering } from './render.mjs';
 import { installRollerMotion } from './roller.mjs';
 import { installWalkMotion } from './walk.mjs';
+import { installWeaponMotion } from './weapon-motion.mjs';
 
 let installed = false;
 export function install(profile) {
@@ -45,6 +46,7 @@ export function install(profile) {
   installClock(api);
   installUi(api);
   installRendering(api);
+  installWeaponMotion(api, profile);
   installWalkMotion(api, profile);
   // Aim remains tied to the actual camera ray. No target-dependent auto-turn.
   DEFAULT_SETTINGS.aimAssist = 0; DEFAULT_SETTINGS.aimAssistMouse = false;
