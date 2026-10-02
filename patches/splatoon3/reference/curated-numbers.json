@@ -1,0 +1,1310 @@
+{
+  "referenceVersion": "11.3.0",
+  "sourceCommit": "7280ff9cde8bb1c5dcef46c700c326471584d2e6",
+  "sources": [
+    {
+      "id": "data/parameter/1130/misc/params.json",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/misc/params.json",
+      "sha256": "7d01dc1542316bc496425a35efe1a7ece553b2e1b8140ebc4b465555e754788e"
+    },
+    {
+      "id": "data/parameter/1130/weapon/WeaponShooterNormal.game__GameParameterTable.json",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponShooterNormal.game__GameParameterTable.json",
+      "sha256": "dfca9f45fd0df3b6afab8f6ec0e47034912f3a6fc411936b9fd7257fe85c4cb9"
+    },
+    {
+      "id": "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json",
+      "sha256": "55e37c4d8db92b63d48f281015a30a9aaccd1ff838edf88ae4103124c365eb07"
+    },
+    {
+      "id": "data/parameter/1130/weapon/WeaponBlasterMiddle.game__GameParameterTable.json",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponBlasterMiddle.game__GameParameterTable.json",
+      "sha256": "36139282d2bd915f675424d99d5641800f184bcc9a9d1b0c94be533d38f64e18"
+    },
+    {
+      "id": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json",
+      "sha256": "92647d586beee1764ca8984820fa37e0fd7887e2a756f7ca18e10e1aef97fd08"
+    },
+    {
+      "id": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json",
+      "sha256": "dfe4637def507f933b0bbecbc805331f6357bb69ac165608a6e558406a4b72c1"
+    },
+    {
+      "id": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json",
+      "sha256": "5b423eb35d4cac268a1e4085ec8321d27639ddbfc8f3775bb65696af5c2449c7"
+    },
+    {
+      "id": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json",
+      "sha256": "1d20043ad7efaf2831801afbce601fb1e14bfd11947063903c6fadd6c98f5298"
+    },
+    {
+      "id": "data/parameter/1130/weapon/WeaponBombSplash.game__GameParameterTable.json",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponBombSplash.game__GameParameterTable.json",
+      "sha256": "d2a7e096d8e3ba3b5bef7774c7b62d1e9cb252b054650317955fa38f90658f97"
+    },
+    {
+      "id": "data/parameter/1130/weapon/WeaponSpInkStorm.game__GameParameterTable.json",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponSpInkStorm.game__GameParameterTable.json",
+      "sha256": "86be8a104a6194523223a976c8dd91506bb02e6526465e48ecce6f189001ea0b"
+    },
+    {
+      "id": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json",
+      "sha256": "afece0e3e2016a895ba79483bfa63489b334c372293417b3b0ef072993bcb660"
+    }
+  ],
+  "parameters": {
+    "data/parameter/1130/misc/params.json#/MoveVel_Human": {
+      "value": [
+        0.144,
+        0.12,
+        0.096
+      ],
+      "pointer": "/MoveVel_Human",
+      "sourceId": "data/parameter/1130/misc/params.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/misc/params.json#/MoveVel_Stealth": {
+      "value": [
+        0.24,
+        0.216,
+        0.192
+      ],
+      "pointer": "/MoveVel_Stealth",
+      "sourceId": "data/parameter/1130/misc/params.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/misc/params.json#/OpInk_MoveVel": {
+      "value": [
+        0.0768,
+        0.0557,
+        0.024
+      ],
+      "pointer": "/OpInk_MoveVel",
+      "sourceId": "data/parameter/1130/misc/params.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/misc/params.json#/OpInk_JumpVel": {
+      "value": [
+        0.11,
+        0.098,
+        0.08
+      ],
+      "pointer": "/OpInk_JumpVel",
+      "sourceId": "data/parameter/1130/misc/params.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/misc/params.json#/InkRecoverFrm_Stealth": {
+      "value": [
+        117.0,
+        148.5,
+        180.0
+      ],
+      "pointer": "/InkRecoverFrm_Stealth",
+      "sourceId": "data/parameter/1130/misc/params.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/misc/params.json#/InkRecoverFrm_Std": {
+      "value": [
+        220.0,
+        410.0,
+        600.0
+      ],
+      "pointer": "/InkRecoverFrm_Std",
+      "sourceId": "data/parameter/1130/misc/params.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/misc/params.json#/OpInk_DamagePerFrame": {
+      "value": [
+        0.0015,
+        0.00225,
+        0.003
+      ],
+      "pointer": "/OpInk_DamagePerFrame",
+      "sourceId": "data/parameter/1130/misc/params.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/misc/params.json#/OpInk_DamageLmt": {
+      "value": [
+        0.2,
+        0.3,
+        0.4
+      ],
+      "pointer": "/OpInk_DamageLmt",
+      "sourceId": "data/parameter/1130/misc/params.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponShooterNormal.game__GameParameterTable.json#/GameParameters/WeaponParam/InkConsume": {
+      "value": 0.0092,
+      "pointer": "/GameParameters/WeaponParam/InkConsume",
+      "sourceId": "data/parameter/1130/weapon/WeaponShooterNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponShooterNormal.game__GameParameterTable.json#/GameParameters/WeaponParam/MoveSpeed": {
+      "value": 0.072,
+      "pointer": "/GameParameters/WeaponParam/MoveSpeed",
+      "sourceId": "data/parameter/1130/weapon/WeaponShooterNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponShooterNormal.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeed": {
+      "value": 2.266,
+      "pointer": "/GameParameters/MoveParam/SpawnSpeed",
+      "sourceId": "data/parameter/1130/weapon/WeaponShooterNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponShooterNormal.game__GameParameterTable.json#/GameParameters/WeaponParam/Jump_DegSwerve": {
+      "value": 11.66,
+      "pointer": "/GameParameters/WeaponParam/Jump_DegSwerve",
+      "sourceId": "data/parameter/1130/weapon/WeaponShooterNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponShooterNormal.game__GameParameterTable.json#/GameParameters/WeaponParam/Stand_DegSwerve": {
+      "value": 4.86,
+      "pointer": "/GameParameters/WeaponParam/Stand_DegSwerve",
+      "sourceId": "data/parameter/1130/weapon/WeaponShooterNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponShooterNormal.game__GameParameterTable.json#/GameParameters/DamageParam/ValueMax": {
+      "value": 360,
+      "pointer": "/GameParameters/DamageParam/ValueMax",
+      "sourceId": "data/parameter/1130/weapon/WeaponShooterNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponShooterNormal.game__GameParameterTable.json#/GameParameters/DamageParam/ValueMin": {
+      "value": 180,
+      "pointer": "/GameParameters/DamageParam/ValueMin",
+      "sourceId": "data/parameter/1130/weapon/WeaponShooterNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponShooterNormal.game__GameParameterTable.json#/GameParameters/DamageParam/ReduceStartFrame": {
+      "value": 8,
+      "pointer": "/GameParameters/DamageParam/ReduceStartFrame",
+      "sourceId": "data/parameter/1130/weapon/WeaponShooterNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponShooterNormal.game__GameParameterTable.json#/GameParameters/DamageParam/ReduceEndFrame": {
+      "value": 40,
+      "pointer": "/GameParameters/DamageParam/ReduceEndFrame",
+      "sourceId": "data/parameter/1130/weapon/WeaponShooterNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponShooterNormal.game__GameParameterTable.json#/GameParameters/MoveParam/GoStraightToBrakeStateFrame": {
+      "value": 4,
+      "pointer": "/GameParameters/MoveParam/GoStraightToBrakeStateFrame",
+      "sourceId": "data/parameter/1130/weapon/WeaponShooterNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponShooterNormal.game__GameParameterTable.json#/GameParameters/MoveParam/FreeGravity": {
+      "value": 0.016,
+      "pointer": "/GameParameters/MoveParam/FreeGravity",
+      "sourceId": "data/parameter/1130/weapon/WeaponShooterNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json#/GameParameters/WeaponParam/InkConsume": {
+      "value": 0.0072,
+      "pointer": "/GameParameters/WeaponParam/InkConsume",
+      "sourceId": "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json#/GameParameters/WeaponParam/MoveSpeed": {
+      "value": 0.08,
+      "pointer": "/GameParameters/WeaponParam/MoveSpeed",
+      "sourceId": "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeed": {
+      "value": 2.37,
+      "pointer": "/GameParameters/MoveParam/SpawnSpeed",
+      "sourceId": "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json#/GameParameters/WeaponParam/Jump_DegSwerve": {
+      "value": 7.5,
+      "pointer": "/GameParameters/WeaponParam/Jump_DegSwerve",
+      "sourceId": "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json#/GameParameters/WeaponParam/Stand_DegSwerve": {
+      "value": 2.0,
+      "pointer": "/GameParameters/WeaponParam/Stand_DegSwerve",
+      "sourceId": "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json#/GameParameters/WeaponParam/RepeatFrame": {
+      "value": 5,
+      "pointer": "/GameParameters/WeaponParam/RepeatFrame",
+      "sourceId": "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json#/GameParameters/DamageParam/ValueMax": {
+      "value": 300,
+      "pointer": "/GameParameters/DamageParam/ValueMax",
+      "sourceId": "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json#/GameParameters/DamageParam/ValueMin": {
+      "value": 150,
+      "pointer": "/GameParameters/DamageParam/ValueMin",
+      "sourceId": "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json#/GameParameters/DamageParam/ReduceStartFrame": {
+      "value": 7,
+      "pointer": "/GameParameters/DamageParam/ReduceStartFrame",
+      "sourceId": "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json#/GameParameters/DamageParam/ReduceEndFrame": {
+      "value": 15,
+      "pointer": "/GameParameters/DamageParam/ReduceEndFrame",
+      "sourceId": "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json#/GameParameters/MoveParam/GoStraightToBrakeStateFrame": {
+      "value": 3,
+      "pointer": "/GameParameters/MoveParam/GoStraightToBrakeStateFrame",
+      "sourceId": "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json#/GameParameters/MoveParam/FreeGravity": {
+      "value": 0.016,
+      "pointer": "/GameParameters/MoveParam/FreeGravity",
+      "sourceId": "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponBlasterMiddle.game__GameParameterTable.json#/GameParameters/WeaponParam/InkConsume": {
+      "value": 0.1,
+      "pointer": "/GameParameters/WeaponParam/InkConsume",
+      "sourceId": "data/parameter/1130/weapon/WeaponBlasterMiddle.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponBlasterMiddle.game__GameParameterTable.json#/GameParameters/WeaponParam/MoveSpeed": {
+      "value": 0.045,
+      "pointer": "/GameParameters/WeaponParam/MoveSpeed",
+      "sourceId": "data/parameter/1130/weapon/WeaponBlasterMiddle.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponBlasterMiddle.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeed": {
+      "value": 0.945,
+      "pointer": "/GameParameters/MoveParam/SpawnSpeed",
+      "sourceId": "data/parameter/1130/weapon/WeaponBlasterMiddle.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponBlasterMiddle.game__GameParameterTable.json#/GameParameters/WeaponParam/Jump_DegSwerve": {
+      "value": 10.0,
+      "pointer": "/GameParameters/WeaponParam/Jump_DegSwerve",
+      "sourceId": "data/parameter/1130/weapon/WeaponBlasterMiddle.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponBlasterMiddle.game__GameParameterTable.json#/GameParameters/WeaponParam/Stand_DegSwerve": {
+      "value": 0.0,
+      "pointer": "/GameParameters/WeaponParam/Stand_DegSwerve",
+      "sourceId": "data/parameter/1130/weapon/WeaponBlasterMiddle.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponBlasterMiddle.game__GameParameterTable.json#/GameParameters/WeaponParam/RepeatFrame": {
+      "value": 50,
+      "pointer": "/GameParameters/WeaponParam/RepeatFrame",
+      "sourceId": "data/parameter/1130/weapon/WeaponBlasterMiddle.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponBlasterMiddle.game__GameParameterTable.json#/GameParameters/WeaponParam/InkRecoverStop": {
+      "value": 57,
+      "pointer": "/GameParameters/WeaponParam/InkRecoverStop",
+      "sourceId": "data/parameter/1130/weapon/WeaponBlasterMiddle.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/WeaponParam/InkConsume": {
+      "value": 0.225,
+      "pointer": "/GameParameters/WeaponParam/InkConsume",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/WeaponParam/MoveSpeed": {
+      "value": 0.07,
+      "pointer": "/GameParameters/WeaponParam/MoveSpeed",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeed": {
+      "value": 1.05,
+      "pointer": "/GameParameters/MoveParam/SpawnSpeed",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/WeaponParam/Jump_DegSwerve": {
+      "value": 7.0,
+      "pointer": "/GameParameters/WeaponParam/Jump_DegSwerve",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/WeaponParam/Stand_DegSwerve": {
+      "value": 3.3,
+      "pointer": "/GameParameters/WeaponParam/Stand_DegSwerve",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/WeaponParam/RepeatFrame": {
+      "value": 4,
+      "pointer": "/GameParameters/WeaponParam/RepeatFrame",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/DamageParam/ValueMax": {
+      "value": 300,
+      "pointer": "/GameParameters/DamageParam/ValueMax",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/DamageParam/ValueMin": {
+      "value": 150,
+      "pointer": "/GameParameters/DamageParam/ValueMin",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/DamageParam/ReduceStartFrame": {
+      "value": 11,
+      "pointer": "/GameParameters/DamageParam/ReduceStartFrame",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/DamageParam/ReduceEndFrame": {
+      "value": 19,
+      "pointer": "/GameParameters/DamageParam/ReduceEndFrame",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/MoveParam/GoStraightToBrakeStateFrame": {
+      "value": 8,
+      "pointer": "/GameParameters/MoveParam/GoStraightToBrakeStateFrame",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/WeaponParam/InkRecoverStop": {
+      "value": 40,
+      "pointer": "/GameParameters/WeaponParam/InkRecoverStop",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json#/GameParameters/SideStepParam/InkConsume": {
+      "value": 0.07,
+      "pointer": "/GameParameters/SideStepParam/InkConsume",
+      "sourceId": "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json#/GameParameters/SideStepParam/MoveFrame": {
+      "value": 12,
+      "pointer": "/GameParameters/SideStepParam/MoveFrame",
+      "sourceId": "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json#/GameParameters/SideStepParam/UnrelaxFrameMove": {
+      "value": 32,
+      "pointer": "/GameParameters/SideStepParam/UnrelaxFrameMove",
+      "sourceId": "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json#/GameParameters/WeaponParam/LapOver_RepeatFrame": {
+      "value": 4,
+      "pointer": "/GameParameters/WeaponParam/LapOver_RepeatFrame",
+      "sourceId": "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json#/GameParameters/WeaponParam/LapOver_DegSwerve": {
+      "value": 0.0,
+      "pointer": "/GameParameters/WeaponParam/LapOver_DegSwerve",
+      "sourceId": "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponBlasterMiddle.game__GameParameterTable.json#/GameParameters/BlastParam/DistanceDamage": {
+      "value": [
+        {
+          "Damage": 700,
+          "Distance": 1.025
+        },
+        {
+          "Damage": 500,
+          "Distance": 3.385
+        }
+      ],
+      "pointer": "/GameParameters/BlastParam/DistanceDamage",
+      "sourceId": "data/parameter/1130/weapon/WeaponBlasterMiddle.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponBlasterMiddle.game__GameParameterTable.json#/GameParameters/DamageParam/ValueMax": {
+      "value": 1250,
+      "pointer": "/GameParameters/DamageParam/ValueMax",
+      "sourceId": "data/parameter/1130/weapon/WeaponBlasterMiddle.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponBlasterMiddle.game__GameParameterTable.json#/GameParameters/WeaponParam/PreDelayFrame_HumanShot": {
+      "value": 10,
+      "pointer": "/GameParameters/WeaponParam/PreDelayFrame_HumanShot",
+      "sourceId": "data/parameter/1130/weapon/WeaponBlasterMiddle.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/WeaponParam/MaxShootingFrame_Second": {
+      "value": 160,
+      "pointer": "/GameParameters/WeaponParam/MaxShootingFrame_Second",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/WeaponParam/ChargeFrame_Second": {
+      "value": 72,
+      "pointer": "/GameParameters/WeaponParam/ChargeFrame_Second",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/WeaponParam/MoveSpeed_Charge": {
+      "value": 0.062,
+      "pointer": "/GameParameters/WeaponParam/MoveSpeed_Charge",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/WeaponParam/InkConsumeFullCharge": {
+      "value": 0.18,
+      "pointer": "/GameParameters/WeaponParam/InkConsumeFullCharge",
+      "sourceId": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/WeaponParam/InkConsumeMinCharge": {
+      "value": 0.0225,
+      "pointer": "/GameParameters/WeaponParam/InkConsumeMinCharge",
+      "sourceId": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/DamageParam/ValueMinCharge": {
+      "value": 400,
+      "pointer": "/GameParameters/DamageParam/ValueMinCharge",
+      "sourceId": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/DamageParam/ValueFullCharge": {
+      "value": 1600,
+      "pointer": "/GameParameters/DamageParam/ValueFullCharge",
+      "sourceId": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/MoveParam/DistanceMinCharge": {
+      "value": 9.033,
+      "pointer": "/GameParameters/MoveParam/DistanceMinCharge",
+      "sourceId": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/MoveParam/DistanceFullCharge": {
+      "value": 24.037,
+      "pointer": "/GameParameters/MoveParam/DistanceFullCharge",
+      "sourceId": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/WeaponParam/MoveSpeedFullCharge": {
+      "value": 0.02,
+      "pointer": "/GameParameters/WeaponParam/MoveSpeedFullCharge",
+      "sourceId": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/WeaponKeepChargeParam/KeepChargeFullFrame": {
+      "value": 75,
+      "pointer": "/GameParameters/WeaponKeepChargeParam/KeepChargeFullFrame",
+      "sourceId": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WideSwingUnitGroupParam/DamageParam/Inside": {
+      "value": {
+        "DamageHighDistance": 7.2,
+        "DamageHighValue": 1000,
+        "DamageLowDistance": 7.2,
+        "DamageLowValue": 1000,
+        "DamageMaxDistance": 4.2,
+        "DamageMaxValue": 1500,
+        "DamageMinDistance": 10.7,
+        "DamageMinValue": 350,
+        "Degree": 16.0,
+        "DepletionDamageRate": 0.25,
+        "FinalDamageMinValue": 350,
+        "InsideDistanceXZ": 1.2
+      },
+      "pointer": "/GameParameters/WideSwingUnitGroupParam/DamageParam/Inside",
+      "sourceId": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/VerticalSwingUnitGroupParam/DamageParam/Inside": {
+      "value": {
+        "DamageHighDistance": 8.2,
+        "DamageHighValue": 1000,
+        "DamageLowDistance": 11.2,
+        "DamageLowValue": 500,
+        "DamageMaxDistance": 5.2,
+        "DamageMaxValue": 1500,
+        "DamageMinDistance": 13.2,
+        "DamageMinValue": 400,
+        "Degree": 5.0,
+        "FinalDamageMinValue": 400
+      },
+      "pointer": "/GameParameters/VerticalSwingUnitGroupParam/DamageParam/Inside",
+      "sourceId": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WeaponRollParam/SpeedDash": {
+      "value": 0.132,
+      "pointer": "/GameParameters/WeaponRollParam/SpeedDash",
+      "sourceId": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WeaponRollParam/SpeedNormal": {
+      "value": 0.108,
+      "pointer": "/GameParameters/WeaponRollParam/SpeedNormal",
+      "sourceId": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WeaponRollParam/DashFrame": {
+      "value": 90,
+      "pointer": "/GameParameters/WeaponRollParam/DashFrame",
+      "sourceId": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WeaponRollParam/InkConsumeMaxPerFrame": {
+      "value": 0.001,
+      "pointer": "/GameParameters/WeaponRollParam/InkConsumeMaxPerFrame",
+      "sourceId": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WeaponWideSwingParam/SwingFrame": {
+      "value": 21,
+      "pointer": "/GameParameters/WeaponWideSwingParam/SwingFrame",
+      "sourceId": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WeaponWideSwingParam/InkConsume": {
+      "value": 0.085,
+      "pointer": "/GameParameters/WeaponWideSwingParam/InkConsume",
+      "sourceId": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WeaponWideSwingParam/SwingMoveSpeed": {
+      "value": 0.048,
+      "pointer": "/GameParameters/WeaponWideSwingParam/SwingMoveSpeed",
+      "sourceId": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WideSwingUnitGroupParam/Unit/0/BulletNum": {
+      "value": 12,
+      "pointer": "/GameParameters/WideSwingUnitGroupParam/Unit/0/BulletNum",
+      "sourceId": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WideSwingUnitGroupParam/Unit/0/SpawnSpeedBase": {
+      "value": 1.05,
+      "pointer": "/GameParameters/WideSwingUnitGroupParam/Unit/0/SpawnSpeedBase",
+      "sourceId": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WideSwingUnitGroupParam/Unit/0/SpawnWideDegree": {
+      "value": 18.0,
+      "pointer": "/GameParameters/WideSwingUnitGroupParam/Unit/0/SpawnWideDegree",
+      "sourceId": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WeaponVerticalSwingParam/SwingFrame": {
+      "value": 26,
+      "pointer": "/GameParameters/WeaponVerticalSwingParam/SwingFrame",
+      "sourceId": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WeaponVerticalSwingParam/InkConsume": {
+      "value": 0.085,
+      "pointer": "/GameParameters/WeaponVerticalSwingParam/InkConsume",
+      "sourceId": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/VerticalSwingUnitGroupParam/Unit/0/SpawnSpeedBase": {
+      "value": 1.8338,
+      "pointer": "/GameParameters/VerticalSwingUnitGroupParam/Unit/0/SpawnSpeedBase",
+      "sourceId": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WideSwingUnitGroupParam/Unit/0/UnitParam/MoveParam/FreeGravity": {
+      "value": 0.04,
+      "pointer": "/GameParameters/WideSwingUnitGroupParam/Unit/0/UnitParam/MoveParam/FreeGravity",
+      "sourceId": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WeaponWideSwingParam/InkRecoverStop": {
+      "value": 43,
+      "pointer": "/GameParameters/WeaponWideSwingParam/InkRecoverStop",
+      "sourceId": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WeaponVerticalSwingParam/InkRecoverStop": {
+      "value": 58,
+      "pointer": "/GameParameters/WeaponVerticalSwingParam/InkRecoverStop",
+      "sourceId": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/WeaponParam/InkConsume": {
+      "value": 0.076,
+      "pointer": "/GameParameters/WeaponParam/InkConsume",
+      "sourceId": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/WeaponParam/RepeatFrame": {
+      "value": 29,
+      "pointer": "/GameParameters/WeaponParam/RepeatFrame",
+      "sourceId": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/WeaponParam/SwingLiftFrame": {
+      "value": 12,
+      "pointer": "/GameParameters/WeaponParam/SwingLiftFrame",
+      "sourceId": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/WeaponParam/MoveSpeed": {
+      "value": 0.04,
+      "pointer": "/GameParameters/WeaponParam/MoveSpeed",
+      "sourceId": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/WeaponParam/InkRecoverStop": {
+      "value": 40,
+      "pointer": "/GameParameters/WeaponParam/InkRecoverStop",
+      "sourceId": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/UnitGroupParam/Unit/0/DamageParam/ValueMax": {
+      "value": 700,
+      "pointer": "/GameParameters/UnitGroupParam/Unit/0/DamageParam/ValueMax",
+      "sourceId": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/UnitGroupParam/Unit/2/DamageParam/ValueMax": {
+      "value": 500,
+      "pointer": "/GameParameters/UnitGroupParam/Unit/2/DamageParam/ValueMax",
+      "sourceId": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponBombSplash.game__GameParameterTable.json#/GameParameters/BlastParam/DistanceDamage": {
+      "value": [
+        {
+          "Damage": 1800,
+          "Distance": 3.6
+        },
+        {
+          "Damage": 300,
+          "Distance": 7.0
+        }
+      ],
+      "pointer": "/GameParameters/BlastParam/DistanceDamage",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombSplash.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponBombSplash.game__GameParameterTable.json#/GameParameters/MoveParam/BurstFrame": {
+      "value": 60,
+      "pointer": "/GameParameters/MoveParam/BurstFrame",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombSplash.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponBombSplash.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeedZSpecUp/Low": {
+      "value": 1.12,
+      "pointer": "/GameParameters/MoveParam/SpawnSpeedZSpecUp/Low",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombSplash.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponBombSplash.game__GameParameterTable.json#/GameParameters/MoveParam/FlyGravity": {
+      "value": 0.016,
+      "pointer": "/GameParameters/MoveParam/FlyGravity",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombSplash.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponBombSplash.game__GameParameterTable.json#/GameParameters/WeaponParam/InkRecoverStop": {
+      "value": 60,
+      "pointer": "/GameParameters/WeaponParam/InkRecoverStop",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombSplash.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponSpInkStorm.game__GameParameterTable.json#/GameParameters/CloudParam/RainyFrame/Low": {
+      "value": 480.0,
+      "pointer": "/GameParameters/CloudParam/RainyFrame/Low",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpInkStorm.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/weapon/WeaponSpInkStorm.game__GameParameterTable.json#/GameParameters/CloudParam/DamageRadius": {
+      "value": 10.0,
+      "pointer": "/GameParameters/CloudParam/DamageRadius",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpInkStorm.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/misc/params.json#/ConsumeRt_Main": {
+      "value": [
+        0.55,
+        0.775,
+        1.0
+      ],
+      "pointer": "/ConsumeRt_Main",
+      "sourceId": "data/parameter/1130/misc/params.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/misc/params.json#/ConsumeRt_Sub_Lv0": {
+      "value": [
+        0.8,
+        0.9,
+        1.0
+      ],
+      "pointer": "/ConsumeRt_Sub_Lv0",
+      "sourceId": "data/parameter/1130/misc/params.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/misc/params.json#/IncreaseRt_Special": {
+      "value": [
+        1.3,
+        1.15,
+        1.0
+      ],
+      "pointer": "/IncreaseRt_Special",
+      "sourceId": "data/parameter/1130/misc/params.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/misc/params.json#/SpecialGaugeRt_Restart": {
+      "value": [
+        1.0,
+        0.8,
+        0.5
+      ],
+      "pointer": "/SpecialGaugeRt_Restart",
+      "sourceId": "data/parameter/1130/misc/params.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/misc/params.json#/Dying_ChaseFrm": {
+      "value": [
+        90.0,
+        180.0,
+        270.0
+      ],
+      "pointer": "/Dying_ChaseFrm",
+      "sourceId": "data/parameter/1130/misc/params.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/misc/params.json#/SuperJump_ChargeFrm": {
+      "value": [
+        20.0,
+        35.0,
+        80.0
+      ],
+      "pointer": "/SuperJump_ChargeFrm",
+      "sourceId": "data/parameter/1130/misc/params.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#/GameParameters/spl__PlayerGearSkillParam_ActionSpecUp_Squid": {
+      "value": {
+        "$type": "spl__PlayerGearSkillParam_ActionSpecUp_Squid",
+        "WallJumpChargeFrm_High": 5,
+        "WallJumpChargeFrm_Low": 45,
+        "WallJumpChargeFrm_Mid": 18
+      },
+      "pointer": "/GameParameters/spl__PlayerGearSkillParam_ActionSpecUp_Squid",
+      "sourceId": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/misc/params.json#/Somersault_MoveVelKd": {
+      "value": [
+        1.0,
+        0.925,
+        0.85
+      ],
+      "pointer": "/Somersault_MoveVelKd",
+      "sourceId": "data/parameter/1130/misc/params.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/misc/params.json#/OpInk_MoveVel_Shot": {
+      "value": [
+        0.042,
+        0.033,
+        0.012
+      ],
+      "pointer": "/OpInk_MoveVel_Shot",
+      "sourceId": "data/parameter/1130/misc/params.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/misc/params.json#/OpInk_ArmorHP": {
+      "value": [
+        39.0,
+        26.0,
+        0.0
+      ],
+      "pointer": "/OpInk_ArmorHP",
+      "sourceId": "data/parameter/1130/misc/params.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "data/parameter/1130/misc/params.json#/SuperJump_MoveFrm": {
+      "value": [
+        96.6,
+        132.3,
+        138.0
+      ],
+      "pointer": "/SuperJump_MoveFrm",
+      "sourceId": "data/parameter/1130/misc/params.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+    },
+    "movement.acceleration": {
+      "value": null,
+      "unit": "unknown",
+      "sourceId": null,
+      "pointer": null,
+      "status": "unknown",
+      "notes": "No public default code/measurement was obtained."
+    },
+    "movement.jumpGravity": {
+      "value": null,
+      "unit": "unknown",
+      "sourceId": null,
+      "pointer": null,
+      "status": "unknown",
+      "notes": "Upstream handling remains an explicitly unverified calibration."
+    },
+    "roll.minimumAngle": {
+      "value": null,
+      "unit": "unknown",
+      "sourceId": null,
+      "pointer": null,
+      "status": "unknown",
+      "notes": "Nintendo documents the input but does not publish the exact angle threshold."
+    },
+    "roll.minimumSpeed": {
+      "value": null,
+      "unit": "unknown",
+      "sourceId": null,
+      "pointer": null,
+      "status": "unknown",
+      "notes": "Minimum speed and chain reset require engine code or controlled Switch measurement."
+    },
+    "roll.armorFrames": {
+      "value": null,
+      "unit": "unknown",
+      "sourceId": null,
+      "pointer": null,
+      "status": "unknown",
+      "notes": "Early armor is documented; exact duration and overflow behavior are not certified."
+    },
+    "surge.burstVelocity": {
+      "value": null,
+      "unit": "unknown",
+      "sourceId": null,
+      "pointer": null,
+      "status": "unknown",
+      "notes": "Charge-time gear field exists; launch velocity/default code was not obtained."
+    },
+    "flow.trigger": {
+      "value": null,
+      "unit": "unknown",
+      "sourceId": null,
+      "pointer": null,
+      "status": "unknown",
+      "notes": "Official actions activate Flow; exact score formula/threshold is unavailable."
+    },
+    "flow.extension": {
+      "value": null,
+      "unit": "unknown",
+      "sourceId": null,
+      "pointer": null,
+      "status": "unknown",
+      "notes": "Official splat/assist extension exists; exact extension time unavailable."
+    },
+    "flow.multipliers": {
+      "value": null,
+      "unit": "unknown",
+      "sourceId": null,
+      "pointer": null,
+      "status": "unknown",
+      "notes": "Buff categories are official; exact numerical strengths unavailable."
+    },
+    "health.regen": {
+      "value": null,
+      "unit": "unknown",
+      "sourceId": null,
+      "pointer": null,
+      "status": "unknown",
+      "notes": "Default timings/rates omitted from exposed parameters."
+    },
+    "respawn.total": {
+      "value": null,
+      "unit": "unknown",
+      "sourceId": null,
+      "pointer": null,
+      "status": "unknown",
+      "notes": "Only component gear curves are available, not the entire default respawn sequence."
+    },
+    "camera.gyro": {
+      "value": null,
+      "unit": "unknown",
+      "sourceId": null,
+      "pointer": null,
+      "status": "unknown",
+      "notes": "Requires reference-device calibration and input response measurements."
+    },
+    "terrain.feet": {
+      "value": null,
+      "unit": "unknown",
+      "sourceId": null,
+      "pointer": null,
+      "status": "unknown",
+      "notes": "Collision tolerance, slope/ledge behavior and stride remain unmeasured."
+    },
+    "special.slam": {
+      "value": null,
+      "unit": "unknown",
+      "sourceId": null,
+      "pointer": null,
+      "status": "unknown",
+      "notes": "INKWAVE slam lacks Triple Splashdown fists; no numerical substitution can establish equivalence."
+    },
+    "data/parameter/1130/misc/params.json#/MoveVelRt_Shot": {
+      "value": [
+        1.25,
+        1.125,
+        1.0
+      ],
+      "pointer": "/MoveVelRt_Shot",
+      "sourceId": "data/parameter/1130/misc/params.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Extracted field; unit conversion and behavior remain separate validation."
+    },
+    "data/parameter/1130/misc/params.json#/ReduceJumpSwerveRate": {
+      "value": [
+        1.0,
+        0.75,
+        0.0
+      ],
+      "pointer": "/ReduceJumpSwerveRate",
+      "sourceId": "data/parameter/1130/misc/params.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Extracted field; unit conversion and behavior remain separate validation."
+    },
+    "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/DamageParam/ValueMaxCharge": {
+      "value": 800,
+      "pointer": "/GameParameters/DamageParam/ValueMaxCharge",
+      "sourceId": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Extracted field; unit conversion and behavior remain separate validation."
+    },
+    "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#/GameParameters/spl__PlayerGearSkillParam_ActionSpecUp_Squid/WallJumpChargeFrm_Low": {
+      "value": 45,
+      "pointer": "/GameParameters/spl__PlayerGearSkillParam_ActionSpecUp_Squid/WallJumpChargeFrm_Low",
+      "sourceId": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; behavior and physical units are verified separately."
+    },
+    "data/parameter/1130/weapon/WeaponBombSplash.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeedZSpecUp/Mid": {
+      "value": 1.4,
+      "pointer": "/GameParameters/MoveParam/SpawnSpeedZSpecUp/Mid",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombSplash.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; behavior and physical units are verified separately."
+    },
+    "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#/GameParameters/spl__PlayerGearSkillParam_ActionSpecUp_Squid/WallJumpChargeFrm_Mid": {
+      "value": 18,
+      "pointer": "/GameParameters/spl__PlayerGearSkillParam_ActionSpecUp_Squid/WallJumpChargeFrm_Mid",
+      "sourceId": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; behavior and physical units are verified separately."
+    },
+    "data/parameter/1130/weapon/WeaponBombSplash.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeedZSpecUp/High": {
+      "value": 1.68,
+      "pointer": "/GameParameters/MoveParam/SpawnSpeedZSpecUp/High",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombSplash.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; behavior and physical units are verified separately."
+    },
+    "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#/GameParameters/spl__PlayerGearSkillParam_ActionSpecUp_Squid/WallJumpChargeFrm_High": {
+      "value": 5,
+      "pointer": "/GameParameters/spl__PlayerGearSkillParam_ActionSpecUp_Squid/WallJumpChargeFrm_High",
+      "sourceId": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; behavior and physical units are verified separately."
+    },
+    "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/WeaponParam/ChargeFrame_First": {
+      "value": 48,
+      "pointer": "/GameParameters/WeaponParam/ChargeFrame_First",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; behavior and physical units are verified separately."
+    },
+    "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/WeaponParam/MaxShootingFrame_First": {
+      "value": 80,
+      "pointer": "/GameParameters/WeaponParam/MaxShootingFrame_First",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; behavior and physical units are verified separately."
+    },
+    "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/MainWeaponSetting/Overwrite_MoveVelRt_Shot_Low": {
+      "value": 1.0,
+      "pointer": "/GameParameters/MainWeaponSetting/Overwrite_MoveVelRt_Shot_Low",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "gear effect ratio",
+      "notes": "Per-weapon override; unchanged endpoints reuse the pinned common curve. No omitted default reconstructed."
+    },
+    "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/MainWeaponSetting/Overwrite_MoveVelRt_Shot_Mid": {
+      "value": 1.175,
+      "pointer": "/GameParameters/MainWeaponSetting/Overwrite_MoveVelRt_Shot_Mid",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "gear effect ratio",
+      "notes": "Per-weapon override; unchanged endpoints reuse the pinned common curve. No omitted default reconstructed."
+    },
+    "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/MainWeaponSetting/Overwrite_MoveVelRt_Shot_High": {
+      "value": 1.35,
+      "pointer": "/GameParameters/MainWeaponSetting/Overwrite_MoveVelRt_Shot_High",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "gear effect ratio",
+      "notes": "Per-weapon override; unchanged endpoints reuse the pinned common curve. No omitted default reconstructed."
+    },
+    "data/parameter/1130/weapon/WeaponBlasterMiddle.game__GameParameterTable.json#/GameParameters/spl__PlayerGearSkillParam_ActionSpecUp_ReduceJumpSwerveRate/Mid": {
+      "value": 0.5,
+      "pointer": "/GameParameters/spl__PlayerGearSkillParam_ActionSpecUp_ReduceJumpSwerveRate/Mid",
+      "sourceId": "data/parameter/1130/weapon/WeaponBlasterMiddle.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "gear effect ratio",
+      "notes": "Per-weapon override; unchanged endpoints reuse the pinned common curve. No omitted default reconstructed."
+    }
+  }
+}
