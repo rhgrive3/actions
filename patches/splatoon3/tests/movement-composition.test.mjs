@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
-import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { adaptSource } from '../adapter.mjs';
 import { installMovementMotion, movementMotionSnapshot } from '../runtime/movement-motion.mjs';
@@ -11,6 +11,9 @@ import { installMovementMotion, movementMotionSnapshot } from '../runtime/moveme
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const SRC = path.join(ROOT, 'inkwave-public');
 const plain = value => JSON.parse(JSON.stringify(value));
+// Exact pre-fix cb381b3 blob, available in shallow clones and source archives.
+const legacySource = fs.readFileSync(new URL('./fixtures/movement-owner-before.mjs', import.meta.url), 'utf8');
+assert.equal(createHash('sha256').update(legacySource).digest('hex'), '385583f2102796592356007aaea0083ac5e61e7ad48a8166bedc28c9286a172c');
 
 // Fresh complete production realm for every experiment, including every motion
 // installer. Do not join source-fixture's stub Character to a different Actor.
@@ -22,7 +25,7 @@ async function production(legacyMovement = false) {
     if (file.startsWith(path.join(ROOT, 'src') + path.sep)) file = path.join(SRC, path.relative(ROOT, file));
     if (modules.has(file)) return modules.get(file);
     const source = legacyMovement && file === path.join(ROOT, 'patches/splatoon3/runtime/movement-motion.mjs')
-      ? execFileSync('git', ['show', 'cb381b38608a823d1e329c7248e4f27fe26eb18a:patches/splatoon3/runtime/movement-motion.mjs'], { cwd: ROOT, encoding: 'utf8' })
+      ? legacySource
       : fs.readFileSync(file, 'utf8');
     const mod = new vm.SourceTextModule(file.startsWith(SRC + path.sep) ? adaptSource(path.relative(SRC, file), source) : source,
       { context, identifier: file, initializeImportMeta(meta) { meta.url = pathToFileURL(file).href; } });
