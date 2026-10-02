@@ -6,6 +6,20 @@ import { installMovementMotion, movementMotionSnapshot } from '../runtime/moveme
 import { FixedClock } from '../runtime/clock.mjs';
 
 const close = (a, b, tolerance = 1e-9) => assert.ok(Math.abs(a - b) <= tolerance, `${a} != ${b}`);
+test('native Actor cancellation does not allocate an untouched Character and disposal stays terminal', async () => {
+  const f = await fixture(), api = await realCharacter();
+  installMovementMotion({ ...api, Actor: f.Actor }, f.profile);
+  const a = f.make(), ch = new api.Character({ weapon: 'shooter', style: { hair: 0, skin: 2, outfit: 0, eyes: 0 } });
+  a.character = ch;
+  assert.equal(movementMotionSnapshot(ch), null);
+  a.reset(); assert.equal(movementMotionSnapshot(ch), null, 'reset cannot invent visual state');
+  ch.trigger('squidroll'); ch.update(1 / 60, { form: 'squid', grounded: false });
+  assert.equal(movementMotionSnapshot(ch).phase, 'roll');
+  ch.dispose(); assert.equal(movementMotionSnapshot(ch), null);
+  a.reset(); ch.trigger('squidroll'); ch.update(1 / 60, { form: 'squid' });
+  assert.equal(movementMotionSnapshot(ch), null, 'terminal owner is never resurrected');
+  ch.dispose();
+});
 async function rig(hz = 60, weapon = 'shooter') {
   const f = await fixture(), api = await realCharacter();
   installMovementMotion({ ...api, Actor: f.Actor }, f.profile);

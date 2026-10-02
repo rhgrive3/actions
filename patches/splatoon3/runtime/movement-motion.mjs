@@ -1,8 +1,10 @@
 // Dedicated squid action layer on the actual public Character, after its normal
 // form/swim/climb/air pose. Rotations and shape curves are visual calibration;
 // Nintendo's public clips establish the actions, not exact joint curves.
-const installedCharacters = new WeakSet(), installedActors = new WeakSet();
-const states = new WeakMap();
+// The owning closures stay private, but registration is on the production
+// prototypes. Independently evaluated modules must discover that same owner.
+const CHARACTER_OWNER = Symbol.for('inkwave.s3.movement-motion.character.v1');
+const ACTOR_INSTALL = Symbol.for('inkwave.s3.movement-motion.actor.v1');
 const clamp = x => Math.max(0, Math.min(1, x));
 const ease = x => { x = clamp(x); return x * x * (3 - 2 * x); };
 const TAU = Math.PI * 2, EPS = 1e-10;
@@ -13,9 +15,7 @@ export const MOVEMENT_MOTION_CALIBRATION = Object.freeze({
 });
 
 export function movementMotionSnapshot(ch) {
-  const m = states.get(ch);
-  return m ? { phase: m.phase, rollAge: m.roll?.age ?? null,
-    topAge: m.top?.age ?? null, spin: m.spin, charge: m.charge } : null;
+  return ch?.[CHARACTER_OWNER]?.snapshot(ch) ?? null;
 }
 
 function restore(ch, m) {
@@ -34,6 +34,7 @@ function cancel(ch, m) {
 export function installMovementMotion({ Character, Actor, THREE }, profile) {
   if (!Character || !THREE || !profile?.movement) throw new Error('Movement motion requires Character, THREE and movement tuning');
   const cfg = profile.movement, visual = MOVEMENT_MOTION_CALIBRATION;
+  const states = new WeakMap(), disposed = new WeakSet();
   const get = ch => {
     let m = states.get(ch);
     if (!m) {
@@ -45,10 +46,19 @@ export function installMovementMotion({ Character, Actor, THREE }, profile) {
     }
     return m;
   };
-  if (!installedCharacters.has(Character.prototype)) {
-    installedCharacters.add(Character.prototype);
+  if (!Object.hasOwn(Character.prototype, CHARACTER_OWNER)) {
     const C = Character.prototype, trigger = C.trigger, update = C.update, squid = C._updateSquid;
+    Object.defineProperty(C, CHARACTER_OWNER, { value: Object.freeze({
+      snapshot(ch) {
+        const m = states.get(ch);
+        return m ? { phase: m.phase, rollAge: m.roll?.age ?? null,
+          topAge: m.top?.age ?? null, spin: m.spin, charge: m.charge } : null;
+      },
+      cancel(ch) { const m = states.get(ch); if (m) cancel(ch, m); },
+      disposed(ch) { return disposed.has(ch); },
+    }) });
     C.trigger = function (name, arg) {
+      if (disposed.has(this)) return trigger.call(this, name, arg);
       const m = get(this);
       if (name === 'squidroll') {
         m.roll = { age: 0, duration: Math.max(EPS, arg?.duration ?? cfg.roll.duration) };
@@ -63,6 +73,7 @@ export function installMovementMotion({ Character, Actor, THREE }, profile) {
       return trigger.call(this, name, arg);
     };
     C.update = function (dt, s = {}) {
+      if (disposed.has(this)) return;
       s = s || {}; // preserve the public Character's nullable preview input
       const m = get(this), frame = s.movementMotion, step = Math.max(0, Math.min(.1, dt || 0));
       // Actor state is authoritative. A missed notification cannot strand a
@@ -113,6 +124,7 @@ export function installMovementMotion({ Character, Actor, THREE }, profile) {
       return result;
     };
     C._updateSquid = function (dt, s) {
+      if (disposed.has(this)) return;
       const m = get(this);
       // Original pose overwrites pivot from its own springs every visible tick;
       // our offset must never feed back into those springs or accumulate.
@@ -135,17 +147,29 @@ export function installMovementMotion({ Character, Actor, THREE }, profile) {
       m.applied = true;
       return result;
     };
+    const dispose = C.dispose;
+    C.dispose = function (...args) {
+      if (disposed.has(this)) return;
+      const m = states.get(this);
+      if (m) cancel(this, m);
+      states.delete(this); disposed.add(this);
+      return dispose.apply(this, args);
+    };
   }
   // Prototype hooks need no adapter/source anchor. Call after installMovement.
   // They delegate the full public frame, reset, death and action implementations.
-  if (Actor && !installedActors.has(Actor.prototype)) {
-    installedActors.add(Actor.prototype);
+  if (Actor && !Object.hasOwn(Actor.prototype, ACTOR_INSTALL)) {
     const A = Actor.prototype, finish = A._finishFrame;
+    Object.defineProperty(A, ACTOR_INSTALL, { value: true });
     A._finishFrame = function (...args) {
-      const frame = this.anim.movementMotion ||= {};
-      frame.actions = this.s3?.actions; frame.superJump = this.superJumpState;
-      frame.chargeTime = this.s3?.jumpChargeTime;
-      frame.alive = this.alive; frame.special = this.specialActive;
+      const ch = this.character;
+      if (ch?.[CHARACTER_OWNER]?.disposed(ch)) delete this.anim.movementMotion;
+      else {
+        const frame = this.anim.movementMotion ||= {};
+        frame.actions = this.s3?.actions; frame.superJump = this.superJumpState;
+        frame.chargeTime = this.s3?.jumpChargeTime;
+        frame.alive = this.alive; frame.special = this.specialActive;
+      }
       return finish.apply(this, args);
     };
     for (const method of ['reset', 'splat', '_startSpecial', 'superJump']) {
@@ -153,7 +177,10 @@ export function installMovementMotion({ Character, Actor, THREE }, profile) {
       A[method] = function (...args) {
         const result = original.apply(this, args);
         if (method === 'reset' || !this.alive || this.specialActive || this.superJumpState) {
-          if (this.character) cancel(this.character, get(this.character));
+          const ch = this.character;
+          // Actor registration may have been evaluated in a different realm or
+          // against another Character. Never allocate state on cancellation.
+          ch?.[CHARACTER_OWNER]?.cancel(ch);
           if (this.anim) delete this.anim.movementMotion;
         }
         return result;
