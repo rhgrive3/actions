@@ -4,9 +4,9 @@
 // the aiming phase. Curve ages below are native visual calibration, not Switch
 // input-frame measurements or extracted Nintendo animation parameters.
 const INSTALL = Symbol.for('inkwave.s3.bomb-motion.install.v1'), RESET = Symbol.for('inkwave.s3.bomb-motion.reset.v1');
-const states = new WeakMap(), sampleCaches = new WeakMap();
+const states = new WeakMap(), sampleCaches = new WeakMap(), disposed = new WeakSet();
 const RELEASE_AGE = .10, NATIVE_END = .62, RECOVERY = NATIVE_END - RELEASE_AGE;
-const enabled = ch => ch?.s3BombMotionEnabled !== false;
+const enabled = ch => !!ch && ch.s3BombMotionEnabled !== false && !registry(ch)?.disposed?.has(ch);
 function registry(ch) {
   for (let prototype = Object.getPrototypeOf(ch); prototype; prototype = Object.getPrototypeOf(prototype))
     if (Object.hasOwn(prototype, INSTALL)) return prototype[INSTALL];
@@ -72,7 +72,8 @@ function sampleCache(ch) {
 }
 function sampleRelease(a, out) {
   const ch = a?.character, value = ch && stateMap(ch).get(ch), curves = ch && registry(ch)?.curves;
-  if (!curves || !enabled(ch) || !ch.bomb || !ch.weapon || hidden(ch.root) || ch.dance || a.alive === false || a.form === 'squid') return out;
+  if (!curves || !enabled(ch) || !ch.bomb || !ch.weapon || hidden(ch.root) || ch.dance || a.alive === false || a.form === 'squid'
+    || a.specialActive || a.superJumpState) return out;
   // Evaluate the exported native curve into isolated buffers. The receiver
   // deliberately has no gameplay clocks, springs, footsteps or hair to mutate.
   const cache = sampleCache(ch), pose = cache.pose;
@@ -158,7 +159,7 @@ export function installBombMotion({ Character, WeaponRunner, CHARACTER_TIMERS: t
   // A globally registered own prototype stamp survives imports into other VM
   // realms. Keep the original state/curve registry available to their helpers.
   if (Object.hasOwn(C, INSTALL)) return;
-  Object.defineProperty(C, INSTALL, { value: Object.freeze({ states, curves }) });
+  Object.defineProperty(C, INSTALL, { value: Object.freeze({ states, curves, disposed }) });
   function clear(ch) {
     if (!ch?.tr) return;
     stateMap(ch).delete(ch);
@@ -181,7 +182,11 @@ export function installBombMotion({ Character, WeaponRunner, CHARACTER_TIMERS: t
   C.trigger = function (name, ...args) {
     const result = trigger.call(this, name, ...args);
     if (enabled(this) && name === 'throw') {
-      const value = state(this); value.throwing = true; value.elapsed = 0;
+      const value = state(this);
+      // Storm shares the native event and timer, but its installed special
+      // layer owns that throw. Never classify it as a Splat Bomb recovery.
+      value.externalThrow = this._owner()?.specialActive?.id === 'storm';
+      value.throwing = !value.externalThrow; value.elapsed = 0;
       // No held copy survives the event that creates the real projectile,
       // including an update while the Character is hidden or paused.
       this.bombHeld = false;
@@ -193,11 +198,18 @@ export function installBombMotion({ Character, WeaponRunner, CHARACTER_TIMERS: t
     const result = updateStates.call(this, dt, s);
     if (!enabled(this)) return result;
     const owner = this._owner(), value = state(this);
-    if (!this.kidForm || this.dance || !this.root.visible || owner?.alive === false) {
+    if (!this.kidForm || this.dance || hidden(this.root) || owner?.alive === false
+      || owner?.superJumpState || owner?.specialActive && owner.specialActive.id !== 'storm') {
       clear(this); return result;
     }
     const age = this.tr[timers.T_THROW]; value.elapsed = age;
     if (age >= RECOVERY) value.throwing = false;
+    if (age >= NATIVE_END) value.externalThrow = false;
+    if (owner?.specialActive?.id === 'storm') {
+      value.throwing = false; this.bombHeld = false;
+      if (this.bomb) this.bomb.group.visible = false;
+      return result;
+    }
     const sub = s.subAim ?? !!owner?.weaponRunner?.aimingSub;
     if (sub && !value.throwing && !this.bombHeld) {
       // Returning to human/visible form with a still-held real input starts a
@@ -215,7 +227,7 @@ export function installBombMotion({ Character, WeaponRunner, CHARACTER_TIMERS: t
     return result;
   };
   C._poseThrow = function (...args) {
-    if (!enabled(this)) return throwing.apply(this, args);
+    if (!enabled(this) || stateMap(this).get(this)?.externalThrow) return throwing.apply(this, args);
     // Applied once after native main-weapon overlays; a simultaneous main
     // attack must not reclaim the hand currently drawing the held bomb.
   };
@@ -242,6 +254,7 @@ export function installBombMotion({ Character, WeaponRunner, CHARACTER_TIMERS: t
   C.dispose = function (...args) {
     if (enabled(this)) clear(this);
     stateMap(this).delete(this);
+    disposed.add(this);
     sampleCaches.delete(this);
     return dispose.apply(this, args);
   };

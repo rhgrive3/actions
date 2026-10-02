@@ -11,6 +11,10 @@ const ease = t => { t = Math.max(0, Math.min(1, t)); return t * t * (3 - 2 * t);
 const COIL_END = .15 / .23;
 const COIL_ANCHOR = [-.13, 1.06, -.02];
 const COIL_ROTATION = [-2.3, .3, 0];
+function hidden(root) {
+  for (let node = root; node; node = node.parent) if (node.visible === false) return true;
+  return false;
+}
 
 function record(ch) { return ch?.constructor?.prototype?.[INSTALL]; }
 export function rollerDetailMotionSnapshot(ch) {
@@ -38,10 +42,14 @@ export function installRollerDetailMotion({ Character, CHARACTER_CHANNELS: C, CH
   // it so either realm's snapshot reads the same installed addon.
   Object.defineProperty(P, INSTALL, { value: { states, clear } });
   const updateStates = P._updateStates, flick = P._poseFlick;
-  const setWeapon = P.setWeapon, dispose = P.dispose;
+  const setWeapon = P.setWeapon, setVisible = P.setVisible, dispose = P.dispose;
+  const block = ch => {
+    const m = states.get(ch);
+    if (m) { m.blocked = !!ch.s3RollerFlick; m.startAnchor = m.startRotation = null; }
+  };
   function interrupted(ch, s) {
     const a = ch._owner?.(), r = ch._runner?.(s), tr = ch.tr;
-    return !ch.kidForm || !!ch.dance || a?.alive === false || !!a?.specialActive || !!a?.superJumpState
+    return hidden(ch.root) || !ch.kidForm || !!ch.dance || a?.alive === false || !!a?.specialActive || !!a?.superJumpState
       || !!a?.s3?.actions?.roll || !!a?.s3?.actions?.surge
       || !!(s?.subAim ?? r?.aimingSub) || ch.wSub > .01 || tr[T.T_THROW] < .62
       || tr[T.T_LEAP] < 1.9 || tr[T.T_SLAM] < 1.4
@@ -85,6 +93,7 @@ export function installRollerDetailMotion({ Character, CHARACTER_CHANNELS: C, CH
     return result;
   };
   P.setWeapon = function (...args) { clear(this); return setWeapon.apply(this, args); };
+  P.setVisible = function (value) { if (!value) block(this); return setVisible.call(this, value); };
   P.dispose = function (...args) { clear(this); return dispose.apply(this, args); };
   if (WeaponRunner?.prototype && !Object.hasOwn(WeaponRunner.prototype, RUNNER)) {
     const R = WeaponRunner.prototype, reset = R.reset;

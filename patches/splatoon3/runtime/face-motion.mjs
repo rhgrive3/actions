@@ -28,7 +28,8 @@ function makeState(ch, installation) {
 
 function action(ch, s, owner, timers) {
   if (ch.s3FaceMotionEnabled === false || !ch.kidForm || ch.dance || owner?.alive === false
-      || ch.t < s.suspendedUntil || ch.lifeLv === 0 || !ch.root.visible) return null;
+      || ch.t < s.suspendedUntil || ch.lifeLv === 0 || owner?.specialActive || owner?.superJumpState) return null;
+  for (let node = ch.root; node; node = node.parent) if (!node.visible) return null;
   if (s.input.subAim) return 'sub-aim';
   if (Number.isInteger(timers?.T_THROW) && ch.tr[timers.T_THROW] < FACE_MOTION_CALIBRATION.throwRecovery) return 'throw';
   if (s.input.charge > .01) return 'charge';
@@ -100,12 +101,13 @@ export function installFaceMotion(api, _profile) {
   if (!Character || !THREE) throw Error('Face motion requires the actual Character and THREE');
   const C = Character.prototype;
   if (C[INSTALL]) return;
-  const installation = { states: new WeakMap(), THREE };
+  const installation = { states: new WeakMap(), disposed: new WeakSet(), THREE };
   Object.defineProperty(C, INSTALL, { value: installation });
   const update = C.update, apply = C._applyFace, trigger = C.trigger, setWeapon = C.setWeapon,
-    formEnter = C._formEnter, dispose = C.dispose;
+    formEnter = C._formEnter, setVisible = C.setVisible, dispose = C.dispose;
   const clear = ch => { if (ch) installation.states.delete(ch); };
   C.update = function (dt, input) {
+    if (installation.disposed.has(this)) return;
     const s = makeState(this, installation), a = input || {};
     s.input.firing = !!a.firing; s.input.subAim = !!a.subAim;
     s.input.charge = a.charge || 0; s.input.aimPitch = a.aimPitch ?? 0;
@@ -130,12 +132,13 @@ export function installFaceMotion(api, _profile) {
     return result;
   };
   C.setWeapon = function (...args) { if (args[0] !== this.weaponKind) clear(this); return setWeapon.apply(this, args); };
+  C.setVisible = function (value) { if (!value) clear(this); return setVisible.call(this, value); };
   C._formEnter = function (...args) {
     const s = installation.states.get(this);
     if (s) { s.mode = s.source = null; s.suspendedUntil = -1; }
     return formEnter.apply(this, args);
   };
-  C.dispose = function (...args) { clear(this); return dispose.apply(this, args); };
+  C.dispose = function (...args) { installation.disposed.add(this); clear(this); return dispose.apply(this, args); };
   for (const [Type, methods, character] of [[Actor, ['reset', 'splat'], x => x.character],
     [WeaponRunner, ['reset'], x => x.a?.character]]) {
     const prototype = Type?.prototype;

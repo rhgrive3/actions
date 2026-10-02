@@ -49,3 +49,11 @@ WeaponRunner reset / death、weapon swap、hidden、squid form、dance、dispose
 exact lane commit のテスト receipt、量的比較、source/evidence SHA256 inventory は永続 lane の `done.json` と `evidence-manifest.json`。親が canonical build / actual WebGL / final integration gate を独立検証する。lane の node fixture が完了したことと統合 product の完了は分けて扱う。
 
 残る実機測定は、同じ named weapon・0AP・fixed camera・入力 edge を付けたキャプチャでの original joint angles、bucket interiorの遮蔽中の fill、barrel phase/rad/s、moving/steep aimのgrip/contact。今回の observations と calibration でこれらの unknown を解消済みにしない。
+
+## 統合productionの独立再レビュー — 2026-10-03
+
+基盤は14個の追加installerを含む `d846b5b8fadd6cef86e7d02699cf9b3b7356b80e`。別realmの重複installはwrapperを増やさなかったが、snapshotはそのrealmの空WeakMapを読んでおり、実SlosherのwindupとChargerのreleaseを失った。prototypeのSymbol.for記録へ実tracksを保持し、snapshotは元のinstallationを参照するよう修正した。実Actor/Runnerで開始した攻撃とresetの両方を別realmから照合する回帰を追加した。関節値、profile、native IK、ゲーム時計は変更しない。
+
+親browserの `flow-kid` support-contact失敗は、idle shooterに対する無条件の左手接触assertionだった。実native `HOLD.shooter.twoCarry=0`、`twoAim=1`、idle時の `IKL=0`、`IKR=1`、`LTW=0` を確認した。同じ240-frame操作のCPU/indexed描画頂点ではframe21の左手最短距離が約0.43660、右のnative grip誤差はroundoff以下。Flow中も意図した片手carryであり、これだけではheld-hand不具合ではない。射撃で実support weightが.99を超える全frameは、両手のauthored native grip距離<.005、native IK residual<.0005、左手のindexed geometry距離<.035を要求する。真に保持された手の条件を弱めていない。
+
+共有browser probeの修正は親へ `review-weapons/integration-handoff.json` で引き継ぐ。実IK weight/明示target/dual bombSwapとauthored grip/socketを記録し、free FKとheld gripを区別すること。単に全武器メッシュへ近いだけでは正しい握りを証明できない。現在の再現はCPU証拠であり、修正後のGPU gateの合格ではない。Nintendoの現在の一次ページを再確認し、保持済み公式動画hashを検証・再観察したが、原作非公開曲線・実機操作条件の未確認は維持する。

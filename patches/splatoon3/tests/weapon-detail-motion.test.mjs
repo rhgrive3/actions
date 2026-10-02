@@ -5,13 +5,14 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { adaptSource } from '../adapter.mjs';
-import { splatlingMotorStep, bucketDrain, installWeaponDetailMotion as installFromAnotherRealm } from '../runtime/weapon-detail-motion.mjs';
+import { splatlingMotorStep, bucketDrain, installWeaponDetailMotion as installFromAnotherRealm,
+  weaponDetailMotionSnapshot as snapshotFromAnotherRealm } from '../runtime/weapon-detail-motion.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const SRC = path.resolve(process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public'));
 let cached;
-// One VM runs the unchanged production installer exactly once, then the new
-// production module once. Never mix same-class installers from other realms.
+// One VM runs the complete production installer exactly once. Duplicate
+// installers below may verify guards, but cannot repair a missing installation.
 async function production() {
   if (cached) return cached;
   const context = vm.createContext({ console, performance, URL }), modules = new Map();
@@ -39,7 +40,7 @@ async function production() {
   const profile = JSON.parse(fs.readFileSync(path.join(ROOT, 'patches/splatoon3/profile.json')));
   const api = entry.namespace.install(profile);
   assert.throws(() => entry.namespace.install(profile), /already installed/);
-  entry.namespace.installWeaponDetailMotion(api, profile);
+  assert.ok(Object.hasOwn(api.Character.prototype, Symbol.for('inkwave.weapon-detail-motion.installed')));
   // A module from a different realm must not wrap the actual classes twice.
   const guarded = ['trigger', '_updateStates', '_poseWeapon', '_poseSlosh', '_animWeapon', '_solveLimb']
     .map(name => [name, api.Character.prototype[name]]);
@@ -118,6 +119,66 @@ test('Heavy motor integrates coast independently of render partition and pause',
   assert.equal(bucketDrain(0, 17 / 60), 0);
   assert.equal(bucketDrain(3 / 60, 17 / 60), 1);
   assert.equal(bucketDrain(17 / 60, 17 / 60), 0);
+});
+
+test('second-realm helpers observe the installed weapon attack and reset state', async () => {
+  const api = await production();
+  for (const kind of ['slosher', 'charger']) {
+    const r = rig(api, kind);
+    try {
+      r.step(1 / 60, { fire: true });
+      if (kind === 'charger') r.step();
+      const active = r.snapshot();
+      assert.notEqual(kind === 'slosher' ? active.sloshElapsed : active.chargerReleaseAge, null);
+      assert.deepEqual(JSON.parse(JSON.stringify(snapshotFromAnotherRealm(r.ch))), JSON.parse(JSON.stringify(active)));
+      r.a.weaponRunner.reset();
+      assert.deepEqual(JSON.parse(JSON.stringify(snapshotFromAnotherRealm(r.ch))), JSON.parse(JSON.stringify(r.snapshot())));
+    } finally { r.close(); }
+  }
+});
+
+test('flow-kid native carry leaves support free while aimed hands retain actual indexed grips', async t => {
+  const api = await production(), r = rig(api, 'shooter'), C = api.CHARACTER_CHANNELS, rows = [];
+  function contact(frame) {
+    const w = r.ch.weapon, vertices = [];
+    w.off.traverse(mesh => {
+      let shown = true;
+      for (let node = mesh; node; node = node.parent) if (!node.visible) shown = false;
+      if (mesh.isMesh && shown) vertices.push(...drawnVertices(api, mesh));
+    });
+    assert.ok(vertices.length > 50);
+    const left = r.ch.bones.handL.getWorldPosition(new api.THREE.Vector3());
+    const nearestLeft = Math.min(...vertices.map(v => v.distanceTo(left)));
+    return { frame, aim: r.ch.wAim, support: r.ch.wTwo, ikL: r.ch.P[C.IKL], ikR: r.ch.P[C.IKR],
+      explicitLeft: r.ch.P[C.LTW], nativeIK: Array.from(r.ch.ikErr.slice(0, 2)),
+      nearestLeft, gripL: r.grip('L'), gripR: r.grip('R'), indexedVertices: vertices.length };
+  }
+  try {
+    assert.equal(r.ch.hold.twoCarry, 0); assert.equal(r.ch.hold.twoAim, 1);
+    for (let frame = 0; frame < 240; frame++) {
+      if (frame === 20) { r.a.s3.flow.active = true; r.a.s3.flow.remaining = 10; }
+      if (frame === 90) r.a.s3.flow.remaining += 5;
+      if (frame === 160) { r.a.s3.flow.active = false; r.a.s3.flow.remaining = 0; }
+      r.step();
+      if ([21, 29, 45, 75, 95, 145, 200, 239].includes(frame)) {
+        const row = contact(frame); rows.push(row);
+        assert.equal(row.ikL, 0, 'idle shooter carry deliberately frees its left hand');
+        assert.equal(row.explicitLeft, 0); assert.ok(row.nearestLeft > .2, 'reproduce parent whole-mesh contact failure with a free native hand');
+        assert.ok(row.gripR < .005, 'the actual held right grip stays attached');
+      }
+    }
+    for (let frame = 0; frame < 60; frame++) {
+      r.step(1 / 60, { fire: true });
+      if (r.ch.P[C.IKL] > .99) {
+        const row = contact(240 + frame); rows.push(row);
+        assert.ok(row.gripL < .005 && row.gripR < .005, 'both truly held hands must meet their authored native grips');
+        assert.ok(row.nativeIK.every(e => e < .0005));
+        assert.ok(row.nearestLeft < .035, 'held support is also next to actual indexed weapon geometry');
+      }
+    }
+    assert.ok(rows.some(row => row.ikL > .99), 'full two-handed aim was exercised');
+    t.diagnostic(JSON.stringify({ flowKidContact: rows.filter(row => row.frame < 240 || row.frame === 299) }));
+  } finally { r.close(); }
 });
 
 test('actual Slosher drains only after its wave, visibly lowers indexed fill and refills before repeat', async () => {

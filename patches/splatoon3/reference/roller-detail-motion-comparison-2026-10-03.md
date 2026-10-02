@@ -45,3 +45,11 @@
 今回の証拠は `/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-roller-detail/` に保存する。`fresh-primary-sources.json`、`*-fresh-1080.ts`、`*-frame-pts.json`、`*-observed-sequence.png` が一次資料。`posed-before-after-*.json` は実骨・native IK・武器world行列・描画index・頂点のCPU証拠で、開始8F/14Fには実SkinnedMeshの骨変形後のbody頂点も含む。最終のコマンド、結果、SHA、ハッシュは `done.json` とテストreceiptへ結び付ける。
 
 ブラウザ/GPU描画、build、統合候補のexact-SHA CI、公開artifact一致は親の検証範囲。CPUの骨変形後の頂点はGPU shaderの全効果やブラウザ実動作を代用しない。原作実機比較、映像のソフトバージョンとギア、正確な入力時刻、横から縦へ変わる受付猶予、急な上・下照準、斜面・段差、ローラー別の挙動、ネット補間、任天堂の数値的な骨軌道は未確認のまま残す。
+
+## 完全production候補の独立再レビュー
+
+14個の追加installerを含む `d846b5b8fadd6cef86e7d02699cf9b3b7356b80e` で既存のfocused回帰を再実行した。hideには開始姿勢を中断するgateがなく、非表示から同じ古い攻撃のstartupへ戻れた。setVisible(false)と非表示ancestorを検出し、現在の攻撃記録だけをblockedにする。再表示は同じ攻撃を復活させず、実Runnerのreset後の新規攻撃は通常どおり開始する。
+
+新規回帰は追加detailの有効/無効の両方で同じnative hide操作を行い、ゲーム入力、ink/HP、root/velocity、Runnerの攻撃object/時計と全native timerを比較する。nativeの既存hideによるT_THROW resetも比較対象に含め、hide前後の値が不変だと誤って要求しない。ドラムのindex検証はancestor visibilityとdrawRangeを尊重するよう改善した。setVisibleも別realmのwrapper identity確認へ追加した。関節値、35F/42Fインスタンス試験、基盤profileの42F/47F、縦振り・接地・release選択は変更しない。
+
+Nintendoの現在の武器ページと保持済み公式ローラー動画hashを再確認し、PTS付きsequenceを再観察した。元の実機バージョン、AP、入力edge、関節曲線の未確認は解消していない。最終SHA/CPU結果は `review-weapons/done.json`。共有browser/build/Actionsと実機の証明は親へ引き継ぐ。
