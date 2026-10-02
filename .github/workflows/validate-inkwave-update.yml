@@ -52,7 +52,7 @@ jobs:
           path: .ci-scratch/inkwave-patches/
           retention-days: 14
       - name: Verify motion verifier regressions
-        run: node --test scripts/tests/inkwave-motion-gates.test.mjs
+        run: node --test scripts/tests/inkwave-motion-gates.test.mjs scripts/tests/inkwave-integration-workflow.test.mjs
       - name: Verify pinned primary numerical sources
         run: |
           python3 - <<'PY'
@@ -194,7 +194,7 @@ jobs:
           }[suite]
           reports={name:json.loads((root/name).read_text()) for name in checks}
           build=json.loads(pathlib.Path('.built-site/_site/inkwave-build.json').read_text())
-          assert build['sourceSha']==os.environ['SOURCE_SHA']
+          assert pathlib.Path('.built-site/_site-source-sha.txt').read_text().strip()==os.environ['SOURCE_SHA']
           for name,report in reports.items():
             if name=='motion/motion-result.json': assert not report['errors'] and report['fixture']['scenarios']==10
             else: assert report['status']=='passed', name
