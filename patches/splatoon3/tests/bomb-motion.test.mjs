@@ -133,7 +133,7 @@ function fields(object) {
   }
   return result;
 }
-function preservedRig(r, api) {
+function preservedRig(r, api, includePhysics = false) {
   const nodes = [];
   r.ch.root.traverse(node => nodes.push({ name: node.name, position: Array.from(node.position.toArray()),
     rotation: Array.from(node.rotation.toArray()), quaternion: Array.from(node.quaternion.toArray()), scale: Array.from(node.scale.toArray()),
@@ -143,7 +143,8 @@ function preservedRig(r, api) {
     motions: Object.fromEntries(DETAIL_HOOKS.map(([module, snapshot]) => [module, JSON.parse(JSON.stringify(api[snapshot](r.ch)))])),
     weapon: fields(r.ch.weapon), leftWeapon: r.ch.weapon.left ? fields(r.ch.weapon.left) : null,
     actor: fields(r.a), anim: fields(r.a.anim), intent: fields(r.a.intent), runner: fields(r.a.weaponRunner),
-    flow: fields(r.a.s3.flow), physics: fields(api.G.physics), physicsQuery: Array.from(api.G.physics._ids),
+    flow: fields(r.a.s3.flow),
+    ...(includePhysics ? { physics: fields(api.G.physics), physicsQuery: Array.from(api.G.physics._ids) } : {}),
     time: api.G.time, launches: r.projectiles.bombs.length };
 }
 function countCalls(ch) {
@@ -383,10 +384,10 @@ test('release and per-frame preview sample native rig without changing any live 
         r.a.pos.addScaledVector(r.a.vel, 1 / 60); r.a.yaw = .4 + i * .004;
         r.step(1 / 60, { sub: true, fire: kind === 'slosher' && i === 4 });
         r.a.ink = 100;
-        const before = preservedRig(r, api), beforeCalls = { ...calls }, beforeEvents = flowEvents;
+        const before = preservedRig(r, api, true), beforeCalls = { ...calls }, beforeEvents = flowEvents;
         const preview = new api.THREE.Vector3(0, 1.35, 0);
         api.bombPreviewPosition(r.a, preview);
-        assert.deepEqual(preservedRig(r, api), before, kind + ' preview preserves the complete live native rig');
+        assert.deepEqual(preservedRig(r, api, true), before, kind + ' preview preserves the complete live native rig and physics scratch');
         assert.deepEqual(calls, beforeCalls, 'preview performs no update, animation or secondary simulation');
         assert.equal(flowEvents, beforeEvents);
         assert.ok(preview.distanceTo(r.a.pos) < 1.25, 'sample is reachable by this native model');
@@ -407,6 +408,32 @@ test('release and per-frame preview sample native rig without changing any live 
       assert.equal(flowEvents, 1, 'Flow is not reactivated or extended by preview/release sampling');
     } finally { stop(); r.close(); }
   }
+});
+
+test('pose-only release and preview never query or advance actual native Physics', async () => {
+  const api = await production(), physics = api.G.physics;
+  for (const kind of ['shooter', 'dualies', 'slosher', 'charger', 'splatling', 'roller']) {
+    const r = rig(api, kind), methods = new Map(), calls = {};
+    try {
+      r.step(1 / 60, { sub: true });
+      for (const name of ['raycast', 'segment', 'collideBody', 'groundProbe']) {
+        const native = physics[name]; methods.set(name, native); calls[name] = 0;
+        physics[name] = function (...args) { calls[name]++; return native.apply(this, args); };
+      }
+      let before = preservedRig(r, api, true);
+      for (let i = 0; i < 8; i++) api.bombPreviewPosition(r.a, new api.THREE.Vector3());
+      assert.deepEqual(preservedRig(r, api, true), before);
+      r.ch.trigger('throw'); before = preservedRig(r, api, true);
+      api.bombReleasePosition(r.a, new api.THREE.Vector3());
+      assert.deepEqual(preservedRig(r, api, true), before);
+      assert.ok(Object.values(calls).every(n => n === 0), kind + ' pose sampling must never call native Physics');
+    } finally {
+      for (const name of methods.keys()) delete physics[name];
+      r.close();
+    }
+  }
+  // Projectiles.updateArc itself intentionally uses native segment/raycast
+  // scratch. Those reads remain native; they are separate from pose sampling.
 });
 
 test('preview preserves native null/show/dead guards and hidden, form, opt-out fallback candidates', async () => {
