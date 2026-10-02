@@ -57,6 +57,7 @@ export function validateDetailResult(result) {
     for(const event of events){finite(event.frame,name+'.eventFrame');if(typeof event.name!=='string'||event.frame<0||event.frame>=frames)throw Error('Detail release event identity: '+name);}
     for(const release of releaseFrames){for(const key of ['frame','fuse','meshOriginError','releaseSnapshotError'])finite(release[key],name+'.release.'+key);for(const key of ['pos','velocity']){if(!Array.isArray(release[key])||release[key].length!==3)throw Error('Detail release vector denominator');release[key].forEach(v=>finite(v,name+'.releaseVector'));}}
     for(const m of renderMetrics) {
+      if(m.renderClocksStable!==true)throw Error('Detail render changed native clocks/gameplay: '+name);
       finite(m.frame,name+'.renderFrame');
       for(const layer of ['rig',...(scenario.type==='flow'?['flow']:[])]){
         for(const key of ['pixels','changedPixels','totalRgbDifference','maxChannelDifference'])finite(m[layer]?.[key],name+'.render.'+layer+'.'+key);
@@ -191,7 +192,7 @@ await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0
     const { weaponDetailMotionSnapshot } = await import(prefix + 'patches/splatoon3/runtime/weapon-detail-motion.mjs');
     const scene = new THREE.Scene(); scene.background = new THREE.Color('#dfe7e9');
     const camera = new THREE.OrthographicCamera(-1.4, 1.4, 1.05, -1.05, .01, 200);
-    const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+    const renderer = new THREE.WebGLRenderer({ antialias: false, preserveDrawingBuffer: true });
     renderer.setSize(960, 720); renderer.setPixelRatio(1); document.body.appendChild(renderer.domElement);
     Object.assign(G, { scene, camera, renderer, settings: { quality: 'high', shadows: false }, mode: 'match', actors: [], time: 0,
       teamColors: [new THREE.Color('#ff8a14'), new THREE.Color('#2f5bff')],
@@ -239,6 +240,8 @@ await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0
       return {indexedVertices,nearestLeft,nearestRight};
     }
     function capture(scenario,frame,ch,actor) {
+      const nativeRenderState=()=>JSON.stringify({time:G.time,characterTime:ch.t,pose:Array.from(ch.P),timers:Array.from(ch.tr),root:ch.root.position.toArray(),position:actor.pos.toArray(),velocity:actor.vel.toArray(),hp:actor.hp,ink:actor.ink,invuln:actor.invuln,flow:actor.s3.flow,runner:Object.fromEntries(['cooldown','chargeT','charge','lockT','streaming','aimingSub','fuse','subFuse'].map(k=>[k,actor.weaponRunner[k]]))});
+      const beforeRender=nativeRenderState();
       projectiles._draw();camera.position.copy(ch.root.position).add(new THREE.Vector3(2.6,1.3,3.4));
       camera.lookAt(ch.root.position.clone().add(new THREE.Vector3(0,.62,0)));camera.updateMatrixWorld();renderer.render(scene,camera);
       const actual=pixels(),image=renderer.domElement.toDataURL('image/png'),visible=ch.root.visible;
@@ -247,14 +250,18 @@ await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0
       finally{ch.root.visible=visible;}
       let flow=null;
       if(scenario.type==='flow'){
+        // Each visibility pair owns a fresh baseline. The preceding rig-hidden
+        // render must not supply the baseline for a different counterfactual.
+        renderer.render(scene,camera);const flowActual=pixels();
         const nodes=[];ch.root.traverse(node=>{if(node.name.startsWith('s3-flow-'))nodes.push({node,visible:node.visible});});
-        try{for(const item of nodes)item.node.visible=false;renderer.render(scene,camera);flow=globalThis.motionPixelDifference(actual,pixels());images.push({name:scenario.name+'-'+String(frame).padStart(3,'0')+'-exterior-hidden',image:renderer.domElement.toDataURL('image/png')});}
+        try{for(const item of nodes)item.node.visible=false;renderer.render(scene,camera);flow=globalThis.motionPixelDifference(flowActual,pixels());images.push({name:scenario.name+'-'+String(frame).padStart(3,'0')+'-exterior-hidden',image:renderer.domElement.toDataURL('image/png')});}
         finally{for(const item of nodes)item.node.visible=item.visible;}
       }
       renderer.render(scene,camera);
       images.push({name:scenario.name+'-'+String(frame).padStart(3,'0'),image});
       const left=ch.bones.handL.getWorldPosition(new THREE.Vector3()),right=ch.bones.handR.getWorldPosition(new THREE.Vector3());
-      return {frame,rig,flow,weapon:drawable(ch.weapon.off)?drawnContact(ch.weapon.off,left,right):null,heldBomb:drawable(ch.bomb.group)?drawnContact(ch.bomb.group,left,right):null,releasedBomb:scenario.type==='bomb'&&frame===30?drawnContact(projectiles.bombs.at(-1).mesh,left,right):null};
+      if(nativeRenderState()!==beforeRender)throw Error('Rendered pair advanced native clocks/gameplay: '+scenario.name+' frame '+frame);
+      return {frame,renderClocksStable:true,rig,flow,weapon:drawable(ch.weapon.off)?drawnContact(ch.weapon.off,left,right):null,heldBomb:drawable(ch.bomb.group)?drawnContact(ch.bomb.group,left,right):null,releasedBomb:scenario.type==='bomb'&&frame===30?drawnContact(projectiles.bombs.at(-1).mesh,left,right):null};
     }
     try {
     for (const scenario of cases) {
@@ -330,7 +337,7 @@ await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0
       }
     }
     return {contentHash,cases:data.length,data,images,
-      fixture:{source:'production install once; actual Actor/Runner/Projectiles/full native rig',driver:'WeaponRunner.update + Actor._finishFrame only; no Actor.update or Projectiles.update',terrain:'flat diagnostic plane; raycast hit=false',flow:'active/remaining assigned manually; gameplay activation, extension and duration not measured',air:'height=.8 and vertical velocity=0 throughout; no jump/landing physics',render:'60Hz software WebGL; same-frame visible/hidden pixel pairs',parity:'calibrated INKWAVE regression; Nintendo curves unknown; not Switch/iOS or original image parity'}};
+      fixture:{source:'production install once; actual Actor/Runner/Projectiles/full native rig',driver:'WeaponRunner.update + Actor._finishFrame only; no Actor.update or Projectiles.update',terrain:'flat diagnostic plane; raycast hit=false',flow:'active/remaining assigned manually; gameplay activation, extension and duration not measured',air:'height=.8 and vertical velocity=0 throughout; no jump/landing physics',render:'60Hz single-sample software WebGL; independent same-frame visible/hidden pairs with native clock/gameplay transactions',parity:'calibrated INKWAVE regression; Nintendo curves unknown; not Switch/iOS or original image parity'}};
     }finally{
       projectiles.clear();
       const geometries=new Set(),materials=new Set();scene.traverse(node=>{if(node.geometry)geometries.add(node.geometry);for(const m of (Array.isArray(node.material)?node.material:[node.material]))if(m)materials.add(m);});

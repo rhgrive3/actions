@@ -52,10 +52,11 @@ function rig(api,hz=60,kind='shooter'){
  return {a,ch,visual,close(){G.actors=G.actors.filter(x=>x!==a);G.scene.remove(ch.root);ch.dispose();}};
 }
 function contact(api,ch){
- const {THREE,CHARACTER_FOOT_METRICS:{ANKLE_H:h,BALL_Z:ball,HEEL_Z:heel}}=api;
+ const {THREE,CHARACTER_CHANNELS:C,CHARACTER_FOOT_METRICS:{ANKLE_H:h,BALL_Z:ball,HEEL_Z:heel}}=api;
+ for(const key of ['WPL','WPR','TIPTOE'])assert.ok(Number.isInteger(C[key]),'actual named native foot channel '+key);
  for(const [i,f]of ch.feet.entries()){
   assert.ok(f.planted,'idle return uses actual planted feet');
-  const pitch=f.pitch+(!ch.moving&&i===(ch.shiftS>0?1:0)?.1*Math.abs(ch.shiftS||0)*(1-ch.gaitW):0),ay=h*Math.cos(pitch)+(pitch>=0?ball:-heel)*Math.sin(pitch);
+  const pitch=f.pitch+(!ch.moving&&i===(ch.shiftS>0?1:0)?.1*Math.abs(ch.shiftS||0)*(1-ch.gaitW):0)+.55*Math.max(0,ch.P[C.TIPTOE]),ay=h*Math.cos(pitch)+(pitch>=0?ball:-heel)*Math.sin(pitch);
   const az=pitch>=0?ball+h*Math.sin(pitch)-ball*Math.cos(pitch):-heel+h*Math.sin(pitch)+heel*Math.cos(pitch);
   const normal=new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0),f.cn)
    .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),f.cyaw));

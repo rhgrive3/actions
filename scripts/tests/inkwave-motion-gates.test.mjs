@@ -45,6 +45,8 @@ test('detail accepts valid semantic records and rejects original false-pass coun
   r=>delete row(r,'charger-return').events[0].charge,
   r=>row(r,'bomb-standing').renderMetrics.find(m=>m.frame===30).releasedBomb.nearestLeft=.3,
   r=>delete row(r,'bomb-standing').releaseFrames[0].meshOriginError,
+  r=>delete row(r,'flow-kid').renderMetrics[0].renderClocksStable,
+  r=>row(r,'flow-kid').renderMetrics[0].renderClocksStable=false,
   r=>row(r,'bucket-repeat').renderMetrics[0].weapon.indexedVertices=0,
   r=>row(r,'bucket-repeat').renderMetrics[0].weapon.nearestRight=.3,
   r=>row(r,'flow-kid').renderMetrics[0].weapon.nearestLeft=.3,

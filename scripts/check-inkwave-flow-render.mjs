@@ -81,7 +81,8 @@ export function verifyFlowBuild(site, exactSource = false) {
   const files = Object.entries(manifest.files).map(([key, digest]) => {
     const file = key.startsWith('upstream/') ? 'inkwave-public/' + key.slice(9)
       : key.startsWith('patch/') ? 'patches/splatoon3/' + key.slice(6)
-        : key.startsWith('touch-layout/') ? 'patches/touch-layout/' + key.slice(13) : null;
+        : key.startsWith('touch-layout/') ? 'patches/touch-layout/' + key.slice(13)
+          : key.startsWith('reliability/') ? 'patches/reliability/' + key.slice(12) : null;
     if (!file || !inside(ROOT.replace(/\/$/, ''), fs.realpathSync(path.resolve(ROOT, file)))
         || hash(fs.readFileSync(path.join(ROOT, file))) !== digest) throw Error('Flow build input differs from source: ' + key);
     return file;

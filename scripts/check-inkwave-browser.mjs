@@ -26,6 +26,7 @@ if(process.argv.includes('--exact-source')) {
     if(key.startsWith('upstream/')) return 'inkwave-public/'+key.slice(9);
     if(key.startsWith('patch/')) return 'patches/splatoon3/'+key.slice(6);
     if(key.startsWith('touch-layout/')) return 'patches/touch-layout/'+key.slice(13);
+    if(key.startsWith('reliability/')) return 'patches/reliability/'+key.slice(12);
     throw new Error('Unknown build input namespace: '+key);
   });
   Object.entries(manifest.files).forEach(([key,expected],i)=>{if(hash(fs.readFileSync(path.join(ROOT,files[i])))!==expected)throw new Error('Build input differs from manifest: '+key);});
