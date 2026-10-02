@@ -6,7 +6,7 @@ import vm from 'node:vm';
 import { createHash } from 'node:crypto';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { adaptSource } from '../adapter.mjs';
-import { installSpecialMotion as duplicateInstaller } from '../runtime/special-motion.mjs';
+import { installSpecialMotion as duplicateInstaller, specialMotionSnapshot as duplicateSnapshot, specialMotionOwnsPose as duplicateOwnsPose, specialMotionAllowsFootPlant as duplicateFootPlant } from '../runtime/special-motion.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const SRC = path.resolve(process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public'));
@@ -28,7 +28,7 @@ async function production() {
   };
   const entry = new vm.SourceTextModule(`
     export { install } from './patches/splatoon3/runtime/install.mjs';
-    export { installSpecialMotion, specialMotionSnapshot } from './patches/splatoon3/runtime/special-motion.mjs';
+    export * from './patches/splatoon3/runtime/special-motion.mjs';
     export { FixedClock } from './patches/splatoon3/runtime/clock.mjs';
   `, { context, identifier: path.join(ROOT, 'special-production-entry.mjs') });
   await entry.link((specifier, from) => load(specifier === 'three'
@@ -40,10 +40,11 @@ async function production() {
   const profile = JSON.parse(fs.readFileSync(path.join(ROOT, 'patches/splatoon3/profile.json')));
   const api = { ...entry.namespace.install(profile), ...entry.namespace, profile };
   api.installSpecialMotion(api, profile);
-  const update = api.Character.prototype.update, slam = api.Character.prototype._poseSlam;
+  const update = api.Character.prototype.update, slam = api.Character.prototype._poseSlam, build = api.Character.prototype._buildPose;
   api.installSpecialMotion(api, profile); duplicateInstaller(api, profile);
   assert.equal(api.Character.prototype.update, update);
   assert.equal(api.Character.prototype._poseSlam, slam);
+  assert.equal(api.Character.prototype._buildPose, build);
   const { G, THREE } = api;
   G.scene = new THREE.Scene(); G.settings = { quality: 'high' };
   G.teamColors = [new THREE.Color('#ff8a14'), new THREE.Color('#2f5bff')];
@@ -82,7 +83,9 @@ function posed(r, label) {
       const vertex = index.getX(k), point = mesh.getVertexPosition(vertex, new THREE.Vector3());
       vertices.push({ indexOffset: k, vertex, world: point.applyMatrix4(mesh.matrixWorld).toArray() });
     }
-    meshes.push({ name: mesh.name, triangles: index.count / 3, skinned: !!mesh.isSkinnedMesh, vertices });
+    meshes.push({ name: mesh.name, triangles: index.count / 3, skinned: !!mesh.isSkinnedMesh,
+      indexSHA256: createHash('sha256').update(Buffer.from(index.array.buffer, index.array.byteOffset, index.array.byteLength)).digest('hex'),
+      material: { type: mesh.material.type, transparent: mesh.material.transparent, depthWrite: mesh.material.depthWrite }, vertices });
   }
   assert.ok(meshes.length > 0 && meshes.some(x => x.skinned));
   return { label, diagnostic: r.snapshot(), pose: Array.from(ch.P),
@@ -95,8 +98,10 @@ function posed(r, label) {
 function gameplay(a) {
   return { special: a.special, active: a.specialActive ? { ...a.specialActive } : null,
     pos: a.pos.toArray(), vel: a.vel.toArray(), ink: a.ink, hp: a.hp, grounded: a.grounded,
-    form: a.form, invuln: a.invuln, stats: { ...a.stats }, runner: {
-      charge: a.weaponRunner.charge, dodge: a.weaponRunner.dodge, lockT: a.weaponRunner.lockT } };
+    form: a.form, invuln: a.invuln,
+    intent: { ...a.intent, move: a.intent.move.toArray() }, stats: { ...a.stats }, runner: {
+      charge: a.weaponRunner.charge, dodge: a.weaponRunner.dodge, lockT: a.weaponRunner.lockT,
+      cooldown: a.weaponRunner.cooldown, aimingSub: a.weaponRunner.aimingSub } };
 }
 function save(rows) {
   const destination = process.env.INKWAVE_SPECIAL_TRACE_PATH; if (!destination) return;
@@ -172,9 +177,13 @@ test('storm aligns empty-hand follow-through to actual immediate deployment, ord
     for (const x of [before, r]) { start(x, 'storm'); x.visual(); }
     assert.equal(deployments, 2);
     const C = api.CHARACTER_CHANNELS;
-    assert.ok(Math.abs(r.ch.P[C.FARML]) < Math.abs(before.ch.P[C.FARML]), 'released hand is no longer cocked behind the head');
+    // Full production Bomb already applies this same 0.10 release offset.
+    // The old standalone comparison claimed a difference that does not exist.
+    assert.deepEqual(Array.from(r.ch.P), Array.from(before.ch.P), 'one calibrated native follow-through, no extra or double throw');
     const nativeThrow = posed(before, 'before-storm'), releaseThrow = posed(r, 'after-storm');
-    assert.notDeepEqual(releaseThrow.bones.handL, nativeThrow.bones.handL);
+    assert.deepEqual(releaseThrow.bones.handL, nativeThrow.bones.handL);
+    assert.deepEqual(releaseThrow.meshes, nativeThrow.meshes, 'same actual indexed native release geometry');
+    assert.ok(r.ch.ikErr[1] < .0005, 'native right-hand weapon IK stays reachable');
     evidence.push(nativeThrow, releaseThrow); save(evidence);
     for (const x of [before, r]) {
       x.a.specialActive = null; x.a.weaponRunner.aimingSub = true; x.visual();
@@ -205,6 +214,7 @@ test('actual native special physics, phase clocks, landing and resources are ide
             const unchanged = gameplay(x.a); x.visual(1 / hz); assert.deepEqual(gameplay(x.a), unchanged);
           }
           assert.deepEqual(gameplay(r.a), gameplay(before.a));
+          assert.deepEqual(Array.from(r.ch.tr), Array.from(before.ch.tr), 'native visual clocks advance equally; the patch does not reset them');
         }
         assert.equal(r.a.specialActive, null); assert.equal(r.snapshot().phase, null);
         assert.ok(r.a.grounded);
@@ -278,4 +288,158 @@ test('incomplete network special state retains native replay rather than inventi
     assert.deepEqual(Array.from(r.ch.P), Array.from(before.ch.P));
     r.a.specialActive = null; r.visual(); assert.equal(r.snapshot().phase, null);
   } finally { r.close(); before.close(); }
+});
+
+
+test('special state is shared across realms and interruptions block a live token before its first visual frame', async () => {
+  const api = await production();
+  for (const interruption of ['sub-before-first-frame', 'hidden', 'hidden-ancestor', 'ordinary-throw', 'flick', 'dance']) {
+    const r = rig(api);
+    try {
+      start(r);
+      if (interruption === 'sub-before-first-frame') r.a.weaponRunner.aimingSub = true;
+      else {
+        r.visual();
+        assert.equal(JSON.stringify(duplicateSnapshot(r.ch)), JSON.stringify(r.snapshot()), 'cross-realm observer sees installed state');
+        assert.equal(duplicateOwnsPose(r.ch), true);
+        if (interruption === 'hidden') r.ch.setVisible(false);
+        if (interruption === 'hidden-ancestor') api.G.scene.visible = false;
+        if (interruption === 'ordinary-throw') r.ch.trigger('throw');
+        if (interruption === 'flick') r.ch.trigger('flick');
+        if (interruption === 'dance') r.ch.setDance('victory');
+      }
+      r.visual(); assert.equal(r.snapshot().phase, null, interruption);
+      r.a.weaponRunner.aimingSub = false; r.ch.setVisible(true); api.G.scene.visible = true; r.ch.setDance(null);
+      for (let i = 0; i < 3; i++) r.visual();
+      assert.equal(r.snapshot().phase, null, 'same interrupted token cannot replay: ' + interruption);
+      assert.equal(api.specialMotionOwnsPose(r.ch), false);
+      assert.ok(Math.abs(r.ch.P[api.CHARACTER_CHANNELS.MODELR]) < .1, 'actual native body does not restart the somersault');
+      evidence.push(posed(r, 'interrupted-' + interruption));
+    } finally { api.G.scene.visible = true; r.close(); }
+  }
+  save(evidence);
+});
+
+test('foot-plant hook observes mapped Slam ownership and preserves native fallback', async () => {
+  const api = await production(), r = rig(api), preview = new api.Character({ weapon: 'shooter' });
+  try {
+    assert.equal(typeof api.specialMotionAllowsFootPlant, 'function');
+    const eligible = native => api.specialMotionAllowsFootPlant(r.ch, native);
+    assert.equal(api.specialMotionAllowsFootPlant(preview, false), false, 'uncontrolled preview uses native timer gate');
+    r.ch.s3SpecialMotionEnabled = false; assert.equal(eligible(false), false);
+    r.ch.s3SpecialMotionEnabled = true; start(r); r.visual(); assert.equal(eligible(true), false);
+    r.a.specialActive = { id: 'slam', net: true }; r.visual(); assert.equal(eligible(false), false);
+    assert.equal(eligible(true), true, 'unmapped network phase keeps supplied native gate');
+    r.a.specialActive = null; r.visual(); assert.equal(eligible(false), true, 'cancelled mapped hooks no longer leave timer-only planting locks');
+    assert.equal(duplicateFootPlant(r.ch, false), true, 'cross-realm eligibility reads the installed registry');
+    r.a.setWeapon('charger'); start(r, 'storm'); r.visual(); assert.equal(eligible(true), true, 'Storm adds no planting restriction');
+    r.a.specialActive = null; r.visual();
+    assert.equal(eligible(true), true);
+  } finally { preview.dispose(); r.close(); }
+});
+
+
+test('cancelled Storm does not retain Bomb follow-through, and the public bomb opt-out descriptor is preserved', async () => {
+  const api = await production();
+  for (const interruption of ['sub', 'dance', 'hidden', 'shoot']) {
+    const r = rig(api, 'charger');
+    try {
+      Object.defineProperty(r.ch, 's3BombMotionEnabled', { value: true, configurable: true, writable: false, enumerable: false });
+      const descriptor = Object.getOwnPropertyDescriptor(r.ch, 's3BombMotionEnabled');
+      start(r, 'storm'); r.visual();
+      assert.deepEqual(Object.getOwnPropertyDescriptor(r.ch, 's3BombMotionEnabled'), descriptor);
+      if (interruption === 'sub') r.a.weaponRunner.aimingSub = true;
+      if (interruption === 'dance') r.ch.setDance('victory');
+      if (interruption === 'hidden') r.ch.setVisible(false);
+      if (interruption === 'shoot') r.ch.trigger('shoot');
+      r.visual(); r.a.weaponRunner.aimingSub = false; r.ch.setDance(null); r.ch.setVisible(true);
+      r.visual(); assert.equal(r.snapshot().phase, null);
+      // Sub aim retains its native damped blend after input release. It must
+      // not be mistaken for an orphaned Storm throw or forcibly reset here.
+      const expectedIK = r.ch.wTwo * (1 - r.ch.wSub);
+      assert.ok(Math.abs(r.ch.P[api.CHARACTER_CHANNELS.IKL] - expectedIK) < 1e-6, 'native hold/sub blend, without Storm throw');
+      const grip = side => r.ch.weapon.off.localToWorld(r.ch.weapon.def['hand' + side].pos.clone()).distanceTo(
+        r.ch.bones['hand' + side].getWorldPosition(new api.THREE.Vector3()));
+      assert.ok(grip('R') < .025 && r.ch.ikErr[1] < .0005, 'actual native weapon grip remains reachable');
+      if (interruption !== 'sub') assert.ok(grip('L') < .025, 'drawn left hand returns to the charger grip');
+      assert.deepEqual(Object.getOwnPropertyDescriptor(r.ch, 's3BombMotionEnabled'), descriptor);
+      evidence.push(posed(r, 'cancelled-storm-' + interruption));
+    } finally { r.close(); }
+  }
+  save(evidence);
+});
+
+
+test('a short actual Slam fall preserves native impact impulses when primary fire resumes immediately', async () => {
+  const api = await production(), { G, THREE } = api, V = THREE.Vector3;
+  const previous = { physics: G.physics, level: G.level };
+  const box = (id, y, height) => { const center = new V(0, y, 0), half = new V(100, height / 2, 100);
+    return { id, solid: true, center, half, axes: [new V(1, 0, 0), new V(0, 1, 0), new V(0, 0, 1)],
+      faces: [-1, -1, -1, -1, -1, -1], aabbMin: center.clone().sub(half), aabbMax: center.clone().add(half) }; };
+  const level = { blocks: [box(0, -.1, .2), box(1, 1.6, .2)], groundHeight: () => 0,
+    queryBlocks: (_x, _z, _xx, _zz, out) => { out.length = 0; out.push(0, 1); return out; } };
+  const results = [];
+  try {
+    G.level = level; G.physics = new api.Physics(level);
+    for (const hz of [30, 60, 120]) {
+      const pair = [];
+      for (const enabled of [false, true]) {
+        const r = rig(api, 'shooter', enabled); let impulses = 0, impacted = false, contactAge;
+        const hair = r.ch._hairKick;
+        r.ch._hairKick = function (...args) { if (args[0] === 0 && args[1] === -3 && args[2] === 0) impulses++; return hair.apply(this, args); };
+        try {
+          r.a.pos.set(0, 0, 0); start(r);
+          for (let i = 0; i < 2 * hz; i++) {
+            if (r.a.specialActive) r.a._updateSpecial(1 / hz);
+            else if (impacted) r.a.weaponRunner.update(1 / hz, { fire: true });
+            r.visual(1 / hz);
+            if (!r.a.specialActive && !impacted) { impacted = true; contactAge = r.ch.tr[api.CHARACTER_TIMERS.T_SLAM]; }
+            if (impacted && i > hz + 5) break;
+          }
+          assert.ok(impacted && r.a.grounded, 'actual floor/ceiling Physics completes the special');
+          assert.ok(Math.abs(contactAge - 1 / hz) < 1e-6, 'low ceiling makes fall/contact share its first visual tick');
+          pair.push({ impulses, contactAge });
+          evidence.push(posed(r, 'short-slam-impact-' + hz + '-' + enabled));
+        } finally { r.close(); }
+      }
+      assert.equal(pair[0].impulses, 1, 'native impact event oracle executes exactly once');
+      assert.deepEqual(pair[1], pair[0], 'visual exclusivity cannot drop the native impact impulse at ' + hz + 'Hz');
+      results.push({ hz, pair });
+    }
+  } finally { G.physics = previous.physics; G.level = previous.level; }
+  save(evidence);
+});
+
+
+test('mapped Slam hang and strike keep actual native arm reach and drawn weapon grips', async () => {
+  const api = await production();
+  const kits = Object.keys(api.profile.weapons).filter(k => api.WEAPONS[k].special === 'slam');
+  assert.equal(kits.length, 4, 'all four real public Slam kits must execute');
+  for (const kind of kits) {
+    const r = rig(api, kind);
+    try {
+      start(r); for (let i = 0; i < 34; i++) r.visual();
+      r.a.specialActive.phase = 'hang'; r.a.specialActive.t = 0;
+      for (let i = 0; i < 4; i++) r.visual();
+      for (const phase of ['hang', 'fall']) {
+        if (phase === 'fall') { r.a.specialActive.phase = 'fall'; r.ch.trigger('special_slam'); for (let i = 0; i < 6; i++) r.visual(); }
+        const output = posed(r, 'grip-' + kind + '-' + phase);
+        assert.ok(r.ch.ikErr[1] < .0005, 'actual right-arm reach: ' + kind + ' ' + phase + ' ' + r.ch.ikErr);
+        const handR = r.ch.weapon.off.localToWorld(r.ch.weapon.def.handR.pos.clone());
+        assert.ok(handR.distanceTo(r.ch.bones.handR.getWorldPosition(new api.THREE.Vector3())) < .001);
+        if (!r.ch.dual && r.ch.P[api.CHARACTER_CHANNELS.IKL] > .99) {
+          assert.ok(r.ch.ikErr[0] < .0005, 'actual support-arm reach: ' + kind + ' ' + phase + ' ' + r.ch.ikErr);
+          assert.ok(r.ch.weapon.off.localToWorld(r.ch.weapon.def.handL.pos.clone()).distanceTo(
+            r.ch.bones.handL.getWorldPosition(new api.THREE.Vector3())) < .001, 'actual drawn support grip');
+        }
+        if (r.ch.dual && r.ch.P[api.CHARACTER_CHANNELS.IKL] > .99 && r.ch.bombSwap < .001) {
+          assert.ok(r.ch.ikErr[0] < .0005, 'actual independent left-pistol reach');
+          assert.ok(r.ch.weapon.left.off.localToWorld(r.ch.weapon.left.def.handL.pos.clone()).distanceTo(
+            r.ch.bones.handL.getWorldPosition(new api.THREE.Vector3())) < .001, 'actual drawn left-pistol grip');
+        }
+        assert.ok(output.meshes.some(m => m.skinned && m.triangles > 0)); evidence.push(output);
+      }
+    } finally { r.close(); }
+  }
+  save(evidence);
 });

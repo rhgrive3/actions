@@ -1,6 +1,7 @@
 // Ordinary shooter jump legs. Nintendo's public demonstration establishes the
 // bent-knee / rearward-shoe silhouette, not these joint curves or dimensions.
 // All values below are visual calibration in the native kid rig's space.
+import { specialMotionAllowsFootPlant } from './special-motion.mjs';
 const GUARD = Symbol.for('inkwave.splatoon3.jump-motion.v1');
 const clamp = x => Math.max(0, Math.min(1, x));
 const smooth = (a, b, x) => { const u = clamp((x - a) / (b - a)); return u * u * (3 - 2 * u); };
@@ -47,13 +48,17 @@ export function installJumpMotion({ Character, Actor, CHARACTER_CHANNELS: C, CHA
   const clear = ch => { const s = states.get(ch); if (s) { s.started = null; s.phase = null; s.weight = 0; s.allowed = false; } };
   const timerBusy = ch => ch.tr[T.T_THROW] < .62 || ch.tr[T.T_SLOSH] < .66
     || ch.tr[T.T_FLICK] < .7 || ch.tr[T.T_SPAWN] < 1.4
-    || ch.tr[T.T_LEAP] < 1.9 || ch.tr[T.T_SLAM] < 1.4
+    || !specialMotionAllowsFootPlant(ch, ch.tr[T.T_LEAP] >= 1.9 && ch.tr[T.T_SLAM] >= 1.4)
     || ch.tr[T.T_DODGE] < ch.dodgeDur + .3;
+  const shown = ch => {
+    for (let p = ch.root; p; p = p.parent) if (p.visible === false) return false;
+    return true;
+  };
   const interrupted = (ch, input) => {
     const a = ch._owner(), runner = ch._runner(input);
     return ch.s3JumpMotionEnabled === false || (input?.form || 'kid') !== 'kid'
       || a?.alive === false || a?.specialActive || a?.superJumpState || input?.alive === false
-      || ch.dance || ch.wDance > .001 || ch.formT < .5 || ch.weaponKind !== 'shooter'
+      || !shown(ch) || ch.dance || ch.wDance > .001 || ch.formT < .5 || ch.weaponKind !== 'shooter'
       || input?.subAim || runner?.aimingSub || runner?.dodge || runner?.s3Turret
       || ch.wSub > .001 || ch.bombHeld || timerBusy(ch);
   };
@@ -98,7 +103,13 @@ export function installJumpMotion({ Character, Actor, CHARACTER_CHANNELS: C, CHA
   };
   proto.dispose = function (...args) { states.delete(this); return dispose.apply(this, args); };
   if (Actor) {
-    const reset = Actor.prototype.reset;
-    Actor.prototype.reset = function (...args) { clear(this.character); return reset.apply(this, args); };
+    for (const name of ['reset', 'splat']) {
+      const original = Actor.prototype[name];
+      Actor.prototype[name] = function (...args) {
+        const result = original.apply(this, args);
+        if (name === 'reset' || !this.alive) clear(this.character);
+        return result;
+      };
+    }
   }
 }

@@ -203,7 +203,7 @@ test('actual native collision completes charge, takeoff, flight, descent and tou
       const error = r.ch.weapon.off.localToWorld(r.ch.weapon.def.handR.pos.clone())
         .distanceTo(r.ch.bones.handR.getWorldPosition(new api.THREE.Vector3()));
       assert.ok(error < .025, 'native right-hand weapon grip recovers');
-      assert.ok(r.ch.ikErr[0] < .0005, 'native two-bone solver remains valid');
+      assert.ok(r.ch.ikErr[1] < .0005, 'native right-arm two-bone solver remains valid');
       assert.equal(r.ch.feet.every(foot => foot.planted), true);
       comparisons.push(rows);
     } finally { r.close(); }
@@ -302,4 +302,31 @@ test('direct variable visual intervals use the frozen native flight sample and p
     assert.ok(r.direction().dot(r.a.vel.clone().normalize()) > .999999);
     assert.equal(r.snapshot().progress, progress); assert.deepEqual(gameplay(r), original);
   } finally { r.close(); }
+});
+
+
+test('action interruption blocks the same live Super Jump across subsequent production frames', async () => {
+  const api = await production();
+  for (const ending of ['weapon', 'action', 'sub', 'fire', 'dance']) {
+    const r = rig(api);
+    try {
+      r.a.superJump(new api.THREE.Vector3(0, 0, .5)); advanceToFlight(r, .4);
+      const native = gameplay(r);
+      if (ending === 'weapon') r.a.setWeapon('dualies');
+      if (ending === 'action') r.ch.trigger('movement_cancel');
+      if (ending === 'dance') r.ch.setDance('victory');
+      r.a.anim.subAim = ending === 'sub'; r.a.anim.firing = ending === 'fire';
+      r.ch.update(1 / 60, r.a.anim);
+      r.a.anim.subAim = false; r.a.anim.firing = false; r.ch.setDance(null);
+      for (let i = 0; i < 3; i++) r.visual();
+      assert.equal(r.snapshot().phase, null, ending + ' cannot resume an interrupted live token');
+      assert.equal(r.snapshot().applied, false);
+      assert.ok(r.ch.squid.pivot.quaternion.angleTo(r.ch.sqQuat) < 1e-7, 'actual native orientation restored');
+      assert.equal(r.a.superJumpState.t, native.superjump.t, 'visual cancellation does not advance gameplay');
+      assert.deepEqual(r.a.pos.toArray(), native.pos);
+      // A genuinely new action token can acquire the overlay again.
+      r.a.superJumpState = null; r.a.superJump(new api.THREE.Vector3(0, 0, 1)); advanceToFlight(r, .4);
+      assert.equal(r.snapshot().applied, true); assert.ok(r.direction().dot(r.a.vel.clone().normalize()) > .999999);
+    } finally { r.close(); }
+  }
 });

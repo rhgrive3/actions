@@ -39,3 +39,49 @@ Focused command: `node --experimental-vm-modules --test patches/splatoon3/tests/
 Parent installs this module **after `installMovementMotion` and the other motion layers**, using the existing API's `Actor`, `Character`, `THREE`, `CHARACTER_TIMERS` and profile. No adapter/source-anchor change is needed. It adds the read-only native velocity reference `anim.movementMotion.superJumpVelocity`; other motion layers must yield their squid pose when `movementMotion.superJump` is active. The parent-owned main comparison report should append the short/vertical-flight correction with this document's source limits, retaining the unknown status of original orientation and kid-return timing. Exact integration details and report entry are in the evidence `integration-handoff.json`.
 
 The module is ready for parent verification as a separate patch. Full original motion parity is **not established**. To calibrate beyond this correction, obtain authorized 11.3.0 Switch recordings with recorded weapon/AP/state/stage and synchronized map-confirm/input frames, short and long destinations, front/side views, ascent/apex/descent/impact landmarks and actual post-landing input trials.
+
+
+## Independent complete-installation review — 2026-10-03
+
+Reviewed the frozen complete production candidate `d846b5b8fadd6cef86e7d02699cf9b3b7356b80e`. All fourteen new
+motion installers are present in `runtime/install.mjs`; the tests load that
+installer once in one VM realm. Repeated owned installer calls test idempotence
+only. Earlier author receipts and measurements above describe their earlier
+foundation composition and are historical evidence, not proof of this candidate.
+
+Current primary pages and retained primary bytes were checked again before
+correction. `/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/review-air/primary-source-review.json` records
+current lookup URLs and verified retained byte hashes. The freshly decoded
+`official-jump-reinspect.png` and `official-landing-reinspect.png` retain the
+visible aimed hop, rearward bent legs and aimed knee absorption. Their source
+frames and PTS are recorded in `primary-frame-reinspection.json`. Clip build,
+gear abilities and controller input remain unknown; `11.3.0` is the profile
+target, not a proven clip version. No numeric motion calibration changed in
+this review. No original hardware, GPU shader/render, browser build or
+exact-SHA Actions result is claimed by these focused CPU checks.
+
+Current results, exact source/test hashes, commands and outstanding shared
+work are in `/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/review-air/done.json`, `findings.json` and
+`integration-handoff.json`. The parent owns the aggregate behavior report,
+shared-file integration, complete build and browser/Actions verification.
+
+Action/weapon/sub/fire/dance interruption now blocks the same native Super Jump
+token across subsequent visual frames. The previous regression checked only
+the immediate cleared frame and missed re-acquisition on the next update.
+The real owner state authorizes flight when available, so a stale animation
+view cannot recreate an ended action. A new native token can acquire the layer;
+selecting the existing weapon no longer cancels it. `setDance` records the
+interruption before the later Emotes wrapper can clear that dance.
+
+Every visual frame still restores the saved native squid transforms before
+delegating. A hidden ancestor suppresses application; a still-live flight may
+resume from its current authoritative phase/velocity on visibility return.
+This differs from an action cancellation: no old offset or private phase clock
+is resumed. Disposal releases token references. Existing actual native
+Super Jump trajectory, indexed mantle output, kid descent/landing IK, zero-dt
+and FixedClock 30/60/120 Hz/irregular-render comparisons remain in the suite.
+
+Current Nintendo report lookup is retained in the source receipt. The earlier
+official tutorial/report embeds did not yield playable primary flight frames.
+Exact original mantle orientation, curves, roll and timing remain unconfirmed;
+velocity-tangent alignment is an engine correction, not original parity proof.

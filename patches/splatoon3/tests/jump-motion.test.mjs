@@ -13,6 +13,7 @@ import { installJumpMotion as duplicateInstall } from '../runtime/jump-motion.mj
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const SRC = path.resolve(process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public'));
 let cached;
+const evidenceRows = [];
 async function production() {
   if (cached) return cached;
   const context = vm.createContext({ console, performance, URL }), modules = new Map();
@@ -116,11 +117,12 @@ function row(api, r, stage) {
 function saveTrace(rows) {
   const destination = process.env.INKWAVE_JUMP_TRACE_PATH;
   if (!destination) return;
+  evidenceRows.push(...rows);
   const folder = fs.realpathSync(path.dirname(destination));
   assert.ok(folder.startsWith('/mnt/workspace/.dev-state/agent-work/evidence/'));
   const file = path.join(folder, path.basename(destination));
   const body = { schema: 1, evidence: 'Native CPU pose, bones, indexed skinned vertices and IK; GPU/browser and original hardware comparison remain parent-owned.',
-    runtimeSha256: createHash('sha256').update(fs.readFileSync(path.join(ROOT, 'patches/splatoon3/runtime/jump-motion.mjs'))).digest('hex'), rows };
+    runtimeSha256: createHash('sha256').update(fs.readFileSync(path.join(ROOT, 'patches/splatoon3/runtime/jump-motion.mjs'))).digest('hex'), rows: evidenceRows };
   fs.writeFileSync(file + '.pending', JSON.stringify(body, null, 2) + '\n'); fs.renameSync(file + '.pending', file);
 }
 function saveNativeProjection(api, r, stage) {
@@ -271,4 +273,88 @@ test('interruptions cannot resume an old jump; landing, carry, other weapons and
   const preview = new api.Character({ name: 'nullable jump preview' });
   try { preview.update(0, null); preview.trigger('jump'); preview.update(1 / 60, null); assert.ok(Array.from(preview.P).every(Number.isFinite)); }
   finally { preview.dispose(); }
+});
+
+
+test('hiding an airborne character cancels ordinary jump without a form change', async () => {
+  const api = await production();
+  for (const ancestor of [false, true]) {
+    const r = rig(api);
+    try {
+      r.begin(); for (let i = 1; i <= 16; i++) r.frame(i / 60);
+      assert.ok(api.jumpMotionSnapshot(r.ch).weight > .5);
+      if (ancestor) api.G.scene.visible = false; else r.ch.setVisible(false);
+      r.frame(.3); assert.equal(api.jumpMotionSnapshot(r.ch).active, false);
+      api.G.scene.visible = true; r.ch.setVisible(true); r.frame(.4);
+      assert.equal(api.jumpMotionSnapshot(r.ch).active, false);
+    } finally { api.G.scene.visible = true; r.close(); }
+  }
+});
+
+
+test('ordinary input-driven jump uses actual production Actor/Runner/Physics through apex and landing at 30/60/120Hz', async () => {
+  const api = await production(), { G, THREE, Physics } = api, V = THREE.Vector3;
+  const previous = { physics: G.physics, level: G.level };
+  const center = new V(0, -.1, 0), half = new V(100, .1, 100);
+  const floor = { id: 0, solid: true, center, half, axes: [new V(1, 0, 0), new V(0, 1, 0), new V(0, 0, 1)],
+    faces: [-1, -1, 0, -1, -1, -1], aabbMin: center.clone().sub(half), aabbMax: center.clone().add(half) };
+  const level = { blocks: [floor], faces: [{ origin: new V(-100, 0, -100), u: new V(1, 0, 0), v: new V(0, 0, 1) }],
+    hasRails: false, groundHeight: () => 0, spawnPads: [new V(1000, 0, 1000), new V(-1000, 0, -1000)], spawnBarrier: 1,
+    queryBlocks: (_x, _z, _xx, _zz, out) => { out.length = 0; out.push(0); return out; } };
+  const rows = [];
+  try {
+    G.level = level; G.physics = new Physics(level);
+    for (const hz of [30, 60, 120]) {
+      const before = rig(api, false), after = rig(api, true);
+      try {
+        for (const r of [before, after]) { r.a.pos.set(0, 0, 0); r.a.vel.set(0, 0, 0); r.a.intent.fire = true; }
+        let airborne = false, landed = false, maxWeight = 0, changedGeometry = false;
+        const game = r => ({ pos: r.a.pos.toArray(), vel: r.a.vel.toArray(), ink: r.a.ink, hp: r.a.hp,
+          grounded: r.a.grounded, form: r.a.form, landT: r.a.landT, hardLand: r.a.hardLand,
+          runner: [r.a.weaponRunner.cooldown, r.a.weaponRunner.charge],
+          clocks: Array.from(r.ch.tr), root: r.ch.root.position.toArray() });
+        for (let i = 0; i < hz; i++) {
+          G.time += 1 / hz;
+          for (const r of [before, after]) {
+            r.a.intent.jump = i === 0; r.a.update(1 / hz);
+            r.ch.root.updateMatrixWorld(true); r.ch.skeleton.update();
+          }
+          assert.deepEqual(game(after), game(before), 'presentation cannot change input-driven native trajectory or clocks');
+          airborne ||= !after.a.grounded; landed ||= airborne && after.a.grounded;
+          const weight = api.jumpMotionSnapshot(after.ch).weight;
+          if (weight > maxWeight) {
+            maxWeight = weight;
+            if (weight > .5) {
+              const a = row(api, after, 'actual-physics-' + hz + '-' + i), b = row(api, before, 'native-counterfactual-' + hz + '-' + i);
+              assert.ok(a.nativeIK.every(x => x < .0005), 'actual native limb IK reaches its drawn endpoints');
+              assert.ok(a.bones.footL[2] < a.bones.hips[2] - .06 && a.bones.footR[2] < a.bones.hips[2] - .06);
+              changedGeometry ||= a.geometry.vertices.some((v, k) => Math.hypot(...v.world.map((x, j) => x - b.geometry.vertices[k].world[j])) > .01);
+              rows.push(b, a);
+            }
+          }
+        }
+        assert.ok(airborne && landed, 'real jump input and Physics must take off and emit landing');
+        assert.ok(maxWeight > .5 && changedGeometry, 'native trajectory reaches the calibrated indexed-geometry pose');
+        assert.equal(after.a.pos.y, 0); assert.equal(after.a.vel.y, 0);
+        assert.equal(api.jumpMotionSnapshot(after.ch).active, false);
+      } finally { before.close(); after.close(); }
+    }
+  } finally { G.physics = previous.physics; G.level = previous.level; }
+  // The supplied-parabola tests above remain pose-envelope tests only.
+  saveTrace(rows);
+});
+
+
+test('fresh ordinary jump after cancelled Slam is not blocked by orphaned leap/slam clocks', async () => {
+  const api = await production(), r = rig(api);
+  try {
+    r.a._startSpecial(); r.visual(); r.a.specialActive = null; r.visual();
+    assert.ok(r.ch.tr[api.CHARACTER_TIMERS.T_LEAP] < 1.9);
+    r.begin(); for (let i = 1; i <= 16; i++) r.frame(i / 60);
+    const output = row(api, r, 'fresh-jump-after-cancelled-slam');
+    assert.ok(output.diagnostic.weight > .5);
+    assert.ok(output.nativeIK.every(x => x < .0005));
+    assert.ok(output.bones.footL[2] < output.bones.hips[2] - .08);
+    saveTrace([output]);
+  } finally { r.close(); }
 });
