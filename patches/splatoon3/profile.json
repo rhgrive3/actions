@@ -74,7 +74,12 @@
         ]
       ],
       "preDelay": 0.16666666666666666,
-      "range": 13.3
+      "range": 13.3,
+      "actionAirSpreadCurve": [
+        0.0,
+        0.5,
+        1.0
+      ]
     },
     "splatling": {
       "inkPerShot": 0.5625,
@@ -97,7 +102,12 @@
       "moveSpeedCharging": 3.7199999999999998,
       "range": 21,
       "firstChargeTime": 0.8,
-      "burstFirst": 1.3333333333333333
+      "burstFirst": 1.3333333333333333,
+      "runSpeedFiringCurve": [
+        1.0,
+        1.175,
+        1.35
+      ]
     },
     "charger": {
       "inkFull": 18.0,
@@ -323,7 +333,6 @@
     "runMultiplier": 1.2,
     "swimMultiplier": 1.2,
     "enemyInkSpeedMultiplier": 1.5,
-    "paintInterval": 0.1,
     "paintRadius": 0.6,
     "bots": true
   },
@@ -359,7 +368,12 @@
       "special slam remains INKWAVE original; it is not Triple Splashdown",
       "aim response, gyro, animation, terrain/network and physical-device validation",
       "splatling ChargeFrame_Second is interpreted cumulatively (72F total), not added to ChargeFrame_First (48F); actual engine timing requires verification",
-      "weapon weight classes and all charging/rolling movement restrictions"
+      "weapon weight classes and all charging/rolling movement restrictions",
+      "Flow action-intensify bonus and gear stacking; fixed run/swim/enemy-ink multipliers remain provisional, not equivalent to confirmed AP",
+      "Splat Bomb sub-resistance DamageRt_BombH/BombL family routing, sub-saver level, and omitted ink-consume default",
+      "charger full-charge storage countdown after emerging, pre-delay fields and charge-to-ink accounting",
+      "per-weapon weight-class assignment and Splatling charge-stage movement curve; gear family curves alone do not establish assignment",
+      "projectile brake-state defaults, charge-dependent Splatling velocity, collision radii and paint geometry remain unverified"
     ]
   },
   "bindings": {
@@ -1082,6 +1096,42 @@
       "index": null,
       "factor": 0.016666666666666666,
       "rawValue": 80
+    },
+    "weapons.splatling.runSpeedFiringCurve.0": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/MainWeaponSetting/Overwrite_MoveVelRt_Shot_Low",
+      "index": null,
+      "factor": 1,
+      "rawValue": 1.0
+    },
+    "weapons.splatling.runSpeedFiringCurve.1": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/MainWeaponSetting/Overwrite_MoveVelRt_Shot_Mid",
+      "index": null,
+      "factor": 1,
+      "rawValue": 1.175
+    },
+    "weapons.splatling.runSpeedFiringCurve.2": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/MainWeaponSetting/Overwrite_MoveVelRt_Shot_High",
+      "index": null,
+      "factor": 1,
+      "rawValue": 1.35
+    },
+    "weapons.blaster.actionAirSpreadCurve.0": {
+      "parameter": "data/parameter/1130/misc/params.json#/ReduceJumpSwerveRate",
+      "index": 2,
+      "factor": 1,
+      "rawValue": 0.0
+    },
+    "weapons.blaster.actionAirSpreadCurve.1": {
+      "parameter": "data/parameter/1130/weapon/WeaponBlasterMiddle.game__GameParameterTable.json#/GameParameters/spl__PlayerGearSkillParam_ActionSpecUp_ReduceJumpSwerveRate/Mid",
+      "index": null,
+      "factor": 1,
+      "rawValue": 0.5
+    },
+    "weapons.blaster.actionAirSpreadCurve.2": {
+      "parameter": "data/parameter/1130/misc/params.json#/ReduceJumpSwerveRate",
+      "index": 0,
+      "factor": 1,
+      "rawValue": 1.0
     }
   },
   "gearExtra": {

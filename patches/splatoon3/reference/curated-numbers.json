@@ -1273,6 +1273,38 @@
       "status": "extracted",
       "unit": "raw reference units",
       "notes": "Primary extracted field; behavior and physical units are verified separately."
+    },
+    "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/MainWeaponSetting/Overwrite_MoveVelRt_Shot_Low": {
+      "value": 1.0,
+      "pointer": "/GameParameters/MainWeaponSetting/Overwrite_MoveVelRt_Shot_Low",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "gear effect ratio",
+      "notes": "Per-weapon override; unchanged endpoints reuse the pinned common curve. No omitted default reconstructed."
+    },
+    "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/MainWeaponSetting/Overwrite_MoveVelRt_Shot_Mid": {
+      "value": 1.175,
+      "pointer": "/GameParameters/MainWeaponSetting/Overwrite_MoveVelRt_Shot_Mid",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "gear effect ratio",
+      "notes": "Per-weapon override; unchanged endpoints reuse the pinned common curve. No omitted default reconstructed."
+    },
+    "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/MainWeaponSetting/Overwrite_MoveVelRt_Shot_High": {
+      "value": 1.35,
+      "pointer": "/GameParameters/MainWeaponSetting/Overwrite_MoveVelRt_Shot_High",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "gear effect ratio",
+      "notes": "Per-weapon override; unchanged endpoints reuse the pinned common curve. No omitted default reconstructed."
+    },
+    "data/parameter/1130/weapon/WeaponBlasterMiddle.game__GameParameterTable.json#/GameParameters/spl__PlayerGearSkillParam_ActionSpecUp_ReduceJumpSwerveRate/Mid": {
+      "value": 0.5,
+      "pointer": "/GameParameters/spl__PlayerGearSkillParam_ActionSpecUp_ReduceJumpSwerveRate/Mid",
+      "sourceId": "data/parameter/1130/weapon/WeaponBlasterMiddle.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "gear effect ratio",
+      "notes": "Per-weapon override; unchanged endpoints reuse the pinned common curve. No omitted default reconstructed."
     }
   }
 }

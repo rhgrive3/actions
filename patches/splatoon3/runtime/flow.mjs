@@ -11,7 +11,9 @@ export function awardFlow(state, action, value, cfg) {
     return false;
   }
   state.score += Math.max(0, value) * (cfg.weights[action] || 0);
-  if (state.score < cfg.threshold) return false;
+  // Nintendo describes accumulated turf/assists making the next opponent
+  // splat more likely to activate Flow. They do not activate it by themselves.
+  if (action !== 'splat' || state.score < cfg.threshold) return false;
   state.active = true; state.remaining = cfg.duration; state.score = 0; return true;
 }
 export function installFlow({ Actor, on, emit, G }, tuning) {
@@ -19,7 +21,15 @@ export function installFlow({ Actor, on, emit, G }, tuning) {
   function state(a) { a.s3 ||= {}; return a.s3.flow || (a.s3.flow = createFlow()); }
   function award(a, action, value) {
     if (!a?.alive || a.isBot && cfg.bots === false || G.match?.attract) return;
-    if (awardFlow(state(a), action, value, cfg)) emit('actor:flow', { actor: a, active: true });
+    const flow = state(a), before = flow.remaining;
+    const activated = awardFlow(flow, action, value, cfg);
+    if (activated) emit('actor:flow', { actor: a, active: true });
+    // The official trigger is entering/extending Flow, rather than a passive
+    // stream of paint for the entire active period. Radius remains calibration.
+    if (activated || flow.remaining > before) {
+      const p = a.pos.clone(); p.y += 0.15;
+      G.paint.splat(p, cfg.paintRadius, a.team, { kind: 'trail', seed: 0.5 });
+    }
   }
   const reset = Actor.prototype.reset;
   Actor.prototype.reset = function (...args) { const result = reset.apply(this, args); this.s3 ||= {}; this.s3.flow = createFlow(); credits.delete(this); return result; };
@@ -28,17 +38,7 @@ export function installFlow({ Actor, on, emit, G }, tuning) {
     const flow = state(this), was = flow.active;
     advanceFlow(flow, dt);
     if (was && !flow.active) emit('actor:flow', { actor: this, active: false });
-    const result = update.call(this, dt);
-    if (flow.active && this.alive && this.grounded && !this.submerged) {
-      this.s3.flowPaintTime = (this.s3.flowPaintTime || 0) + dt;
-      if (this.s3.flowPaintTime >= cfg.paintInterval) {
-        this.s3.flowPaintTime = 0;
-        const p = this.pos.clone(); p.y += 0.15;
-        // This passive footprint doesn't recursively award activation points.
-        G.paint.splat(p, cfg.paintRadius, this.team, { kind: 'trail', seed: 0.5 });
-      }
-    }
-    return result;
+    return update.call(this, dt);
   };
   on('turf', ({ actor, area }) => award(actor, 'turf', area));
   on('damage', ({ victim, attacker, amount, source }) => {

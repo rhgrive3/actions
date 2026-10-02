@@ -115,6 +115,9 @@ export function installWeapons(context, profile) {
     return result;
   };
   WeaponRunner.prototype._spreadDeg = function (w) {
+    // The upstream blaster reads `spread`, while the pinned profile supplies
+    // Stand_DegSwerve as spreadGround. Connect both ground and jump values.
+    if (w.kind === 'blaster') return this.a.grounded ? w.spreadGround : w.spreadAir;
     return w.kind === 'dualies' && this.s3Turret ? w.spreadLock : spread.call(this, w);
   };
   const fireCharger = Projectiles.prototype.fireCharger;
