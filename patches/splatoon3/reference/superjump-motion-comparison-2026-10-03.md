@@ -1,0 +1,87 @@
+# Super Jump motion — fresh primary-source comparison, 2026-10-03
+
+Scope: public `inkwave-public/`, patch foundation `5cdc815c923e2e6e0a9860bcfec6a4734a089657`, profile reference 11.3.0. This separate additive module exports `installSuperjumpMotion(api, profile)` and `superjumpMotionSnapshot(character)`. It does not implement a second trajectory, change movement clocks, or write input, Actor position/velocity, form, health, ink, weapon-runner state, collision, or camera root.
+
+## Primary sources and limits
+
+Freshly fetched Nintendo's [basic controls guide](https://www.nintendo.com/jp/games/feature/splatoonqa/guide_basic/index.html) and [research report](https://www.nintendo.com/jp/switch/av5ja/report/index.html). The guide links Super Jump tutorial `ymozvG1HbFs`. YouTube reports `LOGIN_REQUIRED` here; no frames were acquired. Its poster is a title card, not pose evidence. The report's Ver.11.0.0+ Stealth Jump section explicitly distinguishes ground preparation from airborne flight. Its published embed `8dRlr38k1o3` returns HTTP 403, including the legacy public embed form. No access restriction was bypassed.
+
+Consequently, the original observed facts in this lane are the preparation/flight distinction and existence of the official teammate-jump tutorial. Exact charge shape, takeoff stretch, mantle/joint curves, apex turn, kid-return timing, descent/landing posture and input recovery remain **unverified**. Video PTS/frame selections are unavailable, rather than inferred from a different action. Squid Spawn footage is not Super Jump evidence. The report is in a Ver.11.0.0 context; the profile's 11.3.0 target does not turn that material into an input-aligned 11.3.0 capture. Weapon, gear AP and controller input in the inaccessible videos are unknown. No Switch was measured.
+
+Fresh receipts, byte hashes, access outcomes and source observations are retained at `/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-superjump/source-observations.json`. The basic page SHA256 is `db29bba4aed57565e3c2d74d880d658cbfeb139bd6d3df49ca6e27d00140abab`; report SHA256 is `0da09549e1aa76f37985fe8668aa158d2c81d7ce04716aeb676a4c9c8b55ee6f`.
+
+## Actual divergence and correction
+
+The existing Actor `_updateSuperJump` has real charge/flight state and a native trajectory. Its `_finishFrame` forwards form, grounded, speed and vertical velocity. The existing movement patch supplies `anim.movementMotion.superJump`, fixes flight's grounded flag, and compresses charge by a calibrated .20. However, Character `_updateSquid` selects its dolphin-flight branch only when airborne **and** horizontal speed exceeds 3, the form is swim, or the previous form was climb. A short or vertical dry-squid Super Jump therefore falls into the dry-hop branch even though `Actor.superJumpState.phase === 'flight'`. On downward vertical travel the mantle can continue pointing substantially upward. Checking only launch height or a `superjump` event misses this visible divergence.
+
+Reproduction: with a dry grounded Actor and no gear modifiers, call `actor.superJump(new THREE.Vector3(0, 0, .5))`, advance through charge and inspect the actual squid mantle 24 native flight ticks later. Repeat at zero distance, one unit and a longer destination. Compare the world-space direction of the body's local +Y mantle axis to normalized `actor.vel`. The focused test executes the real production installer, Actor, Character, Runner, indexed meshes, native two-bone IK and Physics collision floor in one VM realm; it includes an opt-out counterfactual using the same installed product.
+
+The additive hook reads the same movement frame and its native velocity reference. During squid-visible flight it aligns the real pivot's mantle to the Actor's actual world velocity and converts that rotation through the real model transform. The launch tick has no trajectory velocity yet, so its mantle remains up. It uses the existing native dolphin shape/stretch and wiggle values, now consistently for short/vertical flights. **This is game-engine visual calibration, not a verified Nintendo joint/orientation curve.** No trajectory derivative, second physics path, root offset, extra timer or gameplay state is introduced. The layer restores its own quaternion/scale/shader overlay before the next native pose, so it does not accumulate or feed into native springs.
+
+| Phase / related behavior | Existing public implementation | Result and comparison status |
+| --- | --- | --- |
+| Ground charge | `superJumpState.phase='charge'`, actual gear charge duration, existing movement-layer compression | Retained without double compression. Official text supports preparation on the ground; .20 shape/easing remains calibration. |
+| Takeoff | Charge switches to flight with `t=0`; trajectory velocity begins on the next native step | New state-driven up-mantle pose reaches the actual squid geometry on the launch frame. Exact original takeoff pose/frame unverified. |
+| Squid ascent / flight | Native flight can incorrectly select the dry-hop body when horizontal speed is low | Fixed selection by live Super Jump state; mantle follows actual velocity at short/vertical/long distances. Native dolphin .22 stretch and .03/16 wiggle reused as calibration. |
+| Apex / descent | Native tangent and form switch at 82% flight | Tangent orientation applies while squid remains visible; original smoothing at a purely vertical apex unverified. Existing kid return at 82% is retained, not newly certified. |
+| Kid descent | Native full kid air pose, body/weapon transforms and IK | Preserved and captured. No invented original descent curve. |
+| Touchdown | Native `_resolve` → `_onLand` → `trigger('land')`, native landing clock and full bone pose | Observed through the existing timer, with native absorb/recovery/feet and weapon grips preserved. No extra landing clock or new landing curve. Original exact posture/input delay unverified. |
+| Reset/death/form/sub/fire/weapon/action/special | Native lifecycle and action hooks | Overlay is restored/cleared; later native live state can select a fresh flight. No gameplay cancellation rule added. |
+| Hidden return / disposal | Native visibility, model disposal | No stale overlay, mesh clone, new geometry/material or resource allocation. |
+| Stealth Jump / network | Native duration/protocol outside this visual module | Official distance-dependent extra flight duration is source-grounded but outside this lane. Remote pose timing/velocity transport remains unverified. |
+
+## Verification and integration
+
+Focused command: `node --experimental-vm-modules --test patches/splatoon3/tests/superjump-motion.test.mjs`. Assertions cover duplicate installs from another module realm via a `Symbol.for` prototype guard; nullable preview; direct zero-dt visual reads and a paused simulation; identical complete gameplay/pose traces under 30/60/120Hz and irregular rendering on the existing 60Hz clock; actual native charge/flight/land collision; source-state read-only checks; interruptions and repeated cycles; native post-landing weapon grip, feet and solver error; sampled **drawn indexed vertices** through native mesh/skinning transforms, actual posed bones, full pose array and weapon matrix/muzzle. Counterfactual gameplay traces must be identical while squid vertices and mantle direction differ.
+
+`native-before-after.json` and `native-sequence.json` retain actual full pose/mesh/IK evidence. `before-short-flight.svg` / `after-short-flight.svg` are projections of real native indexed squid triangles, not AABBs or a test-double rig. They are geometry diagnostics, not screenshots: native shader uniforms are captured separately and no claim is made that these CPU projections reproduce shader wiggle or browser pixels. Browser/build/exact-SHA CI and Switch comparison belong to parent integration and remain pending.
+
+Parent installs this module **after `installMovementMotion` and the other motion layers**, using the existing API's `Actor`, `Character`, `THREE`, `CHARACTER_TIMERS` and profile. No adapter/source-anchor change is needed. It adds the read-only native velocity reference `anim.movementMotion.superJumpVelocity`; other motion layers must yield their squid pose when `movementMotion.superJump` is active. The parent-owned main comparison report should append the short/vertical-flight correction with this document's source limits, retaining the unknown status of original orientation and kid-return timing. Exact integration details and report entry are in the evidence `integration-handoff.json`.
+
+The module is ready for parent verification as a separate patch. Full original motion parity is **not established**. To calibrate beyond this correction, obtain authorized 11.3.0 Switch recordings with recorded weapon/AP/state/stage and synchronized map-confirm/input frames, short and long destinations, front/side views, ascent/apex/descent/impact landmarks and actual post-landing input trials.
+
+
+## Independent complete-installation review — 2026-10-03
+
+Reviewed the frozen complete production candidate `d846b5b8fadd6cef86e7d02699cf9b3b7356b80e`. All fourteen new
+motion installers are present in `runtime/install.mjs`; the tests load that
+installer once in one VM realm. Repeated owned installer calls test idempotence
+only. Earlier author receipts and measurements above describe their earlier
+foundation composition and are historical evidence, not proof of this candidate.
+
+Current primary pages and retained primary bytes were checked again before
+correction. `/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/review-air/primary-source-review.json` records
+current lookup URLs and verified retained byte hashes. The freshly decoded
+`official-jump-reinspect.png` and `official-landing-reinspect.png` retain the
+visible aimed hop, rearward bent legs and aimed knee absorption. Their source
+frames and PTS are recorded in `primary-frame-reinspection.json`. Clip build,
+gear abilities and controller input remain unknown; `11.3.0` is the profile
+target, not a proven clip version. No numeric motion calibration changed in
+this review. No original hardware, GPU shader/render, browser build or
+exact-SHA Actions result is claimed by these focused CPU checks.
+
+Current results, exact source/test hashes, commands and outstanding shared
+work are in `/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/review-air/done.json`, `findings.json` and
+`integration-handoff.json`. The parent owns the aggregate behavior report,
+shared-file integration, complete build and browser/Actions verification.
+
+Action/weapon/sub/fire/dance interruption now blocks the same native Super Jump
+token across subsequent visual frames. The previous regression checked only
+the immediate cleared frame and missed re-acquisition on the next update.
+The real owner state authorizes flight when available, so a stale animation
+view cannot recreate an ended action. A new native token can acquire the layer;
+selecting the existing weapon no longer cancels it. `setDance` records the
+interruption before the later Emotes wrapper can clear that dance.
+
+Every visual frame still restores the saved native squid transforms before
+delegating. A hidden ancestor suppresses application; a still-live flight may
+resume from its current authoritative phase/velocity on visibility return.
+This differs from an action cancellation: no old offset or private phase clock
+is resumed. Disposal releases token references. Existing actual native
+Super Jump trajectory, indexed mantle output, kid descent/landing IK, zero-dt
+and FixedClock 30/60/120 Hz/irregular-render comparisons remain in the suite.
+
+Current Nintendo report lookup is retained in the source receipt. The earlier
+official tutorial/report embeds did not yield playable primary flight frames.
+Exact original mantle orientation, curves, roll and timing remain unconfirmed;
+velocity-tangent alignment is an engine correction, not original parity proof.

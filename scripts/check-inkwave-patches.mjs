@@ -37,9 +37,23 @@ try {
   const files = [...walk(path.join(PATCH_ROOT, 'tests')), ...walk(path.join(RELIABILITY_ROOT, 'tests'))].filter(f => f.endsWith('.test.mjs')).sort();
   if (!files.length) throw new Error('No patch tests discovered');
   const result = spawnSync(process.execPath, ['--experimental-vm-modules', '--test', ...files], { cwd: ROOT, env: { ...process.env, INKWAVE_UPSTREAM_SOURCE: SRC }, encoding: 'utf8', maxBuffer: 4 * 1024 * 1024 });
+  const logDir = path.resolve(process.env.INKWAVE_TEST_LOG_DIR || path.join(ROOT, '.ci-scratch/inkwave-patches'));
+  const physical = p => fs.existsSync(p) ? fs.realpathSync(p) : path.join(physical(path.dirname(p)), path.basename(p));
+  if (['/tmp', '/var/tmp', '/dev/shm'].some(p => physical(logDir) === p || physical(logDir).startsWith(p + '/'))) throw Error('Persistent test log storage required');
+  fs.mkdirSync(logDir, { recursive: true });
+  const log = path.join(logDir, 'patch-tests.log');
+  fs.writeFileSync(log + '.writing', (result.stdout || '') + (result.stderr || ''));
+  fs.renameSync(log + '.writing', log);
   if (result.status !== 0) {
-    process.stderr.write((result.stdout + result.stderr).slice(-18000));
-    throw new Error(`Patch tests failed (exit ${result.status})`);
+    const lines = (result.stdout || '').split('\n'), failures = [];
+    for (let i = 0; i < lines.length; i++) if (/^\s*not ok\b/.test(lines[i])) {
+      let end = i + 1;
+      while (end < lines.length && !/^\s*(?:# Subtest:|(?:not )?ok \d|1\.\.)/.test(lines[end])) end++;
+      failures.push(lines.slice(i, end).join('\n').slice(0, 2400));
+    }
+    process.stderr.write(failures.length ? failures.join('\n').slice(0, 26000) + '\n' : (result.stdout + result.stderr).slice(-18000));
+    process.stderr.write(lines.filter(line => /^# (?:tests|pass|fail|skipped|duration_ms) /.test(line)).join('\n') + '\n');
+    throw new Error(`Patch tests failed (exit ${result.status}); full diagnostic log: ${log}`);
   }
   const summary = result.stdout.split('\n').filter(line => /tests |pass |fail |skipped |duration_ms /.test(line));
   console.log(`INKWAVE patches OK: ${files.length} test files; upstream compatible; reference ${profile.referenceVersion}`);

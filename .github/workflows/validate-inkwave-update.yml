@@ -44,6 +44,15 @@ jobs:
           node-version: 22
       - name: Verify gameplay patch contracts and regressions
         run: node --experimental-vm-modules scripts/check-inkwave-patches.mjs
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: inkwave-patch-failure-diagnostics-${{ inputs.source_sha || github.sha }}
+          if-no-files-found: error
+          path: .ci-scratch/inkwave-patches/
+          retention-days: 14
+      - name: Verify motion verifier regressions
+        run: node --test scripts/tests/inkwave-motion-gates.test.mjs
       - name: Verify pinned primary numerical sources
         run: |
           python3 - <<'PY'
@@ -105,13 +114,19 @@ jobs:
   browser:
     needs: validate
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        suite: [active, catalog, ui]
     env:
       TMPDIR: ${{ github.workspace }}/.ci-scratch
       TMP: ${{ github.workspace }}/.ci-scratch
       TEMP: ${{ github.workspace }}/.ci-scratch
       PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.browser-cache
-      CI_STORAGE: /mnt/workspace/inkwave-ci-${{ github.run_id }}-${{ github.run_attempt }}
+      BROWSER_SUITE: ${{ matrix.suite }}
+      CI_STORAGE: /mnt/workspace/inkwave-ci-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.suite }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -135,39 +150,64 @@ jobs:
           npm install --no-save --no-package-lock --silent playwright@1.62.1
           npx playwright install --with-deps chromium webkit
       - name: Verify active browser behavior and loaded artifact bytes
+        if: matrix.suite == 'active'
         run: node scripts/check-inkwave-browser.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/game" --profile-dir "$CI_STORAGE/cache/game" --exact-source
       - name: Verify rendered walking contacts and transitions
+        if: matrix.suite == 'active'
         run: node scripts/check-inkwave-motion.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/motion" --profile-dir "$CI_STORAGE/cache/motion"
+      - name: Verify rendered sub, Flow and weapon detail transitions
+        if: matrix.suite == 'active'
+        run: node scripts/check-inkwave-motion-detail.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/motion-detail" --profile-dir "$CI_STORAGE/cache/motion-detail"
+      - name: Verify Flow geometry through actual GTAO and GPU disposal
+        if: matrix.suite == 'active'
+        run: node scripts/check-inkwave-flow-render.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/flow" --profile-dir "$CI_STORAGE/cache/flow" --exact-source
+      - name: Verify wall geometry through actual GTAO and GPU disposal
+        if: matrix.suite == 'active'
+        run: node scripts/check-inkwave-wall-render.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/wall" --profile-dir "$CI_STORAGE/cache/wall" --exact-source
+      - name: Verify the complete installed motion catalog
+        if: matrix.suite == 'catalog'
+        run: node scripts/check-inkwave-motion-catalog.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/catalog" --profile-dir "$CI_STORAGE/cache/catalog"
       - name: Verify touch layout in Chromium and WebKit
+        if: matrix.suite == 'ui'
         run: node scripts/check-inkwave-touch-layout.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/layout" --profile-dir "$CI_STORAGE/cache/layout"
       - name: Verify built input and lifecycle modules in Chromium and WebKit
+        if: matrix.suite == 'ui'
         run: node scripts/check-inkwave-reliability.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/reliability" --profile-dir "$CI_STORAGE/cache/reliability"
       - name: Reject forged touch and reliability source identities
+        if: matrix.suite == 'ui'
         run: |
           node scripts/check-inkwave-touch-layout-identity.mjs --site .built-site/_site --source inkwave-public --checkout-dir "$CI_STORAGE/identity-touch" --evidence-dir "$CI_STORAGE/evidence/identity-touch"
           node scripts/check-inkwave-touch-layout-identity.mjs --reliability --site .built-site/_site --source inkwave-public --checkout-dir "$CI_STORAGE/identity-reliability" --evidence-dir "$CI_STORAGE/evidence/identity-reliability"
+      - name: Verify responsive menus in Chromium and WebKit
+        if: matrix.suite == 'ui'
+        run: node scripts/check-inkwave-responsive.mjs --source .built-site/_site --section all --evidence-dir "$CI_STORAGE/evidence/responsive" --profile-dir "$CI_STORAGE/cache/responsive"
       - name: Bind passing browser evidence to the tested commit
         run: |
           python3 - <<'PY'
           import json, os, pathlib
           root=pathlib.Path(os.environ['CI_STORAGE'])/'evidence'
-          checks=['game/browser-result.json','layout/touch-layout-result.json','reliability/reliability-browser-result.json','identity-touch/touch-layout-identity-result.json','identity-reliability/reliability-identity-result.json']
+          suite=os.environ['BROWSER_SUITE']
+          checks={
+            'active':['game/browser-result.json','motion/motion-result.json','motion-detail/motion-detail-result.json','flow/flow-render-result.json','wall/wall-render-result.json'],
+            'catalog':['catalog/motion-catalog-result.json'],
+            'ui':['layout/touch-layout-result.json','reliability/reliability-browser-result.json','identity-touch/touch-layout-identity-result.json','identity-reliability/reliability-identity-result.json','responsive/responsive-result.json'],
+          }[suite]
           reports={name:json.loads((root/name).read_text()) for name in checks}
-          assert all(report['status']=='passed' for report in reports.values())
-          assert reports[checks[0]]['sourceSha']==os.environ['SOURCE_SHA']
-          motion=json.loads((root/'motion/motion-result.json').read_text())
-          assert not motion['errors'] and motion['fixture']['scenarios']==10
           build=json.loads(pathlib.Path('.built-site/_site/inkwave-build.json').read_text())
-          assert all(reports[name]['contentHash']==build['contentHash'] for name in checks[:3])
-          assert motion['contentHash']==build['contentHash']
-          receipt={'status':'passed','sourceSha':os.environ['SOURCE_SHA'],'contentHash':build['contentHash'],'runId':os.environ['GITHUB_RUN_ID'],'runAttempt':os.environ['GITHUB_RUN_ATTEMPT'],'event':os.environ['GITHUB_EVENT_NAME'],'checks':checks+['motion/motion-result.json']}
+          assert build['sourceSha']==os.environ['SOURCE_SHA']
+          for name,report in reports.items():
+            if name=='motion/motion-result.json': assert not report['errors'] and report['fixture']['scenarios']==10
+            else: assert report['status']=='passed', name
+            if 'contentHash' in report: assert report['contentHash']==build['contentHash'], name
+          if suite=='active': assert reports['game/browser-result.json']['sourceSha']==os.environ['SOURCE_SHA']
+          receipt={'status':'passed','sourceSha':os.environ['SOURCE_SHA'],'contentHash':build['contentHash'],'suite':suite,'runId':os.environ['GITHUB_RUN_ID'],'runAttempt':os.environ['GITHUB_RUN_ATTEMPT'],'event':os.environ['GITHUB_EVENT_NAME'],'checks':checks}
           pending=root/'ci-result.json.pending'; pending.write_text(json.dumps(receipt,indent=2)+'\n'); pending.replace(root/'ci-result.json')
           print(json.dumps(receipt))
           PY
       - uses: actions/upload-artifact@v4
         if: success()
         with:
-          name: inkwave-browser-${{ inputs.source_sha || github.sha }}
+          name: inkwave-browser-${{ matrix.suite }}-${{ inputs.source_sha || github.sha }}
           include-hidden-files: true
           if-no-files-found: error
           path: ${{ env.CI_STORAGE }}/evidence/

@@ -1,3 +1,5 @@
+import { dualiesMotionAllowsFootPlant } from './action-admission.mjs';
+import { specialMotionAllowsFootPlant } from './special-motion.mjs';
 // Walking is an animation layer. It never writes actor speed or collision state.
 // The numbers in walkMotion are visual calibration, not measured Nintendo clips.
 let api, tuning;
@@ -8,10 +10,10 @@ const smooth=(a,b,x)=>{const t=clamp((x-a)/(b-a),0,1);return t*t*(3-2*t);};
 const ease=x=>{const u=clamp(x,0,1);return u*u*u*(10+u*(6*u-15));};
 const damp=(a,b,rate,dt)=>mix(a,b,1-Math.exp(-rate*dt));
 const angle=x=>Math.atan2(Math.sin(x),Math.cos(x));
-const state=ch=>{let s=states.get(ch);if(!s){s={active:false,pitch:0,pitchV:0,roll:0,rollV:0,vx:0,vz:0,target:new api.THREE.Vector3()};states.set(ch,s);}return s;};
+const state=ch=>{let s=states.get(ch);if(!s){s={active:false,pitch:0,pitchV:0,roll:0,rollV:0,vx:0,vz:0,target:new api.THREE.Vector3(),support:new api.THREE.Vector3()};states.set(ch,s);}return s;};
 function eligible(ch){
   const T=api.CHARACTER_TIMERS, tr=ch.tr;
-  return ch.kidForm&&ch.grounded&&!ch.dance&&ch.kidScale>.5&&tr[T.T_LEAP]>1.9&&tr[T.T_SLAM]>1.4&&tr[T.T_DODGE]>ch.dodgeDur*.86&&tr[T.T_SPAWN]>1.4;
+  return ch.kidForm&&ch.grounded&&!ch.dance&&ch.kidScale>.5&&specialMotionAllowsFootPlant(ch,tr[T.T_LEAP]>1.9&&tr[T.T_SLAM]>1.4)&&dualiesMotionAllowsFootPlant(ch,tr[T.T_DODGE]>ch.dodgeDur*.86)&&tr[T.T_SPAWN]>1.4;
 }
 function startSwing(ch,f,settle=false,remaining){
   const M=api.CHARACTER_FOOT_MODES;
@@ -118,6 +120,7 @@ export function installWalkMotion(context,profile){
   const C=api.Character.prototype,oldTrack=C._trackRoot,oldStates=C._updateStates,oldFeet=C._updateFeet,oldPose=C._footPose,oldTarget=C._gaitTarget;
   C._trackRoot=function(dt,s){
     const w=state(this),valid=this.rootInit&&this.root.position.distanceToSquared(this.rp)<=9;
+    w.rootMotionKnown=valid&&dt>0;
     w.vx=valid&&dt>0?(this.root.position.x-this.rp.x)/dt:0;w.vz=valid&&dt>0?(this.root.position.z-this.rp.z)/dt:0;
     oldTrack.call(this,dt,s);if(this.tread){w.vx=this.tvx;w.vz=this.tvz;}
   };
@@ -167,7 +170,45 @@ function advanceLean(ch,axis,acceleration,weight,dt){
 // contact blend; this only changes the grounded walking controller.
 export function walkSwingUnloaded(ch,f){return state(ch).active?f.sw:f.sw&&f.su>.02&&f.su<.9;}
 
+// The extra swing knee margin must not pull a weight-bearing ankle away from
+// its locked heel/toe contact. The pelvis already solves planted-leg reach.
+// The planted pelvis calculation keeps its source soft-knee margin, and the
+// native analytic IK keeps its own final limit. Flight/actions retain the
+// original additional swing margin.
+export function walkFootReach(ch,f){
+  if(!states.get(ch)?.active||!f.planted)return ch.legReach*.97;
+  const leg=f.side>0?ch.limbs.legL:ch.limbs.legR;return leg.a+leg.b;
+}
+
+// A filtered pelvis can lag behind the support constraint during a reversal.
+// Keep its native smoothing, but enforce the actual analytic IK reach before
+// it can shorten a fully weighted, world-locked foot target. This uses the
+// native kid-space targets and limb lengths; no actor or foot clocks change.
+export function walkPelvisDrop(ch,nativeDrop){
+  const s=states.get(ch);if(!s?.active)return nativeDrop;
+  const C=api.CHARACTER_CHANNELS,hips=ch.bones.hips;
+  let drop=nativeDrop;
+  for(let i=0;i<2;i++){
+    const f=ch.feet[i],weight=ch.P[i===0?C.WPL:C.WPR]*ch.plantW*(ch.feetValid?1:0);
+    if(!f.planted||weight<.999)continue;
+    const leg=i===0?ch.limbs.legL:ch.limbs.legR,ft=i===0?ch._fL:ch._fR;
+    const hip=s.support.copy(leg.up.position).applyQuaternion(hips.quaternion).add(hips.position);
+    const hx=ft.x-hip.x,hz=ft.z-hip.z,reach=(leg.a+leg.b)*.9995;
+    const vertical=Math.sqrt(Math.max(0,reach*reach-hx*hx-hz*hz));
+    drop=Math.max(drop,hip.y-ft.y-vertical+1e-6);
+  }
+  return drop;
+}
+
 export function walkActive(ch){return !!states.get(ch)?.active;}
+
+// A reversing filtered velocity can pass through zero while the real root
+// still travels. Only an actually stationary root uses preview tread motion.
+export function walkTreadAllowed(ch,nativeTread){
+  const w=states.get(ch);
+  if(!nativeTread||!w?.rootMotionKnown||!ch.kidForm||!ch.grounded||ch.dance)return nativeTread;
+  return Math.hypot(w.vx,w.vz)<=1e-6;
+}
 
 // _updateStates advances these once per tick, including hidden/squid bodies.
 export function walkLean(ch,axis){return api&&eligible(ch)?state(ch)[axis==='pitch'?'pitch':'roll']:null;}

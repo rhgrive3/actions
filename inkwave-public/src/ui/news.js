@@ -173,6 +173,24 @@ export class WhatsNew {
       list,
       h('div', { class: 'iw-news__btns' }, btns),
       h('div', { class: 'iw-news__foot' }, dots, h('span', { class: 'iw-news__count' }, `${i + 1} / ${PAGES.length}`)));
+    // WebKit can shift this overflowing card between pointerdown and pointerup.
+    // Touch events retain the original target; activate only a tap, never a scroll.
+    for (const button of btns) {
+      let start = null;
+      button.addEventListener('touchstart', (e) => { start = e.touches.length === 1 ? e.touches[0] : null; }, { passive: true });
+      button.addEventListener('touchmove', (e) => {
+        const point = start && [...e.touches].find((p) => p.identifier === start.identifier);
+        if (!point || Math.hypot(point.clientX - start.clientX, point.clientY - start.clientY) > 10) start = null;
+      }, { passive: true });
+      button.addEventListener('touchcancel', () => { start = null; }, { passive: true });
+      button.addEventListener('touchend', (e) => {
+        const point = start && [...e.changedTouches].find((p) => p.identifier === start.identifier);
+        const tap = point && Math.hypot(point.clientX - start.clientX, point.clientY - start.clientY) <= 10;
+        start = null;
+        if (!tap) return;
+        e.preventDefault(); button.classList.remove('is-down'); button.click();
+      }, { passive: false });
+    }
     this.card.innerHTML = '';
     this.card.append(hero, body);
     restartAnim(this.card, first ? 'is-in' : 'is-swap');
