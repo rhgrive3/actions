@@ -18,10 +18,12 @@ export const EMOTES_MOTION_CALIBRATION = Object.freeze({
 
 export function emotesMotionSnapshot(ch) {
   const record = ch?.[INSTALL]?.states.get(ch);
-  return record ? { ...record, variant: record.name && record.name === ch.dance ? ch.danceVar : record.variant } : null;
+  if (!record) return null;
+  const { reach, ...view } = record;
+  return { ...view, variant: record.name && record.name === ch.dance ? ch.danceVar : record.variant };
 }
 
-export function installEmotesMotion({ Character, Actor }, _profile) {
+export function installEmotesMotion({ Character, Actor, THREE }, _profile) {
   if (!Character?.prototype?._poseDance || !Character.prototype.setDance)
     throw Error('Emotes motion requires the actual public Character dance hooks');
   const C = Character.prototype;
@@ -76,6 +78,27 @@ export function installEmotesMotion({ Character, Actor }, _profile) {
     this.danceVar = variant;
     try { return pose.call(this, D, name, sample, dt); }
     finally { this.danceVar = currentVariant; }
+  };
+  const solve = C._solveLimb;
+  C._solveLimb = function (limb, target, pole, endQuat, weight, slot) {
+    const victory = this.dance === 'victory' || this.lastDance === 'victory' || this.prevDance === 'victory';
+    if (!enabled(this) || !victory || this.wDance <= .001 || !endQuat || weight <= .999
+      || !(limb === this.limbs.armR || this.dual && limb === this.limbs.armL))
+      return solve.call(this, limb, target, pole, endQuat, weight, slot);
+    // Preserve the authored native pose and real IK. Project only an unreachable
+    // held-hand target onto the actual arm span, including the outgoing fade.
+    let x = states.get(this)?.reach;
+    if (!x) {
+      const record = states.get(this) || {}; states.set(this, record);
+      x = record.reach = { shoulder: new THREE.Vector3(), delta: new THREE.Vector3(),
+        point: new THREE.Vector3(), parentQ: new THREE.Quaternion() };
+    }
+    this._kidXform(limb.up.parent, x.shoulder, x.parentQ);
+    x.shoulder.add(x.delta.copy(limb.up.position).applyQuaternion(x.parentQ));
+    x.delta.subVectors(target, x.shoulder);
+    const radius = (limb.a + limb.b) * .9995, distance = x.delta.length();
+    const point = distance > radius ? x.point.copy(x.shoulder).addScaledVector(x.delta, radius / distance) : target;
+    return solve.call(this, limb, point, pole, endQuat, weight, slot);
   };
   C.update = function (dt, s) {
     if (disposed.has(this)) return;

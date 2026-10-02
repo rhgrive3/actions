@@ -95,6 +95,11 @@ jobs:
     needs: validate
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        suite: [active, catalog]
     env:
       TMPDIR: ${{ github.workspace }}/.ci-scratch
       TMP: ${{ github.workspace }}/.ci-scratch
@@ -115,17 +120,27 @@ jobs:
           npm install --no-save --no-package-lock --silent playwright@1.62.1
           npx playwright install chromium
       - name: Verify active browser behavior and loaded artifact bytes
+        if: matrix.suite == 'active'
         run: node scripts/check-inkwave-browser.mjs --site .built-site/_site --evidence-dir .browser-evidence --profile-dir .browser-profile --exact-source
       - name: Verify rendered walking contacts and transitions
+        if: matrix.suite == 'active'
         run: node scripts/check-inkwave-motion.mjs --site .built-site/_site --evidence-dir .browser-evidence/motion --profile-dir .browser-profile-motion
       - name: Verify rendered sub, Flow and weapon detail transitions
+        if: matrix.suite == 'active'
         run: node scripts/check-inkwave-motion-detail.mjs --site .built-site/_site --evidence-dir .browser-evidence/motion-detail --profile-dir .browser-profile-motion-detail
       - name: Verify Flow geometry through actual GTAO and GPU disposal
+        if: matrix.suite == 'active'
         run: node scripts/check-inkwave-flow-render.mjs --site .built-site/_site --evidence-dir .browser-evidence/flow-render --profile-dir .browser-profile-flow --exact-source
+      - name: Verify wall geometry through actual GTAO and GPU disposal
+        if: matrix.suite == 'active'
+        run: node scripts/check-inkwave-wall-render.mjs --site .built-site/_site --evidence-dir .browser-evidence/wall-render --profile-dir .browser-profile-wall --exact-source
+      - name: Verify the complete installed motion catalog
+        if: matrix.suite == 'catalog'
+        run: node scripts/check-inkwave-motion-catalog.mjs --site .built-site/_site --evidence-dir .browser-evidence/catalog --profile-dir .browser-profile-catalog
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: inkwave-browser-${{ github.sha }}
+          name: inkwave-browser-${{ matrix.suite }}-${{ github.sha }}
           include-hidden-files: true
           if-no-files-found: error
           path: .browser-evidence/

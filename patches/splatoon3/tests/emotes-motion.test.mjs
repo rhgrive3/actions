@@ -30,6 +30,7 @@ async function production() {
     export { installFlowMotion } from './patches/splatoon3/runtime/flow-motion.mjs';
     export { installEmotesMotion, emotesMotionSnapshot } from './patches/splatoon3/runtime/emotes-motion.mjs';
     export { FixedClock } from './patches/splatoon3/runtime/clock.mjs';
+    export { FIST_OFFSET } from './src/game/character-weapons.js';
   `, { context, identifier: path.join(ROOT, 'emotes-production-entry.mjs') });
   await entry.link((specifier, from) => load(specifier === 'three'
     ? path.join(SRC, 'vendor/three/build/three.module.js')
@@ -308,16 +309,8 @@ test('native runner and Actor frame resume shooting/sub poses after a presentati
       assert.ok(Array.from(after.ch.ikErr.slice(0, 2)).every(error => error < .0005));
       assert.ok(grip(after) < .025);
       const actual = gameplay(after), expected = { ...gameplay(before), danceTime: 0 };
-      // The native opt-out is still dancing, so the integrated bomb layer
-      // repeatedly clears its visual throw timer. Cancellation admits normal
-      // native timer advancement. Check that fact explicitly, then compare all
-      // other clocks and the complete actual Actor/Runner gameplay fields.
-      const throwIndex = api.CHARACTER_TIMERS.T_THROW;
-      assert.equal(expected.timers[throwIndex], 99);
-      let throwAge = Math.fround(99);
-      for (let i = 0; i < 45; i++) throwAge = Math.fround(throwAge + 1 / 60);
-      assert.equal(actual.timers[throwIndex], throwAge);
-      expected.timers[throwIndex] = throwAge;
+      // Presentation cancellation no longer clears native throw clocks.
+      // Compare every native timer directly with the same real runner inputs.
       assert.deepEqual(actual, expected);
       trace.push(capture(after, 'native-runner-shooting'));
       // Return to presentation then exercise actual native held-sub state.
@@ -360,5 +353,44 @@ test('a future unsupported dance is not cancelled through an old supported selec
     r.dance(); r.step(); r.ch.setDance('future-custom-presentation'); r.step(0, { firing: true });
     assert.equal(r.ch.dance, 'future-custom-presentation');
     r.ch.trigger('shoot'); assert.equal(r.ch.dance, 'future-custom-presentation');
+  } finally { r.close(); }
+});
+
+
+test('actual victory and fade retain reachable held native hands at every tick', async () => {
+  const api = await production();
+  for (const variant of [0, 1, 2]) {
+    const r = rig(api, { actor: true });
+    try {
+      r.dance(variant);
+      for (let tick = 0; tick < 360; tick++) {
+        if (tick === 280) r.ch.setDance(null);
+        if (tick === 310) r.ch.setDance('lobby_pose');
+        r.step();
+        if (r.ch.P[api.CHARACTER_CHANNELS.IKR] > .999)
+          assert.ok(r.ch.ikErr[1] <= .025, `variant ${variant} tick ${tick} right IK ${r.ch.ikErr[1]}`);
+      }
+    } finally { r.close(); }
+  }
+});
+
+
+test('native twirl holds the physical authored grip axis while the wrist socket rotates', async () => {
+  const api = await production(), r = rig(api);
+  try {
+    r.dance(1); let oldOriginMiss = 0;
+    for (let tick = 0; tick < 110; tick++) {
+      r.step(); const w = r.ch.weapon, bone = r.ch.bones.handR;
+      const socket = api.FIST_OFFSET.clone().sub(w.def.inHand.pos).applyQuaternion(w.def.inHand.quat.clone().invert());
+      const expected = bone.localToWorld(api.FIST_OFFSET.clone());
+      assert.ok(w.off.localToWorld(socket.clone()).distanceTo(expected) < 1e-6);
+      oldOriginMiss = Math.max(oldOriginMiss, grip(r));
+      if (tick === 66) {
+        const original = w.off.position.clone(); w.off.position.x += .04; r.ch.root.updateMatrixWorld(true);
+        assert.ok(w.off.localToWorld(socket.clone()).distanceTo(expected) > .015, 'a displaced actual grip must fail');
+        w.off.position.copy(original); r.ch.root.updateMatrixWorld(true);
+      }
+    }
+    assert.ok(oldOriginMiss > .09, 'the retained frozen wrist-origin diagnostic is reproduced');
   } finally { r.close(); }
 });

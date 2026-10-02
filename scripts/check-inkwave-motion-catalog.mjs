@@ -256,6 +256,7 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout 
   const { walkActive } = await import(prefix + 'patches/splatoon3/runtime/walk.mjs');
   const { beforeActions } = await import(prefix + 'patches/splatoon3/runtime/movement.mjs');
   const { FixedClock } = await import(prefix + 'patches/splatoon3/runtime/clock.mjs');
+  const { FIST_OFFSET, GRIP_HOLE_L } = await import(prefix + 'src/game/character-weapons.js');
   const methods = [Character, Actor, api.WeaponRunner].flatMap(Type => Reflect.ownKeys(Type.prototype).filter(k => typeof Object.getOwnPropertyDescriptor(Type.prototype, k).value === 'function').map(key => [Type.prototype, key, Type.prototype[key]]));
   const iframe = document.createElement('iframe'); iframe.src = '/motion-catalog'; document.body.appendChild(iframe);
   await new Promise((resolve, reject) => { iframe.onload = resolve; iframe.onerror = reject; });
@@ -266,11 +267,11 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout 
   const duplicateRealm = { modules: modules.length, unchanged: methods.every(([p, k, fn]) => p[k] === fn) }; iframe.remove();
   const scene = new THREE.Scene(); scene.background = new THREE.Color('#dfe7e9');
   const camera = new THREE.OrthographicCamera(-1.4, 1.4, 1.05, -1.05, .01, 300);
-  const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+  const renderer = new THREE.WebGLRenderer({ antialias: false, preserveDrawingBuffer: true });
   renderer.setSize(960, 720); renderer.setPixelRatio(1); document.body.appendChild(renderer.domElement);
   const gl = renderer.getContext(), debug = gl.getExtension('WEBGL_debug_renderer_info');
   const gpu = { renderer: debug ? gl.getParameter(debug.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER), version: gl.getParameter(gl.VERSION), contextLost: gl.isContextLost() };
-  const ownedGeometries = new Set(), allMaterials = new Set();
+  const ownedGeometries = new Set(), allMaterials = new Set(), fixtureTextures = new Set();
   const floor = { id: 0, solid: true, center: new THREE.Vector3(0, -.5, 0), half: new THREE.Vector3(200, .5, 200), faces: [-1, -1, -1, -1, -1, -1], axes: [new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 1)], aabbMin: new THREE.Vector3(-200, -1, -200), aabbMax: new THREE.Vector3(200, 0, 200) };
   const wall = { id: 1, solid: true, center: new THREE.Vector3(0, 1.5, -.7), half: new THREE.Vector3(3, 1.5, .2), faces: [0, 0, 0, 0, 0, 0], axes: floor.axes, aabbMin: new THREE.Vector3(-3, 0, -.9), aabbMax: new THREE.Vector3(3, 3, -.5) };
   const level = { blocks: [floor], faces: [{ origin: new THREE.Vector3(), u: new THREE.Vector3(1, 0, 0), v: new THREE.Vector3(0, 1, 0) }], groundHeight: () => 0, spawnPads: [new THREE.Vector3(), new THREE.Vector3(0, 0, 20)], pointInside: () => false, queryBlocks: (_a, _b, _c, _d, out) => { out.length = 0; out.push(...level.blocks.map(b => b.id)); return out; } };
@@ -303,7 +304,7 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout 
     active: a?.specialActive, jump: a?.superJumpState, input: a?.intent, runner: a ? primitives(a.weaponRunner) : null, actions: a?.s3?.actions, time: G.time,
     projectiles: primitives(projectiles), projectileClocks: Object.fromEntries(Object.entries(projectiles).filter(([, v]) => Array.isArray(v)).map(([k, list]) => [k, list.map(p => p && typeof p === 'object' ? { clocks: primitives(p), pos: p.pos?.toArray(), vel: p.vel?.toArray() } : p)])),
   });
-  function collect(root) { root.traverse(node => { if (node.geometry) ownedGeometries.add(node.geometry); for (const m of (Array.isArray(node.material) ? node.material : [node.material])) if (m) allMaterials.add(m); }); }
+  function collect(root) { root.traverse(node => { if (node.geometry) ownedGeometries.add(node.geometry); for (const m of (Array.isArray(node.material) ? node.material : [node.material])) if (m) { allMaterials.add(m); for (const v of Object.values(m)) if (v?.isTexture) fixtureTextures.add(v); for (const u of Object.values(m.uniforms || {})) if (u?.value?.isTexture) fixtureTextures.add(u.value); } }); }
   function geometry(ch) {
     // getVertexPosition executes real native skinning, but custom vertex-shader
     // squid/eye/lid deformation is evidenced by the compiled RGB render only.
@@ -340,11 +341,19 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout 
   }
   function grip(ch, side) {
     const left = side === 'left', w = left && ch.dual ? ch.weapon.left : ch.weapon;
-    const target = w.off.localToWorld(w.def[left ? 'handL' : 'handR'].pos.clone());
-    const hand = ch.bones[left ? 'handL' : 'handR'].getWorldPosition(new THREE.Vector3());
+    const bone = ch.bones[left ? 'handL' : 'handR'];
+    const authored = w.def[left && ch.dual ? 'inHandL' : 'inHand'];
+    // Native spin is around the fist's authored grip axis, not the wrist bone
+    // origin. Keep the old socket error as diagnostic; never exempt a dance.
+    const hole = left && ch.dual ? GRIP_HOLE_L : FIST_OFFSET;
+    const socket = hole.clone().sub(authored.pos).applyQuaternion(authored.quat.clone().invert());
+    const rightHeld = !left || ch.dual;
+    const target = w.off.localToWorld(rightHeld ? socket : w.def.handL.pos.clone());
+    const hand = rightHeld ? bone.localToWorld(hole.clone()) : bone.getWorldPosition(new THREE.Vector3());
+    const boneOriginGap = w.off.localToWorld(w.def[left ? 'handL' : 'handR'].pos.clone()).distanceTo(bone.getWorldPosition(new THREE.Vector3()));
     const weight = ch.P[left ? C.IKL : C.IKR];
     const explicitTarget = left ? ch.P[C.LTW] : 0, swapped = left && ch.dual ? ch.bombSwap : 0;
-    return { gap: target.distanceTo(hand), weight, explicitTarget, swapped, held: weight > .999 && explicitTarget <= .001 && swapped <= .001 && ch.kidForm };
+    return { gap: target.distanceTo(hand), boneOriginGap, socket: target.toArray(), fist: hand.toArray(), weight, explicitTarget, swapped, held: weight > .999 && explicitTarget <= .001 && swapped <= .001 && ch.kidForm };
   }
   function record(ch, a, frame, last, invariant, contactEpoch) {
     const feet = ch.feet.map((f, i) => {
@@ -379,7 +388,7 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout 
     let rig, hiddenImage;
     try { ch.root.visible = false; renderer.render(scene, camera); rig = globalThis.catalogPixelDifference(actual, pixels()); hiddenImage = await save(name + '-hidden', renderer.domElement.toDataURL('image/png')); }
     finally { ch.root.visible = visible; }
-    const effect = mutation => { const undo = mutation(); try { renderer.render(scene, camera); return globalThis.catalogPixelDifference(actual, pixels()); } finally { undo(); } };
+    const effect = mutation => { renderer.render(scene, camera); const baseline = pixels(); const undo = mutation(); try { renderer.render(scene, camera); return globalThis.catalogPixelDifference(baseline, pixels()); } finally { undo(); } };
     let glint = null, coating = null, face = null;
     const star = ch.root.getObjectByName('s3-wall-ready-glint');
     if (star?.visible) glint = effect(() => { star.visible = false; return () => { star.visible = true; }; });
@@ -519,8 +528,12 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout 
     for (const key of ['bombGeo', 'bombCapGeo', 'ribbonGeo', 'arcGeo', 'cloudGeo']) if (projectiles[key]) ownedGeometries.add(projectiles[key]);
     for (const m of projectiles.bombMatCache.values()) allMaterials.add(m);
     for (const geometry of ownedGeometries) geometry.dispose(); for (const material of allMaterials) material.dispose();
+    // This fixture owns the entire isolated renderer/realm, including native
+    // shared cached material maps. Dispose observed textures at fixture teardown.
+    const textureReceipts = [...fixtureTextures].map(t => ({ uuid: t.uuid, name: t.name, type: t.type }));
+    for (const texture of fixtureTextures) texture.dispose();
     renderer.dispose(); renderer.domElement.remove();
-    const cleanup = { rendererDisposed: true, domRemoved: !renderer.domElement.isConnected, geometries: renderer.info.memory.geometries, textures: renderer.info.memory.textures };
+    const cleanup = { rendererDisposed: true, domRemoved: !renderer.domElement.isConnected, geometries: renderer.info.memory.geometries, textures: renderer.info.memory.textures, fixtureTextureDisposals: textureReceipts };
     if (globalThis.catalogPartial) globalThis.catalogPartial.cleanup = cleanup;
   }
 }

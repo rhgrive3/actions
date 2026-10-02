@@ -63,3 +63,7 @@ Fixtures now rely exclusively on the complete installer for activation. The old 
 Focused CPU source/geometry/material evidence is recorded under `/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/review-body/`. Integrated GPU renders, complete exact-SHA Actions and controlled Nintendo device comparisons remain parent work.
 
 The independent final tests also check cross-realm snapshots and direct frame-rate boundaries where relevant. Fixed 60 Hz production scheduling and direct 30/60/120 Hz native integration are recorded as separate CPU evidence; no equality of arbitrary native spring trajectories or Nintendo timings is inferred.
+
+## 実リグの全tick到達性（親統合）
+
+variant2の165tickで右手native IK残差0.027094mを実productionで再現した。全variantの360tick、終了とlobbyへのfadeを含め、保持腕の目標がnative span内に入るようemotes専用solve wrapperを追加した。時計・variant・元の関節曲線・腕の長さは保持する。twirlの握り測定は手首原点ではなく、native weapon definitionのinHandと実FIST_OFFSETから計算した軸を使う。spin時の手首原点誤差0.09m超を再現しながら実軸の握りを確認し、武器を0.04m変位させるcounterexampleは失敗する。数値はINKWAVE実リグの検証であり、原作の関節数値ではない。
