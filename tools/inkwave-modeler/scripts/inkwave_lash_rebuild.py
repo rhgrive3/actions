@@ -564,7 +564,9 @@ def build_rim(rays, design):
     origin = np.array([c[0] for c in cast])
     direction = np.array([c[1] for c in cast])
     hit = np.array([c[2] for c in cast])
-    depth = er.smooth_rows(hit, 2.0)
+    # the front rays hit the lid edge at uneven depths; smoothed along the line, the rim (and the margin strip
+    # wrapped from it) does not zigzag in the 3/4 and side views.  The front view does not change.
+    depth = er.smooth_rows(hit, design.get('rim_depth_sigma', 2.0))
     r0 = design.get('rim_r_mm', 0.36)
     # upper part: grows from a hair under the liner to full width at the corner; then the lower lid taper
     t_up = np.linspace(0, 1, n_up + 1) ** 0.6
@@ -575,7 +577,8 @@ def build_rim(rays, design):
     depth = np.minimum(depth - (0.15 + 0.5 * r) / 1000, hit - 0.10 / 1000)
     pts = M.to_local(origin + direction * depth[:, None]) * 1000
     tv, tf = er.tube(pts, r, sides=8)
-    skin_pts = M.to_local(origin + direction * (hit - MARGIN_LIFT_MM / 1000)[:, None]) * 1000
+    start = np.minimum(er.smooth_rows(hit, design.get('rim_depth_sigma', 2.0)), hit) if design.get('margin_smooth') else hit
+    skin_pts = M.to_local(origin + direction * (start - MARGIN_LIFT_MM / 1000)[:, None]) * 1000
     mv, mf = build_margin(rays, skin_pts)
     return (np.r_[tv, mv], list(tf) + [tuple(i + len(tv) for i in fc) for fc in mf]), px
 
