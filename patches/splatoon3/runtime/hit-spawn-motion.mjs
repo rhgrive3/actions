@@ -58,7 +58,7 @@ export function installHitSpawnMotion(api, _profile) {
     const get = ch => {
       let s = states.get(ch);
       if (!s) {
-        s = { phase: 'off', age: 0, spawnProtection: false, disposed: false,
+        s = { phase: 'off', age: 0, spawnProtection: false, disposed: false, owner: null,
           level: { value: 0 }, color: { value: ch.color.clone() }, materials: new Set() };
         states.set(ch, s);
       }
@@ -66,12 +66,17 @@ export function installHitSpawnMotion(api, _profile) {
     };
     const clear = ch => {
       const s = states.get(ch);
-      if (s) { s.phase = 'off'; s.age = 0; s.spawnProtection = false; s.level.value = 0; }
+      if (s) { s.phase = 'off'; s.age = 0; s.spawnProtection = false; s.level.value = 0; s.owner = null; }
     };
-    const start = ch => {
+    const start = (ch, owner) => {
       const s = get(ch);
       if (s.disposed) return;
+      // Actor.spawnAt knows the owner before Character's first update has set
+      // inWorld/discovered it. A subsequent native spawn trigger keeps that
+      // binding; a standalone Character preview still has no gameplay owner.
+      const bound = owner || ch._owner() || s.owner;
       clear(ch); s.spawnProtection = true; s.phase = 'entry';
+      s.owner = bound?.character === ch ? bound : null;
     };
     const coatAll = ch => {
       const s = get(ch);
@@ -110,7 +115,7 @@ export function installHitSpawnMotion(api, _profile) {
       // Hook per-character base materials before native LOD clones are made.
       // Existing dither clones also retain their original vertex/discard code.
       coatAll(this);
-      const frame = input || {}, owner = this._owner();
+      const frame = input || {}, owner = this._owner() || (s.owner?.character === this ? s.owner : null);
       const enabled = this.s3HitSpawnMotionEnabled !== false;
       const alive = !owner || owner.alive !== false;
       const protectedNow = owner ? owner.invuln > 0 : !!frame.invuln;
@@ -157,7 +162,7 @@ export function installHitSpawnMotion(api, _profile) {
     };
     A.spawnAt = function (...args) {
       const result = spawnAt.apply(this, args);
-      if (this.character?.s3HitSpawnMotionEnabled !== false) hooks.start(this.character);
+      if (this.character?.s3HitSpawnMotionEnabled !== false) hooks.start(this.character, this);
       return result;
     };
   }

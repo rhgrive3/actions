@@ -6,7 +6,8 @@ const INSTALL = Symbol.for('inkwave.splatoon3.emotes-motion.v1');
 const ACTOR_INSTALL = Symbol.for('inkwave.splatoon3.emotes-motion.actor.v1');
 const supported = new Set(['victory', 'defeat', 'menu_idle', 'lobby_pose', 'locker_idle']);
 const interruptions = new Set(['shoot', 'throw', 'slosh', 'flick', 'charge_release',
-  'dodge', 'leap', 'slam', 'spawn', 'movement_cancel', 'squidroll', 'squidsurge', 'squidsurge_top']);
+  'dodge', 'leap', 'slam', 'special_leap', 'special_slam', 'hit', 'superjump',
+  'spawn', 'movement_cancel', 'squidroll', 'squidsurge', 'squidsurge_top']);
 
 export const EMOTES_MOTION_CALIBRATION = Object.freeze({
   // Pump's hero stance after wink recovery; flourish's camera stance;
@@ -28,7 +29,7 @@ export function installEmotesMotion({ Character, Actor }, _profile) {
   const states = new WeakMap(), outgoing = new WeakMap(), disposed = new WeakSet();
   Object.defineProperty(C, INSTALL, { value: { states } });
   const pose = C._poseDance, setDance = C.setDance, update = C.update;
-  const trigger = C.trigger, setWeapon = C.setWeapon, dispose = C.dispose;
+  const trigger = C.trigger, setWeapon = C.setWeapon, dispose = C.dispose, setVisible = C.setVisible;
   const enabled = ch => ch.s3EmotesMotionEnabled !== false && !disposed.has(ch);
   const managed = ch => enabled(ch) && (supported.has(ch.dance)
     || (!ch.dance && supported.has(ch.lastDance)));
@@ -81,6 +82,7 @@ export function installEmotesMotion({ Character, Actor }, _profile) {
     if (managed(this)) {
       const owner = this._owner?.();
       const reason = owner?.alive === false ? 'death'
+        : !this.root.visible ? 'hidden'
         : (s?.form || owner?.form || 'kid') !== 'kid' ? 'form'
         : s?.subAim || owner?.weaponRunner?.aimingSub ? 'sub'
         : s?.firing || s?.rolling || s?.charge > 0 || owner?.specialActive
@@ -96,6 +98,10 @@ export function installEmotesMotion({ Character, Actor }, _profile) {
   C.setWeapon = function (kind) {
     if (this.weaponKind && kind !== this.weaponKind) cancel(this, 'weapon');
     return setWeapon.call(this, kind);
+  };
+  C.setVisible = function (value) {
+    if (!value) cancel(this, 'hidden');
+    return setVisible.call(this, value);
   };
   C.dispose = function (...args) {
     if (disposed.has(this)) return;

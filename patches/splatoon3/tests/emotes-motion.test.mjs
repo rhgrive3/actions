@@ -6,7 +6,7 @@ import vm from 'node:vm';
 import { createHash } from 'node:crypto';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { adaptSource } from '../adapter.mjs';
-import { installEmotesMotion as duplicateRealmInstall } from '../runtime/emotes-motion.mjs';
+import { installEmotesMotion as duplicateRealmInstall, emotesMotionSnapshot as crossRealmSnapshot } from '../runtime/emotes-motion.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const SRC = path.resolve(process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public'));
@@ -39,8 +39,7 @@ async function production() {
   await entry.evaluate();
   const profile = JSON.parse(fs.readFileSync(path.join(ROOT, 'patches/splatoon3/profile.json')));
   const api = { ...entry.namespace.install(profile), ...entry.namespace, profile };
-  api.installFlowMotion(api); api.installEmotesMotion(api, profile);
-  const hooks = ['update', 'trigger', 'setDance', '_poseDance', 'setWeapon', 'dispose'];
+  const hooks = ['update', 'trigger', 'setDance', '_poseDance', 'setWeapon', 'setVisible', 'dispose'];
   const before = hooks.map(name => api.Character.prototype[name]);
   api.installEmotesMotion(api, profile); duplicateRealmInstall(api, profile);
   assert.deepEqual(hooks.map(name => api.Character.prototype[name]), before,
@@ -151,6 +150,7 @@ test('native victory poses start at onset and hold their ending instead of resta
       advance(before, 4.5); advance(after, 4.5);
       const nativeEnding = Array.from(before.ch.PD), held = Array.from(after.ch.PD);
       assert.equal(api.emotesMotionSnapshot(after.ch).phase, 'hold');
+      assert.deepEqual(crossRealmSnapshot(after.ch), JSON.parse(JSON.stringify(api.emotesMotionSnapshot(after.ch))));
       evidence.push(capture(before, `native-v${variant}-5s`), capture(after, `patched-v${variant}-5s`));
       advance(before, 2); advance(after, 2);
       assert.deepEqual(Array.from(after.ch.PD), held, 'finishing pose stays held while native breathing remains active');
@@ -306,7 +306,19 @@ test('native runner and Actor frame resume shooting/sub poses after a presentati
       assert.equal(after.ch.dance, null); assert.ok(after.ch.wAim > .99);
       assert.ok(after.ch.P[api.CHARACTER_CHANNELS.IKL] > .99);
       assert.ok(Array.from(after.ch.ikErr.slice(0, 2)).every(error => error < .0005));
-      assert.ok(grip(after) < .025); assert.deepEqual(gameplay(after), { ...gameplay(before), danceTime: 0 });
+      assert.ok(grip(after) < .025);
+      const actual = gameplay(after), expected = { ...gameplay(before), danceTime: 0 };
+      // The native opt-out is still dancing, so the integrated bomb layer
+      // repeatedly clears its visual throw timer. Cancellation admits normal
+      // native timer advancement. Check that fact explicitly, then compare all
+      // other clocks and the complete actual Actor/Runner gameplay fields.
+      const throwIndex = api.CHARACTER_TIMERS.T_THROW;
+      assert.equal(expected.timers[throwIndex], 99);
+      let throwAge = Math.fround(99);
+      for (let i = 0; i < 45; i++) throwAge = Math.fround(throwAge + 1 / 60);
+      assert.equal(actual.timers[throwIndex], throwAge);
+      expected.timers[throwIndex] = throwAge;
+      assert.deepEqual(actual, expected);
       trace.push(capture(after, 'native-runner-shooting'));
       // Return to presentation then exercise actual native held-sub state.
       after.a.weaponRunner.reset(); after.a.intent.fire = false; after.dance(0);
@@ -317,6 +329,29 @@ test('native runner and Actor frame resume shooting/sub poses after a presentati
       writeTrace(trace, '.native-runner.json');
     } finally { api.G.projectiles.fireShooter = fire; }
   } finally { before.close(); after.close(); }
+});
+
+test('native special/hit events and hide cancel presentation before their native effects, with no replay', async () => {
+  const api = await production();
+  for (const action of ['special_leap', 'special_slam', 'hit', 'hide']) {
+    const r = rig(api, { actor: true }), before = rig(api, { actor: true, native: true });
+    try {
+      for (const x of [r, before]) { x.dance(1); advance(x, .5); }
+      const held = capture(r, 'before-' + action);
+      for (const x of [r, before]) {
+        if (action === 'hide') x.ch.setVisible(false);
+        else x.ch.trigger(action, action === 'hit' ? { x: 1, z: 0, amp: 1 } : undefined);
+      }
+      assert.equal(r.ch.dance, null, action); assert.equal(r.ch.wDance, 0);
+      assert.deepEqual(gameplay(r), { ...gameplay(before), danceTime: 0 }, 'native event effects are preserved');
+      if (action === 'hide') { r.ch.setVisible(true); before.ch.setVisible(true); }
+      r.step(0); const output = capture(r, 'after-' + action);
+      assert.equal(r.ch.dance, null); assert.equal(r.ch.lastDance, null);
+      assert.notDeepEqual(output.geometry, held.geometry);
+      assert.ok(output.nativeIK.every(Number.isFinite));
+      writeTrace([held, output], '.' + action + '.json');
+    } finally { r.close(); before.close(); }
+  }
 });
 
 test('a future unsupported dance is not cancelled through an old supported selection', async () => {

@@ -7,8 +7,8 @@ export const IDLE_MOTION_CALIBRATION = Object.freeze({
   status: 'visual calibration; original idle frequencies and joint curves unknown',
 });
 const INSTALL = Symbol.for('inkwave.s3.idle-motion.install.v1');
-const states = new WeakMap(), disposed = new WeakSet();
 function state(ch) {
+  const states = ch[INSTALL].states;
   let m = states.get(ch);
   if (!m) {
     m = { phase: 'off', reason: 'unowned', quiet: false, filtered: 0, looks: 0, pose: null };
@@ -17,7 +17,7 @@ function state(ch) {
   return m;
 }
 function clear(ch, reason) {
-  const m = states.get(ch);
+  const m = ch?.[INSTALL]?.states.get(ch);
   if (m) { m.phase = 'off'; m.reason = reason; m.quiet = false; m.pose = null; }
 }
 function classify(ch, s, api) {
@@ -44,17 +44,20 @@ function classify(ch, s, api) {
   return 'quiet';
 }
 export function idleMotionSnapshot(ch) {
-  const m = states.get(ch);
+  const hooks = ch?.[INSTALL], m = hooks?.states.get(ch);
   return { phase: m?.phase || 'off', reason: m?.reason || 'unowned',
     quiet: !!m?.quiet, filteredFidgets: m?.filtered || 0, looks: m?.looks || 0,
-    ownedResources: 0, disposed: disposed.has(ch) };
+    ownedResources: 0, disposed: !!hooks?.disposed.has(ch) };
 }
 export function installIdleMotion(api, _profile) {
   const C = api.Character?.prototype, A = api.Actor?.prototype;
   if (!C?._poseFidget || !C._owner || !api.G || !api.CHARACTER_TIMERS || !api.CHARACTER_CHANNELS)
     throw Error('Idle motion requires production Character, G, channel and timer exports');
   if (Object.prototype.hasOwnProperty.call(C, INSTALL)) return;
-  Object.defineProperty(C, INSTALL, { value: true });
+  // Diagnostics imported in another realm must use the installed registry,
+  // just as duplicate installers use this globally registered prototype key.
+  const states = new WeakMap(), disposed = new WeakSet();
+  Object.defineProperty(C, INSTALL, { value: { states, disposed } });
   const updateStates = C._updateStates, fidget = C._poseFidget;
   C._updateStates = function (dt, s) {
     const result = updateStates.call(this, dt, s);

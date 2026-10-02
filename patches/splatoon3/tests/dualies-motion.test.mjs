@@ -6,7 +6,7 @@ import vm from 'node:vm';
 import { createHash } from 'node:crypto';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { adaptSource } from '../adapter.mjs';
-import { installDualiesMotion as installOtherRealm } from '../runtime/dualies-motion.mjs';
+import { installDualiesMotion as installOtherRealm, dualiesMotionSnapshot as crossRealmSnapshot } from '../runtime/dualies-motion.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const SRC = path.resolve(process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public'));
@@ -38,9 +38,8 @@ async function production() {
   await entry.evaluate();
   const profile = JSON.parse(fs.readFileSync(path.join(ROOT, 'patches/splatoon3/profile.json')));
   const api = { ...entry.namespace.install(profile), ...entry.namespace, profile };
-  api.installDualiesMotion(api, profile);
   assert.throws(() => entry.namespace.install(profile), /already installed/);
-  const hooks = ['_updateStates', '_buildPose', '_poseDodge', '_poseWeapon', 'setWeapon', 'dispose'];
+  const hooks = ['_updateStates', '_buildPose', '_poseDodge', '_poseLook', '_poseWeapon', 'setWeapon', 'setVisible', 'dispose'];
   const originals = hooks.map(name => api.Character.prototype[name]), reset = api.WeaponRunner.prototype.reset;
   api.installDualiesMotion(api, profile); installOtherRealm(api, profile);
   hooks.forEach((name, i) => assert.equal(api.Character.prototype[name], originals[i]));
@@ -170,6 +169,33 @@ test('runner progress and world roll direction drive actual tucked bones and ind
   save(rows);
 });
 
+test('expired native dodge call sites preserve the native dodge-before-face composition', async () => {
+  const api = await production(), reference = rig(api), expired = rig(api);
+  try {
+    for (const r of [reference, expired]) { r.roll(); r.step(1 / 60, { fire: true }); }
+    // Only the Character trigger age differs. Keep both values above the
+    // native plant-admission threshold; runner progress remains authoritative.
+    // The control retains the native call site, while the other must use the
+    // patch fallback. Neither test substitutes a pose or facial routine.
+    for (const r of [reference, expired]) r.ch.tr[api.CHARACTER_TIMERS.T_DODGE] = .47;
+    for (let i = 0; i < 40; i++) {
+      reference.ch.tr[api.CHARACTER_TIMERS.T_DODGE] = .47;
+      reference.visual(); expired.visual();
+    }
+    for (const r of [reference, expired]) r.a.weaponRunner.update(1 / 60, { fire: true });
+    reference.ch.tr[api.CHARACTER_TIMERS.T_DODGE] = .47;
+    reference.visual(); expired.visual();
+    assert.equal(api.dualiesMotionSnapshot(expired.ch).progress, api.dualiesMotionSnapshot(reference.ch).progress);
+    const expected = posed(reference), actual = posed(expired);
+    save([{ stage: 'native-callsite-order-control', posed: expected }, { stage: 'expired-callsite-order', posed: actual }]);
+    assert.deepEqual(actual.pose, expected.pose, 'native face must consume the current roll effort, not the previous frame');
+    assert.deepEqual(expired.ch.u.uMouth.value.toArray(), reference.ch.u.uMouth.value.toArray());
+    assert.deepEqual(actual.geometry, expected.geometry);
+    assert.ok(grip(expired, 'R') < .025 && grip(expired, 'L') < .025);
+    assert.ok(actual.nativeIK.slice(0, 2).every(v => v < .001));
+  } finally { reference.close(); expired.close(); }
+});
+
 test('native planted stance is not overwritten by roll recovery during the first real recoil shots', async () => {
   const api = await production(), traces = [];
   for (const enabled of [false, true]) {
@@ -231,7 +257,14 @@ test('reset, death, form, sub, weapon, spawn and special actions cancel owned ro
       if (action === 'leap') r.ch.trigger('special_leap');
       if (action === 'slam') r.ch.trigger('special_slam');
       if (action === 'superjump') r.a.superJumpState = { phase: 'charge' };
-      if (action === 'dance') r.ch.dance = 'victory';
+      if (action === 'dance') {
+        // An active native dodge owns this frame. Integrated emotes cancels
+        // supported presentation before dualies arbitration runs.
+        r.ch.setDance('victory'); r.visual();
+        assert.equal(r.ch.dance, null); assert.equal(api.dualiesMotionSnapshot(r.ch).phase, 'roll');
+        // An unsupported future presentation remains native and blocks roll.
+        r.ch.setDance('future-custom-presentation');
+      }
       r.visual();
       assert.equal(r.ch.tumble, 0, action); assert.equal(r.ch.tumbleDrop, 0, action);
       assert.equal(r.ch.lockW, 0, action);
@@ -249,6 +282,28 @@ test('reset, death, form, sub, weapon, spawn and special actions cancel owned ro
   }
 });
 
+test('hiding a live dualies character retires its roll without replaying the same runner token', async () => {
+  const api = await production(), r = rig(api);
+  try {
+    r.roll(); for (let i = 0; i < 6; i++) r.step(1 / 60, { fire: true });
+    const token = r.a.weaponRunner.dodge, before = gameplay(r);
+    assert.ok(r.ch.tumble > 0); r.ch.setVisible(false);
+    assert.equal(api.dualiesMotionSnapshot(r.ch)?.phase, null);
+    assert.equal(r.ch.tumble, 0); assert.equal(r.ch.lockW, 0);
+    r.visual(0); r.ch.setVisible(true); r.visual(0);
+    assert.equal(r.a.weaponRunner.dodge, token); assert.equal(r.ch.tumble, 0);
+    assert.equal(api.dualiesMotionSnapshot(r.ch).blockedRoll, true);
+    // The integrated bomb hook clears its *visual* throw timer on hide.
+    // Everything else, including every actual gameplay field, stays fixed.
+    const after = gameplay(r); const throwIndex = api.CHARACTER_TIMERS.T_THROW;
+    after.timers[throwIndex] = before.timers[throwIndex];
+    assert.deepEqual(after, before);
+    const output = posed(r); assert.ok(output.geometry.length > 0);
+    assert.ok(output.nativeIK.slice(0, 2).every(v => v < .001));
+    save([{ stage: 'hidden-roll-return', posed: output }]);
+  } finally { r.close(); }
+});
+
 test('nullable preview, zero dt, repeated chained directions, disposal and other weapons remain native', async () => {
   const api = await production();
   assert.equal(api.dualiesMotionSnapshot(null), null);
@@ -259,8 +314,9 @@ test('nullable preview, zero dt, repeated chained directions, disposal and other
     for (let i = 0; i < 90; i++) ch.update(1 / 60, s);
     ch.trigger('dodge', { x: -1, z: 0, t: .2 }); ch.update(.1, s);
     assert.equal(api.dualiesMotionSnapshot(ch).phase, 'roll');
+    assert.deepEqual(crossRealmSnapshot(ch), JSON.parse(JSON.stringify(api.dualiesMotionSnapshot(ch))));
     const progress = api.dualiesMotionSnapshot(ch).progress, clocks = Array.from(ch.tr);
-    for (let i = 0; i < 10; i++) ch.update(0, s);
+    for (let i = 0; i < 10; i++) ch.update(0, i % 2 ? null : s);
     assert.deepEqual(Array.from(ch.tr), clocks); assert.equal(api.dualiesMotionSnapshot(ch).progress, progress);
     ch.update(.1, s); assert.equal(api.dualiesMotionSnapshot(ch).phase, 'plant');
     assert.equal(ch.tumbleDrop, 0);
@@ -286,4 +342,28 @@ test('nullable preview, zero dt, repeated chained directions, disposal and other
     }
   } finally { r.close(); }
   assert.equal(api.dualiesMotionSnapshot(r.ch), null);
+});
+
+test('direct 30/60/120Hz native preview rolls end in actual reachable planted grips', async () => {
+  const api = await production();
+  for (const hz of [30, 60, 120]) {
+    const ch = new api.Character({ name: 'direct dualies preview', weapon: 'dualies', style: { hair: 0 } });
+    ch.onEvent = null;
+    const s = { runner: null, form: 'kid', grounded: true, speed: 0, localMove: { x: 0, z: 0 } };
+    const r = { api, ch };
+    try {
+      for (let i = 0; i < hz; i++) ch.update(1 / hz, s);
+      ch.trigger('dodge', { x: 1, z: 0, t: .2 });
+      for (let i = 0; i < hz / 2; i++) ch.update(1 / hz, s);
+      ch.root.updateMatrixWorld(true); ch.skeleton.update();
+      assert.equal(api.dualiesMotionSnapshot(ch).phase, 'plant'); assert.equal(ch.tumble, 0);
+      const output = posed(r); assert.ok(output.pose.every(Number.isFinite));
+      assert.ok(output.geometry.some(m => m.skinned && m.vertices.length > 0));
+      assert.ok(grip(r, 'R') < .025 && grip(r, 'L') < .025);
+      assert.ok(output.nativeIK.slice(0, 2).every(v => v < .001));
+      const clocks = Array.from(ch.tr); ch.update(0, null);
+      assert.deepEqual(Array.from(ch.tr), clocks);
+      save([{ stage: 'direct-preview-rate', hz, posed: output }]);
+    } finally { ch.dispose(); }
+  }
 });

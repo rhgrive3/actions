@@ -25,7 +25,9 @@ export function installDualiesMotion({ Character, WeaponRunner, CHARACTER_CHANNE
   const states = new WeakMap();
   Object.defineProperty(proto, INSTALL, { value: { states } });
   const updateStates = proto._updateStates, buildPose = proto._buildPose, dodge = proto._poseDodge;
+  const poseLook = proto._poseLook;
   const poseWeapon = proto._poseWeapon, setWeapon = proto.setWeapon, dispose = proto.dispose;
+  const setVisible = proto.setVisible;
   function state(ch) {
     let s = states.get(ch);
     if (!s) { s = { phase: null, progress: 0, x: 0, z: 1, blockedRoll: null }; states.set(ch, s); }
@@ -34,7 +36,7 @@ export function installDualiesMotion({ Character, WeaponRunner, CHARACTER_CHANNE
   function enabled(ch) { return ch.s3DualiesMotionEnabled !== false && ch.dual && ch.weaponKind === 'dualies'; }
   function allowed(ch, input, runner) {
     const a = ch._owner();
-    return ch.kidForm && !ch.dance && a?.alive !== false && !a?.specialActive && !a?.superJumpState
+    return ch.root.visible && ch.kidForm && !ch.dance && a?.alive !== false && !a?.specialActive && !a?.superJumpState
       && !(input?.subAim ?? runner?.aimingSub) && !ch.bombHeld
       && ch.tr[T.T_THROW] >= .62 && ch.tr[T.T_SPAWN] >= 1.4
       && ch.tr[T.T_LEAP] >= 1.9 && ch.tr[T.T_SLAM] >= 1.4;
@@ -97,11 +99,16 @@ export function installDualiesMotion({ Character, WeaponRunner, CHARACTER_CHANNE
   proto._buildPose = function (dt, input) {
     const s = states.get(this);
     if (s) s.posed = false;
-    const result = buildPose.call(this, dt, input);
+    return buildPose.call(this, dt, input);
+  };
+  proto._poseLook = function (dt, input) {
+    const s = states.get(this);
     // The native call site expires by Character's trigger age. A paused or
     // network runner can still be rolling after that visual window expires.
+    // Keep the fallback at the native boundary before gaze/face/dance/life.
+    // Applying it after _buildPose delayed effort and changed head composition.
     if (enabled(this) && s?.phase === 'roll' && !s.posed) this._poseDodge(this.P, 0);
-    return result;
+    return poseLook.call(this, dt, input);
   };
   proto._poseWeapon = function (dt, input) {
     if (!enabled(this)) return poseWeapon.call(this, dt, input);
@@ -115,6 +122,16 @@ export function installDualiesMotion({ Character, WeaponRunner, CHARACTER_CHANNE
   proto.setWeapon = function (...args) {
     if (enabled(this) && args[0] !== this.weaponKind) clear(this);
     return setWeapon.apply(this, args);
+  };
+  proto.setVisible = function (value) {
+    if (!value && enabled(this)) {
+      // Rendering may stop completely while hidden. Retire the pose now and
+      // retain the interrupted runner token so showing it cannot replay a roll.
+      const s = state(this);
+      s.blockedRoll = this._runner()?.dodge || null; s.phase = null; s.progress = 0;
+      this.tumble = this.tumbleDrop = this.lockW = 0;
+    }
+    return setVisible.call(this, value);
   };
   proto.dispose = function (...args) {
     states.delete(this);

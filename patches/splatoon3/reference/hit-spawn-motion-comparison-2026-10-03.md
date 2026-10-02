@@ -40,3 +40,15 @@ The runtime creates no meshes, copied rigs, targets or standalone shield proxy. 
 Remaining unknowns: current-console hit and protection joint/shader curves; actual respawn launcher versus opening animation; original armor cancellation/break sequence; precise original protection/camera/respawn durations; loose equipment and ghost transitions; and hit spring residuals across native hidden death intervals. No unsupported original equality or exact joint curve is asserted. This patch does not change the existing native hurt springs to resolve that last item without an isolated exported spring contract and original evidence.
 
 Parent must add the installer import/call and link this comparison into `reports/inkwave-splatoon3-behavior-2026-10-02.md`; those shared files are outside this lane's allowlist. No adapter export or profile change is required.
+
+## Independent integrated review — 2026-10-03
+
+Reviewed the complete installer at frozen candidate `d846b5b8fadd6cef86e7d02699cf9b3b7356b80e`. The official Nintendo gameplay page was fetched again through verified TLS and retained spawn/splat media hashes were verified. Inspected spawn n300/320/340 at PTS 5.000000/5.333333/5.666667. The original shader, exact protection rules, controller conditions, gear and game version remain unknown; no visual calibration values changed.
+
+A real first-frame regression exposed an ownership gap: `Actor.spawnAt` knows its Character, but native `Character._owner()` returns null until `inWorld` is established. The coating consequently used infinite remaining protection for that frame, even when native `Actor.invuln` was in its expiry interval. Spawn presentation now remembers the Actor supplied by the actual spawn hook (without writing `Character.actor`), preserves it through the subsequent native spawn trigger, and reads the authoritative remaining value from the first frame. Clear/hide/reset/disposal retire that binding. Standalone Character previews retain their existing no-owner behavior.
+
+The new test uses actual Actor construction/spawnAt/_finishFrame, without an injected owner pointer or warm-up frames, and verifies the calibrated expiry blend, unchanged HP/ink/invulnerability/position/velocity, real indexed skinned vertices and native IK. All fixtures now rely on production installation rather than adding missing hooks themselves. Existing shader/LOD/Flow composition, generic invulnerability, directional hits, native splat hiding, null previews and disposal are reverified in the full composition. Shader-string and CPU geometry checks cannot establish GPU compilation or rendered material appearance.
+
+Durable receipts and remaining parent GPU/Actions/original-device obligations are in `/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/review-body/`.
+
+The independent final fixture also checks direct 30/60/120 Hz native frames in addition to fixed-clock scheduling. Direct native spring trajectories are not asserted identical across different integration intervals. Material assertions preserve the actual native flash/hurt/mouth/glow uniform identities; shader-string proof still excludes GPU compilation.
