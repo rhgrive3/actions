@@ -24,6 +24,12 @@ test('an upstream change to the planted-leg reach connection stops the build', (
   assert.throws(() => adaptSource('src/game/character.js', character.replace(anchor, 'const d = _v5.length(), mxr = this.legReach * 0.95;')), /walking planted ankle reach/);
   assert.throws(() => adaptSource('src/game/character.js', character + '\n' + anchor), /walking planted ankle reach/);
 });
+test('walking support pelvis correction requires its unique native drop connection', () => {
+  const character = fs.readFileSync(new URL('src/game/character.js', publicRoot), 'utf8');
+  const anchor = 'B.hips.position.y -= Math.max(drop * 0.85, this.hipDrop);';
+  assert.throws(() => adaptSource('src/game/character.js', character.replace(anchor, 'B.hips.position.y -= drop;')), /walking support pelvis reach/);
+  assert.throws(() => adaptSource('src/game/character.js', character + '\n' + anchor), /walking support pelvis reach/);
+});
 test('bomb sampling requires the exact native pose functions and captures them before decoration', () => {
   const character = fs.readFileSync(new URL('src/game/character.js', publicRoot), 'utf8');
   assert.throws(() => adaptSource('src/game/character.js', character.replace('  _poseThrow(P, tt) {', '  _changedThrow(P, tt) {')), /native bomb throw pose/);

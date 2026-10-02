@@ -23,6 +23,7 @@ async function production(){
  const entry=new vm.SourceTextModule(`export {install} from './patches/splatoon3/runtime/install.mjs';
   export {walkActive} from './patches/splatoon3/runtime/walk.mjs';
   export {specialMotionSnapshot} from './patches/splatoon3/runtime/special-motion.mjs';
+  export {formMotionSnapshot} from './patches/splatoon3/runtime/form-motion.mjs';
   export {jumpMotionSnapshot} from './patches/splatoon3/runtime/jump-motion.mjs';`,{context,identifier:path.join(ROOT,'walk-special-entry.mjs')});
  await entry.link((s,f)=>load(s==='three'?path.join(SRC,'vendor/three/build/three.module.js'):
   s.startsWith('three/addons/')?path.join(SRC,'vendor/three/jsm',s.slice(13)):path.resolve(path.dirname(f.identifier),s)));
@@ -51,10 +52,11 @@ function rig(api,hz=60,kind='shooter'){
  for(let i=0;i<hz*2;i++)visual();
  return {a,ch,visual,close(){G.actors=G.actors.filter(x=>x!==a);G.scene.remove(ch.root);ch.dispose();}};
 }
-function contact(api,ch){
+function contact(api,ch,plantedOnly=false){
  const {THREE,CHARACTER_CHANNELS:C,CHARACTER_FOOT_METRICS:{ANKLE_H:h,BALL_Z:ball,HEEL_Z:heel}}=api;
  for(const key of ['WPL','WPR','TIPTOE'])assert.ok(Number.isInteger(C[key]),'actual named native foot channel '+key);
  for(const [i,f]of ch.feet.entries()){
+  if(!f.planted&&plantedOnly)continue;
   assert.ok(f.planted,'idle return uses actual planted feet');
   const pitch=f.pitch+(!ch.moving&&i===(ch.shiftS>0?1:0)?.1*Math.abs(ch.shiftS||0)*(1-ch.gaitW):0)+.55*Math.max(0,ch.P[C.TIPTOE]),ay=h*Math.cos(pitch)+(pitch>=0?ball:-heel)*Math.sin(pitch);
   const az=pitch>=0?ball+h*Math.sin(pitch)-ball*Math.cos(pitch):-heel+h*Math.sin(pitch)+heel*Math.cos(pitch);
@@ -113,4 +115,45 @@ test('disabled and unmapped specials retain the native contact gate; Storm adds 
    else assert.ok(r.ch.plantW<.9,'native unplanting is still in force');
   }finally{r.close();}
  }
+});
+
+// Reproduces the independent GPU review with native acceleration and collision,
+// including the actual rendered ankle instead of only the stored world contact.
+test('native input turns and reversals keep actual planted shoes on their heel/toe contacts',async()=>{
+ const api=await production();world(api);const r=rig(api);let contacts=0;
+ try{
+  for(let i=0;i<210;i++){
+   const speed=i<25?.15:i<65?1.2:i<105?5.76:i<165?2.4:0;
+   const [x,z]=i<70?[0,1]:i<90?[1,0]:i<105?[0,-1]:[0,1];
+   const top=r.a.weaponRunner.moveSpeed();r.a.intent.move.set(x*speed/top,0,z*speed/top);
+   r.a._horizontal(1/60,false,false);r.a._integrate(1/60,false,false);
+   r.a.intent.fire=i>=105&&i<145;r.a.weaponRunner.update(1/60,{fire:r.a.intent.fire});r.visual();
+   try{contact(api,r.ch,true);}catch(e){e.message+=' frame '+i;throw e;}
+   contacts+=r.ch.feet.filter(f=>f.planted).length;
+  }
+  assert.ok(contacts>100,'real weight-bearing samples through slow input, turn, reversal, fire and release');
+ }finally{r.close();}
+});
+
+test('completed managed Slam permits actual form emergence while its old special timer remains active',async()=>{
+ const api=await production();world(api);const r=rig(api),T=api.CHARACTER_TIMERS;
+ try{
+  r.a._startSpecial();r.visual();
+  for(let i=0;r.a.specialActive&&i<180;i++){r.a._updateSpecial(1/60);r.visual();}
+  assert.equal(r.a.specialActive,null);
+  for(let i=0;i<51;i++)r.visual();
+  assert.equal(api.specialMotionSnapshot(r.ch)?.phase,null);
+  assert.ok(r.ch.tr[T.T_SLAM]<1.4,'obsolete special timer is still active');
+  r.a.form='squid';r.a.submerged=true;r.visual();r.visual();r.visual();
+  r.a.form='kid';r.a.submerged=false;r.visual();
+  const snap=api.formMotionSnapshot(r.ch);
+  assert.equal(snap.phase,'emerge');
+  assert.equal(snap.actionBlocked,false,'released mapped action cannot suppress the new form gesture');
+  assert.ok(Array.from(r.ch.P).every(Number.isFinite));
+  assert.ok(r.ch.root.position.distanceTo(r.a.pos)<1e-9,'presentation keeps actual gameplay root');
+  const timers=Array.from(r.ch.tr);
+  r.ch.s3SpecialMotionEnabled=false;r.ch._poseForm(r.ch.P);
+  assert.equal(api.formMotionSnapshot(r.ch).actionBlocked,true,'disabled presentation preserves the native special timer gate');
+  assert.deepEqual(Array.from(r.ch.tr),timers,'form admission never retimes native events');
+ }finally{r.close();}
 });

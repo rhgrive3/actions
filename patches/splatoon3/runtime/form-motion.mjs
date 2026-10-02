@@ -1,6 +1,7 @@
 // Nintendo's public kid/swim demonstration shows a compact ink-column return
 // into the weapon stance. These are INKWAVE visual calibrations, not published
 // Nintendo joint curves, transformation frames, or gameplay timings.
+import { specialMotionAllowsFootPlant } from './special-motion.mjs';
 export const FORM_MOTION_CALIBRATION = Object.freeze({
   settleStart: .10, settleEnd: .22, reversalBlend: .08, gestureEnd: .16,
   divePitch: .10, emergePitch: -.035, hipDropLegFraction: .025,
@@ -47,8 +48,11 @@ function busy(ch, m, T) {
       r?.charge > .01 || r?.rolling || r?.firingPose?.()) return true;
   if (ch.lastShot < .5 || ch.lastRelease < .35) return true;
   if (Number.isInteger(T?.T_LAND) && ch.landAmp > .3 && ch.tr[T.T_LAND] < .8) return true;
+  const nativeSpecialReleased = (!Number.isInteger(T?.T_LEAP) || ch.tr[T.T_LEAP] >= 1.9)
+    && (!Number.isInteger(T?.T_SLAM) || ch.tr[T.T_SLAM] >= 1.4);
+  if (!specialMotionAllowsFootPlant(ch, nativeSpecialReleased)) return true;
   const limits = { T_THROW: .62, T_FLICK: .7, T_SLOSH: .66, T_DODGE: ch.dodgeDur + .5,
-    T_LEAP: 1.9, T_SLAM: 1.4, T_SPAWN: 1.4 };
+    T_SPAWN: 1.4 };
   for (const [name, limit] of Object.entries(limits)) {
     if (Number.isInteger(T?.[name]) && ch.tr[T[name]] < limit) return true;
   }
