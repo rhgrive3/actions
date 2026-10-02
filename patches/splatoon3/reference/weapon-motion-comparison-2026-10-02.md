@@ -37,3 +37,13 @@ Slosher は trigger ごとの actual windup/interval を保存し、winding 中�
 - Flow 外周 aura 粒子、発動/解除 transition、原作輝度・周期を測る。現接続は body emission の部分対応であり原作 aura の完全実装ではない。
 
 原作 joint animation・distance scale・入力/ギア不明の映像から既定値を捏造して未知を解消しない。Slam の原作対応が不明な点も維持する。
+
+## Slosher の実放出時計 — 追加修正
+
+親の production install `98f7c1e` を一つの VM / Three / G に統合した独立レビューで、押しっぱなしの actual `Projectiles.fireSlosh` が tick `[104,135,166,197]` に発生し、31F 周期へ伸びることが判明した。開始 tick 91 で `slosh=0` となるので初射まで13F。native の `12*(1/60) < .2` と、17F recovery の正の丸め残差が各1F増やす。見た目の retiming だけでは、この gameplay の放出遅延を修正できない。
+
+2026-10-02 に [抽出本人の pinned 原本](https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json) を再取得した。commit `7280ff9cde8bb1c5dcef46c700c326471584d2e6`、Ver.11.3.0、SHA256 `1d20043ad7efaf2831801afbce601fb1e14bfd11947063903c6fadd6c98f5298` は既存 raw evidence と一致。`/GameParameters/WeaponParam/SwingLiftFrame=12` と `RepeatFrame=29` を使用し、profile の `.2` 秒と `29/60` 秒を変更していない。[Nintendo の Slosher 映像](https://www.nintendo.com/jp/character/splatoon/en/fashion/index.html) も再確認したが、映像には入力 edge / AP /版が無く、入力から放出までの数値根拠は抽出原本であり映像から確定した値ではない。
+
+`runtime/weapons.mjs` の actual `WeaponRunner._slosher` override は、windup と cooldown に `1e-10` 秒の浮動小数境界を使う。秒 dt の windup 超過と、継続入力中の cooldown 超過を次の段階へ持ち越し、不規則な更新でも周期誤差を累積させない。トリガー解除後の idle 負 cooldown は持ち越さず、次の入力は新しい windup を開始する。既存の ink admission / consume / fireFacing / 音 / slosh trigger、解除しても進行中の一投を完了する動作を維持する。reset / death / ブキ交換は残時間所有を消す。整数フレームへ量子化していない。
+
+`tests/slosher-timing.test.mjs` は旧 actual Runner で失敗する初射/連射/解除/ink/reset 回帰を含む。修正後は入力開始 tick 1 に対して放出 `[13,42,71,100]`（開始から12F、以後29F）。固定60Hz gameplay tick を30/60/120Hz描画時計で進めた full runner trace は同一。直接の30/60/120Hz秒 dt、不規則 `.037/.009/.023/.011` 秒、dt=0と小さい残時間、解除/再入力/empty retry/現在の gear 後 ink cost/reset/death/ブキ交換を検証する。別の one-VM production install harness で、親候補の歩行・イカ移動・ブキ姿勢を接続した実 full Character / bones / muzzle / hair impulse の放出同期も検証する。証拠と exact SHA は lane `done-timing.json` に保存する。
