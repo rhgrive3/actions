@@ -266,6 +266,56 @@ def inside(poly, pts):
     return res
 
 
+def _disk_shifts(r):
+    return [(dj, di) for dj in range(-r, r + 1) for di in range(-r, r + 1) if dj * dj + di * di <= r * r]
+
+
+def _shift(m, dj, di, fill):
+    out = np.full_like(m, fill)
+    h, w = m.shape
+    out[max(dj, 0):h + min(dj, 0), max(di, 0):w + min(di, 0)] = m[max(-dj, 0):h + min(-dj, 0), max(-di, 0):w + min(-di, 0)]
+    return out
+
+
+def mask_open(m, r):
+    """Binary opening with a disk of radius r samples (erode, then dilate): parts thinner than 2r go."""
+    if r <= 0:
+        return m.copy()
+    sh = _disk_shifts(r)
+    ero = np.ones_like(m)
+    for dj, di in sh:
+        ero &= _shift(m, dj, di, False)
+    dil = np.zeros_like(m)
+    for dj, di in sh:
+        dil |= _shift(ero, dj, di, False)
+    return dil & m
+
+
+def small_parts(m, min_count):
+    """Samples of 4-connected islands with fewer than min_count samples."""
+    out = np.zeros_like(m)
+    if min_count <= 0:
+        return out
+    seen = np.zeros_like(m)
+    h, w = m.shape
+    for j0, i0 in zip(*np.nonzero(m)):
+        if seen[j0, i0]:
+            continue
+        stack, part = [(j0, i0)], []
+        seen[j0, i0] = True
+        while stack:
+            j, i = stack.pop()
+            part.append((j, i))
+            for jj, ii in ((j + 1, i), (j - 1, i), (j, i + 1), (j, i - 1)):
+                if 0 <= jj < h and 0 <= ii < w and m[jj, ii] and not seen[jj, ii]:
+                    seen[jj, ii] = True
+                    stack.append((jj, ii))
+        if len(part) < min_count:
+            for j, i in part:
+                out[j, i] = True
+    return out
+
+
 def build_side_corner(design, tree, views, side, black):
     """The outer eye corner seen from the side: the reference fills the triangle from the wing down to the
     white's outer corner with black.  That skin (the outer corner fold) faces sideways, so it hardly shows from
@@ -383,6 +433,15 @@ def build_side_corner(design, tree, views, side, black):
                             break
                     continue
                 grid[j, i] = hp
+        if design.get('side_clean_px'):
+            # samples that could not be placed (eyeball, or a point the front view would see on skin) leave
+            # teeth and thin broken slivers along the sheet's edge: the placed area is opened (thin parts
+            # dropped) and small islands are removed, so the black ends in a clean edge
+            valid = ~np.isnan(grid[..., 0])
+            keep = mask_open(valid, int(round(design['side_clean_px'] / SIDE_STEP_PX)))
+            keep &= ~small_parts(keep, design.get('side_min_px2', 0.0) / SIDE_STEP_PX ** 2)
+            grid[~keep] = np.nan
+            print('SIDE_CORNER', view, 'clean dropped', int((valid & ~keep).sum()), 'samples')
         base = len(verts)
         idx = -np.ones(grid.shape[:2], int)
         for (j, i) in zip(*np.nonzero(~np.isnan(grid[..., 0]))):
