@@ -24,19 +24,25 @@ const fixture = `<!doctype html><html lang="ja"><meta charset="utf-8"><meta name
 <style>html,body{margin:0;overflow:hidden;background:#0d1020;touch-action:none}#ui-root{position:fixed;inset:0}</style>
 <div id="ui-root"></div><canvas id="game"></canvas><script type="module">
 import { MobileInput } from '/src/core/mobile.js'; import { Menus } from '/src/ui/menus.js'; import { DEFAULT_SETTINGS } from '/src/config.js';
+import { installUi } from '/patches/splatoon3/runtime/ui.mjs';
+installUi({ Menus });
 window.mobile=new MobileInput(document.getElementById('game'),{lastDevice:'touch'});
 window.settings={...DEFAULT_SETTINGS};
 window.menus=new Menus(document.getElementById('ui-root'),{getSettings:()=>settings,setSetting:(k,v)=>settings[k]=v,editTouchLayout:()=>mobile.openEditor()});
 menus.show('settings',{wipe:false,light:false}); window.ready=true;
 </script></html>`;
-const types = { '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.webp': 'image/webp', '.woff2': 'font/woff2' };
+const types = { '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.webp': 'image/webp', '.woff2': 'font/woff2' };
 const receipts = {};
 const server = http.createServer((request, response) => {
   try {
     const url = new URL(request.url, 'http://localhost');
     if (url.pathname === '/__layout') { response.writeHead(200, { 'content-type': 'text/html' }); response.end(fixture); return; }
-    const rel = decodeURIComponent(url.pathname).slice(1), file = path.resolve(source, rel);
-    assert(file.startsWith(source + path.sep));
+    const rel = decodeURIComponent(url.pathname).slice(1);
+    // The raw mirror also calls the missing fitter. Serve only its real,
+    // idempotent production initializer; raw source still gets touch transforms only.
+    const root = !built && rel === 'patches/splatoon3/runtime/ui.mjs' ? repo : source;
+    const file = path.resolve(root, rel);
+    assert(file.startsWith(path.resolve(root) + path.sep));
     let data = fs.readFileSync(file);
     if (!built && /\.(js|css)$/.test(rel)) data = Buffer.from(adaptTouchLayout(rel, data.toString('utf8')));
     receipts[rel] = crypto.createHash('sha256').update(data).digest('hex');
@@ -77,6 +83,25 @@ try {
       page.on('pageerror', error => report.errors.push(`${engineName}/${name}: ${error.message}`));
       try {
         await page.goto(address); await page.waitForFunction(() => window.ready);
+        {
+          // Exercise the production initializer, not a fixture-only replacement:
+          // missing initialization previously left all layout assertions green
+          // while the actual menu animation loop threw on every fitted screen.
+          const fitting = await page.evaluate(() => {
+            const root = document.createElement('div'), label = document.createElement('div');
+            root.style.cssText = 'position:absolute;left:0;top:0;font:32px monospace';
+            label.dataset.fit = '0.6'; label.style.cssText = 'width:120px;white-space:nowrap';
+            label.textContent = '1234567890'; root.appendChild(label); document.body.appendChild(root);
+            try {
+              const before = { fontSize: parseFloat(getComputedStyle(label).fontSize), overflow: label.scrollWidth > label.clientWidth };
+              menus._fitAll(root);
+              return { before, fontSize: parseFloat(getComputedStyle(label).fontSize), fits: label.scrollWidth <= label.clientWidth + 1 };
+            } finally { root.remove(); }
+          });
+          assert(fitting.before.overflow, 'Production UI regression starts with overflowing text');
+          assert(fitting.fontSize < fitting.before.fontSize && fitting.fits, 'Production UI initialization fits menu text');
+          entry.checks.push('production-ui-initialization-and-text-fitting');
+        }
         await page.evaluate(() => { localStorage.removeItem('inkwave.touchLayout'); mobile.layout = {}; mobile._layoutAll(); });
         const firstRow = await page.locator('.iw-row').first().evaluate(el => el._key);
         assert.equal(firstRow, '_layout', 'Layout editing must be the first touch setting');
