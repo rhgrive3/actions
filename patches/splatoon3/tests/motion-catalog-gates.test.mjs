@@ -17,7 +17,7 @@ function gateFixture() {
     const renders = catalogRenderFrames(scenario).map(frame => ({ frame, tick: scenario.hz ? Math.min(scenario.frames - 1, Math.floor((frame + 1) * 60 / scenario.hz) - 1) : frame, visible: true, shaderErrors: 0, programs: [{ linked: true, vertexCompiled: true, fragmentCompiled: true }], materials: [{ type: 'fabricated gate material', linked: true, vertexCompiled: true, fragmentCompiled: true }], rig: { ...pixel }, image: 'fixture.png', hiddenImage: 'fixture-hidden.png', geometry: { indexedVertices: 300, triangles: 100, skinnedVertices: 300, meshes: 1, min: [0, 0, 0], max: [1, 1, 1] } }));
     // FixedClock's first selected 120Hz display is index 1, after tick 0.
     for (const r of renders) r.tick = Math.max(0, r.tick);
-    const row = { name: scenario.name, kind: scenario.kind, frames: scenario.frames, hz: scenario.hz || 60, driver: 'fabricated acceptance-logic fixture only', samples, renders, contactSheet: 'fixture-sheet.png', events: [], transitions: [], cleanup: { detached: true, ownedMaterials: 8, disposedMaterials: 8, glints: 0, disposedGlints: 0, cleanStates: true, secondDisposeStable: true }, pause: { unchangedClocks: true, sameRgb: { ...pixel, changedPixels: 0, totalRgbDifference: 0, maxChannelDifference: 0 } }, zeroDt: { unchangedClocks: true, gameplayInvariant: true, poseDelta: 0 }, traceHash: hash, displayFrames: scenario.hz || scenario.frames, clockTicks: scenario.frames };
+    const row = { name: scenario.name, kind: scenario.kind, frames: scenario.frames, hz: scenario.hz || 60, driver: 'fabricated acceptance-logic fixture only', samples, renders, contactSheet: 'fixture-sheet.png', events: [], transitions: [], cleanup: { detached: true, ownedMaterials: 8, disposedMaterials: 8, glints: 0, disposedGlints: 0, cleanStates: true, secondDisposeStable: true }, pause: { unchangedClocks: true, unchangedRig: true, nativeVertexShaders: true, measurement: 'native-vertex-flat-colour', vertexPrograms: 1, vertexSources: [{ nativeSHA256: hash, controlledSHA256: hash }], image: 'fixture.png', repeatedImage: 'fixture.png', movedImage: 'fixture.png', beautyImage: 'fixture.png', repeatedBeautyImage: 'fixture.png', wholeSceneRgb: {...pixel}, movedRigRgb: {...pixel}, sameRgb: { ...pixel, changedPixels: 0, totalRgbDifference: 0, maxChannelDifference: 0 } }, zeroDt: { unchangedClocks: true, gameplayInvariant: true, poseDelta: 0 }, traceHash: hash, displayFrames: scenario.hz || scenario.frames, clockTicks: scenario.frames };
     const fill = (id, v, start = 0, end = samples.length) => { for (const s of samples.slice(start, end)) s.snapshots[id] = structuredClone(v); };
     fill('carry', { active: true });
     switch (scenario.name) {
@@ -68,6 +68,11 @@ for (const [name, mutate, pattern] of [
   ['planted ankle missed', r => r.data[0].samples[0].feet[0].error = .01, /planted native walking contact/],
   ['missing native foot ownership', r => delete r.data[0].samples[0].feet[0].contactWeight, /non-finite/],
   ['pause advances clock', r => r.data[0].pause.unchangedClocks = false, /pause denominator/],
+  ['pause native rig moves', r => r.data[0].pause.unchangedRig = false, /pause denominator/],
+  ['pause controlled RGB moves', r => r.data[0].pause.sameRgb.changedPixels = 1, /pause denominator/],
+  ['pause replaces native vertex shader', r => r.data[0].pause.vertexSources[0].controlledSHA256 = 'b'.repeat(64), /pause native vertex shader identity/],
+  ['pause insensitive to real rig motion', r => r.data[0].pause.movedRigRgb.changedPixels = 0, /not rendered/],
+  ['pause lacks raw beauty image', r => delete r.data[0].pause.beautyImage, /pause screenshot denominator/],
   ['zero dt advances native clock', r => r.data[0].zeroDt.unchangedClocks = false, /zero-dt/],
   ['walking remains suppressed after authoritative special recovery', r => r.data.find(x => x.name === 'native-slam-phases').samples[80].walkActive = false, /post-special native walking owner/],
   ['native roller release duplicated', r => r.data.find(x => x.name === 'roller-horizontal-push').events.push({ name: 'fireFlick', frame: 23 }), /native roller/],

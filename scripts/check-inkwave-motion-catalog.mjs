@@ -109,7 +109,7 @@ function vector(v, length, label) {
 function pixels(p, label, visible) {
   for (const k of ['pixels', 'changedPixels', 'totalRgbDifference', 'maxChannelDifference']) finite(p?.[k], label + '.' + k);
   if (p.pixels !== 960 * 720 || !Number.isInteger(p.changedPixels) || p.changedPixels < 0 || p.changedPixels > p.pixels || p.totalRgbDifference < 0 || p.maxChannelDifference < 0 || p.maxChannelDifference > 255) fail('pixel denominator ' + label);
-  if (visible ? p.changedPixels < 16 : p.changedPixels !== 0) fail('not rendered / hidden pixels ' + label);
+  if (visible === true && p.changedPixels < 16 || visible === false && p.changedPixels !== 0) fail('not rendered / hidden pixels ' + label);
 }
 export function validateCatalogReceipts(manifest, receipts) {
   if (!/^[a-f0-9]{64}$/.test(manifest?.contentHash || '') || !manifest.artifacts || !Array.isArray(receipts)) fail('manifest/loaded denominator');
@@ -224,7 +224,20 @@ export function validateCatalogResult(result) {
     if (label === 'native-storm-deploy') need(row.events.filter(e => e.name === 'throwStorm').length === 1 && phase('special', 'storm-deploy') >= 5 && phase('special', 'storm-recovery') >= 1 && row.samples.at(-1).snapshots.special?.phase === null, 'native Storm deploy/recovery');
     if (label === 'gaze-face-actions') { for (const mode of ['fire', 'sub-aim', 'throw']) need(count(s => s.snapshots.face?.mode === mode) >= 2, 'native face ' + mode); need(count(s => s.snapshots.face?.blink.some(x => x > .5)) >= 1 && row.renders.some(r => r.face?.changedPixels > 0), 'native face/blink RGB'); }
     if (label === 'lifecycle-interruptions') need(['form', 'sub', 'dance', 'reset', 'death', 'hide', 'weapon'].every(name => row.transitions.includes(name)) && row.renders.some(r => !r.visible) && row.samples.at(-1).visible, 'lifecycle interruption denominator');
-    if (!row.pause || row.pause.unchangedClocks !== true || row.pause.sameRgb.changedPixels !== 0) fail('pause denominator ' + label);
+    if (!row.pause || row.pause.unchangedClocks !== true || row.pause.unchangedRig !== true
+        || row.pause.nativeVertexShaders !== true || row.pause.vertexPrograms < 1
+        || row.pause.measurement !== 'native-vertex-flat-colour' || row.pause.sameRgb.changedPixels !== 0)
+      fail('pause denominator ' + label);
+    if (!Array.isArray(row.pause.vertexSources) || row.pause.vertexSources.length !== row.pause.vertexPrograms
+        || row.pause.vertexSources.some(p => !/^[a-f0-9]{64}$/.test(p.nativeSHA256) || p.nativeSHA256 !== p.controlledSHA256))
+      fail('pause native vertex shader identity ' + label);
+    pixels(row.pause.sameRgb, label + '.pause', false);
+    // Native beauty shaders are retained as a diagnostic; their repeated
+    // subpixel shading varies even with identical native pose and clocks.
+    pixels(row.pause.wholeSceneRgb, label + '.pause-beauty', null);
+    pixels(row.pause.movedRigRgb, label + '.pause-counterexample', true);
+    for (const key of ['image', 'repeatedImage', 'movedImage', 'beautyImage', 'repeatedBeautyImage'])
+      if (!imageFiles.has(row.pause[key])) fail('pause screenshot denominator ' + label);
     if (!row.zeroDt || row.zeroDt.unchangedClocks !== true || row.zeroDt.gameplayInvariant !== true) fail('zero-dt native clock/physics invariant ' + label);
     finite(row.zeroDt.poseDelta, label + '.zeroDt.poseDelta');
     const contacts = row.samples.flatMap(s => Object.values(s.grip).filter(g => g.held).map(g => g.gap));
@@ -439,6 +452,66 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout 
     collect(ch.root);
     return { frame, tick, visible, rig, image, hiddenImage, glint, coating, face, geometry: geometry(ch), programs, materials, shaderErrors: programs.filter(p => !p.linked || !p.vertexCompiled || !p.fragmentCompiled).length };
   }
+  async function capturePause(ch, a, scenario) {
+    const name = scenario.name + '-pause', clocks = () => JSON.stringify([ch.t, Array.from(ch.tr), ch.danceT, gameState(a)]);
+    const rig = () => {
+      const nodes = []; ch.root.traverse(n => nodes.push([n.uuid, n.visible, n.matrixWorld.elements.slice(), n.morphTargetInfluences?.slice()]));
+      return JSON.stringify([Array.from(ch.P), Array.from(ch.skeleton.boneMatrices), nodes, snap(ch)]);
+    };
+    renderer.render(scene, camera);
+    const beforeClocks = clocks(), beforeRig = rig(), beauty = pixels();
+    const beautyImage = await save(name + '-beauty', frameImage());
+    renderer.render(scene, camera);
+    const wholeSceneRgb = globalThis.catalogPixelDifference(beauty, pixels());
+    const repeatedBeautyImage = await save(name + '-beauty-repeat', frameImage());
+    // This pass isolates actual vertex motion from native fragment shading.
+    // Keep every native vertex shader, mesh, bone, depth test and cutout. Only
+    // replace the final fragment colour, using a separate temporary material.
+    // Retain both unmodified beauty images and require real movement sensitivity.
+    const replacements = [], materials = new Map(), vertexSources = [], originalPosition = ch.root.position.clone();
+    scene.traverse(n => {
+      if (!n.material) return;
+      const replace = m => {
+        if (materials.has(m)) return materials.get(m).clone;
+        const clone = m.clone(), hook = m.onBeforeCompile, key = m.customProgramCacheKey();
+        const c = .2 + (materials.size % 7) * .09;
+        clone.onBeforeRender = m.onBeforeRender;
+        clone.onBeforeCompile = function (shader, r) {
+          hook.call(this, shader, r);
+          if (!shader.fragmentShader.includes('#include <opaque_fragment>')) throw Error('Pause unsupported native fragment shader: ' + m.type);
+          shader.fragmentShader = shader.fragmentShader.replace('#include <opaque_fragment>', '#include <opaque_fragment>\ngl_FragColor = vec4(' + c + ', ' + (.9 - c) + ', .4, 1.0);');
+        };
+        clone.customProgramCacheKey = () => key + '|s3-pause-flat-colour-v1';
+        const p = renderer.properties.get(m).currentProgram;
+        materials.set(m, { clone, nativeVertex: p ? gl.getShaderSource(p.vertexShader) : null });
+        return clone;
+      };
+      replacements.push([n, n.material]); n.material = Array.isArray(n.material) ? n.material.map(replace) : replace(n.material);
+    });
+    let sameRgb, movedRigRgb, image, repeatedImage, movedImage;
+    try {
+      renderer.render(scene, camera); const paused = pixels(); image = await save(name + '-geometry', frameImage());
+      renderer.render(scene, camera); sameRgb = globalThis.catalogPixelDifference(paused, pixels());
+      repeatedImage = await save(name + '-geometry-repeat', frameImage());
+      for (const { clone, nativeVertex } of materials.values()) {
+        const p = renderer.properties.get(clone).currentProgram;
+        if (!p) continue; // invisible materials have no draw or shader evidence
+        if (!nativeVertex) throw Error('Pause missing original compiled vertex shader');
+        vertexSources.push({ type: clone.type, nativeSHA256: await digest(nativeVertex), controlledSHA256: await digest(gl.getShaderSource(p.vertexShader)) });
+      }
+      ch.root.position.x += .03; renderer.render(scene, camera);
+      movedRigRgb = globalThis.catalogPixelDifference(paused, pixels()); movedImage = await save(name + '-moved', frameImage());
+    } finally {
+      ch.root.position.copy(originalPosition);
+      for (const [n, material] of replacements) n.material = material;
+      for (const { clone } of materials.values()) clone.dispose();
+      renderer.render(scene, camera);
+    }
+    return { unchangedClocks: beforeClocks === clocks(), unchangedRig: beforeRig === rig(),
+      measurement: 'native-vertex-flat-colour', nativeVertexShaders: vertexSources.length > 0 && vertexSources.every(p => p.nativeSHA256 === p.controlledSHA256),
+      vertexPrograms: vertexSources.length, vertexSources, sameRgb, wholeSceneRgb, movedRigRgb,
+      image, repeatedImage, movedImage, beautyImage, repeatedBeautyImage };
+  }
   const drivers = {
     default: 'Diagnostic kinematic root/velocity conditions; actual WeaponRunner.update and Actor._finishFrame; not a complete gameplay/input or Nintendo parity test',
     physics: 'Diagnostic initial launch/drop; actual Actor._integrate + native Physics floor + Runner + _finishFrame; no whole-game update',
@@ -536,11 +609,7 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout 
           for (let display = 0; display < scenario.hz; display++) { clock.advance(1 / scenario.hz, () => { runFrame(); frame++; }); if (renderFrames.includes(display)) renders.push(await capture(ch, scenario, display, frame - 1)); else renderer.render(scene, camera); }
           displayFrames = scenario.hz; clockTicks = clock.ticks;
         } else for (frame = 0; frame < scenario.frames; frame++) { runFrame(); if (renderFrames.includes(frame)) renders.push(await capture(ch, scenario, frame, frame)); }
-        renderer.render(scene, camera); const paused = pixels(), clocks = JSON.stringify([ch.t, Array.from(ch.tr), ch.danceT, gameState(a)]);
-        // A paused production loop performs no simulation/update. Also exercise
-        // the native dt=0 nullable preview separately below.
-        renderer.render(scene, camera);
-        const pause = { unchangedClocks: clocks === JSON.stringify([ch.t, Array.from(ch.tr), ch.danceT, gameState(a)]), sameRgb: globalThis.catalogPixelDifference(paused, pixels()) };
+        const pause = await capturePause(ch, a, scenario);
         row = { name: scenario.name, kind: scenario.kind, frames: scenario.frames, hz: scenario.hz || 60, driver, diagnostics: ['kinematic initial/root conditions except explicit native Physics/Super Jump/special/wall drivers', 'invulnerability countdown and fidget id in hit/idle cases assigned manually; not full gameplay', 'one explicit diagnostic Character.update(0) at tick 6; delta recorded, clocks/gameplay must remain stable'], samples, renders, events, transitions, pause, zeroDt, displayFrames, clockTicks, traceHash: scenario.hz ? await digest(trace) : null };
         data.push(row); globalThis.catalogPartial = { data, gpu, duplicateRealm, images };
       } finally {
