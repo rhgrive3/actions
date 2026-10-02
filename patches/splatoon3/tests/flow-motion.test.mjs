@@ -96,7 +96,7 @@ function saveTrace(rows) {
   assert.ok(folder.startsWith('/mnt/workspace/.dev-state/agent-work/evidence/'),
     'requested Flow trace must resolve to persistent evidence storage');
   const file = path.join(folder, path.basename(destination));
-  const body = { schema: 1, evidence: 'actual source CPU scene/pose trace; GPU render is parent-owned',
+  const body = { schema: 1, evidence: 'actual source CPU scene/pose trace; GPU proof requires check-inkwave-flow-render.mjs',
     runtimeSha256: createHash('sha256').update(fs.readFileSync(path.join(ROOT,
       'patches/splatoon3/runtime/flow-motion.mjs'))).digest('hex'), rows };
   fs.writeFileSync(file + '.pending', JSON.stringify(body, null, 2) + '\n');
@@ -341,7 +341,7 @@ test('per-Character counterfactual opt-out retains the installed legacy Flow sha
 });
 
 
-test('override material passes exclude every Flow mesh without changing shared native geometry or buffers', async () => {
+test('CPU override callback contract preserves native geometry bytes and detaches borrowed disposal references', async () => {
   const api = await production(), r = rig(api), victim = rig(api, 'shooter', 1);
   try {
     prepare(api, r.a); award(api, r.a, victim.a); r.step();
@@ -355,7 +355,10 @@ test('override material passes exclude every Flow mesh without changing shared n
       assert.notEqual(shell.geometry.drawRange, source.geometry.drawRange);
       assert.equal(shell.geometry.index, source.geometry.index);
       for (const key of Object.keys(source.geometry.attributes)) assert.equal(shell.geometry.attributes[key], source.geometry.attributes[key]);
-      return {shell, source, range:{...source.geometry.drawRange}, index:source.geometry.index, attributes:{...source.geometry.attributes}};
+      return {shell, source, range:{...source.geometry.drawRange}, rangeObject: source.geometry.drawRange,
+        index:source.geometry.index, indexBytes: Array.from(source.geometry.index.array),
+        attributes:{...source.geometry.attributes}, attributeBytes: Object.fromEntries(Object.entries(source.geometry.attributes)
+          .map(([key, attribute]) => [key, Array.from(attribute.array)]))};
     });
     const scene = {overrideMaterial: new api.THREE.MeshNormalMaterial()};
     for (const mesh of meshes) {
@@ -368,11 +371,74 @@ test('override material passes exclude every Flow mesh without changing shared n
       assert.equal(record.source.geometry.drawRange.start, record.range.start); assert.equal(record.source.geometry.drawRange.count, record.range.count); assert.equal(record.source.geometry.index, record.index);
       for (const key of Object.keys(record.attributes)) assert.equal(record.source.geometry.attributes[key], record.attributes[key]);
       record.shell.geometry.addEventListener('dispose', () => {
-        assert.equal(record.shell.geometry.index, null, 'dispose cannot delete the source GPU index buffer');
-        assert.equal(Object.keys(record.shell.geometry.attributes).length, 0, 'dispose cannot delete source GPU vertex buffers');
+        assert.equal(record.shell.geometry.index, null, 'borrowed index detached at view disposal');
+        assert.equal(Object.keys(record.shell.geometry.attributes).length, 0, 'borrowed vertex references detached at view disposal');
+        assert.equal(Object.keys(record.shell.geometry.morphAttributes).length, 0, 'borrowed morph references detached at view disposal');
       });
     }
     r.close();
-    for (const record of native) { assert.equal(record.source.geometry.index, record.index); assert.equal(record.source.geometry.drawRange.start, record.range.start); assert.equal(record.source.geometry.drawRange.count, record.range.count); }
+    for (const record of native) {
+      const geometry = record.source.geometry;
+      assert.equal(geometry.index, record.index); assert.deepEqual(Array.from(geometry.index.array), record.indexBytes);
+      assert.equal(geometry.drawRange, record.rangeObject); assert.deepEqual({ ...geometry.drawRange }, record.range);
+      assert.deepEqual(Object.keys(geometry.attributes), Object.keys(record.attributes));
+      for (const [key, attribute] of Object.entries(record.attributes)) {
+        assert.equal(geometry.attributes[key], attribute);
+        assert.deepEqual(Array.from(attribute.array), record.attributeBytes[key]);
+      }
+    }
+  } finally { r.close(); victim.close(); }
+});
+
+test('native animation interruptions and null-owner preview preserve authoritative state', async () => {
+  const progress = stage => {
+    const file = process.env.INKWAVE_FLOW_REVIEW_PROGRESS;
+    if (!file) return;
+    const folder = fs.realpathSync(path.dirname(file));
+    assert.ok(folder.startsWith('/mnt/workspace/.dev-state/agent-work/evidence/'));
+    const destination = path.join(folder, path.basename(file));
+    fs.writeFileSync(destination + '.pending', JSON.stringify({ stage, time: new Date().toISOString() }) + '\n');
+    fs.renameSync(destination + '.pending', destination);
+  };
+  progress('production');
+  const api = await production(); progress('rig');
+  const r = rig(api), victim = rig(api, 'shooter', 1);
+  // Native forced game tier keeps this ownership regression bounded. Hero/far
+  // and quality rebuilds have their separate native geometry regressions.
+  r.ch.setLod('game'); progress('activate');
+  try {
+    prepare(api, r.a); award(api, r.a, victim.a); r.step();
+    const group = exterior(r.ch), runner = r.a.weaponRunner, flow = r.a.s3.flow;
+    const gameplay = () => ({ flow: { ...flow }, position: r.a.pos.toArray(), velocity: r.a.vel.toArray(),
+      ink: r.a.ink, hp: r.a.hp, time: api.G.time, weapon: r.a.weaponId,
+      runner: Object.fromEntries(['cooldown', 'chargeT', 'charge', 'lockT', 'slosh', 'streaming',
+        'aimingSub', 's3Turret'].map(key => [key, runner[key]])) });
+    const before = gameplay(); Object.freeze(flow);
+    for (const [event, arg] of [['shoot', undefined], ['throw', undefined], ['slosh', undefined], ['jump', undefined]]) {
+      progress(event);
+      r.ch.trigger(event, arg); r.visual(1 / 60);
+      assert.deepEqual(gameplay(), before, 'visual hooks do not advance gameplay/action clocks');
+      assert.equal(r.snapshot().active, true);
+      assert.ok(Array.from(r.ch.ikErr).every(Number.isFinite));
+      const shell = r.ch.root.getObjectsByProperty('isSkinnedMesh', true).find(x => x.visible && x.name.startsWith('s3-flow-edge:'));
+      assert.ok(shell);
+      const source = shell.parent.children.find(x => x !== shell && !x.name.startsWith('s3-flow-') && x.geometry?.index === shell.geometry.index);
+      const i = shell.geometry.index.getX(0), edge = new api.THREE.Vector3(), native = new api.THREE.Vector3();
+      r.ch.skeleton.update(); source.getVertexPosition(i, native); shell.getVertexPosition(i, edge);
+      assert.ok(native.distanceTo(edge) < 1e-8, 'shell follows the actual native indexed action pose');
+    }
+    progress('dance'); r.ch.setDance('victory'); r.visual(); assert.equal(r.snapshot().active, true); assert.deepEqual(gameplay(), before);
+    r.ch.setDance(null);
+    // Native _owner() returns null for a detached menu preview, rather than a
+    // mock owner accessor. Old actor effects must disappear immediately.
+    progress('preview'); r.ch.actor = null; r.ch.root.removeFromParent();
+    api.G.actors = api.G.actors.filter(actor => actor !== r.a); r.visual();
+    assert.ok(r.ch._owner() === null, 'detached preview has no registered native owner');
+    assert.equal(r.snapshot().phase, 'off'); assert.equal(group.visible, false);
+    assert.ok(r.ch.root.getObjectsByProperty('isMesh', true).filter(x => x.name.startsWith('s3-flow-')).every(x => !x.visible || x.parent === group));
+    assert.deepEqual(gameplay(), before);
+    r.ch.actor = r.a; api.G.actors.push(r.a); api.G.scene.add(r.ch.root); r.visual();
+    assert.equal(r.snapshot().phase, 'entry'); assert.equal(r.snapshot().activationCount, 2);
+    progress('passed');
   } finally { r.close(); victim.close(); }
 });

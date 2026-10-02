@@ -21,7 +21,7 @@
 
 既存 `runtime/flow.mjs` が `actor.s3.flow` の active / remaining / score を管理し、発動・延長で塗る。既存 `runtime/weapon-motion.mjs` は active 中に body の `uGlow` を即時 pulse に変えるが、外周粒子・発動らせん・延長 flash・解除 fade がない。この差分は体色だけで判定せず、上表の event と持続中の形を比較した。
 
-新しい `runtime/flow-motion.mjs` の `installFlowMotion({ THREE, Character, Actor })` は、**production installer の他の Character hooks 全ての後**に一度適用する。親の共有 installer で import / call する必要がある。この lane は共有 installer、adapter、profile、upstream、モデル、髪、generated output を変更しない。個別テストでは同じ VM 内で production `install(profile)` を一度適用した後、この追加 installer を呼ぶ。prototype 上の `Symbol.for` により、別 realm の重複 module から再度呼んでも二重巻きを防ぐ。
+新しい `runtime/flow-motion.mjs` の `installFlowMotion({ THREE, Character, Actor })` は、body / weapon / locomotion の Character hooks の後に一度適用する。2026-10-03 の統合候補 `d846b5b8fadd6cef86e7d02699cf9b3b7356b80e` では、共有 production installer が新しい14 motion installer と Flow を接続済み。Flow の後の face wrapper は入力を記録して captured update を呼び、Flow / glow を上書きしない。この lane は共有 installer、adapter、profile、upstream、モデル、髪、generated output を変更しない。個別テストでは同じ VM 内で production `install(profile)` を一度適用し、追加の `installFlowMotion` 呼び出しは既存 prototype の重複インストール拒否を検証する。prototype 上の `Symbol.for` により、別 realm の重複 module から再度呼んでも二重巻きを防ぐ。
 
 実装は次の三つを組み合わせる。
 
@@ -45,7 +45,7 @@
 
 読み取り診断 `flowMotionSnapshot(ch)` は phase、opacity、visible、aliveParticles、event / eventAge、activation / extension / expiry counts、ownedResources、disposed を公開する。親の actual WebGL trace と final exact-SHA Actions へ `integration-handoff.json` で渡す。
 
-lane の Node 回帰は GPU shader compile や Switch 実機比較の代用ではない。最終 browser の loaded module hash / active build と実 shader / scene / render の確認、共有 installer の wiring、最終 integration の exact-SHA Actions は親の担当で、lane 単独では **NOT-INTEGRATED**。元映像と同じ camera / gear / input を用いた実機測定、airborne / opponent-concealed visibility、自然解除の曲線、正確な particle count / luminance / timing は未確認として残す。
+lane の Node 回帰は GPU shader compile や Switch 実機比較の代用ではない。2026-10-03 の独立レビューでは下記の focused browser verifier を追加した。共有 workflow への接続と最終 integration の exact-SHA Actions は親の担当で、focused lane の passing receipt だけで製品全体を認定しない。元映像と同じ camera / gear / input を用いた実機測定、airborne / opponent-concealed visibility、自然解除の曲線、正確な particle count / luminance / timing は未確認として残す。
 
 
 ## Ambient-occlusion override pass (2026-10-03)
@@ -55,3 +55,17 @@ lane の Node 回帰は GPU shader compile や Switch 実機比較の代用で�
 Shellは本体と同じ実インデックス・vertex attribute・skeletonを使い、独立したgeometry viewに描画範囲を持たせる。本体geometryの描画範囲を変更しない。viewを破棄する前に借りたattribute/index参照を外し、Three.jsのgeometry破棄処理が本体GPU bufferを消さないようにする。資源数にはこのviewも含める。画質変更時は古いviewを破棄して置き換え、同じLODで数が増えないことを検査する。
 
 回帰は全Flow meshでoverride/通常passの描画範囲を直接確認し、本体vertex/index/drawRangeの保持とview破棄時の参照分離を検査する。これは実ソースのpass契約の回帰であり、実GTAO描画やSwitchの見え方の認定は親のWebGL検証に残る。
+
+## 独立した実 WebGL / GTAOPass 検証 (2026-10-03)
+
+`scripts/check-inkwave-flow-render.mjs` は親と同じ immutable built site の `_versions/<revision>/` を読み、manifest の全 artifact / source input / build script hash を実ファイルと照合する。ブラウザへ渡す response body を hash 検証した後、その同じ bytes で fulfill し、path / SHA256 / byte length を結果に保存する。`--exact-source` は build inputs と verifier 自身を HEAD の committed blobs に追加で束縛する。検証の前後で入力を再照合し、別 build / dirty source を合格させない。
+
+実 production installer、Actor.update、WeaponRunner、完全な Character と native IK、Level / Physics / PaintSystem / Projectiles を使う。固定入力、平坦な診断 box、match の playing / canRespawn 境界である。全体 Game.update を呼ばず、native turf と splat award で発動・延長し、remaining を短縮せず約30秒を実 Actor tick で進めて解除する。kid entry / active、extension、squid entry / active、kid return、expiry / off、即時 reset / death、hide の11場面を描画する。preview / animation interruption の CPU 回帰は renderer 単独の主張と区別する。
+
+各場面では本物の WebGLRenderer と GTAOPass.render を実行し、beauty、Normal、Depth、AO の実 framebuffer pixels を読み戻す。Flow mesh を同一姿勢のまま非表示にした対照と比較し、正常な override は Normal / Depth / AO の全 bytes が一致し、実 GL drawElements / drawElementsInstanced の Flow draw が0になる。shell / glint / ribbon を個別に非表示にした beauty 差分も検証する。さらに gate だけを一時的に bypass する故障対照を実 GPU で描き、元の不透明 occluder バグが Normal / Depth / AO の pixels に現れることを必須にする。
+
+独立初回 passing receipt は `review-flow/browser-instrumented/flow-render-result.json`、source-bound content hash は `64948045d77ac6fe195373e0dd79f05551b1e141c067d4f5c1f809fc97d77418`。故障対照は Normal / Depth それぞれ3732 pixels、AO 6063 pixels を変えた。shell、glint、ribbon はそれぞれ1082 / 341 / 2346 beauty pixels を変え、shader error は0。この数値はこの診断 camera、480×360、Chromium WebGL2 / SwiftShader での観測であり、Nintendo の見え方や実機 GPU の数値ではない。最終 commit に束縛した receipt は lane の `done.json` に記録する。
+
+実 GL bufferData で本体 attribute/index arrays と38個の WebGLBuffer を対応付け、dispose 中の deleteBuffer を観測する。本体 buffer の削除は0、全38個が gl.isBuffer のまま、借用参照を外した4 shell view の dispose と実 VAO 解放を確認した。共有 native geometry を使う別の Character はdispose前後で Normal pixels が完全一致する。CPU 回帰も source の attribute/index bytes と drawRange object の保持を検証する。
+
+beauty の hidden/hidden 対照にも少数 pixel の差が出るため、raw 差分と繰り返し対照を保存し、完全な beauty bit 一致を認定しない。off / reset / death / hide は visible Flow mesh、実 renderer callback、実 Flow GL draw が全て0であることを確認する。Nintendo 一次資料は現行 page の lookup と retained TS hash を再確認してから frame contact sheet を独立に閲覧した。入力、ギア、映像の版番号、自然解除の曲線、Nintendo の AO 実装は不明のままで、校正値は変更しない。
