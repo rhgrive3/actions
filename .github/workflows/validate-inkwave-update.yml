@@ -120,6 +120,8 @@ jobs:
         run: node scripts/check-inkwave-motion.mjs --site .built-site/_site --evidence-dir .browser-evidence/motion --profile-dir .browser-profile-motion
       - name: Verify rendered sub, Flow and weapon detail transitions
         run: node scripts/check-inkwave-motion-detail.mjs --site .built-site/_site --evidence-dir .browser-evidence/motion-detail --profile-dir .browser-profile-motion-detail
+      - name: Verify Flow geometry through actual GTAO and GPU disposal
+        run: node scripts/check-inkwave-flow-render.mjs --site .built-site/_site --evidence-dir .browser-evidence/flow-render --profile-dir .browser-profile-flow --exact-source
       - uses: actions/upload-artifact@v4
         if: always()
         with:
