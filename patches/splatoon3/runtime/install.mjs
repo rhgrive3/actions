@@ -10,6 +10,7 @@ import { Physics, Hit } from '../../../src/game/physics.js';
 import { Menus } from '../../../src/ui/menus.js';
 import { ShadowCache } from '../../../src/core/shadowcache.js';
 import { installMovement } from './movement.mjs';
+import { installMovementMotion } from './movement-motion.mjs';
 import { installWeapons } from './weapons.mjs';
 import { installGear } from './gear.mjs';
 import { installFlow } from './flow.mjs';
@@ -36,6 +37,7 @@ export function install(profile) {
   installWeapons(api, profile);
   installRollerMotion(api, profile);
   installMovement(api, profile);
+  installMovementMotion(api, profile);
   installGear(api, profile);
   installFlow(api, profile);
   installResources(api, profile);

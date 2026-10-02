@@ -25,6 +25,7 @@ function launch(a, direction, speed, vertical, kind) {
   a._setClimb(false); a.grounded = false; a.coyote = 0; a.jumpBuffer = 0;
   a.vel.set(direction.x / length * speed, vertical, direction.z / length * speed);
   a.character.trigger('jump');
+  a.character.trigger(kind, { duration: config.roll.duration });
   api.emit('actor:' + kind, { actor: a });
 }
 export function beforeActions(a, dt, jumpPressed) {
@@ -75,6 +76,7 @@ export function beforeActions(a, dt, jumpPressed) {
       surge.armorTime = surge.charge >= 1 ? cfg.surge.armorTime : 0;
       surge.armorHP = cfg.surge.armorHP;
       a.jumpBuffer = 0; a.anim.surgeCharge = 0;
+      a.character.trigger('squidsurge', { charge: surge.charge, duration: surge.time });
       api.emit('actor:squidsurge', { actor: a, charge: surge.charge });
     }
   }
@@ -119,7 +121,18 @@ export function installMovement(context, tuning) {
   const ledge = Actor.prototype._ledgePop;
   Actor.prototype._ledgePop = function (...args) {
     const surge = movementState(this).surge, value = ledge.apply(this, args);
-    if (surge?.phase === 'burst') this.vel.y = Math.max(this.vel.y, surge.speed);
+    if (surge?.phase === 'burst') {
+      this.vel.y = Math.max(this.vel.y, surge.speed);
+      this.character.trigger('squidsurge_top', { charge: surge.charge, duration: config.surge.duration });
+    }
+    return value;
+  };
+  const superJumpUpdate = Actor.prototype._updateSuperJump;
+  Actor.prototype._updateSuperJump = function (...args) {
+    const value = superJumpUpdate.apply(this, args);
+    // Charge probes the floor. Once launched, the rendered body is airborne;
+    // keeping the charge's ground flag selected the dry-squid idle animation.
+    if (this.superJumpState?.phase === 'flight') this.grounded = false;
     return value;
   };
   const climb = Actor.prototype._updateClimb;
