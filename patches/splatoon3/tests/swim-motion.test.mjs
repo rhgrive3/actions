@@ -6,7 +6,7 @@ import vm from 'node:vm';
 import { createHash } from 'node:crypto';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { adaptSource } from '../adapter.mjs';
-import { installSwimMotion as duplicateInstall } from '../runtime/swim-motion.mjs';
+import { installSwimMotion as duplicateInstall, swimMotionSnapshot as duplicateSnapshot } from '../runtime/swim-motion.mjs';
 
 // One production realm: actual THREE, Actor, WeaponRunner, Character, material,
 // indexed meshes, all installer hooks and native IK. No surrogate rig.
@@ -163,7 +163,7 @@ function gameplay(r) {
     form: a.form, submerged: a.submerged, input: a.intent.move.toArray(),
     nativeTime: ch.t, nativeTimers: Array.from(ch.tr), springs: Array.from(ch.sp),
     pose: Array.from(ch.P), trackedPosition: ch.sqPos.toArray(), trackedQuaternion: ch.sqQuat.toArray(),
-    runner: { cd: runner.cd, charge: runner.charge, chargeT: runner.chargeT,
+    runner: { cooldown: runner.cooldown, charge: runner.charge, chargeT: runner.chargeT,
       lockT: runner.lockT, dodge: runner.dodge, firing: runner.firingPose() } };
 }
 function saveTrace(rows, summary) {
@@ -322,6 +322,7 @@ test('ordinary swim composes on the real production rig', async t => {
       const branches = [
         { form: 'kid' }, { form: 'climb', wallNormal: new api.THREE.Vector3(0, 0, -1) },
         { form: 'swim', grounded: false }, { form: 'swim', subAim: true },
+        { form: 'swim', charge: .5 }, { form: 'swim', rolling: true },
         { form: 'swim', firing: true }, { form: 'swim', movementMotion: { alive: true, special: {} } },
         { form: 'swim', movementMotion: { alive: true, superJump: { phase: 'flight' } } },
         { form: 'swim', movementMotion: { alive: true, actions: { roll: { age: .1 } } } },
@@ -333,7 +334,8 @@ test('ordinary swim composes on the real production rig', async t => {
         assert.equal(r.snap().active, false, JSON.stringify(branch));
         assert.equal(r.ch.u.uTime.value, r.ch.t, 'excluded branches retain native material time');
       }
-      for (const event of ['squidroll', 'squidsurge', 'squidsurge_top', 'jump', 'throw', 'dodge', 'spawn']) {
+      for (const event of ['squidroll', 'squidsurge', 'squidsurge_top', 'jump', 'throw', 'dodge', 'spawn',
+        'shoot', 'shootL', 'slosh', 'flick', 'charge_release', 'special_leap', 'special_slam']) {
         r.ch.trigger('movement_cancel'); r.swim(); assert.equal(r.snap().active, true);
         r.ch.trigger(event); assert.equal(r.snap().active, false, event);
       }
@@ -360,6 +362,19 @@ test('ordinary swim composes on the real production rig', async t => {
       assert.equal(squidDisposals, 1); assert.equal(geoDisposals, 0, 'shared native geometry stays alive');
       geo.removeEventListener('dispose', onDispose);
     } finally { api.G.scene.visible = true; r.close(); }
+  });
+  await t.test('dance immediately retires swim and another realm observes its exact installed state', () => {
+    const r = rig(api);
+    try {
+      r.swim(8); assert.deepEqual(JSON.parse(JSON.stringify(duplicateSnapshot(r.ch))),
+        JSON.parse(JSON.stringify(r.snap())), 'compare snapshot data across different Object/Array prototypes');
+      const g = gameplay(r), field = nativeField(r);
+      r.ch.setDance('victory');
+      assert.equal(r.snap().active, false);
+      assert.equal(r.ch.u.uTime.value, r.ch.t, 'ordinary wave override is restored immediately');
+      assert.deepEqual(gameplay(r), g, 'dance event does not retime native/gameplay state');
+      assert.ok(posedSquid(r, field).vertices.every(v => v.world.every(Number.isFinite)));
+    } finally { r.close(); }
   });
   await t.test('native physics, gameplay clocks, pose channels, IK and returned grips are unchanged', () => {
     const traces = [], returned = [];

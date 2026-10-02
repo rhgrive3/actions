@@ -6,7 +6,8 @@ import vm from 'node:vm';
 import { createHash } from 'node:crypto';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { adaptSource } from '../adapter.mjs';
-import { installFormMotion as duplicateInstall } from '../runtime/form-motion.mjs';
+import { installFormMotion as duplicateInstall, formMotionSnapshot as duplicateSnapshot,
+  resetFormMotion as duplicateReset } from '../runtime/form-motion.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const SRC = path.resolve(process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public'));
@@ -359,4 +360,20 @@ test('spawn/reset, death, weapon replacement, hidden updates and nullable previe
     assert.ok(Array.from(preview.P).every(Number.isFinite));
   } finally { preview.dispose(); }
   assert.equal(api.formMotionSnapshot(preview), null);
+});
+
+test('cross-realm snapshots/reset observe the installed state and disposed forms cannot reacquire it', async () => {
+  const api = await production(), r = rig(api);
+  try {
+    form(r, 'swim'); r.step();
+    assert.equal(api.formMotionSnapshot(r.ch).phase, 'dive');
+    assert.deepEqual(duplicateSnapshot(r.ch), api.formMotionSnapshot(r.ch));
+    const clocks = gameplay(r), vertices = geometry(r);
+    duplicateReset(r.ch);
+    assert.equal(api.formMotionSnapshot(r.ch), null);
+    assert.deepEqual(gameplay(r), clocks);
+    assert.deepEqual(geometry(r), vertices, 'state reset cannot change the displayed native indexed draw');
+  } finally { r.close(); }
+  r.ch.update(0, null); r.ch.trigger('squidroll');
+  assert.equal(api.formMotionSnapshot(r.ch), null);
 });

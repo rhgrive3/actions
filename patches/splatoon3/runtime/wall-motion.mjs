@@ -40,6 +40,20 @@ function clear(ch, m, block = false) {
   m.hasWallPose = false;
 }
 
+function faceGlint(ch, m, camera) {
+  const pivot = ch.squid.pivot;
+  pivot.updateWorldMatrix(true, false);
+  m.glintPosition.set(0, .12, .055).applyMatrix4(pivot.matrixWorld);
+  (camera || pivot).getWorldQuaternion(m.rotation);
+  m.glintScale.setScalar(m.glintSize);
+  m.glintMatrix.compose(m.glintPosition, m.rotation, m.glintScale);
+  // A quaternion alone cannot undo the mantle's nonuniform squash. The local
+  // affine matrix cancels the full parent basis, including its scale/shear.
+  m.glint.matrix.copy(pivot.matrixWorld).invert().multiply(m.glintMatrix);
+  m.glint.matrixWorldNeedsUpdate = true;
+  m.glint.updateWorldMatrix(false, false);
+}
+
 function glint(ch, m, THREE) {
   if (m.glint) return m.glint;
   // Indexed four-point glint, with its centre on the actual squid mantle.
@@ -54,6 +68,13 @@ function glint(ch, m, THREE) {
   const material = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true,
     opacity: 0, depthWrite: false, depthTest: false, side: THREE.DoubleSide, toneMapped: false });
   const mesh = new THREE.Mesh(geometry, material);
+  // GTAO replaces transparent materials with an opaque normal/depth material.
+  // Follow the native projectile gate using this cue's own geometry only.
+  mesh.matrixAutoUpdate = false;
+  mesh.onBeforeRender = (_renderer, scene, camera) => {
+    geometry.drawRange.count = scene.overrideMaterial ? 0 : geometry.index.count;
+    if (!scene.overrideMaterial) faceGlint(ch, m, camera);
+  };
   mesh.name = 's3-wall-ready-glint'; mesh.renderOrder = 5; mesh.visible = false;
   ch.squid.pivot.add(mesh); m.glint = mesh;
   return mesh;
@@ -75,6 +96,8 @@ export function installWallMotion(api, profile) {
         baseScale: new THREE.Vector3(), baseQuaternion: new THREE.Quaternion(),
         baseEmission: new THREE.Color(), baseGhostEmission: new THREE.Color(),
         lastWorldQuaternion: new THREE.Quaternion(), parentQuaternion: new THREE.Quaternion(),
+        glintMatrix: new THREE.Matrix4(), glintPosition: new THREE.Vector3(),
+        glintScale: new THREE.Vector3(), glintSize: visual.glintSize,
         rotation: new THREE.Quaternion(), axis: new THREE.Vector3(0, 1, 0) };
       states.set(ch, m);
     }
@@ -102,14 +125,14 @@ export function installWallMotion(api, profile) {
           charge: clamp(arg?.charge ?? 1), from: m.shape,
           worldQuaternion: m.hasWallPose ? m.lastWorldQuaternion.clone() : null };
         m.burst = null;
-      } else if (['movement_cancel', 'spawn', 'land', 'squidroll', 'throw', 'shoot',
-        'slosh', 'charge_release', 'dodge'].includes(name)) clear(this, m, true);
+      } else if (['movement_cancel', 'spawn', 'land', 'squidroll', 'throw', 'shoot', 'shootL',
+        'slosh', 'flick', 'charge_release', 'jump', 'special_leap', 'special_slam', 'dodge'].includes(name)) clear(this, m, true);
     }
     return trigger.call(this, name, arg);
   };
 
   C.update = function (dt, s) {
-    if (disposed.has(this)) return update.call(this, dt, s);
+    if (disposed.has(this)) return;
     s = s || {};
     const m = get(this), step = Math.max(0, Math.min(.1, dt || 0));
     // Restore before any existing installer can cancel/restore its own offset.
@@ -117,11 +140,15 @@ export function installWallMotion(api, profile) {
     const owner = this._owner(), frame = s.movementMotion;
     const actions = frame?.actions ?? owner?.s3?.actions;
     const action = actions?.surge;
-    const allowed = (s.form === 'climb' || s.form === 'squid') && !this.dance &&
+    const allowed = this.s3WallMotionEnabled !== false &&
+      (s.form === 'climb' || s.form === 'squid') && !this.dance &&
       owner?.alive !== false && frame?.alive !== false && !owner?.specialActive &&
       !frame?.special && !owner?.superJumpState && !frame?.superJump &&
       (!actions?.roll || action?.phase === 'charge' || action?.phase === 'burst') &&
-      !s.subAim && !s.firing && !owner?.weaponRunner?.aimingSub;
+      !s.subAim && !s.firing && !s.rolling && !(s.charge > .01) &&
+      !owner?.weaponRunner?.aimingSub && !owner?.weaponRunner?.dodge &&
+      !owner?.weaponRunner?.rolling && !(owner?.weaponRunner?.charge > .01) &&
+      !(owner?.weaponRunner?.lockT > 0);
     if (!action) m.blocked = null;
     if (action !== m.action) { m.action = action ?? null; m.ready = false; m.readyAge = 0; }
     if (!allowed || action && action === m.blocked) clear(this, m, true);
@@ -164,8 +191,9 @@ export function installWallMotion(api, profile) {
   };
 
   C._updateSquid = function (dt, s) {
+    if (disposed.has(this)) return;
     const result = squid.call(this, dt, s);
-    if (disposed.has(this) || this.sqScale <= .001) return result;
+    if (this.s3WallMotionEnabled === false || this.sqScale <= .001) return result;
     const m = get(this), pivot = this.squid.pivot;
     const legacy = movementMotionSnapshot(this);
     // Replace just the old wall action contribution. Native springs, wall basis,
@@ -205,32 +233,37 @@ export function installWallMotion(api, profile) {
       this.mats.squidGhost.emissive.addScalar(m.glow);
       m.emissionApplied = true;
       const star = glint(this, m, THREE);
-      star.position.set(0, .12, .055);
-      if (G?.camera) {
-        pivot.getWorldQuaternion(m.parentQuaternion).invert();
-        G.camera.getWorldQuaternion(m.rotation); star.quaternion.copy(m.parentQuaternion).multiply(m.rotation);
-      }
-      star.scale.setScalar(visual.glintSize * (.75 + .25 * ease(m.readyAge / visual.readyFlashTime)));
+      m.glintSize = visual.glintSize * (.75 + .25 * ease(m.readyAge / visual.readyFlashTime));
+      faceGlint(this, m, G?.camera);
       star.material.opacity = m.glow / visual.readyEmission;
       star.visible = true;
     }
     return result;
   };
 
-  const setWeapon = C.setWeapon, dispose = C.dispose;
+  const setWeapon = C.setWeapon, dispose = C.dispose, visible = C.setVisible, dance = C.setDance;
+  C.setVisible = function (...args) {
+    const m = states.get(this);
+    if (!args[0] && m) clear(this, m, true);
+    return visible.apply(this, args);
+  };
+  C.setDance = function (...args) {
+    const m = states.get(this);
+    if (args[0] && m) clear(this, m, true);
+    return dance.apply(this, args);
+  };
   C.setWeapon = function (...args) {
     if (states.has(this) && args[0] !== this.weaponKind) clear(this, get(this), true);
     return setWeapon.apply(this, args);
   };
   C.dispose = function (...args) {
-    if (!disposed.has(this)) {
-      const m = states.get(this);
-      if (m) {
-        restore(this, m); m.glint?.removeFromParent();
-        m.glint?.geometry.dispose(); m.glint?.material.dispose();
-      }
-      states.delete(this); disposed.add(this);
+    if (disposed.has(this)) return;
+    const m = states.get(this);
+    if (m) {
+      restore(this, m); m.glint?.removeFromParent();
+      m.glint?.geometry.dispose(); m.glint?.material.dispose();
     }
+    states.delete(this); disposed.add(this);
     return dispose.apply(this, args);
   };
   if (Actor) for (const method of ['reset', 'splat', '_startSpecial', 'superJump']) {

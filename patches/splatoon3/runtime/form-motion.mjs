@@ -9,6 +9,7 @@ export const FORM_MOTION_CALIBRATION = Object.freeze({
 const INSTALL = Symbol.for('inkwave.s3.form-motion.install.v1');
 const RESET = Symbol.for('inkwave.s3.form-motion.reset.v1');
 const states = new WeakMap();
+const disposed = new WeakSet();
 const smooth = u => { u = Math.max(0, Math.min(1, u)); return u * u * (3 - 2 * u); };
 const kid = ch => ch.form === 'kid';
 function shape(ch) {
@@ -38,6 +39,9 @@ function state(ch) {
 // retimed or cleared by this module. A nullable preview has no Actor/Runner.
 function busy(ch, m, T) {
   const s = m.frame, a = ch._owner?.(), r = a?.weaponRunner;
+  const f = s?.movementMotion;
+  if (s?.hp === 0 || f?.alive === false || f?.special || f?.superJump ||
+      f?.actions?.roll || f?.actions?.surge || a?.s3?.actions?.roll || a?.s3?.actions?.surge) return true;
   if (a?.alive === false || ch.dance || ch.fidget >= 0 || !ch.grounded || a?.specialActive || a?.superJumpState) return true;
   if (s?.firing || s?.charge > .01 || s?.subAim || s?.rolling || r?.aimingSub || r?.dodge ||
       r?.charge > .01 || r?.rolling || r?.firingPose?.()) return true;
@@ -50,8 +54,11 @@ function busy(ch, m, T) {
   }
   return false;
 }
-export function resetFormMotion(ch) { if (ch) states.delete(ch); }
+export function resetFormMotion(ch) { ch?.[INSTALL]?.reset(ch); }
 export function formMotionSnapshot(ch) {
+  return ch?.[INSTALL]?.snapshot(ch) ?? null;
+}
+function snapshot(ch) {
   const m = ch && states.get(ch);
   return m ? { phase: m.phase, age: m.age, reversing: !!m.start,
     actionBlocked: m.blocked, shape: { ...shape(ch) },
@@ -63,20 +70,24 @@ export function installFormMotion({ Character, Actor, CHARACTER_CHANNELS: C, CHA
     throw Error('Form motion requires the actual Character and exported pose channels');
   }
   const P = Character.prototype;
-  if (P[INSTALL]) return;
+  if (Object.hasOwn(P, INSTALL)) return;
   const update = P.update, scales = P._updateFormScales, pose = P._poseForm;
   const trigger = P.trigger, weapon = P.setWeapon, dispose = P.dispose;
   if (![update, scales, pose, trigger, weapon, dispose].every(f => typeof f === 'function')) {
     throw Error('Form motion requires the native form, pose and lifecycle methods');
   }
-  Object.defineProperty(P, INSTALL, { value: true });
+  // Exports from another module realm must use the installed state's owner.
+  Object.defineProperty(P, INSTALL, { value: Object.freeze({ snapshot,
+    reset: ch => states.delete(ch) }) });
   P.update = function (dt, s) {
+    if (disposed.has(this)) return;
     const m = state(this); m.frame = s || null;
     // Native update owns dt clamping, formEnter, input and the complete rig.
     try { return update.call(this, dt, s); }
     finally { m.frame = null; }
   };
   P._updateFormScales = function (dt) {
+    if (disposed.has(this)) return;
     const m = state(this), toKid = kid(this), previous = m.previous;
     const changed = toKid !== m.toKid, rewound = this.formT < m.clock - 1e-10;
     const interrupted = changed && previous && m.phase !== null;
@@ -113,6 +124,7 @@ export function installFormMotion({ Character, Actor, CHARACTER_CHANNELS: C, CHA
     return result;
   };
   P._poseForm = function (out) {
+    if (disposed.has(this)) return;
     if (this.s3FormMotionEnabled === false) return pose.call(this, out);
     const m = state(this); m.blocked = busy(this, m, T);
     if (!m.phase || m.blocked) return;
@@ -136,6 +148,8 @@ export function installFormMotion({ Character, Actor, CHARACTER_CHANNELS: C, CHA
     return weapon.apply(this, args);
   };
   P.dispose = function (...args) {
+    if (disposed.has(this)) return;
+    disposed.add(this);
     resetFormMotion(this); return dispose.apply(this, args);
   };
   if (Actor && !Actor.prototype[RESET]) {

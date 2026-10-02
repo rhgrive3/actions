@@ -56,11 +56,12 @@ async function production() {
   cached = api; return api;
 }
 
-function rig(api, weapon = 'shooter') {
+function rig(api, weapon = 'shooter', enabled = true) {
   const { Actor, Character, G, THREE } = api;
   const a = new Actor({ team: 0, name: 'native wall regression', weapon, isLocal: true,
     CharacterClass: Character, style: { hair: 0, skin: 2, outfit: 0, eyes: 0 } });
   const ch = a.character; ch.actor = a; ch.onEvent = null; G.actors.push(a); G.scene.add(ch.root);
+  ch.s3WallMotionEnabled = enabled;
   a.grounded = a.ground.hit = true;
   const draw = (dt = 1 / 60) => {
     G.time += dt; a._finishFrame(dt); ch.root.updateMatrixWorld(true); ch.skeleton.update();
@@ -91,24 +92,44 @@ function gameplay(a) {
       fire: a.intent.fire, sub: a.intent.sub },
     actions: a.s3.actions ? JSON.parse(JSON.stringify(a.s3.actions)) : null,
     clocks: Array.from(a.character.tr), runnerCharge: a.weaponRunner.charge,
-    runnerCd: a.weaponRunner.cd, fuse: a.weaponRunner.subFuse };
+    runnerCooldown: a.weaponRunner.cooldown };
 }
 
+// Evaluate the displacement extracted from the actual native material shader.
+const fieldCache = new WeakMap();
+function nativeField(ch, THREE) {
+  if (fieldCache.has(ch)) return fieldCache.get(ch);
+  const shader = { vertexShader: THREE.ShaderLib.physical.vertexShader,
+    fragmentShader: THREE.ShaderLib.physical.fragmentShader, uniforms: {} };
+  ch.squid.body.material.onBeforeCompile(shader);
+  const begin = shader.vertexShader.indexOf('float wig = color.g;');
+  const end = shader.vertexShader.indexOf('vTint = color.r;', begin);
+  assert.ok(begin >= 0 && end > begin, 'native travelling tentacle shader is present');
+  const source = shader.vertexShader.slice(begin, end);
+  let js = source.replaceAll('float ', 'let ')
+    .replace('vec2 rad = position.xz;', 'let rad = [position.x, position.z];')
+    .replace('length(rad)', 'Math.hypot(...rad)')
+    .replace('rad / rl', 'rad.map(x => x / rl)')
+    .replace('vec2(0.0, 1.0)', '[0, 1]')
+    .replace('vec2 tng = vec2(-rad.y, rad.x);', 'let tng = [-rad[1], rad[0]];')
+    .replace(/transformed\.xz \+= rad \* (\([^;]+\)) \+ tng \* (\([^;]+\));/,
+      'transformed.x += rad[0] * $1 + tng[0] * $2; transformed.z += rad[1] * $1 + tng[1] * $2;')
+    .replace(/\bsin\(/g, 'Math.sin(').replace(/\bcos\(/g, 'Math.cos(');
+  assert.doesNotMatch(js, /\bvec2\b|transformed\.xz|\bfloat\b/);
+  const evaluate = new Function('position', 'color', 'uTime', 'uWig',
+    'const transformed = position.clone();\n' + js + '\nreturn transformed;');
+  const field = { shader, source, evaluate };
+  fieldCache.set(ch, field); return field;
+}
 function posed(ch, THREE) {
   const body = ch.squid.body, geometry = body.geometry;
   assert.ok(geometry.index?.count > 100, 'the real drawn squid is indexed geometry');
-  const indices = [], vertices = [], p = new THREE.Vector3();
+  const indices = [], vertices = [], p = new THREE.Vector3(), field = nativeField(ch, THREE);
   // Sample actual drawn indices through native vertex attributes and wiggle.
   for (let k = 0; k < geometry.index.count; k += Math.max(1, Math.floor(geometry.index.count / 96))) {
     const i = geometry.index.getX(k); indices.push(i); body.getVertexPosition(i, p);
-    const color = geometry.getAttribute('color'), wig = color.getY(i), ph = color.getZ(i) * 6.2831;
-    const u = ch.u.uWig.value, t = ch.u.uTime.value;
-    const s = Math.sin(t * u.y + ph - wig * 4.2), c = Math.cos(t * u.y * .8 + ph * 1.3 - wig * 3.1);
-    const mag = wig * wig * u.x * 2, length = Math.hypot(p.x, p.z);
-    const x = length > 1e-4 ? p.x / length : 0, z = length > 1e-4 ? p.z / length : 1;
-    p.x += x * s * mag * 1.1 - z * c * mag * .9;
-    p.z += z * s * mag * 1.1 + x * c * mag * .9;
-    p.y += (s * .5 + .5) * wig * u.x * .8 + s * mag * .35;
+    const color = geometry.getAttribute('color');
+    p.copy(field.evaluate(p, { g: color.getY(i), b: color.getZ(i) }, ch.u.uTime.value, ch.u.uWig.value));
     p.applyMatrix4(body.matrixWorld); vertices.push(p.toArray());
   }
   const skin = ch.kid.children.find(x => x.isSkinnedMesh);
@@ -134,18 +155,12 @@ function evidence(name, data) {
 function drawGeometryProof(ch, THREE, name) {
   if (!EVIDENCE) return;
   const body = ch.squid.body, geometry = body.geometry, color = geometry.attributes.color;
-  const p = new THREE.Vector3(), vertices = [], u = ch.u.uWig.value, t = ch.u.uTime.value;
+  const p = new THREE.Vector3(), vertices = [], field = nativeField(ch, THREE);
   // Full indexed mesh projection, with the existing native shader deformation.
   // This is CPU pose visualization; it is explicitly not browser/GPU proof.
   for (let i = 0; i < geometry.attributes.position.count; i++) {
     body.getVertexPosition(i, p);
-    const wig = color.getY(i), ph = color.getZ(i) * 6.2831;
-    const s = Math.sin(t * u.y + ph - wig * 4.2), c = Math.cos(t * u.y * .8 + ph * 1.3 - wig * 3.1);
-    const mag = wig * wig * u.x * 2, length = Math.hypot(p.x, p.z);
-    const x = length > 1e-4 ? p.x / length : 0, z = length > 1e-4 ? p.z / length : 1;
-    p.x += x * s * mag * 1.1 - z * c * mag * .9;
-    p.z += z * s * mag * 1.1 + x * c * mag * .9;
-    p.y += (s * .5 + .5) * wig * u.x * .8 + s * mag * .35;
+    p.copy(field.evaluate(p, { g: color.getY(i), b: color.getZ(i) }, ch.u.uTime.value, ch.u.uWig.value));
     p.applyMatrix4(body.matrixWorld); vertices.push(p.toArray());
   }
   const triangles = [];
@@ -184,7 +199,7 @@ function difference(a, b) {
   return Math.sqrt(a.vertices.reduce((sum, v, i) => sum + v.reduce((s, x, j) => s + (x - b.vertices[i][j]) ** 2, 0), 0) / a.vertices.length);
 }
 
-function nativeWallTrace(api, hz = 60) {
+function nativeWallTrace(api, hz = 60, enabled = true) {
   const { THREE, G, Physics, FixedClock, PLAYER } = api, V = THREE.Vector3;
   const previous = { level: G.level, physics: G.physics };
   const box = (id, center, half, faces) => ({ id, solid: true, center, half, faces,
@@ -199,7 +214,7 @@ function nativeWallTrace(api, hz = 60) {
     spawnPads: [new V(-1000, 0, 0), new V(1000, 0, 0)],
     queryBlocks: (_x, _z, _xx, _zz, out) => { out.length = 0; out.push(0, 1); return out; } };
   G.level = level; G.physics = new Physics(level);
-  const r = rig(api), rows = [], poses = [], clock = new FixedClock();
+  const r = rig(api, 'shooter', enabled), rows = [], poses = [], clock = new FixedClock();
   try {
     r.a.pos.set(0, .5, PLAYER.radius + .02); r.a.grounded = false; r.a.ink = 50;
     r.a.intent.squid = true; r.a.intent.move.set(0, 0, -1);
@@ -221,9 +236,9 @@ function nativeWallTrace(api, hz = 60) {
   } finally { r.close(); G.level = previous.level; G.physics = previous.physics; }
 }
 
-test('one production realm exposes the actual pre-patch missing ready cue and retains native IK', async () => {
-  const api = await production(), baseline = rig(api);
-  const gameplayBefore = nativeWallTrace(api);
+test('production wall opt-out exposes the legacy missing ready cue and retains native IK', async () => {
+  const api = await production(), baseline = rig(api, 'shooter', false);
+  const gameplayBefore = nativeWallTrace(api, 60, false);
   let before;
   try {
     baseline.climb(); baseline.a.intent.jump = true;
@@ -236,7 +251,6 @@ test('one production realm exposes the actual pre-patch missing ready cue and re
   } finally { baseline.close(); }
   api.installWallMotion(api, api.profile);
   const gameplayAfter = nativeWallTrace(api);
-  api.nativeWallBaseline = gameplayAfter;
   assert.deepEqual(gameplayAfter.rows, gameplayBefore.rows,
     'actual native physics, input, actions/resources, runner and timer sequence must be identical');
   assert.deepEqual(gameplayAfter.poses[0].posed.vertices, gameplayBefore.poses[0].posed.vertices,
@@ -278,7 +292,7 @@ test('one production realm exposes the actual pre-patch missing ready cue and re
 });
 
 test('production FixedClock yields the same native wall geometry and gameplay at 30/60/120Hz render rates', async () => {
-  const api = await production(), traces = [api.nativeWallBaseline];
+  const api = await production(), traces = [nativeWallTrace(api, 60)];
   for (const hz of [30, 120]) traces.push(nativeWallTrace(api, hz));
   for (const trace of traces.slice(1)) {
     assert.deepEqual(trace.rows, traces[0].rows);
@@ -405,5 +419,71 @@ test('local wall ghost remains readable without exposing submerged remote readin
     assert.equal(r.ch.squid.ghost.visible, false);
     assert.equal(r.ch.squid.pivot.getObjectByName('s3-wall-ready-glint'), undefined);
     assert.deepEqual(Array.from(r.ch.mats.squid.emissive.toArray()), [0, 0, 0]);
+  } finally { r.close(); }
+});
+
+test('hide and dance immediately retire readiness and disposed wall state stays retired', async () => {
+  const api = await production();
+  for (const event of ['hide', 'dance', 'flick', 'shootL', 'special_leap', 'dispose']) {
+    const r = rig(api);
+    try {
+      r.climb(); r.a.intent.jump = true; for (let i = 0; i < 45; i++) r.action();
+      const star = r.ch.squid.pivot.getObjectByName('s3-wall-ready-glint');
+      assert.equal(star.visible, true);
+      if (event === 'hide') r.ch.setVisible(false);
+      if (event === 'dance') r.ch.setDance('victory');
+      if (event === 'dispose') r.ch.dispose();
+      if (['flick', 'shootL', 'special_leap'].includes(event)) r.ch.trigger(event);
+      assert.equal(api.wallMotionSnapshot(r.ch)?.phase ?? null, null, event);
+      assert.equal(star.visible, false, event);
+      assert.deepEqual(Array.from(r.ch.mats.squid.emissive.toArray()), [0, 0, 0]);
+      if (event === 'dispose') {
+        r.ch.update(0, null); r.ch.trigger('squidsurge');
+        assert.equal(api.wallMotionSnapshot(r.ch), null);
+        assert.equal(star.parent, null);
+      }
+    } finally { r.close(); }
+  }
+});
+
+test('readiness indexed glint faces the camera without inheriting mantle squash and skips normal/depth draws', async () => {
+  const api = await production(), r = rig(api), { THREE, G } = api;
+  try {
+    r.climb(); r.a.intent.jump = true; for (let i = 0; i < 45; i++) r.action();
+    const star = r.ch.squid.pivot.getObjectByName('s3-wall-ready-glint');
+    const p = new THREE.Vector3(), cameraX = new THREE.Vector3(1, 0, 0)
+      .applyQuaternion(G.camera.getWorldQuaternion(new THREE.Quaternion()));
+    const cameraY = new THREE.Vector3(0, 1, 0)
+      .applyQuaternion(G.camera.getWorldQuaternion(new THREE.Quaternion()));
+    star.updateWorldMatrix(true, false);
+    const center = star.getVertexPosition(star.geometry.index.getX(0), p).applyMatrix4(star.matrixWorld).clone();
+    const x = star.getVertexPosition(3, p).applyMatrix4(star.matrixWorld).clone().sub(center);
+    const y = star.getVertexPosition(1, p).applyMatrix4(star.matrixWorld).clone().sub(center);
+    near(x.length(), y.length(), 1e-8);
+    assert.ok(x.normalize().dot(cameraX) > 1 - 1e-8);
+    assert.ok(y.normalize().dot(cameraY) > 1 - 1e-8);
+    const before = posed(r.ch, THREE), normal = new THREE.MeshNormalMaterial();
+    // Exercise the real cue's renderer hook with the actual THREE scene and
+    // indexed draw. This is a CPU gate contract, not a GPU render assertion.
+    try {
+      G.scene.overrideMaterial = normal;
+      star.onBeforeRender(null, G.scene, G.camera, star.geometry, normal, null);
+      assert.equal(star.geometry.drawRange.count, 0);
+      G.scene.overrideMaterial = null;
+      star.onBeforeRender(null, G.scene, G.camera, star.geometry, star.material, null);
+      assert.equal(star.geometry.drawRange.count, star.geometry.index.count);
+      const secondCamera = new THREE.PerspectiveCamera();
+      secondCamera.quaternion.setFromEuler(new THREE.Euler(.37, -.64, .22, 'XYZ'));
+      star.onBeforeRender(null, G.scene, secondCamera, star.geometry, star.material, null);
+      const renderedX = star.getVertexPosition(3, p).applyMatrix4(star.matrixWorld).clone().sub(center);
+      const renderedY = star.getVertexPosition(1, p).applyMatrix4(star.matrixWorld).clone().sub(center);
+      assert.ok(renderedX.clone().normalize().dot(new THREE.Vector3(1, 0, 0)
+        .applyQuaternion(secondCamera.quaternion)) > 1 - 1e-8, 'use the actual draw camera');
+      assert.ok(renderedY.clone().normalize().dot(new THREE.Vector3(0, 1, 0)
+        .applyQuaternion(secondCamera.quaternion)) > 1 - 1e-8);
+      near(renderedX.length(), renderedY.length());
+      star.onBeforeRender(null, G.scene, G.camera, star.geometry, star.material, null);
+      assert.deepEqual(posed(r.ch, THREE), before, 'overlay pass gating does not change native squid/skinned vertices or IK');
+    } finally { G.scene.overrideMaterial = null; normal.dispose(); }
   } finally { r.close(); }
 });
