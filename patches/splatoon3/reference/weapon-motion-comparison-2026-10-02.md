@@ -47,3 +47,9 @@ Slosher は trigger ごとの actual windup/interval を保存し、winding 中�
 `runtime/weapons.mjs` の actual `WeaponRunner._slosher` override は、windup と cooldown に `1e-10` 秒の浮動小数境界を使う。秒 dt の windup 超過と、継続入力中の cooldown 超過を次の段階へ持ち越し、不規則な更新でも周期誤差を累積させない。トリガー解除後の idle 負 cooldown は持ち越さず、次の入力は新しい windup を開始する。既存の ink admission / consume / fireFacing / 音 / slosh trigger、解除しても進行中の一投を完了する動作を維持する。reset / death / ブキ交換は残時間所有を消す。整数フレームへ量子化していない。
 
 `tests/slosher-timing.test.mjs` は旧 actual Runner で失敗する初射/連射/解除/ink/reset 回帰を含む。修正後は入力開始 tick 1 に対して放出 `[13,42,71,100]`（開始から12F、以後29F）。固定60Hz gameplay tick を30/60/120Hz描画時計で進めた full runner trace は同一。直接の30/60/120Hz秒 dt、不規則 `.037/.009/.023/.011` 秒、dt=0と小さい残時間、解除/再入力/empty retry/現在の gear 後 ink cost/reset/death/ブキ交換を検証する。別の one-VM production install harness で、親候補の歩行・イカ移動・ブキ姿勢を接続した実 full Character / bones / muzzle / hair impulse の放出同期も検証する。証拠と exact SHA は lane `done-timing.json` に保存する。
+
+## バケツ内部の未確認接続
+
+実際の投擲を追加確認したところ、独自の液面減少・レバー曲線は時計が未接続だった。`_animWeapon` は `T_SHOOT` を参照するが、バケツの trigger は `T_SLOSH` をリセットする。実3放出では液面減少とレバー回転は0、液面の傾き・通常の揺れは動いた。診断用に時計を操作すると既存曲線が動くため、この欠落を原作の動作として認定しない。
+
+公式動画 `xnGkyA7kgWr` の1080/60fps・デコード74/76/78/80/90には内部のインクと放出する波が見える。一方、既存の減少量・回復曲線・レバー機構に対応する原作測定はない。単に時計をつなぐと本作固有の曲線が有効になるため、今回の忠実性修正では接続を保留し、液面減少・回復とレバーは原作対応未確認として残す。入力時刻の分かる同じ通常型の近接映像で、放出との同期を測る必要がある。証拠は永続laneの `bucket-surface-independent-review.json` に保存した。
