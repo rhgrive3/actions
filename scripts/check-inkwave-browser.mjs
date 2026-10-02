@@ -22,7 +22,12 @@ const sourceSha=process.argv.includes('--exact-source') ? execFileSync('git',['r
 // Bind every build input to the actual checkout commit when --exact-source is used.
 if(process.argv.includes('--exact-source')) {
   const tree=new Map(execFileSync('git',['ls-tree','-r','-z',sourceSha],{cwd:ROOT,encoding:'utf8'}).split('\0').filter(Boolean).map(row=>{ const [meta,file]=row.split('\t'); return [file,meta.split(' ')[2]]; }));
-  const files=Object.keys(manifest.files).map(key=>key.startsWith('upstream/')?'inkwave-public/'+key.slice(9):'patches/splatoon3/'+key.slice(6));
+  const files=Object.keys(manifest.files).map(key=>{
+    if(key.startsWith('upstream/')) return 'inkwave-public/'+key.slice(9);
+    if(key.startsWith('patch/')) return 'patches/splatoon3/'+key.slice(6);
+    if(key.startsWith('touch-layout/')) return 'patches/touch-layout/'+key.slice(13);
+    throw new Error('Unknown build input namespace: '+key);
+  });
   Object.entries(manifest.files).forEach(([key,expected],i)=>{if(hash(fs.readFileSync(path.join(ROOT,files[i])))!==expected)throw new Error('Build input differs from manifest: '+key);});
   if(hash(fs.readFileSync(path.join(ROOT,'scripts/build-inkwave.mjs')))!==manifest.build.script)throw new Error('Build pipeline mismatch');
   files.push('scripts/build-inkwave.mjs');
@@ -132,14 +137,25 @@ try {
     const windup=[];
     for(let i=0;i<36;i++){windup.push({frame:i+1,runnerTime:a.weaponRunner.slosh,weaponWorld:ch.weapon.off.matrixWorld.elements.slice()});tick();}
     if(!windup.some(s=>s.runnerTime>=0)||!windup.some(s=>s.runnerTime<0))throw Error('Compiled bucket never completed its actual windup');
+    const firstWindupFrames=windup.findIndex(row=>row.runnerTime<0);
+    if(firstWindupFrames!==12)throw Error('Compiled bucket release did not wait 12 elapsed frames');
+    a.weaponRunner.reset();
+    const releaseFrames=[],projectiles=G.projectiles,fireSlosh=projectiles.fireSlosh;
+    let frame=0;
+    try {
+      projectiles.fireSlosh=function(...args){if(args[0]===a)releaseFrames.push(frame);return fireSlosh.apply(this,args);};
+      for(frame=0;frame<120;frame++)tick({fire:true});
+    } finally {projectiles.fireSlosh=fireSlosh;}
+    if(releaseFrames.join(',')!=='12,41,70,99')throw Error('Compiled bucket did not repeat every 29 frames');
     a.weaponRunner.reset();tick();
+    const reset={lastShot:ch.lastShot,chargeFlash:ch.chargeFlash};
     if(ch.lastShot<1||ch.chargeFlash!==0)throw Error('Compiled reset left weapon motion clocks active');
     prepare('shooter');a.special=0;a.s3.flow.active=true;a.s3.flow.remaining=10;tick();
     const glow=()=>{const c=ch.u.uGlow.value;return Math.hypot(c.r,c.g,c.b);};
     const flow={activeGlow:glow(),specialGlow:ch.wGlow};
     a.s3.flow.active=false;a.s3.flow.remaining=0;tick();flow.inactiveGlow=glow();
     if(!Number.isFinite(flow.activeGlow)||flow.activeGlow<=0||flow.specialGlow>.001||flow.inactiveGlow>=.001)throw Error('Compiled Flow material did not follow actual actor state');
-    return {fixture:'loaded match Actor/WeaponRunner -> complete Character; fixed pose position; Chromium WebGL',dualies,slosher:windup,flow};
+    return {fixture:'loaded match Actor/WeaponRunner -> complete Character; fixed pose position; Chromium WebGL',dualies,slosher:{windup,firstWindupFrames,releaseFrames},reset,flow};
   });
   result.status = 'passed';
 } catch (error) {
@@ -150,7 +166,7 @@ try {
   
   result.sourceSha = sourceSha; result.verifiedResponses = receipts.length;
   result.verifiedRuntimeFiles = [...new Set(receipts)].sort();
-  for (const required of ['patches/splatoon3/bootstrap.mjs','patches/splatoon3/profile.json','patches/splatoon3/runtime/install.mjs','patches/splatoon3/runtime/walk.mjs','patches/splatoon3/runtime/roller.mjs','patches/splatoon3/runtime/movement-motion.mjs','patches/splatoon3/runtime/weapon-motion.mjs','src/main.js','src/game/actor.js','src/game/character.js','src/game/weapons.js']) if(!receipts.includes(required)) errors.push('Required runtime was not verified: '+required);
+  for (const required of ['patches/splatoon3/bootstrap.mjs','patches/splatoon3/profile.json','patches/splatoon3/runtime/install.mjs','patches/splatoon3/runtime/weapons.mjs','patches/splatoon3/runtime/movement.mjs','patches/splatoon3/runtime/walk.mjs','patches/splatoon3/runtime/roller.mjs','patches/splatoon3/runtime/movement-motion.mjs','patches/splatoon3/runtime/weapon-motion.mjs','src/main.js','src/game/actor.js','src/game/character.js','src/game/weapons.js']) if(!receipts.includes(required)) errors.push('Required runtime was not verified: '+required);
   if(errors.length || consoleErrors.length || failures.length) result.status = 'failed';
   result.errors = errors; result.consoleErrors = consoleErrors; result.requestFailures = failures;
   fs.writeFileSync(evidence + '/browser-result.json.writing', JSON.stringify(result, null, 2));
