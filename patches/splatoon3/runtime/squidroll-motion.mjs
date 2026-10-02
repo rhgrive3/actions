@@ -1,6 +1,6 @@
 // Additive correction to movement-motion's long-axis turn. Nintendo's footage
 // supports an airborne turnover and direction reversal, not these exact curves.
-// Install immediately AFTER installMovementMotion. Only the Roll branch owns
+// Install after installMovementMotion and the other squid layers. Only Roll owns
 // the squid pivot here; the original springs, IK and gameplay remain untouched.
 import { movementMotionSnapshot, MOVEMENT_MOTION_CALIBRATION } from './movement-motion.mjs';
 
@@ -10,6 +10,7 @@ export const SQUIDROLL_MOTION_CALIBRATION = Object.freeze({
 });
 const INSTALL = Symbol.for('inkwave.s3.squidroll-motion.install.v1');
 const states = new WeakMap();
+const disposed = new WeakSet();
 const TAU = Math.PI * 2;
 const clamp = x => Math.max(0, Math.min(1, x));
 const ease = x => { x = clamp(x); return x * x * (3 - 2 * x); };
@@ -19,7 +20,7 @@ export function squidrollMotionSnapshot(ch) {
   return ch?.[INSTALL]?.snapshot(ch) ?? null;
 }
 
-export function installSquidrollMotion({ Character, THREE }, profile) {
+export function installSquidrollMotion({ Character, Actor, THREE }, profile) {
   if (!Character || !THREE || !(profile?.movement?.roll?.duration > 0))
     throw new Error('Squid Roll motion requires Character, THREE and roll tuning');
   const C = Character.prototype;
@@ -69,6 +70,7 @@ export function installSquidrollMotion({ Character, THREE }, profile) {
   const update = C.update, squid = C._updateSquid, trigger = C.trigger;
   const setWeapon = C.setWeapon, dispose = C.dispose;
   C.update = function (dt, s) {
+    if (disposed.has(this)) return;
     const m = get(this);
     // Restore before delegating so this offset never feeds native pose springs
     // or movement-motion's saved transform, including when the body is hidden.
@@ -81,6 +83,7 @@ export function installSquidrollMotion({ Character, THREE }, profile) {
     return result;
   };
   C._updateSquid = function (dt, s) {
+    if (disposed.has(this)) return;
     const m = get(this);
     restore(this, m);
     const result = squid.call(this, dt, s);
@@ -150,11 +153,12 @@ export function installSquidrollMotion({ Character, THREE }, profile) {
     return result;
   };
   C.trigger = function (name, arg) {
-    if (name === 'squidroll') {
+    if (!disposed.has(this) && name === 'squidroll') {
       const m = get(this); restore(this, m);
       m.preview++; m.live = m.blocked = null;
       m.previewDuration = Math.max(1e-10, arg?.duration ?? duration);
-    } else if (['spawn', 'land', 'movement_cancel', 'squidsurge', 'squidsurge_top',
+    } else if (!disposed.has(this) && ['spawn', 'land', 'movement_cancel', 'squidsurge', 'squidsurge_top',
+      'jump', 'shoot', 'shootL', 'slosh', 'flick', 'charge_release', 'dodge',
       'throw', 'special_leap', 'special_slam'].includes(name)) interrupt(this);
     return trigger.call(this, name, arg);
   };
@@ -162,9 +166,30 @@ export function installSquidrollMotion({ Character, THREE }, profile) {
     if (args[0] !== this.weaponKind) interrupt(this);
     return setWeapon.apply(this, args);
   };
+  const visible = C.setVisible, dance = C.setDance;
+  C.setVisible = function (...args) {
+    if (!args[0]) interrupt(this);
+    return visible.apply(this, args);
+  };
+  C.setDance = function (...args) {
+    if (args[0]) interrupt(this);
+    return dance.apply(this, args);
+  };
   C.dispose = function (...args) {
+    if (disposed.has(this)) return;
+    disposed.add(this);
     restore(this, states.get(this));
     states.delete(this);
     return dispose.apply(this, args);
   };
+  if (Actor?.prototype) for (const method of ['reset', 'splat', '_startSpecial', 'superJump']) {
+    const original = Actor.prototype[method];
+    if (!original) continue;
+    Actor.prototype[method] = function (...args) {
+      // Unwind the outer Roll before the older movement layer cancels. Doing
+      // this afterwards can restore our saved legacy spin over its native pose.
+      if (this.character && (method !== 'superJump' || this.canSuperJump())) interrupt(this.character);
+      return original.apply(this, args);
+    };
+  }
 }

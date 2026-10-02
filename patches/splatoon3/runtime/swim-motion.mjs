@@ -34,9 +34,10 @@ function eligible(ch, s, owner) {
     // Native form gestures last .45s. Never replace their squash/pop curves.
     && !(ch.formPrev === 'kid' && ch.formT < .45)
     && ch.root.visible && ch.root.parent?.visible !== false
-    && s.hp !== 0 && !s.subAim && !s.firing
+    && s.hp !== 0 && !s.subAim && !s.firing && !s.rolling && !(s.charge > .01)
     && owner?.alive !== false && !owner?.specialActive && !owner?.superJumpState
     && !owner?.weaponRunner?.aimingSub && !owner?.weaponRunner?.dodge
+    && !owner?.weaponRunner?.rolling && !(owner?.weaponRunner?.charge > .01)
     && !(owner?.weaponRunner?.lockT > 0)
     && !owner?.s3?.actions?.roll && !owner?.s3?.actions?.surge
     && !(frame && (!frame.alive || frame.special || frame.superJump
@@ -163,16 +164,21 @@ export function installSwimMotion({ Character, Actor, THREE }, _profile) {
     if (!this.root.visible || this.root.parent?.visible === false) clear(this, states);
     return result;
   };
-  const visible = C.setVisible, weapon = C.setWeapon, trigger = C.trigger, dispose = C.dispose;
+  const visible = C.setVisible, weapon = C.setWeapon, trigger = C.trigger, dispose = C.dispose, dance = C.setDance;
   C.setVisible = function (...args) {
     if (!args[0]) clear(this, states); return visible.apply(this, args);
+  };
+  C.setDance = function (...args) {
+    if (args[0]) clear(this, states);
+    return dance.apply(this, args);
   };
   C.setWeapon = function (...args) {
     if (args[0] !== this.weaponKind) clear(this, states); return weapon.apply(this, args);
   };
   C.trigger = function (name, ...args) {
     if (['spawn', 'movement_cancel', 'squidroll', 'squidsurge', 'squidsurge_top',
-      'jump', 'throw', 'leap', 'slam', 'dodge'].includes(name)) clear(this, states);
+      'jump', 'shoot', 'shootL', 'slosh', 'flick', 'charge_release', 'throw',
+      'leap', 'slam', 'special_leap', 'special_slam', 'dodge'].includes(name)) clear(this, states);
     return trigger.call(this, name, ...args);
   };
   C.dispose = function (...args) {

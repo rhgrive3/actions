@@ -41,7 +41,7 @@ All replacement numbers in `FORM_MOTION_CALIBRATION`—0.10–0.22s wobble recov
 
 ## Native output verification
 
-Run `node --experimental-vm-modules --test patches/splatoon3/tests/form-motion.test.mjs`. The test creates **one VM realm**, runs the unchanged production installer once, then installs this additive module. It does not combine the limited walk/roller fixture with another Actor realm. A duplicate installer from a second module realm leaves prototype functions unchanged through `Symbol.for` guards.
+Run `node --experimental-vm-modules --test patches/splatoon3/tests/form-motion.test.mjs`. The test creates **one VM realm**, runs the unchanged production installer once with this module and all fourteen detail installers already present; repeat calls check idempotence. It does not combine the limited walk/roller fixture with another Actor realm. A duplicate installer from a second module realm leaves prototype functions unchanged through `Symbol.for` guards.
 
 The before/after trace is `actual-form-geometry.json`: full pose, actual world bone matrices, body/weapon/squid matrices, native IK errors, measured world-space right-hand grip, representative drawn triangles and hashes of the complete **posed indexed draw** for every visible native mesh. Real `SkinnedMesh.getVertexPosition` and native skeleton/solver run; no dummy bones or AABB-only evidence are used. Topology and source position hashes establish that no art asset was replaced. CPU skinning does not include vertex-shader face/tentacle deformation or establish a GPU-rendered result.
 
@@ -58,3 +58,12 @@ Import `installFormMotion` into the shared runtime installer and call `installFo
 The parent owns updating `reports/inkwave-splatoon3-behavior-2026-10-02.md` with this scoped record. That shared file is intentionally outside this lane's allowlist.
 
 For exact comparison, capture 11.3.0 Switch output with controller receipts, known weapon/gear AP, fixed camera and dry/own/enemy-ink, moving/stationary, wall/air conditions. Align ZL press/release and first shot with visible kid/gun appearance, ink column, body-height recovery and disappearance. Include rapid reverse inputs at several incomplete stages. Neither public footage nor these CPU tests establish those unknown values. Ink splash topology, shader morphology, physics/hitbox shape and original joint curves remain unmodified/unmeasured.
+
+
+## Independent integrated review, 2026-10-03
+
+At frozen integrated base `d846b5b8fadd6cef86e7d02699cf9b3b7356b80e`, the install guard was shared across realms but the diagnostic/reset exports still read their own realm-private WeakMap. Reproduce by importing `formMotionSnapshot`/`resetFormMotion` from another module realm while a production Character is mid-dive: the old snapshot returned null and reset left the installed state active. Both exports now delegate to the state owner attached to the real prototype through `Symbol.for`. The regression checks the actual native posed indexed draw and gameplay state are unchanged by diagnostic state reset.
+
+Disposed instances now return before reacquiring form state or applying form channels. Live movement-frame death, special, Roll, Surge and Super Jump ownership also suppress the compact form gesture in nullable previews, while native silhouette exchange remains form-owned. Existing rapid-reversal, dt0, actual Runner attack/IK, visibility endpoints and 30/60/120Hz tests use the integrated installer, not an independently authored partial composition.
+
+Nintendo's retained form movie and sheets were hash-verified and visually inspected again after a current primary-page/media lookup. Conditions and unpublished curves remain as recorded above. Review receipts and hashes are in `/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/review-squid/`. The shared legacy movement module's cross-realm installation/state defect is an explicit parent handoff; GPU/Actions and the aggregate comparison report remain parent-owned.
