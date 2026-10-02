@@ -120,19 +120,19 @@ jobs:
           npm install --no-save --no-package-lock --silent playwright@1.62.1
           npx playwright install chromium
       - name: Verify active browser behavior and loaded artifact bytes
-        if: matrix.suite == 'active'
+        if: ${{ !cancelled() && matrix.suite == 'active' }}
         run: node scripts/check-inkwave-browser.mjs --site .built-site/_site --evidence-dir .browser-evidence --profile-dir .browser-profile --exact-source
       - name: Verify rendered walking contacts and transitions
-        if: matrix.suite == 'active'
+        if: ${{ !cancelled() && matrix.suite == 'active' }}
         run: node scripts/check-inkwave-motion.mjs --site .built-site/_site --evidence-dir .browser-evidence/motion --profile-dir .browser-profile-motion
       - name: Verify rendered sub, Flow and weapon detail transitions
-        if: matrix.suite == 'active'
+        if: ${{ !cancelled() && matrix.suite == 'active' }}
         run: node scripts/check-inkwave-motion-detail.mjs --site .built-site/_site --evidence-dir .browser-evidence/motion-detail --profile-dir .browser-profile-motion-detail
       - name: Verify Flow geometry through actual GTAO and GPU disposal
-        if: matrix.suite == 'active'
+        if: ${{ !cancelled() && matrix.suite == 'active' }}
         run: node scripts/check-inkwave-flow-render.mjs --site .built-site/_site --evidence-dir .browser-evidence/flow-render --profile-dir .browser-profile-flow --exact-source
       - name: Verify wall geometry through actual GTAO and GPU disposal
-        if: matrix.suite == 'active'
+        if: ${{ !cancelled() && matrix.suite == 'active' }}
         run: node scripts/check-inkwave-wall-render.mjs --site .built-site/_site --evidence-dir .browser-evidence/wall-render --profile-dir .browser-profile-wall --exact-source
       - name: Verify the complete installed motion catalog
         if: matrix.suite == 'catalog'

@@ -42,7 +42,7 @@ function gateFixture() {
     for (const r of renders) if (!samples[r.tick].visible) { r.visible = false; r.rig.changedPixels = r.rig.totalRgbDifference = r.rig.maxChannelDifference = 0; }
     return row;
   });
-  return { schema: 1, source: 'built-production-native', installCalls: 1, contentHash: crypto.createHash('sha256').update(JSON.stringify(artifacts)).digest('hex'), artifacts, loaded: Object.entries(artifacts).map(([file, sha256]) => ({ file, sha256, bytes: 100 })), images: ['fixture.png', 'fixture-hidden.png', 'fixture-sheet.png'].map(file => ({ file, sha256: hash, bytes: 100 })), errors: [], gpu: { renderer: 'fabricated gate string, never GPU evidence', contextLost: false }, duplicateRealm: { modules: CATALOG_MODULES.length, unchanged: true }, data, previewRates: [30, 60, 120].map(hz => ({ hz, frames: hz, finite: true })), cleanup: { rendererDisposed: true, domRemoved: true, geometries: 0, textures: 0 } };
+  return { schema: 1, source: 'built-production-native', installCalls: 1, contentHash: crypto.createHash('sha256').update(JSON.stringify(artifacts)).digest('hex'), artifacts, loaded: Object.entries(artifacts).map(([file, sha256]) => ({ file, sha256, bytes: 100 })), images: ['fixture.png', 'fixture-hidden.png', 'fixture-sheet.png'].map(file => ({ file, sha256: hash, bytes: 100 })), errors: [], gpu: { renderer: 'fabricated gate string, never GPU evidence', contextLost: false, pixelControls: {dither:false,samples:0,target:'explicit-srgb-rgba8'} }, duplicateRealm: { modules: CATALOG_MODULES.length, unchanged: true }, data, previewRates: [30, 60, 120].map(hz => ({ hz, frames: hz, finite: true })), cleanup: { rendererDisposed: true, domRemoved: true, geometries: 0, textures: 0, fixtureTextureDisposals:[{labels:['compiled-uniform.dfgLUT'],wasLive:true,remainsLive:false}] } };
 }
 test('synthetic gate schema can exercise every acceptance branch; this proves no motion or GPU output', () => assert.equal(validateCatalogResult(gateFixture()).length, CATALOG_SCENARIOS.length));
 for (const [name, mutate, pattern] of [
@@ -149,4 +149,14 @@ if (process.env.INKWAVE_CATALOG_RECORDING) test('retained actual production brow
   const result = JSON.parse(fs.readFileSync(file));
   assert.equal(result.status, 'passed');
   assert.equal(validateCatalogResult(result).length, CATALOG_SCENARIOS.length);
+});
+
+
+test('catalog rejects uncontrolled framebuffer and unproved compiled texture disposal', () => {
+  for (const field of ['dither', 'samples', 'target']) {
+    const r = gateFixture(); r.gpu.pixelControls[field] = field === 'dither' ? true : field === 'samples' ? 4 : 'canvas';
+    assert.throws(() => validateCatalogResult(r), /controlled pixel framebuffer/);
+  }
+  const r = gateFixture(); r.cleanup.fixtureTextureDisposals[0].remainsLive = true;
+  assert.throws(() => validateCatalogResult(r), /compiled texture disposal proof/);
 });

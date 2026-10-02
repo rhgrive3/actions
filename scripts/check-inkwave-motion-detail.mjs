@@ -24,6 +24,7 @@ export function validateDetailReceipts(loaded) {
     if (!loaded.some(file=>file.endsWith('/patches/splatoon3/runtime/'+module+'.mjs'))) throw Error('Actual detail module not loaded: '+module);
 }
 export function validateDetailResult(result) {
+  if(result.pixelControls?.dither!==false||result.pixelControls?.samples!==0||result.pixelControls?.target!=='explicit-srgb-rgba8')throw Error('Controlled detail pixel framebuffer');
   const finite=(v,path)=>{ if(typeof v!=='number'||!Number.isFinite(v))throw Error('Non-finite detail '+path); };
   const numericTree=(v,path)=>{ if(typeof v==='number')finite(v,path);else if(v&&typeof v==='object')for(const [key,value] of Object.entries(v))numericTree(value,path+'.'+key); };
   const expected=['bomb-standing','bomb-running','bomb-air','bomb-dualies','flow-kid','flow-squid','flow-air','flow-reset','bucket-repeat','blaster-repeat','charger-return','splatling-coast','shooter-recoil','shooter-detail-opt-out'];
@@ -85,6 +86,7 @@ export function validateDetailResult(result) {
       if(releaseFrames[0].meshOriginError>1e-10||releaseFrames[0].releaseSnapshotError>1e-8)throw Error('Rendered/collision bomb release regression: '+name);
     }
     if(scenario.type==='flow') {
+      if(renderMetrics.some(m=>m.flowIsolation?.nativeDepthOcclusion!==true||!(m.flowIsolation?.maskedMaterials>0)))throw Error('Native Flow exterior occlusion proof: '+name);
       const off=s=>!s.flow.active&&s.flow.phase==='off'&&!s.flow.visible&&s.flow.opacity===0&&s.flow.aliveParticles===0;
       if(!samples[45].flow.active||!(samples[45].flow.opacity>0)||!samples[75].flow.visible)throw Error('Compiled Flow did not appear: '+name);
       if(samples[95].flow.extensionCount!==1||samples[45].flow.activationCount!==1)throw Error('Compiled Flow entry/renewal event regression: '+name);
@@ -194,6 +196,22 @@ await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0
     const camera = new THREE.OrthographicCamera(-1.4, 1.4, 1.05, -1.05, .01, 200);
     const renderer = new THREE.WebGLRenderer({ antialias: false, preserveDrawingBuffer: true });
     renderer.setSize(960, 720); renderer.setPixelRatio(1); document.body.appendChild(renderer.domElement);
+    const glControl = renderer.getContext();
+    const defaultDither = glControl.isEnabled(glControl.DITHER); glControl.disable(glControl.DITHER);
+    // Read the same explicit single-sample framebuffer for every pair. Canvas
+    // drawing buffers may rotate between render calls; preserve native shaders.
+    const pixelTarget = new THREE.WebGLRenderTarget(960, 720, { samples: 0 });
+    pixelTarget.texture.colorSpace = THREE.SRGBColorSpace;
+    renderer.setRenderTarget(pixelTarget);
+    const evidenceCanvas = document.createElement('canvas'); evidenceCanvas.width = 960; evidenceCanvas.height = 720;
+    const evidenceContext = evidenceCanvas.getContext('2d');
+    function frameImage() {
+      const rgba = pixels(), flipped = new Uint8ClampedArray(rgba.length);
+      for (let y = 0; y < 720; y++) flipped.set(rgba.subarray(y * 960 * 4, (y + 1) * 960 * 4), (719 - y) * 960 * 4);
+      evidenceContext.putImageData(new ImageData(flipped, 960, 720), 0, 0);
+      return evidenceCanvas.toDataURL('image/png');
+    }
+
     Object.assign(G, { scene, camera, renderer, settings: { quality: 'high', shadows: false }, mode: 'match', actors: [], time: 0,
       teamColors: [new THREE.Color('#ff8a14'), new THREE.Color('#2f5bff')],
       level: { blocks: [], groundHeight: () => 0 }, paint: { sample: () => 1, splat: () => 0 },
@@ -220,7 +238,7 @@ await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0
       { name: 'shooter-detail-opt-out', kind: 'shooter', type: 'shooter', detailEnabled: false },
     ];
     const data = [], images = [];
-    const pixels=()=>{const gl=renderer.getContext(),p=new Uint8Array(960*720*4);gl.readPixels(0,0,960,720,gl.RGBA,gl.UNSIGNED_BYTE,p);return p;};
+    const pixels=()=>{const gl=renderer.getContext(),p=new Uint8Array(960*720*4);renderer.readRenderTargetPixels(pixelTarget,0,0,960,720,p);return p;};
     const drawable=root=>{for(let node=root;node;node=node.parent)if(!node.visible)return false;return true;};
     function drawnContact(root,left,right) {
       if(!drawable(root))throw Error('Attempt to measure an invisible indexed draw');
@@ -244,24 +262,45 @@ await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0
       const beforeRender=nativeRenderState();
       projectiles._draw();camera.position.copy(ch.root.position).add(new THREE.Vector3(2.6,1.3,3.4));
       camera.lookAt(ch.root.position.clone().add(new THREE.Vector3(0,.62,0)));camera.updateMatrixWorld();renderer.render(scene,camera);
-      const actual=pixels(),image=renderer.domElement.toDataURL('image/png'),visible=ch.root.visible;
+      const actual=pixels(),image=frameImage(),visible=ch.root.visible;
       let rig;
       try{ch.root.visible=false;renderer.render(scene,camera);rig=globalThis.motionPixelDifference(actual,pixels());}
       finally{ch.root.visible=visible;}
-      let flow=null;
+      let flow=null,wholeSceneFlow=null,flowIsolation=null;
       if(scenario.type==='flow'){
         // Each visibility pair owns a fresh baseline. The preceding rig-hidden
         // render must not supply the baseline for a different counterfactual.
         renderer.render(scene,camera);const flowActual=pixels();
         const nodes=[];ch.root.traverse(node=>{if(node.name.startsWith('s3-flow-'))nodes.push({node,visible:node.visible});});
-        try{for(const item of nodes)item.node.visible=false;renderer.render(scene,camera);flow=globalThis.motionPixelDifference(flowActual,pixels());images.push({name:scenario.name+'-'+String(frame).padStart(3,'0')+'-exterior-hidden',image:renderer.domElement.toDataURL('image/png')});}
+        try{for(const item of nodes)item.node.visible=false;renderer.render(scene,camera);wholeSceneFlow=globalThis.motionPixelDifference(flowActual,pixels());}
         finally{for(const item of nodes)item.node.visible=item.visible;}
+        // Exterior geometry must be measured against the native body's depth,
+        // without unrelated skin/coating color noise after a reset. Keep the
+        // original whole-scene comparison as a diagnostic; thresholds stay fixed.
+        const bodyMaterials=new Map();
+        ch.root.traverse(node=>{
+          if(!node.isMesh)return;
+          for(let p=node;p;p=p.parent)if(p.name.startsWith('s3-flow-'))return;
+          for(const mat of Array.isArray(node.material)?node.material:[node.material])if(mat&&!bodyMaterials.has(mat))bodyMaterials.set(mat,mat.colorWrite);
+        });
+        try{
+          for(const mat of bodyMaterials.keys())mat.colorWrite=false;
+          renderer.render(scene,camera);const exteriorActual=pixels();
+          images.push({name:scenario.name+'-'+String(frame).padStart(3,'0')+'-exterior-visible',image:frameImage()});
+          for(const item of nodes)item.node.visible=false;
+          renderer.render(scene,camera);flow=globalThis.motionPixelDifference(exteriorActual,pixels());
+          images.push({name:scenario.name+'-'+String(frame).padStart(3,'0')+'-exterior-hidden',image:frameImage()});
+          flowIsolation={nativeDepthOcclusion:true,maskedMaterials:bodyMaterials.size};
+        }finally{
+          for(const [mat,colorWrite] of bodyMaterials)mat.colorWrite=colorWrite;
+          for(const item of nodes)item.node.visible=item.visible;
+        }
       }
       renderer.render(scene,camera);
       images.push({name:scenario.name+'-'+String(frame).padStart(3,'0'),image});
       const left=ch.bones.handL.getWorldPosition(new THREE.Vector3()),right=ch.bones.handR.getWorldPosition(new THREE.Vector3());
       if(nativeRenderState()!==beforeRender)throw Error('Rendered pair advanced native clocks/gameplay: '+scenario.name+' frame '+frame);
-      return {frame,renderClocksStable:true,rig,flow,weapon:drawable(ch.weapon.off)?drawnContact(ch.weapon.off,left,right):null,heldBomb:drawable(ch.bomb.group)?drawnContact(ch.bomb.group,left,right):null,releasedBomb:scenario.type==='bomb'&&frame===30?drawnContact(projectiles.bombs.at(-1).mesh,left,right):null};
+      return {frame,renderClocksStable:true,rig,flow,wholeSceneFlow,flowIsolation,weapon:drawable(ch.weapon.off)?drawnContact(ch.weapon.off,left,right):null,heldBomb:drawable(ch.bomb.group)?drawnContact(ch.bomb.group,left,right):null,releasedBomb:scenario.type==='bomb'&&frame===30?drawnContact(projectiles.bombs.at(-1).mesh,left,right):null};
     }
     try {
     for (const scenario of cases) {
@@ -336,14 +375,14 @@ await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0
         if (!disposed.disposed || disposed.resources !== 0) throw Error('Flow resources survived Character disposal');
       }
     }
-    return {contentHash,cases:data.length,data,images,
+    return {contentHash,cases:data.length,data,images,pixelControls:{defaultDither,dither:glControl.isEnabled(glControl.DITHER),samples:pixelTarget.samples,target:'explicit-srgb-rgba8'},
       fixture:{source:'production install once; actual Actor/Runner/Projectiles/full native rig',driver:'WeaponRunner.update + Actor._finishFrame only; no Actor.update or Projectiles.update',terrain:'flat diagnostic plane; raycast hit=false',flow:'active/remaining assigned manually; gameplay activation, extension and duration not measured',air:'height=.8 and vertical velocity=0 throughout; no jump/landing physics',render:'60Hz single-sample software WebGL; independent same-frame visible/hidden pairs with native clock/gameplay transactions',parity:'calibrated INKWAVE regression; Nintendo curves unknown; not Switch/iOS or original image parity'}};
     }finally{
       projectiles.clear();
       const geometries=new Set(),materials=new Set();scene.traverse(node=>{if(node.geometry)geometries.add(node.geometry);for(const m of (Array.isArray(node.material)?node.material:[node.material]))if(m)materials.add(m);});
       for(const key of ['bombGeo','bombCapGeo','ribbonGeo','arcGeo','cloudGeo'])if(projectiles[key])geometries.add(projectiles[key]);
       for(const m of projectiles.bombMatCache.values())materials.add(m);
-      for(const g of geometries)g.dispose();for(const m of materials)m.dispose();renderer.dispose();renderer.domElement.remove();
+      for(const g of geometries)g.dispose();for(const m of materials)m.dispose();pixelTarget.dispose();renderer.dispose();renderer.domElement.remove();
     }
   }, { prefix, contentHash: manifest.contentHash });
   result.summary=validateDetailResult(result);validateDetailReceipts(loaded);

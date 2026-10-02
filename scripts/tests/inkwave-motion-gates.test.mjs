@@ -29,6 +29,10 @@ test('detail accepts valid semantic records and rejects original false-pass coun
  assert.equal(validateDetailResult(detailFixture()).length,14);
  const row=(r,n)=>r.data.find(c=>c.name===n);
  const mutations=[
+  r=>r.pixelControls.dither=true,
+  r=>delete r.pixelControls.target,
+  r=>row(r,'flow-kid').renderMetrics[0].flowIsolation.nativeDepthOcclusion=false,
+  r=>row(r,'flow-kid').renderMetrics[0].flowIsolation.maskedMaterials=0,
   r=>Object.assign(row(r,'flow-reset').samples[110].flow,{active:true,visible:true,opacity:1,aliveParticles:4,phase:'active'}),
   r=>row(r,'flow-reset').renderMetrics.find(m=>m.frame===110).flow.changedPixels=1,
   r=>row(r,'flow-kid').samples[45].flow.opacity=NaN,

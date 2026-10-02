@@ -128,6 +128,7 @@ export function validateCatalogReceipts(manifest, receipts) {
 }
 export function validateCatalogResult(result) {
   if (result?.schema !== 1 || result.installCalls !== 1 || result.source !== 'built-production-native' || result.gpu?.contextLost !== false || !result.gpu?.renderer || result.errors?.length !== 0) fail('runtime identity / shader errors');
+  if (result.gpu.pixelControls?.dither !== false || result.gpu.pixelControls?.samples !== 0 || result.gpu.pixelControls?.target !== 'explicit-srgb-rgba8') fail('controlled pixel framebuffer');
   validateCatalogReceipts({ contentHash: result.contentHash, artifacts: result.artifacts }, result.loaded);
   if (result.duplicateRealm?.modules !== CATALOG_MODULES.length || result.duplicateRealm?.unchanged !== true) fail('cross-realm install');
   if (!Array.isArray(result.data) || result.data.length !== CATALOG_SCENARIOS.length || new Set(result.data.map(r => r.name)).size !== CATALOG_SCENARIOS.length) fail('scenario denominator');
@@ -235,6 +236,7 @@ export function validateCatalogResult(result) {
   const cadence = result.data.filter(r => r.name.startsWith('cadence-'));
   if (cadence.some(r => r.displayFrames !== r.hz || r.clockTicks !== 60) || new Set(cadence.map(r => r.traceHash)).size !== 1) failures.push('30/60/120Hz native output equality');
   if (result.previewRates?.length !== 3 || result.previewRates.some((r, i) => r.hz !== [30, 60, 120][i] || r.frames !== r.hz || r.finite !== true)) failures.push('direct variable-dt preview denominator');
+  if (!result.cleanup?.fixtureTextureDisposals?.some(t => t.labels?.includes('compiled-uniform.dfgLUT') && t.wasLive === true && t.remainsLive === false) || result.cleanup.fixtureTextureDisposals.some(t => t.remainsLive !== false)) failures.push('compiled texture disposal proof');
   if (result.cleanup?.rendererDisposed !== true || result.cleanup.domRemoved !== true || result.cleanup.geometries !== 0 || result.cleanup.textures !== 0) failures.push('unclean-disposal renderer');
   if (failures.length) fail('gate failures:\n' + failures.join('\n'));
   return summaries;
@@ -270,8 +272,23 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout 
   const renderer = new THREE.WebGLRenderer({ antialias: false, preserveDrawingBuffer: true });
   renderer.setSize(960, 720); renderer.setPixelRatio(1); document.body.appendChild(renderer.domElement);
   const gl = renderer.getContext(), debug = gl.getExtension('WEBGL_debug_renderer_info');
-  const gpu = { renderer: debug ? gl.getParameter(debug.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER), version: gl.getParameter(gl.VERSION), contextLost: gl.isContextLost() };
-  const ownedGeometries = new Set(), allMaterials = new Set(), fixtureTextures = new Set();
+  const defaultDither = gl.isEnabled(gl.DITHER); gl.disable(gl.DITHER);
+  // Read the same explicit single-sample framebuffer for every pair. Canvas
+  // drawing buffers may rotate between render calls; preserve native shaders.
+  const pixelTarget = new THREE.WebGLRenderTarget(960, 720, { samples: 0 });
+  pixelTarget.texture.colorSpace = THREE.SRGBColorSpace;
+  renderer.setRenderTarget(pixelTarget);
+  const evidenceCanvas = document.createElement('canvas'); evidenceCanvas.width = 960; evidenceCanvas.height = 720;
+  const evidenceContext = evidenceCanvas.getContext('2d');
+  function frameImage() {
+    const rgba = pixels(), flipped = new Uint8ClampedArray(rgba.length);
+    for (let y = 0; y < 720; y++) flipped.set(rgba.subarray(y * 960 * 4, (y + 1) * 960 * 4), (719 - y) * 960 * 4);
+    evidenceContext.putImageData(new ImageData(flipped, 960, 720), 0, 0);
+    return evidenceCanvas.toDataURL('image/png');
+  }
+
+  const gpu = { renderer: debug ? gl.getParameter(debug.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER), version: gl.getParameter(gl.VERSION), contextLost: gl.isContextLost(), pixelControls: { defaultDither, dither: gl.isEnabled(gl.DITHER), samples: pixelTarget.samples, target: 'explicit-srgb-rgba8' } };
+  const ownedGeometries = new Set(), allMaterials = new Set(), fixtureTextures = new Set(), textureLabels = new Map();
   const floor = { id: 0, solid: true, center: new THREE.Vector3(0, -.5, 0), half: new THREE.Vector3(200, .5, 200), faces: [-1, -1, -1, -1, -1, -1], axes: [new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 1)], aabbMin: new THREE.Vector3(-200, -1, -200), aabbMax: new THREE.Vector3(200, 0, 200) };
   const wall = { id: 1, solid: true, center: new THREE.Vector3(0, 1.5, -.7), half: new THREE.Vector3(3, 1.5, .2), faces: [0, 0, 0, 0, 0, 0], axes: floor.axes, aabbMin: new THREE.Vector3(-3, 0, -.9), aabbMax: new THREE.Vector3(3, 3, -.5) };
   const level = { blocks: [floor], faces: [{ origin: new THREE.Vector3(), u: new THREE.Vector3(1, 0, 0), v: new THREE.Vector3(0, 1, 0) }], groundHeight: () => 0, spawnPads: [new THREE.Vector3(), new THREE.Vector3(0, 0, 20)], pointInside: () => false, queryBlocks: (_a, _b, _c, _d, out) => { out.length = 0; out.push(...level.blocks.map(b => b.id)); return out; } };
@@ -282,7 +299,7 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout 
   groundMesh.rotation.x = -Math.PI / 2; groundMesh.position.y = -.004; scene.add(groundMesh);
   const projectiles = G.projectiles = new Projectiles(scene), data = [], images = [], previewRates = [];
   const digest = async v => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(v))))).map(x => x.toString(16).padStart(2, '0')).join('');
-  const pixels = () => { const p = new Uint8Array(960 * 720 * 4); gl.readPixels(0, 0, 960, 720, gl.RGBA, gl.UNSIGNED_BYTE, p); return p; };
+  const pixels = () => { const p = new Uint8Array(960 * 720 * 4); renderer.readRenderTargetPixels(pixelTarget, 0, 0, 960, 720, p); return p; };
   const save = async (name, image) => { const receipt = await globalThis.catalogSaveImage(name, image); images.push(receipt); return receipt.file; };
   async function contactSheet(row) {
     const canvas = document.createElement('canvas'); canvas.width = 960; canvas.height = Math.ceil(row.renders.length / 2) * 204;
@@ -304,7 +321,27 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout 
     active: a?.specialActive, jump: a?.superJumpState, input: a?.intent, runner: a ? primitives(a.weaponRunner) : null, actions: a?.s3?.actions, time: G.time,
     projectiles: primitives(projectiles), projectileClocks: Object.fromEntries(Object.entries(projectiles).filter(([, v]) => Array.isArray(v)).map(([k, list]) => [k, list.map(p => p && typeof p === 'object' ? { clocks: primitives(p), pos: p.pos?.toArray(), vel: p.vel?.toArray() } : p)])),
   });
-  function collect(root) { root.traverse(node => { if (node.geometry) ownedGeometries.add(node.geometry); for (const m of (Array.isArray(node.material) ? node.material : [node.material])) if (m) { allMaterials.add(m); for (const v of Object.values(m)) if (v?.isTexture) fixtureTextures.add(v); for (const u of Object.values(m.uniforms || {})) if (u?.value?.isTexture) fixtureTextures.add(u.value); } }); }
+  function collect(root) {
+    const texture = (value, label) => {
+      if (!value?.isTexture) return;
+      fixtureTextures.add(value);
+      if (!textureLabels.has(value)) textureLabels.set(value, new Set());
+      textureLabels.get(value).add(label);
+    };
+    root.traverse(node => {
+      if (node.geometry) ownedGeometries.add(node.geometry);
+      for (const m of Array.isArray(node.material) ? node.material : [node.material]) {
+        if (!m) continue;
+        allMaterials.add(m);
+        for (const [key, value] of Object.entries(m)) texture(value, 'material.' + key);
+        // Native MeshPhysicalMaterial's DFG LUT is renderer-bound, rather than
+        // an own material map. Capture the actual compiled uniform owner.
+        for (const [key, uniform] of Object.entries(renderer.properties.get(m).uniforms || m.uniforms || {}))
+          texture(uniform?.value, 'compiled-uniform.' + key);
+      }
+    });
+  }
+
   function geometry(ch) {
     // getVertexPosition executes real native skinning, but custom vertex-shader
     // squid/eye/lid deformation is evidenced by the compiled RGB render only.
@@ -384,9 +421,9 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout 
     try { renderer.render(scene, camera); gl.finish(); }
     finally { for (const [n, original] of observers) n.onAfterRender = original; }
     const actual = pixels(), name = scenario.name + '-' + String(frame).padStart(3, '0');
-    const image = await save(name, renderer.domElement.toDataURL('image/png')), visible = ch.root.visible;
+    const image = await save(name, frameImage()), visible = ch.root.visible;
     let rig, hiddenImage;
-    try { ch.root.visible = false; renderer.render(scene, camera); rig = globalThis.catalogPixelDifference(actual, pixels()); hiddenImage = await save(name + '-hidden', renderer.domElement.toDataURL('image/png')); }
+    try { ch.root.visible = false; renderer.render(scene, camera); rig = globalThis.catalogPixelDifference(actual, pixels()); hiddenImage = await save(name + '-hidden', frameImage()); }
     finally { ch.root.visible = visible; }
     const effect = mutation => { renderer.render(scene, camera); const baseline = pixels(); const undo = mutation(); try { renderer.render(scene, camera); return globalThis.catalogPixelDifference(baseline, pixels()); } finally { undo(); } };
     let glint = null, coating = null, face = null;
@@ -530,9 +567,13 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout 
     for (const geometry of ownedGeometries) geometry.dispose(); for (const material of allMaterials) material.dispose();
     // This fixture owns the entire isolated renderer/realm, including native
     // shared cached material maps. Dispose observed textures at fixture teardown.
-    const textureReceipts = [...fixtureTextures].map(t => ({ uuid: t.uuid, name: t.name, type: t.type }));
-    for (const texture of fixtureTextures) texture.dispose();
-    renderer.dispose(); renderer.domElement.remove();
+    const textureReceipts = [...fixtureTextures].map(t => {
+      const handle = renderer.properties.get(t).__webglTexture;
+      const wasLive = !!handle && gl.isTexture(handle);
+      t.dispose();
+      return { uuid: t.uuid, name: t.name, type: t.type, labels: [...textureLabels.get(t)], wasLive, remainsLive: !!handle && gl.isTexture(handle) };
+    });
+    pixelTarget.dispose(); renderer.dispose(); renderer.domElement.remove();
     const cleanup = { rendererDisposed: true, domRemoved: !renderer.domElement.isConnected, geometries: renderer.info.memory.geometries, textures: renderer.info.memory.textures, fixtureTextureDisposals: textureReceipts };
     if (globalThis.catalogPartial) globalThis.catalogPartial.cleanup = cleanup;
   }
