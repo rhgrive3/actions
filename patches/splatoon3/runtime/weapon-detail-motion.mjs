@@ -7,6 +7,11 @@ const tracks = new WeakMap(), fills = new WeakMap(), reaches = new WeakMap();
 const TAU = Math.PI * 2;
 const clamp = (x, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, x));
 const smooth = x => { x = clamp(x); return x * x * (3 - 2 * x); };
+function trackMap(ch) {
+  for (let p = ch && Object.getPrototypeOf(ch); p; p = Object.getPrototypeOf(p))
+    if (Object.hasOwn(p, INSTALLED)) return p[INSTALLED].tracks;
+  return tracks;
+}
 export const WEAPON_DETAIL_CALIBRATION = Object.freeze({
   bucketDepth: .012, bucketDrawFrames: 3, bucketTiltLimit: .28,
   chargerReturnStart: .10, chargerReturnEnd: .38,
@@ -19,8 +24,9 @@ const recoil = Object.freeze({
   splatling: { kick: .022, back: .012, hz: 10, z: .92, jit: .006 },
 });
 function track(ch) {
-  let m = tracks.get(ch);
-  if (!m) { m = { slosh: null, release: null, disposed: false }; tracks.set(ch, m); }
+  const map = trackMap(ch);
+  let m = map.get(ch);
+  if (!m) { m = { slosh: null, release: null, disposed: false }; map.set(ch, m); }
   return m;
 }
 function enabled(ch) { return ch.s3WeaponDetailMotionEnabled !== false && ch.s3WeaponMotionEnabled !== false; }
@@ -79,8 +85,9 @@ function lowerFill(mesh, depth) {
   mesh.position.y = r.y + r.bottom * r.scaleY * (1 - scale);
 }
 function clear(ch) {
-  if (!tracks.has(ch)) return; // an opted-out character has no owned parts to restore
-  tracks.delete(ch);
+  const map = trackMap(ch);
+  if (!map.has(ch)) return; // an opted-out character has no owned parts to restore
+  map.delete(ch);
   reaches.delete(ch);
   for (const w of Object.values(ch.weapons || {})) {
     if (w.def.kind === 'slosher') {
@@ -100,7 +107,7 @@ function clear(ch) {
   }
 }
 export function weaponDetailMotionSnapshot(ch) {
-  const m = tracks.get(ch), w = ch?.weapon, a = m?.slosh;
+  const m = ch && trackMap(ch).get(ch), w = ch?.weapon, a = m?.slosh;
   return Object.freeze({ kind: ch?.weaponKind ?? null, enabled: !!ch && enabled(ch),
     sloshElapsed: a?.elapsed ?? null, sloshReleaseAge: a?.releaseAge ?? null,
     bucketDrain: a ? bucketDrain(a.releaseAge, a.recovery) : 0,
@@ -118,7 +125,7 @@ export function installWeaponDetailMotion({ Character, WeaponRunner, THREE, CHAR
   }
   const P = Character.prototype;
   if (Object.hasOwn(P, INSTALLED)) return;
-  Object.defineProperty(P, INSTALLED, { value: true });
+  Object.defineProperty(P, INSTALLED, { value: Object.freeze({ tracks }) });
   const trigger = P.trigger, updateStates = P._updateStates, poseWeapon = P._poseWeapon;
   const poseSlosh = P._poseSlosh, animWeapon = P._animWeapon, nativeRecoil = P._recoil;
   const setWeapon = P.setWeapon, setVisible = P.setVisible, dispose = P.dispose;

@@ -34,7 +34,7 @@ async function production() {
   await entry.evaluate();
   const profile = JSON.parse(fs.readFileSync(path.join(ROOT, 'patches/splatoon3/profile.json')));
   const api = { ...entry.namespace.install(profile), ...entry.namespace, profile };
-  api.installRollerDetailMotion(api, profile);
+  assert.ok(Object.hasOwn(api.Character.prototype, Symbol.for('inkwave.s3.roller-detail-motion.install.v1')));
   const { G, THREE } = api;
   G.teamColors = [new THREE.Color('#ff8a14'), new THREE.Color('#2f5bff')];
   G.scene = new THREE.Scene(); G.level = { blocks: [], groundHeight: () => 0 };
@@ -85,12 +85,14 @@ function poseRow(api, r, index, detailed = false) {
   const vertices = [], triangles = [];
   ch.weapon.drum?.traverse(m => {
     if (!m.isMesh || !m.visible) return;
+    for (let parent = m; parent; parent = parent.parent) if (!parent.visible) return;
     const p = m.geometry.attributes.position, idx = m.geometry.index, offset = vertices.length / 3;
     for (let i = 0; i < p.count; i++) {
       v.fromBufferAttribute(p, i).applyMatrix4(m.matrixWorld).sub(ch.root.position);
       vertices.push(...v.toArray());
     }
-    for (let i = 0; i < (idx ? idx.count : p.count); i++) {
+    const start = m.geometry.drawRange.start, end = Math.min(idx?.count ?? p.count, start + m.geometry.drawRange.count);
+    for (let i = start; i < end; i++) {
       const n = idx ? idx.getX(i) : i;
       bottom = Math.min(bottom, vertices[3 * (offset + n) + 1]); count++;
       triangles.push(offset + n);
@@ -139,9 +141,9 @@ test.after(saveEvidence);
 
 test('one production installer and duplicate module realms preserve hook identity; nullable previews use native IK', async () => {
   const api = await production(), P = api.Character.prototype;
-  const before = [P._poseFlick, P._updateStates, P.dispose, P.setWeapon, api.WeaponRunner.prototype.reset, api.Actor.prototype.splat];
+  const before = [P._poseFlick, P._updateStates, P.dispose, P.setWeapon, P.setVisible, api.WeaponRunner.prototype.reset, api.Actor.prototype.splat];
   api.installRollerDetailMotion(api, api.profile); otherRealmInstall(api, api.profile);
-  assert.deepEqual([P._poseFlick, P._updateStates, P.dispose, P.setWeapon, api.WeaponRunner.prototype.reset, api.Actor.prototype.splat], before);
+  assert.deepEqual([P._poseFlick, P._updateStates, P.dispose, P.setWeapon, P.setVisible, api.WeaponRunner.prototype.reset, api.Actor.prototype.splat], before);
   const ch = new api.Character({ name: 'standalone roller preview', weapon: 'roller', style: { hair: 0, skin: 2, outfit: 0, eyes: 0 } });
   try {
     assert.equal(api.rollerDetailMotionSnapshot(null), null);
@@ -267,4 +269,24 @@ test('reset, death, sub aim, form, weapon and special interruption clear addon s
     r.a.setWeapon('roller'); start(); r.a.splat(null); assert.equal(api.rollerDetailMotionSnapshot(r.ch), null);
     assert.equal(r.a.alive, false);
   } finally { r.close(); assert.equal(api.rollerDetailMotionSnapshot(r.ch), null); }
+});
+
+test('hide interrupts the current roller startup without cancelling its native runner', async () => {
+  const api = await production(), r = rig(api), nativeOnly = rig(api, { enabled: false });
+  try {
+    for (const x of [r, nativeOnly]) { x.step(1 / 60, { firePressed: true }); x.step(); }
+    assert.equal(api.rollerDetailMotionSnapshot(r.ch).active, true);
+    const attack = r.a.weaponRunner.s3RollerAttack;
+    r.ch.setVisible(false); nativeOnly.ch.setVisible(false);
+    assert.equal(api.rollerDetailMotionSnapshot(r.ch).active, false);
+    assert.deepEqual(gameplay(r), gameplay(nativeOnly), 'all native hide/reset clock semantics remain unchanged');
+    for (const x of [r, nativeOnly]) { x.ch.setVisible(true); x.step(); }
+    assert.equal(r.a.weaponRunner.s3RollerAttack, attack);
+    assert.equal(api.rollerDetailMotionSnapshot(r.ch).active, false, 'show cannot resurrect an interrupted startup');
+    assert.deepEqual(gameplay(r), gameplay(nativeOnly));
+    r.a.weaponRunner.reset(); r.step(1 / 60, { firePressed: true });
+    assert.equal(api.rollerDetailMotionSnapshot(r.ch).active, true, 'a fresh native attack owns a new startup');
+    api.G.scene.visible = false; r.step();
+    assert.equal(api.rollerDetailMotionSnapshot(r.ch).active, false, 'hidden parent interrupts startup too');
+  } finally { api.G.scene.visible = true; r.close(); nativeOnly.close(); }
 });

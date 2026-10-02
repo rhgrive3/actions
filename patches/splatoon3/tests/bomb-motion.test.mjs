@@ -4,12 +4,20 @@ import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { adaptSource, replaceOnce } from '../adapter.mjs';
+import { adaptSource } from '../adapter.mjs';
 
-// Production installs once in one VM, then the owned proposed installer uses
-// that same module realm. No second copy of an installer's WeakSet is involved.
+// The complete production installer and adapter run once in one VM. Duplicate
+// installers are exercised separately and must retain the original registry.
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const SRC = path.resolve(process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public'));
+const DETAIL_HOOKS = [
+  ['jump', 'jumpMotionSnapshot'], ['landing', 'landingMotionSnapshot'], ['swim', 'swimMotionSnapshot'],
+  ['wall', 'wallMotionSnapshot'], ['form', 'formMotionSnapshot'], ['dualies', 'dualiesMotionSnapshot'],
+  ['roller-detail', 'rollerDetailMotionSnapshot'], ['superjump', 'superjumpMotionSnapshot'],
+  ['squidroll', 'squidrollMotionSnapshot'], ['hit-spawn', 'hitSpawnMotionSnapshot'],
+  ['idle', 'idleMotionSnapshot'], ['emotes', 'emotesMotionSnapshot'], ['special', 'specialMotionSnapshot'],
+  ['face', 'faceMotionSnapshot'], ['weapon-detail', 'weaponDetailMotionSnapshot'], ['flow', 'flowMotionSnapshot'],
+];
 let cached;
 async function production() {
   if (cached) return cached;
@@ -22,19 +30,8 @@ async function production() {
     const raw = fs.readFileSync(file, 'utf8');
     const relative = path.relative(SRC, file);
     let source = file.startsWith(SRC + path.sep) ? adaptSource(relative, raw) : raw;
-    // Exercise the exact proposed shared adapter connections without writing
-    // the parent-owned adapter or production installer in this component lane.
-    if (relative === 'src/game/character.js' && !source.includes('export const CHARACTER_BOMB_POSE'))
-      source += '\nexport const CHARACTER_BOMB_POSE = Object.freeze({ throw: Character.prototype._poseThrow, apply: Character.prototype._applyPose });\n';
-    if (relative === 'src/game/weapons.js' && !source.includes('bombReleasePosition(a, pos)')) {
-      source = replaceOnce(source, 'const pos = _v.copy(a.pos); pos.y += 1.35;',
-        'const pos = _v.copy(a.pos); pos.y += 1.35; bombReleasePosition(a, pos);', 'bomb release origin');
-      source = replaceOnce(source, 'const p = _v.copy(a.pos); p.y += 1.35;',
-        'const p = _v.copy(a.pos); p.y += 1.35; bombPreviewPosition(a, p);', 'bomb preview origin');
-      source = "import { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\n" + source;
-    }
-    if (relative === 'src/game/weapons.js' && !source.includes('        vel.y -= SUB.bomb.gravity * dt;'))
-      source = replaceOnce(source, '        vel.y -= 24 * dt;', '        vel.y -= SUB.bomb.gravity * dt;', 'bomb preview gravity');
+    // Use only the real production adapter. A missing release/preview export
+    // or connection must fail here instead of being repaired by the fixture.
     const module = new vm.SourceTextModule(source,
       { context, identifier: file, initializeImportMeta(meta) { meta.url = pathToFileURL(file).href; } });
     modules.set(file, module); return module;
@@ -44,6 +41,7 @@ async function production() {
     export { FixedClock } from './patches/splatoon3/runtime/clock.mjs';
     export { CHARACTER_BOMB_POSE } from './inkwave-public/src/game/character.js';
     export { installBombMotion, bombMotionSnapshot, bombReleasePosition, bombPreviewPosition } from './patches/splatoon3/runtime/bomb-motion.mjs';
+    ${DETAIL_HOOKS.map(([module, snapshot]) => `export { ${snapshot} } from './patches/splatoon3/runtime/${module}-motion.mjs';`).join('\n')}
   `, { context, identifier: path.join(ROOT, 'bomb-test-entry.mjs') });
   await entry.link((specifier, from) => load(specifier === 'three'
     ? path.join(SRC, 'vendor/three/build/three.module.js')
@@ -53,17 +51,24 @@ async function production() {
   await entry.evaluate();
   const profile = JSON.parse(fs.readFileSync(path.join(ROOT, 'patches/splatoon3/profile.json')));
   const api = { ...entry.namespace.install(profile), CHARACTER_BOMB_POSE: entry.namespace.CHARACTER_BOMB_POSE };
-  entry.namespace.installBombMotion(api, profile);
+  for (const stamp of [
+    'inkwave.s3.bomb-motion.install.v1', 'inkwave.splatoon3.jump-motion.v1', 'inkwave.splatoon3.landing-motion.v1',
+    'inkwave.s3.swim-motion.install.v1', 'inkwave.s3.wall-motion.install.v1', 'inkwave.s3.form-motion.install.v1',
+    'inkwave.splatoon3.dualies-motion.v1', 'inkwave.s3.roller-detail-motion.install.v1',
+    'inkwave.s3.superjump-motion.installed.v1', 'inkwave.s3.squidroll-motion.install.v1',
+    'inkwave.s3.hit-spawn-motion.install.v1', 'inkwave.s3.idle-motion.install.v1',
+    'inkwave.splatoon3.emotes-motion.v1', 'inkwave.s3.special-motion.install.v1', 'inkwave.s3.face-motion.install.v1',
+  ]) assert.ok(Object.hasOwn(api.Character.prototype, Symbol.for(stamp)), 'actual production installation missing ' + stamp);
   // Applying the same installer twice must not stack pose or reset wrappers.
   const wrapper = api.Character.prototype._buildPose;
   entry.namespace.installBombMotion(api, profile);
   assert.equal(api.Character.prototype._buildPose, wrapper);
   const { G, THREE } = api;
   G.teamColors = [new THREE.Color('#ff8a14'), new THREE.Color('#2f5bff')];
-  G.scene = new THREE.Scene(); G.level = { blocks: [], groundHeight: () => 0 };
+  G.scene = new THREE.Scene(); G.level = { blocks: [], groundHeight: () => 0,
+    queryBlocks: (_a, _b, _c, _d, out) => { out.length = 0; return out; } };
   G.paint = { sample: () => 1, splat: () => 0 }; G.match = { playing: () => true };
-  G.physics = { los: () => true, raycast: (_a, _b, _c, hit) => { hit.hit = false; return hit; },
-    segment: (_a, _b, hit) => { hit.hit = false; return hit; } };
+  G.physics = new api.Physics(G.level);
   G.actors = []; G.time = 0;
   cached = { ...api, ...entry.namespace, profile }; return cached;
 }
@@ -134,13 +139,16 @@ function preservedRig(r, api) {
     rotation: Array.from(node.rotation.toArray()), quaternion: Array.from(node.quaternion.toArray()), scale: Array.from(node.scale.toArray()),
     matrix: Array.from(node.matrix.elements), world: Array.from(node.matrixWorld.elements), visible: node.visible, dirty: node.matrixWorldNeedsUpdate }));
   return { character: fields(r.ch), feet: Array.from(r.ch.feet, fields), nodes,
+    face: fields(r.ch.face), gaze: fields(r.ch.gz), blink: fields(r.ch.bl),
+    motions: Object.fromEntries(DETAIL_HOOKS.map(([module, snapshot]) => [module, JSON.parse(JSON.stringify(api[snapshot](r.ch)))])),
     weapon: fields(r.ch.weapon), leftWeapon: r.ch.weapon.left ? fields(r.ch.weapon.left) : null,
     actor: fields(r.a), anim: fields(r.a.anim), intent: fields(r.a.intent), runner: fields(r.a.weaponRunner),
-    flow: fields(r.a.s3.flow), time: api.G.time, launches: r.projectiles.bombs.length };
+    flow: fields(r.a.s3.flow), physics: fields(api.G.physics), physicsQuery: Array.from(api.G.physics._ids),
+    time: api.G.time, launches: r.projectiles.bombs.length };
 }
 function countCalls(ch) {
   const counts = {};
-  for (const name of ['update', '_trackRoot', '_updateFeet', '_buildPose', '_animWeapon', '_updateHair', '_hairKick', '_updateTank', '_applyJiggle', '_applyFingers']) {
+  for (const name of ['update', '_trackRoot', '_updateFeet', '_buildPose', '_animWeapon', '_applyFace', '_updateHair', '_hairKick', '_updateTank', '_applyJiggle', '_applyFingers', 'rng']) {
     const previous = ch[name]; counts[name] = 0;
     ch[name] = function (...args) { counts[name]++; return previous.apply(this, args); };
   }
@@ -201,6 +209,34 @@ test('real release creates its projectile immediately in whip posture, without a
     const file = path.join(destination, 'release-geometry.json'), pending = file + '.pending';
     fs.writeFileSync(pending, JSON.stringify(measurements, null, 2) + '\n'); fs.renameSync(pending, file);
   }
+});
+
+test('actual Storm deployment keeps the special throw and never starts bomb recovery', async () => {
+  const api = await production(), traces = [];
+  const previous = { physics: api.G.physics, level: api.G.level };
+  const level = { blocks: [], queryBlocks: (_a, _b, _c, _d, out) => { out.length = 0; return out; },
+    groundHeight: () => 0 };
+  api.G.level = level; api.G.physics = new api.Physics(level);
+  try {
+    for (const enabled of [false, true]) {
+      const r = rig(api, 'shooter', enabled), rows = [];
+      try {
+        r.a.weapon = { ...r.a.weapon, special: 'storm' };
+        api.G.projectiles = r.projectiles;
+        r.a._startSpecial();
+        assert.equal(r.projectiles.bombs.length, 1); assert.equal(r.projectiles.bombs[0].kind, 'storm');
+        if (enabled) assert.equal(api.bombMotionSnapshot(r.ch).throwing, false, 'the native throw event also belongs to Storm');
+        for (let i = 0; i < 40; i++) {
+          if (r.a.specialActive) r.a._updateSpecial(1 / 60);
+          r.a._finishFrame(1 / 60); r.ch.root.updateMatrixWorld(true);
+          rows.push({ pose: Array.from(r.ch.P), hands: ['handL', 'handR'].map(n => r.ch.bones[n].getWorldPosition(new api.THREE.Vector3()).toArray()),
+            ik: Array.from(r.ch.ikErr), clocks: Array.from(r.ch.tr), ink: r.a.ink, hp: r.a.hp, pos: r.a.pos.toArray(), vel: r.a.vel.toArray() });
+        }
+        assert.equal(rows.length, 40, 'real special deployment and post-deployment recovery were exercised'); traces.push(rows);
+      } finally { r.projectiles.clear(); r.close(); }
+    }
+    assert.deepEqual(traces[1], traces[0], 'bomb ownership cannot bypass the installed special throw pose');
+  } finally { api.G.physics = previous.physics; api.G.level = previous.level; }
 });
 
 test('actual indexed held bomb stays attached and dualies pistol makes room until recovery ends', async () => {
@@ -384,7 +420,7 @@ test('preview preserves native null/show/dead guards and hidden, form, opt-out f
     r.a.alive = false; r.projectiles.updateArc(r.a, true);
     assert.equal(r.projectiles.arcLine.visible, false); r.a.alive = true;
     const outer = new api.THREE.Group(); outer.add(api.G.scene);
-    for (const mode of ['hidden', 'parent-hidden', 'ancestor-hidden', 'squid', 'disabled', 'missing-character', 'missing-bomb', 'not-aiming']) {
+    for (const mode of ['hidden', 'parent-hidden', 'ancestor-hidden', 'squid', 'disabled', 'missing-character', 'missing-bomb', 'not-aiming', 'dance', 'special', 'superjump', 'disposed']) {
       const original = { character: r.a.character, bomb: r.ch.bomb };
       if (mode === 'hidden') r.ch.root.visible = false;
       if (mode === 'parent-hidden') api.G.scene.visible = false;
@@ -394,12 +430,17 @@ test('preview preserves native null/show/dead guards and hidden, form, opt-out f
       if (mode === 'missing-character') r.a.character = null;
       if (mode === 'missing-bomb') r.ch.bomb = null;
       if (mode === 'not-aiming') r.a.weaponRunner.aimingSub = false;
+      if (mode === 'dance') r.ch.dance = 'victory';
+      if (mode === 'special') r.a.specialActive = { id: 'storm', t: 0, phase: 'throw' };
+      if (mode === 'superjump') r.a.superJumpState = { phase: 'prep', t: 0 };
+      if (mode === 'disposed') r.ch.dispose();
       const candidate = r.a.pos.clone(); candidate.y += 1.35;
       const expected = Array.from(candidate.toArray());
       api.bombPreviewPosition(r.a, candidate);
       assert.deepEqual(Array.from(candidate.toArray()), expected, mode);
       r.ch.root.visible = true; api.G.scene.visible = true; outer.visible = true; r.a.form = 'kid'; r.ch.s3BombMotionEnabled = true;
       r.a.character = original.character; r.ch.bomb = original.bomb; r.a.weaponRunner.aimingSub = true;
+      r.ch.dance = null; r.a.specialActive = r.a.superJumpState = null;
     }
     outer.remove(api.G.scene);
   } finally { r.close(); }
@@ -423,6 +464,7 @@ test('moving real throw tick has the same walking contacts, cadence and root vel
           prevYaw: r.ch.prevYaw, yawRate: r.ch.yawRate, phase: r.ch.phase, cadence: r.ch.cad, moving: r.ch.moving }),
           pose: Array.from(r.ch.P), springs: Array.from(r.ch.sp), hair: Array.from(r.ch.hv),
           clocks: Array.from(r.ch.tr), calls: { ...calls }, volleys });
+        rows.at(-1).motions = Object.fromEntries(DETAIL_HOOKS.map(([module, snapshot]) => [module, JSON.parse(JSON.stringify(api[snapshot](r.ch)))]));
       }
       assert.equal(volleys, 1, 'real slosher fire is not duplicated by the concurrent bomb');
       assert.equal(calls.update, 65); assert.equal(calls._trackRoot, 65); assert.equal(calls._updateFeet, 65);

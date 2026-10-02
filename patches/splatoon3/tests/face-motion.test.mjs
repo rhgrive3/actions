@@ -40,9 +40,9 @@ async function production() {
   if (cached) return cached;
   const entry = await realm(), profile = JSON.parse(fs.readFileSync(path.join(ROOT, 'patches/splatoon3/profile.json')));
   const api = { ...entry.install(profile), ...entry, profile };
-  // Actual production composition once, in one realm; add only the new hook
-  // after all existing hooks and the foundation's separate Flow visual hook.
-  api.installFlowMotion(api, profile); api.installFaceMotion(api, profile);
+  // The shared production installer must already own the final face layer.
+  // A standalone call here would hide a missing production connection.
+  assert.ok(Object.hasOwn(api.Character.prototype, Symbol.for('inkwave.s3.face-motion.install.v1')));
   const { G, THREE } = api;
   G.scene = new THREE.Scene(); G.settings = { quality: 'high' };
   G.teamColors = [new THREE.Color('#ff8a14'), new THREE.Color('#2f5bff')];
@@ -58,6 +58,8 @@ function rig(api, kind = 'shooter', enabled = true) {
   const a = new Actor({ team: 0, name: 'face native regression', weapon: kind,
     CharacterClass: Character, style: { hair: 0, skin: 2, outfit: 0, eyes: 0 } });
   const ch = a.character; ch.actor = a; ch.onEvent = null; ch.s3FaceMotionEnabled = enabled;
+  const nativeRng = ch.rng; let rngCalls = 0;
+  ch.rng = function () { rngCalls++; return nativeRng(); };
   G.scene.add(ch.root); a.grounded = a.ground.hit = true;
   a.remote = true; // Real remote Actor route preserves an aim/body yaw gap.
   function aim(yaw = .12, pitch = .06, distance = 8) {
@@ -72,7 +74,7 @@ function rig(api, kind = 'shooter', enabled = true) {
   }
   function visual(dt = 1 / 60) { G.actors = [a]; a._finishFrame(dt); ch.root.updateMatrixWorld(true); ch.skeleton.update(); }
   aim(); for (let i = 0; i < 90; i++) step();
-  return { a, ch, api, step, visual, aim, snapshot: () => api.faceMotionSnapshot(ch),
+  return { a, ch, api, step, visual, aim, get rngCalls() { return rngCalls; }, snapshot: () => api.faceMotionSnapshot(ch),
     close() { G.scene.remove(ch.root); G.actors = []; ch.dispose(); } };
 }
 function shader(ch, THREE, material = 'eye') {
@@ -138,7 +140,8 @@ function lids(r) {
 const hash = x => createHash('sha256').update(typeof x === 'string' ? x : Buffer.from(x.buffer, x.byteOffset, x.byteLength)).digest('hex');
 function invariant(r) {
   const { a, ch, api: { THREE } } = r;
-  return { pose: Array.from(ch.P), timers: Array.from(ch.tr), springs: Array.from(ch.sp),
+  return { pose: Array.from(ch.P), timers: Array.from(ch.tr), springs: Array.from(ch.sp), rngCalls: r.rngCalls,
+    gazeState: { ...ch.gz }, blinkState: { ...ch.bl },
     bones: ch.boneList.map(b => [b.name, ...b.position.toArray(), ...b.quaternion.toArray(), ...b.scale.toArray()]),
     root: ch.root.matrix.toArray(), weapon: ch.weapon.off.matrixWorld.toArray(),
     hand: ch.bones.handR.getWorldPosition(new THREE.Vector3()).toArray(), ik: Array.from(ch.ikErr),
@@ -160,9 +163,17 @@ function trace(rows, suffix = '') {
 
 test('production composition and duplicate-realm installation keep one face hook', async () => {
   const api = await production(), C = api.Character.prototype, A = api.Actor.prototype, R = api.WeaponRunner.prototype;
-  const before = [C.update, C._applyFace, C.trigger, C.dispose, A.reset, A.splat, R.reset];
-  api.installFaceMotion(api, api.profile); (await realm()).installFaceMotion(api, api.profile);
-  assert.deepEqual([C.update, C._applyFace, C.trigger, C.dispose, A.reset, A.splat, R.reset], before);
+  const before = [C.update, C._applyFace, C.trigger, C.dispose, C.setVisible, A.reset, A.splat, R.reset];
+  const other = await realm();
+  api.installFaceMotion(api, api.profile); other.installFaceMotion(api, api.profile);
+  assert.deepEqual([C.update, C._applyFace, C.trigger, C.dispose, C.setVisible, A.reset, A.splat, R.reset], before);
+  const r = rig(api);
+  try {
+    r.step(1 / 60, { fire: true });
+    assert.deepEqual(JSON.parse(JSON.stringify(other.faceMotionSnapshot(r.ch))), JSON.parse(JSON.stringify(r.snapshot())));
+    r.close(); assert.equal(other.faceMotionSnapshot(r.ch), null);
+    r.ch.update(0, { firing: true }); assert.equal(other.faceMotionSnapshot(r.ch), null);
+  } finally { if (r.snapshot()) r.close(); }
   assert.equal(api.faceMotionSnapshot(null), null);
 });
 
@@ -231,6 +242,27 @@ test('native blink lids, wink, landing/damage and victory expressions still reac
   } finally { a.close(); b.close(); }
 });
 
+test('action gaze composes with actual native blink deformation and expression materials', async () => {
+  const api = await production(), a = rig(api), b = rig(api, 'shooter', false);
+  try {
+    for (const r of [a, b]) {
+      r.a.s3.flow.active = true; r.a.s3.flow.remaining = 10;
+      r.ch._blinkStart(1, true);
+    }
+    let closed = false;
+    for (let i = 0; i < 22; i++) {
+      a.step(1 / 60, { fire: true }); b.step(1 / 60, { fire: true });
+      assert.deepEqual(invariant(a), invariant(b), 'final gaze cannot change native RNG, face clocks, body or IK');
+      assert.deepEqual(lids(a), lids(b), 'the real indexed lid deformation stays native while eye axes follow aim');
+      assert.deepEqual(a.ch.u.uMouth.value.toArray(), b.ch.u.uMouth.value.toArray());
+      assert.deepEqual(a.ch.u.uMouth2.value.toArray(), b.ch.u.uMouth2.value.toArray());
+      assert.ok(eyes(a).centers.every(c => c.error < 1e-5));
+      closed ||= a.ch.bones.eyeL.scale.y < .1;
+    }
+    assert.equal(closed, true, 'a real hard-blink closed frame was measured during firing');
+  } finally { a.close(); b.close(); }
+});
+
 test('30/60/120Hz fixed-clock rendering, pause, interruptions and disposal', async () => {
   const api = await production(), traces = [];
   for (const hz of [30, 60, 120]) {
@@ -279,4 +311,18 @@ test('nullable character preview, invalid aim fallback and shader limits stay fi
     assert.ok(r.ch.u.uGaze.value.toArray().every(Number.isFinite));
     r.a.aimDir.set(NaN, 0, 0); r.step(1 / 60, { fire: true }); assert.equal(r.snapshot().mode, null);
   } finally { r.close(); }
+});
+
+test('hidden and disposed characters cannot retain or resurrect action gaze state', async () => {
+  const api = await production(), r = rig(api);
+  try {
+    r.step(1 / 60, { fire: true }); assert.equal(r.snapshot().mode, 'fire');
+    r.ch.setVisible(false); assert.equal(r.snapshot(), null, 'hide immediately drops the action gaze');
+    r.ch.setVisible(true); r.step(1 / 60, { fire: true }); assert.equal(r.snapshot().mode, 'fire');
+    api.G.scene.visible = false; r.step(1 / 60, { fire: true });
+    assert.equal(r.snapshot()?.mode ?? null, null, 'hidden ancestors also suppress gaze');
+    api.G.scene.visible = true; r.step(1 / 60, { fire: true });
+    r.close(); assert.equal(r.snapshot(), null);
+    r.ch.update(0, { firing: true }); assert.equal(r.snapshot(), null, 'disposed native update cannot recreate a face track');
+  } finally { api.G.scene.visible = true; if (r.snapshot()) r.close(); }
 });
