@@ -1492,9 +1492,68 @@
    0.55,
    0.7
   ],
-  "shade_from_m": 0.004,
-  "shade_to_m": 0.011,
-  "shade_min": 0.62,
+  "shade_from_m": 0.0,
+  "shade_to_m": 0.007,
+  "shade_min": 0.25,
   "emission": 0.15
+ },
+ "ears": {
+  "angle_deg": 16.0,
+  "pivot_yz": [
+   -34.5,
+   -58.2
+  ],
+  "turn": [
+   "HEAD_face_02",
+   "HEAD_face_03",
+   "HEADGEAR_headgear_02"
+  ],
+  "hang": [
+   "HEADGEAR_headgear"
+  ]
+ },
+ "cheek_triangles": {
+  "right": "HEAD_skin_05",
+  "left": "HEAD_skin_02",
+  "corner_names": [
+   "top",
+   "bot",
+   "tip"
+  ],
+  "corners": {
+   "top": [
+    -81.83,
+    -9.86,
+    47.88
+   ],
+   "tip": [
+    -64.79,
+    -37.49,
+    75.49
+   ],
+   "bot": [
+    -73.03,
+    -51.96,
+    47.68
+   ]
+  },
+  "offset_mm": 0.4,
+  "corners_left": {
+   "top": [
+    82.95,
+    -14.92,
+    46.38
+   ],
+   "tip": [
+    60.72,
+    -38.3,
+    81.04
+   ],
+   "bot": [
+    70.34,
+    -55.06,
+    49.73
+   ]
+  }
  }
 }

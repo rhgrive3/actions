@@ -44,7 +44,8 @@ FOLLOWERS = ['HEAD_skin', 'HEAD_skin_04', 'HEAD_skin_02', 'HEAD_skin_03', 'HEAD_
              'HEAD_eyes_29']
 EYEBALLS = ['HEAD_eyes', 'HEAD_eyes_02', 'HEAD_eyes_18', 'HEAD_eyes_19']
 IRIS_BALLS = {'HEAD_eyes_18': -1, 'HEAD_eyes': 1}
-CHANGED = list(dict.fromkeys([FACE] + FOLLOWERS + list(IRIS_BALLS) + EYEBALLS))   # backed up / restored
+EAR_PARTS = ['HEAD_face_02', 'HEAD_face_03', 'HEADGEAR_headgear', 'HEADGEAR_headgear_02']
+CHANGED = list(dict.fromkeys([FACE] + FOLLOWERS + list(IRIS_BALLS) + EYEBALLS + EAR_PARTS))   # backed up / restored
 
 
 def restore(drop=False):
@@ -619,6 +620,68 @@ def paint_blush(face, names, cfg):
 
 
 BLUSH_IMAGE = 'INKWAVE_BLUSH_ALPHA'
+
+
+def set_local_mm(obj, loc):
+    """Vertex positions from head-frame mm."""
+    W = M.to_world(np.asarray(loc, float) / 1000)
+    inv = np.array(obj.matrix_world.inverted())
+    co = (np.c_[W, np.ones(len(W))] @ inv.T)[:, :3]
+    obj.data.vertices.foreach_set('co', co.astype(np.float32).ravel())
+    obj.data.update()
+
+
+def turn_ears(cfg):
+    """In the side and 3/4 views the reference ears lie flatter: the tip is where ours is, the root sits lower.
+    The ears and the bars along their rims turn about the head-frame x axis through the tip (y, z = cfg['pivot_yz'],
+    mm) by cfg['angle_deg'] (root down).  The hoops hang from the lobes: they follow the lobe without turning."""
+    th = np.radians(cfg['angle_deg'])
+    py, pz = cfg['pivot_yz']
+
+    def turn(L):
+        y, z = L[:, 1] - py, L[:, 2] - pz
+        out = L.copy()
+        out[:, 1] = py + y * np.cos(th) - z * np.sin(th)
+        out[:, 2] = pz + y * np.sin(th) + z * np.cos(th)
+        return out
+    for name in cfg['turn']:
+        obj = bpy.data.objects[name]
+        set_local_mm(obj, turn(M.to_local(er.world(obj)) * 1000))
+    for name in cfg['hang']:
+        obj = bpy.data.objects[name]
+        L = M.to_local(er.world(obj)) * 1000
+        for side in (-1, 1):
+            m = np.sign(L[:, 0]) == side
+            top = L[m][np.argsort(L[m][:, 1])[-20:]].mean(0)
+            L[m] += turn(top[None])[0] - top
+        set_local_mm(obj, L)
+    print('FACE_VOLUME ears turned', cfg['angle_deg'], 'deg')
+
+
+def place_cheek_triangles(face, cfg):
+    """The green cheek triangle (a 45-vertex triangle grid, corners = vertices 0, 1, 2) lay 20-30 px too far back
+    in the 3/4 and side views (front view fine: there the cheek is seen edge-on).  New corners: skin points that
+    meet the reference corners in the front, 3/4 and side views (cfg['corners'], right side, head-frame mm; the
+    left side: cfg['corners_left'], else the mirror image).  Every vertex keeps its barycentric place; Blender's Shrinkwrap lays the
+    sheet back on the skin at cfg['offset_mm']."""
+    names = {cfg['right']: 1.0, cfg['left']: -1.0}
+    for name, sx in names.items():
+        obj = bpy.data.objects[name]
+        L = M.to_local(er.world(obj)) * 1000
+        C = L[:3]
+        A = np.c_[C[0] - C[2], C[1] - C[2]]
+        ab = np.linalg.lstsq(A, (L - C[2]).T, rcond=None)[0].T
+        bary = np.c_[ab, 1 - ab.sum(1)]
+        if sx < 0 and cfg.get('corners_left'):
+            # the left one measured on its own (q34L / sideL): the face and the reference are not exactly mirror images
+            new = np.array([cfg['corners_left'][k] for k in cfg['corner_names']], float)
+        else:
+            new = np.array([cfg['corners'][k] for k in cfg['corner_names']], float)
+            new[:, 0] *= sx
+        set_local_mm(obj, bary @ new)
+        er.apply_weighted_modifier(obj, np.ones(len(L)), 'SHRINKWRAP', target=face, wrap_method='NEAREST_SURFACEPOINT',
+                                   wrap_mode='ABOVE_SURFACE', offset=cfg['offset_mm'] / 1000)
+    print('FACE_VOLUME cheek triangles placed')
 
 
 def lift_coloured(obj, face, alpha, cfg):
@@ -1692,6 +1755,10 @@ def main():
             tuck_clear_edges(face, ['HEAD_skin_04', 'HEAD_skin'], p['tuck'])
         if p.get('blush'):
             paint_blush(face, ['HEAD_skin_04', 'HEAD_skin'], p['blush'])
+        if p.get('ears'):
+            turn_ears(p['ears'])
+        if p.get('cheek_triangles'):
+            place_cheek_triangles(face, p['cheek_triangles'])
         seam_normals(face, pairs)
     if args.save:
         bpy.ops.wm.save_as_mainfile(filepath=args.save, compress=True)
