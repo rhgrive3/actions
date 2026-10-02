@@ -26,6 +26,8 @@ async function production() {
     modules.set(file, m); return m;
   };
   const entry = new vm.SourceTextModule(`
+    import { Character } from './src/game/character.js';
+    export const nativeThrow = Character.prototype._poseThrow;
     export { install } from './patches/splatoon3/runtime/install.mjs';
     export { FixedClock } from './patches/splatoon3/runtime/clock.mjs';
     export * from './patches/splatoon3/runtime/weapon-detail-motion.mjs';
@@ -410,7 +412,9 @@ test('zero-time native throw pose evaluation preserves weapon tracks and grip di
       const before = r.snapshot(), anim = r.ch._animWeapon, dt = r.ch._dt;
       try {
         r.ch._dt = 0; r.ch._animWeapon = () => {};
-        r.ch._poseThrow(r.ch.P, .10);
+        // The production WeaponMotion hook filters preview calls. Bomb's
+        // sampler uses the original native curve, captured before install.
+        api.nativeThrow.call(r.ch, r.ch.P, .10);
         assert.equal(r.ch.P[api.CHARACTER_CHANNELS.IKL], 0, 'native release frees the throwing hand');
         for (let i = 0; i < 4; i++) r.ch._applyPose(0, r.a.anim || {});
         assert.deepEqual(r.snapshot(), before, kind);
