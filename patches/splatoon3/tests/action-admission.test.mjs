@@ -5,16 +5,14 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { createHash } from 'node:crypto';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { adaptSource, replaceOnce } from '../adapter.mjs';
+import { adaptSource } from '../adapter.mjs';
 import { installDualiesMotion as installOtherRealm, dualiesMotionSnapshot as crossRealmSnapshot } from '../runtime/dualies-motion.mjs';
 
 import { dualiesMotionLock, dualiesMotionAllowsFootPlant, specialMotionAllowsAction } from '../runtime/action-admission.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const SRC = path.resolve(process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public'));
-// Parent alone owns adapter/Walk. Until those files are integrated, exercise
-// these exact, unique source connections in memory over the actual production
-// adapter/installer. No invented classes/exports or alternate motion installer.
+// Exercise the actual production source hooks, with no prospective rewrites.
 const connections = [
   ['character-lock', 'const lock = kid && !dance && this.dual && ((R ? (R.lockT || 0) > 0 || (!!R.dodge && dk > 0.55) : this.tr[T_DODGE] < this.dodgeDur + 0.5) || (dk > 0.55 && dk < 1));',
     'const lock = dualiesMotionLock(this, R, kid && !dance && this.dual && ((R ? (R.lockT || 0) > 0 || (!!R.dodge && dk > 0.55) : this.tr[T_DODGE] < this.dodgeDur + 0.5) || (dk > 0.55 && dk < 1)));'],
@@ -23,16 +21,12 @@ const connections = [
 ];
 const appliedConnections = new Set();
 function candidateSource(file, source) {
-  let code = file.startsWith(SRC + path.sep) ? adaptSource(path.relative(SRC, file), source) : source;
-  if (process.env.INKWAVE_ADMISSION_TEST_LEGACY === '1') return code;
+  const code = file.startsWith(SRC + path.sep) ? adaptSource(path.relative(SRC, file), source) : source;
   const character = file === path.join(SRC, 'src/game/character.js'), walk = file === path.join(ROOT, 'patches/splatoon3/runtime/walk.mjs');
-  if (!character && !walk) return code;
-  for (const [label, before, after] of connections.filter(([label]) => character ? label.startsWith('character') : label === 'walk-foot')) {
-    if (code.includes(after)) continue;
-    code = replaceOnce(code, before, after, 'supplemental admission ' + label); appliedConnections.add(label);
+  for (const [label, _before, after] of connections.filter(([label]) => character ? label.startsWith('character') : walk && label === 'walk-foot')) {
+    assert.equal(code.split(after).length - 1, 1, 'actual production admission connection ' + label);
+    appliedConnections.add(label);
   }
-  const specifier = character ? '../../patches/splatoon3/runtime/action-admission.mjs' : './action-admission.mjs';
-  if (!code.includes("from '" + specifier + "'") && !code.includes('from "' + specifier + '"')) code = `import { dualiesMotionLock, dualiesMotionAllowsFootPlant } from '${specifier}';\n` + code;
   return code;
 }
 
@@ -166,15 +160,15 @@ function save(label, r, details = {}) {
     feet: r.ch.feet.map(f => ({ planted: f.planted, swing: f.sw, display: f.disp.toArray() })) });
   const file = path.join(directory, path.basename(destination));
   fs.writeFileSync(file + '.pending', JSON.stringify({ schema: 1, rows: nativeRows,
-    supplementalSourceConnections: [...appliedConnections],
+    productionSourceConnections: [...appliedConnections],
     nativeDrawBoundary: 'Selected vertices within native indexed draw ranges, CPU skinning/bones and native IK. Native Physics/Actor/Runner/Projectiles; no GPU draw or Nintendo hardware attestation.',
     inputHashes: Object.fromEntries(['action-admission', 'dualies-motion', 'bomb-motion'].map(name =>
       [name, createHash('sha256').update(fs.readFileSync(path.join(ROOT, 'patches/splatoon3/runtime/' + name + '.mjs'))).digest('hex')]))
   }, null, 2) + '\n'); fs.renameSync(file + '.pending', file);
 }
 
-// Recorded red receipt exercises the current production adapter with no
-// supplemental hooks. This candidate proof cannot attest parent activation.
+// Retained red receipts predate these hooks; current tests exercise their actual
+// production activation before native aim/stance/contact consume the result.
 test('admission paused and remote Runner clocks govern native aim, stance and feet before rendering', async () => {
   const api = await production(), T = api.CHARACTER_TIMERS;
   for (const hz of [30, 60, 120]) for (const remote of [false, true]) {

@@ -69,3 +69,15 @@ test('special foot-plant ownership requires its unique upstream timer boundary',
   assert.throws(() => adaptSource('src/game/character.js', character.replace(anchor, 'true')), /special foot-plant ownership/);
   assert.throws(() => adaptSource('src/game/character.js', character + '\n' + anchor), /special foot-plant ownership/);
 });
+
+
+test('dualies pre-aim and contact admission stop on missing or duplicated native connections', () => {
+  const character = fs.readFileSync(new URL('src/game/character.js', publicRoot), 'utf8');
+  for (const [anchor, label] of [
+    ['const lock = kid && !dance && this.dual && ((R ? (R.lockT || 0) > 0 || (!!R.dodge && dk > 0.55) : this.tr[T_DODGE] < this.dodgeDur + 0.5) || (dk > 0.55 && dk < 1));', 'dualies native pre-aim admission'],
+    ['this.tr[T_DODGE] > this.dodgeDur * 0.86', 'dualies native foot admission'],
+  ]) {
+    assert.throws(() => adaptSource('src/game/character.js', character.replace(anchor, '/* upstream changed */')), new RegExp(label));
+    assert.throws(() => adaptSource('src/game/character.js', character + '\n' + anchor), new RegExp(label));
+  }
+});

@@ -36,6 +36,7 @@ async function production() {
     export const nativeThrow = Character.prototype._poseThrow;
     export { install } from './patches/splatoon3/runtime/install.mjs';
     export { FixedClock } from './patches/splatoon3/runtime/clock.mjs';
+    export { carryMotionSnapshot } from './patches/splatoon3/runtime/carry-motion.mjs';
     export * from './patches/splatoon3/runtime/weapon-detail-motion.mjs';
   `, { context, identifier: path.join(ROOT, 'weapon-detail-entry.mjs') });
   await entry.link((specifier, from) => load(specifier === 'three' ? path.join(SRC, 'vendor/three/build/three.module.js')
@@ -174,6 +175,12 @@ test('production supported shooter carry retains both actual indexed grips throu
         assert.ok(row.nativeIK.every(e => e < .0005));
       }
     }
+    r.ch.s3CarryMotionEnabled = false;
+    for (let frame = 0; frame < 20; frame++) r.step();
+    const free = contact(260); rows.push(free);
+    assert.equal(free.ikL, 0, 'opt-out retains the native free hand');
+    assert.ok(free.nearestLeft > .2); assert.ok(free.gripR < .005);
+    r.ch.s3CarryMotionEnabled = true;
     for (let frame = 0; frame < 60; frame++) {
       r.step(1 / 60, { fire: true });
       if (r.ch.P[C.IKL] > .99) {

@@ -40,3 +40,9 @@ The old Flow carry test expected a free left hand from the earlier native policy
 Adjacent raw timer gates in Form/Swim/Wall/Squid Roll and other reviewers' modules are handed off, not edited or declared fixed. Complete Actions, canonical artifact identity, actual GPU/browser behavior and real-console motion/gear/input comparisons remain required parent work. Engine pipeline consistency is not Nintendo exact timing or near-perfect fidelity certification.
 
 The owned Weapon Detail lifetime regression additionally found zero-time state delegation recreating deleted disposed tracks. A shared disposed stamp now prevents resurrection and keeps cross-realm diagnostic enablement accurate while preserving native delegation. This is bounded lifetime hardening, not a new motion calibration or a claim that disposed meshes draw.
+
+### 親担当による本番接続
+
+親担当が native `_updateStates` の lock 判定、native `_updateFeet` の Dodge 判定、walk eligibility の 3 接続を実 adapter／walk に追加した。テストの prospective なメモリ書き換えを削除し、実生成コードに固有接続があることを検証して本番インストーラーをそのまま実行する。接続の欠落・重複時は adapter が停止する。実 Runner の停止時間・remote progress・連続回避・キャンセルと実 bone/indexed skin を検証する。
+
+新しい Bomb は native T_THROW を早送りせず表示を中断する。その後の変身が保存された旧時計だけで止まることを実 Runner の投擲→dive→emerge で再現し、Form の Bomb／Special／Dodge 排他を対応する純粋な所有判定へ接続した。live action／無効化／standalone の元の判定を保ち、時計を書き換えない。

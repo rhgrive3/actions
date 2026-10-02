@@ -448,3 +448,20 @@ test('cross-realm snapshots/reset observe the installed state and disposed forms
   r.ch.update(0, null); r.ch.trigger('squidroll');
   assert.equal(api.formMotionSnapshot(r.ch), null);
 });
+
+
+test('a retired real Bomb presentation does not keep new emergence blocked by its preserved event age', async () => {
+  const api = await production(), r = rig(api), T = api.CHARACTER_TIMERS;
+  try {
+    for (let i = 0; i < 12; i++) r.step(1 / 60, {sub:true});
+    assert.equal(r.ch.bombHeld,true);r.step(1 / 60,{subReleased:true});
+    assert.ok(r.ch.tr[T.T_THROW]<.1,'actual native release event');
+    form(r,'swim');for(let i=0;i<3;i++)r.step();
+    form(r,'kid');r.step();
+    assert.ok(r.ch.tr[T.T_THROW]<.62,'ordinary throw age is preserved after cancellation');
+    assert.equal(api.formMotionSnapshot(r.ch).phase,'emerge');
+    assert.equal(api.formMotionSnapshot(r.ch).actionBlocked,false,'retired Bomb cannot suppress the new gesture');
+    const clocks=Array.from(r.ch.tr);r.ch._poseForm(r.ch.P);
+    assert.deepEqual(Array.from(r.ch.tr),clocks);
+  } finally {r.close();}
+});

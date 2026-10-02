@@ -73,3 +73,7 @@ Nintendo's retained form movie and sheets were hash-verified and visually inspec
 ### 2026-10-03: 完了したスペシャルからの変身
 
 全表示パッチを接続した実 Actor/Physics で Slam 完了後の変身を確認すると、旧 `T_SLAM < 1.4` が、新しい emergence の姿勢を止めていた。Special の公開所有判定でそのレイヤーが終了した場合だけ旧 leap/slam の組み合わせを解除する。表示を無効化した場合や未管理状態はネイティブのタイマー判定を保ち、native イベント時計は書き換えない。実床で Slam を完了して dive→emerge する本番 VM 回帰が修正前に失敗し、修正後の検証を追加した。任天堂の変身フレーム数の測定ではない。
+
+### 保存された Bomb イベント時計と次の変身
+
+native Runner の投擲からイカへ変身して投擲表示を終了すると、保存された T_THROW は正常に進む。その古い age だけで新しい emergence を止める回帰を再現した。Form の排他判定は Bomb／Special／Dodge の live な表示所有を参照し、standalone と無効化では元のタイマー条件を保つ。回帰は native release・実形態状態・native pose/clock の非変更を確認する。
