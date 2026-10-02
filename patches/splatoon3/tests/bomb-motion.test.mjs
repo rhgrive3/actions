@@ -383,10 +383,12 @@ test('preview preserves native null/show/dead guards and hidden, form, opt-out f
     }
     r.a.alive = false; r.projectiles.updateArc(r.a, true);
     assert.equal(r.projectiles.arcLine.visible, false); r.a.alive = true;
-    for (const mode of ['hidden', 'parent-hidden', 'squid', 'disabled', 'missing-character', 'missing-bomb', 'not-aiming']) {
+    const outer = new api.THREE.Group(); outer.add(api.G.scene);
+    for (const mode of ['hidden', 'parent-hidden', 'ancestor-hidden', 'squid', 'disabled', 'missing-character', 'missing-bomb', 'not-aiming']) {
       const original = { character: r.a.character, bomb: r.ch.bomb };
       if (mode === 'hidden') r.ch.root.visible = false;
       if (mode === 'parent-hidden') api.G.scene.visible = false;
+      if (mode === 'ancestor-hidden') outer.visible = false;
       if (mode === 'squid') r.a.form = 'squid';
       if (mode === 'disabled') r.ch.s3BombMotionEnabled = false;
       if (mode === 'missing-character') r.a.character = null;
@@ -396,9 +398,10 @@ test('preview preserves native null/show/dead guards and hidden, form, opt-out f
       const expected = Array.from(candidate.toArray());
       api.bombPreviewPosition(r.a, candidate);
       assert.deepEqual(Array.from(candidate.toArray()), expected, mode);
-      r.ch.root.visible = true; api.G.scene.visible = true; r.a.form = 'kid'; r.ch.s3BombMotionEnabled = true;
+      r.ch.root.visible = true; api.G.scene.visible = true; outer.visible = true; r.a.form = 'kid'; r.ch.s3BombMotionEnabled = true;
       r.a.character = original.character; r.ch.bomb = original.bomb; r.a.weaponRunner.aimingSub = true;
     }
+    outer.remove(api.G.scene);
   } finally { r.close(); }
 });
 
@@ -496,4 +499,51 @@ test('native drawn arc follows actual bomb origin, velocity and gravity at every
       fs.renameSync(pending, file);
     }
   } finally { api.PLAYER.waterY = waterY; r.close(); }
+});
+
+test('a duplicate installer from a different VM realm preserves the original prototype hooks and live helper state', async () => {
+  const api = await production(), r = rig(api, 'dualies');
+  const duplicate = new vm.SourceTextModule(fs.readFileSync(path.join(ROOT, 'patches/splatoon3/runtime/bomb-motion.mjs'), 'utf8'),
+    { context: vm.createContext({}), identifier: 'separate-bomb-installer-realm.mjs' });
+  await duplicate.link(() => { throw Error('Bomb installer unexpectedly gained imports'); }); await duplicate.evaluate();
+  try {
+    assert.ok(Object.hasOwn(api.Character.prototype, Symbol.for('inkwave.s3.bomb-motion.install.v1')));
+    assert.ok(Object.hasOwn(api.WeaponRunner.prototype, Symbol.for('inkwave.s3.bomb-motion.reset.v1')));
+    const hooks = Object.fromEntries(['trigger', '_updateStates', '_buildPose', '_poseThrow', '_poseSubAim', 'setWeapon', 'setVisible', 'dispose']
+      .map(name => [name, api.Character.prototype[name]])), reset = api.WeaponRunner.prototype.reset;
+    for (let i = 0; i < 20; i++) r.step(1 / 60, { sub: true });
+    duplicate.namespace.installBombMotion(api);
+    for (const [name, hook] of Object.entries(hooks)) assert.equal(api.Character.prototype[name], hook, name + ' is not redecorated');
+    assert.equal(api.WeaponRunner.prototype.reset, reset, 'the original Runner reset hook is not redecorated');
+    assert.deepEqual(JSON.parse(JSON.stringify(duplicate.namespace.bombMotionSnapshot(r.ch))), JSON.parse(JSON.stringify(api.bombMotionSnapshot(r.ch))));
+    const before = preservedRig(r, api), first = api.bombPreviewPosition(r.a, new api.THREE.Vector3());
+    const second = duplicate.namespace.bombPreviewPosition(r.a, new api.THREE.Vector3());
+    assert.ok(second.distanceTo(first) < 1e-12); assert.deepEqual(preservedRig(r, api), before);
+    r.step(1 / 60, { subReleased: true });
+    assert.equal(r.projectiles.bombs.length, 1);
+    assert.equal(duplicate.namespace.bombMotionSnapshot(r.ch).throwing, true, 'second-realm helper reads the actual first-installer state');
+    const original = api.bombReleasePosition(r.a, new api.THREE.Vector3());
+    const crossRealm = duplicate.namespace.bombReleasePosition(r.a, new api.THREE.Vector3());
+    assert.ok(original.distanceTo(crossRealm) < 1e-12);
+    r.a.weaponRunner.reset(); assert.equal(duplicate.namespace.bombMotionSnapshot(r.ch).throwing, false);
+  } finally { r.close(); }
+});
+
+test('native release sampling never invokes a composed left support-hand correction', async () => {
+  const api = await production(), corrections = new WeakMap();
+  for (const kind of ['shooter', 'dualies', 'slosher', 'charger', 'splatling', 'roller']) {
+    const r = rig(api, kind), solve = r.ch._solveLimb;
+    r.ch._solveLimb = function (limb, ...args) {
+      if (limb === this.limbs.armL) corrections.set(this, (corrections.get(this) || 0) + 1);
+      return solve.call(this, limb, ...args);
+    };
+    try {
+      r.step(1 / 60, { sub: true });
+      const before = corrections.get(r.ch) || 0;
+      for (let i = 0; i < 10; i++) api.bombPreviewPosition(r.a, new api.THREE.Vector3());
+      assert.equal(corrections.get(r.ch) || 0, before, kind + ' sample keeps left-hand support solver free');
+      api.G.projectiles = r.projectiles; r.a.weaponRunner.update(0, { subReleased: true });
+      assert.equal(corrections.get(r.ch) || 0, before, kind + ' source release does not mutate the support addon WeakMap');
+    } finally { r.close(); }
+  }
 });

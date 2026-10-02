@@ -3,25 +3,31 @@
 // and gameplay, but put its existing whip on the real release and its cock in
 // the aiming phase. Curve ages below are native visual calibration, not Switch
 // input-frame measurements or extracted Nintendo animation parameters.
-const installed = new WeakSet(), resetInstalled = new WeakSet(), states = new WeakMap(), samplers = new WeakMap(), sampleCaches = new WeakMap();
+const INSTALL = Symbol.for('inkwave.s3.bomb-motion.install.v1'), RESET = Symbol.for('inkwave.s3.bomb-motion.reset.v1');
+const states = new WeakMap(), sampleCaches = new WeakMap();
 const RELEASE_AGE = .10, NATIVE_END = .62, RECOVERY = NATIVE_END - RELEASE_AGE;
 const enabled = ch => ch?.s3BombMotionEnabled !== false;
+function registry(ch) {
+  for (let prototype = Object.getPrototypeOf(ch); prototype; prototype = Object.getPrototypeOf(prototype))
+    if (Object.hasOwn(prototype, INSTALL)) return prototype[INSTALL];
+}
+const stateMap = ch => ch && registry(ch)?.states || states;
 function state(ch) {
-  let value = states.get(ch);
-  if (!value) { value = { throwing: false, elapsed: 0 }; states.set(ch, value); }
+  const map = stateMap(ch); let value = map.get(ch);
+  if (!value) { value = { throwing: false, elapsed: 0 }; map.set(ch, value); }
   return value;
 }
 export function bombMotionSnapshot(ch) {
-  const value = states.get(ch);
+  const value = ch && stateMap(ch).get(ch);
   return { throwing: !!value?.throwing, held: !!ch?.bombHeld,
     phase: value?.throwing ? 'recovery' : ch?.bombHeld ? 'aim' : 'idle',
     elapsed: value?.throwing ? value.elapsed : null,
     nativeCurveAge: value?.throwing ? RELEASE_AGE + value.elapsed : null,
     releasePosition: value?.releasePosition?.toArray() ?? null, recovery: RECOVERY };
 }
-function nativePose(ch) {
-  for (let prototype = Object.getPrototypeOf(ch); prototype; prototype = Object.getPrototypeOf(prototype))
-    if (samplers.has(prototype)) return samplers.get(prototype);
+function hidden(root) {
+  for (let node = root; node; node = node.parent) if (node.visible === false) return true;
+  return false;
 }
 const SECONDARY = ['_animWeapon', '_applyFace', '_updateHair', '_updateTank', '_applyJiggle', '_applyFingers'];
 const noop = () => {};
@@ -65,8 +71,8 @@ function sampleCache(ch) {
   return cache;
 }
 function sampleRelease(a, out) {
-  const ch = a?.character, value = ch && states.get(ch), curves = ch && nativePose(ch);
-  if (!curves || !enabled(ch) || !ch.bomb || !ch.weapon || !ch.root.visible || ch.root.parent?.visible === false || ch.dance || a.alive === false || a.form === 'squid') return out;
+  const ch = a?.character, value = ch && stateMap(ch).get(ch), curves = ch && registry(ch)?.curves;
+  if (!curves || !enabled(ch) || !ch.bomb || !ch.weapon || hidden(ch.root) || ch.dance || a.alive === false || a.form === 'squid') return out;
   // Evaluate the exported native curve into isolated buffers. The receiver
   // deliberately has no gameplay clocks, springs, footsteps or hair to mutate.
   const cache = sampleCache(ch), pose = cache.pose;
@@ -133,7 +139,7 @@ function sampleRelease(a, out) {
 // origin and before native mesh/network/event/arc creation. Unsupported or
 // explicitly disabled previews keep that supplied origin unchanged.
 export function bombReleasePosition(a, out) {
-  const ch = a?.character, value = ch && states.get(ch);
+  const ch = a?.character, value = ch && stateMap(ch).get(ch);
   if (!value?.throwing) return out;
   sampleRelease(a, out);
   value.releasePosition = out.clone();
@@ -148,15 +154,20 @@ export function installBombMotion({ Character, WeaponRunner, CHARACTER_TIMERS: t
     throw Error('Bomb motion requires the actual Character and exact exported T_THROW');
   if (typeof curves?.throw !== 'function' || typeof curves?.apply !== 'function')
     throw Error('Bomb motion requires the exact exported native throw and apply pose methods');
+  const C = Character.prototype;
+  // A globally registered own prototype stamp survives imports into other VM
+  // realms. Keep the original state/curve registry available to their helpers.
+  if (Object.hasOwn(C, INSTALL)) return;
+  Object.defineProperty(C, INSTALL, { value: Object.freeze({ states, curves }) });
   function clear(ch) {
     if (!ch?.tr) return;
-    states.delete(ch);
+    stateMap(ch).delete(ch);
     ch.bombHeld = false; ch.bombT = 0; ch.wSub = 0; ch.bombSwap = 0; ch._subPrev = false;
     ch.tr[timers.T_THROW] = 99;
     if (ch.bomb) { ch.bomb.group.visible = false; ch.bomb.group.scale.setScalar(1); }
   }
-  if (WeaponRunner && !resetInstalled.has(WeaponRunner.prototype)) {
-    resetInstalled.add(WeaponRunner.prototype);
+  if (WeaponRunner && !Object.hasOwn(WeaponRunner.prototype, RESET)) {
+    Object.defineProperty(WeaponRunner.prototype, RESET, { value: true });
     const reset = WeaponRunner.prototype.reset;
     WeaponRunner.prototype.reset = function (...args) {
       const result = reset.apply(this, args);
@@ -164,10 +175,6 @@ export function installBombMotion({ Character, WeaponRunner, CHARACTER_TIMERS: t
       return result;
     };
   }
-  const C = Character.prototype;
-  if (installed.has(C)) return;
-  installed.add(C);
-  samplers.set(C, curves);
   const trigger = C.trigger, updateStates = C._updateStates, buildPose = C._buildPose;
   const throwing = C._poseThrow, holding = C._poseSubAim;
   const setWeapon = C.setWeapon, setVisible = C.setVisible, dispose = C.dispose;
@@ -234,7 +241,7 @@ export function installBombMotion({ Character, WeaponRunner, CHARACTER_TIMERS: t
   };
   C.dispose = function (...args) {
     if (enabled(this)) clear(this);
-    states.delete(this);
+    stateMap(this).delete(this);
     sampleCaches.delete(this);
     return dispose.apply(this, args);
   };
