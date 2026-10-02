@@ -21,7 +21,12 @@ async function production() {
       ? path.join(ROOT, path.relative(SRC, requested)) : requested;
     if (file.startsWith(path.join(ROOT, 'src') + path.sep)) file = path.join(SRC, path.relative(ROOT, file));
     if (modules.has(file)) return modules.get(file);
-    const source = fs.readFileSync(file, 'utf8');
+    // Optional prior-owned-runtime reproduction over the same production
+    // installer. Normal validation always reads the current production bytes.
+    const baseline = process.env.INKWAVE_ADMISSION_BASELINE_RUNTIME_DIR;
+    const prior = baseline && file.startsWith(path.join(ROOT, 'patches/splatoon3/runtime') + path.sep)
+      ? path.join(fs.realpathSync(baseline), path.basename(file)) : null;
+    const source = fs.readFileSync(prior && fs.existsSync(prior) ? prior : file, 'utf8');
     const m = new vm.SourceTextModule(file.startsWith(SRC + path.sep) ? adaptSource(path.relative(SRC, file), source) : source,
       { context, identifier: file, initializeImportMeta(meta) { meta.url = pathToFileURL(file).href; } });
     modules.set(file, m); return m;
@@ -51,9 +56,9 @@ async function production() {
   assert.equal(api.WeaponRunner.prototype.reset, reset);
   const { G, THREE } = api;
   G.teamColors = [new THREE.Color('#ff8a14'), new THREE.Color('#2f5bff')];
-  G.scene = new THREE.Scene(); G.level = { blocks: [], groundHeight: () => 0 };
+  G.scene = new THREE.Scene(); G.level = { blocks: [], groundHeight: () => 0, queryBlocks: (_a, _b, _c, _d, out) => { out.length = 0; return out; } };
   G.paint = { sample: () => 1, splat: () => 0 }; G.match = { playing: () => true };
-  G.physics = { los: () => true, raycast: (_a, _b, _c, hit) => { hit.hit = false; return hit; } };
+  G.physics = new api.Physics(G.level);
   G.actors = []; G.time = 0;
   cached = { ...api, ...entry.namespace, profile }; return cached;
 }
@@ -137,7 +142,7 @@ test('second-realm helpers observe the installed weapon attack and reset state',
   }
 });
 
-test('flow-kid native carry leaves support free while aimed hands retain actual indexed grips', async t => {
+test('production supported shooter carry retains both actual indexed grips through Flow and aim', async t => {
   const api = await production(), r = rig(api, 'shooter'), C = api.CHARACTER_CHANNELS, rows = [];
   function contact(frame) {
     const w = r.ch.weapon, vertices = [];
@@ -162,9 +167,11 @@ test('flow-kid native carry leaves support free while aimed hands retain actual 
       r.step();
       if ([21, 29, 45, 75, 95, 145, 200, 239].includes(frame)) {
         const row = contact(frame); rows.push(row);
-        assert.equal(row.ikL, 0, 'idle shooter carry deliberately frees its left hand');
-        assert.equal(row.explicitLeft, 0); assert.ok(row.nearestLeft > .2, 'reproduce parent whole-mesh contact failure with a free native hand');
-        assert.ok(row.gripR < .005, 'the actual held right grip stays attached');
+        assert.ok(row.ikL > .99, 'the integrated supported carry uses native support-hand IK');
+        assert.equal(row.explicitLeft, 0);
+        assert.ok(row.gripL < .005 && row.gripR < .005, 'both actually held hands meet their authored grips');
+        assert.ok(row.nearestLeft < .035, 'support is beside actual indexed geometry');
+        assert.ok(row.nativeIK.every(e => e < .0005));
       }
     }
     for (let frame = 0; frame < 60; frame++) {
@@ -408,7 +415,7 @@ test('unique native Slam preview keeps its original full pose and limb transform
     for (const enabled of [false, true]) {
       // Both traces begin with the same native pre-special history, so this
       // checks the special itself rather than earlier weapon calibration.
-      const r = rig(api, kind, false), rows = []; r.ch.s3WeaponDetailMotionEnabled = enabled;
+      const r = rig(api, kind, false), rows = []; r.ch.s3WeaponDetailMotionEnabled = enabled; r.ch.s3SpecialMotionEnabled = false;
       try {
         r.ch.trigger('special_leap');
         for (let i = 0; i < 70; i++) {
@@ -482,4 +489,45 @@ test('zero-time native throw pose evaluation preserves weapon tracks and grip di
       } finally { r.ch._animWeapon = anim; r.ch._dt = dt; }
     } finally { r.close(); }
   }
+});
+
+test('admission managed Slam relinquishment restores actual Heavy brace and native grips before timer expiry', async () => {
+  const api = await production(), r = rig(api, 'splatling');
+  try {
+    r.a.weapon = { ...r.a.weapon, special: 'slam' }; r.a._startSpecial(); r.a._finishFrame(0);
+    r.a.specialActive = null; r.a.grounded = true; r.a._finishFrame(0);
+    for (let i = 0; i < 15; i++) r.step(1 / 60, { fire: true });
+    assert.ok(r.ch.tr[api.CHARACTER_TIMERS.T_LEAP] < 1.9);
+    assert.ok(r.ch.wAim > .99); assert.ok(r.ch.spinW > .2);
+    const pose = [...r.ch.P], bones = ['handL', 'handR'].map(n => r.ch.bones[n].getWorldPosition(new api.THREE.Vector3()).toArray());
+    const vertices = drawnVertices(api, r.ch.weapon.parts.barrels.userData.mesh).map(v => v.toArray());
+    const clocks = [...r.ch.tr];
+    // Counterfactual differs only in obsolete presentation ages, at zero dt.
+    r.ch.tr[api.CHARACTER_TIMERS.T_LEAP] = r.ch.tr[api.CHARACTER_TIMERS.T_SLAM] = 99;
+    r.a._finishFrame(0); r.ch.root.updateMatrixWorld(true);
+    assert.deepEqual([...r.ch.P], pose, 'native calibrated weapon pose cannot depend on released Special ages');
+    // Native zero-dt limb solving converges again by about 1e-10; preserve
+    // exact pose equality above and bound actual output at 1e-8 scene units.
+    ['handL', 'handR'].forEach((n, i) => assert.ok(r.ch.bones[n].getWorldPosition(new api.THREE.Vector3()).distanceTo(new api.THREE.Vector3(...bones[i])) < 1e-8));
+    drawnVertices(api, r.ch.weapon.parts.barrels.userData.mesh).forEach((v, i) => assert.ok(v.distanceTo(new api.THREE.Vector3(...vertices[i])) < 1e-8));
+    r.ch.tr.set(clocks);
+    assert.ok(r.grip('L') < .025 && r.grip('R') < .025); assert.ok(r.ch.ikErr.slice(0, 2).every(v => v < .001));
+  } finally { r.close(); }
+});
+
+test('admission disposed weapon detail cannot recreate installed tracks across realms or zero-time native state hooks', async () => {
+  const api = await production(), r = rig(api, 'splatling');
+  try {
+    r.step(1 / 60, { fire: true });
+    assert.ok(drawnVertices(api, r.ch.weapon.parts.barrels.userData.mesh).length > 100);
+    assert.ok(r.ch.ikErr.every(Number.isFinite));
+    const registry = r.ch[Symbol.for('inkwave.weapon-detail-motion.installed')];
+    assert.equal(registry.tracks.has(r.ch), true); r.ch.dispose();
+    assert.equal(registry.tracks.has(r.ch), false);
+    const clocks = [...r.ch.tr]; r.ch._updateStates(0, null);
+    assert.equal(registry.tracks.has(r.ch), false, 'native state delegation cannot recreate disposed owned tracks');
+    assert.equal(r.snapshot().enabled, false);
+    assert.equal(snapshotFromAnotherRealm(r.ch).enabled, false);
+    assert.deepEqual([...r.ch.tr], clocks);
+  } finally { r.close(); }
 });

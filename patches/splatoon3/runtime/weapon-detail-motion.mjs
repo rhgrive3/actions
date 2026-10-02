@@ -1,17 +1,18 @@
 // Fine motion calibrated against Nintendo's normal Slosher / Splat Charger /
 // Heavy Splatling / Blaster clips. These are this rig's visual curves, never
 // claimed to be unpublished Nintendo joint parameters. Gameplay is read only.
+import { specialMotionAllowsAction } from './action-admission.mjs';
 const INSTALLED = Symbol.for('inkwave.weapon-detail-motion.installed');
 const RESET_INSTALLED = Symbol.for('inkwave.weapon-detail-motion.runner-reset-installed');
-const tracks = new WeakMap(), fills = new WeakMap(), reaches = new WeakMap();
+const tracks = new WeakMap(), fills = new WeakMap(), reaches = new WeakMap(), disposed = new WeakSet();
 const TAU = Math.PI * 2;
 const clamp = (x, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, x));
 const smooth = x => { x = clamp(x); return x * x * (3 - 2 * x); };
-function trackMap(ch) {
+function registry(ch) {
   for (let p = ch && Object.getPrototypeOf(ch); p; p = Object.getPrototypeOf(p))
-    if (Object.hasOwn(p, INSTALLED)) return p[INSTALLED].tracks;
-  return tracks;
+    if (Object.hasOwn(p, INSTALLED)) return p[INSTALLED];
 }
+const trackMap = ch => registry(ch)?.tracks ?? tracks;
 export const WEAPON_DETAIL_CALIBRATION = Object.freeze({
   bucketDepth: .012, bucketDrawFrames: 3, bucketTiltLimit: .28,
   chargerReturnStart: .10, chargerReturnEnd: .38,
@@ -26,14 +27,15 @@ const recoil = Object.freeze({
 function track(ch) {
   const map = trackMap(ch);
   let m = map.get(ch);
-  if (!m) { m = { slosh: null, release: null, disposed: false }; map.set(ch, m); }
+  if (!m) { m = { slosh: null, release: null }; map.set(ch, m); }
   return m;
 }
-function enabled(ch) { return ch.s3WeaponDetailMotionEnabled !== false && ch.s3WeaponMotionEnabled !== false; }
+function enabled(ch) { return !!ch && ch.s3WeaponDetailMotionEnabled !== false && ch.s3WeaponMotionEnabled !== false
+  && !registry(ch)?.disposed?.has(ch); }
 function activeSpecial(ch, T) {
-  return ch._owner()?.specialActive ||
+  return !specialMotionAllowsAction(ch, !(ch._owner()?.specialActive ||
     Number.isInteger(T.T_SLAM) && ch.tr[T.T_SLAM] < 1.4 ||
-    Number.isInteger(T.T_LEAP) && ch.tr[T.T_LEAP] < 1.9;
+    Number.isInteger(T.T_LEAP) && ch.tr[T.T_LEAP] < 1.9));
 }
 function withRecoil(ch, fn) {
   const original = ch.hold, tune = recoil[ch.weaponKind];
@@ -125,7 +127,7 @@ export function installWeaponDetailMotion({ Character, WeaponRunner, THREE, CHAR
   }
   const P = Character.prototype;
   if (Object.hasOwn(P, INSTALLED)) return;
-  Object.defineProperty(P, INSTALLED, { value: Object.freeze({ tracks }) });
+  Object.defineProperty(P, INSTALLED, { value: Object.freeze({ tracks, disposed }) });
   const trigger = P.trigger, updateStates = P._updateStates, poseWeapon = P._poseWeapon;
   const poseSlosh = P._poseSlosh, animWeapon = P._animWeapon, nativeRecoil = P._recoil;
   const setWeapon = P.setWeapon, setVisible = P.setVisible, dispose = P.dispose;
@@ -293,5 +295,5 @@ export function installWeaponDetailMotion({ Character, WeaponRunner, THREE, CHAR
   };
   P.setWeapon = function (...args) { if (args[0] !== this.weaponKind) clear(this); return setWeapon.apply(this, args); };
   P.setVisible = function (value) { if (!value) clear(this); return setVisible.call(this, value); };
-  P.dispose = function (...args) { clear(this); return dispose.apply(this, args); };
+  P.dispose = function (...args) { clear(this); disposed.add(this); return dispose.apply(this, args); };
 }
