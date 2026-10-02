@@ -12,6 +12,36 @@ function start(f, a, vertical, dt = 1 / 60) {
   a.weaponRunner.update(dt, { fire: true, firePressed: true });
 }
 
+// A transformed geometry bounding box is conservative when the drum tilts.
+// Floor regression uses only indexed vertices that are actually drawn.
+function drumMinimum(c, THREE) {
+  let bottom = Infinity;
+  const v = new THREE.Vector3();
+  c.weapon.drum.traverse(m => {
+    if (!m.isMesh || !m.visible) return;
+    const p = m.geometry.attributes.position, index = m.geometry.index;
+    for (let i = 0; i < (index ? index.count : p.count); i++) {
+      v.fromBufferAttribute(p, index ? index.getX(i) : i).applyMatrix4(m.matrixWorld);
+      bottom = Math.min(bottom, v.y);
+    }
+  });
+  return bottom;
+}
+function gripError(c, THREE, name) {
+  const target = c.weapon.def[name].pos.clone().applyMatrix4(c.weapon.off.matrixWorld);
+  return target.distanceTo(c.bones[name].getWorldPosition(new THREE.Vector3()));
+}
+function settle(a, c, dt) {
+  a.weaponRunner.reset(); c.tr.fill(99);
+  c.root.position.set(0, 0, 0); c.rootInit = false; c.replant = true;
+  a.pos.set(0, 0, 0); a.vel.set(0, 0, 0); a.grounded = true; a.ink = 100;
+  const s = { form: 'kid', grounded: true, speed: 0, vy: 0, firing: false, rolling: false, localMove: { x: 0, z: 0 } };
+  for (let i = 0; i < Math.ceil(1.5 / dt); i++) c.update(dt, s);
+  c.weapon.drumW = 0;
+  c.fidget = -1; c.idleT = 0; c.shufT = 99;
+  return s;
+}
+
 test('simultaneous jump and fire go through actual Actor and retain vertical mode on landing', async () => {
   const f = await fixture(), a = f.make('roller');
   a.intent.jump = true; a.intent.fire = true; f.tick(a);
@@ -24,14 +54,17 @@ test('simultaneous jump and fire go through actual Actor and retain vertical mod
   assert.equal(a.weaponRunner.s3RollerAttack.vertical, true);
 });
 test('horizontal/vertical windups release on 21/26 elapsed ticks without an extra float tick', async () => {
-  for (const vertical of [false, true]) for (const dt of [1 / 60, 1 / 120]) {
+  for (const vertical of [false, true]) for (const dt of [1 / 30, 1 / 60, 1 / 120]) {
     const f = await fixture(), a = f.make('roller'); start(f, a, vertical, dt);
-    const ticks = Math.round((vertical ? a.weapon.verticalWindup : a.weapon.flickWindup) / dt);
+    const windup = vertical ? a.weapon.verticalWindup : a.weapon.flickWindup;
+    const ticks = Math.ceil(windup / dt - 1e-10);
     for (let i = 0; i < ticks - 1; i++) a.weaponRunner.update(dt, { fire: false });
     assert.equal(f.shots.length, 0);
     a.weaponRunner.update(dt, { fire: false }); assert.equal(f.shots.length, 1);
     assert.ok(Math.abs(a.ink - 91.5) < 1e-9);
     assert.equal(a.weaponRunner.s3RollerAttack.released, true);
+    assert.equal(a.weaponRunner.s3RollerAttack.elapsed, windup);
+    assert.ok(ticks * dt >= windup - 1e-10 && ticks * dt < windup + dt);
   }
 });
 test('jump after starting a horizontal attack keeps its selected mode; the next attack reselects', async () => {
@@ -81,14 +114,14 @@ test('actual projectile path retains narrow vertical paint flight and one-attack
 test('actual bones and weapon rotate vertically and the drum impulse waits for gameplay release', async () => {
   const f = await fixture(), { Character, CHARACTER_CHANNELS: C } = await realCharacter();
   const a = new f.Actor({ team: 0, name: 'actual roller rig', weapon: 'roller', CharacterClass: Character });
-  const c = a.character, r = a.weaponRunner;
+  const c = a.character, r = a.weaponRunner; c.actor = a;
   start(f, a, true);
   const frames = [], state = { form: 'kid', grounded: false, speed: 0, vy: 0, firing: true, rolling: false, localMove: { x: 0, z: 0 } };
   for (let i = 0; i < 48; i++) {
     if (i) r.update(1 / 60, { fire: false });
     if (i === 20) { state.grounded = true; c.trigger('land', 7.5); }
     c.update(1 / 60, state); c.root.updateMatrixWorld(true);
-    frames.push({ drum: c.weapon.drumW, angle: c.P[C.ANCR + 2], arm: c.bones.handR.getWorldPosition(a.pos.clone()), weapon: c.weapon.drum.getWorldPosition(a.pos.clone()), bottom: new f.THREE.Box3().setFromObject(c.weapon.drum).min.y });
+    frames.push({ drum: c.weapon.drumW, angle: c.P[C.ANCR + 2], arm: c.bones.handR.getWorldPosition(a.pos.clone()), weapon: c.weapon.drum.getWorldPosition(a.pos.clone()), bottom: drumMinimum(c, f.THREE) });
   }
   assert.ok(frames[18].angle > 1.4, 'drum axis is rotated upright before release');
   assert.equal(frames[25].drum, 0, 'no 0.15s visual impulse during windup');
@@ -97,8 +130,74 @@ test('actual bones and weapon rotate vertically and the drum impulse waits for g
   assert.ok(frames[18].arm.distanceTo(frames[26].arm) > .12, 'arm bones follow the grip IK');
   for (const frame of frames) for (const vec of [frame.arm, frame.weapon]) assert.ok(vec.toArray().every(Number.isFinite));
   assert.ok(frames.slice(26).every(frame => frame.bottom >= -.02), 'the upright drum clears the floor during landed recovery');
-  assert.ok(Math.abs(frames[47].angle) < .4, 'recovery returns to the carry/roll orientation');
+  assert.ok(frames[47].angle > .8, 'unheld recovery returns to the tilted shoulder carry');
   a.setWeapon('shooter'); assert.equal(c.s3RollerFlick, null);
+  c.dispose();
+});
+
+test('actual moving roller geometry and both grips stay synchronized through lift, landing, held roll and restart at 30/60/120Hz', async () => {
+  const f = await fixture(), { Character, THREE, CHARACTER_CHANNELS: C } = await realCharacter();
+  const a = new f.Actor({ team: 0, name: 'moving roller rig', weapon: 'roller', CharacterClass: Character });
+  const c = a.character, r = a.weaponRunner; c.actor = a;
+  for (const hz of [30, 60, 120]) for (const vertical of [false, true]) for (const held of [false, true]) for (const landAt of vertical ? [20 / 60, 40 / 60] : [Infinity]) {
+    const dt = 1 / hz, s = settle(a, c, dt), rows = [];
+    c.root.updateMatrixWorld(true);
+    const readyDrum = c.weapon.drum.getWorldPosition(new THREE.Vector3());
+    const readyAxis = new THREE.Vector3(1, 0, 0).applyQuaternion(c.weapon.drum.getWorldQuaternion(new THREE.Quaternion()));
+    assert.ok(readyDrum.y > .9 && readyDrum.y < 1.4 && readyDrum.z < -.2, 'idle drum is behind the shoulder, below an overhead windup');
+    assert.ok(Math.abs(readyAxis.y) > .6 && Math.abs(readyAxis.x) > .3, 'carry stays tilted across the back');
+    s.grounded = !vertical; start(f, a, vertical, dt);
+    for (let i = 0; i < Math.ceil(2.3 * hz); i++) {
+      const t = i * dt, restart = held && i === Math.round(1.52 * hz), fire = held && (t < 1.25 || t >= 1.5);
+      // Exercise landing before and after release at every update frequency.
+      const land = vertical && i === Math.round(landAt * hz);
+      if (land) { s.grounded = true; a.grounded = true; c.trigger('land', 7.5); }
+      if (i) r.update(dt, { fire, firePressed: restart });
+      s.rolling = r.rolling; s.firing = fire;
+      s.speed = r.rolling ? a.weapon.rollSpeed : 2; s.localMove = { x: 0, z: 1 };
+      c.root.position.z += s.speed * dt; a.pos.copy(c.root.position); a.vel.z = s.speed;
+      c.update(dt, s); c.root.updateMatrixWorld(true);
+      rows.push({ t, bottom: drumMinimum(c, THREE), gripL: gripError(c, THREE, 'handL'), gripR: gripError(c, THREE, 'handR'), rolling: r.rolling, roll: c.wRoll, axis: c.P[C.ANCR + 2] });
+      if (vertical && r.s3RollerAttack && !restart && t < .78) assert.equal(r.s3RollerAttack.vertical, true);
+      if (t < (vertical ? 26 : 21) / 60) assert.equal(c.weapon.drumW, 0, 'lift does not spin the drum before release');
+    }
+    const label = `${hz}Hz ${vertical ? `vertical land ${landAt}s` : 'horizontal'} ${held ? 'held/restart' : 'released'}`;
+    assert.ok(rows.every(x => x.bottom >= -.006), `${label}: actual vertices clear the floor (${Math.min(...rows.map(x => x.bottom))})`);
+    assert.ok(rows.every(x => x.gripL < .02 && x.gripR < .002), `${label}: arms reach the weapon grips (${Math.max(...rows.map(x => x.gripL))})`);
+    if (held) {
+      // Allow the late landing at 40F and the lowering spring to finish before
+      // checking sustained contact; all transition vertices are checked above.
+      const roll = rows.filter(x => x.t >= 1.1 && x.t < 1.2);
+      assert.ok(roll.every(x => x.rolling && x.roll > .9 && Math.abs(x.axis) < .15));
+      assert.ok(roll.every(x => x.bottom < .055), `${label}: rolling drum stays near the floor (${Math.max(...roll.map(x => x.bottom))})`);
+      assert.ok(rows.some(x => x.t > 1.52 && !x.rolling), 'pressing again lifts the drum');
+    } else assert.ok(rows.at(-1).axis > .8, 'release returns to tilted carry');
+  }
+  c.dispose();
+});
+
+test('reset during a real Character windup cancels the legacy pose and drum impulse; form transitions do not invent an attack', async () => {
+  const f = await fixture(), { Character, CHARACTER_TIMERS: T } = await realCharacter();
+  const a = new f.Actor({ team: 0, name: 'cancelled roller rig', weapon: 'roller', CharacterClass: Character });
+  const c = a.character, r = a.weaponRunner; c.actor = a;
+  const s = settle(a, c, 1 / 60); start(f, a, true); s.grounded = false;
+  for (let i = 0; i < 7; i++) { if (i) r.update(1 / 60, { fire: false }); c.update(1 / 60, s); }
+  r.reset();
+  assert.equal(c.s3RollerFlick, null); assert.ok(c.tr[T.T_FLICK] > 1);
+  for (const form of ['squid', 'kid']) {
+    s.form = form; s.grounded = true; a.grounded = true;
+    for (let i = 0; i < 70; i++) { r.update(1 / 60, { fire: false }); c.update(1 / 60, s); }
+    assert.equal(c.s3RollerFlick, null); assert.equal(c.weapon.drumW, 0);
+  }
+  assert.equal(f.shots.length, 0);
+  assert.ok(Array.from(c.P).every(Number.isFinite));
+  c.dispose();
+  const b = f.make('roller'); start(f, b, false); b.intent.squid = true;
+  f.tick(b, 10); assert.equal(b.form, 'kid', 'Actor keeps the windup in kid form');
+  f.tick(b, 60); assert.equal(b.form, 'squid');
+  assert.equal(b.weaponRunner.s3RollerAttack, null);
+  b.intent.squid = false; f.tick(b, 5); assert.equal(b.form, 'kid');
+  assert.equal(f.shots.length, 1, 'emerging without fire does not create another flick');
 });
 test('Character channel/drum hooks are hash locked and fail closed', () => {
   assert.doesNotThrow(() => checkCompatibility(path.join(ROOT, 'inkwave-public')));
