@@ -18,6 +18,7 @@ import { installClock } from './clock.mjs';
 import { installScoring } from './scoring.mjs';
 import { installUi } from './ui.mjs';
 import { installRendering } from './render.mjs';
+import { installRollerMotion } from './roller.mjs';
 import { installWalkMotion } from './walk.mjs';
 
 let installed = false;
@@ -33,6 +34,7 @@ export function install(profile) {
   Object.assign(SUB.bomb, profile.bomb);
   for (const [id, data] of Object.entries(profile.specials || {})) Object.assign(SPECIALS[id], data);
   installWeapons(api, profile);
+  installRollerMotion(api, profile);
   installMovement(api, profile);
   installGear(api, profile);
   installFlow(api, profile);
