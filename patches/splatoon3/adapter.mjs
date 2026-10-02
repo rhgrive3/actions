@@ -70,10 +70,16 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, '      if (onEnemy) jv *= 0.72;', '      if (onEnemy) jv = this.s3?.modifiers?.enemyJumpVelocity ?? P.enemyInkJumpVel;', 'enemy ink jump');
     code = replaceOnce(code, '      if (s.t > 0.75) {', '      if (s.t + 1e-10 >= this.s3.jumpChargeTime) {', 'super jump charge');
     code = replaceOnce(code, '        s.dur = 1.15 + Math.min(0.6, s.from.distanceTo(s.to) / 80);', '        s.dur = this.s3.jumpFlightTime;', 'super jump flight');
+    code = replaceOnce(code, '        this.invuln = Math.max(this.invuln, s.dur + 0.2);',
+      '        // Super Jump does not grant an extra landing shield.', 'super jump invulnerability');
+    code = replaceOnce(code, '      const k = Math.min(1, s.t / s.dur);',
+      '      const k = s.t + 1e-10 >= s.dur ? 1 : Math.min(1, s.t / s.dur);', 'super jump frame boundary');
+    code = replaceOnce(code, "      if (k >= 1) {\n        this.superJumpState = null;",
+      "      if (k >= 1) {\n        this.invuln = 0; // Spawn protection always ends before landing.\n        this.superJumpState = null;", 'super jump landing vulnerability');
     const start = code.indexOf('    // ---- ink / hp\n');
     const end = code.indexOf('    // ---- weapons (', start);
     if (start < 0 || end < start) throw new Error('INKWAVE patch conflict: actor resource connection');
-    code = code.slice(0, start) + '    updateResources(this, dt, onEnemy, isSquid);\n\n' + code.slice(end);
+    code = replaceOnce(code, code.slice(start, end), '    updateResources(this, dt);\n\n', 'post-movement resources');
     return `import { beforeActions } from '../../patches/splatoon3/runtime/movement.mjs';\nimport { updateResources } from '../../patches/splatoon3/runtime/resources.mjs';\n` + code;
   }
   if (rel === 'src/main.js') {

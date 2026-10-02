@@ -347,20 +347,21 @@
     },
     "unverified": [
       "upstream acceleration/braking/turn/air-control/jump and landing feel",
-      "Squid Roll angle/minimum speed/chain reset/armor semantics and duration",
-      "Surge burst velocity/armor/partial charge behavior",
+      "Squid Roll angle/minimum speed/chain reset/armor break vs overflow and duration; consecutive retention is applied once per launch but engine interpretation remains unverified",
+      "Surge burst velocity/armor/partial charge and post-wall air control (including the Ver.11.3.0 lateral-distance fix); 45F base charge timing is pinned",
       "Flow scoring/extension/buff multipliers (30s duration is official)",
       "default omitted shooter fire/recovery and charger charge/recovery fields",
       "roller cooldown and projectile distribution/damage aggregation details",
       "splatling second charge phase interpretation and partial stream duration",
       "ink recovery suppression during stored charge and dry squid",
-      "HP regen and enemy ink grace/recovery",
-      "superjump flight vulnerability/landing and respawn timing",
+      "HP regen delay/rate and enemy ink grace/contact-damage recovery; post-movement contact and partial-tick grace arithmetic are regression-verified only",
+      "superjump airborne vulnerability window/trajectory/landing paint and respawn timing/armor; raw 80F preparation/138F flight are pinned and landing protection is removed per Nintendo 9.3.0 fix",
       "special slam remains INKWAVE original; it is not Triple Splashdown",
-      "aim response, gyro, animation, terrain/network and physical-device validation",
+      "aim response, gyro, animation, terrain/network and physical-device validation; see movement-resources comparison matrix and Switch/iOS/two-peer measurement protocol",
       "splatling ChargeFrame_Second is interpreted cumulatively (72F total), not added to ChargeFrame_First (48F); actual engine timing requires verification",
       "weapon weight classes and all charging/rolling movement restrictions"
-    ]
+    ],
+    "movementResourcesEvidence": "reports/inkwave-movement-resources-2026-10-02.md"
   },
   "bindings": {
     "player.runSpeed": {
@@ -1082,6 +1083,36 @@
       "index": null,
       "factor": 0.016666666666666666,
       "rawValue": 80
+    },
+    "resources.enemyInkDps": {
+      "parameter": "data/parameter/1130/misc/params.json#/OpInk_DamagePerFrame",
+      "index": 2,
+      "factor": 6000,
+      "rawValue": 0.003
+    },
+    "resources.enemyInkDamageCap": {
+      "parameter": "data/parameter/1130/misc/params.json#/OpInk_DamageLmt",
+      "index": 2,
+      "factor": 100,
+      "rawValue": 0.4
+    },
+    "movement.roll.chainRetention": {
+      "parameter": "data/parameter/1130/misc/params.json#/Somersault_MoveVelKd",
+      "index": 2,
+      "factor": 1,
+      "rawValue": 0.85
+    },
+    "superJump.chargeTime": {
+      "parameter": "data/parameter/1130/misc/params.json#/SuperJump_ChargeFrm",
+      "index": 2,
+      "factor": 0.016666666666666666,
+      "rawValue": 80
+    },
+    "superJump.flightTime": {
+      "parameter": "data/parameter/1130/misc/params.json#/SuperJump_MoveFrm",
+      "index": 2,
+      "factor": 0.016666666666666666,
+      "rawValue": 138
     }
   },
   "gearExtra": {

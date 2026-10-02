@@ -5,6 +5,11 @@ export function rollEligible(velocity, move, cfg) {
   const cosine = Math.max(-1, Math.min(1, (velocity.x * move.x + velocity.z * move.z) / (speed * input)));
   return Math.acos(cosine) + 1e-10 >= cfg.minimumAngle;
 }
+export function rollLaunchSpeed(speed, chain, retention) {
+  // Speed already contains any loss from the previous roll. Apply the
+  // per-roll coefficient once, rather than compounding it again by chain count.
+  return speed * (chain > 0 ? retention : 1);
+}
 export function absorbArmor(state, damage) {
   if (!state || state.armorTime <= 0 || state.armorHP <= 0) return damage;
   const absorbed = Math.min(damage, state.armorHP); state.armorHP -= absorbed;
@@ -26,20 +31,23 @@ export function beforeActions(a, dt, jumpPressed) {
   if (!api) throw new Error('INKWAVE movement patch not installed');
   const state = movementState(a), cfg = config;
   state.chainTimer = Math.max(0, state.chainTimer - dt);
-  if (!state.chainTimer) state.chain = 0;
-  for (const action of [state.roll, state.surge]) if (action) action.armorTime = Math.max(0, (action.armorTime || 0) - dt);
+  if (state.chainTimer <= 1e-10) { state.chain = 0; state.chainTimer = 0; }
+  for (const action of [state.roll, state.surge]) if (action) {
+    const remaining = (action.armorTime || 0) - dt;
+    action.armorTime = remaining <= 1e-10 ? 0 : remaining;
+  }
   if (state.roll) {
     state.roll.time -= dt;
-    if (state.roll.time <= 0 || a.form !== 'squid') state.roll = null;
+    if (state.roll.time <= 1e-10 || a.form !== 'squid') state.roll = null;
   }
   if (!a.alive || a.specialActive || a.superJumpState || a.form !== 'squid') {
-    state.roll = state.surge = null; sync(a, state); return false;
+    state.roll = state.surge = null; a.anim.surgeCharge = 0; sync(a, state); return false;
   }
   // Own-ink roll uses the velocity captured BEFORE ordinary braking/turning.
   const wallRoll = a.climbing && jumpPressed && (a.intent.move.x * a.wallN.x + a.intent.move.z * a.wallN.z) >= cfg.wallRollMinimumInput;
   if (jumpPressed && (wallRoll || a.submerged && rollEligible(a.vel, a.intent.move, cfg.roll))) {
     const retention = a.s3.modifiers?.rollRetention ?? cfg.roll.chainRetention;
-    const speed = Math.max(cfg.roll.minimumSpeed, Math.hypot(a.vel.x, a.vel.z)) * Math.pow(retention, state.chain);
+    const speed = rollLaunchSpeed(Math.max(cfg.roll.minimumSpeed, Math.hypot(a.vel.x, a.vel.z)), state.chain, retention);
     const direction = wallRoll ? a.wallN : a.intent.move;
     launch(a, direction, speed, cfg.roll.jumpVelocity, 'squidroll');
     state.roll = { time: cfg.roll.duration, armorTime: cfg.roll.armorTime, armorHP: cfg.roll.armorHP,
@@ -52,6 +60,7 @@ export function beforeActions(a, dt, jumpPressed) {
     if (surge.phase === 'charge') {
       const scale = a.s3.modifiers?.surgeChargeScale ?? 1;
       surge.charge = Math.min(1, surge.charge + dt / (cfg.surge.chargeTime * scale));
+      if (1 - surge.charge <= 1e-10) surge.charge = 1;
       a.climbV = 0; a.vel.set(0, 0, 0); a.jumpBuffer = 0;
       a.anim.surgeCharge = surge.charge;
       sync(a, state); return true;
@@ -71,7 +80,7 @@ export function beforeActions(a, dt, jumpPressed) {
   }
   if (state.surge?.phase === 'burst') {
     const burst = state.surge; burst.time -= dt;
-    if (burst.time <= 0 || !a.climbing && a.grounded) state.surge = null;
+    if (burst.time <= 1e-10 || !a.climbing && a.grounded) state.surge = null;
     else if (a.climbing) {
       a.climbV = burst.speed; a.vel.y = burst.speed; a.jumpBuffer = 0;
       sync(a, state); return true;
@@ -85,7 +94,8 @@ export function installMovement(context, tuning) {
   const { Actor } = api;
   const reset = Actor.prototype.reset, damage = Actor.prototype.damage;
   Actor.prototype.reset = function (...args) {
-    const value = reset.apply(this, args); this.s3 ||= {}; delete this.s3.actions; this.s3.roll = this.s3.surge = null; return value;
+    const value = reset.apply(this, args); this.s3 ||= {}; delete this.s3.actions; this.s3.roll = this.s3.surge = null;
+    this.anim.surgeCharge = 0; return value;
   };
   Actor.prototype.damage = function (amount, attacker, source) {
     if (this.invuln > 0 || !this.alive) return false;
@@ -101,7 +111,9 @@ export function installMovement(context, tuning) {
   const horizontal = Actor.prototype._horizontal;
   Actor.prototype._horizontal = function (...args) {
     const roll = movementState(this).roll;
-    if (roll) { this.vel.x = roll.vx; this.vel.z = roll.vz; return; }
+    // Keep launch momentum, including any clipping applied by the real collision
+    // resolver. Restoring vx/vz here would push into the wall again every tick.
+    if (roll) return;
     return horizontal.apply(this, args);
   };
   const ledge = Actor.prototype._ledgePop;
@@ -122,7 +134,7 @@ export function installMovement(context, tuning) {
     Actor.prototype[method] = function (...args) {
       const result = original.apply(this, args);
       if (this.specialActive || this.superJumpState) {
-        const state = movementState(this); state.roll = state.surge = null; sync(this, state);
+        const state = movementState(this); state.roll = state.surge = null; this.anim.surgeCharge = 0; sync(this, state);
       }
       return result;
     };

@@ -1,14 +1,27 @@
 let api, tuning;
 export function installResources(context, values) { api = context; tuning = values.resources; }
-export function updateResources(a, dt, onEnemy, isSquid) {
+export function resourceSurface(a) {
+  // Integration may have crossed a paint edge, taken off, or landed this tick.
+  // The pre-movement surface is only suitable for movement, not recovery.
+  a._surface();
+  const isSquid = a.form === 'squid';
+  a.submerged = isSquid && a.grounded && a.groundTeam === 1;
+  a.onEnemy = a.grounded && a.groundTeam === 2 && !a.submerged;
+  return { isSquid, onEnemy: a.onEnemy };
+}
+export function updateResources(a, dt) {
   if (!api) throw new Error('INKWAVE resource patch not installed');
   const P = api.PLAYER, r = tuning, mods = a.s3?.modifiers || {};
+  const { onEnemy, isSquid } = resourceSurface(a);
   if (onEnemy) {
     a.s3 ||= {};
-    a.s3.enemyInkTime = (a.s3.enemyInkTime || 0) + dt;
+    const before = a.s3.enemyInkTime || 0;
+    a.s3.enemyInkTime = before + dt;
+    // Only the part of this tick beyond grace can deal contact damage.
+    const exposure = Math.max(0, a.s3.enemyInkTime - Math.max(before, r.enemyInkGrace || 0));
     const cap = mods.enemyDamageCap ?? r.enemyInkDamageCap;
-    if (a.s3.enemyInkTime > (r.enemyInkGrace || 0) && a.damageFromInk < cap && a.invuln <= 0) {
-      const damage = Math.min((mods.enemyDamageRate ?? r.enemyInkDps) * dt, cap - a.damageFromInk);
+    if (exposure > 0 && a.damageFromInk < cap && a.invuln <= 0) {
+      const damage = Math.min((mods.enemyDamageRate ?? r.enemyInkDps) * exposure, cap - a.damageFromInk);
       a.damageFromInk += damage; a.hp = Math.max(1, a.hp - damage);
     }
     a.lastDamage = Math.min(a.lastDamage, r.enemyInkRegenSuppression);
@@ -16,7 +29,7 @@ export function updateResources(a, dt, onEnemy, isSquid) {
     if (a.s3) a.s3.enemyInkTime = 0;
     a.damageFromInk = Math.max(0, a.damageFromInk - dt * r.enemyInkRecovery);
   }
-  if (a.lastDamage + 1e-10 >= r.regenDelay && a.hp < P.hp) {
+  if (!onEnemy && a.lastDamage + 1e-10 >= r.regenDelay && a.hp < P.hp) {
     a.hp = Math.min(P.hp, a.hp + (a.submerged ? r.regenRateSwim : r.regenRate) * dt);
   }
   const wasFull = a.ink >= P.inkMax;
