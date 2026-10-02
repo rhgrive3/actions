@@ -1,0 +1,1091 @@
+{
+  "schema": 1,
+  "task": "inkwave-motion-detail-20261002",
+  "status": "PARTIAL REBOOT CHECKPOINT; not release or final verification",
+  "base": "fd9612edfa99787c9b8f37748bfac495de7f0658",
+  "savedAt": 1790959935.749699,
+  "lanes": [
+    {
+      "id": "terminal-jump",
+      "branch": "codex/inkwave-motion-detail-terminal-jump-20261003",
+      "worktree": "/mnt/workspace/.dev-state/agent-work/checkouts/inkwave-motion-detail-20261002/terminal-jump",
+      "evidence": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-jump",
+      "status": "checkpoint; parent verification/integration pending",
+      "files": {
+        "patches/splatoon3/runtime/jump-motion.mjs": "0d0c5fda2ae49d3efb4a8e1499369d1a93c7872fe4143cba81d23f5ac22b7dd2",
+        "patches/splatoon3/tests/jump-motion.test.mjs": "de0c87ea93c7fab0c4d0130fd5aa1920fdd646c23ebff66676fd6fe4c6bea699",
+        "patches/splatoon3/reference/jump-motion-comparison-2026-10-03.md": "c2b45dbf19038df4dc201996d21fb653145d1be052f8bb094705bd02e8f1b919"
+      },
+      "claimedCompletion": {
+        "schema": 1,
+        "status": "done",
+        "component": "terminal-jump",
+        "commit": "39292ccf067e1468a0fdfbeafdf4a70a0f80ac6e",
+        "foundation": "5cdc815c923e2e6e0a9860bcfec6a4734a089657",
+        "branch": "codex/inkwave-motion-detail-terminal-jump-20261003",
+        "remote_backup": {
+          "schema": 1,
+          "commit": "39292ccf067e1468a0fdfbeafdf4a70a0f80ac6e",
+          "branch": "codex/inkwave-motion-detail-terminal-jump-20261003",
+          "push_exit_code": 0,
+          "force_push": false,
+          "pushed_at": "2026-10-02T16:49:48.128216+00:00",
+          "remote_ref": "39292ccf067e1468a0fdfbeafdf4a70a0f80ac6e\trefs/heads/codex/inkwave-motion-detail-terminal-jump-20261003",
+          "verified": true
+        },
+        "changed_files": [
+          "patches/splatoon3/reference/jump-motion-comparison-2026-10-03.md",
+          "patches/splatoon3/runtime/jump-motion.mjs",
+          "patches/splatoon3/tests/jump-motion.test.mjs"
+        ],
+        "implementation": "Additive ordinary aimed shooter jump leg calibration: rearward ankles, both flexed knees through apex; native takeoff/descent reach/other actions and gameplay preserved",
+        "tests": {
+          "schema": 1,
+          "commit": "39292ccf067e1468a0fdfbeafdf4a70a0f80ac6e",
+          "branch": "codex/inkwave-motion-detail-terminal-jump-20261003",
+          "foundation": "5cdc815c923e2e6e0a9860bcfec6a4734a089657",
+          "command": "INKWAVE_JUMP_TRACE_PATH=/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-jump/native-jump-trace.json node --experimental-vm-modules --test patches/splatoon3/tests/jump-motion.test.mjs",
+          "exit_code": 0,
+          "tests": 3,
+          "pass": 3,
+          "fail": 0,
+          "node": "v24.20.0",
+          "log": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-jump/test-final.log",
+          "log_sha256": "03ab76df42c599c543a41c0173a851bc1dc2bbaa7402b40a2eae632f70e330ef",
+          "files_sha256": {
+            "patches/splatoon3/reference/jump-motion-comparison-2026-10-03.md": "c2b45dbf19038df4dc201996d21fb653145d1be052f8bb094705bd02e8f1b919",
+            "patches/splatoon3/runtime/jump-motion.mjs": "0d0c5fda2ae49d3efb4a8e1499369d1a93c7872fe4143cba81d23f5ac22b7dd2",
+            "patches/splatoon3/tests/jump-motion.test.mjs": "de0c87ea93c7fab0c4d0130fd5aa1920fdd646c23ebff66676fd6fe4c6bea699"
+          },
+          "scope_review": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-jump/scope-review.json",
+          "build_browser_ci": "Parent-owned, not performed in component lane",
+          "recorded_at": "2026-10-02T16:49:21.055397+00:00"
+        },
+        "evidence": {
+          "fresh-source-receipts.json": {
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-jump/fresh-source-receipts.json",
+            "sha256": "1ee7ac849a986d90c84aa9a230571cc51284c1ca59994061ca45525fac2f2578",
+            "bytes": 3634
+          },
+          "integration-handoff.json": {
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-jump/integration-handoff.json",
+            "sha256": "fe0a7d53b80e7586da32b9dbfac5db432a6a948f098772a06662bc5e7b157bad",
+            "bytes": 1858
+          },
+          "jump-motion.patch": {
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-jump/jump-motion.patch",
+            "sha256": "3a6a792ab2435b7c31cad3ca6e528f1eb8369bf063ef7904f0647476dc69c589",
+            "bytes": 34685
+          },
+          "native-before-after.png": {
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-jump/native-before-after.png",
+            "sha256": "94aea9b1c85850e16979f76cb034f4d699c7d899d8d36bb2a93b12110af8f8fa",
+            "bytes": 63206
+          },
+          "native-jump-trace.json": {
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-jump/native-jump-trace.json",
+            "sha256": "fca89a57fe53b0a25c9f565e2b0216b46d99a9834a2e07adb4c10990697c4ab6",
+            "bytes": 263481
+          },
+          "official-frame-pts.json": {
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-jump/official-frame-pts.json",
+            "sha256": "8d8b706c5805e5770eb2a27278fecfe7b49d84caf4950b6cb7899fae81eb3079",
+            "bytes": 860
+          },
+          "official-selected-frames.png": {
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-jump/official-selected-frames.png",
+            "sha256": "503779164f846466f7e43153e1cc3b3be8769767c25c682af08d48803ed3c9b2",
+            "bytes": 930888
+          },
+          "pose-measurements.json": {
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-jump/pose-measurements.json",
+            "sha256": "ce0d9dd622432a8467be9b9f74cbea52bc122745427e8b7f1475757585c60b67",
+            "bytes": 3685
+          },
+          "prior-embed-verification.json": {
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-jump/prior-embed-verification.json",
+            "sha256": "893dafc8db2bf9628c2e238a7f321e3c83b42d05319860f452964ddd9579561b",
+            "bytes": 427
+          },
+          "remote-backup-receipt.json": {
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-jump/remote-backup-receipt.json",
+            "sha256": "84a260420fcd6fb018d999477f12144053291357b719615e43e16c95453714b8",
+            "bytes": 380
+          },
+          "scope-review.json": {
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-jump/scope-review.json",
+            "sha256": "1940005d5d49332331bcfa1acf2fb68932af883a0c0ec05af64c1c496d8c4a5c",
+            "bytes": 1668
+          },
+          "source-observations.json": {
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-jump/source-observations.json",
+            "sha256": "5008a447539f778633b7cd56e1b0820b6f5401940f74947b3fe71f5f2d509c45",
+            "bytes": 3319
+          },
+          "test-final.log": {
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-jump/test-final.log",
+            "sha256": "03ab76df42c599c543a41c0173a851bc1dc2bbaa7402b40a2eae632f70e330ef",
+            "bytes": 634
+          },
+          "test-receipt.json": {
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-jump/test-receipt.json",
+            "sha256": "0725a8df92c46f43eb78c8756fa67d3e5bf2ffd4e082681b82452db00aca7d5f",
+            "bytes": 1374
+          }
+        },
+        "evidence_manifest": {
+          "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-jump/evidence-manifest.json",
+          "sha256": "ccd8ff371ca6f2789a24d06f3d8f19f4d009237affb2e55c5046ec0b19e4fe53"
+        },
+        "remaining_original_unknowns": [
+          "Original exact joint curves and launch/apex/descent/landing blend times",
+          "Footage game build and 11.3.0 hardware equivalence",
+          "Exact original shooter weapon variant, gear abilities and button/stick sequence",
+          "Running/strafe/backward aimed jump leg pose; running application is labelled visual extrapolation",
+          "Other weapon and un-aimed carry jump variations, high-fall/slope/ledge variants"
+        ],
+        "handoff": {
+          "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-jump/integration-handoff.json",
+          "installer": "installJumpMotion(api, profile)",
+          "order": "After existing installWeaponMotion and installWalkMotion",
+          "shared_hooks_or_exports_required": false,
+          "snapshot": "jumpMotionSnapshot(ch)",
+          "parent_owned": [
+            "Production import/installer activation",
+            "Shared report link/update",
+            "Combined build/browser/native GPU pose checks",
+            "Exact integrated-SHA CI and independent verification"
+          ]
+        },
+        "native_measurements": {
+          "max_ik_error": 0,
+          "max_sampled_muzzle_displacement": 4.681342462742322e-05,
+          "units": "native rig units; not original measurements"
+        },
+        "completed_at": "2026-10-02T16:50:47.488516+00:00"
+      }
+    },
+    {
+      "id": "terminal-landing",
+      "branch": "codex/inkwave-motion-detail-terminal-landing-20261003",
+      "worktree": "/mnt/workspace/.dev-state/agent-work/checkouts/inkwave-motion-detail-20261002/terminal-landing",
+      "evidence": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-landing",
+      "status": "checkpoint; parent verification/integration pending",
+      "files": {
+        "patches/splatoon3/runtime/landing-motion.mjs": "28f08945ad1f9db452f586bba7e53f07a81031400edb929a425b8a3c93bbca83",
+        "patches/splatoon3/tests/landing-motion.test.mjs": "ca89725bd0c6b9b68a361cea503f993ad0841e6dd4869b06e397e510c600a5af",
+        "patches/splatoon3/reference/landing-motion-comparison-2026-10-03.md": "7543b13debd84fec3b782f050914d35875d99dfc301518757635adb096f5645a"
+      },
+      "claimedCompletion": {
+        "schema": 1,
+        "status": "DONE: owned landing lane implementation/test/commit/remote backup",
+        "completedUTC": "2026-10-02T16:49:25.202748+00:00",
+        "lane": "terminal-landing",
+        "commit": "0f22f4b5f636a3b3d839c655900618339ce79784",
+        "commitTree": "d3f085a73d231d411113a7fb3f994db0ad483c2d",
+        "foundation": "5cdc815c923e2e6e0a9860bcfec6a4734a089657",
+        "branch": "codex/inkwave-motion-detail-terminal-landing-20261003",
+        "remote": "origin",
+        "remoteRef": "refs/heads/codex/inkwave-motion-detail-terminal-landing-20261003",
+        "remoteRefSHA": "0f22f4b5f636a3b3d839c655900618339ce79784",
+        "remoteVerified": true,
+        "changedFiles": [
+          "patches/splatoon3/reference/landing-motion-comparison-2026-10-03.md",
+          "patches/splatoon3/runtime/landing-motion.mjs",
+          "patches/splatoon3/tests/landing-motion.test.mjs"
+        ],
+        "worktreeClean": true,
+        "implementation": "Separate installLandingMotion(api, profile); native _poseLand refinements with calibrated pelvis/knee absorb/recovery and aimed torso weighting. Other hooks cancel only private landing participation. No native physics/root/input/resource/runner/timer/spring mutation.",
+        "tests": {
+          "command": "node --experimental-vm-modules --test patches/splatoon3/tests/landing-motion.test.mjs",
+          "node": "v24.20.0",
+          "tests": 6,
+          "passed": 6,
+          "failed": 0,
+          "exactTestedTree": "d3f085a73d231d411113a7fb3f994db0ad483c2d",
+          "receipt": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-landing/focused-test-receipt.json",
+          "log": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-landing/focused-test-with-weapon-final.log",
+          "covers": [
+            "Real production composition once in one VM realm",
+            "Cross-realm installer idempotence and snapshots",
+            "Actual posed native bones/IK/contact/visible indexed body and weapon triangles",
+            "Normal/hard and aimed recovery; native arm/weapon grips",
+            "30/60/120Hz rendering through 60Hz clock, dt0/pause, nullable preview",
+            "Reset/death/form/sub/weapon/action/special/superjump interruption and hidden/dispose",
+            "Actual native Physics collideBody/groundProbe/_onLand enabled-vs-disabled gameplay trajectory equality"
+          ]
+        },
+        "integrationHandoff": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-landing/integration-handoff.json",
+        "beforeAfterGeometry": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-landing/native-before-after-with-weapon-geometry.png",
+        "nativeTrace": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-landing/native-pose-with-weapon-trace.json",
+        "sourceReceipt": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-landing/source-receipt.json",
+        "framePTSObservations": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-landing/primary-frame-observations.json",
+        "remainingOriginalUnknowns": [
+          "Exact unpublished joint curves, angles and frame values",
+          "Hard ordinary fall/free-arm/hand-deck behavior with known original input/gear/weapon",
+          "Official film version, gear AP, controller input and playback edits",
+          "11.3.0 Switch input-aligned normal/aimed/sloped/stepped landing calibration",
+          "Shader details/GPU/browser appearance not established by CPU projection"
+        ],
+        "parentOwnedRemaining": [
+          "Production installer import/call after weapon/walk motion",
+          "Shared behavior report update",
+          "Combined browser capture/build/full gates/exact-SHA CI and integration"
+        ],
+        "evidence": {
+          "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-landing/focused-test-candidate.log": {
+            "sha256": "729bfff9d966c22a1f278c676e9d64eca3c1a1b11dba4f46cc85cff7ed77a87d",
+            "bytes": 1603
+          },
+          "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-landing/focused-test-development.log": {
+            "sha256": "d50e400e49c9ddff400ce4deaea198350f35f3a2bd0c028808738deeb3201dcc",
+            "bytes": 2353
+          },
+          "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-landing/focused-test-final.log": {
+            "sha256": "af8c4944969787f79a63df4484f36d568442ff30ab2ff7f62d874fb54b244506",
+            "bytes": 982
+          },
+          "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-landing/focused-test-receipt.json": {
+            "sha256": "89c25846a1329783f4ce388ed65ec625bc4a287c10618ae638b03343a1a387aa",
+            "bytes": 1792
+          },
+          "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-landing/focused-test-with-weapon-final.log": {
+            "sha256": "70646d2d9394f732d4aa8b96e7e8069d037835df3700ab23207d53718ca53845",
+            "bytes": 980
+          },
+          "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-landing/integration-handoff.json": {
+            "sha256": "4e9a34f13f7d155aeb007660ab7fd4f7619d922a992c9bcf1fc7a4b36efce721",
+            "bytes": 1938
+          },
+          "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-landing/interruption-test-candidate.log": {
+            "sha256": "266541cc66e519f63970422307d65bca97e1e91f6b2ece72aab62ff34510770f",
+            "bytes": 413
+          },
+          "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-landing/native-before-after-geometry.png": {
+            "sha256": "af0267ac9a12443dda441dd1a2352af9522e71af4007ddd5cc919fccced51e15",
+            "bytes": 374329
+          },
+          "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-landing/native-before-after-with-weapon-geometry.png": {
+            "sha256": "7989388ab00cea776bfed249e548f51b393d51b04d44e80f598a58d63f6a49fa",
+            "bytes": 379626
+          },
+          "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-landing/native-floor-candidate.log": {
+            "sha256": "36e6869a22deae95519ed0163055af3d89292606913b61351a29f5c5c0648a04",
+            "bytes": 423
+          },
+          "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-landing/native-geometry-projection-receipt.json": {
+            "sha256": "c9aec9e3836bdda3649172899192194f7022fdb0fe008684e8a05f73257e8634",
+            "bytes": 22833
+          },
+          "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-landing/native-pose-trace.json": {
+            "sha256": "15591a5fe056ea375169417477b88c1582a6e6bae3bd303b4b7bab49ae65ed6b",
+            "bytes": 64266808
+          },
+          "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-landing/native-pose-with-weapon-trace.json": {
+            "sha256": "97633b8c9081a98369d128ec73c112d68b69e632ecfd8dabdb7bf1a5b32fc006",
+            "bytes": 71656833
+          },
+          "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-landing/native-with-weapon-geometry-projection-receipt.json": {
+            "sha256": "4f9aad7462af1cfc9e9ff69b7eaa1500f3b55ac001dcb1ba87f7d1fb58210751",
+            "bytes": 22833
+          },
+          "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-landing/official-11.3.0.html": {
+            "sha256": "aec50af64312fa93700a03e5987c64b649c12d3be922af694f608e66c0d658fb",
+            "bytes": 33726
+          },
+          "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-landing/official-fashion.html": {
+            "sha256": "2b42a2a4d60e5642af0ffb0b2e8326c1ed6a244608e08b68ee861009900dc26b",
+            "bytes": 844315
+          },
+          "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-landing/primary-frame-observations.json": {
+            "sha256": "31d34c7c7aae87e40b9d6cdb50a90a6b8abd865ef96c064b2c494b7803de3ea1",
+            "bytes": 3043
+          },
+          "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-landing/prior-verified-shooter-1-embed.html": {
+            "sha256": "83594757720f64538f85d5fe67b697c362b7057ad483c016c66fb45a8fde9390",
+            "bytes": 9705
+          },
+          "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-landing/render-native-geometry.py": {
+            "sha256": "3c873844ff8470bb29ff2bef8985a83c72bcc86ea446657c8c4be6c5d8cfe1da",
+            "bytes": 4286
+          },
+          "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-landing/render-native-with-weapon-geometry.py": {
+            "sha256": "ac8ddbcdfab4b3b6061369867f03bda094e4d27fb87c176aa66e8c35bbc62ab2",
+            "bytes": 4346
+          },
+          "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-landing/runner-events.jsonl": {
+            "sha256": "4bf70866be1eedd09061a0ed650a651f08770020216ae3396077bdf630cd75b9",
+            "bytes": 509908
+          },
+          "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-landing/scope-review.json": {
+            "sha256": "7ad93525a3dd3cf8576082550fc349bf663caff7c00b79674b530fe5af1d0be5",
+            "bytes": 1102
+          },
+          "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-landing/shooter-1-1080.m3u8": {
+            "sha256": "789f2a32d16f801661ef1fc286738cd748a737ecdea8bb2f17dacb612beff809",
+            "bytes": 247
+          },
+          "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-landing/shooter-1-1080.ts": {
+            "sha256": "6fd20313b229072b55aca46805afc943cc22c3358620b37ed7dceee674ee76b7",
+            "bytes": 9944824
+          },
+          "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-landing/shooter-1-frame-pts.json": {
+            "sha256": "4e90a7fa05dcc9df7c3b9b0e7da9db47c0b835f71ebbc8c8aaa75ab061444689",
+            "bytes": 49808
+          },
+          "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-landing/shooter-1-landing-sheet.png": {
+            "sha256": "de036e3e2af822f5c57624d1f4177110dd68aea43c0f973941400a82fdf949f9",
+            "bytes": 2204503
+          },
+          "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-landing/shooter-1-master.m3u8": {
+            "sha256": "4a72946fe11b0771c203430983c6af637a9543d0a4c77cf85b655c6d3f1a5409",
+            "bytes": 777
+          },
+          "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-landing/shooter-1-n215.png": {
+            "sha256": "d2016041db98cdbe22a2a4560ca50fdb8b96d1ae4473ef8ab692da816bca1b3b",
+            "bytes": 2612175
+          },
+          "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-landing/shooter-1-recovery-sheet.png": {
+            "sha256": "204a611d5db2ad66577c2b43fb8f49768a29506ced35dfb4a9b218ad59698129",
+            "bytes": 2161780
+          },
+          "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-landing/shooter-1-segment-1.ts": {
+            "sha256": "2675c12e8e1d83db938dc3776614bc543e431475256646761301228a06ae1bb3",
+            "bytes": 9012908
+          },
+          "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-landing/shooter-1-segment-2.ts": {
+            "sha256": "4196be85a8285ef4b1acf293d92738fd48f47b17924d72a5c78f397a04a6263d",
+            "bytes": 931916
+          },
+          "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-landing/source-receipt.json": {
+            "sha256": "898a595ba9ccc399d6bab4d37c92d49056f7c6fdea3ff0879e7feba1f2a9221f",
+            "bytes": 3769
+          }
+        }
+      }
+    },
+    {
+      "id": "terminal-swim",
+      "branch": "codex/inkwave-motion-detail-terminal-swim-20261003",
+      "worktree": "/mnt/workspace/.dev-state/agent-work/checkouts/inkwave-motion-detail-20261002/terminal-swim",
+      "evidence": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-swim",
+      "status": "checkpoint; parent verification/integration pending",
+      "files": {
+        "patches/splatoon3/runtime/swim-motion.mjs": "081fa46357db25e6d2ee92cba747cf8d95a0332b04a237c7b9f668328872dd85",
+        "patches/splatoon3/tests/swim-motion.test.mjs": "73b7211942a47f02b52a49d28a1af41a994267d3428b135dc540415b6870ba1c",
+        "patches/splatoon3/reference/swim-motion-comparison-2026-10-03.md": "489801ce651cdddf59d867c408dad849e5362399ff97dbf2bd2945e9bb1d0f96"
+      }
+    },
+    {
+      "id": "terminal-wall",
+      "branch": "codex/inkwave-motion-detail-terminal-wall-20261003",
+      "worktree": "/mnt/workspace/.dev-state/agent-work/checkouts/inkwave-motion-detail-20261002/terminal-wall",
+      "evidence": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-wall",
+      "status": "checkpoint; parent verification/integration pending",
+      "files": {
+        "patches/splatoon3/runtime/wall-motion.mjs": "92c66a3e1089adf76837ab7e156ab68ce19c093f178df740d07407224ac080a9",
+        "patches/splatoon3/tests/wall-motion.test.mjs": "e79546908086012537070a381e96584a510f4d5e278c0221708d07a80f41b008",
+        "patches/splatoon3/reference/wall-motion-comparison-2026-10-03.md": "96e5250537300aa863769102e7761e4cd85358b6d172952e5c1f2b217343b552"
+      }
+    },
+    {
+      "id": "terminal-form",
+      "branch": "codex/inkwave-motion-detail-terminal-form-20261003",
+      "worktree": "/mnt/workspace/.dev-state/agent-work/checkouts/inkwave-motion-detail-20261002/terminal-form",
+      "evidence": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-form",
+      "status": "checkpoint; parent verification/integration pending",
+      "files": {
+        "patches/splatoon3/runtime/form-motion.mjs": "f05504eb24867dced5fd5b15dc9761a00376660b9c79aaf4044c4631d25f0594",
+        "patches/splatoon3/tests/form-motion.test.mjs": "6cd99a5a1024a145146b3e8116c126ef5c6e7a15b9c7f3953fe639b6e5b79783",
+        "patches/splatoon3/reference/form-motion-comparison-2026-10-03.md": "b8aa040c1577886c5b4542b16fed84e58e6ef590941da4bb7d57bf7ca13a81e1"
+      }
+    },
+    {
+      "id": "terminal-dualies",
+      "branch": "codex/inkwave-motion-detail-terminal-dualies-20261003",
+      "worktree": "/mnt/workspace/.dev-state/agent-work/checkouts/inkwave-motion-detail-20261002/terminal-dualies",
+      "evidence": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-dualies",
+      "status": "checkpoint; parent verification/integration pending",
+      "files": {
+        "patches/splatoon3/runtime/dualies-motion.mjs": "b2e8e42f6614135ba92feecbdf46f84a287f49647a248b2e3702e7d212affbc5",
+        "patches/splatoon3/tests/dualies-motion.test.mjs": "c94d87f9922b5798ea2d51d2c64eeaced61f6a999f152edd405a698469423627",
+        "patches/splatoon3/reference/dualies-motion-comparison-2026-10-03.md": "8dd9f391827dd2819930548c39c56d5e29e5c687192cb05dbc70575c0356a27f"
+      },
+      "claimedCompletion": {
+        "schema": 1,
+        "status": "DONE: scoped implementation, focused native-source proof, commit and remote backup; parent integration/browser/CI pending",
+        "task": "Dualies dodge roll, body tuck/tumble, direction, planted stance and recoil timing",
+        "foundation": "5cdc815c923e2e6e0a9860bcfec6a4734a089657",
+        "commit": "78d9d710b9e7644d6727c693ff2732d356b8997e",
+        "branch": "codex/inkwave-motion-detail-terminal-dualies-20261003",
+        "remote": "origin",
+        "remote_ref_verified": "78d9d710b9e7644d6727c693ff2732d356b8997e",
+        "changed_files": [
+          "patches/splatoon3/reference/dualies-motion-comparison-2026-10-03.md",
+          "patches/splatoon3/runtime/dualies-motion.mjs",
+          "patches/splatoon3/tests/dualies-motion.test.mjs"
+        ],
+        "changed_files_sha256": {
+          "patches/splatoon3/reference/dualies-motion-comparison-2026-10-03.md": "8dd9f391827dd2819930548c39c56d5e29e5c687192cb05dbc70575c0356a27f",
+          "patches/splatoon3/runtime/dualies-motion.mjs": "b2e8e42f6614135ba92feecbdf46f84a287f49647a248b2e3702e7d212affbc5",
+          "patches/splatoon3/tests/dualies-motion.test.mjs": "c94d87f9922b5798ea2d51d2c64eeaced61f6a999f152edd405a698469423627"
+        },
+        "tests": {
+          "schema": 1,
+          "commit": "78d9d710b9e7644d6727c693ff2732d356b8997e",
+          "command": "node --experimental-vm-modules --test patches/splatoon3/tests/dualies-motion.test.mjs",
+          "node_version": "v24.20.0",
+          "log": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-dualies/focused-final.log",
+          "log_sha256": "e78f7bf36bb77f35f4c350bcccc81d11e1978bb7e92db8e0260aa31d57d57fbe",
+          "passed": 5,
+          "failed": 0,
+          "runtime_sha256": "b2e8e42f6614135ba92feecbdf46f84a287f49647a248b2e3702e7d212affbc5",
+          "test_sha256": "c94d87f9922b5798ea2d51d2c64eeaced61f6a999f152edd405a698469423627",
+          "proof": "one VM realm and actual production installation, then additive dualies installer; native posed bones/drawn geometry/IK; fixed 60Hz Runner at 30/60/120Hz rendering; no GPU/original-device claim"
+        },
+        "evidence": [
+          {
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-dualies/source-receipts.json",
+            "bytes": 2207,
+            "sha256": "fd37118b38a788148f349e618d2790d94d6dea4958ba65b50a0862ea971afe38"
+          },
+          {
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-dualies/official-fashion.html",
+            "bytes": 823416,
+            "sha256": "8d4db5822e83c943cbe7dcdd92a9795714091375cd2df4f4655ddf5b4c6c02aa"
+          },
+          {
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-dualies/dualies-3-master.m3u8",
+            "bytes": 777,
+            "sha256": "1a425d59af51a8fa53d425c7904e5621414b1ed939ed57be82a27050cb02e45c"
+          },
+          {
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-dualies/dualies-3-playlist.m3u8",
+            "bytes": 181,
+            "sha256": "c8ce1c9fd995e687fa229e4e8f046e49c00114e3a23c4460b74287668f9756a7"
+          },
+          {
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-dualies/dualies-3.ts",
+            "bytes": 8869276,
+            "sha256": "23c839f37e3225726af8bd9b85b96201274a00767c9a380db188b421e1d1ecb9"
+          },
+          {
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-dualies/official-frame-selections.json",
+            "bytes": 5384,
+            "sha256": "ef94d103f167cf953e7fe6461fa8f298272f6551a994eced004ba9de28c02a7c"
+          },
+          {
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-dualies/official-dualies-sequence.png",
+            "bytes": 1610215,
+            "sha256": "0b459971be162c44bbea048a49816c4ea70e52c2480269bfb85c04e3ca0339b5"
+          },
+          {
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-dualies/retained-embed-verified.json",
+            "bytes": 338,
+            "sha256": "c51c16a15794ae5ca6491990b97e50fc93a1f9cbf640a78ef18591670ec37566"
+          },
+          {
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-dualies/native-pose-trace-final.json",
+            "bytes": 657419,
+            "sha256": "f0e2724b6bc8a9cf56fd8b17a90ab59188f59ee1ac0a089a94ac086e62042b94"
+          },
+          {
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-dualies/native-indexed-draw.json",
+            "bytes": 28637308,
+            "sha256": "0526d6b9aa441592ba2bb06ac86ab6ab8529c0e1f3ef514e88e61ec06e55c6ed"
+          },
+          {
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-dualies/native-dualies-before-after.png",
+            "bytes": 483595,
+            "sha256": "cec69c0648f2584bb6b26789c30eb5f220d2904ce88e6044fd99d9d2a7937c84"
+          },
+          {
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-dualies/scope-review.json",
+            "bytes": 1522,
+            "sha256": "4c4e7af45e3449cf3060d86932ffcce121ac1cb9f9767fa1018b542444c35396"
+          },
+          {
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-dualies/remote-backup-receipt.json",
+            "bytes": 942,
+            "sha256": "08fee873ca0ffb02b265adbf0abb6a69b81e7bd8421160174daad2d4cc6ca4df"
+          },
+          {
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-dualies/integration-handoff.json",
+            "bytes": 2350,
+            "sha256": "d711997133d0721a936f4a448a7e2679456619283f937835fbf48bd1dbd039e4"
+          },
+          {
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-dualies/dualies-motion.patch",
+            "bytes": 33077,
+            "sha256": "1a3a520f641938969df4ee7a19041d1ef36b22f3476587e1635a0c6a5dedceb9"
+          },
+          {
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-dualies/focused-final.log",
+            "bytes": 838,
+            "sha256": "e78f7bf36bb77f35f4c350bcccc81d11e1978bb7e92db8e0260aa31d57d57fbe"
+          },
+          {
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-dualies/test-receipt.json",
+            "bytes": 824,
+            "sha256": "15b298b98f167d22e702e12316bcc92428e126da403c6ff7f3a25ee3923bd9af"
+          }
+        ],
+        "integration_handoff": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-dualies/integration-handoff.json",
+        "installer_order": "after installWeaponMotion, before installWalkMotion",
+        "adapter_hooks_required": [],
+        "snapshot": "dualiesMotionSnapshot(ch)",
+        "completed": [
+          "Runner progress drives native tucked pose even if the old trigger window expires",
+          "World roll axis stays aligned to Runner direction through aim/root yaw changes",
+          "Obsolete recovery overlay no longer alters planted pose/first actual shot recoil",
+          "Reset/death/form/sub/weapon/spawn/special/superjump/dance interruptions suppress owned roll channels",
+          "Native IK, both held pistol transforms and actual indexed skinned mesh tested",
+          "Duplicate installation in a second module realm is harmless",
+          "Only three scoped files committed; clean tree and remote ref verified"
+        ],
+        "calibration": {
+          "status": "visual INKWAVE rig calibration, not original exact parameters",
+          "turnStart": 0.12,
+          "turnEnd": 0.94,
+          "curve": "smoothstep normalized roll progress; existing native tuck/IK retained"
+        },
+        "remaining_original_unknowns": [
+          "Nintendo unpublished joint trajectories, exact turn/landing/recoil curves",
+          "Official clip game build/gear/input/camera and exact variant selection",
+          "Controlled Switch slope/step/enemy-ink/airborne comparisons",
+          "Per-hand recoil parity of existing generic runner; no invented variant or shot clock"
+        ],
+        "parent_remaining": [
+          "Import/call installer in shared production install",
+          "Link focused comparison from shared behavior report",
+          "Build and actual browser/GPU pose proof",
+          "Complete exact-SHA CI and independently verify integration candidate"
+        ],
+        "timestamp_utc": "2026-10-02T16:46:38.222020+00:00"
+      }
+    },
+    {
+      "id": "terminal-roller-detail",
+      "branch": "codex/inkwave-motion-detail-terminal-roller-detail-20261003",
+      "worktree": "/mnt/workspace/.dev-state/agent-work/checkouts/inkwave-motion-detail-20261002/terminal-roller-detail",
+      "evidence": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-roller-detail",
+      "status": "checkpoint; parent verification/integration pending",
+      "files": {
+        "patches/splatoon3/runtime/roller-detail-motion.mjs": "ea0be87ff96a01e0310b3be9b69f70e364ea320e8ac7bcdfefaac7d45e000eee",
+        "patches/splatoon3/tests/roller-detail-motion.test.mjs": "8cfb7286f92e1d1bf0e10c6d7672a8896360a7ace3c1a11cc2fd9917de47aa6c",
+        "patches/splatoon3/reference/roller-detail-motion-comparison-2026-10-03.md": "86a3a4f518c43f63c770295a1cb09454206e9efe06e212586862d7adac8d0822"
+      }
+    },
+    {
+      "id": "terminal-superjump",
+      "branch": "codex/inkwave-motion-detail-terminal-superjump-20261003",
+      "worktree": "/mnt/workspace/.dev-state/agent-work/checkouts/inkwave-motion-detail-20261002/terminal-superjump",
+      "evidence": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-superjump",
+      "status": "checkpoint; parent verification/integration pending",
+      "files": {
+        "patches/splatoon3/runtime/superjump-motion.mjs": "b2f98b8dca35a1d2adb79859c73b957e0afe15f66bae308dbb7db22c76a4b862",
+        "patches/splatoon3/tests/superjump-motion.test.mjs": "473869d51ecb04dad924732fd3aeb5a8b4cfdbb36287a0268d57c6339187df1e",
+        "patches/splatoon3/reference/superjump-motion-comparison-2026-10-03.md": "a36a588600eadc07209f51102781355bf325a01d3f8c6ae857d47a93815a2493"
+      },
+      "claimedCompletion": {
+        "status": "done",
+        "scope": "Super Jump lane implemented, focused-tested, committed and backed up. Parent integration/browser/CI and original Switch motion verification remain pending.",
+        "completedAtUTC": "2026-10-02T16:47:08.091818+00:00",
+        "commit": "52d99df98bc8a7d03cd3c39e52e234287f8bef5e",
+        "branch": "codex/inkwave-motion-detail-terminal-superjump-20261003",
+        "foundation": "5cdc815c923e2e6e0a9860bcfec6a4734a089657",
+        "changedFiles": [
+          "patches/splatoon3/reference/superjump-motion-comparison-2026-10-03.md",
+          "patches/splatoon3/runtime/superjump-motion.mjs",
+          "patches/splatoon3/tests/superjump-motion.test.mjs"
+        ],
+        "allowlistPass": true,
+        "worktreeClean": true,
+        "remote": {
+          "name": "origin",
+          "branch": "codex/inkwave-motion-detail-terminal-superjump-20261003",
+          "sha": "52d99df98bc8a7d03cd3c39e52e234287f8bef5e",
+          "verified": true,
+          "receipt": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-superjump/remote-ref.txt",
+          "forcePush": false
+        },
+        "correction": "Short/vertical Super Jump flight incorrectly selected dry-hop tilt from the native hs > 3 dolphin gate. The additive module poses the actual squid mantle using the live Actor.superJumpState and actual velocity carried in the existing movement frame. Native charge compression, kid descent/return and native touchdown bones/IK remain in place.",
+        "test": {
+          "command": "node --experimental-vm-modules --test patches/splatoon3/tests/superjump-motion.test.mjs",
+          "exitCode": 0,
+          "passed": 6,
+          "failed": 0,
+          "finalLog": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-superjump/focused-test-final.log",
+          "sourceHashBinding": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-superjump/final-test-source-hashes.json",
+          "commitInputsVerified": true,
+          "productionComposition": "Single VM realm uses the actual production installer, full native Character/Actor/Runner/indexed geometry/IK and Physics floor; duplicate module-realm install is harmless",
+          "checks": [
+            "Counterfactual ascent/descent at 0/.5/1/16-unit destination distances",
+            "Complete native charge/takeoff/flight/kid descent/touchdown, collision, grip/IK/feet recovery",
+            "Identical gameplay and posed output under 30/60/120Hz and irregular rendering on existing 60Hz clock",
+            "Zero-dt, paused/no-frame simulation, nullable preview, frozen native flight/velocity read-only",
+            "Reset/death/form/sub/fire/weapon/action/special, hidden active return, repeated cycles and idempotent disposal",
+            "Direct variable visual intervals retain frozen native state with no new flight clock"
+          ],
+          "broadTests": "Not run; parent owns complete exact-SHA CI/build/browser verification"
+        },
+        "poseProof": {
+          "beforeAfter": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-superjump/native-before-after.json",
+          "nativeSequence": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-superjump/native-sequence.json",
+          "visual": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-superjump/native-short-descent-comparison.png",
+          "visualReview": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-superjump/native-geometry-visual-review.json",
+          "source": "Actual drawn indexed mesh vertices/native skinning transforms, full pose arrays, native bones and solver errors, body/weapon matrices/muzzle; no stand-in rig, AABB proof or target-only proof",
+          "originalParity": false,
+          "shaderRasterization": false
+        },
+        "sourceEvidence": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-superjump/source-observations.json",
+        "remainingOriginalUnknowns": [
+          "Exact mantle/joint curves, roll angle, smoothness at vertical apex",
+          "Takeoff pose and exact release frame",
+          "Kid return frame and descent preparation pose",
+          "Landing body compression/joint angles and input recovery",
+          "Weapon and gear AP in inaccessible clips",
+          "Stealth Jump additional duration support in separate core is outside this module",
+          "Input-aligned Switch footage and actual browser visual result"
+        ],
+        "calibrationLabel": "Velocity alignment and native dolphin shape/wiggle are game-engine visual calibration, not verified Nintendo curves/numbers. Official guide video requires sign-in and report embed returns HTTP403; no original frames acquired or source restriction bypassed.",
+        "handoff": {
+          "installer": "installSuperjumpMotion(api, profile)",
+          "module": "patches/splatoon3/runtime/superjump-motion.mjs",
+          "exportSnapshot": "superjumpMotionSnapshot(character)",
+          "exports": [
+            "installSuperjumpMotion",
+            "superjumpMotionSnapshot",
+            "SUPERJUMP_MOTION_CALIBRATION"
+          ],
+          "foundation": "5cdc815c923e2e6e0a9860bcfec6a4734a089657",
+          "requiredApi": [
+            "Actor",
+            "Character",
+            "THREE",
+            "CHARACTER_TIMERS"
+          ],
+          "profile": "Existing profile.superJump and s3.jumpChargeTime; no profile edit required",
+          "installerOrder": "Install after installMovementMotion and the other native Character motion layers, so this gated Super Jump presentation is outermost. Existing installMovement/gear and fixed clock are unchanged.",
+          "adapterChange": null,
+          "hooks": {
+            "Character": [
+              "update",
+              "_updateSquid",
+              "trigger",
+              "setWeapon",
+              "dispose"
+            ],
+            "Actor": [
+              "_finishFrame",
+              "reset",
+              "splat",
+              "_startSpecial"
+            ]
+          },
+          "sharedFrame": "Reads anim.movementMotion.superJump/alive/special/chargeTime; publishes the read-only native Actor.vel reference as movementMotion.superJumpVelocity",
+          "crossLaneContract": "Other squid motion layers must yield their visual offsets when movementMotion.superJump is present. Native charge compression stays owned by existing movement-motion. No double compression or extra Super Jump clock.",
+          "idempotence": "Symbol.for per native prototype, across duplicate module realms; same state is readable by either realm",
+          "counterfactual": "character.s3SuperjumpMotionEnabled=false disables this presentation overlay only; gameplay is identical",
+          "scope": "Only new runtime, focused native test and reference comparison document; no parent-owned source edits",
+          "requiredParentWork": [
+            "Add import/call in parent-owned runtime/install.mjs",
+            "Append comparison-report entry below",
+            "Review composed native/browser output and exact pushed-SHA CI as parent",
+            "Check other lanes gate themselves during superJump"
+          ],
+          "mainReport": "reports/inkwave-splatoon3-behavior-2026-10-02.md",
+          "proposedComparisonReportEntry": {
+            "motion": "Super Jump short/vertical squid flight",
+            "originalSource": "Nintendo basic-controls guide (ymozvG1HbFs, LOGIN_REQUIRED) and Ver.11.0.0+ report (8dRlr38k1o3, HTTP403) freshly fetched 2026-10-03. Ground preparation/airborne flight distinction confirmed by official text; original exact mantle/joint curve unverified.",
+            "nativeImplementation": "inkwave-public/src/game/actor.js _updateSuperJump/_finishFrame; Character._updateSquid dolphin gate hs>3 falls through to dry-hop for short/vertical flight",
+            "reproduction": "Dry-grounded no-gear Actor.superJump(new THREE.Vector3(0,0,.5)), inspect mantle and actual velocity after 24 flight ticks; repeat 0/1/16 distance",
+            "playImpact": "Low-speed flight had dry-hop tilt and incorrect mantle direction; state-driven velocity alignment now reaches real indexed geometry while physics/clocks/input remain identical",
+            "verification": "Focused production one-realm native physics/Character/IK/mesh test; browser/CI/11.3.0 Switch comparison pending; numeric orientation/shape is labelled visual calibration",
+            "details": "patches/splatoon3/reference/superjump-motion-comparison-2026-10-03.md"
+          }
+        },
+        "separatePatch": {
+          "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-superjump/superjump-motion.patch",
+          "sha256": "fde75d6de8cd4819eaa59ba3744ec13cdfa4bd2009d002399b826fba3635f785",
+          "validation": "git apply --check --reverse passed on committed tree"
+        },
+        "evidence": [
+          {
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-superjump/after-short-descent.svg",
+            "bytes": 531454,
+            "sha256": "4a57a54dfb6ed2aad93f31f7ae5dc03798fce834f9eb86e4dde9f88d66a45788"
+          },
+          {
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-superjump/after-short-flight.svg",
+            "bytes": 530014,
+            "sha256": "72efaafddd75a2b5bbc60ce2c3a0d8dd9467a18d9cfddbd6b16c7077770e5fa6"
+          },
+          {
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-superjump/before-short-descent.svg",
+            "bytes": 530141,
+            "sha256": "2b68aa22b7e0b34e52dc690794678ce7b17ef49532a73ffc8cdbc9c0db636c1c"
+          },
+          {
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-superjump/before-short-flight.svg",
+            "bytes": 530039,
+            "sha256": "3c2f182637f1296b2596752108f1c89fdcc6fc2cb772d4b2e786d3823c6e561a"
+          },
+          {
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-superjump/final-test-source-hashes.json",
+            "bytes": 1482,
+            "sha256": "a11f348bdefbbce33c33b5bc497763afaa3aa47556083673bc0f15e5feff3702"
+          },
+          {
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-superjump/focused-test-final.log",
+            "bytes": 1015,
+            "sha256": "6098a8b9dff0d5e407655cbc4cfff6a9ff9e54fb7f33fd3a23eda9d7535da552"
+          },
+          {
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-superjump/focused-test-r2.log",
+            "bytes": 892,
+            "sha256": "d3ca223b2bad1c79e6d356a89db77a0a0a2424d6e5e9d17bcae1cbe85df32dbc"
+          },
+          {
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-superjump/focused-test.log",
+            "bytes": 2059,
+            "sha256": "0369c614e0d5d702fdb3b4e84fd4ebd78142902d5611d499ebd0eee7376e8bec"
+          },
+          {
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-superjump/integration-handoff.json",
+            "bytes": 3334,
+            "sha256": "7a4328b6ba67c6e9635b00614cae448f946c7b7a8f245230182ae35dab52bdfd"
+          },
+          {
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-superjump/native-before-after.json",
+            "bytes": 224155,
+            "sha256": "1842579875cca70d1b0f3793aac527edb295c1e5d162ffa25343641dbd926f26"
+          },
+          {
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-superjump/native-geometry-visual-review.json",
+            "bytes": 545,
+            "sha256": "6e4976028afcdd67a3cd6297b963a41587b7238ccf8916386ff1132901627d0f"
+          },
+          {
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-superjump/native-sequence.json",
+            "bytes": 450102,
+            "sha256": "d305a02d1ee258e2cc42063c2b9674c2502268bf592bb54c9dcce9e047495dd7"
+          },
+          {
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-superjump/native-short-descent-comparison.png",
+            "bytes": 12702,
+            "sha256": "d09c1a04f3905c572f1d03fc670c9cf5c802118e448caec1caefcadd098f4082"
+          },
+          {
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-superjump/official-basic-fresh.html",
+            "bytes": 105605,
+            "sha256": "db29bba4aed57565e3c2d74d880d658cbfeb139bd6d3df49ca6e27d00140abab"
+          },
+          {
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-superjump/official-report-fresh.html",
+            "bytes": 161887,
+            "sha256": "0da09549e1aa76f37985fe8668aa158d2c81d7ce04716aeb676a4c9c8b55ee6f"
+          },
+          {
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-superjump/official-report-script-fresh.js",
+            "bytes": 11440,
+            "sha256": "d4e293da22c5beff5438e560ca6e7d654dcfeb88f01174298ac02b23d3070b53"
+          },
+          {
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-superjump/official-superjump-player-status.json",
+            "bytes": 4761,
+            "sha256": "af8046342955031dea0b64775da42fb9a89f948a14c1601022d90739b0e96496"
+          },
+          {
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-superjump/official-superjump-poster.png",
+            "bytes": 34235,
+            "sha256": "a4583e71be1d819d66c9bb0eeeaf1c56bebf1c61dceda47db63a0653ca6f06b9"
+          },
+          {
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-superjump/official-superjump-youtube.html",
+            "bytes": 1055724,
+            "sha256": "37367b65b52a03f3a96f57797f95cba2ee8bfadfb246bb41fee402e79d78d3fa"
+          },
+          {
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-superjump/official-videoPlayer-fresh.js",
+            "bytes": 4466,
+            "sha256": "0e99a81e57ea6e42c26851e95809d1aa23a90a9bcf8eda104dd98c7ec3a3e85c"
+          },
+          {
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-superjump/official-weapons.html",
+            "bytes": 71509,
+            "sha256": "bf611cb7b28707c6ccb07b6d69ed341e50323ed3c6190ccc763c2573587bdaf7"
+          },
+          {
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-superjump/pose-evidence-hashes.json",
+            "bytes": 1351,
+            "sha256": "0e12420ba22c76f2a6ee6b5f9703c5d5f56855b17abf09df4ca5c7d238ab7caa"
+          },
+          {
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-superjump/remote-ref.txt",
+            "bytes": 108,
+            "sha256": "edcec7d67a872918b0fc68226290deddf741b7833876e056375afb9608dba238"
+          },
+          {
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-superjump/runner-events.jsonl",
+            "bytes": 498043,
+            "sha256": "43734b12a79dd71e232840778357af0670f79ec14ad0374fc74dff41788e0729"
+          },
+          {
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-superjump/scope-review.json",
+            "bytes": 1236,
+            "sha256": "4740e170ed90064737c912fc56a6ffb423e86af8120e832f2d801e95ce96ffb1"
+          },
+          {
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-superjump/source-observations.json",
+            "bytes": 4685,
+            "sha256": "b58504f7c7a882f9a23a70fc2d7c52c52c3497ed3270edea28acfaadd9724264"
+          },
+          {
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-superjump/superjump-motion.patch",
+            "bytes": 37885,
+            "sha256": "fde75d6de8cd4819eaa59ba3744ec13cdfa4bd2009d002399b826fba3635f785"
+          }
+        ],
+        "TASK": "Super Jump charge/takeoff, squid flight, descent and touchdown visual motion through actual native state/frame.",
+        "DONE": "Concrete short/vertical-flight presentation correction, source comparison, native regression/evidence, allowlist review, scoped commit and verified origin backup.",
+        "REMAINING": "Parent import/install call and comparison-report entry from integration-handoff.json; composed browser/build/exact-SHA CI; authorized input-aligned original Switch capture for exact motion calibration.",
+        "CHANGED FILES": [
+          "patches/splatoon3/reference/superjump-motion-comparison-2026-10-03.md",
+          "patches/splatoon3/runtime/superjump-motion.mjs",
+          "patches/splatoon3/tests/superjump-motion.test.mjs"
+        ],
+        "TEST STATUS": "6/6 focused tests pass; final input hashes match commit; no broad local suites.",
+        "IMPORTANT FINDINGS": "Original low-speed downward flight mantle points upward (alignment about -0.95 at .5 units); corrected native geometry points along actual descent (alignment 1). Physics/resources/input/runner trajectories identical. Original Nintendo orientation remains unverified."
+      }
+    },
+    {
+      "id": "terminal-squidroll",
+      "branch": "codex/inkwave-motion-detail-terminal-squidroll-20261003",
+      "worktree": "/mnt/workspace/.dev-state/agent-work/checkouts/inkwave-motion-detail-20261002/terminal-squidroll",
+      "evidence": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-squidroll",
+      "status": "checkpoint; parent verification/integration pending",
+      "files": {
+        "patches/splatoon3/runtime/squidroll-motion.mjs": "f183776d37f38d0cd6774317c674e4edeb95404cfb5fa75da44de6690b898ca2",
+        "patches/splatoon3/tests/squidroll-motion.test.mjs": "a8f2fdb295d74dfac9b0d29c76b4efdda130907f253ce014e7ba0d20fc04fc67",
+        "patches/splatoon3/reference/squidroll-motion-comparison-2026-10-03.md": "f943aa190e808f707737a756a44bb3e0f1e4793952cfda2d2eb18a5e97451593"
+      }
+    },
+    {
+      "id": "terminal-hit-spawn",
+      "branch": "codex/inkwave-motion-detail-terminal-hit-spawn-20261003",
+      "worktree": "/mnt/workspace/.dev-state/agent-work/checkouts/inkwave-motion-detail-20261002/terminal-hit-spawn",
+      "evidence": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-hit-spawn",
+      "status": "checkpoint; parent verification/integration pending",
+      "files": {
+        "patches/splatoon3/runtime/hit-spawn-motion.mjs": "6e3ab8f9ab07caf922de5ea809a45286722d7ef269b71df534c39803b29b8ab6",
+        "patches/splatoon3/tests/hit-spawn-motion.test.mjs": "6220c31ff9dfccc64c829900fd33989f8f2ae0f1314c24f9216a0b161b74f43f",
+        "patches/splatoon3/reference/hit-spawn-motion-comparison-2026-10-03.md": "c16af33a3f9400d78e0b50b4821dbb9b1ba8fc976bf48cc6e23eef1270467758"
+      },
+      "claimedCompletion": {
+        "schema": 1,
+        "status": "lane-implementation-complete; parent integration/browser/exact-SHA CI pending",
+        "lane": "terminal-hit-spawn",
+        "completedUtc": "2026-10-02T16:52:07.385481+00:00",
+        "commit": "36c9cd277e5c612a9c21f6bd5a477e16e3e8aff1",
+        "foundation": "5cdc815c923e2e6e0a9860bcfec6a4734a089657",
+        "branch": "codex/inkwave-motion-detail-terminal-hit-spawn-20261003",
+        "remote": {
+          "name": "origin",
+          "verified": true,
+          "sha": "36c9cd277e5c612a9c21f6bd5a477e16e3e8aff1",
+          "forcePush": false
+        },
+        "changedFiles": [
+          "patches/splatoon3/reference/hit-spawn-motion-comparison-2026-10-03.md",
+          "patches/splatoon3/runtime/hit-spawn-motion.mjs",
+          "patches/splatoon3/tests/hit-spawn-motion.test.mjs"
+        ],
+        "changes": [
+          "suppresses only legacy respawn dive/three-point flourish so actual native weapon support hand remains at grip",
+          "adds calibrated team-ink coating to native body material programs bound to native Actor.invuln; preserves generic invulnerability flash",
+          "immediate visual-state cleanup on hide/death/reset/special and native geometry/material disposal; no geometry/material clones",
+          "Symbol.for prototype/material guards and cross-realm-readable snapshot"
+        ],
+        "hitReactionCorrection": "No exact curve correction: fresh official clip cannot isolate controlled hit amplitudes, direction or timings; native reaction is preserved and output-tested.",
+        "splatDisappearanceCorrection": "Native ink burst and immediate root hiding are preserved; layer coating clears immediately. Equipment/ghost parity not claimed.",
+        "gameplayPreserved": [
+          "hp and damage",
+          "ink and special gameplay",
+          "respawn and invulnerability timers",
+          "root/world position and rotation",
+          "native physics/input/WeaponRunner/fuse/action clocks"
+        ],
+        "tests": {
+          "command": "node --experimental-vm-modules --test patches/splatoon3/tests/hit-spawn-motion.test.mjs",
+          "pass": 7,
+          "fail": 0,
+          "durationMs": 21644.628863,
+          "exactCommittedBytesVerified": true,
+          "log": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-hit-spawn/focused-tests-final.log",
+          "sha256": "77166a3659d0405c9016e9e0cdb479bf16c3d24551d5e686f706ecbdaeec0c29",
+          "proof": "actual production installer once in one VM realm; actual Character, Actor, WeaponRunner, native indexed geometry and native IK; no double rig",
+          "coverage": [
+            "30/60/120Hz fixed-clock pose and sampled drawn-geometry equality",
+            "dt0 pause",
+            "native grounded spawn before/after weapon grip and drawn body",
+            "directional hit pose equality; splat invisibility and unchanged timer decrement",
+            "native material/LOD shader composition and generic invulnerability isolation",
+            "cross-realm idempotence and nullable preview",
+            "reset/death/hide/form/sub/weapon/special interruption",
+            "resource disposal exactly once; Flow hook compatibility"
+          ]
+        },
+        "poseEvidence": {
+          "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-hit-spawn/native-pose-proof.json",
+          "sha256": "d216d1bce61e6320bbe8753380c1bbbf1ff5856170e97f88eedd074f44c281f2",
+          "drawnIndexedVertexSamplesPerRig": 124,
+          "nativeLeftIKErrorBefore": 0.13717375991908654,
+          "nativeLeftIKErrorAfter": 0
+        },
+        "sourceEvidence": [
+          {
+            "url": "https://splatoon.nintendo.com/en/gameplay/",
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-hit-spawn/official-gameplay.html",
+            "bytes": 136761,
+            "sha256": "604fa5910f0e66ee6e877d66f38baa28d71facc48bbef16d3467043448eb1f22",
+            "freshFetch": true
+          },
+          {
+            "url": "https://assets.nintendo.com/video/upload/w_548,q_70/v1657880121/Microsites/splatoon-3/videos/s3_howtoplay_move04.mp4",
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-hit-spawn/official-spawn.mp4",
+            "bytes": 1537598,
+            "sha256": "96e9af53db1acadfb386f7cfca46f0319140df888e527bb960221cdb9a289005",
+            "freshFetch": true
+          },
+          {
+            "url": "https://assets.nintendo.com/video/upload/v1657880121/Microsites/splatoon-3/videos/s3_howtoplay_move04.mp4",
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-hit-spawn/official-spawn-full.mp4",
+            "bytes": 26550634,
+            "sha256": "08a4571d3fc1bd2fa0bb290d8a11f904295b65f904b2c8c90a39c2ce276c821e",
+            "freshFetch": true
+          },
+          {
+            "url": "https://assets.nintendo.com/video/upload/w_548,q_70/v1657880121/Microsites/splatoon-3/videos/s3_howtoplay_move03.mp4",
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-hit-spawn/official-splat.mp4",
+            "bytes": 825091,
+            "sha256": "58a7ea09ebcf34138f3f21758123b256ebabf7647eee9f3068ecb0af7766ca3c",
+            "freshFetch": true
+          },
+          {
+            "url": "https://assets.nintendo.com/video/upload/v1657880121/Microsites/splatoon-3/videos/s3_howtoplay_move03.mp4",
+            "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-hit-spawn/official-splat-full.mp4",
+            "bytes": 26745416,
+            "sha256": "00645b6d7eca3c14d4f42e9a2a18e2ec4aad06e8ab428f9a1c814c196af1ad92",
+            "freshFetch": true
+          }
+        ],
+        "visualEvidence": [
+          "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-hit-spawn/spawn-detail.png",
+          "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-hit-spawn/splat-detail.png"
+        ],
+        "manifest": {
+          "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-hit-spawn/evidence-manifest.json",
+          "sha256": "58d6f7a1a12be6925a3037be2ceeae30fd597fbbef41faaf127c0d6f9de2329f"
+        },
+        "portablePatch": {
+          "path": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-hit-spawn/hit-spawn-motion.patch",
+          "sha256": "f321b6d40cb72479589755176d2dd1124664f1b0ba37edf0e9cac1136469c744"
+        },
+        "integrationHandoff": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-hit-spawn/integration-handoff.json",
+        "installer": "installHitSpawnMotion(api, profile)",
+        "installerOrder": "after weapon/walk hooks; tests install hit-spawn then real Flow motion in same realm",
+        "snapshot": "hitSpawnMotionSnapshot(character)",
+        "adapterExportsNeeded": [],
+        "profileChangesNeeded": [],
+        "remainingOriginalUnknowns": [
+          "current-console hit/armor shader and joint curves",
+          "original protection expiry/cancellation/break rules and exact timings",
+          "actual respawn launcher sequence versus opening promo sequence",
+          "original respawn/camera/ghost/loose equipment transitions",
+          "native hit spring residuals across hidden death interval; no isolated spring export yet"
+        ],
+        "parentRemaining": [
+          "add production installer import and call",
+          "link comparison into reports/inkwave-splatoon3-behavior-2026-10-02.md",
+          "landing owner considers native T_SPAWN>1.4 gate (not edited here)",
+          "native browser/GPU pose proof, build, combined-lane and exact-SHA CI"
+        ],
+        "TASK": "Hit-spawn separate motion patch",
+        "DONE": [
+          "implementation",
+          "source-grounded comparison",
+          "focused native-source tests",
+          "allowlist review",
+          "scoped commit",
+          "authorized remote backup verified",
+          "portable patch and evidence manifest"
+        ],
+        "REMAINING": "Parent-owned integration and original unknowns only.",
+        "CHANGED FILES": [
+          "patches/splatoon3/reference/hit-spawn-motion-comparison-2026-10-03.md",
+          "patches/splatoon3/runtime/hit-spawn-motion.mjs",
+          "patches/splatoon3/tests/hit-spawn-motion.test.mjs"
+        ],
+        "TEST STATUS": "7/7 focused tests pass; committed file bytes match tested bytes.",
+        "IMPORTANT FINDINGS": "Native legacy spawn gave left-arm solver error 0.13717375991908654 and floor-directed support hand; additive suppression yields native solver error 0 with same gameplay state and real drawn mesh deformation."
+      }
+    },
+    {
+      "id": "terminal-idle",
+      "branch": "codex/inkwave-motion-detail-terminal-idle-20261003",
+      "worktree": "/mnt/workspace/.dev-state/agent-work/checkouts/inkwave-motion-detail-20261002/terminal-idle",
+      "evidence": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-idle",
+      "status": "checkpoint; parent verification/integration pending",
+      "files": {
+        "patches/splatoon3/runtime/idle-motion.mjs": "2033475a6780a577662b95faedb53e9f3188cc425a0bc875b39a8c0ab01a8ad5",
+        "patches/splatoon3/tests/idle-motion.test.mjs": "8644d012ccfcf5ab96e95ae7868e8fa12c356e49f5263dc1262cf2c3ce9eea2c",
+        "patches/splatoon3/reference/idle-motion-comparison-2026-10-03.md": "5cc0aa003dc42525bd88c2f1b200de036524e597d2f24c6d044f86b14bb727f1"
+      }
+    },
+    {
+      "id": "terminal-emotes",
+      "branch": "codex/inkwave-motion-detail-terminal-emotes-20261003",
+      "worktree": "/mnt/workspace/.dev-state/agent-work/checkouts/inkwave-motion-detail-20261002/terminal-emotes",
+      "evidence": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-emotes",
+      "status": "checkpoint; parent verification/integration pending",
+      "files": {
+        "patches/splatoon3/runtime/emotes-motion.mjs": "8a6c5658dcc5efda9a0c78bbeb6e9f43e73f46cb19f29fde7d6d009c638e1e65",
+        "patches/splatoon3/tests/emotes-motion.test.mjs": "9afbda0a764250e9ac9945838f216ab18ee64bac9c277f00834a30c33d592489",
+        "patches/splatoon3/reference/emotes-motion-comparison-2026-10-03.md": "b36e8131e1f5fcc8ced2bfc2e683113decfe7ee317ce504807417127a1993c7f"
+      }
+    },
+    {
+      "id": "terminal-special",
+      "branch": "codex/inkwave-motion-detail-terminal-special-20261003",
+      "worktree": "/mnt/workspace/.dev-state/agent-work/checkouts/inkwave-motion-detail-20261002/terminal-special",
+      "evidence": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-special",
+      "status": "checkpoint; parent verification/integration pending",
+      "files": {
+        "patches/splatoon3/runtime/special-motion.mjs": "8dfd0c9a9e5141e9898fc469737556315e2f3d16601702835e5f29a5f41c8ee2",
+        "patches/splatoon3/tests/special-motion.test.mjs": "2a95079175a6fcbefda423a6bcfcac49e1c33494e5e416eabd95939d5dc3fbbc",
+        "patches/splatoon3/reference/special-motion-comparison-2026-10-03.md": "9af06be719124b66e01b1aea36182adbbf9e1055551a789ea340d10bee031911"
+      }
+    },
+    {
+      "id": "terminal-face",
+      "branch": "codex/inkwave-motion-detail-terminal-face-20261003",
+      "worktree": "/mnt/workspace/.dev-state/agent-work/checkouts/inkwave-motion-detail-20261002/terminal-face",
+      "evidence": "/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/terminal-face",
+      "status": "checkpoint; parent verification/integration pending",
+      "files": {
+        "patches/splatoon3/runtime/face-motion.mjs": "f4f5cf325993ba047e14f4d263b0f4752dee4ea1b7e220615263fa5f158dcded",
+        "patches/splatoon3/tests/face-motion.test.mjs": "31446361d6c185c8d53073a6365e200d229bc736a9188e493505bba6b32302cf",
+        "patches/splatoon3/reference/face-motion-comparison-2026-10-03.md": "6276720d88de57ebd863bddc58afb95fa801a79332874d8f6115a262577a70c4"
+      }
+    }
+  ],
+  "knownPending": [
+    "Flow AO pass exclusion fix",
+    "parent independent new motion reviews",
+    "new motion installer wiring",
+    "current exact-SHA full app Actions",
+    "original dirty repo copy preserving concurrent UI/model work"
+  ],
+  "persistentCheckpoint": "/mnt/workspace/.dev-state/agent-work/checkpoints/inkwave-motion-detail-20261002/state.json"
+}

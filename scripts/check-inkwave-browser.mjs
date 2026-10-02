@@ -109,8 +109,9 @@ try {
     return {state:g.match.state, elapsedAt20Hz:initial-g.match.time-.5, movement:actor.pos.distanceTo(before), hp:actor.hp, gear:actor.s3.loadout, velocityFinite:[actor.vel.x,actor.vel.y,actor.vel.z].every(Number.isFinite), clockTicks:g.s3Clock.ticks, paintedFloorArea, coverage:G.paint.coverage()};
   });
   if (Math.abs(result.gameplay.elapsedAt20Hz-3)>1e-8 || !result.gameplay.velocityFinite || result.gameplay.movement<=0 || result.gameplay.paintedFloorArea<=0 || result.gameplay.coverage[0]<=0 || result.gameplay.coverage[0]>1) throw new Error('Actual browser gameplay regression');
-  result.weaponMotion = await page.evaluate(() => {
+  result.weaponMotion = await page.evaluate(async () => {
     const G=globalThis.s3ProbeG,a=G.game.match.local,ch=a.character,dt=1/60;
+    const {flowMotionSnapshot}=await import(new URL('patches/splatoon3/runtime/flow-motion.mjs',document.baseURI).href);
     // The already loaded match's real runner and Actor frame drive the actual
     // rig. Position is held for these pose/timing checks; slide collision and
     // travel are covered separately by the actual-Physics regressions.
@@ -153,8 +154,11 @@ try {
     prepare('shooter');a.special=0;a.s3.flow.active=true;a.s3.flow.remaining=10;tick();
     const glow=()=>{const c=ch.u.uGlow.value;return Math.hypot(c.r,c.g,c.b);};
     const flow={activeGlow:glow(),specialGlow:ch.wGlow};
-    a.s3.flow.active=false;a.s3.flow.remaining=0;tick();flow.inactiveGlow=glow();
+    for(let i=0;i<60;i++)tick();flow.activePresentation=flowMotionSnapshot(ch);
+    a.s3.flow.active=false;a.s3.flow.remaining=0;tick();flow.expiryPresentation=flowMotionSnapshot(ch);
+    for(let i=0;i<30;i++)tick();flow.inactiveGlow=glow();flow.inactivePresentation=flowMotionSnapshot(ch);
     if(!Number.isFinite(flow.activeGlow)||flow.activeGlow<=0||flow.specialGlow>.001||flow.inactiveGlow>=.001)throw Error('Compiled Flow material did not follow actual actor state');
+    if(!flow.activePresentation.visible||flow.activePresentation.aliveParticles<1||flow.inactivePresentation.visible||flow.inactivePresentation.phase!=='off')throw Error('Compiled Flow exterior did not follow actual actor state');
     return {fixture:'loaded match Actor/WeaponRunner -> complete Character; fixed pose position; Chromium WebGL',dualies,slosher:{windup,firstWindupFrames,releaseFrames},reset,flow};
   });
   result.status = 'passed';
@@ -166,7 +170,7 @@ try {
   
   result.sourceSha = sourceSha; result.verifiedResponses = receipts.length;
   result.verifiedRuntimeFiles = [...new Set(receipts)].sort();
-  for (const required of ['patches/splatoon3/bootstrap.mjs','patches/splatoon3/profile.json','patches/splatoon3/runtime/install.mjs','patches/splatoon3/runtime/weapons.mjs','patches/splatoon3/runtime/movement.mjs','patches/splatoon3/runtime/walk.mjs','patches/splatoon3/runtime/roller.mjs','patches/splatoon3/runtime/movement-motion.mjs','patches/splatoon3/runtime/weapon-motion.mjs','src/main.js','src/game/actor.js','src/game/character.js','src/game/weapons.js']) if(!receipts.includes(required)) errors.push('Required runtime was not verified: '+required);
+  for (const required of ['patches/splatoon3/bootstrap.mjs','patches/splatoon3/profile.json','patches/splatoon3/runtime/install.mjs','patches/splatoon3/runtime/weapons.mjs','patches/splatoon3/runtime/movement.mjs','patches/splatoon3/runtime/walk.mjs','patches/splatoon3/runtime/roller.mjs','patches/splatoon3/runtime/movement-motion.mjs','patches/splatoon3/runtime/weapon-motion.mjs','patches/splatoon3/runtime/bomb-motion.mjs','patches/splatoon3/runtime/flow-motion.mjs','patches/splatoon3/runtime/weapon-detail-motion.mjs','src/main.js','src/game/actor.js','src/game/character.js','src/game/weapons.js']) if(!receipts.includes(required)) errors.push('Required runtime was not verified: '+required);
   if(errors.length || consoleErrors.length || failures.length) result.status = 'failed';
   result.errors = errors; result.consoleErrors = consoleErrors; result.requestFailures = failures;
   fs.writeFileSync(evidence + '/browser-result.json.writing', JSON.stringify(result, null, 2));
