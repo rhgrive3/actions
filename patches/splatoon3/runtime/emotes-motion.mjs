@@ -9,8 +9,9 @@ const interruptions = new Set(['shoot', 'throw', 'slosh', 'flick', 'charge_relea
   'dodge', 'leap', 'slam', 'spawn', 'movement_cancel', 'squidroll', 'squidsurge', 'squidsurge_top']);
 
 export const EMOTES_MOTION_CALIBRATION = Object.freeze({
-  // Pump's hero stance; flourish's camera stance; hops' final landing.
-  victoryHoldAt: Object.freeze([7.2 / 2.1, 2.6, (8 - 1e-5) / 2.5]),
+  // Pump's hero stance after wink recovery; flourish's camera stance;
+  // hops' final landing. Do not freeze the pump with its eye still closed.
+  victoryHoldAt: Object.freeze([7.95 / 2.1, 2.6, (8 - 1e-5) / 2.5]),
   provenance: 'existing INKWAVE pose endpoints; visually calibrated, not Nintendo frame values',
 });
 

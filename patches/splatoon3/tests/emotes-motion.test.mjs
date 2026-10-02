@@ -120,7 +120,8 @@ function capture(r, stage) {
     dancePose: Array.from(r.ch.PD), nativeIK: Array.from(r.ch.ikErr),
     grips: r.ch.dual ? [grip(r), grip(r, 'L')] : [grip(r)],
     bones: Object.fromEntries(Object.entries(r.ch.bones).map(([name, b]) => [name, {
-      position: b.getWorldPosition(new r.api.THREE.Vector3()).toArray(), quaternion: b.quaternion.toArray() }])),
+      position: b.getWorldPosition(new r.api.THREE.Vector3()).toArray(), quaternion: b.quaternion.toArray(), scale: b.scale.toArray() }])),
+    face: { ...r.ch.face }, nativeBlink: [r.ch.blinkL, r.ch.blinkR],
     bodyTransform: r.ch.kid.matrixWorld.toArray(), weaponTransform: r.ch.weapon.off.matrixWorld.toArray(),
     geometry: drawnGeometry(r) };
 }
@@ -156,6 +157,8 @@ test('native victory poses start at onset and hold their ending instead of resta
       assert.ok(difference(Array.from(before.ch.PD), nativeEnding) > .1, 'native action visibly restarted');
       assert.ok(grip(after) < .025, 'actual weapon grip survives retiming');
       assert.ok(Array.from(after.ch.ikErr).every(error => error < .0005), 'native solver still reaches the sampled pose');
+      if (variant === 0) assert.ok(Math.abs(after.ch.face.blinkR - after.ch.blinkR) < 1e-6,
+        'the hero ending must recover from its action wink, while native spontaneous blinking continues');
       assert.equal(after.ch.danceT, before.ch.danceT, 'no native clock was rewritten');
       evidence.push(capture(after, `patched-v${variant}-7s`));
     } finally { before.close(); after.close(); }
