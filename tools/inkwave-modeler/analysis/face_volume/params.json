@@ -362,54 +362,6 @@
    ]
   },
   {
-   "name": "bridge_side_soft",
-   "kind": "displace",
-   "mm": -2.0,
-   "weight_smooth": 8,
-   "bumps": [
-    {
-     "centre": [
-      15.0,
-      -21.0
-     ],
-     "rx": 7.0,
-     "ry": 11.0,
-     "x_fade": [
-      6.0,
-      11.0
-     ]
-    }
-   ],
-   "eye_keep_mm": [
-    1.5,
-    4.0
-   ]
-  },
-  {
-   "name": "canthus_medial_down",
-   "kind": "warp",
-   "vec_mm": [
-    0,
-    0,
-    -3.5
-   ],
-   "weight_smooth": 6,
-   "bumps": [
-    {
-     "centre": [
-      21.0,
-      -19.0
-     ],
-     "rx": 6.5,
-     "ry": 9.5
-    }
-   ],
-   "eye_keep_mm": [
-    0.4,
-    1.6
-   ]
-  },
-  {
    "name": "bridge_glabella_fill",
    "kind": "arc_v",
    "mm_sign": 1,
@@ -1200,6 +1152,49 @@
      "front_only": false
     }
    ]
+  },
+  {
+   "name": "supratip_fill",
+   "kind": "arc_v",
+   "mm_sign": 1,
+   "x": [
+    0.0,
+    8.0
+   ],
+   "ya": -27.0,
+   "yb": -39.0,
+   "p": 1.0,
+   "fade": 5.0,
+   "scale": 0.45,
+   "weight_smooth": 8
+  },
+  {
+   "name": "eyes_back",
+   "kind": "move_eyes",
+   "vec_mm": [
+    0,
+    0,
+    -3.5
+   ],
+   "eye_mm": [
+    1.5,
+    16.0
+   ],
+   "x_in": [
+    5.0,
+    13.0
+   ],
+   "weight_smooth": 10,
+   "smooth": {
+    "ring": [
+     1.5,
+     4.0,
+     10.0,
+     18.0
+    ],
+    "factor": 0.5,
+    "iters": 20
+   }
   }
  ],
  "delta_smooth": {

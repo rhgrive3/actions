@@ -44,11 +44,12 @@ FOLLOWERS = ['HEAD_skin', 'HEAD_skin_04', 'HEAD_skin_02', 'HEAD_skin_03', 'HEAD_
              'HEAD_eyes_29']
 EYEBALLS = ['HEAD_eyes', 'HEAD_eyes_02', 'HEAD_eyes_18', 'HEAD_eyes_19']
 IRIS_BALLS = {'HEAD_eyes_18': -1, 'HEAD_eyes': 1}
+CHANGED = list(dict.fromkeys([FACE] + FOLLOWERS + list(IRIS_BALLS) + EYEBALLS))   # backed up / restored
 
 
 def restore(drop=False):
     count = 0
-    for name in [FACE] + FOLLOWERS + list(IRIS_BALLS):
+    for name in CHANGED:
         backup = bpy.data.meshes.get(name + SUFFIX)
         if backup is None:
             continue
@@ -66,7 +67,7 @@ def restore(drop=False):
 
 
 def back_up():
-    for name in [FACE] + FOLLOWERS + list(IRIS_BALLS):
+    for name in CHANGED:
         if bpy.data.meshes.get(name + SUFFIX) is None:
             backup = bpy.data.objects[name].data.copy()
             backup.name = name + SUFFIX
@@ -281,6 +282,46 @@ def warp(face, w, vec_mm, loc):
                                    use_volume_preserve=False)
         for e in (a, b):
             bpy.data.objects.remove(e)
+
+
+def move_eyes(face, loc, d_eye, st):
+    """Set the eyes deeper: the eyeballs (sclera caps and irises) move by vec_mm as one piece (Warp, weight 1), and
+    the face moves with them by a weight that is 1 on the skin touching the eyeballs (eye distance < eye_mm[0])
+    and falls smoothly to 0 at eye_mm[1], so the lids stay on the eyeballs and the slope from the eye to the
+    cheek, brow and nose stays smooth.  x_in = [from, to] (|x|, mm) keeps the nose bridge where it is."""
+    a, b = st['eye_mm']
+    t = np.clip((b - d_eye) / (b - a), 0, 1)
+    w = t * t * (3 - 2 * t)
+    if 'x_in' in st:
+        c0, c1 = st['x_in']
+        t = np.clip((np.abs(loc[:, 0]) - c0) / (c1 - c0), 0, 1)
+        w *= t * t * (3 - 2 * t)
+    if st.get('weight_smooth', 0):
+        near = w >= 0.999
+        w = np.clip(smooth_weights(face, w, st['weight_smooth']), 0, 1)
+        w[near] = 1.0                       # the lid margins stay on the eyeballs
+    before = er.world(face)
+    warp(face, w, st['vec_mm'], loc)
+    for name in EYEBALLS:
+        obj = bpy.data.objects[name]
+        warp(obj, np.ones(len(obj.data.vertices)), st['vec_mm'], M.to_local(er.world(obj)) * 1000)
+    sm = st.get('smooth')
+    if sm:
+        # the socket wall gets steeper where the move fades out: Blender's Smooth over a ring round the eye
+        # (0 on the lid margin that rests on the eyeball, full from ring[1] to ring[2] mm, 0 beyond ring[3])
+        d = eye_distance(er.world(face))
+        r0, r1, r2, r3 = sm['ring']
+        t0 = np.clip((d - r0) / (r1 - r0), 0, 1)
+        t1 = np.clip((r3 - d) / (r3 - r2), 0, 1)
+        ws = t0 * t0 * (3 - 2 * t0) * t1 * t1 * (3 - 2 * t1)
+        if 'x_in' in st:
+            c0, c1 = st['x_in']
+            t = np.clip((np.abs(loc[:, 0]) - c0) / (c1 - c0), 0, 1)
+            ws *= t * t * (3 - 2 * t)
+        ws *= np.clip((loc[:, 2] - 40) / 20, 0, 1)
+        er.apply_weighted_modifier(face, ws, 'SMOOTH', factor=sm['factor'], iterations=sm['iters'])
+    move = np.linalg.norm(er.world(face) - before, axis=1) * 1000
+    print('FACE_VOLUME', st['name'], 'face vertices', int((w > 0.001).sum()), 'max move mm', round(float(move.max()), 2))
 
 
 def eye_distance(world):
@@ -1517,6 +1558,10 @@ def main():
             loc = M.to_local(er.world(face)) * 1000
             nw = np.array([face.matrix_world.to_3x3() @ v.normal for v in face.data.vertices])
             NORMALS = M.to_local(nw) - M.to_local(np.zeros((1, 3)))
+            if step['kind'] == 'move_eyes':
+                move_eyes(face, loc, d_eye, step)
+                print('FACE_VOLUME', step['name'], 'seam gap closed mm', round(float(join_seam(face, pairs)), 3))
+                continue
             if step['kind'] in ('arc_h', 'arc_v'):
                 off = arc_offsets(loc, step)
                 if step.get('keep_q34', False) and step['mm_sign'] > 0:
