@@ -96,6 +96,35 @@ def belly_field(W, cfg):
     return w
 
 
+def nape_field(obj, cfg):
+    """Back (-z, head frame) move that fills the corner where the back of the head meets the neck: in the side
+    views the source head ends in a round ball over a thin neck, the reference's back of head runs smoothly down
+    into the neck.  Amount (mm) by head-frame height (cfg['profile'] = [y_mm, mm] pairs), full near the midline
+    fading to the sides (cfg['x'] = [full, out] |x| mm) and on the back half only (cfg['z_back'] = [from, full])."""
+    L = er.M.to_local(er.world(obj)) * 1000
+    prof = np.array(cfg['profile'], float)
+    order = np.argsort(prof[:, 0])
+    d = np.interp(L[:, 1], prof[order, 0], prof[order, 1], left=0.0, right=0.0)
+    x_full, x_out = cfg['x']
+    z0, z1 = cfg['z_back']
+    return d * smoothstep((x_out - np.abs(L[:, 0])) / (x_out - x_full)) * smoothstep((z0 - L[:, 2]) / (z0 - z1))
+
+
+def nape(cfg):
+    """The same field on the head, the neck and everything that lies on them there (collar, temple shell), so
+    nothing opens or pokes through.  Blender's Warp, one vector, per-vertex weights."""
+    back = er.M.to_world_delta(np.array([[0.0, 0.0, -1.0]]))[0]
+    back /= np.linalg.norm(back)
+    peak = max(m for _, m in cfg['profile'])
+    for name in cfg['meshes']:
+        obj = bpy.data.objects[name]
+        w = nape_field(obj, cfg) / peak
+        before = er.world(obj)
+        warp(obj, w, tuple(back * peak / 1000))
+        print('BODY_SHAPE nape', name, 'vertices', int((w > 1e-3).sum()), 'max move mm',
+              round(float(np.linalg.norm(er.world(obj) - before, axis=1).max() * 1000), 2))
+
+
 def jacket_field(W, cfg):
     """Outward move of the jacket's open front edges at the waist (front parts only)."""
     x, y, z = W[:, 0], W[:, 1], W[:, 2]
@@ -573,6 +602,7 @@ def main():
         names += [n for n in sq['meshes'] if n not in names]
     for sl, _, riders in p.get('sleeves', {}).get('pairs', []):
         names += [n for n in [sl] + riders if n not in names]
+    names += [n for n in p.get('nape', {}).get('meshes', []) if n not in names]
     remove_made()
     restore_legwear()
     print('BODY_SHAPE restored', restore(names, drop=args.restore), 'meshes')
@@ -634,6 +664,8 @@ def main():
             squash(sq['meshes'], sq)
         if p.get('sleeves'):
             slim_sleeves(p['sleeves'])
+        if p.get('nape'):
+            nape(p['nape'])
         if p.get('nails'):
             mat = nail_material(p['nails'])
             for hand in p['nails']['hands']:
