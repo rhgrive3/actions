@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "sourceCommit": "8cb3787ff5ac041a02dcf5d6bbc6979f44af1a6d",
+  "files": {
+    "index.html": "13e4485f3974f806a1672e60200d6c86efd419a1cd41b18c9aa3e9cbf461a580",
+    "src/main.js": "af8d0c1e0d5850ba10b5a1e5f1b5be15860927aab78fd85390775876bd41bcd1",
+    "src/game/actor.js": "7330c84f1e095bcbbc41df26cab68d63cb0e3c9490d86bc45d60a45be6c4d4f3",
+    "src/game/weapons.js": "ffdf976caeec5e1dd3ca32356588b9610af355490d5a2d45cc8a58ce1be6daf5",
+    "src/game/player.js": "25c5f97c07d8bd53a6ab7f8a85dfb8361216754b9121ff19fb17c81da39657fc",
+    "src/game/match.js": "c76ca6b008204c70f3514d4fdfb76c19721d4363f8f6184f62067bc736d082c0",
+    "src/world/paint.js": "24af8f76519648629672b7504551a440de1f5cd3070bcc2960cb5aa5d6158302",
+    "src/config.js": "1ad69a27c47c74a8db2f6193fd369afb4ae7069d4902a5480bc365338097f164",
+    "src/ui/menus.js": "a1377440c9492d26029c9e71a94cf632859d00a365a8e66f7c586019c8c94289",
+    "src/core/shadowcache.js": "f062770e5bb6ca3f397cf83cb01ee3b0290bfabac5c3026c8a6355dd452a4391",
+    "src/core/input.js": "cc320e31be3b9be5c6ef80e4120e59a130068272e4bd30ae6585601ae4b04ae4",
+    "src/ui/hud.js": "7e99727b738b888d671ebca73c65f9c282b022783b42bddb2b63550de329a29c",
+    "src/i18n.js": "48f38fafdcbf75d93bbf46a0566b96f2d409025f48e9893c7ad316a6acecef07",
+    "src/game/physics.js": "69cef214461935a77ec3a167b70d50fd0e35a953334cd837ab9b8c037da5bb48",
+    "src/core/ctx.js": "3bac560e4a49b949890b54f7cbbdf9c7ed378aa2c9a1c3878b1d6df2589e5c04"
+  }
+}

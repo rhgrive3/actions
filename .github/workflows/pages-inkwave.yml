@@ -6,6 +6,8 @@ on:
     paths:
       - "inkwave-public/**"
       - "scripts/build-inkwave.mjs"
+      - "scripts/check-inkwave-patches.mjs"
+      - "patches/splatoon3/**"
       - ".github/workflows/pages-inkwave.yml"
   workflow_run:
     workflows: ["Fetch INKWAVE public source"]
@@ -47,7 +49,8 @@ jobs:
       - name: Build optimized site
         run: |
           set -euo pipefail
-          npm install --no-save --no-package-lock --no-audit --no-fund esbuild@0.25.12
+          npm install --no-save --no-package-lock --no-audit --no-fund esbuild@0.28.2
+          node --experimental-vm-modules scripts/check-inkwave-patches.mjs
           node scripts/build-inkwave.mjs inkwave-public _site
 
       - name: Upload INKWAVE site
