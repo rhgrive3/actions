@@ -212,8 +212,9 @@ test('posed indexed shell geometry follows kid/squid, airborne, weapons and LOD 
     const shell = r.ch.root.getObjectByName('s3-flow-edge:kid:hair:game')
       || r.ch.root.getObjectsByProperty('isSkinnedMesh', true).find(x => x.name.startsWith('s3-flow-edge:'));
     assert.ok(shell, 'uses actual skinned geometry');
-    const source = shell.parent.children.find(x => x !== shell && x.geometry === shell.geometry && !x.name.startsWith('s3-flow-edge:'));
-    assert.equal(shell.skeleton, source.skeleton); assert.equal(shell.geometry, source.geometry);
+    const source = shell.parent.children.find(x => x !== shell && x.geometry?.index === shell.geometry.index && !x.name.startsWith('s3-flow-edge:'));
+    assert.equal(shell.skeleton, source.skeleton); assert.notEqual(shell.geometry, source.geometry);
+    assert.equal(shell.geometry.index, source.geometry.index); assert.equal(shell.geometry.attributes.position, source.geometry.attributes.position);
     assert.ok(shell.geometry.index.count > 0);
     // Test a genuinely drawn indexed vertex through the native skinning path;
     // assigned hand targets or an AABB would not prove this shell follows pose.
@@ -227,7 +228,7 @@ test('posed indexed shell geometry follows kid/squid, airborne, weapons and LOD 
       assert.ok(r.snapshot().visible);
     }
     const squidShell = r.ch.root.getObjectByName('s3-flow-squid-edge');
-    assert.equal(squidShell.geometry, r.ch.squid.body.geometry); assert.equal(squidShell.parent, r.ch.squid.body.parent);
+    assert.notEqual(squidShell.geometry, r.ch.squid.body.geometry); assert.equal(squidShell.geometry.index, r.ch.squid.body.geometry.index); assert.equal(squidShell.parent, r.ch.squid.body.parent);
     assert.equal(squidShell.visible, true); assert.ok(r.snapshot().shells < 50);
     assert.ok(squidShell.material.vertexShader.includes('float wig = color.g'));
     assert.equal(squidShell.material.uniforms.uWig, r.ch.u.uWig,
@@ -268,10 +269,10 @@ test('bounded resources survive many Flow cycles and dispose exactly once withou
     const shellMaterials = new Set(r.ch.root.getObjectsByProperty('isMesh', true)
       .filter(x => x.name.startsWith('s3-flow-edge:')).map(x => x.material));
     const owned = [glints.geometry, glints.material, ribbon.geometry, ribbon.material,
-      squidShell.material, ...shellMaterials, glints];
+      squidShell.material, ...shellMaterials, glints, squidShell.geometry, ...r.ch.root.getObjectsByProperty('isSkinnedMesh', true).filter(x => x.name.startsWith('s3-flow-edge:')).map(x => x.geometry)];
     const counts = new Map(owned.map(x => [x, 0]));
     for (const x of owned) x.addEventListener('dispose', () => counts.set(x, counts.get(x) + 1));
-    let sharedDisposed = 0; squidShell.geometry.addEventListener('dispose', () => sharedDisposed++);
+    let sharedDisposed = 0; r.ch.squid.body.geometry.addEventListener('dispose', () => sharedDisposed++);
     const initial = r.snapshot().resources;
     for (let cycle = 0; cycle < 40; cycle++) {
       r.a.reset(); r.a.grounded = true; prepare(api, r.a); award(api, r.a, victim.a);
@@ -300,7 +301,7 @@ test('quality rebuilds replace stale real LOD shells and keep resource counts bo
         .filter(x => ['skin', 'cloth', 'hair'].includes(x.userData.iwMat)).length);
       assert.ok(shells().every(shell => !original.has(shell)), 'retired source shells are detached');
       assert.ok(shells().every(shell => shell.parent.children.some(source => source !== shell
-        && source.geometry === shell.geometry && !source.name.startsWith('s3-flow-edge:'))));
+        && source.geometry?.index === shell.geometry.index && !source.name.startsWith('s3-flow-edge:'))));
     }
   } finally { api.G.settings.quality = 'high'; r.close(); victim.close(); }
 });
@@ -336,5 +337,42 @@ test('per-Character counterfactual opt-out retains the installed legacy Flow sha
     assert.equal(exterior(r.ch), undefined); assert.equal(r.snapshot().resources, 0);
     assert.equal(r.a.s3.flow.active, true);
     r.ch.s3FlowMotionEnabled = true; r.step(); assert.equal(r.snapshot().phase, 'entry');
+  } finally { r.close(); victim.close(); }
+});
+
+
+test('override material passes exclude every Flow mesh without changing shared native geometry or buffers', async () => {
+  const api = await production(), r = rig(api), victim = rig(api, 'shooter', 1);
+  try {
+    prepare(api, r.a); award(api, r.a, victim.a); r.step();
+    const meshes = r.ch.root.getObjectsByProperty('isMesh', true).filter(x => x.name.startsWith('s3-flow-'));
+    assert.ok(meshes.some(x => x.isInstancedMesh)); assert.ok(meshes.some(x => x.name.startsWith('s3-flow-entry-spiral')));
+    const borrowed = meshes.filter(x => x.name.startsWith('s3-flow-edge:') || x.name === 's3-flow-squid-edge');
+    assert.ok(borrowed.length > 1);
+    const native = borrowed.map(shell => {
+      const source = shell.name === 's3-flow-squid-edge' ? r.ch.squid.body : shell.parent.children.find(x => x !== shell && !x.name.startsWith('s3-flow-') && x.geometry?.index === shell.geometry.index);
+      assert.ok(source); assert.notEqual(shell.geometry, source.geometry);
+      assert.notEqual(shell.geometry.drawRange, source.geometry.drawRange);
+      assert.equal(shell.geometry.index, source.geometry.index);
+      for (const key of Object.keys(source.geometry.attributes)) assert.equal(shell.geometry.attributes[key], source.geometry.attributes[key]);
+      return {shell, source, range:{...source.geometry.drawRange}, index:source.geometry.index, attributes:{...source.geometry.attributes}};
+    });
+    const scene = {overrideMaterial: new api.THREE.MeshNormalMaterial()};
+    for (const mesh of meshes) {
+      const count = mesh.geometry.drawRange.count;
+      mesh.onBeforeRender({}, scene, {}, mesh.geometry); assert.equal(mesh.geometry.drawRange.count, 0);
+      scene.overrideMaterial = null; mesh.onBeforeRender({}, scene, {}, mesh.geometry); assert.equal(mesh.geometry.drawRange.count, count);
+      scene.overrideMaterial = {}; // repeat the next mesh's override pass
+    }
+    for (const record of native) {
+      assert.equal(record.source.geometry.drawRange.start, record.range.start); assert.equal(record.source.geometry.drawRange.count, record.range.count); assert.equal(record.source.geometry.index, record.index);
+      for (const key of Object.keys(record.attributes)) assert.equal(record.source.geometry.attributes[key], record.attributes[key]);
+      record.shell.geometry.addEventListener('dispose', () => {
+        assert.equal(record.shell.geometry.index, null, 'dispose cannot delete the source GPU index buffer');
+        assert.equal(Object.keys(record.shell.geometry.attributes).length, 0, 'dispose cannot delete source GPU vertex buffers');
+      });
+    }
+    r.close();
+    for (const record of native) { assert.equal(record.source.geometry.index, record.index); assert.equal(record.source.geometry.drawRange.start, record.range.start); assert.equal(record.source.geometry.drawRange.count, record.range.count); }
   } finally { r.close(); victim.close(); }
 });

@@ -116,6 +116,42 @@ function shellMaterial(ch, source, THREE) {
   m.vertexColors = source.vertexColors; m.side = THREE.BackSide;
   return m;
 }
+// Follow the native projectile ribbon gate: custom transparent vertices must
+// not become opaque occluders when GTAO replaces their material with normals.
+const beautyRanges = new WeakMap(), borrowedGeometry = new WeakSet();
+function overrideGate(_renderer, scene, _camera, geometry) {
+  geometry.drawRange.count = scene.overrideMaterial ? 0 : beautyRanges.get(geometry);
+}
+function gate(mesh) {
+  beautyRanges.set(mesh.geometry, mesh.geometry.drawRange.count);
+  mesh.onBeforeRender = overrideGate; return mesh;
+}
+function geometryView(source, THREE) {
+  // Independent drawRange/VAO identity, actual source vertex/index attributes.
+  // Never change a native geometry or duplicate its skinning/vertex buffers.
+  const view = new THREE.BufferGeometry();
+  view.index = source.index; view.attributes = { ...source.attributes };
+  view.morphAttributes = { ...source.morphAttributes };
+  view.morphTargetsRelative = source.morphTargetsRelative;
+  view.groups = source.groups.map(group => ({ ...group }));
+  view.drawRange = { ...source.drawRange };
+  view.boundingBox = source.boundingBox?.clone() ?? null;
+  view.boundingSphere = source.boundingSphere?.clone() ?? null;
+  borrowedGeometry.add(view); return view;
+}
+function disposeGeometry(geometry) {
+  if (borrowedGeometry.has(geometry)) {
+    // WebGLGeometries removes index/attribute GPU buffers on dispose. Detach
+    // these borrowed references first, so only this view's VAOs are released.
+    geometry.index = null; geometry.attributes = {}; geometry.morphAttributes = {};
+  }
+  geometry.dispose();
+}
+function retireShell(r, shell) {
+  shell.removeFromParent();
+  const i = r.ownedGeometries.indexOf(shell.geometry);
+  if (i >= 0) { r.ownedGeometries.splice(i, 1); disposeGeometry(shell.geometry); }
+}
 function makeResources(ch, s, THREE) {
   const group = new THREE.Group(); group.name = 's3-flow-exterior';
   group.visible = false; ch.root.add(group);
@@ -123,7 +159,7 @@ function makeResources(ch, s, THREE) {
   const alpha = new THREE.InstancedBufferAttribute(new Float32Array(FLOW_MOTION_CALIBRATION.glints), 1);
   alpha.setUsage(THREE.DynamicDrawUsage); glintGeo.setAttribute('aFlowAlpha', alpha);
   const glintMat = material(THREE, ch, glintVertex, glintFragment);
-  const glints = new THREE.InstancedMesh(glintGeo, glintMat, FLOW_MOTION_CALIBRATION.glints);
+  const glints = gate(new THREE.InstancedMesh(glintGeo, glintMat, FLOW_MOTION_CALIBRATION.glints));
   glints.name = 's3-flow-glints'; glints.frustumCulled = false; glints.renderOrder = 6;
   glints.instanceMatrix.setUsage(THREE.DynamicDrawUsage); group.add(glints);
 
@@ -145,16 +181,17 @@ function makeResources(ch, s, THREE) {
   ribbonGeo.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); ribbonGeo.setIndex(index);
   const ribbonMat = material(THREE, ch, ribbonVertex, ribbonFragment); ribbonMat.side = THREE.DoubleSide;
   const ribbons = Array.from({ length: FLOW_MOTION_CALIBRATION.ribbonCount }, (_, i) => {
-    const mesh = new THREE.Mesh(ribbonGeo, ribbonMat); mesh.name = `s3-flow-entry-spiral:${i}`;
+    const mesh = gate(new THREE.Mesh(ribbonGeo, ribbonMat)); mesh.name = `s3-flow-entry-spiral:${i}`;
     mesh.frustumCulled = false; mesh.renderOrder = 5; group.add(mesh); return mesh;
   });
   const shellMat = shellMaterial(ch, ch.mats.squid, THREE);
-  const squidShell = new THREE.Mesh(ch.squid.body.geometry, shellMat);
+  const squidView = geometryView(ch.squid.body.geometry, THREE);
+  const squidShell = gate(new THREE.Mesh(squidView, shellMat));
   squidShell.name = 's3-flow-squid-edge'; squidShell.frustumCulled = false; squidShell.renderOrder = 4;
   squidShell.visible = false; ch.squid.body.parent.add(squidShell);
   const r = { group, glints, alpha, glintGeo, glintMat, ribbonGeo, ribbonMat,
     ribbons, shellMat, squidShell, kidShells: new Map(), kidSources: new Map(),
-    shellMaterials: new Map([['squid', shellMat]]), ownedGeometries: [glintGeo, ribbonGeo],
+    shellMaterials: new Map([['squid', shellMat]]), ownedGeometries: [glintGeo, ribbonGeo, squidView], squidSource: ch.squid.body.geometry,
     ownedMaterials: [glintMat, ribbonMat, shellMat] };
   s.resources = r; return r;
 }
@@ -166,7 +203,7 @@ function syncShell(ch, s, r, THREE, shown) {
   if (shown && ch.kid.visible && source && r.kidSources.get(tier) !== source) {
     // Native quality changes rebuild the source tier objects. Retire stale
     // siblings before reconnecting, otherwise old geometry would accumulate.
-    for (const { shell } of r.kidShells.get(tier) || []) shell.removeFromParent();
+    for (const { shell } of r.kidShells.get(tier) || []) retireShell(r, shell);
     const shells = [];
     for (const mesh of source.list) {
       if (!['skin', 'cloth', 'hair'].includes(mesh.userData.iwMat)) continue;
@@ -176,7 +213,8 @@ function syncShell(ch, s, r, THREE, shown) {
         mat.uniforms.uLevel = r.shellMat.uniforms.uLevel;
         r.shellMaterials.set(kind, mat); r.ownedMaterials.push(mat);
       }
-      const shell = new THREE.SkinnedMesh(mesh.geometry, r.shellMaterials.get(kind));
+      const view = geometryView(mesh.geometry, THREE); r.ownedGeometries.push(view);
+      const shell = gate(new THREE.SkinnedMesh(view, r.shellMaterials.get(kind)));
       shell.name = 's3-flow-edge:' + mesh.name; shell.bind(mesh.skeleton, mesh.bindMatrix);
       shell.frustumCulled = false; shell.renderOrder = 4; shell.matrixAutoUpdate = false;
       mesh.parent.add(shell); shells.push({ source: mesh, shell });
@@ -188,7 +226,13 @@ function syncShell(ch, s, r, THREE, shown) {
     shell.matrix.copy(mesh.matrix); shell.matrixWorldNeedsUpdate = true;
   }
   const sq = ch.squid.body;
-  r.squidShell.geometry = sq.geometry; r.squidShell.position.copy(sq.position);
+  if (r.squidSource !== sq.geometry) {
+    const previous = r.squidShell.geometry;
+    r.ownedGeometries.splice(r.ownedGeometries.indexOf(previous), 1); disposeGeometry(previous);
+    r.squidShell.geometry = geometryView(sq.geometry, THREE); gate(r.squidShell);
+    r.ownedGeometries.push(r.squidShell.geometry); r.squidSource = sq.geometry;
+  }
+  r.squidShell.position.copy(sq.position);
   r.squidShell.quaternion.copy(sq.quaternion); r.squidShell.scale.copy(sq.scale);
   r.squidShell.visible = shown && ch.squidRoot.visible && sq.visible;
 }
@@ -339,7 +383,7 @@ export function installFlowMotion({ THREE, Character, Actor }) {
     if (r) {
       r.group.removeFromParent(); r.squidShell.removeFromParent();
       for (const shells of r.kidShells.values()) for (const { shell } of shells) shell.removeFromParent();
-      for (const geo of r.ownedGeometries) geo.dispose();
+      for (const geo of r.ownedGeometries) disposeGeometry(geo);
       for (const mat of r.ownedMaterials) mat.dispose();
       r.glints.dispose();
     }
