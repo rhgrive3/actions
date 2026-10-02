@@ -32,7 +32,7 @@ const result=await page.evaluate(async({prefix,contentHash})=>{
  const THREE=await import('three'), {G}=await import(prefix+'src/core/ctx.js');
  const profile=await fetch(prefix+'patches/splatoon3/profile.json').then(r=>r.json());
  const {install}=await import(prefix+'patches/splatoon3/runtime/install.mjs');install(profile);
- const {Character}=await import(prefix+'src/game/character.js');
+ const {Character,CHARACTER_FOOT_METRICS}=await import(prefix+'src/game/character.js');
  const scene=new THREE.Scene();scene.background=new THREE.Color('#dfe7e9');
  const camera=new THREE.OrthographicCamera(-1.4,1.4,1.05,-1.05,.01,200);
  const renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});renderer.setSize(960,720);renderer.setPixelRatio(1);document.body.appendChild(renderer.domElement);
@@ -57,18 +57,20 @@ const result=await page.evaluate(async({prefix,contentHash})=>{
    if(scenario.firing&&frame%Math.round(profile.weapons.shooter.fireInterval*60)===0)ch.trigger('shoot');
    ch.update(1/60,state);ch.root.updateMatrixWorld(true);
    const feet=ch.feet.map((f,i)=>{
-    const pitch=f.pitch, h=.085, ball=.11,heel=.065;
+    const pitch=f.pitch, {ANKLE_H:h,BALL_Z:ball,HEEL_Z:heel}=CHARACTER_FOOT_METRICS;
     const ay=h*Math.cos(pitch)+(pitch>=0?ball:-heel)*Math.sin(pitch),az=pitch>=0?ball+h*Math.sin(pitch)-ball*Math.cos(pitch):-heel+h*Math.sin(pitch)+heel*Math.cos(pitch);
-    const expected=f.cw.clone().add(new THREE.Vector3(0,ay,az).applyAxisAngle(new THREE.Vector3(0,1,0),f.cyaw));
+    const normal=new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0),f.cn);
+    normal.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),f.cyaw));
+    const expected=f.cw.clone().add(new THREE.Vector3(0,ay,az).applyQuaternion(normal));
     const actual=ch.bones[i===0?'footL':'footR'].getWorldPosition(new THREE.Vector3());
     const leg=i===0?ch.limbs.legL:ch.limbs.legR,hip=leg.up.getWorldPosition(new THREE.Vector3()),knee=leg.lo.getWorldPosition(new THREE.Vector3());
     const kneeFlex=Math.PI-knee.clone().sub(hip).angleTo(knee.clone().sub(actual));
     const soleForward=new THREE.Vector3(0,0,1).applyQuaternion(leg.end.getWorldQuaternion(new THREE.Quaternion()));
     const plantedDrift=f.planted&&last[i]?.planted?f.cw.distanceTo(last[i].cw):0;
     last[i]={planted:f.planted,cw:f.cw.clone()};
-    return {planted:f.planted,mode:f.mode,su:f.su,cw:f.cw.toArray(),actual:actual.toArray(),knee:knee.toArray(),kneeFlex,solePitch:Math.atan2(soleForward.y,Math.hypot(soleForward.x,soleForward.z)),ankleError:actual.distanceTo(expected),plantedDrift,pitch};
+    return {planted:f.planted,mode:f.mode,su:f.su,cw:f.cw.toArray(),actual:actual.toArray(),knee:knee.toArray(),kneeFlex,solePitch:Math.atan2(soleForward.y,Math.hypot(soleForward.x,soleForward.z)),ankleError:actual.distanceTo(expected),nativeReachError:ch.ikErr[i+2],plantedDrift,pitch};
    });
-   samples.push({frame,time,v,phase:ch.phase,cad:ch.cad,duty:ch.duty,hipDrop:ch.hipDrop,hipY:ch.bones.hips.position.y,feet});
+   samples.push({frame,time,v,moving:ch.moving,phase:ch.phase,cad:ch.cad,duty:ch.duty,hipDrop:ch.hipDrop,hipY:ch.bones.hips.position.y,feet});
    if(frame>=60&&frame<108&&frame%6===0 || scenario.stop&&frame>=96&&frame<150&&frame%9===0){
     camera.position.copy(ch.root.position).add(new THREE.Vector3(2.6,1.3,3.4));camera.lookAt(ch.root.position.clone().add(new THREE.Vector3(0,.62,0)));camera.updateMatrixWorld();renderer.render(scene,camera);
     images.push({name:scenario.name+'-'+String(frame).padStart(3,'0'),image:renderer.domElement.toDataURL('image/png')});
@@ -76,7 +78,7 @@ const result=await page.evaluate(async({prefix,contentHash})=>{
   }
   data.push({name:scenario.name,firing:!!scenario.firing,speed:scenario.v,samples});scene.remove(ch.root);ch.dispose();
  }
- const summary=data.map(({name,samples})=>{const steady=samples.filter(s=>s.time>=.8);return {name,maxAnkleError:Math.max(...steady.flatMap(s=>s.feet.filter(f=>f.planted).map(f=>f.ankleError))),maxHipDrop:Math.max(...steady.map(s=>s.hipDrop)),hipTravel:Math.max(...steady.map(s=>s.hipY))-Math.min(...steady.map(s=>s.hipY)),plantSlide:Math.max(...steady.flatMap(s=>s.feet.map(f=>f.plantedDrift))),catchFrames:steady.filter(s=>s.feet.some(f=>!f.planted&&f.mode===1)).length};});
+ const summary=data.map(({name,samples})=>{const steady=samples.filter(s=>s.time>=.8);return {name,maxAnkleError:Math.max(...steady.flatMap(s=>s.feet.filter(f=>f.planted).map(f=>f.ankleError))),maxPlantedMovingError:Math.max(0,...steady.filter(s=>s.moving).flatMap(s=>s.feet.filter(f=>f.planted).map(f=>f.ankleError))),maxNativeLegReachError:Math.max(0,...steady.flatMap(s=>s.feet.filter(f=>f.planted).map(f=>f.nativeReachError))),maxHipDrop:Math.max(...steady.map(s=>s.hipDrop)),hipTravel:Math.max(...steady.map(s=>s.hipY))-Math.min(...steady.map(s=>s.hipY)),plantSlide:Math.max(...steady.flatMap(s=>s.feet.map(f=>f.plantedDrift))),catchFrames:steady.filter(s=>s.feet.some(f=>!f.planted&&f.mode===1)).length};});
  renderer.dispose();return {contentHash,data,summary,images};
 },{prefix,contentHash:manifest.contentHash});
 for(const entry of result.images)fs.writeFileSync(path.join(output,entry.name+'.png'),Buffer.from(entry.image.split(',')[1],'base64'));delete result.images;
@@ -84,6 +86,7 @@ result.errors=errors;result.build=manifest.build;result.loaded=[...new Set(loade
 if(errors.length)throw Error('Browser animation error');
 for(const row of result.summary){
  if(row.plantSlide>1e-8||row.maxHipDrop>.10||row.hipTravel>(row.name==='run'?.075:.11))throw Error('Motion regression: '+row.name);
+ if(row.maxPlantedMovingError>=.001||row.maxNativeLegReachError>=1e-6)throw Error('Rendered planted ankle regression: '+row.name);
 }
 if(!loaded.some(file=>file.endsWith('/patches/splatoon3/runtime/walk.mjs'))||!loaded.some(file=>file.endsWith('/src/game/character.js')))throw Error('Actual walking modules were not loaded');
 }finally{await browser?.close();await new Promise(resolve=>server.close(resolve));}

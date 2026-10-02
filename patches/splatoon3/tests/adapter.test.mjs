@@ -18,6 +18,12 @@ test('missing or duplicated upstream connections fail closed', () => {
   assert.throws(() => adaptSource('src/main.js', ''), /conflict/);
   assert.throws(() => adaptSource('index.html', '<html>'), /conflict/);
 });
+test('an upstream change to the planted-leg reach connection stops the build', () => {
+  const character = fs.readFileSync(new URL('src/game/character.js', publicRoot), 'utf8');
+  const anchor = 'const d = _v5.length(), mxr = this.legReach * 0.97;';
+  assert.throws(() => adaptSource('src/game/character.js', character.replace(anchor, 'const d = _v5.length(), mxr = this.legReach * 0.95;')), /walking planted ankle reach/);
+  assert.throws(() => adaptSource('src/game/character.js', character + '\n' + anchor), /walking planted ankle reach/);
+});
 test('the deployment entry always installs patches before importing the game', () => {
   const html = fs.readFileSync(new URL('index.html', publicRoot), 'utf8');
   const built = adaptSource('index.html', html);

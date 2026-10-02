@@ -64,6 +64,32 @@ test('walking keeps shoe contact and handles slow input, stops and turns on the 
    assert.ok(rearFold>1.75,'rear leg folds during pickup');assert.ok(soleTilt>.7,'the rear sole rotates instead of staying nearly flat through flight');
    state.firing=false;
   });
+  await t.test('the rendered planted ankle follows its real heel/toe pivot without the swing reach cap lifting it',()=>{
+   const {ANKLE_H:h,BALL_Z:ball,HEEL_Z:heel}=api.CHARACTER_FOOT_METRICS;
+   for(const [name,v,dx,dz] of [['slow',.35,0,1],['walk',1.5,0,1],['run',5.76,0,1],['back',4.2,0,-1],['strafe',4.2,1,0]]){
+    ch.root.position.set(0,0,0);ch.rootInit=false;ch.feetValid=false;ch.replant=true;
+    Object.assign(state,{form:'kid',grounded:true,speed:0,localMove:{x:0,z:0},firing:false});
+    for(let i=0;i<120;i++)ch.update(1/60,state);
+    let maxError=0,contacts=0;
+    for(let i=0;i<240;i++){
+     const speed=v*Math.min(1,i/12);ch.root.position.x+=dx*speed/60;ch.root.position.z+=dz*speed/60;
+     Object.assign(state,{speed,localMove:{x:-dx,z:dz}});ch.update(1/60,state);ch.root.updateMatrixWorld(true);
+     if(i<60)continue;
+     for(const [j,f] of ch.feet.entries()){
+      if(!f.planted)continue;
+      const pitch=f.pitch,ay=h*Math.cos(pitch)+(pitch>=0?ball:-heel)*Math.sin(pitch);
+      const az=pitch>=0?ball+h*Math.sin(pitch)-ball*Math.cos(pitch):-heel+h*Math.sin(pitch)+heel*Math.cos(pitch);
+      const normal=new api.THREE.Quaternion().setFromUnitVectors(new api.THREE.Vector3(0,1,0),f.cn);
+      normal.multiply(new api.THREE.Quaternion().setFromAxisAngle(new api.THREE.Vector3(0,1,0),f.cyaw));
+      const expected=new api.THREE.Vector3(0,ay,az).applyQuaternion(normal).add(f.cw);
+      const actual=ch.bones[j===0?'footL':'footR'].getWorldPosition(new api.THREE.Vector3());
+      maxError=Math.max(maxError,actual.distanceTo(expected));contacts++;
+      assert.ok(ch.ikErr[j+2]<1e-6,'the actual planted leg remains reachable');
+     }
+    }
+    assert.ok(contacts>50);assert.ok(maxError<.001,`${name}: drawn ankle must follow contact (${maxError})`);
+   }
+  });
   await t.test('swing across terrain normals keeps a unit rotation and continuous contact',()=>{
    const f=ch.feet[0];f.planted=false;f.sw=true;f.from.set(0,0,0);f.to.set(0,.05,.2);f.n.set(0,1,0);f.tn.set(0,.8,.6);f.startPitch=0;f.toe=.2;f.land=.1;f.fold=.5;f.peak=.35;f.lift=.1;
    for(let i=1;i<60;i++){f.su=i/60;ch._footPose(f);assert.ok(Math.abs(f.cn.length()-1)<1e-12,'terrain interpolation supplies a unit normal to foot quaternion construction');assert.ok(f.cw.toArray().every(Number.isFinite));}

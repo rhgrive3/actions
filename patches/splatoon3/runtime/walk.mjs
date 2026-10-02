@@ -167,6 +167,16 @@ function advanceLean(ch,axis,acceleration,weight,dt){
 // contact blend; this only changes the grounded walking controller.
 export function walkSwingUnloaded(ch,f){return state(ch).active?f.sw:f.sw&&f.su>.02&&f.su<.9;}
 
+// The extra swing knee margin must not pull a weight-bearing ankle away from
+// its locked heel/toe contact. The pelvis already solves planted-leg reach.
+// The planted pelvis calculation keeps its source soft-knee margin, and the
+// native analytic IK keeps its own final limit. Flight/actions retain the
+// original additional swing margin.
+export function walkFootReach(ch,f){
+  if(!states.get(ch)?.active||!f.planted)return ch.legReach*.97;
+  const leg=f.side>0?ch.limbs.legL:ch.limbs.legR;return leg.a+leg.b;
+}
+
 export function walkActive(ch){return !!states.get(ch)?.active;}
 
 // _updateStates advances these once per tick, including hidden/squid bodies.
