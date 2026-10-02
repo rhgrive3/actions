@@ -4,15 +4,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import path from 'node:path';
 import crypto from 'node:crypto';
-import { CATALOG_MODULES, CATALOG_SCENARIOS, catalogRenderFrames, validateCatalogResult } from '../../../scripts/check-inkwave-motion-catalog.mjs';
+import { CATALOG_MODULES, CATALOG_SCENARIOS, catalogRenderFrames, validateCatalogResult, catalogStoragePath, catalogInputPath, validateCatalogInputReceipts, catalogFootLayout } from '../../../scripts/check-inkwave-motion-catalog.mjs';
 
 const hash = 'a'.repeat(64), pixel = { pixels: 960 * 720, changedPixels: 30, totalRgbDifference: 1000, maxChannelDifference: 100 };
 function gateFixture() {
   const files = [...CATALOG_MODULES.map(([id]) => 'patches/splatoon3/runtime/' + id + '-motion.mjs'), 'patches/splatoon3/runtime/install.mjs', 'patches/splatoon3/runtime/walk.mjs', 'src/game/actor.js', 'src/game/character.js', 'src/game/weapons.js', 'src/game/physics.js'];
   const artifacts = Object.fromEntries(files.map(file => ['_versions/fixture/' + file, hash]));
   const data = CATALOG_SCENARIOS.map(scenario => {
-    const samples = Array.from({ length: scenario.frames }, (_, frame) => ({ frame, visible: true, visualGameplayInvariant: true, root: [0, 0, 0], velocity: [0, 0, 0], hp: 90, kidScale: 1, walkActive: true, pose: { length: 150, minimum: -1, maximum: 1, l1: 50 }, ik: [0, 0, 0, 0], hands: { left: [0, 1, 0], right: [0, 1, 0] }, grip: { left: { held: true, gap: .001, weight: 1, explicitTarget: 0, swapped: 0 }, right: { held: true, gap: .001, weight: 1, explicitTarget: 0, swapped: 0 } }, feet: [0, 1].map(() => ({ planted: true, contactEpoch: 1, contactWeight: 1, actual: [0, .1, 0], expected: [0, .1, 0], contact: [0, 0, 0], normal: [0, 1, 0], error: 0, drift: 0 })), snapshots: Object.fromEntries(CATALOG_MODULES.map(([id]) => [id, null])) }));
+    const samples = Array.from({ length: scenario.frames }, (_, frame) => ({ frame, visible: true, grounded: true, visualGameplayInvariant: true, root: [0, 0, 0], velocity: [0, 0, 0], hp: 90, kidScale: 1, walkActive: true, pose: { length: 150, minimum: -1, maximum: 1, l1: 50 }, ik: [0, 0, 0, 0], hands: { left: [0, 1, 0], right: [0, 1, 0] }, grip: { left: { held: true, gap: .001, weight: 1, explicitTarget: 0, swapped: 0 }, right: { held: true, gap: .001, weight: 1, explicitTarget: 0, swapped: 0 } }, feet: [0, 1].map(() => ({ planted: true, contactEpoch: 1, contactWeight: 1, actual: [0, .1, 0], expected: [0, .1, 0], contact: [0, 0, 0], normal: [0, 1, 0], error: 0, drift: 0 })), snapshots: Object.fromEntries(CATALOG_MODULES.map(([id]) => [id, null])) }));
     const renders = catalogRenderFrames(scenario).map(frame => ({ frame, tick: scenario.hz ? Math.min(scenario.frames - 1, Math.floor((frame + 1) * 60 / scenario.hz) - 1) : frame, visible: true, shaderErrors: 0, programs: [{ linked: true, vertexCompiled: true, fragmentCompiled: true }], materials: [{ type: 'fabricated gate material', linked: true, vertexCompiled: true, fragmentCompiled: true }], rig: { ...pixel }, image: 'fixture.png', hiddenImage: 'fixture-hidden.png', geometry: { indexedVertices: 300, triangles: 100, skinnedVertices: 300, meshes: 1, min: [0, 0, 0], max: [1, 1, 1] } }));
     // FixedClock's first selected 120Hz display is index 1, after tick 0.
     for (const r of renders) r.tick = Math.max(0, r.tick);
@@ -30,7 +31,7 @@ function gateFixture() {
       case 'squidroll-finish': case 'squidroll-interrupt': fill('squidroll', { phase: 'roll' }, 0, 10); fill('squidroll', { phase: null }, 10); break;
       case 'hit-spawn-reset': fill('hit-spawn', { phase: 'entry', coating: .9 }, 0, 5); fill('hit-spawn', { phase: 'protected', coating: .9 }, 5, 20); fill('hit-spawn', { phase: 'expiry', coating: .5 }, 20, 25); fill('hit-spawn', { coating: 0 }, 25); renders[0].coating = { ...pixel }; break;
       case 'quiet-idle-held-sub': fill('idle', { quiet: true }); for (const s of samples.slice(40, 80)) { s.heldBomb = true; s.grip.left.held = false; } row.events.push({ name: 'throwBomb', frame: 80 }); break;
-      case 'native-slam-phases': for (const [i, phase] of ['rise', 'hang', 'fall', 'slam-recovery'].entries()) fill('special', { phase }, i * 10, (i + 1) * 10); fill('special', { phase: null }, 40); break;
+      case 'native-slam-phases': for (const [i, phase] of ['rise', 'hang', 'fall', 'slam-recovery'].entries()) fill('special', { phase }, i * 10, (i + 1) * 10); fill('special', { phase: null }, 40); for (const s of samples.slice(40)) s.velocity[2] = 2.4; break;
       case 'native-storm-deploy': fill('special', { phase: 'storm-deploy' }, 0, 10); fill('special', { phase: 'storm-recovery' }, 10, 20); fill('special', { phase: null }, 20); row.events.push({ name: 'throwStorm', frame: 0 }); break;
       case 'gaze-face-actions': for (const [i, mode] of ['fire', 'sub-aim', 'throw'].entries()) fill('face', { mode, blink: [.8, .8] }, i * 20, (i + 1) * 20); renders[0].face = { ...pixel }; break;
       case 'lifecycle-interruptions': row.transitions = ['form', 'sub', 'dance', 'reset', 'death', 'hide', 'weapon']; samples[135].visible = false; break;
@@ -68,6 +69,9 @@ for (const [name, mutate, pattern] of [
   ['missing native foot ownership', r => delete r.data[0].samples[0].feet[0].contactWeight, /non-finite/],
   ['pause advances clock', r => r.data[0].pause.unchangedClocks = false, /pause denominator/],
   ['zero dt advances native clock', r => r.data[0].zeroDt.unchangedClocks = false, /zero-dt/],
+  ['walking remains suppressed after authoritative special recovery', r => r.data.find(x => x.name === 'native-slam-phases').samples[80].walkActive = false, /post-special native walking owner/],
+  ['native roller release duplicated', r => r.data.find(x => x.name === 'roller-horizontal-push').events.push({ name: 'fireFlick', frame: 23 }), /native roller/],
+  ['native held sub release duplicated', r => r.data.find(x => x.name === 'quiet-idle-held-sub').events.push({ name: 'throwBomb', frame: 100 }), /idle\/sub/],
   ['30Hz diverges', r => r.data.find(x => x.name === 'cadence-30').traceHash = 'b'.repeat(64), /30\/60\/120Hz/],
   ['gameplay touched by pose', r => r.data[0].samples[0].visualGameplayInvariant = false, /native frame identity/],
   ['duplicate realm adds wrapper', r => r.duplicateRealm.unchanged = false, /cross-realm/],
@@ -86,12 +90,62 @@ test('native explicit hand target is measured without claiming foregrip attachme
   Object.assign(hand, { held: false, explicitTarget: 1, gap: .2 });
   assert.equal(validateCatalogResult(result).length, CATALOG_SCENARIOS.length);
 });
+test('no held hands has an explicit zero denominator, not an infinite grip summary (acceptance logic only)', () => {
+  const result = gateFixture();
+  for (const s of result.data.find(r => r.name === 'swim-turn-brake').samples) for (const g of Object.values(s.grip)) g.held = false;
+  const summary = validateCatalogResult(result).find(r => r.name === 'swim-turn-brake');
+  assert.equal(summary.heldHandSamples, 0); assert.equal(summary.maximumHeldGrip, null);
+});
+
+test('physical checkout storage accepts CI ownership and rejects temporary paths and escaping links', () => {
+  const localWorkspace = fs.realpathSync(process.cwd()).startsWith('/mnt/workspace/');
+  const scratch = catalogStoragePath(localWorkspace ? '/mnt/workspace/.dev-state/agent-work/scratch/inkwave-motion-detail-20261002/review-render-normal' : path.join(process.cwd(), '.motion-catalog-test-scratch'));
+  const scratchExisted = fs.existsSync(scratch);
+  fs.mkdirSync(scratch, { recursive: true });
+  const fixture = fs.mkdtempSync(path.join(scratch, 'storage-gate-'));
+  try {
+    // Explicit roots exercise checkout ownership independently of /mnt/workspace.
+    assert.equal(catalogStoragePath(path.join(fixture, 'new/profile'), [fixture]), path.join(fixture, 'new/profile'));
+    assert.throws(() => catalogStoragePath(fixture + '-sibling', [fixture]), /persistent workspace/);
+    for (const dir of ['/tmp', '/var/tmp', '/dev/shm']) assert.throws(() => catalogStoragePath(dir, [dir]), /persistent workspace/);
+    fs.symlinkSync('/etc', path.join(fixture, 'escape'));
+    assert.throws(() => catalogStoragePath(path.join(fixture, 'escape/new/profile'), [fixture]), /persistent workspace/);
+    fs.symlinkSync(path.join(fixture, 'missing'), path.join(fixture, 'dangling'));
+    assert.throws(() => catalogStoragePath(path.join(fixture, 'dangling/profile'), [fixture]), /ENOENT/);
+  } finally {
+    fs.rmSync(fixture, { recursive: true, force: true });
+    if (!scratchExisted) fs.rmdirSync(scratch);
+  }
+});
+
+test('all declared original input namespaces retain exact committed byte identity (acceptance logic only)', () => {
+  const keys = ['upstream/src/game/character.js', 'patch/runtime/walk.mjs', 'touch-layout/runtime/install.mjs', 'reliability/runtime/install.mjs'];
+  const files = Object.fromEntries(keys.map(key => [key, hash]));
+  const manifest = { files, inputHash: crypto.createHash('sha256').update(JSON.stringify(files)).digest('hex') };
+  const receipts = keys.map(key => ({ key, file: catalogInputPath(key), sha256: hash, committedSHA256: hash, bytes: 100 }));
+  assert.equal(receipts[3].file, 'patches/reliability/runtime/install.mjs');
+  assert.doesNotThrow(() => validateCatalogInputReceipts(manifest, receipts));
+  assert.throws(() => validateCatalogInputReceipts(manifest, receipts.slice(0, -1)), /source input denominator/);
+  assert.throws(() => validateCatalogInputReceipts(manifest, receipts.map(r => r.key.startsWith('reliability/') ? { ...r, committedSHA256: 'b'.repeat(64) } : r)), /committed source input identity reliability/);
+  assert.throws(() => validateCatalogInputReceipts({ ...manifest, inputHash: 'b'.repeat(64) }, receipts), /source input hash/);
+  const emptyHash = crypto.createHash('sha256').update('').digest('hex'), emptyFiles = { 'reliability/.keep': emptyHash };
+  assert.doesNotThrow(() => validateCatalogInputReceipts({ files: emptyFiles, inputHash: crypto.createHash('sha256').update(JSON.stringify(emptyFiles)).digest('hex') }, [{ key: 'reliability/.keep', file: 'patches/reliability/.keep', sha256: emptyHash, committedSHA256: emptyHash, bytes: 0 }]));
+  for (const key of ['foreign/file.mjs', 'patch/../file.mjs', 'patch//file.mjs', 'patch/./file.mjs']) assert.throws(() => catalogInputPath(key), /input namespace\/path/);
+});
+
+test('named native foot channels bypass adjacent layout inference; old builds require verified contact use', () => {
+  assert.equal(catalogFootLayout('Object.freeze({WPL:L,WPR:R})', 'fixture').named, true);
+  const old = 'L=k(),R=k(),S=k();Object.freeze({STAB:S});(i===0?p[L]:p[R])*w*(this.feetValid?1:0)';
+  assert.equal(catalogFootLayout(old, 'fixture').named, false);
+  assert.throws(() => catalogFootLayout(old.replace('p[R]', 'p[S]'), 'fixture'), /native foot contact binding/);
+  assert.throws(() => catalogFootLayout('Object.freeze({WPL:L})', 'fixture'), /native foot contact binding/);
+});
 
 // Opt-in validation of a retained actual browser recording. Absence is never
 // interpreted as GPU success; ordinary node:test runs are gate logic only.
 if (process.env.INKWAVE_CATALOG_RECORDING) test('retained actual production browser result meets the same catalog contract', () => {
   const file = fs.realpathSync(process.env.INKWAVE_CATALOG_RECORDING);
-  assert.ok(file.startsWith('/mnt/workspace/'));
+  assert.equal(catalogStoragePath(file), file);
   const result = JSON.parse(fs.readFileSync(file));
   assert.equal(result.status, 'passed');
   assert.equal(validateCatalogResult(result).length, CATALOG_SCENARIOS.length);
