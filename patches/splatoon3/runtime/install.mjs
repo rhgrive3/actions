@@ -25,6 +25,20 @@ import { installWeaponMotion } from './weapon-motion.mjs';
 import { installFlowMotion } from './flow-motion.mjs';
 import { installBombMotion } from './bomb-motion.mjs';
 import { installWeaponDetailMotion } from './weapon-detail-motion.mjs';
+import { installJumpMotion } from './jump-motion.mjs';
+import { installLandingMotion } from './landing-motion.mjs';
+import { installSwimMotion } from './swim-motion.mjs';
+import { installWallMotion } from './wall-motion.mjs';
+import { installFormMotion } from './form-motion.mjs';
+import { installDualiesMotion } from './dualies-motion.mjs';
+import { installRollerDetailMotion } from './roller-detail-motion.mjs';
+import { installSuperjumpMotion } from './superjump-motion.mjs';
+import { installSquidrollMotion } from './squidroll-motion.mjs';
+import { installHitSpawnMotion } from './hit-spawn-motion.mjs';
+import { installIdleMotion } from './idle-motion.mjs';
+import { installEmotesMotion } from './emotes-motion.mjs';
+import { installSpecialMotion } from './special-motion.mjs';
+import { installFaceMotion } from './face-motion.mjs';
 
 let installed = false;
 export function install(profile) {
@@ -52,8 +66,22 @@ export function install(profile) {
   installWeaponMotion(api, profile);
   installBombMotion(api);
   installWeaponDetailMotion(api, profile);
+  installDualiesMotion(api, profile);
   installWalkMotion(api, profile);
+  installJumpMotion(api, profile);
+  installLandingMotion(api, profile);
+  installSwimMotion(api, profile);
+  installWallMotion(api, profile);
+  installFormMotion(api, profile);
+  installRollerDetailMotion(api, profile);
+  installSuperjumpMotion(api, profile);
+  installSquidrollMotion(api, profile);
+  installHitSpawnMotion(api, profile);
+  installIdleMotion(api, profile);
+  installEmotesMotion(api, profile);
+  installSpecialMotion(api, profile);
   installFlowMotion(api);
+  installFaceMotion(api, profile);
   // Aim remains tied to the actual camera ray. No target-dependent auto-turn.
   DEFAULT_SETTINGS.aimAssist = 0; DEFAULT_SETTINGS.aimAssistMouse = false;
   PlayerController.prototype._assistTarget = () => null;
