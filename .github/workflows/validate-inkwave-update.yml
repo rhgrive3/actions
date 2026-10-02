@@ -26,6 +26,13 @@ jobs:
           node-version: 22
       - name: Verify gameplay patch contracts and regressions
         run: node --experimental-vm-modules scripts/check-inkwave-patches.mjs
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: inkwave-patch-failure-diagnostics-${{ github.sha }}
+          if-no-files-found: error
+          path: .ci-scratch/inkwave-patches/
+          retention-days: 14
       - name: Verify pinned primary numerical sources
         run: |
           python3 - <<'PY'

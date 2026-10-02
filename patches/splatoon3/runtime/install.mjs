@@ -39,6 +39,7 @@ import { installIdleMotion } from './idle-motion.mjs';
 import { installEmotesMotion } from './emotes-motion.mjs';
 import { installSpecialMotion } from './special-motion.mjs';
 import { installFaceMotion } from './face-motion.mjs';
+import { installCarryMotion } from './carry-motion.mjs';
 
 let installed = false;
 export function install(profile) {
@@ -67,6 +68,7 @@ export function install(profile) {
   installBombMotion(api);
   installWeaponDetailMotion(api, profile);
   installDualiesMotion(api, profile);
+  installCarryMotion(api);
   installWalkMotion(api, profile);
   installJumpMotion(api, profile);
   installLandingMotion(api, profile);

@@ -15,8 +15,21 @@
 | `runtime/movement.mjs` | イカロール、イカノボリ、被弾処理の状態管理 |
 | `runtime/movement-motion.mjs` | イカロール・イカノボリ・スーパージャンプの表示と状態の同期 |
 | `runtime/weapon-motion.mjs` | スライド後の構え、バケツの振り、リセット、フローの発光 |
+| `runtime/weapon-detail-motion.mjs` | 実際の発射に同期した反動、チャージ後の復帰、バケツ内のインク、スピナー停止 |
+| `runtime/bomb-motion.mjs` | 手元のボム、実際の投擲位置、予測軌道と放す姿勢 |
+| `runtime/flow-motion.mjs` | フロー開始・延長・失効の粒子と外周表示、描画パスとリソースの分離 |
 | `runtime/walk.mjs` | 足の接地・踏み出し・停止・方向転換、腰・上体の歩行校正 |
+| `runtime/carry-motion.mjs` | シューターの歩行・待機・射撃・復帰で連続する両手の支持 |
+| `runtime/jump-motion.mjs`, `runtime/landing-motion.mjs` | 通常ジャンプの脚と着地の圧縮・復帰 |
+| `runtime/swim-motion.mjs`, `runtime/wall-motion.mjs` | 通常の泳ぎ・方向転換、壁登り・イカノボリの表示 |
+| `runtime/form-motion.mjs` | ヒト・イカへの変形と中断時の復帰 |
+| `runtime/squidroll-motion.mjs`, `runtime/superjump-motion.mjs` | 実際のアクション状態に従うイカロールとスーパージャンプ |
+| `runtime/dualies-motion.mjs` | マニューバーのスライドと直後の構え |
 | `runtime/roller.mjs` | ローラーの縦振り・横振り、振り下ろしと回復を射撃時刻へ同期 |
+| `runtime/roller-detail-motion.mjs` | 横振りの巻き込み方向と、実際の攻撃終了後の姿勢 |
+| `runtime/hit-spawn-motion.mjs` | 被弾・復活の表示と操作復帰に残る姿勢の補正 |
+| `runtime/idle-motion.mjs`, `runtime/emotes-motion.mjs` | 待機の身振り、勝敗・メニューの姿勢と中断 |
+| `runtime/special-motion.mjs`, `runtime/face-motion.mjs` | 既存スペシャルの表示復帰と、実際の照準に従う視線 |
 | `runtime/weapons.mjs` | チャージ保持・貫通、縦振り、スライド後射撃、弾の減衰 |
 | `runtime/gear.mjs` | 3 部位×4 スロット、AP、効果曲線、保存と装備画面 |
 | `runtime/resources.mjs` | インク回復の待ち時間、敵インク、HP 回復 |
@@ -83,3 +96,7 @@ CI の取得・検証・Pages ビルドもこの互換性チェックを通る�
 2026-10-02 の追加確認では、各担当が任天堂の映像から実際の動作を比較し、別の担当が接続後の実コードを検証した。[イカ系の比較](reference/movement-motion-comparison-2026-10-02.md)、[ローラーの比較](reference/roller-motion-comparison-2026-10-02.md)、[その他ブキの比較](reference/weapon-motion-comparison-2026-10-02.md)に、ブキ・動作・確認できた状態と未知の関節曲線を分けて記録した。歩行では接地の歩調、後ろ脚の畳みと靴底の向きを修正した。
 
 `tests/full-motion-install.test.mjs` は本番のインストーラーを一つのモジュール環境で適用し、全表示パッチを組み合わせた構え・握り・リセット・イカからの復帰を検査する。30/60/120 Hz の描画間隔でも、60 Hz のゲーム更新ごとに姿勢・銃口・髪のボーンが同じになることを確認する。公式映像には操作開始時刻・装備・収録版が揃わないものがあるため、内部の校正値を本家の確定値として扱わない。
+
+各追加モーションの観察と未知の範囲は `reference/*-motion-comparison-2026-10-03.md` に記録する。[ボム](reference/bomb-motion-comparison-2026-10-02.md)、[フロー](reference/flow-motion-comparison-2026-10-02.md)、[ブキの詳細](reference/weapon-detail-motion-comparison-2026-10-02.md)、[両手の支持](reference/carry-motion-comparison-2026-10-03.md)も参照する。接地中の足首には遊脚用の短縮を適用せず、ネイティブ IK と接地位置の一致を保つ。各パッチは本体から分離し、接続先の変更時には同じ互換性チェックを通す。
+
+`scripts/check-inkwave-motion-detail.mjs` はボム・フロー・各ブキの14条件を実際の WebGL で描画する。描画した頂点と手の距離、同じフレームでの表示・非表示の画素差、開始・延長・失効・リセットと解放後の資源を確認する。この表示用の診断入力は、実機の操作感や通常ゲームの移動物理とは別の証拠である。検証器自身の欠測・NaN・非表示・古い成功記録の反例も、通常のパッチ試験から実行する。
