@@ -1580,7 +1580,27 @@ def main():
         ds = p.get('delta_smooth')
         ds_mod = delta_smooth_bind(face) if ds else None
         print('FACE_VOLUME midline pairs', len(pairs))
+
+        def run_delta_smooth():
+            loc = M.to_local(er.world(face)) * 1000
+            w = np.clip((loc[:, 2] - 40) / 20, 0, 1) * np.clip((loc[:, 1] + 115) / 10, 0, 1) * np.clip((5 - loc[:, 1]) / 10, 0, 1)
+            e0, e1 = ds['eye_keep_mm']
+            w *= np.clip((eye_distance(er.world(face)) - e0) / (e1 - e0), 0, 1)
+            # the halves are not joined at the midline: smoothing there sees one side only and folds the crest,
+            # so the midline keeps the (already smooth) edit
+            t = np.clip((np.abs(loc[:, 0]) - 1.0) / 5.0, 0, 1)
+            w *= t * t * (3 - 2 * t)
+            for b in ds.get('exclude', []):
+                w *= 1 - bump(loc, dict(b, front_only=False))
+            delta_smooth_apply(face, ds_mod, w, ds)
+            print('FACE_VOLUME delta smooth seam gap closed mm', round(float(join_seam(face, pairs)), 3))
+        ds_done = False
         for step in p['steps']:
+            if step.get('after_delta_smooth') and ds_mod is not None and not ds_done:
+                # the delta smooth brings back the source's fine detail; steps that remove source detail
+                # (the shelves beside the outer eye corner) run after it
+                run_delta_smooth()
+                ds_done = True
             loc = M.to_local(er.world(face)) * 1000
             nw = np.array([face.matrix_world.to_3x3() @ v.normal for v in face.data.vertices])
             NORMALS = M.to_local(nw) - M.to_local(np.zeros((1, 3)))
@@ -1642,19 +1662,8 @@ def main():
             gap = join_seam(face, pairs)
             move = np.linalg.norm(er.world(face) - before, axis=1) * 1000
             print('FACE_VOLUME', step['name'], 'vertices', int((w > 0.001).sum()), 'max move mm', round(float(move.max()), 2), 'seam gap closed mm', round(float(gap), 3))
-        if ds_mod is not None:
-            loc = M.to_local(er.world(face)) * 1000
-            w = np.clip((loc[:, 2] - 40) / 20, 0, 1) * np.clip((loc[:, 1] + 115) / 10, 0, 1) * np.clip((5 - loc[:, 1]) / 10, 0, 1)
-            e0, e1 = ds['eye_keep_mm']
-            w *= np.clip((eye_distance(er.world(face)) - e0) / (e1 - e0), 0, 1)
-            # the halves are not joined at the midline: smoothing there sees one side only and folds the crest,
-            # so the midline keeps the (already smooth) edit
-            t = np.clip((np.abs(loc[:, 0]) - 1.0) / 5.0, 0, 1)
-            w *= t * t * (3 - 2 * t)
-            for b in ds.get('exclude', []):
-                w *= 1 - bump(loc, dict(b, front_only=False))
-            delta_smooth_apply(face, ds_mod, w, ds)
-            print('FACE_VOLUME delta smooth seam gap closed mm', round(float(join_seam(face, pairs)), 3))
+        if ds_mod is not None and not ds_done:
+            run_delta_smooth()
         for obj, mod in mods:
             er.apply_modifier(obj, mod)
         if p.get('skin'):
