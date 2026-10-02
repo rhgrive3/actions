@@ -149,6 +149,7 @@ try {
 } finally {
   
   result.sourceSha = sourceSha; result.verifiedResponses = receipts.length;
+  result.verifiedRuntimeFiles = [...new Set(receipts)].sort();
   for (const required of ['patches/splatoon3/bootstrap.mjs','patches/splatoon3/profile.json','patches/splatoon3/runtime/install.mjs','patches/splatoon3/runtime/walk.mjs','patches/splatoon3/runtime/roller.mjs','patches/splatoon3/runtime/movement-motion.mjs','patches/splatoon3/runtime/weapon-motion.mjs','src/main.js','src/game/actor.js','src/game/character.js','src/game/weapons.js']) if(!receipts.includes(required)) errors.push('Required runtime was not verified: '+required);
   if(errors.length || consoleErrors.length || failures.length) result.status = 'failed';
   result.errors = errors; result.consoleErrors = consoleErrors; result.requestFailures = failures;
