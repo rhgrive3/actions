@@ -47,6 +47,9 @@ test('detail accepts valid semantic records and rejects original false-pass coun
   r=>delete row(r,'bomb-standing').releaseFrames[0].meshOriginError,
   r=>row(r,'bucket-repeat').renderMetrics[0].weapon.indexedVertices=0,
   r=>row(r,'bucket-repeat').renderMetrics[0].weapon.nearestRight=.3,
+  r=>row(r,'flow-kid').renderMetrics[0].weapon.nearestLeft=.3,
+  r=>delete row(r,'flow-kid').samples[21].gripWeights,
+  r=>row(r,'flow-kid').samples[21].gripWeights.left=NaN,
   r=>row(r,'bucket-repeat').samples[50].ik[0]=NaN,
   r=>row(r,'blaster-repeat').samples[60].weapon.pump=1,
   r=>row(r,'splatling-coast').samples[419].weapon.barrelSpeed=1,
@@ -55,6 +58,9 @@ test('detail accepts valid semantic records and rejects original false-pass coun
   r=>row(r,'flow-squid').renderMetrics.pop(),
  ];
  for(const change of mutations){const record=detailFixture();change(record);assert.throws(()=>validateDetailResult(record));}
+ const free=detailFixture(),idle=row(free,'flow-kid');
+ for(const metric of idle.renderMetrics){idle.samples[metric.frame].gripWeights.left=0;metric.weapon.nearestLeft=.44;}
+ assert.equal(validateDetailResult(free).length,14,'a legitimately detached native support hand is not a missed weapon grip');
 });
 test('same-frame pixel comparison requires real RGB differences and a finite denominator',()=>{
  const a=new Uint8Array([10,20,30,255,10,20,30,255]),b=new Uint8Array([10,20,30,255,14,20,30,255]);

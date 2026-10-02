@@ -40,6 +40,10 @@ export function validateDetailResult(result) {
     for(const [frame,s] of samples.entries()) {
       if(s.frame!==frame||!Array.isArray(s.ik)||s.ik.length!==4)throw Error('Detail frame/IK denominator: '+name);
       s.ik.forEach(v=>finite(v,name+'.ik'));
+      for(const key of ['right','left','leftTarget']){
+        finite(s.gripWeights?.[key],name+'.gripWeights.'+key);
+        if(s.gripWeights[key]<-1e-6||s.gripWeights[key]>1+1e-6)throw Error('Detail native grip weight range: '+name);
+      }
       if(s.weapon?.kind!==scenario.kind||!['off','entry','active','expiry'].includes(s.flow?.phase))throw Error('Detail snapshot identity: '+name);
       for(const key of ['heldVisible','leftPistolVisible','runnerStreaming'])if(typeof s[key]!=='boolean')throw Error('Detail flag identity: '+name);
       for(const key of ['time','lastShot','lastRelease','aim','rcP','rcZ','projectileCount'])finite(s[key],name+'.'+key);
@@ -65,7 +69,9 @@ export function validateDetailResult(result) {
       }
       if(!m.weapon){if(!(scenario.squid&&samples[m.frame]?.form==='squid'))throw Error('Missing drawn weapon: '+name);continue;}
       if(m.weapon.nearestRight>=.2)throw Error('Detail hand left actual drawn weapon: '+name);
-      if(scenario.type!=='bomb'&&m.weapon.nearestLeft>=.2)throw Error('Detail support hand left actual drawn weapon: '+name);
+      const grip=samples[m.frame].gripWeights;
+      if(scenario.type!=='bomb'&&grip.left>.99&&grip.leftTarget<.001&&m.weapon.nearestLeft>=.2)
+        throw Error('Detail held support hand left actual drawn weapon: '+name+' frame '+m.frame+' gap '+m.weapon.nearestLeft);
     }
     if(!disposed?.disposed||disposed.resources!==0||disposed.aliveParticles!==0)throw Error('Flow resources survived Character disposal: '+name);
     const peak=Math.max(...samples.map(s=>Math.abs(s.rcP))),tail=samples.slice(-24);
@@ -129,7 +135,7 @@ for (const dir of [output, profileDir]) {
 }
 const hash = value => crypto.createHash('sha256').update(value).digest('hex');
 const publish=value=>{fs.writeFileSync(path.join(output,'motion-detail-result.json.writing'),JSON.stringify(value,null,2)+'\n');fs.renameSync(path.join(output,'motion-detail-result.json.writing'),path.join(output,'motion-detail-result.json'));};
-let manifest,browser,server,page,result,failure;const errors=[],loaded=[];
+let manifest,browser,server,page,result,failure,lastProgress;const errors=[],loaded=[];
 const recordError=value=>{if(errors.length<20)errors.push(String(value).slice(0,1500));};
 publish({status:'running',gate:'motion-detail',startedAt:new Date().toISOString()});
 try {
@@ -154,7 +160,14 @@ await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0
     args: ['--no-sandbox', '--disable-dev-shm-usage', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
   page = await browser.newPage();
   page.on('pageerror', error => recordError(error.message));
-  page.on('console', message => { if (message.type() === 'error') recordError(message.text()); });
+  page.on('crash', () => recordError('Chromium detail page crashed'));
+  page.on('console', message => {
+    if (message.type() === 'error') recordError(message.text());
+    const text = message.text(), prefix = '[motion-detail-progress] ';
+    if (text.startsWith(prefix)) {
+      try { lastProgress = JSON.parse(text.slice(prefix.length)); } catch {}
+    }
+  });
   await page.route('http://127.0.0.1:' + server.address().port + '/**', async route => {
     try {
       const response = await route.fetch(), body = await response.body();
@@ -295,10 +308,17 @@ await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0
           const left = ch.bones.handL.getWorldPosition(new THREE.Vector3()).toArray();
           const right = ch.bones.handR.getWorldPosition(new THREE.Vector3()).toArray();
           samples.push({ frame, form: actor.form, bomb, flow, weapon, hands: { left, right }, ik: Array.from(ch.ikErr),
+            gripWeights:{right:ch.P[C.IKR],left:ch.P[C.IKL],leftTarget:ch.P[C.LTW]},
             heldVisible: ch.bomb.group.visible, leftPistolVisible: !!ch.weapon.left?.pivot.visible,
             lastShot: ch.lastShot, lastRelease: ch.lastRelease, aim: ch.wAim, rcP: ch.rcP, rcZ: ch.rcZ, time: ch.t, projectileCount: projectiles.list.length,
             runnerStreaming: !!actor.weaponRunner.streaming });
           globalThis.motionProbeProgress={scenario:scenario.name,frame,casesFinished:data.length,flow,weapon,ik:Array.from(ch.ikErr),nativeRecoil:ch.rcP};
+          if(frame%60===0||frame===frames-1){
+            console.info('[motion-detail-progress] '+JSON.stringify(globalThis.motionProbeProgress));
+            // Yield the browser event loop without changing the fixed native
+            // simulation step. Preserve the last completed frame on a crash.
+            await new Promise(resolve=>setTimeout(resolve,0));
+          }
           if([21,29,30,45,75,95,110,111,145,160,165,200,239,310,360,419].includes(frame))renderMetrics.push(capture(scenario,frame,ch,actor));
         }
         data.push({name:scenario.name,scenario,frames,fireInterval:actor.weapon.fireInterval,samples,releaseFrames,events,renderMetrics});
@@ -324,7 +344,7 @@ await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0
   for(const entry of result.images)fs.writeFileSync(path.join(output,entry.name+'.png'),Buffer.from(entry.image.split(',')[1],'base64'));delete result.images;
 }catch(error){failure=error;try{if(page)result={...(result||{}),progress:await page.evaluate(()=>globalThis.motionProbeProgress||null)};}catch{};try{await page?.screenshot({path:path.join(output,'motion-detail-failed.png'),timeout:10000});}catch{}}
 finally{for(const cleanup of [()=>browser?.close(),()=>server?.listening?new Promise((resolve,reject)=>server.close(error=>error?reject(error):resolve())):null])try{await cleanup();}catch(error){failure ||= error;}}
-if(failure){publish({status:'failed',contentHash:manifest?.contentHash||null,build:manifest?.build||null,message:String(failure.message||failure).slice(0,2500),errors,loaded:[...new Set(loaded)].slice(0,200),progress:result?.progress||null,casesFinished:result?.data?.length||0});console.error(JSON.stringify({status:'failed',message:String(failure.message||failure).slice(0,1200),evidence:path.join(output,'motion-detail-result.json')}));process.exitCode=1;return;}
+if(failure){publish({status:'failed',contentHash:manifest?.contentHash||null,build:manifest?.build||null,message:String(failure.message||failure).slice(0,2500),errors,loaded:[...new Set(loaded)].slice(0,200),progress:result?.progress||lastProgress||null,casesFinished:result?.data?.length||lastProgress?.casesFinished||0});console.error(JSON.stringify({status:'failed',message:String(failure.message||failure).slice(0,1200),evidence:path.join(output,'motion-detail-result.json')}));process.exitCode=1;return;}
 Object.assign(result,{errors,loaded:[...new Set(loaded)],build:manifest.build,status:'passed'});publish(result);
 console.log(JSON.stringify({status:result.status,contentHash:result.contentHash,cases:result.cases,verifiedModules:result.loaded.length,summary:result.summary}));
 }
