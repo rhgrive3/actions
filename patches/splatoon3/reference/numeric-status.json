@@ -1903,5 +1903,180 @@
     "value": 4.5,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
+  },
+  "walkMotion.startSpeed": {
+    "value": 0.075,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "walkMotion.stopSpeed": {
+    "value": 0.045,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "walkMotion.runStart": {
+    "value": 1.8,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "walkMotion.runFull": {
+    "value": 5.76,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "walkMotion.walkHalfStride": {
+    "value": 0.16,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "walkMotion.runHalfStride": {
+    "value": 0.27,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "walkMotion.walkDuty": {
+    "value": 0.64,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "walkMotion.runDuty": {
+    "value": 0.3,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "walkMotion.minCadence": {
+    "value": 0.32,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "walkMotion.maxCadence": {
+    "value": 4.8,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "walkMotion.walkLift": {
+    "value": 0.025,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "walkMotion.runLift": {
+    "value": 0.115,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "walkMotion.toeWalk": {
+    "value": 0.24,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "walkMotion.toeRun": {
+    "value": 0.6,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "walkMotion.heelWalk": {
+    "value": 0.18,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "walkMotion.heelRun": {
+    "value": 0.08,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "walkMotion.firstStepTime": {
+    "value": 0.16,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "walkMotion.settleLift": {
+    "value": 0.015,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "walkMotion.settleTime": {
+    "value": 0.17,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "walkMotion.settleThreshold": {
+    "value": 0.055,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "walkMotion.catchDistance": {
+    "value": 0.3,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "walkMotion.landingLock": {
+    "value": 0.93,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "walkMotion.targetFollow": {
+    "value": 20,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "walkMotion.walkYaw": {
+    "value": 0.065,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "walkMotion.runYaw": {
+    "value": 0.105,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "walkMotion.walkRoll": {
+    "value": 0.035,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "walkMotion.runRoll": {
+    "value": 0.045,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "walkMotion.walkDrop": {
+    "value": -0.02,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "walkMotion.runDrop": {
+    "value": -0.064,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "walkMotion.walkBob": {
+    "value": 0.008,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "walkMotion.runBob": {
+    "value": -0.012,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "walkMotion.leanGain": {
+    "value": 0.0035,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "walkMotion.leanMax": {
+    "value": 0.16,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "walkMotion.leanFrequency": {
+    "value": 3.2,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "walkMotion.footPitchRate": {
+    "value": 8,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
   }
 }
