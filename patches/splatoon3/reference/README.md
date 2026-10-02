@@ -27,3 +27,9 @@
 各設定の対応は `profile.json.bindings`、全数値の状態は `numeric-status.json`、ロジックに関する残課題は `profile.json.calibration.unverified` を参照する。原フィールド `OpInk_ArmorHP` は意味を確定できていないため、HP や猶予フレームとして実装することは保留した。
 
 [非ローラー・ギア・Flow の調査記録](weapons-gear-flow-audit-2026-10-02.md) に、担当項目ごとの出典、修正、実コード回帰、残課題と次の実機測定を記載した。バレルスピナーの射撃移動ギア専用曲線とブラスターのアク強専用曲線を接続した。Flowは [公式11.0.0の説明](https://support.nintendo.com/jp/switch/software_support/av5ja/1100.html) に合わせ、相手を倒す時に発動判定し、足元塗りは発動/延長時だけにした。発動ポイント・延長量・強化AP・倍率は確認できておらず、数値一致の主張はしない。
+
+## 追加モーションの確認
+
+歩行は[通常ヒトと移動射撃](walk-motion-2026-10-02.md)、その他は[イカロール・イカノボリ・スーパージャンプ](movement-motion-comparison-2026-10-02.md)、[通常ローラー](roller-motion-comparison-2026-10-02.md)、[ブキ・投擲・フロー](weapon-motion-comparison-2026-10-02.md)に公式映像の取得元、映像ハッシュ、使用フレームと測定条件を残す。
+
+数値抽出資料と公式映像の役割は異なる。フレーム設定は実際のWeaponRunnerの放出時刻で検証し、見た目の順序は実Characterのボーン・握り・床接触で検証する。観察だけから確定できない角度、持ち上げ量、回転曲線、フローの外側の粒子などは校正または未実装として記録する。

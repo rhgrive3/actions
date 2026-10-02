@@ -13,6 +13,8 @@
 | `bootstrap.mjs` | 設定とパッチを読み込み、適用後にゲームを起動する |
 | `runtime/clock.mjs` | 60 Hz の固定更新、経過時間と入力の保持 |
 | `runtime/movement.mjs` | イカロール、イカノボリ、被弾処理の状態管理 |
+| `runtime/movement-motion.mjs` | イカロール・イカノボリ・スーパージャンプの表示と状態の同期 |
+| `runtime/weapon-motion.mjs` | スライド後の構え、バケツの振り、リセット、フローの発光 |
 | `runtime/walk.mjs` | 足の接地・踏み出し・停止・方向転換、腰・上体の歩行校正 |
 | `runtime/roller.mjs` | ローラーの縦振り・横振り、振り下ろしと回復を射撃時刻へ同期 |
 | `runtime/weapons.mjs` | チャージ保持・貫通、縦振り、スライド後射撃、弾の減衰 |
@@ -47,7 +49,7 @@ node scripts/build-inkwave.mjs inkwave-public _site
 node scripts/check-inkwave-browser.mjs --site <ビルド出力> --evidence-dir <証拠ディレクトリ> --profile-dir <ブラウザ用ディレクトリ> --exact-source
 ```
 
-`--exact-source` は入力を現在の Git コミットと照合する。未コミットの候補を試す場合はこのフラグを外し、結果の `sourceSha` が未確定であることを記録する。試験は実際に読み込むファイルのバイト列、起動、装備の保存と適用、幅 375 px の画面、歩行、20 Hz 相当の時間経過、実際の床への塗りを確認する。Chromium の確認を Switch や iOS の確認として扱わない。
+`--exact-source` は入力を現在の Git コミットと照合する。未コミットの候補を試す場合はこのフラグを外し、結果の `sourceSha` が未確定であることを記録する。試験は実際に読み込むファイルのバイト列、起動、装備の保存と適用、幅 375 px の画面、歩行、20 Hz 相当の時間経過、実際の床への塗りを確認する。読み込んだ実ゲームのActor・WeaponRunner・Characterで、スライド後の構え、バケツの振り、リセット、フローの発光も確認する。位置を保持する表示試験は移動物理の証拠とは区別する。Chromium の確認を Switch や iOS の確認として扱わない。
 
 ## 本体を更新する手順
 
@@ -77,3 +79,7 @@ CI の取得・検証・Pages ビルドもこの互換性チェックを通る�
 `runtime/walk.mjs` の表示設定は `profile.walkMotion` に集約する。[歩行参照](reference/walk-motion-2026-10-02.md)、[ローラー](roller-behavior.md)、[移動・回復](../../reports/inkwave-movement-resources-2026-10-02.md)、[ブキ・ギア・Flow](reference/weapons-gear-flow-audit-2026-10-02.md)を変更時に見直す。数値の根拠が得られるまで校正値を抽出済み値へ昇格しない。
 
 通常ゲームのブラウザ確認に加え、同じビルドを `node scripts/check-inkwave-motion.mjs --site _site --evidence-dir <永続保存先> --profile-dir <専用プロファイル>` で描画する。小さな入力、前後・横移動、停止、方向転換、前後・横の移動射撃の10条件で、実際の膝・足首・靴底・IK値と画像を保存し、遊脚・接地・腰揺れの回帰を検出する。歩調の整合と後ろ脚の畳み方の数値は内部校正であり、公式の非公開関節曲線とは区別する。
+
+2026-10-02 の追加確認では、各担当が任天堂の映像から実際の動作を比較し、別の担当が接続後の実コードを検証した。[イカ系の比較](reference/movement-motion-comparison-2026-10-02.md)、[ローラーの比較](reference/roller-motion-comparison-2026-10-02.md)、[その他ブキの比較](reference/weapon-motion-comparison-2026-10-02.md)に、ブキ・動作・確認できた状態と未知の関節曲線を分けて記録した。歩行では接地の歩調、後ろ脚の畳みと靴底の向きを修正した。
+
+`tests/full-motion-install.test.mjs` は本番のインストーラーを一つのモジュール環境で適用し、全表示パッチを組み合わせた構え・握り・リセット・イカからの復帰を検査する。30/60/120 Hz の描画間隔でも、60 Hz のゲーム更新ごとに姿勢・銃口・髪のボーンが同じになることを確認する。公式映像には操作開始時刻・装備・収録版が揃わないものがあるため、内部の校正値を本家の確定値として扱わない。
