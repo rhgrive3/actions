@@ -66,6 +66,12 @@ test('Slosher heave follows real windup and completes recovery before the next a
     const old = await rig('slosher', false), r = await rig('slosher');
     try {
       for (const x of [old, r]) { x.a.grounded = !airborne; x.step(1 / hz, { fire: true }); }
+      let heaveKicks = 0;
+      const hairKick = r.ch._hairKick;
+      r.ch._hairKick = function (...args) {
+        if (args[0] === 0 && args[1] === 2.4 && args[2] === 1.6) heaveKicks++;
+        return hairKick.apply(this, args);
+      };
       const C = r.api.CHARACTER_CHANNELS;
       for (let i = 0; i < Math.round(.1 * hz); i++) { old.step(1 / hz); r.step(1 / hz); }
       assert.equal(r.launches.length, 0);
@@ -73,6 +79,7 @@ test('Slosher heave follows real windup and completes recovery before the next a
       let guard = hz;
       while (!r.launches.length && guard-- > 0) r.step(1 / hz);
       assert.equal(r.launches.length, 1);
+      assert.equal(heaveKicks, 1, 'float release boundary must not apply heave hair/tank impulse twice');
       assert.ok(r.ch.weapon.off.getWorldPosition(new r.api.THREE.Vector3()).toArray().every(Number.isFinite));
       assert.equal(r.a.weaponRunner.slosh, -1);
       for (let i = 0; i < 1.5 * hz; i++) r.step(1 / hz, { fire: true });

@@ -69,7 +69,7 @@ export function installWeaponMotion({ Character, WeaponRunner, CHARACTER_TIMERS:
     if (name === 'slosh') {
       const w = this._owner()?.weapon || profile?.weapons?.[this.weaponKind];
       m.slosh = w?.windup > 0 && w.fireInterval > w.windup
-        ? { elapsed: 0, windup: w.windup, interval: w.fireInterval, released: false } : null;
+        ? { elapsed: 0, previousElapsed: 0, windup: w.windup, interval: w.fireInterval, released: false } : null;
     }
     if (name === 'throw') m.thrown = true;
     return result;
@@ -78,6 +78,7 @@ export function installWeaponMotion({ Character, WeaponRunner, CHARACTER_TIMERS:
     if (this.s3WeaponMotionEnabled !== false) {
       const m = state(this), r = runner.call(this, s), a = m.slosh;
       if (a) {
+        a.previousElapsed = a.elapsed;
         if (!this.kidForm || this.weaponKind !== 'slosher') m.slosh = null;
         else if (r && r.slosh >= 0) a.elapsed = r.slosh;
         else if (r && !a.released) { a.elapsed = a.windup; a.released = true; }
@@ -94,7 +95,7 @@ export function installWeaponMotion({ Character, WeaponRunner, CHARACTER_TIMERS:
     const age = slosherMotionTime(m.elapsed, m.windup, m.interval);
     // Secondary spring impulses cross the same retimed curve once per tick.
     const dt = this._dt;
-    this._dt = age - slosherMotionTime(Math.max(0, m.elapsed - dt), m.windup, m.interval);
+    this._dt = age - slosherMotionTime(m.previousElapsed, m.windup, m.interval);
     try { return slosh.call(this, P, age); }
     finally { this._dt = dt; }
   };
@@ -114,7 +115,7 @@ export function installWeaponMotion({ Character, WeaponRunner, CHARACTER_TIMERS:
     const k = this.lockW, drop = (this.rest.hips.y - this.rest.footL.y) * .30;
     this.P[channels.HIPS_P + 1] -= drop * k;
     this.P[channels.SPINE] += .12 * k;
-    // Both pistol IK targets follow the lowered chest, retaining aim direction.
+    // Both pistol IK targets follow the lowered chest with existing aim rotations.
     this.P[channels.AFOLT] += (1 - this.P[channels.AFOLT]) * k;
     return result;
   };
