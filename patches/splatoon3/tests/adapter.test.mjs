@@ -50,3 +50,10 @@ test('the deployment entry always installs patches before importing the game', (
   assert.ok(main.includes('runSimulation(this, dt)'));
   assert.ok(!main.includes('dt = Math.min(dt, 1 / 24)'));
 });
+
+test('special foot-plant ownership requires its unique upstream timer boundary', () => {
+  const character = fs.readFileSync(new URL('src/game/character.js', publicRoot), 'utf8');
+  const anchor = 'this.tr[T_LEAP] > 1.9 && this.tr[T_SLAM] > 1.4';
+  assert.throws(() => adaptSource('src/game/character.js', character.replace(anchor, 'true')), /special foot-plant ownership/);
+  assert.throws(() => adaptSource('src/game/character.js', character + '\n' + anchor), /special foot-plant ownership/);
+});

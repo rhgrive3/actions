@@ -1,3 +1,4 @@
+import { specialMotionAllowsFootPlant } from './special-motion.mjs';
 // Walking is an animation layer. It never writes actor speed or collision state.
 // The numbers in walkMotion are visual calibration, not measured Nintendo clips.
 let api, tuning;
@@ -11,7 +12,7 @@ const angle=x=>Math.atan2(Math.sin(x),Math.cos(x));
 const state=ch=>{let s=states.get(ch);if(!s){s={active:false,pitch:0,pitchV:0,roll:0,rollV:0,vx:0,vz:0,target:new api.THREE.Vector3()};states.set(ch,s);}return s;};
 function eligible(ch){
   const T=api.CHARACTER_TIMERS, tr=ch.tr;
-  return ch.kidForm&&ch.grounded&&!ch.dance&&ch.kidScale>.5&&tr[T.T_LEAP]>1.9&&tr[T.T_SLAM]>1.4&&tr[T.T_DODGE]>ch.dodgeDur*.86&&tr[T.T_SPAWN]>1.4;
+  return ch.kidForm&&ch.grounded&&!ch.dance&&ch.kidScale>.5&&specialMotionAllowsFootPlant(ch,tr[T.T_LEAP]>1.9&&tr[T.T_SLAM]>1.4)&&tr[T.T_DODGE]>ch.dodgeDur*.86&&tr[T.T_SPAWN]>1.4;
 }
 function startSwing(ch,f,settle=false,remaining){
   const M=api.CHARACTER_FOOT_MODES;
