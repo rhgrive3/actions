@@ -1,3 +1,4 @@
+import { specialMotionAllowsAction, bombMotionAllowsAction, dualiesMotionLock } from './action-admission.mjs';
 // Match idle only. Nintendo's short shooter demonstrations show a restrained
 // carry between attacks, not a measured full idle cycle. Removing the large
 // showcase flourishes and reducing the native look gesture is visual calibration.
@@ -30,7 +31,7 @@ function classify(ch, s, api) {
     return 'walk';
   const runner = ch._runner(s);
   if (s.subAim || ch.wSub > .001 || ch.bombHeld || runner?.aimingSub
-      || tr[T.T_THROW] < .62) return 'sub';
+      || !bombMotionAllowsAction(ch,tr[T.T_THROW] >= .62)) return 'sub';
   if (s.firing || (s.charge || 0) > 0 || ch.wAim > .05 || ch.wRoll > .05
       || s.rolling || runner?.charging || runner?.streaming || runner?.rolling
       || runner?.dodge || runner?.s3Turret || (runner?.lockT || 0) > 0
@@ -38,8 +39,8 @@ function classify(ch, s, api) {
       || ch.lastShot < .5 || ch.lastRelease < .35) return 'weapon';
   if (actor.specialActive || actor.superJumpState || actor.s3?.actions?.roll
       || actor.s3?.actions?.surge || actor.hurtFlash > 0 || ch.hitAcc > 0
-      || tr[T.T_SPAWN] < 1.4 || tr[T.T_LEAP] < 1.9 || tr[T.T_SLAM] < 1.4
-      || tr[T.T_DODGE] < ch.dodgeDur + .3 || tr[T.T_LAND] < .8 && ch.landAmp > .3)
+      || tr[T.T_SPAWN] < 1.4 || !specialMotionAllowsAction(ch,tr[T.T_LEAP] >= 1.9 && tr[T.T_SLAM] >= 1.4)
+      || dualiesMotionLock(ch,runner,tr[T.T_DODGE] < ch.dodgeDur + .3) || tr[T.T_LAND] < .8 && ch.landAmp > .3)
     return 'action';
   return 'quiet';
 }

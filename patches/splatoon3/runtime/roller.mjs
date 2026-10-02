@@ -1,3 +1,4 @@
+import { specialMotionAllowsAction } from './action-admission.mjs';
 // Roller-specific refinements. Timing comes from the existing gameplay profile;
 // joint curves are visual calibration against Nintendo's public roller videos.
 const EPS = 1e-10;
@@ -100,7 +101,7 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
   Character.prototype._poseWeapon = function (dt, s) {
     const result = weaponPose.call(this, dt, s);
     if (this.weaponKind !== 'roller' || !this.kidForm || this.dance || this.wSub > .01) return result;
-    if (T && (this.tr[T.T_LEAP] < 1.9 || this.tr[T.T_SLAM] < 1.4 || this.tr[T.T_DODGE] < this.dodgeDur || this.tr[T.T_SPAWN] < 1.4)) return result;
+    if (T && (!specialMotionAllowsAction(this,this.tr[T.T_LEAP] >= 1.9 && this.tr[T.T_SLAM] >= 1.4) || this.tr[T.T_DODGE] < this.dodgeDur || this.tr[T.T_SPAWN] < 1.4)) return result;
     // Official footage carries the raised drum behind the shoulder, then lowers
     // it only to roll. These targets are rig calibration, not Nintendo joints.
     const P = this.P, roll = this.wRoll;

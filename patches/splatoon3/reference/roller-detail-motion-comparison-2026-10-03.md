@@ -53,3 +53,7 @@
 新規回帰は追加detailの有効/無効の両方で同じnative hide操作を行い、ゲーム入力、ink/HP、root/velocity、Runnerの攻撃object/時計と全native timerを比較する。nativeの既存hideによるT_THROW resetも比較対象に含め、hide前後の値が不変だと誤って要求しない。ドラムのindex検証はancestor visibilityとdrawRangeを尊重するよう改善した。setVisibleも別realmのwrapper identity確認へ追加した。関節値、35F/42Fインスタンス試験、基盤profileの42F/47F、縦振り・接地・release選択は変更しない。
 
 Nintendoの現在の武器ページと保持済み公式ローラー動画hashを再確認し、PTS付きsequenceを再観察した。元の実機バージョン、AP、入力edge、関節曲線の未確認は解消していない。最終SHA/CPU結果は `review-weapons/done.json`。共有browser/build/Actionsと実機の証明は親へ引き継ぐ。
+
+## 実終了後の次の振り（親統合）
+
+実Slamが完了しても旧T_LEAP/T_SLAMが残り、新しいRunner横振りと実ジャンプからの縦振りがinterruptedになっていた。rollerとroller-detailは共通action-admissionを利用し、終了済みスペシャル・投擲の表示時計で新規攻撃を遮断しない。時計、放出、ink消費、攻撃間隔は変更しない。実Actor・Runner・native骨とindexed頂点で横／縦の新規攻撃が有効になることを確認した。

@@ -53,3 +53,7 @@ The independent final tests also check cross-realm snapshots and direct frame-ra
 ### 統合された Carry の支持手
 
 全体 CI で残っていた「静止シューターの IKL=0／手が前持ち部から離れる」という旧比較を、公式映像から追加した Carry を含む本番条件へ更新した。native HOLD.twoCarry=0 は保ち、Carry の所有記録・実 IKL=1・描画された左右の native グリップ接触を検証する。fidget 抑制と視線・呼吸・足の調整、native flourish の比較もそのまま検証する。IK を切った状態のゼロ残差を支持手の接触証明には使わない。
+
+## 実終了後の状態合成（親統合）
+
+Slam終了後に残るT_LEAP/T_SLAMや、終了した投擲・回避の表示時計が静止姿勢を遮断していた。追加モジュールはaction-admissionの実所有者に問い合わせ、既存時計を保持したまま待機へ復帰する。実ActorのSlam完了後、旧タイマー期限前にIdleのready状態へ戻る回帰を追加した。

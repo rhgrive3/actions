@@ -1,3 +1,4 @@
+import { specialMotionAllowsAction, bombMotionAllowsAction } from './action-admission.mjs';
 // Additive detail for the public Character, installed after roller.mjs. Nintendo
 // footage supports the motion order; these targets are INKWAVE rig calibration,
 // never extracted Nintendo joint angles or a change to the gameplay clock.
@@ -51,8 +52,8 @@ export function installRollerDetailMotion({ Character, CHARACTER_CHANNELS: C, CH
     const a = ch._owner?.(), r = ch._runner?.(s), tr = ch.tr;
     return hidden(ch.root) || !ch.kidForm || !!ch.dance || a?.alive === false || !!a?.specialActive || !!a?.superJumpState
       || !!a?.s3?.actions?.roll || !!a?.s3?.actions?.surge
-      || !!(s?.subAim ?? r?.aimingSub) || ch.wSub > .01 || tr[T.T_THROW] < .62
-      || tr[T.T_LEAP] < 1.9 || tr[T.T_SLAM] < 1.4
+      || !!(s?.subAim ?? r?.aimingSub) || ch.wSub > .01 || !bombMotionAllowsAction(ch,tr[T.T_THROW] >= .62)
+      || !specialMotionAllowsAction(ch,tr[T.T_LEAP] >= 1.9 && tr[T.T_SLAM] >= 1.4)
       || tr[T.T_DODGE] < ch.dodgeDur || tr[T.T_SPAWN] < 1.4;
   }
   P._updateStates = function (dt, s) {

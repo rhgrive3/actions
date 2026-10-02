@@ -24,6 +24,8 @@ async function production(){
   export {walkActive} from './patches/splatoon3/runtime/walk.mjs';
   export {specialMotionSnapshot} from './patches/splatoon3/runtime/special-motion.mjs';
   export {formMotionSnapshot} from './patches/splatoon3/runtime/form-motion.mjs';
+  export {idleMotionSnapshot} from './patches/splatoon3/runtime/idle-motion.mjs';
+  export {rollerDetailMotionSnapshot} from './patches/splatoon3/runtime/roller-detail-motion.mjs';
   export {jumpMotionSnapshot} from './patches/splatoon3/runtime/jump-motion.mjs';`,{context,identifier:path.join(ROOT,'walk-special-entry.mjs')});
  await entry.link((s,f)=>load(s==='three'?path.join(SRC,'vendor/three/build/three.module.js'):
   s.startsWith('three/addons/')?path.join(SRC,'vendor/three/jsm',s.slice(13)):path.resolve(path.dirname(f.identifier),s)));
@@ -160,4 +162,37 @@ test('completed managed Slam permits actual form emergence while its old special
   assert.equal(api.formMotionSnapshot(r.ch).actionBlocked,true,'disabled presentation preserves the native special timer gate');
   assert.deepEqual(Array.from(r.ch.tr),timers,'form admission never retimes native events');
  }finally{r.close();}
+});
+
+async function completedSlam(api,kind='shooter'){
+ world(api);const r=rig(api,60,kind);
+ r.a._startSpecial();r.visual();
+ for(let i=0;r.a.specialActive&&i<180;i++){r.a._updateSpecial(1/60);r.visual();}
+ assert.equal(r.a.specialActive,null);for(let i=0;i<51;i++)r.visual();
+ assert.equal(api.specialMotionSnapshot(r.ch)?.phase,null);
+ assert.ok(r.ch.tr[api.CHARACTER_TIMERS.T_SLAM]<1.4);
+ return r;
+}
+test('completed Slam releases the actual quiet idle owner before its legacy timers expire',async()=>{
+ const api=await production(),r=await completedSlam(api);
+ try{assert.equal(api.idleMotionSnapshot(r.ch).phase,'ready','released action returns the live ready-carry controller');}
+ finally{r.close();}
+});
+test('completed Slam admits fresh native horizontal and vertical Roller poses before legacy timer expiry',async t=>{
+ const api=await production();
+ for(const vertical of [false,true])await t.test(vertical?'vertical native jump':'horizontal',async()=>{
+  const r=await completedSlam(api,'roller');
+  try{
+   if(vertical){r.a.intent.jump=true;api.G.time+=1/60;r.a.update(1/60);r.a.intent.jump=false;assert.equal(r.a.grounded,false,'actual fresh Actor jump');}
+   r.a.intent.fire=true;api.G.time+=1/60;r.a.update(1/60);
+   assert.ok(r.ch.s3RollerFlick,'actual gameplay creates a new flick');
+   assert.equal(r.ch.s3RollerFlick.vertical,vertical);
+   const snap=api.rollerDetailMotionSnapshot(r.ch);
+   assert.equal(snap.active,true,'fresh actual attack must not be marked interrupted by a released Special');
+   r.ch.root.updateMatrixWorld(true);r.ch.skeleton.update();
+   assert.ok(Array.from(r.ch.P).every(Number.isFinite));
+   const mesh=r.ch.lodSets[r.ch.lod.tier].list.find(m=>m.isSkinnedMesh&&m.geometry.index);
+   assert.ok(mesh.getVertexPosition(mesh.geometry.index.getX(0),new api.THREE.Vector3()).applyMatrix4(mesh.matrixWorld).toArray().every(Number.isFinite));
+  }finally{r.close();}
+ });
 });
