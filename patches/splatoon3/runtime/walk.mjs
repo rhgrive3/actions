@@ -151,9 +151,9 @@ export function applyWalkLocomotion(ch,P){
   const squash=.012*c2*rn*gw;P[C.SQY]*=1-squash;P[C.SQXZ]*=1+squash*.45;P[C.HEAD]-=.018*c2*rn*gw;P[C.NECK]+=.012*c2*rn*gw;
 }
 export function walkLean(ch,axis,acceleration,weight,dt){
-  if(!api||!eligible(ch))return null;
+  if(!api)return null;
   const s=state(ch),key=axis==='pitch'?'pitch':'roll',velocity=key+'V',goal=clamp(acceleration*(key==='pitch'?1:-1)*tuning.leanGain,-tuning.leanMax,tuning.leanMax)*weight,omega=2*Math.PI*tuning.leanFrequency;
-  const y=s[key]-goal,j=s[velocity]+omega*y,e=Math.exp(-omega*dt);s[key]=goal+(y+j*dt)*e;s[velocity]=(s[velocity]-omega*j*dt)*e;return s[key];
+  const y=s[key]-goal,j=s[velocity]+omega*y,e=Math.exp(-omega*dt);s[key]=goal+(y+j*dt)*e;s[velocity]=(s[velocity]-omega*j*dt)*e;return eligible(ch)?s[key]:null;
 }
 
 // A foot in flight does not carry body weight. Action poses keep their original
