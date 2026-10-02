@@ -4,6 +4,10 @@
 const INSTALLED = Symbol.for('inkwave.s3.superjump-motion.installed.v1');
 const STATE = Symbol.for('inkwave.s3.superjump-motion.state.v1');
 const clamp = x => Math.max(0, Math.min(1, x));
+function shown(ch) {
+  for (let p = ch.root; p; p = p.parent) if (p.visible === false) return false;
+  return true;
+}
 const flightPhase = phase => phase === 'takeoff' || phase === 'flight' || phase === 'descent';
 const CLEAR_EVENTS = new Set(['spawn', 'movement_cancel', 'jump', 'dodge', 'shoot', 'throw',
   'flick', 'slosh', 'charge_release', 'special_leap', 'special_slam']);
@@ -29,9 +33,12 @@ function restore(ch, m) {
   ch.u.uWig.value.copy(m.baseWiggle);
   m.applied = false;
 }
-function clear(ch, m) {
+function clear(ch, m, block = true) {
   restore(ch, m);
+  const token = ch._owner()?.superJumpState ?? m.token;
+  if (block && token) m.blocked = token;
   m.phase = null; m.progress = 0; m.touchdown = false;
+  m.token = null;
   m.mantle.set(0, 0, 0);
 }
 
@@ -45,6 +52,7 @@ export function installSuperjumpMotion({ Character, Actor, THREE, CHARACTER_TIME
   const get = ch => {
     if (!ch[STATE]) Object.defineProperty(ch, STATE, { value: {
       phase: null, progress: 0, touchdown: false, applied: false, disposed: false,
+      token: null, blocked: null,
       baseQuaternion: new THREE.Quaternion(), baseScale: new THREE.Vector3(),
       baseWiggle: new THREE.Vector3(), worldQuaternion: new THREE.Quaternion(),
       modelQuaternion: new THREE.Quaternion(), euler: new THREE.Euler(0, 0, 0, 'YXZ'),
@@ -54,7 +62,7 @@ export function installSuperjumpMotion({ Character, Actor, THREE, CHARACTER_TIME
   };
   Object.defineProperty(C, INSTALLED, { value: true });
   const update = C.update, squid = C._updateSquid, trigger = C.trigger,
-    dispose = C.dispose, setWeapon = C.setWeapon;
+    dispose = C.dispose, setWeapon = C.setWeapon, setDance = C.setDance;
   C.update = function (dt, s) {
     const m = get(this);
     // Restore before upstream hooks compute their pose. Nothing feeds back
@@ -62,15 +70,20 @@ export function installSuperjumpMotion({ Character, Actor, THREE, CHARACTER_TIME
     restore(this, m);
     if (m.disposed) return;
     s = s || {};
-    const f = s.movementMotion, sj = f?.superJump;
-    const eligible = f && f.alive && !f.special && !this.dance
+    const f = s.movementMotion, owner = this._owner();
+    const sj = owner ? owner.superJumpState : f?.superJump;
+    const eligible = f && f.alive && owner?.alive !== false && !f.special && !owner?.specialActive && !this.dance
       && this.s3SuperjumpMotionEnabled !== false && !s.firing && !s.subAim && !s.rolling;
+    if (!eligible) clear(this, m);
+    const allowed = eligible && (!sj || sj !== m.blocked);
     m.phase = null; m.progress = 0; m.mantle.set(0, 0, 0);
-    if (!eligible) m.touchdown = false;
+    if (!allowed) m.touchdown = false;
     else if (sj?.phase === 'charge' && (s.form || 'kid') !== 'kid') {
+      m.token = sj;
       m.touchdown = false; m.phase = 'charge';
       m.progress = clamp(sj.t / Math.max(1e-10, f.chargeTime ?? profile.superJump.chargeTime));
     } else if (sj?.phase === 'flight') {
+      m.token = sj;
       m.touchdown = false; m.progress = clamp(sj.t / Math.max(1e-10, sj.dur ?? profile.superJump.flightTime));
       m.phase = (s.form || 'kid') === 'kid' ? 'descent' : sj.t === 0 ? 'takeoff' : 'flight';
     } else if (m.touchdown && !sj && s.grounded && (s.form || 'kid') === 'kid'
@@ -82,7 +95,7 @@ export function installSuperjumpMotion({ Character, Actor, THREE, CHARACTER_TIME
   };
   C._updateSquid = function (dt, s) {
     const result = squid.call(this, dt, s), m = get(this);
-    if (!flightPhase(m.phase) || this.sqScale <= .001) return result;
+    if (!flightPhase(m.phase) || !shown(this) || this.sqScale <= .001) return result;
     const velocity = s.movementMotion.superJumpVelocity;
     if (!velocity || !Number.isFinite(velocity.x) || !Number.isFinite(velocity.y) || !Number.isFinite(velocity.z)) return result;
     const horizontal = Math.hypot(velocity.x, velocity.z), speed = Math.hypot(horizontal, velocity.y);
@@ -108,14 +121,21 @@ export function installSuperjumpMotion({ Character, Actor, THREE, CHARACTER_TIME
     const m = get(this);
     if (name === 'land') {
       const touchdown = flightPhase(m.phase);
-      clear(this, m); m.touchdown = touchdown;
+      clear(this, m, false); m.touchdown = touchdown;
     } else if (CLEAR_EVENTS.has(name)) clear(this, m);
     return trigger.call(this, name, arg);
   };
-  C.setWeapon = function (...args) { clear(this, get(this)); return setWeapon.apply(this, args); };
+  C.setWeapon = function (...args) {
+    if (args[0] !== this.weaponKind) clear(this, get(this));
+    return setWeapon.apply(this, args);
+  };
+  C.setDance = function (name, ...args) {
+    if (name) clear(this, get(this));
+    return setDance.call(this, name, ...args);
+  };
   C.dispose = function (...args) {
     const m = get(this); if (m.disposed) return;
-    clear(this, m); m.disposed = true;
+    clear(this, m); m.blocked = null; m.disposed = true;
     return dispose.apply(this, args);
   };
   if (!Object.hasOwn(A, INSTALLED)) {

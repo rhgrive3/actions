@@ -86,7 +86,7 @@ Run the focused suite:
 node --experimental-vm-modules --test patches/splatoon3/tests/jump-motion.test.mjs
 ```
 
-The suite loads the unmodified production installer, then this additive module,
+The suite loads the unmodified production installer, with the integrated module,
 in one VM realm with actual Actor, Runner, Character, THREE and native IK.
 It verifies indexed skinned leg vertices, posed ankle/knee bones, all other pose
 channels, native clock preservation, actual weapon grip/reach, interruption,
@@ -115,3 +115,44 @@ variants, gear effects, weapon variants and 11.3.0 hardware equivalence remain
 unknown. Parent should link this comparison from
 `reports/inkwave-splatoon3-behavior-2026-10-02.md` without closing P04 or other
 unverified gameplay differences on the strength of CPU pose tests.
+
+
+## Independent complete-installation review — 2026-10-03
+
+Reviewed the frozen complete production candidate `d846b5b8fadd6cef86e7d02699cf9b3b7356b80e`. All fourteen new
+motion installers are present in `runtime/install.mjs`; the tests load that
+installer once in one VM realm. Repeated owned installer calls test idempotence
+only. Earlier author receipts and measurements above describe their earlier
+foundation composition and are historical evidence, not proof of this candidate.
+
+Current primary pages and retained primary bytes were checked again before
+correction. `/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/review-air/primary-source-review.json` records
+current lookup URLs and verified retained byte hashes. The freshly decoded
+`official-jump-reinspect.png` and `official-landing-reinspect.png` retain the
+visible aimed hop, rearward bent legs and aimed knee absorption. Their source
+frames and PTS are recorded in `primary-frame-reinspection.json`. Clip build,
+gear abilities and controller input remain unknown; `11.3.0` is the profile
+target, not a proven clip version. No numeric motion calibration changed in
+this review. No original hardware, GPU shader/render, browser build or
+exact-SHA Actions result is claimed by these focused CPU checks.
+
+Current results, exact source/test hashes, commands and outstanding shared
+work are in `/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/review-air/done.json`, `findings.json` and
+`integration-handoff.json`. The parent owns the aggregate behavior report,
+shared-file integration, complete build and browser/Actions verification.
+
+Brief root/ancestor hiding now cancels the ordinary jump without requiring a
+form change; successful native `Actor.splat` clears its private state immediately.
+The old hidden regression also changed form, so it did not isolate hiding.
+Fresh jumps after cancelled mapped Slam consult the public special lifetime
+hook instead of inheriting orphaned leap/slam timer locks. Those timers are
+never reset by this module.
+
+A new input-driven test advances the production Actor, WeaponRunner and actual
+Physics floor at direct 30/60/120 Hz. It observes real takeoff, apex and landing,
+compares paired gameplay trajectories and native clocks, and checks drawn
+indexed leg vertices and native limb IK. The earlier supplied parabola remains
+a pose-envelope fixture only. Derived native head/tank spring feedback may
+change with the drawn pose; tests preserve gameplay state and verify that the
+air hook itself never writes spring/clock state. FixedClock tests still prove
+identical output per 60 Hz tick, not variable-dt trajectory equality.

@@ -1,6 +1,7 @@
 // Nintendo's public shooter film shows knee absorption while the gun stays
 // presented. These offsets are INKWAVE visual calibration, not Nintendo joint
 // angles or game-frame timings. Native contact, springs and limb IK still run.
+import { specialMotionAllowsFootPlant } from './special-motion.mjs';
 export const LANDING_MOTION_CALIBRATION = Object.freeze({
   normalPeak: .04, hardPeak: .055, normalRecovery: .22, hardRecovery: .34,
   normalDrop: .045, hardDrop: .08, hipPitch: .07, spinePitch: .10,
@@ -37,10 +38,11 @@ export function installLandingMotion(api, _profile) {
   function eligible(ch, s) {
     const owner = ch._owner(), runner = s?.runner ?? owner?.weaponRunner;
     const tr = ch.tr;
+    for (let p = ch.root; p; p = p.parent) if (p.visible === false) return false;
     return ch.kidForm && ch.grounded && !ch.dance && ch.wDance < .001 &&
       (!owner || (owner.alive !== false && !owner.specialActive && !owner.superJumpState)) &&
       s?.hp !== 0 && !s?.subAim && !runner?.aimingSub && ch.wSub < .001 &&
-      tr[T.T_SPAWN] > 1.4 && tr[T.T_LEAP] > 1.9 && tr[T.T_SLAM] > 1.4 &&
+      tr[T.T_SPAWN] > 1.4 && specialMotionAllowsFootPlant(ch, tr[T.T_LEAP] > 1.9 && tr[T.T_SLAM] > 1.4) &&
       tr[T.T_DODGE] > ch.dodgeDur + .3 && ch.lockW < .001 &&
       tr[T.T_THROW] > .62 &&
       !(ch.weaponKind === 'roller' && (ch.s3RollerFlick
@@ -62,7 +64,7 @@ export function installLandingMotion(api, _profile) {
     if (name === 'land') {
       const m = state(this); m.cancelled = false; m.age = 0;
       m.phase = null; m.compression = m.drop = 0;
-    } else if (['jump', 'spawn', 'leap', 'slam', 'dodge', 'throw', 'flick', 'slosh',
+    } else if (['jump', 'spawn', 'leap', 'slam', 'special_leap', 'special_slam', 'movement_cancel', 'dodge', 'throw', 'flick', 'slosh',
       'squidroll', 'squidsurge', 'squidsurge_top'].includes(name)) clear(this);
     return result;
   };

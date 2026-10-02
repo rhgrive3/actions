@@ -13,6 +13,7 @@ import { installLandingMotion as duplicateInstall, landingMotionSnapshot as dupl
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const SRC = path.resolve(process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public'));
 let cached;
+const evidenceRows = [];
 async function production() {
   if (cached) return cached;
   const context = vm.createContext({ console, performance, URL }), modules = new Map();
@@ -131,12 +132,13 @@ function row(r, stage, complete = false) {
 function save(rows) {
   const dest = process.env.INKWAVE_LANDING_TRACE_PATH;
   if (!dest) return;
+  evidenceRows.push(...rows);
   const folder = fs.realpathSync(path.dirname(dest));
   assert.ok(folder.startsWith('/mnt/workspace/.dev-state/agent-work/evidence/'));
   const file = path.join(folder, path.basename(dest));
   const sha = name => createHash('sha256').update(fs.readFileSync(path.join(ROOT, name))).digest('hex');
   const body = { schema: 1, proof: 'native source CPU skinning of actual visible indexed geometry; GPU/browser verification belongs to parent',
-    runtimeSHA256: sha('patches/splatoon3/runtime/landing-motion.mjs'), sourceSHA256: sha('inkwave-public/src/game/character.js'), rows };
+    runtimeSHA256: sha('patches/splatoon3/runtime/landing-motion.mjs'), sourceSHA256: sha('inkwave-public/src/game/character.js'), rows: evidenceRows };
   fs.writeFileSync(file + '.pending', JSON.stringify(body) + '\n'); fs.renameSync(file + '.pending', file);
 }
 
@@ -187,8 +189,8 @@ test('aimed landing keeps weapon/action channels and genuine native arm IK', asy
       const changed = new Set([C.HIPS_P + 1, C.HIPS_P + 2, C.HIPS, C.SPINE, C.CHEST, C.KNEEL, C.KNEER]);
       for (let i = 0; i < before.length; i++) if (!changed.has(i)) assert.equal(r.ch.P[i], before[i], 'only landing-owned lower body/torso channels change');
       for (let i = 0; i < 24; i++) { r.step(1 / 60, { fire: true }); assert.ok(grip(r) < .025); }
-      assert.ok(r.ch.ikErr[0] < .0005, 'actual native right arm reaches the weapon grip');
-      if (r.ch.dual) { assert.ok(grip(r, 'L') < .025); assert.ok(r.ch.ikErr[1] < .0005); }
+      assert.ok(r.ch.ikErr[1] < .0005, 'actual native right arm reaches the weapon grip');
+      if (r.ch.dual) { assert.ok(grip(r, 'L') < .025); assert.ok(r.ch.ikErr[0] < .0005); }
     } finally { r.close(); }
   }
 });
@@ -284,4 +286,39 @@ test('actual native floor collision lands and recovers with identical actor phys
     }
     assert.deepEqual(traces[1], traces[0], 'animation patch cannot alter native fall/contact/gameplay trajectory');
   } finally { G.physics = previous.physics; G.level = previous.level; }
+});
+
+
+test('brief hiding or movement cancellation cannot replay a landing on return', async () => {
+  const api = await production();
+  for (const interrupt of ['hidden', 'ancestor', 'movement_cancel', 'special_leap', 'special_slam']) {
+    const r = rig(api);
+    try {
+      land(r); r.step(); assert.ok(api.landingMotionSnapshot(r.ch).compression > 0);
+      if (interrupt === 'hidden') r.ch.setVisible(false);
+      else if (interrupt === 'ancestor') api.G.scene.visible = false;
+      else r.ch.trigger(interrupt);
+      r.step(); r.ch.setVisible(true); api.G.scene.visible = true; r.step();
+      assert.equal(api.landingMotionSnapshot(r.ch).phase, null, interrupt);
+      assert.equal(api.landingMotionSnapshot(r.ch).compression, 0);
+    } finally { api.G.scene.visible = true; r.close(); }
+  }
+});
+
+
+test('fresh landing after cancelled Slam regains its owned absorb despite orphaned special clocks', async () => {
+  const api = await production(), r = rig(api);
+  try {
+    r.a._startSpecial(); r.step(); r.a.specialActive = null; r.a.grounded = true; r.step();
+    assert.ok(r.ch.tr[api.CHARACTER_TIMERS.T_LEAP] < 1.9);
+    land(r); r.step();
+    const output = row(r, 'landing-after-cancelled-slam');
+    assert.ok(output.diagnostic.compression > 0, 'fresh land event owns its absorb');
+    assert.ok(output.nativeIK.every(Number.isFinite));
+    assert.ok(output.drawnGeometry.length > 0);
+    // Actual foot planting remains blocked by shared adapter/walk timers.
+    // The parent must wire specialMotionAllowsFootPlant there, then verify
+    // planted heel/toe contact; this lane does not assert contact parity yet.
+    save([output]);
+  } finally { r.close(); }
 });

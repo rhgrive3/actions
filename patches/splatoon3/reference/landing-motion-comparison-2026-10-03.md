@@ -43,3 +43,41 @@ Run `node --experimental-vm-modules --test patches/splatoon3/tests/landing-motio
 ## Remaining original measurements
 
 Capture known 11.3.0 input/gear/weapon conditions with synchronized front and side views: normal and high falls, stationary and running land, aimed/charged land, slopes/steps and rapid form/action transitions. Measure contact, minimum pelvis height, knee/ankle landmarks, weapon direction and return to normal stance after accounting for camera and playback. Unknown exact timing, angles, joint trajectories, hard-fall hand-contact behavior and original action overlap remain unknown. The patch is a separate usable calibration improvement; it does not close those parity questions.
+
+
+## Independent complete-installation review — 2026-10-03
+
+Reviewed the frozen complete production candidate `d846b5b8fadd6cef86e7d02699cf9b3b7356b80e`. All fourteen new
+motion installers are present in `runtime/install.mjs`; the tests load that
+installer once in one VM realm. Repeated owned installer calls test idempotence
+only. Earlier author receipts and measurements above describe their earlier
+foundation composition and are historical evidence, not proof of this candidate.
+
+Current primary pages and retained primary bytes were checked again before
+correction. `/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/review-air/primary-source-review.json` records
+current lookup URLs and verified retained byte hashes. The freshly decoded
+`official-jump-reinspect.png` and `official-landing-reinspect.png` retain the
+visible aimed hop, rearward bent legs and aimed knee absorption. Their source
+frames and PTS are recorded in `primary-frame-reinspection.json`. Clip build,
+gear abilities and controller input remain unknown; `11.3.0` is the profile
+target, not a proven clip version. No numeric motion calibration changed in
+this review. No original hardware, GPU shader/render, browser build or
+exact-SHA Actions result is claimed by these focused CPU checks.
+
+Current results, exact source/test hashes, commands and outstanding shared
+work are in `/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/review-air/done.json`, `findings.json` and
+`integration-handoff.json`. The parent owns the aggregate behavior report,
+shared-file integration, complete build and browser/Actions verification.
+
+Brief root/ancestor hiding now cancels landing before it can replay on return.
+The earlier hidden test waited out the whole landing window and missed that
+bug. Cancellation also observes the actual `special_leap`, `special_slam` and
+`movement_cancel` event names. Fresh landing after a cancelled mapped special
+uses the shared public lifetime hook instead of its orphaned leap/slam timers.
+
+Native ordinary floor contact, actual indexed geometry and IK remain tested.
+After a mapped special ends, native `_updateFeet` and Walk still use their old
+timer conjunctions in this candidate. The owned landing absorb can resume,
+but the parent must wire `specialMotionAllowsFootPlant` at those two sites and
+verify actual heel/toe contact before declaring post-special contact fixed.
+This limitation is explicitly recorded in the shared handoff.
