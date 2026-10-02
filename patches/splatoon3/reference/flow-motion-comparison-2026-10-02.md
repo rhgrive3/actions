@@ -27,9 +27,9 @@
 
 - 発動時は3本の開いたテーパー付きらせん strip が短く拡大・回転して消える。常時足元に torus を置かない。延長は同じ有限な strip を小さく再開する。
 - 18個の固定 instanced glint pool から短い duty で少数だけ明るくし、持続中は疎な四方向光にする。体を貫いて地形越しに見える depth bypass は使わない。kid は実 hips / spine / head、squid は実 pivot の現在の姿勢を anchor として追う。
-- 薄い外周 shell は実 kid の描画中 indexed skin / cloth / hair geometry と実 skeleton、実 squid body geometry を共有する。source material の vertex hook も再利用し、skin の顔変形、hair の normal 処理、squid の tentacle wave と uniform を保つ。AABB の代理形状や別の skeleton を作らない。実際の3段階 LOD と source quality の rebuild に追従し、古い shell を除去する。
+- 薄い外周 shell は実 kid の描画中 indexed skin / cloth / hair のvertex/index属性と実 skeleton、実 squid body のvertex/index属性を共有する。描画範囲はshell固有のgeometry viewで管理する。source material の vertex hook も再利用し、skin の顔変形、hair の normal 処理、squid の tentacle wave と uniform を保つ。AABB の代理形状や別の skeleton を作らない。実際の3段階 LOD と source quality の rebuild に追従し、古い shell を除去する。
 
-自己所有は Character ごとに **2 geometries、最大6 materials、1 instanced mesh、3 ribbon meshes**。body shell は source の mesh 数に従い、3つの実 LOD tier を上限に再利用する。source geometry / skeleton / uniforms は借用し、dispose しない。glint と ribbon の own buffers / materials、instanced GPU state を dispose 時に一度解放し、scene から shell を除去する。dead / reset では effect を即時消し、既存 pool を再利用する。dispose 後の update で pool を再生成しない。
+自己所有は Character ごとに **2 particle geometries、shellごとのgeometry view、最大6 materials、1 instanced mesh、3 ribbon meshes**。body shell は source の mesh 数に従い、3つの実 LOD tier を上限に再利用する。source attribute / index / skeleton / uniforms は借用し、source geometryをdisposeしない。glintとribbonのown buffers / materials、instanced GPU state、shell view固有のVAOをdispose時に一度解放し、sceneからshellを除去する。viewの破棄前に借用attribute/indexを外す。dead / reset では effect を即時消し、既存 pool を再利用する。dispose 後の update で pool を再生成しない。
 
 `actor.s3.flow.active` の立ち上がり、`remaining` の増加、active の立ち下がりだけを読む。延長を推測するために別の damage-credit map や score / duration clock を作らない。state が最大 duration で増加しなかった場合は、production Flow の塗りと同じく追加の延長演出を起こさない。武器交換や Runner.reset によって Flow を消さず、kid/squid/swim/climb、空中、攻撃中、移動 action と既存 pose を共存させる。
 
@@ -46,3 +46,12 @@
 読み取り診断 `flowMotionSnapshot(ch)` は phase、opacity、visible、aliveParticles、event / eventAge、activation / extension / expiry counts、ownedResources、disposed を公開する。親の actual WebGL trace と final exact-SHA Actions へ `integration-handoff.json` で渡す。
 
 lane の Node 回帰は GPU shader compile や Switch 実機比較の代用ではない。最終 browser の loaded module hash / active build と実 shader / scene / render の確認、共有 installer の wiring、最終 integration の exact-SHA Actions は親の担当で、lane 単独では **NOT-INTEGRATED**。元映像と同じ camera / gear / input を用いた実機測定、airborne / opponent-concealed visibility、自然解除の曲線、正確な particle count / luminance / timing は未確認として残す。
+
+
+## Ambient-occlusion override pass (2026-10-03)
+
+独立レビューで、本体の `GTAOPass` が `Points/Line` のみを除外し、Flowの透明な `Mesh/InstancedMesh` を法線・深度用の不透明材質で描いてしまう点を確認した。本体 `weapons.js` の `ribbonGate` と同じ方式で、Flowのglint・spiral・kid/squid shellは `scene.overrideMaterial` のあるpassでは描画範囲を0にする。通常passの元の範囲は復元する。
+
+Shellは本体と同じ実インデックス・vertex attribute・skeletonを使い、独立したgeometry viewに描画範囲を持たせる。本体geometryの描画範囲を変更しない。viewを破棄する前に借りたattribute/index参照を外し、Three.jsのgeometry破棄処理が本体GPU bufferを消さないようにする。資源数にはこのviewも含める。画質変更時は古いviewを破棄して置き換え、同じLODで数が増えないことを検査する。
+
+回帰は全Flow meshでoverride/通常passの描画範囲を直接確認し、本体vertex/index/drawRangeの保持とview破棄時の参照分離を検査する。これは実ソースのpass契約の回帰であり、実GTAO描画やSwitchの見え方の認定は親のWebGL検証に残る。
