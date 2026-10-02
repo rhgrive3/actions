@@ -78,6 +78,8 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: inkwave-patched-site-${{ github.sha }}
+          include-hidden-files: true
+          if-no-files-found: error
           path: |
             _site/
             _site-source-sha.txt
@@ -111,5 +113,7 @@ jobs:
         if: always()
         with:
           name: inkwave-browser-${{ github.sha }}
+          include-hidden-files: true
+          if-no-files-found: error
           path: .browser-evidence/
           retention-days: 14
