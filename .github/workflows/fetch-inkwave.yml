@@ -92,6 +92,11 @@ jobs:
           print('fetched', sum('path' in x for x in manifest), 'resources')
           print('errors', sum('error' in x for x in manifest))
           PY2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate patch compatibility before accepting upstream
+        run: node --experimental-vm-modules scripts/check-inkwave-patches.mjs
       - name: Commit mirror
         run: |
           git config user.name github-actions[bot]
