@@ -474,6 +474,36 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "weapons.blaster.actionAirSpreadCurve.0": {
+    "value": 0,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/misc/params.json#/ReduceJumpSwerveRate",
+      "index": 2,
+      "factor": 1,
+      "rawValue": 0
+    }
+  },
+  "weapons.blaster.actionAirSpreadCurve.1": {
+    "value": 0.5,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponBlasterMiddle.game__GameParameterTable.json#/GameParameters/spl__PlayerGearSkillParam_ActionSpecUp_ReduceJumpSwerveRate/Mid",
+      "index": null,
+      "factor": 1,
+      "rawValue": 0.5
+    }
+  },
+  "weapons.blaster.actionAirSpreadCurve.2": {
+    "value": 1,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/misc/params.json#/ReduceJumpSwerveRate",
+      "index": 0,
+      "factor": 1,
+      "rawValue": 1
+    }
+  },
   "weapons.splatling.inkPerShot": {
     "value": 0.5625,
     "status": "calibration or derived value; see reference raw table and unverified list",
@@ -637,6 +667,36 @@
       "index": null,
       "factor": 0.016666666666666666,
       "rawValue": 80
+    }
+  },
+  "weapons.splatling.runSpeedFiringCurve.0": {
+    "value": 1,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/MainWeaponSetting/Overwrite_MoveVelRt_Shot_Low",
+      "index": null,
+      "factor": 1,
+      "rawValue": 1
+    }
+  },
+  "weapons.splatling.runSpeedFiringCurve.1": {
+    "value": 1.175,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/MainWeaponSetting/Overwrite_MoveVelRt_Shot_Mid",
+      "index": null,
+      "factor": 1,
+      "rawValue": 1.175
+    }
+  },
+  "weapons.splatling.runSpeedFiringCurve.2": {
+    "value": 1.35,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/MainWeaponSetting/Overwrite_MoveVelRt_Shot_High",
+      "index": null,
+      "factor": 1,
+      "rawValue": 1.35
     }
   },
   "weapons.charger.inkFull": {
@@ -1606,11 +1666,6 @@
   },
   "flow.enemyInkSpeedMultiplier": {
     "value": 1.5,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "flow.paintInterval": {
-    "value": 0.1,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },

@@ -63,20 +63,22 @@ export function installGear(api, tuning) {
     m.enemyDamageRate = gearCurve(ap.inkResistance || 0, ...extra.enemyDamageRate) * 6000;
     m.enemyJumpVelocity = gearCurve(ap.inkResistance || 0, ...extra.enemyJumpVelocity) * 60;
     m.rollRetention = gearCurve(ap.actionIntensify || 0, ...extra.rollRetention);
-    m.runSpeedFiring = gearCurve(ap.runSpeed || 0, ...extra.runSpeedFiring);
-    m.actionAirSpread = gearCurve(ap.actionIntensify || 0, ...extra.actionAirSpread);
     a.s3.jumpChargeTime = tuning.superJump.chargeTime * (m.quickSuperJump ?? 1);
     a.s3.jumpFlightTime = tuning.superJump.flightTime * gearCurve(ap.quickSuperJump || 0, ...extra.jumpFlightTime);
     a.s3.modifiers.surgeChargeScale = m.actionIntensify ?? 1;
     // Actor-local copy. An opponent's equipment never changes shared stats.
     a.weapon = { ...api.WEAPONS[a.weaponId] };
+    // MainWeaponSetting and ActionSpecUp overrides belong to the equipped
+    // weapon. Heavy Splatling and Blaster do not use the common middle values.
+    m.runSpeedFiring = gearCurve(ap.runSpeed || 0, ...(a.weapon.runSpeedFiringCurve || extra.runSpeedFiring));
+    m.actionAirSpread = gearCurve(ap.actionIntensify || 0, ...(a.weapon.actionAirSpreadCurve || extra.actionAirSpread));
     if (Number.isFinite(a.weapon.spreadAir) && Number.isFinite(a.weapon.spreadGround)) a.weapon.spreadAir = a.weapon.spreadGround + (a.weapon.spreadAir - a.weapon.spreadGround) * (1 - m.actionAirSpread);
     for (const field of ['inkPerShot', 'inkFull', 'inkMin', 'flickInk', 'verticalInk', 'rollInkPerMeter']) if (field in a.weapon) a.weapon[field] *= m.inkSaverMain ?? 1;
     a.weapon.specialCost /= m.specialCharge ?? 1;
   }
   Actor.prototype.reset = function (...args) {
     const result = reset.apply(this, args); equip(this);
-    this.s3.recoverStopRemaining = 0; this.s3.enemyInkTime = 0; this.s3.flowPaintTime = 0;
+    this.s3.recoverStopRemaining = 0; this.s3.enemyInkTime = 0;
     return result;
   };
   Actor.prototype.setWeapon = function (...args) { const result = setWeapon.apply(this, args); equip(this); return result; };

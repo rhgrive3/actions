@@ -30,7 +30,8 @@ test('gear curve follows the reference nonlinear interpolation and exact endpoin
 test('flow activates once, extends on splats and expires', () => {
   const cfg = { threshold: 3, duration: 30, extension: 5, maxDuration: 30, weights: { splat: 1, turf: .1 } }, state = createFlow();
   assert.equal(awardFlow(state, 'splat', 1, cfg), false);
-  assert.equal(awardFlow(state, 'turf', 20, cfg), true);
+  assert.equal(awardFlow(state, 'turf', 20, cfg), false);
+  assert.equal(awardFlow(state, 'splat', 1, cfg), true);
   advanceFlow(state, 10); awardFlow(state, 'assist', 1, cfg); assert.equal(state.remaining, 25);
   advanceFlow(state, 26); assert.equal(state.active, false);
 });
