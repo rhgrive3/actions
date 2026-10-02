@@ -42,7 +42,14 @@ test('walking keeps shoe contact and handles slow input, stops and turns on the 
     Object.assign(state,{form,grounded,speed:2,localMove:{x:0,z:1}});
     for(let i=0;i<15;i++){ch.root.position.z+=2/60;ch.update(1/60,state);assert.ok(Array.from(ch.P).every(Number.isFinite));}
    }
-   ch.dance=true;ch.update(1/60,state);assert.ok(Array.from(ch.P).every(Number.isFinite));ch.dance=false;
+   Object.assign(state,{form:'kid',grounded:true,speed:0,localMove:{x:0,z:0}});
+   for(const dance of ['victory','defeat']){
+    ch.setDance(dance);for(let i=0;i<60;i++){ch.update(1/60,state);assert.ok(Array.from(ch.P).every(Number.isFinite));}
+    ch.setDance(null);for(let i=0;i<120;i++)ch.update(1/60,state);
+    assert.ok(ch.feet.every(f=>f.planted),'dance returns to a stable stance');assert.ok(ch.hipDrop<.10);
+   }
+   for(let i=0;i<60;i++){ch.root.position.z+=1.5/60;Object.assign(state,{speed:1.5,localMove:{x:0,z:1}});ch.update(1/60,state);}
+   assert.equal(ch.moving,true,'walking resumes after the real dance pose');
    const before=ch.root.position.clone();ch.update(1/60,state);assert.ok(ch.root.position.equals(before),'animation never changes gameplay position');
   });
  }finally{ch.dispose();}

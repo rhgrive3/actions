@@ -109,6 +109,8 @@ jobs:
           npx playwright install chromium
       - name: Verify active browser behavior and loaded artifact bytes
         run: node scripts/check-inkwave-browser.mjs --site .built-site/_site --evidence-dir .browser-evidence --profile-dir .browser-profile --exact-source
+      - name: Verify rendered walking contacts and transitions
+        run: node scripts/check-inkwave-motion.mjs --site .built-site/_site --evidence-dir .browser-evidence/motion --profile-dir .browser-profile-motion
       - uses: actions/upload-artifact@v4
         if: always()
         with:

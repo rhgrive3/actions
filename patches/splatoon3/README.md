@@ -13,6 +13,8 @@
 | `bootstrap.mjs` | 設定とパッチを読み込み、適用後にゲームを起動する |
 | `runtime/clock.mjs` | 60 Hz の固定更新、経過時間と入力の保持 |
 | `runtime/movement.mjs` | イカロール、イカノボリ、被弾処理の状態管理 |
+| `runtime/walk.mjs` | 足の接地・踏み出し・停止・方向転換、腰・上体の歩行校正 |
+| `runtime/roller.mjs` | ローラーの縦振り・横振り、振り下ろしと回復を射撃時刻へ同期 |
 | `runtime/weapons.mjs` | チャージ保持・貫通、縦振り、スライド後射撃、弾の減衰 |
 | `runtime/gear.mjs` | 3 部位×4 スロット、AP、効果曲線、保存と装備画面 |
 | `runtime/resources.mjs` | インク回復の待ち時間、敵インク、HP 回復 |
@@ -69,3 +71,9 @@ CI の取得・検証・Pages ビルドもこの互換性チェックを通る�
 `slam` は INKWAVE 固有のスペシャルであり、ウルトラチャクチの拳を含む動作を再現していない。既存の AI とオンライン通信も本家と同一のロジックではない。
 
 詳しい値と根拠は [数値資料](reference/README.md)、差分の状態は [比較報告](../../reports/inkwave-splatoon3-behavior-2026-10-02.md) に記録する。
+
+## モーションの比較
+
+`runtime/walk.mjs` の表示設定は `profile.walkMotion` に集約する。[歩行参照](reference/walk-motion-2026-10-02.md)、[ローラー](roller-behavior.md)、[移動・回復](../../reports/inkwave-movement-resources-2026-10-02.md)、[ブキ・ギア・Flow](reference/weapons-gear-flow-audit-2026-10-02.md)を変更時に見直す。数値の根拠が得られるまで校正値を抽出済み値へ昇格しない。
+
+通常ゲームのブラウザ確認に加え、同じビルドを `node scripts/check-inkwave-motion.mjs --site _site --evidence-dir <永続保存先> --profile-dir <専用プロファイル>` で描画する。小さな入力、前後・横移動、停止、方向転換の骨/IK値と画像を保存し、遊脚・接地・腰揺れの回帰を検出する。
