@@ -37,14 +37,18 @@ test('walking keeps shoe contact and handles slow input, stops and turns on the 
    for(const hz of [30,60,120]){f.pitch=.5;ch._dt=1/hz;for(let i=0;i<hz/2;i++)ch._footPose(f);results.push(f.pitch);}
    assert.ok(Math.max(...results)-Math.min(...results)<1e-10);
   });
-  await t.test('lean settles during actions instead of returning an old acceleration',()=>{
-   Object.assign(state,{form:'kid',grounded:true,speed:0,localMove:{x:0,z:0}});
-   for(let i=0;i<120;i++)ch.update(1/60,state);
-   for(let i=0;i<12;i++){ch.root.position.z+=5.76/60;state.speed=5.76;ch.update(1/60,state);}
-   assert.ok(Math.abs(api.walkLean(ch,'pitch',ch.kaz,1,0))>.03,'the fixture first accelerates');
-   Object.assign(state,{grounded:false,speed:0});for(let i=0;i<120;i++)ch.update(1/60,state);
-   state.grounded=true;ch.update(1/60,state);
-   assert.ok(Math.abs(api.walkLean(ch,'pitch',ch.kaz,1,0))<.002,'old lean does not reappear on landing');
+  await t.test('lean settles through air, fully hidden squid and invisible bodies',()=>{
+   for(const action of ['air','squid','hidden']){
+    ch.root.visible=true;Object.assign(state,{form:'kid',grounded:true,speed:0,localMove:{x:0,z:0}});
+    for(let i=0;i<120;i++)ch.update(1/60,state);
+    for(let i=0;i<12;i++){ch.root.position.z+=5.76/60;state.speed=5.76;ch.update(1/60,state);}
+    assert.ok(Math.abs(api.walkLean(ch,'pitch'))>.03,'the fixture first accelerates');
+    state.speed=0;if(action==='air')state.grounded=false;if(action==='squid')state.form='squid';if(action==='hidden')ch.root.visible=false;
+    for(let i=0;i<120;i++)ch.update(1/60,state);
+    if(action==='squid')assert.ok(ch.kidScale<=.001,'pose building was skipped for the squid');
+    ch.root.visible=true;Object.assign(state,{form:'kid',grounded:true});for(let i=0;i<30;i++)ch.update(1/60,state);
+    assert.ok(Math.abs(api.walkLean(ch,'pitch'))<.002,'old lean does not reappear: '+action);
+   }
   });
   await t.test('air, squid, dance and return preserve finite full-body poses',()=>{
    for(const form of ['kid','squid','kid'])for(const grounded of [false,true]){

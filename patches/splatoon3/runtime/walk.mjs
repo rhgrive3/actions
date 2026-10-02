@@ -117,6 +117,7 @@ export function installWalkMotion(context,profile){
   };
   C._updateStates=function(dt,s){
     const weight=this.gaitW;oldStates.call(this,dt,s);
+    const support=1-this.wAir*.75;advanceLean(this,'pitch',clamp(this.kaz,-48,48),support,dt);advanceLean(this,'roll',clamp(this.kax,-48,48),support,dt);
     if(!eligible(this))return;
     const v=this.gv,rw=smooth(tuning.runStart,tuning.runFull,v);this.runW=rw;
     this.duty=mix(tuning.walkDuty,tuning.runDuty,rw)+.06*this.wGoo;
@@ -150,10 +151,10 @@ export function applyWalkLocomotion(ch,P){
   const lat=clamp(ch.kgx/6,-1,1)*gw*(1-.3*ch.wGoo);P[C.SPINE+2]-=.05*lat;P[C.CHEST+2]-=.025*lat;P[C.HIPS+2]-=.02*lat;
   const squash=.012*c2*rn*gw;P[C.SQY]*=1-squash;P[C.SQXZ]*=1+squash*.45;P[C.HEAD]-=.018*c2*rn*gw;P[C.NECK]+=.012*c2*rn*gw;
 }
-export function walkLean(ch,axis,acceleration,weight,dt){
+function advanceLean(ch,axis,acceleration,weight,dt){
   if(!api)return null;
   const s=state(ch),key=axis==='pitch'?'pitch':'roll',velocity=key+'V',goal=clamp(acceleration*(key==='pitch'?1:-1)*tuning.leanGain,-tuning.leanMax,tuning.leanMax)*weight,omega=2*Math.PI*tuning.leanFrequency;
-  const y=s[key]-goal,j=s[velocity]+omega*y,e=Math.exp(-omega*dt);s[key]=goal+(y+j*dt)*e;s[velocity]=(s[velocity]-omega*j*dt)*e;return eligible(ch)?s[key]:null;
+  const y=s[key]-goal,j=s[velocity]+omega*y,e=Math.exp(-omega*dt);s[key]=goal+(y+j*dt)*e;s[velocity]=(s[velocity]-omega*j*dt)*e;return s[key];
 }
 
 // A foot in flight does not carry body weight. Action poses keep their original
@@ -161,3 +162,6 @@ export function walkLean(ch,axis,acceleration,weight,dt){
 export function walkSwingUnloaded(ch,f){return state(ch).active?f.sw:f.sw&&f.su>.02&&f.su<.9;}
 
 export function walkActive(ch){return !!states.get(ch)?.active;}
+
+// _updateStates advances these once per tick, including hidden/squid bodies.
+export function walkLean(ch,axis){return api&&eligible(ch)?state(ch)[axis==='pitch'?'pitch':'roll']:null;}
