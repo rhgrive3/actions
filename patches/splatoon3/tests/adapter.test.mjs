@@ -24,6 +24,22 @@ test('an upstream change to the planted-leg reach connection stops the build', (
   assert.throws(() => adaptSource('src/game/character.js', character.replace(anchor, 'const d = _v5.length(), mxr = this.legReach * 0.95;')), /walking planted ankle reach/);
   assert.throws(() => adaptSource('src/game/character.js', character + '\n' + anchor), /walking planted ankle reach/);
 });
+test('bomb sampling requires the exact native pose functions and captures them before decoration', () => {
+  const character = fs.readFileSync(new URL('src/game/character.js', publicRoot), 'utf8');
+  assert.throws(() => adaptSource('src/game/character.js', character.replace('  _poseThrow(P, tt) {', '  _changedThrow(P, tt) {')), /native bomb throw pose/);
+  assert.throws(() => adaptSource('src/game/character.js', character + '\n  _applyPose(dt, s) {'), /native bomb pose application/);
+});
+test('bomb preview and creation connections fail closed on upstream changes', () => {
+  const weapons = fs.readFileSync(new URL('src/game/weapons.js', publicRoot), 'utf8');
+  for (const [anchor, label] of [
+    ['const pos = _v.copy(a.pos); pos.y += 1.35;', 'bomb release origin'],
+    ['const p = _v.copy(a.pos); p.y += 1.35;', 'bomb preview origin'],
+    ['        vel.y -= 24 * dt;', 'bomb preview gravity'],
+  ]) {
+    assert.throws(() => adaptSource('src/game/weapons.js', weapons.replace(anchor, '/* upstream changed */')), new RegExp(label));
+    assert.throws(() => adaptSource('src/game/weapons.js', weapons + '\n' + anchor), new RegExp(label));
+  }
+});
 test('the deployment entry always installs patches before importing the game', () => {
   const html = fs.readFileSync(new URL('index.html', publicRoot), 'utf8');
   const built = adaptSource('index.html', html);

@@ -111,6 +111,8 @@ jobs:
         run: node scripts/check-inkwave-browser.mjs --site .built-site/_site --evidence-dir .browser-evidence --profile-dir .browser-profile --exact-source
       - name: Verify rendered walking contacts and transitions
         run: node scripts/check-inkwave-motion.mjs --site .built-site/_site --evidence-dir .browser-evidence/motion --profile-dir .browser-profile-motion
+      - name: Verify rendered sub, Flow and weapon detail transitions
+        run: node scripts/check-inkwave-motion-detail.mjs --site .built-site/_site --evidence-dir .browser-evidence/motion-detail --profile-dir .browser-profile-motion-detail
       - uses: actions/upload-artifact@v4
         if: always()
         with:
