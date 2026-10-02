@@ -27,7 +27,10 @@ async function production() {
       ? path.join(ROOT, path.relative(SRC, requested)) : requested;
     if (file.startsWith(path.join(ROOT, 'src') + path.sep)) file = path.join(SRC, path.relative(ROOT, file));
     if (modules.has(file)) return modules.get(file);
-    const raw = fs.readFileSync(file, 'utf8');
+    const baseline = process.env.INKWAVE_ADMISSION_BASELINE_RUNTIME_DIR;
+    const prior = baseline && file.startsWith(path.join(ROOT, 'patches/splatoon3/runtime') + path.sep)
+      ? path.join(fs.realpathSync(baseline), path.basename(file)) : null;
+    const raw = fs.readFileSync(prior && fs.existsSync(prior) ? prior : file, 'utf8');
     const relative = path.relative(SRC, file);
     let source = file.startsWith(SRC + path.sep) ? adaptSource(relative, raw) : raw;
     // Use only the real production adapter. A missing release/preview export
@@ -284,6 +287,7 @@ test('hidden, form, death, reset, disposal and weapon swap invalidate owned bomb
     const r = rig(api, 'dualies');
     try {
       for (let i = 0; i < 20; i++) r.step(1 / 60, { sub: true });
+      const beforeClock = r.ch.tr[T.T_THROW];
       if (action === 'hide') r.ch.setVisible(false);
       if (action === 'form') { r.a.form = 'squid'; r.step(1 / 60, { sub: true }); }
       if (action === 'death') r.a.splat(null, 'test');
@@ -291,7 +295,7 @@ test('hidden, form, death, reset, disposal and weapon swap invalidate owned bomb
       if (action === 'swap') r.a.setWeapon('slosher');
       if (action === 'dispose') r.ch.dispose();
       assert.equal(r.ch.bombHeld, false, action); assert.equal(r.ch.bomb.group.visible, false, action);
-      assert.equal(r.ch.bombSwap, 0, action); assert.equal(r.ch.tr[T.T_THROW], 99, action);
+      assert.equal(r.ch.bombSwap, 0, action); assert.equal(r.ch.tr[T.T_THROW], ['reset', 'death', 'swap'].includes(action) ? 99 : action === 'form' ? Math.fround(beforeClock + 1 / 60) : beforeClock, action);
       assert.equal(api.bombMotionSnapshot(r.ch).throwing, false, action);
       if (action === 'hide' || action === 'form') {
         if (action === 'hide') r.ch.setVisible(true); else r.a.form = 'kid';
@@ -306,13 +310,14 @@ test('hidden, form, death, reset, disposal and weapon swap invalidate owned bomb
     try {
       r.step(1 / 60, { sub: true }); r.step(1 / 60, { subReleased: true });
       assert.equal(api.bombMotionSnapshot(r.ch).throwing, true);
+      const beforeClock = r.ch.tr[T.T_THROW];
       if (action === 'reset') r.a.weaponRunner.reset();
       if (action === 'swap') r.a.setWeapon('charger');
       if (action === 'form') { r.a.form = 'squid'; r.step(); }
       if (action === 'hide') r.ch.setVisible(false);
       if (action === 'death') r.a.splat(null, 'test');
       assert.equal(api.bombMotionSnapshot(r.ch).throwing, false, action);
-      assert.ok(r.ch.tr[T.T_THROW] >= 99, action);
+      assert.equal(r.ch.tr[T.T_THROW], ['reset', 'death', 'swap'].includes(action) ? 99 : action === 'form' ? Math.fround(beforeClock + 1 / 60) : beforeClock, action);
     } finally { r.close(); }
   }
 });
@@ -572,9 +577,14 @@ test('native drawn arc follows actual bomb origin, velocity and gravity at every
 
 test('a duplicate installer from a different VM realm preserves the original prototype hooks and live helper state', async () => {
   const api = await production(), r = rig(api, 'dualies');
-  const duplicate = new vm.SourceTextModule(fs.readFileSync(path.join(ROOT, 'patches/splatoon3/runtime/bomb-motion.mjs'), 'utf8'),
-    { context: vm.createContext({}), identifier: 'separate-bomb-installer-realm.mjs' });
-  await duplicate.link(() => { throw Error('Bomb installer unexpectedly gained imports'); }); await duplicate.evaluate();
+  const otherContext = vm.createContext({}), modules = new Map();
+  const load = file => {
+    if (!modules.has(file)) modules.set(file, new vm.SourceTextModule(fs.readFileSync(file, 'utf8'),
+      { context: otherContext, identifier: file }));
+    return modules.get(file);
+  };
+  const duplicate = load(path.join(ROOT, 'patches/splatoon3/runtime/bomb-motion.mjs'));
+  await duplicate.link((specifier, from) => load(path.resolve(path.dirname(from.identifier), specifier))); await duplicate.evaluate();
   try {
     assert.ok(Object.hasOwn(api.Character.prototype, Symbol.for('inkwave.s3.bomb-motion.install.v1')));
     assert.ok(Object.hasOwn(api.WeaponRunner.prototype, Symbol.for('inkwave.s3.bomb-motion.reset.v1')));
@@ -615,4 +625,81 @@ test('native release sampling never invokes a composed left support-hand correct
       assert.equal(corrections.get(r.ch) || 0, before, kind + ' source release does not mutate the support addon WeakMap');
     } finally { r.close(); }
   }
+});
+
+test('admission cancellation preserves paired native throw clocks through hide, dance and lifetime events', async () => {
+  const api = await production(), T = api.CHARACTER_TIMERS;
+  for (const hz of [30, 60, 120]) for (const action of ['hide', 'ancestor', 'dance', 'form', 'reset', 'runner-reset', 'death', 'swap', 'dispose']) {
+    const baseline = rig(api, 'dualies', false), r = rig(api, 'dualies');
+    try {
+      for (const x of [baseline, r]) {
+        x.step(1 / hz, { sub: true }); x.step(1 / hz, { subReleased: true });
+        if (action === 'hide') x.ch.setVisible(false);
+        if (action === 'ancestor') api.G.scene.visible = false;
+        if (action === 'dance') x.ch.setDance('future-custom-presentation');
+        if (action === 'form') x.a.form = 'squid';
+        if (action === 'reset') x.a.reset();
+        if (action === 'runner-reset') x.a.weaponRunner.reset();
+        if (action === 'death') x.a.splat(null, 'clock regression');
+        if (action === 'swap') x.a.setWeapon('slosher');
+        if (action === 'dispose') x.ch.dispose();
+      }
+      assert.deepEqual(Array.from(r.ch.tr), Array.from(baseline.ch.tr), `${action}: event clocks match Bomb-disabled production`);
+      assert.equal(r.ch.bombT, baseline.ch.bombT, `${action}: ordinary native hold clock is preserved`);
+      if (action === 'dispose') continue;
+      for (let i = 0; i < 4; i++) {
+        for (const x of [baseline, r]) x.a._finishFrame(i === 0 ? 0 : 1 / hz);
+        assert.deepEqual(Array.from(r.ch.tr), Array.from(baseline.ch.tr), `${action}: every ordinary Float32 timer progresses natively`);
+        assert.equal(r.ch.bombT, baseline.ch.bombT, `${action}: ordinary hold age progresses natively`);
+      }
+      assert.equal(api.bombMotionSnapshot(r.ch).throwing, false);
+      assert.equal(r.ch.bomb.group.visible, false);
+      if (['hide', 'ancestor', 'dance', 'form'].includes(action)) {
+        api.G.scene.visible = true; r.ch.setVisible(true); r.ch.setDance(null); r.a.form = 'kid';
+        const age = r.ch.tr[T.T_THROW]; r.a._finishFrame(0);
+        assert.equal(r.ch.tr[T.T_THROW], age);
+        assert.equal(api.bombMotionSnapshot(r.ch).throwing, false, 'cancelled final recovery never reappears');
+        assert.equal(r.ch.bombSwap, 0, 'obsolete throw age cannot hide the left pistol after cancellation');
+        r.ch.root.updateMatrixWorld(true);
+        assert.ok(drawnVertices(r.ch.weapon.left.pivot, api.THREE).length > 100);
+        assert.ok(r.ch.ikErr.every(Number.isFinite));
+        r.a.ink = 100; // a fresh actual release requires the native 70-ink cost
+        r.step(1 / hz, { sub: true }); r.step(1 / hz, { subReleased: true });
+        assert.equal(api.bombMotionSnapshot(r.ch).throwing, true, `${action}: a fresh native event restarts owned presentation`);
+      }
+    } finally {
+      api.G.scene.visible = true;
+      if (action !== 'dispose') { baseline.close(); r.close(); }
+    }
+  }
+});
+
+test('admission bomb hold and read-only release preview resume after mapped Special while native fallbacks stay native', async () => {
+  const api = await production(), T = api.CHARACTER_TIMERS, r = rig(api);
+  try {
+    r.a.weapon = { ...r.a.weapon, special: 'slam' }; r.a._startSpecial(); r.a._finishFrame(0);
+    r.a.specialActive = null; r.a.grounded = true;
+    r.step(1 / 60, { sub: true });
+    assert.ok(r.ch.tr[T.T_LEAP] < 1.9); assert.equal(r.ch.bombHeld, true);
+    const candidate = new api.THREE.Vector3(1, 2, 3), before = preservedRig(r, api, true);
+    const preview = api.bombPreviewPosition(r.a, candidate.clone());
+    assert.ok(preview.distanceTo(candidate) > .5); assert.deepEqual(preservedRig(r, api, true), before);
+    r.step(1 / 60, { subReleased: true });
+    assert.equal(r.projectiles.bombs.length, 1); assert.equal(api.bombMotionSnapshot(r.ch).throwing, true);
+    assert.equal(r.ch.tr[T.T_THROW], Math.fround(1 / 60));
+    assert.ok(drawnVertices(r.projectiles.bombs[0].mesh, api.THREE).length > 100);
+    assert.ok(r.ch.ikErr.slice(0, 2).every(v => v < .001));
+    for (const mode of ['disabled', 'unmapped', 'detached']) {
+      r.a.weaponRunner.aimingSub = true;
+      if (mode === 'disabled') r.ch.s3SpecialMotionEnabled = false;
+      if (mode === 'unmapped') { r.ch.s3SpecialMotionEnabled = true; r.a.specialActive = { id: 'slam', net: true }; r.a._finishFrame(0); }
+      if (mode === 'detached') {
+        r.a.specialActive = null; r.ch.actor = null; api.G.actors = []; api.G.scene.remove(r.ch.root);
+        r.ch.update(0, { form: 'kid', grounded: true, subAim: true });
+      }
+      const native = preservedRig(r, api, true);
+      assert.deepEqual(api.bombPreviewPosition(r.a, candidate.clone()).toArray(), candidate.toArray(), mode);
+      assert.deepEqual(preservedRig(r, api, true), native, mode);
+    }
+  } finally { r.close(); }
 });

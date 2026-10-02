@@ -3,6 +3,7 @@
 // and gameplay, but put its existing whip on the real release and its cock in
 // the aiming phase. Curve ages below are native visual calibration, not Switch
 // input-frame measurements or extracted Nintendo animation parameters.
+import { specialMotionAllowsAction } from './action-admission.mjs';
 const INSTALL = Symbol.for('inkwave.s3.bomb-motion.install.v1'), RESET = Symbol.for('inkwave.s3.bomb-motion.reset.v1');
 const states = new WeakMap(), sampleCaches = new WeakMap(), disposed = new WeakSet();
 const RELEASE_AGE = .10, NATIVE_END = .62, RECOVERY = NATIVE_END - RELEASE_AGE;
@@ -28,6 +29,10 @@ export function bombMotionSnapshot(ch) {
 function hidden(root) {
   for (let node = root; node; node = node.parent) if (node.visible === false) return true;
   return false;
+}
+function specialAllows(ch, owner, timers) {
+  return specialMotionAllowsAction(ch, !owner?.specialActive
+    && ch.tr[timers.T_LEAP] >= 1.9 && ch.tr[timers.T_SLAM] >= 1.4);
 }
 const SECONDARY = ['_animWeapon', '_applyFace', '_updateHair', '_updateTank', '_applyJiggle', '_applyFingers'];
 const noop = () => {};
@@ -71,9 +76,9 @@ function sampleCache(ch) {
   return cache;
 }
 function sampleRelease(a, out) {
-  const ch = a?.character, value = ch && stateMap(ch).get(ch), curves = ch && registry(ch)?.curves;
+  const ch = a?.character, value = ch && stateMap(ch).get(ch), installation = ch && registry(ch), curves = installation?.curves;
   if (!curves || !enabled(ch) || !ch.bomb || !ch.weapon || hidden(ch.root) || ch.dance || a.alive === false || a.form === 'squid'
-    || a.specialActive || a.superJumpState) return out;
+    || !specialAllows(ch, a, installation.timers) || a.superJumpState) return out;
   // Evaluate the exported native curve into isolated buffers. The receiver
   // deliberately has no gameplay clocks, springs, footsteps or hair to mutate.
   const cache = sampleCache(ch), pose = cache.pose;
@@ -159,12 +164,13 @@ export function installBombMotion({ Character, WeaponRunner, CHARACTER_TIMERS: t
   // A globally registered own prototype stamp survives imports into other VM
   // realms. Keep the original state/curve registry available to their helpers.
   if (Object.hasOwn(C, INSTALL)) return;
-  Object.defineProperty(C, INSTALL, { value: Object.freeze({ states, curves, disposed }) });
+  Object.defineProperty(C, INSTALL, { value: Object.freeze({ states, curves, timers, disposed }) });
   function clear(ch) {
     if (!ch?.tr) return;
-    stateMap(ch).delete(ch);
-    ch.bombHeld = false; ch.bombT = 0; ch.wSub = 0; ch.bombSwap = 0; ch._subPrev = false;
-    ch.tr[timers.T_THROW] = 99;
+    // Retire the presentation, not the native event clock. Native Runner reset
+    // and setWeapon may independently reset clocks; preserve those exact calls.
+    stateMap(ch).set(ch, { throwing: false, elapsed: 0, cancelled: true });
+    ch.bombHeld = false; ch.wSub = 0; ch.bombSwap = 0;
     if (ch.bomb) { ch.bomb.group.visible = false; ch.bomb.group.scale.setScalar(1); }
   }
   if (WeaponRunner && !Object.hasOwn(WeaponRunner.prototype, RESET)) {
@@ -186,7 +192,7 @@ export function installBombMotion({ Character, WeaponRunner, CHARACTER_TIMERS: t
       // Storm shares the native event and timer, but its installed special
       // layer owns that throw. Never classify it as a Splat Bomb recovery.
       value.externalThrow = this._owner()?.specialActive?.id === 'storm';
-      value.throwing = !value.externalThrow; value.elapsed = 0;
+      value.throwing = !value.externalThrow; value.elapsed = 0; value.cancelled = false;
       // No held copy survives the event that creates the real projectile,
       // including an update while the Character is hidden or paused.
       this.bombHeld = false;
@@ -199,12 +205,13 @@ export function installBombMotion({ Character, WeaponRunner, CHARACTER_TIMERS: t
     if (!enabled(this)) return result;
     const owner = this._owner(), value = state(this);
     if (!this.kidForm || this.dance || hidden(this.root) || owner?.alive === false
-      || owner?.superJumpState || owner?.specialActive && owner.specialActive.id !== 'storm') {
+      || owner?.superJumpState || owner?.specialActive?.id !== 'storm' && !specialAllows(this, owner, timers)) {
       clear(this); return result;
     }
     const age = this.tr[timers.T_THROW]; value.elapsed = age;
     if (age >= RECOVERY) value.throwing = false;
     if (age >= NATIVE_END) value.externalThrow = false;
+    if (value.cancelled) this.bombSwap = 0;
     if (owner?.specialActive?.id === 'storm') {
       value.throwing = false; this.bombHeld = false;
       if (this.bomb) this.bomb.group.visible = false;
@@ -236,7 +243,9 @@ export function installBombMotion({ Character, WeaponRunner, CHARACTER_TIMERS: t
   };
   C._buildPose = function (...args) {
     const result = buildPose.apply(this, args);
-    if (!enabled(this) || !this.kidForm || this.dance || this._owner()?.alive === false) return result;
+    const owner = this._owner();
+    if (!enabled(this) || !this.kidForm || this.dance || hidden(this.root) || owner?.alive === false
+      || owner?.superJumpState || !specialAllows(this, owner, timers)) return result;
     const value = state(this), age = this.tr[timers.T_THROW];
     value.basePose ||= new Float32Array(this.P.length); value.basePose.set(this.P);
     if (value.throwing && age < RECOVERY) throwing.call(this, this.P, RELEASE_AGE + age);

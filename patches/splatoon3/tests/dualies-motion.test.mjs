@@ -19,7 +19,12 @@ async function production() {
       ? path.join(ROOT, path.relative(SRC, requested)) : requested;
     if (file.startsWith(path.join(ROOT, 'src') + path.sep)) file = path.join(SRC, path.relative(ROOT, file));
     if (modules.has(file)) return modules.get(file);
-    const source = fs.readFileSync(file, 'utf8');
+    // Optional prior-owned-runtime reproduction over the same production
+    // installer. Normal validation always reads the current production bytes.
+    const baseline = process.env.INKWAVE_ADMISSION_BASELINE_RUNTIME_DIR;
+    const prior = baseline && file.startsWith(path.join(ROOT, 'patches/splatoon3/runtime') + path.sep)
+      ? path.join(fs.realpathSync(baseline), path.basename(file)) : null;
+    const source = fs.readFileSync(prior && fs.existsSync(prior) ? prior : file, 'utf8');
     const m = new vm.SourceTextModule(file.startsWith(SRC + path.sep)
       ? adaptSource(path.relative(SRC, file), source) : source,
     { context, identifier: file, initializeImportMeta(meta) { meta.url = pathToFileURL(file).href; } });
@@ -47,9 +52,9 @@ async function production() {
   const { G, THREE } = api;
   G.scene = new THREE.Scene(); G.settings = { quality: 'high' };
   G.teamColors = [new THREE.Color('#ff8a14'), new THREE.Color('#2f5bff')];
-  G.level = { blocks: [], groundHeight: () => 0 };
+  G.level = { blocks: [], groundHeight: () => 0, queryBlocks: (_a, _b, _c, _d, out) => { out.length = 0; return out; } };
   G.paint = { sample: () => 1, splat: () => 0 }; G.match = { playing: () => true, canRespawn: () => false };
-  G.physics = { los: () => true, raycast: (_a, _b, _c, hit) => { hit.hit = false; return hit; } };
+  G.physics = new api.Physics(G.level);
   G.actors = []; G.time = 0;
   cached = api; return api;
 }
@@ -98,10 +103,13 @@ function posed(r) {
   // and its actual draw indices. No proxy rig, target-only or bounding-box proof.
   const geometry = [];
   ch.kid.traverse(mesh => {
-    if (!mesh.isMesh || !mesh.visible || !mesh.geometry.index) return;
+    if (!mesh.isMesh || !mesh.geometry?.index) return;
+    for (let p = mesh; p; p = p.parent) if (!p.visible) return;
     for (let p = mesh.parent; p && p !== ch.kid; p = p.parent) if (!p.visible) return;
-    const indices = mesh.geometry.index, count = indices.count;
-    const vertices = [0, Math.floor(count / 3), Math.floor(2 * count / 3), count - 1].map(i => {
+    const indices = mesh.geometry.index, start = mesh.geometry.drawRange.start || 0;
+    const end = Math.min(indices.count, start + mesh.geometry.drawRange.count), count = end - start;
+    if (!(count > 0)) return;
+    const vertices = [start, start + Math.floor(count / 3), start + Math.floor(2 * count / 3), end - 1].map(i => {
       const index = indices.getX(i), vertex = new THREE.Vector3();
       mesh.getVertexPosition(index, vertex); vertex.applyMatrix4(mesh.matrixWorld);
       return { index, position: vertex.toArray() };
@@ -254,8 +262,8 @@ test('reset, death, form, sub, weapon, spawn and special actions cancel owned ro
       if (action === 'sub') r.a.weaponRunner.aimingSub = true;
       if (action === 'weapon') r.a.setWeapon('shooter');
       if (action === 'spawn') r.ch.trigger('spawn');
-      if (action === 'leap') r.ch.trigger('special_leap');
-      if (action === 'slam') r.ch.trigger('special_slam');
+      if (action === 'leap') { r.ch.s3SpecialMotionEnabled = false; r.ch.trigger('special_leap'); }
+      if (action === 'slam') { r.ch.s3SpecialMotionEnabled = false; r.ch.trigger('special_slam'); }
       if (action === 'superjump') r.a.superJumpState = { phase: 'charge' };
       if (action === 'dance') {
         // An active native dodge owns this frame. Integrated emotes cancels
@@ -273,7 +281,7 @@ test('reset, death, form, sub, weapon, spawn and special actions cancel owned ro
         r.visual(); assert.equal(r.ch.tumble, 0, 'same interrupted roll must not replay');
       }
       r.a.weaponRunner.reset(); r.a.superJumpState = null; r.ch.dance = null;
-      r.a.alive = true; r.a.form = 'kid'; r.ch.setVisible(true);
+      r.a.alive = true; r.a.form = 'kid'; r.ch.s3SpecialMotionEnabled = true; r.ch.setVisible(true);
       for (const name of ['T_SPAWN', 'T_LEAP', 'T_SLAM', 'T_THROW']) r.ch.tr[T[name]] = 99;
       r.a.setWeapon('dualies'); for (let i = 0; i < 60; i++) r.visual();
       assert.equal(r.ch.tumble, 0); assert.equal(r.ch.lockW, 0);
@@ -293,11 +301,7 @@ test('hiding a live dualies character retires its roll without replaying the sam
     r.visual(0); r.ch.setVisible(true); r.visual(0);
     assert.equal(r.a.weaponRunner.dodge, token); assert.equal(r.ch.tumble, 0);
     assert.equal(api.dualiesMotionSnapshot(r.ch).blockedRoll, true);
-    // The integrated bomb hook clears its *visual* throw timer on hide.
-    // Everything else, including every actual gameplay field, stays fixed.
-    const after = gameplay(r); const throwIndex = api.CHARACTER_TIMERS.T_THROW;
-    after.timers[throwIndex] = before.timers[throwIndex];
-    assert.deepEqual(after, before);
+    assert.deepEqual(gameplay(r), before, 'all native clocks and gameplay survive hide at dt0');
     const output = posed(r); assert.ok(output.geometry.length > 0);
     assert.ok(output.nativeIK.slice(0, 2).every(v => v < .001));
     save([{ stage: 'hidden-roll-return', posed: output }]);
@@ -366,4 +370,20 @@ test('direct 30/60/120Hz native preview rolls end in actual reachable planted gr
       save([{ stage: 'direct-preview-rate', hz, posed: output }]);
     } finally { ch.dispose(); }
   }
+});
+
+test('admission managed Slam relinquishment allows a fresh Runner roll before legacy Special timers expire', async () => {
+  const api = await production(), r = rig(api);
+  try {
+    r.a.weapon = { ...r.a.weapon, special: 'slam' }; r.a._startSpecial(); r.visual(0);
+    r.a.specialActive = null; r.a.grounded = true; r.visual(0);
+    assert.ok(r.ch.tr[api.CHARACTER_TIMERS.T_LEAP] < 1.9);
+    r.roll(); r.step(1 / 60, { fire: true });
+    assert.equal(api.dualiesMotionSnapshot(r.ch).phase, 'roll');
+    assert.ok(posed(r).geometry.some(m => m.skinned && m.vertices.length > 0));
+    for (let i = 0; i < 14; i++) r.step(1 / 60, { fire: true });
+    assert.equal(api.dualiesMotionSnapshot(r.ch).phase, 'plant');
+    assert.ok(grip(r, 'L') < .025 && grip(r, 'R') < .025);
+    assert.ok(r.ch.ikErr.slice(0, 2).every(v => v < .001));
+  } finally { r.close(); }
 });
