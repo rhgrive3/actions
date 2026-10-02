@@ -128,6 +128,9 @@ test('production installer composes all motion hooks in one realm', async t => {
       for (let i = 0; i < 120; i++) r.step(1 / 60, { fire: true });
       assert.equal(r.a.weaponRunner.lockT, 0); assert.equal(r.a.weaponRunner.s3Turret, true);
       assert.ok(r.ch.lockW > .999); assert.ok(r.grip('R') < .025); assert.ok(r.grip('L') < .025);
+      // Hand targets can match while the native two-bone solver is clamped.
+      assert.ok(Array.from(r.ch.ikErr.slice(0, 2)).every(error => error < .0005));
+      assert.ok(r.ch.P[C.IKR] > .999); assert.ok(r.ch.P[C.IKL] > .999);
       r.a.weaponRunner.reset(); r.a.form = 'squid'; for (let i = 0; i < 30; i++) r.step();
       r.a.form = 'kid'; for (let i = 0; i < 90; i++) r.step();
       assert.ok(r.ch.lockW < 1e-8); assert.ok(r.grip('R') < .025); assert.ok(r.grip('L') < .025);
