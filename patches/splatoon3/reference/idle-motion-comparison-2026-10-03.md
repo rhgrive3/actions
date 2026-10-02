@@ -18,7 +18,7 @@
 
 | 項目 | 原作の根拠 / 確認範囲 | 公開本体の実装・再現 | 修正 / プレイへの影響 / 確認状態 |
 | --- | --- | --- | --- |
-| サブ保持中の待機割込み | 公式のサブ / special の区別。ボム保持関節曲線・切替時間は未確認 | `_updateStates` の `idleNow` は `wSub` / `bombHeld` を見ない。`_buildPose` は `_poseSubAim` の後に `_poseFidget`。静止してサブを保持し、native goggles fidget が発生すると左手目標が上書きされる | サブ保持・投擲回復中は待機レイヤーを適用しない。実リグで手の変位が 0.414061467 → 0.000331778 INKWAVE 単位。arm IK error は双方 0。これが修正済みの実装不具合。Nintendo の数値ではない |
+| サブ保持中の待機割込み | 公式のサブ / special の区別。ボム保持関節曲線・切替時間は未確認 | `_updateStates` の `idleNow` は `wSub` / `bombHeld` を見ない。`_buildPose` は `_poseSubAim` の後に `_poseFidget`。静止してサブを保持し、native goggles fidget が発生すると左手目標が上書きされる | サブ保持・投擲回復中は待機レイヤーを適用しない。旧個別構成の実リグで手の変位が 0.414061467 → 0.000331778 INKWAVE 単位、arm IK error は双方 0 と測定。完全統合では bomb layer も手を保護するため、この値を現候補の差として扱わない。Nintendo の数値ではない |
 | ブキを構えた静かな待機 | shooter n=612〜660 の下げた保持姿勢。長時間の全ジェスチャーは不明 | `_poseFidget` の twirl / stretch / tank / goggles / bounce / shake が持ち手、ブキ回転、つま先、髪・タンクの spring impulse を大きく変える | 試合中の静かな待機には native look のみ残し、他の大きな演技を抑制。これは **視覚校正**。全 7 ブキで実描画対象の indexed geometry と native IK を確認したが、7 種類の原作固有待機を認定した意味ではない |
 | 呼吸と重心移動 | 短い静止区間のため原作の呼吸周期を分離できない | `_breathe`、`brPh`、`S_SHIFT`、姿勢 FK / head stabilisation が既に存在 | native 呼吸・重心移動を保持。実胸骨の quaternion が変化すること、root 座標を変えないことを確認。原作と等しい周期・振幅とは判定しない |
 | 小さな足の調整 | 正確な原作の頻度・接地位置は未測定 | `stVar` / `shufT` が小さな stance 変更を出し、native `_updateFeet` / 独立 walk layer が実 replant と脚 IK を担当 | 足時計・接地・歩調を変更しない。native shuffle の expiration を再現し、実足の移動→再接地を確認。原作の数値へ変換しない |
@@ -37,3 +37,15 @@ production installer の既存 walk / weapon hooks の後に `installIdleMotion(
 実 bone transforms、native arm/leg IK error、現在表示されている indexed mesh の三角形頂点を記録する。オプションの `INKWAVE_IDLE_TRACE_PATH` は永続 evidence 内へ解決する場合だけ受け付け、native CPU skinning の全表示 mesh を OBJ にも保存する。AABB や target への代入のみの証拠は使わない。CPU OBJ は material の vertex shader / face deformation を実行した GPU screenshot ではない。
 
 検証項目は actual production composition、別 realm を含む二重 install、nullable preview、dt=0 の停止、reset / death / weapon changes / form / sub / action interruption、native breathing / shuffle / turn、全 7 ブキの静止保持、active walk と action の実出力不変、30/60/120 Hz display clock の固定 gameplay ticks 上での実骨・geometry 同一性、dispose の一回性。新しい geometry / material / scene object は生成しない。browser / build / exact-SHA CI と Switch 実機比較は親担当であり、focused VM 成功で代用しない。
+
+## 独立・統合レビュー — 2026-10-03
+
+保存済み commit `6947bcae0927e40eeaba71a7f1adc6a17bbf6d1d` の三所有ファイルが frozen complete candidate `d846b5b8fadd6cef86e7d02699cf9b3b7356b80e` と一致すること、旧 focused log / trace の hash、origin の保存済み SHA を確認した。旧作者の作業を再作成していない。公式 Fashion ページを再取得し、shooter 動画・idle sheet の hash を確認して n588–660 / PTS 11.869833–13.069833 を再観察した。係数・原作未確認項目は変更しない。
+
+実バグ: install の Symbol.for guard は realm 間で共有されるが、`idleMotionSnapshot` は module-local WeakMap / WeakSet を参照していた。production realm では ready でも外部 realm は off/unowned と返した。registry を Character prototype の Symbol.for 値へ置き、snapshot と dispose 診断がインストール済み state を参照するよう修正した。実姿勢・native indexed geometry・pause と併せて再現した regression で確認する。
+
+旧 held-sub test は idle opt-out の左手が大きく壊れることを要求していたが、全 installer の統合後は bomb module が最後に native sub pose を保護するため、この前提は成立しない。両方の実出力が安定すること、idle 側が fidget を除外することを検証へ改めた。0.414061467 → 0.000331778 は旧個別構成の歴史的測定であり、今回の統合結果ではない。全 fixture は production installer に activation を任せ、追加 installer による未接続隠しを行わない。
+
+シューター両手保持・歩行との連続性は引き続き親の共有範囲。今回の registry 修正は持ち方・歩調・入力・Actor/Runner・時計へ介入しない。証拠と接続要求は `/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/review-body/`。CPU 実骨格/IK/頂点、ブラウザ GPU、Actions、原作実機を引き続き区別する。
+
+The independent final tests also check cross-realm snapshots and direct frame-rate boundaries where relevant. Fixed 60 Hz production scheduling and direct 30/60/120 Hz native integration are recorded as separate CPU evidence; no equality of arbitrary native spring trajectories or Nintendo timings is inferred.

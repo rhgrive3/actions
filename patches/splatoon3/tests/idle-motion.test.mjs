@@ -6,7 +6,7 @@ import vm from 'node:vm';
 import { createHash } from 'node:crypto';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { adaptSource } from '../adapter.mjs';
-import { installIdleMotion as installFromAnotherRealm } from '../runtime/idle-motion.mjs';
+import { installIdleMotion as installFromAnotherRealm, idleMotionSnapshot as crossRealmSnapshot } from '../runtime/idle-motion.mjs';
 
 // Actual production composition in ONE realm. No fake Character/rig and no
 // individual motion installer stitched to the two-installer character fixture.
@@ -40,7 +40,6 @@ async function production() {
   await entry.evaluate();
   const profile = JSON.parse(fs.readFileSync(path.join(ROOT, 'patches/splatoon3/profile.json')));
   const api = { ...entry.namespace.install(profile), ...entry.namespace, profile };
-  api.installIdleMotion(api, profile);
   const hooks = [api.Character.prototype.update, api.Character.prototype._updateStates,
     api.Character.prototype._poseFidget, api.Actor.prototype.reset];
   api.installIdleMotion(api, profile); installFromAnotherRealm(api, profile);
@@ -106,6 +105,12 @@ function frame(r) {
   });
   return { diagnostic: r.snapshot(), pose: Array.from(ch.P), root: ch.root.position.toArray(), bones, meshes,
     nativeIK: Array.from(ch.ikErr), muzzle: ch.getMuzzle(new THREE.Vector3()).toArray(),
+    armIKWeights: [ch.P[r.api.CHARACTER_CHANNELS.IKR], ch.P[r.api.CHARACTER_CHANNELS.IKL]],
+    gripDistances: ['R', 'L'].map(side => {
+      const weapon = side === 'L' && ch.dual ? ch.weapon.left : ch.weapon;
+      return weapon.off.localToWorld(weapon.def[side === 'L' ? 'handL' : 'handR'].pos.clone())
+        .distanceTo(ch.bones[side === 'L' ? 'handL' : 'handR'].getWorldPosition(new THREE.Vector3()));
+    }),
     weapon: { position: ch.weapon.pivot.getWorldPosition(new THREE.Vector3()).toArray(),
       quaternion: ch.weapon.pivot.getWorldQuaternion(new THREE.Quaternion()).toArray() },
     feet: ch.feet.map(f => ({ planted: f.planted, swing: f.sw, contact: f.cw.toArray() })) };
@@ -167,7 +172,7 @@ function saveNativeGeometry(r, name) {
   fs.writeFileSync(file + '.pending', lines.join('\n') + '\n'); fs.renameSync(file + '.pending', file);
 }
 
-test('native idle fidget cannot replace the held-bomb hand or move its ready weapon', async () => {
+test('integrated idle and bomb layers keep the held-bomb hand and ready weapon stable', async () => {
   const api = await production(), rows = [];
   for (const enabled of [false, true]) {
     const r = rig(api, 'shooter', enabled);
@@ -179,9 +184,13 @@ test('native idle fidget cannot replace the held-bomb hand or move its ready wea
       const posed = frame(r), change = distance(stable.bones.handL.position, posed.bones.handL.position);
       rows.push({ enabled, stable, posed, handChange: change });
       saveNativeGeometry(r, enabled ? 'bomb-ready-after' : 'bomb-ready-before');
-      if (!enabled) assert.ok(change > .05, `baseline replaces the bomb-ready hand (${change})`);
-      else {
+      // Bomb motion is now integrated after native one-shots and already
+      // protects this hand in the idle opt-out. Do not require obsolete damage
+      // as proof that the idle layer works; validate both real outputs.
+      assert.ok(change < .008, `integrated held bomb stays readied (${change})`);
+      if (enabled) {
         assert.equal(r.snapshot().reason, 'sub'); assert.ok(change < .008, `held bomb stays readied (${change})`);
+        assert.ok(r.snapshot().filteredFidgets > 0);
         assert.ok(posed.meshes.some(m => m.skinned && m.indexCount > 100));
         assert.ok(posed.meshes.some(m => !m.skinned && m.vertices.length > 0));
         assert.ok(geometryDistance(stable, posed) < .03);
@@ -190,6 +199,19 @@ test('native idle fidget cannot replace the held-bomb hand or move its ready wea
     } finally { r.close(); }
   }
   saveEvidence(rows);
+});
+
+test('idle diagnostics read installing-realm state and disposal through the shared prototype registry', async () => {
+  const api = await production(), r = rig(api);
+  try {
+    forceFidget(r, 1); r.step();
+    assert.equal(r.snapshot().phase, 'ready'); assert.ok(r.snapshot().filteredFidgets > 0);
+    assert.deepEqual(crossRealmSnapshot(r.ch), JSON.parse(JSON.stringify(r.snapshot())));
+    const pose = frame(r); r.visual(0);
+    assert.ok(geometryDistance(pose, frame(r)) < 1e-7);
+  } finally { r.close(); }
+  assert.equal(crossRealmSnapshot(r.ch).disposed, true);
+  assert.deepEqual(crossRealmSnapshot(r.ch), JSON.parse(JSON.stringify(r.snapshot())));
 });
 
 test('quiet match carry remains ready instead of a weapon flourish; looking, breathing and foot adjustment survive', async () => {
@@ -206,6 +228,13 @@ test('quiet match carry remains ready instead of a weapon flourish; looking, bre
         if (enabled) {
           assert.equal(r.snapshot().phase, 'ready'); assert.ok(swing < .012, `${kind} quiet carry (${swing})`);
           assert.ok(after.nativeIK.slice(0, 2).every(v => v < .025), `${kind} native arms remain reachable`);
+          assert.ok(after.gripDistances[0] < .025, `${kind}: actual right-hand grip`);
+          if (kind === 'dualies') assert.ok(after.gripDistances[1] < .025);
+          if (kind === 'shooter') {
+            // A zero solver residual with IK disabled proves no foregrip
+            // contact. Keep this shared carry gap explicit for the parent.
+            assert.equal(after.armIKWeights[1], 0); assert.ok(after.gripDistances[1] > .1);
+          }
         } else assert.ok(swing > .015, `${kind} native flourish reproduction (${swing})`);
       } finally { r.close(); }
     }
@@ -333,4 +362,21 @@ test('30/60/120Hz display clocks produce identical native idle-to-walk bones and
     } finally { r.close(); }
   }
   assert.deepEqual(traces[0], traces[1]); assert.deepEqual(traces[1], traces[2]);
+});
+
+test('direct 30/60/120Hz Actor frames keep quiet carry finite and paused without claiming identical native springs', async () => {
+  const api = await production();
+  for (const hz of [30, 60, 120]) {
+    const r = rig(api);
+    try {
+      r.ch.nextFidget = 99;
+      for (let i = 0; i < hz; i++) r.step(1 / hz);
+      const output = frame(r); assert.equal(output.diagnostic.phase, 'ready');
+      assert.ok(output.meshes.some(m => m.skinned && m.vertices.length > 0));
+      assert.ok(output.nativeIK.every(Number.isFinite)); assert.ok(output.gripDistances[0] < .025);
+      const clocks = Array.from(r.ch.tr); r.visual(0);
+      assert.deepEqual(Array.from(r.ch.tr), clocks); assert.ok(geometryDistance(output, frame(r)) < 1e-7);
+      saveEvidence([{ stage: 'direct-frame-rate', hz, output }]);
+    } finally { r.close(); }
+  }
 });

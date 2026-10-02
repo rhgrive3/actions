@@ -39,7 +39,6 @@ async function production() {
   await entry.evaluate();
   const profile = JSON.parse(fs.readFileSync(path.join(ROOT, 'patches/splatoon3/profile.json')));
   const api = { ...entry.namespace.install(profile), ...entry.namespace, profile };
-  api.installHitSpawnMotion(api, profile); api.installFlowMotion(api);
   assert.throws(() => entry.namespace.install(profile), /already installed/);
   const before = [api.Character.prototype.update, api.Character.prototype._poseSpawn,
     api.Actor.prototype.reset, api.Actor.prototype.spawnAt];
@@ -192,6 +191,14 @@ test('spawn coating uses native physical shaders, geometry and LOD, expires with
       assert.ok(program.vertexShader.includes('#include <skinning_vertex>'));
       assert.ok(program.fragmentShader.includes('diffuseColor.rgb = mix(diffuseColor.rgb, uS3SpawnColor'));
       assert.equal((program.fragmentShader.match(/uniform float uS3SpawnCoating/g) || []).length, 1);
+      assert.equal(program.uniforms.uFlash, r.ch.u.uFlash, 'native flash uniform identity survives composition');
+      if (['skin', 'cloth', 'hair'].includes(kind)) {
+        assert.equal(program.uniforms.uHurt, r.ch.u.uHurt);
+        assert.ok(program.fragmentShader.includes('iwHurtM'), 'native directional hurt mask remains in the program');
+      }
+      if (kind === 'skin') assert.equal(program.uniforms.uMouth, r.ch.u.uMouth);
+      if (['hair', 'squid', 'squidGhost'].includes(kind)) assert.equal(program.uniforms.uGlow, r.ch.u.uGlow);
+      assert.ok(r.ch.mats[kind].customProgramCacheKey().includes('|iwSpawnCoating1'));
       const vertexOnly = { vertexShader: api.THREE.ShaderLib.physical.vertexShader, fragmentShader: '', uniforms: {} };
       assert.doesNotThrow(() => r.ch.mats[kind].onBeforeCompile(vertexOnly));
     }
@@ -214,6 +221,24 @@ test('spawn coating uses native physical shaders, geometry and LOD, expires with
     assert.ok(r.ch.u.uFlash.value.r > 0, 'non-spawn invulnerability keeps the native flash');
     assert.equal(original.hp, r.a.hp);
   } finally { r.close(); }
+});
+
+test('direct 30/60/120Hz native frames follow the same spawn protection duration and retain finite output', async () => {
+  const api = await production();
+  for (const hz of [30, 60, 120]) {
+    const r = rig(api);
+    try {
+      r.a.respawn(); r.a.grounded = true; r.a.vel.set(0, 0, 0);
+      const duration = r.a.invuln;
+      for (let i = 0; i < hz * 2; i++) r.step(1 / hz);
+      assert.equal(r.a.invuln, 0); assert.equal(r.snapshot().phase, 'off');
+      assert.equal(duration, api.PLAYER.spawnInvuln);
+      const output = posed(r); assert.ok(output.pose.every(Number.isFinite));
+      assert.ok(output.nativeIK.every(Number.isFinite)); assert.ok(output.geometry.length > 0);
+      const before = gameplay(r); r.visual(0); assert.deepEqual(gameplay(r), before);
+      evidenceRows.push({ stage: 'direct-frame-rate', hz, native: output }); saveTrace();
+    } finally { r.close(); }
+  }
 });
 
 test('native directional hits and splat disappearance remain gameplay-identical', async () => {
@@ -274,6 +299,28 @@ test('Flow production hooks still derive native shell deformation and own their 
     assert.ok(flowShell); assert.ok(flowShell.material.vertexShader.includes('#include <skinning_vertex>'));
     assert.ok(r.snapshot().coating > 0);
   } finally { r.close(); }
+});
+
+test('a first native Actor frame uses the real remaining spawn protection before Character discovers its owner', async () => {
+  const api = await production(), { G, THREE, Actor, Character } = api;
+  const a = new Actor({ team: 0, name: 'first-frame spawn', weapon: 'shooter', CharacterClass: Character,
+    style: { hair: 0, skin: 2, outfit: 0, eyes: 0 } });
+  const ch = a.character; ch.onEvent = null;
+  G.scene.add(ch.root); G.actors.push(a);
+  try {
+    assert.equal(ch._owner(), null, 'no test-injected Actor pointer or warm-up frames');
+    a.spawnAt(new THREE.Vector3(), 0); a.grounded = a.ground.hit = true;
+    a.invuln = .05; const before = { ink: a.ink, hp: a.hp, invuln: a.invuln, pos: a.pos.toArray(), vel: a.vel.toArray() };
+    a._finishFrame(1 / 60); ch.root.updateMatrixWorld(true); ch.skeleton.update();
+    const snapshot = api.hitSpawnMotionSnapshot(ch);
+    assert.equal(ch._owner(), a); assert.equal(snapshot.phase, 'expiry');
+    const smooth = x => x * x * (3 - 2 * x);
+    assert.ok(Math.abs(snapshot.coating - .9 * smooth((1 / 60) / .08) * smooth(.05 / .12)) < 1e-12);
+    assert.deepEqual({ ink: a.ink, hp: a.hp, invuln: a.invuln, pos: a.pos.toArray(), vel: a.vel.toArray() }, before);
+    const r = { a, ch, api, snapshot: () => api.hitSpawnMotionSnapshot(ch) };
+    assert.ok(drawnVertices(r).length > 0); assert.ok(Array.from(ch.ikErr).every(Number.isFinite));
+    evidenceRows.push({ stage: 'first-native-frame-expiry', native: posed(r), protection: a.invuln }); saveTrace();
+  } finally { G.actors = G.actors.filter(x => x !== a); ch.dispose(); }
 });
 
 test('30/60/120Hz production clock yields identical posed native geometry, protection clocks and pause behavior', async () => {
