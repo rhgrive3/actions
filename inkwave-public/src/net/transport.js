@@ -6,7 +6,7 @@ export const PROTO = 1;
 
 // Where the relay lives: ?relay=… wins; a page served from this machine or the LAN talks to a local `wrangler dev`
 // relay on :8787; the public site talks to the deployed Worker.
-export const PROD_RELAY = 'wss://inkwave-net.inkwave.workers.dev';
+export const PROD_RELAY = 'wss://inkwave-relay.rhgrive.workers.dev';
 export function relayURL() {
   const q = new URLSearchParams(location.search).get('relay');
   if (q) return q.replace(/\/$/, '');
