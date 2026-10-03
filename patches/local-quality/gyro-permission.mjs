@@ -28,6 +28,8 @@ export class GyroPermission {
     this.probe = null;
     this.generation = 0;
     this.received = false;
+    this.lastSampleAt = null;
+    this.lastRequest = { generation: 0, result: null, error: null };
     this.disposed = false;
     this.wanted = false;
     this.listeners = new Set();
@@ -45,15 +47,22 @@ export class GyroPermission {
   }
   snapshot() { return { state: this.state, supported: this.capability.supported, reason: this.reason,
     permission: this.permission, motionPermission: this.motionPermission, availability: this.availability,
-    pending: !!this.pending, received: this.received, wanted: this.wanted, standalone: !!this.lifecycle?.standalone }; }
+    pending: !!this.pending, received: this.received, wanted: this.wanted, standalone: !!this.lifecycle?.standalone,
+    orientationRequestAvailable: this.capability.orientationRequest, motionRequestAvailable: this.capability.motionRequest,
+    generation: this.generation, lastRequest: { ...this.lastRequest }, lastSampleAt: this.lastSampleAt,
+    lifecycleState: this.lifecycle?.state ?? null, lifecycleEpoch: this.lifecycle?.epoch ?? null,
+    lifecycleLastEvent: this.lifecycle?.lastEvent ?? null }; }
   subscribe(callback) { this.listeners.add(callback); callback(this.snapshot()); return () => this.listeners.delete(callback); }
   notify() { const value = this.snapshot(); for (const callback of [...this.listeners]) try { callback(value); } catch {} }
   request() {
     if (this.disposed || !this.capability.supported) return Promise.resolve(false);
     this.wanted = true;
     if (!this.needsPermission) { this.notify(); return Promise.resolve(this.allowed); }
-    if (this.pending) return this.pending.promise;
+    // A fresh user activation owns a fresh permission attempt. Never coalesce it
+    // with an older unresolved browser promise: the older result is obsolete.
+    if (this.pending) this.cancelRequest(false);
     const generation = ++this.generation, epoch = this.lifecycle?.epoch;
+    this.lastRequest = { generation, result: 'pending', error: null };
     let settle;
     const promise = new Promise(resolve => { settle = resolve; });
     const pending = this.pending = { generation, epoch, promise, settle, timer: null };
@@ -63,10 +72,13 @@ export class GyroPermission {
       if (this.disposed || this.pending !== pending || generation !== this.generation || epoch !== this.lifecycle?.epoch) return;
       this.permission = result === 'granted' ? 'granted' : result === 'denied' ? 'denied' : 'error';
       this.reason = this.permission === 'denied' ? 'permission-denied' : this.permission === 'error' ? 'permission-result-invalid' : null;
+      this.availability = this.permission === 'granted' ? 'idle' : this.availability;
+      this.lastRequest = { generation, result: this.permission, error: null };
       this.env.clearTimeout(pending.timer); this.pending = null; settle(this.allowed); this.notify();
     }, () => {
       if (this.disposed || this.pending !== pending || generation !== this.generation || epoch !== this.lifecycle?.epoch) return;
       this.permission = 'error'; this.reason = 'permission-error';
+      this.lastRequest = { generation, result: 'error', error: 'permission-error' };
       this.env.clearTimeout(pending.timer); this.pending = null; settle(false); this.notify();
     });
     Promise.resolve(motionPromise).then(result => {
@@ -75,8 +87,13 @@ export class GyroPermission {
       this.notify();
     }, () => { if (!this.disposed && generation === this.generation) { this.motionPermission = 'error'; this.notify(); } });
     pending.timer = this.env.setTimeout(() => {
-      if (this.disposed || this.pending !== pending) return;
-      this.permission = 'error'; this.reason = 'permission-timeout'; this.cancelRequest(false); this.notify();
+      if (this.disposed || this.pending !== pending || generation !== this.generation) return;
+      // A missing browser response is not evidence of denial. Keep the request
+      // retryable and report temporary unavailability rather than unknown-error.
+      if (this.permission !== 'granted') this.permission = 'prompt';
+      this.availability = 'unavailable'; this.reason = 'permission-timeout';
+      this.lastRequest = { generation, result: 'timeout', error: null };
+      this.cancelRequest(false); this.notify();
     }, 15000);
     this.notify();
     return promise;
@@ -97,8 +114,9 @@ export class GyroPermission {
     }, 2000);
     this.notify();
   }
-  sample() {
+  sample(time = this.env.performance?.now?.() ?? Date.now()) {
     if (!this.lifecycle.active || this.disposed) return;
+    if (Number.isFinite(time)) this.lastSampleAt = time;
     if (this.received && this.availability === 'active') return;
     this.received = true; this.stopProbe(); this.availability = 'active'; this.reason = null; this.notify();
   }

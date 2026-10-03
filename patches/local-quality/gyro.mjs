@@ -123,7 +123,7 @@ export function installGyroQuality(Gyro, getScreenAngle, isAndroid = () => /Andr
     if (!Number.isFinite(t)) return;
     if (t < this._platformSensorStart && this._platformSensorStart - t < 3600000) return;
     if (this._hasQ && (t < this._tQ || t - this._tQ > 500)) this.resync();
-    accessFor(this).sample();
+    accessFor(this).sample(t);
     if (isAndroid() && this._src !== 'ori') fallback(this, 'android-attitude');
     return orientation.call(this, e);
   };
