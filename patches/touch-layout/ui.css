@@ -60,3 +60,23 @@
   .iwm-layout-selection { flex-wrap: wrap; }
   .iwm-layout-select-label { flex-basis: 100%; }
 }
+
+
+/* Loading progress track stays geometrically centered on touch screens.
+   The percentage is absolutely positioned so it cannot pull the bar left. */
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-loading .iw-progress {
+  position: relative;
+  display: block;
+  width: min(calc(var(--u) * 34), calc(100vw - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px) - 112px));
+  margin-left: auto;
+  margin-right: auto;
+}
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-loading .iw-progress__track { width: 100%; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-loading .iw-progress__pct {
+  position: absolute;
+  left: calc(100% + 14px);
+  top: 50%;
+  transform: translateY(-50%);
+  min-width: 4ch;
+  white-space: nowrap;
+}
