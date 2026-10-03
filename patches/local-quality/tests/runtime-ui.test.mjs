@@ -58,3 +58,10 @@ test('rapid same-clock retarget retains already spent credit without advancing t
  const x=m._cur.x.x,credit=m._qualityCursorCredit;m._setFocus(c);assert.equal(m._cur.x.x,x);assert.equal(m._cur.x.target,193);assert.equal(m._qualityCursorCredit,credit);
  m._updateCursor(.010);assert.equal(m._cur.x.x,x);assert.equal(m._qualityCursorCredit,0);
 });
+
+test('logically off ring is hidden despite its native CSS opacity fade, and reappears on mode recovery',()=>{
+ const {m,el,time}=fixture(),a=el(10,20,'row'),b=el(100,120,'row');m._setFocus(a);m._updateCursor(1/60);assert.equal(m.cursorEl.style.visibility,'');
+ time(12);m.setInputMode('touch');m._setFocus(b);assert.equal(m._cur.on,false);assert.equal(m.cursorEl.style.visibility,'hidden');
+ time(24);m.setInputMode('pad');assert.equal(m._cur.on,true);assert.equal(m.cursorEl.style.visibility,'');
+ m._setFocus(null);assert.equal(m.cursorEl.style.visibility,'hidden');
+});

@@ -37,3 +37,11 @@ test('runtime verifier storage is prepared before tests and baseline checkout is
  assert(prepare>=0&&prepare<tests);assert(workflow.includes('sudo chown "$(id -u):$(id -g)" "$runtime_fixtures"'));assert(workflow.includes('test -w "$runtime_fixtures"'));
  assert(workflow.indexOf('test "$(realpath -m "$baseline_checkout")"')<workflow.indexOf('git worktree add --detach "$baseline_checkout"'));
 });
+
+test('long high-quality profiles preserve baseline before candidate work and cancelled diagnostics cannot become passing evidence',()=>{
+ assert(workflow.includes('timeout-minutes: 90'));
+ const before=workflow.indexOf('name: Profile runtime at immutable baseline'),save=workflow.indexOf('name: Preserve completed baseline runtime evidence'),after=workflow.indexOf('name: Profile candidate runtime and compare repeated evidence');
+ assert(before>=0&&before<save&&save<after);
+ assert(workflow.includes('inkwave-runtime-baseline-diagnostics-'));assert(workflow.includes('always() && (failure() || cancelled())'));
+ assert(workflow.includes('if: success()'));
+});

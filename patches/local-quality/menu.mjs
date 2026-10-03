@@ -9,6 +9,9 @@ export function installMenuQuality(Menus, env=globalThis){
   const update=P.update,dispose=P.dispose,settings=P._scr_settings,swap=P._swap,loop=P._loop;
   const active=m=>!!(m.current||m._scr);
   const focus=P._setFocus, inputMode=P.setInputMode, cursor=P._updateCursor;
+  // A CSS opacity fade must not leave a retired ring over the old item.
+  // Keep native fade-in and the moving spring; hide only the logically off ring.
+  const syncRingVisibility=m=>{const style=m.cursorEl.style,want=m._cur.on?'':'hidden';if(style.visibility!==want)style.visibility=want;};
   // One spring clock: an input task can spend the elapsed part of the current
   // frame immediately; the engine's next cursor tick subtracts that credit.
   // This starts visual motion now without an extra rAF or double advancement.
@@ -19,7 +22,7 @@ export function installMenuQuality(Menus, env=globalThis){
       this._qualityCursorCredit=Math.max(0,credit-dt);dt=Math.max(0,dt-credit);
     }
     if(!this._focus?.isConnected)this._cur.targetEl=null;
-    const result=cursor.call(this,dt);this._qualityCursorAt=env.performance.now();return result;
+    const result=cursor.call(this,dt);syncRingVisibility(this);this._qualityCursorAt=env.performance.now();return result;
   };
   function retarget(m){
     const now=env.performance.now();
@@ -27,7 +30,7 @@ export function installMenuQuality(Menus, env=globalThis){
     const step=m._frozen?.()?0:Math.min(1/60,elapsed)*(m.timeScale>0?m.timeScale:1);
     if(!m._focus?.isConnected)m._cur.targetEl=null;
     const springClock=m._cur.on&&!m._cur.snapNext,advancing=step>0&&springClock;
-    cursor.call(m,step);m._qualityCursorAt=now;
+    cursor.call(m,step);syncRingVisibility(m);m._qualityCursorAt=now;
     if(advancing&&m._cur.on)m._qualityCursorCredit=(m._qualityCursorCredit||0)+step;
     else if(!m._cur.on||!springClock)m._qualityCursorCredit=0;
   }
@@ -84,7 +87,7 @@ export function installMenuQuality(Menus, env=globalThis){
     if(retired.has(this))return;
     const r=ensure(this);
     if(this._raf){env.cancelAnimationFrame(this._raf);this._raf=0;}
-    if(!active(this)){stop(this,r);this._extTick=env.performance.now();return;}
+    if(!active(this)||env.document?.hidden){stop(this,r);this._extTick=env.performance.now();return;}
     const result=update.call(this,dt);r.arm();return result;
   };
   P.dispose=function(...args){

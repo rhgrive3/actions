@@ -33,3 +33,10 @@ test('visibility and disposal release callbacks and timers; visible screen resum
  f.env.document.hidden=false;f.listeners.get('visibilitychange')();f.advance(81);assert.equal(f.callbacks(),2);
  f.m.dispose();assert.equal(f.listeners.size,0);assert.equal(f.rafs.size,0);assert.equal(f.timers.size,0);f.m.update(1/60);f.advance(100);assert.equal(f.callbacks(),2);
 });
+
+test('external engine ticks do no hidden-document menu work and visible owner recovers',()=>{
+ const f=fixture();f.m._swap('settings');f.m.update(1/60);assert.equal(f.ticks(),1);
+ f.env.document.hidden=true;f.listeners.get('visibilitychange')();for(let i=0;i<600;i++)f.m.update(1/60);
+ assert.equal(f.ticks(),1);assert.equal(f.timers.size,0);assert.equal(f.rafs.size,0);assert.equal(f.m.current,'settings');
+ f.env.document.hidden=false;f.listeners.get('visibilitychange')();f.m.update(1/60);assert.equal(f.ticks(),2);f.advance(81);assert.equal(f.callbacks(),1);
+});
