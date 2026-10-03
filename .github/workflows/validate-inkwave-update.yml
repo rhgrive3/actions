@@ -8,6 +8,7 @@ on:
       - "patches/splatoon3/**"
       - "patches/touch-layout/**"
       - "patches/reliability/**"
+      - "patches/local-quality/**"
       - "scripts/*inkwave*.mjs"
       - "scripts/tests/inkwave-*.mjs"
   pull_request:
@@ -17,6 +18,7 @@ on:
       - "patches/splatoon3/**"
       - "patches/touch-layout/**"
       - "patches/reliability/**"
+      - "patches/local-quality/**"
       - "scripts/*inkwave*.mjs"
       - "scripts/tests/inkwave-*.mjs"
   workflow_dispatch:
@@ -46,6 +48,8 @@ jobs:
           node-version: 22
       - name: Verify gameplay patch contracts and regressions
         run: node --experimental-vm-modules scripts/check-inkwave-patches.mjs
+      - name: Verify local quality regressions
+        run: node --experimental-vm-modules --test patches/local-quality/tests/*.test.mjs
       - uses: actions/upload-artifact@v4
         if: failure() && hashFiles('.ci-scratch/inkwave-patches/patch-tests.log') != ''
         with:
@@ -69,7 +73,7 @@ jobs:
       - name: Check JavaScript syntax
         run: |
           set -euo pipefail
-          find inkwave-public/src inkwave-public/vendor -type f \( -name '*.js' -o -name '*.mjs' \) -print0 |
+          find inkwave-public/src inkwave-public/vendor patches/local-quality -type f \( -name '*.js' -o -name '*.mjs' \) -print0 |
             while IFS= read -r -d '' f; do node --check "$f"; done
       - name: Check local module and stylesheet references
         run: |

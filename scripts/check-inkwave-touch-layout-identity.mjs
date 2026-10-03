@@ -24,6 +24,7 @@ const sourcePath = key => {
   if (key.startsWith('patch/')) return ['patches/splatoon3/' + key.slice(6), path.join(repo, 'patches/splatoon3', key.slice(6))];
   if (key.startsWith('touch-layout/')) return ['patches/touch-layout/' + key.slice(13), path.join(repo, 'patches/touch-layout', key.slice(13))];
   if (key.startsWith('reliability/')) return ['patches/reliability/' + key.slice(12), path.join(repo, 'patches/reliability', key.slice(12))];
+  if (key.startsWith('local-quality/')) return ['patches/local-quality/' + key.slice(14), path.join(repo, 'patches/local-quality', key.slice(14))];
   throw new Error('Unknown input ' + key);
 };
 for (const [key, expected] of Object.entries(identity.files)) {
