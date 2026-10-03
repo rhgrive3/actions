@@ -192,10 +192,5 @@ export function installWeapons(context, profile) {
     }
     return result;
   };
-  const moveSpeed = WeaponRunner.prototype.moveSpeed;
-  WeaponRunner.prototype.moveSpeed = function () {
-    const w = this.a.weapon;
-    if (this.rolling && w.rollBaseSpeed) return this.rollT >= w.rollDashTime ? w.rollSpeed : w.rollBaseSpeed;
-    return moveSpeed.call(this);
-  };
+  // Rolling speed is owned by the build-connected native WeaponRunner.moveSpeed.
 }
