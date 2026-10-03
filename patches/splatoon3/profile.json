@@ -9,9 +9,9 @@
     "enemyInkSpeed": 1.44,
     "enemyInkJumpVel": 4.8,
     "inkRefillSwim": 33.333333333333336,
-    "inkRefillKid": 10,
-    "enemyInkDps": 18,
-    "enemyInkDamageCap": 40
+    "inkRefillKid": 10.0,
+    "enemyInkDps": 18.0,
+    "enemyInkDamageCap": 40.0
   },
   "weapons": {
     "shooter": {
@@ -21,8 +21,8 @@
       "spreadAir": 11.66,
       "spreadGround": 4.86,
       "fireInterval": 0.1,
-      "damage": 36,
-      "damageMin": 18,
+      "damage": 36.0,
+      "damageMin": 18.0,
       "damageReduceStart": 0.13333333333333333,
       "damageReduceEnd": 0.6666666666666666,
       "straightTime": 0.06666666666666667,
@@ -30,7 +30,7 @@
       "inkRecoverStop": 0.3333333333333333,
       "range": 12.9,
       "ballistics": {
-        "endSpeed": 89.58
+        "endSpeed": 89.58000000000001
       }
     },
     "dualies": {
@@ -38,10 +38,10 @@
       "moveSpeedFiring": 4.8,
       "projSpeed": 142.20000000000002,
       "spreadAir": 7.5,
-      "spreadGround": 2,
+      "spreadGround": 2.0,
       "fireInterval": 0.08333333333333333,
-      "damage": 30,
-      "damageMin": 15,
+      "damage": 30.0,
+      "damageMin": 15.0,
       "damageReduceStart": 0.11666666666666667,
       "damageReduceEnd": 0.25,
       "straightTime": 0.05,
@@ -51,40 +51,40 @@
       "rollTime": 0.2,
       "lockTime": 0.5333333333333333,
       "lockInterval": 0.06666666666666667,
-      "spreadLock": 0,
+      "spreadLock": 0.0,
       "range": 12.5,
       "ballistics": {
-        "endSpeed": 140.55
+        "endSpeed": 140.54999999999998
       }
     },
     "blaster": {
-      "inkPerShot": 10,
+      "inkPerShot": 10.0,
       "moveSpeedFiring": 2.6999999999999997,
       "projSpeed": 56.699999999999996,
-      "spreadAir": 10,
-      "spreadGround": 0,
+      "spreadAir": 10.0,
+      "spreadGround": 0.0,
       "fireInterval": 0.8333333333333334,
       "inkRecoverStop": 0.95,
-      "directDamage": 125,
-      "splashDamageMax": 70,
-      "splashDamageMin": 50,
+      "directDamage": 125.0,
+      "splashDamageMax": 70.0,
+      "splashDamageMin": 50.0,
       "splashRadius": 3.385,
       "damageBands": [
         [
           1.025,
-          70
+          70.0
         ],
         [
           3.385,
-          50
+          50.0
         ]
       ],
       "preDelay": 0.16666666666666666,
       "range": 13.3,
       "actionAirSpreadCurve": [
-        0,
+        0.0,
         0.5,
-        1
+        1.0
       ],
       "ballistics": {
         "endSpeed": 54.786,
@@ -95,12 +95,12 @@
     "splatling": {
       "inkPerShot": 0.5625,
       "moveSpeedFiring": 4.2,
-      "projSpeed": 63,
-      "spreadAir": 7,
+      "projSpeed": 63.0,
+      "spreadAir": 7.0,
       "spreadGround": 3.3,
       "fireInterval": 0.06666666666666667,
-      "damage": 30,
-      "damageMin": 15,
+      "damage": 30.0,
+      "damageMin": 15.0,
       "damageReduceStart": 0.18333333333333332,
       "damageReduceEnd": 0.31666666666666665,
       "straightTime": 0.13333333333333333,
@@ -115,20 +115,20 @@
       "firstChargeTime": 0.8,
       "burstFirst": 1.3333333333333333,
       "runSpeedFiringCurve": [
-        1,
+        1.0,
         1.175,
         1.35
       ],
       "ballistics": {
         "endSpeed": 90.63,
-        "firstChargeSpeed": 126
+        "firstChargeSpeed": 126.0
       }
     },
     "charger": {
-      "inkFull": 18,
+      "inkFull": 18.0,
       "inkMin": 2.25,
-      "damageMin": 40,
-      "damageMax": 160,
+      "damageMin": 40.0,
+      "damageMax": 160.0,
       "rangeMin": 9.033,
       "rangeMax": 24.037,
       "moveSpeedFiring": 1.2,
@@ -146,26 +146,26 @@
       "flickInk": 8.5,
       "moveSpeedFiring": 2.88,
       "flickDrops": 12,
-      "flickSpeed": 63,
-      "flickSpreadDeg": 36,
-      "flickDamageNear": 150,
-      "flickDamageFar": 35,
+      "flickSpeed": 63.0,
+      "flickSpreadDeg": 36.0,
+      "flickDamageNear": 150.0,
+      "flickDamageFar": 35.0,
       "flickDamageBands": [
         [
           4.2,
-          150
+          150.0
         ],
         [
           7.2,
-          100
+          100.0
         ],
         [
           7.2,
-          100
+          100.0
         ],
         [
           10.7,
-          35
+          35.0
         ]
       ],
       "verticalWindup": 0.43333333333333335,
@@ -173,27 +173,27 @@
       "verticalDrops": 5,
       "verticalSpeed": 110.028,
       "verticalSpreadDeg": 0,
-      "verticalDamageNear": 150,
-      "verticalDamageFar": 40,
+      "verticalDamageNear": 150.0,
+      "verticalDamageFar": 40.0,
       "verticalDamageBands": [
         [
           5.2,
-          150
+          150.0
         ],
         [
           8.2,
-          100
+          100.0
         ],
         [
           11.2,
-          50
+          50.0
         ],
         [
           13.2,
-          40
+          40.0
         ]
       ],
-      "flickGravity": 144,
+      "flickGravity": 144.0,
       "flickDrag": 6,
       "inkRecoverStop": 0.7166666666666667,
       "verticalInkRecoverStop": 0.9666666666666667,
@@ -235,15 +235,15 @@
           },
           {
             "count": 2,
-            "speed": 98.028,
-            "speedStep": -12,
+            "speed": 98.02799999999999,
+            "speedStep": -12.0,
             "pitchDegrees": 5,
             "pitchStepDegrees": -2.5
           },
           {
             "count": 2,
             "speed": 74.028,
-            "speedStep": -12,
+            "speedStep": -12.0,
             "pitchDegrees": 0,
             "pitchStepDegrees": -2.5
           }
@@ -256,61 +256,61 @@
       "windup": 0.2,
       "moveSpeedFiring": 2.4,
       "inkRecoverStop": 0.6666666666666666,
-      "damageHead": 70,
-      "damageTail": 50,
+      "damageHead": 70.0,
+      "damageTail": 50.0,
       "range": 14.5
     }
   },
   "bomb": {
-    "fuse": 1,
+    "fuse": 1.0,
     "throwSpeed": 67.2,
     "gravity": 57.6,
-    "radius": 7,
-    "damageMax": 180,
-    "damageMin": 30,
+    "radius": 7.0,
+    "damageMax": 180.0,
+    "damageMin": 30.0,
     "damageBands": [
       [
         3.6,
-        180
+        180.0
       ],
       [
-        7,
-        30
+        7.0,
+        30.0
       ]
     ],
-    "inkRecoverStop": 1
+    "inkRecoverStop": 1.0
   },
   "specials": {
     "storm": {
-      "duration": 8,
-      "radius": 10
+      "duration": 8.0,
+      "radius": 10.0
     }
   },
   "gear": {
     "runSpeed": [
-      1,
+      1.0,
       1.25,
       1.4999999999999998
     ],
     "swimSpeed": [
-      1,
+      1.0,
       1.125,
       1.25
     ],
     "inkSaverMain": [
-      1,
+      1.0,
       0.775,
       0.55
     ],
     "inkSaverSub": [
-      1,
+      1.0,
       0.9,
       0.8
     ],
     "inkRecovery": [
-      180,
+      180.0,
       148.5,
-      117
+      117.0
     ],
     "inkResistance": [
       0.024,
@@ -318,22 +318,22 @@
       0.0768
     ],
     "specialCharge": [
-      1,
+      1.0,
       1.15,
       1.3
     ],
     "specialSaver": [
       0.5,
       0.8,
-      1
+      1.0
     ],
     "quickRespawn": [
-      1,
+      1.0,
       0.6666666666666666,
       0.3333333333333333
     ],
     "quickSuperJump": [
-      1,
+      1.0,
       0.4375,
       0.25
     ],
@@ -350,12 +350,12 @@
   },
   "resources": {
     "inkRefillSwim": 33.333333333333336,
-    "inkRefillKid": 10,
+    "inkRefillKid": 10.0,
     "inkRefillDelay": 0.3333333333333333,
     "regenDelay": 1.3,
     "regenRate": 22,
     "regenRateSwim": 60,
-    "enemyInkDps": 18,
+    "enemyInkDps": 18.0,
     "enemyInkDamageCap": 40,
     "enemyInkGrace": 0,
     "enemyInkRegenSuppression": 0.4,
@@ -561,7 +561,7 @@
       "parameter": "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json#/GameParameters/WeaponParam/Stand_DegSwerve",
       "index": null,
       "factor": 1,
-      "rawValue": 2
+      "rawValue": 2.0
     },
     "weapons.dualies.inkPerShot": {
       "parameter": "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json#/GameParameters/WeaponParam/InkConsume",
@@ -621,13 +621,13 @@
       "parameter": "data/parameter/1130/weapon/WeaponBlasterMiddle.game__GameParameterTable.json#/GameParameters/WeaponParam/Jump_DegSwerve",
       "index": null,
       "factor": 1,
-      "rawValue": 10
+      "rawValue": 10.0
     },
     "weapons.blaster.spreadGround": {
       "parameter": "data/parameter/1130/weapon/WeaponBlasterMiddle.game__GameParameterTable.json#/GameParameters/WeaponParam/Stand_DegSwerve",
       "index": null,
       "factor": 1,
-      "rawValue": 0
+      "rawValue": 0.0
     },
     "weapons.blaster.inkPerShot": {
       "parameter": "data/parameter/1130/weapon/WeaponBlasterMiddle.game__GameParameterTable.json#/GameParameters/WeaponParam/InkConsume",
@@ -657,7 +657,7 @@
       "parameter": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/WeaponParam/Jump_DegSwerve",
       "index": null,
       "factor": 1,
-      "rawValue": 7
+      "rawValue": 7.0
     },
     "weapons.splatling.spreadGround": {
       "parameter": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/WeaponParam/Stand_DegSwerve",
@@ -777,7 +777,7 @@
       "parameter": "data/parameter/1130/misc/params.json#/ConsumeRt_Main",
       "index": 2,
       "factor": 1,
-      "rawValue": 1
+      "rawValue": 1.0
     },
     "gear.inkSaverMain.1": {
       "parameter": "data/parameter/1130/misc/params.json#/ConsumeRt_Main",
@@ -795,7 +795,7 @@
       "parameter": "data/parameter/1130/misc/params.json#/ConsumeRt_Sub_Lv0",
       "index": 2,
       "factor": 1,
-      "rawValue": 1
+      "rawValue": 1.0
     },
     "gear.inkSaverSub.1": {
       "parameter": "data/parameter/1130/misc/params.json#/ConsumeRt_Sub_Lv0",
@@ -813,7 +813,7 @@
       "parameter": "data/parameter/1130/misc/params.json#/InkRecoverFrm_Stealth",
       "index": 2,
       "factor": 1,
-      "rawValue": 180
+      "rawValue": 180.0
     },
     "gear.inkRecovery.1": {
       "parameter": "data/parameter/1130/misc/params.json#/InkRecoverFrm_Stealth",
@@ -825,7 +825,7 @@
       "parameter": "data/parameter/1130/misc/params.json#/InkRecoverFrm_Stealth",
       "index": 0,
       "factor": 1,
-      "rawValue": 117
+      "rawValue": 117.0
     },
     "gear.inkResistance.0": {
       "parameter": "data/parameter/1130/misc/params.json#/OpInk_MoveVel",
@@ -849,7 +849,7 @@
       "parameter": "data/parameter/1130/misc/params.json#/IncreaseRt_Special",
       "index": 2,
       "factor": 1,
-      "rawValue": 1
+      "rawValue": 1.0
     },
     "gear.specialCharge.1": {
       "parameter": "data/parameter/1130/misc/params.json#/IncreaseRt_Special",
@@ -879,61 +879,61 @@
       "parameter": "data/parameter/1130/misc/params.json#/SpecialGaugeRt_Restart",
       "index": 0,
       "factor": 1,
-      "rawValue": 1
+      "rawValue": 1.0
     },
     "gear.quickRespawn.0": {
       "parameter": "data/parameter/1130/misc/params.json#/Dying_ChaseFrm",
       "index": 2,
       "factor": 0.003703703703703704,
-      "rawValue": 270
+      "rawValue": 270.0
     },
     "gear.quickRespawn.1": {
       "parameter": "data/parameter/1130/misc/params.json#/Dying_ChaseFrm",
       "index": 1,
       "factor": 0.003703703703703704,
-      "rawValue": 180
+      "rawValue": 180.0
     },
     "gear.quickRespawn.2": {
       "parameter": "data/parameter/1130/misc/params.json#/Dying_ChaseFrm",
       "index": 0,
       "factor": 0.003703703703703704,
-      "rawValue": 90
+      "rawValue": 90.0
     },
     "gear.quickSuperJump.0": {
       "parameter": "data/parameter/1130/misc/params.json#/SuperJump_ChargeFrm",
       "index": 2,
       "factor": 0.0125,
-      "rawValue": 80
+      "rawValue": 80.0
     },
     "gear.quickSuperJump.1": {
       "parameter": "data/parameter/1130/misc/params.json#/SuperJump_ChargeFrm",
       "index": 1,
       "factor": 0.0125,
-      "rawValue": 35
+      "rawValue": 35.0
     },
     "gear.quickSuperJump.2": {
       "parameter": "data/parameter/1130/misc/params.json#/SuperJump_ChargeFrm",
       "index": 0,
       "factor": 0.0125,
-      "rawValue": 20
+      "rawValue": 20.0
     },
     "gearExtra.inkRecoveryKid.0": {
       "parameter": "data/parameter/1130/misc/params.json#/InkRecoverFrm_Std",
       "index": 2,
       "factor": 1,
-      "rawValue": 600
+      "rawValue": 600.0
     },
     "gearExtra.inkRecoveryKid.1": {
       "parameter": "data/parameter/1130/misc/params.json#/InkRecoverFrm_Std",
       "index": 1,
       "factor": 1,
-      "rawValue": 410
+      "rawValue": 410.0
     },
     "gearExtra.inkRecoveryKid.2": {
       "parameter": "data/parameter/1130/misc/params.json#/InkRecoverFrm_Std",
       "index": 0,
       "factor": 1,
-      "rawValue": 220
+      "rawValue": 220.0
     },
     "gearExtra.rollRetention.0": {
       "parameter": "data/parameter/1130/misc/params.json#/Somersault_MoveVelKd",
@@ -951,7 +951,7 @@
       "parameter": "data/parameter/1130/misc/params.json#/Somersault_MoveVelKd",
       "index": 0,
       "factor": 1,
-      "rawValue": 1
+      "rawValue": 1.0
     },
     "gearExtra.enemyShotSpeed.0": {
       "parameter": "data/parameter/1130/misc/params.json#/OpInk_MoveVel_Shot",
@@ -998,336 +998,3 @@
     "gearExtra.enemyDamageRate.1": {
       "parameter": "data/parameter/1130/misc/params.json#/OpInk_DamagePerFrame",
       "index": 1,
-      "factor": 1,
-      "rawValue": 0.00225
-    },
-    "gearExtra.enemyDamageRate.2": {
-      "parameter": "data/parameter/1130/misc/params.json#/OpInk_DamagePerFrame",
-      "index": 0,
-      "factor": 1,
-      "rawValue": 0.0015
-    },
-    "gearExtra.enemyJumpVelocity.0": {
-      "parameter": "data/parameter/1130/misc/params.json#/OpInk_JumpVel",
-      "index": 2,
-      "factor": 1,
-      "rawValue": 0.08
-    },
-    "gearExtra.enemyJumpVelocity.1": {
-      "parameter": "data/parameter/1130/misc/params.json#/OpInk_JumpVel",
-      "index": 1,
-      "factor": 1,
-      "rawValue": 0.098
-    },
-    "gearExtra.enemyJumpVelocity.2": {
-      "parameter": "data/parameter/1130/misc/params.json#/OpInk_JumpVel",
-      "index": 0,
-      "factor": 1,
-      "rawValue": 0.11
-    },
-    "gearExtra.runSpeedFiring.0": {
-      "parameter": "data/parameter/1130/misc/params.json#/MoveVelRt_Shot",
-      "index": 2,
-      "factor": 1,
-      "rawValue": 1
-    },
-    "gearExtra.runSpeedFiring.1": {
-      "parameter": "data/parameter/1130/misc/params.json#/MoveVelRt_Shot",
-      "index": 1,
-      "factor": 1,
-      "rawValue": 1.125
-    },
-    "gearExtra.runSpeedFiring.2": {
-      "parameter": "data/parameter/1130/misc/params.json#/MoveVelRt_Shot",
-      "index": 0,
-      "factor": 1,
-      "rawValue": 1.25
-    },
-    "gearExtra.actionAirSpread.0": {
-      "parameter": "data/parameter/1130/misc/params.json#/ReduceJumpSwerveRate",
-      "index": 2,
-      "factor": 1,
-      "rawValue": 0
-    },
-    "gearExtra.actionAirSpread.1": {
-      "parameter": "data/parameter/1130/misc/params.json#/ReduceJumpSwerveRate",
-      "index": 1,
-      "factor": 1,
-      "rawValue": 0.75
-    },
-    "gearExtra.actionAirSpread.2": {
-      "parameter": "data/parameter/1130/misc/params.json#/ReduceJumpSwerveRate",
-      "index": 0,
-      "factor": 1,
-      "rawValue": 1
-    },
-    "gearExtra.jumpFlightTime.0": {
-      "parameter": "data/parameter/1130/misc/params.json#/SuperJump_MoveFrm",
-      "index": 2,
-      "factor": 0.007246376811594203,
-      "rawValue": 138
-    },
-    "gearExtra.jumpFlightTime.1": {
-      "parameter": "data/parameter/1130/misc/params.json#/SuperJump_MoveFrm",
-      "index": 1,
-      "factor": 0.007246376811594203,
-      "rawValue": 132.3
-    },
-    "gearExtra.jumpFlightTime.2": {
-      "parameter": "data/parameter/1130/misc/params.json#/SuperJump_MoveFrm",
-      "index": 0,
-      "factor": 0.007246376811594203,
-      "rawValue": 96.6
-    },
-    "weapons.charger.inkMin": {
-      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/WeaponParam/InkConsumeMinCharge",
-      "index": null,
-      "factor": 100,
-      "rawValue": 0.0225
-    },
-    "weapons.charger.damagePartialMax": {
-      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/DamageParam/ValueMaxCharge",
-      "index": null,
-      "factor": 0.1,
-      "rawValue": 800
-    },
-    "weapons.shooter.referenceGravity": {
-      "parameter": "data/parameter/1130/weapon/WeaponShooterNormal.game__GameParameterTable.json#/GameParameters/MoveParam/FreeGravity",
-      "index": null,
-      "factor": 3600,
-      "rawValue": 0.016
-    },
-    "weapons.dualies.referenceGravity": {
-      "parameter": "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json#/GameParameters/MoveParam/FreeGravity",
-      "index": null,
-      "factor": 3600,
-      "rawValue": 0.016
-    },
-    "gear.subPower.0": {
-      "parameter": "data/parameter/1130/weapon/WeaponBombSplash.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeedZSpecUp/Low",
-      "index": null,
-      "factor": 0.8928571428571428,
-      "rawValue": 1.12
-    },
-    "gear.actionIntensify.0": {
-      "parameter": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#/GameParameters/spl__PlayerGearSkillParam_ActionSpecUp_Squid/WallJumpChargeFrm_Low",
-      "index": null,
-      "factor": 0.022222222222222223,
-      "rawValue": 45
-    },
-    "gear.subPower.1": {
-      "parameter": "data/parameter/1130/weapon/WeaponBombSplash.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeedZSpecUp/Mid",
-      "index": null,
-      "factor": 0.8928571428571428,
-      "rawValue": 1.4
-    },
-    "gear.actionIntensify.1": {
-      "parameter": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#/GameParameters/spl__PlayerGearSkillParam_ActionSpecUp_Squid/WallJumpChargeFrm_Mid",
-      "index": null,
-      "factor": 0.022222222222222223,
-      "rawValue": 18
-    },
-    "gear.subPower.2": {
-      "parameter": "data/parameter/1130/weapon/WeaponBombSplash.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeedZSpecUp/High",
-      "index": null,
-      "factor": 0.8928571428571428,
-      "rawValue": 1.68
-    },
-    "gear.actionIntensify.2": {
-      "parameter": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#/GameParameters/spl__PlayerGearSkillParam_ActionSpecUp_Squid/WallJumpChargeFrm_High",
-      "index": null,
-      "factor": 0.022222222222222223,
-      "rawValue": 5
-    },
-    "bomb.throwSpeed": {
-      "parameter": "data/parameter/1130/weapon/WeaponBombSplash.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeedZSpecUp/Low",
-      "index": null,
-      "factor": 60,
-      "rawValue": 1.12
-    },
-    "movement.surge.chargeTime": {
-      "parameter": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#/GameParameters/spl__PlayerGearSkillParam_ActionSpecUp_Squid/WallJumpChargeFrm_Low",
-      "index": null,
-      "factor": 0.016666666666666666,
-      "rawValue": 45
-    },
-    "weapons.splatling.firstChargeTime": {
-      "parameter": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/WeaponParam/ChargeFrame_First",
-      "index": null,
-      "factor": 0.016666666666666666,
-      "rawValue": 48
-    },
-    "weapons.splatling.burstFirst": {
-      "parameter": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/WeaponParam/MaxShootingFrame_First",
-      "index": null,
-      "factor": 0.016666666666666666,
-      "rawValue": 80
-    },
-    "weapons.splatling.runSpeedFiringCurve.0": {
-      "parameter": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/MainWeaponSetting/Overwrite_MoveVelRt_Shot_Low",
-      "index": null,
-      "factor": 1,
-      "rawValue": 1
-    },
-    "weapons.splatling.runSpeedFiringCurve.1": {
-      "parameter": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/MainWeaponSetting/Overwrite_MoveVelRt_Shot_Mid",
-      "index": null,
-      "factor": 1,
-      "rawValue": 1.175
-    },
-    "weapons.splatling.runSpeedFiringCurve.2": {
-      "parameter": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/MainWeaponSetting/Overwrite_MoveVelRt_Shot_High",
-      "index": null,
-      "factor": 1,
-      "rawValue": 1.35
-    },
-    "weapons.blaster.actionAirSpreadCurve.0": {
-      "parameter": "data/parameter/1130/misc/params.json#/ReduceJumpSwerveRate",
-      "index": 2,
-      "factor": 1,
-      "rawValue": 0
-    },
-    "weapons.blaster.actionAirSpreadCurve.1": {
-      "parameter": "data/parameter/1130/weapon/WeaponBlasterMiddle.game__GameParameterTable.json#/GameParameters/spl__PlayerGearSkillParam_ActionSpecUp_ReduceJumpSwerveRate/Mid",
-      "index": null,
-      "factor": 1,
-      "rawValue": 0.5
-    },
-    "weapons.blaster.actionAirSpreadCurve.2": {
-      "parameter": "data/parameter/1130/misc/params.json#/ReduceJumpSwerveRate",
-      "index": 0,
-      "factor": 1,
-      "rawValue": 1
-    },
-    "resources.enemyInkDps": {
-      "parameter": "data/parameter/1130/misc/params.json#/OpInk_DamagePerFrame",
-      "index": 2,
-      "factor": 6000,
-      "rawValue": 0.003
-    },
-    "resources.enemyInkDamageCap": {
-      "parameter": "data/parameter/1130/misc/params.json#/OpInk_DamageLmt",
-      "index": 2,
-      "factor": 100,
-      "rawValue": 0.4
-    },
-    "movement.roll.chainRetention": {
-      "parameter": "data/parameter/1130/misc/params.json#/Somersault_MoveVelKd",
-      "index": 2,
-      "factor": 1,
-      "rawValue": 0.85
-    },
-    "superJump.chargeTime": {
-      "parameter": "data/parameter/1130/misc/params.json#/SuperJump_ChargeFrm",
-      "index": 2,
-      "factor": 0.016666666666666666,
-      "rawValue": 80
-    },
-    "superJump.flightTime": {
-      "parameter": "data/parameter/1130/misc/params.json#/SuperJump_MoveFrm",
-      "index": 2,
-      "factor": 0.016666666666666666,
-      "rawValue": 138
-    }
-  },
-  "gearExtra": {
-    "inkRecoveryKid": [
-      600,
-      410,
-      220
-    ],
-    "rollRetention": [
-      0.85,
-      0.925,
-      1
-    ],
-    "enemyShotSpeed": [
-      0.012,
-      0.033,
-      0.042
-    ],
-    "enemyDamageCap": [
-      0.4,
-      0.3,
-      0.2
-    ],
-    "enemyDamageRate": [
-      0.003,
-      0.00225,
-      0.0015
-    ],
-    "jumpFlightTime": [
-      1,
-      0.9586956521739132,
-      0.7
-    ],
-    "enemyJumpVelocity": [
-      0.08,
-      0.098,
-      0.11
-    ],
-    "runSpeedFiring": [
-      1,
-      1.125,
-      1.25
-    ],
-    "actionAirSpread": [
-      0,
-      0.75,
-      1
-    ]
-  },
-  "respawnChaseTime": 4.5,
-  "walkMotion": {
-    "status": "visual calibration against official Nintendo footage; exact animation curve parity unverified",
-    "startSpeed": 0.075,
-    "stopSpeed": 0.045,
-    "runStart": 1.8,
-    "runFull": 5.76,
-    "walkHalfStride": 0.16,
-    "runHalfStride": 0.27,
-    "walkDuty": 0.64,
-    "runDuty": 0.3,
-    "minCadence": 0.32,
-    "maxCadence": 4.8,
-    "walkLift": 0.025,
-    "runLift": 0.16,
-    "walkPickupPeak": 0.42,
-    "runPickupPeak": 0.32,
-    "swingPitchWalk": 0.32,
-    "swingPitchRun": 1.05,
-    "toeWalk": 0.24,
-    "toeRun": 0.6,
-    "heelWalk": 0.18,
-    "heelRun": 0.08,
-    "firstStepTime": 0.16,
-    "settleLift": 0.015,
-    "settleTime": 0.17,
-    "settleThreshold": 0.055,
-    "catchDistance": 0.3,
-    "landingLock": 0.93,
-    "targetFollow": 20,
-    "walkYaw": 0.065,
-    "runYaw": 0.105,
-    "walkRoll": 0.035,
-    "runRoll": 0.045,
-    "walkDrop": -0.02,
-    "runDrop": -0.064,
-    "walkBob": 0.008,
-    "runBob": -0.012,
-    "leanGain": 0.0035,
-    "leanMax": 0.16,
-    "leanFrequency": 3.2,
-    "footPitchRate": 8
-  },
-  "weaponsFidelity": {
-    "schema": 1,
-    "status": "source-guided; Switch parity not certified",
-    "brakeDragPerFrame": 0.36,
-    "brakeGravity": 252,
-    "brakeToFreeVelocityY": -9,
-    "freeDragPerFrame": 0.02,
-    "freeGravity": 57.6,
-    "defaultProvenance": "XarrotD/paramtable; not version-pinned 11.3.0 datamine; medium confidence"
-  }
-}
