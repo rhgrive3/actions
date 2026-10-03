@@ -2,6 +2,17 @@ import test from 'node:test';import assert from 'node:assert/strict';import fs f
 import {parse} from '../vendor/acorn.mjs';import {adaptCompiledMain,loadingIdentity} from '../adapter.mjs';
 const baseline=process.env.INKWAVE_BASELINE_SITE;
 const source=baseline?fs.readFileSync(path.join(baseline,'src/main.js'),'utf8'):null;
+function writableTestTmp(){
+ const candidates=[process.env.INKWAVE_TEST_TMP,process.env.TMPDIR,path.resolve('.ci-scratch'),
+   process.env.TMP,process.env.TEMP,process.env.CI_STORAGE,os.tmpdir()].filter(Boolean);
+ const seen=new Set();
+ for(const candidate of candidates){
+  const root=path.resolve(candidate);if(seen.has(root))continue;seen.add(root);
+  try{fs.mkdirSync(root,{recursive:true});fs.accessSync(root,fs.constants.W_OK);return root;}catch{}
+ }
+ throw new Error('No writable temporary directory for loading/cache regression tests');
+}
+const TEST_TMP=writableTestTmp();
 const classMethods=s=>{const ast=parse(s,{ecmaVersion:'latest',sourceType:'module'});const cls=ast.body.find(n=>n.type==='ClassDeclaration'&&n.body.body.some(m=>m.key?.name==='boot'));return new Map(cls.body.body.filter(n=>n.type==='MethodDefinition').map(n=>[n.key.name,s.slice(n.start,n.end)]));};
 function shape(node){if(Array.isArray(node))return node.map(shape);if(node&&typeof node==='object')return Object.fromEntries(Object.entries(node).filter(([k])=>!['start','end','raw'].includes(k)).map(([k,v])=>[k,shape(v)]));return node;}
 function uninstrument(node){if(Array.isArray(node))return node.map(uninstrument).filter(Boolean);if(!node||typeof node!=='object')return node;
@@ -45,7 +56,7 @@ test('loading identity binds runtime, shell, worker, adapter and exact Acorn; ex
 });
 test('exact-source checker rejects forged loading input despite self-consistent manifest',()=>{
  const root=path.resolve(new URL('../../../',import.meta.url).pathname);
- const dir=fs.mkdtempSync(path.join(process.env.INKWAVE_TEST_TMP||os.tmpdir(),'iw-identity-'));
+ const dir=fs.mkdtempSync(path.join(TEST_TMP,'iw-identity-'));
  try{
  const fixture=path.join(dir,'repo'),site=path.join(dir,'site');fs.mkdirSync(path.join(fixture,'scripts'),{recursive:true});fs.mkdirSync(path.join(fixture,'patches/loading-cache/runtime'),{recursive:true});fs.mkdirSync(site);
  fs.copyFileSync(path.join(root,'scripts/check-inkwave-browser.mjs'),path.join(fixture,'scripts/check-inkwave-browser.mjs'));
@@ -56,7 +67,7 @@ test('exact-source checker rejects forged loading input despite self-consistent 
  const identity={artifacts:{},contentHash:hash(JSON.stringify({})),files:{'loading-cache/runtime/startup.mjs':hash(fs.readFileSync(target))},build:{script:hash(fs.readFileSync(path.join(fixture,'scripts/build-inkwave.mjs')))}};
  fs.writeFileSync(path.join(site,'inkwave-build.json'),JSON.stringify(identity));
  // The checker rejects /tmp for browser outputs. This check exits before browser use.
- const outputs=path.join(process.env.INKWAVE_TEST_TMP||'/mnt/data','iw-identity-outputs-'+path.basename(dir));fs.mkdirSync(outputs,{recursive:true});
+ const outputs=path.join(TEST_TMP,'iw-identity-outputs-'+path.basename(dir));fs.mkdirSync(outputs,{recursive:true});
  try{const check=spawnSync(process.execPath,[path.join(fixture,'scripts/check-inkwave-browser.mjs'),'--site',site,'--evidence-dir',path.join(outputs,'evidence'),'--profile-dir',path.join(outputs,'profile'),'--exact-source'],{encoding:'utf8',timeout:15000});
  assert.notEqual(check.status,0);assert(check.stderr.includes('Build input differs from commit: patches/loading-cache/runtime/startup.mjs'),check.stderr);
  }finally{fs.rmSync(outputs,{recursive:true,force:true});}
