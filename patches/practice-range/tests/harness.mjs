@@ -43,9 +43,10 @@ export async function rangeRealm() {
     export { Level } from './src/world/level.js';
     export { Physics } from './src/game/physics.js';
     export { MAP_LAYOUTS } from './src/world/maps.js';
-    export { MAPS, OFFLINE_MAPS, PLAYER, WEAPONS } from './src/config.js';
+    export { MAPS, OFFLINE_MAPS, PLAYER, WEAPONS, SPECIALS } from './src/config.js';
     export { on, emit } from './src/core/ctx.js';
     export { Match } from './src/game/match.js';
+    export { Projectiles } from './src/game/weapons.js';
     export { STAGE_SURFACES, STAGE_SLOTS, FIRST_STAGE_SLOT, LAST_STAGE_SLOT } from './src/world/stages/surfaces.js';
     export { STAGES } from './src/world/stages/index.js';
     export { installPracticeRange, isRangeMatch } from './patches/practice-range/install.mjs';
