@@ -1,0 +1,6 @@
+.s3-gear { position: absolute; right: 1.5rem; top: 15%; width: min(23rem, 40vw); max-height: 72%; overflow-y: auto; z-index: 10; color: #fff; padding: .75rem; background: #152028f5; border-radius: .6rem; }
+.s3-gear summary { cursor: pointer; font-weight: 700; }
+.s3-gear fieldset { display: grid; gap: .4rem; margin-top: .6rem; border: 1px solid #fff4; }
+.s3-gear label { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+.s3-gear select { max-width: 70%; font: inherit; padding: .25rem; color: #fff; background: #25353e; }
+@media (max-width: 500px) { .s3-gear { left: 1rem; right: 1rem; width: auto; } .s3-gear label { font-size: .8rem; } }

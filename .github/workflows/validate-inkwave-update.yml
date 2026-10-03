@@ -4,14 +4,46 @@ on:
     branches: [main]
     paths:
       - .github/workflows/validate-inkwave-update.yml
+      - "inkwave-public/**"
+      - "patches/splatoon3/**"
+      - "scripts/*inkwave*.mjs"
+  pull_request:
+    paths:
+      - "inkwave-public/**"
+      - "patches/splatoon3/**"
+      - "scripts/*inkwave*.mjs"
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:
   validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify gameplay patch contracts and regressions
+        run: node --experimental-vm-modules scripts/check-inkwave-patches.mjs
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: inkwave-patch-failure-diagnostics-${{ github.sha }}
+          if-no-files-found: error
+          path: .ci-scratch/inkwave-patches/
+          retention-days: 14
+      - name: Verify pinned primary numerical sources
+        run: |
+          python3 - <<'PY'
+          import json, pathlib, urllib.request
+          reference=json.loads(pathlib.Path('patches/splatoon3/reference/curated-numbers.json').read_text())
+          for source in reference['sources']:
+            target=pathlib.Path('.reference-data')/source['id']
+            target.parent.mkdir(parents=True,exist_ok=True)
+            with urllib.request.urlopen(source['url'],timeout=30) as response: target.write_bytes(response.read())
+          PY
+          node scripts/verify-inkwave-reference.mjs .reference-data
       - name: Check JavaScript syntax
         run: |
           set -euo pipefail
@@ -45,3 +77,71 @@ jobs:
             sys.exit(1)
           print('references OK')
           PY
+      - name: Build patched site at the checkout commit
+        run: |
+          npm install --no-save --no-package-lock --silent esbuild@0.28.2
+          node scripts/build-inkwave.mjs inkwave-public _site
+          git rev-parse HEAD > _site-source-sha.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: inkwave-patched-site-${{ github.sha }}
+          include-hidden-files: true
+          if-no-files-found: error
+          path: |
+            _site/
+            _site-source-sha.txt
+          retention-days: 14
+  browser:
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        suite: [active, catalog]
+    env:
+      TMPDIR: ${{ github.workspace }}/.ci-scratch
+      TMP: ${{ github.workspace }}/.ci-scratch
+      TEMP: ${{ github.workspace }}/.ci-scratch
+      PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.browser-cache
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/download-artifact@v4
+        with:
+          name: inkwave-patched-site-${{ github.sha }}
+          path: .built-site
+      - name: Prepare workspace storage and browser
+        run: |
+          mkdir -p .ci-scratch .browser-evidence .browser-profile
+          npm install --no-save --no-package-lock --silent playwright@1.62.1
+          npx playwright install chromium
+      - name: Verify active browser behavior and loaded artifact bytes
+        if: ${{ !cancelled() && matrix.suite == 'active' }}
+        run: node scripts/check-inkwave-browser.mjs --site .built-site/_site --evidence-dir .browser-evidence --profile-dir .browser-profile --exact-source
+      - name: Verify rendered walking contacts and transitions
+        if: ${{ !cancelled() && matrix.suite == 'active' }}
+        run: node scripts/check-inkwave-motion.mjs --site .built-site/_site --evidence-dir .browser-evidence/motion --profile-dir .browser-profile-motion
+      - name: Verify rendered sub, Flow and weapon detail transitions
+        if: ${{ !cancelled() && matrix.suite == 'active' }}
+        run: node scripts/check-inkwave-motion-detail.mjs --site .built-site/_site --evidence-dir .browser-evidence/motion-detail --profile-dir .browser-profile-motion-detail
+      - name: Verify Flow geometry through actual GTAO and GPU disposal
+        if: ${{ !cancelled() && matrix.suite == 'active' }}
+        run: node scripts/check-inkwave-flow-render.mjs --site .built-site/_site --evidence-dir .browser-evidence/flow-render --profile-dir .browser-profile-flow --exact-source
+      - name: Verify wall geometry through actual GTAO and GPU disposal
+        if: ${{ !cancelled() && matrix.suite == 'active' }}
+        run: node scripts/check-inkwave-wall-render.mjs --site .built-site/_site --evidence-dir .browser-evidence/wall-render --profile-dir .browser-profile-wall --exact-source
+      - name: Verify the complete installed motion catalog
+        if: matrix.suite == 'catalog'
+        run: node scripts/check-inkwave-motion-catalog.mjs --site .built-site/_site --evidence-dir .browser-evidence/catalog --profile-dir .browser-profile-catalog
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: inkwave-browser-${{ matrix.suite }}-${{ github.sha }}
+          include-hidden-files: true
+          if-no-files-found: error
+          path: .browser-evidence/
+          retention-days: 14

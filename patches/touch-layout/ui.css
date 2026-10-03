@@ -1,0 +1,62 @@
+/* Reuse INKWAVE's dark cards, ink accent, rounded actions and font family. */
+#iw-mobile-controls.is-editing {
+  --iwm-c: var(--iwm-editor-accent, #ff8a14);
+  pointer-events: auto;
+  background: repeating-linear-gradient(0deg, #ffffff08 0 1px, transparent 1px 24px),
+    repeating-linear-gradient(90deg, #ffffff08 0 1px, transparent 1px 24px), #080610df;
+}
+#iw-mobile-controls .iwm-edit, #iw-mobile-controls .iwm-edit * { box-sizing: border-box; }
+#iw-mobile-controls.is-editing .iwm-edit { pointer-events: none; }
+#iw-mobile-controls.is-editing .iwm-edit::before { display: none; }
+#iw-mobile-controls.is-editing .iwm-b, #iw-mobile-controls.is-editing .iwm-stick { z-index: 1; pointer-events: auto; cursor: grab; }
+#iw-mobile-controls.is-editing .is-sel { z-index: 2; }
+#iw-mobile-controls.is-editing .iwm-edit__bar, #iw-mobile-controls.is-editing .iwm-edit__sel { pointer-events: auto; }
+#iw-mobile-controls .iwm-layout-label { display: none; }
+#iw-mobile-controls.is-editing .iwm-layout-label { display: block; position: absolute; top: calc(100% + 9px); left: 50%; translate: -50% 0;
+  padding: 4px 7px; border-radius: 8px; background: #15121ce8; font-size: 11px; white-space: nowrap; pointer-events: none; }
+#iw-mobile-controls .iwm-edit__bar, #iw-mobile-controls .iwm-edit__sel {
+  border: 2px solid #ffffff22; box-shadow: 0 5px 0 #080610, 0 10px 26px #0005;
+  max-width: calc(100% - max(12px, env(safe-area-inset-left)) - max(12px, env(safe-area-inset-right)));
+  padding: 10px 12px; border-radius: 18px; background: #1f1a2cf5;
+}
+#iw-mobile-controls .iwm-edit__bar { gap: 16px; }
+.iwm-layout-heading { display: flex; flex-direction: column; gap: 6px; }
+#iw-mobile-controls .iwm-edit__title { font-size: 15px; }
+#iw-mobile-controls .iwm-edit__hint { display: block; font-size: 11px; }
+.iwm-layout-actions { display: flex; gap: 7px; }
+#iw-mobile-controls .iwm-eb { min-height: 40px; padding: 10px 13px; font-weight: 800; font-size: 12px; line-height: 1.2; font-family: inherit;
+  border: 2px solid #ffffff26; box-shadow: inset 0 -3px 0 #0002; touch-action: manipulation; cursor: pointer; }
+#iw-mobile-controls .iwm-eb.is-primary { border-color: #ffffff40; }
+#iw-mobile-controls .iwm-eb:focus-visible, #iw-mobile-controls select:focus-visible, #iw-mobile-controls input:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+#iw-mobile-controls .iwm-edit__sel { width: 470px; display: flex; flex-direction: column; gap: 9px; white-space: normal; }
+.iwm-layout-selection { display: flex; align-items: center; gap: 9px; width: 100%; }
+.iwm-layout-select-label { font-size: 11px; color: #c3bdd6; }
+.iwm-layout-control { flex: 1; min-width: 0; min-height: 40px; padding: 6px 9px; border: 2px solid #ffffff30; border-radius: 11px;
+  font: inherit; color: #fff; background: #15121c; touch-action: manipulation; }
+#iw-mobile-controls .iwm-layout-size { width: 100%; display: flex; gap: 10px; }
+#iw-mobile-controls .iwm-edit__size { flex: 1; width: 80px; min-width: 0; height: 28px; margin: 0; touch-action: pan-x; }
+.iwm-layout-note { font-size: 10px; line-height: 1.4; color: #c3bdd6; }
+.iwm-layout-error { font-size: 11px; line-height: 1.4; color: #ff9aac; }
+.iwm-layout-error:empty { display: none; }
+.iwm-layout-position { width: 100%; font-size: 11px; color: #c3bdd6; }
+.iwm-layout-position summary { cursor: pointer; min-height: 24px; padding: 5px 0; touch-action: manipulation; }
+#iw-mobile-controls .iwm-layout-position label { display: flex; gap: 12px; width: 100%; }
+.iwm-layout-position input { flex: 1; min-width: 0; height: 28px; margin: 0; accent-color: var(--iwm-c); touch-action: pan-x; }
+/* Editing remains available in portrait; the live match still asks for landscape. */
+@media (orientation: portrait) {
+  html.iw-touch #iw-mobile-controls.is-editing > :not(.iwm-rotate):not(.iwm-safe) { visibility: visible; }
+  html.iw-touch #iw-mobile-controls.is-editing .iwm-rotate { display: none; }
+  #iw-mobile-controls .iwm-edit__bar { width: 470px; flex-wrap: wrap; gap: 9px; }
+  .iwm-layout-heading, .iwm-layout-actions { width: 100%; }
+  .iwm-layout-actions > button { flex: 1; }
+}
+@media (max-height: 430px) and (orientation: landscape) {
+  #iw-mobile-controls .iwm-edit__bar { padding: 7px 10px; }
+  #iw-mobile-controls .iwm-edit__sel { padding: 7px 10px; gap: 5px; }
+  .iwm-layout-note { display: none; }
+}
+@media (max-width: 390px) {
+  #iw-mobile-controls .iwm-eb { padding: 8px; font-size: 11px; }
+  .iwm-layout-selection { flex-wrap: wrap; }
+  .iwm-layout-select-label { flex-basis: 100%; }
+}

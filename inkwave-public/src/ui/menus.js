@@ -399,6 +399,13 @@ export class Menus {
   }
 
   // ================================================================ internals: loop / sound / accent
+  _fitAll(root) {
+    for (const el of root.querySelectorAll('[data-fit]')) {
+      const floor = Number.parseFloat(el.dataset.fit);
+      fitText(el, Number.isFinite(floor) ? floor : 0.62);
+    }
+  }
+
   _loop(t) {
     this._raf = requestAnimationFrame(this._loop);
     const dt = Math.min(0.1, (t - this._lastT) / 1000);
@@ -2343,6 +2350,11 @@ export class Menus {
       return b;
     });
     const codeRow = h('div', { class: 'iw-code' }, boxes);
+    // A real input is required to open the software keyboard on iOS/Android. The five
+    // animated slots remain the keyboard/controller view; both use the same room state.
+    const codeInput = h('input', { class: 'iw-code-input', type: 'text', inputmode: 'text',
+      maxlength: '5', autocomplete: 'off', autocapitalize: 'characters', autocorrect: 'off',
+      spellcheck: 'false', enterkeyhint: 'go', 'aria-label': 'ROOM CODE', placeholder: '•••••' });
     const pasteBtn = h('button', { class: 'iw-minibtn iw-noclick', type: 'button', tabindex: '-1' }, h('i', { html: GLYPHS.paste }), 'PASTE');
     const joinBtn = h('button', { class: 'iw-minibtn is-go iw-noclick', type: 'button', tabindex: '-1' }, h('span', { class: 'iw-join__lbl' }, 'JOIN'), h('i', { html: GLYPHS.next }));
     pasteBtn.addEventListener('mousedown', (e) => e.preventDefault());
@@ -2359,7 +2371,7 @@ export class Menus {
           h('span', { class: 'iw-hubcard__kicker iw-tape' }, h('i', { html: GLYPHS.key }), 'GOT A CODE?'),
           h('span', { class: 'iw-hubcard__title' }, 'JOIN A ROOM')),
         h('span', { class: 'iw-join__btns' }, pasteBtn, joinBtn)),
-      codeRow,
+      codeRow, codeInput,
       h('div', { class: 'iw-join__foot' }, hintEl, jstat));
     join.dataset.cur = 'own';
     this._fx(join, { tilt: 0, press: false });
@@ -2432,10 +2444,13 @@ export class Menus {
       joinBtn.classList.toggle('is-ready', full() && st.mode !== 'connecting');
       joinBtn.classList.toggle('is-cancel', st.mode === 'connecting');
       joinBtn.firstChild.textContent = st.mode === 'connecting' ? 'CANCEL' : 'JOIN';
+      codeInput.disabled = st.busy;
+      const codeValue = st.code.join('');
+      if (codeInput.value !== codeValue) codeInput.value = codeValue;
       el.classList.toggle('is-connecting', st.mode === 'connecting' || create.classList.contains('is-busy'));
       el.classList.toggle('is-entry', st.mode === 'entry' || st.mode === 'error');
       if (st.mode === 'idle') hintEl.textContent = 'Room codes are 5 letters & numbers';
-      else if (st.mode === 'entry') hintEl.textContent = full() ? 'Press JOIN (or Enter) to hop in' : st.input === 'pad' ? '↑↓ pick a letter · A to confirm' : 'Type or paste the code';
+      else if (st.mode === 'entry') hintEl.textContent = full() ? (this._input === 'touch' ? 'JOIN' : 'Press JOIN (or Enter) to hop in') : st.input === 'pad' ? '↑↓ pick a letter · A to confirm' : 'Type or paste the code';
     };
     const setMode = (m) => { st.mode = m; render(); };
     const clearError = () => { if (st.mode === 'error') { st.mode = 'entry'; join.classList.remove('is-err'); jstat.classList.remove('is-on'); } };
@@ -2496,7 +2511,7 @@ export class Menus {
       else st.caret = firstEmpty();
       render();
     };
-    const pasteCode = (text) => {
+    const pasteCode = (text, autoJoin = true) => {
       // a pasted invite ("Join my room: K7QXM") → the 5-character word that can be a code; else the characters themselves
       const up = String(text || '').toUpperCase();
       let pick = (up.match(/\b[A-Z0-9]{5}\b/g) || []).reverse().find((w) => [...w].every((c) => CODE_ABC.includes(c)));
@@ -2509,12 +2524,18 @@ export class Menus {
       clean.forEach((c, i) => { st.code[i] = c; st.pick[i] = CODE_ABC.indexOf(c); setTimeout(() => { if (st.alive) { bump(i); this._sfx('ui_toggle', 0.02); } }, reduced ? 0 : i * 55); });
       st.caret = Math.min(4, clean.length === 5 ? 4 : clean.length);
       render();
-      if (clean.length === 5) { clearTimeout(st.autoT); st.autoT = setTimeout(() => { if (st.alive && full()) doJoin(); }, reduced ? 120 : 420); }
+      if (clean.length === 5 && autoJoin) { clearTimeout(st.autoT); st.autoT = setTimeout(() => { if (st.alive && full()) doJoin(); }, reduced ? 120 : 420); }
     };
+    const focusCodeInput = () => { enterEntry(firstEmpty()); codeInput.focus(); };
     const readClipboard = () => {
+      const touchEntry = touchPrimary || this._input === 'touch';
+      const fallback = () => {
+        if (touchEntry) focusCodeInput();
+        else { enterEntry(firstEmpty()); hintEl.textContent = 'Press Ctrl+V (⌘V) to paste'; }
+      };
       if (navigator.clipboard && navigator.clipboard.readText) {
-        navigator.clipboard.readText().then(pasteCode, () => { enterEntry(firstEmpty()); hintEl.textContent = 'Press Ctrl+V (⌘V) to paste'; });
-      } else { enterEntry(firstEmpty()); hintEl.textContent = 'Press Ctrl+V (⌘V) to paste'; }
+        navigator.clipboard.readText().then((text) => { if (st.alive && !st.busy) pasteCode(text, !touchEntry); }, () => { if (st.alive && !st.busy) fallback(); });
+      } else fallback();
     };
     const showError = (msg) => {
       const E = JOIN_ERR[msg] || { title: 'COULDN’T JOIN', text: msg || 'Something went wrong. Try again.', icon: 'close' };
@@ -2604,6 +2625,34 @@ export class Menus {
       },
     });
 
+    codeInput.addEventListener('pointerdown', (e) => e.stopPropagation());
+    codeInput.addEventListener('click', (e) => e.stopPropagation());
+    codeInput.addEventListener('focus', () => { this._setFocus(join); enterEntry(firstEmpty()); });
+    codeInput.addEventListener('input', () => {
+      if (st.busy) return;
+      clearTimeout(st.autoT);
+      clearError();
+      const clean = [...codeInput.value.toUpperCase()].filter((c) => CODE_ABC.includes(c)).slice(0, 5);
+      st.code = Array.from({ length: 5 }, (_, i) => clean[i] || '');
+      clean.forEach((c, i) => { st.pick[i] = CODE_ABC.indexOf(c); });
+      st.caret = Math.min(4, clean.length);
+      render();
+    });
+    codeInput.addEventListener('paste', (e) => {
+      const text = e.clipboardData?.getData('text');
+      if (!text || st.busy) return;
+      e.preventDefault(); e.stopPropagation();
+      clearTimeout(st.autoT);
+      pasteCode(text, false);
+    });
+    codeInput.addEventListener('keydown', (e) => {
+      // Keep editing/caret keys in the native input instead of the menu's spatial navigation.
+      e.stopPropagation();
+      if (e.isComposing) return;
+      if (e.key === 'Enter') { e.preventDefault(); codeInput.blur(); doJoin(); }
+      else if (e.key === 'Escape') { e.preventDefault(); codeInput.blur(); exitEntry(); }
+    });
+
     const onPaste = (e) => {
       const ae = document.activeElement;
       if (ae && ae.tagName === 'INPUT') return; // pasting into the name field
@@ -2677,6 +2726,7 @@ export class Menus {
         document.removeEventListener('paste', onPaste);
         const inp = nameRow._input;
         if (document.activeElement === inp) inp.blur();
+        if (document.activeElement === codeInput) codeInput.blur();
         if (sc && !['loadout', 'locker', 'lobby'].includes(this.current)) safeCall(() => sc.hide());
       },
     };
@@ -2826,6 +2876,24 @@ export class Menus {
     // ---- nameplates over the 3D line-up
     const platesEl = h('div', { class: 'iw-lob__plates', 'aria-hidden': 'true' });
     const plates = new Map();
+    // A compact roster keeps the room state readable when the 3D line-up does not
+    // fit behind the portrait UI. It projects the same session players as the tags.
+    const touchRoster = h('div', { class: 'iw-lob__roster', role: 'list', 'aria-label': 'Squidkids' });
+    let rosterSignature = '';
+    const renderTouchRoster = () => {
+      const sig = JSON.stringify([bossMode(), players().map((p) => [p.id, p.name, p.team, p.weapon, p.ready, p.host, p.you])]);
+      if (sig === rosterSignature) return;
+      rosterSignature = sig;
+      touchRoster.replaceChildren(...players().map((p) => {
+        const W = Ws[p.weapon];
+        const name = h('b'); name.textContent = p.name;
+        const row = h('div', { class: `iw-lob__member${p.you ? ' is-you' : ''}${p.ready || p.host ? ' is-ready' : ''}`, role: 'listitem', data: { team: bossMode() ? 0 : teamOf(p) } },
+          h('i', { html: weaponIcon(W?.kind || p.weapon) }),
+          h('span', { class: 'iw-lob__membername' }, name, h('small', null, p.you ? 'YOU' : W?.name || p.weapon)),
+          h('span', { class: 'iw-lob__memberstate', 'aria-label': p.host ? 'HOST' : p.ready ? 'READY' : 'Getting ready…' }, h('i', { html: p.host ? GLYPHS.crown : p.ready ? GLYPHS.check : GLYPHS.clock })));
+        return row;
+      }));
+    };
     const open = Array.from({ length: 8 }, (_, k) => {
       const row = k >> 2, i = k & 3;
       const txt = h('b', null, 'OPEN');
@@ -2845,7 +2913,7 @@ export class Menus {
     prompts.children[2].querySelector('.iw-padg').innerHTML = padGlyph('LB') + padGlyph('RB');
     prompts.children[2].classList.add('iw-lob__teamprompt');   // hidden in boss mode (one squad)
     const el = h('div', { class: 'iw-screen iw-lobby' },
-      h('div', { class: 'iw-lob__scrim' }), platesEl, h('div', { class: 'iw-lob__band iw-in iw-in--up', html: inkBand(9) }), top, status, side, bar, countdown, prompts);
+      h('div', { class: 'iw-lob__scrim' }), platesEl, h('div', { class: 'iw-lob__band iw-in iw-in--up', html: inkBand(9) }), top, status, side, touchRoster, bar, countdown, prompts);
 
     // ================================================ behaviour
     const hostSet = (o) => {
@@ -3008,7 +3076,8 @@ export class Menus {
         return b;
       });
       const r = emoteBtn.getBoundingClientRect();
-      const wheel = h('div', { class: 'iw-emowheel' }, h('div', { class: 'iw-emowheel__card', style: { left: `${r.left + r.width / 2}px`, top: `${r.top}px` } }, h('span', { class: 'iw-emowheel__hub', html: GLYPHS.smile }), btns));
+      const close = h('button', { class: 'iw-touch-close', type: 'button', 'aria-label': 'Close', onclick: () => this._closeModal() }, h('i', { html: GLYPHS.close }));
+      const wheel = h('div', { class: 'iw-emowheel' }, h('div', { class: 'iw-emowheel__card', style: { left: `${r.left + r.width / 2}px`, top: `${r.top}px` } }, h('span', { class: 'iw-emowheel__hub', html: GLYPHS.smile }), btns), close);
       wheel.dataset.keys = '1';
       wheel.addEventListener('pointerdown', (e) => { if (e.target === wheel) this._closeModal(); });
       el.appendChild(wheel);
@@ -3073,7 +3142,8 @@ export class Menus {
       const detail = h('div', { class: 'iw-ldr__detail' }, h('div', { class: 'iw-wd__title' }, kind, nm), blurb, h('div', { class: 'iw-wd__stats' }, statEls.map((s) => s.row)), kits);
       const drawer = h('div', { class: 'iw-ldr' },
         h('div', { class: 'iw-ldr__card' },
-          h('div', { class: 'iw-ldr__head' }, h('span', { class: 'iw-seclabel' }, h('i', { html: WEAPON_ICONS.shooter }), 'CHOOSE YOUR WEAPON'), h('span', { class: 'iw-ldr__hint' }, this._hint('Enter', 'A', 'Equip'), this._hint('Esc', 'B', 'Close'))),
+          h('div', { class: 'iw-ldr__head' }, h('span', { class: 'iw-seclabel' }, h('i', { html: WEAPON_ICONS.shooter }), 'CHOOSE YOUR WEAPON'), h('span', { class: 'iw-ldr__hint' }, this._hint('Enter', 'A', 'Equip'), this._hint('Esc', 'B', 'Close')),
+            h('button', { class: 'iw-touch-close', type: 'button', 'aria-label': 'Close', onclick: () => this._closeModal() }, h('i', { html: GLYPHS.close }))),
           h('div', { class: 'iw-ldr__grid', style: { '--cols': order.length > 8 ? 5 : 4 } }, cards),
           detail));
       drawer.addEventListener('pointerdown', (e) => { if (e.target === drawer) this._closeModal(); });
@@ -3286,6 +3356,7 @@ export class Menus {
       renderStatus();
       renderSettings(fromEvent ? prev : null);
       renderBar();
+      renderTouchRoster();
       bindRows();
       S.lastLobby = { map: lob.map, time: lob.time, duration: lob.duration, bots: lob.bots, difficulty: lob.difficulty, palette: lob.palette, mode: lob.mode };
       if (sc && sc.updateLobby) safeCall(() => sc.updateLobby(...lineup()));

@@ -1,0 +1,14 @@
+{
+  "name": "inkwave-relay",
+  "version": "1.0.0",
+  "description": "Cloudflare Workers relay server for INKWAVE multiplayer",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.128.0"
+  }
+}

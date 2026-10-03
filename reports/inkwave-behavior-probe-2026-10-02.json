@@ -1,0 +1,155 @@
+{
+  "scope": "Public-source isolated logic probe; excludes browser rendering, collisions, network, animation and Switch measurement",
+  "sourceSha256": {
+    "inkwave-public/src/game/actor.js": "7330c84f1e095bcbbc41df26cab68d63cb0e3c9490d86bc45d60a45be6c4d4f3",
+    "inkwave-public/src/core/ctx.js": "3bac560e4a49b949890b54f7cbbdf9c7ed378aa2c9a1c3878b1d6df2589e5c04",
+    "inkwave-public/src/config.js": "1ad69a27c47c74a8db2f6193fd369afb4ae7069d4902a5480bc365338097f164",
+    "inkwave-public/src/game/physics.js": "69cef214461935a77ec3a167b70d50fd0e35a953334cd837ab9b8c037da5bb48",
+    "inkwave-public/src/game/weapons.js": "ffdf976caeec5e1dd3ca32356588b9610af355490d5a2d45cc8a58ce1be6daf5",
+    "inkwave-public/src/game/player.js": "25c5f97c07d8bd53a6ab7f8a85dfb8361216754b9121ff19fb17c81da39657fc"
+  },
+  "movement": [
+    {
+      "hz": 30,
+      "swim": false,
+      "mag": 1,
+      "speed": 6,
+      "timeTo90Percent": 0.1,
+      "stopTime": 0.133333,
+      "stopDistance": 0.213438,
+      "turn90Time": 0.133333,
+      "reverseZeroCrossingTime": 0.1
+    },
+    {
+      "hz": 30,
+      "swim": true,
+      "mag": 1,
+      "speed": 11.8,
+      "timeTo90Percent": 0.2,
+      "stopTime": 0.333333,
+      "stopDistance": 1.486651,
+      "turn90Time": 0.166667,
+      "reverseZeroCrossingTime": 0.166667
+    },
+    {
+      "hz": 60,
+      "swim": false,
+      "mag": 1,
+      "speed": 6,
+      "timeTo90Percent": 0.1,
+      "stopTime": 0.133333,
+      "stopDistance": 0.266291,
+      "turn90Time": 0.116667,
+      "reverseZeroCrossingTime": 0.083333
+    },
+    {
+      "hz": 60,
+      "swim": true,
+      "mag": 1,
+      "speed": 11.8,
+      "timeTo90Percent": 0.183333,
+      "stopTime": 0.316667,
+      "stopDistance": 1.591347,
+      "turn90Time": 0.15,
+      "reverseZeroCrossingTime": 0.183333
+    },
+    {
+      "hz": 120,
+      "swim": false,
+      "mag": 1,
+      "speed": 6,
+      "timeTo90Percent": 0.1,
+      "stopTime": 0.125,
+      "stopDistance": 0.294254,
+      "turn90Time": 0.108333,
+      "reverseZeroCrossingTime": 0.1
+    },
+    {
+      "hz": 120,
+      "swim": true,
+      "mag": 1,
+      "speed": 11.8,
+      "timeTo90Percent": 0.183333,
+      "stopTime": 0.325,
+      "stopDistance": 1.644836,
+      "turn90Time": 0.15,
+      "reverseZeroCrossingTime": 0.166667
+    },
+    {
+      "hz": 60,
+      "swim": false,
+      "mag": 0.25,
+      "speed": 1.5,
+      "timeTo90Percent": 0.066667,
+      "stopTime": 0.05,
+      "stopDistance": 0.013804,
+      "turn90Time": 0.066667,
+      "reverseZeroCrossingTime": 0.05
+    }
+  ],
+  "reverseJump": {
+    "form": "squid",
+    "verticalVelocity": 9.4,
+    "invulnerability": 0,
+    "armorStatePresent": false,
+    "jumpBuffer": 0
+  },
+  "charger": {
+    "bothHeld": {
+      "form": "kid",
+      "charging": true,
+      "charge": 1
+    },
+    "afterRelease": {
+      "form": "kid",
+      "shotsFired": 1,
+      "charge": 0
+    },
+    "nextFrame": {
+      "form": "squid",
+      "charge": 0
+    }
+  },
+  "submergedRefill": {
+    "inkAfterOneFrame": 0.7,
+    "lastFire": 0.016667,
+    "theoreticalEmptyToFullSeconds": 2.380952
+  },
+  "postDodge": {
+    "lockT": 0,
+    "cooldownIntervalUsed": 0.083
+  },
+  "shooterMovement": {
+    "walk": 6,
+    "whileFiring": 4.6,
+    "after200ms": 4.6,
+    "ratio": 0.766667
+  },
+  "clampedTimer": [
+    {
+      "hz": 20,
+      "simulationSecondsPerWallSecond": 0.833333,
+      "wallSecondsFor180SimulationSeconds": 216
+    },
+    {
+      "hz": 24,
+      "simulationSecondsPerWallSecond": 1,
+      "wallSecondsFor180SimulationSeconds": 180
+    },
+    {
+      "hz": 30,
+      "simulationSecondsPerWallSecond": 1,
+      "wallSecondsFor180SimulationSeconds": 180
+    },
+    {
+      "hz": 60,
+      "simulationSecondsPerWallSecond": 1,
+      "wallSecondsFor180SimulationSeconds": 180
+    },
+    {
+      "hz": 120,
+      "simulationSecondsPerWallSecond": 1,
+      "wallSecondsFor180SimulationSeconds": 180
+    }
+  ]
+}
