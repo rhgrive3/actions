@@ -16,7 +16,21 @@ export function adaptMovementPhysics(rel, code, replaceOnce) {
       '    const side = _v2.set(mv.x, 0, mv.z);\n    if (mh > 1) side.multiplyScalar(1 / mh);', 'wall lateral magnitude');
     replace('    } else if (this.weaponRunner.firingPose() || this.fireFacing > 0 || this.intent.sub) {',
       '    } else if (rollingMovementActive(this) && !this.intent.sub) {\n      if (hs > 0.1) target = Math.atan2(this.vel.x, this.vel.z);\n    } else if (this.weaponRunner.firingPose() || this.fireFacing > 0 || this.intent.sub) {', 'roller authoritative heading');
-    return "import { integrateMovement, rollingMovementActive } from '../../patches/splatoon3/runtime/movement-physics.mjs';\n" + code;
+    const groundStart = code.indexOf('    // ---- grounded: speed + heading model');
+    const groundEnd = code.indexOf('\n  }\n\n  // ------------------------------------------------------------------ character controller', groundStart);
+    if (groundStart < 0 || groundEnd < groundStart) throw new Error('Movement physics: missing grounded movement block');
+    replace(code.slice(groundStart, groundEnd),
+`    // ---- grounded: Splatoon 3 constant vector acceleration model
+    let vt;
+    if (isSquid && this.submerged) vt = P.swimSpeed;
+    else if (isSquid) vt = P.squidDrySpeed;
+    else vt = this.weaponRunner.moveSpeed();
+    if (!isSquid && this.hardLand > 0) vt *= 1 - (1 - P.hardLandSlow) * this.hardLand;
+    let accel = (this.weaponRunner.firingPose?.() || this.intent.sub || this.specialActive)
+      ? (P.s3AttackGroundAccel ?? 72) : (P.s3GroundAccel ?? 36);
+    if (onEnemy) { vt = Math.min(vt, P.enemyInkSpeed); accel = Math.min(accel, P.enemyInkAccel); }
+    stepGroundVelocity(this.vel, mv.x, mv.z, vt, accel, dt);`, 'S3 grounded vector acceleration');
+    return "import { integrateMovement, rollingMovementActive, stepGroundVelocity } from '../../patches/splatoon3/runtime/movement-physics.mjs';\n" + code;
   }
   if (rel === 'src/game/weapons.js') {
     replace('    if (this.rolling) return lerp(w.rollSpeed * 0.5, w.rollSpeed, smoothstep(0, 0.45, this.rollT));',

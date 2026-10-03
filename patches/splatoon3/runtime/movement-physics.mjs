@@ -3,6 +3,23 @@
 // deliberately retained calibration are in reports/movement-physics-fidelity-report.md.
 export const MOVEMENT_EPSILON = 1e-10;
 
+/** Move a horizontal velocity vector toward the requested S3 ground velocity
+ * by a fixed acceleration magnitude. Splatoon 3 community frame measurements
+ * report 0.01 m/F^2 normally and 0.02 m/F^2 while attacking/aiming; at 60 Hz
+ * those are 36 and 72 m/s^2. Vector approach preserves inertia on 90/180 turns
+ * instead of rotating a full-speed vector in place.
+ */
+export function stepGroundVelocity(vel, moveX, moveZ, targetSpeed, accel, dt) {
+  if (!(dt > 0) || !(accel >= 0) || !(targetSpeed >= 0)) return;
+  const mh = Math.hypot(moveX, moveZ), mag = Math.min(1, mh);
+  const tx = mh > 1e-10 ? moveX / mh * targetSpeed * mag : 0;
+  const tz = mh > 1e-10 ? moveZ / mh * targetSpeed * mag : 0;
+  const dx = tx - vel.x, dz = tz - vel.z, dist = Math.hypot(dx, dz);
+  const step = accel * dt;
+  if (!(dist > step) || !(step > 0)) { vel.x = tx; vel.z = tz; return; }
+  vel.x += dx / dist * step; vel.z += dz / dist * step;
+}
+
 /** True only while the roller, not its flick/recovery, owns ground movement. */
 export function rollingMovementActive(a) {
   const r = a.weaponRunner;

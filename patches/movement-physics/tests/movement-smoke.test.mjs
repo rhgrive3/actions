@@ -6,6 +6,7 @@ import {
   dodgeIntervalDistance,
   rollingMovementActive,
   rollingMovementSpeed,
+  stepGroundVelocity,
 } from '../../splatoon3/runtime/movement-physics.mjs';
 import { adaptMovementPhysics } from '../../splatoon3/movement-physics-adapter.mjs';
 
@@ -59,10 +60,47 @@ test('build-only adapter changes only its explicit actor/weapons anchors', () =>
   assert.match(actorAfter, /integrateMovement\(this, dt, isSquid, jumped, PLAYER\.radius\)/);
   assert.match(actorAfter, /if \(mh > 1\) side\.multiplyScalar\(1 \/ mh\)/);
   assert.match(actorAfter, /rollingMovementActive\(this\)/);
+  assert.match(actorAfter, /stepGroundVelocity\(this\.vel, mv\.x, mv\.z, vt, accel, dt\)/);
   assert.match(weaponsAfter, /rollingMovementSpeed\(this\)/);
   assert.match(weaponsAfter, /MOVEMENT_EPSILON/);
   assert.match(weaponsAfter, /writeDodgeVelocity\(this, vel, dt\)/);
   for (const rel of ['src/game/player.js','src/core/input.js','src/core/gyro.js','src/net/netmatch.js','src/game/character.js']) {
     assert.equal(adaptMovementPhysics(rel, 'UNCHANGED', replaceOnce), 'UNCHANGED');
   }
+});
+
+
+test('S3 grounded acceleration conversion and vector response match measured 60 Hz timing', () => {
+  const profile=JSON.parse(fs.readFileSync(new URL('../../splatoon3/profile.json',import.meta.url),'utf8'));
+  close(profile.player.s3GroundAccel, .01*60*60);
+  close(profile.player.s3AttackGroundAccel, .02*60*60);
+
+  const framesTo=(startX,startZ,mx,mz,target,accel)=>{
+    const vel={x:startX,z:startZ};let frames=0;
+    while(frames<120){
+      stepGroundVelocity(vel,mx,mz,target,accel,1/60);frames++;
+      const mag=Math.hypot(mx,mz),wantX=mag?mx/mag*target*Math.min(1,mag):0,wantZ=mag?mz/mag*target*Math.min(1,mag):0;
+      if(Math.hypot(vel.x-wantX,vel.z-wantZ)<1e-9)return {frames,vel};
+    }
+    throw new Error('ground response did not converge');
+  };
+  assert.equal(framesTo(0,0,0,1,profile.player.runSpeed,36).frames,10);
+  assert.equal(framesTo(0,0,0,1,profile.player.swimSpeed,36).frames,20);
+  assert.equal(framesTo(0,profile.player.runSpeed,0,0,profile.player.runSpeed,36).frames,10);
+  assert.equal(framesTo(0,profile.player.swimSpeed,0,0,profile.player.swimSpeed,36).frames,20);
+  assert.equal(framesTo(0,profile.player.runSpeed,0,-1,profile.player.runSpeed,36).frames,20);
+
+  const turn={x:0,z:profile.player.runSpeed};
+  stepGroundVelocity(turn,1,0,profile.player.runSpeed,36,1/60);
+  assert(turn.x>0 && turn.x<.5,'90 degree turn gains only a small lateral component on frame 1');
+  assert(turn.z>5,'90 degree turn preserves most prior forward inertia on frame 1');
+});
+
+test('retained top speeds preserve S3 dimensionless ratios independent of world-scale interpretation',()=>{
+  const p=JSON.parse(fs.readFileSync(new URL('../../splatoon3/profile.json',import.meta.url),'utf8'));
+  close(p.player.swimSpeed/p.player.runSpeed,2);
+  close(p.weapons.roller.rollBaseSpeed/p.player.runSpeed,1.125);
+  close(p.weapons.roller.rollSpeed/p.player.runSpeed,1.375);
+  close(p.player.enemyInkSpeed/p.player.runSpeed,.25);
+  close(p.weapons.roller.rollDashTime,1.5);
 });
