@@ -1220,6 +1220,80 @@
      "front_only": false
     }
    ]
+  },
+  {
+   "name": "jaw_tuck",
+   "kind": "jaw_tuck",
+   "after_delta_smooth": true,
+   "protect_lips": false,
+   "weight_smooth": 10,
+   "line": [
+    [
+     -10,
+     -66
+    ],
+    [
+     12,
+     -66
+    ],
+    [
+     20,
+     -68
+    ],
+    [
+     26,
+     -74
+    ],
+    [
+     30,
+     -78
+    ],
+    [
+     35,
+     -80.5
+    ],
+    [
+     43,
+     -84.5
+    ],
+    [
+     54,
+     -89
+    ],
+    [
+     68,
+     -93
+    ],
+    [
+     82,
+     -98
+    ],
+    [
+     96,
+     -102
+    ]
+   ],
+   "depth": 8,
+   "depth_back": 14,
+   "z_ramus": [
+    15.0,
+    30.0
+   ],
+   "z_front": [
+    30,
+    52
+   ],
+   "z_back": [
+    -30.0,
+    -15.0
+   ],
+   "neck": {
+    "zc": 8,
+    "half_x": 38,
+    "half_z": 42
+   },
+   "inside_mm": 2.5,
+   "min_x": 30
   }
  ],
  "delta_smooth": {
