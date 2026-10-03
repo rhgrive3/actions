@@ -126,3 +126,15 @@ test('Android gyro never promotes raw rotationRate after calibration and station
   g.dYaw=.5; g.dPitch=.2; context.__angle=90; const d=tick(35,2);
   assert.equal(d.yaw,0); assert.equal(d.pitch,0); assert.equal(g._src,'ori');
 });
+
+
+test('all exact-source verifiers recognize the local-quality identity namespace', () => {
+  const expected = [
+    ['scripts/check-inkwave-browser.mjs', /local-quality\//],
+    ['scripts/check-inkwave-motion-catalog.mjs', /'local-quality': 'patches\/local-quality'/],
+    ['scripts/check-inkwave-touch-layout-identity.mjs', /patches\/local-quality/],
+    ['scripts/check-inkwave-flow-render.mjs', /key\.startsWith\('local-quality\/'\)/],
+    ['scripts/check-inkwave-wall-render.mjs', /key\.startsWith\('local-quality\/'\)/],
+  ];
+  for (const [file, pattern] of expected) assert.match(read(file), pattern, file);
+});
