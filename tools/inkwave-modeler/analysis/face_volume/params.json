@@ -1542,7 +1542,7 @@
   "bare": "analysis/face_volume/bare_front.png",
   "below_lip": {
    "centre": 180.2,
-   "y": 196.0,
+   "y": 194.0,
    "half_width": 28.0,
    "rise": 4.5,
    "fade": 2.5
