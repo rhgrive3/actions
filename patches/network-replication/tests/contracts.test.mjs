@@ -48,3 +48,16 @@ test('publication uses active attack physics even when actor profile differs',as
  const active={...a.weapon};a.weapon={...a.weapon,flickGravity:1,flickDrag:0};f.projectiles.fireFlick(a,active);
  const p=f.projectiles.list[0],e=nm.out[0];assert.equal(p.grav,active.flickGravity);assert.equal(e[16],p.grav);assert.equal(e[17],p.drag);
 });
+
+
+test('back-to-back unstepped volleys carry their own first projectile identity',async()=>{
+ const f=await fixture(),nm=f.makeNetMatch(f.makeSession()),a=f.makeActor({nid:0,owner:'me',vertical:true});f.bind(nm,[a]);nm.unsubs.push(f.on('weapon:fire',e=>nm._onLocalEvent('weapon:fire',e)));
+ f.projectiles.fireFlick(a,a.weapon);a.weaponRunner.s3FlickVertical=false;f.projectiles.fireFlick(a,a.weapon);
+ const events=nm.out.filter(e=>e[1]==='ev');assert.equal(events.length,2);assert.equal(events[0][3].projectileFirst,1);assert.equal(events[1][3].projectileFirst,a.weapon.verticalDrops+1);
+});
+
+
+test('invalid birth lifetime/delay is rejected instead of creating an immortal ghost',async()=>{
+ const f=await fixture(),nm=f.makeNetMatch(f.makeSession()),a=f.makeActor({nid:0,owner:'p2',remote:true});f.bind(nm,[a]);nm.peers.set('p2',{tr:1000});
+ const e=[1000,'p',0,'shot','shooter',0,30,0,0,0,10,0,-1,99,.1,.1,0,0,0,0,.1,.8,1.3,.03,26,.3,3,0,.123,1];nm._play('p2',e);assert.equal(f.projectiles.list.length,0);e[12]=1;e[11]=-.1;nm._play('p2',e);assert.equal(f.projectiles.list.length,0);
+});

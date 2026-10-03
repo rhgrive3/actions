@@ -12,6 +12,12 @@ const ROOT=fileURLToPath(new URL('../',import.meta.url));
 const i=process.argv.indexOf('--evidence-dir'),evidence=path.resolve(i>=0?process.argv[i+1]:path.join(ROOT,'.ci-scratch/network-comparison'));
 const physical=p=>fs.existsSync(p)?fs.realpathSync(p):path.join(physical(path.dirname(p)),path.basename(p));
 assert(!['/tmp','/var/tmp','/dev/shm'].some(p=>physical(evidence)===p||physical(evidence).startsWith(p+'/')),'Persistent evidence required');fs.mkdirSync(evidence,{recursive:true});
+let sourceSha=null;
+if(process.argv.includes('--exact-source')){
+ sourceSha=execFileSync('git',['rev-parse','HEAD'],{cwd:ROOT,encoding:'utf8'}).trim();
+ assert(!process.env.INKWAVE_UPSTREAM_SOURCE || path.resolve(process.env.INKWAVE_UPSTREAM_SOURCE)===path.join(ROOT,'inkwave-public'),'Exact replay uses this committed checkout');
+ execFileSync('git',['diff','--quiet','HEAD','--','inkwave-public','patches','scripts/check-inkwave-network-comparison.mjs'],{cwd:ROOT});
+}
 const DT=1/60,distance=(a,b)=>Math.hypot(...a.map((v,i)=>v-b[i]));
 const scenarios=['horizontal','vertical','shooter','dualies','blaster','splatling','slosher','bomb','storm','charger','charger_half','charger_full'];
 export async function replay(network,kind){
@@ -57,18 +63,18 @@ export async function replay(network,kind){
  for(let k=0;k<births[0].length;k++){
   const a=births[0][k],b=births[1][k];assert(b,'missing birth');result.spawnError=Math.max(result.spawnError,distance(a.spawn,b.spawn));result.velocityError=Math.max(result.velocityError,distance(a.velocity,b.velocity));
   if(network)for(const f of ['life','straight','delay','grav','drag','vertical'])assert.equal(b[f],a[f],kind+': '+f);
-  const aa=traces[0].filter(s=>s.id===k),bb=traces[1].filter(s=>s.id===k);assert(aa.length&&bb.length);
+  const aa=traces[0].filter(s=>s.id===k),bb=traces[1].filter(s=>s.id===k);assert(aa.length&&bb.length);if(network)assert.equal(bb.length,aa.length,kind+': lifetime/physics step count');
   result.localLifetime=Math.max(result.localLifetime,aa.at(-1).age);result.remoteLifetime=Math.max(result.remoteLifetime,bb.at(-1).age);
   result.localDistance=Math.max(result.localDistance,Math.hypot(aa.at(-1).pos[0]-a.spawn[0],aa.at(-1).pos[2]-a.spawn[2]));result.remoteDistance=Math.max(result.remoteDistance,Math.hypot(bb.at(-1).pos[0]-b.spawn[0],bb.at(-1).pos[2]-b.spawn[2]));
   for(const s of bb){const l=aa.find(l=>Math.abs(l.age-s.age)<1e-8);if(network)assert(l,kind+': missing authoritative projectile age '+s.age);if(!l)continue;result.comparedSteps++;result.maxPositionError=Math.max(result.maxPositionError,distance(l.pos,s.pos));}
  }
  if(kind.startsWith('charger')){assert(sourceBeam.length&&remoteBeam.length,'charger beam was not exercised');for(const s of remoteBeam){const l=sourceBeam.find(l=>Math.abs(l.age-s.age)<.00051);if(network)assert(l,'missing native beam timestamp');if(!l)continue;if(network){assert.equal(s.len,l.len);assert.equal(s.life,l.life);}result.comparedSteps++;}}
- for(const s of remoteBomb){const l=sourceBomb.find(l=>Math.abs(l.age-s.age)<1e-8);if(l){result.comparedSteps++;result.maxPositionError=Math.max(result.maxPositionError,distance(l.pos,s.pos));}}
- for(const s of remoteCloud){const l=sourceCloud.find(l=>Math.abs(l.age-s.age)<1e-8);if(l){result.comparedSteps++;result.maxPositionError=Math.max(result.maxPositionError,distance(l.pos,s.pos));}}
+ for(const s of remoteBomb){const l=sourceBomb.find(l=>Math.abs(l.age-s.age)<1e-8);if(network)assert(l,kind+': missing authoritative bomb/cloud age '+s.age);if(l){result.comparedSteps++;result.maxPositionError=Math.max(result.maxPositionError,distance(l.pos,s.pos));}}
+ for(const s of remoteCloud){const l=sourceCloud.find(l=>Math.abs(l.age-s.age)<1e-8);if(network)assert(l,kind+': missing authoritative bomb/cloud age '+s.age);if(l){result.comparedSteps++;result.maxPositionError=Math.max(result.maxPositionError,distance(l.pos,s.pos));}}
  for(let k=0;k<paint[0].length;k++){const a=paint[0][k],b=paint[1][k];assert(b,'missing authoritative paint');result.paintLandingError=Math.max(result.paintLandingError,distance(a.pos,b.pos));if(network)assert.equal(b.seed,a.seed,'paint seed');}
  if(network){assert(result.maxPositionError<.08,kind+': native trajectory divergence '+result.maxPositionError);assert.equal(births[0].length,births[1].length);assert.equal(paint[0].length,paint[1].length);assert(result.paintLandingError<.01);for(const count of Object.values(result.remaining))assert.equal(count,0,'entity residue');}
  onm.dispose();rnm.dispose();return result;
 }
 if(process.argv[1]===fileURLToPath(import.meta.url)){
- const results=[];try{for(const network of[false,true])for(const kind of scenarios){results.push(await replay(network,kind));}const report={status:'passed',sourceSha:execFileSync('git',['rev-parse','HEAD'],{cwd:ROOT,encoding:'utf8'}).trim(),harnessHash:crypto.createHash('sha256').update(fs.readFileSync(fileURLToPath(import.meta.url))).digest('hex'),integrator:'actual native Projectiles._step and update; no shadow physics',results};const f=path.join(evidence,'comparison-metrics.json');fs.writeFileSync(f+'.pending',JSON.stringify(report,null,2)+'\n');fs.renameSync(f+'.pending',f);console.log(JSON.stringify({status:report.status,cases:results.length,maxFixedPositionError:Math.max(...results.filter(r=>r.network).map(r=>r.maxPositionError)),evidence}));}catch(error){fs.writeFileSync(path.join(evidence,'comparison-failure.json'),JSON.stringify({status:'failed',results,error:error.stack},null,2));throw error;}
+ const results=[];try{for(const network of[false,true])for(const kind of scenarios){results.push(await replay(network,kind));}const report={status:'passed',sourceSha,harnessHash:crypto.createHash('sha256').update(fs.readFileSync(fileURLToPath(import.meta.url))).digest('hex'),integrator:'actual native Projectiles._step and update; no shadow physics',results};const f=path.join(evidence,'comparison-metrics.json');fs.writeFileSync(f+'.pending',JSON.stringify(report,null,2)+'\n');fs.renameSync(f+'.pending',f);console.log(JSON.stringify({status:report.status,cases:results.length,maxFixedPositionError:Math.max(...results.filter(r=>r.network).map(r=>r.maxPositionError)),evidence}));}catch(error){fs.writeFileSync(path.join(evidence,'comparison-failure.json'),JSON.stringify({status:'failed',results,error:error.stack},null,2));throw error;}
 }

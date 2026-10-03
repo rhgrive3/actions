@@ -41,14 +41,11 @@ export function adaptNetworkSource(rel, code) {
       if (d.r === 2) { const seq = e[e.length-1]; if (!Number.isSafeInteger(seq) || seq < 1) continue; e._netSeq = seq; const tick = e[e.length-2]; if (Number.isSafeInteger(tick)) e._netTick = tick; }
       p.events.push(e);
     }`, 'receive event identity');
-    patch("    this._rec(['ev', name, packEvent(e)]);", `    if (name === 'weapon:fire' && a.weapon?.kind === 'roller') {
-      const first = G.projectiles?.list.find(p => p.owner === a && p.type === 'drop' && p.age === 0 && p._netId !== undefined);
-      if (first) e = { ...e, projectileFirst: first._netId };
-    }
-    this._rec(['ev', name, packEvent(e)]);`, 'curtain volley identity');
     patch('while (i < p.events.length && p.events[i][0] <= tr) i++;',
       'while (i < p.events.length && p.events[i][0] <= tr && (!Number.isFinite(p.events[i]._netTick) || !Number.isFinite(p.sim) || p.events[i]._netTick <= p.sim + .0306)) i++;',
       'events share owner simulation time during render hitches');
+    patch('      if (drop) { this._remove(a); continue; }\n      a.owner = this.s.hostId;',
+      '      if (drop) { this._remove(a); continue; }\n      retireNetworkGhosts(a);\n      a.owner = this.s.hostId;', 'retire old timeline before remote owner transfer');
     patch('  _adopt(a) {', '  _adopt(a) {\n    retireNetworkGhosts(a);', 'ownership transfer retirement');
     patch('r3(o.seed ?? Math.random())', 'o.seed ?? Math.random()', 'preserve paint pattern seed');
     patch('r3(p.delay || 0), r3(p.life), r3(p.straight)', 'p.delay || 0, p.life, p.straight', 'preserve exact physics timing boundaries');
@@ -93,6 +90,7 @@ export function adaptNetworkSource(rel, code) {
       }`, 'beam birth clock');
     patch("case 'p': { const a = this.byNid.get(e[2]); if (a) G.projectiles?.ghostProjectile(a, e); break; }", `case 'p': {
         for (let index = 5; index <= 18; index++) if (!Number.isFinite(e[index])) return;
+        if (e[11] < 0 || e[12] <= 0) return;
         const peer = this.peers.get(from);
         if (Number.isFinite(e[29]) && peer) { if (e[29] <= (peer._lastProjectileId || 0)) break; peer._lastProjectileId = e[29]; }
         const a = this.byNid.get(e[2]), p = a && G.projectiles?.ghostProjectile(a, e);
@@ -100,7 +98,7 @@ export function adaptNetworkSource(rel, code) {
         break;
       }
       case 'pe': {
-        if (e[4] === 1 && ![e[5],e[6],e[7]].every(Number.isFinite)) return;
+        if (e[4] === 1 && (!Number.isFinite(e[5]) || !Number.isFinite(e[6]) || !Number.isFinite(e[7]))) return;
         for (const p of G.projectiles?.list || []) if (p.ghost && p.owner?.nid === e[2] && p._netId === e[3]) { p._netEnded = true; p._qualityDead = true; p._netEndStep = Number.isFinite(e._netTick) && Number.isFinite(p._netBornTick) ? e._netTick - p._netBornTick + 1 : Math.floor((e[0] - p._netBorn + .00101) * 60) + 1; p._netEndReason = e[4] || 0; p._netHitX = e[5]; p._netHitY = e[6]; p._netHitZ = e[7]; }
         break;
       }`, 'birth and terminal events');
@@ -127,6 +125,10 @@ function retireNetworkGhosts(owner = null) {
 `;
   }
   if (rel === 'src/game/weapons.js') {
+    patch('    const up = clamp(a.aimPitch, -0.2, 0.5) + 0.32;', '    const up = clamp(a.aimPitch, -0.2, 0.5) + 0.32;\n    let projectileFirst;', 'attack-owned first projectile');
+    patch("      this._push(p);\n    }\n    if (a.isLocal) emit('recoil', { amount: 0.007 });", "      this._push(p);\n      if (i === 0) projectileFirst = p._netId;\n    }\n    if (a.isLocal) emit('recoil', { amount: 0.007 });", 'capture exact volley during generation');
+    patch('weapon: w.id, muzzle: new THREE.Vector3(m.x + fx * 0.6, m.y + 0.3, m.z + fz * 0.6)', 'weapon: w.id, projectileFirst, muzzle: new THREE.Vector3(m.x + fx * 0.6, m.y + 0.3, m.z + fz * 0.6)', 'publish exact volley event');
+
     patch('      p.vel.set(Math.sin(ang) * cu * sp, Math.sin(up) * sp, Math.cos(ang) * cu * sp);', `      p.vel.set(Math.sin(ang) * cu * sp, Math.sin(up) * sp, Math.cos(ang) * cu * sp);
       // The active attack parameters own physics. Finalize before _push records
       // them; the gameplay overlay formerly assigned these only after publication.

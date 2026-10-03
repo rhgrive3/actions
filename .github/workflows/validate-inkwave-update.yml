@@ -53,7 +53,7 @@ jobs:
       - name: Verify deterministic network replication
         run: node --experimental-vm-modules --test patches/network-replication/tests/*.test.mjs
       - name: Compare authoritative and reconstructed attacks
-        run: node --experimental-vm-modules scripts/check-inkwave-network-comparison.mjs --evidence-dir .ci-scratch/network-comparison
+        run: node --experimental-vm-modules scripts/check-inkwave-network-comparison.mjs --exact-source --evidence-dir .ci-scratch/network-comparison
       - uses: actions/upload-artifact@v4
         if: always() && hashFiles('.ci-scratch/network-comparison/*.json') != ''
         with:

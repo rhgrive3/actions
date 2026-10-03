@@ -41,3 +41,20 @@ test('render-batch terminal waits for its owner physics tick before playback',as
  let played=0;nm._play=()=>played++;nm._playEvents();assert.equal(played,0);assert.equal(peer.events.length,1);
  peer.sim=4;nm._playEvents();assert.equal(played,1);assert.equal(peer.events.length,0);
 });
+
+test('storm catch-up never applies historical cloud damage as a burst',async()=>{
+ const f=await fixture(),nm=f.makeNetMatch(f.makeSession()),a=f.makeActor({nid:0,owner:'p2',remote:true});f.bind(nm,[a]);const peer={tr:1000.1};nm.peers.set('p2',peer);
+ nm._play('p2',[1000,'b',0,'storm',0,.5,0,0,-10,0,4,6]);f.projectiles.update(1/60);const c=f.projectiles.clouds[0];assert(c?.ghost);
+ const victim=f.makeActor({nid:1,owner:'me',remote:false,team:1});victim.pos.copy(c.group.position);victim.pos.y=0;const damage=[];victim.damage=d=>{damage.push(d);return false;};f.G.actors=[victim];
+ peer.tr=1000.5;f.projectiles.update(1/60);assert.equal(damage.length,1);assert.equal(damage[0],f.SPECIALS.storm.dps/60);
+});
+
+
+test('remote-to-remote owner migration retires old projectile and bomb clocks',async()=>{
+ const f=await fixture(),nm=f.makeNetMatch(f.makeSession('me','p3'));
+ const gone=f.makeActor({nid:0,owner:'p2',remote:true}),stay=f.makeActor({nid:1,owner:'p3',remote:true});f.bind(nm,[gone,stay]);nm.peers.set('p2',{tr:1000});nm.peers.set('p3',{tr:1000});
+ const shot=nid=>[1000,'p',nid,'shot','shooter',0,30,0,0,0,10,0,1,99,.1,.1,0,0,0,0,.1,.8,1.3,.03,26,.3,3,0,.123,1];
+ nm._play('p2',shot(0));nm._play('p3',shot(1));nm._play('p2',[1000,'b',0,'bomb',0,30,0,0,0,10]);nm._play('p3',[1000,'b',1,'bomb',0,30,0,0,0,10]);
+ nm.onLeave('p2',false);f.projectiles.update(1/60);assert.equal(gone.owner,'p3');assert.equal(gone.remote,true);
+ assert.equal(f.projectiles.list.length,1);assert.equal(f.projectiles.list[0].owner,stay);assert.equal(f.projectiles.bombs.length,1);assert.equal(f.projectiles.bombs[0].owner,stay);
+});
