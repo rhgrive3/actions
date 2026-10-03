@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="INKWAVE">
+  <rect width="512" height="512" rx="112" fill="#161029"/>
+  <g fill="#19cddd">
+    <circle cx="180" cy="180" r="108"/><circle cx="290" cy="142" r="84"/><circle cx="352" cy="232" r="76"/>
+    <circle cx="264" cy="294" r="110"/><circle cx="134" cy="286" r="72"/>
+  </g>
+  <g fill="#ff4a65">
+    <circle cx="316" cy="318" r="86"/><circle cx="382" cy="304" r="52"/><circle cx="344" cy="392" r="58"/>
+  </g>
+  <rect x="82" y="188" width="348" height="142" rx="70" fill="#0b0814" fill-opacity=".92"/>
+  <text x="256" y="290" text-anchor="middle" font-family="system-ui, sans-serif" font-weight="900" font-size="126" fill="#fff" stroke="#000" stroke-width="10" paint-order="stroke">IW</text>
+</svg>
