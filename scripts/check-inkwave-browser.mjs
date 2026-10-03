@@ -111,6 +111,45 @@ try {
     return {state:g.match.state, elapsedAt20Hz:initial-g.match.time-.5, movement:actor.pos.distanceTo(before), hp:actor.hp, gear:actor.s3.loadout, velocityFinite:[actor.vel.x,actor.vel.y,actor.vel.z].every(Number.isFinite), clockTicks:g.s3Clock.ticks, paintedFloorArea, coverage:G.paint.coverage()};
   });
   if (Math.abs(result.gameplay.elapsedAt20Hz-3)>1e-8 || !result.gameplay.velocityFinite || result.gameplay.movement<=0 || result.gameplay.paintedFloorArea<=0 || result.gameplay.coverage[0]<=0 || result.gameplay.coverage[0]>1) throw new Error('Actual browser gameplay regression');
+  // Native keyboard events traverse the loaded match's complete input/action
+  // pipeline. Only ground collision is pinned for this admission-only proof;
+  // the gameplay check above still uses the actual world Physics.
+  await page.evaluate(() => {
+    const G = globalThis.s3ProbeG, g = G.game, a = g.match.local;
+    a.setWeapon('dualies'); a.ink = 100; a.form = 'kid'; a.grounded = true;
+    a.climbing = false; a.superJumpState = a.specialActive = null;
+    a.jumpBuffer = a.fireBuffer = 0; a.intent.jump = false; a._prevIntent.jump = false;
+    g.input.keys.clear(); g.input.pressed.clear(); g.input.locked = true;
+    const integrate = a._integrate, trigger = a.character.trigger;
+    const proof = window.actionProof = { dodges: 0, jumps: 0 };
+    a._integrate = () => { a.grounded = true; };
+    a.character.trigger = function (name, ...args) {
+      if (name === 'dodge') proof.dodges++; if (name === 'jump') proof.jumps++;
+      return trigger.call(this, name, ...args);
+    };
+    proof.restore = () => { a._integrate = integrate; a.character.trigger = trigger; };
+    window.dispatchEvent(new MouseEvent('mousedown', { button: 0 }));
+  });
+  try {
+    await page.keyboard.down('KeyD'); await page.keyboard.down('Space');
+    await page.evaluate(() => { const g = s3ProbeG.game; g._skipRender = true; for (let i = 0; i < 31; i++) g._frame(1 / 60); });
+    await page.keyboard.up('Space'); await page.keyboard.up('KeyD');
+    await page.keyboard.down('KeyA'); await page.keyboard.down('Space');
+    result.actionReliability = await page.evaluate(() => {
+      const g = s3ProbeG.game, before = actionProof.dodges;
+      g._frame(1 / 120); const renderOnly = actionProof.dodges;
+      g._frame(1 / 120); const after = actionProof.dodges;
+      for (let i = 0; i < 90; i++) g._frame(1 / 60);
+      return { before, renderOnly, after, held: actionProof.dodges, jumps: actionProof.jumps,
+        physicalKeyboardEvents: true, groundCollisionPinned: true };
+    });
+    const r = result.actionReliability;
+    if (r.before !== 1 || r.renderOnly !== 1 || r.after !== 2 || r.held !== 2 || r.jumps !== 0) throw Error('Native keyboard action edge did not reach Character exactly once');
+    await page.keyboard.up('Space'); await page.keyboard.up('KeyA');
+    await page.evaluate(() => { window.dispatchEvent(new MouseEvent('mouseup', { button: 0 })); s3ProbeG.game._frame(1 / 60); });
+  } finally {
+    await page.evaluate(() => { actionProof.restore(); s3ProbeG.game._skipRender = false; s3ProbeG.game.input.keys.clear(); });
+  }
   result.weaponMotion = await page.evaluate(async () => {
     const G=globalThis.s3ProbeG,a=G.game.match.local,ch=a.character,dt=1/60;
     const {flowMotionSnapshot}=await import(new URL('patches/splatoon3/runtime/flow-motion.mjs',document.baseURI).href);
