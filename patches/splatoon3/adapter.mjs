@@ -1,7 +1,7 @@
 // Apply only to a disposable BUILD tree. Upstream sources are never modified.
 // Every connection has a unique exact anchor; missing/duplicated hooks are errors.
-import { adaptWeaponsFidelity } from './weapons-adapter.mjs';
 import fs from 'node:fs';
+import { adaptWeaponsFidelity } from './weapons-adapter.mjs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
