@@ -1,2 +1,11 @@
 node_modules/
 _site/
+
+# Local verification and relay development caches.
+.ci-scratch/
+.reference-data/
+.browser-cache/
+.browser-profile*/
+.browser-evidence/
+.built-site/
+**/.wrangler/

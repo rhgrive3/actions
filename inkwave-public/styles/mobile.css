@@ -148,3 +148,467 @@ html.iw-touch-ui .iw-dio.is-on .iw-pin:not(.iw-pin--self) .iw-pin__badge { point
 html.iw-touch-ui .iw-dio.is-on .iw-pin:not(.iw-pin--self) .iw-pin__badge::after { content: ''; position: absolute; inset: -14px; border-radius: 50%; }
 html.iw-touch-ui .iw-hud .iw-map.is-expanded .iw-bcn { scale: 1.18; }     /* fat-finger friendly super-jump targets */
 html.iw-touch-ui .iw-hud .iw-prompt { bottom: calc(env(safe-area-inset-bottom, 0px) + 3vmin); max-width: 44vw; white-space: normal; text-align: center; }
+
+/* ---- expansion menus: retain the ink tickets, textures and depth at finger scale.
+   Device and viewport own layout, including tablets with keyboards and split view. */
+.iw-code-input, .iw-touch-close, .iw-lob__roster { display: none; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) :is(.iw-kbm, .iw-padg, .iw-news__key, .iw-news__skipkey) { display: none !important; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) :is(.iw-online, .iw-lobby, .iw-modesel) > .iw-prompts { display: none; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) :is(.iw-online, .iw-lobby, .iw-modesel) {
+  --u: clamp(8px, 1vw, 12px);
+  --menu-gap: clamp(16px, 2.4vw, 28px);
+  padding: calc(var(--sat) + 20px) calc(var(--sar) + var(--menu-gap)) calc(var(--sab) + 24px) calc(var(--sal) + var(--menu-gap));
+  overflow-x: hidden; overflow-y: auto; touch-action: pan-y; overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) :is(.iw-online, .iw-modesel) > .iw-head {
+  position: relative; inset: auto; grid-column: 1 / -1; margin: 0 0 12px; gap: 12px;
+}
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) :is(.iw-online, .iw-modesel) .iw-head__titles { min-width: 0; flex: 1; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) :is(.iw-online, .iw-modesel) .iw-head__sub { white-space: normal; overflow-wrap: break-word; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) :is(.iw-online, .iw-lobby, .iw-modesel) .iw-backbtn {
+  flex: none; min-width: 44px; height: 44px; padding: 0 12px; font-size: 13px;
+}
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) :is(.iw-online, .iw-lobby) :is(.iw-minibtn, .iw-rc__copy) { min-height: 44px; font-size: 14px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) :is(.iw-online, .iw-lobby) :is(.iw-wchip, .iw-lchip) { min-height: 52px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-online .iw-name__input { min-height: 44px; font-size: 16px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) :is(.iw-online, .iw-lobby) .iw-wchip__text b { font-size: max(13px, calc(var(--u) * 1.3)); }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) :is(.iw-online, .iw-lobby, .iw-modesel) :is(button, input) { touch-action: manipulation; }
+
+/* Online: join and create remain the primary cards; the personal ticket is alongside. */
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-online { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(220px, .8fr); gap: var(--menu-gap); align-content: start; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-hub__body { position: relative; inset: auto; width: auto; min-width: 0; gap: 24px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-hub__me { position: relative; inset: auto; min-width: 0; display: flex; flex-direction: column; gap: 24px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-hub__metag { position: relative; inset: auto; width: auto; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-hub__chips { position: relative; inset: auto; width: auto; display: flex; flex-direction: column; gap: 16px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-hub__chip { width: 100%; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-hubcard--create { grid-template-columns: 48px minmax(0, 1fr) auto; gap: 12px; padding: 18px 16px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-hubcard__title { font-size: clamp(23px, 3vw, 34px); line-height: 1.12; overflow-wrap: anywhere; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-hubcard__icon { width: 48px; height: 60px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-hubcard__blob { left: -10px; width: 64px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-hubcard__sub { font-size: 13px; line-height: 1.5; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-hubcard__go { font-size: 14px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-hubcard--join { padding: 18px 16px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-join__head { align-items: flex-start; flex-wrap: wrap; gap: 16px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-join__btns { margin-left: auto; gap: 12px; padding: 0; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-online .iw-code { display: none; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-code-input {
+  display: block; width: 100%; height: 64px; margin: 18px 0 14px; padding: 8px 16px;
+  border: 2px solid rgba(255, 255, 255, .24); border-radius: 12px; background: #120e1c; color: #fff;
+  box-shadow: inset 0 5px 0 rgba(0, 0, 0, .3), 0 3px 0 var(--k);
+  font: 400 30px/1 'Titan One', 'IW JP Display', sans-serif; letter-spacing: .3em; text-align: center;
+  caret-color: var(--hv); outline: none; -webkit-user-select: text; user-select: text;
+}
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-code-input:focus { border-color: var(--hv); box-shadow: 0 0 0 3px var(--k), 0 0 0 5px var(--hv); }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-code-input::placeholder { color: rgba(255, 255, 255, .35); }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-code-input:disabled { opacity: .6; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-join__foot { min-height: 24px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-join__hint { font-size: 12px; white-space: normal; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-jstat { position: relative; inset: auto; max-width: 100%; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-hub__steps { flex-wrap: wrap; gap: 12px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-hubstep { flex: 1 1 100px; font-size: 12px; }
+
+/* Mode tickets use a readable unit independent of a portrait phone's short side. */
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-modesel { display: flex; flex-direction: column; gap: 20px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-modesel__row { position: relative; inset: auto; translate: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; padding: 12px 8px 20px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-mode { width: 100%; height: auto; min-height: 330px; min-width: 0; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-mode__art { height: auto; aspect-ratio: 16 / 9; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-mode__tape { position: relative; inset: auto; align-self: flex-start; max-width: calc(100% - 24px); margin: -24px 12px 0; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-mode__tape .iw-display { font-size: clamp(25px, 3.8vw, 40px); }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-mode__blurb { margin: 16px; font-size: 13px; line-height: 1.5; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-mode__go { opacity: 1; scale: 1; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-mode__chips, :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-mode.is-focus .iw-mode__chips { margin: auto 16px 18px; padding-right: 120px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-mode__beta { left: 12px; top: 48px; }
+
+/* Lobby: scroll settings, with ready/start and personal controls in a bottom dock. */
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-lobby { display: grid; grid-template-columns: minmax(260px, .8fr) minmax(0, 1.2fr); align-content: start; gap: 24px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-lob__top { position: relative; inset: auto; grid-column: 1 / -1; min-width: 0; gap: 16px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-lob__leave { margin-top: 12px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-rc { min-width: 0; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-rc__row { flex-wrap: wrap; gap: 12px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-rc__share { font-size: 12px; white-space: normal; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-lob__side { position: relative; inset: auto; width: auto; min-width: 0; grid-column: 1; grid-row: 2 / span 2; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-lob__status { position: relative; inset: auto; grid-column: 2; grid-row: 2; justify-self: end; align-self: start; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-lob__statustxt { max-width: 100%; font-size: 12px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-lob__roster { display: grid; grid-column: 2; grid-row: 3; align-content: start; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-lob__member {
+  --tc: var(--a); display: flex; align-items: center; gap: 8px; min-width: 0; padding: 10px;
+  background: var(--tex-squids), #21192f; border-radius: 12px 8px 14px 9px;
+  box-shadow: inset 3px 0 var(--tc), 0 3px 0 var(--k); font-size: 13px;
+}
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-lob__member[data-team="1"] { --tc: var(--b); }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-lob__member.is-you { outline: 2px solid var(--tc); outline-offset: 1px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-lob__member > i { flex: none; width: 28px; height: 28px; color: var(--tc); }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-lob__member svg { width: 100%; height: 100%; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-lob__membername { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-lob__membername :is(b, small) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-lob__membername small { color: var(--muted); font-size: 10px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-lob__memberstate { flex: none; width: 20px; height: 20px; color: var(--muted); }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-lob__member.is-ready .iw-lob__memberstate { color: #3ddc84; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-lob__plates { display: none; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-lob__bar {
+  position: sticky; inset: auto; bottom: calc(var(--sab) - 12px); z-index: 8; grid-column: 1 / -1;
+  display: flex; flex-wrap: wrap; gap: 16px; padding: 16px 12px;
+  background: var(--tex-squids), rgba(21, 18, 28, .97); border-radius: 16px 12px 18px 12px;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, .14), 0 5px 0 var(--k);
+}
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-lob__bar .iw-lob__you { flex: 1 0 230px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-lob__bar .iw-lob__wchip { flex: 1; width: auto; min-width: 0; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-lob__bar .iw-lob__lchip { flex: none; width: 56px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-lob__team { flex: 1 0 200px; min-width: 170px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-lob__team :is(.iw-seg, .iw-lob__squadlock) { width: 100%; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-lob__team .iw-seg__opt { min-height: 44px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-lob__emote { min-height: 48px; font-size: 14px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-lob__grow { display: none; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) :is(.iw-btn--ready, .iw-btn--lobstart) { flex: 1 0 200px; width: auto; min-height: 60px; font-size: 22px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) :is(.iw-btn--ready, .iw-btn--lobstart) .iw-btn__sub { max-width: none; font-size: 12px; line-height: 1.25; white-space: normal; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-lobby .iw-seg__opt { min-height: 44px; font-size: 12px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-lobby .iw-toggle { height: 44px; min-width: 64px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-lobby .iw-toggle__knob { top: 6px; height: 32px; width: 32px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-lset__pair { grid-template-columns: 1fr; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) :is(.iw-lstage__arrows, .iw-lob__modearrows) { gap: 8px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) :is(.iw-lstage__arrows, .iw-lob__modearrows) i { width: 44px; height: 44px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-lob__mode { font-size: clamp(18px, 2.5vw, 25px); }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-lob__beta { position: relative; inset: auto; margin-left: 8px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-lob__sidehead { flex-wrap: wrap; gap: 14px; }
+
+/* Drawers/wheels own their scroll area and an explicit close target above the dock. */
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) :is(.iw-ldr, .iw-emowheel) { position: fixed; overflow: hidden; background: rgba(8, 6, 14, .78); touch-action: pan-y; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-touch-close {
+  display: grid; place-items: center; flex: none; width: 44px; height: 44px; padding: 12px; border: 0;
+  background: #fff; color: var(--k); border-radius: 50%; cursor: pointer; box-shadow: 0 0 0 3px var(--k), 0 4px 0 var(--k);
+}
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-touch-close i, :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-touch-close svg { width: 100%; height: 100%; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ldr__card {
+  --u: 10px; position: absolute; left: calc(var(--sal) + 20px); right: calc(var(--sar) + 20px); top: calc(var(--sat) + 20px); bottom: calc(var(--sab) + 20px);
+  width: auto; padding: 20px; rotate: 0deg; overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y;
+}
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ldr__head { position: sticky; top: 0; z-index: 3; padding: 4px 0 12px; min-height: 44px; background: #251c3b; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ldr__hint { display: none; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ldr .iw-touch-close { position: static; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ldr__grid { grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 12px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ldr__grid .iw-wcard { height: auto; min-height: 112px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ldr__grid .iw-wcard__name { font-size: 13px; line-height: 1.3; white-space: normal; overflow-wrap: anywhere; text-align: center; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ldr__detail { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); padding: 16px; gap: 12px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-emowheel__card {
+  --u: 12px; left: 50% !important; top: 50% !important; width: min(320px, calc(100% - var(--sal) - var(--sar) - 48px)); height: 260px; translate: -50% -50%;
+}
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-emo { min-height: 48px; font-size: 16px; padding: 0 12px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-emo--right { left: 78%; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-emo--left { left: 22%; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-emowheel > .iw-touch-close { position: absolute; top: calc(var(--sat) + 20px); right: calc(var(--sar) + 20px); }
+
+/* Launch cards: scroll from the top, leaving the title and actions in reach. */
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-news { --nu: clamp(8px, 1vw, 12px); }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-news__stage {
+  display: flex; flex-direction: column; align-items: center;
+  padding: calc(var(--sat) + 24px) calc(var(--sar) + 24px) calc(var(--sab) + 28px) calc(var(--sal) + 24px);
+  overflow-y: auto; overflow-x: hidden; touch-action: pan-y; overscroll-behavior: contain;
+}
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-news__card { flex: none; width: 100%; max-width: 960px; margin-block: auto; rotate: 0deg; gap: 24px; padding: 24px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-news__title { font-size: clamp(26px, 4vw, 43px); overflow-wrap: anywhere; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-news__title.is-one { font-size: clamp(27px, 4.5vw, 48px); }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-news__btns :is(.iw-btn--wide, .iw-news__skip) { min-height: 48px; font-size: 18px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-news__go { padding-right: 20px !important; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-news__btns { width: 100%; gap: 16px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-news__btns button { touch-action: manipulation; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-news__list li { min-width: 0; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-news__thumb { display: none; }
+
+/* Portrait tablets and split view use the full width instead of a miniature 16:9 frame. */
+@media (max-aspect-ratio: 5 / 4) {
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-online { grid-template-columns: minmax(0, 1fr); }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-hub__me { gap: 20px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-hub__chips { flex-direction: row; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-hub__chip { flex: 1; min-width: 0; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-modesel__row { grid-template-columns: minmax(0, 1fr); max-width: 620px; width: 100%; margin: auto; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-lobby { grid-template-columns: minmax(0, 1fr); }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-lob__status { grid-column: 1; grid-row: auto; justify-self: stretch; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-lob__side { grid-column: 1; grid-row: auto; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-lob__roster { grid-column: 1; grid-row: auto; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-lob__bar { grid-column: 1; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-news { --nu: clamp(8px, 2vw, 12px); }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-news__card { grid-template-columns: minmax(0, 1fr); max-width: 620px; }
+}
+@media (max-width: 480px) {
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) :is(.iw-online, .iw-lobby, .iw-modesel) .iw-head__sub { max-width: 100%; font-size: 12px; line-height: 1.4; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-hubcard--create { grid-template-columns: 40px minmax(0, 1fr); }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-hubcard__go { grid-column: 2; justify-self: end; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-lob__top { flex-direction: column; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-lob__leave { margin-top: 0; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-rc__tiles { gap: 6px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-rc__tile { width: 30px; height: 40px; font-size: 26px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-lob__bar { gap: 12px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-lob__team { min-width: 0; flex-basis: 100%; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-lob__bar .iw-lob__you { flex-basis: 100%; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-lob__bar .iw-lob__wchip { flex: 1; width: auto; min-width: 0; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-lob__member { padding: 10px 8px; gap: 6px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-lob__member > i { width: 22px; height: 22px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-lob__membername b { font-size: 12px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ldr__card { padding: 16px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ldr__detail { display: flex; flex-direction: column; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ldr__detail .iw-wd__stats { width: 100%; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-news__card { padding: 18px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-news__btns > button { flex: 1 1 100%; }
+}
+/* A multi-row dock must not cover the settings in landscape or on a short phone. */
+@media (max-height: 700px) {
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-lob__bar { position: relative; bottom: auto; }
+}
+
+/* Touch instructions need one row per action in a narrow pause card. */
+@media (max-width: 600px), (max-height: 500px) {
+  .iw-pctl .iw-ctl--touch { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ---- core menus: use the same ink materials at a readable, touchable size.
+   These screens scroll as documents; their artwork remains inside each card. */
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) :is(.iw-main, .iw-setup, .iw-loadout, .iw-locker, .iw-settings, .iw-howto, .iw-credits, .iw-pause, .iw-results) {
+  --u: clamp(8px, 1vw, 12px); --fs-xs: 12px; --fs-s: 14px; --fs-m: 16px; --fs-l: 18px;
+  --menu-gap: clamp(16px, 2.4vw, 28px);
+  padding: calc(var(--sat) + 24px) calc(var(--sar) + var(--menu-gap)) calc(var(--sab) + 32px) calc(var(--sal) + var(--menu-gap));
+  overflow: hidden auto; touch-action: pan-y; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+}
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) :is(.iw-main, .iw-setup, .iw-loadout, .iw-locker, .iw-settings, .iw-howto, .iw-credits, .iw-pause, .iw-results) > .iw-prompts { display: none; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) :is(.iw-main, .iw-setup, .iw-loadout, .iw-locker, .iw-settings, .iw-howto, .iw-credits, .iw-pause, .iw-results) > .iw-head { position: relative; inset: auto; grid-column: 1 / -1; margin: 0 0 20px; gap: 12px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) :is(.iw-main, .iw-setup, .iw-loadout, .iw-locker, .iw-settings, .iw-howto, .iw-credits, .iw-pause, .iw-results) .iw-head__titles { min-width: 0; flex: 1; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) :is(.iw-main, .iw-setup, .iw-loadout, .iw-locker, .iw-settings, .iw-howto, .iw-credits, .iw-pause, .iw-results) .iw-head__title { font-size: clamp(28px, 4vw, 46px); line-height: 1.2; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) :is(.iw-main, .iw-setup, .iw-loadout, .iw-locker, .iw-settings, .iw-howto, .iw-credits, .iw-pause, .iw-results) .iw-head__sub { white-space: normal; overflow-wrap: break-word; line-height: 1.5; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) :is(.iw-main, .iw-setup, .iw-loadout, .iw-locker, .iw-settings, .iw-howto, .iw-credits, .iw-pause, .iw-results) .iw-backbtn { flex: none; min-width: 44px; height: 44px; padding: 0 12px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) :is(.iw-main, .iw-setup, .iw-loadout, .iw-locker, .iw-settings, .iw-howto, .iw-credits, .iw-pause, .iw-results) :is(button, input) { touch-action: manipulation; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) :is(.iw-main, .iw-setup, .iw-loadout, .iw-locker, .iw-settings, .iw-howto, .iw-credits, .iw-pause, .iw-results) .iw-btn { min-width: 44px; min-height: 48px; font-size: 18px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) :is(.iw-main, .iw-setup, .iw-loadout, .iw-locker, .iw-settings, .iw-howto, .iw-credits, .iw-pause, .iw-results) :is(.iw-btn__text, .iw-wchip__text) { min-width: 0; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) :is(.iw-main, .iw-setup, .iw-loadout, .iw-locker, .iw-settings, .iw-howto, .iw-credits, .iw-pause, .iw-results) .iw-btn__label { white-space: normal; line-height: 1.25; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) :is(.iw-main, .iw-setup, .iw-loadout, .iw-locker, .iw-settings, .iw-howto, .iw-credits, .iw-pause, .iw-results) .iw-seg { min-width: 0; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) :is(.iw-main, .iw-setup, .iw-loadout, .iw-locker, .iw-settings, .iw-howto, .iw-credits, .iw-pause, .iw-results) .iw-seg__opt { min-width: 44px; min-height: 44px; padding: 8px; font-size: 14px; white-space: normal; text-align: center; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) :is(.iw-main, .iw-setup, .iw-loadout, .iw-locker, .iw-settings, .iw-howto, .iw-credits, .iw-pause, .iw-results) .iw-tab { min-width: 44px; height: auto; min-height: 48px; padding: 10px 12px; font-size: 14px; flex: 1 0 auto; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) :is(.iw-main, .iw-setup, .iw-loadout, .iw-locker, .iw-settings, .iw-howto, .iw-credits, .iw-pause, .iw-results) .iw-tabs { flex-wrap: wrap; gap: 6px; border-radius: 16px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) :is(.iw-main, .iw-setup, .iw-loadout, .iw-locker, .iw-settings, .iw-howto, .iw-credits, .iw-pause, .iw-results) .iw-tabs__hl { display: none; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) :is(.iw-main, .iw-setup, .iw-loadout, .iw-locker, .iw-settings, .iw-howto, .iw-credits, .iw-pause, .iw-results) .iw-tab.is-sel { background: linear-gradient(180deg, var(--a-light), var(--a) 60%); box-shadow: 0 3px 0 var(--a-deep); }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) :is(.iw-main, .iw-setup, .iw-loadout, .iw-locker, .iw-settings, .iw-howto, .iw-credits, .iw-pause, .iw-results) .iw-wchip { min-height: 64px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) :is(.iw-main, .iw-setup, .iw-loadout, .iw-locker, .iw-settings, .iw-howto, .iw-credits, .iw-pause, .iw-results) .iw-wchip__text b { font-size: 16px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) :is(.iw-main, .iw-setup, .iw-loadout, .iw-locker, .iw-settings, .iw-howto, .iw-credits, .iw-pause, .iw-results) .iw-name__input { min-height: 48px; font-size: 18px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) :is(.iw-main, .iw-setup, .iw-loadout, .iw-locker, .iw-settings, .iw-howto, .iw-credits, .iw-pause, .iw-results) :is(.iw-panel, .iw-wd, .iw-lpanel, .iw-prev) { min-width: 0; }
+
+/* Loading / title keep their centered composition, independently of 16:9. */
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) :is(.iw-loading, .iw-title) { --u: clamp(6px, 1.5vmin, 12px); }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-loading__center { width: min(480px, 84%); }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-loading .iw-logo { font-size: clamp(34px, 9vw, 64px); }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-loading .iw-progress { width: 100%; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-loading .iw-tip { left: calc(var(--sal) + 24px); right: calc(var(--sar) + 24px); width: auto; max-width: none; transform: none; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-title__logo .iw-logo { font-size: clamp(36px, 10vw, 88px); }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-title__press { min-height: 64px; justify-content: center; width: min(480px, 86%); bottom: calc(var(--sab) + 12%); }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-title__presstext { font-size: clamp(22px, 3.5vw, 32px); line-height: 1.25; text-align: center; }
+
+/* Main: the launch stack is paired with the existing profile and kit ticket. */
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-main { --menu-gap: clamp(26px, 3vw, 36px); display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(240px, .8fr); align-content: start; gap: 24px var(--menu-gap); }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-main__logo { position: relative; inset: auto; grid-column: 1 / -1; margin: 8px 0 12px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-main__logo .iw-logo { font-size: clamp(34px, 6vw, 58px); }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-main__menu { position: relative; inset: auto; transform: none; width: auto; min-width: 0; gap: 12px; grid-column: 1; grid-row: 2; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-main__menu .iw-btn--menu { height: 60px; font-size: 21px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-main__menu .iw-btn--xl { height: 80px; font-size: 29px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-main__menu .iw-btn--online { height: auto; min-height: 88px; display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: 8px 12px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-main .iw-btn--online .iw-btn__icon { grid-row: 1 / 3; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-main .iw-btn__live { position: relative; inset: auto; translate: none; grid-column: 2; justify-self: start; font-size: 11px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-main .iw-btn__sub { white-space: normal; line-height: 1.4; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-main > .iw-corner { position: relative; inset: auto; grid-column: 1 / -1; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-main__side { position: relative; inset: auto; width: auto; min-width: 0; gap: 24px; justify-content: flex-start; grid-column: 2; grid-row: 2; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-main__desc { position: relative; inset: auto; max-width: none; grid-column: 1 / -1; font-size: 14px; line-height: 1.5; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-main .iw-profile__name { font-size: 22px; }
+
+/* Stage selection: a clear preview, a selectable ticket list and match options. */
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup { display: grid; grid-template-columns: minmax(240px, .7fr) minmax(0, 1.4fr); align-content: start; gap: 24px var(--menu-gap); }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup > .iw-head { margin-bottom: 0; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ss__left { position: relative; inset: auto; width: auto; min-width: 0; grid-column: 1; grid-row: 2 / 4; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ss__list { gap: 16px; padding: 8px; max-height: none; margin-right: 0; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ticket { width: 100%; height: 96px; transform: none; translate: none; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ticket.is-focus { transform: none; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ticket.is-sel { translate: none; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ticket__name { left: 44px; right: 58px; font-size: 16px; line-height: 1.3; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ticket__num { left: 10px; width: 26px; height: 26px; font-size: 13px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ticket__time { top: 8px; right: 8px; width: 44px; height: 44px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ss__match { margin-top: 24px; padding: 14px; gap: 12px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ss__match .iw-setrow { flex-direction: column; align-items: stretch; gap: 12px; padding: 0; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ss__match .iw-setrow .iw-seg { min-width: 0; width: 100%; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-diffopt { gap: 4px; flex-wrap: wrap; justify-content: center; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ss__hero { position: relative; inset: auto; height: auto; min-width: 0; grid-column: 2; padding-bottom: 8px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ss__frame { position: relative; inset: auto; width: 100%; aspect-ratio: 16 / 10; min-height: 240px; transform: none; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ss__caption { position: relative; inset: auto; margin: 16px 8px 0; gap: 8px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ss__tape { max-width: 100%; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ss__name { font-size: clamp(22px, 3vw, 34px); white-space: normal; line-height: 1.25; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ss__word { display: inline; white-space: normal; overflow-wrap: anywhere; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ss__layout { right: 12px; top: 12px; bottom: auto; width: 100px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ss__count { left: 12px; top: 12px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ss__time { position: relative; inset: auto; margin-top: 20px; gap: 10px; padding: 14px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ss__timehead { font-size: 14px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-daytgl { width: 100%; height: 52px; transform: none; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-daytgl__opt { min-width: 44px; min-height: 44px; font-size: 18px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ss__timetext { font-size: 14px; line-height: 1.5; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ss__foot { position: relative; inset: auto; grid-column: 2; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ss__foot .iw-wchip { width: 100%; height: 68px; padding: 0 10px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ss__foot .iw-btn--start { grid-column: 1 / -1; width: 100%; height: 64px; font-size: 25px; }
+
+/* Loadout and locker retain every catalog item, with grids sized by space. */
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) :is(.iw-loadout__body, .iw-locker__body) { position: relative; inset: auto; width: auto; min-width: 0; gap: 24px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-loadout__look { position: relative; inset: auto; width: auto; margin-top: 24px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-loadout__look .iw-wchip { max-width: 420px; transform: none; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-loadout .iw-wgrid { grid-template-columns: repeat(auto-fit, minmax(112px, 1fr)); gap: 14px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-loadout .iw-wcard { height: 116px; padding: 10px 8px; transform: none; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-loadout .iw-wcard.is-focus { transform: translateY(-2px); }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-loadout .iw-wcard__name { font-size: 14px !important; white-space: normal; line-height: 1.3; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-loadout .iw-wcard__icon svg { height: 52px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-wd { padding: 20px; gap: 20px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-wd__head { flex-wrap: wrap; align-items: center; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-wd__name { font-size: 26px !important; white-space: normal; line-height: 1.25; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-stat { grid-template-columns: minmax(90px, auto) minmax(24px, 1fr) 28px 28px; gap: 6px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-stat__num { font-size: 14px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-stat__delta { font-size: 11px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-kit__row { flex-wrap: wrap; gap: 6px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-kit__cost { font-size: 11px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-lgrids { height: auto; gap: 24px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-lgrid { grid-template-columns: repeat(auto-fit, minmax(76px, 1fr)); gap: 14px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-lgrid--swatch { grid-template-columns: repeat(auto-fit, minmax(48px, 1fr)); }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ltile { min-height: 48px; transform: none; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ltile.is-focus { transform: translateY(-2px); }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ltile__name { font-size: 12px !important; white-space: normal; line-height: 1.2; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-lfoot { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-lfoot .iw-btn { width: 100%; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-lsaved { grid-column: 1 / -1; grid-row: 2; justify-content: center; min-width: 0; line-height: 1.4; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ltag { position: relative; inset: auto; width: auto; margin: 28px 0 0; gap: 16px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ltag .iw-name { transform: none; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-lspin { display: none; }
+
+/* Settings: tabs wrap and the complete row list follows native screen scrolling. */
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-settings { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(240px, .8fr); align-content: start; gap: 24px var(--menu-gap); }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-settings > .iw-head { margin-bottom: 0; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-settings__panel { position: relative; inset: auto; width: auto; max-height: none; padding: 16px; gap: 16px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-settings .iw-rows { flex: none; min-height: 0; overflow: visible; mask-image: none; -webkit-mask-image: none; margin: 0; padding: 4px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-settings .iw-row { min-height: 64px; padding: 12px; gap: 16px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-settings .iw-row__label { min-width: 0; line-height: 1.4; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-settings .iw-row__ctrl { min-width: 0; flex: 0 1 55%; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-settings .iw-row__ctrl .iw-seg { min-width: 0; width: 100%; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-settings .iw-slider { min-height: 44px; width: 100%; gap: 12px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-settings .iw-slider__track { height: 12px; min-width: 48px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-settings .iw-slider__track::before { inset: -16px 0; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-settings .iw-slider__knob { width: 28px; height: 28px; margin: -14px 0 0 -14px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-settings .iw-slider__val { font-size: 18px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-settings .iw-toggle { width: 88px; height: 44px; margin-left: auto; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-settings .iw-toggle__knob { top: 6px; left: 6px; width: 32px; height: 32px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-settings .iw-toggle.is-on .iw-toggle__knob { transform: translateX(44px); }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-settings .iw-toggle__txt { font-size: 12px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-settings__foot { flex-wrap: wrap; gap: 16px; margin: 0; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-settings__foot .iw-btn { flex: none; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-prev { position: relative; inset: auto; width: auto; align-self: start; padding: 20px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-prev__label { font-size: 18px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-prev__stage { width: 100%; aspect-ratio: 16 / 10; min-height: 190px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-prev .iw-pvsvg { min-width: 0; max-width: 100%; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-prev__help { font-size: 14px; line-height: 1.5; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) :is(.iw-pv-cap, .iw-pv-stat) { font-size: 12px; }
+
+/* Instructions and credits can be read at the user's own pace. */
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-howto__body { position: relative; inset: auto; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-howto__rules { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-howto__ctl { padding: 20px; min-width: 0; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ctl__row { gap: 12px; min-height: 52px; padding: 10px 0; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ctl__act { min-width: 0; line-height: 1.4; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ctl__keys { min-width: 0; flex: 0 1 auto; flex-wrap: wrap; justify-content: flex-end; line-height: 1.4; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-cred__view { position: relative; inset: auto; width: min(720px, 100%); height: calc(100dvh - var(--sat) - var(--sab) - 160px); min-height: 140px; transform: none; margin: 0 auto; overflow: hidden auto; touch-action: pan-y; mask-image: none; -webkit-mask-image: none; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-cred__roll { position: relative; inset: auto; transform: none !important; padding: 24px 12px; will-change: auto; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-cred__logo .iw-logo { font-size: clamp(30px, 8vw, 54px); }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-cred__sec p { font-size: 20px; line-height: 1.4; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-cred__cast { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 12px; }
+
+/* Pause: the action stack and live match card both remain accessible. */
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-pause { --menu-gap: clamp(26px, 3vw, 36px); display: grid; grid-template-columns: minmax(220px, .7fr) minmax(0, 1.5fr); align-content: start; gap: 32px var(--menu-gap); }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-pause__col { position: relative; inset: auto; transform: none; width: auto; gap: 24px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-pause__title { font-size: 42px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-pause__menu { gap: 16px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-pause__menu .iw-btn { height: 64px; font-size: 22px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-pmatch { position: relative; inset: auto; transform: none; width: auto; padding: 20px; min-width: 0; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-pmatch__top { flex-wrap: wrap; gap: 16px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-pmatch__info { min-width: 0; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-pmatch__map { font-size: 18px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-pyou { flex-wrap: wrap; gap: 16px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-pyou__stats { flex: 1 0 100%; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-pstat > b { font-size: 16px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-pstat > small { font-size: 10px; letter-spacing: .02em; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-roster__head { flex-wrap: wrap; line-height: 1.4; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-rrow { min-height: 36px; font-size: 14px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-rrow__name { min-width: 0; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-pctl { margin-top: 20px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-pctl .iw-ctl--touch { grid-template-columns: minmax(0, 1fr); }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-pause .iw-modal { position: fixed; overflow: auto; padding: calc(var(--sat) + 48px) calc(var(--sar) + 24px) calc(var(--sab) + 24px) calc(var(--sal) + 24px); }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-pause .iw-modal__card { width: min(560px, 100%); padding: 28px 24px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-pause .iw-modal__btns { flex-wrap: wrap; gap: 16px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-pause .iw-modal__btns button { flex: 1 1 180px; }
+
+/* Results: keep all figures, team colors, awards and XP in a flowing layout. */
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-res__head { position: relative; inset: auto; margin-bottom: 24px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-res__title { font-size: clamp(42px, 6vw, 72px); }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-res__meta { max-width: 100%; flex-wrap: wrap; line-height: 1.4; border-radius: 16px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-res__body { position: relative; inset: auto; gap: 24px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-res__medals { position: relative; inset: auto; width: auto; margin: 24px 0; align-items: flex-start; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-res__medallist { justify-content: start; gap: 12px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-medal { width: 112px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-medal__label { max-width: 100%; font-size: 11px; white-space: normal; text-align: center; line-height: 1.3; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-medal__val { font-size: 11px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-res__metarow { flex-wrap: wrap; gap: 12px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-res__tag { font-size: 12px; white-space: normal; flex-wrap: wrap; line-height: 1.4; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-res__teams { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ttable__head, :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-prow { grid-template-columns: 28px minmax(0, 1fr) 86px 36px 36px; gap: 8px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ttable--boss .iw-ttable__head, :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ttable--boss .iw-prow { grid-template-columns: 28px minmax(0, 1fr) 80px 36px 36px 36px 48px; gap: 6px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-prow { height: auto; min-height: 44px; padding: 10px; margin-top: 8px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) :is(.iw-prow__turf, .iw-prow__n, .iw-prow__sm) { font-size: 16px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-prow__w { height: 28px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-res__foot { flex-wrap: wrap; align-items: stretch; gap: 24px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-xp { width: 100%; max-width: none; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-xp__row { flex-wrap: wrap; gap: 8px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-xp__next { white-space: normal; line-height: 1.4; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-res__btns { flex-wrap: wrap; width: 100%; gap: 16px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-res__btns button { flex: 1 1 160px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-res__boss { height: auto; min-height: 80px; gap: 16px; padding: 16px 16px 16px 72px; flex-wrap: wrap; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-rb__main { flex-basis: 180px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-rb__row { flex-wrap: wrap; gap: 8px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-rb__stamp { left: auto; right: 16px; top: -12px; translate: none; font-size: 20px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-prow__stamp { left: 0; top: -6px; font-size: 12px; }
+
+/* Phones / tablet split view: stack panels and give each control room to breathe. */
+@media (max-width: 700px) {
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) :is(.iw-main, .iw-setup, .iw-settings, .iw-pause) { grid-template-columns: minmax(0, 1fr); }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) :is(.iw-main__menu, .iw-main__side) { grid-column: 1; grid-row: auto; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) :is(.iw-ss__left, .iw-ss__hero, .iw-ss__foot) { grid-column: 1; grid-row: auto; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-main__side { margin-top: 8px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ss__frame { aspect-ratio: 4 / 3; min-height: 240px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ss__foot { grid-template-columns: minmax(0, 1fr); }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ss__name { font-size: clamp(20px, 5.8vw, 24px); }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-wd { grid-template-columns: minmax(0, 1fr); }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-wd__head { grid-column: 1; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-settings .iw-row { flex-wrap: wrap; gap: 10px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-settings .iw-row__ctrl { flex: 1 1 100%; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-settings .iw-row__label { flex: 1 1 100%; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-settings .iw-row:has(.iw-toggle) { flex-wrap: nowrap; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-settings .iw-row:has(.iw-toggle) .iw-row__label { flex: 1; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-settings .iw-row:has(.iw-toggle) .iw-row__ctrl { flex: none; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-settings .iw-row--link .iw-row__ctrl { flex: 0 1 auto; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-settings .iw-row--link .iw-row__label { flex: 1 1 140px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-howto__body { grid-template-columns: minmax(0, 1fr); }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-howto__ctl { padding: 16px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ctl-switch .iw-segico { flex-direction: column; gap: 8px; line-height: 1.4; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ctl-switch .iw-seg__opt { min-height: 72px; font-size: 12px; padding: 8px 4px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ctl--touch .iw-ctl__row { align-items: flex-start; flex-direction: column; gap: 8px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ctl--touch .iw-ctl__keys { justify-content: flex-start; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-pteams { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ttable__head, :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-prow { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 8px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ttable--boss .iw-ttable__head, :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ttable--boss .iw-prow { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px 4px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ttable__team { grid-column: 1 / -1; line-height: 1.4; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-prow__w { grid-column: 1; grid-row: 1; width: 28px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-prow__name { grid-column: 1 / -1; grid-row: 1; padding-left: 40px; font-size: 16px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-prow__turf { justify-content: center; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ttable__col:nth-child(2), :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ttable__col:last-child { justify-content: center; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-prow__sm { justify-content: center; font-size: 13px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ttable__head { padding: 8px 10px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ttable__col { font-size: 11px; letter-spacing: 0; }
+}
+@media (min-width: 1000px) and (min-height: 600px) {
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-res__teams { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+}

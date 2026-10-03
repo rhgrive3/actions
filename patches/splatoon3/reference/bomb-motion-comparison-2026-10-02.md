@@ -1,0 +1,79 @@
+# Bomb hold, release, recovery and physical origin
+
+This component fixes two measured inconsistencies in the public INKWAVE rig: the arm started another cock after the actual projectile already existed, and the fixed actor offset used for bomb creation/preview was about 0.6 world units away from the physical throwing prop. The change aligns the native release curve with the real runner event and uses that same native rig sample for creation and preview. These are implementation consistency corrections and visual calibration. They are not a measurement of unpublished Splatoon 3 joint animation or a certification of Switch animation parity.
+
+## Primary reference and remaining uncertainty
+
+Nintendo's [basic controls guide](https://www.nintendo.com/jp/games/feature/splatoonqa/guide_basic/index.html), [Splatoon 3 introduction](https://www.nintendo.com/jp/switch/av5ja/index.html), [first-time guide](https://www.nintendo.com/jp/ichikara/av5ja/index.html), and [weapon introduction](https://www.nintendo.com/jp/topics/article/2e33bbea-9aec-4df5-a5bc-3d062051bce4) provide the primary comparison context. The basic guide's `ZNcLehKqvhI` sub-weapon embed previously returned `LOGIN_REQUIRED`; its retained response and hashes were verified, and that access restriction was not bypassed. The retained poster is a title card, not a motion observation.
+
+Fresh public Nintendo assets were downloaded and their one-second contact sheets visually inspected:
+
+| Asset | Public source | SHA-256 | Inspected selections |
+| --- | --- | --- | --- |
+| Top introduction | [movie_pc.mp4](https://www.nintendo.com/jp/switch/av5ja/assets/images/index/movie/movie_pc.mp4) | `6a62fa1d074c19a0f8d35a6f334691decff7ac7e29110b6fff7c5c31302386dd` | 0–7 seconds, 30 fps source |
+| Turf War introduction | [nawabari_pc.mp4](https://www.nintendo.com/jp/switch/av5ja/assets/images/index/movie/nawabari_pc.mp4) | `5e933a5ce4b6695ca07b12777298ad5bf5eee82b5ce50ba0f90141382d5e8640` | 0–25 seconds, 60 fps source |
+| Human/squid introduction | [modal_pc.mp4](https://www.nintendo.com/jp/switch/av5ja/assets/images/index/ikatohito/movie/modal_pc.mp4) | `294c6713400be43793f989f897dfae633bcc2744a369849bd0ec14c77b28e807` | 0–12 seconds, 60000/1001 fps source |
+
+These assets did not yield a clear close-up bomb hold/release sequence. Nintendo's first-time guide photographs [007](https://www.nintendo.com/jp/ichikara/av5ja/photo/01/007.jpg) and [008](https://www.nintendo.com/jp/ichikara/av5ja/photo/01/008.jpg) show a Splash Wall and a Killer Wail respectively, and cannot establish a Splat Bomb throwing hand. Other official embed endpoints returned 403, and the US gameplay page failed TLS chain verification; neither is positive motion evidence. Consequently the original game's holding hand, exact release arm/torso angles, anticipation duration and recovery duration remain unverified. The public model's left hand remains provisional; it was not swapped on inference from unrelated frames.
+
+The freshly verified [version 11.3.0 extracted Splat Bomb parameter table](https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponBombSplash.game__GameParameterTable.json), pinned to commit `7280ff9cde8bb1c5dcef46c700c326471584d2e6`, has SHA-256 `d2a7e096d8e3ba3b5bef7774c7b62d1e9cb252b054650317955fa38f90658f97`. It provides gameplay data, not joint curves or a spawn attachment: `BurstFrame=60`, `FlyGravity=0.016`, `SpawnSpeedY=0.24`, and horizontal speed scaling are present. This patch changes none of those mappings or the chosen gameplay profile.
+
+## Comparison against the actual source
+
+| Condition | Measured public source | Result | Classification |
+| --- | --- | --- | --- |
+| Real release event | `WeaponRunner.update` consumes 70 ink, triggers `throw`, and immediately calls native `Projectiles.throwBomb` | Same event and input tick, unchanged speed/direction/fuse/cost; the first release arm presentation is already in whip/follow-through | Event synchronization; curve age is calibration |
+| Native throw curve | `_poseThrow` starts with cock even though creation already happened | Its existing age `0.10` is evaluated at actual release; native aiming supplies anticipation | Native visual calibration, not Nintendo frame timing |
+| Recovery | Native throw curve fades out at `0.62` | Shifted recovery lasts `0.52` seconds, then native carry/IK resumes | Native visual calibration |
+| Main attack plus sub | Main slosh/weapon overlays can reclaim the held/free left hand | The owned hold/throw overlay is applied once after native main overlays | Rig presentation priority |
+| Dualies hold/recovery | A partially shrinking left pistol overlaps the bomb or floats while the hand throws | Native pistol is fully hidden while holding and recovering, then its native damped return resumes | Presentation calibration |
+| Creation/preview origin | Both use `actor.pos + (0,1.35,0)`, separate from the physical native prop | Both use the identical native release prop center at current actor position/yaw | Model/game origin consistency correction |
+| Bomb arc gravity | The source arc uses `24` while the existing calibrated physical bomb uses `SUB.bomb.gravity=57.6` | The bomb-only arc reads that same existing profile gravity | Physics/preview consistency; physical gameplay unchanged |
+| Render/collision/network/event position | All derive from native `pos` | One supplied position is corrected before native creation; all still derive from it | Existing native contract maintained |
+| Hidden/form/death/cancel/reset/swap/dispose | Held clocks/flags could persist across transitions | Owned state clears; current real held input starts fresh after return | State lifetime correction |
+
+`0.10`, `0.62`, `0.52`, hand choice and joint curves are explicitly not claimed as official Nintendo animation parameters. The held triangular prop and airborne body remain the source's original indexed geometries; this component does not claim a matching official model silhouette.
+
+## Pose-only sampling and integration contract
+
+The adapter exports `CHARACTER_BOMB_POSE = Object.freeze({ throw: Character.prototype._poseThrow, apply: Character.prototype._applyPose })` from the exact native Character module before installers wrap its methods. The installer receives that registry and the exact native `T_THROW`; it is connected after `installWeaponMotion`. No private channel/timer order is guessed.
+
+Own prototype stamps using `Symbol.for('inkwave.s3.bomb-motion.install.v1')` and a separate Runner reset symbol prevent duplicate decoration even when another VM realm imports a fresh installer module. The Character stamp retains the original state/curve registry so second-realm snapshot/origin helpers read the real active installation rather than an empty private WeakMap.
+
+The native release curve runs on isolated reusable pose buffers. Its native rig application runs in a transaction with weapon/face/hair/tank/jiggle/finger simulation disabled. It does not call `Character.update`, `Actor._finishFrame`, root tracking, input processing, state advancement or gait stepping. Bone/weapon transforms and matrices, all direct scalar/vector/quaternion/typed-array state, foot contact/display data, head bookkeeping, IK errors, springs, hair velocities and native root history are restored, including exception rollback. The buffers, field banks and bone snapshots are cached per Character and reused for every preview. External scene matrices are not updated by the sample.
+
+The source hook calls `bombReleasePosition(a, pos)` immediately after the unique bomb-only native candidate is constructed, before the mesh/network/event creation. The preview calls `bombPreviewPosition(a, p)` immediately after its native candidate is constructed. Missing rig, opt-out, any hidden ancestor in the rig hierarchy, squid, dance and dead presentation retain that candidate. Native nullable/show-false/dead arc guards remain in place. The storm's separate `+1.45` origin is untouched. The parent also connects the unique bomb-only arc gravity line to `SUB.bomb.gravity`; this matches the existing physical bomb rather than changing its gameplay parameters. The native semi-implicit Euler integrator, 60 Hz step and one drawn vertex per two steps remain unchanged. Original-game trajectory parity still depends on the selected profile's calibration.
+
+## Verification and limits
+
+Run the focused actual-source tests with:
+
+```sh
+node --experimental-vm-modules --test patches/splatoon3/tests/bomb-motion.test.mjs
+```
+
+The suite installs the complete production composition once in one VM and exercises the actual production adapter connections without fixture fallback wiring. It constructs the real Actor, WeaponRunner, Character, Projectiles and original rig. Assertions cover immediate release at 30/60/120 Hz after both one-frame and longer holds; unchanged ink cost, native velocity, fuse and age; actually drawn indexed vertices and native arm reach errors; dualies grip recovery; combinations with shooter/dualies/slosher/charger/splatling/roller; cancel/empty/hidden/form/air/reset/death/swap/dispose; pause; identical fixed-60-Hz traces under variable render intervals; native arc/creation origin equality; complete rig preservation during repeated previews with active Flow; and exception rollback. All 64 actual native arc BufferAttribute vertices are compared with the real `_updateBombs` position every two 60 Hz ticks through 126 ticks with no collisions. Each vertex equals the actual physical position after Float32 storage rounding; repeated previews leave that existing bomb's age/fuse/position/velocity and Character clocks unchanged.
+
+A moving 65-tick slosher throw trace is compared exactly with an otherwise identical control that skips sampling. Contacts, cadence, native `rp/rv/ra`, yaw, pose, springs, hair, clocks and invocation counts match, with one normal Character/root/feet/hair/weapon tick and one real slosher volley. This specifically guards against the previous proposed `update(0)` approach consuming movement/root history or duplicating impulses.
+
+A separately imported installer in another VM realm is applied to the same real Character/Runner and must preserve all original hook references and active helper state. A composed left support-arm solver with independent WeakMap state is observed across six weapons: native release sampling leaves `IKL/LTW` free at curve age `0.10`, never invokes that correction, and preserves its state. The parent must additionally run these tests with any later weapon detail installer in the final combined installation.
+
+Durable receipts, primary files, contact sheets, test logs, per-release indexed-geometry measurements, integration instructions and their SHA-256 manifest are under `/mnt/workspace/.dev-state/agent-work/evidence/inkwave-motion-detail-20261002/bomb/`. This component's evidence is actual-source logic/rig geometry, not an actual WebGL draw certificate. The parent owns combined installation, generated output, independent review and actual WebGL/browser gates. Remaining original-game motion uncertainty requires a clear unrestricted primary bomb sequence; it is not silently declared fixed by these implementation tests.
+
+## Independent review of complete production composition — 2026-10-03
+
+The review starts from frozen candidate `d846b5b8fadd6cef86e7d02699cf9b3b7356b80e`, with all 14 additional motion installers already present. The fixture now uses the actual production adapter only: it no longer synthesizes missing release/preview hooks, native exports or arc gravity wiring. Repeated preview, source release, rollback and sampled-versus-unsampled walking traces include snapshots from every additional motion module, weapon detail and Flow, native blink/gaze fields, and RNG invocation counts. These checks establish the CPU transaction boundary; they do not prove simultaneous participation of mutually exclusive actions, GPU drawing or Nintendo parity.
+
+A reproduced ownership error used `Actor._startSpecial()` and native `Projectiles.throwStorm`: Storm shares the native `throw` event and `T_THROW`, but the bomb addon incorrectly entered bomb recovery and bypassed the special throw layer. Storm is now identified as an external throw and delegated to the installed special/native pose path. The focused regression compares complete posed hands, native IK, pose and clocks with bomb detail disabled, using native Physics in a collision-free scene. The Storm projectile's separate origin, velocity and event remain native. Special/Super Jump preview candidates retain their supplied fallback; non-Storm actions interrupt bomb presentation.
+
+Disposal now stamps the original installation's shared registry, preventing either module realm's helper from sampling a disposed rig that still retains its bomb reference. Hidden ancestors, dance, form, reset and unsupported-preview guards remain explicit. No joint calibration constant changed in this review. Current Nintendo weapon-page lookup and verified retained footage are recorded in `review-weapons/primary-source-review.json`; the absence of a clear original bomb sequence remains unresolved. Final head, hashes, focused test commands and remaining parent GPU/build/Actions work are in `review-weapons/done.json`.
+
+The final review uses actual native Physics for the collision-free source arc. Native `Projectiles.updateArc` legitimately changes Physics segment/raycast scratch; those query buffers are not gameplay clocks. A separate regression instruments real native raycast, segment, collideBody and groundProbe methods across six weapons and requires zero invocations from the pose-only release/preview helpers, with exact live rig and Physics scratch preservation. The native arc retains its own queries and the existing exact physical-trajectory comparisons.
+
+## Admission and clock follow-up — 2026-10-03
+
+At complete production base `f125ed9`, the paired native baseline exposed that this module's `clear` forced `T_THROW=99`, reset ordinary `bombT`, and reset the native input-edge flag on each hidden/dance frame. Cancellation now retires shared presentation state and suppresses its lingering pistol swap while preserving ordinary native clocks/edges. Actor/Runner reset and weapon-change calls still execute the existing shared WeaponMotion timer resets; they are not undone or silently replaced. A new real release owns a new recovery. All native timers and the ordinary hold age are compared with Bomb disabled at 30/60/120 Hz and dt0 across hide/ancestor/dance/form/reset/death/swap/dispose.
+
+Bomb admission and read-only native release/preview sampling use the general `specialMotionAllowsAction` helper. Mapped Special completion/cancellation can relinquish presentation before its old leap/slam timer expires; active mapped Storm still has one Special owner. Disabled, detached, incomplete or not-yet-observed Special tokens retain native admission/candidate behavior. An incomplete token must retain fallback even when a simultaneous sub presentation interrupts the Special observer. Retirement also exposes `bombMotionAllowsAction` so Dualies need not wait on a cancelled native throw age. The native sampled curve/IK transaction, ordinary event semantics, launch velocity/fuse and existing sampler rollback are preserved.
+
+Fresh Nintendo page/playlist inspection and verified footage selections are recorded in `review-admission/primary-source-review.json`. No throw joint coefficient changed, and the unresolved unobstructed original bomb sequence remains unresolved. `action-admission-comparison-2026-10-03.md` and the durable findings/test/handoff receipts distinguish current production proof from the parent-owned proposed adapter/Walk hooks, CPU geometry from GPU, and engine consistency from original-console timing.
