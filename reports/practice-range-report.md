@@ -171,6 +171,7 @@ splatoon3 adaptSource → touch-layout → reliability → local-quality → pra
 | `15-phone-mode.webp` `16-mode.webp` | PLAY 画面（スマホ 844×390 タッチ、デスクトップ 1280×720） |
 | `17-phone-spawn.webp` `18-phone-hit.webp` `19-phone-pause.webp` | ブラウザチェック（スマホ）：スポーン、10 m の的への命中とカード、ポーズ画面 |
 | `20-desktop-hit.webp` | ブラウザチェック（デスクトップ）：10 m の的への命中 |
+| `21-ja-phone-hit.webp` | スマホ・日本語：的を倒した後のカード（合計 108.0、3 ヒット、たおすまで 3 発） |
 
 ![日本語の HUD](practice-range-evidence/13-ja-spawn.webp)
 ![日本語のポーズ画面](practice-range-evidence/14-ja-pause.webp)
@@ -193,6 +194,7 @@ splatoon3 adaptSource → touch-layout → reliability → local-quality → pra
 9. 射撃線上（z = 0）でゾーン表示が「ハブ」になった → ゾーン判定を半開区間にして、射撃線上はレーン／ギャラリーと表示。
 10. PLAY 画面（1280×720）で「PRACTICE RANGE」が2行になり説明文を隠した → デスクトップでは1行に固定。
 11. 的が倒れて 2 秒後に再膨張すると、まだ表示中のカードのコンボが「—」に戻った → 終わったコンボ（「SPLAT IN n · t s」）は次のヒットまで残す。
+12. ダミーを倒すと対戦用の連続キル表示（「DOUBLE SPLAT!」など）が出て、スマホでターゲットカードの下に重なった → 練習場では非表示（カードが同じ情報を出す）。
 
 ## 10. パフォーマンス
 
@@ -229,6 +231,7 @@ Chromium（SwiftShader、1280×720、DPR 1）で `renderer.info` とシーン走
 ![スマホのスポーン](practice-range-evidence/17-phone-spawn.webp)
 ![スマホでの命中とカード](practice-range-evidence/18-phone-hit.webp)
 ![スマホのポーズ画面](practice-range-evidence/19-phone-pause.webp)
+![スマホ・日本語のカード](practice-range-evidence/21-ja-phone-hit.webp)
 
 ## 12. テスト
 

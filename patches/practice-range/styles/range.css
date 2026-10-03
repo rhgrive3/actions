@@ -4,6 +4,8 @@
 
 /* ---------------------------------------------------------------- HUD: replace the turf-war roster + timer */
 .iw-hud--range .iw-hud__top, .iw-hud--range .iw-lineup, .iw-hud-over.iw-hud--range .iw-lineup { display: none !important; }
+/* battle streak callouts (FIRST / DOUBLE SPLAT!…) would count dummies as kills and sit under the target card */
+.iw-hud--range .iw-call { display: none !important; }
 .iwr-hud { position: absolute; inset: 0; pointer-events: none; font-family: 'Rubik', 'IW JP Body', sans-serif; color: #fff; }
 .iwr-num { font-variant-numeric: tabular-nums; }
 
