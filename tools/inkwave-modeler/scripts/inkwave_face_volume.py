@@ -1293,7 +1293,8 @@ def tint_map(ref, box, centre, cfg, skin_model, bare=None):
         # only where the shape is already dark: there the paint adds just the rest (never lighter than the
         # reference itself).  Where the shape is brighter than its surroundings (a lit bulge) nothing is taken
         # off: darkening a highlight gives a grey band.
-        own = np.clip(own, 0.5, 1.0) ** cfg.get('own', 1.0)
+        # cfg['own_max'] > 1: a lit bulge brighter than the reference (the lower lip) is also taken down
+        own = np.clip(own, 0.5, cfg.get('own_max', 1.0)) ** cfg.get('own', 1.0)
         ratio = np.minimum(ratio / own[..., None], np.maximum(ratio, 1.0))
     if cfg.get('desaturate'):
         # the reference's shading is warmer than its skin; on this skin that reads as a red nose: keep mostly
