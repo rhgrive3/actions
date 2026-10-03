@@ -9,6 +9,7 @@ on:
       - "patches/touch-layout/**"
       - "patches/reliability/**"
       - "scripts/*inkwave*.mjs"
+      - "scripts/tests/inkwave-*.mjs"
   pull_request:
     paths:
       - .github/workflows/validate-inkwave-update.yml
@@ -17,6 +18,7 @@ on:
       - "patches/touch-layout/**"
       - "patches/reliability/**"
       - "scripts/*inkwave*.mjs"
+      - "scripts/tests/inkwave-*.mjs"
   workflow_dispatch:
     inputs:
       source_sha:
@@ -45,7 +47,7 @@ jobs:
       - name: Verify gameplay patch contracts and regressions
         run: node --experimental-vm-modules scripts/check-inkwave-patches.mjs
       - uses: actions/upload-artifact@v4
-        if: failure()
+        if: failure() && hashFiles('.ci-scratch/inkwave-patches/patch-tests.log') != ''
         with:
           name: inkwave-patch-failure-diagnostics-${{ inputs.source_sha || github.sha }}
           if-no-files-found: error

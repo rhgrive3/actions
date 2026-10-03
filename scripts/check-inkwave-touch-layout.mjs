@@ -84,9 +84,10 @@ try {
       try {
         await page.goto(address); await page.waitForFunction(() => window.ready);
         {
-          // Exercise the production initializer, not a fixture-only replacement:
-          // missing initialization previously left all layout assertions green
-          // while the actual menu animation loop threw on every fitted screen.
+          // Exercise the production menu fitter, using the raw implementation
+          // when present and the installer fallback on older mirrored source.
+          // Missing fitting previously left geometric assertions green while
+          // the actual menu animation loop threw on every fitted screen.
           const fitting = await page.evaluate(() => {
             const root = document.createElement('div'), label = document.createElement('div');
             root.style.cssText = 'position:absolute;left:0;top:0;font:32px monospace';

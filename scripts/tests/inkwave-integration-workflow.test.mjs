@@ -25,3 +25,10 @@ test('successful browser artifacts require validated reports and distinct suite 
   assert.ok(workflow.includes('if: success()'));
   assert.ok(workflow.includes('name: inkwave-browser-${{ matrix.suite }}-${{ inputs.source_sha || github.sha }}'));
 });
+
+test('nested INKWAVE guard changes trigger both pull request and pushed-main validation', () => {
+  assert.equal((workflow.match(/scripts\/tests\/inkwave-\*\.mjs/g) || []).length, 2);
+});
+test('compatibility failure preserves its primary error without a missing diagnostic upload', () => {
+  assert.ok(workflow.includes("if: failure() && hashFiles('.ci-scratch/inkwave-patches/patch-tests.log') != ''"));
+});
