@@ -2120,8 +2120,24 @@ def main():
                 y0, y1, y2, y3 = step['y']
                 wn = np.clip((nl[:, 1] - y0) / (y1 - y0), 0, 1) * np.clip((y3 - nl[:, 1]) / (y3 - y2), 0, 1)
                 wn = wn * wn * (3 - 2 * wn) * (np.abs(nl[:, 0]) < 60) * (np.abs(nl[:, 2]) < 60)
+                # the neck mesh is split at its seams (vertices on top of each other, each with its own normal):
+                # moved along their normals they part and open a slit.  They are put back together (mean)
+                W0 = er.world(neck)
+                from mathutils.kdtree import KDTree
+                kd = KDTree(len(W0))
+                for i, v in enumerate(W0):
+                    kd.insert(Vector(v), i)
+                kd.balance()
+                twins = [[j for _, j, _ in kd.find_range(Vector(W0[i]), 1e-5)] for i in np.nonzero(wn > 0)[0]]
+                twins = [t for t in twins if len(t) > 1]
                 er.apply_weighted_modifier(neck, wn, 'DISPLACE', direction='NORMAL', strength=step['mm'] / 1000,
                                            mid_level=0.0)
+                me = neck.data
+                for t in twins:
+                    co = sum((me.vertices[j].co for j in t), Vector()) / len(t)
+                    for j in t:
+                        me.vertices[j].co = co
+                me.update()
                 print('FACE_VOLUME', step['name'], 'neck vertices', int((wn > 0.001).sum()), 'mm', step['mm'])
                 continue
             elif step['kind'] == 'jaw_tuck':
