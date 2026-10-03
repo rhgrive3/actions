@@ -1254,7 +1254,13 @@
     -108,
     -72,
     -62
-   ]
+   ],
+   "lateral": 1.0,
+   "mm_side": [
+    8.5,
+    -5.0
+   ],
+   "x_fade": 15.0
   },
   {
    "name": "jaw_tuck",
@@ -1307,7 +1313,7 @@
      -102
     ]
    ],
-   "depth": 4,
+   "depth": 8,
    "depth_back": 30,
    "z_ramus": [
     10,
@@ -1323,7 +1329,7 @@
    ],
    "offset_mm": 1.0,
    "dive": {
-    "from_mm": 4,
+    "from_mm": 8,
     "len_mm": 8,
     "mm": 4,
     "z_front": [
@@ -1331,6 +1337,30 @@
      40
     ]
    }
+  },
+  {
+   "name": "chin_neck_fillet",
+   "kind": "warp",
+   "after_delta_smooth": true,
+   "protect_lips": false,
+   "vec_mm": [
+    0,
+    -9.0,
+    0
+   ],
+   "bumps": [
+    {
+     "centre": [
+      0.0,
+      -97.0,
+      42.0
+     ],
+     "rx": 38.0,
+     "ry": 7.0,
+     "rz": 14.0,
+     "front_only": false
+    }
+   ]
   },
   {
    "name": "jaw_line_smooth",
