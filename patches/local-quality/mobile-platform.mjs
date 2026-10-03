@@ -1,6 +1,25 @@
 import { getPlatformLifecycle } from './platform-lifecycle.mjs';
 const INSTALLED = Symbol.for('inkwave.platform.mobile.v1');
 
+export function gyroDiagnosticText(status, now = null) {
+  const current = Number.isFinite(now) ? now : null;
+  const age = status?.received && Number.isFinite(status.lastSampleAt) && current !== null
+    ? Math.max(0, Math.round(current - status.lastSampleAt)) : null;
+  const request = status?.lastRequest || {};
+  return [
+    'GYRO DIAG',
+    'standalone=' + (status?.standalone ? 'yes' : 'no'),
+    'orientationRequest=' + (status?.orientationRequestAvailable ? 'yes' : 'no'),
+    'motionRequest=' + (status?.motionRequestAvailable ? 'yes' : 'no'),
+    'permission=' + (status?.permission ?? 'unknown'),
+    'motion=' + (status?.motionPermission ?? 'unknown'),
+    'request=' + (request.result ?? 'none') + '#' + (request.generation ?? 0),
+    'sample=' + (status?.received ? (age === null ? 'yes' : age + 'ms') : 'no'),
+    'lifecycle=' + (status?.lifecycleState ?? 'unknown') + '@' + (status?.lifecycleEpoch ?? 0),
+    'last=' + (status?.lifecycleLastEvent ?? 'none'),
+  ].join(' | ');
+}
+
 export function installMobilePlatform(MobileInput, env = globalThis) {
   const P = MobileInput.prototype;
   if (Object.hasOwn(P, INSTALLED)) return;
@@ -96,7 +115,7 @@ export function installMobilePlatform(MobileInput, env = globalThis) {
     ensure(this);
     if (!lifecycle.active || this._destroyed || this.editing) return;
     clearTap(this);
-    this._platformGyroTap = { id: event.pointerId, x: event.clientX, y: event.clientY };
+    this._platformGyroTap = { id: event.pointerId, x: event.clientX, y: event.clientY, t: env.performance.now() };
     this.els?.gyro?.classList.add('is-down');
   };
   P._up = function (event) {
@@ -106,7 +125,11 @@ export function installMobilePlatform(MobileInput, env = globalThis) {
     const valid = event.type === 'pointerup' && lifecycle.active && !this._destroyed && !this.editing && this.visible &&
       Math.hypot(event.clientX - tap.x, event.clientY - tap.y) <= 24 && this._hitButton(event.clientX, event.clientY) === 'gyro';
     this._platformGyroUp = env.performance.now();
-    if (valid) this._toggleGyroFromTap();
+    if (valid && this._platformGyroUp - tap.t >= 900) {
+      // Hidden production-safe device acceptance harness: a deliberate long
+      // press reports sensor/lifecycle state without adding normal UI clutter.
+      this.toast(gyroDiagnosticText(this.gyro.platformStatus, this._platformGyroUp), 7);
+    } else if (valid) this._toggleGyroFromTap();
     try { if (this.root?.hasPointerCapture?.(tap.id)) this.root.releasePointerCapture(tap.id); } catch {}
   };
   P.resetPointers = function (...args) { clearTap(this); return resetPointers.apply(this, args); };

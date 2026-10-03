@@ -74,8 +74,11 @@ export function installPlatformGame(Game, G, env = globalThis) {
     }, clear);
     r.snapshot = () => ({ ...owner.snapshot(), frame: r.driver.snapshot(), rendererLost: r.rendererLost,
       gyro: game.input?.mobile?.gyro?.platformStatus,
-      audio: { state: G.audio?.ctx?.state ?? 'uninitialized', needsGesture: !!G.audio?._platformAudio?.needsGesture },
-      network: { readyState: G.net?.tr?.ws?.readyState ?? null, resumeChecks: G.net?.tr?._platformTransport?.resumes ?? 0 } });
+      audio: { state: G.audio?.ctx?.state ?? 'uninitialized', needsGesture: !!G.audio?._platformAudio?.needsGesture,
+        owner: !!G.audio?._platformAudio },
+      network: { readyState: G.net?.tr?.ws?.readyState ?? null, resumeChecks: G.net?.tr?._platformTransport?.resumes ?? 0,
+        owner: !!G.net?.tr?._platformTransport, watchPending: G.net?.tr?._platformTransport?.watch != null },
+      menu: { platformDriven: !!game.menus?._platformDriven, pendingRAF: game.menus?._raf ? 1 : 0 } });
     clear();
     return r;
   }
