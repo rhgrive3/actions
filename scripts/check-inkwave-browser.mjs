@@ -120,6 +120,9 @@ try {
     a.climbing = false; a.superJumpState = a.specialActive = null;
     a.jumpBuffer = a.fireBuffer = 0; a.intent.jump = false; a._prevIntent.jump = false;
     g.input.keys.clear(); g.input.pressed.clear(); g.input.locked = true;
+    // The preceding live match can leave fractional elapsed time queued. This
+    // boundary trial starts at a known tick phase before testing two half frames.
+    g.s3Clock.reset();
     const integrate = a._integrate, trigger = a.character.trigger;
     const proof = window.actionProof = { dodges: 0, jumps: 0 };
     a._integrate = () => { a.grounded = true; };
