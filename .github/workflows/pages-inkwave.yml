@@ -11,6 +11,7 @@ on:
       - "patches/touch-layout/**"
       - "patches/reliability/**"
       - "patches/local-quality/**"
+      - "patches/practice-range/**"
       - ".github/workflows/pages-inkwave.yml"
   workflow_dispatch:
 permissions:
@@ -66,6 +67,7 @@ jobs:
           fi
           node scripts/check-inkwave-patches.mjs --quick
           node --experimental-vm-modules --test patches/local-quality/tests/*.test.mjs
+          node --experimental-vm-modules --test patches/practice-range/tests/*.test.mjs
           node scripts/build-inkwave.mjs inkwave-public _site
 
       - name: Upload INKWAVE site

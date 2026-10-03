@@ -1,0 +1,167 @@
+/* Practice Range UI — HUD read-outs, the PLAY card and the range pause screen. Uses the game's own tokens
+   (--u, --k, --fs-*, Titan One / Rubik) so it reads as part of the INKWAVE interface. Everything is scoped to
+   .iw-hud--range / .iwr-* / .iw-mode--range: nothing here can restyle a turf-war screen. */
+
+/* ---------------------------------------------------------------- HUD: replace the turf-war roster + timer */
+.iw-hud--range .iw-hud__top, .iw-hud--range .iw-lineup, .iw-hud-over.iw-hud--range .iw-lineup { display: none !important; }
+.iwr-hud { position: absolute; inset: 0; pointer-events: none; font-family: 'Rubik', 'IW JP Body', sans-serif; color: #fff; }
+.iwr-num { font-variant-numeric: tabular-nums; }
+
+.iwr-tel { --zc: #35405a; position: absolute; left: 50%; top: calc(var(--u) * 1.2); translate: -50% 0; display: flex; align-items: stretch; gap: 2px;
+  padding: 3px; border-radius: calc(var(--u) * 1.3); background: rgba(16, 19, 30, .78); box-shadow: 0 0 0 2px rgba(255, 255, 255, .14), 0 calc(var(--u) * .35) 0 rgba(0, 0, 0, .28);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); white-space: nowrap; }
+.iwr-tel__cell { display: flex; flex-direction: column; justify-content: center; gap: 2px; padding: calc(var(--u) * .45) calc(var(--u) * 1.05); border-radius: calc(var(--u) * 1);
+  background: rgba(255, 255, 255, .06); min-width: calc(var(--u) * 6.2); transition: opacity .25s, max-width .3s; }
+.iwr-tel__cell small { font: 800 calc(var(--u) * 0.95) / 1 'Rubik', 'IW JP Body', sans-serif; letter-spacing: .14em; color: rgba(255, 255, 255, .6); }
+.iwr-tel__cell > span { font: 400 calc(var(--u) * 2.05) / 1 'Titan One', 'IW JP Display', sans-serif; letter-spacing: .01em; }
+.iwr-tel__cell i { font: 800 calc(var(--u) * 1.0) / 1 'Rubik', sans-serif; font-style: normal; margin-left: .25em; color: rgba(255, 255, 255, .7); }
+.iwr-tel__weapon { flex-direction: row; align-items: center; gap: calc(var(--u) * .6); background: var(--a, #ff8a14); color: var(--a-ink, #15121c); }
+.iwr-tel__wicon { display: block; width: calc(var(--u) * 3.1); height: calc(var(--u) * 3.1); filter: drop-shadow(0 1px 0 rgba(0, 0, 0, .35)); }
+.iwr-tel__wicon svg { width: 100%; height: 100%; }
+.iwr-tel__wname { font: 900 calc(var(--u) * 1.35) / 1.05 'Rubik', 'IW JP Body', sans-serif; max-width: calc(var(--u) * 12); white-space: normal; }
+.iwr-tel__zonecell { background: color-mix(in srgb, var(--zc) 55%, transparent); }
+.iwr-tel__zone { font: 900 calc(var(--u) * 1.45) / 1.1 'Rubik', 'IW JP Body', sans-serif !important; letter-spacing: .02em; }
+.iwr-tel__cell.is-off { display: none; }
+.iwr-tel__paint > span { font-size: calc(var(--u) * 1.75); }
+
+/* target card (left, under the telemetry strip's line of sight) */
+.iwr-card { position: absolute; left: calc(var(--u) * 2.2); top: calc(var(--u) * 11.5); width: calc(var(--u) * 23); padding: calc(var(--u) * 1.1) calc(var(--u) * 1.3) calc(var(--u) * 1.2);
+  border-radius: calc(var(--u) * 1.6); background: rgba(16, 19, 30, .8); box-shadow: 0 0 0 2px rgba(255, 255, 255, .14), 0 calc(var(--u) * .4) 0 rgba(0, 0, 0, .3);
+  opacity: 0; translate: calc(var(--u) * -3) 0; transition: opacity .25s, translate .35s var(--spring, cubic-bezier(.34, 1.56, .64, 1)); }
+.iwr-card.is-on { opacity: 1; translate: 0 0; }
+.iwr-card__head { display: flex; align-items: center; gap: .6em; margin-bottom: calc(var(--u) * .6); }
+.iwr-card__tag { padding: .3em .55em .26em; border-radius: .4em; background: var(--b, #2f5bff); color: var(--b-ink, #fff); font: 900 calc(var(--u) * .95) / 1 'Rubik', sans-serif; letter-spacing: .16em; }
+.iwr-card.is-endure .iwr-card__tag { background: #e5b94d; color: #15121c; }
+.iwr-card__name { font: 900 calc(var(--u) * 1.45) / 1.1 'Rubik', 'IW JP Body', sans-serif; }
+.iwr-card__row { display: flex; align-items: flex-end; justify-content: space-between; gap: calc(var(--u) * 1); }
+.iwr-card__row small { display: block; font: 800 calc(var(--u) * .9) / 1 'Rubik', 'IW JP Body', sans-serif; letter-spacing: .14em; color: rgba(255, 255, 255, .6); margin-bottom: 3px; }
+.iwr-card__row b { font: 400 calc(var(--u) * 2.1) / 1 'Titan One', sans-serif; }
+.iwr-card__big { font-size: calc(var(--u) * 3.6) !important; color: #ffe27a; }
+.iwr-card__from { font: 800 calc(var(--u) * 1.15) / 1.2 'Rubik', sans-serif; color: rgba(255, 255, 255, .8); padding-bottom: .3em; }
+.iwr-card__row--3 { margin-top: calc(var(--u) * .9); justify-content: flex-start; gap: calc(var(--u) * 2); }
+.iwr-card__splat { margin-left: auto; align-self: center; font: 900 calc(var(--u) * 1.1) / 1.2 'Rubik', 'IW JP Body', sans-serif; color: #ffe27a; text-align: right; }
+.iwr-card__hp { margin-top: calc(var(--u) * .9); height: calc(var(--u) * .6); border-radius: 999px; background: rgba(255, 255, 255, .14); overflow: hidden; }
+.iwr-card__hp i { display: block; height: 100%; background: linear-gradient(90deg, #7ef0a7, #3fd17d); transform-origin: 0 50%; transition: transform .12s; }
+.iwr-card.is-endure .iwr-card__hp i { background: repeating-linear-gradient(135deg, #e5b94d 0 8px, #c99a2e 8px 16px); }
+
+/* floating damage numbers */
+.iwr-nums { position: absolute; inset: 0; overflow: hidden; }
+.iwr-dmg { position: absolute; left: 0; top: 0; font: 400 calc(var(--u) * 2.3) / 1 'Titan One', sans-serif; color: #fff; -webkit-text-stroke: calc(var(--u) * .28) #15121c; paint-order: stroke;
+  text-shadow: 0 calc(var(--u) * .25) 0 #15121c; white-space: nowrap; will-change: transform, opacity; }
+.iwr-dmg.is-splat { color: #ffe27a; font-size: calc(var(--u) * 2.9); }
+.iwr-dmg.is-endure { color: #ffe9b0; }
+
+/* pad prompt + toast + keys */
+.iwr-prompt { position: absolute; left: 50%; bottom: calc(var(--u) * 9.5); translate: -50% 0; display: flex; flex-direction: column; align-items: center; gap: calc(var(--u) * .5);
+  padding: calc(var(--u) * .7) calc(var(--u) * 1.6); border-radius: 999px; background: rgba(16, 19, 30, .82); box-shadow: 0 0 0 2px rgba(255, 255, 255, .16);
+  font: 900 calc(var(--u) * 1.3) / 1 'Rubik', 'IW JP Body', sans-serif; letter-spacing: .08em; opacity: 0; scale: .9; transition: opacity .18s, scale .3s var(--spring, ease); }
+.iwr-prompt.is-on { opacity: 1; scale: 1; }
+.iwr-prompt__bar { display: block; width: calc(var(--u) * 16); height: 4px; border-radius: 4px; background: rgba(255, 255, 255, .18); overflow: hidden; }
+.iwr-prompt__bar i { display: block; height: 100%; background: var(--a, #ff8a14); transform-origin: 0 50%; transform: scaleX(0); }
+.iwr-toast { position: absolute; left: 50%; top: calc(var(--u) * 8.6); translate: -50% 0; padding: .55em 1.1em .5em; border-radius: 999px; background: #fff; color: #15121c;
+  font: 900 calc(var(--u) * 1.35) / 1 'Rubik', 'IW JP Body', sans-serif; letter-spacing: .05em; box-shadow: 0 0 0 2.5px #15121c, 0 calc(var(--u) * .35) 0 2.5px #15121c;
+  opacity: 0; scale: .7; transition: opacity .2s, scale .35s var(--spring, ease); white-space: nowrap; }
+.iwr-toast.is-on { opacity: 1; scale: 1; }
+.iwr-toast.is-big { font: 400 calc(var(--u) * 2.4) / 1 'Titan One', 'IW JP Display', sans-serif; padding: .45em 1em .4em; background: var(--a, #ff8a14); color: var(--a-ink, #15121c); }
+.iwr-keys { position: absolute; right: calc(var(--u) * 2.2); bottom: calc(var(--u) * 2.2); align-items: flex-end; display: flex; flex-direction: column; gap: 4px; font: 800 calc(var(--u) * 1.05) / 1 'Rubik', 'IW JP Body', sans-serif;
+  color: rgba(255, 255, 255, .85); text-shadow: 0 1px 2px rgba(0, 0, 0, .6); }
+.iwr-keys span { display: flex; align-items: center; gap: .5em; }
+.iwr-keys kbd { display: inline-grid; place-items: center; min-width: 1.7em; height: 1.7em; border-radius: .35em; background: rgba(255, 255, 255, .92); color: #15121c; font: 900 1em / 1 'Rubik', sans-serif;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, .45); }
+/* touch: no keys, a tighter strip, the card moves clear of the move stick and the buttons */
+html.iw-touch-ui .iwr-keys, .iwr-hud.is-touch .iwr-keys { display: none; }
+html.iw-touch-ui .iwr-tel__cell { min-width: 0; padding: 4px 8px; }
+html.iw-touch-ui .iwr-tel__cell small { font-size: 8px; }
+html.iw-touch-ui .iwr-tel__cell > span { font-size: 15px; }
+html.iw-touch-ui .iwr-tel__wname { display: none; }
+html.iw-touch-ui .iwr-tel__wicon { width: 26px; height: 26px; }
+html.iw-touch-ui .iwr-tel__zone { font-size: 11px !important; }
+html.iw-touch-ui .iwr-card { left: 50%; top: auto; bottom: auto; top: 64px; translate: -50% -8px; width: min(64vw, 300px); padding: 8px 12px 9px; }
+html.iw-touch-ui .iwr-card.is-on { translate: -50% 0; }
+html.iw-touch-ui .iwr-card__big { font-size: 26px !important; }
+html.iw-touch-ui .iwr-card__row b { font-size: 17px; }
+html.iw-touch-ui .iwr-card__name { font-size: 12px; }
+html.iw-touch-ui .iwr-prompt { bottom: 46%; font-size: 12px; }
+html.iw-touch-ui .iwr-toast { top: 52px; font-size: 12px; }
+html.iw-touch-ui .iwr-toast.is-big { font-size: 18px; }
+html.iw-touch-ui .iwr-dmg { font-size: 20px; -webkit-text-stroke-width: 3px; }
+@media (max-width: 720px) {
+  .iwr-tel__measure small, .iwr-tel__paint small { letter-spacing: .06em; }
+  html.iw-touch-ui .iwr-tel__zonecell { display: none; }
+}
+
+/* ---------------------------------------------------------------- PLAY: the PRACTICE RANGE card */
+.iw-modesel__row.has-range { gap: calc(var(--u) * 2.6); }
+.iw-modesel__row.has-range .iw-mode { width: min(calc(var(--u) * 33), calc((100vw - var(--u) * 12) / 3)); }
+.iw-modesel__row.has-range .iw-mode__tape .iw-display { font-size: calc(var(--u) * 3.1); }
+.iw-modesel__row.has-range .iw-mode__blurb { margin-left: calc(var(--u) * 1.5); margin-right: calc(var(--u) * 1.5); }
+.iw-mode--range { --mc: #2f8f86; --mc-rgb: 47, 143, 134; --mc-l: #8fe0d6; --mc-d: #1d4f4a; --mc-ink: #fff; }
+.iw-mode--range .iw-mode__img { filter: brightness(.8) saturate(.95); }
+.iw-mode--range:not(.is-focus) .iw-mode__img { filter: brightness(.62) saturate(.7); }
+.iw-mode__hero.is-range { bottom: calc(var(--u) * 2.2); }
+.iwr-mode__target { position: relative; display: block; width: calc(var(--u) * 10.5); height: calc(var(--u) * 10.5); border-radius: 50%; background: #fff;
+  box-shadow: 0 0 0 calc(var(--u) * .5) var(--k, #15121c), 0 calc(var(--u) * .6) 0 calc(var(--u) * .5) var(--k, #15121c); }
+.iwr-mode__target i { position: absolute; inset: 0; margin: auto; border-radius: 50%; }
+.iwr-mode__target i:nth-child(1) { width: 78%; height: 78%; background: var(--mc); }
+.iwr-mode__target i:nth-child(2) { width: 52%; height: 52%; background: #fff; }
+.iwr-mode__target i:nth-child(3) { width: 26%; height: 26%; background: var(--mc); }
+.iw-mode--range.is-focus .iwr-mode__target { animation: iwr-target 1.4s ease-in-out infinite; }
+@keyframes iwr-target { 0%, 100% { rotate: 0deg; } 30% { rotate: -6deg; translate: 0 calc(var(--u) * -.4); } 60% { rotate: 4deg; } }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-modesel__row.has-range { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-modesel__row.has-range .iw-mode { width: 100%; min-height: 300px; }
+@media (max-width: 600px) {
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-modesel__row.has-range { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ---------------------------------------------------------------- the range pause screen */
+.iwr-pausescr .iwr-pause__menu { position: absolute; left: calc(var(--u) * 4); top: calc(var(--u) * 15); display: flex; flex-direction: column; gap: calc(var(--u) * 1.4); width: calc(var(--u) * 30); pointer-events: auto; }
+.iwr-pause { position: absolute; left: calc(var(--u) * 37.5); right: calc(var(--u) * 3); top: calc(var(--u) * 12.5); bottom: calc(var(--u) * 7.5); max-width: calc(var(--u) * 80); margin-left: auto; display: flex; flex-direction: column; gap: calc(var(--u) * 1.5);
+  padding: calc(var(--u) * 2) calc(var(--u) * 2.2); overflow: auto; pointer-events: auto; }
+.iwr-pause__sec { display: flex; flex-direction: column; gap: calc(var(--u) * .8); }
+.iwr-pause__hint { font: 600 var(--fs-xs, 12px) / 1.3 'Rubik', 'IW JP Body', sans-serif; color: rgba(255, 255, 255, .65); }
+.iwr-pause__foot { margin-top: auto; font: 700 var(--fs-xs, 12px) / 1.3 'Rubik', 'IW JP Body', sans-serif; color: rgba(255, 255, 255, .55); letter-spacing: .02em; }
+.iwr-wchips { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: calc(var(--u) * .7); }
+.iwr-wchip, .iwr-rbtn, .iwr-zbtn { position: relative; border: 0; font: inherit; color: #fff; cursor: pointer; pointer-events: auto; outline: none; background: rgba(255, 255, 255, .08);
+  border-radius: calc(var(--u) * 1.1); box-shadow: 0 0 0 2px rgba(255, 255, 255, .1); transition: background .15s, box-shadow .15s, scale .3s var(--spring, ease); -webkit-tap-highlight-color: transparent; }
+.iwr-wchip { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: calc(var(--u) * .8) 4px calc(var(--u) * .7); }
+.iwr-wchip__icon { width: calc(var(--u) * 4.2); height: calc(var(--u) * 4.2); }
+.iwr-wchip__icon svg { width: 100%; height: 100%; }
+.iwr-wchip b { font: 900 calc(var(--u) * 1.05) / 1.1 'Rubik', 'IW JP Body', sans-serif; text-align: center; }
+.iwr-wchip small { font: 700 calc(var(--u) * .85) / 1 'Rubik', 'IW JP Body', sans-serif; color: rgba(255, 255, 255, .6); }
+.iwr-wchip.is-on { background: var(--a, #ff8a14); color: var(--a-ink, #15121c); }
+.iwr-wchip.is-on small { color: inherit; opacity: .7; }
+.iwr-rbtns { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: calc(var(--u) * .7); }
+.iwr-rbtn { display: flex; align-items: center; justify-content: space-between; gap: .6em; padding: calc(var(--u) * 1) calc(var(--u) * 1.2); text-align: left; }
+.iwr-rbtn b { font: 900 calc(var(--u) * 1.2) / 1.1 'Rubik', 'IW JP Body', sans-serif; letter-spacing: .04em; }
+.iwr-rbtn kbd { display: inline-grid; place-items: center; min-width: 1.6em; height: 1.6em; border-radius: .3em; background: rgba(255, 255, 255, .9); color: #15121c; font: 900 calc(var(--u) * 1) / 1 'Rubik', sans-serif; }
+html.iw-touch-ui .iwr-rbtn kbd { display: none; }
+.iwr-toggle__v { font: 900 calc(var(--u) * 1) / 1 'Rubik', sans-serif; padding: .3em .6em; border-radius: 999px; background: rgba(255, 255, 255, .15); }
+.iwr-toggle.is-on .iwr-toggle__v { background: #3fd17d; color: #0f2a1a; }
+.iwr-zbtns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: calc(var(--u) * .7); }
+.iwr-zbtn { --zc: #35405a; display: flex; align-items: center; gap: calc(var(--u) * 1); padding: calc(var(--u) * .6) calc(var(--u) * 1) calc(var(--u) * .6) calc(var(--u) * .6); text-align: left; }
+.iwr-zbtn__l { flex: none; display: grid; place-items: center; width: calc(var(--u) * 3.3); height: calc(var(--u) * 3.3); border-radius: 50%; background: var(--zc); font: 400 calc(var(--u) * 1.8) / 1 'Titan One', sans-serif; }
+.iwr-zbtn__t { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.iwr-zbtn__t b { font: 900 calc(var(--u) * 1.2) / 1.1 'Rubik', 'IW JP Body', sans-serif; }
+.iwr-zbtn__t small { font: 600 calc(var(--u) * .9) / 1.2 'Rubik', 'IW JP Body', sans-serif; color: rgba(255, 255, 255, .62); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.iwr-wchip.is-focus, .iwr-rbtn.is-focus, .iwr-zbtn.is-focus, .iwr-wchip.is-hover, .iwr-rbtn.is-hover, .iwr-zbtn.is-hover { background: rgba(255, 255, 255, .2); box-shadow: 0 0 0 2.5px #fff; scale: 1.03; }
+.iwr-wchip.is-on.is-focus, .iwr-wchip.is-on.is-hover { background: var(--a, #ff8a14); }
+/* touch (the game's touch layout makes .iw-pause a scrolling 2-column grid: buttons | panel) and narrow windows */
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iwr-pausescr .iwr-pause__menu { position: relative; left: auto; top: auto; width: auto; margin: 0; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iwr-pause { position: relative; inset: auto; width: auto; min-width: 0; max-width: none; margin: 0; overflow: visible; padding: 16px; box-sizing: border-box; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iwr-wchips { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iwr-rbtns { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) :is(.iwr-wchip, .iwr-rbtn, .iwr-zbtn) { min-height: 48px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iwr-wchip b { font-size: 12px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iwr-wchip small, :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iwr-zbtn__t small { font-size: 10px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iwr-rbtn b, :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iwr-zbtn__t b { font-size: 14px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iwr-wchip__icon { width: 34px; height: 34px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iwr-zbtn__l { width: 34px; height: 34px; font-size: 18px; }
+@media (max-width: 700px) { :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iwr-pausescr { grid-template-columns: minmax(0, 1fr); } }
+html:not(.iw-touch-ui) .iwr-pausescr { overflow: hidden auto; }
+@media (max-width: 1000px), (max-aspect-ratio: 4/3) {
+  html:not(.iw-touch-ui) .iwr-pausescr .iwr-pause__menu { position: relative; left: auto; top: auto; width: auto; margin: 84px 16px 12px; flex-direction: row; flex-wrap: wrap; }
+  html:not(.iw-touch-ui) .iwr-pausescr .iwr-pause__menu .iw-btn { flex: 1 1 140px; }
+  html:not(.iw-touch-ui) .iwr-pause { position: relative; inset: auto; width: auto; max-width: none; margin: 0 16px 80px; overflow: visible; }
+  html:not(.iw-touch-ui) .iwr-wchips { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 520px) { .iwr-zbtns { grid-template-columns: minmax(0, 1fr); } }
