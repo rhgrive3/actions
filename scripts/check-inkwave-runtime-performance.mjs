@@ -62,6 +62,9 @@ try{
   }
   await page.evaluate(()=>{restore.forEach(f=>f());ltObserver.disconnect();rafProbeOn=false;cancelAnimationFrame(window.rafProbeId);window.rafProbeId=0;});
  }
+ // Drain already submitted GPU work outside the profile windows, for BOTH builds.
+ // A screenshot's default30s limit is shorter than observed SwiftShader queue stalls.
+ if(!menuOnly){result.renderDrainMs=await page.evaluate(()=>{const t=performance.now();probeG.renderer.getContext().finish();return performance.now()-t;});checkpoint();}
  if(process.argv.includes('--verify-render')){
   result.renderParity=await page.evaluate(()=>{
    const G=probeG,g=G.game,r=G.renderer,gl=r.getContext(),native=r.render,w=gl.drawingBufferWidth,h=gl.drawingBufferHeight,out=[];
@@ -93,7 +96,7 @@ try{
  result.ringRetirement=[];
  for(let repeat=0;repeat<3;repeat++){
   await page.evaluate(()=>{const m=probeG.game.menus;if(probeG.game._onDevice)probeG.game._onDevice('pad');else m.setInputMode('pad');const a=m._candidates().find(e=>e.dataset.nav==='row');m._setFocus(a,{snap:true});m._updateCursor(1/60);getComputedStyle(m.cursorEl).opacity;});
-  await page.screenshot({path:path.join(evidence,`ring-prime-${repeat}.png`)});await page.waitForTimeout(250);
+  await page.screenshot({path:path.join(evidence,`ring-prime-${repeat}.png`),timeout:900000});await page.waitForTimeout(250);
   result.ringRetirement.push(await page.evaluate(repeat=>{const m=probeG.game.menus,before=+getComputedStyle(m.cursorEl).opacity,oldFocus=m._focus;if(repeat===1)m._setFocus(null);else{if(probeG.game._onDevice)probeG.game._onDevice('touch');else m.setInputMode('touch');const row=m._candidates().filter(e=>e.dataset.nav==='row')[1];row.dispatchEvent(new PointerEvent('pointerdown',{pointerType:'touch',bubbles:true}));}const css=getComputedStyle(m.cursorEl);return{repeat,entry:repeat===1?'deselect':'pad -> touch',beforeOpacity:before,stateChanged:m._focus!==oldFocus,ringOn:m._cur.on,visibility:css.visibility,opacity:+css.opacity,ghost:css.visibility!=='hidden'&&+css.opacity>.001};},repeat));
  }
  result.menuLifecycle=await page.evaluate(()=>{

@@ -45,3 +45,12 @@ test('long high-quality profiles preserve baseline before candidate work and can
  assert(workflow.includes('inkwave-runtime-baseline-diagnostics-'));assert(workflow.includes('always() && (failure() || cancelled())'));
  assert(workflow.includes('if: success()'));
 });
+
+
+test('GPU completion fence precedes paint probes outside all fixed profile windows, with bounded capture budget',()=>{
+ const source=fs.readFileSync(new URL('../check-inkwave-runtime-performance.mjs',import.meta.url),'utf8');
+ const profile=source.indexOf("phase:'completed-window'"),fence=source.indexOf('probeG.renderer.getContext().finish()'),parity=source.indexOf("if(process.argv.includes('--verify-render'))"),paint=source.indexOf('await page.screenshot');
+ assert(profile>=0&&profile<fence&&fence<parity&&parity<paint);
+ assert.match(source,/page\.screenshot\(\{path:path\.join\(evidence,`ring-prime-\$\{repeat\}\.png`\),timeout:900000\}\)/);
+ assert(900000>132545,'capture budget exceeds the observed132.5s Software GPU spike');
+});
