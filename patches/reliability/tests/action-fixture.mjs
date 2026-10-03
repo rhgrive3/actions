@@ -101,4 +101,3 @@ export function device(h, name) {
     else { h.release(pointers.get(action)); pointers.delete(action); }
   };
 }
-
