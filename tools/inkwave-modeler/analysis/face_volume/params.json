@@ -1222,6 +1222,18 @@
    ]
   },
   {
+   "name": "neck_widen",
+   "kind": "neck_widen",
+   "after_delta_smooth": true,
+   "mm": 3.0,
+   "y": [
+    -112,
+    -100,
+    -72,
+    -62
+   ]
+  },
+  {
    "name": "jaw_tuck",
    "kind": "jaw_tuck",
    "after_delta_smooth": true,
@@ -1286,7 +1298,16 @@
     -30.0,
     -15.0
    ],
-   "offset_mm": 1.0
+   "offset_mm": 1.0,
+   "dive": {
+    "from_mm": 4,
+    "len_mm": 8,
+    "mm": 4,
+    "z_front": [
+     20,
+     40
+    ]
+   }
   },
   {
    "name": "jaw_line_smooth",

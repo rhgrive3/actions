@@ -46,7 +46,8 @@ FOLLOWERS = ['HEAD_skin', 'HEAD_skin_04', 'HEAD_skin_02', 'HEAD_skin_03', 'HEAD_
 EYEBALLS = ['HEAD_eyes', 'HEAD_eyes_02', 'HEAD_eyes_18', 'HEAD_eyes_19']
 IRIS_BALLS = {'HEAD_eyes_18': -1, 'HEAD_eyes': 1}
 EAR_PARTS = ['HEAD_face_02', 'HEAD_face_03', 'HEADGEAR_headgear', 'HEADGEAR_headgear_02']
-CHANGED = list(dict.fromkeys([FACE] + FOLLOWERS + list(IRIS_BALLS) + EYEBALLS + EAR_PARTS))   # backed up / restored
+NECK = 'BODY_torso'
+CHANGED = list(dict.fromkeys([FACE] + FOLLOWERS + list(IRIS_BALLS) + EYEBALLS + EAR_PARTS + [NECK]))   # backed up / restored
 
 
 def restore(drop=False):
@@ -199,7 +200,7 @@ def ceiling_offsets(loc, st):
     return off * t * t * (3 - 2 * t) * (loc[:, 1] < y0 + 25)
 
 
-def jaw_tuck_weights(loc, st):
+def jaw_tuck_weights(loc, st, dive=None):
     """Weights (0..1) of the face that goes onto the neck to give the jaw a lower border: below and behind the
     jaw line seen from the side (st['line'] = [[z, y], ...] from under the ear lobe to the chin, traced on the
     sideR reference).  0 on the line, 1 from st['depth'] mm below it (st['depth_back'] behind the ramus,
@@ -225,7 +226,11 @@ def jaw_tuck_weights(loc, st):
     under = np.where(sign > 0, best, 0.0)
     ramus = np.clip((st['z_ramus'][1] - z) / (st['z_ramus'][1] - st['z_ramus'][0]), 0, 1)
     depth = st['depth'] + (st['depth_back'] - st['depth']) * ramus
-    t = np.clip(under / depth, 0, 1)
+    if dive is not None:
+        # the dive weight: 0 down to dive['from_mm'] under the line, 1 at from_mm + len_mm (same fades)
+        t = np.clip((under - dive['from_mm']) / dive['len_mm'], 0, 1)
+    else:
+        t = np.clip(under / depth, 0, 1)
     w = t * t * (3 - 2 * t)
     z0, z1 = st['z_front']
     t = np.clip((z1 - z) / (z1 - z0), 0, 1)
@@ -2073,6 +2078,19 @@ def main():
                 peak = float(off.max())
                 w, step = off / max(peak, 1e-9), dict(step, kind='warp', vec_mm=[0, peak, 0])
                 print('FACE_VOLUME', step['name'], 'ceiling peak mm', round(peak, 2))
+            elif step['kind'] == 'neck_widen':
+                # the neck is thinner than the reference's (front view 3-5 px): it gets thicker along its normals
+                # (Blender's Displace), full from y[1] to y[2], faded out over y[0] (in the collar) and y[3]
+                # (inside the head).  Before jaw_tuck, which lays the jaw on this neck
+                neck = bpy.data.objects[NECK]
+                nl = M.to_local(er.world(neck)) * 1000
+                y0, y1, y2, y3 = step['y']
+                wn = np.clip((nl[:, 1] - y0) / (y1 - y0), 0, 1) * np.clip((y3 - nl[:, 1]) / (y3 - y2), 0, 1)
+                wn = wn * wn * (3 - 2 * wn) * (np.abs(nl[:, 0]) < 60) * (np.abs(nl[:, 2]) < 60)
+                er.apply_weighted_modifier(neck, wn, 'DISPLACE', direction='NORMAL', strength=step['mm'] / 1000,
+                                           mid_level=0.0)
+                print('FACE_VOLUME', step['name'], 'neck vertices', int((wn > 0.001).sum()), 'mm', step['mm'])
+                continue
             elif step['kind'] == 'jaw_tuck':
                 # the part under the jaw line goes onto the neck (BODY_torso): Blender's Shrinkwrap to the
                 # nearest surface point, outside it by offset_mm.  The neck is measured, not assumed (the head is
@@ -2082,6 +2100,15 @@ def main():
                 er.apply_weighted_modifier(face, w, 'SHRINKWRAP', target=bpy.data.objects['BODY_torso'],
                                            wrap_method='NEAREST_SURFACEPOINT', wrap_mode='OUTSIDE_SURFACE',
                                            offset=step['offset_mm'] / 1000)
+                if step.get('dive'):
+                    # the face lies offset_mm outside the neck; where it ended there was a step (a thin line in
+                    # the 3/4 and side views).  Further under the jaw line it now sinks into the neck along its
+                    # normals (Blender's Displace), so it goes in at a small angle along a curve parallel to the
+                    # jaw line, and the neck shows below without a step
+                    wd = jaw_tuck_weights(loc, dict(step, z_front=step['dive'].get('z_front', step['z_front'])), step['dive'])
+                    er.apply_weighted_modifier(face, wd, 'DISPLACE', direction='NORMAL',
+                                               strength=-step['dive']['mm'] / 1000, mid_level=0.0)
+                    print('FACE_VOLUME', step['name'], 'dive vertices', int((wd > 0.001).sum()), 'mm', step['dive']['mm'])
                 gap = join_seam(face, pairs)
                 move = np.linalg.norm(er.world(face) - M.to_world(loc / 1000), axis=1) * 1000
                 print('FACE_VOLUME', step['name'], 'vertices', int((w > 0.001).sum()), 'max move mm', round(float(move.max()), 2), 'seam gap closed mm', round(float(gap), 3))
