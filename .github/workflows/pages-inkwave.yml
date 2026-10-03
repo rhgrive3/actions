@@ -11,9 +11,7 @@ on:
       - "patches/touch-layout/**"
       - "patches/reliability/**"
       - ".github/workflows/pages-inkwave.yml"
-  workflow_run:
-    workflows: ["Fetch INKWAVE public source"]
-    types: [completed]
+  # Pages is currently also configured with the legacy branch publisher.\n  # Re-deploy INKWAVE after that generated Pages run finishes so the game is\n  # always the final site instead of main/README content overwriting it.\n  workflow_run:\n    workflows: ["pages build and deployment"]\n    types: [completed]
   workflow_dispatch:
 
 permissions:
