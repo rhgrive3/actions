@@ -144,7 +144,7 @@ try {
         physicalKeyboardEvents: true, groundCollisionPinned: true };
     });
     const r = result.actionReliability;
-    if (r.before !== 1 || r.renderOnly !== 1 || r.after !== 2 || r.held !== 2 || r.jumps !== 0) throw Error('Native keyboard action edge did not reach Character exactly once');
+    if (r.before !== 1 || r.renderOnly !== 1 || r.after !== 2 || r.held !== 2 || r.jumps !== 0) throw Error('Native keyboard action edge did not reach Character exactly once: ' + JSON.stringify(r));
     await page.keyboard.up('Space'); await page.keyboard.up('KeyA');
     await page.evaluate(() => { window.dispatchEvent(new MouseEvent('mouseup', { button: 0 })); s3ProbeG.game._frame(1 / 60); });
   } finally {
@@ -216,7 +216,7 @@ try {
   result.errors = errors; result.consoleErrors = consoleErrors; result.requestFailures = failures;
   fs.writeFileSync(evidence + '/browser-result.json.writing', JSON.stringify(result, null, 2));
   fs.renameSync(evidence + '/browser-result.json.writing', evidence + '/browser-result.json');
-  console.log(JSON.stringify({status:result.status,sourceSha,contentHash:result.contentHash,gearSelects:result.gearSelects,gameplay:result.gameplay,verifiedResponses:receipts.length,errors})); await browser.close();
+  console.log(JSON.stringify({status:result.status,error:result.error,sourceSha,contentHash:result.contentHash,gearSelects:result.gearSelects,gameplay:result.gameplay,actionReliability:result.actionReliability,verifiedResponses:receipts.length,errors})); await browser.close();
 }
 if (result.status !== 'passed' || errors.length) process.exitCode = 1;
 

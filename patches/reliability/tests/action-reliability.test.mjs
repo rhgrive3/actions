@@ -6,6 +6,23 @@ import { STEP } from '../../splatoon3/runtime/clock.mjs';
 const key = code => ({ code, repeat: false, preventDefault() {} });
 const dodges = h => h.actor.character.events.filter(e => e[0] === 'dodge').length;
 
+test('the exact fixed-step roll duration clears admission before the next press', async () => {
+  for (const name of ['keyboard', 'gamepad', 'touch']) {
+    const h = await boot(), set = device(h, name);
+    set('fire', true); set('jump', true); h.frame();
+    set('jump', false);
+    const ticks = Math.round(h.actor.weapon.rollTime / STEP);
+    assert.ok(Math.abs(ticks * STEP - h.actor.weapon.rollTime) < Number.EPSILON);
+    for (let i = 1; i < ticks - 1; i++) h.frame();
+    assert.ok(h.actor.weaponRunner.dodge, 'one tick before completion is still active');
+    h.frame();
+    assert.equal(h.actor.weaponRunner.dodge, null, 'rounding cannot add a stale admission tick');
+    set('jump', true); h.frame();
+    assert.equal(dodges(h), 2, name);
+    h.frame(); assert.equal(dodges(h), 2, 'hold does not repeat');
+  }
+});
+
 for (const name of ['keyboard', 'gamepad', 'touch']) {
   test(`${name}: release and repress between ticks starts a legal second dodge once`, async () => {
     const h = await boot(), set = device(h, name);
