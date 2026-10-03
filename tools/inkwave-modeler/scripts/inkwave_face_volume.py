@@ -199,6 +199,51 @@ def ceiling_offsets(loc, st):
     return off * t * t * (3 - 2 * t) * (loc[:, 1] < y0 + 25)
 
 
+def jaw_tuck_offsets(loc, st):
+    """Inward move (mm, toward the midline in head x) that gives the jaw a lower border: below and behind the
+    jaw line seen from the side (st['line'] = [[z, y], ...] from under the ear lobe to the chin, traced on the
+    sideR reference), the face goes in to the neck (an elliptic cylinder, st['neck'] = {'zc', 'half_x', 'half_z'},
+    fitted to BODY_torso), so the side of the jaw ends at a border and the part under it faces down and is in
+    shadow.  The face never goes in further than |x| = st['min_x'] (the front of the neck is narrow, and the jaw
+    underside there must stay a slope, not a groove).  The move grows from 0 on the line to full st['depth'] mm below it (st['depth_back'] behind the
+    ramus, where the step under the ear must be longer); it fades out in front over st['z_front'] = [z0, z1] and
+    at the back of the head over st['z_back'] = [z0, z1]."""
+    line = np.array(st['line'], float)
+    z, y = loc[:, 2], loc[:, 1]
+    # signed distance below the line in the side view (+ = under / behind it)
+    best = np.full(len(loc), np.inf)
+    sign = np.zeros(len(loc))
+    for a, b in zip(line[:-1], line[1:]):
+        d = b - a
+        t = np.clip(((z - a[0]) * d[0] + (y - a[1]) * d[1]) / (d @ d), 0, 1)
+        qz, qy = a[0] + t * d[0], a[1] + t * d[1]
+        dist = np.hypot(z - qz, y - qy)
+        cross = d[0] * (y - a[1]) - d[1] * (z - a[0])     # < 0: below a line running forward and down
+        closer = dist < best
+        best = np.where(closer, dist, best)
+        sign = np.where(closer, np.where(cross < 0, 1.0, -1.0), sign)
+    # behind the first point the line runs on backward at the same height
+    behind = z < line[0, 0]
+    best = np.where(behind, np.abs(line[0, 1] - y), best)
+    sign = np.where(behind, np.where(y < line[0, 1], 1.0, -1.0), sign)
+    under = np.where(sign > 0, best, 0.0)
+    ramus = np.clip((st['z_ramus'][1] - z) / (st['z_ramus'][1] - st['z_ramus'][0]), 0, 1)
+    depth = st['depth'] + (st['depth_back'] - st['depth']) * ramus
+    t = np.clip(under / depth, 0, 1)
+    w = t * t * (3 - 2 * t)
+    n = st['neck']
+    q = np.clip((z - n['zc']) / n['half_z'], -1, 1)
+    target = np.maximum(n['half_x'] * np.sqrt(1 - q * q) - st.get('inside_mm', 0.5), st.get('min_x', 0.0))
+    off = np.maximum(np.abs(loc[:, 0]) - target, 0) * w
+    z0, z1 = st['z_front']
+    t = np.clip((z1 - z) / (z1 - z0), 0, 1)
+    off *= t * t * (3 - 2 * t)
+    z0, z1 = st['z_back']
+    t = np.clip((z - z0) / (z1 - z0), 0, 1)
+    off *= t * t * (3 - 2 * t)
+    return off
+
+
 def ridge_v(loc, xq, yq):
     for r in (1.0, 2.0, 3.0):
         sel = (np.abs(np.abs(loc[:, 0]) - xq) < 1.0) & (np.abs(loc[:, 1] - yq) < r) & (loc[:, 2] > 40)
@@ -1929,6 +1974,11 @@ def main():
                 peak = float(off.max())
                 w, step = off / max(peak, 1e-9), dict(step, kind='warp', vec_mm=[0, peak, 0])
                 print('FACE_VOLUME', step['name'], 'ceiling peak mm', round(peak, 2))
+            elif step['kind'] == 'jaw_tuck':
+                off = jaw_tuck_offsets(loc, step)
+                peak = float(off.max())
+                w, step = off / max(peak, 1e-9), dict(step, kind='warp', vec_mm=[-peak, 0, 0])
+                print('FACE_VOLUME', step['name'], 'jaw tuck peak mm', round(peak, 2))
             else:
                 w = sum(bump(loc, b) * b.get('scale', 1.0) for b in step['bumps'])
                 if step.get('keep_q34') and step['kind'] == 'warp':
