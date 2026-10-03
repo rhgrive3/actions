@@ -67,6 +67,11 @@ for (const file of walk(PATCH_ROOT)) {
   } else fs.copyFileSync(file, dst);
 }
 
+// Service workers only control ancestor paths when served from the site root.
+// Keep the manifest/icons revisioned, but publish the worker itself as /sw.js.
+const pwaWorker = path.join(PATCH_ROOT, 'pwa', 'sw.js');
+if (fs.existsSync(pwaWorker)) fs.copyFileSync(pwaWorker, path.join(BUILD, 'sw.js'));
+
 // ---- three.js: tree-shake to the symbols the game (and the bundled three/addons) actually use. Every `THREE.x`
 // access in the sources is static (verified: no computed THREE[...] lookups), so the namespace keeps what it needs.
 const THREE_DIR = path.join(SRC, 'vendor/three/build');
