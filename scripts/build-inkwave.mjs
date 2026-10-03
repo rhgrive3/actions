@@ -15,6 +15,7 @@ import { PATCH_ROOT, checkCompatibility, adaptSource, writeBuildIdentity, sha256
 import { adaptTouchLayout, touchLayoutIdentity } from '../patches/touch-layout/adapter.mjs';
 import { adaptReliability, reliabilityIdentity, RELIABILITY_ROOT } from '../patches/reliability/adapter.mjs';
 import { adaptQualitySource, qualityIdentity, QUALITY_ROOT } from '../patches/local-quality/adapter.mjs';
+import { LOADING_ROOT, prepareLoading, finalizeLoadingWorker, loadingIdentity } from '../patches/loading-cache/adapter.mjs';
 
 const adaptBuildSource = (rel, code) => adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code))));
 
@@ -24,7 +25,7 @@ const OUT = physicalLocation(path.resolve(process.argv[3] || '_site'));
 if (fs.existsSync(OUT) && !fs.statSync(OUT).isDirectory()) throw new Error('Build output must be a directory');
 const projectRoot = path.resolve(PATCH_ROOT, '../..');
 const contains = (parent, child) => parent === child || child.startsWith(parent.endsWith(path.sep) ? parent : parent + path.sep);
-if (contains(OUT, projectRoot) || contains(OUT, SRC) || contains(SRC, OUT) || contains(PATCH_ROOT, OUT) || contains(RELIABILITY_ROOT, OUT) || contains(QUALITY_ROOT, OUT)) throw new Error('Build output must be separate from upstream source and patch files');
+if (contains(OUT, projectRoot) || contains(OUT, SRC) || contains(SRC, OUT) || contains(PATCH_ROOT, OUT) || contains(RELIABILITY_ROOT, OUT) || contains(QUALITY_ROOT, OUT) || contains(LOADING_ROOT, OUT)) throw new Error('Build output must be separate from upstream source and patch files');
 checkCompatibility(SRC);
 const esbuild = await import(process.env.ESBUILD_MODULE ? pathToFileURL(process.env.ESBUILD_MODULE).href : 'esbuild');
 const SKIP = new Set(['FETCH_MANIFEST.json', 'README_FETCH.txt']);
@@ -143,6 +144,8 @@ const preload = order.filter((f) => fs.existsSync(path.join(BUILD, f))).map((f) 
 const html = html0.replace('</head>', `<!-- build: module graph preloaded (${order.length} modules) -->\n${preload}\n</head>`);
 fs.writeFileSync(path.join(BUILD, 'index.html'), html);
 fs.writeFileSync(path.join(BUILD, '.nojekyll'), '');
+const loadingPlan = prepareLoading(BUILD, order);
+const loadingHTML = fs.readFileSync(path.join(BUILD, 'index.html'), 'utf8');
 // Give the entire module/asset tree an immutable URL. A cached old module must
 // never import a newer profile or dependency after the next OSS update.
 const revision = sha256(JSON.stringify(walk(BUILD).sort().map(file => [path.relative(BUILD,file),sha256(fs.readFileSync(file))])));
@@ -154,12 +157,14 @@ for (const file of versionFiles) {
 }
 // Place base before the import map so all relative imports, preload hints,
 // stylesheet URLs and runtime fetches resolve within the same revision.
-fs.writeFileSync(path.join(BUILD,'index.html'), html.replace('<head>', `<head>\n<base href="./_versions/${revision}/">`));
-const identity = writeBuildIdentity(SRC, BUILD, PATCH_ROOT, { esbuild:esbuild.version, revision, script:sha256(fs.readFileSync(new URL(import.meta.url))), touchLayout:touchLayoutIdentity(), reliability:reliabilityIdentity(), quality:qualityIdentity() });
+fs.writeFileSync(path.join(BUILD,'index.html'), loadingHTML.replace('<head>', `<head>\n<base href="./_versions/${revision}/">`));
+const loadingSummary = finalizeLoadingWorker(BUILD, revision, loadingPlan);
+const identity = writeBuildIdentity(SRC, BUILD, PATCH_ROOT, { esbuild:esbuild.version, revision, script:sha256(fs.readFileSync(new URL(import.meta.url))), touchLayout:touchLayoutIdentity(), reliability:reliabilityIdentity(), quality:qualityIdentity(), loadingCache:{ source:loadingIdentity(), ...loadingSummary } });
 // Include the independent editor in exact-source verification, not only artifact hashing.
 for (const [file, hash] of Object.entries(identity.build.touchLayout)) identity.files['touch-layout/' + file] = hash;
 for (const [file, hash] of Object.entries(identity.build.reliability)) identity.files['reliability/' + file] = hash;
 for (const [file, hash] of Object.entries(identity.build.quality)) identity.files['local-quality/' + file] = hash;
+for (const [file, hash] of Object.entries(identity.build.loadingCache.source)) identity.files['loading-cache/' + file] = hash;
 identity.inputHash = sha256(JSON.stringify(identity.files));
 fs.writeFileSync(path.join(BUILD, 'inkwave-build.json'), JSON.stringify(identity, null, 2) + '\n');
 fs.rmSync(OUT, { recursive: true, force: true });
