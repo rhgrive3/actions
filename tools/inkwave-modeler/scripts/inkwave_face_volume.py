@@ -2164,6 +2164,11 @@ def main():
                     if part.max() > 0:
                         er.apply_weighted_modifier(neck, part / part.max(), 'DISPLACE', direction='NORMAL',
                                                    strength=sign * part.max() / 1000, mid_level=0.0)
+                if step.get('smooth'):
+                    # the moves depend on the normal's direction: on the coarse neck mesh that leaves small creases;
+                    # Blender's Smooth over the moved part takes them out
+                    er.apply_weighted_modifier(neck, wy, 'SMOOTH', factor=step['smooth']['factor'],
+                                               iterations=step['smooth']['iters'])
                 me = neck.data
                 for t in twins:
                     co = sum((me.vertices[j].co for j in t), Vector()) / len(t)
