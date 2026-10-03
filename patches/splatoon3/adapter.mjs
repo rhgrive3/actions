@@ -68,7 +68,7 @@ export function adaptSource(rel, code) {
       '<meta name="apple-mobile-web-app-title" content="INKWAVE">\n' +
       '<link rel="manifest" href="./patches/splatoon3/pwa/manifest.webmanifest">\n' +
       '<link rel="icon" type="image/svg+xml" href="./patches/splatoon3/pwa/icon.svg">\n' +
-      '<link rel="apple-touch-icon" href="./patches/splatoon3/pwa/icon.svg">\n' +
+      '<link rel="apple-touch-icon" sizes="192x192" href="./patches/splatoon3/pwa/icon-192.png">\n' +
       '<link rel="stylesheet" href="./patches/splatoon3/ui.css">\n</head>', 'patch styles and pwa');
     return replaceOnce(code, '</body>',
       '<script>if ("serviceWorker" in navigator && location.protocol === "https:") { addEventListener("load", () => { const root = new URL("./", location.href); navigator.serviceWorker.register(new URL("sw.js", root).href, { scope: root.pathname }).catch(() => {}); }); }</script>\n</body>',
