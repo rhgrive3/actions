@@ -73,3 +73,16 @@ test('exact-source checker rejects forged loading input despite self-consistent 
  }finally{fs.rmSync(outputs,{recursive:true,force:true});}
  }finally{fs.rmSync(dir,{recursive:true,force:true});}
 });
+
+
+test('all source-attesting browser verifiers recognize the loading-cache namespace',()=>{
+ const root=path.resolve(new URL('../../../',import.meta.url).pathname);
+ const checks=[
+  ['scripts/check-inkwave-browser.mjs',/loading-cache/],
+  ['scripts/check-inkwave-touch-layout-identity.mjs',/loading-cache/],
+  ['scripts/check-inkwave-motion-catalog.mjs',/'loading-cache': 'patches\/loading-cache'/],
+  ['scripts/check-inkwave-flow-render.mjs',/key\.startsWith\('loading-cache\/'\)/],
+  ['scripts/check-inkwave-wall-render.mjs',/key\.startsWith\('loading-cache\/'\)/],
+ ];
+ for(const[file,pattern]of checks)assert.match(fs.readFileSync(path.join(root,file),'utf8'),pattern,file);
+});
