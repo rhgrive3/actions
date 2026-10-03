@@ -94,6 +94,8 @@ html.iw-touch-ui .iwr-dmg { font-size: 20px; -webkit-text-stroke-width: 3px; }
 .iw-modesel__row.has-range { gap: calc(var(--u) * 2.6); }
 .iw-modesel__row.has-range .iw-mode { width: min(calc(var(--u) * 33), calc((100vw - var(--u) * 12) / 3)); }
 .iw-modesel__row.has-range .iw-mode__tape .iw-display { font-size: calc(var(--u) * 3.1); }
+/* the range's longer title stays on one line so it never covers its blurb */
+html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-mode--range .iw-mode__tape .iw-display { white-space: nowrap; font-size: calc(var(--u) * 2.6); }
 .iw-modesel__row.has-range .iw-mode__blurb { margin-left: calc(var(--u) * 1.5); margin-right: calc(var(--u) * 1.5); }
 .iw-mode--range { --mc: #2f8f86; --mc-rgb: 47, 143, 134; --mc-l: #8fe0d6; --mc-d: #1d4f4a; --mc-ink: #fff; }
 .iw-mode--range .iw-mode__img { filter: brightness(.8) saturate(.95); }

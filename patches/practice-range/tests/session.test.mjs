@@ -66,6 +66,7 @@ test('damage comes from Actor.damage untouched: shots to splat, combo, time-to-s
     assert.equal(t.hp, R.PLAYER.hp);
     assert.equal(t.invuln, 0, 'no spawn shield on a target');
     assert.ok(Math.abs(t.pos.x - t.rangeTarget.x) < 1e-9 && Math.abs(t.pos.z - t.rangeTarget.z) < 1e-9, 're-inflated where it stood');
+    assert.ok(t.rangeTarget.combo.done && t.rangeTarget.combo.hits === hits, 'the finished combo stays readable after the re-inflate');
   } finally { w.done(); }
 });
 

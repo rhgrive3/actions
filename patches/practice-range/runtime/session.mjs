@@ -82,7 +82,8 @@ export class RangeSession {
     a.invuln = 0;                                    // no spawn shield on a target
     a.character.trigger('spawn');
     if (t.kind === 'endurance') a.hp = ENDURANCE_HP;
-    t.phase = 0; t.combo = null;
+    // the finished combo stays readable on the card ("SPLAT IN n · t s") until the next hit starts a new one
+    t.phase = 0;
     G.audio?.play?.('respawn', { pos: a.pos, volume: 0.35 });
     emit('respawn', { actor: a });
   }
