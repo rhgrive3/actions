@@ -26,10 +26,10 @@ export function installMenuQuality(Menus, env=globalThis){
     const elapsed=m._qualityCursorAt==null?0:Math.max(0,(now-m._qualityCursorAt)/1000);
     const step=m._frozen?.()?0:Math.min(1/60,elapsed)*(m.timeScale>0?m.timeScale:1);
     if(!m._focus?.isConnected)m._cur.targetEl=null;
-    const advancing=step>0&&m._cur.on&&!m._cur.snapNext;
+    const springClock=m._cur.on&&!m._cur.snapNext,advancing=step>0&&springClock;
     cursor.call(m,step);m._qualityCursorAt=now;
     if(advancing&&m._cur.on)m._qualityCursorCredit=(m._qualityCursorCredit||0)+step;
-    else if(!m._cur.on||!advancing)m._qualityCursorCredit=0;
+    else if(!m._cur.on||!springClock)m._qualityCursorCredit=0;
   }
   // Logical selection, geometric target and first visual step all commit in
   // this task, including touch's own-row highlight and deselection.

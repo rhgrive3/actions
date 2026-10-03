@@ -53,3 +53,8 @@ test('snap and touch-hide do not spend spring credit; frozen snap keeps native s
  time(24);m.setInputMode('touch');assert.equal(m._qualityCursorCredit,0);assert.equal(m._cur.on,false);
  m.setInputMode('kbm');m._frozen=()=>true;time(36);m._setFocus(a,{snap:true});assert.equal(m._cur.x.x,3);assert.equal(m._cur.x.target,3);assert.equal(m._qualityCursorCredit,0);
 });
+test('rapid same-clock retarget retains already spent credit without advancing twice',()=>{
+ const {m,el,time}=fixture(),a=el(10,20),b=el(100,120),c=el(200,220);m._setFocus(a);m._updateCursor(1/60);time(10);m._setFocus(b);
+ const x=m._cur.x.x,credit=m._qualityCursorCredit;m._setFocus(c);assert.equal(m._cur.x.x,x);assert.equal(m._cur.x.target,193);assert.equal(m._qualityCursorCredit,credit);
+ m._updateCursor(.010);assert.equal(m._cur.x.x,x);assert.equal(m._qualityCursorCredit,0);
+});
