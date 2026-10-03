@@ -1,18 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { adaptWeaponsFidelity } from '../weapons-adapter.mjs';
+import { adaptSource } from '../adapter.mjs';
 
 const root = new URL('../../../', import.meta.url);
 const source = fs.readFileSync(new URL('inkwave-public/src/game/weapons.js', root), 'utf8');
-const replaceOnce = (code, before, after, label) => {
-  const at = code.indexOf(before);
-  if (at < 0 || code.indexOf(before, at + before.length) >= 0) throw new Error('conflict ' + label);
-  return code.slice(0, at) + after + code.slice(at + before.length);
-};
 
-test('weapons fidelity adapter connects only to the intended projectile paths', () => {
-  const out = adaptWeaponsFidelity(source, replaceOnce);
+test('weapons fidelity composes through the real gameplay adapter order', () => {
+  const out = adaptSource('src/game/weapons.js', source);
   assert.match(out, /advanceFidelityProjectile\(p, dt\)/);
   assert.match(out, /fidelityProjectileTargets\(this, p\)/);
   assert.match(out, /configureFidelityFlick\(p, a, w, i, ang, sp\)/);
@@ -20,7 +15,7 @@ test('weapons fidelity adapter connects only to the intended projectile paths', 
   assert.match(out, /WEAPONS_FIDELITY_EPSILON/);
 });
 
-test('critical native anchor changes fail closed', () => {
+test('critical native anchor changes fail closed through the full adapter', () => {
   for (const anchor of [
     `      p.age += dt;
       p.prev.copy(p.pos);
@@ -30,8 +25,8 @@ test('critical native anchor changes fail closed', () => {
     '      // actors\n      for (const e of G.actors) {',
     '      if (!dead && p.age > p.life) {',
   ]) {
-    assert.throws(() => adaptWeaponsFidelity(source.replace(anchor, ''), replaceOnce), /conflict/);
-    assert.throws(() => adaptWeaponsFidelity(source + anchor, replaceOnce), /conflict/);
+    assert.throws(() => adaptSource('src/game/weapons.js', source.replace(anchor, '')), /conflict/);
+    assert.throws(() => adaptSource('src/game/weapons.js', source + anchor), /conflict/);
   }
 });
 
