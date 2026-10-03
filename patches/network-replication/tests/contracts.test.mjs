@@ -61,3 +61,9 @@ test('invalid birth lifetime/delay is rejected instead of creating an immortal g
  const f=await fixture(),nm=f.makeNetMatch(f.makeSession()),a=f.makeActor({nid:0,owner:'p2',remote:true});f.bind(nm,[a]);nm.peers.set('p2',{tr:1000});
  const e=[1000,'p',0,'shot','shooter',0,30,0,0,0,10,0,-1,99,.1,.1,0,0,0,0,.1,.8,1.3,.03,26,.3,3,0,.123,1];nm._play('p2',e);assert.equal(f.projectiles.list.length,0);e[12]=1;e[11]=-.1;nm._play('p2',e);assert.equal(f.projectiles.list.length,0);
 });
+
+test('charger birth preserves oblique unit direction, origin, partial charge and length',async()=>{
+ const f=await fixture(),nm=f.makeNetMatch(f.makeSession()),a=f.makeActor({nid:0,owner:'me',roller:false});a.weapon=f.WEAPONS.charger;a.aimPoint.set(17.53,11.24,49.67);a.character.getMuzzle=o=>o.copy(a.pos).add(new f.THREE.Vector3(.013,1.057,.307));f.bind(nm,[a]);let raw;
+ nm.unsubs.push(f.on('weapon:fire',e=>{raw=e;nm._onLocalEvent('weapon:fire',e);}));f.projectiles.fireCharger(a,a.weapon,.3764321);
+ const e=JSON.parse(JSON.stringify(nm.out.find(e=>e[1]==='ev')))[3];assert.equal(e.charge,raw.charge);assert.equal(e.len,raw.len);for(let i=0;i<3;i++){assert.equal(e.dir[i],raw.dir.toArray()[i]);assert.equal(e.muzzle[i],raw.muzzle.toArray()[i]);}
+});
