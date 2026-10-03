@@ -2,6 +2,8 @@
 
 Status: not included in this PR.
 
+Draft implementation candidate: PR #60 (`inkwave/astra-platform-lifecycle`). It remains here because real-device iOS/Home Screen acceptance is still pending.
+
 Critical issues:
 - gyro works on Android and iOS Safari but cannot be enabled in iOS Home Screen Web App
 - UI can direct users to a setting that does not actually exist
