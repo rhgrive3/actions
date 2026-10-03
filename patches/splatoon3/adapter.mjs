@@ -54,10 +54,25 @@ export function adaptSource(rel, code) {
     return "import { dualiesMotionLock, dualiesMotionAllowsFootPlant } from '../../patches/splatoon3/runtime/action-admission.mjs';\nimport { specialMotionAllowsFootPlant } from '../../patches/splatoon3/runtime/special-motion.mjs';\nimport { applyWalkLocomotion, walkLean, walkSwingUnloaded, walkFootReach, walkPelvisDrop, walkTreadAllowed, walkActive } from '../../patches/splatoon3/runtime/walk.mjs';\n"+code;
   }
   if (rel === 'src/ui/hud.js') return "import { t as tr } from '../i18n.js';\n" + code;
+  if (rel === 'src/ui/ui-icons.js') {
+    return replaceOnce(code,
+      'return `<div class="iw-logo iw-logo--${size}">`;',
+      'return `<div class="iw-logo iw-logo--${size} notranslate" translate="no">`;',
+      'logo translation lock');
+  }
   if (rel === 'index.html') {
     code = replaceOnce(code, '<script type="module" src="./src/main.js"></script>',
       '<script type="module" src="./patches/splatoon3/bootstrap.mjs"></script>', 'entry');
-    return replaceOnce(code, '</head>', '<link rel="stylesheet" href="./patches/splatoon3/ui.css">\n</head>', 'patch styles');
+    code = replaceOnce(code, '</head>',
+      '<meta name="mobile-web-app-capable" content="yes">\n' +
+      '<meta name="apple-mobile-web-app-title" content="INKWAVE">\n' +
+      '<link rel="manifest" href="./patches/splatoon3/pwa/manifest.webmanifest">\n' +
+      '<link rel="icon" type="image/svg+xml" href="./patches/splatoon3/pwa/icon.svg">\n' +
+      '<link rel="apple-touch-icon" href="./patches/splatoon3/pwa/icon.svg">\n' +
+      '<link rel="stylesheet" href="./patches/splatoon3/ui.css">\n</head>', 'patch styles and pwa');
+    return replaceOnce(code, '</body>',
+      '<script>if ("serviceWorker" in navigator && location.protocol === "https:") { addEventListener("load", () => { const root = new URL("./", location.href); navigator.serviceWorker.register(new URL("sw.js", root).href, { scope: root.pathname }).catch(() => {}); }); }</script>\n</body>',
+      'pwa service worker');
   }
   if (rel === 'src/game/player.js') {
     const start = code.indexOf('    if (this.onTarget && this.onTarget !== G.boss) {');
