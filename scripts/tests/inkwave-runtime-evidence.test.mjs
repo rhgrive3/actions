@@ -21,3 +21,10 @@ test('valid artifacts cannot forge their source SHA by changing a build input',(
  const save=()=>fs.writeFileSync(path.join(site,'inkwave-build.json'),JSON.stringify(m));save();assert.equal(verifyRuntimeBuild(site,repo,sha).contentHash,m.contentHash);
  m.files['upstream/source.js']=hash('forged source');save();assert.throws(()=>verifyRuntimeBuild(site,repo,sha),/Build differs from source SHA/);
 });
+test('comparison cannot pass empty scenarios despite superficially passing reports',()=>{
+ const before={status:'passed',sourceSha:'a'.repeat(40),verifiedRuntimeFiles:['src/core/renderer.js'],environment:{},scenarios:[],input:[]};
+ const after={...before,inputStatus:'synchronous',input:Array.from({length:36},()=>({targetError:0})),inputErrors:[]};
+ const a=path.join(root,'before.json'),b=path.join(root,'after.json'),out=path.join(root,'compare.json');fs.writeFileSync(a,JSON.stringify(before));fs.writeFileSync(b,JSON.stringify(after));
+ assert.throws(()=>execFileSync(process.execPath,[new URL('../compare-inkwave-runtime-performance.mjs',import.meta.url).pathname,'--before',a,'--after',b,'--out',out],{stdio:'pipe'}));
+ const report=JSON.parse(fs.readFileSync(out));assert.equal(report.status,'failed');assert(report.errors.some(x=>x.includes('incomplete scenario set')));
+});

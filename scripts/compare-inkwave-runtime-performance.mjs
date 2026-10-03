@@ -9,12 +9,16 @@ for(const [label,r]of [['before',before],['after',after]]){
  if(r.status!=='passed')errors.push(label+' failed');
  if(!r.sourceSha||!r.verifiedRuntimeFiles.includes('src/core/renderer.js'))errors.push(label+' missing active source receipt');
 }
-for(const k of ['cpu','cores','platform','quality','viewport','webgl','repetitions'])if(JSON.stringify(before.environment[k])!==JSON.stringify(after.environment[k]))errors.push('Different environment: '+k);
+for(const k of ['cpu','cores','platform','quality','viewport','webgl','repetitions','browser','seed'])if(JSON.stringify(before.environment[k])!==JSON.stringify(after.environment[k]))errors.push('Different environment: '+k);
+for(const [label,r]of [['before',before],['after',after]])if(JSON.stringify(r.scenarios.map(x=>x.scenario))!==JSON.stringify(['title','settings','battle']))errors.push(label+' incomplete scenario set');
 if(after.inputStatus!=='synchronous'||after.input.length!==36)errors.push('Candidate input target regression');
+if(after.renderParity?.length!==3||after.renderParity.some(r=>!r.nonempty||r.changedChannels||!r.sceneAutoRestored))errors.push('Missing passing pixel parity');
 const scenarios=before.scenarios.map(b=>{
  const a=after.scenarios.find(x=>x.scenario===b.scenario);if(!a||a.runs.length!==3||b.runs.length!==3){errors.push('Missing repeated scenario '+b.scenario);return {scenario:b.scenario};}
- const normalize=r=>({frame:r.timings.frame,sceneMatrices:r.timings.sceneMatrices,count:r.counts.sceneMatrices,updates:r.counts.match,renderCalls:r.renderInfo?.calls,triangles:r.renderInfo?.triangles,heap:r.heap});
+ const normalize=r=>({frame:r.timings.frame,sceneMatrices:r.timings.sceneMatrices,count:r.counts.sceneMatrices,updates:r.counts.match,cursorTicks:r.counts.cursor||0,quality:r.quality,scale:r.scale,renderCalls:r.renderInfo?.calls,triangles:r.renderInfo?.triangles,heap:r.heap});
  if(b.runs.some((r,i)=>r.fixedSteps!==a.runs[i].fixedSteps||r.counts.match!==a.runs[i].counts.match))errors.push('Different simulation work: '+b.scenario);
+ if([...b.runs,...a.runs].some(r=>r.fixedSteps!==30||r.counts.frame!==30||!r.timings.frame?.n||r.quality!==before.environment.quality||r.scale!==1))errors.push('Invalid fixed-step/quality window: '+b.scenario);
+ if(b.scenario==='battle'&&[...b.runs,...a.runs].some(r=>r.matchState!=='playing'))errors.push('Battle was not playing');
  if(b.scenario==='battle'&&a.runs.some((r,i)=>!(r.counts.sceneMatrices<b.runs[i].counts.sceneMatrices)))errors.push('No repeated scene traversal reduction');
  return{scenario:b.scenario,before:b.runs.map(normalize),after:a.runs.map(normalize),frameRunMedians:{before:sampleStats(b.runs.map(r=>r.timings.frame?.median).filter(Number.isFinite)),after:sampleStats(a.runs.map(r=>r.timings.frame?.median).filter(Number.isFinite))}};
 });

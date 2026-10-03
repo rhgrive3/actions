@@ -32,3 +32,8 @@ test('nested INKWAVE guard changes trigger both pull request and pushed-main val
 test('compatibility failure preserves its primary error without a missing diagnostic upload', () => {
   assert.ok(workflow.includes("if: failure() && hashFiles('.ci-scratch/inkwave-patches/patch-tests.log') != ''"));
 });
+test('runtime verifier storage is prepared before tests and baseline checkout is resolved before creation',()=>{
+ const prepare=workflow.indexOf('name: Prepare persistent runtime verifier fixtures'),tests=workflow.indexOf('name: Verify motion verifier regressions');
+ assert(prepare>=0&&prepare<tests);assert(workflow.includes('sudo chown "$(id -u):$(id -g)" "$runtime_fixtures"'));assert(workflow.includes('test -w "$runtime_fixtures"'));
+ assert(workflow.indexOf('test "$(realpath -m "$baseline_checkout")"')<workflow.indexOf('git worktree add --detach "$baseline_checkout"'));
+});

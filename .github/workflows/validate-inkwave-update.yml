@@ -57,6 +57,13 @@ jobs:
           if-no-files-found: error
           path: .ci-scratch/inkwave-patches/
           retention-days: 14
+      - name: Prepare persistent runtime verifier fixtures
+        run: |
+          runtime_fixtures=/mnt/workspace/.dev-state/agent-work/scratch/inkwave-runtime-performance-ui-evidence-tests
+          test "$(realpath -m "$runtime_fixtures")" = "$runtime_fixtures"
+          sudo mkdir -p "$runtime_fixtures"
+          sudo chown "$(id -u):$(id -g)" "$runtime_fixtures"
+          test -w "$runtime_fixtures"
       - name: Verify motion verifier regressions
         run: node --test scripts/tests/inkwave-motion-gates.test.mjs scripts/tests/inkwave-integration-workflow.test.mjs scripts/tests/inkwave-runtime-evidence.test.mjs
       - name: Verify pinned primary numerical sources
@@ -176,7 +183,9 @@ jobs:
           npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1
           baseline_sha=5e28dbd16f7829aebd88052ff5f7fdf71f39fdad
           baseline_checkout=/mnt/workspace/.dev-state/agent-work/checkouts/inkwave-runtime-performance-ui-ci-${{ github.run_id }}-${{ github.run_attempt }}/baseline
-          mkdir -p "$(dirname "$baseline_checkout")"
+          test "$(realpath -m "$baseline_checkout")" = "$baseline_checkout"
+          sudo mkdir -p "$(dirname "$baseline_checkout")"
+          sudo chown "$(id -u):$(id -g)" "$(dirname "$baseline_checkout")"
           test "$(realpath "$(dirname "$baseline_checkout")")" = "$(dirname "$baseline_checkout")"
           git fetch origin "$baseline_sha"
           git worktree add --detach "$baseline_checkout" "$baseline_sha"
