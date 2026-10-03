@@ -100,3 +100,9 @@ Shooter/Dualies improve from shorter live projectile lifetime; Splatling and Slo
 
 Ready for integration review only after all existing validate/browser jobs are green.
 Physical Switch/iOS/Android fidelity and the unresolved roller-height/collision semantics are not represented as complete.
+
+## Plus PR #63 integration note
+
+PR #63 (`inkwave/issue-batch-44-58`) overlaps weapon behavior but most ownership composes cleanly: its Shooter first-shot/swim/jump-spread timing and Charger charge/storage gates sit above/beside this workstream's projectile flight model. Its field-collision radius wrapper can compose with the world-collision query used here.
+
+Roller outside-fan damage is the exception: #63 adds a simplified duplicate outer-fan damage path, while this workstream owns the pinned v11.3.0 4-band outside envelope and 16-degree classification. In the combined integration, do not stack both damage owners; retain this workstream as the authoritative roller outside-damage calculation and remove/disable the duplicate #63 calculation while preserving #63's unrelated issue fixes.
