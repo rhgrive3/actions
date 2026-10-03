@@ -9,6 +9,7 @@ on:
       - "patches/touch-layout/**"
       - "patches/reliability/**"
       - "patches/local-quality/**"
+      - "patches/movement-physics/**"
       - "scripts/*inkwave*.mjs"
       - "scripts/tests/inkwave-*.mjs"
   pull_request:
@@ -19,6 +20,7 @@ on:
       - "patches/touch-layout/**"
       - "patches/reliability/**"
       - "patches/local-quality/**"
+      - "patches/movement-physics/**"
       - "scripts/*inkwave*.mjs"
       - "scripts/tests/inkwave-*.mjs"
   workflow_dispatch:
@@ -50,6 +52,8 @@ jobs:
         run: node --experimental-vm-modules scripts/check-inkwave-patches.mjs
       - name: Verify local quality regressions
         run: node --experimental-vm-modules --test patches/local-quality/tests/*.test.mjs
+      - name: Verify movement physics smoke regressions
+        run: node --test patches/movement-physics/tests/movement-smoke.test.mjs
       - uses: actions/upload-artifact@v4
         if: failure() && hashFiles('.ci-scratch/inkwave-patches/patch-tests.log') != ''
         with:
