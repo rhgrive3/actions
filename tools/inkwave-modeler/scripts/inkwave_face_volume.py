@@ -1643,6 +1643,26 @@ def soften_lights(cfg):
         if SUFFIX not in light:
             light[SUFFIX] = light.angle
         light.angle = cfg['angle']
+    for name, energy in cfg.get('energy', {}).items():
+        light = bpy.data.objects[name].data
+        if SUFFIX + '_energy' not in light:
+            light[SUFFIX + '_energy'] = light.energy
+        light.energy = energy
+    if cfg.get('side_suns'):
+        # the reference lights the sides of the face about as brightly as the front; here the sides (the cheek
+        # below the triangle, the side of the jaw) were 5-8 L darker in the 3/4 and side views while the front
+        # matched: a sun from each side (a little above and in front, head frame).  eye_look keeps them off
+        # the corneas (they are in eye_look['suns'])
+        sc = cfg['side_suns']
+        for name, sx in zip(SIDE_SUNS, (-1.0, 1.0)):
+            light = bpy.data.lights.new(name, 'SUN')
+            light.energy, light.angle, light.color = sc['energy'], cfg['angle'], sc.get('colour', (1.0, 0.95, 0.9))
+            obj = bpy.data.objects.new(name, light)
+            bpy.data.objects[cfg['names'][0]].users_collection[0].objects.link(obj)
+            src = np.array([[sx, sc['up'], sc['front']]])
+            src /= np.linalg.norm(src)
+            d = M.to_world(-src)[0] - M.to_world(np.zeros((1, 3)))[0]
+            obj.rotation_euler = Vector(-d / np.linalg.norm(d)).to_track_quat('Z', 'Y').to_euler()
 
 
 EYE_LOOK = 'INKWAVE_eye_look'
@@ -1761,11 +1781,23 @@ def restore_eye_look():
         bpy.data.collections.remove(c)
 
 
+SIDE_SUNS = ('INKWAVE_side_R', 'INKWAVE_side_L')
+
+
 def restore_lights():
+    for name in SIDE_SUNS:
+        obj = bpy.data.objects.get(name)
+        if obj is not None:
+            light = obj.data
+            bpy.data.objects.remove(obj)
+            bpy.data.lights.remove(light)
     for light in bpy.data.lights:
         if SUFFIX in light:
             light.angle = light[SUFFIX]
             del light[SUFFIX]
+        if SUFFIX + '_energy' in light:
+            light.energy = light[SUFFIX + '_energy']
+            del light[SUFFIX + '_energy']
 
 
 CORNEA_MATERIAL = 'eyes_000000'
