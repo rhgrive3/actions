@@ -2120,6 +2120,14 @@ def main():
                 y0, y1, y2, y3 = step['y']
                 wn = np.clip((nl[:, 1] - y0) / (y1 - y0), 0, 1) * np.clip((y3 - nl[:, 1]) / (y3 - y2), 0, 1)
                 wn = wn * wn * (3 - 2 * wn) * (np.abs(nl[:, 0]) < 60) * (np.abs(nl[:, 2]) < 60)
+                wy = wn.copy()
+                if step.get('lateral'):
+                    # only the sides of the neck (the front view's width); its front stays, so the widened neck does
+                    # not meet the floor of the chin at a grazing angle (a jagged tab there)
+                    nw = np.array([neck.matrix_world.to_3x3() @ v.normal for v in neck.data.vertices])
+                    nn = M.to_local(nw) - M.to_local(np.zeros((1, 3)))
+                    nn /= np.maximum(np.linalg.norm(nn, axis=1), 1e-9)[:, None]
+                    wn = wn * np.abs(nn[:, 0]) ** step['lateral']
                 # the neck mesh is split at its seams (vertices on top of each other, each with its own normal):
                 # moved along their normals they part and open a slit.  They are put back together (mean)
                 W0 = er.world(neck)
@@ -2130,15 +2138,39 @@ def main():
                 kd.balance()
                 twins = [[j for _, j, _ in kd.find_range(Vector(W0[i]), 1e-5)] for i in np.nonzero(wn > 0)[0]]
                 twins = [t for t in twins if len(t) > 1]
-                er.apply_weighted_modifier(neck, wn, 'DISPLACE', direction='NORMAL', strength=step['mm'] / 1000,
-                                           mid_level=0.0)
+                if step.get('lean'):
+                    # the front of the neck moves along its normal by lean['mm'] (side view: the neck front stood
+                    # 6-7 px in front of the reference's): front-facing parts only, 0 at lean['y'][0] to 1 at
+                    # lean['y'][1]
+                    ln = step['lean']
+                    nw = np.array([neck.matrix_world.to_3x3() @ v.normal for v in neck.data.vertices])
+                    nn = M.to_local(nw) - M.to_local(np.zeros((1, 3)))
+                    nn /= np.maximum(np.linalg.norm(nn, axis=1), 1e-9)[:, None]
+                    t = np.clip((nl[:, 1] - ln['y'][0]) / (ln['y'][1] - ln['y'][0]), 0, 1)
+                    wl = wy * t * np.clip(nn[:, 2], 0, 1) ** ln.get('power', 1.0)
+                if step.get('mm_side'):
+                    # per side of the head (x < 0, x > 0): the neck sits off-centre under the head in this model
+                    a, b = step['mm_side']
+                    t = np.clip((nl[:, 0] + step.get('x_fade', 15.0)) / (2 * step.get('x_fade', 15.0)), 0, 1)
+                    t = t * t * (3 - 2 * t)
+                    per = a * (1 - t) + b * t
+                else:
+                    per = np.full(len(nl), step['mm'])
+                amounts = per * wn
+                if step.get('lean'):
+                    amounts = amounts + ln['mm'] * wl
+                for sign in (1, -1):
+                    part = np.maximum(sign * amounts, 0)
+                    if part.max() > 0:
+                        er.apply_weighted_modifier(neck, part / part.max(), 'DISPLACE', direction='NORMAL',
+                                                   strength=sign * part.max() / 1000, mid_level=0.0)
                 me = neck.data
                 for t in twins:
                     co = sum((me.vertices[j].co for j in t), Vector()) / len(t)
                     for j in t:
                         me.vertices[j].co = co
                 me.update()
-                print('FACE_VOLUME', step['name'], 'neck vertices', int((wn > 0.001).sum()), 'mm', step['mm'])
+                print('FACE_VOLUME', step['name'], 'neck vertices', int((wn > 0.001).sum()), 'mm', step.get('mm_side', step.get('mm')), 'lean', step.get('lean'))
                 continue
             elif step['kind'] == 'jaw_tuck':
                 # the part under the jaw line goes onto the neck (BODY_torso): Blender's Shrinkwrap to the
