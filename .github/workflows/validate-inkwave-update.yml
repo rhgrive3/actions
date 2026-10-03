@@ -9,6 +9,7 @@ on:
       - "patches/touch-layout/**"
       - "patches/reliability/**"
       - "patches/local-quality/**"
+      - "patches/network-replication/**"
       - "scripts/*inkwave*.mjs"
       - "scripts/tests/inkwave-*.mjs"
   pull_request:
@@ -19,6 +20,7 @@ on:
       - "patches/touch-layout/**"
       - "patches/reliability/**"
       - "patches/local-quality/**"
+      - "patches/network-replication/**"
       - "scripts/*inkwave*.mjs"
       - "scripts/tests/inkwave-*.mjs"
   workflow_dispatch:
@@ -48,6 +50,17 @@ jobs:
           node-version: 22
       - name: Verify gameplay patch contracts and regressions
         run: node --experimental-vm-modules scripts/check-inkwave-patches.mjs
+      - name: Verify deterministic network replication
+        run: node --experimental-vm-modules --test patches/network-replication/tests/*.test.mjs
+      - name: Compare authoritative and reconstructed attacks
+        run: node --experimental-vm-modules scripts/check-inkwave-network-comparison.mjs --evidence-dir .ci-scratch/network-comparison
+      - uses: actions/upload-artifact@v4
+        if: always() && hashFiles('.ci-scratch/network-comparison/*.json') != ''
+        with:
+          name: inkwave-network-comparison-${{ inputs.source_sha || github.sha }}
+          if-no-files-found: error
+          path: .ci-scratch/network-comparison/
+          retention-days: 14
       - name: Verify local quality regressions
         run: node --experimental-vm-modules --test patches/local-quality/tests/*.test.mjs
       - uses: actions/upload-artifact@v4
@@ -125,7 +138,7 @@ jobs:
       fail-fast: false
       max-parallel: 2
       matrix:
-        suite: [active, catalog, ui]
+        suite: [active, catalog, ui, network]
     env:
       TMPDIR: ${{ github.workspace }}/.ci-scratch
       TMP: ${{ github.workspace }}/.ci-scratch
@@ -153,11 +166,17 @@ jobs:
           mkdir -p "$CI_STORAGE/evidence" "$CI_STORAGE/cache"
           test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
           test "$(cat .built-site/_site-source-sha.txt)" = "$SOURCE_SHA"
-          npm install --no-save --no-package-lock --silent playwright@1.62.1
+          npm install --no-save --no-package-lock --silent playwright@1.62.1 ws@8
           npx playwright install --with-deps chromium webkit
       - name: Verify active browser behavior and loaded artifact bytes
         if: matrix.suite == 'active'
         run: node scripts/check-inkwave-browser.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/game" --profile-dir "$CI_STORAGE/cache/game" --exact-source
+      - name: Verify two-player network trajectories and rendered FX
+        if: matrix.suite == 'network'
+        run: node scripts/check-inkwave-network-browser.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/network" --profile-dir "$CI_STORAGE/cache/network" --exact-source
+      - name: Verify two-player replication with 100 ms ordered delivery delay
+        if: matrix.suite == 'network'
+        run: node scripts/check-inkwave-network-browser.mjs --delay-frames 6 --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/network-delay" --profile-dir "$CI_STORAGE/cache/network-delay" --exact-source
       - name: Verify rendered walking contacts and transitions
         if: matrix.suite == 'active'
         run: node scripts/check-inkwave-motion.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/motion" --profile-dir "$CI_STORAGE/cache/motion"
@@ -183,6 +202,7 @@ jobs:
         if: matrix.suite == 'ui'
         run: |
           node scripts/check-inkwave-touch-layout-identity.mjs --site .built-site/_site --source inkwave-public --checkout-dir "$CI_STORAGE/identity-touch" --evidence-dir "$CI_STORAGE/evidence/identity-touch"
+          node scripts/check-inkwave-touch-layout-identity.mjs --network --site .built-site/_site --source inkwave-public --checkout-dir "$CI_STORAGE/identity-network" --evidence-dir "$CI_STORAGE/evidence/identity-network"
           node scripts/check-inkwave-touch-layout-identity.mjs --reliability --site .built-site/_site --source inkwave-public --checkout-dir "$CI_STORAGE/identity-reliability" --evidence-dir "$CI_STORAGE/evidence/identity-reliability"
       - name: Verify responsive menus in Chromium and WebKit
         if: matrix.suite == 'ui'
@@ -196,7 +216,8 @@ jobs:
           checks={
             'active':['game/browser-result.json','motion/motion-result.json','motion-detail/motion-detail-result.json','flow/flow-render-result.json','wall/wall-render-result.json'],
             'catalog':['catalog/motion-catalog-result.json'],
-            'ui':['layout/touch-layout-result.json','reliability/reliability-browser-result.json','identity-touch/touch-layout-identity-result.json','identity-reliability/reliability-identity-result.json','responsive/responsive-result.json'],
+            'network':['network/network-browser-result.json','network-delay/network-browser-result.json'],
+            'ui':['identity-network/network-identity-result.json','layout/touch-layout-result.json','reliability/reliability-browser-result.json','identity-touch/touch-layout-identity-result.json','identity-reliability/reliability-identity-result.json','responsive/responsive-result.json'],
           }[suite]
           reports={name:json.loads((root/name).read_text()) for name in checks}
           build=json.loads(pathlib.Path('.built-site/_site/inkwave-build.json').read_text())
@@ -205,6 +226,8 @@ jobs:
             if name=='motion/motion-result.json': assert not report['errors'] and report['fixture']['scenarios']==10
             else: assert report['status']=='passed', name
             if 'contentHash' in report: assert report['contentHash']==build['contentHash'], name
+          if suite=='network':
+            for name in checks: assert reports[name]['sourceSha']==os.environ['SOURCE_SHA']
           if suite=='active': assert reports['game/browser-result.json']['sourceSha']==os.environ['SOURCE_SHA']
           receipt={'status':'passed','sourceSha':os.environ['SOURCE_SHA'],'contentHash':build['contentHash'],'suite':suite,'runId':os.environ['GITHUB_RUN_ID'],'runAttempt':os.environ['GITHUB_RUN_ATTEMPT'],'event':os.environ['GITHUB_EVENT_NAME'],'checks':checks}
           pending=root/'ci-result.json.pending'; pending.write_text(json.dumps(receipt,indent=2)+'\n'); pending.replace(root/'ci-result.json')
