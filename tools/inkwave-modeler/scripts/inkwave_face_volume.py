@@ -26,6 +26,7 @@ import json
 import sys
 from pathlib import Path
 
+import bmesh
 import bpy
 import numpy as np
 from mathutils import Vector
@@ -44,7 +45,8 @@ FOLLOWERS = ['HEAD_skin', 'HEAD_skin_04', 'HEAD_skin_02', 'HEAD_skin_03', 'HEAD_
              'HEAD_eyes_29']
 EYEBALLS = ['HEAD_eyes', 'HEAD_eyes_02', 'HEAD_eyes_18', 'HEAD_eyes_19']
 IRIS_BALLS = {'HEAD_eyes_18': -1, 'HEAD_eyes': 1}
-CHANGED = list(dict.fromkeys([FACE] + FOLLOWERS + list(IRIS_BALLS) + EYEBALLS))   # backed up / restored
+EAR_PARTS = ['HEAD_face_02', 'HEAD_face_03', 'HEADGEAR_headgear', 'HEADGEAR_headgear_02']
+CHANGED = list(dict.fromkeys([FACE] + FOLLOWERS + list(IRIS_BALLS) + EYEBALLS + EAR_PARTS))   # backed up / restored
 
 
 def restore(drop=False):
@@ -621,6 +623,311 @@ def paint_blush(face, names, cfg):
 BLUSH_IMAGE = 'INKWAVE_BLUSH_ALPHA'
 
 
+def set_local_mm(obj, loc):
+    """Vertex positions from head-frame mm."""
+    W = M.to_world(np.asarray(loc, float) / 1000)
+    inv = np.array(obj.matrix_world.inverted())
+    co = (np.c_[W, np.ones(len(W))] @ inv.T)[:, :3]
+    obj.data.vertices.foreach_set('co', co.astype(np.float32).ravel())
+    obj.data.update()
+
+
+def turn_ears(cfg):
+    """In the side and 3/4 views the reference ears lie flatter: the tip is where ours is, the root sits lower.
+    The ears and the bars along their rims turn about the head-frame x axis through the tip (y, z = cfg['pivot_yz'],
+    mm) by cfg['angle_deg'] (root down).  The hoops hang from the lobes: they follow the lobe without turning."""
+    th = np.radians(cfg['angle_deg'])
+    py, pz = cfg['pivot_yz']
+
+    def turn(L):
+        y, z = L[:, 1] - py, L[:, 2] - pz
+        out = L.copy()
+        out[:, 1] = py + y * np.cos(th) - z * np.sin(th)
+        out[:, 2] = pz + y * np.sin(th) + z * np.cos(th)
+        return out
+    for name in cfg['turn']:
+        obj = bpy.data.objects[name]
+        set_local_mm(obj, turn(M.to_local(er.world(obj)) * 1000))
+    for name in cfg['hang']:
+        obj = bpy.data.objects[name]
+        L = M.to_local(er.world(obj)) * 1000
+        for side in (-1, 1):
+            m = np.sign(L[:, 0]) == side
+            top = L[m][np.argsort(L[m][:, 1])[-20:]].mean(0)
+            L[m] += turn(top[None])[0] - top
+        set_local_mm(obj, L)
+    print('FACE_VOLUME ears turned', cfg['angle_deg'], 'deg')
+
+
+EAR_MATERIAL = 'skin_ear'
+
+
+def _chaikin(L, it, closed=False):
+    L = np.asarray(L, float)
+    for _ in range(it):
+        Q = np.r_[L, L[:1]] if closed else L
+        a, b = Q[:-1], Q[1:]
+        N = np.empty((2 * len(a), 2))
+        N[0::2] = 0.75 * a + 0.25 * b
+        N[1::2] = 0.25 * a + 0.75 * b
+        L = N if closed else np.r_[L[:1], N, L[-1:]]
+    return L
+
+
+def _line_dist(p, L):
+    L = np.asarray(L, float)
+    best = np.full(len(p), 1e9)
+    for q0, q1 in zip(L[:-1], L[1:]):
+        d = q1 - q0
+        t = np.clip(((p - q0) @ d) / (d @ d), 0, 1)
+        best = np.minimum(best, np.linalg.norm(p - (q0 + t[:, None] * d), axis=1))
+    return best
+
+
+def _inside(p, poly):
+    c = np.zeros(len(p), bool)
+    for (x0, y0), (x1, y1) in zip(poly, np.roll(poly, -1, 0)):
+        c ^= ((y0 > p[:, 1]) != (y1 > p[:, 1])) & (p[:, 0] < (x1 - x0) * (p[:, 1] - y0) / (y1 - y0 + 1e-12) + x0)
+    return c
+
+
+def _cos2(d):
+    return np.where(d < 1, np.cos(np.clip(d, 0, 1) * np.pi / 2) ** 2, 0.0)
+
+
+def _ear_relief(uv, D, s):
+    """Height (mm, toward the viewer) of the ear front over its plane: the helix rim along the top with the fold
+    under it, the lower rim, the rounded mass in front of the concha, the concha bowl with the notch under it,
+    the ear canal and the lobe.  All lines were traced on the sideR reference and moved onto the ear plane."""
+    L = {k: _chaikin(v, 3, k == 'concha') for k, v in D['lines'].items()}
+    up, fold = L['upper_edge'], L['helix_fold']
+    near = up[np.argmin(np.linalg.norm(fold[:, None] - up[None], axis=2), axis=1)]
+    w = max(2.5, float(np.median(np.linalg.norm(fold - near, axis=1))) / 2)
+    h = s['helix_h'] * _cos2(_line_dist(uv, (fold + near) / 2) / (w * s['helix_wk']))
+    h += s['groove_h'] * _cos2(_line_dist(uv, fold) / s['groove_w'])
+    h += s['low_h'] * _cos2(_line_dist(uv, L['lower_edge'] + [0, 1.6]) / s['low_w'])
+    h += s['front_h'] * _cos2(_line_dist(uv, L['front_ridge']) / s['front_w'])
+    cp = L['concha']
+    dd = _line_dist(uv, np.r_[cp, cp[:1]])
+    t = np.clip((np.where(_inside(uv, cp), dd, -dd) + 1) / s['concha_w'], 0, 1)
+    t = t * t * (3 - 2 * t)
+    h = h * (1 - t) + s['concha_d'] * t
+    h += s['notch_d'] * _cos2(_line_dist(uv, L['notch']) / 2.5)
+    for k in ('lobe', 'canal'):
+        c, r = D['bumps'][k]
+        h += s[k + '_h'] * _cos2(np.linalg.norm(uv - c, axis=1) / r)
+    return h
+
+
+def _apply_modifier(obj, kind, **kw):
+    md = obj.modifiers.new('ear_' + kind.lower(), kind)
+    for k, v in kw.items():
+        setattr(md, k, v)
+    me = bpy.data.meshes.new_from_object(obj.evaluated_get(bpy.context.evaluated_depsgraph_get()))
+    obj.modifiers.remove(md)
+    old, obj.data = obj.data, me
+    bpy.data.meshes.remove(old)
+
+
+def _sheet_rays(view, pts):
+    """World rays through sheet pixels of a fitted camera."""
+    cam = next(c for c in bpy.data.collections['FACE_FIT_CAMERAS'].objects if c['inkwave_view'] == view)
+    W, H = cam['inkwave_resolution']
+    box = cam['inkwave_sheet_box']
+    Pi = np.linalg.inv(np.array(cam.calc_matrix_camera(bpy.context.evaluated_depsgraph_get(), x=W, y=H)))
+    mw = np.array(cam.matrix_world)
+    out = []
+    for sx, sy in pts:
+        a = (sx - box[0]) / (box[2] - box[0]) * 2 - 1
+        b = 1 - (sy - box[1]) / (box[3] - box[1]) * 2
+        p0, p1 = Pi @ [a, b, -1, 1], Pi @ [a, b, 1, 1]
+        w0 = (mw @ np.r_[p0[:3] / p0[3], 1])[:3]
+        w1 = (mw @ np.r_[p1[:3] / p1[3], 1])[:3]
+        out.append((w0, (w1 - w0) / np.linalg.norm(w1 - w0)))
+    return out
+
+
+def _islands(obj):
+    bm = bmesh.new()
+    bm.from_mesh(obj.data)
+    bm.verts.ensure_lookup_table()
+    lab = -np.ones(len(bm.verts), int)
+    k = 0
+    for v in bm.verts:
+        if lab[v.index] >= 0:
+            continue
+        stack = [v]
+        while stack:
+            x = stack.pop()
+            if lab[x.index] < 0:
+                lab[x.index] = k
+                stack += [e.other_vert(x) for e in x.link_edges]
+        k += 1
+    bm.free()
+    return lab
+
+
+def rebuild_ears(cfg):
+    """The source ears were flat cones with a dimple: no rim, no concha, no lobe, and paler than the skin (the thin
+    shell let the subsurface light through).  New ears from the reference (sideR traced, see the README):
+    the outline is the mean of the sideR / q34R / front outlines moved onto the plane that fits all three best;
+    a closed slab of that outline (root pushed into the head) is voxel remeshed, the relief (_ear_relief) is
+    put on its front (the back follows the hollows), the free edges are rounded, then Blender's Smooth and
+    Decimate.  The left ear is the mirror image.  Their material is the skin with a shorter subsurface scale.
+    The bar, hoops and beads move to the traced piercing points (a ray from the sideR camera onto the new ear);
+    the bar is mirrored onto the left ear as in the reference."""
+    D, s = cfg['design'], cfg['shape']
+    tip, a1, a2, nv = (np.array(D[k], float) for k in ('tip', 'a1', 'a2', 'n'))
+    O = np.array(D['outline'], float)
+    i0, i1 = D['root_idx']
+    k = np.arange(len(O))
+    O += np.clip(np.minimum(k - (i0 - 3), (i1 + 3) - k) / 3, 0, 1)[:, None] * [s['root_ext'], 0]
+    O = _chaikin(np.r_[O, O[:1]], 3)[:-1]          # round every corner but the tip
+    ear = bpy.data.objects['HEAD_face_03']
+    mats = list(ear.data.materials)
+    em = bpy.data.materials.get(EAR_MATERIAL) or mats[0].copy()
+    em.name = EAR_MATERIAL
+    em.node_tree.nodes['Principled BSDF'].inputs['Subsurface Scale'].default_value = s['subsurface_scale']
+    T = s['thick']
+    pts = np.r_[tip + O[:, :1] * a1 + O[:, 1:] * a2 + T / 2 * nv, tip + O[:, :1] * a1 + O[:, 1:] * a2 - T / 2 * nv]
+    bm = bmesh.new()
+    vs = [bm.verts.new(p) for p in pts]
+    n = len(O)
+    bm.faces.new(vs[:n])
+    bm.faces.new(vs[n:][::-1])
+    for i in range(n):
+        j = (i + 1) % n
+        bm.faces.new([vs[j], vs[i], vs[n + i], vs[n + j]])
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    names = {o: o.data.name for o in (ear, bpy.data.objects['HEAD_face_02'])}
+    me = bpy.data.meshes.new(names[ear])
+    bm.to_mesh(me)
+    bm.free()
+    ear.data = me
+    me.materials.append(em)
+    set_local_mm(ear, pts)
+    _apply_modifier(ear, 'REMESH', mode='VOXEL', voxel_size=s['voxel_mm'] / 1000)
+    L = M.to_local(er.world(ear)) * 1000
+    q = L - tip
+    uv, w = np.c_[q @ a1, q @ a2], q @ nv
+    h = _ear_relief(uv, D, s)
+    front = np.clip(w / T + 0.5, 0, 1)
+    disp = front * h + (1 - front) * np.minimum(h, 0) * 0.9
+    c, r = D['bumps']['lobe']
+    disp -= (1 - front) * s['lobe_thick'] * _cos2(np.linalg.norm(uv - c, axis=1) / r)
+    f = np.clip(_line_dist(uv, np.r_[O, O[:1]]) / s['edge_r'], 0, 1)
+    f = np.sqrt(f * (2 - f))                       # bullnose edges
+    L = L + ((w - (w.max() + w.min()) / 2) * (f - 1) + disp * np.maximum(f, 0.25))[:, None] * nv
+    set_local_mm(ear, L)
+    _apply_modifier(ear, 'SMOOTH', factor=0.5, iterations=int(s['smooth_iterations']))
+    _apply_modifier(ear, 'DECIMATE', ratio=s['vertices'] / len(ear.data.vertices))
+    for poly in ear.data.polygons:
+        poly.use_smooth = True
+    q = M.to_local(er.world(ear)) * 1000 - tip     # a UV map like the old ears had: the ear plane, 0..1
+    uv = np.c_[q @ a1, q @ a2]
+    uv = (uv - uv.min(0)) / (uv.max(0) - uv.min(0)).max()
+    layer = ear.data.uv_layers.new(name='UVMap')
+    loops = np.empty(len(ear.data.loops), int)
+    ear.data.loops.foreach_get('vertex_index', loops)
+    layer.data.foreach_set('uv', uv[loops].astype(np.float32).ravel())
+    left = bpy.data.objects['HEAD_face_02']
+    me = ear.data.copy()
+    left.data = me
+    for o, name in names.items():                  # the old meshes go (the backups stay); the new ones take their names
+        old = bpy.data.meshes.get(name)
+        if old is not None and old is not o.data and old.users == 0:
+            bpy.data.meshes.remove(old)
+        o.data.name = name
+    set_local_mm(left, M.to_local(er.world(ear)) * 1000 * [-1, 1, 1])
+    bm = bmesh.new()
+    bm.from_mesh(me)
+    bmesh.ops.reverse_faces(bm, faces=bm.faces)
+    bm.to_mesh(me)
+    bm.free()
+    place_piercings(ear, nv, D['piercings'])
+    print('FACE_VOLUME ears rebuilt', len(ear.data.vertices), 'vertices each')
+
+
+def place_piercings(ear, nv, PI):
+    tree = BVHTree.FromPolygons([Vector(v) for v in er.world(ear)], [list(p.vertices) for p in ear.data.polygons])
+
+    def on_ear(pix, lift):
+        out = []
+        for o, d in _sheet_rays('sideR', pix):
+            loc, nrm, _, _ = tree.ray_cast(Vector(o), Vector(d))
+            out.append(M.to_local(np.array([loc + nrm * lift / 1000]))[0] * 1000)
+        return np.array(out)
+    hg, bar = bpy.data.objects['HEADGEAR_headgear'], bpy.data.objects['HEADGEAR_headgear_02']
+    Lh, Lb = M.to_local(er.world(hg)) * 1000, M.to_local(er.world(bar)) * 1000
+    lh, lb = _islands(hg), _islands(bar)
+    size = np.bincount(lb)
+    # bar: the tube, its caps and its two end balls (61 vertices) -> the traced ends on the lower rim
+    parts = [i for i in range(len(size)) if Lb[lb == i, 0].mean() < -110]
+    b0, b1 = sorted([i for i in parts if size[i] == 61], key=lambda i: Lb[lb == i, 2].mean())
+    e0, e1 = Lb[lb == b0].mean(0), Lb[lb == b1].mean(0)
+    t0, t1 = on_ear(PI['bar'], PI['lift'])
+    a, b = (e1 - e0) / np.linalg.norm(e1 - e0), (t1 - t0) / np.linalg.norm(t1 - t0)
+    v = np.cross(a, b)
+    K = np.array([[0, -v[2], v[1]], [v[2], 0, -v[0]], [-v[1], v[0], 0]])
+    Rm = np.eye(3) + K + K @ K / (1 + a @ b)
+    on_bar = np.isin(lb, parts)
+    Lb[on_bar] = (Lb[on_bar] - (e0 + e1) / 2) @ Rm.T + (t0 + t1) / 2
+    # hoops (front-most to the lobe) and their beads (97 vertices) -> the traced piercing points
+    holes = on_ear(PI['hoops'], 0.0)
+    for side in (-1, 1):
+        hoops = sorted([i for i in range(lh.max() + 1) if np.sign(Lh[lh == i, 0].mean()) == side],
+                       key=lambda i: Lh[lh == i, 2].mean())
+        beads = [i for i in range(len(size)) if size[i] == 97 and np.sign(Lb[lb == i, 0].mean()) == side]
+        tops = {i: Lh[lh == i][np.argsort(Lh[lh == i][:, 1])[-12:]].mean(0) for i in hoops}
+        dist = lambda order: sum(np.linalg.norm(Lb[lb == j].mean(0) - tops[i]) for i, j in zip(hoops, order))
+        beads = min((beads, beads[::-1]), key=dist)
+        for hi, bi, hole in zip(hoops, beads, holes * [-side, 1, 1]):
+            Lh[lh == hi] += hole + [0, PI['hoop_up'], 0] - tops[hi]
+            Lb[lb == bi] += hole + nv * [-side, 1, 1] * PI['bead_out'] - Lb[lb == bi].mean(0)
+    set_local_mm(hg, Lh)
+    set_local_mm(bar, Lb)
+    # the reference has the bar on the left ear too: a mirrored copy
+    inv = np.array(bar.matrix_world.inverted())
+    Wm = M.to_world(Lb[on_bar] * [-1, 1, 1] / 1000)
+    co = (np.c_[Wm, np.ones(len(Wm))] @ inv.T)[:, :3]
+    bm = bmesh.new()
+    bm.from_mesh(bar.data)
+    new = {i: bm.verts.new(c) for i, c in zip(np.flatnonzero(on_bar), co)}
+    for f in list(bm.faces):
+        ids = [v.index for v in f.verts]
+        if all(i in new for i in ids):
+            nf = bm.faces.new([new[i] for i in ids[::-1]])
+            nf.material_index, nf.smooth = f.material_index, f.smooth
+    bm.to_mesh(bar.data)
+    bm.free()
+
+
+def place_cheek_triangles(face, cfg):
+    """The green cheek triangle (a 45-vertex triangle grid, corners = vertices 0, 1, 2) lay 20-30 px too far back
+    in the 3/4 and side views (front view fine: there the cheek is seen edge-on).  New corners: skin points that
+    meet the reference corners in the front, 3/4 and side views (cfg['corners'], right side, head-frame mm; the
+    left side: cfg['corners_left'], else the mirror image).  Every vertex keeps its barycentric place; Blender's Shrinkwrap lays the
+    sheet back on the skin at cfg['offset_mm']."""
+    names = {cfg['right']: 1.0, cfg['left']: -1.0}
+    for name, sx in names.items():
+        obj = bpy.data.objects[name]
+        L = M.to_local(er.world(obj)) * 1000
+        C = L[:3]
+        A = np.c_[C[0] - C[2], C[1] - C[2]]
+        ab = np.linalg.lstsq(A, (L - C[2]).T, rcond=None)[0].T
+        bary = np.c_[ab, 1 - ab.sum(1)]
+        if sx < 0 and cfg.get('corners_left'):
+            # the left one measured on its own (q34L / sideL): the face and the reference are not exactly mirror images
+            new = np.array([cfg['corners_left'][k] for k in cfg['corner_names']], float)
+        else:
+            new = np.array([cfg['corners'][k] for k in cfg['corner_names']], float)
+            new[:, 0] *= sx
+        set_local_mm(obj, bary @ new)
+        er.apply_weighted_modifier(obj, np.ones(len(L)), 'SHRINKWRAP', target=face, wrap_method='NEAREST_SURFACEPOINT',
+                                   wrap_mode='ABOVE_SURFACE', offset=cfg['offset_mm'] / 1000)
+    print('FACE_VOLUME cheek triangles placed')
+
+
 def lift_coloured(obj, face, alpha, cfg):
     """Where a blush face with colour (alpha over lift_alpha at a corner) dips under the skin, the skin cuts the
     blush along a ragged line (a pale patch under the eye in the 3/4 views).  Its corners under the skin go to
@@ -798,6 +1105,8 @@ def keep_material(mat):
 
 
 def restore_materials():
+    if bpy.data.materials.get(EAR_MATERIAL) is not None and not bpy.data.materials[EAR_MATERIAL].users:
+        bpy.data.materials.remove(bpy.data.materials[EAR_MATERIAL])
     for name in DECAL_MATERIALS.values():
         mat = bpy.data.materials.get(name)
         if mat is None or SUFFIX not in mat:
@@ -1692,6 +2001,12 @@ def main():
             tuck_clear_edges(face, ['HEAD_skin_04', 'HEAD_skin'], p['tuck'])
         if p.get('blush'):
             paint_blush(face, ['HEAD_skin_04', 'HEAD_skin'], p['blush'])
+        if p.get('ears'):
+            turn_ears(p['ears'])
+        if p.get('ear_rebuild'):
+            rebuild_ears(p['ear_rebuild'])
+        if p.get('cheek_triangles'):
+            place_cheek_triangles(face, p['cheek_triangles'])
         seam_normals(face, pairs)
     if args.save:
         bpy.ops.wm.save_as_mainfile(filepath=args.save, compress=True)
