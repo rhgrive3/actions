@@ -2,6 +2,8 @@
 
 Status: not included in this PR.
 
+Draft implementation candidate: PR #61 (`inkwave/astra-loading-cache`). It remains here because native browser/PWA startup acceptance and user-visible timing are still pending.
+
 Problem:
 - startup feels heavy every time and warm starts are not sufficiently faster.
 
