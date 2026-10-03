@@ -1263,6 +1263,30 @@
    "x_fade": 15.0
   },
   {
+   "name": "chin_neck_fillet",
+   "kind": "warp",
+   "after_delta_smooth": true,
+   "protect_lips": false,
+   "vec_mm": [
+    0,
+    -15.0,
+    0
+   ],
+   "bumps": [
+    {
+     "centre": [
+      0.0,
+      -97.0,
+      41.0
+     ],
+     "rx": 40.0,
+     "ry": 8.0,
+     "rz": 16.0,
+     "front_only": false
+    }
+   ]
+  },
+  {
    "name": "jaw_tuck",
    "kind": "jaw_tuck",
    "after_delta_smooth": true,
