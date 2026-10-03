@@ -32,6 +32,11 @@ jobs:
         uses: actions/checkout@v6
         with:
           ref: main
+          filter: blob:none
+          sparse-checkout: |
+            inkwave-public
+            patches
+            scripts
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
@@ -43,11 +48,22 @@ jobs:
 
       # Minify every JS/CSS file in place (same module layout, same behaviour), tree-shake three.js to the symbols
       # the game uses and preload the module graph. Source of truth stays the readable inkwave-public/.
+      - name: Cache esbuild
+        id: esbuild-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules/esbuild
+            node_modules/@esbuild
+          key: ${{ runner.os }}-${{ runner.arch }}-esbuild-0.28.2
+
       - name: Build optimized site
         run: |
           set -euo pipefail
-          npm install --no-save --no-package-lock --no-audit --no-fund esbuild@0.28.2
-          node --experimental-vm-modules scripts/check-inkwave-patches.mjs
+          if [ "${{ steps.esbuild-cache.outputs.cache-hit }}" != "true" ]; then
+            npm install --no-save --no-package-lock --no-audit --no-fund esbuild@0.28.2
+          fi
+          node scripts/check-inkwave-patches.mjs --quick
           node scripts/build-inkwave.mjs inkwave-public _site
 
       - name: Upload INKWAVE site
