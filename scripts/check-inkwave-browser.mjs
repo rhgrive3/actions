@@ -28,6 +28,7 @@ if(process.argv.includes('--exact-source')) {
     if(key.startsWith('touch-layout/')) return 'patches/touch-layout/'+key.slice(13);
     if(key.startsWith('reliability/')) return 'patches/reliability/'+key.slice(12);
     if(key.startsWith('local-quality/')) return 'patches/local-quality/'+key.slice(14);
+    if(key.startsWith('loading-cache/')) return 'patches/loading-cache/'+key.slice(14);
     throw new Error('Unknown build input namespace: '+key);
   });
   Object.entries(manifest.files).forEach(([key,expected],i)=>{if(hash(fs.readFileSync(path.join(ROOT,files[i])))!==expected)throw new Error('Build input differs from manifest: '+key);});
