@@ -9,6 +9,7 @@ import { numericStatus } from './sync-inkwave-numeric-status.mjs';
 import { adaptTouchLayout } from '../patches/touch-layout/adapter.mjs';
 import { adaptReliability, RELIABILITY_ROOT } from '../patches/reliability/adapter.mjs';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const quick = process.argv.includes('--quick');
 const sourceArg = process.argv.indexOf('--source');
 const SRC = path.resolve(sourceArg >= 0 ? process.argv[sourceArg + 1] : path.join(ROOT, 'inkwave-public'));
 try {
@@ -25,6 +26,10 @@ try {
     const raw = value.index == null ? parameter.value : parameter.value[value.index];
     const actual = key.split('.').reduce((obj, name) => obj?.[name], profile);
     if (raw !== value.rawValue || !Number.isFinite(actual) || Math.abs(actual - raw * value.factor) > 1e-9) throw new Error(`Numeric conversion drift: ${key}`);
+  }
+  if (quick) {
+    console.log(`INKWAVE quick checks OK: upstream compatible; reference ${profile.referenceVersion}`);
+    process.exit(0);
   }
   const walk = directory => fs.readdirSync(directory, { withFileTypes: true }).flatMap(d => d.isDirectory() ? walk(path.join(directory, d.name)) : [path.join(directory, d.name)]);
   if (vm.SourceTextModule) {
