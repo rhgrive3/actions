@@ -56,8 +56,8 @@ export function adaptSource(rel, code) {
   if (rel === 'src/ui/hud.js') return "import { t as tr } from '../i18n.js';\n" + code;
   if (rel === 'src/ui/ui-icons.js') {
     return replaceOnce(code,
-      'return `<div class="iw-logo iw-logo--${size}">`;',
-      'return `<div class="iw-logo iw-logo--${size} notranslate" translate="no">`;',
+      'return `<div class="iw-logo iw-logo--${size}">',
+      'return `<div class="iw-logo iw-logo--${size} notranslate" translate="no">',
       'logo translation lock');
   }
   if (rel === 'index.html') {
