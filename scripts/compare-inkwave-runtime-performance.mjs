@@ -1,0 +1,22 @@
+#!/usr/bin/env node
+import fs from 'node:fs';
+import path from 'node:path';
+import {persistentDirectory,sampleStats} from './lib/inkwave-runtime-evidence.mjs';
+const option=name=>process.argv[process.argv.indexOf(name)+1];
+const before=JSON.parse(fs.readFileSync(option('--before'))),after=JSON.parse(fs.readFileSync(option('--after')));
+const errors=[];
+for(const [label,r]of [['before',before],['after',after]]){
+ if(r.status!=='passed')errors.push(label+' failed');
+ if(!r.sourceSha||!r.verifiedRuntimeFiles.includes('src/core/renderer.js'))errors.push(label+' missing active source receipt');
+}
+for(const k of ['cpu','cores','platform','quality','viewport','webgl','repetitions'])if(JSON.stringify(before.environment[k])!==JSON.stringify(after.environment[k]))errors.push('Different environment: '+k);
+if(after.inputStatus!=='synchronous'||after.input.length!==36)errors.push('Candidate input target regression');
+const scenarios=before.scenarios.map(b=>{
+ const a=after.scenarios.find(x=>x.scenario===b.scenario);if(!a||a.runs.length!==3||b.runs.length!==3){errors.push('Missing repeated scenario '+b.scenario);return {scenario:b.scenario};}
+ const normalize=r=>({frame:r.timings.frame,sceneMatrices:r.timings.sceneMatrices,count:r.counts.sceneMatrices,updates:r.counts.match,renderCalls:r.renderInfo?.calls,triangles:r.renderInfo?.triangles,heap:r.heap});
+ if(b.runs.some((r,i)=>r.fixedSteps!==a.runs[i].fixedSteps||r.counts.match!==a.runs[i].counts.match))errors.push('Different simulation work: '+b.scenario);
+ if(b.scenario==='battle'&&a.runs.some((r,i)=>!(r.counts.sceneMatrices<b.runs[i].counts.sceneMatrices)))errors.push('No repeated scene traversal reduction');
+ return{scenario:b.scenario,before:b.runs.map(normalize),after:a.runs.map(normalize),frameRunMedians:{before:sampleStats(b.runs.map(r=>r.timings.frame?.median).filter(Number.isFinite)),after:sampleStats(a.runs.map(r=>r.timings.frame?.median).filter(Number.isFinite))}};
+});
+const result={status:errors.length?'failed':'passed',baselineSha:before.sourceSha,sourceSha:after.sourceSha,contentHash:after.contentHash,errors,scenarios,input:{beforeStale:before.input.filter(r=>r.targetError>.5).length,afterStale:after.inputErrors.length},limitations:['Fixed-step CPU/render transaction profile; no live FPS or photon-latency claim','SwiftShader CPU-render time is not hardware GPU time','Timing differences require variance review; traversal counts are the acceptance metric']};
+const out=path.resolve(option('--out'));persistentDirectory(path.dirname(out));fs.writeFileSync(out+'.pending',JSON.stringify(result,null,2));fs.renameSync(out+'.pending',out);console.log(JSON.stringify({status:result.status,errors,input:result.input}));if(errors.length)process.exitCode=1;

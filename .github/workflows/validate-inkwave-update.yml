@@ -58,7 +58,7 @@ jobs:
           path: .ci-scratch/inkwave-patches/
           retention-days: 14
       - name: Verify motion verifier regressions
-        run: node --test scripts/tests/inkwave-motion-gates.test.mjs scripts/tests/inkwave-integration-workflow.test.mjs
+        run: node --test scripts/tests/inkwave-motion-gates.test.mjs scripts/tests/inkwave-integration-workflow.test.mjs scripts/tests/inkwave-runtime-evidence.test.mjs
       - name: Verify pinned primary numerical sources
         run: |
           python3 - <<'PY'
@@ -170,6 +170,20 @@ jobs:
       - name: Verify wall geometry through actual GTAO and GPU disposal
         if: matrix.suite == 'active'
         run: node scripts/check-inkwave-wall-render.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/wall" --profile-dir "$CI_STORAGE/cache/wall" --exact-source
+      - name: Compare runtime at immutable baseline and candidate
+        if: matrix.suite == 'active'
+        run: |
+          npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1
+          baseline_sha=5e28dbd16f7829aebd88052ff5f7fdf71f39fdad
+          baseline_checkout=/mnt/workspace/.dev-state/agent-work/checkouts/inkwave-runtime-performance-ui-ci-${{ github.run_id }}-${{ github.run_attempt }}/baseline
+          mkdir -p "$(dirname "$baseline_checkout")"
+          test "$(realpath "$(dirname "$baseline_checkout")")" = "$(dirname "$baseline_checkout")"
+          git fetch origin "$baseline_sha"
+          git worktree add --detach "$baseline_checkout" "$baseline_sha"
+          ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js" node "$baseline_checkout/scripts/build-inkwave.mjs" "$baseline_checkout/inkwave-public" "$CI_STORAGE/cache/runtime-baseline-site"
+          node scripts/check-inkwave-runtime-performance.mjs --site "$CI_STORAGE/cache/runtime-baseline-site" --evidence-dir "$CI_STORAGE/evidence/runtime-before" --playwright "$GITHUB_WORKSPACE/node_modules/playwright/index.mjs" --source-sha "$baseline_sha" --fixed-only --quality medium
+          node scripts/check-inkwave-runtime-performance.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/runtime-after" --playwright "$GITHUB_WORKSPACE/node_modules/playwright/index.mjs" --source-sha "$SOURCE_SHA" --fixed-only --quality medium --verify-render
+          node scripts/compare-inkwave-runtime-performance.mjs --before "$CI_STORAGE/evidence/runtime-before/runtime-result.json" --after "$CI_STORAGE/evidence/runtime-after/runtime-result.json" --out "$CI_STORAGE/evidence/runtime-comparison.json"
       - name: Verify the complete installed motion catalog
         if: matrix.suite == 'catalog'
         run: node scripts/check-inkwave-motion-catalog.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/catalog" --profile-dir "$CI_STORAGE/cache/catalog"
@@ -194,7 +208,7 @@ jobs:
           root=pathlib.Path(os.environ['CI_STORAGE'])/'evidence'
           suite=os.environ['BROWSER_SUITE']
           checks={
-            'active':['game/browser-result.json','motion/motion-result.json','motion-detail/motion-detail-result.json','flow/flow-render-result.json','wall/wall-render-result.json'],
+            'active':['game/browser-result.json','motion/motion-result.json','motion-detail/motion-detail-result.json','flow/flow-render-result.json','wall/wall-render-result.json','runtime-before/runtime-result.json','runtime-after/runtime-result.json','runtime-comparison.json'],
             'catalog':['catalog/motion-catalog-result.json'],
             'ui':['layout/touch-layout-result.json','reliability/reliability-browser-result.json','identity-touch/touch-layout-identity-result.json','identity-reliability/reliability-identity-result.json','responsive/responsive-result.json'],
           }[suite]
@@ -204,12 +218,22 @@ jobs:
           for name,report in reports.items():
             if name=='motion/motion-result.json': assert not report['errors'] and report['fixture']['scenarios']==10
             else: assert report['status']=='passed', name
-            if 'contentHash' in report: assert report['contentHash']==build['contentHash'], name
-          if suite=='active': assert reports['game/browser-result.json']['sourceSha']==os.environ['SOURCE_SHA']
+            if 'contentHash' in report and name!='runtime-before/runtime-result.json': assert report['contentHash']==build['contentHash'], name
+          if suite=='active':
+            assert reports['game/browser-result.json']['sourceSha']==os.environ['SOURCE_SHA']
+            assert reports['runtime-after/runtime-result.json']['sourceSha']==os.environ['SOURCE_SHA']
           receipt={'status':'passed','sourceSha':os.environ['SOURCE_SHA'],'contentHash':build['contentHash'],'suite':suite,'runId':os.environ['GITHUB_RUN_ID'],'runAttempt':os.environ['GITHUB_RUN_ATTEMPT'],'event':os.environ['GITHUB_EVENT_NAME'],'checks':checks}
           pending=root/'ci-result.json.pending'; pending.write_text(json.dumps(receipt,indent=2)+'\n'); pending.replace(root/'ci-result.json')
           print(json.dumps(receipt))
           PY
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: inkwave-browser-failure-${{ matrix.suite }}-${{ inputs.source_sha || github.sha }}
+          include-hidden-files: true
+          if-no-files-found: warn
+          path: ${{ env.CI_STORAGE }}/evidence/
+          retention-days: 14
       - uses: actions/upload-artifact@v4
         if: success()
         with:

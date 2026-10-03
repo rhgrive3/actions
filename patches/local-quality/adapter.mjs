@@ -19,6 +19,36 @@ export function replaceOnce(code, before, after, label) {
 }
 
 export function adaptQualitySource(rel, code) {
+  if (rel === 'src/core/renderer.js') {
+    return replaceOnce(code, '    this.composer.render();',
+      '    // Simulation/animation have committed transforms before this transaction.\n' +
+      '    // Beauty, normal/GTAO and nested sea reflection consume the same scene.\n' +
+      '    // Update its matrices once; restore ownership even if a pass throws.\n' +
+      '    const scene = this.scene, auto = scene.matrixWorldAutoUpdate;\n' +
+      '    if (!auto) { this.composer.render(); return; }\n' +
+      '    scene.updateMatrixWorld();\n' +
+      '    scene.matrixWorldAutoUpdate = false;\n' +
+      '    try { this.composer.render(); } finally { scene.matrixWorldAutoUpdate = auto; }',
+      'render scene matrix transaction');
+  }
+  if (rel === 'src/ui/menus.js') {
+    // Keep the logical target current even when touch uses the row's own tint
+    // or the screen entrance temporarily hides the floating ring.
+    code = replaceOnce(code,
+      '    if (!want) {\n      if (C.on)',
+      '    if (!want) {\n' +
+      '      if (f && f.isConnected && C.targetEl !== f) {\n' +
+      '        const r = f.getBoundingClientRect(), pad = f.dataset.curPad != null ? +f.dataset.curPad : 7;\n' +
+      '        C.targetEl = f;\n' +
+      '        C.x.target = r.left - pad; C.y.target = r.top - pad;\n' +
+      '        C.w.target = r.width + pad * 2; C.h.target = r.height + pad * 2;\n' +
+      '      }\n      if (C.on)',
+      'hidden cursor logical target');
+    return replaceOnce(code,
+      '    C.x.target = tx; C.y.target = ty; C.w.target = tw; C.h.target = th;',
+      '    C.targetEl = f;\n    C.x.target = tx; C.y.target = ty; C.w.target = tw; C.h.target = th;',
+      'cursor target owner');
+  }
   if (rel === 'src/ui/menu-art.js') {
     code = replaceOnce(code,
       'export function createPreview(key, ctx = {}) {',
