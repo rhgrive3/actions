@@ -43,9 +43,9 @@ try{
  const cdp=await context.newCDPSession(page);await cdp.send('Performance.enable');
  for(const scenario of (inputOnly?[]:menuOnly?['title','settings']:['title','settings','battle'])){
   await page.evaluate(async scenario=>{const g=probeG.game;g.menus.wipe.cancel();if(scenario==='battle'){window.resetRuntimeSeed();await g.startMatch({mapId:'tidewater',difficulty:'easy',duration:180,mode:'turf'});g.debug.freezeBots();}else g.menus.show(scenario,{wipe:false,light:false});},scenario);
-  await page.bringToFront();if(fixedOnly)await page.evaluate(scenario=>{const g=probeG.game;g.debug.freeze();g._skipRender=true;g.s3Clock?.reset();for(let i=0;i<(scenario==='battle'?270:30);i++)g._frame?.(1/60);g._skipRender=false;if(scenario==='battle'&&g.match.state!=='playing')throw Error('Battle warmup did not reach playing');},scenario);else await page.waitForTimeout(3000);console.log('Scenario ready '+scenario);
+  await page.bringToFront();if(fixedOnly)await page.evaluate(scenario=>{const g=probeG.game;g.debug.freeze();g._skipRender=true;g.s3Clock?.reset();for(let i=0;i<(scenario==='battle'?270:30);i++)g._frame?.(1/60);g._skipRender=false;if(scenario==='battle'&&g.match.state!=='playing')throw Error('Battle warmup did not reach playing');},scenario);else await page.waitForTimeout(3000);console.log('Scenario ready '+scenario);if(scenario==='battle')await page.evaluate(()=>probeG.game.debug.fire(true));
   // Instrument actual owners, retaining their receiver and return values.
-  await page.evaluate(()=>{window.counts={};window.timings={};window.restore=[];const G=probeG,g=G.game;for(const [name,o,key]of [['sceneMatrices',G.scene,'updateMatrixWorld'],['frame',g,'_frame'],['match',g.match,'update'],['paint',G.paint,'flush'],['fx',G.fx,'update'],['env',G.env,'update'],['decor',g.decor,'update'],['props',g.props,'update'],['render',g.R,'render'],['showcase',g.showcase,'update'],['menu',g.menus,'update'],['cursor',g.menus,'_updateCursor'],['hud',g,'_updateHud'],['minimap',g.minimap,'update']]){if(!o||typeof o[key]!=='function')continue;const old=o[key];o[key]=function(...a){const t=performance.now();try{return old.apply(this,a);}finally{counts[name]=(counts[name]||0)+1;(timings[name]??=[]).push(performance.now()-t);}};restore.push(()=>o[key]=old);}window.longtasks=[];window.ltObserver=new PerformanceObserver(l=>longtasks.push(...l.getEntries().map(x=>x.duration)));ltObserver.observe({type:'longtask',buffered:false});window.rafTimes=[];window.rafProbeOn=true;const tick=t=>{rafTimes.push(t);if(rafProbeOn)requestAnimationFrame(tick);};requestAnimationFrame(tick);});
+  await page.evaluate(()=>{window.counts={};window.timings={};window.restore=[];const G=probeG,g=G.game;for(const [name,o,key]of [['sceneMatrices',G.scene,'updateMatrixWorld'],['frame',g,'_frame'],['match',g.match,'update'],['character',g.match?.local?.character?.constructor.prototype,'update'],['projectiles',G.projectiles,'update'],['rig',g.rig,'update'],['screenfx',g.screenfx,'update'],['paint',G.paint,'flush'],['fx',G.fx,'update'],['env',G.env,'update'],['decor',g.decor,'update'],['props',g.props,'update'],['render',g.R,'render'],['showcase',g.showcase,'update'],['menu',g.menus,'update'],['cursor',g.menus,'_updateCursor'],['hud',g,'_updateHud'],['minimap',g.minimap,'update']]){if(!o||typeof o[key]!=='function')continue;const old=o[key];o[key]=function(...a){const t=performance.now();try{return old.apply(this,a);}finally{counts[name]=(counts[name]||0)+1;(timings[name]??=[]).push(performance.now()-t);}};restore.push(()=>o[key]=old);}window.longtasks=[];window.ltObserver=new PerformanceObserver(l=>longtasks.push(...l.getEntries().map(x=>x.duration)));ltObserver.observe({type:'longtask',buffered:false});window.rafTimes=[];window.rafProbeOn=true;const tick=t=>{rafTimes.push(t);if(rafProbeOn)requestAnimationFrame(tick);};requestAnimationFrame(tick);});
   const runs=[];
   for(let repeat=0;repeat<3;repeat++){
    await page.evaluate(()=>{counts={};timings={};longtasks=[];rafTimes=[];});
@@ -54,7 +54,7 @@ try{
    if(fixedOnly)await page.evaluate(()=>{const g=probeG.game;for(let i=0;i<30;i++)g._frame?.(1/60);});else await page.waitForTimeout(3000);
    const {profile}=await cdp.send('Profiler.stop');fs.writeFileSync(path.join(evidence,`${scenario}-${repeat}.cpuprofile`),JSON.stringify(profile));
    const after=(await cdp.send('Performance.getMetrics')).metrics;
-   const samples=await page.evaluate(()=>({counts,timings,longtasks,frames:rafTimes.slice(1).map((t,i)=>t-rafTimes[i]),heap:performance.memory?.usedJSHeapSize,menu:{hidden:document.hidden,current:probeG.game.menus.current,raf:probeG.game.menus._raf,extAge:performance.now()-probeG.game.menus._extTick},renderInfo:probeG.renderer?{calls:probeG.renderer.info.render.calls,triangles:probeG.renderer.info.render.triangles,geometries:probeG.renderer.info.memory.geometries,textures:probeG.renderer.info.memory.textures}:null,matchState:probeG.game.match?.state,quality:probeG.game.settings.quality,scale:probeG.game.R?.dynScale}));
+   const samples=await page.evaluate(()=>({counts,timings,longtasks,frames:rafTimes.slice(1).map((t,i)=>t-rafTimes[i]),heap:performance.memory?.usedJSHeapSize,menu:{hidden:document.hidden,current:probeG.game.menus.current,raf:probeG.game.menus._raf,extAge:performance.now()-probeG.game.menus._extTick},renderInfo:probeG.renderer?{calls:probeG.renderer.info.render.calls,triangles:probeG.renderer.info.render.triangles,geometries:probeG.renderer.info.memory.geometries,textures:probeG.renderer.info.memory.textures}:null,matchState:probeG.game.match?.state,gameplay:probeG.game.match?{time:probeG.game.match.time,actors:probeG.game.match.actors.map(a=>({pos:[a.pos.x,a.pos.y,a.pos.z],hp:a.hp,ink:a.ink,alive:a.alive,weapon:a.weaponId})),coverage:probeG.paint.coverage(),projectiles:probeG.projectiles.list.length}:null,quality:probeG.game.settings.quality,scale:probeG.game.R?.dynScale}));
    const metrics=Object.fromEntries(after.map(x=>[x.name,x.value]));for(const x of before)if(['TaskDuration','ScriptDuration','LayoutDuration','RecalcStyleDuration'].includes(x.name))metrics[x.name]-=x.value;
    runs.push({repeat,metrics,...samples,frames:stats(samples.frames),fixedSteps:fixedOnly?30:null,timings:Object.fromEntries(Object.entries(samples.timings).map(([k,v])=>[k,stats(v)])),longtasks:stats(samples.longtasks)});
   }
@@ -64,26 +64,44 @@ try{
  if(process.argv.includes('--verify-render')){
   result.renderParity=await page.evaluate(()=>{
    const G=probeG,g=G.game,r=G.renderer,gl=r.getContext(),native=r.render,w=gl.drawingBufferWidth,h=gl.drawingBufferHeight,out=[];
+   const moving=g.props.group,oldX=moving.position.x;
    g.debug.freeze();
    const read=()=>{const bytes=new Uint8Array(w*h*4);gl.readPixels(0,0,w,h,gl.RGBA,gl.UNSIGNED_BYTE,bytes);return bytes;};
-   for(let i=0;i<3;i++){
-    // Counterfactual: restore the native automatic update before every game-scene pass,
-    // including nested reflection. No simulation/animation advance between the two images.
+   try{for(let i=0;i<3;i++){
+    // Fresh transform FIRST: a missing initial update must fail, even when an
+    // earlier frozen image had valid matrices. This modifies only the render fixture.
+    moving.position.x=oldX+.1*(i+1);r.shadowMap.needsUpdate=true;G.env._reflFrame=-1;
+    g.R.render();const a=read();
     r.render=function(scene,camera){if(scene===G.scene&&!scene.matrixWorldAutoUpdate)scene.updateMatrixWorld();return native.call(this,scene,camera);};
-    let a,b;try{g.R.render();a=read();}finally{r.render=native;}
-    g.R.render();b=read();let changed=0,maxDelta=0;
+    let b;try{r.shadowMap.needsUpdate=true;G.env._reflFrame=-1;g.R.render();b=read();}finally{r.render=native;}
+    let changed=0,maxDelta=0;
     for(let j=0;j<a.length;j++)if(a[j]!==b[j]){changed++;maxDelta=Math.max(maxDelta,Math.abs(a[j]-b[j]));}
-    out.push({repeat:i,width:w,height:h,changedChannels:changed,maxDelta,nonempty:a.some(v=>v!==0),sceneAutoRestored:G.scene.matrixWorldAutoUpdate});
-   }
+    out.push({repeat:i,width:w,height:h,changedChannels:changed,maxDelta,nonempty:a.some(v=>v!==0),freshTransform:Math.abs(moving.matrixWorld.elements[12]-moving.position.x)<1e-6,sceneAutoRestored:G.scene.matrixWorldAutoUpdate});
+   }}finally{moving.position.x=oldX;r.render=native;G.scene.updateMatrixWorld();}
    return out;
   });
-  if(result.renderParity.some(r=>!r.nonempty||r.changedChannels||!r.sceneAutoRestored))result.errors.push('Render matrix transaction pixel parity failed');
+  if(result.renderParity.some(r=>!r.nonempty||!r.freshTransform||r.changedChannels||!r.sceneAutoRestored))result.errors.push('Render matrix transaction pixel parity failed');
  }
  // Pause the game owner, then dispatch real menu entry points in one task.
  // A stale target here proves an extra engine-tick dependency independent of GPU.
  await page.evaluate(()=>{const g=probeG.game;g.debug.freeze();g.menus.wipe.cancel();g.menus.show('settings',{wipe:false,light:false});});
  await page.waitForTimeout(1500);
- result.input=await page.evaluate(()=>{const m=probeG.game.menus;const out=[];for(const mode of ['kbm','pad','touch'])for(let i=0;i<12;i++){m.setInputMode(mode);const rows=m._candidates().filter(e=>e.dataset.nav==='row');const a=rows[i%Math.max(1,rows.length-1)],b=rows[i%Math.max(1,rows.length-1)+1];m._setFocus(a,{snap:true});m._updateCursor(1/60);const oldVisual={x:m._cur.x.x,y:m._cur.y.x};const t=performance.now();if(mode==='touch')b.dispatchEvent(new PointerEvent('pointerdown',{pointerType:'touch',bubbles:true}));else if(mode==='kbm')window.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowDown',code:'ArrowDown',bubbles:true,cancelable:true}));else m.nav('down');const focus=m._focus,r=focus.getBoundingClientRect(),pad=focus.dataset.curPad!=null?+focus.dataset.curPad:7;out.push({mode,entry:mode==='pad'?'Menus.nav (after gamepad polling)':mode==='kbm'?'DOM keydown':'DOM pointerdown',state:focus!==a,targetError:Math.hypot(m._cur.x.target-(r.left-pad),m._cur.y.target-(r.top-pad)),syncMs:performance.now()-t,ringOn:m._cur.on,oldVisual,visual:{x:m._cur.x.x,y:m._cur.y.x},transform:m.cursorEl.style.transform});m._updateCursor(1/60);}return out;});
+ result.input=await page.evaluate(()=>{const m=probeG.game.menus;const out=[];for(const mode of ['kbm','pad','touch'])for(let i=0;i<12;i++){m.setInputMode(mode);const rows=m._candidates().filter(e=>e.dataset.nav==='row');const a=rows[i%Math.max(1,rows.length-1)],b=rows[i%Math.max(1,rows.length-1)+1];m._setFocus(a,{snap:true});m._updateCursor(1/60);const oldVisual={x:m._cur.x.x,y:m._cur.y.x};const t=performance.now();if(mode==='touch')b.dispatchEvent(new PointerEvent('pointerdown',{pointerType:'touch',bubbles:true}));else if(mode==='kbm')window.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowDown',code:'ArrowDown',bubbles:true,cancelable:true}));else if(probeG.game.input){const inp=probeG.game.input,prev=inp.padPrev,desc=Object.getOwnPropertyDescriptor(navigator,'getGamepads');const fake={connected:true,mapping:'standard',axes:[0,0,0,0],buttons:Array.from({length:16},(_,i)=>({pressed:i===13,value:i===13?1:0}))};try{Object.defineProperty(navigator,'getGamepads',{configurable:true,value:()=>[fake]});inp.padPrev=[];inp.pollPad();probeG.game._padMenus();}finally{inp.padPrev=prev;inp.padPressed.clear();if(desc)Object.defineProperty(navigator,'getGamepads',desc);else delete navigator.getGamepads;}}else m.nav('down');const focus=m._focus,r=focus.getBoundingClientRect(),pad=focus.dataset.curPad!=null?+focus.dataset.curPad:7;out.push({mode,entry:mode==='pad'?(probeG.game.input?'navigator.getGamepads -> Input.pollPad -> Game._padMenus -> Menus.nav':'Menus.nav fixture'):mode==='kbm'?'DOM keydown':'DOM pointerdown',state:focus!==a,targetError:Math.hypot(m._cur.x.target-(r.left-pad),m._cur.y.target-(r.top-pad)),syncMs:performance.now()-t,ringOn:m._cur.on,oldVisual,visual:{x:m._cur.x.x,y:m._cur.y.x},transform:m.cursorEl.style.transform});m._updateCursor(1/60);}return out;});
+ result.menuLifecycle=await page.evaluate(()=>{
+  const m=probeG.game.menus,old=m._tick,hidden=[];let ticks=0;
+  m._tick=function(...args){ticks++;return old.apply(this,args);};
+  try{m.show(null,{wipe:false,instantLeave:true});for(let repeat=0;repeat<3;repeat++){ticks=0;for(let i=0;i<600;i++)m.update(1/60);hidden.push({repeat,ticks,raf:m._raf});}m.show('settings',{wipe:false,light:false});ticks=0;m.update(1/60);return{hidden,resumedTicks:ticks};}finally{m._tick=old;}
+ });
+ result.menuLifetime=await page.evaluate(async()=>{
+  const M=probeG.game.menus.constructor,fonts=document.fonts,added=new Set(),observed=new Set(),add=fonts.addEventListener,remove=fonts.removeEventListener,observe=ResizeObserver.prototype.observe,disconnect=ResizeObserver.prototype.disconnect;
+  fonts.addEventListener=function(type,fn,...args){if(type==='loadingdone')added.add(fn);return add.call(this,type,fn,...args);};
+  fonts.removeEventListener=function(type,fn,...args){if(type==='loadingdone')added.delete(fn);return remove.call(this,type,fn,...args);};
+  ResizeObserver.prototype.observe=function(...args){observed.add(this);return observe.apply(this,args);};
+  ResizeObserver.prototype.disconnect=function(){observed.delete(this);return disconnect.call(this);};
+  const results=[];
+  try{for(let repeat=0;repeat<3;repeat++){for(let i=0;i<20;i++){const root=document.createElement('div');document.body.append(root);const m=new M(root);m.dispose();root.remove();}await Promise.resolve();results.push({repeat,disposed:(repeat+1)*20,fontListeners:added.size,observedOwners:observed.size});}}finally{fonts.addEventListener=add;fonts.removeEventListener=remove;ResizeObserver.prototype.observe=observe;ResizeObserver.prototype.disconnect=disconnect;}
+  return results;
+ });
  result.emptyWindows=invalidWindows(result.scenarios,fixedOnly);
  result.inputErrors=result.input.filter(r=>!r.state||r.targetError>.5);result.inputStatus=result.inputErrors.length?'stale':'synchronous';
  result.status=result.errors.length||result.emptyWindows.length?'failed':'passed';

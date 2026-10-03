@@ -13,6 +13,7 @@ export function installMenuQuality(Menus, env=globalThis){
   // frame immediately; the engine's next cursor tick subtracts that credit.
   // This starts visual motion now without an extra rAF or double advancement.
   if(cursor)P._updateCursor=function(dt){
+    if(!this._cur.on||this._cur.snapNext)this._qualityCursorCredit=0;
     if(dt>0&&this._qualityCursorCredit){
       const credit=this._qualityCursorCredit;
       this._qualityCursorCredit=Math.max(0,credit-dt);dt=Math.max(0,dt-credit);
@@ -25,8 +26,10 @@ export function installMenuQuality(Menus, env=globalThis){
     const elapsed=m._qualityCursorAt==null?0:Math.max(0,(now-m._qualityCursorAt)/1000);
     const step=m._frozen?.()?0:Math.min(1/60,elapsed)*(m.timeScale>0?m.timeScale:1);
     if(!m._focus?.isConnected)m._cur.targetEl=null;
+    const advancing=step>0&&m._cur.on&&!m._cur.snapNext;
     cursor.call(m,step);m._qualityCursorAt=now;
-    m._qualityCursorCredit=(m._qualityCursorCredit||0)+step;
+    if(advancing&&m._cur.on)m._qualityCursorCredit=(m._qualityCursorCredit||0)+step;
+    else if(!m._cur.on||!advancing)m._qualityCursorCredit=0;
   }
   // Logical selection, geometric target and first visual step all commit in
   // this task, including touch's own-row highlight and deselection.

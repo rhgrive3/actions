@@ -231,6 +231,7 @@ jobs:
           if suite=='active':
             assert reports['game/browser-result.json']['sourceSha']==os.environ['SOURCE_SHA']
             assert reports['runtime-after/runtime-result.json']['sourceSha']==os.environ['SOURCE_SHA']
+            assert reports['runtime-before/runtime-result.json']['sourceSha']=='5e28dbd16f7829aebd88052ff5f7fdf71f39fdad'
           receipt={'status':'passed','sourceSha':os.environ['SOURCE_SHA'],'contentHash':build['contentHash'],'suite':suite,'runId':os.environ['GITHUB_RUN_ID'],'runAttempt':os.environ['GITHUB_RUN_ATTEMPT'],'event':os.environ['GITHUB_EVENT_NAME'],'checks':checks}
           pending=root/'ci-result.json.pending'; pending.write_text(json.dumps(receipt,indent=2)+'\n'); pending.replace(root/'ci-result.json')
           print(json.dumps(receipt))

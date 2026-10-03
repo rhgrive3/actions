@@ -48,3 +48,8 @@ test('cursor source connections fail closed on upstream drift and double applica
  const raw=read('inkwave-public/src/ui/menus.js');assert.throws(()=>adaptQualitySource('src/ui/menus.js',raw.replace('    if (!want) {','    if (!want) /* drift */ {')),/quality patch conflict/);
  assert.throws(()=>adaptQualitySource('src/ui/menus.js',adaptQualitySource('src/ui/menus.js',raw)),/quality patch conflict/);
 });
+test('snap and touch-hide do not spend spring credit; frozen snap keeps native semantics',()=>{
+ const {m,el,time}=fixture(),a=el(10,20,'row'),b=el(100,120,'row');m._setFocus(a);m._updateCursor(1/60);time(12);m._setFocus(b,{snap:true});assert.equal(m._qualityCursorCredit,0);
+ time(24);m.setInputMode('touch');assert.equal(m._qualityCursorCredit,0);assert.equal(m._cur.on,false);
+ m.setInputMode('kbm');m._frozen=()=>true;time(36);m._setFocus(a,{snap:true});assert.equal(m._cur.x.x,3);assert.equal(m._cur.x.target,3);assert.equal(m._qualityCursorCredit,0);
+});

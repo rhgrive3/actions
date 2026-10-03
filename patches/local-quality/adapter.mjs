@@ -32,6 +32,25 @@ export function adaptQualitySource(rel, code) {
       'render scene matrix transaction');
   }
   if (rel === 'src/ui/menus.js') {
+    code = replaceOnce(code,
+      "    if (typeof ResizeObserver !== 'undefined') new ResizeObserver(this._refit).observe(this.el);",
+      "    if (typeof ResizeObserver !== 'undefined') { this._qualityFitObserver = new ResizeObserver(this._refit); this._qualityFitObserver.observe(this.el); }",
+      'menu fit observer owner');
+    code = replaceOnce(code,
+      '    this._refit = () => { if (!this._fitQ)',
+      '    this._refit = () => { if (!this._qualityDisposed && !this._fitQ)',
+      'retired menu fit guard');
+    code = replaceOnce(code,
+      '  dispose() {\n    cancelAnimationFrame(this._raf);\n    this.wipe.cancel();\n    this.el.remove();\n  }',
+      '  dispose() {\n' +
+      '    this._qualityDisposed = true;\n' +
+      '    cancelAnimationFrame(this._raf); cancelAnimationFrame(this._fitQ); this._fitQ = 0;\n' +
+      '    this._qualityFitObserver?.disconnect(); this._qualityFitObserver = null;\n' +
+      "    window.removeEventListener('resize', this._refit);\n" +
+      "    document.fonts?.removeEventListener?.('loadingdone', this._refit);\n" +
+      '    safeCall(() => this._scr?.destroy?.()); this._scr = null; this._cur.targetEl = null;\n' +
+      '    this.wipe.cancel();\n    this.el.remove();\n  }',
+      'menu fit lifetime');
     // Keep the logical target current even when touch uses the row's own tint
     // or the screen entrance temporarily hides the floating ring.
     code = replaceOnce(code,
