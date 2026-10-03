@@ -1355,7 +1355,7 @@
    "dive": {
     "from_mm": 8,
     "len_mm": 8,
-    "mm": 4,
+    "mm": 7,
     "z_front": [
      20,
      40
