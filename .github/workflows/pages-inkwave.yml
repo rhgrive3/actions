@@ -1,13 +1,18 @@
 name: Publish INKWAVE to Pages
 
 on:
-  # Legacy branch-based Pages currently publishes main as a text site on every push.
-  # Always rebuild INKWAVE too, regardless of which files changed.
   push:
     branches: [main]
+    paths:
+      - "inkwave-public/**"
+      - "scripts/build-inkwave.mjs"
+      - "scripts/check-inkwave-patches.mjs"
+      - "patches/splatoon3/**"
+      - "patches/touch-layout/**"
+      - "patches/reliability/**"
+      - ".github/workflows/pages-inkwave.yml"
   workflow_dispatch:
 permissions:
-  actions: read
   contents: read
   pages: write
   id-token: write
@@ -18,7 +23,6 @@ concurrency:
 
 jobs:
   deploy:
-    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -50,38 +54,6 @@ jobs:
         uses: actions/upload-pages-artifact@v4
         with:
           path: _site
-
-      - name: Wait for legacy Pages build to finish
-        if: ${{ github.event_name == 'push' }}
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REPO: ${{ github.repository }}
-          SHA: ${{ github.sha }}
-        run: |
-          set -euo pipefail
-          done_legacy=0
-          for _ in $(seq 1 48); do
-            runs="$(curl -fsSL \
-              -H "Accept: application/vnd.github+json" \
-              -H "Authorization: Bearer $GH_TOKEN" \
-              -H "X-GitHub-Api-Version: 2026-03-10" \
-              "https://api.github.com/repos/$REPO/actions/runs?head_sha=$SHA&per_page=100")"
-            state="$(printf '%s' "$runs" | jq -r '
-              [.workflow_runs[] | select(.name == "pages build and deployment" and .event == "dynamic")] as $p
-              | if ($p|length)==0 then "missing"
-                elif all($p[]; .status=="completed") then "completed"
-                else "running" end
-            ')"
-            echo "legacy Pages state: $state"
-            if [ "$state" = completed ]; then
-              done_legacy=1
-              break
-            fi
-            sleep 5
-          done
-          if [ "$done_legacy" -ne 1 ]; then
-            echo "::warning::Legacy Pages run did not finish within 4 minutes; deploying INKWAVE anyway."
-          fi
 
       - name: Deploy to GitHub Pages
         id: deployment
