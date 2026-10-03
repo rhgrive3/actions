@@ -1226,7 +1226,6 @@
    "kind": "jaw_tuck",
    "after_delta_smooth": true,
    "protect_lips": false,
-   "weight_smooth": 10,
    "line": [
     [
      -10,
@@ -1273,27 +1272,63 @@
      -102
     ]
    ],
-   "depth": 8,
-   "depth_back": 14,
+   "depth": 4,
+   "depth_back": 30,
    "z_ramus": [
-    15.0,
-    30.0
+    10,
+    30
    ],
    "z_front": [
-    30,
-    52
+    45,
+    70
    ],
    "z_back": [
     -30.0,
     -15.0
    ],
-   "neck": {
-    "zc": 8,
-    "half_x": 38,
-    "half_z": 42
-   },
-   "inside_mm": 2.5,
-   "min_x": 30
+   "offset_mm": 1.0
+  },
+  {
+   "name": "jaw_line_smooth",
+   "kind": "smooth",
+   "factor": 0.5,
+   "protect_lips": false,
+   "after_delta_smooth": true,
+   "bumps": [
+    {
+     "centre": [
+      40.0,
+      -88.0,
+      30.0
+     ],
+     "rx": 30.0,
+     "ry": 16.0,
+     "rz": 45.0,
+     "front_only": false
+    }
+   ],
+   "iters": 30
+  },
+  {
+   "name": "jaw_notch_smooth",
+   "kind": "smooth",
+   "factor": 0.5,
+   "protect_lips": false,
+   "after_delta_smooth": true,
+   "iters": 60,
+   "bumps": [
+    {
+     "centre": [
+      25.0,
+      -95.0,
+      50.0
+     ],
+     "rx": 16.0,
+     "ry": 10.0,
+     "rz": 16.0,
+     "front_only": false
+    }
+   ]
   }
  ],
  "delta_smooth": {
@@ -1346,7 +1381,7 @@
  },
  "cornea": {
   "coat": 0.0,
-  "specular": 0.1
+  "specular": 0.03
  },
  "iris_up": {
   "px": 4.5,
@@ -1458,20 +1493,25 @@
   "up": 4,
   "floor": 0.05,
   "rim": 5.0,
-  "strength": 1.0,
+  "strength": 1.1,
   "max_ratio": 1.05,
   "bare": "analysis/face_volume/bare_front.png",
   "below_lip": {
    "centre": 180.2,
-   "y": 193.0,
+   "y": 190.0,
    "half_width": 28.0,
    "rise": 4.5,
    "fade": 2.5
-  }
+  },
+  "tint": [
+   1.064,
+   1.124,
+   1.404
+  ]
  },
  "mouth_line": {
-  "width_mm": 0.6,
-  "mid_width_mm": 0.55,
+  "width_mm": 0.5,
+  "mid_width_mm": 0.45,
   "mid_at": 0.45,
   "end_width_mm": 0.3,
   "taper": 0.3,
@@ -1493,9 +1533,9 @@
  },
  "skin": {
   "base_colour": [
-   0.554,
-   0.249,
-   0.108
+   0.5785,
+   0.265,
+   0.1244
   ],
   "bsdf": {
    "Subsurface Weight": 0.5,
@@ -1541,7 +1581,7 @@
   "min_facing": 0.35,
   "gain": 0.06,
   "floor": 0.5,
-  "max": 0.45,
+  "max": 0.4,
   "max_factor": 3.0,
   "relax": 6,
   "combine": "max",
@@ -1559,7 +1599,7 @@
    "RIM",
    "RIM2"
   ],
-  "catch_energy": 6.0,
+  "catch_energy": 0.0,
   "catch_angle": 0.03,
   "catch_dir": [
    -0.45,
@@ -1569,7 +1609,11 @@
   "shade_from_m": 0.0,
   "shade_to_m": 0.007,
   "shade_min": 0.25,
-  "emission": 0.15
+  "emission": 0.15,
+  "keep_white": [
+   0.85,
+   0.95
+  ]
  },
  "ears": {
   "angle_deg": 16.0,
@@ -2245,5 +2289,55 @@
     49.73
    ]
   }
+ },
+ "eye_paint": {
+  "iris_r": 91.5,
+  "find_r": 70,
+  "grow": 3,
+  "core": [
+   5.0,
+   3.5
+  ],
+  "soft": 1.2,
+  "dots": {
+   "Image_1": [
+    [
+     1,
+     10
+    ],
+    [
+     -16,
+     7
+    ]
+   ],
+   "Image_0": [
+    [
+     3,
+     6
+    ],
+    [
+     1,
+     -6
+    ]
+   ]
+  },
+  "sclera": {
+   "white": [
+    0.8,
+    0.79,
+    0.79
+   ],
+   "rows": [
+    150,
+    175
+   ],
+   "iris_pad": [
+    1,
+    5
+   ],
+   "amount": 1.0
+  },
+  "find_min": 0.15,
+  "find_sat": 0.1
  }
 }
