@@ -164,4 +164,7 @@ html:not(.iw-touch-ui) .iwr-pausescr { overflow: hidden auto; }
   html:not(.iw-touch-ui) .iwr-pause { position: relative; inset: auto; width: auto; max-width: none; margin: 0 16px 80px; overflow: visible; }
   html:not(.iw-touch-ui) .iwr-wchips { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
+/* wide desktop: three travel columns so the whole pause panel fits a 720p screen; Japanese weapon names sit tighter */
+@media (min-width: 1100px) { html:not(.iw-touch-ui) .iw-ui:not(.is-touch) .iwr-zbtns { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+html:lang(ja) .iwr-wchip b { letter-spacing: -.04em; font-size: calc(var(--u) * 1); }
 @media (max-width: 520px) { .iwr-zbtns { grid-template-columns: minmax(0, 1fr); } }

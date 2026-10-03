@@ -6,6 +6,8 @@
 //   src/world/maps.js            the 'range' layout joins MAP_LAYOUTS (not MAPS: no stage picker ever lists it)
 //   src/world/stages/index.js    the stage-module registry (props, murals) gains the range stage
 //   src/world/stages/surfaces.js the range's three texlib surfaces on slots 31–33
+//   src/world/levelMaterial.js   measuring lines drawn from world coordinates, only on slots 31 (floors) / 32 (walls)
+//   src/ui/hud.js                upstream bug fix: the missing `isJa` import (see the branch below)
 //   src/main.js                  startMatch resolves 'range' (humans-only, no bots), the attract backdrop stays empty on
 //                                the range, the turf-war state presentation skips range matches, installPracticeRange()
 //   index.html                   the range stylesheet

@@ -157,10 +157,12 @@ export const TRAVEL = [
   { id: 'special', zone: 'special', pos: [SPECIAL_STAND[0], 0, SPECIAL_STAND[1] - 9], yaw: 0 },
 ];
 
+// Half-open rects ([x0, x1) × [z0, z1)): a point on a shared edge belongs to the zone that starts there, so a player on
+// the firing line (z = 0) reads as standing in the lane / gallery they shoot into, not in the hub behind it.
 export function zoneAt(x, z) {
   for (const [id, zn] of Object.entries(ZONES)) {
     const [x0, x1, z0, z1] = zn.rect;
-    if (x >= x0 && x <= x1 && z >= z0 && z <= z1) return id;
+    if (x >= x0 && x < x1 && z >= z0 && z < z1) return id;
   }
   return null;
 }

@@ -159,6 +159,8 @@ function rangePause(menus) {
   return {
     el, initial: btns[0],
     onBack: () => menus._resume(),
+    // the panel scrolls on short screens: keep the keyboard / pad focus in view
+    onFocus: (f) => { if (f && panel.contains(f)) safeCall(() => f.scrollIntoView({ block: 'nearest', inline: 'nearest' })); },
   };
 }
 
