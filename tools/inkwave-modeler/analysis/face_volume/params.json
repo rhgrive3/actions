@@ -1401,6 +1401,27 @@
    ]
   },
   {
+   "name": "ramus_back_smooth",
+   "kind": "smooth",
+   "factor": 0.5,
+   "protect_lips": false,
+   "after_delta_smooth": true,
+   "iters": 150,
+   "bumps": [
+    {
+     "centre": [
+      40.0,
+      -79.0,
+      -5.0
+     ],
+     "rx": 14.0,
+     "ry": 14,
+     "rz": 36,
+     "front_only": false
+    }
+   ]
+  },
+  {
    "name": "neck_normals",
    "kind": "neck_normals",
    "after_delta_smooth": true,
