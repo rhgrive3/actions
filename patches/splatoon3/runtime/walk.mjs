@@ -11,7 +11,7 @@ const ease=x=>{const u=clamp(x,0,1);return u*u*u*(10+u*(6*u-15));};
 const damp=(a,b,rate,dt)=>mix(a,b,1-Math.exp(-rate*dt));
 const angle=x=>Math.atan2(Math.sin(x),Math.cos(x));
 const cycle=x=>x-Math.floor(x+.5);
-const state=ch=>{let s=states.get(ch);if(!s){s={active:false,pitch:0,pitchV:0,roll:0,rollV:0,vx:0,vz:0,target:new api.THREE.Vector3(),support:new api.THREE.Vector3()};states.set(ch,s);}return s;};
+const state=ch=>{let s=states.get(ch);if(!s){s={active:false,pitch:0,pitchV:0,roll:0,rollV:0,vx:0,vz:0,target:new api.THREE.Vector3(),support:new api.THREE.Vector3(),supportParent:new api.THREE.Vector3(),supportQ:new api.THREE.Quaternion()};states.set(ch,s);}return s;};
 function eligible(ch){
   const T=api.CHARACTER_TIMERS, tr=ch.tr;
   return ch.kidForm&&ch.grounded&&!ch.dance&&ch.kidScale>.5&&specialMotionAllowsFootPlant(ch,tr[T.T_LEAP]>1.9&&tr[T.T_SLAM]>1.4)&&dualiesMotionAllowsFootPlant(ch,tr[T.T_DODGE]>ch.dodgeDur*.86)&&tr[T.T_SPAWN]>1.4;
@@ -247,13 +247,17 @@ export function walkFootReach(ch,f){
 // native kid-space targets and limb lengths; no actor or foot clocks change.
 export function walkPelvisDrop(ch,nativeDrop){
   const s=states.get(ch);if(!s?.active)return nativeDrop;
-  const C=api.CHARACTER_CHANNELS,hips=ch.bones.hips;
+  const C=api.CHARACTER_CHANNELS;
   let drop=nativeDrop;
   for(let i=0;i<2;i++){
     const f=ch.feet[i],weight=ch.P[i===0?C.WPL:C.WPR]*ch.plantW*(ch.feetValid?1:0);
     if(!f.planted||weight<.999)continue;
     const leg=i===0?ch.limbs.legL:ch.limbs.legR,ft=i===0?ch._fL:ch._fR;
-    const hip=s.support.copy(leg.up.position).applyQuaternion(hips.quaternion).add(hips.position);
+    // Mirror Character._solveLimb's actual IK origin.  Using hips directly
+    // misses intermediate parent transforms during a turn/reversal and can
+    // make a fully weighted planted ankle just unreachable, visibly sliding it.
+    ch._kidXform(leg.up.parent,s.supportParent,s.supportQ);
+    const hip=s.support.copy(leg.up.position).applyQuaternion(s.supportQ).add(s.supportParent);
     const hx=ft.x-hip.x,hz=ft.z-hip.z,reach=(leg.a+leg.b)*.9995;
     const vertical=Math.sqrt(Math.max(0,reach*reach-hx*hx-hz*hz));
     drop=Math.max(drop,hip.y-ft.y-vertical+1e-6);
