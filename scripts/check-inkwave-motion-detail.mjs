@@ -103,8 +103,13 @@ export function validateDetailResult(result) {
     if(scenario.type==='blaster'&&(samples.some(s=>s.weapon.pump!==0)||events.filter(e=>e.name==='fireBlaster').length<2))throw Error('Unsupported Blaster pump or missing repeated release');
     if(scenario.type==='splatling'&&(!samples.some(s=>s.weapon.barrelSpeed>40)||events.filter(e=>e.name==='fireSplatling').length<2||tail.some(s=>s.runnerStreaming||s.weapon.barrelSpeed!==0)||tail.some(s=>Math.abs(s.weapon.barrelAngle-tail[0].weapon.barrelAngle)>1e-10)))throw Error('Heavy cluster spin/coast did not finish');
     if(scenario.type==='shooter') {
-      finite(row.fireInterval,name+'.fireInterval');const interval=Math.round(row.fireInterval*60),shots=events.filter(e=>e.name==='fireShooter');
-      if(interval<1||Math.abs(interval/60-row.fireInterval)>1e-8||shots.length!==Math.ceil(100/interval)||shots.some((e,i)=>e.frame!==i*interval))throw Error('Shooter actual shot stream regression: '+name);
+      finite(row.fireInterval,name+'.fireInterval'); finite(row.firstShotDelay,name+'.firstShotDelay');
+      const interval=Math.round(row.fireInterval*60),shots=events.filter(e=>e.name==='fireShooter');
+      // The configured N-frame first-shot gate fires on the Nth simulation tick
+      // (zero-based frame N-1); subsequent shots still follow native cadence.
+      const first=Math.max(0,Math.ceil(row.firstShotDelay*60-1e-9)-1);
+      const expectedShots=first<100?Math.floor((99-first)/interval)+1:0;
+      if(interval<1||Math.abs(interval/60-row.fireInterval)>1e-8||shots.length!==expectedShots||shots.some((e,i)=>e.frame!==first+i*interval))throw Error('Shooter actual shot stream regression: '+name);
       if(!(peak>.003)||tail.some(s=>Math.abs(s.rcP)>=.001||Math.abs(s.rcZ)>=.001))throw Error('Shooter actual recoil/recovery regression: '+name);
       if(samples.some(s=>s.ik.slice(0,2).some(e=>e>=.02)))throw Error('Shooter native arm reach regression: '+name);
     }
@@ -367,7 +372,7 @@ await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0
           }
           if([21,29,30,45,75,95,110,111,145,160,165,200,239,310,360,419].includes(frame))renderMetrics.push(capture(scenario,frame,ch,actor));
         }
-        data.push({name:scenario.name,scenario,frames,fireInterval:actor.weapon.fireInterval,samples,releaseFrames,events,renderMetrics});
+        data.push({name:scenario.name,scenario,frames,fireInterval:actor.weapon.fireInterval,firstShotDelay:actor.weapon.firstShotDelay||0,samples,releaseFrames,events,renderMetrics});
       } finally {
         for(const [name,native] of methods)projectiles[name]=native; scene.remove(ch.root); ch.dispose();
         const disposed = flowMotionSnapshot(ch);
