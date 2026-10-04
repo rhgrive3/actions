@@ -10,11 +10,14 @@ test('integration retains immutable source and downloaded artifact identity chec
 });
 test('bounded browser families keep motion, WebKit, responsiveness and negative identity gates', () => {
   assert.ok(workflow.includes('max-parallel: 2'));
-  assert.ok(workflow.includes('suite: [active, catalog, ui]'));
+  assert.ok(workflow.includes('suite: [active, catalog, ui, network]'));
   assert.ok(workflow.includes('npx playwright install --with-deps chromium webkit'));
-  for (const gate of ['browser', 'motion', 'motion-detail', 'flow-render', 'wall-render', 'motion-catalog', 'touch-layout', 'reliability', 'touch-layout-identity', 'responsive']) {
+  for (const gate of ['browser', 'motion', 'motion-detail', 'flow-render', 'wall-render', 'motion-catalog', 'touch-layout', 'reliability', 'touch-layout-identity', 'responsive', 'network-browser']) {
     assert.ok(workflow.includes(`node scripts/check-inkwave-${gate}.mjs`), gate);
   }
+  assert.ok(workflow.includes('scripts/check-inkwave-network-comparison.mjs'));
+  assert.ok(workflow.includes('patches/network-replication/tests/*.test.mjs'));
+  assert.ok(workflow.includes('patches/network-replication/**'));
   assert.ok(workflow.includes('patches/touch-layout/**'));
   assert.ok(workflow.includes('patches/reliability/**'));
 });
