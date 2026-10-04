@@ -221,3 +221,6 @@ C batch 02 (#433/#419/#415): 未使用Online資源とMinimap OFFの描画バッ�
 ## 2026-10-04: inactive music and world/resource lifecycle
 
 Four current-public defects #366/#370 (one duplicate pair), #375, #384, #395 are addressed by the local-quality idle adapter. Music=0 parks only music scheduling; LOW/touch cloud color payload is 2.5 MiB; leaving marina disposes its far cubemap; offline pause presents one invalidation-driven frozen backdrop. These are browser resource policies, not Nintendo memory measurements. Gameplay timing, attacks, scoring and match durations are unchanged. See [implementation, sources, regression evidence and remaining physical-device limits](idle-resource-batch-2026-10-04.md). New full-app WebGL/Web Audio acceptance runs in Actions; do not infer success from CPU mocks.
+## 2026-10-04 Flow progress and respawn continuity
+
+[#468/#471/#306 comparison](inkwave-flow-progress-lifecycle-2026-10-04.md) records inactive decay, cause-sensitive death losses, preserved active/inactive Flow through native respawn, and full-reset clearing. The existing synthetic award scale is retained with explicit fp-loss normalization; community verification is distinguished from official/pinned numerical data. Real-character regressions require the aura to hide on death and resume without replaying activation.

@@ -1624,6 +1624,36 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "flow.progress.referenceThreshold": {
+    "value": 100,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "flow.progress.decayPerSecond": {
+    "value": 0.2,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "flow.progress.fastDecayAfter": {
+    "value": 5,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "flow.progress.fastDecayPerSecond": {
+    "value": 3.3,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "flow.progress.deathPenalty": {
+    "value": 5,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "flow.progress.environmentDeathPenalty": {
+    "value": 10,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
   "flow.threshold": {
     "value": 3,
     "status": "calibration or derived value; see reference raw table and unverified list",

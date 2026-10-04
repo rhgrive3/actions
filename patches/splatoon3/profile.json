@@ -319,6 +319,16 @@
     }
   },
   "flow": {
+    "progress": {
+      "referenceThreshold": 100,
+      "decayPerSecond": 0.2,
+      "fastDecayAfter": 5,
+      "fastDecayPerSecond": 3.3,
+      "deathPenalty": 5,
+      "environmentDeathPenalty": 10,
+      "source": "https://wikiwiki.jp/splatoon3mix/検証/イカフロー",
+      "status": "community verification; loss values normalized to existing threshold, award weights remain uncalibrated"
+    },
     "threshold": 3,
     "duration": 30,
     "extension": 5,
