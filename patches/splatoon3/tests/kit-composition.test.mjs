@@ -17,6 +17,8 @@ test('all three required base kits agree with pinned extracted main rows', () =>
     assert.equal(reference.parameters[prefix+'SpecialPoint'].value,kit.specialCost);
     assert.equal(api.WEAPONS[main].sub,kit.sub);assert.equal(api.WEAPONS[main].special,kit.special);
     assert.equal(api.WEAPONS[main].specialCost,kit.specialCost);
+    const profile = JSON.parse(fs.readFileSync(new URL('../profile.json', import.meta.url)));
+    assert.equal(profile.weapons[main].specialCost,kit.specialCost);
   }
   assert.equal(api.WEAPONS.blaster.kitStatus,'original-inkwave-kit');
   assert.equal(api.WEAPONS.blaster.special,'slam');

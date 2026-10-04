@@ -51,6 +51,18 @@ export function installWeapons(context, profile) {
     if (['shooter', 'dualies', 'splatling'].includes(p.s3Weapon?.kind) && Number.isFinite(p.s3Weapon.referenceGravity)) p.grav = p.s3Weapon.referenceGravity;
     return pushProjectile.call(this, p);
   };
+  const ghostProjectile = Projectiles.prototype.ghostProjectile;
+  Projectiles.prototype.ghostProjectile = function (actor, packet) {
+    const index = this.list.length;
+    const result = ghostProjectile.call(this, actor, packet);
+    const p = this.list[index];
+    const resolve = p && api.SPECIALS?.[p.wid]?.projectileDescriptor;
+    if (typeof resolve === 'function') {
+      p.s3SpecialWeapon = resolve(p);
+      p.s3Weapon = p.s3SpecialWeapon;
+    }
+    return result;
+  };
   // The public shooter raises the launch ray to compensate for drop at the
   // camera target. Use the launch ray as aimed; gravity acts on the bullet.
   Projectiles.prototype._ballistic = function (_from, direction) { return direction; };
