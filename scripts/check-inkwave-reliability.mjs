@@ -8,9 +8,12 @@ import path from 'node:path';
 import http from 'node:http';
 import crypto from 'node:crypto';
 import { createRequire } from 'node:module';
+import { runTouchTransitionCases } from './inkwave-touch-transition-cases.mjs';
 
 const option = name => { const i = process.argv.indexOf(name); assert(i >= 0 && process.argv[i + 1], 'Required ' + name); return path.resolve(process.argv[i + 1]); };
 const site = option('--site'), evidence = option('--evidence-dir'), cache = option('--profile-dir');
+const focusedOnly = process.argv.includes('--focused-touch-transitions');
+const negativeControl = process.argv.includes('--negative-control');
 const physical = p => fs.existsSync(p) ? fs.realpathSync(p) : path.join(physical(path.dirname(p)), path.basename(p));
 for (const dir of [evidence, cache]) { assert(physical(dir).startsWith('/mnt/workspace/'), 'Persistent workspace required'); fs.mkdirSync(dir, { recursive: true }); }
 const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
@@ -23,7 +26,7 @@ assert(manifest.build.reliability && Object.keys(manifest.build.reliability).len
 const fixture = `<!doctype html><html lang="ja"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <link rel="stylesheet" href="/styles/ui.css"><link rel="stylesheet" href="/styles/mobile.css">
 <style>html,body{margin:0;overflow:hidden;background:#0d1020;touch-action:none}canvas{width:100vw;height:100vh}</style>
-<script type="importmap">{"imports":{"three":"/vendor/three/build/three.module.js","three/addons/":"/vendor/three/jsm/"}}</script><canvas id="game"></canvas><script type="module">
+<script type="importmap">{"imports":{"three":"/vendor/three/build/three.module.js","three/addons/":"/vendor/three/jsm/"}}</script><canvas id="game"></canvas><div id="test-menu-target" class="iw-menu" style="position:fixed;top:10px;left:10px;z-index:9500;width:120px;height:40px;background:#333;color:#fff;pointer-events:auto">Menu Item</div><script type="module">
 import * as THREE from 'three';
 import { Input } from '/src/core/input.js';
 import { PlayerController } from '/src/game/player.js';
@@ -72,20 +75,32 @@ try {
       const page = context.pages()[0] || await context.newPage(); page.setDefaultTimeout(10000);
       page.on('pageerror', error => errors.push(engineName + ': ' + error.message));
       await page.goto(url); await page.waitForFunction(() => window.ready);
-      const entry = { engine: engineName, viewport: { width: 1024, height: 768 }, checks: [], dragEvents: engineName === 'chromium' ? 'native-CDP-touch' : 'DOM-PointerEvent' }; report.cases.push(entry);
+      const entry = { engine: engineName, viewport: { width: 1024, height: 768 }, checks: [], dragEvents: engineName === 'chromium' ? 'native-CDP-touch' : 'DOM-PointerEvent', evidenceClass: engineName === 'chromium' ? 'native-CDP-touch' : 'DOM-PointerEvent' }; report.cases.push(entry);
       const cdp = engineName === 'chromium' ? await context.newCDPSession(page) : null;
       const gesture = async (type, points) => {
         if (cdp) await cdp.send('Input.dispatchTouchEvent', { type, touchPoints: points.map(p => ({ id: p.id, x: p.x, y: p.y, radiusX: 2, radiusY: 2, force: 1 })) });
         else await page.evaluate(({ type, points }) => {
           const pointers = window.testPointers || (window.testPointers = new Map());
           if (type === 'touchEnd' || type === 'touchCancel') {
-            for (const [id, p] of pointers) if (!points.some(q => q.id === id)) { mobile.root.dispatchEvent(new PointerEvent(type === 'touchEnd' ? 'pointerup' : 'pointercancel', { bubbles: true, cancelable: true, pointerType: 'touch', pointerId: id, clientX: p.x, clientY: p.y })); pointers.delete(id); }
+            for (const [id, p] of pointers) if (!points.some(q => q.id === id)) {
+              const target = (mobile._ptr?.has(id) || mobile._stick?.id === id || (mobile.root?.hasPointerCapture?.(id))) ? mobile.root : (p.target || mobile.root);
+              target.dispatchEvent(new PointerEvent(type === 'touchEnd' ? 'pointerup' : 'pointercancel', { bubbles: true, cancelable: true, pointerType: 'touch', pointerId: id, clientX: p.x, clientY: p.y }));
+              pointers.delete(id);
+            }
           } else for (const p of points) {
-            const isNew = !pointers.has(p.id), target = isNew ? document.elementFromPoint(p.x, p.y) : mobile.root;
-            target.dispatchEvent(new PointerEvent(isNew ? 'pointerdown' : 'pointermove', { bubbles: true, cancelable: true, pointerType: 'touch', pointerId: p.id, clientX: p.x, clientY: p.y })); pointers.set(p.id, p);
+            const isNew = !pointers.has(p.id);
+            let target;
+            if (isNew) {
+              target = document.elementFromPoint(p.x, p.y) || document.getElementById('game');
+            } else {
+              target = (mobile._ptr?.has(p.id) || mobile._stick?.id === p.id || (mobile.root?.hasPointerCapture?.(p.id))) ? mobile.root : (pointers.get(p.id)?.target || mobile.root);
+            }
+            target.dispatchEvent(new PointerEvent(isNew ? 'pointerdown' : 'pointermove', { bubbles: true, cancelable: true, pointerType: 'touch', pointerId: p.id, clientX: p.x, clientY: p.y }));
+            pointers.set(p.id, { x: p.x, y: p.y, target });
           }
         }, { type, points });
       };
+      if (!focusedOnly) {
       const reset = () => page.evaluate(() => { mobile.reset(); mobile.layout = {}; mobile.s.stickMode = 'float'; mobile.s.fireAim = true; mobile._layoutAll(); sim.s3Clock?.reset(); intents.length = 0; });
       const look = () => page.evaluate(() => [mobile.lookDX, mobile.lookDY]);
       await reset();
@@ -247,6 +262,17 @@ try {
       });
       assert.deepEqual(menuPad, { startEdges: 2, menuAcceptOwned: true, nextGameplayPressRestored: true });
       entry.checks.push('actual-built-Input-menu-pad-edge-and-hold-ownership-through-144Hz-clock');
+      }
+      await runTouchTransitionCases({
+        page,
+        context,
+        cdp,
+        engineName,
+        gesture,
+        entry,
+        report,
+        negativeControl,
+      });
       await page.screenshot({ path: path.join(evidence, engineName + '-tablet-controls.png') });
     } finally { await context.close(); }
   }
