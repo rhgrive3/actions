@@ -1,7 +1,4 @@
-// Issue #394 (lane cl7, test-only): parent owns combat-life / combat-credit
-// adapters; this file only exercises the integrated parent combat-life
-// adapter plus the parent combat-integration fixture. Shared adapter and
-// fixture copies in this worktree are uncommitted test dependencies.
+// Combat-life admission through the production adapters and native wire path.
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { combatWorld } from './combat-integration-fixture.mjs';
@@ -28,8 +25,7 @@ test('stale life hit is dropped, matching life hit damages the same life', async
       before,
       'stale life hit must not damage the respawned life',
     );
-    defender.net.onMessage('A', tick(defender));
-    shooter.net.onMessage('B', defender.wire.at(-1).data);
+    shooter.net.onMessage('B', tick(defender));
     const peer = shooter.net.peers.get('B');
     peer.tr = defender.wire.at(-1).data.ts;
     peer.sim = Number.MAX_SAFE_INTEGER;
@@ -118,18 +114,17 @@ test('adopted owner keeps continuity across the accepted snapshot epoch', async 
 test('reordered owner snapshots keep the highest accepted life', async () => {
   const shooter = await combatWorld('A'), defender = await combatWorld('B');
   try {
-    tick(shooter);
-    const first = shooter.wire.at(-1).data;
-    shooter.victim.respawn();
-    shooter.victim.invuln = 0;
-    tick(shooter);
-    const second = shooter.wire.at(-1).data;
+    const first = tick(defender);
+    defender.victim.respawn();
+    defender.victim.invuln = 0;
+    const second = tick(defender);
     assert.ok(second.ts > first.ts, 'fixture needs strictly ordered ticks');
-    defender.net.onMessage('A', structuredClone(second));
-    const accepted = defender.victim.net.lastLife;
-    defender.net.onMessage('A', structuredClone(first));
+    shooter.net.onMessage('B', structuredClone(second));
+    const accepted = shooter.victim.net.lastLife;
+    assert.equal(accepted, defender.victim.netLife);
+    shooter.net.onMessage('B', structuredClone(first));
     assert.equal(
-      defender.victim.net.lastLife,
+      shooter.victim.net.lastLife,
       accepted,
       'reordered earlier-timestamp snapshot with older life cannot regress acceptance',
     );
@@ -152,8 +147,45 @@ test('hit application restores a thrown _applyingHit flag', async () => {
     assert.equal(defender.net._applyingHit, 'outer', 'failed hit must restore the outer flag');
     assert.equal(defender.victim.hp, 100);
     defender.net._applyingHit = undefined;
-    defender.net.onMessage('A', fresh);
+    defender.net.onMessage('A', { ...fresh, h: fresh.h + 1 });
     assert.equal(defender.victim.hp, 70);
     assert.equal(defender.net._applyingHit, undefined, 'successful hit restores an unset flag');
   } finally { shooter.dispose(); defender.dispose(); }
+});
+
+test('a newer buffered life does not label the older life still being rendered', async () => {
+  const shooter = await combatWorld('A'), defender = await combatWorld('B');
+  try {
+    const first = tick(defender);
+    shooter.net.onMessage('B', first);
+    defender.victim.respawn(); defender.victim.invuln = 0;
+    shooter.net.onMessage('B', tick(defender));
+    assert.equal(shooter.victim.net.lastLife, defender.victim.netLife);
+    const peer = shooter.net.peers.get('B'); peer.tr = first.ts;
+    shooter.net._sample(shooter.victim, peer.tr, 1 / 60);
+    shooter.net.applyRemote(shooter.victim, 1 / 60);
+    assert.equal(shooter.victim.netLife, defender.victim.netLife - 1);
+    shooter.G.projectiles.applyHit(shooter.attacker, shooter.victim, 20, 'shooter');
+    const hit = shooter.wire.at(-1).data;
+    assert.equal(hit.l, shooter.victim.net.cur.life);
+    defender.net.onMessage('A', hit);
+    assert.equal(defender.victim.hp, 100);
+  } finally { shooter.dispose(); defender.dispose(); }
+});
+
+test('native owner leave and host adoption keep valid current-life hits admissible', async () => {
+  const shooter = await combatWorld('A'), owner = await combatWorld('B'), host = await combatWorld('C');
+  try {
+    const current = tick(owner); host.net.onMessage('B', current);
+    shooter.G.projectiles.applyHit(shooter.attacker, shooter.victim, 20, 'shooter');
+    const held = shooter.wire.at(-1).data;
+    host.net.s.hostId = 'C'; host.net.onLeave('B', false);
+    assert.equal(host.victim.owner, 'C');
+    assert.equal(host.victim.remote, false);
+    assert.equal(host.victim.netLife, held.l);
+    host.net.onMessage('A', held);
+    assert.equal(host.victim.hp, 80);
+    host.net.onMessage('A', held);
+    assert.equal(host.victim.hp, 80);
+  } finally { shooter.dispose(); owner.dispose(); host.dispose(); }
 });

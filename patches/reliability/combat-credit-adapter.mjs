@@ -25,7 +25,7 @@ export function adaptCombatCredit(rel, code) {
     '    const a = e.actor || e.victim;\n    if (!a || !a.remote) return;\n' +
     '    if (name === "splatted") {\n' +
     '      const life = e.victimLife, area = typeof e.burstArea === "string" ? Number(e.burstArea) : NaN;\n' +
-    '      if (e.victimOwner !== a.owner || !Number.isSafeInteger(life) || life < 0 || !Number.isFinite(area) || area < 0 || life <= (a._combatCreditLife ?? -1)) return;\n' +
+    '      if (e.victimOwner !== a.owner || !Number.isSafeInteger(life) || life < 0 || life > (a.net.lastLife ?? a.netLife ?? 0) || !Number.isFinite(area) || area < 0 || life <= (a._combatCreditLife ?? -1)) return;\n' +
     '      a._combatCreditLife = life;\n' +
     '      if (e.attacker && e.attacker.team !== a.team) {\n' +
     '        e.attacker.stats.splats++;\n' +
