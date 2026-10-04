@@ -245,3 +245,12 @@ presentation, including a host/local player on Bravo. The historical 0.1%
 display-bonus note is not treated as a newly calibrated S3 parameter.
 See [the scoped tie-policy report](inkwave-alpha-tie-2026-10-04.md) for source
 provenance, native roster/packet checks and remaining physical-device limits.
+
+## 2026-10-04: first-allocation mobile resource budget
+
+A cold-boot follow-up for #375/#395 uses the already-published G.mobile profile
+until G.game exists. The established touch budget now applies on the first
+cloud/Halyard cube allocation at default high settings, not only after later
+runtime refresh. Existing formats, appearance policy and gameplay stay intact.
+These are project resource dimensions, not Nintendo/Switch memory values.
+See [the cold-boot budget report](inkwave-cold-boot-budgets-2026-10-04.md).
