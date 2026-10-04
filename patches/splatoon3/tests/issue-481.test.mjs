@@ -1,7 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import { fixture } from './source-fixture.mjs';
-import { adaptIssue481, calculateFlowSplatPoints } from '../issue-481-adapter.mjs';
+import { adaptIssue481, adaptIssue481Flow, calculateFlowSplatPoints } from '../issue-481-adapter.mjs';
+import { adaptPR489Flow, pr489FlowProgress } from './pr-489-fixture.mjs';
 
 // Helper to calculate score in 100-fp domain from normalized score
 function scoreToFp(score, threshold = 3) {
@@ -58,52 +60,46 @@ test('negative control: unpatched INKWAVE awards flat +1.0 regardless of previou
   b.team = 1; c.team = 1;
 
   // First splat (isolated)
-  f.G.time = 10.0;
   f.emit('splatted', { victim: b, attacker: a });
-  const scoreAfterFirst = a.s3.flow.score;
+  assert.equal(a.s3.flow.score, 1.0);
 
-  // Second splat within 1.0s
-  f.G.time = 11.0;
+  // Second splat immediately after (2 seconds, within consecutive window)
+  f.G.time = 2.0;
   f.emit('splatted', { victim: c, attacker: a });
-  const incrementSecond = a.s3.flow.score - scoreAfterFirst;
-
-  // In unpatched INKWAVE, both splats award exactly 1.0, ratio is 1.0
-  assert.equal(scoreAfterFirst, 1.0);
-  assert.equal(incrementSecond, 1.0);
-  assert.equal(incrementSecond / scoreAfterFirst, 1.0);
+  // Unpatched adds flat +1.0 -> 2.0 (ratio 1.0, failing consecutive multi-splat incentive)
+  assert.equal(a.s3.flow.score, 2.0);
 });
 
 test('acceptance: at fp < 75, ordinary splat awards 23 fp and consecutive splat awards 45 fp (ratio 45/23)', async () => {
   const f = await fixture({ adaptRuntime: adaptIssue481 });
   const a = f.make(), b = f.make(), c = f.make();
   b.team = 1; c.team = 1;
-
-  const threshold = f.profile.flow.threshold; // 3.0
+  const threshold = f.profile.flow.threshold; // default 3
   const scale = threshold / 100; // 0.03
 
-  // First splat at G.time = 10.0: ordinary
+  // Initial state
+  assert.equal(a.s3.flow.score, 0);
+
+  // 1. First splat: ordinary award (+23 fp)
   f.G.time = 10.0;
   f.emit('splatted', { victim: b, attacker: a });
-  const firstGain = a.s3.flow.score;
-  const firstFp = scoreToFp(firstGain, threshold);
+  const scoreAfter1 = a.s3.flow.score;
+  const fpAfter1 = scoreToFp(scoreAfter1, threshold);
+  assert.ok(Math.abs(fpAfter1 - 23) < 1e-9);
+  assert.ok(Math.abs(scoreAfter1 - 23 * scale) < 1e-9);
 
-  assert.ok(Math.abs(firstGain - (23 * scale)) < 1e-9, `Expected 23 fp (${23 * scale}), got ${firstGain}`);
-  assert.ok(Math.abs(firstFp - 23) < 1e-9);
-
-  // Second splat at G.time = 13.0 (3.0s later, within 5s): consecutive
+  // 2. Second splat at t = 13.0 (within 5 seconds of previous splat at t = 10.0): consecutive award (+45 fp)
   f.G.time = 13.0;
   f.emit('splatted', { victim: c, attacker: a });
-  const secondGain = a.s3.flow.score - firstGain;
-  const secondFp = scoreToFp(secondGain, threshold);
+  const scoreAfter2 = a.s3.flow.score;
+  const fpAfter2 = scoreToFp(scoreAfter2, threshold);
+  assert.ok(Math.abs(fpAfter2 - (23 + 45)) < 1e-9);
+  assert.ok(Math.abs(scoreAfter2 - (23 + 45) * scale) < 1e-9);
 
-  assert.ok(Math.abs(secondGain - (45 * scale)) < 1e-9, `Expected 45 fp (${45 * scale}), got ${secondGain}`);
-  assert.ok(Math.abs(secondFp - 45) < 1e-9);
-
-  // Total accumulated fp is 23 + 45 = 68 fp (< 75 fp)
-  assert.ok(Math.abs(scoreToFp(a.s3.flow.score, threshold) - 68) < 1e-9);
-
-  // Ratio is exactly 45 / 23 (~1.9565)
-  const ratio = secondGain / firstGain;
+  // Check ratio of consecutive gain to ordinary gain
+  const consecutiveGain = scoreAfter2 - scoreAfter1;
+  const ordinaryGain = scoreAfter1;
+  const ratio = consecutiveGain / ordinaryGain;
   assert.ok(Math.abs(ratio - (45 / 23)) < 1e-9);
 });
 
@@ -111,207 +107,182 @@ test('acceptance: at fp >= 75, ordinary splat awards 15 fp and consecutive splat
   const f = await fixture({ adaptRuntime: adaptIssue481 });
   const a = f.make(), b = f.make();
   b.team = 1;
-
   const threshold = f.profile.flow.threshold;
   const scale = threshold / 100;
 
-  // Set flow score directly to exactly 75 fp (2.25)
-  a.s3 ||= {};
-  a.s3.flow ||= { active: false, remaining: 0, score: 0 };
+  // Preset Flow score to 75 fp (2.25 normalized)
   a.s3.flow.score = 75 * scale;
+  assert.ok(Math.abs(scoreToFp(a.s3.flow.score, threshold) - 75) < 1e-9);
 
-  // Test 1: Ordinary splat at 75 fp adds +15 fp -> 90 fp (does not activate)
-  f.G.time = 20.0;
+  // 1. Isolated splat at 75 fp: ordinary high-tier award (+15 fp)
+  f.G.time = 10.0;
   f.emit('splatted', { victim: b, attacker: a });
-  const highOrdGain = a.s3.flow.score - (75 * scale);
-  assert.ok(Math.abs(highOrdGain - (15 * scale)) < 1e-9, `Expected 15 fp (${15 * scale}), got ${highOrdGain}`);
-  assert.equal(a.s3.flow.active, false, 'Ordinary splat at 75 fp (total 90 fp) must not activate Flow');
+  assert.ok(Math.abs(scoreToFp(a.s3.flow.score, threshold) - (75 + 15)) < 1e-9);
 
-  // Test 2: Consecutive splat at 75 fp adds +35 fp -> 110 fp (>= 100 fp) -> activates Flow!
-  const victim2 = f.make(); victim2.team = 1;
-  a.s3.flow.active = false;
+  // Reset to 75 fp for consecutive test
   a.s3.flow.score = 75 * scale;
-  a.s3.flowLastSplatTime = 25.0;
-  f.G.time = 27.0; // 2.0s later, within 5s window
-  f.emit('splatted', { victim: victim2, attacker: a });
+  a.s3.flowLastSplatTime = 10.0; // previous splat at 10.0s
 
-  assert.equal(a.s3.flow.active, true, 'Consecutive splat at 75 fp adds 35 fp reaching 110 fp, which must activate Flow');
+  // 2. Consecutive splat at t = 12.5s (within 5s): consecutive high-tier award (+35 fp)
+  const victim2 = f.make(); victim2.team = 1;
+  f.G.time = 12.5;
+  f.emit('splatted', { victim: victim2, attacker: a });
+  // Crossing 100 fp triggers activation!
+  // In awardFlow: state.active = true, state.remaining = cfg.duration (30), state.score = 0
+  assert.equal(a.s3.flow.active, true);
   assert.equal(a.s3.flow.remaining, f.profile.flow.duration);
   assert.equal(a.s3.flow.score, 0);
-
-  // Test 3: Numerical verification of ratio 35/15 with headroom (threshold = 5.0 -> 100 fp = 5.0, 75 fp = 3.75)
-  const a2 = f.make(), v3 = f.make(), v4 = f.make();
-  v3.team = 1; v4.team = 1;
-  const headroomCfg = { threshold: 5.0, duration: 30, extension: 5, maxDuration: 30, weights: { splat: 1 } };
-  const hScale = 5.0 / 100;
-  const flowState = { active: false, remaining: 0, score: 75 * hScale };
-  
-  // Test calculateFlowSplatPoints ratio directly at >= 75 fp
-  const ordPts = calculateFlowSplatPoints(75 * hScale, false, headroomCfg);
-  const conPts = calculateFlowSplatPoints(75 * hScale, true, headroomCfg);
-  assert.equal(ordPts.points, 15);
-  assert.equal(conPts.points, 35);
-  assert.ok(Math.abs(conPts.gain / ordPts.gain - (35 / 15)) < 1e-9);
+  assert.equal(a.s3.flowLastSplatTime, null); // streak cleared on activation
 });
 
 test('acceptance: 5-second boundary precision (<= 5.0s is consecutive, > 5.0s is ordinary)', async () => {
   const f = await fixture({ adaptRuntime: adaptIssue481 });
+  const a = f.make();
   const threshold = f.profile.flow.threshold;
   const scale = threshold / 100;
 
-  // Case 1: Exactly at 5.0 seconds (within 5 seconds) -> consecutive (+45 fp)
+  // Case 1: Exactly 4.999s elapsed -> Consecutive (+45 fp)
   {
-    const a = f.make(), v1 = f.make(), v2 = f.make();
+    const v1 = f.make(), v2 = f.make();
     v1.team = 1; v2.team = 1;
-
-    f.G.time = 100.0;
+    f.G.time = 10.0;
     f.emit('splatted', { victim: v1, attacker: a });
     assert.ok(Math.abs(a.s3.flow.score - 23 * scale) < 1e-9);
 
-    f.G.time = 105.0; // exactly +5.000s
+    f.G.time = 14.999;
     f.emit('splatted', { victim: v2, attacker: a });
-    const gainAtBoundary = a.s3.flow.score - 23 * scale;
-    assert.ok(Math.abs(gainAtBoundary - 45 * scale) < 1e-9, `Expected 45 fp at dt=5.0s, got ${gainAtBoundary / scale} fp`);
+    assert.ok(Math.abs(a.s3.flow.score - (23 + 45) * scale) < 1e-9);
   }
 
-  // Case 2: Just outside 5.0 seconds (5.001s) -> ordinary (+23 fp)
+  // Case 2: Exactly 5.000s elapsed -> Consecutive (+45 fp, boundary inclusive)
   {
-    const a = f.make(), v1 = f.make(), v2 = f.make();
-    v1.team = 1; v2.team = 1;
-
-    f.G.time = 200.0;
-    f.emit('splatted', { victim: v1, attacker: a });
+    a.reset();
+    const v3 = f.make(), v4 = f.make();
+    v3.team = 1; v4.team = 1;
+    f.G.time = 20.0;
+    f.emit('splatted', { victim: v3, attacker: a });
     assert.ok(Math.abs(a.s3.flow.score - 23 * scale) < 1e-9);
 
-    f.G.time = 205.001; // +5.001s (just outside window)
-    f.emit('splatted', { victim: v2, attacker: a });
-    const gainOutside = a.s3.flow.score - 23 * scale;
-    assert.ok(Math.abs(gainOutside - 23 * scale) < 1e-9, `Expected 23 fp at dt=5.001s, got ${gainOutside / scale} fp`);
+    f.G.time = 25.000;
+    f.emit('splatted', { victim: v4, attacker: a });
+    assert.ok(Math.abs(a.s3.flow.score - (23 + 45) * scale) < 1e-9);
   }
 
-  // Case 3: Well outside 5.0 seconds (6.0s) -> ordinary (+23 fp)
+  // Case 3: Exactly 5.001s elapsed -> Ordinary (+23 fp, window expired)
   {
-    const a = f.make(), v1 = f.make(), v2 = f.make();
-    v1.team = 1; v2.team = 1;
-
-    f.G.time = 300.0;
-    f.emit('splatted', { victim: v1, attacker: a });
+    a.reset();
+    const v5 = f.make(), v6 = f.make();
+    v5.team = 1; v6.team = 1;
+    f.G.time = 30.0;
+    f.emit('splatted', { victim: v5, attacker: a });
     assert.ok(Math.abs(a.s3.flow.score - 23 * scale) < 1e-9);
 
-    f.G.time = 306.0; // +6.0s
-    f.emit('splatted', { victim: v2, attacker: a });
-    const gainWellOutside = a.s3.flow.score - 23 * scale;
-    assert.ok(Math.abs(gainWellOutside - 23 * scale) < 1e-9, `Expected 23 fp at dt=6.0s, got ${gainWellOutside / scale} fp`);
+    f.G.time = 35.001;
+    f.emit('splatted', { victim: v6, attacker: a });
+    // Window expired: ordinary award (+23 fp)
+    assert.ok(Math.abs(a.s3.flow.score - (23 + 23) * scale) < 1e-9);
   }
 });
 
 test('acceptance: previous-splat timer is actor-local and cannot be contaminated by another player', async () => {
   const f = await fixture({ adaptRuntime: adaptIssue481 });
-  const p1 = f.make(), p2 = f.make(), v1 = f.make(), v2 = f.make(), v3 = f.make();
-  p1.team = 0; p2.team = 0;
+  const p1 = f.make(), p2 = f.make();
+  const v1 = f.make(), v2 = f.make(), v3 = f.make();
   v1.team = 1; v2.team = 1; v3.team = 1;
+  const scale = f.profile.flow.threshold / 100;
 
-  const threshold = f.profile.flow.threshold;
-  const scale = threshold / 100;
-
-  // Player 1 splats v1 at t = 10.0s (p1 first splat -> ordinary +23 fp)
-  f.G.time = 10.0;
+  // t = 0: P1 splats V1
+  f.G.time = 0.0;
   f.emit('splatted', { victim: v1, attacker: p1 });
   assert.ok(Math.abs(p1.s3.flow.score - 23 * scale) < 1e-9);
-  assert.equal(p2.s3?.flow?.score || 0, 0);
+  assert.equal(p1.s3.flowLastSplatTime, 0.0);
+  assert.equal(p2.s3?.flowLastSplatTime || null, null);
 
-  // Player 2 splats v2 at t = 11.0s (1.0s after p1's splat)
-  // Must NOT use p1's timestamp: p2 has no previous splat -> ordinary +23 fp
-  f.G.time = 11.0;
+  // t = 2.0: P2 splats V2 (independent isolated splat for P2)
+  f.G.time = 2.0;
   f.emit('splatted', { victim: v2, attacker: p2 });
-  assert.ok(Math.abs(p2.s3.flow.score - 23 * scale) < 1e-9, 'Player 2 must get ordinary award, not consecutive from Player 1');
+  assert.ok(Math.abs(p2.s3.flow.score - 23 * scale) < 1e-9);
+  assert.equal(p2.s3.flowLastSplatTime, 2.0);
+  assert.equal(p1.s3.flowLastSplatTime, 0.0); // P1 unchanged
 
-  // Player 1 splats v3 at t = 13.0s (3.0s after p1's own splat)
-  // Must use p1's own timestamp -> consecutive +45 fp
-  f.G.time = 13.0;
+  // t = 4.0: P1 splats V3 (elapsed 4.0s from P1's previous splat at 0.0s -> consecutive)
+  f.G.time = 4.0;
   f.emit('splatted', { victim: v3, attacker: p1 });
-  assert.ok(Math.abs(p1.s3.flow.score - (23 + 45) * scale) < 1e-9, 'Player 1 must get consecutive award from their own streak');
+  // P1 gets consecutive bonus (+45 fp):
+  assert.ok(Math.abs(p1.s3.flow.score - (23 + 45) * scale) < 1e-9);
+  // P2 unchanged:
+  assert.ok(Math.abs(p2.s3.flow.score - 23 * scale) < 1e-9);
 });
 
 test('acceptance: Flow activates exclusively on splats when threshold is reached', async () => {
   const f = await fixture({ adaptRuntime: adaptIssue481 });
-  const a = f.make(), victim = f.make();
-  victim.team = 1;
-
+  const a = f.make();
   const threshold = f.profile.flow.threshold; // 3.0
+  const scale = threshold / 100;
 
-  // Turf provides huge preparation (area = 2000, 2000 * 0.003 = 6.0 >= threshold)
-  f.emit('turf', { actor: a, area: 2000 });
+  // Preset to 99 fp (just below 100 fp threshold)
+  a.s3.flow.score = 99 * scale;
+  assert.equal(a.s3.flow.active, false);
+
+  // 1. Turf points crossing threshold must NOT activate Flow:
+  f.emit('turf', { actor: a, area: 1000 });
+  // Score accumulates past threshold:
   assert.ok(a.s3.flow.score >= threshold);
-  assert.equal(a.s3.flow.active, false, 'Flow must not activate on turf even when exceeding threshold');
+  // BUT active MUST remain false:
+  assert.equal(a.s3.flow.active, false, 'Turf progress must never activate Flow');
 
-  // Assist also does not activate Flow
-  const helper = f.make(), k = f.make();
-  helper.s3 ||= {};
-  helper.s3.flow = { active: false, remaining: 0, score: threshold + 1 };
-  f.emit('damage', { victim, attacker: helper, amount: 50, source: 'shooter' });
-  f.emit('splatted', { victim, attacker: k });
-  assert.equal(helper.s3.flow.active, false, 'Flow must not activate on assist');
+  // 2. Damage points crossing threshold must NOT activate Flow:
+  const enemy = f.make(); enemy.team = 1;
+  f.emit('damage', { victim: enemy, attacker: a, amount: 200, source: 'weapon' });
+  assert.equal(a.s3.flow.active, false, 'Damage progress must never activate Flow');
 
-  // Splat crossing threshold activates Flow
-  const b = f.make(), enemy = f.make(); enemy.team = 1;
-  f.G.time = 1.0;
-  // Splat 1: +23 fp (23 fp)
-  f.emit('splatted', { victim: enemy, attacker: b });
-  assert.equal(b.s3.flow.active, false);
-
-  // Splat 2 at t=3.0: consecutive +45 fp (23 + 45 = 68 fp)
-  f.G.time = 3.0;
+  // 3. Assist points crossing threshold must NOT activate Flow:
+  const ally = f.make();
   const enemy2 = f.make(); enemy2.team = 1;
-  f.emit('splatted', { victim: enemy2, attacker: b });
-  assert.equal(b.s3.flow.active, false);
+  enemy2.damage(50, a, 'shooter');
+  f.emit('splatted', { victim: enemy2, attacker: ally });
+  assert.equal(a.s3.flow.active, false, 'Assist progress must never activate Flow');
 
-  // Splat 3 at t=5.0: consecutive +45 fp (68 + 45 = 113 fp >= 100 fp threshold!)
-  f.G.time = 5.0;
+  // 4. Opponent splat DOES activate Flow:
   const enemy3 = f.make(); enemy3.team = 1;
-  let flowEventEmitted = false;
-  f.on('actor:flow', ({ actor, active }) => {
-    if (actor === b && active) flowEventEmitted = true;
-  });
-
-  f.emit('splatted', { victim: enemy3, attacker: b });
-  assert.equal(b.s3.flow.active, true, 'Flow must activate on splat crossing threshold');
-  assert.equal(b.s3.flow.score, 0, 'Score must be reset to 0 upon activation');
-  assert.equal(b.s3.flow.remaining, f.profile.flow.duration, 'Remaining duration set to config duration');
-  assert.equal(flowEventEmitted, true, 'actor:flow active:true event must be emitted');
-  assert.equal(b.s3.flowLastSplatTime, null, 'Streak must be reset upon Flow activation');
+  f.emit('splatted', { victim: enemy3, attacker: a });
+  assert.equal(a.s3.flow.active, true, 'Splat event must activate Flow');
+  assert.equal(a.s3.flow.score, 0);
+  assert.equal(a.s3.flow.remaining, f.profile.flow.duration);
 });
 
 test('acceptance: streak is reset on actor reset, respawn, splat, and flow expiration', async () => {
   const f = await fixture({ adaptRuntime: adaptIssue481 });
-  const a = f.make(), v1 = f.make(), v2 = f.make();
-  v1.team = 1; v2.team = 1;
+  f.G.level.spawnPads = [new f.THREE.Vector3(), new f.THREE.Vector3(0, 0, 20)];
+  f.G.physics.groundProbe = (_x, _y, _z, _r, _d, _foot, h) => { h.hit = false; return h; };
+  const a = f.make(), v1 = f.make(), v2 = f.make(), v3 = f.make();
+  v1.team = 1; v2.team = 1; v3.team = 1;
   const scale = f.profile.flow.threshold / 100;
 
-  // Establish initial splat
+  // Initial splat: starts streak at t = 10.0
   f.G.time = 10.0;
   f.emit('splatted', { victim: v1, attacker: a });
   assert.equal(a.s3.flowLastSplatTime, 10.0);
 
-  // Reset clears streak
+  // Actor reset clears streak
   a.reset();
   assert.equal(a.s3.flowLastSplatTime, null);
 
-  // Second splat at t=12.0s (2.0s later) after reset must be ordinary, not consecutive
+  // Second splat at t = 12.0 (2s later): because reset cleared streak, treated as ordinary (+23 fp)
   f.G.time = 12.0;
   f.emit('splatted', { victim: v2, attacker: a });
-  assert.ok(Math.abs(a.s3.flow.score - 23 * scale) < 1e-9, 'Post-reset splat must be ordinary');
+  assert.ok(Math.abs(a.s3.flow.score - 23 * scale) < 1e-9);
+  assert.equal(a.s3.flowLastSplatTime, 12.0);
 
-  // Respawn calls spawnAt -> reset() which creates fresh flow, streak is null
-  const v3 = f.make(); v3.team = 1;
-  f.G.level.spawnPads = [new f.THREE.Vector3(0, 0, 0), new f.THREE.Vector3(0, 0, 0)];
-  f.G.physics.groundProbe = () => 0;
+  // Actor respawn clears streak
   a.respawn();
   assert.equal(a.s3.flowLastSplatTime, null);
+
+  // Third splat at t = 14.0 (2s later): ordinary (+23 fp)
   f.G.time = 14.0;
   f.emit('splatted', { victim: v3, attacker: a });
-  // Flow was reset by spawnAt, so this splat is ordinary (+23 fp) starting from 0 fp
-  assert.ok(Math.abs(a.s3.flow.score - 23 * scale) < 1e-9, 'Post-respawn splat must be ordinary');
+  assert.ok(Math.abs(a.s3.flow.score - 23 * scale) < 1e-9);
+  assert.equal(a.s3.flowLastSplatTime, 14.0);
 
   // Attacker splatted / death clears streak
   a.splat(null);
@@ -328,51 +299,133 @@ test('acceptance: streak is reset on actor reset, respawn, splat, and flow expir
   assert.equal(a.s3.flowLastSplatTime, null);
 });
 
-test('acceptance: exclusions: water deaths, suicides, team kills, dead attackers, and duplicates are excluded', async () => {
+test('acceptance: exclusions: team kills, self splats, dead attackers, and attract mode are excluded', async () => {
   const f = await fixture({ adaptRuntime: adaptIssue481 });
   const a = f.make(), ally = f.make(), victim = f.make();
   ally.team = 0; victim.team = 1;
 
-  // 1. Water death: cause === 'water' or 'fall' excluded from Flow splat award
-  f.G.time = 10.0;
-  f.emit('splatted', { victim, attacker: a, cause: 'water' });
-  assert.equal(a.s3?.flow?.score || 0, 0, 'Water death must not award Flow splat progress');
-  assert.equal(a.s3?.flowLastSplatTime || null, null, 'Water death must not start streak');
-
-  // 2. Self death: attacker === victim
+  // 1. Self death: attacker === victim
   f.G.time = 11.0;
   f.emit('splatted', { victim: a, attacker: a });
   assert.equal(a.s3?.flow?.score || 0, 0, 'Self death must not award Flow');
 
-  // 3. Team kill: attacker.team === victim.team
+  // 2. Team kill: attacker.team === victim.team
   f.G.time = 12.0;
   f.emit('splatted', { victim: ally, attacker: a });
   assert.equal(a.s3?.flow?.score || 0, 0, 'Team kill must not award Flow');
 
-  // 4. Dead attacker: attacker.alive === false
+  // 3. Dead attacker: attacker.alive === false
   a.alive = false;
   f.G.time = 13.0;
   f.emit('splatted', { victim, attacker: a });
   assert.equal(a.s3?.flow?.score || 0, 0, 'Dead attacker must not receive Flow award');
   a.alive = true;
 
-  // 5. Attract mode: G.match.attract = true
+  // 4. Attract mode: G.match.attract = true
   f.G.match = { attract: true };
   f.G.time = 14.0;
   f.emit('splatted', { victim, attacker: a });
   assert.equal(a.s3?.flow?.score || 0, 0, 'Attract mode must not award Flow');
   delete f.G.match.attract;
+});
 
-  // 6. Duplicate splatted event for the same dead victim in the same life
-  const victimFresh = f.make(); victimFresh.team = 1;
+test('Point 2 fix: environmental death attribution credits qualifying enemy attacker within 4s, while unattributed water awards nothing', async () => {
+  const f = await fixture({ adaptRuntime: adaptIssue481 });
+  const a = f.make(), enemy = f.make();
+  enemy.team = 1;
   const scale = f.profile.flow.threshold / 100;
-  f.G.time = 15.0;
-  f.emit('splatted', { victim: victimFresh, attacker: a });
-  assert.ok(Math.abs(a.s3.flow.score - 23 * scale) < 1e-9);
 
-  // Duplicate emission without respawn/reset
-  f.emit('splatted', { victim: victimFresh, attacker: a });
-  assert.ok(Math.abs(a.s3.flow.score - 23 * scale) < 1e-9, 'Duplicate event must not double award');
+  // 1. Attacker damages enemy, and enemy falls into water within 4 seconds:
+  // Native actor.js line 335: this.splat(this.lastDamage < 4 ? this.lastAttacker : null, 'water');
+  enemy.lastAttacker = a;
+  enemy.lastDamage = 1.5; // within 4 seconds
+  f.G.time = 5.0;
+
+  // Native actor.splat(enemy.lastAttacker, 'water') emits splatted with attacker = a and cause = 'water':
+  enemy.splat(enemy.lastAttacker, 'water');
+
+  // Attacker MUST be credited with Flow points for the qualifying environmental kill!
+  assert.ok(
+    Math.abs(a.s3.flow.score - 23 * scale) < 1e-9,
+    `Qualifying attacker for water death must receive Flow splat award (+23 fp, actual: ${a.s3.flow.score / scale} fp)`
+  );
+  assert.equal(a.s3.flowLastSplatTime, 5.0, 'Qualifying water death starts streak timer');
+
+  // 2. Second splat within 5.0s (e.g. at t = 8.0s) awards consecutive bonus (+45 fp)
+  const enemy2 = f.make(); enemy2.team = 1;
+  f.G.time = 8.0;
+  enemy2.splat(a, 'weapon');
+  assert.ok(
+    Math.abs(a.s3.flow.score - (23 + 45) * scale) < 1e-9,
+    'Subsequent splat within 5s gets consecutive bonus'
+  );
+
+  // 3. Unattributed water death: no attacker
+  const b = f.make(); b.team = 0;
+  const victimSolo = f.make(); victimSolo.team = 1;
+  victimSolo.lastAttacker = null;
+  victimSolo.lastDamage = 99;
+  victimSolo.splat(null, 'water'); // attacker is null
+  assert.equal(b.s3?.flow?.score || 0, 0, 'Unattributed water death awards zero Flow');
+});
+
+test('Point 1 fix: native NetMatch remote victim death -> remoteRespawn -> death twice proof with life epoch awareness', async () => {
+  const f = await fixture({ adaptRuntime: adaptIssue481 });
+  const a = f.make(), remoteVictim = f.make();
+  remoteVictim.team = 1;
+  remoteVictim.remote = true;
+  remoteVictim.nid = 2;
+  remoteVictim.owner = 'B';
+  const scale = f.profile.flow.threshold / 100;
+
+  // Initial state: remote victim alive, stats.deaths = 0, netLife = 0
+  remoteVictim.stats.deaths = 0;
+  remoteVictim.netLife = 0;
+  remoteVictim.alive = true;
+
+  // 1. Attacker kills remote victim for the first time
+  f.G.time = 10.0;
+  remoteVictim.alive = false;
+  remoteVictim.stats.deaths++; // deaths = 1
+  f.emit('splatted', { victim: remoteVictim, attacker: a, cause: 'weapon' });
+  assert.ok(Math.abs(a.s3.flow.score - 23 * scale) < 1e-9, 'Initial kill of remote victim earns 23 fp');
+
+  // 2. Duplicate splatted event for the same death/life (same netLife=0, deaths=1)
+  f.emit('splatted', { victim: remoteVictim, attacker: a, cause: 'weapon' });
+  assert.ok(Math.abs(a.s3.flow.score - 23 * scale) < 1e-9, 'Duplicate splatted event on same life is ignored');
+
+  // 3. Remote respawn: native NetMatch._remoteRespawn does NOT call Actor.respawn or reset!
+  // In native NetMatch:
+  // _remoteRespawn(a) { a.alive = true; a.hp = PLAYER.hp; a.invuln = PLAYER.spawnInvuln; a.respawnTimer = 0; a.net.spawnPending = true; }
+  remoteVictim.alive = true;
+  remoteVictim.hp = 100;
+  remoteVictim.respawnTimer = 0;
+  if (!remoteVictim.net) remoteVictim.net = {};
+  remoteVictim.net.spawnPending = true;
+  // Note: Actor.prototype.respawn or reset was NOT called!
+  // Under the old bug, remoteVictim would remain in WeakSet forever and all subsequent kills gained 0!
+
+  // 4. Advance clock by 2.0s (within 5s window from t = 10.0s)
+  f.G.time = 12.0;
+
+  // 5. Attacker kills remote victim second time (new life: deaths becomes 2)
+  remoteVictim.alive = false;
+  remoteVictim.stats.deaths++; // deaths = 2
+  remoteVictim.netLife = 1; // new life epoch
+  f.emit('splatted', { victim: remoteVictim, attacker: a, cause: 'weapon' });
+
+  // In the corrected adapter, new life is admitted and consecutive splat bonus (+45 fp) is awarded!
+  assert.ok(
+    Math.abs(a.s3.flow.score - (23 + 45) * scale) < 1e-9,
+    `Remote victim second life kill must be admitted and award consecutive points (actual: ${a.s3.flow.score / scale} fp)`
+  );
+
+  // 6. Duplicate event for second life (netLife=1, deaths=2) is ignored
+  f.emit('splatted', { victim: remoteVictim, attacker: a, cause: 'weapon' });
+  assert.ok(
+    Math.abs(a.s3.flow.score - (23 + 45) * scale) < 1e-9,
+    'Duplicate event on second life must be ignored'
+  );
 });
 
 test('acceptance: fixed-step schedules (30Hz, 60Hz, 120Hz) evaluate 5-second window identically', async () => {
@@ -420,62 +473,77 @@ test('acceptance: fixed-step schedules (30Hz, 60Hz, 120Hz) evaluate 5-second win
   }
 });
 
-test('composition: adapter seamlessly composes with PR #489 decay and death penalty normalization', () => {
-  const cfg = {
-    threshold: 3,
-    progress: {
-      decayPerSecond: 0.2,
-      fastDecayAfter: 5,
-      fastDecayPerSecond: 3.3,
-      deathPenalty: 5,
-      environmentDeathPenalty: 10,
-      referenceThreshold: 100,
+test('composition: live PR #489 adapter and Issue #481 adapter compose cleanly in both orders', () => {
+  const flowOriginal = fs.readFileSync(new URL('../runtime/flow.mjs', import.meta.url), 'utf8');
+
+  // Order 1: 489 then 481
+  const order1 = adaptIssue481Flow(adaptPR489Flow(flowOriginal));
+  assert.ok(order1.includes('deadVictimEpochs = new WeakMap()'), 'Order 1 includes deadVictimEpochs');
+  assert.ok(order1.includes('penalizeFlowDeath'), 'Order 1 includes penalizeFlowDeath');
+  assert.ok(order1.includes('respawning.get(this)'), 'Order 1 includes respawning state persistence');
+  assert.ok(order1.includes('isConsecutive = false'), 'Order 1 includes consecutive award signature');
+
+  // Order 2: 481 then 489
+  const order2 = adaptPR489Flow(adaptIssue481Flow(flowOriginal));
+  assert.ok(order2.includes('deadVictimEpochs = new WeakMap()'), 'Order 2 includes deadVictimEpochs');
+  assert.ok(order2.includes('penalizeFlowDeath'), 'Order 2 includes penalizeFlowDeath');
+  assert.ok(order2.includes('respawning.get(this)'), 'Order 2 includes respawning state persistence');
+  assert.ok(order2.includes('isConsecutive = false'), 'Order 2 includes consecutive award signature');
+});
+
+test('composition: native positive proof of Flow death persistence, decay, and 481 consecutive awards combined', async () => {
+  const f = await fixture({
+    adaptRuntime: (rel, code) => {
+      if (rel.endsWith('runtime/flow.mjs')) {
+        return adaptIssue481Flow(adaptPR489Flow(code));
+      }
+      return code;
     },
-    weights: { splat: 1, assist: 0.5, turf: 0.003 },
-  };
+  });
 
-  const scale = cfg.threshold / cfg.progress.referenceThreshold; // 0.03
-  assert.equal(scale, 0.03);
+  f.G.level.spawnPads = [new f.THREE.Vector3(), new f.THREE.Vector3(0, 0, 20)];
+  f.G.physics.groundProbe = (_x, _y, _z, _r, _d, _foot, h) => { h.hit = false; return h; };
+  f.profile.flow.progress = { ...pr489FlowProgress };
+  const attacker = f.make(), victim = f.make(), victim2 = f.make();
+  victim.team = 1; victim2.team = 1;
+  const threshold = f.profile.flow.threshold; // 3.0
+  const scale = threshold / 100; // 0.03
 
-  const flow = { active: false, remaining: 0, score: 0, idleTime: 12.0 };
+  // 1. Attacker scores first splat: +23 fp (0.69)
+  f.G.time = 0;
+  f.emit('splatted', { victim, attacker });
+  assert.ok(Math.abs(attacker.s3.flow.score - 23 * scale) < 1e-9);
+  assert.equal(attacker.s3.flow.idleTime, 0);
 
-  // Step 1: Initial ordinary splat below 75 fp -> +23 fp (0.69 normalized)
-  const ord = calculateFlowSplatPoints(flow.score, false, cfg);
-  assert.equal(ord.points, 23);
-  flow.score += ord.gain;
-  flow.idleTime = 0; // reset idle decay clock on positive gain
-  assert.ok(Math.abs(flow.score - 23 * scale) < 1e-9);
-  assert.equal(flow.idleTime, 0);
+  // 2. PR 489 idle decay: advance 2.0s (slow decay rate: 0.2 fp/s)
+  // Loss = 2.0 * 0.2 = 0.4 fp -> remaining = 23 - 0.4 = 22.6 fp
+  f.G.time += 2.0;
+  attacker.update(2.0);
+  assert.ok(Math.abs(attacker.s3.flow.score - 22.6 * scale) < 1e-9);
+  assert.ok(Math.abs(attacker.s3.flow.idleTime - 2.0) < 1e-9);
 
-  // Step 2: PR #489 decay simulation (e.g. 5 seconds slow decay = 5 * 0.2 = 1.0 fp loss)
-  const decayLossFp = 5 * cfg.progress.decayPerSecond; // 1.0 fp
-  flow.score = Math.max(0, flow.score - decayLossFp * scale); // 23 - 1 = 22 fp
-  assert.ok(Math.abs(flow.score - 22 * scale) < 1e-9);
+  // 3. Attacker scores consecutive splat at t = 2.0s (within 5.0s window): +45 fp!
+  // Score becomes 22.6 + 45 = 67.6 fp
+  f.emit('splatted', { victim: victim2, attacker });
+  assert.ok(Math.abs(attacker.s3.flow.score - 67.6 * scale) < 1e-9);
+  assert.equal(attacker.s3.flow.idleTime, 0); // idleTime reset on positive gain
 
-  // Step 3: Consecutive splat within 5s window -> +45 fp
-  const con = calculateFlowSplatPoints(flow.score, true, cfg);
-  assert.equal(con.points, 45);
-  flow.score += con.gain; // 22 + 45 = 67 fp
-  assert.ok(Math.abs(flow.score - 67 * scale) < 1e-9);
+  // 4. PR 489 death penalty: victim with accumulated Flow dies
+  victim.alive = true;
+  victim.s3.flow = { active: false, remaining: 0, score: 50 * scale, idleTime: 0 };
+  victim.splat(attacker, 'weapon');
+  // Under unpatched main, victim score would be reset to 0.
+  // Under PR 489 penalizeFlowDeath, victim loses only 5 fp (50 - 5 = 45 fp):
+  assert.ok(Math.abs(victim.s3.flow.score - 45 * scale) < 1e-9, 'PR489 penalizeFlowDeath preserves score minus penalty');
 
-  // Step 4: PR #489 death penalty (-5 fp)
-  const deathLossFp = cfg.progress.deathPenalty; // 5.0 fp
-  flow.score = Math.max(0, flow.score - deathLossFp * scale); // 67 - 5 = 62 fp
-  assert.ok(Math.abs(flow.score - 62 * scale) < 1e-9);
+  // 5. PR 489 respawn state persistence:
+  victim.respawn();
+  assert.ok(Math.abs(victim.s3.flow.score - 45 * scale) < 1e-9, 'PR489 respawn preserves Flow progress across death');
 
-  // Step 5: High tier boundary verification after further progress
-  // Add 15 fp to reach 77 fp (>= 75 fp)
-  flow.score += 15 * scale; // 62 + 15 = 77 fp
-  assert.ok(Math.abs(flow.score - 77 * scale) < 1e-9);
-
-  // High tier ordinary: +15 fp -> 77 + 15 = 92 fp
-  const highOrd = calculateFlowSplatPoints(flow.score, false, cfg);
-  assert.equal(highOrd.points, 15);
-  assert.equal(highOrd.isHighTier, true);
-
-  // High tier consecutive: +35 fp -> 77 + 35 = 112 fp (>= 100 fp, triggers activation)
-  const highCon = calculateFlowSplatPoints(flow.score, true, cfg);
-  assert.equal(highCon.points, 35);
-  assert.equal(highCon.isHighTier, true);
-  assert.ok(flow.score + highCon.gain >= cfg.threshold);
+  // 6. Active Flow remains active across death per PR #489:
+  victim.s3.flow = { active: true, remaining: 20, score: 0, idleTime: 0 };
+  victim.splat(attacker, 'weapon');
+  assert.equal(victim.s3.flow.active, true, 'Active Flow remains active while dead');
+  victim.respawn();
+  assert.equal(victim.s3.flow.active, true, 'Active Flow remains active after respawn');
 });

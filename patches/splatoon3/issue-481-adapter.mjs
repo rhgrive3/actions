@@ -22,13 +22,15 @@
 //    clock), never render clock / wall-clock / requestAnimationFrame.
 // 2. Strict actor locality: each player maintains their own streak timer; other
 //    players' splats never contaminate an actor's streak.
-// 3. Admission & exclusions: water/fall deaths, self-splats, friendly splats,
-//    already-dead attackers, attract mode, and duplicate victim admissions are excluded.
-// 4. Boundary resets: actor-local streak is reset on actor reset, respawn, splat,
-//    match reset / attract mode, and upon Flow activation.
+// 3. Admission & attribution: legitimate credited environmental splats (e.g. damaged within
+//    4s then fell in water) award splat points; unattributed water deaths have no attacker
+//    and award nothing. Duplicate splats for the same accepted victim life epoch are ignored.
+// 4. Boundary resets: actor-local streak is reset on actor reset, respawn, splat death,
+//    match reset / attract mode, and upon Flow activation or expiration.
 // 5. Splat-only activation: turf and assist progress continue using their own weights
 //    and cannot activate Flow by themselves even if crossing the threshold.
-// 6. Composition: composes cleanly with PR #489 decay/death penalties.
+// 6. Composition: narrow hooks compose seamlessly in both orders with PR #489 decay and
+//    death persistence/penalties, preserving existing listener assist and victim death logic.
 
 export function replaceOnce(code, before, after, label) {
   const at = code.indexOf(before);
@@ -59,11 +61,13 @@ export function adaptIssue481Flow(code) {
     'awardFlow signature'
   );
 
-  // 2. Stateful splat award calculation in awardFlow
-  code = replaceOnce(
-    code,
-    '  state.score += Math.max(0, value) * (cfg.weights[action] || 0);',
-    `  let gain = 0;
+  // 2. Stateful splat award calculation in awardFlow (supporting main or PR #489 anchor)
+  const unpatchedMainGain = '  state.score += Math.max(0, value) * (cfg.weights[action] || 0);';
+  const pr489Gain = `  const gain = Number.isFinite(value) ? Math.max(0, value) * (cfg.weights[action] || 0) : 0;
+  state.score += gain;
+  if (gain > 0) state.idleTime = 0;`;
+
+  const targetGain = `  let gain = 0;
   if (action === 'splat') {
     const consecutive = Boolean(isConsecutive || (value && typeof value === 'object' && value.consecutive));
     const scale = (cfg?.threshold ?? 3) / 100;
@@ -74,19 +78,25 @@ export function adaptIssue481Flow(code) {
     gain = Number.isFinite(value) ? Math.max(0, value) * (cfg?.weights?.[action] || 0) : 0;
   }
   state.score += gain;
-  if (gain > 0 && typeof state.idleTime === 'number') state.idleTime = 0;`,
-    'awardFlow splat points calculation'
-  );
+  if (gain > 0 && typeof state.idleTime === 'number') state.idleTime = 0;`;
 
-  // 3. installFlow state bookkeeping (credits and per-life deduplication)
+  if (code.includes(unpatchedMainGain)) {
+    code = replaceOnce(code, unpatchedMainGain, targetGain, 'awardFlow gain calculation (main)');
+  } else if (code.includes(pr489Gain)) {
+    code = replaceOnce(code, pr489Gain, targetGain, 'awardFlow gain calculation (PR489)');
+  } else {
+    throw new Error('INKWAVE issue-481 patch conflict: unknown awardFlow gain anchor');
+  }
+
+  // 3. installFlow deadVictimEpochs bookkeeping
   code = replaceOnce(
     code,
-    '  const cfg = tuning.flow, credits = new WeakMap();',
-    '  const cfg = tuning.flow, credits = new WeakMap(), deadThisLife = new WeakSet();',
-    'installFlow credits and deadThisLife'
+    'const cfg = tuning.flow,',
+    'const cfg = tuning.flow, deadVictimEpochs = new WeakMap(),',
+    'installFlow deadVictimEpochs'
   );
 
-  // 4. award helper signature and call
+  // 4. award helper signature and invocation
   code = replaceOnce(
     code,
     '  function award(a, action, value) {',
@@ -101,55 +111,49 @@ export function adaptIssue481Flow(code) {
     'award helper awardFlow invocation'
   );
 
-  // 5. Actor reset and respawn streak clearing
+  // 5. Actor reset streak clearing (hooking credits.delete without clobbering flow persistence)
   code = replaceOnce(
     code,
-    '  Actor.prototype.reset = function (...args) { const result = reset.apply(this, args); this.s3 ||= {}; this.s3.flow = createFlow(); credits.delete(this); return result; };',
-    `  Actor.prototype.reset = function (...args) {
-    const result = reset.apply(this, args);
-    this.s3 ||= {};
-    this.s3.flow = createFlow();
-    this.s3.flowLastSplatTime = null;
-    credits.delete(this);
-    deadThisLife.delete(this);
-    return result;
-  };
-  const respawn = Actor.prototype.respawn;
-  if (respawn) {
-    Actor.prototype.respawn = function (...args) {
-      const result = respawn.apply(this, args);
-      if (this.s3) this.s3.flowLastSplatTime = null;
-      deadThisLife.delete(this);
-      return result;
-    };
-  }`,
-    'actor reset and respawn streak reset'
+    'credits.delete(this);',
+    'credits.delete(this); if (this.s3) this.s3.flowLastSplatTime = null; deadVictimEpochs.delete(this);',
+    'actor reset streak clear'
   );
 
-  // 6. Actor update Flow expiration streak clearing
+  // 6. Respawn streak clearing
   code = replaceOnce(
     code,
-    '    if (was && !flow.active) emit(\'actor:flow\', { actor: this, active: false });',
-    '    if (was && !flow.active) { if (this.s3) this.s3.flowLastSplatTime = null; emit(\'actor:flow\', { actor: this, active: false }); }',
+    "  on('turf', ({ actor, area }) => award(actor, 'turf', area));",
+    "  on('respawn', ({ actor }) => { if (actor?.s3) actor.s3.flowLastSplatTime = null; });\n  on('turf', ({ actor, area }) => award(actor, 'turf', area));",
+    'respawn event streak clear'
+  );
+
+  // 7. Actor update Flow expiration streak clearing
+  code = replaceOnce(
+    code,
+    "if (was && !flow.active) emit('actor:flow', { actor: this, active: false });",
+    "if (was && !flow.active) { if (this.s3) this.s3.flowLastSplatTime = null; emit('actor:flow', { actor: this, active: false }); }",
     'actor update flow expiration streak clear'
   );
 
-  // 7. Authoritative splatted listener with 5-second window, exclusions, and attribution
-  const unpatchedSplatted = `  on('splatted', ({ victim, attacker }) => {
-    if (attacker && attacker !== victim && attacker.team !== victim.team) award(attacker, 'splat', 1);
-    for (const [helper, time] of credits.get(victim) || []) if (helper !== attacker && G.time - time <= cfg.assistWindow) award(helper, 'assist', 1);
-    credits.delete(victim); victim.s3 ||= {}; victim.s3.flow = createFlow();
-  });`;
-
-  const patchedSplatted = `  on('splatted', ({ victim, attacker, cause }) => {
-    const isWaterOrFall = cause === 'water' || cause === 'fall';
-    const isDuplicate = victim ? deadThisLife.has(victim) : false;
-    if (victim) deadThisLife.add(victim);
-
-    if (attacker && attacker !== victim && attacker.team !== victim?.team && attacker.alive && !isWaterOrFall && !isDuplicate && !G.match?.attract) {
+  // 8. on('splatted') consecutive splat award and victim life-epoch deduplication
+  // Narrowly replaces only the attacker award line, preserving helper assists and victim death handling
+  const unpatchedAttackerAward = "    if (attacker && attacker !== victim && attacker.team !== victim.team) award(attacker, 'splat', 1);";
+  const patchedAttackerAward = `    if (victim?.s3) victim.s3.flowLastSplatTime = null;
+    let isDuplicate = false;
+    if (victim) {
+      const victimLife = (typeof victim.netLife === 'number' ? victim.netLife : undefined)
+        ?? (typeof victim.net?.lastLife === 'number' ? victim.net.lastLife : undefined);
+      const deaths = typeof victim.stats?.deaths === 'number' ? victim.stats.deaths : 0;
+      const epoch = victimLife !== undefined ? \`\${victimLife}:\${deaths}\` : String(deaths);
+      if (deadVictimEpochs.get(victim) === epoch) {
+        isDuplicate = true;
+      } else {
+        deadVictimEpochs.set(victim, epoch);
+      }
+    }
+    if (attacker && attacker !== victim && attacker.team !== victim?.team && !isDuplicate) {
       const now = G.time;
       const lastTime = attacker.s3?.flowLastSplatTime;
-      // Actor-local 5-second window: within 5 seconds of previous qualifying splat at G.time
       const isConsecutive = typeof lastTime === 'number' && Number.isFinite(lastTime) && now >= lastTime && (now - lastTime) <= 5.0;
       attacker.s3 ||= {};
       attacker.s3.flowLastSplatTime = now;
@@ -157,17 +161,9 @@ export function adaptIssue481Flow(code) {
       if (attacker.s3.flow?.active) {
         attacker.s3.flowLastSplatTime = null;
       }
-    }
-    for (const [helper, time] of credits.get(victim) || []) if (helper !== attacker && G.time - time <= cfg.assistWindow) award(helper, 'assist', 1);
-    credits.delete(victim);
-    if (victim) {
-      victim.s3 ||= {};
-      victim.s3.flow = createFlow();
-      victim.s3.flowLastSplatTime = null;
-    }
-  });`;
+    }`;
 
-  code = replaceOnce(code, unpatchedSplatted, patchedSplatted, 'on splatted consecutive handling');
+  code = replaceOnce(code, unpatchedAttackerAward, patchedAttackerAward, 'on splatted consecutive award and dedup');
 
   return code;
 }
