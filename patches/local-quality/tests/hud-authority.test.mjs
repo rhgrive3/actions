@@ -143,3 +143,11 @@ test('#425: touch SP replacement uses 23 steps while preserving readiness/buzz a
   m.setHud({special:.5});assert.equal(m._hud.sp,11);assert.equal(buzzes,1);
   new vm.SourceTextModule(code);
 });
+
+
+test('#381: standalone browser reliability fixture supplies winner without weakening expected outcome',()=>{
+  const code=fs.readFileSync(new URL('scripts/check-inkwave-reliability.mjs',root),'utf8');
+  assert.match(code,/newer = hud\.judge\(\{ winner: 1, percents: \[40, 60\]/);
+  assert.match(code,/winner: 1/);
+  assert.match(code,/assert\.deepEqual\(judging, \{ afterCancel: \{ cancelled: true, elements: 0, sounds: \['judge_drumroll'\], voicesStopped: true \}, replaced: true, newerPreserved: true, winner: 1, disposed: true \}\);/);
+});

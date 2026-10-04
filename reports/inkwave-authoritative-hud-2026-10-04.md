@@ -116,3 +116,15 @@ No merge, deployment, settings change, issue closure or external service access
 is performed by this batch. #425 can be linked as closing once actual browser
 acceptance for the published head is verified. #381 stays a reference for the
 separate #158 condition described above.
+
+
+### First browser CI findings
+
+Run37222572436 on the prior 8f2679b5 head passed validate and active Chromium,
+including the actual new desktop HUD and Judd checks. The UI shard correctly
+rejected its standalone reliability fixture because it still omitted winner
+while expecting team1. The fixture now passes its explicit winner (0/0/1 for
+the cancellation/older/newer scenarios). Expected winner1, cancellation,
+voice-stop, replacement and disposal assertions are unchanged. Mobile native
+acceptance is pending the newer head; prior active success is not reused as its
+proof.
