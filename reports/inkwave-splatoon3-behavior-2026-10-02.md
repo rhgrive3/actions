@@ -237,4 +237,15 @@ See [weapon edge-case comparison](inkwave-weapon-edgecases-2026-10-04.md) for #3
 | 再現操作 | A が B に通常被弾を与えた後、4秒以上経過（5秒・10秒・30秒・60秒）してから B が敵インクを踏んで直後に水没する。未修正版では `lastDamage` が 0.4s に短縮されて A の splats が +1 される。修正版（`patches/splatoon3/issue-482-adapter.mjs`）では専用の `lastAttackerHitAge` を保持し、敵インク接触時も攻撃者の経過時間（>= 4.0s）を維持して水没死の攻撃者を null と判定する。 |
 | プレイへの影響 | 数秒〜数十秒前の古い攻撃者が、敵インク接触直後の水没で不当にキル数・ナワバリ塗り・Flow進捗を得る不整合を排除。HP回復遅延抑制は独立して維持され、4秒以内の正当な直前被弾の水没キル判定や、別攻撃者 C による上書き更新は正常に動作する。 |
 | 確認状態 | **ロジック・Node VM確認済み**（source-fixture、実 Actor.update / resources、30Hz/60Hz/120Hz、負の対照群再現と正準受入 9/9 pass）。**Switch実機での水没アシスト判定タイマーの厳密な公式フレーム値は未確認**として残し、4秒境界（INKWAVE既存の基準）と敵インクによる非再活性化不変条件のみを整合。 |
+## 180°方向転換減速度（#405、2026-10-05）
+
+スプラトゥーン3 Ver. 11.3.0 の標準移動仕様では、スティックを離したときの減速と、移動方向と逆へスティックを倒したときの減速（180°反転）はいずれも同一の減速度（基準値 0.01 m/F²）がマイナス方向へ適用され、減速係数比は 1.00 となる。INKWAVE の公開版（`src/game/actor.js:_horizontal`）では、126°（`reverseAngle = 2.2` rad）を超える方向転換時に `Math.max(P.reverseDecel, D)`（`P.reverseDecel = 78`, `D = P.runDecel = 58`）が適用され、反転ブレーキがスティック離しの約 1.345 倍（78/58）と不自然に強く減速していた。本件は `patches/splatoon3/issue-405-adapter.mjs` により反転減速度を通常移動減速度 `D` と同一基準へ統合した。
+
+| 項目 | 内容 |
+|---|---|
+| 本家の根拠 | [スプラトゥーン3 wikiwiki システム詳細仕様 / 加速度について](https://wikiwiki.jp/splatoon3mix/%E3%82%B7%E3%82%B9%E3%83%86%E3%83%A0%E8%A9%B3%E7%B4%B0%E4%BB%95%E6%A7%98#xb946c7b)。通常移動の加速度基準値 0.01 m/F² に対し、スティック離しと逆方向倒しの双方が同一の減速加速度をマイナス方向へ適用。reverse braking / neutral-stick braking 比率 = 1.00。 |
+| INKWAVE の実装箇所 | `inkwave-public/src/game/actor.js:409-415`（`_horizontal`）。`patches/splatoon3/issue-405-adapter.mjs` でビルド時に `Math.max(P.reverseDecel, D)` を `D` へ置換。 |
+| 再現操作 | ヒト状態・通常最高速（5.76 WU/s）で前進中、①スティックを離す（neutral）、②スティックを180°反転（reverse）の初期1tick（1/60s）減速量を比較。未修正版では neutral 0.96667 WU/s に対し reverse 1.30000 WU/s（比率 1.344827...）。修正版では双方が 0.96667 WU/s（比率 1.000000）。 |
+| プレイへの影響 | 前後切り返し・細かい位置合わせ・撃ち合い前後の方向転換で、本家より速度を失いやすく 126° 境界で減速が不連続になっていた現象が解消され、滑らかな切り返し挙動となる。 |
+| 確認状態 | **ロジック確認済み**（`patches/splatoon3/tests/issue-405.test.mjs`。30Hz/60Hz/120Hz、複数フレーム軌道、90°〜180°角度遷移、単体練習モード・ローカル/リモート分離、泳ぎ・敵インク・空中制御の非回帰）。**本家実機（Switch Ver.11.3.0）でのフレーム・ミリ単位の実測比較は未確認**。 |
 
