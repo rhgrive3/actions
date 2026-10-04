@@ -168,3 +168,8 @@ The next combined run proved the remaining race: one Space edge could be consume
 ### Physical action edge vs dodge preconditions
 
 With lifecycle integration enabled, the first physical direction-key transition can legitimately participate in focus/input-boundary handling even while the simulation is frozen. That made the browser proof accidentally test two things at once: Space edge retention and direction-key lifecycle semantics. The final runner keeps **Space** as the physical browser action edge under test, while fire and move direction are established through the game's canonical debug input after the browser event. It asserts that the physical Space key is present in both held and pressed Input state before each explicit fixed tick. This preserves the real keyboard-edge proof while making unrelated dodge-admission preconditions deterministic.
+
+
+### Keyboard target ownership
+
+The combined browser matrix retained a gear `<select>` from the earlier loadout interaction as the DOM keyboard target on some lifecycle-integrated runs. Before the physical Space edge proof, the runner now brings the page forward and explicitly focuses the real game canvas, asserting that the canvas remains the active element before both fixed-tick trials. The temporary tabindex used only to make the canvas focusable is restored afterward. Production input routing is unchanged.
