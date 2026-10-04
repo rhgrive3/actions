@@ -53,7 +53,18 @@ export function adaptSource(rel, code) {
     code += '\nexport const CHARACTER_BOMB_POSE = Object.freeze({ throw: Character.prototype._poseThrow, apply: Character.prototype._applyPose });\n';
     return "import { dualiesMotionLock, dualiesMotionAllowsFootPlant } from '../../patches/splatoon3/runtime/action-admission.mjs';\nimport { specialMotionAllowsFootPlant } from '../../patches/splatoon3/runtime/special-motion.mjs';\nimport { applyWalkLocomotion, walkLean, walkSwingUnloaded, walkFootReach, walkPelvisDrop, walkTreadAllowed, walkActive } from '../../patches/splatoon3/runtime/walk.mjs';\n"+code;
   }
-  if (rel === 'src/ui/hud.js') return "import { t as tr } from '../i18n.js';\n" + code;
+  if (rel === 'src/ui/hud.js') {
+    code = replaceOnce(code, '    // spawn shield + bomb aim (read straight off the local actor; absent in the lab unless mocked)\n    const a = this._local();',
+      "    // spawn shield + bomb aim (read straight off the local actor; absent in the lab unless mocked)\n    const a = this._local();\n    if (a) {\n      const sub = selectedSub(a, SUB), cost = Math.round(selectedSubCost(a, SUB));\n      if (L.kitSub !== sub.id || L.kitSubCost !== cost) {\n        L.kitSub = sub.id; L.kitSubCost = cost;\n        this.subChip.querySelector('i').innerHTML = SUB_ICONS[sub.id] || SUB_ICONS.bomb;\n        this.subChip.querySelector('b').textContent = cost + '%';\n        this.subChip.title = sub.name;\n      }\n    }", 'HUD selected sub identity and cost');
+    return "import { t as tr } from '../i18n.js';\nimport { selectedSub, selectedSubCost } from '../../patches/splatoon3/runtime/kit-composition.mjs';\n" + code;
+  }
+  if (rel === 'src/game/bots.js') {
+    code = replaceOnce(code, 'a.ink > SUB.bomb.inkCost + 8', 'a.ink > selectedSubCost(a, SUB) + 8', 'bot turf selected sub cost');
+    code = replaceOnce(code, 'a.ink > SUB.bomb.inkCost + 10', 'a.ink > selectedSubCost(a, SUB) + 10', 'bot boss selected sub cost');
+    for (const [anchor, label] of [["          if (w.special === 'storm' && dist < 16) it.special = true;", 'turf'], ["        if (w.special === 'storm' && dist < 13 && T.los) it.special = true;", 'boss']])
+      code = replaceOnce(code, anchor, anchor + "\n        if (w.special === 'trizooka' && dist < 24 || w.special === 'inkVac' && dist < 15 || w.special === 'bubbler' && dist < 12) it.special = true;", 'bot ' + label + ' installed kit activation');
+    return "import { selectedSubCost } from '../../patches/splatoon3/runtime/kit-composition.mjs';\n" + code;
+  }
   if (rel === 'src/ui/ui-icons.js') {
     return replaceOnce(code,
       'return `<div class="iw-logo iw-logo--${size}">',
@@ -224,7 +235,8 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, '    dt = Math.min(dt, 1 / 24);\n', '', 'elapsed time');
     code = replaceOnce(code, '    this.input.endFrame();\n', '', 'input consumption');
     code = replaceOnce(code, 'const game = new Game();', 'installGame(Game);\nconst game = new Game();', 'game installation');
-    return `import { runSimulation, installGame } from '../patches/splatoon3/runtime/clock.mjs';\n` + code;
+    code = replaceOnce(code, 'subCost: SUB.bomb.inkCost / PLAYER.inkMax,', 'subCost: selectedSubCost(a, SUB) / PLAYER.inkMax,', 'frame selected sub gear cost');
+    return `import { runSimulation, installGame } from '../patches/splatoon3/runtime/clock.mjs';\nimport { selectedSubCost } from '../patches/splatoon3/runtime/kit-composition.mjs';\n` + code;
   }
   return code;
 }

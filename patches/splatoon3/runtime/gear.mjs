@@ -1,3 +1,4 @@
+import { selectedSub } from './kit-composition.mjs';
 // Gear uses three equipment pieces, each with one 10 AP main and three 3 AP subs.
 export const ABILITIES = Object.freeze({
   none: 'なし', runSpeed: 'ヒト移動速度アップ', swimSpeed: 'イカダッシュ速度アップ',
@@ -118,15 +119,21 @@ export function installGear(api, tuning) {
   const update = WeaponRunner.prototype.update;
   WeaponRunner.prototype.update = function (dt, input) {
     const a = this.a, m = a.s3?.modifiers || {}, beforeInk = a.ink;
-    const saved = { inkCost: api.SUB.bomb.inkCost, throwSpeed: api.SUB.bomb.throwSpeed };
-    api.SUB.bomb.inkCost *= m.inkSaverSub ?? 1;
-    api.SUB.bomb.throwSpeed *= m.subPower ?? 1;
+    const sub = selectedSub(a, api.SUB);
+    const saved = { inkCost: sub.inkCost, throwSpeed: sub.throwSpeed, throwSpeedMaxCharge: sub.throwSpeedMaxCharge };
+    const hold = this.s3SubHold || 0;
+    const charge = sub.chargeable ? Math.min(1, Math.max(0, hold / sub.maxChargeTime)) : 0;
+    const subDelay = sub.inkRecoverStopMaxCharge == null ? sub.inkRecoverStop
+      : sub.inkRecoverStop + (sub.inkRecoverStopMaxCharge - sub.inkRecoverStop) * charge;
+    sub.inkCost = (sub.inkCost ?? sub.inkCostFallback) * (m.inkSaverSub ?? 1);
+    sub.throwSpeed *= m.subPower ?? 1;
+    if (Number.isFinite(sub.throwSpeedMaxCharge)) sub.throwSpeedMaxCharge *= m.subPower ?? 1;
     try { return update.call(this, dt, input); }
     finally {
-      Object.assign(api.SUB.bomb, saved);
+      Object.assign(sub, saved);
       if (a.ink < beforeInk) {
         a.s3 ||= {};
-        const delay = input.subReleased ? api.SUB.bomb.inkRecoverStop : this.s3FlickVertical ? a.weapon.verticalInkRecoverStop ?? a.weapon.inkRecoverStop : a.weapon.inkRecoverStop;
+        const delay = input.subReleased ? subDelay : this.s3FlickVertical ? a.weapon.verticalInkRecoverStop ?? a.weapon.inkRecoverStop : a.weapon.inkRecoverStop;
         a.s3.recoverStopRemaining = Math.max(a.s3.recoverStopRemaining || 0, delay ?? tuning.resources.inkRefillDelay);
       }
     }
