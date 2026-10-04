@@ -26,6 +26,8 @@ test('Splattershot uses 3F humanoid first shot, 12F swim first shot and 4F post-
   a.intent.fire = true;
   f.tick(a, 2); assert.equal(f.shots.length, 0);
   f.tick(a); assert.equal(f.shots.length, 1);
+  f.tick(a, 5); assert.equal(f.shots.length, 1, 'first-shot gate must not bank negative cooldown');
+  f.tick(a); assert.equal(f.shots.length, 2, 'normal 6F cadence resumes after the gated first shot');
 
   // Release the first trigger before starting the independent swim-origin case.
   a.intent.fire = false;
