@@ -51,12 +51,13 @@ export function configureFidelityFlick(p, actor, weapon, index, angle, speed) {
   if (!b) return;
   const vertical = !!actor.weaponRunner.s3FlickVertical;
   let pitch = Math.max(-.2, Math.min(.5, actor.aimPitch)); // native aim envelope
+  let unit = null;
   if (vertical) {
     let offset = index;
-    const unit = b.verticalUnits.find(unit => {
-      if (offset < unit.count) return true;
-      offset -= unit.count; return false;
-    });
+    for (const candidate of b.verticalUnits) {
+      if (offset < candidate.count) { unit = candidate; break; }
+      offset -= candidate.count;
+    }
     if (!unit) throw new RangeError('Roller projectile count exceeds the reference unit layout');
     speed = (unit.speed ?? weapon.verticalSpeed) + offset * unit.speedStep;
     pitch += radians(unit.pitchDegrees + offset * unit.pitchStepDegrees);
@@ -66,9 +67,32 @@ export function configureFidelityFlick(p, actor, weapon, index, angle, speed) {
   p.vel.set(Math.sin(angle)*cp*speed, Math.sin(pitch)*speed, Math.cos(angle)*cp*speed);
   p.fidelityYaw = Math.atan2(Math.sin(angle-actor.yaw),Math.cos(angle-actor.yaw));
   p.fidelityMode = vertical ? 'vertical' : 'horizontal';
+  p.fidelityPlayerCollision = vertical ? unit?.playerCollision ?? null : b.horizontalPlayerCollision ?? null;
   p.straight = vertical ? b.verticalStraightTime : b.horizontalStraightTime;
   // Set these before _push/recProj; the old wrapper set them after publication.
   p.grav = weapon.flickGravity; p.drag = weapon.flickDrag;
+}
+
+export function fidelityPlayerCollisionRadius(p) {
+  const c = p.fidelityPlayerCollision;
+  if (!c) return p.size;
+  if (!(Number.isFinite(c.initRadius) && Number.isFinite(c.endRadius) && Number.isFinite(c.changeTime) && c.changeTime > 0)) return p.size;
+  const t = clamp01(p.age / c.changeTime);
+  return c.initRadius + (c.endRadius - c.initRadius) * t;
+}
+
+function rollerCollisionForProjectile(weapon,p,vertical) {
+  if (p.fidelityPlayerCollision) return p.fidelityPlayerCollision;
+  const b=weapon.ballistics;
+  if(!vertical) return b.horizontalPlayerCollision??null;
+  const speed=p.vel.length();
+  let chosen=b.verticalUnits[0]?.playerCollision??null,best=Infinity;
+  for(const unit of b.verticalUnits) for(let offset=0;offset<unit.count;offset++){
+    const expected=(unit.speed??weapon.verticalSpeed)+offset*unit.speedStep;
+    const delta=Math.abs(speed-expected);
+    if(delta<best){best=delta;chosen=unit.playerCollision??chosen;}
+  }
+  return chosen;
 }
 
 function scratch(system) {
@@ -100,7 +124,7 @@ export function fidelityBossHit(system,p) {
 export function fidelityProjectileTargets(system,p) {
   const s=scratch(system),{G,Physics,PLAYER}=api;
   s.worldReady=s.bossReady=false;s.boss=null;s.targets.length=0;
-  const radius=PLAYER.radius*.95+p.size;
+  const radius=PLAYER.radius*.95+fidelityPlayerCollisionRadius(p);
   let nearest=null,best=Infinity;
   for(const actor of G.actors){
     if(actor.team===p.team||!actor.alive)continue;
@@ -173,9 +197,12 @@ export function installWeaponsFidelity(context,profile) {
     if(w.kind==='roller'){
       finite(b.horizontalStraightTime,'horizontal straight time');finite(b.verticalStraightTime,'vertical straight time');
       if(!Number.isFinite(b.horizontalPitchDegrees)||!Number.isFinite(b.horizontalInsideDegrees))throw new RangeError('Invalid roller angle');
+      const collisionOk=c=>c&&[c.initRadius,c.endRadius,c.changeTime].every(Number.isFinite)&&c.initRadius>=0&&c.endRadius>=c.initRadius&&c.changeTime>0;
+      if(!collisionOk(b.horizontalPlayerCollision))throw new RangeError('Invalid roller horizontal player collision');
       for(const u of b.verticalUnits){
         if(!Number.isInteger(u.count)||u.count<=0||![u.speed??w.verticalSpeed,u.speedStep,u.pitchDegrees,u.pitchStepDegrees].every(Number.isFinite))throw new RangeError('Invalid roller unit');
         finite((u.speed??w.verticalSpeed)+(u.count-1)*u.speedStep,'last unit speed');
+        if(!collisionOk(u.playerCollision))throw new RangeError('Invalid roller vertical player collision');
       }
     }
     if(w.kind==='blaster'){finite(b.straightTime,'straight time');finite(b.burstTime,'burst time');}
@@ -191,7 +218,7 @@ export function installWeaponsFidelity(context,profile) {
   const fresh=Projectiles.prototype._new,push=Projectiles.prototype._push,ghost=Projectiles.prototype.ghostProjectile,clear=Projectiles.prototype.clear;
   Projectiles.prototype.clear=function(...args){const result=clear.apply(this,args);this._fidelityCollision=null;return result;};
   Projectiles.prototype._new=function(...args){
-    const p=fresh.apply(this,args);p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;return p;
+    const p=fresh.apply(this,args);p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;return p;
   };
   function initialize(p,w){
     if(!w)return;
@@ -205,6 +232,7 @@ export function installWeaponsFidelity(context,profile) {
       // Ghosts derive the mode from that duration, without a protocol extension.
       const vertical=p.fidelityMode==='vertical'||p.ghost&&Math.round(p.straight*profile.referenceHz)===Math.round(w.ballistics.verticalStraightTime*profile.referenceHz);
       p.fidelityMode=vertical?'vertical':'horizontal';p.s3Vertical=vertical;
+      p.fidelityPlayerCollision=rollerCollisionForProjectile(w,p,vertical);
       p.straight=vertical?w.ballistics.verticalStraightTime:w.ballistics.horizontalStraightTime;
       p.grav=w.flickGravity;p.drag=w.flickDrag;
     } else {
