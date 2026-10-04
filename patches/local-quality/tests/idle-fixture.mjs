@@ -12,7 +12,7 @@ export const compose = (rel, baseline = false) => {
   const out = adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, src)));
   return baseline ? out : adaptQualitySource(rel, out);
 };
-export async function idleFixture({ baseline = false, globals = {}, built = process.env.INKWAVE_IDLE_BUILD } = {}) {
+export async function idleFixture({ baseline = false, globals = {}, transform = (_rel, code) => code, built = process.env.INKWAVE_IDLE_BUILD } = {}) {
   if (baseline) built = null;
   const upstream = built || path.join(ROOT, "inkwave-public");
   const context = vm.createContext({ console, performance, ...globals });
@@ -24,7 +24,7 @@ export async function idleFixture({ baseline = false, globals = {}, built = proc
     if (modules.has(file)) return modules.get(file);
     const rel = path.relative(upstream, file);
     const code = built || rel.startsWith('..') ? fs.readFileSync(file, 'utf8') : compose(rel, baseline);
-    const mod = new vm.SourceTextModule(code, { context, identifier: file }); modules.set(file, mod); return mod;
+    const mod = new vm.SourceTextModule(transform(rel, code), { context, identifier: file }); modules.set(file, mod); return mod;
   }
   let entry = `
     export * from './inkwave-public/src/core/ctx.js';
