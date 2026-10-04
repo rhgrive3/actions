@@ -68,9 +68,17 @@ function contact(api,ch,plantedOnly=false){
   const actual=ch.bones[i===0?'footL':'footR'].getWorldPosition(new THREE.Vector3());
   const error=actual.distanceTo(expected);
   const poseWeight=ch.P[i===0?C.WPL:C.WPR], contactWeight=poseWeight*ch.plantW*(ch.feetValid?1:0);
+  const localTarget=(i===0?ch._fL:ch._fR).clone(),targetWorld=localTarget.clone().applyMatrix4(ch.kid.matrixWorld);
+  const leg=i===0?ch.limbs.legL:ch.limbs.legR,parentPos=new THREE.Vector3(),parentQ=new THREE.Quaternion();
+  ch._kidXform(leg.up.parent,parentPos,parentQ);
+  const hipKid=leg.up.position.clone().applyQuaternion(parentQ).add(parentPos);
+  const targetDist=hipKid.distanceTo(localTarget),dmax=(leg.a+leg.b)*.9995;
   assert.ok(error<.001,'drawn ankle follows its native heel/toe pivot: '+error+
     ' weight='+contactWeight+' poseWeight='+poseWeight+' plantW='+ch.plantW+
     ' ikErr='+ch.ikErr[i+2]+' legReach='+ch.legReach+
+    ' contactToTarget='+expected.distanceTo(targetWorld)+' targetToDrawn='+targetWorld.distanceTo(actual)+
+    ' targetDist='+targetDist+' dmax='+dmax+' kidScale='+ch.kid.scale.toArray().join(',')+
+    ' localTarget='+localTarget.toArray().join(',')+' targetWorld='+targetWorld.toArray().join(',')+
     ' actual='+actual.toArray().join(',')+' expected='+expected.toArray().join(','));
   assert.ok(ch.ikErr[i+2]<1e-6,'native planted leg is reachable');
  }
