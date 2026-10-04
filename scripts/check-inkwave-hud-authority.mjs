@@ -69,6 +69,24 @@ export async function checkHudAuthority({ page, evidence }) {
     });
     if(viewport)await page.setViewportSize(viewport);
   }
+  result.alphaTies=await page.evaluate(async()=>{
+    const {G}=await import(new URL('src/core/ctx.js',document.baseURI).href);
+    const {Match}=await import(new URL('src/game/match.js',document.baseURI).href);
+    // Invoke the loaded native judge with frozen coverage and an isolated result
+    // sink. Do not finish the live rendering match or send network traffic.
+    const coverage=G.paint.coverage,net=G.netm,random=Math.random,rows=[];
+    try {
+      Math.random=()=>{throw Error('Exact Turf judge used randomness');};
+      for(const [values,winner]of [[[0,0],0],[[.4,.4],0],[[.4,.3996],0],[[.3996,.4],1]])for(const team of [0,1]){
+        const cov=Object.freeze(values.slice()),m=Object.create(Match.prototype);let packet;
+        Object.assign(m,{local:{team},bossMode:null,setState(state){this.state=state;}});
+        G.paint.coverage=()=>cov;G.netm={sendResult(value){packet=value;}};m._judge();
+        if(m.result.winner!==winner||packet.winner!==winner||m.result.coverage!==cov||m.state!=='judge')throw Error('Native Alpha result mismatch');
+        rows.push({coverage:values,winner:m.result.winner,localTeam:team});
+      }
+    } finally {G.paint.coverage=coverage;G.netm=net;Math.random=random;}
+    return rows;
+  });
   result.judges=await page.evaluate(async()=>{
     const {G}=await import(new URL('src/core/ctx.js',document.baseURI).href),h=G.game.hud,rows=[];
     const paused=h.paused;h.paused=true;

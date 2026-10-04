@@ -235,3 +235,13 @@ Close non-ties no longer become presentation-only ties; exact-tie gameplay
 #158 remains outside this batch. Sources, negative controls, full native-method
 checks and unverified browser/physical-device limits are recorded in
 [the scoped HUD report](inkwave-authoritative-hud-2026-10-04.md).
+
+## 2026-10-04: deterministic assigned-Alpha Turf ties (#158)
+
+The native Turf judge now preserves the lobby/roster's Alpha team0 assignment
+on exact equality instead of drawing a new random winner. Non-ties, Boss and
+actual coverage are unchanged. It composes with PR486's authoritative Judd
+presentation, including a host/local player on Bravo. The historical 0.1%
+display-bonus note is not treated as a newly calibrated S3 parameter.
+See [the scoped tie-policy report](inkwave-alpha-tie-2026-10-04.md) for source
+provenance, native roster/packet checks and remaining physical-device limits.
