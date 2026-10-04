@@ -2,16 +2,20 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 const workflow = fs.readFileSync(new URL('../../.github/workflows/validate-inkwave-update.yml', import.meta.url), 'utf8');
-test('integration retains immutable source and downloaded artifact identity checks', () => {
+test('integration retains immutable source and independently rebuilt artifact identity checks', () => {
   assert.equal((workflow.match(/ref: \$\{\{ inputs.source_sha \|\| github.sha \}\}/g) || []).length, 3);
   assert.ok(workflow.includes('test "$(git rev-parse HEAD)" = "$SOURCE_SHA"'));
+  assert.ok(workflow.includes('node scripts/build-inkwave.mjs inkwave-public .built-site/_site'));
   assert.ok(workflow.includes('test "$(cat .built-site/_site-source-sha.txt)" = "$SOURCE_SHA"'));
   assert.ok(workflow.includes("assert reports['game/browser-result.json']['sourceSha']==os.environ['SOURCE_SHA']"));
 });
-test('bounded browser families keep motion, WebKit, responsiveness and negative identity gates', () => {
-  assert.ok(workflow.includes('max-parallel: 2'));
-  assert.ok(workflow.includes('suite: [active, catalog, ui]'));
-  assert.ok(workflow.includes('npx playwright install --with-deps chromium webkit'));
+test('parallel browser families keep motion, WebKit, responsiveness and negative identity gates', () => {
+  assert.ok(workflow.includes('max-parallel: 3'));
+  for (const suite of ['suite: active', 'suite: catalog', 'suite: ui']) assert.ok(workflow.includes(suite), suite);
+  assert.ok(workflow.includes('browsers: chromium webkit'));
+  assert.ok(workflow.includes('npx playwright install --with-deps ${{ matrix.browsers }}'));
+  assert.ok(!workflow.includes('needs: validate'));
+  assert.ok(workflow.includes('cancel-in-progress: true'));
   for (const gate of ['browser', 'motion', 'motion-detail', 'flow-render', 'wall-render', 'motion-catalog', 'touch-layout', 'reliability', 'touch-layout-identity', 'responsive']) {
     assert.ok(workflow.includes(`node scripts/check-inkwave-${gate}.mjs`), gate);
   }
@@ -40,7 +44,7 @@ test('runtime verifier storage is prepared before tests and baseline checkout is
 });
 
 test('long high-quality profiles preserve baseline before candidate work and cancelled diagnostics cannot become passing evidence',()=>{
- assert(workflow.includes('timeout-minutes: 90'));
+ assert(workflow.includes('timeout-minutes: 120'));
  const before=workflow.indexOf('name: Profile runtime at immutable baseline'),save=workflow.indexOf('name: Preserve completed baseline runtime evidence'),after=workflow.indexOf('name: Profile candidate runtime and compare repeated evidence');
  assert(before>=0&&before<save&&save<after);
  assert(workflow.includes('inkwave-runtime-baseline-diagnostics-'));assert(workflow.includes('always() && (failure() || cancelled())'));
@@ -98,7 +102,7 @@ test('CI prepares the short persistent browser cache for validator, browser and 
 
 
 test('historical gameplay equality is scoped to the runtime workstream and does not block other gameplay PRs',()=>{
- assert(workflow.includes("inputs.runtime_performance == true || (github.event_name == 'pull_request' && github.head_ref == 'inkwave/runtime-performance-ui')"));
+ assert(workflow.includes("inputs.runtime_performance == true || (github.event_name == 'pull_request' && (github.head_ref == 'inkwave/runtime-performance-ui' || github.head_ref == 'inkwave/integration-final-61-184-183'))"));
  for(const name of ['Profile runtime at immutable baseline','Profile candidate runtime and compare repeated evidence'])assert(workflow.includes("name: "+name+"\n        if: matrix.suite == 'active' && env.RUNTIME_PERFORMANCE == 'true'"));
  assert(workflow.includes("if suite=='active' and runtime_performance:\n            checks.extend(['runtime-before/runtime-result.json','runtime-after/runtime-result.json','runtime-comparison.json'])"));
  assert(workflow.includes("'runtimePerformance':runtime_performance"));
