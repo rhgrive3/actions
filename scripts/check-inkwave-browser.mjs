@@ -109,10 +109,13 @@ async function probeComposedKitMenus() {
       assert(kits[1].querySelector('.iw-kit__icon').innerHTML === normalizedIcon(icons.SPECIAL_ICONS[w.special]), main + ' selected special icon');
       show('main');
       const chips = [...menu._scr.el.querySelectorAll('.iw-kitcard__chips .iw-chip')];
-      assert(chips.length === 2 && chips[0].textContent === SUB[w.sub].name && chips[1].textContent === SPECIALS[w.special].name, main + ' lobby current kit names');
+      // Native chips append their label as a direct text node after the icon.
+      // Decorative SVG whitespace is not part of the displayed kit name.
+      const chipLabel = chip => [...chip.childNodes].filter(n => n.nodeType === Node.TEXT_NODE).map(n => n.textContent).join('').trim();
+      assert(chips.length === 2 && chipLabel(chips[0]) === SUB[w.sub].name && chipLabel(chips[1]) === SPECIALS[w.special].name, main + ' lobby current kit names');
       assert(chips[0].querySelector('i').innerHTML === normalizedIcon(icons.SUB_ICONS[w.sub]), main + ' lobby current sub icon');
       result.push({main,sub:w.sub,special:w.special,specialCost:w.specialCost,
-        leavingScreens:document.querySelectorAll('.iw-screen.is-leaving').length});
+        lobbyNames:chips.map(chipLabel),leavingScreens:document.querySelectorAll('.iw-screen.is-leaving').length});
     }
     return result;
   } finally { menu.api.setLoadout({weapon:original}); show('loadout'); }

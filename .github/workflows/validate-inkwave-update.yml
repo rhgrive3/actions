@@ -107,6 +107,8 @@ jobs:
         run: |
           npm install --no-save --no-package-lock --silent esbuild@0.28.2
           node scripts/build-inkwave.mjs inkwave-public _site
+          node scripts/build-inkwave.mjs inkwave-public _site-repeat
+          diff -qr _site _site-repeat
           git rev-parse HEAD > _site-source-sha.txt
       - uses: actions/upload-artifact@v4
         with:
