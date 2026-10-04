@@ -126,7 +126,7 @@ try{
  // A stale target here proves an extra engine-tick dependency independent of GPU.
  await page.evaluate(()=>{const g=probeG.game;g.debug.freeze();g.menus.wipe.cancel();g.menus.show('settings',{wipe:false,light:false});});
  await page.waitForTimeout(1500);
- Object.assign(result,await page.evaluate(()=>{
+ Object.assign(result,await page.evaluate(async()=>{
   const g=probeG.game,m=g.menus;
   const mode=name=>g._onDevice?g._onDevice(name):m.setInputMode(name);
   const dispatch=(name,target)=>{
@@ -161,8 +161,16 @@ try{
   const modeSwitchInput=[];
   for(const [from,to]of [['pad','kbm'],['kbm','pad'],['touch','kbm'],['touch','pad']]){
    mode(from);const [a,b]=m._candidates().filter(e=>e.dataset.nav==='row');
+   // Mode callbacks can rebuild CSS-entering rows. Prime the natural paint
+   // before measuring input; native intentionally hides rings on opacity<=.6.
+   const deadline=performance.now()+5000;
+   while(Math.min(+getComputedStyle(a).opacity,+getComputedStyle(b).opacity)<.9){
+    if(performance.now()>deadline)throw Error('Mode-switch rows did not finish entrance');
+    await new Promise(resolve=>setTimeout(resolve,25));
+   }
+   const primedOpacity=[+getComputedStyle(a).opacity,+getComputedStyle(b).opacity];
    m._setFocus(a,{snap:true});m._updateCursor(1/60);const beforeOn=m._cur.on,oldVisual=visual(),t=performance.now();dispatch(to,b);
-   modeSwitchInput.push({from,to,beforeOn,...inspect(a,oldVisual,t)});m._updateCursor(1/60);
+   modeSwitchInput.push({from,to,primedOpacity,beforeOn,...inspect(a,oldVisual,t)});m._updateCursor(1/60);
   }
   return{input,modeSwitchInput};
  }));
