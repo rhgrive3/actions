@@ -11,9 +11,11 @@ export function rollLaunchSpeed(speed, chain, retention) {
   return speed * (chain > 0 ? retention : 1);
 }
 export function absorbArmor(state, damage) {
-  if (!state || state.armorTime <= 0 || state.armorHP <= 0) return damage;
-  const absorbed = Math.min(damage, state.armorHP); state.armorHP -= absorbed;
-  return damage - absorbed;
+  if (!(damage > 0) || !state || state.armorTime <= 0 || state.armorHP <= 0) return damage;
+  // Durability and the per-hit penetration threshold are different quantities.
+  // A hit that breaks a 30 HP shield still absorbs up to 100 HP of that hit.
+  state.armorHP = Math.max(0, state.armorHP - damage);
+  return Math.max(0, damage - (state.armorThreshold ?? 100));
 }
 export function movementState(a) {
   a.s3 ||= {};
@@ -33,7 +35,7 @@ export function beforeActions(a, dt, jumpPressed) {
   const state = movementState(a), cfg = config;
   state.chainTimer = Math.max(0, state.chainTimer - dt);
   if (state.chainTimer <= 1e-10) { state.chain = 0; state.chainTimer = 0; }
-  for (const action of [state.roll, state.surge]) if (action) {
+  for (const action of new Set([state.roll, state.surge, state.armor])) if (action) {
     const remaining = (action.armorTime || 0) - dt;
     action.armorTime = remaining <= 1e-10 ? 0 : remaining;
   }
@@ -42,7 +44,7 @@ export function beforeActions(a, dt, jumpPressed) {
     if (state.roll.time <= 1e-10 || a.form !== 'squid') state.roll = null;
   }
   if (!a.alive || a.specialActive || a.superJumpState || a.form !== 'squid') {
-    state.roll = state.surge = null; a.anim.surgeCharge = 0; sync(a, state); return false;
+    state.roll = state.surge = state.armor = null; a.anim.surgeCharge = 0; sync(a, state); return false;
   }
   // Own-ink roll uses the velocity captured BEFORE ordinary braking/turning.
   const wallRoll = a.climbing && jumpPressed && (a.intent.move.x * a.wallN.x + a.intent.move.z * a.wallN.z) >= cfg.wallRollMinimumInput;
@@ -51,8 +53,9 @@ export function beforeActions(a, dt, jumpPressed) {
     const speed = rollLaunchSpeed(Math.max(cfg.roll.minimumSpeed, Math.hypot(a.vel.x, a.vel.z)), state.chain, retention);
     const direction = wallRoll ? a.wallN : a.intent.move;
     launch(a, direction, speed, cfg.roll.jumpVelocity, 'squidroll');
-    state.roll = { time: cfg.roll.duration, armorTime: cfg.roll.armorTime, armorHP: cfg.roll.armorHP,
+    state.roll = { time: cfg.roll.duration, armorTime: wallRoll ? cfg.roll.wallArmorTime : cfg.roll.armorTime, armorHP: cfg.roll.armorHP, armorThreshold: cfg.roll.armorThreshold,
       vx: a.vel.x, vz: a.vel.z };
+    state.armor = state.roll;
     state.surge = null; state.chain++; state.chainTimer = cfg.roll.chainReset;
     sync(a, state); return true;
   }
@@ -74,7 +77,8 @@ export function beforeActions(a, dt, jumpPressed) {
       surge.phase = 'burst'; surge.time = cfg.surge.duration * surge.charge;
       surge.speed = cfg.surge.minimumVelocity + (cfg.surge.velocity - cfg.surge.minimumVelocity) * surge.charge;
       surge.armorTime = surge.charge >= 1 ? cfg.surge.armorTime : 0;
-      surge.armorHP = cfg.surge.armorHP;
+      surge.armorHP = cfg.surge.armorHP; surge.armorThreshold = cfg.surge.armorThreshold;
+      if (surge.armorTime > 0) state.armor = surge;
       a.jumpBuffer = 0; a.anim.surgeCharge = 0;
       a.character.trigger('squidsurge', { charge: surge.charge, duration: surge.time });
       api.emit('actor:squidsurge', { actor: a, charge: surge.charge });
@@ -91,6 +95,23 @@ export function beforeActions(a, dt, jumpPressed) {
   sync(a, state);
   return !!state.roll;
 }
+// Called only at the native unpainted-wall boundary, after the real raycast.
+// A surge coasts under ordinary air physics; no virtual ink or extra impulse.
+export function crossSurgeInkGap(a, hit, into) {
+  const burst = movementState(a).surge;
+  if (burst?.phase !== 'burst' || burst.time <= 0 || a.vel.y <= 0 ||
+      !a.climbing || a.form !== 'squid' || !hit.hit || Math.abs(hit.normal.y) >= .5 ||
+      hit.face < 0 || api.G.paint.sample(hit.face, hit.u, hit.v) !== 0 ||
+      into < api.PLAYER.climbDetachDot) return false;
+  a._setClimb(false); a.grounded = false; a.climbExit = 0;
+  return true;
+}
+export function normalJumpVelocity(a, velocity) {
+  const r = a.weaponRunner, cap = a.weapon.fullChargeJumpVelocity;
+  if (a.form !== 'squid' && a.weapon.kind === 'charger' && a.intent.fire &&
+      r.charging && r.charge >= 1 && Number.isFinite(cap)) return Math.min(velocity, cap);
+  return velocity;
+}
 export function installMovement(context, tuning) {
   api = context; config = tuning.movement;
   const { Actor } = api;
@@ -103,12 +124,30 @@ export function installMovement(context, tuning) {
     if (this.invuln > 0 || !this.alive) return false;
     if (source !== 'ink') {
       const state = movementState(this);
-      const action = state.roll?.armorTime > 0 ? state.roll : state.surge;
+      const action = this.form === 'squid' ? state.armor ?? (state.roll?.armorTime > 0 ? state.roll : state.surge) : null;
       const left = absorbArmor(action, amount);
       if (left !== amount) api.emit('actor:armorhit', { actor: this, absorbed: amount - left, broken: action.armorHP <= 0 });
       amount = left;
     }
     return damage.call(this, amount, attacker, source);
+  };
+  const integrate = Actor.prototype._integrate, splat = Actor.prototype.splat;
+  Actor.prototype._integrate = function (...args) {
+    const value = integrate.apply(this, args);
+    if (this.contacts.ceiling) {
+      const state = movementState(this);
+      for (const shield of new Set([state.armor, state.roll, state.surge])) if (shield) shield.armorTime = 0;
+      state.armor = null;
+    }
+    return value;
+  };
+  Actor.prototype.splat = function (...args) {
+    const result = splat.apply(this, args);
+    if (!this.alive) {
+      const state = movementState(this); state.roll = state.surge = state.armor = null;
+      this.anim.surgeCharge = 0; sync(this, state);
+    }
+    return result;
   };
   const horizontal = Actor.prototype._horizontal;
   Actor.prototype._horizontal = function (...args) {
@@ -147,7 +186,7 @@ export function installMovement(context, tuning) {
     Actor.prototype[method] = function (...args) {
       const result = original.apply(this, args);
       if (this.specialActive || this.superJumpState) {
-        const state = movementState(this); state.roll = state.surge = null; this.anim.surgeCharge = 0; sync(this, state);
+        const state = movementState(this); state.roll = state.surge = state.armor = null; this.anim.surgeCharge = 0; sync(this, state);
       }
       return result;
     };

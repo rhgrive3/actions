@@ -120,7 +120,8 @@
       "keepChargeTime": 1.25,
       "chargeTime": 1,
       "inkRecoverStop": 0.3333333333333333,
-      "damagePartialMax": 80
+      "damagePartialMax": 80,
+      "fullChargeJumpVelocity": 4.2
     },
     "roller": {
       "rollSpeed": 7.92,
@@ -303,8 +304,10 @@
       "minimumInput": 0.3,
       "minimumAngle": 1.5707963267948966,
       "duration": 0.25,
-      "armorTime": 0.13333333333333333,
-      "armorHP": 100,
+      "armorTime": 0.3,
+      "wallArmorTime": 0.75,
+      "armorHP": 30,
+      "armorThreshold": 100,
       "jumpVelocity": 9.4,
       "chainRetention": 0.85,
       "chainReset": 1
@@ -314,8 +317,9 @@
       "duration": 0.3,
       "minimumVelocity": 4,
       "velocity": 15,
-      "armorTime": 0.13333333333333333,
-      "armorHP": 100
+      "armorTime": 0.75,
+      "armorHP": 30,
+      "armorThreshold": 100
     }
   },
   "flow": {
@@ -378,6 +382,11 @@
     "movementResourcesEvidence": "reports/inkwave-movement-resources-2026-10-02.md"
   },
   "bindings": {
+    "weapons.charger.fullChargeJumpVelocity": {
+      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/WeaponParam/JumpHeightFullCharge",
+      "factor": 60,
+      "rawValue": 0.07
+    },
     "player.runSpeed": {
       "parameter": "data/parameter/1130/misc/params.json#/MoveVel_Human",
       "index": 2,
