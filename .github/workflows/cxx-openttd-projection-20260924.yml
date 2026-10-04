@@ -7,6 +7,19 @@ on:
   pull_request:
     branches:
       - main
+    # This diagnostic checks Hex/OpenTTD, not INKWAVE gameplay.
+    paths:
+      - ".github/workflows/*hex*.yml"
+      - ".github/workflows/cxx-*.yml"
+      - "scripts/*hex*.mjs"
+      - "scripts/*cxx*.mjs"
+      - "scripts/tests/hex-*.mjs"
+      - "scripts/tests/cxx-*.mjs"
+      - "patches/hex-*/**"
+      - "patches/hex-*"
+      - "staged/hex-*/**"
+      - "triggers/hex-*"
+  workflow_dispatch:
 
 jobs:
   regression:
