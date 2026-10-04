@@ -226,3 +226,13 @@ compare 対象の変更点は `patches/splatoon3/profile.json` の `player.respa
 未確認の項目を確定済みとして扱わない。ブラウザ、WebKit、実機での確認と、本家実機の計測は別物であり、この節のいずれの行もそれらを代替しない。ブラウザ実動作、GitHub Actions の exact-SHA 描画ゲート、2 台実機のパリティはいずれも未検証である。
 
 親の追加検証: Cline2の再生テストは元のローカルactorを同じwire nidからproxyへ置き換えず、一部で別owner/teamを検証していた。実パケットのnidを維持してproxyに置き換えた上で再検証した。接続破棄後のghost爆弾が6回の塗り呼び出しと1回のturf加算を発生させる旧動作を再現し、ghost固有のpaint/actor/boss拒否で修正した。表示用のFXは維持する。native packet追記2項目と親のKIT_FORWARD/送信者束縛は両方維持している。
+
+
+## 公開キットの親統合補足（2026-10-04）
+
+| 対象 | 本家の根拠 | 実装箇所 | 再現と影響 | 確認状態 |
+|---|---|---|---|---|
+| ロビーの現在のサブ表示 | Ver.11.3.0 の抽出済み基本キットは shooter=Suction / roller=Curling / charger=Splat Bomb。対応表の数値出典は curated-numbers と kit-composition に固定。 | adapter の Menus._sub と CURRENT LOADOUT アイコン接続 | 選択したブキの sub レジストリを取得する。上流の共通ボム名・アイコンを引き継ぐ不一致を除去。 | 実 adapted メソッドの回帰は旧コードで失敗、新コードで成功。キット割当と最終ブラウザ表示検証は未完了。 |
+| バリアへのローラードロップの距離減衰 | 本家実機でバリアの減衰は未確認。INKWAVE 自身の native actor/boss 接触時の damageNear→damageFar、7単位の距離式に揃える内部整合修正。 | kit-big-bubbler の damageAtContact / kitBarrierCandidate | 発射位置から実バリア接触点までの距離を使い、通常弾は変更しない。遠距離の150→35ダメージにより、不適切な即破壊から耐久9097の維持へ変化。 | 旧コードで新規5件中4件失敗、修正後は親統合の54件成功。クエリは副作用なし、提案ダメージも同じ値。ブラウザ実動作と本家一致は未確認。 |
+
+これらは bca373d の rolling 統合結果であり、未完了のトリズーカや全キットの実行を確認済みとは扱わない。
