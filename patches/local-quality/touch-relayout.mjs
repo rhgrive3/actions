@@ -25,6 +25,10 @@ export function createTouchRelayout(mobile, env = globalThis) {
       if (current === null) unknownRotationPending = true;
       mobile.gyro.resync();
       mobile.resetPointers();
+    } else if (mobile.editing) {
+      // Editor drags use viewport-relative anchors; retain the draft but discard
+      // that gesture when its geometry changes, as the existing editor requires.
+      mobile.resetPointers();
     }
     if (frame !== null) return;
     frame = env.requestAnimationFrame(() => {

@@ -199,7 +199,6 @@ export async function runTouchTransitionCases({
     fireDown: !!mobile.buttons?.fire || mobile.down('fire'),
     firePressed: mobile.pressed.has('fire'),
     ptrSize: mobile._ptr.size,
-    hasPointer: mobile._ptr.has(10),
   }));
 
   assert.equal(afterFirstTouchFire.lastDevice, 'touch', 'Device must switch to touch on pointerdown');
@@ -327,6 +326,7 @@ export async function runTouchTransitionCases({
 
   // Subsequent cancel: cancel touch
   await gesture('touchCancel', []);
+  await page.waitForFunction(() => mobile._ptr.size === 0);
   const lookCancelState = await page.evaluate(() => ({
     ptrSize: mobile._ptr.size,
     lookDX: mobile.lookDX,

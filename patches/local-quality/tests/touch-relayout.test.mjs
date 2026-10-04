@@ -96,3 +96,13 @@ test('canonical production composition has one router and layout owner, with bou
   assert.throws(() => adaptTouchRelayout(rel, before.replace('const relayout = () =>', 'const relayout = unexpected =>')), /touch relayout conflict/);
   assert.equal(adaptTouchRelayout('src/core/gyro.js', 'unchanged'), 'unchanged');
 });
+
+test('editor relayout cancels its stale drag without resyncing gyro or losing the draft', () => {
+  const f = fixture(), draft = { fire: { x: .8 } };
+  f.mobile.editing = true; f.mobile.layout = draft; f.mobile._edit = { pts: new Map([[9, {}]]) };
+  f.mobile.resetPointers = function() { f.counts.reset++; this._edit = null; };
+  f.layout({ type: 'resize' }); f.drain();
+  assert.equal(f.mobile._edit, null); assert.equal(f.mobile.layout, draft);
+  assert.equal(f.mobile.editing, true); assert.equal(f.counts.reset, 1);
+  assert.equal(f.counts.resync, 0); assert.equal(f.counts.layout, 1);
+});
