@@ -95,9 +95,11 @@ async function probeComposedKitMenus() {
   try {
     for (const main of ['shooter','roller','charger']) {
       show('loadout');
-      const card = [...document.querySelectorAll('.iw-wcard')].find(c => c.dataset.id === 'w-' + main);
+      const screen = menu._scr.el;
+      assert(menu._scr.name === 'loadout' && screen.isConnected, main + ' current hydrated loadout');
+      const card = [...screen.querySelectorAll('.iw-wcard')].find(c => c.dataset.id === 'w-' + main);
       assert(card, main + ' selectable card'); card.click();
-      const w = WEAPONS[main], kits = [...document.querySelectorAll('.iw-wd__kits .iw-kit')];
+      const w = WEAPONS[main], kits = [...screen.querySelectorAll('.iw-wd__kits .iw-kit')];
       assert(menu._loadout().weapon === main, main + ' actually equipped via menu');
       assert(kits.length === 2, main + ' kit chips');
       assert(kits[0].querySelector('b').textContent === SUB[w.sub].name, main + ' selected sub name');
@@ -106,10 +108,11 @@ async function probeComposedKitMenus() {
       assert(kits[1].querySelector('.iw-kit__cost').textContent === w.specialCost + 'p', main + ' selected special cost');
       assert(kits[1].querySelector('.iw-kit__icon').innerHTML === normalizedIcon(icons.SPECIAL_ICONS[w.special]), main + ' selected special icon');
       show('main');
-      const chips = [...document.querySelectorAll('.iw-kitcard__chips .iw-chip')];
+      const chips = [...menu._scr.el.querySelectorAll('.iw-kitcard__chips .iw-chip')];
       assert(chips.length === 2 && chips[0].textContent === SUB[w.sub].name && chips[1].textContent === SPECIALS[w.special].name, main + ' lobby current kit names');
       assert(chips[0].querySelector('i').innerHTML === normalizedIcon(icons.SUB_ICONS[w.sub]), main + ' lobby current sub icon');
-      result.push({main,sub:w.sub,special:w.special,specialCost:w.specialCost});
+      result.push({main,sub:w.sub,special:w.special,specialCost:w.specialCost,
+        leavingScreens:document.querySelectorAll('.iw-screen.is-leaving').length});
     }
     return result;
   } finally { menu.api.setLoadout({weapon:original}); show('loadout'); }
@@ -289,7 +292,7 @@ try {
   result.errors = errors; result.consoleErrors = consoleErrors; result.requestFailures = failures;
   fs.writeFileSync(evidence + '/browser-result.json.writing', JSON.stringify(result, null, 2));
   fs.renameSync(evidence + '/browser-result.json.writing', evidence + '/browser-result.json');
-  console.log(JSON.stringify({status:result.status,sourceSha,contentHash:result.contentHash,gearSelects:result.gearSelects,gameplay:result.gameplay,verifiedResponses:receipts.length,errors})); await browser.close();
+  console.log(JSON.stringify({status:result.status,error:result.error,sourceSha,contentHash:result.contentHash,gearSelects:result.gearSelects,gameplay:result.gameplay,verifiedResponses:receipts.length,errors})); await browser.close();
 }
 if (result.status !== 'passed' || errors.length) process.exitCode = 1;
 

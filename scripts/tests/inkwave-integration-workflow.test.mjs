@@ -32,3 +32,14 @@ test('nested INKWAVE guard changes trigger both pull request and pushed-main val
 test('compatibility failure preserves its primary error without a missing diagnostic upload', () => {
   assert.ok(workflow.includes("if: failure() && hashFiles('.ci-scratch/inkwave-patches/patch-tests.log') != ''"));
 });
+
+
+test('failed browser producers retain diagnostics separately from passing receipts', () => {
+  const start = workflow.indexOf('name: Preserve failed browser diagnostics');
+  assert.ok(start >= 0, 'a failed loaded-runtime probe must retain its report and screenshot');
+  const step = workflow.slice(start);
+  assert.ok(step.includes("if: failure() && env.CI_STORAGE != ''"));
+  assert.ok(step.includes('name: inkwave-browser-failure-${{ matrix.suite }}-${{ inputs.source_sha || github.sha }}'));
+  assert.ok(step.includes('path: ${{ env.CI_STORAGE }}/evidence/'));
+  assert.ok(workflow.includes('if: success()'), 'passing evidence remains success-only');
+});

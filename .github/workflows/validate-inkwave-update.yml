@@ -218,3 +218,12 @@ jobs:
           if-no-files-found: error
           path: ${{ env.CI_STORAGE }}/evidence/
           retention-days: 14
+      - name: Preserve failed browser diagnostics
+        if: failure() && env.CI_STORAGE != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: inkwave-browser-failure-${{ matrix.suite }}-${{ inputs.source_sha || github.sha }}
+          include-hidden-files: true
+          if-no-files-found: warn
+          path: ${{ env.CI_STORAGE }}/evidence/
+          retention-days: 14
