@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import path from 'node:path';
 import {execFileSync} from 'node:child_process';
-import {hash,verifyRuntimeBuild,persistentDirectory,persistentBrowserTemp,invalidWindows} from '../lib/inkwave-runtime-evidence.mjs';
+import {hash,verifyRuntimeBuild,persistentDirectory,persistentBrowserTemp,invalidWindows,sampleStats} from '../lib/inkwave-runtime-evidence.mjs';
 const root=persistentDirectory('/mnt/workspace/.dev-state/agent-work/scratch/inkwave-runtime-performance-ui-evidence-tests/'+process.pid);
 test('benchmark rejects empty/undersampled live windows and incomplete fixed transactions',()=>{
  const scenarios=[{scenario:'battle',runs:[{repeat:0,frames:{n:0},counts:{frame:0}},{repeat:1,frames:{n:1},counts:{frame:29}},{repeat:2,frames:{n:30},counts:{frame:30}}]}];
@@ -104,4 +104,10 @@ test('actual owner instrumentation retains native work but excludes callbacks ou
  assert.equal(g._frame(),4);assert.equal(context.counts.frame,2);assert.equal(context.counts.match,2);assert.equal(context.counts.menuTick,2);assert.equal(context.counts.cursor,2);
  assert.equal(context.timings.frame.length,2);assert(context.runtimeOwnerNames.includes('menuTick'));
  assert(source.includes('finally{runtimeWindowActive=false;}'));
+});
+
+test('runtime statistics use the standard even-sample median and preserve spike mean and p95',()=>{
+ const stats=sampleStats;
+ const r=stats([100,1,3,2]);assert.equal(r.n,4);assert.equal(r.median,2.5);assert.equal(r.mean,26.5);assert.equal(r.p95,100);assert.equal(r.max,100);
+ assert.equal(stats([1,3,2]).median,2);assert.equal(stats([]).n,0);
 });

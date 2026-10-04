@@ -46,7 +46,8 @@ export function verifyRuntimeBuild(site,root,sha){
 export function sampleStats(values){
  const a=[...values].sort((a,b)=>a-b);
  if(!a.length)return {n:0};
- return{n:a.length,median:a[Math.floor(a.length*.5)],p95:a[Math.min(a.length-1,Math.floor(a.length*.95))],max:a.at(-1)};
+ const middle=Math.floor(a.length/2);
+ return{n:a.length,mean:a.reduce((sum,value)=>sum+value,0)/a.length,median:a.length%2?a[middle]:(a[middle-1]+a[middle])/2,p95:a[Math.min(a.length-1,Math.floor(a.length*.95))],max:a.at(-1)};
 }
 
 export function invalidWindows(scenarios,fixed){
