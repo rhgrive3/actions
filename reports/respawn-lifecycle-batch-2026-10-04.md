@@ -84,3 +84,8 @@ mainがlocal victim自身をHUDへ渡し、HUDのFX callbackが毎描画frameで
 - active検証のHUD失敗は複合条件を観測値付きへ分解。CSS animation shorthandの文字列全体ではなく、computed animation-nameがnoneであることを要求し、独立CSS時計が止まる意味を検査する。新headの実ブラウザ再実行までは原因・成功未確定。
 - 凍結シミュレーションがreal-time introより先へ進むfixtureではHUDを明示表示して描画し、fade完了と数字の可視性を待って証跡を取る。通常introの実機体験を確認したという主張ではない。
 - UIはWebKit小型portraitの回転直後floating-stickで失敗。PR315で実CI成功済みのnative resize/orientation +2rAF待機3ファイルだけを再利用し、ゲームの操作条件を弱めない。PR315の敵インクロジックは取り込まない。
+
+
+### CSSOM数値の受入精度
+
+run37195545808で、actor参照・実タイマー・数字・computed animation-nameの検査は通過し、半周リングの1e-10比率比較で失敗した。CSSはJS doubleをそのまま往復せず、[CSSOM数値serialization](https://drafts.csswg.org/cssom/#serialize-a-css-component-value)に丸め規則がある。検証器だけを0.001 SVG user unit以下の絶対差へ改め、値・期待値を記録する。100単位viewBoxの1pixelより十分小さく、1%ずれ・NaN・空文字・%指定を負例で拒否する。ゲームのtimer/描画計算は変更しない。実CI再確認までは成功未確定。

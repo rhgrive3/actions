@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import fs from 'node:fs';
+import { assertRespawnRing } from './lib/inkwave-respawn-hud.mjs';
 import path from 'node:path';
 import http from 'node:http';
 import crypto from 'node:crypto';
@@ -32,7 +33,7 @@ if(process.argv.includes('--exact-source')) {
   });
   Object.entries(manifest.files).forEach(([key,expected],i)=>{if(hash(fs.readFileSync(path.join(ROOT,files[i])))!==expected)throw new Error('Build input differs from manifest: '+key);});
   if(hash(fs.readFileSync(path.join(ROOT,'scripts/build-inkwave.mjs')))!==manifest.build.script)throw new Error('Build pipeline mismatch');
-  files.push('scripts/build-inkwave.mjs', 'scripts/check-inkwave-browser.mjs');
+  files.push('scripts/build-inkwave.mjs', 'scripts/check-inkwave-browser.mjs', 'scripts/lib/inkwave-respawn-hud.mjs');
   const blobs=execFileSync('git',['hash-object','--',...files],{cwd:ROOT,encoding:'utf8'}).trim().split('\n');
   files.forEach((file,i)=>{if(blobs[i]!==tree.get(file))throw new Error('Build input differs from commit: '+file);});
 }
@@ -180,12 +181,12 @@ try {
     const initial = st.t; hud._fxTime += 100; hud._fxMap.get('splatted')();
     if (st.t !== initial) throw Error('Independent HUD FX time consumed death timer');
     a.respawnTimer /= 2; hud._fxMap.get('splatted')();
-    if (Math.abs(Number(st.ring.style.strokeDashoffset)/st.circumference-.5)>1e-10) throw Error('Compiled death ring desynchronized');
     // The simulation is deliberately frozen and stepped much faster than the
     // real-time intro timers. Present this controlled HUD fixture explicitly.
     hud.setVisible(true); g.R.render();
-    return { initial, remaining: st.t, number: st.num.textContent, ringRatio: Number(st.ring.style.strokeDashoffset)/st.circumference, special: a.special, observed, fixture: 'native death event/HUD; frozen actor clock; explicit HUD visibility after accelerated intro' };
+    return { initial, remaining: st.t, number: st.num.textContent, ringOffset: st.ring.style.strokeDashoffset, circumference: st.circumference, special: a.special, observed, fixture: 'native death event/HUD; frozen actor clock; explicit HUD visibility after accelerated intro' };
   });
+  result.respawnHud.ringRatio = assertRespawnRing(result.respawnHud.ringOffset, result.respawnHud.circumference, .5);
   await page.waitForFunction(() => Number(getComputedStyle(globalThis.s3ProbeG.game.fadeEl).opacity) === 0, null, {timeout:10000});
   await page.locator('.iw-spl__num').waitFor({state:'visible'});
   await page.screenshot({path:path.join(evidence,'respawn-authoritative-countdown.png'),animations:'disabled',timeout:90000});
