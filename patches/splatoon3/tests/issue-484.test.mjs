@@ -148,7 +148,8 @@ test('issue-484 adapter transforms Actor and NetMatch with exact connections', (
   const patchedNet = adaptIssue484('src/net/netmatch.js', netSrc);
   assert.ok(patchedNet.includes('specialReady: 1048576'));
   assert.ok(patchedNet.includes('if (a.specialReady?.()) f |= F.specialReady;'));
-  assert.ok(patchedNet.includes('spCost: s[21]'));
+  assert.ok(patchedNet.includes('snap.spCost = d.sc?.[a.nid]'));
+  assert.ok(!patchedNet.includes('spCost: s[21]'), 'tuple slot21 remains available for existing statistics extensions');
   assert.ok(patchedNet.includes('o.spCost = a.spCost;'));
   assert.ok(patchedNet.includes('a.s3SpecialReady = !!(f & F.specialReady)'));
   assert.ok(patchedNet.includes('victim.s3SpecialReady = false;'));
@@ -300,8 +301,8 @@ test('root acceptance: patched INKWAVE synchronizes specialReady and effective s
   hostNM.tickT = 0;
   hostNM.update(1 / 20);
   assert.ok(hostPacket);
-  assert.equal(hostPacket.a[0].length, 22, 'Patched snapshot has 22 elements');
-  assert.equal(Math.round(hostPacket.a[0][21]), 165, 'Element 21 is effective specialCost');
+  assert.equal(hostPacket.a[0].length, 21, 'original actor tuple is unchanged');
+  assert.equal(Math.round(hostPacket.sc[owner.nid]), 165, 'named sidecar carries effective cost');
   assert.ok(hostPacket.a[0][10] & 1048576, 'Flags contain specialReady bit');
 
   // Deliver tick to client
@@ -388,7 +389,7 @@ test('fractional effective cost preservation: 57 AP does not round 180/1.3 = 138
   assert.ok(hostPacket);
 
   // Appended cost must NOT be Math.round: it preserves the exact float
-  const transmittedCost = hostPacket.a[0][21];
+  const transmittedCost = hostPacket.sc[owner.nid];
   assert.ok(Math.abs(transmittedCost - exactOwnerCost) < 1e-6, `Transmitted cost must preserve float, got ${transmittedCost}`);
   // Points tuple stays native-rounded (Math.round(138.4615) = 138)
   assert.equal(hostPacket.a[0][13], 138);
@@ -551,7 +552,7 @@ test('legacy transport & invalid fields: missing/corrupt cost falls back to nati
   proxy.reset();
   nm.bind({ actors: [proxy] });
 
-  // 1. Legacy 21-element snapshot with 180 special (no 22nd element, no specialReady bit)
+  // 1. Legacy 21-element snapshot with 180 special (no cost sidecar, no specialReady bit)
   const legacy21Snapshot = [
     proxy.nid, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, // f: grounded=1, no specialReady
     100, 100, 180, 0, 50, 0, 0, 0, 0, 0     // 21 elements total (indices 0..20)
@@ -570,6 +571,16 @@ test('legacy transport & invalid fields: missing/corrupt cost falls back to nati
   assert.equal(proxy.s3SpecialReady, undefined, 'No presentation ready set');
   assert.equal(proxy.specialReady(), true, 'Legacy 180p sample MUST be ready (must not force false!)');
 
+  // Unrelated tuple extensions (PR328 stats.specials at slot21) are opaque to cost.
+  const countedLegacy = [...legacy21Snapshot, 3];
+  receiveFixtureSnapshot(nm, 'host-id', { k: 't', ts: 1.025, a: [countedLegacy] });
+  peer.tr = 1.025;
+  nm.update(1 / 20);
+  nm.applyRemote(proxy, 1 / 20);
+  assert.equal(proxy.specialCost(), 180, 'stats count at tuple slot21 cannot become a gameplay/display cost');
+  assert.equal(proxy.s3SpecialCost, undefined);
+
+
   // When legacy special is 100p (< 180p), native readiness returns false
   legacy21Snapshot[13] = 100;
   receiveFixtureSnapshot(nm, 'host-id', { k: 't', ts: 1.05, a: [legacy21Snapshot] });
@@ -578,7 +589,7 @@ test('legacy transport & invalid fields: missing/corrupt cost falls back to nati
   nm.applyRemote(proxy, 1 / 20);
   assert.equal(proxy.specialReady(), false, 'Legacy 100p sample evaluates native false');
 
-  // 2. Test invalid/corrupt appended fields: NaN, Infinity, -50, "165", null, {}
+  // 2. Test invalid/corrupt cost sidecars: NaN, Infinity, -50, "165", null, {}
   const corruptValues = [NaN, Infinity, -Infinity, -50, 0, '165', null, {}];
   let ts = 1.1;
   for (const badCost of corruptValues) {
@@ -587,7 +598,7 @@ test('legacy transport & invalid fields: missing/corrupt cost falls back to nati
       proxy.nid, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
       100, 100, 180, 0, 50, 0, 0, 0, 0, 0, badCost
     ];
-    receiveFixtureSnapshot(nm, 'host-id', { k: 't', ts, a: [corruptSnapshot] });
+    receiveFixtureSnapshot(nm, 'host-id', { k: 't', ts, sc: { [proxy.nid]: badCost }, a: [corruptSnapshot] });
     peer.tr = ts;
     nm.update(1 / 20);
     nm.applyRemote(proxy, 1 / 20);
@@ -624,12 +635,12 @@ test('mixed stream: seamless transitions between new protocol and legacy samples
   nm.bind({ actors: [proxy] });
   const peer = nm._peer('host-id');
 
-  // Step 1: New 22-element packet with 165p effective cost & ready flag
+  // Step 1: Original tuple plus named cost sidecar and ready flag
   const newSnapshot = [
     proxy.nid, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 | 1048576,
     100, 100, 165, 0, 50, 0, 0, 0, 0, 0, 165
   ];
-  receiveFixtureSnapshot(nm, 'host-id', { k: 't', ts: 1.0, a: [newSnapshot] });
+  receiveFixtureSnapshot(nm, 'host-id', { k: 't', ts: 1.0, sc: { [proxy.nid]: 165 }, a: [newSnapshot] });
   peer.tr = 1.0;
   nm.update(1 / 20);
   nm.applyRemote(proxy, 1 / 20);
@@ -637,7 +648,7 @@ test('mixed stream: seamless transitions between new protocol and legacy samples
   assert.equal(proxy.specialCost(), 165);
   assert.equal(proxy.specialReady(), true);
 
-  // Step 2: Legacy 21-element packet arrives with 100p (no 22nd element)
+  // Step 2: Legacy 21-element packet arrives with 100p (no cost sidecar)
   const legacySnapshot = [
     proxy.nid, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
     100, 100, 100, 0, 50, 0, 0, 0, 0, 0
@@ -664,7 +675,7 @@ test('mixed stream: seamless transitions between new protocol and legacy samples
   // Step 4: New packet arrives again -> resumes new protocol
   newSnapshot[10] = 1; // not ready
   newSnapshot[13] = 80;
-  receiveFixtureSnapshot(nm, 'host-id', { k: 't', ts: 1.15, a: [newSnapshot] });
+  receiveFixtureSnapshot(nm, 'host-id', { k: 't', ts: 1.15, sc: { [proxy.nid]: 165 }, a: [newSnapshot] });
   peer.tr = 1.15;
   nm.update(1 / 20);
   nm.applyRemote(proxy, 1 / 20);
@@ -708,8 +719,8 @@ test('sampling alignment: Hermite interpolation aligns cost with earlier snapsho
     100, 100, 165, 0, 50, 0, 0, 0, 0, 0, 165
   ];
 
-  receiveFixtureSnapshot(nm, 'host-id', { k: 't', ts: 1.0, a: [snap0] });
-  receiveFixtureSnapshot(nm, 'host-id', { k: 't', ts: 1.1, a: [snap1] });
+  receiveFixtureSnapshot(nm, 'host-id', { k: 't', ts: 1.0, sc: { [proxy.nid]: 180 }, a: [snap0] });
+  receiveFixtureSnapshot(nm, 'host-id', { k: 't', ts: 1.1, sc: { [proxy.nid]: 165 }, a: [snap1] });
 
   const peer = nm._peer('host-id');
   peer.init = true;
@@ -767,18 +778,18 @@ test('admission checks: out-of-order and non-authoritative packets are rejected'
     proxy.nid, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 | 1048576,
     100, 100, 165, 0, 50, 0, 0, 0, 0, 0, 165
   ];
-  receiveFixtureSnapshot(nm, 'host-id', { k: 't', ts: 2.0, a: [validSnap] });
+  receiveFixtureSnapshot(nm, 'host-id', { k: 't', ts: 2.0, sc: { [proxy.nid]: 165 }, a: [validSnap] });
   assert.equal(proxy.net.buf.length, 1);
 
   // 2. Late/out-of-order packet at ts=1.5 (older than newest in buffer)
-  receiveFixtureSnapshot(nm, 'host-id', { k: 't', ts: 1.5, a: [validSnap] });
+  receiveFixtureSnapshot(nm, 'host-id', { k: 't', ts: 1.5, sc: { [proxy.nid]: 165 }, a: [validSnap] });
   assert.equal(proxy.net.buf.length, 1, 'Late packet must be discarded');
 
   // 3. Non-authoritative packet from 'impostor-id' (owner is 'host-id')
-  receiveFixtureSnapshot(nm, 'impostor-id', { k: 't', ts: 2.1, a: [validSnap] });
+  receiveFixtureSnapshot(nm, 'impostor-id', { k: 't', ts: 2.1, sc: { [proxy.nid]: 165 }, a: [validSnap] });
   assert.equal(proxy.net.buf.length, 1, 'Impostor packet must be discarded');
 
-  nm.onMessage('host-id', { k: 't', ts: 2.2, a: [validSnap] });
+  nm.onMessage('host-id', { k: 't', ts: 2.2, sc: { [proxy.nid]: 165 }, a: [validSnap] });
   assert.equal(proxy.net.buf.length, 1, 'Missing existing life envelope must still be rejected');
 });
 

@@ -6,10 +6,10 @@
 //    Never overwrite authoritative `a.weapon.specialCost` in `applyRemote` (it feeds gameplay
 //    and can survive host adoption).
 // 2. Keep cost override strictly remote: local and adopted actors ignore presentation overrides.
-//    Remove any local readiness -0.01 epsilon: exact native authority condition must remain.
+//    Exact native authority conditions remain unchanged.
 // 3. Preserve finite owner cost exactly: do not Math.round effective cost (e.g. 180 / 1.3 = 138.4615
 //    is legitimate; rounding changes the gauge fraction). Points tuple stays native-rounded.
-// 4. Legacy 21-field samples without appended cost must fall back to native readiness, not force false.
+// 4. Legacy samples without the optional cost sidecar must fall back to native readiness, not force false.
 // 5. Hermite sampling aligns discrete cost with earlier snapshot flags to prevent future cost leaking early.
 // 6. No synthetic pack/unpack exports solely for tests: production exports remain untouched.
 
@@ -38,21 +38,16 @@ export function adaptIssue484Net(code) {
     'netmatch packActor specialReady flag'
   );
 
-  // 3. Append unrounded effective specialCost to packActor return tuple (preserves finite owner float)
-  code = replaceOnce(
-    code,
-    'Math.round(a.hp), Math.round(a.ink), Math.round(a.special), r2(wr.streaming ? wr.burstFrac : wr.charge), Math.round(a.stats.turf), a.netTp || 0,\n    n ? r2(n.x) : 0, n ? r2(n.y) : 0, n ? r2(n.z) : 0, r2(wr.lockT || 0)];',
-    'Math.round(a.hp), Math.round(a.ink), Math.round(a.special), r2(wr.streaming ? wr.burstFrac : wr.charge), Math.round(a.stats.turf), a.netTp || 0,\n    n ? r2(n.x) : 0, n ? r2(n.y) : 0, n ? r2(n.z) : 0, r2(wr.lockT || 0), (typeof a.specialCost === \'function\' ? a.specialCost() : (a.weapon?.specialCost || 180))];',
-    'netmatch packActor specialCost payload'
-  );
-
-  // 4. Parse spCost in unpackActor (s[21] undefined for legacy 21-element packets)
-  code = replaceOnce(
-    code,
-    'function unpackActor(s, ts) {\n  return { t: ts, x: s[1], y: s[2], z: s[3], vx: s[4], vy: s[5], vz: s[6], yaw: s[7], aimYaw: s[8], aimPitch: s[9], f: s[10], hp: s[11], ink: s[12], sp: s[13], ch: s[14], turf: s[15], tp: s[16], wx: s[17], wy: s[18], wz: s[19], lock: s[20] };\n}',
-    'function unpackActor(s, ts) {\n  return { t: ts, x: s[1], y: s[2], z: s[3], vx: s[4], vy: s[5], vz: s[6], yaw: s[7], aimYaw: s[8], aimPitch: s[9], f: s[10], hp: s[11], ink: s[12], sp: s[13], ch: s[14], turf: s[15], tp: s[16], wx: s[17], wy: s[18], wz: s[19], lock: s[20], spCost: s[21] };\n}',
-    'netmatch unpackActor spCost'
-  );
+  // Named sidecar preserves the actor tuple, including adjacent PR328's stats slot21.
+  // Existing reliability life envelope and owner/timestamp admission remain intact.
+  code = replaceOnce(code,
+    "const msg = { k: 't', ts: r3(now()), a",
+    "const msg = { k: 't', ts: r3(now()), a, sc: Object.fromEntries([...this.byNid.values()].filter(actor => !actor.remote).map(actor => [actor.nid, actor.specialCost()]))",
+    'netmatch owner cost sidecar');
+  code = replaceOnce(code,
+    '      const snap = unpackActor(s, d.ts);',
+    '      const snap = unpackActor(s, d.ts);\n      snap.spCost = d.sc?.[a.nid];',
+    'netmatch accepted owner cost');
 
   // 5. In hermite, align spCost with earlier snapshot to prevent future cost leaking early
   code = replaceOnce(
