@@ -38,11 +38,20 @@
 //     more candidate to the native first-contact test and never touches invuln.
 //
 // Replay is concrete but deliberately limited: replayBigBubbler('deploy'|'hit'|
-// 'expire', owner, plainPayload) ingests a validated, bounded, idempotent packet
-// into a PRESENTATION-ONLY dome, and resetBigBubblerReplay() is the match reset.
-// See BIG_BUBBLER_OWNERSHIP for the exact split. There is NO online parity claim:
-// no net code, transport, prediction, reconciliation or rollback is implemented
-// here, and a local round hitting a remote dome only PROPOSES damage.
+// 'expire', owner, plainPayload) ingests a validated, bounded, idempotent,
+// MONOTONIC packet into a PRESENTATION-ONLY dome, an expire that arrives before
+// its deploy TOMBSTONES the activation so a delayed packet cannot resurrect it,
+// and resetBigBubblerReplay() is the match reset. See BIG_BUBBLER_OWNERSHIP for
+// the exact split. There is NO online parity claim: no net code, transport,
+// prediction, reconciliation or rollback is implemented here.
+//
+// A locally owned round hitting a REMOTE dome produces a flat, JSON- and
+// packEvent-compatible kit:bubbler:damage-proposal carrying the real projectile
+// actor identity (shooter), the target dome's owner identity, the dome
+// activation serial and its own monotonic per-hit eventId. It never mutates the
+// remote dome. The counterpart is adjudicateBigBubblerDamage(payload, {host,
+// roster}): the owning side checks authority, ownership, team hostility, amount
+// and duplicate identity before any HP moves.
 //
 // Everything in BIG_BUBBLER_CALIBRATION is a DECLARED mapping, not a source.
 // The 11.3.0 tables pin raw internal numbers whose engine scale is not publicly
@@ -116,13 +125,30 @@ export const BIG_BUBBLER_CALIBRATION = Object.freeze({
 //               produces a damage PROPOSAL for the parent's authoritative path.
 let api, tuning, raw, domes = [], remoteDomes = [];
 let probeRecord = null, bestRecord = null;
-let deploySerial = 0, localOwnerSerial = 0;
+let deploySerial = 0, localOwnerSerial = 0, proposalSerial = 0;
 // Bounded FIFO of already-applied replay event keys, so duplicate packets are
 // idempotent without an unbounded set.
 const seenReplay = new Set();
+// Dome ids whose activation has already ENDED (an expire that arrived before the
+// deploy, or a deploy that was already disposed). A tombstoned id can never be
+// resurrected by a late deploy, so a reordered packet cannot reappear a dome
+// that the host has already removed.
+const tombstones = new Set();
+// domeId -> highest hit eventId already applied. The per-hit identity is
+// MONOTONIC, so this also rejects a reordered packet whose eventId is older than
+// one already applied; without it, deploy serial alone would collapse every
+// second distinct hit on one activation into a "duplicate".
+const hitCursor = new Map();
+// The same two structures for the AUTHORITATIVE adjudication path. They are kept
+// separate from the replay ones so presentation dedupe can never mask a real
+// authoritative hit and vice versa.
+const authoritySeen = new Set();
+const authorityCursor = new Map();
 const activating = new WeakSet();
 
 const REPLAY_SEEN_LIMIT = 256;
+const TOMBSTONE_LIMIT = 256;
+const CURSOR_LIMIT = 64;
 
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 
@@ -134,15 +160,15 @@ export const BIG_BUBBLER_OWNERSHIP = Object.freeze({
     'authoritative local dome lifecycle (deploy, growth, ignition, TimeDamage burn, expiry)',
     'presentation-only remote dome lifecycle driven by replayBigBubbler()',
     'side-effect-free contact candidate queries for local and remote domes',
-    'bounded, idempotent replay ingest of deploy / hit / expire',
+    'bounded, idempotent, monotonic replay ingest of deploy / hit / expire, with expire-before-deploy tombstones',
+    'the authoritative owner adjudication API adjudicateBigBubblerDamage(payload, { host, roster })',
   ]),
   doesNotOwn: Object.freeze([
     'packet transport, framing, rate limiting or any NetMatch wiring',
-    'authoritative HP of a remote dome: the host decides, this client only proposes',
+    'proposing a remote hit: the local client emits a flat proposal and changes nothing',
     'client prediction, interpolation, reconciliation or rollback',
-    'adjudicating whether a proposed remote hit is accepted',
   ]),
-  remoteHpAuthority: 'the host; a local round hitting a remote dome yields kit:bubbler:damage-proposal and changes nothing here',
+  remoteHpAuthority: 'the host; a local round hitting a remote dome yields a FLAT kit:bubbler:damage-proposal carrying the real shooter identity, the target dome owner identity, the dome activation serial and a monotonic per-hit eventId, and changes nothing here. Only adjudicateBigBubblerDamage() on the owning side may turn that into damage.',
   neutralPolicy: 'a neutral or non-integer round team never spends HP; it can only intercept visually',
 });
 
@@ -403,6 +429,15 @@ export function kitBarrierCandidate(p, start, end) {
         bestRecord.team = hit.dome.team; bestRecord.remote = hit.dome.remote;
         bestRecord.reachableCanopy = hit.reachableCanopy;
         bestRecord.reachableEmitter = hit.reachableEmitter;
+        // The REAL identities, captured from live objects at query time. A remote
+        // damage proposal that carries only a team number cannot be adjudicated by
+        // the host: the host needs to know WHO shot and WHOSE dome it was. These
+        // are read once, here, and copied into the flat packet later.
+        bestRecord.shooter = p.owner ?? null;
+        bestRecord.shooterId = bigBubblerOwnerId(p.owner);
+        bestRecord.shooterTeam = p.team;
+        bestRecord.domeOwner = hit.dome.owner ?? null;
+        bestRecord.domeOwnerId = bigBubblerOwnerId(hit.dome.owner);
         found = true;
       }
     }
@@ -419,32 +454,70 @@ export function kitBarrierCandidate(p, start, end) {
   candidate.damage = (p.damage || 0) * tuning.rawPerDamageUnit;
   candidate.settled = false;
   candidate.proposal = null;
-  candidate.damageProposal = () => ({
-    domeId: candidate.domeId, serial: candidate.serial, team: candidate.team,
-    target: candidate.target, amount: candidate.damage,
-    // Built as literals, not Vector3.toArray(): the vendor THREE is loaded from
-    // the host module, so toArray() would hand callers an array whose prototype
-    // comes from that realm and every JSON / prototype comparison downstream
-    // would silently depend on which realm built it.
-    point: [candidate.point.x, candidate.point.y, candidate.point.z],
-    normal: [candidate.normal.x, candidate.normal.y, candidate.normal.z],
-  });
+  // One monotonic identity per SETTLED hit on this client, independent of the
+  // deploy serial. It is stamped at settle time, not at query time, because the
+  // same query can be abandoned without ever becoming a hit.
+  candidate.eventId = 0;
+  /**
+   * The FLAT damage proposal.
+   *
+   * Every field is a number, a boolean or a bounded string, so it survives
+   * BOTH of the parent's paths unchanged:
+   *   * the native NetMatch event packer, which copies numbers/strings/booleans
+   *     and drops everything else (a Vector3 becomes a 3-array, an Actor becomes
+   *     {n:nid}); a flat record needs no such conversion at all, so the shooter
+   *     and the dome owner travel as the identities the host can actually check;
+   *   * JSON, for the packet round-trip test.
+   *
+   * `eventId` is this client's OWN monotonic per-hit counter. The host echoes
+   * it back in adjudication, so the authoritative side can dedupe the same
+   * proposal without ever conflating it with the deploy serial.
+   */
+  candidate.damageProposal = () => {
+    const p = {
+      e: 'damage-proposal', domeId: candidate.domeId, serial: candidate.serial,
+      team: candidate.team, target: candidate.target, amount: candidate.damage,
+      eventId: candidate.eventId,
+      // Flat scalars rather than Vector3/Array: see the note above.
+      pointX: candidate.point.x, pointY: candidate.point.y, pointZ: candidate.point.z,
+      normalX: candidate.normal.x, normalY: candidate.normal.y, normalZ: candidate.normal.z,
+    };
+    // The identities are OMITTED, not nulled, when they are unknown: the native
+    // packer keeps numbers, strings and booleans only, so a null would be dropped
+    // in transit and the receiving side could not tell "unknown" from "absent
+    // field". An omitted identity is exactly what adjudication refuses, with the
+    // field named ('missing-shooter' / 'missing-dome-owner').
+    if (candidate.shooterId !== null) {
+      p.shooter = candidate.shooterId;
+      p.shooterTeam = candidate.shooterTeam;
+    }
+    if (candidate.domeOwnerId !== null) p.domeOwner = candidate.domeOwnerId;
+    return p;
+  };
   candidate.onHit = () => {
     if (candidate.settled || candidate.visualOnly) return 0;
     candidate.settled = true;
+    // Re-check liveness and ACTIVATION IDENTITY before anything is proposed or
+    // spent. The record is reused across queries, so a caller that queried
+    // against one dome and settled after an expire/redeploy cycle must not
+    // damage, or propose damage against, whatever now wears that id.
+    const dome = candidate.dome;
+    if (!dome || dome.dead) return 0;
+    const list = listOf(dome);
+    if (!list.includes(dome)) return 0;
+    if (dome.id !== candidate.domeId || dome.serial !== candidate.serial) return 0;
     if (candidate.remote) {
       // Hand the parent a serializable proposal; spend nothing.
+      candidate.eventId = ++proposalSerial;
       candidate.proposal = candidate.damageProposal();
       api.emit?.('kit:bubbler:damage-proposal', { ...candidate.proposal });
       return 0;
     }
-    // Re-check liveness: the parent may have queried before the dome collapsed.
-    if (candidate.dome.dead || !domes.includes(candidate.dome)) return 0;
-    const applied = damageDome(candidate.dome, candidate.target, candidate.damage);
-    api.G.fx?.burst?.(candidate.point, candidate.normal, candidate.dome.color,
+    const applied = damageDome(dome, candidate.target, candidate.damage);
+    api.G.fx?.burst?.(candidate.point, candidate.normal, dome.color,
       { count: 6, speed: 3, size: 0.07 });
     api.emit?.('weapon:impact', { pos: candidate.point.clone(), normal: candidate.normal.clone(),
-      team: candidate.team, kind: 'shot', radius: candidate.dome.radius * 0.5 });
+      team: candidate.team, kind: 'shot', radius: dome.radius * 0.5 });
     return applied;
   };
   return candidate;
@@ -484,6 +557,10 @@ export function kitBarrierHitRecord(candidate) {
   return {
     domeId: candidate.domeId, serial: candidate.serial, team: candidate.team,
     target: candidate.target, distance: candidate.distance,
+    // The real identities, so a host reading this record can adjudicate it
+    // without having to guess who shot or whose dome it was.
+    shooter: candidate.shooterId, shooterTeam: candidate.shooterTeam,
+    domeOwner: candidate.domeOwnerId,
     // Built as literals, not Vector3.toArray(): the vendor THREE is loaded from
     // the host module, so toArray() would hand callers an array whose prototype
     // comes from that realm and every JSON / prototype comparison downstream
@@ -570,7 +647,11 @@ export function tickRemoteBigBubblers(dt) {
 }
 
 const LIMITS = Object.freeze({
-  domeId: 64, teamMax: 3, coord: 1e4, hp: 1e9, age: 600,
+  domeId: 64, ownerId: 64, teamMax: 3, coord: 1e4, hp: 1e9, age: 600,
+  // The per-hit event id is a per-activation counter, so it stays small; the
+  // bound only exists so a hostile packet cannot push an unbounded integer into
+  // the dedupe key.
+  eventId: 1e9,
 });
 
 const ok = (reason, extra) => ({ ok: true, reason, ...extra });
@@ -599,24 +680,84 @@ function validateDeploy(payload) {
   return ok('valid', { value: { domeId, team, pos: [...pos], t, hp, fieldHp, serial: serial ?? 0 } });
 }
 
+// A contact packet carries an INDEPENDENT, MONOTONIC per-hit identity.
+//
+// The deploy serial identifies the ACTIVATION, not the hit: keying dedupe on
+// `hit|domeId|deploySerial` collapses every second distinct hit on one
+// activation into a false "duplicate" and silently drops real damage. `eventId`
+// is the host's own per-activation counter for hits, so two distinct hits on the
+// same dome are two distinct events, and a retransmitted packet of either one is
+// still recognised as the same event.
+//
+// `serial` stays optional and is treated as an ACTIVATION match, not a hit
+// identity: if it is supplied it must equal the dome's serial, which is how a
+// packet for a superseded activation is refused instead of applied.
 function validateContact(payload) {
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return no('not-an-object');
-  const { domeId, target, amount, serial } = payload;
+  const { domeId, target, amount, eventId, serial, shooter, domeOwner } = payload;
   if (typeof domeId !== 'string' || domeId.length === 0) return no('bad-dome-id');
   if (domeId.length > LIMITS.domeId) return no('dome-id-too-long');
   if (target !== 'canopy' && target !== 'field') return no('bad-target');
   if (!finiteNumber(amount, 0, LIMITS.hp)) return no('bad-amount');
+  if (eventId === undefined) return no('missing-event-id');
+  if (!Number.isSafeInteger(eventId) || eventId < 0 || eventId > LIMITS.eventId) return no('bad-event-id');
   if (serial !== undefined && (!Number.isSafeInteger(serial) || serial < 0)) return no('bad-serial');
-  return ok('valid', { value: { domeId, target, amount, serial: serial ?? 0 } });
+  const { shooterTeam } = payload;
+  if (shooterTeam !== undefined && shooterTeam !== null
+    && !Number.isInteger(shooterTeam)) return no('bad-shooter-team');
+  // Identity fields are bounded strings, never dereferenced. A packet may
+  // OMIT them (then the adjudication is refused later as foreign) but it may not
+  // send something that is not a bounded string.
+  for (const [field, value] of [['shooter', shooter], ['domeOwner', domeOwner]]) {
+    if (value === undefined || value === null) continue;
+    if (typeof value !== 'string' || value.length === 0) return no(`bad-${field}`);
+    if (value.length > LIMITS.ownerId) return no(`${field}-id-too-long`);
+  }
+  return ok('valid', { value: { domeId, target, amount, eventId,
+    serial: serial ?? null, shooter: shooter ?? null, shooterTeam: shooterTeam ?? null,
+    domeOwner: domeOwner ?? null } });
+}
+
+// Bounded FIFO insert. The oldest key is dropped once the window is full, so a
+// long match or a hostile packet flood cannot grow any of these sets or maps.
+function rememberInto(set, key, limit) {
+  if (set.has(key)) return false;
+  set.add(key);
+  if (set.size > limit) set.delete(set.values().next().value);
+  return true;
+}
+
+// Bounded per-dome monotonic cursor. Returns false when `eventId` is not newer
+// than the one already applied, which is what makes a REORDERED packet a no-op
+// instead of a second application of the same damage.
+function advanceCursor(map, key, eventId, limit) {
+  const seen = map.get(key);
+  if (seen !== undefined && eventId <= seen) return false;
+  if (seen === undefined) {
+    map.set(key, eventId);
+    if (map.size > limit) map.delete(map.keys().next().value);
+  } else map.set(key, eventId);
+  return true;
+}
+
+function resetReplayState() {
+  seenReplay.clear();
+  tombstones.clear();
+  hitCursor.clear();
+  authoritySeen.clear();
+  authorityCursor.clear();
+  proposalSerial = 0;
 }
 
 function remember(key) {
-  if (seenReplay.has(key)) return false;
-  seenReplay.add(key);
-  // Bounded FIFO: the oldest key is dropped once the window is full, so a long
-  // match cannot grow this without limit.
-  if (seenReplay.size > REPLAY_SEEN_LIMIT) seenReplay.delete(seenReplay.values().next().value);
-  return true;
+  return rememberInto(seenReplay, key, REPLAY_SEEN_LIMIT);
+}
+
+// A tombstone is durable for the whole match: it is what stops a delayed deploy
+// from resurrecting an activation the host already expired. Bounded, so a flood
+// of invented ids still cannot grow it without limit.
+function tombstone(domeId) {
+  rememberInto(tombstones, domeId, TOMBSTONE_LIMIT);
 }
 
 /**
@@ -651,6 +792,11 @@ function replayDeploy(owner, payload) {
   const checked = validateDeploy(payload);
   if (!checked.ok) return checked;
   const v = checked.value;
+  // A tombstone WINS over a delayed deploy. An expire that arrived first (a
+  // reordered stream, or a deploy whose frame was lost) has already ended this
+  // activation on the host; resurrecting it here would show a dome the host has
+  // already removed, and would accept damage for it forever after.
+  if (tombstones.has(v.domeId)) return no('expired-before-deploy');
   if (remoteDomes.some(d => d.id === v.domeId)) return ok('duplicate', { domeId: v.domeId });
   const key = `deploy|${v.domeId}`;
   if (!remember(key)) return ok('duplicate', { domeId: v.domeId });
@@ -672,45 +818,183 @@ function replayDeploy(owner, payload) {
   return ok('deployed', { domeId: v.domeId, serial: dome.serial });
 }
 
+/**
+ * Two DISTINCT hits on one activation are two DISTINCT events.
+ *
+ * The identity is (domeId, eventId): the host's monotonic per-activation hit
+ * counter. `serial` is checked as the ACTIVATION identity only, so a packet that
+ * names the wrong activation is refused rather than applied to whatever dome
+ * happens to share the id. Duplicate suppression is a bounded FIFO plus the
+ * per-dome cursor, so a retransmitted OR reordered packet is idempotent and two
+ * real hits both land.
+ */
 function replayHit(owner, payload) {
   const checked = validateContact(payload);
   if (!checked.ok) return checked;
   const v = checked.value;
-  const key = `hit|${v.domeId}|${v.serial}`;
-  if (!remember(key)) return ok('duplicate', { domeId: v.domeId });
+  if (tombstones.has(v.domeId)) return ok('expired', { domeId: v.domeId, eventId: v.eventId });
   const dome = remoteDomes.find(d => d.id === v.domeId);
   if (!dome || dome.dead) return no('unknown-dome');
+  if (v.serial !== null && v.serial !== dome.serial) {
+    // Same id, different activation: the packet describes a dome that no longer
+    // exists. Refuse it instead of applying it to the current one. No tombstone
+    // is written here: the CURRENT activation under this id is still live, and
+    // tombstoning it would make every later hit on it report "expired".
+    return no('stale-activation');
+  }
+  if (!advanceCursor(hitCursor, v.domeId, v.eventId, CURSOR_LIMIT)) {
+    return ok('duplicate', { domeId: v.domeId, eventId: v.eventId });
+  }
+  if (!remember(`hit|${v.domeId}|${v.eventId}`)) {
+    return ok('duplicate', { domeId: v.domeId, eventId: v.eventId });
+  }
   // Displayed HP only. The host decides whether this damage is real; nothing
   // here becomes authoritative, and an expire packet still removes the dome.
   if (v.target === 'field') dome.fieldHp = Math.max(0, dome.fieldHp - v.amount);
   else dome.hp = Math.max(0, dome.hp - v.amount);
-  return ok('displayed', { domeId: v.domeId, hp: dome.hp, fieldHp: dome.fieldHp });
+  return ok('displayed', { domeId: v.domeId, eventId: v.eventId, hp: dome.hp, fieldHp: dome.fieldHp });
 }
 
 function replayExpire(owner, payload) {
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return no('not-an-object');
-  const { domeId } = payload;
+  const { domeId, eventId, serial } = payload;
   if (typeof domeId !== 'string' || domeId.length === 0) return no('bad-dome-id');
   if (domeId.length > LIMITS.domeId) return no('dome-id-too-long');
-  const key = `expire|${domeId}`;
+  if (eventId !== undefined && (!Number.isSafeInteger(eventId) || eventId < 0 || eventId > LIMITS.eventId)) {
+    return no('bad-event-id');
+  }
+  if (serial !== undefined && (!Number.isSafeInteger(serial) || serial < 0)) return no('bad-serial');
+  // The tombstone is written FIRST and unconditionally: an expire that arrives
+  // before its deploy (reordered frames) has still ended that activation, and
+  // must not be forgotten just because there was nothing on screen to remove.
+  tombstone(domeId);
+  // The expire itself is keyed by the activation, and the per-hit cursor for that
+  // dome is dropped, so a NEW activation under the same id still starts clean
+  // while the old one stays dead.
+  hitCursor.delete(domeId);
+  const key = eventId === undefined ? `expire|${domeId}` : `expire|${domeId}|${eventId}`;
   if (!remember(key)) return ok('duplicate', { domeId });
   const dome = remoteDomes.find(d => d.id === domeId);
   if (!dome) return ok('already-absent', { domeId });
+  if (serial !== undefined && serial !== dome.serial) return no('stale-activation');
   removeDome(dome, 'replay-expire');
   return ok('expired', { domeId });
 }
 
 /**
+ * The AUTHORITATIVE owner adjudication API.
+ *
+ * This is the concrete counterpart of the flat damage proposal: the side that
+ * OWNS the dome (in practice the host, or whichever client the host named as the
+ * authority for that dome) calls this with the proposal a remote client sent.
+ * Nothing on the proposing client ever mutated the dome, so this is the only
+ * place where a proposed hit can become real damage.
+ *
+ * `plainPayload` is a flat proposal exactly as kitBarrierCandidate().onHit()
+ * produced it, after whatever transport the parent wired. `authority` is:
+ *   { host: boolean,           // must be true: only the authority may apply
+ *     roster?: iterable|Map }  // the actor ids this authority can resolve to a team
+ *
+ * Every check is explicit and every rejection is named, because "silently ignore"
+ * is how a client ends up showing a dome the host has already destroyed:
+ *   - authority      the caller must declare itself the authority;
+ *   - ownership      the dome must be a LOCAL AUTHORITATIVE dome of this client,
+ *                    still alive, with the same id AND the same serial, so a
+ *                    proposal for a superseded activation can never land;
+ *   - team           the shooter must resolve in the roster and be HOSTILE to the
+ *                    dome's own team: friendly fire and neutral rounds are refused,
+ *                    which is the same rule kitBarrierCandidate applies locally;
+ *   - amount         finite, positive and bounded (validateContact), and capped
+ *                    at the remaining HP of the part that was hit;
+ *   - duplicate      the proposal's own (domeId, eventId) is deduped and must be
+ *                    MONOTONIC, so a retransmitted OR reordered proposal is a
+ *                    no-op while two distinct hits both apply.
+ *
+ * It NEVER touches a remote dome's HP: a proposal naming a presentation-only dome
+ * is refused as 'foreign-ownership' rather than silently mutating an image.
+ */
+export function adjudicateBigBubblerDamage(plainPayload, authority = {}) {
+  if (!api) return no('not-installed');
+  if (!authority || authority.host !== true) return no('not-authoritative');
+  const checked = validateContact(plainPayload);
+  if (!checked.ok) return checked;
+  const v = checked.value;
+  // Ownership: only an authoritative LOCAL dome may be adjudicated here. A remote
+  // (presentation-only) dome has no real HP on this client, so a proposal that
+  // names one is refused as foreign rather than mutating an image.
+  const dome = domes.find(d => d.id === v.domeId);
+  if (!dome || dome.dead) {
+    // Distinguish "you have no such structure at all" from "the only thing you
+    // have is a picture of somebody else's", because they are different bugs.
+    return no(remoteDomes.some(d => d.id === v.domeId) ? 'foreign-ownership' : 'unknown-dome');
+  }
+  if (v.serial !== null && v.serial !== dome.serial) return no('stale-activation');
+  if (v.domeOwner === null) return no('missing-dome-owner');
+  const expectedOwner = bigBubblerOwnerId(dome.owner);
+  // The claimed owner must be the REAL owner of THIS dome. A proposal that names
+  // somebody else is a spoof or a stale packet, and is refused outright.
+  if (expectedOwner !== null && v.domeOwner !== expectedOwner) return no('foreign-ownership');
+  if (v.shooter === null) return no('missing-shooter');
+  const rosterTeam = resolveRosterTeam(authority.roster, v.shooter);
+  if (rosterTeam === null) return no('unknown-shooter');
+  if (!Number.isInteger(rosterTeam)) return no('bad-shooter-team');
+  if (rosterTeam === dome.team) return no('friendly-fire');
+  if (v.shooterTeam !== null && v.shooterTeam !== rosterTeam) return no('shooter-team-mismatch');
+  if (!(v.amount > 0)) return no('bad-amount');
+  // Duplicate prevention, keyed on the proposal's OWN identity and monotonic, so
+  // a retransmit and a reordered packet are both no-ops. This runs AFTER the
+  // malformed-amount refusal but BEFORE the remaining-HP comparison: a packet
+  // that has already been applied must report 'duplicate' whatever it claims,
+  // and must never be re-judged against HP the first application already moved.
+  if (!advanceCursor(authorityCursor, v.domeId, v.eventId, CURSOR_LIMIT)) {
+    return ok('duplicate', { domeId: v.domeId, eventId: v.eventId });
+  }
+  if (!rememberInto(authoritySeen, `${v.domeId}|${v.eventId}`, REPLAY_SEEN_LIMIT)) {
+    return ok('duplicate', { domeId: v.domeId, eventId: v.eventId });
+  }
+  const remaining = v.target === 'field' ? dome.fieldHp : dome.hp;
+  // A claim beyond the remaining HP is refused, NOT silently clamped: silently
+  // clamping would let a hostile client choose how much damage a hit lands.
+  if (v.amount > remaining) return no('overkill');
+  const applied = damageDome(dome, v.target, v.amount);
+  api.emit?.('kit:bubbler:damage-adjudicated', {
+    domeId: v.domeId, serial: dome.serial, team: dome.team, shooter: v.shooter,
+    shooterTeam: rosterTeam, domeOwner: v.domeOwner, target: v.target,
+    eventId: v.eventId, amount: applied, hp: dome.hp, fieldHp: dome.fieldHp,
+  });
+  return ok('applied', { domeId: v.domeId, eventId: v.eventId, applied, hp: dome.hp, fieldHp: dome.fieldHp });
+}
+
+// The roster is a plain iterable or Map of the actor ids this authority can
+// resolve. Anything unresolvable yields null rather than a guessed team: an
+// unknown shooter is refused, never treated as neutral-and-therefore-fine.
+function resolveRosterTeam(roster, id) {
+  if (!roster) return null;
+  if (typeof roster.get === 'function') {
+    const team = roster.get(id);
+    return team === undefined ? null : team;
+  }
+  for (const entry of roster) {
+    if (!entry) continue;
+    if (entry.id === id) return entry.team;
+    if (entry.nid !== undefined && `n${entry.nid}` === id) return entry.team;
+  }
+  return null;
+}
+
+/**
  * Match reset for the replay side: every remote dome is removed and its scene
- * resources released, the duplicate-packet window is cleared so a new match
- * cannot inherit stale dedupe state, and a reset marker is emitted so a parent
- * can drop its own net-side caches at the same moment. Projectiles.clear() (the
- * match-disposal path) calls this.
+ * resources released, and EVERY piece of replay bookkeeping is dropped - the
+ * duplicate window, the tombstones, the per-dome hit cursors, the authority
+ * dedupe window and the proposal counter. A new match therefore cannot inherit a
+ * stale tombstone (which would refuse the very first deploy) or a stale dedupe
+ * key. A reset marker is emitted so a parent can drop its own net-side caches at
+ * the same moment. Projectiles.clear() (the match-disposal path) calls this.
  */
 export function resetBigBubblerReplay(reason = 'match-reset') {
   const removed = [];
   for (const dome of [...remoteDomes]) { removed.push(dome.id); removeDome(dome, reason); }
-  seenReplay.clear();
+  resetReplayState();
   api.emit?.('kit:bubbler:replay:reset', { reason, removed, presentationOnly: true });
   return { removed };
 }
@@ -740,12 +1024,14 @@ export function installKitBigBubbler(context, profile) {
   for (const dome of [...remoteDomes]) { remoteDomes.splice(remoteDomes.indexOf(dome), 1); releaseVisual(dome); }
   domes = [];
   remoteDomes = [];
-  seenReplay.clear();
+  resetReplayState();
   probeRecord = { dome: null, t: 0, target: 'canopy' };
   bestRecord = {
     dome: null, domeId: null, serial: 0, team: 0, target: 'canopy', t: 0, distance: 0,
-    damage: 0, visualOnly: false, settled: false, proposal: null,
+    damage: 0, visualOnly: false, settled: false, proposal: null, eventId: 0,
     remote: false, ownership: 'authoritative',
+    shooter: null, shooterId: null, shooterTeam: 0,
+    domeOwner: null, domeOwnerId: null,
     reachableCanopy: false, reachableEmitter: false,
     onHit: () => 0, damageProposal: () => null,
     point: new api.THREE.Vector3(), normal: new api.THREE.Vector3(),
@@ -808,6 +1094,12 @@ export function installKitBigBubbler(context, profile) {
   // only; see BIG_BUBBLER_OWNERSHIP for exactly what this does and does not own.
   Projectiles.prototype.kitBubbleReplay = function (eventName, owner, payload) {
     return replayBigBubbler(eventName, owner, payload);
+  };
+  // Authoritative adjudication of an INBOUND damage proposal. The host (or the
+  // named authority for that dome) calls this; it is the only path by which a
+  // proposed hit can become real damage.
+  Projectiles.prototype.kitBubbleAdjudicate = function (payload, authority) {
+    return adjudicateBigBubblerDamage(payload, authority);
   };
 
   const update = Projectiles.prototype.update;

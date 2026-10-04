@@ -19,6 +19,7 @@ import {
   installKitBigBubbler, bigBubblerDomes, bigBubblerRemoteDomes, bigBubblerSnapshot,
   bigBubblerOwnerId, kitBarrierCandidate, kitBarrierHitRecord, clearBigBubblers,
   tickBigBubblers, tickRemoteBigBubblers, replayBigBubbler, resetBigBubblerReplay,
+  adjudicateBigBubblerDamage,
   BIG_BUBBLER_RAW, BIG_BUBBLER_CALIBRATION, hermite2d, kitBarrierShelter,
   BIG_BUBBLER_OWNERSHIP,
 } from '../runtime/kit-big-bubbler.mjs';
@@ -86,6 +87,24 @@ function round(f, team, pos, opts = {}) {
   return { pos: pos.clone(), prev: pos.clone(), vel: new f.THREE.Vector3(0, 0, 1), age: 0,
     straight: 0.07, grav: 28, drag: 0.8, size: 0.15, damage: 36, team, life: 1.2, type: 'shot', ...opts };
 }
+// ------------------------------------------------------------------ net pack
+
+// The NATIVE event packer from inkwave-public/src/net/netmatch.js, reproduced
+// byte-for-byte in behaviour: it copies numbers (rounded), strings and booleans,
+// turns an Actor into {n: nid} and a Vector3 into a 3-array, and DROPS everything
+// else. A proposal that survives it is one the parent can hand straight to
+// NetMatch without a bespoke encoder.
+const netPackEvent = e => {
+  const o = {};
+  for (const k in e) {
+    const v = e[k];
+    if (v && v.nid !== undefined && v.character) o[k] = { n: v.nid };
+    else if (v && v.isVector3) o[k] = [v.x, v.y, v.z];
+    else if (typeof v === 'number') o[k] = Math.round(v * 1000) / 1000;
+    else if (typeof v === 'string' || typeof v === 'boolean') o[k] = v;
+  }
+  return o;
+};
 
 // ---------------------------------------------------------------------------
 test('the pinned Hermit2DSmooth curves evaluate through their pinned endpoints', () => {
@@ -626,7 +645,7 @@ test('a replayed deploy restores the transmitted position instead of re-deriving
   assert.ok(scene.children.length > sceneBefore, 'a real scene object backs the remote dome');
 });
 
-test('replay is idempotent: duplicate deploy, hit and expire packets are reported, not applied', async () => {
+test('replay is idempotent per HIT EVENT, so two distinct hits on one activation both land', async () => {
   const { f } = await composed();
   level(f);
   const proxy = f.make('shooter'); proxy.team = 1; f.G.actors = [proxy];
@@ -636,15 +655,26 @@ test('replay is idempotent: duplicate deploy, hit and expire packets are reporte
   assert.equal(again.ok, true);
   assert.equal(again.reason, 'duplicate');
   assert.equal(bigBubblerRemoteDomes().length, 1, 'a duplicated deploy creates nothing new');
-  // a hit with a distinct serial is applied once, even when the packet repeats
-  const hit = { domeId: payload.domeId, serial: 1, target: 'canopy', amount: 3600 };
   const shown = bigBubblerRemoteDomes()[0];
   const hp = shown.hp;
-  assert.equal(f.G.projectiles.kitBubbleReplay('hit', proxy, hit).reason, 'displayed');
+  // The regression this revision exists for: both hits name the SAME deploy
+  // serial (one activation) and differ only in the per-hit eventId. Dedupe keyed
+  // on the deploy serial used to reject the second one as a "duplicate" and
+  // silently drop real damage.
+  const first = { domeId: payload.domeId, serial: 3, eventId: 1, target: 'canopy', amount: 3600 };
+  const second = { ...first, eventId: 2 };
+  assert.equal(f.G.projectiles.kitBubbleReplay('hit', proxy, first).reason, 'displayed');
   assert.equal(shown.hp, hp - 3600);
-  assert.equal(f.G.projectiles.kitBubbleReplay('hit', proxy, hit).reason, 'duplicate');
-  assert.equal(f.G.projectiles.kitBubbleReplay('hit', proxy, hit).ok, true);
-  assert.equal(shown.hp, hp - 3600, 'a duplicated hit packet cannot spend HP twice');
+  assert.equal(f.G.projectiles.kitBubbleReplay('hit', proxy, second).reason, 'displayed',
+    'a SECOND distinct hit on the same activation is not a duplicate');
+  assert.equal(shown.hp, hp - 7200, 'both hits were applied');
+  // each of them is still individually retransmit-safe
+  assert.equal(f.G.projectiles.kitBubbleReplay('hit', proxy, first).reason, 'duplicate');
+  assert.equal(f.G.projectiles.kitBubbleReplay('hit', proxy, second).reason, 'duplicate');
+  assert.equal(shown.hp, hp - 7200, 'no retransmit spends HP twice');
+  // a REORDERED packet (an older eventId arriving late) is a no-op as well
+  assert.equal(f.G.projectiles.kitBubbleReplay('hit', proxy, { ...first, amount: 99999 }).reason, 'duplicate');
+  assert.equal(shown.hp, hp - 7200, 'a reordered hit cannot reapply damage');
   // expire is idempotent too
   assert.equal(f.G.projectiles.kitBubbleReplay('expire', proxy, { domeId: payload.domeId }).reason, 'expired');
   assert.equal(bigBubblerRemoteDomes().length, 0);
@@ -679,12 +709,29 @@ test('replay validation is bounded and never throws on malformed input', async (
   }
   assert.equal(bigBubblerRemoteDomes().length, 0, 'no malformed packet created anything');
   assert.equal(replayBigBubbler('nope', proxy, {}).reason, 'unknown-event');
-  // hit validates target and amount
-  for (const payload of [{}, { domeId: 'a', target: 'wall', amount: 1 }, { domeId: 'a', target: 'canopy', amount: -1 },
-    { domeId: 'a', target: 'canopy', amount: 'lots' }, { domeId: 'a'.repeat(80), target: 'canopy', amount: 1 },
-    { domeId: 'a', target: 'canopy', amount: 1, serial: -1 }]) {
+  // hit validates target, amount and the per-hit event identity
+  for (const payload of [{}, { domeId: 'a', target: 'wall', amount: 1 },
+    { domeId: 'a', target: 'canopy', amount: -1 },
+    { domeId: 'a', target: 'canopy', amount: 'lots' },
+    { domeId: 'a', target: 'canopy', amount: 1, serial: -1 },
+    // a hit with NO event identity cannot be deduped at all, so it is refused
+    // rather than applied: without eventId a second real hit is indistinguishable
+    // from the first one's retransmission.
+    { domeId: 'a', target: 'canopy', amount: 1 },
+    { domeId: 'a', target: 'canopy', amount: 1, eventId: -1 },
+    { domeId: 'a', target: 'canopy', amount: 1, eventId: 1.5 },
+    { domeId: 'a', target: 'canopy', amount: 1, eventId: '1' },
+    { domeId: 'a', target: 'canopy', amount: 1, eventId: 1e12 },
+    { domeId: 'a', target: 'canopy', amount: 1, eventId: 1, shooter: 5 },
+    { domeId: 'a', target: 'canopy', amount: 1, eventId: 1, shooter: 'n'.repeat(65) },
+    { domeId: 'a', target: 'canopy', amount: 1, eventId: 1, domeOwner: {} },
+    { domeId: 'a'.repeat(80), target: 'canopy', amount: 1, eventId: 1 }]) {
     assert.equal(replayBigBubbler('hit', proxy, payload).ok, false, `hit rejects ${JSON.stringify(payload).slice(0, 50)}`);
   }
+  // and the specific reasons are named, not just "false"
+  assert.equal(replayBigBubbler('hit', proxy, { domeId: 'a', target: 'canopy', amount: 1 }).reason, 'missing-event-id');
+  assert.equal(replayBigBubbler('hit', proxy, { domeId: 'a', target: 'canopy', amount: 1, eventId: 2.5 }).reason, 'bad-event-id');
+  assert.equal(replayBigBubbler('hit', proxy, { domeId: 'a', target: 'canopy', amount: 1, eventId: 1, shooter: 9 }).reason, 'bad-shooter');
   // expire validates only the id: a well-formed id for an unknown dome is a
   // harmless idempotent no-op, not an error, and must say so rather than vanish
   for (const payload of [{}, undefined, 'x', { domeId: 3 }, { domeId: '' }, { domeId: 'a'.repeat(80) }]) {
@@ -731,7 +778,7 @@ test('a remote dome is presentation only: its clock paints nothing and burns not
 test('a local round versus a remote dome proposes damage and changes nothing', async () => {
   const { f } = await composed({ timeDamageIntervalSeconds: 1e9 });
   level(f);
-  const proxy = f.make('shooter'); proxy.team = 1; f.G.actors = [proxy];
+  const proxy = f.make('shooter'); proxy.team = 1; proxy.nid = 9; f.G.actors = [proxy];
   replayBigBubbler('deploy', proxy, VALID_DEPLOY());
   const remote = bigBubblerRemoteDomes()[0];
   tickRemoteBigBubblers(DT);
@@ -741,7 +788,7 @@ test('a local round versus a remote dome proposes damage and changes nothing', a
   // the round crosses the dome: centre (-12.5, 0, 33.25), shell radius 7.5 at t=1
   const y = 1.05;
   const start = new f.THREE.Vector3(-12.5, y, 33.25 - 20), end = new f.THREE.Vector3(-12.5, y, 33.25 + 20);
-  const candidate = kitBarrierCandidate(round(f, 0, start), start, end);
+  const candidate = kitBarrierCandidate(round(f, 0, start, { owner: proxy }), start, end);
   assert.ok(candidate, 'a local round can be stopped by a remote dome');
   assert.equal(candidate.remote, true);
   assert.equal(candidate.ownership, 'remote-presentation');
@@ -756,14 +803,54 @@ test('a local round versus a remote dome proposes damage and changes nothing', a
   assert.equal(wire.domeId, remote.id);
   assert.equal(wire.serial, remote.serial);
   assert.equal(wire.amount, 36 * BIG_BUBBLER_CALIBRATION.rawPerDamageUnit);
+  // The proposal names the ACTUAL projectile actor and the ACTUAL dome owner.
+  assert.equal(wire.shooter, 'n9', 'the real projectile actor identity, not a placeholder');
+  assert.equal(wire.shooterTeam, 0, 'and its real team');
+  assert.equal(wire.domeOwner, 'n9', 'and the owner of the dome it hit');
+  assert.ok(wire.eventId > 0, 'a monotonic per-hit identity travels with it');
   assert.equal(candidate.onHit(), 0, 'a second call cannot propose twice');
   assert.equal(proposals.length, 1);
   // the ghost round is still intercepted, still visual only
-  const ghost = kitBarrierCandidate(round(f, 0, start, { ghost: true }), start, end);
+  const ghost = kitBarrierCandidate(round(f, 0, start, { ghost: true, owner: proxy }), start, end);
   assert.ok(ghost, 'a ghost may be stopped at a remote dome');
   assert.equal(ghost.visualOnly, true);
   assert.equal(ghost.onHit(), 0);
   assert.equal(ghost.proposal, null, 'a ghost proposes nothing at all');
+});
+
+test('the proposal survives the native event packer with every field intact', async () => {
+  const { f } = await composed({ timeDamageIntervalSeconds: 1e9 });
+  level(f);
+  const proxy = f.make('shooter'); proxy.team = 1; proxy.nid = 9; f.G.actors = [proxy];
+  replayBigBubbler('deploy', proxy, VALID_DEPLOY());
+  tickRemoteBigBubblers(DT);
+  const proposals = [];
+  const stop = f.on('kit:bubbler:damage-proposal', p => proposals.push(p));
+  const y = 1.05;
+  const start = new f.THREE.Vector3(-12.5, y, 13.25), end = new f.THREE.Vector3(-12.5, y, 53.25);
+  kitBarrierCandidate(round(f, 0, start, { owner: proxy }), start, end).onHit();
+  stop();
+  // A round with no owner at all still proposes, but OMITS the identity rather
+  // than inventing one (and a null would be dropped by the native packer).
+  const second = [];
+  const stop2 = f.on('kit:bubbler:damage-proposal', p => second.push(p));
+  kitBarrierCandidate(round(f, 0, start, {}), start, end).onHit();
+  stop2();
+  assert.ok(!('shooter' in second[0]), 'no actor means no invented identity');
+  assert.ok('domeOwner' in second[0], 'but the dome\'s own owner IS known and is still named');
+  assert.equal(second[0].domeOwner, 'n9');
+  assert.equal(adjudicateBigBubblerDamage(second[0], { host: true, roster: [] }).reason, 'foreign-ownership',
+    'an identity-less proposal naming no known dome is refused, never applied');
+  for (const proposal of [...proposals, ...second]) {
+    const packed = netPackEvent(proposal);
+    assert.deepEqual(Object.keys(packed).sort(), Object.keys(proposal).sort(),
+      'the native packer drops no field of a proposal: it is already flat');
+    for (const [k, v] of Object.entries(packed)) {
+      const original = proposal[k];
+      if (typeof original === 'number') close(v, original, 1e-3, `${k} survived packEvent`);
+      else assert.deepEqual(v, original, `${k} survived packEvent unchanged`);
+    }
+  }
 });
 
 test('a neutral round never spends a dome budget, on either dome', async () => {
@@ -812,13 +899,80 @@ test('the candidate reports which targets are reachable and re-checks liveness o
   assert.equal(pending.onHit(), 0, 'a stale candidate cannot spend a dead dome');
 });
 
+test('an expire that arrives BEFORE its deploy tombstones the activation forever', async () => {
+  const { f, scene } = await composed();
+  level(f);
+  const proxy = f.make('shooter'); proxy.team = 1; proxy.nid = 9; f.G.actors = [proxy];
+  const payload = VALID_DEPLOY();
+  const sceneBefore = scene.children.length;
+  // reordered frames: the activation is already over on the host when the deploy
+  // finally lands. The expire must leave a durable tombstone.
+  const first = replayBigBubbler('expire', proxy, { domeId: payload.domeId, serial: payload.serial });
+  assert.equal(first.reason, 'already-absent', 'nothing was on screen, and it says so');
+  const late = replayBigBubbler('deploy', proxy, payload);
+  assert.equal(late.ok, false, 'a delayed deploy cannot resurrect an expired activation');
+  assert.equal(late.reason, 'expired-before-deploy');
+  assert.equal(bigBubblerRemoteDomes().length, 0);
+  assert.equal(scene.children.length, sceneBefore, 'and it creates no scene object');
+  // the tombstone survives any number of retries of the same deploy packet
+  for (let i = 0; i < 5; i++) {
+    assert.equal(replayBigBubbler('deploy', proxy, payload).reason, 'expired-before-deploy');
+  }
+  // a hit against a tombstoned activation is refused as expired, not applied
+  assert.equal(replayBigBubbler('hit', proxy,
+    { domeId: payload.domeId, serial: payload.serial, eventId: 1, target: 'canopy', amount: 10 }).reason, 'expired');
+  assert.equal(bigBubblerRemoteDomes().length, 0, 'nothing was ever damaged or created');
+  // a different activation is entirely unaffected
+  const other = { ...payload, domeId: '1:n9:4', serial: 4 };
+  assert.equal(replayBigBubbler('deploy', proxy, other).reason, 'deployed');
+  assert.equal(bigBubblerRemoteDomes().length, 1, 'the tombstone is per activation, not global');
+  assert.equal(replayBigBubbler('hit', proxy,
+    { domeId: other.domeId, serial: 4, eventId: 1, target: 'canopy', amount: 10 }).reason, 'displayed');
+  // and a match reset drops the tombstones, so the next match's first deploy works
+  resetBigBubblerReplay('test-tombstone-reset');
+  assert.equal(replayBigBubbler('deploy', proxy, payload).reason, 'deployed',
+    'a reset match does not inherit a stale tombstone');
+});
+
+test('a stale candidate proposes nothing once its dome is gone or superseded', async () => {
+  const { f } = await composed({ timeDamageIntervalSeconds: 1e9 });
+  level(f);
+  const proxy = f.make('shooter'); proxy.team = 1; proxy.nid = 9; f.G.actors = [proxy];
+  replayBigBubbler('deploy', proxy, VALID_DEPLOY());
+  tickRemoteBigBubblers(DT);
+  const y = 1.05;
+  const start = new f.THREE.Vector3(-12.5, y, 13.25), end = new f.THREE.Vector3(-12.5, y, 53.25);
+  const proposals = [];
+  const stop = f.on('kit:bubbler:damage-proposal', p => proposals.push(p));
+  // queried, then the activation expired before the caller arbitrated
+  const stale = kitBarrierCandidate(round(f, 0, start, { owner: proxy }), start, end);
+  assert.ok(stale, 'the query itself is valid');
+  const staleDomeId = stale.domeId;      // the record is reused, so snapshot the value
+  const p = VALID_DEPLOY();
+  replayBigBubbler('expire', proxy, { domeId: p.domeId, serial: p.serial });
+  assert.equal(stale.onHit(), 0, 'a settled-late candidate on a dead dome spends nothing');
+  assert.equal(proposals.length, 0, 'and proposes nothing either');
+  // the identity re-check: a NEW activation with a NEW serial gets its own
+  // identity, and a candidate queried against the old one cannot act on it.
+  const fresh = { ...p, domeId: '1:n9:4', serial: 4 };
+  replayBigBubbler('deploy', proxy, fresh);
+  kitBarrierCandidate(round(f, 0, start, { owner: proxy }), start, end).onHit();
+  assert.equal(proposals.length, 1, 'the new activation proposes for itself');
+  assert.equal(proposals[0].domeId, fresh.domeId, 'and under its own identity');
+  assert.notEqual(proposals[0].domeId, staleDomeId, 'never under the dead one');
+  // the very same candidate object, re-settled after its dome has been disposed
+  clearBigBubblers('test-stale');
+  assert.equal(proposals.length, 1, 'a disposed dome can never be proposed against again');
+  stop();
+});
+
 test('a match reset clears remote domes, the dedupe window and the scene', async () => {
   const { f, scene } = await composed();
   level(f);
   const proxy = f.make('shooter'); proxy.team = 1; f.G.actors = [proxy];
   const payload = VALID_DEPLOY();
   replayBigBubbler('deploy', proxy, payload);
-  replayBigBubbler('hit', proxy, { domeId: payload.domeId, serial: 1, target: 'canopy', amount: 10 });
+  replayBigBubbler('hit', proxy, { domeId: payload.domeId, serial: 3, eventId: 1, target: 'canopy', amount: 10 });
   const sceneWith = scene.children.length;
   assert.equal(bigBubblerRemoteDomes().length, 1);
   let resets = 0;
@@ -832,6 +986,112 @@ test('a match reset clears remote domes, the dedupe window and the scene', async
   // the same packet is accepted again after a reset: no stale dedupe carries over
   assert.equal(replayBigBubbler('deploy', proxy, payload).reason, 'deployed',
     'the dedupe window is cleared by the reset');
+});
+
+test('replay bookkeeping is bounded and dropped wholesale by a match reset', async () => {
+  const { f } = await composed();
+  level(f);
+  const proxy = f.make('shooter'); proxy.team = 1; f.G.actors = [proxy];
+  // a hostile flood: thousands of invented deploy/hit/expire packets across
+  // thousands of ids. Nothing here may grow without limit, and nothing may throw.
+  for (let i = 0; i < 4000; i++) {
+    const domeId = `1:n9:${i}`;
+    replayBigBubbler('deploy', proxy, { ...VALID_DEPLOY(), domeId, serial: i });
+    replayBigBubbler('hit', proxy, { domeId, serial: i, eventId: 1, target: 'canopy', amount: 1 });
+    replayBigBubbler('hit', proxy, { domeId, serial: i, eventId: 2, target: 'canopy', amount: 1 });
+    replayBigBubbler('expire', proxy, { domeId, serial: i });
+  }
+  assert.equal(bigBubblerRemoteDomes().length, 0, 'every flooded activation was expired again');
+  // after the flood, a legitimate packet still works and the old ones cannot
+  // resurrect: the tombstone window has rolled over, and the reset drops it all
+  const fresh = VALID_DEPLOY();
+  assert.equal(replayBigBubbler('deploy', proxy, fresh).reason, 'deployed');
+  const shown = bigBubblerRemoteDomes()[0];
+  assert.equal(replayBigBubbler('hit', proxy,
+    { domeId: fresh.domeId, serial: 3, eventId: 1, target: 'canopy', amount: 100 }).reason, 'displayed');
+  assert.equal(shown.hp, BIG_BUBBLER_RAW.maxHp - 100);
+  const resets = [];
+  const stop = f.on('kit:bubbler:replay:reset', p => resets.push(p));
+  resetBigBubblerReplay('test-bounded-reset');
+  stop();
+  assert.equal(resets.length, 1);
+  // every trace of the previous match is gone: the same packet is brand new
+  assert.equal(replayBigBubbler('deploy', proxy, fresh).reason, 'deployed');
+  assert.equal(replayBigBubbler('hit', proxy,
+    { domeId: fresh.domeId, serial: 3, eventId: 1, target: 'canopy', amount: 100 }).reason, 'displayed',
+    'a hit id already used before the reset is not suppressed in the new match');
+});
+
+test('the owner adjudication API validates authority, ownership, team, amount and duplicates', async () => {
+  const { f } = await composed({ timeDamageIntervalSeconds: 1e9 });
+  level(f);
+  const local = roller(f); local.nid = 4;
+  const remote = f.make('shooter'); remote.team = 1; remote.nid = 9;
+  f.G.actors = [local, remote];
+  activate(f, local);
+  const dome = bigBubblerDomes()[0];
+  const hp = dome.hp;
+  const proposal = {
+    e: 'damage-proposal', domeId: dome.id, serial: dome.serial, team: 0,
+    target: 'canopy', amount: 3600, eventId: 1,
+    shooter: 'n9', shooterTeam: 1, domeOwner: 'n4',
+    pointX: 0, pointY: 1, pointZ: 3, normalX: 0, normalY: 0, normalZ: -1,
+  };
+  const roster = [{ nid: 4, team: 0 }, { nid: 9, team: 1 }];
+  // only the authority may apply
+  assert.equal(adjudicateBigBubblerDamage(proposal, {}).reason, 'not-authoritative');
+  assert.equal(adjudicateBigBubblerDamage(proposal, { host: 'yes' }).reason, 'not-authoritative');
+  assert.equal(dome.hp, hp, 'no non-authority call moved any HP');
+  // a roster that cannot resolve the shooter is refused, not assumed neutral
+  assert.equal(adjudicateBigBubblerDamage(proposal, { host: true }).reason, 'unknown-shooter');
+  assert.equal(adjudicateBigBubblerDamage(proposal, { host: true, roster: [{ nid: 3, team: 1 }] }).reason, 'unknown-shooter');
+  // friendly fire is refused even when every identity checks out
+  assert.equal(adjudicateBigBubblerDamage({ ...proposal, shooter: 'n4', shooterTeam: 0 },
+    { host: true, roster }).reason, 'friendly-fire');
+  // a claimed dome owner that is not the real owner is a spoof
+  assert.equal(adjudicateBigBubblerDamage({ ...proposal, domeOwner: 'n77' },
+    { host: true, roster }).reason, 'foreign-ownership');
+  // a proposal naming nobody at all is refused, with the field named
+  assert.equal(adjudicateBigBubblerDamage({ ...proposal, domeOwner: null },
+    { host: true, roster }).reason, 'missing-dome-owner');
+  assert.equal(adjudicateBigBubblerDamage({ ...proposal, shooter: null },
+    { host: true, roster }).reason, 'missing-shooter');
+  // a packet whose team claim contradicts the roster is refused
+  assert.equal(adjudicateBigBubblerDamage({ ...proposal, shooterTeam: 0 },
+    { host: true, roster }).reason, 'shooter-team-mismatch');
+  assert.equal(dome.hp, hp, 'not one of those refusals moved a single HP');
+  // the right proposal applies exactly once, and only once
+  const authority = { host: true, roster };
+  const applied = adjudicateBigBubblerDamage(proposal, authority);
+  assert.equal(applied.reason, 'applied');
+  assert.equal(applied.applied, 3600);
+  assert.equal(dome.hp, hp - 3600);
+  assert.equal(adjudicateBigBubblerDamage(proposal, authority).reason, 'duplicate');
+  assert.equal(dome.hp, hp - 3600, 'a retransmitted proposal is idempotent');
+  // a REORDERED proposal (older eventId, huge amount) cannot reapply
+  assert.equal(adjudicateBigBubblerDamage({ ...proposal, amount: 99999 }, authority).reason, 'duplicate');
+  assert.equal(dome.hp, hp - 3600);
+  // but the NEXT distinct hit on the same activation does apply
+  assert.equal(adjudicateBigBubblerDamage({ ...proposal, eventId: 2 }, authority).reason, 'applied');
+  assert.equal(dome.hp, hp - 7200, 'two distinct hits, two applications, one activation');
+  // a packet for a superseded activation is refused, never applied
+  assert.equal(adjudicateBigBubblerDamage({ ...proposal, eventId: 3, serial: dome.serial + 1 },
+    authority).reason, 'stale-activation');
+  // a proposal for a presentation-only dome is refused: remote HP is never local
+  replayBigBubbler('deploy', remote, VALID_DEPLOY());
+  assert.equal(adjudicateBigBubblerDamage({ ...proposal, eventId: 4, domeId: VALID_DEPLOY().domeId },
+    authority).reason, 'foreign-ownership');
+  assert.equal(bigBubblerRemoteDomes()[0].hp, BIG_BUBBLER_RAW.maxHp,
+    'the remote image was not mutated by adjudication');
+  // an unknown dome is named, not silently ignored
+  assert.equal(adjudicateBigBubblerDamage({ ...proposal, eventId: 5, domeId: '9:n9:1' },
+    authority).reason, 'unknown-dome');
+  // an amount beyond the remaining HP is refused as overkill, not silently clamped
+  const weak = bigBubblerDomes()[0];
+  assert.equal(adjudicateBigBubblerDamage({ ...proposal, eventId: 6, amount: weak.hp + 1 },
+    authority).reason, 'overkill');
+  assert.equal(adjudicateBigBubblerDamage({ ...proposal, eventId: 6, amount: 0 },
+    authority).reason, 'bad-amount');
 });
 
 test('two composed actors round-trip a deploy packet through JSON, duplicates, reset and disposal', async () => {
@@ -873,7 +1133,7 @@ test('two composed actors round-trip a deploy packet through JSON, duplicates, r
   assert.equal(shown.ignited, wire.payload.ignited);
 
   // a hit packet, duplicated, and then an expiry packet, duplicated
-  const hit = { domeId: wire.payload.domeId, serial: 1, target: 'canopy', amount: 3600 };
+  const hit = { domeId: wire.payload.domeId, serial: wire.payload.serial, eventId: 1, target: 'canopy', amount: 3600 };
   const hitWire = JSON.parse(JSON.stringify(hit));
   const hp = shown.hp;
   f.G.projectiles.kitBubbleReplay('hit', proxy, hitWire);
@@ -891,13 +1151,73 @@ test('two composed actors round-trip a deploy packet through JSON, duplicates, r
   assert.equal(bigBubblerDomes().length, 1, 'the local side still owns its own structure');
 });
 
+test('two composed actors propose, transmit and adjudicate a remote hit end to end', async () => {
+  const { f } = await composed({ timeDamageIntervalSeconds: 1e9 });
+  level(f);
+  // two real composed Actors with real net ids, on opposite teams
+  const owner = roller(f, 0, 0, 0); owner.nid = 4;
+  const shooter = f.make('shooter'); shooter.team = 1; shooter.nid = 9; shooter.pos.set(0, 0, -30);
+  f.G.actors = [owner, shooter];
+  activate(f, owner);
+  step(f, 60);
+  const dome = bigBubblerDomes()[0];
+
+  // --- the SHOOTER's client proposes against the remote image ------------------
+  // The replica is placed where the shooter's own client sees it (this lane does
+  // not model positional disagreement, so the copy is simply moved clear of the
+  // authoritative dome, whose own path the same round must NOT intercept).
+  const asRemote = { ...bigBubblerSnapshot()[0], pos: [0, 0, 40] };
+  replayBigBubbler('deploy', owner, asRemote);   // the proxy IS the remote owner, n4
+  const shown = bigBubblerRemoteDomes()[0];
+  tickRemoteBigBubblers(DT);
+  const proposals = [];
+  const stop = f.on('kit:bubbler:damage-proposal', p => proposals.push(p));
+  const start = new f.THREE.Vector3(0, 1.05, 20), end = new f.THREE.Vector3(0, 1.05, 60);
+  kitBarrierCandidate(round(f, 1, start, { owner: shooter }), start, end).onHit();
+  stop();
+  assert.equal(proposals.length, 1);
+  // it survives both transports the parent has: the native event packer and JSON
+  const packet = { e: proposals[0].e, payload: netPackEvent(proposals[0]) };
+  const wire = JSON.parse(JSON.stringify(packet));
+  assert.deepEqual(wire.payload, packet.payload, 'the packed proposal survives JSON unchanged');
+  assert.equal(wire.payload.shooter, 'n9');
+  assert.equal(wire.payload.domeOwner, 'n4');
+  const shownHp = shown.hp;
+  assert.equal(shownHp, asRemote.hp, 'the shooter client mutated nothing');
+
+  // --- the OWNER's client adjudicates it ------------------------------------
+  // this client owns the same dome authoritatively (the local one), so the
+  // proposal that names n4 is the one it can apply.
+  const authority = { host: true, roster: new Map([['n4', 0], ['n9', 1]]) };
+  const before = dome.hp;
+  const applied = f.G.projectiles.kitBubbleAdjudicate(wire.payload, authority);
+  assert.equal(applied.reason, 'applied', 'the owning client accepted the proposal');
+  assert.equal(dome.hp, before - wire.payload.amount);
+  // a second transmission of the same frame changes nothing
+  const again = f.G.projectiles.kitBubbleAdjudicate(wire.payload, authority);
+  assert.equal(again.reason, 'duplicate');
+  assert.equal(dome.hp, before - wire.payload.amount);
+  // a SECOND distinct hit, one activation later, applies again
+  const second = { ...wire.payload, eventId: wire.payload.eventId + 1, amount: 3600 };
+  assert.equal(f.G.projectiles.kitBubbleAdjudicate(JSON.parse(JSON.stringify(second)), authority).reason, 'applied');
+  assert.equal(dome.hp, before - wire.payload.amount - 3600);
+  // and the two clients never converge by mutating each other's state
+  assert.equal(shown.hp, asRemote.hp, 'the remote image is still only an image');
+  assert.equal(bigBubblerDomes()[0].hp, before - wire.payload.amount - 3600);
+});
+
 test('the ownership declaration is explicit rather than a silent network gap', () => {
-  assert.ok(BIG_BUBBLER_OWNERSHIP.owns.length >= 4);
+  assert.ok(BIG_BUBBLER_OWNERSHIP.owns.length >= 5);
+  assert.ok(BIG_BUBBLER_OWNERSHIP.owns.some(s => /adjudicateBigBubblerDamage/.test(s)),
+    'the adjudication API is declared as owned here');
+  assert.ok(BIG_BUBBLER_OWNERSHIP.owns.some(s => /tombstone/.test(s)));
   assert.ok(BIG_BUBBLER_OWNERSHIP.doesNotOwn.some(s => /packet transport/.test(s)));
   assert.ok(BIG_BUBBLER_OWNERSHIP.doesNotOwn.some(s => /prediction|reconciliation|rollback/.test(s)));
   assert.ok(/host/.test(BIG_BUBBLER_OWNERSHIP.remoteHpAuthority));
-  assert.ok(/proposal/.test(BIG_BUBBLER_OWNERSHIP.remoteHpAuthority),
+  assert.ok(/proposal/i.test(BIG_BUBBLER_OWNERSHIP.remoteHpAuthority),
     'and it names the damage proposal the parent must adjudicate');
+  assert.ok(/shooter/.test(BIG_BUBBLER_OWNERSHIP.remoteHpAuthority),
+    'and that the proposal carries the real shooter identity');
   assert.ok(/neutral/i.test(BIG_BUBBLER_OWNERSHIP.neutralPolicy));
   const source = fs.readFileSync(MODULE_PATH, 'utf8');
   assert.ok(/NO online parity/.test(source), 'the module states the parity limitation in-source');

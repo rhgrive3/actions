@@ -217,9 +217,10 @@ whether a gap is a decision or an omission:
 | Owns | Does not own |
 |---|---|
 | authoritative local dome lifecycle (deploy, growth, ignition, TimeDamage burn, expiry) | packet transport, framing, rate limiting, any NetMatch wiring |
-| presentation-only remote dome lifecycle driven by `replayBigBubbler()` | authoritative HP of a remote dome |
+| presentation-only remote dome lifecycle driven by `replayBigBubbler()` | proposing a remote hit: the local client emits a flat proposal and changes nothing |
 | side-effect-free contact candidate queries for local *and* remote domes | client prediction, interpolation, reconciliation, rollback |
-| bounded, idempotent replay ingest of `deploy` / `hit` / `expire` | adjudicating whether a proposed remote hit is accepted |
+| bounded, idempotent, **monotonic** replay ingest of `deploy` / `hit` / `expire`, with expire-before-deploy **tombstones** | — |
+| the authoritative owner adjudication API `adjudicateBigBubblerDamage(payload, { host, roster })` | — |
 
 `remoteHpAuthority` is the host: a local round hitting a remote dome yields
 `kit:bubbler:damage-proposal` and changes nothing on this client.
@@ -243,17 +244,43 @@ Guarantees, each proven by a test:
 - **Bounded validation.** Nothing allocates from the payload: `domeId` is a
   non-empty string capped at 64 characters, `team` is an integer in `[0, 3]`,
   `pos` is exactly three finite numbers within ±1e4, `t` is finite in `[0, 600]`,
-  `hp`/`fieldHp` are finite in `[0, 1e9]`, `serial` is a non-negative safe integer.
-  Anything else returns an explicit `reason` (`bad-dome-id`, `dome-id-too-long`,
-  `bad-team`, `bad-position`, `bad-age`, `bad-hp`, `bad-field-hp`, `bad-serial`,
-  `not-an-object`, `unknown-event`) and creates nothing. It never throws.
+  `hp`/`fieldHp` are finite in `[0, 1e9]`, `serial` is a non-negative safe integer,
+  and `eventId` (hits) is a non-negative safe integer ≤ 1e9. The identity strings
+  `shooter`/`domeOwner`, when present, are non-empty strings ≤ 64 characters and
+  are never dereferenced. Anything else returns an explicit `reason`
+  (`bad-dome-id`, `dome-id-too-long`, `bad-team`, `bad-position`, `bad-age`,
+  `bad-hp`, `bad-field-hp`, `bad-serial`, `missing-event-id`, `bad-event-id`,
+  `bad-shooter`, `bad-dome-owner`, `bad-shooter-team`, `not-an-object`,
+  `unknown-event`) and creates nothing. It never throws.
+- **Every hit carries its own identity.** A hit packet must carry `eventId`: the
+  host's monotonic per-activation counter for hits. Without it a second real hit
+  is indistinguishable from the first one's retransmission, so it is refused
+  (`missing-event-id`) rather than guessed at. `serial`, when present, is checked
+  as the **activation** identity, not the hit identity: a packet naming a
+  superseded activation is `stale-activation`, never applied to whatever dome now
+  wears the id.
+- **Two distinct hits on one activation both land.** Dedupe is keyed
+  `(domeId, eventId)`, never `(domeId, deploySerial)`. The previous key collapsed
+  every second hit on one dome into a false `duplicate` and silently dropped real
+  damage — a bug a client cannot detect on its own, because the dome simply stops
+  taking damage.
+- **Duplicate AND reordered packets are no-ops.** Suppression is a bounded FIFO
+  of 256 keys *plus* a bounded per-dome monotonic cursor (64 domes). An
+  `eventId` that is not newer than the one already applied is `duplicate`, so a
+  late-arriving old hit cannot reapply damage with a different amount.
+- **Expire before deploy is tombstoned.** `expire` writes a durable, bounded
+  (256-entry) tombstone for the dome id *before* looking for anything on screen,
+  so a reordered stream in which the expiry arrives first still ends that
+  activation. A later deploy of the same id is refused
+  (`expired-before-deploy`) and creates no scene object, and a hit against it is
+  `expired`. Tombstones are per activation id: another dome is unaffected.
 - **Idempotent deploy / hit / expire.** A duplicate deploy is `duplicate`, a
   duplicate hit is `duplicate` and cannot spend HP twice, a duplicate expire is
   `duplicate`. Dedupe keys live in a **bounded FIFO of 256 entries**, so a long
   match cannot grow the set without limit.
 - **Never silently ignored.** Every call returns `{ ok, reason }`. An expire for
   a dome this client never saw is `ok: true, reason: 'already-absent'`, not a
-  silent drop.
+  silent drop — and it is remembered as a tombstone regardless.
 - **A remote dome is presentation only.** `tickRemoteBigBubblers(dt)` advances
   only what may be drawn — age, radius, emitter height, the armed flag. It applies
   **no paint, no TimeDamage burn, no authoritative HP**, never expires a dome on
@@ -282,10 +309,68 @@ A candidate now carries `ownership`, `reachable`, `serial` and `remote`:
 | Situation | Behaviour |
 |---|---|
 | local round → authoritative dome | `onHit()` spends HP once, as before |
-| local round → **remote** dome | `onHit()` returns 0, spends nothing, sets `candidate.proposal` and emits `kit:bubbler:damage-proposal` with a JSON-safe `{ domeId, serial, team, target, amount, point, normal }` |
+| local round → **remote** dome | `onHit()` returns 0, spends nothing, sets `candidate.proposal` and emits `kit:bubbler:damage-proposal` — a **flat** record (see below) carrying the real shooter identity, the dome owner identity, the activation serial and a monotonic per-hit `eventId` |
 | ghost round (any dome) | intercepted for the image; `visualOnly`, `onHit()` 0, **no proposal at all** |
 | neutral round (`p.team` missing or non-integer, any dome) | same as a ghost: it may be intercepted visually but can never spend a budget |
-| `onHit()` on a stale candidate | re-checks that the dome is alive and still registered, then spends 0 |
+| `onHit()` on a stale candidate | re-checks that the dome is alive, still registered, **and still the same id and serial**, then spends/proposes 0 |
+
+### The flat damage proposal
+
+A locally owned round hitting a **remote** dome produces a record that is:
+
+- **flat** — every field is a number, a string or a boolean. The native packer
+  (`packEvent` in `inkwave-public/src/net/netmatch.js`) copies numbers, strings
+  and booleans, converts an `Actor` to `{n:nid}` and a `Vector3` to a 3-array,
+  and **drops everything else**. A flat record needs none of that conversion, so
+  the parent can hand it straight to the native event path. A test reproduces
+  `packEvent` exactly and asserts that no field is dropped and no value is
+  reinterpreted.
+- **JSON-safe** — `JSON.parse(JSON.stringify(p))` deep-equals `p`.
+- **carrying the real identities**, not placeholders: `shooter` is
+  `bigBubblerOwnerId(p.owner)` — the projectile's actual actor — and `domeOwner`
+  is `bigBubblerOwnerId(dome.owner)` for the dome being shot. An identity that is
+  genuinely unknown is **omitted**, never nulled (the native packer would drop a
+  null, and the receiving side could not tell "unknown" from "field absent");
+  adjudication then refuses it with the field named.
+
+```
+{ e:'damage-proposal', domeId, serial, team, target, amount, eventId,
+  shooter?, shooterTeam?, domeOwner?,
+  pointX, pointY, pointZ, normalX, normalY, normalZ }
+```
+
+It changes **nothing** on this client: the remote dome's HP is untouched, and the
+record is inert until somebody adjudicates it.
+
+### Authoritative adjudication
+
+```js
+adjudicateBigBubblerDamage(payload, { host: boolean, roster?: Map|Array })
+Projectiles.prototype.kitBubbleAdjudicate(payload, authority)   // same thing
+```
+
+The owning side (in practice the host) calls this with the proposal a remote
+client sent. Checks, each with a named reason:
+
+| Check | Reasons |
+|---|---|
+| the caller declares itself the authority | `not-authoritative` |
+| the dome is a **local authoritative** dome of this client, alive, same id **and** same serial | `unknown-dome`, `stale-activation` |
+| the only thing this client has under that id is a picture of somebody else's | `foreign-ownership` |
+| the claimed `domeOwner` is the **real** owner of that dome | `missing-dome-owner`, `foreign-ownership` |
+| the shooter resolves in the roster and is hostile to the dome's team | `missing-shooter`, `unknown-shooter`, `bad-shooter-team`, `friendly-fire`, `shooter-team-mismatch` |
+| the amount is positive and within the remaining HP of the part hit | `bad-amount`, `overkill` |
+| this exact `(domeId, eventId)` was not already applied, and is newer than the last | `duplicate` |
+
+A claim beyond the remaining HP is refused as `overkill`, **not** silently
+clamped: clamping would let a hostile client choose how much damage a hit lands.
+An unresolvable shooter is refused, never treated as neutral-and-therefore-fine.
+Duplicate suppression runs before the remaining-HP comparison, so a retransmitted
+packet reports `duplicate` whatever it claims.
+
+**Remote HP is never mutated locally.** A proposal naming a presentation-only
+dome is `foreign-ownership`, not a silent image update. On success it emits
+`kit:bubbler:damage-adjudicated`.
 
 `candidate.reachable = { canopy, emitter }` reports which of the two targets the
 exact segment can reach, so "the emitter is exposed" is distinguishable from
@@ -308,11 +393,12 @@ and `toArray()` would hand callers arrays whose prototype comes from that realm.
 | `kit:bubbler:hit` | `{ owner, domeId, team, target, amount, cause:'shot', hp, fieldHp }` |
 | `kit:bubbler:burn` | same shape, `cause:'burn'` (the internal TimeDamage tick) |
 | `kit:bubbler:collapse` | `{ owner, domeId, serial, team, pos, reason }` |
-| `kit:bubbler:damage-proposal` | `{ domeId, serial, team, target, amount, point, normal }` — outgoing, needs the parent's adjudication |
+| `kit:bubbler:damage-proposal` | the flat record above — outgoing, inert until adjudicated |
+| `kit:bubbler:damage-adjudicated` | `{ domeId, serial, team, shooter, shooterTeam, domeOwner, target, eventId, amount, hp, fieldHp }` — the authority accepted a proposed hit |
 | `kit:bubbler:replay:reset` | `{ reason, removed, presentationOnly }` |
 
-`kitBarrierHitRecord(candidate)` adds `serial`, `remote`, `ownership` and
-`reachable` to the per-contact record.
+`kitBarrierHitRecord(candidate)` adds `serial`, `remote`, `ownership`,
+`shooter`, `shooterTeam`, `domeOwner` and `reachable` to the per-contact record.
 
 **No online parity is claimed.** There is no net code, transport, packet format,
 prediction, reconciliation or rollback in this lane. What exists is bounded,
@@ -328,7 +414,7 @@ remote image, and nothing more.
 | Owner `splat()` | **nothing** | the reference does not erase the structure when its owner dies |
 | Owner `reset()` (respawn) | nothing by default; erases only when the parent sets `profile.kits.bigBubbler.eraseOnOwnerReset = true` | `reset()` is the respawn path |
 | `clearBigBubblers(reason)` | explicit | shutdown / parent use |
-| `resetBigBubblerReplay(reason)` | every **remote** dome removed and released, the 256-entry dedupe window cleared, `kit:bubbler:replay:reset` emitted | the match reset, so stale dedupe cannot leak into the next match |
+| `resetBigBubblerReplay(reason)` | every **remote** dome removed and released, and **all** replay bookkeeping dropped: the 256-entry dedupe window, the 256-entry tombstone set, the per-dome hit cursors, the authority dedupe window and the proposal counter; `kit:bubbler:replay:reset` emitted | the match reset, so a stale tombstone (which would refuse the next match's first deploy) or a stale dedupe key cannot leak forward |
 
 A non-positive timestep is a **strict no-op** for both clocks: `dt <= 0` returns
 before anything is touched, so a paused match (`Projectiles.update(0)`) can never
@@ -372,13 +458,16 @@ fudge and no boundary ignition on a paused tick.
    and call `installKitBigBubbler(api, profile)` after the other installers.
    There is **no** fallback to disable. Until (2) lands the module ships inert:
    the domes deploy, grow and expire, but nothing queries them.
-5. **Network** (parent-owned): the whole integration surface is
+5. **Network** (parent-owned): the integration surface is
    `bigBubblerSnapshot()` out and `replayBigBubbler('deploy' | 'hit' | 'expire',
-   proxy, payload)` in, plus `resetBigBubblerReplay()` on match reset and a
-   subscription to `kit:bubbler:damage-proposal` to route a local round's hit on
-   a remote dome through the authoritative path. Call it from the typed NetMatch
-   events; do not reconstruct positions or identities locally. No online parity
-   is claimed for either side.
+   proxy, payload)` in, plus `resetBigBubblerReplay()` on match reset. Subscribe
+   to `kit:bubbler:damage-proposal` and route the flat record through the native
+   event path (`packEvent` keeps it whole) to the dome's authority, which calls
+   `adjudicateBigBubblerDamage(payload, { host, roster })`. Every hit packet the
+   parent *sends* must carry a monotonic per-activation `eventId`; every deploy
+   and expire must carry the dome's `serial`. Do not reconstruct positions or
+   identities locally, and do not mutate a remote dome's HP on the proposing
+   client. No online parity is claimed for either side.
 6. **Remote domes need a `Projectiles.update` tick** — already installed by this
    module, so `tickRemoteBigBubblers(dt)` runs on the native clock. It is a strict
    no-op while paused and emits nothing authoritative.
@@ -392,9 +481,22 @@ fudge and no boundary ignition on a paused tick.
 - **Explosion shielding on collapse** (the inside-the-dome sweep) is not
   implemented; see the handoff section for the concrete subscription point.
 - **Remote replay is ingest + presentation only.** `replayBigBubbler()` and
-  `tickRemoteBigBubblers()` exist and are tested, but nothing in this lane emits
-  or receives a packet. The parent wires its typed NetMatch events to them; until
-  it does, no remote dome ever appears.
+  `tickRemoteBigBubblers()` exist and are tested, and `adjudicateBigBubblerDamage()`
+  is the concrete owner-side API, but **nothing in this lane emits or receives a
+  packet**. There is no transport, no packet framing, no rate limiting, no
+  prediction, no interpolation, no reconciliation and no rollback. The parent
+  wires its typed NetMatch events to them; until it does, no remote dome ever
+  appears and no proposal ever leaves this client.
+- **The proposal contract is a contract, not an end-to-end online test.** Both
+  halves are exercised against the real composed runtime and against the real
+  `packEvent` rules, but the two *clients* are simulated inside one process. The
+  parent's integration (real transport, real latency, real reordering) is
+  unmeasured by this lane and remains the parent's responsibility.
+- **Adjudication is trust-based by construction.** `adjudicateBigBubblerDamage()`
+  trusts `authority.host === true` from its caller and validates identity, team
+  and amount against the roster **the caller supplies**. Nothing here
+  authenticates the host or defends against a lying authority: the API is the
+  seam a secured transport would sit behind, not the security itself.
 - **The ink refill does not fire for the bubbler today.** The parent's
   `resources.mjs` refills only when `_startSpecial` leaves `specialActive` set,
   and the bubbler deliberately sets none. This module does not refill either, by
@@ -411,12 +513,12 @@ fudge and no boundary ignition on a paused tick.
 
 ## Test evidence
 
-`patches/splatoon3/tests/kit-big-bubbler.test.mjs` (33 tests) runs against the
+`patches/splatoon3/tests/kit-big-bubbler.test.mjs` (39 tests) runs against the
 **actual composed runtime** — the immutable `inkwave-public` sources adapted by
 `patches/splatoon3/adapter.mjs` with the real `Actor`, `Projectiles`, `Physics`
 and config objects. A synthetic level of real oriented boxes is driven by the
 real `Physics` so native wall contacts are genuine distances, not stubs. Only
-audio and the renderer are absent. **33/33 pass.**
+audio and the renderer are absent. **39/39 pass.**
 
 Covered: pinned curve endpoints and monotonicity; deploy/pinned durability/native
 gauge+stat/no-`specialActive`/no-invulnerability; stationary; growth, arming on
@@ -455,18 +557,56 @@ died after the query; a match reset clears remote domes, their scene objects and
 the dedupe window; and two composed actors round-trip a real snapshot packet
 through JSON with duplicate delivery, a hit, an expiry and a match reset.
 
-Logs in `evidence/actions-freebuff-20261004/freebuff-6/`:
+Added by this network-correctness revision (39 tests, all passing):
+
+- **Two distinct hits on one activation both land.** The regression the parent
+  found: dedupe keyed `(domeId, deploySerial)` rejected every second hit on a
+  dome as a "duplicate" and silently dropped real damage. Both hits now apply,
+  each is individually retransmit-safe, and a **reordered** older `eventId`
+  arriving late cannot reapply.
+- **Expire before deploy is tombstoned.** An expiry that arrives first reports
+  `already-absent`, and the deploy that follows is refused `expired-before-deploy`
+  on every retry, creating no scene object; a hit against it is `expired`. Another
+  activation is unaffected, and a match reset drops the tombstone so the next
+  match's first deploy is accepted.
+- **A stale candidate proposes nothing.** `onHit()` re-checks liveness *and*
+  activation identity (same id **and** same serial) before either spending or
+  proposing, so a candidate queried against one dome cannot act on a later one
+  after the record is reused.
+- **The proposal is flat, packEvent-compatible and identity-bearing.** The test
+  reproduces the native `packEvent` exactly and asserts that no field is dropped
+  and no value reinterpreted; the record carries the real `shooter` identity
+  (the actual projectile `Actor`), the real `domeOwner` and a monotonic
+  `eventId`. An unknown identity is **omitted**, never nulled, because the
+  packer drops nulls.
+- **Adjudication is exercised against every rejection path**: not the authority,
+  unresolvable shooter, friendly fire, spoofed dome owner, missing identity,
+  contradicting team claim, unknown dome, superseded activation, a
+  presentation-only dome (`foreign-ownership`, with the remote image provably
+  unmutated), overkill, retransmit, reordered, and the **next distinct hit on
+  the same activation, which does apply**.
+- **Two composed actors propose → transmit → adjudicate end to end**: a real
+  snapshot packet, a real proposal from the shooter's own round, a JSON round
+  trip through the packed payload, an authoritative application, a duplicate
+  frame, and a second distinct hit — with the remote image never converging by
+  local mutation.
+- **Bounded state.** A 4000-activation hostile flood of deploy/hit/expire packets
+  throws nothing, leaves no dome behind, and a legitimate packet still works; the
+  match reset drops every trace, including an `eventId` already used.
+
+Logs in `evidence/actions-freebuff-20261004/freebuff-6/` (prior receipts, retained
+unchanged) and `evidence/actions-freebuff-20261004/cline-1/` (this revision):
 
 | Log | Result |
 |---|---|
-| `bubbler-followup-run1.log` … `run5.log` | the five revision runs; run5 is the passing set |
-| `bubbler-followup-run5.log` | 19/19, exit 0 (the candidate-query revision) |
-| `bubbler-followup-regression.log` | 42/42, exit 0 (`kit-big-bubbler` + `public-issues-6` + `adapter`) |
-| `bubbler-final-run2.log` … `run5.log` | the replay/lifecycle revision; run5 is the passing set |
-| `bubbler-final-run5.log` | 33/33, exit 0 |
+| `bubbler-final-run5.log` | 33/33, exit 0 (the reviewed BUBBLER-FINAL revision) |
 | `bubbler-final-regression.log` | 56/56, exit 0 |
 | `bubbler-final-head.log` | 56/56, exit 0, rerun on the exact committed tree |
 | `bubbler-final-gate-quick.log` | `check-inkwave-patches --quick` OK, upstream compatible, reference 11.3.0 |
+| `cline-1/kit-big-bubbler.log` | 39/39, exit 0 — this revision's owned suite |
+| `cline-1/regression.log` | the full `patches/splatoon3/tests/*.test.mjs` set on this revision |
+| `cline-1/gate-quick.log` | `check-inkwave-patches` OK, upstream compatible, reference 11.3.0 |
+| `cline-1/chain.log` | both owned files re-parsed through the full adapter chain |
 
 Additionally, both the module and its test file were re-parsed through the full
 adapter chain (`adaptSource` → `adaptTouchLayout` → `adaptReliability` →
