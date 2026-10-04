@@ -74,3 +74,25 @@ test('partial and piercing charger beams stop at defense; piercing hits before i
   system.fireCharger(owner, { ...owner.weapon, rangeMin: 10, rangeMax: 10 }, 1);
   assert.deepEqual(hits, [near]); assert.equal(contacts, 1);
 });
+
+test('actual Bubbler mechanics participate in the native sweep and preserve ghost and nearer-wall authority', async () => {
+  const { installKitBigBubbler, tickBigBubblers, bigBubblerDomes } = await import('../runtime/kit-big-bubbler.mjs');
+  for (const mode of ['owned', 'ghost', 'nearer-wall']) {
+    const f = await fixture(); installKitDefense(f); installKitBigBubbler(f, f.profile);
+    const system = f.G.projectiles = new f.Projectiles(new f.THREE.Scene());
+    const owner = f.make('roller'); owner.nid = 4; owner.weapon = { ...owner.weapon, special: 'bubbler', specialCost: 180 };
+    owner.special = 180; owner._startSpecial(); tickBigBubblers(1);
+    const dome = bigBubblerDomes()[0], hp = dome.hp;
+    const shooter = f.make(); shooter.team = 1; shooter.nid = 9;
+    f.G.actors = [owner]; f.G.boss = null;
+    f.G.physics.segment = () => mode === 'nearer-wall' ? { hit: true, dist: .1 } : { hit: false };
+    let hits = 0, impacts = 0; system.applyHit = () => { hits++; }; system._impact = () => { impacts++; };
+    const p = system._new(); Object.assign(p, { owner: shooter, team: 1, type: 'shot', wid: 'shooter', damage: 36,
+      size: .15, radius: .3, age: 0, life: 1, straight: 1, grav: 0, drag: 0, trailEvery: 0, ghost: mode === 'ghost' });
+    p.pos.copy(dome.pos).add(new f.THREE.Vector3(0, 1, 20)); p.prev.copy(p.pos); p.start.copy(p.pos); p.vel.set(0, 0, -1800);
+    assert.equal(system._step(p, 1 / 60), true); assert.equal(hits, 0, mode);
+    assert.equal(dome.hp, mode === 'owned' ? hp - 3600 : hp, mode);
+    assert.equal(impacts, mode === 'nearer-wall' ? 1 : 0, mode); assert.equal(p.age, 1 / 60);
+    system.clear();
+  }
+});

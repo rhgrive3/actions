@@ -81,3 +81,48 @@ test('actual native countershot packet restores charge-scaled blast and its ghos
   f.G.projectiles._blastBurst(ghost, victim.pos, null);
   assert.deepEqual([paint, damage, turf], [0, 0, 0]);
 });
+
+test('native Bubbler deployment packet presents only its actual sender-owned dome', async () => {
+  const { f, sender, receiver, make } = await setup();
+  const { installKitBigBubbler, bigBubblerRemoteDomes } = await import('../runtime/kit-big-bubbler.mjs');
+  const { BUBBLER_EVENTS: BB } = await import('../runtime/kit-network.mjs');
+  installKitBigBubbler(f, f.profile);
+  const owner = make(4, 'peer-A', false), proxy = make(4, 'peer-A', true);
+  owner.weapon = { ...owner.weapon, special: 'bubbler', specialCost: 180 }; owner.special = 180;
+  sender.bind({ actors: [owner] }); f.G.netm = sender; owner._startSpecial();
+  const event = sender.out.find(e => e[1] === 'ev' && e[2] === BB.deploy);
+  assert.ok(event, 'actual bind forwards actual deployment through the native packer');
+  receiver.byNid.set(4, proxy); f.G.netm = receiver;
+  receiver._play('foreign-peer', JSON.parse(JSON.stringify(event)));
+  assert.equal(bigBubblerRemoteDomes().length, 0);
+  const forged = JSON.parse(JSON.stringify(event)); forged[3].domeId = '0:n999:1';
+  receiver._play('peer-A', forged); assert.equal(bigBubblerRemoteDomes().length, 0);
+  receiver._play('peer-A', JSON.parse(JSON.stringify(event)));
+  assert.equal(bigBubblerRemoteDomes().length, 1);
+  assert.equal(bigBubblerRemoteDomes()[0].owner, proxy);
+  receiver._play('peer-A', JSON.parse(JSON.stringify(event)));
+  assert.equal(bigBubblerRemoteDomes().length, 1);
+  sender.unsubs.forEach(fn => fn()); f.G.projectiles.clear();
+});
+
+test('actual native Bubbler proposal packet is shooter-bound and adjudicated by the dome owner even when nonhost', async () => {
+  const { f, sender, receiver, make } = await setup();
+  const { installKitBigBubbler, bigBubblerDomes } = await import('../runtime/kit-big-bubbler.mjs');
+  const { BUBBLER_EVENTS: BB } = await import('../runtime/kit-network.mjs');
+  installKitBigBubbler(f, f.profile);
+  const owner = make(4, 'peer-B', false), shooter = make(9, 'peer-A', false, 1), proxy = make(9, 'peer-A', true, 1);
+  owner.weapon = { ...owner.weapon, special: 'bubbler', specialCost: 180 }; owner.special = 180;
+  owner._startSpecial(); const dome = bigBubblerDomes()[0], hp = dome.hp;
+  receiver.s.isHost = false; receiver.byNid.set(4, owner); receiver.byNid.set(9, proxy);
+  sender.bind({ actors: [shooter] }); f.G.netm = sender;
+  f.emit(BB.proposal, { actor: shooter, domeId: dome.id, serial: dome.serial,
+    domeOwner: 'n4', shooter: 'n9', shooterTeam: 1, target: 'canopy', amount: 3600, eventId: 1 });
+  const packet = JSON.parse(JSON.stringify(sender.out.find(e => e[2] === BB.proposal)));
+  assert.ok(packet); f.G.netm = receiver;
+  receiver._play('foreign-peer', packet); assert.equal(dome.hp, hp);
+  const spoof = JSON.parse(JSON.stringify(packet)); spoof[3].shooter = 'n77';
+  receiver._play('peer-A', spoof); assert.equal(dome.hp, hp);
+  receiver._play('peer-A', packet); assert.equal(dome.hp, hp - 3600);
+  receiver._play('peer-A', packet); assert.equal(dome.hp, hp - 3600);
+  sender.unsubs.forEach(fn => fn()); f.G.projectiles.clear();
+});

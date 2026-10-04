@@ -14,6 +14,7 @@ import { installMovement } from './movement.mjs';
 import { installMovementMotion } from './movement-motion.mjs';
 import { installWeapons } from './weapons.mjs';
 import { installKitDefense } from './kit-defense.mjs';
+import { installKitBigBubbler } from './kit-big-bubbler.mjs';
 import { installKitInkVac } from './kit-ink-vac.mjs';
 import { installKitNetwork } from './kit-network.mjs';
 import { installGear } from './gear.mjs';
@@ -59,6 +60,7 @@ export function install(profile) {
   for (const [id, data] of Object.entries(profile.specials || {})) Object.assign(SPECIALS[id], data);
   installWeapons(api, profile);
   installKitDefense(api);
+  installKitBigBubbler(api, profile);
   installKitInkVac(api, profile);
   installKitNetwork(api);
   installRollerMotion(api, profile);
