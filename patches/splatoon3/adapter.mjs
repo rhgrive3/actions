@@ -54,6 +54,10 @@ export function adaptSource(rel, code) {
     return "import { dualiesMotionLock, dualiesMotionAllowsFootPlant } from '../../patches/splatoon3/runtime/action-admission.mjs';\nimport { specialMotionAllowsFootPlant } from '../../patches/splatoon3/runtime/special-motion.mjs';\nimport { applyWalkLocomotion, walkLean, walkSwingUnloaded, walkFootReach, walkPelvisDrop, walkTreadAllowed, walkActive } from '../../patches/splatoon3/runtime/walk.mjs';\n"+code;
   }
   if (rel === 'src/ui/menus.js') {
+    code = replaceOnce(code,
+      '  _sub() { return this.api.sub || SUB.bomb; }',
+      '  _sub() { const w = this._weapons()[this._loadout().weapon], subs = this.api.subs || SUB; return (w.sub && subs[w.sub]) || this.api.sub || SUB.bomb; }',
+      'lobby selected sub identity');
     return replaceOnce(code,
       "h('span', { class: 'iw-chip' }, h('i', { html: SUB_ICONS.bomb }), sub.name)",
       "h('span', { class: 'iw-chip' }, h('i', { html: SUB_ICONS[sub.id] || SUB_ICONS.bomb }), sub.name)",

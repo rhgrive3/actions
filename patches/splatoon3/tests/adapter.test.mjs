@@ -81,3 +81,18 @@ test('dualies pre-aim and contact admission stop on missing or duplicated native
     assert.throws(() => adaptSource('src/game/character.js', character + '\n' + anchor), new RegExp(label));
   }
 });
+
+
+test('actual lobby sub lookup follows each equipped kit rather than the generic bomb', () => {
+  const menus = fs.readFileSync(new URL('src/ui/menus.js', publicRoot), 'utf8');
+  const adapted = adaptSource('src/ui/menus.js', menus);
+  const method = adapted.match(/  _sub\(\) \{([^\n]+)\}/);
+  assert.ok(method, 'actual adapted Menus._sub exists');
+  const SUB = { bomb: {id:'bomb'}, suction:{id:'suction'}, curling:{id:'curling'} };
+  const lookup = new Function('SUB', `return function () {${method[1]}}`)(SUB);
+  const kits = { shooter: {sub:'suction'}, roller:{sub:'curling'}, charger:{sub:'bomb'} };
+  for (const [main, weapon] of Object.entries(kits)) {
+    const menu = { api:{sub:SUB.bomb}, _weapons:()=>kits, _loadout:()=>({weapon:main}) };
+    assert.equal(lookup.call(menu), SUB[weapon.sub], main + ' lobby kit identity');
+  }
+});
