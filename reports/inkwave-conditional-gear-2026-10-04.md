@@ -133,6 +133,15 @@ No other PR's production feature is copied into this standalone branch.
   the gear panel is not replaced with a synthetic test-only one.
   The fixture-generation regression is imported by the normal gameplay suite,
   raising the final complete count to759 (and standalone verifier tests to11).
+- The second Actions head again passed validate/active/catalog and reached the
+  gear controls in Chromium. After saving/reopening, the test left the native
+  details panel expanded over the weapon cards. The sequence now taps its summary
+  to close it and asserts the closed state before normal weapon-card input.
+  It neither force-clicks through the overlay nor removes any acceptance check.
+  One unrestricted-parallel local rerun ended two test-file workers without an
+  assertion diagnostic (landing-motion/roller). Those unchanged files passed all
+  18 cases in isolation, and the complete unchanged set passed759/759 with
+  Node test concurrency2. No gameplay code or expected values were relaxed.
 - 30/60/120Hz fixed schedules agree on window expiry and restoration.
 - Node/CPU composition is distinct from browser rendering and physical Switch
   comparisons. Public browser evidence is supplied by exact-head CI after publication.

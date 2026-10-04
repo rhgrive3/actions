@@ -92,6 +92,10 @@ export async function checkCoreMenus({ page, entry, config, engineName, evidence
     if (!await page.locator('.s3-gear').evaluate(el => el.open)) await page.locator('.s3-gear summary').tap();
     await page.locator('.s3-gear select').nth(0).selectOption('none');
     await page.locator('.s3-gear select').nth(1).selectOption('none');
+    // The expanded native details panel is an overlay. Close it with the same
+    // summary action as a player before tapping a weapon behind that panel.
+    await tap(page, '.s3-gear summary');
+    assert.equal(await page.locator('.s3-gear').evaluate(el => el.open), false, 'gear panel closes before returning to weapon selection');
     const card = page.locator('.iw-loadout .iw-wcard').last();
     const weapon = await card.evaluate((el) => el._wid);
     await card.scrollIntoViewIfNeeded(); await card.tap();
