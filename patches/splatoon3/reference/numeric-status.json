@@ -1665,7 +1665,7 @@
     }
   },
   "movement.roll.chainReset": {
-    "value": 1,
+    "value": 1.5,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
