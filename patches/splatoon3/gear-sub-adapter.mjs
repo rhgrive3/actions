@@ -1,5 +1,21 @@
 export function adaptGearSub(rel,code,replace){
  const patch=(before,after,label)=>{code=replace(code,before,after,'gear/sub: '+label);};
+ if(rel==='src/main.js'){
+  patch('    const frame = {\n      time: m.time,', '    const subCost = subInkSpec(a, SUB.bomb).inkCost;\n    const frame = {\n      time: m.time,','equipped HUD sub cost');
+  patch('subCost: SUB.bomb.inkCost / PLAYER.inkMax,', 'subCost: subCost / PLAYER.inkMax, subReady: a.ink >= subCost,','raw admission and normalized mark');
+  patch('ink: frame.ink, subCost: frame.subCost });', 'ink: frame.ink, subCost: frame.subCost, subReady: frame.subReady });','same readiness for mobile');
+  return "import { subInkSpec } from '../patches/splatoon3/runtime/sub-ready.mjs';\n"+code;
+ }
+ if(rel==='src/ui/hud.js'){
+  patch('    const aim = !!(a && a.alive && a.weaponRunner && a.weaponRunner.aimingSub) || !!f.subAim;',
+   "    const costPct = Math.round((f.subCost ?? .7) * 100);\n    if (L.subCostPct !== costPct) { L.subCostPct = costPct; this.subChip.querySelector('b').textContent = costPct + '%'; }\n    const aim = !!(a && a.alive && a.weaponRunner && a.weaponRunner.aimingSub) || !!f.subAim;",'live numeric label');
+  patch('const ok = (f.ink ?? 1) >= (f.subCost ?? 0.7) - 1e-3;', 'const ok = f.subReady ?? ((f.ink ?? 1) >= (f.subCost ?? 0.7));','exact sub aim admission');
+  patch('const nosub = sub > 0 && ink < sub;', 'const nosub = sub > 0 && !(f.subReady ?? (ink >= sub));','tank readiness shares raw admission');
+ }
+ if(rel==='src/core/mobile.js'){
+  patch('ink = 1, subCost = 0.7 } = {}) {', 'ink = 1, subCost = 0.7, subReady = null } = {}) {','optional actor readiness input');
+  patch('const noSub = ink < subCost - 1e-3;', 'const noSub = !(subReady ?? (ink >= subCost));','exact mobile sub admission');
+ }
  if(rel==='src/game/actor.js'){
   patch('const wantSquid = intent.squid && !fireWins && !this.weaponRunner.busy();', 'const wantSquid = intent.squid && !intent.sub && !fireWins && !this.weaponRunner.busy();','sub press emerges before 10F ready');
  }

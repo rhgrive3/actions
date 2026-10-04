@@ -177,3 +177,8 @@ Flow の外殻・粒・リボンが GTAO の法線／深度パスに不透明な
 
 ### 2026-10-04 PR327追補 (#267)
 Splat Bombのサブ性能をguide/実投擲で共通のactor-local specへ接続。共有SUB.throwSpeedの一時変更を除き、他actor再入の負例と、PR259/322の実runtime合成でSub/Special倍率・移動継承の分離を検証。[詳細](inkwave-gear-sub-batch-2026-10-04.md)。
+
+
+### 2026-10-04 関連6件目：装備別サブ必要量の表示
+
+#349 は実支払と同じActor固有sub specをGame HUD frameとmobileへ渡す。タンクの線・不足色・構えラベルを更新し、57APは.455を判定、46%を表示にだけ使用する。0/35/57APの直下/一致/直上、装備/reset/Actor変更を実Game/HUD/Mobileのsourceとminify出力で確認し、実DOM/Canvasの9組は追加したActions Chromium検査で確定する。[出典・分母・描画検査の範囲](inkwave-gear-sub-batch-2026-10-04.md)を参照。

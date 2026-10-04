@@ -72,3 +72,29 @@ PR259 runtimeが存在する場合の既存build hookを広げ、bombならsubPo
 既存integrationのサブ性能検査は共有SUBの一時書換えを観測していたため、新設計では実throwVelocityへ渡された速度を記録する検査へ変更した。raw High=1.68*60、共有Low=1.12*60、誤差1e-9の期待値は変えず、合法な6F構えと実bomb1個も確認する。
 
 #267追加後の結果：全757/757、専用source15/15・公開minify build15/15、公開buildの既存integration19/19、最新PR259/322合成17/17、local-quality8/8、motion/workflow gates10/10。固定raw11ファイル/132抽出値を再照合。contentHash `725a387ef0879b426cc9e7d0341acf962d8d3338971e437270eb216423bf7612`。公開直前もPR259 head16d1259dのruntimeが合成済み内容と同一であることを再読確認した。
+
+
+## 関連6件目 #349：装備後サブ消費とHUDの共通接続
+
+直前head `b32201c7a4387b0b8a2fd4bf71aff5a34bfecabb` を保持し、以下の差分を追加する。旧4件head `8a9435a2db5926bf674d87c1a1eee27a8064ecca` の4ジョブ成功と、5件目/6件目の各CIを混同しない。
+
+Game._updateHudで実支払と同じ `subInkSpec(a,SUB.bomb).inkCost` を1回取得する。HUD frame / mobile feedへ0〜1の割合と、丸め前の実インク残量で比較した `subReady` を渡す。共有SUBを一時変更せず、毎frameのActor固有modifierを読む。サブ構えの数値ラベルは割合から整数%へ表示だけを丸め、タンク目盛りと判定値は丸めない。
+
+HUDのis-short、タンクのis-nosub、MobileInputのis-dimは同じresource readinessを使う。旧サブ構え/mobileのみの1e-3（満タン100なら0.1ポイント）の不足許容を除き、支払不可なのに十分な色を示す境界を残さない。subReadyがないUI-lab/旧frameでは未丸めの割合比較へfallbackする。メインLOW INK、スライド/硬直などの行動許可、実消費の計算そのものは変更しない。
+
+### 比較と出典
+
+- [Issue #349](https://github.com/rhgrive3/actions/issues/349)のmain実行証拠は57AP・残60でも実消費56とUI必要70が不一致だった。#193を含む本PRでは57APコスト45.5なので、残50で使用可能と表示する。
+- [任天堂のInk Saver (Sub)説明](https://splatoon.nintendo.com/en/news/beginner-basics-for-splatoon-3-choosing-the-right-gear/)と[Inkipediaインクタンク](https://splatoonwiki.org/wiki/Ink_tank#Splatoon_3)は同Issueの監査で照合された補助説明。今回の直接Web再訪はtimeout/403で失敗したため、再取得成功とは記録しない。
+- [S3 Wiki スプラッシュボム](https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%B5%E3%83%96%E3%82%A6%E3%82%A7%E3%83%9D%E3%83%B3/%E3%82%B9%E3%83%97%E3%83%A9%E3%83%83%E3%82%B7%E3%83%A5%E3%83%9C%E3%83%A0)の0/35/57 AP=70/49.8/45.5%と、固定11.3.0 ConsumeRt_Sub_Lv2の根拠は既存#193節を保持。35APの49.8は表の表示丸め、内部は49.805875。
+- 満タン100の45.5ポイントはframeでは.455。ラベル46%でも.46を判定に使わない。本家UIの外観や音の完全コピーを認定する修正ではない。
+
+### 検証経路と残る範囲
+
+新規3回帰は実Game._updateHudのメソッド本文とimport bindingをsource/公開minify出力から読み、実Actor/Runnerの投擲結果と対照する。HUD._updCrosshair / _updTank / MobileInput.setHudは実VMモジュールを使用し、要素とCanvas描画の末端だけを記録stub化する。0/35/57 AP×必要量±1e-6/一致、装備変更・reset・Actor切替、modifierの発動/失効相当の更新、ラベル46%と.455判定の分離を検証する。別Actorや共有SUBの汚染を許さない。
+
+既存Chromium active検査にも追加し、ロード済みの実Game/HUD/Canvas2D/MobileInput DOMで0/35/57 AP×必要量±.001/一致を9組確認する。desktopでは元のmobile._installで実control DOMを準備し、通常Game→mobile.setHud配送を通す。テストでは元storageと関数をfinallyで復元する。このブラウザ検査はローカルsocket制約で未実行、公開後の正確head CIで成否を確定する。実iPhone/Android新規操作計測や条件付きギアPR全体の統合は未実施。
+
+新規接続先src/core/mobile.jsは読み取ったnativeの完全SHA256をupstream-lockへ追加。既存ハッシュの変更や上流本体の改変はしない。PR328のLOW INK修正は別の入力欄であり、統合時にその削除済み18%条件を再導入しない。
+
+#349追加後ローカル結果：全760/760、gear/sub+HUD専用source18/18、公開minify出力は専用18＋既存integration19の37/37、local-quality8/8、motion/workflow gates10/10、PR259/322実runtime合成17/17、固定11ファイル132値一致（未知14維持）。contentHash `303e52dfd95b2f56c3c824dd6f4c27a2d02a90bdd6139bdfecdab581b26552d6`。追加後headのActionsで新規の実DOM/Canvas検査を確認し、この6件でscopeを固定する。
