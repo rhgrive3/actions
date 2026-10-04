@@ -61,16 +61,11 @@ function adaptIssue427Net(code) {
     'clean pending on remote respawn'
   );
 
-  // Clear pending hits on reconnect/dispose/handoff
+  // Clear pending hits on reconnect/dispose
   patch(
     "  dispose() {\n    for (const u of this.unsubs) u();",
     "  dispose() {\n    this._pendingHits?.clear();\n    for (const u of this.unsubs) u();",
     'clear pending on dispose'
-  );
-  patch(
-    "  _ownership() { /* reserved: explicit transfers */ }",
-    "  _ownership() { this._pendingHits?.clear(); }",
-    'clear pending on handoff'
   );
   patch(
     "  bind(match) {\n    this.match = match;",
@@ -108,7 +103,7 @@ function adaptIssue427Net(code) {
     if (!atk.alive) return;
     this._pendingHits.delete(h);
     if (d.d === 0 && d.kld === 0) return;
-    emit('combat:confirmed', { attacker: atk, victim: v, damage: d.d, killed: d.kld === 1, weaponId: pending.w, victimLife: pending.vl });
+    emit('combat:confirmed', { attacker: atk, victim: v, damage: d.d, killed: d.kld === 1, weaponId: pending.w, victimLife: pending.vl, helperLife: pending.al });
   }
 
   // ---- host clock / state / result`,
@@ -137,8 +132,9 @@ function adaptIssue427Flow(code) {
     `  on('damage', ({ victim, attacker, amount, source }) => {
     if (!attacker || attacker === victim || source === 'ink' || victim.team === attacker.team) return;
     const vl = victim?.netLife ?? 0;
+    const hl = attacker?.netLife ?? 0;
     const map = credits.get(victim) || new Map();
-    map.set(attacker, { time: G.time, victimLife: vl });
+    map.set(attacker, { time: G.time, victimLife: vl, helperLife: hl });
     credits.set(victim, map);
     if (!attacker.remote) award(attacker, 'damage', amount);
   });
@@ -150,7 +146,8 @@ function adaptIssue427Flow(code) {
     for (const [helper, cred] of (victim && credits.get(victim)) || []) {
       const cTime = typeof cred === 'number' ? cred : cred.time;
       const cLife = typeof cred === 'object' && cred.victimLife !== undefined ? cred.victimLife : vl;
-      if (helper !== attacker && cLife === vl && G.time - cTime <= cfg.assistWindow && !helper.remote && helper.alive) {
+      const hLife = typeof cred === 'object' && cred.helperLife !== undefined ? cred.helperLife : (helper.netLife ?? 0);
+      if (helper !== attacker && cLife === vl && (helper.netLife ?? 0) === hLife && G.time - cTime <= cfg.assistWindow && !helper.remote && helper.alive) {
         award(helper, 'assist', 1);
         term.assisted.add(helper);
       }
@@ -165,27 +162,29 @@ function adaptIssue427Flow(code) {
     for (const [helper, cred] of credits.get(victim) || []) {
       const cTime = typeof cred === 'number' ? cred : cred.time;
       const cLife = typeof cred === 'object' && cred.victimLife !== undefined ? cred.victimLife : vl;
-      if (helper !== attacker && cLife === vl && G.time - cTime <= cfg.assistWindow && !helper.remote && helper.alive && !term.assisted.has(helper)) {
+      const hLife = typeof cred === 'object' && cred.helperLife !== undefined ? cred.helperLife : (helper.netLife ?? 0);
+      if (helper !== attacker && cLife === vl && (helper.netLife ?? 0) === hLife && G.time - cTime <= cfg.assistWindow && !helper.remote && helper.alive && !term.assisted.has(helper)) {
         award(helper, 'assist', 1);
         term.assisted.add(helper);
       }
     }
     credits.delete(victim);
   });
-  on('combat:confirmed', ({ attacker, victim, damage, killed, victimLife }) => {
+  on('combat:confirmed', ({ attacker, victim, damage, killed, victimLife, helperLife }) => {
     if (!attacker || attacker.remote || attacker === victim || attacker.team === victim?.team) return;
     const vl = victimLife ?? victim?.netLife ?? 0;
+    const hl = helperLife ?? attacker?.netLife ?? 0;
     if (damage > 0) {
       award(attacker, 'damage', damage);
       const term = victim ? terminals.get(victim) : null;
       if (term && term.victimLife === vl && !killed && attacker !== term.killer && !term.assisted.has(attacker)) {
-        if (Math.abs(G.time - term.time) <= cfg.assistWindow && attacker.alive) {
+        if (Math.abs(G.time - term.time) <= cfg.assistWindow && attacker.alive && (attacker.netLife ?? 0) === hl) {
           award(attacker, 'assist', 1);
           term.assisted.add(attacker);
         }
       } else if (!killed && victim) {
         const map = credits.get(victim) || new Map();
-        map.set(attacker, { time: G.time, victimLife: vl });
+        map.set(attacker, { time: G.time, victimLife: vl, helperLife: hl });
         credits.set(victim, map);
       }
     }
@@ -197,7 +196,8 @@ function adaptIssue427Flow(code) {
       for (const [helper, cred] of (victim && credits.get(victim)) || []) {
         const cTime = typeof cred === 'number' ? cred : cred.time;
         const cLife = typeof cred === 'object' && cred.victimLife !== undefined ? cred.victimLife : vl;
-        if (helper !== attacker && cLife === vl && G.time - cTime <= cfg.assistWindow && !helper.remote && helper.alive && !term.assisted.has(helper)) {
+        const hLife = typeof cred === 'object' && cred.helperLife !== undefined ? cred.helperLife : (helper.netLife ?? 0);
+        if (helper !== attacker && cLife === vl && (helper.netLife ?? 0) === hLife && G.time - cTime <= cfg.assistWindow && !helper.remote && helper.alive && !term.assisted.has(helper)) {
           award(helper, 'assist', 1);
           term.assisted.add(helper);
         }
