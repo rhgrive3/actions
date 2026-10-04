@@ -98,7 +98,9 @@ test('CI prepares the short persistent browser cache for validator, browser and 
 
 
 test('historical gameplay equality is scoped to the runtime workstream and does not block other gameplay PRs',()=>{
- assert(workflow.includes("inputs.runtime_performance == true || (github.event_name == 'pull_request' && github.head_ref == 'inkwave/runtime-performance-ui')"));
+ assert(workflow.includes("inputs.runtime_performance == true"));
+ assert(workflow.includes("github.head_ref == 'inkwave/runtime-performance-ui'"));
+ assert(workflow.includes("github.head_ref == 'inkwave/integration-final-61-184-183'"));
  for(const name of ['Profile runtime at immutable baseline','Profile candidate runtime and compare repeated evidence'])assert(workflow.includes("name: "+name+"\n        if: matrix.suite == 'active' && env.RUNTIME_PERFORMANCE == 'true'"));
  assert(workflow.includes("if suite=='active' and runtime_performance:\n            checks.extend(['runtime-before/runtime-result.json','runtime-after/runtime-result.json','runtime-comparison.json'])"));
  assert(workflow.includes("'runtimePerformance':runtime_performance"));
