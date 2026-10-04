@@ -34,12 +34,7 @@ export function adaptTouchEdges(rel, code) {
       '    if (intent.jumpPressed !== undefined) intent.jumpPressed = false;',
       'consume physical jump edge once');
   } else if (rel === 'src/game/weapons.js') {
-    code = replaceOnce(code,
-      'if (d.t >= d.dur)',
-      '// Accumulated fixed steps can land one rounding unit below the duration.\n' +
-      '      if (d.t + Number.EPSILON * Math.max(1, d.dur) >= d.dur)',
-      'complete dodge at its fixed-step duration boundary');
-    code = replaceOnce(code,
+    // Dodge completion/recovery is owned by Movement Physics after admission.\n    code = replaceOnce(code,
       "a.form === 'squid' || this.aimingSub || !move",
       "a.form === 'squid' || this.aimingSub || a.intent.sub || !move",
       'current sub intent owns admission before runner update');
