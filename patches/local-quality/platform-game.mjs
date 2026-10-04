@@ -22,7 +22,19 @@ export function installPlatformGame(Game, G, env = globalThis) {
     game.timer?.disconnect?.();
     game.menus?.setPlatformDriven?.(true);
     if (game.input?.mobile) game.input.mobile._platformCanRun = () => G.mode === 'match' && !!game.match && !game.match.paused && !game.menus?.current;
-    const clear = () => rebasePlatformGame(game);
+    const clear = (reason) => {
+      // A long foreground frame is a timing discontinuity, not a lifecycle
+      // transition. Drop queued simulation time without discarding held/edge
+      // input; only real suspend/resume/blur/screen boundaries clear input.
+      if (reason === 'timer-gap') {
+        game.timer?.update?.(); game.s3Clock?.reset?.();
+        game._frameCapAcc = game._frameCapElapsed = 0;
+        game.fpsAcc = game.fpsN = 0;
+        game._stickT = 0;
+        return;
+      }
+      rebasePlatformGame(game);
+    };
     r.off = owner.subscribe({
       suspend: clear,
       prepareResume() { clear(); game.R?.resize?.(); },
