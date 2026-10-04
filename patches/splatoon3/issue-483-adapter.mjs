@@ -1,25 +1,26 @@
 // Issue #483 — bounded hair-geometry ownership (narrow adapter, build-only).
-// Production build path: this transform is applied to `src/game/character.js` by the site
-// builder alongside `adaptSource` — parent integration adds the one wiring line in
-// patches/splatoon3/adapter.mjs (`code = adaptIssue483Character(rel, code)` inside the
-// existing `if (rel === 'src/game/character.js')` branch); the focused tests below apply
-// `adaptIssue483Character` directly after `adaptSource` to mirror that build order. Only
-// exact-anchor edits:
-//  - import the narrow runtime helper + HEAD_C (no shared dispatcher/profile edits),
+// Production build path: these transforms are applied by the site builder alongside `adaptSource`.
+// The build composition owns the wire point — parent adds ONE line, `code = adaptIssue483(rel, code)`,
+// in scripts/build-inkwave.mjs (`adaptBuildSource`) and scripts/check-inkwave-patches.mjs, immediately
+// after `adaptSource(rel, code)` and before the touch-layout / reliability / quality adapters. It is
+// deliberately NOT placed inside patches/splatoon3/adapter.mjs: the existing `src/game/character.js`
+// branch of adaptSource early-returns, so a wire after that branch would never run, and adaptSource
+// itself must stay the untouched shared dispatcher. The focused tests below apply
+// `adaptIssue483(rel, ...)` directly after `adaptSource` to mirror that build order. Exact anchors only:
+//  character.js —
+//  - import the narrow runtime helper + owned native builder (no shared dispatcher/profile edits),
 //  - resolve rig meta/rest from the shared game-LOD entry (never a hero build; bone rest
 //    positions are lod-independent), skeleton inverses from that same rest,
 //  - ref-count rendered tier geometries with per-Character key dedup and release them on
 //    dispose / quality rebuild (exactly one dispose per ownership epoch at zero users;
-//    live Characters keep shared meshes).
+//    live Characters keep shared meshes),
+//  character-geo.js —
+//  - expose the narrow native owned builder `buildOwnedHairStyle(st, lod)` (real hairKey +
+//    buildHair pipeline, zero cache side effects) so ref-counted callers never enter the strong
+//    module `_hair` / `_inv` maps. The legacy public `getHairStyle` contract is untouched for
+//    non-owned callers; nothing shared is flushed or disposed here.
 // Untouched: inkwave-public sources, movement/damage/ink/weapon timing, Practice Range
 // isolation, gyro/special readiness.
-import {
-  acquireHair as acquireHairGeometry,
-  releaseHairKey as releaseHairKeyGeometry,
-  hairKeyFor as hairKeyForGeometry,
-  getAnatomy as getAnatomyEntry,
-  releaseAnatomy as releaseAnatomyEntry,
-} from './runtime/hair-cache.mjs';
 
 export function replaceOnce483(code, before, after, label) {
   const at = code.indexOf(before);
@@ -32,8 +33,14 @@ export function replaceOnce483(code, before, after, label) {
 export const ISSUE_483_REL = 'src/game/character.js';
 export const ISSUE_483_HEADER = `// INKWAVE issue-483: bounded hair-geometry ownership (ref-counted; see patches/splatoon3/runtime/hair-cache.mjs).
 import { acquireHair as acquireHair483, releaseHairKey as releaseHairKey483, hairKeyFor as hairKeyFor483, getAnatomy as getHairAnatomy483, releaseAnatomy as releaseHairAnatomy483 } from '../../patches/splatoon3/runtime/hair-cache.mjs';
-import { HEAD_C as HEAD_C483 } from './character-geo.js';
-const HAIR_NATIVE_483 = () => ({ getHairStyle, hairQuality: () => (G.settings?.quality || 'high'), hairStyleCount: HAIR_STYLES, hatKindCount: 4, browKindCount: 4 });`;
+import { HEAD_C as HEAD_C483, HAT_KINDS as HAT_KINDS483, BROW_KINDS as BROW_KINDS483, buildOwnedHairStyle as buildOwnedHairStyle483 } from './character-geo.js';
+import { hairQuality as hairQuality483 } from './character-hair.js';
+// Owned native builder = buildOwnedHairStyle exposed by adaptIssue483CharacterGeo: same hairKey +
+// buildHair pipeline as getHairStyle, but it never enters the strong native _hair/_inv caches, so the
+// helper owns the geometry end to end and can drop the last CPU reference at zero users.
+// Catalog counts come from the real exports (HAIR_STYLES / HAT_KINDS / BROW_KINDS) — no literals —
+// and quality follows the native hairQuality() so rebound keys match the real detail ladder.
+const HAIR_NATIVE_483 = () => ({ buildOwnedHairStyle: buildOwnedHairStyle483, hairQuality: hairQuality483, hairStyleCount: HAIR_STYLES, hatKindCount: HAT_KINDS483.length, browKindCount: BROW_KINDS483.length });`;
 export const ISSUE_483_RIG_ANCHOR = `  _buildRig() {
     const hair = getHairStyle(this.style);   // keyed on the style object (hair + hat + brows)
     this.hairMeta = hair.meta;
@@ -72,7 +79,7 @@ export function adaptIssue483Character(rel, code) {
     ISSUE_483_TIER_ANCHOR,
     `    const K = getKidShared(tn), H = (() => {
       const held483 = this.hairKeys483 || (this.hairKeys483 = []);
-      const q483 = G.settings?.quality || 'high';
+      const q483 = hairQuality483();
       const key483 = hairKeyFor483(HAIR_NATIVE_483(), this.style, tn, q483);
       for (const r of held483) if (r.key === key483) return r.entry;
       const entry483 = acquireHair483(HAIR_NATIVE_483(), this.style, tn, q483);
@@ -98,6 +105,44 @@ export function adaptIssue483Character(rel, code) {
     'teardown releases every hair key',
   );
   if (!patched.includes('runtime/hair-cache.mjs')) patched = `${ISSUE_483_HEADER}\n${patched}`;
-  void acquireHairGeometry; void releaseHairKeyGeometry; void hairKeyForGeometry; void getAnatomyEntry; void releaseAnatomyEntry;
   return patched;
+}
+
+// ------------------------------------------------------------------------------------------------
+// src/game/character-geo.js — narrow native owned builder (the CPU-retention root fix)
+// ------------------------------------------------------------------------------------------------
+export const ISSUE_483_GEO_REL = 'src/game/character-geo.js';
+// Anchors the closing body of the native caching getter: unique in character-geo.js, backtick-free,
+// and it does not touch the getter's public contract (which stays byte-identical above it).
+export const ISSUE_483_GEO_ANCHOR = `  if (!_hair.has(ks)) _hair.set(ks, buildHair(k.hair, k.hat, k.brows, lod));
+  return _hair.get(ks);
+}`;
+export const ISSUE_483_GEO_APPEND = `
+
+// INKWAVE issue-483: narrow owned builder for ref-counted callers. Same hairKey + buildHair pipeline
+// as getHairStyle, but it never reads or writes the module-level hair cache (_hair) and never
+// populates the inverse cache (_inv), so the caller owns the returned geometry and disposes it at
+// zero users. getHairStyle above keeps its legacy caching contract for non-owned callers; no shared
+// cache is flushed or disposed here (live shared geometry must survive).
+export function buildOwnedHairStyle(st, lod = 'hero') {
+  const k = hairKey(st);
+  return buildHair(k.hair, k.hat, k.brows, lod);
+}`;
+
+export function adaptIssue483CharacterGeo(rel, code) {
+  if (rel !== ISSUE_483_GEO_REL) return code;
+  if (code.includes('export function buildOwnedHairStyle(')) return code;   // already adapted
+  return replaceOnce483(
+    code,
+    ISSUE_483_GEO_ANCHOR,
+    ISSUE_483_GEO_ANCHOR + ISSUE_483_GEO_APPEND,
+    'owned native hair builder',
+  );
+}
+
+/** Single build-composition entry point: parent wires `code = adaptIssue483(rel, code)` after adaptSource. */
+export function adaptIssue483(rel, code) {
+  if (rel === ISSUE_483_REL) return adaptIssue483Character(rel, code);
+  if (rel === ISSUE_483_GEO_REL) return adaptIssue483CharacterGeo(rel, code);
+  return code;
 }

@@ -1,17 +1,20 @@
 // Issue #483 — ref-counted hair-geometry ownership (build-only runtime helper).
-// Unpatched `src/game/character-geo.js` keeps every generated hair mesh forever in
-// module `_hair` (hair x hat x brows x LOD x raw quality) and `Character._buildRig()`
-// built a hero mesh just for meta/rest before the game tier was installed. This helper
-// adds explicit ownership without touching inkwave-public/, profile numbers, shared
-// dispatchers or timing:
-//  - acquire pins a cache slot; release disposes at zero users (exactly one
-//    BufferGeometry.dispose() per ownership epoch, never while a Character holds it),
-//  - the far tier ignores quality in its key (fixed detail ladder), so LOD/quality
-//    variants cannot multiply retained entries,
-//  - anatomy reads reuse/build the game-tier entry (never a hero build),
-//  - entries exist only while referenced: match teardown returns to a zero baseline.
-export const HAIR_CACHE_BUDGET = 96;
-const slots = new Map();   // full cache key -> { entry }
+// Native `src/game/character-geo.js` keeps every generated hair mesh in the strong module-level
+// `_hair` map (appearance x LOD x quality) and its inverse cache `_inv` grows the same way; the
+// legacy `getHairStyle` contract must stay intact for non-owned callers, so this helper never calls
+// it. Instead the build-only source transform `adaptIssue483CharacterGeo` exposes the narrow native
+// owned builder `buildOwnedHairStyle` (real hairKey + buildHair pipeline, zero cache side effects)
+// and Character passes it in through HAIR_NATIVE_483. Consequences:
+//  - the native `_hair` / `_inv` maps never see an owned build, so no CPU-side geometry is retained
+//    by them across looks, quality rebounds or rematches;
+//  - acquire pins a helper slot; release at zero users disposes every BufferGeometry exactly once
+//    AND drops the helper's only strong reference (the owned entry set becomes empty),
+//  - the far tier ignores quality in its key because the far detail ladder is quality-independent
+//    (character-hair.js hairDetail('far') never scales with quality),
+//  - anatomy reads use the game-tier owned entry (never a hero build, never the native cache),
+//  - there is deliberately no nominal budget constant: the real bound is zero unreferenced entries
+//    plus the small owned set held by live Characters — match teardown returns to a zero baseline.
+const slots = new Map();   // full cache key -> { entry } (the owned set: exists only while referenced)
 const users = new Map();   // full cache key -> live reference count
 let stats = { builds: 0, reuses: 0, releases: 0, disposes: 0, tiers: { hero: 0, game: 0, far: 0 } };
 
@@ -25,8 +28,13 @@ export function normQuality(q, lod) {
   const s = String(q || 'high');
   return s === 'low' || s === 'medium' || s === 'high' || s === 'ultra' ? s : 'high';
 }
+/** Catalog sizes must come from the real native exports (HAIR_STYLES / HAT_KINDS / BROW_KINDS). */
 export function countsFrom(native) {
-  return { hair: native.hairStyleCount ?? 8, hats: native.hatKindCount ?? 4, brows: native.browKindCount ?? 4 };
+  const c = native || {};
+  if (!(c.hairStyleCount > 0) || !(c.hatKindCount > 0) || !(c.browKindCount > 0)) {
+    throw new Error('issue-483: native catalog counts required (HAIR_STYLES / HAT_KINDS / BROW_KINDS)');
+  }
+  return { hair: c.hairStyleCount, hats: c.hatKindCount, brows: c.browKindCount };
 }
 export function hairCacheKey(style, lod = 'game', quality = 'high', counts) {
   const tier = normLod(lod);
@@ -46,12 +54,20 @@ function geos(entry) {
   };
   visit(entry?.geo ?? entry); return out;
 }
+/**
+ * Pin one reference on an owned entry. Builds through the NARROW native owned builder
+ * (`buildOwnedHairStyle` from adaptIssue483CharacterGeo) so the native `_hair` / `_inv` caches are
+ * never touched — the legacy caching `getHairStyle` is deliberately rejected here, otherwise every
+ * owned build would stay strongly referenced in the native module map forever (the reported root).
+ */
 export function acquireHair(native, style, lod = 'game', quality = 'high') {
-  if (!native || typeof native.getHairStyle !== 'function') throw new Error('issue-483: native geo API required');
+  if (!native || typeof native.buildOwnedHairStyle !== 'function') {
+    throw new Error('issue-483: native owned builder (buildOwnedHairStyle) required — the caching getHairStyle retains CPU geometry forever');
+  }
   const tier = normLod(lod);
   const key = hairKeyFor(native, style, tier, quality);
   let slot = slots.get(key);
-  if (!slot) { slot = { entry: native.getHairStyle(style, tier) }; slots.set(key, slot); stats.builds += 1; stats.tiers[tier] += 1; }
+  if (!slot) { slot = { entry: native.buildOwnedHairStyle(style, tier) }; slots.set(key, slot); stats.builds += 1; stats.tiers[tier] += 1; }
   else stats.reuses += 1;
   users.set(key, (users.get(key) || 0) + 1);
   return slot.entry;
@@ -88,9 +104,13 @@ export function releaseAnatomy(handle) {
   if (!handle || !handle.key) return false;
   return releaseHairKey(handle.key);
 }
+/**
+ * Real bound = zero unreferenced entries + the small owned set held by live Characters
+ * (`entries` is that owned set; there is no nominal budget to quote).
+ */
 export function hairStats() {
   let live = 0; for (const n of users.values()) live += n;
-  return { entries: slots.size, liveUsers: live, budget: HAIR_CACHE_BUDGET, ...stats, tiers: { ...stats.tiers } };
+  return { entries: slots.size, liveUsers: live, ...stats, tiers: { ...stats.tiers } };
 }
 export function resetHairForTests() {
   slots.clear(); users.clear();
