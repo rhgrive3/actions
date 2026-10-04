@@ -209,3 +209,16 @@ compare 対象の変更点は `patches/splatoon3/profile.json` の `player.respa
 未確認の項目を確定済みとして扱わない。ブラウザ、WebKit、実機での確認と、本家実機の計測は別物であり、この節のいずれの行もそれらを代替しない。
 
 親統合補足: F5 の監査対象は旧候補 063286d3。現候補は 14ce1e6 で最近接点順から解析的なカプセル初回接触順へ修正済み。元の接触半径 0.52 は維持し、本家実機の遮蔽寛容幅を確認したとは扱わない。
+
+## cline-2 のサブネットワーク修理差分（2026-10-04）
+
+対象は `inkwave-public/` に `patches/splatoon3/adapter.mjs` を適用した合成公開版で、`game/` は使用していない。以下の確認はすべて合成モジュール上の focused テストによるもので、ブラウザ実動作でも本家実機比較でもない。「確認状態」は本家一致を意味しない。
+
+| # | 対象 | 本家根拠（Ver.11.3.0） | INKWAVE の実装箇所 | 再現操作 | プレイへの影響 | 確認状態 |
+|---|---|---|---|---|---|---|
+| S1 | リモート爆弾のサブ識別と保持チャージの再現 | 本家はオンライン通信の仕様を公開していない。参照するのは INKWAVE 自身が持つ権威分離の構造である（`paint.js` の ghost は塗らない、`netmatch.js` の `shouldApplyHit` が remote 攻撃者を drop、mute 中は `recSplat` を抑止）。 | `netmatch.js` の `recBomb` に後続2項目（サブ ID、保持チャージ 0..1）を**追記**し、`_play` の `case 'b'` が `e[10]`/`e[11]` を native `ghostBomb` へ渡す。受信側は `kitGhostBombAttach()` が `s3GhostResolved` に**表示専用**の解決を置く | 実 `NetMatch.recBomb` → `_rec` → JSON 往復 → 実 `_play` → 実 native `ghostBomb`。Curling 満继续保持で identity と charge が残り、飛翔時 57.6、接地後 5.76、BurstFrame 3.5 の導火線区間で転がって爆発することを確認 | 他家のサブが汎用 Splat Bomb のまま飛ぶ状態と、Suction が壁に貼り付かない状態を解消した | 合成 NetMatch と native Projectiles で確認（focused 27件）。ブラウザ実動作と本家実機は未検証。旧形式パケット（追記項目なし）は generic ghost のままフォールバックすることを確認 |
+| S2 | ghost が権威を得ないこと | 本家根拠なし。INKWAVE 既存の ghost 非権威設計の維持である。 | 権限解決 `resolvedOf()` は `!b.ghost && b.s3Resolved` のまま維持。表示解決 `presentedOf()` を追加し、gravity / contact / fuse / fx 半径だけが ghost の値を読む。paint 半径、ダメージ帯、ダメージ半径、boss splash、turf、直撃ダメージは `resolvedOf()` を通り、ghost では native 値へフォールバックする | ghost の転がり中に `PaintSystem` へ到達せず、爆発時は native mute が**抬起された状態で** `splat` が呼ばれる（呼ばないのではなく無害化されていることを確認）、`applyHit` は remote 攻撃者を drop、turf は 0 | 観客側のサブがローカルと同じ挙動に見えながら、ローカル盤面、体力、スコア統計を一切汚さない | 実 `PaintSystem.splat` と実 `NetMatch` で確認（CPU グリッド）。**GPU アトラス出力は未検証**（スタブ レンダラ）。本家参照は該当なし |
+| S3 | ghost 生成時の記録と再進入 | 本家根拠なし。`netmatch.js` の `!a.remote` が唯一の防壁であり、`_adopt` で remote が外れた瞬間この防壁は外れる。 | `ghostBomb` の内部 throw を `withGhostBombSpawn()` で囲み、その窓では `kitBombAttach` が権限付与を拒否し、`kitBombPacket` は null を返す（= 記録しない）。`Projectiles.prototype.throwBomb` の hold 消費は remote と ghost 窓の両方でスキップする | remote を外した（採用済み）actor のパケットを実 `_play` で再生し、`nm.out` に `'b'` が増えないこと、attach が拒否されて `s3GhostResolved` だけが付くこと、遠隔 actor の保持チャージ 0.5 が残ることを確認 | 誰かのサブが adoption 後に自分の ghost を記録して相互増幅する経路を閉じた | 合成 NetMatch で確認。旧実装に戻すと 4 件が失敗する。本家参照は該当なし |
+| S4 | パケット境界の検証 | 本家根拠なし。`netmatch.js` の `r2`/`r3` 丸め以一种で peer 由来の値を扱う既存方針に従う。 | `kitBombPacket()` と `kitGhostBombAttach()` は 2 件の許可リスト（`suction` / `curling`）、長さ 16 以下、数値のみ、0..1 クランプで受理し、`''` または null を返して native 経路へ戻す。`SUB` をキーに使うのは許可リストを通過した ID のみ。 | `'__proto__'`、`'constructor'`、`'suctionX'`、64 文字、非文字列、負値、5、NaN、文字列の `'1'` を投入し、いずれも拒否されて generic にフォールバックすることを確認 | 異常な peer がローカルレジストリや NaN を爆弾パラメータとして差し込む余地を塞いだ | focused テストで確認。**Transport への敵対入力は未実施**。検証は packet 境界の関数を直接叩く形である |
+
+未確認の項目を確定済みとして扱わない。ブラウザ、WebKit、実機での確認と、本家実機の計測は別物であり、この節のいずれの行もそれらを代替しない。ブラウザ実動作、GitHub Actions の exact-SHA 描画ゲート、2 台実機のパリティはいずれも未検証である。

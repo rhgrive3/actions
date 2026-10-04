@@ -1,0 +1,37 @@
+(node:310004) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ suction spec keeps 11.3.0 omissions explicitly unknown (2.324293ms)
+✔ curling charge uses SpawnSpeedZMaxCharge, never the gear tiers (2.023799ms)
+✔ the real adapted runtime installs kit subs and keeps one native list (1710.240486ms)
+✔ per-weapon selection picks the equipped kit, and the generic bomb stays reachable (12.900717ms)
+✔ registry registration is additive and never overwrites the native bomb (0.913495ms)
+✔ a real suction bomb is thrown with the selected spec and flies under native gravity (175.122206ms)
+✔ a real suction bomb sticks to a wall, then detonates on its own counted fuse (117.065612ms)
+✔ a real suction bomb adheres to a ceiling as well (80.544141ms)
+✔ a real curling bomb rolls, reflects on a wall after landing, and bursts (85.697567ms)
+✔ the real native PaintSystem accepts the rolling trail centre (23.450832ms)
+✔ a ghost bomb gets no kit authority (73.889736ms)
+✔ native release charges suction ink 70 and rejects a 69 tank (38.518487ms)
+✔ gravity keeps storm at the native 24 and uses spec flight/ground values (61.598611ms)
+✔ a stuck bomb stays fixed on later frames with no physics hit (10.062899ms)
+✔ curling rolling is clamped to the floor surface, not sunk into it (88.300221ms)
+✔ the per-bomb spec is attached before recBomb records identity (22.898686ms)
+✔ rolling Curling contact deals the pinned 20 HP once per calibrated contact interval (21.020442ms)
+✔ the native recBomb packet carries the sub id and the held charge (94.09096ms)
+✔ a native old-format packet with no appended fields replays as a generic ghost (65.149755ms)
+✔ the real _play hands a curling ghost its identity, charge and rolling behaviour (29.102333ms)
+✔ a remote Suction Bomb sticks where the owner stuck it (13.099235ms)
+✔ a ghost carries no paint, damage, turf or record authority (22.379201ms)
+✔ replaying a ghost never records a bomb back onto the wire (93.646803ms)
+✔ the spawn guard refuses an authoritative attach inside the ghost window (71.194279ms)
+✔ packets are validated at the boundary and never reach the registry (1.339703ms)
+✔ two owners never see each other cost, charge or throw speed (103.446406ms)
+✔ the gear-scoped sub cost and throw speed survive the release and the throw (23.026209ms)
+ℹ tests 27
+ℹ suites 0
+ℹ pass 27
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3972.391887

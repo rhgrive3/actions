@@ -13,7 +13,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { adaptSource } from '../adapter.mjs';
-import { KIT_SUBS, SUCTION, CURLING, registerKitSubs, kitSubFor, kitSubRelease, kitBombGravity, curlingChargeFraction, curlingThrowSpeed, curlingBlastParams, NATIVE_STORM_GRAVITY } from '../runtime/kit-subs.mjs';
+import { KIT_SUBS, SUCTION, CURLING, registerKitSubs, kitSubFor, kitSubRelease, kitBombGravity, kitBombRadius, kitBombFxRadius, kitBombPaintRadius, kitBombDamageBands, kitBombDamageMax, kitBombDamageMin, kitBombTrail, kitBombFuseTotal, kitBombPacket, kitGhostBombAttach, ghostBombSpawning, withGhostBombSpawn, curlingChargeFraction, curlingThrowSpeed, curlingBlastParams, NATIVE_STORM_GRAVITY } from '../runtime/kit-subs.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const SRC = path.resolve(process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public'));
@@ -84,6 +84,7 @@ async function production() {
     export * from './inkwave-public/src/game/weapons.js';
     export * from './inkwave-public/src/game/physics.js';
     export * from './inkwave-public/src/world/paint.js';
+    export * from './inkwave-public/src/net/netmatch.js';
     export * as THREE from 'three';
   `, { context, identifier: path.join(ROOT, 'kit-subs-entry.mjs') });
   await entry.link((specifier, from) => {
@@ -99,6 +100,9 @@ async function production() {
   api.installKitSubs = ns.installKitSubs;
   ns.installKitSubs(api, profile);
   cached = api;
+  // NetMatch is not part of the installed composition; take the real class straight
+  // off the module namespace so the packet tests drive the shipped implementation.
+  cached.NetMatch = ns.NetMatch;
   return api;
 }
 
@@ -464,4 +468,350 @@ test('rolling Curling contact deals the pinned 20 HP once per calibrated contact
   projectiles._updateBombs(1/60);assert.equal(hits.length,1,'the pinned 0.6667 interval is not rounded down');
   projectiles._updateBombs(1/60);assert.equal(hits.length,2);assert.equal(hits[1].damage,20);
   api.G.physics.los=()=>false;projectiles._updateBombs(1);assert.equal(hits.length,2,'contact through cover is rejected');
+});
+
+// ---- the real native packet: recBomb -> _rec -> JSON -> _play -> ghostBomb ----
+// These do not re-implement a packer. They drive the ACTUAL NetMatch.prototype
+// recBomb and _play against the ACTUAL adapted netmatch module, through a real
+// JSON round trip (which is what the transport does), into the ACTUAL native
+// Projectiles.ghostBomb.
+
+function makeNet(api) {
+  const session = { myId: 'me', isHost: true, hostId: 'me', _members: new Set(['me', 'peer']), tr: { broadcast() {}, sendTo() {} } };
+  const nm = new api.NetMatch(session, { map: 'test' });
+  api.G.netm = nm;
+  return nm;
+}
+
+function remoteActor(api, team = 1, sub = 'curling') {
+  return {
+    nid: 7, team, remote: true, isLocal: false, alive: true, ink: 100,
+    pos: new api.THREE.Vector3(0, 0, 0), vel: new api.THREE.Vector3(),
+    aimYaw: 0, aimPitch: 0, grounded: true, color: api.G.teamColors[team],
+    weapon: { sub, kind: 'shooter' }, weaponRunner: { s3SubHold: 0.5, s3Sub: null },
+    stats: { turf: 0, splats: 0, deaths: 0, specials: 0 },
+    addTurf(a) { this.turf = (this.turf || 0) + a; }, _nearCamera: () => false,
+  };
+}
+
+// Records a real release on a real NetMatch and returns the events exactly as the
+// wire would carry them.
+function recordBomb(api, nm, weaponSub, hold) {
+  nm.out.length = 0;                        // only this release's events
+  const { actor, runner, projectiles } = releaseWith(api, weaponSub, 100);
+  actor.nid = 3;
+  nm.byNid.set(3, actor);
+  api.G.local = actor;
+  api.G.actors = [actor];
+  for (let i = 0; i < Math.max(1, Math.round(hold * 60)); i++) runner.update(1 / 60, { fire: false, firePressed: false, sub: true, subReleased: false });
+  runner.update(1 / 60, { fire: false, firePressed: false, sub: false, subReleased: true });
+  assert.equal(projectiles.bombs.length, 1, 'the release produced exactly one bomb to record');
+  const events = nm.out.filter(e => e[1] === 'b');
+  assert.equal(events.length, 1, 'the native recBomb recorded one b event');
+  // The owner's own bomb has done its job: leaving it in the list would put a second,
+  // authoritative bomb into every assertion below, and its recorded event would sit in
+  // `nm.out` as if the replay had produced it. Only the copied packets leave here.
+  projectiles.bombs.length = 0;
+  const wire = JSON.parse(JSON.stringify(events));
+  nm.out.length = 0;
+  return wire;
+}
+
+// Feeds recorded events through the real playback entry point.
+function playEvents(api, nm, events, actor) {
+  nm.byNid.set(actor.nid, actor);
+  const peer = nm._peer('peer');
+  peer.init = true;
+  peer.tr = Infinity;
+  for (const e of events) peer.events.push(e);
+  nm._playEvents();
+}
+
+test('the native recBomb packet carries the sub id and the held charge', async () => {
+  const api = await production();
+  ground(api, 'record');
+  const nm = makeNet(api);
+  const suction = recordBomb(api, nm, 'suction', 0);
+  assert.equal(suction[0][10], 'suction', 'the recorded event names the sub');
+  assert.equal(suction[0][11], 0, 'a non-chargeable sub records no charge');
+  const curling = recordBomb(api, nm, 'curling', 1);
+  assert.equal(curling[0][10], 'curling');
+  near(curling[0][11], 1, 'a full hold crosses the wire');
+  const tap = recordBomb(api, nm, 'curling', 0.2);
+  assert.ok(tap[0][11] > 0 && tap[0][11] < 1, 'a partial hold crosses the wire as a fraction');
+  // The native indices are untouched, so an older peer reads the same event.
+  assert.equal(curling[0].length, 12);
+  assert.equal(curling[0][2], 3, 'nid is still index 2');
+});
+
+test('a native old-format packet with no appended fields replays as a generic ghost', async () => {
+  const api = await production();
+  ground(api, 'record');
+  const nm = makeNet(api);
+  const actor = remoteActor(api);
+  // Exactly what a pre-patch client sends: the native ten fields and nothing else.
+  const legacy = [0, 'b', actor.nid, 'bomb', 0, 1, 0, 0, 0, 0];
+  playEvents(api, nm, [legacy], actor);
+  const ghost = api.G.projectiles.bombs[api.G.projectiles.bombs.length - 1];
+  assert.ok(ghost, 'the legacy packet still produced the native ghost bomb');
+  assert.equal(ghost.ghost, true);
+  assert.equal(ghost.s3GhostResolved, undefined, 'no kit spec is invented from an old packet');
+  assert.equal(kitBombGravity(api.SUB, ghost), api.SUB.bomb.gravity, 'and it keeps the native gravity');
+});
+
+test('the real _play hands a curling ghost its identity, charge and rolling behaviour', async () => {
+  const api = await production();
+  ground(api, 'record');
+  const nm = makeNet(api);
+  const events = recordBomb(api, nm, 'curling', 1);
+  const actor = remoteActor(api);
+  playEvents(api, nm, events, actor);
+  const ghost = api.G.projectiles.bombs[api.G.projectiles.bombs.length - 1];
+  assert.ok(ghost, 'the native ghostBomb created a record');
+  assert.equal(ghost.ghost, true, 'it is a ghost');
+  assert.equal(ghost.s3GhostResolved.spec.id, 'curling', 'the sub identity survived the packet');
+  near(ghost.s3Charge, 1, 'and the held charge');
+  assert.equal(ghost.s3Resolved, undefined, 'but it holds no authority');
+  assert.equal(ghost.s3Sub, undefined, 'and no authoritative kit identity');
+
+  // Presentation follows the sub: it arcs on FlyGravity, lands on GroundGravity and
+  // bursts on Curling's BurstFrame rather than the generic fuse. The flight is driven
+  // from a height the water guard cannot end early, so every phase is actually run.
+  api.G.physics.segment = (a, b, out) => { out.hit = false; return out; };
+  const g0 = kitBombGravity(api.SUB, ghost);
+  assert.equal(g0, CURLING.flyGravity, 'a ghost in flight uses the kit FlyGravity');
+  ghost.pos.set(0, 40, 0); ghost.vel.set(6, 0, 0);
+  const y0 = ghost.pos.y;
+  tick(api, api.G.projectiles, 0.5);
+  assert.ok(ghost.pos.y < y0, 'the ghost falls under the kit gravity, not the native 57.6 guess');
+  assert.equal(ghost.s3Mode, 'flight', 'and is still in free flight');
+  api.G.physics.segment = (a, b, out) => { out.hit = true; out.point = { x: b.x, y: 0, z: b.z }; out.normal = { x: 0, y: 1, z: 0 }; return out; };
+  ghost.pos.set(0, 0.05, 0);
+  tick(api, api.G.projectiles, 1 / 60);
+  assert.equal(ghost.s3Mode, 'rolling', 'a remote Curling Bomb rolls instead of bouncing');
+  assert.equal(kitBombGravity(api.SUB, ghost), CURLING.groundGravity, 'and rolls on GroundGravity');
+  assert.ok(ghost.fuse > 0 && ghost.fuse <= CURLING.burstFrame, 'it is armed on the Curling burst window');
+  assert.equal(kitBombFuseTotal(api.SUB, ghost), CURLING.burstFrame, 'and its beep curve uses that window');
+});
+
+test('a remote Suction Bomb sticks where the owner stuck it', async () => {
+  const api = await production();
+  ground(api, 'record');
+  const nm = makeNet(api);
+  const events = recordBomb(api, nm, 'suction', 0);
+  const actor = remoteActor(api, 1, 'suction');
+  playEvents(api, nm, events, actor);
+  const ghost = api.G.projectiles.bombs[api.G.projectiles.bombs.length - 1];
+  assert.equal(ghost.s3GhostResolved.spec.id, 'suction');
+  api.G.physics.segment = (a, b, out) => { out.hit = true; out.point = { x: 1, y: b.y, z: 0 }; out.normal = { x: 1, y: 0, z: 0 }; return out; };
+  tick(api, api.G.projectiles, 1 / 60);
+  assert.equal(ghost.s3Mode, 'stuck', 'the ghost adheres to the wall instead of bouncing off it');
+  assert.deepEqual([ghost.vel.x, ghost.vel.y, ghost.vel.z], [0, 0, 0]);
+  assert.equal(kitBombGravity(api.SUB, ghost), 0, 'a stuck ghost does not drift');
+  assert.ok(ghost.fuse > 0, 'and it is armed on the sub fuse');
+});
+
+test('a ghost carries no paint, damage, turf or record authority', async () => {
+  const api = await production();
+  // NATIVE paint mode here, not the record stub. The mute guard that keeps a ghost
+  // from painting lives inside the real PaintSystem.splat, so a stub that replaces
+  // that method would be asserting against a fake of the thing under test. The real
+  // method returns before any atlas work when muted, which is the property to prove.
+  ground(api);
+  const paintCalls = [];
+  const realSplat = api.PaintSystem.prototype.splat;
+  api.G.paint.splat = function (centre, radius, team, opts) {
+    paintCalls.push({ radius, mute: api.G.netm.mute });
+    return realSplat.call(this, centre, radius, team, opts);
+  };
+  const nm = makeNet(api);
+  const events = recordBomb(api, nm, 'curling', 1);
+  const actor = remoteActor(api);
+  playEvents(api, nm, events, actor);
+  const ghost = api.G.projectiles.bombs[api.G.projectiles.bombs.length - 1];
+  const splatsBefore = paintCalls.length;
+
+  // Authority selectors all fall back to the native values for a ghost.
+  assert.equal(kitBombRadius(api.SUB, ghost, 7), 7, 'damage radius is the native one');
+  assert.equal(kitBombPaintRadius(api.SUB, ghost, 5), 5, 'paint radius is the native one');
+  assert.deepEqual(kitBombDamageBands(api.SUB, ghost, 'native'), 'native');
+  assert.equal(kitBombDamageMax(api.SUB, ghost, 180), 180);
+  assert.equal(kitBombDamageMin(api.SUB, ghost, 30), 30);
+  // Presentation is the one place the kit is allowed to show through.
+  assert.equal(kitBombFxRadius(api.SUB, ghost, 7), CURLING.maxCharge.radius, 'the visual burst is the kit size');
+
+  // Rolling: the trail must not paint or credit turf.
+  api.G.physics.segment = (a, b, out) => { out.hit = true; out.point = { x: b.x, y: 0, z: b.z }; out.normal = { x: 0, y: 1, z: 0 }; return out; };
+  tick(api, api.G.projectiles, 1 / 60);
+  assert.equal(kitBombTrail(api.SUB, ghost, api.G.paint, api.G.projectiles), 0, 'a ghost paints no trail');
+  assert.equal(paintCalls.length, splatsBefore, 'nothing reached the PaintSystem');
+  assert.equal(actor.turf, undefined, 'and no turf was credited');
+
+  // The explosion runs natively, muted, and still hurts nobody. The mute guard is
+  // raised and lowered inside one `_updateBombs` call, so it is sampled from inside
+  // the real blast rather than after the frame. `applyHit` is NOT stubbed: its own
+  // routing (`shouldApplyHit` -> 'drop' for a remote attacker) is part of what has to
+  // hold, so the observation is made below it, on the victim's own damage.
+  const hurt = [];
+  api.G.actors = [{ ...actor, remote: true, team: 1 }, { team: 0, alive: true, pos: ghost.pos.clone(),
+    damage(dmg, from, cause) { hurt.push({ dmg, from, cause }); return false; } }];
+  api.G.physics.los = () => true;
+  const muteSeen = [];
+  const explode = api.G.projectiles._explodeBomb.bind(api.G.projectiles);
+  api.G.projectiles._explodeBomb = (b) => { muteSeen.push(nm.mute); return explode(b); };
+  for (let i = 0; i < 400 && api.G.projectiles.bombs.length; i++) { api.G.time += 1 / 60; api.G.projectiles._updateBombs(1 / 60); }
+  assert.equal(api.G.projectiles.bombs.length, 0, 'the ghost detonated and left the native list');
+  assert.equal(muteSeen.length, 1, 'the native blast ran once');
+  assert.ok(muteSeen[0] > 0, 'the native ghost mute guard was raised during the blast');
+  assert.equal(hurt.length, 0, 'a replayed bomb never damages anybody');
+  // The blast DOES reach PaintSystem.splat, and the native mute guard is what turns
+  // each of those calls into a no-op. Proving the call is made muted, rather than
+  // never made, is the difference between a real guard and an absent one.
+  const blastCalls = paintCalls.slice(splatsBefore);
+  assert.ok(blastCalls.length > 0, 'the ghost blast asked the PaintSystem to splat');
+  assert.ok(blastCalls.every(c => c.mute > 0), 'and every one of those calls was muted');
+  assert.equal(nm.out.filter(e => e[1] === 'b').length, 0, 'and no bomb was recorded back out');
+  assert.ok(nm.out.filter(e => e[1] === 's').length === 0, 'and no paint was recorded back out');
+});
+
+test('replaying a ghost never records a bomb back onto the wire', async () => {
+  const api = await production();
+  ground(api, 'record');
+  const nm = makeNet(api);
+  const events = recordBomb(api, nm, 'curling', 1);
+  nm.out.length = 0;
+  // The remote flag is the only thing that used to stop the native throwBomb from
+  // calling recBomb during a ghost replay. Adopted actors lose it.
+  const actor = remoteActor(api);
+  actor.remote = false;
+  playEvents(api, nm, events, actor);
+  assert.equal(nm.out.filter(e => e[1] === 'b').length, 0, 'no b event was recorded while replaying one');
+  // The refusal is the spawn window itself, not a one-shot flag: proven here rather
+  // than inferred from the replay above, where the window has already closed.
+  let inside = null;
+  withGhostBombSpawn(() => { inside = ghostBombSpawning(); });
+  assert.equal(inside, true, 'the window opens around the throw and closes after it');
+  assert.equal(ghostBombSpawning(), false, 'and it is released again afterwards');
+});
+
+test('the spawn guard refuses an authoritative attach inside the ghost window', async () => {
+  const api = await production();
+  ground(api, 'record');
+  const nm = makeNet(api);
+  const events = recordBomb(api, nm, 'suction', 0);
+  const actor = remoteActor(api, 1, 'suction');
+  actor.remote = false;                    // an adopted peer: the native guard is open
+  playEvents(api, nm, events, actor);
+  const ghost = api.G.projectiles.bombs[api.G.projectiles.bombs.length - 1];
+  assert.ok(ghost, 'the ghost exists');
+  assert.equal(ghost.s3Resolved, undefined, 'the attach hook refused it inside the spawn window');
+  assert.equal(ghost.s3Sub, undefined);
+  assert.equal(ghost.s3GhostResolved.spec.id, 'suction', 'so only the presentation spec was attached');
+  // The remote actor's own held charge is not ours to consume.
+  assert.equal(actor.weaponRunner.s3SubHold, 0.5, "a ghost replay does not clear another owner's hold");
+});
+
+test('packets are validated at the boundary and never reach the registry', async () => {
+  const api = await production();
+  // A hand-built record standing in for whatever a peer might send.
+  const probe = (id, charge) => kitBombPacket({
+    kind: 'bomb', owner: { nid: 1, remote: false }, pos: { x: 0, y: 0, z: 0 }, vel: { x: 0, y: 0, z: 0 },
+    s3Sub: id === undefined ? undefined : { id }, s3Charge: charge,
+  });
+  assert.deepEqual(probe('suction'), ['suction', 0], 'a known id passes');
+  assert.deepEqual(probe('curling'), ['curling', 0]);
+  assert.deepEqual(probe('bomb'), ['', 0], 'the generic sub carries no kit identity');
+  assert.deepEqual(probe('__proto__'), ['', 0], 'a prototype key is not a sub');
+  assert.deepEqual(probe('constructor'), ['', 0]);
+  assert.deepEqual(probe('suctionX'), ['', 0], 'a near-miss id is rejected');
+  assert.deepEqual(probe('s'.repeat(64)), ['', 0], 'an over-long id is rejected');
+  assert.deepEqual(probe(undefined), ['', 0], 'no id is rejected');
+  assert.deepEqual(probe(7), ['', 0], 'a non-string id is rejected');
+  assert.deepEqual(probe('curling', 5), ['curling', 1], 'the charge is clamped, not trusted');
+  assert.deepEqual(probe('curling', -3), ['curling', 0]);
+  assert.deepEqual(probe('curling', NaN), ['curling', 0]);
+  assert.deepEqual(probe('curling', '1'), ['curling', 0], 'a stringly-typed charge is rejected');
+
+  // And the replay side validates again, independently of the recorder.
+  const make = () => ({ kind: 'bomb', ghost: true });
+  assert.equal(kitGhostBombAttach(api.SUB, null, make(), '__proto__', 1), null);
+  assert.equal(kitGhostBombAttach(api.SUB, null, make(), 'nope', 1), null);
+  assert.equal(kitGhostBombAttach(api.SUB, null, make(), undefined, 1), null);
+  const ok = kitGhostBombAttach(api.SUB, null, make(), 'curling', 9);
+  assert.ok(ok, 'a valid one attaches');
+  assert.equal(ok.s3Charge, 1, 'with the charge clamped on arrival too');
+  assert.equal(kitGhostBombAttach(api.SUB, null, { kind: 'bomb' }, 'curling', 1), null, 'a non-ghost is refused');
+  assert.equal(kitGhostBombAttach(api.SUB, null, { kind: 'storm', ghost: true }, 'curling', 1), null, 'a storm is not a sub bomb');
+});
+
+test('two owners never see each other cost, charge or throw speed', async () => {
+  const api = await production();
+  ground(api, 'record');
+  const a = releaseWith(api, 'curling', 100);
+  const b = releaseWith(api, 'suction', 100);
+  // One real projectile list for both owners, as a single match has.
+  const projectiles = makeScene(api);
+  api.G.projectiles = projectiles;
+  api.G.actors = [a.actor, b.actor];
+  a.runner.s3SubHold = 1; b.runner.s3SubHold = 0;
+  const subA = kitSubRelease(api.SUB, a.runner, 0, { subReleased: true });
+  const subB = kitSubRelease(api.SUB, b.runner, 0, { subReleased: true });
+  near(subA.__charge, 1, 'A holds a full Curling charge');
+  near(subB.__charge, 0, "B's Suction is not chargeable");
+  assert.equal(subA.id, 'curling');
+  assert.equal(subB.id, 'suction');
+
+  // Throw them one after the other and check neither bomb picked up the other's
+  // numbers, even though both releases are cached on their own runners.
+  const throwNow = (owner, release) => {
+    owner.actor.weaponRunner.s3Release = release;
+    projectiles.throwBomb(owner.actor);
+    return projectiles.bombs[projectiles.bombs.length - 1];
+  };
+  const bombA = throwNow(a, subA);
+  const bombB = throwNow(b, subB);
+  assert.equal(bombA.s3Sub.id, 'curling');
+  near(bombA.s3Charge, 1, "A's bomb kept its charge");
+  assert.equal(bombB.s3Sub.id, 'suction');
+  assert.equal(bombB.s3Charge, 0, "B's bomb did not inherit A's charge");
+  assert.notEqual(bombA.s3Resolved.inkCost, bombB.s3Resolved.inkCost, 'the two subs cost differently');
+
+  // A release cached for one sub cannot steer the other owner's bomb: the charge is
+  // only honoured while the cached release still describes the sub being thrown.
+  const stale = { ...subA };
+  a.actor.weapon.sub = 'suction';
+  a.actor.weaponRunner.s3Release = stale;
+  const switched = throwNow(a, stale);
+  assert.equal(switched.s3Sub.id, 'suction');
+  assert.equal(switched.s3Charge, 0, 'a Curling release cannot donate its charge to a Suction throw');
+});
+
+test('the gear-scoped sub cost and throw speed survive the release and the throw', async () => {
+  const api = await production();
+  ground(api, 'record');
+  // installGear rewrites the live registry for the duration of one update; the
+  // release and the bomb must both read those scaled numbers, and the registry
+  // must be back to its pristine state afterwards.
+  const { actor, runner } = releaseWith(api, 'curling', 100);
+  const sub = api.SUB.curling;
+  const before = { inkCost: sub.inkCost, throwSpeed: sub.throwSpeed, throwSpeedMaxCharge: sub.throwSpeedMaxCharge };
+  runner.s3SubHold = 1;
+  const release = kitSubRelease(api.SUB, runner, 0, { subReleased: true });
+  assert.equal(sub.inkCost, before.inkCost, 'reading the release does not mutate the registry');
+  assert.equal(release.id, 'curling', 'the release resolved the selected sub');
+  assert.equal(release.inkCost, sub.inkCost ?? sub.inkCostFallback, 'and its cost is the live one');
+  assert.equal(release.throwSpeed, sub.throwSpeed, 'and so is its tap throw speed');
+  assert.equal(release.__inkCostStatus, 'extracted', 'Curling has an extracted ink cost');
+  assert.equal(release.inkCostStatus, sub.inkCostStatus, 'and the live object agrees');
+  const suctionRelease = kitSubRelease(api.SUB, { a: { weapon: { sub: 'suction' } } }, 0, { sub: true });
+  assert.equal(suctionRelease.__inkCostStatus, 'calibrated', "Suction's fallback stays labelled calibrated");
+  // installGear's ink saver writes a scaled value onto the LIVE object for the length
+  // of one update. The label must follow the template, not the mutated copy.
+  const savedCost = sub.inkCost;
+  sub.inkCost = savedCost * 0.5;
+  try {
+    const scaled = kitSubRelease(api.SUB, runner, 0, { subReleased: true });
+    assert.equal(scaled.inkCost, savedCost * 0.5, 'the scaled cost is used');
+    assert.equal(scaled.__inkCostStatus, 'extracted', 'and its provenance label is unchanged');
+  } finally { sub.inkCost = savedCost; }
 });
