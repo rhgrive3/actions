@@ -46,7 +46,7 @@ export function installWeapons(context, profile) {
   const { WeaponRunner, Projectiles, G, THREE, Physics, Hit, PLAYER } = api;
   const newProjectile = Projectiles.prototype._new, pushProjectile = Projectiles.prototype._push;
   Projectiles.prototype._new = function (...args) {
-    const p = newProjectile.apply(this, args); p.s3DamageGroup = null; p.s3Weapon = null; p.s3Vertical = false; return p;
+    const p = newProjectile.apply(this, args); p.s3DamageGroup = null; p.s3Weapon = null; p.s3Vertical = false; p.s3SloshPlayerCollision = null; p.fidelityPlayerCollision = null; return p;
   };
   Projectiles.prototype._push = function (p) {
     p.s3Weapon = p.owner ? { ...p.owner.weapon } : null;
@@ -201,6 +201,6 @@ export function installWeapons(context, profile) {
     if (this.rolling && w.rollBaseSpeed) return this.rollT >= w.rollDashTime ? w.rollSpeed : w.rollBaseSpeed;
     return moveSpeed.call(this);
   };
-  installSlosher(api);
+  installSlosher(api, profile);
   installFinalDamage(api);
 }

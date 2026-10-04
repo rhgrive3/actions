@@ -207,7 +207,10 @@
           "speedAir": 1.6852,
           "speedOffset": -0.16,
           "playerRadius": 0.97,
-          "playerRadiusOffset": -0.12
+          "playerRadiusOffset": -0.12,
+          "playerRadiusInit": 0.097,
+          "playerRadiusInitOffset": -0.012,
+          "playerRadiusFrames": 5
         },
         {
           "count": 5,
@@ -217,7 +220,10 @@
           "speedAir": 1.0,
           "speedOffset": -0.2,
           "playerRadius": 0.57,
-          "playerRadiusOffset": -0.05
+          "playerRadiusOffset": -0.05,
+          "playerRadiusInit": 0.057,
+          "playerRadiusInitOffset": -0.005,
+          "playerRadiusFrames": 5
         }
       ]
     }
@@ -400,7 +406,8 @@
       "HP regen delay/rate and enemy ink grace/contact-damage recovery; post-movement contact and partial-tick grace arithmetic are regression-verified only",
       "superjump airborne vulnerability window/trajectory/landing paint and respawn timing/armor; raw 80F preparation/138F flight are pinned and landing protection is removed per Nintendo 9.3.0 fix",
       "aim response, gyro, animation, terrain/network and physical-device validation; see movement-resources comparison matrix and Switch/iOS/two-peer measurement protocol",
-      "Slosher batch: fall-distance units retain existing inferred raw:WU=1:1; linear interpolation is a provisional monotone model. Unit speed/radius ratios use pinned data over the native base launch solution, not absolute S3 ballistics or collision growth. 10-degree sweep is community sourced. Exact sweep extent, timing endpoint, moving-origin pour behavior, #293 radius growth and #297 inheritance remain unverified."
+      "Slosher batch: fall-distance units retain existing inferred raw:WU=1:1; linear interpolation is a provisional monotone model. Unit speed/radius ratios use pinned data over the native base launch solution, not absolute S3 ballistics or collision growth. 10-degree sweep is community sourced. Exact sweep extent, timing endpoint, moving-origin pour behavior, #297 inheritance remains unverified. #293 player growth now has separate sourced endpoints/frame count; absolute player/world calibration and exact interpolation remain unverified.",
+      "Slosher player radii use raw values times existing inferred distanceScale=1; native PLAYER.radius*.95 compensation is retained. Linear growth from Init to End over5F is an explicit interpolation model, not confirmed Nintendo engine code. Visual/field p.size is unchanged."
     ],
     "movementResourcesEvidence": "reports/inkwave-movement-resources-2026-10-02.md"
   },
@@ -1304,6 +1311,42 @@
       "index": null,
       "factor": 1,
       "rawValue": 7.625
+    },
+    "weapons.slosher.unitGroups.0.playerRadiusInit": {
+      "parameter": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/UnitGroupParam/Unit/1/CollisionParam/InitRadiusForPlayer",
+      "index": null,
+      "factor": 1,
+      "rawValue": 0.097
+    },
+    "weapons.slosher.unitGroups.0.playerRadiusInitOffset": {
+      "parameter": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/UnitGroupParam/Unit/1/CollisionParam/AfterOffsetInitRadiusForPlayer",
+      "index": null,
+      "factor": 1,
+      "rawValue": -0.012
+    },
+    "weapons.slosher.unitGroups.0.playerRadiusFrames": {
+      "parameter": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/UnitGroupParam/Unit/1/CollisionParam/ChangeFrameForPlayer",
+      "index": null,
+      "factor": 1,
+      "rawValue": 5
+    },
+    "weapons.slosher.unitGroups.1.playerRadiusInit": {
+      "parameter": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/UnitGroupParam/Unit/2/CollisionParam/InitRadiusForPlayer",
+      "index": null,
+      "factor": 1,
+      "rawValue": 0.057
+    },
+    "weapons.slosher.unitGroups.1.playerRadiusInitOffset": {
+      "parameter": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/UnitGroupParam/Unit/2/CollisionParam/AfterOffsetInitRadiusForPlayer",
+      "index": null,
+      "factor": 1,
+      "rawValue": -0.005
+    },
+    "weapons.slosher.unitGroups.1.playerRadiusFrames": {
+      "parameter": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/UnitGroupParam/Unit/2/CollisionParam/ChangeFrameForPlayer",
+      "index": null,
+      "factor": 1,
+      "rawValue": 5
     }
   },
   "gearExtra": {

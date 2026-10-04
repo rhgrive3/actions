@@ -1457,6 +1457,54 @@
       "status": "extracted",
       "unit": "raw reference units",
       "notes": "Sourced explicit Slosher unit field. Travel and world scale are ratio-calibrated, not Switch verified."
+    },
+    "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/UnitGroupParam/Unit/1/CollisionParam/InitRadiusForPlayer": {
+      "value": 0.097,
+      "pointer": "/GameParameters/UnitGroupParam/Unit/1/CollisionParam/InitRadiusForPlayer",
+      "sourceId": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Explicit Slosher player-only collision endpoints and5F. Runtime uses existing inferred distanceScale; intermediate interpolation remains a model."
+    },
+    "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/UnitGroupParam/Unit/1/CollisionParam/AfterOffsetInitRadiusForPlayer": {
+      "value": -0.012,
+      "pointer": "/GameParameters/UnitGroupParam/Unit/1/CollisionParam/AfterOffsetInitRadiusForPlayer",
+      "sourceId": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Explicit Slosher player-only collision endpoints and5F. Runtime uses existing inferred distanceScale; intermediate interpolation remains a model."
+    },
+    "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/UnitGroupParam/Unit/1/CollisionParam/ChangeFrameForPlayer": {
+      "value": 5,
+      "pointer": "/GameParameters/UnitGroupParam/Unit/1/CollisionParam/ChangeFrameForPlayer",
+      "sourceId": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Explicit Slosher player-only collision endpoints and5F. Runtime uses existing inferred distanceScale; intermediate interpolation remains a model."
+    },
+    "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/UnitGroupParam/Unit/2/CollisionParam/InitRadiusForPlayer": {
+      "value": 0.057,
+      "pointer": "/GameParameters/UnitGroupParam/Unit/2/CollisionParam/InitRadiusForPlayer",
+      "sourceId": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Explicit Slosher player-only collision endpoints and5F. Runtime uses existing inferred distanceScale; intermediate interpolation remains a model."
+    },
+    "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/UnitGroupParam/Unit/2/CollisionParam/AfterOffsetInitRadiusForPlayer": {
+      "value": -0.005,
+      "pointer": "/GameParameters/UnitGroupParam/Unit/2/CollisionParam/AfterOffsetInitRadiusForPlayer",
+      "sourceId": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Explicit Slosher player-only collision endpoints and5F. Runtime uses existing inferred distanceScale; intermediate interpolation remains a model."
+    },
+    "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/UnitGroupParam/Unit/2/CollisionParam/ChangeFrameForPlayer": {
+      "value": 5,
+      "pointer": "/GameParameters/UnitGroupParam/Unit/2/CollisionParam/ChangeFrameForPlayer",
+      "sourceId": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Explicit Slosher player-only collision endpoints and5F. Runtime uses existing inferred distanceScale; intermediate interpolation remains a model."
     }
   }
 }

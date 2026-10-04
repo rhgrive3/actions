@@ -18,7 +18,13 @@ export function slosherUnits(w){
   }
   return units;
 }
-export function installSlosher({WeaponRunner,Projectiles,G,THREE}){
+export function slosherPlayerCollisionRadius(p){
+ const c=p.s3SloshPlayerCollision;
+ if(!c)return p.size;
+ const t=Math.max(0,Math.min(1,p.age/c.changeTime));
+ return c.initRadius+(c.endRadius-c.initRadius)*t;
+}
+export function installSlosher({WeaponRunner,Projectiles,G,THREE},profile){
  const tag=Symbol.for('inkwave.s3.slosher-units.v1'),wr=WeaponRunner.prototype;
  if(wr[tag])return;Object.defineProperty(wr,tag,{value:true});
  const slosh=wr._slosher,reset=wr.reset;
@@ -55,6 +61,15 @@ export function installSlosher({WeaponRunner,Projectiles,G,THREE}){
    p.vel.set(Math.sin(yaw)*cp*speed,Math.sin(s.base.pitch)*speed+p.grav/120,Math.cos(yaw)*cp*speed);
    p.delay=u.delay;p.damage=u.group===0?s.w.damageHead:s.w.damageTail;p.head=u.group===0;
    p.s3SloshGroup=u.group;p.s3SloshIndex=u.index;
+   const scale=profile.calibration.distanceScale.factor;
+   p.s3SloshPlayerCollision=Object.freeze({
+    initRadius:(g.playerRadiusInit+u.index*g.playerRadiusInitOffset)*scale,
+    endRadius:(g.playerRadius+u.index*g.playerRadiusOffset)*scale,
+    changeTime:g.playerRadiusFrames/60,
+   });
+   // Shared descriptor contract with PR64, whose swept actor chronology reads
+   // this slot. Slosher field/visual size remains separate and unchanged.
+   p.fidelityPlayerCollision=p.s3SloshPlayerCollision;
    p.size=s.base.size*(g.playerRadius+u.index*g.playerRadiusOffset)/root.playerRadius;
   }
   return push.call(this,p);

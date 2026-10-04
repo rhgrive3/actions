@@ -1154,6 +1154,36 @@
       "rawValue": -0.12
     }
   },
+  "weapons.slosher.unitGroups.0.playerRadiusInit": {
+    "value": 0.097,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/UnitGroupParam/Unit/1/CollisionParam/InitRadiusForPlayer",
+      "index": null,
+      "factor": 1,
+      "rawValue": 0.097
+    }
+  },
+  "weapons.slosher.unitGroups.0.playerRadiusInitOffset": {
+    "value": -0.012,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/UnitGroupParam/Unit/1/CollisionParam/AfterOffsetInitRadiusForPlayer",
+      "index": null,
+      "factor": 1,
+      "rawValue": -0.012
+    }
+  },
+  "weapons.slosher.unitGroups.0.playerRadiusFrames": {
+    "value": 5,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/UnitGroupParam/Unit/1/CollisionParam/ChangeFrameForPlayer",
+      "index": null,
+      "factor": 1,
+      "rawValue": 5
+    }
+  },
   "weapons.slosher.unitGroups.1.count": {
     "value": 5,
     "status": "derived from pinned extracted data; physical scale unverified",
@@ -1232,6 +1262,36 @@
       "index": null,
       "factor": 1,
       "rawValue": -0.05
+    }
+  },
+  "weapons.slosher.unitGroups.1.playerRadiusInit": {
+    "value": 0.057,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/UnitGroupParam/Unit/2/CollisionParam/InitRadiusForPlayer",
+      "index": null,
+      "factor": 1,
+      "rawValue": 0.057
+    }
+  },
+  "weapons.slosher.unitGroups.1.playerRadiusInitOffset": {
+    "value": -0.005,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/UnitGroupParam/Unit/2/CollisionParam/AfterOffsetInitRadiusForPlayer",
+      "index": null,
+      "factor": 1,
+      "rawValue": -0.005
+    }
+  },
+  "weapons.slosher.unitGroups.1.playerRadiusFrames": {
+    "value": 5,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/UnitGroupParam/Unit/2/CollisionParam/ChangeFrameForPlayer",
+      "index": null,
+      "factor": 1,
+      "rawValue": 5
     }
   },
   "bomb.fuse": {

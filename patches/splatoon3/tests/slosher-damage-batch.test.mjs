@@ -150,3 +150,35 @@ test('#261: owner handoff and respawn isolate fractional group credit',async()=>
  a.owner='peer-a';ps.applyHit(a,e,.39,'shooter',1);a.owner='host';ps.applyHit(a,e,.39,'shooter',1);near(e.hp,99.4);
  e.reset();e.team=1;e.invuln=0;ps.applyHit(a,e,.39,'shooter',1);near(e.hp,99.7);
 });
+
+test('#293: all9 units snapshot separate player collision endpoints and5F growth without changing field/visual size',async()=>{
+ const {slosherPlayerCollisionRadius}=await import('../runtime/slosher.mjs');
+ const f=await fixture(),{a,ps}=setup(f);ps.fireSlosh(a,a.weapon);const sizes=ps.list.map(p=>p.size);
+ ps.list.forEach((p,i)=>{const g=i<4?0:1,k=i<4?i:i-4,lo=(g ? .057 : .097)-k*(g ? .005 : .012),hi=(g ? .57 : .97)-k*(g ? .05 : .12);
+  assert.ok(Object.isFrozen(p.s3SloshPlayerCollision));assert.equal(p.fidelityPlayerCollision,p.s3SloshPlayerCollision);
+  for(const [frames,t]of [[0,0],[2.5,.5],[5,1],[10,1]]){p.age=frames*DT;near(slosherPlayerCollisionRadius(p),lo+(hi-lo)*t);near(p.size,sizes[i]);}
+ });
+});
+
+test('#293: actual player path misses .50 at spawn but hits .80 after5F; field query retains its old radius',async()=>{
+ for(const [age,x,expected]of [[0,.50,0],[5*DT,.80,1]]){
+  const f=await fixture(),{a,ps}=setup(f),e=f.make();e.team=1;e.pos.set(x,0,5);f.G.actors=[e];ps.fireSlosh(a,a.weapon);const p=ps.list[0];p.pos.set(0,.8,5);p.vel.set(0,0,0);p.age=age;p.trailEvery=0;
+  let hits=0;ps.applyHit=()=>hits++;ps._step(p,0);assert.equal(hits,expected);near(p.size,.2);
+ }
+});
+
+test('#293: launch snapshot survives owner swap and projectile pooling clears it',async()=>{
+ const {slosherPlayerCollisionRadius}=await import('../runtime/slosher.mjs');
+ const f=await fixture(),{a,ps}=setup(f);ps.fireSlosh(a,a.weapon);const p=ps.list[0];a.setWeapon('shooter');p.age=5*DT;near(slosherPlayerCollisionRadius(p),.97);
+ ps.list.length=0;ps.pool.push(p);const reused=ps._new();assert.equal(reused,p);assert.equal(reused.s3SloshPlayerCollision,null);assert.equal(reused.fidelityPlayerCollision,null);reused.size=.15;near(slosherPlayerCollisionRadius(reused),.15);
+});
+
+test('#293: delayed units grow by flight age only with identical30/60/120Hz traces',async()=>{
+ const {slosherPlayerCollisionRadius}=await import('../runtime/slosher.mjs');const results=[];
+ for(const hz of [30,60,120]){
+  const f=await fixture(),{a,ps}=setup(f);ps.fireSlosh(a,a.weapon);const units=ps.list.slice(),clock=new FixedClock(),rows=[];ps._draw=()=>{};
+  for(let i=0;i<hz/2;i++)clock.advance(1/hz,dt=>{ps.update(dt);rows.push(Array.from(units,p=>[p.age,slosherPlayerCollisionRadius(p)]));});results.push(rows);
+  near(rows[4][8][0],0);near(rows[4][8][1],.037);near(rows[16][8][1],.37);
+ }
+ assert.deepEqual(results[0],results[1]);assert.deepEqual(results[1],results[2]);
+});

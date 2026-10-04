@@ -93,6 +93,7 @@ export function adaptSource(rel, code) {
     return code;
   }
   if (rel === 'src/game/weapons.js') {
+    code = replaceOnce(code, 'PLAYER.radius * 0.95 + p.size', 'PLAYER.radius * 0.95 + slosherPlayerCollisionRadius(p)', 'slosher age-dependent player radius');
     code = replaceOnce(code, 'if (p.vol) { if (p.vol.hits.includes(e)) dmg = 0; else p.vol.hits.push(e); }', "if (p.vol && p.type !== 'slosh') { if (p.vol.hits.includes(e)) dmg = 0; else p.vol.hits.push(e); }", 'slosher player max-damage aggregation');
     code = replaceOnce(code, '      if (p.delay > 0) { p.delay -= dt; if (p.delay > 0) continue; }   // poured waves: later globs leave a beat later',
       '      let stepDt = dt;\n      if (p.delay > 0) { const wait = p.delay; p.delay = Math.max(0, p.delay - dt); if (p.delay > 1e-10) continue; if (p.type === \'slosh\') { stepDt = Math.max(0, dt - wait); if (stepDt <= 1e-10) continue; } }', 'slosher release boundary carry');
@@ -115,7 +116,7 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, 'const p = _v.copy(a.pos); p.y += 1.35;', 'const p = _v.copy(a.pos); p.y += 1.35; bombPreviewPosition(a, p);', 'bomb preview origin');
     code = replaceOnce(code, '        vel.y -= 24 * dt;', '        vel.y -= SUB.bomb.gravity * dt;', 'bomb preview gravity');
     code = replaceOnce(code, 'if (b.fuse <= 0) {', 'if (b.fuse <= 1e-10) {', 'bomb fuse frame boundary');
-    return `import { applyProjectileHit, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\n` + code;
+    return `import { slosherPlayerCollisionRadius } from '../../patches/splatoon3/runtime/slosher.mjs';\nimport { applyProjectileHit, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\n` + code;
   }
   if (rel === 'src/game/actor.js') {
     code = replaceOnce(code, '    this.hp -= amount;', "    amount = finalWeaponDamage(this, amount, attacker, source);\n    if (amount <= 0) return false;\n    this.hp -= amount;\n    if (Math.abs(this.hp) < 1e-9) this.hp = 0;", 'final weapon HP quantization');
