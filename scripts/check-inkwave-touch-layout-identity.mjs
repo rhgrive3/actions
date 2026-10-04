@@ -26,6 +26,7 @@ const sourcePath = key => {
   if (key.startsWith('reliability/')) return ['patches/reliability/' + key.slice(12), path.join(repo, 'patches/reliability', key.slice(12))];
   if (key.startsWith('local-quality/')) return ['patches/local-quality/' + key.slice(14), path.join(repo, 'patches/local-quality', key.slice(14))];
   if (key.startsWith('loading-cache/')) return ['patches/loading-cache/' + key.slice(14), path.join(repo, 'patches/loading-cache', key.slice(14))];
+  if (key.startsWith('practice-range/')) return ['patches/practice-range/' + key.slice(15), path.join(repo, 'patches/practice-range', key.slice(15))];
   throw new Error('Unknown input ' + key);
 };
 for (const [key, expected] of Object.entries(identity.files)) {
