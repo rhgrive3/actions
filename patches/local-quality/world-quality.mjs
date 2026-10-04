@@ -3,20 +3,9 @@
 // FX particle pools, and prop geometry) when Quality changes at runtime.
 // Authoritative CPU paint distribution, actor/physics state, and weapon values are strictly preserved.
 
-let THREE = globalThis.THREE;
-if (!THREE) {
-  try {
-    THREE = await import('three');
-  } catch (_) {
-    try {
-      THREE = await import('../../../inkwave-public/vendor/three/build/three.module.js');
-    } catch (_) {
-      try {
-        THREE = await import('../../vendor/three/build/three.module.js');
-      } catch (_) {}
-    }
-  }
-}
+// The native adapter passes its own Three namespace explicitly. Do not probe
+// raw repository paths: a generated site has no sibling inkwave-public tree.
+const THREE = globalThis.THREE;
 
 const QUALITY_PRESETS = {
   low:    { pixelRatio: 0.75, shadowSize: 1024, msaa: 0, bloom: false, ao: false, paintAtlas: 2048, particles: 0.4 },
