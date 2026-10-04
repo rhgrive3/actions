@@ -369,7 +369,7 @@
     {
       "sourceId": "roller",
       "pointer": "/GameParameters/WideSwingUnitGroupParam/DamageParam/Outside/DamageMaxDistance",
-      "value": 2.0,
+      "value": 2,
       "unit": "raw distance",
       "confidence": "high for explicit JSON field",
       "method": "Pinned datamine field transcription",
@@ -441,7 +441,7 @@
     {
       "sourceId": "roller",
       "pointer": "/GameParameters/WideSwingUnitGroupParam/DamageParam/Inside/Degree",
-      "value": 16.0,
+      "value": 16,
       "unit": "degrees",
       "confidence": "high for explicit JSON field",
       "method": "Pinned datamine field transcription",
@@ -477,7 +477,7 @@
     {
       "sourceId": "roller",
       "pointer": "/GameParameters/VerticalSwingUnitGroupParam/Unit/0/SpawnRotateYDegree",
-      "value": 0.0,
+      "value": 0,
       "unit": "degrees",
       "confidence": "high for explicit JSON field",
       "method": "Pinned datamine field transcription",
@@ -504,7 +504,7 @@
     {
       "sourceId": "roller",
       "pointer": "/GameParameters/VerticalSwingUnitGroupParam/Unit/1/SpawnRotateXDegreeBase",
-      "value": 5.0,
+      "value": 5,
       "unit": "degrees",
       "confidence": "high for explicit JSON field",
       "method": "Pinned datamine field transcription",
@@ -513,7 +513,7 @@
     {
       "sourceId": "roller",
       "pointer": "/GameParameters/VerticalSwingUnitGroupParam/Unit/1/SpawnRotateYDegree",
-      "value": 0.0,
+      "value": 0,
       "unit": "degrees",
       "confidence": "high for explicit JSON field",
       "method": "Pinned datamine field transcription",
@@ -558,7 +558,7 @@
     {
       "sourceId": "roller",
       "pointer": "/GameParameters/VerticalSwingUnitGroupParam/Unit/2/SpawnRotateYDegree",
-      "value": 0.0,
+      "value": 0,
       "unit": "degrees",
       "confidence": "high for explicit JSON field",
       "method": "Pinned datamine field transcription",
@@ -578,6 +578,114 @@
       "pointer": "/GameParameters/VerticalSwingUnitGroupParam/Unit/2/AfterOffsetSpawnRotateXDegree",
       "value": -2.5,
       "unit": "degrees",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "roller",
+      "pointer": "/GameParameters/WideSwingUnitGroupParam/Unit/0/UnitParam/CollisionParam/InitRadiusForPlayer",
+      "value": 0.12,
+      "unit": "raw distance",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "roller",
+      "pointer": "/GameParameters/WideSwingUnitGroupParam/Unit/0/UnitParam/CollisionParam/EndRadiusForPlayer",
+      "value": 1.02,
+      "unit": "raw distance",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "roller",
+      "pointer": "/GameParameters/WideSwingUnitGroupParam/Unit/0/UnitParam/CollisionParam/ChangeFrameForPlayer",
+      "value": 4,
+      "unit": "frames",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "roller",
+      "pointer": "/GameParameters/VerticalSwingUnitGroupParam/Unit/0/UnitParam/CollisionParam/InitRadiusForPlayer",
+      "value": 0.116,
+      "unit": "raw distance",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "roller",
+      "pointer": "/GameParameters/VerticalSwingUnitGroupParam/Unit/0/UnitParam/CollisionParam/EndRadiusForPlayer",
+      "value": 0.87,
+      "unit": "raw distance",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "roller",
+      "pointer": "/GameParameters/VerticalSwingUnitGroupParam/Unit/0/UnitParam/CollisionParam/ChangeFrameForPlayer",
+      "value": 4,
+      "unit": "frames",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "roller",
+      "pointer": "/GameParameters/VerticalSwingUnitGroupParam/Unit/1/UnitParam/CollisionParam/InitRadiusForPlayer",
+      "value": 0.116,
+      "unit": "raw distance",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "roller",
+      "pointer": "/GameParameters/VerticalSwingUnitGroupParam/Unit/1/UnitParam/CollisionParam/EndRadiusForPlayer",
+      "value": 0.87,
+      "unit": "raw distance",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "roller",
+      "pointer": "/GameParameters/VerticalSwingUnitGroupParam/Unit/1/UnitParam/CollisionParam/ChangeFrameForPlayer",
+      "value": 4,
+      "unit": "frames",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "roller",
+      "pointer": "/GameParameters/VerticalSwingUnitGroupParam/Unit/2/UnitParam/CollisionParam/InitRadiusForPlayer",
+      "value": 0.116,
+      "unit": "raw distance",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "roller",
+      "pointer": "/GameParameters/VerticalSwingUnitGroupParam/Unit/2/UnitParam/CollisionParam/EndRadiusForPlayer",
+      "value": 0.82,
+      "unit": "raw distance",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "roller",
+      "pointer": "/GameParameters/VerticalSwingUnitGroupParam/Unit/2/UnitParam/CollisionParam/ChangeFrameForPlayer",
+      "value": 4,
+      "unit": "frames",
       "confidence": "high for explicit JSON field",
       "method": "Pinned datamine field transcription",
       "official": false
@@ -650,7 +758,7 @@
     {
       "sourceId": "analyst-defaults",
       "parameter": "SpawnRotateXDegreeBase",
-      "value": 0.0,
+      "value": 0,
       "version": null,
       "confidence": "medium",
       "official": false,
@@ -728,8 +836,8 @@
         "schema": 1,
         "status": "source-guided; Switch parity not certified",
         "brakeDragPerFrame": 0.36,
-        "brakeGravity": 252.0,
-        "brakeToFreeVelocityY": -9.0,
+        "brakeGravity": 252,
+        "brakeToFreeVelocityY": -9,
         "freeDragPerFrame": 0.02,
         "freeGravity": 57.599999999999994,
         "defaultProvenance": "XarrotD/paramtable; not version-pinned 11.3.0 datamine; medium confidence"
@@ -870,14 +978,14 @@
         {
           "count": 2,
           "speed": 98.02799999999999,
-          "speedStep": -12.0,
+          "speedStep": -12,
           "pitchDegrees": 5,
           "pitchStepDegrees": -2.5
         },
         {
           "count": 2,
           "speed": 74.028,
-          "speedStep": -12.0,
+          "speedStep": -12,
           "pitchDegrees": 0,
           "pitchStepDegrees": -2.5
         }
@@ -967,6 +1075,64 @@
       "confidence": "high consistency / source parity unverified",
       "sourceIds": [],
       "officialValue": false
+    },
+    {
+      "parameter": "roller.playerCollisionRadiusGrowth",
+      "currentValue": "fixed p.size=0.15 for player collision",
+      "referenceValue": {
+        "horizontal": {
+          "initRadius": 0.12,
+          "endRadius": 1.02,
+          "changeFrame": 4
+        },
+        "vertical": [
+          {
+            "initRadius": 0.116,
+            "endRadius": 0.87,
+            "changeFrame": 4
+          },
+          {
+            "initRadius": 0.116,
+            "endRadius": 0.87,
+            "changeFrame": 4
+          },
+          {
+            "initRadius": 0.116,
+            "endRadius": 0.82,
+            "changeFrame": 4
+          }
+        ]
+      },
+      "adoptedValue": {
+        "horizontal": {
+          "initRadius": 0.12,
+          "endRadius": 1.02,
+          "changeTime": 0.06666666666666667
+        },
+        "vertical": [
+          {
+            "initRadius": 0.116,
+            "endRadius": 0.87,
+            "changeTime": 0.06666666666666667
+          },
+          {
+            "initRadius": 0.116,
+            "endRadius": 0.87,
+            "changeTime": 0.06666666666666667
+          },
+          {
+            "initRadius": 0.116,
+            "endRadius": 0.82,
+            "changeTime": 0.06666666666666667
+          }
+        ]
+      },
+      "reason": "Connect explicit per-unit player collision growth to the existing swept capsule hit test. This removes deterministic roller hit holes without guessing origin height or field/world collision semantics.",
+      "confidence": "high transcription / medium engine-composition parity",
+      "sourceIds": [
+        "roller"
+      ],
+      "officialValue": false
     }
   ],
   "uncertainties": [
@@ -975,7 +1141,7 @@
     "Charger remains the existing hitscan/beam implementation; raw SpawnSpeedMinCharge=2.4 and FullCharge=4.8 per frame indicate finite travel but the exact native release/collision/painting timing is not reconstructed. No latency parity claim.",
     "Splatling partial velocity interpolation is minimal and not recovered native curve. SpawnSpeedRandomBias/Rate are not wired. Existing cumulative second-charge 72F interpretation and ink-to-charge curve remain provisional.",
     "Shooter/Dualies/Splatling spread uses existing elliptical cone with bloom/first-shot factors, not recovered native bias distribution. Jump and post-dodge spreads measured, not probability parity certified.",
-    "Roller horizontal speed/yaw/position randomness and omitted second horizontal unit, vertical height offsets, collision radius growth, depletion and late damage rejection remain unimplemented or inherited.",
+    "Roller horizontal speed/yaw/position randomness and omitted second horizontal unit, vertical height offsets, field/world collision radius growth, depletion and late damage rejection remain unimplemented or inherited. Player collision radius growth is connected from explicit 11.3.0 fields.",
     "Paint radii, spacing, surface splat morphology and cosmetic splash opacity are inherited; actual scoring footprints are measured. They are not assumed equal to raw WidthHalf/DepthScale.",
     "Slosher travel, timing of poured units and splash26HP remain inherited; raw 11.3.0 unit structure not fully mapped.",
     "Render/GPU visuals, Switch side-by-side footage and live two-device network timing are not measured by the simulation fixture. Mixed old/new revision clients must not be described as bit-identical.",
