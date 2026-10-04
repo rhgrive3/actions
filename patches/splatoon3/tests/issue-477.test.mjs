@@ -44,11 +44,18 @@ import {
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const UPSTREAM = process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
+const ISSUE_484_PATH = '/mnt/workspace/inkwave-batch-c/batches/05/patches/splatoon3/issue-484-adapter.mjs';
+
+let adaptIssue484Source = null;
+if (fs.existsSync(ISSUE_484_PATH)) {
+  const mod = await import(pathToFileURL(ISSUE_484_PATH).href);
+  adaptIssue484Source = mod.adaptIssue484Source || mod.adaptIssue484;
+}
 
 let cachedPatchedFixture = null;
 let cachedUnpatchedFixture = null;
 
-async function buildFixture({ apply477 = true } = {}) {
+async function buildFixture({ apply477 = true, apply484 = false, compositionOrder = '477-then-484' } = {}) {
   const context = vm.createContext({ console, performance, URL });
   const modules = new Map();
 
@@ -65,12 +72,20 @@ async function buildFixture({ apply477 = true } = {}) {
     if (file.startsWith(UPSTREAM + path.sep)) {
       const rel = path.relative(UPSTREAM, file);
       adapted = adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, source)));
-    }
-
-    if (apply477) {
-      const rel = file.startsWith(UPSTREAM + path.sep)
-        ? path.relative(UPSTREAM, file)
-        : path.relative(ROOT, file);
+      if (apply477 && apply484 && adaptIssue484Source) {
+        if (compositionOrder === '477-then-484') {
+          adapted = adaptIssue477Source(rel, adapted);
+          adapted = adaptIssue484Source(rel, adapted);
+        } else {
+          adapted = adaptIssue484Source(rel, adapted);
+          adapted = adaptIssue477Source(rel, adapted);
+        }
+      } else {
+        if (apply477) adapted = adaptIssue477Source(rel, adapted);
+        if (apply484 && adaptIssue484Source) adapted = adaptIssue484Source(rel, adapted);
+      }
+    } else if (apply477) {
+      const rel = path.relative(ROOT, file);
       adapted = adaptIssue477Source(rel, adapted);
     }
 
@@ -90,7 +105,7 @@ async function buildFixture({ apply477 = true } = {}) {
     export { NetMatch } from './src/net/netmatch.js';
     export { CHARACTER_CHANNELS, CHARACTER_TIMERS } from './src/game/character.js';
     export { BONE_INDEX } from './src/game/character-geo.js';
-  `, { context, identifier: path.join(ROOT, apply477 ? 'entry-477-patched.mjs' : 'entry-477-unpatched.mjs') });
+  `, { context, identifier: path.join(ROOT, apply484 ? `entry-477-comp-${compositionOrder}.mjs` : apply477 ? 'entry-477-patched.mjs' : 'entry-477-unpatched.mjs') });
 
   await entry.link((specifier, from) => load(specifier === 'three'
     ? path.join(UPSTREAM, 'vendor/three/build/three.module.js')
@@ -688,6 +703,399 @@ test('Remote presentation parity: actual native NetMatch transport (late-start, 
     netB.dispose?.();
     ownerRig.close();
     remoteRig.close();
+  }
+});
+
+test('Gap A: Playback time advancement on NetMatch (Hermite halfway, dry buffer extrapolation, idempotent same TR, future roll protection)', async () => {
+  const f = await getFixture({ apply477: true });
+  const { NetMatch } = f.api;
+
+  const wireA = [];
+  const sessA = { myId: 'A', hostId: 'A', isHost: true, tr: { broadcast: msg => wireA.push(JSON.parse(JSON.stringify(msg))) } };
+  const sessB = { myId: 'B', hostId: 'A', isHost: false, tr: { broadcast: () => {} } };
+
+  const netA = new NetMatch(sessA, { map: 'reef' });
+  const netB = new NetMatch(sessB, { map: 'reef' });
+
+  const ownerRig = f.createDualiesActor({ name: 'owner-dualies-a' });
+  const remoteRig = f.createDualiesActor({ name: 'remote-dualies-a' });
+  const { a: ownerActor } = ownerRig;
+  const { a: remoteActor, ch: remoteCh } = remoteRig;
+
+  ownerActor.nid = 20; ownerActor.owner = 'A'; ownerActor.isLocal = true; ownerActor.remote = false;
+  remoteActor.nid = 20; remoteActor.owner = 'A'; remoteActor.isLocal = false; remoteActor.remote = true;
+
+  netA.bind({ actors: [ownerActor], boss: null, state: 'playing', time: 180 });
+  netB.bind({ actors: [remoteActor], boss: null, state: 'playing', time: 180 });
+
+  try {
+    // A1: Two buffered snapshots with Hermite halfway playback
+    // Snapshot 0 at t = 100.000: owner in startup, time = 0
+    ownerActor.intent.fire = true;
+    ownerActor.intent.move.set(1, 0, 0);
+    assert.equal(ownerActor.weaponRunner.tryDodge(ownerActor.intent.move), true);
+
+    wireA.length = 0;
+    netA._sendTick();
+    const msg0 = wireA.at(-1);
+    msg0.ts = 100.000;
+    netB.onMessage('A', msg0);
+
+    // Snapshot 1 at t = 100.050: owner 3 ticks (0.050s) into startup
+    for (let i = 0; i < 3; i++) {
+      ownerActor.weaponRunner.update(1 / 60, { fire: true });
+    }
+    wireA.length = 0;
+    netA._sendTick();
+    const msg1 = wireA.at(-1);
+    msg1.ts = 100.050;
+    netB.onMessage('A', msg1);
+
+    const peer = netB.peers.get('A');
+
+    // Halfway between snapshots (tr = 100.025):
+    peer.tr = 100.025;
+    netB._sample(remoteActor, peer.tr, 1 / 60);
+    netB.applyRemote(remoteActor, 1 / 60);
+
+    assert.ok(remoteActor.weaponRunner.dodge, 'Remote dodge active during halfway Hermite interpolation');
+    assert.equal(remoteActor.weaponRunner.dodge.token, 1);
+    // Phase age = 100.025 - 100.000 = 0.025s.
+    // Startup remaining at origT was 4/60s.
+    // At halfway, startup remaining must be exactly (4/60 - 0.025) ≈ 0.04167s (NOT frozen at 4/60!).
+    const expectedStartupHalfway = (4 / 60) - 0.025;
+    assert.ok(
+      Math.abs(remoteActor.weaponRunner.dodge.startup - expectedStartupHalfway) < 1e-4,
+      `Startup clock advanced during Hermite interpolation (got ${remoteActor.weaponRunner.dodge.startup}, expected ${expectedStartupHalfway})`
+    );
+    assert.equal(remoteActor.weaponRunner.dodge.t, 0, 'Movement clock held at 0 while startup active');
+    assert.equal(f.api.dualiesMotionSnapshot(remoteCh)?.phase, 'startup');
+    assert.equal(f.api.dualiesMotionSnapshot(remoteCh)?.tumble, 0);
+
+    // A2: Repeated applyRemote at the SAME playback TR cannot double advance
+    netB.applyRemote(remoteActor, 1 / 60);
+    assert.ok(
+      Math.abs(remoteActor.weaponRunner.dodge.startup - expectedStartupHalfway) < 1e-4,
+      'Repeated applyRemote at same TR does not double-advance startup'
+    );
+    assert.equal(remoteActor.weaponRunner.dodge.t, 0);
+
+    // A3: Dry buffer extrapolation past startup duration into genuine moving roll
+    // Simulate buffer dry: no new packets arrive, peer.tr advances past msg1
+    // At msg1 (ts = 100.050), owner startup remaining was 4/60 - 0.050 = 0.016667s.
+    // Advance peer.tr by 0.040s past msg1 (to 100.090s) -> startup remaining has expired!
+    peer.tr = 100.090;
+    netB._sample(remoteActor, peer.tr, 1 / 60);
+    netB.applyRemote(remoteActor, 1 / 60);
+
+    assert.ok(remoteActor.weaponRunner.dodge, 'Dodge remains active during extrapolation');
+    assert.equal(remoteActor.weaponRunner.dodge.startup, 0, 'Startup has completed in extrapolation');
+    // Movement clock must have advanced by phaseAge (0.040) minus remaining startup (0.016667) = 0.02333s
+    const expectedExtrapT = 0.040 - ((4 / 60) - 0.050);
+    assert.ok(
+      Math.abs(remoteActor.weaponRunner.dodge.t - expectedExtrapT) < 1e-3,
+      `Movement clock advanced into genuine moving roll during extrapolation (got ${remoteActor.weaponRunner.dodge.t})`
+    );
+    assert.equal(f.api.dualiesMotionSnapshot(remoteCh)?.phase, 'roll', 'Transitions to roll phase during extrapolation');
+
+    // Bound test: peer.tr advances 0.3s past msg1 (exceeding 0.18s extrapolation bound)
+    peer.tr = 100.350;
+    netB._sample(remoteActor, peer.tr, 1 / 60);
+    netB.applyRemote(remoteActor, 1 / 60);
+    const maxAllowedT = 0.18 - ((4 / 60) - 0.050);
+    assert.ok(
+      remoteActor.weaponRunner.dodge.t <= maxAllowedT + 1e-3,
+      `Extrapolation phase age is strictly bounded by 0.18s (got ${remoteActor.weaponRunner.dodge.t}, max ${maxAllowedT})`
+    );
+
+    // A4: Next new roll does NOT reveal future token early in Hermite interpolation
+    // Buffer has msgNoRoll at 101.000 (no dodge) and msgNewRoll at 101.050 (new roll token 2)
+    ownerActor.weaponRunner.dodge = null;
+    ownerActor.weaponRunner.lockT = 0;
+    remoteActor.weaponRunner.dodge = null;
+    remoteActor.net.buf.length = 0;
+
+    wireA.length = 0;
+    netA._sendTick();
+    const msgNoRoll = wireA.at(-1);
+    msgNoRoll.ts = 101.000;
+    netB.onMessage('A', msgNoRoll);
+
+    // Owner starts roll 2 at 101.050
+    assert.equal(ownerActor.weaponRunner.tryDodge(ownerActor.intent.move), true);
+    assert.equal(ownerActor.weaponRunner.dodge.token, 2);
+
+    wireA.length = 0;
+    netA._sendTick();
+    const msgNewRoll = wireA.at(-1);
+    msgNewRoll.ts = 101.050;
+    netB.onMessage('A', msgNewRoll);
+
+    // Sample halfway (tr = 101.025): discrete roll state must come from msgNoRoll (earlier snapshot)
+    peer.tr = 101.025;
+    netB._sample(remoteActor, peer.tr, 1 / 60);
+    netB.applyRemote(remoteActor, 1 / 60);
+    assert.equal(remoteActor.weaponRunner.dodge, null, 'Halfway interpolation does NOT reveal future roll token 2 early');
+
+    // When tr reaches 101.050, token 2 is now revealed
+    peer.tr = 101.050;
+    netB._sample(remoteActor, peer.tr, 1 / 60);
+    netB.applyRemote(remoteActor, 1 / 60);
+    assert.ok(remoteActor.weaponRunner.dodge, 'Roll 2 active at snapshot timestamp');
+    assert.equal(remoteActor.weaponRunner.dodge.token, 2, 'Token 2 revealed only once playback clock reaches snapshot');
+  } finally {
+    netA.dispose?.();
+    netB.dispose?.();
+    ownerRig.close();
+    remoteRig.close();
+  }
+});
+
+test('Gap B: Token admission scoped to owner and accepted life epoch (handoff, new life, stale rejection, reset/adopt cleanup, invalid scalar fallback)', async () => {
+  const f = await getFixture({ apply477: true });
+  const { NetMatch } = f.api;
+
+  const wireA = [], wireC = [];
+  const sessA = { myId: 'A', hostId: 'A', isHost: true, tr: { broadcast: msg => wireA.push(JSON.parse(JSON.stringify(msg))) } };
+  const sessB = { myId: 'B', hostId: 'A', isHost: false, tr: { broadcast: () => {} } };
+  const sessC = { myId: 'C', hostId: 'A', isHost: false, tr: { broadcast: msg => wireC.push(JSON.parse(JSON.stringify(msg))) } };
+
+  const netA = new NetMatch(sessA, { map: 'reef' });
+  const netB = new NetMatch(sessB, { map: 'reef' });
+  const netC = new NetMatch(sessC, { map: 'reef' });
+
+  const ownerRigA = f.createDualiesActor({ name: 'owner-dualies-a' });
+  const ownerRigC = f.createDualiesActor({ name: 'owner-dualies-c' });
+  const remoteRig = f.createDualiesActor({ name: 'remote-dualies-b' });
+
+  const { a: actorA } = ownerRigA;
+  const { a: actorC } = ownerRigC;
+  const { a: remoteActor } = remoteRig;
+
+  actorA.nid = 30; actorA.owner = 'A'; actorA.isLocal = true; actorA.remote = false;
+  actorC.nid = 30; actorC.owner = 'C'; actorC.isLocal = true; actorC.remote = false;
+  remoteActor.nid = 30; remoteActor.owner = 'A'; remoteActor.isLocal = false; remoteActor.remote = true;
+
+  netA.bind({ actors: [actorA], boss: null, state: 'playing', time: 180 });
+  netB.bind({ actors: [remoteActor], boss: null, state: 'playing', time: 180 });
+  netC.bind({ actors: [actorC], boss: null, state: 'playing', time: 180 });
+
+  try {
+    let ts = 200.0;
+
+    // B1: Owner A performs rolls up to token 3
+    actorA.weaponRunner._rollToken = 2; // will dodge as token 3
+    actorA.intent.fire = true;
+    actorA.intent.move.set(1, 0, 0);
+    assert.equal(actorA.weaponRunner.tryDodge(actorA.intent.move), true);
+    assert.equal(actorA.weaponRunner.dodge.token, 3);
+
+    wireA.length = 0;
+    netA._sendTick();
+    const msgA3 = wireA.at(-1);
+    msgA3.ts = ts;
+    netB.onMessage('A', msgA3);
+    let peerA = netB.peers.get('A');
+    peerA.tr = ts;
+    netB._sample(remoteActor, peerA.tr, 1 / 60);
+    netB.applyRemote(remoteActor, 1 / 60);
+
+    assert.equal(remoteActor.weaponRunner.dodge.token, 3, 'Remote accepted token 3 from owner A');
+    assert.equal(remoteActor.net.lastRollToken, 3);
+    assert.equal(remoteActor.net.rollOwner, 'A');
+
+    // B2: Ownership handoff to C (host migration / re-assignment)
+    // New owner C starts fresh with token 1.
+    // Scoped admission must accept token 1 from new owner C even though prior owner A had token 3!
+    remoteActor.owner = 'C';
+    remoteActor.net.buf.length = 0;
+    remoteActor.weaponRunner.dodge = null;
+
+    actorC.weaponRunner._rollToken = 0;
+    actorC.intent.fire = true;
+    actorC.intent.move.set(1, 0, 0);
+    assert.equal(actorC.weaponRunner.tryDodge(actorC.intent.move), true);
+    assert.equal(actorC.weaponRunner.dodge.token, 1, 'Owner C initiates roll 1');
+
+    ts += 0.1;
+    wireC.length = 0;
+    netC._sendTick();
+    const msgC1 = wireC.at(-1);
+    msgC1.ts = ts;
+    netB.onMessage('C', msgC1);
+    let peerC = netB.peers.get('C');
+    peerC.tr = ts;
+    netB._sample(remoteActor, peerC.tr, 1 / 60);
+    netB.applyRemote(remoteActor, 1 / 60);
+
+    assert.ok(remoteActor.weaponRunner.dodge, 'Remote accepted roll from new owner C');
+    assert.equal(remoteActor.weaponRunner.dodge.token, 1, 'Token 1 from new owner C admitted despite prior owner token 3');
+    assert.equal(remoteActor.net.lastRollToken, 1);
+    assert.equal(remoteActor.net.rollOwner, 'C');
+
+    // B3: Late packet from old owner A is rejected by existing network admission
+    ts += 0.02;
+    const staleMsgOldOwner = JSON.parse(JSON.stringify(msgA3));
+    staleMsgOldOwner.ts = ts;
+    const bufLenBefore = remoteActor.net.buf.length;
+    netB.onMessage('A', staleMsgOldOwner);
+    assert.equal(remoteActor.net.buf.length, bufLenBefore, 'Packet from old owner A rejected by network admission');
+
+    // B4: Same actor new life epoch
+    // Remote actor is splatted and respawns: life increments to 2
+    ts += 0.1;
+    remoteActor.net.lastRollToken = 2; // reached token 2 in life 1
+    remoteActor.net.rollLife = 1;
+    remoteActor.net.lastLife = 1;
+
+    // Owner C respawns with netLife = 2, roll token 1
+    actorC.reset();
+    actorC.grounded = true;
+    actorC.netLife = 2;
+    actorC.weaponRunner._rollToken = 0;
+    assert.equal(actorC.weaponRunner.tryDodge(actorC.intent.move), true);
+    assert.equal(actorC.weaponRunner.dodge.token, 1);
+
+    wireC.length = 0;
+    netC._sendTick();
+    const msgCNewLife = wireC.at(-1);
+    msgCNewLife.ts = ts;
+    netB.onMessage('C', msgCNewLife);
+    peerC.tr = ts;
+    netB._sample(remoteActor, peerC.tr, 1 / 60);
+    netB.applyRemote(remoteActor, 1 / 60);
+
+    assert.equal(remoteActor.weaponRunner.dodge.token, 1, 'Token 1 admitted in new life epoch 2 despite token 2 in prior life');
+    assert.equal(remoteActor.net.rollLife, 2);
+    assert.equal(remoteActor.net.lastRollToken, 1);
+
+    // B5: Stale packet from old life epoch rejected by combat life admission
+    ts += 0.02;
+    const staleLifeMsg = JSON.parse(JSON.stringify(msgCNewLife));
+    staleLifeMsg.ts = ts;
+    staleLifeMsg.l = { 30: 1 }; // old life 1 < current lastLife 2
+    const bufLenBeforeLife = remoteActor.net.buf.length;
+    netB.onMessage('C', staleLifeMsg);
+    assert.equal(remoteActor.net.buf.length, bufLenBeforeLife, 'Late packet with old life rejected by combat-life admission');
+
+    // B6: Host adoption (_adopt) cleans up roll tracking
+    netB._adopt(remoteActor);
+    assert.equal(remoteActor.net.lastRollToken, undefined, '_adopt cleared lastRollToken');
+    assert.equal(remoteActor.net.rollOwner, undefined, '_adopt cleared rollOwner');
+    assert.equal(remoteActor.net.rollLife, undefined, '_adopt cleared rollLife');
+    assert.equal(remoteActor.weaponRunner.dodge, null, '_adopt cleared dodge');
+
+    // B7: Actor reset() cleans up roll tracking
+    remoteActor.net.lastRollToken = 5;
+    remoteActor.net.rollOwner = 'C';
+    remoteActor.net.rollLife = 2;
+    remoteActor.reset();
+    assert.equal(remoteActor.net.lastRollToken, undefined, 'reset() cleared lastRollToken');
+    assert.equal(remoteActor.net.rollOwner, undefined, 'reset() cleared rollOwner');
+    assert.equal(remoteActor.net.rollLife, undefined, 'reset() cleared rollLife');
+
+    // B8: Invalid scalar data does NOT poison lastRollToken and gracefully falls back
+    remoteActor.remote = true;
+    remoteActor.owner = 'C';
+    remoteActor.net.ready = true;
+    remoteActor.net.buf.length = 0;
+    remoteActor.net.lastRollToken = 0;
+    remoteActor.net.rollOwner = 'C';
+    remoteActor.net.rollLife = 2;
+
+    const invalidMsg = {
+      k: 't', ts: 210.0,
+      a: [[30, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1024, 100, 100, 0, 0, 0, 0, 0, 0, 1, 0]],
+      l: { 30: 2 },
+      rl: { 30: { token: -99, phase: 'invalid_phase', time: -5.0, dur: 0 } },
+    };
+    netB.onMessage('C', invalidMsg);
+    peerC.tr = 210.0;
+    netB._sample(remoteActor, peerC.tr, 1 / 60);
+    assert.doesNotThrow(() => netB.applyRemote(remoteActor, 1 / 60), 'Invalid scalar data does not crash');
+    assert.equal(remoteActor.net.lastRollToken, 0, 'Invalid scalar data did not poison lastRollToken');
+
+    // Subsequent valid packet with token 1 is admitted normally
+    const validMsg = {
+      k: 't', ts: 210.05,
+      a: [[30, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1024, 100, 100, 0, 0, 0, 0, 0, 0, 1, 0]],
+      l: { 30: 2 },
+      rl: { 30: { token: 1, phase: 'startup', time: 0, dur: 0.2 } },
+    };
+    netB.onMessage('C', validMsg);
+    peerC.tr = 210.05;
+    netB._sample(remoteActor, peerC.tr, 1 / 60);
+    netB.applyRemote(remoteActor, 1 / 60);
+    assert.ok(remoteActor.weaponRunner.dodge, 'Valid packet created dodge');
+    assert.equal(remoteActor.weaponRunner.dodge.token, 1, 'Valid packet admitted after invalid packet was dropped');
+    assert.equal(remoteActor.net.lastRollToken, 1);
+  } finally {
+    netA.dispose?.();
+    netB.dispose?.();
+    netC.dispose?.();
+    ownerRigA.close();
+    ownerRigC.close();
+    remoteRig.close();
+  }
+});
+
+test('Gap C: Composition in both orders with PR495 #484 adapter and production reliability pipeline', async () => {
+  for (const order of ['477-then-484', '484-then-477']) {
+    const f = await buildFixture({ apply477: true, apply484: true, compositionOrder: order });
+    const { NetMatch } = f.api;
+
+    const wire = [];
+    const sess = { myId: 'A', hostId: 'A', isHost: true, tr: { broadcast: msg => wire.push(JSON.parse(JSON.stringify(msg))) } };
+    const sessRemote = { myId: 'B', hostId: 'A', isHost: false, tr: { broadcast: () => {} } };
+
+    const netHost = new NetMatch(sess, { map: 'reef' });
+    const netClient = new NetMatch(sessRemote, { map: 'reef' });
+
+    const ownerRig = f.createDualiesActor({ name: `comp-owner-${order}` });
+    const remoteRig = f.createDualiesActor({ name: `comp-remote-${order}` });
+    const { a: ownerActor } = ownerRig;
+    const { a: remoteActor } = remoteRig;
+
+    ownerActor.nid = 40; ownerActor.owner = 'A'; ownerActor.isLocal = true; ownerActor.remote = false;
+    remoteActor.nid = 40; remoteActor.owner = 'A'; remoteActor.isLocal = false; remoteActor.remote = true;
+
+    netHost.bind({ actors: [ownerActor], boss: null, state: 'playing', time: 180 });
+    netClient.bind({ actors: [remoteActor], boss: null, state: 'playing', time: 180 });
+
+    try {
+      // 1. Owner initiates roll and has special charge
+      ownerActor.weapon.specialCost = 180;
+      ownerActor.special = 180;
+      ownerActor.intent.fire = true;
+      ownerActor.intent.move.set(1, 0, 0);
+      assert.equal(ownerActor.weaponRunner.tryDodge(ownerActor.intent.move), true);
+
+      wire.length = 0;
+      netHost._sendTick();
+      const msg = wire.at(-1);
+
+      // Verify composition: both rl (from 477) and sc (from 484) and l (from combat-life) must coexist on msg
+      assert.ok(msg.rl?.[40], `${order}: Tick contains optional named rl roll sidecar`);
+      assert.equal(msg.rl[40].token, 1, `${order}: rl sidecar has token 1`);
+      assert.ok(msg.sc?.[40] !== undefined, `${order}: Tick contains optional named sc special-cost sidecar`);
+      assert.ok(msg.l?.[40] !== undefined, `${order}: Tick contains mandatory named l combat-life sidecar`);
+
+      // Verify delivery to remote client: both 484 specialCost and 477 roll state are unpacked
+      netClient.onMessage('A', msg);
+      const peer = netClient.peers.get('A');
+      peer.tr = msg.ts;
+      netClient._sample(remoteActor, peer.tr, 1 / 60);
+      netClient.applyRemote(remoteActor, 1 / 60);
+
+      assert.ok(remoteActor.weaponRunner.dodge, `${order}: Remote actor received roll`);
+      assert.equal(remoteActor.weaponRunner.dodge.token, 1, `${order}: Remote roll token is 1`);
+      assert.equal(remoteActor.s3SpecialCost, 180, `${order}: Remote actor received gear-adjusted specialCost`);
+    } finally {
+      netHost.dispose?.();
+      netClient.dispose?.();
+      ownerRig.close();
+      remoteRig.close();
+    }
   }
 });
 

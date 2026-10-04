@@ -114,6 +114,14 @@ export function adaptIssue477Actor(code) {
     'actor _startSpecial cancel current dualies dodge only'
   );
 
+  // 3. Clear roll admission on Actor reset()
+  code = replaceOnce(
+    code,
+    '    this.weaponRunner?.reset();',
+    '    this.weaponRunner?.reset();\n    if (this.net) { delete this.net.lastRollToken; delete this.net.rollOwner; delete this.net.rollLife; }',
+    'actor reset roll admission reset'
+  );
+
   return code;
 }
 
@@ -148,77 +156,114 @@ export function adaptIssue477DualiesMotion(code) {
 
 export function adaptIssue477Net(code) {
   // 1. Owner tick: replicate authoritative roll token/phase/time via OPTIONAL NAMED sidecar 'rl'
-  // Preserves existing mandatory named 'l' life metadata.
-  if (code.includes("const msg = { k: 't', ts: r3(now()), a, l:")) {
-    code = replaceOnce(
-      code,
-      "const msg = { k: 't', ts: r3(now()), a, l: Object.fromEntries([...this.byNid.values()].filter(x => !x.remote).map(x => [x.nid, x.netLife ?? 0])) };",
-      "const msg = { k: 't', ts: r3(now()), a, l: Object.fromEntries([...this.byNid.values()].filter(x => !x.remote).map(x => [x.nid, x.netLife ?? 0])), rl: Object.fromEntries([...this.byNid.values()].filter(x => !x.remote && x.weaponRunner?.dodge).map(x => [x.nid, { token: x.weaponRunner.dodge.token || 1, phase: (x.weaponRunner.dodge.startup > 1e-10 ? 'startup' : 'roll'), time: r3(x.weaponRunner.dodge.startup > 1e-10 ? Math.max(0, (x.weaponRunner.dodge.startupDur || (4 / 60)) - x.weaponRunner.dodge.startup) : x.weaponRunner.dodge.t), dur: r3(x.weaponRunner.dodge.dur || 0.2) }])) };",
-      'netmatch sendTick roll sidecar (with combat-life)'
-    );
-  } else {
-    code = replaceOnce(
-      code,
-      "const msg = { k: 't', ts: r3(now()), a };",
-      "const msg = { k: 't', ts: r3(now()), a, rl: Object.fromEntries([...this.byNid.values()].filter(x => !x.remote && x.weaponRunner?.dodge).map(x => [x.nid, { token: x.weaponRunner.dodge.token || 1, phase: (x.weaponRunner.dodge.startup > 1e-10 ? 'startup' : 'roll'), time: r3(x.weaponRunner.dodge.startup > 1e-10 ? Math.max(0, (x.weaponRunner.dodge.startupDur || (4 / 60)) - x.weaponRunner.dodge.startup) : x.weaponRunner.dodge.t), dur: r3(x.weaponRunner.dodge.dur || 0.2) }])) };",
-      'netmatch sendTick roll sidecar (raw)'
-    );
-  }
+  // Attaches msg.rl at unique broadcast boundary, preserving any existing 'l' (combat-life),
+  // 'sc' (special-charge PR495), and reserved slot 21 / flag 20.
+  code = replaceOnce(
+    code,
+    '    this.stats.out++;\n    this.s.tr?.broadcast(msg);',
+    `    msg.rl = Object.fromEntries([...this.byNid.values()].filter(x => !x.remote && x.weaponRunner?.dodge).map(x => [x.nid, {
+      token: x.weaponRunner.dodge.token || 1,
+      phase: (x.weaponRunner.dodge.startup > 1e-10 ? 'startup' : 'roll'),
+      time: r3(x.weaponRunner.dodge.startup > 1e-10 ? Math.max(0, (x.weaponRunner.dodge.startupDur || (4 / 60)) - x.weaponRunner.dodge.startup) : x.weaponRunner.dodge.t),
+      dur: r3(x.weaponRunner.dodge.dur || 0.2),
+      ...(x.weaponRunner._dodgeDir && Number.isFinite(x.weaponRunner._dodgeDir.x) && Number.isFinite(x.weaponRunner._dodgeDir.z)
+        ? { dir: [r2(x.weaponRunner._dodgeDir.x), r2(x.weaponRunner._dodgeDir.z)] }
+        : {})
+    }]));
+    this.stats.out++;
+    this.s.tr?.broadcast(msg);`,
+    'netmatch sendTick roll sidecar'
+  );
 
-  // 2. Incoming tick: unpack optional named roll sidecar onto snapshot
-  if (code.includes('a.net.lastLife = snap.life;\n      buf.push(snap);')) {
-    code = replaceOnce(
-      code,
-      'a.net.lastLife = snap.life;\n      buf.push(snap);',
-      'a.net.lastLife = snap.life;\n      snap.roll = (d.rl?.[a.nid] ?? d.roll?.[a.nid]) || null;\n      buf.push(snap);',
-      'netmatch _tick unpack roll sidecar (with combat-life)'
-    );
-  } else {
-    code = replaceOnce(
-      code,
-      'buf.push(snap);',
-      'snap.roll = (d.rl?.[a.nid] ?? d.roll?.[a.nid]) || null;\n      buf.push(snap);',
-      'netmatch _tick unpack roll sidecar (raw)'
-    );
-  }
+  // 2. Incoming tick: unpack optional named roll sidecar onto snapshot with packet origin timestamp
+  code = replaceOnce(
+    code,
+    '      if (buf.length && snap.t <= buf[buf.length - 1].t) continue;\n',
+    `      if (buf.length && snap.t <= buf[buf.length - 1].t) continue;
+      const _rl = d.rl?.[a.nid] ?? d.roll?.[a.nid];
+      snap.roll = (_rl && typeof _rl === 'object') ? { ..._rl, origT: snap.t } : null;\n`,
+    'netmatch _tick unpack roll sidecar'
+  );
 
   // 3. applyRemote: replicate authoritative roll state.
-  // Late packet displays moving roll immediately without fresh anticipation;
-  // stale packet cannot restart phase; chained rolls each get genuine new startup token.
+  // Phase time is derived purely from owner state + peer.playback tr (existing native owner clock)
+  // minus accepted packet timestamp, bounded by existing extrapolation .18s.
+  // Cannot double-advance repeatedly on the same playback TR.
+  // Last roll token is scoped to current owner + accepted snapshot life.
+  // Invalid/legacy scalar data gracefully falls back and cannot poison lastRollToken.
   const netDodgeOld = '    if (f & F.dodge) { if (!wr.dodge) wr.dodge = { t: 0, dur: a.weapon.rollTime || 0.3 }; wr.dodge.t += dt; } else wr.dodge = null;';
   const netDodgeNew = `    if (f & F.dodge) {
       const rl = S.roll;
-      if (rl && typeof rl === 'object') {
+      const currentLife = S.life ?? a.net.lastLife ?? 0;
+      if (a.net.rollOwner !== a.owner || a.net.rollLife !== currentLife) {
+        a.net.rollOwner = a.owner;
+        a.net.rollLife = currentLife;
+        a.net.lastRollToken = 0;
+      }
+      const isValid = rl && typeof rl === 'object' &&
+        Number.isSafeInteger(rl.token) && rl.token > 0 &&
+        Number.isFinite(rl.time) && rl.time >= 0 &&
+        Number.isFinite(rl.dur) && rl.dur > 0 &&
+        (rl.phase === 'startup' || rl.phase === 'roll');
+      if (isValid) {
         const lastTk = a.net.lastRollToken || 0;
-        if (rl.token !== undefined && rl.token < lastTk) {
-          // Stale packet from earlier roll cannot restart phase
-        } else {
-          if (rl.token !== undefined && rl.token > lastTk) a.net.lastRollToken = rl.token;
-          const tk = rl.token ?? 0;
-          if (!wr.dodge || wr.dodge.token !== tk) {
-            if (rl.phase === 'startup') {
-              wr.dodge = { token: tk, t: 0, dur: rl.dur || 0.2, startup: Math.max(0, (4 / 60) - (rl.time || 0)), startupDur: 4 / 60 };
+        if (rl.token >= lastTk) {
+          if (rl.token > lastTk) a.net.lastRollToken = rl.token;
+          const tk = rl.token;
+          const peer = this._peer(a.owner);
+          const tr = (peer && Number.isFinite(peer.tr)) ? peer.tr : S.t;
+          const origT = (rl.origT !== undefined && Number.isFinite(rl.origT)) ? rl.origT : S.t;
+          const phaseAge = Math.min(Math.max(0, tr - origT), 0.18);
+          if (rl.phase === 'startup') {
+            const startupDur = 4 / 60;
+            const startupRemainingAtOrig = Math.max(0, startupDur - rl.time);
+            if (phaseAge < startupRemainingAtOrig) {
+              wr.dodge = {
+                token: tk,
+                t: 0,
+                dur: rl.dur,
+                startup: startupRemainingAtOrig - phaseAge,
+                startupDur: startupDur
+              };
             } else {
-              wr.dodge = { token: tk, t: rl.time || 0, dur: rl.dur || 0.2, startup: 0, startupDur: 4 / 60 };
+              wr.dodge = {
+                token: tk,
+                t: Math.min(rl.dur, phaseAge - startupRemainingAtOrig),
+                dur: rl.dur,
+                startup: 0,
+                startupDur: 0
+              };
             }
           } else {
-            if (rl.phase === 'startup') {
-              wr.dodge.startup = Math.max(0, (4 / 60) - (rl.time || 0));
-              wr.dodge.t = 0;
-            } else {
-              wr.dodge.startup = 0;
-              wr.dodge.t = rl.time || 0;
-            }
+            wr.dodge = {
+              token: tk,
+              t: Math.min(rl.dur, rl.time + phaseAge),
+              dur: rl.dur,
+              startup: 0,
+              startupDur: 0
+            };
+          }
+          if (rl.dir && Array.isArray(rl.dir) && Number.isFinite(rl.dir[0]) && Number.isFinite(rl.dir[1])) {
+            if (!wr._dodgeDir) wr._dodgeDir = new THREE.Vector3();
+            wr._dodgeDir.set(rl.dir[0], 0, rl.dir[1]);
           }
         }
       } else {
-        if (!wr.dodge) wr.dodge = { token: 0, t: 0, dur: a.weapon.rollTime || 0.2, startup: 0, startupDur: 4 / 60 };
+        if (!wr.dodge) wr.dodge = { token: 0, t: 0, dur: a.weapon?.rollTime || 0.2, startup: 0, startupDur: 4 / 60 };
         wr.dodge.t = Math.min(wr.dodge.dur, wr.dodge.t + dt);
       }
     } else {
       wr.dodge = null;
     }`;
   code = replaceOnce(code, netDodgeOld, netDodgeNew, 'netmatch applyRemote authoritative roll sidecar');
+
+  // 4. Host adoption: clear roll admission tracking
+  code = replaceOnce(
+    code,
+    '    a.net.buf.length = 0;\n    if (a.alive && a.net.spawnPending)',
+    '    delete a.net.lastRollToken; delete a.net.rollOwner; delete a.net.rollLife;\n    a.net.buf.length = 0;\n    if (a.alive && a.net.spawnPending)',
+    'netmatch _adopt roll admission reset'
+  );
 
   return code;
 }
