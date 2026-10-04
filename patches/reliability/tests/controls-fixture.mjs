@@ -4,25 +4,50 @@ import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
-import { adaptSource } from '../adapter.mjs';
+import { adaptSource } from '../../splatoon3/adapter.mjs';
+import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
+import { adaptReliability } from '../../reliability/adapter.mjs';
+import { adaptQualitySource } from '../../local-quality/adapter.mjs';
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
-const UPSTREAM = process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
-export async function fixture({ adaptRuntime = (_rel, source) => source } = {}) {
-  const context = vm.createContext({ console, performance });
+const BUILT = process.env.INKWAVE_CONTROLS_SITE;
+const NEGATIVE = process.env.INKWAVE_CONTROLS_BASELINE === '1';
+const UPSTREAM = BUILT ? path.resolve(BUILT) : process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
+export async function fixture() {
+  // The negative control omits only the adapter under test from the real order.
+  let reliability = adaptReliability;
+  if (NEGATIVE) {
+    if (BUILT) throw new Error('Baseline control requires raw source');
+    const dispatcher = fs.readFileSync(path.join(ROOT,'patches/reliability/adapter.mjs'),'utf8');
+    const names = dispatcher.match(/const adapters = \[([^\]]+)\]/)[1].split(',').map(x=>x.trim());
+    const imports = new Map([...dispatcher.matchAll(/import \{ (\w+) \} from '(\.\/[^']+)';/g)].map(m=>[m[1],m[2]]));
+    const adapters=[];
+    for(const name of names) if(name!=='adaptControls') adapters.push((await import(new URL('../'+imports.get(name).slice(2),import.meta.url)))[name]);
+    reliability=(rel,code)=>adapters.reduce((value,adapt)=>adapt(rel,value),code);
+  }
+  const listeners = new Map(), storage = new Map(); let pads = [];
+  const classes = {add(){},remove(){},toggle(){}};
+  const context = vm.createContext({ console, performance, URL, AbortController, setTimeout, clearTimeout,
+    screen:{width:1000,height:700,orientation:{angle:0}},innerWidth:1000,innerHeight:700,
+    localStorage:{getItem:k=>storage.get(k)??null,setItem:(k,v)=>storage.set(k,v)},
+    navigator:{userAgent:'controls fixture',maxTouchPoints:0,getGamepads:()=>pads},
+    window:{addEventListener(n,fn){listeners.set(n,[...(listeners.get(n)||[]),fn]);}},
+    document:{documentElement:{classList:classes},addEventListener(){},pointerLockElement:null}
+  });
   const modules = new Map();
   function resolve(spec, from) {
     if (spec === 'three') return path.join(UPSTREAM, 'vendor/three/build/three.module.js');
     let file = path.resolve(path.dirname(from), spec);
     if (file.startsWith(path.join(ROOT, 'inkwave-public/'))) file = path.join(UPSTREAM, path.relative(path.join(ROOT, 'inkwave-public'), file));
-    if (file.startsWith(path.join(UPSTREAM, 'patches/'))) file = path.join(ROOT, path.relative(UPSTREAM, file));
+    if (!BUILT && file.startsWith(path.join(UPSTREAM, 'patches/'))) file = path.join(ROOT, path.relative(UPSTREAM, file));
     if (file.startsWith(path.join(ROOT, 'src/'))) file = path.join(UPSTREAM, path.relative(ROOT, file));
+    if (BUILT && file.startsWith(path.join(ROOT, 'patches/'))) file = path.join(UPSTREAM, path.relative(ROOT, file));
     return file;
   }
   function load(file) {
     if (modules.has(file)) return modules.get(file);
     const relative = path.relative(UPSTREAM, file);
-    const native = file.startsWith(UPSTREAM + path.sep) ? adaptSource(relative, fs.readFileSync(file, 'utf8')) : fs.readFileSync(file, 'utf8');
-    const source = file.startsWith(UPSTREAM + path.sep) ? native : adaptRuntime(path.relative(ROOT, file), native);
+    const raw = fs.readFileSync(file, 'utf8');
+    const source = !BUILT && file.startsWith(UPSTREAM + path.sep) ? adaptQualitySource(relative, reliability(relative, adaptTouchLayout(relative, adaptSource(relative, raw)))) : raw;
     const mod = new vm.SourceTextModule(source, { context, identifier: file }); modules.set(file, mod); return mod;
   }
   const root = new vm.SourceTextModule(`
@@ -32,8 +57,11 @@ export async function fixture({ adaptRuntime = (_rel, source) => source } = {}) 
     export * from './inkwave-public/src/game/weapons.js';
     export * from './inkwave-public/src/game/physics.js';
     export * from './inkwave-public/src/game/player.js';
+    export * from './inkwave-public/src/core/input.js';
+    export * from './inkwave-public/src/net/netmatch.js';
     export * from './inkwave-public/src/core/shadowcache.js';
     export * as THREE from 'three';
+    export { FixedClock, installClock, runSimulation } from './patches/splatoon3/runtime/clock.mjs';
     export * from './patches/splatoon3/runtime/movement.mjs';
     export * from './patches/splatoon3/runtime/weapons.mjs';
     export * from './patches/splatoon3/runtime/gear.mjs';
@@ -43,7 +71,7 @@ export async function fixture({ adaptRuntime = (_rel, source) => source } = {}) 
   `, { context, identifier: path.join(ROOT, 'fixture.mjs') });
   await root.link((spec, from) => load(resolve(spec, from.identifier))); await root.evaluate();
   const api = { ...root.namespace }, { G, THREE, PLAYER, WEAPONS, SUB, SPECIALS } = api;
-  const profile = JSON.parse(fs.readFileSync(path.join(ROOT, 'patches/splatoon3/profile.json'), 'utf8'));
+  const profile = JSON.parse(fs.readFileSync(path.join(BUILT ? UPSTREAM : ROOT, 'patches/splatoon3/profile.json'), 'utf8'));
   Object.assign(PLAYER, profile.player); Object.assign(SUB.bomb, profile.bomb);
   for (const [id, data] of Object.entries(profile.weapons)) Object.assign(WEAPONS[id], data);
   for (const install of ['installWeapons', 'installMovement', 'installGear', 'installFlow', 'installResources', 'installRendering']) api[install](api, profile);
@@ -69,5 +97,7 @@ export async function fixture({ adaptRuntime = (_rel, source) => source } = {}) 
     return a;
   }
   function tick(a, frames = 1) { for (let i = 0; i < frames; i++) { G.time += 1 / 60; a.update(1 / 60); } }
-  return { ...api, profile, make, tick, shots };
+  return { ...api, profile, make, tick, shots, storage, setPads:p=>{pads=p;},
+    event:(name,value)=>{for(const fn of listeners.get(name)||[])fn(value);},
+    sources:modules };
 }
