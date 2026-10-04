@@ -1,6 +1,7 @@
 # INKWAVE batch C 03 — lifecycle and render resources
 
-Baseline main: `8158a2b83c8e6948d0f96f1bbe0e80e987c4bafd` (external merge of PR452; Orchestrator C did not merge).
+Starting baseline main: `8158a2b83c8e6948d0f96f1bbe0e80e987c4bafd` (external merge of PR452; Orchestrator C did not merge).
+Latest main incorporated before publishing: `866fd45992be33c51966a8acc55596bb5bac15a8` (external merges including C02, idle resources, batch A and weapon edgecases).
 
 - #435: Slosher-only swim admission accounts for the existing 12-frame lift, giving the issue's sourced 18-frame first release. Ordinary humanoid 12-frame startup, 29-frame repeat and other weapons remain native.
 - #196: Successful special activation cancels suspended Charger charge/store/audio bookkeeping. Unsuccessful attempts, cooldown and unrelated weapons retain their behavior.

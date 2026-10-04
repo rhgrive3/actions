@@ -63,7 +63,7 @@ await page.route(address+'**', async route => {
   }catch(error){ errors.push(error.message); await route.abort(); }
 });
 await page.bringToFront();
-await page.addInitScript(() => { localStorage.setItem('inkwave.settings', JSON.stringify({quality:'low', shadows:false, bloom:false})); });
+await page.addInitScript(() => { localStorage.setItem('inkwave.settings', JSON.stringify({quality:'low', shadows:false, bloom:false, minimap:false})); });
 page.on('pageerror', error => errors.push(error.message));
 page.on('requestfailed', request => failures.push({ url: request.url(), error: request.failure()?.errorText }));
 page.on('console', msg => { if (msg.type() === 'error') consoleErrors.push(msg.text().slice(0, 1500)); });
@@ -79,6 +79,11 @@ try {
     if (!document.baseURI.includes(build.build.revision)) throw new Error('Active asset revision mismatch');
     return { baseURI:document.baseURI, mode: G.mode, patch: G.s3, contentHash: build.contentHash, clockTicks: G.game.s3Clock?.ticks, sourceEntry: [...document.querySelectorAll('script[src]')].map(s => s.getAttribute('src')) };
   });
+  // Exercise the native menu interval that previously pinned an unused LobbySet.
+  await page.waitForFunction(() => !!globalThis.s3ProbeG?.game?.timer, null, { timeout:30000 });
+  await page.waitForTimeout(2800);
+  result.idleLobby = await page.evaluate(() => ({ mode:globalThis.s3ProbeG.mode, allocated:!!globalThis.s3ProbeG.game.showcase.lob }));
+  if (result.idleLobby.mode !== 'menu' || result.idleLobby.allocated) throw new Error('Idle menu allocated unused Online LobbySet');
   await page.evaluate(async () => { const { G } = await import(new URL('src/core/ctx.js',document.baseURI).href); G.game.debug.freeze(); G.game.menus.wipe.cancel(); G.game.menus.show('loadout', {wipe:false,light:false}); for(let i=0;i<90;i++)G.game.menus.update(1/60); });
   await page.waitForSelector('.s3-gear');
   result.gearSelects = await page.locator('.s3-gear select').count();
@@ -94,6 +99,19 @@ try {
   await page.screenshot({path:path.join(evidence,'loadout-small-viewport.png'),animations:'disabled',timeout:90000});
   await page.setViewportSize({width:1280,height:800});
   await page.evaluate(async () => { const { G } = await import(new URL('src/core/ctx.js',document.baseURI).href); await G.game.startMatch({mapId:'tidewater', difficulty:'easy', duration:180, mode:'turf'}); });
+  result.hiddenMinimap = await page.evaluate(() => {
+    const m=globalThis.s3ProbeG.game.minimap;
+    return { built:m._built, logical:[m.w,m.h], canvas:[m.canvas.width,m.canvas.height],
+      imageBytes:(m.inkImg?.data.byteLength||0)+(m.flashImg?.data.byteLength||0),
+      rasterBytes:['hgt','topBlock','nrm','pixCell','pixFx','pixFy','pixSx','pixSy','owner'].reduce((n,key)=>n+(m[key]?.byteLength||0),0) };
+  });
+  if (result.hiddenMinimap.built || result.hiddenMinimap.imageBytes || result.hiddenMinimap.rasterBytes || result.hiddenMinimap.canvas.some(n=>n>1)) throw new Error('Minimap OFF allocated render buffers at native match start');
+  await page.evaluate(() => { const G=globalThis.s3ProbeG; G.game.api.setSettings({minimap:true}); G.game.minimap.update(1/60,true); });
+  result.visibleMinimap = await page.evaluate(() => {
+    const m=globalThis.s3ProbeG.game.minimap;
+    return { built:m._built, canvas:[m.canvas.width,m.canvas.height], logical:[m.w,m.h], imageBytes:m.inkImg.data.byteLength+m.flashImg.data.byteLength };
+  });
+  if (!result.visibleMinimap.built || result.visibleMinimap.canvas.some((n,i)=>n!==result.visibleMinimap.logical[i]) || result.visibleMinimap.imageBytes!==8*result.visibleMinimap.logical[0]*result.visibleMinimap.logical[1]) throw new Error('Reenabled Minimap did not initialize native layers');
   result.gameplay = await page.evaluate(() => {
     const G = globalThis.s3ProbeG, g = G.game; g.debug.freezeBots(); g._skipRender = true;
     for (let i=0;i<270;i++) g._frame(1/60);

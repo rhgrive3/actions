@@ -1,19 +1,26 @@
 // Build-only quality corrections composed after the gameplay, touch-layout and
 // reliability adapters. Upstream inkwave-public/ remains byte-for-byte intact.
 import fs from 'node:fs';
+import { adaptIdleSource } from './idle-adapter.mjs';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
+import { adaptMinimapResources } from './minimap-resource-adapter.mjs';
+import { adaptLobbyResources } from './lobby-resource-adapter.mjs';
 import { adaptLandingRigidity } from './landing-rigidity-adapter.mjs';
 import { adaptPaintMipmaps } from './issue-190-adapter.mjs';
 import { adaptQualityIssue418 } from './issue-418-adapter.mjs';
 import { patchLobbySetShowcase } from './issue-472-adapter.mjs';
 import { adaptSlosherEmergeGate } from '../splatoon3/issue-435-adapter.mjs';
+import { adaptFirstTouch } from './first-touch-adapter.mjs';
+import { adaptTouchRelayout } from './touch-relayout.mjs';
 
 export const QUALITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
 const IDENTITY_FILES = [
   'issue-190-adapter.mjs', 'issue-418-adapter.mjs', 'world-quality.mjs', 'quality-probe.mjs', 'paint-mipmap-probe.mjs', 'issue-472-adapter.mjs',
+  'idle-adapter.mjs', 'idle-resources.mjs', 'music-idle.mjs',
+  'lobby-resource-adapter.mjs', 'minimap-resource-adapter.mjs',
   'adapter.mjs', 'gyro.mjs', 'install.mjs', 'menu-preview.mjs', 'menu.mjs',
-  'roller-motion.mjs', 'roller-visual.mjs', 'surface.mjs', 'landing-rigidity-adapter.mjs',
+  'roller-motion.mjs', 'roller-visual.mjs', 'surface.mjs', 'landing-rigidity-adapter.mjs', 'first-touch-adapter.mjs', 'touch-relayout.mjs',
 ];
 
 export function replaceOnce(code, before, after, label) {
@@ -25,6 +32,9 @@ export function replaceOnce(code, before, after, label) {
 }
 
 export function adaptQualitySource(rel, code) {
+  code = adaptIdleSource(rel, code, replaceOnce);
+  code = adaptLobbyResources(rel, code);
+  code = adaptMinimapResources(rel, code);
   code = adaptLandingRigidity(rel, code);
   code = adaptPaintMipmaps(rel, code);
   code = adaptQualityIssue418(rel, code);
@@ -34,6 +44,7 @@ export function adaptQualitySource(rel, code) {
     code = "import { updateSplatGhosts } from '../patches/splatoon3/issue-284-adapter.mjs';\n" + code;
     code = replaceOnce(code, '      if (!m || !m.paused) this.fxHooks?.update?.(dt);', '      if (!m || !m.paused) { this.fxHooks?.update?.(dt); updateSplatGhosts(G, dt); }', 'ghost presentation tick');
   }
+  if (rel === 'src/core/mobile.js') return adaptTouchRelayout(rel, adaptFirstTouch(rel, code));
   if (rel === 'src/ui/menu-art.js') {
     code = replaceOnce(code,
       'export function createPreview(key, ctx = {}) {',
