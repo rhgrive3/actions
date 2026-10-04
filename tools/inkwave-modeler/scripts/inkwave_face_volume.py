@@ -1147,9 +1147,8 @@ def keep_material(mat):
 
 
 def restore_materials():
-    for name in (EAR_MATERIAL, NECK_MATERIAL):
-        if bpy.data.materials.get(name) is not None and not bpy.data.materials[name].users:
-            bpy.data.materials.remove(bpy.data.materials[name])
+    if bpy.data.materials.get(EAR_MATERIAL) is not None and not bpy.data.materials[EAR_MATERIAL].users:
+        bpy.data.materials.remove(bpy.data.materials[EAR_MATERIAL])
     for name in DECAL_MATERIALS.values():
         mat = bpy.data.materials.get(name)
         if mat is None or SUFFIX not in mat:
@@ -1616,67 +1615,6 @@ def set_skin(cfg):
     if paint is not None:                  # its default value is what the reference paint reads as the skin tone
         next(n for n in paint.node_tree.nodes if n.type == 'BSDF_PRINCIPLED').inputs['Base Color'].default_value = \
             list(cfg['base_colour']) + [1.0]
-
-
-NECK_MATERIAL = 'skin_neck'
-
-
-def neck_skin(face, cfg):
-    """The face lies on the neck under the jaw and ends there; the face (its paint texture, face shading) and the
-    neck (the body skin) shade differently, so the border read as a line from under the ear to the neck front (the
-    reference has none).  The neck above the collar (BODY_torso, head-frame y > y_min, |x| < x_max) gets a copy of
-    the body skin with the face skin's values: the colour of the face texture where the face lies on the neck
-    (median, cfg['sample'] box) and the face material's surface values for that texture alpha.  The border to the
-    body skin is inside the collar."""
-    me = face.data
-    loc = M.to_local(er.world(face)) * 1000
-    fm = bpy.data.materials[er.FACE_PAINT_MATERIAL]
-    tex = next(n for n in fm.node_tree.nodes if n.type == 'TEX_IMAGE' and n.outputs['Color'].links)
-    img = tex.image
-    W, H = img.size
-    px = np.empty(W * H * 4, np.float32)
-    img.pixels.foreach_get(px)
-    px = px.reshape(H, W, 4)
-    uv = np.empty(len(me.loops) * 2)
-    me.uv_layers.active.data.foreach_get('uv', uv)
-    uv = uv.reshape(-1, 2)
-    lv = np.empty(len(me.loops), int)
-    me.loops.foreach_get('vertex_index', lv)
-    (y0, y1), (z0, z1) = cfg['sample']['y'], cfg['sample']['z']
-    sel = (loc[lv, 1] > y0) & (loc[lv, 1] < y1) & (loc[lv, 2] > z0) & (loc[lv, 2] < z1)
-    c = px[(np.clip(uv[sel, 1], 0, 1) * (H - 1)).astype(int), (np.clip(uv[sel, 0], 0, 1) * (W - 1)).astype(int)]
-    rgb, alpha = np.median(c[:, :3], 0), float(np.median(c[:, 3]))
-    if img.colorspace_settings.name == 'sRGB' and not img.is_float:
-        rgb = np.where(rgb <= 0.04045, rgb / 12.92, ((rgb + 0.055) / 1.055) ** 2.4)
-    inv = 1 - alpha
-    mat = bpy.data.materials[cfg.get('from', SKIN_MATERIAL)].copy()
-    mat.name = NECK_MATERIAL
-    b = next(n for n in mat.node_tree.nodes if n.type == 'BSDF_PRINCIPLED')
-    fb = next(n for n in fm.node_tree.nodes if n.type == 'BSDF_PRINCIPLED')
-    b.inputs['Base Color'].default_value = list(rgb) + [1.0]
-    for k in ('Sheen Weight', 'Subsurface Weight', 'Coat Weight', 'Specular IOR Level', 'Roughness'):
-        mr = fm.node_tree.nodes.get('ink_' + k)
-        if mr is not None:
-            lo, hi = mr.inputs['To Min'].default_value, mr.inputs['To Max'].default_value
-            b.inputs[k].default_value = lo + (hi - lo) * inv
-        else:
-            b.inputs[k].default_value = fb.inputs[k].default_value
-    for k in ('Subsurface Radius', 'Subsurface Scale', 'Sheen Tint', 'Sheen Roughness', 'Coat Roughness'):
-        b.inputs[k].default_value = fb.inputs[k].default_value
-    neck = bpy.data.objects[NECK]
-    nme = neck.data
-    nl = M.to_local(er.world(neck)) * 1000
-    nme.materials.append(mat)
-    slot = len(nme.materials) - 1
-    vy = nl[:, 1]
-    vx = np.abs(nl[:, 0])
-    count = 0
-    for pl in nme.polygons:
-        vs = list(pl.vertices)
-        if vy[vs].min() > cfg['y_min'] and vx[vs].max() < cfg['x_max']:
-            pl.material_index = slot
-            count += 1
-    print('FACE_VOLUME neck skin: polygons', count, 'colour (linear)', np.round(rgb, 4), 'texture alpha', round(alpha, 3))
 
 
 def restore_skin():
@@ -2253,34 +2191,6 @@ def main():
                     amounts = amounts + ln['mm'] * wl
                 if step.get('flare'):
                     amounts = amounts + fl['mm'] * wf
-                if step.get('cove'):
-                    # a rounded inside corner under the jaw (the reference's jaw runs into the neck in one curve):
-                    # each neck point h mm under the face (ray straight up in the head frame, hitting the face's
-                    # underside from below) goes out along its normal by R - sqrt(R^2 - (R - h)^2), a quarter
-                    # circle of radius R: R at the face, 0 and tangent to the neck at h = R
-                    R = step['cove']['mm']
-                    bvh = BVHTree.FromPolygons([tuple(v) for v in er.world(face)], [tuple(pl.vertices) for pl in face.data.polygons])
-                    up = M.to_world(np.array([[0, 1.0, 0]]))[0] - M.to_world(np.zeros((1, 3)))[0]
-                    up = Vector(up / np.linalg.norm(up))
-                    Wn = er.world(neck)
-                    h = np.full(len(Wn), np.inf)
-                    for i in np.nonzero(wy > 0)[0]:
-                        loc_h, nrm, _, dist = bvh.ray_cast(Vector(Wn[i]), up, 0.05)
-                        if loc_h is not None and nrm.dot(up) < 0:
-                            h[i] = dist * 1000
-                    t = np.clip(1 - h / R, 0, 1)
-                    cove = R - np.sqrt(np.maximum(R * R - (R * t) ** 2, 0))
-                    cove[t <= 0] = 0.0
-                    cove *= step['cove'].get('scale', 1.0)
-                    if step['cove'].get('weight_smooth'):
-                        # the height under the face jumps from point to point (the rays meet the face's own
-                        # bumps): Blender's vertex-group smoothing evens the amounts out before the move
-                        peak = float(cove.max())
-                        if peak > 0:
-                            cw = smooth_weights(neck, cove / peak, step['cove']['weight_smooth'])
-                            cove = cw * peak * (wy > 0)
-                    amounts = amounts + cove * (wy > 0)
-                    print('FACE_VOLUME', step['name'], 'cove vertices', int((cove > 0.01).sum()), 'max mm', round(float(cove.max()), 2))
                 for sign in (1, -1):
                     part = np.maximum(sign * amounts, 0)
                     if part.max() > 0:
@@ -2298,39 +2208,6 @@ def main():
                         me.vertices[j].co = co
                 me.update()
                 print('FACE_VOLUME', step['name'], 'neck vertices', int((wn > 0.001).sum()), 'mm', step.get('mm_side', step.get('mm')), 'lean', step.get('lean'))
-                continue
-            elif step['kind'] == 'floor_fillet':
-                # the floor under the jaw met the neck at a right angle (front and side views: a corner where the
-                # reference runs in one curve).  Floor points d mm from the neck go down by R - sqrt(R^2 - (R-d)^2)
-                # (a quarter circle of radius R: R at the neck, 0 and level with the floor at d = R), so the floor
-                # bends down into the neck.  The amount depends on the distance to the neck only, so a point never
-                # goes through it.  Blender's Warp moves them; the weights are evened out by vertex-group smoothing
-                R = step['mm']
-                neck = bpy.data.objects[NECK]
-                Wn = er.world(neck)
-                bvh = BVHTree.FromPolygons([tuple(v) for v in Wn], [tuple(pl.vertices) for pl in neck.data.polygons])
-                Wf = er.world(face)
-                d = np.full(len(Wf), np.inf)
-                cand = np.nonzero((loc[:, 1] < step['y_max']) & (NORMALS[:, 1] < step['normal_y']) & (loc[:, 2] > step['z'][0]))[0]
-                for i in cand:
-                    q, nrm, _, dist = bvh.find_nearest(Vector(Wf[i]))
-                    if q is not None:
-                        d[i] = dist * 1000 if nrm.dot(Vector(Wf[i]) - q) > 0 else 0.0
-                t = np.clip(1 - d / R, 0, 1)
-                drop = R - np.sqrt(np.maximum(R * R - (R * t) ** 2, 0))
-                drop[t <= 0] = 0.0
-                z0, z1 = step['z']
-                tz = np.clip((loc[:, 2] - z0) / (z1 - z0), 0, 1)
-                drop *= tz * tz * (3 - 2 * tz)
-                peak = float(drop.max())
-                if peak > 0:
-                    w = drop / peak
-                    if step.get('weight_smooth'):
-                        w = smooth_weights(face, w, step['weight_smooth'])
-                        w = np.clip(w / max(w.max(), 1e-9), 0, 1)
-                    warp(face, w, [0, -peak, 0], loc)
-                gap = join_seam(face, pairs)
-                print('FACE_VOLUME', step['name'], 'vertices', int((drop > 0.01).sum()), 'max mm', round(peak, 2), 'seam gap closed mm', round(float(gap), 3))
                 continue
             elif step['kind'] == 'neck_normals':
                 # the face laid on the neck (jaw_tuck) ends on it: its own shading differs from the neck's, so the
@@ -2358,8 +2235,15 @@ def main():
                     # normals (Blender's Displace), so it goes in at a small angle along a curve parallel to the
                     # jaw line, and the neck shows below without a step
                     wd = jaw_tuck_weights(loc, dict(step, z_front=step['dive'].get('z_front', step['z_front'])), step['dive'])
-                    er.apply_weighted_modifier(face, wd, 'DISPLACE', direction='NORMAL',
-                                               strength=-step['dive']['mm'] / 1000, mid_level=0.0)
+                    if step['dive'].get('method') == 'shrinkwrap':
+                        # along the neck's normal (Shrinkwrap Above Surface, negative offset): a crumpled face
+                        # triangle with a wrong normal would otherwise be pushed out of the neck (a flake)
+                        er.apply_weighted_modifier(face, wd, 'SHRINKWRAP', target=bpy.data.objects[NECK],
+                                                   wrap_method='NEAREST_SURFACEPOINT', wrap_mode='ABOVE_SURFACE',
+                                                   offset=-step['dive']['mm'] / 1000)
+                    else:
+                        er.apply_weighted_modifier(face, wd, 'DISPLACE', direction='NORMAL',
+                                                   strength=-step['dive']['mm'] / 1000, mid_level=0.0)
                     print('FACE_VOLUME', step['name'], 'dive vertices', int((wd > 0.001).sum()), 'mm', step['dive']['mm'])
                 gap = join_seam(face, pairs)
                 move = np.linalg.norm(er.world(face) - M.to_world(loc / 1000), axis=1) * 1000
@@ -2445,8 +2329,6 @@ def main():
             rebuild_ears(p['ear_rebuild'])
         if p.get('cheek_triangles'):
             place_cheek_triangles(face, p['cheek_triangles'])
-        if p.get('neck_skin') and not args.no_paint:
-            neck_skin(face, p['neck_skin'])
         seam_normals(face, pairs)
     if args.save:
         bpy.ops.wm.save_as_mainfile(filepath=args.save, compress=True)

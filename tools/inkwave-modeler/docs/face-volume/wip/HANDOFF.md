@@ -129,3 +129,5 @@
   - 見える境目は jaw_tuck の線ではなく、線から約 15 mm 下・後ろ（depth 20 の重みのため）。
   - 試し: J1（参照のふちを 10 mm 内へずらした線、depth 20）、J2（6 mm、depth 12）、J3（ずらさない、depth 20）。
 - J3（線を参照のふちに置く、上は y -58 の横線、z_ramus [10,30]）はきれい。z_ramus [-10,0]（J4〜J6）は首にかけら。J8 = 線を 5 mm 内へ（上の横線は -58 のまま）、z_ramus [10,30]: 顎の後ろのたてのふちと角が参照の線（`jawborder.py`）にほぼ合う。首の下に小さなかけら → dive の試し J9（len 14）、J10（mm 12）、J11（from 14）。p_J8.json を wip に置いた。
+- J9〜J11: かけら 1 つが残る（首の後ろ寄り、顔の面のくしゃっとした三角が法線の向きで外へ出る）。`jaw_tuck.dive.method` "shrinkwrap"（Shrinkwrap Above Surface、offset -mm = 首の法線で沈める）で消えた（J12 = J9 + これ）。J12 を params に入れた。使わないコード（cove、floor_fillet、neck_skin）は消した。正式なビルド Q2。
+- 速さ（ユーザー: 1 回 15 分は遅い）: 色つき Cycles が 1 方向 6〜7 分。形は粘土（25 秒）で見る。`jtc.sh`（LOOKS=clay で粘土だけ）。提案中: 顎だけの切りぬき描画、顎の手前までの途中保存から始める。
