@@ -406,3 +406,24 @@ test('focused counterexample: smaller dt (1/120s) uses elapsed time boundary wit
   aPast.update(dt);
   assert.equal(aPast.weaponRunner.s3FlickVertical, true, 'natural fall exceeding 25/60s transitions to vertical');
 });
+
+// Positive integration uses the production adapter order for native and patch modules.
+test('production build chain preserves natural-fall selection and normal battle/Practice isolation', async () => {
+  const { adaptSource } = await import('../adapter.mjs');
+  const { adaptTouchLayout } = await import('../../touch-layout/adapter.mjs');
+  const { adaptReliability } = await import('../../reliability/adapter.mjs');
+  const { adaptQualitySource } = await import('../../local-quality/adapter.mjs');
+  const production = (rel, code) => adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code))));
+  for (const practice of [false, true]) {
+    const f = await fixture({ adaptNative: production, adaptRuntime: production });
+    f.G.practice = practice ? { active: true } : null;
+    const a = f.make('roller'); a.grounded = false; f.tick(a, 24);
+    a.intent.fire = true; f.tick(a);
+    assert.equal(a.weaponRunner.s3FlickVertical, false);
+    close(a.weaponRunner.s3RollerAttack.windup, 21 / 60);
+    const shot = a.weaponRunner.s3RollerAttack; f.tick(a, 24);
+    assert.equal(shot.vertical, false, 'attack mode is latched past grace');
+    const shooter = f.make('shooter'); shooter.intent.move.set(1,0,0); f.tick(shooter, 2);
+    assert.equal(shooter.s3NaturalAirborne, undefined);
+  }
+});
