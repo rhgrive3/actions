@@ -187,7 +187,3 @@ Flow の外殻・粒・リボンが GTAO の法線／深度パスに不透明な
 Nintendoの非公開protocolや通信時刻を推定して本家一致とはしない。
 実装範囲、既存PR重複監査と確定した検証結果は
 [batch C記録](inkwave-batch-c-issues.md)に記録する。
-## 射撃中の下半身・方向ロコモーション表示（2026-10-05、issue #406）
-
-スプラトゥーン3は射撃中・チャージ保持中の移動で下半身を前進／後退（バックペダル）／左横／右横の4状態から選び、上半身は照準を追えるままにする。公開版 INKWAVE にはこの攻撃ロコモーション状態自体がなく、照準方向へ向いた共通のゲートと連続的な腰ひねり・傾き補正が全方向に使われていた（`Actor._face()` の aimYaw 追従と character.js の連続 `hipTwist`）。build専用アダプター `patches/splatoon3/issue-406-adapter.mjs` がビルド出力の `src/game/character.js` に4状態セレクタ `attackGaitState()` を注入し、射撃ポーズ中の腰ひねり目標を4状態のブレンド値へ置き換える。斜め入力は状態境界を連続補間し、無効時（非射撃・非移動・非ヒト形態）はnative文をそのまま実行してmainとビット単位で同一。twistの大きさはnative公式の定数を正規方向で評価した既存値のみを使用し、新しい数値を導入していない。authoritativeな移動速度・武器タイミング・当たり判定・照準追従、`inkwave-public/` のリポジトリ内容、共有 dispatcher `adapter.mjs` と `profile.json` は変更しない（build wiringは親オーケストレーターが `scripts/build-inkwave.mjs` の adaptBuildSource 連結に行う）。回帰は `patches/splatoon3/tests/issue-406-attack-gait.test.mjs`：セレクタの4方向・ゲート・境界ブレンド、変換が単一領域のみ変更することと二重適用の拒否、実スキン<Character>＋有効なS3歩行レイヤの実機パスで4状態が解決し、非射撃時のhipTwistがmainリグと1e-12以内で一致する負コントロール。実リグ確認で native の `mdx/mdz` は減衰後に毎フレーム正規化されるため、完全な後退（mdx が厳密に 0）では damp が mdz を -1 側へ縮めても正規化が +1 へ戻し、符号がゼロを越えず後退方向が無期限に前進のまま凍ることを確認した（issue 本文の「pure backward input, mdx === 0」と一致）。表示アダプターはボディ空間の生速度 `kgx/kgz`（毎フレーム符号正しい）で状態を選びこの凍結を回避し、native の md フィルタ自体は変更しない（native md の凍結は本家比較の別項目として未確認・未修正のまま親へ報告）。本家の関節角・blendしきい値・フレーム値は公開資料で確認できないため未取得のまま残す（実機計測が必要）。横移動・後退の脚運びは公式映像でも確認できず、表示校正値は公式値として扱わない。
-
