@@ -49,7 +49,7 @@ test('long high-quality profiles preserve baseline before candidate work and can
 
 test('GPU completion fence precedes paint probes outside all fixed profile windows, with bounded capture budget',()=>{
  const source=fs.readFileSync(new URL('../check-inkwave-runtime-performance.mjs',import.meta.url),'utf8');
- const profile=source.indexOf("phase:'completed-window'"),fence=source.indexOf('probeG.renderer.getContext().finish()'),parity=source.indexOf("if(process.argv.includes('--verify-render'))"),paint=source.indexOf('await page.screenshot');
+ const profile=source.indexOf("phase:'completed-window'"),fence=source.indexOf('probeG.renderer.getContext().finish()',profile),parity=source.indexOf("if(process.argv.includes('--verify-render'))"),paint=source.indexOf('await page.screenshot');
  assert(profile>=0&&profile<fence&&fence<parity&&parity<paint);
  assert.match(source,/page\.screenshot\(\{path:path\.join\(evidence,`ring-prime-\$\{repeat\}\.png`\),timeout:900000\}\)/);
  assert(900000>132545,'capture budget exceeds the observed132.5s Software GPU spike');
@@ -72,8 +72,25 @@ test('fixed runtime owner freezes at readiness before potentially blocking WebGL
 
 test('browser internal temporary storage is persistent before Playwright import and launch',()=>{
  const source=fs.readFileSync(new URL('../check-inkwave-runtime-performance.mjs',import.meta.url),'utf8');
- const prepare=source.indexOf("const browserTemp=persistentDirectory(path.join(evidence,'browser-tmp'))");
+ const prepare=source.indexOf("const browserTemp=persistentBrowserTemp(");
  const defaults=source.indexOf("for(const name of ['TMPDIR','TMP','TEMP'])process.env[name]=browserTemp");
  const imported=source.indexOf("const {chromium}=await import"),launch=source.indexOf('chromium.launchPersistentContext');
  assert(prepare>=0&&prepare<defaults&&defaults<imported&&imported<launch);
+});
+
+
+test('render and weapon FX warmup drains outside fixed profile windows',()=>{
+ const source=fs.readFileSync(new URL('../check-inkwave-runtime-performance.mjs',import.meta.url),'utf8');
+ const fire=source.indexOf('probeG.game.debug.fire(true)'),warm=source.indexOf('const warmup=fixedOnly&&!menuOnly?'),instrument=source.indexOf('// Instrument actual owners'),profile=source.indexOf("await cdp.send('Profiler.start')");
+ assert(fire>=0&&fire<warm&&warm<instrument&&instrument<profile);
+ const block=source.slice(warm,instrument);assert(block.includes('for(let i=0;i<30;i++)g._frame(1/60)'));assert(block.includes('probeG.renderer.getContext().finish()'));assert(block.includes('renderedSteps:30'));
+});
+
+
+test('CI prepares the short persistent browser cache for validator, browser and diagnostic jobs',()=>{
+ assert.equal((workflow.match(/browser_tmp=\/mnt\/workspace\/\.dev-state\/agent-work\/cache\/iwrui/g)||[]).length,3);
+ const prep=workflow.indexOf('name: Prepare persistent runtime verifier fixtures'),tests=workflow.indexOf('name: Verify motion verifier regressions');
+ assert(workflow.indexOf('sudo chown "$(id -u):$(id -g)" "$browser_tmp"',prep)<tests);
+ const browser=workflow.indexOf('name: Prepare workspace storage and browser');
+ assert(workflow.indexOf('test "$(realpath -m "$CI_STORAGE")"',browser)<workflow.indexOf('sudo mkdir -p "$CI_STORAGE"',browser));
 });

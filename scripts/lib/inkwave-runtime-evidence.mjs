@@ -9,6 +9,13 @@ export function persistentDirectory(name){
  if(!resolved.startsWith('/mnt/workspace/'))throw Error('Persistent workspace required: '+resolved);
  fs.mkdirSync(resolved,{recursive:true});return resolved;
 }
+// Chromium appends its singleton directory/socket name to TMPDIR (44 bytes).
+// Validate a short physical cache path; never fall back to OS temporary storage.
+export function persistentBrowserTemp(target){
+ const directory=persistentDirectory(target);
+ if(Buffer.byteLength(directory)+48>=108)throw Error('Browser temporary directory exceeds Unix socket budget');
+ return directory;
+}
 export function verifyRuntimeBuild(site,root,sha){
  if(!/^[a-f0-9]{40}$/.test(sha))throw Error('Full source SHA required');
  const manifest=JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json')));

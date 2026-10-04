@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
 import {execFileSync} from 'node:child_process';
-import {persistentDirectory,verifyRuntimeBuild,hash,sampleStats,invalidWindows} from './lib/inkwave-runtime-evidence.mjs';
+import {persistentDirectory,persistentBrowserTemp,verifyRuntimeBuild,hash,sampleStats,invalidWindows} from './lib/inkwave-runtime-evidence.mjs';
 import os from 'node:os';
 import {pathToFileURL,fileURLToPath} from 'node:url';
 const option=(name,fallback)=>{const i=process.argv.indexOf(name);return i<0?fallback:process.argv[i+1];};
@@ -17,7 +17,7 @@ const menuOnly=process.argv.includes('--menu-only'), fixedOnly=process.argv.incl
 // Playwright creates internal artifact directories before Chromium starts.
 // Configure this process's browser temporary directory before importing it;
 // all child defaults then remain inside the verified persistent evidence root.
-const browserTemp=persistentDirectory(path.join(evidence,'browser-tmp'));
+const browserTemp=persistentBrowserTemp('/mnt/workspace/.dev-state/agent-work/cache/iwrui');
 for(const name of ['TMPDIR','TMP','TEMP'])process.env[name]=browserTemp;
 const receipts=new Set();
 const {chromium}=await import(pathToFileURL(option('--playwright',process.env.PLAYWRIGHT_MODULE)).href);
@@ -52,9 +52,12 @@ try{
  for(const scenario of (inputOnly||parityOnly?[]:menuOnly?['title','settings']:['title','settings','battle'])){
   await page.evaluate(async scenario=>{const g=probeG.game;g.menus.wipe.cancel();if(scenario==='battle'){window.resetRuntimeSeed();await g.startMatch({mapId:'tidewater',difficulty:'easy',duration:180,mode:'turf'});g.debug.freezeBots();}else g.menus.show(scenario,{wipe:false,light:false});},scenario);
   await page.bringToFront();if(fixedOnly)await page.evaluate(scenario=>{const g=probeG.game;g.debug.freeze();g._skipRender=true;g.s3Clock?.reset();for(let i=0;i<(scenario==='battle'?270:30);i++)g._frame?.(1/60);g._skipRender=false;if(scenario==='battle'&&g.match.state!=='playing')throw Error('Battle warmup did not reach playing');},scenario);else await page.waitForTimeout(3000);console.log('Scenario ready '+scenario);if(scenario==='battle')await page.evaluate(()=>probeG.game.debug.fire(true));
+  // Warm actual render passes and weapon FX, not just simulation. GPU queue
+  // drain and first-use shader work stay outside every measured window.
+  const warmup=fixedOnly&&!menuOnly?await page.evaluate(scenario=>{const g=probeG.game;window.resetRuntimeSeed();for(let i=0;i<30;i++)g._frame(1/60);const t=performance.now();probeG.renderer.getContext().finish();return{simulationOnlySteps:scenario==='battle'?270:30,renderedSteps:30,drainMs:performance.now()-t};},scenario):null;
   // Instrument actual owners, retaining their receiver and return values.
   await page.evaluate(()=>{window.counts={};window.timings={};window.restore=[];const G=probeG,g=G.game;for(const [name,o,key]of [['sceneMatrices',G.scene,'updateMatrixWorld'],['frame',g,'_frame'],['match',g.match,'update'],['character',g.match?.local?.character?.constructor.prototype,'update'],['projectiles',G.projectiles,'update'],['rig',g.rig,'update'],['screenfx',g.screenfx,'update'],['paint',G.paint,'flush'],['fx',G.fx,'update'],['env',G.env,'update'],['decor',g.decor,'update'],['props',g.props,'update'],['render',g.R,'render'],['showcase',g.showcase,'update'],['menu',g.menus,'update'],['menuTick',g.menus,'_tick'],['cursor',g.menus,'_updateCursor'],['hud',g,'_updateHud'],['minimap',g.minimap,'update']]){if(!o||typeof o[key]!=='function')continue;const old=o[key];o[key]=function(...a){const t=performance.now();try{return old.apply(this,a);}finally{counts[name]=(counts[name]||0)+1;(timings[name]??=[]).push(performance.now()-t);}};restore.push(()=>o[key]=old);}window.longtasks=[];window.ltObserver=new PerformanceObserver(l=>longtasks.push(...l.getEntries().map(x=>x.duration)));ltObserver.observe({type:'longtask',buffered:false});window.rafTimes=[];window.rafProbeOn=true;const tick=t=>{rafTimes.push(t);if(rafProbeOn)window.rafProbeId=requestAnimationFrame(tick);};window.rafProbeId=requestAnimationFrame(tick);});
-  const runs=[];result.scenarios.push({scenario,runs});checkpoint();
+  const runs=[];result.scenarios.push({scenario,warmup,runs});checkpoint();
   for(let repeat=0;repeat<3;repeat++){
    await page.evaluate(()=>{counts={};timings={};longtasks=[];rafTimes=[];});
    const before=(await cdp.send('Performance.getMetrics')).metrics;

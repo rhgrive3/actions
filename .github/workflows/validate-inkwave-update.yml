@@ -69,6 +69,10 @@ jobs:
           sudo mkdir -p "$runtime_fixtures"
           sudo chown "$(id -u):$(id -g)" "$runtime_fixtures"
           test -w "$runtime_fixtures"
+          browser_tmp=/mnt/workspace/.dev-state/agent-work/cache/iwrui
+          test "$(realpath -m "$browser_tmp")" = "$browser_tmp"
+          sudo mkdir -p "$browser_tmp"
+          sudo chown "$(id -u):$(id -g)" "$browser_tmp"
       - name: Verify motion verifier regressions
         run: node --test scripts/tests/inkwave-motion-gates.test.mjs scripts/tests/inkwave-integration-workflow.test.mjs scripts/tests/inkwave-runtime-evidence.test.mjs
       - name: Verify pinned primary numerical sources
@@ -159,8 +163,13 @@ jobs:
       - name: Prepare workspace storage and browser
         run: |
           mkdir -p .ci-scratch
+          test "$(realpath -m "$CI_STORAGE")" = "$CI_STORAGE"
           sudo mkdir -p "$CI_STORAGE"
           sudo chown "$(id -u):$(id -g)" "$CI_STORAGE"
+          browser_tmp=/mnt/workspace/.dev-state/agent-work/cache/iwrui
+          test "$(realpath -m "$browser_tmp")" = "$browser_tmp"
+          sudo mkdir -p "$browser_tmp"
+          sudo chown "$(id -u):$(id -g)" "$browser_tmp"
           test "$(realpath "$CI_STORAGE")" = "$CI_STORAGE"
           mkdir -p "$CI_STORAGE/evidence" "$CI_STORAGE/cache"
           test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
@@ -289,6 +298,10 @@ jobs:
           test "$(realpath -m "$diagnostic_storage")" = "$diagnostic_storage"
           sudo mkdir -p "$diagnostic_storage"
           sudo chown "$(id -u):$(id -g)" "$diagnostic_storage"
+          browser_tmp=/mnt/workspace/.dev-state/agent-work/cache/iwrui
+          test "$(realpath -m "$browser_tmp")" = "$browser_tmp"
+          sudo mkdir -p "$browser_tmp"
+          sudo chown "$(id -u):$(id -g)" "$browser_tmp"
           echo "DIAGNOSTIC_STORAGE=$diagnostic_storage" >> "$GITHUB_ENV"
           mkdir -p "$GITHUB_WORKSPACE/.ci-scratch" "$GITHUB_WORKSPACE/.playwright"
           echo "TMPDIR=$GITHUB_WORKSPACE/.ci-scratch" >> "$GITHUB_ENV"
