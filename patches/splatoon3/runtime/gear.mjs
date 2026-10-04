@@ -1,4 +1,33 @@
 // Gear uses three equipment pieces, each with one 10 AP main and three 3 AP subs.
+
+// The single owner/proxy-agnostic death consequence. `Actor.splat` (owner) and
+// `NetMatch._remoteSplat` (proxy) both land here so gear modifiers can never
+// diverge between the two observers of the same death.
+//
+// `specialBefore` is the pre-death gauge: the native owner path already applied
+// its own 0.5 multiply before we run, so we overwrite from the captured value
+// rather than compounding. The proxy path never applies that multiply, so it
+// passes nothing and we read the (still untouched) gauge ourselves.
+//
+// Exactly-once is keyed to the death counter rather than a boolean, so no reset
+// bookkeeping is needed and the next death re-arms automatically. Both callers
+// increment `stats.deaths` AFTER this runs, so the death being applied here is
+// `stats.deaths + 1` on both paths.
+export function applyDeathGear(a, specialBefore) {
+  if (!a || !a.s3 || a.alive) return false;
+  const s3 = a.s3, m = s3.modifiers || {};
+  const deathId = (s3.deaths || 0) + 1;
+  if (s3.deathGearDeathId === deathId) return false;   // already applied for this death
+  s3.deathGearDeathId = deathId;
+  s3.deaths = deathId;
+  a.special = (specialBefore === undefined ? a.special : specialBefore) * (m.specialSaver ?? 0.5);
+  if ((s3.splatsThisLife || 0) === 0 && s3.previousLifeNoSplat) {
+    a.respawnTimer = Math.max(0, a.respawnTimer - gearTuning.respawnChaseTime * (1 - (m.quickRespawn ?? 1)));
+  }
+  s3.previousLifeNoSplat = (s3.splatsThisLife || 0) === 0;
+  s3.splatsThisLife = 0;
+  return true;
+}
 export const ABILITIES = Object.freeze({
   none: 'なし', runSpeed: 'ヒト移動速度アップ', swimSpeed: 'イカダッシュ速度アップ',
   inkSaverMain: 'インク効率アップ（メイン）', inkSaverSub: 'インク効率アップ（サブ）',
@@ -41,11 +70,13 @@ export function modifiersFor(loadout, curves) {
   return result;
 }
 const STORAGE = 'inkwave.splatoon3.gear.v1';
+let gearTuning = null;   // profile tuning captured for the death helper below
 export function readLoadout() {
   try { return normalizeLoadout(JSON.parse(globalThis.localStorage?.getItem(STORAGE) || 'null')); }
   catch { return emptyLoadout(); }
 }
 export function installGear(api, tuning) {
+  gearTuning = tuning;
   const { Actor, WeaponRunner, G } = api;
   const reset = Actor.prototype.reset, setWeapon = Actor.prototype.setWeapon;
   function equip(a) {
@@ -106,12 +137,9 @@ export function installGear(api, tuning) {
   Actor.prototype.splat = function (...args) {
     const before = this.special, alive = this.alive;
     const result = splat.apply(this, args);
-    if (alive && !this.alive) {
-      this.special = before * (this.s3?.modifiers?.specialSaver ?? 0.5);
-      if ((this.s3?.splatsThisLife || 0) === 0 && this.s3?.previousLifeNoSplat) this.respawnTimer = Math.max(0, this.respawnTimer - tuning.respawnChaseTime * (1 - (this.s3?.modifiers?.quickRespawn ?? 1)));
-      this.s3.previousLifeNoSplat = (this.s3.splatsThisLife || 0) === 0;
-      this.s3.splatsThisLife = 0;
-    }
+    // The native body already halved the gauge, so hand it the pre-death value
+    // explicitly; the proxy path never applies that halving at all.
+    if (alive && !this.alive) applyDeathGear(this, before);
     return result;
   };
   api.on('splatted', ({ attacker }) => { if (attacker?.s3) attacker.s3.splatsThisLife = (attacker.s3.splatsThisLife || 0) + 1; });

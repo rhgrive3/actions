@@ -65,7 +65,11 @@ export function updateResources(a, dt) {
   }
   const wasFull = a.ink >= P.inkMax;
   const weaponDelay = a.weapon.inkRecoverStop ?? r.inkRefillDelay;
-  const delay = Math.max(weaponDelay, a.s3?.inkRecoverStop || 0);
+  // Only the weapon's own post-fire stop gates the tank here. The former
+  // `Math.max(weaponDelay, a.s3?.inkRecoverStop || 0)` second term was never
+  // assigned anywhere, so it was inert; the sub/flick stop is tracked
+  // separately through a.s3.recoverStopRemaining and applied below.
+  const delay = weaponDelay;
   if(a.s3) a.s3.recoverStopRemaining = Math.max(0,(a.s3.recoverStopRemaining || 0)-dt);
   const canRefill = a.lastFire + 1e-10 >= delay && (a.s3?.recoverStopRemaining || 0) <= 1e-10 && !a.weaponRunner.busy() && !a.weaponRunner.s3Stored;
   if (canRefill) {
