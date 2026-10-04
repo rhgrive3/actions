@@ -65,3 +65,11 @@ Unchanged by design:
 ## Review status
 
 Strong Draft integration candidate. Release acceptance requires CI plus the real-device checklist.
+
+
+## Final finishing review (2026-10-04)
+
+- The optional `DeviceMotionEvent.requestPermission()` completion now has the same lifecycle-epoch ownership guard as the required orientation permission. An obsolete result from a prior lifecycle epoch cannot overwrite `motionPermission`; the regression test resolves both stale browser promises after the epoch change and requires the optional state to remain `prompt`.
+- Automated acceptance on this branch requires 24 hide/show suspend-resume cycles with one frame owner and stable listener/subscriber counts, plus a 30-second wall-clock discontinuity whose first simulation frame is rebased to `dt=0`.
+- Suspend/resume clears stale keyboard, mouse, touch, gamepad edges and gyro deltas while preserving authoritative gameplay state such as cooldown, an active dodge/roll object, and projectile age.
+- Physical iPhone/iPad Safari and especially installed Home Screen Web App gyro behavior remain **real-device pending**. Chromium/WebKit automation is compatibility evidence, not a substitute for the OS permission/lifecycle path.
