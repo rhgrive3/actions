@@ -4,7 +4,8 @@
 
 - Source workstream package: `inkwave-astra-subspecial-fidelity-3fd91fa.zip`
 - Source workstream baseline: `5e28dbd16f7829aebd88052ff5f7fdf71f39fdad`
-- Integration base: `0859bf4fab08edc74c25fcb790e662a748a91ec9`
+- Original integration base: `0859bf4fab08edc74c25fcb790e662a748a91ec9`
+- Current main acceptance baseline: `404c66c858cfea14e81225fb6364febcf2c9c528`
 - Splatoon reference: 11.3.0
 - Pinned datamine: `Leanny/splat3@7280ff9cde8bb1c5dcef46c700c326471584d2e6`
 
@@ -99,9 +100,9 @@ This workstream intentionally does not modify:
 - PWA/lifecycle
 - network protocol
 
-PR #63 can compose with this work. Preserve #63's existing Bomb gravity, release-origin and fuse-boundary fixes while retaining this PR's throw-vector mapping, any-surface arming condition, paint distribution, Storm 24 DPS and special ink refill.
+Network / Replication PR #182 composes outside this gameplay adapter. The combined acceptance branch must retain #182's owner-authority, replay/terminal ordering and ghost muting while preserving this PR's throw-vector mapping, any-surface arming condition, center+15 paint distribution, Storm 24 DPS / 8 s and special ink refill. This workstream itself does not add network fields.
 
-PR #64 remains the owner for main-weapon ballistics.
+Main-weapon ballistics remain outside this workstream.
 
 ## Remaining limitations
 
