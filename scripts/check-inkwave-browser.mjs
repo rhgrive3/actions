@@ -114,8 +114,14 @@ try {
   // Native keyboard events traverse the loaded match's complete input/action
   // pipeline. Only ground collision is pinned for this admission-only proof;
   // the gameplay check above still uses the actual world Physics.
+  await page.bringToFront();
   await page.evaluate(() => {
     const G = globalThis.s3ProbeG, g = G.game, a = g.match.local;
+    const canvas = g.R?.renderer?.domElement || document.querySelector('canvas');
+    if (!canvas) throw Error('Game canvas unavailable for physical keyboard proof');
+    const oldTabIndex = canvas.getAttribute('tabindex');
+    canvas.tabIndex = -1; canvas.focus({ preventScroll: true });
+    if (document.activeElement !== canvas) throw Error('Game canvas did not own keyboard focus');
     const wasFrozen = g.frozen;
     g.debug.freeze();
     g.debug.fire(false);
@@ -127,7 +133,7 @@ try {
     // boundary trial starts at a known tick phase before testing two half frames.
     g.s3Clock.reset();
     const integrate = a._integrate, trigger = a.character.trigger;
-    const proof = window.actionProof = { dodges: 0, jumps: 0, wasFrozen };
+    const proof = window.actionProof = { dodges: 0, jumps: 0, wasFrozen, canvas, oldTabIndex };
     a._integrate = () => { a.grounded = true; };
     a.character.trigger = function (name, ...args) {
       if (name === 'dodge') proof.dodges++; if (name === 'jump') proof.jumps++;
@@ -147,6 +153,7 @@ try {
     await page.evaluate(() => {
       const g = s3ProbeG.game;
       g.debug.key('KeyD', true); g.debug.fire(true);
+      if (document.activeElement !== actionProof.canvas) throw Error('Canvas lost keyboard focus before first fixed tick');
       if (!g.input.keys.has('Space') || !g.input.pressed.has('Space')) throw Error('Physical Space edge did not reach Input before first fixed tick');
       if (!g.input.keys.has('KeyD') || !g.input.mouse.left) throw Error('First dodge preconditions were not established');
       g._skipRender = true; for (let i = 0; i < 31; i++) g._frame(1 / 60);
@@ -157,6 +164,7 @@ try {
     result.actionReliability = await page.evaluate(() => {
       const g = s3ProbeG.game;
       g.debug.fire(true);
+      if (document.activeElement !== actionProof.canvas) throw Error('Canvas lost keyboard focus before second fixed tick');
       if (!g.input.keys.has('Space') || !g.input.pressed.has('Space')) throw Error('Physical Space edge did not reach Input before second fixed tick');
       if (!g.input.keys.has('KeyA') || !g.input.mouse.left) throw Error('Second dodge preconditions were not established');
       const before = actionProof.dodges;
@@ -174,6 +182,11 @@ try {
     await page.evaluate(() => {
       const g = s3ProbeG.game, wasFrozen = actionProof.wasFrozen;
       actionProof.restore(); g.debug.fire(false); g.debug.key('KeyD', false); g.debug.key('KeyA', false); g._skipRender = false; g.input.keys.clear();
+      const canvas = actionProof.canvas;
+      if (canvas) {
+        if (actionProof.oldTabIndex === null) canvas.removeAttribute('tabindex');
+        else canvas.setAttribute('tabindex', actionProof.oldTabIndex);
+      }
       if (!wasFrozen) g.debug.unfreeze();
     });
   }
