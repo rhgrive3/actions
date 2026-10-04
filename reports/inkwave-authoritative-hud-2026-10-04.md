@@ -167,3 +167,15 @@ The active checker now prints its bounded error message and uploads failed
 game evidence separately from passing receipts; no success check is relaxed.
 Another supported local Chromium launch still failed at the required socket,
 so final native acceptance continues in CI.
+
+### Rendered-frame touch ownership check
+
+Run37224347871 passed all four jobs, but manual inspection still found the touch
+PNG had reverted to keyboard UI between synchronous DOM checks and capture.
+It is therefore not accepted as final touch visual proof. The fixture now
+releases desktop pointer lock through the normal pause/resume path before
+resizing, lets viewport work settle, and checks the real input owner, visible
+touch button, hidden desktop gauge and 23 paths both before and after capture.
+A locator screenshot additionally requires the touch button itself to remain
+visible. These strengthen acceptance only; production input behavior is not
+changed. Focused checks pass17/17. Fresh screenshot evidence is still required.

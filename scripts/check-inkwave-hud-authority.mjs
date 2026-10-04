@@ -35,9 +35,18 @@ export async function checkHudAuthority({ page, evidence }) {
   } finally {if(viewport)await page.setViewportSize(viewport);}
   // Desktop CI explicitly mounts the actual touch controller. This is native
   // DOM/frame coverage, not a claim of physical phone or permission testing.
+  const resumeForTouch=await page.evaluate(async()=>{
+    const {G}=await import(new URL('src/core/ctx.js',document.baseURI).href);
+    // Release desktop pointer lock through the normal pause path before resizing.
+    // A deferred locked mousemove must not retake keyboard ownership mid-capture.
+    if(document.pointerLockElement&&!G.game.match.paused){G.game.pause();return true;}
+    return false;
+  });
+  if(resumeForTouch)await page.waitForFunction(()=>!document.pointerLockElement);
   await page.setViewportSize({width:844,height:390});
+  await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
   try {
-    result.touch=await page.evaluate(async()=>{
+    result.touch=await page.evaluate(async(resumeForTouch)=>{
       const {G}=await import(new URL('src/core/ctx.js',document.baseURI).href);
       const {MobileInput}=await import(new URL('src/core/mobile.js',document.baseURI).href);
       const g=G.game,a=g.match.local,original=g.input.mobile;
@@ -46,6 +55,7 @@ export async function checkHudAuthority({ page, evidence }) {
       globalThis.__hudTouchFixture=saved;
       if(!m.active){m.active=true;m._install();}
       g.input.mobile=m;g.input.lastDevice='touch';document.documentElement.classList.add('iw-touch-ui');m.setVisible(true);
+      if(resumeForTouch)g.resume();
       const rows=[];
       for(const [fraction,ready,filled]of [[0,false,0],[.47,false,10],[.99999,false,22],[1,true,23],[1,true,23],[0,false,0],[.47,false,10]]){
         a.specialActive=null;a.special=a.specialCost()*fraction;g._updateHud(1/60);
@@ -57,8 +67,17 @@ export async function checkHudAuthority({ page, evidence }) {
       if(getComputedStyle(g.hud.sp).display!=='none')throw Error('Touch replacement did not hide desktop gauge');
       if(!m.els.special.checkVisibility({checkOpacity:true,checkVisibilityCSS:true}))throw Error('Touch special button is not visible');
       return rows;
+    },resumeForTouch);
+    await page.evaluate(async()=>{await Promise.all(document.getAnimations().filter(a=>a.effect?.getTiming().iterations!==Infinity).map(a=>a.finished.catch(()=>{})));await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));});
+    const touchState=()=>page.evaluate(async()=>{
+      const {G}=await import(new URL('src/core/ctx.js',document.baseURI).href),m=G.game.input.mobile;
+      return {owner:G.game.input.lastDevice,buttonVisible:!!m.els?.special?.checkVisibility({checkOpacity:true,checkVisibilityCSS:true}),desktopHidden:getComputedStyle(G.game.hud.sp).display==='none',segments:m.els?.special?.querySelectorAll('.iwm-sp-segment').length};
     });
+    const requireTouch=state=>{if(state.owner!=='touch'||!state.buttonVisible||!state.desktopHidden||state.segments!==23)throw Error('Touch capture lost native ownership/visibility: '+JSON.stringify(state));};
+    result.touchBeforeCapture=await touchState();requireTouch(result.touchBeforeCapture);
+    await page.locator('.iwm-b--special').screenshot({path:path.join(evidence,'special-23-segments-touch-button.png'),animations:'disabled',timeout:90000});
     await page.screenshot({path:path.join(evidence,'special-23-segments-touch.png'),animations:'disabled',timeout:90000});
+    result.touchAfterCapture=await touchState();requireTouch(result.touchAfterCapture);
   } finally {
     await page.evaluate(async()=>{
       const s=globalThis.__hudTouchFixture;if(!s)return;
