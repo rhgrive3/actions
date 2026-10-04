@@ -116,6 +116,9 @@ try {
   // the gameplay check above still uses the actual world Physics.
   await page.evaluate(() => {
     const G = globalThis.s3ProbeG, g = G.game, a = g.match.local;
+    const wasFrozen = g.frozen;
+    g.debug.freeze();
+    g.debug.fire(false);
     a.setWeapon('dualies'); a.ink = 100; a.form = 'kid'; a.grounded = true;
     a.climbing = false; a.superJumpState = a.specialActive = null;
     a.jumpBuffer = a.fireBuffer = 0; a.intent.jump = false; a._prevIntent.jump = false;
@@ -124,18 +127,16 @@ try {
     // boundary trial starts at a known tick phase before testing two half frames.
     g.s3Clock.reset();
     const integrate = a._integrate, trigger = a.character.trigger;
-    const proof = window.actionProof = { dodges: 0, jumps: 0 };
+    const proof = window.actionProof = { dodges: 0, jumps: 0, wasFrozen };
     a._integrate = () => { a.grounded = true; };
     a.character.trigger = function (name, ...args) {
       if (name === 'dodge') proof.dodges++; if (name === 'jump') proof.jumps++;
       return trigger.call(this, name, ...args);
     };
     proof.restore = () => { a._integrate = integrate; a.character.trigger = trigger; };
-    // This proof targets physical keyboard edge delivery. Pin the independent
-    // held-fire admission precondition through the game's canonical debug input
-    // instead of a synthetic mouse event, which can be invalidated by a delayed
-    // pointer-lock transition in the lifecycle-integrated build.
-    g.debug.fire(true);
+    // Freeze only the live rAF-driven simulation during this admission proof.
+    // Physical browser keyboard events still reach Input, but cannot be consumed
+    // by an unrelated live frame before the explicit fixed-tick calls below.
   });
   try {
     await page.keyboard.down('KeyD'); await page.keyboard.down('Space');
@@ -166,7 +167,11 @@ try {
     await page.keyboard.up('Space'); await page.keyboard.up('KeyA');
     await page.evaluate(() => { s3ProbeG.game.debug.fire(false); s3ProbeG.game._frame(1 / 60); });
   } finally {
-    await page.evaluate(() => { actionProof.restore(); s3ProbeG.game.debug.fire(false); s3ProbeG.game._skipRender = false; s3ProbeG.game.input.keys.clear(); });
+    await page.evaluate(() => {
+      const g = s3ProbeG.game, wasFrozen = actionProof.wasFrozen;
+      actionProof.restore(); g.debug.fire(false); g._skipRender = false; g.input.keys.clear();
+      if (!wasFrozen) g.debug.unfreeze();
+    });
   }
   result.weaponMotion = await page.evaluate(async () => {
     const G=globalThis.s3ProbeG,a=G.game.match.local,ch=a.character,dt=1/60;
