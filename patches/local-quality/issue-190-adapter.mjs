@@ -86,22 +86,25 @@ export function adaptPaintMipmaps(rel, code) {
     `    r.render(this.scene, this.cam);\n` +
     `    r.setRenderTarget(prev);\n` +
     `    r.autoClear = ac;`,
-    `    r.autoClear = false;\n` +
-    `    r.setRenderTarget(this.rt);\n` +
     `    const needMip = !!this._mipRequested;\n` +
     `    if (needMip) {\n` +
     `      this.rt.texture.generateMipmaps = true;\n` +
     `    }\n` +
-    `    r.render(this.scene, this.cam);\n` +
-    `    if (needMip) {\n` +
-    `      this.rt.texture.generateMipmaps = false;\n` +
-    `      this._mipRequested = false;\n` +
-    `      this._lastMipClock = this.clock;\n` +
-    `      this._mipsDirty = false;\n` +
-    `      this._mipRebuildCount = (this._mipRebuildCount || 0) + 1;\n` +
-    `    }\n` +
-    `    r.setRenderTarget(prev);\n` +
-    `    r.autoClear = ac;`,
+    `    try {\n` +
+    `      r.autoClear = false;\n` +
+    `      r.setRenderTarget(this.rt);\n` +
+    `      r.render(this.scene, this.cam);\n` +
+    `    } finally {\n` +
+    `      if (needMip) {\n` +
+    `        this.rt.texture.generateMipmaps = false;\n` +
+    `        this._mipRequested = false;\n` +
+    `        this._lastMipClock = this.clock;\n` +
+    `        this._mipsDirty = false;\n` +
+    `        this._mipRebuildCount = (this._mipRebuildCount || 0) + 1;\n` +
+    `      }\n` +
+    `      r.setRenderTarget(prev);\n` +
+    `      r.autoClear = ac;\n` +
+    `    }`,
     'bounded mip regeneration on render target draw'
   );
 
@@ -132,21 +135,21 @@ export function adaptPaintMipmaps(rel, code) {
     `  }\n\n` +
     `  _regenerateMipmaps() {\n` +
     `    const r = this.renderer;\n` +
-    `    if (!r) return;\n` +
-    `    const tex = this.rt?.texture;\n` +
+    `    if (!r || !this.rt) return;\n` +
+    `    const tex = this.rt.texture;\n` +
     `    if (!tex) return;\n` +
-    `    if (r.textures && r.textures.updateRenderTargetMipmap) {\n` +
-    `      tex.generateMipmaps = true;\n` +
-    `      r.textures.updateRenderTargetMipmap(this.rt);\n` +
+    `    if (!this._emptyScene) this._emptyScene = new THREE.Scene();\n` +
+    `    const prev = r.getRenderTarget();\n` +
+    `    const ac = r.autoClear;\n` +
+    `    tex.generateMipmaps = true;\n` +
+    `    try {\n` +
+    `      r.autoClear = false;\n` +
+    `      r.setRenderTarget(this.rt);\n` +
+    `      r.render(this._emptyScene, this.cam);\n` +
+    `    } finally {\n` +
     `      tex.generateMipmaps = false;\n` +
-    `    } else {\n` +
-    `      const gl = r.getContext?.();\n` +
-    `      const webglTexture = r.properties?.get?.(tex)?.__webglTexture;\n` +
-    `      if (gl && webglTexture) {\n` +
-    `        gl.bindTexture(gl.TEXTURE_2D, webglTexture);\n` +
-    `        gl.generateMipmap(gl.TEXTURE_2D);\n` +
-    `        gl.bindTexture(gl.TEXTURE_2D, null);\n` +
-    `      }\n` +
+    `      r.setRenderTarget(prev);\n` +
+    `      r.autoClear = ac;\n` +
     `    }\n` +
     `    this._lastMipClock = this.clock;\n` +
     `    this._mipsDirty = false;\n` +
@@ -158,3 +161,4 @@ export function adaptPaintMipmaps(rel, code) {
 
   return code;
 }
+
