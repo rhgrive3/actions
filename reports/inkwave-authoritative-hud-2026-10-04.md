@@ -153,3 +153,17 @@ before simulation fast-forward, then requires `checkVisibility` including
 ancestor opacity for both desktop gauge and touch SP button. No production
 visibility behavior or test expectation is relaxed. The old PNGs are not
 claimed as visual gauge acceptance; new exact-head screenshots remain pending.
+
+
+### Exact-head fixture integration follow-up
+
+Run37223898462 passed touch layout and Chromium/WebKit reliability checks, but
+the dirty-source identity fixture omitted the active checker's new helper file
+from its isolated checkout. The copy list now includes that helper while the
+specific forged-overlay rejection remains mandatory. Native touch setup now
+selects `owner.lastDevice = touch` and restores it afterward, so `_syncVisible`
+can legitimately show the installed controls. Focused checks pass16/16.
+The active checker now prints its bounded error message and uploads failed
+game evidence separately from passing receipts; no success check is relaxed.
+Another supported local Chromium launch still failed at the required socket,
+so final native acceptance continues in CI.

@@ -200,7 +200,7 @@ try {
   result.errors = errors; result.consoleErrors = consoleErrors; result.requestFailures = failures;
   fs.writeFileSync(evidence + '/browser-result.json.writing', JSON.stringify(result, null, 2));
   fs.renameSync(evidence + '/browser-result.json.writing', evidence + '/browser-result.json');
-  console.log(JSON.stringify({status:result.status,sourceSha,contentHash:result.contentHash,gearSelects:result.gearSelects,gameplay:result.gameplay,verifiedResponses:receipts.length,errors})); await browser.close();
+  console.log(JSON.stringify({status:result.status,error:result.error,sourceSha,contentHash:result.contentHash,gearSelects:result.gearSelects,gameplay:result.gameplay,verifiedResponses:receipts.length,errors})); await browser.close();
 }
 if (result.status !== 'passed' || errors.length) process.exitCode = 1;
 

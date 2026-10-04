@@ -42,10 +42,10 @@ export async function checkHudAuthority({ page, evidence }) {
       const {MobileInput}=await import(new URL('src/core/mobile.js',document.baseURI).href);
       const g=G.game,a=g.match.local,original=g.input.mobile;
       const m=original.root?original:new MobileInput(original.canvas,g.input);
-      const saved={original,m,created:m!==original,special:a.special,active:a.specialActive,visible:m.visible,touch:document.documentElement.classList.contains('iw-touch-ui')};
+      const saved={original,m,created:m!==original,device:g.input.lastDevice,special:a.special,active:a.specialActive,visible:m.visible,touch:document.documentElement.classList.contains('iw-touch-ui')};
       globalThis.__hudTouchFixture=saved;
       if(!m.active){m.active=true;m._install();}
-      g.input.mobile=m;document.documentElement.classList.add('iw-touch-ui');m.setVisible(true);
+      g.input.mobile=m;g.input.lastDevice='touch';document.documentElement.classList.add('iw-touch-ui');m.setVisible(true);
       const rows=[];
       for(const [fraction,ready,filled]of [[0,false,0],[.47,false,10],[.99999,false,22],[1,true,23],[1,true,23],[0,false,0],[.47,false,10]]){
         a.specialActive=null;a.special=a.specialCost()*fraction;g._updateHud(1/60);
@@ -63,7 +63,7 @@ export async function checkHudAuthority({ page, evidence }) {
     await page.evaluate(async()=>{
       const s=globalThis.__hudTouchFixture;if(!s)return;
       const {G}=await import(new URL('src/core/ctx.js',document.baseURI).href);
-      G.game.input.mobile=s.original;G.game.match.local.special=s.special;G.game.match.local.specialActive=s.active;
+      G.game.input.mobile=s.original;G.game.input.lastDevice=s.device;G.game.match.local.special=s.special;G.game.match.local.specialActive=s.active;
       if(s.created)s.m.destroy();else s.m.setVisible(s.visible);
       document.documentElement.classList.toggle('iw-touch-ui',s.touch);G.game._updateHud(1/60);delete globalThis.__hudTouchFixture;
     });

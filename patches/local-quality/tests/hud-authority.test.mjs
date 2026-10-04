@@ -159,3 +159,13 @@ test('browser gauge evidence requires native intro dismissal and visible desktop
   assert.match(browser,/waitForFunction\(\(\) => globalThis\.s3ProbeG.game.hud\?\._visible && !document\.querySelector\('\.iw-lineup'\)/);
   assert.equal((checks.match(/checkVisibility\(\{checkOpacity:true,checkVisibilityCSS:true\}\)/g)||[]).length,2);
 });
+
+
+test('browser fixtures carry helper imports and select native touch ownership before visibility',()=>{
+  const identity=fs.readFileSync(new URL('scripts/check-inkwave-touch-layout-identity.mjs',root),'utf8');
+  const checks=fs.readFileSync(new URL('scripts/check-inkwave-hud-authority.mjs',root),'utf8');
+  assert.match(identity,/'scripts\/check-inkwave-hud-authority\.mjs'/);
+  assert.match(checks,/g\.input\.lastDevice='touch';[^\n]*m\.setVisible\(true\)/);
+  assert.match(checks,/G\.game\.input\.lastDevice=s\.device/);
+  assert.match(identity,/check\.stderr\.includes\('Build input differs from commit: ' \+ relativeInput\)/);
+});
