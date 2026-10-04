@@ -47,22 +47,26 @@ test('owner/remote isolation: equal progress semantics from separate clocks', ()
   assert.equal(remote.label, 'remote');
 });
 
-test('adapter applies all exact-anchor marker connections without gameplay edits', () => {
+test('adapter wires actual gauge render/clear calls at native anchors without gameplay edits', () => {
   const actor = adaptIssue460Source('src/game/actor.js', read('inkwave-public/src/game/actor.js'));
   assert.match(actor, /phase: 'flight', to: s\.to\.clone\(\), dur: s\.dur/);
+  assert.match(actor, /renderJumpGauge460\(G, this, m460, s\.to, this\.color, THREE\)/);
   assert.match(actor, /this\.s3\.jumpMarker460 = m460/);
-  assert.match(actor, /marker: m460/);
-  assert.match(actor, /if \(this\.s3\) this\.s3\.jumpMarker460 = null;\n        this\.superJumpState = null;/);
+  assert.match(actor, /clearJumpGauge460\(this\);\n        this\.superJumpState = null;/);
+  const clears460 = actor.split('\n').filter((l) => /clearJumpGauge460\(this\)/.test(l));
+  assert.ok(clears460.length >= 4, 'land, cancel, splat and reset each detach the gauge');
   const lines460 = actor.split('\n').filter((l) => l.includes('460') || l.includes('p460') || l.includes('m460'));
-  assert.ok(lines460.length >= 4);
-  assert.ok(!lines460.some((l) => /s\.dur\s*=|invuln|damage|paint\.splat|_resolve/.test(l)));
+  assert.ok(lines460.length >= 6);
+  assert.ok(!lines460.some((l) => /s\.dur\s*=|invuln|damage\.|paint\.splat|_resolve/.test(l)));
   const net = adaptIssue460Source('src/net/netmatch.js', read('inkwave-public/src/net/netmatch.js'));
   assert.match(net, /sjDur460: 0, sjT460: 0, sjMarker460: null/);
   assert.match(net, /a\.net\.sjDur460 = Number\(e\.dur\)/);
   assert.match(net, /n\.sjT460 = \(Number\(n\.sjT460\) \|\| 0\) \+ dt/);
-  assert.match(net, /marker: n\.sjMarker460/);
+  assert.match(net, /renderJumpGauge460\(G, a, n\.sjMarker460, n\.sjTo, a\.color, THREE\)/);
+  assert.match(net, /clearJumpGauge460\(a\)/);
+  assert.match(net, /clearJumpGauge460\(victim\)/);
   const net460 = net.split('\n').filter((l) => l.includes('460') || l.includes('p460'));
-  assert.ok(net460.length >= 5);
+  assert.ok(net460.length >= 6);
   assert.ok(!net460.some((l) => /packActor|unpackActor|F\.sjFlight\s*[:=]/.test(l)));
   assert.throws(() => adaptIssue460Source('src/game/actor.js', actor), /issue-460 patch conflict/);
 });
