@@ -234,3 +234,7 @@ cloud/Halyard cube allocation at default high settings, not only after later
 runtime refresh. Existing formats, appearance policy and gameplay stay intact.
 These are project resource dimensions, not Nintendo/Switch memory values.
 See [the cold-boot budget report](inkwave-cold-boot-budgets-2026-10-04.md).
+
+## 2026-10-04 Charger paint / Dualies and Roller launch dependency
+
+[#407/#420/#414/#431 comparison](inkwave-weapon-paint-inertia-2026-10-04.md) separates Charger impact and line-spacing endpoint ratios from absolute distance calibration, and adds the sourced player-forward launch dependency at final projectile publication. Native/minified regressions are distinguished from still-unverified Nintendo internal basis/clamps and Switch/browser physical acceptance.
