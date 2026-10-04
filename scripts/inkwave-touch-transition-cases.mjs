@@ -21,9 +21,6 @@
 // - WebKit: DOM hit-tested PointerEvents ('DOM-PointerEvent')
 
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 
 /**
  * Execute the complete suite of touch transition and resize regression checks
@@ -551,7 +548,8 @@ export async function runTouchTransitionCases({
     moveMag: Math.hypot(mobile.moveX, mobile.moveY),
   }));
   assert(postRelayoutFixed.stickActive, 'Fixed stick must preserve active hold after same-angle relayout');
-  assert.equal(postRelayoutFixed.stickId, 25, 'Fixed stick must preserve pointerId');
+  assert.equal(postRelayoutFixed.stickId, preRelayoutFixed.stickId, 'Fixed stick must preserve the browser-assigned pointerId');
+  assert(Math.abs(postRelayoutFixed.moveMag - preRelayoutFixed.moveMag) < 1e-6, 'Same-coordinate move must preserve normalized stick deflection');
   assert(postRelayoutFixed.moveMag > 0, 'Fixed stick must preserve movement deflection on same-coordinate movement');
 
   await gesture('touchEnd', []);
@@ -585,9 +583,9 @@ export async function runTouchTransitionCases({
   await gesture('touchStart', [{ id: 26, x: portraitFire.x, y: portraitFire.y }]);
   const preFlipHold = await page.evaluate(() => ({
     fireDown: mobile.down('fire'),
-    hasPtr: mobile._ptr.has(26),
+    pointerId: [...mobile._ptr.keys()][0],
   }));
-  assert(preFlipHold.fireDown && preFlipHold.hasPtr, 'FIRE hold established in portrait layout');
+  assert(preFlipHold.fireDown && preFlipHold.pointerId !== undefined, 'FIRE hold established in portrait layout');
 
   // Spy on mobile.gyro.resync to assert no gyro resync occurs on keyboard aspect flip
   await page.evaluate(() => {
@@ -606,15 +604,15 @@ export async function runTouchTransitionCases({
     // while screen angle remains fixed at 0
     await setViewport(768, 400);
 
-    const postFlipState = await page.evaluate(() => {
+    const postFlipState = await page.evaluate((pointerId) => {
       const spy = window._gyroSpy || {};
       return {
         fireDown: mobile.down('fire'),
-        hasPtr: mobile._ptr.has(26),
+        hasPtr: mobile._ptr.has(pointerId),
         ptrSize: mobile._ptr.size,
         resyncCalls: spy.resyncCalls ?? 0,
       };
-    });
+    }, preFlipHold.pointerId);
 
     assert(postFlipState.fireDown, 'Held button must survive keyboard aspect flip with fixed angle');
     assert(postFlipState.hasPtr, 'Pointer ownership must survive keyboard aspect flip with fixed angle');
@@ -683,6 +681,40 @@ export async function runTouchTransitionCases({
   await gesture('touchEnd', []);
   entry.checks.push('true-rotation-clears-all-old-ownership');
 
+  // A forced capture-transfer failure must leave implicit canvas ownership usable.
+  // This is DOM PointerEvent evidence in both engines; normal Chromium gestures
+  // above remain native CDP evidence with browser-assigned pointer IDs.
+  await resetMobileState();
+  await setDevice('kbm');
+  const failedCapture = await page.evaluate(({ x, y }) => {
+    const canvas = document.getElementById('game');
+    const capture = mobile.root.setPointerCapture;
+    const down = mobile._down, press = mobile._press;
+    let downCalls = 0, pressCalls = 0;
+    mobile.root.setPointerCapture = () => { throw new DOMException('Forced capture failure'); };
+    mobile._down = function(e) { downCalls++; return down.call(this, e); };
+    mobile._press = function(...args) { pressCalls++; return press.apply(this, args); };
+    const dispatch = type => canvas.dispatchEvent(new PointerEvent(type, {
+      bubbles: true, cancelable: true, pointerType: 'touch', pointerId: 901,
+      clientX: type === 'pointermove' ? x - 70 : x, clientY: y,
+    }));
+    try {
+      dispatch('pointerdown');
+      const held = mobile.down('fire') && mobile._ptr.has(901);
+      dispatch('pointermove');
+      const aiming = mobile.lookDX < 0;
+      dispatch('pointercancel');
+      const cancelled = !mobile.down('fire') && !mobile._ptr.has(901) && mobile._pendingEdges.size === 0;
+      dispatch('pointerup');
+      return { held, aiming, cancelled, downCalls, pressCalls };
+    } finally {
+      mobile.root.setPointerCapture = capture;
+      mobile._down = down; mobile._press = press;
+    }
+  }, fireBox);
+  assert.deepEqual(failedCapture, { held: true, aiming: true, cancelled: true, downCalls: 1, pressCalls: 1 });
+  entry.checks.push('DOM-forced-capture-failure-canvas-move-cancel-and-up-with-one-router-edge');
+
   // =========================================================================
   // 9. NATIVE LOSTPOINTERCAPTURE CLEANUP
   // =========================================================================
@@ -690,31 +722,31 @@ export async function runTouchTransitionCases({
   await gesture('touchStart', [{ id: 35, x: fireBox.x, y: fireBox.y }]);
   const preLostState = await page.evaluate(() => ({
     fireDown: mobile.down('fire'),
-    hasPointer: mobile._ptr.has(35),
+    pointerId: [...mobile._ptr.keys()][0],
   }));
   assert(preLostState.fireDown, 'FIRE hold active before lostpointercapture');
-  assert(preLostState.hasPointer, 'Pointer tracked in _ptr before lostpointercapture');
+  assert(preLostState.pointerId !== undefined, 'Pointer tracked in _ptr before lostpointercapture');
 
   // Dispatch native lostpointercapture event on mobile.root
-  await page.evaluate(() => {
+  await page.evaluate((pointerId) => {
     const root = mobile.root || document.getElementById('iw-mobile-controls');
     root.dispatchEvent(new PointerEvent('lostpointercapture', {
       bubbles: true,
       cancelable: true,
       pointerType: 'touch',
-      pointerId: 35,
+      pointerId,
       clientX: 0,
       clientY: 0,
     }));
-  });
+  }, preLostState.pointerId);
 
-  const postLostState = await page.evaluate(() => ({
+  const postLostState = await page.evaluate((pointerId) => ({
     fireDown: mobile.down('fire'),
     pressedEdges: mobile.pressed.has('fire'),
     pendingEdgesSize: mobile._pendingEdges?.size ?? 0,
     ptrSize: mobile._ptr.size,
-    hasPointer: mobile._ptr.has(35),
-  }));
+    hasPointer: mobile._ptr.has(pointerId),
+  }), preLostState.pointerId);
   assert.equal(postLostState.fireDown, false, 'lostpointercapture must release button hold');
   assert.equal(postLostState.pressedEdges, false, 'lostpointercapture must clear pressed edge');
   assert.equal(postLostState.pendingEdgesSize, 0, 'lostpointercapture must clear _pendingEdges');

@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import { adaptSource } from '../../splatoon3/adapter.mjs';
 import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
 import { adaptReliability } from '../../reliability/adapter.mjs';
-import { adaptFirstTouch, adoptCanvasTouch } from '../first-touch-adapter.mjs';
+import { adaptFirstTouch, adoptCanvasTouch, continueCanvasTouch } from '../first-touch-adapter.mjs';
 
 test('first canvas touch delegates the original event once; other event paths stay independent', () => {
   const canvas = { ownerDocument: { hidden: false } }, delivered = [];
@@ -50,4 +50,18 @@ test('first-touch adapter composes with production overlays and rejects duplicat
   assert.throws(() => adaptFirstTouch(rel, fixed), /first touch conflict/);
   assert.throws(() => adaptFirstTouch(rel, prior.replace("root.addEventListener('pointerdown'", "root.addEventListener('changed'")), /first touch conflict/);
   assert.equal(adaptFirstTouch('src/core/input.js', 'unchanged'), 'unchanged');
+});
+
+test('canvas retains move and cancel routing when transfer of implicit capture fails', () => {
+  const canvas = {}, calls = [];
+  const mobile = { canvas, _abort: new AbortController(), _ptr: new Map([[7, {}]]),
+    _stick: { id: -1 }, _move(e) { calls.push(['move', e.pointerId]); },
+    _up(e) { calls.push(['up', e.pointerId]); this._ptr.delete(e.pointerId); } };
+  const event = { pointerType: 'touch', pointerId: 7, target: canvas };
+  assert.equal(continueCanvasTouch(mobile, event, false), true);
+  assert.equal(continueCanvasTouch(mobile, {...event, target: {}}, false), false);
+  assert.equal(continueCanvasTouch(mobile, {...event, pointerId: 8}, true), false);
+  assert.equal(continueCanvasTouch(mobile, event, true), true);
+  assert.equal(continueCanvasTouch(mobile, event, true), false);
+  assert.deepEqual(calls, [['move', 7], ['up', 7]]);
 });
