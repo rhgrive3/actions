@@ -114,12 +114,14 @@ test('menu A is consumed while an unrelated fire tap remains available after res
   assert.equal(h.actor.intent.jump, false); assert.equal(h.actor.intent.fire, true);
 });
 
-test('a render-only map d-pad tap keeps its actual super-jump edge until the simulation tick', async () => {
+test('a render-only map d-pad selection survives until the simulation tick and waits for A confirmation', async () => {
   const h = await boot(), targets = [];
   h.actor.canSuperJump = () => true; h.actor.superJump = target => targets.push(target);
   h.setPads(pad([3, 14])); h.frame(STEP / 2);
   assert.equal(targets.length, 0); assert.equal(h.input.padPressed.has(14), true);
   h.setPads(pad([3])); h.frame(STEP / 2);
+  assert.equal(targets.length, 0); assert.equal(h.controller.padJumpIndex, 0);
+  h.setPads(pad([1])); h.frame(STEP);
   assert.deepEqual(targets, [h.other]); h.frame(STEP);
   assert.equal(targets.length, 1);
 });

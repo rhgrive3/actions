@@ -264,3 +264,39 @@ See [weapon edge-case comparison](inkwave-weapon-edgecases-2026-10-04.md) for #3
 受入では実Input.pollPad、PlayerController、Actor、WeaponRunnerとnative保存関数を使用。UI/センサー/描画のみをfixture化し、30/60/120Hzから同じ60Hz tickのmap/charge/fire履歴を比較。PR #62 の正確な input-adapter/touch-edge-adapter を一時合成した35試験も成功。CPU負例はcontrols adapterだけを実dispatcher順序から外し、4件の故障を検出する。GPU/実機成功とは別扱い。
 
 最終ローカル検証: 全体754/754（失敗/skipなし）、controls受入12/12、公開minify出力12/12、負例は2pass/10fail、既存pauseとの専用合計35/35。PR #62 `683957332748ea173fa49408b1df2dca42f16265` の正確な物理edge処理を合成して35/35、PR #63 `bfae5fd133c1e4682d0def2d87c5321929cb449d` のprofile/weapons/resourcesを合成して12/12。別PRの全変更を統合済みとはしない。local-quality8/8、motion/workflowゲート10/10、raw upstream差分なし。exact-head GitHub browser CIはPRで追跡する。
+
+## 2026-10-04 — pad map confirmation and shared touch camera reset (#391, #421)
+
+Dependency: existing controls PR #325. This batch reuses its standard mapping and
+`PlayerController.resetCamera`; it does not recreate or claim that prior work.
+Initial reference head `af41abe1`, reconciled against integration head `c5be5666`.
+Public imported upstream remains unchanged; only build-time navigation connections
+and bounded regression/browser checks are added.
+
+- #391: standard D-pad selects a stable actor identity (or spawn), without jumping.
+  A fresh right-face A press confirms; holding A while newly selecting a direction
+  also confirms. Invalid/dead/removed targets never redirect to another teammate.
+  Close, input-owner change and disabled play clear selection. Existing native HUD
+  beacon, legend and jump-line rendering display the selected target. Mouse/touch
+  direct selection and unknown/raw-pad behavior remain separate.
+- W3C standard mapping explicitly identifies right-face button1, top-face3,
+  left-face2, and directional buttons12–15: https://w3c.github.io/gamepad/#remapping .
+  This extends the Nintendo-position mapping already implemented in #325; no raw
+  device-specific mapping is guessed. S3 map-confirm references and acceptance
+  conditions are retained in https://github.com/rhgrive3/actions/issues/391 .
+- #421: a dedicated camera-reset icon is added beside gyro/pause, including Japanese
+  accessible names and an independent saved/resizable layout entry. It consumes
+  one touch press through the same shared reset function as standard Y, without
+  toggling gyro. Reset clears swipe/pending sensor/tracking state and resynchronizes
+  attitude so the next sample starts a new baseline. Exact Nintendo reset-angle
+  calibration remains unclaimed; existing #325 heading/neutral-pitch semantics
+  are retained. Reference scope: https://github.com/rhgrive3/actions/issues/421 .
+- New production-module tests cover all four targets, confirmation/hold, cancel,
+  removed/dead targets, roster reorder, input ownership, menu-held confirmation,
+  raw/keyboard/touch parity, actual HUD selection output and actual gyro rebaseline.
+  The fixed-clock path covers30/60/120/144Hz render input. A negative control excludes
+  only the navigation adapter; every new case detects the missing behavior.
+- Existing Chromium/WebKit gates are extended with native reset taps, actual sensor
+  rebaseline, native HUD highlight/screenshots, and reset-control layout save/reload.
+  These browser results are reported by exact-head CI; physical Switch/iOS/Android
+  hardware comparison and unmeasured Nintendo motion-reset constants are not claimed.

@@ -262,6 +262,49 @@ try {
       });
       assert.deepEqual(menuPad, { startEdges: 2, menuAcceptOwned: true, nextGameplayPressRestored: true });
       entry.checks.push('actual-built-Input-menu-pad-edge-and-hold-ownership-through-144Hz-clock');
+      // Native touch action, actual shared PlayerController reset, and actual gyro
+      // rebaseline. No sensor permission is requested: the fixture supplies samples.
+      for (const gyroOn of [false, true]) {
+        await page.evaluate(enabled => {
+          mobile.reset(); mobile.setVisible(true); input.lastDevice = 'touch';
+          controller.enabled = true; controller.a.yaw = 1.2;
+          controller.rig.yaw = -2; controller.rig.pitch = .7;
+          mobile.gyro.enabled = enabled; mobile.gyro.dYaw = .4; mobile.gyro.dPitch = .3;
+          mobile.lookDX = .2; mobile.lookDY = .1;
+          sim.s3Clock?.reset();
+        }, gyroOn);
+        await page.locator('[data-c="cameraReset"]').tap();
+        const recentered = await page.evaluate(() => {
+          advance(1 / 60);
+          const first = [rig.yaw, rig.pitch, mobile.gyro.enabled];
+          mobile.gyro._orientation({ alpha: 150, beta: 30, gamma: 45, timeStamp: 1000 });
+          advance(1 / 60);
+          return { first, next: [rig.yaw, rig.pitch], pending: mobile.wasPressed('cameraReset') };
+        });
+        assert.deepEqual(recentered, { first: [1.2, 0, gyroOn], next: [1.2, 0], pending: false });
+      }
+      await page.evaluate(() => { mobile.gyro.enabled = false; mobile.gyro.discard(); });
+      entry.checks.push('native-touch-camera-reset-shares-controller-path-and-rebases-next-sensor-sample');
+      const padHighlight = await page.evaluate(() => {
+        window.navigationPrevious = { match: G.match, input: G.input, pad: input.pad, device: input.lastDevice };
+        input.pad = { mapping: 'standard' }; input.lastDevice = 'pad'; G.input = input;
+        G.match = { state: 'playing', controller }; controller.padJumpIndex = 1;
+        const hud = window.navigationHud = new HUD();
+        hud.lab = { local: controller.a, beacons: [0, 1, 2, 3].map(i => ({ x: .2 + i * .2, y: .3, name: 'Target ' + i, weapon: 'shooter', ok: true, home: i === 3 })) };
+        hud.setVisible(true); hud._mapT = 1;
+        const canvas = document.createElement('canvas'); canvas.width = canvas.height = 256;
+        hud._updMap({ canvas, expanded: true, players: [] }, 0);
+        return { beacon: hud.beacons[1].classList.contains('is-hover'), row: hud.legendRows[1].classList.contains('is-hover'), cursor: hud.mapCursor.classList.contains('is-on'), guide: hud.mapLegend.querySelector('.iw-lg__foot').textContent };
+      });
+      assert.equal(padHighlight.beacon, true); assert.equal(padHighlight.row, true); assert.equal(padHighlight.cursor, false);
+      assert(padHighlight.guide.includes('A'));
+      await page.screenshot({ path: path.join(evidence, engineName + '-pad-map-selection.png') });
+      await page.evaluate(() => {
+        navigationHud.dispose(); const old = navigationPrevious;
+        G.match = old.match; G.input = old.input; input.pad = old.pad; input.lastDevice = old.device;
+        controller.padJumpIndex = -1;
+      });
+      entry.checks.push('actual-built-HUD-highlights-selected-pad-beacon-and-confirmation-guide');
       }
       await runTouchTransitionCases({
         page,

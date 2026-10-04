@@ -11,17 +11,18 @@ import { adaptQualitySource } from '../../local-quality/adapter.mjs';
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const BUILT = process.env.INKWAVE_CONTROLS_SITE;
 const NEGATIVE = process.env.INKWAVE_CONTROLS_BASELINE === '1';
+const NAVIGATION_BASELINE = process.env.INKWAVE_NAVIGATION_BASELINE === '1';
 const UPSTREAM = BUILT ? path.resolve(BUILT) : process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
 export async function fixture() {
   // The negative control omits only the adapter under test from the real order.
   let reliability = adaptReliability;
-  if (NEGATIVE) {
+  if (NEGATIVE || NAVIGATION_BASELINE) {
     if (BUILT) throw new Error('Baseline control requires raw source');
     const dispatcher = fs.readFileSync(path.join(ROOT,'patches/reliability/adapter.mjs'),'utf8');
     const names = dispatcher.match(/const adapters = \[([^\]]+)\]/)[1].split(',').map(x=>x.trim());
     const imports = new Map([...dispatcher.matchAll(/import \{ (\w+) \} from '(\.\/[^']+)';/g)].map(m=>[m[1],m[2]]));
     const adapters=[];
-    for(const name of names) if(name!=='adaptControls') adapters.push((await import(new URL('../'+imports.get(name).slice(2),import.meta.url)))[name]);
+    for(const name of names) if((!NEGATIVE || name!=='adaptControls') && (!NAVIGATION_BASELINE || name!=='adaptNavigation')) adapters.push((await import(new URL('../'+imports.get(name).slice(2),import.meta.url)))[name]);
     reliability=(rel,code)=>adapters.reduce((value,adapt)=>adapt(rel,value),code);
   }
   const listeners = new Map(), storage = new Map(); let pads = [];
