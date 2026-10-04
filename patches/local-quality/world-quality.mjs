@@ -263,13 +263,12 @@ export function updatePaintQuality(game, targetSize, ctx = null, THREE_LIB = THR
   }
 
   const newDensity = targetSize >= 4096 ? 30 : 18;
-  paint.size = targetSize;
-  paint._layout?.(newDensity);
-
   let newRT = null;
   const renderer = paint.renderer;
 
   try {
+    paint.size = targetSize;
+    paint._layout?.(newDensity);
     if (renderer && typeof renderer.setRenderTarget === 'function' && oldRT?.texture && THREE_LIB) {
       newRT = new THREE_LIB.WebGLRenderTarget(targetSize, targetSize, {
         type: THREE_LIB.UnsignedByteType,

@@ -423,3 +423,13 @@ test('quality reallocation resizes linked roller drop bookkeeping', () => {
  assert.ok(fx._qualityDropSource.every(v=>v===null));
  fx._qualityDropGeneration[2500]=42;assert.equal(fx._qualityDropGeneration[2500],42);
 });
+
+test('rollback when atlas layout fails preserves previous atlas and CPU state', () => {
+ const face={atlas:{x:1,y:2,pad:2,ppm:18}};const grid=new Uint8Array([1]);
+ const paint={size:2048,level:{},paintFaces:[face],grid,counts:[1,0],ppm:18,usedHeight:8,
+   _layout(){this.ppm=30;this.usedHeight=999;face.atlas={x:40};throw Error('cannot pack');}};
+ assert.throws(()=>updatePaintQuality(null,4096,{paint},THREE),/cannot pack/);
+ assert.equal(paint.size,2048);assert.equal(paint.ppm,18);assert.equal(paint.usedHeight,8);
+ assert.deepEqual(face.atlas,{x:1,y:2,pad:2,ppm:18});assert.equal(paint.grid,grid);
+ assert.deepEqual(paint.counts,[1,0]);
+});
