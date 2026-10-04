@@ -116,3 +116,7 @@
 - 細分化の `smooth` 1.0（bmesh）は首にたてのしわとかけらを出した（S1、C8、C12 は失敗）。`smooth` 0 + `neck_widen.smooth` 0.5×10（S2）はきれい。首の法線（custom normals）は自動の法線と同じ（0.04 度）なので、細分化しても問題ない。
 - 次: S2 + cove（CA 8 mm + lean、CB 12 mm + lean、CC 12 mm lean なし）。
 - 10/04: cove + lean（CA、CB）はトゲが出る（首が顔をつきぬける）。CC（cove 12、lean なし）: 横のベロは消えた。でも 3/4 で首の横がでこぼこ、横で顎の線にそって段。高さ h（光線）がばらつくため → `cove.weight_smooth`（Blender の重みのならし）を足した。試し: CD（cove 16）、CE（ならし 30）、CF（重みならし 10）、CG（重みならし 30）。
+- 10/04: ユーザー追加: 横で耳の下から首の前への線（顔の面のはしの段）が見える。参照は線がない。
+  - `neck_normals`（新しい手順、いちばん最後）: Data Transfer で首の法線を顔の jaw_tuck の部分へ。効果は小さい。
+  - `jaw_tuck.depth` 20（dive from 20）= N3: 3/4 の固い段の線がやわらかい影になり、横のあごの下のベロも消えた。今いちばん良い。
+  - 正面の角: 角の上は顔（z 62）、下は首（z 23）。重なって角に見える → `floor_fillet`（新しい手順、jaw_tuck の前）: あごの底で首から d mm の点を R - sqrt(R² - (R-d)²) 下げる（Warp）。試し F8、F12、F12s（重みならし 5）。

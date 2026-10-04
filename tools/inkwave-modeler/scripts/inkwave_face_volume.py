@@ -2222,6 +2222,50 @@ def main():
                 me.update()
                 print('FACE_VOLUME', step['name'], 'neck vertices', int((wn > 0.001).sum()), 'mm', step.get('mm_side', step.get('mm')), 'lean', step.get('lean'))
                 continue
+            elif step['kind'] == 'floor_fillet':
+                # the floor under the jaw met the neck at a right angle (front and side views: a corner where the
+                # reference runs in one curve).  Floor points d mm from the neck go down by R - sqrt(R^2 - (R-d)^2)
+                # (a quarter circle of radius R: R at the neck, 0 and level with the floor at d = R), so the floor
+                # bends down into the neck.  The amount depends on the distance to the neck only, so a point never
+                # goes through it.  Blender's Warp moves them; the weights are evened out by vertex-group smoothing
+                R = step['mm']
+                neck = bpy.data.objects[NECK]
+                Wn = er.world(neck)
+                bvh = BVHTree.FromPolygons([tuple(v) for v in Wn], [tuple(pl.vertices) for pl in neck.data.polygons])
+                Wf = er.world(face)
+                d = np.full(len(Wf), np.inf)
+                cand = np.nonzero((loc[:, 1] < step['y_max']) & (NORMALS[:, 1] < step['normal_y']) & (loc[:, 2] > step['z'][0]))[0]
+                for i in cand:
+                    q, nrm, _, dist = bvh.find_nearest(Vector(Wf[i]))
+                    if q is not None:
+                        d[i] = dist * 1000 if nrm.dot(Vector(Wf[i]) - q) > 0 else 0.0
+                t = np.clip(1 - d / R, 0, 1)
+                drop = R - np.sqrt(np.maximum(R * R - (R * t) ** 2, 0))
+                drop[t <= 0] = 0.0
+                z0, z1 = step['z']
+                tz = np.clip((loc[:, 2] - z0) / (z1 - z0), 0, 1)
+                drop *= tz * tz * (3 - 2 * tz)
+                peak = float(drop.max())
+                if peak > 0:
+                    w = drop / peak
+                    if step.get('weight_smooth'):
+                        w = smooth_weights(face, w, step['weight_smooth'])
+                        w = np.clip(w / max(w.max(), 1e-9), 0, 1)
+                    warp(face, w, [0, -peak, 0], loc)
+                gap = join_seam(face, pairs)
+                print('FACE_VOLUME', step['name'], 'vertices', int((drop > 0.01).sum()), 'max mm', round(peak, 2), 'seam gap closed mm', round(float(gap), 3))
+                continue
+            elif step['kind'] == 'neck_normals':
+                # the face laid on the neck (jaw_tuck) ends on it: its own shading differs from the neck's, so the
+                # border reads as a line from under the ear to the neck front (the reference has none).  Blender's
+                # Data Transfer copies the neck's normals onto that part of the face (0 at the jaw line, full
+                # `depth` mm under it), so both surfaces shade alike across the border
+                st = dict([x for x in p['steps'] if x['name'] == step['like']][0], **step.get('override', {}))
+                w = jaw_tuck_weights(loc, st)
+                er.apply_weighted_modifier(face, w, 'DATA_TRANSFER', object=bpy.data.objects[NECK], use_loop_data=True,
+                                           data_types_loops={'CUSTOM_NORMAL'}, loop_mapping='POLYINTERP_NEAREST')
+                print('FACE_VOLUME', step['name'], 'vertices', int((w > 0.001).sum()))
+                continue
             elif step['kind'] == 'jaw_tuck':
                 # the part under the jaw line goes onto the neck (BODY_torso): Blender's Shrinkwrap to the
                 # nearest surface point, outside it by offset_mm.  The neck is measured, not assumed (the head is
