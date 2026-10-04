@@ -1,30 +1,75 @@
 # Final integration — Movement Physics + Sub/Special + Network Replication
 
-Integration baseline: `404c66c858cfea14e81225fb6364febcf2c9c528`.
-Initial combined merge commit: `651ed256dc1e86bb24322c420b13acafb0bf414d`.
+Latest main integration baseline: `f1f98db94af412fd584a459b11fc97346466a063`.
 
-Source heads at integration:
+Latest source heads used:
 - PR #59 Movement Physics: `8880f3bf6aa655dd61a16555fdfdb8b8fec1d10a`
-- PR #259 Bomb / Special / Ink Distribution: `7a508f27d9bda527fcede395fcea244b184b50b0`
+- PR #259 Bomb / Special / Ink Distribution: `16d1259d731cc695b0aa1d467df17be1c1c5bff4`
 - PR #182 Network / Replication: `1f824a176f519ebf86931f9f53a16fef7c5b889c`
 
-This branch exists only for combined acceptance. It must not be merged into `main` by this task.
+Individual INKWAVE validation at those heads is green:
+- PR #59 run `37192505923`
+- PR #259 run `37192957616`
+- PR #182 run `37192638219`
 
-## Acceptance invariants
+The concurrently failing `CXX OpenTTD projection diagnostic` workflow was independently inspected: it fails in the OpenTTD RTTI/vtable probe and is unrelated to INKWAVE.
 
-- gameplay remains on the production fixed 60 Hz clock; 30/60/120 Hz render schedules must produce the same authoritative movement ticks
-- Kid 5.76, own-ink Squid 11.52, Roller base 6.48, Roller dash 7.92 WU/s are retained; scale-independent ratios are 1 : 2 : 1.125 : 1.375
-- standing Kid height 1.45 WU is used only as an internal normalization anchor, not as a Nintendo-meter claim
-- Splat Bomb throw transform/any-surface arm remain enabled and authoritative paint is exactly center + 15 secondary splats
-- Ink Storm remains 24 DPS for 8 s and special activation refills the ink tank
-- remote Bomb/projectile ghosts cannot author gameplay paint/damage; owner splats and terminal events are replayed once
-- stale/duplicate packets and events are rejected and ownership changes retire the old ghost timeline
-- network packet growth is limited to deterministic replay data; Bomb cosmetic spin is intentionally not transmitted
+This branch and Draft PR #337 exist only for combined acceptance. They must not be merged into `main` by this task.
 
-## Combined validation
+## Movement quantitative acceptance
 
-The network native-replay harness is wired to install the Sub/Special fidelity overlay in both owner and receiver VM contexts. Its existing Bomb and Storm scenarios therefore exercise the same final gameplay overlay as the combined build. Bomb acceptance additionally asserts 16 owner paint writes and 16 receiver-applied owner splats, ruling out both missing paint and ghost double-application.
+Authoritative gameplay remains on the production fixed 60 Hz clock.
 
-A combined snapshot test drives Kid, Squid and Roller movement with the Movement Physics vector integrator, publishes 20 Hz actor snapshots, and samples the remote actor at the identical owner tick. Position and velocity must match the quantized owner state within the existing wire precision.
+Retained top speeds:
 
-CI/run receipts are appended after the exact combined SHA completes.
+| Mode | WU/s | standing-Kid-heights/s | ratio to Kid |
+|---|---:|---:|---:|
+| Kid | 5.76 | 3.9724 | 1.000 |
+| own-ink Squid | 11.52 | 7.9448 | 2.000 |
+| Roller base | 6.48 | 4.4690 | 1.125 |
+| Roller dash | 7.92 | 5.4621 | 1.375 |
+| enemy-ink cap | 1.44 | 0.9931 | 0.250 |
+
+The internal normalization anchor is the upstream standing Kid height of 1.45 WU. It is not treated as a Nintendo-meter conversion.
+
+Normal grounded acceleration is 36 WU/s²; attack/aim/sub/special acceleration is 72 WU/s². Candidate 60 Hz behavior reaches Kid top speed in 10 ticks, Squid top speed in 20 ticks, full Kid reversal in 20 ticks, and a full-speed 90° Kid turn in 14 ticks. The 90° turn minimum speed is about 4.0749 WU/s, preserving inertia rather than rotating a full-speed vector in place.
+
+The movement smoke suite includes direct 30/60/120 Hz partition checks and 30/60/120 Hz render schedules feeding the same production 60 Hz fixed clock.
+
+## Bomb / Special acceptance
+
+- Splat Bomb throw transform uses the pinned 11.3.0 values.
+- Fuse arms on first world-surface contact, including vertical walls.
+- Authoritative gameplay paint remains exactly 1 center + 15 secondary splats.
+- Native damage / LOS / FX / audio remain owned by the original gameplay path.
+- Ghost Bombs do not add authoritative replacement paint.
+- Ink Storm remains 24 HP/s for 8 s with radius 10.
+- Special activation refills ink to `PLAYER.inkMax` before native special startup.
+- `RainNum=72` remains reference metadata and is not misrepresented as 72 gameplay splats.
+
+## Network / ownership acceptance
+
+- Owner gameplay remains authoritative; remote projectile/Bomb state is presentation/reconstruction.
+- Ghost projectile/Bomb paths cannot author projectile damage or gameplay paint.
+- Storm keeps the existing victim-owner damage model; catch-up does not burst historical damage.
+- stale/duplicate ticks, event sequences and projectile identities are rejected
+- ownership transfer/disposal retires the old ghost timeline
+- projectile terminal events retire ghosts rather than allowing remote actor collision guesses
+- packet format is not expanded for Bomb cosmetic spin; only replay/ownership data needed for deterministic reconstruction is retained
+
+## Combined cross-regression
+
+The network native-replay fixture is composed with both the Movement/Sub-Special gameplay adapter and the Network adapter.
+
+The combined comparison harness explicitly installs the Sub/Special fidelity overlay in both owner and receiver VM contexts. Therefore its existing `bomb` and `storm` replay scenarios exercise the final throw transform, Bomb 1+15 paint distribution and Storm settings rather than the older baseline overlay.
+
+For the networked Bomb scenario the acceptance harness requires:
+- owner gameplay paint calls: 16
+- receiver-applied owner paint calls: 16
+- ghost-authored authoritative replacement paint: 0 by the existing mute/ghost guards
+
+A combined movement snapshot regression drives Kid, Squid and Roller velocity through the Movement Physics integrator, publishes the resulting owner state on the replication path and verifies remote position/velocity at the same owner tick within existing wire precision.
+
+The first combined CI attempt reached 754/754 gameplay patch tests before failing only in the newly-added integration-test fixture: the test passed the wrong synthetic runner shape to `rollingMovementSpeed`. The production implementation was not implicated. The fixture now uses the production `runner.a.weapon + runner.rollT` shape.
+
+Final acceptance is the exact-head `Validate INKWAVE update` check on Draft PR #337. No `main` merge is performed here.
