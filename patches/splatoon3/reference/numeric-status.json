@@ -1624,6 +1624,11 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "flow.abilityPoints": {
+    "value": 30,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
   "flow.threshold": {
     "value": 3,
     "status": "calibration or derived value; see reference raw table and unverified list",
@@ -1670,17 +1675,17 @@
     "binding": null
   },
   "flow.runMultiplier": {
-    "value": 1.2,
+    "value": 1,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
   "flow.swimMultiplier": {
-    "value": 1.2,
+    "value": 1,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
   "flow.enemyInkSpeedMultiplier": {
-    "value": 1.5,
+    "value": 1,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },

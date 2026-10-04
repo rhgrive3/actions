@@ -319,6 +319,9 @@
     }
   },
   "flow": {
+    "abilityPoints": 30,
+    "effectSource": "https://bsky.app/profile/did:plc:bqlxkhq26ie3xvvjv5kjae3r/post/3mdramqcbbs2o?ref_src=embed",
+    "effectStatus": "Primary community analysis, 2026-02-01; +30 AP for four abilities, cap 57. Not a new Switch measurement. Legacy speed multipliers are identity for pending patch composition.",
     "threshold": 3,
     "duration": 30,
     "extension": 5,
@@ -330,9 +333,9 @@
       "turf": 0.003
     },
     "assistWindow": 5,
-    "runMultiplier": 1.2,
-    "swimMultiplier": 1.2,
-    "enemyInkSpeedMultiplier": 1.5,
+    "runMultiplier": 1,
+    "swimMultiplier": 1,
+    "enemyInkSpeedMultiplier": 1,
     "paintRadius": 0.6,
     "bots": true
   },

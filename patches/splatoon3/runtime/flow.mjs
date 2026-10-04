@@ -32,7 +32,7 @@ export function installFlow({ Actor, on, emit, G }, tuning) {
     }
   }
   const reset = Actor.prototype.reset;
-  Actor.prototype.reset = function (...args) { const result = reset.apply(this, args); this.s3 ||= {}; this.s3.flow = createFlow(); credits.delete(this); return result; };
+  Actor.prototype.reset = function (...args) { const result = reset.apply(this, args); this.s3 ||= {}; this.s3.flow = createFlow(); credits.delete(this); emit('actor:flow', { actor: this, active: false }); return result; };
   const update = Actor.prototype.update;
   Actor.prototype.update = function (dt) {
     const flow = state(this), was = flow.active;
@@ -50,5 +50,6 @@ export function installFlow({ Actor, on, emit, G }, tuning) {
     if (attacker && attacker !== victim && attacker.team !== victim.team) award(attacker, 'splat', 1);
     for (const [helper, time] of credits.get(victim) || []) if (helper !== attacker && G.time - time <= cfg.assistWindow) award(helper, 'assist', 1);
     credits.delete(victim); victim.s3 ||= {}; victim.s3.flow = createFlow();
+    emit('actor:flow', { actor: victim, active: false });
   });
 }
