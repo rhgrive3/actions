@@ -225,3 +225,15 @@ Four current-public defects #366/#370 (one duplicate pair), #375, #384, #395 are
 ## 2026-10-04 weapon edge-case supplement
 
 See [weapon edge-case comparison](inkwave-weapon-edgecases-2026-10-04.md) for #354/#356/#357/#361: stable-human Dualies3F first emission; Splatling separate ground1.6° pitch envelope; terrain Blaster35HP cap; horizontal Roller12+1 gameplay units. The report separates actual source/minified/composed-code tests from S3 probability/position/falloff and released-tap calibration still pending. No native source or deployed main is changed by the draft.
+
+## 2026-10-04: ジャイロ軸反転設定の公開なし (#439)
+
+Splatoon 3 (Ver.11.3.0) のオプションにはモーション操作の感度と ON/OFF のみで、独立したモーション軸反転設定は存在しない。公開版 INKWAVE の Touch 設定は `gyroInvertY` / `gyroInvertX` 行を公開し、`MobileInput.applySettings` が保存済み値を `Gyro.configure` へ渡していたため、非準拠の符号がセッションを跨いでネイティブのヨー/ピッチへ適用されていた。
+
+| 項目 | 内容 |
+|---|---|
+| 本家の根拠 | [Inkipedia — Options](https://splatoonwiki.org/wiki/Options)（S1/S2/S3 の操作設定一覧にモーション軸反転なし）、[Nintendo Support Ver.11.3.0](https://en-americas-support.nintendo.com/app/answers/detail/a_id/59461/)。非公開のキャリブレーション値は推定しない |
+| INKWAVE の実装箇所 | build-only `patches/reliability/gyro-invert-adapter.mjs`（dispatcher `patches/reliability/adapter.mjs` に登録）。`src/ui/menus.js` の TOUCH_TAB から2行を除去し、`src/core/mobile.js` の `configure({ sens: s.gyroSens, invX: s.gyroInvertX, invY: s.gyroInvertY })` を `configure({ sens: s.gyroSens })` へ縮減。生の `inkwave-public/` は変更しない |
+| 再現操作 | 修正前: Touch 設定で Gyro vertical/horizontal を Invert にすると保存され、次回起動以降の傾け・旋回でヨー/ピッチ符号が反転する。修正後: UI に行がなく、保存済み `gyroInvertX/Y = true` があってもネイティブ符号のまま |
+| プレイへの影響 | 準拠プロファイルで反転できる軸が消える。既存の保存値は gyro 経路から読まれなくなり（省略による移行）、隠れた反転状態が残らない。ヨー/ピッチ積分・感度曲線・権限/リスナ寿命（#426）・右スティック/マウス反転（#309 系）・カメラリセット（#490 系）は変更しない |
+| 確認状態 | **ロジック確認済み**：reliability focused suite 378 pass（実 `_setSettings` → `applySettings` → `Gyro.configure`、実 `_orientation` の符号等価と反転コントロール、評価済み TOUCH_TAB 行）、local-quality production composition 49 pass。**本家実機（Switch Ver.11.3.0）との操作比較は未確認**。キャリブレーション値・感度曲線は変更していない |
