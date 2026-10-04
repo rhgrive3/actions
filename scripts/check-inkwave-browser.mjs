@@ -139,11 +139,22 @@ try {
   });
   try {
     await page.keyboard.down('KeyD'); await page.keyboard.down('Space');
-    await page.evaluate(() => { const g = s3ProbeG.game; g._skipRender = true; for (let i = 0; i < 31; i++) g._frame(1 / 60); });
+    await page.evaluate(() => {
+      const g = s3ProbeG.game;
+      // Keyboard focus transitions may legitimately trigger the platform input
+      // boundary reset. Establish the independent held-fire precondition only
+      // after those physical keyboard events have completed.
+      g.debug.fire(true);
+      if (!g.input.mouse.left) throw Error('Held-fire precondition was not established after keyboard focus');
+      g._skipRender = true; for (let i = 0; i < 31; i++) g._frame(1 / 60);
+    });
     await page.keyboard.up('Space'); await page.keyboard.up('KeyD');
     await page.keyboard.down('KeyA'); await page.keyboard.down('Space');
     result.actionReliability = await page.evaluate(() => {
-      const g = s3ProbeG.game, before = actionProof.dodges;
+      const g = s3ProbeG.game;
+      g.debug.fire(true);
+      if (!g.input.mouse.left) throw Error('Held-fire precondition was not re-established before second keyboard edge');
+      const before = actionProof.dodges;
       g._frame(1 / 120); const renderOnly = actionProof.dodges;
       g._frame(1 / 120); const after = actionProof.dodges;
       for (let i = 0; i < 90; i++) g._frame(1 / 60);
