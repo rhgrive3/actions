@@ -19,7 +19,7 @@ import { FixedClock } from '../runtime/clock.mjs';
  *      without firing shot or consuming ink (#390, per evidence/charge-keep-reference-adjudication.md).
  *   5. Resurface into kid form and start fresh charging -> charge starts from 0, never resurrecting full charge (#390).
  *   6. At 70F after the first roll (within ~90F window), execute second action (floor roll or wall roll) ->
- *      chain count is retained (>0) and launch speed applies 0.85 retention penalty (#386).
+ *      chain count is retained (exactly 2) and launch speed applies 0.85 retention penalty (#386).
  *
  * Fixed Clock Schedules:
  *   Advance using FixedClock at 30Hz, 60Hz, and 120Hz schedules and verify invariant simulation outputs.
@@ -200,8 +200,8 @@ test('Issue #390 regression: releasing fire while squid cancels store without sh
   assert.equal(obs.shotsOnRelease, 0, 'No projectile fired on store cancellation');
   // Captured with meaningful partial ink (50) so assertions cannot rely on tank capped at 100
   assert.equal(obs.inkOnRelease, obs.inkBeforeCancel, 'No ink consumed on store cancellation');
-  assert.ok(obs.lastFireOnRelease >= obs.lastFireBeforeCancel, 'lastFire not reset by firing');
-  assert.ok(obs.cooldownOnRelease <= 0, 'No weapon cooldown applied on store cancellation');
+  assert.ok(Math.abs(obs.lastFireOnRelease - (obs.lastFireBeforeCancel + 1 / 60)) < 1e-9, 'lastFire only advances by the simulation tick');
+  assert.ok(Math.abs(obs.cooldownOnRelease - (obs.cooldownBeforeCancel - 1 / 60)) < 1e-9, 'cooldown only decays by the simulation tick');
   // Resources update runs before weapon cancel: cancellation tick does not refill, legitimate refill accounts separately
   assert.ok(obs.inkAfterRefill > obs.inkOnRelease, 'Legitimate ink refill resumes on subsequent tick after stored charge is cleared');
 });
