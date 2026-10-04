@@ -1,5 +1,6 @@
 import { installWeaponEdgecases } from './weapon-edgecases.mjs';
 import { installRollerLogic } from './roller.mjs';
+import { blasterStartupWindup } from './issue-465-blaster-startup.mjs';
 let api;
 export function splatlingBurst(w, charge) {
   const boundary = w.firstChargeTime / w.chargeTime, c = Math.max(0, Math.min(1, charge));
@@ -186,9 +187,20 @@ export function installWeapons(context, profile) {
       this.s3BlasterWindup -= dt; this.firingT = .35;
       if (this.s3BlasterWindup > 1e-10) return;
       this.s3BlasterWindup = 0;
+      // The wind-up ticks have been decrementing `cooldown`; clear them so the
+      // base adds a clean `fireInterval - preDelay` (40f). With the 10f repeat
+      // wind-up that yields the unchanged S3 50f repeat interval. A committed
+      // startup still survives a trigger release (buffered pop-out, never lost).
+      this.cooldown = 0;
       return auto.call(this, dt, { ...input, fire: true }, { ...w, fireInterval: w.fireInterval - w.preDelay });
     }
-    if (input.fire && this.cooldown <= 0 && this.a.ink >= w.inkPerShot) { this.s3BlasterWindup = w.preDelay; this.firingT = .35; return; }
+    if (input.fire && this.cooldown <= 0 && this.a.ink >= w.inkPerShot) {
+      // Issue #465: form-specific first-shot admission — 14f humanoid / 24f swim
+      // instead of treating the 10f profile preDelay as the entire startup.
+      this.s3BlasterWindup = blasterStartupWindup(this.a, input.firePressed, dt, PLAYER.emergeDelay, w.preDelay);
+      this.firingT = .35;
+      return;
+    }
     if (!input.fire) this.cooldown = Math.max(0, this.cooldown);
   };
   const splatling = WeaponRunner.prototype._splatling;
