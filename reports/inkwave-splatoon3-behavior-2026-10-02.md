@@ -257,3 +257,14 @@ Issue #479 の修正（`patches/splatoon3/issue-479-adapter.mjs` および `patc
 | 再現操作 | 自インク壁潜伏からジャンプ長押しでチャージ（例: 15F、30F、44F）し、45F 未満でジャンプ解放。baseline では `surge.phase === 'burst'` かつ `armorTime === 0` となり、直後の被弾を 0 軽減。修正後は 8F 間のアーマー保護窓口（最大 100 HP 吸収）が正常に機能する |
 | プレイへの影響 | 壁際での緊急離脱や牽制、段差越えにおいて、部分チャージノボリを選択した場合のリスク／リターンが正常化され、意図せぬ無防備状態が解消される |
 | 確認状態 | **ロジック確認済み**（`patches/splatoon3/tests/issue-473-surge-armor.test.mjs` にて 10/10 pass。1F/15F/30F/44F 部分チャージおよび 45F フルチャージでの均一アーマー、運動速度スケーリング維持、未発進・途中キャンセル時のアーマー非付与、接地・ヒト化・デス・リセットでの即時解除、30/60/120Hz 描画一致）。**Switch Ver. 11.3.0 実機でのマイクロ秒単位のパケット同期・詳細関節角は未確認**。耐久値（100 HP）・時間（8F）の数値設定は既存 profile.json を維持し、勝手な数値改変は行わない |
+## 2026-10-04: ジャイロ軸反転設定の公開なし (#439)
+
+Splatoon 3 (Ver.11.3.0) のオプションにはモーション操作の感度と ON/OFF のみで、独立したモーション軸反転設定は存在しない。公開版 INKWAVE の Touch 設定は `gyroInvertY` / `gyroInvertX` 行を公開し、`MobileInput.applySettings` が保存済み値を `Gyro.configure` へ渡していたため、非準拠の符号がセッションを跨いでネイティブのヨー/ピッチへ適用されていた。
+
+| 項目 | 内容 |
+|---|---|
+| 本家の根拠 | [Inkipedia — Options](https://splatoonwiki.org/wiki/Options)（S1/S2/S3 の操作設定一覧にモーション軸反転なし）、[Nintendo Support Ver.11.3.0](https://en-americas-support.nintendo.com/app/answers/detail/a_id/59461/)。非公開のキャリブレーション値は推定しない |
+| INKWAVE の実装箇所 | build-only `patches/reliability/gyro-invert-adapter.mjs`（dispatcher `patches/reliability/adapter.mjs` に登録）。`src/ui/menus.js` の TOUCH_TAB から2行を除去し、`src/core/mobile.js` の `configure({ sens: s.gyroSens, invX: s.gyroInvertX, invY: s.gyroInvertY })` を `configure({ sens: s.gyroSens })` へ縮減。生の `inkwave-public/` は変更しない |
+| 再現操作 | 修正前: Touch 設定で Gyro vertical/horizontal を Invert にすると保存され、次回起動以降の傾け・旋回でヨー/ピッチ符号が反転する。修正後: UI に行がなく、保存済み `gyroInvertX/Y = true` があってもネイティブ符号のまま |
+| プレイへの影響 | 準拠プロファイルで反転できる軸が消える。既存の保存値は gyro 経路から読まれなくなり（省略による移行）、隠れた反転状態が残らない。ヨー/ピッチ積分・感度曲線・権限/リスナ寿命（#426）・右スティック/マウス反転（#309 系）・カメラリセット（#490 系）は変更しない |
+| 確認状態 | **ロジック確認済み**：reliability focused suite 378 pass（実 `_setSettings` → `applySettings` → `Gyro.configure`、実 `_orientation` の符号等価と反転コントロール、評価済み TOUCH_TAB 行）、local-quality production composition 49 pass。**本家実機（Switch Ver.11.3.0）との操作比較は未確認**。キャリブレーション値・感度曲線は変更していない |
