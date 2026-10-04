@@ -11,6 +11,14 @@ the included profile pins as `referenceVersion`. The repository's extracted
 11.3.0 parameter set (`patches/splatoon3/reference/`, source commit
 `7280ff9cde8bb1c5dcef46c700c326471584d2e6`) is used where a binding exists.
 
+**Source-access limitation**: the Nintendo Support page was not retrievable from
+this execution environment (HTTP 406 Not Acceptable), and no Nintendo page could
+be fetched. The Ver.11.3.0 target therefore rests on the issue bodies and the
+repository's pinned `profile.referenceVersion`, not on a live Nintendo receipt.
+Inkipedia figures cited for respawn were likewise not independently re-fetched
+here. Numbers that are not pinned by a `profile.bindings` entry stay marked
+unverified below.
+
 Method separation (per AGENTS):
 
 - **Logic composition measurement** — the real immutable `inkwave-public`
