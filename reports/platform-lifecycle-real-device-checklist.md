@@ -44,3 +44,16 @@ If context loss can be triggered safely:
 - unrecoverable context does not silently pretend the battle survived
 
 PASS only after real-device evidence is recorded; CI WebKit/Chromium mocks are not substitutes for Home Screen Web App behavior.
+
+
+## Quick device acceptance
+
+Use this short pass on a physical iPhone/iPad after the automated CI is green:
+
+1. Install/open INKWAVE as a Home Screen Web App. Long-press GYRO for about one second and confirm the diagnostic reports `standalone=yes` and a sensible lifecycle state.
+2. Tap GYRO once from the game UI, accept the native prompt if shown, rotate the device, and confirm camera motion starts once (no doubled/amplified response).
+3. Hold or tap a gameplay input, immediately switch Home/app away for a few seconds, then return. The old shot/jump/touch direction and old gyro delta must **not** replay.
+4. Repeat app-away/return at least 20 times. Controls and gyro must not become progressively faster or fire multiple times per action.
+5. Background for at least 30 seconds and return. There must be no catch-up burst, teleport, large camera jump, or rapid-fire replay. Toggle GYRO off/on once more and confirm it remains usable.
+
+Record device model, iOS/iPadOS version, Home Screen vs Safari, prompt result, and PASS/FAIL. Until this is done, Home Screen gyro stays **real-device pending**.
