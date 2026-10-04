@@ -631,3 +631,29 @@ The candidate installer now installs the real Bubbler mechanics; complete weapon
 Parent follow-up: native actor blast hits now consult the dome at the native applyHit boundary for both projectile bursts and bomb explosions, retaining the existing LOS/reach/paint loop. A per-explosion durability ledger applies the maximum required contact damage once across protected actors, and inside-origin blasts remain hostile. Ghost explosions cannot author actor hits even after transport disposal. Native blast regression fails on the preceding defense module (2 protected actors hit), passes after the fix (0 actor hits, one5300durability spend). All7defense tests pass and15affected native packet/descriptor/defense tests pass. Boss splash shielding and full browser kit proof remain pending.
 
 Exact e85CI37182241679 found one stale assertion in933tests: the isolated successor base still expected no parent resources refill. The current composed resources contract keys on exactly one native stats.specials increment, so Bubbler correctly refills even without a persistent specialActive token. Corrected regression now starts ink23 and requires exactly one refill event and PLAYER.inkMax; focused Bubbler/resources/composition checks pass. The failed run remains failed evidence and is retained; no product acceptance is based on it.
+
+## BB-04 — the dome now honours the native drop distance falloff
+
+The dome was the one target the native damage model never reached. For
+`type: "drop"` rounds (roller flick, Trizooka) the native pipeline scales damage
+with travel for actors (`weapons.js` `_step`) and for the boss (`_bossImpact`):
+
+    dmg = lerp(p.damage, p.dmgFar, clamp(p.start.distanceTo(hit) / 7, 0, 1))
+
+`kitBarrierCandidate` charged `p.damage` outright, so a flick that had already
+travelled far destroyed a dome the native model would have left standing. With the
+pinned roller bands (`flickDamageNear` 150, `flickDamageFar` 35) that is a 4.29x
+over-charge: one far drop took a dome from 12597 HP to 0 where the native model
+leaves it at 9097.
+
+`kitBarrierCandidate` now measures the same distance, to the same CONTACT POINT
+native uses, and applies the same window. The `rawPerDamageUnit` scale, the
+canopy/emitter target split, owner/proxy replay, the query's inertness and the
+once-only application are all unchanged. Only `type: "drop"` is scaled: ordinary
+shots and every other gun keep `p.damage`, and a drop with no declared `dmgFar`
+also keeps `p.damage` exactly as native would.
+
+Covered by `tests/kit-big-bubbler-drop-falloff.test.mjs` (native integration, real
+adapted `_step`): the far-flick 9097 regression, the near-contact-point distance,
+a zero-range guard, an unchanged ordinary round, and the remote-owner proposal
+carrying the same scaled amount.
