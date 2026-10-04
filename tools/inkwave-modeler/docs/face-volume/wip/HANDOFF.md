@@ -139,3 +139,9 @@
   - `wide_render.py` に `JAWCROP=1`（Cycles を顎・首の枠だけ描く。絵の大きさは同じ、外は黒）。evidence/tools のものを直し、写しを wip/tools に置いた。
   - `fast.sh NAME`: ビルド + 3 方向の粘土（全体）と色つき（顎だけ）を同時に → 65 秒（前は 15〜20 分）。輪郭の数は全体描画と同じ（curve.py で確認）。`NOBEAUTY=1` で粘土だけ。
   - `stopjob.sh` は自分と呼んだシェルを止めない（前は名前がコマンドにあると自分を止めた）。
+- 10/04 夜（ユーザー: 顔の色 / 鼻先の形 / 下唇の両はしが茶色）:
+  - 速い試しの顔の材質を正式と同じに（`finalmat.py`、fast.sh の中）。描画の `CROP=face`（顔全体の枠）。`ldiff.py`（L/a/b の差の地図）、`score.py`（平均の差）、`lipzones.py`。
+  - 顔の色: 上の方が明るくオレンジ、下の方が暗く色がうすい（光の色の片寄り: KEY が暖色、FILL と空が寒色）。`lights.colour`（KEY [1,0.97,0.94]、FILL 白）、`lights.world` 1.0（0.8）、`energy` KEY 2.0 FILL 1.0、`side_suns` 1.0（up -0.4、front 0.6 = 下の前から）。差の合計 10.0/12.9/11.5 → 8.2/11.6/10.9（正面/3/4/横）。光だけではこれ以上へらない（形と参照の光のちがい）。
+  - 下唇の両はしの茶色 = 唇のぬり（板 HEAD_skin_08 を消すと消える）。`below_lip` rise 10、half_width 17、fade 6（U3）。`brighten`（ぬりで明るくする）はむらが出るので使わない（コードは残す、設定なし）。
+  - 鼻先: `paint_nose` の spots をなくし floor 0.06、full 0.2、strength 1.3（N5）: 正面の小鼻の輪郭と鼻のまわりの影、3/4・横の小鼻の溝が出た。
+  - params = N5。正式なビルド Q5。

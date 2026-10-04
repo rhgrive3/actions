@@ -1528,11 +1528,11 @@
    13.0
   ],
   "base_sigma": 7.0,
-  "full": 0.3,
+  "full": 0.2,
   "up": 4,
-  "floor": 0.14,
+  "floor": 0.06,
   "rim": 5.0,
-  "strength": 1.0,
+  "strength": 1.3,
   "max_ratio": 1.0,
   "bare": "analysis/face_volume/bare_front.png",
   "own_blur": 2.0,
@@ -1542,27 +1542,7 @@
    0.65
   ],
   "axis_z": 70.0,
-  "size": 512,
-  "spots": [
-   [
-    172.3,
-    168.8,
-    4.5,
-    3.5
-   ],
-   [
-    190.8,
-    169.0,
-    4.5,
-    3.5
-   ],
-   [
-    182.4,
-    174.5,
-    5.0,
-    3.5
-   ]
-  ]
+  "size": 512
  },
  "paint_mouth": {
   "region": [
@@ -1597,9 +1577,9 @@
   "below_lip": {
    "centre": 180.2,
    "y": 194.0,
-   "half_width": 28.0,
-   "rise": 4.5,
-   "fade": 2.5
+   "half_width": 17.0,
+   "rise": 10.0,
+   "fade": 6.0
   },
   "tint": [
    0.92,
@@ -1666,7 +1646,29 @@
    "RIM",
    "RIM2"
   ],
-  "angle": 0.35
+  "angle": 0.35,
+  "energy": {
+   "KEY": 2.0,
+   "FILL": 1.0
+  },
+  "colour": {
+   "KEY": [
+    1.0,
+    0.97,
+    0.94
+   ],
+   "FILL": [
+    1.0,
+    1.0,
+    1.0
+   ]
+  },
+  "world": 1.0,
+  "side_suns": {
+   "energy": 1.0,
+   "up": -0.4,
+   "front": 0.6
+  }
  },
  "blush": {
   "views": [
@@ -1696,7 +1698,9 @@
    "KEY",
    "FILL",
    "RIM",
-   "RIM2"
+   "RIM2",
+   "INKWAVE_side_R",
+   "INKWAVE_side_L"
   ],
   "catch_energy": 0.0,
   "catch_angle": 0.03,

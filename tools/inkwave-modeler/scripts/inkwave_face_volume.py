@@ -1295,7 +1295,12 @@ def tint_map(ref, box, centre, cfg, skin_model, bare=None):
         # off: darkening a highlight gives a grey band.
         # cfg['own_max'] > 1: a lit bulge brighter than the reference (the lower lip) is also taken down
         own = np.clip(own, 0.5, cfg.get('own_max', 1.0)) ** cfg.get('own', 1.0)
-        ratio = np.minimum(ratio / own[..., None], np.maximum(ratio, 1.0))
+        if cfg.get('brighten'):
+            # cfg['brighten']: where the shape's own shadow is darker than the reference (under the outer lower
+            # lip), the paint also lightens it (up to max_ratio) instead of stopping at the bare skin colour
+            ratio = ratio / own[..., None]
+        else:
+            ratio = np.minimum(ratio / own[..., None], np.maximum(ratio, 1.0))
     if cfg.get('desaturate'):
         # the reference's shading is warmer than its skin; on this skin that reads as a red nose: keep mostly
         # the brightness of the shading
@@ -1648,6 +1653,19 @@ def soften_lights(cfg):
         if SUFFIX + '_energy' not in light:
             light[SUFFIX + '_energy'] = light.energy
         light.energy = energy
+    # the key was warm (1, 0.9, 0.82) and the fill and the sky cool: lit parts came out orange and the parts
+    # under them grey-brown (the reference is lit evenly in colour); colours nearer white, the sky a little stronger
+    for name, colour in cfg.get('colour', {}).items():
+        light = bpy.data.objects[name].data
+        if SUFFIX + '_colour' not in light:
+            light[SUFFIX + '_colour'] = list(light.color)
+        light.color = colour
+    if 'world' in cfg:
+        world = bpy.context.scene.world
+        bg = next(n for n in world.node_tree.nodes if n.type == 'BACKGROUND')
+        if SUFFIX + '_strength' not in world:
+            world[SUFFIX + '_strength'] = bg.inputs['Strength'].default_value
+        bg.inputs['Strength'].default_value = cfg['world']
     if cfg.get('side_suns'):
         # the reference lights the sides of the face about as brightly as the front; here the sides (the cheek
         # below the triangle, the side of the jaw) were 5-8 L darker in the 3/4 and side views while the front
@@ -1798,6 +1816,13 @@ def restore_lights():
         if SUFFIX + '_energy' in light:
             light.energy = light[SUFFIX + '_energy']
             del light[SUFFIX + '_energy']
+        if SUFFIX + '_colour' in light:
+            light.color = list(light[SUFFIX + '_colour'])
+            del light[SUFFIX + '_colour']
+    world = bpy.context.scene.world
+    if world is not None and SUFFIX + '_strength' in world:
+        next(n for n in world.node_tree.nodes if n.type == 'BACKGROUND').inputs['Strength'].default_value = world[SUFFIX + '_strength']
+        del world[SUFFIX + '_strength']
 
 
 CORNEA_MATERIAL = 'eyes_000000'

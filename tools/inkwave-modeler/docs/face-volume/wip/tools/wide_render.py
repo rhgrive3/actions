@@ -1,6 +1,7 @@
 """wide_render.py -- <out_dir> [k=2.2] : the fitted cameras widened k times about their centre (same sheet-pixel scale),
 env VIEWS, LOOKS (beauty, clay, mask_all, mask_head), SAMPLES. Output <view>_<look>.png of size (370k, 290k);
 env JAWCROP=1: Cycles renders only the jaw / neck box of the view (render border, same image size, black outside);
+env CROP=face: the same for the whole face box;
 sheet pixel (x, y) of the camera box maps to render pixel (x - box_x0 + 185(k-1), y - box_y0 + 145(k-1))."""
 import os, sys, bpy
 from pathlib import Path
@@ -13,6 +14,8 @@ sc = bpy.context.scene
 VB = {'front': (60, 230), 'q34L': (470, 230), 'sideL': (880, 230), 'q34R': (1370, 230), 'sideR': (1790, 230)}   # = prof_cmp.VB
 JAW = {'front': (150, 375, 330, 476), 'sideR': (1925, 375, 2112, 476), 'sideL': (850, 375, 1040, 476),
        'q34R': (1455, 370, 1635, 472), 'q34L': (440, 370, 620, 472)}      # sheet px
+FACE = {'front': (110, 250, 360, 476), 'sideR': (1890, 250, 2125, 476), 'sideL': (835, 250, 1075, 476),
+        'q34R': (1420, 250, 1660, 476), 'q34L': (410, 250, 650, 476)}      # env CROP=face
 for o in bpy.data.collections['FACE_FIT_ORIGINAL'].objects:
     o.hide_render = True
 hair = [o for o in bpy.data.objects if o.type == 'MESH' and any(c.name in ('HAIR', 'HEADGEAR') for c in o.users_collection)]
@@ -48,9 +51,10 @@ for cam in bpy.data.collections['FACE_FIT_CAMERAS'].objects:
             sc.display.render_aa = '8'
             sc.world.color = (0, 0, 0)
         sc.render.use_border = False
-        if os.environ.get('JAWCROP') and look == 'beauty' and view in JAW:
+        BOX = FACE if os.environ.get('CROP') == 'face' else JAW
+        if (os.environ.get('JAWCROP') or os.environ.get('CROP')) and look == 'beauty' and view in BOX:
             ox, oy = VB[view]
-            x0, y0, x1, y1 = JAW[view]
+            x0, y0, x1, y1 = BOX[view]
             fx = lambda x: (x - ox + 185 * (k - 1)) / (W * k)
             fy = lambda y: (y - oy + 145 * (k - 1)) / (H * k)
             sc.render.use_border, sc.render.use_crop_to_border = True, False
