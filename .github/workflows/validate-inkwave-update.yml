@@ -85,7 +85,7 @@ jobs:
           path: .ci-scratch/network-comparison/
           retention-days: 14
       - name: Verify local quality regressions
-        run: node --experimental-vm-modules --test patches/local-quality/tests/*.test.mjs
+        run: node --experimental-vm-modules --test patches/local-quality/tests/*.test.mjs scripts/tests/inkwave-idle-resources-gates.test.mjs
       - name: Verify platform lifecycle smoke regressions
         run: node --test tests/platform-lifecycle/platform-smoke.test.mjs
       - name: Verify movement physics smoke regressions
@@ -265,6 +265,9 @@ jobs:
       - name: Verify wall geometry through actual GTAO and GPU disposal
         if: matrix.suite == 'active'
         run: node scripts/check-inkwave-wall-render.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/wall" --profile-dir "$CI_STORAGE/cache/wall" --exact-source
+      - name: Verify idle music and paused/render-target resources
+        if: matrix.suite == 'active'
+        run: node scripts/check-inkwave-idle-resources.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/idle-resources" --profile-dir "$CI_STORAGE/cache/idle-resources" --exact-source
       - name: Profile runtime at immutable baseline
         if: matrix.suite == 'active' && env.RUNTIME_PERFORMANCE == 'true'
         run: |
@@ -324,7 +327,7 @@ jobs:
           root=pathlib.Path(os.environ['CI_STORAGE'])/'evidence'
           suite=os.environ['BROWSER_SUITE']
           checks={
-            'active':['game/browser-result.json','motion/motion-result.json','motion-detail/motion-detail-result.json','flow/flow-render-result.json','wall/wall-render-result.json'],
+            'active':['game/browser-result.json','motion/motion-result.json','motion-detail/motion-detail-result.json','flow/flow-render-result.json','wall/wall-render-result.json','idle-resources/idle-resources-result.json'],
             'catalog':['catalog/motion-catalog-result.json'],
             'network':['network/network-browser-result.json','network-delay/network-browser-result.json'],
             'ui':['identity-network/network-identity-result.json','layout/touch-layout-result.json','reliability/reliability-browser-result.json','identity-touch/touch-layout-identity-result.json','identity-reliability/reliability-identity-result.json','responsive/responsive-result.json'],
@@ -352,6 +355,13 @@ jobs:
           pending=root/'ci-result.json.pending'; pending.write_text(json.dumps(receipt,indent=2)+'\n'); pending.replace(root/'ci-result.json')
           print(json.dumps(receipt))
           PY
+      - uses: actions/upload-artifact@v4
+        if: failure() && matrix.suite == 'active'
+        with:
+          name: inkwave-idle-resource-failure-${{ github.sha }}
+          if-no-files-found: warn
+          path: ${{ env.CI_STORAGE }}/evidence/idle-resources/
+          retention-days: 7
       - uses: actions/upload-artifact@v4
         if: always() && (failure() || cancelled())
         with:
