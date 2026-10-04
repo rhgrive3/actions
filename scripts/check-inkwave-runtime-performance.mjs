@@ -14,6 +14,11 @@ const root=fileURLToPath(new URL('../',import.meta.url));
 const sourceSha=option('--source-sha',execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim());
 const manifest=verifyRuntimeBuild(site,root,sourceSha);
 const menuOnly=process.argv.includes('--menu-only'), fixedOnly=process.argv.includes('--fixed-only'), inputOnly=process.argv.includes('--input-only'), parityOnly=process.argv.includes('--parity-only');
+// Playwright creates internal artifact directories before Chromium starts.
+// Configure this process's browser temporary directory before importing it;
+// all child defaults then remain inside the verified persistent evidence root.
+const browserTemp=persistentDirectory(path.join(evidence,'browser-tmp'));
+for(const name of ['TMPDIR','TMP','TEMP'])process.env[name]=browserTemp;
 const receipts=new Set();
 const {chromium}=await import(pathToFileURL(option('--playwright',process.env.PLAYWRIGHT_MODULE)).href);
 const mime={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json','.woff2':'font/woff2','.png':'image/png','.webp':'image/webp'};

@@ -68,3 +68,12 @@ test('fixed runtime owner freezes at readiness before potentially blocking WebGL
  const ready=source.indexOf('if(ready&&fixed)probeG.game.debug.freeze()');
  assert(ready>=0&&ready<source.indexOf('result.active=await page.evaluate'));
 });
+
+
+test('browser internal temporary storage is persistent before Playwright import and launch',()=>{
+ const source=fs.readFileSync(new URL('../check-inkwave-runtime-performance.mjs',import.meta.url),'utf8');
+ const prepare=source.indexOf("const browserTemp=persistentDirectory(path.join(evidence,'browser-tmp'))");
+ const defaults=source.indexOf("for(const name of ['TMPDIR','TMP','TEMP'])process.env[name]=browserTemp");
+ const imported=source.indexOf("const {chromium}=await import"),launch=source.indexOf('chromium.launchPersistentContext');
+ assert(prepare>=0&&prepare<defaults&&defaults<imported&&imported<launch);
+});
