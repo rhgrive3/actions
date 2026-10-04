@@ -61,7 +61,7 @@
 
 ## 4. 自動テストの結果
 
-最終確認はコミット `b75f268` で行った（ローカル実行。下の「未確認」参照）。
+ローカルの最終確認はコミット `b75f268` の内容で行い、その後 Flow 描画ゲートを直した `b4b499b` で Actions とローカル（Wall・Flow・ゲーム起動）を流した。
 
 - `node --experimental-vm-modules scripts/check-inkwave-patches.mjs`: 765 件合格 / 0 失敗（互換性・数値記録・構文・全回帰）
 - `node --experimental-vm-modules --test patches/local-quality/tests/*.test.mjs`: 8 / 0
@@ -71,11 +71,16 @@
 - ブラウザ詳細ゲート `check-inkwave-motion-detail.mjs`: 合格（14 条件）
 - ブラウザカタログゲート `check-inkwave-motion-catalog.mjs`: 合格（27 条件、5130 フレーム、描画 339 組）
 
+### GitHub Actions（`rhgrive3/actions`）
+
+ブランチ `inkwave/motion-fidelity` を push し、`validate-inkwave-update.yml` を厳密なコミット `b4b499b68a9fc13804d54db914574310ac62afce` で実行した（run `37189104105`）。`validate`・`browser (active)`・`browser (catalog)`・`browser (ui)` がすべて success。最初の実行（run `37187164064`、`a66aa0f`）では `browser (active)` が Flow 描画ゲートで失敗した（下の変更 3）。このゲートはローカルで流しておらず、Actions で見つかった。直した後はローカルでも Wall 描画・Flow 描画・ゲーム起動ゲートを合格させてから再実行した。この報告書だけの後続コミットは、検査した SHA とは異なる。
+
 ### 検査（verifier）の変更
 
-止まって潜ったイカが本家どおり見えなくなったため、それを前提にしていた 2 つの描画検査を直した。弱めるのではなく、意図を保った上で新しい振る舞いを確かめる形にした。レビューが必要な変更である。
+止まって潜ったイカが本家どおり見えなくなったため、それを前提にしていた 3 つの描画検査を直した。弱めるのではなく、意図を保った上で新しい振る舞いを確かめる形にした。レビューが必要な変更である。
 
 - `check-inkwave-motion-detail.mjs` の `flow-squid`: イカの間だけ 4 m/s で泳ぐ。この場面の目的（形が変わっても Flow の殻が続く）は泳いでいる時に確かめる。止まると隠れることは `swim-motion.test.mjs` が確かめる。
+- `check-inkwave-flow-render.mjs` の `squid-entry`/`squid-active`（変更 3）: イカを前へ泳がせ、カメラはキャラクターに追従させる（元は止まったイカを固定カメラで描いていた）。判定のしきい値は変えていない。
 - `check-inkwave-motion-catalog.mjs` の `swim-turn-brake` の一時停止: 「描画を動かすと画素が変わる」から「止まって潜ったイカは動かしても画素が変わらない（見えない）」へ。他の 26 場面は引き続き描画の感度を確かめる。`tests/motion-catalog-gates.test.mjs` の模擬データを合わせ、逆に「止まったイカがインク面の上に見える」結果を拒否するテストを追加した。
 
 修正後の歩行の数値（実 Character、`evidence/.../probes/gait.mjs`）:
@@ -127,7 +132,7 @@
 - スプラローラー以外のローラー、ロビー・メニューでのローラーの見た目（描画で確認していない）。
 - 斜面・段差での大きいドラムと床。
 - Switch・iOS 実機。描画はすべて Chromium のソフトウェア WebGL。
-- GitHub Actions（`rhgrive3/actions`）での同じコミットの実行はしていない。指示どおり main へは push せず、ブランチもリモートへ push していない。結果はすべてこの環境でのローカル実行。
+- main へは push していない（ブランチ `inkwave/motion-fidelity` だけを push）。他の検査（responsive・touch-layout・reliability）は変更が及ばないため、ローカルでは流していない。Actions の `browser (ui)` は合格。
 
 ## 9. 他の workstream との境界
 
