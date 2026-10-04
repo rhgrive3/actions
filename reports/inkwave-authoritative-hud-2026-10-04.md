@@ -48,6 +48,13 @@ without falsely becoming ready. Consumption, death-retained gauge changes and
 refilling follow the next authoritative HUD frame. No actor points, charge-rate
 curve, special cost, timer, roster indicator or special-use rule changes.
 
+Touch CSS hides the desktop gauge and uses the native SP button instead. That
+separate path now also has 23 SVG segments and the same normalized quantization.
+Its normal button semantics, actual ready/buzz/active state and other controls
+are preserved. The browser gate explicitly mounts native touch controls at a
+phone landscape viewport, verifies that the desktop gauge is hidden, drives
+Actor -> Game -> MobileInput frames, and captures the visible touch replacement.
+
 ### #381
 
 Game `_judge()` supplies `m.result.winner`. The native Judd method uses that
@@ -64,11 +71,11 @@ integration condition is addressed.
 
 ## Verification
 
-- Production build passes, content digest prefix `d0e3cf15a58c` after composing main `8158a2b8`.
+- Production build passes, content digest prefix `df6212281d0c` after composing main `8158a2b8`.
 - Upstream-lock compatibility and numeric reference 11.3.0 quick checks pass.
-- Focused source regressions: 11/11, including two negative baseline controls.
-- Emitted/minified complete HUD module: 1/1 additional case, loaded with its
-  actual module dependencies and real native `_updSpecial` method.
+- Focused source regressions: 12/12, including two negative baseline controls.
+- Emitted/minified complete HUD and MobileInput modules: 1/1 additional case,
+  loaded with actual module dependencies and real native update methods.
 - Tests exercise all boundaries, tiny crossings, normalized 160/180/200/220
   costs, repeated ready/consume/refill/active transitions, 30/60/120Hz sampled
   presentation, both teams, 0/.000001/.04/.049/.05/.051-point leads, authoritative
@@ -88,9 +95,12 @@ integration condition is addressed.
 Main advanced to `8158a2b83c8e6948d0f96f1bbe0e80e987c4bafd` while publishing.
 Its landing-rigidity import/identity/dispatch and combat-life/credit changes are
 preserved in the merge. The two append-only report sections are both retained.
-The combined production build and focused source/emitted 12 cases pass.
+The combined production build and focused source/emitted 13 cases pass.
 
-Full bounded regression and exact-head CI status are reported in the PR. A
+The persistent main8158a2b full suite passed 786/786 before adding the mobile
+SP-button boundary found during review. After that extension, local quality
+passed 24/24 and the dedicated source/emitted cases passed 13/13. The full suite
+is being rerun on this final code; exact-head CI status is reported in the PR. A
 production build and a focused pass are not a claim of full browser acceptance.
 
 ## Composition and unresolved acceptance

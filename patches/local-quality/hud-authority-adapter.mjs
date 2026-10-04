@@ -12,13 +12,16 @@ function section(code, start, end, after, label) {
 }
 
 export const SPECIAL_SEGMENTS = 23;
-export function specialGaugeSVG() {
+function segmentPaths(outer, inner, name) {
   const point = (r, a) => `${(50 + r * Math.cos(a)).toFixed(3)} ${(50 + r * Math.sin(a)).toFixed(3)}`;
   const step = 2 * Math.PI / SPECIAL_SEGMENTS, gap = .025;
-  const segments = Array.from({ length: SPECIAL_SEGMENTS }, (_, i) => {
+  return Array.from({ length: SPECIAL_SEGMENTS }, (_, i) => {
     const a = -Math.PI / 2 + i * step + gap, b = a + step - 2 * gap;
-    return `<path class="iw-sp__segment" d="M${point(45,a)} A45 45 0 0 1 ${point(45,b)} L${point(34,b)} A34 34 0 0 0 ${point(34,a)} Z"/>`;
+    return `<path class="${name}" d="M${point(outer,a)} A${outer} ${outer} 0 0 1 ${point(outer,b)} L${point(inner,b)} A${inner} ${inner} 0 0 0 ${point(inner,a)} Z"/>`;
   }).join('');
+}
+export function specialGaugeSVG() {
+  const segments = segmentPaths(45, 34, 'iw-sp__segment');
   return `<svg viewBox="0 0 100 100" aria-hidden="true"><circle class="iw-sp__bg" cx="50" cy="50" r="48"/>${segments}<circle class="iw-sp__rim" cx="50" cy="50" r="48"/><circle class="iw-sp__spin" cx="50" cy="50" r="29" pathLength="100"/></svg>`;
 }
 
@@ -75,6 +78,15 @@ export function adaptHudAuthority(rel, code) {
     code = once(code, "    this.spPct = this.sp.querySelector('.iw-sp__pct');\n", '', 'remove percentage reference');
     return section(code, '  _updSpecial(f, dt) {\n', '  // ---------------------------------------------------------------- turf ticker', UPDATE_SPECIAL, 'authoritative segment update');
   }
+  if (rel === 'src/core/mobile.js') {
+    code = once(code, 'const sp = Math.round(clamp(special, 0, 1) * 100);',
+      'const sp = Math.floor(clamp(+special || 0, 0, 1) * 23);', 'touch gauge quantization');
+    code = once(code, "if (sp !== L.sp) { L.sp = sp; E.special.style.setProperty('--g', (sp / 100).toFixed(2)); }",
+      "if (sp !== L.sp) { L.sp = sp; E.special.querySelectorAll('.iwm-sp-segment').forEach((segment, i) => segment.classList.toggle('is-filled', i < sp)); }", 'touch gauge state');
+    return once(code, '<svg class="iwm-b__gauge" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46" pathLength="100"/></svg>',
+      '<svg class="iwm-b__gauge" viewBox="0 0 100 100" aria-hidden="true">' + segmentPaths(49, 42, 'iwm-sp-segment') + '</svg>', 'touch gauge markup');
+  }
+  if (rel === 'styles/mobile.css') return code + '\n/* #425: touch SP replaces the hidden desktop gauge with the same 23 steps. */\n.iwm-b__gauge { transform: none; }\n.iwm-sp-segment { fill: rgba(255,255,255,.16); stroke: rgba(0,0,0,.65); stroke-width: .6; }\n.iwm-sp-segment.is-filled { fill: var(--iwm-c); }\n';
   if (rel === 'styles/hud.css') return code + '\n/* #425: discrete fill; no animated interpolation across segment boundaries. */\n.iw-sp__segment { fill: rgba(255,255,255,.16); stroke: rgba(0,0,0,.65); stroke-width: 1; }\n.iw-sp__segment.is-filled { fill: var(--self); }\n';
   return code;
 }

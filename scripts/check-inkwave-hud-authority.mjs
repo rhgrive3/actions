@@ -25,13 +25,49 @@ export async function checkHudAuthority({ page, evidence }) {
   });
   const viewport=page.viewportSize();
   try {
-    for(const width of [1280,375]){
+    for(const width of [1280]){
       await page.setViewportSize({width,height:width===375?812:800});
       await page.evaluate(async()=>{const {G}=await import(new URL('src/core/ctx.js',document.baseURI).href);const a=G.game.match.local;globalThis.__hudSavedSpecial=a.special;a.special=a.specialCost()*.47;G.game._updateHud(1/60);});
       await page.screenshot({path:path.join(evidence,`special-23-segments-${width}.png`),animations:'disabled',timeout:90000});
       await page.evaluate(async()=>{const {G}=await import(new URL('src/core/ctx.js',document.baseURI).href);G.game.match.local.special=globalThis.__hudSavedSpecial;delete globalThis.__hudSavedSpecial;G.game._updateHud(1/60);});
     }
   } finally {if(viewport)await page.setViewportSize(viewport);}
+  // Desktop CI explicitly mounts the actual touch controller. This is native
+  // DOM/frame coverage, not a claim of physical phone or permission testing.
+  await page.setViewportSize({width:844,height:390});
+  try {
+    result.touch=await page.evaluate(async()=>{
+      const {G}=await import(new URL('src/core/ctx.js',document.baseURI).href);
+      const {MobileInput}=await import(new URL('src/core/mobile.js',document.baseURI).href);
+      const g=G.game,a=g.match.local,original=g.input.mobile;
+      const m=original.root?original:new MobileInput(original.canvas,g.input);
+      const saved={original,m,created:m!==original,special:a.special,active:a.specialActive,visible:m.visible,touch:document.documentElement.classList.contains('iw-touch-ui')};
+      globalThis.__hudTouchFixture=saved;
+      if(!m.active){m.active=true;m._install();}
+      g.input.mobile=m;document.documentElement.classList.add('iw-touch-ui');m.setVisible(true);
+      const rows=[];
+      for(const [fraction,ready,filled]of [[0,false,0],[.47,false,10],[.99999,false,22],[1,true,23],[1,true,23],[0,false,0],[.47,false,10]]){
+        a.specialActive=null;a.special=a.specialCost()*fraction;g._updateHud(1/60);
+        const count=m.els.special.querySelectorAll('.iwm-sp-segment').length;
+        const lit=m.els.special.querySelectorAll('.iwm-sp-segment.is-filled').length;
+        if(count!==23||lit!==filled||m.els.special.classList.contains('is-ready')!==ready)throw Error('Touch special segment state drift');
+        rows.push({fraction,count,lit,ready});
+      }
+      if(getComputedStyle(g.hud.sp).display!=='none')throw Error('Touch replacement did not hide desktop gauge');
+      if(m.els.special.getBoundingClientRect().width<=0)throw Error('Touch special button is not rendered');
+      return rows;
+    });
+    await page.screenshot({path:path.join(evidence,'special-23-segments-touch.png'),animations:'disabled',timeout:90000});
+  } finally {
+    await page.evaluate(async()=>{
+      const s=globalThis.__hudTouchFixture;if(!s)return;
+      const {G}=await import(new URL('src/core/ctx.js',document.baseURI).href);
+      G.game.input.mobile=s.original;G.game.match.local.special=s.special;G.game.match.local.specialActive=s.active;
+      if(s.created)s.m.destroy();else s.m.setVisible(s.visible);
+      document.documentElement.classList.toggle('iw-touch-ui',s.touch);G.game._updateHud(1/60);delete globalThis.__hudTouchFixture;
+    });
+    if(viewport)await page.setViewportSize(viewport);
+  }
   result.judges=await page.evaluate(async()=>{
     const {G}=await import(new URL('src/core/ctx.js',document.baseURI).href),h=G.game.hud,rows=[];
     const paused=h.paused;h.paused=true;

@@ -103,11 +103,11 @@ test('#381: reliability cancellation/replacement cannot show an old authoritativ
 
 test('HUD adapters compile in the production order and fail closed on stale/duplicate anchors', () => {
   new vm.SourceTextModule(hudCode);new vm.SourceTextModule(gameCode);
-  for(const rel of ['src/ui/hud.js','src/main.js'])for(const input of ['',readSource(rel)+readSource(rel),compose(rel)])assert.throws(()=>adaptHudAuthority(rel,input),/HUD patch conflict/);
+  for(const rel of ['src/ui/hud.js','src/main.js','src/core/mobile.js'])for(const input of ['',readSource(rel)+readSource(rel),compose(rel)])assert.throws(()=>adaptHudAuthority(rel,input),/HUD patch conflict/);
   assert.equal(adaptHudAuthority('src/game/actor.js','unchanged'),'unchanged');
 });
 
-test('#425: emitted full HUD module retains quantization and authoritative readiness', {skip:!process.env.INKWAVE_HUD_BUILT_SITE}, async()=>{
+test('#425: emitted full HUD and touch modules retain quantization and authoritative readiness', {skip:!process.env.INKWAVE_HUD_BUILT_SITE}, async()=>{
   const site=process.env.INKWAVE_HUD_BUILT_SITE;
   const path=await import('node:path');const modules=new Map(),context=vm.createContext({console,performance});
   function load(file){
@@ -121,4 +121,25 @@ test('#425: emitted full HUD module retains quantization and authoritative readi
   for(const [s,count]of [[0,0],[.47,10],[.99999,22],[1,23]])assert.equal(r.update(s),count);
   assert(!r.h.sp.classes.has('is-ready'));r.update(1,true);assert(r.h.sp.classes.has('is-ready'));
   assert.equal(r.update(0,false,true),0);assert.equal(r.h.flashes.filter(x=>x==='is-flare').length,1);
+  const mobile=load(path.join(site,'src/core/mobile.js'));
+  await mobile.link((spec,from)=>load(spec==='three'?path.join(site,'vendor/three/build/three.module.js'):path.resolve(path.dirname(from.identifier),spec)));await mobile.evaluate();
+  const m={setHud:mobile.namespace.MobileInput.prototype.setHud,els:{special:r.h.sp,fire:r.h.sp,sub:r.h.sp},_buzz(){}};
+  r.h.sp.querySelectorAll=()=>r.h.spSegments;r.h.sp.style={setProperty(){}};
+  for(const [s,count]of [[0,0],[.47,10],[.99999,22],[1,23],[0,0]]){m.setHud({special:s,ready:s===1});assert.equal(r.h.spSegments.filter(n=>n.classes.has('is-filled')).length,count);}
+});
+
+test('#425: touch SP replacement uses 23 steps while preserving readiness/buzz and other controls',()=>{
+  const code=compose('src/core/mobile.js');
+  assert.equal((code.match(/class="iwm-sp-segment"/g)||[]).length,23);
+  assert.doesNotMatch(code,/E.special.style.setProperty\('--g'/);
+  const start=code.indexOf('  setHud('),end=code.indexOf('\n  endFrame()',start);
+  const Mobile=vm.runInNewContext(`class Mobile {${code.slice(start,end)}};Mobile`,{clamp:(v,a,b)=>Math.max(a,Math.min(b,v))});
+  const r=specialRig(),m=new Mobile();m.els={special:r.h.sp,fire:r.h.sp,sub:r.h.sp};m.els.special.querySelectorAll=()=>r.h.spSegments;m.els.fire.style={setProperty(){}};
+  let buzzes=0;m._buzz=()=>buzzes++;
+  for(let i=0;i<23;i++)for(const delta of [1e-7,2e-7]){m.setHud({special:i/23+delta});assert.equal(r.h.spSegments.filter(n=>n.classes.has('is-filled')).length,i);}
+  m.setHud({special:1});assert(!r.h.sp.classes.has('is-ready'));assert.equal(m._hud.sp,23);
+  m.setHud({special:1,ready:true});m.setHud({special:1,ready:true});assert.equal(buzzes,1);
+  m.setHud({special:0,activeSp:true});assert.equal(m._hud.sp,0);assert(r.h.sp.classes.has('is-active'));assert(!r.h.sp.classes.has('is-ready'));
+  m.setHud({special:.5});assert.equal(m._hud.sp,11);assert.equal(buzzes,1);
+  new vm.SourceTextModule(code);
 });
