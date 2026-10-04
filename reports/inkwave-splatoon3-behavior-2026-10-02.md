@@ -229,16 +229,20 @@ See [weapon edge-case comparison](inkwave-weapon-edgecases-2026-10-04.md) for #3
 
 ## 2026-10-05: Roller natural free-fall 25F horizontal grace (#479)
 
-スプラトゥーン3（Ver. 11.3.0）におけるローラーの縦振り／横振り選択において、ジャンプ入力なしで崖・段差から自然落下（natural free fall）した際、空中最初の25フレーム（約0.42秒）間はZR押下で横振りが維持され、25F経過後（26F以降）に初めて縦振りに移行する仕様（25F grace）が存在する。一方、通常のBジャンプでは空中1F目から即座に縦振りが選択される。また、一度選択された攻撃モード（横振り／縦振り）は攻撃中にジャンプや着地を挟んでもラッチされ、途中でモードが再分類されることはない。
+スプラトゥーン3（Ver. 11.3.0）におけるローラーの縦振り／横振り選択において、ジャンプ入力なしで崖・段差から自然落下（natural free fall）した際、空中最初の25フレーム（25/60秒 ≒ 約0.417秒）間はZR押下で横振りが維持され、25F経過後（26F以降）に初めて縦振りに移行する仕様（25F grace）が存在する。一方、通常のBジャンプおよび各種アクション射出（イカロール、イカノボリ、スーパージャンプ）では空中1F目から即座に縦振りが選択される。また、崖から足を踏み外した後にBボタンを押下／長押ししても、コヨーテ時間切れ等でネイティブのジャンプ受付（native jump admission）が成立しない単なる入力はジャンプ扱いとならず、25F猶予内であれば横振りが維持される。一度選択された攻撃モード（横振り／縦振り）は攻撃中にジャンプや着地を挟んでもラッチされ、途中でモードが再分類されることはない。
 
 INKWAVEの既存公開実装（`patches/splatoon3/runtime/roller.mjs:29-34`）では、攻撃開始判定が単一の `!a.grounded` で行われており、空中移行の原因（ジャンプ vs 自然落下）の区別および自然落下滞空時間の計測が存在しなかった。そのため、崖から足を踏み外した直後（1F, 10F, 20F等）のZR押下でも即座に縦振りが選択されていた。
 
-Issue #479 の修正（`patches/splatoon3/issue-479-adapter.mjs` および `patches/splatoon3/runtime/roller-freefall.mjs`）により、空中移行状態（`s3JumpAirborne` vs `s3NaturalAirborne`）および自然落下フレーム数（`s3NaturalAirTicks` / `s3NaturalAirTime`）を計測し、25F grace および攻撃中ラッチを導入した。
+Issue #479 の修正（`patches/splatoon3/issue-479-adapter.mjs` および `patches/splatoon3/runtime/roller-freefall.mjs`）により、空中移行状態（`s3JumpAirborne` vs `s3NaturalAirborne`）および自然落下滞空時間（`s3NaturalAirTime` / 診断用 `s3NaturalAirTicks`）を計測し、25F grace および攻撃中ラッチを導入した。また以下の受入ギャップを完全に解消した：
+1. **未承認ジャンプ入力の排除**: 生の `intent.jump` ショートカットを撤廃し、Actor 本体の更新でネイティブ承認（`jumped === true` / `character.trigger('jump')`）された場合のみジャンプと判定。コヨーテ失効後の空中B入力は横振りを維持。
+2. **ラッパー順序非依存・正式移動射出の認識**: `installMovement` が武器／フリーフォール後にインストールされる順序でも、イカロール（`squidroll`）やイカノボリ（`squidsurge` / `squidsurge_top`）の正式射出を正しく認識し、自然落下と誤判定せず即座に縦振りを選択。
+3. **非ローラーアクターの軽量ガード**: 非ローラーアクター（シューター、チャージャー等）は `isRollerActor` ガードにより毎フレームのラッパー・クロージャ生成を完全に排除し、通常移動速度を維持。
+4. **経過時間基準の境界（dt不変性）**: 境界判定を `25 / 60` 秒（`S3_ROLLER_NATURAL_FREEFALL_GRACE_SEC`）の経過秒数に基づかせ、`dt = 1/120` 等の小刻みな更新間隔でも tick 数と秒数が競合することなく一貫した猶予期間を保証。
 
 | 項目 | 内容 |
 |---|---|
 | 本家の根拠 | [Splatoon 3 攻略＆検証 Wiki — ローラー属](https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%83%AD%E3%83%BC%E3%83%A9%E3%83%BC%E5%B1%9E) および [Inkipedia — Roller](https://splatoonwiki.org/wiki/Roller)。崖落ち・金網抜け等のジャンプを伴わない空中落下開始から25F間は横振りが維持され、25F経過後に縦振りへ移行する。 |
-| INKWAVE の実装箇所 | `patches/splatoon3/runtime/roller-freefall.mjs`（`selectRollerFlickVertical`, `installActorFreefallHooks`, `updateAirborneTransition`）および `patches/splatoon3/issue-479-adapter.mjs`（`adaptIssue479`）。`patches/splatoon3/runtime/roller.mjs` の新規攻撃開始判定で `selectRollerFlickVertical(a, this)` を参照。 |
-| 再現操作 | ローラーを装備し平地の端からジャンプ（B）を入力せずに前進して落下。落下後 1F, 10F, 20F, 25F で ZR を入力すると横振り（21F風切り、12+1弾扇状拡散）、26F以降で ZR を入力すると縦振り（26F風切り、5弾直線拡散）。対照としてBジャンプ空中1Fは即座に縦振り。 |
+| INKWAVE の実装箇所 | `patches/splatoon3/runtime/roller-freefall.mjs`（`selectRollerFlickVertical`, `installActorFreefallHooks`, `stepAirborneTransition`, `recordMovementLaunch`, `isMovementLaunchActive`）および `patches/splatoon3/issue-479-adapter.mjs`（`adaptIssue479`）。`patches/splatoon3/runtime/roller.mjs` の新規攻撃開始判定で `selectRollerFlickVertical(a, this)` を参照。 |
+| 再現操作 | ローラーを装備し平地の端からジャンプ（B）を入力せずに前進して落下。落下後 1F, 10F, 20F, 25F で ZR を入力すると横振り（21F風切り、12+1弾扇状拡散）、26F以降で ZR を入力すると縦振り（26F風切り、5弾直線拡散）。対照としてBジャンプ空中1F、またはイカロール／イカノボリ後の空中射撃は即座に縦振り。コヨーテ失効後の空中B入力は横振りを維持。 |
 | プレイへの影響 | 段差や高台端からの飛び降り撃ちにおいて、スプラトゥーン2/3の操作感覚どおりに近接の横振りを即座に出せるようになり、不本意な縦振り（硬直増・横幅減少）への誤化を防止。 |
-| 確認状態 | **ロジック確認済み**（source-fixture、Actor 実 tick、FixedClock による 30Hz / 60Hz / 120Hz シミュレーション完全一致、ネガティブコントロール検証）。**Switch 実機での精密ポーズ・着地直前微小落下距離の物理的確証は未確認**。本修正は25F graceおよび選択モードのラッチのみを対象とし、他ブキや既存ローラー数値（ダメージ・インク消費・射程・拡散角）は一切改変していない。 |
+| 確認状態 | **ロジック確認済み**（source-fixture、Actor 実 tick、FixedClock による 30Hz / 60Hz / 120Hz シミュレーション完全一致、未承認入力ネガティブシナリオ、イカロール・ノボリ正式射出、ネガティブコントロール検証）。**Switch 実機での精密ポーズ・着地直前微小落下距離の物理的確証は未確認**。本修正は25F graceおよび選択モードのラッチのみを対象とし、他ブキや既存ローラー数値（ダメージ・インク消費・射程・拡散角）は一切改変していない。 |

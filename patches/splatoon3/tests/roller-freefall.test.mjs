@@ -4,7 +4,6 @@ import { fixture } from './source-fixture.mjs';
 import { adaptIssue479 } from '../issue-479-adapter.mjs';
 import { FixedClock } from '../runtime/clock.mjs';
 
-const EPS = 1e-9;
 const close = (actual, expected, msg) =>
   assert.ok(Math.abs(actual - expected) < 1e-6, `${msg || 'Value mismatch'}: expected ${expected}, got ${actual}`);
 
@@ -106,6 +105,131 @@ test('normal B jump followed by ZR selects vertical immediately on 1F', async ()
   assert.equal(a.weaponRunner.s3FlickVertical, true, 'normal jump selects vertical immediately on 1F');
   assert.equal(a.weaponRunner.s3RollerAttack?.vertical, true);
   close(a.weaponRunner.s3RollerAttack?.windup, 26 / 60, 'vertical jump flick has 26F windup');
+});
+
+// --- Acceptance: negative scenario (jump input rejected by native admission remains horizontal) ---
+test('jump input rejected by native admission remains horizontal in natural fall; accepted jump is immediate vertical', async () => {
+  // A. Negative scenario: walked off ledge, coyote expired, jump input pressed -> rejected by native admission, remains horizontal
+  {
+    const f = await fixture({ adaptRuntime: adaptIssue479 });
+    const a = f.make('roller');
+    a.grounded = false;
+    a.coyote = 0; // coyote expired
+    f.tick(a, 5); // 5 ticks in natural free fall
+
+    // Press jump (B) and fire (ZR) while airborne with coyote expired
+    a.intent.jump = true;
+    a.intent.fire = true;
+    f.tick(a, 1); // 6th tick (well inside 25F grace)
+
+    // Native jump admission failed: no jump event was emitted
+    const jumpEvents = a.character.events.filter(e => e[0] === 'jump');
+    assert.equal(jumpEvents.length, 0, 'native jump admission must fail and emit no jump trigger');
+    assert.equal(a.s3JumpAirborne, false, 'rejected jump input must not count as accepted jump');
+
+    // Roller must remain in horizontal flick inside 25F grace
+    assert.equal(a.weaponRunner.s3FlickVertical, false, 'merely pressing B without native admission must remain horizontal');
+    assert.equal(a.weaponRunner.s3RollerAttack?.vertical, false);
+    close(a.weaponRunner.s3RollerAttack?.windup, 21 / 60, 'horizontal flick has 21F windup');
+  }
+
+  // B. Accepted jump scenario: normal jump from ground admitted by native update selects vertical immediately on 1F
+  {
+    const f = await fixture({ adaptRuntime: adaptIssue479 });
+    const a = f.make('roller');
+    a.grounded = true;
+    a.intent.jump = true;
+    a.intent.fire = true;
+    f.tick(a, 1);
+
+    const jumpEvents = a.character.events.filter(e => e[0] === 'jump');
+    assert.ok(jumpEvents.length > 0, 'native jump admission must succeed from ground');
+    assert.equal(a.s3JumpAirborne, true, 'accepted jump sets s3JumpAirborne');
+    assert.equal(a.weaponRunner.s3FlickVertical, true, 'accepted jump selects vertical immediately');
+    assert.equal(a.weaponRunner.s3RollerAttack?.vertical, true);
+    close(a.weaponRunner.s3RollerAttack?.windup, 26 / 60, 'vertical flick has 26F windup');
+  }
+});
+
+// --- Acceptance: genuine movement launch (squid roll / surge) selects vertical ---
+test('actual installMovement accepted launch (squid roll / surge) selects vertical, not mislabeled natural fall', async () => {
+  // 1. Squid roll launch into air
+  {
+    const f = await fixture({ adaptRuntime: adaptIssue479 });
+    const a = f.make('roller');
+    a.intent.squid = true;
+    a.form = 'squid';
+    a.submerged = true;
+    a.grounded = true;
+    a.vel.set(10.0, 0, 0); // speed 10.0 >= roll minimumSpeed (9.216)
+    a.intent.move.set(-1, 0, 0); // reversal in -X (meets roll angle)
+    a.intent.jump = true;
+
+    // Tick through Actor update which runs installMovement beforeActions launch
+    f.tick(a, 1);
+
+    assert.ok(a.s3?.roll || a.s3?.actions?.roll, 'squid roll must be launched by installMovement');
+    assert.equal(a.s3JumpAirborne, true, 'genuine squid roll launch must be recognized as jump airborne');
+    assert.equal(a.s3NaturalAirborne, false, 'squid roll launch must not be labeled natural fall');
+
+    // Fire roller in the air during roll launch
+    a.form = 'kid';
+    a.intent.squid = false;
+    a.kidT = 1.0;
+    a.intent.jump = false;
+    a.intent.fire = true;
+    f.tick(a, 1);
+
+    assert.equal(a.weaponRunner.s3FlickVertical, true, 'Roller fired after squid roll launch must be vertical');
+    assert.equal(a.weaponRunner.s3RollerAttack?.vertical, true);
+  }
+
+  // 2. Squid surge launch over ledge into air
+  {
+    const f = await fixture({ adaptRuntime: adaptIssue479 });
+    const a = f.make('roller');
+    a.form = 'squid';
+    a.intent.squid = true;
+    a.climbing = true;
+    a._updateClimb = () => {}; // keep attached state in mock raycast fixture
+    a.wallN.set(0, 0, 1);
+    // Charge surge (0.75s / 45 ticks for full charge)
+    a.intent.jump = true;
+    for (let i = 0; i < 45; i++) f.tick(a, 1);
+    // Release surge to trigger burst
+    a.intent.jump = false;
+    f.tick(a, 1);
+
+    assert.ok(a.s3?.surge || a.s3?.actions?.surge, 'squid surge burst must be active');
+    // Pop over ledge into air
+    a._ledgePop(new f.THREE.Vector3(0, 0, -1));
+
+    assert.equal(a.s3JumpAirborne, true, 'squid surge ledge launch must be recognized as jump airborne');
+    assert.equal(a.s3NaturalAirborne, false, 'squid surge must not be labeled natural fall');
+
+    // Fire roller in the air
+    a.form = 'kid';
+    a.intent.squid = false;
+    a.kidT = 1.0;
+    a.intent.fire = true;
+    f.tick(a, 1);
+
+    assert.equal(a.weaponRunner.s3FlickVertical, true, 'Roller fired after squid surge launch must be vertical');
+    assert.equal(a.weaponRunner.s3RollerAttack?.vertical, true);
+  }
+});
+
+// --- Acceptance: non-roller actors guard and velocity preservation ---
+test('non-roller actors (shooter, etc.) are guarded against freefall overhead and retain normal velocities', async () => {
+  const f = await fixture({ adaptRuntime: adaptIssue479 });
+  const s = f.make('shooter');
+  s.grounded = true;
+  s.vel.set(1.5, 0, 2.0);
+  f.tick(s, 2);
+
+  assert.equal(s.s3JumpAirborne, undefined, 'shooter must not track roller freefall jump state');
+  assert.equal(s.s3NaturalAirborne, undefined, 'shooter must not track roller freefall natural state');
+  assert.ok(Number.isFinite(s.vel.x) && Number.isFinite(s.vel.z), 'normal movement velocities are fully preserved');
 });
 
 // --- Acceptance: mode latching across transitions ---
@@ -246,4 +370,39 @@ test('test behavior is identical under fixed simulation at 30, 60, and 120 Hz re
     { tick: 26, vertical: true },
     { tick: 30, vertical: true },
   ]);
+});
+
+// --- Acceptance: focused counterexample for smaller dt invariance ---
+test('focused counterexample: smaller dt (1/120s) uses elapsed time boundary without premature vertical transition at 30 sub-frames', async () => {
+  const f = await fixture({ adaptRuntime: adaptIssue479 });
+  const a = f.make('roller');
+  a.grounded = false; // natural free fall
+  const dt = 1 / 120; // smaller dt
+
+  // Advance 30 sub-frames at 120Hz (30 * 1/120 = 0.25 s, which exceeds 25 ticks count but is within 25/60s = 0.4167s)
+  for (let i = 0; i < 30; i++) {
+    f.G.time += dt;
+    a.update(dt);
+  }
+
+  // Fire roller at 0.25 s elapsed natural fall
+  a.intent.fire = true;
+  f.G.time += dt;
+  a.update(dt);
+
+  // Must still select horizontal mode because elapsed air time (0.258s) is <= 25/60 s
+  assert.equal(a.weaponRunner.s3FlickVertical, false, '0.25s natural fall at 120Hz must remain horizontal despite >25 sub-frames');
+  assert.equal(a.weaponRunner.s3RollerAttack?.vertical, false);
+
+  // Contrast with natural fall elapsed > 25/60 s (e.g. 55 sub-frames at 120Hz = ~0.458s)
+  const aPast = f.make('roller');
+  aPast.grounded = false;
+  for (let i = 0; i < 55; i++) {
+    f.G.time += dt;
+    aPast.update(dt);
+  }
+  aPast.intent.fire = true;
+  f.G.time += dt;
+  aPast.update(dt);
+  assert.equal(aPast.weaponRunner.s3FlickVertical, true, 'natural fall exceeding 25/60s transitions to vertical');
 });
