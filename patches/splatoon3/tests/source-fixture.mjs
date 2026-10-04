@@ -70,5 +70,12 @@ export async function fixture() {
     return a;
   }
   function tick(a, frames = 1) { for (let i = 0; i < frames; i++) { G.time += 1 / 60; a.update(1 / 60); } }
-  return { ...api, profile, make, tick, shots };
+  const originalRandom = vm.runInContext('Math.random', context);
+  function setRandom(random) {
+    context.__inkwaveTestRandom = random;
+    vm.runInContext('Math.random = globalThis.__inkwaveTestRandom', context);
+    delete context.__inkwaveTestRandom;
+  }
+  function restoreRandom() { setRandom(originalRandom); }
+  return { ...api, profile, make, tick, shots, setRandom, restoreRandom };
 }
