@@ -35,9 +35,8 @@ const FAR_LOW = 3.3, FAR_HIGH = 4.3;     // pinned RadiusMax.Low/.High
 const SPEED_LOW = 0.55, SPEED_HIGH = 0.7;// pinned SpawnSpeedZ (per frame)
 const FLY_GRAVITY = 0.003;        // pinned per frame^2
 const FLY_AIR_RESIST = 0.01;      // pinned per frame
-const SPAWN_BLAST_WAIT = 50;      // pinned frames
+const SPAWN_BLAST_WAIT = 50;      // pinned frames: native projectile LIFETIME before detonation
 const INHALE_TO_EXHALE_WAIT = 20; // pinned frames
-const EXHALE_WAIT = 150;          // pinned frames
 const BLAST_MIN = 6.0, BLAST_MAX = 11.0;// pinned blast paint radius
 
 export const INK_VAC_CALIBRATION = Object.freeze({
@@ -50,7 +49,12 @@ export const INK_VAC_CALIBRATION = Object.freeze({
   geometryStatus: 'interpretation / calibration; Nintendo field meaning unconfirmed',
   speedStatus: 'pinned per-frame values multiplied by 60 to per-second',
   damageStatus: 'pinned raw 2200 with repository /10 conversion; exceeds the 100 HP pool (instakill) — physical scale limitation',
-  transitions: 'InhaleToExhaleWaitFrame 20 and ExhaleWaitFrame 150 used as the minimum inhale before a manual release and the special time cap',
+  inhaleDurationSeconds: 2.5,
+  inhaleDurationStatus: 'CALIBRATED: the SpBlower table carries no total inhale duration. ExhaleWaitFrame 150 is an exhale standby field and is deliberately NOT used as the inhale duration; minInhaleSeconds below interprets InhaleToExhaleWaitFrame 20.',
+  minInhaleSeconds: INHALE_TO_EXHALE_WAIT / 60,
+  minInhaleStatus: 'interpretation of pinned InhaleToExhaleWaitFrame 20 as the minimum inhale before a manual release',
+  burstLifetimeSeconds: SPAWN_BLAST_WAIT / 60,
+  burstLifetimeStatus: 'pinned SpawnBlastWaitFrame 50 used as the native projectile lifetime; delay stays 0 so the native integrator runs immediately and bursts on the age>life deadline',
   status: 'pinned geometry/ballistics/timings; origin height, frontal epsilon and the frustum field reading are calibration',
 });
 
@@ -88,8 +92,17 @@ export function inkVacBlastDescriptor(charge) {
   });
 }
 
-// Full 3D aim-aligned forward (vertical included) and the intake origin.
-function forwardOf(a, out) { return out.copy(a.aimDir).normalize(); }
+// Full 3D aim-aligned forward (vertical included) and the intake origin. A zero
+// aim vector (before the first update, or after a reset) must not degenerate the
+// intake, so fall back to the actor's facing and then to +Z.
+function forwardOf(a, out) {
+  out.copy(a.aimDir);
+  if (out.lengthSq() < 1e-12) {
+    out.set(Math.sin(a.aimYaw ?? 0), 0, Math.cos(a.aimYaw ?? 0));
+    if (out.lengthSq() < 1e-12) out.set(0, 0, 1);
+  }
+  return out.normalize();
+}
 function originOf(a, out) { return out.set(a.pos.x, a.pos.y + INK_VAC_CALIBRATION.breathOriginHeight, a.pos.z); }
 
 // Analytic first entry of segment start->end into the truncated frustum.
@@ -119,7 +132,6 @@ function firstEntry(state, start, end) {
     hi = Math.min(hi, -a0 / a1);
   }
   if (lo > hi) return Infinity;                       // the step never reaches the volume
-  if (segLen < 1e-9) return F_at_lo() <= 0 ? 0 : Infinity;
 
   const M0 = m.lengthSq() - a0 * a0;
   const M1 = m.dot(e) - a0 * a1;
@@ -128,11 +140,15 @@ function firstEntry(state, start, end) {
   const C1 = 2 * (M1 - near * k * a1 - k * k * a0 * a1);
   const C0 = M0 - near * near - 2 * near * k * a0 - k * k * a0 * a0;
   const F = t => (C2 * t + C1) * t + C0;
-  function F_at_lo() { return F(lo); }
+  // A root that is analytically on the surface can land a few ulps outside after
+  // rounding, so accept a small scale-relative tolerance instead of requiring F <= 0.
+  const tol = 1e-9 * Math.max(1, Math.abs(C0), Math.abs(C1), Math.abs(C2));
+  const inside = t => F(t) <= tol;
 
-  if (F(lo) <= 0) return lo * segLen;                // already inside at the interval start
+  if (segLen < 1e-9) return inside(lo) ? 0 : Infinity;   // degenerate segment: point test
+  if (inside(lo)) return lo * segLen;                     // already inside at interval start
   const disc = C1 * C1 - 4 * C2 * C0;
-  if (disc < 0) return Infinity;                      // never crosses the surface
+  if (disc < 0) return Infinity;                           // never crosses the surface
   const sq = Math.sqrt(disc);
   const roots = Math.abs(C2) > 1e-12
     ? [(-C1 - sq) / (2 * C2), (-C1 + sq) / (2 * C2)]
@@ -140,7 +156,7 @@ function firstEntry(state, start, end) {
   roots.sort((x, y) => x - y);
   for (const t of roots) {
     if (t < lo - 1e-9 || t > hi + 1e-9) continue;
-    if (F(t) <= 0) return Math.max(lo, t) * segLen;
+    if (inside(t)) return Math.max(lo, t) * segLen;
   }
   return Infinity;
 }
@@ -172,7 +188,10 @@ export function inkVacAbsorbCandidate(actor, start, end, projectile) {
 }
 
 // Absorption side effects, guarded so one projectile is credited/neutralised once.
+// A net ghost is a replay of an authoritative shot: this module applies no
+// authority to it, so neither charge nor damage state is touched.
 function absorb(state, projectile) {
+  if (projectile.ghost) return false;
   if (projectile.s3InkVacAbsorbed) return false;
   projectile.s3InkVacAbsorbed = true;
   projectile.damage = 0;
@@ -247,7 +266,7 @@ function inkVacUpdate(a, dt) {
     const r = state.farR / state.baseFar;
     state.mesh.scale.set(r, 1, r);        // radial only: never lengthens behind the owner
   }
-  if (state.charge >= 1 || state.t >= EXHALE_WAIT / INK_VAC_CALIBRATION.framesPerSecond) release(state);
+  if (state.charge >= 1 || state.t >= INK_VAC_CALIBRATION.inhaleDurationSeconds) release(state);
 }
 
 // ---------------------------------------------------------------------------
@@ -268,9 +287,15 @@ export function installKitInkVac(context, _profile) {
       if (!state) return update.call(this, dt);
       const it = this.intent;
       // Primary fire releases the countershot: the special replaces the main/sub.
-      if (it.fire && state.t >= INHALE_TO_EXHALE_WAIT / INK_VAC_CALIBRATION.framesPerSecond) {
+      // A paused frame (dt <= 0) is a strict no-op and must never release.
+      if (dt > 0 && it.fire && state.t >= INK_VAC_CALIBRATION.minInhaleSeconds) {
         release(state);
-        return update.call(this, dt);
+        // The release frame still suppresses the replaced weapons, so the player
+        // cannot also shoot the main weapon or the sub on the same frame.
+        const fire = it.fire, sub = it.sub, squid = it.squid;
+        it.fire = false; it.sub = false; it.squid = false;
+        try { return update.call(this, dt); }
+        finally { it.fire = fire; it.sub = sub; it.squid = squid; }
       }
       // Inhale: normal movement continues; main, sub and squid form are withheld.
       const fire = it.fire, sub = it.sub, squid = it.squid;
@@ -284,7 +309,7 @@ export function installKitInkVac(context, _profile) {
         // Only restore the token if this actor is still alive and still owns it.
         if (this.alive && states.get(this) === state && !this.specialActive) this.specialActive = s;
       }
-      inkVacUpdate(this, dt);
+      if (dt > 0) inkVacUpdate(this, dt);
       return result;
     };
 
@@ -323,6 +348,7 @@ export function installKitInkVac(context, _profile) {
       const d = payload.descriptor || inkVacBlastDescriptor(charge);
       Object.assign(p, {
         type: 'blast', owner: a, team: a.team,
+        age: 0,                                     // native _step integrates from this clock
         wid: d.id,                                  // native splash cause id
         s3SpecialWeapon: d,                         // set BEFORE _push (parent preserves it)
         damage: exhaleDamage(),                     // direct damage travels on p.damage
@@ -331,10 +357,12 @@ export function installKitInkVac(context, _profile) {
         splashDamageMin: d.splashDamageMin, burstRadius: d.burstRadius,
         damageBands: d.damageBands,
         // pinned ballistics: per-frame spawn speed x60, per-frame^2 gravity x3600,
-        // per-frame air resistance x60; SpawnBlastWaitFrame gates the detonation.
+        // per-frame air resistance x60. SpawnBlastWaitFrame is the native LIFETIME
+        // before detonation; delay stays 0 so the native integrator runs at once and
+        // the native step bursts the projectile on the age > life deadline.
         vel: f.multiplyScalar(exhaleSpeed(charge)),
-        life: Infinity,                             // the wait frames bound the projectile
-        delay: SPAWN_BLAST_WAIT / INK_VAC_CALIBRATION.framesPerSecond,
+        life: SPAWN_BLAST_WAIT / INK_VAC_CALIBRATION.framesPerSecond,
+        delay: 0,
         straight: 0, grav: FLY_GRAVITY * 3600, drag: FLY_AIR_RESIST * 60,
         trail: 0, trailEvery: 0,
       });

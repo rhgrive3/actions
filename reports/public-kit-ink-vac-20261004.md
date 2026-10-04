@@ -29,9 +29,9 @@ From `WeaponSpBlower.game__GameParameterTable.json`:
 | `ExhaleParam.SpawnSpeedZSpecUp.Low` / `SpawnSpeedZMaxCharge` | .55 / .7 | spawn speed, ×60 |
 | `ExhaleParam.FlyGravity` | .003 | ×3600 gravity |
 | `ExhaleParam.FlyPositionAirResist` | .01 | ×60 drag |
-| `ExhaleParam.SpawnBlastWaitFrame` | 50 | detonation delay (projectile `delay`) |
-| `WeaponParam.InhaleToExhaleWaitFrame` | 20 | minimum inhale before a manual release |
-| `WeaponParam.ExhaleWaitFrame` | 150 | special time cap |
+| `ExhaleParam.SpawnBlastWaitFrame` | 50 | native projectile **lifetime** before detonation (`delay` stays 0) |
+| `WeaponParam.InhaleToExhaleWaitFrame` | 20 | minimum inhale before a manual release (interpretation) |
+| `WeaponParam.ExhaleWaitFrame` | 150 | **inspected and NOT used as the inhale duration** (exhale standby field) |
 | `ExhaleBlastParam{Min,Max}Charge.PaintRadius` | 6.0 / 11.0 | charge-scaled blast reach |
 
 ## Explicit calibration / limitations
@@ -51,9 +51,17 @@ From `WeaponSpBlower.game__GameParameterTable.json`:
 - `breathOriginHeight = 1.0` (intake origin above feet) — calibration.
 - `frontalEpsilon = -0.05` (must travel against the aim) — calibration.
 - `absorbCreditPerProjectile = 0.34` charge per accepted projectile — calibration.
-- Unknowns left explicit: the exact mapping of the 20F/150F fields onto "minimum inhale
-  before manual release" and "special time cap" is an interpretation; blast detonation
-  visuals and the `GuideRadius 0.25` guidance are not reproduced.
+- **Inhale duration is CALIBRATED (`2.5 s`), not source-backed.** The SpBlower table
+  carries no total inhale duration. `ExhaleWaitFrame 150` is an exhale standby field and is
+  deliberately **not** used as the inhale duration; the earlier source-backed claim was
+  wrong and has been removed. `InhaleToExhaleWaitFrame 20` is interpreted as the minimum
+  inhale before a manual release.
+- **Countershot lifetime is finite and pinned.** `SpawnBlastWaitFrame 50` is the native
+  projectile lifetime (`life = 50/60`) with `delay = 0`, so the native integrator runs from
+  the first frame and `_step`'s `p.age > p.life` rule fires the burst at exactly frame 50.
+  `life` is never `Infinity`, so no unbounded claim is made. `age` is initialised to 0 so the
+  native clock is valid.
+- Blast detonation visuals and the `GuideRadius 0.25` guidance are not reproduced.
 
 ## Behaviour
 
@@ -67,12 +75,13 @@ From `WeaponSpBlower.game__GameParameterTable.json`:
    its swept segment **first enters** the frustum within `LengthMax`; LOS is tested at that
    first-contact point, so an intervening wall blocks intake.
 4. **Charge** credited once per accepted absorption; absorbed projectiles get `damage = 0`
-   and a guard so they can never be credited or damaged twice.
-5. **Release** (charge full, primary fire, or the 150F cap) queues a native `type:'blast'`
-   countershot carrying the resolved descriptor. The native integrator and `_blastBurst`
-   remain the authority; this module applies no manual splash/paint. Countershot ballistics
-   use the pinned speed/gravity/drag and the pinned `SpawnBlastWaitFrame` delay. A **remote
-   ghost authors nothing**.
+   and a guard so they can never be credited or damaged twice. **A net ghost is a replay and
+   is given no authority**: its `onHit` credits nothing and mutates nothing.
+5. **Release** (charge full, primary fire, or the calibrated inhale duration) queues a native
+   `type:'blast'` countershot carrying the resolved descriptor. The native integrator and
+   `_blastBurst` remain the authority; this module applies no manual splash/paint.
+   Countershot ballistics use the pinned speed/gravity/drag and burst at the pinned lifetime.
+   A **remote ghost authors nothing**.
 6. **Lifecycle.** Expiry/interruption, death and reset clear the state and dispose the owned
    GPU mesh. `dt === 0` is a strict no-op.
 
@@ -100,19 +109,34 @@ const cand = api.inkVacAbsorbCandidate(actor, p.prev, p.pos, p);
 Compare `cand.distance` against the native wall/actor/boss distances and call `onHit()` only
 for the winner. The hook performs no integration or second projectile scan.
 
+## Robustness details
+
+- **Analytic entry tolerance**: the surface quadratic is tested with a scale-relative
+  tolerance so a root that is analytically on the boundary but lands a few ulps outside
+  after rounding is still accepted. Zero-length segments (inside / outside / behind) take a
+  point test after the quadratic is built, with no temporal-dead-zone error.
+- **Degenerate aim**: a zero `aimDir` (before the first update or after a reset) falls back
+  to the actor's facing, then to +Z, so the intake never degenerates.
+- **Disposed state**: a disposed actor yields no intake candidate.
+- **Pause**: a `dt <= 0` frame is a strict no-op — it never releases, never queues a
+  countershot and never fires the main weapon. On the release frame the replaced main/sub/
+  squid inputs stay suppressed, so the player cannot also shoot on that frame.
+
 ## Verification
 
 `node --experimental-vm-modules --test patches/splatoon3/tests/kit-ink-vac.test.mjs`
-→ **21 pass / 0 fail**. Tests drive the real `Actor` activation/update, the real `Projectiles`
+→ **27 pass / 0 fail**. Tests drive the real `Actor` activation/update, the real `Projectiles`
 blast entry and the candidate hook. Coverage includes: gauge/tank consumed once; frontal
 absorb with damage disabled; backside rejection; intervening wall; intake length; a projectile
 that only **sweeps through** the volume (analytic first entry at the far boundary); vertical
-aim alignment; single (non-double) charge credit; main/sub/form withheld while held; primary
-fire withheld inside the 20F window then releasing; 150F cap auto-release; native `type:'blast'`
-countershot with descriptor and both band forms; pinned speed 42 u/s, gravity, drag and 50F
-delay; damage 220 via `/10`; remote ghost no-author; death during an update not restoring the
-token; `dt 0` no-op; visible aim-aligned front-only presentation; reset/dispose GPU removal;
-pinned/calibrated geometry helpers.
+aim alignment; single (non-double) charge credit; ghost given no authority; main/sub/form
+withheld while held; primary fire withheld inside the 20F window then releasing; calibrated
+inhale-duration auto-release; native `type:'blast'` countershot with descriptor and both band
+forms; pinned speed 42 u/s, gravity, drag; **the native `_step` driven to the automatic burst
+at exactly its finite lifetime (frame 50)**; damage 220 via `/10`; remote ghost no-author;
+death during an update not restoring the token; `dt 0` no-op and release-frame suppression;
+zero-length/tangent/zero-aim safety; disposed state; visible aim-aligned front-only
+presentation; reset/dispose GPU removal; pinned/calibrated geometry helpers.
 
 ## Limitations
 
@@ -120,6 +144,8 @@ pinned/calibrated geometry helpers.
   `_blastBurst` wiring are parent-owned; end-to-end charge-scaled detonation is not claimed.
 - The `RadiusMin`/`RadiusMax` near/far reading is an interpretation (unconfirmed).
 - 220 HP exceeds the 100 HP pool (instakill) — physical scale limitation.
+- Inhale duration (2.5 s) is calibrated, not sourced; `ExhaleWaitFrame 150` is an exhale
+  standby field and is not used as the inhale duration.
 - Origin height, frontal epsilon and per-projectile charge credit are calibration.
-- 20F/150F field mapping, blast visuals and `GuideRadius` guidance are not reproduced.
+- Blast visuals and `GuideRadius` guidance are not reproduced.
 - Logic/composed level only; no browser or physical-device capture.

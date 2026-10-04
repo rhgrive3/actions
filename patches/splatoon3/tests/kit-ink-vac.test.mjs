@@ -138,7 +138,7 @@ test('the special replaces main and sub while inhaling, but normal movement cont
 test('primary fire inside the pinned 20F window is withheld, and releases after it', async () => {
   const { f, a, system } = await setup();
   activate(f, a);                                   // t = 1/60 after the first tick
-  f.tick(a, 10);                                    // ~11 frames: inside InhaleToExhaleWaitFrame
+  f.tick(a, 10);                                    // ~11 frames: inside the 20F minimum window
   a.intent.fire = true; f.tick(a);
   assert.ok(a.specialActive, 'fire inside the 20-frame window does not release');
   assert.equal(system.list.length, 0, 'no countershot was queued yet');
@@ -148,14 +148,105 @@ test('primary fire inside the pinned 20F window is withheld, and releases after 
   assert.equal(system.list.length, 1, 'the countershot is queued on release');
 });
 
-test('an unfilled inhale auto-releases at the pinned 150F cap', async () => {
+test('an unfilled inhale auto-releases at the calibrated inhale duration', async () => {
   const { f, a, system } = await setup();
   activate(f, a);
-  f.tick(a, 149);
-  assert.ok(a.specialActive, 'still held just before the cap');
-  f.tick(a, 2);
-  assert.equal(a.specialActive, null, 'the special time cap ends the inhale');
-  assert.equal(system.list.length, 1, 'a min-charge countershot was queued at the cap');
+  const cap = INK_VAC_CALIBRATION.inhaleDurationSeconds;
+  f.tick(a, Math.round(cap * 60) - 2);
+  assert.ok(a.specialActive, 'still held just before the calibrated duration');
+  f.tick(a, 3);
+  assert.equal(a.specialActive, null, 'the calibrated inhale duration ends the inhale');
+  assert.equal(system.list.length, 1, 'a min-charge countershot was queued');
+  assert.ok(INK_VAC_CALIBRATION.inhaleDurationStatus.includes('CALIBRATED'),
+    'the inhale duration is labelled calibrated, not source-backed');
+  assert.ok(INK_VAC_CALIBRATION.inhaleDurationStatus.includes('ExhaleWaitFrame'),
+    'ExhaleWaitFrame is explicitly NOT used as the inhale duration');
+});
+
+test('zero-length segments, tangent contact and a zero aim vector are safe', async () => {
+  const { f, a } = await setup();
+  activate(f, a);
+  const st = f.inkVacState(a);
+  const inside = new f.THREE.Vector3(0, 1, 3);
+  const outside = new f.THREE.Vector3(0, 1, 30);
+  // zero-length INSIDE
+  assert.doesNotThrow(() => inkVacAbsorbCandidate(a, inside, inside.clone(), enemyShot(f, 0, 1, 3, 0, 0, -3)));
+  assert.ok(inkVacAbsorbCandidate(a, inside, inside.clone(), enemyShot(f, 0, 1, 3, 0, 0, -3)),
+    'a zero-length segment inside the volume is an entry at distance 0');
+  // zero-length OUTSIDE
+  assert.equal(inkVacAbsorbCandidate(a, outside, outside.clone(), enemyShot(f, 0, 1, 30, 0, 0, -3)), null);
+  // zero-length BEHIND
+  assert.equal(inkVacAbsorbCandidate(a, new f.THREE.Vector3(0, 1, -3), new f.THREE.Vector3(0, 1, -3),
+    enemyShot(f, 0, 1, -3, 0, 0, 3)), null);
+  // tangent: exactly on the far boundary surface (F == 0 within rounding)
+  const tangent = new f.THREE.Vector3(0, 1 + st.farR, 15);
+  assert.ok(inkVacAbsorbCandidate(a, tangent, tangent.clone(), enemyShot(f, 0, 1 + st.farR, 15, 0, 0, -3)),
+    'tangent contact on the surface is accepted despite floating-point rounding');
+  // zero aim direction must not degenerate the intake
+  a.aimDir.set(0, 0, 0);
+  assert.doesNotThrow(() => inkVacAbsorbCandidate(a, inside, inside.clone(), enemyShot(f, 0, 1, 3, 0, 0, -3)));
+  a.aimDir.set(0, 0, 1);
+});
+
+test('a disposed actor state yields no intake candidate', async () => {
+  const { f, a } = await setup();
+  activate(f, a);
+  disposeInkVac(a);
+  const p = enemyShot(f, 0, 1, 5, 0, 0, -3);
+  assert.equal(inkVacAbsorbCandidate(a, p.pos.clone(), p.pos.clone().addScaledVector(p.vel, 1 / 60), p), null);
+});
+
+test('a ghost projectile is neither credited nor neutralised', async () => {
+  const { f, a } = await setup();
+  activate(f, a);
+  const p = enemyShot(f, 0, 1, 5, 0, 0, -3);
+  p.ghost = true;
+  const cand = inkVacAbsorbCandidate(a, p.pos.clone(), p.pos.clone().addScaledVector(p.vel, 1 / 60), p);
+  assert.ok(cand, 'a ghost is still intercepted geometrically');
+  cand.onHit();
+  assert.equal(f.inkVacState(a).charge, 0, 'no charge is credited for a ghost projectile');
+  assert.equal(p.damage, 30, 'a ghost projectile is not neutralised either');
+});
+
+test('the countershot bursts automatically at its finite lifetime in the native step', async () => {
+  const { f, a, system } = await setup();
+  f.G.physics.segment = () => ({ hit: false });
+  activate(f, a);
+  shoot(f, a);                                      // absorb at ground level first
+  a.pos.y = 40;                    // then isolate the lifetime: drop must not reach the water line
+  f.tick(a);                                        // release queues the countershot
+  const ex = system.list[system.list.length - 1];
+  assert.equal(ex.delay, 0, 'no launch delay: the native integrator runs immediately');
+  assert.ok(Math.abs(ex.life - 50 / 60) < 1e-9, 'SpawnBlastWaitFrame 50 is the native lifetime');
+  let bursts = 0, frames = 0;
+  system._blastBurst = () => { bursts++; };
+  while (system._step(ex, 1 / 60) === false && frames < 600) frames++;
+  assert.ok(bursts >= 1, 'the native step bursts the countershot at its finite deadline');
+  assert.ok(frames <= 52, `the burst happens at the lifetime, took ${frames} frames`);
+});
+
+test('a dt0 frame is a strict no-op: no release, no countershot, no main shot', async () => {
+  const { f, a, system } = await setup();
+  activate(f, a);
+  f.tick(a, 40);
+  a.intent.fire = true;
+  f.G.time += 0; a.update(0);
+  assert.ok(a.specialActive, 'a paused frame never releases');
+  assert.equal(system.list.length, 0, 'no countershot is queued on a paused frame');
+  assert.equal(a.weaponRunner.charging, false, 'no main shot on a paused frame');
+});
+
+test('the release frame does not also fire the replaced main weapon or sub', async () => {
+  const { f, a } = await setup();
+  activate(f, a);
+  f.tick(a, 40);
+  const seen = [];
+  const runner = a.weaponRunner, real = runner.update;
+  runner.update = function (dt, inp) { seen.push({ ...inp }); return real.call(this, dt, inp); };
+  a.intent.fire = true; a.intent.sub = true; f.tick(a);
+  assert.equal(a.specialActive, null, 'the special released');
+  assert.ok(seen.every(i => !i.fire && !i.sub && !i.subReleased),
+    'main and sub stay suppressed on the release frame');
 });
 
 test('primary fire releases the countershot (exhale transition)', async () => {
@@ -201,7 +292,9 @@ test('the countershot uses the pinned spawn speed, gravity and blast wait', asyn
   assert.ok(Math.abs(speed - 42) < 1e-6, `full-charge speed is 0.7*60 = 42 u/s, got ${speed}`);
   assert.ok(Math.abs(ex.grav - 0.003 * 3600) < 1e-6, 'gravity is the pinned per-frame^2 value x3600');
   assert.ok(Math.abs(ex.drag - 0.01 * 60) < 1e-6, 'air resistance is the pinned per-frame value x60');
-  assert.ok(Math.abs(ex.delay - 50 / 60) < 1e-9, 'SpawnBlastWaitFrame 50 gates the detonation');
+  assert.ok(Number.isFinite(ex.life), 'the countershot lifetime is finite, never claimed bounded by Infinity');
+  assert.ok(Math.abs(ex.life - 50 / 60) < 1e-9, 'SpawnBlastWaitFrame 50 is the native lifetime');
+  assert.equal(ex.delay, 0, 'no launch delay');
   assert.equal(ex.straight, 0, 'the pinned FlyGravity applies from the first frame');
 });
 
