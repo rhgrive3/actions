@@ -39,8 +39,14 @@ const revision=manifest.build?.revision;
 if(!/^[a-f0-9]{64}$/.test(revision||'')) throw new Error('Missing immutable revision');
 
 const receipts=[];
+let forceNetworkFailure=false;
 const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json','.svg':'image/svg+xml','.png':'image/png','.webp':'image/webp','.woff2':'font/woff2','.webmanifest':'application/manifest+json'};
 const server=http.createServer((req,res)=>{
+  if(forceNetworkFailure){
+    receipts.push({path:req.url,status:'dropped',bodyBytes:0,immutable:false,time:Date.now()});
+    req.socket.destroy();
+    return;
+  }
   try{
     const url=new URL(req.url,'http://localhost');
     const rel=decodeURIComponent(url.pathname).replace(/^\/+/, '')||'index.html';
@@ -197,11 +203,17 @@ try{
     const row=await measure(pwaPage,'sw-warm-'+i,()=>pwaPage.reload({waitUntil:'domcontentloaded',timeout}),pwaErrors);
     if(!row.controller) result.errors.push(row.label+' was not service-worker controlled');
   }
-  await pwa.setOffline(true);
-  const offline=await measure(pwaPage,'offline-controlled',()=>pwaPage.reload({waitUntil:'domcontentloaded',timeout}),pwaErrors);
+  let offline;
+  forceNetworkFailure=true;
+  try {
+    await pwa.setOffline(true);
+    offline=await measure(pwaPage,'offline-controlled',()=>pwaPage.reload({waitUntil:'domcontentloaded',timeout}),pwaErrors);
+  } finally {
+    forceNetworkFailure=false;
+    await pwa.setOffline(false);
+  }
   if(!offline.controller) result.errors.push('Offline navigation lost service-worker control');
-  if(offline.server.requests!==0) result.errors.push('Offline navigation unexpectedly reached the HTTP server');
-  await pwa.setOffline(false);
+  if(offline.server.bodyBytes!==0 || offline.server.status200!==0) result.errors.push('Offline navigation consumed an HTTP response instead of the cached snapshot');
   await cacheSnapshot(pwaPage,'after-offline');
   await pwa.close();pwa=null;
 
