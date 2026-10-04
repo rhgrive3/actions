@@ -818,3 +818,21 @@ test('the lifecycle wrapper can be removed and restores the native methods', asy
   assert.notEqual(api.Actor.prototype._startSpecial, before, 'the prototype was restored');
   installKitTrizooka(api, JSON.parse(fs.readFileSync(path.join(ROOT, 'patches/splatoon3/profile.json'), 'utf8')));
 });
+test('native volley side lobes are symmetric and stay inside the declared fan', async () => {
+  const api = await production(), projectiles = world(api), a = makeActor(api);
+  a.aimPoint.copy(a.pos).add({ x: 2, y: 3, z: 20 });
+  const muzzle = projectiles._muzzle(a, new api.THREE.Vector3());
+  const aim = projectiles._aimFrom(a, muzzle, new api.THREE.Vector3()).clone();
+  const basis = perpendicularBasis(aim).u;
+  const fired = throwVolley(projectiles, a, trizookaSpecialWeapon());
+  const carrier = fired.find(p => p.damageOwner), sides = fired.filter(p => !p.damageOwner);
+  assert.ok(carrier.vel.clone().normalize().distanceTo(aim) < 1e-12);
+  const offsets = sides.map(p => p.vel.clone().normalize().dot(basis));
+  assert.ok(offsets[0] * offsets[1] < 0, 'visual lobes straddle the authoritative aim ray');
+  assert.ok(Math.abs(offsets[0] + offsets[1]) < 1e-12, 'equal opposite fan offsets');
+  for (const p of sides) {
+    const angle = Math.acos(Math.min(1, p.vel.clone().normalize().dot(aim)));
+    assert.ok(angle <= VOLLEY_CONFIG.spreadDeg * Math.PI / 180 + 1e-12);
+    assert.ok(Math.abs(p.vel.length() - TRIZOOKA.spawnSpeed) < 1e-9);
+  }
+});

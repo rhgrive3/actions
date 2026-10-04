@@ -234,14 +234,14 @@ export function throwVolley(System, actor, descriptor) {
   // extra import is needed.
   const seed = System._new();
   const muzzle = System._muzzle(actor, seed.pos);
-  const aim = System._aimFrom(actor, muzzle, seed.vel);
+  const aim = System._aimFrom(actor, muzzle, seed.vel).clone();
   const fired = [];
   for (let i = 0; i < count; i++) {
     const p = i === 0 ? seed : System._new();
     const spread = VOLLEY_CONFIG.spreadDeg * Math.PI / 180;
     // the fan is symmetric about the DAMAGE CARRIER, so the authoritative shot
     // travels exactly along the native aim ray and the side lobes straddle it
-    const k = i - VOLLEY_CONFIG.damageLobeIndex;
+    const k = i === VOLLEY_CONFIG.damageLobeIndex ? 0 : (i === 1 ? -1 : 1);
     const carrier = i === VOLLEY_CONFIG.damageLobeIndex;
     Object.assign(p, {
       type: carrier ? descriptor.type : 'shot',
@@ -268,7 +268,7 @@ export function throwVolley(System, actor, descriptor) {
     // fan: the native `_spread` is random, this one is deterministic so a volley
     // is reproducible and so a test can assert the carrier is on the ray
     const lateral = perpendicularBasis(aim);
-    p.vel.copy(aim).addScaledVector(lateral.u, Math.sin(k * spread) * TRIZOOKA.spawnSpeed)
+    p.vel.copy(aim).addScaledVector(lateral.u, Math.sin(k * spread))
       .normalize().multiplyScalar(TRIZOOKA.spawnSpeed);
     p.pos.copy(muzzle);
     p.prev.copy(p.pos); p.start.copy(p.pos);
