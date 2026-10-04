@@ -43,7 +43,8 @@ export function installMenuQuality(Menus, env=globalThis){
   };
   if(inputMode&&cursor)P.setInputMode=function(...args){
     const old=this._input,result=inputMode.apply(this,args);
-    if(old!==this._input)retarget(this);
+    // Input-mode callbacks can reflow the same focused element.
+    if(old!==this._input){this._cur.targetEl=null;retarget(this);}
     return result;
   };
   if(settings)P._scr_settings=function(...args){preparePreviewRoot(this.el,env);return settings.apply(this,args);};

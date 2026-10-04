@@ -65,3 +65,11 @@ test('logically off ring is hidden despite its native CSS opacity fade, and reap
  time(24);m.setInputMode('pad');assert.equal(m._cur.on,true);assert.equal(m.cursorEl.style.visibility,'');
  m._setFocus(null);assert.equal(m.cursorEl.style.visibility,'hidden');
 });
+
+test('input-mode layout change refreshes the same focused item target in the input task',()=>{
+ const {m,el}=fixture(),a=el(10,20,'row');let rect={left:10,top:20,width:80,height:30};
+ a.getBoundingClientRect=()=>rect;m._setFocus(a);m._updateCursor(1/60);
+ m._scr.onInputMode=()=>{rect={left:100,top:120,width:120,height:50};};
+ m.setInputMode('touch');assert.equal(m._focus,a);assert.equal(m._cur.targetEl,a);
+ assert.equal(m._cur.x.target,93);assert.equal(m._cur.y.target,113);assert.equal(m._cur.w.target,134);assert.equal(m._cur.h.target,64);assert.equal(m._cur.on,false);
+});
