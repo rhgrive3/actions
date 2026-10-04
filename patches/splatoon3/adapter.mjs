@@ -255,8 +255,8 @@ export function adaptSource(rel, code) {
   }
   if (rel === 'src/net/netmatch.js') {
     code = replaceOnce(code, '    victim.respawnTimer = PLAYER.respawnTime;',
-      '    setRespawnTimer(victim, cause);', 'remote death-cause respawn timing');
-    return `import { setRespawnTimer } from '../../patches/splatoon3/runtime/resources.mjs';\n` + code;
+      'setRespawnTimer(victim, cause);\n    applyDeathGear(victim);', 'remote death-cause respawn timing');
+    return `import { setRespawnTimer } from '../../patches/splatoon3/runtime/resources.mjs';\nimport { applyDeathGear } from '../../patches/splatoon3/runtime/gear.mjs';\n` + code;
   }
   if (rel === 'src/game/character-weapons.js') {
     return replaceOnce(code, '    if (ft >= 0.15 && ft - dt < 0.15) w.drumW += 34;', '    const release = st.flickReleaseTime ?? 0.15;\n    if (ft >= release && ft - dt < release) w.drumW += 34;', 'roller drum release impulse');

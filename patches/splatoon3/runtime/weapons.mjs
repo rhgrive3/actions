@@ -166,13 +166,19 @@ export function installWeapons(context, profile) {
   // feet (足元塗り), independently of the longitudinal line samples and the
   // random line paint. This is a dedicated nearest splash, resolved once per
   // shot with a fixed seed so it cannot depend on the paint RNG.
+  //
+  // `kind` must be one PaintSystem's K table actually defines: recSplat puts
+  // this value straight on the wire and peers feed it back into _kind(), so an
+  // unknown string silently degrades on both ends. 'trail' is the native kind
+  // the radius heuristic already selected for this radius, so naming it
+  // explicitly makes the wire faithful without changing what is painted.
   function feetSplash(a, w) {
     const radius = w.feetPaintRadius;
     if (!(radius > 0)) return;
     feetFrom.set(a.pos.x, a.pos.y + 0.2, a.pos.z);
     const g = G.physics.raycast(feetFrom, feetDown, 3.5, feetHit, true);
     if (!g.hit) return;
-    const area = G.paint.splat(feetAt.copy(g.point).addScaledVector(g.normal, 0.1), radius, a.team, { seed: 0, kind: 'chargerFeet' });
+    const area = G.paint.splat(feetAt.copy(g.point).addScaledVector(g.normal, 0.1), radius, a.team, { seed: 0, kind: 'trail' });
     a.addTurf(area);
   }
   Projectiles.prototype.fireCharger = function (a, w, charge) {
