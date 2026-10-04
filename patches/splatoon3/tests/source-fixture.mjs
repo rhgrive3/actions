@@ -7,7 +7,8 @@ import { fileURLToPath } from 'node:url';
 import { adaptSource } from '../adapter.mjs';
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const UPSTREAM = process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
-export async function fixture() {
+export async function fixture(extraExports = '') {
+  const built = process.env.INKWAVE_CLOTHING_BUILT_SITE;
   const context = vm.createContext({ console, performance });
   const modules = new Map();
   function resolve(spec, from) {
@@ -19,9 +20,12 @@ export async function fixture() {
     return file;
   }
   function load(file) {
+    if (built && (file.startsWith(UPSTREAM + path.sep) || file.startsWith(path.join(ROOT, 'patches/')))) {
+      file = path.join(built, file.startsWith(UPSTREAM + path.sep) ? path.relative(UPSTREAM, file) : path.relative(ROOT, file));
+    }
     if (modules.has(file)) return modules.get(file);
     const relative = path.relative(UPSTREAM, file);
-    const source = file.startsWith(UPSTREAM + path.sep) ? adaptSource(relative, fs.readFileSync(file, 'utf8')) : fs.readFileSync(file, 'utf8');
+    const source = !built && file.startsWith(UPSTREAM + path.sep) ? adaptSource(relative, fs.readFileSync(file, 'utf8')) : fs.readFileSync(file, 'utf8');
     const mod = new vm.SourceTextModule(source, { context, identifier: file }); modules.set(file, mod); return mod;
   }
   const root = new vm.SourceTextModule(`
@@ -39,10 +43,11 @@ export async function fixture() {
     export * from './patches/splatoon3/runtime/flow.mjs';
     export * from './patches/splatoon3/runtime/resources.mjs';
     export * from './patches/splatoon3/runtime/render.mjs';
+    ${extraExports}
   `, { context, identifier: path.join(ROOT, 'fixture.mjs') });
   await root.link((spec, from) => load(resolve(spec, from.identifier))); await root.evaluate();
   const api = { ...root.namespace }, { G, THREE, PLAYER, WEAPONS, SUB, SPECIALS } = api;
-  const profile = JSON.parse(fs.readFileSync(path.join(ROOT, 'patches/splatoon3/profile.json'), 'utf8'));
+  const profile = JSON.parse(fs.readFileSync(path.join(built || ROOT, 'patches/splatoon3/profile.json'), 'utf8'));
   Object.assign(PLAYER, profile.player); Object.assign(SUB.bomb, profile.bomb);
   for (const [id, data] of Object.entries(profile.weapons)) Object.assign(WEAPONS[id], data);
   for (const install of ['installWeapons', 'installMovement', 'installGear', 'installFlow', 'installResources', 'installRendering']) api[install](api, profile);

@@ -1254,5 +1254,15 @@
     "leanMax": 0.16,
     "leanFrequency": 3.2,
     "footPitchRate": 8
+  },
+  "clothingGear": {
+    "respawnPunisher": {
+      "targetFrames": 45,
+      "selfFrames": 68,
+      "targetSpecialLoss": 0.15,
+      "selfSpecialLoss": 0.225,
+      "quickRespawnAPScale": 0.15,
+      "specialSaverAPScale": 0.7
+    }
   }
 }

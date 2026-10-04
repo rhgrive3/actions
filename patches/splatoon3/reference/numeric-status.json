@@ -2178,5 +2178,35 @@
     "value": 8,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
+  },
+  "clothingGear.respawnPunisher.targetFrames": {
+    "value": 45,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "clothingGear.respawnPunisher.selfFrames": {
+    "value": 68,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "clothingGear.respawnPunisher.targetSpecialLoss": {
+    "value": 0.15,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "clothingGear.respawnPunisher.selfSpecialLoss": {
+    "value": 0.225,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "clothingGear.respawnPunisher.quickRespawnAPScale": {
+    "value": 0.15,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "clothingGear.respawnPunisher.specialSaverAPScale": {
+    "value": 0.7,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
   }
 }
