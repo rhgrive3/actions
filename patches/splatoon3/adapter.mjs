@@ -113,14 +113,17 @@ export function adaptSource(rel, code) {
     // these hooks only supply the bomb being processed.
     code = replaceOnce(code, '    // ---- sub weapon (splat bomb)\n    const bomb = SUB.bomb;',
       '    // ---- sub weapon (splat bomb)\n    const bomb = kitSubRelease(SUB, this, dt, inp);', 'sub release selected spec and held charge');
-    code = replaceOnce(code, '        G.projectiles.throwBomb(a);', '        G.projectiles.throwBomb(a, kitSubHoldSeconds(this));', 'sub release hold seconds');
     // per-bomb contact subtype inside the existing native contact block
+    // Attach the per-bomb kit spec AFTER the native push and BEFORE recBomb, so the
+    // network never snapshots a record that lacks its kit identity.
+    code = replaceOnce(code, "    if (G.netm && !a.remote) G.netm.recBomb(this.bombs[this.bombs.length - 1]);\n    if (a.isLocal || a._nearCamera())",
+      "    kitBombAttach(SUB, this, a, a.weaponRunner?.s3Release);\n    if (G.netm && !a.remote) G.netm.recBomb(this.bombs[this.bombs.length - 1]);\n    if (a.isLocal || a._nearCamera())", 'sub bomb attach before recbomb');
     code = replaceOnce(code, '      if (hit.hit) {\n        if (b.kind === \'storm\') {',
       '      if (hit.hit) {\n        const s3Took = kitBombContact(SUB, b, hit, dt);\n        if (b.kind === \'storm\') {', 'sub per-bomb contact');
     // The whole native reflection + arming region is skipped only for the bomb
     // subtype that took the contact; everything else falls through unchanged.
     code = replaceOnce(code, "        b.pos.copy(hit.point).addScaledVector(hit.normal, 0.21);\n        const vn = b.vel.dot(hit.normal);\n        b.vel.addScaledVector(hit.normal, -vn * 1.35);\n        b.vel.multiplyScalar(hit.normal.y > 0.6 ? 0.45 : 0.6);\n        if (hit.normal.y > 0.6 && b.fuse < 0) {\n          b.fuse = SUB.bomb.fuse;\n          G.audio?.play('bomb_beep', { pos: b.pos, volume: 0.6 });\n          emit('bomb:arm', { actor: b.owner, pos: b.pos.clone(), team: b.team, radius: SUB.bomb.radius });\n        }",
-      "        if (!s3Took) {\n        b.pos.copy(hit.point).addScaledVector(hit.normal, 0.21);\n        const vn = b.vel.dot(hit.normal);\n        b.vel.addScaledVector(hit.normal, -vn * 1.35);\n        b.vel.multiplyScalar(hit.normal.y > 0.6 ? 0.45 : 0.6);\n        if (hit.normal.y > 0.6 && b.fuse < 0) {\n          b.fuse = SUB.bomb.fuse;\n          G.audio?.play('bomb_beep', { pos: b.pos, volume: 0.6 });\n          emit('bomb:arm', { actor: b.owner, pos: b.pos.clone(), team: b.team, radius: SUB.bomb.radius });\n        }\n        }\n        kitBombTrail(SUB, b, G.paint);", 'sub native bounce guard and rolling trail');
+      "        if (!s3Took) {\n        b.pos.copy(hit.point).addScaledVector(hit.normal, 0.21);\n        const vn = b.vel.dot(hit.normal);\n        b.vel.addScaledVector(hit.normal, -vn * 1.35);\n        b.vel.multiplyScalar(hit.normal.y > 0.6 ? 0.45 : 0.6);\n        if (hit.normal.y > 0.6 && b.fuse < 0) {\n          b.fuse = SUB.bomb.fuse;\n          G.audio?.play('bomb_beep', { pos: b.pos, volume: 0.6 });\n          emit('bomb:arm', { actor: b.owner, pos: b.pos.clone(), team: b.team, radius: SUB.bomb.radius });\n        }\n        }\n        kitBombTrail(SUB, b, G.paint, this);", 'sub native bounce guard and rolling trail');
     // native blast consumes this bomb's own distance bands and radii
     code = replaceOnce(code, 'distanceDamage(s.damageBands, d, false)', 'distanceDamage(kitBombDamageBands(SUB, b, s.damageBands), d, false)', 'sub blast damage bands');
     code = replaceOnce(code, 'let area = G.paint.splat(_v.copy(c).setY(c.y + 0.2), s.paintRadius, b.team, { seed: Math.random() });',
@@ -134,7 +137,7 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, '        const k = 1 - b.fuse / SUB.bomb.fuse;', '        const k = 1 - b.fuse / kitBombFuseTotal(SUB, b);', 'sub fuse total');
     code = replaceOnce(code, '    G.boss?.splash(b.owner, c, s.radius, s.damageMax, s.damageMin, \'bomb\');',
       '    G.boss?.splash(b.owner, c, kitBombRadius(SUB, b, s.radius), kitBombDamageMax(SUB, b, s.damageMax), kitBombDamageMin(SUB, b, s.damageMin), \'bomb\');', 'sub boss splash');
-    return `import { applyProjectileHit, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\nimport { kitSubRelease, kitSubHoldSeconds, kitBombGravity, kitBombContact, kitBombTrail, kitBombFuseTotal, kitBombPaintRadius, kitBombRadius, kitBombDamageBands, kitBombDamageMax, kitBombDamageMin } from '../../patches/splatoon3/runtime/kit-subs.mjs';\n` + code;
+    return `import { applyProjectileHit, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\nimport { kitSubRelease, kitSubHoldSeconds, kitBombAttach, kitBombGravity, kitBombContact, kitBombTrail, kitBombFuseTotal, kitBombPaintRadius, kitBombRadius, kitBombDamageBands, kitBombDamageMax, kitBombDamageMin } from '../../patches/splatoon3/runtime/kit-subs.mjs';\n` + code;
   }
   if (rel === 'src/game/actor.js') {
     code = replaceOnce(code, '    this._updateClimb(dt, isSquid);',

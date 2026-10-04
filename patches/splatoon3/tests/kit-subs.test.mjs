@@ -13,7 +13,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { adaptSource } from '../adapter.mjs';
-import { KIT_SUBS, SUCTION, CURLING, registerKitSubs, kitSubFor, curlingChargeFraction, curlingThrowSpeed, curlingBlastParams } from '../runtime/kit-subs.mjs';
+import { KIT_SUBS, SUCTION, CURLING, registerKitSubs, kitSubFor, kitSubRelease, kitBombGravity, curlingChargeFraction, curlingThrowSpeed, curlingBlastParams, NATIVE_STORM_GRAVITY } from '../runtime/kit-subs.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const SRC = path.resolve(process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public'));
@@ -201,9 +201,15 @@ async function throwReal(api, weaponSub, hold, lateral = 0) {
     pos: new api.THREE.Vector3(0, 0, 0), vel: new api.THREE.Vector3(lateral, 0, 0),
     aimYaw: 0, aimPitch: 0.2, grounded: true, color: api.G.teamColors[0],
     weapon: { sub: weaponSub, kind: 'shooter' },
-    weaponRunner: { s3SubHold: hold },
+    weaponRunner: null,
     addTurf() { this.turf = (this.turf || 0) + 1; }, _nearCamera: () => true,
   };
+  // Accumulate the hold the way a real held sub button does, then resolve.
+  const runner = { a: actor, s3SubHold: 0 };
+  for (let i = 0; i < Math.round(hold * 60); i++) kitSubRelease(api.SUB, runner, 1 / 60, { sub: true });
+  runner.s3SubHold = hold;
+  runner.s3Release = kitSubRelease(api.SUB, runner, 0, { subReleased: true });
+  actor.weaponRunner = runner;
   api.G.actors = [actor];
   projectiles.throwBomb(actor, hold);
   return { projectiles, actor, bomb: projectiles.bombs[projectiles.bombs.length - 1] };
@@ -287,19 +293,24 @@ test('a real curling bomb rolls, reflects on a wall after landing, and bursts', 
 
 test('the real native PaintSystem accepts the rolling trail centre', async () => {
   const api = await production();
-  ground(api);
+  // record mode drives the loop; the native probe below is separate and real.
+  ground(api, 'record');
   const { projectiles, bomb } = await throwReal(api, 'curling', 1, 8);
   api.G.physics.segment = (a, b, out) => { out.hit = true; out.point = { x: b.x, y: 0, z: b.z }; out.normal = { x: 0, y: 1, z: 0 }; return out; };
-  let cur = tick(api, projectiles, 1 / 60);
+  const cur = tick(api, projectiles, 1 / 60);
   assert.equal(cur.s3Mode, 'rolling');
-  // run the REAL native PaintSystem.splat through the real level
-  let err = null;
-  try { api.G.paint.splat(cur.pos, 1.29, 0, { seed: 1 }); } catch (e) { err = e; }
-  assert.equal(err, null, 'the native paint system accepts the bomb vector centre');
-  // the trail hook allocates one reusable real Vector3 per bomb, not per frame
-  const before = cur.s3TrailPoint;
-  tick(api, projectiles, 2 / 60);
   assert.ok(cur.s3TrailPoint instanceof api.THREE.Vector3, 'trail centre is a real THREE.Vector3');
+  const before = cur.s3TrailPoint;
+  // Genuine native probe: run the REAL PaintSystem.prototype.splat on that exact
+  // vector, outside the level AABB. Native code reads centre.x/y/z and returns 0
+  // without reaching the GPU-atlas density internals a plain object could not pass.
+  const nativePaint = Object.create(api.PaintSystem.prototype);
+  nativePaint.level = api.G.level; nativePaint._qb = []; nativePaint.growing = []; nativePaint.atlas = { size: 256 };
+  nativePaint.grid = new Int32Array(1024 * 1024);
+  const probe = cur.s3TrailPoint;
+  probe.set(9999, 9999, 9999);
+  assert.equal(api.PaintSystem.prototype.splat.call(nativePaint, probe, 1.29, 0, { seed: 2 }), 0,
+    'the native splat consumes the real vector cleanly');
   assert.equal(cur.s3TrailPoint, before, 'the trail point is reused, not reallocated per frame');
 });
 
@@ -318,4 +329,121 @@ test('a ghost bomb gets no kit authority', async () => {
   assert.ok(ghost, 'the native ghost bomb exists');
   assert.equal(ghost.s3Resolved, undefined, 'a remote actor receives no resolved kit spec');
   assert.equal(ghost.s3Sub, undefined, 'no kit identity on a ghost');
+});
+
+// ---- review regressions: native release, gravity, stuck, floor --------------
+
+// Drives the REAL native WeaponRunner.update release path so the ink check and
+// subtraction are the engine's own, not a re-implementation.
+function releaseWith(api, weaponSub, ink, hold = 0) {
+  const actor = {
+    team: 0, remote: false, isLocal: true, alive: true, ink, grounded: true,
+    pos: new api.THREE.Vector3(0, 0, 0), vel: new api.THREE.Vector3(),
+    aimYaw: 0, aimPitch: 0.2, lastFire: 99, fireFacing: 0,
+    weapon: { sub: weaponSub, kind: 'shooter' },
+    weaponRunner: Object.assign(Object.create(api.WeaponRunner.prototype), { a: null }),
+    character: { trigger() {}, setVisible() {}, setHurt() {}, setWeapon() {} },
+    addTurf() {}, _nearCamera: () => false,
+  };
+  const runner = actor.weaponRunner;
+  runner.a = actor;
+  runner.reset();
+  runner.s3SubHold = hold;
+  const projectiles = makeScene(api);
+  api.G.projectiles = projectiles;
+  api.G.actors = [actor];
+  return { actor, runner, projectiles };
+}
+
+test('native release charges suction ink 70 and rejects a 69 tank', async () => {
+  const api = await production();
+  ground(api, 'record');
+  const release = kitSubRelease(api.SUB, { a: { weapon: { sub: 'suction' } } }, 0, { sub: true });
+  assert.equal(release.inkCost, 70, 'the calibrated fallback is resolved before the native check');
+  assert.equal(release.__inkCostStatus, 'calibrated', 'and is labelled calibrated, not extracted');
+
+  // the real native update: sufficient ink releases and is charged exactly once
+  const ok = releaseWith(api, 'suction', 100);
+  const before = ok.actor.ink;
+  ok.runner.update(1 / 60, { fire: false, firePressed: false, sub: true, subReleased: false });
+  ok.runner.update(1 / 60, { fire: false, firePressed: false, sub: false, subReleased: true });
+  assert.equal(ok.projectiles.bombs.length, 1, 'a real native release created the bomb');
+  assert.equal(before - ok.actor.ink, 70, 'ink charged exactly the resolved cost');
+
+  // one point short: the native ink check must refuse and create nothing
+  const short = releaseWith(api, 'suction', 69);
+  short.runner.update(1 / 60, { fire: false, firePressed: false, sub: true, subReleased: false });
+  short.runner.update(1 / 60, { fire: false, firePressed: false, sub: false, subReleased: true });
+  assert.equal(short.projectiles.bombs.length, 0, 'a 69 tank cannot afford the release');
+  assert.equal(short.actor.ink, 69, 'a refused release costs nothing');
+});
+
+test('gravity keeps storm at the native 24 and uses spec flight/ground values', async () => {
+  const api = await production();
+  ground(api, 'record');
+  assert.equal(NATIVE_STORM_GRAVITY, 24);
+  assert.equal(kitBombGravity(api.SUB, { kind: 'storm' }), 24, 'storm is untouched by the bomb gravity');
+  assert.equal(kitBombGravity(api.SUB, { kind: 'bomb', s3Mode: 'flight' }), api.SUB.bomb.gravity,
+    'an untagged generic bomb keeps the configured bomb gravity');
+
+  const { bomb } = await throwReal(api, 'curling', 1, 8);
+  assert.equal(kitBombGravity(api.SUB, bomb), CURLING.flyGravity, 'curling flight uses FlyGravity 0.016*3600');
+  assert.equal(kitBombGravity(api.SUB, bomb), 57.6);
+  bomb.s3Mode = 'rolling';
+  assert.equal(kitBombGravity(api.SUB, bomb), CURLING.groundGravity, 'curling rolling uses GroundGravity');
+  near(kitBombGravity(api.SUB, bomb), 5.76, 'ground gravity');
+});
+
+test('a stuck bomb stays fixed on later frames with no physics hit', async () => {
+  const api = await production();
+  ground(api, 'record');
+  const { projectiles, bomb } = await throwReal(api, 'suction', 0);
+  let mode = 'wall';
+  api.G.physics.segment = (a, b, out) => {
+    if (mode === 'wall') { out.hit = true; out.point = { x: 3, y: b.y, z: 0 }; out.normal = { x: 1, y: 0, z: 0 }; }
+    else out.hit = false;                    // no further contact
+    return out;
+  };
+  tick(api, projectiles, 1 / 60);
+  assert.equal(bomb.s3Mode, 'stuck');
+  const stuckAt = { x: bomb.pos.x, y: bomb.pos.y, z: bomb.pos.z };
+  const fuseAtStick = bomb.fuse;
+  mode = 'none';
+  tick(api, projectiles, 5 / 60);               // five frames, zero further contacts
+  assert.equal(bomb.s3Mode, 'stuck', 'it stays stuck');
+  assert.deepEqual({ x: bomb.pos.x, y: bomb.pos.y, z: bomb.pos.z }, stuckAt,
+    'a stuck bomb does not drift when no new physics hit arrives');
+  assert.ok(bomb.fuse < fuseAtStick, 'the single native fuse countdown still advances');
+  assert.ok(bomb.fuse > 0, 'and has not been re-armed');
+});
+
+test('curling rolling is clamped to the floor surface, not sunk into it', async () => {
+  const api = await production();
+  ground(api, 'record');
+  const { projectiles, bomb } = await throwReal(api, 'curling', 1, 8);
+  api.G.physics.segment = (a, b, out) => { out.hit = true; out.point = { x: b.x, y: 0.25, z: b.z }; out.normal = { x: 0, y: 1, z: 0 }; return out; };
+  tick(api, projectiles, 1 / 60);
+  assert.equal(bomb.s3Mode, 'rolling');
+  near(bomb.pos.y, 0.25 + 0.21, 4, 'rolling rests on the contact point plus the contact bias');
+  // it must not sink below the surface on subsequent frames either
+  tick(api, projectiles, 5 / 60);
+  assert.ok(bomb.pos.y >= 0.25, 'the bomb never penetrates the floor');
+});
+
+test('the per-bomb spec is attached before recBomb records identity', async () => {
+  const api = await production();
+  ground(api, 'record');
+  const seen = [];
+  api.G.netm = { recBomb: (b) => seen.push({ kind: b.kind, sub: b.s3Sub?.id ?? null }), mute: 0 };
+  const projectiles = makeScene(api);
+  const actor = {
+    team: 0, remote: false, isLocal: false, alive: true, ink: 100, grounded: true,
+    pos: new api.THREE.Vector3(0, 0, 0), vel: new api.THREE.Vector3(), aimYaw: 0, aimPitch: 0.2,
+    weapon: { sub: 'suction', kind: 'shooter' }, weaponRunner: { s3SubHold: 0, s3Release: kitSubRelease(api.SUB, { a: { weapon: { sub: 'suction' } } }, 0, {}) },
+    color: api.G.teamColors[0], addTurf() {}, _nearCamera: () => false,
+  };
+  api.G.actors = [actor];
+  projectiles.throwBomb(actor);
+  assert.equal(seen.length, 1, 'recBomb ran once');
+  assert.equal(seen[0].sub, 'suction', 'the record already carried its kit identity when recBomb snapshotted it');
 });

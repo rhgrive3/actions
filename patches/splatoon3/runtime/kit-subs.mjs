@@ -289,19 +289,37 @@ const ownsAuthority = (b) => !!b && !b.ghost && !!b.s3Resolved;
 
 const resolvedOf = (b) => (ownsAuthority(b) ? b.s3Resolved : null);
 
+// The live global context, used only for the native actor scan. Captured at install
+// time from the running composition.
+let G_REF = null;
+
 // ---- 1. sub release: selected spec and held charge ---------------------------
 
 // Called at the native `const bomb = SUB.bomb` site. Accumulates the held charge
 // while the sub button is down and returns the spec that this release will use, so
 // the native ink check, `fireFacing` and cost subtraction all read one object.
+// Returns ONE authoritative release object, cached on the runner so the native
+// ink check/subtraction and the throw hook consume the same selection. `inkCost`
+// is resolved here because a raw spec can carry a null primary field: left
+// unresolved, the native `a.ink < bomb.inkCost` compares against null and the
+// release costs nothing.
 export function kitSubRelease(SUB, runner, dt, inp) {
   if (inp?.sub) runner.s3SubHold = (runner.s3SubHold || 0) + dt;
   else if (!inp?.subReleased) runner.s3SubHold = 0;
-  const a = runner.a;
-  const sub = kitSubFor(a?.weapon, SUB);
+  const sub = kitSubFor(runner.a?.weapon, SUB);
   const hold = runner.s3SubHold || 0;
-  if (!sub.chargeable) return sub;
-  return { ...sub, ...curlingBlastParams(curlingChargeFraction(hold, sub), sub), __charge: curlingChargeFraction(hold, sub) };
+  const charge = sub.chargeable ? curlingChargeFraction(hold, sub) : 0;
+  const inkCost = Number.isFinite(sub.inkCost) ? sub.inkCost
+    : Number.isFinite(sub.inkCostFallback) ? sub.inkCostFallback
+    : SUB.bomb.inkCost;
+  const release = sub.chargeable
+    ? { ...sub, ...curlingBlastParams(charge, sub), inkCost }
+    : { ...sub, inkCost };
+  release.__charge = charge;
+  release.__hold = hold;
+  release.__inkCostStatus = sub.inkCost != null ? sub.inkCostStatus : 'calibrated';
+  runner.s3Release = release;
+  return release;
 }
 
 // Held charge at the release instant, consumed by the throw hook.
@@ -309,16 +327,21 @@ export function kitSubHoldSeconds(runner) {
   return runner?.s3SubHold || 0;
 }
 
-// ---- 2. throw: per-bomb spec, snapped before the network records identity ----
+// ---- 2. throw: per-bomb spec, attached before recBomb records identity ------
 
-// Called by the `Projectiles.throwBomb` wrapper. The resolved spec is attached to
-// the record *before* `G.netm.recBomb` runs, so the identity a peer receives
-// already carries the sub. A remote actor never gets a spec: ghosts keep native
-// behaviour and no paint or damage authority.
-export function kitBombAttach(SUB, projectiles, actor, holdSeconds) {
+// Called from the adapter immediately after the native `this.bombs.push(...)` and
+// BEFORE `G.netm.recBomb(...)`, so the record already carries its kit identity
+// when the network snapshots it. This is a real before-recBomb hook, not a claim:
+// the previous draft attached from a wrapper AFTER the native call had already
+// recorded. A remote actor never gets a spec, so ghosts keep native behaviour and
+// hold no paint or damage authority.
+export function kitBombAttach(SUB, projectiles, actor, release) {
   if (actor?.remote) return null;
   const sub = kitSubFor(actor?.weapon, SUB);
-  const resolved = resolveSubForThrow(actor, holdSeconds, SUB);
+  const holdSeconds = release?.__hold ?? 0;
+  const resolved = release
+    ? { ...resolveSubForThrow(actor, holdSeconds, SUB), charge: release.__charge ?? 0 }
+    : resolveSubForThrow(actor, holdSeconds, SUB);
   const b = projectiles.bombs[projectiles.bombs.length - 1];
   if (!b || !resolved) return null;
   b.s3Sub = sub;
@@ -339,9 +362,17 @@ export function kitBombAttach(SUB, projectiles, actor, holdSeconds) {
 
 // ---- 3. per-bomb gravity, contact and fuse inside the native loop ------------
 
+// Storm keeps the native 24 constant; this hook must not drag it onto the bomb
+// gravity. A stuck bomb gets zero, so it cannot drift off its surface without a
+// fresh physics hit. Otherwise the spec's own flight or ground value is used.
+export const NATIVE_STORM_GRAVITY = 24;
 export function kitBombGravity(SUB, b) {
-  const r = resolvedOf(b);
-  const g = r?.spec?.gravity;
+  if (b?.kind === 'storm') return NATIVE_STORM_GRAVITY;
+  if (b?.s3Mode === 'stuck') return 0;
+  const spec = resolvedOf(b)?.spec;
+  if (!spec) return SUB.bomb.gravity;
+  if (b?.s3Mode === 'rolling') return Number.isFinite(spec.groundGravity) ? spec.groundGravity : SUB.bomb.gravity;
+  const g = Number.isFinite(spec.gravity) ? spec.gravity : spec.flyGravity;
   return Number.isFinite(g) ? g : SUB.bomb.gravity;
 }
 
@@ -377,8 +408,11 @@ export function kitBombContact(SUB, b, hit, dt) {
   if (spec.mode === 'roll') {
     const c = spec.contactJump;
     if (n.y > 0.6) {
-      // floor: settle and let the native fuse countdown own the burst window
+      // floor: clamp to the contact surface so the bomb cannot sink through it and
+      // the trail paints the surface it actually rests on.
       b.s3Mode = 'rolling';
+      b.pos.copy(hit.point);
+      b.pos.addScaledVector(n, CONTACT_BIAS);
       b.vel.y = 0;
       b.vel.x *= spec.baseSpeedComeOverRate;
       b.vel.z *= spec.baseSpeedComeOverRate;
@@ -405,10 +439,24 @@ export function kitBombContact(SUB, b, hit, dt) {
 // Rolling trail, called from the native loop once the bomb is rolling. The centre
 // is a real THREE.Vector3 because the native PaintSystem reads vector fields.
 // Allocated once per bomb and reused; no per-frame allocation.
-export function kitBombTrail(SUB, b, paint) {
+export function kitBombTrail(SUB, b, paint, projectiles) {
   const r = resolvedOf(b);
-  if (!r || b.s3Mode !== 'rolling' || !paint?.splat) return 0;
+  if (!r || b.s3Mode !== 'rolling') return 0;
   const spec = r.spec;
+  // Rolling contact damage through the native hit authority. DamageDirectHit (200
+  // raw -> 20 HP) over DamageDirectSpanSecond is the primary field; this applies it
+  // as a per-second rate via the native applyHit so knockback, armour and the
+  // splat accounting stay with the engine.
+  if (projectiles?.applyHit && Number.isFinite(spec.damageDirectHit) && Number.isFinite(spec.damageDirectSpanSecond)) {
+    const rate = spec.damageDirectHit / spec.damageDirectSpanSecond;
+    for (const e of (G_REF?.actors || [])) {
+      if (e.team === b.team || !e.alive) continue;
+      const dx = e.pos.x - b.pos.x, dy = e.pos.y - b.pos.y, dz = e.pos.z - b.pos.z;
+      if (dx * dx + dy * dy + dz * dz > spec.paintRadiusMaxCharge ** 2) continue;
+      projectiles.applyHit(b.owner, e, rate * (1 / 60), 'curling');
+    }
+  }
+  if (!paint?.splat) return 0;
   const radius = r.trailRadius ?? spec.paintRadiusMinCharge;
   // Derive the real Vector3 class from the bomb's own position vector so the
   // native PaintSystem receives the type it expects, with no extra module import
@@ -472,17 +520,19 @@ export function installKitSubs(api, profile) {
   const SUB = _unused;
   if (!SUB || !Projectiles || !WeaponRunner) throw new Error('INKWAVE sub patch needs SUB, Projectiles and WeaponRunner');
   if (SUB[KIT_KEY]) return api;   // idempotent: no double wrapping
+  G_REF = G;
   registerKitSubs(SUB, profile);
 
   // Delegate to the native throw (mesh, throwVelocity, recBomb, audio), then
   // attach the per-bomb spec. `recBomb` is wrapped for the duration of the native
   // call so the spec is on the record before identity is recorded.
+  // The per-bomb spec is attached by the adapter before recBomb; this wrapper only
+  // consumes the held charge so the next press starts from zero.
   const throwBomb = Projectiles.prototype.throwBomb;
-  Projectiles.prototype.throwBomb = function (actor, holdSeconds) {
+  Projectiles.prototype.throwBomb = function (actor) {
     const runner = actor?.weaponRunner;
     const out = throwBomb.call(this, actor);
-    kitBombAttach(SUB, this, actor, holdSeconds ?? kitSubHoldSeconds(runner));
-    if (runner) runner.s3SubHold = 0;   // the hold is consumed by this release
+    if (runner) runner.s3SubHold = 0;
     return out;
   };
 
