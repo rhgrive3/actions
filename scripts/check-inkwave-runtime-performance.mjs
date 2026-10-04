@@ -72,6 +72,8 @@ try{
    const moving=g.match.local.character.root,oldX=moving.position.x;
    const composer=g.R.composer,readBuffer=composer.readBuffer,writeBuffer=composer.writeBuffer;
    const shadowCache=g.shadowCache,wasDirty=shadowCache?.dirty;
+   const uniforms=()=>{const rows={};G.scene.traverse(o=>{for(const m of (Array.isArray(o.material)?o.material:[o.material])){if(!m)continue;for(const [key,u] of Object.entries(m.uniforms||m.userData?.uniforms||{})){const v=u.value;if(typeof v==='number'||typeof v==='boolean')rows[m.id+':'+key]=v;else if(v?.toArray&&!v.isTexture)rows[m.id+':'+key]=v.toArray();}}});return rows;};
+   const differences=(a,b)=>Object.keys(b).filter(k=>JSON.stringify(a[k])!==JSON.stringify(b[k])).slice(0,30).map(key=>({key,before:a[key],after:b[key]}));
    // Same ping-pong target and shadow-cache rebuild path for each image.
    // The moved character is dynamic: no static-caster demotion between images.
    const draw=()=>{composer.readBuffer=readBuffer;composer.writeBuffer=writeBuffer;r.shadowMap.needsUpdate=true;G.env._reflFrame=-1;if(shadowCache)shadowCache.dirty=true;g.R.render();};
@@ -81,12 +83,13 @@ try{
     // Fresh transform FIRST: a missing initial update must fail, even when an
     // earlier frozen image had valid matrices. This modifies only the render fixture.
     moving.position.x=oldX+.1*(i+1);
-    draw();const a=read();draw();const optimizedRepeat=read();
+    draw();const a=read(),ua=uniforms();draw();const optimizedRepeat=read(),uo=uniforms();
     r.render=function(scene,camera){if(scene===G.scene&&!scene.matrixWorldAutoUpdate)scene.updateMatrixWorld();return native.call(this,scene,camera);};
-    let b,nativeRepeat;try{draw();b=read();draw();nativeRepeat=read();}finally{r.render=native;}
+    let b,nativeRepeat,ub,un;try{draw();b=read();ub=uniforms();draw();nativeRepeat=read();un=uniforms();}finally{r.render=native;}
     let changed=0,maxDelta=0,optimizedRepeatChanges=0,nativeRepeatChanges=0;
     for(let j=0;j<a.length;j++){if(a[j]!==b[j]){changed++;maxDelta=Math.max(maxDelta,Math.abs(a[j]-b[j]));}if(a[j]!==optimizedRepeat[j])optimizedRepeatChanges++;if(b[j]!==nativeRepeat[j])nativeRepeatChanges++;}
-    out.push({repeat:i,width:w,height:h,changedChannels:changed,maxDelta,optimizedRepeatChanges,nativeRepeatChanges,nonempty:a.some(v=>v!==0),freshTransform:Math.abs(moving.matrixWorld.elements[12]-moving.position.x)<1e-6,sceneAutoRestored:G.scene.matrixWorldAutoUpdate});
+    const pixels=[];for(let j=0;j<a.length&&pixels.length<20;j++)if(a[j]!==optimizedRepeat[j])pixels.push({x:Math.floor(j/4)%w,y:Math.floor(j/4/w),channel:j%4,a:a[j],repeat:optimizedRepeat[j]});
+    out.push({pixelSamples:pixels,optimizedUniformChanges:differences(ua,uo),nativeUniformChanges:differences(ub,un),glError:gl.getError(),repeat:i,width:w,height:h,changedChannels:changed,maxDelta,optimizedRepeatChanges,nativeRepeatChanges,nonempty:a.some(v=>v!==0),freshTransform:Math.abs(moving.matrixWorld.elements[12]-moving.position.x)<1e-6,sceneAutoRestored:G.scene.matrixWorldAutoUpdate});
    }}finally{moving.position.x=oldX;r.render=native;composer.readBuffer=readBuffer;composer.writeBuffer=writeBuffer;if(shadowCache)shadowCache.dirty=wasDirty;G.scene.updateMatrixWorld();}
    return out;
   });
