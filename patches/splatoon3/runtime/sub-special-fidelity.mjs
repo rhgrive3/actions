@@ -90,14 +90,14 @@ export function installSubSpecialFidelity(api, profile) {
   assertNear(SUB.bomb.throwSpeed, SUB_SPECIAL_FIDELITY.bomb.spawnSpeedZ, 'bomb.throwSpeed');
   assertNear(SUB.bomb.gravity, 0.016 * 3600, 'bomb.gravity');
   assertNear(SUB.bomb.fuse, 1, 'bomb.fuse');
-  assertNear(SPECIALS.storm.duration, SUB_SPECIAL_FIDELITY.storm.duration, 'storm.duration');
-  assertNear(SPECIALS.storm.radius, SUB_SPECIAL_FIDELITY.storm.radius, 'storm.radius');
+  assertNear(profile?.specials?.storm?.duration, SUB_SPECIAL_FIDELITY.storm.duration, 'profile.specials.storm.duration');
+  assertNear(profile?.specials?.storm?.radius, SUB_SPECIAL_FIDELITY.storm.radius, 'profile.specials.storm.radius');
 
   Object.assign(SUB.bomb, {
     splashAroundCount: SUB_SPECIAL_FIDELITY.bomb.splashAroundCount,
     splashAroundPaintRadius: SUB_SPECIAL_FIDELITY.bomb.splashAroundPaintRadius,
   });
-  Object.assign(SPECIALS.storm, {
+  Object.assign(SPECIALS.storm, profile.specials.storm, {
     dps: SUB_SPECIAL_FIDELITY.storm.dps,
     throwSpeed: SUB_SPECIAL_FIDELITY.storm.spawnSpeedZ,
     rainNumReference: SUB_SPECIAL_FIDELITY.storm.rainNumReference,
