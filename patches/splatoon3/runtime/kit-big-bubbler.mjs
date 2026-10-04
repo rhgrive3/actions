@@ -152,6 +152,38 @@ const CURSOR_LIMIT = 64;
 
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 
+// Native distance falloff window for `type: "drop"` rounds. This is native's own
+// constant in weapons.js, not a new calibration.
+const DROP_FALLOFF_RANGE = 7;
+
+// The damage this projectile would deal to a target at `hitPoint`, using the SAME
+// rule the native pipeline already applies to actors (`_step`) and to the boss
+// (`_bossImpact`):
+//
+//   dmg = lerp(p.damage, p.dmgFar, clamp(p.start.distanceTo(hit) / 7, 0, 1))
+//
+// The dome used to be charged `p.damage` outright, so it was the ONE target that
+// ignored the falloff: a roller flick or Trizooka drop that had already travelled
+// far destroyed a dome the native model would have left standing.
+//
+// Notes, all deliberate:
+//   * the distance is measured to the dome CONTACT POINT, which is what native
+//     measures for its own contact point - not the per-step travel distance;
+//   * a round with no declared `dmgFar` keeps `p.damage`, exactly as a native drop
+//     without that field would;
+//   * only `type === "drop"` is scaled, so ordinary shots and every other gun are
+//     untouched. This is a pure computation: it mutates nothing and returns a
+//     number, so the query stays inert.
+function damageAtContact(p, hitPoint) {
+  const near = p?.damage;
+  if (p?.type !== 'drop' || !Number.isFinite(near)) return Number.isFinite(near) ? near : 0;
+  const far = p.dmgFar;
+  if (!Number.isFinite(far)) return near;
+  const travel = p.start?.distanceTo?.(hitPoint);
+  const t = clamp(Number.isFinite(travel) ? travel / DROP_FALLOFF_RANGE : 0, 0, 1);
+  return near + (far - near) * t;
+}
+
 // What this lane owns, stated explicitly so the network lane never has to guess
 // whether a gap is a decision or an omission. There is NO online parity claim:
 // no packet transport, no prediction, no reconciliation, no rollback lives here.
@@ -452,7 +484,7 @@ export function kitBarrierCandidate(p, start, end) {
   // A remote dome has no authoritative HP on this client, so a local round can
   // only ever PROPOSE damage. The parent adjudicates; nothing is mutated here.
   candidate.ownership = candidate.remote ? 'remote-presentation' : 'authoritative';
-  candidate.damage = (p.damage || 0) * tuning.rawPerDamageUnit;
+  candidate.damage = damageAtContact(p, candidate.point) * tuning.rawPerDamageUnit;
   candidate.settled = false;
   candidate.proposal = null;
   // One monotonic identity per SETTLED hit on this client, independent of the
