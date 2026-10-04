@@ -170,3 +170,33 @@ Flow の外殻・粒・リボンが GTAO の法線／深度パスに不透明な
 終了時に残っていた1textureはnative THREEの共有DFG_LUTで、compiled dfgLUT uniformから所有元を確認した。隔離された描画fixtureの終了時に実GL handleの存在と解放を測り、geometry/textureの残留0を確認する。ゲーム本体や共有shaderの実装変更ではなく、検証fixtureの管理対象を明示する修正である。これらのfocused診断は最終候補の全ケースCIを代用しない。
 
 停止姿勢の全画面beauty再描画では、実際の時計・骨・座標が同一でもnative fragmentの数pixelの色差が反復描画ごとに変化する。停止のモーション検証は、そのbeauty画像を両方保存したうえで、最終描画色だけを固定した別materialによる実GPU比較へ分けた。実際にコンパイルされたnative／比較側vertex shaderのSHA256一致、骨行列・pose・全node world行列・ゲーム時計の不変性、固定色画像の既存0差分条件を必須とする。各ケースで実rootを0.03動かす反例も描き、16pixel以上の変化を検出できない比較器は合格にしない。通常の全339描画ペア、Flow／壁のGTAO、表示中・中断・解放の検査はnative beauty shaderのままであり、この停止の比較を本家の画像一致の証拠にはしない。
+
+## 2026-10-04: 標準コントローラー・マップ・ジャイロの入力所有権（#197 / #265 / #276 / #309）
+
+公開 main `0859bf4fab08edc74c25fcb790e662a748a91ec9` の全 adapter 合成を対象とする。比較版は Splatoon 3 Ver.11.3.0。対象はブラウザの `mapping === "standard"` ゲームパッドと、既存の DeviceMotion ジャイロ。Nintendo コントローラー独自の motion API は追加しない。
+
+### 出典
+
+- [Nintendo S3 ジャイロ設定](https://www.nintendo.com/jp/games/feature/splatoonqa/other/gyro/index.html): ON/OFF と、OFF では Rスティックで照準を合わせる説明。
+- [Nintendo S2 公式基本操作](https://support-jp.nintendo.com/app/answers/detail/a_id/34693): Yカメラリセット、Xマップ、右スティック押込みスペシャル、ジャイロON時の右スティック左右操作。S2資料をS3固有フレーム値の根拠にはしない。
+- [S3検証Wiki 操作方法](https://wikiwiki.jp/splatoon3mix/操作方法): 同じS3ボタン割当、X再押下でマップを閉じる、ジャイロON時の右スティック上下無効、マップ表示中もプレイヤー操作可能。
+- [Inkipedia Options](https://splatoonwiki.org/wiki/Options): S3の右スティック左右反転と上下反転の独立設定、motion ON時の上下無効。
+- [W3C Gamepad §14](https://www.w3.org/TR/gamepad/#remapping): standard index 2=右側十字の左、3=上、8=中央左、11=右スティック押込み。raw mapping の配列順序は推測しない。
+- [しりゅ*本人の射撃練習記事](https://note.com/yukkurisiryu/n/n3be81c8de943): 「フリック操作はしていないのに当たらない場合」に、マップを開いたままRブラスターで連続直撃を練習する記述。本人の経験であり、任天堂の仕様公表や実機フレーム計測ではない。
+
+### 修正と再現
+
+`patches/reliability/controls-adapter.mjs` を既存の入力edge・pause処理の後に適用し、物理Inputやメニューのボタン順序は変更せず、PlayerControllerのゲーム内消費先を修正した。
+
+- #197: standard の top face（Nintendo X / index3）でマップを切り替え、Specialは右stick押込み（index11）に限定。left face（Nintendo Y / index2）を新しい単一 `resetCamera()` へ一度だけ配送。Actorのheading・neutral pitchへ戻し、filtered stick/gyro滞留量を破棄する。raw/nonstandardは従来割当を保持。操作ガイドも標準物理位置を明示し、キーボード・タッチ・Pauseメニューの割当は維持。成功したSJではpadマップも閉じる。
+- #265: マップ選択のマウスクリックは引き続きメインに渡さず、独立したpad ZRを保持する。チャージャー30tick保持→XまたはTabでマップ→保持継続では発射0、実際にZR解放した時だけ1発。シューターは通常のインク・間隔で継続する。サブ/特殊行動の制限やマップ中のカメラ操作は一括解除しない。
+- #276: 実際のgyro enabled状態を縦lookの唯一の所有権条件にし、ON時は右stickのfiltered Yとpitch加算を止める。Xの反応曲線・速度はそのまま。ON/OFF切替時に古いYを消し、OFF復帰時の惰性入力を防ぐ。gyroとtouch swipe自身の符号・感度は維持。
+- #309: persisted `padInvertX=false` と独立toggleを追加し、pad yawだけを反転。縦反転との4組合せ、mouse/touch/gyroに影響しないこと、native saveJSON/loadJSONによる再読込を確認。
+
+未計測事項: #197のカメラリセットはこのエンジンのneutral pitchを使う。Nintendoの物理姿勢ごとの正確なcamera/gyro再基準化曲線、各機種のraw mapping、実Pro Controller/Joy-Conセンサー、実iOS/Androidの体感遅延やGPU表示は未検証。#287の−5〜+5感度を未測定倍率へ単に貼り替える修正はしていない。既存の「D-padで即SJ」やマップカメラの独自仕様も本バッチで完全S3一致とはしない。
+
+重複除外: #303は既存 `pause-adapter.mjs` が `menuBlocked` を保持し Match.updateControllerで判定するため、raw sourceだけを読んだ報告と判断。#271も本番 `runtime/install.mjs` が defaults.aimAssist=0 と `_assistTarget=()=>null` を適用済み。正しい公開挙動を再修正しない。PR #60（platform lifecycle）/#62（物理edge配送）/#184（menu performance）の最新差分を読み、この4件の重複実装を除外した。
+
+受入では実Input.pollPad、PlayerController、Actor、WeaponRunnerとnative保存関数を使用。UI/センサー/描画のみをfixture化し、30/60/120Hzから同じ60Hz tickのmap/charge/fire履歴を比較。PR #62 の正確な input-adapter/touch-edge-adapter を一時合成した35試験も成功。CPU負例はcontrols adapterだけを実dispatcher順序から外し、4件の故障を検出する。GPU/実機成功とは別扱い。
+
+最終ローカル検証: 全体754/754（失敗/skipなし）、controls受入12/12、公開minify出力12/12、負例は2pass/10fail、既存pauseとの専用合計35/35。PR #62 `683957332748ea173fa49408b1df2dca42f16265` の正確な物理edge処理を合成して35/35、PR #63 `bfae5fd133c1e4682d0def2d87c5321929cb449d` のprofile/weapons/resourcesを合成して12/12。別PRの全変更を統合済みとはしない。local-quality8/8、motion/workflowゲート10/10、raw upstream差分なし。exact-head GitHub browser CIはPRで追跡する。
