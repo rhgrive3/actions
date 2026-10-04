@@ -54,7 +54,6 @@ export function adaptNetworkSource(rel, code) {
     patch('r3(o.seed ?? Math.random())', 'o.seed ?? Math.random()', 'preserve paint pattern seed');
     patch('r3(p.delay || 0), r3(p.life), r3(p.straight)', 'p.delay || 0, p.life, p.straight', 'preserve exact physics timing boundaries');
     patch('p.nose ?? 0.3, p.sats ?? 3]);', 'p.nose ?? 0.3, p.sats ?? 3, p.s3Vertical ? 1 : 0, p.seed, (p._netId = this._projectileSeq = (this._projectileSeq || 0) + 1)]);', 'append birth mode, appearance seed, identity');
-    patch("r2(b.vel.y), r2(b.vel.z)]);", "r2(b.vel.y), r2(b.vel.z), b.spin.x, b.spin.y]);", 'bomb presentation spin');
     patch('  _tick(from, d) {\n    this.stats.in++;', `  _tick(from, d) {
     if (!Number.isFinite(d.ts)) return;
     const previous = this.peers.get(from);
@@ -80,7 +79,6 @@ export function adaptNetworkSource(rel, code) {
         const a = this.byNid.get(e[2]), b = a && G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9]);
         if (b) {
           b._netBorn = e[0]; b._netBornTick = e._netTick; b._netPeer = this.peers.get(from); b._netSteps = 0;
-          if (Number.isFinite(e[10]) && Number.isFinite(e[11])) b.spin.set(e[10],e[11],0);
         }
         break;
       }`, 'bomb timeline birth');
