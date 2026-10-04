@@ -69,18 +69,15 @@ test('charger birth preserves oblique unit direction, origin, partial charge and
 });
 
 
-test('Bomb event keeps the existing gameplay payload shape plus only ordered replay footer', () => {
-  const f = fixture();
-  const nm = f.netmatch();
-  const a = f.actor(0, false);
-  nm.byNid.set(a.nid, a);
-  f.G.netm = nm;
+test('Bomb event keeps the existing gameplay payload shape plus only ordered replay footer', async() => {
+  const f=await fixture(),nm=f.makeNetMatch(f.makeSession()),a=f.makeActor({nid:0,owner:'me',roller:false});
+  f.bind(nm,[a]);
   f.projectiles.throwBomb(a);
-  const e = nm.out.find(x => x[1] === 'b');
-  assert.ok(e, 'Bomb birth event missing');
+  const e=nm.out.find(x=>x[1]==='b');
+  assert.ok(e,'Bomb birth event missing');
   // timestamp + existing ['b',nid,kind,px,py,pz,vx,vy,vz] + [ownerTick,eventSeq].
   // Cosmetic spin is intentionally not added to the wire contract.
-  assert.equal(e.length, 12);
-  assert.ok(Number.isSafeInteger(e[e.length - 2]));
-  assert.ok(Number.isSafeInteger(e[e.length - 1]));
+  assert.equal(e.length,12);
+  assert.ok(Number.isSafeInteger(e[e.length-2]));
+  assert.ok(Number.isSafeInteger(e[e.length-1]));
 });
