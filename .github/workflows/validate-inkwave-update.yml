@@ -160,7 +160,7 @@ jobs:
     timeout-minutes: 120
     strategy:
       fail-fast: false
-      max-parallel: 3
+      max-parallel: 5
       matrix:
         include:
           - suite: active
@@ -169,6 +169,10 @@ jobs:
             browsers: chromium
           - suite: ui
             browsers: chromium webkit
+          - suite: range
+            browsers: chromium webkit
+          - suite: startup
+            browsers: chromium
     env:
       TMPDIR: ${{ github.workspace }}/.ci-scratch
       TMP: ${{ github.workspace }}/.ci-scratch
@@ -262,13 +266,13 @@ jobs:
           node scripts/check-inkwave-touch-layout-identity.mjs --site .built-site/_site --source inkwave-public --checkout-dir "$CI_STORAGE/identity-touch" --evidence-dir "$CI_STORAGE/evidence/identity-touch"
           node scripts/check-inkwave-touch-layout-identity.mjs --reliability --site .built-site/_site --source inkwave-public --checkout-dir "$CI_STORAGE/identity-reliability" --evidence-dir "$CI_STORAGE/evidence/identity-reliability"
       - name: Verify the practice range in Chromium and WebKit (desktop + phone + tablet)
-        if: matrix.suite == 'ui'
+        if: matrix.suite == 'range'
         run: node scripts/check-inkwave-range.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/range" --profile-dir "$CI_STORAGE/cache/range"
       - name: Verify responsive menus in Chromium and WebKit
         if: matrix.suite == 'ui'
         run: node scripts/check-inkwave-responsive.mjs --source .built-site/_site --section all --evidence-dir "$CI_STORAGE/evidence/responsive" --profile-dir "$CI_STORAGE/cache/responsive"
       - name: Measure cold, warm, PWA restart and offline startup in Chromium
-        if: matrix.suite == 'ui'
+        if: matrix.suite == 'startup'
         run: node scripts/check-inkwave-startup-browser.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/startup" --profile-dir "$CI_STORAGE/cache/startup" --source-sha "$SOURCE_SHA" --runs 3
       - name: Bind passing browser evidence to the tested commit
         run: |
@@ -279,7 +283,9 @@ jobs:
           checks={
             'active':['game/browser-result.json','motion/motion-result.json','motion-detail/motion-detail-result.json','flow/flow-render-result.json','wall/wall-render-result.json'],
             'catalog':['catalog/motion-catalog-result.json'],
-            'ui':['range/range-result.json','layout/touch-layout-result.json','reliability/reliability-browser-result.json','identity-touch/touch-layout-identity-result.json','identity-reliability/reliability-identity-result.json','responsive/responsive-result.json','startup/startup-browser-result.json'],
+            'ui':['layout/touch-layout-result.json','reliability/reliability-browser-result.json','identity-touch/touch-layout-identity-result.json','identity-reliability/reliability-identity-result.json','responsive/responsive-result.json'],
+            'range':['range/range-result.json'],
+            'startup':['startup/startup-browser-result.json'],
           }[suite]
           runtime_performance=os.environ['RUNTIME_PERFORMANCE']=='true'
           if suite=='active' and runtime_performance:
