@@ -131,16 +131,20 @@ test('issue-484 adapter transforms Actor and NetMatch with exact connections', (
   const netSrc = fs.readFileSync(path.join(UPSTREAM, 'src/net/netmatch.js'), 'utf8');
 
   const patchedActor = adaptIssue484('src/game/actor.js', actorSrc);
-  assert.ok(patchedActor.includes('this.s3SpecialCost ?? this.weapon.specialCost'));
+  assert.ok(patchedActor.includes('if (this.remote && typeof this.s3SpecialCost === \'number\''));
   assert.ok(patchedActor.includes('if (this.remote && this.s3SpecialReady !== undefined)'));
+  assert.ok(!patchedActor.includes('- 0.01'), 'Must not contain -0.01 epsilon');
 
   const patchedNet = adaptIssue484('src/net/netmatch.js', netSrc);
   assert.ok(patchedNet.includes('specialReady: 1048576'));
   assert.ok(patchedNet.includes('if (a.specialReady?.()) f |= F.specialReady;'));
   assert.ok(patchedNet.includes('spCost: s[21]'));
+  assert.ok(patchedNet.includes('o.spCost = a.spCost;'));
   assert.ok(patchedNet.includes('a.s3SpecialReady = !!(f & F.specialReady)'));
+  assert.ok(patchedNet.includes('delete a.s3SpecialCost;'));
   assert.ok(patchedNet.includes('delete a.s3SpecialReady;'));
-  assert.ok(patchedNet.includes('export { F as NET_FLAGS, WEAPONS as _W, packActor, unpackActor };'));
+  assert.ok(!patchedNet.includes('a.weapon.specialCost ='), 'applyRemote must never write to weapon.specialCost');
+  assert.ok(patchedNet.includes('export { F as NET_FLAGS, WEAPONS as _W };'), 'Must not add synthetic pack/unpack exports');
 
   // Non-matching file is passed through untouched
   assert.equal(adaptIssue484('src/config.js', 'const x = 1;'), 'const x = 1;');
@@ -153,19 +157,35 @@ test('negative control: unpatched INKWAVE loses special ready glow on remote cli
   const env = await createFixture({ apply484: false });
   const { make, setLocalLoadout, NetMatch } = env;
 
-  // Configure local loadout with 10 AP Special Charge Up (1 main = 10 AP)
   setLocalLoadout([
     { main: 'specialCharge', subs: ['none', 'none', 'none'] },
     { main: 'none', subs: ['none', 'none', 'none'] },
     { main: 'none', subs: ['none', 'none', 'none'] }
   ]);
 
-  // Create owner with charger (base specialCost = 180). With 10 AP (~1.0909x), effective cost is ~165
+  let hostPacket = null;
+  const hostSession = {
+    myId: 'host-id',
+    isHost: true,
+    tr: { broadcast: (msg) => { hostPacket = JSON.parse(JSON.stringify(msg)); } },
+    _members: new Set(['host-id', 'client-id']),
+  };
+  const clientSession = {
+    myId: 'client-id',
+    isHost: false,
+    hostId: 'host-id',
+    tr: { broadcast: () => {} },
+    _members: new Set(['host-id', 'client-id']),
+  };
+
+  const hostNM = new NetMatch(hostSession, { map: 'arena' });
+  const clientNM = new NetMatch(clientSession, { map: 'arena' });
+
   const owner = make(0, 'owner', 'charger');
   owner.isLocal = true;
   owner.remote = false;
   owner.nid = 1;
-  owner.owner = 'host';
+  owner.owner = 'host-id';
   owner.reset();
 
   const ownerCost = owner.specialCost();
@@ -176,59 +196,41 @@ test('negative control: unpatched INKWAVE loses special ready glow on remote cli
   owner.special = ownerCost;
   assert.equal(owner.specialReady(), true, 'Owner should be specialReady at 165p');
 
-  // Create remote peer session and NetMatch
-  const fakeSession = { myId: 'peer', isHost: false, tr: { broadcast: () => {} } };
-  const nm = new NetMatch(fakeSession, { map: 'arena' });
-
-  // Remote proxy actor on observing peer (no peer gear data in session, base cost 180)
   const remoteProxy = make(0, 'remote-proxy', 'charger');
   remoteProxy.isLocal = false;
   remoteProxy.remote = true;
   remoteProxy.nid = 1;
-  remoteProxy.owner = 'host';
+  remoteProxy.owner = 'host-id';
   remoteProxy.reset();
 
-  // On unpatched INKWAVE, remote proxy has base 180p cost
-  assert.equal(remoteProxy.specialCost(), 180, 'Remote proxy has unadjusted 180p cost');
+  hostNM.bind({ actors: [owner] });
+  clientNM.bind({ actors: [remoteProxy] });
 
-  // In unpatched INKWAVE, packActor only sends Math.round(a.special) = 165, no spCost, no specialReady flag
-  const unpatchedSnapshot = [
-    owner.nid, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, // f: alive=1, no specialReady bit
-    100, 100, Math.round(owner.special), 0, 0, 0, 0, 0, 0, 0
-  ];
+  // Host sends tick
+  hostNM.tickT = 0;
+  hostNM.update(1 / 20);
+  assert.ok(hostPacket);
+  assert.equal(hostPacket.a[0].length, 21, 'Unpatched snapshot has only 21 elements');
 
-  // Feed into NetMatch on remote client
-  nm._setupActor(remoteProxy);
-  const sample = {
-    t: 1.0,
-    x: 0, y: 0, z: 0,
-    vx: 0, vy: 0, vz: 0,
-    yaw: 0, aimYaw: 0, aimPitch: 0,
-    f: unpatchedSnapshot[10],
-    hp: unpatchedSnapshot[11],
-    ink: unpatchedSnapshot[12],
-    sp: unpatchedSnapshot[13],
-    ch: 0, turf: 0, tp: 0, wx: 0, wy: 0, wz: 0, lock: 0
-  };
-
-  remoteProxy.net.ready = true;
-  remoteProxy.net.cur = sample;
-  nm.applyRemote(remoteProxy, 0.05);
+  // Client receives tick
+  clientNM.onMessage('host-id', hostPacket);
+  const peer = clientNM._peer('host-id');
+  peer.tr = hostPacket.ts;
+  clientNM.update(1 / 20);
+  clientNM.applyRemote(remoteProxy, 1 / 20);
 
   // Verification of the bug:
-  // Owner is ready (165 >= 165)
   assert.equal(owner.specialReady(), true);
-  // BUT remote proxy evaluates (165 >= 180) -> FALSE!
   assert.equal(remoteProxy.specialReady(), false, 'UNPATCHED BUG: Remote proxy is NOT ready despite owner being ready');
   assert.ok(remoteProxy.specialFrac() < 1.0, 'UNPATCHED BUG: Remote proxy specialFrac is not 1.0');
 });
 
 // ---------------------------------------------------------------------------
-// Test 3: Root acceptance (Patched INKWAVE with 10 AP Special Charge Up)
+// Test 3: Root acceptance (10 AP Special Charge Up) via real tick transport
 // ---------------------------------------------------------------------------
 test('root acceptance: patched INKWAVE synchronizes specialReady and effective specialCost across peers (10 AP)', async () => {
   const env = await createFixture({ apply484: true });
-  const { make, setLocalLoadout, NetMatch, packActor, unpackActor } = env;
+  const { make, setLocalLoadout, NetMatch } = env;
 
   setLocalLoadout([
     { main: 'specialCharge', subs: ['none', 'none', 'none'] },
@@ -236,52 +238,65 @@ test('root acceptance: patched INKWAVE synchronizes specialReady and effective s
     { main: 'none', subs: ['none', 'none', 'none'] }
   ]);
 
+  let hostPacket = null;
+  const hostSession = {
+    myId: 'host-id',
+    isHost: true,
+    tr: { broadcast: (msg) => { hostPacket = JSON.parse(JSON.stringify(msg)); } },
+    _members: new Set(['host-id', 'client-id']),
+  };
+  const clientSession = {
+    myId: 'client-id',
+    isHost: false,
+    hostId: 'host-id',
+    tr: { broadcast: () => {} },
+    _members: new Set(['host-id', 'client-id']),
+  };
+
+  const hostNM = new NetMatch(hostSession, { map: 'arena' });
+  const clientNM = new NetMatch(clientSession, { map: 'arena' });
+
   const owner = make(0, 'owner', 'charger');
   owner.isLocal = true;
   owner.remote = false;
   owner.nid = 1;
-  owner.owner = 'host';
+  owner.owner = 'host-id';
   owner.reset();
 
   const ownerCost = owner.specialCost();
   assert.equal(Math.round(ownerCost), 165);
 
-  // Fill owner gauge to 165p
   owner.special = ownerCost;
   assert.equal(owner.specialReady(), true);
-
-  // Pack with patched packActor
-  const packed = packActor(owner);
-  assert.equal(packed[13], 165, 'Packed special points is 165');
-  assert.equal(packed[21], 165, 'Packed specialCost is 165');
-  assert.ok(packed[10] & 1048576, 'Packed flags has F.specialReady bit set');
-
-  // Unpack with patched unpackActor
-  const unpacked = unpackActor(packed, 1.0);
-  assert.equal(unpacked.sp, 165);
-  assert.equal(unpacked.spCost, 165);
-  assert.ok(unpacked.f & 1048576);
-
-  // Apply on remote proxy
-  const fakeSession = { myId: 'peer', isHost: false, tr: { broadcast: () => {} } };
-  const nm = new NetMatch(fakeSession, { map: 'arena' });
 
   const remoteProxy = make(0, 'remote-proxy', 'charger');
   remoteProxy.isLocal = false;
   remoteProxy.remote = true;
   remoteProxy.nid = 1;
-  remoteProxy.owner = 'host';
+  remoteProxy.owner = 'host-id';
   remoteProxy.reset();
 
-  nm._setupActor(remoteProxy);
-  remoteProxy.net.ready = true;
-  remoteProxy.net.cur = unpacked;
-  nm.applyRemote(remoteProxy, 0.05);
+  hostNM.bind({ actors: [owner] });
+  clientNM.bind({ actors: [remoteProxy] });
+
+  hostNM.tickT = 0;
+  hostNM.update(1 / 20);
+  assert.ok(hostPacket);
+  assert.equal(hostPacket.a[0].length, 22, 'Patched snapshot has 22 elements');
+  assert.equal(Math.round(hostPacket.a[0][21]), 165, 'Element 21 is effective specialCost');
+  assert.ok(hostPacket.a[0][10] & 1048576, 'Flags contain specialReady bit');
+
+  // Deliver tick to client
+  clientNM.onMessage('host-id', hostPacket);
+  const peer = clientNM._peer('host-id');
+  peer.tr = hostPacket.ts;
+  clientNM.update(1 / 20);
+  clientNM.applyRemote(remoteProxy, 1 / 20);
 
   // Verification of the fix:
   assert.equal(remoteProxy.specialReady(), true, 'PATCHED: Remote proxy is specialReady');
-  assert.equal(remoteProxy.specialCost(), 165, 'PATCHED: Remote proxy has synchronized specialCost (165)');
-  assert.equal(remoteProxy.specialFrac(), 1.0, 'PATCHED: Remote proxy specialFrac is 1.0');
+  assert.equal(Math.round(remoteProxy.specialCost()), 165, 'PATCHED: Remote proxy has synchronized specialCost (165)');
+  assert.ok(remoteProxy.specialFrac() > 0.99 && remoteProxy.specialFrac() <= 1.0, 'PATCHED: Remote proxy specialFrac is near full');
 
   // HUD match roster entry check
   const rosterEntry = {
@@ -295,11 +310,11 @@ test('root acceptance: patched INKWAVE synchronizes specialReady and effective s
 });
 
 // ---------------------------------------------------------------------------
-// Test 4: Root acceptance with maximum 57 AP Special Charge Up
+// Test 4: Fractional effective cost preservation (57 AP) without Math.round
 // ---------------------------------------------------------------------------
-test('root acceptance: maximum 57 AP Special Charge Up synchronizes correctly', async () => {
+test('fractional effective cost preservation: 57 AP does not round 180/1.3 = 138.4615 across tick transport', async () => {
   const env = await createFixture({ apply484: true });
-  const { make, setLocalLoadout, NetMatch, packActor, unpackActor } = env;
+  const { make, setLocalLoadout, NetMatch } = env;
 
   setLocalLoadout([
     { main: 'specialCharge', subs: ['specialCharge', 'specialCharge', 'specialCharge'] },
@@ -307,122 +322,109 @@ test('root acceptance: maximum 57 AP Special Charge Up synchronizes correctly', 
     { main: 'specialCharge', subs: ['specialCharge', 'specialCharge', 'specialCharge'] }
   ]);
 
+  let hostPacket = null;
+  const hostSession = {
+    myId: 'host-id',
+    isHost: true,
+    tr: { broadcast: (msg) => { hostPacket = JSON.parse(JSON.stringify(msg)); } },
+    _members: new Set(['host-id', 'client-id']),
+  };
+  const clientSession = {
+    myId: 'client-id',
+    isHost: false,
+    hostId: 'host-id',
+    tr: { broadcast: () => {} },
+    _members: new Set(['host-id', 'client-id']),
+  };
+
+  const hostNM = new NetMatch(hostSession, { map: 'arena' });
+  const clientNM = new NetMatch(clientSession, { map: 'arena' });
+
   const owner = make(0, 'owner-57ap', 'charger');
   owner.isLocal = true;
   owner.remote = false;
   owner.nid = 2;
-  owner.owner = 'host';
+  owner.owner = 'host-id';
   owner.reset();
 
-  const ownerCost = owner.specialCost();
-  // 180 / 1.3 ≈ 138.46 -> 138
-  assert.equal(Math.round(ownerCost), 138);
+  const exactOwnerCost = owner.specialCost();
+  // 180 / 1.3 ≈ 138.46153846153845
+  assert.ok(Math.abs(exactOwnerCost - (180 / 1.3)) < 1e-4, 'Owner cost must be exact fraction ~138.4615');
+  assert.notEqual(exactOwnerCost, 138, 'Owner cost must not be pre-rounded to 138');
 
-  owner.special = ownerCost;
+  owner.special = exactOwnerCost;
   assert.equal(owner.specialReady(), true);
-
-  const packed = packActor(owner);
-  assert.equal(packed[13], 138);
-  assert.equal(packed[21], 138);
-  assert.ok(packed[10] & 1048576);
-
-  const unpacked = unpackActor(packed, 2.0);
-  const fakeSession = { myId: 'peer', isHost: false, tr: { broadcast: () => {} } };
-  const nm = new NetMatch(fakeSession, { map: 'arena' });
 
   const remoteProxy = make(0, 'remote-57ap', 'charger');
   remoteProxy.isLocal = false;
   remoteProxy.remote = true;
   remoteProxy.nid = 2;
-  remoteProxy.owner = 'host';
+  remoteProxy.owner = 'host-id';
   remoteProxy.reset();
 
-  nm._setupActor(remoteProxy);
-  remoteProxy.net.ready = true;
-  remoteProxy.net.cur = unpacked;
-  nm.applyRemote(remoteProxy, 0.05);
+  hostNM.bind({ actors: [owner] });
+  clientNM.bind({ actors: [remoteProxy] });
 
-  assert.equal(remoteProxy.specialReady(), true);
-  assert.equal(remoteProxy.specialCost(), 138);
-  assert.equal(remoteProxy.specialFrac(), 1.0);
+  hostNM.tickT = 0;
+  hostNM.update(1 / 20);
+  assert.ok(hostPacket);
+
+  // Appended cost must NOT be Math.round: it preserves the exact float
+  const transmittedCost = hostPacket.a[0][21];
+  assert.ok(Math.abs(transmittedCost - exactOwnerCost) < 1e-6, `Transmitted cost must preserve float, got ${transmittedCost}`);
+  // Points tuple stays native-rounded (Math.round(138.4615) = 138)
+  assert.equal(hostPacket.a[0][13], 138);
+
+  clientNM.onMessage('host-id', hostPacket);
+  const peer = clientNM._peer('host-id');
+  peer.tr = hostPacket.ts;
+  clientNM.update(1 / 20);
+  clientNM.applyRemote(remoteProxy, 1 / 20);
+
+  assert.equal(remoteProxy.specialReady(), true, 'Remote proxy is ready');
+  assert.ok(Math.abs(remoteProxy.specialCost() - exactOwnerCost) < 1e-6, 'Remote proxy has unrounded exact cost');
+  assert.ok(remoteProxy.specialFrac() > 0.99 && remoteProxy.specialFrac() <= 1.0);
 });
 
 // ---------------------------------------------------------------------------
-// Test 5: 0 AP regression protection
+// Test 5: Exact native authority on local actor (no -0.01 epsilon)
 // ---------------------------------------------------------------------------
-test('non-regression: 0 AP players maintain standard 180p threshold and exact fractional gauge', async () => {
+test('exact native authority: local readiness requires exact threshold without -0.01 early allowance', async () => {
   const env = await createFixture({ apply484: true });
-  const { make, setLocalLoadout, NetMatch, packActor, unpackActor } = env;
+  const { make } = env;
 
-  setLocalLoadout([
-    { main: 'none', subs: ['none', 'none', 'none'] },
-    { main: 'none', subs: ['none', 'none', 'none'] },
-    { main: 'none', subs: ['none', 'none', 'none'] }
-  ]);
+  const actor = make(0, 'local-exact', 'charger');
+  actor.isLocal = true;
+  actor.remote = false;
+  actor.reset();
 
-  const owner = make(0, 'owner-0ap', 'charger');
-  owner.isLocal = true;
-  owner.remote = false;
-  owner.nid = 3;
-  owner.owner = 'host';
-  owner.reset();
+  // Base charger cost = 180
+  assert.equal(actor.specialCost(), 180);
 
-  assert.equal(owner.specialCost(), 180);
+  // Negative test: 179.99 must NOT trigger readiness (must not allow early specials)
+  actor.special = 179.99;
+  assert.equal(actor.specialReady(), false, '179.99p must NOT trigger specialReady with 180p cost');
 
-  // Half full (90p)
-  owner.special = 90;
-  assert.equal(owner.specialReady(), false);
-  assert.equal(owner.specialFrac(), 0.5);
+  // Exact 180.00 triggers readiness
+  actor.special = 180.0;
+  assert.equal(actor.specialReady(), true, '180.0p triggers specialReady');
 
-  let packed = packActor(owner);
-  assert.equal(packed[13], 90);
-  assert.equal(packed[21], 180);
-  assert.equal((packed[10] & 1048576), 0, 'specialReady bit must not be set at 50% charge');
+  // Active special blocks ready
+  actor.specialActive = { id: 'slam' };
+  assert.equal(actor.specialReady(), false);
+  actor.specialActive = null;
 
-  let unpacked = unpackActor(packed, 1.0);
-  const fakeSession = { myId: 'peer', isHost: false, tr: { broadcast: () => {} } };
-  const nm = new NetMatch(fakeSession, { map: 'arena' });
-
-  const remoteProxy = make(0, 'remote-0ap', 'charger');
-  remoteProxy.isLocal = false;
-  remoteProxy.remote = true;
-  remoteProxy.nid = 3;
-  remoteProxy.owner = 'host';
-  remoteProxy.reset();
-
-  nm._setupActor(remoteProxy);
-  remoteProxy.net.ready = true;
-  remoteProxy.net.cur = unpacked;
-  nm.applyRemote(remoteProxy, 0.05);
-
-  assert.equal(remoteProxy.specialReady(), false);
-  assert.equal(remoteProxy.specialCost(), 180);
-  assert.equal(remoteProxy.specialFrac(), 0.5);
-
-  // Full (180p)
-  owner.special = 180;
-  assert.equal(owner.specialReady(), true);
-
-  packed = packActor(owner);
-  assert.equal(packed[13], 180);
-  assert.equal(packed[21], 180);
-  assert.ok(packed[10] & 1048576);
-
-  unpacked = unpackActor(packed, 2.0);
-  remoteProxy.net.cur = unpacked;
-  nm.applyRemote(remoteProxy, 0.05);
-
-  assert.equal(remoteProxy.specialReady(), true);
-  assert.equal(remoteProxy.specialCost(), 180);
-  assert.equal(remoteProxy.specialFrac(), 1.0);
+  // Dead actor is not ready
+  actor.alive = false;
+  assert.equal(actor.specialReady(), false, 'Dead actor must not be specialReady');
 });
 
 // ---------------------------------------------------------------------------
-// Test 6: Complete special lifecycle (charging -> ready -> activation -> splat -> respawn)
+// Test 6: Host adoption & presentation isolation (bot threshold preserved)
 // ---------------------------------------------------------------------------
-test('lifecycle: special activation, death/splat, and respawn correctly reset readiness on remote client', async () => {
+test('host adoption: _adopt clears presentation overrides and preserves original bot weaponCost and threshold', async () => {
   const env = await createFixture({ apply484: true });
-  const { make, setLocalLoadout, NetMatch, packActor, unpackActor } = env;
+  const { make, setLocalLoadout, NetMatch } = env;
 
   setLocalLoadout([
     { main: 'specialCharge', subs: ['none', 'none', 'none'] },
@@ -430,101 +432,430 @@ test('lifecycle: special activation, death/splat, and respawn correctly reset re
     { main: 'none', subs: ['none', 'none', 'none'] }
   ]);
 
-  const owner = make(0, 'owner-lifecycle', 'charger');
-  owner.isLocal = true;
-  owner.remote = false;
-  owner.nid = 4;
-  owner.owner = 'host';
-  owner.reset();
+  let hostPacket = null;
+  const hostSession = {
+    myId: 'host-id',
+    isHost: true,
+    tr: { broadcast: (msg) => { hostPacket = JSON.parse(JSON.stringify(msg)); } },
+    _members: new Set(['host-id', 'client-id']),
+  };
+  const clientSession = {
+    myId: 'client-id',
+    isHost: false,
+    hostId: 'host-id',
+    tr: { broadcast: () => {} },
+    _members: new Set(['host-id', 'client-id']),
+  };
 
-  const fakeSession = { myId: 'peer', isHost: false, tr: { broadcast: () => {} } };
-  const nm = new NetMatch(fakeSession, { map: 'arena' });
+  const hostNM = new NetMatch(hostSession, { map: 'arena' });
+  const clientNM = new NetMatch(clientSession, { map: 'arena' });
 
-  const remoteProxy = make(0, 'remote-lifecycle', 'charger');
-  remoteProxy.isLocal = false;
-  remoteProxy.remote = true;
-  remoteProxy.nid = 4;
-  remoteProxy.owner = 'host';
-  remoteProxy.reset();
-  nm._setupActor(remoteProxy);
-  remoteProxy.net.ready = true;
+  // Guest player with 10 AP gear (cost ~165)
+  const guestActor = make(0, 'guest-player', 'charger');
+  guestActor.isLocal = true;
+  guestActor.remote = false;
+  guestActor.nid = 7;
+  guestActor.owner = 'host-id';
+  guestActor.reset();
+  guestActor.special = guestActor.specialCost();
 
-  function sync(t) {
-    const packed = packActor(owner);
-    const unpacked = unpackActor(packed, t);
-    remoteProxy.net.cur = unpacked;
-    nm.applyRemote(remoteProxy, 0.05);
-  }
+  // Client proxy receiving guest's state
+  const proxy = make(0, 'guest-player', 'charger');
+  proxy.isLocal = false;
+  proxy.remote = true;
+  proxy.nid = 7;
+  proxy.owner = 'host-id';
+  proxy.reset();
+  assert.equal(proxy.weapon.specialCost, 180, 'Original weapon cost before packets is 180');
 
-  // Phase 1: Reaching Ready
-  owner.special = 165;
-  sync(1.0);
-  assert.equal(owner.specialReady(), true);
-  assert.equal(remoteProxy.specialReady(), true);
+  hostNM.bind({ actors: [guestActor] });
+  clientNM.bind({ actors: [proxy] });
 
-  // Phase 2: Special Activation
-  owner.specialActive = { id: 'slam' };
-  assert.equal(owner.specialReady(), false, 'Owner specialReady is false during specialActive');
-  sync(2.0);
-  assert.equal(remoteProxy.specialActive !== null, true, 'Remote proxy recognizes specialActive');
-  assert.equal(remoteProxy.specialReady(), false, 'Remote proxy specialReady is false during specialActive');
+  // Send real discounted tick from guest to proxy
+  hostNM.tickT = 0;
+  hostNM.update(1 / 20);
+  clientNM.onMessage('host-id', hostPacket);
 
-  // Phase 3: Splat / Death
-  owner.specialActive = null;
-  owner.alive = false;
-  owner.special = Math.round(165 * 0.5); // 82
-  assert.equal(owner.specialReady(), false, 'Dead owner is not specialReady');
-  nm._remoteSplat(remoteProxy, null, 'splat');
-  sync(3.0);
-  assert.equal(remoteProxy.alive, false);
-  assert.equal(remoteProxy.specialReady(), false, 'Dead remote proxy is not specialReady');
+  const peer = clientNM._peer('host-id');
+  peer.tr = hostPacket.ts;
+  clientNM.update(1 / 20);
+  clientNM.applyRemote(proxy, 1 / 20);
 
-  // Phase 4: Respawn
-  owner.alive = true;
-  nm._remoteRespawn(remoteProxy);
-  assert.equal(owner.specialReady(), false, 'Respawned owner with 82p is not specialReady');
-  sync(4.0);
-  assert.equal(remoteProxy.alive, true);
-  assert.equal(remoteProxy.specialReady(), false, 'Respawned remote proxy with 82p is not specialReady');
+  // While remote, proxy displays discounted presentation cost
+  assert.equal(proxy.specialReady(), true);
+  assert.equal(Math.round(proxy.specialCost()), 165);
+  // CRITICAL CHECK: applyRemote MUST NOT have modified proxy.weapon.specialCost!
+  assert.equal(proxy.weapon.specialCost, 180, 'proxy.weapon.specialCost MUST remain 180 authoritative bot cost');
+
+  // Now simulate host adoption: guest disconnects and host adopts proxy
+  clientNM._adopt(proxy);
+
+  // Verify post-adoption state:
+  assert.equal(proxy.remote, false, 'Proxy is no longer remote');
+  assert.equal(proxy.isBot, true, 'Proxy is now an adopted bot');
+  assert.equal(proxy.s3SpecialCost, undefined, 's3SpecialCost presentation override cleared');
+  assert.equal(proxy.s3SpecialReady, undefined, 's3SpecialReady presentation override cleared');
+
+  // Authority check: bot must use its original 180p weapon cost and 180p threshold
+  assert.equal(proxy.weapon.specialCost, 180, 'Bot weapon.specialCost is strictly 180');
+  assert.equal(proxy.specialCost(), 180, 'Bot specialCost() returns 180');
+
+  // Even though special is ~165, bot is NOT ready because bot activation threshold is 180!
+  assert.equal(proxy.specialReady(), false, 'Adopted bot with 165p is NOT ready (needs 180p)');
+
+  // Bot charges 15 more points to 180
+  proxy.addTurf(15);
+  assert.ok(proxy.special >= 180);
+  assert.equal(proxy.specialReady(), true, 'Adopted bot becomes ready only upon reaching full 180p');
 });
 
 // ---------------------------------------------------------------------------
-// Test 7: Reconnection / Host Adoption (_adopt)
+// Test 7: Legacy 21-element snapshot & invalid field handling (fallback to native)
 // ---------------------------------------------------------------------------
-test('host adoption: _adopt clears s3SpecialReady and returns actor to local simulation', async () => {
+test('legacy transport & invalid fields: missing/corrupt cost falls back to native readiness without forcing false', async () => {
   const env = await createFixture({ apply484: true });
   const { make, NetMatch } = env;
 
-  const fakeSession = { myId: 'host', isHost: true, tr: { broadcast: () => {} } };
+  const fakeSession = {
+    myId: 'client-id',
+    isHost: false,
+    hostId: 'host-id',
+    tr: { broadcast: () => {} },
+    _members: new Set(['host-id', 'client-id']),
+  };
   const nm = new NetMatch(fakeSession, { map: 'arena' });
 
-  const actor = make(0, 'peer-actor', 'charger');
-  actor.isLocal = false;
-  actor.remote = true;
-  actor.nid = 5;
-  actor.owner = 'leaving-peer';
-  nm._setupActor(actor);
-  actor.s3SpecialReady = true;
-  actor.weapon.specialCost = 165;
-  actor.special = 165;
+  const proxy = make(0, 'remote-legacy', 'charger');
+  proxy.isLocal = false;
+  proxy.remote = true;
+  proxy.nid = 8;
+  proxy.owner = 'host-id';
+  proxy.reset();
+  nm.bind({ actors: [proxy] });
 
-  assert.equal(actor.specialReady(), true);
+  // 1. Legacy 21-element snapshot with 180 special (no 22nd element, no specialReady bit)
+  const legacy21Snapshot = [
+    proxy.nid, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, // f: grounded=1, no specialReady
+    100, 100, 180, 0, 50, 0, 0, 0, 0, 0     // 21 elements total (indices 0..20)
+  ];
+  assert.equal(legacy21Snapshot.length, 21);
 
-  // Host adopts the actor
-  nm._adopt(actor);
+  nm.onMessage('host-id', { k: 't', ts: 1.0, a: [legacy21Snapshot] });
+  const peer = nm._peer('host-id');
+  peer.tr = 1.0;
+  nm.update(1 / 20);
+  nm.applyRemote(proxy, 1 / 20);
 
-  assert.equal(actor.remote, false, 'Actor is no longer remote');
-  assert.equal(actor.isBot, true, 'Actor became a bot');
-  assert.equal(actor.s3SpecialReady, undefined, 's3SpecialReady was cleared');
+  // Proves absence of valid cost falls back to native readiness (180 >= 180) -> true
+  assert.equal(proxy.specialCost(), 180, 'Legacy sample uses base weapon cost 180');
+  assert.equal(proxy.s3SpecialCost, undefined, 'No presentation cost set');
+  assert.equal(proxy.s3SpecialReady, undefined, 'No presentation ready set');
+  assert.equal(proxy.specialReady(), true, 'Legacy 180p sample MUST be ready (must not force false!)');
 
-  // Bot evaluates local specialReady()
-  assert.equal(actor.specialReady(), true);
+  // When legacy special is 100p (< 180p), native readiness returns false
+  legacy21Snapshot[13] = 100;
+  nm.onMessage('host-id', { k: 't', ts: 1.05, a: [legacy21Snapshot] });
+  peer.tr = 1.05;
+  nm.update(1 / 20);
+  nm.applyRemote(proxy, 1 / 20);
+  assert.equal(proxy.specialReady(), false, 'Legacy 100p sample evaluates native false');
+
+  // 2. Test invalid/corrupt appended fields: NaN, Infinity, -50, "165", null, {}
+  const corruptValues = [NaN, Infinity, -Infinity, -50, 0, '165', null, {}];
+  let ts = 1.1;
+  for (const badCost of corruptValues) {
+    ts += 0.05;
+    const corruptSnapshot = [
+      proxy.nid, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+      100, 100, 180, 0, 50, 0, 0, 0, 0, 0, badCost
+    ];
+    nm.onMessage('host-id', { k: 't', ts, a: [corruptSnapshot] });
+    peer.tr = ts;
+    nm.update(1 / 20);
+    nm.applyRemote(proxy, 1 / 20);
+
+    assert.equal(proxy.s3SpecialCost, undefined, `Corrupt cost ${badCost} must be rejected`);
+    assert.equal(proxy.s3SpecialReady, undefined, `Corrupt cost ${badCost} must clear ready override`);
+    assert.equal(proxy.specialCost(), 180, 'Falls back to native weapon cost');
+    assert.equal(proxy.specialReady(), true, 'Falls back to native readiness without crashing');
+  }
 });
 
 // ---------------------------------------------------------------------------
-// Test 8: Practice Range / Offline isolation
+// Test 8: Mixed old and new sample stream
 // ---------------------------------------------------------------------------
-test('offline isolation: single-player / practice range works without network artifacts', async () => {
+test('mixed stream: seamless transitions between new protocol and legacy samples', async () => {
+  const env = await createFixture({ apply484: true });
+  const { make, NetMatch } = env;
+
+  const fakeSession = {
+    myId: 'client-id',
+    isHost: false,
+    hostId: 'host-id',
+    tr: { broadcast: () => {} },
+    _members: new Set(['host-id', 'client-id']),
+  };
+  const nm = new NetMatch(fakeSession, { map: 'arena' });
+
+  const proxy = make(0, 'mixed-proxy', 'charger');
+  proxy.isLocal = false;
+  proxy.remote = true;
+  proxy.nid = 9;
+  proxy.owner = 'host-id';
+  proxy.reset();
+  nm.bind({ actors: [proxy] });
+  const peer = nm._peer('host-id');
+
+  // Step 1: New 22-element packet with 165p effective cost & ready flag
+  const newSnapshot = [
+    proxy.nid, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 | 1048576,
+    100, 100, 165, 0, 50, 0, 0, 0, 0, 0, 165
+  ];
+  nm.onMessage('host-id', { k: 't', ts: 1.0, a: [newSnapshot] });
+  peer.tr = 1.0;
+  nm.update(1 / 20);
+  nm.applyRemote(proxy, 1 / 20);
+
+  assert.equal(proxy.specialCost(), 165);
+  assert.equal(proxy.specialReady(), true);
+
+  // Step 2: Legacy 21-element packet arrives with 100p (no 22nd element)
+  const legacySnapshot = [
+    proxy.nid, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+    100, 100, 100, 0, 50, 0, 0, 0, 0, 0
+  ];
+  nm.onMessage('host-id', { k: 't', ts: 1.05, a: [legacySnapshot] });
+  peer.tr = 1.05;
+  nm.update(1 / 20);
+  nm.applyRemote(proxy, 1 / 20);
+
+  // Overrides cleared, falls back to native base 180p
+  assert.equal(proxy.specialCost(), 180);
+  assert.equal(proxy.specialReady(), false);
+
+  // Step 3: Legacy packet with 180p arrives -> native readiness true
+  legacySnapshot[13] = 180;
+  nm.onMessage('host-id', { k: 't', ts: 1.1, a: [legacySnapshot] });
+  peer.tr = 1.1;
+  nm.update(1 / 20);
+  nm.applyRemote(proxy, 1 / 20);
+
+  assert.equal(proxy.specialCost(), 180);
+  assert.equal(proxy.specialReady(), true);
+
+  // Step 4: New packet arrives again -> resumes new protocol
+  newSnapshot[10] = 1; // not ready
+  newSnapshot[13] = 80;
+  nm.onMessage('host-id', { k: 't', ts: 1.15, a: [newSnapshot] });
+  peer.tr = 1.15;
+  nm.update(1 / 20);
+  nm.applyRemote(proxy, 1 / 20);
+
+  assert.equal(proxy.specialCost(), 165);
+  assert.equal(proxy.specialReady(), false);
+});
+
+// ---------------------------------------------------------------------------
+// Test 9: Sampling alignment in Hermite interpolation (future cost does not leak early)
+// ---------------------------------------------------------------------------
+test('sampling alignment: Hermite interpolation aligns cost with earlier snapshot flags, no future leak', async () => {
+  const env = await createFixture({ apply484: true });
+  const { make, NetMatch } = env;
+
+  const fakeSession = {
+    myId: 'client-id',
+    isHost: false,
+    hostId: 'host-id',
+    tr: { broadcast: () => {} },
+    _members: new Set(['host-id', 'client-id']),
+  };
+  const nm = new NetMatch(fakeSession, { map: 'arena' });
+
+  const proxy = make(0, 'hermite-proxy', 'charger');
+  proxy.isLocal = false;
+  proxy.remote = true;
+  proxy.nid = 10;
+  proxy.owner = 'host-id';
+  proxy.reset();
+  nm.bind({ actors: [proxy] });
+
+  // Snapshot 0: t=1.0, spCost=180, sp=90, flags=1 (not ready)
+  const snap0 = [
+    proxy.nid, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+    100, 100, 90, 0, 50, 0, 0, 0, 0, 0, 180
+  ];
+  // Snapshot 1: t=1.1, spCost=165, sp=165, flags=1 | specialReady (ready)
+  const snap1 = [
+    proxy.nid, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 | 1048576,
+    100, 100, 165, 0, 50, 0, 0, 0, 0, 0, 165
+  ];
+
+  nm.onMessage('host-id', { k: 't', ts: 1.0, a: [snap0] });
+  nm.onMessage('host-id', { k: 't', ts: 1.1, a: [snap1] });
+
+  const peer = nm._peer('host-id');
+  peer.init = true;
+  peer.off = 0;
+  peer.delay = 0.02;
+  peer.lastTs = 1.1;
+
+  // Sample midway at t = 1.05: Hermite interpolates between snap0 and snap1
+  peer.tr = 1.05;
+  nm._sample(proxy, 1.05, 1 / 20);
+  nm.applyRemote(proxy, 1 / 20);
+
+  // During interpolation between 1.0 and 1.1, flags come from earlier snap0 (f=1, not ready).
+  // Cost must be aligned with earlier flags (spCost = 180).
+  // Future cost (165) and readiness (true) from snap1 MUST NOT leak early!
+  assert.equal(proxy.specialReady(), false, 'Future readiness must not leak early during Hermite interpolation');
+  assert.equal(proxy.specialCost(), 180, 'Sampled cost during interpolation must align with earlier sample (180)');
+
+  // Advance playback time to t = 1.1 (at snap1)
+  peer.tr = 1.1;
+  nm._sample(proxy, 1.1, 1 / 20);
+  nm.applyRemote(proxy, 1 / 20);
+
+  // Now at t=1.1, snap1 is active
+  assert.equal(proxy.specialReady(), true, 'Ready upon reaching snap1');
+  assert.equal(proxy.specialCost(), 165, 'Cost updated to 165 upon reaching snap1');
+});
+
+// ---------------------------------------------------------------------------
+// Test 10: Late packets and non-authoritative packet rejection
+// ---------------------------------------------------------------------------
+test('admission checks: out-of-order and non-authoritative packets are rejected', async () => {
+  const env = await createFixture({ apply484: true });
+  const { make, NetMatch } = env;
+
+  const fakeSession = {
+    myId: 'client-id',
+    isHost: false,
+    hostId: 'host-id',
+    tr: { broadcast: () => {} },
+    _members: new Set(['host-id', 'client-id', 'impostor-id']),
+  };
+  const nm = new NetMatch(fakeSession, { map: 'arena' });
+
+  const proxy = make(0, 'admit-proxy', 'charger');
+  proxy.isLocal = false;
+  proxy.remote = true;
+  proxy.nid = 11;
+  proxy.owner = 'host-id';
+  proxy.reset();
+  nm.bind({ actors: [proxy] });
+
+  // 1. Authoritative packet at ts=2.0
+  const validSnap = [
+    proxy.nid, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 | 1048576,
+    100, 100, 165, 0, 50, 0, 0, 0, 0, 0, 165
+  ];
+  nm.onMessage('host-id', { k: 't', ts: 2.0, a: [validSnap] });
+  assert.equal(proxy.net.buf.length, 1);
+
+  // 2. Late/out-of-order packet at ts=1.5 (older than newest in buffer)
+  nm.onMessage('host-id', { k: 't', ts: 1.5, a: [validSnap] });
+  assert.equal(proxy.net.buf.length, 1, 'Late packet must be discarded');
+
+  // 3. Non-authoritative packet from 'impostor-id' (owner is 'host-id')
+  nm.onMessage('impostor-id', { k: 't', ts: 2.1, a: [validSnap] });
+  assert.equal(proxy.net.buf.length, 1, 'Impostor packet must be discarded');
+});
+
+// ---------------------------------------------------------------------------
+// Test 11: Complete actor lifecycle (charging -> ready -> activation -> splat -> respawn)
+// ---------------------------------------------------------------------------
+test('lifecycle: special activation, death/splat, and respawn correctly reset readiness on remote client', async () => {
+  const env = await createFixture({ apply484: true });
+  const { make, setLocalLoadout, NetMatch } = env;
+
+  setLocalLoadout([
+    { main: 'specialCharge', subs: ['none', 'none', 'none'] },
+    { main: 'none', subs: ['none', 'none', 'none'] },
+    { main: 'none', subs: ['none', 'none', 'none'] }
+  ]);
+
+  let hostPacket = null;
+  const hostSession = {
+    myId: 'host-id',
+    isHost: true,
+    tr: { broadcast: (msg) => { hostPacket = JSON.parse(JSON.stringify(msg)); } },
+    _members: new Set(['host-id', 'client-id']),
+  };
+  const clientSession = {
+    myId: 'client-id',
+    isHost: false,
+    hostId: 'host-id',
+    tr: { broadcast: () => {} },
+    _members: new Set(['host-id', 'client-id']),
+  };
+
+  const hostNM = new NetMatch(hostSession, { map: 'arena' });
+  const clientNM = new NetMatch(clientSession, { map: 'arena' });
+
+  const owner = make(0, 'owner-life', 'charger');
+  owner.isLocal = true;
+  owner.remote = false;
+  owner.nid = 12;
+  owner.owner = 'host-id';
+  owner.reset();
+
+  const proxy = make(0, 'proxy-life', 'charger');
+  proxy.isLocal = false;
+  proxy.remote = true;
+  proxy.nid = 12;
+  proxy.owner = 'host-id';
+  proxy.reset();
+
+  hostNM.bind({ actors: [owner] });
+  clientNM.bind({ actors: [proxy] });
+
+  function sync(ts) {
+    hostNM.tickT = 0;
+    hostNM.update(1 / 20);
+    clientNM.onMessage('host-id', hostPacket);
+    const peer = clientNM._peer('host-id');
+    peer.tr = hostPacket.ts;
+    clientNM.update(1 / 20);
+    clientNM.applyRemote(proxy, 1 / 20);
+  }
+
+  // Phase 1: Charge to ready
+  owner.special = owner.specialCost();
+  assert.equal(owner.specialReady(), true);
+  sync(1.0);
+  assert.equal(proxy.specialReady(), true);
+
+  // Phase 2: Special Activation
+  owner.specialActive = { id: 'slam' };
+  assert.equal(owner.specialReady(), false);
+  sync(1.05);
+  assert.equal(proxy.specialActive !== null, true);
+  assert.equal(proxy.specialReady(), false);
+
+  // Phase 3: Splat / Death
+  owner.specialActive = null;
+  owner.splat(null, 'splat');
+  assert.equal(owner.alive, false);
+  assert.equal(owner.specialReady(), false);
+
+  clientNM._remoteSplat(proxy, null, 'splat');
+  assert.equal(proxy.alive, false);
+  assert.equal(proxy.specialReady(), false);
+
+  // Phase 4: Respawn
+  owner.alive = true;
+  owner.special = 82; // halved on splat
+  clientNM._remoteRespawn(proxy);
+  sync(1.1);
+
+  assert.equal(proxy.alive, true);
+  assert.equal(proxy.specialReady(), false);
+});
+
+// ---------------------------------------------------------------------------
+// Test 12: Practice Range / Offline isolation & exact authority
+// ---------------------------------------------------------------------------
+test('offline isolation: single-player / practice range works without network artifacts and enforces exact authority', async () => {
   const env = await createFixture({ apply484: true });
   const { make, setLocalLoadout } = env;
 
@@ -539,144 +870,19 @@ test('offline isolation: single-player / practice range works without network ar
   player.remote = false;
   player.reset();
 
-  assert.equal(Math.round(player.specialCost()), 165);
-  player.special = 100;
-  assert.equal(player.specialReady(), false);
-  player.special = 165;
-  assert.equal(player.specialReady(), true);
+  const exactCost = player.specialCost();
+  assert.equal(Math.round(exactCost), 165);
+
+  // Negative authority check: player with 165.000p when cost is 165.001375 must NOT be ready!
+  player.special = 165.0;
+  assert.equal(player.specialReady(), false, 'Strict authority: 165.0 is less than 165.001375 and must NOT trigger ready');
+
+  // Exact threshold reached via inking turf
+  player.addTurf(200);
+  assert.equal(player.special, exactCost);
+  assert.equal(player.specialReady(), true, 'Ready upon reaching exact cost via turf addition');
+
+  // Special active blocks ready
   player.specialActive = { id: 'slam' };
   assert.equal(player.specialReady(), false);
 });
-
-// ---------------------------------------------------------------------------
-// Test 9: Deterministic multi-rate Hermite sampling
-// ---------------------------------------------------------------------------
-test('deterministic interpolation: 30Hz, 60Hz, 120Hz preserves spCost across network timeline', async () => {
-  const env = await createFixture({ apply484: true });
-  const { make, setLocalLoadout, NetMatch, packActor, unpackActor } = env;
-
-  setLocalLoadout([
-    { main: 'specialCharge', subs: ['none', 'none', 'none'] },
-    { main: 'none', subs: ['none', 'none', 'none'] },
-    { main: 'none', subs: ['none', 'none', 'none'] }
-  ]);
-
-  for (const hz of [30, 60, 120]) {
-    const dt = 1 / hz;
-    const owner = make(0, `owner-${hz}hz`, 'charger');
-    owner.isLocal = true;
-    owner.remote = false;
-    owner.nid = 10 + hz;
-    owner.owner = 'host';
-    owner.reset();
-    owner.special = 165;
-
-    const packed = packActor(owner);
-    const snap1 = unpackActor(packed, 0.0);
-    const snap2 = unpackActor(packed, 0.05);
-
-    const fakeSession = { myId: 'peer', isHost: false, tr: { broadcast: () => {} } };
-    const nm = new NetMatch(fakeSession, { map: 'arena' });
-
-    const remoteProxy = make(0, `remote-${hz}hz`, 'charger');
-    remoteProxy.isLocal = false;
-    remoteProxy.remote = true;
-    remoteProxy.nid = 10 + hz;
-    remoteProxy.owner = 'host';
-    remoteProxy.reset();
-    nm._setupActor(remoteProxy);
-
-    remoteProxy.net.buf = [snap1, snap2];
-    remoteProxy.net.ready = true;
-
-    // Sample timeline
-    const peer = nm._peer('host');
-    peer.init = true;
-    peer.off = 0;
-    peer.delay = 0.02;
-    peer.tr = 0.025;
-    peer.lastTs = 0.05;
-
-    nm._sample(remoteProxy, 0.025, dt);
-    nm.applyRemote(remoteProxy, dt);
-
-    assert.equal(remoteProxy.specialReady(), true, `${hz}Hz: Remote proxy must be specialReady`);
-    assert.equal(remoteProxy.specialCost(), 165, `${hz}Hz: Remote proxy specialCost must be 165`);
-    assert.equal(remoteProxy.specialFrac(), 1.0, `${hz}Hz: Remote proxy specialFrac must be 1.0`);
-  }
-});
-
-// ---------------------------------------------------------------------------
-// Test 10: Two-peer live NetMatch message round-trip
-// ---------------------------------------------------------------------------
-test('live NetMatch transport: host tick broadcast updates client proxy specialReady over synthetic connection', async () => {
-  const env = await createFixture({ apply484: true });
-  const { make, setLocalLoadout, NetMatch } = env;
-
-  setLocalLoadout([
-    { main: 'specialCharge', subs: ['none', 'none', 'none'] },
-    { main: 'none', subs: ['none', 'none', 'none'] },
-    { main: 'none', subs: ['none', 'none', 'none'] }
-  ]);
-
-  let hostToClient = null;
-  const hostSession = {
-    myId: 'host-id',
-    isHost: true,
-    tr: { broadcast: (msg) => { hostToClient = JSON.parse(JSON.stringify(msg)); } },
-    _members: new Set(['host-id', 'client-id'])
-  };
-  const clientSession = {
-    myId: 'client-id',
-    isHost: false,
-    hostId: 'host-id',
-    tr: { broadcast: () => {} },
-    _members: new Set(['host-id', 'client-id'])
-  };
-
-  const hostNM = new NetMatch(hostSession, { map: 'arena' });
-  const clientNM = new NetMatch(clientSession, { map: 'arena' });
-
-  // Host local actor
-  const hostActor = make(0, 'host-player', 'charger');
-  hostActor.isLocal = true;
-  hostActor.remote = false;
-  hostActor.nid = 42;
-  hostActor.owner = 'host-id';
-  hostActor.reset();
-  hostActor.special = 165; // Charged to 10 AP threshold
-
-  // Client proxy actor
-  const clientProxy = make(0, 'host-player', 'charger');
-  clientProxy.isLocal = false;
-  clientProxy.remote = true;
-  clientProxy.nid = 42;
-  clientProxy.owner = 'host-id';
-  clientProxy.reset();
-
-  const fakeMatch = { actors: [hostActor] };
-  hostNM.bind(fakeMatch);
-
-  const clientMatch = { actors: [clientProxy] };
-  clientNM.bind(clientMatch);
-
-  // Host sends tick
-  hostNM.tickT = 0;
-  hostNM.update(1 / 20);
-  assert.ok(hostToClient, 'Host sent tick packet');
-  assert.equal(hostToClient.k, 't');
-
-  // Client receives tick
-  clientNM.onMessage('host-id', hostToClient);
-
-  // Advance client playback
-  const peer = clientNM._peer('host-id');
-  peer.tr = hostToClient.ts;
-  clientNM.update(1 / 20);
-  clientNM.applyRemote(clientProxy, 1 / 20);
-
-  assert.equal(clientProxy.specialReady(), true, 'Client proxy received and applied specialReady');
-  assert.equal(clientProxy.specialCost(), 165, 'Client proxy synchronized specialCost to 165');
-  assert.equal(clientProxy.specialFrac(), 1.0, 'Client proxy specialFrac is 1.0');
-});
-
