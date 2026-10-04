@@ -46,7 +46,8 @@ FOLLOWERS = ['HEAD_skin', 'HEAD_skin_04', 'HEAD_skin_02', 'HEAD_skin_03', 'HEAD_
 EYEBALLS = ['HEAD_eyes', 'HEAD_eyes_02', 'HEAD_eyes_18', 'HEAD_eyes_19']
 IRIS_BALLS = {'HEAD_eyes_18': -1, 'HEAD_eyes': 1}
 EAR_PARTS = ['HEAD_face_02', 'HEAD_face_03', 'HEADGEAR_headgear', 'HEADGEAR_headgear_02']
-CHANGED = list(dict.fromkeys([FACE] + FOLLOWERS + list(IRIS_BALLS) + EYEBALLS + EAR_PARTS))   # backed up / restored
+NECK = 'BODY_torso'
+CHANGED = list(dict.fromkeys([FACE] + FOLLOWERS + list(IRIS_BALLS) + EYEBALLS + EAR_PARTS + [NECK]))   # backed up / restored
 
 
 def restore(drop=False):
@@ -199,15 +200,11 @@ def ceiling_offsets(loc, st):
     return off * t * t * (3 - 2 * t) * (loc[:, 1] < y0 + 25)
 
 
-def jaw_tuck_offsets(loc, st):
-    """Inward move (mm, toward the midline in head x) that gives the jaw a lower border: below and behind the
+def jaw_tuck_weights(loc, st, dive=None):
+    """Weights (0..1) of the face that goes onto the neck to give the jaw a lower border: below and behind the
     jaw line seen from the side (st['line'] = [[z, y], ...] from under the ear lobe to the chin, traced on the
-    sideR reference), the face goes in to the neck (an elliptic cylinder, st['neck'] = {'zc', 'half_x', 'half_z'},
-    fitted to BODY_torso), so the side of the jaw ends at a border and the part under it faces down and is in
-    shadow.  The face never goes in further than |x| = st['min_x'] (the front of the neck is narrow, and the jaw
-    underside there must stay a slope, not a groove).  The move grows from 0 on the line to full st['depth'] mm below it (st['depth_back'] behind the
-    ramus, where the step under the ear must be longer); it fades out in front over st['z_front'] = [z0, z1] and
-    at the back of the head over st['z_back'] = [z0, z1]."""
+    sideR reference).  0 on the line, 1 from st['depth'] mm below it (st['depth_back'] behind the ramus,
+    z_ramus); faded out in front over st['z_front'] = [z0, z1] and at the back over st['z_back']."""
     line = np.array(st['line'], float)
     z, y = loc[:, 2], loc[:, 1]
     # signed distance below the line in the side view (+ = under / behind it)
@@ -229,19 +226,19 @@ def jaw_tuck_offsets(loc, st):
     under = np.where(sign > 0, best, 0.0)
     ramus = np.clip((st['z_ramus'][1] - z) / (st['z_ramus'][1] - st['z_ramus'][0]), 0, 1)
     depth = st['depth'] + (st['depth_back'] - st['depth']) * ramus
-    t = np.clip(under / depth, 0, 1)
+    if dive is not None:
+        # the dive weight: 0 down to dive['from_mm'] under the line, 1 at from_mm + len_mm (same fades)
+        t = np.clip((under - dive['from_mm']) / dive['len_mm'], 0, 1)
+    else:
+        t = np.clip(under / depth, 0, 1)
     w = t * t * (3 - 2 * t)
-    n = st['neck']
-    q = np.clip((z - n['zc']) / n['half_z'], -1, 1)
-    target = np.maximum(n['half_x'] * np.sqrt(1 - q * q) - st.get('inside_mm', 0.5), st.get('min_x', 0.0))
-    off = np.maximum(np.abs(loc[:, 0]) - target, 0) * w
     z0, z1 = st['z_front']
     t = np.clip((z1 - z) / (z1 - z0), 0, 1)
-    off *= t * t * (3 - 2 * t)
+    w *= t * t * (3 - 2 * t)
     z0, z1 = st['z_back']
     t = np.clip((z - z0) / (z1 - z0), 0, 1)
-    off *= t * t * (3 - 2 * t)
-    return off
+    w *= t * t * (3 - 2 * t)
+    return w
 
 
 def ridge_v(loc, xq, yq):
@@ -1296,7 +1293,8 @@ def tint_map(ref, box, centre, cfg, skin_model, bare=None):
         # only where the shape is already dark: there the paint adds just the rest (never lighter than the
         # reference itself).  Where the shape is brighter than its surroundings (a lit bulge) nothing is taken
         # off: darkening a highlight gives a grey band.
-        own = np.clip(own, 0.5, 1.0) ** cfg.get('own', 1.0)
+        # cfg['own_max'] > 1: a lit bulge brighter than the reference (the lower lip) is also taken down
+        own = np.clip(own, 0.5, cfg.get('own_max', 1.0)) ** cfg.get('own', 1.0)
         ratio = np.minimum(ratio / own[..., None], np.maximum(ratio, 1.0))
     if cfg.get('desaturate'):
         # the reference's shading is warmer than its skin; on this skin that reads as a red nose: keep mostly
@@ -1327,6 +1325,10 @@ def tint_map(ref, box, centre, cfg, skin_model, bare=None):
         alpha = alpha * keep
     a = np.maximum(alpha, 0.2)[..., None]
     colour = np.clip(skin_model * (1 + (ratio - 1) * cfg.get('strength', 1.0) / a), 0, 1)
+    if cfg.get('tint'):
+        # the paint takes the model's skin colour, which is warmer than the reference's: on the lips that reads
+        # orange where the reference is pale pink.  Colour multiplier, in full where the paint is (alpha)
+        colour = np.clip(colour * (1 + (np.array(cfg['tint']) - 1) * alpha[..., None]), 0, 1)
     k = cfg['up']
     return upsample(colour, k), np.clip(upsample(alpha, k), 0, 1)
 
@@ -1641,6 +1643,26 @@ def soften_lights(cfg):
         if SUFFIX not in light:
             light[SUFFIX] = light.angle
         light.angle = cfg['angle']
+    for name, energy in cfg.get('energy', {}).items():
+        light = bpy.data.objects[name].data
+        if SUFFIX + '_energy' not in light:
+            light[SUFFIX + '_energy'] = light.energy
+        light.energy = energy
+    if cfg.get('side_suns'):
+        # the reference lights the sides of the face about as brightly as the front; here the sides (the cheek
+        # below the triangle, the side of the jaw) were 5-8 L darker in the 3/4 and side views while the front
+        # matched: a sun from each side (a little above and in front, head frame).  eye_look keeps them off
+        # the corneas (they are in eye_look['suns'])
+        sc = cfg['side_suns']
+        for name, sx in zip(SIDE_SUNS, (-1.0, 1.0)):
+            light = bpy.data.lights.new(name, 'SUN')
+            light.energy, light.angle, light.color = sc['energy'], cfg['angle'], sc.get('colour', (1.0, 0.95, 0.9))
+            obj = bpy.data.objects.new(name, light)
+            bpy.data.objects[cfg['names'][0]].users_collection[0].objects.link(obj)
+            src = np.array([[sx, sc['up'], sc['front']]])
+            src /= np.linalg.norm(src)
+            d = M.to_world(-src)[0] - M.to_world(np.zeros((1, 3)))[0]
+            obj.rotation_euler = Vector(-d / np.linalg.norm(d)).to_track_quat('Z', 'Y').to_euler()
 
 
 EYE_LOOK = 'INKWAVE_eye_look'
@@ -1701,6 +1723,23 @@ def eye_look(cfg):
         t.links.new(dot.outputs['Value'], rng.inputs['Value'])
         t.links.new(src, mul.inputs[6])
         t.links.new(rng.outputs['Result'], mul.inputs[7])
+        if cfg.get('keep_white'):
+            # the catch lights painted on the pupil are under the lid's shade: the near-white texels keep
+            # their brightness (the eye white is darker than them and stays shaded)
+            a, b = cfg['keep_white']
+            bw = t.nodes.new('ShaderNodeRGBToBW')
+            rw = t.nodes.new('ShaderNodeMapRange')
+            rw.clamp = True
+            rw.inputs['From Min'].default_value, rw.inputs['From Max'].default_value = a, b
+            mx = t.nodes.new('ShaderNodeMath')
+            mx.operation = 'MAXIMUM'
+            for n in (bw, rw, mx):
+                n.name = n.label = EYE_LOOK + '_white_' + n.bl_idname
+            t.links.new(src, bw.inputs[0])
+            t.links.new(bw.outputs[0], rw.inputs['Value'])
+            t.links.new(rng.outputs['Result'], mx.inputs[0])
+            t.links.new(rw.outputs['Result'], mx.inputs[1])
+            t.links.new(mx.outputs[0], mul.inputs[7])
         t.links.new(mul.outputs[2], bsdf.inputs['Base Color'])
         if cfg.get('emission'):
             # the white behind the iris lies in the socket's shadow and went black in the side view, where the
@@ -1742,11 +1781,23 @@ def restore_eye_look():
         bpy.data.collections.remove(c)
 
 
+SIDE_SUNS = ('INKWAVE_side_R', 'INKWAVE_side_L')
+
+
 def restore_lights():
+    for name in SIDE_SUNS:
+        obj = bpy.data.objects.get(name)
+        if obj is not None:
+            light = obj.data
+            bpy.data.objects.remove(obj)
+            bpy.data.lights.remove(light)
     for light in bpy.data.lights:
         if SUFFIX in light:
             light.angle = light[SUFFIX]
             del light[SUFFIX]
+        if SUFFIX + '_energy' in light:
+            light.energy = light[SUFFIX + '_energy']
+            del light[SUFFIX + '_energy']
 
 
 CORNEA_MATERIAL = 'eyes_000000'
@@ -1822,6 +1873,92 @@ def restore_images():
         img.pixels.foreach_set(px)
         img.pack()
         bpy.data.images.remove(bak)
+
+
+def _blobs(mask):
+    """4-connected pieces of a boolean image, as arrays of (row, col)."""
+    left = {tuple(q) for q in np.argwhere(mask)}
+    out = []
+    while left:
+        stack = [left.pop()]
+        piece = []
+        while stack:
+            y, x = stack.pop()
+            piece.append((y, x))
+            for q in ((y + 1, x), (y - 1, x), (y, x + 1), (y, x - 1)):
+                if q in left:
+                    left.remove(q)
+                    stack.append(q)
+        out.append(np.array(piece))
+    return out
+
+
+def eye_paint(cfg):
+    """Two things painted in the eye texture itself (the same images as the limbal ring, same backups):
+    - the white under the iris (the lower half of the eye as seen) is painted grey-pink in the source and looks
+      shaded; it gets the white of the band beside the iris (rows cfg['sclera']['rows'] = [from, to] blend in,
+      texture rows bottom-up; the iris stays, with a soft edge cfg['sclera']['iris_pad'] texels outside it);
+    - the two catch lights are soft dots painted higher on the pupil than in the reference: they are taken out
+      (filled from the texels round them) and painted again as sharp white dots, moved by cfg['dots'][image] = [[dx, dy], ...] texels (the
+      dots ordered left to right), core radius cfg['core'][i], soft edge cfg['soft'] texels."""
+    for name, (cx, cyb) in IRIS_IMAGES.items():
+        img = bpy.data.images[name]
+        if bpy.data.images.get(name + SUFFIX) is None:
+            bak = img.copy()
+            bak.name = name + SUFFIX
+            bak.use_fake_user = True
+            bak.pack()
+        w, h = img.size
+        px = np.empty(w * h * 4, np.float32)
+        img.pixels.foreach_get(px)
+        px = px.reshape(h, w, 4)
+        yy, xx = np.mgrid[0:h, 0:w].astype(float)
+        dx, dy = xx - cx, yy - cyb
+        r = np.hypot(dx, dy)
+        sc = cfg.get('sclera')
+        if sc:
+            a, b = sc['rows']
+            t = np.clip((yy - a) / (b - a), 0, 1)
+            p0, p1 = sc['iris_pad']
+            u = np.clip((r - cfg['iris_r'] - p0) / (p1 - p0), 0, 1)
+            f = (t * t * (3 - 2 * t) * u * u * (3 - 2 * u))[..., None] * sc.get('amount', 1.0)
+            px[..., :3] = px[..., :3] * (1 - f) + np.array(sc['white'], np.float32) * f
+        # the dots: bright (red channel) texels inside the iris, grown a little to take their glow
+        # grey to white (low saturation, not black): the dots and their glow; the iris is saturated teal
+        hi, lo = px[..., :3].max(-1), px[..., :3].min(-1)
+        found = (hi > cfg['find_min']) & (hi - lo < cfg['find_sat']) & (r < cfg['find_r'])
+        dots = sorted(sorted(_blobs(found), key=len)[-len(cfg['dots'][name]):], key=lambda q: q[:, 1].mean())
+        for q in dots:
+            m = np.zeros((h, w), bool)
+            m[q[:, 0], q[:, 1]] = True
+            for _ in range(cfg.get('grow', 2)):
+                g = m.copy()
+                g[1:] |= m[:-1]
+                g[:-1] |= m[1:]
+                g[:, 1:] |= m[:, :-1]
+                g[:, :-1] |= m[:, 1:]
+                m = g
+            # filled from its edge inward (repeated mean of the 4 neighbours): pupil black inside, a soft
+            # pupil edge where the dot lay on it
+            y0, y1 = max(m.any(1).argmax() - 3, 1), min(h - m[::-1].any(1).argmax() + 3, h - 1)
+            x0, x1 = max(m.any(0).argmax() - 3, 1), min(w - m[:, ::-1].any(0).argmax() + 3, w - 1)
+            sub = px[y0 - 1:y1 + 1, x0 - 1:x1 + 1, :3].copy()
+            ms = m[y0 - 1:y1 + 1, x0 - 1:x1 + 1]
+            for _ in range(cfg.get('fill_iters', 300)):
+                avg = (sub[:-2, 1:-1] + sub[2:, 1:-1] + sub[1:-1, :-2] + sub[1:-1, 2:]) / 4
+                inner = sub[1:-1, 1:-1]
+                inner[ms[1:-1, 1:-1]] = avg[ms[1:-1, 1:-1]]
+            px[y0 - 1:y1 + 1, x0 - 1:x1 + 1, :3] = sub
+        for i, q in enumerate(dots):
+            mx, my = cfg['dots'][name][i]
+            ccx, ccy = q[:, 1].mean() + mx, q[:, 0].mean() + my
+            d = np.hypot(xx - ccx, yy - ccy)
+            f = np.clip((cfg['core'][i] + cfg['soft'] - d) / cfg['soft'], 0, 1)[..., None]
+            px[..., :3] = px[..., :3] * (1 - f) + np.array(cfg.get('dot_colour', [1.0, 1.0, 1.0]), np.float32) * f
+        img.pixels.foreach_set(px.ravel())
+        img.pack()
+        img.update()
+        print('FACE_VOLUME eye paint', name, 'catch lights', len(dots), 'moved', cfg['dots'][name])
 
 
 def thin_limbal_ring(cfg):
@@ -1974,11 +2111,144 @@ def main():
                 peak = float(off.max())
                 w, step = off / max(peak, 1e-9), dict(step, kind='warp', vec_mm=[0, peak, 0])
                 print('FACE_VOLUME', step['name'], 'ceiling peak mm', round(peak, 2))
+            elif step['kind'] == 'neck_widen':
+                # the neck is thinner than the reference's (front view 3-5 px): it gets thicker along its normals
+                # (Blender's Displace), full from y[1] to y[2], faded out over y[0] (in the collar) and y[3]
+                # (inside the head).  Before jaw_tuck, which lays the jaw on this neck
+                neck = bpy.data.objects[NECK]
+                y0, y1, y2, y3 = step['y']
+                if step.get('subdivide'):
+                    # the neck's rings are ~9 mm apart: the jaw -> neck corner (and the face laid on the neck by
+                    # jaw_tuck) can only bend at those rings and reads as a kink.  Edit-mode Subdivide (built-in,
+                    # smooth > 0 puts the new points on the round surface) of the neck part that is moved here
+                    sd = step['subdivide']
+                    for _ in range(sd['levels']):
+                        nl = M.to_local(er.world(neck)) * 1000
+                        inb = (nl[:, 1] > y0 - 9) & (nl[:, 1] < y3 + 9) & (np.abs(nl[:, 0]) < 70) & (np.abs(nl[:, 2]) < 70)
+                        bm = bmesh.new()
+                        bm.from_mesh(neck.data)
+                        bm.verts.ensure_lookup_table()
+                        edges = list({e for f in bm.faces if all(inb[v.index] for v in f.verts) for e in f.edges})
+                        bmesh.ops.subdivide_edges(bm, edges=edges, cuts=1, use_grid_fill=True, smooth=sd.get('smooth', 1.0))
+                        bm.to_mesh(neck.data)
+                        bm.free()
+                        neck.data.update()
+                    print('FACE_VOLUME', step['name'], 'neck subdivided: vertices', len(neck.data.vertices))
+                nl = M.to_local(er.world(neck)) * 1000
+                wn = np.clip((nl[:, 1] - y0) / (y1 - y0), 0, 1) * np.clip((y3 - nl[:, 1]) / (y3 - y2), 0, 1)
+                wn = wn * wn * (3 - 2 * wn) * (np.abs(nl[:, 0]) < 60) * (np.abs(nl[:, 2]) < 60)
+                wy = wn.copy()
+                if step.get('lateral'):
+                    # only the sides of the neck (the front view's width); its front stays, so the widened neck does
+                    # not meet the floor of the chin at a grazing angle (a jagged tab there)
+                    nw = np.array([neck.matrix_world.to_3x3() @ v.normal for v in neck.data.vertices])
+                    nn = M.to_local(nw) - M.to_local(np.zeros((1, 3)))
+                    nn /= np.maximum(np.linalg.norm(nn, axis=1), 1e-9)[:, None]
+                    wn = wn * np.abs(nn[:, 0]) ** step['lateral']
+                # the neck mesh is split at its seams (vertices on top of each other, each with its own normal):
+                # moved along their normals they part and open a slit.  They are put back together (mean)
+                W0 = er.world(neck)
+                from mathutils.kdtree import KDTree
+                kd = KDTree(len(W0))
+                for i, v in enumerate(W0):
+                    kd.insert(Vector(v), i)
+                kd.balance()
+                twins = [[j for _, j, _ in kd.find_range(Vector(W0[i]), 1e-5)] for i in np.nonzero(wn > 0)[0]]
+                twins = [t for t in twins if len(t) > 1]
+                if step.get('lean'):
+                    # the front of the neck moves along its normal by lean['mm'] (side view: the neck front stood
+                    # 6-7 px in front of the reference's): front-facing parts only, 0 at lean['y'][0] to 1 at
+                    # lean['y'][1]
+                    ln = step['lean']
+                    nw = np.array([neck.matrix_world.to_3x3() @ v.normal for v in neck.data.vertices])
+                    nn = M.to_local(nw) - M.to_local(np.zeros((1, 3)))
+                    nn /= np.maximum(np.linalg.norm(nn, axis=1), 1e-9)[:, None]
+                    t = np.clip((nl[:, 1] - ln['y'][0]) / (ln['y'][1] - ln['y'][0]), 0, 1)
+                    if ln.get('profile') == 'circle':
+                        # a quarter ellipse: tangent to the neck below, level under the jaw at y[1] (a rounded
+                        # inside corner; the straight ramp met the jaw floor at an angle)
+                        t = 1 - np.sqrt(1 - t * t)
+                    wl = wy * t * np.clip(nn[:, 2], 0, 1) ** ln.get('power', 1.0)
+                if step.get('flare'):
+                    # the same rounded corner on the sides of the neck (front view): out along |normal x|
+                    fl = step['flare']
+                    t = np.clip((nl[:, 1] - fl['y'][0]) / (fl['y'][1] - fl['y'][0]), 0, 1)
+                    t = 1 - np.sqrt(1 - t * t)
+                    nw = np.array([neck.matrix_world.to_3x3() @ v.normal for v in neck.data.vertices])
+                    nn = M.to_local(nw) - M.to_local(np.zeros((1, 3)))
+                    nn /= np.maximum(np.linalg.norm(nn, axis=1), 1e-9)[:, None]
+                    wf = wy * t * np.abs(nn[:, 0]) ** fl.get('power', 1.0)
+                if step.get('mm_side'):
+                    # per side of the head (x < 0, x > 0): the neck sits off-centre under the head in this model
+                    a, b = step['mm_side']
+                    t = np.clip((nl[:, 0] + step.get('x_fade', 15.0)) / (2 * step.get('x_fade', 15.0)), 0, 1)
+                    t = t * t * (3 - 2 * t)
+                    per = a * (1 - t) + b * t
+                else:
+                    per = np.full(len(nl), step['mm'])
+                amounts = per * wn
+                if step.get('lean'):
+                    amounts = amounts + ln['mm'] * wl
+                if step.get('flare'):
+                    amounts = amounts + fl['mm'] * wf
+                for sign in (1, -1):
+                    part = np.maximum(sign * amounts, 0)
+                    if part.max() > 0:
+                        er.apply_weighted_modifier(neck, part / part.max(), 'DISPLACE', direction='NORMAL',
+                                                   strength=sign * part.max() / 1000, mid_level=0.0)
+                if step.get('smooth'):
+                    # the moves depend on the normal's direction: on the coarse neck mesh that leaves small creases;
+                    # Blender's Smooth over the moved part takes them out
+                    er.apply_weighted_modifier(neck, wy, 'SMOOTH', factor=step['smooth']['factor'],
+                                               iterations=step['smooth']['iters'])
+                me = neck.data
+                for t in twins:
+                    co = sum((me.vertices[j].co for j in t), Vector()) / len(t)
+                    for j in t:
+                        me.vertices[j].co = co
+                me.update()
+                print('FACE_VOLUME', step['name'], 'neck vertices', int((wn > 0.001).sum()), 'mm', step.get('mm_side', step.get('mm')), 'lean', step.get('lean'))
+                continue
+            elif step['kind'] == 'neck_normals':
+                # the face laid on the neck (jaw_tuck) ends on it: its own shading differs from the neck's, so the
+                # border reads as a line from under the ear to the neck front (the reference has none).  Blender's
+                # Data Transfer copies the neck's normals onto that part of the face (0 at the jaw line, full
+                # `depth` mm under it), so both surfaces shade alike across the border
+                st = dict([x for x in p['steps'] if x['name'] == step['like']][0], **step.get('override', {}))
+                w = jaw_tuck_weights(loc, st)
+                er.apply_weighted_modifier(face, w, 'DATA_TRANSFER', object=bpy.data.objects[NECK], use_loop_data=True,
+                                           data_types_loops={'CUSTOM_NORMAL'}, loop_mapping='POLYINTERP_NEAREST')
+                print('FACE_VOLUME', step['name'], 'vertices', int((w > 0.001).sum()))
+                continue
             elif step['kind'] == 'jaw_tuck':
-                off = jaw_tuck_offsets(loc, step)
-                peak = float(off.max())
-                w, step = off / max(peak, 1e-9), dict(step, kind='warp', vec_mm=[-peak, 0, 0])
-                print('FACE_VOLUME', step['name'], 'jaw tuck peak mm', round(peak, 2))
+                # the part under the jaw line goes onto the neck (BODY_torso): Blender's Shrinkwrap to the
+                # nearest surface point, outside it by offset_mm.  The neck is measured, not assumed (the head is
+                # tilted on the neck, so the neck is not symmetric in the head frame); the nearest point moves
+                # smoothly over the surface (a ray toward the midline grazes the front of the neck and scatters)
+                w = jaw_tuck_weights(loc, step)
+                er.apply_weighted_modifier(face, w, 'SHRINKWRAP', target=bpy.data.objects['BODY_torso'],
+                                           wrap_method='NEAREST_SURFACEPOINT', wrap_mode='OUTSIDE_SURFACE',
+                                           offset=step['offset_mm'] / 1000)
+                if step.get('dive'):
+                    # the face lies offset_mm outside the neck; where it ended there was a step (a thin line in
+                    # the 3/4 and side views).  Further under the jaw line it now sinks into the neck along its
+                    # normals (Blender's Displace), so it goes in at a small angle along a curve parallel to the
+                    # jaw line, and the neck shows below without a step
+                    wd = jaw_tuck_weights(loc, dict(step, z_front=step['dive'].get('z_front', step['z_front'])), step['dive'])
+                    if step['dive'].get('method') == 'shrinkwrap':
+                        # along the neck's normal (Shrinkwrap Above Surface, negative offset): a crumpled face
+                        # triangle with a wrong normal would otherwise be pushed out of the neck (a flake)
+                        er.apply_weighted_modifier(face, wd, 'SHRINKWRAP', target=bpy.data.objects[NECK],
+                                                   wrap_method='NEAREST_SURFACEPOINT', wrap_mode='ABOVE_SURFACE',
+                                                   offset=-step['dive']['mm'] / 1000)
+                    else:
+                        er.apply_weighted_modifier(face, wd, 'DISPLACE', direction='NORMAL',
+                                                   strength=-step['dive']['mm'] / 1000, mid_level=0.0)
+                    print('FACE_VOLUME', step['name'], 'dive vertices', int((wd > 0.001).sum()), 'mm', step['dive']['mm'])
+                gap = join_seam(face, pairs)
+                move = np.linalg.norm(er.world(face) - M.to_world(loc / 1000), axis=1) * 1000
+                print('FACE_VOLUME', step['name'], 'vertices', int((w > 0.001).sum()), 'max move mm', round(float(move.max()), 2), 'seam gap closed mm', round(float(gap), 3))
+                continue
             else:
                 w = sum(bump(loc, b) * b.get('scale', 1.0) for b in step['bumps'])
                 if step.get('keep_q34') and step['kind'] == 'warp':
@@ -2043,6 +2313,8 @@ def main():
                 hide_decal('mouth_line')
         if p.get('limbal_ring'):
             thin_limbal_ring(p['limbal_ring'])
+        if p.get('eye_paint'):
+            eye_paint(p['eye_paint'])
         if p.get('iris_up'):
             raise_iris(p['iris_up'])
         if p.get('cornea'):
