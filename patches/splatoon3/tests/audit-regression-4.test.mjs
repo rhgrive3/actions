@@ -212,6 +212,121 @@ test('F2 the death helper creates no extra splatted/kill event', async () => {
   assert.equal(hit, 0, 'the gear helper must not synthesise a kill confirmation');
 });
 
+// ---------------------------------------------------------------------------
+// F2 direct-helper regression.
+//
+// The duplicate-packet test above is protected by _remoteSplat's `!alive`
+// guard, so it never exercises the helper's own exactly-once logic. These call
+// applyDeathGear DIRECTLY, which is the only way that guard can be proven.
+// ---------------------------------------------------------------------------
+test('F2 direct applyDeathGear calls for one death apply exactly once', async () => {
+  const f = await fixture();
+  const a = f.make();
+  const saver = gearLoadout(a, 'specialSaver');
+  a.special = 100;
+  a.alive = false;              // a real death: the helper requires it
+  a.stats.deaths = 1;           // the native counter, already incremented
+
+  assert.equal(f.applyDeathGear(a, 100), true, 'the first call must apply');
+  const after = a.special;
+  assert.ok(Math.abs(after - 100 * saver) < 1e-9, 'the gauge is the pre-death value times the modifier');
+
+  for (let i = 0; i < 5; i++) {
+    assert.equal(f.applyDeathGear(a, 100), false, `repeat call ${i} must be refused`);
+    assert.equal(a.special, after, `repeat call ${i} must not compound the gauge`);
+  }
+});
+
+test('F2 direct applyDeathGear re-arms on the next life and never compounds', async () => {
+  const f = await fixture();
+  const a = f.make();
+  const saver = gearLoadout(a, 'specialSaver');
+
+  a.alive = false; a.stats.deaths = 1; a.special = 100;
+  assert.equal(f.applyDeathGear(a, 100), true);
+  const first = a.special;
+
+  a.reset();                   // a new life
+  a.alive = false; a.stats.deaths = 2; a.special = 100;
+  assert.equal(f.applyDeathGear(a, 100), true, 'the next death must apply again');
+  assert.ok(Math.abs(a.special - first) < 1e-9,
+    `the second death must give the same result, not compound (${a.special} vs ${first})`);
+});
+
+test('F2 direct applyDeathGear refuses before any death and while alive', async () => {
+  const f = await fixture();
+  const a = f.make();
+  gearLoadout(a, 'specialSaver');
+  a.special = 100;
+  a.alive = false;
+  a.stats.deaths = 0;
+  assert.equal(f.applyDeathGear(a, 100), false, 'no death has happened yet');
+  assert.equal(a.special, 100, 'the gauge must be untouched');
+  a.stats.deaths = 1;
+  a.alive = true;
+  assert.equal(f.applyDeathGear(a, 100), false, 'a living actor is not a death');
+  assert.equal(a.special, 100, 'the gauge must be untouched');
+});
+
+// ---------------------------------------------------------------------------
+// F2 real lifecycle: the counter timing must line up on BOTH native paths.
+// ---------------------------------------------------------------------------
+test('F2 owner lifecycle: the helper sees the counter after the native increment', async () => {
+  const f = await fixture();
+  const a = f.make();
+  gearLoadout(a, 'specialSaver');
+  a.special = 100;
+  a.splat(null, 'water');
+  assert.equal(a.stats.deaths, 1, 'the native body increments the counter');
+  const applied = a.special;
+  // A second direct call for the SAME death must be refused by the guard itself.
+  assert.equal(f.applyDeathGear(a, 100), false, 'the guard must refuse, not the alive check');
+  assert.equal(a.special, applied, 'no compounding');
+
+  a.reset();
+  a.special = 100;
+  a.splat(null, 'water');
+  assert.equal(a.stats.deaths, 2);
+  assert.ok(Math.abs(a.special - applied) < 1e-9, 'the second life gives the same result');
+});
+
+test('F2 proxy lifecycle: the remote hook runs after victim.stats.deaths++', async () => {
+  const f = await fixture();
+  const p = f.make();
+  gearLoadout(p, 'specialSaver');
+  p.remote = true; p.net = { buf: [], tp: 0 };
+  p.special = 100;
+  f.NetMatch.prototype._remoteSplat.call({ _stopLoops() {} }, p, null, 'water');
+  assert.equal(p.stats.deaths, 1, 'the remote body increments the counter');
+  const applied = p.special;
+  assert.ok(applied < 100, 'the helper must have applied on the remote path');
+  assert.equal(f.applyDeathGear(p, 100), false, 'the guard must refuse a repeat for the same death');
+  assert.equal(p.special, applied, 'no compounding');
+
+  // A second life: the remote respawn path does not run Actor.reset, so the
+  // guard must still re-arm purely from the monotonic counter.
+  p.alive = true; p.special = 100; p.respawnTimer = 0;
+  f.NetMatch.prototype._remoteRespawn.call({}, p);
+  f.NetMatch.prototype._remoteSplat.call({ _stopLoops() {} }, p, null, 'water');
+  assert.equal(p.stats.deaths, 2);
+  assert.ok(Math.abs(p.special - applied) < 1e-9, `second life must match, not compound (${p.special} vs ${applied})`);
+});
+
+test('F2 owner and proxy stay identical across two full lives', async () => {
+  const f = await fixture();
+  const owner = f.make(), proxy = f.make();
+  proxy.remote = true; proxy.net = { buf: [], tp: 0 };
+  gearLoadout(owner, 'specialSaver'); gearLoadout(proxy, 'specialSaver');
+  for (let life = 0; life < 2; life++) {
+    owner.special = 100; proxy.special = 100;
+    owner.splat(null, 'water');
+    f.NetMatch.prototype._remoteSplat.call({ _stopLoops() {} }, proxy, null, 'water');
+    assert.equal(owner.special, proxy.special, `life ${life}: gauge must match`);
+    assert.equal(owner.stats.deaths, proxy.stats.deaths, `life ${life}: death counts must match`);
+    if (life === 0) { owner.reset(); proxy.alive = true; proxy.respawnTimer = 0; }
+  }
+});
+
 test('F2 dt = 0 leaves every death consequence untouched', async () => {
   const f = await fixture();
   const a = f.make();
