@@ -55,7 +55,8 @@ async function production() {
     'fireBlaster', 'fireSlosh', 'throwBomb', 'throwStorm', 'fireFlick'].map(name => [name, () => {}]));
   G.actors = []; G.time = 0; cached = api; return api;
 }
-function rig(api, kind = 'shooter', enabled = true) {
+// Original specials remain on these original INKWAVE kits after base-kit composition.
+function rig(api, kind = 'slosher', enabled = true) {
   const { Actor, Character, G, THREE } = api;
   const a = new Actor({ team: 0, name: 'special native regression', weapon: kind,
     CharacterClass: Character, style: { hair: 0, skin: 2, outfit: 0, eyes: 0 } });
@@ -114,7 +115,7 @@ function save(rows) {
 }
 
 test('one production realm: special gates stop a cancelled leap and leave native clocks and geometry intact', async () => {
-  const api = await production(), r = rig(api), before = rig(api, 'shooter', false);
+  const api = await production(), r = rig(api), before = rig(api, 'slosher', false);
   try {
     const rows = [];
     for (const x of [before, r]) {
@@ -136,7 +137,7 @@ test('one production realm: special gates stop a cancelled leap and leave native
 });
 
 test('real slam phase changes suppress leap; grounded recovery releases the normal weapon pose', async () => {
-  const api = await production(), r = rig(api), before = rig(api, 'shooter', false);
+  const api = await production(), r = rig(api), before = rig(api, 'slosher', false);
   try {
     for (const x of [before, r]) { start(x); for (let i = 0; i < 34; i++) x.visual();
       x.a.specialActive.phase = 'hang'; x.a.specialActive.t = 0; x.visual(); }
@@ -170,7 +171,7 @@ test('real slam phase changes suppress leap; grounded recovery releases the norm
 });
 
 test('storm aligns empty-hand follow-through to actual immediate deployment, ordinary sub throws are unchanged', async () => {
-  const api = await production(), r = rig(api, 'charger'), before = rig(api, 'charger', false);
+  const api = await production(), r = rig(api, 'blaster'), before = rig(api, 'blaster', false);
   try {
     assert.equal(r.a.weapon.special, 'storm');
     let deployments = 0; api.G.projectiles.throwStorm = () => { deployments++; };
@@ -215,7 +216,7 @@ test('actual native special physics, phase clocks, landing and resources are ide
   G.physics = new api.Physics(level);
   try {
     for (const id of ['slam', 'storm']) for (const hz of [30, 60, 120]) {
-      const r = rig(api, id === 'slam' ? 'shooter' : 'charger'), before = rig(api, id === 'slam' ? 'shooter' : 'charger', false);
+      const r = rig(api, id === 'slam' ? 'slosher' : 'blaster'), before = rig(api, id === 'slam' ? 'slosher' : 'blaster', false);
       try {
         for (const x of [before, r]) { x.a.pos.set(0, 0, 0); start(x, id); x.visual(0); }
         for (let i = 0; i < 2 * hz; i++) {
@@ -243,7 +244,7 @@ test('reset, death, form, sub, weapon and action interruption cannot resurrect a
       if (interrupt === 'death') r.a.splat();
       if (interrupt === 'form') r.a.form = 'squid';
       if (interrupt === 'sub') r.a.weaponRunner.aimingSub = true;
-      if (interrupt === 'weapon') r.a.setWeapon('charger');
+      if (interrupt === 'weapon') r.a.setWeapon('blaster');
       if (interrupt === 'action') r.ch.trigger('squidroll', { duration: .2 });
       if (interrupt === 'hidden') { r.ch.setVisible(false); r.a.specialActive = null; }
       if (interrupt === 'form') r.ch.update(1 / 60, { form: 'squid', grounded: false }); else r.visual();
@@ -255,7 +256,7 @@ test('reset, death, form, sub, weapon and action interruption cannot resurrect a
       }
       r.a.specialActive = null; r.a.form = 'kid'; r.a.weaponRunner.aimingSub = false;
       r.ch.setVisible(true); r.visual(); assert.equal(r.snapshot().phase, null, interrupt);
-      r.a.reset(); r.a.setWeapon('shooter'); start(r); r.visual();
+      r.a.reset(); r.a.setWeapon('slosher'); start(r); r.visual();
       assert.equal(r.snapshot().phase, 'rise', `fresh special after ${interrupt}`);
     } finally { r.close(); }
   }
@@ -281,7 +282,7 @@ test('30/60/120Hz presentation schedules produce identical real pose output at f
 });
 
 test('nullable native preview and disposal have no persistent resources', async () => {
-  const api = await production(), ch = new api.Character({ weapon: 'shooter' });
+  const api = await production(), ch = new api.Character({ weapon: 'slosher' });
   ch.onEvent = null;
   ch.update(0, null); ch.update(1 / 60, null);
   assert.ok(Array.from(ch.P).every(Number.isFinite));
@@ -290,7 +291,7 @@ test('nullable native preview and disposal have no persistent resources', async 
 });
 
 test('incomplete network special state retains native replay rather than inventing a phase', async () => {
-  const api = await production(), r = rig(api), before = rig(api, 'shooter', false);
+  const api = await production(), r = rig(api), before = rig(api, 'slosher', false);
   try {
     for (const x of [before, r]) { start(x); x.a.specialActive = { id: 'slam', net: true };
       for (let i = 0; i < 35; i++) x.visual(); }
@@ -331,7 +332,7 @@ test('special state is shared across realms and interruptions block a live token
 });
 
 test('foot-plant hook observes mapped Slam ownership and preserves native fallback', async () => {
-  const api = await production(), r = rig(api), preview = new api.Character({ weapon: 'shooter' });
+  const api = await production(), r = rig(api), preview = new api.Character({ weapon: 'slosher' });
   try {
     assert.equal(typeof api.specialMotionAllowsFootPlant, 'function');
     const eligible = native => api.specialMotionAllowsFootPlant(r.ch, native);
@@ -346,7 +347,7 @@ test('foot-plant hook observes mapped Slam ownership and preserves native fallba
     r.a.weaponRunner.aimingSub = false;
     r.a.specialActive = null; r.visual(); assert.equal(eligible(false), true, 'cancelled mapped hooks no longer leave timer-only planting locks');
     assert.equal(duplicateFootPlant(r.ch, false), true, 'cross-realm eligibility reads the installed registry');
-    r.a.setWeapon('charger'); start(r, 'storm'); r.visual(); assert.equal(eligible(true), true, 'Storm adds no planting restriction');
+    r.a.setWeapon('blaster'); start(r, 'storm'); r.visual(); assert.equal(eligible(true), true, 'Storm adds no planting restriction');
     r.a.specialActive = null; r.visual();
     assert.equal(eligible(true), true);
   } finally { preview.dispose(); r.close(); }
@@ -356,7 +357,7 @@ test('foot-plant hook observes mapped Slam ownership and preserves native fallba
 test('cancelled Storm does not retain Bomb follow-through, and the public bomb opt-out descriptor is preserved', async () => {
   const api = await production();
   for (const interruption of ['sub', 'dance', 'hidden', 'shoot']) {
-    const r = rig(api, 'charger');
+    const r = rig(api, 'blaster');
     try {
       Object.defineProperty(r.ch, 's3BombMotionEnabled', { value: true, configurable: true, writable: false, enumerable: false });
       const descriptor = Object.getOwnPropertyDescriptor(r.ch, 's3BombMotionEnabled');
@@ -398,7 +399,7 @@ test('a short actual Slam fall preserves native impact impulses when primary fir
     for (const hz of [30, 60, 120]) {
       const pair = [];
       for (const enabled of [false, true]) {
-        const r = rig(api, 'shooter', enabled); let impulses = 0, impacted = false, contactAge;
+        const r = rig(api, 'slosher', enabled); let impulses = 0, impacted = false, contactAge;
         const hair = r.ch._hairKick;
         r.ch._hairKick = function (...args) { if (args[0] === 0 && args[1] === -3 && args[2] === 0) impulses++; return hair.apply(this, args); };
         try {

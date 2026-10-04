@@ -49,6 +49,9 @@ function world(api,ceiling=false){
 }
 function rig(api,hz=60,kind='shooter'){
  const {G,THREE,Actor,Character}=api,a=new Actor({team:0,name:'walk special contact',weapon:kind,CharacterClass:Character,style:{hair:0,skin:2,outfit:0,eyes:0}});
+ // Explicit original Slam counterfactual for the shooter-only Jump pose regression.
+ // Production shooter must compose to Trizooka; kit-install/browser tests enforce that.
+ if(kind==='shooter')a.weapon={...a.weapon,special:'slam'};
  const ch=a.character;ch.actor=a;ch.onEvent=null;G.actors.push(a);G.scene.add(ch.root);a.grounded=a.ground.hit=true;
  const visual=()=>{G.time+=1/hz;a._finishFrame(1/hz);ch.root.updateMatrixWorld(true);ch.skeleton.update();};
  for(let i=0;i<hz*2;i++)visual();
@@ -106,7 +109,7 @@ test('actual Slam recovery and cancellation release both native contact and walk
 test('disabled and unmapped specials retain the native contact gate; Storm adds no gait restriction',async()=>{
  const api=await production();world(api);
  for(const mode of ['disabled','network','storm']){
-  const r=rig(api,60,mode==='storm'?'charger':'shooter');
+  const r=rig(api,60,mode==='storm'?'blaster':'shooter');
   try{
    r.a._startSpecial();
    if(mode==='disabled')r.ch.s3SpecialMotionEnabled=false;
@@ -166,6 +169,9 @@ test('completed managed Slam permits actual form emergence while its old special
 
 async function completedSlam(api,kind='shooter'){
  world(api);const r=rig(api,60,kind);
+ // This Roller pose counterfactual deliberately exercises the original Slam profile;
+ // the published Roller kit is separately required to compose to Big Bubbler.
+ if(kind==='roller')r.a.weapon={...r.a.weapon,special:'slam'};
  r.a._startSpecial();r.visual();
  for(let i=0;r.a.specialActive&&i<180;i++){r.a._updateSpecial(1/60);r.visual();}
  assert.equal(r.a.specialActive,null);for(let i=0;i<51;i++)r.visual();
@@ -178,7 +184,7 @@ test('completed Slam releases the actual quiet idle owner before its legacy time
  try{assert.equal(api.idleMotionSnapshot(r.ch).phase,'ready','released action returns the live ready-carry controller');}
  finally{r.close();}
 });
-test('completed Slam admits fresh native horizontal and vertical Roller poses before legacy timer expiry',async t=>{
+test('explicit original Slam counterfactual admits fresh native horizontal and vertical Roller poses before legacy timer expiry',async t=>{
  const api=await production();
  for(const vertical of [false,true])await t.test(vertical?'vertical native jump':'horizontal',async()=>{
   const r=await completedSlam(api,'roller');

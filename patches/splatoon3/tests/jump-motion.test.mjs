@@ -347,6 +347,9 @@ test('ordinary input-driven jump uses actual production Actor/Runner/Physics thr
 
 test('fresh ordinary jump after cancelled Slam is not blocked by orphaned leap/slam clocks', async () => {
   const api = await production(), r = rig(api);
+  // Explicit original Slam counterfactual: this pose owner only supports Shooter.
+  // Published Shooter kit activation is verified separately through production composition.
+  r.a.weapon = { ...r.a.weapon, special: 'slam' };
   try {
     r.a._startSpecial(); r.visual(); r.a.specialActive = null; r.visual();
     assert.ok(r.ch.tr[api.CHARACTER_TIMERS.T_LEAP] < 1.9);

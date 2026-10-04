@@ -307,7 +307,7 @@ test('brief hiding or movement cancellation cannot replay a landing on return', 
 
 
 test('fresh landing after cancelled Slam regains its owned absorb despite orphaned special clocks', async () => {
-  const api = await production(), r = rig(api);
+  const api = await production(), r = rig(api, 'slosher');
   try {
     r.a._startSpecial(); r.step(); r.a.specialActive = null; r.a.grounded = true; r.step();
     assert.ok(r.ch.tr[api.CHARACTER_TIMERS.T_LEAP] < 1.9);
