@@ -135,3 +135,37 @@ test('#214: a sub released during the lock is discarded, while holding past the 
  step(a,1,{subReleased:true});step(a,30);assert.equal(bombs,0);assert.equal(r.aimingSub,false);
  step(a,1,{sub:true});assert.equal(r.aimingSub,true);step(a,1,{subReleased:true});assert.equal(bombs,1);
 });
+
+function saverLoadout(gp){
+ for(let main=0;main<=3;main++){const sub=(gp-main*10)/3;if(Number.isInteger(sub)&&sub>=0&&sub<=9)return Array.from({length:3},(_,i)=>({main:i<main?'inkSaverMain':'none',subs:Array.from({length:3},(_,j)=>i*3+j<sub?'inkSaverMain':'none')}));}
+ throw Error('not an equipment AP count');
+}
+function saver(a,gp){a.s3.loadout=saverLoadout(gp);a.setWeapon('dualies');a.intent.fire=true;}
+
+test('#346: actual slide payment uses main-saver curve once at 0/3/6/10/20/30/57 AP, preserving shot cost and 70F lock',async()=>{
+ for(const gp of [0,3,6,10,20,30,57]){
+  const f=await fixture(),a=f.make('dualies');saver(a,gp);const factor=f.gearCurve(gp,1,.775,.55),cost=7*factor;
+  near(a.weapon.rollInk,cost);near(a.weapon.inkPerShot,.72*factor);assert.ok(a.weaponRunner.tryDodge({x:1,z:0}));near(a.ink,100-cost);near(a.weaponRunner.s3DodgeInkRemaining,70/60);near(f.WEAPONS.dualies.rollInk,7);
+ }
+});
+
+test('#346: 57 AP can pay from 5 ink while 0/10 AP cannot; exact boundary accepts and meaningful shortage rejects',async()=>{
+ for(const gp of [0,10,57]){
+  const f=await fixture(),a=f.make('dualies');saver(a,gp);a.ink=5;assert.equal(a.weaponRunner.tryDodge({x:1,z:0}),gp===57);near(a.ink,gp===57?1.15:5);
+  a.weaponRunner.reset();a.intent.fire=true;const cost=a.weapon.rollInk;a.ink=cost-1e-6;assert.equal(a.weaponRunner.tryDodge({x:1,z:0}),false);near(a.ink,cost-1e-6);
+  a.ink=gp===0?7:gp===57?3.85:cost;assert.ok(a.weaponRunner.tryDodge({x:1,z:0}));assert.ok(a.ink>=0);near(a.ink,0);assert.equal(a.weaponRunner.tryDodge({x:1,z:0}),false);
+ }
+});
+
+test('#346: actor isolation, repeated equip and reset cannot compound the main saver',async()=>{
+ const f=await fixture(),a=f.make('dualies'),b=f.make('dualies');saver(a,57);saver(b,0);const base=f.WEAPONS.dualies.rollInk;
+ for(let i=0;i<3;i++){a.setWeapon('dualies');near(a.weapon.rollInk,3.85);near(b.weapon.rollInk,7);near(f.WEAPONS.dualies.rollInk,base);a.reset();near(a.weapon.rollInk,3.85);}
+ a.setWeapon('shooter');assert.equal(a.weapon.rollInk,undefined);a.setWeapon('dualies');near(a.weapon.rollInk,3.85);
+ b.intent.fire=true;assert.ok(b.weaponRunner.tryDodge({x:1,z:0}));near(b.ink,93);
+});
+
+test('#346: normalized AP is bounded and Flow cannot multiply slide cost a second time',async()=>{
+ const f=await fixture(),a=f.make('dualies');a.s3.loadout=Array.from({length:3},()=>({main:'inkSaverMain',subs:Array(12).fill('inkSaverMain')}));a.setWeapon('dualies');near(f.abilityPoints(a.s3.loadout).inkSaverMain,57);near(a.weapon.rollInk,3.85);
+ a.s3.flow.active=true;a.s3.flow.remaining=30;a.intent.fire=true;assert.ok(a.weaponRunner.tryDodge({x:1,z:0}));near(a.ink,96.15);near(a.weapon.rollInk,3.85);near(a.weapon.rollInkRecoverStop,70/60);
+ a.s3.loadout=Array(8).fill({main:'inkSaverMain',subs:Array(12).fill('inkSaverMain')});a.setWeapon('dualies');assert.equal(f.abilityPoints(a.s3.loadout).inkSaverMain,undefined);near(a.weapon.rollInk,7);
+});
