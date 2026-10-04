@@ -170,3 +170,15 @@ Flow の外殻・粒・リボンが GTAO の法線／深度パスに不透明な
 終了時に残っていた1textureはnative THREEの共有DFG_LUTで、compiled dfgLUT uniformから所有元を確認した。隔離された描画fixtureの終了時に実GL handleの存在と解放を測り、geometry/textureの残留0を確認する。ゲーム本体や共有shaderの実装変更ではなく、検証fixtureの管理対象を明示する修正である。これらのfocused診断は最終候補の全ケースCIを代用しない。
 
 停止姿勢の全画面beauty再描画では、実際の時計・骨・座標が同一でもnative fragmentの数pixelの色差が反復描画ごとに変化する。停止のモーション検証は、そのbeauty画像を両方保存したうえで、最終描画色だけを固定した別materialによる実GPU比較へ分けた。実際にコンパイルされたnative／比較側vertex shaderのSHA256一致、骨行列・pose・全node world行列・ゲーム時計の不変性、固定色画像の既存0差分条件を必須とする。各ケースで実rootを0.03動かす反例も描き、16pixel以上の変化を検出できない比較器は合格にしない。通常の全339描画ペア、Flow／壁のGTAO、表示中・中断・解放の検査はnative beauty shaderのままであり、この停止の比較を本家の画像一致の証拠にはしない。
+
+## サブウェポン実装（2026-10-04、issue 177、lane freebuff-2）
+
+公開版のサブは `WeaponRunner.update` の `const bomb = SUB.bomb` にあり、投射物は `Projectiles.throwBomb` が生成し、`_updateBombs` が飛行と導火線、`_explodeBomb` が塗り・ダメージ・被弾を所有する。公開版に `Actor._throwSub` は存在しない。初稿が 이를仮定していたため、実ソースで修正した。
+
+本家 11.3.0 の一次データ（Leanny/splat3 @ 7280ff9cde8bb1c5dcef46c700c326471584d2e6、data/parameter/1130、SHA256 および生バイトを証拠として保存）を変換して取り込んだ。Suction Bomb は `InkRecoverStop` 60F=1.0s、`SpawnSpeedZSpecUp.Low` 1.12→67.2、`PaintRadius` 5.0、`DistanceDamage` 1800@4.6/300@8.0 → 180HP/30HP。Curling Bomb は `InkConsume` 0.65→65、`MaxChargeFrame` 60F→1.0s、`BurstFrame` 210F→3.5s、`SpawnSpeedZSpecUp.Low` 0.40→24.0 と `SpawnSpeedZMaxCharge` 0.20→12.0、`FlyGravity` 0.016→57.6、MinCharge/MaxCharge の `PaintRadius` 2.133 と 5.0。
+
+実装した挙動差分（名称や見た目ではなく状態遷移）：Suction Bomb は壁と天井に貼り付き、接触法線方向へ 0.21 オフセットして速度をゼロにし導火線を発火する。既存 Splat Bomb は `hit.normal.y > 0.6` の時だけ発火するため、この判定を全体ではなく individual bomb ごとの状態に移した。Curling Bomb は保持時間でチャージし、SpawnSpeedZSpecUp の Mid/High はギア用なのでチャージ曲線には使わず、明示的な SpawnSpeedZMaxCharge まで 24.0→12.0 で落とす。壁反射は ContactJumpPanel の係数と MaxBoundNum=3 の上限を使い、接地で転がり開始し、各フレーム実 `G.paint.splat` で paintRadiusMinCharge/MaxCharge（1.075→1.29）の軌跡を塗って所有者に addTurf する。導火線切れ時は native の `_explodeBomb` と除去経路を呼ぶ。
+
+未確認のまま残す項目：Suction の `BurstFrame`・`InkConsume`・`FlyGravity` は 11.3.0 の表に省略されているため `null` / `unknown-omitted` とし、Splat Bomb の値を複製して一次ソース扱いしていない。発火に有限値が必要な場合のみ INKWAVE 既存の fuse と一致する 1.0 を `calibrated` として明示した。Curling のチャージから速度への曲線は表が端点のみ给出のため線形補間を `calibrated` とする。壁・天井接着は 11.3.0 に接着パラメータが存在しないため機能校正であり、公式値ではない。ネットワークは `recBomb` が `b.kind` を送出するため remote 側の sub 識別に必要なパケット変更と、`gear.mjs` の gear snapshot（`SUB.bomb` 固定）を選択 sub へ広げる作業は親が所有する。ブラウザ実動作、Switch／iPad／2台実機のパリティは未検証であり、単独測定を実機比較の代用にしない。
+
+詳細は `reports/public-kit-2-20261004.md`。親接続前のため、実ブラウザ合成と GitHub Actions による exact-SHA 描画ゲートは未完。
