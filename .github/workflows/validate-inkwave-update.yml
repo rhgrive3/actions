@@ -170,6 +170,9 @@ jobs:
       - name: Verify wall geometry through actual GTAO and GPU disposal
         if: matrix.suite == 'active'
         run: node scripts/check-inkwave-wall-render.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/wall" --profile-dir "$CI_STORAGE/cache/wall" --exact-source
+      - name: Verify depth-only shadows and effective reflection budgets on WebGL
+        if: matrix.suite == 'active'
+        run: node scripts/check-inkwave-resource-render.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/resources" --profile-dir "$CI_STORAGE/cache/resources" --exact-source
       - name: Verify the complete installed motion catalog
         if: matrix.suite == 'catalog'
         run: node scripts/check-inkwave-motion-catalog.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/catalog" --profile-dir "$CI_STORAGE/cache/catalog"
@@ -194,7 +197,7 @@ jobs:
           root=pathlib.Path(os.environ['CI_STORAGE'])/'evidence'
           suite=os.environ['BROWSER_SUITE']
           checks={
-            'active':['game/browser-result.json','motion/motion-result.json','motion-detail/motion-detail-result.json','flow/flow-render-result.json','wall/wall-render-result.json'],
+            'active':['game/browser-result.json','motion/motion-result.json','motion-detail/motion-detail-result.json','flow/flow-render-result.json','wall/wall-render-result.json','resources/resource-render-result.json'],
             'catalog':['catalog/motion-catalog-result.json'],
             'ui':['layout/touch-layout-result.json','reliability/reliability-browser-result.json','identity-touch/touch-layout-identity-result.json','identity-reliability/reliability-identity-result.json','responsive/responsive-result.json'],
           }[suite]
