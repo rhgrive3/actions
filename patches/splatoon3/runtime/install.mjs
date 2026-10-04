@@ -67,6 +67,8 @@ export function install(profile) {
   installKitSubs(api, profile);
   installKitBigBubbler(api, profile);
   installKitInkVac(api, profile);
+  // Trizooka wraps the previously installed Vac/Bubbler lifecycle and delegates
+  // their IDs unchanged; gear/resources then wrap the complete activation chain.
   installKitTrizooka(api, profile);
   registerKitMetadata(api);
   composeKits(api);

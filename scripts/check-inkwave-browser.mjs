@@ -5,7 +5,7 @@ import http from 'node:http';
 import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-// Parent draft: insert into the canonical browser verifier only after kit mapping is wired.
+// Canonical probes exercise the composed kits in the actual loaded browser runtime.
 async function probeComposedKits() {
   const load = name => import(new URL(name, document.baseURI).href);
   const [{ G }, { WEAPONS, SUB, SPECIALS, PLAYER }, gear, vac, bubbler, icons] = await Promise.all([
@@ -17,6 +17,7 @@ async function probeComposedKits() {
   const normalizedIcon = svg => { const el = document.createElement('i'); el.innerHTML = svg; return el.innerHTML; };
   const storageKey = 'inkwave.splatoon3.gear.v1', oldGear = localStorage.getItem(storageKey);
   const original = { weapon: actor.weaponId, frozen: game.frozen, skip: game._skipRender };
+  const botUpdates = G.actors.filter(a => a.bot && !a.isLocal).map(a => [a.bot, a.bot.update]);
   game.debug.freeze(); game.debug.freezeBots(); game._skipRender = true;
   const frames = n => { for (let i = 0; i < n; i++) game._frame(dt); };
   const result = { kits: [], activations: [], shots: [] };
@@ -73,6 +74,7 @@ async function probeComposedKits() {
     }
     return result;
   } finally {
+    for (const [bot, update] of botUpdates) bot.update = update;
     G.projectiles._push = nativePush; game.debug.fire(false); game.debug.key('KeyF', false);
     if (oldGear === null) localStorage.removeItem(storageKey); else localStorage.setItem(storageKey, oldGear);
     actor.setWeapon(original.weapon); game._skipRender = original.skip;

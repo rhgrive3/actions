@@ -28,6 +28,9 @@ async function production() {
   const entry = new vm.SourceTextModule(`
     export { install } from './patches/splatoon3/runtime/install.mjs';
     export { FixedClock } from './patches/splatoon3/runtime/clock.mjs';
+    export { bigBubblerSnapshot } from './patches/splatoon3/runtime/kit-big-bubbler.mjs';
+    export { inkVacState } from './patches/splatoon3/runtime/kit-ink-vac.mjs';
+    export { trizookaIsActive } from './patches/splatoon3/runtime/kit-trizooka.mjs';
     export { movementMotionSnapshot } from './patches/splatoon3/runtime/movement-motion.mjs';
   `, { context, identifier: path.join(ROOT, 'kit-composition-entry.mjs') });
   await entry.link((specifier, from) => load(specifier === 'three'
@@ -72,5 +75,32 @@ test('the unmodified public installer activates all three genuine base kits befo
   for (const main of ['blaster','slosher','splatling','dualies']) {
     assert.equal(api.WEAPONS[main].kitStatus,'original-inkwave-kit');
     assert.match(api.WEAPONS[main].blurb,/Original INKWAVE kit/);
+  }
+});
+
+
+test('the complete production wrapper chain activates each kit and refills exactly once', async () => {
+  const api = await production();
+  api.G.projectiles = new api.Projectiles(api.G.scene);
+  for (const main of ['shooter', 'roller', 'charger']) {
+    const a = new api.Actor({team:0,name:'real wrapper-chain regression',weapon:main,CharacterClass:api.Character,
+      style:{hair:0,skin:2,outfit:0,eyes:0}});
+    try {
+      const cost = a.specialCost(); a.special = cost; a.ink = 7;
+      const count = a.stats.specials;
+      a._startSpecial();
+      assert.equal(a.stats.specials, count + 1, main + ' native activation once');
+      assert.equal(a.special, 0); assert.equal(a.ink, api.PLAYER.inkMax, main + ' outer resource refill');
+      if (main === 'shooter') assert.equal(api.trizookaIsActive(a), true);
+      if (main === 'roller') assert.equal(api.bigBubblerSnapshot().length, 1, 'delegated real Bubbler deployment');
+      if (main === 'charger') assert.equal(api.inkVacState(a)?.phase, 'inhale', 'delegated real Vac intake');
+      a.ink = 7; a._startSpecial();
+      assert.equal(a.stats.specials, count + 1, main + ' re-entry does not spend or refill');
+      assert.equal(a.ink, 7);
+      a.reset();
+      assert.equal(a.specialActive, null);
+      assert.equal(api.trizookaIsActive(a), false);
+      assert.equal(api.inkVacState(a), null);
+    } finally { api.G.projectiles.clear(); a.character.dispose(); }
   }
 });
