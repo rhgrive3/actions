@@ -1,3 +1,5 @@
+import { installSlosher, slosherFallDamage } from './slosher.mjs';
+import { installFinalDamage, damageGroupId } from './final-damage.mjs';
 import { installRollerLogic } from './roller.mjs';
 let api;
 export function splatlingBurst(w, charge) {
@@ -35,8 +37,9 @@ export function applyProjectileHit(system, projectile, victim, amount, point) {
   const weapon = projectile.s3Weapon || projectile.owner.weapon;
   if (['shooter', 'dualies', 'splatling'].includes(weapon.kind)) amount = ageDamage(weapon, projectile.age, amount);
   if (weapon.kind === 'roller' && point) amount = distanceDamage(projectile.s3Vertical ? weapon.verticalDamageBands : weapon.flickDamageBands, projectile.start.distanceTo(point));
+  if (weapon.kind === 'slosher' && point) amount = slosherFallDamage(weapon, projectile.start.y - point.y, projectile.s3SloshGroup === 0 || projectile.head);
   amount = groupDamage(projectile.s3DamageGroup, victim, amount);
-  if (amount > 0) system.applyHit(projectile.owner, victim, amount, projectile.wid || projectile.type);
+  if (amount > 0) system.applyHit(projectile.owner, victim, amount, projectile.wid || projectile.type, damageGroupId(projectile.s3DamageGroup));
 }
 export function installWeapons(context, profile) {
   api = context;
@@ -198,4 +201,6 @@ export function installWeapons(context, profile) {
     if (this.rolling && w.rollBaseSpeed) return this.rollT >= w.rollDashTime ? w.rollSpeed : w.rollBaseSpeed;
     return moveSpeed.call(this);
   };
+  installSlosher(api);
+  installFinalDamage(api);
 }

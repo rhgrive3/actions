@@ -1305,6 +1305,158 @@
       "status": "extracted",
       "unit": "gear effect ratio",
       "notes": "Per-weapon override; unchanged endpoints reuse the pinned common curve. No omitted default reconstructed."
+    },
+    "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/UnitGroupParam/Unit/1/BulletNum": {
+      "value": 4,
+      "pointer": "/GameParameters/UnitGroupParam/Unit/1/BulletNum",
+      "sourceId": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Sourced explicit Slosher unit field. Travel and world scale are ratio-calibrated, not Switch verified."
+    },
+    "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/UnitGroupParam/Unit/1/UnitDelayFrame": {
+      "value": 0,
+      "pointer": "/GameParameters/UnitGroupParam/Unit/1/UnitDelayFrame",
+      "sourceId": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Sourced explicit Slosher unit field. Travel and world scale are ratio-calibrated, not Switch verified."
+    },
+    "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/UnitGroupParam/Unit/1/AfterOffsetDelayFrame": {
+      "value": 1,
+      "pointer": "/GameParameters/UnitGroupParam/Unit/1/AfterOffsetDelayFrame",
+      "sourceId": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Sourced explicit Slosher unit field. Travel and world scale are ratio-calibrated, not Switch verified."
+    },
+    "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/UnitGroupParam/Unit/1/SpawnSpeedGround": {
+      "value": 1.7609,
+      "pointer": "/GameParameters/UnitGroupParam/Unit/1/SpawnSpeedGround",
+      "sourceId": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Sourced explicit Slosher unit field. Travel and world scale are ratio-calibrated, not Switch verified."
+    },
+    "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/UnitGroupParam/Unit/1/SpawnSpeedAir": {
+      "value": 1.6852,
+      "pointer": "/GameParameters/UnitGroupParam/Unit/1/SpawnSpeedAir",
+      "sourceId": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Sourced explicit Slosher unit field. Travel and world scale are ratio-calibrated, not Switch verified."
+    },
+    "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/UnitGroupParam/Unit/1/AfterOffsetSpawnSpeed": {
+      "value": -0.16,
+      "pointer": "/GameParameters/UnitGroupParam/Unit/1/AfterOffsetSpawnSpeed",
+      "sourceId": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Sourced explicit Slosher unit field. Travel and world scale are ratio-calibrated, not Switch verified."
+    },
+    "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/UnitGroupParam/Unit/1/CollisionParam/EndRadiusForPlayer": {
+      "value": 0.97,
+      "pointer": "/GameParameters/UnitGroupParam/Unit/1/CollisionParam/EndRadiusForPlayer",
+      "sourceId": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Sourced explicit Slosher unit field. Travel and world scale are ratio-calibrated, not Switch verified."
+    },
+    "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/UnitGroupParam/Unit/1/CollisionParam/AfterOffsetEndRadiusForPlayer": {
+      "value": -0.12,
+      "pointer": "/GameParameters/UnitGroupParam/Unit/1/CollisionParam/AfterOffsetEndRadiusForPlayer",
+      "sourceId": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Sourced explicit Slosher unit field. Travel and world scale are ratio-calibrated, not Switch verified."
+    },
+    "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/UnitGroupParam/Unit/2/BulletNum": {
+      "value": 5,
+      "pointer": "/GameParameters/UnitGroupParam/Unit/2/BulletNum",
+      "sourceId": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Sourced explicit Slosher unit field. Travel and world scale are ratio-calibrated, not Switch verified."
+    },
+    "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/UnitGroupParam/Unit/2/UnitDelayFrame": {
+      "value": 4,
+      "pointer": "/GameParameters/UnitGroupParam/Unit/2/UnitDelayFrame",
+      "sourceId": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Sourced explicit Slosher unit field. Travel and world scale are ratio-calibrated, not Switch verified."
+    },
+    "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/UnitGroupParam/Unit/2/AfterOffsetDelayFrame": {
+      "value": 2,
+      "pointer": "/GameParameters/UnitGroupParam/Unit/2/AfterOffsetDelayFrame",
+      "sourceId": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Sourced explicit Slosher unit field. Travel and world scale are ratio-calibrated, not Switch verified."
+    },
+    "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/UnitGroupParam/Unit/2/SpawnSpeedGround": {
+      "value": 1.1,
+      "pointer": "/GameParameters/UnitGroupParam/Unit/2/SpawnSpeedGround",
+      "sourceId": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Sourced explicit Slosher unit field. Travel and world scale are ratio-calibrated, not Switch verified."
+    },
+    "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/UnitGroupParam/Unit/2/SpawnSpeedAir": {
+      "value": 1.0,
+      "pointer": "/GameParameters/UnitGroupParam/Unit/2/SpawnSpeedAir",
+      "sourceId": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Sourced explicit Slosher unit field. Travel and world scale are ratio-calibrated, not Switch verified."
+    },
+    "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/UnitGroupParam/Unit/2/AfterOffsetSpawnSpeed": {
+      "value": -0.2,
+      "pointer": "/GameParameters/UnitGroupParam/Unit/2/AfterOffsetSpawnSpeed",
+      "sourceId": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Sourced explicit Slosher unit field. Travel and world scale are ratio-calibrated, not Switch verified."
+    },
+    "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/UnitGroupParam/Unit/2/CollisionParam/EndRadiusForPlayer": {
+      "value": 0.57,
+      "pointer": "/GameParameters/UnitGroupParam/Unit/2/CollisionParam/EndRadiusForPlayer",
+      "sourceId": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Sourced explicit Slosher unit field. Travel and world scale are ratio-calibrated, not Switch verified."
+    },
+    "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/UnitGroupParam/Unit/2/CollisionParam/AfterOffsetEndRadiusForPlayer": {
+      "value": -0.05,
+      "pointer": "/GameParameters/UnitGroupParam/Unit/2/CollisionParam/AfterOffsetEndRadiusForPlayer",
+      "sourceId": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Sourced explicit Slosher unit field. Travel and world scale are ratio-calibrated, not Switch verified."
+    },
+    "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/UnitGroupParam/Unit/1/DamageParam/ValueMin": {
+      "value": 500,
+      "pointer": "/GameParameters/UnitGroupParam/Unit/1/DamageParam/ValueMin",
+      "sourceId": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Sourced explicit Slosher unit field. Travel and world scale are ratio-calibrated, not Switch verified."
+    },
+    "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/UnitGroupParam/Unit/1/DamageParam/ReduceStartFallDistance": {
+      "value": 1.5,
+      "pointer": "/GameParameters/UnitGroupParam/Unit/1/DamageParam/ReduceStartFallDistance",
+      "sourceId": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Sourced explicit Slosher unit field. Travel and world scale are ratio-calibrated, not Switch verified."
+    },
+    "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/UnitGroupParam/Unit/1/DamageParam/ReduceEndFallDistance": {
+      "value": 7.625,
+      "pointer": "/GameParameters/UnitGroupParam/Unit/1/DamageParam/ReduceEndFallDistance",
+      "sourceId": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Sourced explicit Slosher unit field. Travel and world scale are ratio-calibrated, not Switch verified."
     }
   }
 }

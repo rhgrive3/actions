@@ -1039,6 +1039,201 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "weapons.slosher.damageHeadMin": {
+    "value": 50,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/UnitGroupParam/Unit/1/DamageParam/ValueMin",
+      "index": null,
+      "factor": 0.1,
+      "rawValue": 500
+    }
+  },
+  "weapons.slosher.fallReduceStart": {
+    "value": 1.5,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/UnitGroupParam/Unit/1/DamageParam/ReduceStartFallDistance",
+      "index": null,
+      "factor": 1,
+      "rawValue": 1.5
+    }
+  },
+  "weapons.slosher.fallReduceEnd": {
+    "value": 7.625,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/UnitGroupParam/Unit/1/DamageParam/ReduceEndFallDistance",
+      "index": null,
+      "factor": 1,
+      "rawValue": 7.625
+    }
+  },
+  "weapons.slosher.sweepMaxDegrees": {
+    "value": 10,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.slosher.unitGroups.0.count": {
+    "value": 4,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/UnitGroupParam/Unit/1/BulletNum",
+      "index": null,
+      "factor": 1,
+      "rawValue": 4
+    }
+  },
+  "weapons.slosher.unitGroups.0.delayFrames": {
+    "value": 0,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/UnitGroupParam/Unit/1/UnitDelayFrame",
+      "index": null,
+      "factor": 1,
+      "rawValue": 0
+    }
+  },
+  "weapons.slosher.unitGroups.0.intervalFrames": {
+    "value": 1,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/UnitGroupParam/Unit/1/AfterOffsetDelayFrame",
+      "index": null,
+      "factor": 1,
+      "rawValue": 1
+    }
+  },
+  "weapons.slosher.unitGroups.0.speedGround": {
+    "value": 1.7609,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/UnitGroupParam/Unit/1/SpawnSpeedGround",
+      "index": null,
+      "factor": 1,
+      "rawValue": 1.7609
+    }
+  },
+  "weapons.slosher.unitGroups.0.speedAir": {
+    "value": 1.6852,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/UnitGroupParam/Unit/1/SpawnSpeedAir",
+      "index": null,
+      "factor": 1,
+      "rawValue": 1.6852
+    }
+  },
+  "weapons.slosher.unitGroups.0.speedOffset": {
+    "value": -0.16,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/UnitGroupParam/Unit/1/AfterOffsetSpawnSpeed",
+      "index": null,
+      "factor": 1,
+      "rawValue": -0.16
+    }
+  },
+  "weapons.slosher.unitGroups.0.playerRadius": {
+    "value": 0.97,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/UnitGroupParam/Unit/1/CollisionParam/EndRadiusForPlayer",
+      "index": null,
+      "factor": 1,
+      "rawValue": 0.97
+    }
+  },
+  "weapons.slosher.unitGroups.0.playerRadiusOffset": {
+    "value": -0.12,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/UnitGroupParam/Unit/1/CollisionParam/AfterOffsetEndRadiusForPlayer",
+      "index": null,
+      "factor": 1,
+      "rawValue": -0.12
+    }
+  },
+  "weapons.slosher.unitGroups.1.count": {
+    "value": 5,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/UnitGroupParam/Unit/2/BulletNum",
+      "index": null,
+      "factor": 1,
+      "rawValue": 5
+    }
+  },
+  "weapons.slosher.unitGroups.1.delayFrames": {
+    "value": 4,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/UnitGroupParam/Unit/2/UnitDelayFrame",
+      "index": null,
+      "factor": 1,
+      "rawValue": 4
+    }
+  },
+  "weapons.slosher.unitGroups.1.intervalFrames": {
+    "value": 2,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/UnitGroupParam/Unit/2/AfterOffsetDelayFrame",
+      "index": null,
+      "factor": 1,
+      "rawValue": 2
+    }
+  },
+  "weapons.slosher.unitGroups.1.speedGround": {
+    "value": 1.1,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/UnitGroupParam/Unit/2/SpawnSpeedGround",
+      "index": null,
+      "factor": 1,
+      "rawValue": 1.1
+    }
+  },
+  "weapons.slosher.unitGroups.1.speedAir": {
+    "value": 1,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/UnitGroupParam/Unit/2/SpawnSpeedAir",
+      "index": null,
+      "factor": 1,
+      "rawValue": 1
+    }
+  },
+  "weapons.slosher.unitGroups.1.speedOffset": {
+    "value": -0.2,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/UnitGroupParam/Unit/2/AfterOffsetSpawnSpeed",
+      "index": null,
+      "factor": 1,
+      "rawValue": -0.2
+    }
+  },
+  "weapons.slosher.unitGroups.1.playerRadius": {
+    "value": 0.57,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/UnitGroupParam/Unit/2/CollisionParam/EndRadiusForPlayer",
+      "index": null,
+      "factor": 1,
+      "rawValue": 0.57
+    }
+  },
+  "weapons.slosher.unitGroups.1.playerRadiusOffset": {
+    "value": -0.05,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json#/GameParameters/UnitGroupParam/Unit/2/CollisionParam/AfterOffsetEndRadiusForPlayer",
+      "index": null,
+      "factor": 1,
+      "rawValue": -0.05
+    }
+  },
   "bomb.fuse": {
     "value": 1,
     "status": "calibration or derived value; see reference raw table and unverified list",
