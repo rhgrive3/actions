@@ -225,3 +225,16 @@ Four current-public defects #366/#370 (one duplicate pair), #375, #384, #395 are
 ## 2026-10-04 weapon edge-case supplement
 
 See [weapon edge-case comparison](inkwave-weapon-edgecases-2026-10-04.md) for #354/#356/#357/#361: stable-human Dualies3F first emission; Splatling separate ground1.6° pitch envelope; terrain Blaster35HP cap; horizontal Roller12+1 gameplay units. The report separates actual source/minified/composed-code tests from S3 probability/position/falloff and released-tap calibration still pending. No native source or deployed main is changed by the draft.
+
+## 180°方向転換減速度（#405、2026-10-05）
+
+スプラトゥーン3 Ver. 11.3.0 の標準移動仕様では、スティックを離したときの減速と、移動方向と逆へスティックを倒したときの減速（180°反転）はいずれも同一の減速度（基準値 0.01 m/F²）がマイナス方向へ適用され、減速係数比は 1.00 となる。INKWAVE の公開版（`src/game/actor.js:_horizontal`）では、126°（`reverseAngle = 2.2` rad）を超える方向転換時に `Math.max(P.reverseDecel, D)`（`P.reverseDecel = 78`, `D = P.runDecel = 58`）が適用され、反転ブレーキがスティック離しの約 1.345 倍（78/58）と不自然に強く減速していた。本件は `patches/splatoon3/issue-405-adapter.mjs` により反転減速度を通常移動減速度 `D` と同一基準へ統合した。
+
+| 項目 | 内容 |
+|---|---|
+| 本家の根拠 | [スプラトゥーン3 wikiwiki システム詳細仕様 / 加速度について](https://wikiwiki.jp/splatoon3mix/%E3%82%B7%E3%82%B9%E3%83%86%E3%83%A0%E8%A9%B3%E7%B4%B0%E4%BB%95%E6%A7%98#xb946c7b)。通常移動の加速度基準値 0.01 m/F² に対し、スティック離しと逆方向倒しの双方が同一の減速加速度をマイナス方向へ適用。reverse braking / neutral-stick braking 比率 = 1.00。 |
+| INKWAVE の実装箇所 | `inkwave-public/src/game/actor.js:409-415`（`_horizontal`）。`patches/splatoon3/issue-405-adapter.mjs` でビルド時に `Math.max(P.reverseDecel, D)` を `D` へ置換。 |
+| 再現操作 | ヒト状態・通常最高速（5.76 WU/s）で前進中、①スティックを離す（neutral）、②スティックを180°反転（reverse）の初期1tick（1/60s）減速量を比較。未修正版では neutral 0.96667 WU/s に対し reverse 1.30000 WU/s（比率 1.344827...）。修正版では双方が 0.96667 WU/s（比率 1.000000）。 |
+| プレイへの影響 | 前後切り返し・細かい位置合わせ・撃ち合い前後の方向転換で、本家より速度を失いやすく 126° 境界で減速が不連続になっていた現象が解消され、滑らかな切り返し挙動となる。 |
+| 確認状態 | **ロジック確認済み**（`patches/splatoon3/tests/issue-405.test.mjs`。30Hz/60Hz/120Hz、複数フレーム軌道、90°〜180°角度遷移、単体練習モード・ローカル/リモート分離、泳ぎ・敵インク・空中制御の非回帰）。**本家実機（Switch Ver.11.3.0）でのフレーム・ミリ単位の実測比較は未確認**。 |
+
