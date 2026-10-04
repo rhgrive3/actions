@@ -1147,8 +1147,9 @@ def keep_material(mat):
 
 
 def restore_materials():
-    if bpy.data.materials.get(EAR_MATERIAL) is not None and not bpy.data.materials[EAR_MATERIAL].users:
-        bpy.data.materials.remove(bpy.data.materials[EAR_MATERIAL])
+    for name in (EAR_MATERIAL, NECK_MATERIAL):
+        if bpy.data.materials.get(name) is not None and not bpy.data.materials[name].users:
+            bpy.data.materials.remove(bpy.data.materials[name])
     for name in DECAL_MATERIALS.values():
         mat = bpy.data.materials.get(name)
         if mat is None or SUFFIX not in mat:
@@ -1615,6 +1616,67 @@ def set_skin(cfg):
     if paint is not None:                  # its default value is what the reference paint reads as the skin tone
         next(n for n in paint.node_tree.nodes if n.type == 'BSDF_PRINCIPLED').inputs['Base Color'].default_value = \
             list(cfg['base_colour']) + [1.0]
+
+
+NECK_MATERIAL = 'skin_neck'
+
+
+def neck_skin(face, cfg):
+    """The face lies on the neck under the jaw and ends there; the face (its paint texture, face shading) and the
+    neck (the body skin) shade differently, so the border read as a line from under the ear to the neck front (the
+    reference has none).  The neck above the collar (BODY_torso, head-frame y > y_min, |x| < x_max) gets a copy of
+    the body skin with the face skin's values: the colour of the face texture where the face lies on the neck
+    (median, cfg['sample'] box) and the face material's surface values for that texture alpha.  The border to the
+    body skin is inside the collar."""
+    me = face.data
+    loc = M.to_local(er.world(face)) * 1000
+    fm = bpy.data.materials[er.FACE_PAINT_MATERIAL]
+    tex = next(n for n in fm.node_tree.nodes if n.type == 'TEX_IMAGE' and n.outputs['Color'].links)
+    img = tex.image
+    W, H = img.size
+    px = np.empty(W * H * 4, np.float32)
+    img.pixels.foreach_get(px)
+    px = px.reshape(H, W, 4)
+    uv = np.empty(len(me.loops) * 2)
+    me.uv_layers.active.data.foreach_get('uv', uv)
+    uv = uv.reshape(-1, 2)
+    lv = np.empty(len(me.loops), int)
+    me.loops.foreach_get('vertex_index', lv)
+    (y0, y1), (z0, z1) = cfg['sample']['y'], cfg['sample']['z']
+    sel = (loc[lv, 1] > y0) & (loc[lv, 1] < y1) & (loc[lv, 2] > z0) & (loc[lv, 2] < z1)
+    c = px[(np.clip(uv[sel, 1], 0, 1) * (H - 1)).astype(int), (np.clip(uv[sel, 0], 0, 1) * (W - 1)).astype(int)]
+    rgb, alpha = np.median(c[:, :3], 0), float(np.median(c[:, 3]))
+    if img.colorspace_settings.name == 'sRGB' and not img.is_float:
+        rgb = np.where(rgb <= 0.04045, rgb / 12.92, ((rgb + 0.055) / 1.055) ** 2.4)
+    inv = 1 - alpha
+    mat = bpy.data.materials[cfg.get('from', SKIN_MATERIAL)].copy()
+    mat.name = NECK_MATERIAL
+    b = next(n for n in mat.node_tree.nodes if n.type == 'BSDF_PRINCIPLED')
+    fb = next(n for n in fm.node_tree.nodes if n.type == 'BSDF_PRINCIPLED')
+    b.inputs['Base Color'].default_value = list(rgb) + [1.0]
+    for k in ('Sheen Weight', 'Subsurface Weight', 'Coat Weight', 'Specular IOR Level', 'Roughness'):
+        mr = fm.node_tree.nodes.get('ink_' + k)
+        if mr is not None:
+            lo, hi = mr.inputs['To Min'].default_value, mr.inputs['To Max'].default_value
+            b.inputs[k].default_value = lo + (hi - lo) * inv
+        else:
+            b.inputs[k].default_value = fb.inputs[k].default_value
+    for k in ('Subsurface Radius', 'Subsurface Scale', 'Sheen Tint', 'Sheen Roughness', 'Coat Roughness'):
+        b.inputs[k].default_value = fb.inputs[k].default_value
+    neck = bpy.data.objects[NECK]
+    nme = neck.data
+    nl = M.to_local(er.world(neck)) * 1000
+    nme.materials.append(mat)
+    slot = len(nme.materials) - 1
+    vy = nl[:, 1]
+    vx = np.abs(nl[:, 0])
+    count = 0
+    for pl in nme.polygons:
+        vs = list(pl.vertices)
+        if vy[vs].min() > cfg['y_min'] and vx[vs].max() < cfg['x_max']:
+            pl.material_index = slot
+            count += 1
+    print('FACE_VOLUME neck skin: polygons', count, 'colour (linear)', np.round(rgb, 4), 'texture alpha', round(alpha, 3))
 
 
 def restore_skin():
@@ -2383,6 +2445,8 @@ def main():
             rebuild_ears(p['ear_rebuild'])
         if p.get('cheek_triangles'):
             place_cheek_triangles(face, p['cheek_triangles'])
+        if p.get('neck_skin') and not args.no_paint:
+            neck_skin(face, p['neck_skin'])
         seam_normals(face, pairs)
     if args.save:
         bpy.ops.wm.save_as_mainfile(filepath=args.save, compress=True)

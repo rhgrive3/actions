@@ -1262,10 +1262,26 @@
    ],
    "x_fade": 15.0,
    "lean": {
-    "mm": 8.0,
+    "mm": 10,
     "y": [
-     -102,
-     -90
+     -110,
+     -99
+    ],
+    "profile": "circle"
+   },
+   "subdivide": {
+    "levels": 2,
+    "smooth": 0.0
+   },
+   "smooth": {
+    "factor": 0.5,
+    "iters": 10
+   },
+   "flare": {
+    "mm": 6,
+    "y": [
+     -106,
+     -92
     ]
    }
   },
@@ -1320,7 +1336,7 @@
      -102
     ]
    ],
-   "depth": 8,
+   "depth": 20,
    "depth_back": 30,
    "z_ramus": [
     10,
@@ -1336,7 +1352,7 @@
    ],
    "offset_mm": 1.0,
    "dive": {
-    "from_mm": 8,
+    "from_mm": 20,
     "len_mm": 8,
     "mm": 7,
     "z_front": [
@@ -1386,6 +1402,12 @@
      "front_only": false
     }
    ]
+  },
+  {
+   "name": "neck_normals",
+   "kind": "neck_normals",
+   "after_delta_smooth": true,
+   "like": "jaw_tuck"
   }
  ],
  "delta_smooth": {
@@ -2397,5 +2419,19 @@
   },
   "find_min": 0.15,
   "find_sat": 0.1
+ },
+ "neck_skin": {
+  "y_min": -135,
+  "x_max": 70,
+  "sample": {
+   "y": [
+    -115,
+    -95
+   ],
+   "z": [
+    -5,
+    30
+   ]
+  }
  }
 }
