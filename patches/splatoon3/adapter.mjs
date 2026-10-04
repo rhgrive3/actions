@@ -194,6 +194,8 @@ export function adaptSource(rel, code) {
       '      this.charge = Math.min(1, this.chargeT / w.chargeTime, splatlingChargeCap(a.ink, w));', 'splatling ink charge cap');
     code = replaceOnce(code, "      this.applyHit(b.owner, e, lerp(s.damageMin, s.damageMax, k * k), 'bomb');",
       "      this.applyHit(b.owner, e, distanceDamage(s.damageBands, d, false), 'bomb');", 'bomb damage bands');
+    code = replaceOnce(code, '    // paint under the burst',
+      '    if (p.ghost) return; // remote bursts present; owner packets carry paint and hits\n    // paint under the burst', 'ghost blast authority');
     code = replaceOnce(code, '    const w = WEAPONS.blaster;',
       '    const w = p.s3SpecialWeapon || WEAPONS.blaster;', 'per-projectile blast descriptor');
     code = replaceOnce(code, "      this.applyHit(p.owner, e, lerp(w.splashDamageMax, w.splashDamageMin, d / w.splashRadius), 'blaster');",

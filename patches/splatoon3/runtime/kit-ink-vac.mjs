@@ -671,6 +671,12 @@ export function installKitInkVac(context, _profile) {
     };
   }
 
+  // Native recProj already transports impact radius; it uniquely identifies the
+  // charge-scaled 6..11 blast radius, so ghosts restore the same descriptor without
+  // a second projectile packet or an authoritative release action.
+  api.SPECIALS[VAC_ID] = { ...api.SPECIALS[VAC_ID], id: VAC_ID, name: 'Ink Vac', cost: 190,
+    projectileDescriptor: p => inkVacBlastDescriptor(Number.isFinite(p.radius)
+      ? clamp01((p.radius - BLAST_MIN) / (BLAST_MAX - BLAST_MIN)) : 0) };
   api.inkVacAbsorbCandidate = inkVacAbsorbCandidate;
   api.inkVacState = inkVacState;
   // Remote replay surface. The parent wires these into the native NetMatch

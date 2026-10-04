@@ -62,3 +62,22 @@ test('real native projectile step absorbs before the actor and ghost absorption 
   const ghost = round(true); assert.equal(system._step(ghost, 1 / 60), true);
   assert.equal(hits, 0); assert.equal(state.charge, charge);
 });
+test('actual native countershot packet restores charge-scaled blast and its ghost cannot paint or damage', async () => {
+  const { f, sender, receiver, make } = await setup(), owner = make(1, 'peer-A', false), proxy = make(1, 'peer-A', true);
+  sender.byNid.set(1, owner); f.G.netm = sender;
+  const p = f.G.projectiles.fireInkVacExhale(owner, { charge: .8 });
+  assert.equal(p.s3SpecialWeapon.burstRadius, 10);
+  const packet = sender.out.find(e => e[1] === 'p'); assert.ok(packet);
+  receiver.byNid.set(1, proxy); f.G.netm = receiver;
+  receiver._play('peer-A', JSON.parse(JSON.stringify(packet)));
+  const ghost = f.G.projectiles.list.at(-1); assert.ok(ghost.ghost);
+  assert.equal(ghost.damage, 0); assert.equal(ghost.s3SpecialWeapon.burstRadius, 10);
+  assert.equal(ghost.life, .833); assert.equal(ghost.grav, p.grav);
+  let paint = 0, damage = 0, turf = 0;
+  f.G.paint.splat = () => { paint++; return 1; };
+  f.G.projectiles.applyHit = () => { damage++; }; proxy.addTurf = () => { turf++; };
+  const victim = make(2, 'peer-B', false, 1); f.G.actors = [victim];
+  f.G.netm = null; // ownership remains intrinsic even if transport was disposed
+  f.G.projectiles._blastBurst(ghost, victim.pos, null);
+  assert.deepEqual([paint, damage, turf], [0, 0, 0]);
+});
