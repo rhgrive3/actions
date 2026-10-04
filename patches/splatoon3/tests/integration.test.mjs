@@ -7,11 +7,13 @@ test('actual Actor stores a full charger charge and expires it without firing un
   a.intent.squid = true; f.tick(a); assert.equal(a.form, 'squid'); assert.ok(a.weaponRunner.s3Stored);
   a.intent.fire = false; f.tick(a, 74); assert.equal(f.shots.length, 0); assert.equal(a.weaponRunner.s3Stored, null);
 });
-test('stored charge requires an emerged trigger press and then release; reset clears it', async () => {
+test('stored charge requires the 31F gate, an emerged trigger press and then release; reset clears it', async () => {
   const f = await fixture(), a = f.make('charger'); a.intent.fire = true; f.tick(a, 61);
-  a.intent.squid = true; f.tick(a); a.intent.fire = false; f.tick(a);
-  a.intent.squid = false; f.tick(a, 5); assert.equal(f.shots.length, 0);
-  a.intent.fire = true; f.tick(a, 5); a.intent.fire = false; f.tick(a);
+  a.intent.squid = true; f.tick(a); a.intent.fire = false; f.tick(a, 29);
+  assert.ok(a.weaponRunner.s3Stored?.fireDelay > 0);
+  a.intent.squid = false; f.tick(a); assert.equal(f.shots.length, 0);
+  assert.equal(a.weaponRunner.s3Stored?.fireDelay, 0);
+  a.intent.fire = true; f.tick(a); a.intent.fire = false; f.tick(a);
   assert.equal(f.shots.length, 1); assert.equal(f.shots[0].charge, 1);
   a.reset(); assert.equal(a.weaponRunner.s3Stored, null);
 });
@@ -135,10 +137,14 @@ test('splatling diving cancels both charging and an active stream', async () => 
   a.reset();a.intent.squid=false;a.intent.fire=true;f.tick(a,73);a.intent.fire=false;f.tick(a,2);assert.equal(a.weaponRunner.streaming,true);
   const count=f.shots.length;a.intent.squid=true;f.tick(a,45);assert.equal(a.weaponRunner.streaming,false);assert.equal(f.shots.length,count);
 });
-test('a charger tap uses the minimum ink without forcing a 12 percent charge', async () => {
+test('charger releases below 8F are cancelled and the minimum legal release still uses available ink', async () => {
   const f=await fixture(),a=f.make('charger'),r=a.weaponRunner;a.ink=2.25;
-  r.update(1/60,{fire:true});r.update(1/60,{fire:false});
-  assert.equal(f.shots.length,1);assert.ok(f.shots[0].charge<.12);assert.ok(a.ink<1e-9);
+  for(let i=0;i<7;i++)r.update(1/60,{fire:true});
+  r.update(1/60,{fire:false});
+  assert.equal(f.shots.length,0);assert.equal(a.ink,2.25);
+  for(let i=0;i<8;i++)r.update(1/60,{fire:true});
+  r.update(1/60,{fire:false});
+  assert.equal(f.shots.length,1);assert.ok(f.shots[0].charge>0&&f.shots[0].charge<.25);assert.ok(a.ink<1e-9);
 });
 test('global menu time cannot skip an actor ink recovery wait', async () => {
   const f=await fixture(),a=f.make();a.form='squid';a.intent.squid=true;a.ink=0;a.lastFire=2;a.s3.recoverStopRemaining=.5;

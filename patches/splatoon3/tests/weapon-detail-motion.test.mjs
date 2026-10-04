@@ -132,8 +132,10 @@ test('second-realm helpers observe the installed weapon attack and reset state',
   for (const kind of ['slosher', 'charger']) {
     const r = rig(api, kind);
     try {
-      r.step(1 / 60, { fire: true });
-      if (kind === 'charger') r.step();
+      if (kind === 'charger') {
+        for (let i = 0; i < 8; i++) r.step(1 / 60, { fire: true });
+        r.step(1 / 60);
+      } else r.step(1 / 60, { fire: true });
       const active = r.snapshot();
       assert.notEqual(kind === 'slosher' ? active.sloshElapsed : active.chargerReleaseAge, null);
       assert.deepEqual(JSON.parse(JSON.stringify(snapshotFromAnotherRealm(r.ch))), JSON.parse(JSON.stringify(active)));
@@ -289,9 +291,9 @@ test('actual Charger stores full charge across form, then releases into faster c
     try {
       for (let i = 0; i < 2 * hz; i++) r.step(1 / hz, { fire: true });
       assert.ok(r.ch.charge > .99); assert.equal(r.events.length, 0);
-      r.a.form = 'squid'; for (let i = 0; i < hz / 4; i++) r.step(1 / hz);
+      r.a.form = 'squid'; for (let i = 0; i < Math.ceil(hz * .28); i++) r.step(1 / hz);
       assert.equal(r.a.weaponRunner.s3Stored.charge, 1);
-      r.a.form = 'kid'; for (let i = 0; i < hz / 4; i++) r.step(1 / hz);
+      r.a.form = 'kid'; for (let i = 0; i < Math.ceil(hz * .28); i++) r.step(1 / hz);
       assert.equal(r.events.length, 0); assert.ok(r.ch.weapon.coil.userData.u.uCharge.value > .99);
       r.step(1 / hz, { fire: true }); r.step(1 / hz);
       assert.equal(r.events.length, 1); assert.equal(r.events[0].charge, 1);

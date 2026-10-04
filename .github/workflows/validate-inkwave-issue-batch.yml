@@ -1,0 +1,24 @@
+name: Validate INKWAVE issue batch
+
+on:
+  pull_request:
+    paths:
+      - "patches/splatoon3/**"
+      - ".github/workflows/validate-inkwave-issue-batch.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  focused:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Focused issue regressions
+        run: |
+          node --experimental-vm-modules --test             patches/splatoon3/tests/issue-batch-fidelity.test.mjs             patches/splatoon3/tests/integration.test.mjs             patches/splatoon3/tests/bomb-motion.test.mjs
