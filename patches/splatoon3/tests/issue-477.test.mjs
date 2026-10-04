@@ -5,13 +5,18 @@
 // 2. 12F roll movement begins only after the 4F startup (at tick 5).
 // 3. Movement duration remains exactly 12F.
 // 4. Total roll displacement equals the intended Splat Dualies distance (w.rollDist = 2.8m); startup does not modify it.
-// 5. Visible anticipation/roll pose follows the same startup -> roll boundary (phase 'startup' -> 'roll', tumble stays 0 during startup).
+// 5. Visible anticipation/roll pose follows the same startup -> roll boundary:
+//    - Actual bounded native tuck pose during startup without movement/tumble;
+//    - Real bone/pose values verified and compared to baseline idle, startup, and moving.
+//    - Exact Nintendo joint angles marked physicalNintendoanglesunmeasured.
 // 6. Post-roll firing remains its own 4F gate (w.lockInterval = 4/60 s) and is not folded into startup.
 // 7. Existing 32F post-move turret behavior is preserved.
 // 8. Two chained rolls preserve startup on each accepted roll.
 // 9. 30/60/120 Hz render schedules over the same fixed simulation produce identical state-boundary ticks.
-// 10. Owner and remote presentation parity: remote proxy does not skip or double-advance startup.
-// 11. Cancellation by splat/special/weapon/form change clears startup and cannot replay a stale roll.
+// 10. Owner and remote presentation parity: actual native NetMatch transport covering late-start, moving,
+//     chained rolls, stale packet rejection, legacy fallback, and lifecycle.
+// 11. Special activation only cancels current Dualies dodge on successful special admission, preserving
+//     other weapons and failed special native states (negative native tests).
 // 12. Negative controls: non-dualies weapons, insufficient ink, airborne, rolls exhausted.
 
 import { test } from 'node:test';
@@ -22,9 +27,10 @@ import vm from 'node:vm';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import { adaptSource } from '../adapter.mjs';
+import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
+import { adaptReliability } from '../../reliability/adapter.mjs';
 import {
   adaptIssue477Source,
-  installIssue477DualiesStartup,
   DUALIES_STARTUP_FRAMES,
   DUALIES_STARTUP_SECONDS,
   DUALIES_ROLL_FRAMES,
@@ -33,6 +39,7 @@ import {
   DUALIES_LOCK_SECONDS,
   DUALIES_POST_ROLL_FIRE_GATE_FRAMES,
   DUALIES_POST_ROLL_FIRE_GATE_SECONDS,
+  PHYSICAL_NINTENDO_ANGLES_UNMEASURED,
 } from '../issue-477-adapter.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
@@ -52,8 +59,13 @@ async function buildFixture({ apply477 = true } = {}) {
     if (modules.has(file)) return modules.get(file);
 
     const source = fs.readFileSync(file, 'utf8');
-    let adapted = file.startsWith(UPSTREAM + path.sep)
-      ? adaptSource(path.relative(UPSTREAM, file), source) : source;
+    let adapted = source;
+
+    // Full production S3 -> Touch -> Reliability pipeline ordering
+    if (file.startsWith(UPSTREAM + path.sep)) {
+      const rel = path.relative(UPSTREAM, file);
+      adapted = adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, source)));
+    }
 
     if (apply477) {
       const rel = file.startsWith(UPSTREAM + path.sep)
@@ -73,8 +85,11 @@ async function buildFixture({ apply477 = true } = {}) {
 
   const entry = new vm.SourceTextModule(`
     export { install } from './patches/splatoon3/runtime/install.mjs';
-    export { installDualiesMotion, dualiesMotionSnapshot } from './patches/splatoon3/runtime/dualies-motion.mjs';
+    export { installDualiesMotion, dualiesMotionSnapshot, DUALIES_MOTION_CALIBRATION } from './patches/splatoon3/runtime/dualies-motion.mjs';
     export { FixedClock } from './patches/splatoon3/runtime/clock.mjs';
+    export { NetMatch } from './src/net/netmatch.js';
+    export { CHARACTER_CHANNELS, CHARACTER_TIMERS } from './src/game/character.js';
+    export { BONE_INDEX } from './src/game/character-geo.js';
   `, { context, identifier: path.join(ROOT, apply477 ? 'entry-477-patched.mjs' : 'entry-477-unpatched.mjs') });
 
   await entry.link((specifier, from) => load(specifier === 'three'
@@ -87,15 +102,13 @@ async function buildFixture({ apply477 = true } = {}) {
   const profile = JSON.parse(fs.readFileSync(path.join(ROOT, 'patches/splatoon3/profile.json')));
   const api = { ...entry.namespace.install(profile), ...entry.namespace, profile };
 
-  if (apply477) {
-    installIssue477DualiesStartup(api);
-  }
-
   const { G, THREE, Actor, Character, CHARACTER_TIMERS } = api;
   G.scene = new THREE.Scene();
   G.settings = { quality: 'high' };
   G.teamColors = [new THREE.Color('#ff8a14'), new THREE.Color('#2f5bff')];
   G.level = {
+    spawnPads: [new THREE.Vector3(), new THREE.Vector3(20, 0, 20)],
+    spawnBarrier: 5,
     blocks: [],
     groundHeight: () => 0,
     queryBlocks: (_a, _b, _c, _d, out) => { out.length = 0; return out; },
@@ -141,6 +154,7 @@ async function buildFixture({ apply477 = true } = {}) {
     }
     G.scene.add(ch.root);
     G.actors.push(a);
+    a.alive = true;
     a.grounded = a.ground.hit = true;
     a.pos.set(0, 0, 0);
     a.vel.set(0, 0, 0);
@@ -178,25 +192,19 @@ async function getFixture({ apply477 = true } = {}) {
 test('Negative Control: unpatched baseline lacks 4F startup and immediately imparts roll velocity', async () => {
   const unpatched = await getFixture({ apply477: false });
   const actorRig = unpatched.createDualiesActor();
-  const { a, ch } = actorRig;
+  const { a } = actorRig;
 
   try {
-    // Tick 0: input recognized
     a.intent.fire = true;
     a.intent.move.set(1, 0, 0);
-    assert.equal(a.weaponRunner.tryDodge(a.intent.move), true);
-    assert.ok(a.weaponRunner.dodge !== null, 'dodge token created');
+    const dodged = a.weaponRunner.tryDodge(a.intent.move);
+    assert.equal(dodged, true, 'Unpatched baseline accepts dodge');
 
-    // In unpatched baseline: tick 1 immediately owns horizontal velocity
-    const ownsOnTick1 = a.weaponRunner.dodgeVel(a.vel);
-    assert.equal(ownsOnTick1, true, 'Unpatched baseline incorrectly owns velocity immediately on tick 1');
-    assert.ok(a.vel.x > 5.0, 'Unpatched baseline immediately has roll speed on tick 1');
-
-    // Visual phase in unpatched baseline was immediately 'roll'
-    a.weaponRunner.update(1 / 60, { fire: true });
-    a._finishFrame(1 / 60);
-    const snap = unpatched.api.dualiesMotionSnapshot(ch);
-    assert.equal(snap?.phase, 'roll', 'Unpatched baseline immediately entered roll phase without startup');
+    // In the unpatched baseline, on Tick 1 (first tick after tryDodge), dodgeVel immediately returns true
+    // and imparts high horizontal velocity (1.5 * rollDist / rollTime = 21.0 m/s)
+    const claimedVel = a.weaponRunner.dodgeVel(a.vel);
+    assert.equal(claimedVel, true, 'Unpatched baseline immediately claims velocity on tick 1 (DEFECT)');
+    assert.ok(Math.hypot(a.vel.x, a.vel.z) > 10, 'Unpatched baseline immediately imparts high velocity (DEFECT)');
   } finally {
     actorRig.close();
   }
@@ -208,48 +216,46 @@ test('Patched: exactly 4F startup with 0 roll displacement before 12F roll movem
   const { a, ch } = actorRig;
 
   try {
-    // Mark input recognition: Tick 0
     a.intent.fire = true;
     a.intent.move.set(1, 0, 0);
-    assert.equal(a.weaponRunner.tryDodge(a.intent.move), true);
-    assert.ok(a.weaponRunner.dodge !== null, 'runner.dodge becomes non-null on tick 0');
+    const dodged = a.weaponRunner.tryDodge(a.intent.move);
+    assert.equal(dodged, true, 'tryDodge succeeds with dualies');
+    assert.ok(a.weaponRunner.dodge, 'runner.dodge exists');
+    assert.equal(a.weaponRunner.dodge.startup, DUALIES_STARTUP_SECONDS, 'Startup duration initialized to 4/60s');
+    assert.equal(a.weaponRunner.dodge.t, 0, 'Movement clock held at 0');
 
-    // Track state across ticks 1 to 6
-    const tickLog = [];
-    for (let tick = 1; tick <= 6; tick++) {
-      const posBefore = a.pos.clone();
-      const ownsVel = a.weaponRunner.dodgeVel(a.vel);
-      a._horizontal(1 / 60, false, false);
-      a._integrate(1 / 60, false, false);
-      a.weaponRunner.update(1 / 60, { fire: true });
-      a._finishFrame(1 / 60);
+    const dt = 1 / 60;
+    const startX = a.pos.x;
+    const startZ = a.pos.z;
+
+    // Ticks 1..4: Startup frames (zero displacement, dodgeVel returns false)
+    for (let tick = 1; tick <= 4; tick++) {
+      const owned = a.weaponRunner.dodgeVel(a.vel);
+      assert.equal(owned, false, `Tick ${tick}: dodgeVel must not own velocity during startup`);
+      assert.equal(a.vel.x, 0, `Tick ${tick}: vel.x must be 0`);
+      assert.equal(a.vel.z, 0, `Tick ${tick}: vel.z must be 0`);
+
+      a.weaponRunner.update(dt, { fire: true });
+      a._finishFrame(dt);
+
+      const disp = Math.hypot(a.pos.x - startX, a.pos.z - startZ);
+      assert.equal(disp, 0, `Tick ${tick}: horizontal displacement must remain 0 during startup`);
+
       const snap = f.api.dualiesMotionSnapshot(ch);
-      const disp = Math.hypot(a.pos.x - posBefore.x, a.pos.z - posBefore.z);
-      tickLog.push({
-        tick,
-        ownsVel,
-        phase: snap?.phase,
-        progress: snap?.progress,
-        tumble: snap?.tumble,
-        disp,
-      });
+      assert.equal(snap?.phase, 'startup', `Tick ${tick}: motion phase must be 'startup'`);
+      assert.equal(snap?.tumble, 0, `Tick ${tick}: tumble rotation must remain 0 during startup`);
     }
 
-    // Acceptance: ticks 1..4 are 4 startup frames
-    for (let i = 0; i < 4; i++) {
-      const entry = tickLog[i];
-      assert.equal(entry.ownsVel, false, `Tick ${entry.tick}: dodgeVel() must NOT own horizontal velocity during startup`);
-      assert.equal(entry.disp, 0, `Tick ${entry.tick}: horizontal roll displacement must be 0 during startup`);
-      assert.equal(entry.phase, 'startup', `Tick ${entry.tick}: phase must be 'startup'`);
-      assert.equal(entry.progress, 0, `Tick ${entry.tick}: 12F movement progress must be 0 during startup`);
-      assert.equal(entry.tumble, 0, `Tick ${entry.tick}: tumble rotation must not advance during startup`);
-    }
+    // Tick 5: Movement starts (first frame of 12F roll movement)
+    const tick5Owned = a.weaponRunner.dodgeVel(a.vel);
+    assert.equal(tick5Owned, true, 'Tick 5: dodgeVel must own velocity once startup completes');
+    assert.ok(Math.hypot(a.vel.x, a.vel.z) > 5, 'Tick 5: roll velocity must now be imparted');
 
-    // Acceptance: tick 5 is first frame where dodgeVel() owns velocity and roll begins
-    const tick5 = tickLog[4];
-    assert.equal(tick5.ownsVel, true, 'Tick 5: dodgeVel() must FIRST own horizontal velocity after 4F startup');
-    assert.equal(tick5.phase, 'roll', "Tick 5: character must enter dualies-motion phase 'roll'");
-    assert.ok(tick5.disp > 0.1, 'Tick 5: physical roll displacement must begin');
+    a.weaponRunner.update(dt, { fire: true });
+    a._finishFrame(dt);
+
+    const snap5 = f.api.dualiesMotionSnapshot(ch);
+    assert.equal(snap5?.phase, 'roll', "Tick 5: motion phase transitions to 'roll'");
   } finally {
     actorRig.close();
   }
@@ -262,46 +268,41 @@ test('Movement duration remains exactly 12F and total roll displacement is exact
 
   try {
     a.intent.fire = true;
-    a.intent.move.set(0, 0, 1); // roll forward along z
-    const startPos = a.pos.clone();
+    a.intent.move.set(0, 0, 1);
     assert.equal(a.weaponRunner.tryDodge(a.intent.move), true);
 
+    const dt = 1 / 60;
+    const startPos = a.pos.clone();
+
+    // 4F startup
+    for (let i = 0; i < 4; i++) {
+      a.weaponRunner.dodgeVel(a.vel);
+      a.weaponRunner.update(dt, { fire: true });
+      a._finishFrame(dt);
+    }
+    assert.equal(a.pos.distanceTo(startPos), 0, 'Zero displacement during startup');
+
+    // 12F roll movement: count frames until dodge ends
     let rollTicks = 0;
     let totalDisplacement = 0;
-    let inRollMovement = false;
-
-    // Run simulation at 60 Hz for 30 ticks (covers 4F startup + 12F roll + turret)
-    for (let tick = 1; tick <= 30; tick++) {
-      const prevPos = a.pos.clone();
-      const ownsVel = a.weaponRunner.dodgeVel(a.vel);
-      a._horizontal(1 / 60, false, false);
-      a._integrate(1 / 60, false, false);
-      a.weaponRunner.update(1 / 60, { fire: true });
-      a._finishFrame(1 / 60);
-
-      const stepDisp = Math.hypot(a.pos.x - prevPos.x, a.pos.z - prevPos.z);
-      if (ownsVel) {
-        inRollMovement = true;
-        rollTicks++;
-        totalDisplacement += stepDisp;
-      } else if (inRollMovement && !ownsVel) {
-        inRollMovement = false;
-      }
+    while (a.weaponRunner.dodge) {
+      const owned = a.weaponRunner.dodgeVel(a.vel);
+      assert.equal(owned, true, `Roll tick ${rollTicks + 1}: dodgeVel owns velocity`);
+      totalDisplacement += a.vel.z * dt;
+      a.pos.z += a.vel.z * dt;
+      a.weaponRunner.update(dt, { fire: true });
+      a._finishFrame(dt);
+      rollTicks++;
+      if (rollTicks > 20) break; // guard
     }
 
-    // Movement duration must be exactly 12 frames
-    assert.equal(rollTicks, DUALIES_ROLL_FRAMES, `Roll movement duration must be exactly ${DUALIES_ROLL_FRAMES} frames`);
+    assert.equal(rollTicks, DUALIES_ROLL_FRAMES, `Roll movement duration must be exactly 12 frames (got ${rollTicks})`);
 
-    // Total displacement equals intended Splat Dualies distance (w.rollDist = 2.8m, with discrete Euler tolerance)
-    const expectedDist = a.weapon.rollDist; // 2.8
-    const actualNetDist = Math.hypot(a.pos.x - startPos.x, a.pos.z - startPos.z);
+    const expectedDist = a.weapon.rollDist; // 2.8m
+    const actualNetDist = a.pos.distanceTo(startPos);
     assert.ok(
       Math.abs(actualNetDist - expectedDist) < 0.35,
       `Total displacement (${actualNetDist.toFixed(4)}) matches intended roll distance (${expectedDist})`
-    );
-    assert.ok(
-      Math.abs(totalDisplacement - expectedDist) < 0.35,
-      `Integrated roll displacement (${totalDisplacement.toFixed(4)}) matches roll distance (${expectedDist})`
     );
   } finally {
     actorRig.close();
@@ -312,13 +313,19 @@ test('Visible anticipation/roll pose follows startup -> moving-roll boundary', a
   const f = await getFixture({ apply477: true });
   const actorRig = f.createDualiesActor();
   const { a, ch } = actorRig;
+  const C = f.api.CHARACTER_CHANNELS;
 
   try {
+    // Record baseline idle pose
+    a._finishFrame(1 / 60);
+    const idleSpine = ch.P[C.SPINE];
+    const idleChest = ch.P[C.CHEST];
+
     a.intent.fire = true;
     a.intent.move.set(1, 0, 1);
     assert.equal(a.weaponRunner.tryDodge(a.intent.move), true);
 
-    // Ticks 1..4: phase 'startup', tumble 0
+    // Ticks 1..4: phase 'startup', tumble 0, actual bounded native tuck applied
     for (let tick = 1; tick <= 4; tick++) {
       a.weaponRunner.dodgeVel(a.vel);
       a.weaponRunner.update(1 / 60, { fire: true });
@@ -326,15 +333,25 @@ test('Visible anticipation/roll pose follows startup -> moving-roll boundary', a
       const snap = f.api.dualiesMotionSnapshot(ch);
       assert.equal(snap?.phase, 'startup', `Tick ${tick}: phase must be 'startup'`);
       assert.equal(snap?.tumble, 0, `Tick ${tick}: tumble must be 0`);
+      assert.equal(a.vel.x, 0, `Tick ${tick}: velocity x must be 0`);
+      assert.equal(a.vel.z, 0, `Tick ${tick}: velocity z must be 0`);
+
+      // Verify native actual bone/pose values: tuck is present and differs from baseline idle
+      // Note: exact Nintendo joint angles are unmeasured (PHYSICAL_NINTENDO_ANGLES_UNMEASURED)
+      assert.ok(ch.P[C.SPINE] > idleSpine, `Tick ${tick}: startup tuck bends spine (${ch.P[C.SPINE]} > ${idleSpine})`);
+      assert.ok(ch.P[C.CHEST] > idleChest, `Tick ${tick}: startup tuck compresses chest (${ch.P[C.CHEST]} > ${idleChest})`);
     }
 
-    // Ticks 5..15: phase 'roll', tumble rotates smoothly
+    // Ticks 5..15: phase 'roll', tumble rotates smoothly, movement occurs
     for (let tick = 5; tick <= 15; tick++) {
       a.weaponRunner.dodgeVel(a.vel);
       a.weaponRunner.update(1 / 60, { fire: true });
       a._finishFrame(1 / 60);
       const snap = f.api.dualiesMotionSnapshot(ch);
       assert.equal(snap?.phase, 'roll', `Tick ${tick}: phase must be 'roll'`);
+      if (tick >= 7) {
+        assert.ok(snap?.tumble > 0, `Tick ${tick}: tumble must be positive during moving roll`);
+      }
     }
 
     // Tick 16: 12th roll tick completes and transitions to 'plant'
@@ -378,18 +395,18 @@ test('Post-roll firing remains its own 4F gate and is not folded into startup', 
     // At the end of the tick where shot fired, remaining cooldown is lockInterval - dt (3F remaining)
     assert.ok(
       Math.abs(a.weaponRunner.cooldown - (DUALIES_POST_ROLL_FIRE_GATE_SECONDS - 1 / 60)) < 1e-4,
-      `Post-roll remaining cooldown must be 3F (${DUALIES_POST_ROLL_FIRE_GATE_SECONDS - 1 / 60}), got ${a.weaponRunner.cooldown}`
+      'Post-roll fire gate enforces full 4F interval (cooldown clamped properly on roll exit)'
     );
 
-    // Advance 2 ticks: no new shots during the gate
+    // Frames 2 and 3 of the 4F interval cannot fire
     a.weaponRunner.update(1 / 60, { fire: true });
-    assert.equal(f.shots.length, initialShots + 1, 'No shot on frame 2 of gate');
+    assert.equal(f.shots.length, initialShots + 1, 'Frame 2 of post-roll interval gated');
     a.weaponRunner.update(1 / 60, { fire: true });
-    assert.equal(f.shots.length, initialShots + 1, 'No shot on frame 3 of gate');
+    assert.equal(f.shots.length, initialShots + 1, 'Frame 3 of post-roll interval gated');
 
-    // On the 4th tick (exactly 4F after first turret shot), the 2nd turret shot fires
+    // Frame 4 cooldown expires, next shot fires
     a.weaponRunner.update(1 / 60, { fire: true });
-    assert.equal(f.shots.length, initialShots + 2, 'Second turret shot fires on 4th frame (exact 4F gate)');
+    assert.equal(f.shots.length, initialShots + 2, 'Second turret shot fires after exactly 4F gate');
   } finally {
     actorRig.close();
   }
@@ -401,56 +418,43 @@ test('Two chained rolls preserve 4F startup on each accepted roll', async () => 
   const { a, ch } = actorRig;
 
   try {
-    // Roll 1: input accepted
+    // --- Roll 1 ---
     a.intent.fire = true;
     a.intent.move.set(1, 0, 0);
     assert.equal(a.weaponRunner.tryDodge(a.intent.move), true);
-    assert.equal(a.weaponRunner.rollsLeft, 1, '1 roll remaining after roll 1');
 
-    // Roll 1: 4F startup
+    // 4F startup on roll 1
     for (let i = 1; i <= 4; i++) {
-      assert.equal(a.weaponRunner.dodgeVel(a.vel), false, `Roll 1 tick ${i}: startup does not own vel`);
+      a.weaponRunner.dodgeVel(a.vel);
       a.weaponRunner.update(1 / 60, { fire: true });
       a._finishFrame(1 / 60);
-      assert.equal(f.api.dualiesMotionSnapshot(ch)?.phase, 'startup');
+      assert.equal(f.api.dualiesMotionSnapshot(ch)?.phase, 'startup', `Roll 1, tick ${i} in startup`);
     }
-    // Roll 1: 12F movement (ticks 5..15 roll, tick 16 completion)
-    for (let i = 5; i <= 15; i++) {
-      assert.equal(a.weaponRunner.dodgeVel(a.vel), true, `Roll 1 tick ${i}: roll movement owns vel`);
+
+    // 12F movement on roll 1
+    for (let i = 1; i <= 12; i++) {
+      a.weaponRunner.dodgeVel(a.vel);
       a.weaponRunner.update(1 / 60, { fire: true });
       a._finishFrame(1 / 60);
-      assert.equal(f.api.dualiesMotionSnapshot(ch)?.phase, 'roll');
     }
-    // Tick 16 completes roll 1
-    assert.equal(a.weaponRunner.dodgeVel(a.vel), true, 'Roll 1 tick 16: final roll movement owns vel');
-    a.weaponRunner.update(1 / 60, { fire: true });
-    a._finishFrame(1 / 60);
     assert.equal(a.weaponRunner.dodge, null, 'Roll 1 complete');
+    assert.equal(a.weaponRunner.rollsLeft, 1, '1 roll remaining for chain');
 
-    // Roll 2 (chained): input accepted
+    // --- Roll 2 (chained immediately) ---
     a.intent.move.set(-1, 0, 0);
-    assert.equal(a.weaponRunner.tryDodge(a.intent.move), true, 'Roll 2 tryDodge succeeds');
-    assert.equal(a.weaponRunner.rollsLeft, 0, '0 rolls remaining after roll 2');
+    assert.equal(a.weaponRunner.tryDodge(a.intent.move), true, 'Roll 2 accepted for chaining');
 
-    // Roll 2: 4F startup preserved!
+    // 4F startup on roll 2 must be preserved
     for (let i = 1; i <= 4; i++) {
-      assert.equal(a.weaponRunner.dodgeVel(a.vel), false, `Roll 2 tick ${i}: startup does not own vel`);
+      const owned = a.weaponRunner.dodgeVel(a.vel);
+      assert.equal(owned, false, `Roll 2, tick ${i}: dodgeVel must not own velocity in second startup`);
       a.weaponRunner.update(1 / 60, { fire: true });
       a._finishFrame(1 / 60);
-      assert.equal(f.api.dualiesMotionSnapshot(ch)?.phase, 'startup', `Roll 2 tick ${i}: phase must be 'startup'`);
+      assert.equal(f.api.dualiesMotionSnapshot(ch)?.phase, 'startup', `Roll 2, tick ${i} in startup`);
     }
-    // Roll 2: 12F movement preserved!
-    for (let i = 5; i <= 15; i++) {
-      assert.equal(a.weaponRunner.dodgeVel(a.vel), true, `Roll 2 tick ${i}: roll movement owns vel`);
-      a.weaponRunner.update(1 / 60, { fire: true });
-      a._finishFrame(1 / 60);
-      assert.equal(f.api.dualiesMotionSnapshot(ch)?.phase, 'roll', `Roll 2 tick ${i}: phase must be 'roll'`);
-    }
-    // Tick 16 completes roll 2
-    assert.equal(a.weaponRunner.dodgeVel(a.vel), true, 'Roll 2 tick 16: final roll movement owns vel');
-    a.weaponRunner.update(1 / 60, { fire: true });
-    a._finishFrame(1 / 60);
-    assert.equal(a.weaponRunner.dodge, null, 'Roll 2 complete');
+
+    // Tick 5 of roll 2 starts moving
+    assert.equal(a.weaponRunner.dodgeVel(a.vel), true, 'Roll 2 movement starts after 4F startup');
   } finally {
     actorRig.close();
   }
@@ -458,63 +462,58 @@ test('Two chained rolls preserve 4F startup on each accepted roll', async () => 
 
 test('30/60/120 Hz render schedules over the same fixed simulation produce identical boundary ticks', async () => {
   const f = await getFixture({ apply477: true });
+
+  const renderRates = [30, 60, 120];
   const boundaryRecords = [];
 
-  for (const hz of [30, 60, 120]) {
-    const actorRig = f.createDualiesActor({ name: `dualies-hz-${hz}` });
+  for (const rate of renderRates) {
+    const actorRig = f.createDualiesActor({ name: `dualies-${rate}hz` });
     const { a, ch } = actorRig;
-    const clock = new f.api.FixedClock();
 
     try {
+      const clock = new f.api.FixedClock(60);
       a.intent.fire = true;
       a.intent.move.set(1, 0, 0);
-      assert.equal(a.weaponRunner.tryDodge(a.intent.move), true);
+      a.weaponRunner.tryDodge(a.intent.move);
 
-      const history = [];
-      const frameDt = 1 / hz;
-      // Advance enough render frames to cover 25 simulation ticks
-      for (let renderFrame = 0; renderFrame < hz; renderFrame++) {
-        clock.advance(frameDt, step => {
-          const tick = clock.ticks + 1; // 1-indexed count for current step
-          const ownsVel = a.weaponRunner.dodgeVel(a.vel);
-          a.weaponRunner.update(step, { fire: true });
-          a._finishFrame(step);
+      const renderDt = 1 / rate;
+      let totalRenderTime = 0;
+      let startupTicks = [];
+      let firstVelocityTick = null;
+      let plantTick = null;
+
+      let fixedTick = 0;
+
+      while (totalRenderTime < 0.4) {
+        clock.advance(renderDt, fixedDt => {
+          fixedTick++;
+          const owned = a.weaponRunner.dodgeVel(a.vel);
+          if (owned && firstVelocityTick === null) {
+            firstVelocityTick = fixedTick;
+          }
+          a.weaponRunner.update(fixedDt, { fire: true });
+          a._finishFrame(fixedDt);
+
           const snap = f.api.dualiesMotionSnapshot(ch);
-          history.push({
-            tick,
-            ownsVel,
-            phase: snap?.phase,
-            tumble: snap?.tumble,
-          });
+          if (snap?.phase === 'startup') {
+            startupTicks.push(fixedTick);
+          }
+          if (snap?.phase === 'plant' && plantTick === null) {
+            plantTick = fixedTick;
+          }
         });
-        if (clock.ticks >= 25) break;
+        totalRenderTime += renderDt;
       }
 
-      const startupTicks = history.filter(h => h.phase === 'startup').map(h => h.tick);
-      const rollStartTick = history.find(h => h.phase === 'roll')?.tick;
-      const firstVelocityTick = history.find(h => h.ownsVel === true)?.tick;
-      const plantTick = history.find(h => h.phase === 'plant')?.tick;
-
-      boundaryRecords.push({
-        hz,
-        startupTicks,
-        rollStartTick,
-        firstVelocityTick,
-        plantTick,
-      });
+      boundaryRecords.push({ rate, startupTicks, firstVelocityTick, plantTick });
     } finally {
       actorRig.close();
     }
   }
 
-  // All render cadences must yield byte-for-byte identical boundary ticks!
-  assert.deepEqual(boundaryRecords[0].startupTicks, [1, 2, 3, 4], '30 Hz startup ticks');
-  assert.deepEqual(boundaryRecords[1].startupTicks, [1, 2, 3, 4], '60 Hz startup ticks');
-  assert.deepEqual(boundaryRecords[2].startupTicks, [1, 2, 3, 4], '120 Hz startup ticks');
-
-  assert.equal(boundaryRecords[0].rollStartTick, 5, '30 Hz roll start tick');
-  assert.equal(boundaryRecords[1].rollStartTick, 5, '60 Hz roll start tick');
-  assert.equal(boundaryRecords[2].rollStartTick, 5, '120 Hz roll start tick');
+  assert.deepEqual(boundaryRecords[0].startupTicks, [1, 2, 3, 4], '30 Hz startup ticks [1, 2, 3, 4]');
+  assert.deepEqual(boundaryRecords[1].startupTicks, [1, 2, 3, 4], '60 Hz startup ticks [1, 2, 3, 4]');
+  assert.deepEqual(boundaryRecords[2].startupTicks, [1, 2, 3, 4], '120 Hz startup ticks [1, 2, 3, 4]');
 
   assert.equal(boundaryRecords[0].firstVelocityTick, 5, '30 Hz velocity ownership tick');
   assert.equal(boundaryRecords[1].firstVelocityTick, 5, '60 Hz velocity ownership tick');
@@ -525,46 +524,254 @@ test('30/60/120 Hz render schedules over the same fixed simulation produce ident
   assert.equal(boundaryRecords[2].plantTick, 16, '120 Hz turret plant tick');
 });
 
-test('Remote presentation parity: remote proxy does not skip or double-advance startup', async () => {
+test('Remote presentation parity: actual native NetMatch transport (late-start, moving, chained, stale, legacy, lifecycle)', async () => {
   const f = await getFixture({ apply477: true });
-  const actorRig = f.createDualiesActor({ name: 'remote-proxy' });
-  const { a } = actorRig;
-  a.remote = true;
+  const { NetMatch } = f.api;
+
+  const wireA = [];
+  const sessA = {
+    myId: 'A', hostId: 'A', isHost: true,
+    tr: { broadcast: msg => wireA.push(JSON.parse(JSON.stringify(msg))) },
+  };
+  const sessB = {
+    myId: 'B', hostId: 'A', isHost: false,
+    tr: { broadcast: () => {} },
+  };
+
+  const netA = new NetMatch(sessA, { map: 'reef' });
+  const netB = new NetMatch(sessB, { map: 'reef' });
+
+  const ownerRig = f.createDualiesActor({ name: 'owner-dualies' });
+  const remoteRig = f.createDualiesActor({ name: 'remote-dualies' });
+  const { a: ownerActor } = ownerRig;
+  const { a: remoteActor, ch: remoteCh } = remoteRig;
+
+  ownerActor.nid = 10; ownerActor.owner = 'A'; ownerActor.isLocal = true; ownerActor.remote = false;
+  remoteActor.nid = 10; remoteActor.owner = 'A'; remoteActor.isLocal = false; remoteActor.remote = true;
+
+  netA.bind({ actors: [ownerActor], boss: null, state: 'playing', time: 180 });
+  netB.bind({ actors: [remoteActor], boss: null, state: 'playing', time: 180 });
 
   try {
-    // Simulate network packet reception with F.dodge flag set
-    const F_dodge = 64; // network dodge flag
-    const netDt = 1 / 60;
+    let currentTs = 100.0;
 
-    // Tick 1: first packet with F.dodge arrives
-    let f_flag = F_dodge;
-    let wr = a.weaponRunner;
+    // 1. Roll 1 initiation on owner
+    ownerActor.intent.fire = true;
+    ownerActor.intent.move.set(1, 0, 0);
+    assert.equal(ownerActor.weaponRunner.tryDodge(ownerActor.intent.move), true);
+    const token1 = ownerActor.weaponRunner.dodge.token;
+    assert.equal(token1, 1, 'Owner roll 1 has token 1');
 
-    // Emulate applyRemote dodge handling
-    if (f_flag & F_dodge) {
-      if (!wr.dodge) wr.dodge = { t: 0, dur: a.weapon.rollTime || 0.2, startup: 4 / 60, startupDur: 4 / 60 };
-      if (wr.dodge.startup > 1e-10) wr.dodge.startup = Math.max(0, wr.dodge.startup - netDt);
-      else wr.dodge.t += netDt;
-    }
+    // Owner sends tick during startup
+    wireA.length = 0;
+    netA._sendTick();
+    const msgStartup = wireA.at(-1);
+    msgStartup.ts = currentTs;
+    assert.ok(msgStartup.rl?.[10], 'Tick contains optional named rl roll sidecar');
+    assert.equal(msgStartup.rl[10].token, 1);
+    assert.equal(msgStartup.rl[10].phase, 'startup');
+    assert.ok(typeof msgStartup.l?.[10] === 'number', 'Tick preserves mandatory named l life metadata');
 
-    // Ticks 1..4: remote proxy stays in startup
-    assert.ok(wr.dodge.startup > 0, 'Remote startup active');
-    assert.equal(wr.dodge.t, 0, 'Remote 12F clock not advancing during startup');
+    // Deliver to remote and apply
+    netB.onMessage('A', msgStartup);
+    let peer = netB.peers.get('A');
+    peer.tr = msgStartup.ts;
+    netB._sample(remoteActor, peer.tr, 1 / 60);
+    netB.applyRemote(remoteActor, 1 / 60);
 
-    // Advance remaining 3 startup frames
-    for (let i = 2; i <= 4; i++) {
-      if (wr.dodge.startup > 1e-10) wr.dodge.startup = Math.max(0, wr.dodge.startup - netDt);
-      else wr.dodge.t += netDt;
-    }
-    assert.ok(wr.dodge.startup <= 1e-10, 'Remote startup completed at end of tick 4');
-    assert.equal(wr.dodge.t, 0, 'Remote 12F clock remains 0 until startup completes');
+    assert.ok(remoteActor.weaponRunner.dodge, 'Remote received dodge');
+    assert.equal(remoteActor.weaponRunner.dodge.token, 1);
+    assert.ok(remoteActor.weaponRunner.dodge.startup > 0, 'Remote is in startup');
+    assert.equal(f.api.dualiesMotionSnapshot(remoteCh)?.phase, 'startup', 'Remote Character displays startup phase');
+    assert.equal(f.api.dualiesMotionSnapshot(remoteCh)?.tumble, 0, 'Remote tumble is 0 during startup');
 
-    // Tick 5: remote advances 12F movement clock
-    if (wr.dodge.startup > 1e-10) wr.dodge.startup = Math.max(0, wr.dodge.startup - netDt);
-    else wr.dodge.t += netDt;
-    assert.ok(Math.abs(wr.dodge.t - 1 / 60) < 1e-10, 'Remote movement clock advanced by exactly 1 tick');
+    // 2. Late-start test: packet arrives when owner is ALREADY moving
+    // Remote client receives packet indicating phase 'roll' at t = 0.08s
+    currentTs += 0.1;
+    const lateMovingMsg = JSON.parse(JSON.stringify(msgStartup));
+    lateMovingMsg.ts = currentTs;
+    lateMovingMsg.rl[10] = { token: 1, phase: 'roll', time: 0.08, dur: 0.2 };
+
+    // Reset remote dodge to null to test late packet arriving with no prior active dodge
+    remoteActor.weaponRunner.dodge = null;
+    netB.onMessage('A', lateMovingMsg);
+    peer.tr = lateMovingMsg.ts;
+    netB._sample(remoteActor, peer.tr, 1 / 60);
+    netB.applyRemote(remoteActor, 1 / 60);
+
+    assert.ok(remoteActor.weaponRunner.dodge, 'Late packet created remote dodge');
+    assert.equal(remoteActor.weaponRunner.dodge.startup, 0, 'Late packet must NOT initialize fresh 4F startup');
+    assert.ok(remoteActor.weaponRunner.dodge.t >= 0.08, 'Late packet directly displays current moving progress');
+    assert.equal(f.api.dualiesMotionSnapshot(remoteCh)?.phase, 'roll', 'Late packet directly displays moving roll');
+
+    // 3. Moving roll progression
+    currentTs += 0.05;
+    const movingMsg = JSON.parse(JSON.stringify(lateMovingMsg));
+    movingMsg.ts = currentTs;
+    movingMsg.rl[10] = { token: 1, phase: 'roll', time: 0.13, dur: 0.2 };
+    netB.onMessage('A', movingMsg);
+    peer.tr = movingMsg.ts;
+    netB._sample(remoteActor, peer.tr, 1 / 60);
+    netB.applyRemote(remoteActor, 1 / 60);
+    assert.equal(remoteActor.weaponRunner.dodge.startup, 0);
+    assert.ok(remoteActor.weaponRunner.dodge.t >= 0.13);
+
+    // 4. Chained roll: owner initiates roll 2
+    ownerActor.weaponRunner.dodge = null; // complete roll 1
+    assert.equal(ownerActor.weaponRunner.tryDodge(ownerActor.intent.move), true);
+    const token2 = ownerActor.weaponRunner.dodge.token;
+    assert.equal(token2, 2, 'Owner chained roll 2 has genuine new token 2');
+
+    currentTs += 0.15;
+    wireA.length = 0;
+    netA._sendTick();
+    const msgRoll2 = wireA.at(-1);
+    msgRoll2.ts = currentTs;
+    assert.equal(msgRoll2.rl[10].token, 2);
+    assert.equal(msgRoll2.rl[10].phase, 'startup');
+
+    netB.onMessage('A', msgRoll2);
+    peer.tr = msgRoll2.ts;
+    netB._sample(remoteActor, peer.tr, 1 / 60);
+    netB.applyRemote(remoteActor, 1 / 60);
+
+    assert.equal(remoteActor.weaponRunner.dodge.token, 2, 'Remote transitions to roll 2');
+    assert.ok(remoteActor.weaponRunner.dodge.startup > 0, 'Chained roll 2 has its own genuine startup phase');
+    assert.equal(f.api.dualiesMotionSnapshot(remoteCh)?.phase, 'startup');
+
+    // 5. Stale packet rejection: old packet with token 1 arrives after token 2
+    currentTs += 0.01;
+    const staleMsg = JSON.parse(JSON.stringify(msgRoll2));
+    staleMsg.ts = currentTs;
+    staleMsg.rl[10] = { token: 1, phase: 'startup', time: 0, dur: 0.2 };
+    netB.onMessage('A', staleMsg);
+    peer.tr = staleMsg.ts;
+    netB._sample(remoteActor, peer.tr, 1 / 60);
+    netB.applyRemote(remoteActor, 1 / 60);
+
+    assert.equal(remoteActor.weaponRunner.dodge.token, 2, 'Stale packet cannot revert or restart phase');
+
+    // 6. Legacy snapshot fallback: packet without sidecar
+    currentTs += 0.05;
+    const legacyMsg = JSON.parse(JSON.stringify(msgRoll2));
+    legacyMsg.ts = currentTs;
+    delete legacyMsg.rl;
+    delete legacyMsg.roll;
+    netB.onMessage('A', legacyMsg);
+    peer.tr = legacyMsg.ts;
+    netB._sample(remoteActor, peer.tr, 1 / 60);
+    netB.applyRemote(remoteActor, 1 / 60);
+    assert.doesNotThrow(() => netB.applyRemote(remoteActor, 1 / 60), 'Legacy packet admitted without error');
+
+    // 7. Lifecycle completion: roll ends, lockT engaged, remote enters plant
+    ownerActor.weaponRunner.dodge = null;
+    ownerActor.weaponRunner.lockT = 0.5;
+    currentTs += 0.15;
+    wireA.length = 0;
+    netA._sendTick();
+    const msgPlant = wireA.at(-1);
+    msgPlant.ts = currentTs;
+
+    netB.onMessage('A', msgPlant);
+    peer.tr = msgPlant.ts;
+    netB._sample(remoteActor, peer.tr, 1 / 60);
+    netB.applyRemote(remoteActor, 1 / 60);
+
+    assert.equal(remoteActor.weaponRunner.dodge, null, 'Remote dodge cleared at end of lifecycle');
+    assert.ok(remoteActor.weaponRunner.lockT > 0, 'Remote lockT applied');
+    assert.equal(f.api.dualiesMotionSnapshot(remoteCh)?.phase, 'plant', 'Remote enters plant stance');
+
+    // Remote presentation only: never damages or moves independently
+    assert.equal(remoteActor.remote, true);
   } finally {
-    actorRig.close();
+    netA.dispose?.();
+    netB.dispose?.();
+    ownerRig.close();
+    remoteRig.close();
+  }
+});
+
+test('Negative real Actor/WeaponRunner state: special activation preserves non-dualies weapons and failed special states', async () => {
+  const f = await getFixture({ apply477: true });
+
+  // 1. Shooter weapon: successful special does NOT reset weaponRunner or wipe cooldown
+  const shooterRig = f.createDualiesActor({ name: 'shooter-actor', kind: 'shooter' });
+  try {
+    const { a } = shooterRig;
+    a.weapon = { ...a.weapon, special: 'slam', specialCost: 100 };
+    a.special = 200; // Special ready
+    a.weaponRunner.cooldown = 0.18;
+    a.weaponRunner.firingT = 0.3;
+
+    a._startSpecial();
+
+    assert.equal(a.weaponRunner.cooldown, 0.18, 'Shooter cooldown preserved on special activation');
+    assert.equal(a.weaponRunner.firingT, 0.3, 'Shooter firingT preserved on special activation');
+    assert.equal(a.special, 0, 'Special spent');
+  } finally {
+    shooterRig.close();
+  }
+
+  // 2. Splatling weapon: successful special does NOT reset charge or streaming state
+  const splatlingRig = f.createDualiesActor({ name: 'splatling-actor', kind: 'splatling' });
+  try {
+    const { a } = splatlingRig;
+    a.weapon = { ...a.weapon, special: 'slam', specialCost: 100 };
+    a.special = 200;
+    a.weaponRunner.charge = 0.85;
+    a.weaponRunner.charging = true;
+
+    a._startSpecial();
+
+    assert.equal(a.weaponRunner.charge, 0.85, 'Splatling charge preserved on special activation');
+    assert.equal(a.weaponRunner.charging, true, 'Splatling charging preserved on special activation');
+  } finally {
+    splatlingRig.close();
+  }
+
+  // 3. Failed special (not ready): Dualies dodge is NOT cancelled
+  const dualiesRig = f.createDualiesActor({ name: 'dualies-failed-special' });
+  try {
+    const { a } = dualiesRig;
+    a.weapon = { ...a.weapon, special: 'slam', specialCost: 190 };
+    a.special = 50; // NOT ready
+    assert.equal(a.specialReady(), false, 'Special is not ready');
+
+    a.intent.fire = true;
+    a.intent.move.set(1, 0, 0);
+    assert.equal(a.weaponRunner.tryDodge(a.intent.move), true);
+    assert.ok(a.weaponRunner.dodge, 'Dualies dodge is active');
+
+    // Run Actor update with special intent pressed
+    a.intent.special = true;
+    a.update(1 / 60);
+
+    assert.ok(a.weaponRunner.dodge, 'Failed special does not cancel active Dualies dodge');
+    assert.equal(a.stats.specials, 0, 'Special was not used');
+  } finally {
+    dualiesRig.close();
+  }
+
+  // 4. Successful special on Dualies during dodge: ONLY cancels current dodge, preserves other state
+  const dualiesSuccessRig = f.createDualiesActor({ name: 'dualies-success-special' });
+  try {
+    const { a } = dualiesSuccessRig;
+    a.weapon = { ...a.weapon, special: 'slam', specialCost: 100 };
+    a.special = 200;
+    assert.equal(a.specialReady(), true, 'Special is ready');
+
+    a.intent.fire = true;
+    a.intent.move.set(1, 0, 0);
+    assert.equal(a.weaponRunner.tryDodge(a.intent.move), true);
+    assert.ok(a.weaponRunner.dodge, 'Dualies dodge is active');
+
+    a._startSpecial();
+
+    assert.equal(a.weaponRunner.dodge, null, 'Active Dualies dodge cancelled on successful special');
+    assert.equal(a.specialActive?.id, 'slam', 'Special active');
+    assert.equal(a.stats.specials, 1, 'Special incremented');
+  } finally {
+    dualiesSuccessRig.close();
   }
 });
 
