@@ -48,7 +48,7 @@ permissions:
   contents: read
 env:
   SOURCE_SHA: ${{ inputs.source_sha || github.sha }}
-  RUNTIME_PERFORMANCE: ${{ inputs.runtime_performance == true || (github.event_name == 'pull_request' && (github.head_ref == 'inkwave/runtime-performance-ui' || github.head_ref == 'inkwave/integration-final-61-184-183')) }}
+  RUNTIME_PERFORMANCE: ${{ inputs.runtime_performance == true || (github.event_name == 'pull_request' && github.head_ref == 'inkwave/runtime-performance-ui') }}
 jobs:
   validate:
     if: inputs.diagnostic_only != true
