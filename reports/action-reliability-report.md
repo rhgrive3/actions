@@ -139,3 +139,10 @@ CharacterのT_DODGEはnative event/pose clockであり、gameplay tryDodgeの拒
 ## 最終production review
 
 親はproduction2ファイルのdiffを直接確認した。時間受付の延長なし、追加queueなし、runtime wrapper追加なし、duration設定の変更なし。Runnerの終了比較は丸め単位だけ補正する。state ownerは既存Input/MobileInput/FixedClock/Actorのままで、local Actorの二度目のedge生成だけを除いた。hardware padをコピーの外へ書き換えない。build-only adapter以外のproduction変更はない。新fixtureに残っていたunused helperを除去した。cline-6の独立production reviewと追加のtimer reviewを統合し、親が差分・35 regression・再fuzzを直接確認した。
+
+
+## Final combined-integration review (2026-10-04)
+
+The first #60 + #324 + #62 combined browser run exposed a verifier-only race in the native-keyboard dodge proof. The proof used a synthetic `mousedown` solely to establish the independent held-fire precondition. With the platform/lifecycle integration present, a delayed pointer-lock transition could invalidate that synthetic held mouse state before the manual fixed-tick trial. The observed keyboard presses still reached Character, but they became ordinary jumps because the unrelated fire precondition had disappeared.
+
+The browser verifier now pins held fire through the game's existing canonical debug input for this admission-only trial while retaining real Playwright keyboard events for direction/release/repress. Cleanup forces fire off even after an assertion. This removes pointer-lock timing from the keyboard-edge proof without weakening the edge requirement or changing production input/gameplay code.
