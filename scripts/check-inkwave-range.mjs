@@ -65,7 +65,8 @@ for (const run of RUNS) {
     await page.addInitScript(() => localStorage.setItem('inkwave.settings', JSON.stringify({ quality: 'low', lang: 'en' })));
     await page.goto(base + '?range&skipTitle', { waitUntil: 'domcontentloaded', timeout: 60000 });
     await page.waitForFunction(() => (window.__G?.match?.range && window.__G.match.state === 'playing') || document.getElementById('boot-error')?.textContent, null, { timeout: 420000 });
-    if (await page.locator('#boot-error').textContent()) throw new Error('boot error: ' + await page.locator('#boot-error').textContent());
+    const bootError = await page.evaluate(() => document.getElementById('boot-error')?.textContent || '');
+    if (bootError) throw new Error('boot error: ' + bootError);
     await page.waitForTimeout(1500);
     out.checks.stage = await page.evaluate(() => {
       const G = window.__G, g = window.__inkwave, s = G.match.range;
