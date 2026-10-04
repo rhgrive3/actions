@@ -111,6 +111,9 @@ try {
     return { built:m._built, canvas:[m.canvas.width,m.canvas.height], logical:[m.w,m.h], imageBytes:m.inkImg.data.byteLength+m.flashImg.data.byteLength };
   });
   if (!result.visibleMinimap.built || result.visibleMinimap.canvas.some((n,i)=>n!==result.visibleMinimap.logical[i]) || result.visibleMinimap.imageBytes!==8*result.visibleMinimap.logical[0]*result.visibleMinimap.logical[1]) throw new Error('Reenabled Minimap did not initialize native layers');
+  // The clock is frozen: let the real intro UI timers reveal HUD/remove lineup
+  // before fast-forwarding simulation, otherwise screenshots only show intro.
+  await page.waitForFunction(() => globalThis.s3ProbeG.game.hud?._visible && !document.querySelector('.iw-lineup'), null, {timeout:15000});
   result.gameplay = await page.evaluate(() => {
     const G = globalThis.s3ProbeG, g = G.game; g.debug.freezeBots(); g._skipRender = true;
     for (let i=0;i<270;i++) g._frame(1/60);

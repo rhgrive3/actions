@@ -141,3 +141,15 @@ browser gate retains all idleLobby/hiddenMinimap/visibleMinimap assertions and
 the new HUD check. Both standalone Judd fixture corrections are retained.
 The combined build digest is `518a687a4b0d`; dedicated source/emitted 14/14 pass.
 Full stacked regression and latest-head browser CI remain under verification.
+
+### Stacked regression and evidence visibility
+
+The complete combined suite passed **878/878**, with no failures/skips. Final
+focused source/emitted checks passed **15/15** after strengthening the browser
+fixture. Inspecting the prior CI PNGs revealed that the paused intro still
+covered the HUD: DOM-state success alone was insufficient screenshot evidence.
+The active gate now waits for the native HUD-reveal and lineup-removal timers
+before simulation fast-forward, then requires `checkVisibility` including
+ancestor opacity for both desktop gauge and touch SP button. No production
+visibility behavior or test expectation is relaxed. The old PNGs are not
+claimed as visual gauge acceptance; new exact-head screenshots remain pending.

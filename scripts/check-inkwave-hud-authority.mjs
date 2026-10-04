@@ -5,6 +5,7 @@ export async function checkHudAuthority({ page, evidence }) {
   const result = await page.evaluate(async () => {
     const { G } = await import(new URL('src/core/ctx.js', document.baseURI).href);
     const g=G.game,a=g.match.local,h=g.hud;
+    if(!h.sp.checkVisibility({checkOpacity:true,checkVisibilityCSS:true}))throw Error('Desktop special gauge is hidden');
     const saved={special:a.special,active:a.specialActive};
     const frames=[];
     try {
@@ -54,7 +55,7 @@ export async function checkHudAuthority({ page, evidence }) {
         rows.push({fraction,count,lit,ready});
       }
       if(getComputedStyle(g.hud.sp).display!=='none')throw Error('Touch replacement did not hide desktop gauge');
-      if(m.els.special.getBoundingClientRect().width<=0)throw Error('Touch special button is not rendered');
+      if(!m.els.special.checkVisibility({checkOpacity:true,checkVisibilityCSS:true}))throw Error('Touch special button is not visible');
       return rows;
     });
     await page.screenshot({path:path.join(evidence,'special-23-segments-touch.png'),animations:'disabled',timeout:90000});

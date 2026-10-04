@@ -151,3 +151,11 @@ test('#381: standalone browser reliability fixture supplies winner without weake
   assert.match(code,/winner: 1/);
   assert.match(code,/assert\.deepEqual\(judging, \{ afterCancel: \{ cancelled: true, elements: 0, sounds: \['judge_drumroll'\], voicesStopped: true \}, replaced: true, newerPreserved: true, winner: 1, disposed: true \}\);/);
 });
+
+
+test('browser gauge evidence requires native intro dismissal and visible desktop/touch elements',()=>{
+  const browser=fs.readFileSync(new URL('scripts/check-inkwave-browser.mjs',root),'utf8');
+  const checks=fs.readFileSync(new URL('scripts/check-inkwave-hud-authority.mjs',root),'utf8');
+  assert.match(browser,/waitForFunction\(\(\) => globalThis\.s3ProbeG.game.hud\?\._visible && !document\.querySelector\('\.iw-lineup'\)/);
+  assert.equal((checks.match(/checkVisibility\(\{checkOpacity:true,checkVisibilityCSS:true\}\)/g)||[]).length,2);
+});
