@@ -7,7 +7,8 @@ K=/tmp/inkjaw-work; N=$1; O=$K/t_$N; mkdir -p $O; rm -f $K/$N.done
 cd /tmp/inkjaw/tools/inkwave-modeler
 S=$(date +%s)
 blender -b /mnt/workspace/.dev-state/agent-work/checkpoints/inkwave-face-volume-20260929/J0.blend --python scripts/inkwave_face_volume.py -- --params $K/p_$N.json --save $K/$N.blend > $O/build.log 2>&1
-blender -b $K/$N.blend --python scripts/inkwave_body_shape.py -- --save $K/$N.blend >> $O/build.log 2>&1
+BP=""; [ -e $K/bp_$N.json ] && BP="--params $K/bp_$N.json"
+blender -b $K/$N.blend --python scripts/inkwave_body_shape.py -- $BP --save $K/$N.blend >> $O/build.log 2>&1
 blender -b $K/$N.blend --python /tmp/jawtools/finalmat.py -- $K/$N.blend >> $O/build.log 2>&1
 rm -f $K/$N.blend1; B=$(date +%s)
 cd /mnt/workspace/.dev-state/agent-work/evidence/inkwave-face-volume-20260929

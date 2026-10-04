@@ -1528,22 +1528,22 @@
    13.0
   ],
   "base_sigma": 7.0,
-  "full": 0.2,
+  "full": 0.3,
   "up": 4,
-  "floor": 0.06,
+  "floor": 0.14,
   "rim": 5.0,
   "strength": 1.0,
   "max_ratio": 1.0,
   "bare": "analysis/face_volume/bare_front.png",
   "own_blur": 2.0,
-  "desaturate": 0.4,
+  "desaturate": 0.7,
   "facing": [
-   0.6,
-   0.9
+   0.35,
+   0.65
   ],
   "axis_z": 70.0,
   "size": 512,
-  "facing_keep": [
+  "spots": [
    [
     172.3,
     168.8,

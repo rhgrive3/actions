@@ -105,9 +105,26 @@ def nape_field(obj, cfg):
     prof = np.array(cfg['profile'], float)
     order = np.argsort(prof[:, 0])
     d = np.interp(L[:, 1], prof[order, 0], prof[order, 1], left=0.0, right=0.0)
+    if cfg.get('profile_left'):
+        # the left (+x) back of the neck stood 10-14 px behind the reference in the left side view while the right
+        # one matched: the left half takes its own profile (negative = forward), blended across the midline
+        pl = np.array(cfg['profile_left'], float)
+        ol = np.argsort(pl[:, 0])
+        dl = np.interp(L[:, 1], pl[ol, 0], pl[ol, 1], left=0.0, right=0.0)
+        m0, m1 = cfg.get('x_mix', [-8.0, 8.0])
+        t = smoothstep((L[:, 0] - m0) / (m1 - m0))
+        d = d * (1 - t) + dl * t
+    else:
+        t = np.zeros(len(L))
     x_full, x_out = cfg['x']
     z0, z1 = cfg['z_back']
-    return d * smoothstep((x_out - np.abs(L[:, 0])) / (x_out - x_full)) * smoothstep((z0 - L[:, 2]) / (z0 - z1))
+    fade = smoothstep((x_out - np.abs(L[:, 0])) / (x_out - x_full))
+    if cfg.get('profile_left') and cfg.get('x_left'):
+        # the left side view's back edge is on the side of the neck (|x| 17-35 mm), where the right profile has
+        # faded: the left half fades over its own, wider range
+        xl_full, xl_out = cfg['x_left']
+        fade = fade * (1 - t) + smoothstep((xl_out - np.abs(L[:, 0])) / (xl_out - xl_full)) * t
+    return d * fade * smoothstep((z0 - L[:, 2]) / (z0 - z1))
 
 
 def nape(cfg):
@@ -118,9 +135,12 @@ def nape(cfg):
     peak = max(m for _, m in cfg['profile'])
     for name in cfg['meshes']:
         obj = bpy.data.objects[name]
-        w = nape_field(obj, cfg) / peak
+        f = nape_field(obj, cfg)
         before = er.world(obj)
-        warp(obj, w, tuple(back * peak / 1000))
+        for sign in (1, -1):        # back (profile > 0) and forward (profile_left < 0) as two Warps
+            w = np.maximum(sign * f, 0) / peak
+            if w.max() > 0:
+                warp(obj, w, tuple(sign * back * peak / 1000))
         print('BODY_SHAPE nape', name, 'vertices', int((w > 1e-3).sum()), 'max move mm',
               round(float(np.linalg.norm(er.world(obj) - before, axis=1).max() * 1000), 2))
 

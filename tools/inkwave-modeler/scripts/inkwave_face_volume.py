@@ -1453,13 +1453,6 @@ def bake_projection(obj, face, colour, alpha, box, up, shift, shift_y, cfg):
     sx = (cu + shift - box[0]) * up - 0.5                 # source texel of every vertex
     sy = (cv + shift_y - box[1]) * up - 0.5
     wf = facing_weights(obj, face, *cfg['facing'])
-    if cfg.get('facing_keep'):
-        # places (camera px: centre x, y, radius x, y) painted whatever way they face: the nostrils face down, but
-        # their dark is the reference's; the strict facing limit is for the wings' sides (seen from the side, the
-        # front shading on them read as a dark stain)
-        for cx, cy, rx, ry in cfg['facing_keep']:
-            t = np.clip((1.6 - np.hypot((cu - cx) / rx, (cv - cy) / ry)) / 0.6, 0, 1)
-            wf = np.maximum(wf, t * t * (3 - 2 * t))
     th = np.arctan2(L[:, 0], L[:, 2] - cfg['axis_z'])
     tm = np.abs(th).max() * 1.04
     ya, yb = L[:, 1].min() - 1.0, L[:, 1].max() + 1.0
