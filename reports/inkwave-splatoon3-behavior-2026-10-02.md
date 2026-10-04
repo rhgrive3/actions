@@ -249,3 +249,15 @@ See [weapon edge-case comparison](inkwave-weapon-edgecases-2026-10-04.md) for #3
 | プレイへの影響 | 前後切り返し・細かい位置合わせ・撃ち合い前後の方向転換で、本家より速度を失いやすく 126° 境界で減速が不連続になっていた現象が解消され、滑らかな切り返し挙動となる。 |
 | 確認状態 | **ロジック確認済み**（`patches/splatoon3/tests/issue-405.test.mjs`。30Hz/60Hz/120Hz、複数フレーム軌道、90°〜180°角度遷移、単体練習モード・ローカル/リモート分離、泳ぎ・敵インク・空中制御の非回帰）。**本家実機（Switch Ver.11.3.0）でのフレーム・ミリ単位の実測比較は未確認**。 |
 
+## オンライン対戦時の Special Charge Up 発動可能状態の遠隔同期欠落（#484、2026-10-05）
+
+開始 main は `866fd45992be33c51966a8acc55596bb5bac15a8`。対象は `inkwave-public/` とそのビルド時 overlay であり、旧 Game 試作版は対象外。本家参照版は Splatoon 3 Ver. 11.3.0（2026-08-19）。
+
+| 項目 | 内容 |
+|---|---|
+| 本家の根拠 | [任天堂サポート更新履歴](https://support.nintendo.com/jp/switch/software_support/av5ja/1130.html)、[Inkipedia Special Charge Up](https://splatoonwiki.org/wiki/Special_Charge_Up)、[StrategyWiki Subs and Specials](https://strategywiki.org/wiki/Splatoon_3/Subs_and_Specials)。スプラトゥーン3では Special Charge Up（スペシャル増加量アップ）によってスペシャル必要ポイントが実質的に減少／蓄積効率が上昇する。スペシャルが満タンになると頭上および画面上部のバトルUI（ロスターアイコン）が光り（ready glow）、味方および敵チームの双方へ発動可能状態が表示される。したがって発動可能状態の判定は全クライアント間で厳密に一致しなければならない。 |
+| INKWAVE の実装箇所 | `patches/splatoon3/runtime/gear.mjs:77`、`src/net/netmatch.js:682-713`、`src/game/actor.js:111-113`。所有者側ではギアにより `a.weapon.specialCost /= m.specialCharge ?? 1;` と実効必要量が引き下げられ（例: 180p → 10 APで約165p、57 APで約138p）、165pで `specialReady() = true` となりUIが点灯する。しかし `netmatch.js` の `packActor` は `Math.round(a.special)` のみを送信し、実効 `specialCost` や authoritative な `specialReady` フラグを同期していなかった。遠隔側プロキシ Actor はギア情報を持たず基準コスト 180p のまま `specialReady()`（`165 >= 180`）を判定するため、所有者側がスペシャル発動可能であるにもかかわらず、遠隔クライアント上のロスターUIでは ready 状態（glow）が表示されなかった。 |
+| 再現操作 | 2クライアントによるオンライン対戦。クライアントA（所有者）が Special Charge Up（10 AP または 57 AP）を装備し、自身の必要ポイント（10 AP で 165p）まで塗る。クライアントAの画面ではスペシャルが ready となるが、クライアントB（遠隔観察者）の画面ではAのロスターアイコンが非ready（未点灯）のままになる。修正版（`patches/splatoon3/issue-484-adapter.mjs`）では、`netmatch.js` のスナップショットフラグに `F.specialReady = 1048576`（1 << 20）を割り当て、さらに実効 `specialCost` をタプルに載せて同期。遠隔プロキシ Actor は所有者側の authoritative な `specialReady` 状態および同期された `specialCost` を反映する。 |
+| プレイへの影響 | Special Charge Up を装備した味方および敵のスペシャル発動準備完了状態が、全クライアントのロスターHUD上で正しく glow 表示されるようになり、戦況判断（味方スペシャルの合わせ、敵スペシャルの警戒）の情報不整合を解消。0 AP プレイヤーの標準挙動（180p等）、途中蓄積（specialFrac）、発動中（specialActive）、死亡・リスポーン時の解除、ホスト切断時のローカル引き継ぎ（_adopt）、およびオフライン／試し撃ち場（Practice Range）での単独動作も互換性を保持する。 |
+| 確認状態 | **ロジック・Node VM確認済み**（source-fixture、実 Actor / NetMatch 通信、0 AP / 10 AP / 57 AP、30Hz/60Hz/120Hz、負の対照群再現と正準受入、発動・死亡・復活ライフサイクル、ホスト adopt、2-peer 仮想通信、10/10 pass）。**Switch実機のP2P通信パケットバイナリ仕様は非公開**であるため、INKWAVE自身の権威分離・スナップショット設計に従ってフラグと実効閾値を拡張し、任天堂内部の独自ネットワーキングプロトコルとの一致は主張しない。 |
+
