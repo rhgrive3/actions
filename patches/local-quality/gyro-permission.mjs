@@ -82,10 +82,10 @@ export class GyroPermission {
       this.env.clearTimeout(pending.timer); this.pending = null; settle(false); this.notify();
     });
     Promise.resolve(motionPromise).then(result => {
-      if (this.disposed || generation !== this.generation) return;
+      if (this.disposed || generation !== this.generation || epoch !== this.lifecycle?.epoch) return;
       this.motionPermission = result === 'granted' || result === 'not-required' ? result : result === 'denied' ? 'denied' : 'error';
       this.notify();
-    }, () => { if (!this.disposed && generation === this.generation) { this.motionPermission = 'error'; this.notify(); } });
+    }, () => { if (!this.disposed && generation === this.generation && epoch === this.lifecycle?.epoch) { this.motionPermission = 'error'; this.notify(); } });
     pending.timer = this.env.setTimeout(() => {
       if (this.disposed || this.pending !== pending || generation !== this.generation) return;
       // A missing browser response is not evidence of denial. Keep the request
