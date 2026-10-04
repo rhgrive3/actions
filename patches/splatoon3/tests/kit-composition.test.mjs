@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { composeKits, VERIFIED_KITS, selectedSubCost } from '../runtime/kit-composition.mjs';
+import { composeKits, VERIFIED_KITS, selectedSubCost, registerKitMetadata } from '../runtime/kit-composition.mjs';
 const reference = JSON.parse(fs.readFileSync(new URL('../reference/curated-numbers.json', import.meta.url)));
 function registries() {
   return { WEAPONS: Object.fromEntries(['shooter','roller','charger','blaster'].map(id => [id,{id,sub:'bomb',special:'slam',specialCost:999}])),
@@ -33,4 +33,10 @@ test('selected cost honors explicit fallback and actor-local gear', () => {
   assert.equal(selectedSubCost({weapon:api.WEAPONS.shooter},api.SUB),70);
   assert.equal(selectedSubCost({weapon:api.WEAPONS.roller,s3:{modifiers:{inkSaverSub:.8}}},api.SUB),52);
   assert.equal(api.SUB.curling.inkCost,65);
+});
+
+test('metadata cannot fabricate absent special mechanics or partially update existing registries', () => {
+  const api = registries(); delete api.SPECIALS.trizooka;
+  const original = JSON.stringify(api); assert.throws(() => registerKitMetadata(api), /Special mechanics not registered: trizooka/);
+  assert.equal(JSON.stringify(api), original); assert.throws(() => composeKits(api), /incomplete/);
 });

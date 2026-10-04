@@ -54,6 +54,8 @@ const specialMetadata = {
 };
 export function registerKitMetadata({ SUB, SPECIALS, SUB_ICONS, SPECIAL_ICONS }) {
   for (const id of ['suction','curling']) if (!SUB[id]) throw new Error(`Sub mechanics not registered: ${id}`);
+  for (const id of Object.keys(specialMetadata))
+    if (!SPECIALS[id]) throw new Error(`Special mechanics not registered: ${id}`);
   for (const [id, metadata] of Object.entries(specialMetadata)) {
     const { icon: svg, ...text } = metadata;
     SPECIALS[id] = { ...SPECIALS[id], id, ...text };
