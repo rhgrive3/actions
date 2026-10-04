@@ -1,3 +1,4 @@
+import { installWeaponEdgecases } from './weapon-edgecases.mjs';
 import { installRollerLogic } from './roller.mjs';
 let api;
 export function splatlingBurst(w, charge) {
@@ -198,4 +199,5 @@ export function installWeapons(context, profile) {
     if (this.rolling && w.rollBaseSpeed) return this.rollT >= w.rollDashTime ? w.rollSpeed : w.rollBaseSpeed;
     return moveSpeed.call(this);
   };
+  installWeaponEdgecases(api);
 }

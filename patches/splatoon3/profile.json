@@ -49,7 +49,8 @@
       "lockTime": 0.5333333333333333,
       "lockInterval": 0.06666666666666667,
       "spreadLock": 0.0,
-      "range": 12.5
+      "range": 12.5,
+      "humanoidFirstShotDelay": 0.03333333333333333
     },
     "blaster": {
       "inkPerShot": 10.0,
@@ -79,7 +80,8 @@
         0.0,
         0.5,
         1.0
-      ]
+      ],
+      "terrainSplashDamageRate": 0.5
     },
     "splatling": {
       "inkPerShot": 0.5625,
@@ -107,7 +109,8 @@
         1.0,
         1.175,
         1.35
-      ]
+      ],
+      "spreadPitchGround": 1.6
     },
     "charger": {
       "inkFull": 18.0,
@@ -183,7 +186,16 @@
       "inkRecoverStop": 0.7166666666666667,
       "verticalInkRecoverStop": 0.9666666666666667,
       "flickInterval": 0.7,
-      "verticalInterval": 0.7833333333333333
+      "verticalInterval": 0.7833333333333333,
+      "nearFlickUnit": {
+        "count": 1,
+        "speedBase": 0.48,
+        "speedRandom": 0.11,
+        "mainSpeedBase": 1.05,
+        "halfAngleDegrees": 4,
+        "mainWidthReference": 0.8,
+        "widthRatio": 0.5
+      }
     },
     "slosher": {
       "inkPerShot": 7.6,
@@ -373,7 +385,11 @@
       "Surge burst velocity/armor/partial charge and post-wall air control (including the Ver.11.3.0 lateral-distance fix); 45F base charge timing is pinned",
       "HP regen delay/rate and enemy ink grace/contact-damage recovery; post-movement contact and partial-tick grace arithmetic are regression-verified only",
       "superjump airborne vulnerability window/trajectory/landing paint and respawn timing/armor; raw 80F preparation/138F flight are pinned and landing protection is removed per Nintendo 9.3.0 fix",
-      "aim response, gyro, animation, terrain/network and physical-device validation; see movement-resources comparison matrix and Switch/iOS/two-peer measurement protocol"
+      "aim response, gyro, animation, terrain/network and physical-device validation; see movement-resources comparison matrix and Switch/iOS/two-peer measurement protocol",
+      "Dualies 1F released-tap cancellation is a conservative non-buffering choice; stable held-human first shot is measured3F, squid timing remains unchanged and unverified.",
+      "Splatling grounded pitch1.6deg uses the existing radial sampler with separate axes; S3 PDF, bias, air/IA correlations are unverified.",
+      "Roller near-unit count1 is corroborated by S3 unit research, not an inferred omitted BulletNum; velocity and width use relative mappings, sampler/absolute spawn calibration remains unverified.",
+      "Blaster terrain damage is half of normalized existing bands, floor to0.1HP after scaling;35HP cap is sourced, complete S3 falloff curve remains uncalibrated."
     ],
     "movementResourcesEvidence": "reports/inkwave-movement-resources-2026-10-02.md"
   },
@@ -1163,6 +1179,42 @@
       "index": 2,
       "factor": 0.016666666666666666,
       "rawValue": 138
+    },
+    "weapons.splatling.spreadPitchGround": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/WeaponParam/PitchDegSwerve",
+      "index": null,
+      "factor": 1,
+      "rawValue": 1.6
+    },
+    "weapons.roller.nearFlickUnit.speedBase": {
+      "parameter": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WideSwingUnitGroupParam/Unit/1/SpawnSpeedBase",
+      "index": null,
+      "factor": 1,
+      "rawValue": 0.48
+    },
+    "weapons.roller.nearFlickUnit.speedRandom": {
+      "parameter": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WideSwingUnitGroupParam/Unit/1/SpawnSpeedRandom",
+      "index": null,
+      "factor": 1,
+      "rawValue": 0.11
+    },
+    "weapons.roller.nearFlickUnit.mainSpeedBase": {
+      "parameter": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WideSwingUnitGroupParam/Unit/0/SpawnSpeedBase",
+      "index": null,
+      "factor": 1,
+      "rawValue": 1.05
+    },
+    "weapons.roller.nearFlickUnit.halfAngleDegrees": {
+      "parameter": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WideSwingUnitGroupParam/Unit/1/SpawnWideDegree",
+      "index": null,
+      "factor": 1,
+      "rawValue": 4
+    },
+    "weapons.roller.nearFlickUnit.mainWidthReference": {
+      "parameter": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WideSwingUnitGroupParam/Unit/0/SpawnPositionWidth",
+      "index": null,
+      "factor": 1,
+      "rawValue": 0.8
     }
   },
   "gearExtra": {
