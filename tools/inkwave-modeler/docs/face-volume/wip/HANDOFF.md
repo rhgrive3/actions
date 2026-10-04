@@ -135,3 +135,7 @@
 - 正式な版で残った「耳の後ろから首へのななめの線」は色ではなく形の折れ目（顔が首にのり始める所、頭 |x| 35〜46、y -74〜-85、z -30〜21）→ 新しい手順 `ramus_back_smooth`（Smooth 0.5、中心 [40,-79,-5]、半径 14/14/36、150 回、jaw_tuck のあと）= R4。P1〜P3（上の線や depth_back を変える）は折れ目が強くなった。params = R4。正式なビルド Q3。
 - 10/04 夕: ユーザー「首に参照にない起伏」= 首のたてのすじ。lateral / flare の重み |nx|（1 乗）が首の前の真ん中で V に折れるため → 2 乗（lateral 2、flare.power 2）+ smooth 30 = X2。params = X2。正式なビルド Q4。README に V93 の節。
 - 10/04 夜: Q4（X2）を master V93 にして PR https://github.com/rhgrive3/actions/pull/316（ブランチ claude/inkwave-jaw-neck-v93、main から、wip なし）。マージはユーザーの OK 待ち。PR 用の作業ツリー: checkouts/inkjaw-pr。
+- 10/04 夜（再起動のあと、ユーザー「go」= 試しを速く）: マシンがすいていればモデル作りは 39 秒（face_volume 34 + body_shape 5）。前の 5.5 分は同時に走らせた描画で混んでいたため → 途中から作り直す仕組みは作らない。時間の大部分は Cycles（1 方向 6〜7 分）。
+  - `wide_render.py` に `JAWCROP=1`（Cycles を顎・首の枠だけ描く。絵の大きさは同じ、外は黒）。evidence/tools のものを直し、写しを wip/tools に置いた。
+  - `fast.sh NAME`: ビルド + 3 方向の粘土（全体）と色つき（顎だけ）を同時に → 65 秒（前は 15〜20 分）。輪郭の数は全体描画と同じ（curve.py で確認）。`NOBEAUTY=1` で粘土だけ。
+  - `stopjob.sh` は自分と呼んだシェルを止めない（前は名前がコマンドにあると自分を止めた）。
