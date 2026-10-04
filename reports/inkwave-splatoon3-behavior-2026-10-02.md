@@ -183,3 +183,24 @@ Flow の外殻・粒・リボンが GTAO の法線／深度パスに不透明な
 | 76 | スペシャル使用時のインク | 発動でインクタンク全回復 | `runtime/resources.mjs` が `_startSpecial` を包み、成功時のみ1回回復。slam/storm・未発動・継続中の非再回復・次弾消費を合成確認 | 合成で確認 |
 
 compare 対象の変更点は `patches/splatoon3/profile.json` の `player.respawnTime`/`respawn`、`runtime/resources.mjs`、`adapter.mjs` の respawn フックのみ。武器キットや他ファイルは変更していない。未確認の数値を公式値として確定しない。
+
+## ビッグバブラー（issue 177）モジュールの追記（2026-10-04、公開版のみ）
+
+`inkwave-public/` の `patches/splatoon3/runtime/kit-big-bubbler.mjs` に追加した、キット専用モジュール。`game/`（INKGORGE 試作版）は対象外。詳細は `reports/public-kit-big-bubbler-20261004.md`、回帰は `patches/splatoon3/tests/kit-big-bubbler.test.mjs`（19/19）、証拠は `evidence/actions-freebuff-20261004/freebuff-6/`。
+
+### 本家の根拠（Ver.11.3.0、splat3 `7280ff9cde8bb1c5dcef46c700c326471584d2e6`）
+
+一次資料は `evidence/actions-freebuff-20261004/kit-primary/` の固定原本のみ。`base-kit-fields.json` の `Roller_Normal_00` → `SpGreatBarrier`（`SpecialPoint` 180）、`WeaponInfoSpecial.json` の `__RowId "SpGreatBarrier"`（`Id 2`、`StandAlone: false`）、`WeaponSpGreatBarrier.game__GameParameterTable.json` の `BarrierParam` / `DroneParam` / `BaseParam`。同じ原本の `SpBlower` はインク吸引、`SpUltraShot` はトリゾーグであり、本モジュールとは別である。
+
+| ID | 本家の挙動と根拠 | INKWAVE の実装箇所 | 再現操作 | プレイへの影響 | 確認状態 |
+|---|---|---|---|---|---|
+| B01 | ローラーのスペシャルがビッグバブラー（`SpGreatBarrier`、`SpecialPoint` 180） | `kit-big-bubbler.mjs` の `installKitBigBubbler` が `Actor.prototype._startSpecial` を包む。ゲージ消費・`stats.specials`・フォーム変化・音声は native のもの | ローラーでスペシャル入力 | 発動位置の `deployDistance` 分前方に、回転しない構造体が生成される。specialActive を作らず無敵も付けない | 合成 Actor で発動・特殊値の減算を実測。`deployDistance` は原典に投擲距離が無いため校正値 |
+| B02 | バブルは展開後に半径が成長し、`MinRadius` 2.255 から `MaxRadius` 7.5 まで | `BIG_BUBBLER_RAW.radiusCurve`（`Hermit2DSmooth`）を `hermite2d` で評価。成長窓は校正値 | 発動後 0.75 秒を計測 | 大きさは固定幅で成長する。成長窓の秒数は本家未確認 | 固定端点と単調性を合成確認。窓の数値は未確認 |
+| B03 | `IgnitionFrame` 15 フレームで内部が塗られ、`TimeDamage` 921 で衰退 | `tickBigBubblers` の点火と burn。`radiusGrowthSeconds`/`rawPerDamageUnit`/`timeDamageIntervalSeconds` は宣言された校正値 | 発動し、`TimeDamage` 合計で消えるまで計測 | 0-AP の `MaxHP` 15360 が尽きるまで残る。1 回の命中コストは 36×100=3600 | 合成で減算と崩壊を確認。**HP スケールと per-frame/per-second の読みは未確認**。原典は単位を示さない |
+| B04 | 浮上するエミッターは別予算 `MaxFieldHP.Low` 30720 で、壊すと崩れる | `domeEntry` がシェルとエミッターの球を別ターゲットとして提示し | 点火後に真上へ撃つ | シェルを通らずエミッターだけを狙える | 合成確認。エミッターが露出する高さは `AscendCurve`（校正）からで本家未確認 |
+| B05 | 敵の弾は泡の外側で止まり、内側から出た弾は抜ける | `kitBarrierCandidate(p, start, end)` は **第一進入 `t` × 区間長 = ワールド距離**を返し、`onHit()` は親側が最近接判定で選んだ場合だけ適用する | 泡の内外から撃つ | 壁・敵アクター・ボスより遠い候補は勝てない | 実 `Physics` の壁距離と候補距離を同じ区間で比較する合成テストで実証（`patches/splatoon3/tests/kit-big-bubbler.test.mjs`） |
+| B06 | バブルが爆発を遮蔽する。**未確認** | `kitBarrierShelter(p, start, end)` を read-only の引渡しとして提供。`Actor.invuln` には触れない、泡内から始まる爆弾は遮蔽しない、`Physics.los` を置換しない | 未接続（配線は親担当） | 現状は泡が爆発を遮蔽しない | **ハンドオフのみ。実装・比較いずれも未確認。** 崩壊時の内部掃討も未実装 |
+| B07 | 遠隔の泡の状態表現 | `bigBubblerSnapshot()` と `kit:bubbler:deploy` / `ignite` / `hit` / `burn` / `collapse`、`kitBarrierHitRecord(candidate)` | 未接続（配線は親担当） | 現状は遠隔への再現がない | **handoff のみ。オンラインの対等性は主張しない。** net コード・予測・ reconciliation は無い |
+| B08 | ゴースト弾は表示上だけ | `p.ghost` は `visualOnly` となり `onHit()` は 0。HP・塗り・芝は動かさない | 未接続 | 遠隔の像は泡で止まるが、HP は減らない | 合成確認。**遠隔の完全再現ではない** |
+
+比較対象の追加は `runtime/kit-big-bubbler.mjs`、そのテスト、`reports/public-kit-big-bubbler-20261004.md` のみ。`inkwave-public/**`、`adapter.mjs`、`profile.json`、`install.mjs`、`gear.mjs`、ネットワーク構成は変更していない。special の発動・命中・消滅の実測は合成ランタイムのロジック測定であり、ブラウザ実動作・Switch 実機の比較ではない。`CanopyKnockBack` 700、`DamgeRatio` 0.64、`MaxHP.Mid/High`、`TimeDamageOnVLift`、special 点 180 以外の数値、`AscendFrame`/点火高さの体感は未確認のまま残す。

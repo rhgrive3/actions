@@ -66,11 +66,76 @@ is presented as a Nintendo one.
   erasing there would delete the dome immediately after the owner's own death,
   which the reference does not do. See "Expiry" below.
 
+No new guessed Nintendo value was introduced by this revision. The only new
+numbers are the *candidate's own* test tolerances (brute-force march step size).
+
 Unverified and not implemented: the throw arc/animation, the emitter's own
 damage model beyond its HP, `CanopyKnockBack` knock-back, `DamgeRatio`, the
 `MaxHP.Mid/High` Ink Resistance tiers, and `TimeDamageOnVLift`.
 
-## What the module does
+## The contact-query contract (what changed in this revision)
+
+The previous revision shipped a **predictive `_step` fallback**. It is gone. The
+parent rejected it for two reasons, both correct:
+
+1. It duplicated the native gravity/drag integration, so a round was integrated
+   twice with two different truths.
+2. It intercepted **before** checking the native wall/actor/boss contacts, so a
+   dome behind a nearer wall could claim a hit that the wall already owned.
+
+`Projectiles.prototype._step` is now **untouched**; a test asserts it is
+identical to the composed native method. There is no fallback switch, no
+`barrierProjectile` and no extra pass over `Projectiles.list`.
+
+What the module exposes instead is a **side-effect-free candidate query**:
+
+```js
+Projectiles.prototype.kitBarrierCandidate(p, start, end) -> candidate | null
+kitBarrierCandidate(p, start, end)                        // module-level, same thing
+```
+
+- `p` is the native projectile record; `start`/`end` are the two points the
+  native step is *already* testing (normally `p.prev` → `p.pos`). Defaults are
+  `p.prev` / `p.pos`.
+- Reading a candidate mutates nothing: no position, no HP, no turf, no paint, no
+  event. That is proven by a test that snapshots all four around the call.
+- `candidate.distance` is a **WORLD** distance: first-entry fraction `t` times
+  `start.distanceTo(end)`. It is directly comparable with `Hit.dist` from the
+  native `G.physics.segment`, the actor-capsule distance and the boss
+  `segHit`. A dome behind a wall therefore *must* report a larger distance.
+  A test measures both against the same segment in a real `Physics` level and
+  asserts the wall wins; removing the wall flips the same query to the dome.
+- The candidate also carries `t`, `point`, `normal`, `target`
+  (`'canopy' | 'field'`), `dome`, `domeId`, `team`, `damage`, `visualOnly`,
+  `settled` and `onHit()`.
+- `onHit()` is the **only** mutation: it spends the dome HP, emits
+  `kit:bubbler:hit` (or `kit:bubbler:burn` / `kit:bubbler:overlap` for internal
+  ticks, so an incoming contact is never confused with the TimeDamage burn),
+  spawns the native FX, and is **idempotent** — a second call returns 0.
+- The candidate reuses **one** internal record, so it is valid only until the
+  next query. The caller must arbitrate and settle before asking again.
+
+Long steps and inside origins:
+
+- A 120 m step reports the same world distance as a short step covering the same
+  entry point (verified against a brute-force march of the segment), so a large
+  `dt` cannot inflate or hide a contact.
+- A segment that **starts inside** the sphere yields `null`, so anyone — owner
+  or hostile — inside the dome may shoot out. That is also what makes the
+  hostile-inside shielding rule below work.
+- Friendly rounds (`p.team === dome.team`) are never candidates.
+
+The exposed emitter is a **distinct** target: once armed it is a separate sphere
+above the shell with its own `MaxFieldHP` budget, so it can be shot without
+crossing the canopy, and draining it collapses the dome.
+
+### Ghost rounds
+
+A ghost round (`p.ghost`, the native remote-image flag) **may** be stopped at the
+dome — that is what makes the remote image match — but `visualOnly` is forced and
+`onHit()` is a no-op: no HP, no turf, no paint, no event. A test proves all four.
+
+## What else the module does
 
 `installKitBigBubbler(api, profile)` exports only this module's behaviour:
 
@@ -86,18 +151,80 @@ damage model beyond its HP, `CanopyKnockBack` knock-back, `DamgeRatio`, the
   the interior with the pinned `BaseParam.PaintRadius`, then applies the pinned
   `TimeDamage` to the canopy until it collapses.
 - **Emitter** — rises on the pinned `AscendCurve` to `AscendHeight`, above the
-  shell, and has its own `MaxFieldHP` budget. Destroying it collapses the dome.
-- **Interception** — enemy rounds stop at the dome surface (first entry of the
-  shell or of the exposed emitter, whichever is earlier). Friendly rounds and
-  rounds already inside may leave. Ghost rounds are never intercepted. Actors
-  walk in freely, take no damage by standing inside, and get no invulnerability.
+  shell, and has its own `MaxFieldHP` budget.
+- **Structure clock** — `tickBigBubblers(dt)` drives growth, ignition and the
+  burn only. It reads no round list and integrates nothing native. It is wired
+  to `Projectiles.update` so the dome lives on the native clock, and the caller
+  may drive it directly instead.
 - **Paint/damage ownership** — paint only through `G.paint.splat`; damage only
   through this module's HP budgets and, where used, the native
   `G.projectiles.applyHit`. There is no second physics, damage or paint engine.
 - **Visual** — a real `THREE` hemisphere plus emitter mesh in `G.scene`, team
-  coloured; geometry and materials are disposed on removal.
-- **Net** — `bigBubblerSnapshot()` emits plain serializable state; the module
-  does not replicate it (parent-owned, see handoff).
+  coloured; every geometry and material is disposed on removal.
+- **Disposal** — `Projectiles.clear()` (the match-disposal path in `main.js`)
+  removes every dome and releases its scene objects.
+
+Actors walk into the dome freely: no push, no damage for standing inside, no
+invulnerability for anyone. Only enemy rounds are candidates.
+
+## Explosion shielding handoff
+
+```js
+Projectiles.prototype.kitBarrierShelter(p, start, end) -> descriptor | null
+kitBarrierShelter(p, start, end)                          // module-level
+```
+
+This is a **handoff, not an integration**: the module does not touch any blast,
+bomb, `_blastBurst` or `los` path. It adds exactly one more candidate to the
+*same* native first-contact arbitration the parent already performs, so that when
+the dome is the first thing a blast segment touches, the parent consumes the blast
+at the dome instead of at the target.
+
+It deliberately does **not**:
+
+- touch `Actor.invuln` — nobody inside the dome becomes invulnerable, so there is
+  no universal player invulnerability;
+- shield a blast whose origin is **inside** the dome (an inside origin yields no
+  candidate), so an attacker standing in the dome keeps its native hostile
+  behaviour and is still hittable;
+- add a wall test or replace `Physics.los`, so native cover keeps working. A
+  test asserts `G.physics.los` is still the native method and that asking for a
+  shield does not change its answer.
+
+A test proves all of the above plus: a missing dome, a blast that misses the dome
+and a friendly blast all return `null`, and the shielding query itself spends no
+HP (that stays the caller's `onHit()` decision).
+
+Sweeping enemy rounds that were *inside* the dome when it collapses is **not**
+implemented. If the parent wants it, subscribe to `kit:bubbler:collapse` and route
+the burst through the native blast path; the burst radius and parameters are not
+pinned by any receipt and no value is guessed here.
+
+## Remote replay handoff (no online parity claim)
+
+The concrete, serializable surface a net layer can consume:
+
+| Surface | Payload |
+|---|---|
+| `bigBubblerSnapshot()` | `[{ domeId, team, t, pos, radius, emitterY, hp, fieldHp, ignited }]` — plain data, survives `JSON.stringify` |
+| `kit:bubbler:deploy` | `{ owner, domeId, team, pos, hp, fieldHp }` |
+| `kit:bubbler:ignite` | `{ owner, domeId, team, pos }` |
+| `kit:bubbler:hit` | `{ owner, domeId, team, target, amount, cause:'shot', hp, fieldHp }` |
+| `kit:bubbler:burn` | same shape, `cause:'burn'` (the internal TimeDamage tick) |
+| `kit:bubbler:collapse` | `{ owner, domeId, team, pos, reason }` |
+| `kitBarrierHitRecord(candidate)` | `{ domeId, team, target, distance, point, normal, visualOnly }` — the per-contact replay record |
+
+A test drives deploy → ignite → one `onHit` → collapse and asserts each stage is
+emitted exactly once with an identifiable `domeId` and a JSON-safe forwarded
+subset, and that the burn never masquerades as an incoming hit.
+
+Like every native kit event, the payloads carry the live `owner` object; a net
+layer forwards the serializable subset, exactly as the test does.
+
+**No online parity is claimed.** There is no net code, no reconciliation, no
+client prediction, no rollback and no packet format in this lane. Ghost rounds
+are *visual-only* at the dome, which is the minimum needed for a remote image to
+look right, not a replication implementation.
 
 ## Expiry, disposal and reset
 
@@ -124,34 +251,48 @@ ignition and the burn.
    unique by a test in this lane:
 
    ```
-   before:  "      p.pos.addScaledVector(p.vel, dt);\n      let dead = false;"
-   after:   "      p.pos.addScaledVector(p.vel, dt);\n      let dead = this.kitBarrier ? this.kitBarrier(p) : false;"
+   before: "      p.pos.addScaledVector(p.vel, dt);\n      let dead = false;"
    ```
 
-   `Projectiles.prototype.kitBarrier(p)` returns the first-entry record
-   (`{ dome, distance, point, normal, target }`) or `false`, and applies the
-   canopy/emitter damage itself, so the native loop keeps the chronology and the
-   module never scans or re-integrates the round list.
-3. **Install** (`patches/splatoon3/runtime/install.mjs`, parent-owned): import
-   and call `installKitBigBubbler(api, profile)` after the other installers,
-   then call `disableBigBubblerFallback()` so the stand-in `_step` wrapper stops
-   double-testing rounds. Until (2) and (3) land, the module ships inert.
-4. **Network** (parent-owned): `bigBubblerSnapshot()` plus the
-   `kit:bubbler:deploy` / `kit:bubbler:collapse` events are the integration
-   surface. Remote proxies are **not** implemented in this lane — the parent must
-   decide replication (host-authoritative snapshot on deploy/collapse) and, if
-   wanted, gate remote interception on `p.ghost`, which is already honoured.
+   The replacement keeps the native chronology (actor loop → boss → world) and
+   adds the dome as one more candidate in the *world* branch, comparing world
+   distances, calling `onHit()` only on the winner:
+
+   ```js
+   if (!dead) {
+     const kit = this.kitBarrierCandidate(p, p.prev, p.pos);
+     const hit = G.physics.segment(p.prev, p.pos, _hit, true);
+     if (kit && (!hit.hit || kit.distance < hit.dist)) { kit.onHit(); dead = true; }
+     else if (hit.hit) { ...existing native wall response... }
+   }
+   ```
+
+   The module never scans or re-integrates the round list, and never settles a
+   candidate the parent did not select.
+3. **Blast path** — the same arbitration with `kitBarrierShelter(p, prev, pos)`
+   in the native blast/impact branch. See "Explosion shielding handoff" for the
+   three rules the call must preserve.
+4. **Install** (`patches/splatoon3/runtime/install.mjs`, parent-owned): import
+   and call `installKitBigBubbler(api, profile)` after the other installers.
+   There is **no** fallback to disable. Until (2) lands the module ships inert:
+   the domes deploy, grow and expire, but nothing queries them.
+5. **Network** (parent-owned): `bigBubblerSnapshot()` plus the `kit:bubbler:*`
+   events and `kitBarrierHitRecord()` are the whole integration surface. Remote
+   proxies are not implemented here and no online parity is claimed.
 
 ## Explicit gaps — not claimed as complete
 
-- **Explosion shielding on collapse** is not implemented. When the dome is
-  destroyed, enemy rounds already inside it are not swept or damaged.
-  Handoff: subscribe to `kit:bubbler:collapse` and add the burst through the
-  native blast path; the blast radius/parameters are not pinned by any receipt.
-- **Remote ghost replay** of a deployed dome is not implemented (see handoff 4).
-- **Bomb interaction**: only the bullet pipeline (`Projectiles.list`) is probed.
-  Thrown bombs (`Projectiles.bombs` / `_updateBombs`) are unaffected, which is
-  consistent with a dome that stops rounds rather than thrown explosives.
+- **The public installed pipeline does not yet query the dome.** Wiring is
+  parent-owned (items 2–4 above). Until then the kit deploys and expires but no
+  round is stopped by it. This lane's tests are therefore contract tests, not an
+  end-to-end interception test, and they do not pretend otherwise.
+- **Explosion shielding on collapse** (the inside-the-dome sweep) is not
+  implemented; see the handoff section for the concrete subscription point.
+- **Remote ghost replay** of a deployed dome is not implemented (handoff 5).
+- **Bomb interaction**: only the bullet pipeline (`Projectiles.list`) is
+  queried. Thrown bombs (`Projectiles.bombs` / `_updateBombs`) are unaffected,
+  which is consistent with a dome that stops rounds rather than thrown
+  explosives.
 - No physical-device, browser or Switch parity is claimed. The evidence is a
   composed-runtime logic measurement under `node --experimental-vm-modules`.
 
@@ -159,21 +300,51 @@ ignition and the burn.
 
 `patches/splatoon3/tests/kit-big-bubbler.test.mjs` runs against the **actual
 composed runtime** — the immutable `inkwave-public` sources adapted by
-`patches/splatoon3/adapter.mjs` with the real `Actor`, `Projectiles` and config.
-Only wall/ground collision and audio are stubbed. 13/13 pass.
-
-Logs in `evidence/actions-freebuff-20261004/freebuff-6/`:
-`kit-big-bubbler-after.log` (13/13), `kit-focused-regression.log` (42/42 with
-`adapter.test.mjs` + `integration.test.mjs`), `kit-patch-gate-quick.log`
-(`check-inkwave-patches --quick` OK, reference 11.3.0).
+`patches/splatoon3/adapter.mjs` with the real `Actor`, `Projectiles`, `Physics`
+and config objects. A synthetic level of real oriented boxes is driven by the
+real `Physics` so native wall contacts are genuine distances, not stubs. Only
+audio and the renderer are absent. **19/19 pass.**
 
 Covered: pinned curve endpoints and monotonicity; deploy/pinned durability/native
-gauge+stat/no-specialActive/no-invulnerability; stationary; growth, arming on the
-pinned frame and the radius cap; `TimeDamage` collapse with real GPU disposal;
-enemy round consumed at the surface with the actor behind it unharmed and an
-exact canopy delta; the first-entry distance/point/parametric parameter of the
-documented hook; uniqueness of the parent adapter anchor; actors inside take no
-damage and friendly rounds fired from inside escape; emitter damageable above
-the shell and its destruction collapsing the dome; owner death and respawn not
-erasing; match disposal erasing and releasing the scene; the opt-in reset flag;
-zero-dt freeze; and the net snapshot being plain serializable state.
+gauge+stat/no-`specialActive`/no-invulnerability; stationary; growth, arming on
+the pinned frame and the radius cap; `TimeDamage` collapse with real GPU disposal
+of all four resources exactly once; **querying alone changes no position, no HP,
+no turf and emits nothing**; `distance === t × segmentLength`, the entry point on
+the inflated shell, misses and degenerate steps; **a dome behind a real wall
+reports a larger distance and loses, and the same segment with the wall removed
+wins**; **the winning handler spends HP exactly once and is idempotent**, with a
+serializable replay record; **a 120 m step reports the same world distance as a
+short step and matches a brute-force march**, and an inside origin may leave;
+friendly rounds are never candidates; the emitter is a distinct target with its
+own budget, and draining it collapses the dome; **ghost rounds are stopped but
+spend no HP, turf or paint**; actors inside take no damage and get no
+invulnerability; owner death and respawn do not erase, match disposal does;
+the opt-in reset flag; zero-dt freeze; the snapshot is plain serializable data;
+the **explosion shielding handoff** preserves native LOS, inside-origin hostility
+and grants no invulnerability; the **deploy/ignite/hit/burn/collapse replay
+streams** are emitted once each with JSON-safe payloads; and uniqueness of the
+parent adapter anchor together with `_step` being untouched.
+
+Logs in `evidence/actions-freebuff-20261004/freebuff-6/`:
+
+| Log | Result |
+|---|---|
+| `bubbler-followup-run1.log` … `run5.log` | the five revision runs; run5 is the passing set |
+| `bubbler-followup-run5.log` | 19/19, exit 0 |
+| `bubbler-followup-regression.log` | 42/42, exit 0 (`kit-big-bubbler` + `public-issues-6` + `adapter`) |
+| `bubbler-followup-gate-quick.log` | `check-inkwave-patches --quick` OK, upstream compatible, reference 11.3.0 |
+
+Additionally, both the module and its test file were re-parsed through the full
+adapter chain (`adaptSource` → `adaptTouchLayout` → `adaptReliability` →
+`adaptQualitySource`, then `new vm.SourceTextModule(out)`); both constructed
+cleanly.
+
+Task B logs (`kit-big-bubbler-after.log`, `kit-focused-regression.log`,
+`kit-head-rerun.log`) describe the superseded fallback revision and are kept only
+for audit.
+
+## Superseded revision
+
+The first pass (commit `dbced19`, `SECOND-DONE.json`) shipped the predictive
+`_step` fallback. It is superseded by this revision; both the module and the test
+file were rewritten, and `SECOND-DONE.json` is preserved unchanged for audit.
