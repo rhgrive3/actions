@@ -7,8 +7,15 @@ import { fileURLToPath } from 'node:url';
 import { adaptSource } from '../adapter.mjs';
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const UPSTREAM = process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
-export async function fixture() {
-  const context = vm.createContext({ console, performance });
+export async function fixture({ seed } = {}) {
+  const sandbox = { console, performance };
+  if (seed !== undefined) {
+    let state = seed >>> 0;
+    const math = Object.create(Math);
+    math.random = () => ((state = (Math.imul(1664525, state) + 1013904223) >>> 0) / 4294967296);
+    sandbox.Math = math;
+  }
+  const context = vm.createContext(sandbox);
   const modules = new Map();
   function resolve(spec, from) {
     if (spec === 'three') return path.join(UPSTREAM, 'vendor/three/build/three.module.js');
@@ -31,6 +38,7 @@ export async function fixture() {
     export * from './inkwave-public/src/game/weapons.js';
     export * from './inkwave-public/src/game/physics.js';
     export * from './inkwave-public/src/game/player.js';
+    export * from './inkwave-public/src/net/netmatch.js';
     export * from './inkwave-public/src/core/shadowcache.js';
     export * as THREE from 'three';
     export * from './patches/splatoon3/runtime/movement.mjs';

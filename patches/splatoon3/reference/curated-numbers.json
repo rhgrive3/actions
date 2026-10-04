@@ -1305,6 +1305,22 @@
       "status": "extracted",
       "unit": "gear effect ratio",
       "notes": "Per-weapon override; unchanged endpoints reuse the pinned common curve. No omitted default reconstructed."
+    },
+    "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeedRandomRate": {
+      "value": 0.12,
+      "pointer": "/GameParameters/MoveParam/SpawnSpeedRandomRate",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Pinned explicit field. Absolute speed half-width interpretation is cross-checked against the S3 Wiki 19.8..22.2 DU/F range; gamma distribution and partial-charge mapping remain community calibration, not official engine verification."
+    },
+    "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeedRandomBias": {
+      "value": 0.2,
+      "pointer": "/GameParameters/MoveParam/SpawnSpeedRandomBias",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Pinned explicit field. Absolute speed half-width interpretation is cross-checked against the S3 Wiki 19.8..22.2 DU/F range; gamma distribution and partial-charge mapping remain community calibration, not official engine verification."
     }
   }
 }

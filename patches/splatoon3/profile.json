@@ -103,6 +103,10 @@
       "range": 21,
       "firstChargeTime": 0.8,
       "burstFirst": 1.3333333333333333,
+      "airChargeRate": 0.25,
+      "emptyChargeRate": 0.25,
+      "speedRandomHalfWidth": 7.2,
+      "speedRandomBias": 0.2,
       "runSpeedFiringCurve": [
         1.0,
         1.175,
@@ -373,7 +377,8 @@
       "Surge burst velocity/armor/partial charge and post-wall air control (including the Ver.11.3.0 lateral-distance fix); 45F base charge timing is pinned",
       "HP regen delay/rate and enemy ink grace/contact-damage recovery; post-movement contact and partial-tick grace arithmetic are regression-verified only",
       "superjump airborne vulnerability window/trajectory/landing paint and respawn timing/armor; raw 80F preparation/138F flight are pinned and landing protection is removed per Nintendo 9.3.0 fix",
-      "aim response, gyro, animation, terrain/network and physical-device validation; see movement-resources comparison matrix and Switch/iOS/two-peer measurement protocol"
+      "aim response, gyro, animation, terrain/network and physical-device validation; see movement-resources comparison matrix and Switch/iOS/two-peer measurement protocol",
+      "Splatling batch: 1/4 air/empty charge is Wiki-sourced; low-ink transition uses the existing two-stage cost model. Forty-shot endpoint inclusion, exact S3 spread PDF, partial-charge speed jitter amplitude and the precise sub-ready cancellation frame still require Switch metrology. See reports/inkwave-splatling-batch-2026-10-04.md."
     ],
     "movementResourcesEvidence": "reports/inkwave-movement-resources-2026-10-02.md"
   },
@@ -1163,6 +1168,18 @@
       "index": 2,
       "factor": 0.016666666666666666,
       "rawValue": 138
+    },
+    "weapons.splatling.speedRandomHalfWidth": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeedRandomRate",
+      "index": null,
+      "factor": 60,
+      "rawValue": 0.12
+    },
+    "weapons.splatling.speedRandomBias": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeedRandomBias",
+      "index": null,
+      "factor": 1,
+      "rawValue": 0.2
     }
   },
   "gearExtra": {

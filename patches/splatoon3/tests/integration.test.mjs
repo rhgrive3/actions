@@ -115,7 +115,7 @@ test('gear uses distinct walk and firing curves, and does not speed up roller ro
 test('splatling first stage yields its 80-frame stream, conserving the prepaid ink', async () => {
   const f = await fixture(), a = f.make('splatling'), r = a.weaponRunner;
   a.ink = 11.25;
-  for(let i=0;i<73;i++)r.update(1/60,{fire:true});
+  for(let i=0;i<48;i++)r.update(1/60,{fire:true});
   assert.ok(Math.abs(r.charge-2/3)<1e-9);
   r.update(1/60,{fire:false});
   assert.ok(Math.abs(r.burstDur-80/60)<1e-9); assert.ok(a.ink<1e-9);

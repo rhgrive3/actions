@@ -669,6 +669,36 @@
       "rawValue": 80
     }
   },
+  "weapons.splatling.airChargeRate": {
+    "value": 0.25,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.splatling.emptyChargeRate": {
+    "value": 0.25,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.splatling.speedRandomHalfWidth": {
+    "value": 7.2,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeedRandomRate",
+      "index": null,
+      "factor": 60,
+      "rawValue": 0.12
+    }
+  },
+  "weapons.splatling.speedRandomBias": {
+    "value": 0.2,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeedRandomBias",
+      "index": null,
+      "factor": 1,
+      "rawValue": 0.2
+    }
+  },
   "weapons.splatling.runSpeedFiringCurve.0": {
     "value": 1,
     "status": "derived from pinned extracted data; physical scale unverified",
