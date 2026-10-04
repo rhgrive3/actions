@@ -551,16 +551,14 @@ test('only a charged, single, live native activation deploys a structure', async
   let refills = 0;
   const stopRefill = f.on('special:refill', () => refills++);
   f.G.actors = [a];
-  const inkBefore = a.ink;
+  a.ink = 23;
   a.special = a.specialCost(); a.intent.special = true; f.tick(a);
   stopRefill();
   assert.equal(bigBubblerDomes().length, 1, 'one real activation deploys exactly one dome');
   assert.equal(a.stats.specials, 2, 'only the valid outer activation and ordinary activation spend the gauge');
   assert.equal(a.special, 0);
-  assert.equal(refills, 0,
-    'this module never refills: the parent resources module keys the refill on a '
-    + 'specialActive activation, and the bubbler deliberately sets none');
-  assert.equal(a.ink, inkBefore, 'so the tank is exactly where the parent left it');
+  assert.equal(refills, 1, 'the parent resources wrapper refills exactly once for a valid native activation');
+  assert.equal(a.ink, f.PLAYER.inkMax, 'a deployed special refills the tank even without a persistent specialActive token');
 });
 
 test('the module never writes an ink field, so the refill stays the parent’s', async () => {
