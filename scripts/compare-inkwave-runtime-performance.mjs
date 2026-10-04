@@ -9,6 +9,7 @@ for(const [label,r]of [['before',before],['after',after]]){
  if(r.status!=='passed')errors.push(label+' failed');
  if(!r.sourceSha||!r.verifiedRuntimeFiles.includes('src/core/renderer.js'))errors.push(label+' missing active source receipt');
 }
+if(before.environment.seedMode!=='reset-each-profile-window'||after.environment.seedMode!=='reset-each-profile-window')errors.push('Uncontrolled window RNG');
 for(const k of ['cpu','cores','platform','quality','viewport','webgl','repetitions','browser','seed','seedMode'])if(JSON.stringify(before.environment[k])!==JSON.stringify(after.environment[k]))errors.push('Different environment: '+k);
 for(const [label,r]of [['before',before],['after',after]])if(JSON.stringify(r.scenarios.map(x=>x.scenario))!==JSON.stringify(['title','settings','battle']))errors.push(label+' incomplete scenario set');
 if(after.inputStatus!=='synchronous'||after.input.length!==36)errors.push('Candidate input target regression');
