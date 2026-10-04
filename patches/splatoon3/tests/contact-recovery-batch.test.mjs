@@ -93,3 +93,36 @@ test('contact/refill traces are render-rate independent through the public Fixed
  for(let i=0;i<hz/2;i++)clock.advance(1/hz,dt=>{f.G.time+=dt;a.update(dt);trace.push(a.ink);});traces.push(trace);}
  assert.deepEqual(traces[0],traces[1]);assert.deepEqual(traces[1],traces[2]);
 });
+
+function runLoadout(gp){return Array.from({length:3},(_,i)=>({main:gp===57||gp===10&&i===0?'runSpeed':'none',subs:Array.from({length:3},(_,j)=>gp===57||gp===3&&i===0&&j===0?'runSpeed':'none')}));}
+test('#350: real tap/held repeated horizontal/vertical flicks use firing gear at 0/3/10/57 AP from first windup frame',async()=>{
+ for(const gp of [0,3,10,57])for(const vertical of [false,true])for(const held of [false,true]){
+  const f=await fixture(),a=f.make('roller'),b=f.make('roller');a.s3.loadout=runLoadout(gp);a.setWeapon('roller');a.grounded=b.grounded=!vertical;f.G.actors=[];f.G.projectiles.applyHit=()=>{};
+  const factor=f.gearCurve(gp,...f.profile.gearExtra.runSpeedFiring);let winding=0,rolling=0;
+  for(let i=0;i<130;i++){
+   const press=i===0||i===70,input={fire:held||press,firePressed:press};a.weaponRunner.update(DT,input);b.weaponRunner.update(DT,input);
+   const r=a.weaponRunner,s=b.weaponRunner;assert.equal(r.flick,s.flick);
+   if(r.flick>=0){near(r.moveSpeed()/s.moveSpeed(),factor);winding++;}
+   else if(r.rolling){near(r.moveSpeed(),s.moveSpeed());rolling++;}
+   else if(r.firingT>0)near(r.moveSpeed()/s.moveSpeed(),factor);
+  }
+  assert.ok(winding>=40);if(held&&!vertical)assert.ok(rolling>0);near(f.WEAPONS.roller.moveSpeedFiring,2.88);
+ }
+});
+test('#350: idle walking retains normal gear, while reset, re-equip, enemy ink and other actors do not compound it',async()=>{
+ const f=await fixture(),a=f.make('roller'),b=f.make('roller');a.s3.loadout=runLoadout(57);a.setWeapon('roller');near(a.weaponRunner.moveSpeed()/b.weaponRunner.moveSpeed(),1.5);
+ for(let i=0;i<3;i++){a.weaponRunner.update(DT,{firePressed:true});near(a.weaponRunner.moveSpeed(),2.88*1.25);a.reset();a.setWeapon('roller');near(a.weaponRunner.moveSpeed(),f.PLAYER.runSpeed*1.5);}
+ a.weaponRunner.update(DT,{firePressed:true});a.grounded=true;a.intent.fire=true;a.intent.move.set(1,0,0);a.vel.set(a.s3.modifiers.enemyShotSpeed,0,0);a._horizontal(DT,false,true);near(a.vel.x,a.s3.modifiers.enemyShotSpeed);near(b.weaponRunner.moveSpeed(),f.PLAYER.runSpeed);
+ a.setWeapon('shooter');near(a.weaponRunner.moveSpeed(),f.PLAYER.runSpeed*1.5);a.weaponRunner.firingT=.2;near(a.weaponRunner.moveSpeed(),a.weapon.moveSpeedFiring*1.25);
+});
+test('#350: previous firing pose cannot change the same flick-phase gear ratio',async()=>{
+ const f=await fixture(),a=f.make('roller'),b=f.make('roller');for(const x of[a,b]){x.s3.loadout=runLoadout(10);x.setWeapon('roller');}
+ a.weaponRunner.firingT=.3;
+ for(let i=0;i<20;i++){const input={firePressed:i===0};a.weaponRunner.update(DT,input);b.weaponRunner.update(DT,input);near(a.weaponRunner.moveSpeed(),b.weaponRunner.moveSpeed());}
+});
+test('#350: fixed 30/60/120 Hz schedules keep identical flick-phase caps and real horizontal motion',async()=>{
+ const traces=[];for(const hz of [30,60,120]){
+  const f=await fixture(),a=f.make('roller'),clock=new FixedClock(),rows=[];a.s3.loadout=runLoadout(57);a.setWeapon('roller');a.intent.move.set(1,0,0);
+  for(let i=0;i<hz;i++)clock.advance(1/hz,dt=>{a.weaponRunner.update(dt,{firePressed:rows.length===0});a._horizontal(dt,false,false);rows.push([a.weaponRunner.flick,a.weaponRunner.moveSpeed(),a.vel.x,a.vel.z]);});traces.push(rows);
+ }assert.deepEqual(traces[0],traces[1]);assert.deepEqual(traces[1],traces[2]);
+});

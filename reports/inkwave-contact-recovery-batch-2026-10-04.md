@@ -45,3 +45,25 @@ PR327のサブコストactor-local化と、本PRのgear回復モード選択は�
 専用10件が実Actor/WeaponRunner/Projectiles/Physics OBB経路を使用し、固定60Hzの経過を30/60/120Hz描画で比較する。敵やカメラ/塗り装置など必要な表示/接触はfixtureで固定する。GPU描画・Switch/実スマートフォンの一致をCPU試験で認定しない。全回帰、公開minify build、raw照合、Actionsの結果をheadごとに記録する。
 
 最終ローカル結果：全752/752、専用source10/10・公開minify build10/10、local-quality8/8、motion/workflow gates10/10。原典11ファイル・抽出129値の照合成功。contentHash `d7134eb4002a7dfd2392baff626c6592ce7c70f47c8565f4a769910048fb3c7a`。最後にpaint/FX保持assertを補強し、専用・公開build・全回帰を再実行した。ローカルChromiumのUnix socket制約は残るため、Actionsのブラウザー結果は別に追跡する。
+
+
+## 関連5件目 #350：Roller振り上げ中のヒト速ギア分類
+
+拡張前head `1212486effa1b6421f6564971ba14fea31d08113` は[Actions 37193436767](https://github.com/rhgrive3/actions/actions/runs/37193436767)のvalidate/active/catalog/uiが全て成功（2026-10-04確認）。このcheckpointを保持し、追加後のheadは別に検証する。
+
+公開gearのattacking判定に `flick >= 0` を加える。実際の振り上げ状態を参照し、短押しでZRを離していても射撃用のヒト速曲線を選ぶ。rolling中の1倍、通常歩行用の最大1.5倍、基礎速度/振り時間/塗り/ダメージは維持する。
+
+### 根拠・数値の意味
+
+- [S3 Wiki スプラローラー](https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%B9%E3%83%97%E3%83%A9%E3%83%AD%E3%83%BC%E3%83%A9%E3%83%BC#abilitypower)（表11.0.0、2026-10-04再閲覧）は射撃時0/57 GPで0.480/0.600 DU/f、通常歩行は0.960/1.44。コロコロはヒト速で上がらない。
+- [固定11.3.0 Roller](https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json) はヨコ/タテのSwingMoveSpeed=.048。[共通ギア表](https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/misc/params.json)のMoveVelRt_ShotはHigh/Mid/Low=1.25/1.125/1。既存gearCurveを一回適用する。
+- 同じflick時刻の無装備比を比較し、3/10/57 APは各射撃curveの1.0241425/1.07575/1.25。通常歩行curveの1.048285/1.1515/1.5を振り上げへ掛けない。無次元倍率の修正で、絶対WUの校正とは切り分ける。
+- nativeの振り上げ中lerpで基礎速度を最大0.45倍へ落とす処理自体は本件の校正対象外。これを本家一致と新たに認定しない。
+
+### 実装検証
+
+専用追加4件で、0/3/10/57 AP×ヨコ/タテ×短押し/保持の実Runnerを130tick進め、初回/2回目のwindupと発射後、rolling無効、通常歩行、前回firingT残量差、装備更新/reset、別Actor、敵インクclamp、他ブキ切替、30/60/120Hzの実水平速度traceを確認する。実インク消費や弾の挙動は既存回帰で維持する。
+
+PR341 head `f81652b6fb478241a54c3676d33d3c030a186133` の正確なgear/flow/flow-effects runtimeとprofile.flowへ、今回のflick判定1項だけを手動合成した追加1試験（0/27/57 AP）も実施。実イベントで発動したFlowの+30 APと57上限が、振り上げの全位相で射撃curveを一回だけ使い、weapon/runner同一性を保持し、reset後に通常装備値へ戻る。条件付きギア新PR全体の統合や実機描画検証と同義ではない。
+
+#350追加後：全回帰756/756、専用source14/14、公開minify出力14/14、Flow実runtime合成1/1、local-quality8/8、motion/workflow gates10/10、固定11ファイル129値一致（未知14維持）。contentHash `28df82e4d9ba74bdf14509217f6692c858994e9989f9005a11c3ac2eddbfb158`。追加後headのActionsを別途確認し、この5件でscopeを固定する。
