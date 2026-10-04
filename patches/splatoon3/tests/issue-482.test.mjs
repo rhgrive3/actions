@@ -401,7 +401,7 @@ test('remote presentation advances native hit age once per frame and respawn cle
       f: 1 | 16 | 524288, hp: victim.hp, ink: victim.ink, sp: victim.special, turf: 0,
       ch: 0, lock: 0, tp: 0 }
   };
-  const hp = victim.hp, damage = victim.stats.damage, kills = attacker.stats.kills;
+  const hp = victim.hp, damage = victim.stats.damage, splats = attacker.stats.splats;
   for (let i = 0; i < 12; i++) {
     net.applyRemote(victim, 1 / 60);
     assert.ok(Math.abs(victim.lastAttackerHitAge - (3.9 + (i + 1) / 60)) < 1e-9);
@@ -410,7 +410,7 @@ test('remote presentation advances native hit age once per frame and respawn cle
   assert.equal(victim.lastAttacker, attacker);
   assert.equal(victim.hp, hp);
   assert.equal(victim.stats.damage, damage);
-  assert.equal(attacker.stats.kills, kills);
+  assert.equal(attacker.stats.splats, splats);
   net._remoteRespawn(victim);
   assert.equal(victim.lastAttacker, null);
   assert.equal(victim.lastAttackerHitAge, 99);
