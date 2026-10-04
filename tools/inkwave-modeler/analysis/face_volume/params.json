@@ -1532,11 +1532,11 @@
   "up": 4,
   "floor": 0.06,
   "rim": 5.0,
-  "strength": 1.3,
+  "strength": 1.0,
   "max_ratio": 1.0,
   "bare": "analysis/face_volume/bare_front.png",
   "own_blur": 2.0,
-  "desaturate": 0.7,
+  "desaturate": 0.4,
   "facing": [
    0.35,
    0.65
