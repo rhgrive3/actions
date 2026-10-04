@@ -276,7 +276,10 @@ async function main() {
         }
       };
       const step = (dt = 1 / 60) => {
-        G.time += dt; actor.anim.time = G.time; actor.update(dt); ch.root.updateMatrixWorld(true); observe();
+        G.time += dt; actor.anim.time = G.time; actor.update(dt); ch.root.updateMatrixWorld(true);
+        // The camera keeps the same framing of the character while the squid swims.
+        camera.position.set(ch.root.position.x + 2.5, 1.8, ch.root.position.z + 3.8);
+        camera.lookAt(ch.root.position.x, .68, ch.root.position.z); camera.updateMatrixWorld(true); observe();
         assert(Array.from(ch.P).every(Number.isFinite) && Array.from(ch.ikErr).every(Number.isFinite), 'Non-finite native pose/IK');
       };
       const gameplayState = () => JSON.stringify({ position: actor.pos.toArray(), velocity: actor.vel.toArray(),
@@ -377,9 +380,11 @@ async function main() {
         const remaining = actor.s3.flow.remaining; victim.reset(); victim.splat(actor);
         assert(actor.s3.flow.remaining === Math.min(profile.flow.maxDuration, remaining + profile.flow.extension), 'Native extension failed');
         for (let i = 0; i < 6; i++) step(); capture('extension');
-        actor.intent.squid = true; for (let i = 0; i < 8; i++) step(); capture('squid-entry');
+        // The squid swims: one resting in its own ink is drawn under the surface
+        // (swim-motion.test.mjs), so Flow on the squid form is proven while it glides.
+        actor.intent.squid = true; actor.intent.move.set(0, 0, 1); for (let i = 0; i < 8; i++) step(); capture('squid-entry');
         for (let i = 0; i < 40; i++) step(); capture('squid-active');
-        actor.intent.squid = false; for (let i = 0; i < 30; i++) step(); capture('kid-return');
+        actor.intent.squid = false; actor.intent.move.set(0, 0, 0); for (let i = 0; i < 30; i++) step(); capture('kid-return');
         // Full native duration, fixed input: no timer shortening or fake expiry.
         let expiryTicks = 0;
         while (actor.s3.flow.active && expiryTicks < Math.ceil(profile.flow.maxDuration * 60) + 2) { step(); expiryTicks++; }

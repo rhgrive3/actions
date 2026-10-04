@@ -10,16 +10,53 @@ const smooth=(a,b,x)=>{const t=clamp((x-a)/(b-a),0,1);return t*t*(3-2*t);};
 const ease=x=>{const u=clamp(x,0,1);return u*u*u*(10+u*(6*u-15));};
 const damp=(a,b,rate,dt)=>mix(a,b,1-Math.exp(-rate*dt));
 const angle=x=>Math.atan2(Math.sin(x),Math.cos(x));
+const cycle=x=>x-Math.floor(x+.5);
 const state=ch=>{let s=states.get(ch);if(!s){s={active:false,pitch:0,pitchV:0,roll:0,rollV:0,vx:0,vz:0,target:new api.THREE.Vector3(),support:new api.THREE.Vector3()};states.set(ch,s);}return s;};
 function eligible(ch){
   const T=api.CHARACTER_TIMERS, tr=ch.tr;
   return ch.kidForm&&ch.grounded&&!ch.dance&&ch.kidScale>.5&&specialMotionAllowsFootPlant(ch,tr[T.T_LEAP]>1.9&&tr[T.T_SLAM]>1.4)&&dualiesMotionAllowsFootPlant(ch,tr[T.T_DODGE]>ch.dodgeDur*.86)&&tr[T.T_SPAWN]>1.4;
 }
-function startSwing(ch,f,settle=false,remaining){
+// Both legs share the one gait clock (ch.phase; foot i is half a cycle behind
+// foot 0) that also drives the pelvis sway. Each contact still advances by its
+// own elapsed time, so a step is never cut short. A regular lift-off sizes its
+// swing (within a bounded range) to land when the clock says. Without this
+// coupling an acceleration, a duty change or a catch step left the legs
+// permanently out of anti-phase and a strafe drifted into both feet stepping
+// together.
+function lockedSwing(ch,f,ago){
+  const nominal=1-ch.duty,late=cycle(ch.phase-ago*ch.cad+f.i*.5-ch.duty);
+  return clamp(nominal-late,nominal*(1-tuning.phaseLockRange),nominal*(1+tuning.phaseLockRange))/ch.cad;
+}
+// The pelvis turns toward a sideways travel and the spine/chest turn back to
+// the aim. A walking strafe keeps the native twist and side-steps; a running
+// strafe turns the pelvis further so the legs stride along their own forward
+// axis. With the native 0.8 rad limit a half stride at run speed moved each
+// shoe further across the pelvis than the stance width, so the legs crossed.
+function strafeTwist(ch,v){
+  if(!ch.moving)return 0;
+  const rw=ch.runW;let tw=Math.atan2(ch.mdx,Math.abs(ch.mdz)+mix(.3,.05,rw))*mix(.78,.9,rw);
+  // Backpedalling turns the pelvis the other way; blend it so a reversal never
+  // flips the twist target across the whole range in one tick.
+  tw*=1-1.8*smooth(-.05,-.45,ch.mdz);
+  const limit=mix(.8,tuning.strafeTwistRun,smooth(0,.6,rw));
+  return clamp(tw,-limit,limit)*smooth(.5,2.2,v);
+}
+// The native travel direction damps a unit vector and renormalises it. Toward
+// the opposite direction that vector shrinks through zero and renormalising
+// restores the old heading, so after a strafe flip the legs and pelvis kept the
+// old side for seconds. Turn the heading by angle at the native rate instead;
+// a reversal turns through forward, where the chest already faces the aim.
+function travelDirection(ch,mx,mz,dt,fromRest){
+  const from=Math.atan2(mx,mz),to=Math.atan2(ch.kgx,ch.kgz);let d=angle(to-from);
+  if(Math.abs(d)>tuning.reversalAngle)d=to-from;
+  const h=fromRest?to:from+d*(1-Math.exp(-tuning.travelTurnRate*dt));ch.mdx=Math.sin(h);ch.mdz=Math.cos(h);
+}
+function startSwing(ch,f,settle=false,remaining,ago=0){
   const M=api.CHARACTER_FOOT_MODES;
   f.from.copy(f.planted?f.pw:f.cw);f.fromYaw=f.planted?f.yaw:f.cyaw;
   f.startPitch=f.pitch;f.planted=false;f.sw=true;f.mode=settle?M.M_SETTLE:M.M_GAIT;f.su=0;
-  f.dur=remaining??(1-ch.duty)/ch.cad;
+  // First and catch steps keep their own short timing (offbeat until touchdown).
+  f.dur=remaining??lockedSwing(ch,f,ago);f.offbeat=!settle&&remaining!==undefined;
   f.lift=settle?tuning.settleLift:ch.liftH;
   const forward=clamp(ch.mdz*Math.cos(ch.hipTwist)+ch.mdx*Math.sin(ch.hipTwist),-1,1);
   f.toe=mix(tuning.toeWalk,tuning.toeRun,ch.runW)*forward;
@@ -31,7 +68,7 @@ function startSwing(ch,f,settle=false,remaining){
 }
 function land(ch,f,loud){
   // Normal touchdown does not reset the other leg's clock.
-  f.mode=api.CHARACTER_FOOT_MODES.M_GAIT;ch._touchDown(f,loud);
+  f.mode=api.CHARACTER_FOOT_MODES.M_GAIT;f.offbeat=false;ch._touchDown(f,loud);
 }
 function updateFeet(ch,dt){
   const F=ch.feet,R=ch.root.position,M=api.CHARACTER_FOOT_MODES;
@@ -51,8 +88,11 @@ function updateFeet(ch,dt){
     if(!was){
       const along=f=>(f.pw.x-R.x)*ch.gvx+(f.pw.z-R.z)*ch.gvz;
       const first=along(F[0])<=along(F[1])?0:1;
-      ch.phase=ch.duty+.001-first*.5;
       if(!F[first].sw)startSwing(ch,F[first],false,Math.min(tuning.firstStepTime,(1-ch.duty)/ch.cad));
+      // From rest the clock reaches this foot's touchdown when the short first
+      // step lands. A restart while the pelvis still sways (a reversal passing
+      // through zero speed) keeps the running clock and the step joins it.
+      if(ch.gaitW<tuning.clockRestartWeight)ch.phase=1-(1-F[first].su)*F[first].dur*ch.cad-first*.5;
       // Stagger the other leg by half a cycle, including the shorter first step.
       // Each contact then owns its elapsed time; a display phase cannot cut a
       // freshly planted step short or change the rhythm at a phase wrap.
@@ -65,7 +105,7 @@ function updateFeet(ch,dt){
       if(f.planted){
         f.stT+=dt;f.stU+=dt*ch.cad/ch.duty;
         const far=Math.hypot(f.pw.x-R.x,f.pw.z-R.z)>tuning.catchDistance;
-        if(f.stU>=1){elapsed=(f.stU-1)*ch.duty/ch.cad;startSwing(ch,f);}
+        if(f.stU>=1){elapsed=(f.stU-1)*ch.duty/ch.cad;startSwing(ch,f,false,undefined,elapsed);}
         else if(far&&f.stT>.06){startSwing(ch,f,false,Math.min(tuning.firstStepTime,(1-ch.duty)/ch.cad));elapsed=0;}
       }
       if(f.sw){
@@ -111,6 +151,11 @@ function footPose(ch,f){
   f.cw.copy(f.from).lerp(f.to,e);
   const peak=f.peak??.5,lift=u<peak?ease(u/peak):ease((1-u)/(1-peak));
   f.cw.y+=(f.lift+Math.max(0,f.to.y-f.from.y)*.35)*lift;
+  // The swing leg passes the support shoe on its own side of the pelvis. The
+  // end points are already apart; only mid-swing bows outward.
+  const o=ch.feet[1-f.i],hy=ch.yaw+ch.hipTwist,ax=Math.cos(hy),az=-Math.sin(hy),dx=f.cw.x-o.cw.x,dz=f.cw.z-o.cw.z;
+  const along=Math.abs(dx*Math.sin(hy)+dz*Math.cos(hy)),need=(tuning.minFootGap-(dx*ax+dz*az)*f.side)*(1-smooth(tuning.footLength*.5,tuning.footLength,along))*Math.sin(Math.PI*u);
+  if(need>0){f.cw.x+=need*f.side*ax;f.cw.z+=need*f.side*az;}
   f.cyaw=f.fromYaw+angle(f.toYaw-f.fromYaw)*e;f.cn.copy(f.n).lerp(f.tn,e).normalize();
   f.pitch=mix(f.startPitch??f.toe,0,smooth(0,.5,u))+(f.fold??0)*smooth(0,.22,u)*(1-smooth(.38,.78,u))-f.land*smooth(.55,.96,u);
 }
@@ -119,21 +164,30 @@ export function installWalkMotion(context,profile){
   if(!tuning||!api.Character||!api.CHARACTER_CHANNELS||!api.CHARACTER_TIMERS||!api.CHARACTER_FOOT_MODES)throw Error('Walking motion contract missing');
   const C=api.Character.prototype,oldTrack=C._trackRoot,oldStates=C._updateStates,oldFeet=C._updateFeet,oldPose=C._footPose,oldTarget=C._gaitTarget;
   C._trackRoot=function(dt,s){
-    const w=state(this),valid=this.rootInit&&this.root.position.distanceToSquared(this.rp)<=9;
+    const w=state(this),valid=this.rootInit&&this.root.position.distanceToSquared(this.rp)<=9,mx=this.mdx,mz=this.mdz;
     w.rootMotionKnown=valid&&dt>0;
     w.vx=valid&&dt>0?(this.root.position.x-this.rp.x)/dt:0;w.vz=valid&&dt>0?(this.root.position.z-this.rp.z)/dt:0;
     oldTrack.call(this,dt,s);if(this.tread){w.vx=this.tvx;w.vz=this.tvz;}
+    // From rest the new travel sets the heading at once; the native update also
+    // ignored slow walking below 0.35, which kept a stale heading for a slow step.
+    // A paused frame keeps the heading; native renormalisation would still move its last bits.
+    if(!(dt>0)){this.mdx=mx;this.mdz=mz;}
+    else if(valid&&this.kidForm&&Math.hypot(w.vx,w.vz)>tuning.startSpeed)travelDirection(this,mx,mz,dt,!this.moving&&this.gaitW<tuning.clockRestartWeight);
   };
   C._updateStates=function(dt,s){
-    const weight=this.gaitW;oldStates.call(this,dt,s);
+    const weight=this.gaitW,twist=this.hipTwist;oldStates.call(this,dt,s);
     const support=1-this.wAir*.75;advanceLean(this,'pitch',clamp(this.kaz,-48,48),support,dt);advanceLean(this,'roll',clamp(this.kax,-48,48),support,dt);
     if(!eligible(this))return;
     const v=this.gv,rw=smooth(tuning.runStart,tuning.runFull,v);this.runW=rw;
     this.duty=mix(tuning.walkDuty,tuning.runDuty,rw)+.06*this.wGoo;
-    const half=mix(tuning.walkHalfStride,tuning.runHalfStride,rw)*(1-.18*this.wGoo);
+    // Sideways across the pelvis a leg can only step out and close, so the
+    // steps shorten and quicken; the travel speed is unchanged.
+    const side=this.mdx*Math.cos(this.hipTwist)-this.mdz*Math.sin(this.hipTwist);
+    const half=mix(tuning.walkHalfStride,tuning.runHalfStride,rw)*(1-.18*this.wGoo)*(1-tuning.sideStrideCut*side*side);
     this.cad=clamp(Math.max(v,tuning.startSpeed)*this.duty/(2*half),tuning.minCadence,tuning.maxCadence);
     this.liftH=mix(tuning.walkLift,tuning.runLift,rw)*(1+.6*this.wGoo);
     this.gaitW=damp(weight,v>(this.moving?tuning.stopSpeed:tuning.startSpeed)?1:0,v>tuning.startSpeed?12:8,dt);
+    const limit=tuning.twistRate*dt;this.hipTwist=twist+clamp(damp(twist,strafeTwist(this,v),7,dt)-twist,-limit,limit);
   };
   C._updateFeet=function(dt,s){const w=state(this);w.active=eligible(this);if(!w.active)return oldFeet.call(this,dt,s);return updateFeet(this,dt);};
   C._footPose=function(f){return state(this).active?footPose(this,f):oldPose.call(this,f);};
@@ -142,6 +196,13 @@ export function installWalkMotion(context,profile){
     const motion=state(this),v=Math.hypot(motion.vx,motion.vz),yaw=this.yaw+this.hipTwist+clamp(this.yawRate*remaining*.55,-.2,.2),half=clamp(v*this.duty/this.cad*.5,0,tuning.runHalfStride),w=mix(Math.abs(this.stance[f.side>0?0:3]),.078,this.runW)*f.side;
     const inv=v>.001?1/v:0;
     out.set(this.root.position.x+motion.vx*remaining+motion.vx*inv*half+w*Math.cos(yaw),this.root.position.y,this.root.position.z+motion.vz*remaining+motion.vz*inv*half-w*Math.sin(yaw));
+    // Beside the other foot, stay on its own side of the pelvis: a side step
+    // closes next to the leading foot instead of passing it. A foot landing a
+    // shoe length ahead or behind is not pushed, so a turn cannot shove it out
+    // of the leg's reach.
+    const o=this.feet[1-f.i],ref=o.planted?o.pw:o.to,ax=Math.cos(yaw),az=-Math.sin(yaw),dx=out.x-ref.x,dz=out.z-ref.z,lat=(dx*ax+dz*az)*f.side;
+    const push=(tuning.minFootGap-lat)*(1-smooth(tuning.footLength*.5,tuning.footLength,Math.abs(dx*Math.sin(yaw)+dz*Math.cos(yaw))));
+    if(push>0){out.x+=push*f.side*ax;out.z+=push*f.side*az;}
     out.y=this._ground(out.x,out.z,f.tn);return yaw+f.side*mix(.1,.04,this.runW);
   };
 }
