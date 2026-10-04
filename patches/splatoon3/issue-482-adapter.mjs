@@ -12,7 +12,7 @@
 // This build-only adapter introduces a dedicated `lastAttackerHitAge` clock:
 // - initialized to 99 (expired)
 // - reset to 0 ONLY on attributable damage (`damage(amount, attacker)`)
-// - advanced by `dt` in `Actor.update(dt)` and `NetMatch._updateRemote(dt)`
+// - advanced by `dt` in `Actor.update(dt)` and `NetMatch.applyRemote(actor, dt)`
 // - cleared on respawn (`lastAttacker = null`, `lastAttackerHitAge = 99`)
 // - water death checks `(this.lastAttacker && (this.lastAttackerHitAge ?? this.lastDamage) < 4) ? this.lastAttacker : null`
 // - HP recovery suppression continues to use `lastDamage` without regression.
@@ -26,7 +26,7 @@ export function replaceOnce(code, before, after, label) {
 }
 
 export function adaptIssue482Actor(code) {
-  // 1. Initialize dedicated lastAttackerHitAge in constructor
+  // 1. Initialize dedicated lastAttackerHitAge in native reset()
   code = replaceOnce(
     code,
     'this.lastAttacker = null;',

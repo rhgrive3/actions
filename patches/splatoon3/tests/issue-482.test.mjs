@@ -47,6 +47,7 @@ async function createFixture({ apply482 = true } = {}) {
     export * from './inkwave-public/src/core/ctx.js';
     export * from './inkwave-public/src/config.js';
     export * from './inkwave-public/src/game/actor.js';
+    export * from './inkwave-public/src/net/netmatch.js';
     export * from './inkwave-public/src/game/weapons.js';
     export * from './inkwave-public/src/game/physics.js';
     export * from './inkwave-public/src/game/player.js';
@@ -383,4 +384,39 @@ test('respawn resets lastAttacker and lastAttackerHitAge', async () => {
   // Immediately falling into water after respawn must not credit anyone
   f.triggerWaterDeath(victim);
   assert.equal(attacker.stats.splats, 0, 'attacker must not be credited across respawn');
+});
+
+
+test('remote presentation advances native hit age once per frame and respawn clears attribution', async () => {
+  const f = await createFixture();
+  const net = new f.NetMatch({ myId: 'viewer', isHost: false }, {});
+  const victim = f.make(1, 'remote-victim'), attacker = f.make(0, 'attacker');
+  victim.remote = true;
+  victim.lastAttacker = attacker;
+  victim.lastAttackerHitAge = 3.9;
+  victim.lastDamage = 0.4;
+  victim.net = {
+    ready: true, prevGrounded: true, prevVy: 0, err: new f.THREE.Vector3(),
+    cur: { x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, yaw: 0, aimYaw: 0, aimPitch: 0,
+      f: 1 | 16 | 524288, hp: victim.hp, ink: victim.ink, sp: victim.special, turf: 0,
+      ch: 0, lock: 0, tp: 0 }
+  };
+  const hp = victim.hp, damage = victim.stats.damage, kills = attacker.stats.kills;
+  for (let i = 0; i < 12; i++) {
+    net.applyRemote(victim, 1 / 60);
+    assert.ok(Math.abs(victim.lastAttackerHitAge - (3.9 + (i + 1) / 60)) < 1e-9);
+  }
+  assert.ok(victim.lastAttackerHitAge > 4);
+  assert.equal(victim.lastAttacker, attacker);
+  assert.equal(victim.hp, hp);
+  assert.equal(victim.stats.damage, damage);
+  assert.equal(attacker.stats.kills, kills);
+  net._remoteRespawn(victim);
+  assert.equal(victim.lastAttacker, null);
+  assert.equal(victim.lastAttackerHitAge, 99);
+  victim.lastAttacker = attacker;
+  victim.lastAttackerHitAge = 0;
+  victim.reset();
+  assert.equal(victim.lastAttacker, null);
+  assert.equal(victim.lastAttackerHitAge, 99);
 });
