@@ -225,3 +225,16 @@ Four current-public defects #366/#370 (one duplicate pair), #375, #384, #395 are
 ## 2026-10-04 weapon edge-case supplement
 
 See [weapon edge-case comparison](inkwave-weapon-edgecases-2026-10-04.md) for #354/#356/#357/#361: stable-human Dualies3F first emission; Splatling separate ground1.6° pitch envelope; terrain Blaster35HP cap; horizontal Roller12+1 gameplay units. The report separates actual source/minified/composed-code tests from S3 probability/position/falloff and released-tap calibration still pending. No native source or deployed main is changed by the draft.
+
+## 2026-10-05: Blaster direct projectile player-collision radius (#463)
+
+Blaster直撃弾の対プレイヤー当たり判定半径を、汎用視覚サイズ `p.size = 0.26` から、Splatoon 3 Ver. 11.3.0 一次資料の確定値 `0.285` へ分離・設定する（Issue #463）。
+
+| 項目 | 内容 |
+|---|---|
+| 本家の根拠 | Splatoon 3 Ver. 11.3.0 `spl__BulletSimpleCollisionParam`。`InitRadiusForPlayer: 0.285`, `EndRadiusForPlayer: 0.285`, `ChangeFrameForField: 0`, `InitRadiusForField: 0.2`, `EndRadiusForField: 0.2`。直撃弾の対プレイヤー判定半径は飛行中一定して 0.285。 |
+| INKWAVE の実装箇所 | `inkwave-public/src/game/weapons.js:913`（`fireBlaster` 内で `size: 0.26` 設定）および `weapons.js:1180`（`_res.dist < PLAYER.radius * 0.95 + p.size`）。視覚 blob 半径 0.26 がそのまま当たり判定半径として流用され、S3 基準値 0.285 より 0.025（約 8.77%）小さくなっていた。build-only adapter `patches/splatoon3/issue-463-adapter.mjs` および helper `patches/splatoon3/runtime/blaster-player-radius.mjs` により、Blaster 直撃弾の判定時半径のみ `blasterPlayerCollisionRadius(p) === 0.285` を適用する。 |
+| 再現操作 | 標的（通常直立）を側方オフセット `PLAYER.radius * 0.95 + 0.272`（0.26 と 0.285 の中間帯）に配置し、Blaster 直撃弾を通過させる。修正前は直撃判定をすり抜け（miss、HP減少なし）、修正後は直撃判定成立（direct hit、125ダメージで即splat）となる。 |
+| プレイへの影響 | かすり当たりの境界線において、本家 S3 では直撃（125 ダメージ即 splat）となる射撃が、INKWAVE では爆風ダメージ（最大70 / 最小50）あるいは不発判定となっていた差異が解消される。 |
+| 確認状態 | **ロジック確認済み**（`patches/splatoon3/tests/issue-463.test.mjs` による native 8/8 全件通過。負例ベースラインとの境界反転、旧領域内 hit、新領域外 miss、owner/remote 同一判定、地形爆発維持、Boss 判定維持、直撃 125 ダメージ維持、武器タイミング・インク維持）。**本家実機（Switch Ver.11.3.0）でのミリ秒・ピクセル単位の実機比較は未確認**。ワールド衝突判定（field radius 0.2）や爆風減衰帯は変更せず独立。 |
+
