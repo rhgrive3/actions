@@ -139,11 +139,17 @@ dome — that is what makes the remote image match — but `visualOnly` is force
 
 `installKitBigBubbler(api, profile)` exports only this module's behaviour:
 
-- **Activation** — wraps `Actor.prototype._startSpecial`. The native activation
-  has no branch for this id, so it still owns the gauge cost (`special = 0`),
-  `stats.specials`, the form change and the audio; the module only deploys the
-  structure afterwards. No renamed Tidal Slam / Ink Tempest state is created and
-  no invulnerability is granted.
+- **Activation, guarded** — wraps `Actor.prototype._startSpecial`. The native
+  activation has no branch for this id, so it still owns the gauge cost, the
+  `stats.specials` bump, the form change and the audio; the module only deploys
+  the structure afterwards, and only when all four hold: the gauge actually held
+  a full charge **before** the call, the native activation ran exactly once
+  (`stats.specials + 1` and `special` back to 0), the actor is alive, and the
+  call is not re-entrant. A manual `_startSpecial()` on an uncharged, dead or
+  re-entrant actor therefore deploys nothing, and a re-entrant chain fails
+  closed. No renamed Tidal Slam / Ink Tempest state is created and no
+  invulnerability is granted. **The module never touches `ink`**: the refill
+  stays with the parent's `resources.mjs` (see the gaps section).
 - **Stationary dome** — never moves after landing; the owner may leave.
 - **Radius growth** — `Hermit2DSmooth` evaluation of the pinned curve between
   `MinRadius` and `MaxRadius`, monotonic, capped at the pinned `MaxRadius`.
@@ -200,44 +206,134 @@ implemented. If the parent wants it, subscribe to `kit:bubbler:collapse` and rou
 the burst through the native blast path; the burst radius and parameters are not
 pinned by any receipt and no value is guessed here.
 
-## Remote replay handoff (no online parity claim)
+## Remote replay API (concrete, no online parity claim)
 
-The concrete, serializable surface a net layer can consume:
+### Ownership, stated rather than implied
 
-| Surface | Payload |
+`BIG_BUBBLER_OWNERSHIP` is exported and frozen. It names what this lane owns and,
+just as importantly, what it does **not**, so the network lane never has to guess
+whether a gap is a decision or an omission:
+
+| Owns | Does not own |
 |---|---|
-| `bigBubblerSnapshot()` | `[{ domeId, team, t, pos, radius, emitterY, hp, fieldHp, ignited }]` — plain data, survives `JSON.stringify` |
-| `kit:bubbler:deploy` | `{ owner, domeId, team, pos, hp, fieldHp }` |
+| authoritative local dome lifecycle (deploy, growth, ignition, TimeDamage burn, expiry) | packet transport, framing, rate limiting, any NetMatch wiring |
+| presentation-only remote dome lifecycle driven by `replayBigBubbler()` | authoritative HP of a remote dome |
+| side-effect-free contact candidate queries for local *and* remote domes | client prediction, interpolation, reconciliation, rollback |
+| bounded, idempotent replay ingest of `deploy` / `hit` / `expire` | adjudicating whether a proposed remote hit is accepted |
+
+`remoteHpAuthority` is the host: a local round hitting a remote dome yields
+`kit:bubbler:damage-proposal` and changes nothing on this client.
+
+### The ingest call
+
+```js
+replayBigBubbler(eventName, owner, plainPayload) -> { ok: boolean, reason: string, ... }
+Projectiles.prototype.kitBubbleReplay(eventName, owner, payload)   // same thing
+```
+
+`eventName` is `'deploy' | 'hit' | 'expire'`. `owner` is the **local actor proxy**
+for the remote owner; the payload is treated as untrusted plain data and is never
+dereferenced, so a payload-supplied `owner` is ignored.
+
+Guarantees, each proven by a test:
+
+- **The transmitted position is restored exactly.** It is never re-derived from
+  the proxy's aim: aim is local state the sender does not own, and re-deriving it
+  put the dome tens of metres away from where the host said it was.
+- **Bounded validation.** Nothing allocates from the payload: `domeId` is a
+  non-empty string capped at 64 characters, `team` is an integer in `[0, 3]`,
+  `pos` is exactly three finite numbers within ±1e4, `t` is finite in `[0, 600]`,
+  `hp`/`fieldHp` are finite in `[0, 1e9]`, `serial` is a non-negative safe integer.
+  Anything else returns an explicit `reason` (`bad-dome-id`, `dome-id-too-long`,
+  `bad-team`, `bad-position`, `bad-age`, `bad-hp`, `bad-field-hp`, `bad-serial`,
+  `not-an-object`, `unknown-event`) and creates nothing. It never throws.
+- **Idempotent deploy / hit / expire.** A duplicate deploy is `duplicate`, a
+  duplicate hit is `duplicate` and cannot spend HP twice, a duplicate expire is
+  `duplicate`. Dedupe keys live in a **bounded FIFO of 256 entries**, so a long
+  match cannot grow the set without limit.
+- **Never silently ignored.** Every call returns `{ ok, reason }`. An expire for
+  a dome this client never saw is `ok: true, reason: 'already-absent'`, not a
+  silent drop.
+- **A remote dome is presentation only.** `tickRemoteBigBubblers(dt)` advances
+  only what may be drawn — age, radius, emitter height, the armed flag. It applies
+  **no paint, no TimeDamage burn, no authoritative HP**, never expires a dome on
+  its own, and emits only `kit:bubbler:remote:ignite` /
+  `kit:bubbler:remote:gone`, both flagged `presentationOnly`. The authoritative
+  `kit:bubbler:*` streams stay empty for a remote dome.
+
+### Identity and serials
+
+Dome ids are `${team}:${ownerKey}:${serial}` with a monotonic per-session
+`serial`, and `ownerKey` is `bigBubblerOwnerId(owner)`:
+
+- `n${owner.nid}` when a live net id exists — `match.js` assigns `Actor.nid` from
+  the room roster, so that is the real identity;
+- otherwise a stable per-actor-instance key minted once on the actor.
+
+The previous `owner.slot ?? 0` fallback is **gone**. It was not an identity: two
+actors on the same team with the same special count produced the same dome id. A
+test asserts two same-team actors still get distinct ids and that no
+`team:slot:count` identity is emitted, and that a later `nid` is preferred.
+
+### Remote domes and local rounds
+
+A candidate now carries `ownership`, `reachable`, `serial` and `remote`:
+
+| Situation | Behaviour |
+|---|---|
+| local round → authoritative dome | `onHit()` spends HP once, as before |
+| local round → **remote** dome | `onHit()` returns 0, spends nothing, sets `candidate.proposal` and emits `kit:bubbler:damage-proposal` with a JSON-safe `{ domeId, serial, team, target, amount, point, normal }` |
+| ghost round (any dome) | intercepted for the image; `visualOnly`, `onHit()` 0, **no proposal at all** |
+| neutral round (`p.team` missing or non-integer, any dome) | same as a ghost: it may be intercepted visually but can never spend a budget |
+| `onHit()` on a stale candidate | re-checks that the dome is alive and still registered, then spends 0 |
+
+`candidate.reachable = { canopy, emitter }` reports which of the two targets the
+exact segment can reach, so "the emitter is exposed" is distinguishable from
+"this shot passes over it".
+
+### The wire form of a local dome
+
+`bigBubblerSnapshot()` returns exactly the payload `replayBigBubbler('deploy', …)`
+accepts: `[{ id, domeId, serial, team, t, pos, radius, emitterY, hp, fieldHp, ignited }]`,
+all plain JSON-safe data. Positions and normals are built as array literals rather
+than `Vector3.toArray()`, because the vendor THREE is loaded from the host module
+and `toArray()` would hand callers arrays whose prototype comes from that realm.
+
+### Authoritative event streams
+
+| Stream | Payload |
+|---|---|
+| `kit:bubbler:deploy` | `{ owner, domeId, serial, team, pos, hp, fieldHp }` |
 | `kit:bubbler:ignite` | `{ owner, domeId, team, pos }` |
 | `kit:bubbler:hit` | `{ owner, domeId, team, target, amount, cause:'shot', hp, fieldHp }` |
 | `kit:bubbler:burn` | same shape, `cause:'burn'` (the internal TimeDamage tick) |
-| `kit:bubbler:collapse` | `{ owner, domeId, team, pos, reason }` |
-| `kitBarrierHitRecord(candidate)` | `{ domeId, team, target, distance, point, normal, visualOnly }` — the per-contact replay record |
+| `kit:bubbler:collapse` | `{ owner, domeId, serial, team, pos, reason }` |
+| `kit:bubbler:damage-proposal` | `{ domeId, serial, team, target, amount, point, normal }` — outgoing, needs the parent's adjudication |
+| `kit:bubbler:replay:reset` | `{ reason, removed, presentationOnly }` |
 
-A test drives deploy → ignite → one `onHit` → collapse and asserts each stage is
-emitted exactly once with an identifiable `domeId` and a JSON-safe forwarded
-subset, and that the burn never masquerades as an incoming hit.
+`kitBarrierHitRecord(candidate)` adds `serial`, `remote`, `ownership` and
+`reachable` to the per-contact record.
 
-Like every native kit event, the payloads carry the live `owner` object; a net
-layer forwards the serializable subset, exactly as the test does.
-
-**No online parity is claimed.** There is no net code, no reconciliation, no
-client prediction, no rollback and no packet format in this lane. Ghost rounds
-are *visual-only* at the dome, which is the minimum needed for a remote image to
-look right, not a replication implementation.
+**No online parity is claimed.** There is no net code, transport, packet format,
+prediction, reconciliation or rollback in this lane. What exists is bounded,
+idempotent ingest and a presentation clock — enough for a parent to drive a
+remote image, and nothing more.
 
 ## Expiry, disposal and reset
 
 | Event | Effect | Why |
 |---|---|---|
 | `TimeDamage` drains the canopy, or the emitter is destroyed | dome removed, scene released | pinned |
-| `Projectiles.clear()` (match disposal, `main.js`) | **every** dome removed | explicit disposal path |
+| `Projectiles.clear()` (match disposal, `main.js`) | **every** dome removed, remote domes included, replay state reset | the meaningful match reset |
 | Owner `splat()` | **nothing** | the reference does not erase the structure when its owner dies |
 | Owner `reset()` (respawn) | nothing by default; erases only when the parent sets `profile.kits.bigBubbler.eraseOnOwnerReset = true` | `reset()` is the respawn path |
 | `clearBigBubblers(reason)` | explicit | shutdown / parent use |
+| `resetBigBubblerReplay(reason)` | every **remote** dome removed and released, the 256-entry dedupe window cleared, `kit:bubbler:replay:reset` emitted | the match reset, so stale dedupe cannot leak into the next match |
 
-A zero timestep (`Projectiles.update(0)`, i.e. a paused match) freezes growth,
-ignition and the burn.
+A non-positive timestep is a **strict no-op** for both clocks: `dt <= 0` returns
+before anything is touched, so a paused match (`Projectiles.update(0)`) can never
+grow a dome, ignite it, paint, or start the TimeDamage burn. There is no epsilon
+fudge and no boundary ignition on a paused tick.
 
 ## Concrete parent handoffs
 
@@ -276,9 +372,16 @@ ignition and the burn.
    and call `installKitBigBubbler(api, profile)` after the other installers.
    There is **no** fallback to disable. Until (2) lands the module ships inert:
    the domes deploy, grow and expire, but nothing queries them.
-5. **Network** (parent-owned): `bigBubblerSnapshot()` plus the `kit:bubbler:*`
-   events and `kitBarrierHitRecord()` are the whole integration surface. Remote
-   proxies are not implemented here and no online parity is claimed.
+5. **Network** (parent-owned): the whole integration surface is
+   `bigBubblerSnapshot()` out and `replayBigBubbler('deploy' | 'hit' | 'expire',
+   proxy, payload)` in, plus `resetBigBubblerReplay()` on match reset and a
+   subscription to `kit:bubbler:damage-proposal` to route a local round's hit on
+   a remote dome through the authoritative path. Call it from the typed NetMatch
+   events; do not reconstruct positions or identities locally. No online parity
+   is claimed for either side.
+6. **Remote domes need a `Projectiles.update` tick** — already installed by this
+   module, so `tickRemoteBigBubblers(dt)` runs on the native clock. It is a strict
+   no-op while paused and emits nothing authoritative.
 
 ## Explicit gaps — not claimed as complete
 
@@ -288,7 +391,17 @@ ignition and the burn.
   end-to-end interception test, and they do not pretend otherwise.
 - **Explosion shielding on collapse** (the inside-the-dome sweep) is not
   implemented; see the handoff section for the concrete subscription point.
-- **Remote ghost replay** of a deployed dome is not implemented (handoff 5).
+- **Remote replay is ingest + presentation only.** `replayBigBubbler()` and
+  `tickRemoteBigBubblers()` exist and are tested, but nothing in this lane emits
+  or receives a packet. The parent wires its typed NetMatch events to them; until
+  it does, no remote dome ever appears.
+- **The ink refill does not fire for the bubbler today.** The parent's
+  `resources.mjs` refills only when `_startSpecial` leaves `specialActive` set,
+  and the bubbler deliberately sets none. This module does not refill either, by
+  design and by test, so the current behaviour is *no refill on the bubbler*.
+  Whether Splatoon 3 refills here is **unconfirmed** from the receipts in hand,
+  and the fix is the parent's to make in `resources.mjs`, not this module's.
+  No value is guessed either way.
 - **Bomb interaction**: only the bullet pipeline (`Projectiles.list`) is
   queried. Thrown bombs (`Projectiles.bombs` / `_updateBombs`) are unaffected,
   which is consistent with a dome that stops rounds rather than thrown
@@ -298,12 +411,12 @@ ignition and the burn.
 
 ## Test evidence
 
-`patches/splatoon3/tests/kit-big-bubbler.test.mjs` runs against the **actual
-composed runtime** — the immutable `inkwave-public` sources adapted by
+`patches/splatoon3/tests/kit-big-bubbler.test.mjs` (33 tests) runs against the
+**actual composed runtime** — the immutable `inkwave-public` sources adapted by
 `patches/splatoon3/adapter.mjs` with the real `Actor`, `Projectiles`, `Physics`
 and config objects. A synthetic level of real oriented boxes is driven by the
 real `Physics` so native wall contacts are genuine distances, not stubs. Only
-audio and the renderer are absent. **19/19 pass.**
+audio and the renderer are absent. **33/33 pass.**
 
 Covered: pinned curve endpoints and monotonicity; deploy/pinned durability/native
 gauge+stat/no-`specialActive`/no-invulnerability; stationary; growth, arming on
@@ -322,17 +435,38 @@ invulnerability; owner death and respawn do not erase, match disposal does;
 the opt-in reset flag; zero-dt freeze; the snapshot is plain serializable data;
 the **explosion shielding handoff** preserves native LOS, inside-origin hostility
 and grants no invulnerability; the **deploy/ignite/hit/burn/collapse replay
-streams** are emitted once each with JSON-safe payloads; and uniqueness of the
+streams** are emitted once each with JSON-safe payloads; uniqueness of the
 parent adapter anchor together with `_step` being untouched.
+
+Added by the replay/lifecycle revision: an uncharged, dead or re-entrant manual
+`_startSpecial()` deploys nothing while the ordinary path deploys exactly one
+structure with exactly one native activation; the module source contains no ink
+assignment at all; `dt <= 0` is a strict no-op for both clocks with no ignition
+and no paint; dome ids use the real `nid` identity and two same-team actors never
+collide; a replayed deploy restores the transmitted position verbatim rather than
+re-deriving aim; twenty malformed payloads are each rejected with an explicit
+reason and create nothing; duplicate deploy / hit / expire packets are reported as
+`duplicate` and cannot be applied twice; a remote dome's clock paints nothing,
+burns nothing, never expires on its own and emits no authoritative event; a local
+round against a remote dome returns 0, mutates nothing and hands the parent one
+JSON-safe damage proposal, while a ghost or neutral round proposes nothing at all;
+a candidate reports which targets are reachable and refuses to spend a dome that
+died after the query; a match reset clears remote domes, their scene objects and
+the dedupe window; and two composed actors round-trip a real snapshot packet
+through JSON with duplicate delivery, a hit, an expiry and a match reset.
 
 Logs in `evidence/actions-freebuff-20261004/freebuff-6/`:
 
 | Log | Result |
 |---|---|
 | `bubbler-followup-run1.log` … `run5.log` | the five revision runs; run5 is the passing set |
-| `bubbler-followup-run5.log` | 19/19, exit 0 |
+| `bubbler-followup-run5.log` | 19/19, exit 0 (the candidate-query revision) |
 | `bubbler-followup-regression.log` | 42/42, exit 0 (`kit-big-bubbler` + `public-issues-6` + `adapter`) |
-| `bubbler-followup-gate-quick.log` | `check-inkwave-patches --quick` OK, upstream compatible, reference 11.3.0 |
+| `bubbler-final-run2.log` … `run5.log` | the replay/lifecycle revision; run5 is the passing set |
+| `bubbler-final-run5.log` | 33/33, exit 0 |
+| `bubbler-final-regression.log` | 56/56, exit 0 |
+| `bubbler-final-head.log` | 56/56, exit 0, rerun on the exact committed tree |
+| `bubbler-final-gate-quick.log` | `check-inkwave-patches --quick` OK, upstream compatible, reference 11.3.0 |
 
 Additionally, both the module and its test file were re-parsed through the full
 adapter chain (`adaptSource` → `adaptTouchLayout` → `adaptReliability` →

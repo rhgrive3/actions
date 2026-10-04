@@ -16,10 +16,14 @@ import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { fixture } from './source-fixture.mjs';
 import {
-  installKitBigBubbler, bigBubblerDomes, bigBubblerSnapshot, kitBarrierCandidate,
-  kitBarrierHitRecord, clearBigBubblers, tickBigBubblers,
+  installKitBigBubbler, bigBubblerDomes, bigBubblerRemoteDomes, bigBubblerSnapshot,
+  bigBubblerOwnerId, kitBarrierCandidate, kitBarrierHitRecord, clearBigBubblers,
+  tickBigBubblers, tickRemoteBigBubblers, replayBigBubbler, resetBigBubblerReplay,
   BIG_BUBBLER_RAW, BIG_BUBBLER_CALIBRATION, hermite2d, kitBarrierShelter,
+  BIG_BUBBLER_OWNERSHIP,
 } from '../runtime/kit-big-bubbler.mjs';
+
+const MODULE_PATH = new URL('../runtime/kit-big-bubbler.mjs', import.meta.url);
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const UPSTREAM = process.env.INKWAVE_UPSTREAM_SOURCE || `${ROOT}inkwave-public`;
@@ -493,6 +497,410 @@ test('the deploy, hit, ignite and collapse events are the concrete remote replay
   // the pinned TimeDamage is its own stream: it never masquerades as a hit
   assert.ok(seen.burn.length > 0, 'the burn ticks were observed');
   assert.ok(seen.burn.every(b => b.cause === 'burn' && b.target === 'canopy'));
+});
+
+// ---------------------------------------------------------------- lifecycle
+test('only a charged, single, live native activation deploys a structure', async () => {
+  const { f } = await composed();
+  level(f);
+  const a = roller(f); f.G.actors = [a];
+  // a manual call with an empty gauge must not create a structure
+  a.special = 0;
+  a._startSpecial();
+  assert.equal(bigBubblerDomes().length, 0, 'an uncharged manual _startSpecial does not deploy');
+  // a dead actor must not deploy either, even with a full gauge
+  a.special = a.specialCost();
+  a.alive = false;
+  a._startSpecial();
+  assert.equal(bigBubblerDomes().length, 0, 'a dead actor does not deploy');
+  a.alive = true;
+  // re-entrancy: a nested activation chain fails closed and deploys nothing
+  let fired = false, nested = 0;
+  const stop = f.on('special:use', () => {
+    if (fired) return;
+    fired = true;
+    a.special = a.specialCost();
+    a._startSpecial();
+    nested++;
+  });
+  a.special = a.specialCost();
+  a._startSpecial();
+  stop();
+  assert.equal(nested, 1, 'the nested call really happened');
+  assert.equal(bigBubblerDomes().length, 0, 'a re-entrant activation chain never deploys');
+  // the ordinary path runs the native common activation exactly once
+  let refills = 0;
+  const stopRefill = f.on('special:refill', () => refills++);
+  f.G.actors = [a];
+  const inkBefore = a.ink;
+  a.special = a.specialCost(); a.intent.special = true; f.tick(a);
+  stopRefill();
+  assert.equal(bigBubblerDomes().length, 1, 'one real activation deploys exactly one dome');
+  // 1 uncharged + 1 dead + (1 re-entrant chain = outer + nested) + 1 real = 5
+  assert.equal(a.stats.specials, 5, 'the native activation ran once per call and never more');
+  assert.equal(a.special, 0);
+  assert.equal(refills, 0,
+    'this module never refills: the parent resources module keys the refill on a '
+    + 'specialActive activation, and the bubbler deliberately sets none');
+  assert.equal(a.ink, inkBefore, 'so the tank is exactly where the parent left it');
+});
+
+test('the module never writes an ink field, so the refill stays the parent’s', async () => {
+  const source = fs.readFileSync(MODULE_PATH, 'utf8');
+  assert.equal(/\.ink\s*=/.test(source), false, 'no ink assignment anywhere in the module');
+  assert.equal(/\bink\s*[:=]/.test(source), false, 'no ink binding either');
+});
+
+test('a paused timestep is a strict no-op: no growth, no ignition, no paint', async () => {
+  const { f } = await composed();
+  level(f);
+  const a = roller(f); f.G.actors = [a]; activate(f, a);
+  const dome = bigBubblerDomes()[0];
+  let paints = 0;
+  f.G.paint.splat = () => { paints++; return 0; };
+  // park the clock: a non-positive timestep must be ignored outright
+  tickBigBubblers(0);
+  assert.equal(dome.t, 0);
+  assert.equal(dome.ignited, false);
+  for (let i = 0; i < 120; i++) { tickBigBubblers(0); tickRemoteBigBubblers(0); tickBigBubblers(-1); }
+  assert.equal(dome.t, 0, 'a paused or negative dt never advances the clock');
+  assert.equal(dome.ignited, false, 'a paused clock never ignites');
+  assert.equal(paints, 0, 'a paused clock never paints');
+  assert.equal(dome.radius, BIG_BUBBLER_RAW.minRadius);
+  assert.equal(bigBubblerRemoteDomes().length, 0, 'and the remote clock is a no-op too');
+});
+
+test('dome ids use the real network identity, never a colliding slot fallback', async () => {
+  const { f } = await composed();
+  level(f);
+  const a = roller(f); const b = roller(f, 0, 20, 0);
+  f.G.actors = [a, b];
+  assert.equal(bigBubblerOwnerId(a), bigBubblerOwnerId(a), 'stable per actor instance');
+  assert.notEqual(bigBubblerOwnerId(a), bigBubblerOwnerId(b),
+    'two actors of the same team get different keys even with the same slot');
+  activate(f, a); activate(f, b);
+  const ids = bigBubblerDomes().map(d => d.id);
+  assert.equal(ids.length, 2);
+  assert.equal(new Set(ids).size, 2, 'same team and same special count still collide-free');
+  assert.ok(ids.every(id => !/^0:0:/.test(id)), 'no "team:slot:count" identity is emitted');
+  // a live net id is preferred over anything this module could mint
+  a.nid = 41;
+  assert.equal(bigBubblerOwnerId(a), 'n41', 'Actor.nid is the source of truth');
+  assert.equal(bigBubblerOwnerId(null), null, 'an absent owner has no identity, and does not crash');
+  a.special = a.specialCost();
+  a._startSpecial();
+  assert.ok(bigBubblerDomes().some(d => d.id.startsWith('0:n41:')),
+    'the dome id carries the real network identity');
+});
+
+// ------------------------------------------------------------------ replay
+const VALID_DEPLOY = () => ({
+  domeId: '1:n9:3', serial: 3, team: 1, t: 1.0,
+  pos: [-12.5, 0, 33.25], hp: BIG_BUBBLER_RAW.maxHp, fieldHp: BIG_BUBBLER_RAW.maxFieldHp,
+});
+
+test('a replayed deploy restores the transmitted position instead of re-deriving aim', async () => {
+  const { f, scene } = await composed();
+  level(f);
+  const proxy = f.make('shooter'); proxy.team = 1; proxy.pos.set(0, 0, 60); proxy.aimYaw = 1.1;
+  f.G.actors = [proxy];
+  const sceneBefore = scene.children.length;
+  const result = f.G.projectiles.kitBubbleReplay('deploy', proxy, VALID_DEPLOY());
+  assert.equal(result.ok, true);
+  assert.equal(result.reason, 'deployed');
+  const shown = bigBubblerRemoteDomes();
+  assert.equal(shown.length, 1);
+  const [px, py, pz] = shown[0].pos.toArray();
+  assert.equal(px, -12.5);
+  assert.equal(py, 0);
+  assert.equal(pz, 33.25);
+  // the aim-derived position would be ~ (sin(1.1), cos(1.1)) * 3 from the proxy
+  const derived = { x: 60 + Math.sin(1.1) * BIG_BUBBLER_CALIBRATION.deployDistance,
+    z: Math.cos(1.1) * BIG_BUBBLER_CALIBRATION.deployDistance };
+  assert.ok(Math.hypot(33.25 - derived.x, 0 - derived.z) > 20,
+    'which is nowhere near the aim-derived landing point');
+  assert.equal(shown[0].team, 1);
+  assert.equal(shown[0].id, '1:n9:3');
+  assert.equal(shown[0].serial, 3);
+  assert.equal(shown[0].remote, true);
+  assert.ok(scene.children.length > sceneBefore, 'a real scene object backs the remote dome');
+});
+
+test('replay is idempotent: duplicate deploy, hit and expire packets are reported, not applied', async () => {
+  const { f } = await composed();
+  level(f);
+  const proxy = f.make('shooter'); proxy.team = 1; f.G.actors = [proxy];
+  const payload = VALID_DEPLOY();
+  assert.equal(f.G.projectiles.kitBubbleReplay('deploy', proxy, payload).reason, 'deployed');
+  const again = f.G.projectiles.kitBubbleReplay('deploy', proxy, payload);
+  assert.equal(again.ok, true);
+  assert.equal(again.reason, 'duplicate');
+  assert.equal(bigBubblerRemoteDomes().length, 1, 'a duplicated deploy creates nothing new');
+  // a hit with a distinct serial is applied once, even when the packet repeats
+  const hit = { domeId: payload.domeId, serial: 1, target: 'canopy', amount: 3600 };
+  const shown = bigBubblerRemoteDomes()[0];
+  const hp = shown.hp;
+  assert.equal(f.G.projectiles.kitBubbleReplay('hit', proxy, hit).reason, 'displayed');
+  assert.equal(shown.hp, hp - 3600);
+  assert.equal(f.G.projectiles.kitBubbleReplay('hit', proxy, hit).reason, 'duplicate');
+  assert.equal(f.G.projectiles.kitBubbleReplay('hit', proxy, hit).ok, true);
+  assert.equal(shown.hp, hp - 3600, 'a duplicated hit packet cannot spend HP twice');
+  // expire is idempotent too
+  assert.equal(f.G.projectiles.kitBubbleReplay('expire', proxy, { domeId: payload.domeId }).reason, 'expired');
+  assert.equal(bigBubblerRemoteDomes().length, 0);
+  assert.equal(f.G.projectiles.kitBubbleReplay('expire', proxy, { domeId: payload.domeId }).reason, 'duplicate');
+});
+
+test('replay validation is bounded and never throws on malformed input', async () => {
+  const { f } = await composed();
+  level(f);
+  const proxy = f.make('shooter'); proxy.team = 1; f.G.actors = [proxy];
+  const bad = [
+    [undefined, 'not-an-object'], [null, 'not-an-object'], ['deploy', 'not-an-object'],
+    [[], 'not-an-object'], [{}, 'bad-dome-id'], [{ domeId: 7 }, 'bad-dome-id'], [{ domeId: '' }, 'bad-dome-id'],
+    [{ domeId: 'x'.repeat(65), team: 1, t: 0, pos: [0, 0, 0], hp: 1, fieldHp: 1 }, 'dome-id-too-long'],
+    [{ domeId: 'a', team: 9, t: 0, pos: [0, 0, 0], hp: 1, fieldHp: 1 }, 'bad-team'],
+    [{ domeId: 'a', team: 1.5, t: 0, pos: [0, 0, 0], hp: 1, fieldHp: 1 }, 'bad-team'],
+    [{ domeId: 'a', team: 1, t: 0, pos: [0, 0], hp: 1, fieldHp: 1 }, 'bad-position'],
+    [{ domeId: 'a', team: 1, t: 0, pos: [0, 0, NaN], hp: 1, fieldHp: 1 }, 'bad-position'],
+    [{ domeId: 'a', team: 1, t: 0, pos: [0, 0, Infinity], hp: 1, fieldHp: 1 }, 'bad-position'],
+    [{ domeId: 'a', team: 1, t: 0, pos: [0, 0, 1e9], hp: 1, fieldHp: 1 }, 'bad-position'],
+    [{ domeId: 'a', team: 1, t: -1, pos: [0, 0, 0], hp: 1, fieldHp: 1 }, 'bad-age'],
+    [{ domeId: 'a', team: 1, t: 1e9, pos: [0, 0, 0], hp: 1, fieldHp: 1 }, 'bad-age'],
+    [{ domeId: 'a', team: 1, t: 0, pos: [0, 0, 0], hp: -1, fieldHp: 1 }, 'bad-hp'],
+    [{ domeId: 'a', team: 1, t: 0, pos: [0, 0, 0], hp: 1, fieldHp: 1e12 }, 'bad-field-hp'],
+    [{ domeId: 'a', team: 1, t: 0, pos: [0, 0, 0], hp: 1, fieldHp: 1, serial: -3 }, 'bad-serial'],
+    [{ domeId: 'a', team: 1, t: 0, pos: [0, 0, 0], hp: 1, fieldHp: 1, serial: 1.5 }, 'bad-serial'],
+  ];
+  for (const [payload, reason] of bad) {
+    const r = replayBigBubbler('deploy', proxy, payload);
+    assert.equal(r.ok, false, `rejected: ${reason}`);
+    assert.equal(r.reason, reason, `reason for ${JSON.stringify(payload)?.slice(0, 40)}`);
+  }
+  assert.equal(bigBubblerRemoteDomes().length, 0, 'no malformed packet created anything');
+  assert.equal(replayBigBubbler('nope', proxy, {}).reason, 'unknown-event');
+  // hit validates target and amount
+  for (const payload of [{}, { domeId: 'a', target: 'wall', amount: 1 }, { domeId: 'a', target: 'canopy', amount: -1 },
+    { domeId: 'a', target: 'canopy', amount: 'lots' }, { domeId: 'a'.repeat(80), target: 'canopy', amount: 1 },
+    { domeId: 'a', target: 'canopy', amount: 1, serial: -1 }]) {
+    assert.equal(replayBigBubbler('hit', proxy, payload).ok, false, `hit rejects ${JSON.stringify(payload).slice(0, 50)}`);
+  }
+  // expire validates only the id: a well-formed id for an unknown dome is a
+  // harmless idempotent no-op, not an error, and must say so rather than vanish
+  for (const payload of [{}, undefined, 'x', { domeId: 3 }, { domeId: '' }, { domeId: 'a'.repeat(80) }]) {
+    assert.equal(replayBigBubbler('expire', proxy, payload).ok, false, `expire rejects ${JSON.stringify(payload)}`);
+  }
+  const orphan = replayBigBubbler('expire', proxy, { domeId: 'never-deployed' });
+  assert.equal(orphan.ok, true);
+  assert.equal(orphan.reason, 'already-absent', 'an unknown dome is reported, not silently ignored');
+});
+
+test('a remote dome is presentation only: its clock paints nothing and burns nothing', async () => {
+  const { f } = await composed();
+  level(f);
+  const proxy = f.make('shooter'); proxy.team = 1; f.G.actors = [proxy];
+  let paints = 0;
+  f.G.paint.splat = () => { paints++; return 0; };
+  const authoritative = [], presentation = [];
+  const stops = [
+    f.on('kit:bubbler:ignite', p => authoritative.push(p)),
+    f.on('kit:bubbler:hit', p => authoritative.push(p)),
+    f.on('kit:bubbler:burn', p => authoritative.push(p)),
+    f.on('kit:bubbler:collapse', p => authoritative.push(p)),
+    f.on('kit:bubbler:deploy', p => authoritative.push(p)),
+    f.on('kit:bubbler:remote:ignite', p => presentation.push(p)),
+    f.on('kit:bubbler:remote:gone', p => presentation.push(p)),
+    f.on('kit:bubbler:replay:reset', p => presentation.push(p)),
+  ];
+  const fresh = { ...VALID_DEPLOY(), t: 0 };
+  replayBigBubbler('deploy', proxy, fresh);
+  const dome = bigBubblerRemoteDomes()[0];
+  assert.equal(dome.ignited, false, 'a freshly replayed dome is not yet armed');
+  const hp = dome.hp, field = dome.fieldHp;
+  for (let i = 0; i < 60 * 40; i++) tickRemoteBigBubblers(DT);
+  stops.forEach(stop => stop());
+  assert.equal(paints, 0, 'a remote dome never paints on this client');
+  assert.equal(dome.hp, hp, 'the TimeDamage burn never runs against a remote dome');
+  assert.equal(dome.fieldHp, field);
+  assert.equal(bigBubblerRemoteDomes().length, 1, 'a remote dome never expires on its own');
+  assert.deepEqual(authoritative, [], 'no authoritative event is emitted for a remote dome');
+  assert.equal(presentation.length, 1, 'exactly one presentation ignition');
+  assert.equal(presentation[0].presentationOnly, true);
+});
+
+test('a local round versus a remote dome proposes damage and changes nothing', async () => {
+  const { f } = await composed({ timeDamageIntervalSeconds: 1e9 });
+  level(f);
+  const proxy = f.make('shooter'); proxy.team = 1; f.G.actors = [proxy];
+  replayBigBubbler('deploy', proxy, VALID_DEPLOY());
+  const remote = bigBubblerRemoteDomes()[0];
+  tickRemoteBigBubblers(DT);
+  const hp = remote.hp, field = remote.fieldHp;
+  const proposals = [];
+  const stop = f.on('kit:bubbler:damage-proposal', p => proposals.push(p));
+  // the round crosses the dome: centre (-12.5, 0, 33.25), shell radius 7.5 at t=1
+  const y = 1.05;
+  const start = new f.THREE.Vector3(-12.5, y, 33.25 - 20), end = new f.THREE.Vector3(-12.5, y, 33.25 + 20);
+  const candidate = kitBarrierCandidate(round(f, 0, start), start, end);
+  assert.ok(candidate, 'a local round can be stopped by a remote dome');
+  assert.equal(candidate.remote, true);
+  assert.equal(candidate.ownership, 'remote-presentation');
+  const applied = candidate.onHit();
+  stop();
+  assert.equal(applied, 0, 'no HP is spent on this client');
+  assert.equal(remote.hp, hp, 'the remote HP is untouched');
+  assert.equal(remote.fieldHp, field);
+  assert.equal(proposals.length, 1, 'the parent is handed exactly one proposal');
+  const wire = proposals[0];
+  assert.deepEqual(JSON.parse(JSON.stringify(wire)), wire, 'the proposal is JSON-safe');
+  assert.equal(wire.domeId, remote.id);
+  assert.equal(wire.serial, remote.serial);
+  assert.equal(wire.amount, 36 * BIG_BUBBLER_CALIBRATION.rawPerDamageUnit);
+  assert.equal(candidate.onHit(), 0, 'a second call cannot propose twice');
+  assert.equal(proposals.length, 1);
+  // the ghost round is still intercepted, still visual only
+  const ghost = kitBarrierCandidate(round(f, 0, start, { ghost: true }), start, end);
+  assert.ok(ghost, 'a ghost may be stopped at a remote dome');
+  assert.equal(ghost.visualOnly, true);
+  assert.equal(ghost.onHit(), 0);
+  assert.equal(ghost.proposal, null, 'a ghost proposes nothing at all');
+});
+
+test('a neutral round never spends a dome budget, on either dome', async () => {
+  const { f } = await composed({ timeDamageIntervalSeconds: 1e9 });
+  level(f);
+  const a = roller(f); f.G.actors = [a]; activate(f, a);
+  const local = bigBubblerDomes()[0];
+  step(f, 60);
+  const start = new f.THREE.Vector3(0, 1.05, -8), end = new f.THREE.Vector3(0, 1.05, 8);
+  const hp = local.hp;
+  for (const team of [null, undefined, 'blue', 1.5, NaN]) {
+    const neutral = kitBarrierCandidate(round(f, team, start), start, end);
+    assert.ok(neutral, `a neutral round (team ${String(team)}) can still be intercepted visually`);
+    assert.equal(neutral.visualOnly, true);
+    assert.equal(neutral.onHit(), 0);
+  }
+  assert.equal(local.hp, hp, 'no neutral round damaged the local dome');
+  assert.equal(kitBarrierHitRecord(kitBarrierCandidate(round(f, null, start), start, end)).visualOnly, true);
+});
+
+test('the candidate reports which targets are reachable and re-checks liveness on hit', async () => {
+  const { f } = await composed({ timeDamageIntervalSeconds: 1e9 });
+  level(f);
+  const a = roller(f); f.G.actors = [a]; activate(f, a);
+  const dome = bigBubblerDomes()[0];
+  step(f, 90);
+  const ey = dome.pos.y + dome.emitterY;
+  const overhead = new f.THREE.Vector3(dome.pos.x, ey, -8);
+  const through = new f.THREE.Vector3(dome.pos.x, ey, dome.pos.z);
+  const above = kitBarrierCandidate(round(f, 1, overhead), overhead, through);
+  assert.equal(above.target, 'field');
+  assert.deepEqual(above.reachableCanopy, false, 'a shot over the shell cannot reach the canopy');
+  assert.equal(above.reachableEmitter, true);
+  // a shell shot can reach the canopy but not the emitter above it
+  const low = new f.THREE.Vector3(dome.pos.x, dome.pos.y + 1.0, dome.pos.z - 20);
+  const shell = kitBarrierCandidate(round(f, 1, low), low, new f.THREE.Vector3(dome.pos.x, dome.pos.y + 1.0, dome.pos.z + 20));
+  assert.equal(shell.target, 'canopy');
+  assert.equal(shell.reachableCanopy, true);
+  assert.equal(shell.reachableEmitter, false, 'the emitter is above this segment');
+  assert.deepEqual(kitBarrierHitRecord(shell).reachable, { canopy: true, emitter: false });
+  // a candidate queried before the dome died spends nothing when it settles
+  const pending = kitBarrierCandidate(round(f, 1, low),
+    low, new f.THREE.Vector3(dome.pos.x, dome.pos.y + 1.0, dome.pos.z + 20));
+  clearBigBubblers('test-race');
+  assert.equal(dome.dead, true);
+  assert.equal(pending.onHit(), 0, 'a stale candidate cannot spend a dead dome');
+});
+
+test('a match reset clears remote domes, the dedupe window and the scene', async () => {
+  const { f, scene } = await composed();
+  level(f);
+  const proxy = f.make('shooter'); proxy.team = 1; f.G.actors = [proxy];
+  const payload = VALID_DEPLOY();
+  replayBigBubbler('deploy', proxy, payload);
+  replayBigBubbler('hit', proxy, { domeId: payload.domeId, serial: 1, target: 'canopy', amount: 10 });
+  const sceneWith = scene.children.length;
+  assert.equal(bigBubblerRemoteDomes().length, 1);
+  let resets = 0;
+  const stop = f.on('kit:bubbler:replay:reset', () => resets++);
+  const removed = resetBigBubblerReplay('test-match-reset');
+  stop();
+  assert.deepEqual(removed.removed, [payload.domeId]);
+  assert.equal(resets, 1, 'the parent is told exactly when the replay side was reset');
+  assert.equal(bigBubblerRemoteDomes().length, 0);
+  assert.ok(scene.children.length < sceneWith, 'the remote dome released its scene objects');
+  // the same packet is accepted again after a reset: no stale dedupe carries over
+  assert.equal(replayBigBubbler('deploy', proxy, payload).reason, 'deployed',
+    'the dedupe window is cleared by the reset');
+});
+
+test('two composed actors round-trip a deploy packet through JSON, duplicates, reset and disposal', async () => {
+  const { f, scene } = await composed();
+  level(f);
+  const local = roller(f, 0, 0, 0);                       // the authoritative side
+  const proxy = f.make('shooter'); proxy.team = 1; proxy.nid = 7; proxy.pos.set(0, 0, 60);
+  f.G.actors = [local, proxy];
+  const sceneBefore = scene.children.length;   // baseline: no dome on screen yet
+  activate(f, local);
+  step(f, 60);
+  assert.ok(scene.children.length > sceneBefore, 'the deployed dome owns real scene objects');
+  // the packet a host would put on the wire, and it must survive JSON intact
+  const packet = { e: 'deploy', payload: bigBubblerSnapshot()[0] };
+  const wire = JSON.parse(JSON.stringify(packet));
+  assert.deepEqual(wire, packet, 'the snapshot is a JSON-safe packet');
+  for (const key of ['domeId', 'serial', 'team', 't', 'pos', 'hp', 'fieldHp']) {
+    assert.ok(key in wire.payload, `the packet carries ${key}`);
+  }
+  // match disposal on the receiving side before the packet arrives
+  f.G.projectiles.clear();
+  assert.equal(bigBubblerDomes().length + bigBubblerRemoteDomes().length, 0);
+  assert.equal(scene.children.length, sceneBefore, 'every scene object is released by the reset');
+
+  // the same packet is delivered twice (a duplicated transport frame)
+  const first = f.G.projectiles.kitBubbleReplay(wire.e, proxy, wire.payload);
+  const second = f.G.projectiles.kitBubbleReplay(wire.e, proxy, wire.payload);
+  assert.equal(first.reason, 'deployed');
+  assert.equal(second.reason, 'duplicate');
+  assert.equal(bigBubblerRemoteDomes().length, 1);
+  const shown = bigBubblerRemoteDomes()[0];
+  assert.deepEqual(Array.from(shown.pos.toArray()), wire.payload.pos, 'the transmitted position round-trips exactly');
+  assert.equal(shown.team, wire.payload.team);
+  assert.equal(shown.id, wire.payload.domeId);
+  assert.equal(shown.serial, wire.payload.serial);
+  assert.equal(shown.hp, wire.payload.hp);
+  assert.equal(shown.fieldHp, wire.payload.fieldHp);
+  assert.equal(shown.t, wire.payload.t);
+  assert.equal(shown.ignited, wire.payload.ignited);
+
+  // a hit packet, duplicated, and then an expiry packet, duplicated
+  const hit = { domeId: wire.payload.domeId, serial: 1, target: 'canopy', amount: 3600 };
+  const hitWire = JSON.parse(JSON.stringify(hit));
+  const hp = shown.hp;
+  f.G.projectiles.kitBubbleReplay('hit', proxy, hitWire);
+  f.G.projectiles.kitBubbleReplay('hit', proxy, hitWire);
+  assert.equal(shown.hp, hp - 3600, 'exactly one hit packet was applied');
+  const expireWire = JSON.parse(JSON.stringify({ domeId: wire.payload.domeId }));
+  f.G.projectiles.kitBubbleReplay('expire', proxy, expireWire);
+  f.G.projectiles.kitBubbleReplay('expire', proxy, expireWire);
+  assert.equal(bigBubblerRemoteDomes().length, 0);
+  assert.equal(scene.children.length, sceneBefore, 'the expiry disposed the remote dome');
+
+  // the authoritative dome is untouched by any of the remote traffic
+  local.special = local.specialCost();
+  local._startSpecial();
+  assert.equal(bigBubblerDomes().length, 1, 'the local side still owns its own structure');
+});
+
+test('the ownership declaration is explicit rather than a silent network gap', () => {
+  assert.ok(BIG_BUBBLER_OWNERSHIP.owns.length >= 4);
+  assert.ok(BIG_BUBBLER_OWNERSHIP.doesNotOwn.some(s => /packet transport/.test(s)));
+  assert.ok(BIG_BUBBLER_OWNERSHIP.doesNotOwn.some(s => /prediction|reconciliation|rollback/.test(s)));
+  assert.ok(/host/.test(BIG_BUBBLER_OWNERSHIP.remoteHpAuthority));
+  assert.ok(/proposal/.test(BIG_BUBBLER_OWNERSHIP.remoteHpAuthority),
+    'and it names the damage proposal the parent must adjudicate');
+  assert.ok(/neutral/i.test(BIG_BUBBLER_OWNERSHIP.neutralPolicy));
+  const source = fs.readFileSync(MODULE_PATH, 'utf8');
+  assert.ok(/NO online parity/.test(source), 'the module states the parity limitation in-source');
 });
 
 test('the documented native query anchor is present and unique in the composed source', () => {

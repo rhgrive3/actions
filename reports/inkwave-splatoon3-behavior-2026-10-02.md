@@ -204,3 +204,18 @@ compare 対象の変更点は `patches/splatoon3/profile.json` の `player.respa
 | B08 | ゴースト弾は表示上だけ | `p.ghost` は `visualOnly` となり `onHit()` は 0。HP・塗り・芝は動かさない | 未接続 | 遠隔の像は泡で止まるが、HP は減らない | 合成確認。**遠隔の完全再現ではない** |
 
 比較対象の追加は `runtime/kit-big-bubbler.mjs`、そのテスト、`reports/public-kit-big-bubbler-20261004.md` のみ。`inkwave-public/**`、`adapter.mjs`、`profile.json`、`install.mjs`、`gear.mjs`、ネットワーク構成は変更していない。special の発動・命中・消滅の実測は合成ランタイムのロジック測定であり、ブラウザ実動作・Switch 実機の比較ではない。`CanopyKnockBack` 700、`DamgeRatio` 0.64、`MaxHP.Mid/High`、`TimeDamageOnVLift`、special 点 180 以外の数値、`AscendFrame`/点火高さの体感は未確認のまま残す。
+
+### ビッグバブラーのライフサイクルと遠隔再現の追記（2026-10-04、公開版のみ）
+
+`patches/splatoon3/runtime/kit-big-bubbler.mjs` の、遠隔再現の具体 API と発動ガードについて。対象は公開版のみで `inkwave-public/**` は変更していない。
+
+| ID | 本家の挙動と根拠 | INKWAVE の実装箇所 | 再現操作 | プレイへの影響 | 確認状態 |
+|---|---|---|---|---|---|
+| B09 | スペシャル発動でインクタンクを全回復する。一次資料に回復条件そのものの記述はないため、**以下は未確認** | 回復は親の `runtime/resources.mjs` が持つ。当該モジュールは `ink` を一切代入しない（テストで検査） | ローラーでスペシャル入力 | 現状は回復しない。親は `specialActive` が立った場合のみ回復するが、この泡泡は `specialActive` を作らない | 合成確認（回復呼び出し 0 回）。**本家値は未確認**で校正値は置いていない。修正は親が `resources.mjs` で行う |
+| B10 | バブルは一投ごとに別個体である | `bigBubblerOwnerId` は `Actor.nid` を優先し、無ければ発番した識別子と単調 `serial` で `${team}:${ownerKey}:${serial}` を生成。旧 `owner.slot ?? 0` は削除した | 同チームの 2 人が同数のスペシャルを使う | 同じ状況でも domeId が衝突しなくなった | 合成確認。`nid` は `match.js:101` がルーム名簿から設定する実識別子 |
+| B11 | 発動は入力 1 回につき 1 回 | `_startSpecial` のラップは「ゲージが満タン」「native 発動がちょうど 1 回」「生存」「再入でない」をすべて満たすときだけ生成。再入連鎖は fail closed | 未チャージ／死亡／再入で `_startSpecial` を直接呼ぶ | 手動呼出しでは構造体が生成されない | 合成確認（native 発動 5 回に対し生成 0、正常系で 1） |
+| B12 | ポーズ中は時間が進まない | `tickBigBubblers` と `tickRemoteBigBubblers` は `dt <= 0` で即 return。点火・塗り・burn を含む全更新より前 | `tickBigBubblers(0)` を反復 | ポーズで直径も点火も塗りも進まない | 合成確認（t・ignited・radius・塗り回数すべて不変） |
+| B13 | 遠隔の状態は再現されうる。**本家挙動は未確認** | `replayBigBubbler('deploy'｜'hit'｜'expire', proxy, payload)` が有界検証・冪等 ingest し、`tickRemoteBigBubblers` が描画専用時計として半径と浮上のみを進める。塗・burn・HP は一切進めない | 親が NetMatch の型付きイベントから呼ぶ（未配線） | 現状は遠隔の泡が一切出ない | **ハンドオフと合成確認のみ。在線の一致は主張しない** |
+| B14 | 自チームの弾が遠隔の泡に当たった場合の裁定はサーバ側で行う | `onHit()` は 0 を返し一切変えず、`kit:bubbler:damage-proposal` で直列化可能な提案を出す。ゴーストは視覚のみ、中立弾は proposal すら出さない | 遠隔 dome へローカル弾を当てる | 親が裁定するまでは HP が減らない | 合成確認。**在線の裁定・予測・reconciliation は無い** |
+
+比較対象の追加は `runtime/kit-big-bubbler.mjs`、そのテスト、`reports/public-kit-big-bubbler-20261004.md` のみ。ネットワーク層・adapter・profile・install・`inkwave-public/**` は変更していない。B09 の回復条件、B13 と B14 の在線挙動はいずれも一次資料で確定していないため未確認のまま残し、数値を推測で置いていない。
