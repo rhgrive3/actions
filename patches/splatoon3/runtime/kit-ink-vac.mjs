@@ -1,281 +1,260 @@
 // Splat Charger special "Ink Vac" (Splatoon 3 SpBlower) for the public composed
-// INKWAVE runtime. Owned by the freebuff-8 kit task.
-//
-// Design constraints honoured here:
-//  * One held, aim-aligned FRONTAL intake volume. It absorbs enemy projectiles /
-//    ink that are inside the cone, have clear line of sight to the intake origin,
-//    are within intake length, and are travelling toward the player.
-//  * Charge is credited ONCE per accepted absorption (never per step, never per
-//    re-scan). An absorbed projectile deals zero damage.
-//  * The projectile-collision decision is exposed as a narrow candidate hook that
-//    the NATIVE projectile chronology calls with (start, end, projectile). It
-//    returns the FIRST CONTACT DISTANCE of the projectile with the intake volume
-//    and an onHit() that performs the absorption side effects. The hook does NOT
-//    integrate or scan native projectiles a second time; the caller owns the pass.
-//  * Release produces a charge-scaled countershot blast + turf routed through the
-//    native projectile pipeline (a real Projectiles entry) and the native
-//    applyHit / paint primitives. A remote ghost never authors damage or paint.
-//  * Activation consumes the special gauge and refills the ink tank exactly once.
-//  * Normal movement and main/sub weapon use continue while the special is held
-//    (the native update early-return for slam/storm is bypassed only for this id).
-//  * Expiry / interruption / death / reset clear the state and dispose any GPU
-//    resource it created.
+// INKWAVE runtime. Owned by the freebuff-8 kit task. Native id: 'inkVac'.
 //
 // Pinned raw values (WeaponSpBlower.game__GameParameterTable.json, Leanny/splat3
 // @7280ff9c 11.3.0):
-//   InhaleParam.LengthMax = 15 ; RadiusMin.Low = 0.8 ; RadiusMax.Low = 3.3
-//   ExhaleParam.DirectDamage = 2200 ; SpawnSpeedZSpecUp.Low = 0.55 ; SpawnSpeedZMaxCharge = 0.7
-//   ExhaleBlastParamMin/MaxCharge.PaintRadius = 6.0 / 11.0 ; DistanceDamage Damage = 2200
-//   WeaponParam.InhaleToExhaleWaitFrame = 20 ; ExhaleWaitFrame = 150
+//   InhaleParam.LengthMax 15 · RadiusMin{Low,Mid,High} .8/1.1/1.4
+//                        · RadiusMax{Low,Mid,High} 3.3/3.8/4.3
+//   ExhaleParam.DirectDamage 2200 · FlyGravity .003 · FlyPositionAirResist .01
+//   ExhaleParam.SpawnSpeedZSpecUp{Low,Mid,High} .55 · SpawnSpeedZMaxCharge .7
+//   ExhaleParam.SpawnBlastWaitFrame 50
+//   WeaponParam.InhaleToExhaleWaitFrame 20 · ExhaleWaitFrame 150
+//   ExhaleBlastParam{Min,Max}Charge.PaintRadius 6.0/11.0 · DistanceDamage.Damage 2200
 //
-// Every other numeric value (per-projection charge credit, inhale cap, damage unit
-// conversion) is explicitly CALIBRATED, not sourced. No physical Switch parity is
-// asserted.
+// Damage uses the repository's established conversion rawDamageToHP "/10" (see
+// profile.json calibration.unitConversions), so the pinned 2200 raw is 220 HP.
+// That exceeds the 100 HP actor pool, i.e. the countershot splats on contact: a
+// PHYSICAL SCALE LIMITATION of copying the raw Splatoon number into INKWAVE's HP
+// pool, not a claim about the hardware. (rawToHp = 100/3000 is NOT used here.)
+//
+// Intake geometry INTERPRETATION (labelled calibration, not a source claim):
+// RadiusMin/RadiusMax are read as the NEAR (muzzle-end) and FAR (LengthMax-end)
+// radius of a frustum that widens away from the player, and Low/High as the ends
+// of the charge range. The shape is therefore a widening frustum along the full 3D
+// aim vector (not a cylinder, and not a cone of revolution about horizontal only).
+// Nintendo's actual field meaning of RadiusMin/RadiusMax is UNCONFIRMED.
 
 let api = null;
 const INSTALL = Symbol.for('inkwave.s3.kit-ink-vac.install.v1');
+export const VAC_ID = 'inkVac';
+
+const RAW_TO_HP = 10;             // repository conversion rawDamageToHP: "/10"
+const INHALE_LENGTH = 15;         // pinned LengthMax
+const NEAR_LOW = 0.8, NEAR_HIGH = 1.4;   // pinned RadiusMin.Low/.High
+const FAR_LOW = 3.3, FAR_HIGH = 4.3;     // pinned RadiusMax.Low/.High
+const SPEED_LOW = 0.55, SPEED_HIGH = 0.7;// pinned SpawnSpeedZ (per frame)
+const FLY_GRAVITY = 0.003;        // pinned per frame^2
+const FLY_AIR_RESIST = 0.01;      // pinned per frame
+const SPAWN_BLAST_WAIT = 50;      // pinned frames
+const INHALE_TO_EXHALE_WAIT = 20; // pinned frames
+const EXHALE_WAIT = 150;          // pinned frames
+const BLAST_MIN = 6.0, BLAST_MAX = 11.0;// pinned blast paint radius
 
 export const INK_VAC_CALIBRATION = Object.freeze({
-  rawToHp: 100 / 3000,             // 3000 raw ~= 100 INKWAVE HP (calibration)
-  absorbCredit: 0.34,              // charge added per accepted projectile (calibration)
-  maxInhaleSeconds: 2.5,           // safety cap; real release is charge-full (calibration)
-  breathOriginHeight: 1.0,         // intake origin above feet (kid chest) (calibration)
-  frontalEpsilon: -0.05,          // projectile must travel against player forward (calibration)
-  status: 'SpBlower geometry pinned; charge/duration/unit conversions are INKWAVE calibration, not sourced',
+  rawToHp: RAW_TO_HP,
+  framesPerSecond: 60,
+  breathOriginHeight: 1.0,   // intake origin above feet (kid chest) — calibration
+  frontalEpsilon: -0.05,    // projectile must travel against player aim — calibration
+  absorbCreditPerProjectile: 0.34, // charge added per accepted projectile — calibration
+  geometry: 'frustum: near radius at the muzzle growing linearly to far radius at LengthMax; RadiusMin/RadiusMax read as near/far and Low/High as charge ends',
+  geometryStatus: 'interpretation / calibration; Nintendo field meaning unconfirmed',
+  speedStatus: 'pinned per-frame values multiplied by 60 to per-second',
+  damageStatus: 'pinned raw 2200 with repository /10 conversion; exceeds the 100 HP pool (instakill) — physical scale limitation',
+  transitions: 'InhaleToExhaleWaitFrame 20 and ExhaleWaitFrame 150 used as the minimum inhale before a manual release and the special time cap',
+  status: 'pinned geometry/ballistics/timings; origin height, frontal epsilon and the frustum field reading are calibration',
 });
 
-const INHALE_LENGTH = 15;      // pinned LengthMax
-const RADIUS_MIN = 0.8;        // pinned RadiusMin.Low
-const RADIUS_MAX = 3.3;        // pinned RadiusMax.Low
-const EXHALE_DAMAGE_RAW = 2200;// pinned DirectDamage / DistanceDamage Damage
-const BLAST_MIN = 6.0;         // pinned ExhaleBlastParamMinCharge.PaintRadius
-const BLAST_MAX = 11.0;        // pinned ExhaleBlastParamMaxCharge.PaintRadius
-
 const lerp = (a, b, t) => a + (b - a) * Math.max(0, Math.min(1, t));
-const states = new WeakMap(); // actor -> state
+const states = new WeakMap();
 
-function requireApi() {
-  if (!api) throw new Error('INKWAVE kit-ink-vac not installed');
-  return api;
-}
+function requireApi() { if (!api) throw new Error('INKWAVE kit-ink-vac not installed'); return api; }
+export function inkVacState(actor) { return states.get(actor) || null; }
 
-// Intake radius grows with accumulated charge (pinned Min.Low -> Max.Low).
-export function intakeRadius(charge) { return lerp(RADIUS_MIN, RADIUS_MAX, charge); }
-// Countershot blast reach grows with charge (pinned 6 -> 11).
+// Charge-scaled frustum radii (pinned Low/High ends).
+export function intakeNearRadius(charge) { return lerp(NEAR_LOW, NEAR_HIGH, charge); }
+export function intakeFarRadius(charge) { return lerp(FAR_LOW, FAR_HIGH, charge); }
 export function blastRadius(charge) { return lerp(BLAST_MIN, BLAST_MAX, charge); }
-// Charge-scaled countershot damage, converted from the pinned raw 2200.
-export function exhaleDamage(charge) { return EXHALE_DAMAGE_RAW * INK_VAC_CALIBRATION.rawToHp; }
+export function exhaleDamage() { return 2200 / RAW_TO_HP; }
+// Pinned per-frame spawn speed -> INKWAVE units/second.
+export function exhaleSpeed(charge) { return lerp(SPEED_LOW, SPEED_HIGH, charge) * INK_VAC_CALIBRATION.framesPerSecond; }
 
-// Resolved special-blast descriptor consumed by the native burst. The parent's
-// runtime adapts native _blastBurst to `p.s3SpecialWeapon || WEAPONS.blaster`, so
-// every field the native burst reads must be supplied here with provenance. Native
-// type:'blast' + integrator/burst remains the authority for motion and detonation.
+// Resolved special-blast descriptor consumed by the native burst. The parent adapts
+// native _blastBurst to `p.s3SpecialWeapon || WEAPONS.blaster`, so every field the
+// native burst reads is supplied here with provenance. Both `damageBands` and
+// `splashBands` are provided because the parent supports either.
 export function inkVacBlastDescriptor(charge) {
-  const radius = blastRadius(charge), damage = exhaleDamage(charge);
+  const radius = blastRadius(charge), damage = exhaleDamage();
   return Object.freeze({
-    id: 'inkVac', name: 'Ink Vac', kind: 'special',
+    id: VAC_ID, name: 'Ink Vac', kind: 'special',
     splashRadius: radius, burstRadius: radius, impactRadius: radius,
     splashDamageMax: damage, splashDamageMin: damage,
     splashBands: Object.freeze([[0, damage], [radius, damage]]),
+    damageBands: Object.freeze([[0, damage], [radius, damage]]),
     provenance: Object.freeze({
       blastRadius: 'ExhaleBlastParam{Min,Max}Charge.PaintRadius 6.0/11.0 (pinned)',
-      damage: 'ExhaleParam.DirectDamage & ExhaleBlastParam DistanceDamage.Damage = 2200 raw; rawToHp=100/3000 (calibration)',
-      chargeScale: 'radius and damage scale with accumulated charge (calibration)',
+      damage: 'ExhaleParam.DirectDamage & DistanceDamage.Damage = 2200 raw via repository rawDamageToHP /10 = 220 HP (exceeds 100 HP pool; scale limitation)',
+      chargeScale: 'blast radius lerps 6.0 -> 11.0 with charge; damage flat inside the pinned radius',
     }),
   });
 }
 
-function inkVacState(actor) { return states.get(actor) || null; }
+// Full 3D aim-aligned forward (vertical included) and the intake origin.
+function forwardOf(a, out) { return out.copy(a.aimDir).normalize(); }
+function originOf(a, out) { return out.set(a.pos.x, a.pos.y + INK_VAC_CALIBRATION.breathOriginHeight, a.pos.z); }
 
-// Horizontal aim-aligned forward of the intake.
-function forward(a, out) {
-  out.copy(a.aimDir);
-  out.y = 0;
-  if (out.lengthSq() < 1e-6) out.set(0, 0, 1);
-  return out.normalize();
-}
-function origin(a, out) { return out.set(a.pos.x, a.pos.y + INK_VAC_CALIBRATION.breathOriginHeight, a.pos.z); }
+// Analytic first entry of segment start->end into the truncated frustum.
+// Inside <=> 0 <= along(t) <= LengthMax AND F(t) <= 0, where
+// F(t) = radial^2(t) - radius(along(t))^2 is a quadratic in t and along(t) is linear.
+// The allowed t interval comes from the truncation, then the first F(t) <= 0 inside
+// it is found from the quadratic roots. No sampling, no per-projectile allocation.
+function firstEntry(state, start, end) {
+  const { _org: o, _fwd: f, _m: m, _e: e } = state;
+  originOf(state.actor, o); forwardOf(state.actor, f);
+  m.copy(start).sub(o);
+  e.copy(end).sub(start);
+  const segLen = e.length();
+  const L = INHALE_LENGTH, near = state.nearR, far = state.farR;
+  const k = (far - near) / L;
+  const a0 = m.dot(f), a1 = e.dot(f);
 
-// Is point q inside the held frontal intake cone for this state?
-function insideIntake(state, q) {
-  const a = state.actor, f = forward(a, state._fwd), o = origin(a, state._org);
-  const rx = q.x - o.x, ry = q.y - o.y, rz = q.z - o.z;
-  const along = rx * f.x + ry * f.y + rz * f.z;
-  if (along <= 0 || along > INHALE_LENGTH) return false;          // in front, within intake length
-  const latx = rx - f.x * along, laty = ry - f.y * along, latz = rz - f.z * along;
-  const lat = Math.hypot(latx, laty, latz);
-  return lat <= intakeRadius(state.charge);                        // within the charge-scaled radius
-}
-
-// First-contact distance along start->end where the swept point enters the cone.
-function firstContactDistance(state, start, end) {
-  const n = 16;
-  let prev = -1;
-  for (let i = 0; i <= n; i++) {
-    const t = i / n;
-    state._q.lerpVectors(start, end, t);
-    if (insideIntake(state, state._q)) { prev = t; break; }
+  // Allowed parameter interval from the truncated extent along the aim axis.
+  let lo = 0, hi = 1;
+  if (Math.abs(a1) < 1e-12) {
+    if (a0 < -1e-9 || a0 > L + 1e-9) return Infinity;
+  } else if (a1 > 0) {
+    lo = Math.max(lo, -a0 / a1);
+    hi = Math.min(hi, (L - a0) / a1);
+  } else {
+    lo = Math.max(lo, (L - a0) / a1);
+    hi = Math.min(hi, -a0 / a1);
   }
-  if (prev < 0) return Infinity;
-  let lo = Math.max(0, prev - 1 / n), hi = prev;
-  for (let k = 0; k < 12; k++) {                                   // bisect the boundary
-    const mid = (lo + hi) * 0.5;
-    state._q.lerpVectors(start, end, mid);
-    if (insideIntake(state, state._q)) hi = mid; else lo = mid;
-  }
-  return hi * start.distanceTo(end);
-}
+  if (lo > hi) return Infinity;                       // the step never reaches the volume
+  if (segLen < 1e-9) return F_at_lo() <= 0 ? 0 : Infinity;
 
-// Line of sight from the intake origin to the projectile: a wall in between blocks absorption.
-function clearPath(state, point) {
-  const { G } = api;
-  const o = origin(state.actor, state._org);
-  return G.physics?.los ? G.physics.los(o, point) : true;
+  const M0 = m.lengthSq() - a0 * a0;
+  const M1 = m.dot(e) - a0 * a1;
+  const M2 = e.lengthSq() - a1 * a1;
+  const C2 = M2 - k * k * a1 * a1;
+  const C1 = 2 * (M1 - near * k * a1 - k * k * a0 * a1);
+  const C0 = M0 - near * near - 2 * near * k * a0 - k * k * a0 * a0;
+  const F = t => (C2 * t + C1) * t + C0;
+  function F_at_lo() { return F(lo); }
+
+  if (F(lo) <= 0) return lo * segLen;                // already inside at the interval start
+  const disc = C1 * C1 - 4 * C2 * C0;
+  if (disc < 0) return Infinity;                      // never crosses the surface
+  const sq = Math.sqrt(disc);
+  const roots = Math.abs(C2) > 1e-12
+    ? [(-C1 - sq) / (2 * C2), (-C1 + sq) / (2 * C2)]
+    : (Math.abs(C1) > 1e-12 ? [-C0 / C1] : []);
+  roots.sort((x, y) => x - y);
+  for (const t of roots) {
+    if (t < lo - 1e-9 || t > hi + 1e-9) continue;
+    if (F(t) <= 0) return Math.max(lo, t) * segLen;
+  }
+  return Infinity;
 }
 
 // ---------------------------------------------------------------------------
-// The narrow candidate hook the native projectile chronology calls per actor.
-// Returns { distance, onHit } when this projectile is accepted into the intake,
-// else null. onHit() applies absorption exactly once (idempotent per projectile).
+// Narrow candidate hook. Returns { distance, onHit } when the projectile enters
+// the held intake, else null. Does not integrate or scan native projectiles.
 export function inkVacAbsorbCandidate(actor, start, end, projectile) {
-  const state = inkVacState(actor);
+  const state = states.get(actor);
   if (!state || state.phase !== 'inhale' || !projectile) return null;
-  if (projectile.team === actor.team) return null;                  // own ink is not absorbed
-  if (projectile.s3InkVacAbsorbed) return null;                      // already consumed this pass
-  // Direction: only projectiles travelling toward the player enter the frontal intake.
+  if (projectile.team === actor.team) return null;
+  if (projectile.s3InkVacAbsorbed) return null;
+  const { G } = api;
+  // Direction: only projectiles travelling toward the player enter the intake.
   if (projectile.vel) {
-    forward(actor, state._fwd);
+    forwardOf(actor, state._fwd);
     const vl = projectile.vel.length();
     if (vl > 1e-6) {
-      const dot = (projectile.vel.x * state._fwd.x + projectile.vel.y * state._fwd.y + projectile.vel.z * state._fwd.z) / vl;
-      if (dot > INK_VAC_CALIBRATION.frontalEpsilon) return null;      // leaving / parallel
+      const dot = projectile.vel.dot(state._fwd) / vl;
+      if (dot > INK_VAC_CALIBRATION.frontalEpsilon) return null;
     }
   }
-  // Range + cone + LOS: the projectile's leading position must be inside the intake volume.
-  const { THREE } = api;
-  const point = new THREE.Vector3().copy(projectile.pos);
-  if (!insideIntake(state, point)) return null;                        // current position outside cone
-  if (!clearPath(state, point)) return null;                            // intervening wall blocks
-  const distance = firstContactDistance(state, start, end);           // first contact along the step
+  const distance = firstEntry(state, start, end);
   if (!Number.isFinite(distance)) return null;
-  const onHit = () => absorb(state, projectile);
-  return { distance, onHit };
+  // Line of sight at the first-contact point (an intervening wall blocks intake).
+  const q = state._q.copy(start).lerp(end, start.distanceTo(end) > 0 ? distance / start.distanceTo(end) : 0);
+  if (G.physics?.los && !G.physics.los(originOf(actor, state._org), q)) return null;
+  return { distance, onHit: () => absorb(state, projectile) };
 }
 
-// Absorption side effects. Guarded so a single projectile is credited and
-// neutralised exactly once, no matter how often onHit is invoked.
+// Absorption side effects, guarded so one projectile is credited/neutralised once.
 function absorb(state, projectile) {
   if (projectile.s3InkVacAbsorbed) return false;
   projectile.s3InkVacAbsorbed = true;
-  projectile.damage = 0;                       // absorbed rounds deal zero damage
-  projectile.s3InkVacCredited = true;
-  state.charge = Math.min(1, state.charge + INK_VAC_CALIBRATION.absorbCredit);
+  projectile.damage = 0;
+  state.charge = Math.min(1, state.charge + INK_VAC_CALIBRATION.absorbCreditPerProjectile);
   state.absorbed++;
   return true;
 }
 
 // ---------------------------------------------------------------------------
-// GPU + state lifecycle.
+// Presentation. Owned cone built with its apex at the origin so it can never
+// extend behind the owner, oriented to the full 3D aim and visible while active.
 function createVisual(state) {
   const { THREE, G } = api;
   const scene = G.scene;
   if (!scene || typeof scene.add !== 'function' || typeof THREE?.Mesh !== 'function') return;
-  // A single cone ring owned by this state, disposed on every exit path.
-  const geo = new THREE.ConeGeometry(RADIUS_MAX, INHALE_LENGTH, 16, 1, true);
+  const L = INHALE_LENGTH;
+  const geo = new THREE.ConeGeometry(FAR_HIGH, L, 20, 1, true);   // wide end at -y
+  geo.rotateX(Math.PI);                                            // wide end now at +y
+  geo.translate(0, L / 2, 0);                                      // apex at origin, extends forward
   const mat = new THREE.MeshBasicMaterial({ color: state.actor.color?.getHex ? state.actor.color.getHex() : 0xffffff,
-    transparent: true, opacity: 0.18, depthWrite: false, side: THREE.DoubleSide });
+    transparent: true, opacity: 0.16, depthWrite: false, side: THREE.DoubleSide });
   const mesh = new THREE.Mesh(geo, mat);
-  mesh.position.copy(origin(state.actor, state._org));
-  mesh.rotation.x = Math.PI / 2;               // cone default +Y -> +Z (aim)
-  mesh.visible = false;
+  mesh.position.copy(originOf(state.actor, state._org));
+  mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), forwardOf(state.actor, state._fwd));
+  mesh.visible = true;
   scene.add(mesh);
-  state.mesh = mesh; state.geo = geo; state.mat = mat;
+  state.mesh = mesh; state.geo = geo; state.mat = mat; state.baseFar = FAR_HIGH;
 }
 function disposeVisual(state) {
   if (!state) return;
   const { G } = api;
-  const mesh = state.mesh;
-  if (mesh && G.scene && typeof G.scene.remove === 'function') G.scene.remove(mesh);
+  if (state.mesh && G.scene && typeof G.scene.remove === 'function') G.scene.remove(state.mesh);
   state.geo?.dispose?.(); state.mat?.dispose?.();
   state.mesh = state.geo = state.mat = null;
 }
 export function disposeInkVac(actor) {
-  const state = inkVacState(actor);
+  const state = states.get(actor);
   if (!state) return;
   disposeVisual(state);
-  if (actor.specialActive && actor.specialActive.id === 'inkvac') actor.specialActive = null;
+  if (actor.specialActive && actor.specialActive.id === VAC_ID) actor.specialActive = null;
   states.delete(actor);
 }
 
 // ---------------------------------------------------------------------------
-// Release: charge-scaled countershot blast + turf, via the native projectile
-// pipeline. A remote ghost authors nothing.
+// Release: queue the native type:'blast' countershot carrying the resolved
+// descriptor. Native integrator and _blastBurst remain the authority for motion and
+// detonation; this module applies no manual splash/paint. Errors are NOT swallowed.
 function release(state) {
-  const a = state.actor, c = state.charge;
-  const { G, emit, THREE } = api;
+  const a = state.actor, c = state.charge, { G, emit } = api;
   state.phase = 'done';
-  a.specialActive = null;                       // native lifecycle: control returns
+  a.specialActive = null;
   disposeVisual(state);
-  if (a.remote) { states.delete(a); emit?.('special:inkvac-release', { actor: a, charge: c, authored: false }); return; }
-  // Native pipeline handoff: Projectiles owns motion/lifetime of the countershot.
-  // Countershot: the native integrator and _blastBurst remain the authority. This
-  // module only queues the native blast projectile carrying the resolved
-  // descriptor; detonation damage/turf come from the native burst once the parent
-  // handoff reads p.s3SpecialWeapon. No manual splash/paint here (avoid double
-  // application and a second damage/paint engine).
-  const descriptor = inkVacBlastDescriptor(c);
-  try { G.projectiles?.fireInkVacExhale?.(a, { charge: c, descriptor }); } catch { /* parent-owned pipeline */ }
-  emit?.('special:inkvac-release', { actor: a, charge: c, authored: true });
+  let authored = false;
+  if (!a.remote && G.projectiles?.fireInkVacExhale) {
+    const projectile = G.projectiles.fireInkVacExhale(a, { charge: c, descriptor: inkVacBlastDescriptor(c) });
+    authored = !!projectile;
+  }
+  emit?.('special:inkvac-release', { actor: a, charge: c, authored });
   states.delete(a);
 }
 
-// Exhale countershot via the NATIVE projectile pipeline: push a real Projectiles
-// entry the native _step integrates. The splash/turf is applied by release().
-function installExhaleHandler(Projectiles) {
-  if (!Projectiles?.prototype || Projectiles.prototype.fireInkVacExhale) return;
-  const { THREE } = api;
-  Projectiles.prototype.fireInkVacExhale = function (a, payload) {
-    const p = this._new();
-    const o = origin(a, new THREE.Vector3());
-    const f = forward(a, new THREE.Vector3());
-    const charge = payload.charge ?? 0;
-    const d = payload.descriptor || inkVacBlastDescriptor(charge);
-    Object.assign(p, {
-      type: 'blast', owner: a, team: a.team,
-      wid: d.id,                       // 'inkVac': native splash cause id
-      s3SpecialWeapon: d,              // resolved descriptor, set BEFORE _push (parent preserves it)
-      damage: exhaleDamage(charge),    // direct damage travels on p.damage
-      size: 0.2, radius: d.impactRadius, radiusNear: d.impactRadius,
-      splashRadius: d.splashRadius, splashDamageMax: d.splashDamageMax, splashDamageMin: d.splashDamageMin,
-      burstRadius: d.burstRadius, damageBands: d.splashBands,
-      life: 0.5, straight: 1, grav: 0, drag: 0, trail: 0, trailEvery: 0,
-    });
-    p.pos.copy(o); p.prev.copy(o); p.start.copy(o);
-    p.vel.copy(f).multiplyScalar(2);
-    this._push(p);
-    return p;
-  };
-}
-
-// Per-frame advance. Runs after the (bypassed) native update so normal movement
-// and weapons keep working during the held special.
+// Per-frame advance (inhale). dt === 0 must be a strict no-op.
 function inkVacUpdate(a, dt) {
-  const state = inkVacState(a);
-  if (!state || state.phase !== 'inhale') return;
+  const state = states.get(a);
+  if (!state || state.phase !== 'inhale' || !(dt > 0)) return;
   state.t += dt;
-  if (state.charge >= 1 || state.t >= INK_VAC_CALIBRATION.maxInhaleSeconds) { release(state); return; }
+  state.nearR = intakeNearRadius(state.charge);
+  state.farR = intakeFarRadius(state.charge);
   if (state.mesh) {
-    state.mesh.position.copy(origin(a, state._org));
-    state.mesh.quaternion.setFromUnitVectors(new api.THREE.Vector3(0, 1, 0), forward(a, state._fwd));
-    state.mesh.scale.set(1, 1, 1);
+    state.mesh.position.copy(originOf(a, state._org));
+    state.mesh.quaternion.setFromUnitVectors(state._up, forwardOf(a, state._fwd));
+    const r = state.farR / state.baseFar;
+    state.mesh.scale.set(r, 1, r);        // radial only: never lengthens behind the owner
   }
+  if (state.charge >= 1 || state.t >= EXHALE_WAIT / INK_VAC_CALIBRATION.framesPerSecond) release(state);
 }
 
 // ---------------------------------------------------------------------------
 export function installKitInkVac(context, _profile) {
   if (context === api && Object.hasOwn(api.Actor?.prototype || {}, INSTALL)) return api;
   api = context;
-  const { Actor, THREE, Hit } = api;
+  const { Actor, THREE } = api;
   if (!Actor?.prototype || !THREE?.Vector3) throw new Error('Ink Vac requires the actual Actor and THREE');
   const proto = Actor.prototype;
   if (!Object.hasOwn(proto, INSTALL)) {
@@ -285,46 +264,86 @@ export function installKitInkVac(context, _profile) {
 
     proto.update = function (dt) {
       const s = this.specialActive;
-      const mine = s && s.id === 'inkvac';
-      if (!mine) return update.call(this, dt);
-      // Hide the token for the native pass so movement/weapons keep running,
-      // then restore it so death/reset and the native lifecycle still own it.
-      this.specialActive = null;
+      const state = s && s.id === VAC_ID ? states.get(this) : null;
+      if (!state) return update.call(this, dt);
+      const it = this.intent;
+      // Primary fire releases the countershot: the special replaces the main/sub.
+      if (it.fire && state.t >= INHALE_TO_EXHALE_WAIT / INK_VAC_CALIBRATION.framesPerSecond) {
+        release(state);
+        return update.call(this, dt);
+      }
+      // Inhale: normal movement continues; main, sub and squid form are withheld.
+      const fire = it.fire, sub = it.sub, squid = it.squid;
+      it.fire = false; it.sub = false; it.squid = false;
+      this.form = 'kid';
+      this.specialActive = null;                    // so the native pass does not early-return
       let result;
       try { result = update.call(this, dt); }
-      finally { if (this.specialActive === null) this.specialActive = s; }
+      finally {
+        it.fire = fire; it.sub = sub; it.squid = squid;
+        // Only restore the token if this actor is still alive and still owns it.
+        if (this.alive && states.get(this) === state && !this.specialActive) this.specialActive = s;
+      }
       inkVacUpdate(this, dt);
       return result;
     };
 
     proto._startSpecial = function () {
-      const id = this.weapon.special;
-      if (id !== 'inkvac') return startSpecial.call(this);
-      // Consume gauge + emit + kid form, exactly as the native activation, then
-      // refill the tank once and open the held intake.
+      if (this.weapon.special !== VAC_ID) return startSpecial.call(this);
       this.special = 0;
       this.stats.specials++;
       this.form = 'kid';
       this._setClimb(false);
-      api.emit?.('special:use', { actor: this, id });
+      api.emit?.('special:use', { actor: this, id: VAC_ID });
       api.G.audio?.play('special_activate', { pos: this.isLocal ? undefined : this.pos, volume: this.isLocal ? 1 : 0.7 });
-      const state = { actor: this, t: 0, phase: 'inhale', charge: 0, absorbed: 0, mesh: null, geo: null, mat: null,
-        _fwd: new THREE.Vector3(), _org: new THREE.Vector3(), _q: new THREE.Vector3() };
+      const state = { actor: this, t: 0, phase: 'inhale', charge: 0, absorbed: 0,
+        nearR: intakeNearRadius(0), farR: intakeFarRadius(0), baseFar: FAR_HIGH,
+        mesh: null, geo: null, mat: null,
+        _fwd: new THREE.Vector3(), _org: new THREE.Vector3(), _q: new THREE.Vector3(),
+        _m: new THREE.Vector3(), _e: new THREE.Vector3(), _up: new THREE.Vector3(0, 1, 0) };
       states.set(this, state);
-      this.specialActive = { id, t: 0, phase: 'inhale', armor: false };
-      this.ink = api.PLAYER.inkMax;   // tank refill, once per activation
+      this.specialActive = { id: VAC_ID, t: 0, phase: 'inhale', armor: false };
+      this.ink = api.PLAYER.inkMax;                 // tank refill, once per activation
       createVisual(state);
       api.emit?.('special:inkvac', { actor: this });
       return undefined;
     };
 
-    // Death / reset clear the held state and dispose GPU resources.
     proto.splat = function (...args) { disposeInkVac(this); return splat.apply(this, args); };
     proto.reset = function (...args) { disposeInkVac(this); return reset.apply(this, args); };
   }
 
-  installExhaleHandler(api.Projectiles);
-  // Expose the candidate hook + state lookup for the native projectile chronology.
+  const { Projectiles } = api;
+  if (Projectiles?.prototype && !Projectiles.prototype.fireInkVacExhale) {
+    Projectiles.prototype.fireInkVacExhale = function (a, payload) {
+      const p = this._new();
+      const o = originOf(a, new THREE.Vector3());
+      const f = forwardOf(a, new THREE.Vector3());
+      const charge = payload.charge ?? 0;
+      const d = payload.descriptor || inkVacBlastDescriptor(charge);
+      Object.assign(p, {
+        type: 'blast', owner: a, team: a.team,
+        wid: d.id,                                  // native splash cause id
+        s3SpecialWeapon: d,                         // set BEFORE _push (parent preserves it)
+        damage: exhaleDamage(),                     // direct damage travels on p.damage
+        size: 0.2, radius: d.impactRadius,
+        splashRadius: d.splashRadius, splashDamageMax: d.splashDamageMax,
+        splashDamageMin: d.splashDamageMin, burstRadius: d.burstRadius,
+        damageBands: d.damageBands,
+        // pinned ballistics: per-frame spawn speed x60, per-frame^2 gravity x3600,
+        // per-frame air resistance x60; SpawnBlastWaitFrame gates the detonation.
+        vel: f.multiplyScalar(exhaleSpeed(charge)),
+        life: Infinity,                             // the wait frames bound the projectile
+        delay: SPAWN_BLAST_WAIT / INK_VAC_CALIBRATION.framesPerSecond,
+        straight: 0, grav: FLY_GRAVITY * 3600, drag: FLY_AIR_RESIST * 60,
+        trail: 0, trailEvery: 0,
+      });
+      p.pos.copy(o); p.prev.copy(o); p.start.copy(o);
+      this._push(p);
+      return p;
+    };
+  }
+
   api.inkVacAbsorbCandidate = inkVacAbsorbCandidate;
   api.inkVacState = inkVacState;
   return api;

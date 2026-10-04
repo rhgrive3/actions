@@ -3,143 +3,123 @@
 Scope: public composed runtime only (`inkwave-public` + `patches/splatoon3`). No native
 source, lock, FETCH or generated-output edits. Owned files: this report,
 `patches/splatoon3/runtime/kit-ink-vac.mjs`, `patches/splatoon3/tests/kit-ink-vac.test.mjs`.
-Parent owns profile / install / adapter / gear / network composition.
+Parent owns profile / install / adapter / gear / network, the native burst integration, the
+candidate-hook wiring and the installed browser.
+
+Native id used consistently everywhere (weapon.special, `specialActive.id`, `p.wid`,
+`descriptor.id`): **`inkVac`**.
 
 ## Issue 177 mapping (pinned receipts)
 
 `evidence/actions-freebuff-20261004/kit-primary/base-kit-fields.json`
-(Leanny/splat3 @7280ff9cde8bb1c5dcef46c700c326471584d2e6, 11.3.0):
+(Leanny/splat3 @7280ff9cde8bb1c5dcef46c700c326471584d2e6, 11.3.0): `charger` →
+`SpBlower` (Ink Vac), `SpecialPoint = 190`, sub `Bomb_Splash`. Only the charger's Ink Vac is
+implemented here; it is not a Storm/Slam alias.
 
-| INKWAVE weapon | SpecialWeapon | SpecialPoint | Sub |
-| --- | --- | --- | --- |
-| `shooter` | SpUltraShot (Trizooka) | 200 | Bomb_Suction |
-| `roller` | SpGreatBarrier (Big Bubbler) | 180 | Bomb_Curling |
-| `charger` | **SpBlower (Ink Vac)** | **190** | Bomb_Splash |
+## Pinned values used
 
-This module implements only the charger's Ink Vac, as requested. It does **not** alias
-Storm or Slam, and does not touch the other two kits (parent-owned).
+From `WeaponSpBlower.game__GameParameterTable.json`:
 
-## Pinned SpBlower values used
+| Field | Value | Use here |
+| --- | --- | --- |
+| `InhaleParam.LengthMax` | 15 | frustum length |
+| `InhaleParam.RadiusMin.{Low,High}` | .8 / 1.4 | near radius at charge ends |
+| `InhaleParam.RadiusMax.{Low,High}` | 3.3 / 4.3 | far radius at charge ends |
+| `ExhaleParam.DirectDamage` | 2200 | countershot damage (via repository `/10`) |
+| `ExhaleParam.SpawnSpeedZSpecUp.Low` / `SpawnSpeedZMaxCharge` | .55 / .7 | spawn speed, ×60 |
+| `ExhaleParam.FlyGravity` | .003 | ×3600 gravity |
+| `ExhaleParam.FlyPositionAirResist` | .01 | ×60 drag |
+| `ExhaleParam.SpawnBlastWaitFrame` | 50 | detonation delay (projectile `delay`) |
+| `WeaponParam.InhaleToExhaleWaitFrame` | 20 | minimum inhale before a manual release |
+| `WeaponParam.ExhaleWaitFrame` | 150 | special time cap |
+| `ExhaleBlastParam{Min,Max}Charge.PaintRadius` | 6.0 / 11.0 | charge-scaled blast reach |
 
-From `WeaponSpBlower.game__GameParameterTable.json` (same pinned commit):
+## Explicit calibration / limitations
 
-- `InhaleParam.LengthMax = 15` — intake length (world units, project scale 1:1)
-- `InhaleParam.RadiusMin.Low = 0.8`, `RadiusMax.Low = 3.3` — charge-scaled intake radius
-- `ExhaleParam.DirectDamage = 2200`; `ExhaleBlastParam{Min,Max}Charge.DistanceDamage Damage = 2200`
-- `ExhaleBlastParamMinCharge.PaintRadius = 6.0`, `MaxCharge = 11.0` — charge-scaled blast reach
-- `ExhaleParam.SpawnSpeedZSpecUp.Low = 0.55`, `SpawnSpeedZMaxCharge = 0.7` — exhale speed (recorded; not used by this integration)
-- `WeaponParam.InhaleToExhaleWaitFrame = 20`, `ExhaleWaitFrame = 150` — recorded; the real
-  release trigger in this integration is charge-full, so the fixed wait frames are NOT
-  claimed to be reproduced.
+- **Damage conversion.** Uses the repository's established `rawDamageToHP: "/10"`
+  (profile.json `calibration.unitConversions`), so the pinned 2200 raw is **220 HP**.
+  The earlier `100/3000` was inconsistent with the repository and has been removed. 220 HP
+  exceeds the 100 HP actor pool, so the countershot splats on contact: this is a **physical
+  scale limitation** of copying the raw Splatoon number into INKWAVE's HP pool, not a
+  hardware-parity claim.
+- **Intake geometry reading.** `RadiusMin`/`RadiusMax` are read as the **near (muzzle-end)**
+  and **far (`LengthMax`-end)** radius of a frustum that widens away from the player, with
+  `Low`/`High` the ends of the charge range. The volume is therefore a **widening frustum**
+  along the **full 3D aim vector** — not a cylinder, and not a cone about horizontal only.
+  Nintendo's actual field meaning of `RadiusMin`/`RadiusMax` is **unconfirmed**; this is a
+  labelled interpretation, not a source claim.
+- `breathOriginHeight = 1.0` (intake origin above feet) — calibration.
+- `frontalEpsilon = -0.05` (must travel against the aim) — calibration.
+- `absorbCreditPerProjectile = 0.34` charge per accepted projectile — calibration.
+- Unknowns left explicit: the exact mapping of the 20F/150F fields onto "minimum inhale
+  before manual release" and "special time cap" is an interpretation; blast detonation
+  visuals and the `GuideRadius 0.25` guidance are not reproduced.
 
-## Explicitly calibrated (not sourced)
+## Behaviour
 
-Exported as `INK_VAC_CALIBRATION` and asserted in tests:
+1. **Activation** consumes the gauge, refills the tank once, forces kid form, opens a held
+   inhale state and creates the intake visual.
+2. **Special replaces main and sub.** During the inhale the native pass runs for movement
+   only: `intent.fire`, `intent.sub` and `intent.squid` are withheld and form is pinned to
+   kid. **Primary fire releases the countershot** (after the pinned 20F window). The token is
+   restored around the native pass only if the actor is still alive and still owns the state.
+3. **Held frontal intake.** A projectile is accepted only if it travels toward the player, and
+   its swept segment **first enters** the frustum within `LengthMax`; LOS is tested at that
+   first-contact point, so an intervening wall blocks intake.
+4. **Charge** credited once per accepted absorption; absorbed projectiles get `damage = 0`
+   and a guard so they can never be credited or damaged twice.
+5. **Release** (charge full, primary fire, or the 150F cap) queues a native `type:'blast'`
+   countershot carrying the resolved descriptor. The native integrator and `_blastBurst`
+   remain the authority; this module applies no manual splash/paint. Countershot ballistics
+   use the pinned speed/gravity/drag and the pinned `SpawnBlastWaitFrame` delay. A **remote
+   ghost authors nothing**.
+6. **Lifecycle.** Expiry/interruption, death and reset clear the state and dispose the owned
+   GPU mesh. `dt === 0` is a strict no-op.
 
-- `rawToHp = 100/3000` — 3000 raw damage ~= 100 INKWAVE HP. The pinned exhale raw 2200
-  therefore yields ~73 HP rather than instant-splatting. **Calibration, not sourced.**
-- `absorbCredit = 0.34` charge per accepted projectile. **Calibration.**
-- `maxInhaleSeconds = 2.5` safety cap; real release is charge-full. **Calibration.**
-- `breathOriginHeight = 1.0` (kid chest) for the intake origin. **Calibration.**
-- `frontalEpsilon = -0.05` frontal-direction gate. **Calibration.**
+## Projectile contract (kept as agreed)
 
-No physical Switch parity is asserted. Charge/duration/unit values are engineering
-calibration for this rig.
+`fireInkVacExhale` pushes a real native projectile via `_new`/`_push` with
+`type:'blast'`, `p.wid = 'inkVac'`, `p.s3SpecialWeapon = inkVacBlastDescriptor(charge)`
+set **before** `_push`, and direct damage on `p.damage`. The descriptor supplies both
+`splashBands` and `damageBands` (parent supports either), plus `splashRadius`,
+`splashDamageMax/Min`, `burstRadius`, `impactRadius`, `kind:'special'` and a `provenance`
+block. Errors are not swallowed.
 
-## Behaviour implemented
+Parent-side work still required: preserve `p.s3SpecialWeapon` in runtime `_push`, reset it in
+`_new`, adapt `_blastBurst` to `p.s3SpecialWeapon || WEAPONS.blaster`, use `p.wid` as the
+splash cause and restore the ghost descriptor from the installed id registry. Until that
+handoff lands the native burst still reads `WEAPONS.blaster`, so **native integration of the
+charge-scaled blast is NOT claimed**.
 
-1. **Activation** (`Actor._startSpecial`, id `inkvac`): consumes the gauge
-   (`special = 0`), refills the tank once (`ink = inkMax`), forces kid form, and opens a
-   held intake state. Guarded to run once per activation.
-2. **Held frontal intake** aligned to `actor.aimDir`: a cone of length `LengthMax` with
-   charge-scaled radius (`RadiusMin.Low → RadiusMax.Low`). A projectile is accepted only
-   if it is in front, within length and radius, travelling toward the player
-   (`vel·forward <= frontalEpsilon`), and has clear LOS to the intake origin (an
-   intervening wall blocks it).
-3. **Charge**: credited once per accepted absorption (`absorbCredit`), clamped to [0,1].
-   Absorbed projectiles get `damage = 0` and a `s3InkVacAbsorbed` guard so they can never
-   be credited or damaged twice.
-4. **Release** (charge-full or cap): a charge-scaled countershot using the native
-   `type:'blast'` projectile. Per the agreed parent contract, the module only queues the
-   native blast projectile carrying the resolved descriptor; the native integrator and
-   `_blastBurst` remain the authority for motion and detonation. This module does **not**
-   apply a manual splash/paint (avoids double application and a second damage/paint engine).
-   A **remote ghost authors nothing** (no projectile is queued, so no damage/paint).
-5. **Normal use during the special**: the native `update` early-return for slam/storm is
-   bypassed **only** for `id === 'inkvac'` by temporarily hiding `specialActive` around the
-   native pass, so movement, squid form and main/sub weapons keep running. The token is
-   restored so death/reset and the native lifecycle still own it.
-6. **Lifecycle**: expiry (release), interruption (weapon swap clears via reset path),
-   death (`Actor.splat`) and reset (`Actor.reset`) all clear the state and dispose any GPU
-   resource the state created (an owned cone mesh). `disposeInkVac` is exported.
-
-## Integration hooks the parent must wire (I did not edit install/adapter)
-
-### A. Candidate hook (native projectile chronology)
-
-For each candidate actor currently in an Ink Vac, call:
+## Candidate hook
 
 ```js
 const cand = api.inkVacAbsorbCandidate(actor, p.prev, p.pos, p);
-// cand === null  -> no intake contact
-// cand.distance   -> first-contact distance of p with the intake volume
-// cand.onHit()    -> absorbs p (damage->0, credit charge once), run ONLY if the intake
-//                    candidate wins the nearest comparison against wall/actor/boss
+// null | { distance /* analytic first contact */, onHit }
 ```
+Compare `cand.distance` against the native wall/actor/boss distances and call `onHit()` only
+for the winner. The hook performs no integration or second projectile scan.
 
-Returns a first-contact **distance** and an `onHit` side-effect closure; it does **not**
-integrate or scan native projectiles a second time. `api.inkVacState(actor)` exposes the
-held state.
-
-### B. Countershot descriptor (agreed with parent)
-
-`inkVacBlastDescriptor(charge)` is exported and also set on the projectile. Contract:
-
-- projectile `type: 'blast'` (native integrator/burst);
-- `p.wid = 'inkVac'` (the id; parent uses it as the splash cause and restores the ghost
-  descriptor from the installed id registry). If the parent prefers `trizooka` for the
-  other special, only that module's descriptor differs;
-- `p.s3SpecialWeapon = <descriptor>` set **before** native `_push`;
-- `p.damage` carries the direct damage;
-- descriptor supplies `splashBands`, `splashRadius`, `splashDamageMax/Min`, `burstRadius`,
-  `impactRadius`, `kind:'special'` and a `provenance` block.
-
-Parent-side work already agreed: preserve `p.s3SpecialWeapon` in runtime `_push` (instead of
-copying the owner main weapon, which would let Shooter `ageDamage` cap damage), reset it in
-`_new` reuse, and adapt native `_blastBurst` to `p.s3SpecialWeapon || WEAPONS.blaster`.
-Without that handoff the native burst still reads `WEAPONS.blaster`, so **current native
-integration of the charge-scaled blast is NOT claimed**; the tests assert the descriptor
-contract that the handoff consumes.
-
-### C. Composition steps not performed here (parent-owned)
-
-- add `charger.special = 'inkvac'` / `specialCost = 190` (from `base-kit-fields.json`);
-- register the kit in `profile`/`SPECIALS` and the weapon-select UI;
-- call `installKitInkVac(api, profile)` from `runtime/install.mjs`;
-- call the candidate hook from the native projectile chronology;
-- apply the `_push`/`_new`/`_blastBurst` descriptor handoff above;
-- Special Charge Up gear multiplier already composes on top of the base 190 (gear.mjs owns it).
-
-## Verification (focused, composed)
+## Verification
 
 `node --experimental-vm-modules --test patches/splatoon3/tests/kit-ink-vac.test.mjs`
-→ **13 pass / 0 fail** (`evidence/.../kit-ink-vac.log`, EXIT=0). Tests drive the real
-`Actor` activation/update, the real `Projectiles` blast entry and the candidate hook;
-helpers alone are not treated as proof. Covered: front/back, intervening wall, range,
-absorbed damage disabled, single (no double) credit, movement + weapon use during special,
-the native `type:'blast'` countershot with its resolved descriptor and charge scaling,
-remote-ghost no-author, death and explicit disposal (GPU resource removed), pinned/calibrated
-geometry helpers.
+→ **21 pass / 0 fail**. Tests drive the real `Actor` activation/update, the real `Projectiles`
+blast entry and the candidate hook. Coverage includes: gauge/tank consumed once; frontal
+absorb with damage disabled; backside rejection; intervening wall; intake length; a projectile
+that only **sweeps through** the volume (analytic first entry at the far boundary); vertical
+aim alignment; single (non-double) charge credit; main/sub/form withheld while held; primary
+fire withheld inside the 20F window then releasing; 150F cap auto-release; native `type:'blast'`
+countershot with descriptor and both band forms; pinned speed 42 u/s, gravity, drag and 50F
+delay; damage 220 via `/10`; remote ghost no-author; death during an update not restoring the
+token; `dt 0` no-op; visible aim-aligned front-only presentation; reset/dispose GPU removal;
+pinned/calibrated geometry helpers.
 
 ## Limitations
 
-- Charge/duration/damage-unit conversions and frontal gate are calibration, not sourced.
-- The fixed `InhaleToExhaleWaitFrame` / `ExhaleWaitFrame` timings are not reproduced.
-- Exhale speed (`0.55/0.7`) is recorded but not used by this integration.
-- Kit registration (`charger.special = 'inkvac'`, `specialCost = 190`), the projectile
-  candidate-hook wiring and the `_blastBurst` descriptor handoff are parent-owned; until the
-  handoff lands the native burst still reads `WEAPONS.blaster`, so the charge-scaled blast
-  is not claimed end-to-end.
-- Main weapon is verified as usable during the special; the sub uses the identical native
-  pipeline path but is not separately asserted.
-- No browser/physical-device capture; logic/composed-level only.
+- Kit registration (`charger.special='inkVac'`, `specialCost=190`) and the candidate-hook and
+  `_blastBurst` wiring are parent-owned; end-to-end charge-scaled detonation is not claimed.
+- The `RadiusMin`/`RadiusMax` near/far reading is an interpretation (unconfirmed).
+- 220 HP exceeds the 100 HP pool (instakill) — physical scale limitation.
+- Origin height, frontal epsilon and per-projectile charge credit are calibration.
+- 20F/150F field mapping, blast visuals and `GuideRadius` guidance are not reproduced.
+- Logic/composed level only; no browser or physical-device capture.
