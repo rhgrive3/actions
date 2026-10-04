@@ -12,6 +12,7 @@ import { ShadowCache } from '../../../src/core/shadowcache.js';
 import { installMovement } from './movement.mjs';
 import { installMovementMotion } from './movement-motion.mjs';
 import { installWeapons } from './weapons.mjs';
+import { installKitDefense } from './kit-defense.mjs';
 import { installGear } from './gear.mjs';
 import { installFlow } from './flow.mjs';
 import { installResources } from './resources.mjs';
@@ -54,6 +55,7 @@ export function install(profile) {
   Object.assign(SUB.bomb, profile.bomb);
   for (const [id, data] of Object.entries(profile.specials || {})) Object.assign(SPECIALS[id], data);
   installWeapons(api, profile);
+  installKitDefense(api);
   installRollerMotion(api, profile);
   installMovement(api, profile);
   installMovementMotion(api, profile);
