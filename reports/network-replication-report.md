@@ -1,6 +1,6 @@
 # Network replication repair
 
-Baseline: `5e28dbd16f7829aebd88052ff5f7fdf71f39fdad` (remote main observed before work). Branch: `inkwave/network-sync`. Upstream INKWAVE sources and weapon tuning are immutable. No merge into main.
+Current main integration baseline: `404c66c858cfea14e81225fb6364febcf2c9c528`. Original source-workstream baseline: `5e28dbd16f7829aebd88052ff5f7fdf71f39fdad`. Branch: `inkwave/network-sync`. Upstream INKWAVE sources and weapon tuning are immutable. No merge into main.
 
 ## Root cause
 
@@ -12,6 +12,7 @@ The active fireFlick attack parameters finalize physics before _push publication
 
 - Owner input and WeaponRunner admit the attack. The owner alone generates damage projectiles and their physics, and records paint results.
 - `p` events retain the original positional fields, append mode, seed, and projectile identifier. Exact physics timing is preserved instead of rounding delay/life/straight boundaries. Initial position and velocity retain existing 0.01 quantization.
+- Bomb cosmetic spin is **not** appended to the event payload. The Bomb wire payload stays at its existing birth fields; only the generic ordered-replay tick/sequence footer is added. This keeps protocol growth limited to information required for deterministic ownership/replay.
 - Transport remains ordered, reliable WebSocket JSON through the existing relay. Snapshot frequency remains 20 Hz. No extra transport packet type or send timer.
 - Remote projectile and bomb ghosts are visual copies with zero projectile damage and muted paint. Storm is the existing exception: each victim owner applies cloud damage to its own local actors. Catch-up advances cloud geometry but applies only one current frame of victim damage/rain, never a burst of historical damage. Owner paint (`s`) and hit routing remain independent from ghost rendering. Remote actor interpolation continues to use the existing sender playback clock; projectile, bomb, storm cloud, and charger beam playback now shares it, mapped to executed owner simulation ticks. Each tick carries u; event schema r:2 adds [birth/terminal physics tick, ordered event sequence] footer. Receiver interpolation maps wall playback time to sampled owner ticks and holds beyond the newest completed tick. Events also wait for their owner tick; several physics steps within one render batch cannot cause premature terminal playback.
 - Owner terminal (`pe`) events retire projectile-linked visuals for authoritative actor collisions. Ghost actor/boss collision guesses cannot replace owner outcomes. Static world collision uses native physics.
