@@ -14,9 +14,17 @@
 //
 // Every helper returns without touching anything unless the projectile belongs
 // to this kit, so an un-composed build stays byte-identical to native.
-import { selectTrizookaFlight, selectTrizookaCollision, trizookaOrbitOffset, TRIZOOKA_PROJECTILE_FIELDS } from './kit-trizooka.mjs';
+import { selectTrizookaFlight, selectTrizookaCollision, trizookaOrbitOffset, TRIZOOKA_PROJECTILE_FIELDS, TRIZOOKA_ORBIT } from './kit-trizooka.mjs';
 
 export const TRIZOOKA_WID = 'trizooka';
+
+// Wids whose replayed ghost must never lay ink. This is a declared IDENTITY
+// list, not another kit's logic: the rule a kit ghost needs is intrinsic (it is
+// not the owner of the ink) and therefore independent of `G.netm`. A native
+// transport mute only suppresses RECORDING, so it cannot be the authority test:
+// once `G.netm` is null, or a ghost is stepped outside the mute window, a mute
+// based guard would quietly start letting ghost ink through.
+const KIT_GHOST_WIDS = new Set([TRIZOOKA_WID, 'inkVac']);
 
 let PLAYER_CONFIG = null;
 let SPECIALS_CONFIG = null;
@@ -34,7 +42,8 @@ export function isKitProjectile(p) {
   return !!p && p.wid === TRIZOOKA_WID;
 }
 
-// A ghost keeps the kit identity for presentation but is never authoritative.
+// A ghost keeps the kit identity for presentation but is never authoritative,
+// and neither is a side lobe: only the one damage carrier of a volley is.
 export function hasAuthority(p) {
   return isKitProjectile(p) && !p.ghost && p.damageOwner === true;
 }
@@ -51,11 +60,17 @@ export function hasPaintAuthority(p) {
 
 // ---- flight stage ------------------------------------------------------------
 //
-// The native step applies one grav/drag pair. The Trizooka flies 16F straight,
-// 10F braking, then free. Runs for ghosts too: that is presentation only.
+// The native step applies exactly one grav/drag pair, and it is the ONLY
+// integrator. This helper therefore never applies a force: it publishes this
+// stage's constants onto `p.grav` / `p.drag` and the transition velocity, and
+// the native pair that follows runs for EVERY projectile, kit or not, exactly
+// once. An earlier revision returned true here, which made the adapter skip
+// that pair, so every brake and free tick flew with no gravity and no drag at
+// all and only the transition frame ever moved the velocity.
 //
-// `p.age` is NOT touched, so the native clock and the `p.prev` snapshot stay put
-// and the swept segment remains chronological.
+// Runs for ghosts too: that is presentation only. `p.age` is NOT touched, so the
+// native clock and the `p.prev` snapshot stay put and the swept segment remains
+// chronological.
 export function kitTrizookaFlight(system, p, dt) {
   if (!isKitProjectile(p)) return false;
   const s = selectTrizookaFlight(p, dt);
@@ -69,7 +84,19 @@ export function kitTrizookaFlight(system, p, dt) {
     p.grav = s.grav;
     p.drag = s.drag;
   }
-  if (s.transition) {
+  // EXACTLY ONCE per stage. The stage is entered when it differs from the stage
+  // this projectile was last stepped in; a symmetric `|age - boundary| <= dt`
+  // window is true on BOTH frames that straddle the boundary, so the vertical
+  // was reset twice and a slow frame could reset it again on either side. The
+  // flag is re-stamped every call, so it never latches from an older step.
+  // The FIRST step never transitions: a projectile is born in the straight
+  // stage, so an undefined memory means "no boundary has been crossed yet" -
+  // not "the brake just started", which would clamp a round that only ever
+  // appeared mid-flight (a ghost, or a pooled round aged by its previous life).
+  const entered = p.s3AppliedStage !== undefined && p.s3AppliedStage !== s.stage;
+  p.s3AppliedStage = s.stage;
+  p.s3StageTransition = false;
+  if (s.transition && entered) {
     const horiz = Math.hypot(p.vel.x, p.vel.z);
     if (s.stage === 'brake') {
       const cap = s.brakeVelocityXZ * 60;
@@ -83,7 +110,7 @@ export function kitTrizookaFlight(system, p, dt) {
   const c = selectTrizookaCollision(p);
   p.s3ActorRadius = c.actorRadius;
   p.s3WorldRadius = c.worldRadius;
-  return true;
+  return false;
 }
 
 // ---- orbit -------------------------------------------------------------------
@@ -107,13 +134,23 @@ export function kitTrizookaOrbitDelta(system, p, dt) {
 
 // ---- actor hit sphere --------------------------------------------------------
 //
-// Native uses `PLAYER.radius * 0.95 + p.size`: the body capsule plus the
-// projectile's own visual shell. The Trizooka GROWS on that same expression, so
-// the visual shell is counted exactly once and the body radius is never dropped.
+// Native reaches an actor with `PLAYER.radius * 0.95 + p.size`: the BODY
+// allowance plus the projectile's own round shell. The Trizooka table's
+// actorRadius IS that projectile sphere, so it REPLACES the `p.size` term.
+//
+// `p.size` must NOT be added as well. It is the render-only shell an ordinary
+// round happens to use, and adding it on top of the table radius counted the
+// projectile twice: a lobe reached further than the table states, and it grew
+// when only the drawing was supposed to grow. The body allowance is kept, so no
+// part of the native reach is lost.
+//
+// The reach is passed as `segmentCapsuleEntry`'s last argument, which is a
+// distance from the capsule AXIS (the function solves against the axis and the
+// two cap spheres). The adapter region that calls it already used the axis form
+// for every ordinary round; that convention is untouched here.
 export function kitTrizookaActorRadius(system, p) {
   if (!isKitProjectile(p)) return null;
-  const shell = Number.isFinite(p.size) ? p.size : 0;
-  return playerRadius() * 0.95 + shell + selectTrizookaCollision(p).actorRadius;
+  return playerRadius() * 0.95 + selectTrizookaCollision(p).actorRadius;
 }
 
 // ---- swept sphere vs the native block OBBs -----------------------------------
@@ -230,48 +267,95 @@ function blockCandidates(block, a, b, r) {
   return { t: Math.max(0, Math.min(1, bestT)), kind: bestKind, axis: bestAxis, sign: bestSign, block };
 }
 
+// The real closest point on a rotated box, mirroring native
+// `Physics.closestOnBlock` (clamp each axis projection to its own half extent).
+// Used for the contact normal, so a rotated corner or edge gets the true surface
+// normal instead of an axis-aligned approximation.
+function closestOnBlock(block, px, py, pz) {
+  const c = block.center, ax = block.axes, h = block.half;
+  const dx = px - c.x, dy = py - c.y, dz = pz - c.z;
+  const hs = [h.x, h.y, h.z];
+  let lx = 0, ly = 0, lz = 0;
+  for (let k = 0; k < 3; k++) {
+    const A = ax[k];
+    let d = dx * A.x + dy * A.y + dz * A.z;
+    const lim = hs[k];
+    if (d > lim) d = lim; else if (d < -lim) d = -lim;
+    lx += A.x * d; ly += A.y * d; lz += A.z * d;
+  }
+  return { x: c.x + lx, y: c.y + ly, z: c.z + lz };
+}
+
 // Fills the native-shaped Hit for a swept sphere. Returns true when it hit.
 function sweepFill(out, a, b, hit) {
   const level = out.__level;
-  const x0 = Math.min(a.x, b.x), x1 = Math.max(a.x, b.x);
-  const z0 = Math.min(a.z, b.z), z1 = Math.max(a.z, b.z);
+  const r = hit.radius > 0 ? hit.radius : 0;
+  // The broadphase rect must contain the whole SPHERE, not just the centre line.
+  // Un-expanded, a block whose face the shell only grazes lies outside the rect
+  // and is never even considered, so the grazing contact was silently lost. The
+  // native ray rect is exact for a point; for a sphere it is not.
+  const x0 = Math.min(a.x, b.x) - r, x1 = Math.max(a.x, b.x) + r;
+  const z0 = Math.min(a.z, b.z) - r, z1 = Math.max(a.z, b.z) + r;
   const ids = level.queryBlocks(x0, z0, x1, z1, out.__ids || (out.__ids = []));
   let best = null;
   for (let i = 0; i < ids.length; i++) {
     const blk = level.blocks[ids[i]];
     if (!blk || !blk.solid) continue;
-    const c = blockCandidates(blk, a, b, hit.radius);
+    // native `physics.segment(..., true)` means "skip grates"; this sweep
+    // replaces exactly that call, so it must skip them too
+    if (blk.grate) continue;
+    const c = blockCandidates(blk, a, b, r);
     if (c && (!best || c.t < best.t)) best = c;
   }
-  out.hit = false; out.dist = 0; out.block = -1; out.face = -1;
+  out.hit = false; out.dist = 0; out.block = -1; out.face = -1; out.u = 0; out.v = 0;
+  out.center = false; out.grate = false;
   if (!best) return false;
   const len = Math.hypot(b.x - a.x, b.y - a.y, b.z - a.z);
-  const dist = best.t * len;
   out.hit = true;
-  out.dist = dist;
+  out.dist = best.t * len;
   out.block = best.block.id ?? -1;
-  out.point.set(a.x + (b.x - a.x) * best.t, a.y + (b.y - a.y) * best.t, a.z + (b.z - a.z) * best.t);
-  // the surface normal: face/edge candidates use the axis, corner candidates use
-  // the direction from the rounded corner to the contact point
-  if (best.kind === 0) {
-    const A = best.block.axes[best.axis];
-    out.normal.copy(A).multiplyScalar(best.sign);
-  } else if (best.kind === 1) {
-    const c = best.block.center, ax = best.block.axes;
-    const dx = out.point.x - c.x, dy = out.point.y - c.y, dz = out.point.z - c.z;
-    const o = [dx * ax[0].x + dy * ax[0].y + dz * ax[0].z, dx * ax[1].x + dy * ax[1].y + dz * ax[1].z, dx * ax[2].x + dy * ax[2].y + dz * ax[2].z];
-    o[best.axis] = 0;
-    if (Math.hypot(o[0], o[1], o[2]) < 1e-9) out.normal.set(0, 1, 0); else {
-    out.normal.set(
-      ax[0].x * o[0] + ax[1].x * o[1] + ax[2].x * o[2],
-      ax[0].y * o[0] + ax[1].y * o[1] + ax[2].y * o[2],
-      ax[0].z * o[0] + ax[1].z * o[1] + ax[2].z * o[2],
-    ).normalize();
+  // the SPHERE CENTRE at the contact parameter
+  const cx = a.x + (b.x - a.x) * best.t;
+  const cy = a.y + (b.y - a.y) * best.t;
+  const cz = a.z + (b.z - a.z) * best.t;
+  // The normal is centre minus the real closest surface point. That is the true
+  // outward direction for a rotated box on a face, an edge AND a corner; the
+  // previous face/edge/corner case analysis used WORLD half extents and a radial
+  // direction from the box centre, which is wrong as soon as the box is rotated
+  // or the contact is not on a face.
+  const q = closestOnBlock(best.block, cx, cy, cz);
+  let nx = cx - q.x, ny = cy - q.y, nz = cz - q.z;
+  const nl = Math.hypot(nx, ny, nz);
+  if (nl < 1e-9) {
+    // degenerate (the centre sits exactly on the surface): fall back to the axis
+    // the candidate family reported
+    const A = best.block.axes[best.axis] || best.block.axes[0];
+    nx = A.x * (best.sign || 1); ny = A.y * (best.sign || 1); nz = A.z * (best.sign || 1);
+    const al = Math.hypot(nx, ny, nz) || 1;
+    nx /= al; ny /= al; nz /= al;
+  } else { nx /= nl; ny /= nl; nz /= nl; }
+  out.normal.set(nx, ny, nz);
+  // The contact POINT is on the shell, not at the centre: a centre-based point
+  // sits one radius INSIDE the solid, and native `_impact` offsets by only 0.14
+  // along the normal, so the impact ink was laid inside the geometry.
+  out.point.set(cx - nx * r, cy - ny * r, cz - nz * r);
+  // face + uv from the dominant normal axis, with native's own indexing
+  const ax = best.block.axes;
+  let faceK = 0, faceD = -1, faceSign = 1;
+  for (let k = 0; k < 3; k++) {
+    const d = nx * ax[k].x + ny * ax[k].y + nz * ax[k].z;
+    const ad = d < 0 ? -d : d;
+    if (ad > faceD) { faceD = ad; faceK = k; faceSign = d >= 0 ? 1 : -1; }
+  }
+  const faces = best.block.faces;
+  out.face = faces ? (faces[faceK * 2 + (faceSign > 0 ? 0 : 1)] ?? -1) : -1;
+  if (out.face >= 0) {
+    const f = level.faces?.[out.face];
+    if (f) {
+      const px = out.point.x - f.origin.x, py = out.point.y - f.origin.y, pz = out.point.z - f.origin.z;
+      out.u = px * f.u.x + py * f.u.y + pz * f.u.z;
+      out.v = px * f.v.x + py * f.v.y + pz * f.v.z;
     }
-  } else {
-    const c = best.block.center, h = best.block.half;
-    const sx = Math.sign(out.point.x - c.x) || 1, sy = Math.sign(out.point.y - c.y) || 1, sz = Math.sign(out.point.z - c.z) || 1;
-    out.normal.set(out.point.x - (c.x + sx * h.x), out.point.y - (c.y + sy * h.y), out.point.z - (c.z + sz * h.z)).normalize();
   }
   return true;
 }
@@ -292,25 +376,52 @@ export function kitTrizookaWorldSweep(system, p, out, physics) {
 
 // ---- paint and turf credit ---------------------------------------------------
 //
-// A shared pure helper for the three native projectile paint-credit sites.
+// A shared PURE helper for the three native projectile paint-credit sites.
 //
 // The gauge policy after a special ends is UNKNOWN, so the ordinary native
-// `addTurf` semantics are preserved exactly. What this does refuse is authority:
-// a ghost or a side lobe lays no ink and credits no turf, even after the
-// transport is disposed. `_impact` lays paint BEFORE the credit line, so the
-// ghost guard is applied before any splat as well.
-// Only a KIT projectile can be refused here. Anything else keeps the native
-// behaviour untouched: this helper must never block an ordinary main round.
+// `addTurf` semantics are preserved exactly. What this refuses is authority: a
+// ghost or a side lobe lays no ink and credits no turf.
+//
+// It is PURE. It used to call `owner.addTurf(area)` itself, and the native line
+// still called `owner.addTurf(kitPaintCredit(...))` around it, so every
+// authoritative projectile credited turf TWICE - ordinary guns included - and a
+// refused projectile still reached `addTurf(0)`. It returns the credit amount and
+// nothing else; the native `addTurf` stays the single credit site.
+//
+// Paint MUST NOT run before the credit test for a projectile with no authority,
+// so each native site gates the whole statement on `kitPaintAuthority` first.
+// `_impact` lays paint at its own top, and that method is already refused there.
+//
+// The rule is intrinsic: it reads the projectile's own identity, never
+// `G.netm`. A transport mute only stops RECORDING, so it cannot be the test - a
+// mute based guard would start letting kit ghost ink through as soon as
+// `G.netm` is null.
 export function kitPaintAuthority(p) {
-  return !isKitProjectile(p) || hasAuthority(p);
+  if (!p) return false;
+  if (isKitProjectile(p)) return hasAuthority(p);
+  // every ordinary native projectile keeps the native rule exactly
+  return !(p.ghost && KIT_GHOST_WIDS.has(p.wid));
 }
 
+// The credit amount for one paint: the area for an authoritative projectile,
+// zero for a ghost, a side lobe or anything without an owner.
 export function kitPaintCredit(p, area) {
   if (!kitPaintAuthority(p)) return 0;
   const a = p.owner;
-  if (!a) return 0;
-  if (typeof a.addTurf === 'function') a.addTurf(area);
+  if (!a || typeof a.addTurf !== 'function') return 0;
   return area;
+}
+
+// The shared volley ledger (`p.vol.hits`) is the native one-hit-per-victim
+// dedupe. Native appends the victim even when the projectile deals no damage, so
+// a visual side lobe that is stepped BEFORE the carrier marks the victim as
+// already hit and silently suppresses the carrier's real hit; the order of the
+// lobes in the one native list then decides whether the volley damages anything.
+// Only the carrier may write this ledger, for any projectile.
+// Ordinary drop / slosh rounds keep the native shared-vol semantics untouched.
+export function kitVolleyHitAuthority(p) {
+  if (!isKitProjectile(p)) return true;
+  return hasAuthority(p);
 }
 
 // ---- pooled reuse ------------------------------------------------------------
@@ -320,26 +431,50 @@ export function kitTrizookaClearPooled(p) {
   // next borrower of this pooled object inherits them
   const wasKit = isKitProjectile(p) || p.s3SpecialWeapon?.kind === TRIZOOKA_WID;
   for (const k of TRIZOOKA_PROJECTILE_FIELDS) delete p[k];
-  for (const k of ['s3Stage', 's3StageFrames', 's3StageTransition', 's3ActorRadius', 's3WorldRadius', 's3SizeBase', 's3OrbitApplied']) delete p[k];
+  for (const k of ['s3Stage', 's3StageFrames', 's3StageTransition', 's3AppliedStage', 's3ActorRadius', 's3WorldRadius', 's3SizeBase', 's3OrbitApplied']) delete p[k];
   if (wasKit) { p.damage = 0; p.dmgFar = undefined; p.grav = 0; p.drag = 0; }
   return p;
 }
 
 // ---- ghost reconstruction ----------------------------------------------------
 //
-// The native packet is a fixed tuple, so it is NOT widened: the descriptor is
-// rebuilt from SPECIALS[wid].projectileDescriptor, which is the contract the
-// parent established. A ghost keeps the presentation state and never authority.
-export function kitTrizookaGhost(p, actor, SPECIALS) {
+// The descriptor is rebuilt from SPECIALS[wid].projectileDescriptor, which is
+// the contract the parent established. A ghost keeps the presentation state and
+// never authority.
+//
+// The volley identity is appended to the MAIN PROJECTILE packet only (never the
+// bomb or the sub event) and is validated here: without it a replayed volley
+// arrives as three ghosts that all orbit on phase 0, so the lobes overlap
+// instead of staying 120 degrees apart. Values are bounded on the way in, so a
+// malformed or hostile packet cannot inject a large phase or a negative index,
+// and an OLD packet that has no such field simply restores lobe 0.
+function wireIndex(v, max) {
+  const n = Number(v);
+  if (!Number.isFinite(n) || n < 0) return 0;
+  const i = Math.floor(n);
+  return i > max ? max : i;
+}
+
+// Packer side of the same bound, so a malformed local value can never put a
+// negative, fractional or unbounded index on the wire.
+export function kitVolleyPacketIndex(v) {
+  return wireIndex(v, 255);
+}
+
+export function kitTrizookaGhost(p, actor, SPECIALS, wire) {
   if (!isKitProjectile(p)) return p;
   const entry = (SPECIALS || SPECIALS_CONFIG)?.[TRIZOOKA_WID];
   const descriptor = typeof entry?.projectileDescriptor === 'function'
     ? entry.projectileDescriptor(p)
     : entry?.descriptor ?? null;
   if (descriptor) p.s3SpecialWeapon = descriptor;
-  // a ghost that arrives without an explicit owner keeps its volley index so the
-  // side lobes stay in order; authority is forced off regardless
-  if (p.damageOwner === undefined) p.damageOwner = false;
+  if (wire) {
+    p.s3VolleyIndex = wireIndex(wire.volleyIndex, 2);
+    p.s3ActionIndex = wireIndex(wire.actionIndex, 255);
+    p.s3OrbitPhase = p.s3VolleyIndex * TRIZOOKA_ORBIT.lobePhase;
+  }
+  // authority is forced off regardless of what the packet claimed
+  p.damageOwner = false;
   p.ghost = true;
   return p;
 }

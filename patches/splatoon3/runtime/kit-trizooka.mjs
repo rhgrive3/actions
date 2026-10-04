@@ -511,11 +511,15 @@ export function selectTrizookaFlight(p, dt) {
   const grav = stage === 'straight' ? 0
     : stage === 'brake' ? TRIZOOKA.brakeGravity : TRIZOOKA.freeGravity;
   const drag = stage === 'straight' ? 0 : TRIZOOKA_DRAG[`${stage}PerSecond`];
-  // did we just cross into this stage? the parent applies the brake transition
+  // Did we just cross into this stage? This is a PROPERTY of the stage, not a
+  // window around the boundary: a symmetric `|age - boundary| <= dt` test is
+  // true on BOTH frames that straddle the boundary, so the brake transition ran
+  // twice and a slow frame could run it again on either side. The caller pairs
+  // this with its own last-stage memory (`p.s3AppliedStage`) and applies the
+  // transition exactly once, on entry.
   const straightFrames = straight > 0 ? straight / FRAME : 0;
-  const transition = stage === 'brake'
-    ? Math.abs(age - straight) <= Math.max(dt, FRAME)
-    : stage === 'free' ? Math.abs(age - brakeEnd) <= Math.max(dt, FRAME) : false;
+  const transition = stage === 'brake' || stage === 'free';
+  const boundaryAge = stage === 'brake' ? straight : stage === 'free' ? brakeEnd : 0;
   return {
     kind: TRIZOOKA_ID,
     stage,
@@ -527,6 +531,8 @@ export function selectTrizookaFlight(p, dt) {
     drag,
     dragPerFrame: stage === 'straight' ? 0 : stage === 'brake' ? TRIZOOKA.brakeAirResist : TRIZOOKA.freeAirResist,
     transition,
+    boundaryAge,
+    transitionNote: 'transition means "this stage has a transition action"; apply it once, on entry to the stage (see p.s3AppliedStage)',
     // raw transition velocities, unscaled by the unit conversions
     brakeVelocityXZ: TRIZOOKA.brakeVelocityXZ,
     brakeVelocityY: TRIZOOKA.brakeVelocityY,
@@ -601,7 +607,7 @@ export function trizookaOrbitOffset(p, dt) {
 // Fields the parent must clear in native `_new` and reconstruct for a ghost.
 export const TRIZOOKA_PROJECTILE_FIELDS = [
   's3SpecialWeapon', 's3Weapon', 's3VolleyIndex', 's3ActionIndex', 'damageOwner', 's3OrbitPhase', 's3Yaw',
-  's3Stage', 's3StageFrames', 's3StageTransition', 's3ActorRadius', 's3WorldRadius', 's3SizeBase',
+  's3Stage', 's3StageFrames', 's3StageTransition', 's3AppliedStage', 's3ActorRadius', 's3WorldRadius', 's3SizeBase',
   's3OrbitApplied',
 ];
 

@@ -13,7 +13,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { adaptSource } from '../adapter.mjs';
-import { installKitTrizooka, VOLLEY_CONFIG, throwVolley, trizookaSpecialWeapon, TRIZOOKA_PROJECTILE_FIELDS } from '../runtime/kit-trizooka.mjs';
+import { installKitTrizooka, VOLLEY_CONFIG, throwVolley, trizookaSpecialWeapon, TRIZOOKA_PROJECTILE_FIELDS, TRIZOOKA } from '../runtime/kit-trizooka.mjs';
 import { kitTrizookaClearPooled, kitTrizookaGhost, isDamageCarrier, kitTrizookaFlight } from '../runtime/trizooka-collision.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
@@ -212,13 +212,23 @@ test('the growing actor sphere actually changes the native capsule query', async
   assert.ok(early < 0.2, `the sphere starts near the 0.01 init radius, got ${early}`);
   assert.ok(grown > 0.7, `the sphere grows to its 0.75 end radius, got ${grown}`);
   assert.ok(grown > early * 3, 'and it is genuinely increasing');
-  // the number is real geometry, not metadata: the native capsule query inflates
-  // by s3SizeBase + this radius
+  // the number is real geometry, not metadata: the native capsule query is
+  // inflated by the BODY allowance plus this sphere, and the table sphere
+  // REPLACES the ordinary round's render-only `p.size`
   const { kitTrizookaActorRadius } = await import('../runtime/trizooka-collision.mjs');
-  const native = api.PLAYER.radius * 0.95 + p.size;
-  assert.equal(kitTrizookaActorRadius(projectiles, p), native + grown,
-    'the native body capsule and visual shell are both kept, with only the table sphere added');
-  assert.ok(kitTrizookaActorRadius(projectiles, p) > native, 'it really inflates the capsule');
+  const body = api.PLAYER.radius * 0.95;
+  const reach = kitTrizookaActorRadius(projectiles, p);
+  assert.equal(reach, body + grown,
+    'the body allowance is kept and the table sphere stands in for the visual shell');
+  assert.ok(reach > body, 'it really inflates the capsule');
+  assert.ok(reach < body + p.size + grown, 'the projectile is not counted twice');
+  // p.size drives the drawing only: the physical reach must not follow it
+  const before = kitTrizookaActorRadius(projectiles, p);
+  p.size = 0.75;
+  assert.equal(kitTrizookaActorRadius(projectiles, p), before,
+    'a render-only shell change cannot move the physical Trizooka reach');
+  p.size = 0.15;
+  assert.equal(kitTrizookaActorRadius(projectiles, p), before, 'in either direction');
 });
 
 test('the growing world sphere contacts a block earlier than the bare point ray', async () => {
@@ -245,7 +255,11 @@ test('the growing world sphere contacts a block earlier than the bare point ray'
   assert.equal(swept.hit, true);
   assert.ok(swept.dist < faceDist - 0.001,
     `the sphere contacts before the point ray: ${swept.dist} vs ${faceDist}`);
-  assert.ok(swept.point.z < 6 - 0.001, 'and the contact point is on the near side of the face');
+  // the reported point is ON the surface, one radius in front of the centre, so
+  // the impact ink native lays 0.14 further along the normal stays OUTSIDE
+  near(swept.point.z, 6, 1e-6);
+  assert.ok(swept.point.z < 6 + 1e-9, 'never behind the face it contacted');
+  assert.ok(swept.normal.z < -0.99, 'and the normal points back out of the block');
 });
 
 // ---- pooled reuse ----------------------------------------------------------
@@ -337,4 +351,114 @@ test('the blast steps the discrete damage bands instead of lerping', async () =>
   // the linear form really would invent damage, which is why it is not used
   const invented = distanceDamage(bands, 3.0, true);
   assert.ok(invented < 53 && invented > 35, 'the linear form interpolates, the Trizooka does not');
+});
+// ---- the native forces really run, once, on every stage --------------------
+//
+// These measure the ACTUAL velocity delta the one native integrator produces,
+// for the owner AND the replayed ghost, on ticks that are NOT a transition.
+
+function stepVelocity(api, projectiles, a, { ageFrames, dt, ghost = false }) {
+  const fired = throwVolley(projectiles, a, trizookaSpecialWeapon());
+  const p = fired[VOLLEY_CONFIG.damageLobeIndex];
+  api.G.actors = [];
+  if (ghost) { p.ghost = true; p.damageOwner = false; }
+  p.age = ageFrames / 60;
+  p.pos.set(0, 40, 0); p.prev.copy(p.pos);           // far from every surface
+  p.vel.set(0, 0, 20);
+  const before = p.vel.clone();
+  projectiles._step(p, dt);
+  const grav = p.grav, drag = p.drag;               // published by the hook
+  // native order: gravity first, then one uniform drag multiply
+  const k = 1 - drag * dt;
+  return { p, before, grav, drag, expect: new api.THREE.Vector3(before.x * k, (before.y - grav * dt) * k, before.z * k) };
+}
+
+test('a non-transition brake tick applies native gravity and drag exactly once', async () => {
+  const api = await production();
+  const projectiles = world(api, { blockAt: [999, 1, 0] });
+  const a = shooter(api);
+  const r = stepVelocity(api, projectiles, a, { ageFrames: 20, dt: F });   // mid brake, no boundary
+  assert.equal(r.p.s3Stage, 'brake');
+  assert.equal(r.p.s3StageTransition, false, 'and this tick is not a transition tick');
+  assert.ok(r.grav > 0, `brake gravity is published (${r.grav})`);
+  assert.ok(r.drag > 0, `brake drag is published (${r.drag})`);
+  // exactly the native pair: NOT the untouched launch velocity (the old bug)
+  assert.ok(Math.abs(r.p.vel.y - r.before.y) > 1e-6, 'gravity really moved the vertical');
+  assert.ok(Math.abs(r.p.vel.z - r.before.z) > 1e-6, 'drag really slowed the flight');
+  near(r.p.vel.x, r.expect.x, 1e-12);
+  near(r.p.vel.y, r.expect.y, 1e-12);
+  near(r.p.vel.z, r.expect.z, 1e-12);
+  // applying it twice would halve the drag loss; applying it not at all leaves z
+  const twice = (1 - r.drag * F) ** 2;
+  assert.ok(Math.abs(r.p.vel.z - r.before.z * twice) > 1e-9, 'and not twice');
+  assert.ok(Math.abs(r.p.vel.z - r.before.z) > 1e-9, 'and not zero times');
+});
+
+test('a free tick applies the free-stage forces for the owner and for a ghost', async () => {
+  const api = await production();
+  for (const ghost of [false, true]) {
+    const projectiles = world(api, { blockAt: [999, 1, 0] });
+    const a = shooter(api);
+    const r = stepVelocity(api, projectiles, a, { ageFrames: 60, dt: F, ghost });
+    assert.equal(r.p.s3Stage, 'free');
+    assert.equal(r.p.s3StageTransition, false, `ghost=${ghost}: not a transition tick`);
+    assert.ok(r.grav > 0, `ghost=${ghost}: free gravity is published`);
+    near(r.p.vel.x, r.expect.x, 1e-12);
+    near(r.p.vel.y, r.expect.y, 1e-12);
+    near(r.p.vel.z, r.expect.z, 1e-12);
+    assert.ok(Math.abs(r.p.vel.y - r.before.y) > 1e-9, `ghost=${ghost}: the vertical really fell`);
+  }
+});
+
+test('a straight tick stays force-free, and dt = 0 changes nothing at all', async () => {
+  const api = await production();
+  const projectiles = world(api, { blockAt: [999, 1, 0] });
+  const a = shooter(api);
+  const straight = stepVelocity(api, projectiles, a, { ageFrames: 4, dt: F });
+  assert.equal(straight.p.s3Stage, 'straight');
+  assert.equal(straight.grav, 0);
+  assert.equal(straight.drag, 0);
+  near(straight.p.vel.z, 20, 1e-12);
+
+  const free = stepVelocity(api, projectiles, a, { ageFrames: 60, dt: 0 });
+  assert.equal(free.p.vel.y, free.before.y, 'dt = 0 leaves the vertical exactly as it was');
+  assert.equal(free.p.vel.z, free.before.z, 'and the horizontal too');
+  assert.equal(free.p.vel.x, free.before.x);
+});
+
+test('the brake transition resets the vertical exactly once, at any frame interval', async () => {
+  const api = await production();
+  for (const dt of [F, F / 2, 2 * F, 5 * F]) {
+    const projectiles = world(api, { blockAt: [999, 1, 0] });
+    const a = shooter(api);
+    const fired = throwVolley(projectiles, a, trizookaSpecialWeapon());
+    const p = fired[VOLLEY_CONFIG.damageLobeIndex];
+    api.G.actors = [];
+    p.pos.set(0, 40, 0); p.prev.copy(p.pos);
+    p.vel.set(0, 0, 20);
+    // start just below the 16F boundary and step well past the 26F one, so both
+    // stage boundaries are crossed inside the window
+    p.age = 15 / 60;
+    let transitions = 0, stageChanges = 0, resetVelY = null, lastStage = null;
+    for (let i = 0; i < 12; i++) {
+      projectiles._step(p, dt);
+      if (lastStage !== null && p.s3Stage !== lastStage) stageChanges++;
+      lastStage = p.s3Stage;
+      if (p.s3StageTransition) {
+        transitions++;
+        resetVelY = p.vel.y;
+      }
+    }
+    assert.ok(stageChanges >= 1, `dt = ${dt.toFixed(4)}: the projectile really changed stage`);
+    assert.equal(transitions, stageChanges,
+      `dt = ${dt.toFixed(4)}: one transition per stage boundary, never two (${transitions} vs ${stageChanges})`);
+    assert.ok(resetVelY < 0, 'and the brake vertical is the table value, not the launch zero');
+    const straight = TRIZOOKA.goStraightFrames, brakeEnd = straight + TRIZOOKA.brakeFrames;
+    const want = p.age >= brakeEnd ? 'free' : p.age >= straight ? 'brake' : 'straight';
+    assert.equal(p.s3Stage, want, `dt = ${dt.toFixed(4)}: the stage matches the age it reached`);
+    assert.notEqual(p.s3Stage, 'straight', 'and it really moved past the straight stage');
+    // the flag is re-stamped, never latched from an older step
+    projectiles._step(p, dt);
+    assert.equal(p.s3StageTransition, false, 'a later tick reports no transition at all');
+  }
 });

@@ -168,7 +168,7 @@ export function adaptSource(rel, code) {
       '          _v.copy(p.prev).lerp(p.pos, victimT);',
       '          let dmg = p.damage;',
       "          if (p.type === 'drop') dmg = lerp(p.damage, p.dmgFar, clamp(p.start.distanceTo(_v) / 7, 0, 1));",
-      '          if (p.vol) { if (p.vol.hits.includes(victim)) dmg = 0; else p.vol.hits.push(victim); }',
+      '          if (p.vol && kitVolleyHitAuthority(p)) { if (p.vol.hits.includes(victim)) dmg = 0; else p.vol.hits.push(victim); }',
       '          if (dmg > 0) applyProjectileHit(this, p, victim, dmg, _v);',
       "          G.fx?.burst(_v, _v2.copy(p.vel).normalize().negate(), p.owner.color, { count: 6, speed: 3, size: 0.07 });",
       "          if (p.type !== 'blast') emit('weapon:impact', { pos: _v.clone(), normal: _v2.clone(), team: p.team, kind: p.type === 'drop' || p.type === 'slosh' ? 'drop' : 'shot', radius: p.radius * 0.5, victim });",
@@ -247,9 +247,14 @@ export function adaptSource(rel, code) {
     // integration and its single contact resolution; these hooks only supply
     // the per-stage constants, the orbit offset difference and the growing hit
     // radii for the Trizooka wid. Every other projectile falls straight through.
+    // The native grav/drag pair is the ONE integrator and it runs for every
+    // projectile, kit or not. The kit hook only publishes this stage's constants
+    // and the transition velocity onto p BEFORE that pair, so the forces are
+    // applied exactly once. It used to wrap the pair in `if (!kit...)`, and the
+    // hook returning true skipped gravity and drag for every brake and free tick.
     code = replaceOnce(code,
       '      if (p.age > p.straight) p.vel.y -= p.grav * dt;\n      if (p.drag) p.vel.multiplyScalar(1 - p.drag * dt * (p.age > p.straight ? 1 : 0));',
-      '      if (!kitTrizookaFlight(this, p, dt)) {\n      if (p.age > p.straight) p.vel.y -= p.grav * dt;\n      if (p.drag) p.vel.multiplyScalar(1 - p.drag * dt * (p.age > p.straight ? 1 : 0));\n      }',
+      '      kitTrizookaFlight(this, p, dt);\n      if (p.age > p.straight) p.vel.y -= p.grav * dt;\n      if (p.drag) p.vel.multiplyScalar(1 - p.drag * dt * (p.age > p.straight ? 1 : 0));',
       'trizooka per-stage gravity and drag');
     // the orbit is an offset DIFFERENCE around the native centreline, applied
     // after the integration so the swept p.prev -> p.pos segment stays valid
@@ -280,30 +285,47 @@ export function adaptSource(rel, code) {
       'trizooka discrete blast damage bands');
     // paint/turf credit. The gauge policy after a special ends is UNKNOWN, so the
     // ordinary native addTurf semantics are preserved; what is refused is
-    // authority. _impact lays paint BEFORE the credit line, so the ghost guard
-    // goes in ahead of any splat. The storm cloud paint at its own anchor is
-    // deliberately left alone.
+    // authority. `kitPaintCredit` is PURE and returns the credit amount, so the
+    // native `owner.addTurf` stays the SINGLE credit site - it used to be called
+    // inside the helper as well, which credited every projectile's turf twice.
+    // Each site gates the whole statement, so a projectile with no authority never
+    // even lays the paint. _impact lays paint at its own top, so it is already
+    // refused there. The storm cloud paint at its own anchor is left alone.
     code = replaceOnce(code, '  _impact(p, hit) {\n    _v.copy(hit.point)',
       '  _impact(p, hit) {\n    if (!kitPaintAuthority(p)) { if (p.type === \'blast\') this._blastBurst(p, hit.point, null); return; }\n    _v.copy(hit.point)',
       'kit projectile ghost impact paint authority');
     code = replaceOnce(code,
       '          if (g.hit) p.owner.addTurf(G.paint.splat(_v.copy(g.point).addScaledVector(g.normal, 0.1), p.trailRadius * (0.8 + Math.random() * 0.4), p.team, { seed: Math.random() }));',
-      '          if (g.hit) p.owner.addTurf(kitPaintCredit(p, G.paint.splat(_v.copy(g.point).addScaledVector(g.normal, 0.1), p.trailRadius * (0.8 + Math.random() * 0.4), p.team, { seed: Math.random() })));',
+      '          if (g.hit && kitPaintAuthority(p)) p.owner.addTurf(kitPaintCredit(p, G.paint.splat(_v.copy(g.point).addScaledVector(g.normal, 0.1), p.trailRadius * (0.8 + Math.random() * 0.4), p.team, { seed: Math.random() })));',
       'kit projectile trail paint credit');
     code = replaceOnce(code, '    p.owner.addTurf(area);\n    if (p.type !== \'blast\') emit(\'weapon:impact\'',
-      '    p.owner.addTurf(kitPaintCredit(p, area));\n    if (p.type !== \'blast\') emit(\'weapon:impact\'',
+      '    if (kitPaintAuthority(p)) p.owner.addTurf(kitPaintCredit(p, area));\n    if (p.type !== \'blast\') emit(\'weapon:impact\'',
       'kit projectile impact paint credit');
     code = replaceOnce(code,
       '    if (g.hit) p.owner.addTurf(G.paint.splat(_v3.copy(g.point).addScaledVector(g.normal, 0.1), w.impactRadius, p.team, { seed: Math.random() }));',
-      '    if (g.hit) p.owner.addTurf(kitPaintCredit(p, G.paint.splat(_v3.copy(g.point).addScaledVector(g.normal, 0.1), w.impactRadius, p.team, { seed: Math.random() })));',
+      '    if (g.hit && kitPaintAuthority(p)) p.owner.addTurf(kitPaintCredit(p, G.paint.splat(_v3.copy(g.point).addScaledVector(g.normal, 0.1), w.impactRadius, p.team, { seed: Math.random() })));',
       'kit projectile blast paint credit');
-    // a ghost rebuilds its descriptor and is forced to carry no authority
+    // The shared one-hit-per-victim ledger must only ever be written by the
+    // authoritative carrier. Native appends the victim even when the projectile
+    // deals no damage, so a visual side lobe stepped BEFORE the carrier marked the
+    // victim as seen and suppressed the carrier's real hit, purely by list order.
+    // Ordinary drop / slosh rounds keep the native shared-vol semantics.
+    code = replaceOnce(code, '    if (p.vol) { if (p.vol.hits.includes(key)) dmg = 0; else p.vol.hits.push(key); }',
+      '    if (p.vol && kitVolleyHitAuthority(p)) { if (p.vol.hits.includes(key)) dmg = 0; else p.vol.hits.push(key); }',
+      'kit boss volley hit ledger');
+    // a ghost rebuilds its descriptor and is forced to carry no authority. The
+    // two appended fields are the volley identity: without them a replayed volley
+    // is three ghosts that all orbit on phase 0 and overlap instead of staying
+    // apart. They are appended at the END of the main projectile packet only,
+    // so an OLD packet (no such field) still replays, on lobe 0.
+    code = replaceOnce(code,
+      'nose, sats] = e;', 'nose, sats, s3Volley, s3Action] = e;', 'trizooka ghost packet volley identity');
     code = replaceOnce(code,
       "    this.list.push(p);\n  }",
-      "    kitTrizookaGhost(p, a, SPECIALS);\n    this.list.push(p);\n  }",
+      "    kitTrizookaGhost(p, a, SPECIALS, { volleyIndex: s3Volley, actionIndex: s3Action });\n    this.list.push(p);\n  }",
       'trizooka ghost descriptor reconstruction');
 
-    return `import { segmentCapsuleEntry } from '../../patches/splatoon3/runtime/projectile-collision.mjs';\nimport { applyProjectileHit, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\nimport { kitSubRelease, kitSubHoldSeconds, kitBombAttach, kitBombGravity, kitBombContact, kitBombTrail, kitBombFuseTotal, kitBombPaintRadius, kitBombRadius, kitBombDamageBands, kitBombDamageMax, kitBombDamageMin } from '../../patches/splatoon3/runtime/kit-subs.mjs';\nimport { kitTrizookaFlight, kitTrizookaOrbitDelta, kitTrizookaActorRadius, kitTrizookaWorldSweep, kitTrizookaClearPooled, kitTrizookaGhost, kitTrizookaSteppedBands, kitPaintCredit, kitPaintAuthority } from '../../patches/splatoon3/runtime/trizooka-collision.mjs';\n` + code;
+    return `import { segmentCapsuleEntry } from '../../patches/splatoon3/runtime/projectile-collision.mjs';\nimport { applyProjectileHit, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\nimport { kitSubRelease, kitSubHoldSeconds, kitBombAttach, kitBombGravity, kitBombContact, kitBombTrail, kitBombFuseTotal, kitBombPaintRadius, kitBombRadius, kitBombDamageBands, kitBombDamageMax, kitBombDamageMin } from '../../patches/splatoon3/runtime/kit-subs.mjs';\nimport { kitTrizookaFlight, kitTrizookaOrbitDelta, kitTrizookaActorRadius, kitTrizookaWorldSweep, kitTrizookaClearPooled, kitTrizookaGhost, kitTrizookaSteppedBands, kitPaintCredit, kitPaintAuthority, kitVolleyHitAuthority } from '../../patches/splatoon3/runtime/trizooka-collision.mjs';\n` + code;
   }
   if (rel === 'src/game/actor.js') {
     code = replaceOnce(code, '    this._updateClimb(dt, isSquid);',
@@ -340,7 +362,15 @@ export function adaptSource(rel, code) {
     // runs (that wrapper wraps the whole splat body, deaths++ included).
     code = replaceOnce(code, '    victim.stats.deaths++;',
       '    victim.stats.deaths++;\n    applyDeathGear(victim);', 'remote gear death consequence');
-    return `import { KIT_FORWARD } from '../../patches/splatoon3/runtime/kit-network.mjs';\nimport { setRespawnTimer } from '../../patches/splatoon3/runtime/resources.mjs';\nimport { applyDeathGear } from '../../patches/splatoon3/runtime/gear.mjs';\n` + code;
+    // Main PROJECTILE packet only: the volley identity is appended to the END of
+    // the 'p' tuple, so the native tuple, its recorder and its replay are
+    // unchanged for every other projectile, and the bomb ('b') and the typed kit
+    // event ('ev') packets are not touched at all. A receiver on the older shape
+    // simply ignores the trailing fields.
+    code = replaceOnce(code, '      r3(p.vis ?? 0.1), p.tail0 ?? 0.8, p.tailK ?? 1.3, p.wob ?? 0.035, p.wobF ?? 26, p.nose ?? 0.3, p.sats ?? 3]);',
+      '      r3(p.vis ?? 0.1), p.tail0 ?? 0.8, p.tailK ?? 1.3, p.wob ?? 0.035, p.wobF ?? 26, p.nose ?? 0.3, p.sats ?? 3,\n      kitVolleyPacketIndex(p.s3VolleyIndex), kitVolleyPacketIndex(p.s3ActionIndex)]);',
+      'trizooka main projectile volley identity');
+    return `import { KIT_FORWARD } from '../../patches/splatoon3/runtime/kit-network.mjs';\nimport { setRespawnTimer } from '../../patches/splatoon3/runtime/resources.mjs';\nimport { applyDeathGear } from '../../patches/splatoon3/runtime/gear.mjs';\nimport { kitVolleyPacketIndex } from '../../patches/splatoon3/runtime/trizooka-collision.mjs';\n` + code;
   }
   if (rel === 'src/game/character-weapons.js') {
     return replaceOnce(code, '    if (ft >= 0.15 && ft - dt < 0.15) w.drumW += 34;', '    const release = st.flickReleaseTime ?? 0.15;\n    if (ft >= release && ft - dt < release) w.drumW += 34;', 'roller drum release impulse');

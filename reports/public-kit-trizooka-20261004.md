@@ -304,26 +304,67 @@ yield a negative `t`.
 An **inflated AABB is deliberately not used** — it manufactures corner hits the
 rounded box does not have, and a regression test pins that.
 
+The **broadphase rect is widened by `r`**, because the rect has to contain the
+whole shell, not just the centre line: a block the shell only grazes lies
+outside the centre-line rect and would never be considered. Native's rect is
+exact for a *point* ray and is not exact for a sphere. Grates are skipped,
+exactly like the `physics.segment(..., true)` call this sweep replaces.
+
+The contact **normal is `centre - closestOnBlock(centre)`** and the reported
+**point is the shell contact** (`centre - normal * r`). Both were wrong before:
+the face/edge/corner case analysis used WORLD half extents and a radial
+direction from the box centre, which disagrees with the true surface normal on
+any rotated box, and a centre-based point sits one radius *inside* the solid,
+so native `_impact` (which offsets by only 0.14) laid its ink inside the
+geometry. `face`, `u` and `v` come from the dominant normal axis with native's
+own `faces[k * 2 + (sign > 0 ? 0 : 1)]` indexing.
+
 Block data is read from the real native level; the non-block/ground/world
 semantics are untouched, and any non-kit projectile goes straight to the native
 `Physics.segment`.
 
 ### 9.2b Actor hit sphere
 
-Native uses `PLAYER.radius * 0.95 + p.size`: the body capsule plus the
-projectile's own visual shell. The Trizooka grows that **same expression**, so
-the shell is counted exactly once and the body radius is never dropped.
+Native reaches an actor with `PLAYER.radius * 0.95 + p.size`: the body
+allowance plus the projectile's own round shell. The Trizooka table's
+`actorRadius` **is** that projectile sphere, so it **replaces** the `p.size`
+term: the reach is `PLAYER.radius * 0.95 + actorRadius`.
+
+`p.size` is a render-only shell and must not be added as well. Adding both
+counted the projectile twice — the lobe reached further than the table states
+and grew when only the drawing was supposed to grow. The body allowance is
+kept, so no part of the native reach is lost, and a regression pins that
+changing `p.size` cannot move the physical reach.
 
 ### 9.2 Authority
 
 Exactly one lobe per volley is the damage carrier (`damageOwner === true`). Side
 lobes are `type: 'shot'`, `damage: 0`, `trailEvery: 0`: no HP, no paint, no turf,
-no splash, no gauge, no authoritative packet, no proposal. The shared native `vol`
-record means a carrier damages each victim once per volley. A **ghost is never a
+no splash, no gauge, no authoritative packet, no proposal. A **ghost is never a
 damage carrier even when its transport is disposed**, so a remote volley presents
 without authority. The blast uses the discrete 53 @2.5 / 35 @4.0 bands, never an
 interpolated value, and the paint radius (3.2) stays distinct from the damage
 radius (4.0).
+
+The shared native `vol` ledger (`p.vol.hits`) is the one-hit-per-victim dedupe.
+Native appends the victim **even when the projectile deals no damage**, so a
+visual side lobe stepped *before* the carrier marked the victim as already hit
+and silently suppressed the carrier's real hit — the order in the one native
+list decided whether the volley damaged anything at all. Only the carrier may
+write that ledger (`kitVolleyHitAuthority`), in the actor branch and in the boss
+branch. Ordinary drop / slosh rounds keep the native shared-`vol` semantics
+untouched.
+
+`kitPaintCredit` is **pure**: it returns the credit amount and nothing else, and
+the native `owner.addTurf` stays the single credit site. It used to call
+`addTurf` itself as well, so every authoritative projectile — ordinary guns
+included — credited turf twice. Each native paint site gates the whole
+statement on `kitPaintAuthority` first, so a projectile with no authority never
+lays the paint either. The rule is **intrinsic** (it reads the projectile's own
+identity, never `G.netm`): a transport mute only stops *recording*, so a mute
+based guard would start letting kit ghost ink through once `G.netm` is null. The
+declared kit ghost ids are `trizooka` and `inkVac`; an ordinary native ghost is
+untouched.
 
 ### 9.3 Tests
 
@@ -382,3 +423,45 @@ still painting, crediting turf **and charging the gauge**.
   not implemented and not claimed.
 - Gauge parity after a special ends is **unknown** and unguessed.
 - No browser proof, no retail parity claim, no GitHub Actions proof from here.
+
+## 13. Final native-helper corrections (lane freebuff-4)
+
+Six defects found in the native connections after the candidate was merged. All
+of them were real behaviour bugs, not test-only issues: each one changed what a
+player sees or hits. Every correction is in this lane's own two runtime files
+plus narrow Trizooka-only adapter hooks; no upstream file was edited.
+
+| # | defect | what it actually did | fix |
+| --- | --- | --- | --- |
+| A | gravity and drag never ran | the adapter wrapped the native grav/drag pair in `if (!kitTrizookaFlight(...))` and the helper returned `true`, so every brake and free tick flew with **no gravity and no drag at all**; only the transition frame ever moved the velocity | the native pair is now unconditional and the hook only *publishes* `p.grav` / `p.drag` / the transition velocity before it. One integrator, one application, for every projectile |
+| A2 | transition ran twice | `transition` was a symmetric `\|age - boundary\| <= dt` window, true on **both** frames that straddle the boundary | `transition` now means "this stage has a transition action", applied on **entry** (tracked by `p.s3AppliedStage`), so it fires exactly once per boundary at any frame interval. The first step of a projectile never transitions |
+| B | turf credited twice | `kitPaintCredit` called `owner.addTurf(area)` while the native line still called `owner.addTurf(kitPaintCredit(...))` around it — for **every** authoritative projectile, ordinary guns included | the helper is pure; the native `addTurf` is the single credit site, and each paint site is gated on authority before the splat runs |
+| C | the sphere sweep missed grazing blocks | the broadphase rect was the centre line, not the sphere: a block only the shell touches was never queried. Grates were not skipped, unlike the `physics.segment(..., true)` it replaces. The corner normal used world half extents, the edge normal was radial from the box centre, and the reported point was the sphere **centre**, one radius inside the solid, so `_impact` painted inside geometry | rect widened by `r`; grates skipped; normal = `centre - closestOnBlock(centre)`; point = `centre - normal * r`; `face`/`u`/`v` from a valid native face |
+| D | the packet lost the volley identity | `recProj` carried no `s3VolleyIndex`, so a replayed volley arrived as three ghosts that all orbited on phase 0 and **overlapped instead of staying 120 degrees apart** | two bounded fields appended to the **main projectile packet only** (never the bomb, never the typed kit event). An older packet without them still replays, defaulting to lobe 0 |
+| E | a side lobe could suppress the carrier | native appends the victim to `p.vol.hits` even when the projectile deals no damage, so a side lobe processed first poisoned the shared ledger | only the carrier writes the ledger, in the actor branch and the boss branch; ordinary drop/slosh semantics untouched |
+| F | the actor sphere counted the projectile twice | the reach was `body + p.size + tableActorRadius`; `p.size` is the render-only shell, so the table sphere was added on top of a second copy of the same sphere | `body + tableActorRadius`: the table sphere **replaces** `p.size`, the body allowance is kept, and changing `p.size` cannot move the physical reach |
+
+### 13.1 Verification
+
+`node --experimental-vm-modules --test` over the three named Trizooka files:
+**75 tests, 75 pass, exit 0**. Against the committed (pre-fix) source the same
+three files give **57 pass / 18 fail, exit 1** — every failure is one of the
+defects above, with the old pair shimmed for the two exports it did not have
+(`kitVolleyHitAuthority = () => true`, `kitVolleyPacketIndex = () => 0`, both of
+which are the old behaviour). Logs in `evidence/actions-freebuff-20261004/
+freebuff-4/trizooka-force/`.
+
+Neighbouring suites were also run so the unconditional native force pair and the
+repainted credit sites cannot regress other guns: `weapons`,
+`weapons-collision-feet-refill`, `projectile-collision` (25 pass),
+`adapter`, `special-projectile`, `integration` (32 pass), and
+`weapons-gear-flow`, `movement-resources`, `public-issues-6` (43 pass).
+
+### 13.2 Still not claimed
+
+- No browser, WebKit or device proof, and no GitHub Actions proof from here.
+- The parent owns the final semantic merge onto `9f63`, the compose / full CI
+  run, and the behaviour record in
+  `reports/inkwave-splatoon3-behavior-2026-10-02.md` (out of this lane's scope).
+- Gauge policy after the special ends is still **unknown** and unguessed.
+- The orbit start radius and turn rate remain **calibration**, not extracted.
