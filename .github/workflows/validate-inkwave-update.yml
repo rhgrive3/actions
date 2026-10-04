@@ -84,6 +84,8 @@ jobs:
           retention-days: 14
       - name: Verify local quality regressions
         run: node --experimental-vm-modules --test patches/local-quality/tests/*.test.mjs
+      - name: Verify platform lifecycle smoke regressions
+        run: node --test tests/platform-lifecycle/platform-smoke.test.mjs
       - name: Verify movement physics smoke regressions
         run: node --test patches/movement-physics/tests/movement-smoke.test.mjs
       - name: Verify practice range measurement, rules and battle isolation

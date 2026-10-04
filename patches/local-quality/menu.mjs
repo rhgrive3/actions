@@ -1,107 +1,25 @@
 import {preparePreviewRoot,clearPreviewRoot} from './menu-preview.mjs';
-// One UI animation owner. The game already drives Menus.update each frame;
-// do not also dispatch a second requestAnimationFrame just to early-return.
-// Independent UI labs recover their native loop after the same 80ms lease.
+import {getPlatformLifecycle} from './platform-lifecycle.mjs';
 const INSTALLED=Symbol.for('inkwave.local-quality.menu.v1');
 export function installMenuQuality(Menus, env=globalThis){
   const P=Menus.prototype;if(Object.hasOwn(P,INSTALLED))return;
-  const records=new WeakMap(),retired=new WeakSet();Object.defineProperty(P,INSTALLED,{value:records});
-  const update=P.update,dispose=P.dispose,settings=P._scr_settings,swap=P._swap,loop=P._loop;
-  const active=m=>!!(m.current||m._scr);
-  const focus=P._setFocus, inputMode=P.setInputMode, cursor=P._updateCursor;
-  // A CSS opacity fade must not leave a retired ring over the old item.
-  // Keep native fade-in and the moving spring; hide only the logically off ring.
-  const syncRingVisibility=m=>{const style=m.cursorEl.style,want=m._cur.on?'':'hidden';if(style.visibility!==want)style.visibility=want;};
-  // One spring clock: an input task can spend the elapsed part of the current
-  // frame immediately; the engine's next cursor tick subtracts that credit.
-  // This starts visual motion now without an extra rAF or double advancement.
-  if(cursor)P._updateCursor=function(dt){
-    if(!this._cur.on||this._cur.snapNext)this._qualityCursorCredit=0;
-    if(dt>0&&this._qualityCursorCredit){
-      const credit=this._qualityCursorCredit;
-      this._qualityCursorCredit=Math.max(0,credit-dt);dt=Math.max(0,dt-credit);
-    }
-    if(!this._focus?.isConnected)this._cur.targetEl=null;
-    const result=cursor.call(this,dt);syncRingVisibility(this);this._qualityCursorAt=env.performance.now();return result;
-  };
-  function retarget(m,advance=true){
-    const now=env.performance.now();
-    const elapsed=m._qualityCursorAt==null?0:Math.max(0,(now-m._qualityCursorAt)/1000);
-    const step=!advance||m._frozen?.()?0:Math.min(1/60,elapsed)*(m.timeScale>0?m.timeScale:1);
-    if(!m._focus?.isConnected)m._cur.targetEl=null;
-    const springClock=m._cur.on&&!m._cur.snapNext,advancing=step>0&&springClock;
-    cursor.call(m,step);syncRingVisibility(m);if(advance)m._qualityCursorAt=now;
-    if(advancing&&m._cur.on)m._qualityCursorCredit=(m._qualityCursorCredit||0)+step;
-    else if(!m._cur.on||!springClock)m._qualityCursorCredit=0;
-  }
-  // Logical selection, geometric target and first visual step all commit in
-  // this task, including touch's own-row highlight and deselection.
-  if(focus&&cursor)P._setFocus=function(...args){
-    const old=this._focus,result=focus.apply(this,args);
-    if(old!==this._focus)retarget(this);
-    return result;
-  };
-  if(inputMode&&cursor)P.setInputMode=function(...args){
-    const old=this._input,wasOn=this._cur.on,result=inputMode.apply(this,args);
-    // Input-mode callbacks can reflow the same focused element.
-    if(old!==this._input){
-      this._cur.targetEl=null;
-      // Mode changes precede navigation in the same input task. Do not spend
-      // its spring clock on the old item before logical selection changes.
-      retarget(this,false);
-      // A newly revealed ring has not painted yet. Keep native first-appearance
-      // snapping pending until navigation or the next animation-owner tick.
-      if(!wasOn&&this._cur.on)this._cur.snapNext=true;
-    }
-    return result;
-  };
+  const records=new WeakMap(),retired=new WeakSet(),lifecycle=getPlatformLifecycle(env);
+  Object.defineProperty(P,INSTALLED,{value:records});
+  const update=P.update,dispose=P.dispose,settings=P._scr_settings,swap=P._swap;
   if(settings)P._scr_settings=function(...args){preparePreviewRoot(this.el,env);return settings.apply(this,args);};
-  if(swap)P._swap=function(...args){
-    clearPreviewRoot(this.el);this._qualityCursorCredit=0;
-    const result=swap.apply(this,args),r=ensure(this);
-    if(active(this))r.arm();else stop(this,r);
-    return result;
-  };
-  function stop(m,r){
-    if(m._raf){env.cancelAnimationFrame(m._raf);m._raf=0;}
-    if(r?.timer!==null&&r?.timer!==undefined){env.clearTimeout(r.timer);r.timer=null;}
-    m._qualityCursorCredit=0;
-  }
-  if(loop)P._loop=function(t){
-    if(retired.has(this)||env.document?.hidden||!active(this)){stop(this,records.get(this));return;}
-    return loop.call(this,t);
-  };
+  if(swap)P._swap=function(...args){clearPreviewRoot(this.el);return swap.apply(this,args);};
   function ensure(m){
     let r=records.get(m);if(r)return r;
-    r={timer:null,visible:null};records.set(m,r);
-    const arm=()=>{if(r.timer===null&&!retired.has(m)&&active(m)&&!env.document?.hidden)r.timer=env.setTimeout(watch,80);};
-    const watch=()=>{
-      r.timer=null;if(retired.has(m)||env.document?.hidden||!active(m))return;
-      const age=env.performance.now()-m._extTick;
-      if(age>=80){
-        // The external owner stopped. Hand animation back without a burst of
-        // stale elapsed time or duplicate callbacks.
-        m._lastT=Math.max(m._lastT,m._extTick);
-        if(!m._raf)m._raf=env.requestAnimationFrame(m._loop);
-      }else r.timer=env.setTimeout(watch,Math.max(1,80-age));
-    };
-    r.arm=arm;r.visible=()=>{
-      if(env.document?.hidden)stop(m,r);
-      else arm();
-    };
-    env.document?.addEventListener('visibilitychange',r.visible);
+    r={timer:null,off:null};records.set(m,r);
+    const cancel=()=>{if(r.timer!==null)env.clearTimeout(r.timer);r.timer=null;if(m._raf){env.cancelAnimationFrame(m._raf);m._raf=0;}};
+    const arm=()=>{if(!m._platformDriven&&r.timer===null&&lifecycle.active&&!retired.has(m))r.timer=env.setTimeout(watch,80);};
+    const watch=()=>{r.timer=null;if(m._platformDriven||retired.has(m)||!lifecycle.active)return;const age=env.performance.now()-m._extTick;if(!Number.isFinite(age)||age>=80){m._lastT=env.performance.now();if(!m._raf)m._raf=env.requestAnimationFrame(m._loop);}else r.timer=env.setTimeout(watch,Math.max(1,80-age));};
+    r.arm=arm;r.cancel=cancel;
+    r.off=lifecycle.subscribe({suspend:cancel,prepareResume(){m._lastT=env.performance.now();m._extTick=-Infinity;},resume:arm});
     return r;
   }
-  P.update=function(dt){
-    if(retired.has(this))return;
-    const r=ensure(this);
-    if(this._raf){env.cancelAnimationFrame(this._raf);this._raf=0;}
-    if(!active(this)||env.document?.hidden){stop(this,r);this._extTick=env.performance.now();return;}
-    const result=update.call(this,dt);r.arm();return result;
-  };
-  P.dispose=function(...args){
-    retired.add(this);clearPreviewRoot(this.el,true);const r=records.get(this);
-    if(r){if(r.timer!==null)env.clearTimeout(r.timer);env.document?.removeEventListener('visibilitychange',r.visible);records.delete(this);}
-    return dispose.apply(this,args);
-  };
+  P.setPlatformDriven=function(on){this._platformDriven=!!on;const r=ensure(this);r.cancel();if(!on)r.arm();};
+  P._loop=function(now){this._raf=0;ensure(this);if(retired.has(this)||this._platformDriven||!lifecycle.active)return;this._raf=env.requestAnimationFrame(this._loop);const elapsed=(now-this._lastT)/1000;this._lastT=now;if(now-this._extTick<80)return;const dt=Number.isFinite(elapsed)&&elapsed>=0&&elapsed<=.25?Math.min(.1,elapsed):0;if(this.current&&this._scr)this._tick(dt);};
+  P.update=function(dt){if(retired.has(this)||!lifecycle.active)return;const r=ensure(this);r.cancel();const result=update.call(this,dt);r.arm();return result;};
+  P.dispose=function(...args){retired.add(this);clearPreviewRoot(this.el,true);const r=records.get(this);if(r){r.cancel();r.off();records.delete(this);}return dispose.apply(this,args);};
 }
