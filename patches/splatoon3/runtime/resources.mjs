@@ -1,5 +1,29 @@
-let api, tuning;
-export function installResources(context, values) { api = context; tuning = values.resources; }
+let api, tuning, profile;
+export function installResources(context, values) {
+  api = context; tuning = values.resources; profile = values;
+  const { Actor } = context;
+  // Resource-step unit callers install only updateResources; they have no Actor.
+  if (!Actor) return;
+  // A successful special activation refills the tank exactly once (Splatoon 3).
+  // Wrapping the native method keeps the refill on the activation tick, skips
+  // failed/not-ready input, and cannot repeat while the special stays active.
+  const startSpecial = Actor.prototype._startSpecial;
+  Actor.prototype._startSpecial = function (...args) {
+    const result = startSpecial.apply(this, args);
+    if (this.specialActive) { this.ink = api.PLAYER.inkMax; api.emit?.('special:refill', { actor: this }); }
+    return result;
+  };
+}
+// Death-cause respawn bases. The profile owns the values; this is the fallback
+// used only when a reduced unit caller installs the resource step alone.
+export const RESPAWN_CAUSES = Object.freeze({ normal: 8.5, water: 7.0, outOfBounds: 5.5 });
+export function respawnSeconds(cause, values = profile) {
+  const table = values?.respawn || RESPAWN_CAUSES;
+  if (cause === 'water' || cause === 'drown') return table.water ?? table.normal;
+  if (cause === 'outOfBounds' || cause === 'fall' || cause === 'oob') return table.outOfBounds ?? table.normal;
+  return table.normal ?? 8.5;
+}
+export function setRespawnTimer(a, cause = 'weapon') { a.respawnTimer = respawnSeconds(cause); return a.respawnTimer; }
 export function resourceSurface(a) {
   // Integration may have crossed a paint edge, taken off, or landed this tick.
   // The pre-movement surface is only suitable for movement, not recovery.

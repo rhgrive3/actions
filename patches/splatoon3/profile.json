@@ -11,7 +11,8 @@
     "inkRefillSwim": 33.333333333333336,
     "inkRefillKid": 10.0,
     "enemyInkDps": 18.0,
-    "enemyInkDamageCap": 40.0
+    "enemyInkDamageCap": 40.0,
+    "respawnTime": 8.5
   },
   "weapons": {
     "shooter": {
@@ -340,6 +341,11 @@
     "chargeTime": 1.3333333333333333,
     "flightTime": 2.3
   },
+  "respawn": {
+    "normal": 8.5,
+    "water": 7.0,
+    "outOfBounds": 5.5
+  },
   "calibration": {
     "status": "partial; numeric data extracted, Switch behavior parity NOT verified",
     "distanceScale": {
@@ -373,7 +379,9 @@
       "Surge burst velocity/armor/partial charge and post-wall air control (including the Ver.11.3.0 lateral-distance fix); 45F base charge timing is pinned",
       "HP regen delay/rate and enemy ink grace/contact-damage recovery; post-movement contact and partial-tick grace arithmetic are regression-verified only",
       "superjump airborne vulnerability window/trajectory/landing paint and respawn timing/armor; raw 80F preparation/138F flight are pinned and landing protection is removed per Nintendo 9.3.0 fix",
-      "aim response, gyro, animation, terrain/network and physical-device validation; see movement-resources comparison matrix and Switch/iOS/two-peer measurement protocol"
+      "aim response, gyro, animation, terrain/network and physical-device validation; see movement-resources comparison matrix and Switch/iOS/two-peer measurement protocol",
+      "respawn death-cause totals (normal/water/out-of-bounds) are the report's secondary Splatoon 3 documentation values; the repository's curated respawn.total is unknown and no official 11.3.0 parameter data confirms them. Local Actor.splat cause routing is regression-verified; remote/network cause routing is not"
+
     ],
     "movementResourcesEvidence": "reports/inkwave-movement-resources-2026-10-02.md"
   },
