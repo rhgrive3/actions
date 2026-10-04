@@ -26,7 +26,7 @@ test('Kid, Squid and Roller owner trajectories survive snapshot reconstruction a
     for(let tick=1;tick<=120;tick++){
       let speed=f.profile.player.runSpeed;
       if(mode==='squid') speed=f.profile.player.swimSpeed;
-      if(mode==='roller') speed=rollingMovementSpeed({weapon:f.profile.weapons.roller,rollTravel:{t:(tick-1)/60}});
+      if(mode==='roller') speed=rollingMovementSpeed({a:{weapon:f.profile.weapons.roller},rollT:(tick-1)/60});
       const phase=tick<=30?[0,1]:tick<=60?[1,0]:tick<=90?[0,-1]:[0,0];
       stepGroundVelocity(source.vel,phase[0],phase[1],speed,f.profile.player.s3GroundAccel,1/60);
       source.pos.x+=source.vel.x/60;source.pos.z+=source.vel.z/60;
