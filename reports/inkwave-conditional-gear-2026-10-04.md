@@ -121,10 +121,18 @@ No other PR's production feature is copied into this standalone branch.
 ## Verification and remaining visual limits
 
 - Standalone dedicated16/16 source and16/16 emitted/minified public graph.
-- Complete gameplay/reliability758/758; no failures/skips, from persistent cwd.
+- Initial complete gameplay/reliability758/758; no failures/skips, from persistent cwd.
 - Reviewed combined regression group110/110; final cross-feature group21/21.
 - Added native Chromium/WebKit menu checks for all four options, illegal slots,
   storage persistence and reopen. These await exact-head Actions, not a local GPU claim.
+- The first Actions head passed validate/active/catalog, but UI revealed that the
+  old standalone menu fixture imported Menus without the runtime installer and
+  therefore had no gear panel. The verifier now installs the actual published
+  runtime/profile before constructing Menus, with its Three import map and
+  explicit hashes for the installed UI inputs. The new assertions are retained;
+  the gear panel is not replaced with a synthetic test-only one.
+  The fixture-generation regression is imported by the normal gameplay suite,
+  raising the final complete count to759 (and standalone verifier tests to11).
 - 30/60/120Hz fixed schedules agree on window expiry and restoration.
 - Node/CPU composition is distinct from browser rendering and physical Switch
   comparisons. Public browser evidence is supplied by exact-head CI after publication.
