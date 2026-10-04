@@ -1,14 +1,21 @@
 // Build-only quality corrections composed after the gameplay, touch-layout and
 // reliability adapters. Upstream inkwave-public/ remains byte-for-byte intact.
 import fs from 'node:fs';
+import { adaptIdleSource } from './idle-adapter.mjs';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
+import { adaptMinimapResources } from './minimap-resource-adapter.mjs';
+import { adaptLobbyResources } from './lobby-resource-adapter.mjs';
 import { adaptLandingRigidity } from './landing-rigidity-adapter.mjs';
+import { adaptFirstTouch } from './first-touch-adapter.mjs';
+import { adaptTouchRelayout } from './touch-relayout.mjs';
 
 export const QUALITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
 const IDENTITY_FILES = [
+  'idle-adapter.mjs', 'idle-resources.mjs', 'music-idle.mjs',
+  'lobby-resource-adapter.mjs', 'minimap-resource-adapter.mjs',
   'adapter.mjs', 'gyro.mjs', 'install.mjs', 'menu-preview.mjs', 'menu.mjs',
-  'roller-motion.mjs', 'roller-visual.mjs', 'surface.mjs', 'landing-rigidity-adapter.mjs',
+  'roller-motion.mjs', 'roller-visual.mjs', 'surface.mjs', 'landing-rigidity-adapter.mjs', 'first-touch-adapter.mjs', 'touch-relayout.mjs',
 ];
 
 export function replaceOnce(code, before, after, label) {
@@ -20,7 +27,11 @@ export function replaceOnce(code, before, after, label) {
 }
 
 export function adaptQualitySource(rel, code) {
+  code = adaptIdleSource(rel, code, replaceOnce);
+  code = adaptLobbyResources(rel, code);
+  code = adaptMinimapResources(rel, code);
   code = adaptLandingRigidity(rel, code);
+  if (rel === 'src/core/mobile.js') return adaptTouchRelayout(rel, adaptFirstTouch(rel, code));
   if (rel === 'src/ui/menu-art.js') {
     code = replaceOnce(code,
       'export function createPreview(key, ctx = {}) {',

@@ -1,4 +1,5 @@
 import { installSplatlingRadiusCharge } from './splatling-radius-charge.mjs';
+import { installWeaponEdgecases } from './weapon-edgecases.mjs';
 import { installRollerLogic } from './roller.mjs';
 let api;
 export function splatlingBurst(w, charge) {
@@ -65,11 +66,22 @@ export function installWeapons(context, profile) {
     return this.s3BlasterWindup > 0 || busy.call(this);
   };
   const charger = WeaponRunner.prototype._charger;
+  // S3 keeps a full charge only while ZR stays down; letting go of ZR before
+  // leaving the keep cancels the charge. `inp.fire` cannot express that, because
+  // the actor masks it to false while squid and through emergeDelay, which makes
+  // "still holding ZR underwater" and "released ZR underwater" the same value.
+  // `a.intent.fire` is the canonical actor-side hold state and keeps them apart.
+  const cancelStored = r => {
+    r.s3Stored = null; r.charging = false; r.charge = 0; r.chargeT = 0; r.chargeDinged = false;
+    r.chargeLoop?.stop(.05); r.chargeLoop = null;
+  };
   WeaponRunner.prototype._charger = function (dt, inp, w) {
-    const a = this.a;
+    const a = this.a, held = !!a.intent.fire;
+    if (this.s3Stored && !held) cancelStored(this);
     if (a.form === 'squid') {
       if (this.charging) {
-        if (this.charge >= .999) this.s3Stored = { charge: 1, remaining: w.keepChargeTime };
+        // Submerging with ZR already released never opens a keep window.
+        if (this.charge >= .999 && held) this.s3Stored = { charge: 1, remaining: w.keepChargeTime };
         this.charging = false; this.charge = 0; this.chargeT = 0;
         this.chargeLoop?.stop(.05); this.chargeLoop = null;
       }
@@ -80,7 +92,8 @@ export function installWeapons(context, profile) {
       return;
     }
     if (this.s3Stored) {
-      // A released ZR while underwater does not become a shot on emerging.
+      // Held through the keep, so the store survives emergeDelay with inp.fire
+      // masked, and is restored once the actor forwards the trigger again.
       if (!inp.fire) { this.charge = 1; return; }
       this.charge = this.s3Stored.charge; this.chargeT = 1; this.charging = true; this.s3Stored = null;
     }
@@ -197,7 +210,14 @@ export function installWeapons(context, profile) {
   WeaponRunner.prototype.moveSpeed = function () {
     const w = this.a.weapon;
     if (this.rolling && w.rollBaseSpeed) return this.rollT >= w.rollDashTime ? w.rollSpeed : w.rollBaseSpeed;
+    // S3 Charger: charging movement uses MoveSpeedFullCharge from charging
+    // entry (pinned 0.02 raw -> profile 1.2 u/s before gear/Flow), not the
+    // upstream 70%-run ramp. Other kinds keep upstream branches/cooldowns.
+    // Preserve upstream cooldown/state priority (e.g. dualies lockT plants).
+    if (this.lockT > 0) return moveSpeed.call(this);
+    if (this.charging && w.kind === 'charger' && Number.isFinite(w.moveSpeedFiring)) return w.moveSpeedFiring;
     return moveSpeed.call(this);
   };
   installSplatlingRadiusCharge(api, profile);
+  installWeaponEdgecases(api);
 }

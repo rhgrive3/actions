@@ -778,7 +778,7 @@
       "sourceId": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json",
       "status": "extracted",
       "unit": "raw reference units",
-      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+      "notes": "Pinned11.3.0; angular sampler and world-space spawn mapping remain separately uncalibrated."
     },
     "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WideSwingUnitGroupParam/Unit/0/SpawnWideDegree": {
       "value": 18.0,
@@ -1321,6 +1321,54 @@
       "status": "extracted",
       "unit": "gear effect ratio",
       "notes": "Per-weapon override; unchanged endpoints reuse the pinned common curve. No omitted default reconstructed."
+    },
+    "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/WeaponParam/PitchDegSwerve": {
+      "value": 1.6,
+      "pointer": "/GameParameters/WeaponParam/PitchDegSwerve",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Pinned11.3.0; angular sampler and world-space spawn mapping remain separately uncalibrated."
+    },
+    "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WideSwingUnitGroupParam/Unit/1/SpawnSpeedBase": {
+      "value": 0.48,
+      "pointer": "/GameParameters/WideSwingUnitGroupParam/Unit/1/SpawnSpeedBase",
+      "sourceId": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Pinned11.3.0; angular sampler and world-space spawn mapping remain separately uncalibrated."
+    },
+    "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WideSwingUnitGroupParam/Unit/1/SpawnSpeedRandom": {
+      "value": 0.11,
+      "pointer": "/GameParameters/WideSwingUnitGroupParam/Unit/1/SpawnSpeedRandom",
+      "sourceId": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Pinned11.3.0; angular sampler and world-space spawn mapping remain separately uncalibrated."
+    },
+    "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WideSwingUnitGroupParam/Unit/1/SpawnWideDegree": {
+      "value": 4,
+      "pointer": "/GameParameters/WideSwingUnitGroupParam/Unit/1/SpawnWideDegree",
+      "sourceId": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Pinned11.3.0; angular sampler and world-space spawn mapping remain separately uncalibrated."
+    },
+    "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WideSwingUnitGroupParam/Unit/0/SpawnPositionWidth": {
+      "value": 0.8,
+      "pointer": "/GameParameters/WideSwingUnitGroupParam/Unit/0/SpawnPositionWidth",
+      "sourceId": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Pinned11.3.0; angular sampler and world-space spawn mapping remain separately uncalibrated."
+    },
+    "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WideSwingUnitGroupParam/Unit/1/SpawnPositionWidth": {
+      "value": 0.4,
+      "pointer": "/GameParameters/WideSwingUnitGroupParam/Unit/1/SpawnPositionWidth",
+      "sourceId": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference width",
+      "notes": "Near/main width ratio .4/.8=.5; absolute mapping and full/half width semantics remain provisional."
     }
   }
 }

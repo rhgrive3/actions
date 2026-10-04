@@ -37,3 +37,7 @@ Reviewed actual PR64 head `33db80691e65ea5e620cfff4abaa17be9eefc7ae`. Its collis
 PR318 already uses `p.s3PlayerRadius` for Dualies. Preserve that mode-specific producer; this candidate assigns only Shooter/Splatling. The two adapters should converge on one player-radius expression, not stack duplicate source replacements. This report does not claim that independent branches merge automatically or that the complete future integration has passed browser acceptance.
 
 No merge/deployment or settings change is included. Switch absolute geometry, real-device input/rendering, and unrelated charge admission/airborne behavior remain separate.
+
+## Resumed integration verification (2026-10-04)
+
+Reconciled main `866fd45992be33c51966a8acc55596bb5bac15a8`: preserve both weapon-edgecase installation/adaptation and this patch. The existing Charger isolation test asserted the intentionally replaced Splatling ramp; update only that assertion to the #470 state target and keep its Roller coverage. Final full patch/reliability gate **825/825**, main-composition **40/40**, local-quality plus idle/motion/workflow gates **74/74**, minified public-module **10/10**, production build and primary-byte verification **11 files / 134 extracted / 14 unknown** passed. No browser or physical-device run is claimed by this continuation.
