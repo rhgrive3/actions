@@ -65,3 +65,10 @@
 head c6aac63c の run37191742187 は既存のgame/motion/detail/Flow/Wall描画とcatalogを通過し、新resource検証はcontext restore待機で10秒timeout。そこまでの8影比較・色attachment検査・反射回数/coverage検査に例外なしで到達したが、全GPU受入は未達。
 
 [WEBGL_lose_context確定仕様・Revision15](https://registry.khronos.org/webgl/extensions/WEBGL_lose_context/)は、lossイベントが完了する前のrestoreContextを禁止する。元検証器はイベント内でresolveしたPromiseをawait後に直ちにrestoreし、Chromiumのevent microtask checkpointでdispatch完了前に実行できた。0ms timerの次taskへrestoreを移し、単体テストでmicrotask中に呼ばれないことを確認。無効化・条件緩和はせず、実復元イベントと復元後pixel比較を引き続き要求する。失敗時のJSON/PNGも専用artifactへ保持する。
+
+
+## CIで発見した復旧世代のGPU解放修正
+
+run37192724286 は復旧イベントと9番目の影pixel完全比較まで到達し、最後のGLエラー検査で失敗。復旧listenerが無効化済みの旧FBO/renderbufferへdeleteを送る経路を廃止し、コンテキスト消失によるGPU解放後は所有参照だけを破棄する。通常dispose/resize/割当失敗は従来通り解放する。旧世代handleのdeleteを例外にする回帰テスト、新世代の再生成・解放・Three再接続テストを追加。GPU再実行での無エラー確認が完了するまでは受入未達とする。
+
+根拠: [WebGL 1.0仕様のcontext lost/restored規則](https://registry.khronos.org/webgl/specs/latest/1.0/)（旧WebGLObjectはinvalidated、復元で再利用可能にはならない）。検証器のGL判定は保持し、今後の失敗時は16進エラー値とpixel差分を記録する。

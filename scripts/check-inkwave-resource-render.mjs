@@ -153,7 +153,9 @@ async function main() {
         cache.enabled = false; const full = pixels(); cache.enabled = true; const cached = pixels();
         const d = difference(full, cached); assert(d.changedBytes === 0, name + ' static shadow pixels differ: ' + JSON.stringify(d));
         assert(cache.enabled && cache.cache?.valid(), name + ' cache disabled/fallback');
-        assert(gl.getError() === gl.NO_ERROR, name + ' WebGL error');
+        const glError = gl.getError();
+        globalThis.resourceProbeProgress = { phase: name, glError, pixels: d };
+        assert(glError === gl.NO_ERROR, name + ' WebGL error 0x' + glError.toString(16));
         png(name + '-cached', cached); rows.push({ name, pixels: d, rebuilds: cache.stats.rebuilds, statics: cache.stats.lastStatic });
         return cached;
       };

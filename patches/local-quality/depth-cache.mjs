@@ -10,7 +10,10 @@ export function createDepthCache(gl, width, height, type) {
   let disposed = false;
   const cache = { width, height, framebuffer, depth, colorBytes: 0, depthType: type,
     valid: () => !disposed && !gl.isContextLost() && gl.isFramebuffer(framebuffer) && gl.isRenderbuffer(depth),
-    dispose() { if (disposed) return; disposed = true; gl.deleteFramebuffer(framebuffer); gl.deleteRenderbuffer(depth); } };
+    // Context loss already frees these GPU objects. Never submit handles from
+    // the old generation after restoration (WebGL INVALID_OPERATION).
+    abandon() { disposed = true; },
+    dispose() { if (disposed) return; disposed = true; if (!gl.isContextLost()) { gl.deleteFramebuffer(framebuffer); gl.deleteRenderbuffer(depth); } } };
   try {
     if (!framebuffer || !depth) { cache.dispose(); return null; }
     gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
@@ -49,7 +52,7 @@ export function installDepthOnlyShadowCache(ShadowCache) {
 export function attachDepthCacheLifecycle(owner, G) {
   owner._depthHook = owner.renderer.shadowMap.render;
   owner._depthRestore = () => {
-    owner.cache?.dispose(); owner.cache = null; owner.dirty = true;
+    owner.cache?.abandon(); owner.cache = null; owner.dirty = true;
     // Three recreates WebGLShadowMap before dispatching its restore listener.
     // Reconnect to that new owner, never call the stale renderer internals.
     const sm = owner.renderer.shadowMap;

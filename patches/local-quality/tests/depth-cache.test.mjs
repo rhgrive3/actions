@@ -36,7 +36,31 @@ test('native ShadowCache replacement reuses, resizes, releases and unhooks on di
   cache._ensureCache(2048, 2048, api.THREE.UnsignedIntType); const first = cache.cache;
   cache._ensureCache(2048, 2048, api.THREE.UnsignedIntType); assert.equal(cache.cache, first);
   cache._ensureCache(4096, 4096, api.THREE.UnsignedIntType); assert.equal(first.valid(), false); assert.equal(gl.framebuffers.size, 1);
-  listeners.get('webglcontextrestored')(); assert.equal(cache.cache, null); assert.ok(cache.dirty); assert.equal(gl.framebuffers.size, 0);
+  gl.framebuffers.clear(); gl.renderbuffers.clear(); // Context loss invalidates all old handles.
+  const deletedBeforeRestore = gl.deleted.length;
+  listeners.get('webglcontextrestored')(); assert.equal(gl.deleted.length, deletedBeforeRestore); assert.equal(cache.cache, null); assert.ok(cache.dirty); assert.equal(gl.framebuffers.size, 0);
   cache._ensureCache(32, 32, api.THREE.UnsignedIntType); assert.equal(cache._fbo(cache.cache), cache.cache.framebuffer);
   cache.dispose(); cache.dispose(); assert.equal(gl.framebuffers.size, 0); assert.equal(listeners.size, 0); assert.equal(renderer.shadowMap.render, original);
+});
+
+test('restore abandons invalidated handles without delete calls and rehooks Three shadow owner', () => {
+  const gl = mockGL(), listeners = new Map(), original = () => {}, restored = () => {};
+  const renderer = { shadowMap: { render: original }, getContext: () => gl,
+    domElement: { addEventListener: (n, cb) => listeners.set(n, cb), removeEventListener: n => listeners.delete(n) }, properties: { get: o => o } };
+  const cache = new api.ShadowCache(renderer); cache._ensureCache(64, 64, api.THREE.UnsignedIntType);
+  const old = cache.cache, invalid = new Set([old.framebuffer, old.depth]);
+  for (const method of ['deleteFramebuffer', 'deleteRenderbuffer']) {
+    const native = gl[method]; gl[method] = function (o) { assert.ok(!invalid.has(o), 'old context handle must not reach WebGL'); native.call(this, o); };
+  }
+  gl.framebuffers.clear(); gl.renderbuffers.clear(); renderer.shadowMap = { render: restored };
+  listeners.get('webglcontextrestored')(); assert.equal(old.valid(), false); old.dispose();
+  assert.equal(gl.deleted.length, 0); assert.equal(cache.cache, null); assert.equal(cache._orig, restored);
+  assert.equal(renderer.shadowMap.render, cache._depthHook);
+  cache._ensureCache(64, 64, api.THREE.UnsignedIntType); assert.ok(cache.cache.valid());
+  cache.dispose(); assert.equal(gl.deleted.length, 2); assert.equal(renderer.shadowMap.render, restored);
+});
+test('disposal during context loss does not submit invalidated objects', () => {
+  const gl = mockGL(), c = api.createDepthCache(gl, 32, 32, api.THREE.UnsignedIntType);
+  gl.lost = true; gl.framebuffers.clear(); gl.renderbuffers.clear(); c.dispose();
+  gl.lost = false; c.dispose(); assert.equal(gl.deleted.length, 0); assert.equal(c.valid(), false);
 });
