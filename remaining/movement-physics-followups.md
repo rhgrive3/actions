@@ -8,7 +8,7 @@ Still open:
 An independent Nintendo-to-INKWAVE world-scale anchor is not established. Therefore the retained values (Kid 5.76, Squid 11.52, Roller 6.48/7.92, etc.) are not yet certified as perceptually/physically equal to Splatoon.
 
 ## Curves and directional behavior
-Still require stronger public or device evidence:
+Implementation behavior is now quantitatively locked for the current candidate (including 30/60/120 partition/render-cadence regressions), but Nintendo-side source/device evidence is still required before claiming exact curve fidelity for:
 - normal Kid/Squid acceleration and braking
 - air control
 - reverse/turn curve
