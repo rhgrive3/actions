@@ -426,16 +426,20 @@ still painting, crediting turf **and charging the gauge**.
 
 ## 13. Final native-helper corrections (lane freebuff-4)
 
-Six defects found in the native connections after the candidate was merged. All
-of them were real behaviour bugs, not test-only issues: each one changed what a
-player sees or hits. Every correction is in this lane's own two runtime files
-plus narrow Trizooka-only adapter hooks; no upstream file was edited.
+Six reported defect groups, in eight corrections: the paint/credit group needed
+two of its own (the double credit, and an authority rule that was transport
+dependent), and the force group needed two (the skipped forces, and a transition
+that ran twice). All of them were real behaviour bugs, not test-only issues:
+each one changed what a player sees or hits. Every correction is in this lane's
+own two runtime files plus narrow Trizooka-only adapter hooks; no upstream file
+was edited.
 
 | # | defect | what it actually did | fix |
 | --- | --- | --- | --- |
 | A | gravity and drag never ran | the adapter wrapped the native grav/drag pair in `if (!kitTrizookaFlight(...))` and the helper returned `true`, so every brake and free tick flew with **no gravity and no drag at all**; only the transition frame ever moved the velocity | the native pair is now unconditional and the hook only *publishes* `p.grav` / `p.drag` / the transition velocity before it. One integrator, one application, for every projectile |
-| A2 | transition ran twice | `transition` was a symmetric `\|age - boundary\| <= dt` window, true on **both** frames that straddle the boundary | `transition` now means "this stage has a transition action", applied on **entry** (tracked by `p.s3AppliedStage`), so it fires exactly once per boundary at any frame interval. The first step of a projectile never transitions |
+| A2 | transition ran twice | `transition` was a symmetric `\|age - boundary\| <= dt` window, true on **both** frames that straddle the boundary | `transition` now means "this stage has a transition action", applied on **entry** (tracked by `p.s3AppliedStage`), so it fires exactly once per boundary at any frame interval. The first step of a projectile never transitions, so a round that only appears mid-flight (a ghost, or a pooled round aged by its previous life) is never clamped |
 | B | turf credited twice | `kitPaintCredit` called `owner.addTurf(area)` while the native line still called `owner.addTurf(kitPaintCredit(...))` around it — for **every** authoritative projectile, ordinary guns included | the helper is pure; the native `addTurf` is the single credit site, and each paint site is gated on authority before the splat runs |
+| B2 | the authority rule depended on the transport | it only refused `p.wid === 'trizooka'`, so an inkVac ghost kept native paint, and a mute based rule would break the moment `G.netm` is null | the rule is **intrinsic**: it reads the projectile's own identity against a declared kit ghost id list (`trizooka`, `inkVac`). An ordinary native ghost keeps the native rule |
 | C | the sphere sweep missed grazing blocks | the broadphase rect was the centre line, not the sphere: a block only the shell touches was never queried. Grates were not skipped, unlike the `physics.segment(..., true)` it replaces. The corner normal used world half extents, the edge normal was radial from the box centre, and the reported point was the sphere **centre**, one radius inside the solid, so `_impact` painted inside geometry | rect widened by `r`; grates skipped; normal = `centre - closestOnBlock(centre)`; point = `centre - normal * r`; `face`/`u`/`v` from a valid native face |
 | D | the packet lost the volley identity | `recProj` carried no `s3VolleyIndex`, so a replayed volley arrived as three ghosts that all orbited on phase 0 and **overlapped instead of staying 120 degrees apart** | two bounded fields appended to the **main projectile packet only** (never the bomb, never the typed kit event). An older packet without them still replays, defaulting to lobe 0 |
 | E | a side lobe could suppress the carrier | native appends the victim to `p.vol.hits` even when the projectile deals no damage, so a side lobe processed first poisoned the shared ledger | only the carrier writes the ledger, in the actor branch and the boss branch; ordinary drop/slosh semantics untouched |
@@ -448,8 +452,10 @@ plus narrow Trizooka-only adapter hooks; no upstream file was edited.
 three files give **57 pass / 18 fail, exit 1** — every failure is one of the
 defects above, with the old pair shimmed for the two exports it did not have
 (`kitVolleyHitAuthority = () => true`, `kitVolleyPacketIndex = () => 0`, both of
-which are the old behaviour). Logs in `evidence/actions-freebuff-20261004/
-freebuff-4/trizooka-force/`.
+which are the old behaviour). The fixed tree was restored afterwards and
+re-verified at 75/75. Logs in `evidence/actions-freebuff-20261004/freebuff-4/
+trizooka-force/`, receipt in `evidence/actions-freebuff-20261004/freebuff-4/
+TRIZOOKA-FORCE.json`.
 
 Neighbouring suites were also run so the unconditional native force pair and the
 repainted credit sites cannot regress other guns: `weapons`,
