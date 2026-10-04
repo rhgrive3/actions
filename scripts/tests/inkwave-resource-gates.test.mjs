@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { validateResourceResult } from '../check-inkwave-resource-render.mjs';
+import { validateResourceResult, restoreContextAfterEvent } from '../check-inkwave-resource-render.mjs';
 const good = () => ({
   rows: ['initial','dynamic-motion','static-demotion','stage-roots','light-change','shadow-resize','offscreen-actor','after-allocation-probe','context-restored']
     .map(name => ({ name, rebuilds: 1, pixels: { pixels: 480*360, changedBytes: 0, changedPixels: 0, totalDifference: 0 } })),
@@ -24,4 +24,14 @@ test('resource actual GPU probe is a required exact-source CI gate and receipt',
   assert.ok(workflow.includes("'resources/resource-render-result.json'"));
   const probe = fs.readFileSync(new URL('../check-inkwave-resource-render.mjs', import.meta.url), 'utf8');
   for (const call of ['readRenderTargetPixels', 'getFramebufferAttachmentParameter', 'loseContext()', 'restoreContext()', "'HEAD:' + file", 'manifest.artifacts[key]']) assert.ok(probe.includes(call), call);
+});
+
+
+test('context restoration is a new task after the loss event, not an event microtask', async () => {
+  let dispatching = true, called = false;
+  const pending = restoreContextAfterEvent({ restoreContext() {
+    assert.equal(dispatching, false, 'WEBGL_lose_context requires loss dispatch to have completed'); called = true;
+  } });
+  await Promise.resolve(); assert.equal(called, false, 'must not restore at the loss-event microtask checkpoint');
+  dispatching = false; await pending; assert.equal(called, true);
 });

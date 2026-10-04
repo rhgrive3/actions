@@ -58,3 +58,10 @@
 - pinned primary numeric source: Ver.11.3.0、11files、126 extracted、14 unknownを維持。
 - 公開ビルド成功: revision prefix `93ca913d4d2b`、133 modulepreloads。build入力/artifact hashの全照合成功。
 - 新GPU検証は未実行のため、本書時点で#274の実描画受入は未達。CI結果が確定するまでDraftを維持し、失敗時は修正と再検証を続ける。
+
+
+## CI検証器のcontext-loss順序修正
+
+head c6aac63c の run37191742187 は既存のgame/motion/detail/Flow/Wall描画とcatalogを通過し、新resource検証はcontext restore待機で10秒timeout。そこまでの8影比較・色attachment検査・反射回数/coverage検査に例外なしで到達したが、全GPU受入は未達。
+
+[WEBGL_lose_context確定仕様・Revision15](https://registry.khronos.org/webgl/extensions/WEBGL_lose_context/)は、lossイベントが完了する前のrestoreContextを禁止する。元検証器はイベント内でresolveしたPromiseをawait後に直ちにrestoreし、Chromiumのevent microtask checkpointでdispatch完了前に実行できた。0ms timerの次taskへrestoreを移し、単体テストでmicrotask中に呼ばれないことを確認。無効化・条件緩和はせず、実復元イベントと復元後pixel比較を引き続き要求する。失敗時のJSON/PNGも専用artifactへ保持する。

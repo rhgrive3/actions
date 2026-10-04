@@ -14,6 +14,13 @@ const ROOT = fileURLToPath(new URL('../', import.meta.url));
 const WIDTH = 480, HEIGHT = 360;
 const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
 const resourcePixelDifference = wallPixelDifference;
+// WEBGL_lose_context forbids restoration until the loss event has finished.
+// A resolved Promise resumes at its microtask checkpoint, still inside event
+// dispatch on Chromium. A new task, not an arbitrary delay, crosses that boundary.
+export async function restoreContextAfterEvent(extension) {
+  await new Promise(resolve => setTimeout(resolve, 0));
+  extension.restoreContext();
+}
 export function verifyResourceBuild(site, exactSource = false) {
   const result = verifyWallBuild(site, exactSource);
   const file = 'scripts/check-inkwave-resource-render.mjs';
@@ -102,7 +109,7 @@ async function main() {
       } catch (error) { recordError(error.message); await route.abort(); }
     });
     await page.goto(address + '/resource-render');
-    await page.addScriptTag({ content: 'globalThis.resourcePixelDifference = ' + resourcePixelDifference.toString() + ';' });
+    await page.addScriptTag({ content: 'globalThis.resourcePixelDifference = ' + resourcePixelDifference.toString() + '; globalThis.restoreContextAfterEvent = ' + restoreContextAfterEvent.toString() + ';' });
     result = await page.evaluate(async ({ prefix, width, height }) => {
       const THREE = await import('three');
       const { G } = await import(prefix + 'src/core/ctx.js');
@@ -219,7 +226,7 @@ async function main() {
         loss.loseContext(); await bounded(lost, 'context-loss');
         const restored = new Promise(resolve => renderer.domElement.addEventListener('webglcontextrestored', resolve, { once: true }));
         globalThis.resourceProbeProgress = { phase: 'context-restore' };
-        loss.restoreContext(); await bounded(restored, 'context-restore');
+        await globalThis.restoreContextAfterEvent(loss); await bounded(restored, 'context-restore');
         assert(cache.dirty && cache.cache === null && renderer.shadowMap.render === cache._depthHook, 'cache did not reconnect after context restore');
         pair('context-restored');
         const owned = cache.cache, original = cache._orig; cache.dispose();
