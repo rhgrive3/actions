@@ -145,3 +145,4 @@
   - 下唇の両はしの茶色 = 唇のぬり（板 HEAD_skin_08 を消すと消える）。`below_lip` rise 10、half_width 17、fade 6（U3）。`brighten`（ぬりで明るくする）はむらが出たのでやめた（コードも消した）。
   - 鼻先: `paint_nose` の spots をなくし floor 0.06、full 0.2、strength 1.3（N5）: 正面の小鼻の輪郭と鼻のまわりの影、3/4・横の小鼻の溝が出た。
   - params = N5。正式なビルド Q5。
+- 10/04 夜: Q5 = master V94。PR https://github.com/rhgrive3/actions/pull/401（ブランチ claude/inkwave-skin-lips-nose-v94）。マージはユーザーの OK 待ち。
