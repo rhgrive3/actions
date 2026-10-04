@@ -33,6 +33,7 @@ export async function fixture() {
     export * from './inkwave-public/src/game/player.js';
     export * from './inkwave-public/src/core/shadowcache.js';
     export * as THREE from 'three';
+    export const VM_MATH = Math;
     export * from './patches/splatoon3/runtime/movement.mjs';
     export * from './patches/splatoon3/runtime/weapons.mjs';
     export * from './patches/splatoon3/runtime/gear.mjs';
