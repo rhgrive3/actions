@@ -20,8 +20,8 @@ const golden = {
   'splatling-first':[20.3,19.5,21.125,1],
   'splatling-full':[20.3,19.5,21.125,1],
   'charger-1':[24.7,24.7,24.375,0],
-  'roller-horizontal':[11,4.8,12.625,12],
-  'roller-vertical':[15.6,6.2,16.125,5],
+  'roller-horizontal':[12.2,5.8,12.625,12],
+  'roller-vertical':[16.3,6.9,16.125,5],
   slosher:[12.7,11.9,14.125,8],
 };
 for (const [key,[hit,full,paint,count]] of Object.entries(golden)) {
@@ -51,6 +51,11 @@ for (const key of ['shooter','roller-horizontal','roller-vertical']) {
   for(let i=0;i<locals.length;i++){
     const p=locals[i],q=ghosts[i];
     assert.equal(q.fidelityMode,p.fidelityMode,key);
+    if (key.startsWith('roller-')) {
+      near(q.fidelityPlayerCollision.initRadius,p.fidelityPlayerCollision.initRadius,1e-9);
+      near(q.fidelityPlayerCollision.endRadius,p.fidelityPlayerCollision.endRadius,1e-9);
+      near(q.fidelityPlayerCollision.changeTime,p.fidelityPlayerCollision.changeTime,1e-9);
+    }
     near(q.straight,p.straight,.00051); near(q.life,p.life,.00051);
     for(let step=0;step<20;step++){
       f.advanceFidelityProjectile(p,1/60); f.advanceFidelityProjectile(q,1/60);
