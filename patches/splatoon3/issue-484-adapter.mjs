@@ -79,12 +79,21 @@ export function adaptIssue484Net(code) {
     'netmatch adopt s3SpecialReady cleanup'
   );
 
-  // 8. Reset s3SpecialReady in _remoteSplat
+  // 8. In _remoteSplat, clear presentation cost and keep readiness explicitly false through death
   code = replaceOnce(
     code,
     '    victim.specialActive = null; victim.superJumpState = null;',
-    '    victim.specialActive = null; victim.superJumpState = null;\n    delete victim.s3SpecialReady;',
-    'netmatch remoteSplat s3SpecialReady reset'
+    '    victim.specialActive = null; victim.superJumpState = null;\n    delete victim.s3SpecialCost;\n    victim.s3SpecialReady = false;',
+    'netmatch remoteSplat presentation cleanup'
+  );
+
+  // 9. In _remoteRespawn, clear presentation cost and keep readiness explicitly false until live snapshot
+  // Use unique narrower a.net.spawnPending = true; anchor compatible with #482 composition
+  code = replaceOnce(
+    code,
+    '    a.net.spawnPending = true;',
+    '    a.net.spawnPending = true;\n    delete a.s3SpecialCost;\n    a.s3SpecialReady = false;',
+    'netmatch remoteRespawn presentation cleanup'
   );
 
   return code;
@@ -99,11 +108,11 @@ export function adaptIssue484Actor(code) {
     'actor reset cleanup'
   );
 
-  // 2. In splat(), clear presentation readiness
+  // 2. In splat(), clear presentation overrides
   code = replaceOnce(
     code,
     '    this.special *= 0.5;\n    this.specialActive = null;\n    this.climbing = false;',
-    '    this.special *= 0.5;\n    this.specialActive = null;\n    delete this.s3SpecialReady;\n    this.climbing = false;',
+    '    this.special *= 0.5;\n    this.specialActive = null;\n    delete this.s3SpecialCost;\n    delete this.s3SpecialReady;\n    this.climbing = false;',
     'actor splat cleanup'
   );
 
