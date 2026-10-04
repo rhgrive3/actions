@@ -30,6 +30,7 @@ async function production() {
     export { install } from './patches/splatoon3/runtime/install.mjs';
     export * from './patches/splatoon3/runtime/special-motion.mjs';
     export { FixedClock } from './patches/splatoon3/runtime/clock.mjs';
+    export { updateStormHold } from './patches/splatoon3/runtime/storm-effects.mjs';
   `, { context, identifier: path.join(ROOT, 'special-production-entry.mjs') });
   await entry.link((specifier, from) => load(specifier === 'three'
     ? path.join(SRC, 'vendor/three/build/three.module.js')
@@ -70,6 +71,10 @@ function rig(api, kind = 'shooter', enabled = true) {
 function start(r, id = 'slam') {
   assert.equal(r.a.weapon.special, id, 'use the real public kit');
   r.a._startSpecial();
+  if (id === 'storm') {
+    r.a.intent.sub = true; r.api.updateStormHold(r.a, 1 / 60, r.api.G);
+    r.a.intent.sub = false; r.api.updateStormHold(r.a, 1 / 60, r.api.G);
+  }
 }
 function posed(r, label) {
   const { ch, api } = r, { THREE } = api;
@@ -169,7 +174,23 @@ test('real slam phase changes suppress leap; grounded recovery releases the norm
   } finally { r.close(); before.close(); }
 });
 
-test('storm aligns empty-hand follow-through to actual immediate deployment, ordinary sub throws are unchanged', async () => {
+test('storm hold shows the native held device until explicit release', async () => {
+  const api = await production(), r = rig(api, 'charger');
+  try {
+    let thrown = 0; api.G.projectiles.throwStorm = () => { thrown++; };
+    r.a._startSpecial();
+    for (let i = 0; i < 20; i++) r.visual();
+    assert.equal(r.snapshot().phase, 'storm-hold');
+    assert.equal(r.ch.bombHeld, true); assert.equal(r.ch.bomb.group.visible, true);
+    assert.equal(thrown, 0);
+    r.a.intent.sub = true; api.updateStormHold(r.a, 1 / 60, api.G);
+    r.a.intent.sub = false; api.updateStormHold(r.a, 1 / 60, api.G); r.visual();
+    assert.equal(thrown, 1); assert.equal(r.snapshot().phase, 'storm-deploy');
+    assert.equal(r.ch.bombHeld, false); assert.equal(r.ch.bomb.group.visible, false);
+  } finally { r.close(); }
+});
+
+test('storm aligns empty-hand follow-through to explicit held-device release, ordinary sub throws are unchanged', async () => {
   const api = await production(), r = rig(api, 'charger'), before = rig(api, 'charger', false);
   try {
     assert.equal(r.a.weapon.special, 'storm');

@@ -42,6 +42,7 @@ async function production() {
   const entry = new vm.SourceTextModule(`
     export { install } from './patches/splatoon3/runtime/install.mjs';
     export { FixedClock } from './patches/splatoon3/runtime/clock.mjs';
+    export { updateStormHold } from './patches/splatoon3/runtime/storm-effects.mjs';
     export { CHARACTER_BOMB_POSE } from './inkwave-public/src/game/character.js';
     export { installBombMotion, bombMotionSnapshot, bombReleasePosition, bombPreviewPosition } from './patches/splatoon3/runtime/bomb-motion.mjs';
     ${DETAIL_HOOKS.map(([module, snapshot]) => `export { ${snapshot} } from './patches/splatoon3/runtime/${module}-motion.mjs';`).join('\n')}
@@ -228,6 +229,8 @@ test('actual Storm deployment keeps the special throw and never starts bomb reco
         r.a.weapon = { ...r.a.weapon, special: 'storm' };
         api.G.projectiles = r.projectiles;
         r.a._startSpecial();
+        r.a.intent.sub = true; api.updateStormHold(r.a, 1 / 60, api.G);
+        r.a.intent.sub = false; api.updateStormHold(r.a, 1 / 60, api.G);
         assert.equal(r.projectiles.bombs.length, 1); assert.equal(r.projectiles.bombs[0].kind, 'storm');
         if (enabled) assert.equal(api.bombMotionSnapshot(r.ch).throwing, false, 'the native throw event also belongs to Storm');
         for (let i = 0; i < 40; i++) {

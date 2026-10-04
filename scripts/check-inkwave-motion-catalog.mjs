@@ -194,7 +194,7 @@ export function validateCatalogResult(result) {
       : label === 'hit-spawn-reset' ? ['hit-spawn', ['entry', 'protected', 'expiry']]
       : label.startsWith('victory-') ? ['emotes', ['action', 'hold']]
       : label === 'native-slam-phases' ? ['special', ['rise', 'hang', 'fall', 'slam-recovery']]
-      : label === 'native-storm-deploy' ? ['special', ['storm-deploy', 'storm-recovery']] : null;
+      : label === 'native-storm-deploy' ? ['special', ['storm-hold', 'storm-deploy', 'storm-recovery']] : null;
     if (requiredPhases) for (const p of requiredPhases[1]) need(renderPhase(requiredPhases[0], p), 'phase RGB sample ' + p);
     if (label === 'carry-walk-fire-return' || scenario.hz) {
       need(count(s => s.snapshots.carry?.active && s.grip.left.held) >= (scenario.hz ? 40 : 200), 'supported carry denominator');
@@ -221,7 +221,7 @@ export function validateCatalogResult(result) {
       const returned = row.samples.filter(s => s.snapshots.special?.phase === null && s.grounded && s.kidScale > .999 && Math.hypot(s.velocity[0], s.velocity[2]) > 1);
       need(returned.length >= 30 && returned.every(s => s.walkActive), 'post-special native walking owner');
     }
-    if (label === 'native-storm-deploy') need(row.events.filter(e => e.name === 'throwStorm').length === 1 && phase('special', 'storm-deploy') >= 5 && phase('special', 'storm-recovery') >= 1 && row.samples.at(-1).snapshots.special?.phase === null, 'native Storm deploy/recovery');
+    if (label === 'native-storm-deploy') need(row.events.filter(e => e.name === 'throwStorm').length === 1 && phase('special', 'storm-hold') >= 5 && phase('special', 'storm-deploy') >= 5 && phase('special', 'storm-recovery') >= 1 && row.samples.at(-1).snapshots.special?.phase === null, 'native Storm deploy/recovery');
     if (label === 'gaze-face-actions') { for (const mode of ['fire', 'sub-aim', 'throw']) need(count(s => s.snapshots.face?.mode === mode) >= 2, 'native face ' + mode); need(count(s => s.snapshots.face?.blink.some(x => x > .5)) >= 1 && row.renders.some(r => r.face?.changedPixels > 0), 'native face/blink RGB'); }
     if (label === 'lifecycle-interruptions') need(['form', 'sub', 'dance', 'reset', 'death', 'hide', 'weapon'].every(name => row.transitions.includes(name)) && row.renders.some(r => !r.visible) && row.samples.at(-1).visible, 'lifecycle interruption denominator');
     if (!row.pause || row.pause.unchangedClocks !== true || row.pause.unchangedRig !== true
@@ -270,6 +270,7 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout 
   for (const [id, snapshot] of modules) snapshots[id] = (await import(prefix + 'patches/splatoon3/runtime/' + id + '-motion.mjs'))[snapshot];
   const { walkActive } = await import(prefix + 'patches/splatoon3/runtime/walk.mjs');
   const { beforeActions } = await import(prefix + 'patches/splatoon3/runtime/movement.mjs');
+  const { isStormHolding, updateStormHold } = await import(prefix + 'patches/splatoon3/runtime/storm-effects.mjs');
   const { FixedClock } = await import(prefix + 'patches/splatoon3/runtime/clock.mjs');
   const { FIST_OFFSET, GRIP_HOLE_L } = await import(prefix + 'src/game/character-weapons.js');
   const methods = [Character, Actor, api.WeaponRunner].flatMap(Type => Reflect.ownKeys(Type.prototype).filter(k => typeof Object.getOwnPropertyDescriptor(Type.prototype, k).value === 'function').map(key => [Type.prototype, key, Type.prototype[key]]));
@@ -587,7 +588,7 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout 
           if (n === 'hit-spawn-reset') { if (frame === 0) a.damage(30, null); if (frame === 20) a.respawn(); if (frame >= 20 && !a.grounded) a._integrate(1 / 60, false, false); if (frame >= 20) a.invuln = Math.max(0, a.invuln - 1 / 60); if (frame === 150) { a.reset(); a.grounded = true; } }
           if (n === 'quiet-idle-held-sub') { input.sub = frame >= 40 && frame < 100; input.subReleased = frame === 100; if (frame === 55) { ch.fidget = 4; ch.fidgetT = 0; } }
           if (n.startsWith('victory-')) { if (frame === 280) ch.setDance(null); if (frame === 310) ch.setDance('lobby_pose'); }
-          if (n.startsWith('native-')) { if (a.specialActive) a._updateSpecial(1 / 60); else if (n === 'native-slam-phases') move(2.4); }
+          if (n.startsWith('native-')) { if (isStormHolding(a)) { a.intent.sub = frame >= 8 && frame < 12; updateStormHold(a, 1 / 60, G); } if (a.specialActive && !isStormHolding(a)) a._updateSpecial(1 / 60); else if (n === 'native-slam-phases') move(2.4); }
           if (n === 'gaze-face-actions') { input.fire = frame < 40; input.sub = frame >= 55 && frame < 85; input.subReleased = frame === 85; a.aimDir.set(.08, .05, 1).normalize(); a.aimPoint.copy(a.pos).add(new THREE.Vector3(.5, 1.3, 8)); if (frame === 100) { a.damage(10, null); ch._blink(true); } if (frame === 140) ch.trigger('wink'); }
           if (n === 'lifecycle-interruptions') { input.fire = frame < 15; if (frame === 20) { a.form = 'squid'; transitions.push('form'); } if (frame === 40) a.form = 'kid'; input.sub = frame >= 50 && frame < 65; if (frame === 50) transitions.push('sub'); if (frame === 75) { ch.setDance('victory'); transitions.push('dance'); } if (frame === 90) { a.reset(); a.grounded = true; transitions.push('reset'); } if (frame === 105) { a.splat(); transitions.push('death'); } if (frame === 120) { a.spawnAt(new THREE.Vector3(), 0); } if (frame === 135) { ch.setVisible(false); transitions.push('hide'); } if (frame === 145) ch.setVisible(true); if (frame === 150) { a.setWeapon('charger'); transitions.push('weapon'); } if (frame === 165) a.setWeapon('shooter'); }
           if (scenario.hz) { move(frame < 40 ? 2.4 : 0); input.fire = frame >= 20 && frame < 35; }

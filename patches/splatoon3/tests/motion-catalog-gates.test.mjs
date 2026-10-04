@@ -32,7 +32,7 @@ function gateFixture() {
       case 'hit-spawn-reset': fill('hit-spawn', { phase: 'entry', coating: .9 }, 0, 5); fill('hit-spawn', { phase: 'protected', coating: .9 }, 5, 20); fill('hit-spawn', { phase: 'expiry', coating: .5 }, 20, 25); fill('hit-spawn', { coating: 0 }, 25); renders[0].coating = { ...pixel }; break;
       case 'quiet-idle-held-sub': fill('idle', { quiet: true }); for (const s of samples.slice(40, 80)) { s.heldBomb = true; s.grip.left.held = false; } row.events.push({ name: 'throwBomb', frame: 80 }); break;
       case 'native-slam-phases': for (const [i, phase] of ['rise', 'hang', 'fall', 'slam-recovery'].entries()) fill('special', { phase }, i * 10, (i + 1) * 10); fill('special', { phase: null }, 40); for (const s of samples.slice(40)) s.velocity[2] = 2.4; break;
-      case 'native-storm-deploy': fill('special', { phase: 'storm-deploy' }, 0, 10); fill('special', { phase: 'storm-recovery' }, 10, 20); fill('special', { phase: null }, 20); row.events.push({ name: 'throwStorm', frame: 0 }); break;
+      case 'native-storm-deploy': fill('special', { phase: 'storm-hold' }, 0, 10); fill('special', { phase: 'storm-deploy' }, 10, 20); fill('special', { phase: 'storm-recovery' }, 20, 30); fill('special', { phase: null }, 30); row.events.push({ name: 'throwStorm', frame: 10 }); break;
       case 'gaze-face-actions': for (const [i, mode] of ['fire', 'sub-aim', 'throw'].entries()) fill('face', { mode, blink: [.8, .8] }, i * 20, (i + 1) * 20); renders[0].face = { ...pixel }; break;
       case 'lifecycle-interruptions': row.transitions = ['form', 'sub', 'dance', 'reset', 'death', 'hide', 'weapon']; samples[135].visible = false; break;
     }
