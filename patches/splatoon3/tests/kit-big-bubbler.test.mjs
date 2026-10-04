@@ -538,7 +538,6 @@ test('only a charged, single, live native activation deploys a structure', async
   const stop = f.on('special:use', () => {
     if (fired) return;
     fired = true;
-    a.special = a.specialCost();
     a._startSpecial();
     nested++;
   });
@@ -546,7 +545,8 @@ test('only a charged, single, live native activation deploys a structure', async
   a._startSpecial();
   stop();
   assert.equal(nested, 1, 'the nested call really happened');
-  assert.equal(bigBubblerDomes().length, 0, 'a re-entrant activation chain never deploys');
+  assert.equal(bigBubblerDomes().length, 1, 'a nested refused call cannot duplicate or cancel the valid outer activation');
+  clearBigBubblers('test-next-activation');
   // the ordinary path runs the native common activation exactly once
   let refills = 0;
   const stopRefill = f.on('special:refill', () => refills++);
@@ -555,8 +555,7 @@ test('only a charged, single, live native activation deploys a structure', async
   a.special = a.specialCost(); a.intent.special = true; f.tick(a);
   stopRefill();
   assert.equal(bigBubblerDomes().length, 1, 'one real activation deploys exactly one dome');
-  // 1 uncharged + 1 dead + (1 re-entrant chain = outer + nested) + 1 real = 5
-  assert.equal(a.stats.specials, 5, 'the native activation ran once per call and never more');
+  assert.equal(a.stats.specials, 2, 'only the valid outer activation and ordinary activation spend the gauge');
   assert.equal(a.special, 0);
   assert.equal(refills, 0,
     'this module never refills: the parent resources module keys the refill on a '
@@ -799,7 +798,9 @@ test('a local round versus a remote dome proposes damage and changes nothing', a
   assert.equal(remote.fieldHp, field);
   assert.equal(proposals.length, 1, 'the parent is handed exactly one proposal');
   const wire = proposals[0];
-  assert.deepEqual(JSON.parse(JSON.stringify(wire)), wire, 'the proposal is JSON-safe');
+  assert.equal(wire.actor, proxy, 'the native event carries its actual shooter for transport binding');
+  const { actor: transportActor, ...scalarWire } = wire;
+  assert.deepEqual(JSON.parse(JSON.stringify(scalarWire)), scalarWire, 'proposal fields are JSON-safe');
   assert.equal(wire.domeId, remote.id);
   assert.equal(wire.serial, remote.serial);
   assert.equal(wire.amount, 36 * BIG_BUBBLER_CALIBRATION.rawPerDamageUnit);
@@ -848,6 +849,7 @@ test('the proposal survives the native event packer with every field intact', as
     for (const [k, v] of Object.entries(packed)) {
       const original = proposal[k];
       if (typeof original === 'number') close(v, original, 1e-3, `${k} survived packEvent`);
+      else if (k === 'actor') assert.deepEqual(v, { n: original.nid }, 'native packer encodes the shooter identity');
       else assert.deepEqual(v, original, `${k} survived packEvent unchanged`);
     }
   }
@@ -1086,12 +1088,12 @@ test('the owner adjudication API validates authority, ownership, team, amount an
   // an unknown dome is named, not silently ignored
   assert.equal(adjudicateBigBubblerDamage({ ...proposal, eventId: 5, domeId: '9:n9:1' },
     authority).reason, 'unknown-dome');
-  // an amount beyond the remaining HP is refused as overkill, not silently clamped
+  // A legitimate finishing hit must destroy remaining durability, not be refused.
   const weak = bigBubblerDomes()[0];
-  assert.equal(adjudicateBigBubblerDamage({ ...proposal, eventId: 6, amount: weak.hp + 1 },
-    authority).reason, 'overkill');
-  assert.equal(adjudicateBigBubblerDamage({ ...proposal, eventId: 6, amount: 0 },
-    authority).reason, 'bad-amount');
+  assert.equal(adjudicateBigBubblerDamage({ ...proposal, eventId: 6, amount: 0 }, authority).reason, 'bad-amount');
+  assert.equal(adjudicateBigBubblerDamage({ ...proposal, eventId: 6, amount: weak.hp + 1 }, authority).reason, 'applied');
+  assert.equal(weak.hp, 0); assert.ok(weak.dead);
+
 });
 
 test('two composed actors round-trip a deploy packet through JSON, duplicates, reset and disposal', async () => {
@@ -1230,4 +1232,39 @@ test('the documented native query anchor is present and unique in the composed s
   assert.ok(source.includes('G.physics.segment(p.prev, p.pos, _hit, true)'),
     'the native world contact the candidate must be arbitrated against');
   assert.ok(source.includes('return dead;'));
+});
+test('parent: distinct shooters and reordered distinct proposals all spend durability exactly once', async () => {
+  const { f } = await composed({ timeDamageIntervalSeconds: 1e9 }); level(f);
+  const owner = roller(f); owner.nid = 4; f.G.actors = [owner]; activate(f, owner);
+  const dome = bigBubblerDomes()[0], hp = dome.hp;
+  const base = { domeId: dome.id, serial: dome.serial, target: 'canopy', amount: 100,
+    shooter: 'n9', shooterTeam: 1, domeOwner: 'n4' };
+  const authority = { host: true, roster: [{ nid: 4, team: 0 }, { nid: 9, team: 1 }, { nid: 10, team: 1 }] };
+  for (const event of [{ ...base, eventId: 2 }, { ...base, eventId: 1 }, { ...base, shooter: 'n10', eventId: 1 }]) {
+    assert.equal(adjudicateBigBubblerDamage(event, authority).reason, 'applied');
+    assert.equal(adjudicateBigBubblerDamage(event, authority).reason, 'duplicate');
+  }
+  assert.equal(dome.hp, hp - 300);
+});
+test('parent: reordered distinct replica hits apply both deltas and retransmissions remain inert', async () => {
+  const { f } = await composed(); level(f); const proxy = roller(f); proxy.remote = true;
+  const deploy = VALID_DEPLOY(); replayBigBubbler('deploy', proxy, deploy);
+  const dome = bigBubblerRemoteDomes()[0], hp = dome.hp;
+  for (const eventId of [2, 1]) {
+    const event = { domeId: dome.id, serial: dome.serial, target: 'canopy', amount: 100, eventId };
+    assert.equal(replayBigBubbler('hit', proxy, event).reason, 'displayed');
+    assert.equal(replayBigBubbler('hit', proxy, event).reason, 'duplicate');
+  }
+  assert.equal(dome.hp, hp - 200);
+});
+
+ test('parent: refused Bubbler activations preserve gauge, ink and the native special counter', async () => {
+  const { f } = await composed(); level(f); const a = roller(f); f.G.actors = [a];
+  for (const [key, value] of [['alive', false], ['remote', true], ['superJumpState', {}], ['specialActive', {}]]) {
+    const before = a[key]; a[key] = value; a.special = a.specialCost(); a.ink = 23;
+    const count = a.stats.specials; a._startSpecial();
+    assert.equal(a.special, a.specialCost(), key); assert.equal(a.stats.specials, count, key);
+    assert.equal(a.ink, 23, key); assert.equal(bigBubblerDomes().length, 0, key); a[key] = before;
+  }
+  a.special = 0; const count = a.stats.specials; a._startSpecial(); assert.equal(a.stats.specials, count);
 });

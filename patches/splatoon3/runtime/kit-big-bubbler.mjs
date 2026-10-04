@@ -277,7 +277,7 @@ function removeDome(dome, reason) {
   // A remote dome's disappearance is presentation, not gameplay, so it is a
   // separate stream and never claims the authoritative collapse event.
   api.emit?.(dome.remote ? 'kit:bubbler:remote:gone' : 'kit:bubbler:collapse', {
-    owner: dome.owner, domeId: dome.id, serial: dome.serial, team: dome.team,
+    actor: dome.owner, owner: dome.owner, domeId: dome.id, serial: dome.serial, team: dome.team,
     pos: dome.pos.clone(), reason,
   });
   return true;
@@ -313,7 +313,7 @@ function deploy(owner) {
   api.G.fx?.ring?.(pos.clone().setY(pos.y + 0.05), new THREE.Vector3(0, 1, 0), dome.color,
     { radius: raw.maxRadius, life: 0.5 });
   api.emit?.('kit:bubbler:deploy', {
-    owner, domeId: dome.id, serial: dome.serial, team: owner.team,
+    actor: owner, owner, domeId: dome.id, serial: dome.serial, team: owner.team, t: 0,
     pos: pos.clone(), hp: dome.hp, fieldHp: dome.fieldHp,
   });
   return dome;
@@ -343,7 +343,8 @@ function damageDome(dome, target, amount, cause = 'shot') {
   if (target === 'field') dome.fieldHp = Math.max(0, dome.fieldHp - amount);
   else dome.hp = Math.max(0, dome.hp - amount);
   api.emit?.(cause === 'shot' ? 'kit:bubbler:hit' : `kit:bubbler:${cause}`, {
-    owner: dome.owner, domeId: dome.id, team: dome.team, target, amount, cause,
+    actor: dome.owner, owner: dome.owner, domeId: dome.id, serial: dome.serial,
+    eventId: dome.hitSerial = (dome.hitSerial || 0) + 1, team: dome.team, target, amount, cause,
     hp: dome.hp, fieldHp: dome.fieldHp,
   });
   if (dome.hp <= 0 || dome.fieldHp <= 0) removeDome(dome, target === 'field' ? 'emitter-destroyed' : 'canopy-destroyed');
@@ -510,7 +511,7 @@ export function kitBarrierCandidate(p, start, end) {
       // Hand the parent a serializable proposal; spend nothing.
       candidate.eventId = ++proposalSerial;
       candidate.proposal = candidate.damageProposal();
-      api.emit?.('kit:bubbler:damage-proposal', { ...candidate.proposal });
+      api.emit?.('kit:bubbler:damage-proposal', { ...candidate.proposal, ...(candidate.shooter ? { actor: candidate.shooter } : {}) });
       return 0;
     }
     const applied = damageDome(dome, candidate.target, candidate.damage);
@@ -638,7 +639,7 @@ export function tickRemoteBigBubblers(dt) {
     if (!dome.ignited && dome.t + 1e-10 >= raw.ignitionFrames / 60) {
       dome.ignited = true;
       api.emit?.('kit:bubbler:remote:ignite', {
-        owner: dome.owner, domeId: dome.id, serial: dome.serial, team: dome.team,
+        actor: dome.owner, owner: dome.owner, domeId: dome.id, serial: dome.serial, team: dome.team,
         pos: dome.pos.clone(), presentationOnly: true,
       });
     }
@@ -727,16 +728,17 @@ function rememberInto(set, key, limit) {
   return true;
 }
 
-// Bounded per-dome monotonic cursor. Returns false when `eventId` is not newer
-// than the one already applied, which is what makes a REORDERED packet a no-op
-// instead of a second application of the same damage.
+// A bounded reorder window accepts each DISTINCT delta once. A high-water
+// cursor alone would drop a legitimate earlier hit that arrives after a later hit.
 function advanceCursor(map, key, eventId, limit) {
-  const seen = map.get(key);
-  if (seen !== undefined && eventId <= seen) return false;
-  if (seen === undefined) {
-    map.set(key, eventId);
+  let window = map.get(key);
+  if (!window) {
+    window = { max: eventId, seen: new Set() }; map.set(key, window);
     if (map.size > limit) map.delete(map.keys().next().value);
-  } else map.set(key, eventId);
+  }
+  if (eventId <= window.max - 64 || window.seen.has(eventId)) return false;
+  window.max = Math.max(window.max, eventId); window.seen.add(eventId);
+  for (const id of window.seen) if (id <= window.max - 64) window.seen.delete(id);
   return true;
 }
 
@@ -904,11 +906,9 @@ function replayExpire(owner, payload) {
  *   - team           the shooter must resolve in the roster and be HOSTILE to the
  *                    dome's own team: friendly fire and neutral rounds are refused,
  *                    which is the same rule kitBarrierCandidate applies locally;
- *   - amount         finite, positive and bounded (validateContact), and capped
- *                    at the remaining HP of the part that was hit;
- *   - duplicate      the proposal's own (domeId, eventId) is deduped and must be
- *                    MONOTONIC, so a retransmitted OR reordered proposal is a
- *                    no-op while two distinct hits both apply.
+ *   - amount         finite, positive and bounded (validateContact), and applied with durability clamped at zero;
+ *   - duplicate      the proposal's own (domeId, shooter, eventId) is deduped in
+ *                    a bounded reorder window; distinct hits apply once.
  *
  * It NEVER touches a remote dome's HP: a proposal naming a presentation-only dome
  * is refused as 'foreign-ownership' rather than silently mutating an image.
@@ -946,16 +946,14 @@ export function adjudicateBigBubblerDamage(plainPayload, authority = {}) {
   // malformed-amount refusal but BEFORE the remaining-HP comparison: a packet
   // that has already been applied must report 'duplicate' whatever it claims,
   // and must never be re-judged against HP the first application already moved.
-  if (!advanceCursor(authorityCursor, v.domeId, v.eventId, CURSOR_LIMIT)) {
+  if (!advanceCursor(authorityCursor, `${v.domeId}|${v.shooter}`, v.eventId, CURSOR_LIMIT)) {
     return ok('duplicate', { domeId: v.domeId, eventId: v.eventId });
   }
-  if (!rememberInto(authoritySeen, `${v.domeId}|${v.eventId}`, REPLAY_SEEN_LIMIT)) {
+  if (!rememberInto(authoritySeen, `${v.domeId}|${v.shooter}|${v.eventId}`, REPLAY_SEEN_LIMIT)) {
     return ok('duplicate', { domeId: v.domeId, eventId: v.eventId });
   }
-  const remaining = v.target === 'field' ? dome.fieldHp : dome.hp;
-  // A claim beyond the remaining HP is refused, NOT silently clamped: silently
-  // clamping would let a hostile client choose how much damage a hit lands.
-  if (v.amount > remaining) return no('overkill');
+  // A legitimate hit larger than the remaining durability destroys the dome,
+  // just as an owned projectile does. The dome damage path clamps at zero.
   const applied = damageDome(dome, v.target, v.amount);
   api.emit?.('kit:bubbler:damage-adjudicated', {
     domeId: v.domeId, serial: dome.serial, team: dome.team, shooter: v.shooter,
@@ -1017,6 +1015,7 @@ function overlapDamage(dome) {
 export function installKitBigBubbler(context, profile) {
   if (context[INSTALL]) throw new Error('INKWAVE Big Bubbler already installed');
   if (!context?.Actor || !context?.Projectiles) throw new Error('Big Bubbler needs the composed Actor and Projectiles');
+  context.SPECIALS.bubbler = { ...context.SPECIALS.bubbler, id: 'bubbler', name: 'Big Bubbler', cost: 180, mechanicsInstalled: true };
   api = context;
   raw = { ...BIG_BUBBLER_RAW, ...(profile?.kits?.bigBubbler?.raw || {}) };
   tuning = { ...BIG_BUBBLER_CALIBRATION, ...(profile?.kits?.bigBubbler || {}) };
@@ -1052,6 +1051,8 @@ export function installKitBigBubbler(context, profile) {
     const reentrant = activating.has(this);
     const cost = typeof this.specialCost === 'function' ? this.specialCost() : 0;
     const charged = cost > 0 && finiteNumber(Number(this.special), cost, Infinity);
+    if (this.weapon?.special === BUBBLER_ID && (!charged || reentrant || this.alive === false ||
+        this.remote || this.specialActive || this.superJumpState)) return;
     const specialsBefore = this.stats?.specials ?? 0;
     activating.add(this);
     let result;
