@@ -122,3 +122,5 @@
   - 正面の角: 角の上は顔（z 62）、下は首（z 23）。重なって角に見える → `floor_fillet`（新しい手順、jaw_tuck の前）: あごの底で首から d mm の点を R - sqrt(R² - (R-d)²) 下げる（Warp）。試し F8、F12、F12s（重みならし 5）。
 - 10/04: `floor_fillet`（あごの底を下げる）は首にトゲ → やめる（コードは残すが使わない）。
 - `neck_widen.lean.profile` "circle"（四分の一だ円）と `neck_widen.flare` {mm, y}（首の横を同じ形で広げる、|法線 x|）。K1（lean 8 [-104,-90] + flare 4 [-104,-92]）・K2（10 / 6）: 正面の角が丸くなった（frontL のうねり max 1.22 → 0.81 px）。3/4 もきれい。横の角は変わらない: あごの底は y -99〜-100 なのに lean の上のはしが -90。→ K4（lean 7 [-107,-99]）、K5（lean 10 [-110,-99]）。
+- 10/04: 首と顔の色の段（横で 首が R+11 G+15 明るい）→ `neck_skin`（首のえりより上 y > -135、|x| < 70 に、顔の絵のさかいめの色と顔の材質の値をもつ材質 `skin_neck`）。段は G 14.5 → 5。params = K5 + neck_skin（5cf8b15）。正式なビルド Q1（V92 マスターの写し V92master.blend から、final_qa.sh は BASE / BASEGLB で土台を変えられる）。
+- 大事: main の PR #42（e187c6a）は 10/03 09:35 に、前の版の V92（8240029）でマージされた。そのあとの直し（eye_paint、唇、肌、jaw_tuck dive、neck_widen）は main にない。次の PR（V93）で全部入れる。
