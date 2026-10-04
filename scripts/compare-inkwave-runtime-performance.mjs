@@ -9,9 +9,10 @@ for(const [label,r]of [['before',before],['after',after]]){
  if(r.status!=='passed')errors.push(label+' failed');
  if(!/^[a-f0-9]{40}$/.test(r.sourceSha||'')||!r.verifiedRuntimeFiles.includes('src/core/renderer.js'))errors.push(label+' missing active source receipt');
 }
-if(before.environment.seedMode!=='reset-each-profile-window'||after.environment.seedMode!=='reset-each-profile-window')errors.push('Uncontrolled window RNG');
+if(before.environment.seedMode!=='reset-each-fixed-step'||after.environment.seedMode!=='reset-each-fixed-step')errors.push('Uncontrolled window RNG');
 if(before.audioRngFixtureEnabled!==true||after.audioRngFixtureEnabled!==true)errors.push('Missing real audio RNG fixture');
 if(before.environment.audioRngMode!=='independent-seeded-audio'||after.environment.audioRngMode!=='independent-seeded-audio')errors.push('Uncontrolled audio RNG');
+if(before.environment.fixtureClockMode!=='canonical-battle-zero-phase'||after.environment.fixtureClockMode!=='canonical-battle-zero-phase')errors.push('Uncontrolled battle clock phase');
 for(const k of ['cpu','cores','platform','quality','viewport','webgl','repetitions','browser','seed','seedMode'])if(JSON.stringify(before.environment[k])!==JSON.stringify(after.environment[k]))errors.push('Different environment: '+k);
 for(const [label,r]of [['before',before],['after',after]])if(JSON.stringify(r.scenarios.map(x=>x.scenario))!==JSON.stringify(['title','settings','battle']))errors.push(label+' incomplete scenario set');
 if(after.inputStatus!=='synchronous'||after.input.length!==36||after.input.some(r=>r.state!==true||r.targetOwnerCorrect!==true||!Number.isFinite(r.targetError)||r.targetError>.5)||['kbm','pad','touch'].some(mode=>after.input.filter(r=>r.mode===mode).length!==12))errors.push('Candidate input target regression');
@@ -25,6 +26,7 @@ if(after.menuLifetime?.length!==3||after.menuLifetime.some(r=>r.fontListeners||r
 const scenarios=before.scenarios.map(b=>{
  const a=after.scenarios.find(x=>x.scenario===b.scenario);if(!a||a.runs.length!==3||b.runs.length!==3){errors.push('Missing repeated scenario '+b.scenario);return {scenario:b.scenario};}
  for(const s of [b,a])if(s.warmup?.simulationOnlySteps!==(s.scenario==='battle'?270:30)||s.warmup?.renderedSteps!==30||!Number.isFinite(s.warmup?.drainMs)||s.warmup.drainMs<0)errors.push('Missing rendered warmup: '+s.scenario);
+ if(b.scenario==='battle'&&(![b,a].every(s=>s.fixtureStart?.gameTime===0&&s.fixtureStart?.cameraTime===0&&Number.isFinite(s.fixtureStart?.shakeSeed))||JSON.stringify(b.fixtureStart)!==JSON.stringify(a.fixtureStart)))errors.push('Different initial battle clock phase');
  const normalize=r=>({frame:r.timings.frame,sceneMatrices:r.timings.sceneMatrices,count:r.counts.sceneMatrices,updates:r.counts.match,cursorTicks:r.counts.cursor||0,menuTicks:r.counts.menuTick||0,menuTick:r.timings.menuTick,quality:r.quality,scale:r.scale,renderCalls:r.renderInfo?.calls,triangles:r.renderInfo?.triangles,geometries:r.renderInfo?.geometries,textures:r.renderInfo?.textures,programs:r.renderInfo?.programs,heap:r.heap});
  if(b.runs.some((r,i)=>r.fixedSteps!==a.runs[i].fixedSteps||r.counts.match!==a.runs[i].counts.match))errors.push('Different simulation work: '+b.scenario);
  if([...b.runs,...a.runs].some(r=>r.fixedSteps!==30||r.counts.frame!==30||!r.timings.frame?.n||r.quality!==before.environment.quality||r.scale!==1))errors.push('Invalid fixed-step/quality window: '+b.scenario);

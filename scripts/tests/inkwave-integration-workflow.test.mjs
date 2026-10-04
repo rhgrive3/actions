@@ -83,7 +83,7 @@ test('render and weapon FX warmup drains outside fixed profile windows',()=>{
  const source=fs.readFileSync(new URL('../check-inkwave-runtime-performance.mjs',import.meta.url),'utf8');
  const fire=source.indexOf('probeG.game.debug.fire(true)'),warm=source.indexOf('const warmup=fixedOnly&&!menuOnly?'),instrument=source.indexOf('// Instrument actual owners'),profile=source.indexOf("await cdp.send('Profiler.start')");
  assert(fire>=0&&fire<warm&&warm<instrument&&instrument<profile);
- const block=source.slice(warm,instrument);assert(block.includes('for(let i=0;i<30;i++)g._frame(1/60)'));assert(block.includes('probeG.renderer.getContext().finish()'));assert(block.includes('renderedSteps:30'));
+ const block=source.slice(warm,instrument);assert(block.includes("for(let i=0;i<30;i++)window.runtimeFixedStep(g,(scenario==='battle'?270:30)+i)"));assert(block.includes('probeG.renderer.getContext().finish()'));assert(block.includes('renderedSteps:30'));
 });
 
 
