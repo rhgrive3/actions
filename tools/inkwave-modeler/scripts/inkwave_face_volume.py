@@ -2195,6 +2195,13 @@ def main():
                     cove = R - np.sqrt(np.maximum(R * R - (R * t) ** 2, 0))
                     cove[t <= 0] = 0.0
                     cove *= step['cove'].get('scale', 1.0)
+                    if step['cove'].get('weight_smooth'):
+                        # the height under the face jumps from point to point (the rays meet the face's own
+                        # bumps): Blender's vertex-group smoothing evens the amounts out before the move
+                        peak = float(cove.max())
+                        if peak > 0:
+                            cw = smooth_weights(neck, cove / peak, step['cove']['weight_smooth'])
+                            cove = cw * peak * (wy > 0)
                     amounts = amounts + cove * (wy > 0)
                     print('FACE_VOLUME', step['name'], 'cove vertices', int((cove > 0.01).sum()), 'max mm', round(float(cove.max()), 2))
                 for sign in (1, -1):
