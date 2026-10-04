@@ -21,6 +21,7 @@ import {
   installKitTrizooka, installTrizookaLifecycle, trizookaSpecialWeapon, trizookaProjectileDescriptor,
   startTrizooka, stepTrizooka, endTrizooka, canActivateTrizooka, disposeTrizooka, trizookaIsActive,
   newTrizookaState, newTrizookaReplayState, trizookaReplayActivate, trizookaReplayFire, trizookaReplayEnd,
+  splashBandsFor, splashRadiusFor, perpendicularBasis,
   throwVolley, apOf, durationFor,
   selectTrizookaFlight, selectTrizookaCollision, trizookaOrbitOffset, trizookaDragPerSecond,
   trizookaClearProjectile, trizookaApplyProjectile,
@@ -79,14 +80,23 @@ test('the volley configuration is a real non-null calibration, honestly labelled
 test('the descriptor carries the numbers the native blast reads', () => {
   const d = trizookaSpecialWeapon();
   assert.deepEqual(d.splashBands, [[2.5, 53], [4.0, 35]]);
-  assert.equal(d.burstRadius, 3.2);
-  assert.equal(d.impactRadius, 3.2);
+  assert.equal(d.splashRadius, 4.0);
+  assert.equal(d.burstRadius, 4.0);
+  assert.equal(d.impactRadius, 4.0);
+  assert.equal(d.paintRadius, 3.2);
   assert.equal(d.directDamage, 220);
   assert.equal(d.wid, 'trizooka', 'wid is the native cause id used by ghost restore');
   assert.equal(trizookaProjectileDescriptor(null).wid, 'trizooka');
-  // AP ladder scales splash, never the direct hit
-  assert.deepEqual(trizookaSpecialWeapon(2).splashBands, [[2.5, 53 * 1.3], [4.0, 35 * 1.3]]);
-  assert.equal(trizookaSpecialWeapon(2).directDamage, 220);
+  assert.equal(d.splashDamageMax, 53);
+  assert.equal(d.splashDamageMin, 35);
+});
+
+test('the descriptor exposes the full native blast field names', () => {
+  const d = trizookaSpecialWeapon();
+  assert.equal(d.splashRadius, 4.0);
+  assert.equal(d.splashDamageMax, 53);
+  assert.equal(d.splashDamageMin, 35);
+  assert.equal(d.splashBands[0][1], 53);
 });
 
 // ---- real production runtime -------------------------------------------------
@@ -352,17 +362,19 @@ test('main and sub are suppressed for the whole special, including the release f
   const subReleases = [];
   const realFireShooter = projectiles.fireShooter.bind(projectiles);
   const realThrowBomb = projectiles.throwBomb.bind(projectiles);
-  projectiles.fireShooter = (...x) => { mainShots.push(x); return realFireShooter(...x); };
-  projectiles.throwBomb = (...x) => { subReleases.push(x); return realThrowBomb(...x); };
+  projectiles.fireShooter = (...x) => { if (trizookaIsActive(a)) mainShots.push(x); return realFireShooter(...x); };
+  projectiles.throwBomb = (...x) => { if (trizookaIsActive(a)) subReleases.push(x); return realThrowBomb(...x); };
 
-  a.intent.special = true; a.update(F); a.intent.special = false;
+  a._startSpecial();
   // hold fire and sub for the entire special
   a.intent.fire = true; a.intent.sub = true;
-  for (let i = 0; i < 200; i++) api_time(a, F);
-  a.intent.sub = false;                            // the release edge lands here
-  for (let i = 0; i < 30; i++) api_time(a, F);
-  a.intent.fire = false;
-
+  let framesActive = 0;
+  while (trizookaIsActive(a) && framesActive < 60 * 8) {
+    if (framesActive === 30) a.intent.sub = false;   // the release edge lands mid-special
+    api_time(a, F);
+    framesActive += 1;
+  }
+  assert.ok(framesActive > 30, 'the release edge really landed while the special was active');
   assert.equal(mainShots.length, 0, 'no main-weapon shot while the special owns the body');
   assert.equal(subReleases.length, 0, 'the sub release edge is swallowed, not queued');
 });
@@ -466,6 +478,182 @@ test('the flight descriptor is carried on the projectile for the parent selector
   assert.equal(p.straight, 16 / 60, 'native straight-flight window matches GoStraightToBrakeStateFrame');
 });
 
+test('a refused _startSpecial spends nothing, on every rejection path', async () => {
+  const api = await production();
+  world(api);
+
+  const cases = [
+    ['dead', (a) => { a.alive = false; }],
+    ['super jumping', (a) => { a.superJumpState = { phase: 'charge' }; }],
+    ['zero gauge', (a) => { a.special = 0; }],
+    ['already active', (a) => { a.specialActive = { id: 'trizooka', t: 0 }; }],
+    ['re-entrant token', (a) => { a.s3Trizooka = newTrizookaState(0); }],
+  ];
+  for (const [label, arrange] of cases) {
+    const a = makeActor(api);
+    const specials = a.stats.specials;
+    const ink = a.ink;
+    const gauge = a.special;
+    arrange(a);
+    a._startSpecial();                               // the REAL prototype method
+    assert.equal(a.stats.specials, specials, `${label}: the special counter must not move`);
+    assert.equal(a.ink, ink, `${label}: ink must not move`);
+    assert.equal(a.specialActive?.id === 'trizooka' && label !== 'already active', false,
+      `${label}: no trizooka became active`);
+    if (label === 'zero gauge') assert.equal(a.special, 0, 'zero gauge stays zero');
+    else assert.equal(a.special, gauge, `${label}: the gauge is untouched`);
+  }
+});
+
+test('a refused _startSpecial does not reach the native call at all', async () => {
+  const api = await production();
+  world(api);
+  const a = makeActor(api);
+  const specials = a.stats.specials;
+  a.alive = false;
+  a._startSpecial();
+  // native would have zeroed the gauge and bumped the counter; neither happened
+  assert.equal(a.special, TRIZOOKA_KIT_COST, 'the gauge survived a refused activation');
+  assert.equal(a.stats.specials, specials);
+  assert.ok(!a.s3Trizooka, 'no token was installed');
+});
+
+test('an accepted _startSpecial spends the gauge and counter exactly once', async () => {
+  const api = await production();
+  world(api);
+  const a = makeActor(api);
+  const specials = a.stats.specials;
+  a._startSpecial();
+  assert.equal(a.stats.specials, specials + 1);
+  assert.equal(a.special, 0);
+  assert.equal(a.specialActive?.id, 'trizooka');
+  assert.ok(trizookaIsActive(a));
+  a._startSpecial();                                  // re-entrant call
+  assert.equal(a.stats.specials, specials + 1, 'a second direct call never double-spends');
+});
+
+test('other specials still delegate to native untouched', async () => {
+  const api = await production();
+  world(api);
+  const a = makeActor(api);
+  a.weapon = { ...api.WEAPONS.shooter, special: 'storm', specialCost: 180 };
+  a.special = 180;
+  const specials = a.stats.specials;
+  a._startSpecial();
+  assert.equal(a.stats.specials, specials + 1, 'native handled it');
+  assert.equal(a.specialActive?.id, 'storm', 'the native special id is untouched');
+  assert.ok(!a.s3Trizooka, 'no trizooka state leaked in');
+});
+
+test('a paused frame is a strict no-op on the whole actor, not just the token', async () => {
+  const api = await production();
+  const projectiles = world(api);
+  const a = makeActor(api);
+  a._startSpecial();
+  pressFire(a);
+  api_time(a, F);                                    // one real frame first
+
+  const snapshot = () => ({
+    t: a.s3Trizooka?.t,
+    pos: a.pos.toArray(), vel: a.vel.toArray(),
+    prevIntent: { ...a._prevIntent },
+    intent: { ...a.intent, move: a.intent.move.toArray() },
+    fireBuffer: a.fireBuffer,
+    specials: a.stats.specials,
+    list: projectiles.list.length,
+  });
+  const before = snapshot();
+  a.update(0);
+  a.update(0);
+  a.update(0);
+  assert.deepEqual(snapshot(), before, 'a dt<=0 frame changed nothing at all');
+  assert.ok(before.t > 0, 'the token had actually advanced before the pause');
+
+  // and a real frame still works afterwards
+  pressFire(a);
+  api_time(a, F);
+  assert.ok(a.s3Trizooka.t > before.t, 'time resumes after the pause');
+});
+
+test('the AP rate stretches distance and never the damage', async () => {
+  const ap0 = trizookaSpecialWeapon(0);
+  const ap2 = trizookaSpecialWeapon(2);
+  assert.deepEqual(ap0.splashBands, [[2.5, 53], [4.0, 35]]);
+  assert.equal(ap0.splashDamageMax, 53);
+  assert.equal(ap0.splashDamageMin, 35);
+  // DistanceDamageDistanceRate multiplies DISTANCE
+  assert.deepEqual(ap2.splashBands, [[2.5 * 1.3, 53], [4.0 * 1.3, 35]]);
+  assert.equal(ap2.splashDamageMax, 53, 'damage is unchanged at AP 2');
+  assert.equal(ap2.splashDamageMin, 35, 'damage is unchanged at AP 2');
+  // the damaging radius is the outer band distance, not PaintRadius
+  assert.equal(ap0.splashRadius, 4.0, 'outer band distance at AP 0');
+  assert.equal(ap2.splashRadius, 4.0 * 1.3);
+  assert.notEqual(ap0.splashRadius, TRIZOOKA.paintRadius, 'PaintRadius is not the damage radius');
+  assert.equal(ap0.paintRadius, 3.2, 'the ink/FX radius stays PaintRadius');
+  // a target at 3.9m: inside AP0's 4.0 band, still inside AP2's 5.2 band
+  const inside = (bands, d) => bands.some(([r, dmg]) => d <= r && dmg > 0);
+  assert.equal(inside(ap0.splashBands, 3.9), true);
+  assert.equal(inside(ap2.splashBands, 3.9), true);
+  // at 4.5m AP0 has already dropped to its outer band edge while AP2 still catches it
+  assert.equal(ap0.splashRadius >= 4.5, false, 'AP 0 does not reach 4.5m');
+  assert.equal(ap2.splashRadius >= 4.5, true, 'AP 2 does reach 4.5m');
+});
+
+test('the volley uses the native camera-ray aim path, not the bomb lob', async () => {
+  const api = await production();
+  const projectiles = world(api);
+  const a = makeActor(api);
+  // a camera aim point that disagrees with the body yaw, plus a NEGATIVE pitch
+  a.aimYaw = 0.5;
+  a.aimPitch = -0.25;
+  const far = a.pos.clone().add({ x: 12 * Math.sin(-1.1), y: 6, z: 12 * Math.cos(-1.1) });
+  a.aimPoint.copy(far);
+  a.aimDir.set(Math.sin(0.5), Math.sin(-0.25), Math.cos(0.5)).normalize();
+
+  const fired = throwVolley(projectiles, a, trizookaSpecialWeapon());
+  const carrier = fired[VOLLEY_CONFIG.damageLobeIndex];
+  // the native aim ray is what the carrier travels along, no fan applied to it
+  const muzzle = projectiles._muzzle(a, new api.THREE.Vector3());
+  const aim = projectiles._aimFrom(a, muzzle, new api.THREE.Vector3());
+  const v = carrier.vel.clone().normalize();
+  assert.ok(v.dot(aim) > 0.999, 'the damage carrier flies along the native aim ray');
+  // it must NOT be the native bomb lob (which adds +0.28 pitch and a +1.5 lift)
+  const bombDir = projectiles.throwVelocity(a, TRIZOOKA.spawnSpeed, new api.THREE.Vector3()).normalize();
+  const differs = Math.abs(v.x - bombDir.x) + Math.abs(v.y - bombDir.y) + Math.abs(v.z - bombDir.z);
+  assert.ok(differs > 0.01, 'the Trizooka is not thrown with the bomb pitch lift');
+  // a negative pitch must actually send it downward
+  assert.ok(carrier.vel.y < 0, `negative pitch points down, got y=${carrier.vel.y}`);
+  // speed is the table SpawnSpeed, not the bomb throw speed
+  near(carrier.vel.length(), TRIZOOKA.spawnSpeed, 1e-6);
+  // the side lobes deviate laterally, but only by the calibrated fan
+  for (const p of fired.filter((x) => !x.damageOwner)) {
+    const d = p.vel.clone().normalize().dot(aim);
+    assert.ok(d > 0.99, 'a side lobe stays within the calibrated fan');
+  }
+});
+
+test('the orbit circles the flight axis, not world Y', async () => {
+  const api = await production();
+  const projectiles = world(api);
+  const a = makeActor(api);
+  a.aimPitch = 0.6;
+  const fired = throwVolley(projectiles, a, trizookaSpecialWeapon());
+  const p = fired[0];
+  projectiles._step(p, F);                          // the native step sets the velocity
+  const o = trizookaOrbitOffset(p, F);
+  const axis = o.axis;
+  // the offset must be perpendicular to the flight axis
+  const dot = axis.x * o.x + axis.y * o.y + axis.z * o.z;
+  near(dot, 0, 1e-6);
+  // and it must have a vertical component for a non-vertical axis, which a
+  // world-XZ circle could never produce
+  assert.ok(Math.abs(o.y) > 1e-6, 'the orbit is tilted out of the world XZ plane');
+  // it stays a pure displacement: the projectile is untouched
+  const pos = p.pos.toArray();
+  trizookaOrbitOffset(p, F);
+  assert.deepEqual(p.pos.toArray(), pos, 'the selector never moves the projectile');
+});
+
 // ---- per-native-step selectors ---------------------------------------------
 
 test('the flight selector returns the three table stages, not the launch gravity', () => {
@@ -539,6 +727,22 @@ test('the drag table exposes both the linear and the exact per-second forms', ()
   near(TRIZOOKA_DRAG.brakeRetention, 0.91);
   near(trizookaDragPerSecond('straight'), 0, 'straight flight has no drag');
   assert.match(TRIZOOKA_DRAG.status, /flagged/);
+
+  const linear = TRIZOOKA.brakeAirResist * 60;
+  const retention = 1 - TRIZOOKA.brakeAirResist;
+  // at exactly 60Hz the two forms coincide by construction: one frame of
+  // retention IS perFrame*60. The linearisation only diverges at other rates.
+  near(trizookaDragPerSecond('brake', true, 1 / 60), linear, 1e-9);
+  // off 60Hz the exact form must differ, or the "exact" label is a lie
+  const dt = 1 / 30;
+  const c = trizookaDragPerSecond('brake', true, dt);
+  assert.ok(Math.abs(c - linear) > 1e-3, 'exact diverges from linear away from 60Hz');
+  // the exact form must reproduce the per-frame retention over dt
+  near(1 - c * dt, Math.pow(retention, 60 * dt), 1e-9);
+  // the linear form is only an approximation of the same thing
+  assert.ok(Math.abs((1 - linear * dt) - Math.pow(retention, 60 * dt)) > 1e-4,
+    'the linear form is the approximation, the exact form is not');
+  near(trizookaDragPerSecond('brake'), linear, 'the default is the linear per-second coefficient');
 });
 
 test('the projectile field contract clears and reconstructs on _new and ghost replay', () => {
@@ -565,10 +769,11 @@ test('the selectors are reachable from the special registry by wid', async () =>
 
 test('the descriptor exposes the full native blast field names', () => {
   const d = trizookaSpecialWeapon();
-  assert.equal(d.splashRadius, 3.2);
+  assert.equal(d.splashRadius, 4.0, 'the damaging radius is the outer band distance');
   assert.equal(d.splashDamageMax, 53);
   assert.equal(d.splashDamageMin, 35);
   assert.equal(d.splashBands[0][1], 53);
+  assert.equal(d.paintRadius, 3.2, 'the ink/FX radius stays PaintRadius');
 });
 
 // ---- replay ----------------------------------------------------------------

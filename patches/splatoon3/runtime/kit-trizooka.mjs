@@ -89,20 +89,40 @@ export const TRIZOOKA = {
   status: 'extracted',
 };
 
-// SpecialChargeUp ladder. INKWAVE has no AP source, so `apOf` reads one if the
-// parent provides it and otherwise reports AP 0 — the ladder is recorded, the
-// selection is honest, and nothing here invents an AP value.
+// SpecialChargeUp ladder. `DistanceDamageDistanceRate` is a DISTANCE rate: it
+// stretches the bands outward and must not touch the damage numbers, which stay
+// at the table's 53 / 35 at every AP. INKWAVE does carry ability points
+// (gear.mjs: `abilityPoints(loadout)` -> `a.s3.modifiers`, 10 per main, 3 per
+// sub), but there is no Special Power Up selectable ability wired to a weapon,
+// so no AP source reaches this special today. `apOf` therefore reads AP 0 unless
+// the parent supplies one, and says so rather than claiming AP is absent.
 export const TRIZOOKA_SPEC_UP = {
   ap: [0, 1, 2],
   duration: [TRIZOOKA.duration, TRIZOOKA.durationMid, TRIZOOKA.durationHigh],
-  paintRadius: [TRIZOOKA.paintRadius, 3.6, 4.0],
-  splashScale: [1.0, 1.15, 1.3],       // DistanceDamageDistanceRate
-  status: 'ladder-extracted-ap-source-absent',
+  // PaintRadius is the ink/FX radius and stays at the table value
+  paintRadius: [TRIZOOKA.paintRadius, TRIZOOKA.paintRadius, TRIZOOKA.paintRadius],
+  // DistanceDamageDistanceRate, applied to DISTANCE only
+  distanceRate: [1.0, 1.15, 1.3],
+  outerBandDistance: 4.0,            // the outermost damage band, before AP
+  status: 'ladder-extracted-no-special-power-up-ability-is-wired-to-this-weapon-yet',
 };
 
 export function apOf(actor) {
-  const ap = actor?.apLevel ?? actor?.s3Ap ?? 0;
+  const ap = actor?.apLevel ?? actor?.s3Ap ?? actor?.s3?.specialPowerUp ?? 0;
   return Number.isFinite(ap) ? Math.max(0, Math.min(2, Math.floor(ap))) : 0;
+}
+
+// The AP-scaled damage bands: the RATE stretches the distance, never the damage.
+export function splashBandsFor(ap) {
+  const rate = TRIZOOKA_SPEC_UP.distanceRate[ap] ?? 1;
+  return TRIZOOKA.splashBands.map(([r, d]) => [r * rate, d]);
+}
+
+// The outer radius that actually damages is the outer band distance x the rate,
+// NOT PaintRadius: the paint/FX radius and the damage radius are distinct.
+export function splashRadiusFor(ap) {
+  const rate = TRIZOOKA_SPEC_UP.distanceRate[ap] ?? 1;
+  return TRIZOOKA_SPEC_UP.outerBandDistance * rate;
 }
 
 export function durationFor(ap) {
@@ -111,6 +131,14 @@ export function durationFor(ap) {
 
 // Cartridge visuals are recorded from spl__WeaponSpUltraShotParam; the eject mesh
 // itself is not yet driven, so this is calibration data, not claimed behaviour.
+// When the three firing actions are spent the weapon has no ammo left, so the
+// special returns control after a short tail rather than holding the body until
+// the full 330F duration expires. The table states no such delay: the end frame
+// is when the last shot leaves the barrel, so this is an explicit CALIBRATION,
+// not an extracted value. Set to 0 to hold until the AP duration instead.
+export const TRIZOOKA_END_DELAY = frames(12);
+export const TRIZOOKA_END_DELAY_STATUS = 'calibration-not-extracted';
+
 export const TRIZOOKA_CARTRIDGE = {
   ejectFrame: 30, fadeOutFrame: 5, lifeTimeFrame: 60, initSpeed: 5,
   angular: { x: 35, y: 0, z: 20 }, hideBeforeEject: 1,
@@ -150,21 +178,26 @@ export function volleysPerAction() {
 // The projectile descriptor the parent's `_blastBurst` and ghost restore read.
 // Every number comes from the table above; nothing is invented per projectile.
 export function trizookaSpecialWeapon(ap = 0) {
-  const scale = TRIZOOKA_SPEC_UP.splashScale[ap] ?? 1;
+  const bands = splashBandsFor(ap);
+  const damageMax = bands[0][1];
+  const damageMin = bands[bands.length - 1][1];
+  // the damaging radius is the OUTER BAND DISTANCE x rate. PaintRadius (3.2) is
+  // the ink/FX radius, a different quantity, and must not stand in for it.
+  const splashRadius = splashRadiusFor(ap);
   return {
     kind: 'trizooka',
     wid: TRIZOOKA_ID,
     // read by the native blast
-    splashBands: TRIZOOKA.splashBands.map(([r, d]) => [r, d * scale]),
-    burstRadius: TRIZOOKA_SPEC_UP.paintRadius[ap] ?? TRIZOOKA.paintRadius,
-    impactRadius: TRIZOOKA_SPEC_UP.paintRadius[ap] ?? TRIZOOKA.paintRadius,
-    damageMax: TRIZOOKA.splashBands[0][1] * scale,
-    damageMin: TRIZOOKA.splashBands[1][1] * scale,
+    splashBands: bands,
+    splashRadius,
+    burstRadius: splashRadius,
+    impactRadius: splashRadius,
+    paintRadius: TRIZOOKA_SPEC_UP.paintRadius[ap] ?? TRIZOOKA.paintRadius,
+    damageMax,
+    damageMin,
+    splashDamageMax: damageMax,
+    splashDamageMin: damageMin,
     directDamage: TRIZOOKA.directHitDamage,
-    // the field names native _blastBurst reads, with the full values
-    splashRadius: TRIZOOKA_SPEC_UP.paintRadius[ap] ?? TRIZOOKA.paintRadius,
-    splashDamageMax: TRIZOOKA.splashBands[0][1] * scale,
-    splashDamageMin: TRIZOOKA.splashBands[1][1] * scale,
     // flight
     type: 'blast',
     grav: TRIZOOKA.freeGravity,
@@ -190,15 +223,23 @@ export function throwVolley(System, actor, descriptor) {
   const count = VOLLEY_CONFIG.lobes;
   const vol = System.vols ? System.vols[System.volI = (System.volI + 1) % System.vols.length] : null;
   if (vol) vol.hits.length = 0;
+  // The camera-ray aim path, exactly as the native shooter uses it: the muzzle
+  // anchor from native `_muzzle`, the 3D direction from native `_aimFrom` (which
+  // falls back to aimDir when the aim point is too close or behind). The
+  // Trizooka is NOT a lobbed bomb, so the native bomb throw tilt, pitch clamp and
+  // carry term are deliberately NOT used here.
+  // The scratch vectors come from the native pool, so no new vector type and no
+  // extra import is needed.
+  const seed = System._new();
+  const muzzle = System._muzzle(actor, seed.pos);
+  const aim = System._aimFrom(actor, muzzle, seed.vel);
   const fired = [];
-  const yaw = actor.aimYaw;
-  const pitch = Math.max(-0.3, Math.min(1.1, actor.aimPitch + 0.28));
-  const cp = Math.cos(pitch);
   for (let i = 0; i < count; i++) {
-    const p = System._new();
+    const p = i === 0 ? seed : System._new();
     const spread = VOLLEY_CONFIG.spreadDeg * Math.PI / 180;
-    const k = count === 1 ? 0 : (i - (count - 1) / 2) / ((count - 1) / 2);
-    const ly = yaw + k * spread;
+    // the fan is symmetric about the DAMAGE CARRIER, so the authoritative shot
+    // travels exactly along the native aim ray and the side lobes straddle it
+    const k = i - VOLLEY_CONFIG.damageLobeIndex;
     const carrier = i === VOLLEY_CONFIG.damageLobeIndex;
     Object.assign(p, {
       type: carrier ? descriptor.type : 'shot',
@@ -221,23 +262,45 @@ export function throwVolley(System, actor, descriptor) {
       trailRadius: 0.3,
       seed: (i * 0.37 + 0.11) % 1,
     });
-    // full 3D aim through the native throw velocity, so pitch/yaw/carry stay native
-    System.throwVelocity(actor, TRIZOOKA.spawnSpeed, p.vel);
-    // the fan is applied on top of the native throw, so native aim stays authoritative
-    p.vel.set(Math.sin(ly) * cp * TRIZOOKA.spawnSpeed + actor.vel.x * 0.4,
-      Math.sin(pitch) * TRIZOOKA.spawnSpeed + 1.5,
-      Math.cos(ly) * cp * TRIZOOKA.spawnSpeed + actor.vel.z * 0.4);
-    p.pos.copy(actor.pos); p.pos.y += 1.05;
+    // the ONLY deviation from the native aim ray is the calibrated lateral lobe
+    // fan: the native `_spread` is random, this one is deterministic so a volley
+    // is reproducible and so a test can assert the carrier is on the ray
+    const lateral = perpendicularBasis(aim);
+    p.vel.copy(aim).addScaledVector(lateral.u, Math.sin(k * spread) * TRIZOOKA.spawnSpeed)
+      .normalize().multiplyScalar(TRIZOOKA.spawnSpeed);
+    p.pos.copy(muzzle);
     p.prev.copy(p.pos); p.start.copy(p.pos);
     p.s3SpecialWeapon = descriptor;            // parent preserves this before _push
     p.s3Weapon = descriptor;
     p.s3VolleyIndex = i;
+    p.s3Yaw = actor.aimYaw;               // stable orbit basis before the first step
     p.s3ActionIndex = descriptor.actionIndex ?? 0;
     p.ghost = false;
     System._push(p);                           // the one native list, the one native record
     fired.push(p);
   }
   return fired;
+}
+
+// A stable orthonormal basis perpendicular to a direction, built from the
+// smallest component so the cross product never degenerates. Used both for the
+// lobe fan and for the orbit, which must spin around the FLIGHT axis rather than
+// around world Y.
+export function perpendicularBasis(dir) {
+  const ax = Math.abs(dir.x), ay = Math.abs(dir.y), az = Math.abs(dir.z);
+  const helper = ax <= ay && ax <= az ? { x: 1, y: 0, z: 0 }
+    : ay <= az ? { x: 0, y: 1, z: 0 } : { x: 0, y: 0, z: 1 };
+  // u = normalize(helper x dir)
+  let ux = helper.y * dir.z - helper.z * dir.y;
+  let uy = helper.z * dir.x - helper.x * dir.z;
+  let uz = helper.x * dir.y - helper.y * dir.x;
+  const ul = Math.hypot(ux, uy, uz) || 1;
+  ux /= ul; uy /= ul; uz /= ul;
+  // v = dir x u  (already unit when dir and u are unit and perpendicular)
+  return {
+    u: { x: ux, y: uy, z: uz },
+    v: { x: dir.y * uz - dir.z * uy, y: dir.z * ux - dir.x * uz, z: dir.x * uy - dir.y * ux },
+  };
 }
 
 // ---- charge / lifecycle state machine ---------------------------------------
@@ -294,11 +357,21 @@ function stepMovement(actor, dt, charging) {
   actor.vel.x += (tx - actor.vel.x) * k;
   actor.vel.z += (tz - actor.vel.z) * k;
   const stick = actor.grounded;
-  if (!stick) actor.vel.y -= (actor.gravity ?? 68) * dt; else actor.vel.y = 0;
+  if (!stick) actor.vel.y -= gravityFor(actor) * dt; else actor.vel.y = 0;
   const py = actor.pos.y;
   actor.pos.addScaledVector(actor.vel, dt);
   actor._resolve?.(false, py, stick);
 }
+
+// the real configured gravity, resolved the way the native code resolves it
+function gravityFor(actor) {
+  if (typeof actor?.gravity === 'number' && Number.isFinite(actor.gravity)) return actor.gravity;
+  const P = currentPlayerConfig();
+  return P?.gravity ?? 25;
+}
+
+let currentPlayerConfig = () => null;
+export function setTrizookaPlayerConfig(PLAYER) { currentPlayerConfig = () => PLAYER; }
 
 // Advances the special by one frame. Consumes the NATIVE fire intent edge, so
 // nothing fires unless the player actually presses fire.
@@ -335,6 +408,8 @@ export function stepTrizooka(actor, dt, System) {
     s.bufferedShot = false;
     s.gateAt = s.t + TRIZOOKA.shotDelay;
     s.repeatAt = s.t + TRIZOOKA.repeatFrame;
+    // ammo is spent: schedule the bounded return instead of holding to timeout
+    if (s.shots >= TRIZOOKA.maxFireActions) s.endAt = s.t + TRIZOOKA_END_DELAY;
     s.descriptor.actionIndex = s.shots;
     const fired = throwVolley(System, actor, s.descriptor);
     events.push({ type: 'volley', shot: s.shots, projectiles: fired });
@@ -342,9 +417,12 @@ export function stepTrizooka(actor, dt, System) {
 
   stepMovement(actor, dt, s.shots === 0);
 
-  if (s.t >= s.duration) {
-    endTrizooka(actor);
-    events.push({ type: 'end', reason: 'duration' });
+  // bounded return: once the three actions are spent, control comes back after the
+  // calibrated end delay; otherwise the AP duration is the hard ceiling
+  const endAt = s.endAt != null ? Math.min(s.endAt, s.duration) : s.duration;
+  if (s.t >= endAt) {
+    endTrizooka(actor, s.shots >= TRIZOOKA.maxFireActions ? 'ammo' : 'duration');
+    events.push({ type: 'end', reason: s.endReason });
   }
   s.events = events;
   return events;
@@ -402,11 +480,21 @@ export const TRIZOOKA_DRAG = {
   status: 'per-frame-to-per-second-linearisation-flagged-unverified-against-retail',
 };
 
-// Exact exponential drag for a dt, matching a per-frame retention factor.
-export function trizookaDragPerSecond(stage, exact = false) {
+// Drag coefficient for native `_step`'s `vel *= 1 - drag * dt`.
+//
+//   linear (default): the per-frame retention times 60 — 0.09 -> 5.4.
+//   exact:            the coefficient c such that (1 - c*dt) reproduces the
+//                     per-frame retention over dt seconds, i.e.
+//                     c = (1 - (1 - perFrame)^(60*dt)) / dt.
+//                     At dt = 1/60 this converges to perFrame * 60, so the two
+//                     agree at 60Hz and diverge at other frame intervals.
+export function trizookaDragPerSecond(stage, exact = false, dt = FRAME) {
   const perFrame = stage === 'straight' ? 0
     : stage === 'brake' ? TRIZOOKA.brakeAirResist : TRIZOOKA.freeAirResist;
-  return exact ? perFrame * 60 : perFrame * 60;
+  if (!perFrame) return 0;
+  if (!exact) return perFrame * 60;
+  const step = dt > 0 ? dt : FRAME;
+  return (1 - Math.pow(1 - perFrame, 60 * step)) / step;
 }
 
 // Plain-flight stage selection: 16F straight, 10F brake, then free.
@@ -475,24 +563,41 @@ export const TRIZOOKA_ORBIT = {
   endRadius: TRIZOOKA.orbitalRadiusEnd,
   transitionFrames: TRIZOOKA.orbitalTransitionFrames,
   startRadius: 1.0,          // CALIBRATION: assumed equal to the end radius
-  turnRate: 6.0,             // CALIBRATION: radians/second about the vertical
+  turnRate: 6.0,             // CALIBRATION: radians/second around the FLIGHT axis
   lobePhase: Math.PI * 2 / 3,// CALIBRATION: three lobes 120 degrees apart
   status: 'end-radius-and-transition-extracted-start-radius-and-turn-rate-are-calibration',
 };
 
-// Returns {x,y,z} the parent ADDS to p.pos after the native integration.
+// Returns {x,y,z} the parent ADDS to p.pos after the native integration. The
+// circle is built in the plane PERPENDICULAR to the projectile's own flight
+// axis, so the spiral orbits the trajectory instead of circling world Y.
 export function trizookaOrbitOffset(p, dt) {
   const age = p?.age ?? 0;
   const w = TRIZOOKA_ORBIT.transitionFrames > 0 ? TRIZOOKA_ORBIT.transitionFrames : 1;
   const k = Math.min(1, age / w);
   const radius = TRIZOOKA_ORBIT.startRadius + (TRIZOOKA_ORBIT.endRadius - TRIZOOKA_ORBIT.startRadius) * k;
   const phase = TRIZOOKA_ORBIT.turnRate * age + (p?.s3VolleyIndex ?? 0) * TRIZOOKA_ORBIT.lobePhase;
-  return { x: Math.cos(phase) * radius, y: 0, z: Math.sin(phase) * radius, radius, phase };
+  // the flight axis: the launch velocity, falling back to the yaw so the basis
+  // stays stable before the native step has moved anything
+  const axis = (p?.vel && p.vel.lengthSq() > 1e-9)
+    ? { x: p.vel.x, y: p.vel.y, z: p.vel.z }
+    : { x: Math.sin(p?.s3Yaw ?? 0), y: 0, z: Math.cos(p?.s3Yaw ?? 0) };
+  const len = Math.hypot(axis.x, axis.y, axis.z) || 1;
+  const dir = { x: axis.x / len, y: axis.y / len, z: axis.z / len };
+  const { u, v } = perpendicularBasis(dir);
+  const c = Math.cos(phase) * radius;
+  const s = Math.sin(phase) * radius;
+  return {
+    x: u.x * c + v.x * s,
+    y: u.y * c + v.y * s,
+    z: u.z * c + v.z * s,
+    radius, phase, axis: dir,
+  };
 }
 
 // Fields the parent must clear in native `_new` and reconstruct for a ghost.
 export const TRIZOOKA_PROJECTILE_FIELDS = [
-  's3SpecialWeapon', 's3Weapon', 's3VolleyIndex', 's3ActionIndex', 'damageOwner', 's3OrbitPhase',
+  's3SpecialWeapon', 's3Weapon', 's3VolleyIndex', 's3ActionIndex', 'damageOwner', 's3OrbitPhase', 's3Yaw',
 ];
 
 export function trizookaClearProjectile(p) {
@@ -576,9 +681,10 @@ export function trizookaReplayEnd(state, payload = {}) {
 let wrapped = null;
 
 export function installTrizookaLifecycle(api) {
-  const { Actor, G } = api || {};
+  const { Actor, G, PLAYER } = api || {};
   if (!Actor?.prototype) throw new Error('INKWAVE trizooka patch needs Actor');
   setTrizookaMatchCheck(() => G?.match?.playing?.() ?? true);
+  setTrizookaPlayerConfig(PLAYER);
 
   const proto = Actor.prototype;
   if (wrapped) {
@@ -588,21 +694,39 @@ export function installTrizookaLifecycle(api) {
   }
 
   const originalStartSpecial = proto._startSpecial;
+  const originalUpdate = proto.update;
   const originalUpdateSpecial = proto._updateSpecial;
   const originalReset = proto.reset;
   const originalSplat = proto.splat;
 
-  // native _startSpecial consumes the gauge, bumps stats.specials, plays the
-  // activation cue and then only knows slam and storm. It runs first and exactly
-  // once, so the gauge is spent once and the counter increments once.
+  // The guard MUST run BEFORE the native call. Native _startSpecial zeroes the
+  // gauge and increments stats.specials unconditionally, so delegating first and
+  // rejecting afterwards would spend the gauge and bump the counter on a dead,
+  // super-jumping, not-ready, already-active or re-entrant call. For the
+  // Trizooka we therefore check every condition first and refuse without ever
+  // entering native. Every other special id is passed straight through.
   proto._startSpecial = function _startSpecial(...args) {
-    const r = originalStartSpecial.apply(this, args);
-    if (this.weapon?.special !== TRIZOOKA_ID) return r;
-    if (trizookaIsActive(this)) return r;                 // re-entrant guard
-    if (!this.alive || this.superJumpState) return r;
+    if (this.weapon?.special !== TRIZOOKA_ID) return originalStartSpecial.apply(this, args);
+    if (!canActivateTrizooka(this)) return undefined;      // no spend, no counter
+    if (!matchIsPlaying()) return undefined;
+    if (trizookaIsActive(this)) return undefined;          // re-entrant
+
+    const specialsBefore = this.stats?.specials ?? 0;
+    const r = originalStartSpecial.apply(this, args);     // the one native call
+    // the token is installed only if native really did activate it exactly once
+    if (this.stats.specials !== specialsBefore + 1) return r;
     this.s3Trizooka = newTrizookaState(apOf(this));
     this.specialActive = { id: TRIZOOKA_ID, t: 0, phase: 'charge', armor: false };
     return r;
+  };
+
+  // A paused frame must not mutate anything. Native update() writes _prevIntent,
+  // fireBuffer and several timers before it reaches _updateSpecial, so stepping
+  // it with dt <= 0 would still advance the intent edges. The whole frame is
+  // skipped instead, which is the only way to make dt 0 a true no-op.
+  proto.update = function update(dt, ...rest) {
+    if (!(dt > 0) && this.s3Trizooka?.active) return undefined;
+    return originalUpdate.call(this, dt, ...rest);
   };
 
   proto._updateSpecial = function _updateSpecial(dt, ...rest) {
@@ -627,12 +751,13 @@ export function installTrizookaLifecycle(api) {
 
   const restore = () => {
     proto._startSpecial = originalStartSpecial;
+    proto.update = originalUpdate;
     proto._updateSpecial = originalUpdateSpecial;
     proto.reset = originalReset;
     proto.splat = originalSplat;
     wrapped = null;
   };
-  wrapped = { api, restore, originalStartSpecial, originalUpdateSpecial, originalReset, originalSplat };
+  wrapped = { api, restore, originalStartSpecial, originalUpdate, originalUpdateSpecial, originalReset, originalSplat };
   return restore;
 }
 
