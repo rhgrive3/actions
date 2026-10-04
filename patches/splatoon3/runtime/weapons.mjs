@@ -43,10 +43,10 @@ export function installWeapons(context, profile) {
   const { WeaponRunner, Projectiles, G, THREE, Physics, Hit, PLAYER } = api;
   const newProjectile = Projectiles.prototype._new, pushProjectile = Projectiles.prototype._push;
   Projectiles.prototype._new = function (...args) {
-    const p = newProjectile.apply(this, args); p.s3DamageGroup = null; p.s3Weapon = null; p.s3Vertical = false; return p;
+    const p = newProjectile.apply(this, args); p.s3DamageGroup = null; p.s3Weapon = null; p.s3SpecialWeapon = null; p.s3Vertical = false; return p;
   };
   Projectiles.prototype._push = function (p) {
-    p.s3Weapon = p.owner ? { ...p.owner.weapon } : null;
+    p.s3Weapon = p.s3SpecialWeapon || (p.owner ? { ...p.owner.weapon } : null);
     if (['shooter', 'dualies', 'splatling'].includes(p.s3Weapon?.kind) && Number.isFinite(p.s3Weapon.referenceGravity)) p.grav = p.s3Weapon.referenceGravity;
     return pushProjectile.call(this, p);
   };
