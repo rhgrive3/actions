@@ -240,5 +240,10 @@ Blaster直撃弾の対プレイヤー当たり判定半径を、汎用視覚サ�
 [#427](https://github.com/rhgrive3/actions/issues/427)は対人戦におけるcross-owner確定戦闘進行（FlowおよびQuick RespawnのsplatsThisLife）の欠落を扱う。
 被弾側owner（authoritative）で確定・受理された実ダメージ・キルのみをhit確認ACKで攻撃側ownerへ返送し、攻撃側authoritative Actorで1回のみFlow加点およびsplatsThisLifeを加算する。
 被弾側での攻撃者remote proxyに対する二重加点および非確定予測ヒットからの即時加点を防止し、オフライン・ローカル戦闘の既存経路およびタイミングを保持する。
+[#427](https://github.com/rhgrive3/actions/issues/427)は対人戦におけるcross-owner確定戦闘進行（FlowおよびQuick RespawnのsplatsThisLife、アシスト）の欠落を扱う。
+被弾側owner（authoritative）で確定・受理された実ダメージ・キルのみをhit確認ACKで攻撃側ownerへ返送し、送信元・被弾者・攻撃者・ライフ・ペイロードを検証した上でpendingを1回のみ消費し、攻撃側authoritative ActorでFlow加点およびsplatsThisLifeを加算する。
+偽装送信元や不正IDによるpending消費を防止し、単調グローバルカウンタの破棄による順不同正当ACKの取り落としを解消（per-pending-request once semantics）。ブロックされた正当ACKは加算なしで退役する。
+遠隔被弾者の撃破時には確定端末イベント連携（combat:terminal）により過去の有効打アシスタントへFlowアシスト進行を安全に付与し、汎用イベント・描画・効果音・加点の二重発生を防止する。
 Nintendoの内部ネットワークプロトコルやパケット構造は非公開であり、推定による本家通信仕様一致とはしない。実機対戦レイテンシ下での同期比較は引き続き未確認。
+
 
