@@ -254,3 +254,24 @@ test('adapter scope: single anchor, build-only, raw upstream never mutated', asy
   assert.throws(() => adaptSlosherEmergeGate(SLOSHER_EMERGE_REL, 'no anchor here'),
     /INKWAVE patch conflict/, 'missing upstream anchor is a hard build error');
 });
+
+
+test('Super Jump landing kidT seed retains native Slosher admission and reset clears pending swim gate', async () => {
+  const traces=[];
+  for(const factory of [mainFixture,patchedFixture]) {
+    const r=await rig(factory,'slosher');
+    r.a.kidT=.05; r.a.form='kid'; r.a.intent.fire=true;
+    for(let i=0;i<20;i++)r.step();
+    traces.push({starts:r.starts,shots:r.shots});
+    if(factory===patchedFixture) {
+      const pending=await rig(patchedFixture,'slosher');
+      swimPress(pending); assert.equal(pending.a._s435SwimExit,true);
+      pending.a.reset(); assert.equal(pending.a._s435SwimExit,false);
+    }
+  }
+  assert.deepEqual(traces[1],traces[0],'landing seed follows existing native gate');
+  const r=await rig(patchedFixture,'slosher');
+  r.a._s435SwimExit=true;
+  r.a.superJump(new r.f.THREE.Vector3(4,0,4));
+  assert.equal(r.a._s435SwimExit,false,'actual Super Jump entry clears pending swim gate');
+});

@@ -29,7 +29,7 @@
 //   profile/wrapper and 6f is 18f - 12f.
 //
 // Scope
-//   Only `src/game/actor.js`, only the single admission anchor. No raw
+//   Only `src/game/actor.js`, actual swim transition and admission with lifecycle clears. No raw
 //   inkwave-public mutation (strings in, strings out), no shared dispatcher
 //   adapter.mjs / profile.json edits. Wiring into the build chain is reported
 //   to the orchestrator; parent owns integration and release decisions.
@@ -40,12 +40,19 @@ export const SLOSHER_EMERGE_ANCHOR = '    if (!isSquid && this.kidT >= P.emergeD
 export const SLOSHER_EMERGE_REPLACEMENT =
   '    // #435 S3 Slosher swim exit: fixed-frame admission (18f total - 12f lift = 6f @60Hz) at the same epsilon boundary\n' +
   '    // the S3 slosher wrapper uses; every other weapon keeps the native emergeDelay comparison unchanged.\n' +
-  "    if (!isSquid && (this.weapon?.kind === 'slosher' ? this.kidT + 1e-10 >= 6 / 60 : this.kidT >= P.emergeDelay)) {\n";
+  "    if (!isSquid && (this.weapon?.kind === 'slosher' && this._s435SwimExit ? this.kidT + 1e-10 >= 6 / 60 : this.kidT >= P.emergeDelay)) {\n" +
+  '      this._s435SwimExit = false;\n';
 
 // Build-only: identical connection semantics as the shared dispatcher
 // (exactly one anchor or a hard build error; never a silent no-op).
 export function adaptSlosherEmergeGate(rel, code) {
   if (rel !== SLOSHER_EMERGE_REL) return code;
+  code = replaceOnce(code, '      if (!wantSquid) this.kidT = 0;',
+    "      if (!wantSquid) { this.kidT = 0; this._s435SwimExit = this.weapon?.kind === 'slosher'; }",
+    'issue #435 actual swim exit');
+  for (const anchor of ['  reset() {', '  superJump(target) {', '  _startSpecial() {']) {
+    code = replaceOnce(code, anchor, anchor + '\n    this._s435SwimExit = false;', 'issue #435 lifecycle ' + anchor);
+  }
   return replaceOnce(code, SLOSHER_EMERGE_ANCHOR, SLOSHER_EMERGE_REPLACEMENT,
     'issue #435 slosher swim-exit emerge gate');
 }
