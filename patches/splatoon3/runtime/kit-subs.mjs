@@ -28,6 +28,10 @@
 // an explicit *functional calibration* is supplied and labelled `calibrated`,
 // never `extracted`.
 
+// The upstream SUB registry is passed in by the adapter from the real weapons.js
+// scope, so these hooks always read the one live registry and still behave exactly
+// like the native code when installKitSubs has not been applied.
+
 const FRAME = 1 / 60;
 const rawDamage = (v) => (v == null ? null : v / 10);
 const frames = (v) => (v == null ? null : v * FRAME);
@@ -204,9 +208,11 @@ export function registerKitSubs(SUB, profile) {
   return SUB;
 }
 
+// Reads only the live registry. A sub that has not been registered falls back to
+// the native generic bomb, so an un-composed build keeps its existing behaviour
+// instead of losing the release entirely.
 export function kitSubFor(weapon, SUB) {
   const id = weapon?.sub;
-  if (id && KIT_SUBS[id]) return SUB?.[id] || KIT_SUBS[id];
   if (id && SUB?.[id]) return SUB[id];
   return SUB?.bomb || KIT_SUBS.bomb;
 }
@@ -267,165 +273,238 @@ export function resolveSubForThrow(actor, subHoldSeconds, SUB) {
   };
 }
 
-// ---- Per-bomb state transitions ---------------------------------------------
-// Called once per bomb from inside the native `_updateBombs` loop. It only mutates
-// the bomb record (and paints the rolling trail through the real PaintSystem), so
-// collision, damage, turf accounting, fx, audio and the network mute guard all stay
-// with the native owner.
+// ---- Narrow native hooks -----------------------------------------------------
+// Every function here is called from *inside* the native pipeline by the adapter
+// (see patches/splatoon3/adapter.mjs, "sub weapon hooks"). There is no second
+// projectile list, no second pass over `this.bombs`, and no second fuse
+// decrement: the native `_updateBombs` loop keeps ownership of ordering,
+// integration, contact resolution and the fuse countdown. These functions only
+// select values for the bomb already being processed and mutate that one record.
 
-const STICK_BIAS = 0.21;   // matches the native bomb contact offset
+const CONTACT_BIAS = 0.21;   // the native bomb contact offset
 
-// Suction Bomb: adheres to a wall or ceiling, zeroes its velocity, then arms.
-function suctionStick(b, hit, resolved) {
-  const n = hit.normal;
-  const onFloor = n.y > 0.6;
-  const onWall = Math.abs(n.x) > 0.5 || Math.abs(n.z) > 0.5;
-  const onCeiling = n.y < -0.5;
-  if (!onFloor && !onWall && !onCeiling) return false;
-  b.s3Mode = 'stuck';
-  b.pos.copy(hit.point);
-  b.pos.addScaledVector(n, STICK_BIAS);
-  b.vel.set(0, 0, 0);
-  b.fuse = resolved.fuse;
-  b.s3StuckNormal = { x: n.x, y: n.y, z: n.z };
-  b.s3StuckOn = onCeiling ? 'ceiling' : onWall ? 'wall' : 'floor';
-  return true;
+// Ghost bombs are presentation only. The native explosion already guards them
+// with `nm.mute`; these hooks give them no authority of their own either.
+const ownsAuthority = (b) => !!b && !b.ghost && !!b.s3Resolved;
+
+const resolvedOf = (b) => (ownsAuthority(b) ? b.s3Resolved : null);
+
+// ---- 1. sub release: selected spec and held charge ---------------------------
+
+// Called at the native `const bomb = SUB.bomb` site. Accumulates the held charge
+// while the sub button is down and returns the spec that this release will use, so
+// the native ink check, `fireFacing` and cost subtraction all read one object.
+export function kitSubRelease(SUB, runner, dt, inp) {
+  if (inp?.sub) runner.s3SubHold = (runner.s3SubHold || 0) + dt;
+  else if (!inp?.subReleased) runner.s3SubHold = 0;
+  const a = runner.a;
+  const sub = kitSubFor(a?.weapon, SUB);
+  const hold = runner.s3SubHold || 0;
+  if (!sub.chargeable) return sub;
+  return { ...sub, ...curlingBlastParams(curlingChargeFraction(hold, sub), sub), __charge: curlingChargeFraction(hold, sub) };
 }
 
-// Curling Bomb: bounces off walls (bounded), rolls on the ground, paints a trail
-// and bursts when the pinned BurstFrame window expires.
-function curlingRoll(b, hit, resolved, dt, ctx) {
+// Held charge at the release instant, consumed by the throw hook.
+export function kitSubHoldSeconds(runner) {
+  return runner?.s3SubHold || 0;
+}
+
+// ---- 2. throw: per-bomb spec, snapped before the network records identity ----
+
+// Called by the `Projectiles.throwBomb` wrapper. The resolved spec is attached to
+// the record *before* `G.netm.recBomb` runs, so the identity a peer receives
+// already carries the sub. A remote actor never gets a spec: ghosts keep native
+// behaviour and no paint or damage authority.
+export function kitBombAttach(SUB, projectiles, actor, holdSeconds) {
+  if (actor?.remote) return null;
+  const sub = kitSubFor(actor?.weapon, SUB);
+  const resolved = resolveSubForThrow(actor, holdSeconds, SUB);
+  const b = projectiles.bombs[projectiles.bombs.length - 1];
+  if (!b || !resolved) return null;
+  b.s3Sub = sub;
+  b.s3Resolved = resolved;
+  b.s3Charge = resolved.charge;
+  b.s3Mode = 'flight';
+  b.s3Bounces = 0;
+  b.s3TrailPoint = null;                 // allocated lazily, reused for the roll
+  b.s3FuseTotal = resolved.fuse;         // denominator for the native beep curve
+  // Held charge re-aims through the native throwVelocity, so aim pitch and
+  // player-velocity carry stay with the native implementation.
+  if (resolved.throwSpeed != null) {
+    const v = projectiles.throwVelocity(actor, resolved.throwSpeed, b.vel.clone());
+    if (v) b.vel.copy(v);
+  }
+  return b;
+}
+
+// ---- 3. per-bomb gravity, contact and fuse inside the native loop ------------
+
+export function kitBombGravity(SUB, b) {
+  const r = resolvedOf(b);
+  const g = r?.spec?.gravity;
+  return Number.isFinite(g) ? g : SUB.bomb.gravity;
+}
+
+// Contact subtype, called from the native `if (hit.hit)` block. Returns true when
+// this bomb has taken over the contact and the native reflection must be skipped.
+// Returns false to let the native bounce/settle run unchanged.
+//
+// Unlike the earlier draft this never disables wall handling after landing: a
+// rolling Curling Bomb still reflects on a wall, and the bounce budget is a real
+// bound that stops adding energy once exhausted.
+export function kitBombContact(SUB, b, hit, dt) {
+  const r = resolvedOf(b);
+  if (!r || !hit?.hit) return false;
   const n = hit.normal;
-  if (n.y <= 0.6) {
-    // vertical surface: reflect with the pinned ContactJumpPanel rates
-    const c = CURLING.contactJump;
+  const spec = r.spec;
+
+  if (spec.mode === 'stick') {
+    const onFloor = n.y > 0.6;
+    const onWall = Math.abs(n.x) > 0.5 || Math.abs(n.z) > 0.5;
+    const onCeiling = n.y < -0.5;
+    if (!onFloor && !onWall && !onCeiling) return false;
+    b.pos.copy(hit.point);
+    b.pos.addScaledVector(n, CONTACT_BIAS);
+    b.vel.set(0, 0, 0);
+    // Arm once, like the native `b.fuse < 0` guard. Re-arming on every contact
+    // would reset the countdown each tick and the bomb would never detonate.
+    if (b.fuse < 0) { b.fuse = r.fuse; b.s3FuseTotal = r.fuse; }
+    b.s3Mode = 'stuck';
+    b.s3StuckOn = onCeiling ? 'ceiling' : onWall ? 'wall' : 'floor';
+    return true;                       // native bounce is skipped for a stuck bomb
+  }
+
+  if (spec.mode === 'roll') {
+    const c = spec.contactJump;
+    if (n.y > 0.6) {
+      // floor: settle and let the native fuse countdown own the burst window
+      b.s3Mode = 'rolling';
+      b.vel.y = 0;
+      b.vel.x *= spec.baseSpeedComeOverRate;
+      b.vel.z *= spec.baseSpeedComeOverRate;
+      if (b.fuse < 0) { b.fuse = r.fuse; b.s3FuseTotal = r.fuse; }
+      return true;
+    }
+    // vertical surface: reflect with the pinned rate, bounded by MaxBoundNum.
+    // Once the budget is spent the bomb stops gaining energy instead of setting
+    // a flag that nothing reads.
+    if (b.s3Mode === 'rolling') b.s3Mode = 'rolling';
     b.s3Bounces = (b.s3Bounces || 0) + 1;
+    if (b.s3Bounces > c.maxBoundNum) {
+      b.vel.multiplyScalar(0);
+      b.s3BounceExhausted = true;
+      return true;
+    }
     const vn = b.vel.dot(n);
     b.vel.addScaledVector(n, -vn * (1 + c.addSpeedOneBoundRate));
-    b.s3BounceExhausted = b.s3Bounces > c.maxBoundNum;
-    return;
-  }
-  // floor contact: settle onto the ground plane and start/keep the burst window
-  b.s3Mode = 'rolling';
-  b.pos.copy(hit.point);
-  b.pos.addScaledVector(n, STICK_BIAS);
-  b.vel.y = 0;
-  b.vel.x *= CURLING.baseSpeedComeOverRate;
-  b.vel.z *= CURLING.baseSpeedComeOverRate;
-  b.fuse = resolved.fuse;
-}
-
-function curlingTrail(b, resolved, ctx) {
-  const paint = ctx?.paint;
-  if (!paint?.splat) return;
-  const r = resolved.trailRadius ?? CURLING.paintRadiusMinCharge;
-  const y = b.pos.y + CURLING.paintCheckHeight * 0;
-  const tmp = b.s3TrailPoint || (b.s3TrailPoint = { x: 0, y: 0, z: 0, set(x, yy, z) { this.x = x; this.y = yy; this.z = z; } });
-  tmp.set(b.pos.x, y, b.pos.z);
-  const area = paint.splat(tmp, r, b.team, { seed: Math.random() });
-  if (area > 0) b.owner?.addTurf?.(area);
-}
-
-// One call per bomb per frame, from the native loop. Returns true when the bomb
-// has reached its burst and should explode (the caller then invokes the native
-// `_explodeBomb` and the existing removal path).
-export function stepSubBomb(b, hit, dt, ctx) {
-  const resolved = b.s3Resolved;
-  if (!resolved) return false;
-  const spec = resolved.spec;
-  if (spec.mode === 'stick') {
-    if (hit?.hit && b.s3Mode !== 'stuck' && suctionStick(b, hit, resolved)) return false;
-    if (b.s3Mode === 'stuck' && b.fuse > 0) { b.fuse -= dt; if (b.fuse <= 0) return true; }
-    return false;
-  }
-  if (spec.mode === 'roll') {
-    if (hit?.hit && b.s3Mode !== 'rolling') curlingRoll(b, hit, resolved, dt, ctx);
-    if (b.s3Mode === 'rolling') {
-      curlingTrail(b, resolved, ctx);
-      if (b.fuse > 0) { b.fuse -= dt; if (b.fuse <= 0) return true; }
-    }
-    return false;
+    return true;
   }
   return false;
 }
 
+// Rolling trail, called from the native loop once the bomb is rolling. The centre
+// is a real THREE.Vector3 because the native PaintSystem reads vector fields.
+// Allocated once per bomb and reused; no per-frame allocation.
+export function kitBombTrail(SUB, b, paint) {
+  const r = resolvedOf(b);
+  if (!r || b.s3Mode !== 'rolling' || !paint?.splat) return 0;
+  const spec = r.spec;
+  const radius = r.trailRadius ?? spec.paintRadiusMinCharge;
+  // Derive the real Vector3 class from the bomb's own position vector so the
+  // native PaintSystem receives the type it expects, with no extra module import
+  // and no per-frame allocation.
+  if (!b.s3TrailPoint) b.s3TrailPoint = new b.pos.constructor();
+  b.s3TrailPoint.copy(b.pos);
+  const area = paint.splat(b.s3TrailPoint, radius, b.team, { seed: Math.random() });
+  if (area > 0) b.owner?.addTurf?.(area);
+  return area;
+}
+
+// Denominator for the native fuse progress/beep curve. One native decrement, so
+// the bomb's own total is used rather than the generic bomb's.
+export function kitBombFuseTotal(SUB, b) {
+  const t = resolvedOf(b)?.fuse;
+  return Number.isFinite(t) && t > 0 ? t : SUB.bomb.fuse;
+}
+
+// ---- 4. native blast reads this bomb's own bands ----------------------------
+// The adapter routes the existing `_explodeBomb` reads through these, so the
+// native blast keeps owning paint, damage, LOS, fx, audio, turf and the ghost
+// mute guard while consuming this bomb's numbers.
+
+export function kitBombPaintRadius(SUB, b, fallback) {
+  const r = resolvedOf(b);
+  return Number.isFinite(r?.paintRadius) ? r.paintRadius : fallback;
+}
+
+export function kitBombRadius(SUB, b, fallback) {
+  const r = resolvedOf(b);
+  return Number.isFinite(r?.radius) ? r.radius : fallback;
+}
+
+// The DistanceDamage table for this bomb's charge tier. The native blast already
+// evaluates `distanceDamage(s.damageBands, d, false)`; this supplies the table so
+// the lethal inner band is the bomb's own distance and not a global radius guess.
+export function kitBombDamageBands(SUB, b, fallback) {
+  const r = resolvedOf(b);
+  if (!r) return fallback;
+  const inner = r.damageInnerDistance, outer = r.damageOuterDistance;
+  if (!Number.isFinite(inner) || !Number.isFinite(outer)) return fallback;
+  return [[inner, r.damageMax], [outer, r.damageMin]];
+}
+
+export function kitBombDamageMax(SUB, b, fallback) {
+  const v = resolvedOf(b)?.damageMax;
+  return Number.isFinite(v) ? v : fallback;
+}
+
+export function kitBombDamageMin(SUB, b, fallback) {
+  const v = resolvedOf(b)?.damageMin;
+  return Number.isFinite(v) ? v : fallback;
+}
+
 // ---- Install -----------------------------------------------------------------
 
-const SWAPPED = ['paintRadius', 'radius', 'damageMax', 'damageMin', 'throwSpeed'];
 const KIT_KEY = '__kitSubsInstalled';
 
 export function installKitSubs(api, profile) {
-  const { SUB, Projectiles, WeaponRunner, G } = api;
+  const { SUB: _unused, Projectiles, WeaponRunner, G } = api;
+  const SUB = _unused;
   if (!SUB || !Projectiles || !WeaponRunner) throw new Error('INKWAVE sub patch needs SUB, Projectiles and WeaponRunner');
   if (SUB[KIT_KEY]) return api;   // idempotent: no double wrapping
   registerKitSubs(SUB, profile);
 
-  // Delegate to the native throw so it allocates the mesh, applies the real
-  // throwVelocity, records the network bomb and plays the real audio; then attach
-  // this bomb's own resolved spec and re-aim the velocity for held charge.
+  // Delegate to the native throw (mesh, throwVelocity, recBomb, audio), then
+  // attach the per-bomb spec. `recBomb` is wrapped for the duration of the native
+  // call so the spec is on the record before identity is recorded.
   const throwBomb = Projectiles.prototype.throwBomb;
   Projectiles.prototype.throwBomb = function (actor, holdSeconds) {
-    const resolved = resolveSubForThrow(actor, holdSeconds, SUB);
-    if (!resolved) return throwBomb.call(this, actor);
-    // Native release reads SUB.bomb; swap in this sub's numbers for that one call.
-    const saved = {};
-    for (const k of SWAPPED) { saved[k] = SUB.bomb[k]; if (resolved[k] != null) SUB.bomb[k] = resolved[k]; }
-    let created;
-    try { created = throwBomb.call(this, actor); }
-    finally { Object.assign(SUB.bomb, saved); }
-    const b = this.bombs[this.bombs.length - 1];
-    if (b) {
-      // Per-bomb state only: no grouping, no second iteration, no per-frame global.
-      b.s3Sub = resolved.spec;
-      b.s3Resolved = resolved;
-      b.s3Charge = resolved.charge;
-      b.s3Mode = resolved.spec.mode === 'roll' ? 'flight' : 'flight';
-      b.s3Bounces = 0;
-      if (resolved.throwSpeed != null && b.vel) {
-        // Re-aim through the native throwVelocity so aim pitch/carry stay native.
-        const v = this.throwVelocity(actor, resolved.throwSpeed, b.vel.clone());
-        if (v) b.vel.copy(v);
-      }
-    }
-    return created ?? b;
-  };
-
-  // Scoped swap so the native explosion owns paint, damage, LOS, fx, audio, turf
-  // and the network mute guard, while reading this bomb's own numbers.
-  const explode = Projectiles.prototype._explodeBomb;
-  Projectiles.prototype._explodeBomb = function (b) {
-    const r = b?.s3Resolved;
-    if (!r) return explode.call(this, b);
-    const saved = {};
-    for (const k of SWAPPED) { saved[k] = SUB.bomb[k]; if (r[k] != null) SUB.bomb[k] = r[k]; }
-    try { return explode.call(this, b); }
-    finally { Object.assign(SUB.bomb, saved); }
+    const runner = actor?.weaponRunner;
+    const out = throwBomb.call(this, actor);
+    kitBombAttach(SUB, this, actor, holdSeconds ?? kitSubHoldSeconds(runner));
+    if (runner) runner.s3SubHold = 0;   // the hold is consumed by this release
+    return out;
   };
 
   // Arc preview follows the sub that would actually be released.
   const updateArc = Projectiles.prototype.updateArc;
   Projectiles.prototype.updateArc = function (actor, show) {
-    const r = resolveSubForThrow(actor, actor?.weaponRunner?.s3SubHold, SUB);
-    if (!r || r.throwSpeed == null) return updateArc.call(this, actor, show);
+    const resolved = resolveSubForThrow(actor, actor?.weaponRunner?.s3SubHold, SUB);
+    if (!resolved || resolved.throwSpeed == null) return updateArc.call(this, actor, show);
     const saved = SUB.bomb.throwSpeed;
-    SUB.bomb.throwSpeed = r.throwSpeed;
+    SUB.bomb.throwSpeed = resolved.throwSpeed;
     try { return updateArc.call(this, actor, show); }
     finally { SUB.bomb.throwSpeed = saved; }
   };
 
-  // Charge accumulation and death / weapon-change reset on the real runner.
+  // Charge state and death / weapon-change reset live on the real runner.
   const reset = WeaponRunner.prototype.reset;
   WeaponRunner.prototype.reset = function (...args) {
     const out = reset.apply(this, args);
     this.s3SubHold = 0;
     this.s3Sub = kitSubFor(this.a?.weapon, SUB);
-    this.s3SubCharge = 0;
     return out;
   };
-
-  // The parent adapter calls this once per bomb inside native `_updateBombs`, so
-  // this module never re-iterates the bomb list itself.
-  api.S3_SUB_BOMB_STEP = stepSubBomb;
 
   Object.defineProperty(SUB, KIT_KEY, { value: true, enumerable: false, configurable: true });
   if (G && G.s3) G.s3.kitSubs = { suction: 'WeaponBombSuction', curling: 'WeaponBombCurling' };
