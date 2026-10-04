@@ -8,16 +8,7 @@
 // inkwave-public/, profile.json numbers, damage cap/grace/rate, or the
 // global regenDelay tracked in #195.
 //
-// Parent wiring required (this lane does NOT edit the shared dispatcher):
-//   1. In scripts/build-inkwave.mjs + scripts/check-inkwave-patches.mjs,
-//      apply `adaptIssue415(rel, code)` AFTER `adaptSource` (and alongside
-//      the touch/reliability/quality chain) so the built
-//      `patches/splatoon3/runtime/resources.mjs` delegates the clamp to
-//      `resetEnemyInkRecovery`.
-//   2. Include this file in the build identity inputs (it is copied like
-//      other `patches/splatoon3/runtime/*.mjs` files).
-// Until wired, the focused regression below exercises `resetEnemyInkRecovery`
-// directly after each native tick to prove the corrected timing.
+// The gameplay build dispatcher applies this transform to resources.mjs.
 export function resetEnemyInkRecovery(a) {
   // Eligible ground contact only. While `onEnemy` is true the recovery gate
   // in resources.mjs (`!onEnemy && lastDamage >= regenDelay`) already blocks

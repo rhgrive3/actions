@@ -4,11 +4,12 @@ import fs from 'node:fs';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 
+import { adaptMinimapResources } from './minimap-resource-adapter.mjs';
 import { adaptLobbyResources } from './lobby-resource-adapter.mjs';
 
 export const QUALITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
 const IDENTITY_FILES = [
-  'lobby-resource-adapter.mjs',
+  'lobby-resource-adapter.mjs', 'minimap-resource-adapter.mjs',
   'adapter.mjs', 'gyro.mjs', 'install.mjs', 'menu-preview.mjs', 'menu.mjs',
   'roller-motion.mjs', 'roller-visual.mjs', 'surface.mjs',
 ];
@@ -23,6 +24,7 @@ export function replaceOnce(code, before, after, label) {
 
 export function adaptQualitySource(rel, code) {
   code = adaptLobbyResources(rel, code);
+  code = adaptMinimapResources(rel, code);
   if (rel === 'src/ui/menu-art.js') {
     code = replaceOnce(code,
       'export function createPreview(key, ctx = {}) {',

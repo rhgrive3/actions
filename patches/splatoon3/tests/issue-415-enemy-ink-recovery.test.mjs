@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from './source-fixture.mjs';
-import { adaptIssue415, resetEnemyInkRecovery } from '../runtime/issue-415-adapter.mjs';
+import { adaptSource } from '../adapter.mjs';
+import { adaptIssue415 } from '../runtime/issue-415-adapter.mjs';
 
 const close = (actual, expected) => assert.ok(Math.abs(actual - expected) < 1e-8, `${actual} != ${expected}`);
 
@@ -45,22 +46,24 @@ test('issue-415 enemy-ink contact resets recovery timer; negative main control p
   f.tick(control, 1);
   assert.ok(control.hp > hpBefore, 'unpatched timer recovers early from the preserved 0.4s credit');
 
-  // --- Patched path: helper applied after each native enemy-ink tick resets to zero.
-  const a = f.make();
-  damageOnly(f, a);
-  f.G.paint.sample = () => 2; a.invuln = 99;
-  for (let i = 0; i < 60; i++) { f.tick(a, 1); resetEnemyInkRecovery(a); }
+  // --- Production transform runs inside the real native resources tick.
+  const patched = await fixture({ adaptRuntime: adaptSource });
+  patched.profile.resources.regenDelay = delay;
+  const a = patched.make();
+  damageOnly(patched, a);
+  patched.G.paint.sample = () => 2; a.invuln = 99;
+  patched.tick(a, 60);
   close(a.lastDamage, 0);
-  f.G.paint.sample = () => 0; a.invuln = 0;
+  patched.G.paint.sample = () => 0; a.invuln = 0;
   const patchedHp = a.hp;
-  f.tick(a, 60 - 1); // 59/60 s out: a full 1.0 s has NOT yet elapsed
+  patched.tick(a, 60 - 1); // 59/60 s out: a full 1.0 s has NOT yet elapsed
   assert.equal(a.hp, patchedHp, 'recovery must wait a full delay after leaving enemy ink');
-  f.tick(a, 1); // 60th frame out: exactly 1.0 s elapsed
+  patched.tick(a, 1); // 60th frame out: exactly 1.0 s elapsed
   assert.ok(a.hp > patchedHp, 'recovery resumes exactly after a full delay with no new contact');
 
   // --- Re-entry restarts the wait from zero again (60 Hz deterministic).
-  f.G.paint.sample = () => 2; a.invuln = 99;
-  f.tick(a, 1); resetEnemyInkRecovery(a);
+  patched.G.paint.sample = () => 2; a.invuln = 99;
+  patched.tick(a, 1);
   close(a.lastDamage, 0);
   void dt;
 });
