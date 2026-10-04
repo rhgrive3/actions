@@ -72,6 +72,8 @@ export function updateFXQuality(fx, targetMultiplier, THREE_LIB = THREE) {
     fx.dMesh.material?.dispose?.();
     if (typeof fx._initDrops === 'function') {
       fx._initDrops(Math.round(2600 * q));
+      if (fx._qualityDropSource) fx._qualityDropSource = Array(fx.dCap).fill(null);
+      if (fx._qualityDropGeneration) fx._qualityDropGeneration = new Uint32Array(fx.dCap);
     }
   }
 
@@ -274,7 +276,7 @@ export function updatePaintQuality(game, targetSize, ctx = null, THREE_LIB = THR
         format: THREE_LIB.RGBAFormat,
         minFilter: THREE_LIB.LinearMipmapLinearFilter,
         magFilter: THREE_LIB.LinearFilter,
-        generateMipmaps: true,
+        generateMipmaps: typeof paint._regenerateMipmaps !== 'function',
         depthBuffer: false,
         stencilBuffer: false,
       });
@@ -282,7 +284,9 @@ export function updatePaintQuality(game, targetSize, ctx = null, THREE_LIB = THR
         newRT.texture.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
       }
 
-      // Clear newRT before resampling
+      // Clear the target without leaking the arena renderer background state.
+      const prevColor = renderer.getClearColor?.(new THREE_LIB.Color());
+      const prevAlpha = renderer.getClearAlpha?.();
       const prevRT = renderer.getRenderTarget();
       const prevAutoClear = renderer.autoClear;
       try {
@@ -293,6 +297,7 @@ export function updatePaintQuality(game, targetSize, ctx = null, THREE_LIB = THR
       } finally {
         renderer.setRenderTarget(prevRT);
         renderer.autoClear = prevAutoClear;
+        if (prevColor) renderer.setClearColor(prevColor, prevAlpha);
       }
 
       resampleAtlasFaces(renderer, oldRT, oldSize, newRT, targetSize, paint.paintFaces, oldAtlasMap, THREE_LIB);
@@ -318,6 +323,8 @@ export function updatePaintQuality(game, targetSize, ctx = null, THREE_LIB = THR
     oldRT?.dispose?.();
     paint.rt = newRT;
     paint.texture = newRT.texture;
+    // Resampling is an atlas write even when no future paint/drying is queued.
+    paint._regenerateMipmaps?.();
   }
 
   // Update dryMesh geometry to match new atlas dimensions

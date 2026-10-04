@@ -12,6 +12,9 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import { adaptSource } from '../adapter.mjs';
+import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
+import { adaptReliability } from '../../reliability/adapter.mjs';
+import { adaptQualitySource } from '../../local-quality/adapter.mjs';
 import {
   adaptSlosherEmergeGate,
   SLOSHER_EMERGE_REL,
@@ -42,7 +45,7 @@ async function patchedFixture() {
     if (modules.has(file)) return modules.get(file);
     const relative = path.relative(UPSTREAM, file);
     const source = file.startsWith(UPSTREAM + path.sep)
-      ? adaptSlosherEmergeGate(relative, adaptSource(relative, fs.readFileSync(file, 'utf8')))
+      ? adaptQualitySource(relative, adaptReliability(relative, adaptTouchLayout(relative, adaptSource(relative, fs.readFileSync(file, 'utf8')))))
       : fs.readFileSync(file, 'utf8');
     const mod = new vm.SourceTextModule(source, { context, identifier: file });
     modules.set(file, mod);

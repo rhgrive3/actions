@@ -4,9 +4,14 @@ import fs from 'node:fs';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { adaptLandingRigidity } from './landing-rigidity-adapter.mjs';
+import { adaptPaintMipmaps } from './issue-190-adapter.mjs';
+import { adaptQualityIssue418 } from './issue-418-adapter.mjs';
+import { patchLobbySetShowcase } from './issue-472-adapter.mjs';
+import { adaptSlosherEmergeGate } from '../splatoon3/issue-435-adapter.mjs';
 
 export const QUALITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
 const IDENTITY_FILES = [
+  'issue-190-adapter.mjs', 'issue-418-adapter.mjs', 'world-quality.mjs', 'quality-probe.mjs', 'paint-mipmap-probe.mjs', 'issue-472-adapter.mjs',
   'adapter.mjs', 'gyro.mjs', 'install.mjs', 'menu-preview.mjs', 'menu.mjs',
   'roller-motion.mjs', 'roller-visual.mjs', 'surface.mjs', 'landing-rigidity-adapter.mjs',
 ];
@@ -21,6 +26,14 @@ export function replaceOnce(code, before, after, label) {
 
 export function adaptQualitySource(rel, code) {
   code = adaptLandingRigidity(rel, code);
+  code = adaptPaintMipmaps(rel, code);
+  code = adaptQualityIssue418(rel, code);
+  code = patchLobbySetShowcase(rel, code);
+  code = adaptSlosherEmergeGate(rel, code);
+  if (rel === 'src/main.js') {
+    code = "import { updateSplatGhosts } from '../patches/splatoon3/issue-284-adapter.mjs';\n" + code;
+    code = replaceOnce(code, '      if (!m || !m.paused) this.fxHooks?.update?.(dt);', '      if (!m || !m.paused) { this.fxHooks?.update?.(dt); updateSplatGhosts(G, dt); }', 'ghost presentation tick');
+  }
   if (rel === 'src/ui/menu-art.js') {
     code = replaceOnce(code,
       'export function createPreview(key, ctx = {}) {',

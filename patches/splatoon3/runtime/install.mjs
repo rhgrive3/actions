@@ -1,3 +1,6 @@
+import { NetMatch } from '../../../src/net/netmatch.js';
+import { installIssue196SpecialChargeCancel } from '../issue-196-adapter.mjs';
+import { installSplatGhostReturn } from '../issue-284-adapter.mjs';
 import * as THREE from 'three';
 import { G, on, emit } from '../../../src/core/ctx.js';
 import { PLAYER, WEAPONS, SUB, SPECIALS, DEFAULT_SETTINGS } from '../../../src/config.js';
@@ -54,6 +57,8 @@ export function install(profile) {
   Object.assign(SUB.bomb, profile.bomb);
   for (const [id, data] of Object.entries(profile.specials || {})) Object.assign(SPECIALS[id], data);
   installWeapons(api, profile);
+  installIssue196SpecialChargeCancel(api);
+  installSplatGhostReturn({ Actor, NetMatch, G });
   installRollerMotion(api, profile);
   installMovement(api, profile);
   installMovementMotion(api, profile);

@@ -31,6 +31,8 @@ const DURATION = 2.2;
 const EMIT_EVERY = 1 / 30;
 const OWNER_HOOK = Symbol.for('inkwave.issue-284.splat-ghost.owner.v1');
 const REMOTE_HOOK = Symbol.for('inkwave.issue-284.splat-ghost.remote.v1');
+const RESET_HOOK = Symbol.for('inkwave.issue-284.splat-ghost.reset.v1');
+const RESPAWN_HOOK = Symbol.for('inkwave.issue-284.splat-ghost.respawn.v1');
 const RECORD = Symbol.for('inkwave.issue-284.splat-ghost.record.v1');
 const clamp01 = v => (v <= 0 ? 0 : v >= 1 ? 1 : v);
 const smooth = u => { u = clamp01(u); return u * u * (3 - 2 * u); };
@@ -64,13 +66,14 @@ function spawnTarget(G, team) {
 export function startSplatGhost(G, victim, cause = 'weapon') {
   if (!victim || victim.alive !== false) return null;
   if (cause === 'water' || cause === 'fall') return null;
-  if (victim[RECORD]?.active) return victim[RECORD];
+  const death = victim.stats?.deaths ?? null;
+  if (victim[RECORD] && victim[RECORD].death === death) return victim[RECORD];
   const target = spawnTarget(G, victim.team);
   if (!target) return null;
   const start = { x: victim.pos.x, y: victim.pos.y + 0.35, z: victim.pos.z };
   if (!Number.isFinite(start.x + start.y + start.z)) return null;
   if (Math.hypot(target.x - start.x, target.z - start.z) < 0.05) return null;
-  const record = { active: true, age: 0, emitAcc: 1, kind: ghostKindFor(victim),
+  const record = { death, active: true, age: 0, emitAcc: 1, kind: ghostKindFor(victim),
     team: victim.team, color: victim.color ?? null,
     from: start, target: { x: target.x, y: target.y, z: target.z } };
   victim[RECORD] = record;
@@ -88,12 +91,12 @@ export function updateSplatGhosts(G, dt, actors) {
   const scratch = { x: 0, y: 0, z: 0 };
   for (const actor of list) {
     const r = actor?.[RECORD];
+    if (actor.alive !== false) { if (r) { r.active = false; r.death = undefined; } continue; }
     if (!r?.active) continue;
-    if (actor.alive !== false) { r.active = false; continue; }
-    if (actor.character?.visible !== false) { r.active = false; continue; }
+    if ((actor.character?.visible ?? actor.character?.root?.visible) !== false) { r.active = false; continue; }
     r.age += dt;
     const u = clamp01(r.age / DURATION);
-    if (u >= 1 - 1e-9 || r.age >= (actor.respawnTimer ?? DURATION)) { r.active = false; continue; }
+    if (u >= 1 - 1e-9) { r.active = false; continue; }
     r.emitAcc += dt;
     if (r.emitAcc + 1e-9 < EMIT_EVERY) continue;
     r.emitAcc = 0;
@@ -122,6 +125,8 @@ function hookOnce(proto, name, slot, wrap) {
 export function installSplatGhostReturn({ Actor, NetMatch, G = null, getG = null } = {}) {
   if (!Actor?.prototype?.splat) throw new Error('Splat ghost return requires the native Actor death path');
   const ctx = () => (typeof getG === 'function' ? getG() : G);
+  if (Actor.prototype.reset) hookOnce(Actor.prototype, 'reset', RESET_HOOK, victim => { delete victim[RECORD]; });
+  if (NetMatch?.prototype?._remoteRespawn) hookOnce(NetMatch.prototype, '_remoteRespawn', RESPAWN_HOOK, (_nm, args) => { if (args[0]) delete args[0][RECORD]; });
   hookOnce(Actor.prototype, 'splat', OWNER_HOOK, (victim, args) => {
     startSplatGhost(ctx(), victim, args?.[1] ?? 'weapon');
   });

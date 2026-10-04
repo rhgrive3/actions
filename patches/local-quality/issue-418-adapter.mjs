@@ -30,11 +30,12 @@ export function adaptQualityIssue418(rel, code) {
       '    const layoutId = map.layout || map.id;\n    if (this.layoutId === layoutId) { this.mapDef = map; return; }',
       '    const layoutId = map.layout || map.id;\n    if (this.layoutId === layoutId) {\n      if (this._builtQuality !== this.settings?.quality) applyRuntimeWorldQuality(this, this.settings, this.mobile, { G, effectiveQuality, dressingFor, THREE });\n      this.mapDef = map; return;\n    }\n    this._builtQuality = this.settings?.quality;',
       'world rebuild layout and quality gate');
-    code = replaceExact(code,
-      '    if ((map.layout || map.id) !== this.layoutId) await this._buildWorld(map);',
-      '    if ((map.layout || map.id) !== this.layoutId || this._builtQuality !== this.settings?.quality) await this._buildWorld(map);',
-      'startMatch and startNetMatch quality reconciliation',
-      2);
+    const startup = code.includes('await this._buildWorld(map, flow);')
+      ? '    if ((map.layout || map.id) !== this.layoutId) await this._buildWorld(map, flow);'
+      : '    if ((map.layout || map.id) !== this.layoutId) await this._buildWorld(map);';
+    code = replaceExact(code, startup,
+      startup.replace('!== this.layoutId)', '!== this.layoutId || this._builtQuality !== this.settings?.quality)'),
+      'startMatch and startNetMatch quality reconciliation', 2);
   }
   return code;
 }

@@ -410,3 +410,16 @@ test('adapted _setSettings and _buildWorld: calls real G without invented aliase
   assert.equal(game._builtQuality, 'high');
   assert.equal(G.level, level, 'G.level identity strictly preserved across reconciliation');
 });
+
+// Combined quality/roller binding regression: visual pool reallocation cannot
+// leave source-generation bookkeeping capped at the previous LOW capacity.
+test('quality reallocation resizes linked roller drop bookkeeping', () => {
+ const fx={q:.4,dCap:1040,dMesh:{material:{dispose(){}}},dGeo:{dispose(){}},root:{remove(){}},
+   _qualityDropSource:Array(1040).fill({}),_qualityDropGeneration:new Uint32Array(1040),
+   _initDrops(cap){this.dCap=cap;}};
+ updateFXQuality(fx,1,THREE);
+ assert.equal(fx._qualityDropSource.length,2600);
+ assert.equal(fx._qualityDropGeneration.length,2600);
+ assert.ok(fx._qualityDropSource.every(v=>v===null));
+ fx._qualityDropGeneration[2500]=42;assert.equal(fx._qualityDropGeneration[2500],42);
+});
