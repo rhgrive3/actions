@@ -53,6 +53,12 @@ export function adaptSource(rel, code) {
     code += '\nexport const CHARACTER_BOMB_POSE = Object.freeze({ throw: Character.prototype._poseThrow, apply: Character.prototype._applyPose });\n';
     return "import { dualiesMotionLock, dualiesMotionAllowsFootPlant } from '../../patches/splatoon3/runtime/action-admission.mjs';\nimport { specialMotionAllowsFootPlant } from '../../patches/splatoon3/runtime/special-motion.mjs';\nimport { applyWalkLocomotion, walkLean, walkSwingUnloaded, walkFootReach, walkPelvisDrop, walkTreadAllowed, walkActive } from '../../patches/splatoon3/runtime/walk.mjs';\n"+code;
   }
+  if (rel === 'src/ui/menus.js') {
+    return replaceOnce(code,
+      "h('span', { class: 'iw-chip' }, h('i', { html: SUB_ICONS.bomb }), sub.name)",
+      "h('span', { class: 'iw-chip' }, h('i', { html: SUB_ICONS[sub.id] || SUB_ICONS.bomb }), sub.name)",
+      'lobby selected sub icon');
+  }
   if (rel === 'src/ui/hud.js') {
     code = replaceOnce(code, '    // spawn shield + bomb aim (read straight off the local actor; absent in the lab unless mocked)\n    const a = this._local();',
       "    // spawn shield + bomb aim (read straight off the local actor; absent in the lab unless mocked)\n    const a = this._local();\n    if (a) {\n      const sub = selectedSub(a, SUB), cost = Math.round(selectedSubCost(a, SUB));\n      if (L.kitSub !== sub.id || L.kitSubCost !== cost) {\n        L.kitSub = sub.id; L.kitSubCost = cost;\n        this.subChip.querySelector('i').innerHTML = SUB_ICONS[sub.id] || SUB_ICONS.bomb;\n        this.subChip.querySelector('b').textContent = cost + '%';\n        this.subChip.title = sub.name;\n      }\n    }", 'HUD selected sub identity and cost');
