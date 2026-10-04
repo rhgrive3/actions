@@ -1,10 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from './source-fixture.mjs';
-import { installSubSpecialFidelity, SUB_SPECIAL_FIDELITY, fidelityThrowVelocity } from '../runtime/sub-special-fidelity.mjs';
 
 const f = await fixture();
-const { G, THREE, PLAYER, WEAPONS, SUB, SPECIALS, Projectiles } = f;
+const { G, THREE, PLAYER, WEAPONS, SUB, SPECIALS, Projectiles, installSubSpecialFidelity, SUB_SPECIAL_FIDELITY, fidelityThrowVelocity, TEST_MATH } = f;
 const before = { player: JSON.stringify(PLAYER), weapons: JSON.stringify(WEAPONS), slam: JSON.stringify(SPECIALS.slam) };
 installSubSpecialFidelity(f, f.profile);
 
@@ -83,8 +82,8 @@ test('Bomb damage/FX stay native while gameplay paint is deterministic center + 
   G.fx.explosion=()=>explosion++;
   const b={kind:'bomb',ghost:false,owner:{team:0,addTurf:a=>{turf+=a;}},team:0,
     pos:new THREE.Vector3(2,0,3),spin:new THREE.Vector3(1.25,2.5,0),age:.4};
-  const old=Math.random; let draws=0; Math.random=()=>{draws++;return .5;};
-  try { p._explodeBomb(b); } finally { Math.random=old; }
+  const old=TEST_MATH.random; let draws=0; TEST_MATH.random=()=>{draws++;return .5;};
+  try { p._explodeBomb(b); } finally { TEST_MATH.random=old; }
   assert.equal(draws,21);
   assert.equal(splats.length,16);
   assert.equal(splats[0].radius,SUB.bomb.paintRadius);
@@ -99,8 +98,8 @@ test('replacement Bomb paint is repeatable without adding global RNG draws', () 
     const p=new Projectiles(new THREE.Scene()),rows=[];
     G.paint.splat=(pos,radius,_team,opts)=>{rows.push([+pos.x.toFixed(6),+pos.z.toFixed(6),radius,+opts.seed.toFixed(8)]);return 0;};
     const b={kind:'bomb',ghost:false,owner:{team:0,addTurf(){}},team:0,pos:new THREE.Vector3(4,0,-2),spin:new THREE.Vector3(3,5,0),age:.2};
-    const old=Math.random; Math.random=()=>.125;
-    try { p._explodeBomb(b); } finally { Math.random=old; }
+    const old=TEST_MATH.random; TEST_MATH.random=()=>.125;
+    try { p._explodeBomb(b); } finally { TEST_MATH.random=old; }
     return rows;
   }
   assert.deepEqual(run(),run());
