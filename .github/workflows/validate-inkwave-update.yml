@@ -9,6 +9,7 @@ on:
       - "patches/touch-layout/**"
       - "patches/reliability/**"
       - "patches/local-quality/**"
+      - "patches/loading-cache/**"
       - "scripts/*inkwave*.mjs"
       - "scripts/tests/inkwave-*.mjs"
   pull_request:
@@ -19,6 +20,7 @@ on:
       - "patches/touch-layout/**"
       - "patches/reliability/**"
       - "patches/local-quality/**"
+      - "patches/loading-cache/**"
       - "scripts/*inkwave*.mjs"
       - "scripts/tests/inkwave-*.mjs"
   workflow_dispatch:
@@ -50,6 +52,10 @@ jobs:
         run: node --experimental-vm-modules scripts/check-inkwave-patches.mjs
       - name: Verify local quality regressions
         run: node --experimental-vm-modules --test patches/local-quality/tests/*.test.mjs
+      - name: Verify loading/cache regressions
+        run: |
+          node --experimental-vm-modules --test patches/loading-cache/tests/adapter.test.mjs patches/loading-cache/tests/worker.test.mjs
+          python3 patches/loading-cache/tests/harness.test.py
       - uses: actions/upload-artifact@v4
         if: failure() && hashFiles('.ci-scratch/inkwave-patches/patch-tests.log') != ''
         with:
@@ -73,7 +79,7 @@ jobs:
       - name: Check JavaScript syntax
         run: |
           set -euo pipefail
-          find inkwave-public/src inkwave-public/vendor patches/local-quality -type f \( -name '*.js' -o -name '*.mjs' \) -print0 |
+          find inkwave-public/src inkwave-public/vendor patches/local-quality patches/loading-cache -type f \( -name '*.js' -o -name '*.mjs' \) -print0 |
             while IFS= read -r -d '' f; do node --check "$f"; done
       - name: Check local module and stylesheet references
         run: |
@@ -107,6 +113,7 @@ jobs:
         run: |
           npm install --no-save --no-package-lock --silent esbuild@0.28.2
           node scripts/build-inkwave.mjs inkwave-public _site
+          node scripts/check-inkwave-startup-budget.mjs _site
           git rev-parse HEAD > _site-source-sha.txt
       - uses: actions/upload-artifact@v4
         with:
@@ -120,7 +127,7 @@ jobs:
   browser:
     needs: validate
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       max-parallel: 2
@@ -187,6 +194,9 @@ jobs:
       - name: Verify responsive menus in Chromium and WebKit
         if: matrix.suite == 'ui'
         run: node scripts/check-inkwave-responsive.mjs --source .built-site/_site --section all --evidence-dir "$CI_STORAGE/evidence/responsive" --profile-dir "$CI_STORAGE/cache/responsive"
+      - name: Measure cold, warm, PWA restart and offline startup in Chromium
+        if: matrix.suite == 'ui'
+        run: node scripts/check-inkwave-startup-browser.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/startup" --profile-dir "$CI_STORAGE/cache/startup" --source-sha "$SOURCE_SHA" --runs 3
       - name: Bind passing browser evidence to the tested commit
         run: |
           python3 - <<'PY'
@@ -196,7 +206,7 @@ jobs:
           checks={
             'active':['game/browser-result.json','motion/motion-result.json','motion-detail/motion-detail-result.json','flow/flow-render-result.json','wall/wall-render-result.json'],
             'catalog':['catalog/motion-catalog-result.json'],
-            'ui':['layout/touch-layout-result.json','reliability/reliability-browser-result.json','identity-touch/touch-layout-identity-result.json','identity-reliability/reliability-identity-result.json','responsive/responsive-result.json'],
+            'ui':['layout/touch-layout-result.json','reliability/reliability-browser-result.json','identity-touch/touch-layout-identity-result.json','identity-reliability/reliability-identity-result.json','responsive/responsive-result.json','startup/startup-browser-result.json'],
           }[suite]
           reports={name:json.loads((root/name).read_text()) for name in checks}
           build=json.loads(pathlib.Path('.built-site/_site/inkwave-build.json').read_text())
