@@ -1,0 +1,2419 @@
+{
+ "eye_keep_mm": [
+  3.0,
+  8.0
+ ],
+ "lips": {
+  "cy": -65.0,
+  "rx": 18.0,
+  "ry": 7.0,
+  "fade": 0.8
+ },
+ "steps": [
+  {
+   "name": "lower_face_smooth",
+   "kind": "smooth",
+   "factor": 0.5,
+   "iters": 60,
+   "protect_lips": true,
+   "bumps": [
+    {
+     "centre": [
+      30.0,
+      -62.0
+     ],
+     "rx": 34.0,
+     "ry": 40.0,
+     "x_fade": [
+      9.0,
+      18.0
+     ],
+     "front_only": false
+    }
+   ]
+  },
+  {
+   "name": "cheek_forward",
+   "kind": "warp",
+   "vec_mm": [
+    0,
+    0,
+    4.5
+   ],
+   "weight_smooth": 10,
+   "bumps": [
+    {
+     "centre": [
+      30.0,
+      -58.0
+     ],
+     "rx": 30.0,
+     "ry": 34.0,
+     "x_fade": [
+      8.0,
+      18.0
+     ]
+    }
+   ],
+   "keep_q34": true,
+   "margin_px": 0.3
+  },
+  {
+   "name": "muzzle_full",
+   "kind": "warp",
+   "vec_mm": [
+    0,
+    0,
+    4.0
+   ],
+   "weight_smooth": 10,
+   "protect_lips": false,
+   "bumps": [
+    {
+     "centre": [
+      32.0,
+      -64.0
+     ],
+     "rx": 26.0,
+     "ry": 16.0,
+     "x_fade": [
+      6.0,
+      20.0
+     ]
+    }
+   ]
+  },
+  {
+   "name": "cheek_apple",
+   "kind": "warp",
+   "vec_mm": [
+    0,
+    0,
+    2.6
+   ],
+   "weight_smooth": 10,
+   "bumps": [
+    {
+     "centre": [
+      33.0,
+      -45.0
+     ],
+     "rx": 17.0,
+     "ry": 13.0,
+     "x_fade": [
+      10.0,
+      20.0
+     ]
+    }
+   ]
+  },
+  {
+   "name": "eye_cheek_curve",
+   "kind": "arc_v",
+   "mm_sign": -1,
+   "x": [
+    17.0,
+    57.0
+   ],
+   "fade": 6.0,
+   "ya": -27.5,
+   "yb": -48.0,
+   "p": 2.0,
+   "scale": 0.8,
+   "weight_smooth": 25,
+   "eye_keep_mm": [
+    3.0,
+    8.0
+   ]
+  },
+  {
+   "name": "cheek_plump",
+   "kind": "displace",
+   "mm": 3.0,
+   "weight_smooth": 10,
+   "bumps": [
+    {
+     "centre": [
+      40.0,
+      -53.0
+     ],
+     "rx": 20.0,
+     "ry": 17.0,
+     "x_fade": [
+      14.0,
+      24.0
+     ]
+    }
+   ]
+  },
+  {
+   "name": "cheek_high",
+   "kind": "displace",
+   "mm": 2.4,
+   "weight_smooth": 8,
+   "bumps": [
+    {
+     "centre": [
+      47.0,
+      -42.0
+     ],
+     "rx": 15.0,
+     "ry": 11.0
+    }
+   ],
+   "eye_keep_mm": [
+    2.0,
+    6.0
+   ]
+  },
+  {
+   "name": "orbit_side_in",
+   "kind": "displace",
+   "mm": -2.2,
+   "weight_smooth": 6,
+   "bumps": [
+    {
+     "centre": [
+      67.0,
+      -24.0,
+      79.0
+     ],
+     "rx": 10.0,
+     "ry": 9.0,
+     "rz": 12.0,
+     "front_only": false
+    }
+   ],
+   "eye_keep_mm": [
+    1.0,
+    3.0
+   ]
+  },
+  {
+   "name": "jaw_side_full",
+   "kind": "displace",
+   "mm": 2.2,
+   "weight_smooth": 10,
+   "protect_lips": false,
+   "bumps": [
+    {
+     "centre": [
+      60.0,
+      -74.0,
+      34.0
+     ],
+     "rx": 22.0,
+     "ry": 18.0,
+     "rz": 34.0,
+     "front_only": false
+    }
+   ]
+  },
+  {
+   "name": "nose_cheek_blend",
+   "kind": "smooth",
+   "factor": 0.5,
+   "iters": 40,
+   "protect_lips": false,
+   "eye_keep_mm": [
+    1.0,
+    3.0
+   ],
+   "bumps": [
+    {
+     "centre": [
+      17.0,
+      -38.0
+     ],
+     "rx": 10.0,
+     "ry": 17.0,
+     "x_fade": [
+      6.0,
+      10.0
+     ]
+    }
+   ]
+  },
+  {
+   "name": "cheek_round",
+   "kind": "displace",
+   "mm": 2.2,
+   "weight_smooth": 12,
+   "bumps": [
+    {
+     "centre": [
+      37.0,
+      -49.0
+     ],
+     "rx": 21.0,
+     "ry": 19.0,
+     "x_fade": [
+      14.0,
+      24.0
+     ],
+     "facing": [
+      0.45,
+      0.8
+     ]
+    }
+   ],
+   "eye_keep_mm": [
+    2.0,
+    6.0
+   ]
+  },
+  {
+   "name": "smile_fold",
+   "kind": "warp",
+   "vec_mm": [
+    0,
+    0,
+    -0.5
+   ],
+   "weight_smooth": 6,
+   "protect_lips": true,
+   "bumps": [
+    {
+     "centre": [
+      17.0,
+      -55.0
+     ],
+     "rx": 5.5,
+     "ry": 6.0
+    },
+    {
+     "centre": [
+      21.5,
+      -60.5
+     ],
+     "rx": 5.5,
+     "ry": 6.0
+    },
+    {
+     "centre": [
+      26.5,
+      -65.5
+     ],
+     "rx": 5.5,
+     "ry": 6.0,
+     "scale": 0.9
+    },
+    {
+     "centre": [
+      31.0,
+      -70.0
+     ],
+     "rx": 5.5,
+     "ry": 6.0,
+     "scale": 0.6
+    }
+   ]
+  },
+  {
+   "name": "bridge_ridge",
+   "kind": "warp",
+   "vec_mm": [
+    0,
+    0,
+    -3.0
+   ],
+   "weight_smooth": 0,
+   "bumps": [
+    {
+     "centre": [
+      0.0,
+      -18.0
+     ],
+     "rx": 1000.0,
+     "ry": 1000.0,
+     "ridge_sigma": 8.0,
+     "x_out": [
+      21.0,
+      26.0
+     ],
+     "y_band": [
+      -28.0,
+      -12.0,
+      12.0
+     ]
+    }
+   ],
+   "eye_keep_mm": [
+    0.8,
+    2.5
+   ]
+  },
+  {
+   "name": "bridge_slope",
+   "kind": "arc_h",
+   "mm_sign": -1,
+   "y": [
+    -30.0,
+    -8.0
+   ],
+   "fade": 5.0,
+   "xa": 1.5,
+   "xb": 25.0,
+   "p": 1.0,
+   "weight_smooth": 10,
+   "eye_keep_mm": [
+    1.2,
+    3.5
+   ]
+  },
+  {
+   "name": "bridge_glabella_fill",
+   "kind": "arc_v",
+   "mm_sign": 1,
+   "x": [
+    0.0,
+    16.0
+   ],
+   "ya": 2.0,
+   "yb": -32.0,
+   "p": 1.0,
+   "fade": 4.0,
+   "scale": 0.45,
+   "weight_smooth": 8,
+   "eye_keep_mm": [
+    1.2,
+    3.5
+   ]
+  },
+  {
+   "name": "nose_sides",
+   "kind": "displace",
+   "mm": 1.0,
+   "protect_lips": false,
+   "bumps": [
+    {
+     "centre": [
+      6.0,
+      -45.0
+     ],
+     "rx": 7.0,
+     "ry": 8.0,
+     "x_fade": [
+      1.5,
+      5.0
+     ],
+     "lateral": [
+      0.3,
+      0.7
+     ]
+    }
+   ]
+  },
+  {
+   "name": "alae_wider",
+   "kind": "warp",
+   "vec_mm": [
+    1.2,
+    0,
+    0
+   ],
+   "protect_lips": false,
+   "bumps": [
+    {
+     "centre": [
+      9.0,
+      -50.0
+     ],
+     "rx": 5.0,
+     "ry": 5.0
+    }
+   ]
+  },
+  {
+   "name": "nose_lobule",
+   "kind": "displace",
+   "mm": 1.2,
+   "protect_lips": false,
+   "weight_smooth": 6,
+   "bumps": [
+    {
+     "centre": [
+      7.5,
+      -50.0,
+      109.0
+     ],
+     "rx": 7.5,
+     "ry": 6.0,
+     "rz": 9.0,
+     "front_only": false,
+     "x_fade": [
+      1.5,
+      4.5
+     ]
+    }
+   ]
+  },
+  {
+   "name": "nose_alae",
+   "kind": "displace",
+   "mm": 2.5,
+   "protect_lips": false,
+   "weight_smooth": 6,
+   "bumps": [
+    {
+     "centre": [
+      11.5,
+      -52.5,
+      106.0
+     ],
+     "rx": 5.0,
+     "ry": 4.5,
+     "rz": 8.0,
+     "front_only": false,
+     "x_fade": [
+      5.0,
+      8.0
+     ]
+    }
+   ]
+  },
+  {
+   "name": "nose_tip_round",
+   "kind": "warp",
+   "vec_mm": [
+    0,
+    0,
+    -1.4
+   ],
+   "protect_lips": false,
+   "bumps": [
+    {
+     "centre": [
+      0.0,
+      -45.0,
+      119.0
+     ],
+     "rx": 5.0,
+     "ry": 5.0,
+     "rz": 5.0,
+     "front_only": false
+    }
+   ]
+  },
+  {
+   "name": "nose_infratip",
+   "kind": "displace",
+   "mm": 1.8,
+   "protect_lips": false,
+   "weight_smooth": 6,
+   "bumps": [
+    {
+     "centre": [
+      0.0,
+      -49.5,
+      113.0
+     ],
+     "rx": 9.0,
+     "ry": 5.0,
+     "rz": 8.0,
+     "front_only": false
+    }
+   ]
+  },
+  {
+   "name": "nose_side_edge",
+   "kind": "smooth",
+   "factor": 0.5,
+   "iters": 20,
+   "protect_lips": false,
+   "bumps": [
+    {
+     "centre": [
+      11.0,
+      -33.0
+     ],
+     "rx": 6.0,
+     "ry": 14.0,
+     "x_fade": [
+      5.0,
+      8.0
+     ]
+    }
+   ]
+  },
+  {
+   "name": "jaw_round",
+   "kind": "smooth",
+   "factor": 0.5,
+   "iters": 40,
+   "protect_lips": false,
+   "bumps": [
+    {
+     "centre": [
+      52.0,
+      -85.0,
+      40.0
+     ],
+     "rx": 22.0,
+     "ry": 18.0,
+     "rz": 40.0,
+     "front_only": false
+    }
+   ]
+  },
+  {
+   "name": "jaw_mid_out",
+   "kind": "displace",
+   "mm": 1.8,
+   "weight_smooth": 15,
+   "protect_lips": false,
+   "bumps": [
+    {
+     "centre": [
+      56.0,
+      -80.0,
+      35.0
+     ],
+     "rx": 14.0,
+     "ry": 13.0,
+     "rz": 35.0,
+     "front_only": false,
+     "lateral": [
+      0.45,
+      0.75
+     ]
+    }
+   ]
+  },
+  {
+   "name": "side_jaw_smooth",
+   "kind": "smooth",
+   "factor": 0.5,
+   "iters": 80,
+   "protect_lips": true,
+   "bumps": [
+    {
+     "centre": [
+      50.0,
+      -74.0
+     ],
+     "rx": 30.0,
+     "ry": 26.0,
+     "x_fade": [
+      14.0,
+      26.0
+     ],
+     "front_only": false
+    }
+   ]
+  },
+  {
+   "name": "chin_under_lift",
+   "kind": "ceiling",
+   "line": [
+    [
+     87.0,
+     -106.6
+    ],
+    [
+     51.0,
+     -100.6
+    ]
+   ],
+   "soft": 4.0,
+   "z_fade": 8.0,
+   "z_back": [
+    0.0,
+    20.0
+   ],
+   "protect_lips": false,
+   "eye_keep_mm": [
+    0.0,
+    0.1
+   ]
+  },
+  {
+   "name": "chin_under_smooth",
+   "kind": "smooth",
+   "factor": 0.5,
+   "iters": 30,
+   "protect_lips": false,
+   "eye_keep_mm": [
+    0.0,
+    0.1
+   ],
+   "bumps": [
+    {
+     "centre": [
+      0.0,
+      -103.0,
+      66.0
+     ],
+     "rx": 42.0,
+     "ry": 10.0,
+     "rz": 32.0,
+     "front_only": false
+    }
+   ],
+   "seam_chunks": 15,
+   "pin_xz": {
+    "centre": [
+     0.0,
+     70.2
+    ],
+    "r": [
+     3.5,
+     9.0
+    ]
+   }
+  },
+  {
+   "name": "chin_front_round",
+   "kind": "warp",
+   "vec_mm": [
+    0,
+    0.9,
+    -2.1
+   ],
+   "protect_lips": false,
+   "bumps": [
+    {
+     "centre": [
+      0.0,
+      -101.5,
+      102.0
+     ],
+     "rx": 22.0,
+     "ry": 8.0,
+     "rz": 10.0,
+     "front_only": false
+    }
+   ]
+  },
+  {
+   "name": "chin_groove_fill",
+   "kind": "warp",
+   "vec_mm": [
+    0,
+    0,
+    1.0
+   ],
+   "protect_lips": false,
+   "bumps": [
+    {
+     "centre": [
+      0.0,
+      -84.5,
+      103.0
+     ],
+     "rx": 16.0,
+     "ry": 6.0,
+     "rz": 10.0,
+     "front_only": false
+    }
+   ]
+  },
+  {
+   "name": "chin_soften",
+   "kind": "smooth",
+   "factor": 0.5,
+   "iters": 40,
+   "seam_chunks": 6,
+   "protect_lips": false,
+   "eye_keep_mm": [
+    0.0,
+    0.1
+   ],
+   "bumps": [
+    {
+     "centre": [
+      0.0,
+      -98.0,
+      85.0
+     ],
+     "rx": 46.0,
+     "ry": 16.0,
+     "rz": 40.0,
+     "front_only": false
+    }
+   ],
+   "pin_xz": {
+    "centre": [
+     0.0,
+     70.2
+    ],
+    "r": [
+     3.5,
+     9.0
+    ]
+   }
+  },
+  {
+   "name": "sulcus_side_fill",
+   "kind": "arc_v",
+   "mm_sign": 1,
+   "x": [
+    8.0,
+    22.0
+   ],
+   "fade": 6.0,
+   "ya": -77.0,
+   "yb": -95.0,
+   "p": 1.0,
+   "scale": 0.55,
+   "weight_smooth": 8,
+   "protect_lips": false,
+   "eye_keep_mm": [
+    0.0,
+    0.1
+   ]
+  },
+  {
+   "name": "lower_lip_soft_edge",
+   "kind": "smooth",
+   "factor": 0.5,
+   "iters": 20,
+   "seam_chunks": 4,
+   "protect_lips": false,
+   "eye_keep_mm": [
+    0.0,
+    0.1
+   ],
+   "bumps": [
+    {
+     "centre": [
+      10.0,
+      -79.0,
+      104.0
+     ],
+     "rx": 22.0,
+     "ry": 5.0,
+     "rz": 12.0,
+     "front_only": false
+    }
+   ]
+  },
+  {
+   "name": "nose_tip_up",
+   "kind": "warp",
+   "vec_mm": [
+    0,
+    3.4,
+    0
+   ],
+   "protect_lips": false,
+   "bumps": [
+    {
+     "centre": [
+      0.0,
+      -47.0,
+      115.0
+     ],
+     "rx": 13.0,
+     "ry": 9.0,
+     "rz": 11.0,
+     "front_only": false
+    }
+   ]
+  },
+  {
+   "name": "upper_lip_out",
+   "kind": "warp",
+   "vec_mm": [
+    0,
+    0,
+    1.8
+   ],
+   "protect_lips": false,
+   "bumps": [
+    {
+     "centre": [
+      0.0,
+      -65.3,
+      112.0
+     ],
+     "rx": 15.0,
+     "ry": 3.4,
+     "rz": 7.0,
+     "front_only": false
+    }
+   ]
+  },
+  {
+   "name": "lower_lip_in",
+   "kind": "warp",
+   "vec_mm": [
+    0,
+    0,
+    -1.9
+   ],
+   "protect_lips": false,
+   "bumps": [
+    {
+     "centre": [
+      0.0,
+      -71.0,
+      110.5
+     ],
+     "rx": 15.0,
+     "ry": 4.0,
+     "rz": 7.0,
+     "front_only": false
+    }
+   ]
+  },
+  {
+   "name": "supratip_dip",
+   "kind": "warp",
+   "vec_mm": [
+    0,
+    0,
+    -3.6
+   ],
+   "protect_lips": false,
+   "bumps": [
+    {
+     "centre": [
+      0.0,
+      -35.0
+     ],
+     "rx": 11.0,
+     "ry": 6.0
+    }
+   ]
+  },
+  {
+   "name": "infratip_out",
+   "kind": "warp",
+   "vec_mm": [
+    0,
+    0,
+    1.0
+   ],
+   "protect_lips": false,
+   "bumps": [
+    {
+     "centre": [
+      0.0,
+      -53.0,
+      111.0
+     ],
+     "rx": 8.0,
+     "ry": 5.0,
+     "rz": 9.0,
+     "front_only": false
+    }
+   ]
+  },
+  {
+   "name": "nose_base_up",
+   "kind": "warp",
+   "vec_mm": [
+    0,
+    1.2,
+    0
+   ],
+   "protect_lips": false,
+   "bumps": [
+    {
+     "centre": [
+      0.0,
+      -56.0,
+      109.0
+     ],
+     "rx": 12.0,
+     "ry": 5.0,
+     "rz": 8.0,
+     "front_only": false
+    }
+   ]
+  },
+  {
+   "name": "ala_lobe",
+   "kind": "displace",
+   "mm": 1.6,
+   "protect_lips": false,
+   "bumps": [
+    {
+     "centre": [
+      10.8,
+      -48.2,
+      112.0
+     ],
+     "rx": 3.8,
+     "ry": 5.4,
+     "rz": 6.0,
+     "front_only": false
+    }
+   ]
+  },
+  {
+   "name": "alar_base_lift",
+   "kind": "warp",
+   "vec_mm": [
+    0,
+    2.8,
+    0
+   ],
+   "protect_lips": false,
+   "bumps": [
+    {
+     "centre": [
+      10.5,
+      -55.0,
+      109.5
+     ],
+     "rx": 6.5,
+     "ry": 4.5,
+     "rz": 5.0,
+     "front_only": false,
+     "x_fade": [
+      3.0,
+      6.5
+     ]
+    }
+   ]
+  },
+  {
+   "name": "lower_lip_side_smooth",
+   "kind": "smooth",
+   "factor": 0.5,
+   "iters": 30,
+   "protect_lips": false,
+   "bumps": [
+    {
+     "centre": [
+      20.0,
+      -76.0
+     ],
+     "rx": 15.0,
+     "ry": 8.0,
+     "x_fade": [
+      5.0,
+      12.0
+     ]
+    }
+   ]
+  },
+  {
+   "name": "tip_side_groove",
+   "kind": "warp",
+   "vec_mm": [
+    0,
+    0,
+    -1.9
+   ],
+   "weight_smooth": 2,
+   "protect_lips": false,
+   "bumps": [
+    {
+     "centre": [
+      7.8,
+      -45.5
+     ],
+     "rx": 2.3,
+     "ry": 5.5
+    }
+   ]
+  },
+  {
+   "name": "nostril_sill",
+   "kind": "warp",
+   "vec_mm": [
+    0,
+    1.0,
+    -1.5
+   ],
+   "weight_smooth": 4,
+   "protect_lips": false,
+   "bumps": [
+    {
+     "centre": [
+      8.0,
+      -54.0,
+      109.5
+     ],
+     "rx": 4.8,
+     "ry": 3.2,
+     "rz": 5.0,
+     "front_only": false,
+     "x_fade": [
+      2.5,
+      5.0
+     ]
+    }
+   ]
+  },
+  {
+   "name": "tip_ball_full",
+   "kind": "displace",
+   "mm": 1.3,
+   "weight_smooth": 2,
+   "protect_lips": false,
+   "bumps": [
+    {
+     "centre": [
+      3.8,
+      -49.5,
+      114.5
+     ],
+     "rx": 3.6,
+     "ry": 4.5,
+     "rz": 5.0,
+     "front_only": false,
+     "x_fade": [
+      0.8,
+      2.5
+     ]
+    }
+   ]
+  },
+  {
+   "name": "nose_under_soften",
+   "kind": "smooth",
+   "factor": 0.5,
+   "iters": 8,
+   "protect_lips": false,
+   "bumps": [
+    {
+     "centre": [
+      8.0,
+      -54.0,
+      109.0
+     ],
+     "rx": 7.0,
+     "ry": 4.5,
+     "rz": 7.0,
+     "front_only": false,
+     "x_fade": [
+      1.5,
+      4.0
+     ]
+    }
+   ]
+  },
+  {
+   "name": "nostril_pit",
+   "kind": "warp",
+   "vec_mm": [
+    0,
+    0.6,
+    -2.4
+   ],
+   "weight_smooth": 1,
+   "protect_lips": false,
+   "bumps": [
+    {
+     "centre": [
+      7.0,
+      -49.8,
+      113.0
+     ],
+     "rx": 3.0,
+     "ry": 2.4,
+     "rz": 4.0,
+     "front_only": false
+    }
+   ]
+  },
+  {
+   "name": "nose_tip_soften",
+   "kind": "smooth",
+   "factor": 0.5,
+   "iters": 6,
+   "seam_chunks": 3,
+   "protect_lips": false,
+   "bumps": [
+    {
+     "centre": [
+      0.0,
+      -41.0,
+      115.0
+     ],
+     "rx": 8.0,
+     "ry": 7.0,
+     "rz": 8.0,
+     "front_only": false
+    }
+   ]
+  },
+  {
+   "name": "upper_lip_soften",
+   "kind": "smooth",
+   "factor": 0.5,
+   "iters": 4,
+   "seam_chunks": 2,
+   "protect_lips": false,
+   "bumps": [
+    {
+     "centre": [
+      0.0,
+      -65.0,
+      112.5
+     ],
+     "rx": 10.0,
+     "ry": 4.0,
+     "rz": 5.0,
+     "front_only": false
+    }
+   ]
+  },
+  {
+   "name": "supratip_fill",
+   "kind": "arc_v",
+   "mm_sign": 1,
+   "x": [
+    0.0,
+    8.0
+   ],
+   "ya": -27.0,
+   "yb": -39.0,
+   "p": 1.0,
+   "fade": 5.0,
+   "scale": 0.45,
+   "weight_smooth": 8
+  },
+  {
+   "name": "eyes_back",
+   "kind": "move_eyes",
+   "vec_mm": [
+    0,
+    0,
+    -3.5
+   ],
+   "eye_mm": [
+    1.5,
+    16.0
+   ],
+   "x_in": [
+    5.0,
+    13.0
+   ],
+   "weight_smooth": 10,
+   "smooth": {
+    "ring": [
+     1.5,
+     4.0,
+     10.0,
+     18.0
+    ],
+    "factor": 0.5,
+    "iters": 20
+   }
+  },
+  {
+   "name": "canthus_shelf_smooth",
+   "kind": "smooth",
+   "factor": 0.5,
+   "iters": 250,
+   "protect_lips": false,
+   "after_delta_smooth": true,
+   "eye_keep_mm": [
+    1.0,
+    3.0
+   ],
+   "bumps": [
+    {
+     "centre": [
+      82.0,
+      -15.0,
+      52.0
+     ],
+     "rx": 11.0,
+     "ry": 11.0,
+     "rz": 22.0,
+     "front_only": false
+    }
+   ]
+  },
+  {
+   "name": "mouth_up",
+   "kind": "warp",
+   "after_delta_smooth": true,
+   "protect_lips": false,
+   "vec_mm": [
+    0,
+    2.2,
+    0
+   ],
+   "bumps": [
+    {
+     "centre": [
+      0.0,
+      -67.0,
+      108.0
+     ],
+     "rx": 22.0,
+     "ry": 5.0,
+     "rz": 12.0
+    }
+   ]
+  },
+  {
+   "name": "neck_widen",
+   "kind": "neck_widen",
+   "after_delta_smooth": true,
+   "mm": 8.5,
+   "y": [
+    -132,
+    -118,
+    -72,
+    -62
+   ],
+   "lateral": 1.0,
+   "mm_side": [
+    8.5,
+    -5.0
+   ],
+   "x_fade": 15.0,
+   "lean": {
+    "mm": 10,
+    "y": [
+     -110,
+     -99
+    ],
+    "profile": "circle"
+   },
+   "subdivide": {
+    "levels": 2,
+    "smooth": 0.0
+   },
+   "smooth": {
+    "factor": 0.5,
+    "iters": 10
+   },
+   "flare": {
+    "mm": 6,
+    "y": [
+     -106,
+     -92
+    ]
+   }
+  },
+  {
+   "name": "jaw_tuck",
+   "kind": "jaw_tuck",
+   "after_delta_smooth": true,
+   "protect_lips": false,
+   "line": [
+    [
+     -30.0,
+     -58.0
+    ],
+    [
+     25.7,
+     -58.0
+    ],
+    [
+     27.8,
+     -62.7
+    ],
+    [
+     30.6,
+     -75.9
+    ],
+    [
+     35.4,
+     -82.4
+    ],
+    [
+     46.8,
+     -89.8
+    ],
+    [
+     54,
+     -89
+    ],
+    [
+     68,
+     -93
+    ],
+    [
+     82,
+     -98
+    ],
+    [
+     96,
+     -102
+    ]
+   ],
+   "depth": 20,
+   "depth_back": 30,
+   "z_ramus": [
+    10,
+    30
+   ],
+   "z_front": [
+    45,
+    70
+   ],
+   "z_back": [
+    -30.0,
+    -15.0
+   ],
+   "offset_mm": 1.0,
+   "dive": {
+    "from_mm": 20,
+    "len_mm": 8,
+    "mm": 7,
+    "z_front": [
+     20,
+     40
+    ]
+   }
+  },
+  {
+   "name": "jaw_line_smooth",
+   "kind": "smooth",
+   "factor": 0.5,
+   "protect_lips": false,
+   "after_delta_smooth": true,
+   "bumps": [
+    {
+     "centre": [
+      40.0,
+      -88.0,
+      30.0
+     ],
+     "rx": 30.0,
+     "ry": 16.0,
+     "rz": 45.0,
+     "front_only": false
+    }
+   ],
+   "iters": 30
+  },
+  {
+   "name": "jaw_notch_smooth",
+   "kind": "smooth",
+   "factor": 0.5,
+   "protect_lips": false,
+   "after_delta_smooth": true,
+   "iters": 60,
+   "bumps": [
+    {
+     "centre": [
+      25.0,
+      -95.0,
+      50.0
+     ],
+     "rx": 16.0,
+     "ry": 10.0,
+     "rz": 16.0,
+     "front_only": false
+    }
+   ]
+  },
+  {
+   "name": "neck_normals",
+   "kind": "neck_normals",
+   "after_delta_smooth": true,
+   "like": "jaw_tuck"
+  }
+ ],
+ "delta_smooth": {
+  "factor": 0.5,
+  "iters": 40,
+  "eye_keep_mm": [
+   2.0,
+   5.0
+  ],
+  "exclude": [
+   {
+    "centre": [
+     0.0,
+     -49.0
+    ],
+    "rx": 22.0,
+    "ry": 14.0
+   },
+   {
+    "centre": [
+     0.0,
+     -103.0
+    ],
+    "rx": 40.0,
+    "ry": 14.0
+   },
+   {
+    "centre": [
+     0.0,
+     -67.0
+    ],
+    "rx": 20.0,
+    "ry": 9.0
+   }
+  ]
+ },
+ "tuck": {
+  "alpha": 0.06,
+  "colour_alpha": 0.12,
+  "rings": 3,
+  "inner_x_mm": 32.0,
+  "under_mm": -0.15,
+  "over_mm": 0.3,
+  "relax": 60,
+  "step_mm": 0.05,
+  "fade_mm": [
+   0.05,
+   0.28
+  ]
+ },
+ "cornea": {
+  "coat": 0.0,
+  "specular": 0.03
+ },
+ "iris_up": {
+  "px": 4.5,
+  "centre_px": [
+   136.7,
+   131.2
+  ],
+  "centre_px_left": [
+   219.0,
+   131.2
+  ]
+ },
+ "limbal_ring": {
+  "white_lum": 0.5,
+  "t0": 0.6,
+  "ring_in": 0.88,
+  "keep": 0.5,
+  "ring_tint": [
+   0.05,
+   0.24,
+   0.25
+  ],
+  "ring_tint_amount": 0.65,
+  "edge_lift": 0.4,
+  "edge_lift_from": 0.72
+ },
+ "paint_nose": {
+  "region": [
+   28.0,
+   -63.0,
+   -26.0,
+   88.0
+  ],
+  "offset_mm": 0.12,
+  "box": [
+   156,
+   158,
+   209,
+   183
+  ],
+  "centre": 182.4,
+  "mask": [
+   182.4,
+   165.5,
+   17.0,
+   13.0
+  ],
+  "base_sigma": 7.0,
+  "full": 0.3,
+  "up": 4,
+  "floor": 0.14,
+  "rim": 5.0,
+  "strength": 1.0,
+  "max_ratio": 1.0,
+  "bare": "analysis/face_volume/bare_front.png",
+  "own_blur": 2.0,
+  "desaturate": 0.7,
+  "facing": [
+   0.35,
+   0.65
+  ],
+  "axis_z": 70.0,
+  "size": 512,
+  "spots": [
+   [
+    172.3,
+    168.8,
+    4.5,
+    3.5
+   ],
+   [
+    190.8,
+    169.0,
+    4.5,
+    3.5
+   ],
+   [
+    182.4,
+    174.5,
+    5.0,
+    3.5
+   ]
+  ]
+ },
+ "paint_mouth": {
+  "region": [
+   42.0,
+   -86.0,
+   -54.0,
+   82.0
+  ],
+  "offset_mm": 0.2,
+  "box": [
+   141,
+   176,
+   219,
+   204
+  ],
+  "centre": 181.1,
+  "shift_y": -1.1,
+  "mask": [
+   180.2,
+   187.0,
+   36.0,
+   10.5
+  ],
+  "base_sigma": 8.0,
+  "full": 0.25,
+  "up": 4,
+  "floor": 0.05,
+  "rim": 5.0,
+  "strength": 1.1,
+  "max_ratio": 1.05,
+  "bare": "analysis/face_volume/bare_front.png",
+  "below_lip": {
+   "centre": 180.2,
+   "y": 194.0,
+   "half_width": 28.0,
+   "rise": 4.5,
+   "fade": 2.5
+  },
+  "tint": [
+   0.92,
+   1.05,
+   1.12
+  ],
+  "own_max": 1.3
+ },
+ "mouth_line": {
+  "width_mm": 0.5,
+  "mid_width_mm": 0.45,
+  "mid_at": 0.45,
+  "end_width_mm": 0.3,
+  "taper": 0.3,
+  "alpha": 0.3,
+  "ref_path": {
+   "corners": [
+    150.5,
+    208.5
+   ],
+   "rows": [
+    177,
+    192
+   ],
+   "centre": 181.1,
+   "shift_y": -1.1,
+   "degree": 6
+  },
+  "specular": 0.0
+ },
+ "skin": {
+  "base_colour": [
+   0.5785,
+   0.265,
+   0.1244
+  ],
+  "bsdf": {
+   "Subsurface Weight": 0.5,
+   "Subsurface Radius": [
+    1.0,
+    0.38,
+    0.22
+   ],
+   "Subsurface Scale": 0.006,
+   "Roughness": 0.68,
+   "Specular IOR Level": 0.12,
+   "Sheen Weight": 0.3,
+   "Sheen Tint": [
+    1.0,
+    0.78,
+    0.64,
+    1.0
+   ],
+   "Coat Weight": 0.0
+  },
+  "layers": [
+   "skin_d8664f"
+  ]
+ },
+ "lights": {
+  "names": [
+   "KEY",
+   "FILL",
+   "RIM",
+   "RIM2"
+  ],
+  "angle": 0.35
+ },
+ "blush": {
+  "views": [
+   "front",
+   "q34R",
+   "q34L",
+   "sideR",
+   "sideL"
+  ],
+  "sigma_px": 2.5,
+  "min_facing": 0.35,
+  "gain": 0.06,
+  "floor": 0.5,
+  "max": 0.4,
+  "max_factor": 3.0,
+  "relax": 6,
+  "combine": "max",
+  "colour": [
+   0.961,
+   0.502,
+   0.416
+  ],
+  "lift_alpha": 0.03
+ },
+ "eye_look": {
+  "suns": [
+   "KEY",
+   "FILL",
+   "RIM",
+   "RIM2"
+  ],
+  "catch_energy": 0.0,
+  "catch_angle": 0.03,
+  "catch_dir": [
+   -0.45,
+   0.55,
+   0.7
+  ],
+  "shade_from_m": 0.0,
+  "shade_to_m": 0.007,
+  "shade_min": 0.25,
+  "emission": 0.15,
+  "keep_white": [
+   0.85,
+   0.95
+  ]
+ },
+ "ears": {
+  "angle_deg": 16.0,
+  "pivot_yz": [
+   -34.5,
+   -58.2
+  ],
+  "turn": [
+   "HEAD_face_02",
+   "HEAD_face_03",
+   "HEADGEAR_headgear_02"
+  ],
+  "hang": [
+   "HEADGEAR_headgear"
+  ]
+ },
+ "ear_rebuild": {
+  "design": {
+   "tip": [
+    -174.48,
+    -34.517,
+    -58.202
+   ],
+   "a1": [
+    0.771,
+    0.099,
+    0.63
+   ],
+   "a2": [
+    -0.048,
+    0.994,
+    -0.097
+   ],
+   "n": [
+    -0.635,
+    0.045,
+    0.771
+   ],
+   "outline": [
+    [
+     4.328,
+     0.402
+    ],
+    [
+     7.608,
+     2.06
+    ],
+    [
+     10.89,
+     3.719
+    ],
+    [
+     14.193,
+     5.357
+    ],
+    [
+     17.527,
+     6.965
+    ],
+    [
+     20.885,
+     8.533
+    ],
+    [
+     24.295,
+     10.036
+    ],
+    [
+     27.849,
+     11.331
+    ],
+    [
+     31.404,
+     12.626
+    ],
+    [
+     35.002,
+     13.842
+    ],
+    [
+     38.645,
+     14.991
+    ],
+    [
+     42.291,
+     16.14
+    ],
+    [
+     45.941,
+     17.28
+    ],
+    [
+     49.663,
+     18.272
+    ],
+    [
+     53.389,
+     19.26
+    ],
+    [
+     57.118,
+     20.249
+    ],
+    [
+     60.854,
+     21.22
+    ],
+    [
+     64.6,
+     22.168
+    ],
+    [
+     68.349,
+     23.116
+    ],
+    [
+     72.104,
+     24.056
+    ],
+    [
+     75.925,
+     24.833
+    ],
+    [
+     79.751,
+     25.603
+    ],
+    [
+     83.589,
+     26.35
+    ],
+    [
+     87.442,
+     27.058
+    ],
+    [
+     91.312,
+     27.673
+    ],
+    [
+     95.232,
+     28.052
+    ],
+    [
+     99.11,
+     28.337
+    ],
+    [
+     102.268,
+     26.678
+    ],
+    [
+     105.327,
+     24.853
+    ],
+    [
+     107.329,
+     22.141
+    ],
+    [
+     109.026,
+     19.238
+    ],
+    [
+     109.995,
+     16.122
+    ],
+    [
+     110.71,
+     12.935
+    ],
+    [
+     111.426,
+     9.749
+    ],
+    [
+     111.715,
+     6.527
+    ],
+    [
+     111.73,
+     3.303
+    ],
+    [
+     111.745,
+     0.08
+    ],
+    [
+     111.632,
+     -3.132
+    ],
+    [
+     111.433,
+     -6.338
+    ],
+    [
+     111.214,
+     -9.543
+    ],
+    [
+     111.369,
+     -12.759
+    ],
+    [
+     111.71,
+     -15.989
+    ],
+    [
+     112.098,
+     -19.216
+    ],
+    [
+     112.818,
+     -22.402
+    ],
+    [
+     113.698,
+     -25.57
+    ],
+    [
+     114.526,
+     -28.745
+    ],
+    [
+     115.006,
+     -31.969
+    ],
+    [
+     115.486,
+     -35.193
+    ],
+    [
+     114.376,
+     -37.89
+    ],
+    [
+     112.578,
+     -40.436
+    ],
+    [
+     109.923,
+     -42.286
+    ],
+    [
+     106.226,
+     -43.306
+    ],
+    [
+     102.638,
+     -43.089
+    ],
+    [
+     99.159,
+     -41.747
+    ],
+    [
+     95.715,
+     -40.066
+    ],
+    [
+     92.385,
+     -38.275
+    ],
+    [
+     89.171,
+     -36.373
+    ],
+    [
+     85.869,
+     -34.553
+    ],
+    [
+     82.424,
+     -32.83
+    ],
+    [
+     78.968,
+     -31.126
+    ],
+    [
+     75.452,
+     -29.508
+    ],
+    [
+     71.873,
+     -28.0
+    ],
+    [
+     68.254,
+     -26.556
+    ],
+    [
+     64.638,
+     -25.113
+    ],
+    [
+     61.018,
+     -23.679
+    ],
+    [
+     57.471,
+     -22.144
+    ],
+    [
+     53.981,
+     -20.533
+    ],
+    [
+     50.492,
+     -18.922
+    ],
+    [
+     47.008,
+     -17.307
+    ],
+    [
+     43.511,
+     -15.729
+    ],
+    [
+     40.011,
+     -14.16
+    ],
+    [
+     36.513,
+     -12.591
+    ],
+    [
+     33.016,
+     -11.023
+    ],
+    [
+     29.399,
+     -9.653
+    ],
+    [
+     25.735,
+     -8.356
+    ],
+    [
+     22.074,
+     -7.06
+    ],
+    [
+     18.423,
+     -5.746
+    ],
+    [
+     14.859,
+     -4.273
+    ],
+    [
+     11.347,
+     -2.714
+    ],
+    [
+     7.837,
+     -1.156
+    ]
+   ],
+   "root_idx": [
+    28,
+    44
+   ],
+   "lines": {
+    "helix_fold": [
+     [
+      13.181136738713136,
+      0.251598292807067
+     ],
+     [
+      34.11579182676583,
+      6.555627541852335
+     ],
+     [
+      57.74163173208606,
+      11.01836452279559
+     ],
+     [
+      75.74348406808465,
+      11.788237542756212
+     ],
+     [
+      87.89303642352675,
+      10.714562063305209
+     ],
+     [
+      95.3455422563959,
+      5.856239604037299
+     ],
+     [
+      99.18190779305826,
+      0.06512588569453293
+     ]
+    ],
+    "upper_edge": [
+     [
+      5.038709014720023,
+      0.35995634306350244
+     ],
+     [
+      13.056163181672298,
+      4.926953234758086
+     ],
+     [
+      22.280724588823468,
+      9.501831936960434
+     ],
+     [
+      33.91021581022972,
+      14.07836027283801
+     ],
+     [
+      45.6415363980689,
+      17.7415896335395
+     ],
+     [
+      57.47663511726873,
+      20.482788809547095
+     ],
+     [
+      69.39060166605489,
+      23.242255043109257
+     ],
+     [
+      81.38422703009451,
+      26.020171539227086
+     ],
+     [
+      91.04807944612762,
+      27.87396565467145
+     ],
+     [
+      99.59564498853337,
+      27.82925508979244
+     ],
+     [
+      105.81079823719712,
+      24.92045513660447
+     ],
+     [
+      110.92949357176919,
+      18.167270146046757
+     ]
+    ],
+    "lower_edge": [
+     [
+      5.038709014720023,
+      0.35995634306350244
+     ],
+     [
+      19.17183751950809,
+      -5.447628939009288
+     ],
+     [
+      32.219029477743554,
+      -10.343841337737311
+     ],
+     [
+      45.419265803122116,
+      -17.167147186048897
+     ],
+     [
+      58.723354812026464,
+      -24.04413530226811
+     ],
+     [
+      73.28544060109675,
+      -29.09635019424319
+     ],
+     [
+      86.78189190891774,
+      -35.12051602618477
+     ]
+    ],
+    "concha": [
+     [
+      84.52187676984367,
+      1.2102952906777142
+     ],
+     [
+      93.0148582835907,
+      2.0581241626684466
+     ],
+     [
+      97.98581473577208,
+      -0.8769680109871876
+     ],
+     [
+      100.60272544084674,
+      -6.662932617621472
+     ],
+     [
+      103.25219512334932,
+      -13.418814105177873
+     ],
+     [
+      107.10806921816179,
+      -19.248174442549264
+     ],
+     [
+      109.74045346016945,
+      -25.066815040579527
+     ],
+     [
+      102.41798630897131,
+      -26.839754257022207
+     ],
+     [
+      92.65423726481126,
+      -27.596050553474512
+     ],
+     [
+      84.04816421094804,
+      -24.551791953374487
+     ],
+     [
+      79.00547468650525,
+      -17.777023414115742
+     ],
+     [
+      77.55001377634193,
+      -9.176317676565697
+     ],
+     [
+      79.78032145916593,
+      -2.5403720494686635
+     ]
+    ],
+    "front_ridge": [
+     [
+      103.55234098431659,
+      18.22571271819376
+     ],
+     [
+      107.51937818278864,
+      8.59707057186001
+     ],
+     [
+      109.03262166485162,
+      -1.0239770482142365
+     ],
+     [
+      110.54773391381997,
+      -10.65690609755185
+     ],
+     [
+      112.00789845095112,
+      -18.376298961779007
+     ]
+    ],
+    "notch": [
+     [
+      98.48838636299446,
+      -18.13080447723817
+     ],
+     [
+      103.50514183448415,
+      -22.061634802788895
+     ],
+     [
+      108.50856024266692,
+      -25.042120726973025
+     ]
+    ]
+   },
+   "bumps": {
+    "lobe": [
+     [
+      96.543,
+      -35.345
+     ],
+     9.671
+    ],
+    "canal": [
+     [
+      100.743,
+      -11.459
+     ],
+     4.298
+    ]
+   },
+   "piercings": {
+    "bar": [
+     [
+      1938,
+      376.5
+     ],
+     [
+      1968,
+      391.5
+     ]
+    ],
+    "hoops": [
+     [
+      1972,
+      393
+     ],
+     [
+      1989,
+      399
+     ]
+    ],
+    "lift": 1.2,
+    "hoop_up": 1.0,
+    "bead_out": 1.5
+   }
+  },
+  "shape": {
+   "thick": 3.5,
+   "voxel_mm": 0.45,
+   "helix_h": 5.0,
+   "helix_wk": 1.4,
+   "groove_h": -2.0,
+   "groove_w": 4.0,
+   "low_h": 1.5,
+   "low_w": 3.5,
+   "front_h": 3.5,
+   "front_w": 9.0,
+   "concha_d": -12.0,
+   "concha_w": 6.0,
+   "notch_d": -3.0,
+   "lobe_h": 3.0,
+   "canal_h": -2.5,
+   "lobe_thick": 3.0,
+   "edge_r": 3.0,
+   "root_ext": 15.0,
+   "smooth_iterations": 30,
+   "vertices": 14000,
+   "subsurface_scale": 0.0015
+  }
+ },
+ "cheek_triangles": {
+  "right": "HEAD_skin_05",
+  "left": "HEAD_skin_02",
+  "corner_names": [
+   "top",
+   "bot",
+   "tip"
+  ],
+  "corners": {
+   "top": [
+    -81.83,
+    -9.86,
+    47.88
+   ],
+   "tip": [
+    -64.79,
+    -37.49,
+    75.49
+   ],
+   "bot": [
+    -73.03,
+    -51.96,
+    47.68
+   ]
+  },
+  "offset_mm": 0.4,
+  "corners_left": {
+   "top": [
+    82.95,
+    -14.92,
+    46.38
+   ],
+   "tip": [
+    60.72,
+    -38.3,
+    81.04
+   ],
+   "bot": [
+    70.34,
+    -55.06,
+    49.73
+   ]
+  }
+ },
+ "eye_paint": {
+  "iris_r": 91.5,
+  "find_r": 70,
+  "grow": 3,
+  "core": [
+   5.0,
+   3.5
+  ],
+  "soft": 1.2,
+  "dots": {
+   "Image_1": [
+    [
+     1,
+     10
+    ],
+    [
+     -16,
+     7
+    ]
+   ],
+   "Image_0": [
+    [
+     3,
+     6
+    ],
+    [
+     1,
+     -6
+    ]
+   ]
+  },
+  "sclera": {
+   "white": [
+    0.8,
+    0.79,
+    0.79
+   ],
+   "rows": [
+    150,
+    175
+   ],
+   "iris_pad": [
+    1,
+    5
+   ],
+   "amount": 1.0
+  },
+  "find_min": 0.15,
+  "find_sat": 0.1
+ }
+}
