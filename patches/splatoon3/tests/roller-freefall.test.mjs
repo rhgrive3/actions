@@ -427,3 +427,25 @@ test('production build chain preserves natural-fall selection and normal battle/
     assert.equal(shooter.s3NaturalAirborne, undefined);
   }
 });
+
+test('partial Surge armor and Roller accepted-launch mode compose in the production battle and Practice paths', async () => {
+  const { adaptSource } = await import('../adapter.mjs');
+  const { adaptTouchLayout } = await import('../../touch-layout/adapter.mjs');
+  const { adaptReliability } = await import('../../reliability/adapter.mjs');
+  const { adaptQualitySource } = await import('../../local-quality/adapter.mjs');
+  const production = (rel, code) => adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code))));
+  for (const practice of [false, true]) {
+    const f = await fixture({ adaptNative: production, adaptRuntime: production });
+    f.G.practice = practice ? { active: true } : null;
+    const a = f.make('roller'); a.form = 'squid'; a.intent.squid = true; a.intent.jump = true;
+    a.climbing = true; a.grounded = false; a._updateClimb = () => {};
+    f.tick(a, 1); a.intent.jump = false; f.tick(a, 1);
+    assert.equal(a.s3.surge.phase, 'armor', 'short climb burst ended, shield still alive');
+    const hp = a.hp; a.damage(30, null, 'shooter'); assert.equal(a.hp, hp);
+    assert.equal(a.s3.surge.armorHP, 70);
+    a.climbing = false; a.form = 'kid'; a.intent.squid = false; a.intent.fire = true; f.tick(a, 1);
+    assert.equal(a.weaponRunner.s3RollerAttack.vertical, true, 'accepted partial Surge is a launch, never natural-fall grace');
+    assert.equal(a.s3.surge, null, 'kid transition retires shield');
+    a.reset(); assert.equal(a.s3.surge, null);
+  }
+});
