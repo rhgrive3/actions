@@ -193,11 +193,18 @@ export function adaptSource(rel, code) {
       '      const k = s.t + 1e-10 >= s.dur ? 1 : Math.min(1, s.t / s.dur);', 'super jump frame boundary');
     code = replaceOnce(code, "      if (k >= 1) {\n        this.superJumpState = null;",
       "      if (k >= 1) {\n        this.invuln = 0; // Spawn protection always ends before landing.\n        this.superJumpState = null;", 'super jump landing vulnerability');
+    code = replaceOnce(code, '    this.respawnTimer = PLAYER.respawnTime;',
+      '    setRespawnTimer(this, cause);', 'death-cause respawn timing');
     const start = code.indexOf('    // ---- ink / hp\n');
     const end = code.indexOf('    // ---- weapons (', start);
     if (start < 0 || end < start) throw new Error('INKWAVE patch conflict: actor resource connection');
     code = replaceOnce(code, code.slice(start, end), '    updateResources(this, dt);\n\n', 'post-movement resources');
-    return `import { beforeActions } from '../../patches/splatoon3/runtime/movement.mjs';\nimport { updateResources } from '../../patches/splatoon3/runtime/resources.mjs';\n` + code;
+    return `import { beforeActions } from '../../patches/splatoon3/runtime/movement.mjs';\nimport { updateResources, setRespawnTimer } from '../../patches/splatoon3/runtime/resources.mjs';\n` + code;
+  }
+  if (rel === 'src/net/netmatch.js') {
+    code = replaceOnce(code, '    victim.respawnTimer = PLAYER.respawnTime;',
+      '    setRespawnTimer(victim, cause);', 'remote death-cause respawn timing');
+    return `import { setRespawnTimer } from '../../patches/splatoon3/runtime/resources.mjs';\n` + code;
   }
   if (rel === 'src/game/character-weapons.js') {
     return replaceOnce(code, '    if (ft >= 0.15 && ft - dt < 0.15) w.drumW += 34;', '    const release = st.flickReleaseTime ?? 0.15;\n    if (ft >= release && ft - dt < release) w.drumW += 34;', 'roller drum release impulse');

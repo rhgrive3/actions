@@ -170,3 +170,16 @@ Flow の外殻・粒・リボンが GTAO の法線／深度パスに不透明な
 終了時に残っていた1textureはnative THREEの共有DFG_LUTで、compiled dfgLUT uniformから所有元を確認した。隔離された描画fixtureの終了時に実GL handleの存在と解放を測り、geometry/textureの残留0を確認する。ゲーム本体や共有shaderの実装変更ではなく、検証fixtureの管理対象を明示する修正である。これらのfocused診断は最終候補の全ケースCIを代用しない。
 
 停止姿勢の全画面beauty再描画では、実際の時計・骨・座標が同一でもnative fragmentの数pixelの色差が反復描画ごとに変化する。停止のモーション検証は、そのbeauty画像を両方保存したうえで、最終描画色だけを固定した別materialによる実GPU比較へ分けた。実際にコンパイルされたnative／比較側vertex shaderのSHA256一致、骨行列・pose・全node world行列・ゲーム時計の不変性、固定色画像の既存0差分条件を必須とする。各ケースで実rootを0.03動かす反例も描き、16pixel以上の変化を検出できない比較器は合格にしない。通常の全339描画ペア、Flow／壁のGTAO、表示中・中断・解放の検査はnative beauty shaderのままであり、この停止の比較を本家の画像一致の証拠にはしない。
+
+## 公開 issue 群6（76/86/91/180）の追記（2026-10-04、公開版のみ）
+
+`game/` は公開版ではなく、PR #185 のマージで削除済み。以下は `inkwave-public/` を `patches/splatoon3/adapter.mjs` と実ランタイムで合成したロジック測定であり、ブラウザ実動作・Switch 実機比較ではない。詳細は `reports/issue-freebuff-6-20261004.md`、回帰は `patches/splatoon3/tests/public-issues-6.test.mjs`、証拠は `evidence/actions-freebuff-20261004/freebuff-6/`。
+
+| issue | 対象 | 本家参照（Ver.11.3.0） | INKWAVE の状態 | 確認状態 |
+|---|---|---|---|---|
+| 180 | 壁ジャンプ（イカノボリ） | 壁でジャンプ長押し→チャージ、離して上昇。長いほど強く、上限あり（Inkipedia Mobility） | `runtime/movement.mjs` の `beforeActions` がチャージ/バーストを実装済み。合成 Actor で充填・静止・離し上昇・単調増加・乾き/敵インク/非登攀の拒否・通常登攀維持を回帰確認 | 合成で確認。`surge.velocity`等は校正値で本家未確認 |
+| 86 | スーパージャンプ | 準備80F=1.3333s、移動138F=2.300s、クイックスーパージャンプで短縮 | adapter が `s3.jumpChargeTime`/`jumpFlightTime` を使用。AP0 で80/138 tick、AP最大で短縮を合成確認 | 妖精形開始の約21F追加は未実装（検証済み数値なし） |
+| 91 | 通常splatの復活時間 | 通常約8.5s、溺死約7.0s、場外約5.5s（Inkipedia、報告の二次資料） | `profile.respawn` と adapter の死因分岐を追加。通常8.5s/水7.0sを合成確認。Quick Respawn は補正後の基準から減算 | 数値は二次資料で公式未確認。`reference.respawn.total` は unknown。遠隔splatは単一値のまま |
+| 76 | スペシャル使用時のインク | 発動でインクタンク全回復 | `runtime/resources.mjs` が `_startSpecial` を包み、成功時のみ1回回復。slam/storm・未発動・継続中の非再回復・次弾消費を合成確認 | 合成で確認 |
+
+compare 対象の変更点は `patches/splatoon3/profile.json` の `player.respawnTime`/`respawn`、`runtime/resources.mjs`、`adapter.mjs` の respawn フックのみ。武器キットや他ファイルは変更していない。未確認の数値を公式値として確定しない。

@@ -79,6 +79,11 @@
       "rawValue": 0.4
     }
   },
+  "player.respawnTime": {
+    "value": 8.5,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
   "weapons.shooter.inkPerShot": {
     "value": 0.9199999999999999,
     "status": "derived from pinned extracted data; physical scale unverified",
@@ -1713,6 +1718,21 @@
       "factor": 0.016666666666666666,
       "rawValue": 138
     }
+  },
+  "respawn.normal": {
+    "value": 8.5,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "respawn.water": {
+    "value": 7,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "respawn.outOfBounds": {
+    "value": 5.5,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
   },
   "gearExtra.inkRecoveryKid.0": {
     "value": 600,
