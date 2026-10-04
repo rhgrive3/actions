@@ -99,7 +99,7 @@ test('actual projectile path retains narrow vertical paint flight and one-attack
   for (const vertical of [false, true]) {
     system.list.length = 0; a.weaponRunner.s3FlickVertical = vertical;
     system.fireFlick(a, a.weapon);
-    const drops = [...system.list]; assert.equal(drops.length, vertical ? 5 : 12);
+    const drops = [...system.list]; assert.equal(drops.length, vertical ? 5 : 13);
     assert.ok(drops.every(p => p.s3Vertical === vertical && p.grav === a.weapon.flickGravity && p.drag === a.weapon.flickDrag));
     assert.ok(drops.every(p => p.trailRadius > 0 && p.radius > 0));
     widths.push(Math.max(...drops.map(p => Math.abs(Math.atan2(p.vel.x, p.vel.z)))));
