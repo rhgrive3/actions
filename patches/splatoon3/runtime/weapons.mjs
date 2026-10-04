@@ -148,8 +148,22 @@ export function installWeapons(context, profile) {
     return w.kind === 'dualies' && this.s3Turret ? w.spreadLock : spread.call(this, w);
   };
   const fireCharger = Projectiles.prototype.fireCharger;
+  const feetDown = new THREE.Vector3(0, -1, 0), feetFrom = new THREE.Vector3(), feetAt = new THREE.Vector3(), feetHit = new Hit();
+  // Reference behavior: a Charger shot always inks the ground at the shooter's
+  // feet (足元塗り), independently of the longitudinal line samples and the
+  // random line paint. This is a dedicated nearest splash, resolved once per
+  // shot with a fixed seed so it cannot depend on the paint RNG.
+  function feetSplash(a, w) {
+    const radius = w.feetPaintRadius;
+    if (!(radius > 0)) return;
+    feetFrom.set(a.pos.x, a.pos.y + 0.2, a.pos.z);
+    const g = G.physics.raycast(feetFrom, feetDown, 3.5, feetHit, true);
+    if (!g.hit) return;
+    const area = G.paint.splat(feetAt.copy(g.point).addScaledVector(g.normal, 0.1), radius, a.team, { seed: 0, kind: 'chargerFeet' });
+    a.addTurf(area);
+  }
   Projectiles.prototype.fireCharger = function (a, w, charge) {
-    if (charge < .999) return fireCharger.call(this, a, w, charge);
+    if (charge < .999) { const result = fireCharger.call(this, a, w, charge); feetSplash(a, w); return result; }
     const muzzle = this._muzzle(a, new THREE.Vector3()).clone(), dir = this._aimFrom(a, muzzle, new THREE.Vector3()).clone();
     const hit = G.physics.raycast(muzzle, dir, w.rangeMax, new Hit(), true);
     let length = hit.hit ? hit.dist : w.rangeMax;
@@ -165,6 +179,7 @@ export function installWeapons(context, profile) {
     try { G.actors = []; fireCharger.call(this, a, w, charge); }
     finally { G.actors = actors; }
     for (const { actor } of victims.sort((x, y) => x.distance - y.distance)) this.applyHit(a, actor, w.damageMax, 'charger');
+    feetSplash(a, w);
   };
   const auto = WeaponRunner.prototype._auto;
   WeaponRunner.prototype._auto = function (dt, input, w) {

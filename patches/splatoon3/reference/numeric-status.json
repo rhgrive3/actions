@@ -794,6 +794,11 @@
       "rawValue": 800
     }
   },
+  "weapons.charger.feetPaintRadius": {
+    "value": 0.7,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
   "weapons.roller.rollSpeed": {
     "value": 7.92,
     "status": "calibration or derived value; see reference raw table and unverified list",

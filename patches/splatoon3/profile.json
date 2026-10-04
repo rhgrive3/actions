@@ -120,7 +120,8 @@
       "keepChargeTime": 1.25,
       "chargeTime": 1,
       "inkRecoverStop": 0.3333333333333333,
-      "damagePartialMax": 80
+      "damagePartialMax": 80,
+      "feetPaintRadius": 0.7
     },
     "roller": {
       "rollSpeed": 7.92,
@@ -367,6 +368,7 @@
       "Flow action-intensify bonus and gear stacking; fixed run/swim/enemy-ink multipliers remain provisional, not equivalent to confirmed AP",
       "Splat Bomb sub-resistance DamageRt_BombH/BombL family routing, sub-saver level, and omitted ink-consume default",
       "charger full-charge storage countdown after emerging, pre-delay fields and charge-to-ink accounting",
+      "charger dedicated nearest/feet splash radius (feetPaintRadius): inferred from the player footprint, not converted from Nintendo RadiusSpawnNearest; magnitude unverified",
       "per-weapon weight-class assignment and Splatling charge-stage movement curve; gear family curves alone do not establish assignment",
       "projectile brake-state defaults, charge-dependent Splatling velocity, collision radii and paint geometry remain unverified",
       "Squid Roll angle/minimum speed/chain reset/armor break vs overflow and duration; consecutive retention is applied once per launch but engine interpretation remains unverified",
