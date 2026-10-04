@@ -59,6 +59,22 @@
     }
   ],
   "parameters": {
+    "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/CollisionParam/InitRadiusForPlayer": {
+      "value": 0.225,
+      "pointer": "/GameParameters/CollisionParam/InitRadiusForPlayer",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference distance",
+      "notes": "InitRadiusForPlayer equals EndRadiusForPlayer; use a common Shooter-anchored scale, not raw distance as world units."
+    },
+    "data/parameter/1130/weapon/WeaponShooterNormal.game__GameParameterTable.json#/GameParameters/CollisionParam/InitRadiusForPlayer": {
+      "value": 0.285,
+      "pointer": "/GameParameters/CollisionParam/InitRadiusForPlayer",
+      "sourceId": "data/parameter/1130/weapon/WeaponShooterNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference distance",
+      "notes": "InitRadiusForPlayer equals EndRadiusForPlayer; use a common Shooter-anchored scale, not raw distance as world units."
+    },
     "data/parameter/1130/misc/params.json#/MoveVel_Human": {
       "value": [
         0.144,

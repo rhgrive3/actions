@@ -79,6 +79,29 @@
       "rawValue": 0.4
     }
   },
+  "splatlingPlayerCollision.referenceRadius": {
+    "value": 0.225,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/CollisionParam/InitRadiusForPlayer",
+      "rawValue": 0.225,
+      "factor": 1
+    }
+  },
+  "splatlingPlayerCollision.referenceShooterRadius": {
+    "value": 0.285,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponShooterNormal.game__GameParameterTable.json#/GameParameters/CollisionParam/InitRadiusForPlayer",
+      "rawValue": 0.285,
+      "factor": 1
+    }
+  },
+  "splatlingPlayerCollision.shooterWorldRadius": {
+    "value": 0.15,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
   "weapons.shooter.inkPerShot": {
     "value": 0.9199999999999999,
     "status": "derived from pinned extracted data; physical scale unverified",

@@ -187,3 +187,6 @@ Flow の外殻・粒・リボンが GTAO の法線／深度パスに不透明な
 Nintendoの非公開protocolや通信時刻を推定して本家一致とはしない。
 実装範囲、既存PR重複監査と確定した検証結果は
 [batch C記録](inkwave-batch-c-issues.md)に記録する。
+## 2026-10-04 Heavy Splatling player radius / charge-walk
+
+[#403/#470 comparison](inkwave-splatling-radius-charge-2026-10-04.md) records the sourced `.225/.285` relative player-collider correction and the active-charge3.72 target. Visual/field dimensions, Actor acceleration, and charge/stream timing are preserved. The report distinguishes native/minified-module regressions, negative controls, and actual PR64 composition from unverified absolute Switch distance and real-device parity.
