@@ -41,6 +41,9 @@ on:
         description: Run isolated render repeatability diagnosis (never full acceptance)
         type: boolean
         default: false
+concurrency:
+  group: validate-inkwave-${{ github.event.pull_request.number || inputs.source_sha || github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 env:
@@ -152,14 +155,20 @@ jobs:
             _site-source-sha.txt
           retention-days: 14
   browser:
-    needs: validate
+    if: inputs.diagnostic_only != true
     runs-on: ubuntu-latest
     timeout-minutes: 90
     strategy:
       fail-fast: false
-      max-parallel: 2
+      max-parallel: 3
       matrix:
-        suite: [active, catalog, ui]
+        include:
+          - suite: active
+            browsers: chromium
+          - suite: catalog
+            browsers: chromium
+          - suite: ui
+            browsers: chromium webkit
     env:
       TMPDIR: ${{ github.workspace }}/.ci-scratch
       TMP: ${{ github.workspace }}/.ci-scratch
@@ -174,10 +183,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - uses: actions/download-artifact@v4
-        with:
-          name: inkwave-patched-site-${{ inputs.source_sha || github.sha }}
-          path: .built-site
+      - name: Build patched site for this browser shard
+        run: |
+          mkdir -p .built-site
+          npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1
+          node scripts/build-inkwave.mjs inkwave-public .built-site/_site
+          git rev-parse HEAD > .built-site/_site-source-sha.txt
       - name: Prepare workspace storage and browser
         run: |
           mkdir -p .ci-scratch
@@ -192,8 +203,7 @@ jobs:
           mkdir -p "$CI_STORAGE/evidence" "$CI_STORAGE/cache"
           test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
           test "$(cat .built-site/_site-source-sha.txt)" = "$SOURCE_SHA"
-          npm install --no-save --no-package-lock --silent playwright@1.62.1
-          npx playwright install --with-deps chromium webkit
+          npx playwright install --with-deps ${{ matrix.browsers }}
       - name: Verify active browser behavior and loaded artifact bytes
         if: matrix.suite == 'active'
         run: node scripts/check-inkwave-browser.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/game" --profile-dir "$CI_STORAGE/cache/game" --exact-source
