@@ -99,9 +99,9 @@ Shooter/Dualies improve from shorter live projectile lifetime; Splatling and Slo
 ## Draft acceptance boundary
 
 Ready for integration review only after all existing validate/browser jobs are green.
-Physical Switch/iOS/Android fidelity and the unresolved roller-height/collision semantics are not represented as complete.
+Physical Switch/iOS/Android fidelity and the remaining Roller field/world collision + unit-height semantics are not represented as complete.
 
-## Plus PR #63 integration note
+## PR #63 integration note
 
 PR #63 (`inkwave/issue-batch-44-58`) overlaps weapon behavior but most ownership composes cleanly: its Shooter first-shot/swim/jump-spread timing and Charger charge/storage gates sit above/beside this workstream's projectile flight model. Its field-collision radius wrapper can compose with the world-collision query used here.
 
