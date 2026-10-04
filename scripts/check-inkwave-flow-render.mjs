@@ -83,7 +83,8 @@ export function verifyFlowBuild(site, exactSource = false) {
       : key.startsWith('patch/') ? 'patches/splatoon3/' + key.slice(6)
         : key.startsWith('touch-layout/') ? 'patches/touch-layout/' + key.slice(13)
           : key.startsWith('reliability/') ? 'patches/reliability/' + key.slice(12)
-            : key.startsWith('local-quality/') ? 'patches/local-quality/' + key.slice(14) : null;
+            : key.startsWith('local-quality/') ? 'patches/local-quality/' + key.slice(14)
+              : key.startsWith('network-replication/') ? 'patches/network-replication/' + key.slice(20) : null;
     if (!file || !inside(ROOT.replace(/\/$/, ''), fs.realpathSync(path.resolve(ROOT, file)))
         || hash(fs.readFileSync(path.join(ROOT, file))) !== digest) throw Error('Flow build input differs from source: ' + key);
     return file;

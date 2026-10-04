@@ -11,14 +11,18 @@ test('integration retains immutable source and independently rebuilt artifact id
 });
 test('parallel browser families keep motion, WebKit, responsiveness and negative identity gates', () => {
   assert.ok(workflow.includes('max-parallel: 3'));
-  for (const suite of ['suite: active', 'suite: catalog', 'suite: ui']) assert.ok(workflow.includes(suite), suite);
+  for (const suite of ['suite: active', 'suite: catalog', 'suite: ui', 'suite: network']) assert.ok(workflow.includes(suite), suite);
   assert.ok(workflow.includes('browsers: chromium webkit'));
   assert.ok(workflow.includes('npx playwright install --with-deps ${{ matrix.browsers }}'));
   assert.ok(!workflow.includes('needs: validate'));
   assert.ok(workflow.includes('cancel-in-progress: true'));
-  for (const gate of ['browser', 'motion', 'motion-detail', 'flow-render', 'wall-render', 'motion-catalog', 'touch-layout', 'reliability', 'touch-layout-identity', 'responsive']) {
+  for (const gate of ['browser', 'motion', 'motion-detail', 'flow-render', 'wall-render', 'motion-catalog', 'touch-layout', 'reliability', 'touch-layout-identity', 'responsive', 'network-browser']) {
     assert.ok(workflow.includes(`node scripts/check-inkwave-${gate}.mjs`), gate);
   }
+  assert.ok(workflow.includes('scripts/check-inkwave-network-comparison.mjs'));
+  assert.ok(workflow.includes('patches/network-replication/tests/*.test.mjs'));
+  assert.ok(workflow.includes('patches/network-replication/**'));
+  assert.ok(workflow.includes('patches/movement-physics/**'));
   assert.ok(workflow.includes('patches/touch-layout/**'));
   assert.ok(workflow.includes('patches/reliability/**'));
 });
