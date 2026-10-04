@@ -2109,6 +2109,51 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "walkMotion.phaseLockRange": {
+    "value": 0.4,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "walkMotion.minFootGap": {
+    "value": 0.09,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "walkMotion.sideStrideCut": {
+    "value": 0.45,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "walkMotion.strafeTwistRun": {
+    "value": 1.25,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "walkMotion.footLength": {
+    "value": 0.24,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "walkMotion.travelTurnRate": {
+    "value": 10,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "walkMotion.reversalAngle": {
+    "value": 2.6,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "walkMotion.twistRate": {
+    "value": 4.5,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "walkMotion.clockRestartWeight": {
+    "value": 0.2,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
   "walkMotion.landingLock": {
     "value": 0.93,
     "status": "calibration or derived value; see reference raw table and unverified list",

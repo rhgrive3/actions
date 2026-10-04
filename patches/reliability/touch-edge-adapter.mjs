@@ -1,5 +1,7 @@
-// Build-copy overlay, applied after the gameplay adapter. A completed touch tap
-// must reach the same simulation tick that consumes keyboard/mouse press edges.
+// Build-copy input delivery, applied after the gameplay adapter. Existing raw
+// edge sets belong to Input/MobileInput and are consumed by the fixed clock.
+// Carry the physical jump edge through Actor: deriving it again from simulated
+// holds loses release/repress sequences when no tick samples the release.
 import { replaceOnce } from './input-adapter.mjs';
 
 const INTENTS = {
@@ -14,9 +16,33 @@ export function adaptTouchEdges(rel, code) {
   if (rel === 'src/game/player.js') {
     for (const [id, desktop] of Object.entries(INTENTS)) {
       const before = `    it.${id} = ${desktop} || !!touch?.down('${id}');`;
-      const after = `    it.${id} = ${desktop} || !!(touch?.down('${id}') || touch?.wasPressed('${id}'));`;
+      const padEdges = { squid: [6], fire: [7], sub: [5], special: [3, 11] }[id] || [];
+      const pad = padEdges.map(button => ` || inp.padPressed.has(${button})`).join('');
+      const edge = id === 'jump' ? `\n    it.jumpPressed = inp.wasPressed('Space') || inp.padPressed.has(0) || !!touch?.wasPressed('jump');` : '';
+      const after = `    it.${id} = ${desktop}${pad} || !!(touch?.down('${id}') || touch?.wasPressed('${id}'));${edge}`;
       code = replaceOnce(code, before, after, `touch ${id} press delivery`);
     }
+    code = replaceOnce(code,
+      '      it.move.set(0, 0, 0); it.fire = it.jump = it.squid = it.sub = it.special = false;',
+      '      it.move.set(0, 0, 0); it.fire = it.jump = it.squid = it.sub = it.special = false;\n      it.jumpPressed = false;',
+      'disabled controller drops physical jump edge');
+  } else if (rel === 'src/game/actor.js') {
+    code = replaceOnce(code,
+      '    const jumpPressed = intent.jump && !prev.jump;',
+      '    // Local input carries its physical edge. Bots/remote intent keep their native fallback.\n' +
+      '    const jumpPressed = intent.jumpPressed ?? (intent.jump && !prev.jump);\n' +
+      '    if (intent.jumpPressed !== undefined) intent.jumpPressed = false;',
+      'consume physical jump edge once');
+  } else if (rel === 'src/game/weapons.js') {
+    code = replaceOnce(code,
+      'if (d.t >= d.dur)',
+      '// Accumulated fixed steps can land one rounding unit below the duration.\n' +
+      '      if (d.t + Number.EPSILON * Math.max(1, d.dur) >= d.dur)',
+      'complete dodge at its fixed-step duration boundary');
+    code = replaceOnce(code,
+      "a.form === 'squid' || this.aimingSub || !move",
+      "a.form === 'squid' || this.aimingSub || a.intent.sub || !move",
+      'current sub intent owns admission before runner update');
   } else if (rel === 'src/core/input.js') {
     code = replaceOnce(code,
       '  endFrame() {\n    this.pressed.clear();',

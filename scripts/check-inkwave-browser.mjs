@@ -111,6 +111,88 @@ try {
     return {state:g.match.state, elapsedAt20Hz:initial-g.match.time-.5, movement:actor.pos.distanceTo(before), hp:actor.hp, gear:actor.s3.loadout, velocityFinite:[actor.vel.x,actor.vel.y,actor.vel.z].every(Number.isFinite), clockTicks:g.s3Clock.ticks, paintedFloorArea, coverage:G.paint.coverage()};
   });
   if (Math.abs(result.gameplay.elapsedAt20Hz-3)>1e-8 || !result.gameplay.velocityFinite || result.gameplay.movement<=0 || result.gameplay.paintedFloorArea<=0 || result.gameplay.coverage[0]<=0 || result.gameplay.coverage[0]>1) throw new Error('Actual browser gameplay regression');
+  // Native keyboard events traverse the loaded match's complete input/action
+  // pipeline. Only ground collision is pinned for this admission-only proof;
+  // the gameplay check above still uses the actual world Physics.
+  await page.bringToFront();
+  await page.evaluate(() => {
+    const G = globalThis.s3ProbeG, g = G.game, a = g.match.local;
+    const canvas = g.R?.renderer?.domElement || document.querySelector('canvas');
+    if (!canvas) throw Error('Game canvas unavailable for physical keyboard proof');
+    const oldTabIndex = canvas.getAttribute('tabindex');
+    canvas.tabIndex = -1; canvas.focus({ preventScroll: true });
+    if (document.activeElement !== canvas) throw Error('Game canvas did not own keyboard focus');
+    const wasFrozen = g.frozen;
+    g.debug.freeze();
+    g.debug.fire(false);
+    a.setWeapon('dualies'); a.ink = 100; a.form = 'kid'; a.grounded = true;
+    a.climbing = false; a.superJumpState = a.specialActive = null;
+    a.jumpBuffer = a.fireBuffer = 0; a.intent.jump = false; a._prevIntent.jump = false;
+    g.input.keys.clear(); g.input.pressed.clear(); g.input.locked = true;
+    // The preceding live match can leave fractional elapsed time queued. This
+    // boundary trial starts at a known tick phase before testing two half frames.
+    g.s3Clock.reset();
+    const integrate = a._integrate, trigger = a.character.trigger;
+    const proof = window.actionProof = { dodges: 0, jumps: 0, wasFrozen, canvas, oldTabIndex };
+    a._integrate = () => { a.grounded = true; };
+    a.character.trigger = function (name, ...args) {
+      if (name === 'dodge') proof.dodges++; if (name === 'jump') proof.jumps++;
+      return trigger.call(this, name, ...args);
+    };
+    proof.restore = () => { a._integrate = integrate; a.character.trigger = trigger; };
+    // Freeze only the live rAF-driven simulation during this admission proof.
+    // Physical browser keyboard events still reach Input, but cannot be consumed
+    // by an unrelated live frame before the explicit fixed-tick calls below.
+  });
+  try {
+    // Space is the physical browser edge under test. Fire and move direction are
+    // independent dodge-admission preconditions, so pin them deterministically
+    // after the keyboard event instead of letting focus/lifecycle behavior of
+    // an unrelated direction key decide whether the trial is legal.
+    await page.keyboard.down('Space');
+    await page.evaluate(() => {
+      const g = s3ProbeG.game;
+      g.debug.key('KeyD', true); g.debug.fire(true);
+      if (document.activeElement !== actionProof.canvas) throw Error('Canvas lost keyboard focus before first fixed tick');
+      if (!g.input.keys.has('Space') || !g.input.pressed.has('Space')) throw Error('Physical Space edge did not reach Input before first fixed tick');
+      if (!g.input.keys.has('KeyD') || !g.input.mouse.left) throw Error('First dodge preconditions were not established');
+      g._skipRender = true; for (let i = 0; i < 31; i++) g._frame(1 / 60);
+    });
+    await page.keyboard.up('Space');
+    await page.evaluate(() => { const g = s3ProbeG.game; g.debug.key('KeyD', false); });
+    await page.keyboard.down('Space');
+    result.actionReliability = await page.evaluate(() => {
+      const g = s3ProbeG.game;
+      // The lifecycle boundary attached to the physical second press may clear
+      // unrelated held controls. Establish the independent direction/fire
+      // preconditions only after the Space edge has reached Input.
+      g.debug.key('KeyA', true); g.debug.fire(true);
+      if (document.activeElement !== actionProof.canvas) throw Error('Canvas lost keyboard focus before second fixed tick');
+      if (!g.input.keys.has('Space') || !g.input.pressed.has('Space')) throw Error('Physical Space edge did not reach Input before second fixed tick');
+      if (!g.input.keys.has('KeyA') || !g.input.mouse.left) throw Error('Second dodge preconditions were not established');
+      const before = actionProof.dodges;
+      g._frame(1 / 120); const renderOnly = actionProof.dodges;
+      g._frame(1 / 120); const after = actionProof.dodges;
+      for (let i = 0; i < 90; i++) g._frame(1 / 60);
+      return { before, renderOnly, after, held: actionProof.dodges, jumps: actionProof.jumps,
+        physicalKeyboardEvents: true, groundCollisionPinned: true };
+    });
+    const r = result.actionReliability;
+    if (r.before !== 1 || r.renderOnly !== 1 || r.after !== 2 || r.held !== 2 || r.jumps !== 0) throw Error('Native keyboard action edge did not reach Character exactly once: ' + JSON.stringify(r));
+    await page.keyboard.up('Space');
+    await page.evaluate(() => { const g=s3ProbeG.game; g.debug.key('KeyA', false); g.debug.fire(false); g._frame(1 / 60); });
+  } finally {
+    await page.evaluate(() => {
+      const g = s3ProbeG.game, wasFrozen = actionProof.wasFrozen;
+      actionProof.restore(); g.debug.fire(false); g.debug.key('KeyD', false); g.debug.key('KeyA', false); g._skipRender = false; g.input.keys.clear();
+      const canvas = actionProof.canvas;
+      if (canvas) {
+        if (actionProof.oldTabIndex === null) canvas.removeAttribute('tabindex');
+        else canvas.setAttribute('tabindex', actionProof.oldTabIndex);
+      }
+      if (!wasFrozen) g.debug.unfreeze();
+    });
+  }
   result.weaponMotion = await page.evaluate(async () => {
     const G=globalThis.s3ProbeG,a=G.game.match.local,ch=a.character,dt=1/60;
     const {flowMotionSnapshot}=await import(new URL('patches/splatoon3/runtime/flow-motion.mjs',document.baseURI).href);
@@ -177,7 +259,7 @@ try {
   result.errors = errors; result.consoleErrors = consoleErrors; result.requestFailures = failures;
   fs.writeFileSync(evidence + '/browser-result.json.writing', JSON.stringify(result, null, 2));
   fs.renameSync(evidence + '/browser-result.json.writing', evidence + '/browser-result.json');
-  console.log(JSON.stringify({status:result.status,sourceSha,contentHash:result.contentHash,gearSelects:result.gearSelects,gameplay:result.gameplay,verifiedResponses:receipts.length,errors})); await browser.close();
+  console.log(JSON.stringify({status:result.status,error:result.error,sourceSha,contentHash:result.contentHash,gearSelects:result.gearSelects,gameplay:result.gameplay,actionReliability:result.actionReliability,verifiedResponses:receipts.length,errors})); await browser.close();
 }
 if (result.status !== 'passed' || errors.length) process.exitCode = 1;
 
