@@ -6,7 +6,14 @@ const identity=JSON.parse(fs.readFileSync(path.join(root,'inkwave-build.json')))
 assert.equal(hash(JSON.stringify(identity.artifacts)),identity.contentHash,'artifact manifest identity');
 for(const[file,sha]of Object.entries(identity.artifacts))assert.equal(hash(fs.readFileSync(path.join(root,file))),sha,'artifact '+file);
 const html=fs.readFileSync(path.join(root,'index.html'),'utf8');const revision=html.match(/<base href="\.\/_versions\/([a-f0-9]{64})\/">/)?.[1];assert.equal(revision,identity.build.revision);
-const preloads=[...html.matchAll(/<link rel="modulepreload" href="\.\/([^"]+)">/g)].map(m=>m[1]);assert.equal(new Set(preloads).size,preloads.length);assert(preloads.length<=131,'preload request budget');
+const preloads=[...html.matchAll(/<link rel="modulepreload" href="\.\/([^"]+)">/g)].map(m=>m[1]);assert.equal(new Set(preloads).size,preloads.length);
+const rangePreloads=preloads.filter(file=>file.startsWith('patches/practice-range/'));
+const corePreloads=preloads.filter(file=>!file.startsWith('patches/practice-range/'));
+const hasRange=Object.keys(identity.files||{}).some(key=>key.startsWith('practice-range/'));
+assert(corePreloads.length<=131,'core preload request budget');
+assert(rangePreloads.length<=(hasRange?14:0),'practice-range preload request budget');
+const rangePreloadBytes=rangePreloads.reduce((sum,file)=>sum+fs.statSync(path.join(root,file)).size,0);
+assert(rangePreloadBytes<=(hasRange?192*1024:0),'practice-range preload byte budget');
 const entry=html.match(/<script type="module" src="\.\/([^"]+)"/)?.[1];assert.equal(entry,'patches/loading-cache/runtime/startup.mjs');
 const initial=[...new Set([...preloads,entry])];const initialJSBytes=initial.reduce((sum,file)=>sum+fs.statSync(path.join(root,file)).size,0);assert(initialJSBytes<=3.2*1024*1024,'initial JS raw budget');
 assert(fs.statSync(path.join(root,entry)).size<=12*1024,'new startup module budget');assert(Buffer.byteLength(html)<=24*1024,'critical HTML budget');
@@ -29,4 +36,4 @@ for(const file of core){
 for(const file of Object.keys(config.assets)){assert(!file.includes('..'));const bytes=fs.readFileSync(path.join(root,'_versions',revision,file));assert.equal(hash(bytes),config.assets[file].sha256);}
 assert(!fs.readFileSync(path.join(root,'src/main.js'),'utf8').includes('.png?h='),'lightmap URL must match precache');
 assert(!html.includes('navigator.serviceWorker.register'),'single runtime registration owner');
-console.log(JSON.stringify({status:'passed',revision,initialJSRequests:initial.length,modulePreloads:preloads.length,initialJSBytes,criticalHTMLBytes:Buffer.byteLength(html),precacheCount:core.size,precacheBytes,workerBytes:Buffer.byteLength(worker),declaredBytes:config.declaredBytes,measurementKind:'deterministic file and dependency gates; not native browser timings'},null,2));
+console.log(JSON.stringify({status:'passed',revision,initialJSRequests:initial.length,modulePreloads:preloads.length,coreModulePreloads:corePreloads.length,practiceRangeModulePreloads:rangePreloads.length,practiceRangePreloadBytes:rangePreloadBytes,initialJSBytes,criticalHTMLBytes:Buffer.byteLength(html),precacheCount:core.size,precacheBytes,workerBytes:Buffer.byteLength(worker),declaredBytes:config.declaredBytes,measurementKind:'deterministic file and dependency gates; not native browser timings'},null,2));
