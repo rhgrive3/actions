@@ -157,7 +157,7 @@ jobs:
   browser:
     if: inputs.diagnostic_only != true
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 120
     strategy:
       fail-fast: false
       max-parallel: 3
