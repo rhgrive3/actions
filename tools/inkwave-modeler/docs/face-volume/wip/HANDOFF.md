@@ -112,3 +112,6 @@
 - ユーザー: 「拡大するとまだガタガタ。線を引けば分かる。顎から首が滑らかなカーブじゃない」。新しい道具 `curve.py OUT DIR..`（頭の中の点から放射状に輪郭をとり、参照=水色・モデル=赤で描く。正面左右と横）。
 - 原因: 首（BODY_torso）の輪が約 9 mm おき（辺 9 mm）。顎と首の角は首の上にあり、その輪でしか曲がれない（顔も jaw_tuck で首にのるので同じ）。
   → `neck_widen.subdivide` {levels, smooth}（編集モードの Subdivide、body_shape のおへそと同じやり方）と `neck_widen.cove` {mm}（首の点を、真上の顔の下面までの距離 h で、R - sqrt(R² - (R-h)²) だけ法線の向きに出す = 半径 R の丸い内角）。試し S1（細分化だけ）、C8、C12（lean のかわりに cove）。
+- 10/04: Z1 を線でなぞった（curve.py）: 正面は顎の線と首のたての線が角でぶつかる。横は顎の下・首のすぐ前に HEAD_face のベロ（真ん中、y -100〜-107、z 45〜50）が首にのらずにたれている（idmap で確認）。
+- 細分化の `smooth` 1.0（bmesh）は首にたてのしわとかけらを出した（S1、C8、C12 は失敗）。`smooth` 0 + `neck_widen.smooth` 0.5×10（S2）はきれい。首の法線（custom normals）は自動の法線と同じ（0.04 度）なので、細分化しても問題ない。
+- 次: S2 + cove（CA 8 mm + lean、CB 12 mm + lean、CC 12 mm lean なし）。
