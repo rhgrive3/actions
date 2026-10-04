@@ -9,6 +9,7 @@ import {
   stepGroundVelocity,
 } from '../../splatoon3/runtime/movement-physics.mjs';
 import { adaptMovementPhysics } from '../../splatoon3/movement-physics-adapter.mjs';
+import { FixedClock } from '../../splatoon3/runtime/clock.mjs';
 
 const close = (a, b, tol = 1e-9) => assert.ok(Math.abs(a - b) <= tol, `${a} != ${b}`);
 const replaceOnce = (code, before, after, label) => {
@@ -103,4 +104,53 @@ test('retained top speeds preserve S3 dimensionless ratios independent of world-
   close(p.weapons.roller.rollSpeed/p.player.runSpeed,1.375);
   close(p.player.enemyInkSpeed/p.player.runSpeed,.25);
   close(p.weapons.roller.rollDashTime,1.5);
+});
+
+
+test('direct ground integrator is partition-invariant at 30/60/120 Hz', () => {
+  const profile=JSON.parse(fs.readFileSync(new URL('../../splatoon3/profile.json',import.meta.url),'utf8'));
+  const segments=[
+    { seconds: 0.1, x:0, z:1, speed:profile.player.runSpeed, accel:profile.player.s3GroundAccel },
+    { seconds: 0.2, x:1, z:0, speed:profile.player.runSpeed, accel:profile.player.s3GroundAccel },
+    { seconds: 0.2, x:-1, z:0, speed:profile.player.runSpeed, accel:profile.player.s3GroundAccel },
+    { seconds: 0.1, x:0, z:0, speed:profile.player.runSpeed, accel:profile.player.s3GroundAccel },
+    { seconds: 0.2, x:0, z:1, speed:profile.player.swimSpeed, accel:profile.player.s3GroundAccel },
+  ];
+  const run=hz=>{
+    const vel={x:0,z:0}, checkpoints=[];
+    for(const s of segments){
+      const steps=Math.round(s.seconds*hz);
+      close(steps/hz,s.seconds,1e-12);
+      for(let i=0;i<steps;i++) stepGroundVelocity(vel,s.x,s.z,s.speed,s.accel,1/hz);
+      checkpoints.push([vel.x,vel.z]);
+    }
+    return checkpoints;
+  };
+  const reference=run(120);
+  for(const hz of [30,60]) {
+    const got=run(hz);
+    got.forEach((v,i)=>{ close(v[0],reference[i][0],1e-9); close(v[1],reference[i][1],1e-9); });
+  }
+});
+
+test('30/60/120 Hz render schedules produce the same 60 Hz authoritative movement ticks', () => {
+  const profile=JSON.parse(fs.readFileSync(new URL('../../splatoon3/profile.json',import.meta.url),'utf8'));
+  const run=renderHz=>{
+    const clock=new FixedClock(), vel={x:0,z:0}, trace=[];
+    for(let frame=0;frame<renderHz*2;frame++) clock.advance(1/renderHz,()=>{
+      const tick=clock.ticks;
+      const phase=tick<30 ? [0,1] : tick<60 ? [1,0] : tick<90 ? [0,-1] : [0,0];
+      stepGroundVelocity(vel,phase[0],phase[1],profile.player.runSpeed,profile.player.s3GroundAccel,1/60);
+      trace.push([vel.x,vel.z]);
+    });
+    return {ticks:clock.ticks,vel,trace};
+  };
+  const reference=run(120);
+  assert.equal(reference.ticks,120);
+  for(const hz of [30,60]) {
+    const got=run(hz);
+    assert.equal(got.ticks,reference.ticks);
+    assert.equal(got.trace.length,reference.trace.length);
+    got.trace.forEach((v,i)=>{ close(v[0],reference.trace[i][0],1e-9); close(v[1],reference.trace[i][1],1e-9); });
+  }
 });
