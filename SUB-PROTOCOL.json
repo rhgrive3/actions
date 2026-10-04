@@ -6,6 +6,7 @@
   "head": "3b15310b10df240daeacf1265e5c7d0683feb1c3",
   "branch": "fix/actions-cline-2-subprotocol-20261004",
   "base": "c089ca1",
+  "mergeHead": "ec212476894270ffcbe568cad8cac519c0b80a89",
   "remote": {
     "url": "https://github.com/rhgrive3/actions.git",
     "pushed": true,
@@ -78,5 +79,6 @@
   ],
   "forbidden": [
     "No broad suite, no glob over tests/*.test.mjs, no full npm/check chain, no browser or build runs were performed in this lane."
-  ]
+  ],
+  "headNote": "mergeHead is this handoff record only; head is the code commit to merge. The record commit cannot contain its own sha, so it is named here by the value it had when written."
 }
