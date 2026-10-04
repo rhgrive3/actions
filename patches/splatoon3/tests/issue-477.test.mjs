@@ -29,6 +29,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { adaptSource } from '../adapter.mjs';
 import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
 import { adaptReliability } from '../../reliability/adapter.mjs';
+import { adaptQualitySource } from '../../local-quality/adapter.mjs';
 import {
   adaptIssue477Source,
   DUALIES_STARTUP_FRAMES,
@@ -44,13 +45,7 @@ import {
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const UPSTREAM = process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
-const ISSUE_484_PATH = '/mnt/workspace/inkwave-batch-c/batches/05/patches/splatoon3/issue-484-adapter.mjs';
-
-let adaptIssue484Source = null;
-if (fs.existsSync(ISSUE_484_PATH)) {
-  const mod = await import(pathToFileURL(ISSUE_484_PATH).href);
-  adaptIssue484Source = mod.adaptIssue484Source || mod.adaptIssue484;
-}
+import { adaptIssue484 as adaptIssue484Source } from './fixtures/pr495-484-adapter.mjs';
 
 let cachedPatchedFixture = null;
 let cachedUnpatchedFixture = null;
@@ -74,19 +69,19 @@ async function buildFixture({ apply477 = true, apply484 = false, compositionOrde
       adapted = adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, source)));
       if (apply477 && apply484 && adaptIssue484Source) {
         if (compositionOrder === '477-then-484') {
-          adapted = adaptIssue477Source(rel, adapted);
+          adapted = adaptQualitySource(rel, adapted);
           adapted = adaptIssue484Source(rel, adapted);
         } else {
           adapted = adaptIssue484Source(rel, adapted);
-          adapted = adaptIssue477Source(rel, adapted);
+          adapted = adaptQualitySource(rel, adapted);
         }
       } else {
-        if (apply477) adapted = adaptIssue477Source(rel, adapted);
+        if (apply477) adapted = adaptQualitySource(rel, adapted);
         if (apply484 && adaptIssue484Source) adapted = adaptIssue484Source(rel, adapted);
       }
     } else if (apply477) {
       const rel = path.relative(ROOT, file);
-      adapted = adaptIssue477Source(rel, adapted);
+      adapted = adaptQualitySource(rel, adapted);
     }
 
     const m = new vm.SourceTextModule(adapted, {
@@ -1090,6 +1085,19 @@ test('Gap C: Composition in both orders with PR495 #484 adapter and production r
       assert.ok(remoteActor.weaponRunner.dodge, `${order}: Remote actor received roll`);
       assert.equal(remoteActor.weaponRunner.dodge.token, 1, `${order}: Remote roll token is 1`);
       assert.equal(remoteActor.s3SpecialCost, 180, `${order}: Remote actor received gear-adjusted specialCost`);
+      // The owner still shows startup at the end of its fourth simulation tick.
+      // Snapshot quantization must not turn that exact boundary into an early roll.
+      for (let i=0;i<4;i++) { ownerActor.weaponRunner.update(1/60, {fire:true}); ownerActor._finishFrame(1/60); }
+      netHost._sendTick(); const boundary = wire.at(-1); boundary.ts = msg.ts + .2;
+      netClient.onMessage('A', boundary); peer.tr = boundary.ts;
+      netClient._sample(remoteActor, peer.tr, 1/60); netClient.applyRemote(remoteActor, 1/60);
+      assert.equal(f.api.dualiesMotionSnapshot(ownerRig.ch).phase, 'startup');
+      assert.equal(f.api.dualiesMotionSnapshot(remoteRig.ch).phase, 'startup', 'fourth-tick owner/remote phase parity');
+      const legacy = JSON.parse(JSON.stringify(boundary)); legacy.ts += .05; delete legacy.rl;
+      netClient.onMessage('A', legacy); peer.tr=legacy.ts;
+      netClient._sample(remoteActor,peer.tr,1/60);netClient.applyRemote(remoteActor,1/60);
+      assert.equal(remoteActor.weaponRunner.dodge.startup,0,'legacy sample cannot retain a stale modern startup');
+      assert.equal(f.api.dualiesMotionSnapshot(remoteRig.ch).phase,'roll');
     } finally {
       netHost.dispose?.();
       netClient.dispose?.();

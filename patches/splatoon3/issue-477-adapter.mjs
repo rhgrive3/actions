@@ -163,8 +163,8 @@ export function adaptIssue477Net(code) {
     '    this.stats.out++;\n    this.s.tr?.broadcast(msg);',
     `    msg.rl = Object.fromEntries([...this.byNid.values()].filter(x => !x.remote && x.weaponRunner?.dodge).map(x => [x.nid, {
       token: x.weaponRunner.dodge.token || 1,
-      phase: (x.weaponRunner.dodge.startup > 1e-10 ? 'startup' : 'roll'),
-      time: r3(x.weaponRunner.dodge.startup > 1e-10 ? Math.max(0, (x.weaponRunner.dodge.startupDur || (4 / 60)) - x.weaponRunner.dodge.startup) : x.weaponRunner.dodge.t),
+      phase: (x.weaponRunner.dodge.startup > 1e-10 || x.weaponRunner.dodge.startupDur > 0 && x.weaponRunner.dodge.t <= 1e-10 ? 'startup' : 'roll'),
+      time: r3(x.weaponRunner.dodge.startup > 1e-10 || x.weaponRunner.dodge.startupDur > 0 && x.weaponRunner.dodge.t <= 1e-10 ? Math.max(0, (x.weaponRunner.dodge.startupDur || (4 / 60)) - x.weaponRunner.dodge.startup) : x.weaponRunner.dodge.t),
       dur: r3(x.weaponRunner.dodge.dur || 0.2),
       ...(x.weaponRunner._dodgeDir && Number.isFinite(x.weaponRunner._dodgeDir.x) && Number.isFinite(x.weaponRunner._dodgeDir.z)
         ? { dir: [r2(x.weaponRunner._dodgeDir.x), r2(x.weaponRunner._dodgeDir.z)] }
@@ -217,12 +217,12 @@ export function adaptIssue477Net(code) {
           if (rl.phase === 'startup') {
             const startupDur = 4 / 60;
             const startupRemainingAtOrig = Math.max(0, startupDur - rl.time);
-            if (phaseAge < startupRemainingAtOrig) {
+            if (phaseAge <= startupRemainingAtOrig + 1e-10) {
               wr.dodge = {
                 token: tk,
                 t: 0,
                 dur: rl.dur,
-                startup: startupRemainingAtOrig - phaseAge,
+                startup: Math.max(0, startupRemainingAtOrig - phaseAge),
                 startupDur: startupDur
               };
             } else {
@@ -249,7 +249,8 @@ export function adaptIssue477Net(code) {
           }
         }
       } else {
-        if (!wr.dodge) wr.dodge = { token: 0, t: 0, dur: a.weapon?.rollTime || 0.2, startup: 0, startupDur: 4 / 60 };
+        if (!wr.dodge) wr.dodge = { token: 0, t: 0, dur: a.weapon?.rollTime || 0.2 };
+        wr.dodge.startup = 0; wr.dodge.startupDur = 0;
         wr.dodge.t = Math.min(wr.dodge.dur, wr.dodge.t + dt);
       }
     } else {
