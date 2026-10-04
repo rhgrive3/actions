@@ -109,6 +109,10 @@ async function main() {
       const { ShadowCache } = await import(prefix + 'src/core/shadowcache.js');
       const { Environment } = await import(prefix + 'src/world/environment.js');
       const assert = (condition, message) => { if (!condition) throw Error(message); };
+      const bounded = (promise, phase) => new Promise((resolve, reject) => {
+        const timer = setTimeout(() => reject(Error('Resource GPU timeout: ' + phase)), 10000);
+        promise.then(value => { clearTimeout(timer); resolve(value); }, error => { clearTimeout(timer); reject(error); });
+      });
       const renderer = new THREE.WebGLRenderer({ antialias: false, preserveDrawingBuffer: true });
       document.body.append(renderer.domElement); renderer.setSize(width, height); renderer.setPixelRatio(1);
       renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFShadowMap;
@@ -138,6 +142,7 @@ async function main() {
         cv.getContext('2d').putImageData(new ImageData(flipped, width, height), 0, 0); images.push({ name, image: cv.toDataURL() });
       };
       const pair = name => {
+        globalThis.resourceProbeProgress = { phase: name };
         cache.enabled = false; const full = pixels(); cache.enabled = true; const cached = pixels();
         const d = difference(full, cached); assert(d.changedBytes === 0, name + ' static shadow pixels differ: ' + JSON.stringify(d));
         assert(cache.enabled && cache.cache?.valid(), name + ' cache disabled/fallback');
@@ -159,6 +164,7 @@ async function main() {
         // Prove the existing offscreen culling decision still excludes only an invisible actor shadow.
         const off = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 1), new THREE.MeshBasicMaterial()); off.castShadow = true; off.position.set(1000, 0, 1000); scene.add(off);
         G.actors = [{ pos: off.position, character: { root: off } }]; pair('offscreen-actor'); assert(cache.stats.skippedActors === 1, 'offscreen actor not culled'); G.actors = []; scene.remove(off); off.geometry.dispose(); off.material.dispose();
+        globalThis.resourceProbeProgress = { phase: 'allocation' };
         const allocations = [], nativeCreateTexture = gl.createTexture; let textures = 0;
         gl.createTexture = function (...args) { textures++; return nativeCreateTexture.apply(this, args); };
         try {
@@ -178,6 +184,7 @@ async function main() {
         } finally { gl.createTexture = nativeCreateTexture; }
         assert(textures === 0, 'private cache allocated a texture'); cache.invalidate(); pair('after-allocation-probe');
         // Native Environment method, real HDR render/mips/clipping. Diagnostic marina scene.
+        globalThis.resourceProbeProgress = { phase: 'reflection' };
         env = Object.create(Environment.prototype);
         Object.assign(env, { _marina: true, reflections: true, _frameId: 0, U: { uReflOn: { value: 0 }, uReflTex: { value: null }, uReflMat: { value: new THREE.Matrix4() } } });
         const nativeRender = renderer.render; let reflectionRenders = 0;
@@ -208,9 +215,11 @@ async function main() {
         // Real context loss/restoration; Three replaces its shadow renderer.
         const loss = gl.getExtension('WEBGL_lose_context'); assert(loss, 'context-loss extension unavailable');
         const lost = new Promise(resolve => renderer.domElement.addEventListener('webglcontextlost', e => { e.preventDefault(); resolve(); }, { once: true }));
-        loss.loseContext(); await lost;
+        globalThis.resourceProbeProgress = { phase: 'context-loss' };
+        loss.loseContext(); await bounded(lost, 'context-loss');
         const restored = new Promise(resolve => renderer.domElement.addEventListener('webglcontextrestored', resolve, { once: true }));
-        loss.restoreContext(); await restored;
+        globalThis.resourceProbeProgress = { phase: 'context-restore' };
+        loss.restoreContext(); await bounded(restored, 'context-restore');
         assert(cache.dirty && cache.cache === null && renderer.shadowMap.render === cache._depthHook, 'cache did not reconnect after context restore');
         pair('context-restored');
         const owned = cache.cache, original = cache._orig; cache.dispose();
