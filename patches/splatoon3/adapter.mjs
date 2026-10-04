@@ -241,7 +241,50 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, '        const k = 1 - b.fuse / SUB.bomb.fuse;', '        const k = 1 - b.fuse / kitBombFuseTotal(SUB, b);', 'sub fuse total');
     code = replaceOnce(code, '    G.boss?.splash(b.owner, c, s.radius, s.damageMax, s.damageMin, \'bomb\');',
       '    G.boss?.splash(b.owner, c, kitBombRadius(SUB, b, s.radius), kitBombDamageMax(SUB, b, s.damageMax), kitBombDamageMin(SUB, b, s.damageMin), \'bomb\');', 'sub boss splash');
-    return `import { segmentCapsuleEntry } from '../../patches/splatoon3/runtime/projectile-collision.mjs';\nimport { applyProjectileHit, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\nimport { kitSubRelease, kitSubHoldSeconds, kitBombAttach, kitBombGravity, kitBombContact, kitBombTrail, kitBombFuseTotal, kitBombPaintRadius, kitBombRadius, kitBombDamageBands, kitBombDamageMax, kitBombDamageMin } from '../../patches/splatoon3/runtime/kit-subs.mjs';\n` + code;
+    // ---- trizooka native projectile connections (lane freebuff-2, issue 177) --
+    // Narrow and confined to the projectile step, the pooled-reuse path and the
+    // ghost replay path. The native loop keeps its single pass, its single
+    // integration and its single contact resolution; these hooks only supply
+    // the per-stage constants, the orbit offset difference and the growing hit
+    // radii for the Trizooka wid. Every other projectile falls straight through.
+    code = replaceOnce(code,
+      '      if (p.age > p.straight) p.vel.y -= p.grav * dt;\n      if (p.drag) p.vel.multiplyScalar(1 - p.drag * dt * (p.age > p.straight ? 1 : 0));',
+      '      if (!kitTrizookaFlight(this, p, dt)) {\n      if (p.age > p.straight) p.vel.y -= p.grav * dt;\n      if (p.drag) p.vel.multiplyScalar(1 - p.drag * dt * (p.age > p.straight ? 1 : 0));\n      }',
+      'trizooka per-stage gravity and drag');
+    // the orbit is an offset DIFFERENCE around the native centreline, applied
+    // after the integration so the swept p.prev -> p.pos segment stays valid
+    code = replaceOnce(code,
+      '      p.pos.addScaledVector(p.vel, dt);',
+      '      p.pos.addScaledVector(p.vel, dt);\n      kitTrizookaOrbitDelta(this, p, dt);',
+      'trizooka orbit offset difference');
+    // a growing per-projectile actor sphere, on top of the native body capsule
+    code = replaceOnce(code,
+      '        const entry = segmentCapsuleEntry(p.prev, p.pos, hitBase(e), PLAYER.radius, h, PLAYER.radius * 0.95 + p.size);',
+      '        const entry = segmentCapsuleEntry(p.prev, p.pos, hitBase(e), PLAYER.radius, h, kitTrizookaActorRadius(this, p) ?? (PLAYER.radius * 0.95 + p.size));',
+      'trizooka growing actor hit sphere');
+    // a growing sphere sweep against the world blocks
+    code = replaceOnce(code,
+      'const wallHit = G.physics.segment(p.prev, p.pos, _hit, true);',
+      'const wallHit = kitTrizookaWorldSweep(this, p, _hit, G.physics);',
+      'trizooka growing world hit sphere');
+    // pooled reuse must not leak the previous round's kit state
+    code = replaceOnce(code,
+      "    p.delay = 0; p.head = false; p.wid = null; p.dmgFar = undefined; p.vol = null; p.ghost = false;",
+      "    p.delay = 0; p.head = false; p.wid = null; p.dmgFar = undefined; p.vol = null; p.ghost = false;\n    kitTrizookaClearPooled(p);",
+      'trizooka pooled-reuse field clearing');
+    // the Trizooka damage bands are discrete table points (53 @2.5, 35 @4.0),
+    // so the blast must step between them rather than lerp continuously
+    code = replaceOnce(code,
+      'distanceDamage(w.splashBands || w.damageBands, d)',
+      'distanceDamage(w.splashBands || w.damageBands, d, !kitTrizookaSteppedBands(p))',
+      'trizooka discrete blast damage bands');
+    // a ghost rebuilds its descriptor and is forced to carry no authority
+    code = replaceOnce(code,
+      "    this.list.push(p);\n  }",
+      "    kitTrizookaGhost(p, a, SPECIALS);\n    this.list.push(p);\n  }",
+      'trizooka ghost descriptor reconstruction');
+
+    return `import { segmentCapsuleEntry } from '../../patches/splatoon3/runtime/projectile-collision.mjs';\nimport { applyProjectileHit, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\nimport { kitSubRelease, kitSubHoldSeconds, kitBombAttach, kitBombGravity, kitBombContact, kitBombTrail, kitBombFuseTotal, kitBombPaintRadius, kitBombRadius, kitBombDamageBands, kitBombDamageMax, kitBombDamageMin } from '../../patches/splatoon3/runtime/kit-subs.mjs';\nimport { kitTrizookaFlight, kitTrizookaOrbitDelta, kitTrizookaActorRadius, kitTrizookaWorldSweep, kitTrizookaClearPooled, kitTrizookaGhost, kitTrizookaSteppedBands } from '../../patches/splatoon3/runtime/trizooka-collision.mjs';\n` + code;
   }
   if (rel === 'src/game/actor.js') {
     code = replaceOnce(code, '    this._updateClimb(dt, isSquid);',

@@ -259,3 +259,66 @@ exercise the `Actor` lifecycle the wrappers sit on.
 - The cartridge eject mesh (`TRIZOOKA_CARTRIDGE`, extracted, not yet driven).
 - Movement/weapon pose needs the original calibrated visual, not a renamed Slam.
 - Browser and GitHub Actions proof at the exact pushed SHA.
+## 9. Native-pipeline integration (lane freebuff-2, second stage)
+
+The selectors of §5 are now **connected to the single native projectile
+pipeline**. Nothing integrates twice: the native loop keeps its one pass, its one
+integration, its one contact resolution and its one network record.
+
+New module `patches/splatoon3/runtime/trizooka-collision.mjs`, wired from
+`adapter.mjs` inside `src/game/weapons.js` only. Every anchor is
+`replaceOnce`, so an ambiguous or missing anchor throws `INKWAVE patch conflict`
+and the build fails closed.
+
+| native site | hook | what it changes |
+| --- | --- | --- |
+| `_step` gravity + drag | `kitTrizookaFlight` | per-stage `grav`/`drag` for the Trizooka wid only; returns `false` so every other projectile takes the native lines unchanged |
+| `p.pos.addScaledVector(p.vel, dt)` | `kitTrizookaOrbitDelta` | the orbit applied as an offset **difference** around the centreline, after the integration so `p.prev → p.pos` stays a valid swept segment |
+| actor capsule entry | `kitTrizookaActorRadius` | the growing per-projectile sphere, added to the native body capsule |
+| world point ray | `kitTrizookaWorldSweep` | a growing sphere sweep against the block OBBs |
+| `_new` pooled reset | `kitTrizookaClearPooled` | every transient removed, plus damage/grav/drag when the pooled round was a kit one |
+| `ghostProjectile` | `kitTrizookaGhost` | descriptor rebuilt from `SPECIALS[wid].projectileDescriptor`, authority forced off |
+| `_blastBurst` bands | `kitTrizookaSteppedBands` | discrete table points, no continuous lerp |
+
+### 9.1 The world sphere sweep, and its honest uncertainty
+
+Native `Physics.segment` is a **point ray** against the block OBBs, so a growing
+shell cannot reuse it unchanged. `kitTrizookaWorldSweep` inflates the native
+result along the surface normal:
+
+```
+back    = r / max(dot(dir, -normal), eps)
+contact = nativePoint - dir * back
+```
+
+That is **exact against a plane**, and every block face is a plane locally, so
+face contact is correct. Near a box **edge or corner** the true sphere contacts
+earlier than a plane back-off predicts, so contact there is reported slightly
+late. The direction of the error is known and it never invents a contact the
+point ray did not have. Fixing it properly needs a real sphere-vs-OBB sweep
+inside `Physics`, which is upstream-owned.
+
+### 9.2 Authority
+
+Exactly one lobe per volley is the damage carrier (`damageOwner === true`). Side
+lobes are `type: 'shot'`, `damage: 0`, `trailEvery: 0`: no HP, no paint, no turf,
+no splash, no gauge, no authoritative packet, no proposal. The shared native `vol`
+record means a carrier damages each victim once per volley. A **ghost is never a
+damage carrier even when its transport is disposed**, so a remote volley presents
+without authority. The blast uses the discrete 53 @2.5 / 35 @4.0 bands, never an
+interpolated value, and the paint radius (3.2) stays distinct from the damage
+radius (4.0).
+
+### 9.3 Tests
+
+`patches/splatoon3/tests/kit-trizooka-native.test.mjs` — **9 pass, 0 fail,
+exit 0**. It drives the real adapted `Projectiles._step` / `_new` /
+`ghostProjectile` through the real production installer with
+`installKitTrizooka` called explicitly, against a real `Physics` and a real OBB
+block — not selector metadata. Covers: the three stages applied by the native
+step; a non-Trizooka projectile left untouched; the orbit as a bounded difference
+rather than an accumulating circle; the actor sphere growing and actually
+inflating the native capsule; the world sphere contacting strictly before the
+bare point ray; pooled reuse clearing every transient; ghost descriptor
+reconstruction with authority stripped; single-carrier authority; and the
+stepped damage bands.

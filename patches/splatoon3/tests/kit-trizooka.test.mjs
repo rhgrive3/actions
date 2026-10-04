@@ -186,8 +186,10 @@ function makeActor(api, over = {}) {
   // lifecycle, not the walk controller (covered by walk.test.mjs and friends)
   a._spawnBarrier = () => {}; a._finishFrame = () => {}; a._integrate = () => {};
   a.grounded = true; a.ground.hit = true; a.ground.face = 0;
-  // the shooter must actually carry the Trizooka for the native path to engage
-  a.weapon = { ...api.WEAPONS.shooter, special: 'trizooka', specialCost: TRIZOOKA_KIT_COST, sub: 'suction' };
+  // the shooter must actually carry the Trizooka for the native path to engage.
+  // The sub is left exactly as the weapon table has it: forcing one here would
+  // trip the kit sub protocol's own registration, which is not this lane's code.
+  a.weapon = { ...api.WEAPONS.shooter, special: 'trizooka', specialCost: TRIZOOKA_KIT_COST };
   a.special = TRIZOOKA_KIT_COST;
   a.specialReady();
   return Object.assign(a, over);

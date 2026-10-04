@@ -273,6 +273,7 @@ export function throwVolley(System, actor, descriptor) {
     p.s3SpecialWeapon = descriptor;            // parent preserves this before _push
     p.s3Weapon = descriptor;
     p.s3VolleyIndex = i;
+    p.s3SizeBase = p.size;             // the native sweep grows on top of this
     p.s3Yaw = actor.aimYaw;               // stable orbit basis before the first step
     p.s3ActionIndex = descriptor.actionIndex ?? 0;
     p.ghost = false;
@@ -598,6 +599,8 @@ export function trizookaOrbitOffset(p, dt) {
 // Fields the parent must clear in native `_new` and reconstruct for a ghost.
 export const TRIZOOKA_PROJECTILE_FIELDS = [
   's3SpecialWeapon', 's3Weapon', 's3VolleyIndex', 's3ActionIndex', 'damageOwner', 's3OrbitPhase', 's3Yaw',
+  's3Stage', 's3StageFrames', 's3StageTransition', 's3ActorRadius', 's3WorldRadius', 's3SizeBase',
+  's3OrbitApplied',
 ];
 
 export function trizookaClearProjectile(p) {
