@@ -182,3 +182,39 @@ test('#293: delayed units grow by flight age only with identical30/60/120Hz trac
  }
  assert.deepEqual(results[0],results[1]);assert.deepEqual(results[1],results[2]);
 });
+
+function runGear(a,gp){a.s3.loadout=Array.from({length:3},(_,i)=>({main:gp===57||gp===10&&i===0?'runSpeed':'none',subs:Array(3).fill(gp===57?'runSpeed':'none')}));a.setWeapon('slosher');}
+test('#347: real continuous windup and release use one actor-local firing cap at 0/10/57 AP on ground and air',async()=>{
+ for(const gp of [0,10,57])for(const grounded of [false,true]){
+  const f=await fixture(),a=f.make('slosher'),r=a.weaponRunner;runGear(a,gp);a.grounded=grounded;
+  const cap=a.weapon.moveSpeedFiring*f.gearCurve(gp,...f.profile.gearExtra.runSpeedFiring),ticks=[];let tick=0,windups=0;
+  near(cap,gp===0?2.4:gp===10?2.5818:3);near(r.moveSpeed(),f.PLAYER.runSpeed*a.s3.modifiers.runSpeed);
+  f.G.projectiles.fireSlosh=()=>ticks.push(tick);
+  for(tick=1;tick<=80;tick++){r.update(DT,{fire:true});if(r.slosh>=0)windups++;if(r.firingT>0)near(r.moveSpeed(),cap);}
+  assert.ok(windups>=24);assert.ok(ticks.length>=3);assert.equal(ticks[0],13);
+  for(let i=0;i<60;i++)r.update(DT,{fire:false});assert.equal(r.slosh,-1);near(r.moveSpeed(),f.PLAYER.runSpeed*a.s3.modifiers.runSpeed);
+ }
+});
+test('#347: movement owner retains ground cap, airborne floor and enemy-ink clamp',async()=>{
+ const f=await fixture(),a=f.make('slosher'),r=a.weaponRunner;r.update(DT,{fire:true});a.intent.move.set(1,0,0);a.intent.fire=true;
+ a.vel.set(2.4,0,0);a._horizontal(DT,false,false);near(a.vel.x,2.4);near(a.vel.z,0);
+ a.grounded=false;a.vel.set(f.PLAYER.airMinSpeed,0,0);a._horizontal(DT,false,false);near(a.vel.x,f.PLAYER.airMinSpeed);
+ a.grounded=true;a.vel.set(a.s3.modifiers.enemyShotSpeed,0,0);a._horizontal(DT,false,true);near(a.vel.x,a.s3.modifiers.enemyShotSpeed);
+});
+test('#347: empty input, actor isolation and other weapon move modes are unchanged',async()=>{
+ const f=await fixture(),a=f.make('slosher'),b=f.make('slosher');runGear(a,57);runGear(b,0);a.weaponRunner.update(DT,{fire:true});b.weaponRunner.update(DT,{fire:true});near(a.weaponRunner.moveSpeed(),3);near(b.weaponRunner.moveSpeed(),2.4);
+ a.reset();a.ink=0;a.weaponRunner.update(DT,{fire:true});assert.equal(a.weaponRunner.slosh,-1);near(a.weaponRunner.moveSpeed(),f.PLAYER.runSpeed*a.s3.modifiers.runSpeed);
+ for(const id of ['shooter','dualies','blaster','charger','splatling','roller']){
+  const c=f.make(id),r=c.weaponRunner;near(r.moveSpeed(),f.PLAYER.runSpeed);r.firingT=.3;near(r.moveSpeed(),c.weapon.moveSpeedFiring);
+  if(id==='dualies'){r.lockT=.2;near(r.moveSpeed(),0);}
+  if(id==='roller'){r.firingT=0;r.rolling=true;r.rollT=0;near(r.moveSpeed(),c.weapon.rollBaseSpeed);}
+ }
+});
+test('#347: 30/60/120 Hz rendering shares identical real ground velocity and attack-cap traces',async()=>{
+ const traces=[];
+ for(const hz of [30,60,120]){
+  const f=await fixture(),a=f.make('slosher'),clock=new FixedClock(),rows=[];runGear(a,10);a.intent.move.set(1,0,0);f.G.projectiles.fireSlosh=()=>{};
+  for(let frame=0;frame<hz;frame++)clock.advance(1/hz,dt=>{a.weaponRunner.update(dt,{fire:rows.length<40});a._horizontal(dt,false,false);rows.push([a.weaponRunner.slosh,a.weaponRunner.moveSpeed(),a.vel.x,a.vel.z]);});traces.push(rows);
+ }
+ assert.deepEqual(traces[0],traces[1]);assert.deepEqual(traces[1],traces[2]);
+});

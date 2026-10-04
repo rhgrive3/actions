@@ -93,6 +93,7 @@ export function adaptSource(rel, code) {
     return code;
   }
   if (rel === 'src/game/weapons.js') {
+    code = replaceOnce(code, 'if (this.slosh >= 0) return w.moveSpeedFiring * 0.7;              // slosher heave plants you a little', 'if (this.slosh >= 0) return w.moveSpeedFiring; // shared sourced firing cap', 'slosher windup sourced move cap');
     code = replaceOnce(code, 'PLAYER.radius * 0.95 + p.size', 'PLAYER.radius * 0.95 + slosherPlayerCollisionRadius(p)', 'slosher age-dependent player radius');
     code = replaceOnce(code, 'if (p.vol) { if (p.vol.hits.includes(e)) dmg = 0; else p.vol.hits.push(e); }', "if (p.vol && p.type !== 'slosh') { if (p.vol.hits.includes(e)) dmg = 0; else p.vol.hits.push(e); }", 'slosher player max-damage aggregation');
     code = replaceOnce(code, '      if (p.delay > 0) { p.delay -= dt; if (p.delay > 0) continue; }   // poured waves: later globs leave a beat later',

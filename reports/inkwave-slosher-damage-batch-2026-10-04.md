@@ -1,6 +1,6 @@
 # 公開 INKWAVE：バケット弾群と最終ダメージ（2026-10-04）
 
-main `0859bf4fab08edc74c25fcb790e662a748a91ec9` の公開 `inkwave-public/` が基準。#217 / #219 / #258 / #261 を最初の4件とし、後続で #293 を同じPRへ加えた5件を対象とする。#297は慣性係数のローカル軸・制約の解釈が裏付け不足のため除外し、推測の2倍加算は実装しない。#302 / #318とは独立のmain基準ブランチ。
+main `0859bf4fab08edc74c25fcb790e662a748a91ec9` の公開 `inkwave-public/` が基準。#217 / #219 / #258 / #261 を最初の4件とし、後続で #293 / #347 を同じPRへ加えた6件を対象とする。#297は慣性係数のローカル軸・制約の解釈が裏付け不足のため除外し、推測の2倍加算は実装しない。#302 / #318とは独立のmain基準ブランチ。
 
 ## 出典と確度
 
@@ -73,3 +73,25 @@ PR64のfidelityPlayerCollision descriptor形式にも同じオブジェクトを
 ネットワークpacketの旧sizeは表示/地形向けのまま。現NetMatch.shouldApplyHitはremote attackerをdropし、射手側が新しい対人判定を決めて既存hit経路で送る。remote ghostの詳細な消滅タイミング/混在ビルド/PR182の全面統合は未検証。既存のgroup damage、最終0.1HP量子化、boss一振り制限は保持する。
 
 #293追加後のローカル結果：全763/763、source専用21/21、公開minify build21/21、PR64実runtime合成1/1、local-quality8/8、motion/workflow gates10/10。固定raw11ファイル・明示151値の照合成功、未知14は維持。contentHash `eb42be9454d2e96f79a7865ae0b3565b3894e8a35377854dd6366281a107c894`。旧headの759件/17件とこの結果は別checkpoint。
+
+
+## 後続 #347：振り上げ中の余分な0.7速度倍率
+
+直前head `83925b327c649eb8904232cfdd7f811885481f84` と、その前の合格head `26c4dcab02ae701b1aa3d2c71212a96bbb0d5869` を保持する。新しいheadへの追加は公開adapterの `slosh >= 0` 分岐のみ。native上流やprofileの基礎値を改変せず、`moveSpeedFiring * .7` を `moveSpeedFiring` とする。他ブキや後段gear/移動ownerを上書きしない。
+
+固定11.3.0 WeaponSlosherStrongの `GameParameters.WeaponParam.MoveSpeed=.04` と、同じ[共通パラメータ](https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/misc/params.json)の通常ヒトLow=.096から、無装備の比は5/12。上記S3 Wikiの表（Ver11.0.0、2026-10-04再閲覧）は0.40/0.96 DU/f、射撃時57 APで0.500 DU/fを示す。rawとの10倍表記差を区別する。INKWAVEの既存×60変換2.4/5.76を維持し、余分な倍率による7/24への低下だけを取り除く。絶対WUが任天堂の実距離と一致する主張ではない。
+
+実Runnerの連続攻撃で、地上/空中のwindupと放出後は0/10/57 APそれぞれ2.4/2.5818/3.0 WU/s上限となる。これは上限値であって瞬間root速度とは区別する。Actor._horizontalは元の地上加減速、空中のairMinSpeed下限、敵インクclampを引き続き所有する。空撃ち/非射撃の歩行速度、他6ブキの射撃・Dualies硬直・Roller rollingは維持する。
+
+追加4回帰で、前/後・反復攻撃・通常歩行復帰・0/10/57 AP・Actor分離・地上実速度上限・空中下限・敵インク・他武器・30/60/120Hz同一の実速度traceを確認する。
+
+### 既存PRの実runtime合成
+
+一時合成fixtureで次の確定headを読み、6組（0/10/57 AP × Flow有無）を1テストとして実行した。
+- PR59 `8880f3bf6aa655dd61a16555fdfdb8b8fec1d10a` のmovement-physics-adapter/runtimeとprofileの加速度2値。
+- PR318 `c6b13fde64486d21d7209cebee91a26671cbb516` のweapon-gates runtime、Slosher放出時のpostShotDelay設定、該当profile値。既存Slosher/最終HPインストーラーを保持。
+- PR341 `f81652b6fb478241a54c3676d33d3c030a186133` のgear/flow/flow-effects runtimeとprofile.flow。
+
+実発動Flowの射撃ヒト速AP加算/57上限、地上移動owner、振り上げ/放出後の同一上限、発射後15F busy・16F解放、別Actor不変を同時確認した。重複するrolling速度wrapperはPR59の所有方針に合わせて合成時だけ除去した。正確runtimeを使った手動合成の証拠であり、3PR全差分の無競合Git統合や全機能合格と同義ではない。条件付きギアやSwitch実機の新たな受入は未実施。
+
+#347追加後のローカル結果：全767/767、専用25/25、公開minify出力25/25、上記3PR実runtime合成1/1（6条件）、local-quality8/8、motion/workflow gates10/10、固定原典11ファイル151値一致（未知14維持）。contentHash `0ba0736e94fe43364d7326ebd0994f33c428e8693ed8c5cf1260d6755c171771`。新headのActionsは公開後に別途確認する。
