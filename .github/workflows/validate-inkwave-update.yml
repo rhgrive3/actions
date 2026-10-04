@@ -10,6 +10,7 @@ on:
       - "patches/reliability/**"
       - "patches/local-quality/**"
       - "patches/loading-cache/**"
+      - "patches/practice-range/**"
       - "scripts/*inkwave*.mjs"
       - "scripts/tests/inkwave-*.mjs"
       - "scripts/lib/inkwave-*.mjs"
@@ -22,6 +23,7 @@ on:
       - "patches/reliability/**"
       - "patches/local-quality/**"
       - "patches/loading-cache/**"
+      - "patches/practice-range/**"
       - "scripts/*inkwave*.mjs"
       - "scripts/tests/inkwave-*.mjs"
       - "scripts/lib/inkwave-*.mjs"
@@ -64,6 +66,8 @@ jobs:
         run: node --experimental-vm-modules scripts/check-inkwave-patches.mjs
       - name: Verify local quality regressions
         run: node --experimental-vm-modules --test patches/local-quality/tests/*.test.mjs
+      - name: Verify practice range measurement, rules and battle isolation
+        run: node --experimental-vm-modules --test patches/practice-range/tests/*.test.mjs
       - name: Verify loading/cache regressions
         run: |
           node --experimental-vm-modules --test patches/loading-cache/tests/adapter.test.mjs patches/loading-cache/tests/worker.test.mjs
@@ -102,7 +106,7 @@ jobs:
       - name: Check JavaScript syntax
         run: |
           set -euo pipefail
-          find inkwave-public/src inkwave-public/vendor patches/local-quality patches/loading-cache -type f \( -name '*.js' -o -name '*.mjs' \) -print0 |
+          find inkwave-public/src inkwave-public/vendor patches/local-quality patches/loading-cache patches/practice-range -type f \( -name '*.js' -o -name '*.mjs' \) -print0 |
             while IFS= read -r -d '' f; do node --check "$f"; done
       - name: Check local module and stylesheet references
         run: |
@@ -247,6 +251,9 @@ jobs:
         run: |
           node scripts/check-inkwave-touch-layout-identity.mjs --site .built-site/_site --source inkwave-public --checkout-dir "$CI_STORAGE/identity-touch" --evidence-dir "$CI_STORAGE/evidence/identity-touch"
           node scripts/check-inkwave-touch-layout-identity.mjs --reliability --site .built-site/_site --source inkwave-public --checkout-dir "$CI_STORAGE/identity-reliability" --evidence-dir "$CI_STORAGE/evidence/identity-reliability"
+      - name: Verify the practice range in Chromium and WebKit (desktop + phone + tablet)
+        if: matrix.suite == 'ui'
+        run: node scripts/check-inkwave-range.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/range" --profile-dir "$CI_STORAGE/cache/range"
       - name: Verify responsive menus in Chromium and WebKit
         if: matrix.suite == 'ui'
         run: node scripts/check-inkwave-responsive.mjs --source .built-site/_site --section all --evidence-dir "$CI_STORAGE/evidence/responsive" --profile-dir "$CI_STORAGE/cache/responsive"
@@ -262,7 +269,7 @@ jobs:
           checks={
             'active':['game/browser-result.json','motion/motion-result.json','motion-detail/motion-detail-result.json','flow/flow-render-result.json','wall/wall-render-result.json'],
             'catalog':['catalog/motion-catalog-result.json'],
-            'ui':['layout/touch-layout-result.json','reliability/reliability-browser-result.json','identity-touch/touch-layout-identity-result.json','identity-reliability/reliability-identity-result.json','responsive/responsive-result.json','startup/startup-browser-result.json'],
+            'ui':['range/range-result.json','layout/touch-layout-result.json','reliability/reliability-browser-result.json','identity-touch/touch-layout-identity-result.json','identity-reliability/reliability-identity-result.json','responsive/responsive-result.json','startup/startup-browser-result.json'],
           }[suite]
           runtime_performance=os.environ['RUNTIME_PERFORMANCE']=='true'
           if suite=='active' and runtime_performance:
