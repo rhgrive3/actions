@@ -89,9 +89,17 @@ try{
     let changed=0,maxDelta=0,optimizedRepeatChanges=0,nativeRepeatChanges=0;
     for(let j=0;j<a.length;j++){if(a[j]!==b[j]){changed++;maxDelta=Math.max(maxDelta,Math.abs(a[j]-b[j]));}if(a[j]!==optimizedRepeat[j])optimizedRepeatChanges++;if(b[j]!==nativeRepeat[j])nativeRepeatChanges++;}
     const pixels=[];for(let j=0;j<a.length&&pixels.length<20;j++)if(a[j]!==optimizedRepeat[j])pixels.push({x:Math.floor(j/4)%w,y:Math.floor(j/4/w),channel:j%4,a:a[j],repeat:optimizedRepeat[j]});
-    out.push({pixelSamples:pixels,optimizedUniformChanges:differences(ua,uo),nativeUniformChanges:differences(ub,un),glError:gl.getError(),repeat:i,width:w,height:h,changedChannels:changed,maxDelta,optimizedRepeatChanges,nativeRepeatChanges,nonempty:a.some(v=>v!==0),freshTransform:Math.abs(moving.matrixWorld.elements[12]-moving.position.x)<1e-6,sceneAutoRestored:G.scene.matrixWorldAutoUpdate});
+    out.push({...(i===0?{diagnosticImage:r.domElement.toDataURL()}:{}),pixelSamples:pixels,optimizedUniformChanges:differences(ua,uo),nativeUniformChanges:differences(ub,un),glError:gl.getError(),repeat:i,width:w,height:h,changedChannels:changed,maxDelta,optimizedRepeatChanges,nativeRepeatChanges,nonempty:a.some(v=>v!==0),freshTransform:Math.abs(moving.matrixWorld.elements[12]-moving.position.x)<1e-6,sceneAutoRestored:G.scene.matrixWorldAutoUpdate});
    }}finally{moving.position.x=oldX;r.render=native;composer.readBuffer=readBuffer;composer.writeBuffer=writeBuffer;if(shadowCache)shadowCache.dirty=wasDirty;G.scene.updateMatrixWorld();}
    return out;
+  });
+  for(const row of result.renderParity)if(row.diagnosticImage){const file=path.join(evidence,`render-parity-${row.repeat}.png`),fd=fs.openSync(file,'w');try{fs.writeFileSync(fd,Buffer.from(row.diagnosticImage.split(',')[1],'base64'));fs.fsyncSync(fd);}finally{fs.closeSync(fd);}delete row.diagnosticImage;}
+  if(parityOnly)result.renderIsolation=await page.evaluate(()=>{
+   const G=probeG,g=G.game,r=G.renderer,gl=r.getContext(),cache=g.shadowCache,comp=g.R.composer,read=comp.readBuffer,write=comp.writeBuffer;
+   const cases=[['unchanged',null,null],['full-native-shadows',cache,'enabled'],['without-GTAO-diagnostic',g.R.gtao,'enabled'],['without-bloom-diagnostic',g.R.bloom,'enabled']],rows=[];
+   const image=()=>{const bytes=new Uint8Array(gl.drawingBufferWidth*gl.drawingBufferHeight*4);gl.readPixels(0,0,gl.drawingBufferWidth,gl.drawingBufferHeight,gl.RGBA,gl.UNSIGNED_BYTE,bytes);return bytes;};
+   for(const [name,owner,key]of cases){if(name!=='unchanged'&&!owner)continue;const saved=owner?.[key];try{if(owner)owner[key]=false;const draw=()=>{comp.readBuffer=read;comp.writeBuffer=write;r.shadowMap.needsUpdate=true;G.env._reflFrame=-1;if(cache)cache.dirty=true;g.R.render();};draw();const a=image();draw();const b=image();let changed=0,maxDelta=0;for(let i=0;i<a.length;i++)if(a[i]!==b[i]){changed++;maxDelta=Math.max(maxDelta,Math.abs(a[i]-b[i]));}rows.push({name,changedChannels:changed,maxDelta,glError:gl.getError(),diagnosticOnly:true});}finally{if(owner)owner[key]=saved;}}
+   comp.readBuffer=read;comp.writeBuffer=write;return rows;
   });
   if(result.renderParity.some(r=>!r.nonempty||!r.freshTransform||r.changedChannels||r.optimizedRepeatChanges||r.nativeRepeatChanges||!r.sceneAutoRestored))result.errors.push('Render matrix transaction pixel parity failed');
  }
