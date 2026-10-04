@@ -149,6 +149,37 @@ identity, plus a monotonic per-owner serial.
 consumption, tank refill or charge of its own. The countershot itself travels as the native
 `recProj`/`ghostProjectile` packet, so the release event allocates nothing on replicas.
 
+**Absorb (proposal) validation** — every gate is checked before a single byte of state changes,
+and each refusal carries its own reason:
+
+| Refusal reason | Gate |
+|---|---|
+| `unknown-event` / `missing-event-or-actor` / `malformed-payload` / `not-inkvac` / `malformed-serial` / `malformed-subject` | shape, kit tag, `Number.isSafeInteger` serial, subject — checked first, for any event |
+| `sender-actor-mismatch` | `payload.actor === actor` (the transport-resolved actor) |
+| `no-peer-binding-for-sender` | a validator is installed but `opts.from` was not passed |
+| `sender-not-owned-by-peer` | `validator(actor, opts.from)` is not exactly `true` (a throwing validator grants no trust) |
+| `self-proposal` | the sender is not its own target |
+| `same-team-sender` | the sender must be a genuine enemy of the owner |
+| `dead-sender` | the sender must be alive |
+| `replica-is-not-an-authority` | the target must be **locally owned** |
+| `dead-target` | the target must be alive |
+| `no-local-activation` / `stale-or-mismatched-serial` | the target must hold this exact live activation |
+| `malformed-proposal-key` | key is a non-empty string, ≤ 64 chars, charset `[A-Za-z0-9#._:-]` |
+| `duplicate-proposal` | bounded 64-key ledger |
+
+**Peer binding is parent-owned.** Which peer a packet came from cannot be recovered from a
+replayed payload, so the parent must install
+`installInkVacSenderValidator((actor, fromPeerId) => senderPeerId(actor) === fromPeerId)` and
+call `replayInkVac(name, actor, payload, { from })`. Until then the module takes the
+unvalidated path and says so in `INK_VAC_CALIBRATION.authorityStatus` rather than pretending.
+
+**Lifecycle ordering.** `release`/`dispose` record a bounded **tombstone** (last 32 serials per
+replica) *before* anything else, even when no replica state exists — so a release that overtakes
+its own activation still blocks the delayed activation (`activation-after-release-or-dispose`),
+while the next serial starts normally. Serials are bounded safe integers. Replicated charge is a
+**high-water mark**: a reordered packet carrying a lower value is refused
+(`charge-regression-rejected`) and never walks the cone backwards.
+
 **Native-owned projectile vs ghost.** When a native (non-ghost) round owned by a locally-owned
 shooter enters a replica intake, `onHit` neutralises the shooter-authoritative damage at first
 contact and emits an absorption **proposal** keyed by source projectile and activation
@@ -156,22 +187,20 @@ contact and emits an absorption **proposal** keyed by source projectile and acti
 duplicate-key ledger (last 64 keys) and credits with its own calibration. A ghost round is
 consumed **visually only** — no damage edit, no charge, no proposal, no paint.
 
-**Guards.** Strict `dt <= 0` early return (form, `_prevIntent`, weapons, refill, gauge and the
-inhale clock are all untouched); `_startSpecial` refuses dead, already-holding, reentrant and
-not-ready calls; an `onHit` closure captured before disposal is a no-op; malformed packets,
-duplicate/out-of-order serials, mismatched serials and post-death packets return
-`{ applied: false, reason }` instead of throwing.
+**Other guards.** Strict `dt <= 0` early return (form, `_prevIntent`, weapons, refill, gauge and
+the inhale clock are all untouched); `_startSpecial` refuses dead, already-holding, reentrant and
+not-ready calls; an `onHit` closure captured before disposal is a no-op.
 
-**Parent handoff:** add the five `INK_VAC_EVENTS` names to the native `FORWARD` list and call
-`api.replayInkVac(name, e.actor || e.victim, e)` from the replay path. Replica presentation is
-advanced by `advanceInkVacReplica(actor, dt)`, which is wrapped around
-`NetMatch.prototype.applyRemote` when the real NetMatch is supplied (remote actors are driven by
-`applyRemote`, not `Actor.update`).
+**Parent handoff:** add the five `INK_VAC_EVENTS` names to the native `FORWARD` list, call
+`api.replayInkVac(name, e.actor || e.victim, e, { from: peerId })` from the replay path, and
+install the sender validator. Replica presentation is advanced by
+`advanceInkVacReplica(actor, dt)`, wrapped around `NetMatch.prototype.applyRemote` when the real
+NetMatch is supplied (remote actors are driven by `applyRemote`, not `Actor.update`).
 
 ## Verification
 
 `node --experimental-vm-modules --test patches/splatoon3/tests/kit-ink-vac.test.mjs`
-→ **38 pass / 0 fail**. Tests drive the real `Actor` activation/update, the real `Projectiles`
+→ **46 pass / 0 fail**. Tests drive the real `Actor` activation/update, the real `Projectiles`
 blast entry and the candidate hook. Coverage includes: gauge/tank consumed once; frontal
 absorb with damage disabled; backside rejection; intervening wall; intake length; a projectile
 that only **sweeps through** the volume (analytic first entry at the far boundary); vertical
@@ -196,6 +225,13 @@ harmless; replica advance rejecting `dt <= 0`, negative and `NaN` steps and foll
 a stale `onHit` no-op; `_startSpecial` refusing dead/reentrant/not-ready calls; and a paused
 frame changing nothing at all.
 
+**Authority coverage**: a sender that is not the transport-resolved actor; self-proposal;
+same-team sender; dead sender; replica target; dead target; oversize/whitespace/object/non-string
+keys; spoofed and missing peer binding plus a throwing validator; release-before-activation
+tombstoning with the delayed start blocked and the next serial accepted; charge high-water mark
+against a reordered packet; unknown/malformed packets leaving the live cone, charge and scene
+untouched; and a stale proposal refused after the owner's death.
+
 ## Limitations
 
 - Kit registration (`charger.special='inkVac'`, `specialCost=190`) and the candidate-hook and
@@ -208,7 +244,10 @@ frame changing nothing at all.
 - Blast visuals and `GuideRadius` guidance are not reproduced.
 - The replica stuck-cone guard (7.5 s) is a **calibrated** presentation-only failsafe for a lost
   release/dispose packet, not a sourced duration; the owner packet remains authoritative.
-- The proposal ledger size (64 keys) is an engineering bound, not a sourced value.
+- The proposal ledger (64 keys) and tombstone ledger (32 serials) sizes are engineering bounds,
+  not sourced values; the 64-char key cap is a transport guard, not a Nintendo field.
+- **Peer binding is unverified end-to-end**: the validator hook is implemented and tested, but no
+  real NetMatch peer id has been wired to it, so sender ownership in a live session is not claimed.
 - **Replay is verified against the real composed modules and a faithful mirror of the native
   packer, not against a live NetMatch session.** No actual two-client/browser/online session was
   run: the `FORWARD` registration and the replay-path call are parent-owned and not yet wired.

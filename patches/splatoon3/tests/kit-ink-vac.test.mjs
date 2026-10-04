@@ -436,11 +436,12 @@ async function twoActorSetup() {
   const { f, system } = await setup();
   f.G.scene = new f.THREE.Scene();
   const p1 = f.make('charger');
-  p1.nid = 1; p1.remote = false;
+  p1.nid = 1; p1.remote = false; p1.team = 0;
   p1.weapon = { ...p1.weapon, special: VAC_ID, specialCost: 190 }; p1.special = 190;
-  const p2 = f.make('charger'); p2.nid = 2; p2.remote = true;
-  const q1 = f.make('charger'); q1.nid = 1; q1.remote = true; q1.aimDir.set(0, 0, 1); q1.aimYaw = 0;
-  const q2 = f.make('shooter'); q2.nid = 2; q2.remote = false;
+  const p2 = f.make('charger'); p2.nid = 2; p2.remote = true; p2.team = 1;
+  const q1 = f.make('charger'); q1.nid = 1; q1.remote = true; q1.team = 0;
+  q1.aimDir.set(0, 0, 1); q1.aimYaw = 0;
+  const q2 = f.make('shooter'); q2.nid = 2; q2.remote = false; q2.team = 1;
   const viewP = new Map([[1, p1], [2, p2]]);       // machine P resolves nids its own way
   const viewQ = new Map([[1, q1], [2, q2]]);       // machine Q likewise
   const rec = [];
@@ -509,7 +510,8 @@ test('malformed, foreign and target-less packets are dropped, never half-applied
   }
   // A proposal addressed to a proxy of the shooter, or to nobody, is refused.
   assert.equal(f.replayInkVac(EV.absorb, p1, { actor: p2, kit: VAC_ID, serial: activation.serial, key: 'k1' }).reason, 'malformed-subject');
-  assert.equal(f.replayInkVac(EV.absorb, p2, { actor: p2, target: q1, kit: VAC_ID, serial: activation.serial, key: 'k2' }).reason, 'no-local-activation');
+  assert.equal(f.replayInkVac(EV.absorb, p2, { actor: p2, target: q1, kit: VAC_ID, serial: activation.serial, key: 'k2' }).reason,
+    'replica-is-not-an-authority');
   // An unknown event name and a replica packet aimed at a local actor.
   assert.equal(f.replayInkVac('special:unknown', q1, activation).reason, 'unknown-event');
   assert.equal(f.replayInkVac(EV.charge, p1, activation).reason, 'replica-events-need-a-remote-actor');
@@ -518,7 +520,7 @@ test('malformed, foreign and target-less packets are dropped, never half-applied
     'malformed-charge');
   // A replica is never a credit authority, whoever sends the proposal.
   assert.equal(hop(f, viewQ, { actor: q2, target: q1, kit: VAC_ID, serial: activation.serial, key: 'k3' }, EV.absorb).verdict.reason,
-    'no-local-activation');
+    'replica-is-not-an-authority');
   assert.equal(f.inkVacState(q1).charge, before, 'no malformed packet changed the replica charge');
   assert.equal(f.inkVacState(p1).charge, 0, 'no malformed packet changed the owner charge');
 });
@@ -707,4 +709,203 @@ test('a strictly paused frame changes nothing at all on the held special', async
   assert.equal(a.weaponRunner.charging, false, 'no main shot on a paused frame');
   assert.equal(a.stats.specials, 1, 'a paused frame cannot activate a second special');
   a.intent.fire = a.intent.sub = a.intent.squid = a.intent.special = false;
+});
+// ===========================================================================
+// REPLAY AUTHORITY (parent review of 1c37d68)
+// ===========================================================================
+test('the absorb branch refuses a sender that is not the transport-resolved actor', async () => {
+  const { f, p1, p2, q1, q2, rec } = await twoActorSetup();
+  const EV = f.INK_VAC_EVENTS;
+  activate(f, p1);
+  const serial = rec.find(r => r.name === EV.activation).payload.serial;
+  const good = { actor: p2, target: p1, kit: VAC_ID, serial, key: 'p1#a' };
+  // payload.actor names somebody else than the actor the transport resolved.
+  assert.equal(f.replayInkVac(EV.absorb, p2, { ...good, actor: q2 }).reason, 'sender-actor-mismatch');
+  assert.equal(f.replayInkVac(EV.absorb, p2, { ...good, actor: null }).reason, 'sender-actor-mismatch');
+  // A sender claiming itself as the Vac owner is refused.
+  assert.equal(f.replayInkVac(EV.absorb, p1, { ...good, actor: p1, target: p1 }).reason, 'self-proposal');
+  assert.equal(f.inkVacState(p1).charge, 0, 'no forged sender credited anything');
+  assert.equal(f.replayInkVac(EV.absorb, p2, good).applied, true, 'the honest sender is still accepted');
+});
+
+test('the absorb branch requires a live ENEMY sender and a live LOCALLY owned target', async () => {
+  const { f, p1, p2, q1, q2, rec } = await twoActorSetup();
+  const EV = f.INK_VAC_EVENTS;
+  activate(f, p1);
+  const serial = rec.find(r => r.name === EV.activation).payload.serial;
+  const base = (over = {}) => ({ actor: p2, target: p1, kit: VAC_ID, serial, key: 'p1#k', ...over });
+
+  p2.team = p1.team;                       // friendly fire
+  assert.equal(f.replayInkVac(EV.absorb, p2, base()).reason, 'same-team-sender');
+  p2.team = 1;
+  p2.alive = false;                         // dead sender
+  assert.equal(f.replayInkVac(EV.absorb, p2, base()).reason, 'dead-sender');
+  p2.alive = true;
+  assert.equal(f.replayInkVac(EV.absorb, p2, base()).applied, true, 'the live enemy sender is accepted');
+  assert.ok(f.inkVacState(p1).charge > 0);
+
+  // A replica target is never an authority, whoever proposes.
+  assert.equal(f.replayInkVac(EV.absorb, q2, base({ actor: q2, target: q1, key: 'q1#k' })).reason, 'replica-is-not-an-authority');
+  // A dead owner cannot be credited by a late proposal.
+  const held = f.inkVacState(p1).charge;
+  p1.alive = false;
+  assert.equal(f.replayInkVac(EV.absorb, p2, base({ key: 'p1#late' })).reason, 'dead-target');
+  assert.equal(f.inkVacState(p1).charge, held, 'the dead owner was not credited');
+  p1.splat(0, q2, VAC_ID);
+  assert.equal(f.inkVacState(p1), null, 'the genuine death path still disposes the state');
+});
+
+test('proposal keys are bounded and charset-checked', async () => {
+  const { f, p1, p2, rec } = await twoActorSetup();
+  const EV = f.INK_VAC_EVENTS;
+  activate(f, p1);
+  const serial = rec.find(r => r.name === EV.activation).payload.serial;
+  const base = key => ({ actor: p2, target: p1, kit: VAC_ID, serial, key });
+  const reject = key => assert.equal(f.replayInkVac(EV.absorb, p2, base(key)).reason, 'malformed-proposal-key');
+  reject('');
+  reject('x'.repeat(INK_VAC_CALIBRATION.proposalKeyMaxLength + 1));   // unbounded payload refused
+  reject('has space');
+  reject('has\ttab');
+  reject('semi;colon&evil');
+  reject(12345);
+  reject(null);
+  reject(undefined);
+  reject({ nested: 'object' });
+  assert.equal(f.inkVacState(p1).charge, 0, 'no malformed key credited anything');
+  const ok = '2#p17';
+  assert.equal(f.replayInkVac(EV.absorb, p2, base(ok)).applied, true, 'a normal bounded key is accepted');
+  assert.equal(f.replayInkVac(EV.absorb, p2, base(ok)).reason, 'duplicate-proposal', 'and then deduped');
+});
+
+test('the sender is bound to the peer the packet came from (parent-installed validator)', async () => {
+  const { f, p1, p2, rec } = await twoActorSetup();
+  const EV = f.INK_VAC_EVENTS;
+  activate(f, p1);
+  const serial = rec.find(r => r.name === EV.activation).payload.serial;
+  const payload = { actor: p2, target: p1, kit: VAC_ID, serial, key: '2#p1' };
+  // A spoofed peer cannot claim an actor it does not own.
+  const owner = new Map([[p2, 'peerQ']]);
+  f.installInkVacSenderValidator((actor, from) => owner.get(actor) === from);
+  assert.equal(f.replayInkVac(EV.absorb, p2, payload, { from: 'peerR' }).reason, 'sender-not-owned-by-peer');
+  assert.equal(f.replayInkVac(EV.absorb, p2, payload, { from: 'peerZ' }).reason, 'sender-not-owned-by-peer');
+  assert.equal(f.replayInkVac(EV.absorb, p2, payload, {}).reason, 'no-peer-binding-for-sender');
+  assert.equal(f.replayInkVac(EV.absorb, p2, payload).reason, 'no-peer-binding-for-sender');
+  assert.equal(f.inkVacState(p1).charge, 0, 'no unbound packet credited anything');
+  assert.equal(f.replayInkVac(EV.absorb, p2, payload, { from: 'peerQ' }).applied, true, 'the real peer is accepted');
+  // A throwing validator grants no trust.
+  f.installInkVacSenderValidator(() => { throw new Error('boom'); });
+  assert.equal(f.replayInkVac(EV.absorb, p2, { ...payload, key: '2#p2' }, { from: 'peerQ' }).reason, 'sender-not-owned-by-peer');
+  // Removing the validator restores the unvalidated path (and the recorded gap).
+  assert.equal(f.installInkVacSenderValidator(null), null);
+});
+
+test('a release that overtakes its activation tombstones the serial and blocks the delayed start', async () => {
+  const { f, q1, q2 } = await twoActorSetup();
+  const EV = f.INK_VAC_EVENTS;
+  const view = new Map([[1, q1], [2, q2]]);
+  // An activation for serial 41 is still in flight; the release arrives first.
+  const early = hop(f, view, { actor: q1, kit: VAC_ID, serial: 41, charge: 0 }, EV.release);
+  assert.equal(early.verdict.applied, false, 'there is nothing to release yet');
+  assert.equal(early.verdict.reason, 'no-replica-activation');
+  assert.equal(early.verdict.tombstoned, true, 'but the serial IS tombstoned');
+  // The delayed activation must not resurrect a cone that already ended.
+  const late = hop(f, view, { actor: q1, kit: VAC_ID, serial: 41, charge: 0.5 }, EV.activation);
+  assert.equal(late.verdict.reason, 'activation-after-release-or-dispose');
+  assert.equal(f.inkVacState(q1), null, 'no cone appeared');
+  assert.equal(f.G.scene.children.length, 0, 'and no scene object was created');
+  // A dispose overtaking its activation is the same story.
+  assert.equal(f.replayInkVac(EV.dispose, q1, { actor: q1, kit: VAC_ID, serial: 42 }).tombstoned, true);
+  assert.equal(f.replayInkVac(EV.activation, q1, { actor: q1, kit: VAC_ID, serial: 42, charge: 0 }).reason,
+    'activation-after-release-or-dispose');
+  // The NEXT serial starts normally.
+  const next = hop(f, view, { actor: q1, kit: VAC_ID, serial: 43, charge: 0 }, EV.activation);
+  assert.equal(next.verdict.applied, true, 'the next activation is unaffected by the tombstones');
+  assert.ok(f.inkVacState(q1), 'and its cone appears');
+  // A tombstone never blocks a newer live serial, and ordering still holds.
+  assert.equal(f.replayInkVac(EV.release, q1, { actor: q1, kit: VAC_ID, serial: 43 }).applied, true);
+  assert.equal(f.replayInkVac(EV.activation, q1, { actor: q1, kit: VAC_ID, serial: 44, charge: 0 }).applied, true);
+  assert.equal(f.replayInkVac(EV.activation, q1, { actor: q1, kit: VAC_ID, serial: 41, charge: 0 }).reason,
+    'activation-after-release-or-dispose', 'the tombstone outranks the ordering check for an ended serial');
+});
+
+test('replicated charge is a high-water mark: a reordered packet cannot walk it back', async () => {
+  const { f, q1, q2 } = await twoActorSetup();
+  const EV = f.INK_VAC_EVENTS;
+  const serial = 7;
+  f.replayInkVac(EV.activation, q1, { actor: q1, kit: VAC_ID, serial, charge: 0 });
+  assert.equal(f.replayInkVac(EV.charge, q1, { actor: q1, kit: VAC_ID, serial, charge: 0.7 }).applied, true);
+  assert.equal(f.inkVacState(q1).charge, 0.7);
+  // The SAME serial replayed with an older, lower value is refused outright.
+  const back = f.replayInkVac(EV.charge, q1, { actor: q1, kit: VAC_ID, serial, charge: 0.2 });
+  assert.equal(back.applied, false);
+  assert.equal(back.reason, 'charge-regression-rejected');
+  assert.equal(back.charge, 0.7, 'the verdict reports the retained high-water mark');
+  assert.equal(f.inkVacState(q1).charge, 0.7, 'the replica charge never decreased');
+  // Equal and higher values are fine, and out-of-range values clamp.
+  assert.equal(f.replayInkVac(EV.charge, q1, { actor: q1, kit: VAC_ID, serial, charge: 0.7 }).applied, true);
+  assert.equal(f.replayInkVac(EV.charge, q1, { actor: q1, kit: VAC_ID, serial, charge: 1 }).applied, true);
+  assert.equal(f.replayInkVac(EV.charge, q1, { actor: q1, kit: VAC_ID, serial, charge: 5 }).charge, 1, 'clamped to 1');
+  assert.equal(f.replayInkVac(EV.charge, q1, { actor: q1, kit: VAC_ID, serial, charge: -3 }).reason, 'charge-regression-rejected');
+  // A charge for another serial never touches the live cone.
+  assert.equal(f.replayInkVac(EV.charge, q1, { actor: q1, kit: VAC_ID, serial: serial + 1, charge: 1 }).reason,
+    'stale-or-mismatched-serial');
+  assert.equal(f.inkVacState(q1).charge, 1);
+});
+
+test('unknown and malformed packets are refused before any state mutation', async () => {
+  const { f, q1 } = await twoActorSetup();
+  const EV = f.INK_VAC_EVENTS;
+  const serial = 11;
+  f.replayInkVac(EV.activation, q1, { actor: q1, kit: VAC_ID, serial, charge: 0.3 });
+  const cones = f.G.scene.children.length;
+  f.replayInkVac(EV.charge, q1, { actor: q1, kit: VAC_ID, serial, charge: 0.6 });
+  const charge = f.inkVacState(q1).charge;
+
+  // Unknown names never reach a branch, so they cannot tombstone or clean up.
+  assert.equal(f.replayInkVac('special:inkvac-evil', q1, { actor: q1, kit: VAC_ID, serial: serial + 1 }).reason, 'unknown-event');
+  assert.equal(f.replayInkVac('special:inkvac', undefined, { actor: q1, kit: VAC_ID, serial }).reason, 'missing-event-or-actor');
+  assert.equal(f.replayInkVac(EV.activation, q1, { actor: q1, kit: 'trizooka', serial: serial + 1 }).reason, 'not-inkvac');
+  assert.equal(f.replayInkVac(EV.release, q1, { actor: q1, kit: VAC_ID, serial: 1.5 }).reason, 'malformed-serial');
+  assert.equal(f.replayInkVac(EV.release, q1, { actor: q1, kit: VAC_ID, serial: Number.MAX_SAFE_INTEGER + 2 }).reason, 'malformed-serial');
+  assert.equal(f.replayInkVac(EV.charge, q1, { actor: q1, kit: VAC_ID, serial: '11' }).reason, 'malformed-serial');
+
+  // The live activation is untouched by all of that.
+  assert.ok(f.inkVacState(q1), 'the cone survives every rejected packet');
+  assert.equal(f.inkVacState(q1).serial, serial);
+  assert.equal(f.inkVacState(q1).charge, charge, 'no rejected packet changed the charge');
+  assert.equal(f.G.scene.children.length, cones, 'no rejected packet touched the scene');
+  // A well-formed release still tombstones, and only then blocks its activation.
+  assert.equal(f.replayInkVac(EV.release, q1, { actor: q1, kit: VAC_ID, serial: serial + 1 }).tombstoned, true);
+  assert.equal(f.replayInkVac(EV.activation, q1, { actor: q1, kit: VAC_ID, serial: serial + 1, charge: 0 }).reason,
+    'activation-after-release-or-dispose');
+  // A dead subject still cleans up on a well-formed packet, and nothing else.
+  q1.alive = false;
+  assert.equal(f.replayInkVac(EV.charge, q1, { actor: q1, kit: VAC_ID, serial, charge: 1 }).reason, 'dead-actor');
+  assert.equal(f.inkVacState(q1), null, 'a well-formed packet for a dead replica cleans it up');
+  assert.equal(f.replayInkVac('special:inkvac-evil', q1, { actor: q1, kit: VAC_ID, serial, charge: 1 }).reason, 'unknown-event');
+});
+
+test('a proposal that arrives after the owner died is stale, not credited', async () => {
+  const { f, p1, p2, q1, viewP, rec } = await twoActorSetup();
+  const EV = f.INK_VAC_EVENTS;
+  activate(f, p1);
+  const serial = rec.find(r => r.name === EV.activation).payload.serial;
+  // A genuinely serialised proposal, delivered only after the owner is gone.
+  const proposal = { actor: p2, target: p1, kit: VAC_ID, serial, key: '2#p9' };
+  p1.alive = false; p1.splat(0, q1, VAC_ID);
+  assert.equal(f.inkVacState(p1), null, 'the owner state is gone');
+  assert.equal(hop(f, viewP, proposal, EV.absorb).verdict.reason, 'dead-target');
+  // And a DIFFERENT live owner on a new serial refuses the same stale packet.
+  const p3 = f.make('charger');
+  p3.nid = 3; p3.remote = false; p3.team = 0;
+  p3.weapon = { ...p3.weapon, special: VAC_ID, specialCost: 190 }; p3.special = 190;
+  activate(f, p3);
+  assert.ok(f.inkVacState(p3), 'the new owner really activated');
+  assert.notEqual(f.inkVacState(p3).serial, serial);
+  assert.equal(f.replayInkVac(EV.absorb, p2, { ...proposal, target: p3 }).reason, 'stale-or-mismatched-serial');
+  // The same stale packet over the real wire shape against the new owner.
+  const staleForNew = { ...proposal, target: p3 };
+  const viewP3 = new Map([[1, p1], [2, p2], [3, p3]]);
+  assert.equal(hop(f, viewP3, staleForNew, EV.absorb).verdict.reason, 'stale-or-mismatched-serial');
+  assert.equal(f.inkVacState(p3).charge, 0, 'the new activation was not credited from a dead-owner packet');
 });

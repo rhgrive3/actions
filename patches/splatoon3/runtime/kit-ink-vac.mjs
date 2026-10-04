@@ -45,6 +45,12 @@ const BLAST_MIN = 6.0, BLAST_MAX = 11.0;// pinned blast paint radius
 // Bounded duplicate-proposal memory per owner: a proposal is keyed by
 // source projectile + activation, and only the last PROPOSAL_MEMORY keys count.
 const PROPOSAL_MEMORY = 64;
+// Bounded release/dispose tombstones per replica: a delayed activation naming an
+// ended serial must never resurrect a cone. Only the last TOMBSTONE_MEMORY end.
+const TOMBSTONE_MEMORY = 32;
+// An absorption key is a short transport token, never free-form text.
+const MAX_KEY_LENGTH = 64;
+const KEY_PATTERN = /^[A-Za-z0-9#._:-]{1,64}$/;
 
 export const INK_VAC_CALIBRATION = Object.freeze({
   rawToHp: RAW_TO_HP,
@@ -63,6 +69,9 @@ export const INK_VAC_CALIBRATION = Object.freeze({
   burstLifetimeSeconds: SPAWN_BLAST_WAIT / 60,
   burstLifetimeStatus: 'pinned SpawnBlastWaitFrame 50 used as the native projectile lifetime; delay stays 0 so the native integrator runs immediately and bursts on the age>life deadline',
   proposalMemory: PROPOSAL_MEMORY,
+  tombstoneMemory: TOMBSTONE_MEMORY,
+  proposalKeyMaxLength: MAX_KEY_LENGTH,
+  authorityStatus: 'the absorb branch validates the claimed sender against the transport-resolved actor, the installed peer-binding validator, team, liveness, the locally-owned live target and the exact live serial. WITHOUT a parent-installed validator the peer binding cannot be checked from a replayed payload and that gap is not papered over.',
   replicaStuckGuardSeconds: 7.5,
   replicaStuckGuardStatus: 'CALIBRATED presentation-only failsafe: a replica cone is hidden when its release/dispose packet never arrives, after inhaleDurationSeconds (2.5) + 2x the 2.5 s owner cap. Generous by design so it can never pre-empt a real owner release. The owner packet remains authoritative.',
   status: 'pinned geometry/ballistics/timings; origin height, frontal epsilon and the frustum field reading are calibration',
@@ -95,6 +104,12 @@ export const INK_VAC_EVENTS = Object.freeze({
 });
 
 const seenProposals = new WeakMap();
+// Sender/peer ownership cannot be decided from a replayed payload alone: only the
+// native transport knows which peer a packet arrived from. The parent installs
+// that binding; until it does, this module records the gap instead of assuming it.
+let senderValidator = null;
+const tombstones = new WeakMap();
+const KNOWN_EVENTS = new Set(Object.values(INK_VAC_EVENTS));
 let actorIdentSeq = 0, activationSeq = 0, proposalSeq = 0;
 const idents = new WeakMap();
 const remoteSerials = new WeakMap();
@@ -113,6 +128,29 @@ function proposalLedger(owner) {
   if (!s) { s = { set: new Set(), order: [] }; seenProposals.set(owner, s); }
   return s;
 }
+
+/** Parent hook: fn(actor, fromPeerId) must be true only when the transport really
+ *  delivered that packet from the peer that owns `actor`. */
+export function installInkVacSenderValidator(fn) {
+  senderValidator = typeof fn === 'function' ? fn : null;
+  return senderValidator;
+}
+
+function tombstoneLedger(subject) {
+  let s = tombstones.get(subject);
+  if (!s) { s = { set: new Set(), order: [] }; tombstones.set(subject, s); }
+  return s;
+}
+// Recorded even when no live replica state exists, so a release that overtakes its
+// own activation still blocks the delayed activation.
+function addTombstone(subject, serial) {
+  const s = tombstoneLedger(subject);
+  if (s.set.has(serial)) return false;
+  s.set.add(serial); s.order.push(serial);
+  while (s.order.length > TOMBSTONE_MEMORY) s.set.delete(s.order.shift());
+  return true;
+}
+function hasTombstone(subject, serial) { return !!tombstones.get(subject)?.set.has(serial); }
 
 function requireApi() { if (!api) throw new Error('INKWAVE kit-ink-vac not installed'); return api; }
 export function inkVacState(actor) { return states.get(actor) || null; }
@@ -401,38 +439,61 @@ export function advanceInkVacReplica(actor, dt) {
 // ---------------------------------------------------------------------------
 // REMOTE REPLAY API.
 //
-// replayInkVac(eventName, actor, payload) is the single entry point the parent
-// calls from the native NetMatch transport. `actor` is whatever native
+// replayInkVac(eventName, actor, payload, opts) is the single entry point the
+// parent calls from the native NetMatch transport. `actor` is whatever native
 // _onLocalEvent/_playEvent resolve as `e.actor || e.victim`; for an absorption
 // PROPOSAL that is the SHOOTER and the Vac owner arrives as payload.target, so a
-// proposal can never be credited to the shooter by accident.
+// proposal can never be credited to the shooter by accident. `opts.from` is the
+// peer the packet arrived from -- information this module cannot recover on its
+// own, so the parent must pass it and install a sender validator
+// (installInkVacSenderValidator) to bind a sender actor to its real owner.
 //
-// Every branch is guarded and returns a verdict instead of throwing, so a
-// malformed or out-of-order packet is dropped rather than half-applied:
+// Validation order is deliberate: the event name, payload shape, kit tag, serial
+// and subject are all checked BEFORE any state is touched, so a malformed or
+// unknown packet can never mutate anything. Every branch returns a verdict
+// instead of throwing:
 //   { applied: true, ... } | { applied: false, reason }
-export function replayInkVac(eventName, actor, payload) {
+export function replayInkVac(eventName, actor, payload, opts = {}) {
   const drop = reason => ({ applied: false, reason });
   if (!api) return drop('not-installed');
-  if (typeof eventName !== 'string' || !actor) return drop('missing-event-or-actor');
+  const EV = INK_VAC_EVENTS;
+  // 1. Unknown event names are refused before anything is read or written.
+  if (!KNOWN_EVENTS.has(eventName)) return drop('unknown-event');
+  // 2. Shape, tag, serial and subject.
+  if (!actor || typeof actor !== 'object') return drop('missing-event-or-actor');
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return drop('malformed-payload');
   if (payload.kit !== VAC_ID) return drop('not-inkvac');
   const serial = payload.serial;
-  if (!Number.isInteger(serial) || serial < 0) return drop('malformed-serial');
-  const EV = INK_VAC_EVENTS;
+  if (!Number.isSafeInteger(serial) || serial < 0) return drop('malformed-serial');
   const subject = eventName === EV.absorb ? payload.target : actor;
   if (!subject || typeof subject !== 'object') return drop('malformed-subject');
 
-  // A dead owner drops its replica whatever arrives next, so a lost dispose
-  // packet cannot leave a cone hanging in the scene.
-  if (subject.alive !== true && states.has(subject)) disposeInkVac(subject);
-
   if (eventName === EV.absorb) {
-    // The credit authority is the Vac OWNER, never a replayed ghost.
+    // --- sender authority -------------------------------------------------
+    // The claimed sender must BE the actor the transport resolved, must come
+    // from the peer that really owns it, and must be a live enemy.
+    if (payload.actor !== actor) return drop('sender-actor-mismatch');
+    if (senderValidator) {
+      if (opts.from === undefined || opts.from === null) return drop('no-peer-binding-for-sender');
+      let owned = false;
+      try { owned = senderValidator(actor, opts.from) === true; }
+      catch { owned = false; }                     // a throwing validator never grants trust
+      if (!owned) return drop('sender-not-owned-by-peer');
+    }
+    if (actor === subject) return drop('self-proposal');
+    if (actor.team === subject.team) return drop('same-team-sender');
+    if (actor.alive !== true) return drop('dead-sender');
+    // --- target authority -------------------------------------------------
+    // Only a live, LOCALLY owned actor holding this exact activation may credit.
+    if (subject.remote === true) return drop('replica-is-not-an-authority');
+    if (subject.alive !== true) return drop('dead-target');
     const state = states.get(subject);
     if (!state || state.remote) return drop('no-local-activation');
     if (state.phase !== 'inhale' || state.serial !== serial) return drop('stale-or-mismatched-serial');
     const key = payload.key;
-    if (typeof key !== 'string' || !key) return drop('malformed-proposal-key');
+    if (typeof key !== 'string' || key.length === 0 || key.length > MAX_KEY_LENGTH || !KEY_PATTERN.test(key)) {
+      return drop('malformed-proposal-key');
+    }
     const ledger = proposalLedger(subject);
     if (ledger.set.has(key)) return drop('duplicate-proposal');
     ledger.set.add(key); ledger.order.push(key);
@@ -441,12 +502,30 @@ export function replayInkVac(eventName, actor, payload) {
     return { applied: true, serial, charge: state.charge };
   }
 
-  // Everything below is owner->replica state. It may only present.
+  // --- owner -> replica state; it may only present ------------------------
   if (subject.remote !== true) return drop('replica-events-need-a-remote-actor');
+
+  if (eventName === EV.release || eventName === EV.dispose) {
+    // The tombstone is recorded FIRST and unconditionally, so a release that
+    // overtakes its own activation still blocks the delayed activation, and a
+    // release for a serial that never reached us still cannot resurrect later.
+    const fresh = addTombstone(subject, serial);
+    const live = remoteStateOf(subject);
+    if (subject.alive !== true) {
+      if (live) disposeInkVac(subject);
+      return { applied: false, reason: 'dead-actor', serial, tombstoned: fresh };
+    }
+    if (!live) return { applied: false, reason: 'no-replica-activation', serial, tombstoned: fresh };
+    if (live.serial !== serial) return { applied: false, reason: 'stale-or-mismatched-serial', serial, tombstoned: fresh };
+    disposeInkVac(subject);          // presentation only: no projectile, paint or damage
+    return { applied: true, serial, ended: eventName };
+  }
+
   if (eventName === EV.activation) {
     if (subject.alive !== true) return drop('dead-actor');
+    if (hasTombstone(subject, serial)) return drop('activation-after-release-or-dispose');
     const last = remoteSerials.get(subject);
-    if (Number.isInteger(last) && serial <= last) return drop('duplicate-or-out-of-order-activation');
+    if (Number.isSafeInteger(last) && serial <= last) return drop('duplicate-or-out-of-order-activation');
     const current = states.get(subject);
     if (current && current.serial === serial) return drop('duplicate-activation');
     if (current) disposeVisual(current);        // a newer activation supersedes an older cone
@@ -461,20 +540,25 @@ export function replayInkVac(eventName, actor, payload) {
     return { applied: true, serial, charge };
   }
 
-  // charge / release / dispose all require the exact live activation.
+  // The only remaining event is EV.charge.
   const state = remoteStateOf(subject);
+  if (subject.alive !== true) {
+    if (state) disposeInkVac(subject);
+    return drop('dead-actor');
+  }
   if (!state) return drop('no-replica-activation');
   if (state.serial !== serial) return drop('stale-or-mismatched-serial');
-  if (eventName === EV.charge) {
-    if (!Number.isFinite(payload.charge)) return drop('malformed-charge');
-    state.charge = clamp01(payload.charge);
-    state.nearR = intakeNearRadius(state.charge); state.farR = intakeFarRadius(state.charge);
-    updateVisual(state);
-    return { applied: true, serial, charge: state.charge };
+  if (!Number.isFinite(payload.charge)) return drop('malformed-charge');
+  // Charge is a high-water mark: a reordered packet can never walk a replica's
+  // cone backwards, so a stale low value is refused rather than applied.
+  const next = clamp01(payload.charge);
+  if (next < state.charge) {
+    return { applied: false, reason: 'charge-regression-rejected', serial, charge: state.charge };
   }
-  if (eventName !== EV.release && eventName !== EV.dispose) return drop('unknown-event');
-  disposeInkVac(subject);          // presentation only: no projectile, paint or damage
-  return { applied: true, serial, ended: eventName };
+  state.charge = next;
+  state.nearR = intakeNearRadius(state.charge); state.farR = intakeFarRadius(state.charge);
+  updateVisual(state);
+  return { applied: true, serial, charge: state.charge };
 }
 
 // ---------------------------------------------------------------------------
@@ -593,6 +677,10 @@ export function installKitInkVac(context, _profile) {
   // transport: add INK_VAC_EVENTS names to the native FORWARD list and call
   // api.replayInkVac(name, e.actor || e.victim, e) from the replay path.
   api.replayInkVac = replayInkVac;
+  // The parent MUST bind the sender actor to the peer the packet came from:
+  // installInkVacSenderValidator((actor, fromPeerId) => senderPeerId(actor) === fromPeerId)
+  // and pass the peer id as replayInkVac(name, actor, payload, { from }).
+  api.installInkVacSenderValidator = installInkVacSenderValidator;
   api.advanceInkVacReplica = advanceInkVacReplica;
   api.INK_VAC_EVENTS = INK_VAC_EVENTS;
 
