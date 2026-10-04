@@ -10,10 +10,10 @@
 The supplied package was independently restored against the exact GitHub Actions artifact for main `5e28dbd...` (artifact SHA-256 `3ac3aed0e5d68947adc16883f9d0be3d60384965805eae317fe5d61b5e02d597`).
 
 Independent reproduction:
-- source package tests: **77 / 77 pass**
+- source package tests: **78 / 78 pass**
 - package identity verification: pass
 - 7 pinned datamine JSONs fetched independently
-- **51 / 51 explicit reference fields matched the pinned originals**
+- **63 / 63 explicit reference fields matched the pinned originals**
 
 The unversioned analyst default table is deliberately marked medium-confidence and non-official.
 
@@ -44,8 +44,8 @@ No changes are made to Character animation, movement physics, input admission, B
 | Splatling partial | 20.3 -> **15.0** | -> **14.2** | -> **15.875** |
 | Splatling full | **20.3 retained** | 12.2 -> **19.5** | -> **21.125** |
 | Charger full | **24.7 retained** | **24.7 retained** | **24.375 retained** |
-| Roller horizontal | 9.4 -> **11.0** | 1.6 -> **4.8** | 10.625 -> **12.625** |
-| Roller vertical | 17.5 -> **15.6** | 1.6 -> **6.2** | 18.375 -> **16.125** |
+| Roller horizontal | 9.4 -> **12.2** | 1.6 -> **5.8** | 10.625 -> **12.625** |
+| Roller vertical | 17.5 -> **16.3** | 1.6 -> **6.9** | 18.375 -> **16.125** |
 | Slosher | **12.7 retained** | -> **11.9** | **14.125 retained** |
 
 Distances are **INKWAVE world units**, not Nintendo range-meter units.
@@ -75,8 +75,8 @@ Do not resolve the future textual conflict by dropping either side.
 2. **Analyst default brake/free fields are medium-confidence and unversioned.**
    They are source-guided model assumptions, not extracted 11.3.0 overrides.
 
-3. **Roller vertical fixture has narrow hit gaps around 12.7–12.8 and 14.3–14.4 WU.**
-   The pinned datamine exposes spawn-height offsets and player collision-radius transitions, but their exact native composition is not established. A review experiment applying collision-radius growth alone did not remove the gaps. This Draft therefore does **not** guess an origin-height conversion merely to fill them.
+3. **Roller player collision growth is now source-connected.**
+The initial review reproduced narrow vertical hit gaps at 12.7–12.8 and 14.3–14.4 WU. A second audit of the pinned 11.3.0 Roller JSON found explicit `InitRadiusForPlayer`, `EndRadiusForPlayer` and `ChangeFrameForPlayer=4` fields for the selected horizontal/vertical units. Connecting those exact fields to the existing swept capsule test removes the fixture gaps without inventing an origin-height conversion. Field/world collision growth and unit height offsets remain intentionally unimplemented until their composition is established.
 
 4. Charger remains the existing hitscan/beam gameplay representation. Raw finite travel values exist, but native release/collision/paint timing has not been reconstructed confidently enough to replace it.
 
@@ -106,3 +106,25 @@ Physical Switch/iOS/Android fidelity and the unresolved roller-height/collision 
 PR #63 (`inkwave/issue-batch-44-58`) overlaps weapon behavior but most ownership composes cleanly: its Shooter first-shot/swim/jump-spread timing and Charger charge/storage gates sit above/beside this workstream's projectile flight model. Its field-collision radius wrapper can compose with the world-collision query used here.
 
 Roller outside-fan damage is the exception: #63 adds a simplified duplicate outer-fan damage path, while this workstream owns the pinned v11.3.0 4-band outside envelope and 16-degree classification. In the combined integration, do not stack both damage owners; retain this workstream as the authoritative roller outside-damage calculation and remove/disable the duplicate #63 calculation while preserving #63's unrelated issue fixes.
+
+
+## Follow-up review: sourced roller player collision
+
+The initial Draft deliberately left the Roller vertical hit gaps unresolved rather than tuning an arbitrary hit radius. A second independent source review found 12 explicit player-collision fields in the same pinned Splatoon 3 11.3.0 Roller JSON:
+
+- WideSwing selected unit: 0.12 -> 1.02 over 4 frames
+- Vertical unit 0: 0.116 -> 0.87 over 4 frames
+- Vertical unit 1: 0.116 -> 0.87 over 4 frames
+- Vertical unit 2: 0.116 -> 0.82 over 4 frames
+
+All 12 fields were mechanically rechecked against `Leanny/splat3@7280ff9...`. The patch now uses these values only for **player collision**. It does not guess field/world radius growth or unit-specific spawn-height composition.
+
+Repository measurement expectations are now:
+
+- Roller horizontal practical hit: **12.2 WU**, full damage: **5.8 WU**
+- Roller vertical practical hit: **16.3 WU**, full damage: **6.9 WU**
+- fixed horizontal-aim vertical hit coverage: **continuous 0.5–16.3 WU**
+
+The existing 27-field projectile packet is unchanged. For remote visual ghosts, the collision profile is reconstructed from the transmitted straight duration and nearest transmitted launch-speed layer, so no new network field is introduced.
+
+This resolves the deterministic fixture holes while still **not** claiming exact Switch hitbox parity.
