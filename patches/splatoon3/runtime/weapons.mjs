@@ -1,3 +1,4 @@
+import { segmentCapsuleEntry } from './projectile-collision.mjs';
 import { installRollerLogic } from './roller.mjs';
 let api;
 export function splatlingBurst(w, charge) {
@@ -168,12 +169,12 @@ export function installWeapons(context, profile) {
     const hit = G.physics.raycast(muzzle, dir, w.rangeMax, new Hit(), true);
     let length = hit.hit ? hit.dist : w.rangeMax;
     if (G.boss) { const bh = G.boss.segHit(muzzle, muzzle.clone().addScaledVector(dir, length), .1); if (bh) length = Math.min(length, bh.dist); }
-    const end = muzzle.clone().addScaledVector(dir, length), result = { t: 0, dist: 0 }, victims = [];
+    const end = muzzle.clone().addScaledVector(dir, length), victims = [];
     for (const e of G.actors) {
       if (!e.alive || e.team === a.team) continue;
       const base = e.pos.clone(); base.y += e.smoothY || 0;
-      Physics.segmentCapsuleDist(muzzle, end, base, PLAYER.radius + .12, e.form === 'squid' ? PLAYER.squidHeight : PLAYER.height, result);
-      if (result.dist < PLAYER.radius + .14) victims.push({ actor: e, distance: result.t * length });
+      const entry = segmentCapsuleEntry(muzzle, end, base, PLAYER.radius + .12, e.form === 'squid' ? PLAYER.squidHeight : PLAYER.height, PLAYER.radius + .14);
+      if (entry < Infinity) victims.push({ actor: e, distance: entry * length });
     }
     const actors = G.actors;
     try { G.actors = []; fireCharger.call(this, a, w, charge); }

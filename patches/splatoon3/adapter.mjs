@@ -166,6 +166,9 @@ export function adaptSource(rel, code) {
       '        }',
       '      }',
     ].join('\n'), 'projectile nearest-collision chronology');
+    code = replaceOnce(code,
+      "      Physics.segmentCapsuleDist(m, _v2, hitBase(e), PLAYER.radius + 0.12, e.form === 'squid' ? PLAYER.squidHeight : PLAYER.height, _res);\n      if (_res.dist < PLAYER.radius + 0.14) {\n        const d = _res.t * len;",
+      "      const entry = segmentCapsuleEntry(m, _v2, hitBase(e), PLAYER.radius + 0.12, e.form === 'squid' ? PLAYER.squidHeight : PLAYER.height, PLAYER.radius + 0.14);\n      if (entry < Infinity) {\n        const d = entry * len;", 'charger first-contact ordering');
     code = replaceOnce(code, '      this.charge = Math.min(1, this.chargeT / w.chargeTime);',
       '      this.charge = Math.min(1, this.chargeT / w.chargeTime, splatlingChargeCap(a.ink, w));', 'splatling ink charge cap');
     code = replaceOnce(code, "      this.applyHit(b.owner, e, lerp(s.damageMin, s.damageMax, k * k), 'bomb');",
