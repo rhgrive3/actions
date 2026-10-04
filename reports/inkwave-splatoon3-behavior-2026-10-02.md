@@ -170,3 +170,20 @@ Flow の外殻・粒・リボンが GTAO の法線／深度パスに不透明な
 終了時に残っていた1textureはnative THREEの共有DFG_LUTで、compiled dfgLUT uniformから所有元を確認した。隔離された描画fixtureの終了時に実GL handleの存在と解放を測り、geometry/textureの残留0を確認する。ゲーム本体や共有shaderの実装変更ではなく、検証fixtureの管理対象を明示する修正である。これらのfocused診断は最終候補の全ケースCIを代用しない。
 
 停止姿勢の全画面beauty再描画では、実際の時計・骨・座標が同一でもnative fragmentの数pixelの色差が反復描画ごとに変化する。停止のモーション検証は、そのbeauty画像を両方保存したうえで、最終描画色だけを固定した別materialによる実GPU比較へ分けた。実際にコンパイルされたnative／比較側vertex shaderのSHA256一致、骨行列・pose・全node world行列・ゲーム時計の不変性、固定色画像の既存0差分条件を必須とする。各ケースで実rootを0.03動かす反例も描き、16pixel以上の変化を検出できない比較器は合格にしない。通常の全339描画ペア、Flow／壁のGTAO、表示中・中断・解放の検査はnative beauty shaderのままであり、この停止の比較を本家の画像一致の証拠にはしない。
+
+## 2026-10-04: Super Jump #215 / #216 / #218 / #255
+
+基準main: `0859bf4fab08edc74c25fcb790e662a748a91ec9`（GitHubで再確認）。対象は `build-inkwave.mjs` の全adapter合成と `runtime/install.mjs` を通した公開版。`inkwave-public/` の元ソースは変更しない。比較条件: Splatoon 3 Ver.11.3.0、通常対戦、静的地面/金網/自インク壁、通常のSuper Jump、スプラシューター（追加でブラスターの前隙を検証）、ギアなしと短縮条件。WUはINKWAVE内部単位であり本家の距離換算ではない。
+
+### 根拠と修正
+
+- #215: [Inkipedia Super Jump](https://splatoonwiki.org/wiki/Super_Jump)の本文で、落下中は準備できるが接地まで離陸しないこと、自インク壁と金網上からは準備できることを確認。`runtime/superjump.mjs:prepareSuperJump` は準備中もnative `_integrate` と共通化した環境死判定を実行し、接地または再検証したインク壁支持を離陸条件とする。短縮ギアの準備完了が支持条件を省略しない。
+- #216: 同Wikiの最終接地位置の記述に従い、native接地解決、spawn、ネットワークproxyのframe完了で最終支持位置を保存する。壁登りや空中移動で上書きせず、死亡/リセット/remote respawnで消去する。現在の空中位置から短いraycastで着地点を推測する処理を除去。支持位置がまだ不明の味方はジャンプを中止し、空中へfallbackしない。動く塔/スペシャル帰還点は未対応の別条件。
+- #218: [Nintendo Ver.1.2.0更新履歴](https://www.nintendo.com/en-gb/Support/Nintendo-Switch/Game-Updates/Splatoon-3-Update-History-2358763.html)は遠距離Super Jumpの着地直前攻撃の弾飛距離修正を記載しており、着地前攻撃の存在を確認できる。降下終盤にnative WeaponRunnerへメイン入力だけ渡す。武器前隙・インク・連射cooldownを迂回せず、サブ/スペシャルは解禁しない。**解禁値は既存INKWAVEヒト形態復帰の進行度0.82を暫定で共用する。S3の正確な解禁Fは根拠未確定で、公式値一致・#218完全受入を主張しない。**
+- #255: [S3検証WikiのQuick Super Jump](https://wikiwiki.jp/splatoon3mix/ギア/ギアパワー/分割2#quick_super_jump)およびInkipedia本文は飛翔中の無敵を説明する。[Nintendo Ver.9.3.0更新履歴](https://www.nintendo.com/en-gb/Support/Nintendo-Switch/Game-Updates/How-to-Update-Splatoon-3-2266003.html)はイカスポーン装甲を着地前に終える修正を別に記載。native `damage` の受理境界でflightのみ保護し、準備/着地後は通常被弾。`dur+0.2` の着地後保護は復活させない。ネット受信の `_hit` → native `applyHit` → `damage` も同一条件。
+
+### 再現と検証の範囲
+
+`patches/splatoon3/tests/superjump-gameplay.test.mjs` は実Actor・Physics・Level・WeaponRunner・Projectiles・NetMatch・Characterと全production installerを同じrealmで合成する。音/GPU描画/塗りのsampleだけfixture境界で、別ゲームモデルではない。`INKWAVE_SUPERJUMP_SITE=<build出力>` でminify済み公開生成物にも同じ受入を実施する。30/60/120Hz描画相当のFixedClock入力で各60Hz tickの座標・状態・HP・インク・発射数・cooldownを比較する。
+
+公開操作の追試: 落下してからマップで帰還選択、味方が地上→低い壁/高い壁に上った状態へのジャンプ、準備から着地までZR保持、上昇/降下/着地tickへの通常弾・チャージャー・ボム・継続ダメージを比較する。実Switchの映像比較、実ブラウザGPU描画、遅延付き2peer実機計測は今回のCPU合成検証に含めない。Wiki本文は閲覧時点の資料でありNintendoの一次資料ではない。
