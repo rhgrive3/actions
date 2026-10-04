@@ -221,6 +221,20 @@ C batch 02 (#433/#419/#415): 未使用Online資源とMinimap OFFの描画バッ�
 ## 2026-10-04: inactive music and world/resource lifecycle
 
 Four current-public defects #366/#370 (one duplicate pair), #375, #384, #395 are addressed by the local-quality idle adapter. Music=0 parks only music scheduling; LOW/touch cloud color payload is 2.5 MiB; leaving marina disposes its far cubemap; offline pause presents one invalidation-driven frozen backdrop. These are browser resource policies, not Nintendo memory measurements. Gameplay timing, attacks, scoring and match durations are unchanged. See [implementation, sources, regression evidence and remaining physical-device limits](idle-resource-batch-2026-10-04.md). New full-app WebGL/Web Audio acceptance runs in Actions; do not infer success from CPU mocks.
+
 ## 2026-10-04 Flow progress and respawn continuity
 
 [#468/#471/#306 comparison](inkwave-flow-progress-lifecycle-2026-10-04.md) records inactive decay, cause-sensitive death losses, preserved active/inactive Flow through native respawn, and full-reset clearing. The existing synthetic award scale is retained with explicit fp-loss normalization; community verification is distinguished from official/pinned numerical data. Real-character regressions require the aura to hide on death and resume without replaying activation.
+
+## 2026-10-04 weapon edge-case supplement
+
+See [weapon edge-case comparison](inkwave-weapon-edgecases-2026-10-04.md) for #354/#356/#357/#361: stable-human Dualies3F first emission; Splatling separate ground1.6° pitch envelope; terrain Blaster35HP cap; horizontal Roller12+1 gameplay units. The report separates actual source/minified/composed-code tests from S3 probability/position/falloff and released-tap calibration still pending. No native source or deployed main is changed by the draft.
+
+## 2026-10-04: first-allocation mobile resource budget
+
+A cold-boot follow-up for #375/#395 uses the already-published G.mobile profile
+until G.game exists. The established touch budget now applies on the first
+cloud/Halyard cube allocation at default high settings, not only after later
+runtime refresh. Existing formats, appearance policy and gameplay stay intact.
+These are project resource dimensions, not Nintendo/Switch memory values.
+See [the cold-boot budget report](inkwave-cold-boot-budgets-2026-10-04.md).
