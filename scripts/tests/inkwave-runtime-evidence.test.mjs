@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import vm from 'node:vm';
 import path from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {hash,verifyRuntimeBuild,persistentDirectory,persistentBrowserTemp,invalidWindows} from '../lib/inkwave-runtime-evidence.mjs';
@@ -30,11 +31,11 @@ test('comparison cannot pass empty scenarios despite superficially passing repor
 });
 test('complete comparison rejects replay, different browser/seed, wrong windows, changed renderer and hidden work',()=>{
  const run=()=>({fixedSteps:30,probedOwners:['menuTick','cursor','match','character','projectiles','paint','render'],counts:{frame:30,match:30,sceneMatrices:60,cursor:30,menuTick:30,character:240,projectiles:30,paint:30,render:30},timings:{frame:{n:30,median:2,p95:3,max:4},sceneMatrices:{n:60,median:.1}},quality:'medium',scale:1,matchState:'playing',gameplay:{time:179,actors:Array.from({length:8},()=>({pos:[0,0,0],hp:100,ink:100,alive:true,weapon:'shooter'})),coverage:[.01,0],projectiles:2},renderInfo:{calls:10,triangles:100}});
- const b={status:'passed',sourceSha:'5e28dbd16f7829aebd88052ff5f7fdf71f39fdad',verifiedRuntimeFiles:['src/core/renderer.js'],rendererArtifactHash:'a'.repeat(64),environment:{quality:'medium',browser:'test-chromium',seed:1,seedMode:'reset-each-profile-window',audioRngMode:'independent-seeded-audio'},scenarios:['title','settings','battle'].map(scenario=>({scenario,warmup:{simulationOnlySteps:scenario==='battle'?270:30,renderedSteps:30,drainMs:0},runs:Array.from({length:3},run)})),input:Array.from({length:36},()=>({targetError:4}))};
+ const b={status:'passed',audioRngFixtureEnabled:true,sourceSha:'5e28dbd16f7829aebd88052ff5f7fdf71f39fdad',verifiedRuntimeFiles:['src/core/renderer.js'],rendererArtifactHash:'a'.repeat(64),environment:{quality:'medium',browser:'test-chromium',seed:1,seedMode:'reset-each-profile-window',audioRngMode:'independent-seeded-audio'},scenarios:['title','settings','battle'].map(scenario=>({scenario,warmup:{simulationOnlySteps:scenario==='battle'?270:30,renderedSteps:30,drainMs:0},runs:Array.from({length:3},run)})),input:Array.from({length:36},()=>({targetError:4}))};
  const a=structuredClone(b);a.sourceSha='b'.repeat(40);a.inputStatus='synchronous';a.inputErrors=[];a.input.forEach((r,i)=>{r.mode=['kbm','pad','touch'][Math.floor(i/12)];r.state=true;r.targetOwnerCorrect=true;r.targetError=0;r.ringOn=false;r.ringVisibility='hidden';});a.scenarios.find(s=>s.scenario==='battle').runs.forEach(r=>{r.counts.menuTick=0;r.counts.cursor=0;});a.ringRetirement=Array.from({length:3},()=>({beforeOpacity:1,stateChanged:true,ringOn:false,ghost:false,visibility:'hidden'}));a.menuLifecycle={hidden:Array.from({length:3},()=>({ticks:0,raf:0})),resumedTicks:1,hiddenDocument:Array.from({length:3},()=>({ticks:0,raf:0})),documentResumedTicks:1};a.menuLifetime=Array.from({length:3},()=>({fontListeners:0,observedOwners:0}));
  const check=(before,after,expect)=>{const pa=path.join(root,'valid-before.json'),pb=path.join(root,'valid-after.json'),out=path.join(root,'valid-compare.json');fs.writeFileSync(pa,JSON.stringify(before));fs.writeFileSync(pb,JSON.stringify(after));let passed=true;try{execFileSync(process.execPath,[new URL('../compare-inkwave-runtime-performance.mjs',import.meta.url).pathname,'--before',pa,'--after',pb,'--out',out],{stdio:'pipe'});}catch{passed=false;}assert.equal(passed,expect);assert.equal(JSON.parse(fs.readFileSync(out)).status,expect?'passed':'failed');};
  check(b,a,true);
- for(const mutate of [x=>delete x.environment.audioRngMode,x=>delete x.scenarios[2].runs[0].probedOwners,x=>x.scenarios[2].runs[0].counts.character=0,x=>x.input[0].targetError=null,x=>x.input[0].targetError=1,x=>delete x.input[0].state,x=>x.input[0].targetOwnerCorrect=false,x=>x.input[0].mode='pad',x=>x.sourceSha='not-a-sha',x=>x.sourceSha=b.sourceSha,x=>x.environment.browser='another',x=>x.environment.seed=2,x=>x.environment.seedMode='uncontrolled',x=>delete x.environment.seedMode,x=>delete x.scenarios[2].runs[0].gameplay,x=>x.scenarios[2].runs[0].gameplay.coverage[0]=.02,x=>x.scenarios[2].runs[0].gameplay.actors[0].hp=99,x=>x.scenarios[2].runs[0].counts.frame=29,x=>x.scenarios[2].runs[0].matchState='intro',x=>x.scenarios[2].runs[0].scale=.75,x=>delete x.scenarios[2].warmup,x=>x.scenarios[2].warmup.renderedSteps=0,x=>delete x.rendererArtifactHash,x=>x.rendererArtifactHash='c'.repeat(64),x=>x.scenarios[2].runs[0].counts.menuTick=1,x=>x.scenarios[2].runs[0].counts.cursor=1,x=>x.scenarios[2].runs[0].counts.sceneMatrices=30,x=>x.scenarios[2].runs[0].counts.character=1,x=>x.menuLifecycle.hidden[0].ticks=1,x=>x.menuLifetime[0].fontListeners=20,x=>x.input[0].ringVisibility='visible',x=>delete x.input[0].ringOn,x=>x.menuLifecycle.hiddenDocument[0].ticks=1,x=>delete x.menuLifecycle.hiddenDocument,x=>x.ringRetirement[0].ghost=true,x=>x.ringRetirement[0].beforeOpacity=0,x=>delete x.ringRetirement,x=>delete x.ringRetirement[0].beforeOpacity,x=>x.ringRetirement[0].stateChanged=false,x=>x.input[0].ringOn=true]){const changed=structuredClone(a);mutate(changed);check(b,changed,false);}
+ for(const mutate of [x=>x.audioRngFixtureEnabled=false,x=>delete x.environment.audioRngMode,x=>delete x.scenarios[2].runs[0].probedOwners,x=>x.scenarios[2].runs[0].counts.character=0,x=>x.input[0].targetError=null,x=>x.input[0].targetError=1,x=>delete x.input[0].state,x=>x.input[0].targetOwnerCorrect=false,x=>x.input[0].mode='pad',x=>x.sourceSha='not-a-sha',x=>x.sourceSha=b.sourceSha,x=>x.environment.browser='another',x=>x.environment.seed=2,x=>x.environment.seedMode='uncontrolled',x=>delete x.environment.seedMode,x=>delete x.scenarios[2].runs[0].gameplay,x=>x.scenarios[2].runs[0].gameplay.coverage[0]=.02,x=>x.scenarios[2].runs[0].gameplay.actors[0].hp=99,x=>x.scenarios[2].runs[0].counts.frame=29,x=>x.scenarios[2].runs[0].matchState='intro',x=>x.scenarios[2].runs[0].scale=.75,x=>delete x.scenarios[2].warmup,x=>x.scenarios[2].warmup.renderedSteps=0,x=>delete x.rendererArtifactHash,x=>x.rendererArtifactHash='c'.repeat(64),x=>x.scenarios[2].runs[0].counts.menuTick=1,x=>x.scenarios[2].runs[0].counts.cursor=1,x=>x.scenarios[2].runs[0].counts.sceneMatrices=30,x=>x.scenarios[2].runs[0].counts.character=1,x=>x.menuLifecycle.hidden[0].ticks=1,x=>x.menuLifetime[0].fontListeners=20,x=>x.input[0].ringVisibility='visible',x=>delete x.input[0].ringOn,x=>x.menuLifecycle.hiddenDocument[0].ticks=1,x=>delete x.menuLifecycle.hiddenDocument,x=>x.ringRetirement[0].ghost=true,x=>x.ringRetirement[0].beforeOpacity=0,x=>delete x.ringRetirement,x=>delete x.ringRetirement[0].beforeOpacity,x=>x.ringRetirement[0].stateChanged=false,x=>x.input[0].ringOn=true]){const changed=structuredClone(a);mutate(changed);check(b,changed,false);}
 });
 
 
@@ -45,4 +46,30 @@ test('browser temporary storage is a short physical persistent task cache',()=>{
 test('browser storage cannot fall back to OS temporary or an oversized Unix socket path',()=>{
  assert.throws(()=>persistentBrowserTemp('/tmp/forbidden-browser-tmp'),/Persistent workspace required/);
  assert.throws(()=>persistentBrowserTemp(path.join(root,'browser-tmp')),/Unix socket budget/);
+});
+
+
+test('native wall-clock audio voice drops cannot change the benchmark gameplay RNG',()=>{
+ const raw=fs.readFileSync(new URL('../../inkwave-public/src/audio/audio.js',import.meta.url),'utf8');
+ const constructor=raw.slice(raw.indexOf('  constructor(opts = {}) {'),raw.indexOf('\n  init() {'));
+ const play=raw.slice(raw.indexOf('  play(name, o = {}) {'),raw.indexOf('\n  loop(name, o = {}) {'));
+ const harness=fs.readFileSync(new URL('../check-inkwave-runtime-performance.mjs',import.meta.url),'utf8');
+ const start=harness.indexOf('await page.evaluate(()=>{if(probeG.audio)');
+ assert(start>=0,'audio RNG setup must run in the actual harness');
+ const setup=harness.slice(start+'await page.evaluate('.length,harness.indexOf(');\n result.environment.audioRngMode',start));
+ function sample(gap,isolated){
+  let seed=20261004;const math=Object.create(Math);math.random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
+  const context={Math:math,DEFAULT_SETTINGS:{},musicSingleton:null,MAX_VOICES:64};
+  const Audio=vm.runInNewContext('class Audio{'+constructor+play+'};Audio',context),audio=new Audio();
+  audio.ctx={currentTime:1};audio._def=()=>({minGap:.018});audio._voice=()=>({v:{finish(){}}});
+  if(isolated)vm.runInNewContext('('+setup+')()', {...context,probeG:{audio}});
+  audio.play('probe');audio.ctx.currentTime+=gap;audio.play('probe');
+  return {nextGameplayRandom:math.random(),played:audio.counts.played,dropped:audio.counts.dropped};
+ }
+ const fast=sample(.001,false),slow=sample(.1,false);
+ assert.equal(fast.played,1);assert.equal(fast.dropped,1);assert.equal(slow.played,2);
+ assert.notEqual(fast.nextGameplayRandom,slow.nextGameplayRandom,'negative control: shared stream is wall-clock dependent');
+ const isolatedFast=sample(.001,true),isolatedSlow=sample(.1,true);
+ assert.equal(isolatedFast.played,1);assert.equal(isolatedSlow.played,2,'actual audio work is retained');
+ assert.equal(isolatedFast.nextGameplayRandom,isolatedSlow.nextGameplayRandom);
 });

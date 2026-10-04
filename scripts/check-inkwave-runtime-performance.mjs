@@ -46,7 +46,7 @@ try{
  // Audio voices use wall-clock rate limits. Their procedural noise must not
  // consume the gameplay fixture's seeded RNG when a voice is dropped/created.
  // Retain the real audio work with its own seeded stream, in BOTH builds.
- await page.evaluate(()=>{if(probeG.audio){let audioSeed=20261004;probeG.audio.rng=()=>{audioSeed=(Math.imul(audioSeed,1664525)+1013904223)>>>0;return audioSeed/4294967296;};}});
+ result.audioRngFixtureEnabled=await page.evaluate(()=>{if(probeG.audio){let audioSeed=20261004;probeG.audio.rng=()=>{audioSeed=(Math.imul(audioSeed,1664525)+1013904223)>>>0;return audioSeed/4294967296;};}return !!probeG.audio;});
  result.environment.audioRngMode='independent-seeded-audio';
  result.active=await page.evaluate(()=>{const gl=probeG.renderer?.getContext(),ext=gl?.getExtension('WEBGL_debug_renderer_info');return{baseURI:document.baseURI,mode:probeG.mode,browser:navigator.userAgent,dpr:devicePixelRatio,renderer:ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):null,gpuTimerQuery:!!gl?.getExtension('EXT_disjoint_timer_query_webgl2')};});
  result.environment.browser=await context.browser().version();result.environment.seed=20261004;result.environment.seedMode='reset-each-profile-window';checkpoint();

@@ -10,6 +10,7 @@ for(const [label,r]of [['before',before],['after',after]]){
  if(!/^[a-f0-9]{40}$/.test(r.sourceSha||'')||!r.verifiedRuntimeFiles.includes('src/core/renderer.js'))errors.push(label+' missing active source receipt');
 }
 if(before.environment.seedMode!=='reset-each-profile-window'||after.environment.seedMode!=='reset-each-profile-window')errors.push('Uncontrolled window RNG');
+if(before.audioRngFixtureEnabled!==true||after.audioRngFixtureEnabled!==true)errors.push('Missing real audio RNG fixture');
 if(before.environment.audioRngMode!=='independent-seeded-audio'||after.environment.audioRngMode!=='independent-seeded-audio')errors.push('Uncontrolled audio RNG');
 for(const k of ['cpu','cores','platform','quality','viewport','webgl','repetitions','browser','seed','seedMode'])if(JSON.stringify(before.environment[k])!==JSON.stringify(after.environment[k]))errors.push('Different environment: '+k);
 for(const [label,r]of [['before',before],['after',after]])if(JSON.stringify(r.scenarios.map(x=>x.scenario))!==JSON.stringify(['title','settings','battle']))errors.push(label+' incomplete scenario set');
