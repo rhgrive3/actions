@@ -10,13 +10,15 @@ export function adaptCombatLife(rel, code) {
       '  spawnAt(p, yaw) {\n    this.netLife = (this.netLife ?? 0) + 1;\n    this.reset();', 'new life');
   }
   if (rel !== 'src/net/netmatch.js') return code;
-  patch('r2(wr.lockT || 0)];', 'r2(wr.lockT || 0), a.netLife ?? 0];', 'snapshot epoch');
-  patch('lock: s[20] };', 'lock: s[20], life: s[21] };', 'unpack epoch');
+  // Keep the legacy actor tuple extensible for unrelated snapshot fields.
+  patch("    const msg = { k: 't', ts: r3(now()), a };",
+    "    const msg = { k: 't', ts: r3(now()), a, l: Object.fromEntries([...this.byNid.values()].filter(x => !x.remote).map(x => [x.nid, x.netLife ?? 0])) };", 'named owner epochs');
   patch('    this.stats.in++;\n    const p = this._peer(from);',
     '    this.stats.in++;\n    // Ordered WebSocket ticks cannot replay paint or terminal events.\n' +
     '    if (!Number.isFinite(d.ts) || d.ts <= (this.peers.get(from)?.lastTs ?? -Infinity)) return;\n' +
     '    const p = this._peer(from);', 'tick replay admission');
   patch('      buf.push(snap);',
+    '      snap.life = d.l?.[a.nid];\n' +
     '      if (!Number.isSafeInteger(snap.life) || snap.life < 0 || snap.life < (a.net.lastLife ?? 0)) continue;\n' +
     '      a.net.lastLife = snap.life;\n      buf.push(snap);', 'accepted owner epoch');
   patch('    a.pos.set(S.x + n.err.x, S.y + n.err.y, S.z + n.err.z);',

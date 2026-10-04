@@ -42,6 +42,8 @@ test('combined lethal owner hit transfers exact original burst credit once throu
     assert.equal(shooter.victim.stats.deaths, 1);
     assert.equal(shooter.paint.length, 1, 'duplicate tick cannot repaint previously accepted ink');
     assert.equal(defender.attacker.stats.turf, 0, 'remote proxy never earns authoritative reward');
+    assert.deepEqual(JSON.parse(JSON.stringify(shooter.paint[0])), JSON.parse(JSON.stringify(defender.paint[0])), 'same world death-burst geometry and team');
+
   } finally { shooter.dispose(); defender.dispose(); }
 });
 
@@ -172,5 +174,26 @@ test('malformed terminal area cannot consume the legitimate credit for that life
     a.deliver('B', { ...original, ts:time });
     assert.equal(a.attacker.stats.turf, .123456789);
     assert.equal(a.attacker.stats.splats, 1);
+  } finally { a.dispose(); b.dispose(); }
+});
+
+test('remote scorer proxy converges through the native integer-precision reward snapshot', async () => {
+  const area = 12.123456789;
+  const a = await combatWorld('A', { paintArea:area }), b = await combatWorld('B', { paintArea:area });
+  try {
+    a.G.projectiles.applyHit(a.attacker, a.victim, 100, 'shooter');
+    b.net.onMessage('A', a.wire.at(-1).data); b.net._sendTick();
+    a.deliver('B', b.wire.at(-1).data);
+    assert.equal(a.attacker.stats.turf, area);
+    assert.equal(a.attacker.special, area);
+    assert.equal(b.attacker.stats.turf, 0);
+    a.net._sendTick(); const owned = a.wire.at(-1).data;
+    b.net.onMessage('A', owned);
+    const peer = b.net.peers.get('A'); peer.tr = owned.ts;
+    b.net._sample(b.attacker, peer.tr, 1 / 60); b.net.applyRemote(b.attacker, 1 / 60);
+    assert.equal(b.attacker.stats.turf, Math.round(area));
+    assert.equal(b.attacker.special, Math.round(area));
+    assert.equal(a.attacker.stats.turf, area, 'owner preserves original fractional reward');
+    assert.equal(a.paint.length, 1); assert.equal(b.paint.length, 1);
   } finally { a.dispose(); b.dispose(); }
 });

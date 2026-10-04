@@ -39,7 +39,10 @@ reconciliation evidence is recorded with the final verification below.
 Combat-life identity is separate from the existing teleport/interpolation
 counter: a Super Jump or an ownership handoff must not become a new combat
 life. Only the victim owner applies admitted gameplay hits. Missing or stale
-life metadata cannot authorize damage to a new life.
+life metadata cannot authorize damage to a new life. Owner ticks carry a named
+`l` dictionary keyed by actor id; the existing actor tuple remains intact.
+This avoids draft PR #328's special-use counter at tuple slot 21. Monotonic hit
+sequence numbers and ordered tick admission reject repeated transactions.
 
 Death-burst scoring must retain the exact area returned by the original paint
 operation, credit the owning scorer once, and leave paint playback independent
@@ -60,10 +63,54 @@ provenance and unverified calibration entries remain unchanged.
 
 ## Verification
 
+Focused final integration: 21 combat tests passed against both the complete
+source-adapter chain and the actual built/minified module graph. These execute
+native Actor, Projectiles.applyHit, NetMatch packing, sender admission, sampling
+and event playback in paired owner realms. Known paint-area stubs isolate the
+scoring assertion; this is deterministic wire replay, not a live-relay latency
+measurement. Coverage includes held old-life/dead hits, matching new-life hits,
+sampled versus buffered life, native host adoption, duplicate hits/ticks/events,
+malformed attribution, reversed ownership, special suppression, environmental
+and nonlethal deaths, offline parity, identical burst paint, and remote scorer
+convergence at the existing integer snapshot precision.
+
+Local quality: 11 tests passed, including three new landing tests. Real Character
+checks cover all seven weapon rigs, soft/hard landings and 30/60/120 Hz (42
+combinations). World weapon basis lengths and Gram matrices remain rigid; the
+old-source negative control detects the deformation. Articulated pelvis and
+kid-space knees, native landing timing and other action springs remain covered.
+These CPU transform checks complement the existing rendered browser gates.
+
+Independent adversarial review used Freebuff 6/7/8 and Cline 7/8/9, each in a
+separate worktree/tmux lane. The parent reproduced and fixed duplicate hit
+application and the PR #328 tuple collision, corrected two initially vacuous
+owner-snapshot tests, and verified the integrated lane tests. Completed read-only
+network and visual reviews found no remaining blocker in their reviewed scope.
+
+Live audit refreshed all 40 open/draft PRs after new batch PRs #441 and #442
+appeared and PR #401 advanced; their actual changed files/diffs fix different
+roots. The target issues remain open and unaddressed outside C. PR #182/400
+adapter anchors and syntax compose in the intended gameplay-before-reliability
+order. PR #400 in reverse order remains unsupported, as its one-shot anchors
+expect native hit signatures. PR #328 snapshot counter fragments compose in
+both orders after using named life metadata. Actual PR #183's Practice Range
+adapter leaves the five affected core modules unchanged. This is an anchor and
+syntax audit of future branches, not their combined runtime acceptance.
+
+The current main does not include Practice Range; that feature remains in
+#183/#339. No range tuning or battle-state feature is added here. Normal/offline
+behavior has deterministic coverage; full future-range runtime acceptance is
+outside this batch. Network peers must use this updated combat metadata; no
+mixed-old-build or Nintendo-protocol compatibility is claimed. Existing
+non-landing jump/dodge/slam squash remains unchanged.
+
 Baseline CI: [37200951785](https://github.com/rhgrive3/actions/actions/runs/37200951785)
-passed at the exact baseline main SHA. Focused lane tests, combined source and
-emitted build tests, independent adversarial review, final live overlap audit,
-and exact-head Actions results are recorded here after completion.
+passed at baseline main. Preliminary exact-SHA validation of the initial batch,
+[37213004122](https://github.com/rhgrive3/actions/actions/runs/37213004122), passed
+all four existing validate/active/catalog/Chromium-WebKit UI jobs. This earlier
+run is not final-head evidence. Final immutable-head CI and validated artifact
+receipts are linked from the batch PR; existing workflow gates remain unchanged.
 
 Durable parent evidence, lane briefs, roster and checkpoints are retained at
-`/mnt/workspace/inkwave-batch-c/`. No merge or deployment is authorized.
+`/mnt/workspace/inkwave-batch-c/`. The batch is prepared for review without merge
+or deployment.

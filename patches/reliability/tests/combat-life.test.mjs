@@ -47,6 +47,10 @@ test('dead then respawned hit window expires without damaging the new life', asy
     defender.net.onMessage('A', lethal);
     assert.equal(defender.victim.alive, false);
     const held = structuredClone(lethal);
+    const deaths = defender.victim.stats.deaths;
+    defender.net.onMessage('A', { ...held, h: held.h + 1 });
+    assert.equal(defender.victim.hp, 0);
+    assert.equal(defender.victim.stats.deaths, deaths);
     defender.victim.respawn();
     defender.victim.invuln = 0;
     const hp = defender.victim.hp;
@@ -188,4 +192,26 @@ test('native owner leave and host adoption keep valid current-life hits admissib
     host.net.onMessage('A', held);
     assert.equal(host.victim.hp, 80);
   } finally { shooter.dispose(); owner.dispose(); host.dispose(); }
+});
+
+test('named life metadata stays independent of an unrelated appended actor tuple field', async () => {
+  const shooter = await combatWorld('A'), defender = await combatWorld('B');
+  try {
+    const msg = tick(defender);
+    for (const actor of msg.a) actor.push(9); // e.g. PR #328 special-use counter at slot21
+    shooter.net.onMessage('B', msg);
+    assert.equal(shooter.victim.net.lastLife, defender.victim.netLife);
+    const peer = shooter.net.peers.get('B'); peer.tr = msg.ts;
+    shooter.net._sample(shooter.victim, peer.tr, 1 / 60);
+    shooter.net.applyRemote(shooter.victim, 1 / 60);
+    assert.equal(shooter.victim.netLife, defender.victim.netLife);
+    shooter.G.projectiles.applyHit(shooter.attacker, shooter.victim, 20, 'shooter');
+    defender.net.onMessage('A', shooter.wire.at(-1).data);
+    assert.equal(defender.victim.hp, 80);
+    const missing = tick(defender); delete missing.l;
+    for (const actor of missing.a) actor.push(defender.victim.netLife);
+    const before = shooter.victim.net.buf.length;
+    shooter.net.onMessage('B', missing);
+    assert.equal(shooter.victim.net.buf.length, before, 'tuple field cannot substitute for required life identity');
+  } finally { shooter.dispose(); defender.dispose(); }
 });

@@ -9,7 +9,7 @@ import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
 import { adaptReliability } from '../adapter.mjs';
 import { adaptQualitySource } from '../../local-quality/adapter.mjs';
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
-export async function combatWorld(owner, { emitted = process.env.INKWAVE_COMBAT_SITE } = {}) {
+export async function combatWorld(owner, { emitted = process.env.INKWAVE_COMBAT_SITE, paintArea = .123456789 } = {}) {
   const SRC = emitted ? path.resolve(emitted) : path.join(ROOT, 'inkwave-public');
   let clock = 1000;
   const context = vm.createContext({ console, performance: { now: () => clock * 1000 } });
@@ -52,7 +52,7 @@ export async function combatWorld(owner, { emitted = process.env.INKWAVE_COMBAT_
   G.paint = { sample: () => 1, splat: (pos, radius, team, opts = {}) => {
     paint.push({ pos: pos.toArray(), radius, team });
     G.netm?.recSplat(pos, radius, team, opts);
-    return .123456789;
+    return paintArea;
   } };
   G.time = 0;
   class Display {
