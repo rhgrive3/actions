@@ -5,8 +5,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from './source-fixture.mjs';
+import { FixedClock, STEP } from '../runtime/clock.mjs';
 
-const EPS = 1e-9;
 const close = (actual, expected, label) => assert.ok(
   Math.abs(actual - expected) < 1e-6, `${label}: ${actual} ~= ${expected}`);
 
@@ -60,32 +60,77 @@ test('Splatling charging curve and other branches are unchanged', async () => {
   assert.equal(roller.weaponRunner.moveSpeed(), roller.weapon.rollSpeed);
 });
 
-test('S3 Charger charging speed holds across 30/60/120 fixed schedules', async () => {
+test('S3 Charger charging speed holds across 30/60/120Hz render cadences', async () => {
+  // One wall-clock second per cadence: hz render frames of dt 1/hz fed into
+  // FixedClock(STEP=1/60) so every cadence yields exactly 60 real
+  // Actor.update ticks and chargeTime 1 reaches chargeT 1 with same states.
+  const traces = [];
   for (const hz of [30, 60, 120]) {
-    const dt = 1 / hz;
-    // Same 60-frame charge window expressed in fixed steps per schedule.
-    const steps = Math.round(60 * (60 / hz));
     const f = await fixture();
-    const a = f.make('charger'), r = a.weaponRunner;
-    // First charging frame on each schedule must already use the baseline.
-    r._charger(dt, { fire: true }, a.weapon);
-    close(r.moveSpeed(), 1.2, `first frame at ${hz}Hz`);
-    for (let i = 1; i < steps; i++) {
-      r._charger(dt, { fire: true }, a.weapon);
-      assert.ok(Math.abs(r.moveSpeed() - 1.2) < 1e-6, `${hz}Hz step ${i + 1}`);
+    const a = f.make('charger');
+    a.intent.fire = true;
+    a.intent.move.set(0, 0, 1);
+    const clock = new FixedClock();
+    const states = [];
+    for (let frame = 0; frame < hz; frame++) {
+      clock.advance(1 / hz, (dt) => {
+        f.G.time += dt;
+        a.update(dt);
+        states.push({ chargeT: a.weaponRunner.chargeT, speed: a.weaponRunner.moveSpeed() });
+      });
     }
+    assert.equal(clock.ticks, 60, `${hz}Hz yields 60 ticks`);
+    assert.equal(a.weaponRunner.chargeT, 1, `${hz}Hz reaches full charge`);
+    assert.equal(a.weaponRunner.charging, true, `${hz}Hz still charging`);
+    // Charging baseline from the first charge state on every cadence.
+    close(states[0].speed, 1.2, `first charge state at ${hz}Hz`);
+    for (let i = 0; i < states.length; i++) {
+      close(states[i].speed, 1.2, `${hz}Hz tick ${i + 1}`);
+    }
+    traces.push(states);
   }
+  assert.deepEqual(traces[1], traces[0], '60Hz matches 30Hz per-tick states');
+  assert.deepEqual(traces[2], traces[0], '120Hz matches 30Hz per-tick states');
 });
 
-test('actual Actor horizontal target follows the charging baseline', async () => {
+test('actual Actor horizontal converges below 1.2 and lockT keeps priority', async () => {
   const f = await fixture();
   const a = f.make('charger');
+  a.intent.fire = true;
   a.intent.move.set(0, 0, 1);
   a.vel.set(0, 0, 0);
-  a.weaponRunner._charger(1 / 60, { fire: true }, a.weapon);
+  const clock = new FixedClock();
+  clock.advance(STEP, (dt) => { f.G.time += dt; a.update(dt); });
   assert.equal(a.weaponRunner.charging, true);
-  close(a.weaponRunner.moveSpeed(), 1.2, 'runner target');
-  a._horizontal(1 / 60, false, false);
+  close(a.weaponRunner.moveSpeed(), 1.2, 'runner target after first tick');
   const speed = Math.hypot(a.vel.x, a.vel.z);
   assert.ok(speed > 0 && speed <= 1.2 + 1e-6, `horizontal speed ${speed}`);
+  // Run the full one-second charge: velocity converges to the baseline.
+  for (let i = 1; i < 60; i++) clock.advance(STEP, (dt) => { f.G.time += dt; a.update(dt); });
+  assert.equal(clock.ticks, 60);
+  assert.equal(a.weaponRunner.chargeT, 1);
+  const settled = Math.hypot(a.vel.x, a.vel.z);
+  assert.ok(Math.abs(settled - 1.2) < 1e-6, `converged speed ${settled}`);
+  // Upstream cooldown/state priority is preserved: a planted turret wins.
+  a.weaponRunner.lockT = 0.5;
+  assert.equal(a.weaponRunner.moveSpeed(), 0, 'lockT priority over charging');
+});
+
+test('two actors with distinct charge/Flow gear state share no target', async () => {
+  const f = await fixture();
+  const charging = f.make('charger'), idle = f.make('charger');
+  // Distinct gear: charging actor stacks runSpeed, idle actor keeps none.
+  const stacked = Array.from({ length: 3 }, () => ({ main: 'runSpeed', subs: ['runSpeed', 'runSpeed', 'runSpeed'] }));
+  charging.s3.loadout = stacked;
+  charging.setWeapon('charger');
+  // Distinct Flow: only the idle actor is active.
+  idle.s3.flow.active = true;
+  idle.s3.flow.remaining = f.profile.flow.duration;
+  charging.weaponRunner.charging = true;
+  // Charger charging locks the baseline before gear; idle run scales by Flow.
+  close(charging.weaponRunner.moveSpeed(), 1.2, 'charging target ignores run gear');
+  close(idle.weaponRunner.moveSpeed(), f.PLAYER.runSpeed * f.profile.flow.runMultiplier, 'idle Flow target');
+  assert.notEqual(charging.weapon, idle.weapon, 'per-actor weapon copies');
+  assert.equal(f.profile.weapons.charger.moveSpeedFiring, 1.2, 'shared profile untouched');
+  assert.equal(f.WEAPONS.charger.moveSpeedFiring, 1.2, 'shared source weapon untouched');
 });
