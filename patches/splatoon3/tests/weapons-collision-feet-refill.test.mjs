@@ -137,7 +137,7 @@ test('#168 a partial Charger shot always leaves a dedicated, seeded splash at th
     a.aimDir.set(Math.sin(yaw), 0, Math.cos(yaw)); a.aimYaw = yaw;
     splats.length = 0;
     system.fireCharger(a, a.weapon, 0.5);
-    const feet = splats.filter(s => s.opts?.kind === 'chargerFeet');
+    const feet = splats.filter(s => s.opts?.kind === 'trail');
     assert.equal(feet.length, 1, `exactly one feet splash for yaw ${yaw}`);
     assert.ok(Math.abs(feet[0].point.x - a.pos.x) < 1e-9 && Math.abs(feet[0].point.z - a.pos.z) < 1e-9, 'splash is centred on the shooter');
     assert.equal(feet[0].radius, a.weapon.feetPaintRadius);
@@ -159,7 +159,7 @@ test('#168 a full-charge Charger applies the feet splash exactly once (piercing 
   const system = new f.Projectiles(new THREE.Scene());
   system.applyHit = () => {};
   system.fireCharger(a, a.weapon, 1);
-  const feet = splats.filter(s => s.opts?.kind === 'chargerFeet');
+  const feet = splats.filter(s => s.opts?.kind === 'trail');
   assert.equal(feet.length, 1, 'one feet splash even though the full-charge path paints through the native line');
 });
 
