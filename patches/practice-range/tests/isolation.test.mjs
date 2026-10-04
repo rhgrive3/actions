@@ -20,6 +20,19 @@ test('the range is not a stage of any picker: MAPS / OFFLINE_MAPS never list it;
   assert.equal(R.RANGE_MAP.noBots, true); assert.equal(R.RANGE_MAP.noBoss, true);
 });
 
+test('network and weapon tuning sources are byte-exact pass-through for the practice layer', () => {
+  const untouched = [
+    'src/net/mock.js', 'src/net/netmatch.js', 'src/net/session.js', 'src/net/transport.js',
+    'src/game/weapons.js', 'src/game/actor.js', 'src/config.js',
+  ];
+  for (const rel of untouched) {
+    const before = read(rel);
+    assert.equal(adaptRange(rel, before), before, rel + ' must not be patched by Practice Range');
+  }
+  const id = rangeIdentity();
+  assert.ok(!Object.keys(id).some((rel) => rel.startsWith('src/net/') || rel === 'src/game/weapons.js' || rel === 'src/config.js'));
+});
+
 test('main.js connections: every range branch is gated on the range map; other stages keep the old values', () => {
   const main = compose('src/main.js', read('src/main.js'));
   for (const s of ['rangeMapFor(opts.mapId)', '!isRangeMap(map)', 'noBots: mapNoBots(map.id) || isRangeMap(map), range: isRangeMap(map)',
