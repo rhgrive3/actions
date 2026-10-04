@@ -39,7 +39,7 @@ try{
  await page.waitForFunction(()=>probeG.game?.menus&&probeG.s3?.installed&&probeG.mode!=='boot',null,{timeout:Number(option('--boot-timeout','900000'))});
  console.log('Runtime ready');
  result.active=await page.evaluate(()=>{const gl=probeG.renderer?.getContext(),ext=gl?.getExtension('WEBGL_debug_renderer_info');return{baseURI:document.baseURI,mode:probeG.mode,browser:navigator.userAgent,dpr:devicePixelRatio,renderer:ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):null,gpuTimerQuery:!!gl?.getExtension('EXT_disjoint_timer_query_webgl2')};});
- result.environment.browser=await context.browser().version();result.environment.seed=20261004;checkpoint();
+ result.environment.browser=await context.browser().version();result.environment.seed=20261004;result.environment.seedMode='reset-each-profile-window';checkpoint();
  if(fixedOnly&&!menuOnly)await page.evaluate(()=>{probeG.game.debug.freeze();probeG.game.R.setDynamicScale(1);});
  if(parityOnly)await page.evaluate(async()=>{const g=probeG.game;await g.startMatch({mapId:'tidewater',difficulty:'easy',duration:180,mode:'turf'});g.debug.freeze();g.debug.freezeBots();g._skipRender=true;for(let i=0;i<270;i++)g._frame(1/60);g._skipRender=false;g.R.render();});
  if(!result.active.baseURI.includes(result.revision))throw Error('Active revision mismatch');
@@ -54,7 +54,7 @@ try{
    await page.evaluate(()=>{counts={};timings={};longtasks=[];rafTimes=[];});
    const before=(await cdp.send('Performance.getMetrics')).metrics;
    await cdp.send('Profiler.enable');await cdp.send('Profiler.start');
-   if(fixedOnly)await page.evaluate(()=>{const g=probeG.game;for(let i=0;i<30;i++)g._frame?.(1/60);});else await page.waitForTimeout(3000);
+   if(fixedOnly)await page.evaluate(()=>{const g=probeG.game;window.resetRuntimeSeed();for(let i=0;i<30;i++)g._frame?.(1/60);});else await page.waitForTimeout(3000);
    const {profile}=await cdp.send('Profiler.stop');saveEvidence(path.join(evidence,`${scenario}-${repeat}.cpuprofile`),profile);
    const after=(await cdp.send('Performance.getMetrics')).metrics;
    const samples=await page.evaluate(()=>({counts,timings,longtasks,frames:rafTimes.slice(1).map((t,i)=>t-rafTimes[i]),heap:performance.memory?.usedJSHeapSize,menu:{hidden:document.hidden,current:probeG.game.menus.current,raf:probeG.game.menus._raf,extAge:performance.now()-probeG.game.menus._extTick},renderInfo:probeG.renderer?{calls:probeG.renderer.info.render.calls,triangles:probeG.renderer.info.render.triangles,geometries:probeG.renderer.info.memory.geometries,textures:probeG.renderer.info.memory.textures,programs:probeG.renderer.info.programs?.length}:null,matchState:probeG.game.match?.state,gameplay:probeG.game.match?{time:probeG.game.match.time,actors:probeG.game.match.actors.map(a=>({pos:[a.pos.x,a.pos.y,a.pos.z],hp:a.hp,ink:a.ink,alive:a.alive,weapon:a.weaponId})),coverage:probeG.paint.coverage(),projectiles:probeG.projectiles.list.length}:null,quality:probeG.game.settings.quality,scale:probeG.game.R?.dynScale}));
