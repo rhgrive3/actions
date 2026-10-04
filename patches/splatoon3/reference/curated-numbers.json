@@ -56,6 +56,36 @@
       "id": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json",
       "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json",
       "sha256": "afece0e3e2016a895ba79483bfa63489b334c372293417b3b0ef072993bcb660"
+    },
+    {
+      "id": "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json",
+      "sha256": "a64c24c3167e5a7ec201cf8377fbeb3f6f8870ecd0be4549c50b9c3c57e840f7"
+    },
+    {
+      "id": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "sha256": "aa1d1c0a13d13c4f5d236524fb0452ccf6bfadf736274cb207181cb75b8fe815"
+    },
+    {
+      "id": "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json",
+      "sha256": "00a70cb95d668b0e48645d2852bbe2c4f9885afefbc5b42eadab00a1808f5434"
+    },
+    {
+      "id": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "sha256": "0de43e9869cb0d9451da5d57890184d1726d14fb4b38daec2868a76cc5a3c3c0"
+    },
+    {
+      "id": "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "sha256": "b088c9df476ed786a4a9e76c1fd3d7166885adf0dcffd563b36d1d20b9995d22"
+    },
+    {
+      "id": "data/mush/1130/WeaponInfoMain.json",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/mush/1130/WeaponInfoMain.json",
+      "sha256": "53641c4b4c96d56d3ed4ca8d4c7426d83a0bf28af6f85e9eafc391b2ae9f663e"
     }
   ],
   "parameters": {
@@ -1305,6 +1335,2358 @@
       "status": "extracted",
       "unit": "gear effect ratio",
       "notes": "Per-weapon override; unchanged endpoints reuse the pinned common curve. No omitted default reconstructed."
+    },
+    "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json#/GameParameters/BlastParam/CrossPaintCheckLength": {
+      "value": 2.5,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParam/CrossPaintCheckLength",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json#/GameParameters/BlastParam/CrossPaintRadius": {
+      "value": 2.5,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParam/CrossPaintRadius",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json#/GameParameters/BlastParam/DamageOffsetY": {
+      "value": 0.6,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParam/DamageOffsetY",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json#/GameParameters/BlastParam/DistanceDamage/0/Damage": {
+      "value": 1800,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParam/DistanceDamage/0/Damage",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json#/GameParameters/BlastParam/DistanceDamage/0/Distance": {
+      "value": 4.6,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParam/DistanceDamage/0/Distance",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json#/GameParameters/BlastParam/DistanceDamage/1/Damage": {
+      "value": 300,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParam/DistanceDamage/1/Damage",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json#/GameParameters/BlastParam/DistanceDamage/1/Distance": {
+      "value": 8.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParam/DistanceDamage/1/Distance",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json#/GameParameters/BlastParam/KnockBackParam/Accel": {
+      "value": 700.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParam/KnockBackParam/Accel",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json#/GameParameters/BlastParam/KnockBackParam/Bias": {
+      "value": 0.8,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParam/KnockBackParam/Bias",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json#/GameParameters/BlastParam/KnockBackParam/Distance": {
+      "value": 12.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParam/KnockBackParam/Distance",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json#/GameParameters/BlastParam/PaintOffsetY": {
+      "value": 0.45,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParam/PaintOffsetY",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json#/GameParameters/BlastParam/PaintRadius": {
+      "value": 5.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParam/PaintRadius",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json#/GameParameters/BlastParam/SplashAroundParam/Num": {
+      "value": 15,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParam/SplashAroundParam/Num",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json#/GameParameters/BlastParam/SplashAroundParam/OffsetY": {
+      "value": 0.5,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParam/SplashAroundParam/OffsetY",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json#/GameParameters/BlastParam/SplashAroundParam/PaintRadius": {
+      "value": 1.116,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParam/SplashAroundParam/PaintRadius",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json#/GameParameters/BlastParam/SplashAroundParam/PitchMax": {
+      "value": 45.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParam/SplashAroundParam/PitchMax",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json#/GameParameters/BlastParam/SplashAroundParam/PitchMin": {
+      "value": 5.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParam/SplashAroundParam/PitchMin",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json#/GameParameters/BlastParam/SplashAroundParam/VelocityMax": {
+      "value": 0.64,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParam/SplashAroundParam/VelocityMax",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json#/GameParameters/BlastParam/SplashAroundParam/VelocityMin": {
+      "value": 0.48,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParam/SplashAroundParam/VelocityMin",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeedY": {
+      "value": 0.24,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json",
+      "pointer": "/GameParameters/MoveParam/SpawnSpeedY",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeedYWorldMin": {
+      "value": -0.4,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json",
+      "pointer": "/GameParameters/MoveParam/SpawnSpeedYWorldMin",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeedZSpecUp/High": {
+      "value": 1.68,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json",
+      "pointer": "/GameParameters/MoveParam/SpawnSpeedZSpecUp/High",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeedZSpecUp/Low": {
+      "value": 1.12,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json",
+      "pointer": "/GameParameters/MoveParam/SpawnSpeedZSpecUp/Low",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeedZSpecUp/Mid": {
+      "value": 1.4,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json",
+      "pointer": "/GameParameters/MoveParam/SpawnSpeedZSpecUp/Mid",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json#/GameParameters/MoveParam/WarningSERestFrame": {
+      "value": 60,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json",
+      "pointer": "/GameParameters/MoveParam/WarningSERestFrame",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json#/GameParameters/WeaponParam/InkRecoverStop": {
+      "value": 60,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json",
+      "pointer": "/GameParameters/WeaponParam/InkRecoverStop",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json#/GameParameters/spl__BulletInformImpactControlForGeyserParam/AddSpeedPerImpact": {
+      "value": 0.15,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__BulletInformImpactControlForGeyserParam/AddSpeedPerImpact",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json#/GameParameters/spl__SpawnBulletAdditionMovePlayerParam/XRate": {
+      "value": 1.6,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__SpawnBulletAdditionMovePlayerParam/XRate",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json#/GameParameters/spl__SpawnBulletAdditionMovePlayerParam/YMax": {
+      "value": 0.32,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__SpawnBulletAdditionMovePlayerParam/YMax",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json#/GameParameters/spl__SpawnBulletAdditionMovePlayerParam/YPlusRate": {
+      "value": 4.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__SpawnBulletAdditionMovePlayerParam/YPlusRate",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json#/GameParameters/spl__SpawnBulletAdditionMovePlayerParam/ZRate": {
+      "value": 2.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__SpawnBulletAdditionMovePlayerParam/ZRate",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/BlastParamMaxCharge/CrossPaintCheckLength": {
+      "value": 2.1,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParamMaxCharge/CrossPaintCheckLength",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/BlastParamMaxCharge/CrossPaintRadius": {
+      "value": 2.1,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParamMaxCharge/CrossPaintRadius",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/BlastParamMaxCharge/DistanceDamage/0/Damage": {
+      "value": 1800,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParamMaxCharge/DistanceDamage/0/Damage",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/BlastParamMaxCharge/DistanceDamage/0/Distance": {
+      "value": 4.6,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParamMaxCharge/DistanceDamage/0/Distance",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/BlastParamMaxCharge/DistanceDamage/1/Damage": {
+      "value": 300,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParamMaxCharge/DistanceDamage/1/Damage",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/BlastParamMaxCharge/DistanceDamage/1/Distance": {
+      "value": 8.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParamMaxCharge/DistanceDamage/1/Distance",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/BlastParamMaxCharge/KnockBackParam/Accel": {
+      "value": 700.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParamMaxCharge/KnockBackParam/Accel",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/BlastParamMaxCharge/KnockBackParam/Bias": {
+      "value": 0.8,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParamMaxCharge/KnockBackParam/Bias",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/BlastParamMaxCharge/KnockBackParam/Distance": {
+      "value": 9.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParamMaxCharge/KnockBackParam/Distance",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/BlastParamMaxCharge/PaintRadius": {
+      "value": 5.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParamMaxCharge/PaintRadius",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/BlastParamMaxCharge/SplashAroundParam/Num": {
+      "value": 12,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParamMaxCharge/SplashAroundParam/Num",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/BlastParamMaxCharge/SplashAroundParam/PaintRadius": {
+      "value": 0.805,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParamMaxCharge/SplashAroundParam/PaintRadius",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/BlastParamMaxCharge/SplashAroundParam/PitchMax": {
+      "value": 33.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParamMaxCharge/SplashAroundParam/PitchMax",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/BlastParamMaxCharge/SplashAroundParam/PitchMin": {
+      "value": 19.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParamMaxCharge/SplashAroundParam/PitchMin",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/BlastParamMaxCharge/SplashAroundParam/VelocityMax": {
+      "value": 0.48,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParamMaxCharge/SplashAroundParam/VelocityMax",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/BlastParamMaxCharge/SplashAroundParam/VelocityMin": {
+      "value": 0.4,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParamMaxCharge/SplashAroundParam/VelocityMin",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/BlastParamMinCharge/CrossPaintCheckLength": {
+      "value": 1.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParamMinCharge/CrossPaintCheckLength",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/BlastParamMinCharge/CrossPaintRadius": {
+      "value": 1.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParamMinCharge/CrossPaintRadius",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/BlastParamMinCharge/DistanceDamage/0/Damage": {
+      "value": 1800,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParamMinCharge/DistanceDamage/0/Damage",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/BlastParamMinCharge/DistanceDamage/0/Distance": {
+      "value": 1.6,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParamMinCharge/DistanceDamage/0/Distance",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/BlastParamMinCharge/DistanceDamage/1/Damage": {
+      "value": 300,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParamMinCharge/DistanceDamage/1/Damage",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/BlastParamMinCharge/DistanceDamage/1/Distance": {
+      "value": 5.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParamMinCharge/DistanceDamage/1/Distance",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/BlastParamMinCharge/KnockBackParam/Accel": {
+      "value": 700.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParamMinCharge/KnockBackParam/Accel",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/BlastParamMinCharge/KnockBackParam/Bias": {
+      "value": 0.8,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParamMinCharge/KnockBackParam/Bias",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/BlastParamMinCharge/KnockBackParam/Distance": {
+      "value": 9.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParamMinCharge/KnockBackParam/Distance",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/BlastParamMinCharge/PaintRadius": {
+      "value": 2.133,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParamMinCharge/PaintRadius",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/BlastParamMinCharge/SplashAroundParam/Num": {
+      "value": 12,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParamMinCharge/SplashAroundParam/Num",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/BlastParamMinCharge/SplashAroundParam/PaintRadius": {
+      "value": 0.805,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParamMinCharge/SplashAroundParam/PaintRadius",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/BlastParamMinCharge/SplashAroundParam/PitchMax": {
+      "value": 33.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParamMinCharge/SplashAroundParam/PitchMax",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/BlastParamMinCharge/SplashAroundParam/PitchMin": {
+      "value": 19.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParamMinCharge/SplashAroundParam/PitchMin",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/BlastParamMinCharge/SplashAroundParam/VelocityMax": {
+      "value": 0.3,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParamMinCharge/SplashAroundParam/VelocityMax",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/BlastParamMinCharge/SplashAroundParam/VelocityMin": {
+      "value": 0.25,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParamMinCharge/SplashAroundParam/VelocityMin",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/MoveParam/BaseSpeedComeOverRate": {
+      "value": 0.92,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/MoveParam/BaseSpeedComeOverRate",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/MoveParam/BaseSpeedComeUnderRate": {
+      "value": 0.96,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/MoveParam/BaseSpeedComeUnderRate",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/MoveParam/BaseSpeedMinCharge": {
+      "value": 0.22,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/MoveParam/BaseSpeedMinCharge",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/MoveParam/BurstFrame": {
+      "value": 210,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/MoveParam/BurstFrame",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/MoveParam/BurstTimingSpeedStartRestFrame": {
+      "value": 90,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/MoveParam/BurstTimingSpeedStartRestFrame",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/MoveParam/BurstTimingSpeedStopBias": {
+      "value": 0.41,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/MoveParam/BurstTimingSpeedStopBias",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/MoveParam/ContactDashPanel/AddSpeedPerImpact": {
+      "value": 0.22807,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/MoveParam/ContactDashPanel/AddSpeedPerImpact",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/MoveParam/ContactDashPanel/AddSpeedSequenceFrameRate": {
+      "value": 0.95,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/MoveParam/ContactDashPanel/AddSpeedSequenceFrameRate",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/MoveParam/ContactDashPanel/ImpactDirectionSaveSpeedRate": {
+      "value": 0.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/MoveParam/ContactDashPanel/ImpactDirectionSaveSpeedRate",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/MoveParam/ContactJumpPanel/AddSpeedOneBoundRate": {
+      "value": 0.5,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/MoveParam/ContactJumpPanel/AddSpeedOneBoundRate",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/MoveParam/ContactJumpPanel/AddSpeedPerImpact": {
+      "value": 0.05167,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/MoveParam/ContactJumpPanel/AddSpeedPerImpact",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/MoveParam/ContactJumpPanel/MaxBoundNum": {
+      "value": 3,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/MoveParam/ContactJumpPanel/MaxBoundNum",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/MoveParam/DamageDirectHit": {
+      "value": 200,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/MoveParam/DamageDirectHit",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/MoveParam/DamageDirectSpanSecond": {
+      "value": 0.6667,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/MoveParam/DamageDirectSpanSecond",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/MoveParam/FlyGravity": {
+      "value": 0.016,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/MoveParam/FlyGravity",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/MoveParam/FlyPositionAirResist": {
+      "value": 0.05866,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/MoveParam/FlyPositionAirResist",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/MoveParam/GroundGravity": {
+      "value": 0.0016,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/MoveParam/GroundGravity",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/MoveParam/GroundPositionAirResist": {
+      "value": 0.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/MoveParam/GroundPositionAirResist",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/MoveParam/KnockBackParam/Accel": {
+      "value": 350.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/MoveParam/KnockBackParam/Accel",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/MoveParam/KnockBackParam/Bias": {
+      "value": 0.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/MoveParam/KnockBackParam/Bias",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/MoveParam/KnockBackParam/Degree": {
+      "value": 60.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/MoveParam/KnockBackParam/Degree",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/MoveParam/KnockBackParam/Distance": {
+      "value": 10.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/MoveParam/KnockBackParam/Distance",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/MoveParam/ModelRotateHitWall45Degree": {
+      "value": 1.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/MoveParam/ModelRotateHitWall45Degree",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/MoveParam/ModelRotateReduceDegree": {
+      "value": 0.005,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/MoveParam/ModelRotateReduceDegree",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/MoveParam/PaintBurstRadiusBias": {
+      "value": 0.65,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/MoveParam/PaintBurstRadiusBias",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/MoveParam/PaintCheckHeight": {
+      "value": 2.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/MoveParam/PaintCheckHeight",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/MoveParam/PaintRadiusBias": {
+      "value": 0.25,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/MoveParam/PaintRadiusBias",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/MoveParam/PaintRadiusMaxCharge": {
+      "value": 1.29,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/MoveParam/PaintRadiusMaxCharge",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/MoveParam/PaintRadiusMinCharge": {
+      "value": 1.075,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/MoveParam/PaintRadiusMinCharge",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeedY": {
+      "value": 0.12,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/MoveParam/SpawnSpeedY",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeedYMaxCharge": {
+      "value": 0.12,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/MoveParam/SpawnSpeedYMaxCharge",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeedYWorldMin": {
+      "value": -0.5,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/MoveParam/SpawnSpeedYWorldMin",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeedZMaxCharge": {
+      "value": 0.2,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/MoveParam/SpawnSpeedZMaxCharge",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeedZSpecUp/High": {
+      "value": 0.52,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/MoveParam/SpawnSpeedZSpecUp/High",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeedZSpecUp/Low": {
+      "value": 0.4,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/MoveParam/SpawnSpeedZSpecUp/Low",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeedZSpecUp/Mid": {
+      "value": 0.46,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/MoveParam/SpawnSpeedZSpecUp/Mid",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/MoveParam/WarningAnimRestFrame": {
+      "value": 90,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/MoveParam/WarningAnimRestFrame",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/WeaponParam/ChargeFrameBlastRate": {
+      "value": 2.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/WeaponParam/ChargeFrameBlastRate",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/WeaponParam/InkConsume": {
+      "value": 0.65,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/WeaponParam/InkConsume",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/WeaponParam/InkRecoverStop": {
+      "value": 70,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/WeaponParam/InkRecoverStop",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/WeaponParam/InkRecoverStopMaxCharge": {
+      "value": 30,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/WeaponParam/InkRecoverStopMaxCharge",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/WeaponParam/MaxChargeFrame": {
+      "value": 60,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/WeaponParam/MaxChargeFrame",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/spl__SpawnBulletAdditionMovePlayerParam/XRate": {
+      "value": 0.8,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__SpawnBulletAdditionMovePlayerParam/XRate",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/spl__SpawnBulletAdditionMovePlayerParam/YMax": {
+      "value": 0.16,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__SpawnBulletAdditionMovePlayerParam/YMax",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/spl__SpawnBulletAdditionMovePlayerParam/YMinusRate": {
+      "value": 0.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__SpawnBulletAdditionMovePlayerParam/YMinusRate",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/spl__SpawnBulletAdditionMovePlayerParam/YPlusRate": {
+      "value": 2.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__SpawnBulletAdditionMovePlayerParam/YPlusRate",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json#/GameParameters/spl__SpawnBulletAdditionMovePlayerParam/ZRate": {
+      "value": 1.2,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponBombCurling.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__SpawnBulletAdditionMovePlayerParam/ZRate",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json#/GameParameters/spl__BulletSpGreatBarrierMoveParam/BarrierParam/CanopyKnockBack": {
+      "value": 700.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__BulletSpGreatBarrierMoveParam/BarrierParam/CanopyKnockBack",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json#/GameParameters/spl__BulletSpGreatBarrierMoveParam/BarrierParam/DamgeRatio": {
+      "value": 0.64,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__BulletSpGreatBarrierMoveParam/BarrierParam/DamgeRatio",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json#/GameParameters/spl__BulletSpGreatBarrierMoveParam/BarrierParam/MaxFieldHP/High": {
+      "value": 36864.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__BulletSpGreatBarrierMoveParam/BarrierParam/MaxFieldHP/High",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json#/GameParameters/spl__BulletSpGreatBarrierMoveParam/BarrierParam/MaxFieldHP/Low": {
+      "value": 30720.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__BulletSpGreatBarrierMoveParam/BarrierParam/MaxFieldHP/Low",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json#/GameParameters/spl__BulletSpGreatBarrierMoveParam/BarrierParam/MaxFieldHP/Mid": {
+      "value": 33792.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__BulletSpGreatBarrierMoveParam/BarrierParam/MaxFieldHP/Mid",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json#/GameParameters/spl__BulletSpGreatBarrierMoveParam/BarrierParam/MaxHP/High": {
+      "value": 18432.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__BulletSpGreatBarrierMoveParam/BarrierParam/MaxHP/High",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json#/GameParameters/spl__BulletSpGreatBarrierMoveParam/BarrierParam/MaxHP/Low": {
+      "value": 15360.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__BulletSpGreatBarrierMoveParam/BarrierParam/MaxHP/Low",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json#/GameParameters/spl__BulletSpGreatBarrierMoveParam/BarrierParam/MaxHP/Mid": {
+      "value": 16896.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__BulletSpGreatBarrierMoveParam/BarrierParam/MaxHP/Mid",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json#/GameParameters/spl__BulletSpGreatBarrierMoveParam/BarrierParam/MaxRadius": {
+      "value": 7.5,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__BulletSpGreatBarrierMoveParam/BarrierParam/MaxRadius",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json#/GameParameters/spl__BulletSpGreatBarrierMoveParam/BarrierParam/MinRadius": {
+      "value": 2.255,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__BulletSpGreatBarrierMoveParam/BarrierParam/MinRadius",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json#/GameParameters/spl__BulletSpGreatBarrierMoveParam/BarrierParam/RadiusRatioCurve/Data/0": {
+      "value": 0.1940299,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__BulletSpGreatBarrierMoveParam/BarrierParam/RadiusRatioCurve/Data/0",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json#/GameParameters/spl__BulletSpGreatBarrierMoveParam/BarrierParam/RadiusRatioCurve/Data/1": {
+      "value": 0.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__BulletSpGreatBarrierMoveParam/BarrierParam/RadiusRatioCurve/Data/1",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json#/GameParameters/spl__BulletSpGreatBarrierMoveParam/BarrierParam/RadiusRatioCurve/Data/2": {
+      "value": 0.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__BulletSpGreatBarrierMoveParam/BarrierParam/RadiusRatioCurve/Data/2",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json#/GameParameters/spl__BulletSpGreatBarrierMoveParam/BarrierParam/RadiusRatioCurve/Data/3": {
+      "value": 0.6522388,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__BulletSpGreatBarrierMoveParam/BarrierParam/RadiusRatioCurve/Data/3",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json#/GameParameters/spl__BulletSpGreatBarrierMoveParam/BarrierParam/RadiusRatioCurve/Data/4": {
+      "value": 0.3726415,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__BulletSpGreatBarrierMoveParam/BarrierParam/RadiusRatioCurve/Data/4",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json#/GameParameters/spl__BulletSpGreatBarrierMoveParam/BarrierParam/RadiusRatioCurve/Data/5": {
+      "value": -0.02766653,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__BulletSpGreatBarrierMoveParam/BarrierParam/RadiusRatioCurve/Data/5",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json#/GameParameters/spl__BulletSpGreatBarrierMoveParam/BarrierParam/RadiusRatioCurve/Data/6": {
+      "value": 0.8723881,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__BulletSpGreatBarrierMoveParam/BarrierParam/RadiusRatioCurve/Data/6",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json#/GameParameters/spl__BulletSpGreatBarrierMoveParam/BarrierParam/RadiusRatioCurve/Data/7": {
+      "value": 0.75,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__BulletSpGreatBarrierMoveParam/BarrierParam/RadiusRatioCurve/Data/7",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json#/GameParameters/spl__BulletSpGreatBarrierMoveParam/BarrierParam/RadiusRatioCurve/Data/8": {
+      "value": 1.1808,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__BulletSpGreatBarrierMoveParam/BarrierParam/RadiusRatioCurve/Data/8",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json#/GameParameters/spl__BulletSpGreatBarrierMoveParam/BarrierParam/RadiusRatioCurve/Data/9": {
+      "value": 1.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__BulletSpGreatBarrierMoveParam/BarrierParam/RadiusRatioCurve/Data/9",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json#/GameParameters/spl__BulletSpGreatBarrierMoveParam/BarrierParam/RadiusRatioCurve/Data/10": {
+      "value": 1.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__BulletSpGreatBarrierMoveParam/BarrierParam/RadiusRatioCurve/Data/10",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json#/GameParameters/spl__BulletSpGreatBarrierMoveParam/BarrierParam/RadiusRatioCurve/Data/11": {
+      "value": 4.740566,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__BulletSpGreatBarrierMoveParam/BarrierParam/RadiusRatioCurve/Data/11",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json#/GameParameters/spl__BulletSpGreatBarrierMoveParam/BarrierParam/RadiusRatioCurve/MaxX": {
+      "value": 1.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__BulletSpGreatBarrierMoveParam/BarrierParam/RadiusRatioCurve/MaxX",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json#/GameParameters/spl__BulletSpGreatBarrierMoveParam/BarrierParam/TimeDamage": {
+      "value": 921,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__BulletSpGreatBarrierMoveParam/BarrierParam/TimeDamage",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json#/GameParameters/spl__BulletSpGreatBarrierMoveParam/BarrierParam/TimeDamageOnVLift": {
+      "value": 1842,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__BulletSpGreatBarrierMoveParam/BarrierParam/TimeDamageOnVLift",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json#/GameParameters/spl__BulletSpGreatBarrierMoveParam/BaseParam/PaintRadius": {
+      "value": 4.5,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__BulletSpGreatBarrierMoveParam/BaseParam/PaintRadius",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json#/GameParameters/spl__BulletSpGreatBarrierMoveParam/DroneParam/AscendCurve/Data/0": {
+      "value": 0.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__BulletSpGreatBarrierMoveParam/DroneParam/AscendCurve/Data/0",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json#/GameParameters/spl__BulletSpGreatBarrierMoveParam/DroneParam/AscendCurve/Data/1": {
+      "value": 0.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__BulletSpGreatBarrierMoveParam/DroneParam/AscendCurve/Data/1",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json#/GameParameters/spl__BulletSpGreatBarrierMoveParam/DroneParam/AscendCurve/Data/2": {
+      "value": 0.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__BulletSpGreatBarrierMoveParam/DroneParam/AscendCurve/Data/2",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json#/GameParameters/spl__BulletSpGreatBarrierMoveParam/DroneParam/AscendCurve/Data/3": {
+      "value": 0.25,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__BulletSpGreatBarrierMoveParam/DroneParam/AscendCurve/Data/3",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json#/GameParameters/spl__BulletSpGreatBarrierMoveParam/DroneParam/AscendCurve/Data/4": {
+      "value": 0.1122642,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__BulletSpGreatBarrierMoveParam/DroneParam/AscendCurve/Data/4",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json#/GameParameters/spl__BulletSpGreatBarrierMoveParam/DroneParam/AscendCurve/Data/5": {
+      "value": 0.8181818,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__BulletSpGreatBarrierMoveParam/DroneParam/AscendCurve/Data/5",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json#/GameParameters/spl__BulletSpGreatBarrierMoveParam/DroneParam/AscendCurve/Data/6": {
+      "value": 0.5,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__BulletSpGreatBarrierMoveParam/DroneParam/AscendCurve/Data/6",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json#/GameParameters/spl__BulletSpGreatBarrierMoveParam/DroneParam/AscendCurve/Data/7": {
+      "value": 0.5,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__BulletSpGreatBarrierMoveParam/DroneParam/AscendCurve/Data/7",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json#/GameParameters/spl__BulletSpGreatBarrierMoveParam/DroneParam/AscendCurve/Data/8": {
+      "value": 2.926098,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__BulletSpGreatBarrierMoveParam/DroneParam/AscendCurve/Data/8",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json#/GameParameters/spl__BulletSpGreatBarrierMoveParam/DroneParam/AscendCurve/Data/9": {
+      "value": 0.6830189,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__BulletSpGreatBarrierMoveParam/DroneParam/AscendCurve/Data/9",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json#/GameParameters/spl__BulletSpGreatBarrierMoveParam/DroneParam/AscendCurve/Data/10": {
+      "value": 0.8556603,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__BulletSpGreatBarrierMoveParam/DroneParam/AscendCurve/Data/10",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json#/GameParameters/spl__BulletSpGreatBarrierMoveParam/DroneParam/AscendCurve/Data/11": {
+      "value": 1.395833,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__BulletSpGreatBarrierMoveParam/DroneParam/AscendCurve/Data/11",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json#/GameParameters/spl__BulletSpGreatBarrierMoveParam/DroneParam/AscendCurve/Data/12": {
+      "value": 1.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__BulletSpGreatBarrierMoveParam/DroneParam/AscendCurve/Data/12",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json#/GameParameters/spl__BulletSpGreatBarrierMoveParam/DroneParam/AscendCurve/Data/13": {
+      "value": 1.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__BulletSpGreatBarrierMoveParam/DroneParam/AscendCurve/Data/13",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json#/GameParameters/spl__BulletSpGreatBarrierMoveParam/DroneParam/AscendCurve/Data/14": {
+      "value": 0.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__BulletSpGreatBarrierMoveParam/DroneParam/AscendCurve/Data/14",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json#/GameParameters/spl__BulletSpGreatBarrierMoveParam/DroneParam/AscendCurve/MaxX": {
+      "value": 1.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__BulletSpGreatBarrierMoveParam/DroneParam/AscendCurve/MaxX",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json#/GameParameters/spl__BulletSpGreatBarrierMoveParam/DroneParam/AscendFrame": {
+      "value": 30,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__BulletSpGreatBarrierMoveParam/DroneParam/AscendFrame",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json#/GameParameters/spl__BulletSpGreatBarrierMoveParam/DroneParam/AscendHeight": {
+      "value": 8.5,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__BulletSpGreatBarrierMoveParam/DroneParam/AscendHeight",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json#/GameParameters/spl__BulletSpGreatBarrierMoveParam/DroneParam/FieldCollisionRadius": {
+      "value": 0.4,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__BulletSpGreatBarrierMoveParam/DroneParam/FieldCollisionRadius",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json#/GameParameters/spl__BulletSpGreatBarrierMoveParam/DroneParam/IgnitionFrame": {
+      "value": 15,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__BulletSpGreatBarrierMoveParam/DroneParam/IgnitionFrame",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json#/GameParameters/spl__BulletSpGreatBarrierMoveParam/DroneParam/OverlapFieldDamage": {
+      "value": 5,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__BulletSpGreatBarrierMoveParam/DroneParam/OverlapFieldDamage",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json#/GameParameters/spl__BulletSpGreatBarrierMoveParam/DroneParam/OverlapFieldDamageInterval": {
+      "value": 5,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__BulletSpGreatBarrierMoveParam/DroneParam/OverlapFieldDamageInterval",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json#/GameParameters/spl__WeaponSpGreatBarrierParam/KnockBackParam/ImpactValue": {
+      "value": 0.05,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__WeaponSpGreatBarrierParam/KnockBackParam/ImpactValue",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/ExhaleBlastParamMaxCharge/CrossPaintCheckLength": {
+      "value": 6.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/ExhaleBlastParamMaxCharge/CrossPaintCheckLength",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/ExhaleBlastParamMaxCharge/CrossPaintRadius": {
+      "value": 9.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/ExhaleBlastParamMaxCharge/CrossPaintRadius",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/ExhaleBlastParamMaxCharge/DamageOffsetY": {
+      "value": 0.5,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/ExhaleBlastParamMaxCharge/DamageOffsetY",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/ExhaleBlastParamMaxCharge/DistanceDamage/0/Damage": {
+      "value": 2200,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/ExhaleBlastParamMaxCharge/DistanceDamage/0/Damage",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/ExhaleBlastParamMaxCharge/DistanceDamage/0/Distance": {
+      "value": 11.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/ExhaleBlastParamMaxCharge/DistanceDamage/0/Distance",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/ExhaleBlastParamMaxCharge/KnockBackParam/Accel": {
+      "value": 700.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/ExhaleBlastParamMaxCharge/KnockBackParam/Accel",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/ExhaleBlastParamMaxCharge/KnockBackParam/Bias": {
+      "value": 0.8,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/ExhaleBlastParamMaxCharge/KnockBackParam/Bias",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/ExhaleBlastParamMaxCharge/KnockBackParam/Distance": {
+      "value": 9.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/ExhaleBlastParamMaxCharge/KnockBackParam/Distance",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/ExhaleBlastParamMaxCharge/PaintOffsetY": {
+      "value": 0.5,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/ExhaleBlastParamMaxCharge/PaintOffsetY",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/ExhaleBlastParamMaxCharge/PaintRadius": {
+      "value": 11.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/ExhaleBlastParamMaxCharge/PaintRadius",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/ExhaleBlastParamMinCharge/CrossPaintCheckLength": {
+      "value": 6.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/ExhaleBlastParamMinCharge/CrossPaintCheckLength",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/ExhaleBlastParamMinCharge/CrossPaintRadius": {
+      "value": 5.5,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/ExhaleBlastParamMinCharge/CrossPaintRadius",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/ExhaleBlastParamMinCharge/DamageOffsetY": {
+      "value": 0.5,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/ExhaleBlastParamMinCharge/DamageOffsetY",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/ExhaleBlastParamMinCharge/DistanceDamage/0/Damage": {
+      "value": 2200,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/ExhaleBlastParamMinCharge/DistanceDamage/0/Damage",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/ExhaleBlastParamMinCharge/DistanceDamage/0/Distance": {
+      "value": 6.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/ExhaleBlastParamMinCharge/DistanceDamage/0/Distance",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/ExhaleBlastParamMinCharge/KnockBackParam/Accel": {
+      "value": 700.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/ExhaleBlastParamMinCharge/KnockBackParam/Accel",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/ExhaleBlastParamMinCharge/KnockBackParam/Bias": {
+      "value": 0.8,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/ExhaleBlastParamMinCharge/KnockBackParam/Bias",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/ExhaleBlastParamMinCharge/KnockBackParam/DirectionZeroAccelRate": {
+      "value": 0.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/ExhaleBlastParamMinCharge/KnockBackParam/DirectionZeroAccelRate",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/ExhaleBlastParamMinCharge/KnockBackParam/Distance": {
+      "value": 9.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/ExhaleBlastParamMinCharge/KnockBackParam/Distance",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/ExhaleBlastParamMinCharge/PaintOffsetY": {
+      "value": 0.5,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/ExhaleBlastParamMinCharge/PaintOffsetY",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/ExhaleBlastParamMinCharge/PaintRadius": {
+      "value": 6.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/ExhaleBlastParamMinCharge/PaintRadius",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/ExhaleCollisionParam/RadiusForPlayerMinCharge": {
+      "value": 0.4,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/ExhaleCollisionParam/RadiusForPlayerMinCharge",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/ExhaleParam/DirectAccel": {
+      "value": 200.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/ExhaleParam/DirectAccel",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/ExhaleParam/DirectDamage": {
+      "value": 2200,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/ExhaleParam/DirectDamage",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/ExhaleParam/FlyGravity": {
+      "value": 0.003,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/ExhaleParam/FlyGravity",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/ExhaleParam/FlyPositionAirResist": {
+      "value": 0.01,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/ExhaleParam/FlyPositionAirResist",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/ExhaleParam/GuideRadius": {
+      "value": 0.25,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/ExhaleParam/GuideRadius",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/ExhaleParam/PaintRadiusMaxCharge": {
+      "value": 3.2,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/ExhaleParam/PaintRadiusMaxCharge",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/ExhaleParam/PaintRadiusMinCharge": {
+      "value": 2.4,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/ExhaleParam/PaintRadiusMinCharge",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/ExhaleParam/SpawnBlastWaitFrame": {
+      "value": 50,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/ExhaleParam/SpawnBlastWaitFrame",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/ExhaleParam/SpawnSpeedY": {
+      "value": 0.08,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/ExhaleParam/SpawnSpeedY",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/ExhaleParam/SpawnSpeedYMaxCharge": {
+      "value": 0.08,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/ExhaleParam/SpawnSpeedYMaxCharge",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/ExhaleParam/SpawnSpeedZMaxCharge": {
+      "value": 0.7,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/ExhaleParam/SpawnSpeedZMaxCharge",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/ExhaleParam/SpawnSpeedZSpecUp/High": {
+      "value": 0.55,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/ExhaleParam/SpawnSpeedZSpecUp/High",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/ExhaleParam/SpawnSpeedZSpecUp/Low": {
+      "value": 0.55,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/ExhaleParam/SpawnSpeedZSpecUp/Low",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/ExhaleParam/SpawnSpeedZSpecUp/Mid": {
+      "value": 0.55,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/ExhaleParam/SpawnSpeedZSpecUp/Mid",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/CollisionAccelRateNearest": {
+      "value": 2.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/CollisionAccelRateNearest",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/CollisionAccelRatePerDist": {
+      "value": 0.01,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/CollisionAccelRatePerDist",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/CollisionAirResist": {
+      "value": 0.12,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/CollisionAirResist",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/CollisionAirResistMaxNum": {
+      "value": 2,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/CollisionAirResistMaxNum",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/CollisionAirResistNum0": {
+      "value": 0.02,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/CollisionAirResistNum0",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/DamagePerFrameByObject": {
+      "value": 20,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/DamagePerFrameByObject",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/EffectRingSpanFrame": {
+      "value": 56,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/EffectRingSpanFrame",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/EffectRingSpeed/Data/0": {
+      "value": 0.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/EffectRingSpeed/Data/0",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/EffectRingSpeed/Data/1": {
+      "value": 0.55,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/EffectRingSpeed/Data/1",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/EffectRingSpeed/Data/2": {
+      "value": 0.1832544,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/EffectRingSpeed/Data/2",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/EffectRingSpeed/Data/3": {
+      "value": 0.0637774,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/EffectRingSpeed/Data/3",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/EffectRingSpeed/Data/4": {
+      "value": 0.5,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/EffectRingSpeed/Data/4",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/EffectRingSpeed/Data/5": {
+      "value": 0.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/EffectRingSpeed/Data/5",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/EffectRingSpeed/Data/6": {
+      "value": 0.4208998,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/EffectRingSpeed/Data/6",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/EffectRingSpeed/Data/7": {
+      "value": 0.219,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/EffectRingSpeed/Data/7",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/EffectRingSpeed/Data/8": {
+      "value": 0.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/EffectRingSpeed/Data/8",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/EffectRingSpeed/Data/9": {
+      "value": 1.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/EffectRingSpeed/Data/9",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/EffectRingSpeed/Data/10": {
+      "value": 0.219,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/EffectRingSpeed/Data/10",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/EffectRingSpeed/Data/11": {
+      "value": 0.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/EffectRingSpeed/Data/11",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/EffectRingSpeed/MaxX": {
+      "value": 1.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/EffectRingSpeed/MaxX",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/EffectScalePerCollision/Data/0": {
+      "value": 0.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/EffectScalePerCollision/Data/0",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/EffectScalePerCollision/Data/1": {
+      "value": 0.28,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/EffectScalePerCollision/Data/1",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/EffectScalePerCollision/Data/2": {
+      "value": 2.329197,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/EffectScalePerCollision/Data/2",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/EffectScalePerCollision/Data/3": {
+      "value": 0.440625,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/EffectScalePerCollision/Data/3",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/EffectScalePerCollision/Data/4": {
+      "value": 1.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/EffectScalePerCollision/Data/4",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/EffectScalePerCollision/Data/5": {
+      "value": 0.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/EffectScalePerCollision/Data/5",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/EffectScalePerCollision/Data/6": {
+      "value": 1.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/EffectScalePerCollision/Data/6",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/EffectScalePerCollision/Data/7": {
+      "value": 1.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/EffectScalePerCollision/Data/7",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/EffectScalePerCollision/Data/8": {
+      "value": 0.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/EffectScalePerCollision/Data/8",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/EffectScalePerCollision/MaxX": {
+      "value": 1.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/EffectScalePerCollision/MaxX",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/EffectSpanForGeyser": {
+      "value": 10,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/EffectSpanForGeyser",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/EffectSpeed": {
+      "value": 2.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/EffectSpeed",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/LengthAddPerFrame": {
+      "value": 0.3334,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/LengthAddPerFrame",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/LengthMax": {
+      "value": 15.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/LengthMax",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/MuzzleCollisionOffset": {
+      "value": 1.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/MuzzleCollisionOffset",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/MuzzleCollisionRadius": {
+      "value": 1.2,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/MuzzleCollisionRadius",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/PaintSplashParam/DepthMaxDropHeight": {
+      "value": 1.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/PaintSplashParam/DepthMaxDropHeight",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/PaintSplashParam/DepthMinDropHeight": {
+      "value": 1.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/PaintSplashParam/DepthMinDropHeight",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/PaintSplashParam/DepthScaleMax": {
+      "value": 2.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/PaintSplashParam/DepthScaleMax",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/PaintSplashParam/DepthScaleMin": {
+      "value": 2.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/PaintSplashParam/DepthScaleMin",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/PaintSplashParam/WidthHalf": {
+      "value": 1.5,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/PaintSplashParam/WidthHalf",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/PaintSplashParam/WidthHalfNearest": {
+      "value": 1.5,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/PaintSplashParam/WidthHalfNearest",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/PaintSplashSpanFrame": {
+      "value": 20,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/PaintSplashSpanFrame",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/PaintSplashSpawnOffset/X": {
+      "value": -0.3,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/PaintSplashSpawnOffset/X",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/PaintSplashSpawnOffset/Y": {
+      "value": -0.7,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/PaintSplashSpawnOffset/Y",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/PaintSplashSpawnOffset/Z": {
+      "value": -0.7,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/PaintSplashSpawnOffset/Z",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/PoisonMistForPlayer/EffectFrame": {
+      "value": 5,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/PoisonMistForPlayer/EffectFrame",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/PoisonMistForPlayer/Level/1/NextLevelCount": {
+      "value": 4,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/PoisonMistForPlayer/Level/1/NextLevelCount",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/PoisonMistForPlayer/Level/2/Frame": {
+      "value": 15,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/PoisonMistForPlayer/Level/2/Frame",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/PoisonMistForPlayer/Level/2/NextLevelCount": {
+      "value": 0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/PoisonMistForPlayer/Level/2/NextLevelCount",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/PoisonMistForPlayer/SideStepInkConsumeRate": {
+      "value": 3.5,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/PoisonMistForPlayer/SideStepInkConsumeRate",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/RadiusMax/High": {
+      "value": 4.3,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/RadiusMax/High",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/RadiusMax/Low": {
+      "value": 3.3,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/RadiusMax/Low",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/RadiusMax/Mid": {
+      "value": 3.8,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/RadiusMax/Mid",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/RadiusMin/High": {
+      "value": 1.4,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/RadiusMin/High",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/RadiusMin/Low": {
+      "value": 0.8,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/RadiusMin/Low",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/RadiusMin/Mid": {
+      "value": 1.1,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/RadiusMin/Mid",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/ReceiveDamageForGeyser": {
+      "value": 10,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/ReceiveDamageForGeyser",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/InhaleParam/ReceiveDamageForPlayer": {
+      "value": 15,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/InhaleParam/ReceiveDamageForPlayer",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/WeaponParam/ExhaleWaitFrame": {
+      "value": 150,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/WeaponParam/ExhaleWaitFrame",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/WeaponParam/InhaleToExhaleWaitFrame": {
+      "value": 20,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/WeaponParam/InhaleToExhaleWaitFrame",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/WeaponParam/JumpHeightFullCharge": {
+      "value": 0.07,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/WeaponParam/JumpHeightFullCharge",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/WeaponParam/JumpHeightMinCharge": {
+      "value": 0.115,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/WeaponParam/JumpHeightMinCharge",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/WeaponParam/JumpVelExhale": {
+      "value": 0.07,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/WeaponParam/JumpVelExhale",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/WeaponParam/MoveJumpDownBias": {
+      "value": 1.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/WeaponParam/MoveJumpDownBias",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/WeaponParam/MoveJumpDownStartChargeRate": {
+      "value": 0.1,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/WeaponParam/MoveJumpDownStartChargeRate",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/WeaponParam/MoveSpeedFullCharge": {
+      "value": 0.07,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/WeaponParam/MoveSpeedFullCharge",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/WeaponParam/MoveSpeedMinCharge": {
+      "value": 0.09,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/WeaponParam/MoveSpeedMinCharge",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/WeaponParam/ShotDirXZ_RotDegH": {
+      "value": 2.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/WeaponParam/ShotDirXZ_RotDegH",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/WeaponParam/ShotPitVel": {
+      "value": 0.15,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/WeaponParam/ShotPitVel",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/spl__SpawnBulletAdditionMovePlayerParam/XRate": {
+      "value": 0.1,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__SpawnBulletAdditionMovePlayerParam/XRate",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/spl__SpawnBulletAdditionMovePlayerParam/YPlusRate": {
+      "value": 0.5,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__SpawnBulletAdditionMovePlayerParam/YPlusRate",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json#/GameParameters/spl__SpawnBulletAdditionMovePlayerParam/ZRate": {
+      "value": 0.5,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__SpawnBulletAdditionMovePlayerParam/ZRate",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json#/GameParameters/BlastParam/DistanceDamage/0/Damage": {
+      "value": 530,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParam/DistanceDamage/0/Damage",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json#/GameParameters/BlastParam/DistanceDamage/0/Distance": {
+      "value": 2.5,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParam/DistanceDamage/0/Distance",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json#/GameParameters/BlastParam/DistanceDamage/1/Damage": {
+      "value": 350,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParam/DistanceDamage/1/Damage",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json#/GameParameters/BlastParam/DistanceDamage/1/Distance": {
+      "value": 4.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParam/DistanceDamage/1/Distance",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json#/GameParameters/BlastParam/KnockBackParam/Accel": {
+      "value": 470.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParam/KnockBackParam/Accel",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json#/GameParameters/BlastParam/KnockBackParam/Bias": {
+      "value": 0.8,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParam/KnockBackParam/Bias",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json#/GameParameters/BlastParam/KnockBackParam/Distance": {
+      "value": 8.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParam/KnockBackParam/Distance",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json#/GameParameters/BlastParam/PaintRadius": {
+      "value": 3.2,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParam/PaintRadius",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json#/GameParameters/BlastParam/SubSpecialSpecUpList/0/Value/High": {
+      "value": 4.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParam/SubSpecialSpecUpList/0/Value/High",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json#/GameParameters/BlastParam/SubSpecialSpecUpList/0/Value/Low": {
+      "value": 3.2,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParam/SubSpecialSpecUpList/0/Value/Low",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json#/GameParameters/BlastParam/SubSpecialSpecUpList/0/Value/Mid": {
+      "value": 3.6,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParam/SubSpecialSpecUpList/0/Value/Mid",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json#/GameParameters/BlastParam/SubSpecialSpecUpList/1/Value/High": {
+      "value": 1.3,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParam/SubSpecialSpecUpList/1/Value/High",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json#/GameParameters/BlastParam/SubSpecialSpecUpList/1/Value/Low": {
+      "value": 1.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParam/SubSpecialSpecUpList/1/Value/Low",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json#/GameParameters/BlastParam/SubSpecialSpecUpList/1/Value/Mid": {
+      "value": 1.15,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "pointer": "/GameParameters/BlastParam/SubSpecialSpecUpList/1/Value/Mid",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json#/GameParameters/CollisionParam/ChangeFrameForField": {
+      "value": 20,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "pointer": "/GameParameters/CollisionParam/ChangeFrameForField",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json#/GameParameters/CollisionParam/ChangeFrameForPlayer": {
+      "value": 10,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "pointer": "/GameParameters/CollisionParam/ChangeFrameForPlayer",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json#/GameParameters/CollisionParam/EndRadiusForField": {
+      "value": 0.3,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "pointer": "/GameParameters/CollisionParam/EndRadiusForField",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json#/GameParameters/CollisionParam/EndRadiusForPlayer": {
+      "value": 0.75,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "pointer": "/GameParameters/CollisionParam/EndRadiusForPlayer",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json#/GameParameters/CollisionParam/InitRadiusForField": {
+      "value": 0.01,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "pointer": "/GameParameters/CollisionParam/InitRadiusForField",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json#/GameParameters/CollisionParam/InitRadiusForPlayer": {
+      "value": 0.01,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "pointer": "/GameParameters/CollisionParam/InitRadiusForPlayer",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json#/GameParameters/DamageParam/DirectHitDamage": {
+      "value": 2200,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "pointer": "/GameParameters/DamageParam/DirectHitDamage",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json#/GameParameters/MoveParam/BrakeAirResist": {
+      "value": 0.09,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "pointer": "/GameParameters/MoveParam/BrakeAirResist",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json#/GameParameters/MoveParam/BrakeGravity": {
+      "value": 0.09,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "pointer": "/GameParameters/MoveParam/BrakeGravity",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json#/GameParameters/MoveParam/BrakeToFreeStateFrame": {
+      "value": 10,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "pointer": "/GameParameters/MoveParam/BrakeToFreeStateFrame",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json#/GameParameters/MoveParam/BrakeToFreeVelocityXZ": {
+      "value": 1.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "pointer": "/GameParameters/MoveParam/BrakeToFreeVelocityXZ",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json#/GameParameters/MoveParam/BrakeToFreeVelocityY": {
+      "value": -0.1,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "pointer": "/GameParameters/MoveParam/BrakeToFreeVelocityY",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json#/GameParameters/MoveParam/FreeAirResist": {
+      "value": 0.01985,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "pointer": "/GameParameters/MoveParam/FreeAirResist",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json#/GameParameters/MoveParam/FreeGravity": {
+      "value": 0.0190565,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "pointer": "/GameParameters/MoveParam/FreeGravity",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json#/GameParameters/MoveParam/GoStraightStateEndMaxSpeed": {
+      "value": 1.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "pointer": "/GameParameters/MoveParam/GoStraightStateEndMaxSpeed",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json#/GameParameters/MoveParam/GoStraightToBrakeStateFrame": {
+      "value": 16,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "pointer": "/GameParameters/MoveParam/GoStraightToBrakeStateFrame",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeed": {
+      "value": 1.125,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "pointer": "/GameParameters/MoveParam/SpawnSpeed",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json#/GameParameters/UltraShotMoveParam/OrbitalRadiusEnd": {
+      "value": 1.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "pointer": "/GameParameters/UltraShotMoveParam/OrbitalRadiusEnd",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json#/GameParameters/UltraShotMoveParam/OrbitalRadiusTransitionFrame": {
+      "value": 10,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "pointer": "/GameParameters/UltraShotMoveParam/OrbitalRadiusTransitionFrame",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json#/GameParameters/spl__SpawnBulletAdditionMovePlayerParam/XRate": {
+      "value": 0.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__SpawnBulletAdditionMovePlayerParam/XRate",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json#/GameParameters/spl__SpawnBulletAdditionMovePlayerParam/YPlusRate": {
+      "value": 0.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__SpawnBulletAdditionMovePlayerParam/YPlusRate",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json#/GameParameters/spl__SpawnBulletAdditionMovePlayerParam/ZRate": {
+      "value": 0.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__SpawnBulletAdditionMovePlayerParam/ZRate",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json#/GameParameters/spl__WeaponSpUltraShotParam/EjectCartridgeAngularVel/X": {
+      "value": 35.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__WeaponSpUltraShotParam/EjectCartridgeAngularVel/X",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json#/GameParameters/spl__WeaponSpUltraShotParam/EjectCartridgeAngularVel/Y": {
+      "value": 0.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__WeaponSpUltraShotParam/EjectCartridgeAngularVel/Y",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json#/GameParameters/spl__WeaponSpUltraShotParam/EjectCartridgeAngularVel/Z": {
+      "value": 20.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__WeaponSpUltraShotParam/EjectCartridgeAngularVel/Z",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json#/GameParameters/spl__WeaponSpUltraShotParam/EjectCartridgeFadeOutFrame": {
+      "value": 5,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__WeaponSpUltraShotParam/EjectCartridgeFadeOutFrame",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json#/GameParameters/spl__WeaponSpUltraShotParam/EjectCartridgeFrame": {
+      "value": 30,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__WeaponSpUltraShotParam/EjectCartridgeFrame",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json#/GameParameters/spl__WeaponSpUltraShotParam/EjectCartridgeInitSpeed": {
+      "value": 5.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__WeaponSpUltraShotParam/EjectCartridgeInitSpeed",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json#/GameParameters/spl__WeaponSpUltraShotParam/EjectCartridgeLifeTimeFrame": {
+      "value": 60,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__WeaponSpUltraShotParam/EjectCartridgeLifeTimeFrame",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json#/GameParameters/spl__WeaponSpUltraShotParam/HideCartridgeBeforeEjectFrame": {
+      "value": 1,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__WeaponSpUltraShotParam/HideCartridgeBeforeEjectFrame",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json#/GameParameters/spl__WeaponSpUltraShotParam/HoldAimFrame": {
+      "value": 55,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__WeaponSpUltraShotParam/HoldAimFrame",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json#/GameParameters/spl__WeaponSpUltraShotParam/KnockBackParam/AirBreakRt": {
+      "value": 0.8,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__WeaponSpUltraShotParam/KnockBackParam/AirBreakRt",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json#/GameParameters/spl__WeaponSpUltraShotParam/KnockBackParam/ImpactValue": {
+      "value": 0.04,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__WeaponSpUltraShotParam/KnockBackParam/ImpactValue",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json#/GameParameters/spl__WeaponSpUltraShotParam/KnockBackParam/StickDownRt": {
+      "value": 5.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__WeaponSpUltraShotParam/KnockBackParam/StickDownRt",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json#/GameParameters/spl__WeaponSpUltraShotParam/MoveSpeed": {
+      "value": 0.07,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__WeaponSpUltraShotParam/MoveSpeed",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json#/GameParameters/spl__WeaponSpUltraShotParam/MoveSpeedInCharge": {
+      "value": 0.04,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__WeaponSpUltraShotParam/MoveSpeedInCharge",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json#/GameParameters/spl__WeaponSpUltraShotParam/RepeatFrame": {
+      "value": 55,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__WeaponSpUltraShotParam/RepeatFrame",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json#/GameParameters/spl__WeaponSpUltraShotParam/ShotDelayFrame": {
+      "value": 15,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__WeaponSpUltraShotParam/ShotDelayFrame",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json#/GameParameters/spl__WeaponSpUltraShotParam/SpecialDurationFrame/High": {
+      "value": 480.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__WeaponSpUltraShotParam/SpecialDurationFrame/High",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json#/GameParameters/spl__WeaponSpUltraShotParam/SpecialDurationFrame/Low": {
+      "value": 330.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__WeaponSpUltraShotParam/SpecialDurationFrame/Low",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json#/GameParameters/spl__WeaponSpUltraShotParam/SpecialDurationFrame/Mid": {
+      "value": 405.0,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__WeaponSpUltraShotParam/SpecialDurationFrame/Mid",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json#/GameParameters/spl__WeaponSpUltraShotParam/StartDelayFrame": {
+      "value": 5,
+      "status": "extracted",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+      "pointer": "/GameParameters/spl__WeaponSpUltraShotParam/StartDelayFrame",
+      "note": "Raw kit parameter only; presence does not attest runtime use or physical conversion."
+    },
+    "data/mush/1130/WeaponInfoMain.json#/73/__RowId": {
+      "value": "Charger_Normal_00",
+      "status": "extracted",
+      "sourceId": "data/mush/1130/WeaponInfoMain.json",
+      "pointer": "/73/__RowId",
+      "note": "Base kit identity/points; no generic special substitution."
+    },
+    "data/mush/1130/WeaponInfoMain.json#/73/SpecialPoint": {
+      "value": 190,
+      "status": "extracted",
+      "sourceId": "data/mush/1130/WeaponInfoMain.json",
+      "pointer": "/73/SpecialPoint",
+      "note": "Base kit identity/points; no generic special substitution."
+    },
+    "data/mush/1130/WeaponInfoMain.json#/73/SubWeapon": {
+      "value": "Work/Gyml/Bomb_Splash.spl__WeaponInfoSub.gyml",
+      "status": "extracted",
+      "sourceId": "data/mush/1130/WeaponInfoMain.json",
+      "pointer": "/73/SubWeapon",
+      "note": "Base kit identity/points; no generic special substitution."
+    },
+    "data/mush/1130/WeaponInfoMain.json#/73/SpecialWeapon": {
+      "value": "Work/Gyml/SpBlower.spl__WeaponInfoSpecial.gyml",
+      "status": "extracted",
+      "sourceId": "data/mush/1130/WeaponInfoMain.json",
+      "pointer": "/73/SpecialWeapon",
+      "note": "Base kit identity/points; no generic special substitution."
+    },
+    "data/mush/1130/WeaponInfoMain.json#/133/__RowId": {
+      "value": "Roller_Normal_00",
+      "status": "extracted",
+      "sourceId": "data/mush/1130/WeaponInfoMain.json",
+      "pointer": "/133/__RowId",
+      "note": "Base kit identity/points; no generic special substitution."
+    },
+    "data/mush/1130/WeaponInfoMain.json#/133/SpecialPoint": {
+      "value": 180,
+      "status": "extracted",
+      "sourceId": "data/mush/1130/WeaponInfoMain.json",
+      "pointer": "/133/SpecialPoint",
+      "note": "Base kit identity/points; no generic special substitution."
+    },
+    "data/mush/1130/WeaponInfoMain.json#/133/SubWeapon": {
+      "value": "Work/Gyml/Bomb_Curling.spl__WeaponInfoSub.gyml",
+      "status": "extracted",
+      "sourceId": "data/mush/1130/WeaponInfoMain.json",
+      "pointer": "/133/SubWeapon",
+      "note": "Base kit identity/points; no generic special substitution."
+    },
+    "data/mush/1130/WeaponInfoMain.json#/133/SpecialWeapon": {
+      "value": "Work/Gyml/SpGreatBarrier.spl__WeaponInfoSpecial.gyml",
+      "status": "extracted",
+      "sourceId": "data/mush/1130/WeaponInfoMain.json",
+      "pointer": "/133/SpecialWeapon",
+      "note": "Base kit identity/points; no generic special substitution."
+    },
+    "data/mush/1130/WeaponInfoMain.json#/219/__RowId": {
+      "value": "Shooter_Normal_00",
+      "status": "extracted",
+      "sourceId": "data/mush/1130/WeaponInfoMain.json",
+      "pointer": "/219/__RowId",
+      "note": "Base kit identity/points; no generic special substitution."
+    },
+    "data/mush/1130/WeaponInfoMain.json#/219/SpecialPoint": {
+      "value": 200,
+      "status": "extracted",
+      "sourceId": "data/mush/1130/WeaponInfoMain.json",
+      "pointer": "/219/SpecialPoint",
+      "note": "Base kit identity/points; no generic special substitution."
+    },
+    "data/mush/1130/WeaponInfoMain.json#/219/SubWeapon": {
+      "value": "Work/Gyml/Bomb_Suction.spl__WeaponInfoSub.gyml",
+      "status": "extracted",
+      "sourceId": "data/mush/1130/WeaponInfoMain.json",
+      "pointer": "/219/SubWeapon",
+      "note": "Base kit identity/points; no generic special substitution."
+    },
+    "data/mush/1130/WeaponInfoMain.json#/219/SpecialWeapon": {
+      "value": "Work/Gyml/SpUltraShot.spl__WeaponInfoSpecial.gyml",
+      "status": "extracted",
+      "sourceId": "data/mush/1130/WeaponInfoMain.json",
+      "pointer": "/219/SpecialWeapon",
+      "note": "Base kit identity/points; no generic special substitution."
     }
   }
 }

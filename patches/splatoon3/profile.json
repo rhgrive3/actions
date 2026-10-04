@@ -29,7 +29,8 @@
       "straightTime": 0.06666666666666667,
       "referenceGravity": 57.6,
       "inkRecoverStop": 0.3333333333333333,
-      "range": 12.9
+      "range": 12.9,
+      "specialCost": 200
     },
     "dualies": {
       "inkPerShot": 0.72,
@@ -122,7 +123,8 @@
       "chargeTime": 1,
       "inkRecoverStop": 0.3333333333333333,
       "damagePartialMax": 80,
-      "feetPaintRadius": 0.7
+      "feetPaintRadius": 0.7,
+      "specialCost": 190
     },
     "roller": {
       "rollSpeed": 7.92,
@@ -185,7 +187,8 @@
       "inkRecoverStop": 0.7166666666666667,
       "verticalInkRecoverStop": 0.9666666666666667,
       "flickInterval": 0.7,
-      "verticalInterval": 0.7833333333333333
+      "verticalInterval": 0.7833333333333333,
+      "specialCost": 180
     },
     "slosher": {
       "inkPerShot": 7.6,
@@ -383,7 +386,6 @@
       "superjump airborne vulnerability window/trajectory/landing paint and respawn timing/armor; raw 80F preparation/138F flight are pinned and landing protection is removed per Nintendo 9.3.0 fix",
       "aim response, gyro, animation, terrain/network and physical-device validation; see movement-resources comparison matrix and Switch/iOS/two-peer measurement protocol",
       "respawn death-cause totals (normal/water/out-of-bounds) are the report's secondary Splatoon 3 documentation values; the repository's curated respawn.total is unknown and no official 11.3.0 parameter data confirms them. Owner Actor.splat and NetMatch remote proxy cause timers are logic-regression-verified; two-peer and physical-device timing remain unverified"
-
     ],
     "movementResourcesEvidence": "reports/inkwave-movement-resources-2026-10-02.md"
   },
@@ -1173,6 +1175,21 @@
       "index": 2,
       "factor": 0.016666666666666666,
       "rawValue": 138
+    },
+    "weapons.shooter.specialCost": {
+      "parameter": "data/mush/1130/WeaponInfoMain.json#/219/SpecialPoint",
+      "rawValue": 200,
+      "factor": 1
+    },
+    "weapons.roller.specialCost": {
+      "parameter": "data/mush/1130/WeaponInfoMain.json#/133/SpecialPoint",
+      "rawValue": 180,
+      "factor": 1
+    },
+    "weapons.charger.specialCost": {
+      "parameter": "data/mush/1130/WeaponInfoMain.json#/73/SpecialPoint",
+      "rawValue": 190,
+      "factor": 1
     }
   },
   "gearExtra": {

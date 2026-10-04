@@ -1,3 +1,4 @@
+import { segmentCapsuleEntry } from './projectile-collision.mjs';
 import { installRollerLogic } from './roller.mjs';
 let api;
 export function splatlingBurst(w, charge) {
@@ -43,12 +44,24 @@ export function installWeapons(context, profile) {
   const { WeaponRunner, Projectiles, G, THREE, Physics, Hit, PLAYER } = api;
   const newProjectile = Projectiles.prototype._new, pushProjectile = Projectiles.prototype._push;
   Projectiles.prototype._new = function (...args) {
-    const p = newProjectile.apply(this, args); p.s3DamageGroup = null; p.s3Weapon = null; p.s3Vertical = false; return p;
+    const p = newProjectile.apply(this, args); p.s3DamageGroup = null; p.s3Weapon = null; p.s3SpecialWeapon = null; p.s3Vertical = false; return p;
   };
   Projectiles.prototype._push = function (p) {
-    p.s3Weapon = p.owner ? { ...p.owner.weapon } : null;
+    p.s3Weapon = p.s3SpecialWeapon || (p.owner ? { ...p.owner.weapon } : null);
     if (['shooter', 'dualies', 'splatling'].includes(p.s3Weapon?.kind) && Number.isFinite(p.s3Weapon.referenceGravity)) p.grav = p.s3Weapon.referenceGravity;
     return pushProjectile.call(this, p);
+  };
+  const ghostProjectile = Projectiles.prototype.ghostProjectile;
+  Projectiles.prototype.ghostProjectile = function (actor, packet) {
+    const index = this.list.length;
+    const result = ghostProjectile.call(this, actor, packet);
+    const p = this.list[index];
+    const resolve = p && api.SPECIALS?.[p.wid]?.projectileDescriptor;
+    if (typeof resolve === 'function') {
+      p.s3SpecialWeapon = resolve(p);
+      p.s3Weapon = p.s3SpecialWeapon;
+    }
+    return result;
   };
   // The public shooter raises the launch ray to compensate for drop at the
   // camera target. Use the launch ray as aimed; gravity acts on the bullet.
@@ -174,12 +187,12 @@ export function installWeapons(context, profile) {
     const hit = G.physics.raycast(muzzle, dir, w.rangeMax, new Hit(), true);
     let length = hit.hit ? hit.dist : w.rangeMax;
     if (G.boss) { const bh = G.boss.segHit(muzzle, muzzle.clone().addScaledVector(dir, length), .1); if (bh) length = Math.min(length, bh.dist); }
-    const end = muzzle.clone().addScaledVector(dir, length), result = { t: 0, dist: 0 }, victims = [];
+    const end = muzzle.clone().addScaledVector(dir, length), victims = [];
     for (const e of G.actors) {
       if (!e.alive || e.team === a.team) continue;
       const base = e.pos.clone(); base.y += e.smoothY || 0;
-      Physics.segmentCapsuleDist(muzzle, end, base, PLAYER.radius + .12, e.form === 'squid' ? PLAYER.squidHeight : PLAYER.height, result);
-      if (result.dist < PLAYER.radius + .14) victims.push({ actor: e, distance: result.t * length });
+      const entry = segmentCapsuleEntry(muzzle, end, base, PLAYER.radius + .12, e.form === 'squid' ? PLAYER.squidHeight : PLAYER.height, PLAYER.radius + .14);
+      if (entry < Infinity) victims.push({ actor: e, distance: entry * length });
     }
     const actors = G.actors;
     try { G.actors = []; fireCharger.call(this, a, w, charge); }

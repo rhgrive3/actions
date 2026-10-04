@@ -209,6 +209,15 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "weapons.shooter.specialCost": {
+    "value": 200,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/mush/1130/WeaponInfoMain.json#/219/SpecialPoint",
+      "rawValue": 200,
+      "factor": 1
+    }
+  },
   "weapons.dualies.inkPerShot": {
     "value": 0.72,
     "status": "derived from pinned extracted data; physical scale unverified",
@@ -804,6 +813,15 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "weapons.charger.specialCost": {
+    "value": 190,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/mush/1130/WeaponInfoMain.json#/73/SpecialPoint",
+      "rawValue": 190,
+      "factor": 1
+    }
+  },
   "weapons.roller.rollSpeed": {
     "value": 7.92,
     "status": "calibration or derived value; see reference raw table and unverified list",
@@ -1008,6 +1026,15 @@
     "value": 0.7833333333333333,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
+  },
+  "weapons.roller.specialCost": {
+    "value": 180,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/mush/1130/WeaponInfoMain.json#/133/SpecialPoint",
+      "rawValue": 180,
+      "factor": 1
+    }
   },
   "weapons.slosher.inkPerShot": {
     "value": 7.6,
