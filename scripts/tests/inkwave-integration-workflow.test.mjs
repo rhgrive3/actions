@@ -9,8 +9,8 @@ test('integration retains immutable source and downloaded artifact identity chec
   assert.ok(workflow.includes("assert reports['game/browser-result.json']['sourceSha']==os.environ['SOURCE_SHA']"));
 });
 test('bounded browser families keep motion, WebKit, responsiveness and negative identity gates', () => {
-  assert.ok(workflow.includes('max-parallel: 3'));
-  for (const suite of ['suite: active', 'suite: catalog', 'suite: ui']) assert.ok(workflow.includes(suite), suite);
+  assert.ok(workflow.includes('max-parallel: 5'));
+  for (const suite of ['suite: active', 'suite: catalog', 'suite: ui', 'suite: range', 'suite: startup']) assert.ok(workflow.includes(suite), suite);
   assert.ok(workflow.includes('browsers: chromium webkit'));
   assert.ok(workflow.includes('npx playwright install --with-deps ${{ matrix.browsers }}'));
   assert.ok(!workflow.includes('needs: validate'));
