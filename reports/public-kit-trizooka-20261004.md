@@ -280,23 +280,39 @@ and the build fails closed.
 | `ghostProjectile` | `kitTrizookaGhost` | descriptor rebuilt from `SPECIALS[wid].projectileDescriptor`, authority forced off |
 | `_blastBurst` bands | `kitTrizookaSteppedBands` | discrete table points, no continuous lerp |
 
-### 9.1 The world sphere sweep, and its honest uncertainty
+### 9.1 The world sphere sweep
 
 Native `Physics.segment` is a **point ray** against the block OBBs, so a growing
-shell cannot reuse it unchanged. `kitTrizookaWorldSweep` inflates the native
-result along the surface normal:
+shell misses every glancing face, edge and corner contact entirely. A plane
+back-off is not sufficient either: `r / facing` grows without bound as the
+normal turns away from the ray and manufactures false early contacts.
 
-```
-back    = r / max(dot(dir, -normal), eps)
-contact = nativePoint - dir * back
-```
+`kitTrizookaWorldSweep` computes the genuine earliest entry of a swept sphere
+against the **rounded box** (the OBB Minkowski-summed with a sphere of radius
+`r`), by testing the three exact candidate families and taking the minimum:
 
-That is **exact against a plane**, and every block face is a plane locally, so
-face contact is correct. Near a box **edge or corner** the true sphere contacts
-earlier than a plane back-off predicts, so contact there is reported slightly
-late. The direction of the error is known and it never invents a contact the
-point ray did not have. Fixing it properly needs a real sphere-vs-OBB sweep
-inside `Physics`, which is upstream-owned.
+| family | test |
+| --- | --- |
+| 6 offset planes | ray vs each face plane at `half + r`, valid while the other two axes stay inside their extent |
+| 12 edge cylinders | ray vs a cylinder of radius `r` around each OBB edge, valid while the axial coordinate is inside the edge |
+| 8 corner spheres | ray vs a sphere of radius `r` at each OBB corner |
+
+Plus an explicit **initial-overlap** case: a shell that already intersects the
+rounded box reports contact at `t = 0`, because every other candidate would
+yield a negative `t`.
+
+An **inflated AABB is deliberately not used** — it manufactures corner hits the
+rounded box does not have, and a regression test pins that.
+
+Block data is read from the real native level; the non-block/ground/world
+semantics are untouched, and any non-kit projectile goes straight to the native
+`Physics.segment`.
+
+### 9.2b Actor hit sphere
+
+Native uses `PLAYER.radius * 0.95 + p.size`: the body capsule plus the
+projectile's own visual shell. The Trizooka grows that **same expression**, so
+the shell is counted exactly once and the body radius is never dropped.
 
 ### 9.2 Authority
 
@@ -322,3 +338,47 @@ inflating the native capsule; the world sphere contacting strictly before the
 bare point ray; pooled reuse clearing every transient; ghost descriptor
 reconstruction with authority stripped; single-carrier authority; and the
 stepped damage bands.
+
+## 10. Visual versus authority, and the paint credit sites
+
+A ghost keeps **presentation** — flight stage, orbit, growing radii, volley
+identity — so a remote volley looks right even after its transport is disposed.
+It never has **authority**: no damage, no paint, no turf, no gauge.
+
+`_impact` lays ink *before* the credit line, so a ghost guard is applied at the
+top of `_impact`, ahead of any splat. The three native paint-credit sites (trail,
+impact, blast) route through one shared helper:
+
+```js
+kitPaintCredit(p, area)  // 0 and no ink for a ghost or a side lobe
+```
+
+**The helper never blocks a non-kit projectile.** An ordinary main round keeps
+the native `addTurf` and the native special-gauge behaviour exactly. The gauge
+policy *after* a special ends is **UNKNOWN** and is deliberately not guessed.
+
+Side lobes are inert: no ink, no turf, no splash, no gauge.
+
+The storm cloud paint site is deliberately left alone.
+
+## 11. Geometry, packet and paint regressions
+
+`patches/splatoon3/tests/kit-trizooka-geometry.test.mjs` — **14 pass, 0 fail,
+exit 0**. Against the real `Physics` and real oriented block geometry:
+
+face contact earlier than the point ray; a **tangential corner the centreline
+misses entirely**; a **tangential edge** the centreline misses; an inflated-AABB
+false-positive guard; a **rotated OBB**; **initial overlap at zero**; a
+**zero-length step**; wall-versus-actor **chronology**; the actor sphere not
+double counting; the real **`recProj` → JSON → `_play` → `ghostProjectile`**
+round trip with the transport disposed afterwards; a ghost keeping the flight
+stage for presentation while having no authority; a ghost world impact laying
+no ink and no turf after disposal; side lobes inert; and an ordinary main round
+still painting, crediting turf **and charging the gauge**.
+
+## 12. Not claimed
+
+- The cartridge eject mesh and the weapon pose remain **pending calibration**,
+  not implemented and not claimed.
+- Gauge parity after a special ends is **unknown** and unguessed.
+- No browser proof, no retail parity claim, no GitHub Actions proof from here.

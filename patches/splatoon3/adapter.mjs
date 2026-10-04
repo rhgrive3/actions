@@ -278,13 +278,32 @@ export function adaptSource(rel, code) {
       'distanceDamage(w.splashBands || w.damageBands, d)',
       'distanceDamage(w.splashBands || w.damageBands, d, !kitTrizookaSteppedBands(p))',
       'trizooka discrete blast damage bands');
+    // paint/turf credit. The gauge policy after a special ends is UNKNOWN, so the
+    // ordinary native addTurf semantics are preserved; what is refused is
+    // authority. _impact lays paint BEFORE the credit line, so the ghost guard
+    // goes in ahead of any splat. The storm cloud paint at its own anchor is
+    // deliberately left alone.
+    code = replaceOnce(code, '  _impact(p, hit) {\n    _v.copy(hit.point)',
+      '  _impact(p, hit) {\n    if (!kitPaintAuthority(p)) { if (p.type === \'blast\') this._blastBurst(p, hit.point, null); return; }\n    _v.copy(hit.point)',
+      'kit projectile ghost impact paint authority');
+    code = replaceOnce(code,
+      '          if (g.hit) p.owner.addTurf(G.paint.splat(_v.copy(g.point).addScaledVector(g.normal, 0.1), p.trailRadius * (0.8 + Math.random() * 0.4), p.team, { seed: Math.random() }));',
+      '          if (g.hit) p.owner.addTurf(kitPaintCredit(p, G.paint.splat(_v.copy(g.point).addScaledVector(g.normal, 0.1), p.trailRadius * (0.8 + Math.random() * 0.4), p.team, { seed: Math.random() })));',
+      'kit projectile trail paint credit');
+    code = replaceOnce(code, '    p.owner.addTurf(area);\n    if (p.type !== \'blast\') emit(\'weapon:impact\'',
+      '    p.owner.addTurf(kitPaintCredit(p, area));\n    if (p.type !== \'blast\') emit(\'weapon:impact\'',
+      'kit projectile impact paint credit');
+    code = replaceOnce(code,
+      '    if (g.hit) p.owner.addTurf(G.paint.splat(_v3.copy(g.point).addScaledVector(g.normal, 0.1), w.impactRadius, p.team, { seed: Math.random() }));',
+      '    if (g.hit) p.owner.addTurf(kitPaintCredit(p, G.paint.splat(_v3.copy(g.point).addScaledVector(g.normal, 0.1), w.impactRadius, p.team, { seed: Math.random() })));',
+      'kit projectile blast paint credit');
     // a ghost rebuilds its descriptor and is forced to carry no authority
     code = replaceOnce(code,
       "    this.list.push(p);\n  }",
       "    kitTrizookaGhost(p, a, SPECIALS);\n    this.list.push(p);\n  }",
       'trizooka ghost descriptor reconstruction');
 
-    return `import { segmentCapsuleEntry } from '../../patches/splatoon3/runtime/projectile-collision.mjs';\nimport { applyProjectileHit, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\nimport { kitSubRelease, kitSubHoldSeconds, kitBombAttach, kitBombGravity, kitBombContact, kitBombTrail, kitBombFuseTotal, kitBombPaintRadius, kitBombRadius, kitBombDamageBands, kitBombDamageMax, kitBombDamageMin } from '../../patches/splatoon3/runtime/kit-subs.mjs';\nimport { kitTrizookaFlight, kitTrizookaOrbitDelta, kitTrizookaActorRadius, kitTrizookaWorldSweep, kitTrizookaClearPooled, kitTrizookaGhost, kitTrizookaSteppedBands } from '../../patches/splatoon3/runtime/trizooka-collision.mjs';\n` + code;
+    return `import { segmentCapsuleEntry } from '../../patches/splatoon3/runtime/projectile-collision.mjs';\nimport { applyProjectileHit, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\nimport { kitSubRelease, kitSubHoldSeconds, kitBombAttach, kitBombGravity, kitBombContact, kitBombTrail, kitBombFuseTotal, kitBombPaintRadius, kitBombRadius, kitBombDamageBands, kitBombDamageMax, kitBombDamageMin } from '../../patches/splatoon3/runtime/kit-subs.mjs';\nimport { kitTrizookaFlight, kitTrizookaOrbitDelta, kitTrizookaActorRadius, kitTrizookaWorldSweep, kitTrizookaClearPooled, kitTrizookaGhost, kitTrizookaSteppedBands, kitPaintCredit, kitPaintAuthority } from '../../patches/splatoon3/runtime/trizooka-collision.mjs';\n` + code;
   }
   if (rel === 'src/game/actor.js') {
     code = replaceOnce(code, '    this._updateClimb(dt, isSquid);',

@@ -215,8 +215,10 @@ test('the growing actor sphere actually changes the native capsule query', async
   // the number is real geometry, not metadata: the native capsule query inflates
   // by s3SizeBase + this radius
   const { kitTrizookaActorRadius } = await import('../runtime/trizooka-collision.mjs');
-  assert.equal(kitTrizookaActorRadius(projectiles, p), p.s3SizeBase + grown);
-  assert.ok(kitTrizookaActorRadius(projectiles, p) > p.s3SizeBase, 'it really inflates the capsule');
+  const native = api.PLAYER.radius * 0.95 + p.size;
+  assert.equal(kitTrizookaActorRadius(projectiles, p), native + grown,
+    'the native body capsule and visual shell are both kept, with only the table sphere added');
+  assert.ok(kitTrizookaActorRadius(projectiles, p) > native, 'it really inflates the capsule');
 });
 
 test('the growing world sphere contacts a block earlier than the bare point ray', async () => {

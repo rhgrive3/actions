@@ -29,6 +29,8 @@
 // framesToSeconds /60, perFrameVelocityToPerSecond *60,
 // perFrameGravityToPerSecondSquared *3600, rawDamageToHP /10.
 
+import { configureTrizookaNative } from './trizooka-collision.mjs';
+
 const FRAME = 1 / 60;
 const rawDamage = (v) => (v == null ? null : v / 10);
 const frames = (v) => (v == null ? null : v * FRAME);
@@ -771,8 +773,10 @@ export function trizookaUninstall() {
 // ---- install ----------------------------------------------------------------
 
 export function installKitTrizooka(api, profile) {
-  const { SPECIALS, Projectiles } = api || {};
+  const { SPECIALS, Projectiles, PLAYER } = api || {};
   if (!SPECIALS || !Projectiles) throw new Error('INKWAVE trizooka patch needs SPECIALS and Projectiles');
+  // the native-pipeline helpers need the real PLAYER radius and the registry
+  configureTrizookaNative({ PLAYER, SPECIALS });
 
   const existing = SPECIALS[TRIZOOKA_ID] || { id: TRIZOOKA_ID, name: 'Trizooka' };
   Object.assign(existing, {
