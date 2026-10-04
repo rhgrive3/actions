@@ -1,3 +1,4 @@
+import { installBlasterPlayerRadius } from './blaster-player-radius.mjs';
 import { installWeaponEdgecases } from './weapon-edgecases.mjs';
 import { installRollerLogic } from './roller.mjs';
 let api;
@@ -218,4 +219,5 @@ export function installWeapons(context, profile) {
     return moveSpeed.call(this);
   };
   installWeaponEdgecases(api);
+  installBlasterPlayerRadius(api);
 }

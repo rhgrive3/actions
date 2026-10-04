@@ -35,7 +35,7 @@ export function adaptIssue463(rel, code) {
     code = replaceOnce(
       code,
       'PLAYER.radius * 0.95 + playerCollisionRadius(p)',
-      'PLAYER.radius * 0.95 + blasterPlayerCollisionRadius(p)',
+      "PLAYER.radius * 0.95 + (p.type === 'blast' ? blasterPlayerCollisionRadius(p) : playerCollisionRadius(p))",
       'blaster authoritative player collision radius composite'
     );
   } else {

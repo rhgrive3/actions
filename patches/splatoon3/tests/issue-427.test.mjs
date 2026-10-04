@@ -40,16 +40,14 @@ async function createCombatWorld(owner, { apply427 = true, pr400 = false, roster
     let source = fs.readFileSync(file, 'utf8');
     const rel = file.startsWith(SRC + path.sep) ? path.relative(SRC, file) : path.relative(ROOT, file);
 
-    source = adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, source))));
+    source = adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, source)));
+    if (apply427) source = adaptQualitySource(rel, source);
     if (pr400Adapter) {
       source = pr400Adapter(rel, source, (code, b, a, lbl) => {
         const idx = code.indexOf(b);
         if (idx === -1) return code;
         return code.slice(0, idx) + a + code.slice(idx + b.length);
       });
-    }
-    if (apply427) {
-      source = adaptIssue427(rel, source);
     }
 
     const mod = new vm.SourceTextModule(source, { context, identifier: file });

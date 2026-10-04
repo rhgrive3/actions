@@ -1,3 +1,8 @@
+import { adaptIssue460Source } from '../splatoon3/issue-460-adapter.mjs';
+import { adaptIssue463 } from '../splatoon3/issue-463-adapter.mjs';
+import { adaptIssue427 } from '../splatoon3/issue-427-adapter.mjs';
+import { adaptIssue461Source } from './issue-461-sfx-mute.mjs';
+import { adaptIssue480Source } from './issue-480-camera-shake-fidelity.mjs';
 // Build-only quality corrections composed after the gameplay, touch-layout and
 // reliability adapters. Upstream inkwave-public/ remains byte-for-byte intact.
 import fs from 'node:fs';
@@ -12,7 +17,7 @@ import { adaptTouchRelayout } from './touch-relayout.mjs';
 
 export const QUALITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
 const IDENTITY_FILES = [
-  'idle-adapter.mjs', 'idle-resources.mjs', 'music-idle.mjs',
+  'issue-461-sfx-mute.mjs', 'issue-480-camera-shake-fidelity.mjs', 'idle-adapter.mjs', 'idle-resources.mjs', 'music-idle.mjs',
   'lobby-resource-adapter.mjs', 'minimap-resource-adapter.mjs',
   'adapter.mjs', 'gyro.mjs', 'install.mjs', 'menu-preview.mjs', 'menu.mjs',
   'roller-motion.mjs', 'roller-visual.mjs', 'surface.mjs', 'landing-rigidity-adapter.mjs', 'first-touch-adapter.mjs', 'touch-relayout.mjs',
@@ -27,7 +32,12 @@ export function replaceOnce(code, before, after, label) {
 }
 
 export function adaptQualitySource(rel, code) {
+  code = adaptIssue463(rel, code);
+  code = adaptIssue427(rel, code);
+  code = adaptIssue460Source(rel, code);
+  code = adaptIssue461Source(rel, code);
   code = adaptIdleSource(rel, code, replaceOnce);
+  code = adaptIssue480Source(rel, code);
   code = adaptLobbyResources(rel, code);
   code = adaptMinimapResources(rel, code);
   code = adaptLandingRigidity(rel, code);
