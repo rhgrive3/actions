@@ -196,6 +196,12 @@ export function installWeapons(context, profile) {
   WeaponRunner.prototype.moveSpeed = function () {
     const w = this.a.weapon;
     if (this.rolling && w.rollBaseSpeed) return this.rollT >= w.rollDashTime ? w.rollSpeed : w.rollBaseSpeed;
+    // S3 Charger: charging movement uses MoveSpeedFullCharge from charging
+    // entry (pinned 0.02 raw -> profile 1.2 u/s before gear/Flow), not the
+    // upstream 70%-run ramp. Other kinds keep upstream branches/cooldowns.
+    // Preserve upstream cooldown/state priority (e.g. dualies lockT plants).
+    if (this.lockT > 0) return moveSpeed.call(this);
+    if (this.charging && w.kind === 'charger' && Number.isFinite(w.moveSpeedFiring)) return w.moveSpeedFiring;
     return moveSpeed.call(this);
   };
 }
