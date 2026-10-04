@@ -53,8 +53,12 @@ test('autostart retains native match start and does not request Online resources
 
 test('native Online hub and room entry remain demand-loaded and reuse the current set', () => {
   const source = read('src/game/showcase.js');
-  assert.equal(adaptQualitySource('src/game/showcase.js', source), source);
-  const methods = section(source, '  showHub(style, color, weapon) {', '\n  updateLobby(players, colors) {');
+  // The boot-only adapter preserves Showcase; the combined dispatcher also
+  // applies the lobby quality policy. Its native demand-load entry methods must remain exact.
+  assert.equal(adaptLobbyResources('src/game/showcase.js', source), source);
+  const composed = adaptQualitySource('src/game/showcase.js', source);
+  const methods = section(composed, '  showHub(style, color, weapon) {', '\n  updateLobby(players, colors) {');
+  assert.equal(methods, section(source, '  showHub(style, color, weapon) {', '\n  updateLobby(players, colors) {'));
   const Cls = vm.runInNewContext(`class Showcase { ${methods} }; Showcase`, {
     THREE: {}, G: { game: { profile: { weapon: 'shooter' } } }, HUB_ID: 'hub', styleKey: () => 'style',
   });
