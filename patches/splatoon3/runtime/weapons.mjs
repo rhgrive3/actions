@@ -347,6 +347,10 @@ export function installWeapons(context, profile) {
       if (this.s3ShooterPendingFirst) {
         this.s3ShooterFirstRemaining = Math.max(0, this.s3ShooterFirstRemaining - dt);
         this.firingT = .35; this.a.fireFacing = .5;
+        // Native update() decrements cooldown before dispatching to _auto().
+        // The authoritative first-shot gate must not bank that negative time,
+        // or the first release shortens the following 6F Splattershot cadence.
+        this.cooldown = Math.max(0, this.cooldown);
         if (this.s3ShooterFirstRemaining > EPS) return;
         this.s3ShooterFirstRemaining = 0;
         this.s3ShooterPendingFirst = false;
