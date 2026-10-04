@@ -19,11 +19,11 @@ export function adaptIssue479(rel, code) {
     return code;
   }
 
-  // 1. Pass api (containing Actor and WeaponRunner) to install free-fall hooks
+  // 1. Pass api (containing Actor, Character, WeaponRunner, on, emit) to install free-fall hooks
   code = replaceOnce(
     code,
     'export function installRollerLogic({ WeaponRunner }, _profile) {',
-    'export function installRollerLogic(api, _profile) {\n  const { WeaponRunner, Actor } = api || {};\n  installActorFreefallHooks(Actor);',
+    'export function installRollerLogic(api, _profile) {\n  const { WeaponRunner, Actor } = api || {};\n  installActorFreefallHooks(api);',
     'roller installRollerLogic actor hook connection'
   );
 
