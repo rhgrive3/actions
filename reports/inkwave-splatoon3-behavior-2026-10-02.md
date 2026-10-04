@@ -234,3 +234,11 @@ See [weapon edge-case comparison](inkwave-weapon-edgecases-2026-10-04.md) for #3
 - Focused production-module tests: 20 passing, including ten-second neutral-owner drift traces at 30/60/120/144 Hz, deliberate acquisition, held-button suppression, pad→touch filter reset, gyro pitch with swipe yaw, stale transition clearing, and first fresh OFF swipe for four drag paths at sensitivity -5/0/+5.
 - Final reliability suite: 373 passing; existing pause/menu-owned gamepad edge/hold coverage retained. Upstream/reference quick compatibility check passed. All 85 transformed public JS modules syntax-checked. Existing #325 controls adapter composes in its intended position after reliability.
 - Complete serial gameplay+reliability suite result recorded in the corresponding PR after completion. Browser rendering, physical Android Chromium/iPadOS Safari with Bluetooth controllers, real drifting hardware, and comparison on Nintendo hardware were not performed in this constrained cloud run; #475 hardware acceptance remains unverified. No deployment or quality reductions.
+## 2026-10-04: first-allocation mobile resource budget
+
+A cold-boot follow-up for #375/#395 uses the already-published G.mobile profile
+until G.game exists. The established touch budget now applies on the first
+cloud/Halyard cube allocation at default high settings, not only after later
+runtime refresh. Existing formats, appearance policy and gameplay stay intact.
+These are project resource dimensions, not Nintendo/Switch memory values.
+See [the cold-boot budget report](inkwave-cold-boot-budgets-2026-10-04.md).
