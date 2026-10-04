@@ -30,7 +30,10 @@ export function updateResources(a, dt) {
     a.damageFromInk = Math.max(0, a.damageFromInk - dt * r.enemyInkRecovery);
   }
   if (!onEnemy && a.lastDamage + 1e-10 >= r.regenDelay && a.hp < P.hp) {
-    a.hp = Math.min(P.hp, a.hp + (a.submerged ? r.regenRateSwim : r.regenRate) * dt);
+    // _updateClimb already validates own wall ink before resources run.
+    // Floor submersion remains floor-only for movement and presentation.
+    const swimmingInInk = a.submerged || (isSquid && a.climbing);
+    a.hp = Math.min(P.hp, a.hp + (swimmingInInk ? r.regenRateSwim : r.regenRate) * dt);
   }
   const wasFull = a.ink >= P.inkMax;
   const weaponDelay = a.weapon.inkRecoverStop ?? r.inkRefillDelay;
