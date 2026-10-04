@@ -255,7 +255,12 @@ export function adaptSource(rel, code) {
   }
   if (rel === 'src/net/netmatch.js') {
     code = replaceOnce(code, '    victim.respawnTimer = PLAYER.respawnTime;',
-      'setRespawnTimer(victim, cause);\n    applyDeathGear(victim);', 'remote death-cause respawn timing');
+      '    setRespawnTimer(victim, cause);', 'remote death-cause respawn timing');
+    // The gear death consequence reads the actor's death counter, so it must run
+    // AFTER the native increment - exactly where Actor.splat's own gear wrapper
+    // runs (that wrapper wraps the whole splat body, deaths++ included).
+    code = replaceOnce(code, '    victim.stats.deaths++;',
+      '    victim.stats.deaths++;\n    applyDeathGear(victim);', 'remote gear death consequence');
     return `import { setRespawnTimer } from '../../patches/splatoon3/runtime/resources.mjs';\nimport { applyDeathGear } from '../../patches/splatoon3/runtime/gear.mjs';\n` + code;
   }
   if (rel === 'src/game/character-weapons.js') {

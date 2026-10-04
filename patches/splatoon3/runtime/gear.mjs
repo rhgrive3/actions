@@ -10,17 +10,23 @@ import { selectedSub } from './kit-composition.mjs';
 // rather than compounding. The proxy path never applies that multiply, so it
 // passes nothing and we read the (still untouched) gauge ourselves.
 //
-// Exactly-once is keyed to the death counter rather than a boolean, so no reset
-// bookkeeping is needed and the next death re-arms automatically. Both callers
-// increment `stats.deaths` AFTER this runs, so the death being applied here is
-// `stats.deaths + 1` on both paths.
+// Exactly-once is keyed to the actor's OWN death counter, read AFTER the native
+// increment. `Actor.splat` increments `stats.deaths` inside the body its gear
+// wrapper wraps, and the remote adapter hook sits after `victim.stats.deaths++`,
+// so both paths present the same already-incremented value here. `stats.deaths`
+// is monotonic and is never touched by `Actor.reset()`, so the next death yields
+// a fresh identity and re-arms with no extra bookkeeping. A previous revision
+// kept a private `s3.deaths` and assigned it from the guard, which minted a new
+// identity on every call and made the guard unreachable; the duplicate-packet
+// test had passed only because `_remoteSplat`'s `!alive` guard stopped the
+// second packet before the helper was reached.
 export function applyDeathGear(a, specialBefore) {
   if (!a || !a.s3 || a.alive) return false;
+  const deathId = a.stats.deaths;
+  if (!(deathId > 0)) return false;                  // no real death has happened yet
   const s3 = a.s3, m = s3.modifiers || {};
-  const deathId = (s3.deaths || 0) + 1;
-  if (s3.deathGearDeathId === deathId) return false;   // already applied for this death
+  if (s3.deathGearDeathId === deathId) return false; // already applied for this death
   s3.deathGearDeathId = deathId;
-  s3.deaths = deathId;
   a.special = (specialBefore === undefined ? a.special : specialBefore) * (m.specialSaver ?? 0.5);
   if ((s3.splatsThisLife || 0) === 0 && s3.previousLifeNoSplat) {
     a.respawnTimer = Math.max(0, a.respawnTimer - gearTuning.respawnChaseTime * (1 - (m.quickRespawn ?? 1)));
