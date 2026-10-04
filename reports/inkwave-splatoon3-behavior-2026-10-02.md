@@ -235,3 +235,12 @@ Close non-ties no longer become presentation-only ties; exact-tie gameplay
 #158 remains outside this batch. Sources, negative controls, full native-method
 checks and unverified browser/physical-device limits are recorded in
 [the scoped HUD report](inkwave-authoritative-hud-2026-10-04.md).
+
+## 2026-10-04: first-allocation mobile resource budget
+
+A cold-boot follow-up for #375/#395 uses the already-published G.mobile profile
+until G.game exists. The established touch budget now applies on the first
+cloud/Halyard cube allocation at default high settings, not only after later
+runtime refresh. Existing formats, appearance policy and gameplay stay intact.
+These are project resource dimensions, not Nintendo/Switch memory values.
+See [the cold-boot budget report](inkwave-cold-boot-budgets-2026-10-04.md).
