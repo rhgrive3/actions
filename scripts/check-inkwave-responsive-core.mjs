@@ -3,7 +3,7 @@ import path from 'node:path';
 
 // Runs the existing menu actions against the caller's fixture API. It tests
 // layout and UI state; it does not simulate gameplay or attest a real device.
-export async function checkCoreMenus({ page, entry, config, engineName, evidence, show, settle, geometry, tap, audit }) {
+export async function checkCoreMenus({ page, entry, config, engineName, evidence, show, settle, geometry, tap, audit, touchCameraReset = false }) {
   const capture = async (name, selector) => {
     entry.screens[name] = selector ? await geometry(page, selector, name) : 'display';
     if (!audit) assert(await page.locator('.iw-ss__frame, .iw-prev__stage, .iw-wd, .iw-howto__ctl, .iw-lpanel, .iw-lfoot, .iw-pmatch').evaluateAll((els) => els.every((el) => {
@@ -100,11 +100,13 @@ export async function checkCoreMenus({ page, entry, config, engineName, evidence
   await show(page, 'howto');
   await capture('howto', '.iw-howto .iw-seg__opt, .iw-howto .iw-backbtn');
   if (!audit) {
-    assert.equal(await page.locator('.iw-ctl--touch .iw-ctl__row').count(), 9);
+    assert.equal(await page.locator('.iw-ctl--touch .iw-ctl__row').count(), touchCameraReset ? 10 : 9);
+    if (touchCameraReset) assert.match(await page.locator('.iw-ctl--touch .iw-ctl__act').last().textContent(), /Camera reset|カメラリセット/);
     await tap(page, '.iw-howto .iw-seg__opt:last-child');
     assert.equal(await page.locator('.iw-ctl--touch').count(), 0);
     await tap(page, '.iw-howto .iw-seg__opt');
-    assert.equal(await page.locator('.iw-ctl--touch .iw-ctl__row').count(), 9);
+    assert.equal(await page.locator('.iw-ctl--touch .iw-ctl__row').count(), touchCameraReset ? 10 : 9);
+    if (touchCameraReset) assert.match(await page.locator('.iw-ctl--touch .iw-ctl__act').last().textContent(), /Camera reset|カメラリセット/);
   }
   await show(page, 'credits');
   await capture('credits', '.iw-credits .iw-backbtn');

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { checkHudAuthority } from './check-inkwave-hud-authority.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
@@ -110,6 +111,9 @@ try {
     return { built:m._built, canvas:[m.canvas.width,m.canvas.height], logical:[m.w,m.h], imageBytes:m.inkImg.data.byteLength+m.flashImg.data.byteLength };
   });
   if (!result.visibleMinimap.built || result.visibleMinimap.canvas.some((n,i)=>n!==result.visibleMinimap.logical[i]) || result.visibleMinimap.imageBytes!==8*result.visibleMinimap.logical[0]*result.visibleMinimap.logical[1]) throw new Error('Reenabled Minimap did not initialize native layers');
+  // The clock is frozen: let the real intro UI timers reveal HUD/remove lineup
+  // before fast-forwarding simulation, otherwise screenshots only show intro.
+  await page.waitForFunction(() => globalThis.s3ProbeG.game.hud?._visible && !document.querySelector('.iw-lineup'), null, {timeout:15000});
   result.gameplay = await page.evaluate(() => {
     const G = globalThis.s3ProbeG, g = G.game; g.debug.freezeBots(); g._skipRender = true;
     for (let i=0;i<270;i++) g._frame(1/60);
@@ -181,6 +185,7 @@ try {
     if(!flow.activePresentation.visible||flow.activePresentation.aliveParticles<1||flow.inactivePresentation.visible||flow.inactivePresentation.phase!=='off')throw Error('Compiled Flow exterior did not follow actual actor state');
     return {fixture:'loaded match Actor/WeaponRunner -> complete Character; fixed pose position; Chromium WebGL',dualies,slosher:{windup,firstWindupFrames,releaseFrames},reset,flow};
   });
+  result.hudAuthority = await checkHudAuthority({ page, evidence });
   result.status = 'passed';
 } catch (error) {
   result = { ...(result || {}), status: 'failed', error: error.message };
@@ -195,7 +200,7 @@ try {
   result.errors = errors; result.consoleErrors = consoleErrors; result.requestFailures = failures;
   fs.writeFileSync(evidence + '/browser-result.json.writing', JSON.stringify(result, null, 2));
   fs.renameSync(evidence + '/browser-result.json.writing', evidence + '/browser-result.json');
-  console.log(JSON.stringify({status:result.status,sourceSha,contentHash:result.contentHash,gearSelects:result.gearSelects,gameplay:result.gameplay,verifiedResponses:receipts.length,errors})); await browser.close();
+  console.log(JSON.stringify({status:result.status,error:result.error,sourceSha,contentHash:result.contentHash,gearSelects:result.gearSelects,gameplay:result.gameplay,verifiedResponses:receipts.length,errors})); await browser.close();
 }
 if (result.status !== 'passed' || errors.length) process.exitCode = 1;
 

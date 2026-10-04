@@ -13,6 +13,11 @@
     "enemyInkDps": 18.0,
     "enemyInkDamageCap": 40.0
   },
+  "splatlingPlayerCollision": {
+    "referenceRadius": 0.225,
+    "referenceShooterRadius": 0.285,
+    "shooterWorldRadius": 0.15
+  },
   "weapons": {
     "shooter": {
       "inkPerShot": 0.9199999999999999,
@@ -331,6 +336,16 @@
     }
   },
   "flow": {
+    "progress": {
+      "referenceThreshold": 100,
+      "decayPerSecond": 0.2,
+      "fastDecayAfter": 5,
+      "fastDecayPerSecond": 3.3,
+      "deathPenalty": 5,
+      "environmentDeathPenalty": 10,
+      "source": "https://wikiwiki.jp/splatoon3mix/検証/イカフロー",
+      "status": "community verification; loss values normalized to existing threshold, award weights remain uncalibrated"
+    },
     "threshold": 3,
     "duration": 30,
     "extension": 5,
@@ -394,6 +409,16 @@
     "movementResourcesEvidence": "reports/inkwave-movement-resources-2026-10-02.md"
   },
   "bindings": {
+    "splatlingPlayerCollision.referenceRadius": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/CollisionParam/InitRadiusForPlayer",
+      "rawValue": 0.225,
+      "factor": 1
+    },
+    "splatlingPlayerCollision.referenceShooterRadius": {
+      "parameter": "data/parameter/1130/weapon/WeaponShooterNormal.game__GameParameterTable.json#/GameParameters/CollisionParam/InitRadiusForPlayer",
+      "rawValue": 0.285,
+      "factor": 1
+    },
     "player.runSpeed": {
       "parameter": "data/parameter/1130/misc/params.json#/MoveVel_Human",
       "index": 2,

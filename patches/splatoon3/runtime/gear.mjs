@@ -87,7 +87,13 @@ export function installGear(api, tuning) {
     const m = this.a.s3?.modifiers || {}, w = this.a.weapon;
     const lockedMode = this.rolling || this.charging && w.kind === 'charger';
     const attacking = this.firingT > 0 || this.charging || this.streaming;
-    const gear = lockedMode ? 1 : attacking ? m.runSpeedFiring ?? 1 : m.runSpeed ?? 1;
+    // Ordinary airborne steering must not acquire extra reach from the ground
+    // run-speed ability. Keep attack/ready/action-specific speed owners separate;
+    // this only changes the target multiplier, never the velocity at takeoff.
+    const ordinaryAir = !this.a.grounded && this.a.form === 'kid' &&
+      !this.a.specialActive && !this.a.superJumpState && !this.a.s3?.roll && !this.a.s3?.surge &&
+      !this.busy() && !this.firingPose() && !this.aimingSub && !(this.flickRecover > 0);
+    const gear = lockedMode || ordinaryAir ? 1 : attacking ? m.runSpeedFiring ?? 1 : m.runSpeed ?? 1;
     return moveSpeed.call(this) * gear * (this.a.s3?.flow?.active ? tuning.flow.runMultiplier : 1);
   };
   const horizontal = Actor.prototype._horizontal;

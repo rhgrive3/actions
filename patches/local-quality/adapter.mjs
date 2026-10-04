@@ -1,6 +1,7 @@
 // Build-only quality corrections composed after the gameplay, touch-layout and
 // reliability adapters. Upstream inkwave-public/ remains byte-for-byte intact.
 import fs from 'node:fs';
+import { adaptHudAuthority } from './hud-authority-adapter.mjs';
 import { adaptIdleSource } from './idle-adapter.mjs';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
@@ -12,6 +13,7 @@ import { adaptTouchRelayout } from './touch-relayout.mjs';
 
 export const QUALITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
 const IDENTITY_FILES = [
+  'hud-authority-adapter.mjs',
   'idle-adapter.mjs', 'idle-resources.mjs', 'music-idle.mjs',
   'lobby-resource-adapter.mjs', 'minimap-resource-adapter.mjs',
   'adapter.mjs', 'gyro.mjs', 'install.mjs', 'menu-preview.mjs', 'menu.mjs',
@@ -31,6 +33,7 @@ export function adaptQualitySource(rel, code) {
   code = adaptLobbyResources(rel, code);
   code = adaptMinimapResources(rel, code);
   code = adaptLandingRigidity(rel, code);
+  code = adaptHudAuthority(rel, code);
   if (rel === 'src/core/mobile.js') return adaptTouchRelayout(rel, adaptFirstTouch(rel, code));
   if (rel === 'src/ui/menu-art.js') {
     code = replaceOnce(code,

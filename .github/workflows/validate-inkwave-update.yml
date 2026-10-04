@@ -225,6 +225,13 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: failure() && matrix.suite == 'active'
         with:
+          name: inkwave-game-failure-${{ github.sha }}
+          if-no-files-found: warn
+          path: ${{ env.CI_STORAGE }}/evidence/game/
+          retention-days: 7
+      - uses: actions/upload-artifact@v4
+        if: failure() && matrix.suite == 'active'
+        with:
           name: inkwave-idle-resource-failure-${{ github.sha }}
           if-no-files-found: warn
           path: ${{ env.CI_STORAGE }}/evidence/idle-resources/
