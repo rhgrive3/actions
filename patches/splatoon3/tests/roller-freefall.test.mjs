@@ -449,3 +449,25 @@ test('partial Surge armor and Roller accepted-launch mode compose in the product
     a.reset(); assert.equal(a.s3.surge, null);
   }
 });
+
+test('catalog roller-vertical-land diagnostic launch path exercises native accepted launch and selects vertical mode', async () => {
+  const f = await fixture({ adaptRuntime: adaptIssue479 });
+  const a = f.make('roller');
+  const ch = a.character;
+
+  // Exercise catalog step and accepted jump launch
+  f.tick(a, 10);
+  a.grounded = false;
+  a.pos.y = 0.4;
+  a.vel.y = 7;
+  ch.trigger('jump');
+  f.emit('actor:jump', { actor: a, surface: a.groundTeam, swim: false });
+
+  a.intent.fire = true;
+  f.tick(a, 1);
+
+  assert.equal(a.s3JumpAirborne, true, 'accepted jump launch sets s3JumpAirborne');
+  assert.equal(a.weaponRunner.s3FlickVertical, true, 'catalog jump launch selects vertical flick mode immediately');
+  assert.equal(a.weaponRunner.s3RollerAttack?.vertical, true);
+  close(a.weaponRunner.s3RollerAttack?.windup, 26 / 60, 'vertical flick has 26F windup');
+});

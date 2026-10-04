@@ -29,6 +29,7 @@ export function resetAirborneState(a) {
 
 export function recordMovementLaunch(a) {
   if (!a) return;
+  ensureActorTriggerHooked(a);
   a.s3JumpAirborne = true;
   a.s3NaturalAirborne = false;
   a.s3NaturalAirTicks = 0;
@@ -84,6 +85,7 @@ export function stepAirborneTransition(a, dt) {
 
 export function selectRollerFlickVertical(a, runner) {
   if (!a) return false;
+  ensureActorTriggerHooked(a);
 
   // 1. Latched mode: an attack already in progress never changes its mode.
   if (runner?.s3RollerAttack) {
@@ -132,6 +134,7 @@ export function installActorFreefallHooks(apiOrActor) {
     const res = origReset.apply(this, args);
     if (isRollerActor(this)) {
       resetAirborneState(this);
+      ensureActorTriggerHooked(this);
     }
     return res;
   };
