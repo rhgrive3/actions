@@ -225,3 +225,20 @@ Four current-public defects #366/#370 (one duplicate pair), #375, #384, #395 are
 ## 2026-10-04 weapon edge-case supplement
 
 See [weapon edge-case comparison](inkwave-weapon-edgecases-2026-10-04.md) for #354/#356/#357/#361: stable-human Dualies3F first emission; Splatling separate ground1.6° pitch envelope; terrain Blaster35HP cap; horizontal Roller12+1 gameplay units. The report separates actual source/minified/composed-code tests from S3 probability/position/falloff and released-tap calibration still pending. No native source or deployed main is changed by the draft.
+
+
+## 2026-10-05: Roller natural free-fall 25F horizontal grace (#479)
+
+スプラトゥーン3（Ver. 11.3.0）におけるローラーの縦振り／横振り選択において、ジャンプ入力なしで崖・段差から自然落下（natural free fall）した際、空中最初の25フレーム（約0.42秒）間はZR押下で横振りが維持され、25F経過後（26F以降）に初めて縦振りに移行する仕様（25F grace）が存在する。一方、通常のBジャンプでは空中1F目から即座に縦振りが選択される。また、一度選択された攻撃モード（横振り／縦振り）は攻撃中にジャンプや着地を挟んでもラッチされ、途中でモードが再分類されることはない。
+
+INKWAVEの既存公開実装（`patches/splatoon3/runtime/roller.mjs:29-34`）では、攻撃開始判定が単一の `!a.grounded` で行われており、空中移行の原因（ジャンプ vs 自然落下）の区別および自然落下滞空時間の計測が存在しなかった。そのため、崖から足を踏み外した直後（1F, 10F, 20F等）のZR押下でも即座に縦振りが選択されていた。
+
+Issue #479 の修正（`patches/splatoon3/issue-479-adapter.mjs` および `patches/splatoon3/runtime/roller-freefall.mjs`）により、空中移行状態（`s3JumpAirborne` vs `s3NaturalAirborne`）および自然落下フレーム数（`s3NaturalAirTicks` / `s3NaturalAirTime`）を計測し、25F grace および攻撃中ラッチを導入した。
+
+| 項目 | 内容 |
+|---|---|
+| 本家の根拠 | [Splatoon 3 攻略＆検証 Wiki — ローラー属](https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%83%AD%E3%83%BC%E3%83%A9%E3%83%BC%E5%B1%9E) および [Inkipedia — Roller](https://splatoonwiki.org/wiki/Roller)。崖落ち・金網抜け等のジャンプを伴わない空中落下開始から25F間は横振りが維持され、25F経過後に縦振りへ移行する。 |
+| INKWAVE の実装箇所 | `patches/splatoon3/runtime/roller-freefall.mjs`（`selectRollerFlickVertical`, `installActorFreefallHooks`, `updateAirborneTransition`）および `patches/splatoon3/issue-479-adapter.mjs`（`adaptIssue479`）。`patches/splatoon3/runtime/roller.mjs` の新規攻撃開始判定で `selectRollerFlickVertical(a, this)` を参照。 |
+| 再現操作 | ローラーを装備し平地の端からジャンプ（B）を入力せずに前進して落下。落下後 1F, 10F, 20F, 25F で ZR を入力すると横振り（21F風切り、12+1弾扇状拡散）、26F以降で ZR を入力すると縦振り（26F風切り、5弾直線拡散）。対照としてBジャンプ空中1Fは即座に縦振り。 |
+| プレイへの影響 | 段差や高台端からの飛び降り撃ちにおいて、スプラトゥーン2/3の操作感覚どおりに近接の横振りを即座に出せるようになり、不本意な縦振り（硬直増・横幅減少）への誤化を防止。 |
+| 確認状態 | **ロジック確認済み**（source-fixture、Actor 実 tick、FixedClock による 30Hz / 60Hz / 120Hz シミュレーション完全一致、ネガティブコントロール検証）。**Switch 実機での精密ポーズ・着地直前微小落下距離の物理的確証は未確認**。本修正は25F graceおよび選択モードのラッチのみを対象とし、他ブキや既存ローラー数値（ダメージ・インク消費・射程・拡散角）は一切改変していない。 |
