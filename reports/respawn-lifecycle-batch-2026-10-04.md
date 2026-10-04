@@ -76,3 +76,11 @@ mainがlocal victim自身をHUDへ渡し、HUDのFX callbackが毎描画frameで
 #323のrespawn wrapperはQR履歴を、ここはSPを別々に保持する。両方を残す。#319のroll/surge damage計算は本件のelse枝へ合成し、spawn優先分岐を残す。#300のtuple末尾special数は変更せず、bit23の表示と共存させる。#325のcontroller map/gyro処理を保持し、物理再armのsampleと混同しない。これらはコードのマージだけで完了扱いせず、合成後の全テスト/実ブラウザを再実行する。
 
 最終ローカル結果: full patch 753 pass / 0 fail / 0 skip、専用11件、Hit/Spawn+catalog検証器を合わせたfocused 63件、local-quality8件、motion/workflow10件が成功。Ver11.3.0固定11files/126抽出値の照合、公開ビルド `72b4bb546a5c`（132 preloads）、全入力/artifact hash照合、`git diff --check` が成功。これらはCIの実ブラウザ結果を先取りするものではない。
+
+
+## CI検証の補修（run37193444109）
+
+- catalogの235F期限直前はframe250に実到達する。旧probe246は保護中だったため250を追加し、実Actor/Characterのphaseと検証器probeの一致を回帰テスト化。期限切れRGB受入条件は保持。
+- active検証のHUD失敗は複合条件を観測値付きへ分解。CSS animation shorthandの文字列全体ではなく、computed animation-nameがnoneであることを要求し、独立CSS時計が止まる意味を検査する。新headの実ブラウザ再実行までは原因・成功未確定。
+- 凍結シミュレーションがreal-time introより先へ進むfixtureではHUDを明示表示して描画し、fade完了と数字の可視性を待って証跡を取る。通常introの実機体験を確認したという主張ではない。
+- UIはWebKit小型portraitの回転直後floating-stickで失敗。PR315で実CI成功済みのnative resize/orientation +2rAF待機3ファイルだけを再利用し、ゲームの操作条件を弱めない。PR315の敵インクロジックは取り込まない。

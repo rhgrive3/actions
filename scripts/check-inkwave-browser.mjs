@@ -170,14 +170,24 @@ try {
     a._prevIntent.fire = true; a.intent.fire = true;
     a.splat(g.match.actors.find(x => x.team !== a.team));
     const st = hud._splatted; hud._fxMap.get('splatted')();
-    if (st.actor !== a || Math.abs(st.t-a.respawnTimer)>1e-10 || st.num.textContent !== String(Math.ceil(a.respawnTimer)) || st.ring.style.animation !== 'none')
-      throw Error('Compiled death HUD does not follow final actor timer');
+    const observed = { sameActor: st.actor === a, sampled: st.t, authoritative: a.respawnTimer,
+      number: st.num.textContent, expectedNumber: String(Math.ceil(a.respawnTimer)),
+      inlineAnimation: st.ring.style.animation, animationName: getComputedStyle(st.ring).animationName };
+    // CSS shorthand serialization may include default longhands. The required
+    // behavior is that no independently timed CSS animation drives this ring.
+    if (!observed.sameActor || Math.abs(observed.sampled-observed.authoritative)>1e-10 || observed.number !== observed.expectedNumber || observed.animationName !== 'none')
+      throw Error('Compiled death HUD does not follow final actor timer: ' + JSON.stringify(observed));
     const initial = st.t; hud._fxTime += 100; hud._fxMap.get('splatted')();
     if (st.t !== initial) throw Error('Independent HUD FX time consumed death timer');
     a.respawnTimer /= 2; hud._fxMap.get('splatted')();
     if (Math.abs(Number(st.ring.style.strokeDashoffset)/st.circumference-.5)>1e-10) throw Error('Compiled death ring desynchronized');
-    return { initial, remaining: st.t, number: st.num.textContent, ringRatio: Number(st.ring.style.strokeDashoffset)/st.circumference, special: a.special };
+    // The simulation is deliberately frozen and stepped much faster than the
+    // real-time intro timers. Present this controlled HUD fixture explicitly.
+    hud.setVisible(true); g.R.render();
+    return { initial, remaining: st.t, number: st.num.textContent, ringRatio: Number(st.ring.style.strokeDashoffset)/st.circumference, special: a.special, observed, fixture: 'native death event/HUD; frozen actor clock; explicit HUD visibility after accelerated intro' };
   });
+  await page.waitForFunction(() => Number(getComputedStyle(globalThis.s3ProbeG.game.fadeEl).opacity) === 0, null, {timeout:10000});
+  await page.locator('.iw-spl__num').waitFor({state:'visible'});
   await page.screenshot({path:path.join(evidence,'respawn-authoritative-countdown.png'),animations:'disabled',timeout:90000});
   result.respawnLifecycle = await page.evaluate(() => {
     const G=globalThis.s3ProbeG, g=G.game, a=g.match.local, dt=1/60;

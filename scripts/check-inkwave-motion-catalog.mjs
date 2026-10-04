@@ -42,7 +42,7 @@ export const CATALOG_SCENARIOS = Object.freeze([
   ...['short', 'vertical', 'long'].map(distance => ({ name: 'superjump-' + distance, kind: 'shooter', frames: 300, probes: [79, 80, 200, 217, 265] })),
   { name: 'squidroll-finish', kind: 'shooter', frames: 120 },
   { name: 'squidroll-interrupt', kind: 'shooter', frames: 120 },
-  { name: 'hit-spawn-reset', kind: 'shooter', frames: 300, probes: [20, 246, 280] },
+  { name: 'hit-spawn-reset', kind: 'shooter', frames: 300, probes: [20, 246, 250, 280] },
   { name: 'quiet-idle-held-sub', kind: 'shooter', frames: 180, probes: [55, 100] },
   ...[0, 1, 2].map(variant => ({ name: 'victory-fade-lobby-' + variant, kind: 'shooter', frames: 360, variant, probes: [240, 279, 280, 290, 310] })),
   { name: 'native-slam-phases', kind: 'shooter', frames: 180, probes: [33, 49, 54, 79, 133] },

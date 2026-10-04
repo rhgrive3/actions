@@ -364,3 +364,21 @@ test('nullable preview is safe, duplicate realms are harmless, and native resour
     assert.doesNotThrow(() => r.ch.update(.1, null));
   } finally { r.close(); }
 });
+
+
+test('catalog samples include real finite-armor expiry pixels after the 235F clock change', async () => {
+  const { CATALOG_SCENARIOS, catalogRenderFrames } = await import('../../../scripts/check-inkwave-motion-catalog.mjs');
+  const { advanceSpawnProtection } = await import('../runtime/respawn-lifecycle.mjs');
+  const scenario=CATALOG_SCENARIOS.find(s=>s.name==='hit-spawn-reset');
+  const frames=new Set(catalogRenderFrames(scenario)),api=await production(),r=rig(api), phases=[];
+  try {
+    for(let frame=0;frame<scenario.frames;frame++){
+      if(frame===20)r.a.respawn();if(frame>20)advanceSpawnProtection(r.a,1/60);
+      if(frame===280)r.a.reset();r.visual(1/60);
+      if(frames.has(frame))phases.push({frame,phase:r.snapshot().phase});
+    }
+    assert.ok(phases.some(s=>s.phase==='expiry'),'expiry must be an actual scheduled RGB frame, not merely a CPU sample');
+    assert.equal(phases.find(s=>s.frame===246)?.phase,'protected','old probe misses the <0.12s expiry window');
+    assert.equal(phases.find(s=>s.frame===250)?.phase,'expiry');
+  }finally{r.close();}
+});

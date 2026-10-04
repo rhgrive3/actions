@@ -2,6 +2,7 @@
 // Focused production menu/mobile DOM check, with real touch taps in Chromium and WebKit.
 // This does not attest a deployed commit or replace real iOS device verification.
 import assert from 'node:assert/strict';
+import { settleTouchViewport } from './lib/inkwave-touch-viewport.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
@@ -77,7 +78,7 @@ try {
       const context = await engine.launchPersistentContext(path.join(browserDir, 'profile'), { ...config, headless: true, reducedMotion: 'reduce',
         artifactsDir: path.join(browserDir, 'artifacts'), downloadsPath: path.join(browserDir, 'downloads'),
         ...(engineName === 'chromium' ? { args: ['--no-sandbox', '--disable-dev-shm-usage'] } : {}) });
-      const entry = { engine: engineName, name, viewport: config.viewport, checks: [] }; report.cases.push(entry);
+      const entry = { engine: engineName, name, viewport: config.viewport, checks: [], viewportTransitions: [] }; report.cases.push(entry);
       const page = context.pages()[0] || await context.newPage();
       page.setDefaultTimeout(10000);
       page.on('pageerror', error => report.errors.push(`${engineName}/${name}: ${error.message}`));
@@ -180,7 +181,7 @@ try {
         await page.locator('[data-e="cancel"]').tap();
         entry.checks.push('storage-failure-retains-draft');
         // Relocate the floating stick to the right, then exercise gameplay routing there.
-        if (name === 'small-phone-portrait') await page.setViewportSize({ width: 568, height: 320 });
+        if (name === 'small-phone-portrait') entry.viewportTransitions.push(await settleTouchViewport(page, { width: 568, height: 320 }));
         await page.evaluate(() => { mobile.openEditor(); mobile._layoutPosition('stick', innerWidth * .65, innerHeight * .25); mobile._closeEditor(true); mobile.setVisible(true); });
         const moved = await box(page, 'stick');
         assert.equal(await page.evaluate(({ x, y }) => mobile._hitButton(x, y), moved), null, 'Stick test must avoid overlapping action buttons');
@@ -199,7 +200,7 @@ try {
         const beforeRotation = page.viewportSize();
         await pointer(page, 'pointerdown', 81, beforeRotation.width * .45, beforeRotation.height * .4);
         assert.equal(await page.evaluate(() => mobile._edit?.pts.size), 1);
-        await page.setViewportSize({ width: beforeRotation.height, height: beforeRotation.width });
+        entry.viewportTransitions.push(await settleTouchViewport(page, { width: beforeRotation.height, height: beforeRotation.width }));
         await page.waitForFunction(() => mobile._edit === null && mobile._H === Math.max(300, Math.min(460, Math.min(innerWidth, innerHeight))));
         const bounds = await page.evaluate(() => Object.keys(mobile.els).map(id => ({ id, ...mobile._box(id), w: innerWidth, h: innerHeight })));
         for (const b of bounds) assert(b.x - b.d / 2 >= 0 && b.x + b.d / 2 <= b.w + 1 && b.y - b.d / 2 >= 0 && b.y + b.d / 2 <= b.h + 1, `${b.id} survives rotation`);
