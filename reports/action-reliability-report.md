@@ -173,3 +173,8 @@ With lifecycle integration enabled, the first physical direction-key transition 
 ### Keyboard target ownership
 
 The combined browser matrix retained a gear `<select>` from the earlier loadout interaction as the DOM keyboard target on some lifecycle-integrated runs. Before the physical Space edge proof, the runner now brings the page forward and explicitly focuses the real game canvas, asserting that the canvas remains the active element before both fixed-tick trials. The temporary tabindex used only to make the canvas focusable is restored afterward. Production input routing is unchanged.
+
+
+### Second-press lifecycle ordering
+
+The combined lifecycle run exposed that the second trial's direction precondition was being established before the physical Space repress. A valid lifecycle/input-boundary reset on that physical event can clear unrelated held controls, so KeyA vanished even though the Space edge was preserved. The runner now releases the first direction, sends the physical Space repress, and only then establishes KeyA plus held fire before the explicit fixed tick.
