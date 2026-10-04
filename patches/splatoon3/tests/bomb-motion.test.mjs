@@ -329,6 +329,13 @@ test('held and release overlays reserve the left hand during main attacks, movem
     try {
       r.a.vel.set(1.5, 0, 1); r.a.grounded = false;
       for (let i = 0; i < 40; i++) { r.a.pos.addScaledVector(r.a.vel, 1 / 60); r.step(1 / 60, { sub: true, fire: true }); r.a.ink = 100; }
+      // Slosher's post-shot gate now temporarily withholds sub admission.
+      // Finish its already-committed swing, wait for the legal boundary, then
+      // retain the same full hand/preview assertions on an admitted hold.
+      if (kind === 'slosher') {
+        for (let i = 0; i < 80 && (r.a.weaponRunner.slosh >= 0 || r.a.weaponRunner.s3PostShotRemaining > 0); i++) r.step(1 / 60, { sub: true });
+        for (let i = 0; i < 20; i++) r.step(1 / 60, { sub: true });
+      }
       assert.equal(r.ch.bombHeld, true); assert.ok(r.ch.P[C.IKL] < .01, kind);
       r.step(1 / 60, { subReleased: true, fire: true });
       assert.equal(r.ch.bomb.group.visible, false); assert.ok(r.ch.P[C.IKL] < .01, kind);
@@ -395,8 +402,11 @@ test('release and per-frame preview sample native rig without changing any live 
         assert.deepEqual(preservedRig(r, api, true), before, kind + ' preview preserves the complete live native rig and physics scratch');
         assert.deepEqual(calls, beforeCalls, 'preview performs no update, animation or secondary simulation');
         assert.equal(flowEvents, beforeEvents);
-        assert.ok(preview.distanceTo(r.a.pos) < 1.25, 'sample is reachable by this native model');
+        if (r.a.weaponRunner.aimingSub) assert.ok(preview.distanceTo(r.a.pos) < 1.25, 'admitted sample is reachable by this native model');
+        else assert.deepEqual(Array.from(preview.toArray()), [0, 1.35, 0], 'blocked sub preview leaves the caller fallback unchanged');
       }
+      for (let i = 0; i < 80 && (r.a.weaponRunner.slosh >= 0 || r.a.weaponRunner.s3PostShotRemaining > 0); i++) r.step(1 / 60, { sub: true });
+      r.step(1 / 60, { sub: true });
       const before = preservedRig(r, api), beforeCalls = { ...calls }, preview = api.bombPreviewPosition(r.a, new api.THREE.Vector3());
       r.projectiles.updateArc(r.a, true);
       assert.deepEqual(preservedRig(r, api), before, 'actual native arc path does not mutate Character/runner/Flow');

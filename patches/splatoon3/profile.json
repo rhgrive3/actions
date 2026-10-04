@@ -49,7 +49,11 @@
       "lockTime": 0.5333333333333333,
       "lockInterval": 0.06666666666666667,
       "spreadLock": 0.0,
-      "range": 12.5
+      "range": 12.5,
+      "playerRadiusNormal": 0.31,
+      "playerRadiusAfterRoll": 0.335,
+      "rollInkRecoverStop": 1.1666666666666667,
+      "rollShotDelay": 0.06666666666666667
     },
     "blaster": {
       "inkPerShot": 10.0,
@@ -79,7 +83,8 @@
         0.0,
         0.5,
         1.0
-      ]
+      ],
+      "postShotDelay": 0.36666666666666664
     },
     "splatling": {
       "inkPerShot": 0.5625,
@@ -120,7 +125,8 @@
       "keepChargeTime": 1.25,
       "chargeTime": 1,
       "inkRecoverStop": 0.3333333333333333,
-      "damagePartialMax": 80
+      "damagePartialMax": 80,
+      "rechargeDelay": 0.1
     },
     "roller": {
       "rollSpeed": 7.92,
@@ -193,7 +199,8 @@
       "inkRecoverStop": 0.6666666666666666,
       "damageHead": 70.0,
       "damageTail": 50.0,
-      "range": 14.5
+      "range": 14.5,
+      "postShotDelay": 0.26666666666666666
     }
   },
   "bomb": {
@@ -373,7 +380,8 @@
       "Surge burst velocity/armor/partial charge and post-wall air control (including the Ver.11.3.0 lateral-distance fix); 45F base charge timing is pinned",
       "HP regen delay/rate and enemy ink grace/contact-damage recovery; post-movement contact and partial-tick grace arithmetic are regression-verified only",
       "superjump airborne vulnerability window/trajectory/landing paint and respawn timing/armor; raw 80F preparation/138F flight are pinned and landing protection is removed per Nintendo 9.3.0 fix",
-      "aim response, gyro, animation, terrain/network and physical-device validation; see movement-resources comparison matrix and Switch/iOS/two-peer measurement protocol"
+      "aim response, gyro, animation, terrain/network and physical-device validation; see movement-resources comparison matrix and Switch/iOS/two-peer measurement protocol",
+      "Weapon gate batch: Dualies collision uses pinned .335/.31 ratio on native .15 normal radius; absolute world scale, initial 4F dodge startup and Switch frame/latency metrology remain unverified. Slosher 16F post-shot and Charger 6F recharge are community measured, not Nintendo published values. See reports/inkwave-weapon-gates-batch-2026-10-04.md."
     ],
     "movementResourcesEvidence": "reports/inkwave-movement-resources-2026-10-02.md"
   },
@@ -1163,6 +1171,24 @@
       "index": 2,
       "factor": 0.016666666666666666,
       "rawValue": 138
+    },
+    "weapons.dualies.playerRadiusNormal": {
+      "parameter": "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json#/GameParameters/CollisionParam/InitRadiusForPlayer",
+      "index": null,
+      "factor": 1,
+      "rawValue": 0.31
+    },
+    "weapons.dualies.playerRadiusAfterRoll": {
+      "parameter": "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json#/GameParameters/CollisionLapOverParam/InitRadiusForPlayer",
+      "index": null,
+      "factor": 1,
+      "rawValue": 0.335
+    },
+    "weapons.blaster.postShotDelay": {
+      "parameter": "data/parameter/1130/weapon/WeaponBlasterMiddle.game__GameParameterTable.json#/GameParameters/WeaponParam/PostDelayFrame_Blaster",
+      "index": null,
+      "factor": 0.016666666666666666,
+      "rawValue": 22
     }
   },
   "gearExtra": {

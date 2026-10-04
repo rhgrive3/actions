@@ -1305,6 +1305,30 @@
       "status": "extracted",
       "unit": "gear effect ratio",
       "notes": "Per-weapon override; unchanged endpoints reuse the pinned common curve. No omitted default reconstructed."
+    },
+    "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json#/GameParameters/CollisionParam/InitRadiusForPlayer": {
+      "value": 0.31,
+      "pointer": "/GameParameters/CollisionParam/InitRadiusForPlayer",
+      "sourceId": "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Explicit field; Dualies radius is used only as a ratio until world-scale calibration. Delay frames divide by 60."
+    },
+    "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json#/GameParameters/CollisionLapOverParam/InitRadiusForPlayer": {
+      "value": 0.335,
+      "pointer": "/GameParameters/CollisionLapOverParam/InitRadiusForPlayer",
+      "sourceId": "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Explicit field; Dualies radius is used only as a ratio until world-scale calibration. Delay frames divide by 60."
+    },
+    "data/parameter/1130/weapon/WeaponBlasterMiddle.game__GameParameterTable.json#/GameParameters/WeaponParam/PostDelayFrame_Blaster": {
+      "value": 22,
+      "pointer": "/GameParameters/WeaponParam/PostDelayFrame_Blaster",
+      "sourceId": "data/parameter/1130/weapon/WeaponBlasterMiddle.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Explicit field; Dualies radius is used only as a ratio until world-scale calibration. Delay frames divide by 60."
     }
   }
 }

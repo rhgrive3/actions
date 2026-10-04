@@ -87,6 +87,7 @@ export function adaptSource(rel, code) {
     return code;
   }
   if (rel === 'src/game/weapons.js') {
+    code = replaceOnce(code, 'PLAYER.radius * 0.95 + p.size', 'PLAYER.radius * 0.95 + projectilePlayerRadius(p)', 'per-mode player collision radius');
     code = replaceOnce(code, 'lerp(w.damageMin, w.damageMax * 0.62, charge)',
       'lerp(w.damageMin, w.damagePartialMax, charge)', 'charger partial damage');
     code = replaceOnce(code, 'a.ink < w.inkFull * 0.2', 'a.ink < w.inkMin', 'charger minimum ink');
@@ -105,7 +106,7 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, 'const p = _v.copy(a.pos); p.y += 1.35;', 'const p = _v.copy(a.pos); p.y += 1.35; bombPreviewPosition(a, p);', 'bomb preview origin');
     code = replaceOnce(code, '        vel.y -= 24 * dt;', '        vel.y -= SUB.bomb.gravity * dt;', 'bomb preview gravity');
     code = replaceOnce(code, 'if (b.fuse <= 0) {', 'if (b.fuse <= 1e-10) {', 'bomb fuse frame boundary');
-    return `import { applyProjectileHit, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\n` + code;
+    return `import { projectilePlayerRadius } from '../../patches/splatoon3/runtime/weapon-gates.mjs';\nimport { applyProjectileHit, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\n` + code;
   }
   if (rel === 'src/game/actor.js') {
     code = replaceOnce(code, '    this._updateClimb(dt, isSquid);',

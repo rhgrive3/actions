@@ -1,3 +1,4 @@
+import { installWeaponGates } from './weapon-gates.mjs';
 import { installRollerLogic } from './roller.mjs';
 let api;
 export function splatlingBurst(w, charge) {
@@ -92,6 +93,7 @@ export function installWeapons(context, profile) {
       // 12 * (1/60) misses .2 and the 17F recovery also gains an extra tick.
       const carry = Math.max(0, this.slosh - w.windup);
       this.slosh = -1; G.projectiles.fireSlosh(a, w);
+      this.s3PostShotRemaining = w.postShotDelay;
       this.cooldown = w.fireInterval - w.windup - carry;
       this.s3SloshRecovery = !!inp.fire;
     };
@@ -173,7 +175,10 @@ export function installWeapons(context, profile) {
       this.s3BlasterWindup -= dt; this.firingT = .35;
       if (this.s3BlasterWindup > 1e-10) return;
       this.s3BlasterWindup = 0;
-      return auto.call(this, dt, { ...input, fire: true }, { ...w, fireInterval: w.fireInterval - w.preDelay });
+      const beforeInk = this.a.ink;
+      const result = auto.call(this, dt, { ...input, fire: true }, { ...w, fireInterval: w.fireInterval - w.preDelay });
+      if (this.a.ink < beforeInk) this.s3PostShotRemaining = w.postShotDelay;
+      return result;
     }
     if (input.fire && this.cooldown <= 0 && this.a.ink >= w.inkPerShot) { this.s3BlasterWindup = w.preDelay; this.firingT = .35; return; }
     if (!input.fire) this.cooldown = Math.max(0, this.cooldown);
@@ -198,4 +203,5 @@ export function installWeapons(context, profile) {
     if (this.rolling && w.rollBaseSpeed) return this.rollT >= w.rollDashTime ? w.rollSpeed : w.rollBaseSpeed;
     return moveSpeed.call(this);
   };
+  installWeaponGates(api);
 }

@@ -126,7 +126,7 @@ export function installGear(api, tuning) {
       Object.assign(api.SUB.bomb, saved);
       if (a.ink < beforeInk) {
         a.s3 ||= {};
-        const delay = input.subReleased ? api.SUB.bomb.inkRecoverStop : this.s3FlickVertical ? a.weapon.verticalInkRecoverStop ?? a.weapon.inkRecoverStop : a.weapon.inkRecoverStop;
+        const delay = input.subReleased && !(this.s3PostShotRemaining > 1e-10) ? api.SUB.bomb.inkRecoverStop : this.s3FlickVertical ? a.weapon.verticalInkRecoverStop ?? a.weapon.inkRecoverStop : a.weapon.inkRecoverStop;
         a.s3.recoverStopRemaining = Math.max(a.s3.recoverStopRemaining || 0, delay ?? tuning.resources.inkRefillDelay);
       }
     }
