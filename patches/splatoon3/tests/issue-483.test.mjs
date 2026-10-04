@@ -258,9 +258,9 @@ async function runProductionOrder() {
     for (const rel of ['src/game/character.js', 'src/game/character-geo.js']) {
       const raw = fs.readFileSync(path.join(ROOT_DIR, 'inkwave-public', rel), 'utf8');
       const s3 = adaptSource(rel, raw);
-      const w483 = a483.adaptIssue483(rel, s3);
-      if (w483 === s3) fail(rel + ': the issue-483 transform did not apply');
-      const built = adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, w483)));
+      const beforeQuality = adaptReliability(rel, adaptTouchLayout(rel, s3));
+      const built = adaptQualitySource(rel, beforeQuality);
+      if (built === beforeQuality) fail(rel + ': the issue-483 transform did not apply');
       new vm.SourceTextModule(built, { identifier: rel });   // the full order must compile
       if (rel === 'src/game/character.js') {
         if (!built.includes('patches/splatoon3/runtime/hair-cache.mjs')) fail('helper import lost');
@@ -271,7 +271,7 @@ async function runProductionOrder() {
         if (s3 !== raw) fail('adaptSource must be a no-op for character-geo.js (it has no branch)');
         if (!built.includes('export function buildOwnedHairStyle(')) fail('owned builder lost');
         if (!built.includes("export function getHairStyle(st, lod = 'hero') {")) fail('legacy getHairStyle contract lost');
-        if (!w483.includes('_hair.has(ks)')) fail('legacy caching getter body lost');
+        if (!built.includes('_hair.has(ks)')) fail('legacy caching getter body lost');
         if (built.includes('_hair.clear()')) fail('no global cache flush may be introduced');
       }
       if (built.includes('hatKindCount: 4') || built.includes('browKindCount: 4')) fail('hardcoded catalog count');
@@ -287,7 +287,7 @@ async function runProductionOrder() {
   });
 }
 
-test('issue-483 production order: S3 -> 483 -> touch -> reliability -> quality compiles', async () => {
+test('issue-483 production order: S3 -> touch -> reliability -> quality (483) compiles', async () => {
   const out = await runProductionOrder();
   assert.match(out, /PRODUCTION483 OK/);
 });
@@ -302,6 +302,9 @@ async function runNative(mode) {
     const vm = await import('node:vm');
     const { adaptSource } = await import(${JSON.stringify(path.join(ROOT, 'patches/splatoon3/adapter.mjs'))});
     const a483 = await import(${JSON.stringify(path.join(ROOT, 'patches/splatoon3/issue-483-adapter.mjs'))});
+    const { adaptTouchLayout } = await import(${JSON.stringify(path.join(ROOT, 'patches/touch-layout/adapter.mjs'))});
+    const { adaptReliability } = await import(${JSON.stringify(path.join(ROOT, 'patches/reliability/adapter.mjs'))});
+    const { adaptQualitySource } = await import(${JSON.stringify(path.join(ROOT, 'patches/local-quality/adapter.mjs'))});
     const ROOT_DIR = ${JSON.stringify(ROOT)};
     const SRC = path.join(ROOT_DIR, 'inkwave-public');
     const MODE = process.env.I483_MODE || 'patched';
@@ -330,9 +333,9 @@ async function runNative(mode) {
       if (file.startsWith(SRC + path.sep)) {
         const rel = path.relative(SRC, file);
         text = adaptSource(rel, text);
-        if (MODE === 'patched') text = a483.adaptIssue483(rel, text);
+        if (MODE === 'patched') text = adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, text)));
         text = probeNativeCaches(rel, text);
-      }
+      } else if (MODE === 'patched') text = adaptQualitySource(path.relative(ROOT_DIR, file), text);
       const m = new vm.SourceTextModule(text, { context, identifier: file });
       modules.set(file, m);
       return m;

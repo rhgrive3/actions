@@ -1,12 +1,7 @@
 // Issue #483 — bounded hair-geometry ownership (narrow adapter, build-only).
-// Production build path: these transforms are applied by the site builder alongside `adaptSource`.
-// The build composition owns the wire point — parent adds ONE line, `code = adaptIssue483(rel, code)`,
-// in scripts/build-inkwave.mjs (`adaptBuildSource`) and scripts/check-inkwave-patches.mjs, immediately
-// after `adaptSource(rel, code)` and before the touch-layout / reliability / quality adapters. It is
-// deliberately NOT placed inside patches/splatoon3/adapter.mjs: the existing `src/game/character.js`
-// branch of adaptSource early-returns, so a wire after that branch would never run, and adaptSource
-// itself must stay the untouched shared dispatcher. The focused tests below apply
-// `adaptIssue483(rel, ...)` directly after `adaptSource` to mirror that build order. Exact anchors only:
+// Production build path: adaptQualitySource composes these transforms after the existing
+// gameplay, touch-layout and reliability adapters. Shared build/check scripts and the
+// Splatoon3 dispatcher retain their existing order. Exact native anchors only:
 //  character.js —
 //  - import the narrow runtime helper + owned native builder (no shared dispatcher/profile edits),
 //  - resolve rig meta/rest from the shared game-LOD entry (never a hero build; bone rest
@@ -140,7 +135,7 @@ export function adaptIssue483CharacterGeo(rel, code) {
   );
 }
 
-/** Single build-composition entry point: parent wires `code = adaptIssue483(rel, code)` after adaptSource. */
+/** Single build-composition entry point: parent wires `code = adaptIssue483(rel, code)` inside adaptQualitySource. */
 export function adaptIssue483(rel, code) {
   if (rel === ISSUE_483_REL) return adaptIssue483Character(rel, code);
   if (rel === ISSUE_483_GEO_REL) return adaptIssue483CharacterGeo(rel, code);

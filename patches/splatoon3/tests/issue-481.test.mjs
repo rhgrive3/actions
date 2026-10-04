@@ -5,6 +5,16 @@ import { fixture } from './source-fixture.mjs';
 import { adaptIssue481, adaptIssue481Flow, calculateFlowSplatPoints } from '../issue-481-adapter.mjs';
 import { adaptPR489Flow, pr489FlowProgress } from './pr-489-fixture.mjs';
 
+import { adaptSource } from '../adapter.mjs';
+import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
+import { adaptReliability } from '../../reliability/adapter.mjs';
+import { adaptQualitySource } from '../../local-quality/adapter.mjs';
+const productionFixture = (extra = {}) => fixture({
+  ...extra,
+  adaptNative: (rel, code) => adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code)))),
+  adaptRuntime: adaptQualitySource,
+});
+
 // Helper to calculate score in 100-fp domain from normalized score
 function scoreToFp(score, threshold = 3) {
   const scale = threshold / 100;
@@ -71,7 +81,7 @@ test('negative control: unpatched INKWAVE awards flat +1.0 regardless of previou
 });
 
 test('acceptance: at fp < 75, ordinary splat awards 23 fp and consecutive splat awards 45 fp (ratio 45/23)', async () => {
-  const f = await fixture({ adaptRuntime: adaptIssue481 });
+  const f = await productionFixture();
   const a = f.make(), b = f.make(), c = f.make();
   b.team = 1; c.team = 1;
   const threshold = f.profile.flow.threshold; // default 3
@@ -104,7 +114,7 @@ test('acceptance: at fp < 75, ordinary splat awards 23 fp and consecutive splat 
 });
 
 test('acceptance: at fp >= 75, ordinary splat awards 15 fp and consecutive splat awards 35 fp', async () => {
-  const f = await fixture({ adaptRuntime: adaptIssue481 });
+  const f = await productionFixture();
   const a = f.make(), b = f.make();
   b.team = 1;
   const threshold = f.profile.flow.threshold;
@@ -136,7 +146,7 @@ test('acceptance: at fp >= 75, ordinary splat awards 15 fp and consecutive splat
 });
 
 test('acceptance: 5-second boundary precision (<= 5.0s is consecutive, > 5.0s is ordinary)', async () => {
-  const f = await fixture({ adaptRuntime: adaptIssue481 });
+  const f = await productionFixture();
   const a = f.make();
   const threshold = f.profile.flow.threshold;
   const scale = threshold / 100;
@@ -185,7 +195,7 @@ test('acceptance: 5-second boundary precision (<= 5.0s is consecutive, > 5.0s is
 });
 
 test('acceptance: previous-splat timer is actor-local and cannot be contaminated by another player', async () => {
-  const f = await fixture({ adaptRuntime: adaptIssue481 });
+  const f = await productionFixture();
   const p1 = f.make(), p2 = f.make();
   const v1 = f.make(), v2 = f.make(), v3 = f.make();
   v1.team = 1; v2.team = 1; v3.team = 1;
@@ -215,7 +225,7 @@ test('acceptance: previous-splat timer is actor-local and cannot be contaminated
 });
 
 test('acceptance: Flow activates exclusively on splats when threshold is reached', async () => {
-  const f = await fixture({ adaptRuntime: adaptIssue481 });
+  const f = await productionFixture();
   const a = f.make();
   const threshold = f.profile.flow.threshold; // 3.0
   const scale = threshold / 100;
@@ -252,7 +262,7 @@ test('acceptance: Flow activates exclusively on splats when threshold is reached
 });
 
 test('acceptance: streak is reset on actor reset, respawn, splat, and flow expiration', async () => {
-  const f = await fixture({ adaptRuntime: adaptIssue481 });
+  const f = await productionFixture();
   f.G.level.spawnPads = [new f.THREE.Vector3(), new f.THREE.Vector3(0, 0, 20)];
   f.G.physics.groundProbe = (_x, _y, _z, _r, _d, _foot, h) => { h.hit = false; return h; };
   const a = f.make(), v1 = f.make(), v2 = f.make(), v3 = f.make();
@@ -300,7 +310,7 @@ test('acceptance: streak is reset on actor reset, respawn, splat, and flow expir
 });
 
 test('acceptance: exclusions: team kills, self splats, dead attackers, and attract mode are excluded', async () => {
-  const f = await fixture({ adaptRuntime: adaptIssue481 });
+  const f = await productionFixture();
   const a = f.make(), ally = f.make(), victim = f.make();
   ally.team = 0; victim.team = 1;
 
@@ -330,7 +340,7 @@ test('acceptance: exclusions: team kills, self splats, dead attackers, and attra
 });
 
 test('Point 2 fix: environmental death attribution credits qualifying enemy attacker within 4s, while unattributed water awards nothing', async () => {
-  const f = await fixture({ adaptRuntime: adaptIssue481 });
+  const f = await productionFixture();
   const a = f.make(), enemy = f.make();
   enemy.team = 1;
   const scale = f.profile.flow.threshold / 100;
@@ -369,13 +379,17 @@ test('Point 2 fix: environmental death attribution credits qualifying enemy atta
   assert.equal(b.s3?.flow?.score || 0, 0, 'Unattributed water death awards zero Flow');
 });
 
-test('Point 1 fix: native NetMatch remote victim death -> remoteRespawn -> death twice proof with life epoch awareness', async () => {
-  const f = await fixture({ adaptRuntime: adaptIssue481 });
+test('Point 1 fix: native NetMatch death/respawn epochs admit two accepted Flow events once each', async () => {
+  const f = await productionFixture({ exportNet: true });
+  const net = new f.NetMatch({ myId: 'A', isHost: true }, { map: 'reef' });
   const a = f.make(), remoteVictim = f.make();
   remoteVictim.team = 1;
   remoteVictim.remote = true;
   remoteVictim.nid = 2;
   remoteVictim.owner = 'B';
+  remoteVictim.net = { buf: [], tp: 0 };
+  f.G.fx = { splatted() {} };
+  f.G.teamColors ||= [new f.THREE.Color(), new f.THREE.Color()];
   const scale = f.profile.flow.threshold / 100;
 
   // Initial state: remote victim alive, stats.deaths = 0, netLife = 0
@@ -385,8 +399,10 @@ test('Point 1 fix: native NetMatch remote victim death -> remoteRespawn -> death
 
   // 1. Attacker kills remote victim for the first time
   f.G.time = 10.0;
-  remoteVictim.alive = false;
-  remoteVictim.stats.deaths++; // deaths = 1
+  net._remoteSplat(remoteVictim, a, 'weapon');
+  assert.equal(remoteVictim.stats.deaths, 1);
+  // Invoke the accepted Flow event boundary separately; attribution/ACK transport
+  // belongs to PR #494, while this test verifies native death/respawn life transitions.
   f.emit('splatted', { victim: remoteVictim, attacker: a, cause: 'weapon' });
   assert.ok(Math.abs(a.s3.flow.score - 23 * scale) < 1e-9, 'Initial kill of remote victim earns 23 fp');
 
@@ -394,24 +410,21 @@ test('Point 1 fix: native NetMatch remote victim death -> remoteRespawn -> death
   f.emit('splatted', { victim: remoteVictim, attacker: a, cause: 'weapon' });
   assert.ok(Math.abs(a.s3.flow.score - 23 * scale) < 1e-9, 'Duplicate splatted event on same life is ignored');
 
-  // 3. Remote respawn: native NetMatch._remoteRespawn does NOT call Actor.respawn or reset!
-  // In native NetMatch:
-  // _remoteRespawn(a) { a.alive = true; a.hp = PLAYER.hp; a.invuln = PLAYER.spawnInvuln; a.respawnTimer = 0; a.net.spawnPending = true; }
-  remoteVictim.alive = true;
-  remoteVictim.hp = 100;
-  remoteVictim.respawnTimer = 0;
-  if (!remoteVictim.net) remoteVictim.net = {};
-  remoteVictim.net.spawnPending = true;
-  // Note: Actor.prototype.respawn or reset was NOT called!
-  // Under the old bug, remoteVictim would remain in WeakSet forever and all subsequent kills gained 0!
+  // The actual native method revives this object without calling Actor.reset/respawn.
+  const priorFlow = remoteVictim.s3.flow;
+  net._remoteRespawn(remoteVictim);
+  assert.equal(remoteVictim.alive, true);
+  assert.equal(remoteVictim.net.spawnPending, true);
+  assert.equal(remoteVictim.s3.flow, priorFlow, 'native respawn bypasses Flow reset wrapper');
 
   // 4. Advance clock by 2.0s (within 5s window from t = 10.0s)
   f.G.time = 12.0;
 
   // 5. Attacker kills remote victim second time (new life: deaths becomes 2)
-  remoteVictim.alive = false;
-  remoteVictim.stats.deaths++; // deaths = 2
-  remoteVictim.netLife = 1; // new life epoch
+  net._remoteSplat(remoteVictim, a, 'weapon');
+  assert.equal(remoteVictim.stats.deaths, 2);
+  // Even before a new rendered packet advances netLife, the native death counter
+  // distinguishes the next accepted death on the same remote Actor.
   f.emit('splatted', { victim: remoteVictim, attacker: a, cause: 'weapon' });
 
   // In the corrected adapter, new life is admitted and consecutive splat bonus (+45 fp) is awarded!
@@ -430,7 +443,7 @@ test('Point 1 fix: native NetMatch remote victim death -> remoteRespawn -> death
 
 test('acceptance: fixed-step schedules (30Hz, 60Hz, 120Hz) evaluate 5-second window identically', async () => {
   for (const hz of [30, 60, 120]) {
-    const f = await fixture({ adaptRuntime: adaptIssue481 });
+    const f = await productionFixture();
     const a = f.make(), v1 = f.make(), v2 = f.make();
     v1.team = 1; v2.team = 1;
     const dt = 1 / hz;
