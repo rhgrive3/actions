@@ -213,7 +213,15 @@
         30.0
       ]
     ],
-    "inkRecoverStop": 1.0
+    "inkRecoverStop": 1.0,
+    "readyTimeKid": 0.08333333333333333,
+    "readyTimeSquid": 0.16666666666666666,
+    "holdMoveSpeed": 4.32,
+    "inkSaverCurve": [
+      1,
+      0.825,
+      0.65
+    ]
   },
   "specials": {
     "storm": {
@@ -238,9 +246,9 @@
       0.55
     ],
     "inkSaverSub": [
-      1.0,
-      0.9,
-      0.8
+      1,
+      0.825,
+      0.65
     ],
     "inkRecovery": [
       180.0,
@@ -281,6 +289,11 @@
       1,
       0.4,
       0.1111111111111111
+    ],
+    "specialPower": [
+      0,
+      0.5,
+      1
     ]
   },
   "resources": {
@@ -373,7 +386,8 @@
       "Surge burst velocity/armor/partial charge and post-wall air control (including the Ver.11.3.0 lateral-distance fix); 45F base charge timing is pinned",
       "HP regen delay/rate and enemy ink grace/contact-damage recovery; post-movement contact and partial-tick grace arithmetic are regression-verified only",
       "superjump airborne vulnerability window/trajectory/landing paint and respawn timing/armor; raw 80F preparation/138F flight are pinned and landing protection is removed per Nintendo 9.3.0 fix",
-      "aim response, gyro, animation, terrain/network and physical-device validation; see movement-resources comparison matrix and Switch/iOS/two-peer measurement protocol"
+      "aim response, gyro, animation, terrain/network and physical-device validation; see movement-resources comparison matrix and Switch/iOS/two-peer measurement protocol",
+      "Gear/sub batch: Splat Bomb Lv2 saver mapping is Wiki corroborated (35 AP two bombs, 57 AP45.5%); five/ten-frame startup and .72DU/F hold are community measured. Storm snapshots activation-time duration/forward-speed multiplier; base throw vector remains native until PR259 composition. PR322 owns held-device/gauge clocks; PR182 packet metadata requires explicit integration. Physical Switch/mixed-version network parity is unverified."
     ],
     "movementResourcesEvidence": "reports/inkwave-movement-resources-2026-10-02.md"
   },
@@ -727,22 +741,22 @@
       "rawValue": 0.55
     },
     "gear.inkSaverSub.0": {
-      "parameter": "data/parameter/1130/misc/params.json#/ConsumeRt_Sub_Lv0",
+      "parameter": "data/parameter/1130/misc/params.json#/ConsumeRt_Sub_Lv2",
       "index": 2,
       "factor": 1,
-      "rawValue": 1.0
+      "rawValue": 1
     },
     "gear.inkSaverSub.1": {
-      "parameter": "data/parameter/1130/misc/params.json#/ConsumeRt_Sub_Lv0",
+      "parameter": "data/parameter/1130/misc/params.json#/ConsumeRt_Sub_Lv2",
       "index": 1,
       "factor": 1,
-      "rawValue": 0.9
+      "rawValue": 0.825
     },
     "gear.inkSaverSub.2": {
-      "parameter": "data/parameter/1130/misc/params.json#/ConsumeRt_Sub_Lv0",
+      "parameter": "data/parameter/1130/misc/params.json#/ConsumeRt_Sub_Lv2",
       "index": 0,
       "factor": 1,
-      "rawValue": 0.8
+      "rawValue": 0.65
     },
     "gear.inkRecovery.0": {
       "parameter": "data/parameter/1130/misc/params.json#/InkRecoverFrm_Stealth",
@@ -1163,6 +1177,60 @@
       "index": 2,
       "factor": 0.016666666666666666,
       "rawValue": 138
+    },
+    "bomb.inkSaverCurve.0": {
+      "parameter": "data/parameter/1130/misc/params.json#/ConsumeRt_Sub_Lv2",
+      "index": 2,
+      "factor": 1,
+      "rawValue": 1
+    },
+    "bomb.inkSaverCurve.1": {
+      "parameter": "data/parameter/1130/misc/params.json#/ConsumeRt_Sub_Lv2",
+      "index": 1,
+      "factor": 1,
+      "rawValue": 0.825
+    },
+    "bomb.inkSaverCurve.2": {
+      "parameter": "data/parameter/1130/misc/params.json#/ConsumeRt_Sub_Lv2",
+      "index": 0,
+      "factor": 1,
+      "rawValue": 0.65
+    },
+    "gearExtra.stormDurationFrames.0": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpInkStorm.game__GameParameterTable.json#/GameParameters/CloudParam/RainyFrame/Low",
+      "index": null,
+      "factor": 1,
+      "rawValue": 480
+    },
+    "gearExtra.stormDurationFrames.1": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpInkStorm.game__GameParameterTable.json#/GameParameters/CloudParam/RainyFrame/Mid",
+      "index": null,
+      "factor": 1,
+      "rawValue": 540
+    },
+    "gearExtra.stormDurationFrames.2": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpInkStorm.game__GameParameterTable.json#/GameParameters/CloudParam/RainyFrame/High",
+      "index": null,
+      "factor": 1,
+      "rawValue": 600
+    },
+    "gearExtra.stormThrowScale.0": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpInkStorm.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeedZSpecUp/Low",
+      "index": null,
+      "factor": 0.8928571428571428,
+      "rawValue": 1.12
+    },
+    "gearExtra.stormThrowScale.1": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpInkStorm.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeedZSpecUp/Mid",
+      "index": null,
+      "factor": 0.8928571428571428,
+      "rawValue": 1.4
+    },
+    "gearExtra.stormThrowScale.2": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpInkStorm.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeedZSpecUp/High",
+      "index": null,
+      "factor": 0.8928571428571428,
+      "rawValue": 1.68
     }
   },
   "gearExtra": {
@@ -1210,6 +1278,16 @@
       0,
       0.75,
       1
+    ],
+    "stormDurationFrames": [
+      480,
+      540,
+      600
+    ],
+    "stormThrowScale": [
+      1,
+      1.25,
+      1.5
     ]
   },
   "respawnChaseTime": 4.5,
