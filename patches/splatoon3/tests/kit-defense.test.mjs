@@ -96,3 +96,27 @@ test('actual Bubbler mechanics participate in the native sweep and preserve ghos
     system.clear();
   }
 });
+
+test('native blast shielding consumes durability once for protected actors and preserves inside-origin and LOS rules', async () => {
+  const { installKitBigBubbler, tickBigBubblers, bigBubblerDomes } = await import('../runtime/kit-big-bubbler.mjs');
+  for (const mode of ['outside', 'inside', 'wall', 'ghost']) {
+    const f = await fixture(); installKitDefense(f); installKitBigBubbler(f, f.profile);
+    const system = f.G.projectiles = new f.Projectiles(new f.THREE.Scene());
+    const owner = f.make('roller'); owner.nid = 4; owner.weapon = { ...owner.weapon, special: 'bubbler', specialCost: 180 };
+    owner.special = 180; owner._startSpecial(); tickBigBubblers(1);
+    const dome = bigBubblerDomes()[0], hp = dome.hp;
+    const shooter = f.make(); shooter.team = 1;
+    const victims = [f.make(), f.make()]; let hits = 0;
+    for (const a of victims) { a.pos.copy(dome.pos); a.damage = () => { hits++; return false; }; }
+    f.G.actors = victims; f.G.boss = null; f.G.physics.los = () => mode !== 'wall';
+    f.G.physics.raycast = (_a, _d, _l, h) => { h.hit = false; return h; };
+    const origin = dome.pos.clone().add(new f.THREE.Vector3(0, 1, mode === 'inside' ? 0 : dome.radius + 1));
+    const p = system._new(); Object.assign(p, { owner: shooter, team: 1, type: 'blast', wid: 'inkVac', ghost: mode === 'ghost',
+      s3SpecialWeapon: { burstRadius: 3.2, impactRadius: 3.2, splashRadius: 20, splashBands: [[20, 53]], splashDamageMax: 53, splashDamageMin: 53 } });
+    system._blastBurst(p, origin, null);
+    assert.equal(hits, mode === 'inside' ? 2 : 0, mode);
+    assert.equal(dome.hp, mode === 'outside' ? hp - 5300 : hp, mode);
+    assert.equal(system.s3ExplosionDefense, undefined, 'context restored, no pooled state');
+    system.clear();
+  }
+});
