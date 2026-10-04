@@ -194,3 +194,18 @@ compare 対象の変更点は `patches/splatoon3/profile.json` の `player.respa
 未確認のまま残す項目：Suction の `BurstFrame`・`InkConsume`・`FlyGravity` は 11.3.0 の表に省略されているため `null` / `unknown-omitted` とし、Splat Bomb の値を複製して一次ソース扱いしていない。発火に有限値が必要な場合のみ INKWAVE 既存の fuse と一致する 1.0 を `calibrated` として明示した。Curling のチャージから速度への曲線は表が端点のみ给出のため線形補間を `calibrated` とする。壁・天井接着は 11.3.0 に接着パラメータが存在しないため機能校正であり、公式値ではない。ネットワークは `recBomb` が `b.kind` を送出するため remote 側の sub 識別に必要なパケット変更と、`gear.mjs` の gear snapshot（`SUB.bomb` 固定）を選択 sub へ広げる作業は親が所有する。ブラウザ実動作、Switch／iPad／2台実機のパリティは未検証であり、単独測定を実機比較の代用にしない。
 
 詳細は `reports/public-kit-2-20261004.md`。親接続前のため、実ブラウザ合成と GitHub Actions による exact-SHA 描画ゲートは未完。
+## freebuff-4 の修理差分（75102bd / 7d672d4、2026-10-04）
+
+対象は `inkwave-public/` に `patches/splatoon3/adapter.mjs` を適用して合成した公開版で、`game/` は使用していない。以下の測定はすべて合成モジュール上のもので、ブラウザ実動作でも本家実機比較でもない。「確認状態」は本家一致を意味しない。詳細と証拠は `evidence/actions-freebuff-20261004/freebuff-4/{audit.md,REPAIR-FINAL.json}`、回帰は `patches/splatoon3/tests/audit-regression-4.test.mjs`。
+
+| # | 対象 | 本家根拠（Ver.11.3.0） | INKWAVE の実装箇所 | 再現操作 | プレイへの影響 | 確認状態 |
+|---|---|---|---|---|---|---|
+| F2 | 死亡時のギア（スペシャル減少・復活時間短縮）の到達経路 | 本家に対応する gear / AP の概念が無く、照合対象が存在しない。INKWAVE 独自のシステムであり本家一致を主張しない | `patches/splatoon3/runtime/gear.mjs` の `applyDeathGear()`（22〜36行）を単一入口にする。所有者側は `Actor.prototype.splat` のラッパ（142〜150行）、遠隔側は `adapter.mjs` が `netmatch.js` の `victim.stats.deaths++;`（569行）の直後へ挿入したフック。同一性は `a.stats.deaths` を native の加算後に読んで決まる | 同一死因で自作の死亡と遠隔 splat を1回ずつ発生させ、スペシャル値が一致すること、重複パケットでは1回だけ適用されること、2度目の命で同じ値へ到達すること | 所有者画面と観客側で途中のスペシャル値表示がずれない | 合成 Actor / NetMatch で確認（自前テスト20件、旧実装に戻すと4件が失敗）。本家参照は該当なし |
+| F3 | チャージャーの足元塗り | 発射時に足元へ小面積のインクが着弾すること自体は既知の挙動だが、半径・順序・線状描画との独立性の公式値は未取得 | `patches/splatoon3/runtime/weapons.mjs` の `feetSplash()`（162〜170行）。`kind` は `'trail'` で、これは `inkwave-public/src/world/paint.js:36` の K テーブルが実際に持つ native kind であり、`netmatch.js:106-110` の `recSplat` が通信へ載せる値と `paint.js:385` の `_kind()` が解決する値が一致する | partial / full のチャージを1回ずつ撃ち、その送信パケットを実 `_play` で再生して送信側と受信側が同じセルを指すことを確認 | 観客にも足元インクが現れる。従来の `'chargerFeet'` は K に無かったため、送信側と受信側の両方で半径ヒューリスティックへ静かに劣化していた | 実 Level / PaintSystem / NetMatch で確認（CPUグリッド）。**GPUアトラス出力は未検証**（スタブレンダラ）。本家の半径と順序は未確認 |
+| F6 | 発射後のインク回復開始遅延 | 発射直後しばらく回復が止まることは公開資料で一般的だが、武器別フレーム値の公式資料は未取得 | `patches/splatoon3/runtime/resources.mjs` の回復ゲート（67行・72行）。旧式は回復ゲートに `weaponDelay` と未代入の `a.s3?.inkRecoverStop` の大きい方を掛けていたが、後者には代入先が無く不活性だったため削除 | partial / full 双方で、発射直後の回復開始境界を測る | **挙動差分なし**。サブとフリックの停止は `recoverStopRemaining` が従来どおり独立して効く | 20f の境界が両形態で不変であることを合成で確認。本家の境界値そのものは未確認 |
+| F1 | スーパージャンプ中と壁登攀中の回復 | 回復処理の位置自体が本家挙動として未確認 | 変更なし。`actor.js:248` の早期 return が ink/hp ブロック（`actor.js:299`）より前にあるのは 0859bf4 / 045deb5 / 97b99bf でも既にそうだった（上流既存の挙動） | スーパージャンプ中と壁登攀中で回復を測る（今回は未実施） | 回復が1 tick 遅れる可能性。候補由来の挙動ではない | **未確認**。参照値が得られておらず回復処理は追加していない |
+| F5 | スナイパー弾の遮蔽判定 | 本家実機との比較をしていない | 変更なし。`weapons.mjs:182` の最近接判定は上流自身の幾何 | 壁の向こうに立つ敵に対して射線を生成する（`repair/scripts/f5-occlusion-repro.mjs`） | 完全に遮蔽された敵は正しく除外される。実際の差は、どの壁の背後でも 0.52 m の見通せる帯が残ること | **未確認**（幾何再現のみ） |
+
+未確認の項目を確定済みとして扱わない。ブラウザ、WebKit、実機での確認と、本家実機の計測は別物であり、この節のいずれの行もそれらを代替しない。
+
+親統合補足: F5 の監査対象は旧候補 063286d3。現候補は 14ce1e6 で最近接点順から解析的なカプセル初回接触順へ修正済み。元の接触半径 0.52 は維持し、本家実機の遮蔽寛容幅を確認したとは扱わない。
