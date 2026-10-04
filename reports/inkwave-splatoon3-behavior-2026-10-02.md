@@ -237,4 +237,8 @@ Blaster直撃弾の対プレイヤー当たり判定半径を、汎用視覚サ�
 | 再現操作 | 標的（通常直立）を側方オフセット `PLAYER.radius * 0.95 + 0.272`（0.26 と 0.285 の中間帯）に配置し、Blaster 直撃弾を通過させる。修正前は直撃判定をすり抜け（miss、HP減少なし）、修正後は直撃判定成立（direct hit、125ダメージで即splat）となる。 |
 | プレイへの影響 | かすり当たりの境界線において、本家 S3 では直撃（125 ダメージ即 splat）となる射撃が、INKWAVE では爆風ダメージ（最大70 / 最小50）あるいは不発判定となっていた差異が解消される。 |
 | 確認状態 | **ロジック確認済み**（`patches/splatoon3/tests/issue-463.test.mjs` による native 8/8 全件通過。負例ベースラインとの境界反転、旧領域内 hit、新領域外 miss、owner/remote 同一判定、地形爆発維持、Boss 判定維持、直撃 125 ダメージ維持、武器タイミング・インク維持）。**本家実機（Switch Ver.11.3.0）でのミリ秒・ピクセル単位の実機比較は未確認**。ワールド衝突判定（field radius 0.2）や爆風減衰帯は変更せず独立。 |
+[#427](https://github.com/rhgrive3/actions/issues/427)は対人戦におけるcross-owner確定戦闘進行（FlowおよびQuick RespawnのsplatsThisLife）の欠落を扱う。
+被弾側owner（authoritative）で確定・受理された実ダメージ・キルのみをhit確認ACKで攻撃側ownerへ返送し、攻撃側authoritative Actorで1回のみFlow加点およびsplatsThisLifeを加算する。
+被弾側での攻撃者remote proxyに対する二重加点および非確定予測ヒットからの即時加点を防止し、オフライン・ローカル戦闘の既存経路およびタイミングを保持する。
+Nintendoの内部ネットワークプロトコルやパケット構造は非公開であり、推定による本家通信仕様一致とはしない。実機対戦レイテンシ下での同期比較は引き続き未確認。
 
