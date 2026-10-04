@@ -1,0 +1,82 @@
+{
+  "schema": 1,
+  "lane": "cline-2",
+  "successor": "Space Bunny",
+  "predecessor": "Freebuff4 (session released)",
+  "head": "3b15310b10df240daeacf1265e5c7d0683feb1c3",
+  "branch": "fix/actions-cline-2-subprotocol-20261004",
+  "base": "c089ca1",
+  "remote": {
+    "url": "https://github.com/rhgrive3/actions.git",
+    "pushed": true,
+    "forced": false
+  },
+  "status": "complete",
+  "summary": "Sub packet and ghost replay repaired. The native b event now carries the sub id and held charge, the ghost resolves them presentation-only, and three concrete native blockers (ghost spawn window, hold consumption, cross-sub charge donation) are fixed narrowly.",
+  "inventory": [
+    {
+      "path": "patches/splatoon3/runtime/kit-subs.mjs",
+      "sha256": "808cc15eb227288afa56f5d8e21c4b055242a8abb717d51acd0d7057941ca9d7",
+      "bytes": 32904
+    },
+    {
+      "path": "patches/splatoon3/tests/kit-subs.test.mjs",
+      "sha256": "b2228c1333633fbeb8ae97b333f570dde69a505fad0b812095d4a2afba89fb6e",
+      "bytes": 45205
+    },
+    {
+      "path": "patches/splatoon3/adapter.mjs",
+      "sha256": "53c6eff5702c6a1f77a731686d2f74427779c11f993f235d4ee90061e8ad6790",
+      "bytes": 32275
+    },
+    {
+      "path": "logs/cline2-kit-subs-subprotocol.log",
+      "sha256": "013424609fbb676e92dbe2d5dab6c900f7354556e2fb52c4fd62064cdb43ab10",
+      "bytes": 2569
+    },
+    {
+      "path": "reports/public-kit-2-20261004.md",
+      "sha256": "2ddb453760503487080bb6cbd06a207df4c4679ae687d530aecc1c8c8a541bf8",
+      "bytes": 19781
+    },
+    {
+      "path": "reports/inkwave-splatoon3-behavior-2026-10-02.md",
+      "sha256": "25f338d4543708e40b2f6283c3ad2df25f0ec9de1e8fac9e731e4cb93e1c2397",
+      "bytes": 48519
+    }
+  ],
+  "test": {
+    "command": "node --experimental-vm-modules --test patches/splatoon3/tests/kit-subs.test.mjs",
+    "tests": 27,
+    "pass": 27,
+    "fail": 0,
+    "exit": 0,
+    "log": "logs/cline2-kit-subs-subprotocol.log"
+  },
+  "ownership": {
+    "owned": [
+      "patches/splatoon3/runtime/kit-subs.mjs",
+      "patches/splatoon3/tests/kit-subs.test.mjs",
+      "reports/public-kit-2-20261004.md"
+    ],
+    "adapterRegion": "patches/splatoon3/adapter.mjs - src/game/weapons.js sub-only hook block, src/net/netmatch.js recBomb/_play only. The parent projectile/beam/kit-event regions are untouched; do not replace them when merging."
+  },
+  "remainingForParent": [
+    "Merge branch fix/actions-cline-2-subprotocol-20261004 (3b15310). It touches three regions the parent has newer work in: the sub hook block in adapter.mjs for src/game/weapons.js, and the recBomb/_play anchors in adapter.mjs for src/net/netmatch.js. Rebase those three anchors by hand rather than taking the file.",
+    "Installer: installKitSubs and registerKitSubs are still not called from patches/splatoon3/runtime/install.mjs, and composeKits/registerKitMetadata are not called either. Nothing in this lane wires them; that is parent-owned.",
+    "UI: HUD sub cost and icon already route through selectedSub/selectedSubCost; verify the sub chip shows the real kit name and gear-scaled cost once the subs are registered.",
+    "CI: the Actions exact-SHA render gate has not been run for this branch. This lane was forbidden from the full suite and from browser/build runs.",
+    "Docs: reports/public-kit-2-20261004.md section 8 item 6 is struck through and points at the cline-2 section; the behaviour report carries rows S1-S4."
+  ],
+  "unverified": [
+    "Browser composition and the composed build identity.",
+    "GitHub Actions exact-SHA render gate.",
+    "GPU atlas output of the ghost blast (headless fixture uses a stub atlas; CPU grid only).",
+    "Two-peer and real-hardware parity for sub throws, adhesion, charge timing and rolling trails.",
+    "Transport-level hostile input; validation was probed at the packet-boundary functions.",
+    "No Splatoon 3 hardware measurement backs any number here; 11.3.0 omissions remain unknown-omitted and functional fallbacks stay labelled calibrated."
+  ],
+  "forbidden": [
+    "No broad suite, no glob over tests/*.test.mjs, no full npm/check chain, no browser or build runs were performed in this lane."
+  ]
+}
