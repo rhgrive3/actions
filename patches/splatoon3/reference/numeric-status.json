@@ -1124,6 +1124,21 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "weapons.roller.ballistics.verticalUnits.0.playerCollision.initRadius": {
+    "value": 0.116,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.roller.ballistics.verticalUnits.0.playerCollision.endRadius": {
+    "value": 0.87,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.roller.ballistics.verticalUnits.0.playerCollision.changeTime": {
+    "value": 0.06666666666666667,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
   "weapons.roller.ballistics.verticalUnits.1.count": {
     "value": 2,
     "status": "calibration or derived value; see reference raw table and unverified list",
@@ -1149,6 +1164,21 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "weapons.roller.ballistics.verticalUnits.1.playerCollision.initRadius": {
+    "value": 0.116,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.roller.ballistics.verticalUnits.1.playerCollision.endRadius": {
+    "value": 0.87,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.roller.ballistics.verticalUnits.1.playerCollision.changeTime": {
+    "value": 0.06666666666666667,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
   "weapons.roller.ballistics.verticalUnits.2.count": {
     "value": 2,
     "status": "calibration or derived value; see reference raw table and unverified list",
@@ -1171,6 +1201,36 @@
   },
   "weapons.roller.ballistics.verticalUnits.2.pitchStepDegrees": {
     "value": -2.5,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.roller.ballistics.verticalUnits.2.playerCollision.initRadius": {
+    "value": 0.116,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.roller.ballistics.verticalUnits.2.playerCollision.endRadius": {
+    "value": 0.82,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.roller.ballistics.verticalUnits.2.playerCollision.changeTime": {
+    "value": 0.06666666666666667,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.roller.ballistics.horizontalPlayerCollision.initRadius": {
+    "value": 0.12,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.roller.ballistics.horizontalPlayerCollision.endRadius": {
+    "value": 1.02,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.roller.ballistics.horizontalPlayerCollision.changeTime": {
+    "value": 0.06666666666666667,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
