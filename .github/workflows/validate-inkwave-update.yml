@@ -70,6 +70,19 @@ jobs:
             with urllib.request.urlopen(source['url'],timeout=30) as response: target.write_bytes(response.read())
           PY
           node scripts/verify-inkwave-reference.mjs .reference-data
+      - name: Verify pinned Sub/Special numerical sources
+        run: |
+          python3 - <<'PY'
+          import json, pathlib, urllib.request
+          reference=json.loads(pathlib.Path('patches/splatoon3/reference/sub-special-fidelity-reference.json').read_text())
+          root=pathlib.Path('.reference-data/sub-special')
+          root.mkdir(parents=True,exist_ok=True)
+          for source in reference['sources']:
+            target=root/source['url'].rsplit('/',1)[-1]
+            with urllib.request.urlopen(source['url'],timeout=30) as response:
+              target.write_bytes(response.read())
+          PY
+          node scripts/check-inkwave-sub-special-reference.mjs .reference-data/sub-special
       - name: Check JavaScript syntax
         run: |
           set -euo pipefail
