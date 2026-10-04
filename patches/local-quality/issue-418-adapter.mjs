@@ -3,12 +3,20 @@
 // so selecting LOW/HIGH converges paint, shadow, FX and props immediately.
 // Upstream inkwave-public/ remains byte-for-byte intact.
 
-export function replaceOnce(code, before, after, label) {
-  const at = code.indexOf(before);
-  if (at < 0) {
-    throw new Error(`INKWAVE quality patch conflict (${label}): expected connection not found`);
+export function replaceExact(source, before, after, label, expectedCount = 1) {
+  let count = 0, pos = 0;
+  while ((pos = source.indexOf(before, pos)) !== -1) {
+    count++;
+    pos += before.length;
   }
-  return code.slice(0, at) + after + code.slice(at + before.length);
+  if (count !== expectedCount) {
+    throw new Error(`INKWAVE quality patch conflict (${label}): expected ${expectedCount} occurrence(s), found ${count}`);
+  }
+  return source.replaceAll(before, after);
+}
+
+export function replaceOnce(source, before, after, label) {
+  return replaceExact(source, before, after, label, 1);
 }
 
 export function adaptQualityIssue418(rel, code) {
@@ -16,20 +24,17 @@ export function adaptQualityIssue418(rel, code) {
     code = "import { applyRuntimeWorldQuality } from '../patches/local-quality/world-quality.mjs';\n" + code;
     code = replaceOnce(code,
       "    if ('quality' in partial || 'shadows' in partial || 'bloom' in partial) this.R?.applySettings(this.settings);",
-      "    if ('quality' in partial || 'shadows' in partial || 'bloom' in partial) this.R?.applySettings(this.settings);\n    if ('quality' in partial) applyRuntimeWorldQuality(this, this.settings, this.mobile);",
+      "    if ('quality' in partial || 'shadows' in partial || 'bloom' in partial) this.R?.applySettings(this.settings);\n    if ('quality' in partial) applyRuntimeWorldQuality(this, this.settings, this.mobile, { G, effectiveQuality, dressingFor, THREE });",
       'runtime world quality refresh');
     code = replaceOnce(code,
       '    const layoutId = map.layout || map.id;\n    if (this.layoutId === layoutId) { this.mapDef = map; return; }',
-      '    const layoutId = map.layout || map.id;\n    if (this.layoutId === layoutId && this._builtQuality === this.settings?.quality) { this.mapDef = map; return; }\n    this._builtQuality = this.settings?.quality;',
+      '    const layoutId = map.layout || map.id;\n    if (this.layoutId === layoutId) {\n      if (this._builtQuality !== this.settings?.quality) applyRuntimeWorldQuality(this, this.settings, this.mobile, { G, effectiveQuality, dressingFor, THREE });\n      this.mapDef = map; return;\n    }\n    this._builtQuality = this.settings?.quality;',
       'world rebuild layout and quality gate');
-    code = replaceOnce(code,
+    code = replaceExact(code,
       '    if ((map.layout || map.id) !== this.layoutId) await this._buildWorld(map);',
       '    if ((map.layout || map.id) !== this.layoutId || this._builtQuality !== this.settings?.quality) await this._buildWorld(map);',
-      'startMatch quality check');
-    code = replaceOnce(code,
-      '    if ((map.layout || map.id) !== this.layoutId) await this._buildWorld(map);',
-      '    if ((map.layout || map.id) !== this.layoutId || this._builtQuality !== this.settings?.quality) await this._buildWorld(map);',
-      'startNetMatch quality check');
+      'startMatch and startNetMatch quality reconciliation',
+      2);
   }
   return code;
 }

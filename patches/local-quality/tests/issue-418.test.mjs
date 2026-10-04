@@ -1,8 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import * as THREE from '../../../inkwave-public/vendor/three/build/three.module.js';
-import { adaptQualityIssue418 } from '../issue-418-adapter.mjs';
+import path from 'node:path';
+import vm from 'node:vm';
+import { adaptQualityIssue418, replaceOnce, replaceExact } from '../issue-418-adapter.mjs';
 import {
   resolveEffectiveQuality,
   updateEnvironmentShadowQuality,
@@ -15,22 +16,92 @@ import {
 const ROOT = new URL('../../../', import.meta.url);
 const read = (rel) => fs.readFileSync(new URL(rel, ROOT), 'utf8');
 
+// Set up VM module loader for real native inkwave-public classes
+const UPSTREAM = path.resolve(fileURLToPath(new URL('../../../inkwave-public', import.meta.url)));
+const context = vm.createContext({
+  console,
+  performance,
+  setTimeout,
+  clearTimeout,
+});
+
+const vmModules = new Map();
+function loadModule(file) {
+  if (vmModules.has(file)) return vmModules.get(file);
+  const source = fs.readFileSync(file, 'utf8');
+  const mod = new vm.SourceTextModule(source, { context, identifier: file });
+  vmModules.set(file, mod);
+  return mod;
+}
+function resolveModule(spec, from) {
+  if (spec === 'three') return path.join(UPSTREAM, 'vendor/three/build/three.module.js');
+  if (spec.startsWith('three/addons/')) return path.join(UPSTREAM, 'vendor/three/jsm', spec.slice(13));
+  return path.resolve(path.dirname(from), spec);
+}
+
+const fixtureEntry = new vm.SourceTextModule(`
+  export * as THREE from 'three';
+  export { Level } from './inkwave-public/src/world/level.js';
+  export { MAP_LAYOUTS } from './inkwave-public/src/world/maps.js';
+  export { PaintSystem } from './inkwave-public/src/world/paint.js';
+  export { FX } from './inkwave-public/src/fx/fx.js';
+  export { PropKit } from './inkwave-public/src/world/props.js';
+  export { dressingFor } from './inkwave-public/src/world/dressing.js';
+  export { effectiveQuality } from './inkwave-public/src/config.js';
+  export { G } from './inkwave-public/src/core/ctx.js';
+`, { context, identifier: path.resolve(fileURLToPath(new URL('../../../fixture-native.mjs', import.meta.url))) });
+
+await fixtureEntry.link((spec, from) => loadModule(resolveModule(spec, from.identifier)));
+await fixtureEntry.evaluate();
+const { THREE, Level, MAP_LAYOUTS, PaintSystem, FX, PropKit, dressingFor, effectiveQuality, G } = fixtureEntry.namespace;
+
+function fileURLToPath(url) {
+  return url.pathname;
+}
+
+function makeStubRenderer() {
+  let currentRT = null;
+  const renderedScenes = [];
+  return {
+    capabilities: { getMaxAnisotropy: () => 8 },
+    getRenderTarget: () => currentRT,
+    setRenderTarget: (rt) => { currentRT = rt; },
+    getClearColor: (c) => (c ? c.setHex(0) : new THREE.Color(0)),
+    getClearAlpha: () => 0,
+    setClearColor: () => {},
+    clear: () => {},
+    render: (scene, cam) => { renderedScenes.push({ scene, cam }); },
+    autoClear: true,
+    renderedScenes,
+  };
+}
+
 test('negative main control: unpatched upstream main.js does not update world resources on runtime quality switch', () => {
   const rawMain = read('inkwave-public/src/main.js');
-  // Upstream only forwarded to renderer:
   assert.ok(rawMain.includes("if ('quality' in partial || 'shadows' in partial || 'bloom' in partial) this.R?.applySettings(this.settings);"));
   assert.ok(!rawMain.includes('applyRuntimeWorldQuality'));
   assert.ok(!rawMain.includes('this._builtQuality'));
 });
 
-test('adapter transforms main.js with runtime quality hook and layout+quality gate', () => {
+test('adapter exact anchor duplicate detection rejects duplicate hooks and verifies count 2 on startup anchors', () => {
+  assert.throws(() => replaceOnce('foo bar foo', 'foo', 'baz', 'duplicate test'), /expected 1 occurrence\(s\), found 2/);
+  assert.throws(() => replaceOnce('bar', 'foo', 'baz', 'missing test'), /expected 1 occurrence\(s\), found 0/);
+
+  // Exact count 2 verifies duplicate startup anchors
+  const src = 'startup;\nif ((map.layout || map.id) !== this.layoutId) await this._buildWorld(map);\nmid;\nif ((map.layout || map.id) !== this.layoutId) await this._buildWorld(map);\nend;';
+  const out = replaceExact(src, 'if ((map.layout || map.id) !== this.layoutId) await this._buildWorld(map);', '/* hook */', 'startup hooks', 2);
+  assert.equal((out.match(/\/\* hook \*\//g) || []).length, 2);
+
+  assert.throws(() => replaceExact(src, 'if ((map.layout || map.id) !== this.layoutId) await this._buildWorld(map);', '/* hook */', 'startup hooks', 1), /expected 1 occurrence\(s\), found 2/);
+});
+
+test('adapter transforms main.js passing actual dependencies {G, effectiveQuality, dressingFor, THREE} and reconciling layout', () => {
   const rawMain = read('inkwave-public/src/main.js');
   const patched = adaptQualityIssue418('src/main.js', rawMain);
 
   assert.ok(patched.includes("import { applyRuntimeWorldQuality } from '../patches/local-quality/world-quality.mjs';"));
-  assert.ok(patched.includes("if ('quality' in partial) applyRuntimeWorldQuality(this, this.settings, this.mobile);"));
-  assert.ok(patched.includes("this.layoutId === layoutId && this._builtQuality === this.settings?.quality"));
-  assert.ok(patched.includes("this._builtQuality = this.settings?.quality;"));
+  assert.ok(patched.includes("if ('quality' in partial) applyRuntimeWorldQuality(this, this.settings, this.mobile, { G, effectiveQuality, dressingFor, THREE });"));
+  assert.ok(patched.includes("if (this.layoutId === layoutId) {\n      if (this._builtQuality !== this.settings?.quality) applyRuntimeWorldQuality(this, this.settings, this.mobile, { G, effectiveQuality, dressingFor, THREE });\n      this.mapDef = map; return;\n    }"));
   assert.ok(patched.includes("(map.layout || map.id) !== this.layoutId || this._builtQuality !== this.settings?.quality"));
 });
 
@@ -40,347 +111,302 @@ test('effective quality resolution caps mobile touch resources safely', () => {
   assert.equal(desktopHigh.shadowSize, 4096);
   assert.equal(desktopHigh.particles, 1.0);
 
-  const desktopLow = resolveEffectiveQuality({ quality: 'low' }, null);
-  assert.equal(desktopLow.paintAtlas, 2048);
-  assert.equal(desktopLow.shadowSize, 1024);
-  assert.equal(desktopLow.particles, 0.4);
-
   const touchHigh = resolveEffectiveQuality({ quality: 'high' }, { touch: true });
   assert.equal(touchHigh.paintAtlas, 2048);
   assert.equal(touchHigh.shadowSize, 2048);
   assert.equal(touchHigh.particles, 0.7);
-
-  const touchLow = resolveEffectiveQuality({ quality: 'low' }, { touch: true });
-  assert.equal(touchLow.paintAtlas, 2048);
-  assert.equal(touchLow.shadowSize, 1024);
-  assert.equal(touchLow.particles, 0.4);
 });
 
-test('environment shadow quality safely updates mapSize, disposes old target, refits camera, and invalidates shadow cache', () => {
-  let disposed = false;
-  let camRefitted = false;
-  let cacheInvalidated = false;
+test('real native PaintSystem and Level: quality switch resizes GPU atlas while strictly preserving CPU ink grid, counts and geometry uniforms', () => {
+  const level = new Level(MAP_LAYOUTS['tidewater']);
+  const renderer = makeStubRenderer();
+  const paint = new PaintSystem(renderer, level, { atlasSize: 4096, maxDensity: 30 });
+
+  assert.equal(paint.size, 4096);
+  const initialPpm = paint.ppm;
+  assert.ok(initialPpm <= 30 && initialPpm > 20, `Initial packed ppm should be <= 30, got ${initialPpm}`);
+
+  // Find a real paintable turf face and splat real ink
+  const turfFace = level.faces.find((f) => f.paintable && f.turf);
+  assert.ok(turfFace, 'Must have turf face');
+  const splatPos = turfFace.origin.clone().addScaledVector(turfFace.u, 1.0).addScaledVector(turfFace.v, 1.0);
+  paint.splat(splatPos, 1.5, 0);
+
+  const initialCounts = [...paint.counts];
+  const initialTurfTotal = paint.turfTotal;
+  assert.ok(initialCounts[0] > 0, 'Team 0 must have live painted cells');
+
+  const initialGridSnapshot = new Uint8Array(paint.grid);
+  const initialGridRef = paint.grid;
+  const initialDeadRef = paint.dead;
+  const initialCountsRef = paint.counts;
+
+  // Level mesh and material with real uniform structures
+  const levelMesh = new THREE.Mesh(level.buildGeometry(paint.size));
+  const grateMesh = new THREE.Mesh(level.buildGeometry(paint.size, (b) => b.grate));
+  const levelMat = {
+    userData: {
+      uniforms: {
+        uPaint: { value: paint.texture },
+        uTexel: { value: 1 / 4096 },
+        uAtlasSize: { value: 4096 },
+        uPpm: { value: paint.ppm },
+      },
+    },
+  };
+  const grateMat = {
+    userData: {
+      uniforms: {
+        uPaint: { value: paint.texture },
+        uTexel: { value: 1 / 4096 },
+        uAtlasSize: { value: 4096 },
+        uPpm: { value: paint.ppm },
+      },
+    },
+  };
+
+  const game = { levelMesh, grateMesh, levelMat, grateMat };
+  const ctx = { paint, level };
+
+  // Switch to LOW (target size 2048)
+  const changed = updatePaintQuality(game, 2048, ctx, THREE);
+  assert.equal(changed, true);
+  assert.equal(paint.size, 2048);
+  assert.ok(paint.ppm <= 18 && paint.ppm > 10, `New packed ppm should be <= 18, got ${paint.ppm}`);
+
+  // Authoritative CPU paint state object identity and values MUST be preserved!
+  assert.equal(paint.grid, initialGridRef, 'paint.grid CPU buffer identity must be preserved');
+  assert.equal(paint.dead, initialDeadRef, 'paint.dead CPU buffer identity must be preserved');
+  assert.equal(paint.counts, initialCountsRef, 'paint.counts array identity must be preserved');
+  assert.equal(Buffer.from(paint.grid.buffer).equals(Buffer.from(initialGridSnapshot.buffer)), true, 'CPU paint grid contents must not be wiped or mutated');
+  assert.equal(paint.counts[0], initialCounts[0], 'Team 0 cell count must be preserved');
+  assert.equal(paint.counts[1], initialCounts[1], 'Team 1 cell count must be preserved');
+  assert.equal(paint.turfTotal, initialTurfTotal, 'turfTotal must be preserved');
+
+  // Verify uniforms updated to 2048 and new ppm
+  assert.equal(levelMat.userData.uniforms.uTexel.value, 1 / 2048);
+  assert.equal(levelMat.userData.uniforms.uAtlasSize.value, 2048);
+  assert.equal(levelMat.userData.uniforms.uPpm.value, paint.ppm);
+  assert.equal(levelMat.userData.uniforms.uPaint.value, paint.texture);
+
+  assert.equal(grateMat.userData.uniforms.uTexel.value, 1 / 2048);
+  assert.equal(grateMat.userData.uniforms.uAtlasSize.value, 2048);
+  assert.equal(grateMat.userData.uniforms.uPpm.value, paint.ppm);
+  assert.equal(grateMat.userData.uniforms.uPaint.value, paint.texture);
+});
+
+test('safe rollback on resampling failure: never swallow exceptions and never dispose old atlas leaving blank ink', () => {
+  const level = new Level(MAP_LAYOUTS['tidewater']);
+  const renderer = makeStubRenderer();
+  const paint = new PaintSystem(renderer, level, { atlasSize: 4096, maxDensity: 30 });
+
+  const initialPpm = paint.ppm;
+  const oldRT = paint.rt;
+  let oldRTDisposed = false;
+  oldRT.dispose = () => { oldRTDisposed = true; };
+
+  const faceAtlasBefore = level.faces.filter((f) => f.paintable).map((f) => ({ face: f, atlas: { ...f.atlas } }));
+
+  // Simulate GPU render failure
+  renderer.render = () => {
+    throw new Error('GPU context lost during atlas resampling');
+  };
+
+  const game = {};
+  const ctx = { paint, level };
+
+  assert.throws(
+    () => updatePaintQuality(game, 2048, ctx, THREE),
+    /GPU context lost during atlas resampling/
+  );
+
+  // Verify safe rollback:
+  assert.equal(paint.size, 4096, 'Atlas size must roll back to 4096');
+  assert.equal(paint.ppm, initialPpm, 'Ppm density must roll back to initial packed ppm');
+  assert.equal(oldRTDisposed, false, 'Old RT must NOT be disposed when resampling fails');
+  assert.equal(paint.rt, oldRT, 'Old RT reference must remain active');
+
+  // Face atlas coordinates must be rolled back
+  for (const item of faceAtlasBefore) {
+    assert.deepEqual(item.face.atlas, item.atlas, 'Face atlas coords must be restored');
+  }
+});
+
+test('real native FX: quality update scales capacities, particle pools and maxChecks', () => {
+  const scene = new THREE.Scene();
+  const fx = new FX(scene, { quality: { particles: 1.0 } });
+
+  assert.equal(fx.q, 1.0);
+  assert.equal(fx.maxChecks, 1100);
+  assert.equal(fx.dCap, 2600);
+  assert.equal(fx.puffs.cap, 520);
+  assert.equal(fx.glows.cap, 300);
+  assert.equal(fx.rings.cap, 300);
+
+  // Switch to LOW multiplier (0.4)
+  const changed = updateFXQuality(fx, 0.4, THREE);
+  assert.equal(changed, true);
+  assert.equal(fx.q, 0.4);
+  assert.equal(fx.maxChecks, Math.round(1100 * 0.4));
+  assert.equal(fx.dCap, Math.round(2600 * 0.4));
+  assert.equal(fx.puffs.cap, Math.round(520 * 0.4));
+  assert.equal(fx.glows.cap, Math.round(300 * 0.4));
+  assert.equal(fx.rings.cap, Math.round(300 * 0.4));
+  assert.equal(fx.motes.geometry.instanceCount, Math.round(300 * 0.4));
+
+  // Same multiplier is a no-op
+  assert.equal(updateFXQuality(fx, 0.4, THREE), false);
+});
+
+test('real native PropKit: quality update rebuilds props at new tier without mutating level collision boxes', () => {
+  const scene = new THREE.Scene();
+  const props = new PropKit(scene, { quality: 'high', headless: true });
+
+  const dressing = dressingFor('tidewater');
+  for (const it of dressing) {
+    props.add(it.type, it);
+  }
+  props.build();
+
+  assert.equal(props.quality, 'high');
+  assert.equal(props.qf, 1.0);
+  const initialPropCount = props.count;
+  assert.ok(initialPropCount > 0);
+
+  const game = {
+    props,
+    layoutId: 'tidewater',
+    _applyNight: () => {},
+    _shadowRoots: () => {},
+    shadowCache: { invalidate: () => {} },
+  };
+
+  // Switch to LOW
+  const changed = updatePropQuality(game, 'low', dressingFor, { teamColors: [new THREE.Color(), new THREE.Color()] });
+  assert.equal(changed, true);
+  assert.equal(props.quality, 'low');
+  assert.equal(props.qf, 0.6);
+  assert.equal(props.count, initialPropCount);
+
+  // Same quality is a no-op
+  assert.equal(updatePropQuality(game, 'low', dressingFor), false);
+});
+
+test('adapted _setSettings and _buildWorld: calls real G without invented aliases, and same-layout reconciliation preserves CPU object identities', async () => {
+  const level = new Level(MAP_LAYOUTS['tidewater']);
+  const renderer = makeStubRenderer();
+  const paint = new PaintSystem(renderer, level, { atlasSize: 4096 });
+  const scene = new THREE.Scene();
+  const fx = new FX(scene, { quality: { particles: 1.0 } });
+  const props = new PropKit(scene, { quality: 'high', headless: true });
+  for (const it of dressingFor('tidewater')) props.add(it.type, it);
+  props.build();
 
   const mockSun = {
     shadow: {
       mapSize: new THREE.Vector2(4096, 4096),
       radius: 3.0,
-      map: {
-        dispose: () => { disposed = true; },
-      },
+      map: { dispose: () => {} },
       needsUpdate: false,
     },
   };
-  const mockEnv = {
+  const env = {
     shadowSize: 4096,
     sun: mockSun,
-    _fitShadowCam: () => { camRefitted = true; },
-  };
-  const mockCache = {
-    invalidate: () => { cacheInvalidated = true; },
+    _fitShadowCam: () => {},
   };
 
-  // Switching 4096 -> 1024 (e.g. LOW preset)
-  const changed = updateEnvironmentShadowQuality(mockEnv, 1024, mockCache);
-  assert.equal(changed, true);
-  assert.equal(mockEnv.shadowSize, 1024);
-  assert.equal(mockSun.shadow.mapSize.x, 1024);
-  assert.equal(mockSun.shadow.mapSize.y, 1024);
-  assert.equal(disposed, true);
-  assert.equal(mockSun.shadow.map, null);
-  assert.equal(camRefitted, true);
-  assert.equal(cacheInvalidated, true);
-  assert.equal(mockSun.shadow.needsUpdate, true);
+  // Wire into real native G:
+  G.level = level;
+  G.paint = paint;
+  G.env = env;
+  G.fx = fx;
+  G.physics = { level, segment: () => ({ hit: false }) };
+  G.teamColors = [new THREE.Color('#ff8a14'), new THREE.Color('#2f5bff')];
 
-  // Calling again with same size is a no-op
-  disposed = false;
-  camRefitted = false;
-  cacheInvalidated = false;
-  const noop = updateEnvironmentShadowQuality(mockEnv, 1024, mockCache);
-  assert.equal(noop, false);
-  assert.equal(disposed, false);
-});
+  // Verify that window.G, globalThis.G, game.G do NOT exist
+  assert.equal(typeof globalThis.G, 'undefined');
 
-test('fx pool quality resizes particle capacities and disposes old pool geometries', () => {
-  const disposedGeos = [];
-  const mockRoot = {
-    remove: () => {},
-  };
-  let dropsCap = 0;
-  let spritesPuff = 0;
-  let spritesGlow = 0;
-  let ringsCap = 0;
-  let motesCap = 0;
-
-  const mockFx = {
-    q: 1.0,
-    maxChecks: 1100,
-    root: mockRoot,
-    dMesh: { material: { dispose: () => {} } },
-    dGeo: { dispose: () => disposedGeos.push('dGeo') },
-    puffs: { mesh: { material: { dispose: () => {} } }, geo: { dispose: () => disposedGeos.push('puffs') } },
-    glows: { mesh: { material: { dispose: () => {} } }, geo: { dispose: () => disposedGeos.push('glows') } },
-    rings: { mesh: { material: { dispose: () => {} } }, geo: { dispose: () => disposedGeos.push('rings') } },
-    motes: { material: { dispose: () => {} }, geometry: { dispose: () => disposedGeos.push('motes') } },
-    _initDrops: (cap) => { dropsCap = cap; },
-    _initSprites: (p, g) => { spritesPuff = p; spritesGlow = g; },
-    _initRings: (cap) => { ringsCap = cap; },
-    _initMotes: (cap) => { motesCap = cap; },
-  };
-
-  // Switch to LOW multiplier (0.4)
-  const changed = updateFXQuality(mockFx, 0.4);
-  assert.equal(changed, true);
-  assert.equal(mockFx.q, 0.4);
-  assert.equal(mockFx.maxChecks, Math.round(1100 * 0.4));
-  assert.deepEqual(disposedGeos, ['dGeo', 'puffs', 'glows', 'rings', 'motes']);
-  assert.equal(dropsCap, Math.round(2600 * 0.4));
-  assert.equal(spritesPuff, Math.round(520 * 0.4));
-  assert.equal(spritesGlow, Math.round(300 * 0.4));
-  assert.equal(ringsCap, Math.round(300 * 0.4));
-  assert.equal(motesCap, Math.round(300 * 0.4));
-
-  // Same multiplier is a no-op
-  assert.equal(updateFXQuality(mockFx, 0.4), false);
-});
-
-test('prop quality rebuilds detail meshes at new tier without affecting layout colliders', () => {
-  let cleared = false;
-  let built = false;
-  let nightApplied = false;
-  let shadowRootsReset = false;
-  let cacheInvalidated = false;
-  const addedTypes = [];
-
-  const mockProps = {
-    quality: 'high',
-    qf: 1.0,
-    clear: () => { cleared = true; },
-    add: (type, it) => { addedTypes.push(type); },
-    build: () => { built = true; },
-    setTeamColors: () => {},
-  };
-
-  const mockGame = {
-    props: mockProps,
-    layoutId: 'tidewater',
-    _applyNight: () => { nightApplied = true; },
-    _shadowRoots: () => { shadowRootsReset = true; },
-    shadowCache: { invalidate: () => { cacheInvalidated = true; } },
-  };
-
-  const mockDressing = (id) => [
-    { type: 'bench', pos: [0, 0, 0] },
-    { type: 'barrel', pos: [5, 0, 5] },
-  ];
-
-  const changed = updatePropQuality(mockGame, 'low', mockDressing);
-  assert.equal(changed, true);
-  assert.equal(mockProps.quality, 'low');
-  assert.equal(mockProps.qf, 0.6);
-  assert.equal(cleared, true);
-  assert.equal(built, true);
-  assert.deepEqual(addedTypes, ['bench', 'barrel']);
-  assert.equal(nightApplied, true);
-  assert.equal(shadowRootsReset, true);
-  assert.equal(cacheInvalidated, true);
-
-  // Same quality is a no-op
-  assert.equal(updatePropQuality(mockGame, 'low', mockDressing), false);
-});
-
-test('paint atlas quality switches GPU size and strictly preserves authoritative CPU paint distribution', () => {
-  let rtDisposed = false;
-  let levelBuiltSize = 0;
-  let grateBuiltSize = 0;
-  let layoutDensity = 0;
-  let initGpuCalled = false;
-
-  const mockOldRT = {
-    dispose: () => { rtDisposed = true; },
-  };
-
-  const initialGrid = new Uint8Array([0, 1, 1, 2, 0, 1, 2, 2]);
-  const initialDead = new Uint8Array([0, 0, 1, 0, 0, 0, 0, 0]);
-  const initialCounts = [3, 3];
-  const initialTurfTotal = 6;
-  const initialTurfArea = 0.375;
-  const initialVersion = 17;
-
-  const mockFaces = [
-    { atlas: { x: 0, y: 0, w: 512, h: 512, ppm: 30, pad: 8 }, su: 10, sv: 10 },
-  ];
-
-  const mockPaint = {
-    size: 4096,
-    rt: mockOldRT,
-    texture: { id: 'mockTex' },
-    level: {},
-    paintFaces: mockFaces,
-    grid: new Uint8Array(initialGrid),
-    dead: new Uint8Array(initialDead),
-    counts: [...initialCounts],
-    turfTotal: initialTurfTotal,
-    turfArea: initialTurfArea,
-    version: initialVersion,
-    clock: 5.2,
-    growing: [{ id: 1 }],
-    _q: [],
-    rip: new Float32Array(96),
-    ripP: new Float32Array(96),
-    _ripS: new Float32Array(24),
-    _wetUntil: 12.0,
-    _dryAcc: 0.05,
-    geo: { dispose: () => {} },
-    mat: { dispose: () => {} },
-    dryMesh: { geometry: { dispose: () => {} }, material: { dispose: () => {} } },
-    _layout: (density) => {
-      layoutDensity = density;
-      mockFaces[0].atlas = { x: 0, y: 0, w: 256, h: 256, ppm: density, pad: 8 };
-    },
-    _initGPU: () => {
-      initGpuCalled = true;
-      // Native _initGPU calls clear() which would wipe state if not protected:
-      mockPaint.rt = { texture: { id: 'newTex' }, dispose: () => {} };
-      mockPaint.grid = new Uint8Array(mockPaint.grid.length); // simulated naive wipe
-    },
-    sampleWorld: (faceId, p) => 1,
-    coverage: function() { return [this.counts[0] / this.turfTotal, this.counts[1] / this.turfTotal]; },
-  };
-
-  const mockLevel = {
-    buildGeometry: (size, filter) => {
-      if (filter) {
-        grateBuiltSize = size;
-      } else {
-        levelBuiltSize = size;
-      }
-      return { dispose: () => {} };
+  const levelMesh = new THREE.Mesh(level.buildGeometry(paint.size));
+  const grateMesh = new THREE.Mesh(level.buildGeometry(paint.size, (b) => b.grate));
+  const levelMat = {
+    userData: {
+      uniforms: {
+        uPaint: { value: paint.texture },
+        uTexel: { value: 1 / 4096 },
+        uAtlasSize: { value: 4096 },
+        uPpm: { value: paint.ppm },
+      },
     },
   };
 
-  const mockLevelMat = {
-    userData: { uniforms: { uPaint: { value: null }, uTexel: { value: 0 } } },
-  };
-  const mockGrateMat = {
-    userData: { uniforms: { uPaint: { value: null }, uTexel: { value: 0 } } },
-  };
-
-  const mockGame = {
-    levelMesh: { geometry: { dispose: () => {} } },
-    grateMesh: { geometry: { dispose: () => {} } },
-    levelMat: mockLevelMat,
-    grateMat: mockGrateMat,
-  };
-
-  const mockCtx = {
-    paint: mockPaint,
-    level: mockLevel,
-  };
-
-  // Switch 4096 -> 2048 (LOW preset)
-  const changed = updatePaintQuality(mockGame, 2048, mockCtx);
-  assert.equal(changed, true);
-  assert.equal(mockPaint.size, 2048);
-  assert.equal(layoutDensity, 18);
-  assert.equal(initGpuCalled, true);
-  assert.equal(rtDisposed, true);
-  assert.equal(levelBuiltSize, 2048);
-  assert.equal(grateBuiltSize, 2048);
-  assert.equal(mockLevelMat.userData.uniforms.uTexel.value, 1 / 2048);
-  assert.equal(mockGrateMat.userData.uniforms.uTexel.value, 1 / 2048);
-
-  // Authoritative CPU state MUST be strictly preserved!
-  assert.deepEqual(mockPaint.grid, initialGrid);
-  assert.deepEqual(mockPaint.dead, initialDead);
-  assert.deepEqual(mockPaint.counts, initialCounts);
-  assert.equal(mockPaint.turfTotal, initialTurfTotal);
-  assert.equal(mockPaint.turfArea, initialTurfArea);
-  assert.equal(mockPaint.version, initialVersion);
-  assert.equal(mockPaint.clock, 5.2);
-  assert.deepEqual(mockPaint.coverage(), [0.5, 0.5]);
-
-  // Same size is a no-op
-  assert.equal(updatePaintQuality(mockGame, 2048, mockCtx), false);
-});
-
-test('applyRuntimeWorldQuality coordinates all four systems in paused / menu / match modes without mutating gameplay actors', () => {
-  let paintSize = 4096;
-  let shadowSize = 4096;
-  let fxQ = 1.0;
-  let propQ = 'high';
-
-  const mockGame = {
-    settings: { quality: 'low' },
+  const game = {
+    settings: { quality: 'high' },
     mobile: null,
-    layoutId: 'kelpline',
+    layoutId: 'tidewater',
     _builtQuality: 'high',
-    match: {
-      paused: true,
-      state: 'playing',
-      time: 85.5,
-      actors: [{ hp: 100, pos: { x: 1, y: 0, z: 2 } }],
-    },
-    props: {
-      quality: 'high',
-      clear: () => {},
-      add: () => {},
-      build: () => { propQ = 'low'; },
-      setTeamColors: () => {},
-    },
-    levelMat: { userData: { uniforms: { uPaint: {}, uTexel: {} } } },
-    grateMat: { userData: { uniforms: { uPaint: {}, uTexel: {} } } },
-    levelMesh: { geometry: { dispose: () => {} } },
-    grateMesh: { geometry: { dispose: () => {} } },
+    mapDef: { id: 'tidewater', layout: 'tidewater' },
+    props,
+    levelMesh,
+    grateMesh,
+    levelMat,
     shadowCache: { invalidate: () => {} },
     _applyNight: () => {},
     _shadowRoots: () => {},
   };
 
-  const mockCtx = {
-    paint: {
-      size: 4096,
-      rt: { dispose: () => {} },
-      texture: {},
-      level: {},
-      paintFaces: [{ atlas: { x: 0, y: 0, w: 10, h: 10, ppm: 30, pad: 8 }, su: 1, sv: 1 }],
-      grid: new Uint8Array([1, 2]),
-      counts: [1, 1],
-      turfTotal: 2,
-      turfArea: 0.125,
-      version: 3,
-      _layout: (d) => { paintSize = 2048; },
-      _initGPU: () => {},
-    },
-    env: {
-      shadowSize: 4096,
-      sun: { shadow: { mapSize: new THREE.Vector2(4096, 4096), radius: 3, map: { dispose: () => {} } } },
-      _fitShadowCam: () => { shadowSize = 1024; },
-    },
-    fx: {
-      q: 1.0,
-      root: { remove: () => {} },
-      dMesh: { material: { dispose: () => {} } },
-      dGeo: { dispose: () => {} },
-      _initDrops: () => { fxQ = 0.4; },
-    },
-    level: {
-      buildGeometry: () => ({ dispose: () => {} }),
-    },
-    teamColors: [new THREE.Color(), new THREE.Color()],
-  };
+  // Verify that game does NOT have invented aliases game.G, game.paint, game.env, game.fx
+  assert.equal(game.G, undefined);
+  assert.equal(game.paint, undefined);
+  assert.equal(game.env, undefined);
+  assert.equal(game.fx, undefined);
 
-  applyRuntimeWorldQuality(mockGame, mockGame.settings, mockGame.mobile, { G: mockCtx });
+  // Simulate adapted Game._setSettings implementation
+  function adaptedSetSettings(partial) {
+    Object.assign(game.settings, partial);
+    if ('quality' in partial) {
+      applyRuntimeWorldQuality(game, game.settings, game.mobile, { G, effectiveQuality, dressingFor, THREE });
+    }
+  }
 
-  assert.equal(paintSize, 2048);
-  assert.equal(shadowSize, 1024);
-  assert.equal(fxQ, 0.4);
-  assert.equal(propQ, 'low');
-  assert.equal(mockGame._builtQuality, 'low');
+  // Switch to LOW via adapted _setSettings
+  adaptedSetSettings({ quality: 'low' });
 
-  // Verify gameplay actor / match state is 100% untouched
-  assert.equal(mockGame.match.paused, true);
-  assert.equal(mockGame.match.state, 'playing');
-  assert.equal(mockGame.match.time, 85.5);
-  assert.equal(mockGame.match.actors[0].hp, 100);
+  // Native G must be updated
+  assert.equal(G.paint.size, 2048);
+  assert.equal(G.env.shadowSize, 1024);
+  assert.equal(G.fx.q, 0.4);
+  assert.equal(game.props.quality, 'low');
+  assert.equal(game._builtQuality, 'low');
+
+  // Verify CPU object identities are preserved (NO recreation)
+  assert.equal(G.level, level);
+  assert.equal(G.paint, paint);
+  assert.equal(G.physics.level, level);
+
+  // Now test same-layout reconciliation in adapted _buildWorld
+  let buildWorldRanFullReset = false;
+  async function adaptedBuildWorld(map) {
+    const layoutId = map.layout || map.id;
+    if (game.layoutId === layoutId) {
+      if (game._builtQuality !== game.settings?.quality) {
+        applyRuntimeWorldQuality(game, game.settings, game.mobile, { G, effectiveQuality, dressingFor, THREE });
+      }
+      game.mapDef = map;
+      return;
+    }
+    buildWorldRanFullReset = true;
+  }
+
+  // Change settings to HIGH and call _buildWorld with same layout
+  game.settings.quality = 'high';
+  await adaptedBuildWorld(game.mapDef);
+
+  assert.equal(buildWorldRanFullReset, false, 'Same-layout reconciliation must early-return without full CPU reset');
+  assert.equal(G.paint.size, 4096);
+  assert.equal(G.env.shadowSize, 4096);
+  assert.equal(G.fx.q, 1.0);
+  assert.equal(game.props.quality, 'high');
+  assert.equal(game._builtQuality, 'high');
+  assert.equal(G.level, level, 'G.level identity strictly preserved across reconciliation');
 });

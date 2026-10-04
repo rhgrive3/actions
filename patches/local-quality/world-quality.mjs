@@ -95,9 +95,9 @@ export function updateFXQuality(fx, targetMultiplier, THREE_LIB = THREE) {
     fx.root?.remove(fx.rings.mesh);
     fx.rings.geo?.dispose?.();
     fx.rings.mesh.material?.dispose?.();
-    if (typeof fx._initRings === 'function') {
-      fx._initRings(Math.round(300 * q));
-    }
+  }
+  if (typeof fx._initRings === 'function') {
+    fx._initRings(Math.round(300 * q));
   }
 
   // 4. Ambient motes
@@ -190,35 +190,59 @@ export function resampleAtlasFaces(renderer, oldRT, oldSize, newRT, newSize, fac
     idx[i * 6 + 3] = vi;     idx[i * 6 + 4] = vi + 2; idx[i * 6 + 5] = vi + 3;
   }
 
-  const geo = new THREE_LIB.BufferGeometry();
-  geo.setAttribute('position', new THREE_LIB.BufferAttribute(pos, 3));
-  geo.setAttribute('uv', new THREE_LIB.BufferAttribute(uv, 2));
-  geo.setIndex(new THREE_LIB.BufferAttribute(idx, 1));
-
-  const mat = new THREE_LIB.MeshBasicMaterial({
-    map: oldRT.texture,
-    transparent: false,
-    depthTest: false,
-    depthWrite: false,
-    toneMapped: false,
-  });
-
-  const mesh = new THREE_LIB.Mesh(geo, mat);
-  mesh.frustumCulled = false;
-  const scene = new THREE_LIB.Scene();
-  scene.add(mesh);
-  const cam = new THREE_LIB.OrthographicCamera(-1, 1, 1, -1, 0, 1);
-
-  const prev = renderer.getRenderTarget();
+  let geo = null;
+  let mat = null;
+  const prevRT = renderer.getRenderTarget();
   const prevAutoClear = renderer.autoClear;
-  renderer.autoClear = false;
-  renderer.setRenderTarget(newRT);
-  renderer.render(scene, cam);
-  renderer.setRenderTarget(prev);
-  renderer.autoClear = prevAutoClear;
 
-  geo.dispose();
-  mat.dispose();
+  try {
+    geo = new THREE_LIB.BufferGeometry();
+    geo.setAttribute('position', new THREE_LIB.BufferAttribute(pos, 3));
+    geo.setAttribute('uv', new THREE_LIB.BufferAttribute(uv, 2));
+    geo.setIndex(new THREE_LIB.BufferAttribute(idx, 1));
+
+    // Custom shader material: bit-accurate RGBA transfer, linear GPU encoding without color shifts
+    mat = new THREE_LIB.ShaderMaterial({
+      uniforms: {
+        tOld: { value: oldRT.texture },
+      },
+      vertexShader: `
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          gl_Position = vec4(position.xy, 0.0, 1.0);
+        }
+      `,
+      fragmentShader: `
+        precision highp float;
+        uniform sampler2D tOld;
+        varying vec2 vUv;
+        void main() {
+          gl_FragColor = texture2D(tOld, vUv);
+        }
+      `,
+      transparent: false,
+      depthTest: false,
+      depthWrite: false,
+      toneMapped: false,
+      blending: THREE_LIB.NoBlending,
+    });
+
+    const mesh = new THREE_LIB.Mesh(geo, mat);
+    mesh.frustumCulled = false;
+    const scene = new THREE_LIB.Scene();
+    scene.add(mesh);
+    const cam = new THREE_LIB.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+
+    renderer.autoClear = false;
+    renderer.setRenderTarget(newRT);
+    renderer.render(scene, cam);
+  } finally {
+    renderer.setRenderTarget(prevRT);
+    renderer.autoClear = prevAutoClear;
+    geo?.dispose?.();
+    mat?.dispose?.();
+  }
 }
 
 export function updatePaintQuality(game, targetSize, ctx = null, THREE_LIB = THREE) {
@@ -227,6 +251,8 @@ export function updatePaintQuality(game, targetSize, ctx = null, THREE_LIB = THR
 
   const oldSize = paint.size;
   const oldRT = paint.rt;
+  const oldPpm = paint.ppm;
+  const oldUsedHeight = paint.usedHeight;
   const oldPaintFaces = paint.paintFaces || [];
 
   const oldAtlasMap = new Map();
@@ -234,58 +260,78 @@ export function updatePaintQuality(game, targetSize, ctx = null, THREE_LIB = THR
     if (f.atlas) oldAtlasMap.set(f, { ...f.atlas });
   }
 
-  // Preserve authoritative CPU paint state without any loss or reset
-  const cpuState = {
-    grid: paint.grid,
-    dead: paint.dead,
-    counts: paint.counts ? [...paint.counts] : [0, 0],
-    turfTotal: paint.turfTotal,
-    turfArea: paint.turfArea,
-    version: paint.version,
-    clock: paint.clock,
-    growing: paint.growing,
-    q: paint._q,
-    rip: paint.rip,
-    ripP: paint.ripP,
-    ripS: paint._ripS,
-    wetUntil: paint._wetUntil,
-    dryAcc: paint._dryAcc,
-  };
-
-  paint.geo?.dispose?.();
-  paint.mat?.dispose?.();
-  paint.dryMesh?.geometry?.dispose?.();
-  paint.dryMesh?.material?.dispose?.();
-
-  paint.size = targetSize;
   const newDensity = targetSize >= 4096 ? 30 : 18;
+  paint.size = targetSize;
   paint._layout?.(newDensity);
-  paint._initGPU?.();
 
-  // Restore CPU state intact
-  paint.grid = cpuState.grid;
-  paint.dead = cpuState.dead;
-  paint.counts = cpuState.counts;
-  paint.turfTotal = cpuState.turfTotal;
-  paint.turfArea = cpuState.turfArea;
-  paint.version = cpuState.version;
-  paint.clock = cpuState.clock;
-  paint.growing = cpuState.growing;
-  paint._q = cpuState.q;
-  paint.rip = cpuState.rip;
-  paint.ripP = cpuState.ripP;
-  paint._ripS = cpuState.ripS;
-  paint._wetUntil = cpuState.wetUntil;
-  paint._dryAcc = cpuState.dryAcc;
-
+  let newRT = null;
   const renderer = paint.renderer;
-  if (renderer && typeof renderer.setRenderTarget === 'function' && oldRT?.texture && THREE_LIB) {
-    try {
-      resampleAtlasFaces(renderer, oldRT, oldSize, paint.rt, targetSize, paint.paintFaces, oldAtlasMap, THREE_LIB);
-    } catch (_) {}
-  }
-  oldRT?.dispose?.();
 
+  try {
+    if (renderer && typeof renderer.setRenderTarget === 'function' && oldRT?.texture && THREE_LIB) {
+      newRT = new THREE_LIB.WebGLRenderTarget(targetSize, targetSize, {
+        type: THREE_LIB.UnsignedByteType,
+        format: THREE_LIB.RGBAFormat,
+        minFilter: THREE_LIB.LinearMipmapLinearFilter,
+        magFilter: THREE_LIB.LinearFilter,
+        generateMipmaps: true,
+        depthBuffer: false,
+        stencilBuffer: false,
+      });
+      if (newRT.texture && renderer.capabilities?.getMaxAnisotropy) {
+        newRT.texture.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+      }
+
+      // Clear newRT before resampling
+      const prevRT = renderer.getRenderTarget();
+      const prevAutoClear = renderer.autoClear;
+      try {
+        renderer.autoClear = false;
+        renderer.setRenderTarget(newRT);
+        renderer.setClearColor(0x000000, 0);
+        renderer.clear(true, false, false);
+      } finally {
+        renderer.setRenderTarget(prevRT);
+        renderer.autoClear = prevAutoClear;
+      }
+
+      resampleAtlasFaces(renderer, oldRT, oldSize, newRT, targetSize, paint.paintFaces, oldAtlasMap, THREE_LIB);
+    }
+  } catch (err) {
+    // Safe rollback: never swallow resampling exceptions or dispose old atlas leaving blank ink
+    paint.size = oldSize;
+    paint.ppm = oldPpm;
+    paint.usedHeight = oldUsedHeight;
+    for (const f of oldPaintFaces) {
+      const saved = oldAtlasMap.get(f);
+      if (saved) f.atlas = { ...saved };
+      else delete f.atlas;
+    }
+    if (newRT) {
+      try { newRT.dispose(); } catch (_) {}
+    }
+    throw err;
+  }
+
+  // Safe commit: swap RT and dispose old target
+  if (newRT) {
+    oldRT?.dispose?.();
+    paint.rt = newRT;
+    paint.texture = newRT.texture;
+  }
+
+  // Update dryMesh geometry to match new atlas dimensions
+  if (paint.dryMesh && THREE_LIB) {
+    const S = targetSize;
+    const yTop = Math.min(1, ((paint.usedHeight + 2) / S) * 2 - 1);
+    paint.dryMesh.geometry?.dispose?.();
+    const dg = new THREE_LIB.BufferGeometry();
+    dg.setAttribute('position', new THREE_LIB.BufferAttribute(new Float32Array([-1, -1, 0, 1, -1, 0, 1, yTop, 0, -1, yTop, 0]), 3));
+    dg.setIndex([0, 1, 2, 0, 2, 3]);
+    paint.dryMesh.geometry = dg;
+  }
+
+  // Rebuild level geometries to update paintUv attributes
   const level = ctx?.level || game?.level || paint.level;
   if (level && typeof level.buildGeometry === 'function') {
     if (game?.levelMesh) {
@@ -298,13 +344,15 @@ export function updatePaintQuality(game, targetSize, ctx = null, THREE_LIB = THR
     }
   }
 
-  if (game?.levelMat?.userData?.uniforms) {
-    if (game.levelMat.userData.uniforms.uPaint) game.levelMat.userData.uniforms.uPaint.value = paint.texture;
-    if (game.levelMat.userData.uniforms.uTexel) game.levelMat.userData.uniforms.uTexel.value = 1 / targetSize;
-  }
-  if (game?.grateMat?.userData?.uniforms) {
-    if (game.grateMat.userData.uniforms.uPaint) game.grateMat.userData.uniforms.uPaint.value = paint.texture;
-    if (game.grateMat.userData.uniforms.uTexel) game.grateMat.userData.uniforms.uTexel.value = 1 / targetSize;
+  // Update level shader uniforms: uPaint, uTexel, uAtlasSize, uPpm
+  for (const mat of [game?.levelMat, game?.grateMat]) {
+    const uniforms = mat?.userData?.uniforms || mat?.uniforms;
+    if (uniforms) {
+      if (uniforms.uPaint) uniforms.uPaint.value = paint.texture;
+      if (uniforms.uTexel) uniforms.uTexel.value = 1 / targetSize;
+      if (uniforms.uAtlasSize) uniforms.uAtlasSize.value = targetSize;
+      if (uniforms.uPpm) uniforms.uPpm.value = paint.ppm;
+    }
   }
 
   return true;
@@ -312,16 +360,17 @@ export function updatePaintQuality(game, targetSize, ctx = null, THREE_LIB = THR
 
 export function applyRuntimeWorldQuality(game, settings, mobile, deps = {}) {
   if (!game || !settings) return;
-  const ctx = deps.G || game.G || (typeof window !== 'undefined' ? window.G : (typeof globalThis !== 'undefined' ? globalThis.G : null));
+  const G = deps.G || (typeof window !== 'undefined' && window.__G ? window.__G : null);
   const effQFn = deps.effectiveQuality || resolveEffectiveQuality;
-  const dressingFn = deps.dressingFor || game.dressingFor || null;
+  const dressingFn = deps.dressingFor || null;
+  const THREE_LIB = deps.THREE || THREE || globalThis.THREE;
   const mob = mobile || game.mobile || game.input?.mobile;
   const q = effQFn(settings, mob);
 
-  updatePaintQuality(game, q.paintAtlas, ctx, deps.THREE || THREE);
-  updateEnvironmentShadowQuality(ctx?.env || game.env, q.shadowSize, game.shadowCache);
-  updateFXQuality(ctx?.fx || game.fx, q.particles, deps.THREE || THREE);
-  updatePropQuality(game, settings.quality || 'high', dressingFn, ctx);
+  updatePaintQuality(game, q.paintAtlas, G, THREE_LIB);
+  updateEnvironmentShadowQuality(G?.env, q.shadowSize, game.shadowCache);
+  updateFXQuality(G?.fx, q.particles, THREE_LIB);
+  updatePropQuality(game, settings.quality || 'high', dressingFn, G);
 
   game._builtQuality = settings.quality;
 }
