@@ -50,8 +50,15 @@ function adaptIssue427Net(code) {
   // Terminal notification for assistants on remote splat
   patch(
     "    // your own kills: the confirm sting / marker (the hit that did it was only a prediction)\n    if (attacker && !attacker.remote) emit('hit', { attacker, victim, damage: 0, killed: true, weaponId: cause });",
-    "    // your own kills: the confirm sting / marker (the hit that did it was only a prediction)\n    if (attacker && !attacker.remote) emit('hit', { attacker, victim, damage: 0, killed: true, weaponId: cause });\n    emit('combat:terminal', { victim, attacker });",
+    "    // your own kills: the confirm sting / marker (the hit that did it was only a prediction)\n    if (attacker && !attacker.remote) emit('hit', { attacker, victim, damage: 0, killed: true, weaponId: cause });\n    emit('combat:terminal', { victim, attacker, victimLife: victim.netLife ?? 0 });",
     'terminal assist event'
+  );
+
+  // Clear pending hits on remote actor respawn
+  patch(
+    "  _remoteRespawn(a) {\n    a.alive = true; a.hp = PLAYER.hp; a.invuln = PLAYER.spawnInvuln;\n    a.respawnTimer = 0;\n    a.net.spawnPending = true;\n  }",
+    "  _remoteRespawn(a) {\n    a.alive = true; a.hp = PLAYER.hp; a.invuln = PLAYER.spawnInvuln;\n    a.respawnTimer = 0;\n    a.net.spawnPending = true;\n    if (this._pendingHits) {\n      for (const [h, p] of this._pendingHits) if (p.v === a.nid) this._pendingHits.delete(h);\n    }\n    emit('combat:respawn', { actor: a });\n  }",
+    'clean pending on remote respawn'
   );
 
   // Clear pending hits on reconnect/dispose/handoff
@@ -74,7 +81,7 @@ function adaptIssue427Net(code) {
   // Clear pending hits on local actor death/respawn
   patch(
     "  _onLocalEvent(name, e) {\n    const a = e.actor || e.victim;\n    if (!a || a.remote || a.nid === undefined || G.netm !== this) return;\n    this._rec(['ev', name, packEvent(e)]);\n  }",
-    "  _onLocalEvent(name, e) {\n    const a = e.actor || e.victim;\n    if (!a || a.remote || a.nid === undefined || G.netm !== this) return;\n    if ((name === 'splatted' || name === 'respawn') && this._pendingHits) {\n      for (const [h, p] of this._pendingHits) if (p.a === a.nid) this._pendingHits.delete(h);\n    }\n    this._rec(['ev', name, packEvent(e)]);\n  }",
+    "  _onLocalEvent(name, e) {\n    const a = e.actor || e.victim;\n    if (!a || a.remote || a.nid === undefined || G.netm !== this) return;\n    if ((name === 'splatted' || name === 'respawn') && this._pendingHits) {\n      for (const [h, p] of this._pendingHits) if (p.a === a.nid || p.v === a.nid) this._pendingHits.delete(h);\n    }\n    this._rec(['ev', name, packEvent(e)]);\n  }",
     'clear pending on local actor death/respawn'
   );
 
@@ -94,13 +101,14 @@ function adaptIssue427Net(code) {
     if (d.kld !== 0 && d.kld !== 1) return;
     const v = this.byNid.get(d.v);
     if (!v || v.owner !== from || v.owner !== pending.vo) return;
+    if (v.netLife !== undefined && v.netLife > pending.vl) return;
     const atk = this.byNid.get(d.a);
     if (!atk || atk.remote || atk.owner !== this.myId || atk.owner !== pending.ao) return;
     if (atk.netLife !== pending.al) return;
     if (!atk.alive) return;
     this._pendingHits.delete(h);
     if (d.d === 0 && d.kld === 0) return;
-    emit('combat:confirmed', { attacker: atk, victim: v, damage: d.d, killed: d.kld === 1, weaponId: pending.w });
+    emit('combat:confirmed', { attacker: atk, victim: v, damage: d.d, killed: d.kld === 1, weaponId: pending.w, victimLife: pending.vl });
   }
 
   // ---- host clock / state / result`,
@@ -115,9 +123,91 @@ function adaptIssue427Flow(code) {
     code = replaceOnce(code, before, after, 'issue-427 flow: ' + label);
   };
   patch(
+    "  const cfg = tuning.flow, credits = new WeakMap();",
+    "  const cfg = tuning.flow, credits = new WeakMap(), terminals = new WeakMap();",
+    'flow credits and terminals maps'
+  );
+  patch(
+    "  Actor.prototype.reset = function (...args) { const result = reset.apply(this, args); this.s3 ||= {}; this.s3.flow = createFlow(); credits.delete(this); return result; };",
+    "  Actor.prototype.reset = function (...args) { const result = reset.apply(this, args); this.s3 ||= {}; this.s3.flow = createFlow(); credits.delete(this); terminals.delete(this); return result; };",
+    'flow clean credits and terminals on reset'
+  );
+  patch(
     "  on('damage', ({ victim, attacker, amount, source }) => {\n    if (!attacker || attacker === victim || source === 'ink' || victim.team === attacker.team) return;\n    const map = credits.get(victim) || new Map(); map.set(attacker, G.time); credits.set(victim, map);\n    award(attacker, 'damage', amount);\n  });\n  on('splatted', ({ victim, attacker }) => {\n    if (attacker && attacker !== victim && attacker.team !== victim.team) award(attacker, 'splat', 1);\n    for (const [helper, time] of credits.get(victim) || []) if (helper !== attacker && G.time - time <= cfg.assistWindow) award(helper, 'assist', 1);\n    credits.delete(victim); victim.s3 ||= {}; victim.s3.flow = createFlow();\n  });",
-    "  on('damage', ({ victim, attacker, amount, source }) => {\n    if (!attacker || attacker === victim || source === 'ink' || victim.team === attacker.team) return;\n    const map = credits.get(victim) || new Map(); map.set(attacker, G.time); credits.set(victim, map);\n    if (!attacker.remote) award(attacker, 'damage', amount);\n  });\n  on('splatted', ({ victim, attacker }) => {\n    if (attacker && !attacker.remote && attacker !== victim && attacker.team !== victim.team) award(attacker, 'splat', 1);\n    for (const [helper, time] of credits.get(victim) || []) if (helper !== attacker && G.time - time <= cfg.assistWindow && !helper.remote) award(helper, 'assist', 1);\n    credits.delete(victim); victim.s3 ||= {}; victim.s3.flow = createFlow();\n  });\n  on('combat:confirmed', ({ attacker, victim, damage, killed }) => {\n    if (!attacker || attacker.remote || attacker === victim || attacker.team === victim?.team) return;\n    if (damage > 0) {\n      const map = credits.get(victim) || new Map(); map.set(attacker, G.time); credits.set(victim, map);\n      award(attacker, 'damage', damage);\n    }\n    if (killed) {\n      award(attacker, 'splat', 1);\n      for (const [helper, time] of credits.get(victim) || []) if (helper !== attacker && G.time - time <= cfg.assistWindow && !helper.remote) award(helper, 'assist', 1);\n      credits.delete(victim);\n    }\n  });\n  on('combat:terminal', ({ victim, attacker }) => {\n    if (!victim) return;\n    for (const [helper, time] of credits.get(victim) || []) if (helper !== attacker && G.time - time <= cfg.assistWindow && !helper.remote) award(helper, 'assist', 1);\n    credits.delete(victim);\n  });",
-    'flow remote proxy isolation, combat:confirmed and combat:terminal listeners'
+    `  on('damage', ({ victim, attacker, amount, source }) => {
+    if (!attacker || attacker === victim || source === 'ink' || victim.team === attacker.team) return;
+    const vl = victim?.netLife ?? 0;
+    const map = credits.get(victim) || new Map();
+    map.set(attacker, { time: G.time, victimLife: vl });
+    credits.set(victim, map);
+    if (!attacker.remote) award(attacker, 'damage', amount);
+  });
+  on('splatted', ({ victim, attacker }) => {
+    if (attacker && !attacker.remote && attacker !== victim && attacker.team !== victim.team) award(attacker, 'splat', 1);
+    const vl = victim?.netLife ?? 0;
+    const term = { time: G.time, killer: attacker, victimLife: vl, assisted: new Set() };
+    if (victim) terminals.set(victim, term);
+    for (const [helper, cred] of (victim && credits.get(victim)) || []) {
+      const cTime = typeof cred === 'number' ? cred : cred.time;
+      const cLife = typeof cred === 'object' && cred.victimLife !== undefined ? cred.victimLife : vl;
+      if (helper !== attacker && cLife === vl && G.time - cTime <= cfg.assistWindow && !helper.remote && helper.alive) {
+        award(helper, 'assist', 1);
+        term.assisted.add(helper);
+      }
+    }
+    if (victim) { credits.delete(victim); victim.s3 ||= {}; victim.s3.flow = createFlow(); }
+  });
+  on('combat:terminal', ({ victim, attacker, victimLife }) => {
+    if (!victim) return;
+    const vl = victimLife ?? victim.netLife ?? 0;
+    const term = { time: G.time, killer: attacker, victimLife: vl, assisted: new Set() };
+    terminals.set(victim, term);
+    for (const [helper, cred] of credits.get(victim) || []) {
+      const cTime = typeof cred === 'number' ? cred : cred.time;
+      const cLife = typeof cred === 'object' && cred.victimLife !== undefined ? cred.victimLife : vl;
+      if (helper !== attacker && cLife === vl && G.time - cTime <= cfg.assistWindow && !helper.remote && helper.alive && !term.assisted.has(helper)) {
+        award(helper, 'assist', 1);
+        term.assisted.add(helper);
+      }
+    }
+    credits.delete(victim);
+  });
+  on('combat:confirmed', ({ attacker, victim, damage, killed, victimLife }) => {
+    if (!attacker || attacker.remote || attacker === victim || attacker.team === victim?.team) return;
+    const vl = victimLife ?? victim?.netLife ?? 0;
+    if (damage > 0) {
+      award(attacker, 'damage', damage);
+      const term = victim ? terminals.get(victim) : null;
+      if (term && term.victimLife === vl && !killed && attacker !== term.killer && !term.assisted.has(attacker)) {
+        if (Math.abs(G.time - term.time) <= cfg.assistWindow && attacker.alive) {
+          award(attacker, 'assist', 1);
+          term.assisted.add(attacker);
+        }
+      } else if (!killed && victim) {
+        const map = credits.get(victim) || new Map();
+        map.set(attacker, { time: G.time, victimLife: vl });
+        credits.set(victim, map);
+      }
+    }
+    if (killed) {
+      award(attacker, 'splat', 1);
+      const term = (victim && terminals.get(victim)) || { time: G.time, killer: attacker, victimLife: vl, assisted: new Set() };
+      term.killer = attacker;
+      if (victim) terminals.set(victim, term);
+      for (const [helper, cred] of (victim && credits.get(victim)) || []) {
+        const cTime = typeof cred === 'number' ? cred : cred.time;
+        const cLife = typeof cred === 'object' && cred.victimLife !== undefined ? cred.victimLife : vl;
+        if (helper !== attacker && cLife === vl && G.time - cTime <= cfg.assistWindow && !helper.remote && helper.alive && !term.assisted.has(helper)) {
+          award(helper, 'assist', 1);
+          term.assisted.add(helper);
+        }
+      }
+      if (victim) credits.delete(victim);
+    }
+  });
+  on('respawn', ({ actor }) => { if (actor) { credits.delete(actor); terminals.delete(actor); } });
+  on('combat:respawn', ({ actor }) => { if (actor) { credits.delete(actor); terminals.delete(actor); } });`,
+    'flow remote proxy isolation, bounded terminal state, and confirmed progression'
   );
   return code;
 }
