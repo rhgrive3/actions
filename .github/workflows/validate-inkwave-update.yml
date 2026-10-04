@@ -11,6 +11,7 @@ on:
       - "patches/local-quality/**"
       - "scripts/*inkwave*.mjs"
       - "scripts/tests/inkwave-*.mjs"
+      - "scripts/lib/inkwave-*.mjs"
   pull_request:
     paths:
       - .github/workflows/validate-inkwave-update.yml
@@ -21,6 +22,7 @@ on:
       - "patches/local-quality/**"
       - "scripts/*inkwave*.mjs"
       - "scripts/tests/inkwave-*.mjs"
+      - "scripts/lib/inkwave-*.mjs"
   workflow_dispatch:
     inputs:
       source_sha:

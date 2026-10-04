@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
 import {execFileSync} from 'node:child_process';
-import {persistentDirectory,persistentBrowserTemp,verifyRuntimeBuild,hash,sampleStats,invalidWindows} from './lib/inkwave-runtime-evidence.mjs';
+import {persistentDirectory,persistentBrowserTemp,verifyRuntimeBuild,hash,sampleStats,invalidWindows,primeRuntimeMenuRows} from './lib/inkwave-runtime-evidence.mjs';
 import os from 'node:os';
 import {pathToFileURL,fileURLToPath} from 'node:url';
 const option=(name,fallback)=>{const i=process.argv.indexOf(name);return i<0?fallback:process.argv[i+1];};
@@ -125,8 +125,8 @@ try{
  // Pause the game owner, then dispatch real menu entry points in one task.
  // A stale target here proves an extra engine-tick dependency independent of GPU.
  await page.evaluate(()=>{const g=probeG.game;g.debug.freeze();g.menus.wipe.cancel();g.menus.show('settings',{wipe:false,light:false});});
- await page.waitForTimeout(1500);
- Object.assign(result,await page.evaluate(async()=>{
+ await primeRuntimeMenuRows(page,path.join(evidence,'input-prime.png'));
+ Object.assign(result,await page.evaluate(()=>{
   const g=probeG.game,m=g.menus;
   const mode=name=>g._onDevice?g._onDevice(name):m.setInputMode(name);
   const dispatch=(name,target)=>{
@@ -158,22 +158,21 @@ try{
    input.push({mode:name,entry:name==='pad'?(g.input?'navigator.getGamepads -> Input.pollPad -> Game._padMenus -> Menus.nav':'Menus.nav fixture'):name==='kbm'?'DOM keydown':'DOM pointerdown',...inspect(a,oldVisual,t)});
    m._updateCursor(1/60);
   }
-  const modeSwitchInput=[];
-  for(const [from,to]of [['pad','kbm'],['kbm','pad'],['touch','kbm'],['touch','pad']]){
-   mode(from);const [a,b]=m._candidates().filter(e=>e.dataset.nav==='row');
-   // Mode callbacks can rebuild CSS-entering rows. Prime the natural paint
-   // before measuring input; native intentionally hides rings on opacity<=.6.
-   const deadline=performance.now()+5000;
-   while(Math.min(+getComputedStyle(a).opacity,+getComputedStyle(b).opacity)<.9){
-    if(performance.now()>deadline)throw Error('Mode-switch rows did not finish entrance');
-    await new Promise(resolve=>setTimeout(resolve,25));
-   }
+  window.runtimeMenuInput={m,dispatch,inspect,visual};
+  return{input};
+ }));
+ checkpoint();
+ result.modeSwitchInput=[];
+ for(const [from,to]of [['pad','kbm'],['kbm','pad'],['touch','kbm'],['touch','pad']]){
+  await primeRuntimeMenuRows(page,path.join(evidence,`mode-prime-${result.modeSwitchInput.length}.png`),from);
+  result.modeSwitchInput.push(await page.evaluate(({from,to})=>{
+   const {m,dispatch,inspect,visual}=window.runtimeMenuInput,{a,b}=window.runtimeModePrime;
    const primedOpacity=[+getComputedStyle(a).opacity,+getComputedStyle(b).opacity];
    m._setFocus(a,{snap:true});m._updateCursor(1/60);const beforeOn=m._cur.on,oldVisual=visual(),t=performance.now();dispatch(to,b);
-   modeSwitchInput.push({from,to,primedOpacity,beforeOn,...inspect(a,oldVisual,t)});m._updateCursor(1/60);
-  }
-  return{input,modeSwitchInput};
- }));
+   const row={from,to,primedPaint:true,primedOpacity,beforeOn,...inspect(a,oldVisual,t)};m._updateCursor(1/60);return row;
+  },{from,to}));
+  checkpoint();
+ }
  // Prime the existing native fade in separate tasks before retirement. A
  // batched navigation probe alone can observe opacity 0 before its first paint.
  result.ringRetirement=[];

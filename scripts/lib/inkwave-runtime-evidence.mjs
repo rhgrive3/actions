@@ -53,3 +53,21 @@ export function sampleStats(values){
 export function invalidWindows(scenarios,fixed){
  return scenarios.flatMap(s=>s.runs.filter(r=>fixed?r.counts.frame!==30:r.frames.n<30).map(r=>({scenario:s.scenario,repeat:r.repeat,menu:r.menu})));
 }
+
+// Prime natural CSS presentation outside input timing. Software WebGL can
+// delay a rendering opportunity far beyond a short JS timer deadline.
+export async function primeRuntimeMenuRows(page,screenshotPath,mode=null){
+ await page.evaluate(mode=>{
+  const g=probeG.game,m=g.menus;
+  if(mode!==null){if(g._onDevice)g._onDevice(mode);else m.setInputMode(mode);}
+  const [a,b]=m._candidates().filter(e=>e.dataset.nav==='row');
+  if(!a||!b)throw Error('Missing mode-input rows');
+  window.runtimeModePrime={a,b};
+ },mode);
+ await page.screenshot({path:screenshotPath,timeout:900000});
+ await page.waitForFunction(()=>{
+  const {a,b}=window.runtimeModePrime;
+  if(!a.isConnected||!b.isConnected)throw Error('Mode-input rows detached during priming');
+  return Math.min(+getComputedStyle(a).opacity,+getComputedStyle(b).opacity)>=.9;
+ },undefined,{timeout:900000});
+}

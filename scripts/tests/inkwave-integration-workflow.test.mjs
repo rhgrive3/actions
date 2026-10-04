@@ -27,6 +27,7 @@ test('successful browser artifacts require validated reports and distinct suite 
 });
 
 test('nested INKWAVE guard changes trigger both pull request and pushed-main validation', () => {
+  assert.equal((workflow.match(/scripts\/lib\/inkwave-\*\.mjs/g) || []).length, 2);
   assert.equal((workflow.match(/scripts\/tests\/inkwave-\*\.mjs/g) || []).length, 2);
 });
 test('compatibility failure preserves its primary error without a missing diagnostic upload', () => {
