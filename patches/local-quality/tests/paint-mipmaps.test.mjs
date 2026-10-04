@@ -79,13 +79,6 @@ function createInstrumentedPaintHarness(ns, { atlasSize = 2048 } = {}) {
 
   let mipCalls = 0;
   let currentRenderTarget = null;
-  const textures = {
-    updateRenderTargetMipmap(rt) {
-      for (const tex of rt.textures) {
-        if (tex.generateMipmaps) mipCalls++;
-      }
-    },
-  };
   const renderer = {
     capabilities: { getMaxAnisotropy: () => 8 },
     autoClear: true,
@@ -95,16 +88,16 @@ function createInstrumentedPaintHarness(ns, { atlasSize = 2048 } = {}) {
     getClearAlpha: () => 0,
     setClearColor: () => {},
     clear: () => {},
-    render: () => {
-      if (currentRenderTarget) textures.updateRenderTargetMipmap(currentRenderTarget);
+    render: (scene, camera) => {
+      // Native Three.js WebGLRenderer.render() behavior:
+      // At the end of the pass, textures.updateRenderTargetMipmap() checks if the target texture
+      // has generateMipmaps: true and rebuilds mips via gl.generateMipmap.
+      if (currentRenderTarget) {
+        for (const tex of currentRenderTarget.textures) {
+          if (tex.generateMipmaps) mipCalls++;
+        }
+      }
     },
-    textures,
-    properties: { get: () => ({ __webglTexture: {} }) },
-    getContext: () => ({
-      TEXTURE_2D: 0x0DE1,
-      bindTexture: () => {},
-      generateMipmap: () => { mipCalls++; },
-    }),
   };
 
   const paint = new PaintSystem(renderer, level, { atlasSize });
@@ -343,3 +336,219 @@ test('paint clear resets mip state and synchronizes mips', async () => {
   assert.equal(env.paint._mipsDirty, false);
   assert.equal(env.getMipCalls(), 1, 'Clear must synchronize mipmap chain');
 });
+
+test('regenerateMipmaps strictly uses public renderer pass into empty scene and restores state in finally', async () => {
+  const patchedNs = await createPaintSystemRealm(true);
+  const { THREE, PaintSystem } = patchedNs;
+
+  const renderCalls = [];
+  let currentRT = 'previous-rt';
+  let autoClearVal = true;
+  const renderer = {
+    capabilities: { getMaxAnisotropy: () => 8 },
+    autoClear: autoClearVal,
+    getRenderTarget: () => currentRT,
+    setRenderTarget: rt => { currentRT = rt; },
+    getClearColor: col => col.set(0),
+    getClearAlpha: () => 0,
+    setClearColor: () => {},
+    clear: () => {},
+    render: (scene, camera) => {
+      renderCalls.push({
+        scene,
+        childCount: scene.children.length,
+        rt: currentRT,
+        autoClear: renderer.autoClear,
+        generateMipmaps: currentRT?.texture?.generateMipmaps,
+      });
+    },
+  };
+
+  const v = (x, y, z) => new THREE.Vector3(x, y, z);
+  const face = { paintable: true, turf: true, origin: v(0, 0, 0), u: v(1, 0, 0), v: v(0, 0, 1), n: v(0, 1, 0), su: 20, sv: 20, block: 0, wall: false };
+  const level = { faces: [face], blocks: [{ aabbMin: v(-10, -5, -10), aabbMax: v(30, 5, 30), faces: [0, -1, -1, -1, -1, -1] }], pointInside: () => false, queryBlocks: () => [0] };
+
+  const paint = new PaintSystem(renderer, level, { atlasSize: 512 });
+  renderCalls.length = 0; // Clear calls from initial init/clear
+
+  // Set up sentinel state
+  currentRT = 'custom-user-rt';
+  renderer.autoClear = true;
+  paint._mipsDirty = true;
+
+  // Execute _regenerateMipmaps()
+  paint._regenerateMipmaps();
+
+  // Assertions:
+  assert.equal(renderCalls.length, 1, 'Must execute exactly one public render pass');
+  const call = renderCalls[0];
+  assert.equal(call.rt, paint.rt, 'Render target must be the paint atlas RT');
+  assert.equal(call.autoClear, false, 'autoClear must be false to avoid clearing existing ink');
+  assert.equal(call.generateMipmaps, true, 'generateMipmaps must be true during the pass');
+  assert.equal(call.childCount, 0, 'Scene MUST be empty: do NOT redraw stale quad geometry/drying');
+
+  // Assert state restoration in finally:
+  assert.equal(paint.rt.texture.generateMipmaps, false, 'generateMipmaps flag must be restored to false in finally');
+  assert.equal(renderer.autoClear, true, 'autoClear must be restored to true in finally');
+  assert.equal(currentRT, 'custom-user-rt', 'Render target must be restored to previous RT in finally');
+  assert.equal(paint._mipsDirty, false, 'Atlas must be marked clean after regeneration');
+
+  // Verify that an exception during render still restores state via finally
+  renderer.render = () => { throw new Error('Simulated render error'); };
+  currentRT = 'saved-rt';
+  renderer.autoClear = true;
+  assert.throws(() => paint._regenerateMipmaps(), /Simulated render error/);
+  assert.equal(paint.rt.texture.generateMipmaps, false, 'generateMipmaps must be restored to false even after exception');
+  assert.equal(renderer.autoClear, true, 'autoClear must be restored even after exception');
+  assert.equal(currentRT, 'saved-rt', 'Render target must be restored even after exception');
+});
+
+test('native WebGL / browser probe: instruments generateMipmap and gl.getError plus draw/read pixels', async () => {
+  let chromium = null;
+  try {
+    const pw = await import(process.env.PLAYWRIGHT_MODULE ? pathToFileURL(process.env.PLAYWRIGHT_MODULE).href : 'playwright').catch(() => null);
+    chromium = pw?.chromium;
+    if (!chromium) {
+      const { createRequire } = await import('node:module');
+      const req = createRequire(import.meta.url);
+      const pkg = req('/mnt/workspace/.npm-global/lib/node_modules/@playwright/test');
+      chromium = pkg?.chromium;
+    }
+  } catch {
+    // If Playwright is not resolvable, skip
+  }
+
+  if (!chromium) {
+    return;
+  }
+
+  const http = await import('node:http');
+  const server = http.createServer((req, res) => {
+    if (req.url === '/') {
+      res.writeHead(200, { 'content-type': 'text/html' });
+      res.end(`<!DOCTYPE html><html><head>
+        <script type='importmap'>
+        { "imports": { "three": "/vendor/three/build/three.module.js" } }
+        </script>
+      </head><body><canvas id='c'></canvas></body></html>`);
+      return;
+    }
+    const rel = req.url.slice(1);
+    if (rel === 'src/world/paint.js') {
+      res.writeHead(200, { 'content-type': 'application/javascript' });
+      res.end(adaptPaintMipmaps(rel, fs.readFileSync(path.join(SRC, rel), 'utf8')));
+      return;
+    }
+    const file = path.join(SRC, rel);
+    if (fs.existsSync(file)) {
+      res.writeHead(200, { 'content-type': 'application/javascript' });
+      res.end(fs.readFileSync(file));
+    } else {
+      res.writeHead(404);
+      res.end('Not found: ' + rel);
+    }
+  });
+
+  await new Promise(r => server.listen(0, '127.0.0.1', r));
+  const port = server.address().port;
+
+  let browser;
+  try {
+    browser = await chromium.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-dev-shm-usage', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
+    });
+    const page = await browser.newPage();
+    await page.goto(`http://127.0.0.1:${port}/`);
+
+    const result = await page.evaluate(async () => {
+      const THREE = await import('three');
+      const { PaintSystem } = await import('/src/world/paint.js');
+
+      const canvas = document.getElementById('c');
+      canvas.width = 512;
+      canvas.height = 512;
+      const renderer = new THREE.WebGLRenderer({ canvas, antialias: false });
+      const gl = renderer.getContext();
+
+      let mipCalls = 0;
+      let maxError = 0;
+      const origGenerateMipmap = gl.generateMipmap.bind(gl);
+      gl.generateMipmap = function(...args) {
+        mipCalls++;
+        const res = origGenerateMipmap(...args);
+        const err = gl.getError();
+        if (err !== 0) maxError = err;
+        return res;
+      };
+
+      const v = (x, y, z) => new THREE.Vector3(x, y, z);
+      const face = {
+        paintable: true, turf: true,
+        origin: v(0, 0, 0), u: v(1, 0, 0), v: v(0, 0, 1), n: v(0, 1, 0),
+        su: 20, sv: 20, block: 0, wall: false
+      };
+      const block = {
+        aabbMin: v(-10, -5, -10), aabbMax: v(30, 5, 30),
+        faces: [0, -1, -1, -1, -1, -1]
+      };
+      const level = {
+        faces: [face], blocks: [block],
+        pointInside: () => false,
+        queryBlocks: () => [0]
+      };
+
+      const paint = new PaintSystem(renderer, level, { atlasSize: 512 });
+      const initCalls = mipCalls;
+      const initError = gl.getError();
+
+      // Splat team 1
+      paint.splat(v(5, 0, 5), 1.0, 1, { instant: true, seed: 0.1 });
+      paint.flush(1 / 60);
+
+      // Read back pixels from RT to ensure actual GPU paint draw
+      const buf = new Uint8Array(512 * 512 * 4);
+      renderer.readRenderTargetPixels(paint.rt, 0, 0, 512, 512, buf);
+      let paintedPixels = 0;
+      for (let i = 0; i < buf.length; i += 4) {
+        if (buf[i + 3] > 0) paintedPixels++;
+      }
+
+      // Advance 60 frames (1 second of drying)
+      const startCalls = mipCalls;
+      for (let f = 0; f < 60; f++) {
+        paint.flush(1 / 60);
+      }
+      const dryingCalls = mipCalls - startCalls;
+
+      // Force empty-scene mipmap regeneration directly and inspect GL state
+      const preRegenCalls = mipCalls;
+      paint._regenerateMipmaps();
+      const regenCalls = mipCalls - preRegenCalls;
+      const finalError = gl.getError();
+
+      return {
+        initCalls,
+        initError,
+        paintedPixels,
+        dryingCalls,
+        regenCalls,
+        finalError,
+        maxError,
+        counts: [...paint.counts],
+      };
+    });
+
+    assert.equal(result.initError, 0, 'gl.getError must be 0 after init');
+    assert.equal(result.maxError, 0, 'gl.getError must remain 0 across all generateMipmap calls');
+    assert.equal(result.finalError, 0, 'gl.getError must remain 0 after all operations');
+    assert.equal(result.initCalls, 1, 'Initial clear must synchronize mipmap chain exactly once');
+    assert.ok(result.paintedPixels > 1000, `Actual GPU paint pass must draw pixels (got ${result.paintedPixels})`);
+    assert.ok(result.dryingCalls <= 6 && result.dryingCalls >= 3, `Drying mip calls (${result.dryingCalls}) must be bounded ~4 Hz over 60 frames`);
+    assert.equal(result.regenCalls, 1, '_regenerateMipmaps via empty scene pass must trigger exactly 1 native gl.generateMipmap');
+  } finally {
+    if (browser) await browser.close();
+    server.close();
+  }
+});
+
