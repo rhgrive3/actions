@@ -36,7 +36,7 @@ try{
  await page.goto('http://127.0.0.1:'+server.address().port+'/',{waitUntil:'domcontentloaded'});
  console.log('Navigation complete');
  await page.evaluate(async()=>{window.probeG=(await import(new URL('src/core/ctx.js',document.baseURI))).G;});
- await page.waitForFunction(()=>probeG.game?.menus&&probeG.s3?.installed&&probeG.mode!=='boot',null,{timeout:Number(option('--boot-timeout','900000'))});
+ await page.waitForFunction(fixed=>{const ready=probeG.game?.menus&&probeG.s3?.installed&&probeG.mode!=='boot';if(ready&&fixed)probeG.game.debug.freeze();return !!ready;},fixedOnly,{timeout:Number(option('--boot-timeout','900000'))});
  console.log('Runtime ready');
  result.active=await page.evaluate(()=>{const gl=probeG.renderer?.getContext(),ext=gl?.getExtension('WEBGL_debug_renderer_info');return{baseURI:document.baseURI,mode:probeG.mode,browser:navigator.userAgent,dpr:devicePixelRatio,renderer:ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):null,gpuTimerQuery:!!gl?.getExtension('EXT_disjoint_timer_query_webgl2')};});
  result.environment.browser=await context.browser().version();result.environment.seed=20261004;result.environment.seedMode='reset-each-profile-window';checkpoint();

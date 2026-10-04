@@ -62,3 +62,9 @@ test('isolated render diagnosis cannot replace full acceptance jobs or emit pass
  assert(diagnostic.includes('--parity-only --quality high --verify-render'));
  assert(!diagnostic.includes('ci-result.json'));assert(!diagnostic.includes('inkwave-browser-'));
 });
+
+test('fixed runtime owner freezes at readiness before potentially blocking WebGL identity queries',()=>{
+ const source=fs.readFileSync(new URL('../check-inkwave-runtime-performance.mjs',import.meta.url),'utf8');
+ const ready=source.indexOf('if(ready&&fixed)probeG.game.debug.freeze()');
+ assert(ready>=0&&ready<source.indexOf('result.active=await page.evaluate'));
+});
