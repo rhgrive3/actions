@@ -225,3 +225,12 @@ Four current-public defects #366/#370 (one duplicate pair), #375, #384, #395 are
 ## 2026-10-04 weapon edge-case supplement
 
 See [weapon edge-case comparison](inkwave-weapon-edgecases-2026-10-04.md) for #354/#356/#357/#361: stable-human Dualies3F first emission; Splatling separate ground1.6° pitch envelope; terrain Blaster35HP cap; horizontal Roller12+1 gameplay units. The report separates actual source/minified/composed-code tests from S3 probability/position/falloff and released-tap calibration still pending. No native source or deployed main is changed by the draft.
+
+## 2026-10-04: first-allocation mobile resource budget
+
+A cold-boot follow-up for #375/#395 uses the already-published G.mobile profile
+until G.game exists. The established touch budget now applies on the first
+cloud/Halyard cube allocation at default high settings, not only after later
+runtime refresh. Existing formats, appearance policy and gameplay stay intact.
+These are project resource dimensions, not Nintendo/Switch memory values.
+See [the cold-boot budget report](inkwave-cold-boot-budgets-2026-10-04.md).
