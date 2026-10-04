@@ -11,8 +11,11 @@ on:
       - "patches/local-quality/**"
       - "patches/movement-physics/**"
       - "patches/network-replication/**"
+      - "patches/loading-cache/**"
+      - "patches/practice-range/**"
       - "scripts/*inkwave*.mjs"
       - "scripts/tests/inkwave-*.mjs"
+      - "scripts/lib/inkwave-*.mjs"
   pull_request:
     paths:
       - .github/workflows/validate-inkwave-update.yml
@@ -23,14 +26,25 @@ on:
       - "patches/local-quality/**"
       - "patches/movement-physics/**"
       - "patches/network-replication/**"
+      - "patches/loading-cache/**"
+      - "patches/practice-range/**"
       - "scripts/*inkwave*.mjs"
       - "scripts/tests/inkwave-*.mjs"
+      - "scripts/lib/inkwave-*.mjs"
   workflow_dispatch:
     inputs:
       source_sha:
         description: Full immutable commit SHA to verify
         required: true
         type: string
+      runtime_performance:
+        description: Run the pinned runtime workstream baseline and candidate comparison
+        type: boolean
+        default: false
+      diagnostic_only:
+        description: Run isolated render repeatability diagnosis (never full acceptance)
+        type: boolean
+        default: false
 concurrency:
   group: validate-inkwave-${{ github.event.pull_request.number || inputs.source_sha || github.ref }}
   cancel-in-progress: true
@@ -38,8 +52,10 @@ permissions:
   contents: read
 env:
   SOURCE_SHA: ${{ inputs.source_sha || github.sha }}
+  RUNTIME_PERFORMANCE: ${{ inputs.runtime_performance == true || (github.event_name == 'pull_request' && (github.head_ref == 'inkwave/runtime-performance-ui' || github.head_ref == 'inkwave/final-nine-way-integration')) }}
 jobs:
   validate:
+    if: inputs.diagnostic_only != true
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -70,6 +86,12 @@ jobs:
         run: node --experimental-vm-modules --test patches/local-quality/tests/*.test.mjs
       - name: Verify movement physics smoke regressions
         run: node --test patches/movement-physics/tests/movement-smoke.test.mjs
+      - name: Verify practice range measurement, rules and battle isolation
+        run: node --experimental-vm-modules --test patches/practice-range/tests/*.test.mjs
+      - name: Verify loading/cache regressions
+        run: |
+          node --experimental-vm-modules --test patches/loading-cache/tests/adapter.test.mjs patches/loading-cache/tests/worker.test.mjs
+          python3 patches/loading-cache/tests/harness.test.py
       - uses: actions/upload-artifact@v4
         if: failure() && hashFiles('.ci-scratch/inkwave-patches/patch-tests.log') != ''
         with:
@@ -77,8 +99,19 @@ jobs:
           if-no-files-found: error
           path: .ci-scratch/inkwave-patches/
           retention-days: 14
+      - name: Prepare persistent runtime verifier fixtures
+        run: |
+          runtime_fixtures=/mnt/workspace/.dev-state/agent-work/scratch/inkwave-runtime-performance-ui-evidence-tests
+          test "$(realpath -m "$runtime_fixtures")" = "$runtime_fixtures"
+          sudo mkdir -p "$runtime_fixtures"
+          sudo chown "$(id -u):$(id -g)" "$runtime_fixtures"
+          test -w "$runtime_fixtures"
+          browser_tmp=/mnt/workspace/.dev-state/agent-work/cache/iwrui
+          test "$(realpath -m "$browser_tmp")" = "$browser_tmp"
+          sudo mkdir -p "$browser_tmp"
+          sudo chown "$(id -u):$(id -g)" "$browser_tmp"
       - name: Verify motion verifier regressions
-        run: node --test scripts/tests/inkwave-motion-gates.test.mjs scripts/tests/inkwave-integration-workflow.test.mjs
+        run: node --test scripts/tests/inkwave-motion-gates.test.mjs scripts/tests/inkwave-integration-workflow.test.mjs scripts/tests/inkwave-runtime-evidence.test.mjs
       - name: Verify pinned primary numerical sources
         run: |
           python3 - <<'PY'
@@ -106,7 +139,7 @@ jobs:
       - name: Check JavaScript syntax
         run: |
           set -euo pipefail
-          find inkwave-public/src inkwave-public/vendor patches/local-quality -type f \( -name '*.js' -o -name '*.mjs' \) -print0 |
+          find inkwave-public/src inkwave-public/vendor patches/local-quality patches/loading-cache patches/practice-range -type f \( -name '*.js' -o -name '*.mjs' \) -print0 |
             while IFS= read -r -d '' f; do node --check "$f"; done
       - name: Check local module and stylesheet references
         run: |
@@ -140,6 +173,7 @@ jobs:
         run: |
           npm install --no-save --no-package-lock --silent esbuild@0.28.2
           node scripts/build-inkwave.mjs inkwave-public _site
+          node scripts/check-inkwave-startup-budget.mjs _site
           git rev-parse HEAD > _site-source-sha.txt
       - uses: actions/upload-artifact@v4
         with:
@@ -151,11 +185,12 @@ jobs:
             _site-source-sha.txt
           retention-days: 14
   browser:
+    if: inputs.diagnostic_only != true
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 120
     strategy:
       fail-fast: false
-      max-parallel: 3
+      max-parallel: 5
       matrix:
         include:
           - suite: active
@@ -165,6 +200,10 @@ jobs:
           - suite: ui
             browsers: chromium webkit
           - suite: network
+            browsers: chromium
+          - suite: range
+            browsers: chromium webkit
+          - suite: startup
             browsers: chromium
     env:
       TMPDIR: ${{ github.workspace }}/.ci-scratch
@@ -189,8 +228,13 @@ jobs:
       - name: Prepare workspace storage and browser
         run: |
           mkdir -p .ci-scratch
+          test "$(realpath -m "$CI_STORAGE")" = "$CI_STORAGE"
           sudo mkdir -p "$CI_STORAGE"
           sudo chown "$(id -u):$(id -g)" "$CI_STORAGE"
+          browser_tmp=/mnt/workspace/.dev-state/agent-work/cache/iwrui
+          test "$(realpath -m "$browser_tmp")" = "$browser_tmp"
+          sudo mkdir -p "$browser_tmp"
+          sudo chown "$(id -u):$(id -g)" "$browser_tmp"
           test "$(realpath "$CI_STORAGE")" = "$CI_STORAGE"
           mkdir -p "$CI_STORAGE/evidence" "$CI_STORAGE/cache"
           test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
@@ -217,6 +261,34 @@ jobs:
       - name: Verify wall geometry through actual GTAO and GPU disposal
         if: matrix.suite == 'active'
         run: node scripts/check-inkwave-wall-render.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/wall" --profile-dir "$CI_STORAGE/cache/wall" --exact-source
+      - name: Profile runtime at immutable baseline
+        if: matrix.suite == 'active' && env.RUNTIME_PERFORMANCE == 'true'
+        run: |
+          npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1
+          baseline_sha=5e28dbd16f7829aebd88052ff5f7fdf71f39fdad
+          baseline_checkout=/mnt/workspace/.dev-state/agent-work/checkouts/inkwave-runtime-performance-ui-ci-${{ github.run_id }}-${{ github.run_attempt }}/baseline
+          test "$(realpath -m "$baseline_checkout")" = "$baseline_checkout"
+          sudo mkdir -p "$(dirname "$baseline_checkout")"
+          sudo chown "$(id -u):$(id -g)" "$(dirname "$baseline_checkout")"
+          test "$(realpath "$(dirname "$baseline_checkout")")" = "$(dirname "$baseline_checkout")"
+          git fetch origin "$baseline_sha"
+          git worktree add --detach "$baseline_checkout" "$baseline_sha"
+          ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js" node "$baseline_checkout/scripts/build-inkwave.mjs" "$baseline_checkout/inkwave-public" "$CI_STORAGE/cache/runtime-baseline-site"
+          node scripts/check-inkwave-runtime-performance.mjs --site "$CI_STORAGE/cache/runtime-baseline-site" --evidence-dir "$CI_STORAGE/evidence/runtime-before" --playwright "$GITHUB_WORKSPACE/node_modules/playwright/index.mjs" --source-sha "$baseline_sha" --fixed-only --quality high
+      - name: Preserve completed baseline runtime evidence
+        if: matrix.suite == 'active' && env.RUNTIME_PERFORMANCE == 'true' && always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: inkwave-runtime-baseline-diagnostics-${{ inputs.source_sha || github.sha }}
+          include-hidden-files: true
+          if-no-files-found: warn
+          path: ${{ env.CI_STORAGE }}/evidence/runtime-before/
+          retention-days: 14
+      - name: Profile candidate runtime and compare repeated evidence
+        if: matrix.suite == 'active' && env.RUNTIME_PERFORMANCE == 'true'
+        run: |
+          node scripts/check-inkwave-runtime-performance.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/runtime-after" --playwright "$GITHUB_WORKSPACE/node_modules/playwright/index.mjs" --source-sha "$SOURCE_SHA" --fixed-only --quality high
+          node scripts/compare-inkwave-runtime-performance.mjs --before "$CI_STORAGE/evidence/runtime-before/runtime-result.json" --after "$CI_STORAGE/evidence/runtime-after/runtime-result.json" --out "$CI_STORAGE/evidence/runtime-comparison.json"
       - name: Verify the complete installed motion catalog
         if: matrix.suite == 'catalog'
         run: node scripts/check-inkwave-motion-catalog.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/catalog" --profile-dir "$CI_STORAGE/cache/catalog"
@@ -232,9 +304,15 @@ jobs:
           node scripts/check-inkwave-touch-layout-identity.mjs --site .built-site/_site --source inkwave-public --checkout-dir "$CI_STORAGE/identity-touch" --evidence-dir "$CI_STORAGE/evidence/identity-touch"
           node scripts/check-inkwave-touch-layout-identity.mjs --network --site .built-site/_site --source inkwave-public --checkout-dir "$CI_STORAGE/identity-network" --evidence-dir "$CI_STORAGE/evidence/identity-network"
           node scripts/check-inkwave-touch-layout-identity.mjs --reliability --site .built-site/_site --source inkwave-public --checkout-dir "$CI_STORAGE/identity-reliability" --evidence-dir "$CI_STORAGE/evidence/identity-reliability"
+      - name: Verify the practice range in Chromium and WebKit (desktop + phone + tablet)
+        if: matrix.suite == 'range'
+        run: node scripts/check-inkwave-range.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/range" --profile-dir "$CI_STORAGE/cache/range"
       - name: Verify responsive menus in Chromium and WebKit
         if: matrix.suite == 'ui'
         run: node scripts/check-inkwave-responsive.mjs --source .built-site/_site --section all --evidence-dir "$CI_STORAGE/evidence/responsive" --profile-dir "$CI_STORAGE/cache/responsive"
+      - name: Measure cold, warm, PWA restart and offline startup in Chromium
+        if: matrix.suite == 'startup'
+        run: node scripts/check-inkwave-startup-browser.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/startup" --profile-dir "$CI_STORAGE/cache/startup" --source-sha "$SOURCE_SHA" --runs 3
       - name: Bind passing browser evidence to the tested commit
         run: |
           python3 - <<'PY'
@@ -246,21 +324,38 @@ jobs:
             'catalog':['catalog/motion-catalog-result.json'],
             'network':['network/network-browser-result.json','network-delay/network-browser-result.json'],
             'ui':['identity-network/network-identity-result.json','layout/touch-layout-result.json','reliability/reliability-browser-result.json','identity-touch/touch-layout-identity-result.json','identity-reliability/reliability-identity-result.json','responsive/responsive-result.json'],
+            'range':['range/range-result.json'],
+            'startup':['startup/startup-browser-result.json'],
           }[suite]
+          runtime_performance=os.environ['RUNTIME_PERFORMANCE']=='true'
+          if suite=='active' and runtime_performance:
+            checks.extend(['runtime-before/runtime-result.json','runtime-after/runtime-result.json','runtime-comparison.json'])
           reports={name:json.loads((root/name).read_text()) for name in checks}
           build=json.loads(pathlib.Path('.built-site/_site/inkwave-build.json').read_text())
           assert pathlib.Path('.built-site/_site-source-sha.txt').read_text().strip()==os.environ['SOURCE_SHA']
           for name,report in reports.items():
             if name=='motion/motion-result.json': assert not report['errors'] and report['fixture']['scenarios']==10
             else: assert report['status']=='passed', name
-            if 'contentHash' in report: assert report['contentHash']==build['contentHash'], name
+            if 'contentHash' in report and name!='runtime-before/runtime-result.json': assert report['contentHash']==build['contentHash'], name
           if suite=='network':
             for name in checks: assert reports[name]['sourceSha']==os.environ['SOURCE_SHA']
-          if suite=='active': assert reports['game/browser-result.json']['sourceSha']==os.environ['SOURCE_SHA']
-          receipt={'status':'passed','sourceSha':os.environ['SOURCE_SHA'],'contentHash':build['contentHash'],'suite':suite,'runId':os.environ['GITHUB_RUN_ID'],'runAttempt':os.environ['GITHUB_RUN_ATTEMPT'],'event':os.environ['GITHUB_EVENT_NAME'],'checks':checks}
+          if suite=='active':
+            assert reports['game/browser-result.json']['sourceSha']==os.environ['SOURCE_SHA']
+            if runtime_performance:
+              assert reports['runtime-after/runtime-result.json']['sourceSha']==os.environ['SOURCE_SHA']
+              assert reports['runtime-before/runtime-result.json']['sourceSha']=='5e28dbd16f7829aebd88052ff5f7fdf71f39fdad'
+          receipt={'status':'passed','sourceSha':os.environ['SOURCE_SHA'],'contentHash':build['contentHash'],'suite':suite,'runtimePerformance':runtime_performance,'runId':os.environ['GITHUB_RUN_ID'],'runAttempt':os.environ['GITHUB_RUN_ATTEMPT'],'event':os.environ['GITHUB_EVENT_NAME'],'checks':checks}
           pending=root/'ci-result.json.pending'; pending.write_text(json.dumps(receipt,indent=2)+'\n'); pending.replace(root/'ci-result.json')
           print(json.dumps(receipt))
           PY
+      - uses: actions/upload-artifact@v4
+        if: always() && (failure() || cancelled())
+        with:
+          name: inkwave-browser-failure-${{ matrix.suite }}-${{ inputs.source_sha || github.sha }}
+          include-hidden-files: true
+          if-no-files-found: warn
+          path: ${{ env.CI_STORAGE }}/evidence/
+          retention-days: 14
       - uses: actions/upload-artifact@v4
         if: success()
         with:
@@ -268,4 +363,47 @@ jobs:
           include-hidden-files: true
           if-no-files-found: error
           path: ${{ env.CI_STORAGE }}/evidence/
+          retention-days: 14
+
+  render-diagnostic:
+    if: inputs.diagnostic_only == true
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source_sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Prepare persistent diagnostic storage and exact source
+        run: |
+          [[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          diagnostic_storage=/mnt/workspace/.dev-state/agent-work/evidence/inkwave-runtime-diagnostic-${{ github.run_id }}
+          test "$(realpath -m "$diagnostic_storage")" = "$diagnostic_storage"
+          sudo mkdir -p "$diagnostic_storage"
+          sudo chown "$(id -u):$(id -g)" "$diagnostic_storage"
+          browser_tmp=/mnt/workspace/.dev-state/agent-work/cache/iwrui
+          test "$(realpath -m "$browser_tmp")" = "$browser_tmp"
+          sudo mkdir -p "$browser_tmp"
+          sudo chown "$(id -u):$(id -g)" "$browser_tmp"
+          echo "DIAGNOSTIC_STORAGE=$diagnostic_storage" >> "$GITHUB_ENV"
+          mkdir -p "$GITHUB_WORKSPACE/.ci-scratch" "$GITHUB_WORKSPACE/.playwright"
+          echo "TMPDIR=$GITHUB_WORKSPACE/.ci-scratch" >> "$GITHUB_ENV"
+          echo "TMP=$GITHUB_WORKSPACE/.ci-scratch" >> "$GITHUB_ENV"
+          echo "TEMP=$GITHUB_WORKSPACE/.ci-scratch" >> "$GITHUB_ENV"
+          echo "PLAYWRIGHT_BROWSERS_PATH=$GITHUB_WORKSPACE/.playwright" >> "$GITHUB_ENV"
+      - name: Build and diagnose (not an acceptance benchmark)
+        run: |
+          npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
+          ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js" node scripts/build-inkwave.mjs inkwave-public "$DIAGNOSTIC_STORAGE/site"
+          node scripts/check-inkwave-runtime-performance.mjs --site "$DIAGNOSTIC_STORAGE/site" --evidence-dir "$DIAGNOSTIC_STORAGE/probe" --playwright "$GITHUB_WORKSPACE/node_modules/playwright/index.mjs" --source-sha "$SOURCE_SHA" --fixed-only --parity-only --quality high --verify-render
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: inkwave-render-diagnostic-${{ inputs.source_sha || github.sha }}
+          if-no-files-found: warn
+          path: ${{ env.DIAGNOSTIC_STORAGE }}/probe/
           retention-days: 14
