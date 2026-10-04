@@ -307,7 +307,7 @@
       "armorHP": 100,
       "jumpVelocity": 9.4,
       "chainRetention": 0.85,
-      "chainReset": 1
+      "chainReset": 1.5
     },
     "surge": {
       "chargeTime": 0.75,
