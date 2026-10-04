@@ -1,3 +1,4 @@
+import { absorbSpawnDamage, spawnProtectionRemaining } from './respawn-lifecycle.mjs';
 let api, config;
 export function rollEligible(velocity, move, cfg) {
   const speed = Math.hypot(velocity.x, velocity.z), input = Math.hypot(move.x, move.z);
@@ -102,11 +103,19 @@ export function installMovement(context, tuning) {
   Actor.prototype.damage = function (amount, attacker, source) {
     if (this.invuln > 0 || !this.alive) return false;
     if (source !== 'ink') {
-      const state = movementState(this);
-      const action = state.roll?.armorTime > 0 ? state.roll : state.surge;
-      const left = absorbArmor(action, amount);
-      if (left !== amount) api.emit('actor:armorhit', { actor: this, absorbed: amount - left, broken: action.armorHP <= 0 });
-      amount = left;
+      // One armor admission owner: a spawn shield cannot stack a second
+      // 100-damage absorption with roll/surge on the same incoming hit.
+      if (this.s3?.spawnArmor && spawnProtectionRemaining(this) > 0) {
+        const shield = this.s3.spawnArmor, left = absorbSpawnDamage(this, amount, source, tuning.spawnArmor);
+        if (left !== amount) api.emit('actor:armorhit', { actor: this, absorbed: amount - left, broken: !this.s3.spawnArmor || shield.hp <= 0, kind: 'spawn' });
+        amount = left;
+      } else {
+        const state = movementState(this);
+        const action = state.roll?.armorTime > 0 ? state.roll : state.surge;
+        const left = absorbArmor(action, amount);
+        if (left !== amount) api.emit('actor:armorhit', { actor: this, absorbed: amount - left, broken: action.armorHP <= 0 });
+        amount = left;
+      }
     }
     return damage.call(this, amount, attacker, source);
   };

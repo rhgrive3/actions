@@ -39,6 +39,7 @@ import { installIdleMotion } from './idle-motion.mjs';
 import { installEmotesMotion } from './emotes-motion.mjs';
 import { installSpecialMotion } from './special-motion.mjs';
 import { installFaceMotion } from './face-motion.mjs';
+import { installRespawnLifecycle } from './respawn-lifecycle.mjs';
 import { installCarryMotion } from './carry-motion.mjs';
 
 let installed = false;
@@ -84,6 +85,7 @@ export function install(profile) {
   installSpecialMotion(api, profile);
   installFlowMotion(api);
   installFaceMotion(api, profile);
+  installRespawnLifecycle(api, profile);
   // Aim remains tied to the actual camera ray. No target-dependent auto-turn.
   DEFAULT_SETTINGS.aimAssist = 0; DEFAULT_SETTINGS.aimAssistMouse = false;
   PlayerController.prototype._assistTarget = () => null;

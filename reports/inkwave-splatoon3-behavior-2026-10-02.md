@@ -170,3 +170,7 @@ Flow の外殻・粒・リボンが GTAO の法線／深度パスに不透明な
 終了時に残っていた1textureはnative THREEの共有DFG_LUTで、compiled dfgLUT uniformから所有元を確認した。隔離された描画fixtureの終了時に実GL handleの存在と解放を測り、geometry/textureの残留0を確認する。ゲーム本体や共有shaderの実装変更ではなく、検証fixtureの管理対象を明示する修正である。これらのfocused診断は最終候補の全ケースCIを代用しない。
 
 停止姿勢の全画面beauty再描画では、実際の時計・骨・座標が同一でもnative fragmentの数pixelの色差が反復描画ごとに変化する。停止のモーション検証は、そのbeauty画像を両方保存したうえで、最終描画色だけを固定した別materialによる実GPU比較へ分けた。実際にコンパイルされたnative／比較側vertex shaderのSHA256一致、骨行列・pose・全node world行列・ゲーム時計の不変性、固定色画像の既存0差分条件を必須とする。各ケースで実rootを0.03動かす反例も描き、16pixel以上の変化を検出できない比較器は合格にしない。通常の全339描画ペア、Flow／壁のGTAO、表示中・中断・解放の検査はnative beauty shaderのままであり、この停止の比較を本家の画像一致の証拠にはしない。
+
+## 2026-10-04 死亡・復活状態バッチ（#192/#286/#313/#162）
+
+base `404c66c858cfea14e81225fb6364febcf2c9c528`。詳細は [respawn-lifecycle-batch-2026-10-04.md](respawn-lifecycle-batch-2026-10-04.md)。死亡後に確定したSP値だけを通常respawnを越えて保持し、HUDの数値/ringは最終Actor timerへ追従。人間のheld入力は物理release後に再armする方針を明示。respawn防御を30耐久/100単発閾値の有限状態にし、時計と既存coating/proxy表示を接続。本家アーマー資料の235F/20FはWiki由来で、別出典の最大0.5秒との食い違いと実launch起点の未確認を残す。照準spawn/初回launch（#273/#308）・原因別復活時間は別件。純ロジック/公開関数テストと実ブラウザ/端末実機の検証範囲を分ける。

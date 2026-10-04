@@ -373,7 +373,8 @@
       "Surge burst velocity/armor/partial charge and post-wall air control (including the Ver.11.3.0 lateral-distance fix); 45F base charge timing is pinned",
       "HP regen delay/rate and enemy ink grace/contact-damage recovery; post-movement contact and partial-tick grace arithmetic are regression-verified only",
       "superjump airborne vulnerability window/trajectory/landing paint and respawn timing/armor; raw 80F preparation/138F flight are pinned and landing protection is removed per Nintendo 9.3.0 fix",
-      "aim response, gyro, animation, terrain/network and physical-device validation; see movement-resources comparison matrix and Switch/iOS/two-peer measurement protocol"
+      "aim response, gyro, animation, terrain/network and physical-device validation; see movement-resources comparison matrix and Switch/iOS/two-peer measurement protocol",
+      "spawn armor break-delay 20F follows S3 verification Wiki (Ver2.1.0 section), while 2025-02-21 mashita describes up to 0.5s; new Switch measurement and spawn-launch lifecycle/235F origin remain unverified"
     ],
     "movementResourcesEvidence": "reports/inkwave-movement-resources-2026-10-02.md"
   },
@@ -1254,5 +1255,11 @@
     "leanMax": 0.16,
     "leanFrequency": 3.2,
     "footPitchRate": 8
+  },
+  "spawnArmor": {
+    "hp": 30,
+    "maxAbsorb": 100,
+    "duration": 3.9166666666666665,
+    "breakDelay": 0.3333333333333333
   }
 }

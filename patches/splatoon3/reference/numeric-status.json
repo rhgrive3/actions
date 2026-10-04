@@ -2178,5 +2178,25 @@
     "value": 8,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
+  },
+  "spawnArmor.hp": {
+    "value": 30,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "spawnArmor.maxAbsorb": {
+    "value": 100,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "spawnArmor.duration": {
+    "value": 3.9166666666666665,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "spawnArmor.breakDelay": {
+    "value": 0.3333333333333333,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
   }
 }

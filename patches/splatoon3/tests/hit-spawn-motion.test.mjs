@@ -87,7 +87,7 @@ function grip(r, side = 'R') {
 }
 function gameplay(r) {
   const a = r.a, runner = a.weaponRunner;
-  return { alive: a.alive, hp: a.hp, ink: a.ink, special: a.special, invuln: a.invuln,
+  return { alive: a.alive, hp: a.hp, ink: a.ink, special: a.special, invuln: a.invuln, spawnArmor: a.s3?.spawnArmor ? { ...a.s3.spawnArmor } : null,
     respawnTimer: a.respawnTimer, form: a.form, grounded: a.grounded,
     pos: a.pos.toArray(), vel: a.vel.toArray(), root: r.ch.root.position.toArray(),
     rootQuaternion: r.ch.root.quaternion.toArray(), input: { ...a.intent, move: a.intent.move.toArray() },
@@ -180,9 +180,9 @@ test('spawn coating uses native physical shaders, geometry and LOD, expires with
   try {
     const meshes = r.ch.lodSets[r.ch.lod.tier].list;
     const geometries = meshes.map(m => m.geometry), skeleton = r.ch.skeleton;
-    const original = gameplay(r); r.a.respawn(); const protection = r.a.invuln;
+    const original = gameplay(r); r.a.respawn(); const protection = r.a.s3.spawnArmor.remaining;
     r.visual(.1); assert.equal(r.snapshot().phase, 'protected'); assert.ok(r.snapshot().coating > .8);
-    assert.equal(r.a.invuln, protection); assert.equal(r.ch.skeleton, skeleton);
+    assert.equal(r.a.s3.spawnArmor.remaining, protection); assert.equal(r.ch.skeleton, skeleton);
     assert.deepEqual(meshes.map(m => m.geometry), geometries);
     assert.deepEqual(Array.from(r.ch.u.uFlash.value.toArray()), [0, 0, 0]);
     for (const kind of ['skin', 'cloth', 'hair', 'squid', 'squidGhost']) {
@@ -213,10 +213,10 @@ test('spawn coating uses native physical shaders, geometry and LOD, expires with
     assert.equal((program.fragmentShader.match(/uniform float uS3SpawnCoating/g) || []).length, 1);
     assert.equal(program.uniforms.uLodFade, r.ch.lod.fadeOut);
     assert.ok(program.fragmentShader.includes('discard'));
-    r.a.invuln = .05; r.visual(0); assert.equal(r.snapshot().phase, 'expiry');
+    r.a.s3.spawnArmor.remaining = .05; r.visual(0); assert.equal(r.snapshot().phase, 'expiry');
     assert.ok(r.snapshot().coating > 0 && r.snapshot().coating < .8);
     evidenceRows.push({ stage: 'spawn-coating-and-expiry', native: posed(r), invuln: r.a.invuln }); saveTrace();
-    r.a.invuln = 0; r.visual(0); assert.equal(r.snapshot().phase, 'off'); assert.equal(program.uniforms.uS3SpawnCoating.value, 0);
+    r.a.s3.spawnArmor = null; r.visual(0); assert.equal(r.snapshot().phase, 'off'); assert.equal(program.uniforms.uS3SpawnCoating.value, 0);
     r.a.invuln = 1; r.visual(.013); assert.equal(r.snapshot().spawnProtection, false);
     assert.ok(r.ch.u.uFlash.value.r > 0, 'non-spawn invulnerability keeps the native flash');
     assert.equal(original.hp, r.a.hp);
@@ -229,10 +229,10 @@ test('direct 30/60/120Hz native frames follow the same spawn protection duration
     const r = rig(api);
     try {
       r.a.respawn(); r.a.grounded = true; r.a.vel.set(0, 0, 0);
-      const duration = r.a.invuln;
-      for (let i = 0; i < hz * 2; i++) r.step(1 / hz);
+      const duration = r.a.s3.spawnArmor.remaining;
+      for (let i = 0; i < hz * 4; i++) r.step(1 / hz);
       assert.equal(r.a.invuln, 0); assert.equal(r.snapshot().phase, 'off');
-      assert.equal(duration, api.PLAYER.spawnInvuln);
+      assert.equal(duration, api.profile.spawnArmor.duration);
       const output = posed(r); assert.ok(output.pose.every(Number.isFinite));
       assert.ok(output.nativeIK.every(Number.isFinite)); assert.ok(output.geometry.length > 0);
       const before = gameplay(r); r.visual(0); assert.deepEqual(gameplay(r), before);
@@ -283,7 +283,7 @@ test('reset, death, special, weapon/sub/action interruption and form returns can
     assert.equal(r.snapshot().phase, 'off');
     r.a.respawn(); r.visual(); r.a.splat(null); assert.equal(r.snapshot().coating, 0);
     r.a.respawn(); r.visual(); assert.ok(r.snapshot().coating > 0);
-    assert.equal(r.a.invuln, api.PLAYER.spawnInvuln); assert.equal(r.a.hp, api.PLAYER.hp);
+    assert.equal(r.a.invuln, 0); assert.equal(r.a.s3.spawnArmor.hp, 30); assert.equal(r.a.hp, api.PLAYER.hp);
   } finally { r.close(); }
 });
 

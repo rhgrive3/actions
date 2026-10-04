@@ -32,7 +32,7 @@ if(process.argv.includes('--exact-source')) {
   });
   Object.entries(manifest.files).forEach(([key,expected],i)=>{if(hash(fs.readFileSync(path.join(ROOT,files[i])))!==expected)throw new Error('Build input differs from manifest: '+key);});
   if(hash(fs.readFileSync(path.join(ROOT,'scripts/build-inkwave.mjs')))!==manifest.build.script)throw new Error('Build pipeline mismatch');
-  files.push('scripts/build-inkwave.mjs');
+  files.push('scripts/build-inkwave.mjs', 'scripts/check-inkwave-browser.mjs');
   const blobs=execFileSync('git',['hash-object','--',...files],{cwd:ROOT,encoding:'utf8'}).trim().split('\n');
   files.forEach((file,i)=>{if(blobs[i]!==tree.get(file))throw new Error('Build input differs from commit: '+file);});
 }
@@ -163,6 +163,35 @@ try {
     if(!flow.activePresentation.visible||flow.activePresentation.aliveParticles<1||flow.inactivePresentation.visible||flow.inactivePresentation.phase!=='off')throw Error('Compiled Flow exterior did not follow actual actor state');
     return {fixture:'loaded match Actor/WeaponRunner -> complete Character; fixed pose position; Chromium WebGL',dualies,slosher:{windup,firstWindupFrames,releaseFrames},reset,flow};
   });
+  result.respawnHud = await page.evaluate(() => {
+    const G = globalThis.s3ProbeG, g = G.game, a = g.match.local, hud = g.hud;
+    a.setWeapon('roller'); a.reset(); a.special = 160;
+    a.s3.previousLifeNoSplat = true; a.s3.splatsThisLife = 0; a.s3.modifiers.quickRespawn = 1/3;
+    a._prevIntent.fire = true; a.intent.fire = true;
+    a.splat(g.match.actors.find(x => x.team !== a.team));
+    const st = hud._splatted; hud._fxMap.get('splatted')();
+    if (st.actor !== a || Math.abs(st.t-a.respawnTimer)>1e-10 || st.num.textContent !== String(Math.ceil(a.respawnTimer)) || st.ring.style.animation !== 'none')
+      throw Error('Compiled death HUD does not follow final actor timer');
+    const initial = st.t; hud._fxTime += 100; hud._fxMap.get('splatted')();
+    if (st.t !== initial) throw Error('Independent HUD FX time consumed death timer');
+    a.respawnTimer /= 2; hud._fxMap.get('splatted')();
+    if (Math.abs(Number(st.ring.style.strokeDashoffset)/st.circumference-.5)>1e-10) throw Error('Compiled death ring desynchronized');
+    return { initial, remaining: st.t, number: st.num.textContent, ringRatio: Number(st.ring.style.strokeDashoffset)/st.circumference, special: a.special };
+  });
+  await page.screenshot({path:path.join(evidence,'respawn-authoritative-countdown.png'),animations:'disabled',timeout:90000});
+  result.respawnLifecycle = await page.evaluate(() => {
+    const G=globalThis.s3ProbeG, g=G.game, a=g.match.local, dt=1/60;
+    const enemy=g.match.actors.find(x=>x.team!==a.team); a.respawn();
+    if(a.special!==80 || a.invuln!==0 || a.s3.spawnArmor.hp!==30 || g.hud._splatted) throw Error('Compiled respawn state/HUD boundary');
+    const tick=()=>{G.time+=dt;g.match.controller.update(dt);a.update(dt);};
+    g.input.mouse.left=true;
+    for(let i=0;i<65;i++){tick();if(a.weaponRunner.rolling||a.weaponRunner.flick>=0)throw Error('Held input bypassed respawn rearm');}
+    const ink=a.ink; g.input.mouse.left=false;tick();g.input.mouse.left=true;tick();g.input.mouse.left=false;
+    if(a.weaponRunner.flick<0 || Math.abs(a.ink-(ink-a.weapon.flickInk))>1e-9)throw Error('Fresh post-respawn press did not pay/start flick');
+    const spent=ink-a.ink; a.respawn(); a.damage(160,enemy,'charger');
+    if(a.hp!==40 || a.s3.spawnArmor!==null)throw Error('Compiled spawn armor did not pass 60 overflow');
+    return { retainedSpecial:80, heldTicks:65, freshFlick:true, inkSpent:spent, overflowHp:a.hp, fixture:'actual loaded Actor/Controller/HUD; fixed simulation steps; normal raw mouse hold' };
+  });
   result.status = 'passed';
 } catch (error) {
   result = { ...(result || {}), status: 'failed', error: error.message };
@@ -172,7 +201,7 @@ try {
 
   result.sourceSha = sourceSha; result.verifiedResponses = receipts.length;
   result.verifiedRuntimeFiles = [...new Set(receipts)].sort();
-  for (const required of ['patches/splatoon3/bootstrap.mjs','patches/splatoon3/profile.json','patches/splatoon3/runtime/install.mjs','patches/splatoon3/runtime/weapons.mjs','patches/splatoon3/runtime/movement.mjs','patches/splatoon3/runtime/walk.mjs','patches/splatoon3/runtime/roller.mjs','patches/splatoon3/runtime/movement-motion.mjs','patches/splatoon3/runtime/weapon-motion.mjs','patches/splatoon3/runtime/bomb-motion.mjs','patches/splatoon3/runtime/flow-motion.mjs','patches/splatoon3/runtime/weapon-detail-motion.mjs','src/main.js','src/game/actor.js','src/game/character.js','src/game/weapons.js']) if(!receipts.includes(required)) errors.push('Required runtime was not verified: '+required);
+  for (const required of ['patches/splatoon3/bootstrap.mjs','patches/splatoon3/profile.json','patches/splatoon3/runtime/install.mjs','patches/splatoon3/runtime/weapons.mjs','patches/splatoon3/runtime/movement.mjs','patches/splatoon3/runtime/walk.mjs','patches/splatoon3/runtime/roller.mjs','patches/splatoon3/runtime/movement-motion.mjs','patches/splatoon3/runtime/weapon-motion.mjs','patches/splatoon3/runtime/bomb-motion.mjs','patches/splatoon3/runtime/flow-motion.mjs','patches/splatoon3/runtime/weapon-detail-motion.mjs','patches/splatoon3/runtime/respawn-lifecycle.mjs','src/ui/hud.js','src/main.js','src/game/actor.js','src/game/character.js','src/game/weapons.js']) if(!receipts.includes(required)) errors.push('Required runtime was not verified: '+required);
   if(errors.length || consoleErrors.length || failures.length) result.status = 'failed';
   result.errors = errors; result.consoleErrors = consoleErrors; result.requestFailures = failures;
   fs.writeFileSync(evidence + '/browser-result.json.writing', JSON.stringify(result, null, 2));
