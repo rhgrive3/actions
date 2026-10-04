@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 const workflow = fs.readFileSync(new URL('../../.github/workflows/validate-inkwave-update.yml', import.meta.url), 'utf8');
 test('integration retains immutable source and downloaded artifact identity checks', () => {
-  assert.equal((workflow.match(/ref: \$\{\{ inputs.source_sha \|\| github.sha \}\}/g) || []).length, 2);
+  assert.equal((workflow.match(/ref: \$\{\{ inputs.source_sha \|\| github.sha \}\}/g) || []).length, 3);
   assert.ok(workflow.includes('test "$(git rev-parse HEAD)" = "$SOURCE_SHA"'));
   assert.ok(workflow.includes('test "$(cat .built-site/_site-source-sha.txt)" = "$SOURCE_SHA"'));
   assert.ok(workflow.includes("assert reports['game/browser-result.json']['sourceSha']==os.environ['SOURCE_SHA']"));
@@ -53,4 +53,12 @@ test('GPU completion fence precedes paint probes outside all fixed profile windo
  assert(profile>=0&&profile<fence&&fence<parity&&parity<paint);
  assert.match(source,/page\.screenshot\(\{path:path\.join\(evidence,`ring-prime-\$\{repeat\}\.png`\),timeout:900000\}\)/);
  assert(900000>132545,'capture budget exceeds the observed132.5s Software GPU spike');
+});
+
+test('isolated render diagnosis cannot replace full acceptance jobs or emit passing browser receipt',()=>{
+ assert(workflow.includes('if: inputs.diagnostic_only != true'));
+ const diagnostic=workflow.slice(workflow.indexOf('  render-diagnostic:'));
+ assert(diagnostic.includes('if: inputs.diagnostic_only == true'));
+ assert(diagnostic.includes('--parity-only --quality high --verify-render'));
+ assert(!diagnostic.includes('ci-result.json'));assert(!diagnostic.includes('inkwave-browser-'));
 });

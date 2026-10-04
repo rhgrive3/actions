@@ -27,12 +27,17 @@ on:
         description: Full immutable commit SHA to verify
         required: true
         type: string
+      diagnostic_only:
+        description: Run isolated render repeatability diagnosis (never full acceptance)
+        type: boolean
+        default: false
 permissions:
   contents: read
 env:
   SOURCE_SHA: ${{ inputs.source_sha || github.sha }}
 jobs:
   validate:
+    if: inputs.diagnostic_only != true
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -263,4 +268,43 @@ jobs:
           include-hidden-files: true
           if-no-files-found: error
           path: ${{ env.CI_STORAGE }}/evidence/
+          retention-days: 14
+
+  render-diagnostic:
+    if: inputs.diagnostic_only == true
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source_sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Prepare persistent diagnostic storage and exact source
+        run: |
+          [[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          diagnostic_storage=/mnt/workspace/.dev-state/agent-work/evidence/inkwave-runtime-diagnostic-${{ github.run_id }}
+          test "$(realpath -m "$diagnostic_storage")" = "$diagnostic_storage"
+          sudo mkdir -p "$diagnostic_storage"
+          sudo chown "$(id -u):$(id -g)" "$diagnostic_storage"
+          echo "DIAGNOSTIC_STORAGE=$diagnostic_storage" >> "$GITHUB_ENV"
+          mkdir -p "$GITHUB_WORKSPACE/.ci-scratch" "$GITHUB_WORKSPACE/.playwright"
+          echo "TMPDIR=$GITHUB_WORKSPACE/.ci-scratch" >> "$GITHUB_ENV"
+          echo "TMP=$GITHUB_WORKSPACE/.ci-scratch" >> "$GITHUB_ENV"
+          echo "TEMP=$GITHUB_WORKSPACE/.ci-scratch" >> "$GITHUB_ENV"
+          echo "PLAYWRIGHT_BROWSERS_PATH=$GITHUB_WORKSPACE/.playwright" >> "$GITHUB_ENV"
+      - name: Build and diagnose (not an acceptance benchmark)
+        run: |
+          npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
+          ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js" node scripts/build-inkwave.mjs inkwave-public "$DIAGNOSTIC_STORAGE/site"
+          node scripts/check-inkwave-runtime-performance.mjs --site "$DIAGNOSTIC_STORAGE/site" --evidence-dir "$DIAGNOSTIC_STORAGE/probe" --playwright "$GITHUB_WORKSPACE/node_modules/playwright/index.mjs" --source-sha "$SOURCE_SHA" --fixed-only --parity-only --quality high --verify-render
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: inkwave-render-diagnostic-${{ inputs.source_sha || github.sha }}
+          if-no-files-found: warn
+          path: ${{ env.DIAGNOSTIC_STORAGE }}/probe/
           retention-days: 14

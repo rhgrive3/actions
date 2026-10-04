@@ -13,7 +13,7 @@ const site=fs.realpathSync(path.resolve(option('--site'))), evidence=persistentD
 const root=fileURLToPath(new URL('../',import.meta.url));
 const sourceSha=option('--source-sha',execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim());
 const manifest=verifyRuntimeBuild(site,root,sourceSha);
-const menuOnly=process.argv.includes('--menu-only'), fixedOnly=process.argv.includes('--fixed-only'), inputOnly=process.argv.includes('--input-only');
+const menuOnly=process.argv.includes('--menu-only'), fixedOnly=process.argv.includes('--fixed-only'), inputOnly=process.argv.includes('--input-only'), parityOnly=process.argv.includes('--parity-only');
 const receipts=new Set();
 const {chromium}=await import(pathToFileURL(option('--playwright',process.env.PLAYWRIGHT_MODULE)).href);
 const mime={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json','.woff2':'font/woff2','.png':'image/png','.webp':'image/webp'};
@@ -41,9 +41,10 @@ try{
  result.active=await page.evaluate(()=>{const gl=probeG.renderer?.getContext(),ext=gl?.getExtension('WEBGL_debug_renderer_info');return{baseURI:document.baseURI,mode:probeG.mode,browser:navigator.userAgent,dpr:devicePixelRatio,renderer:ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):null,gpuTimerQuery:!!gl?.getExtension('EXT_disjoint_timer_query_webgl2')};});
  result.environment.browser=await context.browser().version();result.environment.seed=20261004;checkpoint();
  if(fixedOnly&&!menuOnly)await page.evaluate(()=>{probeG.game.debug.freeze();probeG.game.R.setDynamicScale(1);});
+ if(parityOnly)await page.evaluate(async()=>{const g=probeG.game;await g.startMatch({mapId:'tidewater',difficulty:'easy',duration:180,mode:'turf'});g.debug.freeze();g.debug.freezeBots();g._skipRender=true;for(let i=0;i<270;i++)g._frame(1/60);g._skipRender=false;g.R.render();});
  if(!result.active.baseURI.includes(result.revision))throw Error('Active revision mismatch');
  const cdp=await context.newCDPSession(page);await cdp.send('Performance.enable');
- for(const scenario of (inputOnly?[]:menuOnly?['title','settings']:['title','settings','battle'])){
+ for(const scenario of (inputOnly||parityOnly?[]:menuOnly?['title','settings']:['title','settings','battle'])){
   await page.evaluate(async scenario=>{const g=probeG.game;g.menus.wipe.cancel();if(scenario==='battle'){window.resetRuntimeSeed();await g.startMatch({mapId:'tidewater',difficulty:'easy',duration:180,mode:'turf'});g.debug.freezeBots();}else g.menus.show(scenario,{wipe:false,light:false});},scenario);
   await page.bringToFront();if(fixedOnly)await page.evaluate(scenario=>{const g=probeG.game;g.debug.freeze();g._skipRender=true;g.s3Clock?.reset();for(let i=0;i<(scenario==='battle'?270:30);i++)g._frame?.(1/60);g._skipRender=false;if(scenario==='battle'&&g.match.state!=='playing')throw Error('Battle warmup did not reach playing');},scenario);else await page.waitForTimeout(3000);console.log('Scenario ready '+scenario);if(scenario==='battle')await page.evaluate(()=>probeG.game.debug.fire(true));
   // Instrument actual owners, retaining their receiver and return values.
@@ -75,12 +76,12 @@ try{
     // Fresh transform FIRST: a missing initial update must fail, even when an
     // earlier frozen image had valid matrices. This modifies only the render fixture.
     moving.position.x=oldX+.1*(i+1);r.shadowMap.needsUpdate=true;G.env._reflFrame=-1;
-    g.R.render();const a=read();
+    g.R.render();const a=read();g.R.render();const optimizedRepeat=read();
     r.render=function(scene,camera){if(scene===G.scene&&!scene.matrixWorldAutoUpdate)scene.updateMatrixWorld();return native.call(this,scene,camera);};
-    let b;try{r.shadowMap.needsUpdate=true;G.env._reflFrame=-1;g.R.render();b=read();}finally{r.render=native;}
-    let changed=0,maxDelta=0;
-    for(let j=0;j<a.length;j++)if(a[j]!==b[j]){changed++;maxDelta=Math.max(maxDelta,Math.abs(a[j]-b[j]));}
-    out.push({repeat:i,width:w,height:h,changedChannels:changed,maxDelta,nonempty:a.some(v=>v!==0),freshTransform:Math.abs(moving.matrixWorld.elements[12]-moving.position.x)<1e-6,sceneAutoRestored:G.scene.matrixWorldAutoUpdate});
+    let b,nativeRepeat;try{r.shadowMap.needsUpdate=true;G.env._reflFrame=-1;g.R.render();b=read();g.R.render();nativeRepeat=read();}finally{r.render=native;}
+    let changed=0,maxDelta=0,optimizedRepeatChanges=0,nativeRepeatChanges=0;
+    for(let j=0;j<a.length;j++){if(a[j]!==b[j]){changed++;maxDelta=Math.max(maxDelta,Math.abs(a[j]-b[j]));}if(a[j]!==optimizedRepeat[j])optimizedRepeatChanges++;if(b[j]!==nativeRepeat[j])nativeRepeatChanges++;}
+    out.push({repeat:i,width:w,height:h,changedChannels:changed,maxDelta,optimizedRepeatChanges,nativeRepeatChanges,nonempty:a.some(v=>v!==0),freshTransform:Math.abs(moving.matrixWorld.elements[12]-moving.position.x)<1e-6,sceneAutoRestored:G.scene.matrixWorldAutoUpdate});
    }}finally{moving.position.x=oldX;r.render=native;G.scene.updateMatrixWorld();}
    return out;
   });
