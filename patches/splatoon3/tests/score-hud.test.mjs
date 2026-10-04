@@ -9,6 +9,7 @@ import { adaptReliability } from '../../reliability/adapter.mjs';
 import { adaptQualitySource } from '../../local-quality/adapter.mjs';
 import { turfExperience, turfExperienceBreakdown } from '../runtime/results-scoring.mjs';
 import { updateHealthBars } from '../runtime/combat-info.mjs';
+import { installUi } from '../runtime/ui.mjs';
 const ROOT = new URL('../../../', import.meta.url);
 const composed = rel => adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, fs.readFileSync(new URL('inkwave-public/' + rel, ROOT), 'utf8')))));
 const section = (s, start, end) => { const a = s.indexOf(start), b = s.indexOf(end, a); assert.ok(a >= 0 && b > a); return s.slice(a, b); };
@@ -166,4 +167,18 @@ test('#231 remote health samples start the same damage window once and respawn c
   nm.applyRemote(enemy, 3); assert.equal(f.healthActorVisible(enemy, a, { visible: true }), false, 'repeated same sample does not restart the window');
   enemy.s3.revealedUntil = { 0: 99 }; nm._remoteRespawn(enemy);
   assert.equal(enemy.lastDamage, 99); assert.equal(enemy.s3.revealedUntil, undefined); assert.equal(f.healthActorVisible(enemy, a, { visible: true }), false);
+});
+
+
+test('production UI installer owns health rendering exactly once, even when menu fitting already exists', () => {
+  class Node { constructor() { this.children = []; this.style = { setProperty() {} }; } appendChild(x) { this.children.push(x); this.firstChild ||= x; } setAttribute() {} }
+  const old = globalThis.document; globalThis.document = { createElement: () => new Node() };
+  try {
+    class HUD { constructor() { this.markerLayer = new Node(); this.calls = 0; } update() { this.calls++; return 7; } }
+    class Menus { _fitAll() {} }
+    const api = { HUD, Menus }; installUi(api); const update = HUD.prototype.update; installUi(api); assert.equal(HUD.prototype.update, update);
+    const hud = new HUD(); assert.equal(hud.update(1 / 60, { healthMarkers: [{ x: 10, y: 20, hp: .5 }] }), 7);
+    assert.equal(hud.calls, 1); assert.equal(hud.markerLayer.children.length, 1);
+    hud.update(1 / 60, {}); assert.equal(hud._healthBars[0].hidden, true);
+  } finally { globalThis.document = old; }
 });

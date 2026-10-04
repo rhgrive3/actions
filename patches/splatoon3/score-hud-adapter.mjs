@@ -41,8 +41,7 @@ export function adaptScoreHud(rel, code) {
   if (rel === 'src/ui/hud.js') {
     code = replaceOnce(code, '  _onSplatted({ victim, attacker }) {', '  _onSplatted({ victim, attacker, assists = [] }) {', 'authoritative assist card');
     code = replaceOnce(code, 'me && attacker && attacker.team === me.team && K.dealt.has(victim) && now - K.dealt.get(victim) < 4', 'me && assists.includes(me)', 'shared assist admission');
-    code = replaceOnce(code, '    this._updMarkers(f.markers);', '    this._updMarkers(f.markers);\n    updateHealthBars(this, f.healthMarkers);', 'health bar rendering');
-    return "import { updateHealthBars } from '../../patches/splatoon3/runtime/combat-info.mjs';\n" + code;
+    return code;
   }
   if (rel === 'src/ui/menus.js') {
     code = replaceOnce(code, '    const bd = [];\n    if (self) {', '    const bd = [];\n    if (self && !boss) {\n      const parts = turfExperienceBreakdown(self.turf || 0, win);\n      if (parts.reduce((n, p) => n + p[1], 0) === xp.gained) bd.push(...parts);\n    }\n    if (self && boss) {', 'rank XP breakdown');
