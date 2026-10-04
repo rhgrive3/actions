@@ -108,3 +108,7 @@
 - ユーザー指摘「正面で首が曲がっている」: 首の左のふちが下ほど内側（197 → 202）。`neck_widen` を下（えりの近く y -108〜-122）で弱めていたため。y を [-132,-118,-72,-62] にのばす試し（Y1、Y2）。
 - 代わり: 首の前の上の方を前に出す（`neck_widen.lean` +8 / +12 mm、y [-102,-90]）。あごの下の面は動かさない（Z1、Z2）。
 - 10/04: Z1（fillet なし、`neck_widen.lean` +8 mm y [-102,-90]、`neck_widen.y` [-132,-118,-72,-62]）がいちばん良い。正面: あごの下の帯・ギザギザなし、首の左のふちがまっすぐ（197）。横: あごの下 450/449/444（参照 454/448/446）。残り: 横の首の表面の小さなしわ（首を動かす量が向きで変わるため）→ `neck_widen.smooth`（Blender Smooth）をためす（Z1s 0.5×10、Z1t 0.5×30）。params は Z1。
+- 10/04 朝（再起動のあと）: 作業用リポジトリは消えない場所 `/mnt/workspace/.dev-state/agent-work/checkouts/inkjaw`（/mnt/workspace/actions の worktree）。/tmp/inkjaw・/tmp/inkjaw-work・/tmp/jawtools はそこへのリンク（再起動で消えたら `ln -sfn` で作り直す。中身は消えない: 作業は `scratch/inkjaw-work`）。
+- ユーザー: 「拡大するとまだガタガタ。線を引けば分かる。顎から首が滑らかなカーブじゃない」。新しい道具 `curve.py OUT DIR..`（頭の中の点から放射状に輪郭をとり、参照=水色・モデル=赤で描く。正面左右と横）。
+- 原因: 首（BODY_torso）の輪が約 9 mm おき（辺 9 mm）。顎と首の角は首の上にあり、その輪でしか曲がれない（顔も jaw_tuck で首にのるので同じ）。
+  → `neck_widen.subdivide` {levels, smooth}（編集モードの Subdivide、body_shape のおへそと同じやり方）と `neck_widen.cove` {mm}（首の点を、真上の顔の下面までの距離 h で、R - sqrt(R² - (R-h)²) だけ法線の向きに出す = 半径 R の丸い内角）。試し S1（細分化だけ）、C8、C12（lean のかわりに cove）。

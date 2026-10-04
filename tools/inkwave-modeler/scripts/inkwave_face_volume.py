@@ -2116,8 +2116,25 @@ def main():
                 # (Blender's Displace), full from y[1] to y[2], faded out over y[0] (in the collar) and y[3]
                 # (inside the head).  Before jaw_tuck, which lays the jaw on this neck
                 neck = bpy.data.objects[NECK]
-                nl = M.to_local(er.world(neck)) * 1000
                 y0, y1, y2, y3 = step['y']
+                if step.get('subdivide'):
+                    # the neck's rings are ~9 mm apart: the jaw -> neck corner (and the face laid on the neck by
+                    # jaw_tuck) can only bend at those rings and reads as a kink.  Edit-mode Subdivide (built-in,
+                    # smooth > 0 puts the new points on the round surface) of the neck part that is moved here
+                    sd = step['subdivide']
+                    for _ in range(sd['levels']):
+                        nl = M.to_local(er.world(neck)) * 1000
+                        inb = (nl[:, 1] > y0 - 9) & (nl[:, 1] < y3 + 9) & (np.abs(nl[:, 0]) < 70) & (np.abs(nl[:, 2]) < 70)
+                        bm = bmesh.new()
+                        bm.from_mesh(neck.data)
+                        bm.verts.ensure_lookup_table()
+                        edges = list({e for f in bm.faces if all(inb[v.index] for v in f.verts) for e in f.edges})
+                        bmesh.ops.subdivide_edges(bm, edges=edges, cuts=1, use_grid_fill=True, smooth=sd.get('smooth', 1.0))
+                        bm.to_mesh(neck.data)
+                        bm.free()
+                        neck.data.update()
+                    print('FACE_VOLUME', step['name'], 'neck subdivided: vertices', len(neck.data.vertices))
+                nl = M.to_local(er.world(neck)) * 1000
                 wn = np.clip((nl[:, 1] - y0) / (y1 - y0), 0, 1) * np.clip((y3 - nl[:, 1]) / (y3 - y2), 0, 1)
                 wn = wn * wn * (3 - 2 * wn) * (np.abs(nl[:, 0]) < 60) * (np.abs(nl[:, 2]) < 60)
                 wy = wn.copy()
@@ -2159,6 +2176,27 @@ def main():
                 amounts = per * wn
                 if step.get('lean'):
                     amounts = amounts + ln['mm'] * wl
+                if step.get('cove'):
+                    # a rounded inside corner under the jaw (the reference's jaw runs into the neck in one curve):
+                    # each neck point h mm under the face (ray straight up in the head frame, hitting the face's
+                    # underside from below) goes out along its normal by R - sqrt(R^2 - (R - h)^2), a quarter
+                    # circle of radius R: R at the face, 0 and tangent to the neck at h = R
+                    R = step['cove']['mm']
+                    bvh = BVHTree.FromPolygons([tuple(v) for v in er.world(face)], [tuple(pl.vertices) for pl in face.data.polygons])
+                    up = M.to_world(np.array([[0, 1.0, 0]]))[0] - M.to_world(np.zeros((1, 3)))[0]
+                    up = Vector(up / np.linalg.norm(up))
+                    Wn = er.world(neck)
+                    h = np.full(len(Wn), np.inf)
+                    for i in np.nonzero(wy > 0)[0]:
+                        loc_h, nrm, _, dist = bvh.ray_cast(Vector(Wn[i]), up, 0.05)
+                        if loc_h is not None and nrm.dot(up) < 0:
+                            h[i] = dist * 1000
+                    t = np.clip(1 - h / R, 0, 1)
+                    cove = R - np.sqrt(np.maximum(R * R - (R * t) ** 2, 0))
+                    cove[t <= 0] = 0.0
+                    cove *= step['cove'].get('scale', 1.0)
+                    amounts = amounts + cove * (wy > 0)
+                    print('FACE_VOLUME', step['name'], 'cove vertices', int((cove > 0.01).sum()), 'max mm', round(float(cove.max()), 2))
                 for sign in (1, -1):
                     part = np.maximum(sign * amounts, 0)
                     if part.max() > 0:
