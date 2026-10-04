@@ -187,6 +187,14 @@ jobs:
       - name: Verify responsive menus in Chromium and WebKit
         if: matrix.suite == 'ui'
         run: node scripts/check-inkwave-responsive.mjs --source .built-site/_site --section all --evidence-dir "$CI_STORAGE/evidence/responsive" --profile-dir "$CI_STORAGE/cache/responsive"
+      - name: Preserve failed active browser diagnostics
+        if: failure() && matrix.suite == 'active'
+        uses: actions/upload-artifact@v4
+        with:
+          name: inkwave-active-failure-${{ inputs.source_sha || github.sha }}
+          path: ${{ env.CI_STORAGE }}/evidence/game/
+          if-no-files-found: ignore
+          retention-days: 14
       - name: Bind passing browser evidence to the tested commit
         run: |
           python3 - <<'PY'
