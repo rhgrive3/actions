@@ -6,27 +6,30 @@ import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import { adaptSource } from '../adapter.mjs';
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
-const UPSTREAM = process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
-export async function fixture({ adaptRuntime = (_rel, source) => source } = {}) {
-  const context = vm.createContext({ console, performance });
+const SITE = process.env.INKWAVE_EDGECASE_SITE;
+const UPSTREAM = SITE || process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
+export async function fixture() {
+  const math = Object.create(Math); math.random = Math.random;
+  const context = vm.createContext({ console, performance, Math: math });
   const modules = new Map();
   function resolve(spec, from) {
     if (spec === 'three') return path.join(UPSTREAM, 'vendor/three/build/three.module.js');
     let file = path.resolve(path.dirname(from), spec);
     if (file.startsWith(path.join(ROOT, 'inkwave-public/'))) file = path.join(UPSTREAM, path.relative(path.join(ROOT, 'inkwave-public'), file));
-    if (file.startsWith(path.join(UPSTREAM, 'patches/'))) file = path.join(ROOT, path.relative(UPSTREAM, file));
+    if (file.startsWith(path.join(UPSTREAM, 'patches/')) && !SITE) file = path.join(ROOT, path.relative(UPSTREAM, file));
+    if (SITE && file.startsWith(path.join(ROOT, 'patches/'))) file = path.join(SITE, path.relative(ROOT, file));
     if (file.startsWith(path.join(ROOT, 'src/'))) file = path.join(UPSTREAM, path.relative(ROOT, file));
     return file;
   }
   function load(file) {
     if (modules.has(file)) return modules.get(file);
     const relative = path.relative(UPSTREAM, file);
-    const native = file.startsWith(UPSTREAM + path.sep) ? adaptSource(relative, fs.readFileSync(file, 'utf8')) : fs.readFileSync(file, 'utf8');
-    const source = file.startsWith(UPSTREAM + path.sep) ? native : adaptRuntime(path.relative(ROOT, file), native);
+    const source = !SITE && file.startsWith(UPSTREAM + path.sep) ? adaptSource(relative, fs.readFileSync(file, 'utf8')) : fs.readFileSync(file, 'utf8');
     const mod = new vm.SourceTextModule(source, { context, identifier: file }); modules.set(file, mod); return mod;
   }
   const root = new vm.SourceTextModule(`
     export * from './inkwave-public/src/core/ctx.js';
+    export * from './inkwave-public/src/net/netmatch.js';
     export * from './inkwave-public/src/config.js';
     export * from './inkwave-public/src/game/actor.js';
     export * from './inkwave-public/src/game/weapons.js';
@@ -43,7 +46,7 @@ export async function fixture({ adaptRuntime = (_rel, source) => source } = {}) 
   `, { context, identifier: path.join(ROOT, 'fixture.mjs') });
   await root.link((spec, from) => load(resolve(spec, from.identifier))); await root.evaluate();
   const api = { ...root.namespace }, { G, THREE, PLAYER, WEAPONS, SUB, SPECIALS } = api;
-  const profile = JSON.parse(fs.readFileSync(path.join(ROOT, 'patches/splatoon3/profile.json'), 'utf8'));
+  const profile = JSON.parse(fs.readFileSync(path.join(SITE || ROOT, 'patches/splatoon3/profile.json'), 'utf8'));
   Object.assign(PLAYER, profile.player); Object.assign(SUB.bomb, profile.bomb);
   for (const [id, data] of Object.entries(profile.weapons)) Object.assign(WEAPONS[id], data);
   for (const install of ['installWeapons', 'installMovement', 'installGear', 'installFlow', 'installResources', 'installRendering']) api[install](api, profile);
@@ -69,5 +72,5 @@ export async function fixture({ adaptRuntime = (_rel, source) => source } = {}) 
     return a;
   }
   function tick(a, frames = 1) { for (let i = 0; i < frames; i++) { G.time += 1 / 60; a.update(1 / 60); } }
-  return { ...api, profile, make, tick, shots };
+  return { ...api, profile, make, tick, shots, setRandom: fn => { math.random = fn; } };
 }

@@ -128,3 +128,16 @@ the cancellation/older/newer scenarios). Expected winner1, cancellation,
 voice-stop, replacement and disposal assertions are unchanged. Mobile native
 acceptance is pending the newer head; prior active success is not reused as its
 proof.
+
+### Dependency stack for moving main
+
+At the integration owner's request, this branch now composes the prepared
+`26617884ecd4fc47ec7eabdbde745a5212e2a2d2` dependency head (PR397, including
+PR399/476). Those features remain owned by their original PRs. The HUD-only
+delta against that exact head is eight files, not a claim that this batch
+implemented its dependencies. The quality registry preserves idle, lobby,
+minimap, landing, first-touch and relayout alongside HUD authority. The active
+browser gate retains all idleLobby/hiddenMinimap/visibleMinimap assertions and
+the new HUD check. Both standalone Judd fixture corrections are retained.
+The combined build digest is `518a687a4b0d`; dedicated source/emitted 14/14 pass.
+Full stacked regression and latest-head browser CI remain under verification.
