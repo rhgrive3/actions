@@ -1,4 +1,4 @@
-// Issue #477 — build-only adapter and runtime helper:
+// Issue #477 — build-only adapter:
 // Splat Dualies 4F pre-roll startup before 12F roll movement.
 //
 // Reference: Splatoon 3 Ver. 11.3.0
@@ -11,8 +11,8 @@
 //   1. 12F movement clock (d.t) does NOT advance (held at 0).
 //   2. dodgeVel() does NOT own horizontal velocity (returns false) and does NOT apply roll displacement.
 //   3. Prior walk velocity is arrested upon initiating the roll; intent.move is zero-masked during startup.
-//   4. Motion phase is 'startup' with tumble = 0 (tumble rotation does not advance).
-//   5. The authoritative chosen roll direction is preserved deterministically.
+//   4. Motion phase is 'startup' with tumble = 0; actual bounded native tuck/pose is applied.
+//   5. Authoritative chosen roll direction and monotonic roll token are preserved deterministically.
 // - Movement phase:
 //   After 4F startup (at tick 5), dodgeVel() first owns horizontal velocity, phase becomes 'roll',
 //   and the 12F roll movement runs with exact 12F duration and unaltered total displacement.
@@ -20,10 +20,17 @@
 //   At completion, lockT = w.lockTime (32F turret) and s3Turret is engaged.
 //   Post-roll firing remains its own 4F gate (w.lockInterval = 4/60 s) and is not folded into startup.
 // - Remote replication:
-//   Remote proxy uses single clock advancement: initializes with 4F startup and advances startup
-//   before roll time, without double-advancement or skipping startup.
+//   Replicates authoritative roll token/phase/time via OPTIONAL NAMED sidecar ('rl') on owner snapshot.
+//   Preserves existing mandatory named 'l' life, sender/ownership/timestamp admission.
+//   No actor tuple extension (DraftPR328 reserves slot 21 for stats.specials; OwnPR495 reserves flagbit 20 for ready).
+//   Late packet displays current moving phase without fresh anticipation; stale packet cannot restart phase;
+//   chained rolls each carry genuine new startup token; remote presentation never applies gameplay damage/movement.
 // - Cancellation:
-//   Splat, special, super jump, and weapon change cancel startup and clear runner dodge state.
+//   Special activation only clears current Dualies dodge on successful special admission, preserving
+//   other weapons and failed special states. No broad reset.
+// - Physical measurement disclaimer:
+//   physicalNintendoanglesunmeasured: exact Nintendo Splatoon 3 joint angles remain unmeasured;
+//   existing rig calibrated tuck is applied.
 
 export const DUALIES_STARTUP_FRAMES = 4;
 export const DUALIES_STARTUP_SECONDS = 4 / 60; // 0.06666666666666667
@@ -33,6 +40,7 @@ export const DUALIES_LOCK_FRAMES = 32;
 export const DUALIES_LOCK_SECONDS = 32 / 60;
 export const DUALIES_POST_ROLL_FIRE_GATE_FRAMES = 4;
 export const DUALIES_POST_ROLL_FIRE_GATE_SECONDS = 4 / 60;
+export const PHYSICAL_NINTENDO_ANGLES_UNMEASURED = true;
 
 const EPS = 1e-10;
 
@@ -53,11 +61,11 @@ export function adaptIssue477Weapons(code) {
     'weapons tryDodge grounded check'
   );
 
-  // 2. tryDodge: attach 4F startup to runner.dodge and arrest prior walk velocity
+  // 2. tryDodge: attach 4F startup to runner.dodge, monotonic authoritative roll token, and arrest prior walk velocity
   code = replaceOnce(
     code,
     '    this._dodgeDir.set(move.x / ml, 0, move.z / ml);\n    this.dodge = { t: 0, dur: w.rollTime };',
-    '    this._dodgeDir.set(move.x / ml, 0, move.z / ml);\n    this.dodge = { t: 0, dur: w.rollTime, startup: 4 / 60, startupDur: 4 / 60 };\n    if (a.vel) { a.vel.x = 0; a.vel.z = 0; }',
+    '    this._dodgeDir.set(move.x / ml, 0, move.z / ml);\n    this._rollToken = (this._rollToken || 0) + 1;\n    this.dodge = { token: this._rollToken, t: 0, dur: w.rollTime, startup: 4 / 60, startupDur: 4 / 60 };\n    if (a.vel) { a.vel.x = 0; a.vel.z = 0; }',
     'weapons tryDodge 4F startup initialization'
   );
 
@@ -97,36 +105,121 @@ export function adaptIssue477Actor(code) {
     'actor _horizontal startup _ZERO_MOVE mask'
   );
 
-  // 2. Clear dodge and reset weapon runner on special activation
+  // 2. Clear current Dualies dodge only on special activation after successful special admission.
+  // Preserves other weapons and failed special native states (no blanket weaponRunner.reset()).
   code = replaceOnce(
     code,
     '    this.form = \'kid\';\n    this._setClimb(false);\n    emit(\'special:use\', { actor: this, id });',
-    '    this.form = \'kid\';\n    this._setClimb(false);\n    this.weaponRunner.reset();\n    emit(\'special:use\', { actor: this, id });',
-    'actor _startSpecial reset weaponRunner'
+    '    this.form = \'kid\';\n    this._setClimb(false);\n    if (this.weaponRunner?.dodge) this.weaponRunner.dodge = null;\n    emit(\'special:use\', { actor: this, id });',
+    'actor _startSpecial cancel current dualies dodge only'
   );
 
   return code;
 }
 
 export function adaptIssue477DualiesMotion(code) {
-  // In dualies-motion prepare: distinguish 'startup' from 'roll'
+  // 1. In dualies-motion prepare: distinguish 'startup' from 'roll'
   code = replaceOnce(
     code,
     '    s.progress = mapped ? clamp01((d ? d.t : previewAge) / duration) : 0;\n    s.phase = mapped && active && (d || preview && previewAge < duration) ? \'roll\'\n      : active && ch.grounded && (runner ? runner.lockT > 0 || runner.s3Turret\n        : preview && previewAge < duration + .5) ? \'plant\' : null;',
     '    const inStartup = d && (d.startup > 1e-10 || (d.startupDur > 0 && d.t <= 1e-10));\n    s.progress = mapped ? clamp01((d ? d.t : previewAge) / duration) : 0;\n    s.phase = mapped && active && (d || preview && previewAge < duration)\n      ? (inStartup ? \'startup\' : \'roll\')\n      : active && ch.grounded && (runner ? runner.lockT > 0 || runner.s3Turret\n        : preview && previewAge < duration + .5) ? \'plant\' : null;',
     'dualies-motion prepare startup phase separation'
   );
+
+  // 2. In _poseDodge: apply actual bounded native tuck during startup without movement or tumble
+  // Note: exact Nintendo Splatoon 3 joint angles remain unmeasured; uses calibrated tuck
+  code = replaceOnce(
+    code,
+    '    if (s?.phase !== \'roll\') {\n      // Native D..D+.28 recovery was still layering foot/hip offsets over the\n      // planted weapon pose and the first actual post-roll recoil impulses.\n      this.tumble = this.tumbleDrop = 0;\n      return;\n    }',
+    '    if (s?.phase !== \'roll\' && s?.phase !== \'startup\') {\n      this.tumble = this.tumbleDrop = 0;\n      return;\n    }\n    if (s?.phase === \'startup\') {\n      const { turnStart } = DUALIES_MOTION_CALIBRATION;\n      const tuckTime = turnStart * this.dodgeDur;\n      const result = dodge.call(this, P, tuckTime);\n      this.tumble = 0;\n      this.tumbleDrop = 0;\n      return result;\n    }',
+    'dualies-motion _poseDodge startup anticipation tuck'
+  );
+
+  // 3. In _poseLook: ensure unposed startup triggers fallback pose before gaze/head
+  code = replaceOnce(
+    code,
+    '    if (enabled(this) && s?.phase === \'roll\' && !s.posed) this._poseDodge(this.P, 0);',
+    '    if (enabled(this) && (s?.phase === \'roll\' || s?.phase === \'startup\') && !s.posed) this._poseDodge(this.P, 0);',
+    'dualies-motion _poseLook startup fallback check'
+  );
+
   return code;
 }
 
 export function adaptIssue477Net(code) {
-  // Remote proxy: replicate 4F startup on first reception, avoid double-advancement
-  code = replaceOnce(
-    code,
-    '    if (f & F.dodge) { if (!wr.dodge) wr.dodge = { t: 0, dur: a.weapon.rollTime || 0.3 }; wr.dodge.t += dt; } else wr.dodge = null;',
-    '    if (f & F.dodge) {\n      if (!wr.dodge) wr.dodge = { t: 0, dur: a.weapon.rollTime || 0.2, startup: 4 / 60, startupDur: 4 / 60 };\n      if (wr.dodge.startup > 1e-10) wr.dodge.startup = Math.max(0, wr.dodge.startup - dt);\n      else wr.dodge.t += dt;\n    } else wr.dodge = null;',
-    'netmatch applyRemote dodge startup synchronization'
-  );
+  // 1. Owner tick: replicate authoritative roll token/phase/time via OPTIONAL NAMED sidecar 'rl'
+  // Preserves existing mandatory named 'l' life metadata.
+  if (code.includes("const msg = { k: 't', ts: r3(now()), a, l:")) {
+    code = replaceOnce(
+      code,
+      "const msg = { k: 't', ts: r3(now()), a, l: Object.fromEntries([...this.byNid.values()].filter(x => !x.remote).map(x => [x.nid, x.netLife ?? 0])) };",
+      "const msg = { k: 't', ts: r3(now()), a, l: Object.fromEntries([...this.byNid.values()].filter(x => !x.remote).map(x => [x.nid, x.netLife ?? 0])), rl: Object.fromEntries([...this.byNid.values()].filter(x => !x.remote && x.weaponRunner?.dodge).map(x => [x.nid, { token: x.weaponRunner.dodge.token || 1, phase: (x.weaponRunner.dodge.startup > 1e-10 ? 'startup' : 'roll'), time: r3(x.weaponRunner.dodge.startup > 1e-10 ? Math.max(0, (x.weaponRunner.dodge.startupDur || (4 / 60)) - x.weaponRunner.dodge.startup) : x.weaponRunner.dodge.t), dur: r3(x.weaponRunner.dodge.dur || 0.2) }])) };",
+      'netmatch sendTick roll sidecar (with combat-life)'
+    );
+  } else {
+    code = replaceOnce(
+      code,
+      "const msg = { k: 't', ts: r3(now()), a };",
+      "const msg = { k: 't', ts: r3(now()), a, rl: Object.fromEntries([...this.byNid.values()].filter(x => !x.remote && x.weaponRunner?.dodge).map(x => [x.nid, { token: x.weaponRunner.dodge.token || 1, phase: (x.weaponRunner.dodge.startup > 1e-10 ? 'startup' : 'roll'), time: r3(x.weaponRunner.dodge.startup > 1e-10 ? Math.max(0, (x.weaponRunner.dodge.startupDur || (4 / 60)) - x.weaponRunner.dodge.startup) : x.weaponRunner.dodge.t), dur: r3(x.weaponRunner.dodge.dur || 0.2) }])) };",
+      'netmatch sendTick roll sidecar (raw)'
+    );
+  }
+
+  // 2. Incoming tick: unpack optional named roll sidecar onto snapshot
+  if (code.includes('a.net.lastLife = snap.life;\n      buf.push(snap);')) {
+    code = replaceOnce(
+      code,
+      'a.net.lastLife = snap.life;\n      buf.push(snap);',
+      'a.net.lastLife = snap.life;\n      snap.roll = (d.rl?.[a.nid] ?? d.roll?.[a.nid]) || null;\n      buf.push(snap);',
+      'netmatch _tick unpack roll sidecar (with combat-life)'
+    );
+  } else {
+    code = replaceOnce(
+      code,
+      'buf.push(snap);',
+      'snap.roll = (d.rl?.[a.nid] ?? d.roll?.[a.nid]) || null;\n      buf.push(snap);',
+      'netmatch _tick unpack roll sidecar (raw)'
+    );
+  }
+
+  // 3. applyRemote: replicate authoritative roll state.
+  // Late packet displays moving roll immediately without fresh anticipation;
+  // stale packet cannot restart phase; chained rolls each get genuine new startup token.
+  const netDodgeOld = '    if (f & F.dodge) { if (!wr.dodge) wr.dodge = { t: 0, dur: a.weapon.rollTime || 0.3 }; wr.dodge.t += dt; } else wr.dodge = null;';
+  const netDodgeNew = `    if (f & F.dodge) {
+      const rl = S.roll;
+      if (rl && typeof rl === 'object') {
+        const lastTk = a.net.lastRollToken || 0;
+        if (rl.token !== undefined && rl.token < lastTk) {
+          // Stale packet from earlier roll cannot restart phase
+        } else {
+          if (rl.token !== undefined && rl.token > lastTk) a.net.lastRollToken = rl.token;
+          const tk = rl.token ?? 0;
+          if (!wr.dodge || wr.dodge.token !== tk) {
+            if (rl.phase === 'startup') {
+              wr.dodge = { token: tk, t: 0, dur: rl.dur || 0.2, startup: Math.max(0, (4 / 60) - (rl.time || 0)), startupDur: 4 / 60 };
+            } else {
+              wr.dodge = { token: tk, t: rl.time || 0, dur: rl.dur || 0.2, startup: 0, startupDur: 4 / 60 };
+            }
+          } else {
+            if (rl.phase === 'startup') {
+              wr.dodge.startup = Math.max(0, (4 / 60) - (rl.time || 0));
+              wr.dodge.t = 0;
+            } else {
+              wr.dodge.startup = 0;
+              wr.dodge.t = rl.time || 0;
+            }
+          }
+        }
+      } else {
+        if (!wr.dodge) wr.dodge = { token: 0, t: 0, dur: a.weapon.rollTime || 0.2, startup: 0, startupDur: 4 / 60 };
+        wr.dodge.t = Math.min(wr.dodge.dur, wr.dodge.t + dt);
+      }
+    } else {
+      wr.dodge = null;
+    }`;
+  code = replaceOnce(code, netDodgeOld, netDodgeNew, 'netmatch applyRemote authoritative roll sidecar');
+
   return code;
 }
 
@@ -137,96 +230,4 @@ export function adaptIssue477Source(rel, code) {
   if (normalized === 'src/net/netmatch.js') return adaptIssue477Net(code);
   if (normalized === 'patches/splatoon3/runtime/dualies-motion.mjs') return adaptIssue477DualiesMotion(code);
   return code;
-}
-
-const INSTALLED = Symbol.for('inkwave.issue477.dualiesStartup');
-
-export function installIssue477DualiesStartup(context) {
-  const { WeaponRunner, Actor, Character } = context;
-  if (!WeaponRunner) return;
-  const proto = WeaponRunner.prototype;
-  if (proto[INSTALLED]) return;
-  Object.defineProperty(proto, INSTALLED, { value: true });
-
-  // If already adapted via source, methods already include startup handling
-  if (proto.tryDodge && proto.tryDodge.toString().includes('startupDur')) {
-    return;
-  }
-
-  const originalTryDodge = proto.tryDodge;
-  const originalDodgeVel = proto.dodgeVel;
-  const originalDualies = proto._dualies;
-
-  proto.tryDodge = function (move) {
-    if (this.a && !this.a.grounded) return false;
-    const success = originalTryDodge.call(this, move);
-    if (success && this.dodge) {
-      this.dodge.startup = DUALIES_STARTUP_SECONDS;
-      this.dodge.startupDur = DUALIES_STARTUP_SECONDS;
-      if (this.a?.vel) {
-        this.a.vel.x = 0;
-        this.a.vel.z = 0;
-      }
-    }
-    return success;
-  };
-
-  proto.dodgeVel = function (vel) {
-    const d = this.dodge;
-    if (!d || (d.startup !== undefined && d.startup > EPS)) return false;
-    return originalDodgeVel.call(this, vel);
-  };
-
-  proto._dualies = function (dt, inp, w) {
-    if (this.dodge) {
-      const d = this.dodge;
-      if (d.startup !== undefined && d.startup > EPS) {
-        d.startup = Math.max(0, d.startup - dt);
-        this.a.fireFacing = 0.5;
-        this.firingT = 0.35;
-        return;
-      }
-    }
-    const res = originalDualies.call(this, dt, inp, w);
-    if (this.dodge && this.dodge.t >= this.dodge.dur - 1e-5) {
-      this.dodge = null;
-      this.lockT = w.lockTime;
-      if (this.cooldown < 0) this.cooldown = 0;
-    }
-    return res;
-  };
-
-  if (Actor) {
-    const actorProto = Actor.prototype;
-    const origStartSpecial = actorProto._startSpecial;
-    if (origStartSpecial && !actorProto._startSpecial.toString().includes('weaponRunner.reset')) {
-      actorProto._startSpecial = function () {
-        this.weaponRunner?.reset();
-        return origStartSpecial.apply(this, arguments);
-      };
-    }
-  }
-
-  if (Character) {
-    const chProto = Character.prototype;
-    const originalUpdateStates = chProto._updateStates;
-    const INSTALL_KEY = Symbol.for('inkwave.splatoon3.dualies-motion.v1');
-    if (originalUpdateStates) {
-      chProto._updateStates = function (dt, input) {
-        const result = originalUpdateStates.call(this, dt, input);
-        const installation = this.constructor?.prototype?.[INSTALL_KEY];
-        const s = installation?.states?.get(this);
-        const runner = this._runner?.(input);
-        const d = runner?.dodge;
-        if (s && d && (d.startup > EPS || (d.startupDur > 0 && d.t <= EPS))) {
-          s.phase = 'startup';
-          s.progress = 0;
-          this.tumble = 0;
-          this.tumbleDrop = 0;
-          this.lockW = 0;
-        }
-        return result;
-      };
-    }
-  }
 }
