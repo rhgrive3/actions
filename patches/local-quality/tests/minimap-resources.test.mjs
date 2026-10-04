@@ -10,12 +10,13 @@ import vm from 'node:vm';
 import { adaptSource } from '../../splatoon3/adapter.mjs';
 import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
 import { adaptReliability } from '../../reliability/adapter.mjs';
+import { adaptQualitySource } from '../adapter.mjs';
 import { adaptMinimapResources, replaceOnceMinimap } from '../minimap-resource-adapter.mjs';
 
 const ROOT = new URL('../../../', import.meta.url);
 const read = rel => fs.readFileSync(new URL(rel, ROOT), 'utf8');
 const compose = (rel, code = read('inkwave-public/' + rel)) =>
-  adaptMinimapResources(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code))));
+  adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code))));
 
 // ---- native VM harness: rewrite ESM imports to sandbox-provided stubs so the
 // real Minimap class body executes natively (constructor/setViewerTeam/idle/
