@@ -57,8 +57,9 @@ test('native Online hub and room entry remain demand-loaded and reuse the curren
   // applies the lobby quality policy. Its native demand-load entry methods must remain exact.
   assert.equal(adaptLobbyResources('src/game/showcase.js', source), source);
   const composed = adaptQualitySource('src/game/showcase.js', source);
-  const methods = section(composed, '  showHub(style, color, weapon) {', '\n  updateLobby(players, colors) {');
-  assert.equal(methods, section(source, '  showHub(style, color, weapon) {', '\n  updateLobby(players, colors) {'));
+  const from = '  showHub(style, color, weapon) {', to = '\n  updateLobby(players, colors) {';
+  const methods = section(composed.slice(composed.lastIndexOf(from)), from, to);
+  assert.equal(methods, section(source.slice(source.lastIndexOf(from)), from, to));
   const Cls = vm.runInNewContext(`class Showcase { ${methods} }; Showcase`, {
     THREE: {}, G: { game: { profile: { weapon: 'shooter' } } }, HUB_ID: 'hub', styleKey: () => 'style',
   });
