@@ -146,3 +146,4 @@
   - 鼻先: `paint_nose` の spots をなくし floor 0.06、full 0.2、strength 1.3（N5）: 正面の小鼻の輪郭と鼻のまわりの影、3/4・横の小鼻の溝が出た。
   - params = N5。正式なビルド Q5。
 - 10/04 夜: Q5 = master V94。PR https://github.com/rhgrive3/actions/pull/401（ブランチ claude/inkwave-skin-lips-nose-v94）。マージはユーザーの OK 待ち。
+- 10/05: ユーザー「鼻の横に黒いシミ」= 小鼻のわきの灰色の影（paint_nose desaturate 0.7 で灰色）→ desaturate 0.4、strength 1.0（V2）。正式 Q6 で検査合格、PR #401 を更新。左ななめ前・左横の絵をユーザーに出した（顎のレビュー待ち）。
