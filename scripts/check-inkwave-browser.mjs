@@ -131,7 +131,11 @@ try {
       return trigger.call(this, name, ...args);
     };
     proof.restore = () => { a._integrate = integrate; a.character.trigger = trigger; };
-    window.dispatchEvent(new MouseEvent('mousedown', { button: 0 }));
+    // This proof targets physical keyboard edge delivery. Pin the independent
+    // held-fire admission precondition through the game's canonical debug input
+    // instead of a synthetic mouse event, which can be invalidated by a delayed
+    // pointer-lock transition in the lifecycle-integrated build.
+    g.debug.fire(true);
   });
   try {
     await page.keyboard.down('KeyD'); await page.keyboard.down('Space');
@@ -149,9 +153,9 @@ try {
     const r = result.actionReliability;
     if (r.before !== 1 || r.renderOnly !== 1 || r.after !== 2 || r.held !== 2 || r.jumps !== 0) throw Error('Native keyboard action edge did not reach Character exactly once: ' + JSON.stringify(r));
     await page.keyboard.up('Space'); await page.keyboard.up('KeyA');
-    await page.evaluate(() => { window.dispatchEvent(new MouseEvent('mouseup', { button: 0 })); s3ProbeG.game._frame(1 / 60); });
+    await page.evaluate(() => { s3ProbeG.game.debug.fire(false); s3ProbeG.game._frame(1 / 60); });
   } finally {
-    await page.evaluate(() => { actionProof.restore(); s3ProbeG.game._skipRender = false; s3ProbeG.game.input.keys.clear(); });
+    await page.evaluate(() => { actionProof.restore(); s3ProbeG.game.debug.fire(false); s3ProbeG.game._skipRender = false; s3ProbeG.game.input.keys.clear(); });
   }
   result.weaponMotion = await page.evaluate(async () => {
     const G=globalThis.s3ProbeG,a=G.game.match.local,ch=a.character,dt=1/60;
