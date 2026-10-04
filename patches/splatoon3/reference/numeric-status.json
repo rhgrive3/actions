@@ -359,6 +359,11 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "weapons.dualies.humanoidFirstShotDelay": {
+    "value": 0.03333333333333333,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
   "weapons.blaster.inkPerShot": {
     "value": 10,
     "status": "derived from pinned extracted data; physical scale unverified",
@@ -503,6 +508,11 @@
       "factor": 1,
       "rawValue": 1
     }
+  },
+  "weapons.blaster.terrainSplashDamageRate": {
+    "value": 0.5,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
   },
   "weapons.splatling.inkPerShot": {
     "value": 0.5625,
@@ -697,6 +707,16 @@
       "index": null,
       "factor": 1,
       "rawValue": 1.35
+    }
+  },
+  "weapons.splatling.spreadPitchGround": {
+    "value": 1.6,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/WeaponParam/PitchDegSwerve",
+      "index": null,
+      "factor": 1,
+      "rawValue": 1.6
     }
   },
   "weapons.charger.inkFull": {
@@ -996,6 +1016,66 @@
   },
   "weapons.roller.verticalInterval": {
     "value": 0.7833333333333333,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.roller.nearFlickUnit.count": {
+    "value": 1,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.roller.nearFlickUnit.speedBase": {
+    "value": 0.48,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WideSwingUnitGroupParam/Unit/1/SpawnSpeedBase",
+      "index": null,
+      "factor": 1,
+      "rawValue": 0.48
+    }
+  },
+  "weapons.roller.nearFlickUnit.speedRandom": {
+    "value": 0.11,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WideSwingUnitGroupParam/Unit/1/SpawnSpeedRandom",
+      "index": null,
+      "factor": 1,
+      "rawValue": 0.11
+    }
+  },
+  "weapons.roller.nearFlickUnit.mainSpeedBase": {
+    "value": 1.05,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WideSwingUnitGroupParam/Unit/0/SpawnSpeedBase",
+      "index": null,
+      "factor": 1,
+      "rawValue": 1.05
+    }
+  },
+  "weapons.roller.nearFlickUnit.halfAngleDegrees": {
+    "value": 4,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WideSwingUnitGroupParam/Unit/1/SpawnWideDegree",
+      "index": null,
+      "factor": 1,
+      "rawValue": 4
+    }
+  },
+  "weapons.roller.nearFlickUnit.mainWidthReference": {
+    "value": 0.8,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WideSwingUnitGroupParam/Unit/0/SpawnPositionWidth",
+      "index": null,
+      "factor": 1,
+      "rawValue": 0.8
+    }
+  },
+  "weapons.roller.nearFlickUnit.widthRatio": {
+    "value": 0.5,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
