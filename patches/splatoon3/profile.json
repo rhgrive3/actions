@@ -221,7 +221,9 @@
       "radius": 10.0
     }
   },
+  "conditionalGear": {"lastDitchWindow": 30, "lastDitchAP": 18, "comebackDuration": 20, "comebackAP": 10, "openingDuration": 30, "openingAP": 30, "openingExtension": 15},
   "gear": {
+    "subResistance": [1, 0.75, 0.5],
     "runSpeed": [
       1.0,
       1.25,
@@ -378,6 +380,24 @@
     "movementResourcesEvidence": "reports/inkwave-movement-resources-2026-10-02.md"
   },
   "bindings": {
+    "gear.subResistance.0": {
+      "parameter": "data/parameter/1130/misc/params.json#/DamageRt_BombH",
+      "index": 2,
+      "factor": 1,
+      "rawValue": 1
+    },
+    "gear.subResistance.1": {
+      "parameter": "data/parameter/1130/misc/params.json#/DamageRt_BombH",
+      "index": 1,
+      "factor": 1,
+      "rawValue": 0.75
+    },
+    "gear.subResistance.2": {
+      "parameter": "data/parameter/1130/misc/params.json#/DamageRt_BombH",
+      "index": 0,
+      "factor": 1,
+      "rawValue": 0.5
+    },
     "player.runSpeed": {
       "parameter": "data/parameter/1130/misc/params.json#/MoveVel_Human",
       "index": 2,
