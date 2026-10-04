@@ -428,10 +428,14 @@ test('a short actual Slam fall preserves native impact impulses when primary fir
 
 test('mapped Slam hang and strike keep actual native arm reach and drawn weapon grips', async () => {
   const api = await production();
-  const kits = Object.keys(api.profile.weapons).filter(k => api.WEAPONS[k].special === 'slam');
-  assert.equal(kits.length, 4, 'all four real public Slam kits must execute');
+  assert.deepEqual(Object.keys(api.profile.weapons).filter(k => api.WEAPONS[k].special === 'slam').sort(),
+    ['dualies', 'slosher'], 'remaining genuine original Slam kits');
+  // Retain all four native grip rigs: Shooter/Roller use explicit actor-local
+  // original-Slam counterfactuals; their production kits are tested separately.
+  const kits = ['shooter', 'roller', 'slosher', 'dualies'];
   for (const kind of kits) {
     const r = rig(api, kind);
+    if (r.a.weapon.special !== 'slam') r.a.weapon = { ...r.a.weapon, special: 'slam' };
     try {
       start(r); for (let i = 0; i < 34; i++) r.visual();
       r.a.specialActive.phase = 'hang'; r.a.specialActive.t = 0;

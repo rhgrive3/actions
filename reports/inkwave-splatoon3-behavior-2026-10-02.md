@@ -236,3 +236,16 @@ compare 対象の変更点は `patches/splatoon3/profile.json` の `player.respa
 | バリアへのローラードロップの距離減衰 | 本家実機でバリアの減衰は未確認。INKWAVE 自身の native actor/boss 接触時の damageNear→damageFar、7単位の距離式に揃える内部整合修正。 | kit-big-bubbler の damageAtContact / kitBarrierCandidate | 発射位置から実バリア接触点までの距離を使い、通常弾は変更しない。遠距離の150→35ダメージにより、不適切な即破壊から耐久9097の維持へ変化。 | 旧コードで新規5件中4件失敗、修正後は親統合の54件成功。クエリは副作用なし、提案ダメージも同じ値。ブラウザ実動作と本家一致は未確認。 |
 
 これらは bca373d の rolling 統合結果であり、未完了のトリズーカや全キットの実行を確認済みとは扱わない。
+
+
+### Public kit composition and Trizooka native integration (2026-10-04)
+
+The production installer now registers real Suction/Curling, Trizooka, Big Bubbler and Ink Vac mechanics before composing Shooter_Normal_00 (Suction/Trizooka 200p), Roller_Normal_00 (Curling/Big Bubbler 180p), and Charger_Normal_00 (Splat Bomb/Ink Vac 190p). These identities/costs are sourced from the pinned 11.3.0 rows recorded in `patches/splatoon3/reference.json`; actor-local gear, bot selection, lobby, loadout and HUD use the same registry. Four remaining mains explicitly retain Original INKWAVE kits. Kit identity verification does not establish full Nintendo gameplay parity.
+
+Trizooka uses the existing native projectile list and one force/integration pass. Brake/free gravity and drag now apply each tick, transitions apply once on entering a stage, and its growing actor sphere replaces the render shell in collision reach. The growing world sphere queries radius-expanded block bounds, skips grates, and reports the earliest rounded-OBB contact with an outward normal and surface point. Only the authoritative carrier writes the per-volley hit ledger or paints; remote Trizooka/Ink Vac ghosts remain presentation-only even after transport disposal. Paint credits turf once through the native owner call, preserving the native gauge policy. Two fields appended to the main projectile packet preserve lobe/action identity without changing native field positions or bomb packets.
+
+Reproduction: select each of the three base mains in the actual loadout, inspect sub/special names, icons and costs, enter a match and activate at its gauge threshold. Hold primary for Trizooka's three shots; deploy Big Bubbler; absorb a native opposing shot with Ink Vac and release the countershot. New canonical browser probes exercise this sequence in the loaded revision, including rendered frames. Composed-source focused tests verify force deltas, collision, authority and packet reconstruction; final exact-head Actions/browser results remain required before declaring acceptance.
+
+Unconfirmed against Nintendo hardware: orbit start radius/turn rate, unit conversion and drag calibration, end delay, special gauge accumulation after the token ends, and frame-exact device parity. The separate Trizooka report records extracted values and calibrations. No Switch/iPad observation is claimed by the synthetic or Chromium checks.
+
+Independent review PN-01: remote respawn previously retained Squid Surge charge and roll armor because it bypasses owner `reset()`. Both paths now call the same movement-action reset; an actual Actor charge followed by native NetMatch death/respawn is covered by a failing-before/passing-after regression. This confirms previous-life state isolation, not a Nintendo timing measurement.

@@ -5,6 +5,114 @@ import http from 'node:http';
 import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+// Parent draft: insert into the canonical browser verifier only after kit mapping is wired.
+async function probeComposedKits() {
+  const load = name => import(new URL(name, document.baseURI).href);
+  const [{ G }, { WEAPONS, SUB, SPECIALS, PLAYER }, gear, vac, bubbler, icons] = await Promise.all([
+    load('src/core/ctx.js'), load('src/config.js'), load('patches/splatoon3/runtime/gear.mjs'),
+    load('patches/splatoon3/runtime/kit-ink-vac.mjs'), load('patches/splatoon3/runtime/kit-big-bubbler.mjs'), load('src/ui/ui-icons.js'),
+  ]);
+  const game = G.game, actor = game.match.local, dt = 1 / 60;
+  const assert = (condition, detail) => { if (!condition) throw Error('Compiled kit: ' + detail); };
+  const normalizedIcon = svg => { const el = document.createElement('i'); el.innerHTML = svg; return el.innerHTML; };
+  const storageKey = 'inkwave.splatoon3.gear.v1', oldGear = localStorage.getItem(storageKey);
+  const original = { weapon: actor.weaponId, frozen: game.frozen, skip: game._skipRender };
+  game.debug.freeze(); game.debug.freezeBots(); game._skipRender = true;
+  const frames = n => { for (let i = 0; i < n; i++) game._frame(dt); };
+  const result = { kits: [], activations: [], shots: [] };
+  const nativePush = G.projectiles._push;
+  G.projectiles._push = function (p, ...args) {
+    if (p.owner === actor && ['trizooka', 'inkVac'].includes(p.wid))
+      result.shots.push({ wid: p.wid, damage: p.damage, ghost: !!p.ghost, radius: p.radius });
+    return nativePush.call(this, p, ...args);
+  };
+  try {
+    const empty = gear.emptyLoadout(); localStorage.setItem(storageKey, JSON.stringify(empty));
+    for (const [main, sub, special, cost] of [['shooter', 'suction', 'trizooka', 200], ['roller', 'curling', 'bubbler', 180], ['charger', 'bomb', 'inkVac', 190]]) {
+      const w = WEAPONS[main]; assert(w.sub === sub && w.special === special && w.specialCost === cost, main + ' global kit');
+      actor.setWeapon(main); frames(1);
+      assert(actor.weapon.sub === sub && actor.weapon.special === special && actor.specialCost() === cost, main + ' equipped kit');
+      actor.special = cost - .01; assert(!actor.specialReady(), main + ' gauge below base');
+      actor.special = cost; assert(actor.specialReady(), main + ' gauge at base');
+      assert(G.hud.subChip.querySelector('i').innerHTML === normalizedIcon(icons.SUB_ICONS[sub]), main + ' HUD sub icon');
+      assert(G.hud.subChip.querySelector('b').textContent === Math.round(SUB[sub].inkCost ?? SUB[sub].inkCostFallback) + '%', main + ' HUD cost');
+      const charge = gear.emptyLoadout(); charge[0].main = 'specialCharge';
+      localStorage.setItem(storageKey, JSON.stringify(charge)); actor.setWeapon(main);
+      const adjusted = cost / actor.s3.modifiers.specialCharge;
+      assert(Math.abs(actor.specialCost() - adjusted) < 1e-9 && adjusted < cost, main + ' gear uses correct base');
+      result.kits.push({ main, sub, special, base: cost, withSpecialCharge: adjusted, specialName: SPECIALS[special].name });
+      localStorage.setItem(storageKey, JSON.stringify(empty)); actor.setWeapon(main);
+      actor.special = actor.specialCost(); actor.ink = 23; const count = actor.stats.specials;
+      game.debug.key('KeyF', true); frames(1); game.debug.key('KeyF', false); frames(1);
+      assert(actor.stats.specials === count + 1 && actor.special === 0 && actor.ink === PLAYER.inkMax, main + ' activation spends/refills once');
+      game._skipRender = false; frames(1); game._skipRender = true;
+      assert(G.renderer.info.render.calls > 0, main + ' active special rendered in the loaded WebGL game');
+      if (special === 'trizooka') { game.debug.fire(true); frames(180); game.debug.fire(false); frames(1);
+        assert(result.shots.filter(p => p.wid === special && p.damage > 0).length === 3, 'three native Trizooka carriers');
+        assert(!actor.specialActive, 'Trizooka restores ordinary control');
+      } else if (special === 'bubbler') { assert(bubbler.bigBubblerSnapshot().some(d => d.team === actor.team), 'live Bubbler structure'); }
+      else { const state = vac.inkVacState(actor); assert(state && !state.remote, 'live Ink Vac');
+        frames(25);
+        const enemy = G.actors.find(a => a !== actor && a.team !== actor.team && a.alive);
+        assert(enemy, 'actual opposing actor for Ink Vac intake');
+        const incoming = G.projectiles._new(), forward = actor.aimDir.clone().normalize();
+        assert(forward.lengthSq() > .9, 'actual intake aim direction');
+        Object.assign(incoming, {owner:enemy,team:enemy.team,type:'shot',wid:'shooter',damage:36,size:.1,radius:.1,
+          age:0,life:1,straight:1,grav:0,drag:0,trailEvery:0,ghost:false});
+        incoming.pos.copy(actor.pos); incoming.pos.y += vac.INK_VAC_CALIBRATION.breathOriginHeight;
+        incoming.pos.addScaledVector(forward,.5); incoming.prev.copy(incoming.pos); incoming.start.copy(incoming.pos);
+        incoming.vel.copy(forward).multiplyScalar(-60);
+        const beforeCharge = state.charge, consumed = G.projectiles._step(incoming, dt);
+        assert(consumed && state.charge > beforeCharge && state.absorbed === 1, 'compiled native shot absorbed by intake');
+        result.absorption = {beforeCharge,afterCharge:state.charge,absorbed:state.absorbed};
+        game.debug.fire(true); frames(1); game.debug.fire(false); frames(1);
+        assert(result.shots.filter(p => p.wid === special && p.damage > 0).length === 1, 'native Ink Vac countershot');
+        assert(!actor.specialActive, 'Ink Vac restores ordinary control');
+      }
+      result.activations.push({ main, stats: actor.stats.specials, ink: actor.ink });
+    }
+    return result;
+  } finally {
+    G.projectiles._push = nativePush; game.debug.fire(false); game.debug.key('KeyF', false);
+    if (oldGear === null) localStorage.removeItem(storageKey); else localStorage.setItem(storageKey, oldGear);
+    actor.setWeapon(original.weapon); game._skipRender = original.skip;
+    if (!original.frozen) game.debug.unfreeze();
+  }
+}
+
+// Run in the loaded lobby, before startMatch. These are the actual menu buttons.
+async function probeComposedKitMenus() {
+  const load = name => import(new URL(name, document.baseURI).href);
+  const [{G}, {WEAPONS,SUB,SPECIALS}, icons] = await Promise.all([
+    load('src/core/ctx.js'), load('src/config.js'), load('src/ui/ui-icons.js')]);
+  const menu = G.game.menus, original = menu._loadout().weapon;
+  const assert = (condition, detail) => { if (!condition) throw Error('Compiled kit menu: ' + detail); };
+  const normalizedIcon = svg => { const el = document.createElement('i'); el.innerHTML = svg; return el.innerHTML; };
+  const show = id => { menu.wipe.cancel(); menu.show(id,{wipe:false,light:false}); for(let i=0;i<90;i++)menu.update(1/60); };
+  const result = [];
+  try {
+    for (const main of ['shooter','roller','charger']) {
+      show('loadout');
+      const card = [...document.querySelectorAll('.iw-wcard')].find(c => c.dataset.id === 'w-' + main);
+      assert(card, main + ' selectable card'); card.click();
+      const w = WEAPONS[main], kits = [...document.querySelectorAll('.iw-wd__kits .iw-kit')];
+      assert(menu._loadout().weapon === main, main + ' actually equipped via menu');
+      assert(kits.length === 2, main + ' kit chips');
+      assert(kits[0].querySelector('b').textContent === SUB[w.sub].name, main + ' selected sub name');
+      assert(kits[0].querySelector('.iw-kit__icon').innerHTML === normalizedIcon(icons.SUB_ICONS[w.sub]), main + ' selected sub icon');
+      assert(kits[1].querySelector('b').textContent === SPECIALS[w.special].name, main + ' selected special name');
+      assert(kits[1].querySelector('.iw-kit__cost').textContent === w.specialCost + 'p', main + ' selected special cost');
+      assert(kits[1].querySelector('.iw-kit__icon').innerHTML === normalizedIcon(icons.SPECIAL_ICONS[w.special]), main + ' selected special icon');
+      show('main');
+      const chips = [...document.querySelectorAll('.iw-kitcard__chips .iw-chip')];
+      assert(chips.length === 2 && chips[0].textContent === SUB[w.sub].name && chips[1].textContent === SPECIALS[w.special].name, main + ' lobby current kit names');
+      assert(chips[0].querySelector('i').innerHTML === normalizedIcon(icons.SUB_ICONS[w.sub]), main + ' lobby current sub icon');
+      result.push({main,sub:w.sub,special:w.special,specialCost:w.specialCost});
+    }
+    return result;
+  } finally { menu.api.setLoadout({weapon:original}); show('loadout'); }
+}
+
 const option = name => { const i=process.argv.indexOf(name); if(i<0 || !process.argv[i+1]) throw new Error('Required '+name); return path.resolve(process.argv[i+1]); };
 const site=option('--site'), evidence=option('--evidence-dir'), profile=option('--profile-dir');
 const ROOT = fileURLToPath(new URL('../',import.meta.url));
@@ -91,6 +199,7 @@ try {
   if(result.smallViewport.x<0 || result.smallViewport.right>375) throw new Error('Gear panel overflows small viewport');
   await page.screenshot({path:path.join(evidence,'loadout-small-viewport.png'),animations:'disabled',timeout:90000});
   await page.setViewportSize({width:1280,height:800});
+  result.kitMenus = await page.evaluate(probeComposedKitMenus);
   await page.evaluate(async () => { const { G } = await import(new URL('src/core/ctx.js',document.baseURI).href); await G.game.startMatch({mapId:'tidewater', difficulty:'easy', duration:180, mode:'turf'}); });
   result.gameplay = await page.evaluate(() => {
     const G = globalThis.s3ProbeG, g = G.game; g.debug.freezeBots(); g._skipRender = true;
@@ -111,6 +220,7 @@ try {
     return {state:g.match.state, elapsedAt20Hz:initial-g.match.time-.5, movement:actor.pos.distanceTo(before), hp:actor.hp, gear:actor.s3.loadout, velocityFinite:[actor.vel.x,actor.vel.y,actor.vel.z].every(Number.isFinite), clockTicks:g.s3Clock.ticks, paintedFloorArea, coverage:G.paint.coverage()};
   });
   if (Math.abs(result.gameplay.elapsedAt20Hz-3)>1e-8 || !result.gameplay.velocityFinite || result.gameplay.movement<=0 || result.gameplay.paintedFloorArea<=0 || result.gameplay.coverage[0]<=0 || result.gameplay.coverage[0]>1) throw new Error('Actual browser gameplay regression');
+  result.kitIntegration = await page.evaluate(probeComposedKits);
   result.weaponMotion = await page.evaluate(async () => {
     const G=globalThis.s3ProbeG,a=G.game.match.local,ch=a.character,dt=1/60;
     const {flowMotionSnapshot}=await import(new URL('patches/splatoon3/runtime/flow-motion.mjs',document.baseURI).href);
@@ -172,7 +282,7 @@ try {
 
   result.sourceSha = sourceSha; result.verifiedResponses = receipts.length;
   result.verifiedRuntimeFiles = [...new Set(receipts)].sort();
-  for (const required of ['patches/splatoon3/bootstrap.mjs','patches/splatoon3/profile.json','patches/splatoon3/runtime/install.mjs','patches/splatoon3/runtime/weapons.mjs','patches/splatoon3/runtime/movement.mjs','patches/splatoon3/runtime/walk.mjs','patches/splatoon3/runtime/roller.mjs','patches/splatoon3/runtime/movement-motion.mjs','patches/splatoon3/runtime/weapon-motion.mjs','patches/splatoon3/runtime/bomb-motion.mjs','patches/splatoon3/runtime/flow-motion.mjs','patches/splatoon3/runtime/weapon-detail-motion.mjs','src/main.js','src/game/actor.js','src/game/character.js','src/game/weapons.js']) if(!receipts.includes(required)) errors.push('Required runtime was not verified: '+required);
+  for (const required of ['patches/splatoon3/bootstrap.mjs','patches/splatoon3/profile.json','patches/splatoon3/runtime/install.mjs','patches/splatoon3/runtime/kit-composition.mjs','patches/splatoon3/runtime/kit-trizooka.mjs','patches/splatoon3/runtime/trizooka-collision.mjs','patches/splatoon3/runtime/kit-subs.mjs','patches/splatoon3/runtime/kit-big-bubbler.mjs','patches/splatoon3/runtime/kit-ink-vac.mjs','patches/splatoon3/runtime/weapons.mjs','patches/splatoon3/runtime/movement.mjs','patches/splatoon3/runtime/walk.mjs','patches/splatoon3/runtime/roller.mjs','patches/splatoon3/runtime/movement-motion.mjs','patches/splatoon3/runtime/weapon-motion.mjs','patches/splatoon3/runtime/bomb-motion.mjs','patches/splatoon3/runtime/flow-motion.mjs','patches/splatoon3/runtime/weapon-detail-motion.mjs','src/main.js','src/game/actor.js','src/game/character.js','src/game/weapons.js']) if(!receipts.includes(required)) errors.push('Required runtime was not verified: '+required);
   if(errors.length || consoleErrors.length || failures.length) result.status = 'failed';
   result.errors = errors; result.consoleErrors = consoleErrors; result.requestFailures = failures;
   fs.writeFileSync(evidence + '/browser-result.json.writing', JSON.stringify(result, null, 2));

@@ -91,13 +91,18 @@ export function beforeActions(a, dt, jumpPressed) {
   sync(a, state);
   return !!state.roll;
 }
+// Both owner reset and native proxy respawn must discard previous-life actions.
+export function resetMovementActions(actor) {
+  actor.s3 ||= {}; delete actor.s3.actions;
+  actor.s3.roll = actor.s3.surge = null;
+  if (actor.anim) actor.anim.surgeCharge = 0;
+}
 export function installMovement(context, tuning) {
   api = context; config = tuning.movement;
   const { Actor } = api;
   const reset = Actor.prototype.reset, damage = Actor.prototype.damage;
   Actor.prototype.reset = function (...args) {
-    const value = reset.apply(this, args); this.s3 ||= {}; delete this.s3.actions; this.s3.roll = this.s3.surge = null;
-    this.anim.surgeCharge = 0; return value;
+    const value = reset.apply(this, args); resetMovementActions(this); return value;
   };
   Actor.prototype.damage = function (amount, attacker, source) {
     if (this.invuln > 0 || !this.alive) return false;

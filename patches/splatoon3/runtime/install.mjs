@@ -9,6 +9,7 @@ import { PaintSystem } from '../../../src/world/paint.js';
 import { PlayerController } from '../../../src/game/player.js';
 import { Physics, Hit } from '../../../src/game/physics.js';
 import { Menus } from '../../../src/ui/menus.js';
+import { SUB_ICONS, SPECIAL_ICONS } from '../../../src/ui/ui-icons.js';
 import { ShadowCache } from '../../../src/core/shadowcache.js';
 import { installMovement } from './movement.mjs';
 import { installMovementMotion } from './movement-motion.mjs';
@@ -18,6 +19,8 @@ import { installKitSubs } from './kit-subs.mjs';
 import { installKitBigBubbler } from './kit-big-bubbler.mjs';
 import { installKitInkVac } from './kit-ink-vac.mjs';
 import { installKitNetwork } from './kit-network.mjs';
+import { installKitTrizooka } from './kit-trizooka.mjs';
+import { composeKits, registerKitMetadata } from './kit-composition.mjs';
 import { installGear } from './gear.mjs';
 import { installFlow } from './flow.mjs';
 import { installResources } from './resources.mjs';
@@ -51,7 +54,7 @@ let installed = false;
 export function install(profile) {
   if (installed) throw new Error('INKWAVE patches already installed');
   if (profile.schema !== 1 || profile.referenceVersion !== '11.3.0') throw new Error('Unsupported gameplay profile');
-  const api = { THREE, G, on, emit, PLAYER, WEAPONS, SUB, SPECIALS, Actor, NetMatch, Character, CHARACTER_CHANNELS, CHARACTER_TIMERS, CHARACTER_FOOT_MODES, CHARACTER_FOOT_METRICS, CHARACTER_BOMB_POSE, WeaponRunner, Projectiles, PaintSystem, PlayerController, Menus, ShadowCache, Physics, Hit };
+  const api = { THREE, G, on, emit, PLAYER, WEAPONS, SUB, SPECIALS, SUB_ICONS, SPECIAL_ICONS, Actor, NetMatch, Character, CHARACTER_CHANNELS, CHARACTER_TIMERS, CHARACTER_FOOT_MODES, CHARACTER_FOOT_METRICS, CHARACTER_BOMB_POSE, WeaponRunner, Projectiles, PaintSystem, PlayerController, Menus, ShadowCache, Physics, Hit };
   Object.assign(PLAYER, profile.player);
   for (const [kind, data] of Object.entries(profile.weapons)) {
     if (!WEAPONS[kind]) throw new Error(`Missing upstream weapon ${kind}`);
@@ -64,6 +67,9 @@ export function install(profile) {
   installKitSubs(api, profile);
   installKitBigBubbler(api, profile);
   installKitInkVac(api, profile);
+  installKitTrizooka(api, profile);
+  registerKitMetadata(api);
+  composeKits(api);
   installKitNetwork(api);
   installRollerMotion(api, profile);
   installMovement(api, profile);
