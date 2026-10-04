@@ -159,11 +159,14 @@ try {
       g._skipRender = true; for (let i = 0; i < 31; i++) g._frame(1 / 60);
     });
     await page.keyboard.up('Space');
-    await page.evaluate(() => { const g = s3ProbeG.game; g.debug.key('KeyD', false); g.debug.key('KeyA', true); });
+    await page.evaluate(() => { const g = s3ProbeG.game; g.debug.key('KeyD', false); });
     await page.keyboard.down('Space');
     result.actionReliability = await page.evaluate(() => {
       const g = s3ProbeG.game;
-      g.debug.fire(true);
+      // The lifecycle boundary attached to the physical second press may clear
+      // unrelated held controls. Establish the independent direction/fire
+      // preconditions only after the Space edge has reached Input.
+      g.debug.key('KeyA', true); g.debug.fire(true);
       if (document.activeElement !== actionProof.canvas) throw Error('Canvas lost keyboard focus before second fixed tick');
       if (!g.input.keys.has('Space') || !g.input.pressed.has('Space')) throw Error('Physical Space edge did not reach Input before second fixed tick');
       if (!g.input.keys.has('KeyA') || !g.input.mouse.left) throw Error('Second dodge preconditions were not established');
