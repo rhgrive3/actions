@@ -75,7 +75,7 @@ export function catalogStoragePath(dir, workspaceRoots = [process.cwd(), process
   return resolved;
 }
 export function catalogInputPath(key) {
-  const roots = { upstream: 'inkwave-public', patch: 'patches/splatoon3', 'touch-layout': 'patches/touch-layout', reliability: 'patches/reliability', 'local-quality': 'patches/local-quality' };
+  const roots = { upstream: 'inkwave-public', patch: 'patches/splatoon3', 'touch-layout': 'patches/touch-layout', reliability: 'patches/reliability', 'local-quality': 'patches/local-quality', 'practice-range': 'patches/practice-range' };
   const [namespace, ...parts] = key.split('/');
   if (!Object.hasOwn(roots, namespace) || !parts.length || parts.some(part => !part || part === '.' || part === '..' || part.includes('\\'))) fail('input namespace/path ' + key);
   return roots[namespace] + '/' + parts.join('/');
