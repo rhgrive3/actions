@@ -95,10 +95,44 @@ for (const run of RUNS) {
       const G = window.__G, g = window.__inkwave, s = G.match.range, a = G.local;
       s.travel('gallery'); a.pos.set(-12, 0.05, 0); g.rig.yaw = 0; g.rig.pitch = -0.02;
       await new Promise((r) => setTimeout(r, 2500));
-      g.debug.fire(true); const t0 = performance.now();
-      while (!s.last && performance.now() - t0 < 30000) await new Promise((r) => setTimeout(r, 250));
-      g.debug.fire(false);
-      return s.last ? { target: s.last.target.name, amount: s.last.amount, dist: s.last.dist, card: document.querySelector('.iwr-card')?.classList.contains('is-on') } : null;
+      const target = s.targets.find((x) => x.rangeTarget?.dist === 10);
+      const births = [];
+      const push = G.projectiles?._push;
+      if (push) G.projectiles._push = function (p) {
+        if (births.length < 12) births.push({
+          type: p.type, ghost: !!p.ghost, ownerLocal: !!p.owner?.isLocal,
+          pos: p.pos?.toArray?.(), vel: p.vel?.toArray?.(), life: p.life, straight: p.straight,
+          damage: p.damage, team: p.team,
+        });
+        return push.call(this, p);
+      };
+      const hpBefore = target?.hp;
+      try {
+        g.debug.fire(true); const t0 = performance.now();
+        while (!s.last && performance.now() - t0 < 30000) await new Promise((r) => setTimeout(r, 250));
+        g.debug.fire(false);
+      } finally {
+        if (push) G.projectiles._push = push;
+        g.debug.fire(false);
+      }
+      if (s.last) return { target: s.last.target.name, amount: s.last.amount, dist: s.last.dist, card: document.querySelector('.iwr-card')?.classList.contains('is-on') };
+      return {
+        miss: true,
+        actor: {
+          pos: a.pos.toArray(), vel: a.vel.toArray(), yaw: a.yaw, aimYaw: a.aimYaw, aimPitch: a.aimPitch,
+          weaponId: a.weaponId, alive: a.alive, ink: a.ink, remote: !!a.remote, isLocal: !!a.isLocal,
+          intent: { fire: !!a.intent?.fire, move: a.intent?.move?.toArray?.() },
+        },
+        target: target && {
+          pos: target.pos.toArray(), hpBefore, hpAfter: target.hp, alive: target.alive, team: target.team,
+          remote: !!target.remote, isLocal: !!target.isLocal, isBot: !!target.isBot,
+        },
+        net: { manager: !!G.netm, netState: G.net?.state ?? null },
+        births,
+        liveProjectiles: (G.projectiles?.list || []).slice(0, 12).map((p) => ({
+          type: p.type, ghost: !!p.ghost, pos: p.pos?.toArray?.(), vel: p.vel?.toArray?.(), age: p.age, life: p.life,
+        })),
+      };
     });
     if (!out.checks.hit || !(out.checks.hit.amount > 0) || Math.abs(out.checks.hit.dist - 10) > 0.6) throw new Error('target hit ' + JSON.stringify(out.checks.hit));
     await page.screenshot({ path: path.join(evidence, run.name + '-hit.png'), timeout: 240000 });
