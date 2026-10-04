@@ -225,3 +225,15 @@ Four current-public defects #366/#370 (one duplicate pair), #375, #384, #395 are
 ## 2026-10-04 weapon edge-case supplement
 
 See [weapon edge-case comparison](inkwave-weapon-edgecases-2026-10-04.md) for #354/#356/#357/#361: stable-human Dualies3F first emission; Splatling separate ground1.6° pitch envelope; terrain Blaster35HP cap; horizontal Roller12+1 gameplay units. The report separates actual source/minified/composed-code tests from S3 probability/position/falloff and released-tap calibration still pending. No native source or deployed main is changed by the draft.
+
+## イカノボリ部分チャージのアーマー付与（#473、2026-10-05）
+
+スプラトゥーン3（Ver. 11.3.0）のイカノボリ（Squid Surge）は、完全チャージ（目元発光／45F）に達する前の早期解放（部分チャージ）でも発進動作として成立し、壁からの飛び出し（launch）直後には壁イカロールと同等の短時間アーマーが付与される。INKWAVE の baseline では移動ランタイムにおいて `surge.armorTime = surge.charge >= 1 ? cfg.surge.armorTime : 0;` と完全チャージ（100%）時のみにアーマーが限定されており、1F〜44F の有効な部分チャージ発進時にアーマー保護が一切得られないバイナリクリフが生じていた。
+
+| 項目 | 内容 |
+|---|---|
+| 本家の根拠 | [スプラトゥーン3 操作方法 / イカノボリ](https://wikiwiki.jp/splatoon3mix/%E6%93%8D%E4%BD%9C%E6%96%B9%E6%B3%95) および [イカロール・イカノボリ考察](https://wikiwiki.jp/splatoon3mix/%E4%BA%88%E6%83%B3%E3%83%BB%E8%80%83%E5%AF%9F/%E3%82%A4%E3%82%AB%E3%83%AD%E3%83%BC%E3%83%AB%E3%83%BB%E3%82%A4%E3%82%AB%E3%83%8E%E3%83%9C%E3%83%AA)。イカノボリはフルチャージ前でも解放可能であり、壁から飛び出した直後に短時間のアーマーが付与される仕様が明記され、フルチャージ限定とはされていない |
+| INKWAVE の実装箇所 | `patches/splatoon3/issue-473-adapter.mjs` による `patches/splatoon3/runtime/movement.mjs` のビルド時変換。有効なノボリ発進（`surge.charge > 0` かつ jump 解放）時に `cfg.surge.armorTime`（8F = 0.1333s）と `cfg.surge.armorHP`（100）を均一に付与。burst 移動時間が短時間（例: 1F〜15F）で終了した場合も 8F のアーマー保護窓口を維持し、床接地・ヒト化・デス・リセット・スペシャル・スパジャンで即時解除 |
+| 再現操作 | 自インク壁潜伏からジャンプ長押しでチャージ（例: 15F、30F、44F）し、45F 未満でジャンプ解放。baseline では `surge.phase === 'burst'` かつ `armorTime === 0` となり、直後の被弾を 0 軽減。修正後は 8F 間のアーマー保護窓口（最大 100 HP 吸収）が正常に機能する |
+| プレイへの影響 | 壁際での緊急離脱や牽制、段差越えにおいて、部分チャージノボリを選択した場合のリスク／リターンが正常化され、意図せぬ無防備状態が解消される |
+| 確認状態 | **ロジック確認済み**（`patches/splatoon3/tests/issue-473-surge-armor.test.mjs` にて 10/10 pass。1F/15F/30F/44F 部分チャージおよび 45F フルチャージでの均一アーマー、運動速度スケーリング維持、未発進・途中キャンセル時のアーマー非付与、接地・ヒト化・デス・リセットでの即時解除、30/60/120Hz 描画一致）。**Switch Ver. 11.3.0 実機でのマイクロ秒単位のパケット同期・詳細関節角は未確認**。耐久値（100 HP）・時間（8F）の数値設定は既存 profile.json を維持し、勝手な数値改変は行わない |
