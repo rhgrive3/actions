@@ -1,3 +1,4 @@
+export function subThrowSpec(a, base) { return { ...base, throwSpeed: base.throwSpeed * (a.s3?.modifiers?.subPower ?? 1) }; }
 export function subInkSpec(a, base) { return { ...base, inkCost: base.inkCost * (a.s3?.modifiers?.inkSaverSub ?? 1) }; }
 const EPS=1e-10;
 export function installSubReady({Actor,WeaponRunner,SUB},profile){

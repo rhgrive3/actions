@@ -125,12 +125,9 @@ export function installGear(api, tuning) {
   api.on('splatted', ({ attacker }) => { if (attacker?.s3) attacker.s3.splatsThisLife = (attacker.s3.splatsThisLife || 0) + 1; });
   const update = WeaponRunner.prototype.update;
   WeaponRunner.prototype.update = function (dt, input) {
-    const a = this.a, m = a.s3?.modifiers || {}, beforeInk = a.ink;
-    const saved = { inkCost: api.SUB.bomb.inkCost, throwSpeed: api.SUB.bomb.throwSpeed };
-    api.SUB.bomb.throwSpeed *= m.subPower ?? 1;
+    const a = this.a, beforeInk = a.ink;
     try { return update.call(this, dt, input); }
     finally {
-      Object.assign(api.SUB.bomb, saved);
       if (a.ink < beforeInk) {
         a.s3 ||= {};
         const delay = input.subReleased ? api.SUB.bomb.inkRecoverStop : this.s3FlickVertical ? a.weapon.verticalInkRecoverStop ?? a.weapon.inkRecoverStop : a.weapon.inkRecoverStop;

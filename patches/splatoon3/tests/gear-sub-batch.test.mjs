@@ -114,3 +114,36 @@ test('#193: nested actor sub updates cannot double-apply the other players saver
  f.G.projectiles.throwBomb=owner=>{if(owner===a&&!second){second=true;step(b,6,{sub:true});step(b,1,{subReleased:true});}};
  step(a,6,{sub:true});step(a,1,{subReleased:true});near(a.ink,54.5);near(b.ink,30);near(f.SUB.bomb.inkCost,70);
 });
+
+test('#267: actual guide and released bomb use the same actor-local speed at0/10/57AP',async()=>{
+ for(const gp of [0,10,57]){
+  const f=await fixture(),a=f.make(),ps=new f.Projectiles(new f.THREE.Scene());f.G.projectiles=ps;equip(a,gp,'subPower');a.vel.set(2,3,-1);a.aimPitch=-.1;
+  f.G.physics.segment=(_a,_b,h)=>{h.hit=false;return h;};ps.updateArc(a,true);
+  const preview=new f.THREE.Vector3(ps._arcCache.vx,ps._arcCache.vy,ps._arcCache.vz);
+  step(a,6,{sub:true});step(a,1,{subReleased:true});const actual=ps.bombs.at(-1).vel;
+  near(actual.distanceTo(preview),0);near(f.SUB.bomb.throwSpeed,67.2);
+  const inherited=new f.THREE.Vector3(.8,1.5,-.4);near(actual.clone().sub(inherited).length()/67.2,gearCurve(gp,1,1.25,1.5));
+  for(let tick=1;tick<=20;tick++){ps._updateBombs(DT);if(tick%2===0){const expected=new f.THREE.Vector3().fromBufferAttribute(ps.arcGeo.attributes.position,tick/2);assert.ok(ps.bombs[0].pos.distanceTo(expected)<3e-5,'Float32 arc matches actual semi-implicit path');}}
+ }
+});
+
+test('#267: preview cache invalidates after gear changes and low ink does not suppress equipped trajectory',async()=>{
+ const f=await fixture(),a=f.make(),ps=new f.Projectiles(new f.THREE.Scene());f.G.projectiles=ps;f.G.physics.segment=(_a,_b,h)=>{h.hit=false;return h;};
+ ps.updateArc(a,true);const before=ps._arcCache.vz;a.ink=0;equip(a,57,'subPower');ps.updateArc(a,true);assert.ok(ps._arcCache.vz>before);near(f.SUB.bomb.throwSpeed,67.2);
+ equip(a,0,'subPower');ps.updateArc(a,true);near(ps._arcCache.vz,before);
+});
+
+test('#267: nested other-actor guide and throw cannot inherit the first actors57AP boost',async()=>{
+ const f=await fixture(),a=f.make(),b=f.make(),ps=new f.Projectiles(new f.THREE.Scene());f.G.projectiles=ps;equip(a,57,'subPower');equip(b,0,'subPower');f.G.physics.segment=(_a,_b,h)=>{h.hit=false;return h;};let inside=false,preview;
+ f.G.netm={recBomb:bomb=>{if(bomb.owner!==a||inside)return;inside=true;ps.updateArc(b,true);preview=[ps._arcCache.vx,ps._arcCache.vy,ps._arcCache.vz];step(b,6,{sub:true});step(b,1,{subReleased:true});}};
+ step(a,6,{sub:true});step(a,1,{subReleased:true});assert.equal(ps.bombs.length,2);
+ near(ps.bombs[1].vel.distanceTo(new f.THREE.Vector3(...preview)),0);near(ps.bombs[0].vel.clone().sub(new f.THREE.Vector3(0,1.5,0)).length()/ps.bombs[1].vel.clone().sub(new f.THREE.Vector3(0,1.5,0)).length(),1.5);near(f.SUB.bomb.throwSpeed,67.2);
+});
+
+test('#267: subPower and Storm specialPower do not strengthen each others launch',async()=>{
+ const f=await fixture(),ps=new f.Projectiles(new f.THREE.Scene());f.G.projectiles=ps;
+ const sub=f.make(),special=f.make();equip(sub,57,'subPower');equip(special,57,'specialPower');
+ sub.weapon.special=special.weapon.special='storm';sub._startSpecial();special._startSpecial();const [normal,powered]=ps.bombs;
+ near(powered.vel.clone().sub(new f.THREE.Vector3(0,1.5,0)).length()/normal.vel.clone().sub(new f.THREE.Vector3(0,1.5,0)).length(),1.5);
+ ps.throwBomb(special);ps.throwBomb(sub);const plain=ps.bombs[2].vel.clone().sub(new f.THREE.Vector3(0,1.5,0)),strong=ps.bombs[3].vel.clone().sub(new f.THREE.Vector3(0,1.5,0));near(strong.length()/plain.length(),1.5);
+});

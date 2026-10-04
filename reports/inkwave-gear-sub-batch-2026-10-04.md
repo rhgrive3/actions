@@ -1,6 +1,6 @@
-# 公開 INKWAVE：サブ構えとギア4件（2026-10-04）
+# 公開 INKWAVE：サブ構えとギア5件（2026-10-04）
 
-main `0859bf4fab08edc74c25fcb790e662a748a91ec9` 基準、#193 / #235 / #245 / #298。旧試作版・他Draftの実装は含めない。#243はPR #319で対応済み、#241は不発ロック長が未確認のため選ばなかった。
+main `0859bf4fab08edc74c25fcb790e662a748a91ec9` 基準、#193 / #235 / #245 / #298 を最初の4件とし、後続 #267 を追加した5件。旧試作版・他Draftの実装は含めない。#243はPR #319で対応済み、#241は不発ロック長が未確認のため選ばなかった。
 
 ## 根拠と条件
 
@@ -53,3 +53,22 @@ native bomb event配列の任意末尾metadataにstormDurationを保存し、gho
 - 全公開回帰と公開minify出力でも検証し、Actions結果はPR headごとに記録する。Switch/iOSの新規測定は未実施。
 
 ローカル最終結果：全公開回帰753/753、専用11/11、公開ビルドから同11/11、local-quality 8/8、motion/workflow gates 10/10。固定raw11ファイル/抽出値132件を照合。公開build digestは `28ad43a1f45e4b131ddbd1de6608fcf3378f6e4f4bc3687ff1ca298c451b7f85`。ローカルChromiumはUnix socket EPERMで実行不可のため、ブラウザー評価は当該Draft PRのActionsへ分けて確認する。
+
+
+## 後続 #267：サブ性能のガイド/実投擲を同じactor-local値へ
+
+拡張前合格checkpointは `8a9435a2db5926bf674d87c1a1eee27a8064ecca`、[run37191448676](https://github.com/rhgrive3/actions/actions/runs/37191448676) のIN​KWAVE4ジョブ成功。旧checkpointの検証と今回の追加は区別する。
+
+新subThrowSpecがSUB.bombを変更せず、actorのsubPowerを一度だけ適用した短命のthrow specを返す。native throwBombとupdateArcの両方がその値を使う。gear.updateの共有SUB.throwSpeed書換えと復元を削除したので、他actorの更新中にguideや投擲が再入しても倍率が伝播しない。原典Low/Mid/High=1.12/1.4/1.68から既存gear curveが計算する0/10/57AP=1/1.1515/1.5を維持。
+
+[S3 Wiki Splat Bombのサブ性能表](https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%B5%E3%83%96%E3%82%A6%E3%82%A7%E3%83%9D%E3%83%B3/%E3%82%B9%E3%83%97%E3%83%A9%E3%83%83%E3%82%B7%E3%83%A5%E3%83%9C%E3%83%A0)は0/10/57APの初速11.20/12.90/16.80 DU/Fを掲載。丸め表示と計算内値を区別し、発動時間/インクコスト/回復条件は変更しない。[固定Bomb原典](https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponBombSplash.game__GameParameterTable.json)のMoveParam.SpawnSpeedZSpecUpは既存bindingで照合済み。
+
+PR259 runtimeが存在する場合の既存build hookを広げ、bombならsubPower、stormなら発動時specialPower snapshotの倍率で**local forward Zだけ**を拡張する。別成分Y、プレイヤー移動継承、上向き上限、world Y下限はその担当の値を保持する。最新確認head16d1259d731cc695b0aa1d467df17be1c1c5bff4は直前head7a508f27からreportのみ変更で、実runtimeも再読して同じanchorを確認した。他担当PRへ直接書き込んでいない。
+
+実nativeのarc cache初速と実投擲初速を0/10/57APで比較し、20tickの実弾積分とFloat32 guideの各2tick頂点も比較する（3e-5WU許容）。gear変更でcacheが更新されること、低インクでも装備後のguideになること、57AP actor内から0AP actorのguideと投擲を再入した負例、subPower/specialPowerの相互汚染がないことを確認する。
+
+最新PR259とPR322 head9f1fcacb19c6f410742fefa3b521ad6579d97b7cの実runtime/adapter合成で、既存15件＋追加2件=17件成功。中立照準GP57ボムのforward100.8、Y14.4は維持され、移動XZ×1.6や上向き上限を別に確認。Stormの600F時計/保持・回復・非加算も保持。native基礎ベクトル自体の実機一致や、全てのgenuine kitのsub軌道を認定するわけではない。
+
+既存integrationのサブ性能検査は共有SUBの一時書換えを観測していたため、新設計では実throwVelocityへ渡された速度を記録する検査へ変更した。raw High=1.68*60、共有Low=1.12*60、誤差1e-9の期待値は変えず、合法な6F構えと実bomb1個も確認する。
+
+#267追加後の結果：全757/757、専用source15/15・公開minify build15/15、公開buildの既存integration19/19、最新PR259/322合成17/17、local-quality8/8、motion/workflow gates10/10。固定raw11ファイル/132抽出値を再照合。contentHash `725a387ef0879b426cc9e7d0341acf962d8d3338971e437270eb216423bf7612`。公開直前もPR259 head16d1259dのruntimeが合成済み内容と同一であることを再読確認した。
