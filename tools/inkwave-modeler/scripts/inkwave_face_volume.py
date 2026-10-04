@@ -2164,7 +2164,20 @@ def main():
                     nn = M.to_local(nw) - M.to_local(np.zeros((1, 3)))
                     nn /= np.maximum(np.linalg.norm(nn, axis=1), 1e-9)[:, None]
                     t = np.clip((nl[:, 1] - ln['y'][0]) / (ln['y'][1] - ln['y'][0]), 0, 1)
+                    if ln.get('profile') == 'circle':
+                        # a quarter ellipse: tangent to the neck below, level under the jaw at y[1] (a rounded
+                        # inside corner; the straight ramp met the jaw floor at an angle)
+                        t = 1 - np.sqrt(1 - t * t)
                     wl = wy * t * np.clip(nn[:, 2], 0, 1) ** ln.get('power', 1.0)
+                if step.get('flare'):
+                    # the same rounded corner on the sides of the neck (front view): out along |normal x|
+                    fl = step['flare']
+                    t = np.clip((nl[:, 1] - fl['y'][0]) / (fl['y'][1] - fl['y'][0]), 0, 1)
+                    t = 1 - np.sqrt(1 - t * t)
+                    nw = np.array([neck.matrix_world.to_3x3() @ v.normal for v in neck.data.vertices])
+                    nn = M.to_local(nw) - M.to_local(np.zeros((1, 3)))
+                    nn /= np.maximum(np.linalg.norm(nn, axis=1), 1e-9)[:, None]
+                    wf = wy * t * np.abs(nn[:, 0]) ** fl.get('power', 1.0)
                 if step.get('mm_side'):
                     # per side of the head (x < 0, x > 0): the neck sits off-centre under the head in this model
                     a, b = step['mm_side']
@@ -2176,6 +2189,8 @@ def main():
                 amounts = per * wn
                 if step.get('lean'):
                     amounts = amounts + ln['mm'] * wl
+                if step.get('flare'):
+                    amounts = amounts + fl['mm'] * wf
                 if step.get('cove'):
                     # a rounded inside corner under the jaw (the reference's jaw runs into the neck in one curve):
                     # each neck point h mm under the face (ray straight up in the head frame, hitting the face's
