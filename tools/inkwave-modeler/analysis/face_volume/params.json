@@ -1700,7 +1700,7 @@
   ],
   "sigma_px": 2.5,
   "min_facing": 0.35,
-  "gain": 0.06,
+  "gain": 0.045,
   "floor": 0.5,
   "max": 0.4,
   "max_factor": 3.0,

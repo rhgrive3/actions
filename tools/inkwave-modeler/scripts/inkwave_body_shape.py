@@ -145,6 +145,32 @@ def nape(cfg):
               round(float(np.linalg.norm(er.world(obj) - before, axis=1).max() * 1000), 2))
 
 
+def collar_lower(cfg):
+    """The collar (turtleneck) top stood higher than the reference in the side and back views (left side view
+    14-16 px, back right 10-12, right 4-8; the front matched): its top part goes down (head-frame -y, Blender's
+    Warp) by an amount that depends on the direction round the neck (cfg['angles'] = [deg, mm]: 0 = front,
+    90 = left (+x), 180 = back), full from cfg['y'][1] up, nothing from cfg['y'][0] down (the collar is squeezed,
+    not moved), only within cfg['r_max'] mm of the neck axis (cfg['centre_xz'])."""
+    down = er.M.to_world_delta(np.array([[0.0, -1.0, 0.0]]))[0]
+    down /= np.linalg.norm(down)
+    ang = np.array(cfg['angles'], float)
+    ang = np.r_[ang[-1:] - [360, 0], ang, ang[:1] + [360, 0]]
+    peak = float(ang[:, 1].max())
+    cx, cz = cfg['centre_xz']
+    y0, y1 = cfg['y']
+    for name in cfg['meshes']:
+        obj = bpy.data.objects[name]
+        L = er.M.to_local(er.world(obj)) * 1000
+        phi = np.degrees(np.arctan2(L[:, 0] - cx, L[:, 2] - cz)) % 360
+        amount = np.interp(phi, ang[:, 0], ang[:, 1])
+        r = np.hypot(L[:, 0] - cx, L[:, 2] - cz)
+        w = amount / peak * smoothstep((L[:, 1] - y0) / (y1 - y0)) * smoothstep((cfg['r_max'] - r) / 10.0)
+        before = er.world(obj)
+        warp(obj, w, tuple(down * peak / 1000))
+        print('BODY_SHAPE collar_lower', name, 'vertices', int((w > 1e-3).sum()), 'max move mm',
+              round(float(np.linalg.norm(er.world(obj) - before, axis=1).max() * 1000), 2))
+
+
 def jacket_field(W, cfg):
     """Outward move of the jacket's open front edges at the waist (front parts only)."""
     x, y, z = W[:, 0], W[:, 1], W[:, 2]
@@ -623,6 +649,7 @@ def main():
     for sl, _, riders in p.get('sleeves', {}).get('pairs', []):
         names += [n for n in [sl] + riders if n not in names]
     names += [n for n in p.get('nape', {}).get('meshes', []) if n not in names]
+    names += [n for n in p.get('collar_lower', {}).get('meshes', []) if n not in names]
     remove_made()
     restore_legwear()
     print('BODY_SHAPE restored', restore(names, drop=args.restore), 'meshes')
@@ -686,6 +713,8 @@ def main():
             slim_sleeves(p['sleeves'])
         if p.get('nape'):
             nape(p['nape'])
+        if p.get('collar_lower'):
+            collar_lower(p['collar_lower'])
         if p.get('nails'):
             mat = nail_material(p['nails'])
             for hand in p['nails']['hands']:
