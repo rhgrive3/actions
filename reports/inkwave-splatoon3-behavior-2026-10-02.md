@@ -225,3 +225,18 @@ Four current-public defects #366/#370 (one duplicate pair), #375, #384, #395 are
 ## 2026-10-04 weapon edge-case supplement
 
 See [weapon edge-case comparison](inkwave-weapon-edgecases-2026-10-04.md) for #354/#356/#357/#361: stable-human Dualies3F first emission; Splatling separate ground1.6° pitch envelope; terrain Blaster35HP cap; horizontal Roller12+1 gameplay units. The report separates actual source/minified/composed-code tests from S3 probability/position/falloff and released-tap calibration still pending. No native source or deployed main is changed by the draft.
+
+## マニューバーのスライド前隙（#477、2026-10-04）
+
+スプラトゥーン3（Ver. 11.3.0）のマニューバー（スプラマニューバー等）では、移動入力とB（ジャンプ）ボタンによるスライド（dodge roll）入力の認識後、直ちに移動を開始するのではなく、約4Fの前隙（pre-roll startup / 予備動作時間）が存在し、その後に12Fのロール移動が行われる。
+INKWAVE の公開版実装では、`tryDodge` が成功した直後の tick 1 から `dodgeVel` が水平速度を占有し、12Fの移動を開始していたため、4Fの前隙が存在しなかった。
+Issue #477 では、ビルド時アダプター `patches/splatoon3/issue-477-adapter.mjs` を通じて、入力認識直後の 4F startup 期間と、その後の 12F roll 移動のシーケンスを実装した。
+
+| 項目 | 内容 |
+|---|---|
+| 本家の根拠 | スプラトゥーン3 Ver. 11.3.0、スプラマニューバー（Splat Dualies）。コミュニティ検証シーケンス：入力認識 → 4F pre-roll startup → 12F roll 移動 → 32F ポストロール射撃固定（タレット状態）。公式資料上の明示フレーム値は非公開のため、4Fはフレーム単位検証に基づくコミュニティ確立値。 |
+| INKWAVE の実装箇所 | `patches/splatoon3/issue-477-adapter.mjs`（`adaptIssue477Weapons`, `adaptIssue477Actor`, `adaptIssue477DualiesMotion`, `adaptIssue477Net`, `installIssue477DualiesStartup`）。`weapons.js:tryDodge` で 4/60s の startup を付与し歩行初速を停止。`weapons.js:dodgeVel` は startup 中に false を返し水平速度を占有しない。`weapons.js:_dualies` は startup をカウントダウンした後に 12F の移動時計を進める。`dualies-motion.mjs` は startup 中の phase を 'startup' とし tumble を 0 に保つ。 |
+| 再現操作 | マニューバー装備・地上で射撃キーを押しながら任意の移動方向とジャンプキーを入力（スライド発動）。未適用版では tick 1 からロール移動速度が発生し移動変位が生じる。適用後は ticks 1..4 の間、水平変位が 0 に保たれ、tick 5 から 12F の移動変位が開始する。 |
+| プレイへの影響 | スライド入力から実際に移動が発生するまでの 4F のタメ（前隙）が再現され、即座に移動が始まることによる射撃回避タイミングのズレが解消される。ロールの総移動距離（w.rollDist = 2.8m）および 12F の移動時間は不変。 |
+| 確認状態 | **ロジック・テスト確認済み**（`patches/splatoon3/tests/issue-477.test.mjs` による 10 項目受け入れ検証：固定 60Hz 4F 変位ゼロ、tick 5 移動開始、12F 移動期間、総変位量、startup/roll/plant 各フェーズ遷移、タレット後の 4F 射撃ゲート（lockInterval）、2 連続ロールでの各 startup 保持、30/60/120Hz 描画境界一致、リモートプロキシ単一時計同期、デス/スペシャル/変身/ブキ変更によるキャンセル）。**Switch Ver. 11.3.0 実機における正確な関節姿勢・ミリ秒単位の物理変位曲線は未確認**として残す。 |
+
