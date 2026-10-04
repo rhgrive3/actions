@@ -264,6 +264,11 @@ export function adaptSource(rel, code) {
     return `import { beforeActions } from '../../patches/splatoon3/runtime/movement.mjs';\nimport { updateResources, setRespawnTimer } from '../../patches/splatoon3/runtime/resources.mjs';\n` + code;
   }
   if (rel === 'src/net/netmatch.js') {
+    code = replaceOnce(code, "'splatted', 'respawn'];", "'splatted', 'respawn', ...KIT_FORWARD];", 'kit network forward registration');
+    code = replaceOnce(code, "case 'ev': this._playEvent(e[2], e[3]); break;", "case 'ev': this._playEvent(e[2], e[3], from); break;", 'kit event transport sender');
+    code = replaceOnce(code, '  _playEvent(name, d) {', '  _playEvent(name, d, from) {', 'kit event receiver signature');
+    code = replaceOnce(code, '    if (!e) return;\n    const a = e.actor || e.victim;',
+      '    if (!e) return;\n    if (this.replayKitEvent?.(name, e, from)) return;\n    const a = e.actor || e.victim;', 'kit typed replay dispatch');
     code = replaceOnce(code, '    victim.respawnTimer = PLAYER.respawnTime;',
       '    setRespawnTimer(victim, cause);', 'remote death-cause respawn timing');
     // The gear death consequence reads the actor's death counter, so it must run
@@ -271,7 +276,7 @@ export function adaptSource(rel, code) {
     // runs (that wrapper wraps the whole splat body, deaths++ included).
     code = replaceOnce(code, '    victim.stats.deaths++;',
       '    victim.stats.deaths++;\n    applyDeathGear(victim);', 'remote gear death consequence');
-    return `import { setRespawnTimer } from '../../patches/splatoon3/runtime/resources.mjs';\nimport { applyDeathGear } from '../../patches/splatoon3/runtime/gear.mjs';\n` + code;
+    return `import { KIT_FORWARD } from '../../patches/splatoon3/runtime/kit-network.mjs';\nimport { setRespawnTimer } from '../../patches/splatoon3/runtime/resources.mjs';\nimport { applyDeathGear } from '../../patches/splatoon3/runtime/gear.mjs';\n` + code;
   }
   if (rel === 'src/game/character-weapons.js') {
     return replaceOnce(code, '    if (ft >= 0.15 && ft - dt < 0.15) w.drumW += 34;', '    const release = st.flickReleaseTime ?? 0.15;\n    if (ft >= release && ft - dt < release) w.drumW += 34;', 'roller drum release impulse');

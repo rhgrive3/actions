@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { G, on, emit } from '../../../src/core/ctx.js';
 import { PLAYER, WEAPONS, SUB, SPECIALS, DEFAULT_SETTINGS } from '../../../src/config.js';
 import { Actor } from '../../../src/game/actor.js';
+import { NetMatch } from '../../../src/net/netmatch.js';
 import { Character, CHARACTER_CHANNELS, CHARACTER_TIMERS, CHARACTER_FOOT_MODES, CHARACTER_FOOT_METRICS, CHARACTER_BOMB_POSE } from '../../../src/game/character.js';
 import { WeaponRunner, Projectiles } from '../../../src/game/weapons.js';
 import { PaintSystem } from '../../../src/world/paint.js';
@@ -13,6 +14,8 @@ import { installMovement } from './movement.mjs';
 import { installMovementMotion } from './movement-motion.mjs';
 import { installWeapons } from './weapons.mjs';
 import { installKitDefense } from './kit-defense.mjs';
+import { installKitInkVac } from './kit-ink-vac.mjs';
+import { installKitNetwork } from './kit-network.mjs';
 import { installGear } from './gear.mjs';
 import { installFlow } from './flow.mjs';
 import { installResources } from './resources.mjs';
@@ -46,7 +49,7 @@ let installed = false;
 export function install(profile) {
   if (installed) throw new Error('INKWAVE patches already installed');
   if (profile.schema !== 1 || profile.referenceVersion !== '11.3.0') throw new Error('Unsupported gameplay profile');
-  const api = { THREE, G, on, emit, PLAYER, WEAPONS, SUB, SPECIALS, Actor, Character, CHARACTER_CHANNELS, CHARACTER_TIMERS, CHARACTER_FOOT_MODES, CHARACTER_FOOT_METRICS, CHARACTER_BOMB_POSE, WeaponRunner, Projectiles, PaintSystem, PlayerController, Menus, ShadowCache, Physics, Hit };
+  const api = { THREE, G, on, emit, PLAYER, WEAPONS, SUB, SPECIALS, Actor, NetMatch, Character, CHARACTER_CHANNELS, CHARACTER_TIMERS, CHARACTER_FOOT_MODES, CHARACTER_FOOT_METRICS, CHARACTER_BOMB_POSE, WeaponRunner, Projectiles, PaintSystem, PlayerController, Menus, ShadowCache, Physics, Hit };
   Object.assign(PLAYER, profile.player);
   for (const [kind, data] of Object.entries(profile.weapons)) {
     if (!WEAPONS[kind]) throw new Error(`Missing upstream weapon ${kind}`);
@@ -56,6 +59,8 @@ export function install(profile) {
   for (const [id, data] of Object.entries(profile.specials || {})) Object.assign(SPECIALS[id], data);
   installWeapons(api, profile);
   installKitDefense(api);
+  installKitInkVac(api, profile);
+  installKitNetwork(api);
   installRollerMotion(api, profile);
   installMovement(api, profile);
   installMovementMotion(api, profile);
