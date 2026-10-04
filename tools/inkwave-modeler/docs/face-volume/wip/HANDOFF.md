@@ -134,3 +134,4 @@
 - 大事: 試しのビルド（jt.sh、J0 から）は lash_rebuild をしないので、顔の材質が古い `INKWAVE_face_skin_lash`（古い肌の色・SSS 0.07・つや 1.0）のまま。正式なビルドは最後の lash_rebuild で顔を `skin_b27050`（首と同じ）にもどす。だから試しの色は正式とちがう。色の比較は正式なビルドでだけする。
 - 正式な版で残った「耳の後ろから首へのななめの線」は色ではなく形の折れ目（顔が首にのり始める所、頭 |x| 35〜46、y -74〜-85、z -30〜21）→ 新しい手順 `ramus_back_smooth`（Smooth 0.5、中心 [40,-79,-5]、半径 14/14/36、150 回、jaw_tuck のあと）= R4。P1〜P3（上の線や depth_back を変える）は折れ目が強くなった。params = R4。正式なビルド Q3。
 - 10/04 夕: ユーザー「首に参照にない起伏」= 首のたてのすじ。lateral / flare の重み |nx|（1 乗）が首の前の真ん中で V に折れるため → 2 乗（lateral 2、flare.power 2）+ smooth 30 = X2。params = X2。正式なビルド Q4。README に V93 の節。
+- 10/04 夜: Q4（X2）を master V93 にして PR https://github.com/rhgrive3/actions/pull/316（ブランチ claude/inkwave-jaw-neck-v93、main から、wip なし）。マージはユーザーの OK 待ち。PR 用の作業ツリー: checkouts/inkjaw-pr。
