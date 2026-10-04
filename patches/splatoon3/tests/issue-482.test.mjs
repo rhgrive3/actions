@@ -1,3 +1,6 @@
+import { adaptQualitySource } from '../../local-quality/adapter.mjs';
+import { adaptReliability } from '../../reliability/adapter.mjs';
+import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -32,7 +35,7 @@ async function createFixture({ apply482 = true } = {}) {
       : fs.readFileSync(file, 'utf8');
 
     if (apply482 && file.startsWith(UPSTREAM + path.sep)) {
-      source = adaptIssue482(relative, source);
+      source = adaptQualitySource(relative, adaptReliability(relative, adaptTouchLayout(relative, source)));
     }
 
     const mod = new vm.SourceTextModule(source, { context, identifier: file });
