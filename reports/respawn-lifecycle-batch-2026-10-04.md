@@ -89,3 +89,8 @@ mainがlocal victim自身をHUDへ渡し、HUDのFX callbackが毎描画frameで
 ### CSSOM数値の受入精度
 
 run37195545808で、actor参照・実タイマー・数字・computed animation-nameの検査は通過し、半周リングの1e-10比率比較で失敗した。CSSはJS doubleをそのまま往復せず、[CSSOM数値serialization](https://drafts.csswg.org/cssom/#serialize-a-css-component-value)に丸め規則がある。検証器だけを0.001 SVG user unit以下の絶対差へ改め、値・期待値を記録する。100単位viewBoxの1pixelより十分小さく、1%ずれ・NaN・空文字・%指定を負例で拒否する。ゲームのtimer/描画計算は変更しない。実CI再確認までは成功未確定。
+
+
+### 隔離source-identity検証の依存関係
+
+run37196493253でactive/catalog/validate成功。UIのtouch操作とreliabilityも成功したが、偽造入力を拒否する隔離checkoutが新HUD検証helperを含まず、意図するGit照合より前にmodule importで停止した。隔離copy対象へ同helperを追加。helper欠落でERR_MODULE_NOT_FOUNDとなる負例と、同じcopy対象で本検証器の引数検査まで到達する正例をNode実行で固定する。偽造input hashの拒否条件は弱めず維持する。

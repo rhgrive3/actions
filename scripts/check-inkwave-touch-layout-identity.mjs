@@ -32,7 +32,7 @@ for (const [key, expected] of Object.entries(identity.files)) {
   const data = fs.readFileSync(from); assert.equal(hash(data), expected, 'Fixture input matches build: ' + key);
   fs.mkdirSync(path.dirname(target), { recursive: true }); fs.writeFileSync(target, data);
 }
-for (const file of ['scripts/build-inkwave.mjs', 'scripts/check-inkwave-browser.mjs']) {
+for (const file of ['scripts/build-inkwave.mjs', 'scripts/check-inkwave-browser.mjs', 'scripts/lib/inkwave-respawn-hud.mjs']) {
   const target = path.join(checkout, file); fs.mkdirSync(path.dirname(target), { recursive: true }); fs.copyFileSync(path.join(repo, file), target);
 }
 assert(identity.files[input], 'Overlay source is bound to the build');
@@ -53,7 +53,7 @@ fs.writeFileSync(path.join(candidate, 'inkwave-build.json'), JSON.stringify(iden
 const check = spawnSync(process.execPath, [path.join(checkout, 'scripts/check-inkwave-browser.mjs'), '--site', candidate,
   '--evidence-dir', evidence, '--profile-dir', path.join(checkout, 'browser-profile'), '--exact-source'], { encoding: 'utf8', timeout: 30000 });
 assert.notEqual(check.status, 0, 'Dirty editor must fail exact-source verification');
-assert(check.stderr.includes('Build input differs from commit: ' + relativeInput), 'Reject the dirty overlay specifically');
+assert(check.stderr.includes('Build input differs from commit: ' + relativeInput), 'Reject the dirty overlay specifically: ' + check.stderr.slice(-3000));
 const result = { status: 'passed', regression: 'uncommitted-' + (reliability ? 'reliability-overlay' : 'touch-editor') + '-rejected-despite-forged-input-hash', fixtureCommit: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: checkout, encoding: 'utf8' }).trim(), productCommitAttested: false };
 const file = path.join(evidence, (reliability ? 'reliability' : 'touch-layout') + '-identity-result.json');
 fs.writeFileSync(file + '.writing', JSON.stringify(result, null, 2)); fs.renameSync(file + '.writing', file);
