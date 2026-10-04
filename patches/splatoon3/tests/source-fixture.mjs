@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { adaptSource } from '../adapter.mjs';
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const UPSTREAM = process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
-export async function fixture() {
+export async function fixture(extraExports = '') {
   const context = vm.createContext({ console, performance });
   const modules = new Map();
   function resolve(spec, from) {
@@ -39,6 +39,7 @@ export async function fixture() {
     export * from './patches/splatoon3/runtime/flow.mjs';
     export * from './patches/splatoon3/runtime/resources.mjs';
     export * from './patches/splatoon3/runtime/render.mjs';
+    ${extraExports}
   `, { context, identifier: path.join(ROOT, 'fixture.mjs') });
   await root.link((spec, from) => load(resolve(spec, from.identifier))); await root.evaluate();
   const api = { ...root.namespace }, { G, THREE, PLAYER, WEAPONS, SUB, SPECIALS } = api;

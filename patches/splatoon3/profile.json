@@ -378,6 +378,24 @@
     "movementResourcesEvidence": "reports/inkwave-movement-resources-2026-10-02.md"
   },
   "bindings": {
+    "gearExtra.quickRespawnAroundFrames.0": {
+      "parameter": "data/parameter/1130/misc/params.json#/Dying_AroundFrm",
+      "index": 2,
+      "factor": 1,
+      "rawValue": 90
+    },
+    "gearExtra.quickRespawnAroundFrames.1": {
+      "parameter": "data/parameter/1130/misc/params.json#/Dying_AroundFrm",
+      "index": 1,
+      "factor": 1,
+      "rawValue": 60
+    },
+    "gearExtra.quickRespawnAroundFrames.2": {
+      "parameter": "data/parameter/1130/misc/params.json#/Dying_AroundFrm",
+      "index": 0,
+      "factor": 1,
+      "rawValue": 30
+    },
     "player.runSpeed": {
       "parameter": "data/parameter/1130/misc/params.json#/MoveVel_Human",
       "index": 2,
@@ -1166,6 +1184,7 @@
     }
   },
   "gearExtra": {
+    "quickRespawnAroundFrames": [90, 60, 30],
     "inkRecoveryKid": [
       600.0,
       410.0,
@@ -1211,6 +1230,11 @@
       0.75,
       1
     ]
+  },
+  "stealth": {
+    "sneakRatio": 0.6,
+    "ninjaDelay": 0.5,
+    "ninjaSwimMultiplier": 0.9
   },
   "respawnChaseTime": 4.5,
   "walkMotion": {
