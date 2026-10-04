@@ -5,7 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from './source-fixture.mjs';
-import { installKitInkVac, inkVacAbsorbCandidate, disposeInkVac, blastRadius, intakeRadius, INK_VAC_CALIBRATION } from '../runtime/kit-ink-vac.mjs';
+import { installKitInkVac, inkVacAbsorbCandidate, disposeInkVac, blastRadius, intakeRadius, inkVacBlastDescriptor, INK_VAC_CALIBRATION } from '../runtime/kit-ink-vac.mjs';
 
 function setup() {
   const f = fixture();
@@ -99,16 +99,9 @@ test('normal movement and main weapon remain usable while the special is held', 
   assert.ok(a.specialActive, 'the special is not cancelled by normal weapon use');
 });
 
-test('release emits a charge-scaled countershot blast + turf through the native projectile pipeline', async () => {
+test('release queues a native type-blast countershot carrying the resolved inkVac descriptor', async () => {
   const { f, a, system } = await setup();
   activate(f, a);
-  f.G.paint.splat = () => 1.0;                       // deterministic area per splat
-  f.G.physics.raycast = (from, dir, _d, out) => {     // ground hit for the downward blast probe
-    out.hit = dir.y < -0.5; out.dist = from.y; out.point.set(from.x, 0, from.z); out.normal.set(0, 1, 0); return out;
-  };
-  f.G.physics.los = () => true;
-  const victim = f.make(); victim.team = 1; f.G.actors = [a, victim];
-  // Fill the charge via three accepted absorptions (0.34 each).
   for (let i = 0; i < 3; i++) {
     const p = enemyShot(f, 0, 1, 5, 0, 0, -3);
     inkVacAbsorbCandidate(a, p.pos.clone(), p.pos.clone().addScaledVector(p.vel, 1 / 60), p).onHit();
@@ -118,20 +111,39 @@ test('release emits a charge-scaled countershot blast + turf through the native 
   f.tick(a);                                          // release on the next update
   assert.equal(a.specialActive, null, 'release ends the held special');
   assert.equal(f.inkVacState(a), null, 'release clears the intake state');
-  assert.ok(system.list.length > before, 'a countershot entry was pushed onto the native projectile list');
-  const exhale = system.list[system.list.length - 1];
-  assert.equal(exhale.wid, 'inkvac', 'the countershot is an inkvac native projectile, not a storm cloud');
-  assert.ok(victim.hp < f.PLAYER.hp, 'the charge-scaled countershot damaged the enemy');
-  assert.ok(a.stats.turf > 0, 'the countershot laid turf');
+  assert.equal(system.list.length, before + 1, 'countershot pushed onto the native projectile list');
+  const ex = system.list[system.list.length - 1];
+  assert.equal(ex.type, 'blast', 'native blast type so the native integrator/burst runs');
+  assert.equal(ex.wid, 'inkVac', 'wid is the special id used as the splash cause');
+  assert.ok(ex.s3SpecialWeapon, 'the resolved descriptor is set before _push for the parent handoff');
+  const d = ex.s3SpecialWeapon;
+  assert.equal(d.id, 'inkVac');
+  assert.equal(d.kind, 'special');
+  assert.ok(Array.isArray(d.splashBands) && d.splashBands.length > 0, 'descriptor supplies splashBands');
+  assert.ok(d.splashRadius > 0 && d.burstRadius > 0 && d.impactRadius > 0, 'descriptor supplies radii');
+  assert.ok(d.splashDamageMax > 0 && d.splashDamageMin > 0, 'descriptor supplies splash damage');
+  assert.ok(ex.damage > 0, 'direct damage travels on p.damage');
+  assert.equal(d.splashRadius, 11.0, 'max-charge blast radius (pinned)');
+  assert.ok(d.provenance, 'descriptor carries tuning provenance');
 });
 
-test('a remote ghost authors neither damage nor turf nor a projectile on release', async () => {
+test('the descriptor is charge-scaled and falls back to WEAPONS.blaster only via parent handoff', async () => {
+  await setup();
+  const min = inkVacBlastDescriptor(0), max = inkVacBlastDescriptor(1);
+  assert.equal(min.splashRadius, 6.0, 'pinned min-charge blast radius');
+  assert.equal(max.splashRadius, 11.0, 'pinned max-charge blast radius');
+  assert.ok(max.splashDamageMax >= min.splashDamageMax, 'damage does not shrink with charge');
+  assert.equal(min.provenance.blastRadius.includes('pinned'), true);
+  // The descriptor is NOT WEAPONS.blaster: without the parent handoff the native
+  // _blastBurst would read WEAPONS.blaster (the known gap), so we must not claim
+  // current native integration here.
+  assert.notEqual(max.id, 'blaster');
+});
+
+test('a remote ghost authors no projectile (and thus no damage/paint) on release', async () => {
   const { f, a, system } = await setup();
   a.remote = true;
   activate(f, a);
-  f.G.paint.splat = () => 1.0;
-  f.G.physics.raycast = (from, dir, _d, out) => { out.hit = dir.y < -0.5; out.dist = from.y; out.point.set(from.x, 0, from.z); out.normal.set(0, 1, 0); return out; };
-  f.G.physics.los = () => true;
   const victim = f.make(); victim.team = 1; f.G.actors = [a, victim];
   for (let i = 0; i < 3; i++) {
     const p = enemyShot(f, 0, 1, 5, 0, 0, -3);

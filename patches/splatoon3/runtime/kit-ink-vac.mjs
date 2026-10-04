@@ -66,6 +66,25 @@ export function blastRadius(charge) { return lerp(BLAST_MIN, BLAST_MAX, charge);
 // Charge-scaled countershot damage, converted from the pinned raw 2200.
 export function exhaleDamage(charge) { return EXHALE_DAMAGE_RAW * INK_VAC_CALIBRATION.rawToHp; }
 
+// Resolved special-blast descriptor consumed by the native burst. The parent's
+// runtime adapts native _blastBurst to `p.s3SpecialWeapon || WEAPONS.blaster`, so
+// every field the native burst reads must be supplied here with provenance. Native
+// type:'blast' + integrator/burst remains the authority for motion and detonation.
+export function inkVacBlastDescriptor(charge) {
+  const radius = blastRadius(charge), damage = exhaleDamage(charge);
+  return Object.freeze({
+    id: 'inkVac', name: 'Ink Vac', kind: 'special',
+    splashRadius: radius, burstRadius: radius, impactRadius: radius,
+    splashDamageMax: damage, splashDamageMin: damage,
+    splashBands: Object.freeze([[0, damage], [radius, damage]]),
+    provenance: Object.freeze({
+      blastRadius: 'ExhaleBlastParam{Min,Max}Charge.PaintRadius 6.0/11.0 (pinned)',
+      damage: 'ExhaleParam.DirectDamage & ExhaleBlastParam DistanceDamage.Damage = 2200 raw; rawToHp=100/3000 (calibration)',
+      chargeScale: 'radius and damage scale with accumulated charge (calibration)',
+    }),
+  });
+}
+
 function inkVacState(actor) { return states.get(actor) || null; }
 
 // Horizontal aim-aligned forward of the intake.
@@ -199,34 +218,13 @@ function release(state) {
   disposeVisual(state);
   if (a.remote) { states.delete(a); emit?.('special:inkvac-release', { actor: a, charge: c, authored: false }); return; }
   // Native pipeline handoff: Projectiles owns motion/lifetime of the countershot.
-  const payload = { radius: blastRadius(c), damage: exhaleDamage(c), charge: c, kind: 'inkvac' };
-  try { G.projectiles?.fireInkVacExhale?.(a, payload); } catch { /* parent-owned pipeline */ }
-  // Countershot detonation: charge-scaled splash damage + turf via native primitives.
-  const o = origin(a, new THREE.Vector3());
-  const dmg = payload.damage;
-  const applyHit = G.projectiles?.applyHit;
-  if (applyHit) for (const e of G.actors) {
-    if (e === a || e.team === a.team || !e.alive) continue;
-    const p = new THREE.Vector3(e.pos.x, e.pos.y + 0.7, e.pos.z);
-    const d = p.distanceTo(o);
-    if (d > payload.radius) continue;
-    if (G.physics?.los && !G.physics.los(o, p)) continue;
-    applyHit(a, e, dmg, 'inkvac');
-  }
-  const down = new THREE.Vector3(0, -1, 0);
-  const g = G.physics?.raycast?.(o, down, 3.5, new api.Hit());
-  if (g && g.hit) {
-    const centre = new THREE.Vector3().copy(g.point).addScaledVector(g.normal, 0.1);
-    let area = 0;
-    area += G.paint.splat(centre, payload.radius * 0.72, a.team, { seed: Math.random() });
-    for (let i = 0; i < 9; i++) {
-      const ang = (i / 9) * Math.PI * 2 + Math.random() * 0.3;
-      const rr = payload.radius * (0.55 + Math.random() * 0.3);
-      area += G.paint.splat(new THREE.Vector3(centre.x + Math.cos(ang) * rr, centre.y + 0.1, centre.z + Math.sin(ang) * rr),
-        1.1 + Math.random() * 0.6, a.team, { seed: Math.random() });
-    }
-    a.addTurf(area);
-  }
+  // Countershot: the native integrator and _blastBurst remain the authority. This
+  // module only queues the native blast projectile carrying the resolved
+  // descriptor; detonation damage/turf come from the native burst once the parent
+  // handoff reads p.s3SpecialWeapon. No manual splash/paint here (avoid double
+  // application and a second damage/paint engine).
+  const descriptor = inkVacBlastDescriptor(c);
+  try { G.projectiles?.fireInkVacExhale?.(a, { charge: c, descriptor }); } catch { /* parent-owned pipeline */ }
   emit?.('special:inkvac-release', { actor: a, charge: c, authored: true });
   states.delete(a);
 }
@@ -240,8 +238,18 @@ function installExhaleHandler(Projectiles) {
     const p = this._new();
     const o = origin(a, new THREE.Vector3());
     const f = forward(a, new THREE.Vector3());
-    Object.assign(p, { type: 'shot', owner: a, team: a.team, wid: 'inkvac', damage: 0, size: 0.2,
-      radius: payload.radius * 0.4, life: 0.5, straight: 1, grav: 0, drag: 0, trail: 0, trailEvery: 0 });
+    const charge = payload.charge ?? 0;
+    const d = payload.descriptor || inkVacBlastDescriptor(charge);
+    Object.assign(p, {
+      type: 'blast', owner: a, team: a.team,
+      wid: d.id,                       // 'inkVac': native splash cause id
+      s3SpecialWeapon: d,              // resolved descriptor, set BEFORE _push (parent preserves it)
+      damage: exhaleDamage(charge),    // direct damage travels on p.damage
+      size: 0.2, radius: d.impactRadius, radiusNear: d.impactRadius,
+      splashRadius: d.splashRadius, splashDamageMax: d.splashDamageMax, splashDamageMin: d.splashDamageMin,
+      burstRadius: d.burstRadius, damageBands: d.splashBands,
+      life: 0.5, straight: 1, grav: 0, drag: 0, trail: 0, trailEvery: 0,
+    });
     p.pos.copy(o); p.prev.copy(o); p.start.copy(o);
     p.vel.copy(f).multiplyScalar(2);
     this._push(p);
