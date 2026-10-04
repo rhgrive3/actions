@@ -1,6 +1,7 @@
 # Final integration — Movement Physics + Sub/Special + Network Replication
 
 Integration baseline: `404c66c858cfea14e81225fb6364febcf2c9c528`.
+Initial combined merge commit: `651ed256dc1e86bb24322c420b13acafb0bf414d`.
 
 Source heads at integration:
 - PR #59 Movement Physics: `8880f3bf6aa655dd61a16555fdfdb8b8fec1d10a`
