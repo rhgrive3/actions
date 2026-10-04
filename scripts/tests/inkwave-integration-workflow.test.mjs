@@ -43,7 +43,7 @@ test('runtime verifier storage is prepared before tests and baseline checkout is
 });
 
 test('long high-quality profiles preserve baseline before candidate work and cancelled diagnostics cannot become passing evidence',()=>{
- assert(workflow.includes('timeout-minutes: 90'));
+ assert(workflow.includes('timeout-minutes: 120'));
  const before=workflow.indexOf('name: Profile runtime at immutable baseline'),save=workflow.indexOf('name: Preserve completed baseline runtime evidence'),after=workflow.indexOf('name: Profile candidate runtime and compare repeated evidence');
  assert(before>=0&&before<save&&save<after);
  assert(workflow.includes('inkwave-runtime-baseline-diagnostics-'));assert(workflow.includes('always() && (failure() || cancelled())'));
