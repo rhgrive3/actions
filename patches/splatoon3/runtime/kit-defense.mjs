@@ -15,5 +15,11 @@ export function installKitDefense(api) {
     }
     return best;
   };
+  Projectiles.prototype.kitBeamDefense = function (owner, start, dir, length, damage) {
+    if (this.s3BeamDefense?.owner === owner) return this.s3BeamDefense.candidate;
+    const p = { owner, team: owner.team, prev: start, pos: start.clone().addScaledVector(dir, length),
+      vel: dir, damage, type: 'beam', size: 0, ghost: false };
+    return this.kitDefenseCandidate(p);
+  };
   return api;
 }

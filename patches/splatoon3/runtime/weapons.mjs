@@ -187,6 +187,9 @@ export function installWeapons(context, profile) {
     const hit = G.physics.raycast(muzzle, dir, w.rangeMax, new Hit(), true);
     let length = hit.hit ? hit.dist : w.rangeMax;
     if (G.boss) { const bh = G.boss.segHit(muzzle, muzzle.clone().addScaledVector(dir, length), .1); if (bh) length = Math.min(length, bh.dist); }
+    const defense = this.kitBeamDefense?.(a, muzzle, dir, length, w.damageMax);
+    const intercepted = defense && (!hit.hit || defense.distance < hit.dist) && defense.distance <= length;
+    if (intercepted) length = Math.min(length, defense.distance);
     const end = muzzle.clone().addScaledVector(dir, length), victims = [];
     for (const e of G.actors) {
       if (!e.alive || e.team === a.team) continue;
@@ -195,8 +198,10 @@ export function installWeapons(context, profile) {
       if (entry < Infinity) victims.push({ actor: e, distance: entry * length });
     }
     const actors = G.actors;
-    try { G.actors = []; fireCharger.call(this, a, w, charge); }
-    finally { G.actors = actors; }
+    const savedDefense = this.s3BeamDefense;
+    this.s3BeamDefense = { owner: a, candidate: intercepted ? defense : null };
+    try { G.actors = []; fireCharger.call(this, a, intercepted ? { ...w, rangeMax: length } : w, charge); }
+    finally { G.actors = actors; this.s3BeamDefense = savedDefense; }
     for (const { actor } of victims.sort((x, y) => x.distance - y.distance)) this.applyHit(a, actor, w.damageMax, 'charger');
     feetSplash(a, w);
   };

@@ -184,6 +184,12 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code,
       "      Physics.segmentCapsuleDist(m, _v2, hitBase(e), PLAYER.radius + 0.12, e.form === 'squid' ? PLAYER.squidHeight : PLAYER.height, _res);\n      if (_res.dist < PLAYER.radius + 0.14) {\n        const d = _res.t * len;",
       "      const entry = segmentCapsuleEntry(m, _v2, hitBase(e), PLAYER.radius + 0.12, e.form === 'squid' ? PLAYER.squidHeight : PLAYER.height, PLAYER.radius + 0.14);\n      if (entry < Infinity) {\n        const d = entry * len;", 'charger first-contact ordering');
+    code = replaceOnce(code, '    let len = hit.hit ? hit.dist : range;',
+      '    let len = hit.hit ? hit.dist : range;\n    const defense = this.kitBeamDefense?.(a, m, dir, len, dmg);\n    const defenseStops = defense && (!hit.hit || defense.distance < hit.dist);\n    if (defenseStops) len = Math.min(len, defense.distance);', 'charger special defense reach');
+    code = replaceOnce(code, "    if (victim) { len = victim.d; this.applyHit(a, victim.e, dmg, 'charger'); }",
+      "    if (victim) { len = victim.d; this.applyHit(a, victim.e, dmg, 'charger'); }\n    else if (!bossHit && defenseStops) defense.onHit();", 'charger special defense contact');
+    code = replaceOnce(code, '    if (hit.hit && !victim && !bossHit) {',
+      '    if (hit.hit && !victim && !bossHit && !defenseStops) {', 'charger intercepted impact');
     code = replaceOnce(code, '      this.charge = Math.min(1, this.chargeT / w.chargeTime);',
       '      this.charge = Math.min(1, this.chargeT / w.chargeTime, splatlingChargeCap(a.ink, w));', 'splatling ink charge cap');
     code = replaceOnce(code, "      this.applyHit(b.owner, e, lerp(s.damageMin, s.damageMax, k * k), 'bomb');",

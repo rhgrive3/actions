@@ -45,3 +45,32 @@ test('candidate queries are inert, choose earliest intake and reject invalid dis
   system.kitBarrierCandidate = () => ({ distance: 11, onHit() { throw new Error('outside step'); } });
   assert.equal(system.kitDefenseCandidate(p), null);
 });
+test('partial and piercing charger beams stop at defense; piercing hits before it remain', async () => {
+  for (const charge of [.5, 1]) {
+    const f = await fixture(); installKitDefense(f);
+    const system = new f.Projectiles(new f.THREE.Scene()), owner = f.make('charger');
+    owner.pos.set(0, 0, 0); owner.aimDir.set(0, 0, 1); owner.aimPoint.set(0, 1.05, 20);
+    const victim = f.make(); victim.team = 1; victim.pos.set(0, 0, 7);
+    f.G.actors = [victim]; f.G.boss = null;
+    f.G.physics.raycast = (_a, _d, _l, hit) => { hit.hit = false; return hit; };
+    let contacts = 0; const hits = [];
+    system.kitBarrierCandidate = () => ({ distance: 3, onHit: () => { contacts++; } });
+    system.applyHit = (_a, e) => hits.push(e);
+    system.fireCharger(owner, { ...owner.weapon, rangeMin: 10, rangeMax: 10 }, charge);
+    assert.equal(contacts, 1, 'one authoritative defense hit per beam');
+    assert.equal(hits.length, 0, 'actor behind defense excluded');
+    assert.equal(system.beams[0].mesh.scale.z, 3, 'native visual beam uses the intercepted length');
+    assert.equal(system.s3BeamDefense, undefined, 'temporary candidate restored');
+  }
+  const f = await fixture(); installKitDefense(f);
+  const system = new f.Projectiles(new f.THREE.Scene()), owner = f.make('charger');
+  owner.pos.set(0, 0, 0); owner.aimDir.set(0, 0, 1); owner.aimPoint.set(0, 1.05, 20);
+  const near = f.make(), far = f.make(); near.team = far.team = 1;
+  near.pos.set(0, 0, 1.5); far.pos.set(0, 0, 7); f.G.actors = [far, near]; f.G.boss = null;
+  f.G.physics.raycast = (_a, _d, _l, hit) => { hit.hit = false; return hit; };
+  let contacts = 0; const hits = [];
+  system.kitBarrierCandidate = () => ({ distance: 3, onHit: () => { contacts++; } });
+  system.applyHit = (_a, e) => hits.push(e);
+  system.fireCharger(owner, { ...owner.weapon, rangeMin: 10, rangeMax: 10 }, 1);
+  assert.deepEqual(hits, [near]); assert.equal(contacts, 1);
+});
