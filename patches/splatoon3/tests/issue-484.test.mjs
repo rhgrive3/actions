@@ -141,10 +141,18 @@ test('issue-484 adapter transforms Actor and NetMatch with exact connections', (
   assert.ok(patchedNet.includes('spCost: s[21]'));
   assert.ok(patchedNet.includes('o.spCost = a.spCost;'));
   assert.ok(patchedNet.includes('a.s3SpecialReady = !!(f & F.specialReady)'));
-  assert.ok(patchedNet.includes('delete a.s3SpecialCost;'));
-  assert.ok(patchedNet.includes('delete a.s3SpecialReady;'));
+  assert.ok(patchedNet.includes('victim.s3SpecialReady = false;'));
+  assert.ok(patchedNet.includes('a.s3SpecialReady = false;'));
   assert.ok(!patchedNet.includes('a.weapon.specialCost ='), 'applyRemote must never write to weapon.specialCost');
   assert.ok(patchedNet.includes('export { F as NET_FLAGS, WEAPONS as _W };'), 'Must not add synthetic pack/unpack exports');
+
+  // Verify compatibility when parent composition invokes #482 first
+  const netSrcWith482 = netSrc.replace(
+    '  _remoteRespawn(a) {\n    a.alive = true; a.hp = PLAYER.hp; a.invuln = PLAYER.spawnInvuln;\n    a.respawnTimer = 0;\n    a.net.spawnPending = true;\n  }',
+    '  _remoteRespawn(a) {\n    a.alive = true; a.hp = PLAYER.hp; a.invuln = PLAYER.spawnInvuln;\n    a.respawnTimer = 0;\n    a.net.spawnPending = true;\n    a.lastAttacker = null; a.lastAttackerHitAge = 99;\n  }'
+  );
+  const patchedNet482Compatible = adaptIssue484('src/net/netmatch.js', netSrcWith482);
+  assert.ok(patchedNet482Compatible.includes('a.net.spawnPending = true;\n    delete a.s3SpecialCost;\n    a.s3SpecialReady = false;\n    a.lastAttacker = null;'), 'Must compose cleanly after #482');
 
   // Non-matching file is passed through untouched
   assert.equal(adaptIssue484('src/config.js', 'const x = 1;'), 'const x = 1;');
@@ -812,6 +820,7 @@ test('lifecycle: special activation, death/splat, and respawn correctly reset re
   function sync(ts) {
     hostNM.tickT = 0;
     hostNM.update(1 / 20);
+    if (ts !== undefined) hostPacket.ts = ts;
     clientNM.onMessage('host-id', hostPacket);
     const peer = clientNM._peer('host-id');
     peer.tr = hostPacket.ts;
@@ -819,10 +828,14 @@ test('lifecycle: special activation, death/splat, and respawn correctly reset re
     clientNM.applyRemote(proxy, 1 / 20);
   }
 
-  // Phase 1: Charge to ready
-  owner.special = owner.specialCost();
+  // Phase 1: Charge to ready and full gauge
+  owner.special = owner.specialCost(); // 165p with 10 AP
   assert.equal(owner.specialReady(), true);
   sync(1.0);
+  assert.equal(proxy.specialReady(), true);
+  owner.special = 180; // full 180p gauge preserved across death
+  sync(1.02);
+  assert.equal(proxy.special, 180);
   assert.equal(proxy.specialReady(), true);
 
   // Phase 2: Special Activation
@@ -841,15 +854,65 @@ test('lifecycle: special activation, death/splat, and respawn correctly reset re
   clientNM._remoteSplat(proxy, null, 'splat');
   assert.equal(proxy.alive, false);
   assert.equal(proxy.specialReady(), false);
+  assert.equal(proxy.s3SpecialReady, false, 's3SpecialReady must be explicitly false while dead');
+  assert.equal(proxy.s3SpecialCost, undefined, 's3SpecialCost must be cleared on remote splat');
 
-  // Phase 4: Respawn
+  // Phase 4: Respawn before next snapshot
+  // Native _remoteSplat does NOT halve proxy.special, so proxy.special preserves the old full gauge.
+  const oldFullGauge = proxy.special;
+  assert.equal(oldFullGauge >= proxy.specialCost(), true, 'proxy preserves old full gauge before first packet');
+
   owner.alive = true;
-  owner.special = 82; // halved on splat
+  owner.special = 82; // halved on splat on owner
   clientNM._remoteRespawn(proxy);
-  sync(1.1);
 
+  // CRITICAL NATIVE ASSERTION: immediately after _remoteRespawn BEFORE sync/packet
+  assert.equal(proxy.alive, true, 'proxy is alive immediately after _remoteRespawn');
+  assert.equal(proxy.special, oldFullGauge, 'old full gauge is preserved on proxy before first packet');
+  assert.equal(proxy.s3SpecialCost, undefined, 'presentation cost must be cleared on remote respawn');
+  assert.equal(proxy.s3SpecialReady, false, 'readiness must remain explicitly false through death/respawn until live packet');
+  assert.equal(proxy.specialReady(), false, 'specialReady must NOT flash ready before first packet arrives');
+
+  // Genuine next alive snapshot arrives (post-respawn owner state: special=82, not ready)
+  sync(1.1);
   assert.equal(proxy.alive, true);
+  assert.equal(proxy.special, 82, 'special points updated to post-respawn owner value');
+  assert.equal(proxy.s3SpecialReady, false, 'presentation readiness remains false for 82p');
   assert.equal(proxy.specialReady(), false);
+
+  // Then verify genuine next alive/ready packet recovers readiness
+  owner.special = owner.specialCost();
+  assert.equal(owner.specialReady(), true);
+  sync(1.15);
+  assert.equal(proxy.alive, true);
+  assert.equal(proxy.s3SpecialReady, true);
+  assert.equal(proxy.specialReady(), true, 'genuine next alive/ready packet recovers readiness');
+
+  // Phase 5: Legacy snapshot fallback restores native evaluation after death/respawn
+  clientNM._remoteSplat(proxy, null, 'splat');
+  clientNM._remoteRespawn(proxy);
+  assert.equal(proxy.specialReady(), false, 'remains false immediately after second respawn before packet');
+
+  // Legacy snapshot arrives without spCost (21 elements) with owner at 82p (< 180p)
+  const legacySnap = [
+    proxy.nid, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+    100, 100, 82, 0, 50, 0, 0, 0, 0, 0
+  ];
+  clientNM.onMessage('host-id', { k: 't', ts: 1.2, a: [legacySnap] });
+  clientNM._peer('host-id').tr = 1.2;
+  clientNM.update(1 / 20);
+  clientNM.applyRemote(proxy, 1 / 20);
+  assert.equal(proxy.s3SpecialCost, undefined);
+  assert.equal(proxy.s3SpecialReady, undefined, 'legacy sample clears s3SpecialReady to restore native evaluation');
+  assert.equal(proxy.specialReady(), false, '82p in legacy evaluated as not ready');
+
+  // Legacy owner charges up to 180p (native cost)
+  legacySnap[13] = 180;
+  clientNM.onMessage('host-id', { k: 't', ts: 1.25, a: [legacySnap] });
+  clientNM._peer('host-id').tr = 1.25;
+  clientNM.update(1 / 20);
+  clientNM.applyRemote(proxy, 1 / 20);
+  assert.equal(proxy.specialReady(), true, 'legacy snapshot fallback restored native evaluation to ready at 180p');
 });
 
 // ---------------------------------------------------------------------------
