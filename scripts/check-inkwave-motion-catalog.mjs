@@ -542,7 +542,14 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout 
         projectiles[name] = function (...args) { const value = original.apply(this, args); if (args[0] === a && frame >= 0) events.push({ name, frame }); return value; };
       }
       function step(dt = 1 / 60, input = {}) {
-        if (a) { a.intent.fire = !!input.fire; a.intent.sub = !!input.sub; G.time += dt; a.weaponRunner.update(dt, input); a._finishFrame(dt); }
+        if (a) {
+          a.intent.fire = !!input.fire; a.intent.sub = !!input.sub; G.time += dt;
+          // This fixture calls Runner directly instead of Actor.update. Advance
+          // the Actor-owned post-fire clock at the same pre-Runner point so the
+          // production 4F shooter lock can expire before later sub-aim actions.
+          a.lastFire += dt;
+          a.weaponRunner.update(dt, input); a._finishFrame(dt);
+        }
         else ch.update(dt, null);
         ch.root.updateMatrixWorld(true); ch.skeleton.update();
       }
