@@ -122,10 +122,56 @@ for the winner. The hook performs no integration or second projectile scan.
   countershot and never fires the main weapon. On the release frame the replaced main/sub/
   squid inputs stay suppressed, so the player cannot also shoot on that frame.
 
+## Remote replay (explicit, parent-wired)
+
+`replayInkVac(eventName, actor, payload)` is the single entry point the parent calls from the
+native NetMatch transport. It never touches native source, the adapter, the profile or any
+network file.
+
+**Wire contract.** Native `packEvent`/`unpackEvent` keep only TOP-LEVEL actors (`{n: nid}`),
+`[x,y,z]` vectors, numbers, strings and booleans — every nested object is dropped. All payloads
+are therefore deliberately **flat**:
+
+| Event (`INK_VAC_EVENTS`) | Payload |
+|---|---|
+| `special:inkvac` | `{ actor: owner, kit, serial, charge, nid? }` |
+| `special:inkvac-charge` | `{ actor: owner, kit, serial, charge }` |
+| `special:inkvac-absorb` | `{ actor: shooter, target: vac owner, kit, serial, key }` |
+| `special:inkvac-release` | `{ actor: owner, kit, serial, charge, authored }` |
+| `special:inkvac-dispose` | `{ actor: owner, kit, serial }` |
+
+`actor` is the **shooter** for a proposal and the Vac **owner** for its own events, matching
+native `_onLocalEvent`/`_playEvent` (`e.actor || e.victim`). The activation id is
+`activationKey(actor, serial)` = real `nid` when the transport has one, otherwise a unique actor
+identity, plus a monotonic per-owner serial.
+
+**Authority.** A replica may only present. It never authors a countershot, paint, damage, gauge
+consumption, tank refill or charge of its own. The countershot itself travels as the native
+`recProj`/`ghostProjectile` packet, so the release event allocates nothing on replicas.
+
+**Native-owned projectile vs ghost.** When a native (non-ghost) round owned by a locally-owned
+shooter enters a replica intake, `onHit` neutralises the shooter-authoritative damage at first
+contact and emits an absorption **proposal** keyed by source projectile and activation
+(`actor` = shooter, `target` = Vac owner). The **owner** consumes it under a bounded
+duplicate-key ledger (last 64 keys) and credits with its own calibration. A ghost round is
+consumed **visually only** — no damage edit, no charge, no proposal, no paint.
+
+**Guards.** Strict `dt <= 0` early return (form, `_prevIntent`, weapons, refill, gauge and the
+inhale clock are all untouched); `_startSpecial` refuses dead, already-holding, reentrant and
+not-ready calls; an `onHit` closure captured before disposal is a no-op; malformed packets,
+duplicate/out-of-order serials, mismatched serials and post-death packets return
+`{ applied: false, reason }` instead of throwing.
+
+**Parent handoff:** add the five `INK_VAC_EVENTS` names to the native `FORWARD` list and call
+`api.replayInkVac(name, e.actor || e.victim, e)` from the replay path. Replica presentation is
+advanced by `advanceInkVacReplica(actor, dt)`, which is wrapped around
+`NetMatch.prototype.applyRemote` when the real NetMatch is supplied (remote actors are driven by
+`applyRemote`, not `Actor.update`).
+
 ## Verification
 
 `node --experimental-vm-modules --test patches/splatoon3/tests/kit-ink-vac.test.mjs`
-→ **27 pass / 0 fail**. Tests drive the real `Actor` activation/update, the real `Projectiles`
+→ **38 pass / 0 fail**. Tests drive the real `Actor` activation/update, the real `Projectiles`
 blast entry and the candidate hook. Coverage includes: gauge/tank consumed once; frontal
 absorb with damage disabled; backside rejection; intervening wall; intake length; a projectile
 that only **sweeps through** the volume (analytic first entry at the far boundary); vertical
@@ -138,6 +184,18 @@ death during an update not restoring the token; `dt 0` no-op and release-frame s
 zero-length/tangent/zero-aim safety; disposed state; visible aim-aligned front-only
 presentation; reset/dispose GPU removal; pinned/calibrated geometry helpers.
 
+**Replay coverage** (two composed actors, real `packEvent`/`unpackEvent` mirrors, every packet
+round-tripped through `JSON.stringify`): payload flatness and JSON safety; a replayed
+activation opening a real replica scene cone; duplicate and out-of-order activations dropped;
+stale-serial charge refused; malformed/foreign/target-less packets rejected with an explicit
+reason and no half-applied state; a replica authoring no projectile/paint/gauge/refill/damage;
+a native-owned round neutralising its damage and proposing credit the owner consumes exactly once
+(no double credit, owner's own calibration); a ghost proposing nothing; owner death emitting
+`dispose` that drops the replica state and both GPU resources; post-death and repeat packets
+harmless; replica advance rejecting `dt <= 0`, negative and `NaN` steps and following its actor;
+a stale `onHit` no-op; `_startSpecial` refusing dead/reentrant/not-ready calls; and a paused
+frame changing nothing at all.
+
 ## Limitations
 
 - Kit registration (`charger.special='inkVac'`, `specialCost=190`) and the candidate-hook and
@@ -148,4 +206,10 @@ presentation; reset/dispose GPU removal; pinned/calibrated geometry helpers.
   standby field and is not used as the inhale duration.
 - Origin height, frontal epsilon and per-projectile charge credit are calibration.
 - Blast visuals and `GuideRadius` guidance are not reproduced.
+- The replica stuck-cone guard (7.5 s) is a **calibrated** presentation-only failsafe for a lost
+  release/dispose packet, not a sourced duration; the owner packet remains authoritative.
+- The proposal ledger size (64 keys) is an engineering bound, not a sourced value.
+- **Replay is verified against the real composed modules and a faithful mirror of the native
+  packer, not against a live NetMatch session.** No actual two-client/browser/online session was
+  run: the `FORWARD` registration and the replay-path call are parent-owned and not yet wired.
 - Logic/composed level only; no browser or physical-device capture.

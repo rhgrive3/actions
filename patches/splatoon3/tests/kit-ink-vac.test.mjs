@@ -384,3 +384,327 @@ test('pinned/calibrated geometry helpers expose the labelled values', async () =
   assert.ok(INK_VAC_CALIBRATION.geometryStatus.includes('unconfirmed'));
   assert.ok(INK_VAC_CALIBRATION.damageStatus.includes('scale limitation'));
 });
+
+// ===========================================================================
+// REMOTE REPLAY: two composed actors, NetMatch-shaped JSON packets
+// ===========================================================================
+//
+// packEvent/unpackEvent below mirror the PRIVATE functions in
+// inkwave-public/src/net/netmatch.js (packEvent, ~L765). Native packEvent keeps
+// only TOP-LEVEL actors, [x,y,z] vectors, numbers, strings and booleans: any
+// nested object -- and any other array -- is DROPPED, so the payloads must be
+// flat. Every packet here is round-tripped through JSON.stringify.
+//
+// Two machines are modelled in one composed context, exactly as a NetMatch
+// session addresses them: a nid is session-wide, and each machine resolves it
+// through ITS OWN byNid.
+//   machine P: p1 = P's local Ink Vac owner (nid 1, remote false)
+//              p2 = P's proxy for Q's player      (nid 2, remote true)
+//   machine Q: q1 = Q's proxy for P's owner      (nid 1, remote true)
+//              q2 = Q's local shooter            (nid 2, remote false)
+const r3 = v => Math.round(v * 1000) / 1000;
+function packEvent(e) {
+  const o = {};
+  for (const k in e) {
+    const v = e[k];
+    if (v && v.nid !== undefined && v.character) o[k] = { n: v.nid };
+    else if (v && v.isVector3) o[k] = [r3(v.x), r3(v.y), r3(v.z)];
+    else if (typeof v === 'number') o[k] = r3(v);
+    else if (typeof v === 'string' || typeof v === 'boolean') o[k] = v;
+  }
+  return o;
+}
+function unpackEvent(d, byNid, f) {
+  const e = {};
+  for (const k in d) {
+    const v = d[k];
+    if (v && typeof v === 'object' && !Array.isArray(v) && v.n !== undefined) e[k] = byNid.get(v.n) || null;
+    else if (Array.isArray(v) && v.length === 3) e[k] = new f.THREE.Vector3(v[0], v[1], v[2]);
+    else e[k] = v;
+  }
+  return e;
+}
+// One real transport hop: local emit -> native pack -> JSON wire -> the
+// RECEIVER's unpack -> replayInkVac with `e.actor || e.victim`, as native
+// _onLocalEvent/_playEvent do.
+function hop(f, view, payload, name) {
+  const e = unpackEvent(JSON.parse(JSON.stringify(packEvent(payload))), view, f);
+  return { verdict: f.replayInkVac(name, e.actor || e.victim, e), wire: e };
+}
+
+async function twoActorSetup() {
+  const { f, system } = await setup();
+  f.G.scene = new f.THREE.Scene();
+  const p1 = f.make('charger');
+  p1.nid = 1; p1.remote = false;
+  p1.weapon = { ...p1.weapon, special: VAC_ID, specialCost: 190 }; p1.special = 190;
+  const p2 = f.make('charger'); p2.nid = 2; p2.remote = true;
+  const q1 = f.make('charger'); q1.nid = 1; q1.remote = true; q1.aimDir.set(0, 0, 1); q1.aimYaw = 0;
+  const q2 = f.make('shooter'); q2.nid = 2; q2.remote = false;
+  const viewP = new Map([[1, p1], [2, p2]]);       // machine P resolves nids its own way
+  const viewQ = new Map([[1, q1], [2, q2]]);       // machine Q likewise
+  const rec = [];
+  for (const name of Object.values(f.INK_VAC_EVENTS)) f.on(name, payload => rec.push({ name, payload }));
+  return { f, system, p1, p2, q1, q2, viewP, viewQ, rec };
+}
+const at = (f, a, z) => new f.THREE.Vector3(a.pos.x, a.pos.y + 1, a.pos.z + z);
+const step = (f, p, z) => { const s = at(f, p, z), e = s.clone(); e.z -= 0.05; return [s, e]; };
+
+test('every replay payload is flat, JSON-safe and survives the native packer', async () => {
+  const { f, p1, viewQ, rec } = await twoActorSetup();
+  activate(f, p1);
+  assert.equal(rec.length, 1, 'activation emitted exactly one replayable event');
+  const packed = packEvent(rec[0].payload);
+  assert.deepEqual(Object.keys(packed).sort(), ['actor', 'charge', 'kit', 'nid', 'serial'],
+    'the activation payload is flat: actor, nid, kit, serial, charge only');
+  assert.ok(!Object.values(packed).some(v => v && typeof v === 'object' && !Array.isArray(v) && v.n === undefined),
+    'no nested object survives, so nothing is silently dropped by the native packer');
+  const wire = JSON.parse(JSON.stringify(packed));
+  assert.equal(wire.kit, VAC_ID);
+  assert.ok(Number.isInteger(wire.serial) && Number.isInteger(wire.nid), 'serial and nid stay integers on the wire');
+  const e = unpackEvent(wire, viewQ, f);
+  assert.equal(e.actor, viewQ.get(1), 'the actor resolves to the RECEIVER\'s own actor for that nid');
+  assert.equal(e.kit, VAC_ID);
+});
+
+test('a replayed activation opens a replica cone; duplicates and out-of-order are dropped', async () => {
+  const { f, p1, q1, viewQ, rec } = await twoActorSetup();
+  activate(f, p1);
+  const activation = rec.find(r => r.name === f.INK_VAC_EVENTS.activation).payload;
+  const serial = activation.serial;
+  assert.equal(hop(f, viewQ, activation, f.INK_VAC_EVENTS.activation).verdict.applied, true);
+  assert.ok(f.inkVacState(q1), 'the replica holds presentation state');
+  assert.equal(f.inkVacState(q1).remote, true, 'the replica state is marked remote');
+  assert.equal(f.G.scene.children.length, 2, 'the replica cone is a real scene object');
+  // DUPLICATE: the same activation serial again.
+  assert.equal(hop(f, viewQ, activation, f.INK_VAC_EVENTS.activation).verdict.reason, 'duplicate-or-out-of-order-activation');
+  // OUT OF ORDER: an older serial arriving after a newer one was accepted.
+  assert.equal(hop(f, viewQ, { ...activation, serial: serial + 5 }, f.INK_VAC_EVENTS.activation).verdict.applied, true);
+  assert.equal(hop(f, viewQ, { ...activation, serial: serial - 1 }, f.INK_VAC_EVENTS.activation).verdict.reason,
+    'duplicate-or-out-of-order-activation');
+  // A charge naming the now-superseded activation must not land.
+  const stale = hop(f, viewQ, { actor: activation.actor, kit: VAC_ID, serial, charge: 0.9 }, f.INK_VAC_EVENTS.charge);
+  assert.equal(stale.verdict.reason, 'stale-or-mismatched-serial');
+  assert.notEqual(f.inkVacState(q1).charge, 0.9, 'the stale charge never landed');
+});
+
+test('malformed, foreign and target-less packets are dropped, never half-applied', async () => {
+  const { f, p1, p2, q1, q2, viewP, viewQ, rec } = await twoActorSetup();
+  const EV = f.INK_VAC_EVENTS;
+  activate(f, p1);
+  const activation = rec.find(r => r.name === EV.activation).payload;
+  hop(f, viewQ, activation, EV.activation);
+  const before = f.inkVacState(q1).charge;
+  const malformed = [
+    [null, 'malformed-payload'], [[1, 2], 'malformed-payload'], ['nope', 'malformed-payload'], [42, 'malformed-payload'],
+    [{ ...activation, kit: 'storm' }, 'not-inkvac'],
+    [{ ...activation, serial: 1.5 }, 'malformed-serial'], [{ ...activation, serial: 'three' }, 'malformed-serial'],
+    [{ ...activation, serial: -4 }, 'malformed-serial'], [{ ...activation, serial: undefined }, 'malformed-serial'],
+    [{ ...activation, serial: NaN }, 'malformed-serial'],
+  ];
+  for (const [payload, reason] of malformed) {
+    const got = f.replayInkVac(EV.absorb, p1, payload);
+    assert.equal(got.applied, false, `a malformed proposal is rejected (${reason})`);
+    assert.equal(got.reason, reason);
+  }
+  // A proposal addressed to a proxy of the shooter, or to nobody, is refused.
+  assert.equal(f.replayInkVac(EV.absorb, p1, { actor: p2, kit: VAC_ID, serial: activation.serial, key: 'k1' }).reason, 'malformed-subject');
+  assert.equal(f.replayInkVac(EV.absorb, p2, { actor: p2, target: q1, kit: VAC_ID, serial: activation.serial, key: 'k2' }).reason, 'no-local-activation');
+  // An unknown event name and a replica packet aimed at a local actor.
+  assert.equal(f.replayInkVac('special:unknown', q1, activation).reason, 'unknown-event');
+  assert.equal(f.replayInkVac(EV.charge, p1, activation).reason, 'replica-events-need-a-remote-actor');
+  assert.equal(f.replayInkVac(EV.release, null, activation).reason, 'missing-event-or-actor');
+  assert.equal(f.replayInkVac(EV.charge, q1, { actor: activation.actor, kit: VAC_ID, serial: activation.serial }).reason,
+    'malformed-charge');
+  // A replica is never a credit authority, whoever sends the proposal.
+  assert.equal(hop(f, viewQ, { actor: q2, target: q1, kit: VAC_ID, serial: activation.serial, key: 'k3' }, EV.absorb).verdict.reason,
+    'no-local-activation');
+  assert.equal(f.inkVacState(q1).charge, before, 'no malformed packet changed the replica charge');
+  assert.equal(f.inkVacState(p1).charge, 0, 'no malformed packet changed the owner charge');
+});
+
+test('a remote state never authors a countershot, paint, gauge, refill or damage', async () => {
+  const { f, system, p1, q1, viewQ, rec } = await twoActorSetup();
+  let painted = 0;
+  f.G.paint.splat = () => { painted++; return 0; };
+  activate(f, p1);
+  const activation = rec.find(r => r.name === f.INK_VAC_EVENTS.activation).payload;
+  const serial = activation.serial;
+  hop(f, viewQ, activation, f.INK_VAC_EVENTS.activation);
+  const projectiles = system.list.length, tank = q1.ink, gauge = q1.special, hp = q1.hp, count = f.G.scene.children.length;
+  const charged = hop(f, viewQ, { actor: activation.actor, kit: VAC_ID, serial, charge: 1 }, f.INK_VAC_EVENTS.charge);
+  assert.equal(charged.verdict.applied, true);
+  assert.ok(f.inkVacState(q1).charge > 0.9, 'the replica shows the owner-approved charge');
+  const rel = hop(f, viewQ, { actor: activation.actor, kit: VAC_ID, serial, charge: 1 }, f.INK_VAC_EVENTS.release);
+  assert.equal(rel.verdict.applied, true);
+  assert.equal(system.list.length, projectiles, 'the replica authors no projectile (no second ghost allocation)');
+  assert.equal(painted, 0, 'the replica paints nothing');
+  assert.equal(q1.ink, tank, 'the replica tank is not refilled');
+  assert.equal(q1.special, gauge, 'the replica gauge is not consumed');
+  assert.equal(q1.hp, hp, 'the replica takes no damage');
+  assert.equal(q1.specialActive, null, 'a replica never holds a real special token');
+  assert.equal(f.inkVacState(q1), null, 'the replica cone is gone after the release');
+  assert.equal(f.G.scene.children.length, count - 1, 'only the replica mesh was disposed');
+});
+
+test('a shooter proposal neutralises its damage and the owner credits it exactly once', async () => {
+  const { f, p1, p2, q1, q2, viewP, viewQ, rec } = await twoActorSetup();
+  const EV = f.INK_VAC_EVENTS;
+  activate(f, p1);
+  const activation = rec.find(r => r.name === EV.activation).payload;
+  const serial = activation.serial;
+  hop(f, viewQ, activation, EV.activation);
+  // Machine Q: Q's local player shoots a native round at P's actor on Q's machine.
+  const p = { pos: at(f, q1, 5), vel: new f.THREE.Vector3(0, 0, -3), owner: q2, team: 2, damage: 30 };
+  const [s, e] = step(f, q1, 5);
+  const cand = f.inkVacAbsorbCandidate(q1, s, e, p);
+  assert.ok(cand, 'the round enters the replica intake');
+  assert.equal(cand.onHit(), true, 'the replica authorises the absorption by proposing, not by crediting');
+  assert.equal(p.damage, 0, 'the shooter-authoritative damage is neutralised at first contact');
+  assert.equal(f.inkVacState(q1).charge, 0, 'a replica never claims charge from a replayed ghost');
+  const proposal = rec.find(r => r.name === EV.absorb);
+  assert.ok(proposal, 'an absorption PROPOSAL was emitted');
+  assert.equal(proposal.payload.actor, q2, 'the proposal names the SHOOTER as actor');
+  assert.equal(proposal.payload.target, q1, 'and the Vac owner as target');
+  assert.equal(proposal.payload.serial, serial, 'keyed by the source activation');
+  assert.equal(typeof proposal.payload.key, 'string', 'keyed by the source projectile');
+  assert.deepEqual(Object.keys(packEvent(proposal.payload)).sort(), ['actor', 'key', 'kit', 'serial', 'target'],
+    'the proposal is flat so the native packer keeps both actor references');
+  // Machine P consumes the proposal exactly once, over the real wire shape.
+  const { wire, verdict: c1 } = hop(f, viewP, proposal.payload, EV.absorb);
+  assert.equal(wire.actor, p2, 'P resolves the shooter nid to its own proxy');
+  assert.equal(wire.target, p1, 'and the owner nid to its own actor');
+  assert.equal(c1.applied, true, 'the owner credits the proposal');
+  const credited = f.inkVacState(p1).charge;
+  assert.ok(credited > 0, 'the owner charged');
+  assert.equal(credited, c1.charge, 'the owner applied its OWN calibration, not a remote number');
+  const c2 = hop(f, viewP, proposal.payload, EV.absorb);
+  assert.equal(c2.verdict.reason, 'duplicate-proposal', 'a duplicated packet credits nothing');
+  assert.equal(f.inkVacState(p1).charge, credited, 'no double credit');
+  // A proposal for a finished activation is refused even with a fresh key.
+  p1.intent.fire = true; f.tick(p1, 30); p1.intent.fire = false;   // release the first activation
+  assert.equal(f.inkVacState(p1), null, 'the first activation really ended');
+  p1.special = 190; activate(f, p1);
+  const serial2 = f.inkVacState(p1).serial;
+  assert.notEqual(serial2, serial, 'a second activation gets a new serial');
+  assert.equal(f.replayInkVac(EV.absorb, p2, { actor: p2, target: p1, kit: VAC_ID, serial, key: 'fresh' }).reason,
+    'stale-or-mismatched-serial');
+  assert.equal(f.inkVacState(p1).charge, 0, 'the new activation was not credited from the old packet');
+});
+
+test('a ghost round in a replica intake is consumed visually and proposes nothing', async () => {
+  const { f, p1, q1, q2, viewQ, rec } = await twoActorSetup();
+  activate(f, p1);
+  const activation = rec.find(r => r.name === f.INK_VAC_EVENTS.activation).payload;
+  hop(f, viewQ, activation, f.INK_VAC_EVENTS.activation);
+  rec.length = 0;
+  const p = { pos: at(f, q1, 5), vel: new f.THREE.Vector3(0, 0, -3), owner: q2, team: 2, damage: 0, ghost: true };
+  const [s, e] = step(f, q1, 5);
+  const cand = f.inkVacAbsorbCandidate(q1, s, e, p);
+  assert.ok(cand, 'the ghost is intercepted geometrically');
+  cand.onHit();
+  assert.ok(p.s3InkVacAbsorbed, 'the ghost is consumed visually');
+  assert.equal(f.inkVacState(q1).charge, 0, 'a ghost credits nothing');
+  assert.equal(rec.filter(r => r.name === f.INK_VAC_EVENTS.absorb).length, 0, 'a ghost sends no proposal');
+  assert.equal(f.inkVacState(p1).charge, 0, 'the owner is never charged for a ghost');
+  assert.equal(rec.length, 0, 'a ghost emits no replay packet at all');
+});
+
+test('death and disposal drop the replica state and its GPU resource', async () => {
+  const { f, p1, q1, viewQ, rec } = await twoActorSetup();
+  const EV = f.INK_VAC_EVENTS;
+  activate(f, p1);
+  const activation = rec.find(r => r.name === EV.activation).payload;
+  hop(f, viewQ, activation, EV.activation);
+  assert.equal(f.G.scene.children.length, 2, 'both machines hold a cone');
+  // P dies: the owner dispose must travel and drop Q's replica.
+  p1.alive = false; p1.splat(0, q1, VAC_ID);
+  const dispose = rec.find(r => r.name === EV.dispose);
+  assert.ok(dispose, 'owner disposal emits a dispose packet');
+  assert.equal(dispose.payload.serial, activation.serial, 'dispose carries the activation serial');
+  assert.equal(hop(f, viewQ, dispose.payload, EV.dispose).verdict.applied, true);
+  assert.equal(f.inkVacState(q1), null, 'the replica state is gone');
+  assert.equal(f.inkVacState(p1), null, 'the owner state is gone');
+  assert.equal(f.G.scene.children.length, 0, 'both GPU resources are released');
+  // A repeated or late dispose is harmless.
+  assert.equal(hop(f, viewQ, dispose.payload, EV.dispose).verdict.reason, 'no-replica-activation');
+  // A dead actor never opens a new replica cone.
+  q1.alive = false;
+  assert.equal(f.replayInkVac(EV.activation, q1, { ...activation, serial: activation.serial + 9 }).reason, 'dead-actor');
+  assert.equal(f.inkVacState(q1), null);
+});
+
+test('a replica cone advances on the remote-actor path only, and never on dt 0', async () => {
+  const { f, p1, q1, viewQ, rec } = await twoActorSetup();
+  activate(f, p1);
+  const activation = rec.find(r => r.name === f.INK_VAC_EVENTS.activation).payload;
+  hop(f, viewQ, activation, f.INK_VAC_EVENTS.activation);
+  const t0 = f.inkVacState(q1).t;
+  assert.equal(f.advanceInkVacReplica(q1, 0), false, 'dt 0 is a strict no-op for a replica');
+  assert.equal(f.advanceInkVacReplica(q1, -1 / 60), false, 'a negative step is refused too');
+  assert.equal(f.advanceInkVacReplica(q1, NaN), false, 'a NaN step is refused');
+  assert.equal(f.inkVacState(q1).t, t0, 'the replica clock never moved on a paused step');
+  assert.equal(f.advanceInkVacReplica(q1, 1 / 60), true);
+  assert.ok(f.inkVacState(q1).t > t0, 'the replica cone advances on a real step');
+  assert.equal(f.advanceInkVacReplica(p1, 1 / 60), false, 'a locally owned intake is never a replica');
+  // The cone follows the owner actor, not a fixed origin.
+  q1.pos.set(9, 0, 4);
+  f.advanceInkVacReplica(q1, 1 / 60);
+  const mesh = f.G.scene.children.at(-1);       // the replica cone was added last
+  assert.ok(Math.abs(mesh.position.x - 9) < 1e-6 && Math.abs(mesh.position.z - 4) < 1e-6,
+    'the replica cone follows the actor it represents');
+});
+
+test('a stale onHit closure captured before disposal is a no-op', async () => {
+  const { f, a } = await setup();
+  activate(f, a);
+  const p = enemyShot(f, 0, 1, 5, 0, 0, -3);
+  const cand = inkVacAbsorbCandidate(a, p.pos.clone(), p.pos.clone().addScaledVector(p.vel, 1 / 60), p);
+  assert.ok(cand);
+  disposeInkVac(a);
+  const before = p.damage;
+  assert.equal(cand.onHit(), false, 'a disposed state credits nothing');
+  assert.equal(p.damage, before, 'a disposed state neutralises nothing either');
+  assert.ok(!p.s3InkVacAbsorbed, 'a disposed state does not even mark the round');
+});
+
+test('_startSpecial activates genuinely once and refuses dead, reentrant and not-ready calls', async () => {
+  const { f, a } = await setup();
+  a.special = 10;                       // below the special cost: not ready
+  a._startSpecial();
+  assert.equal(f.inkVacState(a), null, 'an unready special does not activate');
+  assert.equal(a.special, 10, 'the gauge is untouched');
+  assert.equal(a.stats.specials, 0, 'nothing was counted');
+  a.special = 190; a.alive = false;     // dead
+  a._startSpecial();
+  assert.equal(f.inkVacState(a), null, 'a dead actor does not activate');
+  assert.equal(a.special, 190, 'a dead actor keeps the gauge');
+  a.alive = true;
+  activate(f, a);
+  const serial = f.inkVacState(a).serial;
+  a._startSpecial(); a._startSpecial();
+  assert.equal(f.inkVacState(a).serial, serial, 'the held special is not re-activated');
+  assert.equal(a.stats.specials, 1, 'the activation is counted exactly once');
+  assert.ok(Number.isInteger(serial) && serial > 0, 'the activation carries a usable serial');
+});
+
+test('a strictly paused frame changes nothing at all on the held special', async () => {
+  const { f, a } = await setup();
+  activate(f, a);
+  const s = f.inkVacState(a);
+  const before = { t: s.t, charge: s.charge, absorbed: s.absorbed, form: a.form, prev: a._prevIntent,
+    ink: a.ink, active: a.specialActive, gauge: a.special };
+  a.intent.fire = true; a.intent.sub = true; a.intent.squid = true; a.intent.special = true;
+  a.update(0); a.update(0); a.update(NaN);
+  assert.equal(f.inkVacState(a).t, before.t, 'the inhale clock does not advance');
+  assert.equal(f.inkVacState(a).charge, before.charge, 'no charge is granted');
+  assert.equal(f.inkVacState(a).absorbed, before.absorbed);
+  assert.equal(a.form, before.form, 'the form is untouched by a paused frame');
+  assert.equal(a._prevIntent, before.prev, '_prevIntent is not snapshotted on a paused frame');
+  assert.equal(a.ink, before.ink, 'no refill on a paused frame');
+  assert.equal(a.special, before.gauge, 'the gauge is not consumed on a paused frame');
+  assert.equal(a.specialActive, before.active, 'the token object is untouched');
+  assert.equal(a.weaponRunner.charging, false, 'no main shot on a paused frame');
+  assert.equal(a.stats.specials, 1, 'a paused frame cannot activate a second special');
+  a.intent.fire = a.intent.sub = a.intent.squid = a.intent.special = false;
+});

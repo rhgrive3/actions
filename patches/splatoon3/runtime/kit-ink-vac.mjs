@@ -23,6 +23,10 @@
 // of the charge range. The shape is therefore a widening frustum along the full 3D
 // aim vector (not a cylinder, and not a cone of revolution about horizontal only).
 // Nintendo's actual field meaning of RadiusMin/RadiusMax is UNCONFIRMED.
+//
+// REMOTE REPLAY: this module owns an explicit replay API (replayInkVac) that the
+// parent wires into the native NetMatch transport. No native source, adapter,
+// profile or network file is touched here; see INK_VAC_EVENTS below.
 
 let api = null;
 const INSTALL = Symbol.for('inkwave.s3.kit-ink-vac.install.v1');
@@ -38,6 +42,9 @@ const FLY_AIR_RESIST = 0.01;      // pinned per frame
 const SPAWN_BLAST_WAIT = 50;      // pinned frames: native projectile LIFETIME before detonation
 const INHALE_TO_EXHALE_WAIT = 20; // pinned frames
 const BLAST_MIN = 6.0, BLAST_MAX = 11.0;// pinned blast paint radius
+// Bounded duplicate-proposal memory per owner: a proposal is keyed by
+// source projectile + activation, and only the last PROPOSAL_MEMORY keys count.
+const PROPOSAL_MEMORY = 64;
 
 export const INK_VAC_CALIBRATION = Object.freeze({
   rawToHp: RAW_TO_HP,
@@ -55,14 +62,64 @@ export const INK_VAC_CALIBRATION = Object.freeze({
   minInhaleStatus: 'interpretation of pinned InhaleToExhaleWaitFrame 20 as the minimum inhale before a manual release',
   burstLifetimeSeconds: SPAWN_BLAST_WAIT / 60,
   burstLifetimeStatus: 'pinned SpawnBlastWaitFrame 50 used as the native projectile lifetime; delay stays 0 so the native integrator runs immediately and bursts on the age>life deadline',
+  proposalMemory: PROPOSAL_MEMORY,
+  replicaStuckGuardSeconds: 7.5,
+  replicaStuckGuardStatus: 'CALIBRATED presentation-only failsafe: a replica cone is hidden when its release/dispose packet never arrives, after inhaleDurationSeconds (2.5) + 2x the 2.5 s owner cap. Generous by design so it can never pre-empt a real owner release. The owner packet remains authoritative.',
   status: 'pinned geometry/ballistics/timings; origin height, frontal epsilon and the frustum field reading are calibration',
 });
 
 const lerp = (a, b, t) => a + (b - a) * Math.max(0, Math.min(1, t));
+const clamp01 = v => Math.max(0, Math.min(1, v));
 const states = new WeakMap();
+
+// ---------------------------------------------------------------------------
+// Remote replay contract.
+//
+// Native packEvent/unpackEvent only survive TOP-LEVEL scalars, [x,y,z] vectors
+// and actors ({n: nid}) -- nested objects and any other array are dropped -- so
+// every payload below is deliberately FLAT. Native `_onLocalEvent` and
+// `_playEvent` both read `e.actor || e.victim`, so `actor` is the SHOOTER for an
+// absorption proposal and the Vac OWNER for every owner-emitted event.
+export const INK_VAC_EVENTS = Object.freeze({
+  // { actor: owner, kit, serial, charge, nid? }
+  activation: 'special:inkvac',
+  // { actor: owner, kit, serial, charge }  owner-approved charge state
+  charge: 'special:inkvac-charge',
+  // { actor: shooter, target: vac owner, kit, serial, key }  credit PROPOSAL
+  absorb: 'special:inkvac-absorb',
+  // { actor: owner, kit, serial, charge }  the countershot itself travels as a
+  // native recProj/ghostProjectile packet, so this carries NO projectile.
+  release: 'special:inkvac-release',
+  // { actor: owner, kit, serial }
+  dispose: 'special:inkvac-dispose',
+});
+
+const seenProposals = new WeakMap();
+let actorIdentSeq = 0, activationSeq = 0, proposalSeq = 0;
+const idents = new WeakMap();
+const remoteSerials = new WeakMap();
+
+// Stable identity for actors the transport cannot address by nid (bots, tests).
+function identityOf(a) {
+  let i = idents.get(a);
+  if (i === undefined) { i = ++actorIdentSeq; idents.set(a, i); }
+  return i;
+}
+/** Public, collision-free activation id: the real nid when the transport has one. */
+export function activationKey(actor, serial) { return `${actor.nid !== undefined ? actor.nid : 'i' + identityOf(actor)}#${serial}`; }
+
+function proposalLedger(owner) {
+  let s = seenProposals.get(owner);
+  if (!s) { s = { set: new Set(), order: [] }; seenProposals.set(owner, s); }
+  return s;
+}
 
 function requireApi() { if (!api) throw new Error('INKWAVE kit-ink-vac not installed'); return api; }
 export function inkVacState(actor) { return states.get(actor) || null; }
+function remoteStateOf(actor) {
+  const s = actor && states.get(actor);
+  return s && s.remote ? s : null;
+}
 
 // Charge-scaled frustum radii (pinned Low/High ends).
 export function intakeNearRadius(charge) { return lerp(NEAR_LOW, NEAR_HIGH, charge); }
@@ -187,22 +244,60 @@ export function inkVacAbsorbCandidate(actor, start, end, projectile) {
   return { distance, onHit: () => absorb(state, projectile) };
 }
 
-// Absorption side effects, guarded so one projectile is credited/neutralised once.
-// A net ghost is a replay of an authoritative shot: this module applies no
-// authority to it, so neither charge nor damage state is touched.
-function absorb(state, projectile) {
-  if (projectile.ghost) return false;
-  if (projectile.s3InkVacAbsorbed) return false;
-  projectile.s3InkVacAbsorbed = true;
-  projectile.damage = 0;
+// Credit the held local intake by its OWN calibration value. Only the owner may
+// credit; a replica never calls this from a replayed packet.
+function creditCharge(state) {
   state.charge = Math.min(1, state.charge + INK_VAC_CALIBRATION.absorbCreditPerProjectile);
   state.absorbed++;
+  updateVisual(state);
+  api.emit?.(INK_VAC_EVENTS.charge, { actor: state.actor, kit: VAC_ID, serial: state.serial, charge: state.charge });
+  return state.charge;
+}
+
+// Absorption PROPOSAL for a replica intake. The shooter is the authority over its
+// own round, so it neutralises the shooter-authoritative damage at first contact
+// and asks the owner to credit once. `actor` is the shooter and `target` the Vac
+// owner, both flat actor references the native packer keeps.
+function proposeAbsorption(state, projectile) {
+  const shooter = projectile.owner;
+  if (!shooter || shooter.remote === true) return false;   // only a locally owned shooter may propose
+  if (!Number.isInteger(state.serial)) return false;
+  const key = `${shooter.nid !== undefined ? shooter.nid : 'i' + identityOf(shooter)}#p${++proposalSeq}`;
+  api.emit?.(INK_VAC_EVENTS.absorb, { actor: shooter, target: state.actor, kit: VAC_ID, serial: state.serial, key });
+  return true;
+}
+
+// Absorption side effects, guarded so one projectile is credited/neutralised once.
+// A captured state that has been disposed (or already released) is stale: its
+// onHit closure must be a no-op.
+function absorb(state, projectile) {
+  if (!projectile) return false;
+  if (states.get(state.actor) !== state || state.phase !== 'inhale') return false;  // stale / disposed
+  if (projectile.s3InkVacAbsorbed) return false;
+  projectile.s3InkVacAbsorbed = true;
+  // A net ghost is a replay of an authoritative shot: this module applies no
+  // authority to it, so it may be consumed VISUALLY only -- no damage edit, no
+  // charge, no proposal, no paint.
+  if (projectile.ghost) return false;
+  projectile.damage = 0;      // neutralise the shooter-authoritative damage here
+  // A replica may not claim charge from a replayed ghost; it proposes instead.
+  if (state.remote) return proposeAbsorption(state, projectile);
+  creditCharge(state);
   return true;
 }
 
 // ---------------------------------------------------------------------------
 // Presentation. Owned cone built with its apex at the origin so it can never
 // extend behind the owner, oriented to the full 3D aim and visible while active.
+function makeState(actor, opts = {}) {
+  const remote = opts.remote === true;
+  return { actor, remote, serial: opts.serial, t: 0, phase: 'inhale', charge: 0, absorbed: 0,
+    nearR: intakeNearRadius(0), farR: intakeFarRadius(0), baseFar: FAR_HIGH,
+    mesh: null, geo: null, mat: null,
+    _fwd: new api.THREE.Vector3(), _org: new api.THREE.Vector3(), _q: new api.THREE.Vector3(),
+    _m: new api.THREE.Vector3(), _e: new api.THREE.Vector3(), _up: new api.THREE.Vector3(0, 1, 0) };
+}
+
 function createVisual(state) {
   const { THREE, G } = api;
   const scene = G.scene;
@@ -227,46 +322,159 @@ function disposeVisual(state) {
   state.geo?.dispose?.(); state.mat?.dispose?.();
   state.mesh = state.geo = state.mat = null;
 }
+
+// Presentation advance, shared by the held local intake and by a replica cone.
+function updateVisual(state) {
+  if (!state.mesh) return;
+  const a = state.actor;
+  state.mesh.position.copy(originOf(a, state._org));
+  state.mesh.quaternion.setFromUnitVectors(state._up, forwardOf(a, state._fwd));
+  const r = state.farR / state.baseFar;
+  state.mesh.scale.set(r, 1, r);        // radial only: never lengthens behind the owner
+}
+
 export function disposeInkVac(actor) {
   const state = states.get(actor);
   if (!state) return;
   disposeVisual(state);
   if (actor.specialActive && actor.specialActive.id === VAC_ID) actor.specialActive = null;
   states.delete(actor);
+  // A locally owned activation must tell its replicas to drop the cone. A replayed
+  // dispose never re-emits, so replay cannot loop.
+  if (!state.remote && Number.isInteger(state.serial)) {
+    api.emit?.(INK_VAC_EVENTS.dispose, { actor, kit: VAC_ID, serial: state.serial });
+  }
 }
 
 // ---------------------------------------------------------------------------
 // Release: queue the native type:'blast' countershot carrying the resolved
 // descriptor. Native integrator and _blastBurst remain the authority for motion and
 // detonation; this module applies no manual splash/paint. Errors are NOT swallowed.
+// A replica NEVER reaches here: it only ever hides its presentation.
 function release(state) {
   const a = state.actor, c = state.charge, { G, emit } = api;
   state.phase = 'done';
   a.specialActive = null;
   disposeVisual(state);
   let authored = false;
-  if (!a.remote && G.projectiles?.fireInkVacExhale) {
+  if (!state.remote && !a.remote && G.projectiles?.fireInkVacExhale) {
     const projectile = G.projectiles.fireInkVacExhale(a, { charge: c, descriptor: inkVacBlastDescriptor(c) });
     authored = !!projectile;
   }
-  emit?.('special:inkvac-release', { actor: a, charge: c, authored });
+  // Flat payload: the countershot itself is a native recProj packet, so replicas
+  // get it through ghostProjectile and this event allocates nothing for them.
+  emit?.(INK_VAC_EVENTS.release, { actor: a, kit: VAC_ID, serial: state.serial, charge: c, authored });
   states.delete(a);
 }
 
-// Per-frame advance (inhale). dt === 0 must be a strict no-op.
+// Per-frame advance of a LOCALLY owned inhale. dt <= 0 is a strict no-op.
 function inkVacUpdate(a, dt) {
   const state = states.get(a);
   if (!state || state.phase !== 'inhale' || !(dt > 0)) return;
   state.t += dt;
   state.nearR = intakeNearRadius(state.charge);
   state.farR = intakeFarRadius(state.charge);
-  if (state.mesh) {
-    state.mesh.position.copy(originOf(a, state._org));
-    state.mesh.quaternion.setFromUnitVectors(state._up, forwardOf(a, state._fwd));
-    const r = state.farR / state.baseFar;
-    state.mesh.scale.set(r, 1, r);        // radial only: never lengthens behind the owner
-  }
+  updateVisual(state);
   if (state.charge >= 1 || state.t >= INK_VAC_CALIBRATION.inhaleDurationSeconds) release(state);
+}
+
+// Per-frame advance of a REPLICA cone. Remote actors are driven by the native
+// NetMatch applyRemote path rather than Actor.update, so the parent calls this
+// (directly, or via the applyRemote wrapper installed below). Presentation only:
+// it authors no projectile, paint, damage, gauge or refill.
+export function advanceInkVacReplica(actor, dt) {
+  const state = states.get(actor);
+  if (!state || !state.remote || state.phase !== 'inhale' || !(dt > 0)) return false;
+  state.t += dt;
+  state.nearR = intakeNearRadius(state.charge);
+  state.farR = intakeFarRadius(state.charge);
+  updateVisual(state);
+  // Presentation-only failsafe if the owner's release/dispose packet is lost.
+  if (state.t >= INK_VAC_CALIBRATION.replicaStuckGuardSeconds) {
+    disposeVisual(state);
+    state.phase = 'done';
+    states.delete(actor);
+  }
+  return true;
+}
+
+// ---------------------------------------------------------------------------
+// REMOTE REPLAY API.
+//
+// replayInkVac(eventName, actor, payload) is the single entry point the parent
+// calls from the native NetMatch transport. `actor` is whatever native
+// _onLocalEvent/_playEvent resolve as `e.actor || e.victim`; for an absorption
+// PROPOSAL that is the SHOOTER and the Vac owner arrives as payload.target, so a
+// proposal can never be credited to the shooter by accident.
+//
+// Every branch is guarded and returns a verdict instead of throwing, so a
+// malformed or out-of-order packet is dropped rather than half-applied:
+//   { applied: true, ... } | { applied: false, reason }
+export function replayInkVac(eventName, actor, payload) {
+  const drop = reason => ({ applied: false, reason });
+  if (!api) return drop('not-installed');
+  if (typeof eventName !== 'string' || !actor) return drop('missing-event-or-actor');
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return drop('malformed-payload');
+  if (payload.kit !== VAC_ID) return drop('not-inkvac');
+  const serial = payload.serial;
+  if (!Number.isInteger(serial) || serial < 0) return drop('malformed-serial');
+  const EV = INK_VAC_EVENTS;
+  const subject = eventName === EV.absorb ? payload.target : actor;
+  if (!subject || typeof subject !== 'object') return drop('malformed-subject');
+
+  // A dead owner drops its replica whatever arrives next, so a lost dispose
+  // packet cannot leave a cone hanging in the scene.
+  if (subject.alive !== true && states.has(subject)) disposeInkVac(subject);
+
+  if (eventName === EV.absorb) {
+    // The credit authority is the Vac OWNER, never a replayed ghost.
+    const state = states.get(subject);
+    if (!state || state.remote) return drop('no-local-activation');
+    if (state.phase !== 'inhale' || state.serial !== serial) return drop('stale-or-mismatched-serial');
+    const key = payload.key;
+    if (typeof key !== 'string' || !key) return drop('malformed-proposal-key');
+    const ledger = proposalLedger(subject);
+    if (ledger.set.has(key)) return drop('duplicate-proposal');
+    ledger.set.add(key); ledger.order.push(key);
+    while (ledger.order.length > PROPOSAL_MEMORY) ledger.set.delete(ledger.order.shift());
+    creditCharge(state);            // owner's own calibration, once
+    return { applied: true, serial, charge: state.charge };
+  }
+
+  // Everything below is owner->replica state. It may only present.
+  if (subject.remote !== true) return drop('replica-events-need-a-remote-actor');
+  if (eventName === EV.activation) {
+    if (subject.alive !== true) return drop('dead-actor');
+    const last = remoteSerials.get(subject);
+    if (Number.isInteger(last) && serial <= last) return drop('duplicate-or-out-of-order-activation');
+    const current = states.get(subject);
+    if (current && current.serial === serial) return drop('duplicate-activation');
+    if (current) disposeVisual(current);        // a newer activation supersedes an older cone
+    const charge = Number.isFinite(payload.charge) ? clamp01(payload.charge) : 0;
+    const state = makeState(subject, { remote: true, serial });
+    state.charge = charge;
+    state.nearR = intakeNearRadius(charge); state.farR = intakeFarRadius(charge);
+    states.set(subject, state);
+    remoteSerials.set(subject, serial);
+    createVisual(state);
+    updateVisual(state);
+    return { applied: true, serial, charge };
+  }
+
+  // charge / release / dispose all require the exact live activation.
+  const state = remoteStateOf(subject);
+  if (!state) return drop('no-replica-activation');
+  if (state.serial !== serial) return drop('stale-or-mismatched-serial');
+  if (eventName === EV.charge) {
+    if (!Number.isFinite(payload.charge)) return drop('malformed-charge');
+    state.charge = clamp01(payload.charge);
+    state.nearR = intakeNearRadius(state.charge); state.farR = intakeFarRadius(state.charge);
+    updateVisual(state);
+    return { applied: true, serial, charge: state.charge };
+  }
+  if (eventName !== EV.release && eventName !== EV.dispose) return drop('unknown-event');
+  disposeInkVac(subject);          // presentation only: no projectile, paint or damage
+  return { applied: true, serial, ended: eventName };
 }
 
 // ---------------------------------------------------------------------------
@@ -285,10 +493,15 @@ export function installKitInkVac(context, _profile) {
       const s = this.specialActive;
       const state = s && s.id === VAC_ID ? states.get(this) : null;
       if (!state) return update.call(this, dt);
+      // A held state whose owner died is dropped whatever the frame step is.
+      if (!this.alive) { disposeInkVac(this); return update.call(this, dt); }
+      // STRICT PAUSE: with no time passing the held special must touch nothing --
+      // not form, not _prevIntent, not the weapons, not the inhale clock. Early
+      // return before any mutation and before the native pass.
+      if (!(dt > 0)) return undefined;
       const it = this.intent;
       // Primary fire releases the countershot: the special replaces the main/sub.
-      // A paused frame (dt <= 0) is a strict no-op and must never release.
-      if (dt > 0 && it.fire && state.t >= INK_VAC_CALIBRATION.minInhaleSeconds) {
+      if (it.fire && state.t >= INK_VAC_CALIBRATION.minInhaleSeconds) {
         release(state);
         // The release frame still suppresses the replaced weapons, so the player
         // cannot also shoot the main weapon or the sub on the same frame.
@@ -309,28 +522,30 @@ export function installKitInkVac(context, _profile) {
         // Only restore the token if this actor is still alive and still owns it.
         if (this.alive && states.get(this) === state && !this.specialActive) this.specialActive = s;
       }
-      if (dt > 0) inkVacUpdate(this, dt);
+      inkVacUpdate(this, dt);
       return result;
     };
 
     proto._startSpecial = function () {
       if (this.weapon.special !== VAC_ID) return startSpecial.call(this);
+      // A genuine native activation, exactly once: alive, not already holding a
+      // special, no live state (reentrancy), and the special actually ready.
+      if (!this.alive) return undefined;
+      if (this.specialActive || states.has(this)) return undefined;
+      if (typeof this.specialReady === 'function' && !this.specialReady()) return undefined;
       this.special = 0;
       this.stats.specials++;
       this.form = 'kid';
       this._setClimb(false);
       api.emit?.('special:use', { actor: this, id: VAC_ID });
       api.G.audio?.play('special_activate', { pos: this.isLocal ? undefined : this.pos, volume: this.isLocal ? 1 : 0.7 });
-      const state = { actor: this, t: 0, phase: 'inhale', charge: 0, absorbed: 0,
-        nearR: intakeNearRadius(0), farR: intakeFarRadius(0), baseFar: FAR_HIGH,
-        mesh: null, geo: null, mat: null,
-        _fwd: new THREE.Vector3(), _org: new THREE.Vector3(), _q: new THREE.Vector3(),
-        _m: new THREE.Vector3(), _e: new THREE.Vector3(), _up: new THREE.Vector3(0, 1, 0) };
+      const state = makeState(this, { remote: false, serial: ++activationSeq });
       states.set(this, state);
       this.specialActive = { id: VAC_ID, t: 0, phase: 'inhale', armor: false };
       this.ink = api.PLAYER.inkMax;                 // tank refill, once per activation
       createVisual(state);
-      api.emit?.('special:inkvac', { actor: this });
+      api.emit?.(INK_VAC_EVENTS.activation, { actor: this, kit: VAC_ID, serial: state.serial,
+        charge: 0, ...(this.nid !== undefined ? { nid: this.nid } : {}) });
       return undefined;
     };
 
@@ -374,5 +589,24 @@ export function installKitInkVac(context, _profile) {
 
   api.inkVacAbsorbCandidate = inkVacAbsorbCandidate;
   api.inkVacState = inkVacState;
+  // Remote replay surface. The parent wires these into the native NetMatch
+  // transport: add INK_VAC_EVENTS names to the native FORWARD list and call
+  // api.replayInkVac(name, e.actor || e.victim, e) from the replay path.
+  api.replayInkVac = replayInkVac;
+  api.advanceInkVacReplica = advanceInkVacReplica;
+  api.INK_VAC_EVENTS = INK_VAC_EVENTS;
+
+  // Remote actors are driven by NetMatch.applyRemote, not Actor.update, so the
+  // replica cone is advanced from there when the real NetMatch is available.
+  const NM = api.NetMatch;
+  if (NM?.prototype?.applyRemote && !NM.prototype[INSTALL]) {
+    Object.defineProperty(NM.prototype, INSTALL, { value: true });
+    const applyRemote = NM.prototype.applyRemote;
+    NM.prototype.applyRemote = function (a, dt) {
+      const r = applyRemote.call(this, a, dt);
+      advanceInkVacReplica(a, dt);
+      return r;
+    };
+  }
   return api;
 }
