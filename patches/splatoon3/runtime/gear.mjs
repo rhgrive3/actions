@@ -58,6 +58,8 @@ export function installGear(api, tuning) {
     m.inkRecoverySwim = tuning.gear.inkRecovery[0] / m.inkRecovery;
     m.inkRecoveryKid = extra.inkRecoveryKid[0] / gearCurve(ap.inkRecovery || 0, ...extra.inkRecoveryKid);
     m.enemyMoveSpeed = m.inkResistance * 60;
+    m.enemyActionSpeedScale = gearCurve(ap.inkResistance || 0, ...extra.enemyActionSpeedScale);
+    m.enemyInkGrace = Math.ceil(gearCurve(ap.inkResistance || 0, ...extra.enemyInkGraceFrames) - 1e-10) / tuning.resources.enemyInkReferenceHz;
     m.enemyShotSpeed = gearCurve(ap.inkResistance || 0, ...extra.enemyShotSpeed) * 60;
     m.enemyDamageCap = gearCurve(ap.inkResistance || 0, ...extra.enemyDamageCap) * 100;
     m.enemyDamageRate = gearCurve(ap.inkResistance || 0, ...extra.enemyDamageRate) * 6000;
@@ -78,7 +80,7 @@ export function installGear(api, tuning) {
   }
   Actor.prototype.reset = function (...args) {
     const result = reset.apply(this, args); equip(this);
-    this.s3.recoverStopRemaining = 0; this.s3.enemyInkTime = 0;
+    this.s3.recoverStopRemaining = 0; this.s3.enemyInkTime = 0; this.s3.enemyInkAwayTime = 0;
     return result;
   };
   Actor.prototype.setWeapon = function (...args) { const result = setWeapon.apply(this, args); equip(this); return result; };
@@ -97,7 +99,23 @@ export function installGear(api, tuning) {
     const original = { swimSpeed: api.PLAYER.swimSpeed, enemyInkSpeed: api.PLAYER.enemyInkSpeed };
     const m = this.s3?.modifiers || {}, flow = this.s3?.flow?.active;
     api.PLAYER.swimSpeed *= (m.swimSpeed ?? 1) * (flow ? tuning.flow.swimMultiplier : 1);
-    api.PLAYER.enemyInkSpeed = (this.intent.fire ? m.enemyShotSpeed : m.enemyMoveSpeed) ?? original.enemyInkSpeed;
+    const runner = this.weaponRunner, kind = this.weapon.kind;
+    const firing = runner.firingT > 0 || runner.s3BlasterWindup > 0;
+    const fixedShot = ['shooter', 'dualies', 'blaster'].includes(kind) && firing;
+    const scaledAction = kind === 'charger' && runner.charging ||
+      kind === 'splatling' && (runner.charging || runner.streaming || firing) ||
+      kind === 'slosher' && (runner.slosh >= 0 || firing);
+    const walk = m.enemyMoveSpeed ?? original.enemyInkSpeed;
+    if (scaledAction && !squid) {
+      // Capture the installed weapon speed before Run Speed Up is applied.
+      // The weapon still owns charge/heave/recovery transitions and movement locks.
+      api.PLAYER.enemyInkSpeed = Math.min(walk, moveSpeed.call(runner) * (m.enemyActionSpeedScale ?? 1));
+    } else if (fixedShot && !squid) {
+      api.PLAYER.enemyInkSpeed = m.enemyShotSpeed ?? walk;
+    } else {
+      // Roller-specific enemy-ink modes are not yet verified; preserve their path.
+      api.PLAYER.enemyInkSpeed = kind === 'roller' && this.intent.fire && !squid ? m.enemyShotSpeed ?? walk : walk;
+    }
     api.PLAYER.enemyInkSpeed *= flow ? tuning.flow.enemyInkSpeedMultiplier : 1;
     try { return horizontal.call(this, dt, squid, enemy); }
     finally { Object.assign(api.PLAYER, original); }

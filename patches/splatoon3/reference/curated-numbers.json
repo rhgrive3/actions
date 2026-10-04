@@ -59,6 +59,18 @@
     }
   ],
   "parameters": {
+    "data/parameter/1130/misc/params.json#/OpInk_MoveVel_ShotK": {
+      "value": [
+        1,
+        0.75,
+        0.5
+      ],
+      "pointer": "/OpInk_MoveVel_ShotK",
+      "sourceId": "data/parameter/1130/misc/params.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; enemy action-speed classification is documented separately in the enemy-ink batch report."
+    },
     "data/parameter/1130/misc/params.json#/MoveVel_Human": {
       "value": [
         0.144,

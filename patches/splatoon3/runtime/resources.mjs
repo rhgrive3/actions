@@ -9,6 +9,11 @@ export function resourceSurface(a) {
   a.onEnemy = a.grounded && a.groundTeam === 2 && !a.submerged;
   return { isSquid, onEnemy: a.onEnemy };
 }
+// Quantize the reference 60 Hz damage quantum, never the render/caller dt.
+// Keeping interval integration separate preserves the same exposure for split ticks.
+export function enemyInkDamageRate(rate, referenceHz = 60, quantum = 0.1) {
+  return Math.max(0, Math.floor(rate / referenceHz / quantum + 1e-10)) * quantum * referenceHz;
+}
 export function updateResources(a, dt) {
   if (!api) throw new Error('INKWAVE resource patch not installed');
   const P = api.PLAYER, r = tuning, mods = a.s3?.modifiers || {};
@@ -17,16 +22,26 @@ export function updateResources(a, dt) {
     a.s3 ||= {};
     const before = a.s3.enemyInkTime || 0;
     a.s3.enemyInkTime = before + dt;
+    a.s3.enemyInkAwayTime = 0;
     // Only the part of this tick beyond grace can deal contact damage.
-    const exposure = Math.max(0, a.s3.enemyInkTime - Math.max(before, r.enemyInkGrace || 0));
+    const exposure = Math.max(0, a.s3.enemyInkTime - Math.max(before, mods.enemyInkGrace ?? r.enemyInkGrace ?? 0));
     const cap = mods.enemyDamageCap ?? r.enemyInkDamageCap;
-    if (exposure > 0 && a.damageFromInk < cap && a.invuln <= 0) {
-      const damage = Math.min((mods.enemyDamageRate ?? r.enemyInkDps) * exposure, cap - a.damageFromInk);
-      a.damageFromInk += damage; a.hp = Math.max(1, a.hp - damage);
+    // The cap is total accumulated damage, not a second budget after weapon hits.
+    // Re-entering enemy ink must never reduce HP below this threshold or heal it.
+    const allowance = Math.max(0, cap - (P.hp - a.hp));
+    if (exposure > 0 && allowance > 0 && a.invuln <= 0) {
+      const rate = enemyInkDamageRate(mods.enemyDamageRate ?? r.enemyInkDps,
+        r.enemyInkReferenceHz, r.enemyInkDamageQuantum);
+      const damage = Math.min(rate * exposure, allowance, Math.max(0, a.hp - 1));
+      a.damageFromInk += damage; a.hp -= damage;
     }
     a.lastDamage = Math.min(a.lastDamage, r.enemyInkRegenSuppression);
   } else {
-    if (a.s3) a.s3.enemyInkTime = 0;
+    if (a.s3) {
+      const resetAfter = r.enemyInkGraceReset ?? 0;
+      a.s3.enemyInkAwayTime = Math.min(resetAfter, (a.s3.enemyInkAwayTime || 0) + dt);
+      if (a.s3.enemyInkAwayTime + 1e-10 >= resetAfter) a.s3.enemyInkTime = 0;
+    }
     a.damageFromInk = Math.max(0, a.damageFromInk - dt * r.enemyInkRecovery);
   }
   if (!onEnemy && a.lastDamage + 1e-10 >= r.regenDelay && a.hp < P.hp) {
