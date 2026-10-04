@@ -163,3 +163,8 @@ The combined active-browser proof exposed one more test-ordering issue: the inde
 ### Live-rAF isolation for the physical keyboard proof
 
 The next combined run proved the remaining race: one Space edge could be consumed by the normal live rAF between Playwright's physical keyboard command and the explicit fixed-tick frame, producing one ordinary jump before the held-fire dodge trial. The browser proof now freezes only the live game-loop simulation while dispatching the real keyboard events and driving the explicit fixed ticks. Browser events still enter the production Input object; only unrelated automatic simulation frames are excluded. The previous frozen state is restored after the proof.
+
+
+### Physical action edge vs dodge preconditions
+
+With lifecycle integration enabled, the first physical direction-key transition can legitimately participate in focus/input-boundary handling even while the simulation is frozen. That made the browser proof accidentally test two things at once: Space edge retention and direction-key lifecycle semantics. The final runner keeps **Space** as the physical browser action edge under test, while fire and move direction are established through the game's canonical debug input after the browser event. It asserts that the physical Space key is present in both held and pressed Input state before each explicit fixed tick. This preserves the real keyboard-edge proof while making unrelated dodge-admission preconditions deterministic.
