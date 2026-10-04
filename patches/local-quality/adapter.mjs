@@ -1,6 +1,8 @@
 // Build-only quality corrections composed after the gameplay, touch-layout and
 // reliability adapters. Upstream inkwave-public/ remains byte-for-byte intact.
 import fs from 'node:fs';
+import { adaptIssue479Source } from '../splatoon3/issue-479-adapter.mjs';
+import { adaptIssue473Source } from '../splatoon3/issue-473-adapter.mjs';
 import { adaptIdleSource } from './idle-adapter.mjs';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
@@ -27,6 +29,8 @@ export function replaceOnce(code, before, after, label) {
 }
 
 export function adaptQualitySource(rel, code) {
+  code = adaptIssue479Source(rel, code);
+  code = adaptIssue473Source(rel, code);
   code = adaptIdleSource(rel, code, replaceOnce);
   code = adaptLobbyResources(rel, code);
   code = adaptMinimapResources(rel, code);
