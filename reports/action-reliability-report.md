@@ -158,3 +158,8 @@ The acceptance runner now scopes room-code interactions to `.iw-online:not(.is-l
 ### Active-browser keyboard focus ordering
 
 The combined active-browser proof exposed one more test-ordering issue: the independent held-fire precondition was established before Playwright sent the physical keyboard events. A legitimate focus/lifecycle boundary reset can clear mouse-held state during that transition, leaving the subsequent Space press as a jump instead of a dualies dodge. The runner now sends the physical keyboard events first, then establishes and asserts the held-fire precondition immediately before each fixed-tick trial. This keeps the keyboard edge under test physical while making the independent dodge admission precondition deterministic.
+
+
+### Live-rAF isolation for the physical keyboard proof
+
+The next combined run proved the remaining race: one Space edge could be consumed by the normal live rAF between Playwright's physical keyboard command and the explicit fixed-tick frame, producing one ordinary jump before the held-fire dodge trial. The browser proof now freezes only the live game-loop simulation while dispatching the real keyboard events and driving the explicit fixed ticks. Browser events still enter the production Input object; only unrelated automatic simulation frames are excluded. The previous frozen state is restored after the proof.
