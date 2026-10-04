@@ -99,6 +99,8 @@ export function createArrivalGauge(opts = {}) {
     if (ctx) {
       texture = new THREE.CanvasTexture(canvas);
       label = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, depthWrite: false }));
+      // Own the label quad: Sprite's default geometry is shared with unrelated sprites.
+      label.geometry = label.geometry.clone();
       label.userData.issue460Label = true;
       label.position.set(0, 0.9, 0);
       label.scale.set(1.6, 0.4, 1);
@@ -181,7 +183,7 @@ function disposeGauge(gauge) {
   gauge.track.material.dispose();
   gauge.arc.material.dispose();
   if (gauge.texture) gauge.texture.dispose();
-  if (gauge.label) gauge.label.material.dispose();
+  if (gauge.label) { gauge.label.geometry.dispose(); gauge.label.material.dispose(); }
 }
 
 // One live gauge per jumper; flight end and native Character disposal release GPU resources.

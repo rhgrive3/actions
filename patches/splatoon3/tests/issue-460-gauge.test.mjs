@@ -120,6 +120,8 @@ test('label: name + countdown seconds are drawn to the canvas texture and wiped 
   const gauge = createArrivalGauge({ THREE, doc });
   assert.ok(gauge.label && gauge.label.userData.issue460Label, 'label sprite exists');
   assert.ok(gauge.texture, 'canvas texture feeds the sprite (GPU label)');
+  assert.notEqual(gauge.label.geometry, new THREE.Sprite().geometry, 'label owns its quad independently of unrelated sprites');
+  let labelQuadsDisposed=0; gauge.label.geometry.addEventListener('dispose',()=>labelQuadsDisposed++);
   assert.equal(canvas.width, 256);
   gauge.update(jumpMarkerSnapshot({ progress: 0.25, dur: 2.3, jumper: 'Ninja' }), 0xff8a14);
   assert.equal(gauge.labelText, 'Ninja · 1.7s');
@@ -129,6 +131,7 @@ test('label: name + countdown seconds are drawn to the canvas texture and wiped 
   const kinds = ops.map((o) => o[0]);
   assert.ok(kinds.lastIndexOf('fillText') < kinds.lastIndexOf('clearRect'), 'clear wipes the label surface');
   assert.ok(!ops.some((o) => o[0] === 'fillText' && o[1] === ''), 'nothing drawn while cleared');
+  gauge.dispose(); assert.equal(labelQuadsDisposed,1,'owned label quad also releases its GPU buffers');
 });
 
 
