@@ -147,3 +147,4 @@
   - params = N5。正式なビルド Q5。
 - 10/04 夜: Q5 = master V94。PR https://github.com/rhgrive3/actions/pull/401（ブランチ claude/inkwave-skin-lips-nose-v94）。マージはユーザーの OK 待ち。
 - 10/05: ユーザー「鼻の横に黒いシミ」= 小鼻のわきの灰色の影（paint_nose desaturate 0.7 で灰色）→ desaturate 0.4、strength 1.0（V2）。正式 Q6 で検査合格、PR #401 を更新。左ななめ前・左横の絵をユーザーに出した（顎のレビュー待ち）。
+- 10/05: ユーザー「右から見たときにまだしみ」= 小鼻の上の面（鼻の穴の上）の暗いかたまり。正面から投影したぬりが、横を向いた小鼻の面ににじむ。→ paint_nose.facing [0.35,0.65] → [0.6,0.9]（正面を向いた面だけ）+ 新しい設定 facing_keep（鼻の穴 2 つと鼻先の下は向きに関係なくぬる。下を向いているので、facing だけだと鼻の穴がうすくなった）= K1。正式なビルド Q7。
