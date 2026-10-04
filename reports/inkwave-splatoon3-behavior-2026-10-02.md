@@ -225,3 +225,16 @@ Four current-public defects #366/#370 (one duplicate pair), #375, #384, #395 are
 ## 2026-10-04 weapon edge-case supplement
 
 See [weapon edge-case comparison](inkwave-weapon-edgecases-2026-10-04.md) for #354/#356/#357/#361: stable-human Dualies3F first emission; Splatling separate ground1.6° pitch envelope; terrain Blaster35HP cap; horizontal Roller12+1 gameplay units. The report separates actual source/minified/composed-code tests from S3 probability/position/falloff and released-tap calibration still pending. No native source or deployed main is changed by the draft.
+
+## 敵インク接触による過去攻撃者の再活性化と水没死誤付与（#482、2026-10-05）
+
+開始 main は `866fd45992be33c51966a8acc55596bb5bac15a8`。対象は `inkwave-public/` とそのビルド時 overlay であり、旧 Game 試作版は対象外。本家参照版は Splatoon 3 Ver. 11.3.0（2026-08-19）。
+
+| 項目 | 内容 |
+|---|---|
+| 本家の根拠 | [任天堂サポート更新履歴](https://support.nintendo.com/jp/switch/software_support/av5ja/1130.html)、Inkipedia (Damage, Splatting, Water)。敵インクへの接触は移動低下・スリップダメージ・HP回復遅延の抑制であり、特定の過去攻撃者による新たな属性攻撃ではない。失効した古い攻撃者のキル・アシスト権利が敵インク接触によって復活し、直後の水没死がその攻撃者の戦果になることはない。 |
+| INKWAVE の実装箇所 | `src/game/actor.js:164`、`:236`、`:335`、および `patches/splatoon3/runtime/resources.mjs:27`。`lastDamage` タイマーが被弾経過時間と敵インクHP回復遅延抑制の双方に兼用されており、敵インク接触で `lastDamage` が 0.4s（または 0s）に短縮されることで、4秒以上前の `lastAttacker` が `this.lastDamage < 4` により水没撃破者として復活していた。 |
+| 再現操作 | A が B に通常被弾を与えた後、4秒以上経過（5秒・10秒・30秒・60秒）してから B が敵インクを踏んで直後に水没する。未修正版では `lastDamage` が 0.4s に短縮されて A の splats が +1 される。修正版（`patches/splatoon3/issue-482-adapter.mjs`）では専用の `lastAttackerHitAge` を保持し、敵インク接触時も攻撃者の経過時間（>= 4.0s）を維持して水没死の攻撃者を null と判定する。 |
+| プレイへの影響 | 数秒〜数十秒前の古い攻撃者が、敵インク接触直後の水没で不当にキル数・ナワバリ塗り・Flow進捗を得る不整合を排除。HP回復遅延抑制は独立して維持され、4秒以内の正当な直前被弾の水没キル判定や、別攻撃者 C による上書き更新は正常に動作する。 |
+| 確認状態 | **ロジック・Node VM確認済み**（source-fixture、実 Actor.update / resources、30Hz/60Hz/120Hz、負の対照群再現と正準受入 9/9 pass）。**Switch実機での水没アシスト判定タイマーの厳密な公式フレーム値は未確認**として残し、4秒境界（INKWAVE既存の基準）と敵インクによる非再活性化不変条件のみを整合。 |
+
