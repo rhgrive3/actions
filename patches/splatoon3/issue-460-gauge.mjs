@@ -184,8 +184,9 @@ function disposeGauge(gauge) {
   if (gauge.label) gauge.label.material.dispose();
 }
 
-// owner key -> gauge, one gauge per jumper, reused across jumps.
+// One live gauge per jumper; flight end and native Character disposal release GPU resources.
 const GAUGES = new WeakMap();
+const DISPOSE_BOUND = new WeakSet();
 
 // Renders (or re-renders) the arrival gauge for `owner` inside flight at the
 // committed destination `dest`. `snapshot` null/absent => clear + detach.
@@ -201,6 +202,12 @@ export function renderJumpGauge460(G, owner, snapshot, dest, color, THREE) {
     if (!THREE) return null;
     gauge = createArrivalGauge({ THREE });
     GAUGES.set(owner, gauge);
+    const character = owner.character;
+    if (character && typeof character.dispose === 'function' && !DISPOSE_BOUND.has(character)) {
+      const dispose = character.dispose;
+      character.dispose = function (...args) { clearJumpGauge460(owner); return dispose.apply(this, args); };
+      DISPOSE_BOUND.add(character);
+    }
   }
   if (gauge.group.parent !== scene) scene.add(gauge.group);
   gauge.group.position.set(dest.x, dest.y + 0.05, dest.z);   // same lift as the native pulse ring
@@ -214,8 +221,8 @@ export function clearJumpGauge460(owner) {
   const gauge = owner && GAUGES.get(owner);
   if (!gauge) return false;
   const attached = !!gauge.group.parent;
-  clearGauge(gauge);
-  if (gauge.group.parent) gauge.group.parent.remove(gauge.group);
+  GAUGES.delete(owner);
+  disposeGauge(gauge);
   return attached;
 }
 

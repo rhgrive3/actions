@@ -131,3 +131,20 @@ test('label: name + countdown seconds are drawn to the canvas texture and wiped 
   assert.ok(!ops.some((o) => o[0] === 'fillText' && o[1] === ''), 'nothing drawn while cleared');
 });
 
+
+
+test('native character disposal releases every arrival GPU resource once, even during flight', () => {
+  const scene=new THREE.Scene();let characterDisposals=0;
+  const owner={character:{dispose(){characterDisposals++;}}};
+  const gauge=renderJumpGauge460({scene},owner,flightAt(.4,2,'A'),new THREE.Vector3(),0xffffff,THREE);
+  const resources=[gauge.track.geometry,gauge.track.material,gauge.arc.material,...(gauge.texture?[gauge.texture]:[]),...(gauge.label?[gauge.label.material]:[])];
+  const counts=resources.map(()=>0);resources.forEach((r,i)=>r.addEventListener('dispose',()=>counts[i]++));
+  owner.character.dispose();owner.character.dispose();
+  assert.equal(characterDisposals,2,'native disposal still runs');
+  assert.equal(scene.children.length,0,'no abandoned world gauge');
+  assert.deepEqual(counts,resources.map(()=>1),'every owned GPU resource disposed exactly once');
+  assert.equal(clearJumpGauge460(owner),false,'no cached disposed gauge');
+  const next=renderJumpGauge460({scene},owner,flightAt(.2,2,'A'),new THREE.Vector3(),0xffffff,THREE);
+  assert.notEqual(next,gauge,'new flight never reuses disposed resources');
+  clearJumpGauge460(owner);
+});
