@@ -69,6 +69,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Diagnose nine-way walk contact regression
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/walk-special-contact.test.mjs
       - name: Verify gameplay patch contracts and regressions
         run: node --experimental-vm-modules scripts/check-inkwave-patches.mjs
       - name: Verify deterministic network replication
