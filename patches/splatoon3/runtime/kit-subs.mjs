@@ -37,6 +37,15 @@ const rawDamage = (v) => (v == null ? null : v / 10);
 const frames = (v) => (v == null ? null : v * FRAME);
 const perSecond = (v) => (v == null ? null : v * 60);
 const tankPoints = (v) => (v == null ? null : v * 100);
+const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
+
+// The pristine templates, never the live registry copies. `installGear` rewrites
+// `sub.inkCost` on the live registry object for the duration of one
+// `WeaponRunner.update` (ink saver scales the fallback), so a provenance label read
+// off the live object would report a *calibrated* number as `unknown-omitted` or
+// `extracted` depending on which actor happened to hold gear. Labels are derived
+// from the template so they describe where the number came from, not who scaled it.
+const kitTemplate = (sub) => (sub?.id && Object.hasOwn(KIT_SUBS, sub.id) ? KIT_SUBS[sub.id] : null);
 
 // ---- Suction Bomb ------------------------------------------------------------
 // data/parameter/1130/weapon/WeaponBombSuction.game__GameParameterTable.json
@@ -244,24 +253,23 @@ export function curlingBlastParams(charge, spec = CURLING) {
 }
 
 // Resolves everything the throw and the per-bomb step need, once, onto the bomb.
-export function resolveSubForThrow(actor, subHoldSeconds, SUB) {
-  const id = actor?.weapon?.sub;
-  const sub = actor?.weaponRunner?.s3Sub
-    || (id ? (SUB?.[id] || KIT_SUBS[id]) : null)
-    || kitSubFor(actor?.weapon, SUB);
+// Split from the selection so a replayed ghost can resolve the SAME object from a
+// wire charge fraction without borrowing the local actor's held seconds.
+export function resolveSubAtCharge(sub, charge) {
   if (!sub) return null;
-  const charge = sub.chargeable ? curlingChargeFraction(subHoldSeconds || 0, sub) : 0;
-  const blast = sub.chargeable ? curlingBlastParams(charge, sub) : sub;
+  const c = sub.chargeable ? clamp01(Number.isFinite(charge) ? charge : 0) : 0;
+  const tpl = kitTemplate(sub);
+  const blast = sub.chargeable ? curlingBlastParams(c, sub) : sub;
   const fuse = sub.fuse ?? sub.fuseFallback ?? sub.burstFrame ?? null;
   return {
     spec: sub,
-    charge,
+    charge: c,
     fuse,
     fuseStatus: sub.fuse != null ? sub.fuseStatus
       : sub.fuseFallback != null ? 'calibrated'
       : sub.burstFrame != null ? 'extracted' : 'unknown-omitted',
     inkCost: sub.inkCost ?? sub.inkCostFallback ?? null,
-    inkCostStatus: sub.inkCost != null ? sub.inkCostStatus : 'calibrated',
+    inkCostStatus: tpl?.inkCost != null ? sub.inkCostStatus : 'calibrated',
     paintRadius: blast.paintRadius,
     radius: blast.radius,
     damageMax: sub.damageMax,
@@ -269,8 +277,22 @@ export function resolveSubForThrow(actor, subHoldSeconds, SUB) {
     damageInnerDistance: blast.damageInnerDistance ?? sub.damageInnerDistance,
     damageOuterDistance: blast.damageOuterDistance ?? sub.damageOuterDistance,
     trailRadius: sub.mode === 'roll' ? blast.trailRadius : null,
-    throwSpeed: sub.chargeable ? curlingThrowSpeed(charge, sub) : sub.throwSpeed,
+    throwSpeed: sub.chargeable ? curlingThrowSpeed(c, sub) : sub.throwSpeed,
   };
+}
+
+// Picks the spec this release will use. `runner.s3Sub` is the per-runner selection
+// made at `WeaponRunner.reset`; the live registry is the fallback so an actor whose
+// runner has not been reset yet still resolves the sub its weapon actually carries.
+// Both are per-actor, and the values read from them are the gear-scoped ones, so
+// two owners releasing in the same frame cannot see each other's cost or speed.
+export function resolveSubForThrow(actor, subHoldSeconds, SUB) {
+  const id = actor?.weapon?.sub;
+  const sub = actor?.weaponRunner?.s3Sub
+    || (id ? (SUB?.[id] || KIT_SUBS[id]) : null)
+    || kitSubFor(actor?.weapon, SUB);
+  if (!sub) return null;
+  return resolveSubAtCharge(sub, sub.chargeable ? curlingChargeFraction(subHoldSeconds || 0, sub) : 0);
 }
 
 // ---- Narrow native hooks -----------------------------------------------------
@@ -283,11 +305,26 @@ export function resolveSubForThrow(actor, subHoldSeconds, SUB) {
 
 const CONTACT_BIAS = 0.21;   // the native bomb contact offset
 
-// Ghost bombs are presentation only. The native explosion already guards them
-// with `nm.mute`; these hooks give them no authority of their own either.
+// Two different questions, two different resolvers.
+//
+// AUTHORITY (`resolvedOf`) answers "may this bomb paint, hurt, credit turf or
+// explode with its own bands?". Only a bomb this client actually threw qualifies,
+// so a replayed remote bomb is excluded twice over: it is marked `ghost`, and it
+// carries its numbers on `s3GhostResolved`, never on `s3Resolved`.
+//
+// PRESENTATION (`presentedOf`) answers "what should this bomb look like while it
+// flies?". That is the ghost's business too: a remote Suction Bomb has to stick to
+// the wall it was thrown at, and a remote Curling Bomb has to roll and burst on
+// its own clock, or the throw you watched is not the throw you saw.
 const ownsAuthority = (b) => !!b && !b.ghost && !!b.s3Resolved;
 
 const resolvedOf = (b) => (ownsAuthority(b) ? b.s3Resolved : null);
+
+const presentedOf = (b) => {
+  if (!b) return null;
+  if (b.ghost) return b.s3GhostResolved ?? null;
+  return ownsAuthority(b) ? b.s3Resolved : null;
+};
 
 // The live global context, used only for the native actor scan. Captured at install
 // time from the running composition.
@@ -309,6 +346,7 @@ export function kitSubRelease(SUB, runner, dt, inp) {
   const sub = kitSubFor(runner.a?.weapon, SUB);
   const hold = runner.s3SubHold || 0;
   const charge = sub.chargeable ? curlingChargeFraction(hold, sub) : 0;
+  const tpl = kitTemplate(sub);
   const inkCost = Number.isFinite(sub.inkCost) ? sub.inkCost
     : Number.isFinite(sub.inkCostFallback) ? sub.inkCostFallback
     : SUB.bomb.inkCost;
@@ -317,7 +355,9 @@ export function kitSubRelease(SUB, runner, dt, inp) {
     : { ...sub, inkCost };
   release.__charge = charge;
   release.__hold = hold;
-  release.__inkCostStatus = sub.inkCost != null ? sub.inkCostStatus : 'calibrated';
+  // Provenance comes from the template, so the ink-saver swap `installGear` makes on
+  // the live registry for this frame cannot relabel the number's origin.
+  release.__inkCostStatus = tpl?.inkCost != null ? sub.inkCostStatus : 'calibrated';
   runner.s3Release = release;
   return release;
 }
@@ -333,16 +373,22 @@ export function kitSubHoldSeconds(runner) {
 // BEFORE `G.netm.recBomb(...)`, so the record already carries its kit identity
 // when the network snapshots it. This is a real before-recBomb hook, not a claim:
 // the previous draft attached from a wrapper AFTER the native call had already
-// recorded. A remote actor never gets a spec, so ghosts keep native behaviour and
-// hold no paint or damage authority.
+// recorded. A remote actor never gets a spec, so ghosts hold no authority: their
+// numbers live on `s3GhostResolved` (see `kitGhostBombAttach`).
 export function kitBombAttach(SUB, projectiles, actor, release) {
-  if (actor?.remote) return null;
+  const b = projectiles.bombs[projectiles.bombs.length - 1];
+  // `ghostBomb` builds its record through the native `throwBomb`, so this hook runs
+  // once for a replayed remote bomb too. Refuse it there: a ghost never gains
+  // authority and never re-enters the recorder (see `withGhostBombSpawn`).
+  if (ghostBombSpawning() || b?.ghost || actor?.remote) return null;
   const sub = kitSubFor(actor?.weapon, SUB);
   const holdSeconds = release?.__hold ?? 0;
   const resolved = release
-    ? { ...resolveSubForThrow(actor, holdSeconds, SUB), charge: release.__charge ?? 0 }
+    // The cached release may only contribute its charge while it still describes
+    // THIS sub. A release cached for a different weapon must not carry its charge
+    // across onto the one being thrown.
+    ? { ...resolveSubForThrow(actor, holdSeconds, SUB), charge: release.id === sub.id ? (release.__charge ?? 0) : 0 }
     : resolveSubForThrow(actor, holdSeconds, SUB);
-  const b = projectiles.bombs[projectiles.bombs.length - 1];
   if (!b || !resolved) return null;
   b.s3Sub = sub;
   b.s3Resolved = resolved;
@@ -365,11 +411,12 @@ export function kitBombAttach(SUB, projectiles, actor, release) {
 // Storm keeps the native 24 constant; this hook must not drag it onto the bomb
 // gravity. A stuck bomb gets zero, so it cannot drift off its surface without a
 // fresh physics hit. Otherwise the spec's own flight or ground value is used.
+// Presentation-only, so a replayed ghost follows the same arc the owner threw.
 export const NATIVE_STORM_GRAVITY = 24;
 export function kitBombGravity(SUB, b) {
   if (b?.kind === 'storm') return NATIVE_STORM_GRAVITY;
   if (b?.s3Mode === 'stuck') return 0;
-  const spec = resolvedOf(b)?.spec;
+  const spec = presentedOf(b)?.spec;
   if (!spec) return SUB.bomb.gravity;
   if (b?.s3Mode === 'rolling') return Number.isFinite(spec.groundGravity) ? spec.groundGravity : SUB.bomb.gravity;
   const g = Number.isFinite(spec.gravity) ? spec.gravity : spec.flyGravity;
@@ -383,8 +430,13 @@ export function kitBombGravity(SUB, b) {
 // Unlike the earlier draft this never disables wall handling after landing: a
 // rolling Curling Bomb still reflects on a wall, and the bounce budget is a real
 // bound that stops adding energy once exhausted.
+//
+// The contact itself only moves the record and arms its fuse, which is why a ghost
+// may take it: a remote Suction Bomb that bounced off the wall would be a lie about
+// the throw the owner made. Painting and damage live in `kitBombTrail`, which stays
+// authority-only.
 export function kitBombContact(SUB, b, hit, dt) {
-  const r = resolvedOf(b);
+  const r = presentedOf(b);
   if (!r || !hit?.hit) return false;
   const n = hit.normal;
   const spec = r.spec;
@@ -475,9 +527,11 @@ export function kitBombTrail(SUB, b, paint, projectiles) {
 }
 
 // Denominator for the native fuse progress/beep curve. One native decrement, so
-// the bomb's own total is used rather than the generic bomb's.
+// the bomb's own total is used rather than the generic bomb's. Presentation-only:
+// the pulse and the scale-up are how a bomb reads as "about to go", and a ghost
+// has to go off when the owner's did.
 export function kitBombFuseTotal(SUB, b) {
-  const t = resolvedOf(b)?.fuse;
+  const t = presentedOf(b)?.fuse;
   return Number.isFinite(t) && t > 0 ? t : SUB.bomb.fuse;
 }
 
@@ -485,6 +539,11 @@ export function kitBombFuseTotal(SUB, b) {
 // The adapter routes the existing `_explodeBomb` reads through these, so the
 // native blast keeps owning paint, damage, LOS, fx, audio, turf and the ghost
 // mute guard while consuming this bomb's numbers.
+//
+// Everything below is AUTHORITY. A replayed ghost reads the native `SUB.bomb`
+// values here exactly as before, so no kit damage, kit paint radius or boss splash
+// can be reached through somebody else's bomb. The one presentation selector is
+// `kitBombFxRadius`, which the adapter uses only on the visual burst.
 
 export function kitBombPaintRadius(SUB, b, fallback) {
   const r = resolvedOf(b);
@@ -493,6 +552,14 @@ export function kitBombPaintRadius(SUB, b, fallback) {
 
 export function kitBombRadius(SUB, b, fallback) {
   const r = resolvedOf(b);
+  return Number.isFinite(r?.radius) ? r.radius : fallback;
+}
+
+// Purely visual: the explosion sprite and the minimap boom ring. It is fed no
+// damage and no paint, so a ghost may use it and a full-charge Curling Bomb reads
+// as the 8 m burst it was instead of the generic bomb's 7 m.
+export function kitBombFxRadius(SUB, b, fallback) {
+  const r = presentedOf(b);
   return Number.isFinite(r?.radius) ? r.radius : fallback;
 }
 
@@ -517,6 +584,75 @@ export function kitBombDamageMin(SUB, b, fallback) {
   return Number.isFinite(v) ? v : fallback;
 }
 
+// ---- 5. the sub packet, and the ghost it replays -----------------------------
+// The native `'b'` event is `[t, 'b', nid, kind, x, y, z, vx, vy, vz]`. Two fields
+// are APPENDED after it:
+//
+//   e[10] sub id   'suction' | 'curling' | '' for "generic, behave natively"
+//   e[11] charge   held-charge fraction 0..1, 0 when the sub is not chargeable
+//
+// Appending is what keeps this compatible in both directions. A client without the
+// appended fields reads only the native indices and keeps replaying a generic
+// bomb; a client WITH them, reading an older packet, sees `undefined` and
+// `kitGhostBombAttach` declines, so it also falls back to the generic bomb instead
+// of inventing a spec.
+
+// Bounded: a peer's packet may only name a sub that exists in this module's own
+// allowlist, and the charge may only be a finite number. Nothing off the wire
+// reaches `SUB` as a lookup key.
+const PACKET_SUB_IDS = Object.freeze(['suction', 'curling']);
+
+const packetSubId = (raw) => (typeof raw === 'string' && raw.length <= 16 && PACKET_SUB_IDS.includes(raw) ? raw : null);
+
+// Recording side. Returns `null` while a ghost is being replayed: `ghostBomb`
+// builds its record through the native `throwBomb`, whose `!a.remote` guard is the
+// only thing standing between a peer's packet and a new packet of our own. Once a
+// peer has been adopted by this client (`_adopt` clears `remote`) that guard is
+// open, and the bounce would feed itself.
+export function kitBombPacket(b) {
+  if (ghostBombSpawning() || b?.ghost) return null;
+  const id = b?.s3Sub ? packetSubId(b.s3Sub.id) : null;
+  if (!id) return ['', 0];
+  const charge = id && Number.isFinite(b.s3Charge) ? Math.round(clamp01(b.s3Charge) * 1000) / 1000 : 0;
+  return [id, charge];
+}
+
+// Replay side. Validated against the LIVE registry as well, so a build that has not
+// registered the sub yet replays natively instead of reading a missing spec.
+export function kitGhostBombAttach(SUB, projectiles, b, rawId, rawCharge) {
+  if (!b || b.ghost !== true || b.kind !== 'bomb') return null;
+  const id = packetSubId(rawId);
+  if (!id) return null;
+  // Same selection order as `resolveSubForThrow`: the live registry first so a
+  // profile override and the gear-scoped numbers win, the module template only as
+  // the fallback so an unregistered build still replays the sub it was sent.
+  const spec = SUB?.[id] || KIT_SUBS[id];
+  if (!spec || spec.id !== id) return null;
+  const charge = spec.chargeable && Number.isFinite(rawCharge) ? clamp01(rawCharge) : 0;
+  // Presentation only: `s3Resolved` is what grants paint/damage/turf authority, so
+  // a ghost's numbers live on their own field and `ownsAuthority` stays false for
+  // the whole life of the record.
+  const resolved = resolveSubAtCharge(spec, charge);
+  if (!resolved) return null;
+  b.s3GhostResolved = resolved;
+  b.s3Charge = resolved.charge;
+  b.s3Mode = 'flight';
+  b.s3Bounces = 0;
+  b.s3FuseTotal = resolved.fuse;
+  return b;
+}
+
+// `ghostBomb` runs the native throw first and only sets `b.ghost` afterwards, so
+// nothing downstream can be told apart by the flag alone. This synchronous depth
+// counter covers exactly that window and nothing else.
+let ghostSpawnDepth = 0;
+export function withGhostBombSpawn(fn) {
+  ghostSpawnDepth++;
+  try { return fn(); }
+  finally { ghostSpawnDepth--; }
+}
+export function ghostBombSpawning() { return ghostSpawnDepth > 0; }
+
 // ---- Install -----------------------------------------------------------------
 
 const KIT_KEY = '__kitSubsInstalled';
@@ -535,7 +671,9 @@ export function installKitSubs(api, profile) {
   Projectiles.prototype.throwBomb = function (actor) {
     const runner = actor?.weaponRunner;
     const out = throwBomb.call(this, actor);
-    if (runner) runner.s3SubHold = 0;
+    // Charge is consumed by the owner's own release. A ghost replays through this
+    // same method, and a remote runner's hold is not ours to clear.
+    if (runner && !actor?.remote && !ghostBombSpawning()) runner.s3SubHold = 0;
     return out;
   };
 

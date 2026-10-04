@@ -230,18 +230,38 @@ export function adaptSource(rel, code) {
       "      kitBombTrail(SUB, b, G.paint, this);\n      if (b.kind === 'storm' && b.age > 1.1)", 'sub per-tick rolling trail');
     // native blast consumes this bomb's own distance bands and radii
     code = replaceOnce(code, 'distanceDamage(s.damageBands, d, false)', 'distanceDamage(kitBombDamageBands(SUB, b, s.damageBands), d, false)', 'sub blast damage bands');
+    const bombPaintStart = code.indexOf('    let area = G.paint.splat');
+    const bombPaintEnd = code.indexOf('    G.fx?.explosion(c, G.teamColors[b.team]', bombPaintStart);
+    if (bombPaintStart < 0 || bombPaintEnd < bombPaintStart) throw new Error('INKWAVE patch conflict: ghost bomb paint boundary');
+    const bombPaint = code.slice(bombPaintStart, bombPaintEnd);
+    code = replaceOnce(code, bombPaint, '    if (!b.ghost) {\n' + bombPaint + '    }\n', 'ghost bomb intrinsic paint authority');
+    code = replaceOnce(code,
+      "    if (loc && loc.alive) { const d = loc.pos.distanceTo(c); if (d < 14) rumble(loc, clamp(1 - d / 14, 0, 1) * 0.6, clamp(1 - d / 14, 0, 1) * 0.5, 160); }",
+      "    if (loc && loc.alive) { const d = loc.pos.distanceTo(c); if (d < 14) rumble(loc, clamp(1 - d / 14, 0, 1) * 0.6, clamp(1 - d / 14, 0, 1) * 0.5, 160); }\n    if (b.ghost) return; // presentation survives transport disposal; authority does not",
+      'ghost bomb intrinsic actor and boss authority');
     code = replaceOnce(code, 'let area = G.paint.splat(_v.copy(c).setY(c.y + 0.2), s.paintRadius, b.team, { seed: Math.random() });',
       'let area = G.paint.splat(_v.copy(c).setY(c.y + 0.2), kitBombPaintRadius(SUB, b, s.paintRadius), b.team, { seed: Math.random() });', 'sub blast paint radius');
     code = replaceOnce(code, '      const a = Math.random() * Math.PI * 2, r = s.paintRadius * (0.6 + Math.random() * 0.4);',
       '      const a = Math.random() * Math.PI * 2, r = kitBombPaintRadius(SUB, b, s.paintRadius) * (0.6 + Math.random() * 0.4);', 'sub blast satellite radius');
-    code = replaceOnce(code, 'G.fx?.explosion(c, G.teamColors[b.team], s.radius);', 'G.fx?.explosion(c, G.teamColors[b.team], kitBombRadius(SUB, b, s.radius));', 'sub blast fx radius');
+    // A replayed remote bomb is built by the NATIVE throwBomb, which records and
+    // reads kit identity before `b.ghost` is set. So the spawn is wrapped, not the
+    // flag: inside the window nothing may attach authority or re-record, and the
+    // kit spec is attached only once the native body has marked the record.
+    code = replaceOnce(code, "  ghostBomb(a, kind, px, py, pz, vx, vy, vz) {\n    const s = this.bombs.length;\n    if (kind === 'storm') this.throwStorm(a); else this.throwBomb(a);",
+      "  ghostBomb(a, kind, px, py, pz, vx, vy, vz, s3kit, s3charge) {\n    const s = this.bombs.length;\n    withGhostBombSpawn(() => { if (kind === 'storm') this.throwStorm(a); else this.throwBomb(a); });",
+      'sub ghost bomb replay scope');
+    code = replaceOnce(code, "    if (!b) return;\n    b.ghost = true;\n    b.pos.set(px, py, pz);",
+      "    if (!b) return;\n    b.ghost = true;\n    kitGhostBombAttach(SUB, this, b, s3kit, s3charge);\n    b.pos.set(px, py, pz);", 'sub ghost bomb kit replay');
+    // The visual burst is presentation, so a ghost may size it; the damage radius
+    // and the boss splash below stay authority-only.
+    code = replaceOnce(code, 'G.fx?.explosion(c, G.teamColors[b.team], s.radius);', 'G.fx?.explosion(c, G.teamColors[b.team], kitBombFxRadius(SUB, b, s.radius));', 'sub blast fx radius');
     code = replaceOnce(code, 'emit(\'bomb:explode\', { actor: b.owner, pos: c.clone(), team: b.team, radius: s.radius });',
-      'emit(\'bomb:explode\', { actor: b.owner, pos: c.clone(), team: b.team, radius: kitBombRadius(SUB, b, s.radius) });', 'sub blast event radius');
+      'emit(\'bomb:explode\', { actor: b.owner, pos: c.clone(), team: b.team, radius: kitBombFxRadius(SUB, b, s.radius) });', 'sub blast event radius');
     code = replaceOnce(code, '      if (d > s.radius) continue;', '      if (d > kitBombRadius(SUB, b, s.radius)) continue;', 'sub blast damage radius');
     code = replaceOnce(code, '        const k = 1 - b.fuse / SUB.bomb.fuse;', '        const k = 1 - b.fuse / kitBombFuseTotal(SUB, b);', 'sub fuse total');
     code = replaceOnce(code, '    G.boss?.splash(b.owner, c, s.radius, s.damageMax, s.damageMin, \'bomb\');',
       '    G.boss?.splash(b.owner, c, kitBombRadius(SUB, b, s.radius), kitBombDamageMax(SUB, b, s.damageMax), kitBombDamageMin(SUB, b, s.damageMin), \'bomb\');', 'sub boss splash');
-    return `import { segmentCapsuleEntry } from '../../patches/splatoon3/runtime/projectile-collision.mjs';\nimport { applyProjectileHit, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\nimport { kitSubRelease, kitSubHoldSeconds, kitBombAttach, kitBombGravity, kitBombContact, kitBombTrail, kitBombFuseTotal, kitBombPaintRadius, kitBombRadius, kitBombDamageBands, kitBombDamageMax, kitBombDamageMin } from '../../patches/splatoon3/runtime/kit-subs.mjs';\n` + code;
+    return `import { segmentCapsuleEntry } from '../../patches/splatoon3/runtime/projectile-collision.mjs';\nimport { applyProjectileHit, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\nimport { kitSubRelease, kitSubHoldSeconds, kitBombAttach, kitBombGravity, kitBombContact, kitBombTrail, kitBombFuseTotal, kitBombPaintRadius, kitBombRadius, kitBombFxRadius, kitBombDamageBands, kitBombDamageMax, kitBombDamageMin, kitGhostBombAttach, withGhostBombSpawn } from '../../patches/splatoon3/runtime/kit-subs.mjs';\n` + code;
   }
   if (rel === 'src/game/actor.js') {
     code = replaceOnce(code, '    this._updateClimb(dt, isSquid);',
@@ -278,7 +298,18 @@ export function adaptSource(rel, code) {
     // runs (that wrapper wraps the whole splat body, deaths++ included).
     code = replaceOnce(code, '    victim.stats.deaths++;',
       '    victim.stats.deaths++;\n    applyDeathGear(victim);', 'remote gear death consequence');
-    return `import { KIT_FORWARD } from '../../patches/splatoon3/runtime/kit-network.mjs';\nimport { setRespawnTimer } from '../../patches/splatoon3/runtime/resources.mjs';\nimport { applyDeathGear } from '../../patches/splatoon3/runtime/gear.mjs';\n` + code;
+    // Sub identity and held charge on the 'b' packet. Both fields are APPENDED after
+    // the native ones, so an older peer keeps reading the same indices and a newer peer
+    // reading an older packet sees undefined and replays natively.
+    code = replaceOnce(code, "    this._rec(['b', o.nid, b.kind, r2(b.pos.x), r2(b.pos.y), r2(b.pos.z), r2(b.vel.x), r2(b.vel.y), r2(b.vel.z)]);",
+      "    const s3kit = kitBombPacket(b);\n    if (!s3kit) return;\n    this._rec(['b', o.nid, b.kind, r2(b.pos.x), r2(b.pos.y), r2(b.pos.z), r2(b.vel.x), r2(b.vel.y), r2(b.vel.z), s3kit[0], s3kit[1]]);",
+      'sub bomb packet identity and charge');
+    // Playback forwards the two appended fields to the native ghostBomb, which passes
+    // them on untouched; kitGhostBombAttach does the bounded validation on the far side.
+    code = replaceOnce(code, "      case 'b': { const a = this.byNid.get(e[2]); if (a) G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9]); break; }",
+      "      case 'b': { const a = this.byNid.get(e[2]); if (a) G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9], e[10], e[11]); break; }",
+      'sub bomb playback identity and charge');
+    return `import { KIT_FORWARD } from '../../patches/splatoon3/runtime/kit-network.mjs';\nimport { kitBombPacket } from '../../patches/splatoon3/runtime/kit-subs.mjs';\nimport { setRespawnTimer } from '../../patches/splatoon3/runtime/resources.mjs';\nimport { applyDeathGear } from '../../patches/splatoon3/runtime/gear.mjs';\n` + code;
   }
   if (rel === 'src/game/character-weapons.js') {
     return replaceOnce(code, '    if (ft >= 0.15 && ft - dt < 0.15) w.drumW += 34;', '    const release = st.flickReleaseTime ?? 0.15;\n    if (ft >= release && ft - dt < release) w.drumW += 34;', 'roller drum release impulse');
