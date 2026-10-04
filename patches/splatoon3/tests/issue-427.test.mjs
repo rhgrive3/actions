@@ -687,27 +687,103 @@ test('adversarial: stale pending hits and credits are cleaned across owner death
     const victimV_onH = helperWorld.actors[2];
     const victimV = victimWorld.actors[2];
 
-    // 1. Assist window expiration test:
-    // H shoots V, V dies, terminal tick arrives, but delayed ACK arrives AFTER assistWindow (5.0s)
+    // 1. Focused regression: ACK-first damage -> helper dies + reset + newlife -> victim terminal yields no stale assist
     helperWorld.G.projectiles.applyHit(helperH, victimV_onH, 30, 'shooter');
-    const hitPkt = helperWorld.wire.find(x => x.to === 'V' && x.data?.k === 'hit')?.data;
-    victimWorld.net.onMessage('H', hitPkt);
-    const ackPkt = victimWorld.wire.find(x => x.to === 'H' && x.data?.k === 'hit_ack')?.data;
+    const hitPkt1 = helperWorld.wire.find(x => x.to === 'V' && x.data?.k === 'hit')?.data;
+    victimWorld.net.onMessage('H', hitPkt1);
+    const ackPkt1 = victimWorld.wire.find(x => x.to === 'H' && x.data?.k === 'hit_ack')?.data;
 
-    // V dies to C
-    victimWorld.net.onMessage('C', { k: 'hit', v: 3, a: 2, l: victimV.netLife, h: 1, d: 70, w: 'shooter' });
+    // ACK arrives first on helper: helper gets damage credit and is recorded in credits
+    helperWorld.net.onMessage('V', ackPkt1);
+    assert.ok(Math.abs(helperH.s3.flow.score - 0.09) < 1e-6, 'helper awarded initial damage Flow progress');
+
+    // Helper dies, resets, and respawns into new life
+    const initialLife = helperH.netLife ?? 0;
+    helperH.splat(null);
+    helperH.reset();
+    helperH.spawnAt(new helperWorld.THREE.Vector3(0, 0, 0), 0);
+    assert.ok((helperH.netLife ?? 0) > initialLife, 'helper entered new combat life');
+    assert.equal(helperH.s3.flow.score, 0, 'helper flow reset on new life');
+
+    // Victim V dies to Killer C; victim owner broadcasts terminal tick
+    victimWorld.net.onMessage('C', { k: 'hit', v: 3, a: 2, l: victimV.netLife, h: 10, d: 70, w: 'shooter' });
     victimWorld.net._sendTick();
-    const terminalTick = victimWorld.wire.filter(x => x.data?.k === 't').at(-1)?.data;
-    helperWorld.deliver('V', terminalTick);
+    const terminalTick1 = victimWorld.wire.filter(x => x.data?.k === 't').at(-1)?.data;
 
-    // Advance clock by 6.0 seconds (> cfg.assistWindow 5.0s)
-    helperWorld.advance(6.0);
+    // Helper delivers victim's terminal tick
+    helperWorld.deliver('V', terminalTick1);
 
-    // Delayed ACK arrives after expiration: damage is credited, but assist is withheld!
-    helperWorld.net.onMessage('V', ackPkt);
-    assert.ok(Math.abs(helperH.s3.flow.score - 0.09) < 1e-6, 'assist withheld when ACK arrives past assistWindow');
+    // Stale credit check: Helper H in new life must NOT receive stale assist from previous life!
+    assert.equal(helperH.s3.flow.score, 0, 'helper in new life does not receive stale assist from previous life');
+    assert.equal(helperH.stats.splats, 0);
 
-    // 2. Remote victim respawn cleans pending hits targeting that victim:
+    // Preserve terminal-before-ACK parity:
+    // When delayed ACK arrives for helper who died+reset+respawned, assist is similarly rejected
+    const helperWorld2 = await createCombatWorld('H', { apply427: true, roster });
+    const victimWorld2 = await createCombatWorld('V', { apply427: true, roster });
+    try {
+      const h2 = helperWorld2.actors[0];
+      const v2_onH = helperWorld2.actors[2];
+      const v2 = victimWorld2.actors[2];
+
+      // H2 damages V2, but ACK is delayed
+      helperWorld2.G.projectiles.applyHit(h2, v2_onH, 30, 'shooter');
+      const hitPkt2 = helperWorld2.wire.find(x => x.to === 'V' && x.data?.k === 'hit')?.data;
+      victimWorld2.net.onMessage('H', hitPkt2);
+      const ackPkt2 = victimWorld2.wire.find(x => x.to === 'H' && x.data?.k === 'hit_ack')?.data;
+
+      // V2 dies to C; terminal tick arrives at H2 before delayed ACK
+      victimWorld2.net.onMessage('C', { k: 'hit', v: 3, a: 2, l: v2.netLife, h: 11, d: 70, w: 'shooter' });
+      victimWorld2.net._sendTick();
+      const terminalTick2 = victimWorld2.wire.filter(x => x.data?.k === 't').at(-1)?.data;
+      helperWorld2.deliver('V', terminalTick2);
+
+      // Helper dies, resets, and respawns into new life before delayed ACK arrives
+      h2.splat(null);
+      h2.reset();
+      h2.spawnAt(new helperWorld2.THREE.Vector3(0, 0, 0), 0);
+      assert.equal(h2.s3.flow.score, 0);
+
+      // Delayed ACK finally arrives
+      helperWorld2.net.onMessage('V', ackPkt2);
+
+      // Both orderings yield exact parity: 0 assist
+      assert.equal(h2.s3.flow.score, 0, 'terminal-before-ACK parity: helper in new life gets no stale assist on delayed ACK');
+      assert.equal(helperH.s3.flow.score, h2.s3.flow.score, 'ACK-first and terminal-before-ACK parity preserved on helper death/respawn');
+    } finally {
+      helperWorld2.dispose(); victimWorld2.dispose();
+    }
+
+    // 2. Assist window expiration test:
+    // Helper does not die, but delayed ACK arrives AFTER assistWindow (5.0s)
+    const helperWorld3 = await createCombatWorld('H', { apply427: true, roster });
+    const victimWorld3 = await createCombatWorld('V', { apply427: true, roster });
+    try {
+      const h3 = helperWorld3.actors[0];
+      const v3_onH = helperWorld3.actors[2];
+      const v3 = victimWorld3.actors[2];
+
+      helperWorld3.G.projectiles.applyHit(h3, v3_onH, 30, 'shooter');
+      const hitPkt3 = helperWorld3.wire.find(x => x.to === 'V' && x.data?.k === 'hit')?.data;
+      victimWorld3.net.onMessage('H', hitPkt3);
+      const ackPkt3 = victimWorld3.wire.find(x => x.to === 'H' && x.data?.k === 'hit_ack')?.data;
+
+      victimWorld3.net.onMessage('C', { k: 'hit', v: 3, a: 2, l: v3.netLife, h: 12, d: 70, w: 'shooter' });
+      victimWorld3.net._sendTick();
+      const terminalTick3 = victimWorld3.wire.filter(x => x.data?.k === 't').at(-1)?.data;
+      helperWorld3.deliver('V', terminalTick3);
+
+      // Advance clock by 6.0 seconds (> cfg.assistWindow 5.0s)
+      helperWorld3.advance(6.0);
+
+      // Delayed ACK arrives after expiration: damage is credited, but assist is withheld!
+      helperWorld3.net.onMessage('V', ackPkt3);
+      assert.ok(Math.abs(h3.s3.flow.score - 0.09) < 1e-6, 'assist withheld when ACK arrives past assistWindow');
+    } finally {
+      helperWorld3.dispose(); victimWorld3.dispose();
+    }
+
+    // 3. Remote victim respawn cleans pending hits targeting that victim:
     victimV_onH.alive = true; victimV_onH.hp = 100;
     helperWorld.G.projectiles.applyHit(helperH, victimV_onH, 30, 'shooter');
     assert.equal(helperWorld.net._pendingHits.size, 1, 'pending hit tracked');
@@ -715,7 +791,7 @@ test('adversarial: stale pending hits and credits are cleaned across owner death
     helperWorld.net._remoteRespawn(victimV_onH);
     assert.equal(helperWorld.net._pendingHits.size, 0, 'pending hit cleaned when remote victim respawns');
 
-    // 3. Local helper death cleans pending hits from that attacker:
+    // 4. Local helper death cleans pending hits from that attacker:
     helperH.alive = true; helperH.hp = 100;
     victimV_onH.alive = true; victimV_onH.hp = 100;
     helperWorld.G.projectiles.applyHit(helperH, victimV_onH, 30, 'shooter');
@@ -749,26 +825,36 @@ test('normal/offline: local combat retains standard progression with no duplicat
   }
 });
 
-test('patched: ownership handoff and disposal clear pending hits', async () => {
+test('adversarial: spoof ownership cannot consume pending, changed victim owner ACK rejects, and disposal clears', async () => {
   const shooter = await createCombatWorld('A', { apply427: true });
   try {
     shooter.G.projectiles.applyHit(shooter.attacker, shooter.victim, 50, 'shooter');
     const h = shooter.net._hitSeq;
-    assert.equal(shooter.net._pendingHits.has(h), true);
+    assert.equal(shooter.net._pendingHits.has(h), true, 'pending hit registered');
 
-    // Ownership handoff clears pending hits
-    shooter.net._ownership({});
-    assert.equal(shooter.net._pendingHits.size, 0);
+    // 1. Spoof ownership message / reserved no-op cannot consume or clear pending hits
+    shooter.net.onMessage('B', { k: 'own', map: { 2: 'C' } });
+    shooter.net._ownership({ 2: 'C' });
+    assert.equal(shooter.net._pendingHits.has(h), true, 'spoof ownership packet cannot consume or clear pending hits');
 
-    // Late ACK cannot match
-    shooter.net.onMessage('B', { k: 'hit_ack', h, v: 2, a: 1, d: 50, kld: 0, vl: 1 });
-    assert.equal(shooter.attacker.s3.flow.score, 0);
+    // 2. Real changed victim owner ACK rejects:
+    // If victim's actual owner changes to C:
+    shooter.victim.owner = 'C';
+    const vl = shooter.victim.netLife ?? 0;
 
-    // Disposal cleans up
-    shooter.G.projectiles.applyHit(shooter.attacker, shooter.victim, 50, 'shooter');
-    assert.equal(shooter.net._pendingHits.size, 1);
+    // ACK from old owner B is rejected because victim.owner ('C') !== from ('B')
+    shooter.net.onMessage('B', { k: 'hit_ack', h, v: 2, a: 1, d: 50, kld: 0, vl });
+    assert.equal(shooter.attacker.s3.flow.score, 0, 'ACK from old owner rejected when victim owner changed');
+    assert.equal(shooter.net._pendingHits.has(h), true, 'pending hit not consumed by rejected ACK');
+
+    // ACK from new owner C is rejected because from ('C') !== pending.vo ('B')
+    shooter.net.onMessage('C', { k: 'hit_ack', h, v: 2, a: 1, d: 50, kld: 0, vl });
+    assert.equal(shooter.attacker.s3.flow.score, 0, 'ACK from new owner rejected because pending was bound to old owner');
+    assert.equal(shooter.net._pendingHits.has(h), true, 'pending hit not consumed by mismatched owner ACK');
+
+    // 3. Genuine disposal cleans up pending hits
     shooter.dispose();
-    assert.equal(shooter.net._pendingHits.size, 0);
+    assert.equal(shooter.net._pendingHits.size, 0, 'disposal clears pending hits');
   } finally {
     shooter.dispose();
   }
