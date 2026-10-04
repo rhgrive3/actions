@@ -15,7 +15,7 @@ for(const [label,r]of [['before',before],['after',after]])if(JSON.stringify(r.sc
 if(after.inputStatus!=='synchronous'||after.input.length!==36)errors.push('Candidate input target regression');
 if(after.input.some(r=>typeof r.ringOn!=='boolean'||typeof r.ringVisibility!=='string'||!r.ringOn&&r.ringVisibility!=='hidden'||r.ringOn&&r.ringVisibility==='hidden'))errors.push('Retired ring still visible');
 if(after.ringRetirement?.length!==3||after.ringRetirement.some(r=>!Number.isFinite(r.beforeOpacity)||r.beforeOpacity<.9||r.stateChanged!==true||typeof r.ringOn!=='boolean'||r.ringOn||typeof r.ghost!=='boolean'||r.ghost||r.visibility!=='hidden'))errors.push('Unverified ring retirement paint eligibility');
-if(after.renderParity?.length!==3||after.renderParity.some(r=>!r.nonempty||!r.freshTransform||r.changedChannels||!r.sceneAutoRestored))errors.push('Missing passing pixel parity');
+if(after.renderParity?.length!==3||after.renderParity.some(r=>!r.nonempty||!r.freshTransform||r.changedChannels||r.optimizedRepeatChanges!==0||r.nativeRepeatChanges!==0||!r.sceneAutoRestored))errors.push('Missing passing pixel parity');
 if(before.sourceSha!=='5e28dbd16f7829aebd88052ff5f7fdf71f39fdad'||before.sourceSha===after.sourceSha)errors.push('Baseline SHA mismatch');
 if(after.menuLifecycle?.hidden.length!==3||after.menuLifecycle.hidden.some(r=>r.ticks||r.raf)||after.menuLifecycle.resumedTicks!==1)errors.push('Real menu lifecycle regression');
 if(after.menuLifecycle?.hiddenDocument?.length!==3||after.menuLifecycle.hiddenDocument.some(r=>r.ticks||r.raf)||after.menuLifecycle.documentResumedTicks!==1)errors.push('Hidden document menu owner regression');

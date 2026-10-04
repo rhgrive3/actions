@@ -69,23 +69,28 @@ try{
  if(process.argv.includes('--verify-render')){
   result.renderParity=await page.evaluate(()=>{
    const G=probeG,g=G.game,r=G.renderer,gl=r.getContext(),native=r.render,w=gl.drawingBufferWidth,h=gl.drawingBufferHeight,out=[];
-   const moving=g.props.group,oldX=moving.position.x;
+   const moving=g.match.local.character.root,oldX=moving.position.x;
+   const composer=g.R.composer,readBuffer=composer.readBuffer,writeBuffer=composer.writeBuffer;
+   const shadowCache=g.shadowCache,wasDirty=shadowCache?.dirty;
+   // Same ping-pong target and shadow-cache rebuild path for each image.
+   // The moved character is dynamic: no static-caster demotion between images.
+   const draw=()=>{composer.readBuffer=readBuffer;composer.writeBuffer=writeBuffer;r.shadowMap.needsUpdate=true;G.env._reflFrame=-1;if(shadowCache)shadowCache.dirty=true;g.R.render();};
    g.debug.freeze();
    const read=()=>{const bytes=new Uint8Array(w*h*4);gl.readPixels(0,0,w,h,gl.RGBA,gl.UNSIGNED_BYTE,bytes);return bytes;};
    try{for(let i=0;i<3;i++){
     // Fresh transform FIRST: a missing initial update must fail, even when an
     // earlier frozen image had valid matrices. This modifies only the render fixture.
-    moving.position.x=oldX+.1*(i+1);r.shadowMap.needsUpdate=true;G.env._reflFrame=-1;
-    g.R.render();const a=read();g.R.render();const optimizedRepeat=read();
+    moving.position.x=oldX+.1*(i+1);
+    draw();const a=read();draw();const optimizedRepeat=read();
     r.render=function(scene,camera){if(scene===G.scene&&!scene.matrixWorldAutoUpdate)scene.updateMatrixWorld();return native.call(this,scene,camera);};
-    let b,nativeRepeat;try{r.shadowMap.needsUpdate=true;G.env._reflFrame=-1;g.R.render();b=read();g.R.render();nativeRepeat=read();}finally{r.render=native;}
+    let b,nativeRepeat;try{draw();b=read();draw();nativeRepeat=read();}finally{r.render=native;}
     let changed=0,maxDelta=0,optimizedRepeatChanges=0,nativeRepeatChanges=0;
     for(let j=0;j<a.length;j++){if(a[j]!==b[j]){changed++;maxDelta=Math.max(maxDelta,Math.abs(a[j]-b[j]));}if(a[j]!==optimizedRepeat[j])optimizedRepeatChanges++;if(b[j]!==nativeRepeat[j])nativeRepeatChanges++;}
     out.push({repeat:i,width:w,height:h,changedChannels:changed,maxDelta,optimizedRepeatChanges,nativeRepeatChanges,nonempty:a.some(v=>v!==0),freshTransform:Math.abs(moving.matrixWorld.elements[12]-moving.position.x)<1e-6,sceneAutoRestored:G.scene.matrixWorldAutoUpdate});
-   }}finally{moving.position.x=oldX;r.render=native;G.scene.updateMatrixWorld();}
+   }}finally{moving.position.x=oldX;r.render=native;composer.readBuffer=readBuffer;composer.writeBuffer=writeBuffer;if(shadowCache)shadowCache.dirty=wasDirty;G.scene.updateMatrixWorld();}
    return out;
   });
-  if(result.renderParity.some(r=>!r.nonempty||!r.freshTransform||r.changedChannels||!r.sceneAutoRestored))result.errors.push('Render matrix transaction pixel parity failed');
+  if(result.renderParity.some(r=>!r.nonempty||!r.freshTransform||r.changedChannels||r.optimizedRepeatChanges||r.nativeRepeatChanges||!r.sceneAutoRestored))result.errors.push('Render matrix transaction pixel parity failed');
  }
  // Pause the game owner, then dispatch real menu entry points in one task.
  // A stale target here proves an extra engine-tick dependency independent of GPU.
