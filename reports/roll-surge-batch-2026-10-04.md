@@ -63,3 +63,9 @@ main `0859bf4fab08edc74c25fcb790e662a748a91ec9` から独立した Draft。
 - esbuild 0.28.2を使った通常の4段adapter合成ビルド: 成功、build revision `80ca9845fb0d`。
 - ローカルbrowser gate: **未実行**。system Chromium 154は開始時のUnix socket作成が `Operation not permitted` で終了した。許可付きコマンドでも同じ環境制約を確認し、それ以上の回避はしていない。
 - コード/fixture合格を、ブラウザ描画やNintendo実機の合格として扱わない。PRの既存Actions browser(active/catalog/ui)を続けて確認する。
+
+## CI 追跡: 移動可能な溜めに合わせた実ジオメトリの診断壁
+
+初回 CI 37185726584 で catalog の launch RGB 条件が失敗。旧 3 WU 壁は、溜め中も登れる変更後には frame 26 で壁が切れ、frame 75 の B 解除前にノボリが失われた。CPU の全 production installer・native Physics・Character で再現し、診断壁を 6 WU に変更すると charge=20、launch=75、crest=80 を観測。既存撮影フレーム、RGB/ready/glint/cleanup の合格基準を一切削らず、短い壁を負例として追加。実ゲームのステージ形状やノボリ速度は変更していない。GPU の最終合否は新 head の CI で確認する。
+
+CI再修正後のローカル確認: 全体758 pass / 0 fail / 0 skip。catalog・production合成の集中47件とmotion/workflow10件も成功。次のCI完了まではGPU成功とは扱わない。
