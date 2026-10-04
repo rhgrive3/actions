@@ -1,3 +1,6 @@
+import { adaptQualitySource } from '../../local-quality/adapter.mjs';
+import { adaptReliability } from '../../reliability/adapter.mjs';
+import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -10,6 +13,13 @@ import { adaptIssue484 } from '../issue-484-adapter.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const UPSTREAM = process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
+
+// Legacy here means the original 21-value actor tuple, with the current main's
+// existing authenticated life envelope. #484 must not weaken epoch admission.
+function receiveFixtureSnapshot(net, sender, message) {
+  const life = Object.fromEntries(message.a.map(sample => [sample[0], net.byNid.get(sample[0])?.netLife ?? 0]));
+  net.onMessage(sender, { l: life, ...message });
+}
 
 async function createFixture({ apply484 = true } = {}) {
   const store = new Map();
@@ -47,7 +57,7 @@ async function createFixture({ apply484 = true } = {}) {
       : fs.readFileSync(file, 'utf8');
 
     if (apply484 && file.startsWith(UPSTREAM + path.sep)) {
-      source = adaptIssue484(relative, source);
+      source = adaptQualitySource(relative, adaptReliability(relative, adaptTouchLayout(relative, source)));
     }
 
     const mod = new vm.SourceTextModule(source, { context, identifier: file });
@@ -548,7 +558,7 @@ test('legacy transport & invalid fields: missing/corrupt cost falls back to nati
   ];
   assert.equal(legacy21Snapshot.length, 21);
 
-  nm.onMessage('host-id', { k: 't', ts: 1.0, a: [legacy21Snapshot] });
+  receiveFixtureSnapshot(nm, 'host-id', { k: 't', ts: 1.0, a: [legacy21Snapshot] });
   const peer = nm._peer('host-id');
   peer.tr = 1.0;
   nm.update(1 / 20);
@@ -562,7 +572,7 @@ test('legacy transport & invalid fields: missing/corrupt cost falls back to nati
 
   // When legacy special is 100p (< 180p), native readiness returns false
   legacy21Snapshot[13] = 100;
-  nm.onMessage('host-id', { k: 't', ts: 1.05, a: [legacy21Snapshot] });
+  receiveFixtureSnapshot(nm, 'host-id', { k: 't', ts: 1.05, a: [legacy21Snapshot] });
   peer.tr = 1.05;
   nm.update(1 / 20);
   nm.applyRemote(proxy, 1 / 20);
@@ -577,7 +587,7 @@ test('legacy transport & invalid fields: missing/corrupt cost falls back to nati
       proxy.nid, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
       100, 100, 180, 0, 50, 0, 0, 0, 0, 0, badCost
     ];
-    nm.onMessage('host-id', { k: 't', ts, a: [corruptSnapshot] });
+    receiveFixtureSnapshot(nm, 'host-id', { k: 't', ts, a: [corruptSnapshot] });
     peer.tr = ts;
     nm.update(1 / 20);
     nm.applyRemote(proxy, 1 / 20);
@@ -619,7 +629,7 @@ test('mixed stream: seamless transitions between new protocol and legacy samples
     proxy.nid, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 | 1048576,
     100, 100, 165, 0, 50, 0, 0, 0, 0, 0, 165
   ];
-  nm.onMessage('host-id', { k: 't', ts: 1.0, a: [newSnapshot] });
+  receiveFixtureSnapshot(nm, 'host-id', { k: 't', ts: 1.0, a: [newSnapshot] });
   peer.tr = 1.0;
   nm.update(1 / 20);
   nm.applyRemote(proxy, 1 / 20);
@@ -632,7 +642,7 @@ test('mixed stream: seamless transitions between new protocol and legacy samples
     proxy.nid, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
     100, 100, 100, 0, 50, 0, 0, 0, 0, 0
   ];
-  nm.onMessage('host-id', { k: 't', ts: 1.05, a: [legacySnapshot] });
+  receiveFixtureSnapshot(nm, 'host-id', { k: 't', ts: 1.05, a: [legacySnapshot] });
   peer.tr = 1.05;
   nm.update(1 / 20);
   nm.applyRemote(proxy, 1 / 20);
@@ -643,7 +653,7 @@ test('mixed stream: seamless transitions between new protocol and legacy samples
 
   // Step 3: Legacy packet with 180p arrives -> native readiness true
   legacySnapshot[13] = 180;
-  nm.onMessage('host-id', { k: 't', ts: 1.1, a: [legacySnapshot] });
+  receiveFixtureSnapshot(nm, 'host-id', { k: 't', ts: 1.1, a: [legacySnapshot] });
   peer.tr = 1.1;
   nm.update(1 / 20);
   nm.applyRemote(proxy, 1 / 20);
@@ -654,7 +664,7 @@ test('mixed stream: seamless transitions between new protocol and legacy samples
   // Step 4: New packet arrives again -> resumes new protocol
   newSnapshot[10] = 1; // not ready
   newSnapshot[13] = 80;
-  nm.onMessage('host-id', { k: 't', ts: 1.15, a: [newSnapshot] });
+  receiveFixtureSnapshot(nm, 'host-id', { k: 't', ts: 1.15, a: [newSnapshot] });
   peer.tr = 1.15;
   nm.update(1 / 20);
   nm.applyRemote(proxy, 1 / 20);
@@ -698,8 +708,8 @@ test('sampling alignment: Hermite interpolation aligns cost with earlier snapsho
     100, 100, 165, 0, 50, 0, 0, 0, 0, 0, 165
   ];
 
-  nm.onMessage('host-id', { k: 't', ts: 1.0, a: [snap0] });
-  nm.onMessage('host-id', { k: 't', ts: 1.1, a: [snap1] });
+  receiveFixtureSnapshot(nm, 'host-id', { k: 't', ts: 1.0, a: [snap0] });
+  receiveFixtureSnapshot(nm, 'host-id', { k: 't', ts: 1.1, a: [snap1] });
 
   const peer = nm._peer('host-id');
   peer.init = true;
@@ -757,16 +767,19 @@ test('admission checks: out-of-order and non-authoritative packets are rejected'
     proxy.nid, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 | 1048576,
     100, 100, 165, 0, 50, 0, 0, 0, 0, 0, 165
   ];
-  nm.onMessage('host-id', { k: 't', ts: 2.0, a: [validSnap] });
+  receiveFixtureSnapshot(nm, 'host-id', { k: 't', ts: 2.0, a: [validSnap] });
   assert.equal(proxy.net.buf.length, 1);
 
   // 2. Late/out-of-order packet at ts=1.5 (older than newest in buffer)
-  nm.onMessage('host-id', { k: 't', ts: 1.5, a: [validSnap] });
+  receiveFixtureSnapshot(nm, 'host-id', { k: 't', ts: 1.5, a: [validSnap] });
   assert.equal(proxy.net.buf.length, 1, 'Late packet must be discarded');
 
   // 3. Non-authoritative packet from 'impostor-id' (owner is 'host-id')
-  nm.onMessage('impostor-id', { k: 't', ts: 2.1, a: [validSnap] });
+  receiveFixtureSnapshot(nm, 'impostor-id', { k: 't', ts: 2.1, a: [validSnap] });
   assert.equal(proxy.net.buf.length, 1, 'Impostor packet must be discarded');
+
+  nm.onMessage('host-id', { k: 't', ts: 2.2, a: [validSnap] });
+  assert.equal(proxy.net.buf.length, 1, 'Missing existing life envelope must still be rejected');
 });
 
 // ---------------------------------------------------------------------------
@@ -898,7 +911,7 @@ test('lifecycle: special activation, death/splat, and respawn correctly reset re
     proxy.nid, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
     100, 100, 82, 0, 50, 0, 0, 0, 0, 0
   ];
-  clientNM.onMessage('host-id', { k: 't', ts: 1.2, a: [legacySnap] });
+  receiveFixtureSnapshot(clientNM, 'host-id', { k: 't', ts: 1.2, a: [legacySnap] });
   clientNM._peer('host-id').tr = 1.2;
   clientNM.update(1 / 20);
   clientNM.applyRemote(proxy, 1 / 20);
@@ -908,7 +921,7 @@ test('lifecycle: special activation, death/splat, and respawn correctly reset re
 
   // Legacy owner charges up to 180p (native cost)
   legacySnap[13] = 180;
-  clientNM.onMessage('host-id', { k: 't', ts: 1.25, a: [legacySnap] });
+  receiveFixtureSnapshot(clientNM, 'host-id', { k: 't', ts: 1.25, a: [legacySnap] });
   clientNM._peer('host-id').tr = 1.25;
   clientNM.update(1 / 20);
   clientNM.applyRemote(proxy, 1 / 20);

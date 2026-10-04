@@ -1,3 +1,4 @@
+import { adaptIssue484 } from '../splatoon3/issue-484-adapter.mjs';
 import { adaptIssue405 } from '../splatoon3/issue-405-adapter.mjs';
 import { adaptIssue482 } from '../splatoon3/issue-482-adapter.mjs';
 // Build-only quality corrections composed after the gameplay, touch-layout and
@@ -31,6 +32,7 @@ export function replaceOnce(code, before, after, label) {
 export function adaptQualitySource(rel, code) {
   code = adaptIssue482(rel, code);
   code = adaptIssue405(rel, code);
+  code = adaptIssue484(rel, code);
   code = adaptIdleSource(rel, code, replaceOnce);
   code = adaptLobbyResources(rel, code);
   code = adaptMinimapResources(rel, code);
