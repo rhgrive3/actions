@@ -225,3 +225,16 @@ Four current-public defects #366/#370 (one duplicate pair), #375, #384, #395 are
 ## 2026-10-04 weapon edge-case supplement
 
 See [weapon edge-case comparison](inkwave-weapon-edgecases-2026-10-04.md) for #354/#356/#357/#361: stable-human Dualies3F first emission; Splatling separate ground1.6° pitch envelope; terrain Blaster35HP cap; horizontal Roller12+1 gameplay units. The report separates actual source/minified/composed-code tests from S3 probability/position/falloff and released-tap calibration still pending. No native source or deployed main is changed by the draft.
+
+## 連続キルのFlow加点が一律+1でS3の23→45fp連続ボーナスを再現しない不整合（#481、2026-10-05）
+
+開始 main は `866fd45992be33c51966a8acc55596bb5bac15a8`。対象は `inkwave-public/` とそのパッチ層（`patches/splatoon3/`）であり、旧 Game 試作版は対象外。本家参照版は Splatoon 3 Ver. 11.3.0（2026-08-19）。
+
+| 項目 | 内容 |
+|---|---|
+| 本家の根拠 | [任天堂サポート更新履歴（Ver. 11.3.0）](https://support.nintendo.com/jp/switch/software_support/av5ja/1130.html)、[イカフロー検証（wikiwiki）](https://wikiwiki.jp/splatoon3mix/%E6%A4%9C%E8%A8%BC/%E3%82%A4%E3%82%AB%E3%83%95%E3%83%AD%E3%83%BC)。S3の検証済み100 fpモデルにおいて、発動閾値は100 fpでありキルによってのみ発動する。75 fp未満では単発キルが +23 fp、直前のキルから5秒以内の連続キルが +45 fp（加点比率 45/23 ≒ 1.9565倍）。蓄積が75 fp以上の高スコア帯では単発 +15 fp、5秒以内の連続キルが +35 fp（加点比率 35/15 ≒ 2.3333倍）となる。5秒を超過したキルは単発加点（+23 fp / +15 fp）へ戻る。 |
+| INKWAVE の実装箇所 | `patches/splatoon3/runtime/flow.mjs:13`、`:50`。キル時に常に固定で `award(attacker, 'splat', 1)`（正規化閾値 3.0 に対して一律 +1.0）が加算されており、攻撃者の直前キル時刻を追跡する状態が存在せず、単発と連続キルの加点比率が 1.0 のままだった。 |
+| 再現操作 | 75 fp未満の初期状態で、2つの同一条件のActor A, Bを用意。Aには単発キルを付与し、Bには直前キルから5秒以内（例: 2〜3秒後）に2回目のキルを付与する。未修正版ではA・Bともに一律 +1.0（比率 1.0）しか加算されない。修正版（`patches/splatoon3/issue-481-adapter.mjs`）ではAに +23 fp（0.69）、Bに +45 fp（1.35）が加算され、45/23（約1.96倍）の比率が再現される。 |
+| プレイへの影響 | マルチキルや連射ブキによる迅速な連続撃破を行った際のFlow発動インセンティブが大幅に低く見積もられ、発動タイミングが著しく遅延していた。修正により、連続撃破によって迅速にFlow Auraへ突入する本来のゲームリズムが復元される。 |
+| 確認状態 | **ロジック・Node VM確認済み**（`patches/splatoon3/tests/issue-481.test.mjs`、30/60/120 Hz固定ステップ、75 fp未満 23/45 fp、75 fp以上 15/35 fp、5.0s以内と5.001s超過の境界、Actorローカル性、キル時のみの発動ゲート、Actorリセット/死亡/復活/Flow失効によるストリーク破棄、水没・自滅・味方キル・重複イベント除外、PR #489 減衰・ペナルティとの正規化合成、11/11 pass）。**Switch実機での通信遅延下におけるキル確定パケット到着猶予の厳密な公式フレーム値は未確認**として残し、ゲーム内シミュレーション時計 `G.time` を基準とした 5.0 秒境界と Actor ローカルな状態遷移のみを整合。 |
+
