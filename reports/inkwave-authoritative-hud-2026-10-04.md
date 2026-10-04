@@ -64,7 +64,7 @@ integration condition is addressed.
 
 ## Verification
 
-- Production build passes, content digest prefix `51656f0d58c2`.
+- Production build passes, content digest prefix `d0e3cf15a58c` after composing main `8158a2b8`.
 - Upstream-lock compatibility and numeric reference 11.3.0 quick checks pass.
 - Focused source regressions: 11/11, including two negative baseline controls.
 - Emitted/minified complete HUD module: 1/1 additional case, loaded with its
@@ -84,6 +84,11 @@ integration condition is addressed.
   without an installation and failed at its singleton socket with Operation not
   permitted. CI browser acceptance remains pending. No local GPU/physical
   phone/Switch comparison is claimed.
+
+Main advanced to `8158a2b83c8e6948d0f96f1bbe0e80e987c4bafd` while publishing.
+Its landing-rigidity import/identity/dispatch and combat-life/credit changes are
+preserved in the merge. The two append-only report sections are both retained.
+The combined production build and focused source/emitted 12 cases pass.
 
 Full bounded regression and exact-head CI status are reported in the PR. A
 production build and a focused pass are not a claim of full browser acceptance.

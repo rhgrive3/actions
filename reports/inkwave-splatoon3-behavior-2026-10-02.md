@@ -171,6 +171,23 @@ Flow の外殻・粒・リボンが GTAO の法線／深度パスに不透明な
 
 停止姿勢の全画面beauty再描画では、実際の時計・骨・座標が同一でもnative fragmentの数pixelの色差が反復描画ごとに変化する。停止のモーション検証は、そのbeauty画像を両方保存したうえで、最終描画色だけを固定した別materialによる実GPU比較へ分けた。実際にコンパイルされたnative／比較側vertex shaderのSHA256一致、骨行列・pose・全node world行列・ゲーム時計の不変性、固定色画像の既存0差分条件を必須とする。各ケースで実rootを0.03動かす反例も描き、16pixel以上の変化を検出できない比較器は合格にしない。通常の全339描画ペア、Flow／壁のGTAO、表示中・中断・解放の検査はnative beauty shaderのままであり、この停止の比較を本家の画像一致の証拠にはしない。
 
+
+## Batch C の着地と通信状態の確認（2026-10-04）
+
+比較条件は公開INKWAVE、既存Splatoon 3 Ver.11.3.0参照、通常装備・通常着地。
+[#90](https://github.com/rhgrive3/actions/issues/90)は着地の全体scaleが剛体ブキまで変形させる問題を扱う。
+着地専用のscale impulseを除き、膝・骨盤・腕・頭・ブキanchorの既存応答と時刻を保持する。
+ゲームの移動、接触、ジャンプ、攻撃時刻や塗り量の変更ではない。
+30/60/120Hzの実Character検査と生成module/ブラウザの検査は、Switch実機の関節曲線・画像一致と区別する。
+本家の同入力・同装備の実機比較は引き続き未確認。
+
+[#394](https://github.com/rhgrive3/actions/issues/394)と
+[#379](https://github.com/rhgrive3/actions/issues/379)はINKWAVE内部のauthoritative owner整合性の問題。
+前lifeのhitによる復活後damageと、remote killによる塗り/SP加点欠落を検証する。
+Nintendoの非公開protocolや通信時刻を推定して本家一致とはしない。
+実装範囲、既存PR重複監査と確定した検証結果は
+[batch C記録](inkwave-batch-c-issues.md)に記録する。
+
 ## 2026-10-04: authoritative HUD follow-up (#425 / #381)
 
 The build-only quality layer replaces the continuous special percentage with
