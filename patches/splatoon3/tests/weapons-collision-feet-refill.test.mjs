@@ -193,3 +193,84 @@ test('#95 an empty trigger click does not reset the ink-recovery cooldown', asyn
   assert.ok(a.lastFire > 1, 'lastFire still advances from its prior value');
   assert.ok(a.lastFire > 0.02, 'an empty click must not restart the post-fire cooldown at zero');
 });
+
+// --- adversarial review follow-up: closest-approach vs first-entry and endpoint cull ---
+
+// Physics.segmentCapsuleDist returns the closest-approach parameter (it minimises
+// pointCapsuleDist), while G.physics.segment and boss.segHit report first-entry
+// distance. A hurt volume can be entered before a nearer-looking wall even when
+// its centre is farther along the step. The actor must win here: with
+// PLAYER.radius 0.38 and p.size 0.15 the hurt radius is 0.511, so an actor centre
+// at x = 1.0 is entered at x ~= 0.658, ahead of a wall at x = 0.8.
+test('#119 REVIEW a hurt volume entered before a wall must beat a wall its centre follows', async () => {
+  const f = await fixture();
+  const actor = enemy(f, 1.0);
+  const { system, hits, impactCount } = setup(f);
+  f.G.actors = [actor];
+  f.G.physics.segment = (_a, _b, out) => {
+    out.hit = true; out.dist = 0.8; out.point.set(0.8, 0, 0); out.normal.set(-1, 0, 0); return out;
+  };
+  system._step(projectile(f, f.make()), 1 / 60);
+  assert.deepEqual(hits.map(h => h.target), [actor],
+    'the actor volume is entered before the wall; closest-approach ordering wrongly resolves the wall');
+  assert.equal(impactCount(), 0, 'no wall impact when the actor is contacted first');
+});
+
+// The fixed-step early-out uses |e.pos - p.pos| against the segment END, not the
+// swept segment. A long step can therefore drop an actor that genuinely lies on
+// the path.
+test('#119 REVIEW the endpoint cull must not drop an actor lying on a long step', async () => {
+  const f = await fixture();
+  const actor = enemy(f, 1.0);
+  const { system, hits } = setup(f);
+  f.G.actors = [actor];
+  const p = projectile(f, f.make());
+  p.vel.set(600, 0, 0); // one 1/60 step spans 10 world units, ending at x = 10
+  system._step(p, 1 / 60);
+  assert.deepEqual(hits.map(h => h.target), [actor],
+    'x = 1 lies on the swept segment; the |e.pos.x - p.pos.x| > 3 endpoint cull must not drop it');
+});
+
+// boss.segHit reports entry distance while the actor loop reports closest-approach.
+// Comparing the two directly biases ordering toward the boss. Boss entry 0.7 is
+// behind the actor hurt-volume entry ~0.658, so the actor must take the hit.
+test('#119 REVIEW actor closest-approach distance must be comparable to boss entry distance', async () => {
+  const f = await fixture(), { THREE } = f;
+  const actor = enemy(f, 1.0);
+  const { system, hits } = setup(f);
+  f.G.actors = [actor];
+  let bossImpacts = 0;
+  system._bossImpact = () => { bossImpacts++; };
+  f.G.boss = { segHit: () => ({ dist: 0.7, t: 0.7 / SHOOTER_STEP, point: new THREE.Vector3(), target: {} }) };
+  system._step(projectile(f, f.make()), 1 / 60);
+  assert.deepEqual(hits.map(h => h.target), [actor],
+    'the actor hurt volume is entered before the boss; entry-domain and closest-approach-domain distances are not comparable');
+  assert.equal(bossImpacts, 0);
+});
+
+// Guard: an actor already inside the capsule at the segment start is still hit.
+test('#105 REVIEW an actor inside the capsule at the segment start is still hit', async () => {
+  const f = await fixture();
+  const actor = enemy(f, 0);
+  const { system, hits } = setup(f);
+  f.G.actors = [actor];
+  system._step(projectile(f, f.make()), 1 / 60);
+  assert.deepEqual(hits.map(h => h.target), [actor]);
+});
+
+// Guard: the wall/actor tie-break must be deterministic across repeated steps.
+test('#119 REVIEW wall/actor boundary resolution is deterministic', async () => {
+  const f = await fixture();
+  const results = [];
+  for (let i = 0; i < 3; i++) {
+    const actor = enemy(f, 1.0);
+    const { system, hits, impactCount } = setup(f);
+    f.G.actors = [actor];
+    f.G.physics.segment = (_a, _b, out) => {
+      out.hit = true; out.dist = 0.66; out.point.set(0.66, 0, 0); out.normal.set(-1, 0, 0); return out;
+    };
+    system._step(projectile(f, f.make()), 1 / 60);
+    results.push(hits.length === 1 ? 'actor' : (impactCount() ? 'wall' : 'none'));
+  }
+  assert.equal(new Set(results).size, 1, `boundary resolution must be deterministic, got ${results}`);
+});

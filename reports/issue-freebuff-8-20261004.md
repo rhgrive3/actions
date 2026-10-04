@@ -44,3 +44,22 @@ Prototype `game/` is out of scope (removed in PR #185). Reference: Splatoon 3 Ve
 - `feetPaintRadius` magnitude and the feet-patch area are inferred, not a verified Nintendo value; Switch/real-device parity is not claimed.
 - The collision-chronology rewrite was validated at the logic/composed level; no physical-device or browser capture was performed.
 - Full exact-source CI, browser gates and integration remain parent-owned.
+
+## Adversarial review follow-up (production unchanged, parent review pending)
+
+Read-only re-inspection of commit 33f17d2 found that the collision-distance comparison
+mixes two different domains and that the actor broad-phase cull is endpoint-only:
+
+1. `Physics.segmentCapsuleDist` returns the **closest-approach** parameter `res.t`
+   (ternary minimisation of `pointCapsuleDist`), while `G.physics.segment` (raycast
+   first hit) and `boss.segHit` (entry with `te = t - back`) report **first-entry**
+   distance. Comparing them directly biases ordering toward the wall/boss whenever a
+   hurt volume is entered before its closest approach.
+2. The actor loop still culls with `|e.pos - p.pos| > 3` against the segment **end**
+   only, so a step longer than ~3 units can drop an actor lying on the swept path.
+
+New regressions in `patches/splatoon3/tests/weapons-collision-feet-refill.test.mjs`
+(3 fail, guards pass; 13/16 total) isolate both gaps. Details in the freebuff-8
+evidence `review-followup.md`. A fix (first-entry actor distance, swept-segment cull,
+copy boss hit record) is recommended but deliberately not applied until the parent
+reviews.
