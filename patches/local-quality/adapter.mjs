@@ -1,3 +1,4 @@
+import { adaptIssue406Source } from '../splatoon3/issue-406-adapter.mjs';
 import { adaptIssue460Source } from '../splatoon3/issue-460-adapter.mjs';
 import { adaptIssue463 } from '../splatoon3/issue-463-adapter.mjs';
 import { adaptIssue427 } from '../splatoon3/issue-427-adapter.mjs';
@@ -35,6 +36,7 @@ export function adaptQualitySource(rel, code) {
   code = adaptIssue463(rel, code);
   code = adaptIssue427(rel, code);
   code = adaptIssue460Source(rel, code);
+  code = adaptIssue406Source(rel, code);
   code = adaptIssue461Source(rel, code);
   code = adaptIdleSource(rel, code, replaceOnce);
   code = adaptIssue480Source(rel, code);

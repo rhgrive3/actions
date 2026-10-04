@@ -32,12 +32,12 @@ function adaptIssue460Actor(code) {
     'issue-460 flight event duration');
   // every flight frame: snapshot + actual gauge geometry/label at s.to
   code = replaceOnce(code,
-    `    if (s.phase === 'flight') {\n      const k = Math.min(1, s.t / s.dur);`,
-    `    if (s.phase === 'flight') {\n      const k = Math.min(1, s.t / s.dur);\n      { const m460 = liveJumpMarker(true, jumpMarkerSnapshot({ progress: ownerJumpProgress(s), dur: s.dur, jumper: this.name })); this.s3 ||= {}; this.s3.jumpMarker460 = m460; renderJumpGauge460(G, this, m460, s.to, this.color, THREE); }`,
+    `    if (s.phase === 'flight') {`,
+    `    if (s.phase === 'flight') {\n      { const m460 = liveJumpMarker(true, jumpMarkerSnapshot({ progress: ownerJumpProgress(s), dur: s.dur, jumper: this.name })); this.s3 ||= {}; this.s3.jumpMarker460 = m460; renderJumpGauge460(G, this, m460, s.to, this.color, THREE); }`,
     'issue-460 owner gauge render');
   code = replaceOnce(code,
-    `      if (k >= 1) {\n        this.superJumpState = null;`,
-    `      if (k >= 1) {\n        if (this.s3) this.s3.jumpMarker460 = null;\n        clearJumpGauge460(this);\n        this.superJumpState = null;`,
+    `      if (k >= 1) {`,
+    `      if (k >= 1) {\n        if (this.s3) this.s3.jumpMarker460 = null;\n        clearJumpGauge460(this);`,
     'issue-460 owner gauge clear on land');
   code = replaceOnce(code,
     `        if (isActor && !tgt.alive) { this.superJumpState = null; return; }`,
@@ -71,11 +71,11 @@ function adaptIssue460Net(code) {
   // every flight frame: snapshot from the event-seeded clock + gauge at n.sjTo
   code = replaceOnce(code,
     `    if (a.superJumpState?.phase === 'flight' && n.sjTo) {\n      n.sjRing += dt;`,
-    `    if (a.superJumpState?.phase === 'flight' && n.sjTo) {\n      n.sjT460 = (Number(n.sjT460) || 0) + dt;\n      n.sjMarker460 = liveJumpMarker(true, jumpMarkerSnapshot({ progress: remoteJumpProgress(n.sjT460, n.sjDur460), dur: n.sjDur460, jumper: a.name }));\n      renderJumpGauge460(G, a, n.sjMarker460, n.sjTo, a.color, THREE);\n      n.sjRing += dt;`,
+    `    if (a.superJumpState?.phase !== 'flight' && n.sjMarker460) { n.sjMarker460 = null; n.sjTo = null; n.sjDur460 = 0; n.sjT460 = 0; clearJumpGauge460(a); }\n    if (a.superJumpState?.phase === 'flight' && n.sjTo) {\n      n.sjT460 = (Number(n.sjT460) || 0) + dt;\n      n.sjMarker460 = liveJumpMarker(true, jumpMarkerSnapshot({ progress: remoteJumpProgress(n.sjT460, n.sjDur460), dur: n.sjDur460, jumper: a.name }));\n      renderJumpGauge460(G, a, n.sjMarker460, n.sjTo, a.color, THREE);\n      n.sjRing += dt;`,
     'issue-460 remote gauge render');
   code = replaceOnce(code,
     `        if (e.phase === 'flight') { a.net.sjTo = e.to ? e.to.clone() : null; G.fx?.burst(`,
-    `        if (e.phase === 'flight') { a.net.sjTo = e.to ? e.to.clone() : null; a.net.sjDur460 = Number(e.dur) > 0 ? Number(e.dur) : 0; a.net.sjT460 = 0; a.net.sjMarker460 = null; clearJumpGauge460(a); G.fx?.burst(`,
+    `        if (e.phase === 'flight') { const sameFlight460 = a.net.sjTo && e.to && a.net.sjTo.equals(e.to); a.net.sjTo = e.to ? e.to.clone() : null; if (!sameFlight460) { a.net.sjDur460 = Number(e.dur) > 0 ? Number(e.dur) : 0; a.net.sjT460 = 0; a.net.sjMarker460 = null; clearJumpGauge460(a); } G.fx?.burst(`,
     'issue-460 remote flight duration seed');
   code = replaceOnce(code,
     `      case 'superjump:land': a.net.sjTo = null; G.fx?.burst(`,
