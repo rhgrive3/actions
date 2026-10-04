@@ -24,13 +24,13 @@ export function installMenuQuality(Menus, env=globalThis){
     if(!this._focus?.isConnected)this._cur.targetEl=null;
     const result=cursor.call(this,dt);syncRingVisibility(this);this._qualityCursorAt=env.performance.now();return result;
   };
-  function retarget(m){
+  function retarget(m,advance=true){
     const now=env.performance.now();
     const elapsed=m._qualityCursorAt==null?0:Math.max(0,(now-m._qualityCursorAt)/1000);
-    const step=m._frozen?.()?0:Math.min(1/60,elapsed)*(m.timeScale>0?m.timeScale:1);
+    const step=!advance||m._frozen?.()?0:Math.min(1/60,elapsed)*(m.timeScale>0?m.timeScale:1);
     if(!m._focus?.isConnected)m._cur.targetEl=null;
     const springClock=m._cur.on&&!m._cur.snapNext,advancing=step>0&&springClock;
-    cursor.call(m,step);syncRingVisibility(m);m._qualityCursorAt=now;
+    cursor.call(m,step);syncRingVisibility(m);if(advance)m._qualityCursorAt=now;
     if(advancing&&m._cur.on)m._qualityCursorCredit=(m._qualityCursorCredit||0)+step;
     else if(!m._cur.on||!springClock)m._qualityCursorCredit=0;
   }
@@ -42,9 +42,17 @@ export function installMenuQuality(Menus, env=globalThis){
     return result;
   };
   if(inputMode&&cursor)P.setInputMode=function(...args){
-    const old=this._input,result=inputMode.apply(this,args);
+    const old=this._input,wasOn=this._cur.on,result=inputMode.apply(this,args);
     // Input-mode callbacks can reflow the same focused element.
-    if(old!==this._input){this._cur.targetEl=null;retarget(this);}
+    if(old!==this._input){
+      this._cur.targetEl=null;
+      // Mode changes precede navigation in the same input task. Do not spend
+      // its spring clock on the old item before logical selection changes.
+      retarget(this,false);
+      // A newly revealed ring has not painted yet. Keep native first-appearance
+      // snapping pending until navigation or the next animation-owner tick.
+      if(!wasOn&&this._cur.on)this._cur.snapNext=true;
+    }
     return result;
   };
   if(settings)P._scr_settings=function(...args){preparePreviewRoot(this.el,env);return settings.apply(this,args);};

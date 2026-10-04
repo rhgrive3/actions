@@ -73,3 +73,20 @@ test('input-mode layout change refreshes the same focused item target in the inp
  m.setInputMode('touch');assert.equal(m._focus,a);assert.equal(m._cur.targetEl,a);
  assert.equal(m._cur.x.target,93);assert.equal(m._cur.y.target,113);assert.equal(m._cur.w.target,134);assert.equal(m._cur.h.target,64);assert.equal(m._cur.on,false);
 });
+
+test('a visible input-mode change does not spend the selection spring clock on the old item',()=>{
+ const {m,el,time}=fixture(),a=el(10,20),b=el(100,120);
+ m.setInputMode('pad');m._setFocus(a,{snap:true});m._updateCursor(1/60);
+ time(12);m.setInputMode('kbm');m._setFocus(b);
+ assert.equal(m._cur.x.target,93);assert(m._cur.x.x>3,'first visual step must follow the newly selected item');
+ assert(m._cur.x.x<93);const x=m._cur.x.x;m._updateCursor(.012);assert.equal(m._cur.x.x,x);assert.equal(m._qualityCursorCredit,0);
+});
+test('touch-to-keyboard/pad navigation first reveals the ring at the newly selected item',()=>{
+ for(const mode of ['kbm','pad']){
+  const {m,el,time}=fixture(),a=el(10,20,'row'),b=el(100,120,'row');
+  m._setFocus(a,{snap:true});m._updateCursor(1/60);m.setInputMode('touch');assert.equal(m._cur.on,false);
+  time(12);m.setInputMode(mode);m._setFocus(b);
+  assert.equal(m._focus,b);assert.equal(m._cur.targetEl,b);assert.equal(m._cur.x.target,93);
+  assert.equal(m._cur.x.x,93);assert.equal(m._cur.y.x,113);assert.equal(m._qualityCursorCredit,0);
+ }
+});

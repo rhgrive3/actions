@@ -27,6 +27,10 @@ on:
         description: Full immutable commit SHA to verify
         required: true
         type: string
+      runtime_performance:
+        description: Run the pinned runtime workstream baseline and candidate comparison
+        type: boolean
+        default: false
       diagnostic_only:
         description: Run isolated render repeatability diagnosis (never full acceptance)
         type: boolean
@@ -35,6 +39,7 @@ permissions:
   contents: read
 env:
   SOURCE_SHA: ${{ inputs.source_sha || github.sha }}
+  RUNTIME_PERFORMANCE: ${{ inputs.runtime_performance == true || (github.event_name == 'pull_request' && github.head_ref == 'inkwave/runtime-performance-ui') }}
 jobs:
   validate:
     if: inputs.diagnostic_only != true
@@ -192,7 +197,7 @@ jobs:
         if: matrix.suite == 'active'
         run: node scripts/check-inkwave-wall-render.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/wall" --profile-dir "$CI_STORAGE/cache/wall" --exact-source
       - name: Profile runtime at immutable baseline
-        if: matrix.suite == 'active'
+        if: matrix.suite == 'active' && env.RUNTIME_PERFORMANCE == 'true'
         run: |
           npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1
           baseline_sha=5e28dbd16f7829aebd88052ff5f7fdf71f39fdad
@@ -206,7 +211,7 @@ jobs:
           ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js" node "$baseline_checkout/scripts/build-inkwave.mjs" "$baseline_checkout/inkwave-public" "$CI_STORAGE/cache/runtime-baseline-site"
           node scripts/check-inkwave-runtime-performance.mjs --site "$CI_STORAGE/cache/runtime-baseline-site" --evidence-dir "$CI_STORAGE/evidence/runtime-before" --playwright "$GITHUB_WORKSPACE/node_modules/playwright/index.mjs" --source-sha "$baseline_sha" --fixed-only --quality high
       - name: Preserve completed baseline runtime evidence
-        if: matrix.suite == 'active' && always()
+        if: matrix.suite == 'active' && env.RUNTIME_PERFORMANCE == 'true' && always()
         uses: actions/upload-artifact@v4
         with:
           name: inkwave-runtime-baseline-diagnostics-${{ inputs.source_sha || github.sha }}
@@ -215,7 +220,7 @@ jobs:
           path: ${{ env.CI_STORAGE }}/evidence/runtime-before/
           retention-days: 14
       - name: Profile candidate runtime and compare repeated evidence
-        if: matrix.suite == 'active'
+        if: matrix.suite == 'active' && env.RUNTIME_PERFORMANCE == 'true'
         run: |
           node scripts/check-inkwave-runtime-performance.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/runtime-after" --playwright "$GITHUB_WORKSPACE/node_modules/playwright/index.mjs" --source-sha "$SOURCE_SHA" --fixed-only --quality high
           node scripts/compare-inkwave-runtime-performance.mjs --before "$CI_STORAGE/evidence/runtime-before/runtime-result.json" --after "$CI_STORAGE/evidence/runtime-after/runtime-result.json" --out "$CI_STORAGE/evidence/runtime-comparison.json"
@@ -243,10 +248,13 @@ jobs:
           root=pathlib.Path(os.environ['CI_STORAGE'])/'evidence'
           suite=os.environ['BROWSER_SUITE']
           checks={
-            'active':['game/browser-result.json','motion/motion-result.json','motion-detail/motion-detail-result.json','flow/flow-render-result.json','wall/wall-render-result.json','runtime-before/runtime-result.json','runtime-after/runtime-result.json','runtime-comparison.json'],
+            'active':['game/browser-result.json','motion/motion-result.json','motion-detail/motion-detail-result.json','flow/flow-render-result.json','wall/wall-render-result.json'],
             'catalog':['catalog/motion-catalog-result.json'],
             'ui':['layout/touch-layout-result.json','reliability/reliability-browser-result.json','identity-touch/touch-layout-identity-result.json','identity-reliability/reliability-identity-result.json','responsive/responsive-result.json'],
           }[suite]
+          runtime_performance=os.environ['RUNTIME_PERFORMANCE']=='true'
+          if suite=='active' and runtime_performance:
+            checks.extend(['runtime-before/runtime-result.json','runtime-after/runtime-result.json','runtime-comparison.json'])
           reports={name:json.loads((root/name).read_text()) for name in checks}
           build=json.loads(pathlib.Path('.built-site/_site/inkwave-build.json').read_text())
           assert pathlib.Path('.built-site/_site-source-sha.txt').read_text().strip()==os.environ['SOURCE_SHA']
@@ -256,9 +264,10 @@ jobs:
             if 'contentHash' in report and name!='runtime-before/runtime-result.json': assert report['contentHash']==build['contentHash'], name
           if suite=='active':
             assert reports['game/browser-result.json']['sourceSha']==os.environ['SOURCE_SHA']
-            assert reports['runtime-after/runtime-result.json']['sourceSha']==os.environ['SOURCE_SHA']
-            assert reports['runtime-before/runtime-result.json']['sourceSha']=='5e28dbd16f7829aebd88052ff5f7fdf71f39fdad'
-          receipt={'status':'passed','sourceSha':os.environ['SOURCE_SHA'],'contentHash':build['contentHash'],'suite':suite,'runId':os.environ['GITHUB_RUN_ID'],'runAttempt':os.environ['GITHUB_RUN_ATTEMPT'],'event':os.environ['GITHUB_EVENT_NAME'],'checks':checks}
+            if runtime_performance:
+              assert reports['runtime-after/runtime-result.json']['sourceSha']==os.environ['SOURCE_SHA']
+              assert reports['runtime-before/runtime-result.json']['sourceSha']=='5e28dbd16f7829aebd88052ff5f7fdf71f39fdad'
+          receipt={'status':'passed','sourceSha':os.environ['SOURCE_SHA'],'contentHash':build['contentHash'],'suite':suite,'runtimePerformance':runtime_performance,'runId':os.environ['GITHUB_RUN_ID'],'runAttempt':os.environ['GITHUB_RUN_ATTEMPT'],'event':os.environ['GITHUB_EVENT_NAME'],'checks':checks}
           pending=root/'ci-result.json.pending'; pending.write_text(json.dumps(receipt,indent=2)+'\n'); pending.replace(root/'ci-result.json')
           print(json.dumps(receipt))
           PY

@@ -65,13 +65,15 @@ try{
   // drain and first-use shader work stay outside every measured window.
   const warmup=fixedOnly&&!menuOnly?await page.evaluate(scenario=>{const g=probeG.game;window.resetRuntimeSeed();for(let i=0;i<30;i++)window.runtimeFixedStep(g,(scenario==='battle'?270:30)+i);const t=performance.now();probeG.renderer.getContext().finish();return{simulationOnlySteps:scenario==='battle'?270:30,renderedSteps:30,drainMs:performance.now()-t};},scenario):null;
   // Instrument actual owners, retaining their receiver and return values.
-  await page.evaluate(()=>{window.counts={};window.timings={};window.restore=[];window.runtimeOwnerNames=[];const G=probeG,g=G.game;for(const [name,o,key]of [['sceneMatrices',G.scene,'updateMatrixWorld'],['frame',g,'_frame'],['match',g.match,'update'],['character',g.match?.local?.character?.constructor.prototype,'update'],['projectiles',G.projectiles,'update'],['rig',g.rig,'update'],['screenfx',g.screenfx,'update'],['paint',G.paint,'flush'],['fx',G.fx,'update'],['env',G.env,'update'],['decor',g.decor,'update'],['props',g.props,'update'],['render',g.R,'render'],['showcase',g.showcase,'update'],['menu',g.menus,'update'],['menuTick',g.menus,'_tick'],['cursor',g.menus,'_updateCursor'],['hud',g,'_updateHud'],['minimap',g.minimap,'update']]){if(!o||typeof o[key]!=='function')continue;runtimeOwnerNames.push(name);const old=o[key];o[key]=function(...a){const t=performance.now();try{return old.apply(this,a);}finally{counts[name]=(counts[name]||0)+1;(timings[name]??=[]).push(performance.now()-t);}};restore.push(()=>o[key]=old);}window.longtasks=[];window.ltObserver=new PerformanceObserver(l=>longtasks.push(...l.getEntries().map(x=>x.duration)));ltObserver.observe({type:'longtask',buffered:false});window.rafTimes=[];window.rafProbeOn=true;const tick=t=>{rafTimes.push(t);if(rafProbeOn)window.rafProbeId=requestAnimationFrame(tick);};window.rafProbeId=requestAnimationFrame(tick);});
+  // Count only the fixed transaction: fallback rAF work between CDP commands
+  // is scheduler noise, not one of the declared 30 simulation/render steps.
+  await page.evaluate(()=>{window.runtimeWindowActive=false;window.counts={};window.timings={};window.restore=[];window.runtimeOwnerNames=[];const G=probeG,g=G.game;for(const [name,o,key]of [['sceneMatrices',G.scene,'updateMatrixWorld'],['frame',g,'_frame'],['match',g.match,'update'],['character',g.match?.local?.character?.constructor.prototype,'update'],['projectiles',G.projectiles,'update'],['rig',g.rig,'update'],['screenfx',g.screenfx,'update'],['paint',G.paint,'flush'],['fx',G.fx,'update'],['env',G.env,'update'],['decor',g.decor,'update'],['props',g.props,'update'],['render',g.R,'render'],['showcase',g.showcase,'update'],['menu',g.menus,'update'],['menuTick',g.menus,'_tick'],['cursor',g.menus,'_updateCursor'],['hud',g,'_updateHud'],['minimap',g.minimap,'update']]){if(!o||typeof o[key]!=='function')continue;runtimeOwnerNames.push(name);const old=o[key];o[key]=function(...a){if(!runtimeWindowActive)return old.apply(this,a);const t=performance.now();try{return old.apply(this,a);}finally{counts[name]=(counts[name]||0)+1;(timings[name]??=[]).push(performance.now()-t);}};restore.push(()=>o[key]=old);}window.longtasks=[];window.ltObserver=new PerformanceObserver(l=>longtasks.push(...l.getEntries().map(x=>x.duration)));ltObserver.observe({type:'longtask',buffered:false});window.rafTimes=[];window.rafProbeOn=true;const tick=t=>{rafTimes.push(t);if(rafProbeOn)window.rafProbeId=requestAnimationFrame(tick);};window.rafProbeId=requestAnimationFrame(tick);});
   const runs=[];result.scenarios.push({scenario,fixtureStart,warmup,runs});checkpoint();
   for(let repeat=0;repeat<3;repeat++){
    await page.evaluate(()=>{counts=Object.fromEntries(runtimeOwnerNames.map(name=>[name,0]));timings={};longtasks=[];rafTimes=[];});
    const before=(await cdp.send('Performance.getMetrics')).metrics;
    await cdp.send('Profiler.enable');await cdp.send('Profiler.start');
-   if(fixedOnly)await page.evaluate(({scenario,repeat})=>{const g=probeG.game;for(let i=0;i<30;i++)window.runtimeFixedStep(g,(scenario==='battle'?300:60)+repeat*30+i);},{scenario,repeat});else await page.waitForTimeout(3000);
+   if(fixedOnly)await page.evaluate(({scenario,repeat})=>{const g=probeG.game;runtimeWindowActive=true;try{for(let i=0;i<30;i++)window.runtimeFixedStep(g,(scenario==='battle'?300:60)+repeat*30+i);}finally{runtimeWindowActive=false;}},{scenario,repeat});else{await page.evaluate(()=>{runtimeWindowActive=true;});await page.waitForTimeout(3000);await page.evaluate(()=>{runtimeWindowActive=false;});}
    const {profile}=await cdp.send('Profiler.stop');saveEvidence(path.join(evidence,`${scenario}-${repeat}.cpuprofile`),profile);
    const after=(await cdp.send('Performance.getMetrics')).metrics;
    const samples=await page.evaluate(()=>({counts,probedOwners:runtimeOwnerNames,timings,longtasks,frames:rafTimes.slice(1).map((t,i)=>t-rafTimes[i]),heap:performance.memory?.usedJSHeapSize,menu:{hidden:document.hidden,current:probeG.game.menus.current,raf:probeG.game.menus._raf,extAge:performance.now()-probeG.game.menus._extTick},renderInfo:probeG.renderer?{calls:probeG.renderer.info.render.calls,triangles:probeG.renderer.info.render.triangles,geometries:probeG.renderer.info.memory.geometries,textures:probeG.renderer.info.memory.textures,programs:probeG.renderer.info.programs?.length}:null,matchState:probeG.game.match?.state,gameplay:probeG.game.match?{time:probeG.game.match.time,actors:probeG.game.match.actors.map(a=>({pos:[a.pos.x,a.pos.y,a.pos.z],hp:a.hp,ink:a.ink,alive:a.alive,weapon:a.weaponId})),coverage:probeG.paint.coverage(),projectiles:probeG.projectiles.list.length}:null,quality:probeG.game.settings.quality,scale:probeG.game.R?.dynScale}));
@@ -124,7 +126,46 @@ try{
  // A stale target here proves an extra engine-tick dependency independent of GPU.
  await page.evaluate(()=>{const g=probeG.game;g.debug.freeze();g.menus.wipe.cancel();g.menus.show('settings',{wipe:false,light:false});});
  await page.waitForTimeout(1500);
- result.input=await page.evaluate(()=>{const m=probeG.game.menus;const out=[];for(const mode of ['kbm','pad','touch'])for(let i=0;i<12;i++){if(probeG.game._onDevice)probeG.game._onDevice(mode);else m.setInputMode(mode);const rows=m._candidates().filter(e=>e.dataset.nav==='row');const a=rows[i%Math.max(1,rows.length-1)],b=rows[i%Math.max(1,rows.length-1)+1];m._setFocus(a,{snap:true});m._updateCursor(1/60);const oldVisual={x:m._cur.x.x,y:m._cur.y.x};const t=performance.now();if(mode==='touch')b.dispatchEvent(new PointerEvent('pointerdown',{pointerType:'touch',bubbles:true}));else if(mode==='kbm')window.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowDown',code:'ArrowDown',bubbles:true,cancelable:true}));else if(probeG.game.input){const inp=probeG.game.input,prev=inp.padPrev,desc=Object.getOwnPropertyDescriptor(navigator,'getGamepads');const fake={connected:true,mapping:'standard',axes:[0,0,0,0],buttons:Array.from({length:16},(_,i)=>({pressed:i===13,value:i===13?1:0}))};try{Object.defineProperty(navigator,'getGamepads',{configurable:true,value:()=>[fake]});inp.padPrev=[];inp.pollPad();probeG.game._padMenus();}finally{inp.padPrev=prev;inp.padPressed.clear();if(desc)Object.defineProperty(navigator,'getGamepads',desc);else delete navigator.getGamepads;}}else m.nav('down');const focus=m._focus,r=focus.getBoundingClientRect(),pad=focus.dataset.curPad!=null?+focus.dataset.curPad:7;out.push({mode,entry:mode==='pad'?(probeG.game.input?'navigator.getGamepads -> Input.pollPad -> Game._padMenus -> Menus.nav':'Menus.nav fixture'):mode==='kbm'?'DOM keydown':'DOM pointerdown',state:focus!==a,targetOwnerCorrect:m._cur.targetEl===focus,targetError:Math.hypot(m._cur.x.target-(r.left-pad),m._cur.y.target-(r.top-pad),m._cur.w.target-(r.width+pad*2),m._cur.h.target-(r.height+pad*2)),syncMs:performance.now()-t,ringOn:m._cur.on,ringVisibility:getComputedStyle(m.cursorEl).visibility,ringOpacity:+getComputedStyle(m.cursorEl).opacity,oldVisual,visual:{x:m._cur.x.x,y:m._cur.y.x},transform:m.cursorEl.style.transform});m._updateCursor(1/60);}return out;});
+ Object.assign(result,await page.evaluate(()=>{
+  const g=probeG.game,m=g.menus;
+  const mode=name=>g._onDevice?g._onDevice(name):m.setInputMode(name);
+  const dispatch=(name,target)=>{
+   if(name==='touch')target.dispatchEvent(new PointerEvent('pointerdown',{pointerType:'touch',bubbles:true}));
+   else if(name==='kbm')window.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowDown',code:'ArrowDown',bubbles:true,cancelable:true}));
+   else if(g.input){
+    const inp=g.input,prev=inp.padPrev,desc=Object.getOwnPropertyDescriptor(navigator,'getGamepads');
+    const fake={connected:true,mapping:'standard',axes:[0,0,0,0],buttons:Array.from({length:16},(_,i)=>({pressed:i===13,value:i===13?1:0}))};
+    try{Object.defineProperty(navigator,'getGamepads',{configurable:true,value:()=>[fake]});inp.padPrev=[];inp.pollPad();g._padMenus();}
+    finally{inp.padPrev=prev;inp.padPressed.clear();if(desc)Object.defineProperty(navigator,'getGamepads',desc);else delete navigator.getGamepads;}
+   }else m.nav('down');
+  };
+  const visual=()=>({x:m._cur.x.x,y:m._cur.y.x,w:m._cur.w.x,h:m._cur.h.x});
+  const inspect=(old,oldVisual,t)=>{
+   const focus=m._focus,r=focus.getBoundingClientRect(),pad=focus.dataset.curPad!=null?+focus.dataset.curPad:7;
+   const target={x:r.left-pad,y:r.top-pad,w:r.width+pad*2,h:r.height+pad*2},v=visual(),css=getComputedStyle(m.cursorEl);
+   return{state:focus!==old,targetOwnerCorrect:m._cur.targetEl===focus,
+    targetError:Math.hypot(m._cur.x.target-target.x,m._cur.y.target-target.y,m._cur.w.target-target.w,m._cur.h.target-target.h),
+    syncMs:performance.now()-t,ringOn:m._cur.on,ringVisibility:css.visibility,ringOpacity:+css.opacity,
+    oldVisual,visual:v,transform:m.cursorEl.style.transform,
+    visualStarted:(v.x-oldVisual.x)*(target.x-oldVisual.x)+(v.y-oldVisual.y)*(target.y-oldVisual.y)>0,
+    firstAppearanceError:Math.hypot(v.x-target.x,v.y-target.y,v.w-target.w,v.h-target.h)};
+  };
+  const input=[];
+  for(const name of ['kbm','pad','touch'])for(let i=0;i<12;i++){
+   mode(name);const rows=m._candidates().filter(e=>e.dataset.nav==='row');
+   const a=rows[i%Math.max(1,rows.length-1)],b=rows[i%Math.max(1,rows.length-1)+1];
+   m._setFocus(a,{snap:true});m._updateCursor(1/60);const oldVisual=visual(),t=performance.now();dispatch(name,b);
+   input.push({mode:name,entry:name==='pad'?(g.input?'navigator.getGamepads -> Input.pollPad -> Game._padMenus -> Menus.nav':'Menus.nav fixture'):name==='kbm'?'DOM keydown':'DOM pointerdown',...inspect(a,oldVisual,t)});
+   m._updateCursor(1/60);
+  }
+  const modeSwitchInput=[];
+  for(const [from,to]of [['pad','kbm'],['kbm','pad'],['touch','kbm'],['touch','pad']]){
+   mode(from);const [a,b]=m._candidates().filter(e=>e.dataset.nav==='row');
+   m._setFocus(a,{snap:true});m._updateCursor(1/60);const beforeOn=m._cur.on,oldVisual=visual(),t=performance.now();dispatch(to,b);
+   modeSwitchInput.push({from,to,beforeOn,...inspect(a,oldVisual,t)});m._updateCursor(1/60);
+  }
+  return{input,modeSwitchInput};
+ }));
  // Prime the existing native fade in separate tasks before retirement. A
  // batched navigation probe alone can observe opacity 0 before its first paint.
  result.ringRetirement=[];

@@ -94,3 +94,13 @@ test('CI prepares the short persistent browser cache for validator, browser and 
  const browser=workflow.indexOf('name: Prepare workspace storage and browser');
  assert(workflow.indexOf('test "$(realpath -m "$CI_STORAGE")"',browser)<workflow.indexOf('sudo mkdir -p "$CI_STORAGE"',browser));
 });
+
+
+test('historical gameplay equality is scoped to the runtime workstream and does not block other gameplay PRs',()=>{
+ assert(workflow.includes("inputs.runtime_performance == true || (github.event_name == 'pull_request' && github.head_ref == 'inkwave/runtime-performance-ui')"));
+ for(const name of ['Profile runtime at immutable baseline','Profile candidate runtime and compare repeated evidence'])assert(workflow.includes("name: "+name+"\n        if: matrix.suite == 'active' && env.RUNTIME_PERFORMANCE == 'true'"));
+ assert(workflow.includes("if suite=='active' and runtime_performance:\n            checks.extend(['runtime-before/runtime-result.json','runtime-after/runtime-result.json','runtime-comparison.json'])"));
+ assert(workflow.includes("'runtimePerformance':runtime_performance"));
+ assert(workflow.includes("if runtime_performance:\n              assert reports['runtime-after/runtime-result.json']['sourceSha']==os.environ['SOURCE_SHA']"));
+ for(const gate of ['browser','motion','motion-detail','flow-render','wall-render'])assert(workflow.includes('node scripts/check-inkwave-'+gate+'.mjs'));
+});
