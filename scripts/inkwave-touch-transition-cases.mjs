@@ -537,8 +537,8 @@ export async function runTouchTransitionCases({
   assert(preRelayoutFixed.stickActive, 'Fixed stick active before relayout');
   assert(preRelayoutFixed.moveMag > 0, 'Fixed stick deflected before relayout');
 
-  // Trigger same-angle viewport relayout (height changes from 768 to 720, orientation angle remains 0)
-  await setViewport(1024, 720);
+  // Trigger same-angle viewport relayout (height changes from 768 to 400, orientation angle remains 0)
+  await setViewport(1024, 400);
 
   // Send touchMove at the exact same coordinate after relayout
   await gesture('touchMove', [{ id: 25, x: fixedMoveTarget.x, y: fixedMoveTarget.y }]);

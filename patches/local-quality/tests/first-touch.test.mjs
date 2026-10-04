@@ -24,7 +24,7 @@ test('first canvas touch delegates the original event once; other event paths st
   assert.equal(delivered.length, 1);
 });
 
-test('canvas bridge never steals menu, editor, map or suspended input', () => {
+test('canvas bridge never steals menu, editor, map or unavailable input', () => {
   const canvas = { ownerDocument: { hidden: false } };
   const fresh = () => ({ canvas, owner: { enabled: true }, visible: true, editing: false,
     mapOpen: false, _destroyed: false, _abort: new AbortController(), _ptr: new Map(),

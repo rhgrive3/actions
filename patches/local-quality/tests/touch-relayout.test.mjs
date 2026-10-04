@@ -21,14 +21,14 @@ function fixture() {
     gyro: { resync() { counts.resync++; } },
     resetPointers() { counts.reset++; this._ptr.clear(); this._stick.active = false; this.buttons.fire = false; },
     _layoutAll() { counts.layout++; this._stickR = env.innerHeight / 20; },
-    _stickUpdate() { this.moveX = (this._stick.x - this._stick.ox) / this._stickR; this.moveY = (this._stick.y - this._stick.oy) / this._stickR; } };
+    _stickUpdate() { const r = Math.max(26, this._stickR || 50); this.moveX = (this._stick.x - this._stick.ox) / r; this.moveY = (this._stick.y - this._stick.oy) / r; } };
   const layout = createTouchRelayout(mobile, env);
   const drain = () => { const queued = [...frames.values()]; frames.clear(); queued.forEach(fn => fn()); };
   return { env, mobile, frames, cancelled, counts, layout, drain };
 }
 
-test('same-angle keyboard aspect change preserves fire, look and stick without gyro reset', () => {
-  const f = fixture(), pointer = f.mobile._ptr.get(8);
+for (const mode of ['fixed', 'float']) test(`${mode} stick and holds survive a radius-clamped keyboard resize without gyro reset`, () => {
+  const f = fixture(), pointer = f.mobile._ptr.get(8); f.mobile.s = { stickMode: mode };
   f.env.innerHeight = 400; f.layout({ type: 'resize' });
   assert.equal(f.mobile.buttons.fire, true);
   assert.equal(f.mobile._ptr.get(8), pointer);
@@ -36,9 +36,9 @@ test('same-angle keyboard aspect change preserves fire, look and stick without g
   assert.equal(f.counts.reset, 0); assert.equal(f.counts.resync, 0);
   f.drain();
   assert.equal(f.mobile._stick.x, 120); assert.equal(f.mobile._stick.y, 200);
-  assert.equal(f.mobile.moveX, .4); assert.equal(f.mobile.moveY, -.2);
+  assert(Math.abs(f.mobile.moveX - .4) < 1e-12); assert(Math.abs(f.mobile.moveY + .2) < 1e-12);
   f.mobile._stick.x = 120; f.mobile._stick.y = 200; f.mobile._stickUpdate();
-  assert.equal(f.mobile.moveX, .4); assert.equal(f.mobile.moveY, -.2);
+  assert(Math.abs(f.mobile.moveX - .4) < 1e-12); assert(Math.abs(f.mobile.moveY + .2) < 1e-12);
 });
 
 test('resize storms and duplicate rotation notifications queue one frame and reset once', () => {

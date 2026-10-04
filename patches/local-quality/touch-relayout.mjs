@@ -34,13 +34,14 @@ export function createTouchRelayout(mobile, env = globalThis) {
     frame = env.requestAnimationFrame(() => {
       frame = null; unknownRotationPending = false;
       if (signal.aborted || mobile._destroyed) return;
-      const stick = mobile._stick, id = stick.id, radius = mobile._stickR;
+      const stick = mobile._stick, id = stick.id, radius = Math.max(26, mobile._stickR || 50);
       const held = stick.active && id >= 0 && radius > 0;
       const dx = stick.x - stick.ox, dy = stick.y - stick.oy;
       mobile._layoutAll();
       if (held && stick.active && stick.id === id && mobile._stickR > 0) {
-        // Preserve normalized deflection, keeping the actual finger coordinates.
-        const scale = mobile._stickR / radius;
+        // Both fixed and floating sticks keep normalized deflection and the actual
+        // finger coordinates; match _stickUpdate's minimum effective radius.
+        const scale = Math.max(26, mobile._stickR || 50) / radius;
         stick.ox = stick.x - dx * scale;
         stick.oy = stick.y - dy * scale;
         mobile._stickUpdate();
