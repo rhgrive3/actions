@@ -1534,18 +1534,13 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
-  "movement.wallRollMinimumInput": {
-    "value": 0.3,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
   "movement.roll.minimumSpeed": {
-    "value": 9.216,
+    "value": 8.7,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
   "movement.roll.minimumInput": {
-    "value": 0.3,
+    "value": 0,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
@@ -1589,6 +1584,11 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "movement.roll.speedGraceTime": {
+    "value": 0.16666666666666666,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
   "movement.surge.chargeTime": {
     "value": 0.75,
     "status": "derived from pinned extracted data; physical scale unverified",
@@ -1621,6 +1621,16 @@
   },
   "movement.surge.armorHP": {
     "value": 100,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "movement.surge.chargeMoveScale": {
+    "value": 0.25,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "movement.wallRollMaximumAngle": {
+    "value": 0.7853981633974483,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },

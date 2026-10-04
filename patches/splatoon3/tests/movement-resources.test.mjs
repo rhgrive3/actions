@@ -106,6 +106,9 @@ test('roll collision clipping persists instead of restoring its pre-collision la
   a.vel.set(0, 0, f.PLAYER.swimSpeed);
   a._integrate = () => { a.vel.x = 0; a.vel.z = 0; };
   f.tick(a); assert.ok(a.s3.roll);
+  // Neutral input preserves the clipped stop. A new directional input is now
+  // allowed to accelerate from zero rather than restoring launch velocity.
+  a.intent.move.set(0, 0, 0);
   a._integrate = () => {}; f.tick(a); close(a.vel.lengthSq() - a.vel.y ** 2, 0);
 });
 
