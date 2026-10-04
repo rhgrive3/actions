@@ -146,3 +146,10 @@ CharacterのT_DODGEはnative event/pose clockであり、gameplay tryDodgeの拒
 The first #60 + #324 + #62 combined browser run exposed a verifier-only race in the native-keyboard dodge proof. The proof used a synthetic `mousedown` solely to establish the independent held-fire precondition. With the platform/lifecycle integration present, a delayed pointer-lock transition could invalidate that synthetic held mouse state before the manual fixed-tick trial. The observed keyboard presses still reached Character, but they became ordinary jumps because the unrelated fire precondition had disappeared.
 
 The browser verifier now pins held fire through the game's existing canonical debug input for this admission-only trial while retaining real Playwright keyboard events for direction/release/repress. Cleanup forces fire off even after an assertion. This removes pointer-lock timing from the keyboard-edge proof without weakening the edge requirement or changing production input/gameplay code.
+
+
+## Final CI harness follow-up (2026-10-04)
+
+The first latest-head UI run failed after the reliability checks had already passed in Chromium/WebKit. The failure came from `check-inkwave-responsive.mjs`: ONLINE screen swaps intentionally keep the previous screen as `.is-leaving` for 340 ms, while the test used an unscoped strict `.iw-code-input` locator and therefore saw both the retiring and current room-code input.
+
+The acceptance runner now scopes room-code interactions to `.iw-online:not(.is-leaving) .iw-code-input`. This does not weaken geometry, visibility, typing, paste, join, or error-state checks; it binds them to the current screen owner and ignores only the explicitly retiring screen.
