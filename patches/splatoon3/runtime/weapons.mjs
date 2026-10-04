@@ -336,6 +336,10 @@ export function installWeapons(context, profile) {
   const auto = WeaponRunner.prototype._auto;
   WeaponRunner.prototype._auto = function (dt, input, w) {
     if (w.kind === 'shooter') {
+      // 0.1s is exactly 6 simulation frames by design. Normalize the tiny
+      // positive IEEE-754 remainder after six 1/60 decrements so cadence does
+      // not acquire an accidental seventh frame.
+      if (this.cooldown <= EPS) this.cooldown = 0;
       const pressed = !!input.fire && !this.s3ShooterHeld;
       if (!input.fire) this.s3ShooterHeld = false;
       else if (pressed && !this.s3ShooterPendingFirst) {
