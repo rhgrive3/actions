@@ -1,6 +1,6 @@
 # Final integration — Movement Physics + Sub/Special + Network Replication
 
-Latest main integration baseline: `f1f98db94af412fd584a459b11fc97346466a063`.
+Latest main integration baseline: `17602ab094da6efb663d872934458e818ae3c93e`.
 
 Latest source heads used:
 - PR #59 Movement Physics: `8880f3bf6aa655dd61a16555fdfdb8b8fec1d10a`
@@ -69,6 +69,8 @@ For the networked Bomb scenario the acceptance harness requires:
 - ghost-authored authoritative replacement paint: 0 by the existing mute/ghost guards
 
 A combined movement snapshot regression drives Kid, Squid and Roller velocity through the Movement Physics integrator, publishes the resulting owner state on the replication path and verifies remote position/velocity at the same owner tick within existing wire precision.
+
+The earlier combined CI on main `f1f98db94af412fd584a459b11fc97346466a063` completed all validate + active/network/catalog/ui browser jobs green in run `37199540039`. The subsequently-landed main commit `17602ab094da6efb663d872934458e818ae3c93e` changes only validation parallelism/sharding; this final integration preserves that newer CI architecture and adds the network shard/gates on top.
 
 The first combined CI attempt reached 754/754 gameplay patch tests before failing only in the newly-added integration-test fixture: the test passed the wrong synthetic runner shape to `rollingMovementSpeed`. The production implementation was not implicated. The fixture now uses the production `runner.a.weapon + runner.rollT` shape.
 
