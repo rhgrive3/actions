@@ -167,6 +167,7 @@ test('off, lifecycle epoch change, timeout and dispose invalidate pending gyro o
   h.lifecycle.epoch++;h.lifecycle.state='SUSPENDED';h.lifecycle.lastEvent='visibilitychange';
   o.resolve('granted');m.resolve('granted');await flush();
   assert.notEqual(access.permission,'granted');
+  assert.equal(access.motionPermission,'prompt','stale optional motion permission cannot cross a lifecycle epoch');
   h.fireTimers();assert.equal(await p,false);
   assert.equal(access.state,'temporarily-unavailable');
   assert.equal(access.reason,'permission-timeout');
