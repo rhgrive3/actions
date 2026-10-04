@@ -3,11 +3,12 @@
 import fs from 'node:fs';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
+import { adaptFirstTouch } from './first-touch-adapter.mjs';
 
 export const QUALITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
 const IDENTITY_FILES = [
   'adapter.mjs', 'gyro.mjs', 'install.mjs', 'menu-preview.mjs', 'menu.mjs',
-  'roller-motion.mjs', 'roller-visual.mjs', 'surface.mjs',
+  'roller-motion.mjs', 'roller-visual.mjs', 'surface.mjs', 'first-touch-adapter.mjs',
 ];
 
 export function replaceOnce(code, before, after, label) {
@@ -19,6 +20,7 @@ export function replaceOnce(code, before, after, label) {
 }
 
 export function adaptQualitySource(rel, code) {
+  if (rel === 'src/core/mobile.js') return adaptFirstTouch(rel, code);
   if (rel === 'src/ui/menu-art.js') {
     code = replaceOnce(code,
       'export function createPreview(key, ctx = {}) {',
