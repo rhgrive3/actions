@@ -153,3 +153,8 @@ The browser verifier now pins held fire through the game's existing canonical de
 The first latest-head UI run failed after the reliability checks had already passed in Chromium/WebKit. The failure came from `check-inkwave-responsive.mjs`: ONLINE screen swaps intentionally keep the previous screen as `.is-leaving` for 340 ms, while the test used an unscoped strict `.iw-code-input` locator and therefore saw both the retiring and current room-code input.
 
 The acceptance runner now scopes room-code interactions to `.iw-online:not(.is-leaving) .iw-code-input`. This does not weaken geometry, visibility, typing, paste, join, or error-state checks; it binds them to the current screen owner and ignores only the explicitly retiring screen.
+
+
+### Active-browser keyboard focus ordering
+
+The combined active-browser proof exposed one more test-ordering issue: the independent held-fire precondition was established before Playwright sent the physical keyboard events. A legitimate focus/lifecycle boundary reset can clear mouse-held state during that transition, leaving the subsequent Space press as a jump instead of a dualies dodge. The runner now sends the physical keyboard events first, then establishes and asserts the held-fire precondition immediately before each fixed-tick trial. This keeps the keyboard edge under test physical while making the independent dodge admission precondition deterministic.
