@@ -238,14 +238,15 @@ Issue #479 の修正（`patches/splatoon3/issue-479-adapter.mjs` および `patc
 2. **ラッパー順序非依存・正式移動射出の認識**: `installMovement` が武器／フリーフォール後にインストールされる順序でも、イカロール（`squidroll`）やイカノボリ（`squidsurge` / `squidsurge_top`）の正式射出を正しく認識し、自然落下と誤判定せず即座に縦振りを選択。
 3. **非ローラーアクターの軽量ガード**: 非ローラーアクター（シューター、チャージャー等）は `isRollerActor` ガードにより毎フレームのラッパー・クロージャ生成を完全に排除し、通常移動速度を維持。
 4. **経過時間基準の境界（dt不変性）**: 境界判定を `25 / 60` 秒（`S3_ROLLER_NATURAL_FREEFALL_GRACE_SEC`）の経過秒数に基づかせ、`dt = 1/120` 等の小刻みな更新間隔でも tick 数と秒数が競合することなく一貫した猶予期間を保証。
+5. **カタログ診断シナリオ（roller-vertical-land）の正式射出受付の整合**: モーションカタログ（`scripts/check-inkwave-motion-catalog.mjs`）の `roller-vertical-land` は物理統合のみで空中初速を注入していたため、25F grace により誤って横振りが選択され swing フェーズ RGB サンプルが欠落していた。ネイティブの正式ジャンプ受付（`ch.trigger('jump')` および `api.emit('actor:jump')`）を実行して即時縦振りを発生させ、`recordMovementLaunch` / `selectRollerFlickVertical` / `reset` 側でもトリガーフックを確実に同期するよう修正。
 
 | 項目 | 内容 |
 |---|---|
 | 本家の根拠 | [Splatoon 3 攻略＆検証 Wiki — ローラー属](https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%83%AD%E3%83%BC%E3%83%A9%E3%83%BC%E5%B1%9E) および [Inkipedia — Roller](https://splatoonwiki.org/wiki/Roller)。崖落ち・金網抜け等のジャンプを伴わない空中落下開始から25F間は横振りが維持され、25F経過後に縦振りへ移行する。 |
-| INKWAVE の実装箇所 | `patches/splatoon3/runtime/roller-freefall.mjs`（`selectRollerFlickVertical`, `installActorFreefallHooks`, `stepAirborneTransition`, `recordMovementLaunch`, `isMovementLaunchActive`）および `patches/splatoon3/issue-479-adapter.mjs`（`adaptIssue479`）。`patches/splatoon3/runtime/roller.mjs` の新規攻撃開始判定で `selectRollerFlickVertical(a, this)` を参照。 |
+| INKWAVE の実装箇所 | `patches/splatoon3/runtime/roller-freefall.mjs`（`selectRollerFlickVertical`, `installActorFreefallHooks`, `stepAirborneTransition`, `recordMovementLaunch`, `isMovementLaunchActive`）、`patches/splatoon3/issue-479-adapter.mjs`（`adaptIssue479`）、および `scripts/check-inkwave-motion-catalog.mjs`（`roller-vertical-land`）。`patches/splatoon3/runtime/roller.mjs` の新規攻撃開始判定で `selectRollerFlickVertical(a, this)` を参照。 |
 | 再現操作 | ローラーを装備し平地の端からジャンプ（B）を入力せずに前進して落下。落下後 1F, 10F, 20F, 25F で ZR を入力すると横振り（21F風切り、12+1弾扇状拡散）、26F以降で ZR を入力すると縦振り（26F風切り、5弾直線拡散）。対照としてBジャンプ空中1F、またはイカロール／イカノボリ後の空中射撃は即座に縦振り。コヨーテ失効後の空中B入力は横振りを維持。 |
 | プレイへの影響 | 段差や高台端からの飛び降り撃ちにおいて、スプラトゥーン2/3の操作感覚どおりに近接の横振りを即座に出せるようになり、不本意な縦振り（硬直増・横幅減少）への誤化を防止。 |
-| 確認状態 | **ロジック確認済み**（source-fixture、Actor 実 tick、FixedClock による 30Hz / 60Hz / 120Hz シミュレーション完全一致、未承認入力ネガティブシナリオ、イカロール・ノボリ正式射出、ネガティブコントロール検証）。**Switch 実機での精密ポーズ・着地直前微小落下距離の物理的確証は未確認**。本修正は25F graceおよび選択モードのラッチのみを対象とし、他ブキや既存ローラー数値（ダメージ・インク消費・射程・拡散角）は一切改変していない。 |
+| 確認状態 | **ロジック確認済み**（source-fixture、Actor 実 tick、FixedClock による 30Hz / 60Hz / 120Hz シミュレーション完全一致、未承認入力ネガティブシナリオ、イカロール・ノボリ正式射出、ネガティブコントロール検証、モーションカタログ `roller-vertical-land` 縦振り startup/swing/recovery 全 RGB サンプル通過）。**Switch 実機での精密ポーズ・着地直前微小落下距離の物理的確証は未確認**。本修正は25F graceおよび選択モードのラッチのみを対象とし、他ブキや既存ローラー数値（ダメージ・インク消費・射程・拡散角）は一切改変していない。 |
 ## イカノボリ部分チャージのアーマー付与（#473、2026-10-05）
 
 スプラトゥーン3（Ver. 11.3.0）のイカノボリ（Squid Surge）は、完全チャージ（目元発光／45F）に達する前の早期解放（部分チャージ）でも発進動作として成立し、壁からの飛び出し（launch）直後には壁イカロールと同等の短時間アーマーが付与される。INKWAVE の baseline では移動ランタイムにおいて `surge.armorTime = surge.charge >= 1 ? cfg.surge.armorTime : 0;` と完全チャージ（100%）時のみにアーマーが限定されており、1F〜44F の有効な部分チャージ発進時にアーマー保護が一切得られないバイナリクリフが生じていた。
