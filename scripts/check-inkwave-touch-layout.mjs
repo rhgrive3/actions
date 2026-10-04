@@ -108,8 +108,9 @@ try {
         assert.equal(firstRow, '_layout', 'Layout editing must be the first touch setting');
         await page.locator('.iw-row').first().tap();
         assert(await page.evaluate(() => mobile.editing));
-        assert.equal(await page.locator('.iwm-layout-control option').count(), 9);
-        entry.checks.push('settings-entry-and-nine-controls');
+        const expectedControls = ['fire', 'jump', 'stick', 'squid', 'sub', 'special', 'map', ...(built ? ['cameraReset'] : []), 'gyro', 'pause'];
+        assert.deepEqual(await page.locator('.iwm-layout-control option').evaluateAll(options => options.map(option => option.value)), expectedControls);
+        entry.checks.push('settings-entry-and-exact-control-registry');
         const bars = await page.locator('.iwm-edit__bar, .iwm-edit__sel').evaluateAll(els => els.map(el => {
           const r = el.getBoundingClientRect(); return { x: r.x, right: r.right, y: r.y, bottom: r.bottom, w: innerWidth, h: innerHeight };
         }));
