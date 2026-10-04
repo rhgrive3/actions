@@ -145,7 +145,7 @@ try {
             entry.coreMenus = 'desktop-composition-passed';
             await show(page, 'online');
           }
-          entry.nativeInputHidden = await page.locator('.iw-code-input').count() === 0 || !(await page.locator('.iw-code-input').isVisible());
+          entry.nativeInputHidden = await page.locator('.iw-online:not(.is-leaving) .iw-code-input').count() === 0 || !(await page.locator('.iw-online:not(.is-leaving) .iw-code-input').isVisible());
           assert(entry.nativeInputHidden);
           const slot = page.locator('.iw-code__box').first(); await slot.click();
           await page.keyboard.type('bc'); await page.keyboard.press('Backspace');
@@ -168,14 +168,14 @@ try {
         entry.screens.online = await geometry(page, '.iw-code-input, .iw-join__btns button, .iw-hubcard--create, .iw-hub__chip, .iw-online .iw-backbtn', 'online');
         await page.screenshot({ path: path.join(evidence, `${engineName}-${name}-online.png`) });
         if (audit) continue;
-        await tap(page, '.iw-code-input');
-        assert.equal(await page.locator('.iw-code-input').evaluate((el) => document.activeElement === el), true);
-        await page.locator('.iw-code-input').fill('bc');
-        await page.locator('.iw-code-input').press('Backspace');
-        assert.equal(await page.locator('.iw-code-input').inputValue(), 'B');
-        await page.locator('.iw-code-input').fill('BO1-C');
-        assert.equal(await page.locator('.iw-code-input').inputValue(), 'BC');
-        await page.locator('.iw-code-input').fill('BC234');
+        await tap(page, '.iw-online:not(.is-leaving) .iw-code-input');
+        assert.equal(await page.locator('.iw-online:not(.is-leaving) .iw-code-input').evaluate((el) => document.activeElement === el), true);
+        await page.locator('.iw-online:not(.is-leaving) .iw-code-input').fill('bc');
+        await page.locator('.iw-online:not(.is-leaving) .iw-code-input').press('Backspace');
+        assert.equal(await page.locator('.iw-online:not(.is-leaving) .iw-code-input').inputValue(), 'B');
+        await page.locator('.iw-online:not(.is-leaving) .iw-code-input').fill('BO1-C');
+        assert.equal(await page.locator('.iw-online:not(.is-leaving) .iw-code-input').inputValue(), 'BC');
+        await page.locator('.iw-online:not(.is-leaving) .iw-code-input').fill('BC234');
         await page.waitForTimeout(500);
         assert.equal(await page.evaluate(() => G.net.state), 'offline', 'native typing must allow correction before joining');
         await tap(page, '.iw-join__btns .is-go');
@@ -214,19 +214,19 @@ try {
         assert.equal(await page.evaluate(() => G.net.lobby.players.find((p) => p.you).ready), true);
         await page.evaluate(() => G.net.leave());
         await show(page, 'online');
-        await page.locator('.iw-code-input').fill('ZZZZZ');
+        await page.locator('.iw-online:not(.is-leaving) .iw-code-input').fill('ZZZZZ');
         await tap(page, '.iw-join__btns .is-go');
         await page.waitForFunction(() => document.querySelector('.iw-jstat')?.classList.contains('is-on'));
-        assert.equal(await page.locator('.iw-code-input').isDisabled(), false);
-        await page.locator('.iw-code-input').evaluate((el) => {
+        assert.equal(await page.locator('.iw-online:not(.is-leaving) .iw-code-input').isDisabled(), false);
+        await page.locator('.iw-online:not(.is-leaving) .iw-code-input').evaluate((el) => {
           const clipboardData = new DataTransfer(); clipboardData.setData('text/plain', 'Join my room: BC234');
           el.dispatchEvent(new ClipboardEvent('paste', { clipboardData, bubbles: true, cancelable: true }));
         });
-        assert.equal(await page.locator('.iw-code-input').inputValue(), 'BC234');
+        assert.equal(await page.locator('.iw-online:not(.is-leaving) .iw-code-input').inputValue(), 'BC234');
         await page.waitForTimeout(500);
         assert.equal(await page.evaluate(() => G.net.state), 'error', 'native paste must wait for JOIN');
         await page.evaluate(() => menus.setInputMode('kbm'));
-        assert.equal(await page.locator('.iw-code-input').isVisible(), true, 'touch device layout must survive an attached keyboard or compatibility mouse event');
+        assert.equal(await page.locator('.iw-online:not(.is-leaving) .iw-code-input').isVisible(), true, 'touch device layout must survive an attached keyboard or compatibility mouse event');
         assert.equal(await page.locator('.iw-online').evaluate((el) => getComputedStyle(el).overflowY), 'auto');
         await page.evaluate(() => menus.setInputMode('touch'));
         await page.evaluate(() => G.net.leave());
