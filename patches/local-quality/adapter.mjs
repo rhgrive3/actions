@@ -19,18 +19,6 @@ export function replaceOnce(code, before, after, label) {
 }
 
 export function adaptQualitySource(rel, code) {
-  if (rel === 'src/core/renderer.js') {
-    return replaceOnce(code, '    this.composer.render();',
-      '    // Simulation/animation have committed transforms before this transaction.\n' +
-      '    // Beauty, normal/GTAO and nested sea reflection consume the same scene.\n' +
-      '    // Update its matrices once; restore ownership even if a pass throws.\n' +
-      '    const scene = this.scene, auto = scene.matrixWorldAutoUpdate;\n' +
-      '    if (!auto) { this.composer.render(); return; }\n' +
-      '    scene.updateMatrixWorld();\n' +
-      '    scene.matrixWorldAutoUpdate = false;\n' +
-      '    try { this.composer.render(); } finally { scene.matrixWorldAutoUpdate = auto; }',
-      'render scene matrix transaction');
-  }
   if (rel === 'src/ui/menus.js') {
     code = replaceOnce(code,
       "    if (typeof ResizeObserver !== 'undefined') new ResizeObserver(this._refit).observe(this.el);",
