@@ -1305,6 +1305,54 @@
       "status": "extracted",
       "unit": "gear effect ratio",
       "notes": "Per-weapon override; unchanged endpoints reuse the pinned common curve. No omitted default reconstructed."
+    },
+    "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/SplashPaintParam/WidthHalfMinCharge": {
+      "value": 0.78,
+      "pointer": "/GameParameters/SplashPaintParam/WidthHalfMinCharge",
+      "sourceId": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Pinned field. Runtime uses ratios on legacy width anchor, not absolute scale."
+    },
+    "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/SplashPaintParam/WidthHalfFullCharge": {
+      "value": 1.56,
+      "pointer": "/GameParameters/SplashPaintParam/WidthHalfFullCharge",
+      "sourceId": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Pinned field. Runtime uses ratios on legacy width anchor, not absolute scale."
+    },
+    "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/SplashPaintParam/DepthHalfMinCharge": {
+      "value": 2.73,
+      "pointer": "/GameParameters/SplashPaintParam/DepthHalfMinCharge",
+      "sourceId": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Pinned field. Runtime uses ratios on legacy width anchor, not absolute scale."
+    },
+    "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/SplashPaintParam/DepthHalfFullCharge": {
+      "value": 1.56,
+      "pointer": "/GameParameters/SplashPaintParam/DepthHalfFullCharge",
+      "sourceId": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Pinned field. Runtime uses ratios on legacy width anchor, not absolute scale."
+    },
+    "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/CollisionParam/InitRadiusForPlayer": {
+      "value": 0.125,
+      "pointer": "/GameParameters/CollisionParam/InitRadiusForPlayer",
+      "sourceId": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Weapon-side radius. Conversion is calibrated to existing Shooter allowance, not an absolute S3/WU mapping."
+    },
+    "data/parameter/1130/weapon/WeaponShooterNormal.game__GameParameterTable.json#/GameParameters/CollisionParam/InitRadiusForPlayer": {
+      "value": 0.285,
+      "pointer": "/GameParameters/CollisionParam/InitRadiusForPlayer",
+      "sourceId": "data/parameter/1130/weapon/WeaponShooterNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Weapon-side radius. Conversion is calibrated to existing Shooter allowance, not an absolute S3/WU mapping."
     }
   }
 }

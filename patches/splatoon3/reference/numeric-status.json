@@ -204,6 +204,16 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "weapons.shooter.playerHitRadius": {
+    "value": 0.131,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponShooterNormal.game__GameParameterTable.json#/GameParameters/CollisionParam/InitRadiusForPlayer",
+      "index": null,
+      "factor": 0.4596491228070176,
+      "rawValue": 0.285
+    }
+  },
   "weapons.dualies.inkPerShot": {
     "value": 0.72,
     "status": "derived from pinned extracted data; physical scale unverified",
@@ -792,6 +802,61 @@
       "index": null,
       "factor": 0.1,
       "rawValue": 800
+    }
+  },
+  "weapons.charger.postShotSwimTime": {
+    "value": 0.25,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.charger.playerHitRadius": {
+    "value": 0.0574561403508772,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/CollisionParam/InitRadiusForPlayer",
+      "index": null,
+      "factor": 0.4596491228070176,
+      "rawValue": 0.125
+    }
+  },
+  "weapons.charger.linePaint.widthMin": {
+    "value": 0.78,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/SplashPaintParam/WidthHalfMinCharge",
+      "index": null,
+      "factor": 1,
+      "rawValue": 0.78
+    }
+  },
+  "weapons.charger.linePaint.widthMax": {
+    "value": 1.56,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/SplashPaintParam/WidthHalfFullCharge",
+      "index": null,
+      "factor": 1,
+      "rawValue": 1.56
+    }
+  },
+  "weapons.charger.linePaint.depthMin": {
+    "value": 2.73,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/SplashPaintParam/DepthHalfMinCharge",
+      "index": null,
+      "factor": 1,
+      "rawValue": 2.73
+    }
+  },
+  "weapons.charger.linePaint.depthMax": {
+    "value": 1.56,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/SplashPaintParam/DepthHalfFullCharge",
+      "index": null,
+      "factor": 1,
+      "rawValue": 1.56
     }
   },
   "weapons.roller.rollSpeed": {

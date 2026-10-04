@@ -18,6 +18,7 @@
     "src/game/physics.js": "69cef214461935a77ec3a167b70d50fd0e35a953334cd837ab9b8c037da5bb48",
     "src/core/ctx.js": "3bac560e4a49b949890b54f7cbbdf9c7ed378aa2c9a1c3878b1d6df2589e5c04",
     "src/game/character.js": "264230c01feb1eaae2967ee5c990d59b5711cd412647031f0e7767febfb26c8d",
-    "src/game/character-weapons.js": "aa6f865e329016aff6efac127ee69dd288b046a911f89189466a4f18c68f5f89"
+    "src/game/character-weapons.js": "aa6f865e329016aff6efac127ee69dd288b046a911f89189466a4f18c68f5f89",
+    "src/game/cameraRig.js": "c00a66368c0f2175a53db212bb8fdd8bc812d15958119bd5927bcad5a726c7c7"
   }
 }

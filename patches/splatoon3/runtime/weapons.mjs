@@ -1,3 +1,4 @@
+import { installChargerSurface } from './charger-surface.mjs';
 import { installRollerLogic } from './roller.mjs';
 let api;
 export function splatlingBurst(w, charge) {
@@ -158,8 +159,8 @@ export function installWeapons(context, profile) {
     for (const e of G.actors) {
       if (!e.alive || e.team === a.team) continue;
       const base = e.pos.clone(); base.y += e.smoothY || 0;
-      Physics.segmentCapsuleDist(muzzle, end, base, PLAYER.radius + .12, e.form === 'squid' ? PLAYER.squidHeight : PLAYER.height, result);
-      if (result.dist < PLAYER.radius + .14) victims.push({ actor: e, distance: result.t * length });
+      Physics.segmentCapsuleDist(muzzle, end, base, PLAYER.radius, e.form === 'squid' ? PLAYER.squidHeight : PLAYER.height, result);
+      if (result.dist < PLAYER.radius + w.playerHitRadius) victims.push({ actor: e, distance: result.t * length });
     }
     const actors = G.actors;
     try { G.actors = []; fireCharger.call(this, a, w, charge); }
@@ -198,4 +199,5 @@ export function installWeapons(context, profile) {
     if (this.rolling && w.rollBaseSpeed) return this.rollT >= w.rollDashTime ? w.rollSpeed : w.rollBaseSpeed;
     return moveSpeed.call(this);
   };
+  installChargerSurface(api);
 }

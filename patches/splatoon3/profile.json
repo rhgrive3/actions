@@ -28,7 +28,8 @@
       "straightTime": 0.06666666666666667,
       "referenceGravity": 57.6,
       "inkRecoverStop": 0.3333333333333333,
-      "range": 12.9
+      "range": 12.9,
+      "playerHitRadius": 0.131
     },
     "dualies": {
       "inkPerShot": 0.72,
@@ -120,7 +121,16 @@
       "keepChargeTime": 1.25,
       "chargeTime": 1,
       "inkRecoverStop": 0.3333333333333333,
-      "damagePartialMax": 80
+      "damagePartialMax": 80,
+      "scopedCharge": false,
+      "postShotSwimTime": 0.25,
+      "playerHitRadius": 0.0574561403508772,
+      "linePaint": {
+        "widthMin": 0.78,
+        "widthMax": 1.56,
+        "depthMin": 2.73,
+        "depthMax": 1.56
+      }
     },
     "roller": {
       "rollSpeed": 7.92,
@@ -373,7 +383,11 @@
       "Surge burst velocity/armor/partial charge and post-wall air control (including the Ver.11.3.0 lateral-distance fix); 45F base charge timing is pinned",
       "HP regen delay/rate and enemy ink grace/contact-damage recovery; post-movement contact and partial-tick grace arithmetic are regression-verified only",
       "superjump airborne vulnerability window/trajectory/landing paint and respawn timing/armor; raw 80F preparation/138F flight are pinned and landing protection is removed per Nintendo 9.3.0 fix",
-      "aim response, gyro, animation, terrain/network and physical-device validation; see movement-resources comparison matrix and Switch/iOS/two-peer measurement protocol"
+      "aim response, gyro, animation, terrain/network and physical-device validation; see movement-resources comparison matrix and Switch/iOS/two-peer measurement protocol",
+      "Charger/Shooter player hit radii preserve 0.125/0.285 ratio using existing Shooter effective allowance .131WU (0.15 - 0.05*0.38), not absolute Nintendo-to-world calibration. Capsule distance is axis distance; actor radius is added once.",
+      "Charger 15F post-shot swim interval is Wiki-observed timing, not a raw extracted FreezeFrame. Wikiwiki 16F from freeze start includes the 1F release frame.",
+      "Charger line paint anchors minimum width at existing 0.44WU. Reference width/depth ratios are transferred; native asymmetric smear, charge interpolation and 3D surface projection are not calibrated S3 footprints.",
+      "Unscoped Charger suppresses charge-induced camera zoom and boom offset. Future scoped weapon camera curve remains uncalibrated."
     ],
     "movementResourcesEvidence": "reports/inkwave-movement-resources-2026-10-02.md"
   },
@@ -1163,6 +1177,42 @@
       "index": 2,
       "factor": 0.016666666666666666,
       "rawValue": 138
+    },
+    "weapons.charger.linePaint.widthMin": {
+      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/SplashPaintParam/WidthHalfMinCharge",
+      "index": null,
+      "factor": 1,
+      "rawValue": 0.78
+    },
+    "weapons.charger.linePaint.widthMax": {
+      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/SplashPaintParam/WidthHalfFullCharge",
+      "index": null,
+      "factor": 1,
+      "rawValue": 1.56
+    },
+    "weapons.charger.linePaint.depthMin": {
+      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/SplashPaintParam/DepthHalfMinCharge",
+      "index": null,
+      "factor": 1,
+      "rawValue": 2.73
+    },
+    "weapons.charger.linePaint.depthMax": {
+      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/SplashPaintParam/DepthHalfFullCharge",
+      "index": null,
+      "factor": 1,
+      "rawValue": 1.56
+    },
+    "weapons.charger.playerHitRadius": {
+      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/CollisionParam/InitRadiusForPlayer",
+      "index": null,
+      "factor": 0.4596491228070176,
+      "rawValue": 0.125
+    },
+    "weapons.shooter.playerHitRadius": {
+      "parameter": "data/parameter/1130/weapon/WeaponShooterNormal.game__GameParameterTable.json#/GameParameters/CollisionParam/InitRadiusForPlayer",
+      "index": null,
+      "factor": 0.4596491228070176,
+      "rawValue": 0.285
     }
   },
   "gearExtra": {
