@@ -7,11 +7,14 @@
 // 1. First touch transition from kbm and pad targeting real canvas under hidden overlay
 //    (do not directly target overlay). Activates FIRE, JUMP, look, stick, followed by
 //    subsequent move, up, and cancel.
-// 2. No duplicate edge on already-visible overlay.
+// 2. No duplicate edge on already-visible overlay with instrumented _down/_press router calls.
 // 3. Reject noncanvas menu/HUD targets and hidden gameplay controls.
 // 4. Same-angle actual viewport resize and resize storm holding FIRE, stick, and look.
-// 5. True rotation clears all old ownership.
-// 6. Repeated transitions and cleanup after destroy.
+// 5. Fixed-stick same-coordinate movement after same-angle viewport relayout.
+// 6. Keyboard aspect flip with fixed angle preserving owned hold with no gyro resync.
+// 7. True rotation clears all old ownership.
+// 8. Native lostpointercapture cleanup of holds, edges, and tracked pointers.
+// 9. Repeated transitions and cleanup after destroy.
 //
 // Execution engines:
 // - Chromium: native CDP touch events ('native-CDP-touch')
@@ -344,17 +347,57 @@ export async function runTouchTransitionCases({
   }));
   assert(activeOverlayState.overlayActive, 'Overlay must be active before test');
 
-  // Touch visible FIRE button
-  await gesture('touchStart', [{ id: 14, x: fireBox.x, y: fireBox.y }]);
-  const visibleEdgeState = await page.evaluate(() => ({
-    fireDown: mobile.down('fire'),
-    pressedEdges: [...mobile.pressed].filter(e => e === 'fire').length,
-    ptrSize: mobile._ptr.size,
-  }));
-  assert(visibleEdgeState.fireDown);
-  assert.equal(visibleEdgeState.pressedEdges, 1, 'Exactly one fire edge registered on visible overlay');
-  assert.equal(visibleEdgeState.ptrSize, 1, 'Exactly one active pointer in _ptr');
-  await gesture('touchEnd', []);
+  // Instrument actual mobile._down and mobile._press call counts before visible-overlay test
+  await page.evaluate(() => {
+    window._testSpies = {
+      origDown: mobile._down,
+      origPress: mobile._press,
+      downCalls: 0,
+      pressCalls: 0,
+    };
+    mobile._down = function(...args) {
+      window._testSpies.downCalls++;
+      return window._testSpies.origDown.apply(this, args);
+    };
+    mobile._press = function(...args) {
+      window._testSpies.pressCalls++;
+      return window._testSpies.origPress.apply(this, args);
+    };
+  });
+
+  try {
+    // Touch visible FIRE button
+    await gesture('touchStart', [{ id: 14, x: fireBox.x, y: fireBox.y }]);
+    const visibleEdgeState = await page.evaluate(() => {
+      const spies = window._testSpies || {};
+      return {
+        downCalls: spies.downCalls ?? 0,
+        pressCalls: spies.pressCalls ?? 0,
+        fireDown: mobile.down('fire'),
+        pressedEdges: [...mobile.pressed].filter(e => e === 'fire').length,
+        pendingEdgesSize: mobile._pendingEdges?.size ?? 0,
+        ptrSize: mobile._ptr.size,
+      };
+    });
+
+    // Assert exactly one original router execution, plus _pendingEdges.size == 1
+    assert.equal(visibleEdgeState.downCalls, 1, 'Exactly one mobile._down router call');
+    assert.equal(visibleEdgeState.pressCalls, 1, 'Exactly one mobile._press call');
+    assert.equal(visibleEdgeState.pendingEdgesSize, 1, '_pendingEdges.size must equal 1');
+    assert(visibleEdgeState.fireDown, 'FIRE button is held down');
+    assert.equal(visibleEdgeState.pressedEdges, 1, 'Exactly one fire edge registered on visible overlay');
+    assert.equal(visibleEdgeState.ptrSize, 1, 'Exactly one active pointer in _ptr');
+  } finally {
+    // Restore spies after checks
+    await page.evaluate(() => {
+      if (window._testSpies) {
+        mobile._down = window._testSpies.origDown;
+        mobile._press = window._testSpies.origPress;
+        delete window._testSpies;
+      }
+    });
+    await gesture('touchEnd', []);
+  }
   entry.checks.push('visible-overlay-touch-does-not-duplicate-edges');
 
   // =========================================================================
@@ -473,6 +516,122 @@ export async function runTouchTransitionCases({
   entry.checks.push('same-angle-viewport-resize-and-storm-preserve-held-fire-stick-look-ownership');
 
   // =========================================================================
+  // 7b. FIXED-STICK SAME-COORDINATE MOVEMENT AFTER SAME-ANGLE VIEWPORT RELAYOUT
+  // =========================================================================
+  await resetMobileState();
+  await page.evaluate(() => {
+    mobile.s.stickMode = 'fixed';
+    mobile._layoutAll();
+  });
+  const fixedStickBox = await page.evaluate(() => {
+    const b = mobile._box('stick');
+    return { x: Math.round(b.x), y: Math.round(b.y) };
+  });
+
+  const fixedMoveTarget = { x: fixedStickBox.x + 35, y: fixedStickBox.y - 25 };
+  await gesture('touchStart', [{ id: 25, x: fixedStickBox.x, y: fixedStickBox.y }]);
+  await gesture('touchMove', [{ id: 25, x: fixedMoveTarget.x, y: fixedMoveTarget.y }]);
+
+  const preRelayoutFixed = await page.evaluate(() => ({
+    stickActive: mobile._stick.active,
+    stickId: mobile._stick.id,
+    moveMag: Math.hypot(mobile.moveX, mobile.moveY),
+  }));
+  assert(preRelayoutFixed.stickActive, 'Fixed stick active before relayout');
+  assert(preRelayoutFixed.moveMag > 0, 'Fixed stick deflected before relayout');
+
+  // Trigger same-angle viewport relayout (height changes from 768 to 720, orientation angle remains 0)
+  await setViewport(1024, 720);
+
+  // Send touchMove at the exact same coordinate after relayout
+  await gesture('touchMove', [{ id: 25, x: fixedMoveTarget.x, y: fixedMoveTarget.y }]);
+  const postRelayoutFixed = await page.evaluate(() => ({
+    stickActive: mobile._stick.active,
+    stickId: mobile._stick.id,
+    moveMag: Math.hypot(mobile.moveX, mobile.moveY),
+  }));
+  assert(postRelayoutFixed.stickActive, 'Fixed stick must preserve active hold after same-angle relayout');
+  assert.equal(postRelayoutFixed.stickId, 25, 'Fixed stick must preserve pointerId');
+  assert(postRelayoutFixed.moveMag > 0, 'Fixed stick must preserve movement deflection on same-coordinate movement');
+
+  await gesture('touchEnd', []);
+  await page.evaluate(() => {
+    mobile.s.stickMode = 'float';
+    mobile._layoutAll();
+  });
+  await setViewport(1024, 768);
+  entry.checks.push('fixed-stick-same-coordinate-movement-after-same-angle-relayout');
+
+  // =========================================================================
+  // 7c. KEYBOARD ASPECT FLIP WITH FIXED ANGLE (768x1024 -> 768x400)
+  //     MUST PRESERVE OWNED HOLD, NO GYRO RESYNC
+  // =========================================================================
+  await resetMobileState();
+  await page.evaluate(() => {
+    if (screen.orientation) {
+      try { Object.defineProperty(screen.orientation, 'angle', { value: 0, configurable: true, writable: true }); } catch {}
+    }
+    if ('orientation' in window) {
+      try { Object.defineProperty(window, 'orientation', { value: 0, configurable: true, writable: true }); } catch {}
+    }
+  });
+  await setViewport(768, 1024);
+
+  const portraitFire = await page.evaluate(() => {
+    const f = mobile._box('fire');
+    return { x: Math.round(f.x), y: Math.round(f.y) };
+  });
+
+  await gesture('touchStart', [{ id: 26, x: portraitFire.x, y: portraitFire.y }]);
+  const preFlipHold = await page.evaluate(() => ({
+    fireDown: mobile.down('fire'),
+    hasPtr: mobile._ptr.has(26),
+  }));
+  assert(preFlipHold.fireDown && preFlipHold.hasPtr, 'FIRE hold established in portrait layout');
+
+  // Spy on mobile.gyro.resync to assert no gyro resync occurs on keyboard aspect flip
+  await page.evaluate(() => {
+    window._gyroSpy = {
+      origResync: mobile.gyro.resync,
+      resyncCalls: 0,
+    };
+    mobile.gyro.resync = function(...args) {
+      window._gyroSpy.resyncCalls++;
+      return window._gyroSpy.origResync.apply(this, args);
+    };
+  });
+
+  try {
+    // Keyboard appearance flips aspect ratio from portrait (768x1024) to landscape (768x400)
+    // while screen angle remains fixed at 0
+    await setViewport(768, 400);
+
+    const postFlipState = await page.evaluate(() => {
+      const spy = window._gyroSpy || {};
+      return {
+        fireDown: mobile.down('fire'),
+        hasPtr: mobile._ptr.has(26),
+        ptrSize: mobile._ptr.size,
+        resyncCalls: spy.resyncCalls ?? 0,
+      };
+    });
+
+    assert(postFlipState.fireDown, 'Held button must survive keyboard aspect flip with fixed angle');
+    assert(postFlipState.hasPtr, 'Pointer ownership must survive keyboard aspect flip with fixed angle');
+    assert.equal(postFlipState.resyncCalls, 0, 'Keyboard aspect flip with fixed angle must NOT trigger gyro resync');
+  } finally {
+    await page.evaluate(() => {
+      if (window._gyroSpy) {
+        mobile.gyro.resync = window._gyroSpy.origResync;
+        delete window._gyroSpy;
+      }
+    });
+    await gesture('touchEnd', []);
+    await setViewport(1024, 768);
+  }
+  entry.checks.push('keyboard-aspect-flip-with-fixed-angle-preserves-ownedhold-no-gyro-resync');
+
+  // =========================================================================
   // 8. TRUE ROTATION CLEARS ALL OLD OWNERSHIP
   // =========================================================================
   await resetMobileState();
@@ -525,7 +684,46 @@ export async function runTouchTransitionCases({
   entry.checks.push('true-rotation-clears-all-old-ownership');
 
   // =========================================================================
-  // 9. REPEATED TRANSITIONS & CLEANUP AFTER DESTROY
+  // 9. NATIVE LOSTPOINTERCAPTURE CLEANUP
+  // =========================================================================
+  await resetMobileState();
+  await gesture('touchStart', [{ id: 35, x: fireBox.x, y: fireBox.y }]);
+  const preLostState = await page.evaluate(() => ({
+    fireDown: mobile.down('fire'),
+    hasPointer: mobile._ptr.has(35),
+  }));
+  assert(preLostState.fireDown, 'FIRE hold active before lostpointercapture');
+  assert(preLostState.hasPointer, 'Pointer tracked in _ptr before lostpointercapture');
+
+  // Dispatch native lostpointercapture event on mobile.root
+  await page.evaluate(() => {
+    const root = mobile.root || document.getElementById('iw-mobile-controls');
+    root.dispatchEvent(new PointerEvent('lostpointercapture', {
+      bubbles: true,
+      cancelable: true,
+      pointerType: 'touch',
+      pointerId: 35,
+      clientX: 0,
+      clientY: 0,
+    }));
+  });
+
+  const postLostState = await page.evaluate(() => ({
+    fireDown: mobile.down('fire'),
+    pressedEdges: mobile.pressed.has('fire'),
+    pendingEdgesSize: mobile._pendingEdges?.size ?? 0,
+    ptrSize: mobile._ptr.size,
+    hasPointer: mobile._ptr.has(35),
+  }));
+  assert.equal(postLostState.fireDown, false, 'lostpointercapture must release button hold');
+  assert.equal(postLostState.pressedEdges, false, 'lostpointercapture must clear pressed edge');
+  assert.equal(postLostState.pendingEdgesSize, 0, 'lostpointercapture must clear _pendingEdges');
+  assert.equal(postLostState.hasPointer, false, 'lostpointercapture must remove pointer from _ptr');
+  await gesture('touchEnd', []);
+  entry.checks.push('native-lostpointercapture-cleans-up-holds-edges-and-pointers');
+
+  // =========================================================================
+  // 10. REPEATED TRANSITIONS & CLEANUP AFTER DESTROY
   // =========================================================================
   await resetMobileState();
 
