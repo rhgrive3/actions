@@ -187,3 +187,9 @@ Flow の外殻・粒・リボンが GTAO の法線／深度パスに不透明な
 Nintendoの非公開protocolや通信時刻を推定して本家一致とはしない。
 実装範囲、既存PR重複監査と確定した検証結果は
 [batch C記録](inkwave-batch-c-issues.md)に記録する。
+
+[#427](https://github.com/rhgrive3/actions/issues/427)は対人戦におけるcross-owner確定戦闘進行（FlowおよびQuick RespawnのsplatsThisLife）の欠落を扱う。
+被弾側owner（authoritative）で確定・受理された実ダメージ・キルのみをhit確認ACKで攻撃側ownerへ返送し、攻撃側authoritative Actorで1回のみFlow加点およびsplatsThisLifeを加算する。
+被弾側での攻撃者remote proxyに対する二重加点および非確定予測ヒットからの即時加点を防止し、オフライン・ローカル戦闘の既存経路およびタイミングを保持する。
+Nintendoの内部ネットワークプロトコルやパケット構造は非公開であり、推定による本家通信仕様一致とはしない。実機対戦レイテンシ下での同期比較は引き続き未確認。
+
