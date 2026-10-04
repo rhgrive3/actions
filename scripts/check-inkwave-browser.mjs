@@ -139,22 +139,26 @@ try {
     // by an unrelated live frame before the explicit fixed-tick calls below.
   });
   try {
-    await page.keyboard.down('KeyD'); await page.keyboard.down('Space');
+    // Space is the physical browser edge under test. Fire and move direction are
+    // independent dodge-admission preconditions, so pin them deterministically
+    // after the keyboard event instead of letting focus/lifecycle behavior of
+    // an unrelated direction key decide whether the trial is legal.
+    await page.keyboard.down('Space');
     await page.evaluate(() => {
       const g = s3ProbeG.game;
-      // Keyboard focus transitions may legitimately trigger the platform input
-      // boundary reset. Establish the independent held-fire precondition only
-      // after those physical keyboard events have completed.
-      g.debug.fire(true);
-      if (!g.input.mouse.left) throw Error('Held-fire precondition was not established after keyboard focus');
+      g.debug.key('KeyD', true); g.debug.fire(true);
+      if (!g.input.keys.has('Space') || !g.input.pressed.has('Space')) throw Error('Physical Space edge did not reach Input before first fixed tick');
+      if (!g.input.keys.has('KeyD') || !g.input.mouse.left) throw Error('First dodge preconditions were not established');
       g._skipRender = true; for (let i = 0; i < 31; i++) g._frame(1 / 60);
     });
-    await page.keyboard.up('Space'); await page.keyboard.up('KeyD');
-    await page.keyboard.down('KeyA'); await page.keyboard.down('Space');
+    await page.keyboard.up('Space');
+    await page.evaluate(() => { const g = s3ProbeG.game; g.debug.key('KeyD', false); g.debug.key('KeyA', true); });
+    await page.keyboard.down('Space');
     result.actionReliability = await page.evaluate(() => {
       const g = s3ProbeG.game;
       g.debug.fire(true);
-      if (!g.input.mouse.left) throw Error('Held-fire precondition was not re-established before second keyboard edge');
+      if (!g.input.keys.has('Space') || !g.input.pressed.has('Space')) throw Error('Physical Space edge did not reach Input before second fixed tick');
+      if (!g.input.keys.has('KeyA') || !g.input.mouse.left) throw Error('Second dodge preconditions were not established');
       const before = actionProof.dodges;
       g._frame(1 / 120); const renderOnly = actionProof.dodges;
       g._frame(1 / 120); const after = actionProof.dodges;
@@ -164,12 +168,12 @@ try {
     });
     const r = result.actionReliability;
     if (r.before !== 1 || r.renderOnly !== 1 || r.after !== 2 || r.held !== 2 || r.jumps !== 0) throw Error('Native keyboard action edge did not reach Character exactly once: ' + JSON.stringify(r));
-    await page.keyboard.up('Space'); await page.keyboard.up('KeyA');
-    await page.evaluate(() => { s3ProbeG.game.debug.fire(false); s3ProbeG.game._frame(1 / 60); });
+    await page.keyboard.up('Space');
+    await page.evaluate(() => { const g=s3ProbeG.game; g.debug.key('KeyA', false); g.debug.fire(false); g._frame(1 / 60); });
   } finally {
     await page.evaluate(() => {
       const g = s3ProbeG.game, wasFrozen = actionProof.wasFrozen;
-      actionProof.restore(); g.debug.fire(false); g._skipRender = false; g.input.keys.clear();
+      actionProof.restore(); g.debug.fire(false); g.debug.key('KeyD', false); g.debug.key('KeyA', false); g._skipRender = false; g.input.keys.clear();
       if (!wasFrozen) g.debug.unfreeze();
     });
   }
