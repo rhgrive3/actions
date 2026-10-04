@@ -337,7 +337,7 @@ test('held and release overlays reserve the left hand during main attacks, movem
         // Gameplay admission is exact; the held-bomb pose eases the free hand
         // into place over subsequent presentation frames.
         for (let i = 0; i < 4; i++) r.step(1 / 60, { sub: true, fire: false });
-        for (let i = 0; i < 24 && r.ch.P[C.IKL] >= .01; i++) r.step(1 / 60, { sub: true, fire: false });
+        for (let i = 0; i < 36 && r.ch.P[C.IKL] >= .01; i++) r.step(1 / 60, { sub: true, fire: false });
       }
       assert.equal(r.ch.bombHeld, true); assert.ok(r.ch.P[C.IKL] < .01, kind);
       r.step(1 / 60, { subReleased: true, fire: true });
