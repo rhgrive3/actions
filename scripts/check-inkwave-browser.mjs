@@ -20,7 +20,15 @@ async function probeComposedKits() {
   const botUpdates = G.actors.filter(a => a.bot && !a.isLocal).map(a => [a.bot, a.bot.update]);
   game.debug.freeze(); game.debug.freezeBots(); game._skipRender = true;
   const frames = n => { for (let i = 0; i < n; i++) game._frame(dt); };
-  const result = { kits: [], activations: [], shots: [] };
+  const result = { kits: [], activations: [], shots: [], activationBoundaries: [] };
+  globalThis.s3KitProbe = result;
+  const nativeStart = actor._startSpecial, ownsStart = Object.hasOwn(actor, '_startSpecial');
+  actor._startSpecial = function (...args) {
+    const before = { main:this.weaponId, cost:this.specialCost(), gauge:this.special, ink:this.ink, stats:this.stats.specials };
+    const value = nativeStart.apply(this, args);
+    result.activationBoundaries.push({before,after:{gauge:this.special,ink:this.ink,stats:this.stats.specials}});
+    return value;
+  };
   const nativePush = G.projectiles._push;
   G.projectiles._push = function (p, ...args) {
     if (p.owner === actor && ['trizooka', 'inkVac'].includes(p.wid))
@@ -45,7 +53,14 @@ async function probeComposedKits() {
       localStorage.setItem(storageKey, JSON.stringify(empty)); actor.setWeapon(main);
       actor.special = actor.specialCost(); actor.ink = 23; const count = actor.stats.specials;
       game.debug.key('KeyF', true); frames(1); game.debug.key('KeyF', false); frames(1);
-      assert(actor.stats.specials === count + 1 && actor.special === 0 && actor.ink === PLAYER.inkMax, main + ' activation spends/refills once');
+      const boundary = result.activationBoundaries.at(-1);
+      if (boundary) boundary.afterFrame = {gauge:actor.special,ink:actor.ink,stats:actor.stats.specials};
+      // The native activation boundary precedes this frame's projectile paint.
+      // A deployable Bubbler returns ordinary control immediately, so old owned
+      // rounds may credit fresh turf later in the SAME frame. Preserve that policy.
+      assert(boundary?.before.main === main && boundary.before.stats === count &&
+        boundary.after.stats === count + 1 && boundary.after.gauge === 0 && boundary.after.ink === PLAYER.inkMax &&
+        actor.stats.specials === count + 1, main + ' activation spends/refills once: ' + JSON.stringify(boundary));
       game._skipRender = false; frames(1); game._skipRender = true;
       assert(G.renderer.info.render.calls > 0, main + ' active special rendered in the loaded WebGL game');
       if (special === 'trizooka') { game.debug.fire(true); frames(180); game.debug.fire(false); frames(1);
@@ -74,6 +89,7 @@ async function probeComposedKits() {
     }
     return result;
   } finally {
+    if (ownsStart) actor._startSpecial = nativeStart; else delete actor._startSpecial;
     for (const [bot, update] of botUpdates) bot.update = update;
     G.projectiles._push = nativePush; game.debug.fire(false); game.debug.key('KeyF', false);
     if (oldGear === null) localStorage.removeItem(storageKey); else localStorage.setItem(storageKey, oldGear);
@@ -284,6 +300,7 @@ try {
   result.status = 'passed';
 } catch (error) {
   result = { ...(result || {}), status: 'failed', error: error.message };
+  result.kitProbeFailure = await page.evaluate(() => globalThis.s3KitProbe || null).catch(() => null);
   result.bootState = await page.evaluate(() => ({ hidden: document.hidden, visibility: document.visibilityState, mode: globalThis.s3ProbeG?.mode, game: !!globalThis.s3ProbeG?.game, renderer: !!globalThis.s3ProbeG?.renderer, menus: globalThis.s3ProbeG?.menus?.current, patch: globalThis.s3ProbeG?.s3, bootError: document.getElementById('boot-error')?.textContent, fonts: document.fonts.status, text: document.body.innerText.slice(0,1200), programs: globalThis.s3ProbeG?.renderer?.info.programs?.length, resources: performance.getEntriesByType('resource').slice(-8).map(r => r.name) })).catch(() => null);
   await page.screenshot({ path:path.join(evidence,'browser-failure.png') }).catch(() => {});
 } finally {

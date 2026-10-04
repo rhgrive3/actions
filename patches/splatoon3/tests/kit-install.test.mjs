@@ -104,3 +104,20 @@ test('the complete production wrapper chain activates each kit and refills exact
     } finally { api.G.projectiles.clear(); a.character.dispose(); }
   }
 });
+
+
+test('ordinary turf after Bubbler deployment may change gauge without another activation or refill', async () => {
+  const api = await production(); api.G.projectiles = new api.Projectiles(api.G.scene);
+  const a = new api.Actor({team:0,name:'activation boundary regression',weapon:'roller',CharacterClass:api.Character,
+    style:{hair:0,skin:2,outfit:0,eyes:0}});
+  try {
+    a.special = a.specialCost(); a.ink = 23; const count = a.stats.specials;
+    a._startSpecial();
+    assert.equal(a.special,0);assert.equal(a.ink,api.PLAYER.inkMax);assert.equal(a.stats.specials,count+1);
+    assert.equal(a.specialActive,null,'a deployable Bubbler restores ordinary body control');
+    a.addTurf(4); // real native owner credit, as remaining rounds may supply later in the frame
+    assert.ok(a.special>0,'preserve the native post-token gauge policy');
+    assert.equal(a.stats.specials,count+1);assert.equal(a.ink,api.PLAYER.inkMax);
+    a.reset();
+  } finally {api.G.projectiles.clear();a.character.dispose();}
+});
