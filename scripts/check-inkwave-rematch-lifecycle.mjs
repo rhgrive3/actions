@@ -94,7 +94,14 @@ const until = async (fn, arg, ms = 300000, what = fn.toString().slice(0, 140)) =
 };
 const tap = async (id) => {
   const sel = `.iw-ui [data-id="${id}"]`;
-  await until((s) => { const e = document.querySelector(s); if (!e || e.closest('.is-leaving')) return false; const r = e.getBoundingClientRect(); return r.width > 0 && +getComputedStyle(e).opacity > 0.6; }, sel, 300000, 'tappable ' + id);
+  // what a player can actually press: laid out, not leaving/inert, pointer events on, and visible through every
+  // ancestor (the results scoreboard waits below the fold at opacity 0 during its intro)
+  await until((s) => {
+    const e = document.querySelector(s);
+    if (!e || e.closest('.is-leaving, [inert]') || getComputedStyle(e).pointerEvents === 'none') return false;
+    let k = 1; for (let n = e; n && n !== document.body; n = n.parentElement) k *= +getComputedStyle(n).opacity;
+    return e.getBoundingClientRect().width > 0 && k > 0.6;
+  }, sel, 300000, 'tappable ' + id);
   await page.tap(sel, { timeout: 30000 });
 };
 const menuIs = (name) => until((n) => window.__inkwave?.menus?.current === n, name, 300000, 'menu ' + name);
@@ -156,13 +163,14 @@ try {
     check(i + 1, 'results', results.state === 'results' && results.hudHidden && !results.touchVisible, 'results own the screen', results);
     // every third round an impatient player taps MAIN MENU again at the same spot while the screen changes
     const impatient = i % 3 === 1;
+    await tap('home');
     if (impatient) {
-      await page.evaluate(() => document.querySelector('.iw-ui [data-id="home"]').scrollIntoView({ block: 'center' }));
-      await page.waitForTimeout(300);
-      const at = await page.evaluate(() => { const r = document.querySelector('.iw-ui [data-id="home"]').getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; });
-      await page.touchscreen.tap(...at);
-      for (const gap of [120, 330, 260]) { await page.waitForTimeout(gap); await page.touchscreen.tap(...at); }
-    } else await tap('home');
+      // the button's live position each time; force = no actionability wait, the tap goes to whatever is on top
+      for (const gap of [120, 330, 260]) {
+        await page.waitForTimeout(gap);
+        await page.locator('.iw-ui [data-id="home"]').first().tap({ force: true, timeout: 3000 }).catch(() => {});
+      }
+    }
     await until(() => window.__inkwave.menus?.current === 'main' && window.__G.mode === 'menu' && window.__G.match?.attract, null, 300000, 'main menu');
     if (impatient) {
       await page.waitForTimeout(1500);
@@ -182,7 +190,8 @@ try {
     else {
       check(i + 1, 'menu', JSON.stringify(menu.listeners) === JSON.stringify(baseline.listeners), 'listener set stable across rounds', { now: menu.listeners, first: baseline.listeners });
       check(i + 1, 'menu', menu.intervals === baseline.intervals, 'interval count stable', [menu.intervals, baseline.intervals]);
-      check(i + 1, 'menu', Math.abs(menu.sceneChildren - baseline.sceneChildren) <= 2, 'scene does not accumulate objects', [menu.sceneChildren, baseline.sceneChildren]);
+      // pooled charger sights come and go with the attract bots' weapons; a leaked match would add whole squads
+      check(i + 1, 'menu', (menu.sceneChildren - menu.sights) - (baseline.sceneChildren - baseline.sights) <= 2, 'scene does not accumulate objects', [menu.sceneChildren, menu.sights, baseline.sceneChildren, baseline.sights]);
       check(i + 1, 'menu', menu.sights <= 8, 'charger sight pool bounded', menu.sights);
     }
     rounds.push(round);
