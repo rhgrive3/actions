@@ -48,7 +48,7 @@ export function installFlow({ Actor, on, emit, G }, tuning) {
   });
   on('splatted', ({ victim, attacker }) => {
     if (attacker && attacker !== victim && attacker.team !== victim.team) award(attacker, 'splat', 1);
-    for (const [helper, time] of credits.get(victim) || []) if (helper !== attacker && G.time - time <= cfg.assistWindow) award(helper, 'assist', 1);
+    for (const [helper, time] of credits.get(victim) || []) if (helper !== attacker && G.time - time <= cfg.assistWindow) { award(helper, 'assist', 1); emit('actor:assist', { actor: helper, victim, attacker }); }
     credits.delete(victim); victim.s3 ||= {}; victim.s3.flow = createFlow();
     emit('actor:flow', { actor: victim, active: false });
   });

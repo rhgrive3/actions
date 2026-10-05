@@ -1,6 +1,9 @@
 import { refreshFlowEffects } from './flow-effects.mjs';
+import { HEAD_ABILITIES, conditionalPoints, conditionalKey, installConditionalGear } from './conditional-gear.mjs';
+import { installSubResistance } from './sub-resistance.mjs';
 // Gear uses three equipment pieces, each with one 10 AP main and three 3 AP subs.
 export const ABILITIES = Object.freeze({
+  lastDitchEffort: 'ラストスパート', comeback: 'カムバック', openingGambit: 'スタートダッシュ', subResistance: 'サブ影響軽減',
   none: 'なし', runSpeed: 'ヒト移動速度アップ', swimSpeed: 'イカダッシュ速度アップ',
   inkSaverMain: 'インク効率アップ（メイン）', inkSaverSub: 'インク効率アップ（サブ）',
   inkRecovery: 'インク回復力アップ', inkResistance: '相手インク影響軽減',
@@ -8,12 +11,15 @@ export const ABILITIES = Object.freeze({
   specialSaver: 'スペシャル減少量ダウン', quickRespawn: '復活時間短縮',
   quickSuperJump: 'スーパージャンプ時間短縮', subPower: 'サブ性能アップ',
 });
+export function abilityAllowed(id, piece, slot) {
+  return Object.hasOwn(ABILITIES, id) && (!HEAD_ABILITIES.includes(id) || piece === 0 && slot === 0);
+}
 export const emptyLoadout = () => Array.from({ length: 3 }, () => ({ main: 'none', subs: ['none', 'none', 'none'] }));
 export function normalizeLoadout(value) {
   if (!Array.isArray(value) || value.length !== 3) return emptyLoadout();
-  return value.map(part => ({
-    main: Object.hasOwn(ABILITIES, part?.main) ? part.main : 'none',
-    subs: Array.from({ length: 3 }, (_, i) => Object.hasOwn(ABILITIES, part?.subs?.[i]) ? part.subs[i] : 'none'),
+  return value.map((part, piece) => ({
+    main: abilityAllowed(part?.main, piece, 0) ? part.main : 'none',
+    subs: Array.from({ length: 3 }, (_, i) => abilityAllowed(part?.subs?.[i], piece, i + 1) ? part.subs[i] : 'none'),
   }));
 }
 export function abilityPoints(loadout) {
@@ -34,8 +40,8 @@ export function gearCurve(points, min, mid, max) {
   const t = s === 0.5 ? p : Math.pow(p, Math.log(s) / Math.log(0.5));
   return min + (max - min) * t;
 }
-export function modifiersFor(loadout, curves) {
-  const points = abilityPoints(loadout), result = {};
+export function modifiersFor(loadout, curves, points = abilityPoints(loadout)) {
+  const result = {};
   for (const [ability, curve] of Object.entries(curves)) {
     if (curve && curve.length === 3 && curve.every(Number.isFinite)) result[ability] = gearCurve(points[ability] || 0, ...curve);
   }
@@ -48,18 +54,21 @@ export function readLoadout() {
 }
 export function installGear(api, tuning) {
   const { Actor, WeaponRunner, G } = api;
+  const reset = Actor.prototype.reset, setWeapon = Actor.prototype.setWeapon;
   const refreshFlow = actor => refreshFlowEffects(actor, api, tuning, abilityPoints, gearCurve);
   api.on('actor:flow', ({ actor }) => refreshFlow(actor));
-  const actorUpdate = Actor.prototype.update;
-  Actor.prototype.update = function (...args) { refreshFlow(this); return actorUpdate.apply(this, args); };
-  const reset = Actor.prototype.reset, setWeapon = Actor.prototype.setWeapon;
-  function equip(a) {
+  const key = a => conditionalKey(a, G.match, tuning.conditionalGear);
+  const refreshConditional = a => { if (a.s3?.modifiers && a.s3.conditionalKey !== key(a)) equip(a, true); };
+  const refresh = a => { refreshConditional(a); refreshFlow(a); };
+  function equip(a, transient = false) {
     a.s3 ||= {};
-    const loadout = a.isLocal ? readLoadout() : normalizeLoadout(a.s3.loadout);
+    const loadout = a.isLocal && !transient ? readLoadout() : normalizeLoadout(a.s3.loadout);
+    const beforeCost = a.weapon?.specialCost, beforeSpecial = a.special;
     a.s3.loadout = loadout;
-    a.s3.modifiers = modifiersFor(loadout, tuning.gear);
+    const points = conditionalPoints(a, abilityPoints(loadout), G.match, tuning.conditionalGear);
+    a.s3.modifiers = modifiersFor(loadout, tuning.gear, points);
     const m = a.s3.modifiers;
-    const ap = abilityPoints(loadout), extra = tuning.gearExtra;
+    const ap = points, extra = tuning.gearExtra;
     m.inkRecoverySwim = tuning.gear.inkRecovery[0] / m.inkRecovery;
     m.inkRecoveryKid = extra.inkRecoveryKid[0] / gearCurve(ap.inkRecovery || 0, ...extra.inkRecoveryKid);
     m.enemyMoveSpeed = m.inkResistance * 60;
@@ -72,7 +81,11 @@ export function installGear(api, tuning) {
     a.s3.jumpFlightTime = tuning.superJump.flightTime * gearCurve(ap.quickSuperJump || 0, ...extra.jumpFlightTime);
     a.s3.modifiers.surgeChargeScale = m.actionIntensify ?? 1;
     // Actor-local copy. An opponent's equipment never changes shared stats.
-    a.weapon = { ...api.WEAPONS[a.weaponId] };
+    const base = api.WEAPONS[a.weaponId];
+    if (!transient) a.weapon = { ...base };
+    else for (const field of ['spreadAir', 'specialCost', 'inkPerShot', 'inkFull', 'inkMin', 'flickInk', 'verticalInk', 'rollInk', 'rollInkPerMeter']) {
+      if (field in base) a.weapon[field] = base[field];
+    }
     // MainWeaponSetting and ActionSpecUp overrides belong to the equipped
     // weapon. Heavy Splatling and Blaster do not use the common middle values.
     m.runSpeedFiring = gearCurve(ap.runSpeed || 0, ...(a.weapon.runSpeedFiringCurve || extra.runSpeedFiring));
@@ -80,6 +93,9 @@ export function installGear(api, tuning) {
     if (Number.isFinite(a.weapon.spreadAir) && Number.isFinite(a.weapon.spreadGround)) a.weapon.spreadAir = a.weapon.spreadGround + (a.weapon.spreadAir - a.weapon.spreadGround) * (1 - m.actionAirSpread);
     for (const field of ['inkPerShot', 'inkFull', 'inkMin', 'flickInk', 'verticalInk', 'rollInkPerMeter']) if (field in a.weapon) a.weapon[field] *= m.inkSaverMain ?? 1;
     a.weapon.specialCost /= m.specialCharge ?? 1;
+    // A temporary charge-rate bonus cannot create/delete already-filled gauge.
+    if (transient && beforeCost > 0 && Number.isFinite(beforeSpecial)) a.special = beforeSpecial / beforeCost * a.weapon.specialCost;
+    a.s3.conditionalKey = key(a);
     refreshFlow(a);
   }
   Actor.prototype.reset = function (...args) {
@@ -90,22 +106,23 @@ export function installGear(api, tuning) {
   Actor.prototype.setWeapon = function (...args) { const result = setWeapon.apply(this, args); equip(this); return result; };
   const moveSpeed = WeaponRunner.prototype.moveSpeed;
   WeaponRunner.prototype.moveSpeed = function () {
-    refreshFlow(this.a);
+    refresh(this.a);
     const m = this.a.s3?.modifiers || {}, w = this.a.weapon;
     const lockedMode = this.rolling || this.charging && w.kind === 'charger';
     const attacking = this.firingT > 0 || this.charging || this.streaming;
     const gear = lockedMode ? 1 : attacking ? m.runSpeedFiring ?? 1 : m.runSpeed ?? 1;
-    return moveSpeed.call(this) * gear;
+    return moveSpeed.call(this) * gear * (this.a.s3?.flow?.active ? tuning.flow.runMultiplier : 1);
   };
   const horizontal = Actor.prototype._horizontal;
   Actor.prototype._horizontal = function (dt, squid, enemy) {
-    refreshFlow(this);
+    refresh(this);
     // The upstream method reads a shared configuration. Provide scoped values
     // synchronously, restoring even when collision/weapon code throws.
     const original = { swimSpeed: api.PLAYER.swimSpeed, enemyInkSpeed: api.PLAYER.enemyInkSpeed };
-    const m = this.s3?.modifiers || {};
-    api.PLAYER.swimSpeed *= m.swimSpeed ?? 1;
+    const m = this.s3?.modifiers || {}, flow = this.s3?.flow?.active;
+    api.PLAYER.swimSpeed *= (m.swimSpeed ?? 1) * (flow ? tuning.flow.swimMultiplier : 1);
     api.PLAYER.enemyInkSpeed = (this.intent.fire ? m.enemyShotSpeed : m.enemyMoveSpeed) ?? original.enemyInkSpeed;
+    api.PLAYER.enemyInkSpeed *= flow ? tuning.flow.enemyInkSpeedMultiplier : 1;
     try { return horizontal.call(this, dt, squid, enemy); }
     finally { Object.assign(api.PLAYER, original); }
   };
@@ -124,7 +141,7 @@ export function installGear(api, tuning) {
   api.on('splatted', ({ attacker }) => { if (attacker?.s3) attacker.s3.splatsThisLife = (attacker.s3.splatsThisLife || 0) + 1; });
   const update = WeaponRunner.prototype.update;
   WeaponRunner.prototype.update = function (dt, input) {
-    refreshFlow(this.a);
+    refresh(this.a);
     const a = this.a, m = a.s3?.modifiers || {}, beforeInk = a.ink;
     const saved = { inkCost: api.SUB.bomb.inkCost, throwSpeed: api.SUB.bomb.throwSpeed };
     api.SUB.bomb.inkCost *= m.inkSaverSub ?? 1;
@@ -139,6 +156,8 @@ export function installGear(api, tuning) {
       }
     }
   };
+  installConditionalGear(api, tuning, refresh);
+  installSubResistance(api);
   if (api.Menus) {
     const render = api.Menus.prototype._scr_loadout;
     api.Menus.prototype._scr_loadout = function (...args) {
@@ -157,7 +176,7 @@ export function installGear(api, tuning) {
         const row = document.createElement('label'); row.textContent = slot === 0 ? 'メイン（10）' : `追加 ${slot}（3）`;
         const select = document.createElement('select'); select.setAttribute('aria-label', `${label} ${slot === 0 ? 'メイン' : '追加' + slot}`);
         for (const [id, name] of Object.entries(ABILITIES)) {
-          if (id !== 'none' && !tuning.gear[id]) continue;
+          if (!abilityAllowed(id, piece, slot) || id !== 'none' && !HEAD_ABILITIES.includes(id) && !tuning.gear[id]) continue;
           const option = document.createElement('option'); option.value = id; option.textContent = name; select.append(option);
         }
         select.value = slot === 0 ? loadout[piece].main : loadout[piece].subs[slot - 1];

@@ -387,6 +387,11 @@
       1,
       0.4,
       0.1111111111111111
+    ],
+    "subResistance": [
+      1,
+      0.75,
+      0.5
     ]
   },
   "resources": {
@@ -1314,6 +1319,24 @@
       "index": null,
       "factor": 1,
       "rawValue": 0.8
+    },
+    "gear.subResistance.0": {
+      "parameter": "data/parameter/1130/misc/params.json#/DamageRt_BombH",
+      "index": 2,
+      "factor": 1,
+      "rawValue": 1
+    },
+    "gear.subResistance.1": {
+      "parameter": "data/parameter/1130/misc/params.json#/DamageRt_BombH",
+      "index": 1,
+      "factor": 1,
+      "rawValue": 0.75
+    },
+    "gear.subResistance.2": {
+      "parameter": "data/parameter/1130/misc/params.json#/DamageRt_BombH",
+      "index": 0,
+      "factor": 1,
+      "rawValue": 0.5
     }
   },
   "gearExtra": {
@@ -3078,5 +3101,14 @@
       "chargerPaint": "pinned width/depth/radius endpoints drive existing rasterizer; spacing formula and terminal multiplier remain source-guided/community-modelled",
       "rollerAgeDamage": "linear multiplier to pinned DamageRejectRate between pinned start/end frames; subframe rounding unverified"
     }
+  },
+  "conditionalGear": {
+    "lastDitchWindow": 30,
+    "lastDitchAP": 18,
+    "comebackDuration": 20,
+    "comebackAP": 10,
+    "openingDuration": 30,
+    "openingAP": 30,
+    "openingExtension": 15
   }
 }

@@ -1,3 +1,4 @@
+import { conditionalPoints } from './conditional-gear.mjs';
 // Flow grants temporary ability points, not a second set of speed multipliers.
 // Permanent equipment, runner state, resource clocks and Flow lifetime stay owned
 // by their existing systems. The source/measurement limits are in the report.
@@ -13,7 +14,8 @@ export function refreshFlowEffects(actor, api, tuning, abilityPoints, gearCurve)
   if (!m || !weapon) return;
   const active = !!s.flow?.active, previous = applied.get(actor);
   if (previous?.active === active && previous.modifiers === m && previous.weapon === weapon) return;
-  const ap = flowAbilityPoints(abilityPoints(s.loadout), active, tuning.flow.abilityPoints);
+  const basePoints = conditionalPoints(actor, abilityPoints(s.loadout), api.G.match, tuning.conditionalGear);
+  const ap = flowAbilityPoints(basePoints, active, tuning.flow.abilityPoints);
   const extra = tuning.gearExtra, base = api.WEAPONS[actor.weaponId];
   for (const id of FLOW_ABILITIES) m[id] = gearCurve(ap[id] || 0, ...tuning.gear[id]);
   m.enemyMoveSpeed = m.inkResistance * 60;
