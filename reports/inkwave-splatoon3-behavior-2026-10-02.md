@@ -242,6 +242,54 @@ Four current-public defects #366/#370 (one duplicate pair), #375, #384, #395 are
 
 See [weapon edge-case comparison](inkwave-weapon-edgecases-2026-10-04.md) for #354/#356/#357/#361: stable-human Dualies3F first emission; Splatling separate ground1.6° pitch envelope; terrain Blaster35HP cap; horizontal Roller12+1 gameplay units. The report separates actual source/minified/composed-code tests from S3 probability/position/falloff and released-tap calibration still pending. No native source or deployed main is changed by the draft.
 
+## マニューバーのスライド前隙（#477、2026-10-04、2026-10-05 補正完了）
+
+スプラトゥーン3（Ver. 11.3.0）のマニューバー（スプラマニューバー等）では、移動入力とB（ジャンプ）ボタンによるスライド（dodge roll）入力の認識後、直ちに移動を開始するのではなく、約4Fの前隙（pre-roll startup / 予備動作時間）が存在し、その後に12Fのロール移動が行われる。
+INKWAVE の公開版実装では、`tryDodge` が成功した直後の tick 1 から `dodgeVel` が水平速度を占有し、12Fの移動を開始していたため、4Fの前隙が存在しなかった。
+Issue #477 では、ビルド時アダプター `patches/splatoon3/issue-477-adapter.mjs` を通じて、入力認識直後の 4F startup 期間と、その後の 12F roll 移動のシーケンスを実装し、以下の受け入れギャップを補正した。
+
+1. **リモートレプリケーションのサイドカー同期化と再生クロック進行（Gap A）**: オーナーパケット間（20Hz / 50ms 間隔）およびバッファ枯渇時の外挿（dry buffer extrapolation）において、`peer.playback tr`（既存ネイティブオーナー時計）から受け入れパケット時刻（`origT`）を差し引いた phase age（0.18秒外挿上限）により startup 残余時間および roll 移動時計を純粋関数として導出。オーナーパケット間の Hermite 中間サンプリング（4F startup の確実な消化）および外挿時の自律的 roll 移行を実現し、同一 `tr` での重複進行を防止。Hermite サンプリングでは先代スナップショットの離散ロール状態を保持し未来トークンの早期露出を防止。
+2. **所有者・ライフエポック限定のトークン承認とクリーンアップ（Gap B）**: `lastRollToken` をグローバルアクター共有から「現在の所有者 + 承認スナップショットライフ（`netLife`）」に厳格にスコープ化。ホスト移行・ハンドオフ、リスポーン（新ライフ）、および `_adopt` / `reset()` でロール承認状態を整合的にリセットし、新所有者／新ライフでの token 1 を正当に受け入れ、旧所有者／旧ライフの遅延パケットは既存ネットワーク承認で確実に破棄。非負有界な有限スカラー値のみを検証し、不正・レガシーデータは `lastRollToken` を汚染せず安全にフォールバック。
+3. **ブロードキャスト境界での非破壊サイドカー合成（Gap C）**: `_sendTick()` においてメッセージ再構築を行わず、固有の `this._send` / broadcast 境界で `msg.rl` を付加。PR495 #484（named `sc`）、reliability（named `l`）、予約スロット 21 / フラグ 20 との双方向合成（477→484、484→477 のいずれの順序でも互換）を確保。必要に応じてオーソリテーティブな `_dodgeDir` を安全に伝達し、リモートでの独立物理シミュレーションを排除。
+4. **`_startSpecial` の Dualies 限定キャンセルと包括リセット廃止**: `_startSpecial` における `weaponRunner.reset()` によるシューターのクールダウンやスピナーのチャージ消去を廃止。スペシャル承認成功時のみ現在のアクティブな Dualies の dodge だけを解除し、他ブキ状態およびスペシャル発動失敗時の状態を完全に温存。不要なランタイム代替インストーラー API を全面削除しソースアダプター単一経路に統一。
+5. **startup 予備動作での有界ネイティブ tuck ポーズ適用**: `_poseDodge` が roll 以外で即時復帰していた問題を修正し、startup 期間中に物理移動・tumble 回転・ゲームプレイ影響を伴わずに既存リグの校正済み tuck ポーズ（`turnStart * dodgeDur`）を適用。ベースライン idle・startup・moving roll の各状態でネイティブ姿勢チャンネル/ボーン（SPINE, CHEST 等）が明確に区別されることを検証。実機の正確な関節角度は `physicalNintendoanglesunmeasured`（未測定）として明記。
+
+| 項目 | 内容 |
+|---|---|
+| 本家の根拠 | スプラトゥーン3 Ver. 11.3.0、スプラマニューバー（Splat Dualies）。コミュニティ検証シーケンス：入力認識 → 4F pre-roll startup → 12F roll 移動 → 32F ポストロール射撃固定（タレット状態）。公式資料上の明示フレーム値は非公開のため、4Fはフレーム単位検証に基づくコミュニティ確立値。 |
+| INKWAVE の実装箇所 | `patches/splatoon3/issue-477-adapter.mjs`（`adaptIssue477Weapons`, `adaptIssue477Actor`, `adaptIssue477DualiesMotion`, `adaptIssue477Net`）。`weapons.js:tryDodge` で 4/60s の startup およびロールトークンを付与し歩行初速を停止。`weapons.js:dodgeVel` は startup 中に false を返し水平速度を占有しない。`weapons.js:_dualies` は startup をカウントダウンした後に 12F の移動時計を進める。`dualies-motion.mjs` は startup 中の phase を 'startup' とし、tumble=0 かつ移動なしで校正済み tuck ポーズを適用。`netmatch.js` は OPTIONAL NAMED サイドカー `rl` を介してオーソリテーティブなロールトークン・フェーズ・時間・方向を同期し、`peer.tr` に基づく再生時計進行と所有者/ライフ限定承認を適用。`actor.js:_startSpecial` はスペシャル承認成功時のみ現在 dodge を解除し、`actor.js:reset` および `netmatch.js:_adopt` でロール承認をリセット。 |
+| 再現操作 | マニューバー装備・地上で射撃キーを押しながら任意の移動方向とジャンプキーを入力（スライド発動）。未適用版では tick 1 からロール移動速度が発生し移動変位が生じる。適用後は ticks 1..4 の間、水平変位が 0 に保たれ、tick 5 から 12F の移動変位が開始する。リモートクライアントでもパケット間 Hermite 中間、外挿進行、所有者ハンドオフ、新ライフ、遅延・連続ロール・通常進行が正確に同期される。 |
+| プレイへの影響 | スライド入力から実際に移動が発生するまでの 4F のタメ（前隙）が再現され、即座に移動が始まることによる射撃回避タイミングのズレが解消される。ロールの総移動距離（w.rollDist = 2.8m）および 12F の移動時間は不変。他ブキのスペシャル発動でクールダウンやチャージが不当にリセットされる副作用を防止。ネットワーク再生中の startup 凍結・ハンドオフ時のトークン拒否・PR484 とのパッチ競合を解消。 |
+| 確認状態 | **ロジック・テスト確認済み**（`patches/splatoon3/tests/issue-477.test.mjs` による 14 項目受け入れ検証：固定 60Hz 4F 変位ゼロ、tick 5 移動開始、12F 移動期間、総変位量、startup tuck ポーズと実ボーン値検証、タレット後の 4F 射撃ゲート（lockInterval）、2 連続ロールでの各 startup 保持、30/60/120Hz 描画境界一致、ネイティブ NetMatch トランスポート、Gap A（Hermite中間進行・外挿・同一TR冪等性・未来トークン隠蔽）、Gap B（所有者ハンドオフ・新ライフ承認・旧パケット破棄・`_adopt`/`reset`リセット・不正スカラーフォールバック）、Gap C（PR495 #484 との双方向合成テスト）、スペシャル発動時の他ブキ/失敗時状態保持のネガティブ検証、デス/スペシャル/変身/ブキ変更によるキャンセル、非マニューバー等無効入力拒否。回帰テスト `dualies-motion.test.mjs` 9/9、`combat-life.test.mjs` 10/10 全通過）。**Switch Ver. 11.3.0 実機における正確な関節姿勢（physicalNintendoanglesunmeasured）・ミリ秒単位の物理変位曲線は未確認**として残す。 |
+
+## 連続キルのFlow加点が一律+1でS3の23→45fp連続ボーナスを再現しない不整合（#481、2026-10-05）
+
+開始 main は `866fd45992be33c51966a8acc55596bb5bac15a8`。対象は `inkwave-public/` とそのパッチ層（`patches/splatoon3/`）であり、旧 Game 試作版は対象外。本家参照版は Splatoon 3 Ver. 11.3.0（2026-08-19）。
+
+| 項目 | 内容 |
+|---|---|
+| 本家の根拠 | [任天堂サポート更新履歴（Ver. 11.3.0）](https://support.nintendo.com/jp/switch/software_support/av5ja/1130.html)、[イカフロー検証（wikiwiki）](https://wikiwiki.jp/splatoon3mix/%E6%A4%9C%E8%A8%BC/%E3%82%A4%E3%82%AB%E3%83%95%E3%83%AD%E3%83%BC)。S3の検証済み100 fpモデルにおいて、発動閾値は100 fpでありキルによってのみ発動する。75 fp未満では単発キルが +23 fp、直前のキルから5秒以内の連続キルが +45 fp（加点比率 45/23 ≒ 1.9565倍）。蓄積が75 fp以上の高スコア帯では単発 +15 fp、5秒以内の連続キルが +35 fp（加点比率 35/15 ≒ 2.3333倍）となる。5秒を超過したキルは単発加点（+23 fp / +15 fp）へ戻る。 |
+| INKWAVE の実装箇所 | `patches/splatoon3/runtime/flow.mjs:13`、`:50`。キル時に常に固定で `award(attacker, 'splat', 1)`（正規化閾値 3.0 に対して一律 +1.0）が加算されており、攻撃者の直前キル時刻を追跡する状態が存在せず、単発と連続キルの加点比率が 1.0 のままだった。 |
+| 再現操作 | 75 fp未満の初期状態で、2つの同一条件のActor A, Bを用意。Aには単発キルを付与し、Bには直前キルから5秒以内（例: 2〜3秒後）に2回目のキルを付与する。未修正版ではA・Bともに一律 +1.0（比率 1.0）しか加算されない。修正版（`patches/splatoon3/issue-481-adapter.mjs`）ではAに +23 fp（0.69）、Bに +45 fp（1.35）が加算され、45/23（約1.96倍）の比率が再現される。 |
+| プレイへの影響 | マルチキルや連射ブキによる迅速な連続撃破を行った際のFlow発動インセンティブが大幅に低く見積もられ、発動タイミングが著しく遅延していた。修正により、連続撃破によって迅速にFlow Auraへ突入する本来のゲームリズムが復元される。 |
+| 確認状態 | **ロジック・Node VM確認済み**（`patches/splatoon3/tests/issue-481.test.mjs`、30/60/120 Hz固定ステップ、75 fp未満 23/45 fp、75 fp以上 15/35 fp、5.0s以内と5.001s超過の境界、Actorローカル性、キル時のみの発動ゲート、Actorリセット/死亡/復活/Flow失効によるストリーク破棄、被弾後4秒以内の正当な環境死（水没・転落）キル認定維持・無帰属水没除外、遠隔被弾者ライフエポック認識によるdedup（NetMatch `_remoteRespawn` 2度撃破検証、同一ライフ重複除外・新ライフ受理）、PR #489 両方向合成および撃破ペナルティ・死亡後Flow維持・アイドル減衰との実動VM連携、14/14 pass）。**Switch実機での通信遅延下におけるキル確定パケット到着猶予の厳密な公式フレーム値は未確認**として残し、ゲーム内シミュレーション時計 `G.time` を基準とした 5.0 秒境界と Actor ローカルな状態遷移のみを整合。 |
+
+
+## #483: owned native hair geometry lifecycle (2026-10-05 correction)
+
+The native `_hair` and `_inv` Maps retained appearance/LOD/quality geometries for the module lifetime. Refcounts around the cached getter alone did not remove those CPU roots. The build-only character-geo transform exposes the same native hair builder without entering either Map; Character owns shared live entries through the refcount helper, releases quality epochs and teardown, and disposes each final geometry once. Legacy public cached getters remain intact for other callers; no global cache flush disposes live shared geometry. Real native tests verify zero owned entries and zero native cache insertions across teardown, repeated appearances, multiple casts and quality changes, game-tier anatomy without unused hero builds, and native rest/bone parity. The final production wire is the existing quality dispatcher after gameplay/touch/reliability.
+
+## ブラスター初弾起動のフォーム差（#465、2026-10-05）
+
+Splatoon 3 Ver.11.3.0 の標準ブラスターは初弾（ZR エッジ→弾/反動の放出）を姿勢で使い分ける。人型は **14F**、イカ（潜伏）から则是 **24F**、連射間隔は **50F**、発射後のスイム/サブ不可は **22F**（別 issue #214）。従来の INKWAVE は `profile.json` の `preDelay = 10/60s` を人型の完全な起動とみなして 10F で放出し、イカからは汎用の emergeDelay（約5F）＋10F で約 15F に留まり、14F/24F の対が再現できていなかった。
+
+| 項目 | 内容 |
+|---|---|
+| 本家の根拠 | [Inkipedia — Blaster](https://splatoonwiki.org/wiki/Blaster)（現行 S3 データ）: humanoid→first shot 14f、swim→first shot 24f、sustained repeat 50f、firing→swim/sub 22f。Acceptance 基準は Ver.11.3.0。数値は issue #465 に記載の pinned 値を使用し、実機フレームの再計測は未実施 |
+| INKWAVE の実装箇所 | `patches/splatoon3/runtime/issue-465-blaster-startup.mjs`（純関数 `blasterStartupWindup`、14F/24F 定数）＋ `patches/splatoon3/runtime/weapons.mjs` の `WeaponRunner.prototype._auto` ブラスター分支。人型は新規エッジ（`firePressed`）で 14F、native ZR edge時の形態を保持し、swim-originの場合だけ既存emerge経過を差し引いて24F、保持再開は従来どおり `preDelay`。放出時に `cooldown=0` へ正規化し、`fireInterval-preDelay`(40F)＋10F 巻き上げで 50F 間隔を回復。受理済みの起動は従来のbuffered tapを維持し、未受理の押下・空弾は放出しない |
+| 再現操作 | 人型・弾充分・cooldown<=0 で新規 ZR→14 tick 目に `fireBlaster`/`trigger('shoot')`。イカで ZR→人型化後の初回解放は edge から 24 tick 目。保持で 50F 間隔。空弾/クールダウン中に押して離した未受理の入力は弾も反動も出ない |
+| プレイへの影響 | 人型は約4F、イカのピーク出しは約9F 早く弾が出ていたのが S3 遊びに同期。起動タイマー（`s3BlasterWindup`）と発射後クールダウン（`cooldown`）は独立したまま、`PLAYER.emergeDelay` と 22F ポストショット（#214）には手を触れない。shooter/slosher/charger/roller の起動は `_auto` の `kind!=='blaster'` 分岐で不変 |
+| 確認状態 | **ロジック確認済み**（source-fixture、実 Actor.tick、1/60 固定、30/60/120 Hz 同一 tick、owner の反動=1回）。**本家実機（Switch Ver.11.3.0）でのフレーム単位の実測比較は未確認**。14F/24F は pinned 引用値であり実機再計測では未確定。22F ポストショットは #214 の別条項として未変更 |
 ## 2026-10-04: first-allocation mobile resource budget
 
 A cold-boot follow-up for #375/#395 uses the already-published G.mobile profile
