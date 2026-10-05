@@ -5,7 +5,7 @@
 function replaceOnce(code, before, after, label) {
   const at = code.indexOf(before);
   if (at < 0 || code.indexOf(before, at + before.length) !== -1) {
-    throw new Error(`INKWAVE aim profile patch conflict (${label}): expected exactly one connection`);
+    throw new Error(`INKWAVE quality patch conflict (aim profile: ${label}): expected exactly one connection`);
   }
   return code.slice(0, at) + after + code.slice(at + before.length);
 }
@@ -142,7 +142,7 @@ export function adaptAimProfiles(rel, code) {
     } else if (code.includes(pr496GyroConfig)) {
       code = replaceOnce(code, pr496GyroConfig, profileResetPrefix + pr496GyroConfig, 'mobile gyro configure pr496');
     } else {
-      throw new Error('INKWAVE aim profile patch conflict (mobile gyro configure): anchor not found');
+      throw new Error('INKWAVE quality patch conflict (aim profile: mobile gyro configure): anchor not found');
     }
 
     // Scoped profile epoch in MobileInput.setGyro prevents deferred permission from activating a replaced profile
