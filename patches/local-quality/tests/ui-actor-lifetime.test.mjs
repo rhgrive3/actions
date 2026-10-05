@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
-import {transformSync} from 'esbuild';
+import {pathToFileURL} from 'node:url';
 import {parse} from '../../loading-cache/vendor/acorn.mjs';
 import {adaptSource} from '../../splatoon3/adapter.mjs';
 import {adaptTouchLayout} from '../../touch-layout/adapter.mjs';
@@ -15,6 +15,7 @@ import * as THREE from '../../../inkwave-public/vendor/three/build/three.module.
 const ROOT=new URL('../../../',import.meta.url);
 const raw=rel=>fs.readFileSync(new URL('inkwave-public/'+rel,ROOT),'utf8');
 const mode=process.env.INKWAVE_UI_LIFETIME_MINIFY==='1';
+const transformSync=mode?(await import(process.env.ESBUILD_MODULE?pathToFileURL(process.env.ESBUILD_MODULE).href:'esbuild')).transformSync:null;
 const site=process.env.INKWAVE_UI_LIFETIME_SITE;
 class El {
   constructor(){this.children=[];this.style={setProperty(k,v){this[k]=v;}};this.names=new Set();this.classList={add:(...n)=>n.forEach(x=>this.names.add(x)),remove:(...n)=>n.forEach(x=>this.names.delete(x)),toggle:(n,v)=>v?this.names.add(n):this.names.delete(n)};}
