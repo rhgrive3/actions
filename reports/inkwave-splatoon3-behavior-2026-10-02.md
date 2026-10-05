@@ -171,6 +171,34 @@ Flow の外殻・粒・リボンが GTAO の法線／深度パスに不透明な
 
 停止姿勢の全画面beauty再描画では、実際の時計・骨・座標が同一でもnative fragmentの数pixelの色差が反復描画ごとに変化する。停止のモーション検証は、そのbeauty画像を両方保存したうえで、最終描画色だけを固定した別materialによる実GPU比較へ分けた。実際にコンパイルされたnative／比較側vertex shaderのSHA256一致、骨行列・pose・全node world行列・ゲーム時計の不変性、固定色画像の既存0差分条件を必須とする。各ケースで実rootを0.03動かす反例も描き、16pixel以上の変化を検出できない比較器は合格にしない。通常の全339描画ペア、Flow／壁のGTAO、表示中・中断・解放の検査はnative beauty shaderのままであり、この停止の比較を本家の画像一致の証拠にはしない。
 
+## 2026-10-04: 試合の結果・状態・不足通知（#300 / #112 / #117）
+
+公開 main `0859bf4fab08edc74c25fcb790e662a748a91ec9` からの独立バッチ。利用者が許容している90秒試合は変更しない。#188は対象外とし、実 Match constructor と MATCH.durations の90/180秒を回帰で保持した。#121の終了時sim即凍結や、未校正の#99 Danger閾値も取り込まない。
+
+参照版は Splatoon 3 Ver.11.3.0。任天堂の [戦闘のコツ](https://www.nintendo.com/en-gb/News/2024/September/Beginner-basics-for-Splatoon-3-tips-for-improving-in-battle-2640849.html) は上部アイコンのスペシャル準備完了発光を説明する。細かなHUD表示は [S3検証Wiki 操作方法](https://wikiwiki.jp/splatoon3mix/操作方法) のイカアイコン・結果画面（塗り、キル+アシスト、デス、SP使用数）と照合した。インク不足は [S3検証Wiki 初心者向け指南](https://wikiwiki.jp/splatoon3mix/初心者向け指南) の「ウェポン使用時に足りない場合」の表示説明に基づく。任天堂が敵の残り復活秒の非表示や不足警告の全フレーム数を文章で規定した、という主張ではない。
+
+| Issue | 到達経路と再現 | 修正・確認境界 |
+|---|---|---|
+| #300 | 実Actorのstats.specialsは発動時に増えるが Game._judge→Menus Turf table で欠落。0/2/4回の各プレイヤー結果を比較する。 | カウンターを増設せず既存値をpayloadとSP列へ接続。ネイティブの列の表示アニメーションにも参加し、Boss table/XP/塗り/撃破/デス/並び順は保持。小画面の4数値列は別段に配置。 |
+| #112 | Match.teamSummary と HUD._updSquads が敵のrespawnTimerを数字/リングで表示。pauseにも別の同種経路が存在。local teamを0/1双方にして敵死亡を確認する。 | 敵の秒数をsummary/pause snapshotに出さず、HUDはrawな旧summaryを渡されても敵数字とcountdown ringを隠す。pause rosterも同様に死亡表示だけ。味方と自分の表示、ready発光、復活状態は維持。通信全体の秘匿やチート耐性を保証する修正ではない。 |
+| #117 | Game._updateHud の a.ink<18 が未使用時まで不足警告にする。17.99/18/18.01と、実shot/subコスト直前直後を比較。 | 固定18%を除去して既存lowink→_lowInkFlashを使用。実際の不足時イベントだけが自分の警告へ届く。消費コスト・残量メーター・サブコスト線・回復停止は変更しない。 |
+
+### SP回数のネットワーク整合
+
+`packActor` の末尾 index21 へ既存累積回数を追加。受信の `_tick` では、実owner・remote・時刻の検証を通った後だけ非負safe integerを単調更新する。視覚的specialイベントを数え直さず、duplicateや古いpacketで加算/巻き戻ししない。最終結果では独立した `specialCounts: [[nid,count],…]` を使い、既存 `st` tuple を変更しない。PR #317 のassist index6と衝突しないことを両adapter順序の実NetMatchで確認した。
+
+旧peerが新フィールドを送らない時は既に知っている値を消さない。ただし、未更新ownerしか知らない回数を復元したり、未到着packetを補完したりするものではない。異ビルド混在・パケット損失の2端末実測は未実施。PR #182の全ネットワーク修正と合成済みという主張もしない。
+
+### 検証
+
+実Actor、Match、HUD、NetMatchを使う受入、実Gameのjudge/HUD frameとMenus table/refreshから抽出した本番処理を検証。Nodeでは描画依存のみfixture化した。emit不足警告・owner違い・duplicate/stale・不正回数・旧result・30/60/120Hz・両team・0使用・90秒維持を含む。
+
+公開minified graphに対して同じ受入を実行し、実Actor/Match/HUD/NetMatchを再確認した。Game/Menu抽出テストはソース合成版のままであり、minified DOM表示の証拠とは区別する。その穴を埋めるため既存Chromium/WebKit responsive検査へ、8人の0〜7 SP表示、4統計セルの非重複、pauseで敵秒非表示/味方秒維持の実DOMゲートを追加した。ブラウザ結果はexact-head Actionsで別記し、ローカルで成功したことにはしない。
+
+最終ローカル結果: gameplay/reliability 751/751、受入9/9、公開minified graph受入9/9、local-quality8/8、motion/workflow10/10。#317の正確なscore/HUD adapterと6モジュールを両順序で構文検証し、両順序の実NetMatch sendResult→_resultでassists[6]とspecialCountsの両方を保持した。新しい実DOM受入はこのheadのCI待ち。
+
+公開直前のmainは `404c66c858cfea14e81225fb6364febcf2c9c528`（PR #316）。0859→404の比較は `tools/inkwave-modeler/` 配下10ファイルのみで、今回検証した公開source/patch/test/workflowのバイトは不変。新PRは404のtreeを基底として、そのモデル変更を保持する。ローカルのCPU/build結果をモデルV93の描画検証とは扱わない。
+
 
 ## Action reliability workstream (2026-10-04)
 

@@ -133,6 +133,10 @@ export async function checkCoreMenus({ page, entry, config, engineName, evidence
   await show(page, 'pause');
   await capture('pause', '.iw-pause__menu button');
   if (!audit) {
+    assert.equal(await page.locator('.iw-roster--b .iw-st--dead b').count(), 0, 'pause roster must not re-expose opponent countdowns');
+    assert(await page.locator('.iw-roster--a .iw-st--dead b').count() > 0, 'friendly countdown remains available');
+  }
+  if (!audit) {
     await tap(page, '.iw-pause__menu [data-id="quit"]');
     entry.screens.quit = await geometry(page, '.iw-modal__btns button', 'quit');
     await page.screenshot({ path: path.join(evidence, `${engineName}-${entry.name}-quit.png`) });
@@ -143,6 +147,7 @@ export async function checkCoreMenus({ page, entry, config, engineName, evidence
   for (const boss of [false, true]) {
     await page.evaluate((boss) => {
       menus._results = menus._demoResults();
+      if (!boss) menus._results.players = menus._results.players.map((p, i) => ({ ...p, specials: i }));
       if (boss) {
         menus._results.mode = 'boss';
         menus._results.boss = { defeated: true, time: 142, hpLeft: 0, phase: 3 };
@@ -164,6 +169,16 @@ export async function checkCoreMenus({ page, entry, config, engineName, evidence
     await capture(name, '.iw-res__foot button');
     if (!audit) {
       assert.equal(await page.locator('.iw-prow').count(), 8);
+      if (!boss) {
+        const uses = await page.locator('.iw-ttable--turf .iw-prow__special').allTextContents();
+        assert.deepEqual(uses.map(Number).sort((a,b)=>a-b), [0,1,2,3,4,5,6,7], 'all authoritative special-use counts, including zero, survive native result rendering');
+        assert(await page.locator('.iw-ttable--turf .iw-prow').evaluateAll(rows => rows.every(row => {
+          const cells=[...row.querySelectorAll('.iw-prow__turf,.iw-prow__n')];
+          const boxes=cells.map(el=>el.getBoundingClientRect());
+          return boxes.every(r=>r.width>0&&r.left>=-1&&r.right<=innerWidth+1) && boxes.every((r,i)=>boxes.every((s,j)=>i===j||r.right<=s.left+1||s.right<=r.left+1||r.bottom<=s.top+1||s.bottom<=r.top+1));
+        })), 'the fourth Turf statistic must not overlap the other three on small screens');
+      }
+
       assert(await page.locator('.iw-prow').evaluateAll((rows) => rows.every((el) => {
         const r = el.getBoundingClientRect(); return r.left >= -1 && r.right <= innerWidth + 1;
       })), 'result rows must fit the viewport without losing statistics');
