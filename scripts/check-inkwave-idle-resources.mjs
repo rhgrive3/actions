@@ -11,6 +11,8 @@ import { verifyWallBuild } from './check-inkwave-wall-render.mjs';
 const ROOT=fileURLToPath(new URL('../',import.meta.url));
 const sha=b=>crypto.createHash('sha256').update(b).digest('hex');
 export function validateIdleResult(r) {
+  const c=r.coldBoot;
+  if(c?.quality!=='high'||c?.touch!==true||c?.gamePublishedAtAllocation!==false||c?.marina!==true||c?.cloud?.[0]!==1024||c?.cloud?.[1]!==320||c?.farSize!==256||c?.sameTargetsAfterBoot!==true)throw Error('Cold-boot mobile allocation gate');
   if(r.clouds?.length!==3||r.clouds.some((v,i)=>v.theme!==['day','sunset','golden'][i]||v.highBytes!==10485760||v.lowBytes!==2621440||!Number.isFinite(v.meanByteError)||v.meanByteError<0||v.meanByteError>8||!Number.isFinite(v.largeErrorFraction)||v.largeErrorFraction<0||v.largeErrorFraction>.1||v.highRepeatChanged!==0||!Number.isInteger(v.nonzero)||v.nonzero<100))throw Error('Cloud appearance/budget gate');
   if(r.far?.length!==4||r.far.some(v=>v.size!==256||v.disposes!==1||!v.deleted||!v.cleared||!v.sameEnvironment))throw Error('Far reflection disposal gate');
   if(r.pause?.renders!==1||r.pause.environment!==0||r.pause.paint!==0||r.pause.shadowMarks!==0||r.pause.menuTicks!==120||!r.pause.matchUnchanged||r.pause.resizeRenders!==1||r.pause.resumedRenders!==1||r.pause.onlineRenders!==3)throw Error('Offline pause work gate');
@@ -106,6 +108,40 @@ async function main(){
   });Object.assign(result.pause,extra);
   result.gpu=await page.evaluate(()=>{const gl=__G.renderer.getContext(),ext=gl.getExtension('WEBGL_debug_renderer_info');return {webgl:gl.getParameter(gl.VERSION),renderer:ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER)};});
   for(const f of ['patches/local-quality/idle-resources.mjs','patches/local-quality/music-idle.mjs'])if(![...loaded].some(p=>p.endsWith('/'+f)))throw Error('Runtime module not actually loaded: '+f);
+  phase='cold-boot-mobile';
+  const coldContext=await browser.browser().newContext({viewport:{width:844,height:390},hasTouch:true,isMobile:true});
+  try {
+   const coldPage=await coldContext.newPage();let hooked=false;const coldLoaded=new Set();
+   coldPage.on('pageerror',e=>errors.push('cold boot: '+e.message));
+   await coldPage.addInitScript(()=>localStorage.setItem('inkwave.settings',JSON.stringify({quality:'high',shadows:false,bloom:false,music:0,sfx:0})));
+   await coldPage.route(address+'**',async route=>{
+    try {
+     const response=await route.fetch(),body=await response.body(),key=decodeURIComponent(new URL(response.url()).pathname).slice(1)||'index.html';
+     if(manifest.artifacts[key]&&sha(body)!==manifest.artifacts[key])throw Error('Cold loaded byte mismatch '+key);
+     coldLoaded.add(key);
+     if(!hooked&&key.endsWith('/src/main.js')){
+      hooked=true;
+      // Observe the real G.env publication before the unmodified main module
+      // executes. No constructor, target factory, budget, or served bytes change.
+      await coldPage.evaluate(async url=>{
+       const {G}=await import(url);if(G.game||G.env)throw Error('Cold observer installed too late');
+       const original=Object.getOwnPropertyDescriptor(G,'env')||{configurable:true,enumerable:true,writable:true,value:undefined};let value=G.env;
+       Object.defineProperty(G,'env',{configurable:true,enumerable:original.enumerable,get:()=>value,set:env=>{
+        value=env;
+        if(env)window.__coldEnvironment={quality:G.settings?.quality,touch:G.mobile?.touch===true,gamePublishedAtAllocation:!!G.game,marina:env._marina===true,cloud:[env._cloudRT?.width,env._cloudRT?.height],farSize:env._farRT?.width,cloudId:env._cloudRT?.texture.uuid,farId:env._farRT?.texture.uuid};
+        Object.defineProperty(G,'env',{...original,value:env});
+       }});
+      },new URL('./core/ctx.js',response.url()).href);
+     }
+     await route.fulfill({response,body});
+    }catch(error){errors.push('cold boot route: '+error.message);await route.abort();}
+   });
+   await coldPage.goto(address+'?devstage&skipTitle&map=halyard',{waitUntil:'domcontentloaded'});
+   await coldPage.waitForFunction(()=>!!window.__G?.game&&!!window.__coldEnvironment,null,{timeout:180000});
+   result.coldBoot=await coldPage.evaluate(()=>{const G=window.__G,c=window.__coldEnvironment;G.game.debug.freeze();return {...c,sameTargetsAfterBoot:c.cloudId===G.env._cloudRT?.texture.uuid&&c.farId===G.env._farRT?.texture.uuid};});
+   if(!hooked||![...coldLoaded].some(p=>p.endsWith('/src/world/environment.js')))throw Error('Cold native Environment bytes not observed');
+   await coldPage.screenshot({path:path.join(output,'cold-boot-mobile-halyard.png'),animations:'disabled'});
+  } finally {await coldContext.close();}
   result.errors=errors;const summary=validateIdleResult(result);
   publish({status:'passed',...result,summary,sourceSha:identity.source.sourceSha,contentHash:manifest.contentHash,verifierSha256:sha(fs.readFileSync(fileURLToPath(import.meta.url))),browser:browser.browser()?.version()});
  }catch(error){publish({status:'failed',phase,error:error.stack,errors,result,sourceSha:identity?.source.sourceSha,contentHash:identity?.manifest.contentHash});if(page)await page.screenshot({path:path.join(output,'failure.png')}).catch(()=>{});throw error;}

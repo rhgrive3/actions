@@ -270,7 +270,15 @@ Splatoon 3 Ver.11.3.0 の標準ブラスターは初弾（ZR エッジ→弾/反
 | 項目 | 内容 |
 |---|---|
 | 本家の根拠 | [Inkipedia — Blaster](https://splatoonwiki.org/wiki/Blaster)（現行 S3 データ）: humanoid→first shot 14f、swim→first shot 24f、sustained repeat 50f、firing→swim/sub 22f。Acceptance 基準は Ver.11.3.0。数値は issue #465 に記載の pinned 値を使用し、実機フレームの再計測は未実施 |
-| INKWAVE の実装箇所 | `patches/splatoon3/runtime/issue-465-blaster-startup.mjs`（純関数 `blasterStartupWindup`、14F/24F 定数）＋ `patches/splatoon3/runtime/weapons.mjs` の `WeaponRunner.prototype._auto` ブラスター分支。人型は新規エッジ（`firePressed`）で 14F、emerge ゲート直後の初回解放（`kidT <= emergeDelay+dt`）で 24F、保持再開は従来どおり `preDelay`。放出時に `cooldown=0` へ正規化し、`fireInterval-preDelay`(40F)＋10F 巻き上げで 50F 間隔を回復。起動中 `input.fire` 解放でキャンセル |
-| 再現操作 | 人型・弾充分・cooldown<=0 で新規 ZR→14 tick 目に `fireBlaster`/`trigger('shoot')`。イカで ZR→人型化後の初回解放は edge から 24 tick 目。保持で 50F 間隔。空弾/起動中の解放は弾も反動も出ない |
+| INKWAVE の実装箇所 | `patches/splatoon3/runtime/issue-465-blaster-startup.mjs`（純関数 `blasterStartupWindup`、14F/24F 定数）＋ `patches/splatoon3/runtime/weapons.mjs` の `WeaponRunner.prototype._auto` ブラスター分支。人型は新規エッジ（`firePressed`）で 14F、native ZR edge時の形態を保持し、swim-originの場合だけ既存emerge経過を差し引いて24F、保持再開は従来どおり `preDelay`。放出時に `cooldown=0` へ正規化し、`fireInterval-preDelay`(40F)＋10F 巻き上げで 50F 間隔を回復。受理済みの起動は従来のbuffered tapを維持し、未受理の押下・空弾は放出しない |
+| 再現操作 | 人型・弾充分・cooldown<=0 で新規 ZR→14 tick 目に `fireBlaster`/`trigger('shoot')`。イカで ZR→人型化後の初回解放は edge から 24 tick 目。保持で 50F 間隔。空弾/クールダウン中に押して離した未受理の入力は弾も反動も出ない |
 | プレイへの影響 | 人型は約4F、イカのピーク出しは約9F 早く弾が出ていたのが S3 遊びに同期。起動タイマー（`s3BlasterWindup`）と発射後クールダウン（`cooldown`）は独立したまま、`PLAYER.emergeDelay` と 22F ポストショット（#214）には手を触れない。shooter/slosher/charger/roller の起動は `_auto` の `kind!=='blaster'` 分岐で不変 |
 | 確認状態 | **ロジック確認済み**（source-fixture、実 Actor.tick、1/60 固定、30/60/120 Hz 同一 tick、owner の反動=1回）。**本家実機（Switch Ver.11.3.0）でのフレーム単位の実測比較は未確認**。14F/24F は pinned 引用値であり実機再計測では未確定。22F ポストショットは #214 の別条項として未変更 |
+## 2026-10-04: first-allocation mobile resource budget
+
+A cold-boot follow-up for #375/#395 uses the already-published G.mobile profile
+until G.game exists. The established touch budget now applies on the first
+cloud/Halyard cube allocation at default high settings, not only after later
+runtime refresh. Existing formats, appearance policy and gameplay stay intact.
+These are project resource dimensions, not Nintendo/Switch memory values.
+See [the cold-boot budget report](inkwave-cold-boot-budgets-2026-10-04.md).
