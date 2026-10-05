@@ -79,7 +79,11 @@ export function beforeActions(a, dt, jumpPressed) {
       const scale = a.s3.modifiers?.surgeChargeScale ?? 1;
       surge.charge = Math.min(1, surge.charge + dt / (cfg.surge.chargeTime * scale));
       if (1 - surge.charge <= 1e-10) surge.charge = 1;
-      // Native climb already resolved slow charge movement; retain that velocity.
+      // Native climb already resolved the slowed vertical/lateral charge motion.
+      // Its -normal wall-hug term is a contact bias, not travel velocity; integrating
+      // that term would bury the squid inside the wall and drop the contact.
+      const n = a.wallN, vn = a.vel.x * n.x + a.vel.z * n.z;
+      a.vel.x -= n.x * vn; a.vel.z -= n.z * vn;
       a.jumpBuffer = 0;
       a.anim.surgeCharge = surge.charge;
       sync(a, state); return true;
