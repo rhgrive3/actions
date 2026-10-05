@@ -127,7 +127,7 @@ test('actual Slam recovery and cancellation release both native contact and walk
 test('disabled and unmapped specials retain the native contact gate; Storm adds no gait restriction',async()=>{
  const api=await production();world(api);
  for(const mode of ['disabled','network','storm']){
-  const r=rig(api,60,mode==='storm'?'charger':'shooter');
+  const r=rig(api,60,mode==='storm'?'charger':'shooter',mode==='storm'?'storm':'slam');
   try{
    r.a._startSpecial();
    if(mode==='disabled')r.ch.s3SpecialMotionEnabled=false;
