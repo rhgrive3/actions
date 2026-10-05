@@ -276,7 +276,13 @@ function retireNetworkGhosts(owner = null) {
     clouds = clouds.replace(/\bdt\b/g,'stepDt').replace('_updateClouds(stepDt)','_updateClouds(dt)').replace('peer ? SIM_DT : stepDt','peer ? SIM_DT : dt');
     clouds = once(clouds,'this.clouds.splice(i, 1); }','this.clouds.splice(i, 1); break; }\n      }','close cloud steps');
     clouds = once(clouds,'        for (const e of G.actors) {','        for (const e of G.actors) {\n          if (peer && tick !== steps-1) break;', 'recipient cloud damage once per frame');
-    clouds = once(clouds,'e.damage(sp.dps * stepDt,', 'e.damage(sp.dps * (peer ? dt : stepDt),', 'recipient damage elapsed time');
+    if (clouds.includes('e.damage(sp.dps * stepDt,')) {
+      clouds = once(clouds,'e.damage(sp.dps * stepDt,', 'e.damage(sp.dps * (peer ? dt : stepDt),', 'recipient damage elapsed time');
+    } else {
+      clouds = once(clouds,'collectStormHit(rainHits, e, c, sp.dps * stepDt);',
+        'collectStormHit(rainHits, e, c, sp.dps * (peer ? dt : stepDt));',
+        'recipient Storm arbitration elapsed time');
+    }
     clouds = once(clouds,'        G.fx?.rain(c.group.position, sp.radius * s, G.teamColors[c.team], stepDt, { cloud: false });','        if (!peer || tick === steps-1) G.fx?.rain(c.group.position, sp.radius * s, G.teamColors[c.team], peer ? dt : stepDt, { cloud: false });','bounded catch-up rain emission');
     code = code.slice(0,cloudStart)+clouds+code.slice(cloudEnd);
     patch('      b.t += dt;', `      if (b._netPeer) {
