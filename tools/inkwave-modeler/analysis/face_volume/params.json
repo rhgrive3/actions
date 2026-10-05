@@ -1222,45 +1222,42 @@
    ]
   },
   {
-   "name": "brow_ridge_lower_back",
+   "name": "forehead_fill",
    "kind": "warp",
    "after_delta_smooth": true,
    "vec_mm": [
     0,
     0,
-    -1.5
+    3.0
    ],
    "bumps": [
     {
      "centre": [
       0.0,
-      24.0,
-      100.0
+      40.0,
+      95.0
      ],
-     "rx": 24.0,
-     "ry": 7.0,
+     "rx": 32.0,
+     "ry": 14.0,
      "rz": 20.0
     }
    ]
   },
   {
-   "name": "brow_ridge_lower_fwd",
-   "kind": "warp",
+   "name": "forehead_profile_smooth",
+   "kind": "smooth",
+   "factor": 0.5,
+   "iters": 40,
    "after_delta_smooth": true,
-   "vec_mm": [
-    0,
-    0,
-    2.0
-   ],
    "bumps": [
     {
      "centre": [
       0.0,
-      5.0,
+      18.0,
       100.0
      ],
-     "rx": 20.0,
-     "ry": 6.0,
+     "rx": 28.0,
+     "ry": 26.0,
      "rz": 20.0
     }
    ]
@@ -1322,10 +1319,10 @@
     "iters": 30
    },
    "flare": {
-    "mm": 6,
+    "mm": 18,
     "y": [
-     -106,
-     -92
+     -100,
+     -76
     ],
     "power": 2.0
    }
