@@ -23,8 +23,17 @@ export function adaptWeaponsFidelity(code,replaceOnce) {
   patch('        const hit = G.physics.segment(p.prev, p.pos, _hit, true);',
     '        const hit = fidelityWorldHit(this, p);','reuse terrain query');
   patch('      if (!dead && p.age > p.life) {','      if (!dead && p.age + WEAPONS_FIDELITY_EPSILON >= p.life) {','exact lifetime boundary');
-  patch('        if (_res.dist < PLAYER.radius * 0.95 + p.size) {','        if (_res.dist < PLAYER.radius * 0.95 + fidelityPlayerCollisionRadius(p)) {','source player-collision growth');
   patch('      p.vel.set(Math.sin(ang) * cu * sp, Math.sin(up) * sp, Math.cos(ang) * cu * sp);',
     '      p.vel.set(Math.sin(ang) * cu * sp, Math.sin(up) * sp, Math.cos(ang) * cu * sp);\n      configureFidelityFlick(p, a, w, i, ang, sp);','flick layers; retain random draw ordering');
+  patch('        Physics.segmentCapsuleDist(p.prev, p.pos, hitBase(e), PLAYER.radius, h, _res);',
+    '        // Continuous capsule entry was already solved by fidelityProjectileTargets.', 'remove sampled closest-point retest');
+  patch('        if (_res.dist < PLAYER.radius * 0.95 + p.size) {',
+    '        if (p.fidelityImpactActor === e) {', 'continuous actor entry');
+  patch('          _v.copy(p.prev).lerp(p.pos, _res.t);',
+    '          _v.copy(p.prev).lerp(p.pos, p.fidelityImpactT);', 'true impact point');
+  patch('      if (p.delay > 0) { p.delay -= dt; if (p.delay > 0) continue; }   // poured waves: later globs leave a beat later',
+    '      const elapsed = Math.max(0, dt - Math.max(0, p.delay || 0));\n      p.delay = Math.max(0, (p.delay || 0) - dt);\n      if (elapsed <= 1e-10) continue;', 'delayed projectile active fraction');
+  patch('try { if (this._step(p, dt))', 'try { if (this._step(p, elapsed))', 'delayed movement duration');
+  patch('      if (!dead && p.trailEvery) {','      if (!dead && !p.ghost && p.trailEvery) {','ghost trails never score paint');
   return "import { EPSILON as WEAPONS_FIDELITY_EPSILON, advanceFidelityProjectile, configureFidelityFlick, fidelityProjectileTargets, fidelityPlayerCollisionRadius, fidelityVolleyDamage, fidelityBossHit, fidelityWorldHit, applyFidelityProjectileHit, applyFidelitySlosherSplash } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n"+code;
 }
