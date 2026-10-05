@@ -133,7 +133,7 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
       // The runner owns whether the drum is rolling. A fixed 0.6s flick timer
       // otherwise delays the arms after gameplay has already resumed painting.
       const rolling = this.kidForm && this.grounded && !this.dance && !!s.rolling;
-      this.wRoll = mix(previous, rolling ? 1 : 0, 1 - Math.exp(-(rolling ? 13 : 6) * dt));
+      this.wRoll = mix(previous, rolling ? 1 : 0, 1 - Math.exp(-(rolling ? 14 : 6) * dt));
     }
     return result;
   };
