@@ -1,9 +1,17 @@
 let api, config;
+const EPSILON = 1e-10;
 export function rollEligible(velocity, move, cfg) {
   const speed = Math.hypot(velocity.x, velocity.z), input = Math.hypot(move.x, move.z);
-  if (speed < cfg.minimumSpeed || input < cfg.minimumInput) return false;
+  if (!Number.isFinite(speed + input) || speed + EPSILON < cfg.minimumSpeed || input <= EPSILON || input < cfg.minimumInput) return false;
   const cosine = Math.max(-1, Math.min(1, (velocity.x * move.x + velocity.z * move.z) / (speed * input)));
   return Math.acos(cosine) + 1e-10 >= cfg.minimumAngle;
+}
+// Input is already deadzone-filtered; wall-roll admission is angular.
+export function wallRollRequested(a, jumpPressed, normal = a.wallN) {
+  if (!jumpPressed || !a.alive || !a.climbing || a.form !== 'squid' || a.specialActive || a.superJumpState) return false;
+  const move = a.intent.move, length = Math.hypot(move.x, move.z), nl = Math.hypot(normal.x, normal.z);
+  if (!Number.isFinite(length + nl) || length <= EPSILON || nl <= EPSILON) return false;
+  return (move.x * normal.x + move.z * normal.z) / (length * nl) + EPSILON >= Math.cos(config.wallRollMaximumAngle);
 }
 export function rollLaunchSpeed(speed, chain, retention) {
   // Speed already contains any loss from the previous roll. Apply the
@@ -17,7 +25,7 @@ export function absorbArmor(state, damage) {
 }
 export function movementState(a) {
   a.s3 ||= {};
-  return a.s3.actions || (a.s3.actions = { chain: 0, chainTimer: 0, roll: null, surge: null });
+  return a.s3.actions || (a.s3.actions = { chain: 0, chainTimer: 0, roll: null, surge: null, floorSpeed: null });
 }
 function sync(a, state) { a.s3.roll = state.roll; a.s3.surge = state.surge; }
 function launch(a, direction, speed, vertical, kind) {
@@ -42,18 +50,27 @@ export function beforeActions(a, dt, jumpPressed) {
     if (state.roll.time <= 1e-10 || a.form !== 'squid') state.roll = null;
   }
   if (!a.alive || a.specialActive || a.superJumpState || a.form !== 'squid') {
-    state.roll = state.surge = null; a.anim.surgeCharge = 0; sync(a, state); return false;
+    state.roll = state.surge = state.floorSpeed = null; a.anim.surgeCharge = 0; sync(a, state); return false;
   }
-  // Own-ink roll uses the velocity captured BEFORE ordinary braking/turning.
-  const wallRoll = a.climbing && jumpPressed && (a.intent.move.x * a.wallN.x + a.intent.move.z * a.wallN.z) >= cfg.wallRollMinimumInput;
-  if (jumpPressed && (wallRoll || a.submerged && rollEligible(a.vel, a.intent.move, cfg.roll))) {
+  // Keep the last qualifying real velocity direction briefly; do not queue raw input.
+  if (!a.submerged || !a.grounded || a.climbing || state.roll) state.floorSpeed = null;
+  else if (Math.hypot(a.vel.x, a.vel.z) + EPSILON >= cfg.roll.minimumSpeed) {
+    const recent = state.floorSpeed || (state.floorSpeed = { x: 0, z: 0, age: 0 });
+    recent.x = a.vel.x; recent.z = a.vel.z; recent.age = 0;
+  } else if (state.floorSpeed) {
+    state.floorSpeed.age += dt;
+    if (state.floorSpeed.age > cfg.roll.speedGraceTime + EPSILON) state.floorSpeed = null;
+  }
+  const wallRoll = wallRollRequested(a, jumpPressed);
+  const floorVelocity = state.floorSpeed || a.vel;
+  if (jumpPressed && (wallRoll || a.submerged && a.grounded && rollEligible(floorVelocity, a.intent.move, cfg.roll))) {
     const retention = a.s3.modifiers?.rollRetention ?? cfg.roll.chainRetention;
     const speed = rollLaunchSpeed(Math.max(cfg.roll.minimumSpeed, Math.hypot(a.vel.x, a.vel.z)), state.chain, retention);
     const direction = wallRoll ? a.wallN : a.intent.move;
     launch(a, direction, speed, cfg.roll.jumpVelocity, 'squidroll');
     state.roll = { time: cfg.roll.duration, armorTime: cfg.roll.armorTime, armorHP: cfg.roll.armorHP,
       vx: a.vel.x, vz: a.vel.z };
-    state.surge = null; state.chain++; state.chainTimer = cfg.roll.chainReset;
+    state.surge = state.floorSpeed = null; state.chain++; state.chainTimer = cfg.roll.chainReset;
     sync(a, state); return true;
   }
   if (a.climbing && a.intent.jump) {
@@ -62,7 +79,8 @@ export function beforeActions(a, dt, jumpPressed) {
       const scale = a.s3.modifiers?.surgeChargeScale ?? 1;
       surge.charge = Math.min(1, surge.charge + dt / (cfg.surge.chargeTime * scale));
       if (1 - surge.charge <= 1e-10) surge.charge = 1;
-      a.climbV = 0; a.vel.set(0, 0, 0); a.jumpBuffer = 0;
+      // Native climb already resolved slow charge movement; retain that velocity.
+      a.jumpBuffer = 0;
       a.anim.surgeCharge = surge.charge;
       sync(a, state); return true;
     }
@@ -113,10 +131,11 @@ export function installMovement(context, tuning) {
   const horizontal = Actor.prototype._horizontal;
   Actor.prototype._horizontal = function (...args) {
     const roll = movementState(this).roll;
-    // Keep launch momentum, including any clipping applied by the real collision
-    // resolver. Restoring vx/vz here would push into the wall again every tick.
-    if (roll) return;
-    return horizontal.apply(this, args);
+    if (!roll || this.grounded) return horizontal.apply(this, args);
+    const original = api.PLAYER.squidDrySpeed;
+    api.PLAYER.squidDrySpeed = api.PLAYER.swimSpeed;
+    try { return horizontal.apply(this, args); }
+    finally { api.PLAYER.squidDrySpeed = original; }
   };
   const ledge = Actor.prototype._ledgePop;
   Actor.prototype._ledgePop = function (...args) {
@@ -137,7 +156,17 @@ export function installMovement(context, tuning) {
   };
   const climb = Actor.prototype._updateClimb;
   Actor.prototype._updateClimb = function (...args) {
-    const was = this.climbing, value = climb.apply(this, args);
+    const was = this.climbing, state = movementState(this);
+    const charging = this.alive && this.form === 'squid' && this.climbing && this.intent.jump &&
+      !this.specialActive && !this.superJumpState && (!state.surge || state.surge.phase === 'charge');
+    const P = api.PLAYER, speed = P.climbSpeed, side = P.climbSideSpeed;
+    if (charging) {
+      P.climbSpeed *= config.surge.chargeMoveScale;
+      P.climbSideSpeed *= config.surge.chargeMoveScale;
+    }
+    let value;
+    try { value = climb.apply(this, args); }
+    finally { P.climbSpeed = speed; P.climbSideSpeed = side; }
     // Losing an inked wall cancels charge. A ledge burst is kept in the air.
     if (was && !this.climbing && movementState(this).surge?.phase === 'charge') { movementState(this).surge = null; this.anim.surgeCharge = 0; }
     return value;
@@ -147,7 +176,7 @@ export function installMovement(context, tuning) {
     Actor.prototype[method] = function (...args) {
       const result = original.apply(this, args);
       if (this.specialActive || this.superJumpState) {
-        const state = movementState(this); state.roll = state.surge = null; this.anim.surgeCharge = 0; sync(this, state);
+        const state = movementState(this); state.roll = state.surge = state.floorSpeed = null; this.anim.surgeCharge = 0; sync(this, state);
       }
       return result;
     };
