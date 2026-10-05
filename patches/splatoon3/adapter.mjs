@@ -1,3 +1,4 @@
+import { adaptChargerSurface } from './charger-surface-adapter.mjs';
 import { adaptGearSub } from './gear-sub-adapter.mjs';
 import { adaptContactRecovery } from './contact-recovery-adapter.mjs';
 import { adaptWeaponEdgecases } from './weapon-edgecases-adapter.mjs';
@@ -34,6 +35,7 @@ export function checkCompatibility(src, patchRoot = PATCH_ROOT) {
 }
 
 export function adaptSource(rel, code) {
+  code = adaptChargerSurface(rel, code, replaceOnce);
   code = adaptGearSub(rel, code, replaceOnce);
   code = adaptContactRecovery(rel, code, replaceOnce);
   if (rel === 'patches/splatoon3/runtime/resources.mjs') return adaptIssue415(rel, code);
