@@ -71,8 +71,18 @@ jobs:
             target=pathlib.Path('.reference-data')/source['id']
             target.parent.mkdir(parents=True,exist_ok=True)
             with urllib.request.urlopen(source['url'],timeout=30) as response: target.write_bytes(response.read())
+          weapons=json.loads(pathlib.Path('patches/splatoon3/reference/weapons-fidelity-reference.json').read_text())
+          for source in weapons['sources']:
+            if not source.get('expectedFileSha256'): continue
+            target=pathlib.Path('.reference-data/weapons')/source['url'].rsplit('/',1)[-1]
+            target.parent.mkdir(parents=True,exist_ok=True)
+            with urllib.request.urlopen(source['url'],timeout=30) as response: target.write_bytes(response.read())
           PY
           node scripts/verify-inkwave-reference.mjs .reference-data
+          node scripts/check-weapons-reference.mjs .reference-data/weapons
+          node scripts/verify-completion-sources.mjs .reference-data/weapons
+      - name: Verify completed weapon source mirror
+        run: node scripts/verify-completion-sources.mjs .reference-data/weapons
       - name: Check JavaScript syntax
         run: |
           set -euo pipefail
@@ -111,6 +121,8 @@ jobs:
           npm install --no-save --no-package-lock --silent esbuild@0.28.2
           node scripts/build-inkwave.mjs inkwave-public _site
           git rev-parse HEAD > _site-source-sha.txt
+      - name: Verify built weapons fidelity measurements and packet parity
+        run: node --experimental-vm-modules scripts/check-inkwave-weapons-fidelity.mjs --site _site
       - uses: actions/upload-artifact@v4
         with:
           name: inkwave-patched-site-${{ inputs.source_sha || github.sha }}
