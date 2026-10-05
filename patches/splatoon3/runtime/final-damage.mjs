@@ -33,7 +33,8 @@ export function finalWeaponDamage(victim, amount, attacker, source) {
   // groupDamage upstream emits max-damage increments. Quantize the cumulative
   // POST-defense damage, not each increment: 30.39 then +3.92 must total 34.3.
   credit.raw += Math.max(0, amount);
-  const total = damageTenths(credit.raw), delta = Math.max(0, total - credit.applied);
+  const total = damageTenths(credit.raw);
+  const delta = Math.max(0, Math.round((total - credit.applied) * 10) / 10);
   credit.applied = total; return delta;
 }
 export function installFinalDamage({Actor, Projectiles}) {
