@@ -63,8 +63,18 @@ function seededFrames(seed, min, max, salt) {
 }
 function wallDropSource(p) {
   const w = p.s3Weapon || p.owner?.weapon;
-  if (!w || (w.kind !== 'blaster' && w.kind !== 'splatling')) return null;
-  const raw = rawWeapon(w), move = raw?.WallDropMoveParam, paint = raw?.WallDropCollisionPaintParam;
+  if (!w) return null;
+  const raw = rawWeapon(w);
+  let move, paint;
+  if (w.kind === 'roller') {
+    // Roller wall-drop data belongs to the exact flick unit that produced the
+    // glob (horizontal main/near or one of the vertical units), not the weapon
+    // top level. configureFidelityFlick/initialize already preserve that unit.
+    const unit = p.fidelityRollerUnit?.UnitParam;
+    move = unit?.WallDropMoveParam; paint = unit?.WallDropCollisionPaintParam;
+  } else if (w.kind === 'blaster' || w.kind === 'splatling') {
+    move = raw?.WallDropMoveParam; paint = raw?.WallDropCollisionPaintParam;
+  } else return null;
   return move && paint ? { w, move, paint } : null;
 }
 function eligibleWallDropHit(hit) {
@@ -93,9 +103,11 @@ function wallDropFallPaint(p, state, from, to) {
   state.paintCarry = (state.paintCarry + distance) % spacing;
 }
 
-// #576/#597 only: the source mirror already contains the pinned S3 top-level
-// WallDrop records. Convert their per-frame target speeds to this runtime's
-// world-units/second convention, but retain phase lengths in source frames.
+// #519/#576/#597: the source mirror already contains the pinned S3 WallDrop
+// records (per-unit for Roller, top-level for Blaster/Splatling). Convert their
+// per-frame target speeds to this runtime's world-units/second convention, but
+// retain phase lengths in source frames. Omitted source fields retain their
+// zero/default meaning rather than inheriting a different unit's constants.
 // First/last random durations are derived from the projectile seed so local and
 // ghost playback need no packet extension and consume no extra PRNG draws.
 export function beginFidelityWallDrop(system, p, hit) {
@@ -105,7 +117,7 @@ export function beginFidelityWallDrop(system, p, hit) {
   const firstFrames = seededFrames(p.seed, move.FallPeriodFirstFrameMin, move.FallPeriodFirstFrameMax, 0x576);
   const lastFrames = seededFrames(p.seed, move.FallPeriodLastFrameMin, move.FallPeriodLastFrameMax, 0x597);
   const secondFrames = Math.max(0, Math.round(move.FallPeriodSecondFrame ?? 0));
-  const firstSpeed = Number(move.FallPeriodFirstTargetSpeed), secondSpeed = Number(move.FallPeriodSecondTargetSpeed);
+  const firstSpeed = Number(move.FallPeriodFirstTargetSpeed ?? 0), secondSpeed = Number(move.FallPeriodSecondTargetSpeed ?? 0);
   if (![firstSpeed, secondSpeed].every(v => Number.isFinite(v) && v >= 0)) throw new RangeError('Invalid wall-drop target speed');
   const state = p.fidelityWallDrop = {
     frame: 0, firstFrames, secondFrames, lastFrames, totalFrames: firstFrames + secondFrames + lastFrames, done: false,
@@ -137,7 +149,7 @@ export function beginFidelityWallDrop(system, p, hit) {
     try { system._blastBurst(p, hit.point, null); }
     finally { p.s3TerrainBurst = before; }
   } else {
-    api.emit('weapon:impact', { pos: hit.point.clone(), normal: hit.normal.clone(), team: p.team, kind: 'shot', radius: state.shockRadius });
+    api.emit('weapon:impact', { pos: hit.point.clone(), normal: hit.normal.clone(), team: p.team, kind: p.type === 'drop' ? 'drop' : 'shot', radius: state.shockRadius });
     api.G.fx?.burst(hit.point, hit.normal, p.owner.color, { count: 5, speed: 3, size: .07, paint: false });
   }
   return true;
