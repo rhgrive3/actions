@@ -78,6 +78,6 @@ export async function fixture({site = BASELINE, seed = 0x1a2b3c4d, floor = true,
     return a;
   }
   function wall(z,{width=10,height=5,thickness=.1}={}){const id=G.level.blocks.length;G.level.blocks.push({id,solid:true,grate:false,center:V(0,height/2,z),half:V(width/2,height/2,thickness/2),axes:box.axes,faces:[-1,-1,-1,-1,-1,-1],aabbMin:V(-width/2,0,z-thickness/2),aabbMax:V(width/2,height,z+thickness/2)});}
-  function tick(a, input={fire:false}, dt=1/60){G.time+=dt;a.intent.fire=!!input.fire;a.weaponRunner.update(dt,input);projectiles.update(dt);}
+  function tick(a, input={fire:false}, dt=1/60){G.time+=dt;a.lastFire+=dt;a.intent.fire=!!input.fire;a.weaponRunner.update(dt,input);projectiles.update(dt);}
   return {...api,context,profile,make,wall,tick,paints,hits,fires,impacts,projectiles,draws:()=>draws,reseed(n){state=n>>>0;draws=0;},sourceFiles:[...modules.keys()]};
 }
