@@ -33,10 +33,11 @@ export function updateResources(a, dt) {
     a.hp = Math.min(P.hp, a.hp + (a.submerged ? r.regenRateSwim : r.regenRate) * dt);
   }
   const wasFull = a.ink >= P.inkMax;
-  const weaponDelay = a.weapon.inkRecoverStop ?? r.inkRefillDelay;
+  const rollingRecovery = a.weapon.kind === 'roller' && a.s3?.rollerRefillMode;
+  const weaponDelay = rollingRecovery ? 0 : a.weapon.inkRecoverStop ?? r.inkRefillDelay;
   const delay = Math.max(weaponDelay, a.s3?.inkRecoverStop || 0);
   if(a.s3) a.s3.recoverStopRemaining = Math.max(0,(a.s3.recoverStopRemaining || 0)-dt);
-  const canRefill = a.lastFire + 1e-10 >= delay && (a.s3?.recoverStopRemaining || 0) <= 1e-10 && !a.weaponRunner.busy() && !a.weaponRunner.s3Stored;
+  const canRefill = (rollingRecovery ? !a.weaponRunner.rolling && a.lastFire + 1e-10 >= (a.s3?.inkRecoverStop || 0) : a.lastFire + 1e-10 >= delay) && (a.s3?.recoverStopRemaining || 0) <= 1e-10 && !a.weaponRunner.busy() && !a.weaponRunner.s3Stored;
   if (canRefill) {
     let rate = 0;
     if (a.submerged || a.climbing) rate = r.inkRefillSwim;

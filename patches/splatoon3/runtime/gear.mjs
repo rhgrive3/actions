@@ -78,7 +78,7 @@ export function installGear(api, tuning) {
   }
   Actor.prototype.reset = function (...args) {
     const result = reset.apply(this, args); equip(this);
-    this.s3.recoverStopRemaining = 0; this.s3.enemyInkTime = 0;
+    this.s3.recoverStopRemaining = 0; this.s3.rollerRefillMode = false; this.s3.enemyInkTime = 0;
     return result;
   };
   Actor.prototype.setWeapon = function (...args) { const result = setWeapon.apply(this, args); equip(this); return result; };
@@ -86,7 +86,7 @@ export function installGear(api, tuning) {
   WeaponRunner.prototype.moveSpeed = function () {
     const m = this.a.s3?.modifiers || {}, w = this.a.weapon;
     const lockedMode = this.rolling || this.charging && w.kind === 'charger';
-    const attacking = this.firingT > 0 || this.charging || this.streaming;
+    const attacking = this.firingT > 0 || this.flick >= 0 || this.charging || this.streaming;
     const gear = lockedMode ? 1 : attacking ? m.runSpeedFiring ?? 1 : m.runSpeed ?? 1;
     return moveSpeed.call(this) * gear * (this.a.s3?.flow?.active ? tuning.flow.runMultiplier : 1);
   };
@@ -126,7 +126,9 @@ export function installGear(api, tuning) {
       Object.assign(api.SUB.bomb, saved);
       if (a.ink < beforeInk) {
         a.s3 ||= {};
-        const delay = input.subReleased ? api.SUB.bomb.inkRecoverStop : this.s3FlickVertical ? a.weapon.verticalInkRecoverStop ?? a.weapon.inkRecoverStop : a.weapon.inkRecoverStop;
+        const rollingUse = !input.subReleased && a.weapon.kind === 'roller' && this.rolling;
+        a.s3.rollerRefillMode = rollingUse;
+        const delay = input.subReleased ? api.SUB.bomb.inkRecoverStop : rollingUse ? a.weapon.rollInkRecoverStop : this.s3FlickVertical ? a.weapon.verticalInkRecoverStop ?? a.weapon.inkRecoverStop : a.weapon.inkRecoverStop;
         a.s3.recoverStopRemaining = Math.max(a.s3.recoverStopRemaining || 0, delay ?? tuning.resources.inkRefillDelay);
       }
     }

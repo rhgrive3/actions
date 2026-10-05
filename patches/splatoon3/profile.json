@@ -97,7 +97,8 @@
         "straightTime": 0.15,
         "burstTime": 0.21666666666666667
       },
-      "fieldCollisionRadius": 0.2
+      "fieldCollisionRadius": 0.2,
+      "terrainSplashRadiusRate": 0.4234
     },
     "splatling": {
       "inkPerShot": 0.5625,
@@ -287,7 +288,9 @@
           "endRadius": 1.02,
           "changeTime": 0.06666666666666667
         }
-      }
+      },
+      "rollDamage": 125,
+      "rollInkRecoverStop": 0.3333333333333333
     },
     "slosher": {
       "inkPerShot": 7.6,
@@ -485,7 +488,10 @@
       "Splatling grounded pitch1.6deg uses the existing radial sampler with separate axes; S3 PDF, bias, air/IA correlations are unverified.",
       "Roller near-unit count1 is corroborated by S3 unit research, not an inferred omitted BulletNum; velocity and width use relative mappings, sampler/absolute spawn calibration remains unverified.",
       "Blaster terrain damage is half of normalized existing bands, floor to0.1HP after scaling;35HP cap is sourced, complete S3 falloff curve remains uncalibrated.",
-      "PR64 completion: finite Charger flight, continuous collision, source-mirrored unit layouts and model-labelled interpolation; physical Switch parity remains unverified."
+      "PR64 completion: finite Charger flight, continuous collision, source-mirrored unit layouts and model-labelled interpolation; physical Switch parity remains unverified.",
+      "Roller contact visibility preserves the native contact volume and tests owner-to-nearest-drum-to-target segments against solid OBBs; exact S3 drum collider and pushback are not calibrated.",
+      "Roller rolling refill uses the last actual ink-consumption countdown, preserving larger unfinished prior swing/sub locks and never refilling during active rolling. Horizontal43F/vertical58F remain independent.",
+      "Blaster .4234 terrain/player blast radius ratio only clips player hit admission. No unverified damage multiplier, boss blast reduction, visual or paint shrink is inferred."
     ],
     "movementResourcesEvidence": "reports/inkwave-movement-resources-2026-10-02.md"
   },
@@ -1311,6 +1317,24 @@
       "index": null,
       "factor": 1,
       "rawValue": 0.8
+    },
+    "weapons.roller.rollDamage": {
+      "parameter": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/BodyParam/Damage",
+      "index": null,
+      "factor": 0.1,
+      "rawValue": 1250
+    },
+    "weapons.roller.rollInkRecoverStop": {
+      "parameter": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WeaponRollParam/InkRecoverStop",
+      "index": null,
+      "factor": 0.016666666666666666,
+      "rawValue": 20
+    },
+    "weapons.blaster.terrainSplashRadiusRate": {
+      "parameter": "data/parameter/1130/weapon/WeaponBlasterMiddle.game__GameParameterTable.json#/GameParameters/BlasterBurstParam/ShotCollisionHitRadiusRate",
+      "index": null,
+      "factor": 1,
+      "rawValue": 0.4234
     }
   },
   "gearExtra": {

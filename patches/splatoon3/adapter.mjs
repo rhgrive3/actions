@@ -1,3 +1,4 @@
+import { adaptContactRecovery } from './contact-recovery-adapter.mjs';
 import { adaptMatchHud } from './match-hud-adapter.mjs';
 import { adaptWeaponEdgecases } from './weapon-edgecases-adapter.mjs';
 import { adaptWeaponsFidelity } from './weapons-adapter.mjs';
@@ -33,6 +34,7 @@ export function checkCompatibility(src, patchRoot = PATCH_ROOT) {
 }
 
 export function adaptSource(rel, code) {
+  code = adaptContactRecovery(rel, code, replaceOnce);
   code = adaptMatchHud(rel, code);
   if (rel === 'patches/splatoon3/runtime/resources.mjs') return adaptIssue415(rel, code);
   code = adaptMovementPhysics(rel, code, replaceOnce);

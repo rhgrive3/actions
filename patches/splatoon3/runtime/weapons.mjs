@@ -1,3 +1,4 @@
+import { installContactRecovery } from './contact-recovery.mjs';
 import { installWeaponEdgecases } from './weapon-edgecases.mjs';
 import { installRollerLogic } from './roller.mjs';
 let api;
@@ -214,5 +215,6 @@ export function installWeapons(context, profile) {
     if (this.charging && w.kind === 'charger' && Number.isFinite(w.moveSpeedFiring)) return w.moveSpeedFiring;
     return moveSpeed.call(this);
   };
+  installContactRecovery(api);
   installWeaponEdgecases(api);
 }
