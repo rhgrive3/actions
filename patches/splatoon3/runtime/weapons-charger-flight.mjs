@@ -104,7 +104,21 @@ export function installChargerFlight(api,completion) {
   }
   P.update=function(dt){
     const list=this._fidelityChargerFlights;
-    if(list)for(let i=list.length-1;i>=0;i--)if(step(this,list[i],dt))list.splice(i,1);
+    if(list)for(let i=list.length-1;i>=0;i--){
+      const job=list[i],beam=job.beam,peer=job.ghost&&beam?._netPeer;
+      if(peer){
+        // Flight and its beam share the same authoritative playback clock.
+        // A frozen/duplicate packet must not move the flight on wall time.
+        if(!this.beams.includes(beam)){list.splice(i,1);continue;}
+        const tick=1/60,clock=Math.min(peer.tr,peer.lastTs??peer.tr);
+        const elapsed=Number.isFinite(peer.sim)&&Number.isFinite(beam._netBornTick)
+          ?peer.sim-beam._netBornTick:(clock-beam._netBorn)/tick;
+        const target=Math.min(Math.floor(elapsed+.0306)+1,Math.ceil(job.range/(job.speed*tick))+1);
+        job.netSteps??=0;let ended=false;
+        while(!ended&&job.netSteps<target){job.netSteps++;ended=step(this,job,tick);}
+        if(ended)list.splice(i,1);
+      }else if(step(this,job,dt))list.splice(i,1);
+    }
     return nativeUpdate.call(this,dt);
   };
   P.clear=function(...args){this._fidelityChargerFlights=[];return nativeClear.apply(this,args);};
