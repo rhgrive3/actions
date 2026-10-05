@@ -182,6 +182,7 @@ const deferredIntegrationPreloads = new Set([
   'patches/local-quality/platform-transport.mjs',
   'patches/local-quality/touch-relayout.mjs',
   'patches/splatoon3/runtime/issue-415-adapter.mjs',
+  'patches/splatoon3/runtime/issue-416-adapter.mjs',
   'patches/splatoon3/runtime/movement-physics.mjs',
   'patches/splatoon3/runtime/roller-model.mjs',
   'patches/splatoon3/runtime/sub-special-fidelity.mjs',
