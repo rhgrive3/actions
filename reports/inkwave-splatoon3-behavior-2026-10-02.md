@@ -250,3 +250,16 @@ cloud/Halyard cube allocation at default high settings, not only after later
 runtime refresh. Existing formats, appearance policy and gameplay stay intact.
 These are project resource dimensions, not Nintendo/Switch memory values.
 See [the cold-boot budget report](inkwave-cold-boot-budgets-2026-10-04.md).
+
+## 泳ぎ中のサブ（R）入力受付とサブ慣性キャンセル（#591、2026-10-06）
+
+自インク泳ぎ中にサブウェポンボタン（R）を入力した際、従来は `Actor.update()` の `wantSquid` がサブ入力を考慮せず、また `WeaponRunner.update()` へ渡す `sub` 入力が `isSquid` により false にマスクされていたため、ヒト化・サブ構えへ遷移できず、スプラトゥーン3の「サブ慣性キャンセル（Sub strafe）」が不可能だった。Issue #591 において、泳ぎ中の R 入力（`_subPressT >= _squidPressT`）をヒト化・サブ構え要求として受領し、泳ぎ復帰（ZL 入力または R 解放）でボム未投擲・インク無消費キャンセルとなるよう `patches/splatoon3/adapter.mjs` で接続した。
+
+| 項目 | 内容 |
+|---|---|
+| 本家の根拠 | [Inkipedia Community Glossary - Sub strafing](https://splatoonwiki.org/wiki/Community_Glossary#Sub_strafing)、任天堂 Splatoon 3 Ver. 11.3.0 操作仕様。泳ぎ中に R を押すと即座にヒト形態のサブ構え状態へ移行して泳ぎ減速・慣性を遮断し、投擲コミット前に泳ぎへ復帰することでボムを投げずインク消費 0 で鋭角反転・方向転換を行う。 |
+| INKWAVE の実装箇所 | `patches/splatoon3/adapter.mjs` による `src/game/actor.js` の `_subPressT` 記録および `wantSquid` 判定（`subWins = intent.sub && (this._subPressT ?? -1) >= this._squidPressT`）。 |
+| 再現操作 | 自インク内で安定泳ぎ状態（`intent.squid = true`）中に R（`intent.sub = true`）を入力し、スティックを 180° 反転。従来は `form === 'squid'` のまま `aimingSub` に入れず通常泳ぎ旋回のみとなったが、修正後はヒト形態・`aimingSub === true` に移行し攻撃時加速で鋭角反転、泳ぎ復帰で投擲キャンセル（ボム 0・インク消費 0）となる。 |
+| プレイへの影響 | スプラトゥーン3における主要な高機動反転技術であるサブ慣性キャンセルが再現可能になる。通常のヒト形態サブ投擲、コミット後の投擲、インク不足時の不発、イカロール判定（アーマー付与）との完全な独立性を維持。 |
+| 確認状態 | **ロジック・回帰確認済み**（`patches/splatoon3/tests/sub-strafe-admission.test.mjs`、30/60/120 Hz、owner/remote 単一投擲・同期検証）。**本家実機（Switch Ver.11.3.0）での正確なフレーム単位の角速度・停止距離実測比較は未確認**。 |
+
