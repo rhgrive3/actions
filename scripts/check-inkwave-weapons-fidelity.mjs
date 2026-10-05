@@ -145,4 +145,20 @@ assert.equal(ghost.f.paints.length,0,'ghost wall-drop cannot mutate turf');
   assert.equal(p.fidelityWallDrop,null,'direct player hit never enters wall-drop');
 }
 
+// Once a terrain hit has converted the projectile to wall ink, that retained
+// state must never regain projectile HP damage on its terminal frame.
+{
+  const f=await fixture({site,fidelity:true,floor:true,seed:0x576597});
+  f.wall(4,{height:8});
+  const a=f.make('blaster'); a.aimPoint.set(0,1.05,20); f.G.actors=[a];
+  f.projectiles.fireBlaster(a,a.weapon,0);
+  const p=f.projectiles.list[0];
+  for(let i=0;i<120&&!p.fidelityWallDrop;i++){f.G.time+=1/60;f.projectiles.update(1/60);}
+  assert.ok(p.fidelityWallDrop,'wall-drop begins before terminal damage guard test');
+  const victim=f.make('shooter',{team:1,z:p.pos.z,hp:100000});
+  f.G.actors.push(victim); const hp=victim.hp;
+  for(let i=0;i<300&&f.projectiles.list.includes(p);i++){f.G.time+=1/60;f.projectiles.update(1/60);}
+  assert.equal(victim.hp,hp,'retained wall ink never deals projectile HP damage');
+}
+
 console.log(JSON.stringify({status:'passed',contentHash:data.artifactIdentity.contentHash,cases:Object.keys(golden).length,networkModes:3,wallDropFamilies:2,completion:'finite-charger-continuous-collision-wall-drop'}));
