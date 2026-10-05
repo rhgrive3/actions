@@ -11,7 +11,7 @@ test('actual Actor stores a full charger charge and expires it without firing un
 test('stored charge requires the 31F gate, survives emergence on a held ZR and fires on release; reset clears it', async () => {
   const f = await fixture(), a = f.make('charger'); a.intent.fire = true; f.tick(a, 61);
   a.intent.squid = true; f.tick(a); a.intent.squid = false;
-  for (let i = 0; i < 30; i++) f.tick(a);
+  for (let i = 0; i < 29; i++) f.tick(a);
   assert.equal(f.shots.length, 0); assert.ok(a.weaponRunner.s3Stored);
   f.tick(a); assert.equal(a.weaponRunner.s3Stored, null); assert.equal(a.weaponRunner.charging, true);
   a.intent.fire = false; f.tick(a);
