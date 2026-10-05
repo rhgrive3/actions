@@ -525,3 +525,23 @@ Loading adapter regressions pass 7/7 using actual compiled pre-loading Main;
 worker regressions pass 28/28, with the optional historical worker fixture
 unavailable. Native browser startup/offline timing and Switch hardware behavior
 remain unverified locally; browser CI is required for the new composition.
+
+### #592: water death during special-owned movement
+
+Storm's early return no longer bypasses the existing water hazard. Ordinary and special paths share the unchanged sea-threshold/dry-dock/attribution predicate, and special activation also checks before publishing its finishing frame. Native owner packets carry the death; accepted remote event playback applies it. Tidal Slam movement was checked through the same helper; Super Jump remains outside this correction. See [the #592 record](inkwave-special-water-hazard-592.md) for evidence and original-game/browser limitations.
+
+### #588: visible blur rejects gyro input until focus restoration
+
+Sensor admission now observes lifecycle focus as well as visibility/activity. Focus restoration rebaselines and rejects queued pre-focus samples; an unfinished startup probe is paused during blur so the remembered gyro request survives. Permission and hidden/freeze owners remain unchanged. Source quality 236/0 with 5 existing optional skips and actual emitted focus/startup/handoff 20/20 passed. Browser address-bar transfers and physical hardware remain unverified; see [the #588 record](inkwave-gyro-focus-588.md).
+
+### #571: deliberate keyboard/pad takeover clears the touch map latch
+
+A touch map is closed through native `setMap(false)` when the existing explicit navigation owner changes away from touch. Held-axis presentation repolls preserve #550 touch intent; fresh input still works when the displayed owner was already pad. Same-touch pointer cleanup and each new device's map controls retain their existing behavior. Source 57/57 and emitted 37/37 passed; physical hybrid-input devices remain unverified. See [the #571 record](inkwave-touch-map-takeover-571.md).
+
+### #567: keyboard keydown preserves live touch contacts
+
+Keyboard events continue through existing key/edge/menu handlers while a physically owned touch gesture retains its device owner. The next fresh keyboard event after all contacts end can acquire keyboard ownership normally. No synthetic pointer or deferred action queue is introduced. Source focused16/16, exact #571 adapter composition16/16 and emitted47/47 passed; physical hybrid-device verification remains pending. See [the #567 record](inkwave-touch-keyboard-contact-567.md).
+
+### #595: remove the zero-rate discontinuity in calibrated gyro trust
+
+The existing absolute disagreement floor now applies at zero attitude speed as well as nearby nonzero speed. No threshold is added, Android remains attitude-only, and the existing raw handoff owner is preserved. Source trust/handoff16/16, emitted trust/viability21/21 and exact #588 focus composition19/19 passed. This preserves calibration continuity; it does not remove physical residual bias. See [the #595 record](inkwave-gyro-stationary-trust-595.md).

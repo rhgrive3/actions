@@ -7,9 +7,13 @@ export function adaptRespawnNavigation(rel, code) {
     // deliberate input separately so an unchanged held axis cannot revoke a choice.
     patch('  set lastDevice(v) {', `  get navigationDevice() { return this._navigationDevice ?? this.lastDevice; }
   set lastDevice(v) {
+    const priorNavigationDevice = this.navigationDevice;
     if (v !== 'pad' || !this._navigationPolling || this.padPressed.size ||
         this.pad?.index !== this._navigationPadIndex || this.pad?.id !== this._navigationPadId ||
-        navigationAxisZones(this.pad).some((zone, i) => zone !== this._navigationAxisZones?.[i])) this._navigationDevice = v;`, 'explicit navigation owner');
+        navigationAxisZones(this.pad).some((zone, i) => zone !== this._navigationAxisZones?.[i])) this._navigationDevice = v;
+    // A held-axis repoll may change presentation owner without deliberate input.
+    // Only a fresh navigation owner can retire the touch-specific map latch.
+    if (this.navigationDevice !== priorNavigationDevice && this.navigationDevice !== 'touch' && this.mobile?.mapOpen) this.mobile.setMap(false);`, 'explicit navigation owner');
     code += `
 function navigationAxisZones(pad) {
   return Array.from({length: 4}, (_, i) => Math.abs(pad?.axes?.[i] || 0) > 0.3 ? Math.sign(pad.axes[i]) : 0);

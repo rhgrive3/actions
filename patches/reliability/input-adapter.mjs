@@ -41,6 +41,13 @@ const NOPAD_AFTER = '    this.padPressed.clear();\n    if (!pad) { this.padPrev 
 
 export function adaptInput(rel, code) {
   if (rel !== INPUT_REL) return code;
+  code = replaceOnce(code,
+    "      this.lastDevice = 'kbm';\n      if (this.onKey && this.onKey(e, false)) return;",
+    "      // Keyboard state remains live while an existing touch contact owns its gesture.\n" +
+    "      const touchContact = this.lastDevice === 'touch' && this.mobile?.active && !this.mobile._destroyed &&\n" +
+    "        ((this.mobile._ptr?.size || 0) > 0 || (this.mobile._stick?.id ?? -1) >= 0);\n" +
+    "      if (!touchContact) this.lastDevice = 'kbm';\n      if (this.onKey && this.onKey(e, false)) return;",
+    'keyboard preserves live touch contact');
   code = replaceOnce(code, BLUR_BEFORE, BLUR_AFTER, 'blur focus reset');
   code = replaceOnce(code, NOPAD_BEFORE, NOPAD_AFTER, 'gamepad disconnect reset');
   code = replaceOnce(code,

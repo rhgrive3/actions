@@ -28,7 +28,7 @@ export function gyroRateTrusted(g, rate, time) {
   const y = (g._src === 'rrA' ? c : b) * k;
   const z = (g._src === 'rrA' ? a : c) * k;
   const [ox, oy, oz] = s.rate, speed = Math.hypot(ox, oy, oz);
-  if (speed <= 1e-8) return Math.hypot(x, y, z) <= 1e-8;
+  // Keep the existing absolute disagreement floor continuous at zero speed.
   return Math.hypot(x - ox, y - oy, z - oz) <= Math.max(.025, speed * .3);
 }
 export function installGyroQuality(Gyro, getScreenAngle, isAndroid = () => /Android/i.test(globalThis.navigator?.userAgent || ''), env = globalThis) {
@@ -53,7 +53,12 @@ export function installGyroQuality(Gyro, getScreenAngle, isAndroid = () => /Andr
     access.unsubscribeLifecycle = lifecycle.subscribe({
       suspend: halt,
       resume: () => { if (access.wanted && access.allowed) g.start(); else access.stopListening(); },
-      blur: () => g.resync(),
+      blur: () => { g.resync(); access.stopProbe(); },
+      focus: () => {
+        g._platformSensorStart = env.performance.now();
+        g.resync();
+        if (g.enabled && lifecycle.active && !access.received) access.beginListening();
+      },
       screen: () => screenChanged(g),
     });
     return access;
@@ -105,7 +110,11 @@ export function installGyroQuality(Gyro, getScreenAngle, isAndroid = () => /Andr
       stop.call(this); access.availability = 'unavailable';
       access.reason = 'sensor-start-error'; access.notify(); return false;
     }
-    access.beginListening(); return this.enabled;
+    access.beginListening();
+    // A permission response may arrive while browser chrome owns focus.
+    // Preserve its session intent; the focused interval owns viability timing.
+    if (!lifecycle.focused) access.stopProbe();
+    return this.enabled;
   };
   P.stop = function () {
     const access = accessFor(this); access.wanted = false;
@@ -125,7 +134,7 @@ export function installGyroQuality(Gyro, getScreenAngle, isAndroid = () => /Andr
     return result;
   };
   P._orientation = function (e) {
-    if (!this.enabled || !lifecycle.active || !finiteEvent(e, ['alpha', 'beta', 'gamma'])) return;
+    if (!this.enabled || !lifecycle.active || !lifecycle.focused || !finiteEvent(e, ['alpha', 'beta', 'gamma'])) return;
     screenChanged(this);
     const t = e.timeStamp || env.performance.now();
     if (!Number.isFinite(t)) return;
@@ -146,7 +155,7 @@ export function installGyroQuality(Gyro, getScreenAngle, isAndroid = () => /Andr
     return result;
   };
   P._motion = function (e) {
-    if (!this.enabled || !lifecycle.active || !finiteEvent(e.rotationRate, ['alpha', 'beta', 'gamma'])) return;
+    if (!this.enabled || !lifecycle.active || !lifecycle.focused || !finiteEvent(e.rotationRate, ['alpha', 'beta', 'gamma'])) return;
     if (accessFor(this).motionPermission === 'denied') return;
     screenChanged(this);
     const t = e.timeStamp || env.performance.now();

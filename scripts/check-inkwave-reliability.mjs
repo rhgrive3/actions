@@ -8,7 +8,7 @@ import path from 'node:path';
 import http from 'node:http';
 import crypto from 'node:crypto';
 import { createRequire } from 'node:module';
-import { runTouchTransitionCases } from './inkwave-touch-transition-cases.mjs';
+import { runTouchTransitionCases, withWindowFocusRestored, runHybridKeyboardMapCases } from './inkwave-touch-transition-cases.mjs';
 
 const option = name => { const i = process.argv.indexOf(name); assert(i >= 0 && process.argv[i + 1], 'Required ' + name); return path.resolve(process.argv[i + 1]); };
 const site = option('--site'), evidence = option('--evidence-dir'), cache = option('--profile-dir');
@@ -143,9 +143,12 @@ try {
         await reset();
       }
       entry.checks.push('native-five-button-taps-survive-render-only-frame-and-consume-once');
-      await page.locator('[data-c="fire"]').tap(); await page.evaluate(() => { mobile.jumpTarget = 2; window.dispatchEvent(new Event('blur')); });
-      assert.deepEqual(await page.evaluate(() => ({ edges: [...mobile.pressed], target: mobile.jumpTarget, look: [mobile.lookDX, mobile.lookDY] })), { edges: [], target: -1, look: [0, 0] });
-      await page.evaluate(() => advance(1 / 60)); assert.equal(await page.evaluate(() => intents.at(-1).fire), false);
+      await page.locator('[data-c="fire"]').tap();
+      await withWindowFocusRestored(async () => {
+        await page.evaluate(() => { mobile.jumpTarget = 2; window.dispatchEvent(new Event('blur')); });
+        assert.deepEqual(await page.evaluate(() => ({ edges: [...mobile.pressed], target: mobile.jumpTarget, look: [mobile.lookDX, mobile.lookDY] })), { edges: [], target: -1, look: [0, 0] });
+        await page.evaluate(() => advance(1 / 60)); assert.equal(await page.evaluate(() => intents.at(-1).fire), false);
+      }, () => page.evaluate(() => window.dispatchEvent(new Event('focus'))));
       entry.checks.push('focus-loss-cancels-pending-touch-action-and-jump-target');
       const network = await page.evaluate(async () => {
         const real = { WebSocket, setTimeout, clearTimeout, setInterval, clearInterval }, sockets = [], timers = new Map(); let seq = 0;
@@ -277,10 +280,14 @@ try {
           mobile.gyro._orientation({alpha:0,beta:0,gamma:0,timeStamp:performance.now()+1});
           mobile.gyro._orientation({alpha:20,beta:0,gamma:0,timeStamp:performance.now()+18});
           const recovered=mobile.gyro.enabled&&mobile.gyro.platformStatus.availability==='active'&&mobile.els.gyro.classList.contains('is-on');
-          return {waiting,stopped,offUI,inputPreserved,recovered};
+          const motion=[mobile.gyro.dYaw,mobile.gyro.dPitch];
+          window.dispatchEvent(new Event('focus'));
+          const duplicateFocusPreserved=Math.abs(motion[0])+Math.abs(motion[1])>0&&mobile.gyro.dYaw===motion[0]&&mobile.gyro.dPitch===motion[1];
+          return {waiting,stopped,offUI,inputPreserved,recovered,duplicateFocusPreserved};
         } finally {await mobile.setGyro(false);mobile.reset();access.permission=permission;}
       });
-      assert.deepEqual(gyroViability,{waiting:true,stopped:true,offUI:true,inputPreserved:true,recovered:true});
+      entry.gyroViability = gyroViability;
+      assert.deepEqual(gyroViability,{waiting:true,stopped:true,offUI:true,inputPreserved:true,recovered:true,duplicateFocusPreserved:true});
       entry.checks.push('actual-built-gyro-no-data-stops-ON-state-and-explicit-retry-recovers');
       const startupGrant = await page.evaluate(async () => {
         const {prepareGyroStartup,startGyroStartup}=await import('/patches/local-quality/gyro-startup.mjs');
@@ -325,11 +332,14 @@ try {
         const recentered = await page.evaluate(() => {
           advance(1 / 60);
           const first = [rig.yaw, rig.pitch, mobile.gyro.enabled];
-          mobile.gyro._orientation({ alpha: 150, beta: 30, gamma: 45, timeStamp: 1000 });
+          const sampleTime=performance.now()+1;
+          mobile.gyro._orientation({ alpha: 150, beta: 30, gamma: 45, timeStamp: sampleTime });
+          const sampleAccepted=mobile.gyro._hasQ&&mobile.gyro._tQ===sampleTime;
           advance(1 / 60);
-          return { first, next: [rig.yaw, rig.pitch], pending: mobile.wasPressed('cameraReset') };
+          return { first, next: [rig.yaw, rig.pitch], pending: mobile.wasPressed('cameraReset'),sampleAccepted };
         });
-        assert.deepEqual(recentered, { first: [1.2, 0, gyroOn], next: [1.2, 0], pending: false });
+        (entry.cameraResetSamples ||= []).push(recentered);
+        assert.deepEqual(recentered, { first: [1.2, 0, gyroOn], next: [1.2, 0], pending: false,sampleAccepted:gyroOn });
       }
       await page.evaluate(() => { mobile.gyro.enabled = false; mobile.gyro.discard(); });
       entry.checks.push('native-touch-camera-reset-shares-controller-path-and-rebases-next-sensor-sample');
@@ -484,6 +494,7 @@ try {
       });
       assert.deepEqual(subOwnership, { aiming: true, heldShots: [], releaseShots: ['bomb'], finalShots: ['bomb'] });
       entry.checks.push('native-DOM-sub-hold-and-release-exclude-simultaneous-main-and-phantom-replay');
+      await runHybridKeyboardMapCases({ page, gesture, entry });
 
       }
       if (!focusedOnly && !negativeControl) {

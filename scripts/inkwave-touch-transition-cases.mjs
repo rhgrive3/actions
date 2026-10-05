@@ -22,6 +22,28 @@
 
 import assert from 'node:assert/strict';
 
+// Cleanup all acquired browser input even if an assertion or one cleanup fails.
+export async function withBrowserCleanup(operation, cleanups) {
+  let failed = false, primaryError;
+  try { return await operation(); }
+  catch (error) { failed = true; primaryError = error; throw error; }
+  finally {
+    const failures = [];
+    for (const cleanup of cleanups) {
+      try { await cleanup(); } catch (error) { failures.push(error); }
+    }
+    if (failures.length) {
+      if (failed) throw new AggregateError([primaryError, ...failures],
+        'Browser cleanup failed after the original case', { cause: primaryError });
+      if (failures.length === 1) throw failures[0];
+      throw new AggregateError(failures, 'Multiple browser cleanup operations failed');
+    }
+  }
+}
+export function withWindowFocusRestored(operation, restoreFocus) {
+  return withBrowserCleanup(operation, [restoreFocus]);
+}
+
 // A completed native-CDP sequence must never receive a second touchEnd.
 export function trackTouchSequence(gesture) {
   let active = false;
@@ -45,6 +67,70 @@ export function trackTouchSequence(gesture) {
     },
   };
   return sequence;
+}
+
+export function assertHybridKeyboardMapReceipt(r) {
+  assert.equal(r.before.ptrIds.length, 1, 'native FIRE owns one pointer before keyboard input');
+  assert.equal(r.before.fire, true);
+  assert.deepEqual(r.held.ptrIds, r.before.ptrIds, 'the same physical touch remains owned');
+  assert.equal(r.held.owner, 'touch'); assert.equal(r.held.navigation, 'touch');
+  assert.equal(r.held.fire, true); assert.equal(r.held.intentFire, true); assert.equal(r.held.moving, true);
+  assert.equal(r.fresh.owner, 'kbm'); assert.equal(r.fresh.navigation, 'kbm');
+  assert.equal(r.fresh.ptrIds.length, 0); assert.equal(r.fresh.fire, false); assert.equal(r.fresh.intentFire, false);
+  assert.deepEqual(r.mapOpened, { mapOpen: true, button: true, classOn: true, held: true });
+  assert.deepEqual(r.mapClosed, { mapOpen: false, button: false, classOn: false, held: false, owner: 'kbm', navigation: 'kbm' });
+}
+
+export async function runHybridKeyboardMapCases({ page, gesture, entry }) {
+  const sequence = trackTouchSequence(gesture), keys = new Set();
+  const receipt = entry.hybridKeyboardMap = {};
+  const down = async key => { keys.add(key); await page.keyboard.down(key); };
+  const up = async key => { if (keys.has(key)) { await page.keyboard.up(key); keys.delete(key); } };
+  const reset = () => page.evaluate(() => {
+    input.keys.clear(); input.pressed.clear(); input.padPressed.clear();
+    input.mouse.left = input.mouse.right = input.mouse.leftPressed = input.mouse.rightPressed = false;
+    input.mouse.dx = input.mouse.dy = 0;
+    input.lastDevice = 'touch'; mobile.reset(); mobile.setVisible(true);
+    mobile.layout = {}; mobile._layoutAll();
+    controller.enabled = true; controller.navigationEnabled = true;
+    controller.menuBlocked = controller.orientationBlocked = false;
+    controller.clearRespawnNavigation?.(); controller.clearMapGyro?.();
+    controller.padMapOpen = controller.mapHeld = false; rig.mapK = 0;
+  });
+  const snapshot = () => page.evaluate(() => ({
+    ptrIds: [...mobile._ptr.keys()], owner: input.lastDevice, navigation: input.navigationDevice,
+    fire: mobile.down('fire'), intentFire: !!controller.a.intent.fire,
+    moving: controller.a.intent.move.length() > 0,
+  }));
+  await withBrowserCleanup(async () => {
+    await reset();
+    const fire = await page.evaluate(() => mobile._box('fire'));
+    await sequence.send('touchStart', [{ id: 917, x: fire.x, y: fire.y }]);
+    const before = receipt.before = await snapshot();
+    await down('w'); await page.evaluate(() => controller.update(1 / 60));
+    const held = receipt.held = await snapshot();
+    await page.evaluate(() => input.endFrame());
+    await sequence.send('touchEnd', []); await up('w');
+    await down('d'); await page.evaluate(() => controller.update(1 / 60));
+    const fresh = receipt.fresh = await snapshot(); await page.evaluate(() => input.endFrame()); await up('d');
+    await reset();
+    await page.locator('[data-c="map"]').tap();
+    const mapOpened = receipt.mapOpened = await page.evaluate(() => {
+      controller.update(1 / 60);
+      return { mapOpen: mobile.mapOpen, button: mobile.buttons.map,
+        classOn: mobile.root.classList.contains('is-map'), held: controller.mapHeld };
+    });
+    await down('w');
+    const mapClosed = receipt.mapClosed = await page.evaluate(() => {
+      controller.update(1 / 60);
+      return { mapOpen: mobile.mapOpen, button: mobile.buttons.map,
+        classOn: mobile.root.classList.contains('is-map'), held: controller.mapHeld,
+        owner: input.lastDevice, navigation: input.navigationDevice };
+    });
+    assertHybridKeyboardMapReceipt(receipt);
+    entry.checks.push('native-touch-fire-with-keyboard-preserves-contact-and-fresh-takeover');
+    entry.checks.push('native-touch-map-latch-closes-on-fresh-keyboard-input');
+  }, [() => sequence.finish(), () => up('w'), () => up('d'), reset]);
 }
 
 export function assertPortraitAspectTransition({ portrait, landscape, fresh, released }) {
