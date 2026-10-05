@@ -6,6 +6,7 @@ import vm from 'node:vm';
 import { createHash } from 'node:crypto';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { adaptSource } from '../adapter.mjs';
+import { ROLLER_POSE } from '../runtime/roller.mjs';
 import { installRollerDetailMotion as otherRealmInstall, rollerDetailMotionSnapshot as otherRealmSnapshot } from '../runtime/roller-detail-motion.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
@@ -225,7 +226,8 @@ test('35F/42F instance timing never replays the horizontal legacy tail; gameplay
   assert.deepEqual(traces[0].map(x => x.gameplay), traces[1].map(x => x.gameplay));
   const C = api.CHARACTER_CHANNELS;
   assert.ok(traces[0][36].pose[C.ANCR] > -2.8, 'native .7s tail returns after authoritative 35F completion');
-  assert.ok(traces[1][36].pose[C.ANCR] < -2.9, 'completed attack stays in shoulder carry');
+  assert.ok(Math.abs(traces[1][36].pose[C.ANCR] - ROLLER_POSE.READY_ROTATION[0]) < .05, 'completed attack stays in shoulder carry');
+  assert.ok(Math.abs(traces[0][36].pose[C.ANCR] - ROLLER_POSE.READY_ROTATION[0]) > .3, 'the native tail is a different pose');
 });
 
 test('30/60/120Hz presentation and zero elapsed pause give identical 60Hz posed bones and indexed geometry', async () => {

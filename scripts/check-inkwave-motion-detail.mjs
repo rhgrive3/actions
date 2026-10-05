@@ -227,7 +227,9 @@ await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0
       { name: 'bomb-air', kind: 'shooter', type: 'bomb', air: true },
       { name: 'bomb-dualies', kind: 'dualies', type: 'bomb' },
       { name: 'flow-kid', kind: 'shooter', type: 'flow' },
-      { name: 'flow-squid', kind: 'shooter', type: 'flow', squid: true },
+      // The squid swims: a squid resting in its own ink is drawn under the surface
+      // (swim-motion.test.mjs), so Flow on the squid form is proven while it glides.
+      { name: 'flow-squid', kind: 'shooter', type: 'flow', squid: true, squidSpeed: 4 },
       { name: 'flow-air', kind: 'shooter', type: 'flow', air: true },
       { name: 'flow-reset', kind: 'shooter', type: 'flow', reset: true },
       { name: 'bucket-repeat', kind: 'slosher', type: 'bucket' },
@@ -348,7 +350,7 @@ await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0
             if (scenario.squid && frame === 120) { actor.form = 'kid'; actor.submerged = false; }
             if (scenario.reset && frame === 110) { actor.reset(); actor.grounded = true; }
           }
-          const v = scenario.speed || 0; actor.vel.set(0, 0, v); actor.pos.z += v / 60;
+          const v = actor.form === 'squid' && scenario.squidSpeed ? scenario.squidSpeed : scenario.speed || 0; actor.vel.set(0, 0, v); actor.pos.z += v / 60;
           tick({ fire, sub, subReleased: scenario.type === 'bomb' && frame === 30 });
           const bomb = bombMotionSnapshot(ch), flow = flowMotionSnapshot(ch), weapon = weaponDetailMotionSnapshot(ch);
           const left = ch.bones.handL.getWorldPosition(new THREE.Vector3()).toArray();

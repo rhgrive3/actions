@@ -18,7 +18,7 @@
 | `runtime/weapon-detail-motion.mjs` | 実際の発射に同期した反動、チャージ後の復帰、バケツ内のインク、スピナー停止 |
 | `runtime/bomb-motion.mjs` | 手元のボム、実際の投擲位置、予測軌道と放す姿勢 |
 | `runtime/flow-motion.mjs` | フロー開始・延長・失効の粒子と外周表示、描画パスとリソースの分離 |
-| `runtime/walk.mjs` | 足の接地・踏み出し・停止・方向転換、腰・上体の歩行校正 |
+| `runtime/walk.mjs` | 足の接地・踏み出し・停止・方向転換、腰・上体の歩行校正。左右の足は一つの歩行時計で交互に動く |
 | `runtime/carry-motion.mjs` | シューターの歩行・待機・射撃・復帰で連続する両手の支持 |
 | `runtime/jump-motion.mjs`, `runtime/landing-motion.mjs` | 通常ジャンプの脚と着地の圧縮・復帰 |
 | `runtime/swim-motion.mjs`, `runtime/wall-motion.mjs` | 通常の泳ぎ・方向転換、壁登り・イカノボリの表示 |
@@ -26,6 +26,7 @@
 | `runtime/squidroll-motion.mjs`, `runtime/superjump-motion.mjs` | 実際のアクション状態に従うイカロールとスーパージャンプ |
 | `runtime/dualies-motion.mjs` | マニューバーのスライドと直後の構え |
 | `runtime/roller.mjs` | ローラーの縦振り・横振り、振り下ろしと回復を射撃時刻へ同期 |
+| `runtime/roller-model.mjs` | ローラーのドラムの幅・直径とヨーク（見た目だけ。塗り・当たりは不変） |
 | `runtime/roller-detail-motion.mjs` | 横振りの巻き込み方向と、実際の攻撃終了後の姿勢 |
 | `runtime/hit-spawn-motion.mjs` | 被弾・復活の表示と操作復帰に残る姿勢の補正 |
 | `runtime/idle-motion.mjs`, `runtime/emotes-motion.mjs` | 待機の身振り、勝敗・メニューの姿勢と中断 |
@@ -100,3 +101,5 @@ CI の取得・検証・Pages ビルドもこの互換性チェックを通る�
 各追加モーションの観察と未知の範囲は `reference/*-motion-comparison-2026-10-03.md` に記録する。[ボム](reference/bomb-motion-comparison-2026-10-02.md)、[フロー](reference/flow-motion-comparison-2026-10-02.md)、[ブキの詳細](reference/weapon-detail-motion-comparison-2026-10-02.md)、[両手の支持](reference/carry-motion-comparison-2026-10-03.md)も参照する。接地中の足首には遊脚用の短縮を適用せず、ネイティブ IK と接地位置の一致を保つ。各パッチは本体から分離し、接続先の変更時には同じ互換性チェックを通す。
 
 `scripts/check-inkwave-motion-detail.mjs` はボム・フロー・各ブキの14条件を実際の WebGL で描画する。描画した頂点と手の距離、同じフレームでの表示・非表示の画素差、開始・延長・失効・リセットと解放後の資源を確認する。この表示用の診断入力は、実機の操作感や通常ゲームの移動物理とは別の証拠である。検証器自身の欠測・NaN・非表示・古い成功記録の反例も、通常のパッチ試験から実行する。
+
+2026-10-04 の動きの見直しは [ローラーの比率とイカの静止](reference/roller-proportions-2026-10-04.md) と `reports/motion-fidelity-report.md` に記録した。`tests/walk-gait-phase.test.mjs` は前後・横・斜め・低速・停止と再開・90度・180度・横の反転で、左右の足が半周期ずれて交互に動くこと、接地した足が滑らないこと、横歩きで足が交差しないこと、腰の向きが飛ばないことを確認する。

@@ -404,3 +404,24 @@ test('ordinary swim composes on the real production rig', async t => {
   });
   saveTrace(rows, summary);
 });
+
+test('a squid resting in its own ink stays under the surface; swimming keeps its glide', async () => {
+  const api = await production(), r = rig(api);
+  try {
+    const field = nativeField(r);
+    // Drawn tentacle and mantle vertices after the native shader deformation.
+    const top = () => Math.max(...posedSquid(r, field, true).vertices.map(v => v.world[1]));
+    r.swim(8); for (let i = 0; i < 60; i++) r.step(1 / 60, 8);
+    const swimming = top();
+    let previous = r.ch.squid.pivot.position.y, largest = 0, resting = -Infinity;
+    for (let i = 0; i < 120; i++) {
+      r.step(1 / 60, 0);
+      const y = r.ch.squid.pivot.position.y; largest = Math.max(largest, Math.abs(y - previous)); previous = y;
+      if (i >= 60 && i % 5 === 0) resting = Math.max(resting, top());
+    }
+    assert.ok(largest < .02, `sinking is continuous (${largest})`);
+    assert.ok(swimming > .05, `swimming keeps the visible surface mound (${swimming})`);
+    assert.ok(resting < -.005, `a resting squid is fully under its ink (${resting})`);
+    assert.ok(largest < .02, `sinking is continuous (${largest})`);
+  } finally { r.close(); }
+});
