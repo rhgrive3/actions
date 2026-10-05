@@ -117,7 +117,7 @@ export function installWeapons(context, profile) {
     r.chargeLoop?.stop(.05); r.chargeLoop = null;
   };
   WeaponRunner.prototype._charger = function (dt, inp, w) {
-    const a = this.a, held = !!a.intent.fire;
+    const a = this.a, held = a.form === 'squid' ? !!a.intent.fire : !!(inp.fire || a.intent.fire);
     if (this.s3Stored && !held) cancelStored(this);
     if (this.s3Stored) {
       this.s3Stored.remaining = Math.max(0, this.s3Stored.remaining - dt);
