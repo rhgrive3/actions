@@ -3103,6 +3103,8 @@ export class PropKit {
     this._headless = !!opts.headless || typeof document === 'undefined';
     if (!this._headless) this._makeMaterials();
     this._buckets = new Map();
+    this._placements = [];   // lightweight {type, o} records: regenerate build buckets on rebuild
+    this._released = false;  // true once build() has released the consumed static buckets
     this._spin = []; this._blink = []; this._flags = []; this._banners = [];
     this._meshes = []; this._inst = [];
     this._tpl = {};
@@ -3149,18 +3151,37 @@ export class PropKit {
   }
   _tplTris(kind) { return triCountOf(this._tplGeo(kind)); }
 
-  add(type, o = {}) {
-    const def = D[type];
-    if (!def) { console.warn('[props] unknown prop type', type); return { colliders: [] }; }
+  // Shared placement runner: seeds the builder from the placement and runs the definition to
+  // populate `_buckets`. Used by add() (fresh placement) and _replayBuckets() (same-instance rebuild
+  // after the consumed buckets were released). Deterministic: the seeded rng + quality factor drive
+  // every generated vertex, so replaying the same placements reproduces identical geometry.
+  _place(def, type, o) {
     const pos = o.pos || [0, 0, 0], rotY = o.rotY || 0, scale = o.scale ?? 1;
     const seed = o.seed ?? ((Math.round(pos[0] * 131) ^ Math.round(pos[2] * 71) ^ Math.round(pos[1] * 17)) + 1013);
     const B = this._B;
     B.begin(pos, rotY, scale, seed, def.mount !== 'wall' || type === 'pipes' || type === 'ladder' || type === 'container_door');
     B.tris = 0;
     def.build(B, o);
+    return { pos, rotY, scale, B };
+  }
+
+  add(type, o = {}) {
+    const def = D[type];
+    if (!def) { console.warn('[props] unknown prop type', type); return { colliders: [] }; }
+    const { pos, rotY, scale, B } = this._place(def, type, o);
     this.lastTris = B.tris;
     this.count++;
+    this._placements.push({ type, o });
     return { colliders: this._xfCols(B.cols, pos, rotY, scale, !!o.oboxCols) };
+  }
+
+  // Regenerate released build buckets from the recorded placements (same-instance rebuild).
+  // Does not touch count/lastTris/colliders — those are established by the first add().
+  _replayBuckets() {
+    for (const p of this._placements) {
+      const def = D[p.type];
+      if (def) this._place(def, p.type, p.o);
+    }
   }
 
   // Local collider boxes → level boxes. A quarter-turned prop gives exact axis-aligned boxes; any other angle gives the
@@ -3196,6 +3217,9 @@ export class PropKit {
   }
 
   build() {
+    // A prior build released the consumed buckets; regenerate them from the recorded placements so
+    // a same-instance rebuild re-merges identical geometry instead of wiping the live meshes.
+    if (this._released) { this._buckets.clear(); this._replayBuckets(); }
     this._disposeMeshes();
     if (this._headless) return this;
     for (const [bucket, parts] of this._buckets) {
@@ -3236,6 +3260,12 @@ export class PropKit {
       this.group.add(mesh); this._inst.push(mesh);
     }
     this._applyColors();
+    // Release the consumed static build graph now that every part is merged into the final buffers.
+    // Part records, per-part Matrix4s and uncached procedural tube sources become garbage; shared
+    // TPL templates stay owned by the module cache and are never disposed here. The separate
+    // animated/instanced records (_spin/_blink/_flags/_banners) are retained for update().
+    this._buckets.clear();
+    this._released = true;
     return this;
   }
 
@@ -3301,6 +3331,7 @@ export class PropKit {
   clear() {
     this._disposeMeshes();
     this._buckets.clear();
+    this._placements = []; this._released = false;
     this._spin = []; this._blink = []; this._flags = []; this._banners = [];
     this.count = 0;
   }
