@@ -28,10 +28,7 @@
       "straightTime": 0.06666666666666667,
       "referenceGravity": 57.6,
       "inkRecoverStop": 0.3333333333333333,
-      "range": 12.9,
-      "ballistics": {
-        "endSpeed": 89.58000000000001
-      }
+      "range": 12.9
     },
     "dualies": {
       "inkPerShot": 0.72,
@@ -53,9 +50,7 @@
       "lockInterval": 0.06666666666666667,
       "spreadLock": 0.0,
       "range": 12.5,
-      "ballistics": {
-        "endSpeed": 140.54999999999998
-      }
+      "humanoidFirstShotDelay": 0.03333333333333333
     },
     "blaster": {
       "inkPerShot": 10.0,
@@ -86,11 +81,7 @@
         0.5,
         1.0
       ],
-      "ballistics": {
-        "endSpeed": 54.786,
-        "straightTime": 0.15,
-        "burstTime": 0.21666666666666667
-      }
+      "terrainSplashDamageRate": 0.5
     },
     "splatling": {
       "inkPerShot": 0.5625,
@@ -119,10 +110,7 @@
         1.175,
         1.35
       ],
-      "ballistics": {
-        "endSpeed": 90.63,
-        "firstChargeSpeed": 126.0
-      }
+      "spreadPitchGround": 1.6
     },
     "charger": {
       "inkFull": 18.0,
@@ -199,75 +187,14 @@
       "verticalInkRecoverStop": 0.9666666666666667,
       "flickInterval": 0.7,
       "verticalInterval": 0.7833333333333333,
-      "ballistics": {
-        "endSpeed": null,
-        "freeDragPerFrame": 0.1,
-        "horizontalStraightTime": 0.11666666666666667,
-        "verticalStraightTime": 0.1,
-        "horizontalPitchDegrees": 0,
-        "horizontalInsideDegrees": 16,
-        "horizontalInsideDistance": 1.2,
-        "horizontalOutsideDamageBands": [
-          [
-            2,
-            100
-          ],
-          [
-            7.2,
-            50
-          ],
-          [
-            7.2,
-            50
-          ],
-          [
-            9.2,
-            35
-          ]
-        ],
-        "verticalUnits": [
-          {
-            "count": 1,
-            "speed": null,
-            "speedStep": 0,
-            "pitchDegrees": 7.5,
-            "pitchStepDegrees": 0,
-            "playerCollision": {
-              "initRadius": 0.116,
-              "endRadius": 0.87,
-              "changeTime": 0.06666666666666667
-            }
-          },
-          {
-            "count": 2,
-            "speed": 98.02799999999999,
-            "speedStep": -12.0,
-            "pitchDegrees": 5,
-            "pitchStepDegrees": -2.5,
-            "playerCollision": {
-              "initRadius": 0.116,
-              "endRadius": 0.87,
-              "changeTime": 0.06666666666666667
-            }
-          },
-          {
-            "count": 2,
-            "speed": 74.028,
-            "speedStep": -12.0,
-            "pitchDegrees": 0,
-            "pitchStepDegrees": -2.5,
-            "playerCollision": {
-              "initRadius": 0.116,
-              "endRadius": 0.82,
-              "changeTime": 0.06666666666666667
-            }
-          }
-        ],
-        "horizontalPlayerCollision": {
-          "initRadius": 0.12,
-          "endRadius": 1.02,
-          "changeTime": 0.06666666666666667
-        }
+      "nearFlickUnit": {
+        "count": 1,
+        "speedBase": 0.48,
+        "speedRandom": 0.11,
+        "mainSpeedBase": 1.05,
+        "halfAngleDegrees": 4,
+        "mainWidthReference": 0.8,
+        "widthRatio": 0.5
       }
     },
     "slosher": {
@@ -392,7 +319,7 @@
       "armorHP": 100,
       "jumpVelocity": 9.4,
       "chainRetention": 0.85,
-      "chainReset": 1
+      "chainReset": 1.5
     },
     "surge": {
       "chargeTime": 0.75,
@@ -458,7 +385,11 @@
       "Surge burst velocity/armor/partial charge and post-wall air control (including the Ver.11.3.0 lateral-distance fix); 45F base charge timing is pinned",
       "HP regen delay/rate and enemy ink grace/contact-damage recovery; post-movement contact and partial-tick grace arithmetic are regression-verified only",
       "superjump airborne vulnerability window/trajectory/landing paint and respawn timing/armor; raw 80F preparation/138F flight are pinned and landing protection is removed per Nintendo 9.3.0 fix",
-      "aim response, gyro, animation, terrain/network and physical-device validation; see movement-resources comparison matrix and Switch/iOS/two-peer measurement protocol"
+      "aim response, gyro, animation, terrain/network and physical-device validation; see movement-resources comparison matrix and Switch/iOS/two-peer measurement protocol",
+      "Dualies 1F released-tap cancellation is a conservative non-buffering choice; stable held-human first shot is measured3F, squid timing remains unchanged and unverified.",
+      "Splatling grounded pitch1.6deg uses the existing radial sampler with separate axes; S3 PDF, bias, air/IA correlations are unverified.",
+      "Roller near-unit count1 is corroborated by S3 unit research, not an inferred omitted BulletNum; velocity and width use relative mappings, sampler/absolute spawn calibration remains unverified.",
+      "Blaster terrain damage is half of normalized existing bands, floor to0.1HP after scaling;35HP cap is sourced, complete S3 falloff curve remains uncalibrated."
     ],
     "movementResourcesEvidence": "reports/inkwave-movement-resources-2026-10-02.md"
   },
@@ -1248,6 +1179,42 @@
       "index": 2,
       "factor": 0.016666666666666666,
       "rawValue": 138
+    },
+    "weapons.splatling.spreadPitchGround": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/WeaponParam/PitchDegSwerve",
+      "index": null,
+      "factor": 1,
+      "rawValue": 1.6
+    },
+    "weapons.roller.nearFlickUnit.speedBase": {
+      "parameter": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WideSwingUnitGroupParam/Unit/1/SpawnSpeedBase",
+      "index": null,
+      "factor": 1,
+      "rawValue": 0.48
+    },
+    "weapons.roller.nearFlickUnit.speedRandom": {
+      "parameter": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WideSwingUnitGroupParam/Unit/1/SpawnSpeedRandom",
+      "index": null,
+      "factor": 1,
+      "rawValue": 0.11
+    },
+    "weapons.roller.nearFlickUnit.mainSpeedBase": {
+      "parameter": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WideSwingUnitGroupParam/Unit/0/SpawnSpeedBase",
+      "index": null,
+      "factor": 1,
+      "rawValue": 1.05
+    },
+    "weapons.roller.nearFlickUnit.halfAngleDegrees": {
+      "parameter": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WideSwingUnitGroupParam/Unit/1/SpawnWideDegree",
+      "index": null,
+      "factor": 1,
+      "rawValue": 4
+    },
+    "weapons.roller.nearFlickUnit.mainWidthReference": {
+      "parameter": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WideSwingUnitGroupParam/Unit/0/SpawnPositionWidth",
+      "index": null,
+      "factor": 1,
+      "rawValue": 0.8
     }
   },
   "gearExtra": {
@@ -1339,15 +1306,5 @@
     "leanMax": 0.16,
     "leanFrequency": 3.2,
     "footPitchRate": 8
-  },
-  "weaponsFidelity": {
-    "schema": 1,
-    "status": "source-guided; Switch parity not certified",
-    "brakeDragPerFrame": 0.36,
-    "brakeGravity": 252.0,
-    "brakeToFreeVelocityY": -9.0,
-    "freeDragPerFrame": 0.02,
-    "freeGravity": 57.599999999999994,
-    "defaultProvenance": "XarrotD/paramtable; not version-pinned 11.3.0 datamine; medium confidence"
   }
 }
