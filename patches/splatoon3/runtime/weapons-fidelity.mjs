@@ -1,9 +1,12 @@
 // Main-weapon gameplay only. Values live in profile.json; provenance and retained
-// uncertainty live in reference/weapons-fidelity-reference.json. No RNG here.
+// uncertainty live in reference/weapons-fidelity-reference.json.
+// Source fields and interpreted equations are explicitly separated in the profile.
 import {distanceDamage, groupDamage, applyProjectileHit as legacyHit} from './weapons.mjs';
+import { capsuleEntry, sweptWorldHit } from './weapons-collision.mjs';
+import { installChargerFlight } from './weapons-charger-flight.mjs';
 export const EPSILON = 1e-10;
 const INSTALLED = Symbol.for('inkwave.weapons-fidelity.v1');
-let api;
+let api, completion;
 const clamp01 = value => Math.max(0, Math.min(1, value));
 const radians = degrees => degrees * Math.PI / 180;
 
@@ -20,6 +23,7 @@ function freezeDeep(value) {
 // Unsupported families retain native force order; all main rounds now respect their declared lifetime.
 export function advanceFidelityProjectile(p, dt) {
   p.prev.copy(p.pos);
+  p.fidelityPrevAge = p.age;
   const remaining = Math.max(0, p.life - p.age);
   const step = Math.min(dt, remaining);
   p.age += step;
@@ -38,61 +42,64 @@ export function advanceFidelityProjectile(p, dt) {
     p.vel.y -= (brake ? move.brakeGravity : move.freeGravity) * step;
     // The documented Y transition is used; the apparently unused frame/XZ
     // defaults are not silently interpreted as additional transition tests.
-    if (brake && p.vel.y < move.freeVelocityY) p.fidelityPhase = 2;
+    if (brake && (p.vel.y < move.freeVelocityY || move.freeFrame!=null && (p.age-p.straight)*move.hz+EPSILON>=move.freeFrame)) p.fidelityPhase = 2;
   }
   p.pos.addScaledVector(p.vel, step);
 }
 
-// Source keeps the existing random draws at their original call sites. This
-// function changes the vertical fan into five distinct pitch/speed layers;
-// horizontal speed/yaw sampling and all cosmetic samples remain inherited.
+// Source records supply endpoints/counts. Added random draws are deterministic
+// under the fixture seed; the source PRNG/bias distribution is not recovered.
+function rawWeapon(w) { return completion?.weapons[w.id || w.kind]; }
+function collisionRecord(c, target, offset = 0) {
+  return { initRadius:Math.max(0,c['InitRadiusFor'+target]+offset*(c['AfterOffsetInitRadiusFor'+target]||0)),
+    endRadius:Math.max(0,c['EndRadiusFor'+target]+offset*(c['AfterOffsetEndRadiusFor'+target]||0)),
+    changeTime:Math.max(0,(c['ChangeFrameFor'+target]||0)/60) };
+}
+function radiusAt(c, age, fallback) {
+  if(!c)return fallback;
+  const t=c.changeTime>0?clamp01(age/c.changeTime):1;
+  return c.initRadius+(c.endRadius-c.initRadius)*t;
+}
+export function fidelityPlayerCollisionRadius(p) { return radiusAt(p.fidelityPlayerCollision,p.age,p.size); }
+function fieldRadiusAt(p,age) { return radiusAt(p.fidelityFieldCollision,age,p.fieldRadius||0); }
+function setCollision(p,c,offset=0) {
+  p.fidelityPlayerCollision=collisionRecord(c,'Player',offset);
+  p.fidelityFieldCollision=collisionRecord(c,'Field',offset);
+  // Existing packet size carries initial radius; layout is unchanged.
+  p.size=p.fidelityPlayerCollision.initRadius;
+}
 export function configureFidelityFlick(p, actor, weapon, index, angle, speed) {
-  const b = weapon.ballistics;
-  if (!b) return;
-  const vertical = !!actor.weaponRunner.s3FlickVertical;
-  let pitch = Math.max(-.2, Math.min(.5, actor.aimPitch)); // native aim envelope
-  let unit = null;
-  if (vertical) {
-    let offset = index;
-    for (const candidate of b.verticalUnits) {
-      if (offset < candidate.count) { unit = candidate; break; }
-      offset -= candidate.count;
-    }
-    if (!unit) throw new RangeError('Roller projectile count exceeds the reference unit layout');
-    speed = (unit.speed ?? weapon.verticalSpeed) + offset * unit.speedStep;
-    pitch += radians(unit.pitchDegrees + offset * unit.pitchStepDegrees);
-    angle = actor.yaw; // all selected vertical units have SpawnRotateYDegree=0
-  } else pitch += radians(b.horizontalPitchDegrees);
-  const cp = Math.cos(pitch);
-  p.vel.set(Math.sin(angle)*cp*speed, Math.sin(pitch)*speed, Math.cos(angle)*cp*speed);
-  p.fidelityYaw = Math.atan2(Math.sin(angle-actor.yaw),Math.cos(angle-actor.yaw));
-  p.fidelityMode = vertical ? 'vertical' : 'horizontal';
-  p.fidelityPlayerCollision = vertical ? unit?.playerCollision ?? null : b.horizontalPlayerCollision ?? null;
-  p.straight = vertical ? b.verticalStraightTime : b.horizontalStraightTime;
-  // Set these before _push/recProj; the old wrapper set them after publication.
-  p.grav = weapon.flickGravity; p.drag = weapon.flickDrag;
-}
-
-export function fidelityPlayerCollisionRadius(p) {
-  const c = p.fidelityPlayerCollision;
-  if (!c) return p.size;
-  if (!(Number.isFinite(c.initRadius) && Number.isFinite(c.endRadius) && Number.isFinite(c.changeTime) && c.changeTime > 0)) return p.size;
-  const t = clamp01(p.age / c.changeTime);
-  return c.initRadius + (c.endRadius - c.initRadius) * t;
-}
-
-function rollerCollisionForProjectile(weapon,p,vertical) {
-  if (p.fidelityPlayerCollision) return p.fidelityPlayerCollision;
-  const b=weapon.ballistics;
-  if(!vertical) return b.horizontalPlayerCollision??null;
-  const speed=p.vel.length();
-  let chosen=b.verticalUnits[0]?.playerCollision??null,best=Infinity;
-  for(const unit of b.verticalUnits) for(let offset=0;offset<unit.count;offset++){
-    const expected=(unit.speed??weapon.verticalSpeed)+offset*unit.speedStep;
-    const delta=Math.abs(speed-expected);
-    if(delta<best){best=delta;chosen=unit.playerCollision??chosen;}
+  const b=weapon.ballistics, raw=rawWeapon(weapon);if(!b||!raw)return;
+  const vertical=!!actor.weaponRunner.s3FlickVertical;
+  const group=raw[vertical?'VerticalSwingUnitGroupParam':'WideSwingUnitGroupParam'];
+  let offset=index,unit;
+  for(const u of group.Unit){if(offset<(u.BulletNum??1)){unit=u;break;}offset-=u.BulletNum??1;}
+  if(!unit)throw new RangeError('Roller index exceeds pinned units + labelled defaults');
+  let pitch=Math.max(-.2,Math.min(.5,actor.aimPitch));
+  if(vertical){
+    speed=60*(unit.SpawnSpeedBase+offset*(unit.AfterOffsetSpawnSpeed||0));
+    pitch+=radians((unit.SpawnRotateXDegreeBase||0)+offset*(unit.AfterOffsetSpawnRotateXDegree||0));
+    angle=actor.yaw+radians(unit.SpawnRotateYDegree||0);
+  }else{
+    const count=unit.BulletNum??1,fan=count>1?offset/(count-1)*2-1:0;
+    speed=60*(unit.SpawnSpeedBase+(Math.random()*2-1)*(unit.SpawnSpeedRandom||0));
+    angle=actor.yaw+fan*radians(unit.SpawnWideDegree||0);
+    pitch+=radians(b.horizontalPitchDegrees); // retained calibrated launch angle, NOT extracted
+    const side=fan*(unit.SpawnPositionWidth||0),j=unit.SpawnPositionRandomCube||0;
+    p.pos.x+=Math.cos(actor.yaw)*side+(Math.random()*2-1)*j;
+    p.pos.z-=Math.sin(actor.yaw)*side-(Math.random()*2-1)*j;
+    p.pos.y+=(Math.random()*2-1)*j;
   }
-  return chosen;
+  // Only offsets are extracted. Native body +1.3 anchor is not claimed as Switch height.
+  p.pos.y+=(unit.SpawnPositionOffsetHeight||0)+(unit.SpawnPositionHeight||0);
+  p.prev.copy(p.pos);p.start.copy(p.pos);
+  const cp=Math.cos(pitch);
+  p.vel.set(Math.sin(angle)*cp*speed,Math.sin(pitch)*speed,Math.cos(angle)*cp*speed);
+  p.fidelityYaw=Math.atan2(Math.sin(angle-actor.yaw),Math.cos(angle-actor.yaw));
+  p.fidelityMode=vertical?'vertical':'horizontal';p.fidelityRollerUnit=unit;
+  setCollision(p,unit.UnitParam.CollisionParam);
+  p.straight=unit.UnitParam.MoveParam.GoStraightToBrakeStateFrame/60;
+  p.grav=weapon.flickGravity;p.drag=weapon.flickDrag;
 }
 
 function scratch(system) {
@@ -103,7 +110,7 @@ function scratch(system) {
 }
 export function fidelityWorldHit(system,p) {
   const s=scratch(system);
-  if(!s.worldReady){api.G.physics.segment(p.prev,p.pos,s.world,true);s.worldReady=true;}
+  if(!s.worldReady){sweptWorldHit(api.G.physics,p.prev,p.pos,fieldRadiusAt(p,p.fidelityPrevAge??p.age),fieldRadiusAt(p,p.age),s.world,true);s.worldReady=true;}
   return s.world;
 }
 export function fidelityBossHit(system,p) {
@@ -117,26 +124,30 @@ export function fidelityBossHit(system,p) {
   return s.boss;
 }
 
-// Use the real Physics capsule query, retaining its native size convention.
+// Use the native body dimensions with continuous first-contact capsule entry.
 // The original loop selected actor-array order and tested the wall afterwards.
 // One reusable scratch record avoids per-projectile sorting/allocation and
 // also avoids a second terrain query when the segment reaches the world.
 export function fidelityProjectileTargets(system,p) {
-  const s=scratch(system),{G,Physics,PLAYER}=api;
-  s.worldReady=s.bossReady=false;s.boss=null;s.targets.length=0;
-  const radius=PLAYER.radius*.95+fidelityPlayerCollisionRadius(p);
+  const s=scratch(system),{G,PLAYER}=api;
+  s.worldReady=s.bossReady=false;s.boss=null;s.targets.length=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;
+  // Ghosts share visual collision chronology, but never damage/paint ownership.
+  const r0=radiusAt(p.fidelityPlayerCollision,p.fidelityPrevAge??p.age,p.size);
+  const r1=fidelityPlayerCollisionRadius(p),radius=PLAYER.radius+Math.max(r0,r1);
   let nearest=null,best=Infinity;
   for(const actor of G.actors){
     if(actor.team===p.team||!actor.alive)continue;
-    if(actor.pos.x < Math.min(p.prev.x,p.pos.x)-radius || actor.pos.x > Math.max(p.prev.x,p.pos.x)+radius ||
-       actor.pos.z < Math.min(p.prev.z,p.pos.z)-radius || actor.pos.z > Math.max(p.prev.z,p.pos.z)+radius)continue;
+    if(actor.pos.x<Math.min(p.prev.x,p.pos.x)-radius||actor.pos.x>Math.max(p.prev.x,p.pos.x)+radius||
+       actor.pos.z<Math.min(p.prev.z,p.pos.z)-radius||actor.pos.z>Math.max(p.prev.z,p.pos.z)+radius)continue;
     s.base.set(actor.pos.x,actor.pos.y+(actor.smoothY||0),actor.pos.z);
-    Physics.segmentCapsuleDist(p.prev,p.pos,s.base,PLAYER.radius,actor.form==='squid'?PLAYER.squidHeight:PLAYER.height,s.res);
-    if(s.res.dist < radius && s.res.t < best){best=s.res.t;nearest=actor;}
+    const t=capsuleEntry(p.prev,p.pos,s.base,PLAYER.radius,actor.form==='squid'?PLAYER.squidHeight:PLAYER.height,r0,r1);
+    if(t!==null&&(t<best-EPSILON||Math.abs(t-best)<EPSILON&&String(actor.nid??actor.name)<String(nearest?.nid??nearest?.name))){best=t;nearest=actor;}
   }
   if(nearest){
     const length=p.prev.distanceTo(p.pos),world=fidelityWorldHit(system,p),boss=fidelityBossHit(system,p);
-    if((!world.hit || best*length < world.dist-EPSILON) && (!boss || best*length < boss.dist-EPSILON))s.targets.push(nearest);
+    if((!world.hit||best*length<world.dist-EPSILON)&&(!boss||best*length<boss.dist-EPSILON)){
+      s.targets.push(nearest);p.fidelityImpactActor=nearest;p.fidelityImpactT=best;
+    }
   }
   return s.targets;
 }
@@ -151,18 +162,38 @@ export function fidelityVolleyDamage(p,victim,amount) {
   return seen && !p.s3DamageGroup ? 0 : amount;
 }
 export function applyFidelitySlosherSplash(system,p,victim,amount) {
+  // Active Splat Bucket units have no SplashSlosherHitParam records. No radial damage.
+  if(rawWeapon(p.s3Weapon||p.owner.weapon)?.UnitGroupParam)return;
+  if(p.ghost)return;
   const delta=groupDamage(p.s3DamageGroup,victim,amount);
   if(delta>0)system.applyHit(p.owner,victim,delta,p.wid||'slosher');
 }
-export function applyFidelityProjectileHit(system,p,victim,amount,point) {
+export function fidelityDamage(p,point) {
   const w=p.s3Weapon||p.owner.weapon;
-  if(w.kind!=='roller')return legacyHit(system,p,victim,amount,point);
-  const b=w.ballistics;
-  if(!b)return legacyHit(system,p,victim,amount,point);
-  const d=p.start.distanceTo(point);
-  const outside=!p.s3Vertical && d>b.horizontalInsideDistance && Math.abs(p.fidelityYaw)>radians(b.horizontalInsideDegrees);
-  const bands=p.s3Vertical?w.verticalDamageBands:outside?b.horizontalOutsideDamageBands:w.flickDamageBands;
-  amount=groupDamage(p.s3DamageGroup,victim,distanceDamage(bands,d));
+  if(w.kind==='roller'&&w.ballistics){
+    const b=w.ballistics,d=p.start.distanceTo(point),xz=Math.hypot(point.x-p.start.x,point.z-p.start.z);
+    const outside=!p.s3Vertical&&xz>b.horizontalInsideDistance&&Math.abs(p.fidelityYaw)>radians(b.horizontalInsideDegrees);
+    const bands=p.s3Vertical?w.verticalDamageBands:outside?b.horizontalOutsideDamageBands:w.flickDamageBands;
+    const source=rawWeapon(w)[p.s3Vertical?'VerticalSwingUnitGroupParam':'WideSwingUnitGroupParam'].DamageParam;
+    const age=(p.fidelityPrevAge??p.age??0)+((p.age??0)-(p.fidelityPrevAge??p.age??0))*(p.fidelityImpactT??1);
+    const t=clamp01((age*60-source.DamageRejectStartFrame)/(source.DamageRejectEndFrame-source.DamageRejectStartFrame));
+    return distanceDamage(bands,d)*(1+(source.DamageRejectRate-1)*t);
+  }
+  if(w.kind==='slosher'&&p.fidelitySloshUnit){
+    const d=p.fidelitySloshUnit.DamageParam,fall=Math.max(0,p.start.y-point.y);
+    const t=clamp01((fall-d.ReduceStartFallDistance)/(d.ReduceEndFallDistance-d.ReduceStartFallDistance));
+    return (d.ValueMax+(d.ValueMin-d.ValueMax)*t)/10;
+  }
+  const age=(p.fidelityPrevAge??p.age)+(p.age-(p.fidelityPrevAge??p.age))*(p.fidelityImpactT??1);
+  if(['shooter','dualies','splatling'].includes(w.kind)){
+    const t=clamp01((age-w.damageReduceStart)/(w.damageReduceEnd-w.damageReduceStart));
+    return w.damage+(w.damageMin-w.damage)*t;
+  }
+  return p.damage;
+}
+export function applyFidelityProjectileHit(system,p,victim,amount,point) {
+  if(p.ghost)return;
+  amount=groupDamage(p.s3DamageGroup,victim,fidelityDamage(p,point));
   if(amount>0)system.applyHit(p.owner,victim,amount,p.wid||p.type);
 }
 
@@ -185,7 +216,8 @@ export function installWeaponsFidelity(context,profile) {
   if(!Number.isFinite(defaults.brakeGravity)||defaults.brakeGravity<0||!Number.isFinite(defaults.freeGravity)||defaults.freeGravity<0||!Number.isFinite(defaults.brakeToFreeVelocityY))throw new RangeError('Invalid ballistic gravity/transition');
   const roller=WEAPONS.roller;
   if(roller?.ballistics && roller.ballistics.verticalUnits.reduce((n,u)=>n+u.count,0)!==roller.verticalDrops)throw new Error('Vertical roller unit count differs from profile');
-  api=context;
+  api=context;completion=profile.weaponsFidelityCompletion;
+  if(!completion||completion.schema!==1)throw new Error('Missing completion source table');
   const moves=new Map();
   for(const [id,w]of Object.entries(WEAPONS)){
     if(!w.ballistics)continue;
@@ -197,12 +229,9 @@ export function installWeaponsFidelity(context,profile) {
     if(w.kind==='roller'){
       finite(b.horizontalStraightTime,'horizontal straight time');finite(b.verticalStraightTime,'vertical straight time');
       if(!Number.isFinite(b.horizontalPitchDegrees)||!Number.isFinite(b.horizontalInsideDegrees))throw new RangeError('Invalid roller angle');
-      const collisionOk=c=>c&&[c.initRadius,c.endRadius,c.changeTime].every(Number.isFinite)&&c.initRadius>=0&&c.endRadius>=c.initRadius&&c.changeTime>0;
-      if(!collisionOk(b.horizontalPlayerCollision))throw new RangeError('Invalid roller horizontal player collision');
       for(const u of b.verticalUnits){
         if(!Number.isInteger(u.count)||u.count<=0||![u.speed??w.verticalSpeed,u.speedStep,u.pitchDegrees,u.pitchStepDegrees].every(Number.isFinite))throw new RangeError('Invalid roller unit');
         finite((u.speed??w.verticalSpeed)+(u.count-1)*u.speedStep,'last unit speed');
-        if(!collisionOk(u.playerCollision))throw new RangeError('Invalid roller vertical player collision');
       }
     }
     if(w.kind==='blaster'){finite(b.straightTime,'straight time');finite(b.burstTime,'burst time');}
@@ -216,37 +245,88 @@ export function installWeaponsFidelity(context,profile) {
   }
   Object.defineProperty(Projectiles.prototype,INSTALLED,{value:true});
   const fresh=Projectiles.prototype._new,push=Projectiles.prototype._push,ghost=Projectiles.prototype.ghostProjectile,clear=Projectiles.prototype.clear;
-  Projectiles.prototype.clear=function(...args){const result=clear.apply(this,args);this._fidelityCollision=null;return result;};
+  Projectiles.prototype.clear=function(...args){const result=clear.apply(this,args);this._fidelityCollision=null;this._fidelitySloshContext=null;return result;};
   Projectiles.prototype._new=function(...args){
-    const p=fresh.apply(this,args);p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;return p;
+    const p=fresh.apply(this,args);p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityRollerUnit=null;p.fidelitySloshUnit=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;return p;
   };
   function initialize(p,w){
     if(!w)return;
-    p.fidelityMove=moves.get(w.id)||null;p.fidelityPhase=0;
-    if(!p.fidelityMove)return;
+    const raw=rawWeapon(w);p.s3Weapon={...w};p.wid=w.id;p.fidelityPhase=0;
+    p.fidelityMove=moves.get(w.id)||null;
+    if(raw?.CollisionParam){
+      const c=w.kind==='dualies'&&p.owner?.weaponRunner?.s3Turret?raw.CollisionLapOverParam:raw.CollisionParam;
+      // On ghosts the existing size field disambiguates standing vs turret radius.
+      setCollision(p,p.ghost&&w.kind==='dualies'&&p.size>(raw.CollisionParam.InitRadiusForPlayer+raw.CollisionLapOverParam.InitRadiusForPlayer)/2?raw.CollisionLapOverParam:c);
+    }
     if(w.kind==='blaster'){
       p.straight=w.ballistics.straightTime;p.life=w.ballistics.burstTime;
-      p.grav=p.fidelityMove.freeGravity;p.drag=p.fidelityMove.freeDrag*profile.referenceHz;
-    } else if(w.kind==='roller'){
-      // Both modes send their real straight duration in the existing packet.
-      // Ghosts derive the mode from that duration, without a protocol extension.
-      const vertical=p.fidelityMode==='vertical'||p.ghost&&Math.round(p.straight*profile.referenceHz)===Math.round(w.ballistics.verticalStraightTime*profile.referenceHz);
+      p.grav=p.fidelityMove.freeGravity;p.drag=p.fidelityMove.freeDrag*60;
+    }else if(w.kind==='roller'){
+      const vertical=p.fidelityMode==='vertical'||p.ghost&&Math.round(p.straight*60)===Math.round(w.ballistics.verticalStraightTime*60);
       p.fidelityMode=vertical?'vertical':'horizontal';p.s3Vertical=vertical;
-      p.fidelityPlayerCollision=rollerCollisionForProjectile(w,p,vertical);
-      p.straight=vertical?w.ballistics.verticalStraightTime:w.ballistics.horizontalStraightTime;
+      if(!p.fidelityRollerUnit){
+        const units=raw[vertical?'VerticalSwingUnitGroupParam':'WideSwingUnitGroupParam'].Unit;
+        let best=Infinity;
+        for(const u of units)for(let i=0;i<(u.BulletNum??1);i++){
+          const d=Math.abs(p.vel.length()-60*(u.SpawnSpeedBase+i*(u.AfterOffsetSpawnSpeed||0)));
+          if(d<best){best=d;p.fidelityRollerUnit=u;}
+        }
+        setCollision(p,p.fidelityRollerUnit.UnitParam.CollisionParam);
+      }
+      p.straight=(vertical?w.ballistics.verticalStraightTime:w.ballistics.horizontalStraightTime);
       p.grav=w.flickGravity;p.drag=w.flickDrag;
-    } else {
-      p.straight=w.straightTime;p.grav=w.referenceGravity;p.drag=p.fidelityMove.freeDrag*profile.referenceHz;
-    }
+    }else if(w.kind==='slosher'){
+      if(!p.fidelitySloshUnit){
+        let best=Infinity;
+        for(const u of raw.UnitGroupParam.Unit)for(let i=0;i<(u.BulletNum??1);i++){
+          // Packet radius is rounded to 0.01, so use the unique source launch delay,
+          // serialized at 0.001 seconds, to recover the unit without extra fields.
+          const delay=((u.UnitDelayFrame||0)+i*(u.AfterOffsetDelayFrame||0))/60;
+          const delta=Math.abs((p.delay||0)-delay);
+          if(delta<best){best=delta;p.fidelitySloshUnit=u;p.fidelitySloshIndex=i;}
+        }
+      }
+      const u=p.fidelitySloshUnit,c=u.MoveParam;
+      setCollision(p,u.CollisionParam,p.fidelitySloshIndex);
+      p.straight=c.GoStraightToBrakeStateFrame/60;
+      p.fidelityMove={hz:60,endSpeed:c.GoStraightStateEndMaxSpeed*60,brakeDrag:c.BrakeAirResist,brakeGravity:c.BrakeGravity*3600,
+        freeDrag:c.FreeAirResist,freeGravity:c.FreeGravity*3600,freeVelocityY:c.BrakeToFreeVelocityY*60,freeFrame:c.BrakeToFreeStateFrame};
+      p.grav=c.FreeGravity*3600;p.drag=c.FreeAirResist*60;
+    }else if(p.fidelityMove){p.straight=w.straightTime;p.grav=w.referenceGravity;p.drag=p.fidelityMove.freeDrag*60;}
   }
   Projectiles.prototype._push=function(p){
-    initialize(p,p.owner?.weapon);
-    return push.call(this,p);
+    const w=WEAPONS[p.wid]||p.owner?.weapon,active=this._fidelitySloshContext;
+    if(active&&p.type==='slosh'){
+      let index=active.index++,u;
+      for(const unit of rawWeapon(w).UnitGroupParam.Unit){if(index<(unit.BulletNum??1)){u=unit;break;}index-=unit.BulletNum??1;}
+      if(!u)throw new RangeError('Slosher unit index');
+      p.fidelitySloshUnit=u;p.fidelitySloshIndex=index;
+      p.delay=((u.UnitDelayFrame||0)+index*(u.AfterOffsetDelayFrame||0))/60;
+      const speed=((p.owner.grounded?u.SpawnSpeedGround:u.SpawnSpeedAir)+index*(u.AfterOffsetSpawnSpeed||0))*60;
+      const aim=p.owner.aimDir.clone().normalize();
+      const yaw=Math.atan2(aim.x,aim.z)+radians(u.BaseRotateYDegree||0)+
+        (u.RandomRotateYOffOrderNum?.includes(index)?0:(Math.random()*2-1)*radians(u.RandomRotateYDegree||0));
+      const pitch=Math.atan2(aim.y,Math.hypot(aim.x,aim.z)),horizontal=Math.cos(pitch)*speed;
+      p.vel.set(Math.sin(yaw)*horizontal,Math.sin(pitch)*speed+horizontal*(u.AddSpawnSpeedYRateByXZ||0),Math.cos(yaw)*horizontal);
+      p.damage=u.DamageParam.ValueMax/10;p.head=!!u.HitEffectBigOrderNum?.includes(index);
+      p.s3DamageGroup=active.group;
+    }
+    initialize(p,w);
+    const group=p.s3DamageGroup;const result=push.call(this,p);
+    // The generic wrapper snapshots owner state too; retain a single per-volley owner.
+    if(group)p.s3DamageGroup=group;
+    return result;
   };
   Projectiles.prototype.ghostProjectile=function(actor,event){
     const before=this.list.length;const result=ghost.call(this,actor,event);
     if(this.list.length>before){const p=this.list.at(-1);initialize(p,WEAPONS[p.wid]||actor.weapon);}
     return result;
+  };
+  const slosh=Projectiles.prototype.fireSlosh;
+  Projectiles.prototype.fireSlosh=function(actor,w){
+    const previous=this._fidelitySloshContext;this._fidelitySloshContext={index:0,group:new Map()};
+    try{return slosh.call(this,actor,{...w,drops:rawWeapon(w).UnitGroupParam.Unit.reduce((n,u)=>n+(u.BulletNum??1),0)});}
+    finally{this._fidelitySloshContext=previous;}
   };
   const reset=WeaponRunner.prototype.reset,auto=WeaponRunner.prototype._auto,spin=WeaponRunner.prototype._splatling;
   WeaponRunner.prototype.reset=function(...args){const result=reset.apply(this,args);this.fidelitySplatlingCharge=null;return result;};
@@ -260,7 +340,36 @@ export function installWeaponsFidelity(context,profile) {
   };
   const fireSpin=Projectiles.prototype.fireSplatling;
   Projectiles.prototype.fireSplatling=function(actor,w,spread){
-    const speed=splatlingLaunchSpeed(w,actor.weaponRunner.fidelitySplatlingCharge??actor.weaponRunner.charge??0);
+    let speed=splatlingLaunchSpeed(w,actor.weaponRunner.fidelitySplatlingCharge??actor.weaponRunner.charge??0);
+    const rate=rawWeapon(w).MoveParam.SpawnSpeedRandomRate;
+    // Bounds are extracted. Uniform law is an explicit model; native bias law is unknown.
+    speed*=1+(Math.random()*2-1)*rate;
     return fireSpin.call(this,actor,{...w,projSpeed:speed},spread);
   };
+  // Boss and player hits share the same weapon damage envelope. The old native
+  // boss path used a separate seven-unit falloff and an unrelated 0.3s throttle.
+  const bossImpact=Projectiles.prototype._bossImpact,blastBurst=Projectiles.prototype._blastBurst;
+  Projectiles.prototype._bossImpact=function(p,hit){
+    if(p.ghost)return;
+    const w=p.s3Weapon||p.owner.weapon;
+    if(!['roller','slosher','shooter','dualies','splatling'].includes(w.kind))return bossImpact.call(this,p,hit);
+    const victim=hit.target?.hp!==undefined&&hit.target?.id!==undefined?hit.target:context.G.boss;
+    const damage=groupDamage(p.s3DamageGroup,victim,fidelityDamage(p,hit.point));
+    if(damage>0)context.G.boss.hit(p.owner,damage,hit.target,w.id,hit.point.clone());
+    context.emit('weapon:impact',{pos:hit.point.clone(),normal:p.vel.clone().normalize().negate(),team:p.team,kind:p.type==='shot'?'shot':'drop',radius:p.radius*.5,victim:null});
+  };
+  Projectiles.prototype._blastBurst=function(p,point,victim){
+    if(!p.ghost)return blastBurst.call(this,p,point,victim);
+    const w=p.s3Weapon||WEAPONS.blaster;
+    context.G.fx?.explosion(point,p.owner.color,w.burstRadius);
+    context.G.audio?.play('blaster_boom',{pos:point,volume:.7});
+  };
+  const nativeImpact=Projectiles.prototype._impact;
+  Projectiles.prototype._impact=function(p,hit){
+    if(!p.ghost)return nativeImpact.call(this,p,hit);
+    // A disconnected ghost still cannot mutate paint even when G.netm is gone.
+    if(p.type==='blast')this._blastBurst(p,hit.point,null);
+    else context.G.fx?.burst(hit.point,hit.normal,p.owner.color,{count:5,speed:3,size:.07,paint:false});
+  };
+  installChargerFlight(context,completion);
 }
