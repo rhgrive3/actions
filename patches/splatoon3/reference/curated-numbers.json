@@ -1365,6 +1365,14 @@
       "status": "extracted",
       "unit": "raw reference units",
       "notes": "Primary extracted field; enemy action-speed classification is documented separately in the enemy-ink batch report."
+    },
+    "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/WeaponParam/JumpHeightFullCharge": {
+      "value": 0.07,
+      "pointer": "/GameParameters/WeaponParam/JumpHeightFullCharge",
+      "sourceId": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "m/F (interpretation corroborated by S3 Wiki 0.7 DU/F)",
+      "notes": "Full-charge held Splat Charger only; partial-charge interpolation and simultaneous release are not inferred."
     }
   }
 }
