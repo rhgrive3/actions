@@ -87,7 +87,7 @@ export function installGear(api, tuning) {
   const moveSpeed = WeaponRunner.prototype.moveSpeed;
   WeaponRunner.prototype.moveSpeed = function () {
     const m = this.a.s3?.modifiers || {}, w = this.a.weapon;
-    const lockedMode = this.rolling || this.charging && w.kind === 'charger';
+    const lockedMode = this.rolling || this.charging && w.kind === 'charger' && this.a.onEnemy;
     const attacking = this.firingT > 0 || this.flick >= 0 || this.charging || this.streaming;
     const gear = lockedMode ? 1 : attacking ? m.runSpeedFiring ?? 1 : m.runSpeed ?? 1;
     return moveSpeed.call(this) * gear * (this.a.s3?.flow?.active ? tuning.flow.runMultiplier : 1);
