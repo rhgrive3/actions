@@ -1894,6 +1894,21 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "resources.enemyInkGraceReset": {
+    "value": 0.75,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "resources.enemyInkReferenceHz": {
+    "value": 60,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "resources.enemyInkDamageQuantum": {
+    "value": 0.1,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
   "movement.wallRollMinimumInput": {
     "value": 0.3,
     "status": "calibration or derived value; see reference raw table and unverified list",
@@ -2337,6 +2352,66 @@
       "index": 0,
       "factor": 1,
       "rawValue": 1
+    }
+  },
+  "gearExtra.enemyActionSpeedScale.0": {
+    "value": 0.5,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/misc/params.json#/OpInk_MoveVel_ShotK",
+      "index": 2,
+      "factor": 1,
+      "rawValue": 0.5
+    }
+  },
+  "gearExtra.enemyActionSpeedScale.1": {
+    "value": 0.75,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/misc/params.json#/OpInk_MoveVel_ShotK",
+      "index": 1,
+      "factor": 1,
+      "rawValue": 0.75
+    }
+  },
+  "gearExtra.enemyActionSpeedScale.2": {
+    "value": 1,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/misc/params.json#/OpInk_MoveVel_ShotK",
+      "index": 0,
+      "factor": 1,
+      "rawValue": 1
+    }
+  },
+  "gearExtra.enemyInkGraceFrames.0": {
+    "value": 0,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/misc/params.json#/OpInk_ArmorHP",
+      "index": 2,
+      "factor": 1,
+      "rawValue": 0
+    }
+  },
+  "gearExtra.enemyInkGraceFrames.1": {
+    "value": 26,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/misc/params.json#/OpInk_ArmorHP",
+      "index": 1,
+      "factor": 1,
+      "rawValue": 26
+    }
+  },
+  "gearExtra.enemyInkGraceFrames.2": {
+    "value": 39,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/misc/params.json#/OpInk_ArmorHP",
+      "index": 0,
+      "factor": 1,
+      "rawValue": 39
     }
   },
   "respawnChaseTime": {
