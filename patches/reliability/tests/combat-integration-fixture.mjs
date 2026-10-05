@@ -18,6 +18,7 @@ export async function combatWorld(owner, { emitted = process.env.INKWAVE_COMBAT_
     if (spec === 'three') return path.join(SRC, 'vendor/three/build/three.module.js');
     let file = path.resolve(path.dirname(from), spec);
     if (!emitted && file.startsWith(path.join(SRC, 'patches/'))) file = path.join(ROOT, path.relative(SRC, file));
+    if (!emitted && file.startsWith(path.join(ROOT, 'src') + path.sep)) file = path.join(SRC, path.relative(ROOT, file));
     return file;
   };
   const load = file => {
