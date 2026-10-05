@@ -350,3 +350,6 @@ The owner-side live Turf path now represents head-main Tenacity and its
 active-team deficit source. Effective/base special-cost conversion preserves
 SCU-independent normalized fill. See [scope and verification](inkwave-tenacity-2026-10-05.md)
 for native/emitted negative controls and unverified hardware/network conditions.
+## 2026-10-05 Roller flick target (#373)
+
+The [Roller movement comparison](inkwave-roller-flick-movement-2026-10-05.md) replaces the native windup-progress slowdown with the already sourced2.88 WU/s attack target for horizontal/vertical swings. Release timing, ink, pose, gear ownership and rolling/post-release branches stay separate; absolute physical scale and Switch acceptance remain unverified.
