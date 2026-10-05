@@ -12,29 +12,30 @@ export function replaceOnce(code, before, after, label) {
   return code.slice(0, at) + after + code.slice(at + before.length);
 }
 
-// Splatoon 3 Ver. 11.3.0 award taxonomy (CommonMsg/VS/VSAwardName)
+// Splatoon 3 Ver. 11.3.0 award taxonomy (primary datamine: https://leanny.github.io/splat3/medals.html)
+// Categories are evaluated strictly top-to-bottom in the gold and silver arrays.
 export const S3_AWARDS = {
-  // Gold Medals (priority order within gold: Battle=1, Paint=10, Standout=11, HomeBase=12, EnemyBase=13, SuperJump=14, Kill=15, Assist=16)
-  Battle: { id: 'overall_splatter', s3Id: 'Battle', label: '#1 Overall Splatter', metal: 'gold', icon: 'splat', desc: 'Most splats and assists on your team' },
-  Paint: { id: 'turf_inker', s3Id: 'Paint', label: '#1 Turf Inker', metal: 'gold', icon: 'roller', desc: 'Most turf inked on your team' },
-  Standout: { id: 'popular_target', s3Id: 'Standout', label: '#1 Popular Target', metal: 'gold', icon: 'shield', desc: 'Most time in enemy sights' },
-  NawabariPaintMyTeamArea: { id: 'home_base_inker', s3Id: 'NawabariPaintMyTeamArea', label: '#1 Home-Base Inker', metal: 'gold', icon: 'roller', desc: 'Most home base turf inked' },
-  NawabariPaintOpTeamArea: { id: 'enemy_base_inker', s3Id: 'NawabariPaintOpTeamArea', label: '#1 Enemy-Base Inker', metal: 'gold', icon: 'roller', desc: 'Most enemy base turf inked' },
-  SuperJumpTarget: { id: 'super_jump_spot', s3Id: 'SuperJumpTarget', label: '#1 Super Jump Spot', metal: 'gold', icon: 'wave', desc: 'Most super jumped to by teammates' },
-  Kill: { id: 'enemy_splatter', s3Id: 'Kill', label: '#1 Enemy Splatter', metal: 'gold', icon: 'splat', desc: 'Most splats on your team' },
-  KillAssist: { id: 'splat_assister', s3Id: 'KillAssist', label: '#1 Splat Assister', metal: 'gold', icon: 'splat', desc: 'Most assists on your team' },
+  // Gold Medals
+  Battle: { id: 'overall_splatter', s3Id: 'Battle', label: '#1 Overall Splatter', metal: 'gold', icon: 'splat', desc: 'Most splats and assists on your team', available: false },
+  Paint: { id: 'turf_inker', s3Id: 'Paint', label: '#1 Turf Inker', metal: 'gold', icon: 'roller', desc: 'Most turf inked on your team', available: true },
+  Standout: { id: 'Standout', s3Id: 'Standout', label: '#1 Popular Target', metal: 'gold', icon: 'shield', desc: 'Most time in enemy sights', available: false },
+  NawabariPaintMyTeamArea: { id: 'NawabariPaintMyTeamArea', s3Id: 'NawabariPaintMyTeamArea', label: '#1 Home-Base Inker', metal: 'gold', icon: 'roller', desc: 'Most home base turf inked', available: false },
+  NawabariPaintOpTeamArea: { id: 'NawabariPaintOpTeamArea', s3Id: 'NawabariPaintOpTeamArea', label: '#1 Enemy-Base Inker', metal: 'gold', icon: 'roller', desc: 'Most enemy base turf inked', available: false },
+  SuperJumpTarget: { id: 'SuperJumpTarget', s3Id: 'SuperJumpTarget', label: '#1 Super Jump Spot', metal: 'gold', icon: 'wave', desc: 'Most super jumped to by teammates', available: false },
+  Kill: { id: 'enemy_splatter', s3Id: 'Kill', label: '#1 Enemy Splatter', metal: 'gold', icon: 'splat', desc: 'Most splats on your team', available: true },
+  KillAssist: { id: 'splat_assister', s3Id: 'KillAssist', label: '#1 Splat Assister', metal: 'gold', icon: 'splat', desc: 'Most assists on your team', available: false },
 
-  // Silver Medals (priority order within silver: BaseDefense=108, FirstSplat=112, Battle2=132, Paint2=139, Standout2=140, HomeBase2=141, EnemyBase2=142, SuperJump2=143, Kill2=144, Assist2=145)
-  NawabariDefenseMyTeamArea: { id: 'base_defender', s3Id: 'NawabariDefenseMyTeamArea', label: '#1 Base Defender', metal: 'silver', icon: 'shield', desc: 'Most base defense splats and assists' },
-  FirstSplat: { id: 'first_splat', s3Id: 'FirstSplat', label: 'First Splat!', metal: 'silver', icon: 'star', desc: 'First splat of the match' },
-  Battle2: { id: 'overall_splatter_2', s3Id: 'Battle2', label: '#2 Overall Splatter', metal: 'silver', icon: 'splat', desc: '2nd most splats and assists on your team' },
-  Paint2: { id: 'turf_inker_2', s3Id: 'Paint2', label: '#2 Turf Inker', metal: 'silver', icon: 'roller', desc: '2nd most turf inked on your team' },
-  Standout2: { id: 'popular_target_2', s3Id: 'Standout2', label: '#2 Popular Target', metal: 'silver', icon: 'shield', desc: '2nd most time in enemy sights' },
-  NawabariPaintMyTeamArea2: { id: 'home_base_inker_2', s3Id: 'NawabariPaintMyTeamArea2', label: '#2 Home-Base Inker', metal: 'silver', icon: 'roller', desc: '2nd most home base turf inked' },
-  NawabariPaintOpTeamArea2: { id: 'enemy_base_inker_2', s3Id: 'NawabariPaintOpTeamArea2', label: '#2 Enemy-Base Inker', metal: 'silver', icon: 'roller', desc: '2nd most enemy base turf inked' },
-  SuperJumpTarget2: { id: 'super_jump_spot_2', s3Id: 'SuperJumpTarget2', label: '#2 Super Jump Spot', metal: 'silver', icon: 'wave', desc: '2nd most super jumped to by teammates' },
-  Kill2: { id: 'enemy_splatter_2', s3Id: 'Kill2', label: '#2 Enemy Splatter', metal: 'silver', icon: 'splat', desc: '2nd most splats on your team' },
-  KillAssist2: { id: 'splat_assister_2', s3Id: 'KillAssist2', label: '#2 Splat Assister', metal: 'silver', icon: 'splat', desc: '2nd most assists on your team' },
+  // Silver Medals
+  NawabariDefenseMyTeamArea: { id: 'NawabariDefenseMyTeamArea', s3Id: 'NawabariDefenseMyTeamArea', label: '#1 Base Defender', metal: 'silver', icon: 'shield', desc: 'Most base defense splats and assists', available: false },
+  FirstSplat: { id: 'FirstSplat', s3Id: 'FirstSplat', label: 'First Splat!', metal: 'silver', icon: 'star', desc: 'First splat of the match', available: false },
+  Battle2: { id: 'overall_splatter_2', s3Id: 'Battle2', label: '#2 Overall Splatter', metal: 'silver', icon: 'splat', desc: '2nd most splats and assists on your team', available: false },
+  Paint2: { id: 'turf_inker_2', s3Id: 'Paint2', label: '#2 Turf Inker', metal: 'silver', icon: 'roller', desc: '2nd most turf inked on your team', available: true },
+  Standout2: { id: 'Standout2', s3Id: 'Standout2', label: '#2 Popular Target', metal: 'silver', icon: 'shield', desc: '2nd most time in enemy sights', available: false },
+  NawabariPaintMyTeamArea2: { id: 'NawabariPaintMyTeamArea2', s3Id: 'NawabariPaintMyTeamArea2', label: '#2 Home-Base Inker', metal: 'silver', icon: 'roller', desc: '2nd most home base turf inked', available: false },
+  NawabariPaintOpTeamArea2: { id: 'NawabariPaintOpTeamArea2', s3Id: 'NawabariPaintOpTeamArea2', label: '#2 Enemy-Base Inker', metal: 'silver', icon: 'roller', desc: '2nd most enemy base turf inked', available: false },
+  SuperJumpTarget2: { id: 'SuperJumpTarget2', s3Id: 'SuperJumpTarget2', label: '#2 Super Jump Spot', metal: 'silver', icon: 'wave', desc: '2nd most super jumped to by teammates', available: false },
+  Kill2: { id: 'enemy_splatter_2', s3Id: 'Kill2', label: '#2 Enemy Splatter', metal: 'silver', icon: 'splat', desc: '2nd most splats on your team', available: true },
+  KillAssist2: { id: 'splat_assister_2', s3Id: 'KillAssist2', label: '#2 Splat Assister', metal: 'silver', icon: 'splat', desc: '2nd most assists on your team', available: false },
 };
 
 // Aliases for dual lookup (by ROM ID or snake_case ID)
@@ -42,42 +43,33 @@ S3_AWARDS.overall_splatter = S3_AWARDS.Battle;
 S3_AWARDS.overall_splatter_2 = S3_AWARDS.Battle2;
 S3_AWARDS.turf_inker = S3_AWARDS.Paint;
 S3_AWARDS.turf_inker_2 = S3_AWARDS.Paint2;
-S3_AWARDS.popular_target = S3_AWARDS.Standout;
-S3_AWARDS.popular_target_2 = S3_AWARDS.Standout2;
-S3_AWARDS.home_base_inker = S3_AWARDS.NawabariPaintMyTeamArea;
-S3_AWARDS.home_base_inker_2 = S3_AWARDS.NawabariPaintMyTeamArea2;
-S3_AWARDS.enemy_base_inker = S3_AWARDS.NawabariPaintOpTeamArea;
-S3_AWARDS.enemy_base_inker_2 = S3_AWARDS.NawabariPaintOpTeamArea2;
-S3_AWARDS.super_jump_spot = S3_AWARDS.SuperJumpTarget;
-S3_AWARDS.super_jump_spot_2 = S3_AWARDS.SuperJumpTarget2;
 S3_AWARDS.enemy_splatter = S3_AWARDS.Kill;
 S3_AWARDS.enemy_splatter_2 = S3_AWARDS.Kill2;
 S3_AWARDS.splat_assister = S3_AWARDS.KillAssist;
 S3_AWARDS.splat_assister_2 = S3_AWARDS.KillAssist2;
-S3_AWARDS.base_defender = S3_AWARDS.NawabariDefenseMyTeamArea;
-S3_AWARDS.first_splat = S3_AWARDS.FirstSplat;
 
 // Authoritative Splatoon 3 evaluation priority hierarchy (Gold always precedes Silver)
+// Sourced from primary authored datamine list order: https://leanny.github.io/splat3/medals.html
 export const S3_PRIORITY_RANKS = {
-  // Gold (1 - 16)
+  // Gold (top-to-bottom array order)
   Battle: 1, overall_splatter: 1,
   Paint: 10, turf_inker: 10,
-  Standout: 11, popular_target: 11,
-  NawabariPaintMyTeamArea: 12, home_base_inker: 12,
-  NawabariPaintOpTeamArea: 13, enemy_base_inker: 13,
-  SuperJumpTarget: 14, super_jump_spot: 14,
+  Standout: 11,
+  NawabariPaintMyTeamArea: 12,
+  NawabariPaintOpTeamArea: 13,
+  SuperJumpTarget: 14,
   Kill: 15, enemy_splatter: 15,
   KillAssist: 16, splat_assister: 16,
 
-  // Silver (108 - 145)
-  NawabariDefenseMyTeamArea: 108, base_defender: 108,
-  FirstSplat: 112, first_splat: 112,
+  // Silver (top-to-bottom array order)
+  NawabariDefenseMyTeamArea: 108,
+  FirstSplat: 112,
   Battle2: 132, overall_splatter_2: 132,
   Paint2: 139, turf_inker_2: 139,
-  Standout2: 140, popular_target_2: 140,
-  NawabariPaintMyTeamArea2: 141, home_base_inker_2: 141,
-  NawabariPaintOpTeamArea2: 142, enemy_base_inker_2: 142,
-  SuperJumpTarget2: 143, super_jump_spot_2: 143,
+  Standout2: 140,
+  NawabariPaintMyTeamArea2: 141,
+  NawabariPaintOpTeamArea2: 142,
+  SuperJumpTarget2: 143,
   Kill2: 144, enemy_splatter_2: 144,
   KillAssist2: 145, splat_assister_2: 145,
 };
@@ -85,20 +77,20 @@ export const S3_PRIORITY_RANKS = {
 export const S3_AWARD_ORDER = [
   'Battle', 'overall_splatter',
   'Paint', 'turf_inker',
-  'Standout', 'popular_target',
-  'NawabariPaintMyTeamArea', 'home_base_inker',
-  'NawabariPaintOpTeamArea', 'enemy_base_inker',
-  'SuperJumpTarget', 'super_jump_spot',
+  'Standout',
+  'NawabariPaintMyTeamArea',
+  'NawabariPaintOpTeamArea',
+  'SuperJumpTarget',
   'Kill', 'enemy_splatter',
   'KillAssist', 'splat_assister',
-  'NawabariDefenseMyTeamArea', 'base_defender',
-  'FirstSplat', 'first_splat',
+  'NawabariDefenseMyTeamArea',
+  'FirstSplat',
   'Battle2', 'overall_splatter_2',
   'Paint2', 'turf_inker_2',
-  'Standout2', 'popular_target_2',
-  'NawabariPaintMyTeamArea2', 'home_base_inker_2',
-  'NawabariPaintOpTeamArea2', 'enemy_base_inker_2',
-  'SuperJumpTarget2', 'super_jump_spot_2',
+  'Standout2',
+  'NawabariPaintMyTeamArea2',
+  'NawabariPaintOpTeamArea2',
+  'SuperJumpTarget2',
   'Kill2', 'enemy_splatter_2',
   'KillAssist2', 'splat_assister_2',
 ];
@@ -115,65 +107,55 @@ const MENU_ART_AWARDS_BEFORE = `export const AWARDS = {
 const AWARD_ORDER = ['mvp', 'turf', 'splats', 'inker', 'untouchable', 'survivor', 'pure'];`;
 
 const MENU_ART_AWARDS_AFTER = `export const AWARDS = {
-  // Gold Medals (Splatoon 3 Ver. 11.3.0)
-  Battle: { id: 'overall_splatter', s3Id: 'Battle', label: '#1 Overall Splatter', metal: 'gold', icon: 'splat', desc: 'Most splats and assists on your team' },
-  Paint: { id: 'turf_inker', s3Id: 'Paint', label: '#1 Turf Inker', metal: 'gold', icon: 'roller', desc: 'Most turf inked on your team' },
-  Standout: { id: 'popular_target', s3Id: 'Standout', label: '#1 Popular Target', metal: 'gold', icon: 'shield', desc: 'Most time in enemy sights' },
-  NawabariPaintMyTeamArea: { id: 'home_base_inker', s3Id: 'NawabariPaintMyTeamArea', label: '#1 Home-Base Inker', metal: 'gold', icon: 'roller', desc: 'Most home base turf inked' },
-  NawabariPaintOpTeamArea: { id: 'enemy_base_inker', s3Id: 'NawabariPaintOpTeamArea', label: '#1 Enemy-Base Inker', metal: 'gold', icon: 'roller', desc: 'Most enemy base turf inked' },
-  SuperJumpTarget: { id: 'super_jump_spot', s3Id: 'SuperJumpTarget', label: '#1 Super Jump Spot', metal: 'gold', icon: 'wave', desc: 'Most super jumped to by teammates' },
-  Kill: { id: 'enemy_splatter', s3Id: 'Kill', label: '#1 Enemy Splatter', metal: 'gold', icon: 'splat', desc: 'Most splats on your team' },
-  KillAssist: { id: 'splat_assister', s3Id: 'KillAssist', label: '#1 Splat Assister', metal: 'gold', icon: 'splat', desc: 'Most assists on your team' },
+  // Gold Medals (Splatoon 3 primary datamine: https://leanny.github.io/splat3/medals.html)
+  Battle: { id: 'overall_splatter', s3Id: 'Battle', label: '#1 Overall Splatter', metal: 'gold', icon: 'splat', desc: 'Most splats and assists on your team', available: false },
+  Paint: { id: 'turf_inker', s3Id: 'Paint', label: '#1 Turf Inker', metal: 'gold', icon: 'roller', desc: 'Most turf inked on your team', available: true },
+  Standout: { id: 'Standout', s3Id: 'Standout', label: '#1 Popular Target', metal: 'gold', icon: 'shield', desc: 'Most time in enemy sights', available: false },
+  NawabariPaintMyTeamArea: { id: 'NawabariPaintMyTeamArea', s3Id: 'NawabariPaintMyTeamArea', label: '#1 Home-Base Inker', metal: 'gold', icon: 'roller', desc: 'Most home base turf inked', available: false },
+  NawabariPaintOpTeamArea: { id: 'NawabariPaintOpTeamArea', s3Id: 'NawabariPaintOpTeamArea', label: '#1 Enemy-Base Inker', metal: 'gold', icon: 'roller', desc: 'Most enemy base turf inked', available: false },
+  SuperJumpTarget: { id: 'SuperJumpTarget', s3Id: 'SuperJumpTarget', label: '#1 Super Jump Spot', metal: 'gold', icon: 'wave', desc: 'Most super jumped to by teammates', available: false },
+  Kill: { id: 'enemy_splatter', s3Id: 'Kill', label: '#1 Enemy Splatter', metal: 'gold', icon: 'splat', desc: 'Most splats on your team', available: true },
+  KillAssist: { id: 'splat_assister', s3Id: 'KillAssist', label: '#1 Splat Assister', metal: 'gold', icon: 'splat', desc: 'Most assists on your team', available: false },
 
-  // Silver Medals (Splatoon 3 Ver. 11.3.0)
-  NawabariDefenseMyTeamArea: { id: 'base_defender', s3Id: 'NawabariDefenseMyTeamArea', label: '#1 Base Defender', metal: 'silver', icon: 'shield', desc: 'Most base defense splats and assists' },
-  FirstSplat: { id: 'first_splat', s3Id: 'FirstSplat', label: 'First Splat!', metal: 'silver', icon: 'star', desc: 'First splat of the match' },
-  Battle2: { id: 'overall_splatter_2', s3Id: 'Battle2', label: '#2 Overall Splatter', metal: 'silver', icon: 'splat', desc: '2nd most splats and assists on your team' },
-  Paint2: { id: 'turf_inker_2', s3Id: 'Paint2', label: '#2 Turf Inker', metal: 'silver', icon: 'roller', desc: '2nd most turf inked on your team' },
-  Standout2: { id: 'popular_target_2', s3Id: 'Standout2', label: '#2 Popular Target', metal: 'silver', icon: 'shield', desc: '2nd most time in enemy sights' },
-  NawabariPaintMyTeamArea2: { id: 'home_base_inker_2', s3Id: 'NawabariPaintMyTeamArea2', label: '#2 Home-Base Inker', metal: 'silver', icon: 'roller', desc: '2nd most home base turf inked' },
-  NawabariPaintOpTeamArea2: { id: 'enemy_base_inker_2', s3Id: 'NawabariPaintOpTeamArea2', label: '#2 Enemy-Base Inker', metal: 'silver', icon: 'roller', desc: '2nd most enemy base turf inked' },
-  SuperJumpTarget2: { id: 'super_jump_spot_2', s3Id: 'SuperJumpTarget2', label: '#2 Super Jump Spot', metal: 'silver', icon: 'wave', desc: '2nd most super jumped to by teammates' },
-  Kill2: { id: 'enemy_splatter_2', s3Id: 'Kill2', label: '#2 Enemy Splatter', metal: 'silver', icon: 'splat', desc: '2nd most splats on your team' },
-  KillAssist2: { id: 'splat_assister_2', s3Id: 'KillAssist2', label: '#2 Splat Assister', metal: 'silver', icon: 'splat', desc: '2nd most assists on your team' },
+  // Silver Medals (Splatoon 3 primary datamine: https://leanny.github.io/splat3/medals.html)
+  NawabariDefenseMyTeamArea: { id: 'NawabariDefenseMyTeamArea', s3Id: 'NawabariDefenseMyTeamArea', label: '#1 Base Defender', metal: 'silver', icon: 'shield', desc: 'Most base defense splats and assists', available: false },
+  FirstSplat: { id: 'FirstSplat', s3Id: 'FirstSplat', label: 'First Splat!', metal: 'silver', icon: 'star', desc: 'First splat of the match', available: false },
+  Battle2: { id: 'overall_splatter_2', s3Id: 'Battle2', label: '#2 Overall Splatter', metal: 'silver', icon: 'splat', desc: '2nd most splats and assists on your team', available: false },
+  Paint2: { id: 'turf_inker_2', s3Id: 'Paint2', label: '#2 Turf Inker', metal: 'silver', icon: 'roller', desc: '2nd most turf inked on your team', available: true },
+  Standout2: { id: 'Standout2', s3Id: 'Standout2', label: '#2 Popular Target', metal: 'silver', icon: 'shield', desc: '2nd most time in enemy sights', available: false },
+  NawabariPaintMyTeamArea2: { id: 'NawabariPaintMyTeamArea2', s3Id: 'NawabariPaintMyTeamArea2', label: '#2 Home-Base Inker', metal: 'silver', icon: 'roller', desc: '2nd most home base turf inked', available: false },
+  NawabariPaintOpTeamArea2: { id: 'NawabariPaintOpTeamArea2', s3Id: 'NawabariPaintOpTeamArea2', label: '#2 Enemy-Base Inker', metal: 'silver', icon: 'roller', desc: '2nd most enemy base turf inked', available: false },
+  SuperJumpTarget2: { id: 'SuperJumpTarget2', s3Id: 'SuperJumpTarget2', label: '#2 Super Jump Spot', metal: 'silver', icon: 'wave', desc: '2nd most super jumped to by teammates', available: false },
+  Kill2: { id: 'enemy_splatter_2', s3Id: 'Kill2', label: '#2 Enemy Splatter', metal: 'silver', icon: 'splat', desc: '2nd most splats on your team', available: true },
+  KillAssist2: { id: 'splat_assister_2', s3Id: 'KillAssist2', label: '#2 Splat Assister', metal: 'silver', icon: 'splat', desc: '2nd most assists on your team', available: false },
 };
 // Aliases for lookup flexibility
 AWARDS.overall_splatter = AWARDS.Battle;
 AWARDS.overall_splatter_2 = AWARDS.Battle2;
 AWARDS.turf_inker = AWARDS.Paint;
 AWARDS.turf_inker_2 = AWARDS.Paint2;
-AWARDS.popular_target = AWARDS.Standout;
-AWARDS.popular_target_2 = AWARDS.Standout2;
-AWARDS.home_base_inker = AWARDS.NawabariPaintMyTeamArea;
-AWARDS.home_base_inker_2 = AWARDS.NawabariPaintMyTeamArea2;
-AWARDS.enemy_base_inker = AWARDS.NawabariPaintOpTeamArea;
-AWARDS.enemy_base_inker_2 = AWARDS.NawabariPaintOpTeamArea2;
-AWARDS.super_jump_spot = AWARDS.SuperJumpTarget;
-AWARDS.super_jump_spot_2 = AWARDS.SuperJumpTarget2;
 AWARDS.enemy_splatter = AWARDS.Kill;
 AWARDS.enemy_splatter_2 = AWARDS.Kill2;
 AWARDS.splat_assister = AWARDS.KillAssist;
 AWARDS.splat_assister_2 = AWARDS.KillAssist2;
-AWARDS.base_defender = AWARDS.NawabariDefenseMyTeamArea;
-AWARDS.first_splat = AWARDS.FirstSplat;
 
 export const S3_PRIORITY_RANKS = {
   Battle: 1, overall_splatter: 1,
   Paint: 10, turf_inker: 10,
-  Standout: 11, popular_target: 11,
-  NawabariPaintMyTeamArea: 12, home_base_inker: 12,
-  NawabariPaintOpTeamArea: 13, enemy_base_inker: 13,
-  SuperJumpTarget: 14, super_jump_spot: 14,
+  Standout: 11,
+  NawabariPaintMyTeamArea: 12,
+  NawabariPaintOpTeamArea: 13,
+  SuperJumpTarget: 14,
   Kill: 15, enemy_splatter: 15,
   KillAssist: 16, splat_assister: 16,
-  NawabariDefenseMyTeamArea: 108, base_defender: 108,
-  FirstSplat: 112, first_splat: 112,
+  NawabariDefenseMyTeamArea: 108,
+  FirstSplat: 112,
   Battle2: 132, overall_splatter_2: 132,
   Paint2: 139, turf_inker_2: 139,
-  Standout2: 140, popular_target_2: 140,
-  NawabariPaintMyTeamArea2: 141, home_base_inker_2: 141,
-  NawabariPaintOpTeamArea2: 142, enemy_base_inker_2: 142,
-  SuperJumpTarget2: 143, super_jump_spot_2: 143,
+  Standout2: 140,
+  NawabariPaintMyTeamArea2: 141,
+  NawabariPaintOpTeamArea2: 142,
+  SuperJumpTarget2: 143,
   Kill2: 144, enemy_splatter_2: 144,
   KillAssist2: 145, splat_assister_2: 145,
 };
@@ -181,20 +163,20 @@ export const S3_PRIORITY_RANKS = {
 const AWARD_ORDER = [
   'Battle', 'overall_splatter',
   'Paint', 'turf_inker',
-  'Standout', 'popular_target',
-  'NawabariPaintMyTeamArea', 'home_base_inker',
-  'NawabariPaintOpTeamArea', 'enemy_base_inker',
-  'SuperJumpTarget', 'super_jump_spot',
+  'Standout',
+  'NawabariPaintMyTeamArea',
+  'NawabariPaintOpTeamArea',
+  'SuperJumpTarget',
   'Kill', 'enemy_splatter',
   'KillAssist', 'splat_assister',
-  'NawabariDefenseMyTeamArea', 'base_defender',
-  'FirstSplat', 'first_splat',
+  'NawabariDefenseMyTeamArea',
+  'FirstSplat',
   'Battle2', 'overall_splatter_2',
   'Paint2', 'turf_inker_2',
-  'Standout2', 'popular_target_2',
-  'NawabariPaintMyTeamArea2', 'home_base_inker_2',
-  'NawabariPaintOpTeamArea2', 'enemy_base_inker_2',
-  'SuperJumpTarget2', 'super_jump_spot_2',
+  'Standout2',
+  'NawabariPaintMyTeamArea2',
+  'NawabariPaintOpTeamArea2',
+  'SuperJumpTarget2',
   'Kill2', 'enemy_splatter_2',
   'KillAssist2', 'splat_assister_2',
 ];`;
@@ -303,38 +285,25 @@ const MENU_ART_COMPUTE_AFTER = `export function computeAwards(players = [], { wi
       }
     };
 
-    // 1. Turf Inker (#1 Paint / #2 Paint2) - authoritative metric
+    // 1. Turf Inker (#1 Paint / #2 Paint2) - authoritative native metric (p.turf)
     evalMetric((p) => p.turf, 'Paint', 'Paint2', (v) => tr('{n}p inked', { n: fmtInt(v) }));
 
-    // 2. Overall Splatter (#1 Battle / #2 Battle2) - authoritative metric (splats + assists if available)
-    evalMetric((p) => (p.assists !== undefined ? (p.splats || 0) + (p.assists || 0) : p.splats), 'Battle', 'Battle2', (v) => tr(v === 1 ? '{n} splat' : '{n} splats', { n: v }));
+    // 2. Enemy Splatter (#1 Kill / #2 Kill2) - authoritative native metric (p.splats)
+    evalMetric((p) => p.splats, 'Kill', 'Kill2', (v) => tr(v === 1 ? '{n} splat' : '{n} splats', { n: v }));
 
-    // Optional event/spatial metrics: evaluated ONLY if authoritative data is present on player objects, never synthesized
-    if (team.some((p) => p.kills !== undefined || p.enemySplats !== undefined)) {
-      evalMetric((p) => p.kills ?? p.enemySplats, 'Kill', 'Kill2', (v) => tr(v === 1 ? '{n} splat' : '{n} splats', { n: v }));
-    }
-    if (team.some((p) => p.assists !== undefined)) {
+    // 3. Overall Splatter (#1 Battle / #2 Battle2) and Splat Assister (#1 KillAssist / #2 KillAssist2)
+    // Eligible ONLY if authoritative finite non-negative assists are known for the ENTIRE compared team,
+    // AND positive assists are present. Missing is unknown (not 0); zero/missing assists awards no Overall.
+    const hasTeamwideFiniteAssists = team.every((p) => (
+      typeof p.assists === 'number' && Number.isFinite(p.assists) && p.assists >= 0
+    ));
+    const hasAnyPositiveAssists = team.some((p) => (
+      typeof p.assists === 'number' && Number.isFinite(p.assists) && p.assists > 0
+    ));
+
+    if (hasTeamwideFiniteAssists && hasAnyPositiveAssists) {
+      evalMetric((p) => p.splats + p.assists, 'Battle', 'Battle2', (v) => tr(v === 1 ? '{n} splat' : '{n} splats', { n: v }));
       evalMetric((p) => p.assists, 'KillAssist', 'KillAssist2', (v) => tr(v === 1 ? '{n} assist' : '{n} assists', { n: v }));
-    }
-    if (team.some((p) => p.standout !== undefined || p.popularTarget !== undefined)) {
-      evalMetric((p) => p.standout ?? p.popularTarget, 'Standout', 'Standout2', (v) => tr('{n}s', { n: v }));
-    }
-    if (team.some((p) => p.homeTurf !== undefined || p.homeBase !== undefined || p.homeBaseInked !== undefined)) {
-      evalMetric((p) => p.homeTurf ?? p.homeBase ?? p.homeBaseInked, 'NawabariPaintMyTeamArea', 'NawabariPaintMyTeamArea2', (v) => tr('{n}p inked', { n: fmtInt(v) }));
-    }
-    if (team.some((p) => p.enemyTurf !== undefined || p.enemyBase !== undefined || p.enemyBaseInked !== undefined)) {
-      evalMetric((p) => p.enemyTurf ?? p.enemyBase ?? p.enemyBaseInked, 'NawabariPaintOpTeamArea', 'NawabariPaintOpTeamArea2', (v) => tr('{n}p inked', { n: fmtInt(v) }));
-    }
-    if (team.some((p) => p.superJumpTarget !== undefined || p.superJumps !== undefined)) {
-      evalMetric((p) => p.superJumpTarget ?? p.superJumps, 'SuperJumpTarget', 'SuperJumpTarget2', (v) => tr(v === 1 ? '{n} jump' : '{n} jumps', { n: v }));
-    }
-    if (team.some((p) => p.baseDefender !== undefined || p.homeDefense !== undefined)) {
-      evalMetric((p) => p.baseDefender ?? p.homeDefense, 'NawabariDefenseMyTeamArea', null, (v) => String(v));
-    }
-    if (team.some((p) => p.firstSplat)) {
-      for (const p of team) {
-        if (p.firstSplat) give(p, 'FirstSplat', '');
-      }
     }
   }
 
