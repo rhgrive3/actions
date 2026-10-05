@@ -34,10 +34,18 @@ export function runSimulation(game, dt) {
   game._s3Ticked = clock.advance(dt, step => {
     G.time += step;
     if (m && !(covered && m.attract)) {
-      m.updateController(step);
-      m.controller?.computeAim?.();
-      m.update(step);
-      if (!m.paused) G.projectiles.update(step);
+      // #53: RESULT must not keep authoritative actor/projectile simulation
+      // running behind the results screen. Presentation ticks, input polling,
+      // edge consumption and menu navigation keep their own cadence. Network
+      // matches keep the existing owner/remote application pipeline so no remote
+      // snapshot is frozen or later replayed stale.
+      const freezeResults = m.state === 'results' && !G.netm;
+      if (!freezeResults) {
+        m.updateController(step);
+        m.controller?.computeAim?.();
+        m.update(step);
+        if (!m.paused) G.projectiles.update(step);
+      }
       if (m.attract) game._updateAttract(step);
       else if (m.state === 'playing' && m.local?.alive && (game.rig.mode !== 'follow' || game.rig.target !== m.local)) game.rig.follow(m.local, true);
     }
