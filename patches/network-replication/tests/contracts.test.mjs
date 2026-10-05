@@ -37,6 +37,35 @@ test('late roller fire links exactly its immutable volley after catch-up',async(
 test('native bomb and forwarded-event sequence replay is idempotent',async()=>{
  const f=await fixture(),nm=f.makeNetMatch(f.makeSession()),a=f.makeActor({nid:0,owner:'p2',remote:true});f.bind(nm,[a]);nm.peers.set('p2',{tr:1000});nm._rec(['b',0,'bomb',0,3,0,0,5,10,1,2]);const b=nm.out.pop();nm._play('p2',b);nm._play('p2',b);assert.equal(f.projectiles.bombs.length,1);
 });
+test('Storm birth requires one admitted owner special epoch and is consumed exactly once',async()=>{
+ const f=await fixture(),nm=f.makeNetMatch(f.makeSession()),a=f.makeActor({nid:0,owner:'p2',remote:true,roller:false});f.bind(nm,[a]);
+ a.weapon={...a.weapon,special:'storm'};a.specialActive={id:'storm',net:true};nm.peers.set('p2',{tr:1000});
+ const use=[1000,'ev','special:use',{actor:{n:0},id:'storm'}];use._netTick=60000;use._netSeq=1;
+ const birth=[1000,'b',0,'storm',0,3,0,0,5,10];birth._netTick=60000;birth._netSeq=2;
+ nm._play('p2',use);nm._play('p2',birth);assert.equal(f.projectiles.bombs.length,1);
+ const second=[...birth];second._netTick=60000;second._netSeq=3;nm._play('p2',second);
+ assert.equal(f.projectiles.bombs.length,1);
+});
+
+test('Storm birth rejects missing, stale and ownership-mismatched admission',async()=>{
+ const f=await fixture(),nm=f.makeNetMatch(f.makeSession()),a=f.makeActor({nid:0,owner:'p2',remote:true,roller:false});f.bind(nm,[a]);
+ a.weapon={...a.weapon,special:'storm'};a.specialActive={id:'storm',net:true};nm.peers.set('p2',{tr:1000});nm.peers.set('p3',{tr:1000});
+ const forged=[1000,'b',0,'storm',0,3,0,0,5,10];forged._netTick=60000;forged._netSeq=1;
+ nm._play('p2',forged);assert.equal(f.projectiles.bombs.length,0);
+ const use=[1000,'ev','special:use',{actor:{n:0},id:'storm'}];use._netTick=60000;use._netSeq=2;nm._play('p2',use);
+ const stale=[...forged];stale._netTick=60001;stale._netSeq=3;nm._play('p2',stale);assert.equal(f.projectiles.bombs.length,0);
+ const wrongOwner=[...forged];wrongOwner._netTick=60000;wrongOwner._netSeq=1;nm._play('p3',wrongOwner);assert.equal(f.projectiles.bombs.length,0);
+});
+
+test('respawn invalidates an unused Storm birth admission',async()=>{
+ const f=await fixture(),nm=f.makeNetMatch(f.makeSession()),a=f.makeActor({nid:0,owner:'p2',remote:true,roller:false});f.bind(nm,[a]);
+ a.weapon={...a.weapon,special:'storm'};a.specialActive={id:'storm',net:true};nm.peers.set('p2',{tr:1000});
+ const use=[1000,'ev','special:use',{actor:{n:0},id:'storm'}];use._netTick=60000;use._netSeq=1;nm._play('p2',use);
+ nm._remoteRespawn(a);a.specialActive={id:'storm',net:true};
+ const birth=[1000,'b',0,'storm',0,3,0,0,5,10];birth._netTick=60000;birth._netSeq=2;nm._play('p2',birth);
+ assert.equal(f.projectiles.bombs.length,0);
+});
+
 test('terminal replay retains the native blaster airburst before recycling',async()=>{
  const f=await fixture(),nm=f.makeNetMatch(f.makeSession()),a=f.makeActor({nid:0,owner:'p2',remote:true,roller:false});f.bind(nm,[a]);
  const life=f.WEAPONS.blaster.ballistics.burstTime,straight=f.WEAPONS.blaster.ballistics.straightTime,peer={tr:1000+life+1/60};nm.peers.set('p2',peer);let bursts=0;f.projectiles._blastBurst=()=>bursts++;
