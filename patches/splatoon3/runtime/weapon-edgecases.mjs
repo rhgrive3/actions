@@ -5,6 +5,18 @@ const EPS = 1e-10, DEG = Math.PI / 180;
 // scalar is evidence for scaling PitchDegSwerve. Air/IA remain uncalibrated.
 export function spreadWeaponRound(system, dir, a, w, spread) {
   const horizontal = spread ?? (a.grounded ? w.spreadGround : w.spreadAir);
+  if (w.kind === 'shooter' || w.kind === 'blaster') {
+    if (horizontal <= 0) return dir;
+    // Keep the existing two-draw radial law; correct only the scalar cone
+    // geometry. This is not a new claim about Nintendo's bias/PDF.
+    const radius = horizontal * DEG * Math.sqrt(Math.random()), angle = Math.random() * Math.PI * 2;
+    const right = dir.clone().set(-dir.z, 0, dir.x);
+    if (right.lengthSq() < 1e-4) right.set(1, 0, 0).addScaledVector(dir, -dir.x);
+    right.normalize();
+    const up = dir.clone().cross(right).normalize();
+    return dir.addScaledVector(right, Math.cos(angle) * Math.tan(radius))
+      .addScaledVector(up, Math.sin(angle) * Math.tan(radius)).normalize();
+  }
   if (w.kind !== 'splatling' || !a.grounded || !Number.isFinite(w.spreadPitchGround)) return system._spread(dir, horizontal);
   const radius = Math.sqrt(Math.random()), angle = Math.random() * Math.PI * 2;
   const right = dir.clone().set(-dir.z, 0, dir.x);

@@ -142,7 +142,8 @@ export function fidelityProjectileTargets(system,p) {
     if(actor.team===p.team||!actor.alive)continue;
     if(actor.pos.x<Math.min(p.prev.x,p.pos.x)-radius||actor.pos.x>Math.max(p.prev.x,p.pos.x)+radius||
        actor.pos.z<Math.min(p.prev.z,p.pos.z)-radius||actor.pos.z>Math.max(p.prev.z,p.pos.z)+radius)continue;
-    s.base.set(actor.pos.x,actor.pos.y+(actor.smoothY||0),actor.pos.z);
+    // smoothY belongs to render easing, not the authoritative body capsule.
+    s.base.copy(actor.pos);
     const t=capsuleEntry(p.prev,p.pos,s.base,PLAYER.radius,actor.form==='squid'?PLAYER.squidHeight:PLAYER.height,r0,r1);
     if(t!==null&&(t<best-EPSILON||Math.abs(t-best)<EPSILON&&String(actor.nid??actor.name)<String(nearest?.nid??nearest?.name))){best=t;nearest=actor;}
   }
