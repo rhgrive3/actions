@@ -38,6 +38,7 @@ test('enemy ink grace integrates only exposure after its boundary, then resets o
   const f = await fixture(), a = f.make();
   // This is an interval arithmetic regression, not a proposed Splatoon grace value.
   f.profile.resources.enemyInkGrace = .025;
+  f.profile.resources.enemyInkGraceReset = 0; // isolate interval arithmetic from #315's 45F reset policy
   f.G.paint.sample = () => 2; f.tick(a); close(a.hp, 100);
   f.tick(a); close(a.damageFromInk, f.profile.resources.enemyInkDps * (2 / 60 - .025));
   f.G.paint.sample = () => 0; f.tick(a); close(a.s3.enemyInkTime, 0);
@@ -51,10 +52,18 @@ test('enemy contact suppresses health recovery even while its damage grace is ac
   f.tick(a, 5); close(a.hp, 50);
 });
 
-test('contact ink remains nonlethal and bounded, including return after leaving it', async () => {
-  const f = await fixture(), a = f.make(); a.hp = 20; f.G.paint.sample = () => 2;
-  f.tick(a, 180); close(a.hp, 1); close(a.damageFromInk, f.profile.resources.enemyInkDamageCap);
-  a.damage(2, null, 'shooter'); assert.equal(a.alive, false);
+test('contact ink remains nonlethal and bounded by total accumulated damage', async () => {
+  const f = await fixture(); f.G.paint.sample = () => 2;
+  const fresh = f.make();
+  f.tick(fresh, 180);
+  close(fresh.hp, f.PLAYER.hp - f.profile.resources.enemyInkDamageCap);
+  close(fresh.damageFromInk, f.profile.resources.enemyInkDamageCap);
+  assert.equal(fresh.alive, true);
+
+  const alreadyHurt = f.make(); alreadyHurt.hp = 20;
+  f.tick(alreadyHurt, 180);
+  close(alreadyHurt.hp, 20); close(alreadyHurt.damageFromInk, 0);
+  alreadyHurt.damage(20, null, 'shooter'); assert.equal(alreadyHurt.alive, false);
 });
 
 test('refill predicates distinguish own ink, wall, dry/enemy squid, and stored charge', async () => {
