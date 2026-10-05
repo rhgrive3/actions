@@ -3099,5 +3099,15 @@
       "chargerPaint": "pinned width/depth/radius endpoints drive existing rasterizer; spacing formula and terminal multiplier remain source-guided/community-modelled",
       "rollerAgeDamage": "linear multiplier to pinned DamageRejectRate between pinned start/end frames; subframe rounding unverified"
     }
+  },
+  "clothingGear": {
+    "respawnPunisher": {
+      "targetFrames": 45,
+      "selfFrames": 68,
+      "targetSpecialLoss": 0.15,
+      "selfSpecialLoss": 0.225,
+      "quickRespawnAPScale": 0.15,
+      "specialSaverAPScale": 0.7
+    }
   }
 }

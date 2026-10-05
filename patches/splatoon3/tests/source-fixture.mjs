@@ -6,9 +6,12 @@ import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import { adaptSource } from '../adapter.mjs';
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
-const BUILT = process.env.INKWAVE_BUILT_SITE;
+const BUILT = process.env.INKWAVE_BUILT_SITE || process.env.INKWAVE_CLOTHING_BUILT_SITE;
 const UPSTREAM = BUILT ? path.resolve(BUILT) : process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
-export async function fixture({ adapt = adaptSource, adaptRuntime = (_rel, source) => source } = {}) {
+export async function fixture(options = {}) {
+  const extraExports = typeof options === 'string' ? options : options.extraExports || '';
+  const adapt = typeof options === 'string' ? adaptSource : options.adapt ?? adaptSource;
+  const adaptRuntime = typeof options === 'string' ? ((_rel, source) => source) : options.adaptRuntime ?? ((_rel, source) => source);
   const context = vm.createContext({ console, performance });
   const modules = new Map();
   function resolve(spec, from) {
@@ -43,6 +46,7 @@ export async function fixture({ adapt = adaptSource, adaptRuntime = (_rel, sourc
     export * from './patches/splatoon3/runtime/flow.mjs';
     export * from './patches/splatoon3/runtime/resources.mjs';
     export * from './patches/splatoon3/runtime/render.mjs';
+    ${extraExports}
     export * from './patches/splatoon3/runtime/sub-special-fidelity.mjs';
     export const TEST_MATH = Math;
   `, { context, identifier: path.join(ROOT, 'fixture.mjs') });

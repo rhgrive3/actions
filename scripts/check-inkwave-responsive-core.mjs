@@ -73,6 +73,32 @@ export async function checkCoreMenus({ page, entry, config, engineName, evidence
   await show(page, 'loadout');
   await capture('loadout', '.iw-loadout .iw-wcard, .iw-loadout__look button, .iw-loadout .iw-backbtn');
   if (!audit) {
+    // Both fixed abilities are clothing-main only. Tee identity and AP labels
+    // are read back after native storage and screen reopen.
+    if (!await page.locator('.s3-gear').evaluate(el => el.open)) await tap(page, '.s3-gear summary');
+    const selects = page.locator('.s3-gear select');
+    assert.equal(await selects.count(), 12);
+    for (const id of ['respawnPunisher', 'abilityDoubler']) {
+      for (let i = 0; i < 12; i++) assert.equal(await selects.nth(i).locator(`option[value="${id}"]`).count(), i === 4 ? 1 : 0);
+    }
+    await selects.nth(4).selectOption('abilityDoubler');
+    for (let i = 5; i < 8; i++) await selects.nth(i).selectOption('runSpeed');
+    const snapshot = await page.evaluate(async () => {
+      const { abilityPoints } = await import('/patches/splatoon3/runtime/gear.mjs');
+      const gear = JSON.parse(localStorage.getItem('inkwave.splatoon3.gear.v1'));
+      return { item: gear[1].item, ap: abilityPoints(gear) };
+    });
+    assert.equal(snapshot.item, 'splatfestTee'); assert.equal(snapshot.ap.runSpeed, 18);
+    assert.equal(await page.locator('.s3-gear fieldset').nth(1).locator('[data-slot]').allTextContents().then(xs => xs.join('|')), 'フェスT（倍化）|追加 1（6）|追加 2（6）|追加 3（6）');
+    await show(page, 'setup'); await show(page, 'loadout');
+    assert.equal(await page.locator('.s3-gear select').nth(4).inputValue(), 'abilityDoubler');
+    if (!await page.locator('.s3-gear').evaluate(el => el.open)) await tap(page, '.s3-gear summary');
+    await page.locator('.s3-gear select').nth(4).selectOption('respawnPunisher');
+    assert.equal(await page.locator('.s3-gear fieldset').nth(1).locator('[data-slot]').allTextContents().then(xs => xs.join('|')), 'メイン（10）|追加 1（3）|追加 2（3）|追加 3（3）');
+    await page.locator('.s3-gear select').nth(4).selectOption('none');
+    for (let i = 5; i < 8; i++) await page.locator('.s3-gear select').nth(i).selectOption('none');
+    await tap(page, '.s3-gear summary');
+    assert.equal(await page.locator('.s3-gear').evaluate(el => el.open), false, 'gear panel closes before returning to weapon selection');
     const card = page.locator('.iw-loadout .iw-wcard').last();
     const weapon = await card.evaluate((el) => el._wid);
     await card.scrollIntoViewIfNeeded(); await card.tap();
