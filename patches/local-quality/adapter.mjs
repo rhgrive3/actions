@@ -10,9 +10,14 @@ import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { adaptMinimapResources } from './minimap-resource-adapter.mjs';
 import { adaptLobbyResources } from './lobby-resource-adapter.mjs';
+import { adaptSlosherEmergeGate } from '../splatoon3/issue-435-adapter.mjs';
+import { patchLobbySetShowcase } from './issue-472-adapter.mjs';
+import { adaptQualityIssue418 } from './issue-418-adapter.mjs';
+import { adaptPaintMipmaps } from './issue-190-adapter.mjs';
 
 export const QUALITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
 const IDENTITY_FILES = [
+  'issue-190-adapter.mjs', 'issue-418-adapter.mjs', 'world-quality.mjs', 'quality-probe.mjs', 'paint-mipmap-probe.mjs', 'issue-472-adapter.mjs',
   'idle-adapter.mjs', 'idle-resources.mjs', 'music-idle.mjs',
   'lobby-resource-adapter.mjs', 'minimap-resource-adapter.mjs',
   'adapter.mjs', 'gyro.mjs', 'install.mjs', 'menu-preview.mjs', 'menu.mjs',
@@ -35,6 +40,14 @@ export function adaptQualitySource(rel, code) {
   code = adaptLobbyResources(rel, code);
   code = adaptMinimapResources(rel, code);
   code = adaptLandingRigidity(rel, code);
+  code = adaptPaintMipmaps(rel, code);
+  code = adaptQualityIssue418(rel, code);
+  code = patchLobbySetShowcase(rel, code);
+  code = adaptSlosherEmergeGate(rel, code);
+  if (rel === 'src/main.js') {
+    code = "import { updateSplatGhosts } from '../patches/splatoon3/issue-284-adapter.mjs';\n" + code;
+    code = replaceOnce(code, '      if (!m || !m.paused) this.fxHooks?.update?.(dt);', '      if (!m || !m.paused) { this.fxHooks?.update?.(dt); updateSplatGhosts(G, dt); }', 'ghost presentation tick');
+  }
   if (rel === 'src/core/mobile.js') {
     code = adaptFirstTouch(rel, code);
     code = adaptTouchRelayout(rel, code);
