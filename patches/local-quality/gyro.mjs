@@ -49,7 +49,7 @@ export function installGyroQuality(Gyro, getScreenAngle, isAndroid = () => /Andr
       suspend: halt,
       resume: () => { if (access.wanted && access.allowed) g.start(); else access.stopListening(); },
       blur: () => g.resync(),
-      screen: () => g.resync(),
+      screen: () => screenChanged(g),
     });
     return access;
   };
