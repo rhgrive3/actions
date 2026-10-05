@@ -1,3 +1,6 @@
+import { adaptMatchHud } from './match-hud-adapter.mjs';
+import { adaptContactRecovery } from './contact-recovery-adapter.mjs';
+import { adaptClothingGear } from './clothing-gear-adapter.mjs';
 import { adaptWeaponEdgecases } from './weapon-edgecases-adapter.mjs';
 import { adaptWeaponsFidelity } from './weapons-adapter.mjs';
 // Apply only to a disposable BUILD tree. Upstream sources are never modified.
@@ -32,6 +35,9 @@ export function checkCompatibility(src, patchRoot = PATCH_ROOT) {
 }
 
 export function adaptSource(rel, code) {
+  code = adaptClothingGear(rel, code, replaceOnce);
+  code = adaptContactRecovery(rel, code, replaceOnce);
+  code = adaptMatchHud(rel, code);
   if (rel === 'src/game/match.js') {
     code = replaceOnce(code,
       'const win = cov[0] === cov[1] ? (Math.random() < 0.5 ? 0 : 1) : cov[0] > cov[1] ? 0 : 1;',

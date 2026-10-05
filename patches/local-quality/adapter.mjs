@@ -2,6 +2,11 @@ import { adaptTenacity } from './tenacity-adapter.mjs';
 // Build-only quality corrections composed after the gameplay, touch-layout and
 // reliability adapters. Upstream inkwave-public/ remains byte-for-byte intact.
 import fs from 'node:fs';
+import { adaptIssue473Source } from '../splatoon3/issue-473-adapter.mjs';
+import { adaptIssue479Source } from '../splatoon3/issue-479-adapter.mjs';
+import { adaptPropRetention } from './prop-retention-adapter.mjs';
+import { adaptBossHit } from './boss-hit-adapter.mjs';
+import { adaptPropAtlas } from './prop-atlas-adapter.mjs';
 import { adaptIdleSource } from './idle-adapter.mjs';
 import { adaptPlatformSource } from './platform-adapter.mjs';
 import { adaptLandingRigidity } from './landing-rigidity-adapter.mjs';
@@ -15,6 +20,7 @@ import { adaptLobbyResources } from './lobby-resource-adapter.mjs';
 export const QUALITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
 const IDENTITY_FILES = [
   'tenacity-adapter.mjs', 'tenacity.mjs',
+  'prop-atlas-adapter.mjs', 'boss-hit-adapter.mjs', 'prop-retention-adapter.mjs',
   'idle-adapter.mjs', 'idle-resources.mjs', 'music-idle.mjs',
   'lobby-resource-adapter.mjs', 'minimap-resource-adapter.mjs',
   'adapter.mjs', 'gyro.mjs', 'install.mjs', 'menu-preview.mjs', 'menu.mjs',
@@ -34,6 +40,11 @@ export function replaceOnce(code, before, after, label) {
 
 export function adaptQualitySource(rel, code) {
   code = adaptTenacity(rel, code, replaceOnce);
+  code = adaptBossHit(rel, code);
+  code = adaptPropRetention(rel, code);
+  code = adaptPropAtlas(rel, code);
+  code = adaptIssue479Source(rel, code);
+  code = adaptIssue473Source(rel, code);
   code = adaptIdleSource(rel, code, replaceOnce);
   code = adaptLobbyResources(rel, code);
   code = adaptMinimapResources(rel, code);
