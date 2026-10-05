@@ -1,5 +1,10 @@
-let api, tuning;
-export function installResources(context, values) { api = context; tuning = values.resources; }
+let api, tuning, respawnTuning;
+export function installResources(context, values) { api = context; tuning = values.resources; respawnTuning = values.respawn || {}; }
+export function respawnTimeForCause(cause, fallback = api?.PLAYER?.respawnTime ?? 8.5) {
+  if (cause === 'water' || cause === 'drowning') return respawnTuning?.water ?? fallback;
+  if (cause === 'out-of-bounds' || cause === 'fall' || cause === 'void') return respawnTuning?.outOfBounds ?? fallback;
+  return respawnTuning?.weapon ?? fallback;
+}
 export function resourceSurface(a) {
   // Integration may have crossed a paint edge, taken off, or landed this tick.
   // The pre-movement surface is only suitable for movement, not recovery.
