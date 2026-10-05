@@ -134,12 +134,12 @@ export function adaptAimProfiles(rel, code) {
       "      this._lastAimProfile = s.aimProfile;\n" +
       "    }\n";
     const rawGyroConfig = "    this.gyro.configure({ sens: s.gyroSens, invX: s.gyroInvertX, invY: s.gyroInvertY });";
-    const pr494GyroConfig = "    this.gyro.configure({ sens: s.gyroSens });";
+    const pr496GyroConfig = "    this.gyro.configure({ sens: s.gyroSens });";
 
     if (code.includes(rawGyroConfig)) {
       code = replaceOnce(code, rawGyroConfig, profileResetPrefix + rawGyroConfig, 'mobile gyro configure raw');
-    } else if (code.includes(pr494GyroConfig)) {
-      code = replaceOnce(code, pr494GyroConfig, profileResetPrefix + pr494GyroConfig, 'mobile gyro configure pr494');
+    } else if (code.includes(pr496GyroConfig)) {
+      code = replaceOnce(code, pr496GyroConfig, profileResetPrefix + pr496GyroConfig, 'mobile gyro configure pr496');
     } else {
       throw new Error('INKWAVE aim profile patch conflict (mobile gyro configure): anchor not found');
     }
@@ -184,7 +184,7 @@ export function adaptAimProfiles(rel, code) {
   }
 
   if (rel === 'src/ui/menus.js') {
-    // 1. Add aimProfile selector to TOUCH_TAB (leave gyroInvertX/Y solely to PR 494)
+    // 1. Add aimProfile selector to TOUCH_TAB (leave gyroInvertX/Y solely to PR 496)
     const touchTabAnchor = "const TOUCH_TAB = { id: 'touch', label: 'Touch', icon: 'hand', rows: [\n";
     const touchTabAimProfile = touchTabAnchor +
       "  { key: 'aimProfile', label: 'Aim control mode', type: 'seg', options: [['tv', 'TV / Tabletop'], ['handheld', 'Handheld']], help: 'Splatoon 3 stores independent aim settings for TV/Tabletop and Handheld modes. Select which profile is active.' },\n";

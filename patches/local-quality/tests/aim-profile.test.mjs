@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
+import crypto from 'node:crypto';
+import { adaptGyroInvert as adaptGyroInvertPR496 } from './fixtures/pr496-439-gyro-invert.mjs';
 import { fileURLToPath } from 'node:url';
 import { adaptSource } from '../../splatoon3/adapter.mjs';
 import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
@@ -25,24 +27,6 @@ const read = rel => fs.readFileSync(path.join(UPSTREAM, rel), 'utf8');
 
 const compose = (rel, code = read(rel)) =>
   adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code))));
-
-// Exact PR 494 adapter function for proving dual raw vs PR494 composition
-function adaptGyroInvertPR494(rel, code) {
-  if (rel === 'src/ui/menus.js') {
-    code = code.replace(
-      "  { key: 'gyroInvertY', label: 'Gyro vertical', type: 'seg', options: [[false, 'Normal'], [true, 'Invert']], help: 'Normal: tilt the top toward you to look up (like a window). Invert flips it.' },\n",
-      '');
-    return code.replace(
-      "  { key: 'gyroInvertX', label: 'Gyro horizontal', type: 'seg', options: [[false, 'Normal'], [true, 'Invert']], help: 'Normal: turn the device left to look left.' },\n",
-      '');
-  }
-  if (rel === 'src/core/mobile.js') {
-    return code.replace(
-      '    this.gyro.configure({ sens: s.gyroSens, invX: s.gyroInvertX, invY: s.gyroInvertY });',
-      '    this.gyro.configure({ sens: s.gyroSens });');
-  }
-  return code;
-}
 
 function nativeMethod(rel, start, next) {
   const source = compose(rel);
@@ -563,14 +547,16 @@ test('MobileInput.setGyro scoped profile epoch prevents deferred request from ac
 });
 
 // ------------------------------------------------------------------------------------------
-// 3. PR 494 separation: raw preserves existing gyroconfigure while PR 494 composition drops invX/invY
+// 3. PR 496 separation: raw preserves existing gyroconfigure while PR 496 composition drops invX/invY
 // ------------------------------------------------------------------------------------------
 
-test('adapter composition retains existing gyro configure for both raw and PR494 applied sources', () => {
+test('adapter composition retains existing gyro configure for both raw and PR496 applied sources', () => {
+  const fixture = fs.readFileSync(new URL('./fixtures/pr496-439-gyro-invert.mjs', import.meta.url));
+  assert.equal(crypto.createHash('sha256').update(fixture).digest('hex'), 'd710d4b3aed1caf4ee7f9ffbba18cbef4fa3b1617dfb751010c4a96df89c2afa', 'exact PR496 source 0ad2a617b9c2f5dde2d6153a4f0bdccba779b5ab');
   const rawMobile = read('src/core/mobile.js');
   const rawMenus = read('src/ui/menus.js');
 
-  // 1. Raw composition (PR 494 not applied)
+  // 1. Raw composition (PR 496 not applied)
   const adaptedRawMobile = adaptQualitySource('src/core/mobile.js', rawMobile);
   const adaptedRawMenus = adaptQualitySource('src/ui/menus.js', rawMenus);
 
@@ -585,19 +571,19 @@ test('adapter composition retains existing gyro configure for both raw and PR494
   // aimProfile selector is added
   assert.ok(adaptedRawMenus.includes("key: 'aimProfile'"), 'aimProfile added to menus');
 
-  // 2. PR 494 applied composition
-  const pr494AppliedMobile = adaptGyroInvertPR494('src/core/mobile.js', rawMobile);
-  const pr494AppliedMenus = adaptGyroInvertPR494('src/ui/menus.js', rawMenus);
+  // 2. PR 496 applied composition
+  const pr496AppliedMobile = adaptGyroInvertPR496('src/core/mobile.js', rawMobile);
+  const pr496AppliedMenus = adaptGyroInvertPR496('src/ui/menus.js', rawMenus);
 
-  const adaptedPr494Mobile = adaptQualitySource('src/core/mobile.js', pr494AppliedMobile);
-  const adaptedPr494Menus = adaptQualitySource('src/ui/menus.js', pr494AppliedMenus);
+  const adaptedPr494Mobile = adaptQualitySource('src/core/mobile.js', pr496AppliedMobile);
+  const adaptedPr494Menus = adaptQualitySource('src/ui/menus.js', pr496AppliedMenus);
 
-  assert.ok(adaptedPr494Mobile.includes('this._lastAimProfile !== s.aimProfile'), 'profile reset added in PR494');
-  assert.ok(adaptedPr494Mobile.includes('this.gyro.configure({ sens: s.gyroSens });'), 'PR494 mobile configure without invX/Y preserved');
-  assert.ok(!adaptedPr494Mobile.includes('invX: s.gyroInvertX'), 'no invX in PR494 mobile');
-  assert.ok(!adaptedPr494Menus.includes("key: 'gyroInvertY'"), 'PR494 menus drop gyroInvertY');
-  assert.ok(!adaptedPr494Menus.includes("key: 'gyroInvertX'"), 'PR494 menus drop gyroInvertX');
-  assert.ok(adaptedPr494Menus.includes("key: 'aimProfile'"), 'aimProfile added to PR494 menus');
+  assert.ok(adaptedPr494Mobile.includes('this._lastAimProfile !== s.aimProfile'), 'profile reset added in PR496');
+  assert.ok(adaptedPr494Mobile.includes('this.gyro.configure({ sens: s.gyroSens });'), 'PR496 mobile configure without invX/Y preserved');
+  assert.ok(!adaptedPr494Mobile.includes('invX: s.gyroInvertX'), 'no invX in PR496 mobile');
+  assert.ok(!adaptedPr494Menus.includes("key: 'gyroInvertY'"), 'PR496 menus drop gyroInvertY');
+  assert.ok(!adaptedPr494Menus.includes("key: 'gyroInvertX'"), 'PR496 menus drop gyroInvertX');
+  assert.ok(adaptedPr494Menus.includes("key: 'aimProfile'"), 'aimProfile added to PR496 menus');
 });
 
 // ------------------------------------------------------------------------------------------
