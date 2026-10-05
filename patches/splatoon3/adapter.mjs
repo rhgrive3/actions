@@ -5,6 +5,7 @@ import { adaptWeaponsFidelity } from './weapons-adapter.mjs';
 import { adaptMovementPhysics } from './movement-physics-adapter.mjs';
 import { adaptSubSpecialFidelity } from './sub-special-adapter.mjs';
 import fs from 'node:fs';
+import { adaptScoreHud } from './score-hud-adapter.mjs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
@@ -32,6 +33,7 @@ export function checkCompatibility(src, patchRoot = PATCH_ROOT) {
 }
 
 export function adaptSource(rel, code) {
+  code = adaptScoreHud(rel, code);
   if (rel === 'patches/splatoon3/runtime/resources.mjs') return adaptIssue415(rel, code);
   code = adaptMovementPhysics(rel, code, replaceOnce);
   code = adaptSubSpecialFidelity(rel, code, replaceOnce);
