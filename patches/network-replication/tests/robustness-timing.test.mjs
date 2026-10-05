@@ -46,11 +46,18 @@ test('a ghost storm cloud advances on the owner clock and retires at its duratio
   const f = await fixture();
   const nm = f.makeNetMatch(f.makeSession('me', 'p2', [['me', 'Me'], ['p2', 'P2']]));
   const a = f.makeActor({ nid: 7, owner: 'p2', remote: true, roller: false });
+  a.weapon = { ...a.weapon, special: 'storm' };
+  a.specialActive = { id: 'storm', net: true };
   f.bind(nm, [a]);
   const peer = { tr: 1000 };
   nm.peers.set('p2', peer);
-  // a ghost storm bomb placed on the floor lands immediately and spawns the cloud
-  nm._play('p2', [1000, 'b', 7, 'storm', 0, 0.5, 0, 0, 0, 0, 4, 6]);
+  // Reproduce the real admitted owner timeline: special use precedes its one Storm birth on the same simulation tick.
+  const use = [1000, 'ev', 'special:use', { actor: { n: 7 }, id: 'storm' }, 4, 5];
+  use._netTick = 4; use._netSeq = 5;
+  const birth = [1000, 'b', 7, 'storm', 0, 0.5, 0, 0, 0, 0, 4, 6];
+  birth._netTick = 4; birth._netSeq = 6;
+  nm._play('p2', use);
+  nm._play('p2', birth);
   peer.tr = 1002;
   for (let i = 0; i < 30; i++) { f.clock.advance(1 / 60); f.projectiles.update(1 / 60); }
   const cloud = f.projectiles.clouds.find((c) => c.ghost);
