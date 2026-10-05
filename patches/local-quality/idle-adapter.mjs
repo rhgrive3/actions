@@ -25,7 +25,7 @@ export function adaptIdleSource(rel, code, replace) {
       "    if ('quality' in partial || 'shadows' in partial || 'bloom' in partial) this.R?.applySettings(this.settings);\n    if ('quality' in partial) refreshEnvironmentBudget(G.env, this.settings, this.mobile);", 'resource quality refresh');
     patch('    const worldHidden = setUp;', '    const pausedFrame = pausedWorldFrame(this, G);\n    const worldHidden = setUp || pausedFrame.paused;', 'offline world pause');
     patch('  _dynRes(dt) {', '  _dynRes(dt) {\n    if (this.match?.paused && !this.match.attract && !G.netm) return;', 'paused frames are not GPU headroom samples');
-    patch('      if (!setUp) this.R.render();', '      if (!setUp && pausedFrame.draw) { this.R.render(); pausedFrame.commit?.(); }', 'frozen backdrop invalidation');
+    patch('      if (!setUp) this.R.render();', '      if (!setUp && pausedFrame.draw) { this.R.render(); if (pausedFrame.paused) G.renderer.shadowMap.needsUpdate = false; pausedFrame.commit?.(); }', 'frozen backdrop invalidation');
   }
   return code;
 }
