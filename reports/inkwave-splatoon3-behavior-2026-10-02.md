@@ -250,3 +250,11 @@ cloud/Halyard cube allocation at default high settings, not only after later
 runtime refresh. Existing formats, appearance policy and gameplay stay intact.
 These are project resource dimensions, not Nintendo/Switch memory values.
 See [the cold-boot budget report](inkwave-cold-boot-budgets-2026-10-04.md).
+
+## 2026-10-06: Charger 通常リリースの発射隙 (#680)
+
+- 本家の根拠：現行Splatoon 3の検証資料はチャージャーの時間分解を `startup + charge + 発射隙 + shot(1F)` とし、通常のZR解放認識から攻撃ヒットボックスまでを **1F** とする（検証Wiki「メインウェポン」、確認はコード差分の前提に限定し独自数値は追加しない）。
+- INKWAVE の実装箇所：`patches/splatoon3/runtime/weapons.mjs` の `WeaponRunner.prototype._charger` に、S3通常リリース用の1F固定ステップ状態を追加。解放tick R では `charging` を解除し、チャージ量・解放方向の基準をラッチして発射しない。R+1 で `weapon:fire`・有限flight・インク/cooldown・recoil を生成する。
+- 再現操作：フル充填または途中充填からZRを離す。解放tickで弾が生成されず、次tickで1発だけ生成されることを、実 `Actor`/`WeaponRunner` の固定60Hzロジックで確認した（`patches/splatoon3/tests/charger-release-gap.test.mjs`）。
+- プレイへの影響：解放直後の早撃ち・トレードがS3より1F先行していたずれを解消する。8F最小チャージ、リピート/cooldown、stored-charge resurfacing、charge-cancel recovery、post-shot swim lock は変更しない。
+- 確認状態：ロジック単独（source-fixture）で30/60/120Hzの同一固定intervalを確認。Switch実機の新規録画や、本家の公開されていないフレーム値の推定は行っていない。

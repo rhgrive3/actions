@@ -133,7 +133,7 @@ test('second-realm helpers observe the installed weapon attack and reset state',
     const r = rig(api, kind);
     try {
       r.step(1 / 60, { fire: true });
-      if (kind === 'charger') r.step();
+      if (kind === 'charger') { r.step(); r.step(); } // S3 1F release gap
       const active = r.snapshot();
       assert.notEqual(kind === 'slosher' ? active.sloshElapsed : active.chargerReleaseAge, null);
       assert.deepEqual(JSON.parse(JSON.stringify(snapshotFromAnotherRealm(r.ch))), JSON.parse(JSON.stringify(active)));
@@ -294,7 +294,7 @@ test('actual Charger stores full charge across form on a held ZR, then releases 
       assert.equal(r.a.weaponRunner.s3Stored.charge, 1);
       r.a.form = 'kid'; for (let i = 0; i < hz / 4; i++) r.step(1 / hz, { fire: true });
       assert.equal(r.events.length, 0); assert.ok(r.ch.weapon.coil.userData.u.uCharge.value > .99);
-      r.step(1 / hz, { fire: true }); r.step(1 / hz);
+      r.step(1 / hz, { fire: true }); r.step(1 / hz); r.step(1 / hz); // S3 1F release gap
       assert.equal(r.events.length, 1); assert.equal(r.events[0].charge, 1);
       let peak = 0, reach = 0;
       for (let i = 0; i < hz / 2; i++) { r.step(1 / hz); peak = Math.max(peak, Math.abs(r.ch.rcP)); reach = Math.max(reach, ...r.ch.ikErr.slice(0, 2)); }

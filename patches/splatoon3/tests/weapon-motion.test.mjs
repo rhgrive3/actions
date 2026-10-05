@@ -108,7 +108,7 @@ test('Charger holds its real charge through form return on a held ZR and release
       assert.equal(r.a.weaponRunner.s3Stored.charge, 1); assert.equal(r.f.shots.length, 0);
       r.a.form = 'kid'; for (let i = 0; i < hz / 3; i++) r.step(1 / hz, { fire: true });
       assert.equal(r.f.shots.length, 0); assert.ok(r.ch.weapon.coil.userData.u.uCharge.value > .999);
-      r.step(1 / hz, { fire: true }); r.step(1 / hz, { fire: false });
+      r.step(1 / hz, { fire: true }); r.step(1 / hz, { fire: false }); r.step(1 / hz, { fire: false }); // S3 1F release gap
       assert.equal(r.f.shots.length, 1); assert.equal(r.f.shots[0].charge, 1);
       assert.ok(r.ch.chargeFlash > .7 && r.ch.lastRelease < .05, 'actual release event drives Character');
       r.a.weaponRunner.reset(); assert.equal(r.ch.chargeFlash, 0);
