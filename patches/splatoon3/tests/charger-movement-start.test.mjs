@@ -6,6 +6,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from './source-fixture.mjs';
 import { FixedClock, STEP } from '../runtime/clock.mjs';
+import { gearCurve } from '../runtime/gear.mjs';
 
 const close = (actual, expected, label) => assert.ok(
   Math.abs(actual - expected) < 1e-6, `${label}: ${actual} ~= ${expected}`);
@@ -129,7 +130,7 @@ test('two actors with distinct charge/Flow gear state share no target', async ()
   charging.weaponRunner.charging = true;
   // Charger charging locks the baseline before gear; idle run scales by Flow.
   close(charging.weaponRunner.moveSpeed(), 1.2, 'charging target ignores run gear');
-  close(idle.weaponRunner.moveSpeed(), f.PLAYER.runSpeed * f.profile.flow.runMultiplier, 'idle Flow target');
+  close(idle.weaponRunner.moveSpeed(), f.PLAYER.runSpeed * gearCurve(f.profile.flow.abilityPoints, ...f.profile.gear.runSpeed), 'idle Flow target');
   assert.notEqual(charging.weapon, idle.weapon, 'per-actor weapon copies');
   assert.equal(f.profile.weapons.charger.moveSpeedFiring, 1.2, 'shared profile untouched');
   assert.equal(f.WEAPONS.charger.moveSpeedFiring, 1.2, 'shared source weapon untouched');
