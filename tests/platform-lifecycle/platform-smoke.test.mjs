@@ -58,15 +58,15 @@ test('lifecycle converges across 24 hide/show cycles without duplicate frame loo
     assert.equal(owner.snapshot().listeners,initialListeners);
     assert.equal(owner.snapshot().subscribers,1);
   }
-  // First resumed frame rebases to zero. A short foreground stall advances a
-  // bounded slice so a slow active browser cannot starve fixed simulation;
-  // a real 30 s gap still resumes from zero.
+  // First frame after the real hide/show transition rebases to zero. Visible,
+  // focused main-thread stalls advance only one bounded slice, even when long,
+  // so fixed simulation cannot starve while background resumes remain stale-free.
   let cb=env._raf.cb; cb(env.performance.now());
   assert.equal(dts.at(-1),0);
   env._advance(400); cb=env._raf.cb; cb(env.performance.now());
   assert.equal(dts.at(-1),MAX_PLATFORM_GAP);
   env._advance(30000); cb=env._raf.cb; cb(env.performance.now());
-  assert.equal(dts.at(-1),0);
+  assert.equal(dts.at(-1),MAX_PLATFORM_GAP);
   assert.equal(driver.snapshot().gaps,2);
   assert.equal(driver.snapshot().pendingRAF,1);
   assert.equal(owner.snapshot().listeners,initialListeners);
