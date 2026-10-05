@@ -42,11 +42,14 @@ export function installMobilePlatform(MobileInput, env = globalThis) {
   }
   function ensure(m) {
     let r = records.get(m); if (r) return r;
-    r = { offStatus: null, offLifecycle: null, lastNotice: null, click: null, resize: null, layoutRAF: null };
+    r = { offStatus: null, offLifecycle: null, lastNotice: null, click: null, layoutRAF: null };
     records.set(m, r);
     m.gyro._platformCanStart = () => runnable(m);
     const layout = () => {
-      reset(m); m.gyro.resync();
+      // Screen resize/orientation is owned by createTouchRelayout so a same-
+      // orientation resize keeps held pointers. Lifecycle resume only refreshes
+      // geometry after suspend has already neutralised input.
+      m.gyro.resync();
       if (!lifecycle.active || r.layoutRAF !== null) return;
       r.layoutRAF = env.requestAnimationFrame(() => { r.layoutRAF = null; if (!m._destroyed && lifecycle.active) m._layoutAll?.(); });
     };
@@ -55,7 +58,7 @@ export function installMobilePlatform(MobileInput, env = globalThis) {
       suspend() { ++m._gyroIntent; env.clearTimeout(m._gyroNoticeT); cancelLayout(); reset(m); },
       prepareResume() { reset(m); m.gyro.resync(); },
       resume() { if (runnable(m) && m._gyroWanted && !m.gyro.needsPermission) m.gyro.start(); layout(); },
-      blur() { reset(m); }, screen: layout,
+      blur() { reset(m); },
     });
     r.offStatus = m.gyro.onPlatformStatus?.(status => {
       const button = m.els?.gyro;
@@ -69,8 +72,7 @@ export function installMobilePlatform(MobileInput, env = globalThis) {
         m.toast(m.gyro.statusMessage(), 4); r.lastNotice = status.reason;
       } else if (status.availability === 'active' || status.availability === 'waiting') r.lastNotice = null;
     });
-    r.cancelLayout = cancelLayout; r.resize = layout;
-    env.addEventListener?.('resize', layout);
+    r.cancelLayout = cancelLayout;
     r.click = e => {
       if (m._destroyed || m.editing || !lifecycle.active || !m.visible) return;
       if (e.detail !== 0 && env.performance.now() - (m._platformGyroUp ?? -Infinity) < 750) return;
@@ -144,7 +146,6 @@ export function installMobilePlatform(MobileInput, env = globalThis) {
     const r = records.get(this);
     if (r) {
       r.cancelLayout(); r.offLifecycle?.(); r.offStatus?.();
-      env.removeEventListener?.('resize', r.resize);
       this.els?.gyro?.removeEventListener('click', r.click); records.delete(this);
     }
     reset(this);
