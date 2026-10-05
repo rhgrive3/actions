@@ -1450,8 +1450,8 @@
    "offset_mm": 1.0,
    "dive": {
     "from_mm": 20,
-    "len_mm": 14,
-    "mm": 7,
+    "len_mm": 30,
+    "mm": 5,
     "z_front": [
      20,
      40

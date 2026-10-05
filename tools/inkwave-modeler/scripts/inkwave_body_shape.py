@@ -230,6 +230,25 @@ def skull_back(cfg):
               round(float(np.linalg.norm(er.world(obj) - before, axis=1).max() * 1000), 2))
 
 
+def seam_normals(cfg):
+    """A line ran from under the ear to under the jaw in the side and 3/4 views where the face (laid on the neck by
+    face_volume jaw_tuck) meets the neck: the shading jumped there (clay +5 brighter on the neck side).  The face
+    near the neck takes the neck's normals (Blender's Data Transfer, custom normals): full within cfg['mm'][0] of
+    the neck surface, none beyond cfg['mm'][1], below head y cfg['y_max'].  Last of all, after every step that moves
+    the neck or the face (nape, collar, ...), so the copied normals match the final neck."""
+    from mathutils.bvhtree import BVHTree
+    face, neck = bpy.data.objects[cfg['face']], bpy.data.objects[cfg['neck']]
+    tree = BVHTree.FromObject(neck, bpy.context.evaluated_depsgraph_get())
+    inv = neck.matrix_world.inverted()
+    W = er.world(face)
+    dist = np.array([tree.find_nearest(inv @ Vector(q))[3] for q in W]) * 1000
+    d0, d1 = cfg['mm']
+    w = smoothstep((d1 - dist) / (d1 - d0)) * (er.M.to_local(W)[:, 1] * 1000 < cfg['y_max'])
+    er.apply_weighted_modifier(face, w, 'DATA_TRANSFER', object=neck, use_loop_data=True,
+                               data_types_loops={'CUSTOM_NORMAL'}, loop_mapping='POLYINTERP_NEAREST')
+    print('BODY_SHAPE seam_normals vertices', int((w > 1e-3).sum()), 'full', int((w > 0.999).sum()))
+
+
 def jacket_field(W, cfg):
     """Outward move of the jacket's open front edges at the waist (front parts only)."""
     x, y, z = W[:, 0], W[:, 1], W[:, 2]
@@ -711,6 +730,7 @@ def main():
     names += [n for n in p.get('collar_lower', {}).get('meshes', []) if n not in names]
     names += [n for n in p.get('head_side_in', {}).get('meshes', []) if n not in names]
     names += [n for n in p.get('skull_back', {}).get('meshes', []) if n not in names]
+    names += [n for n in [p.get('seam_normals', {}).get('face')] if n and n not in names]
     remove_made()
     restore_legwear()
     print('BODY_SHAPE restored', restore(names, drop=args.restore), 'meshes')
@@ -784,6 +804,8 @@ def main():
             mat = nail_material(p['nails'])
             for hand in p['nails']['hands']:
                 nails(bpy.data.objects[hand], p['nails'], mat)
+        if p.get('seam_normals'):
+            seam_normals(p['seam_normals'])
     if args.save:
         bpy.ops.wm.save_as_mainfile(filepath=args.save, compress=True)
 

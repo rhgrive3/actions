@@ -622,5 +622,14 @@
    40,
    75
   ]
+ },
+ "seam_normals": {
+  "face": "HEAD_face",
+  "neck": "BODY_torso",
+  "mm": [
+   2.0,
+   10.0
+  ],
+  "y_max": -50.0
  }
 }
