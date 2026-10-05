@@ -16,6 +16,7 @@ function ctx2d(cv) {
     get(t, p) {
       if (typeof p === 'symbol') return t[p];
       if (p === 'canvas') return t.canvas;
+      if (p === 'setTransform') return (...args) => { (cv._transforms ||= []).push(args); };
       if (p === 'measureText') return () => ({ width: 24 });
       if (p === 'createLinearGradient' || p === 'createRadialGradient' || p === 'createConicGradient') return () => gradient;
       if (p === 'createPattern') return () => ({ setTransform() {} });
@@ -62,9 +63,11 @@ export async function loadNative(patched = true, practice = false) {
 
   const THREE = await import('three');
   const props = await import(pathToFileURL(SRC + '/src/world/props.js').href + '?patched=' + patched + '&practice=' + practice);
+  const { G } = await import(pathToFileURL(SRC + '/src/core/ctx.js').href);
   const dressing = await import(pathToFileURL(SRC + '/src/world/dressing.js').href);
   return {
     THREE,
+    G,
     SRC,
     PropKit: props.PropKit,
     PROP_TYPES: props.PROP_TYPES,
