@@ -53,20 +53,16 @@ export function replaceOnce(code, before, after, label) {
 }
 
 export function adaptIssue477Weapons(code) {
-  // This adapter is composed through the global quality pipeline. Some newer
-  // regression fixtures intentionally provide reduced/synthetic weapons.js
-  // surfaces, so only claim the real upstream Dualies connection. Already
-  // adapted or partial fixture sources must pass through unchanged.
-  const upstreamTryDodge = "  tryDodge(move) {\n    const a = this.a, w = a.weapon;\n    if (w.kind !== 'dualies' || this.dodge || !a.alive || a.form === 'squid' || this.aimingSub || !move) return false;";
-  if (!code.includes(upstreamTryDodge)) return code;
-
-  // 1. tryDodge: verify grounded condition
-  code = replaceOnce(
-    code,
-    '  tryDodge(move) {\n    const a = this.a, w = a.weapon;\n    if (w.kind !== \'dualies\' || this.dodge || !a.alive || a.form === \'squid\' || this.aimingSub || !move) return false;',
-    '  tryDodge(move) {\n    const a = this.a, w = a.weapon;\n    if (w.kind !== \'dualies\' || this.dodge || !a.alive || a.form === \'squid\' || !a.grounded || this.aimingSub || !move) return false;',
-    'weapons tryDodge grounded check'
-  );
+  // Current main's Movement Physics may already own the grounded admission
+  // check before this adapter runs. Accept either form, but only skip reduced
+  // synthetic fixtures that contain neither real Dualies connection.
+  const ungroundedTryDodge = '  tryDodge(move) {\n    const a = this.a, w = a.weapon;\n    if (w.kind !== \'dualies\' || this.dodge || !a.alive || a.form === \'squid\' || this.aimingSub || !move) return false;';
+  const groundedTryDodge = '  tryDodge(move) {\n    const a = this.a, w = a.weapon;\n    if (w.kind !== \'dualies\' || this.dodge || !a.alive || a.form === \'squid\' || !a.grounded || this.aimingSub || !move) return false;';
+  if (code.includes(ungroundedTryDodge)) {
+    code = replaceOnce(code, ungroundedTryDodge, groundedTryDodge, 'weapons tryDodge grounded check');
+  } else if (!code.includes(groundedTryDodge)) {
+    return code;
+  }
 
   // 2. tryDodge: attach 4F startup to runner.dodge, monotonic authoritative roll token, and arrest prior walk velocity
   code = replaceOnce(
