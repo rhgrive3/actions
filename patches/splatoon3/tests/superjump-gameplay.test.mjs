@@ -108,7 +108,7 @@ for (const frames of [138, 96]) for (const distance of [2, 70]) test(`#255 fligh
   a.s3.jumpChargeTime = STEP; a.s3.jumpFlightTime = frames / 60; a.superJump(new f.THREE.Vector3(distance, 0, 0));
   f.G.projectiles.applyHit(enemy, a, 36, 'shooter'); assert.equal(a.hp, 64); a.hp = 100;
   f.tick(a); assert.equal(a.superJumpState.phase, 'flight');
-  const nm = Object.create(f.NetMatch.prototype); nm.byNid = new Map([[1, a], [2, enemy]]); nm.s = { myId: 'owner' }; nm.myId = 'owner';
+  const nm = Object.create(f.NetMatch.prototype); nm.byNid = new Map([[1, a], [2, enemy]]); nm.peers = new Map(); nm.s = { myId: 'owner' }; nm.myId = 'owner';
   a.owner = enemy.owner = 'owner'; f.G.netm = nm;
   let hitSeq = 0;
   const hit = source => nm._hit({ v: 1, a: 2, d: 36, w: source, l: a.netLife, h: ++hitSeq }, 'owner');
