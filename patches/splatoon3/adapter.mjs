@@ -1,3 +1,4 @@
+import { adaptGearSub } from './gear-sub-adapter.mjs';
 import { adaptContactRecovery } from './contact-recovery-adapter.mjs';
 import { adaptWeaponEdgecases } from './weapon-edgecases-adapter.mjs';
 import { adaptWeaponsFidelity } from './weapons-adapter.mjs';
@@ -33,6 +34,7 @@ export function checkCompatibility(src, patchRoot = PATCH_ROOT) {
 }
 
 export function adaptSource(rel, code) {
+  code = adaptGearSub(rel, code, replaceOnce);
   code = adaptContactRecovery(rel, code, replaceOnce);
   if (rel === 'patches/splatoon3/runtime/resources.mjs') return adaptIssue415(rel, code);
   code = adaptMovementPhysics(rel, code, replaceOnce);
