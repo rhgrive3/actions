@@ -10,6 +10,9 @@ const zeros = () => ({ n: 0, a: 0, b: 0, ra: 0, rb: 0 });
 const state = g => g._qualityGyro || (g._qualityGyro = {
   orientationTime: -Infinity, rate: [0, 0, 0], screen: null,
   fallbacks: 0, reason: null,
+  // #615 stationary zero-rate calibration: learned bias in the raw device
+  // frame (rad/s), accumulated still time, and the source it belongs to.
+  bias: [0, 0, 0], still: 0, biasSrc: null,
 });
 const finiteEvent = (e, keys) => keys.every(k => typeof e?.[k] === 'number' && Number.isFinite(e[k]));
 function fallback(g, reason) {
@@ -82,6 +85,7 @@ export function installGyroQuality(Gyro, getScreenAngle, isAndroid = () => /Andr
   P.resync = function () {
     resync.call(this);
     const s = state(this); s.orientationTime = -Infinity; s.rate.fill(0);
+    s.bias[0] = s.bias[1] = s.bias[2] = 0; s.still = 0; s.biasSrc = null;
     this._tQ = this._tRR = 0; this.dYaw = this.dPitch = 0;
     fallback(this, 'resync');
   };
@@ -137,5 +141,30 @@ export function installGyroQuality(Gyro, getScreenAngle, isAndroid = () => /Andr
     if (this._tRR && (t < this._tRR || t - this._tRR > 500)) this.resync();
     if (this._src !== 'ori' && (isAndroid() || !gyroRateTrusted(this, e.rotationRate, t))) fallback(this, 'untrusted-motion');
     return motion.call(this, e);
+  };
+
+  // #615 stationary stability calibration. Only the raw rotationRate path can
+  // hold a zero-rate offset; the attitude path integrates no bias. Learn the
+  // offset as a bias strictly while the attitude stream says the device is
+  // still (below STILL_DEG for HOLD_S seconds), subtract it from every raw
+  // sample, and time-normalize with dt so event frequency cannot change the
+  // result. Thresholds are engineering values for this overlay — not
+  // Nintendo's unpublished calibration constants. Slow deliberate aiming
+  // keeps the attitude above STILL_DEG, so it is never learned as bias.
+  const STILL_DEG = 0.35, HOLD_S = 1.2, TAU_S = 2;
+  const sample = P._sample;
+  P._sample = function (wx, wy, wz, dt) {
+    const s = state(this);
+    if (this._src === 'ori' || !(dt > 0)) return sample.call(this, wx, wy, wz, dt);
+    if (s.biasSrc !== this._src) { s.biasSrc = this._src; s.bias[0] = s.bias[1] = s.bias[2] = 0; s.still = 0; }
+    const att = Math.hypot(s.rate[0], s.rate[1], s.rate[2]) / RAD;
+    if (att <= STILL_DEG) s.still += dt; else s.still = 0;
+    if (s.still >= HOLD_S) {
+      const k = 1 - Math.exp(-dt / TAU_S);
+      s.bias[0] += (wx - s.bias[0]) * k;
+      s.bias[1] += (wy - s.bias[1]) * k;
+      s.bias[2] += (wz - s.bias[2]) * k;
+    }
+    return sample.call(this, wx - s.bias[0], wy - s.bias[1], wz - s.bias[2], dt);
   };
 }

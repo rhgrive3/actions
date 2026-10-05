@@ -250,3 +250,31 @@ cloud/Halyard cube allocation at default high settings, not only after later
 runtime refresh. Existing formats, appearance policy and gameplay stay intact.
 These are project resource dimensions, not Nintendo/Switch memory values.
 See [the cold-boot budget report](inkwave-cold-boot-budgets-2026-10-04.md).
+
+## 2026-10-06: ジャイロの静止中ゼロ率キャリブレーション (#615)
+
+`src/core/gyro.js` の `_sample()` は、軸・単位判定を終えた raw `rotationRate`
+（rrA/rrB）をそのまま `dYaw`/`dPitch` へ積算する。端末に小さなゼロ率オフセットが
+あると、静止中もカメラドリフトが積み続け、止めていても改善しない。`_calibrate()`
+は回転中の軸・単位判定専用で、静止バイアス推定は行わない。本家 Splatoon 3
+Ver. 11.3.0 はコントローラが数秒静止するとジャイロ安定度を自動キャリブレーション
+する（Damian の motion-controls 解説:
+https://damians-eng.github.io/Splatoon-Motion-Controls-Explained/ 、Nintendo サポート
+の静止面でのキャリブレーション手順:
+https://en-americas-support.nintendo.com/app/answers/detail/a_id/22340/ 。閾値・保持
+時間・フィルタ定数は任天堂未公開のため未確認のまま）。
+
+upstream はロック固定のため `inkwave-public/` は変更せず、`patches/local-quality/gyro.mjs`
+のビルド専用オーバーレーで `_sample()` を包む。attitude 由来の角速度が静止閾値
+（0.35°/s、1.2 秒保持、EMA τ=2 秒 — いずれも本家未公開の工学値であって本家値ではない）
+の間だけ raw 減算用バイアスを時間正規化 EMA で学習し、raw サンプルから減算してから
+既存パイプラインへ渡す。ゆっくりした照準追従では attitude が閾値を超えるため学習せず、
+Android の attitude 方針 (#187)、raw 信頼判定 (#595)、source handoff (#524)、Y リセンター
+(#153/#421)、感度曲線・射撃・移動・通信は変更しない。resync（画面回転・suspend・再起動・
+再開）は学習量をリセットする。
+
+回帰は `patches/local-quality/tests/gyro-stationary-bias.test.mjs`（合成トレースを
+30/60/90/120 Hz・rrA/rrB で実行）。修正前の main では静止窓後も 0.038 rad/s の
+ドリフトが収束せず、修正後は近ゼロへ収束し、実回転・遅い照準の応答は維持される。
+物理端末での実オフセット収束、本家と同一のキャリブレーション時間・特性は未確認。
+
