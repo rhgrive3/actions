@@ -44,6 +44,23 @@ function adaptGyroInvertPR494(rel, code) {
   return code;
 }
 
+function nativeMethod(rel, start, next) {
+  const source = compose(rel);
+  const at = source.indexOf(start), end = source.indexOf(next, at);
+  assert.ok(at >= 0 && end > at, `native method span ${rel}: ${start}`);
+  return source.slice(at, end);
+}
+
+function settingsLoader(context, defaults) {
+  const main = compose('src/main.js');
+  const load = main.match(/^function loadJSON.*$/m)?.[0];
+  const statement = main.match(/this\.settings = G\.settings = migrateAimProfiles\([^\n]+/)?.[0];
+  assert.ok(load && statement, 'actual native boot load and migration must be present');
+  return vm.runInNewContext(`${load}\nfunction bootSettings() { ${statement} return this.settings; }; bootSettings`, {
+    localStorage: context.localStorage, G: context.G, DEFAULT_SETTINGS: defaults, migrateAimProfiles,
+  });
+}
+
 // Minimal DOM & Web API mock environment for executing composed modules
 function createTestContext(overrides = {}) {
   const listeners = new Map();
@@ -239,18 +256,11 @@ test('exact composed native loadJSON merges legacy flat save without overwriting
   }));
 
   // EXACT native loadJSON function from composed src/main.js
-  function nativeLoadJSON(key, def) {
-    try {
-      const v = JSON.parse(storage.get(key));
-      return v ? { ...def, ...v } : { ...def };
-    } catch {
-      return { ...def };
-    }
-  }
+  const nativeBootLoad = settingsLoader(context, DEFAULT_SETTINGS);
 
   // Exact native settings load expression from Game.prototype.boot in src/main.js
-  const loadedShallow = nativeLoadJSON('inkwave.settings', DEFAULT_SETTINGS);
-  assert.equal(loadedShallow.aimProfiles, null, 'shallow merge preserved aimProfiles: null');
+  const loadedShallow = nativeBootLoad.call({});
+  assert.equal(loadedShallow.aimProfiles.tv.padSensitivity, 2.2, 'actual boot migrated the legacy profile');
   assert.equal(loadedShallow.gyroSens, 3.5, 'user distinctive gyroSens preserved in shallow merge');
   assert.equal(loadedShallow.padSensitivity, 2.2, 'user distinctive padSensitivity preserved in shallow merge');
   assert.equal(loadedShallow.invertY, true, 'user distinctive invertY preserved in shallow merge');
@@ -284,20 +294,13 @@ test('two cold loads prove deep ownership: no shared nested pointers and zero DE
     invertY: true,
   }));
 
-  function nativeLoadJSON(key, def) {
-    try {
-      const v = JSON.parse(storage.get(key));
-      return v ? { ...def, ...v } : { ...def };
-    } catch {
-      return { ...def };
-    }
-  }
+  const nativeBootLoad = settingsLoader(context, DEFAULT_SETTINGS);
 
   // Cold load 1
-  const cold1 = migrateAimProfiles(nativeLoadJSON('inkwave.settings', DEFAULT_SETTINGS), DEFAULT_SETTINGS);
+  const cold1 = migrateAimProfiles(nativeBootLoad.call({}), DEFAULT_SETTINGS);
 
   // Cold load 2
-  const cold2 = migrateAimProfiles(nativeLoadJSON('inkwave.settings', DEFAULT_SETTINGS), DEFAULT_SETTINGS);
+  const cold2 = migrateAimProfiles(nativeBootLoad.call({}), DEFAULT_SETTINGS);
 
   // Deep ownership: no shared references between instances
   assert.notEqual(cold1.aimProfiles, cold2.aimProfiles, 'aimProfiles objects are distinct');
@@ -314,8 +317,8 @@ test('two cold loads prove deep ownership: no shared nested pointers and zero DE
 
   // Cold loads with empty storage (fresh install) also have distinct pointers
   storage.clear();
-  const fresh1 = migrateAimProfiles(nativeLoadJSON('inkwave.settings', DEFAULT_SETTINGS), DEFAULT_SETTINGS);
-  const fresh2 = migrateAimProfiles(nativeLoadJSON('inkwave.settings', DEFAULT_SETTINGS), DEFAULT_SETTINGS);
+  const fresh1 = migrateAimProfiles(nativeBootLoad.call({}), DEFAULT_SETTINGS);
+  const fresh2 = migrateAimProfiles(nativeBootLoad.call({}), DEFAULT_SETTINGS);
   assert.notEqual(fresh1.aimProfiles, fresh2.aimProfiles, 'fresh instances do not share aimProfiles');
   assert.notEqual(fresh1.aimProfiles.tv, fresh2.aimProfiles.tv, 'fresh instances do not share tv profile');
   assert.equal(DEFAULT_SETTINGS.aimProfiles, null);
@@ -362,35 +365,6 @@ function createComposedSettingsFixture({ gyroSupported = true, needsPermission =
     _gyroWanted: false,
     _profileEpoch: 0,
     _lastAimProfile: null,
-    applySettings(s) {
-      if (this._lastAimProfile !== s.aimProfile) {
-        this._profileEpoch = (this._profileEpoch || 0) + 1;
-        this.gyro?.discard?.();
-        this.gyro?.resync?.();
-        this._lastAimProfile = s.aimProfile;
-      }
-      this.gyro.configure({ sens: s.gyroSens, invX: s.gyroInvertX, invY: s.gyroInvertY });
-    },
-    setGyro(on, canStart = null) {
-      const intent = ++this._gyroIntent;
-      const profileEpoch = this._profileEpoch || 0;
-      this._gyroWanted = !!on;
-      if (!on) {
-        this.gyro.stop();
-        this.s.gyro = false;
-        return Promise.resolve(false);
-      }
-      const finish = (ok) => {
-        if (intent !== this._gyroIntent || profileEpoch !== (this._profileEpoch || 0)) return false;
-        this._gyroWanted = !!ok;
-        this.s.gyro = !!ok;
-        if (ok && (!canStart || canStart())) this.gyro.start();
-        return !!ok;
-      };
-      if (this.gyro.needsPermission) return this.gyro.request().then(finish);
-      if (canStart) return Promise.resolve(this.gyro.supported).then(finish);
-      return Promise.resolve(finish(this.gyro.supported));
-    },
     toast(msg) { toastLog.push(msg); },
   };
 
@@ -414,37 +388,18 @@ function createComposedSettingsFixture({ gyroSupported = true, needsPermission =
     match: { state: 'playing' },
     _aimProfileEpoch: 0,
     saved: [],
-    // Composed _setSettings logic from src/main.js
-    _setSettings(partial) {
-      const prevProfile = this.settings?.aimProfile;
-      const prevGyro = !!this.settings?.gyro;
-      applyAimSettingsChange(this.settings, partial);
-      this.saved.push({ ...this.settings });
-      const profileChanged = prevProfile !== this.settings.aimProfile;
-      if (profileChanged) this._aimProfileEpoch = (this._aimProfileEpoch || 0) + 1;
-      const profileEpoch = this._aimProfileEpoch || 0;
-      const mob = this.input?.mobile;
-      if (mob) {
-        mob.applySettings(this.settings);
-        const gyroTransition = ('gyro' in partial) || (profileChanged && prevGyro !== !!this.settings.gyro);
-        if (gyroTransition) {
-          const turnOn = 'gyro' in partial ? !!partial.gyro : !!this.settings.gyro;
-          if (turnOn) {
-            const ask = mob.setGyro(true, () => this.input?.mobile === mob && this.match?.state === 'playing');
-            const intent = mob._gyroIntent;
-            ask.then((ok) => {
-              if (this.input?.mobile !== mob || intent !== mob._gyroIntent || profileEpoch !== (this._aimProfileEpoch || 0) || !this.settings.gyro) return;
-              if (!ok) {
-                applyAimSettingsChange(this.settings, { gyro: false });
-                this.menus?.refreshSetting?.('gyro');
-                mob.toast(mob.gyro.supported ? 'Gyro permission was denied.' : 'Gyro is not available.');
-              }
-            });
-          } else mob.setGyro(false);
-        }
-      }
-    },
+
   };
+
+  const sandbox = {
+    applyAimSettingsChange, Promise, clearTimeout, G: { mode: 'match' }, t: value => value,
+    localStorage: { setItem(_key, value) { game.saved.push(JSON.parse(value)); } },
+  };
+  const save = compose('src/main.js').match(/^function saveJSON.*$/m)[0];
+  game._setSettings = vm.runInNewContext(`${save}\n({${nativeMethod('src/main.js', '  _setSettings(partial) {', '\n  _applyAudioVolumes()')}})._setSettings`, sandbox);
+  mobile._gyroBtn = () => {};
+  mobile.applySettings = vm.runInNewContext(`({${nativeMethod('src/core/mobile.js', '  applySettings(s) {', '\n  /** Turn gyro')}}).applySettings`, sandbox);
+  mobile.setGyro = vm.runInNewContext(`({${nativeMethod('src/core/mobile.js', '  setGyro(on, canStart = null) {', '\n  setVisible(on)')}}).setGyro`, sandbox);
 
   return {
     game,
@@ -540,6 +495,20 @@ test('scoped profile epoch guards deferred permission: switching profiles/back p
   assert.equal(gyro.enabled, false);
 });
 
+test('same-ON profile replacement renews pending permission for the newly selected profile', async () => {
+  const { game, gyro, resolvePermission } = createComposedSettingsFixture({ needsPermission: true });
+  game._setSettings({ gyro: true });
+  game._setSettings({ aimProfile: 'handheld' });
+  assert.equal(game.settings.gyro, true);
+  resolvePermission(true);
+  await Promise.resolve(); await Promise.resolve();
+  assert.equal(gyro.enabled, false, 'old profile permission must remain cancelled');
+  resolvePermission(true);
+  await Promise.resolve(); await Promise.resolve();
+  assert.equal(gyro.enabled, true, 'newly selected ON profile must obtain its own effective permission');
+  assert.equal(game.settings.aimProfiles.handheld.gyro, true);
+});
+
 test('MobileInput.setGyro scoped profile epoch prevents deferred request from activating replaced profile', async () => {
   let resolveReq = null;
   const gyro = {
@@ -571,23 +540,12 @@ test('MobileInput.setGyro scoped profile epoch prevents deferred request from ac
       }
       this.gyro.configure({ sens: s.gyroSens });
     },
-    setGyro(on, canStart = null) {
-      const intent = ++this._gyroIntent;
-      const profileEpoch = this._profileEpoch || 0;
-      this._gyroWanted = !!on;
-      if (!on) { this.gyro.stop(); this.s.gyro = false; return Promise.resolve(false); }
-      const finish = (ok) => {
-        if (intent !== this._gyroIntent || profileEpoch !== (this._profileEpoch || 0)) return false;
-        this._gyroWanted = !!ok; this.s.gyro = !!ok;
-        if (ok && (!canStart || canStart())) this.gyro.start();
-        return !!ok;
-      };
-      if (this.gyro.needsPermission) return this.gyro.request().then(finish);
-      return Promise.resolve(finish(this.gyro.supported));
-    },
+
   };
 
   // Start gyro request under profile 'tv'
+  mobile._gyroBtn = () => {};
+  mobile.setGyro = vm.runInNewContext(`({${nativeMethod('src/core/mobile.js', '  setGyro(on, canStart = null) {', '\n  setVisible(on)')}}).setGyro`, { Promise, clearTimeout });
   const p = mobile.setGyro(true);
   assert.equal(mobile._profileEpoch, 0);
 
@@ -787,17 +745,14 @@ test('UI interactive settings change callback refreshes all aim controls on prof
     invertX: true,
   };
 
-  // Execute onSetting aimProfile branch
-  const onSettingAimProfile = (key) => {
-    if (key === 'aimProfile') {
-      for (const k of ['gyro', 'gyroSens', 'padSensitivity', 'invertY', 'invertX']) {
-        const c = mockControls.get(k);
-        if (c) c.refresh(settingsState[k]);
-      }
-    }
-  };
-
-  onSettingAimProfile('aimProfile');
+  const at = menusCode.indexOf('      onSetting: (key, value) => {');
+  const end = menusCode.indexOf('\n      onNav:', at);
+  assert.ok(at >= 0 && end > at);
+  const factory = vm.runInNewContext(`(function () { return ({${menusCode.slice(at, end)}}).onSetting; })`, {
+    controls: mockControls, savedPulse() {}, safeCall: fn => fn(), P: {},
+  });
+  const onSettingAimProfile = factory.call({ _settings: () => settingsState });
+  onSettingAimProfile('aimProfile', 'handheld');
 
   assert.equal(refreshed.gyro, true);
   assert.equal(refreshed.gyroSens, 4.5);

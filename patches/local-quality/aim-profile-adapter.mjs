@@ -46,7 +46,6 @@ export function adaptAimProfiles(rel, code) {
 
     const setSettingsHeadTarget = "  _setSettings(partial) {\n" +
       "    const prevProfile = this.settings?.aimProfile;\n" +
-      "    const prevGyro = !!this.settings?.gyro;\n" +
       "    applyAimSettingsChange(this.settings, partial);\n" +
       "    saveJSON('inkwave.settings', this.settings);\n" +
       "    const profileChanged = prevProfile !== this.settings.aimProfile;\n" +
@@ -55,7 +54,7 @@ export function adaptAimProfiles(rel, code) {
       "    const mob = this.input?.mobile;\n" +
       "    if (mob) {\n" +
       "      mob.applySettings(this.settings);\n" +
-      "      const gyroTransition = ('gyro' in partial) || (profileChanged && prevGyro !== !!this.settings.gyro);\n" +
+      "      const gyroTransition = ('gyro' in partial) || profileChanged;\n" +
       "      if (gyroTransition) {\n" +
       "        const turnOn = 'gyro' in partial ? !!partial.gyro : !!this.settings.gyro;\n" +
       "        if (turnOn) {";
