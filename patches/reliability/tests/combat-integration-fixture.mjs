@@ -35,7 +35,6 @@ export async function combatWorld(owner, { emitted = process.env.INKWAVE_COMBAT_
     export * from './src/net/netmatch.js'; export * as THREE from 'three';
     export * from './patches/splatoon3/runtime/movement.mjs';
     export * from './patches/splatoon3/runtime/weapons.mjs';
-    export * from './patches/splatoon3/runtime/weapons-fidelity.mjs';
     export * from './patches/splatoon3/runtime/gear.mjs';
     export * from './patches/splatoon3/runtime/flow.mjs';
     export * from './patches/splatoon3/runtime/resources.mjs';
@@ -46,7 +45,6 @@ export async function combatWorld(owner, { emitted = process.env.INKWAVE_COMBAT_
   Object.assign(PLAYER, profile.player); Object.assign(SUB.bomb, profile.bomb);
   for (const [id, data] of Object.entries(profile.weapons)) Object.assign(WEAPONS[id], data);
   for (const name of ['installWeapons', 'installMovement', 'installGear', 'installFlow', 'installResources']) api[name](api, profile);
-  api.installWeaponsFidelity(api, profile);
   G.teamColors = [new THREE.Color('#ff8a14'), new THREE.Color('#2f5bff')];
   G.level = { spawnPads: [new THREE.Vector3(), new THREE.Vector3(20, 0, 20)], blocks: [], groundHeight: () => 0 };
   G.physics = { los: () => true, groundProbe: (_x,_y,_z,_a,_b,_c,h) => { h.hit = false; return h; } };

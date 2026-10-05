@@ -37,7 +37,6 @@ export async function fixture({ adapt = adaptSource, adaptRuntime = (_rel, sourc
     export const VM_MATH = Math;
     export * from './patches/splatoon3/runtime/movement.mjs';
     export * from './patches/splatoon3/runtime/weapons.mjs';
-    export * from './patches/splatoon3/runtime/weapons-fidelity.mjs';
     export * from './patches/splatoon3/runtime/gear.mjs';
     export * from './patches/splatoon3/runtime/flow.mjs';
     export * from './patches/splatoon3/runtime/resources.mjs';
@@ -51,7 +50,6 @@ export async function fixture({ adapt = adaptSource, adaptRuntime = (_rel, sourc
   Object.assign(PLAYER, profile.player); Object.assign(SUB.bomb, profile.bomb);
   for (const [id, data] of Object.entries(profile.weapons)) Object.assign(WEAPONS[id], data);
   for (const install of ['installWeapons', 'installMovement', 'installGear', 'installFlow', 'installResources', 'installRendering']) api[install](api, profile);
-  api.installWeaponsFidelity(api, profile);
   G.teamColors = [new THREE.Color('#ff8a14'), new THREE.Color('#2f5bff')];
   G.level = { blocks: [], groundHeight: () => 0 }; G.time = 0;
   G.physics = { los: () => true, raycast: (_a, _b, _c, h) => { h.hit = false; return h; } };
