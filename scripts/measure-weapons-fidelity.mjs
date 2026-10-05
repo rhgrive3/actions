@@ -41,7 +41,7 @@ export function finish(f,a,maxFrames=240, trace=null) {
   const ids=new Map(); let next=0;
   const snap=(p,dead=false)=>({id:ids.get(p),age:round(p.age),pos:vec(p.pos),velocity:vec(p.vel),dead});
   if(trace) for(const p of f.projectiles.list){ids.set(p,next++);trace.push(snap(p));}
-  for(let i=0;i<maxFrames && f.projectiles.list.length;i++){
+  for(let i=0;i<maxFrames && (f.projectiles.list.length || f.projectiles._fidelityChargerFlights?.length);i++){
     const ps=[...f.projectiles.list]; f.tick(a);
     if(trace)for(const p of ps)trace.push(snap(p,!f.projectiles.list.includes(p)));
   }
@@ -84,13 +84,12 @@ function sampleBands(samples,predicate) {
 }
 export async function measure({site=BASELINE,fidelity=false,detail=true}={}) {
   const f=await fixture({site,fidelity});const open=await fixture({site,fidelity,floor:false});
-  const result={schema:1,sourceMainSha:'5e28dbd16f7829aebd88052ff5f7fdf71f39fdad',label:fidelity?'after':'before',fixture:{seed:SEED,fixedStep:1/60,origin:[0,0,0],muzzle:[0,1.05,.3],rollerMuzzle:[0,1.3,.6],aim:'horizontal, +Z; spread zero for range, native flick distribution',target:'production upright PLAYER capsule at variable z, unmodified collision routine',units:{distance:'INKWAVE world unit; not Nintendo range meter',time:'seconds',damage:'HP',ink:'percent full tank'}},scale:{playerHeight:f.PLAYER.height,playerRadius:f.PLAYER.radius,gridCell:f.G.paint.cell,planeWidth:80,planeLength:105,referenceScale:1,confidence:'inherited provisional; no independent Switch-to-world metrology'},weapons:JSON.parse(JSON.stringify(f.WEAPONS)),cases:{}};
+  const result={schema:1,sourceMainSha:'17602ab094da6efb663d872934458e818ae3c93e',label:fidelity?'after':'before',fixture:{seed:SEED,fixedStep:1/60,origin:[0,0,0],muzzle:[0,1.05,.3],rollerMuzzle:[0,1.3,.6],aim:'horizontal, +Z; spread zero for range, native flick distribution',target:'production upright PLAYER capsule at variable z, continuous projectile time-of-impact; unmodified actor dimensions',units:{distance:'INKWAVE world unit; not Nintendo range meter',time:'seconds',damage:'HP',ink:'percent full tank'}},scale:{playerHeight:f.PLAYER.height,playerRadius:f.PLAYER.radius,gridCell:f.G.paint.cell,planeWidth:80,planeLength:105,referenceScale:1,confidence:'inherited provisional; no independent Switch-to-world metrology'},weapons:JSON.parse(JSON.stringify(f.WEAPONS)),cases:{}};
   for(const c of CASES){
     let a=reset(f,c);launch(f,a,c);const initial=f.projectiles.list.map(projectileParams),trace=[];
     finish(f,a,240,trace);const paint=paintMetrics(f),paintPoints=structuredClone(f.paints),impacts=structuredClone(f.impacts),fires=structuredClone(f.fires);
     const track=trace.filter(p=>p.id===0);
     const practical=[];let lastHit=null,lastFull=null;const nominal=c.id==='charger'?(c.charge>=.999?a.weapon.damageMax:a.weapon.damageMin+(a.weapon.damagePartialMax-a.weapon.damageMin)*c.charge):c.id==='roller'?150:c.id==='blaster'?125:c.id==='slosher'?70:a.weapon.damage;
-    // 0.1-world-unit sweep, real target/collision/damage/paint on every shot.
     const limit=c.id==='charger'?27:c.id==='roller'?24:45;
     for(let zi=5;zi<=limit*10;zi++){
       const z=zi/10;a=reset(f,c,z);launch(f,a,c);finish(f,a);
@@ -114,7 +113,6 @@ export async function measure({site=BASELINE,fidelity=false,detail=true}={}) {
       groundImpacts:impacts,paint,paintPoints,rangeOrigins:{hitSweep:"actor base z",paintBounds:"world cell centers",line:"muzzle-relative",openFlight:"world center at height 100"},hitSamples:practical,trajectory:detail?trace:track,openTrajectory:detail?openTrace:[]};
     console.error(c.key,JSON.stringify({hit:lastHit,full:lastFull,paint:paint.bounds?.maxZ,area:paint.area}));
   }
-  // WeaponRunner firing/ink, separate from single-projectile geometry tests.
   result.runner={};
   for(const c of CASES){
     if(c.id==='charger'&&c.charge===0)continue;
