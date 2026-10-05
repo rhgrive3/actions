@@ -89,6 +89,7 @@ async function wallDropCase(id, dt = 1/60, ghost = false) {
     f.G.time += dt;
     f.projectiles.update(dt);
     if (!state && p.fidelityWallDrop) {
+      assert.ok(p.prev.distanceTo(p.pos)<1e-9,id+' contact frame starts at the wall, not overshoot');
       const s=p.fidelityWallDrop;
       state={firstFrames:s.firstFrames,secondFrames:s.secondFrames,lastFrames:s.lastFrames,
         firstSpeed:s.firstSpeed,secondSpeed:s.secondSpeed,shockRadius:s.shockRadius,
