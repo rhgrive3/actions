@@ -7,7 +7,7 @@ export function adaptWeaponsFidelity(code,replaceOnce) {
       if (p.age > p.straight) p.vel.y -= p.grav * dt;
       if (p.drag) p.vel.multiplyScalar(1 - p.drag * dt * (p.age > p.straight ? 1 : 0));
       p.pos.addScaledVector(p.vel, dt);`,
-    '      const fidelityWallDropDone = advanceFidelityWallDrop(this, p, dt);\n      if (fidelityWallDropDone === null) advanceFidelityProjectile(p, dt);','staged projectile integration');
+    '      const fidelityWallDropDone = advanceFidelityWallDrop(this, p, dt);\n      if (fidelityWallDropDone === null) {\n      advanceFidelityProjectile(p, dt);\n      }','staged projectile integration');
   patch('      // actors\n      for (const e of G.actors) {',
     '      // Earliest enemy before the first solid obstruction.\n      for (const e of fidelityProjectileTargets(this, p)) {','collision chronology');
   patch('        if (Math.abs(e.pos.x - p.pos.x) > 3 || Math.abs(e.pos.z - p.pos.z) > 3) continue;',
