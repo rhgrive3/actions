@@ -1,19 +1,9 @@
 let api, tuning, respawnTuning;
-export function respawnTimeForCause(cause, values = respawnTuning || {}) {
-  if (cause === 'water' || cause === 'drowning') return values.water ?? api?.PLAYER?.respawnTime ?? 8.5;
-  if (cause === 'out-of-bounds' || cause === 'fall' || cause === 'void') return values.outOfBounds ?? api?.PLAYER?.respawnTime ?? 8.5;
-  return values.weapon ?? api?.PLAYER?.respawnTime ?? 8.5;
-}
-export function installResources(context, values) {
-  api = context; tuning = values.resources; respawnTuning = values.respawn || {};
-  if (!context.Actor?.prototype?.splat) return;
-  const splat = context.Actor.prototype.splat;
-  context.Actor.prototype.splat = function (attacker, cause = 'weapon') {
-    const wasAlive = this.alive;
-    const result = splat.call(this, attacker, cause);
-    if (wasAlive && !this.alive && cause !== 'weapon') this.respawnTimer = respawnTimeForCause(cause, respawnTuning);
-    return result;
-  };
+export function installResources(context, values) { api = context; tuning = values.resources; respawnTuning = values.respawn || {}; }
+export function respawnTimeForCause(cause, fallback = api?.PLAYER?.respawnTime ?? 8.5) {
+  if (cause === 'water' || cause === 'drowning') return respawnTuning?.water ?? fallback;
+  if (cause === 'out-of-bounds' || cause === 'fall' || cause === 'void') return respawnTuning?.outOfBounds ?? fallback;
+  return respawnTuning?.weapon ?? fallback;
 }
 export function resourceSurface(a) {
   // Integration may have crossed a paint edge, taken off, or landed this tick.
