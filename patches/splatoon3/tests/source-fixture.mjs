@@ -6,7 +6,8 @@ import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import { adaptSource } from '../adapter.mjs';
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
-const UPSTREAM = process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
+const BUILT = process.env.INKWAVE_BUILT_SITE;
+const UPSTREAM = BUILT ? path.resolve(BUILT) : process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
 export async function fixture({ adapt = adaptSource, adaptRuntime = (_rel, source) => source } = {}) {
   const context = vm.createContext({ console, performance });
   const modules = new Map();
@@ -19,6 +20,7 @@ export async function fixture({ adapt = adaptSource, adaptRuntime = (_rel, sourc
     return file;
   }
   function load(file) {
+    if (BUILT && file.startsWith(path.join(ROOT, 'patches/'))) file = path.join(UPSTREAM, path.relative(ROOT, file));
     if (modules.has(file)) return modules.get(file);
     const relative = path.relative(UPSTREAM, file);
     const native = file.startsWith(UPSTREAM + path.sep) ? adapt(relative, fs.readFileSync(file, 'utf8')) : fs.readFileSync(file, 'utf8');
@@ -32,6 +34,7 @@ export async function fixture({ adapt = adaptSource, adaptRuntime = (_rel, sourc
     export * from './inkwave-public/src/game/weapons.js';
     export * from './inkwave-public/src/game/physics.js';
     export * from './inkwave-public/src/game/player.js';
+    export * from './inkwave-public/src/net/netmatch.js';
     export * from './inkwave-public/src/core/shadowcache.js';
     export * as THREE from 'three';
     export const VM_MATH = Math;
@@ -47,8 +50,9 @@ export async function fixture({ adapt = adaptSource, adaptRuntime = (_rel, sourc
   `, { context, identifier: path.join(ROOT, 'fixture.mjs') });
   await root.link((spec, from) => load(resolve(spec, from.identifier))); await root.evaluate();
   const api = { ...root.namespace }, { G, THREE, PLAYER, WEAPONS, SUB, SPECIALS } = api;
-  const profile = JSON.parse(fs.readFileSync(path.join(ROOT, 'patches/splatoon3/profile.json'), 'utf8'));
+  const profile = JSON.parse(fs.readFileSync(path.join(BUILT ? UPSTREAM : ROOT, 'patches/splatoon3/profile.json'), 'utf8'));
   Object.assign(PLAYER, profile.player); Object.assign(SUB.bomb, profile.bomb);
+  for (const [id, data] of Object.entries(profile.specials || {})) Object.assign(SPECIALS[id], data);
   for (const [id, data] of Object.entries(profile.weapons)) Object.assign(WEAPONS[id], data);
   for (const install of ['installWeapons', 'installMovement', 'installGear', 'installFlow', 'installResources', 'installRendering']) api[install](api, profile);
   G.teamColors = [new THREE.Color('#ff8a14'), new THREE.Color('#2f5bff')];
