@@ -209,5 +209,12 @@ test('touch overlay requires unique gameplay-adapted anchors and does not modify
     assert.throws(() => adaptTouchEdges('src/game/player.js', player + '\n' + anchor), /conflict/);
   }
   assert.throws(() => adaptTouchEdges('src/game/player.js', read('src/game/player.js')), /conflict/);
-  for (const rel of ['src/core/mobile.js', 'src/game/actor.js', 'src/main.js']) assert.equal(adaptTouchEdges(rel, 'unchanged'), 'unchanged');
+  for (const rel of ['src/core/mobile.js', 'src/main.js']) assert.equal(adaptTouchEdges(rel, 'unchanged'), 'unchanged');
+  for (const rel of ['src/game/actor.js', 'src/game/weapons.js']) {
+    const source = adaptSource(rel, read(rel));
+    assert.notEqual(adaptTouchEdges(rel, source), source);
+    assert.throws(() => adaptTouchEdges(rel, ''), /conflict/);
+    assert.throws(() => adaptTouchEdges(rel, source + source), /conflict/);
+    assert.throws(() => adaptTouchEdges(rel, adaptTouchEdges(rel, source)), /conflict/);
+  }
 });

@@ -10,6 +10,7 @@ import { adaptSource } from '../../splatoon3/adapter.mjs';
 import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
 import { adaptReliability } from '../../reliability/adapter.mjs';
 import { adaptQualitySource } from '../adapter.mjs';
+import { installMobilePlatform } from '../mobile-platform.mjs';
 import {
   AIM_PROFILE_KEYS,
   AIM_PROFILES,
@@ -340,6 +341,7 @@ function createComposedSettingsFixture({ gyroSupported = true, needsPermission =
     },
     discard() { this.dYaw = 0; this.dPitch = 0; },
     resync() {},
+    statusMessage() { return 'Motion permission denied'; },
   };
 
   const mobile = {
@@ -515,17 +517,13 @@ test('MobileInput.setGyro scoped profile epoch prevents deferred request from ac
     _gyroWanted: false,
     _profileEpoch: 0,
     _lastAimProfile: 'tv',
-    applySettings(s) {
-      if (this._lastAimProfile !== s.aimProfile) {
-        this._profileEpoch = (this._profileEpoch || 0) + 1;
-        this.gyro?.discard?.();
-        this.gyro?.resync?.();
-        this._lastAimProfile = s.aimProfile;
-      }
-      this.gyro.configure({ sens: s.gyroSens });
-    },
+
 
   };
+
+  mobile.applySettings = vm.runInNewContext(
+    `({${nativeMethod('src/core/mobile.js', '  applySettings(s) {', '\n  /** Turn gyro')}}).applySettings`,
+    { clamp: (v, lo, hi) => Math.max(lo, Math.min(hi, v)) });
 
   // Start gyro request under profile 'tv'
   mobile._gyroBtn = () => {};
@@ -938,4 +936,33 @@ test('re-migration is idempotent and preserves already split profiles without ov
   assert.equal(migratedAgain.aimProfiles.handheld.padSensitivity, 0.8);
   assert.equal(migratedAgain.aimProfiles.handheld.gyroSens, 4.5);
   assert.equal(migratedAgain.aimProfiles.handheld.invertX, true);
+});
+
+test('installed platform gyro request cannot activate the replacement aim profile', async () => {
+  let resolve;
+  class Mobile {
+    constructor() {
+      this.visible = true; this.s = { gyro: false }; this._gyroIntent = 0;
+      this._lastAimProfile = 'tv';
+      this.gyro = { enabled: false, needsPermission: true,
+        request: () => new Promise(done => { resolve = done; }),
+        start() { this.enabled = true; }, stop() { this.enabled = false; },
+        resync() {}, discard() {}, configure() {},
+      };
+    }
+    _gyroBtn() {}
+  }
+  Mobile.prototype.applySettings = vm.runInNewContext(
+    `({${nativeMethod('src/core/mobile.js', '  applySettings(s) {', '\n  /** Turn gyro')}}).applySettings`,
+    { clamp: (v, lo, hi) => Math.max(lo, Math.min(hi, v)) });
+  const env = { document: {}, performance: { now: () => 0 },
+    clearTimeout() {}, setTimeout() {}, requestAnimationFrame: () => 1, cancelAnimationFrame() {} };
+  installMobilePlatform(Mobile, env);
+  const mobile = new Mobile();
+  const pending = mobile.setGyro(true);
+  mobile.applySettings({ aimProfile: 'handheld', gyroSens: 1 });
+  resolve(true);
+  assert.equal(await pending, false, 'platform override also rejects stale permission');
+  assert.equal(mobile.gyro.enabled, false);
+  assert.equal(mobile.s.gyro, false);
 });

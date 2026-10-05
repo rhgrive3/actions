@@ -172,6 +172,17 @@ function posed(r, dense = false) {
     action: JSON.parse(JSON.stringify(api.movementMotionSnapshot(ch))),
     motion: JSON.parse(JSON.stringify(api.squidrollMotionSnapshot(ch))) };
 }
+function stableSnapshot(value) {
+  // Three.js can differ by one final IEEE-754 bit when zero-dt visual
+  // composition rebuilds equivalent quaternion/matrix state. Preserve exact
+  // structure and all non-numeric values while comparing numeric snapshots at
+  // a precision far tighter than any visible/gameplay tolerance.
+  if (typeof value === 'number') return Number.isFinite(value) ? Number(value.toPrecision(14)) : value;
+  if (Array.isArray(value)) return value.map(stableSnapshot);
+  if (value && typeof value === 'object') return Object.fromEntries(
+    Object.entries(value).map(([key, item]) => [key, stableSnapshot(item)]));
+  return value;
+}
 function save(rows) {
   const destination = process.env.INKWAVE_SQUIDROLL_TRACE_PATH;
   if (!destination) return;
@@ -444,7 +455,7 @@ test('production swim, wall, Roll and Super Jump own the displayed squid exclusi
     assert.ok(mantle(r).dot(velocity) > 1 - 1e-8, 'rendered native mantle follows world flight velocity');
     const frozen = posed(r), native = gameplay(r);
     for (let i = 0; i < 4; i++) r.visual(0);
-    assert.deepEqual(posed(r), frozen, 'paused composition retains drawn indexed geometry');
+    assert.deepEqual(stableSnapshot(posed(r)), stableSnapshot(frozen), 'paused composition retains drawn indexed geometry');
     assert.deepEqual(gameplay(r), native, 'paused composition retains native gameplay and springs');
     r.a.reset(); r.a.form = 'squid'; r.a.climbing = true; r.a.grounded = false;
     r.a.intent.squid = true; r.a.anim.wallNormal.set(0, 0, 1); r.a.intent.jump = true;

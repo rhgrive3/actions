@@ -1,13 +1,21 @@
 import { specialMotionAllowsAction } from './action-admission.mjs';
+import { ROLLER_DRUM } from './roller-model.mjs';
 // Roller-specific refinements. Timing comes from the existing gameplay profile;
 // joint curves are visual calibration against Nintendo's public roller videos.
 const EPS = 1e-10;
 const mix = (a, b, t) => a + (b - a) * t;
 const ease = t => { t = Math.max(0, Math.min(1, t)); return t * t * (3 - 2 * t); };
-const READY_ANCHOR = [-.08, .90, .12];
-const READY_ROTATION = [-2.95, .04, 1.0];
-const ROLL_ANCHOR = [-.07, .885, .24];
-const ROLL_ROTATION = [.9, .06, 0];
+const READY_ANCHOR = [-.08, .80, .28];
+const READY_ROTATION = [-2.5, .04, 1.0];
+const ROLL_ANCHOR = [-.07, .75, .34];
+const ROLL_ROTATION = [.36, .06, 0];
+const ROLL_LEAN = [.14, .06, .12, .05];
+const DRUM_LIFT = .1015 * (ROLLER_DRUM.radius - 1);
+// Vertical swing handle pitch: coil overhead, release level, follow-through.
+// local-quality's release-velocity repair reads the same angles.
+export const VERTICAL_SWING = Object.freeze({ coil: -2.45, release: -.04, follow: .6 });
+// Read-only view for regressions; the arrays stay owned by this module.
+export const ROLLER_POSE = Object.freeze({ READY_ANCHOR, READY_ROTATION, ROLL_ANCHOR, ROLL_ROTATION, ROLL_LEAN });
 
 export function rollerMode(w, vertical) {
   return vertical ? { ...w, flickWindup: w.verticalWindup, flickInterval: w.verticalInterval ?? w.flickInterval, flickInk: w.verticalInk } : w;
@@ -66,13 +74,16 @@ export function verticalRollerPose(elapsed, windup, interval) {
   const recover = ease((elapsed - windup - .12) / Math.max(.01, interval - windup - .12));
   const weight = ease(elapsed / (2 / 60)) * (1 - recover);
   const anchor = [mix(READY_ANCHOR[0], .015, coil), mix(READY_ANCHOR[1], 1.11, coil), mix(READY_ANCHOR[2], .025, coil)];
-  const rotation = [mix(READY_ROTATION[0], -2.45, coil), mix(READY_ROTATION[1], .015, coil), mix(READY_ROTATION[2], Math.PI / 2, coil)];
+  const rotation = [mix(READY_ROTATION[0], VERTICAL_SWING.coil, coil), mix(READY_ROTATION[1], .015, coil), mix(READY_ROTATION[2], Math.PI / 2, coil)];
   // Keep the upright drum clear of the floor through its follow-through. A
   // horizontal carry-height target clips the lower cap while the axis is tilted.
-  const release = [-.025, 1.03, .23], end = [-.025, 1.10, .28];
+  const release = [-.025, 1.05, .23], end = [-.025, 1.12, .28];
   for (let i = 0; i < 3; i++) anchor[i] = mix(mix(anchor[i], release[i], whip), end[i], follow);
-  rotation[0] = mix(mix(rotation[0], -.04, whip), .95, follow);
+  rotation[0] = mix(mix(rotation[0], VERTICAL_SWING.release, whip), VERTICAL_SWING.follow, follow);
   rotation[1] = mix(rotation[1], 0, whip);
+  // The drum lands across the front: an upright drum as wide as the Inkling is
+  // tall would drive its lower end into the floor at the bottom of the slam.
+  rotation[2] = mix(rotation[2], ROLL_ROTATION[2], follow);
   return { anchor, rotation, weight, coil: coil * (1 - whip), whip: whip * (1 - recover) };
 }
 
@@ -109,6 +120,10 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
       P[C.ANC + i] = mix(READY_ANCHOR[i], ROLL_ANCHOR[i], roll);
       P[C.ANCR + i] = mix(READY_ROTATION[i], ROLL_ROTATION[i], roll);
     }
+    // Pushing the wider drum the footage shows a low crouch, the back bent over
+    // the handle and both arms reaching down to it (on top of the native lean).
+    P[C.SPINE] += ROLL_LEAN[0] * roll; P[C.CHEST] += ROLL_LEAN[1] * roll; P[C.HIPS] += ROLL_LEAN[2] * roll;
+    P[C.HIPS_P + 1] -= ROLL_LEAN[3] * roll;
     return result;
   };
   Character.prototype.setWeapon = function (...args) {
@@ -127,7 +142,8 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
       const coil = ease(state.elapsed / (state.windup * .65)) * (1 - ease((state.elapsed - state.windup * .65) / (state.windup * .35)));
       const recover = ease((age - .42) / .26);
       P[C.ANC + 1] -= .16 * coil;
-      P[C.ANC + 1] += .18 * ease((state.elapsed - state.windup) / .08) * (1 - recover);
+      // The sweep keeps the larger drum (roller-model.mjs) at the same floor clearance.
+      P[C.ANC + 1] += (.2 + DRUM_LIFT) * ease((state.elapsed - state.windup) / .08) * (1 - recover);
       // Start from the raised carry instead of first dropping to the upstream
       // low carry and lifting again. Keep its arm/body curves for the swing.
       const lift = ease(state.elapsed / (state.windup * .64));

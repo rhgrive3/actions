@@ -129,6 +129,7 @@ export function adaptAimProfiles(rel, code) {
     // Retain whatever gyro configure is present (raw with invX/invY or PR494 without) and prepend profile reset
     const profileResetPrefix = "    if (this._lastAimProfile !== s.aimProfile) {\n" +
       "      this._profileEpoch = (this._profileEpoch || 0) + 1;\n" +
+      "      this._gyroIntent = (this._gyroIntent || 0) + 1;\n" +
       "      this.gyro?.discard?.();\n" +
       "      this.gyro?.resync?.();\n" +
       "      this._lastAimProfile = s.aimProfile;\n" +
