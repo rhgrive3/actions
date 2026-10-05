@@ -1,0 +1,126 @@
+diff --git a/patches/network-replication/adapter.mjs b/patches/network-replication/adapter.mjs
+index 8cde610..9c361d7 100644
+--- a/patches/network-replication/adapter.mjs
++++ b/patches/network-replication/adapter.mjs
+@@ -279,7 +279,15 @@ function retireNetworkGhosts(owner = null) {
+     clouds = clouds.replace(/\bdt\b/g,'stepDt').replace('_updateClouds(stepDt)','_updateClouds(dt)').replace('peer ? SIM_DT : stepDt','peer ? SIM_DT : dt');
+     clouds = once(clouds,'this.clouds.splice(i, 1); }','this.clouds.splice(i, 1); break; }\n      }','close cloud steps');
+     clouds = once(clouds,'        for (const e of G.actors) {','        for (const e of G.actors) {\n          if (peer && tick !== steps-1) break;', 'recipient cloud damage once per frame');
+-    clouds = once(clouds,'e.damage(sp.dps * stepDt,', 'e.damage(sp.dps * (peer ? dt : stepDt),', 'recipient damage elapsed time');
++    // PR322 may collect overlapping rain before applying one victim hit.
++    // Both supported sinks retain the same recipient-time amount; ambiguity is
++    // a source conflict, never a reason to silently skip the clock connection.
++    const directRain = 'e.damage(sp.dps * stepDt,', collectedRain = 'collectStormHit(rainHits, e, c, sp.dps * stepDt)';
++    const directCount = clouds.split(directRain).length - 1, collectedCount = clouds.split(collectedRain).length - 1;
++    if (directCount + collectedCount !== 1) throw Error('Network replication anchor mismatch: recipient damage elapsed time (expected exactly one direct or collected sink)');
++    clouds = directCount
++      ? once(clouds, directRain, 'e.damage(sp.dps * (peer ? dt : stepDt),', 'recipient damage elapsed time')
++      : once(clouds, collectedRain, 'collectStormHit(rainHits, e, c, sp.dps * (peer ? dt : stepDt))', 'recipient collected damage elapsed time');
+     clouds = once(clouds,'        G.fx?.rain(c.group.position, sp.radius * s, G.teamColors[c.team], stepDt, { cloud: false });','        if (!peer || tick === steps-1) G.fx?.rain(c.group.position, sp.radius * s, G.teamColors[c.team], peer ? dt : stepDt, { cloud: false });','bounded catch-up rain emission');
+     code = code.slice(0,cloudStart)+clouds+code.slice(cloudEnd);
+     patch('      b.t += dt;', `      if (b._netPeer) {
+diff --git a/patches/network-replication/tests/storm-collector-composition.test.mjs b/patches/network-replication/tests/storm-collector-composition.test.mjs
+new file mode 100644
+index 0000000..239c835
+--- /dev/null
++++ b/patches/network-replication/tests/storm-collector-composition.test.mjs
+@@ -0,0 +1,48 @@
++// Focused composition checks. PR322/469 supply the declared Storm dependency;
++// renderer surfaces are stubs, but the cloud loop and clock adapter are native.
++import test from 'node:test';
++import assert from 'node:assert/strict';
++import fs from 'node:fs';
++import vm from 'node:vm';
++import {parse} from '../../loading-cache/vendor/acorn.mjs';
++import {adaptSource} from '../../splatoon3/adapter.mjs';
++import {adaptStormEffects} from '../../splatoon3/storm-effects-adapter.mjs';
++import {adaptTouchLayout} from '../../touch-layout/adapter.mjs';
++import {adaptReliability} from '../../reliability/adapter.mjs';
++import {adaptQualitySource} from '../../local-quality/adapter.mjs';
++import {adaptNetworkSource} from '../adapter.mjs';
++import {collectStormHit,applyStormHits,cloudCoversActor} from '../../splatoon3/runtime/storm-effects.mjs';
++import {fixture} from './robustness-fixture.mjs';
++const rel='src/game/weapons.js',raw=fs.readFileSync(new URL('../../../inkwave-public/'+rel,import.meta.url),'utf8');
++// The dedicated candidate stages PR322 as a declared dependency. A completed
++// combined installer may already own the same transform; never apply it twice.
++let pre=adaptSource(rel,raw);
++if(!pre.includes('collectStormHit(rainHits, e, c,'))pre=adaptSource(rel,adaptStormEffects(rel,raw));
++for(const adapt of [adaptTouchLayout,adaptReliability,adaptQualitySource])pre=adapt(rel,pre);
++const collect='collectStormHit(rainHits, e, c, sp.dps * dt);',direct="e.damage(sp.dps * dt, c.owner, 'storm');";
++assert.equal(pre.split(collect).length,2);
++test('one direct or one collected recipient sink receives the same clock conversion',()=>{
++ const legacy=adaptNetworkSource(rel,pre.replace(collect,direct));assert(legacy.includes('e.damage(sp.dps * (peer ? dt : stepDt),'));
++ const collected=adaptNetworkSource(rel,pre);assert(collected.includes('collectStormHit(rainHits, e, c, sp.dps * (peer ? dt : stepDt))'));
++ assert(collected.includes('if (peer && tick !== steps-1) break;'));
++});
++test('missing, mixed and duplicate recipient sinks fail closed',()=>{
++ for(const replacement of ['',collect+'\n'+direct,collect+'\n'+collect,direct+'\n'+direct])assert.throws(()=>adaptNetworkSource(rel,pre.replace(collect,replacement)),/expected exactly one direct or collected sink/);
++});
++function cloudMethod(code,context){let node;function visit(n){if(!n||typeof n!=='object')return;if(n.type==='MethodDefinition'&&n.key.name==='_updateClouds')node=n;for(const v of Object.values(n))if(Array.isArray(v))v.forEach(visit);else if(v&&typeof v==='object')visit(v);}visit(parse(code,{sourceType:'module',ecmaVersion:'latest'}));assert(node);return vm.runInNewContext(`({${code.slice(node.start,node.end)}})._updateClouds`,context);}
++test('installed 24DPS collector keeps recipient dt and overlap owner under ghost catch-up',async()=>{
++ const f=await fixture();f.installSubSpecialFidelity(f,f.profile);assert.equal(f.SPECIALS.storm.dps,24);const hits=[];
++ f.G.fx={rain(){}};f.G.physics.los=()=>true;f.G.actors=[{team:1,alive:true,remote:false,pos:new f.THREE.Vector3(),damage(amount,owner){hits.push({amount,owner:owner.nid});return false;}}];
++ const context={G:f.G,SPECIALS:f.SPECIALS,SIM_DT:1/60,clamp:(v,a,b)=>Math.max(a,Math.min(b,v)),_v:new f.THREE.Vector3(),_v2:new f.THREE.Vector3(),DOWN:new f.THREE.Vector3(0,-1,0),_hit:{},collectStormHit,applyStormHits,emit(){}};
++ const loop=cloudMethod(adaptNetworkSource(rel,pre),context);
++ const cloud=(nid,steps=null)=>{const group=new f.THREE.Group();group.position.set(0,4,0);return{owner:{nid,addTurf(){}},team:0,group,dir:new f.THREE.Vector3(),t:1,dur:8,rainT:1,ghost:steps!==null,_netBornTick:0,_netSteps:60,_netPeer:steps===null?null:{sim:60+steps-1}};};
++ for(const dt of [1/30,1/120])for(const reverse of [false,true]){hits.length=0;const clouds=[cloud(2),cloud(1,6)];if(reverse)clouds.reverse();loop.call({clouds,_releaseCloud(){}},dt);assert.equal(hits.length,1);assert.equal(hits[0].owner,1);assert(Math.abs(hits[0].amount-24*dt)<1e-10);}
++ hits.length=0;loop.call({clouds:[cloud(1,0)],_releaseCloud(){}},1/60);assert.equal(hits.length,0,'frozen owner has no new recipient hit');
++ hits.length=0;f.projectiles.clouds=[cloud(1,6)];f.projectiles._updateClouds(1/30);assert.equal(hits.length,1);assert(Math.abs(hits[0].amount-.8)<1e-10,'ordinary installed sink keeps recipient dt');f.projectiles.clouds=[];
++});
++test('resource coverage includes the last pre-update live interval but excludes expired/dead recipients',()=>{
++ const pos={x:0,y:0,z:0,clone(){return {...this};}},a={alive:true,pos},G={physics:{los:()=>true}},SPECIALS={storm:{radius:10}};
++ for(const t of [7.7,7.8,479/60])assert.equal(cloudCoversActor({t,dur:8,group:{position:{x:0,y:4,z:0}}},a,G,SPECIALS),true);
++ for(const t of [8,8.01])assert.equal(cloudCoversActor({t,dur:8,group:{position:{x:0,y:4,z:0}}},a,G,SPECIALS),false);
++ a.alive=false;assert.equal(cloudCoversActor({t:1,dur:8,group:{position:{x:0,y:4,z:0}}},a,G,SPECIALS),false);
++});
+diff --git a/patches/splatoon3/runtime/storm-effects.mjs b/patches/splatoon3/runtime/storm-effects.mjs
+index f04f0d1..4ebf693 100644
+--- a/patches/splatoon3/runtime/storm-effects.mjs
++++ b/patches/splatoon3/runtime/storm-effects.mjs
+@@ -38,9 +38,11 @@ export function updateStormHold(a, dt, G) {
+   s.subWasDown = down;
+ }
+ 
++// Actor resources query before projectile advancement/removal. Cover the last
++// live frame; do not import the visual fade cutoff or a post-increment epsilon.
+ export function cloudCoversActor(c, a, G, SPECIALS) {
+   const p = c.group?.position, radius = SPECIALS.storm.radius;
+-  if (!p || !(c.t < c.dur - .3) || !a.alive || a.pos.y > p.y) return false;
++  if (!p || !(c.t < c.dur) || !a.alive || a.pos.y > p.y) return false;
+   const dx = a.pos.x - p.x, dz = a.pos.z - p.z;
+   if (dx * dx + dz * dz > radius * radius) return false;
+   const body = a.pos.clone(); body.y += 1.2;
+diff --git a/reports/inkwave-storm-322-469-connections.md b/reports/inkwave-storm-322-469-connections.md
+new file mode 100644
+index 0000000..079f23c
+--- /dev/null
++++ b/reports/inkwave-storm-322-469-connections.md
+@@ -0,0 +1,28 @@
++# PR322 / #469: remaining clock and coverage connections
++
++This independent delta implements the two source connections identified after bridge0467af79. It is for a dedicated PR322+#469 candidate, not a direct update to the public PR536 batch. PR3229f1fcacb and #46967734d6 remain declared dependencies; the preceding private fixture commits are not replacements for those complete dependencies.
++
++## Changes
++
++The network cloud adapter now requires exactly one recognized damage sink: the legacy direct call or PR322's collected call. Both use `sp.dps * (peer ? dt : stepDt)`. Missing, mixed and duplicate sinks fail closed. The existing last-catch-up-step gate and one final `applyStormHits` remain untouched; this does not create damage for every historical owner step.
++
++`cloudCoversActor` now covers `c.t < c.dur`, removing the inherited visual fade cutoff. This is the Actor resource owner's pre-projectile-update interval. #563's post-increment final rain check and immediate removal remain separate; the resource predicate deliberately does not borrow that post-increment epsilon.
++
++The previously saved Tenacity/HUD bridge is retained. No new clock, packet field, balance constant or ghost liveness rule is added.
++
++## Focused verification
++
++- Eight focused tests pass, no skips: both supported sink forms; missing/mixed/duplicate negatives; actual compiled cloud loop with production SubSpecial fidelity24DPS; overlap order and recipient dt under ghost catch-up; frozen owner refusal; existing native sink; coverage tail/dead-recipient boundary; and the existing four Tenacity/HUD bridge cases.
++- The delivered private probes were changed to load the actual implemented candidate adapter/helper, rather than substituting the proposed connection in memory. They again pass21 local/ghost/mixed/order traces, the frozen and final/overshot retirement boundaries, and an installed480-tick192HP lifetime.
++- Naive stepDt controls produce0.4 instead of0.8 at dt1/30 and0.4 instead of0.2 at dt1/120. The implemented recipient-time connection preserves the expected amount.
++- At479→480, the ghost delivers one0.4 hit and retires once. At479→481, the existing non-retroactive policy delivers no expired historical hit and retires once. With a live local cloud alongside it, only that live cloud contributes one hit.
++- Actual Actor-before-Projectiles lifecycle checks preserve hold/death versus throw/death/respawn, the independent lock/cloud origins, last-live-frame allied recovery and next-frame ordinary recovery. Death during hold creates no cloud/lock. A throw at92, cloud birth157, respawn212, lock expiry572 and cloud expiry636 demonstrates separate origins and exactly480 cloud ticks.
++- An independent UI review already verified bridge0467 against current23-segment desktop/mobile consumers and actual Game._updateHud in a VM. These two new connections do not change that UI projection.
++
++These are focused source/native-method/VM results, not a new complete installed build, public CI pass, browser screenshot or physical device test. Public f46cb4b3 differs from the reviewed41d6 Storm owners only in the separate Slosher motion file. No broad suite was rerun for this delta.
++
++## Existing online limits retained
++
++A frozen ghost still has zero new recipient damage/FX/paint, while its retained active cloud can remain visible to ally/enemy recovery coverage. On resume the clock catches up, but recipient damage is applied at most once. This inherited difference is explicitly outside this delta; neither clock extrapolation nor a new healing cutoff is introduced. Hostile Storm admission (#598), remote gauge authority, and physical throw-startup timing are also outside scope.
++
++Private reproductions and receipts are in `storm-boundary-audit/` under this lane's work directory: probe.mjs, receipt-implemented.json, lifecycle.mjs, lifecycle-implemented.json. The portable focused tests are committed with this delta. When integrating, apply the real PR322 and #469 dependencies, bridge0467, then this delta; omit the fixture-only dependency commits. A complete candidate build/CI remains the integration owner's next acceptance step.

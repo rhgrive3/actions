@@ -1,0 +1,152 @@
+diff --git a/patches/reliability/pause-adapter.mjs b/patches/reliability/pause-adapter.mjs
+index dd5f49e..ab08b62 100644
+--- a/patches/reliability/pause-adapter.mjs
++++ b/patches/reliability/pause-adapter.mjs
+@@ -19,7 +19,7 @@ export function adaptPause(rel, code) {
+       '  padValue(i) { return !this.padMenuBlocked.has(i) && this.pad && this.pad.buttons[i] ? this.pad.buttons[i].value : 0; }', 'mask menu-owned pad values');
+   } else if (rel === 'src/main.js') {
+     code = replaceOnce(code, '      if (this.match.controller) this.match.controller.enabled = false;',
+-      '      if (this.match.controller) { this.match.controller.menuBlocked = true; this.match.controller.enabled = false; }', 'online pause input ownership');
++      '      if (this.match.controller) { this.match.controller.menuBlocked = true; this.match.controller.enabled = false; this.match.local?.weaponRunner?.cancelPendingShooterInput?.(); }', 'online pause input ownership');
+     code = replaceOnce(code, '    if (this.match.controller) this.match.controller.enabled = true;',
+       '    if (this.match.controller) { this.match.controller.menuBlocked = false; this.match.controller.enabled = true; }', 'resume input ownership');
+     code = replaceOnce(code, '    const pp = inp.padPressed;',
+diff --git a/patches/reliability/tests/pause-fixture.mjs b/patches/reliability/tests/pause-fixture.mjs
+index 30a47b0..09292f1 100644
+--- a/patches/reliability/tests/pause-fixture.mjs
++++ b/patches/reliability/tests/pause-fixture.mjs
+@@ -32,7 +32,7 @@ function sources(patched){const main=composed('src/main.js',patched),match=compo
+ const methods=[section(main,'  pause() {','\n  async quitToMenu() {'),section(main,'  _padMenus() {','\n  _updateHud(dt) {'),section(main,'  _onKey(e, repeat) {','\n  _onPointerUnlock() {')].join('\n');return {main,match,methods};}
+ export async function boot(patched=true){
+  const {match,methods}=sources(patched);
+- const f=await fixture(), modules=new Map(),listeners=new Map();let pads=[];
++ const f=await fixture({adapt:(rel)=>composed(rel,patched)}), modules=new Map(),listeners=new Map();let pads=[];
+  const cls=()=>({add(){},remove(){},toggle(){}});
+  const context=vm.createContext({console,performance,AbortController,setTimeout,clearTimeout,screen:{width:1000,height:700,orientation:{angle:0}},innerWidth:1000,innerHeight:700,
+  localStorage:{getItem:()=>null},navigator:{userAgent:'resume probe',maxTouchPoints:0,getGamepads:()=>pads},window:{addEventListener(n,fn){listeners.set(n,[...(listeners.get(n)||[]),fn]);}},document:{documentElement:{classList:cls()},addEventListener(){},pointerLockElement:null}});
+diff --git a/patches/reliability/tests/pause.test.mjs b/patches/reliability/tests/pause.test.mjs
+index f6ccab6..01998ae 100644
+--- a/patches/reliability/tests/pause.test.mjs
++++ b/patches/reliability/tests/pause.test.mjs
+@@ -25,7 +25,7 @@ for (const patched of [false, true]) test(`online pause ${patched ? 'blocks' : '
+   const h = await boot(patched); h.G.netm = {}; h.game.pause();
+   h.input.keys.add('KeyW'); h.input.mouse.left = true;
+   assert.equal(h.controller.enabled, false);
+-  h.frame(STEP);
++  for(let i=0;i<3;i++)h.frame(STEP);
+   assert.equal(h.menus.current, 'pause'); assert.equal(h.m.paused, false);
+   assert.equal(h.controller.enabled, !patched);
+   assert.equal(h.actor.intent.move.length(), patched ? 0 : 1);
+@@ -42,6 +42,8 @@ test('online pause preserves actual Match clock and another actual actor firing;
+   assert.ok(h.ownedShots.some(a => a === h.other)); assert.ok(!h.ownedShots.some(a => a === h.actor));
+   assert.equal(h.actor.intent.move.length(), 0);
+   h.game.resume(); h.frame(STEP);
++  assert.ok(!h.ownedShots.some(a => a === h.actor));
++  h.frame(STEP);assert.ok(!h.ownedShots.some(a => a === h.actor));h.frame(STEP);
+   assert.equal(h.controller.enabled, true); assert.equal(h.actor.intent.move.length(), 1);
+   assert.ok(h.ownedShots.some(a => a === h.actor));
+ });
+@@ -54,7 +56,7 @@ for (const hz of [120, 144]) test(`${hz}Hz online Start blocks only local input
+   assert.equal(h.controller.enabled, false); assert.equal(h.ownedShots.length, 0);
+   h.setPads(pad()); h.frame(1 / hz); h.setPads(pad([9])); h.frame(1 / hz);
+   assert.equal(h.menus.current, null);
+-  h.frame(STEP); assert.equal(h.controller.enabled, true); assert.ok(h.ownedShots.length > 0);
++  for(let i=0;i<3;i++)h.frame(STEP); assert.equal(h.controller.enabled, true); assert.ok(h.ownedShots.length > 0);
+ });
+ 
+ test('released controls and discarded look during online pause do not replay after resume', async () => {
+@@ -72,6 +74,7 @@ test('offline pause still freezes actual Match time and actors; resume restores
+   assert.equal(h.controller.enabled, false); assert.equal(h.m.time, time);
+   assert.equal(h.ownedShots.length, 0); h.game.resume(); h.frame(STEP);
+   assert.ok(h.m.time < time); assert.equal(h.actor.intent.move.length(), 1);
++  assert.equal(h.ownedShots.length,0);h.frame(STEP);assert.equal(h.ownedShots.length,0);h.frame(STEP);
+   assert.equal(h.ownedShots.length, 1);
+ });
+ 
+@@ -152,3 +155,48 @@ test('adapter rejects missing/duplicated/already applied anchors and leaves unre
+   }
+   assert.equal(adaptPause('src/game/player.js', 'untouched'), 'untouched');
+ });
++
++test('online pause cancels a pending Shooter first shot before its legal release', async () => {
++  const h=await boot();h.G.netm={};h.input.mouse.left=true;h.frame(STEP);
++  assert.equal(h.actor.weaponRunner.s3ShooterPendingFirst,true);
++  assert.equal(h.ownedShots.length,0);
++  h.game.pause();h.input.mouse.left=false;
++  for(let i=0;i<12;i++)h.frame(STEP);
++  assert.equal(h.actor.intent.fire,false);
++  assert.equal(h.ownedShots.length,0,'menu suppression must cancel pending first shot');
++  h.game.resume();for(let i=0;i<12;i++)h.frame(STEP);
++  assert.equal(h.ownedShots.length,0,'resume must not replay cancelled startup');
++});
++
++for(const swim of [false,true])for(const cancel of [false,true])test(`online pause ${cancel?'cancels':'negative reproduces'} ${swim?'swim queue':'pending first'} through the Shooter owner`,async()=>{
++  const h=await boot();h.G.netm={};
++  if(swim){h.input.keys.add('ShiftLeft');h.frame(STEP);h.input.keys.delete('ShiftLeft');}
++  h.input.mouse.left=true;h.frame(STEP);
++  const r=h.actor.weaponRunner;
++  assert.equal(swim?r.s3SwimFireQueued:r.s3ShooterPendingFirst,true);
++  assert.equal(h.ownedShots.length,0);
++  if(!cancel)r.cancelPendingShooterInput=()=>{};
++  h.game.pause();h.input.mouse.left=false;
++  for(let i=0;i<30;i++)h.frame(STEP);
++  assert.equal(h.actor.intent.fire,false);
++  assert.equal(h.ownedShots.length,cancel?0:1);
++  if(cancel){assert.equal(r.s3ShooterPendingFirst,false);assert.equal(r.s3SwimFireQueued,false);assert.equal(r.s3ShooterFirstRemaining,0);assert.equal(r.s3SwimFireRemaining,0);}
++  h.game.resume();for(let i=0;i<12;i++)h.frame(STEP);
++  assert.equal(h.ownedShots.length,cancel?0:1,'no delayed replay on resume');
++  h.input.mouse.left=true;h.frame(STEP);assert.equal(h.ownedShots.length,cancel?0:1);
++  h.frame(STEP);assert.equal(h.ownedShots.length,cancel?0:1);h.frame(STEP);assert.equal(h.ownedShots.length,cancel?1:2,'fresh input retains the 3F admission');
++});
++
++test('ordinary completed Shooter tap still settles at 3F without a menu cancellation',async()=>{
++  const h=await boot();h.input.mouse.leftPressed=true;h.frame(STEP);assert.equal(h.ownedShots.length,0);
++  h.frame(STEP);assert.equal(h.actor.intent.fire,false);assert.equal(h.ownedShots.length,0);
++  h.frame(STEP);assert.equal(h.ownedShots.length,1);for(let i=0;i<12;i++)h.frame(STEP);assert.equal(h.ownedShots.length,1);
++});
++
++test('online pause preserves a Blaster release already admitted by its weapon owner',async()=>{
++  const h=await boot();h.G.netm={};h.actor.setWeapon('blaster');let shots=0;h.G.projectiles.fireBlaster=()=>shots++;
++  h.input.mouse.left=true;h.frame(STEP);assert.ok(h.actor.weaponRunner.s3BlasterWindup>0);assert.equal(shots,0);
++  h.game.pause();h.input.mouse.left=false;for(let i=0;i<30;i++)h.frame(STEP);
++  assert.equal(h.actor.intent.fire,false);assert.equal(shots,1);
++  h.game.resume();for(let i=0;i<12;i++)h.frame(STEP);assert.equal(shots,1);
++});
+diff --git a/patches/reliability/tests/sub-action-owner.test.mjs b/patches/reliability/tests/sub-action-owner.test.mjs
+index b687cfa..889a8fc 100644
+--- a/patches/reliability/tests/sub-action-owner.test.mjs
++++ b/patches/reliability/tests/sub-action-owner.test.mjs
+@@ -67,7 +67,7 @@ test('#530 an in-flight Dualies dodge and its native lock keep advancing before
+ });
+ test('#530 a long sub hold accrues no main-shot debt on the next legitimate press',async()=>{
+  const h=await rig('shooter');for(let i=0;i<120;i++)h.step({sub:true});h.step({subReleased:true});
+- const before=h.shots.length;h.step({fire:true,firePressed:true});assert.equal(h.shots.length-before,1);assert.equal(h.shots.at(-1).kind,'shooter');
++ const before=h.shots.length;h.step({fire:true,firePressed:true});assert.equal(h.shots.length-before,0);h.step({fire:true});assert.equal(h.shots.length-before,0);h.step({fire:true});assert.equal(h.shots.length-before,1);assert.equal(h.shots.at(-1).kind,'shooter');
+ });
+ test('#530 completed Roller release is cancelled visually instead of replayed during sub aim',async()=>{
+  const f=await fixture({character:true});f.installWalkMotion(f,f.profile);f.installRollerMotion(f,f.profile);const a=new f.Actor({team:0,name:'sub visual',weapon:'roller',CharacterClass:f.Character}),r=a.weaponRunner,ch=a.character;
+diff --git a/patches/reliability/tests/touch-edges.test.mjs b/patches/reliability/tests/touch-edges.test.mjs
+index db66e1e..dd9a360 100644
+--- a/patches/reliability/tests/touch-edges.test.mjs
++++ b/patches/reliability/tests/touch-edges.test.mjs
+@@ -141,7 +141,7 @@ for (const hz of [20, 30, 60, 90, 120, 144]) test(`${hz}Hz rendering delivers to
+   assert.equal(h.rig.yaw, -.25); assert.equal(h.rig.pitch, -.1);
+ });
+ 
+-test('actual charger charges while held and fires once on release; completed fire tap releases next tick', async () => {
++test('actual charger charges while held and fires once on release; sub-8F tap cancels and an 8F hold releases once', async () => {
+   const h = await boot({ weapon: 'charger' }), held = h.press('fire');
+   for (let i = 0; i < 20; i++) h.frame();
+   assert.equal(h.actor.weaponRunner.charging, true); assert.ok(h.actor.weaponRunner.charge > 0);
+@@ -155,7 +155,10 @@ test('actual charger charges while held and fires once on release; completed fir
+   assert.equal(h.rows.at(-1).fire, true); assert.equal(h.actor.weaponRunner.charging, true);
+   h.frame();
+   assert.equal(h.rows.at(-1).fire, false); assert.equal(h.actor.weaponRunner.charging, false);
+-  assert.equal(h.shots.length, 2);
++  assert.equal(h.shots.length,1,'completed short tap delivers its edge but cannot emit below 8F');
++  const legal=h.press('fire');for(let i=0;i<8;i++)h.frame();assert.equal(h.shots.length,1);
++  h.release(legal);h.frame();assert.equal(h.shots.length,2);
++  for(let i=0;i<30;i++)h.frame();assert.equal(h.shots.length,2,'no deferred tap replay');
+ });
+ 
+ test('actual roller completes a tap flick and stops rolling after a held trigger releases', async () => {

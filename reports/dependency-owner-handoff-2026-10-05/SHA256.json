@@ -1,0 +1,9 @@
+{
+  "shooter600-cancel-bridge.patch": "738c636b70244c6cde0d2df971b8949b7b7793f9e2aa29915694128df727b77a",
+  "pr600-quick-respawn-bridge.patch": "b12967d330c6816b4d1cfc0998e1ba17cf162df21d4eeb908b0dbdf31574890b",
+  "storm-gauge-display-469.patch": "5625a9142a764ca4a9d049301c95769e27c08b677f3344bffc264b587d1aa4e2",
+  "storm-composition-322-469.patch": "33848e72606b18cd71d45026969c8121580e1f0fce85cda921fc9db260337680",
+  "storm-remaining-connections-322-469.patch": "c4c425ea97c05eea3203738dbbc236abd3f139980b4b01926f0b8bfc9f2cc8cc",
+  "startup-fixture-pause-600.patch": "748b0d0456f9db5ebb90736e5239a834d130ab5d32750dbcc666e146e4c3c2a0",
+  "README.md": "e3d61b40c2972f004c3ce2f9131918fa2af8e01a5b9a9807904cb25f46622a6a"
+}

@@ -1,0 +1,94 @@
+diff --git a/patches/local-quality/hud-snapshots.mjs b/patches/local-quality/hud-snapshots.mjs
+index 670309e..e4fdd3e 100644
+--- a/patches/local-quality/hud-snapshots.mjs
++++ b/patches/local-quality/hud-snapshots.mjs
+@@ -34,6 +34,8 @@ export function hudFrameSnapshot(game, m, a, w, spread, players, markers, prompt
+   frame.crosshair = crosshair;
+   map.canvas = showMinimap ? game.minimap.canvas : null; map.expanded = false; map.players = players;
+   frame.map = showMinimap ? map : null; frame.markers = markers; frame.prompt = prompt; frame.fps = game.settings.showFps ? game.fps : undefined;
++  // Project any actor-owned used-special gauge before both consumers read it.
++  a.specialDisplayFrame?.(frame);
+   const mobile = cache.mobile;
+   mobile.special = frame.special; mobile.ready = frame.specialReady; mobile.activeSp = frame.specialActive; mobile.weapon = w.kind || a.weaponId;
+   mobile.specialId = w.special; mobile.ink = frame.ink; mobile.subCost = frame.subCost;
+diff --git a/patches/local-quality/tenacity.mjs b/patches/local-quality/tenacity.mjs
+index a8ef52a..4312db5 100644
+--- a/patches/local-quality/tenacity.mjs
++++ b/patches/local-quality/tenacity.mjs
+@@ -10,7 +10,7 @@ export function advanceTenacity(match, dt, emit) {
+   const counts = [0, 0];
+   for (const a of actors) if (a.alive && (a.team === 0 || a.team === 1)) counts[a.team]++;
+   for (const a of actors) {
+-    if (!a.alive || a.remote || a.specialActive || a.s3?.loadout?.[0]?.main !== 'tenacity' ||
++    if (!a.alive || a.remote || a.specialActive || a.stormGaugeLock > 0 || a.s3?.loadout?.[0]?.main !== 'tenacity' ||
+         (a.team !== 0 && a.team !== 1)) continue;
+     const deficit = Math.max(0, Math.min(3, counts[1 - a.team] - counts[a.team]));
+     const cost = a.specialCost(), baseCost = a.s3?.tenacityBaseCost;
+diff --git a/patches/local-quality/tests/storm-composition.test.mjs b/patches/local-quality/tests/storm-composition.test.mjs
+new file mode 100644
+index 0000000..fb01c3b
+--- /dev/null
++++ b/patches/local-quality/tests/storm-composition.test.mjs
+@@ -0,0 +1,32 @@
++// Composition regression: current #392/#510 helpers plus the actual #322/#469
++// gauge helper. This deliberately does not claim a full installed PR322 build.
++import test from 'node:test';
++import assert from 'node:assert/strict';
++import {advanceTenacity,TENACITY_RATES} from '../tenacity.mjs';
++import {hudFrameSnapshot} from '../hud-snapshots.mjs';
++import {stormGaugeFrame,advanceStormLock} from '../../splatoon3/runtime/storm-effects.mjs';
++const dt=1/60,close=(a,b)=>assert.ok(Math.abs(a-b)<1e-10,`${a} != ${b}`);
++function actor(){return {alive:true,remote:false,team:0,special:0,specialActive:null,stormGaugeLock:6,ink:100,hp:100,weaponId:'charger',weaponRunner:{charge:0},s3:{loadout:[{main:'tenacity'}],tenacityBaseCost:220},specialCost:()=>180,specialFrac(){return this.special/180},specialReady(){return this.special>=180&&!this.specialActive&&!(this.stormGaugeLock>0)},specialDisplayFrame(frame){return stormGaugeFrame(this,frame)}};}
++function match(a){return {mode:'turf',state:'playing',time:60,opts:{},actors:[a,{alive:true,team:1},{alive:true,team:1}],teamSummary:()=>[],controller:{}};}
++test('Tenacity cannot refill used Storm after throwing state ends',()=>{
++ const a=actor(),m=match(a),events=[];advanceTenacity(m,dt,(...e)=>events.push(e));close(a.special,0);close(a.stormGaugeLock,6);assert.equal(events.length,0);
++});
++test('existing lock clock releases passive admission exactly at expiry and retains normal rate/ready event',()=>{
++ const a=actor(),m=match(a),events=[];a.stormGaugeLock=2*dt;
++ advanceStormLock(a,dt);advanceTenacity(m,dt,(...e)=>events.push(e));close(a.special,0);
++ advanceStormLock(a,dt);advanceTenacity(m,dt,(...e)=>events.push(e));const amount=TENACITY_RATES[1]*dt*180/220;close(a.special,amount);close(a.stormGaugeLock,0);
++ a.special=180-amount/2;advanceTenacity(m,dt,(...e)=>events.push(e));close(a.special,180);assert.equal(events.length,1);assert.equal(events[0][0],'special:ready');
++});
++test('510 copies the same used gauge into desktop/mobile without replacing either transport',()=>{
++ const a=actor(),m=match(a),game={settings:{showFps:false}},w={special:'storm'};
++ const draw=()=>hudFrameSnapshot(game,m,a,w,0,[],[],null,false,{inkMax:100,hp:100},{bomb:{inkCost:70}});
++ const frame=draw(),mobile=game._hudTransport.mobile;close(frame.special,.75);close(mobile.special,.75);assert.equal(frame.specialActive,true);assert.equal(mobile.activeSp,true);assert.equal(mobile.ready,false);
++ // 469's standalone main connection may run afterwards; it must be idempotent.
++ a.specialDisplayFrame(frame);close(frame.special,mobile.special);
++ a.stormGaugeLock=0;a.special=45;assert.equal(draw(),frame);assert.equal(game._hudTransport.mobile,mobile);close(frame.special,.25);close(mobile.special,.25);assert.equal(mobile.activeSp,false);
++});
++test('normal actors without the optional Storm projection keep native HUD/readiness',()=>{
++ const a=actor();delete a.specialDisplayFrame;delete a.stormGaugeLock;a.special=180;
++ const game={settings:{}},frame=hudFrameSnapshot(game,match(a),a,{},0,[],[],null,false,{inkMax:100,hp:100},{bomb:{inkCost:70}});
++ close(frame.special,1);assert.equal(frame.specialReady,true);assert.equal(game._hudTransport.mobile.ready,true);
++});
+diff --git a/reports/inkwave-storm-322-469-composition.md b/reports/inkwave-storm-322-469-composition.md
+new file mode 100644
+index 0000000..896f612
+--- /dev/null
++++ b/reports/inkwave-storm-322-469-composition.md
+@@ -0,0 +1,24 @@
++# PR322 / #469 integration conditions on PR536
++
++Read against public PR536 `ef712f898753677b9d806b2f44cf3e473d2670ae`, represented locally by `9543e3e5cfc5643e8b3ee76515de2ee2883c3c93`, tree `a80b019bd800fae2297482320a535c15755fa4f8`. Dependency PR322 is exact `9f1fcacb19c6f410742fefa3b521ad6579d97b7c`; the standalone #469 extension is `67734d6a3456dcf67b408dc47f5f584d332d088e`.
++
++## Two confirmed connections repaired in this delta
++
++1. `advanceTenacity()` previously guarded only `specialActive`. After Storm's short throwing state ended, it added charge directly while PR322's `stormGaugeLock` still blocked `addTurf()`. A six-second remaining lock gained 0.0543333333 points in one 60 Hz tick in the existing native helper. The passive source now also checks the same existing lock; it neither advances nor clears that clock.
++2. #510's `hudFrameSnapshot()` filled `cache.mobile` before standalone #469's main-side projection changed `frame`. Direct composition produced desktop gauge 0.75 / active true but mobile gauge 0 / active false. Projection now runs inside the existing snapshot function before its mobile copy. Both objects and nested resources are reused; the later standalone #469 projection is idempotent. Actors without that optional projection preserve the original behavior.
++
++The four minimal regressions use the actual current Tenacity / HUD snapshot functions and the exact #322+#469 gauge helper. Three failed before the bridge; all four pass after it, with no skips. They prove refusal during lock, one normal passive increment at expiry, one normal ready event, matching desktop/mobile scalar values, transport identity reuse, and non-Storm fallback. This is a helper-level composition proof, not a complete installed PR322, browser, or network acceptance.
++
++The test-only dependency commit stages the existing `storm-effects.mjs` helper so these tests can run in this private candidate. Apply only the following bridge commit when composing the real PR322/#469 stack; do not treat the dependency fixture commit as the entire PR322 implementation.
++
++## Remaining required ownership reconciliation
++
++- PR322 replaces direct `e.damage(...)` with `collectStormHit(...)`. Current network adaptation expects the former at its recipient elapsed-time anchor and correctly fails closed. The composed network owner must normalize the collector candidate amount to `sp.dps * (peer ? dt : stepDt)`, retain the existing `peer && tick !== steps - 1` guard, and retain a single `applyStormHits()` after all clouds have contributed. Do not move the final damage application inside the per-cloud/catch-up loops or silently skip the missing anchor. The lowest-owner-key arbitration then selects one candidate for a victim without stacking rain or replaying all catch-up damage. Mixed local/remote clouds and frozen/catching-up timelines still require focused proof.
++- #563 changes rain admission through the full 8-second lifetime. PR322's `cloudCoversActor()` still has `c.t < c.dur - .3`, so its allied healing/enemy-rain regeneration suppression ends early. Align that helper with the verified active lifetime and native removal boundary when #563 is composed; do not alter the independent 480F gauge lock or infer it from cloud duration.
++- PR322's Actor and NetMatch transforms have already passed the current adapter-chain audit. Preserve its hold/release owner, #530's final weapon/sub dispatcher, #592's shared water-hazard entry, and the existing resource recovery owner while applying the PR322 resources/bomb-motion/special-motion deltas. Raw upstream files remain unchanged.
++
++## Minimum composition sequence
++
++Start from the verified current PR536 tree. Compose PR322's original adapter/runtime/motion/resource changes and its network collector connection together; reconcile #563's common active-rain boundary if #563 is included. Then apply the standalone #469 display extension and this Tenacity/HUD bridge before testing the complete installed candidate. The bridge itself introduces no timer, new balance number, new packet field, or remote authority claim. PR598 Storm admission remains a separate unresolved protocol root.
++
++These conditions are for a later independent candidate. They do not expand the current published batch or hold its CI completion. No full build or broad test suite was repeated for this read/bridge audit.

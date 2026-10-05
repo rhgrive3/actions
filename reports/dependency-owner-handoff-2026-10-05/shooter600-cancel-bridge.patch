@@ -1,0 +1,160 @@
+diff --git a/patches/local-quality/platform-input.mjs b/patches/local-quality/platform-input.mjs
+index 9383083..ecf31a5 100644
+--- a/patches/local-quality/platform-input.mjs
++++ b/patches/local-quality/platform-input.mjs
+@@ -21,6 +21,7 @@ export function resetPlatformInput(input, controller) {
+   if (actor) {
+     for (const key of ['jumpBuffer', 'fireBuffer']) if (key in actor) actor[key] = 0;
+     const weapon = actor.weaponRunner;
++    weapon?.cancelPendingShooterInput?.();
+     if (weapon?.charging) {
+       weapon.charging = false; weapon.charge = 0; weapon.chargeDinged = false;
+       weapon.chargeLoop?.stop?.(.05); weapon.chargeLoop = null;
+diff --git a/patches/reliability/controls-adapter.mjs b/patches/reliability/controls-adapter.mjs
+index 6ca6a50..1be0209 100644
+--- a/patches/reliability/controls-adapter.mjs
++++ b/patches/reliability/controls-adapter.mjs
+@@ -23,7 +23,7 @@ export function adaptControls(rel, code) {
+   code = replaceOnce(code, 'rig.yaw -= this.padLook.x * 3.6 * ps * boost * friction * dt;', 'rig.yaw -= this.padLook.x * 3.6 * ps * boost * friction * dt * (s.padInvertX ? -1 : 1);', 'independent right-stick horizontal inversion');
+   code = replaceOnce(code, 'rig.pitch -= this.padLook.y * 2.4 * ps * friction * dt * inv;', 'if (!gyroActive) rig.pitch -= this.padLook.y * 2.4 * ps * friction * dt * inv;', 'gyro owns vertical camera');
+   code = replaceOnce(code, '    // ---- move (camera relative)', "    if (standardPad && inp.padPressed.has(2)) { this.resetCamera(); inp.padPressed.delete(2); }\n    // ---- move (camera relative)", 'camera reset gameplay edge');
+-  code = replaceOnce(code, '    if (this.mapHeld) { it.fire = false; it.sub = false; }', '    if (this.mapHeld) {\n      // Map clicks belong to the selection UI; an independent ZR remains a real hold.\n      it.fire = inp.padValue(7) > 0.3 || inp.padPressed.has(7); it.sub = false;\n    }', 'map input source ownership');
++  code = replaceOnce(code, '    if (this.mapHeld) { it.fire = false; it.sub = false; }', '    if (this.mapHeld) {\n      // Map clicks belong to the selection UI; an independent ZR remains a real hold.\n      it.fire = inp.padValue(7) > 0.3 || inp.padPressed.has(7); it.sub = false;\n      const pendingPad = a.weaponRunner?.s3ShooterPendingInputPad && (a.weaponRunner.s3ShooterPendingFirst || a.weaponRunner.s3SwimFireQueued);\n      if (!it.fire && !pendingPad) a.weaponRunner?.cancelPendingShooterInput?.();\n    }\n    // Retain the accepted local input source until its pending first shot settles.\n    if (it.fire && a.weapon?.kind === \'shooter\' && a.weaponRunner && \'s3ShooterPendingFirst\' in a.weaponRunner) {\n      const admittedPad = inp.padValue(7) > 0.3 || inp.padPressed.has(7);\n      if (admittedPad) a.weaponRunner.s3ShooterPendingInputPad = true;\n      else if (!a.weaponRunner.s3ShooterHeld && !a.weaponRunner.s3ShooterPendingFirst && !a.weaponRunner.s3SwimFireQueued) a.weaponRunner.s3ShooterPendingInputPad = false;\n    }', 'map input source ownership');
+   code = replaceOnce(code, '  // Best enemy near the crosshair', `  // One camera-reset owner: heading follows the actor and pitch returns to neutral.
+   // No inferred S3 pitch offset or stick response curve is introduced here.
+   resetCamera() {
+diff --git a/patches/reliability/sub-action-adapter.mjs b/patches/reliability/sub-action-adapter.mjs
+index 05538b8..d492fd7 100644
+--- a/patches/reliability/sub-action-adapter.mjs
++++ b/patches/reliability/sub-action-adapter.mjs
+@@ -3,6 +3,7 @@
+ import { replaceOnce } from './input-adapter.mjs';
+ export function adaptSubAction(rel, code) {
+   if (rel !== 'src/game/weapons.js') return code;
++  code = replaceOnce(code, '  reset() {\n    this.cooldown = 0;', '  reset() {\n    this.s3ShooterPendingInputPad = false;\n    this.cooldown = 0;', 'reset pending shooter input source');
+   code = replaceOnce(code, '    this.cooldown -= dt; this.emptyCd -= dt; this.rumbleT -= dt;',
+     '    this.s3SubReleased = false;\n    this.cooldown -= dt; this.emptyCd -= dt; this.rumbleT -= dt;', 'clear actual sub payment receipt');
+   code = replaceOnce(code, '        a.ink -= bomb.inkCost;',
+@@ -26,7 +27,17 @@ export function adaptSubAction(rel, code) {
+     }
+     else switch (w.kind) {
+       case 'shooter': case 'blaster': this._auto(dt, inp, w); break;`, 'sub action dispatcher ownership');
+-  return replaceOnce(code, '  _empty() {', `  cancelMainForSub() {
++  return replaceOnce(code, '  _empty() {', `  cancelPendingShooterInput() {
++    if (this.a.weapon.kind !== 'shooter' || !('s3ShooterPendingFirst' in this)) return;
++    this.s3ShooterHeld = this.s3ShooterPendingFirst = false;
++    this.s3ShooterPendingInputPad = false;
++    this.s3ShooterFirstRemaining = 0;
++    this.s3SwimFireQueued = false; this.s3SwimFireRemaining = 0;
++    this.a.fireBuffer = 0;
++  }
++
++  cancelMainForSub() {
++    this.cancelPendingShooterInput();
+     // Cancel only interruptible main state, retaining cooldown, recovery,
+     // alternating-hand clocks, roll count, bloom and already-paid stream ink.
+     this.a.fireBuffer = 0;
+diff --git a/patches/reliability/tests/shooter600-cancel-probe.test.mjs b/patches/reliability/tests/shooter600-cancel-probe.test.mjs
+new file mode 100644
+index 0000000..4432ad5
+--- /dev/null
++++ b/patches/reliability/tests/shooter600-cancel-probe.test.mjs
+@@ -0,0 +1,57 @@
++import test from 'node:test';
++import assert from 'node:assert/strict';
++import {fixture} from './controls-fixture.mjs';
++import {resetPlatformInput} from '../../local-quality/platform-input.mjs';
++const DT=1/60;
++async function setup(){const f=await fixture({network:true}),a=f.make('shooter');f.G.actors=[a];f.G.camera={position:new f.THREE.Vector3(0,20,0)};f.G.settings={...f.DEFAULT_SETTINGS,aimAssist:0};f.G.match.canRespawn=()=>false;const input=new f.Input({}),rig={yaw:0,pitch:0,mapK:0},c=new f.PlayerController(a,rig,input);c.computeAim=()=>{};f.G.rig=rig;f.G.projectiles.throwBomb=()=>f.shots.push({kind:'bomb'});a.kidT=99;return {...f,a,r:a.weaponRunner,input,c};}
++function trace(h,n=12){const rows=[];for(let i=0;i<n;i++){h.tick(h.a);rows.push({i,shots:h.shots.length,queued:h.r.s3ShooterPendingFirst,remaining:h.r.s3ShooterFirstRemaining,sub:h.r.aimingSub});}return rows;}
++for(const cancel of ['tap','sub-request','explicit-cancel-owner','blur','map-mouse','map-pad'])test('pending-first '+cancel,async t=>{
++ const h=await setup();h.a.intent.fire=true;h.tick(h.a);assert.equal(h.shots.length,0);assert.equal(h.r.s3ShooterPendingFirst,true);
++ h.a.intent.fire=false;
++ if(cancel==='sub-request')h.a.intent.sub=true;
++ if(cancel==='explicit-cancel-owner'){h.r.cancelMainForSub();h.r.aimingSub=true;h.a.intent.sub=true;}
++ if(cancel==='blur')resetPlatformInput(h.input,h.c);
++ if(cancel.startsWith('map')){h.input.keys.add('Tab');if(cancel==='map-mouse')h.input.mouse.left=true;else {h.input.lastDevice='pad';h.input.pad={buttons:Array.from({length:17},(_,i)=>({value:i===7?1:0,pressed:i===7})),axes:[0,0,0,0]};}h.c.update(DT);}
++ const rows=trace(h);
++ if(['explicit-cancel-owner','blur','map-mouse'].includes(cancel))assert.equal(h.shots.filter(s=>s.kind==='shooter').length,0,cancel);
++ else assert.ok(h.shots.some(s=>s.kind==='shooter'),cancel);
++ if(cancel==='sub-request')assert.equal(h.r.aimingSub,true);
++ t.diagnostic(JSON.stringify({cancel,rows,shots:h.shots}));
++});
++
++for(const boundary of ['blur','map-mouse'])test('swim queue '+boundary+' is discarded before pending-first admission',async()=>{
++ const h=await setup();h.a.intent.squid=true;h.tick(h.a,10);h.a.intent.fire=true;h.tick(h.a,2);assert.equal(h.r.s3SwimFireQueued,true);
++ if(boundary==='blur')resetPlatformInput(h.input,h.c);else {h.input.keys.add('Tab');h.c.update(DT);}
++ h.a.intent.fire=false;trace(h,25);assert.equal(h.shots.length,0);assert.equal(h.r.s3SwimFireQueued,false);assert.equal(h.r.s3ShooterPendingFirst,false);
++});
++test('cancellation permits a later fresh human press without shortening its startup',async()=>{
++ const h=await setup();h.a.intent.fire=true;h.tick(h.a);resetPlatformInput(h.input,h.c);h.tick(h.a,10);assert.equal(h.shots.length,0);
++ h.a.intent.fire=true;h.tick(h.a,2);assert.equal(h.shots.length,0);h.tick(h.a);assert.equal(h.shots.length,1);
++});
++test('admitted sub throws once after explicit pending cancel without phantom main',async()=>{
++ const h=await setup();h.a.intent.fire=true;h.tick(h.a);h.r.cancelMainForSub();h.a.intent.fire=false;h.a.intent.sub=true;h.tick(h.a,5);assert.equal(h.r.aimingSub,true);h.a.intent.sub=false;h.tick(h.a,15);assert.deepEqual(h.shots.map(s=>s.kind),['bomb']);
++});
++
++function padStep(h,zr){h.setPads([{index:0,id:'standard',connected:true,mapping:'standard',axes:[0,0,0,0],buttons:Array.from({length:17},(_,i)=>({pressed:i===7&&zr,value:i===7&&zr?1:0}))}]);h.input.pollPad();h.c.update(DT);h.tick(h.a);h.input.endFrame();}
++for(const when of ['already-open','open-after-press','mouse-click-during-pad-buffer'])test('Map preserves accepted pad short tap: '+when,async()=>{
++ const h=await setup();if(when!=='open-after-press')h.input.keys.add('Tab');padStep(h,true);assert.equal(h.r.s3ShooterPendingFirst,true);assert.equal(h.r.s3ShooterPendingInputPad,true);
++ h.input.keys.add('Tab');if(when==='mouse-click-during-pad-buffer')h.input.mouse.left=true;for(let i=0;i<8;i++)padStep(h,false);assert.equal(h.shots.length,1);
++});
++test('new mouse origin replaces old completed pad receipt and Map cancels that queue',async()=>{
++ const h=await setup();padStep(h,true);for(let i=0;i<8;i++)padStep(h,false);assert.equal(h.shots.length,1);
++ h.input.lastDevice='kbm';h.input.mouse.left=true;h.c.update(DT);h.tick(h.a);assert.equal(h.r.s3ShooterPendingInputPad,false);assert.equal(h.r.s3ShooterPendingFirst,true);
++ h.input.keys.add('Tab');h.c.update(DT);h.tick(h.a,8);assert.equal(h.shots.length,1);
++});
++test('blur still cancels a pad-origin committed pending shot and its receipt',async()=>{
++ const h=await setup();h.input.keys.add('Tab');padStep(h,true);resetPlatformInput(h.input,h.c);assert.equal(h.r.s3ShooterPendingInputPad,false);h.tick(h.a,8);assert.equal(h.shots.length,0);
++});
++
++test('native Runner reset retires pad receipt before a new mouse pending shot',async()=>{
++ const h=await setup();padStep(h,true);assert.equal(h.r.s3ShooterPendingInputPad,true);h.r.reset();assert.equal(h.r.s3ShooterPendingInputPad,false);
++ h.input.lastDevice='kbm';h.input.mouse.left=true;h.c.update(DT);h.tick(h.a);assert.equal(h.r.s3ShooterPendingInputPad,false);h.input.keys.add('Tab');h.c.update(DT);h.tick(h.a,8);assert.equal(h.shots.length,0);
++});
++
++for(const map of [false,true])test('new admitted ZR protects an existing mouse pending shot '+map,async()=>{
++ const h=await setup();h.input.mouse.left=true;h.c.update(DT);h.tick(h.a);assert.equal(h.r.s3ShooterPendingFirst,true);assert.equal(h.r.s3ShooterPendingInputPad,false);
++ if(map)h.input.keys.add('Tab');padStep(h,true);assert.equal(h.r.s3ShooterPendingInputPad,true);h.input.mouse.left=false;for(let i=0;i<8;i++)padStep(h,false);assert.equal(h.shots.length,1);
++});
+diff --git a/reports/inkwave-pr600-shooter-cancel-bridge-2026-10-05.md b/reports/inkwave-pr600-shooter-cancel-bridge-2026-10-05.md
+new file mode 100644
+index 0000000..5dbec74
+--- /dev/null
++++ b/reports/inkwave-pr600-shooter-cancel-bridge-2026-10-05.md
+@@ -0,0 +1,35 @@
++# PR600 Shooter pending-input cancellation bridge
++
++Private composition baseline: public536f46cb4b392878340246e1d4d419eac517e3b0089, represented by identical local7a31eaaf0062e88fe132cc7d0df2003cae1d75dd. Exact dependency PR60091981db323df8171c6636e8511f16331af0388d8 is staged separately as a04445e. Only the following bridge is offered for later dependency integration; do not import that preparation commit into the existing published batch. No source PR or main was modified.
++
++## Reproduction and ownership
++
++A stable-human Shooter first press creates PR600's pending first shot. When the native platform reset handles blur before emission, it clears Actor fireBuffer and input, but the new pending-first fields survive. Two fixed updates later the pending branch forces fire=true and emits a shot. Native controller Map masking of mouse fire reproduces the same one-shot leak. Both asserted negative controls fail with1 actual shot where0 is expected.
++
++A normal short tap is different: PR600 deliberately buffers that first shot, and the bridge retains it. A sub request during pending-first is not yet admitted because PR600's outer update masks sub; this request is not falsely treated as an admitted cancellation. Existing530 already clears the swim queue when its final sub owner is reached. The explicit cancel helper contract additionally needs to clear the new pending-first fields; direct helper invocation tests that boundary without claiming a normal pending sub request reaches it.
++
++## Narrow bridge
++
++- Native Runner gets cancelPendingShooterInput(), active only for Shooter with the PR600 pending-state field. It clears held/pending/remaining, the existing swim queue/remaining and Actor fireBuffer. It does not touch cooldown, paid ink, firing recovery, charge state or other weapon classes.
++- Existing530 cancelMainForSub invokes it only when that owner is explicitly called.
++- Existing platform reset invokes it for blur/lifecycle neutralization.
++- Existing Map input-source branch invokes it only when Map is held and no independent pad ZR is admitted. Map+pad ZR firing remains permitted. Ordinary release alone does not invoke the new cancellation owner.
++
++## Evidence
++
++Ten source regressions pass on the dedicated f46+600 composition: normal short tap; unadmitted sub request; explicit cancel owner; blur; mouse Map; pad-ZR Map; swim queue blur; swim queue mouse Map; fresh re-press after cancel at original3-counted-frame startup; one admitted bomb after explicit cancel without phantom main. The original staged composition, with bridge files removed, fails both focused blur and mouse-Map negatives with1 unwanted shot. All checks use actual native Actor/Runner/controller and the installed source adapter chain; projectile emission is recorded by the fixture.
++
++This is not a new full build, browser-input, transport, or broad-suite result. Charger tests were not repeated. The legacy600 short-tap/sub admission semantics are preserved, not reinterpreted as Nintendo evidence. Keyboard/touch/pad transition review is separately requested before the next integration decision.
++
++## Pad short-tap review correction
++
++The first6ce0b6 bridge was not accepted: independent UI review found that Map's every-frame `!it.fire` cancellation also erased a legitimate pad-ZR one-tick buffered shot. Held-ZR validation alone had missed that boundary.
++
++The corrected candidate records one local pad-origin bit when native controller fire is admitted for a new first-shot input, before a pending-first/swim queue owns it. An existing queue keeps that receipt across ordinary release/no-new-input frames. Map preserves that accepted pad queue even after ZR is released, including a tap begun immediately before opening Map. A mouse click on Map cannot overwrite the pad queue's source. A later new mouse/touch input after settlement replaces the old source; mere device connection/lastDevice is not treated as a pad press. Explicit blur/sub cancellation and native Runner reset clear the receipt. No new network field or authority is introduced.
++
++Final focused source16/16 includes Map already open pad short-tap, pad tap before Map entry, Map mouse click during a buffered pad shot, subsequent mouse-origin cancellation, blur of a pad-origin queue and native reset of the receipt. The earlier10-case result remains historical and is superseded by this correction. Exact emitted/browser integration remains separate.
++
++
++A second independent mixed-input review found that an already pending mouse shot followed by a newly admitted Map-ZR pulse also needs protection. The receipt now upgrades to pad-protected on any actual admitted independent ZR while that queue exists, without restarting/shortening its timer. A quiet attached pad never upgrades it. New non-pad first-shot input clears the old receipt only after the previous held/pending/swim state has settled. The added Map/no-Map controls each emit exactly one shot. Final local source18/18 passes;5ade's earlier16-case acceptance is superseded, pending the independent mixed-input recheck.
++
++Independent UI review of executable candidatef77c5cc completed:20 observations (18 input/Map/blur/receipt boundaries plus reverse mixed-input controls inside/outside Map) retained the expected outcomes. In the reverse mixed case both paths held pad protection with one frame remaining and emitted one shot. The reviewer verified the three production files' SHA values were unchanged before/after testing. No additional blocker was identified within this local source scope; a complete future dependency build/browser/CI remains separate.

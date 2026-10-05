@@ -1,0 +1,63 @@
+diff --git a/patches/reliability/tests/pr600-respawn-cause-probe.test.mjs b/patches/reliability/tests/pr600-respawn-cause-probe.test.mjs
+new file mode 100644
+index 0000000..4f744fc
+--- /dev/null
++++ b/patches/reliability/tests/pr600-respawn-cause-probe.test.mjs
+@@ -0,0 +1,29 @@
++import test from 'node:test';
++import assert from 'node:assert/strict';
++import {fixture} from './controls-fixture.mjs';
++const causes=['weapon','shooter','bomb','unknown-attack','water','drowning','out-of-bounds','fall','void'];
++const environment=new Map([['water',7],['drowning',7],['out-of-bounds',5.5],['fall',5.5],['void',5.5]]);
++function equip(f,ap,eligible){
++ const a=f.make('shooter');a.s3.loadout=Array.from({length:3},()=>({main:ap?'quickRespawn':'none',subs:Array(3).fill(ap?'quickRespawn':'none')}));a.setWeapon('shooter');a.s3.previousLifeNoSplat=eligible;a.s3.splatsThisLife=0;return a;
++}
++test('ordinary and unknown attack causes retain real QR; environment aliases retain their own timers',async t=>{
++ const f=await fixture(),rows=[];
++ for(const ap of [0,57])for(const eligible of [false,true])for(const cause of causes){
++  const a=equip(f,ap,eligible);assert.ok(Math.abs(a.s3.modifiers.quickRespawn-(ap?1/3:1))<1e-10);
++  a.splat(null,cause);assert.equal(a.alive,false);const expected=environment.get(cause)??(ap&&eligible?5.5:8.5);
++  assert.ok(Math.abs(a.respawnTimer-expected)<1e-10,`${ap}AP eligible=${eligible} ${cause}: ${a.respawnTimer}`);
++  rows.push({ap,eligible,cause,respawn:a.respawnTimer});
++  a.respawnTimer=2;a.splat(null,cause);assert.equal(a.respawnTimer,2,'duplicate splat does not restart respawn');
++ }
++ t.diagnostic(JSON.stringify({causeMatrix:rows}));
++});
++test('actual lethal damage routes Shooter and Bomb sources through Gear without overwrite',async()=>{
++ const f=await fixture();
++ for(const cause of ['shooter','bomb'])for(const ap of [0,57]){
++  const a=equip(f,ap,true),attacker=f.make('shooter');attacker.team=1;a.invuln=0;a.hp=100;
++  assert.equal(a.damage(200,attacker,cause),true);assert.equal(a.alive,false);assert.equal(a.respawnTimer,ap?5.5:8.5,cause);
++ }
++});
++test('a splat in the current life still prevents QR for ordinary attack aliases',async()=>{
++ const f=await fixture();for(const cause of ['weapon','shooter','bomb','unknown-attack']){const a=equip(f,57,true);a.s3.splatsThisLife=1;a.splat(null,cause);assert.equal(a.respawnTimer,8.5,cause);}
++});
+diff --git a/patches/splatoon3/runtime/resources.mjs b/patches/splatoon3/runtime/resources.mjs
+index 0d5c97f..65fdbb5 100644
+--- a/patches/splatoon3/runtime/resources.mjs
++++ b/patches/splatoon3/runtime/resources.mjs
+@@ -11,7 +11,9 @@ export function installResources(context, values) {
+   context.Actor.prototype.splat = function (attacker, cause = 'weapon') {
+     const wasAlive = this.alive;
+     const result = splat.call(this, attacker, cause);
+-    if (wasAlive && !this.alive && cause !== 'weapon') this.respawnTimer = respawnTimeForCause(cause, respawnTuning);
++    // Gear already adjusted ordinary attack deaths. Only known environment
++    // routes replace that result with their separate respawn contract.
++    if (wasAlive && !this.alive && ['water', 'drowning', 'out-of-bounds', 'fall', 'void'].includes(cause)) this.respawnTimer = respawnTimeForCause(cause, respawnTuning);
+     return result;
+   };
+ }
+diff --git a/reports/inkwave-pr600-quick-respawn-bridge-2026-10-05.md b/reports/inkwave-pr600-quick-respawn-bridge-2026-10-05.md
+new file mode 100644
+index 0000000..5b25cfe
+--- /dev/null
++++ b/reports/inkwave-pr600-quick-respawn-bridge-2026-10-05.md
+@@ -0,0 +1,7 @@
++# PR600 QuickRespawn cause bridge
++
++Private f46+exactPR60091981db composition, with the separate Shooter cancellation candidate retained. This delta changes only the Resources respawn override condition. It does not modify PR600, public536, main, or the Gear calculation.
++
++The outer Resources wrapper formerly replaced every non-literal-'weapon' cause after Gear had shortened respawn. With real57AP and the consecutive-no-splat condition, native 'weapon' yielded5.5s but 'shooter'/'bomb' reverted to8.5s. Override only recognized environmental causes water/drowning/out-of-bounds/fall/void. Ordinary and unknown attack strings now retain Gear's result. Environment timers remain7s for water aliases and5.5s for fall aliases, as already configured by PR600.
++
++Focused source3/3 passes:36 combinations (0/57AP × eligibility ×9 causes), duplicate death refusal for each, four real lethal Actor.damage cases for Shooter/Bomb ×0/57AP, and four current-life-splat QR exclusion cases. No full build/CI, Charger rerun, or new physical/Switch claim. The dedicated patch excludes the dependency preparation and Shooter bridge commits.

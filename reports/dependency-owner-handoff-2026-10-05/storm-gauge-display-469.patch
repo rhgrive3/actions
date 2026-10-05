@@ -1,0 +1,153 @@
+diff --git a/patches/splatoon3/runtime/storm-effects.mjs b/patches/splatoon3/runtime/storm-effects.mjs
+index ce7cdc9..f04f0d1 100644
+--- a/patches/splatoon3/runtime/storm-effects.mjs
++++ b/patches/splatoon3/runtime/storm-effects.mjs
+@@ -2,6 +2,14 @@
+ // Distinct from cloud lifetime and the held-device / throw animation lifetime.
+ export const STORM_GAUGE_LOCK = 480 / 60;
+ export function isStormHolding(a) { return a.specialActive?.id === 'storm' && a.specialActive.phase === 'hold'; }
++// A projection of the existing used-special clock, never new charge points.
++export function stormGaugeFrame(a, frame = {}) {
++  const locked = a.stormGaugeLock > 0;
++  frame.special = isStormHolding(a) ? 1 : locked ? Math.min(1, a.stormGaugeLock / STORM_GAUGE_LOCK) : a.specialFrac();
++  frame.specialReady = a.specialReady();
++  frame.specialActive = !!a.specialActive || locked;
++  return frame;
++}
+ export function advanceStormLock(a, dt) {
+   const remaining = (a.stormGaugeLock || 0) - dt;
+   a.stormGaugeLock = remaining <= 1e-10 ? 0 : remaining;
+diff --git a/patches/splatoon3/storm-effects-adapter.mjs b/patches/splatoon3/storm-effects-adapter.mjs
+index 837a4fa..369a950 100644
+--- a/patches/splatoon3/storm-effects-adapter.mjs
++++ b/patches/splatoon3/storm-effects-adapter.mjs
+@@ -5,6 +5,7 @@ function once(code, before, after, label) {
+ }
+ export function adaptStormEffects(rel, code) {
+   if (rel === 'src/game/actor.js') {
++    code = once(code, '  specialFrac() {', '  specialDisplayFrame(frame) { return stormGaugeFrame(this, frame); }\n  specialFrac() {', 'used Storm display from lock clock');
+     code = once(code, '  update(dt) {\n    this.anim.time = G.time;', '  update(dt) {\n    advanceStormLock(this, dt);\n    this.anim.time = G.time;', 'actor-owned lock clock');
+     code = once(code, '    const intent = this.intent;', '    const stormHolding = isStormHolding(this);\n    const intent = stormHolding ? { ...this.intent, fire: false, sub: false, special: false } : this.intent;', 'held-device main/sub admission');
+     code = once(code, '    if (this.specialActive) { this._updateSpecial(dt); this._finishFrame(dt); return; }', '    if (stormHolding) updateStormHold(this, dt, G);\n    if (this.specialActive && !isStormHolding(this)) { this._updateSpecial(dt); this._finishFrame(dt); return; }', 'held-device movement ownership');
+@@ -13,7 +14,10 @@ export function adaptStormEffects(rel, code) {
+     code = once(code, 'specialReady() { return this.special >= this.specialCost() && !this.specialActive; }', 'specialReady() { return this.special >= this.specialCost() && !this.specialActive && !(this.stormGaugeLock > 0); }', 'locked special admission');
+     code = once(code, '    this.weaponRunner.update(dt, { fire, firePressed: pressed, sub: intent.sub && !isSquid, subReleased: subReleased && !isSquid });', '    if (!isStormHolding(this)) this.weaponRunner.update(dt, { fire, firePressed: pressed, sub: intent.sub && !isSquid, subReleased: subReleased && !isSquid });', 'held-device runner ownership');
+     code = once(code, 'a.subAim = !!this.weaponRunner.aimingSub;', 'a.subAim = !!this.weaponRunner.aimingSub || isStormHolding(this);', 'held-device pose');
+-    return "import { isStormHolding, startStormHold, updateStormHold, advanceStormLock } from '../../patches/splatoon3/runtime/storm-effects.mjs';\n" + code;
++    return "import { isStormHolding, startStormHold, updateStormHold, advanceStormLock, stormGaugeFrame } from '../../patches/splatoon3/runtime/storm-effects.mjs';\n" + code;
++  }
++  if (rel === 'src/main.js') {
++    return once(code, '    this.hud.update(dt, frame);', '    a.specialDisplayFrame(frame);\n    this.hud.update(dt, frame);', 'HUD consumes authoritative special display snapshot');
+   }
+   if (rel === 'src/game/bots.js') {
+     code = once(code, '    // ---------------- aim: critically-damped spring', "    if (a.specialActive?.id === 'storm' && a.specialActive.phase === 'hold') {\n      it.sub = !a.specialActive.botSubPressed; a.specialActive.botSubPressed = true;\n      it.fire = it.special = false;\n    }\n\n    // ---------------- aim: critically-damped spring", 'bot explicit throw input');
+diff --git a/patches/splatoon3/tests/storm-effects-fixture.mjs b/patches/splatoon3/tests/storm-effects-fixture.mjs
+index 5aaa23c..c91fc5d 100644
+--- a/patches/splatoon3/tests/storm-effects-fixture.mjs
++++ b/patches/splatoon3/tests/storm-effects-fixture.mjs
+@@ -11,7 +11,7 @@ import { adaptQualitySource } from '../../local-quality/adapter.mjs';
+ const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
+ const BUILT = process.env.INKWAVE_STORM_SITE;
+ const UPSTREAM = BUILT ? path.resolve(BUILT) : process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
+-export async function fixture() {
++export async function fixture({ hud = false } = {}) {
+   const context = vm.createContext({ console, performance });
+   const modules = new Map();
+   function resolve(spec, from) {
+@@ -33,6 +33,7 @@ export async function fixture() {
+   const root = new vm.SourceTextModule(`
+     export * from './inkwave-public/src/core/ctx.js';
+     export * from './inkwave-public/src/config.js';
++    ${hud ? "export * from './inkwave-public/src/ui/hud.js';" : ''}
+     export * from './inkwave-public/src/game/actor.js';
+     export * from './inkwave-public/src/game/weapons.js';
+     export * from './inkwave-public/src/game/physics.js';
+diff --git a/patches/splatoon3/tests/storm-gauge-display.test.mjs b/patches/splatoon3/tests/storm-gauge-display.test.mjs
+new file mode 100644
+index 0000000..d5b1a89
+--- /dev/null
++++ b/patches/splatoon3/tests/storm-gauge-display.test.mjs
+@@ -0,0 +1,37 @@
++import test from 'node:test';
++import assert from 'node:assert/strict';
++import {fixture} from './storm-effects-fixture.mjs';
++const STEP=1/60,close=(a,b)=>assert.ok(Math.abs(a-b)<1e-8,`${a} != ${b}`);
++async function setup(){const f=await fixture({hud:true});f.G.scene=new f.THREE.Scene();f.G.actors=[];const p=f.G.projectiles=new f.Projectiles(f.G.scene);const a=f.make('charger');a._resolve=()=>{a.grounded=true;};a.special=a.specialCost();return {...f,a,p};}
++const display=a=>a.specialDisplayFrame?.()||{special:a.specialFrac(),specialReady:a.specialReady(),specialActive:!!a.specialActive};
++function release(f){f.a.intent.sub=true;f.tick(f.a);f.a.intent.sub=false;f.tick(f.a);}
++test('used Storm displays full holding gauge then drains from the existing 480F lock',async()=>{
++ const f=await setup(),a=f.a;close(display(a).special,1);a._startSpecial();close(a.special,0);close(display(a).special,1);assert.equal(display(a).specialReady,false);
++ f.tick(a,30);close(display(a).special,1);release(f);close(display(a).special,1);
++ for(let i=1;i<=480;i++){f.tick(a);close(display(a).special,(480-i)/480);assert.equal(display(a).specialReady,false);if(i<480)assert.equal(display(a).specialActive,true);}
++ assert.equal(display(a).specialActive,false);a.addTurf(10);close(display(a).special,10/a.specialCost());f.p.clear();
++});
++test('death and respawn keep display on the same remaining lock; a fresh Actor starts normally',async()=>{
++ const f=await setup(),a=f.a;a._startSpecial();release(f);f.tick(a,60);a.splat(null,'water');f.tick(a,60);close(display(a).special,.75);a.reset();close(display(a).special,.75);a.addTurf(100);close(a.special,0);close(display(a).special,.75);close(display(f.make()).special,0);f.p.clear();
++});
++test('native network packet keeps spent charge at zero while local gauge remains nonzero',async()=>{
++ const f=await setup(),a=f.a;a.nid=1;a._startSpecial();release(f);f.tick(a,120);close(display(a).special,.75);let packet;
++ const sender={byNid:new Map([[1,a]]),out:[],stats:{out:0},s:{tr:{broadcast:m=>{packet=m;}}}};f.NetMatch.prototype._sendTick.call(sender);close(packet.a[0][13],0);assert.equal(a.specialReady(),false);f.p.clear();
++});
++test('actual HUD liquid and percentage follow drain without readiness or gain flashes',async()=>{
++ const f=await setup(),a=f.a,classes=new Set(),effects=[];
++ const hud={_L:{},sp:{style:{},classList:{toggle(k,on){on?classes.add(k):classes.delete(k);}},animate(){effects.push('animate');}},spLiquid:{style:{}},spPct:{textContent:''},_restart(_el,k){effects.push(k);}};
++ const draw=()=>f.HUD.prototype._updSpecial.call(hud,display(a),STEP);
++ draw();assert(classes.has('is-ready'));effects.length=0;a._startSpecial();draw();assert.equal(classes.has('is-ready'),false);assert(classes.has('is-active'));release(f);
++ f.tick(a,240);draw();assert.equal(hud.spPct.textContent,'50%');assert.equal(hud.spLiquid.style.transform,'translateY(50.00px)');assert(classes.has('is-active'));assert.equal(a.specialActive,null);assert.deepEqual(effects,[]);
++ f.tick(a,240);draw();assert.equal(hud.spPct.textContent,'0%');assert.equal(classes.has('is-active'),false);f.p.clear();
++});
++test('ordinary charging and native Slam display remain on their original charge/state',async()=>{
++ const f=await setup(),a=f.make('shooter');a.special=a.specialCost()/2;close(display(a).special,.5);assert.equal(display(a).specialReady,false);a.special=a.specialCost();assert.equal(display(a).specialReady,true);a._startSpecial();assert.equal(a.specialActive.id,'slam');close(display(a).special,0);assert.equal(display(a).specialActive,true);f.p.clear();
++});
++test('projection reuses Game frame and preserves nested HUD resources for desktop and mobile consumers',async()=>{
++ const f=await setup(),a=f.a;a._startSpecial();release(f);f.tick(a,240);
++ const teams=[],map={canvas:{}},frame={teams,map,special:0,specialReady:true,specialActive:false};
++ assert.equal(a.specialDisplayFrame(frame),frame);assert.equal(frame.teams,teams);assert.equal(frame.map,map);close(frame.special,.5);assert.equal(frame.specialReady,false);assert.equal(frame.specialActive,true);
++ f.tick(a,240);a.specialDisplayFrame(frame);close(frame.special,0);assert.equal(frame.specialActive,false);assert.equal(frame.map,map);f.p.clear();
++});
+diff --git a/reports/inkwave-splatoon3-behavior-2026-10-02.md b/reports/inkwave-splatoon3-behavior-2026-10-02.md
+index f77001f..50b90df 100644
+--- a/reports/inkwave-splatoon3-behavior-2026-10-02.md
++++ b/reports/inkwave-splatoon3-behavior-2026-10-02.md
+@@ -190,3 +190,7 @@ Flow の外殻・粒・リボンが GTAO の法線／深度パスに不透明な
+ 検証: 実 Actor/Projectiles/BotBrain/NetMatch と本番 adapter/runtime の CPU 受入 12 件、同じテストの公開 minify build、既存 Bomb/Special/カタログゲート 74 件、30/60/120 Hz で同一固定tickダメージ/ロック推移。GPUカタログには保持・投擲・回復の各RGBサンプルを要求し、以前の即時投擲シナリオを更新した。ローカルCPU結果をブラウザ/GPU成功やSwitch実機一致の代用とはしない。
+ 
+ 最終ローカル結果: gameplay/reliability 全体 755/755、受入 source 12/12・minified 12/12・PR #259 runtime 合成 12/12、Bomb/Special/catalog gate 74/74、独立 workflow/motion gate 10/10、local-quality 8/8。GitHub exact-head browser CI の結果はPRで別記する。
++
++### #469: used Storm gauge display, dependent on PR #322
++
++The HUD now projects #322's existing actor-owned 480F lock instead of showing spent charge as an immediate empty gauge. Holding remains visually full; throwing/death/respawn follow the same remaining lock. Readiness, raw charge and network charge stay unchanged. This is a dependent candidate, with #322's network/rain integration conditions still open; see [the focused report](inkwave-storm-gauge-display-469.md).
+diff --git a/reports/inkwave-storm-gauge-display-469.md b/reports/inkwave-storm-gauge-display-469.md
+new file mode 100644
+index 0000000..4c115be
+--- /dev/null
++++ b/reports/inkwave-storm-gauge-display-469.md
+@@ -0,0 +1,28 @@
++# #469: display the existing used Ink Storm gauge clock
++
++This is a dependent residual fix on PR #322, exact `9f1fcacb19c6f410742fefa3b521ad6579d97b7c`. That PR already owns Storm holding, the GP0 480-frame recharge lock, and its continuation through death and respawn. It does not display the remaining used-special gauge: native `_startSpecial()` spends the charge points immediately, and the Game HUD frame reads that zero through `specialFrac()`.
++
++The Actor now exposes a display snapshot derived from the same existing lock. It shows a full used gauge while the device is held, then `stormGaugeLock / STORM_GAUGE_LOCK` during the existing drain interval. Game projects the snapshot into its existing frame immediately before sending it to HUD and mobile controls, without allocating another per-frame object. The active style continues after the short throwing state ends. Ready state still comes from `specialReady()`, so a full-looking held gauge cannot be reused.
++
++There is no second countdown. `special`, `specialFrac()`, native network packet charge, refill blocking, death penalty, cloud damage, and the ordinary Slam display retain their existing owners. Spent charge remains zero on the wire; the local used-special display is deliberately a separate quantity. This does not add a remote drain-gauge protocol or claim hostile-owner Storm admission is fixed (#598).
++
++## Reference and scope
++
++The S3 verification page explicitly lists a 480F/8-second gauge lock and says the lock continues across death/respawn. This is independent evidence for the existing PR #322 constant, not an inference from rain lifetime:
++https://wikiwiki.jp/splatoon3mix/ブキ/スペシャルウェポン/アメフラシ
++
++The page's base-performance table is marked Ver.10.1.0; this patch does not introduce or re-calibrate timing for later versions or additional gear. It projects the existing actor-owned PR #322 clock. It does not change the unresolved exact throw-startup timing recorded by that dependency.
++
++## Validation
++
++The old #322 tree failed all three new baseline cases because it displayed zero during hold/drain and after respawn. Fixed source cases cover every one of the 480 lock ticks, held-device time, death/respawn, fresh actors, unchanged native packet charge, and ordinary charge/Slam controls. Actual native HUD `_updSpecial` is exercised with display element stand-ins: at half drain it shows 50%, the liquid transform is 50px, active remains set, and no ready or gain flashes occur. This is actual HUD logic in a VM, not a physical browser screenshot.
++
++- Source new tests: 6/6 passed.
++- Existing PR #322 source tests: 12/12 passed.
++- Actual minified output: 18/18 passed (all 6 new cases and 12 dependency cases).
++- Full gameplay/reliability suite on exact PR #322 stack: 761/761 passed, no skips.
++- Build content prefix: 0073f3045bda.
++
++## Integration conditions
++
++This stack is not part of the current PR #536 public tree and is not a claim that all of PR #322 is accepted. The integration review already identified two separate future-composition conditions: #322's `collectStormHit` transformation removes the current network recipient-dt anchor, and its `cloudCoversActor` still uses `dur - .3`, which needs reconciliation with #563's full-duration rain. This residual display patch does not resolve or bypass those conditions.
