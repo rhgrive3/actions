@@ -1,9 +1,10 @@
+import { checkResultContinuation } from './check-inkwave-result-continuation.mjs';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 
 // Runs the existing menu actions against the caller's fixture API. It tests
 // layout and UI state; it does not simulate gameplay or attest a real device.
-export async function checkCoreMenus({ page, entry, config, engineName, evidence, show, settle, geometry, tap, audit, touchCameraReset = false }) {
+export async function checkCoreMenus({ page, entry, config, engineName, evidence, show, settle, geometry, tap, audit, testContinuation = !audit, touchCameraReset = false }) {
   const capture = async (name, selector) => {
     entry.screens[name] = selector ? await geometry(page, selector, name) : 'display';
     if (!audit) assert(await page.locator('.iw-ss__frame, .iw-prev__stage, .iw-wd, .iw-howto__ctl, .iw-lpanel, .iw-lfoot, .iw-pmatch').evaluateAll((els) => els.every((el) => {
@@ -172,6 +173,7 @@ export async function checkCoreMenus({ page, entry, config, engineName, evidence
       await tap(page, '.iw-res__foot button:last-child');
     }
   }
+  if (testContinuation) await checkResultContinuation({ page, tap, settle, capture, entry });
   await page.evaluate(() => { menus._results = null; });
   await settle(page);
   entry.coreMenus = audit ? 'audited' : 'passed';

@@ -116,7 +116,8 @@
         1.175,
         1.35
       ],
-      "spreadPitchGround": 1.6
+      "spreadPitchGround": 1.6,
+      "postStreamDelay": 0.06666666666666667
     },
     "charger": {
       "inkFull": 18.0,
@@ -358,7 +359,7 @@
       "fastDecayPerSecond": 3.3,
       "deathPenalty": 5,
       "environmentDeathPenalty": 10,
-      "source": "https://wikiwiki.jp/splatoon3mix/検証/イカフロー",
+      "source": "https://wikiwiki.jp/splatoon3mix/\u691c\u8a3c/\u30a4\u30ab\u30d5\u30ed\u30fc",
       "status": "community verification; loss values normalized to existing threshold, award weights remain uncalibrated"
     },
     "threshold": 3,
@@ -1310,6 +1311,11 @@
       "parameter": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/spl__SpawnBulletAdditionMovePlayerParam/ZRate",
       "rawValue": 2,
       "factor": 1
+    },
+    "weapons.splatling.postStreamDelay": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/WeaponParam/PostDelayFrame",
+      "rawValue": 4,
+      "factor": 0.016666666666666666
     }
   },
   "gearExtra": {

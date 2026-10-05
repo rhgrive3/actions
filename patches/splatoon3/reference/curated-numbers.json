@@ -1457,6 +1457,14 @@
       "status": "extracted",
       "unit": "multiplier",
       "notes": "Used as a relative ratio with existing local calibration; absolute scale and intermediate mapping unverified."
+    },
+    "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/WeaponParam/PostDelayFrame": {
+      "value": 4,
+      "pointer": "/GameParameters/WeaponParam/PostDelayFrame",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "frames at 60 Hz",
+      "notes": "Heavy Splatling natural stream-end recovery; independent of RepeatFrame and InkRecoverStop."
     }
   }
 }

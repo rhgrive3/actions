@@ -74,7 +74,7 @@ const sourceHashes = () => Object.fromEntries(['styles/mobile.css', 'styles/ui.c
   return [f, hash(fs.readFileSync(original ? path.join(path.resolve(baseline), 'inkwave-public', f) : path.join(source, f)))];
 }));
 result.sourceHashes = sourceHashes();
-const runnerHashes = () => Object.fromEntries(['check-inkwave-responsive.mjs', 'check-inkwave-responsive-core.mjs'].map((f) => [f, hash(fs.readFileSync(path.join(repo, 'scripts', f)))]));
+const runnerHashes = () => Object.fromEntries(['check-inkwave-responsive.mjs', 'check-inkwave-responsive-core.mjs', 'check-inkwave-result-continuation.mjs'].map((f) => [f, hash(fs.readFileSync(path.join(repo, 'scripts', f)))]));
 result.runnerHashes = runnerHashes();
 const configurations = [
   ['phone-portrait', { ...devices['iPhone 13'], viewport: { width: 390, height: 844 } }],
@@ -139,7 +139,8 @@ try {
         if (name === 'desktop') {
           if (section !== 'expansion') {
             await checkCoreMenus({ touchCameraReset, page, entry, config, engineName, evidence, show, settle,
-              geometry: async (page, selector) => { assert(await page.locator(selector).count()); return 'desktop-captured'; }, tap, audit: true });
+              geometry: async (page, selector) => { assert(await page.locator(selector).count()); return 'desktop-captured'; },
+              tap: async (page, selector) => { const el=page.locator(selector).first();await el.scrollIntoViewIfNeeded();await el.click(); }, audit: true, testContinuation: !audit });
             for (const [screen, selector] of [['main', '.iw-main__menu'], ['setup', '.iw-ss__hero'], ['settings', '.iw-settings__panel']]) {
               await show(page, screen);
               assert.equal(await page.locator(selector).evaluate((el) => getComputedStyle(el).position), 'absolute', `${screen}: desktop composition must remain unchanged`);

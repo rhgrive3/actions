@@ -6,6 +6,16 @@ export function splatlingBurst(w, charge) {
   const boundary = w.firstChargeTime / w.chargeTime, c = Math.max(0, Math.min(1, charge));
   return c <= boundary ? w.burstFirst * c / boundary : w.burstFirst + (w.burstMax - w.burstFirst) * (c - boundary) / (1 - boundary);
 }
+// Reserve complete emitted rounds, not fractional duration-equivalents (#543).
+// Ceil the requested count, cap it by paid whole rounds, and run whole cadence
+// slots. Partial duration changes by less than one fire interval; full stays 40.
+export function splatlingReservation(w, charge, availableInk) {
+  if (![w.fireInterval, w.inkPerShot, charge, availableInk].every(Number.isFinite) || !(w.fireInterval > 0) || !(w.inkPerShot > 0)) throw new Error('Invalid Splatling reservation');
+  const requested = Math.max(0, Math.ceil(splatlingBurst(w, charge) / w.fireInterval - 1e-10));
+  const affordable = Math.max(0, Math.floor(Math.max(0, availableInk) / w.inkPerShot + 1e-10));
+  const shots = Math.min(requested, affordable);
+  return { shots, cost: shots * w.inkPerShot, duration: shots * w.fireInterval };
+}
 export function splatlingChargeCap(ink, w) {
   const fraction = Math.max(0, Math.min(1, ink / w.inkFull)), first = w.burstFirst / w.burstMax, boundary = w.firstChargeTime / w.chargeTime;
   return fraction <= first ? fraction / first * boundary : boundary + (fraction - first) / (1 - first) * (1 - boundary);
@@ -199,10 +209,21 @@ export function installWeapons(context, profile) {
       this.spinLoop?.stop(.12); this.spinLoop = null; return;
     }
     const charging = this.charging, charge = this.charge;
+    // First stream tick emits at time zero; do not borrow its pre-update dt
+    // from the next 4F interval. Later near-zero boundaries remain exact.
+    if (this.streaming && this.burstT === this.burstDur) this.cooldown = Math.max(0, this.cooldown);
+    if (Math.abs(this.cooldown) < 1e-10) this.cooldown = 0;
+    // End the final prepaid cadence slot without a floating-point extra tick.
+    if (this.streaming && this.burstT <= dt + 1e-10) this.burstT = Math.min(this.burstT, dt);
     const result = splatling.call(this, dt, input, this.streaming ? { ...w, inkPerShot: 0 } : w);
     if (charging && !input.fire && this.streaming) {
-      this.burstDur = this.burstT = splatlingBurst(w, charge);
-      this.a.ink = Math.max(0, this.a.ink - w.inkFull * this.burstDur / w.burstMax); this.a.lastFire = 0;
+      const reservation = splatlingReservation(w, charge, this.a.ink);
+      this.burstDur = this.burstT = reservation.duration;
+      this.a.ink = Math.max(0, this.a.ink - reservation.cost); this.a.lastFire = 0;
+      if (!reservation.shots) {
+        this.streaming = false; this.charge = this.burstFrac = 0;
+        this.spinLoop?.stop(.12); this.spinLoop = null;
+      }
     }
     return result;
   };
