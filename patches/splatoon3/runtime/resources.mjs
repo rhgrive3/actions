@@ -1,5 +1,20 @@
-let api, tuning;
-export function installResources(context, values) { api = context; tuning = values.resources; }
+let api, tuning, respawnTuning;
+export function respawnTimeForCause(cause, values = respawnTuning || {}) {
+  if (cause === 'water' || cause === 'drowning') return values.water ?? api?.PLAYER?.respawnTime ?? 8.5;
+  if (cause === 'out-of-bounds' || cause === 'fall' || cause === 'void') return values.outOfBounds ?? api?.PLAYER?.respawnTime ?? 8.5;
+  return values.weapon ?? api?.PLAYER?.respawnTime ?? 8.5;
+}
+export function installResources(context, values) {
+  api = context; tuning = values.resources; respawnTuning = values.respawn || {};
+  if (!context.Actor?.prototype?.splat) return;
+  const splat = context.Actor.prototype.splat;
+  context.Actor.prototype.splat = function (attacker, cause = 'weapon') {
+    const wasAlive = this.alive;
+    const result = splat.call(this, attacker, cause);
+    if (wasAlive && !this.alive && cause !== 'weapon') this.respawnTimer = respawnTimeForCause(cause, respawnTuning);
+    return result;
+  };
+}
 export function resourceSurface(a) {
   // Integration may have crossed a paint edge, taken off, or landed this tick.
   // The pre-movement surface is only suitable for movement, not recovery.
@@ -33,10 +48,11 @@ export function updateResources(a, dt) {
     a.hp = Math.min(P.hp, a.hp + (a.submerged ? r.regenRateSwim : r.regenRate) * dt);
   }
   const wasFull = a.ink >= P.inkMax;
-  const weaponDelay = a.weapon.inkRecoverStop ?? r.inkRefillDelay;
+  const rollingRecovery = a.weapon.kind === 'roller' && a.s3?.rollerRefillMode;
+  const weaponDelay = rollingRecovery ? 0 : a.weapon.inkRecoverStop ?? r.inkRefillDelay;
   const delay = Math.max(weaponDelay, a.s3?.inkRecoverStop || 0);
   if(a.s3) a.s3.recoverStopRemaining = Math.max(0,(a.s3.recoverStopRemaining || 0)-dt);
-  const canRefill = a.lastFire + 1e-10 >= delay && (a.s3?.recoverStopRemaining || 0) <= 1e-10 && !a.weaponRunner.busy() && !a.weaponRunner.s3Stored;
+  const canRefill = (rollingRecovery ? !a.weaponRunner.rolling && a.lastFire + 1e-10 >= (a.s3?.inkRecoverStop || 0) : a.lastFire + 1e-10 >= delay) && (a.s3?.recoverStopRemaining || 0) <= 1e-10 && !a.weaponRunner.busy() && !a.weaponRunner.s3Stored;
   if (canRefill) {
     let rate = 0;
     if (a.submerged || a.climbing) rate = r.inkRefillSwim;
