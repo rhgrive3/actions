@@ -323,7 +323,15 @@
         30
       ]
     ],
-    "inkRecoverStop": 1
+    "inkRecoverStop": 1,
+    "readyTimeKid": 0.08333333333333333,
+    "readyTimeSquid": 0.16666666666666666,
+    "holdMoveSpeed": 4.32,
+    "inkSaverCurve": [
+      1,
+      0.825,
+      0.65
+    ]
   },
   "specials": {
     "storm": {
@@ -349,8 +357,8 @@
     ],
     "inkSaverSub": [
       1,
-      0.9,
-      0.8
+      0.825,
+      0.65
     ],
     "inkRecovery": [
       180,
@@ -391,6 +399,11 @@
       1,
       0.4,
       0.1111111111111111
+    ],
+    "specialPower": [
+      0,
+      0.5,
+      1
     ]
   },
   "resources": {
@@ -852,22 +865,22 @@
       "rawValue": 0.55
     },
     "gear.inkSaverSub.0": {
-      "parameter": "data/parameter/1130/misc/params.json#/ConsumeRt_Sub_Lv0",
+      "parameter": "data/parameter/1130/misc/params.json#/ConsumeRt_Sub_Lv2",
       "index": 2,
       "factor": 1,
       "rawValue": 1
     },
     "gear.inkSaverSub.1": {
-      "parameter": "data/parameter/1130/misc/params.json#/ConsumeRt_Sub_Lv0",
+      "parameter": "data/parameter/1130/misc/params.json#/ConsumeRt_Sub_Lv2",
       "index": 1,
       "factor": 1,
-      "rawValue": 0.9
+      "rawValue": 0.825
     },
     "gear.inkSaverSub.2": {
-      "parameter": "data/parameter/1130/misc/params.json#/ConsumeRt_Sub_Lv0",
+      "parameter": "data/parameter/1130/misc/params.json#/ConsumeRt_Sub_Lv2",
       "index": 0,
       "factor": 1,
-      "rawValue": 0.8
+      "rawValue": 0.65
     },
     "gear.inkRecovery.0": {
       "parameter": "data/parameter/1130/misc/params.json#/InkRecoverFrm_Stealth",
@@ -1401,6 +1414,60 @@
       "index": 0,
       "factor": 1,
       "rawValue": 30
+    },
+    "bomb.inkSaverCurve.0": {
+      "parameter": "data/parameter/1130/misc/params.json#/ConsumeRt_Sub_Lv2",
+      "index": 2,
+      "factor": 1,
+      "rawValue": 1
+    },
+    "bomb.inkSaverCurve.1": {
+      "parameter": "data/parameter/1130/misc/params.json#/ConsumeRt_Sub_Lv2",
+      "index": 1,
+      "factor": 1,
+      "rawValue": 0.825
+    },
+    "bomb.inkSaverCurve.2": {
+      "parameter": "data/parameter/1130/misc/params.json#/ConsumeRt_Sub_Lv2",
+      "index": 0,
+      "factor": 1,
+      "rawValue": 0.65
+    },
+    "gearExtra.stormDurationFrames.0": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpInkStorm.game__GameParameterTable.json#/GameParameters/CloudParam/RainyFrame/Low",
+      "index": null,
+      "factor": 1,
+      "rawValue": 480
+    },
+    "gearExtra.stormDurationFrames.1": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpInkStorm.game__GameParameterTable.json#/GameParameters/CloudParam/RainyFrame/Mid",
+      "index": null,
+      "factor": 1,
+      "rawValue": 540
+    },
+    "gearExtra.stormDurationFrames.2": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpInkStorm.game__GameParameterTable.json#/GameParameters/CloudParam/RainyFrame/High",
+      "index": null,
+      "factor": 1,
+      "rawValue": 600
+    },
+    "gearExtra.stormThrowScale.0": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpInkStorm.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeedZSpecUp/Low",
+      "index": null,
+      "factor": 0.8928571428571428,
+      "rawValue": 1.12
+    },
+    "gearExtra.stormThrowScale.1": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpInkStorm.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeedZSpecUp/Mid",
+      "index": null,
+      "factor": 0.8928571428571428,
+      "rawValue": 1.4
+    },
+    "gearExtra.stormThrowScale.2": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpInkStorm.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeedZSpecUp/High",
+      "index": null,
+      "factor": 0.8928571428571428,
+      "rawValue": 1.68
     }
   },
   "gearExtra": {
@@ -1463,6 +1530,16 @@
       90,
       60,
       30
+    ],
+    "stormDurationFrames": [
+      480,
+      540,
+      600
+    ],
+    "stormThrowScale": [
+      1,
+      1.25,
+      1.5
     ]
   },
   "respawnChaseTime": 4.5,
