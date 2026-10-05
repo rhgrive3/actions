@@ -34,7 +34,7 @@ export async function replay(network,kind){
  const os=owner.makeSession('me','me'),rs=receiver.makeSession('p2','me');
  const onm=owner.makeNetMatch(os),rnm=receiver.makeNetMatch(rs);
  const oa=owner.makeActor({nid:0,owner:'me',remote:false,vertical:kind==='vertical'}),ra=receiver.makeActor({nid:0,owner:'me',remote:true});
- const weapon=['horizontal','vertical'].includes(kind)?'roller':['bomb','storm'].includes(kind)?'shooter':kind.startsWith('charger')?'charger':kind;
+ const weapon=['horizontal','vertical'].includes(kind)?'roller':kind==='bomb'?'shooter':kind==='storm'?'charger':kind.startsWith('charger')?'charger':kind;
  oa.weapon=owner.WEAPONS[weapon];ra.weapon=receiver.WEAPONS[weapon];
  for(const [f,a]of[[owner,oa],[receiver,ra]]){a.character.getMuzzle=out=>out.copy(a.pos).add(new f.THREE.Vector3(0,1.05,.3));a.weaponRunner=new f.WeaponRunner(a);a.weaponRunner.s3FlickVertical=kind==='vertical';}
  if(kind.startsWith('charger_oblique')){oa.aimPoint.set(17.53,11.24,49.67);ra.aimPoint.copy(oa.aimPoint);}
@@ -50,7 +50,7 @@ export async function replay(network,kind){
  let incoming=0;const ghost=receiver.projectiles.ghostProjectile.bind(receiver.projectiles);receiver.projectiles.ghostProjectile=(a,e)=>{const p=ghost(a,e)||receiver.projectiles.list.at(-1),id=incoming++;ids[1].set(p,id);births[1].push({id,spawn:p.start.toArray(),velocity:p.vel.toArray(),life:p.life,straight:p.straight,delay:p.delay,grav:p.grav,drag:p.drag,vertical:p.s3Vertical});return p;};
  owner.G.time=1000;receiver.G.time=1000;
  const P=owner.projectiles,w=oa.weapon;
- switch(kind){case'horizontal':case'vertical':P.fireFlick(oa,w);break;case'shooter':P.fireShooter(oa,w,0);break;case'dualies':P.fireDualies(oa,w,0,1);break;case'blaster':P.fireBlaster(oa,w,0);break;case'splatling':P.fireSplatling(oa,w,0);break;case'slosher':P.fireSlosh(oa,w);break;case'bomb':P.throwBomb(oa);break;case'storm':P.throwStorm(oa);break;case'charger':case'charger_half':case'charger_full':case'charger_oblique_partial':case'charger_oblique_full':P.fireCharger(oa,w,kind.endsWith('_full')?1:kind.endsWith('_partial')?.3764321:kind==='charger_half'?.5:0);break;}
+ switch(kind){case'horizontal':case'vertical':P.fireFlick(oa,w);break;case'shooter':P.fireShooter(oa,w,0);break;case'dualies':P.fireDualies(oa,w,0,1);break;case'blaster':P.fireBlaster(oa,w,0);break;case'splatling':P.fireSplatling(oa,w,0);break;case'slosher':P.fireSlosh(oa,w);break;case'bomb':P.throwBomb(oa);break;case'storm':oa.special=oa.specialCost();oa._startSpecial();break;case'charger':case'charger_half':case'charger_full':case'charger_oblique_partial':case'charger_oblique_full':P.fireCharger(oa,w,kind.endsWith('_full')?1:kind.endsWith('_partial')?.3764321:kind==='charger_half'?.5:0);break;}
  const beam=f=>{const b=f.projectiles.beams[0];return{age:b.t,len:b.mesh.scale.z,life:b.life,charge:b.mesh.material.uniforms.uCharge.value,width:b.th,spawn:b.mesh.position.toArray(),end:new f.THREE.Vector3(0,0,b.mesh.scale.z).applyQuaternion(b.mesh.quaternion).add(b.mesh.position).toArray()};};
  const packets=[];os.tr.broadcast=m=>packets.push(JSON.parse(JSON.stringify(m)));
  let bytes=0,packetCount=0,eventCount=0,maxLocal=0,maxRemote=0,sourceBomb=[],remoteBomb=[],sourceCloud=[],remoteCloud=[],sourceBeam=[],remoteBeam=[];
@@ -76,7 +76,7 @@ export async function replay(network,kind){
  for(const s of remoteBomb){const l=sourceBomb.find(l=>Math.abs(l.age-s.age)<1e-8);if(network)assert(l,kind+': missing authoritative bomb/cloud age '+s.age);if(l){result.comparedSteps++;result.maxPositionError=Math.max(result.maxPositionError,distance(l.pos,s.pos));}}
  for(const s of remoteCloud){const l=sourceCloud.find(l=>Math.abs(l.age-s.age)<1e-8);if(network)assert(l,kind+': missing authoritative bomb/cloud age '+s.age);if(l){result.comparedSteps++;result.maxPositionError=Math.max(result.maxPositionError,distance(l.pos,s.pos));}}
  for(let k=0;k<paint[0].length;k++){const a=paint[0][k],b=paint[1][k];assert(b,'missing authoritative paint');result.paintLandingError=Math.max(result.paintLandingError,distance(a.pos,b.pos));if(network)assert.equal(b.seed,a.seed,'paint seed');}
- if(network&&kind==='bomb'){assert.equal(result.paintCount,16,'authoritative Bomb paint must be 1+15');assert.equal(result.remotePaintCount,16,'remote Bomb must replay exactly owner paint once');}
+ if(network&&kind==='bomb'){assert.equal(result.paintCount,16,'authoritative Bomb paint must be 1+15');assert.equal(result.remotePaintCount,16,'remote Bomb must replay exactly owner paint once');}\n if(network&&kind==='storm'){assert(sourceCloud.length>0,'authoritative Storm cloud was not exercised');assert(remoteCloud.length>0,'admitted remote Storm cloud was not reconstructed');}
  if(network){assert(result.beamEndpointError<.001,kind+': native beam endpoint divergence '+result.beamEndpointError);assert(result.maxPositionError<.08,kind+': native trajectory divergence '+result.maxPositionError);assert.equal(births[0].length,births[1].length);assert.equal(paint[0].length,paint[1].length);assert(result.paintLandingError<.01);for(const count of Object.values(result.remaining))assert.equal(count,0,'entity residue');}
  onm.dispose();rnm.dispose();return result;
 }
