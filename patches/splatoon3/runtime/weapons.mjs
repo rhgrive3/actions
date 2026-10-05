@@ -1,5 +1,6 @@
 import { installWeaponEdgecases } from './weapon-edgecases.mjs';
 import { installRollerLogic } from './roller.mjs';
+import { installAgent3WeaponPhysics } from './agent3-weapon-physics.mjs';
 let api;
 export function splatlingBurst(w, charge) {
   const boundary = w.firstChargeTime / w.chargeTime, c = Math.max(0, Math.min(1, charge));
@@ -214,5 +215,6 @@ export function installWeapons(context, profile) {
     if (this.charging && w.kind === 'charger' && Number.isFinite(w.moveSpeedFiring)) return w.moveSpeedFiring;
     return moveSpeed.call(this);
   };
+  installAgent3WeaponPhysics(api, profile);
   installWeaponEdgecases(api);
 }
