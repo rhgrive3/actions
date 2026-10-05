@@ -71,18 +71,25 @@ for (const key of ['shooter','roller-horizontal','roller-vertical']) {
 async function wallDropCase(id, dt = 1/60, ghost = false) {
   const f = await fixture({ site, fidelity:true, floor:true, seed:0x576597 });
   f.wall(4, { height:8 });
-  const a = f.make(id);
+  const weapon = id.startsWith('roller-') ? 'roller' : id;
+  const a = f.make(weapon);
   a.aimPoint.set(0, 1.05, 20);
   let bursts = 0;
   const nativeBurst = f.projectiles._blastBurst;
   f.projectiles._blastBurst = function (...args) { bursts++; return nativeBurst.apply(this,args); };
   if (id === 'blaster') f.projectiles.fireBlaster(a,a.weapon,0);
-  else {
+  else if (id === 'splatling') {
     a.weaponRunner.fidelitySplatlingCharge = 1;
     f.projectiles.fireSplatling(a,a.weapon,0);
+  } else {
+    a.weaponRunner.s3FlickVertical = id === 'roller-vertical';
+    f.projectiles.fireFlick(a,a.weapon);
   }
-  const p = f.projectiles.list[0];
+  let p;
+  if (id === 'roller-horizontal-near') p = f.projectiles.list.find(x=>x.s3FlickUnit===1);
+  else p = f.projectiles.list[0];
   assert.ok(p, id+' projectile created');
+  if (id.startsWith('roller-')) f.projectiles.list.splice(0,f.projectiles.list.length,p);
   if (ghost) p.ghost = true;
   let state = null;
   for (let i=0; i<600 && f.projectiles.list.includes(p); i++) {
@@ -104,15 +111,18 @@ async function wallDropCase(id, dt = 1/60, ghost = false) {
 const wallExpected={
   blaster:{first:[15,30],second:35,last:[20,35],speeds:[.07,.04],radii:[1.3,1,.6]},
   splatling:{first:[15,30],second:5,last:[15,30],speeds:[.06,.06],radii:[1.3,.65,.6]},
+  'roller-horizontal-main':{first:[60,80],second:5,last:[20,35],speeds:[0,.08],radii:[0,0,.5]},
+  'roller-horizontal-near':{first:[60,80],second:5,last:[20,35],speeds:[.06,.08],radii:[1.3,.65,.5]},
+  'roller-vertical':{first:[60,80],second:5,last:[20,35],speeds:[.08,.10],radii:[1.4,.7,.65]},
 };
-for (const id of ['blaster','splatling']) {
+for (const id of Object.keys(wallExpected)) {
   const r=await wallDropCase(id),e=wallExpected[id],s=r.state;
   assert.ok(s.firstFrames>=e.first[0]&&s.firstFrames<=e.first[1],id+' first phase');
   assert.equal(s.secondFrames,e.second,id+' second phase');
   assert.ok(s.lastFrames>=e.last[0]&&s.lastFrames<=e.last[1],id+' last phase');
   near(s.firstSpeed,e.speeds[0]); near(s.secondSpeed,e.speeds[1]);
   near(s.shockRadius,e.radii[0]); near(s.fallRadius,e.radii[1]); near(s.groundRadius,e.radii[2]);
-  for (const radius of e.radii) assert.ok(r.f.paints.some(x=>Math.abs(x.radius-radius)<1e-9),id+' paint radius '+radius);
+  for (const radius of e.radii.filter(x=>x>0)) assert.ok(r.f.paints.some(x=>Math.abs(x.radius-radius)<1e-9),id+' paint radius '+radius);
   if (id==='blaster') assert.equal(r.bursts,1,'terrain Blaster burst remains single-application');
 }
 
@@ -192,4 +202,4 @@ assert.equal(ghost.f.paints.length,0,'ghost wall-drop cannot mutate turf');
   assert.equal(f.paints.length,0,'network ghost wall-drop remains non-authoritative for turf');
  }
 
-console.log(JSON.stringify({status:'passed',contentHash:data.artifactIdentity.contentHash,cases:Object.keys(golden).length,networkModes:3,wallDropFamilies:2,completion:'finite-charger-continuous-collision-wall-drop'}));
+console.log(JSON.stringify({status:'passed',contentHash:data.artifactIdentity.contentHash,cases:Object.keys(golden).length,networkModes:3,wallDropFamilies:3,wallDropCases:Object.keys(wallExpected).length,completion:'finite-charger-continuous-collision-wall-drop'}));
