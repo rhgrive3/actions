@@ -42,6 +42,18 @@ export function adaptTexlibSource(rel, code) {
       '    names: MATERIALS.map((m) => m.name),\n    size,\n    stats: { ms: +(t1 - t0).toFixed(1), compileMs: +(tCompiled - t0).toFixed(1), size },\n    dispose() { out.dispose(); },',
       '    names: activeMaterials.map((m) => m.name),\n    size,\n    stage: stagePack,\n    stats: { ms: +(t1 - t0).toFixed(1), compileMs: +(tCompiled - t0).toFixed(1), size },\n    dispose() { this.disposed = true; out.dispose(); },',
       'createTextureLibrary return object');
+    code = replaceOnceTexlib(code,
+      '  await renderer.compileAsync(scene, cam);',
+      '  try { await renderer.compileAsync(scene, cam); } catch (error) { progs.forEach((p) => p.dispose()); geo.dispose(); out.dispose(); throw error; }',
+      'texlib compile failure cleanup');
+    code = replaceOnceTexlib(code,
+      '  renderer.autoClear = false;\n  renderer.xr.enabled = false;',
+      '  let generated = false;\n  try {\n  renderer.autoClear = false;\n  renderer.xr.enabled = false;',
+      'texlib generation guard');
+    code = replaceOnceTexlib(code,
+      '  renderer.setRenderTarget(prevRT);\n  renderer.autoClear = prevAutoClear;\n  renderer.xr.enabled = prevXR;\n  progs.forEach((p) => p.dispose());\n  geo.dispose();',
+      '  generated = true;\n  } finally {\n    try { renderer.setRenderTarget(prevRT); } finally {\n      renderer.autoClear = prevAutoClear;\n      renderer.xr.enabled = prevXR;\n      progs.forEach((p) => p.dispose());\n      geo.dispose();\n      if (!generated) out.dispose();\n    }\n  }',
+      'texlib render failure cleanup');
     code += '\nif (typeof globalThis !== \'undefined\') { globalThis.__inkwave_stage_surfaces = STAGE_SURFACES; }\nexport { MATERIALS, STAGE_SURFACES };\n';
     return code;
   }

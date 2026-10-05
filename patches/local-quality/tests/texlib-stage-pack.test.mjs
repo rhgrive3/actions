@@ -860,3 +860,39 @@ test('negative control catches the former misplaced runtime-relative factory imp
   assert.equal(result.nextTexlib, null, 'broken route must fail rather than being hidden by injected factory');
   assert.equal(loader.errors.length, 1);
 });
+
+
+test('actual native factory failures retire candidate resources and restore renderer while preserving the live library', async () => {
+  for (const failure of ['compile', 'render']) {
+    const loader = await publishedLoader();
+    const THREE = await loader.get('vendor/three/build/three.module.js');
+    const native = await loader.get('src/world/texlib.js');
+    const runtime = await loader.get('patches/local-quality/texlib.mjs');
+    const renderer = createMockRenderer(THREE);
+    const current = await native.createTextureLibrary(renderer, { size: 256, stage: null });
+    const prevRT = new THREE.WebGLRenderTarget(1, 1);
+    renderer.setRenderTarget(prevRT); renderer.xr.enabled = true;
+    const disposed = { materials: 0, geometry: 0, candidate: 0 };
+    let materialCount = 0;
+    renderer.compileAsync = async (scene) => {
+      materialCount = scene.children.length;
+      for (const mesh of scene.children) mesh.material.addEventListener('dispose', () => disposed.materials++);
+      scene.children[0].geometry.addEventListener('dispose', () => disposed.geometry++);
+      if (failure === 'compile') throw Error('native compilation failed');
+    };
+    renderer.initRenderTarget = (rt) => rt.addEventListener('dispose', () => disposed.candidate++);
+    renderer.render = () => { if (failure === 'render') throw Error('native layer render failed'); };
+    const result = await runtime.syncWorldTexlib({ texlib: current }, 'cargo', renderer, 256, null, native.STAGE_SURFACES);
+    assert.equal(result.nextTexlib, current, 'valid current library remains available on native failure');
+    assert.equal(result.oldTexlib, null);
+    assert.equal(current.disposed, undefined);
+    assert.equal(renderer.getRenderTarget(), prevRT, 'renderer target restored');
+    assert.equal(renderer.autoClear, true);
+    assert.equal(renderer.xr.enabled, true);
+    assert.equal(disposed.materials, materialCount, 'native temporary generator programs all disposed');
+    assert.equal(disposed.geometry, 1, 'native temporary generator geometry disposed once');
+    if (failure === 'render') assert.equal(disposed.candidate, 1, 'initialized native candidate target disposed once');
+    assert.equal(loader.errors.length, 1);
+    current.dispose(); prevRT.dispose();
+  }
+});
