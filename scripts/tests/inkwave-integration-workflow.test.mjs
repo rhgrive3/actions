@@ -4,7 +4,10 @@ import fs from 'node:fs';
 const workflow = fs.readFileSync(new URL('../../.github/workflows/validate-inkwave-update.yml', import.meta.url), 'utf8');
 
 test('integration retains immutable source and independently rebuilt artifact identity checks', () => {
-  assert.equal((workflow.match(/ref: \\$\\{\\{ inputs.source_sha \\|\\| github.sha \\}\\}/g) || []).length, 3);
+  const checkoutCount = (workflow.match(/uses: actions\/checkout@v4/g) || []).length;
+  const pinnedCheckoutCount = (workflow.match(/ref: \$\{\{ inputs\.source_sha \|\| github\.sha \}\}/g) || []).length;
+  assert.ok(checkoutCount > 0);
+  assert.equal(pinnedCheckoutCount, checkoutCount);
   assert.ok(workflow.includes('test "$(git rev-parse HEAD)" = "$SOURCE_SHA"'));
   assert.ok(workflow.includes('node scripts/build-inkwave.mjs inkwave-public .built-site/_site'));
   assert.ok(workflow.includes('test "$(cat .built-site/_site-source-sha.txt)" = "$SOURCE_SHA"'));
