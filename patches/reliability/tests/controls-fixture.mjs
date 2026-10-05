@@ -14,7 +14,7 @@ const MAP_GYRO_BASELINE = process.env.INKWAVE_MAP_GYRO_BASELINE === '1';
 const NEGATIVE = process.env.INKWAVE_CONTROLS_BASELINE === '1';
 const NAVIGATION_BASELINE = process.env.INKWAVE_NAVIGATION_BASELINE === '1';
 const UPSTREAM = BUILT ? path.resolve(BUILT) : process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
-export async function fixture({ diorama = false, match = false } = {}) {
+export async function fixture({ diorama = false, match = false, character = false } = {}) {
   // The negative control omits only the adapter under test from the real order.
   let reliability = adaptReliability;
   if (NEGATIVE || NAVIGATION_BASELINE || MAP_GYRO_BASELINE) {
@@ -38,6 +38,7 @@ export async function fixture({ diorama = false, match = false } = {}) {
   const modules = new Map();
   function resolve(spec, from) {
     if (spec === 'three') return path.join(UPSTREAM, 'vendor/three/build/three.module.js');
+    if (spec.startsWith('three/addons/')) return path.join(UPSTREAM, 'vendor/three/jsm', spec.slice('three/addons/'.length));
     let file = path.resolve(path.dirname(from), spec);
     if (file.startsWith(path.join(ROOT, 'inkwave-public/'))) file = path.join(UPSTREAM, path.relative(path.join(ROOT, 'inkwave-public'), file));
     if (!BUILT && file.startsWith(path.join(UPSTREAM, 'patches/'))) file = path.join(ROOT, path.relative(UPSTREAM, file));
@@ -57,6 +58,7 @@ export async function fixture({ diorama = false, match = false } = {}) {
     export * from './inkwave-public/src/config.js';
     export * from './inkwave-public/src/game/actor.js';
     export * from './inkwave-public/src/game/weapons.js';
+    ${character ? "export * from './inkwave-public/src/game/character.js'; export {installRollerMotion} from './patches/splatoon3/runtime/roller.mjs'; export {installWalkMotion} from './patches/splatoon3/runtime/walk.mjs';" : ''}
     export * from './inkwave-public/src/game/physics.js';
     export * from './inkwave-public/src/game/player.js';
     ${diorama ? "export * from './inkwave-public/src/ui/diorama.js';" : ''}

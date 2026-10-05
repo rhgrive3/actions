@@ -498,3 +498,10 @@ Full gameplay aggregate 1028 pass / 0 fail / 1 optional emitted-mode test. Sourc
 ## 2026-10-05: #142 portrait guard ownership
 
 The existing mandatory rotate UI now suppresses hidden-control pointer routing and offline fixed simulation until landscape returns. Online keeps world time running and blocks only local control. Rotation does not mutate manual pause or menu/history ownership, and resumes with neutral input/zero elapsed time. See reports/inkwave-portrait-guard-2026-10-05.md for native/full-emitted regression boundaries and unverified physical-device/peer limits.
+## 2026-10-05 main/sub action ownership (#530)
+
+Bomb aim/release now owns the final native dispatcher, cancels interruptible main state without a release shot, and clears a buffered emergence attack. Committed windup/Dodge clocks complete before new sub admission. Existing PR302 Splatling refund and PR318 post-shot gates retain ownership; their mechanics are not duplicated. Source/emitted21/21, fixed cadence and actual Actor/Character checks passed. Independent review also corrected cooldown debt, stale Roller visual release, actual sub-payment recovery attribution and retained Dualies fire suppression. Full evidence and pending browser/device limits: [sub action report](inkwave-sub-action-ownership-2026-10-05.md).
+
+## 2026-10-05 special movement spawn boundary (#582)
+
+Slam and Storm movement now apply the existing enemy spawn clamp once after native collision resolution; Slam does so before authoritative impact. Original radius, height condition, velocity response, phase timers and damage/paint rules are retained. Source/emitted10/10 and full1101/0 pass; all4 current map spawn settings, fixed cadence, ordinary movement and native owner/remote packet position are covered. [Evidence and limits](inkwave-special-spawn-boundary-2026-10-05.md).

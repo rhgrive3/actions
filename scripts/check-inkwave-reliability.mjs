@@ -467,6 +467,24 @@ try {
       await page.evaluate(() => { actionPointer('jump', 503, 'pointerup'); actionPointer('fire', 501, 'pointerup'); advance(1 / 60); });
       assert.equal(await page.evaluate(() => actionActor.intent.jump), false);
       entry.checks.push('native-taps-and-DOM-touch-repress-reach-actual-Actor-Runner-Character-once');
+      const subOwnership = await page.evaluate(() => {
+        const old = G.projectiles, shots = [];
+        try {
+          mobile.reset(); mobile.moveX = mobile.moveY = 0; input.lastDevice = 'touch';
+          actionActor.setWeapon('shooter'); actionActor.kidT = 1; actionActor.ink = 100;
+          actionActor._prevIntent.fire = actionActor._prevIntent.sub = false;
+          G.projectiles = { update() {}, fireShooter() { shots.push('main'); }, throwBomb() { shots.push('bomb'); } };
+          actionPointer('sub', 601, 'pointerdown'); actionPointer('fire', 602, 'pointerdown');
+          for (let i = 0; i < 20; i++) advance(1 / 60);
+          const aiming = actionActor.weaponRunner.aimingSub, heldShots = [...shots];
+          actionPointer('sub', 601, 'pointerup'); advance(1 / 60); const releaseShots = [...shots];
+          actionPointer('fire', 602, 'pointerup'); for (let i = 0; i < 30; i++) advance(1 / 60);
+          return { aiming, heldShots, releaseShots, finalShots: shots };
+        } finally { mobile.reset(); G.projectiles = old; actionActor.setWeapon('dualies'); }
+      });
+      assert.deepEqual(subOwnership, { aiming: true, heldShots: [], releaseShots: ['bomb'], finalShots: ['bomb'] });
+      entry.checks.push('native-DOM-sub-hold-and-release-exclude-simultaneous-main-and-phantom-replay');
+
       }
       if (!focusedOnly && !negativeControl) {
         const previousViewport=page.viewportSize();
