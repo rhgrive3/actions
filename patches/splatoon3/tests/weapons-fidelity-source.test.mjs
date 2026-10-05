@@ -11,7 +11,9 @@ test('weapons fidelity composes through the real gameplay adapter order', () => 
   const out = adaptSource('src/game/weapons.js', source);
   assert.match(out, /advanceFidelityProjectile\(p, dt\)/);
   assert.match(out, /fidelityProjectileTargets\(this, p\)/);
-  assert.match(out, /fidelityPlayerCollisionRadius\(p\)/);
+  assert.match(out, /p\.fidelityImpactActor === e/);
+  assert.match(out, /p\.fidelityImpactT/);
+  assert.match(out, /const elapsed = Math\.max\(0, dt - Math\.max\(0, p\.delay \|\| 0\)\)/);
   assert.match(out, /configureFidelityFlick\(p, a, w, i, ang, sp\)/);
   assert.match(out, /applyFidelitySlosherSplash/);
   assert.match(out, /WEAPONS_FIDELITY_EPSILON/);
