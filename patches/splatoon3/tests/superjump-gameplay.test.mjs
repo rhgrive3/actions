@@ -197,114 +197,52 @@ test('#362 30/60/120Hz preserve one committed destination and flight announcemen
   }
 });
 
-for (const ground of ['unpainted', 'enemy']) test(`#645 plain Super Jump landing on ${ground} ground creates 0 paint, adds 0 turf points and 0 special gauge`, async t => {
+// Reuse the same installed fixture for these related landing controls. Each
+// case gets a fresh Actor and scoped event subscriptions; importing/building
+// the native engine five times would only duplicate expensive fixture work.
+test('#645 ordinary landing and special-owned paint controls', async t => {
   const f = await boot(); t.after(f.close);
-  const a = f.make({ team: 0 });
-  a.grounded = true;
-  a.s3.jumpChargeTime = STEP;
-  a.s3.jumpFlightTime = 96 * STEP;
-
-  let paintSplatCalls = 0;
-  let turfEmitted = 0;
-  f.on('turf', () => turfEmitted++);
-  f.G.paint.sample = () => ground === 'enemy' ? 2 : 0;
-  f.G.paint.splat = (pos, rad, team, opts) => {
-    paintSplatCalls++;
-    return 10;
-  };
-
-  const initialTurf = a.stats.turf;
-  const initialSpecial = a.special;
-
-  assert.equal(a.superJump(new f.THREE.Vector3(20, 0, 0)), true);
-  // Charge takes 1 tick, flight takes 96 ticks. Tick 98 reaches k >= 1 landing.
-  f.tick(a, 98);
-
-  assert.equal(a.superJumpState, null, 'super jump finished and landed');
-  assert.equal(paintSplatCalls, 0, 'plain Super Jump landing must not call G.paint.splat');
-  assert.equal(a.stats.turf, initialTurf, 'plain Super Jump adds 0 personal turf');
-  assert.equal(a.special, initialSpecial, 'plain Super Jump adds 0 special gauge');
-  assert.equal(turfEmitted, 0, 'no turf events emitted from landing');
+  for (const { ground, remote } of [
+    { ground: 'unpainted', remote: false },
+    { ground: 'enemy', remote: false },
+    { ground: 'enemy', remote: true },
+  ]) {
+    await t.test(`${remote ? 'remote Actor' : 'owner path'} lands on ${ground} without paint, turf or SP and retains feedback`, () => {
+      const a = f.make({ team: 0, isLocal: false, remote });
+      a.s3.jumpChargeTime = STEP; a.s3.jumpFlightTime = 96 * STEP;
+      let paintCalls = 0, turfEvents = 0, bursts = 0, lands = 0, shakes = 0;
+      f.G.paint.sample = () => ground === 'enemy' ? 2 : 0;
+      f.G.paint.splat = () => { paintCalls++; return 10; };
+      const previousFx = f.G.fx;
+      f.G.fx = { burst: () => bursts++, ring: () => {} };
+      const unsubscribe = [f.on('turf', () => turfEvents++),
+        f.on('superjump:land', () => lands++), f.on('shake', () => shakes++)];
+      const initialTurf = a.stats.turf, initialSpecial = a.special;
+      try {
+        assert.equal(a.superJump(new f.THREE.Vector3(20, 0, 0)), true);
+        f.tick(a, 50);
+        assert.equal(a.superJumpState.phase, 'flight');
+        assert.equal(paintCalls, 0);
+        f.tick(a, 48);
+        assert.equal(a.superJumpState, null, 'landing completes');
+        assert.equal(paintCalls, 0, 'ordinary landing paints no ink');
+        assert.equal(a.stats.turf, initialTurf, 'no personal turf credit');
+        assert.equal(a.special, initialSpecial, 'no special gauge credit');
+        assert.equal(turfEvents, 0, 'no turf events');
+        assert.ok(bursts > 0, 'landing VFX remains');
+        assert.equal(lands, 1, 'exactly one landing event');
+        assert.equal(shakes, 0, 'nonlocal Actor does not shake local screen');
+        assert.equal(a.form, 'kid');
+      } finally { for (const off of unsubscribe) off(); f.G.fx = previousFx; }
+    });
+  }
+  await t.test('special-owned _slamImpact still paints and awards turf without special gain', () => {
+    const a = f.make({ team: 0 }); let paintCalls = 0;
+    f.G.paint.splat = () => { paintCalls++; return 12; };
+    const initialTurf = a.stats.turf, initialSpecial = a.special;
+    a._slamImpact({ radius: 4.5 });
+    assert.equal(paintCalls, 10, 'one center plus nine radial splats');
+    assert.ok(a.stats.turf > initialTurf);
+    assert.equal(a.special, initialSpecial);
+  });
 });
-
-test('#645 plain Super Jump landing preserves landing VFX burst and superjump:land event with zero paint', async t => {
-  const f = await boot(); t.after(f.close);
-  const a = f.make({ team: 0 });
-  a.s3.jumpChargeTime = STEP;
-  a.s3.jumpFlightTime = 96 * STEP;
-
-  let burstCount = 0;
-  let landEvents = 0;
-  let paintCalls = 0;
-  f.G.fx = { burst: () => burstCount++, ring: () => {} };
-  f.G.paint.splat = () => { paintCalls++; return 5; };
-  f.on('superjump:land', () => landEvents++);
-
-  a.superJump(new f.THREE.Vector3(20, 0, 0));
-  f.tick(a, 98);
-
-  assert.equal(a.superJumpState, null);
-  assert.equal(paintCalls, 0, 'zero gameplay paint at landing');
-  assert.ok(burstCount > 0, 'landing VFX burst is preserved');
-  assert.equal(landEvents, 1, 'superjump:land event emitted');
-  assert.equal(a.stats.turf, 0);
-  assert.equal(a.special, 0);
-});
-
-test('#645 native remote Super Jump visual/landing regression creates 0 paint/turf/SP and preserves feedback', async t => {
-  const f = await boot(); t.after(f.close);
-  const a = f.make({ team: 0, isLocal: false, remote: true });
-  a.s3.jumpChargeTime = STEP;
-  a.s3.jumpFlightTime = 96 * STEP;
-
-  let burstCount = 0;
-  let landEvents = 0;
-  let shakeEvents = 0;
-  let paintCalls = 0;
-  f.G.fx = { burst: () => burstCount++, ring: () => {} };
-  f.G.paint.splat = () => { paintCalls++; return 10; };
-  f.on('superjump:land', () => landEvents++);
-  f.on('shake', () => shakeEvents++);
-
-  const initialTurf = a.stats.turf;
-  const initialSpecial = a.special;
-
-  assert.equal(a.superJump(new f.THREE.Vector3(20, 0, 0)), true);
-  f.tick(a, 50);
-  assert.equal(a.superJumpState.phase, 'flight');
-  assert.equal(paintCalls, 0);
-
-  // Advance flight to landing
-  f.tick(a, 48);
-
-  assert.equal(a.superJumpState, null, 'remote super jump state cleared on landing');
-  assert.equal(paintCalls, 0, 'remote landing creates 0 paint');
-  assert.equal(a.stats.turf, initialTurf, 'remote landing adds 0 personal turf score');
-  assert.equal(a.special, initialSpecial, 'remote landing adds 0 special gauge');
-  assert.ok(burstCount > 0, 'remote landing VFX burst preserved');
-  assert.equal(landEvents, 1, 'superjump:land event emitted for remote landing');
-  assert.equal(shakeEvents, 0, 'remote actor landing does not emit local screen shake');
-  assert.equal(a.form, 'kid', 'actor returns to kid form');
-});
-
-test('#645 special-owned _slamImpact paint and turf remain intact', async t => {
-  const f = await boot(); t.after(f.close);
-  const a = f.make({ team: 0 });
-
-  let paintSplatCalls = 0;
-  f.G.paint.splat = () => {
-    paintSplatCalls++;
-    return 12;
-  };
-
-  const initialTurf = a.stats.turf;
-  const initialSpecial = a.special;
-
-  // Trigger special-owned slam impact (e.g. Tidal Slam / Triple Splashdown)
-  a._slamImpact({ radius: 4.5 });
-
-  assert.equal(paintSplatCalls, 10, '_slamImpact executes 1 center + 9 radial paint splats');
-  assert.ok(a.stats.turf > initialTurf, '_slamImpact awards un-special turf score via addTurfNoSpecial');
-  assert.equal(a.special, initialSpecial, 'addTurfNoSpecial does not charge special');
-});
-
