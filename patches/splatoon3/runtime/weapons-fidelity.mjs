@@ -267,6 +267,9 @@ export function installWeaponsFidelity(context,profile) {
     }else if(w.kind==='roller'){
       const vertical=p.fidelityMode==='vertical'||p.ghost&&Math.round(p.straight*60)===Math.round(w.ballistics.verticalStraightTime*60);
       p.fidelityMode=vertical?'vertical':'horizontal';p.s3Vertical=vertical;
+      // WideSwing has no recurring intermediate splash system. Impact paint
+      // and the separately owned VerticalSwing trail remain unchanged.
+      if(!vertical)p.trailEvery=0;
       if(!p.fidelityRollerUnit){
         const units=raw[vertical?'VerticalSwingUnitGroupParam':'WideSwingUnitGroupParam'].Unit;
         let best=Infinity;
