@@ -166,7 +166,7 @@ visit('patches/splatoon3/bootstrap.mjs');
 // #61's accepted startup baseline preloaded 145 modules (131 core + 14 range).
 // Later workstreams add these runtime dependencies to the static graph. Keep
 // them in the immutable revision + Service Worker precache, but let their
-// importing modules request them instead of adding 16 new eager preload
+// importing modules request them instead of adding 19 new eager preload
 // requests to the critical HTML. Browser startup/offline CI validates the
 // resulting dependency fetch path and timing.
 const deferredIntegrationPreloads = new Set([
@@ -184,13 +184,14 @@ const deferredIntegrationPreloads = new Set([
   'patches/splatoon3/issue-498-adapter.mjs',
   'patches/splatoon3/runtime/issue-415-adapter.mjs',
   'patches/splatoon3/runtime/issue-416-adapter.mjs',
+  'patches/splatoon3/runtime/issue-507-splash-cycle.mjs',
   'patches/splatoon3/runtime/movement-physics.mjs',
   'patches/splatoon3/runtime/roller-model.mjs',
   'patches/splatoon3/runtime/sub-special-fidelity.mjs',
   'patches/splatoon3/runtime/weapon-edgecases.mjs',
-  'patches/splatoon3/runtime/weapons-collision.mjs',
-  'patches/splatoon3/runtime/weapons-charger-flight.mjs',
   'patches/splatoon3/runtime/weapons-fidelity.mjs',
+  'patches/splatoon3/runtime/weapons-charger-flight.mjs',
+  'patches/splatoon3/runtime/weapons-collision.mjs',
 ]);
 const preloadOrder = order.filter((f) => !deferredIntegrationPreloads.has(f));
 const preload = preloadOrder.filter((f) => fs.existsSync(path.join(BUILD, f))).map((f) => `<link rel="modulepreload" href="./${f}">`).join('\n');
