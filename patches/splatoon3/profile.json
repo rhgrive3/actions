@@ -13,7 +13,8 @@
     "enemyInkDps": 18,
     "enemyInkDamageCap": 40,
     "s3GroundAccel": 36,
-    "s3AttackGroundAccel": 72
+    "s3AttackGroundAccel": 72,
+    "respawnTime": 8.5
   },
   "weapons": {
     "shooter": {
@@ -34,7 +35,12 @@
       "ballistics": {
         "endSpeed": 89.58000000000001
       },
-      "fieldCollisionRadius": 0.2
+      "fieldCollisionRadius": 0.2,
+      "firstShotDelay": 0.05,
+      "swimFirstShotDelay": 0.2,
+      "postFireSwimLock": 0.06666666666666667,
+      "jumpSpreadHold": 0.4166666666666667,
+      "jumpSpreadRecoverEnd": 1.1666666666666667
     },
     "dualies": {
       "inkPerShot": 0.72,
@@ -146,7 +152,12 @@
       "chargeTime": 1,
       "inkRecoverStop": 0.3333333333333333,
       "damagePartialMax": 80,
-      "fieldCollisionRadius": 0.02
+      "fieldCollisionRadius": 0.02,
+      "airChargeRate": 0.3333333333333333,
+      "emptyChargeRate": 0.3333333333333333,
+      "minReleaseTime": 0.13333333333333333,
+      "storedFireDelay": 0.5166666666666667,
+      "allowEmptyCharge": true
     },
     "roller": {
       "rollSpeed": 7.92,
@@ -396,9 +407,9 @@
     "inkRefillSwim": 33.333333333333336,
     "inkRefillKid": 10,
     "inkRefillDelay": 0.3333333333333333,
-    "regenDelay": 1.3,
-    "regenRate": 22,
-    "regenRateSwim": 60,
+    "regenDelay": 1,
+    "regenRate": 12.5,
+    "regenRateSwim": 100,
     "enemyInkDps": 18,
     "enemyInkDamageCap": 40,
     "enemyInkGrace": 0,
@@ -480,7 +491,6 @@
       "projectile brake-state defaults, charge-dependent Splatling velocity, collision radii and paint geometry remain unverified",
       "Squid Roll angle/minimum speed/chain reset/armor break vs overflow and duration; consecutive retention is applied once per launch but engine interpretation remains unverified",
       "Surge burst velocity/armor/partial charge and post-wall air control (including the Ver.11.3.0 lateral-distance fix); 45F base charge timing is pinned",
-      "HP regen delay/rate and enemy ink grace/contact-damage recovery; post-movement contact and partial-tick grace arithmetic are regression-verified only",
       "superjump airborne vulnerability window/trajectory/landing paint and respawn timing/armor; raw 80F preparation/138F flight are pinned and landing protection is removed per Nintendo 9.3.0 fix",
       "aim response, gyro, animation, terrain/network and physical-device validation; see movement-resources comparison matrix and Switch/iOS/two-peer measurement protocol",
       "upstream acceleration/braking/turn/air-control/jump and landing feel",
@@ -491,7 +501,8 @@
       "PR64 completion: finite Charger flight, continuous collision, source-mirrored unit layouts and model-labelled interpolation; physical Switch parity remains unverified.",
       "Roller contact visibility preserves the native contact volume and tests owner-to-nearest-drum-to-target segments against solid OBBs; exact S3 drum collider and pushback are not calibrated.",
       "Roller rolling refill uses the last actual ink-consumption countdown, preserving larger unfinished prior swing/sub locks and never refilling during active rolling. Horizontal43F/vertical58F remain independent.",
-      "Blaster .4234 terrain/player blast radius ratio only clips player hit admission. No unverified damage multiplier, boss blast reduction, visual or paint shrink is inferred."
+      "Blaster .4234 terrain/player blast radius ratio only clips player hit admission. No unverified damage multiplier, boss blast reduction, visual or paint shrink is inferred.",
+      "Rescued from PR #63: shooter fire gates, charger air/empty/min-release/store timing, HP regen rates and death-cause respawn routing remain regression-backed; physical-device confirmation is still pending."
     ],
     "movementResourcesEvidence": "reports/inkwave-movement-resources-2026-10-02.md"
   },
@@ -3109,5 +3120,10 @@
       "quickRespawnAPScale": 0.15,
       "specialSaverAPScale": 0.7
     }
+  },
+  "respawn": {
+    "weapon": 8.5,
+    "water": 7,
+    "outOfBounds": 5.5
   }
 }

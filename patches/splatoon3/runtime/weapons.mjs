@@ -2,6 +2,7 @@ import { installContactRecovery } from './contact-recovery.mjs';
 import { installWeaponEdgecases } from './weapon-edgecases.mjs';
 import { installRollerLogic } from './roller.mjs';
 let api;
+const EPS = 1e-10;
 export function splatlingBurst(w, charge) {
   const boundary = w.firstChargeTime / w.chargeTime, c = Math.max(0, Math.min(1, charge));
   return c <= boundary ? w.burstFirst * c / boundary : w.burstFirst + (w.burstMax - w.burstFirst) * (c - boundary) / (1 - boundary);
@@ -59,11 +60,52 @@ export function installWeapons(context, profile) {
   WeaponRunner.prototype.reset = function (...args) {
     const result = reset.apply(this, args);
     this.s3Stored = null; this.s3Turret = false; this.s3FlickVertical = false; this.s3BlasterWindup = 0;
-    this.s3SloshRecovery = false; return result;
+    this.s3SloshRecovery = false; this.s3ChargerHeldTime = 0;
+    this.s3ShooterHeld = false; this.s3ShooterPendingFirst = false; this.s3ShooterFirstRemaining = 0;
+    this.s3SwimFireQueued = false; this.s3SwimFireRemaining = 0; this.s3PostFireLockActive = false;
+    this.s3WasSquid = this.a?.form === 'squid';
+    this.s3WasGrounded = !!this.a?.grounded; this.s3JumpSpreadAge = null;
+    return result;
   };
   WeaponRunner.prototype.busy = function () {
+    if (this.a.weapon.kind === 'shooter') {
+      if (this.s3ShooterPendingFirst) return true;
+      if (this.s3PostFireLockActive) {
+        if (this.a.lastFire + EPS < (this.a.weapon.postFireSwimLock || 0)) return true;
+        this.s3PostFireLockActive = false;
+      }
+    }
     if (['charger','splatling'].includes(this.a.weapon.kind) && this.a.intent.squid && this.a._squidPressT > this.a._firePressT) return false;
     return this.s3BlasterWindup > 0 || busy.call(this);
+  };
+  const runnerUpdate = WeaponRunner.prototype.update;
+  WeaponRunner.prototype.update = function (dt, input) {
+    const weapon = this.a.weapon;
+    if (weapon.kind === 'shooter') {
+      if (this.s3WasGrounded && !this.a.grounded) this.s3JumpSpreadAge = 0;
+      if (this.s3JumpSpreadAge != null) this.s3JumpSpreadAge += dt;
+      this.s3WasGrounded = !!this.a.grounded;
+      let next = input;
+      const isSquid = this.a.form === 'squid';
+      if (this.s3WasSquid && !isSquid && this.a.intent?.fire) {
+        this.s3SwimFireQueued = true;
+        this.s3SwimFireRemaining = weapon.swimFirstShotDelay || 0;
+      }
+      this.s3WasSquid = isSquid;
+      if (this.s3SwimFireQueued) {
+        this.s3SwimFireRemaining = Math.max(0, this.s3SwimFireRemaining - dt);
+        if (this.s3SwimFireRemaining > EPS) next = { ...next, fire: false, firePressed: false };
+        else {
+          next = { ...next, fire: true, firePressed: true };
+          this.s3SwimFireQueued = false; this.s3SwimFireRemaining = 0;
+        }
+      }
+      const locked = this.s3PostFireLockActive && this.a.lastFire + EPS < (weapon.postFireSwimLock || 0);
+      if (!locked && this.s3PostFireLockActive) this.s3PostFireLockActive = false;
+      if (locked || this.s3ShooterPendingFirst) next = { ...next, sub: false, subReleased: false };
+      input = next;
+    }
+    return runnerUpdate.call(this, dt, input);
   };
   const charger = WeaponRunner.prototype._charger;
   // S3 keeps a full charge only while ZR stays down; letting go of ZR before
@@ -76,28 +118,47 @@ export function installWeapons(context, profile) {
     r.chargeLoop?.stop(.05); r.chargeLoop = null;
   };
   WeaponRunner.prototype._charger = function (dt, inp, w) {
-    const a = this.a, held = !!a.intent.fire;
+    const a = this.a, held = a.form === 'squid' ? !!a.intent.fire : !!(inp.fire || a.intent.fire);
     if (this.s3Stored && !held) cancelStored(this);
+    if (this.s3Stored) {
+      this.s3Stored.remaining = Math.max(0, this.s3Stored.remaining - dt);
+      this.s3Stored.fireDelay = Math.max(0, (this.s3Stored.fireDelay || 0) - dt);
+      if (this.s3Stored.remaining <= EPS) cancelStored(this);
+    }
     if (a.form === 'squid') {
       if (this.charging) {
-        // Submerging with ZR already released never opens a keep window.
-        if (this.charge >= .999 && held) this.s3Stored = { charge: 1, remaining: w.keepChargeTime };
-        this.charging = false; this.charge = 0; this.chargeT = 0;
+        if (this.charge >= .999 && held) this.s3Stored = {
+          charge: 1,
+          remaining: Math.max(0, w.keepChargeTime - dt),
+          fireDelay: Math.max(0, (w.storedFireDelay || 0) - dt),
+        };
+        this.charging = false; this.charge = 0; this.chargeT = 0; this.s3ChargerHeldTime = 0;
         this.chargeLoop?.stop(.05); this.chargeLoop = null;
-      }
-      if (this.s3Stored) {
-        this.s3Stored.remaining -= dt;
-        if (this.s3Stored.remaining <= 1e-10) this.s3Stored = null;
       }
       return;
     }
+    let effectiveInp = inp;
     if (this.s3Stored) {
-      // Held through the keep, so the store survives emergeDelay with inp.fire
-      // masked, and is restored once the actor forwards the trigger again.
-      if (!inp.fire) { this.charge = 1; return; }
-      this.charge = this.s3Stored.charge; this.chargeT = 1; this.charging = true; this.s3Stored = null;
+      this.charge = 1;
+      if (this.s3Stored.fireDelay > EPS || !held) return;
+      this.chargeT = 1; this.charging = true; this.s3ChargerHeldTime = w.minReleaseTime || 0; this.s3Stored = null;
+      if (!inp.fire) effectiveInp = { ...inp, fire: true };
     }
-    return charger.call(this, dt, inp, w);
+    if (this.charging && !held && this.s3ChargerHeldTime + EPS < (w.minReleaseTime || 0)) {
+      cancelStored(this); this.s3ChargerHeldTime = 0; return;
+    }
+    let rate = 1;
+    if (!a.grounded) rate = Math.min(rate, w.airChargeRate ?? 1);
+    if (a.ink + EPS < (w.inkMin || 0)) rate = Math.min(rate, w.emptyChargeRate ?? 1);
+    const actualInk = a.ink, spoofInk = !!(w.allowEmptyCharge && effectiveInp.fire && a.ink + EPS < (w.inkMin || 0));
+    if (spoofInk) a.ink = w.inkFull;
+    const wasCharging = this.charging;
+    let result;
+    try { result = charger.call(this, dt * rate, effectiveInp, w); }
+    finally { if (spoofInk) a.ink = actualInk; }
+    if (held && (wasCharging || this.charging)) this.s3ChargerHeldTime += dt;
+    else if (!this.charging) this.s3ChargerHeldTime = 0;
+    return result;
   };
   WeaponRunner.prototype._slosher = function (dt, inp, w) {
     const a = this.a, epsilon = 1e-10;
@@ -159,7 +220,22 @@ export function installWeapons(context, profile) {
     // The upstream blaster reads `spread`, while the pinned profile supplies
     // Stand_DegSwerve as spreadGround. Connect both ground and jump values.
     if (w.kind === 'blaster') return this.a.grounded ? w.spreadGround : w.spreadAir;
+    if (w.kind === 'shooter' && this.s3JumpSpreadAge != null) {
+      const age = this.s3JumpSpreadAge, hold = w.jumpSpreadHold ?? 0, end = Math.max(hold + EPS, w.jumpSpreadRecoverEnd ?? hold);
+      let base;
+      if (age <= hold + EPS) base = w.spreadAir;
+      else if (age < end - EPS) base = w.spreadAir + (w.spreadGround - w.spreadAir) * ((age - hold) / (end - hold));
+      else { base = w.spreadGround; this.s3JumpSpreadAge = null; }
+      const first = w.spreadFirst ?? .45;
+      return base * (first + (1 - first) * this.bloom);
+    }
     return w.kind === 'dualies' && this.s3Turret ? w.spreadLock : spread.call(this, w);
+  };
+  const fireShooter = Projectiles.prototype.fireShooter;
+  Projectiles.prototype.fireShooter = function (a, weapon, spreadDeg) {
+    const result = fireShooter.call(this, a, weapon, spreadDeg);
+    if (a.weaponRunner && weapon.kind === 'shooter') a.weaponRunner.s3PostFireLockActive = true;
+    return result;
   };
   const fireCharger = Projectiles.prototype.fireCharger;
   Projectiles.prototype.fireCharger = function (a, w, charge) {
@@ -182,10 +258,41 @@ export function installWeapons(context, profile) {
   };
   const auto = WeaponRunner.prototype._auto;
   WeaponRunner.prototype._auto = function (dt, input, w) {
+    if (w.kind === 'shooter') {
+      if (this.cooldown <= EPS) this.cooldown = 0;
+      const pressed = !!input.fire && !this.s3ShooterHeld;
+      if (!input.fire) this.s3ShooterHeld = false;
+      else if (pressed && !this.s3ShooterPendingFirst) {
+        this.s3ShooterHeld = true;
+        const emerged = this.a.kidT <= (w.swimFirstShotDelay || 0) + EPS;
+        this.s3ShooterPendingFirst = true;
+        this.s3ShooterFirstRemaining = emerged ? 0 : (w.firstShotDelay || 0);
+      }
+      if (this.s3ShooterPendingFirst) {
+        this.s3ShooterFirstRemaining = Math.max(0, this.s3ShooterFirstRemaining - dt);
+        this.firingT = .35; this.a.fireFacing = .5;
+        this.cooldown = Math.max(0, this.cooldown);
+        if (this.s3ShooterFirstRemaining > EPS) return;
+        this.s3ShooterFirstRemaining = 0;
+        this.s3ShooterPendingFirst = false;
+        const inkBefore = this.a.ink;
+        const result = auto.call(this, dt, { ...input, fire: true }, w);
+        if (this.a.ink < inkBefore - EPS) this.s3PostFireLockActive = true;
+        return result;
+      }
+      if (!input.fire) {
+        this.s3ShooterFirstRemaining = 0;
+        return auto.call(this, dt, input, w);
+      }
+      const inkBefore = this.a.ink;
+      const result = auto.call(this, dt, input, w);
+      if (this.a.ink < inkBefore - EPS) this.s3PostFireLockActive = true;
+      return result;
+    }
     if (w.kind !== 'blaster') return auto.call(this, dt, input, w);
     if (this.s3BlasterWindup > 0) {
       this.s3BlasterWindup -= dt; this.firingT = .35;
-      if (this.s3BlasterWindup > 1e-10) return;
+      if (this.s3BlasterWindup > EPS) return;
       this.s3BlasterWindup = 0;
       return auto.call(this, dt, { ...input, fire: true }, { ...w, fireInterval: w.fireInterval - w.preDelay });
     }
