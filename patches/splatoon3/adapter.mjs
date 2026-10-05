@@ -76,6 +76,28 @@ export function adaptSource(rel, code) {
       '      const winner = Math.abs(pa - pb) < 0.05 ? -1 : pa > pb ? 0 : 1;',
       '      const winner = authoritativeWinner === 0 || authoritativeWinner === 1 ? authoritativeWinner : Math.abs(pa - pb) < 0.05 ? -1 : pa > pb ? 0 : 1;',
       'authoritative Turf winner HUD reveal');
+    // #652: the regular Slosher's normal-battle reticle in Splatoon 3 Ver.
+    // 11.3.0 is a compact circular target marker with surrounding ticks, not
+    // the invented trajectory arch + landing "bucket" bracket this upstream
+    // HUD draws over/under the aim point (nor its per-shot --kk kick stretch).
+    // Dropping the special case makes Slosher fall through to the standard
+    // target reticle. Exact Nintendo pixel radii stay unasserted; every other
+    // weapon's reticle and all projectile/aim physics are untouched.
+    code = replaceOnce(code,
+      `    } else if (kind === 'slosher') {
+      // the lob: an arch over the aim point and a landing "bucket" bracket under it
+      r.innerHTML = \`<i class="iw-ret__dot"></i><svg class="iw-ret__svg" viewBox="-40 -40 80 80" aria-hidden="true">
+        <path class="iw-ret__ring iw-ret__arch" d="M-24 6 Q0 -26 24 6"/><path class="iw-ret__ring thin" d="M-10 13 L-6 18 L6 18 L10 13"/>
+        <path class="iw-ret__ring thin" d="M-24 6 L-27 1 M24 6 L27 1"/></svg>\`;
+    } else if (kind === 'splatling') {`,
+      `    } else if (kind === 'splatling') {`, 'slosher trajectory reticle (#652)');
+    code = replaceOnce(code,
+      `    if (L.kind === 'slosher') {
+      const k = this._kick;
+      if (L.bk == null || Math.abs(k - L.bk) > 0.02) { L.bk = k; this.ret.style.setProperty('--kk', k.toFixed(2)); }
+    }
+    // spawn shield + bomb aim`,
+      `    // spawn shield + bomb aim`, 'slosher arch kick writer (#652)');
     return "import { t as tr } from '../i18n.js';\n" + code;
   }
   if (rel === 'src/ui/ui-icons.js') {
