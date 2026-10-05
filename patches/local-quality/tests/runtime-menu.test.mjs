@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {installMenuQuality} from '../menu.mjs';
+import {getPlatformLifecycle} from '../platform-lifecycle.mjs';
 function fixture(){
  let now=0,id=1,ticks=0,callbacks=0;
  const timers=new Map(),rafs=new Map(),listeners=new Map();
@@ -31,7 +32,13 @@ test('visibility and disposal release callbacks and timers; visible screen resum
  f.env.document.hidden=true;f.listeners.get('visibilitychange')();assert.equal(f.rafs.size,0);assert.equal(f.timers.size,0);
  f.advance(5000);assert.equal(f.callbacks(),1);
  f.env.document.hidden=false;f.listeners.get('visibilitychange')();f.advance(81);assert.equal(f.callbacks(),2);
- f.m.dispose();assert.equal(f.listeners.size,0);assert.equal(f.rafs.size,0);assert.equal(f.timers.size,0);f.m.update(1/60);f.advance(100);assert.equal(f.callbacks(),2);
+ const lifecycle=getPlatformLifecycle(f.env),sharedListeners=f.listeners.size;
+ assert.equal(lifecycle.snapshot().subscribers,1);
+ f.m.dispose();
+ assert.equal(lifecycle.snapshot().subscribers,0,'menu disposal releases its shared lifecycle subscription');
+ assert.equal(f.listeners.size,sharedListeners,'shared page lifecycle listeners outlive a menu and do not grow');
+ assert.equal(f.rafs.size,0);assert.equal(f.timers.size,0);
+ f.m.update(1/60);f.advance(100);assert.equal(f.callbacks(),2);assert.equal(f.listeners.size,sharedListeners);
 });
 
 test('external engine ticks do no hidden-document menu work and visible owner recovers',()=>{
