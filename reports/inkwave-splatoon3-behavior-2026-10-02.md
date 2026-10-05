@@ -306,4 +306,32 @@ Android の attitude 方針 (#187)、raw 信頼判定 (#595)、source handoff (#
 30/60/90/120 Hz・rrA/rrB で実行）。修正前の main では静止窓後も 0.038 rad/s の
 ドリフトが収束せず、修正後は近ゼロへ収束し、実回転・遅い照準の応答は維持される。
 物理端末での実オフセット収束、本家と同一のキャリブレーション時間・特性は未確認。
+## Teammate body-block for shooter rounds (#656/#657, 2026-10-05)
+
+Splatoon 3 Ver.11.3.0 lets ordinary shooter rounds be body-blocked by a
+teammate; this is a directly observable gameplay requirement (issue #656
+sources: current-series player testing plus the pinned Leanny 11.3.0
+parameter table). The pinned `CollisionParam.FriendThroughFrameForPlayer`
+records used by INKWAVE are Splattershot/Dualies/Splatling 0, Roller 3,
+Slosher 2, Blaster 1000.
+
+Before this change `fidelityProjectileTargets()` skipped every same-team
+actor before the capsule sweep, and the adapted consumer loop re-checked the
+team, so an ally never entered projectile collision chronology: a
+Splattershot round flew through a friendly body and damaged an enemy behind
+it. Now same-team live capsules (excluding the firing owner) join the same
+earliest-contact sweep once the contact-time age has reached the source
+friend-through window; an ally contact consumes the round without friendly
+damage, kill credit, volley bookkeeping or enemy-hit side effects; a missing
+source record keeps the previous skip instead of a global collider rule.
+Blaster (1000f) pass-through and enemy-first chronology are unchanged.
+
+確認状態: fixed 60 Hz logic/regression evidence only
+(`patches/splatoon3/tests/teammate-bodyblock.test.mjs`: blocked round,
+off-line control, muzzle-close contact, owner pass-through, same-tick
+deterministic ordering, enemy-first ordering, blaster pass-through, ghost
+consumption, 30/60/120 Hz cadence; fails on pristine main, passes with the
+change). 未確認: Switch 実機での挙動比較、短い非ゼロ窓（ローラー3F・ slosher 2F）
+のエンジン意味合い、チャージャー有限飛行・ビーム・サブ/スペシャルの味方接触は
+今回の範囲外で未確認のまま。フレーム値の推測や実機測定の代用は行っていない。
 

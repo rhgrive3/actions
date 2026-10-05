@@ -11,11 +11,13 @@ test('weapons fidelity composes through the real gameplay adapter order', () => 
   const out = adaptSource('src/game/weapons.js', source);
   assert.match(out, /advanceFidelityProjectile\(p, dt\)/);
   assert.match(out, /fidelityProjectileTargets\(this, p\)/);
+  assert.doesNotMatch(out, /if \(e\.team === p\.team \|\| !e\.alive\) continue;/, 'the consumer loop must not re-implement team/liveness filtering solved by fidelityProjectileTargets');
   assert.match(out, /p\.fidelityImpactActor === e/);
   assert.match(out, /p\.fidelityImpactT/);
   assert.match(out, /const elapsed = Math\.max\(0, dt - Math\.max\(0, p\.delay \|\| 0\)\)/);
   assert.match(out, /configureFidelityFlick\(p, a, w, i, ang, sp\)/);
   assert.match(out, /applyFidelitySlosherSplash/);
+  assert.match(out, /e\.team !== p\.team\) this\._sloshSplash\(p, _v, e\)/, 'an ally-consumed glob must not splash enemies behind the blocker');
   assert.match(out, /WEAPONS_FIDELITY_EPSILON/);
 });
 
@@ -27,6 +29,7 @@ test('critical native anchor changes fail closed through the full adapter', () =
       if (p.drag) p.vel.multiplyScalar(1 - p.drag * dt * (p.age > p.straight ? 1 : 0));
       p.pos.addScaledVector(p.vel, dt);`,
     '      // actors\n      for (const e of G.actors) {',
+    '        if (e.team === p.team || !e.alive) continue;\n        const h = e.form === \'squid\' ? PLAYER.squidHeight : PLAYER.height;',
     '      if (!dead && p.age > p.life) {',
   ]) {
     assert.throws(() => adaptSource('src/game/weapons.js', source.replace(anchor, '')), /conflict/);
