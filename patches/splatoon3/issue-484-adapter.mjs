@@ -22,13 +22,19 @@ export function replaceOnce(code, before, after, label) {
 }
 
 export function adaptIssue484Net(code) {
-  // 1. Add specialReady after the swim-visibility bits owned by #323
-  code = replaceOnce(
-    code,
-    '  invuln: 262144, enemy: 524288, quietTrail: 1048576, quietSplash: 2097152, swimVisibility: 4194304,',
-    '  invuln: 262144, enemy: 524288, quietTrail: 1048576, quietSplash: 2097152, swimVisibility: 4194304, specialReady: 8388608,',
-    'netmatch F specialReady flag'
-  );
+  // 1. Add specialReady after #323 swim-visibility bits when composed, while
+  // still accepting raw NetMatch in this adapter's isolated regression tests.
+  const swimFlags = '  invuln: 262144, enemy: 524288, quietTrail: 1048576, quietSplash: 2097152, swimVisibility: 4194304,';
+  if (code.includes(swimFlags)) {
+    code = replaceOnce(code, swimFlags,
+      '  invuln: 262144, enemy: 524288, quietTrail: 1048576, quietSplash: 2097152, swimVisibility: 4194304, specialReady: 8388608,',
+      'netmatch F specialReady flag after swim flags');
+  } else {
+    code = replaceOnce(code,
+      '  invuln: 262144, enemy: 524288,',
+      '  invuln: 262144, enemy: 524288, specialReady: 8388608,',
+      'netmatch F specialReady flag raw source');
+  }
 
   // 2. Replicate specialReady flag in packActor
   code = replaceOnce(
