@@ -234,3 +234,16 @@ cloud/Halyard cube allocation at default high settings, not only after later
 runtime refresh. Existing formats, appearance policy and gameplay stay intact.
 These are project resource dimensions, not Nintendo/Switch memory values.
 See [the cold-boot budget report](inkwave-cold-boot-budgets-2026-10-04.md).
+
+## ナワバリバトル表彰（Medals）の味方内集計・カテゴリ・ティア（#502、2026-10-05）
+
+公開版 INKWAVE のリザルト画面における表彰ロジックを、スプラトゥーン3（Ver.11.3.0）の表彰仕様と比較・修正した。本体 `inkwave-public/` は変更せず、ビルド時アダプター `patches/local-quality/medal-adapter.mjs` を通じて適用する。
+
+| 項目 | 内容 |
+|---|---|
+| 本家の根拠 | スプラトゥーン3 Ver.11.3.0 データ解析（CommonMsg/VS/VSAwardName、BattleAwardInfo）および公式ナワバリバトルリザルト仕様。表彰は味方チーム内（同チーム4人）のみを比較母集団として算出され、相手チームの戦績から完全に独立する。ティアは金・銀のみで構成され、ブロンズメダルおよび独自MVPは存在しない。表示枠は最大3個。同率タイ時は競技方式（1位タイは全員金、2位は上位が厳密に1人の場合のみ銀）。優先度順位は金（Battle=1 > Paint=10 > Standout=11 > ...）が銀（NawabariDefenseMyTeamArea=108 > FirstSplat=112 > Battle2=132 > Paint2=139 > ...）に常に優先する。 |
+| INKWAVE の実装箇所 | `inkwave-public/src/ui/menu-art.js`（`AWARDS`, `computeAwards`）および `src/ui/menus.js`（`_scr_results` の `myAwards` スライスと `.is-4` クラス）。公開版ではロビー全体比較（TURF KING, TOP SPLATTER）や独自MVP、ブロンズ（UNTOUCHABLE, SURVIVOR, PURE PAINTER）、最大4枠表示を行っていた。 |
+| パッチでの変更 | `patches/local-quality/medal-adapter.mjs` を追加し、`adapter.mjs` の dispatcher に登録。正準な S3 カテゴリ（Gold/Silver）を定義し、味方チーム内比較で金・銀メダルを付与。実際に記録されている指標（`turf`, `splats`）のみを用いて評価し、未トラッキングの空間・対象指標は捏造せず除外。優先度ソートを適用して最大3枠に制限。Boss バトル（`computeBossAwards`, `BOSS_AWARDS`）は変更せず維持。 |
+| 再現操作と影響 | ナワバリバトル終了時、相手チームに 99999p のプレイヤーがいても自チーム内で 1 位であれば「#1 Turf Inker」（金）を獲得。自チーム内 2 位であれば「#2 Turf Inker」（銀）を獲得。4枠目やブロンズメダル、独自MVPは付与・表示されない。 |
+| 確認状態 | **ロジック・描画検証済み**（`patches/local-quality/tests/medals.test.mjs` 9テスト、摂動試験、タイ、ゼロ値、優先度・3枠制限、Boss負の対照を検証。`patches/local-quality/tests/*.test.mjs` 62テスト通過）。**実機未確認事項**: Ver.11.3.0 実機における全特殊表彰のタイ発生時の細部挙動、通信切断者がいた場合のチーム内表彰枠補正。 |
+
