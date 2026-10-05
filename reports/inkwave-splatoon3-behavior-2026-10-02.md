@@ -170,6 +170,20 @@ Flow の外殻・粒・リボンが GTAO の法線／深度パスに不透明な
 終了時に残っていた1textureはnative THREEの共有DFG_LUTで、compiled dfgLUT uniformから所有元を確認した。隔離された描画fixtureの終了時に実GL handleの存在と解放を測り、geometry/textureの残留0を確認する。ゲーム本体や共有shaderの実装変更ではなく、検証fixtureの管理対象を明示する修正である。これらのfocused診断は最終候補の全ケースCIを代用しない。
 
 停止姿勢の全画面beauty再描画では、実際の時計・骨・座標が同一でもnative fragmentの数pixelの色差が反復描画ごとに変化する。停止のモーション検証は、そのbeauty画像を両方保存したうえで、最終描画色だけを固定した別materialによる実GPU比較へ分けた。実際にコンパイルされたnative／比較側vertex shaderのSHA256一致、骨行列・pose・全node world行列・ゲーム時計の不変性、固定色画像の既存0差分条件を必須とする。各ケースで実rootを0.03動かす反例も描き、16pixel以上の変化を検出できない比較器は合格にしない。通常の全339描画ペア、Flow／壁のGTAO、表示中・中断・解放の検査はnative beauty shaderのままであり、この停止の比較を本家の画像一致の証拠にはしない。
+
+## 2026-10-04: 成績・XP・戦闘情報 #236 / #256 / #295 / #220 / #231
+
+比較基準はmain `0859bf4fab08edc74c25fcb790e662a748a91ec9` とSplatoon 3 Ver.11.3.0。通常Turf、倍率なしの3分完走、HP100、索敵効果なしを基準とする。公開経路は全adapter→runtimeの合成で、元の `inkwave-public/` は変更しない。#282で誤認された面積重み付きcoverageは既存scoring実装のまま維持する。
+
+- #236: [検証Wikiの表彰](https://wikiwiki.jp/splatoon3mix/表彰)で、バトル数はトドメ＋アシスト、トドメ統計は別と確認。[結果画面の解説](https://gamewith.jp/splatoon3/366896)も合算表示を確認する。`runtime/flow.mjs` の既存被ダメージ履歴を共通のアシスト判定にし、`stats.assists`、HUDカード、Flowが同じhelper集合を使用する。ネットのvictim-authoritative splattedイベントにhelper IDを同梱し、remote死亡を一度だけ再生して結果データへ保存。直接キル `stats.splats` は変更せず、通常Turfの結果だけ合算値と内訳を渡す。認定時間は既存Flowの5秒を共用したもので、本家の実測値を新しく確定したものではない。
+- #256: [検証WikiのSP説明](https://wikiwiki.jp/splatoon3mix/ブキ/スペシャルウェポン#od9f2413)にある垂直壁0点に従い、native `_cpuSplat` のpoint対象を `f.turf && !dead` へ限定する。壁セルの塗りとversion更新は残す。床の新規/塗り返しのみ加点、同色再塗りは0。
+- #295: [検証Wikiのランク表](https://wikiwiki.jp/splatoon3mix/ランク#fa0ad4e0)に基づき、通常Turfのrank XPをtime300＋100p刻みの塗り上限500＋勝利600にする。保存/level更新/結果内訳が同じ関数を使い、キル数による加点を除く。Bossモードの報酬、個人塗り点、coverage、カタログは変更しない。
+- #220: [検証Wikiのダメージ表](https://wikiwiki.jp/splatoon3mix/システム詳細仕様#b08834e6)の18.0ダメージ境界でマップ敵表示を決める。フォームだけで敵を出さず、ダメージがある潜伏敵を消さない。ネットHPを小数2桁で保持し、17.9が丸めで18にならないようにする。味方/自分/ジャンプ対象は既存導線を保つ。
+- #231: [Nintendo Ver.11.0.0の記事](https://www.nintendo.com/au/news-and-articles/whats-new-in-the-splatoon-3-version-11-update/)と[公式更新履歴](https://www.nintendo.com/en-gb/Support/Nintendo-Switch/Game-Updates/How-to-Update-Splatoon-3-2266003.html)に沿い、味方の被ダメージと敵の被弾後3秒・遮蔽/潜伏条件を別のhealth markerへ接続。敵名や正確なHP数値は追加しない。明示的なteam別reveal期限だけ遮蔽/潜伏の例外にでき、死亡/復活でリセット。索敵サブ/ギアそのものの実装を新たに追加したわけではない。remote HP減少も表示時計へ反映する。
+
+`tests/score-hud.test.mjs` は実Actor/Flow/NetMatchのイベントと結果配送、実CPU塗り、実Game `_judge` の保存/level更新、実Game `_updateHud` のframe、health DOM更新を検証。0/99/100/199/200/499/500/1000p×勝敗×0/1/10キル、17.9/18.0/18.1/20ダメージ、表示窓/視線/潜伏/画面外を区別する。minify済み生成物のgameplay・runtimeにも同じ試験を行う（main/HUDメソッド抽出は合成sourceを使用）。音/renderer/DOM fixtureは実ブラウザ目視の代わりではない。
+
+未確認: 現行Switch同条件映像とUI外観の比較、遅延付き2peer実機計測。approximate health barの形/寸法はINKWAVE側デザインでありNintendoの寸法として主張しない。
 # 2026-10-04: Conditional gear / sub defense (#342–345)
 
 Last Ditch, Comeback, Sub Resistance and Opening Gambit now connect native gear
