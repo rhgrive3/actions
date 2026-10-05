@@ -15,11 +15,6 @@
     "s3GroundAccel": 36,
     "s3AttackGroundAccel": 72
   },
-  "splatlingPlayerCollision": {
-    "referenceRadius": 0.225,
-    "referenceShooterRadius": 0.285,
-    "shooterWorldRadius": 0.15
-  },
   "weapons": {
     "shooter": {
       "inkPerShot": 0.9199999999999999,
@@ -62,12 +57,12 @@
       "spreadLock": 0,
       "range": 12.5,
       "humanoidFirstShotDelay": 0.03333333333333333,
-      "swimFirstShotDelay": 0.2,
-      "spawnPlayerForwardRate": 2,
       "ballistics": {
         "endSpeed": 140.54999999999998
       },
-      "fieldCollisionRadius": 0.2
+      "fieldCollisionRadius": 0.2,
+      "swimFirstShotDelay": 0.2,
+      "spawnPlayerForwardRate": 2
     },
     "blaster": {
       "inkPerShot": 10,
@@ -134,12 +129,12 @@
         1.35
       ],
       "spreadPitchGround": 1.6,
-      "postStreamDelay": 0.06666666666666667,
       "ballistics": {
         "endSpeed": 90.63,
         "firstChargeSpeed": 126
       },
-      "fieldCollisionRadius": 0.2
+      "fieldCollisionRadius": 0.2,
+      "postStreamDelay": 0.06666666666666667
     },
     "charger": {
       "inkFull": 18,
@@ -151,9 +146,10 @@
       "moveSpeedFiring": 1.2,
       "keepChargeTime": 1.25,
       "chargeTime": 1,
-      "swimChargeStartDelay": 0.1,
       "inkRecoverStop": 0.3333333333333333,
       "damagePartialMax": 80,
+      "fieldCollisionRadius": 0.02,
+      "swimChargeStartDelay": 0.1,
       "impactPaint": {
         "min": 0.906,
         "max": 2.719,
@@ -166,8 +162,7 @@
         "overlapMin": 0.125,
         "overlapMax": 0.25,
         "overlapFull": 0.34
-      },
-      "fieldCollisionRadius": 0.02
+      }
     },
     "roller": {
       "rollSpeed": 7.92,
@@ -240,8 +235,6 @@
         "mainWidthReference": 0.8,
         "widthRatio": 0.5
       },
-      "spawnPlayerForwardRate": 2,
-      "squidFlickDelay": 0.21666666666666667,
       "ballistics": {
         "endSpeed": null,
         "freeDragPerFrame": 0.1,
@@ -311,7 +304,9 @@
           "endRadius": 1.02,
           "changeTime": 0.06666666666666667
         }
-      }
+      },
+      "spawnPlayerForwardRate": 2,
+      "squidFlickDelay": 0.21666666666666667
     },
     "slosher": {
       "inkPerShot": 7.6,
@@ -449,17 +444,6 @@
     }
   },
   "flow": {
-    "progress": {
-      "referenceThreshold": 100,
-      "wipeoutBonus": 10,
-      "decayPerSecond": 0.2,
-      "fastDecayAfter": 5,
-      "fastDecayPerSecond": 3.3,
-      "deathPenalty": 5,
-      "environmentDeathPenalty": 10,
-      "source": "https://wikiwiki.jp/splatoon3mix/検証/イカフロー",
-      "status": "community verification; loss values normalized to existing threshold, award weights remain uncalibrated"
-    },
     "threshold": 3,
     "duration": 30,
     "extension": 10,
@@ -475,7 +459,17 @@
     "swimMultiplier": 1.2,
     "enemyInkSpeedMultiplier": 1.5,
     "paintRadius": 0.6,
-    "bots": true
+    "bots": true,
+    "progress": {
+      "referenceThreshold": 100,
+      "decayPerSecond": 0.2,
+      "fastDecayAfter": 5,
+      "fastDecayPerSecond": 3.3,
+      "deathPenalty": 5,
+      "environmentDeathPenalty": 10,
+      "source": "https://wikiwiki.jp/splatoon3mix/検証/イカフロー",
+      "status": "community verification; loss values normalized to existing threshold, award weights remain uncalibrated"
+    }
   },
   "superJump": {
     "chargeTime": 1.3333333333333333,
@@ -516,25 +510,17 @@
       "superjump airborne vulnerability window/trajectory/landing paint and respawn timing/armor; raw 80F preparation/138F flight are pinned and landing protection is removed per Nintendo 9.3.0 fix",
       "aim response, gyro, animation, terrain/network and physical-device validation; see movement-resources comparison matrix and Switch/iOS/two-peer measurement protocol",
       "upstream acceleration/braking/turn/air-control/jump and landing feel",
-      "Dualies first shot counts the recognized input as frame1: stable human3F (2 elapsed intervals), swim13F (12 elapsed intervals). Swim13F is a community reference target, not a direct raw-table extraction; physical input/display latency remains unverified. Released startup taps cancel.",
       "Splatling grounded pitch1.6deg uses the existing radial sampler with separate axes; S3 PDF, bias, air/IA correlations are unverified.",
       "Roller near-unit count1 is corroborated by S3 unit research, not an inferred omitted BulletNum; velocity and width use relative mappings, sampler/absolute spawn calibration remains unverified.",
       "Blaster terrain damage is half of normalized existing bands, floor to0.1HP after scaling;35HP cap is sourced, complete S3 falloff curve remains uncalibrated.",
-      "PR64 completion: finite Charger flight, continuous collision, source-mirrored unit layouts and model-labelled interpolation; physical Switch parity remains unverified."
+      "PR64 completion: finite Charger flight, continuous collision, source-mirrored unit layouts and model-labelled interpolation; physical Switch parity remains unverified.",
+      "Rescued from PR #489: Flow progress now decays/penalizes and survives respawn while active; community loss values remain calibration, not Nintendo primary data.",
+      "Rescued from PR #547/#491/#545: Roller swing movement target, deterministic Alpha ties, and Tenacity owner-only passive charge remain subject to current-main combined validation.",
+      "Dualies first shot counts the recognized input as frame1: stable human3F (2 elapsed intervals), swim13F (12 elapsed intervals). Swim13F is a community reference target, not a direct raw-table extraction; physical input/display latency remains unverified. Released startup taps cancel."
     ],
     "movementResourcesEvidence": "reports/inkwave-movement-resources-2026-10-02.md"
   },
   "bindings": {
-    "splatlingPlayerCollision.referenceRadius": {
-      "parameter": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/CollisionParam/InitRadiusForPlayer",
-      "rawValue": 0.225,
-      "factor": 1
-    },
-    "splatlingPlayerCollision.referenceShooterRadius": {
-      "parameter": "data/parameter/1130/weapon/WeaponShooterNormal.game__GameParameterTable.json#/GameParameters/CollisionParam/InitRadiusForPlayer",
-      "rawValue": 0.285,
-      "factor": 1
-    },
     "player.runSpeed": {
       "parameter": "data/parameter/1130/misc/params.json#/MoveVel_Human",
       "index": 2,
@@ -1356,6 +1342,16 @@
       "index": null,
       "factor": 1,
       "rawValue": 0.8
+    },
+    "splatlingPlayerCollision.referenceRadius": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/CollisionParam/InitRadiusForPlayer",
+      "rawValue": 0.225,
+      "factor": 1
+    },
+    "splatlingPlayerCollision.referenceShooterRadius": {
+      "parameter": "data/parameter/1130/weapon/WeaponShooterNormal.game__GameParameterTable.json#/GameParameters/CollisionParam/InitRadiusForPlayer",
+      "rawValue": 0.285,
+      "factor": 1
     },
     "weapons.charger.impactPaint.min": {
       "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/PaintParam/RadiusMinCharge",
@@ -3180,5 +3176,10 @@
       "chargerPaint": "pinned width/depth/radius endpoints drive existing rasterizer; spacing formula and terminal multiplier remain source-guided/community-modelled",
       "rollerAgeDamage": "linear multiplier to pinned DamageRejectRate between pinned start/end frames; subframe rounding unverified"
     }
+  },
+  "splatlingPlayerCollision": {
+    "referenceRadius": 0.225,
+    "referenceShooterRadius": 0.285,
+    "shooterWorldRadius": 0.15
   }
 }

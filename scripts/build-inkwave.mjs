@@ -197,6 +197,7 @@ const deferredIntegrationPreloads = new Set([
   'patches/splatoon3/runtime/movement-physics.mjs',
   'patches/splatoon3/runtime/roller-model.mjs',
   'patches/splatoon3/runtime/sub-special-fidelity.mjs',
+  'patches/splatoon3/runtime/superjump.mjs',
   'patches/splatoon3/runtime/weapon-edgecases.mjs',
   // PR587 dependencies: defer only eager hints; retain the complete precache graph.
   'patches/splatoon3/runtime/weapons-fidelity.mjs',
