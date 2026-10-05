@@ -28,3 +28,15 @@ Three new weapons runtime modules are excluded only from eager preload hints, us
 - Final production content `43ea1bb0ea73d4460f5f7bb54987eb92219f3adf6cf460e312151f3848f1c601`.
 
 The previous head's six successful CI jobs and repaired catalog evidence do not certify this new-main composition. Exact combined CI, including the repaired Dualies catalog scenario, remains required. Additional local Issue candidates are excluded; main is not changed by this integration branch.
+
+## Browser network boundary follow-up
+
+Run37279097038 passed validate plus active, catalog, UI, range and startup. Catalog independently verified44 runtime/83 total loaded receipts and854 image byte hashes, including the repaired240-frame Dualies scenario. Its network browser failed the unchanged0.08 trajectory bound. The verifier previously saved traces only after acceptance, so this correction also saves complete traces before any comparison and the maximum-error pair before the tolerance assertion, with phase/collider metadata.
+
+An actual native floor replay with seed13 reproduces0.254664773 trajectory error: rounding launch velocity to two decimal places moves the Roller braking/free-fall threshold crossing by a tick. Keeping the three existing birth-velocity fields at their original JSON numeric precision reduces the same case to0.007670789 (the existing position quantization), with zero birth-velocity difference. Physics values and acceptance tolerances are unchanged. A permanent seeded real-floor/wire regression and exact three-component round-trip assertion cover this boundary.
+
+Separately, immutable Roller unit identity is now transmitted as one field before the unchanged tick/sequence footer; complete packets are33 fields. This prevents received moving vertical shots from choosing a different field collider by nearest-speed inference. Valid legacy27/30/32 packets keep historical fallback; unsupported lengths and malformed new unit records are rejected before allocation/identity advancement. See inkwave-roller-unit-replication-2026-10-05.md for exact compatibility and scope.
+
+The combined correction's gameplay aggregate passes1121 cases with5 emitted-only modes explicitly covered by29/29. The strict packet follow-up is verified by the final full network suite and canonical15-golden/3-network-mode gate. Startup remains131core+14range, all deferred modules precached. Browser acceptance requires the new exact-head CI; the earlier failed run is not promoted to success.
+
+Final strict network suite61/61; canonical15 goldens and3 exact33-field reconstruction modes pass. Final content hash: f917ec92d1d0dd4b24b6aebfcd063acb846b878d56c3d244c8e94c12711d26ad. Only the two network-production boundaries, their regressions and failure diagnostics are changed in this follow-up; no additional Issue candidate is included.

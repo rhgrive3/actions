@@ -20,12 +20,12 @@ if(process.argv.includes('--exact-source')){
 }
 const DT=1/60,distance=(a,b)=>Math.hypot(...a.map((v,i)=>v-b[i]));
 const scenarios=['horizontal','vertical','shooter','dualies','blaster','splatling','slosher','bomb','storm','charger','charger_half','charger_full','charger_oblique_partial','charger_oblique_full'];
-export async function replay(network,kind){
+export async function replay(network,kind,{seed=0x1badc0de,realFloor=false}={}){
  const owner=await fixture({network}),receiver=await fixture({network});
  const draws=[0,0];
  for(const [j,f]of[[0,owner],[1,receiver]]){
   Object.assign(f.SUB.bomb,f.profile.bomb);for(const [id,data]of Object.entries(f.profile.specials||{}))Object.assign(f.SPECIALS[id],data);
-  let state=0x1badc0de;const global=f.Projectiles.constructor('return globalThis')();
+  let state=seed;const global=f.Projectiles.constructor('return globalThis')();
   global.Math.random=()=>{draws[j]++;state=(Math.imul(1664525,state)+1013904223)>>>0;return state/4294967296;};
  }
 
@@ -38,6 +38,12 @@ export async function replay(network,kind){
  oa.weapon=owner.WEAPONS[weapon];ra.weapon=receiver.WEAPONS[weapon];
  for(const [f,a]of[[owner,oa],[receiver,ra]]){a.character.getMuzzle=out=>out.copy(a.pos).add(new f.THREE.Vector3(0,1.05,.3));a.weaponRunner=new f.WeaponRunner(a);a.weaponRunner.s3FlickVertical=kind==='vertical';}
  if(kind.startsWith('charger_oblique')){oa.aimPoint.set(17.53,11.24,49.67);ra.aimPoint.copy(oa.aimPoint);}
+ if(realFloor)for(const [f,a]of [[owner,oa],[receiver,ra]]){
+  const V=(x,y,z)=>new f.THREE.Vector3(x,y,z);a.pos.y=0;a.aimPitch=.05;a.aimPoint.set(0,1,35);
+  const block={id:0,solid:true,grate:false,center:V(0,-.5,0),half:V(50,.5,50),axes:[V(1,0,0),V(0,1,0),V(0,0,1)],faces:[-1,-1,-1,-1,-1,-1]};
+  f.G.level={blocks:[block],faces:[],queryBlocks(_x,_z,_xx,_zz,out){out.length=0;out.push(0);return out;},groundHeight:()=>0,spawnPads:[{y:0},{y:0}]};
+  f.G.physics=new f.Physics(f.G.level);
+ }
  owner.bind(onm,[oa]);receiver.bind(rnm,[ra]);
  onm.unsubs.push(owner.on('weapon:fire',e=>onm._onLocalEvent('weapon:fire',e)));
  const paint=[[],[]],traces=[[],[]],births=[[],[]],ids=[new WeakMap(),new WeakMap()];let next=0,projectileAllocations=[0,0];

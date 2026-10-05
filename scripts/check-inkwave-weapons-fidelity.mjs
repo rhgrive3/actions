@@ -40,7 +40,8 @@ near(data.runner['splatling-full'].inkSpent,22.5);
 near(data.runner['charger-1'].inkSpent,18);
 
 // Exercise the installed packet recorder, including the existing replication
-// mode/seed/identity and owner-tick/sequence envelope. No new fields are added.
+// mode/seed/identity prefix and owner-tick/sequence footer. The unit is inserted
+// between that unchanged prefix and footer, without renumbering the first30 fields.
 for (const key of ['shooter','roller-horizontal','roller-vertical']) {
   const c = CASES.find(x => x.key === key);
   const f = await fixture({ site, fidelity:true, floor:false, network:true });
@@ -49,12 +50,13 @@ for (const key of ['shooter','roller-horizontal','roller-vertical']) {
   f.G.netm=network; launch(f,a,c); const locals=[...f.projectiles.list],packets=network.out;
   assert.equal(packets.length,locals.length,key);
   for (const [i,p] of packets.entries()) {
-    assert.equal(p.length,32,key+' complete packet shape');
+    assert.equal(p.length,33,key+' complete packet shape');
     assert.equal(p[27],locals[i].s3Vertical?1:0,key+' birth mode');
     assert.equal(p[28],locals[i].seed,key+' appearance seed');
     assert.equal(p[29],locals[i]._netId,key+' projectile identity');
-    assert.equal(p[30],Math.round((f.G.time||0)*60),key+' owner tick');
-    assert.equal(p[31],i+1,key+' event sequence');
+    assert.equal(p[30],locals[i].fidelityRollerUnitIndex ?? -1,key+' immutable roller unit');
+    assert.equal(p[31],Math.round((f.G.time||0)*60),key+' owner tick');
+    assert.equal(p[32],i+1,key+' event sequence');
   }
   const ghost=f.make(c.id,{name:'remote'}); ghost.remote=true; f.projectiles.list.length=0;
   packets.forEach(e=>f.projectiles.ghostProjectile(ghost,e)); const ghosts=[...f.projectiles.list];
