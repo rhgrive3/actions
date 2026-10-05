@@ -1373,6 +1373,18 @@
       "status": "extracted",
       "unit": "m/F (interpretation corroborated by S3 Wiki 0.7 DU/F)",
       "notes": "Full-charge held Splat Charger only; partial-charge interpolation and simultaneous release are not inferred."
+    },
+    "data/parameter/1130/misc/params.json#/Dying_AroundFrm": {
+      "value": [
+        30,
+        60,
+        90
+      ],
+      "pointer": "/Dying_AroundFrm",
+      "sourceId": "data/parameter/1130/misc/params.json",
+      "status": "extracted",
+      "unit": "frames at 60Hz",
+      "notes": "Quick Respawn self-camera phase; floor each phase separately before subtracting from its no-gear duration."
     }
   }
 }
