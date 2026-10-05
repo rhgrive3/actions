@@ -196,6 +196,25 @@ export function adaptSource(rel, code) {
     return "import { rollerModel } from '../../patches/splatoon3/runtime/roller-model.mjs';\n" + code;
   }
   if (rel === 'src/main.js') {
+    // #614: Splatoon 3's normal battle HUD has no global text feed naming remote
+    // attacker/victim pairs. Drop the two remote-splat feed broadcasts; the local
+    // splat confirmation (kind 'kill'), own-death showSplatted, the top roster and
+    // WIPEOUT! keep their existing paths. The ally-down audio cue stays because it
+    // carries no identity.
+    code = replaceOnce(code,
+      "        G.audio?.play('ally_splatted', { volume: 0.5 });\n" +
+      "        this.hud?.feed({ text: attacker ? t('{victim} was splatted by {attacker}', { victim: victim.name, attacker: attacker.name }) : t('{victim} was splatted', { victim: victim.name }), color: G.teamHex[victim.enemyTeam], kind: 'death' });\n" +
+      "      } else if (attacker && attacker.team === local?.team) {\n" +
+      "        this.hud?.feed({ text: t('{attacker} splatted {victim}', { attacker: attacker.name, victim: victim.name }), color: G.teamHex[attacker.team], kind: 'ally' });\n" +
+      "      }",
+      "        // #614: no global text feed naming remote attacker/victim pairs — the top\n" +
+      "        // roster (alive/splatted) and WIPEOUT! already carry remote splat state;\n" +
+      "        // keep only the non-identifying ally-down audio cue.\n" +
+      "        G.audio?.play('ally_splatted', { volume: 0.5 });\n" +
+      "      }\n" +
+      "      // Remote ally-on-enemy splats (#614) likewise add no text entry: the local\n" +
+      "      // confirmation above is the only feed that names a remote player.",
+      'splat feed remote-identity gate (#614)');
     const start = code.indexOf('    G.time += dt;\n', code.indexOf('  _frame(dt) {'));
     const end = code.indexOf('    // A full-frame lobby/showcase completely covers', start);
     if (start < 0 || end < start) throw new Error('INKWAVE patch conflict: fixed simulation connection');

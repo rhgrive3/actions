@@ -250,3 +250,16 @@ cloud/Halyard cube allocation at default high settings, not only after later
 runtime refresh. Existing formats, appearance policy and gameplay stay intact.
 These are project resource dimensions, not Nintendo/Switch memory values.
 See [the cold-boot budget report](inkwave-cold-boot-budgets-2026-10-04.md).
+
+## 2026-10-06: Turf War 全局テキスト kill feed の除去 (#614)
+
+通常対戦の HUD 情報契約の差分。移動・射撃・ダメージ・インク・スコアの各タイミングは変更しない表示・情報経路の修正として扱う。
+
+| 項目 | 内容 |
+|---|---|
+| 本家の根拠 | [Inkipedia — Splat (occurrence)](https://splatoonwiki.org/wiki/Splat_(occurrence))：スプラット通知は撃破に credit された本人に届き、S2/S3 の助攻者は通知を受けない。S3 の通常 HUD は上部ロスターの alive/splatted と `WIPEOUT!` で全体状態を伝え、全戦場の「攻撃者/被撃者名」を並べる従来型テキスト kill feed を持たない（Issue #614 の Reference behavior）。実機の画面上表示は未計測 |
+| INKWAVE の実装箇所 | `inkwave-public/src/main.js` の `on('splatted')` がローカル関与・可視性の gate なしで `hud.feed` に `{victim} was splatted by {attacker}` / `{attacker} splatted {victim}`（kind `death`/`ally`、最大5件・各4.2秒）を送っていた。`patches/splatoon3/adapter.mjs` の `src/main.js` 分岐がこの2つの feed 放送を合成ツリーで除去。upstream-lock 対象の本体ファイルは未変更（全35 Open/Draft PR と同じ overlay 方式） |
+| 再現操作 | 4v4 Turf War でローカルから離れた場所に置いたまま遠方で味方が敵を撃破（逆も）。修正前は両者名の feed pill が最大5件積まれ、修正後は feed に何も出ない。ally_splatted 音・ロスター・WIPEOUT!・ローカル撃破確認・自分の死亡表示は従来どおり |
+| プレイへの影響 | 遠隔戦闘の攻撃者/被撃者を即時に得られなくなり、push/撤退/Super Jump の判断材料がロスターとローカル知覚のみに減る。assist 表示は #561 として独立、オンライン/オフラインで同じ handler を通るため同一契約 |
+| 確認状態 | **ロジック確認済み**：`patches/splatoon3/tests/splat-feed-routing.test.mjs`（構成済み `src/main.js` の実 handler を実行、修正前に3件失敗→修正後8件合格）、`adapter.test.mjs` 10件合格、`review-inkwave-upstream.mjs` 全17接続 unchanged/compatible。**ブラウザ実動作と Switch 実機の HUD 表示比較は未確認**。遠隔 audio cue の本家一致も未確認（音は変更しない） |
+
