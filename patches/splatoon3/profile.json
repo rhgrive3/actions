@@ -400,7 +400,10 @@
     "enemyInkDamageCap": 40,
     "enemyInkGrace": 0,
     "enemyInkRegenSuppression": 0.4,
-    "enemyInkRecovery": 30
+    "enemyInkRecovery": 30,
+    "enemyInkGraceReset": 0.75,
+    "enemyInkReferenceHz": 60,
+    "enemyInkDamageQuantum": 0.1
   },
   "movement": {
     "wallRollMinimumInput": 0.3,
@@ -485,7 +488,8 @@
       "Splatling grounded pitch1.6deg uses the existing radial sampler with separate axes; S3 PDF, bias, air/IA correlations are unverified.",
       "Roller near-unit count1 is corroborated by S3 unit research, not an inferred omitted BulletNum; velocity and width use relative mappings, sampler/absolute spawn calibration remains unverified.",
       "Blaster terrain damage is half of normalized existing bands, floor to0.1HP after scaling;35HP cap is sourced, complete S3 falloff curve remains uncalibrated.",
-      "PR64 completion: finite Charger flight, continuous collision, source-mirrored unit layouts and model-labelled interpolation; physical Switch parity remains unverified."
+      "PR64 completion: finite Charger flight, continuous collision, source-mirrored unit layouts and model-labelled interpolation; physical Switch parity remains unverified.",
+      "Rescued from PR #315: Ink Resistance grace/reset, 0.1HP reference quantization, total-damage cap and action-state enemy-ink speed routing."
     ],
     "movementResourcesEvidence": "reports/inkwave-movement-resources-2026-10-02.md"
   },
@@ -1311,6 +1315,42 @@
       "index": null,
       "factor": 1,
       "rawValue": 0.8
+    },
+    "gearExtra.enemyActionSpeedScale.0": {
+      "parameter": "data/parameter/1130/misc/params.json#/OpInk_MoveVel_ShotK",
+      "index": 2,
+      "factor": 1,
+      "rawValue": 0.5
+    },
+    "gearExtra.enemyActionSpeedScale.1": {
+      "parameter": "data/parameter/1130/misc/params.json#/OpInk_MoveVel_ShotK",
+      "index": 1,
+      "factor": 1,
+      "rawValue": 0.75
+    },
+    "gearExtra.enemyActionSpeedScale.2": {
+      "parameter": "data/parameter/1130/misc/params.json#/OpInk_MoveVel_ShotK",
+      "index": 0,
+      "factor": 1,
+      "rawValue": 1
+    },
+    "gearExtra.enemyInkGraceFrames.0": {
+      "parameter": "data/parameter/1130/misc/params.json#/OpInk_ArmorHP",
+      "index": 2,
+      "factor": 1,
+      "rawValue": 0
+    },
+    "gearExtra.enemyInkGraceFrames.1": {
+      "parameter": "data/parameter/1130/misc/params.json#/OpInk_ArmorHP",
+      "index": 1,
+      "factor": 1,
+      "rawValue": 26
+    },
+    "gearExtra.enemyInkGraceFrames.2": {
+      "parameter": "data/parameter/1130/misc/params.json#/OpInk_ArmorHP",
+      "index": 0,
+      "factor": 1,
+      "rawValue": 39
     }
   },
   "gearExtra": {
@@ -1358,6 +1398,16 @@
       0,
       0.75,
       1
+    ],
+    "enemyActionSpeedScale": [
+      0.5,
+      0.75,
+      1
+    ],
+    "enemyInkGraceFrames": [
+      0,
+      26,
+      39
     ]
   },
   "respawnChaseTime": 4.5,
