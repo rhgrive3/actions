@@ -109,9 +109,9 @@
     },
     "data/parameter/1130/misc/params.json#/InkRecoverFrm_Stealth": {
       "value": [
-        117.0,
+        117,
         148.5,
-        180.0
+        180
       ],
       "pointer": "/InkRecoverFrm_Stealth",
       "sourceId": "data/parameter/1130/misc/params.json",
@@ -121,9 +121,9 @@
     },
     "data/parameter/1130/misc/params.json#/InkRecoverFrm_Std": {
       "value": [
-        220.0,
-        410.0,
-        600.0
+        220,
+        410,
+        600
       ],
       "pointer": "/InkRecoverFrm_Std",
       "sourceId": "data/parameter/1130/misc/params.json",
@@ -276,7 +276,7 @@
       "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
     },
     "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json#/GameParameters/WeaponParam/Stand_DegSwerve": {
-      "value": 2.0,
+      "value": 2,
       "pointer": "/GameParameters/WeaponParam/Stand_DegSwerve",
       "sourceId": "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json",
       "status": "extracted",
@@ -364,7 +364,7 @@
       "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
     },
     "data/parameter/1130/weapon/WeaponBlasterMiddle.game__GameParameterTable.json#/GameParameters/WeaponParam/Jump_DegSwerve": {
-      "value": 10.0,
+      "value": 10,
       "pointer": "/GameParameters/WeaponParam/Jump_DegSwerve",
       "sourceId": "data/parameter/1130/weapon/WeaponBlasterMiddle.game__GameParameterTable.json",
       "status": "extracted",
@@ -372,7 +372,7 @@
       "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
     },
     "data/parameter/1130/weapon/WeaponBlasterMiddle.game__GameParameterTable.json#/GameParameters/WeaponParam/Stand_DegSwerve": {
-      "value": 0.0,
+      "value": 0,
       "pointer": "/GameParameters/WeaponParam/Stand_DegSwerve",
       "sourceId": "data/parameter/1130/weapon/WeaponBlasterMiddle.game__GameParameterTable.json",
       "status": "extracted",
@@ -420,7 +420,7 @@
       "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
     },
     "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/WeaponParam/Jump_DegSwerve": {
-      "value": 7.0,
+      "value": 7,
       "pointer": "/GameParameters/WeaponParam/Jump_DegSwerve",
       "sourceId": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json",
       "status": "extracted",
@@ -524,7 +524,7 @@
       "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
     },
     "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json#/GameParameters/WeaponParam/LapOver_DegSwerve": {
-      "value": 0.0,
+      "value": 0,
       "pointer": "/GameParameters/WeaponParam/LapOver_DegSwerve",
       "sourceId": "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json",
       "status": "extracted",
@@ -662,7 +662,7 @@
         "DamageMaxValue": 1500,
         "DamageMinDistance": 10.7,
         "DamageMinValue": 350,
-        "Degree": 16.0,
+        "Degree": 16,
         "DepletionDamageRate": 0.25,
         "FinalDamageMinValue": 350,
         "InsideDistanceXZ": 1.2
@@ -683,7 +683,7 @@
         "DamageMaxValue": 1500,
         "DamageMinDistance": 13.2,
         "DamageMinValue": 400,
-        "Degree": 5.0,
+        "Degree": 5,
         "FinalDamageMinValue": 400
       },
       "pointer": "/GameParameters/VerticalSwingUnitGroupParam/DamageParam/Inside",
@@ -765,7 +765,7 @@
       "notes": "Pinned11.3.0; angular sampler and world-space spawn mapping remain separately uncalibrated."
     },
     "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WideSwingUnitGroupParam/Unit/0/SpawnWideDegree": {
-      "value": 18.0,
+      "value": 18,
       "pointer": "/GameParameters/WideSwingUnitGroupParam/Unit/0/SpawnWideDegree",
       "sourceId": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json",
       "status": "extracted",
@@ -884,7 +884,7 @@
         },
         {
           "Damage": 300,
-          "Distance": 7.0
+          "Distance": 7
         }
       ],
       "pointer": "/GameParameters/BlastParam/DistanceDamage",
@@ -926,7 +926,7 @@
       "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
     },
     "data/parameter/1130/weapon/WeaponSpInkStorm.game__GameParameterTable.json#/GameParameters/CloudParam/RainyFrame/Low": {
-      "value": 480.0,
+      "value": 480,
       "pointer": "/GameParameters/CloudParam/RainyFrame/Low",
       "sourceId": "data/parameter/1130/weapon/WeaponSpInkStorm.game__GameParameterTable.json",
       "status": "extracted",
@@ -934,7 +934,7 @@
       "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
     },
     "data/parameter/1130/weapon/WeaponSpInkStorm.game__GameParameterTable.json#/GameParameters/CloudParam/DamageRadius": {
-      "value": 10.0,
+      "value": 10,
       "pointer": "/GameParameters/CloudParam/DamageRadius",
       "sourceId": "data/parameter/1130/weapon/WeaponSpInkStorm.game__GameParameterTable.json",
       "status": "extracted",
@@ -945,7 +945,7 @@
       "value": [
         0.55,
         0.775,
-        1.0
+        1
       ],
       "pointer": "/ConsumeRt_Main",
       "sourceId": "data/parameter/1130/misc/params.json",
@@ -957,7 +957,7 @@
       "value": [
         0.8,
         0.9,
-        1.0
+        1
       ],
       "pointer": "/ConsumeRt_Sub_Lv0",
       "sourceId": "data/parameter/1130/misc/params.json",
@@ -969,7 +969,7 @@
       "value": [
         1.3,
         1.15,
-        1.0
+        1
       ],
       "pointer": "/IncreaseRt_Special",
       "sourceId": "data/parameter/1130/misc/params.json",
@@ -979,7 +979,7 @@
     },
     "data/parameter/1130/misc/params.json#/SpecialGaugeRt_Restart": {
       "value": [
-        1.0,
+        1,
         0.8,
         0.5
       ],
@@ -991,9 +991,9 @@
     },
     "data/parameter/1130/misc/params.json#/Dying_ChaseFrm": {
       "value": [
-        90.0,
-        180.0,
-        270.0
+        90,
+        180,
+        270
       ],
       "pointer": "/Dying_ChaseFrm",
       "sourceId": "data/parameter/1130/misc/params.json",
@@ -1003,9 +1003,9 @@
     },
     "data/parameter/1130/misc/params.json#/SuperJump_ChargeFrm": {
       "value": [
-        20.0,
-        35.0,
-        80.0
+        20,
+        35,
+        80
       ],
       "pointer": "/SuperJump_ChargeFrm",
       "sourceId": "data/parameter/1130/misc/params.json",
@@ -1028,7 +1028,7 @@
     },
     "data/parameter/1130/misc/params.json#/Somersault_MoveVelKd": {
       "value": [
-        1.0,
+        1,
         0.925,
         0.85
       ],
@@ -1052,9 +1052,9 @@
     },
     "data/parameter/1130/misc/params.json#/OpInk_ArmorHP": {
       "value": [
-        39.0,
-        26.0,
-        0.0
+        39,
+        26,
+        0
       ],
       "pointer": "/OpInk_ArmorHP",
       "sourceId": "data/parameter/1130/misc/params.json",
@@ -1066,7 +1066,7 @@
       "value": [
         96.6,
         132.3,
-        138.0
+        138
       ],
       "pointer": "/SuperJump_MoveFrm",
       "sourceId": "data/parameter/1130/misc/params.json",
@@ -1190,7 +1190,7 @@
       "value": [
         1.25,
         1.125,
-        1.0
+        1
       ],
       "pointer": "/MoveVelRt_Shot",
       "sourceId": "data/parameter/1130/misc/params.json",
@@ -1200,9 +1200,9 @@
     },
     "data/parameter/1130/misc/params.json#/ReduceJumpSwerveRate": {
       "value": [
-        1.0,
+        1,
         0.75,
-        0.0
+        0
       ],
       "pointer": "/ReduceJumpSwerveRate",
       "sourceId": "data/parameter/1130/misc/params.json",
@@ -1275,7 +1275,7 @@
       "notes": "Primary extracted field; behavior and physical units are verified separately."
     },
     "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/MainWeaponSetting/Overwrite_MoveVelRt_Shot_Low": {
-      "value": 1.0,
+      "value": 1,
       "pointer": "/GameParameters/MainWeaponSetting/Overwrite_MoveVelRt_Shot_Low",
       "sourceId": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json",
       "status": "extracted",
@@ -1353,6 +1353,18 @@
       "status": "extracted",
       "unit": "raw reference width",
       "notes": "Near/main width ratio .4/.8=.5; absolute mapping and full/half width semantics remain provisional."
+    },
+    "data/parameter/1130/misc/params.json#/OpInk_MoveVel_ShotK": {
+      "value": [
+        1,
+        0.75,
+        0.5
+      ],
+      "pointer": "/OpInk_MoveVel_ShotK",
+      "sourceId": "data/parameter/1130/misc/params.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; enemy action-speed classification is documented separately in the enemy-ink batch."
     }
   }
 }
