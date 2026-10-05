@@ -250,3 +250,7 @@ cloud/Halyard cube allocation at default high settings, not only after later
 runtime refresh. Existing formats, appearance policy and gameplay stay intact.
 These are project resource dimensions, not Nintendo/Switch memory values.
 See [the cold-boot budget report](inkwave-cold-boot-budgets-2026-10-04.md).
+
+### UI Actor lifetime: #616 / #672 / #685
+
+Page-lifetime HUD and Diorama state now releases its matching Match's Actor references at disposal; closed/stale map pins cannot call an old Actor. Minimap jump FX uses weakly correlated scalar tokens while preserving native landing fade. This is JavaScript lifecycle ownership, with no Nintendo numerical calibration or gameplay change. Source/minified/production-target regressions and explicit Node GC pass; physical heap/long-soak remains unverified. See [the focused report](inkwave-ui-actor-lifetime-2026-10-05.md).
