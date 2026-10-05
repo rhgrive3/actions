@@ -17,12 +17,8 @@ export function adaptPlatformSource(rel, code) {
     code = replaceOnce(code, badMessage('this'), 'this.gyro.statusMessage()', 'mobile gyro status');
     code = replaceOnce(code,
       "    window.addEventListener('blur', () => this.reset(), { signal: sig });\n" +
-      "    document.addEventListener('visibilitychange', () => { if (document.hidden) this.reset(); else this.gyro.resync(); }, { signal: sig });\n" +
-      "    const relayout = () => { this.gyro.resync(); this.resetPointers(); requestAnimationFrame(() => this._layoutAll()); };\n" +
-      "    window.addEventListener('resize', relayout, { signal: sig });\n" +
-      "    screen.orientation?.addEventListener?.('change', relayout, { signal: sig });\n" +
-      "    window.addEventListener('orientationchange', relayout, { signal: sig });",
-      '    // Page, screen, blur and coalesced layout lifetime: installMobilePlatform.', 'mobile lifecycle owners');
+      "    document.addEventListener('visibilitychange', () => { if (document.hidden) this.reset(); else this.gyro.resync(); }, { signal: sig });",
+      '    // Page/blur lifetime is owned by installMobilePlatform; resize/orientation stays with createTouchRelayout.', 'mobile page lifecycle owners');
     return install(code, 'mobile-platform', 'installMobilePlatform', 'MobileInput');
   }
   if (rel === 'src/core/input.js') {
