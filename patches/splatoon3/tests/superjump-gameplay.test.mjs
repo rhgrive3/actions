@@ -110,12 +110,14 @@ for (const frames of [138, 96]) for (const distance of [2, 70]) test(`#255 fligh
   f.tick(a); assert.equal(a.superJumpState.phase, 'flight');
   const nm = Object.create(f.NetMatch.prototype); nm.byNid = new Map([[1, a], [2, enemy]]); nm.s = { myId: 'owner' }; nm.myId = 'owner';
   a.owner = enemy.owner = 'owner'; f.G.netm = nm;
+  let hitSeq = 0;
+  const hit = source => nm._hit({ v: 1, a: 2, d: 36, w: source, l: a.netLife, h: ++hitSeq }, 'owner');
   for (let i = 0; i < frames; i++) {
-    for (const source of ['shooter', 'charger', 'bomb', 'storm', 'ink']) nm._hit({ v: 1, a: 2, d: 36, w: source });
+    for (const source of ['shooter', 'charger', 'bomb', 'storm', 'ink']) hit(source);
     assert.equal(a.hp, 100); f.tick(a);
   }
   assert.equal(a.superJumpState, null); assert.equal(a.invuln, 0);
-  nm._hit({ v: 1, a: 2, d: 36, w: 'shooter' }); assert.equal(a.hp, 64);
+  hit('shooter'); assert.equal(a.hp, 64);
 });
 
 for (const weapon of ['shooter', 'blaster']) test(`#218 ${weapon} fires before landing, respects windup, ink and main-only admission`, async t => {
