@@ -58,6 +58,8 @@ export function installGear(api, tuning) {
     m.inkRecoverySwim = tuning.gear.inkRecovery[0] / m.inkRecovery;
     m.inkRecoveryKid = extra.inkRecoveryKid[0] / gearCurve(ap.inkRecovery || 0, ...extra.inkRecoveryKid);
     m.enemyMoveSpeed = m.inkResistance * 60;
+    m.enemyActionSpeedScale = gearCurve(ap.inkResistance || 0, ...extra.enemyActionSpeedScale);
+    m.enemyInkGrace = Math.ceil(gearCurve(ap.inkResistance || 0, ...extra.enemyInkGraceFrames) - 1e-10) / tuning.resources.enemyInkReferenceHz;
     m.enemyShotSpeed = gearCurve(ap.inkResistance || 0, ...extra.enemyShotSpeed) * 60;
     m.enemyDamageCap = gearCurve(ap.inkResistance || 0, ...extra.enemyDamageCap) * 100;
     m.enemyDamageRate = gearCurve(ap.inkResistance || 0, ...extra.enemyDamageRate) * 6000;
@@ -78,7 +80,7 @@ export function installGear(api, tuning) {
   }
   Actor.prototype.reset = function (...args) {
     const result = reset.apply(this, args); equip(this);
-    this.s3.recoverStopRemaining = 0; this.s3.enemyInkTime = 0;
+    this.s3.recoverStopRemaining = 0; this.s3.rollerRefillMode = false; this.s3.enemyInkTime = 0; this.s3.enemyInkAwayTime = 0;
     return result;
   };
   Actor.prototype.setWeapon = function (...args) { const result = setWeapon.apply(this, args); equip(this); return result; };
@@ -86,7 +88,7 @@ export function installGear(api, tuning) {
   WeaponRunner.prototype.moveSpeed = function () {
     const m = this.a.s3?.modifiers || {}, w = this.a.weapon;
     const lockedMode = this.rolling || this.charging && w.kind === 'charger';
-    const attacking = this.firingT > 0 || this.charging || this.streaming;
+    const attacking = this.firingT > 0 || this.flick >= 0 || this.charging || this.streaming;
     const gear = lockedMode ? 1 : attacking ? m.runSpeedFiring ?? 1 : m.runSpeed ?? 1;
     return moveSpeed.call(this) * gear * (this.a.s3?.flow?.active ? tuning.flow.runMultiplier : 1);
   };
@@ -97,7 +99,16 @@ export function installGear(api, tuning) {
     const original = { swimSpeed: api.PLAYER.swimSpeed, enemyInkSpeed: api.PLAYER.enemyInkSpeed };
     const m = this.s3?.modifiers || {}, flow = this.s3?.flow?.active;
     api.PLAYER.swimSpeed *= (m.swimSpeed ?? 1) * (flow ? tuning.flow.swimMultiplier : 1);
-    api.PLAYER.enemyInkSpeed = (this.intent.fire ? m.enemyShotSpeed : m.enemyMoveSpeed) ?? original.enemyInkSpeed;
+    const runner = this.weaponRunner, kind = this.weapon.kind;
+    const firing = runner.firingT > 0 || runner.s3BlasterWindup > 0;
+    const fixedShot = ['shooter', 'dualies', 'blaster'].includes(kind) && firing;
+    const scaledAction = kind === 'charger' && runner.charging ||
+      kind === 'splatling' && (runner.charging || runner.streaming || firing) ||
+      kind === 'slosher' && (runner.slosh >= 0 || firing);
+    const walk = m.enemyMoveSpeed ?? original.enemyInkSpeed;
+    if (scaledAction && !squid) api.PLAYER.enemyInkSpeed = Math.min(walk, moveSpeed.call(runner) * (m.enemyActionSpeedScale ?? 1));
+    else if (fixedShot && !squid) api.PLAYER.enemyInkSpeed = m.enemyShotSpeed ?? walk;
+    else api.PLAYER.enemyInkSpeed = kind === 'roller' && this.intent.fire && !squid ? m.enemyShotSpeed ?? walk : walk;
     api.PLAYER.enemyInkSpeed *= flow ? tuning.flow.enemyInkSpeedMultiplier : 1;
     try { return horizontal.call(this, dt, squid, enemy); }
     finally { Object.assign(api.PLAYER, original); }
@@ -126,7 +137,9 @@ export function installGear(api, tuning) {
       Object.assign(api.SUB.bomb, saved);
       if (a.ink < beforeInk) {
         a.s3 ||= {};
-        const delay = input.subReleased ? api.SUB.bomb.inkRecoverStop : this.s3FlickVertical ? a.weapon.verticalInkRecoverStop ?? a.weapon.inkRecoverStop : a.weapon.inkRecoverStop;
+        const rollingUse = !input.subReleased && a.weapon.kind === 'roller' && this.rolling;
+        a.s3.rollerRefillMode = rollingUse;
+        const delay = input.subReleased ? api.SUB.bomb.inkRecoverStop : rollingUse ? a.weapon.rollInkRecoverStop : this.s3FlickVertical ? a.weapon.verticalInkRecoverStop ?? a.weapon.inkRecoverStop : a.weapon.inkRecoverStop;
         a.s3.recoverStopRemaining = Math.max(a.s3.recoverStopRemaining || 0, delay ?? tuning.resources.inkRefillDelay);
       }
     }
