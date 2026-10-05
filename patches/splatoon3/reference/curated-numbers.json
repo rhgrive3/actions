@@ -59,6 +59,18 @@
     }
   ],
   "parameters": {
+    "data/parameter/1130/misc/params.json#/DamageRt_BombH": {
+      "value": [
+        0.5,
+        0.75,
+        1
+      ],
+      "pointer": "/DamageRt_BombH",
+      "sourceId": "data/parameter/1130/misc/params.json",
+      "status": "extracted",
+      "unit": "damage multiplier",
+      "notes": "High/Mid/Low. Current scope is Splat Bomb far splash only; lethal near band is excluded by the separately verified weapon rule."
+    },
     "data/parameter/1130/misc/params.json#/MoveVel_Human": {
       "value": [
         0.144,
