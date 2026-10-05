@@ -80,7 +80,6 @@ jobs:
           PY
           node scripts/verify-inkwave-reference.mjs .reference-data
           node scripts/check-weapons-reference.mjs .reference-data/weapons
-          node scripts/verify-completion-sources.mjs .reference-data/weapons
       - name: Verify completed weapon source mirror
         run: node scripts/verify-completion-sources.mjs .reference-data/weapons
       - name: Check JavaScript syntax
