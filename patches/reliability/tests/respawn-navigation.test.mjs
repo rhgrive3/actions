@@ -120,3 +120,9 @@ test('#409 a second death during spawn descent cannot carry the prior-life reque
  h.a.respawn();h.a.splat(null,'water');h.m.updateController(STEP);assert.equal(h.c.pendingRespawnJump,null);
  h.a.respawn();h.a.grounded=true;h.m.updateController(STEP);assert.equal(h.a.superJumpState,null);
 });
+test('#409 an explicit touch choice adopts the new Input owner after keyboard opened the map',async()=>{
+ const h=await rig();h.dead();h.input.lastDevice='kbm';h.input.keys.add('Tab');h.m.updateController(STEP);
+ h.event('pointerdown',{pointerType:'touch'});assert.equal(h.input.lastDevice,'touch');
+ assert.equal(h.c.requestMapJump(h.allies[0]),true);h.a.respawn();h.a.grounded=true;h.m.updateController(STEP);
+ assert.equal(h.a.superJumpState?.target,h.allies[0]);
+});

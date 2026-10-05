@@ -47,6 +47,8 @@ const METHODS = `  canRequestMapJump() {
       return false;
     }
     if (!this.a.alive || (this._respawnNavigationActive && !this.a.grounded)) {
+      // A fresh explicit choice belongs to the device that made that choice.
+      this._respawnNavigationOwner = this.input.lastDevice;
       this.pendingRespawnJump = target.pos?.isVector3 ? { actor: target } : { point: target.clone() };
       return true;
     }
