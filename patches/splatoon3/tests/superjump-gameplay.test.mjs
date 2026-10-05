@@ -195,3 +195,58 @@ test('#362 30/60/120Hz preserve one committed destination and flight announcemen
     assert.ok(new f.THREE.Vector3(...committed).distanceTo(new f.THREE.Vector3(10,0,7)) < 1e-9);
   }
 });
+
+for (const ground of ['unpainted', 'enemy']) test(`#645 plain Super Jump landing on ${ground} ground creates 0 paint, adds 0 turf points and 0 special gauge`, async t => {
+  const f = await boot(); t.after(f.close);
+  const a = f.make({ team: 0 });
+  a.grounded = true;
+  a.s3.jumpChargeTime = STEP;
+  a.s3.jumpFlightTime = 96 * STEP;
+
+  let paintSplatCalls = 0;
+  let turfEmitted = 0;
+  f.on('turf', () => turfEmitted++);
+  f.G.paint.sample = () => ground === 'enemy' ? 2 : 0;
+  f.G.paint.splat = (pos, rad, team, opts) => {
+    paintSplatCalls++;
+    return 10;
+  };
+
+  const initialTurf = a.stats.turf;
+  const initialSpecial = a.special;
+
+  assert.equal(a.superJump(new f.THREE.Vector3(20, 0, 0)), true);
+  // Charge takes 1 tick, flight takes 96 ticks. Tick 98 reaches k >= 1 landing.
+  f.tick(a, 98);
+
+  assert.equal(a.superJumpState, null, 'super jump finished and landed');
+  assert.equal(paintSplatCalls, 0, 'plain Super Jump landing must not call G.paint.splat');
+  assert.equal(a.stats.turf, initialTurf, 'plain Super Jump adds 0 personal turf');
+  assert.equal(a.special, initialSpecial, 'plain Super Jump adds 0 special gauge');
+  assert.equal(turfEmitted, 0, 'no turf events emitted from landing');
+});
+
+test('#645 online and offline landing feedback preserves VFX/audio and zero paint', async t => {
+  const f = await boot(); t.after(f.close);
+  const a = f.make({ team: 0 });
+  a.s3.jumpChargeTime = STEP;
+  a.s3.jumpFlightTime = 96 * STEP;
+
+  let burstCount = 0;
+  let landEvents = 0;
+  let paintCalls = 0;
+  f.G.fx = { burst: () => burstCount++, ring: () => {} };
+  f.G.paint.splat = () => { paintCalls++; return 5; };
+  f.on('superjump:land', () => landEvents++);
+
+  a.superJump(new f.THREE.Vector3(20, 0, 0));
+  f.tick(a, 98);
+
+  assert.equal(a.superJumpState, null);
+  assert.equal(paintCalls, 0, 'zero gameplay paint at landing');
+  assert.ok(burstCount > 0, 'landing VFX burst is preserved');
+  assert.equal(landEvents, 1, 'superjump:land event emitted');
+  assert.equal(a.stats.turf, 0);
+  assert.equal(a.special, 0);
+});
+

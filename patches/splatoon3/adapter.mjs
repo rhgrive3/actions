@@ -155,6 +155,10 @@ export function adaptSource(rel, code) {
       '      const k = s.t + 1e-10 >= s.dur ? 1 : Math.min(1, s.t / s.dur);', 'super jump frame boundary');
     code = replaceOnce(code, "      if (k >= 1) {\n        this.superJumpState = null;",
       "      if (k >= 1) {\n        this.invuln = 0; // Spawn protection always ends before landing.\n        this.superJumpState = null;", 'super jump landing vulnerability');
+    code = replaceOnce(code,
+      '        this.addTurf(G.paint.splat(_v.copy(this.pos).setY(this.pos.y + 0.3), 1.4, this.team, { seed: Math.random() }));\n',
+      '        // Splatoon 3: Ordinary Super Jump does not leave ink, grant turf points, or charge special at landing.\n',
+      'super jump landing paint');
     const start = code.indexOf('    // ---- ink / hp\n');
     const end = code.indexOf('    // ---- weapons (', start);
     if (start < 0 || end < start) throw new Error('INKWAVE patch conflict: actor resource connection');
