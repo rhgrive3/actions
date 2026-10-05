@@ -353,3 +353,7 @@ for native/emitted negative controls and unverified hardware/network conditions.
 ## 2026-10-05 Roller flick target (#373)
 
 The [Roller movement comparison](inkwave-roller-flick-movement-2026-10-05.md) replaces the native windup-progress slowdown with the already sourced2.88 WU/s attack target for horizontal/vertical swings. Release timing, ink, pose, gear ownership and rolling/post-release branches stay separate; absolute physical scale and Switch acceptance remain unverified.
+
+## Death-time Turf Map navigation (#409)
+
+[Respawn navigation comparison](inkwave-respawn-navigation-2026-10-05.md) separates live map/target selection from disabled dead-body input. Deferred requests remain cancellable and wait for actual respawn grounding; shared HUD/diorama routing preserves the standard-pad A-confirmation owner. Exact physical Squid Spawn timing and the separate #273/#362 behaviors remain independently tracked.

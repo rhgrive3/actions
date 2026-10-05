@@ -36,6 +36,7 @@ import { DEFAULT_SETTINGS } from '/src/config.js';
 import { installClock,runSimulation } from '/patches/splatoon3/runtime/clock.mjs';
 import { NetSession } from '/src/net/session.js';
 import { HUD } from '/src/ui/hud.js';
+import { DioramaOverlay } from '/src/ui/diorama.js';
 window.input=new Input(document.getElementById('game'));window.mobile=input.mobile;
 input.lastDevice='touch';mobile.setVisible(true);
 G.settings={...DEFAULT_SETTINGS,aimAssist:0,aimAssistMouse:false};
@@ -45,7 +46,7 @@ window.controller=new PlayerController(actor,rig,input);controller.computeAim=()
 G.rig=rig;G.projectiles={update(){}};
 window.intents=[];const match={state:'playing',local:actor,controller,updateController(dt){controller.update(dt);},update(){intents.push({...actor.intent,move:actor.intent.move.toArray()});}};
 window.sim={input,rig,match,showcase:{},_padMenus(){}};installClock({G});
-window.advance=dt=>runSimulation(sim,dt);window.G=G;window.Match=Match;window.NetSession=NetSession;window.HUD=HUD;window.ready=true;
+window.advance=dt=>runSimulation(sim,dt);window.G=G;window.Match=Match;window.NetSession=NetSession;window.HUD=HUD;window.DioramaOverlay=DioramaOverlay;window.THREE=THREE;window.ready=true;
 </script></html>`;
 const receipts = {}, errors = [];
 const types = { '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.woff2': 'font/woff2' };
@@ -305,6 +306,39 @@ try {
         controller.padJumpIndex = -1;
       });
       entry.checks.push('actual-built-HUD-highlights-selected-pad-beacon-and-confirmation-guide');
+      const respawnNavigation = await page.evaluate(() => {
+        const old = { match:G.match, actors:G.actors, input:G.input, level:G.level, device:input.lastDevice };
+        const a={alive:false,grounded:false,team:0,intent:{move:new THREE.Vector3()},pos:new THREE.Vector3(),
+          canSuperJump(){return this.alive&&!this.superJumpState;},superJump(target){if(!this.canSuperJump())return false;this.superJumpState={target};return true;}};
+        const ally={alive:true,team:0,pos:new THREE.Vector3(2,0,3)};
+        const camera={yaw:.4,pitch:.2},c=new controller.constructor(a,camera,input);c.computeAim=()=>{};
+        const match={state:'playing',paused:false,local:a,controller:c};
+        let hud,dio;
+        try {
+          G.match=match;G.actors=[a,ally];G.input=input;G.level={spawnPads:[new THREE.Vector3()]};
+          input.lastDevice='kbm';input.keys.add('Tab');input.keys.add('KeyW');input.mouse.left=true;
+          Match.prototype.updateController.call(match,1/60);
+          const deadBlocked=!c.enabled&&c.mapHeld&&a.intent.move.lengthSq()===0&&!a.intent.fire&&camera.yaw===.4&&camera.pitch===.2;
+          hud=new HUD();hud._local=()=>a;hud._beaconTargets=()=>[{ok:true,actor:ally}];hud._jumpTo(0);
+          const hudQueued=c.pendingRespawnJump?.actor===ally&&!a.superJumpState;
+          c.pendingRespawnJump=null;
+          dio=new DioramaOverlay(document.body);dio.on=true;dio.k=1;dio.pins[0].target=ally;
+          dio.pins[0].el.dispatchEvent(new PointerEvent('pointerdown',{pointerType:'touch',bubbles:true,cancelable:true}));
+          const dioramaQueued=c.pendingRespawnJump?.actor===ally&&!a.superJumpState;
+          a.alive=true;Match.prototype.updateController.call(match,1/60);const waitsForLanding=!a.superJumpState;
+          a.grounded=true;Match.prototype.updateController.call(match,1/60);const landed=a.superJumpState?.target===ally&&!c.pendingRespawnJump;
+          a.alive=false;a.superJumpState=null;Match.prototype.updateController.call(match,1/60);c.requestMapJump(ally);
+          c.menuBlocked=true;Match.prototype.updateController.call(match,1/60);
+          const pauseCancels=!c.pendingRespawnJump&&!c.mapHeld&&!a.intent.fire;
+          return {deadBlocked,hudQueued,dioramaQueued,waitsForLanding,landed,pauseCancels};
+        } finally {
+          hud?.dispose();dio?.el.remove();input.keys.clear();input.pressed.clear();input.mouse.left=false;input.lastDevice=old.device;
+          mobile.setMap(false);G.match=old.match;G.actors=old.actors;G.input=old.input;G.level=old.level;
+        }
+      });
+      assert.deepEqual(respawnNavigation,{deadBlocked:true,hudQueued:true,dioramaQueued:true,waitsForLanding:true,landed:true,pauseCancels:true});
+      entry.checks.push('actual-built-Match-HUD-diorama-dead-map-selection-and-deferred-respawn-admission');
+
       }
       await runTouchTransitionCases({
         page,
