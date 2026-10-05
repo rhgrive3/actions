@@ -224,6 +224,31 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "weapons.shooter.nearestPaintCycle.SplashSpawnParam.SplitNum": {
+    "value": 8,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.shooter.nearestPaintCycle.SplashSpawnParam.ForceSpawnNearestAddNumArray.0": {
+    "value": 4,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.shooter.nearestPaintCycle.SplashPaintParam.WidthHalfNearest": {
+    "value": 2.0608,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.shooter.nearestPaintCycle.SplashPaintParam.parameterUnitMultiplier": {
+    "value": 0.2,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.shooter.nearestPaintCycle.SplashPaintParam.worldUnitScale": {
+    "value": 1,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
   "weapons.dualies.inkPerShot": {
     "value": 0.72,
     "status": "derived from pinned extracted data; physical scale unverified",
