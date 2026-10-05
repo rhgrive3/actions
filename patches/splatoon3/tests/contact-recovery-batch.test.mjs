@@ -69,7 +69,7 @@ test('#221: actual terrain impact cuts player admission to0.4234 at floor/wall/s
   const f=await fixture(),{ps,p,a,at}=blast(f),e=f.make();e.team=1;f.G.actors=[e];let damage=[];ps.applyHit=(_a,_e,d)=>damage.push(d);
   const limit=a.weapon.splashRadius*.4234;const n=new f.THREE.Vector3(...normal);
   for(const [distance,expected]of [[limit-.001,1],[limit+.001,0],[a.weapon.splashRadius-.001,0]]){e.pos.set(distance,0,0);damage=[];ps._impact(p,{point:at,normal:n});assert.equal(damage.length,expected);}
-  e.pos.set(a.weapon.splashRadius-.001,0,0);damage=[];ps._blastBurst(p,at,null);assert.equal(damage.length,1);assert.equal(p.s3TerrainBurst,undefined);
+  e.pos.set(a.weapon.splashRadius-.001,0,0);damage=[];ps._blastBurst(p,at,null);assert.equal(damage.length,1);assert.equal(!!p.s3TerrainBurst,false);
  }
 });
 
@@ -84,7 +84,7 @@ test('#221: direct-hit exclusion, terrain LOS, boss splash and paint/visual size
 
 test('#221: impact cause is scoped to the call and clears even if a paint hook throws',async()=>{
  const f=await fixture(),{ps,p,at}=blast(f);f.G.paint.splat=()=>{throw Error('paint failure');};
- assert.throws(()=>ps._impact(p,{point:at,normal:new f.THREE.Vector3(0,1,0)}),/paint failure/);assert.equal(p.s3TerrainBurst,undefined);
+ assert.throws(()=>ps._impact(p,{point:at,normal:new f.THREE.Vector3(0,1,0)}),/paint failure/);assert.equal(!!p.s3TerrainBurst,false);
 });
 
 test('contact/refill traces are render-rate independent through the public FixedClock',async()=>{
