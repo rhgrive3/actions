@@ -1,6 +1,12 @@
 import { installWeaponEdgecases } from './weapon-edgecases.mjs';
 import { installRollerLogic } from './roller.mjs';
 let api;
+// Issue #686: Heavy Splatling continuous-fire interruption (連射中断後隙). The
+// reference Splatoon 3 Ver. 11.3.0 verification table gives squid-form
+// admission 6F after an active stream is interrupted. The authoritative
+// simulation runs at a fixed 1/60 s, so the interruption is held for exactly
+// six fixed ticks before the squid press can be admitted.
+const SPLATLING_STREAM_INTERRUPT = 6 / 60;
 export function splatlingBurst(w, charge) {
   const boundary = w.firstChargeTime / w.chargeTime, c = Math.max(0, Math.min(1, charge));
   return c <= boundary ? w.burstFirst * c / boundary : w.burstFirst + (w.burstMax - w.burstFirst) * (c - boundary) / (1 - boundary);
@@ -58,10 +64,23 @@ export function installWeapons(context, profile) {
   WeaponRunner.prototype.reset = function (...args) {
     const result = reset.apply(this, args);
     this.s3Stored = null; this.s3Turret = false; this.s3FlickVertical = false; this.s3BlasterWindup = 0;
-    this.s3SloshRecovery = false; return result;
+    this.s3StreamInterrupt = 0; this.s3SloshRecovery = false; return result;
   };
   WeaponRunner.prototype.busy = function () {
-    if (['charger','splatling'].includes(this.a.weapon.kind) && this.a.intent.squid && this.a._squidPressT > this.a._firePressT) return false;
+    const a = this.a;
+    if (a.weapon.kind === 'splatling') {
+      // An active stream interrupted by a newer squid press is busy for the
+      // whole continuous-fire interruption instead of diving on the same tick.
+      // Start it here because Actor.update reads busy() before the weapon
+      // update, so the form cannot flip before the interruption is armed.
+      if (this.streaming && a.intent.squid && a._squidPressT > a._firePressT) {
+        if (!(this.s3StreamInterrupt > 0)) this.s3StreamInterrupt = SPLATLING_STREAM_INTERRUPT;
+      }
+      if (this.s3StreamInterrupt > 0) return true;
+    }
+    // Every other path keeps its prior admission, including the separate
+    // Splatling charge-interruption and Charger keep/cancel roots.
+    if (['charger','splatling'].includes(a.weapon.kind) && a.intent.squid && a._squidPressT > a._firePressT) return false;
     return this.s3BlasterWindup > 0 || busy.call(this);
   };
   const charger = WeaponRunner.prototype._charger;
@@ -193,6 +212,16 @@ export function installWeapons(context, profile) {
   };
   const splatling = WeaponRunner.prototype._splatling;
   WeaponRunner.prototype._splatling = function (dt, input, w) {
+    if (this.s3StreamInterrupt > 0) {
+      // Continuous-fire interruption: stop the stream's shot scheduling now and
+      // keep the kid form until the fixed 6F boundary has elapsed.
+      this.s3StreamInterrupt -= dt;
+      if (this.s3StreamInterrupt < 1e-10) this.s3StreamInterrupt = 0;
+      this.charging = this.streaming = false;
+      this.charge = this.chargeT = this.burstT = 0;
+      this.spinLoop?.stop(.12); this.spinLoop = null;
+      return;
+    }
     if(this.a.form === 'squid') {
       this.charging = this.streaming = false; this.charge = this.chargeT = this.burstT = 0;
       this.spinLoop?.stop(.12); this.spinLoop = null; return;

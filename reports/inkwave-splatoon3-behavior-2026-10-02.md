@@ -250,3 +250,17 @@ cloud/Halyard cube allocation at default high settings, not only after later
 runtime refresh. Existing formats, appearance policy and gameplay stay intact.
 These are project resource dimensions, not Nintendo/Switch memory values.
 See [the cold-boot budget report](inkwave-cold-boot-budgets-2026-10-04.md).
+
+## 2026-10-06: ヘビースピナーの連射中断→イカ（#686）
+
+開始mainは `6a9710307549e72d65a9bea53b59bce55e7faba2`。公開対象は `inkwave-public/` と有効な `patches/splatoon3/` であり、旧 `game/` は対象外。本家の実機計測を新たに追加した変更ではない。
+
+| 項目 | 内容 |
+|---|---|
+| 本家の根拠 | [S3 メインウェポン前隙・後隙の検証表](https://wikiwiki.jp/splatoon3mix/%E6%A4%9C%E8%A8%BC/%E3%83%A1%E3%82%A4%E3%83%B3%E3%82%A6%E3%82%A7%E3%83%9D%E3%83%B3/%E5%89%8D%E9%9A%99%E3%83%BB%E5%BE%8C%E9%9A%99)。連射中断後隙（`連射中断後隙`）の行で、バレルスピナーの射撃中断→イカ状態は**6F**（サブ5F / インク回復40F は別行）。コミュニティ検証表の値であり、今回の変更でSwitch実機を再計測したものではない |
+| INKWAVE の実装箇所 | `patches/splatoon3/runtime/weapons.mjs`。`WeaponRunner.prototype.busy` が射撃中の `streaming` を検知して `s3StreamInterrupt = 6/60` を開始し、その間 `Actor.update` のイカ形態を保留する。`WeaponRunner.prototype._splatling` は中断状態で射撃スケジュールを停止する。以前はイカ入力が新しいと `busy()` が無条件 false を返し、同一固定tickでイカ形態になってから射撃を消していた |
+| 再現操作 | ヘビースピナーをフルチャージ→ZR解放で `streaming === true`→射撃中にZL押下。固定1/60 tickで、押下tickを0として `form === 'kid'` が5完了フレーム継続し、6F境界で `squid` になることを確認する |
+| プレイへの影響 | 射撃中にZLで即イカに潜れなくなり、S3の連射中断後隙ぶん射撃姿勢が残る。攻撃を中断したときの被弾猶予が伸びる。48F/72Fチャージ閾値、80F/160Fのストリーム時間、4F連射間隔、弾道、拡散、移動値は変更していない |
+| 確認状態 | **ロジック確認済み**（source-fixture、実 `Actor.update`、1/60 tick）、`patches/splatoon3/tests/issue-686-splatling-stream-interrupt.test.mjs` 5/5 と既存のスピナー合成回帰。**本家Switch Ver.11.3.0でのフレーム単位実機比較と、30/60/120 Hz描画差の実端末確認は未確認**。サブ5F・インク回復40Fの中断族は本件では実装していない（別root） |
+
+自然な連射終了（#501のストリーム終了経路）と、チャージ中断→イカの経路は本件とは別状態として扱い、変更していない。伝令の Character 表示は authoritative な `form` を読むため、追加の1フレームsnapは導入していない。
