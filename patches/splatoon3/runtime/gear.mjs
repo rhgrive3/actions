@@ -1,3 +1,5 @@
+import { installSubReady } from './sub-ready.mjs';
+import { installStormPower } from './storm-power.mjs';
 import { configureSwimStealth, updateSwimStealth, swimSpeedMultiplier } from './swim-stealth.mjs';
 // Gear uses three equipment pieces, each with one 10 AP main and three 3 AP subs.
 export const ABILITIES = Object.freeze({
@@ -5,7 +7,7 @@ export const ABILITIES = Object.freeze({
   inkSaverMain: 'インク効率アップ（メイン）', inkSaverSub: 'インク効率アップ（サブ）',
   inkRecovery: 'インク回復力アップ', inkResistance: '相手インク影響軽減',
   actionIntensify: 'アクション強化', specialCharge: 'スペシャル増加量アップ',
-  specialSaver: 'スペシャル減少量ダウン', quickRespawn: '復活時間短縮',
+  specialPower: 'スペシャル性能アップ', specialSaver: 'スペシャル減少量ダウン', quickRespawn: '復活時間短縮',
   quickSuperJump: 'スーパージャンプ時間短縮', subPower: 'サブ性能アップ',
 });
 export function abilityAllowed(id, piece, slot) {
@@ -86,6 +88,10 @@ export function installGear(api, tuning) {
     m.actionAirSpread = gearCurve(ap.actionIntensify || 0, ...(a.weapon.actionAirSpreadCurve || extra.actionAirSpread));
     if (Number.isFinite(a.weapon.spreadAir) && Number.isFinite(a.weapon.spreadGround)) a.weapon.spreadAir = a.weapon.spreadGround + (a.weapon.spreadAir - a.weapon.spreadGround) * (1 - m.actionAirSpread);
     for (const field of ['inkPerShot', 'inkFull', 'inkMin', 'flickInk', 'verticalInk', 'rollInkPerMeter']) if (field in a.weapon) a.weapon[field] *= m.inkSaverMain ?? 1;
+    const sub = api.SUB[a.weapon.sub || 'bomb'];
+    m.inkSaverSub = sub?.inkSaverCurve ? gearCurve(ap.inkSaverSub || 0, ...sub.inkSaverCurve) : 1;
+    m.stormDuration = Math.floor(gearCurve(ap.specialPower || 0, ...tuning.gearExtra.stormDurationFrames) + 1e-10) / 60;
+    m.stormThrowScale = gearCurve(ap.specialPower || 0, ...tuning.gearExtra.stormThrowScale);
     a.weapon.specialCost /= m.specialCharge ?? 1;
   }
   Actor.prototype.reset = function (...args) {
@@ -110,6 +116,8 @@ export function installGear(api, tuning) {
   const moveSpeed = WeaponRunner.prototype.moveSpeed;
   WeaponRunner.prototype.moveSpeed = function () {
     const m = this.a.s3?.modifiers || {}, w = this.a.weapon;
+    const throwingStorm = this.a.specialActive?.id === 'storm' && this.a.specialActive.phase === 'hold' && this.a.specialActive.subArmed && this.a.intent.sub;
+    if (this.a.grounded && (this.aimingSub || throwingStorm)) return tuning.bomb.holdMoveSpeed * (this.a.s3?.flow?.active ? tuning.flow.runMultiplier : 1);
     const lockedMode = this.rolling || this.charging && w.kind === 'charger' && this.a.onEnemy;
     const attacking = this.firingT > 0 || this.flick >= 0 || this.charging || this.streaming;
     const gear = lockedMode ? 1 : attacking ? m.runSpeedFiring ?? 1 : m.runSpeed ?? 1;
@@ -162,13 +170,9 @@ export function installGear(api, tuning) {
   });
   const update = WeaponRunner.prototype.update;
   WeaponRunner.prototype.update = function (dt, input) {
-    const a = this.a, m = a.s3?.modifiers || {}, beforeInk = a.ink;
-    const saved = { inkCost: api.SUB.bomb.inkCost, throwSpeed: api.SUB.bomb.throwSpeed };
-    api.SUB.bomb.inkCost *= m.inkSaverSub ?? 1;
-    api.SUB.bomb.throwSpeed *= m.subPower ?? 1;
+    const a = this.a, beforeInk = a.ink;
     try { return update.call(this, dt, input); }
     finally {
-      Object.assign(api.SUB.bomb, saved);
       if (a.ink < beforeInk) {
         a.s3 ||= {};
         const rollingUse = !input.subReleased && a.weapon.kind === 'roller' && this.rolling;
@@ -178,6 +182,8 @@ export function installGear(api, tuning) {
       }
     }
   };
+  installSubReady(api, tuning);
+  installStormPower(api);
   if (api.Menus) {
     const render = api.Menus.prototype._scr_loadout;
     api.Menus.prototype._scr_loadout = function (...args) {
