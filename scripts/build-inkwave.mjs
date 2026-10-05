@@ -187,6 +187,7 @@ const deferredIntegrationPreloads = new Set([
   'patches/splatoon3/runtime/movement-physics.mjs',
   'patches/splatoon3/runtime/roller-model.mjs',
   'patches/splatoon3/runtime/sub-special-fidelity.mjs',
+  'patches/splatoon3/runtime/superjump.mjs',
   'patches/splatoon3/runtime/weapon-edgecases.mjs',
   'patches/splatoon3/runtime/weapons-fidelity.mjs',
   'patches/splatoon3/runtime/weapons-charger-flight.mjs',
