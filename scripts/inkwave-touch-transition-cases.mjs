@@ -22,6 +22,31 @@
 
 import assert from 'node:assert/strict';
 
+// A completed native-CDP sequence must never receive a second touchEnd.
+export function trackTouchSequence(gesture) {
+  let active = false;
+  const sequence = {
+    get active() { return active; },
+    async send(type, points) {
+      if ((type === 'touchMove' || type === 'touchEnd' || type === 'touchCancel') && !active)
+        throw new Error('Touch sequence requires touchStart before ' + type);
+      await gesture(type, points);
+      if (type === 'touchStart' || type === 'touchEnd' || type === 'touchCancel')
+        active = type !== 'touchCancel' && points.length > 0;
+    },
+    async finish(primaryError = null) {
+      if (!active) return;
+      try { await sequence.send('touchEnd', []); }
+      catch (cleanupError) {
+        if (primaryError) throw new AggregateError([primaryError, cleanupError],
+          'Touch cleanup failed after: ' + primaryError.message, { cause: primaryError });
+        throw cleanupError;
+      }
+    },
+  };
+  return sequence;
+}
+
 export function assertPortraitAspectTransition({ portrait, landscape, fresh, released }) {
   for (const [phase, value] of [['portrait', portrait], ['landscape stale gesture', landscape], ['released', released]]) {
     assert.equal(value.fireDown, false, phase + ' must not hold FIRE');
@@ -596,7 +621,8 @@ export async function runTouchTransitionCases({
     ptrSize: mobile._ptr.size, stickActive: mobile._stick.active,
     resyncCalls: window._gyroSpy?.resyncCalls ?? 0,
   }));
-  await gesture('touchStart', [{ id: 26, x: portraitFire.x, y: portraitFire.y }]);
+  const portraitSequence = trackTouchSequence(gesture);
+  await portraitSequence.send('touchStart', [{ id: 26, x: portraitFire.x, y: portraitFire.y }]);
   const portrait = await state();
   await page.evaluate(() => {
     window._gyroSpy = { origResync: mobile.gyro.resync, resyncCalls: 0 };
@@ -605,6 +631,7 @@ export async function runTouchTransitionCases({
       return window._gyroSpy.origResync.apply(this, args);
     };
   });
+  let transitionFailure = null;
   try {
     // A keyboard/aspect change does not change the physical screen angle.
     // The gesture rejected in portrait must not acquire ownership on move.
@@ -612,16 +639,19 @@ export async function runTouchTransitionCases({
     const landscapeFire = await page.evaluate(() => {
       const f = mobile._box('fire'); return { x: Math.round(f.x), y: Math.round(f.y) };
     });
-    await gesture('touchMove', [{ id: 26, x: landscapeFire.x, y: landscapeFire.y }]);
+    await portraitSequence.send('touchMove', [{ id: 26, x: landscapeFire.x, y: landscapeFire.y }]);
     const landscape = await state();
-    await gesture('touchEnd', []);
-    await gesture('touchStart', [{ id: 27, x: landscapeFire.x, y: landscapeFire.y }]);
+    await portraitSequence.send('touchEnd', []);
+    await portraitSequence.send('touchStart', [{ id: 27, x: landscapeFire.x, y: landscapeFire.y }]);
     const fresh = await state();
-    await gesture('touchEnd', []);
+    await portraitSequence.send('touchEnd', []);
     // A valid fresh edge is consumed by the normal fixed-step owner.
     await page.evaluate(() => input.endFrame());
     const released = await state();
     assertPortraitAspectTransition({ portrait, landscape, fresh, released });
+  } catch (error) {
+    transitionFailure = error;
+    throw error;
   } finally {
     await page.evaluate(() => {
       if (window._gyroSpy) {
@@ -629,7 +659,7 @@ export async function runTouchTransitionCases({
         delete window._gyroSpy;
       }
     });
-    await gesture('touchEnd', []);
+    await portraitSequence.finish(transitionFailure);
     await setViewport(1024, 768);
   }
   entry.checks.push('portrait-rejects-controls-fixed-angle-recovery-needs-fresh-touch-no-gyro-resync');

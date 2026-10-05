@@ -12,7 +12,7 @@ export function inspectSplatlingStages({charge,streaming,left,first,second,settl
   let changed=null,oldStyle=null,oldRadius=null;
   if(negative){changed=negative==='hidden'?svg:negative==='opacity'||negative==='offscreen'?h.xh:rings[1];oldStyle=changed.getAttribute('style');oldRadius=changed.getAttribute('r');
     if(negative==='hidden')changed.style.visibility='hidden';
-    if(negative==='opacity')changed.style.opacity='0';
+    if(negative==='opacity'){changed.style.setProperty('transition','none','important');changed.style.setProperty('opacity','0','important');}
     if(negative==='offscreen')changed.style.left='200vw';
     if(negative==='stroke')changed.style.stroke='none';
     if(negative==='zero-size')changed.setAttribute('r','0');
@@ -21,7 +21,7 @@ export function inspectSplatlingStages({charge,streaming,left,first,second,settl
   try {
     const viewport={width:innerWidth,height:innerHeight};
     const box=el=>{const r=el.getBoundingClientRect();return{x:r.x,y:r.y,left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height};};
-    const css=el=>{const c=getComputedStyle(el);return{tag:el.tagName,display:c.display,visibility:c.visibility,opacity:c.opacity,contentVisibility:c.contentVisibility,stroke:c.stroke,strokeWidth:c.strokeWidth,strokeOpacity:c.strokeOpacity,strokeDashoffset:c.strokeDashoffset,transform:c.transform};};
+    const css=el=>{const c=getComputedStyle(el);return{tag:el.tagName,display:c.display,visibility:c.visibility,opacity:c.opacity,contentVisibility:c.contentVisibility,stroke:c.stroke,strokeWidth:c.strokeWidth,strokeOpacity:c.strokeOpacity,strokeDashoffset:c.strokeDashoffset,transform:c.transform,transition:c.transition,transitionDuration:c.transitionDuration};};
     const ancestors=[];for(let el=svg;el;el=el.parentElement)ancestors.push(css(el));
     const svgVisible=svg.checkVisibility({checkOpacity:true,checkVisibilityCSS:true});
     if(!svgVisible||ancestors.some(c=>c.display==='none'||c.visibility==='hidden'||c.visibility==='collapse'||Number(c.opacity)<=0||c.contentVisibility==='hidden'))errors.push('container/ancestor hidden');
@@ -39,7 +39,9 @@ export function inspectSplatlingStages({charge,streaming,left,first,second,settl
       return{progress,computedProgress,rawCircleVisible,strokeSamples,bounds,style};
     });
     if(rows[1].bounds.width<=rows[0].bounds.width)errors.push('Splatling second stage is not a distinct outer ring');
-    const row={charge,streaming,left,expected,settled,negative,viewport,mount:probe.mount,svgVisible,svgBounds:box(svg),ancestors,rings:rows,errors};probe.last=row;return row;
+    const negativeState=changed?{style:css(changed),inlineOpacity:changed.style.opacity,bounds:box(changed),radius:changed.getAttribute('r')}:null;
+    const negativeApplied=!negative||({hidden:()=>negativeState.style.visibility==='hidden',opacity:()=>Number(negativeState.style.opacity)===0,offscreen:()=>negativeState.bounds.left>=innerWidth,stroke:()=>negativeState.style.stroke==='none','zero-size':()=>Number(negativeState.radius)===0,progress:()=>Number(changed.style.strokeDashoffset)===100})[negative]();
+    const row={charge,streaming,left,expected,settled,negative,negativeState,negativeApplied,viewport,mount:probe.mount,svgVisible,svgBounds:box(svg),ancestors,rings:rows,errors};probe.last=row;return row;
   } finally {if(changed){if(oldStyle===null)changed.removeAttribute('style');else changed.setAttribute('style',oldStyle);if(oldRadius===null)changed.removeAttribute('r');else changed.setAttribute('r',oldRadius);}}
 }
 
@@ -256,8 +258,11 @@ export async function checkHudAuthority({ page, evidence, sourceSha = null, cont
     result.splatlingNegatives=[];
     for(const negative of ['hidden','opacity','offscreen','stroke','zero-size','progress']){
       const row=await page.evaluate(inspectSplatlingStages,{charge:5/6,streaming:false,left:0,first:1,second:.5,negative});
-      if(!row.errors.length)throw Error('Splatling negative control accepted '+negative);
+      if(!row.negativeApplied)throw Error('Splatling negative control setup failed '+negative+': '+JSON.stringify(row));
+      const expectedError={hidden:'container/ancestor hidden',opacity:'container/ancestor hidden',offscreen:'ring1: geometry/viewport',stroke:'ring1: stroke hidden','zero-size':'ring1: geometry/viewport',progress:'ring1: inline progress'}[negative];
+      if(!row.errors.includes(expectedError))throw Error('Splatling negative control accepted '+negative+': '+JSON.stringify(row));
       result.splatlingNegatives.push(row);
+      await page.evaluate(async()=>{const xh=globalThis.__splatlingProbe.xh;await Promise.all(xh.getAnimations({subtree:true}).filter(a=>a.effect?.getTiming().iterations!==Infinity).map(a=>a.finished.catch(()=>{})));});
     }
     fs.writeFileSync(path.join(evidence,'splatling-reticle-probe.json'),JSON.stringify({status:'passed',sourceSha,contentHash,stages:result.splatlingStages,negatives:result.splatlingNegatives},null,2));
   } catch(error) {

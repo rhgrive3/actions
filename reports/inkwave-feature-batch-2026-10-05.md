@@ -76,3 +76,20 @@ Production inputs and all502 artifact hashes remain unchanged at
 Reuse the passed production tests above; affected contracts/gates pass37/37 and
 71/71, including emitted Turf proof. Browser acceptance still awaits the new
 exact-head run. No extra Issue or gameplay correction is added by this repair.
+
+## Browser follow-up with retained evidence
+
+Run37270065126 passes the real catalog proof and every installed runtime byte
+receipt, plus validate/network/range. It captures all four positive reticle
+states correctly; detailed receipts establish the delayed entrance animation
+as the original immediate-measurement cause. Remaining failures are verifier
+setup/cleanup: an opacity negative sampled its transition before computed zero,
+and a completed touch sequence received a second cleanup touchEnd.
+
+Correct those two without changing production: force the private negative node
+to computed opacity0 with transitions disabled, verify each injected condition
+and its specific rejection, then settle restoration; track successful touch
+sequences and preserve original assertions when cleanup also fails. Affected
+contracts pass43/43. The runtime hash remains30af7443. Startup evidence from
+prior identical runtime is retained, but any superseded/cancelled job is never
+recorded as a pass. Final acceptance requires the next exact-head run.

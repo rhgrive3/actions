@@ -7,3 +7,7 @@ The browser case now requires: portrait FIRE and pointer ownership are rejected;
 The new verifier contract accepts one valid receipt and rejects ten concrete false-pass cases, including portrait FIRE, stale ownership/edges, spurious gyro resync, missing fresh input, duplicate owners and retained release. Source portrait/Map/relayout plus contract: 32 pass, one emitted-only optional. Explicit emitted runs: 33/33, no skips. Build 30af7443fcef.
 
 The canonical browser runner was attempted locally with only its output-root assertion adjusted in a private copy for this environment. Local loopback succeeds, but Playwright's default Chromium headless executable is missing. No browser pass is claimed from that attempt. Combined CI must run the real gesture checks.
+
+## Native touch protocol follow-up
+
+Run 37270065126 exposed the case's duplicate cleanup touchEnd. The case now tracks only successfully established active sequences, clears that state after end/cancel, and ends from finally only when still active. Cleanup errors remain visible; when an assertion already failed, an AggregateError retains that original failure as its cause and first error instead of replacing it. Contract/protocol tests: 15/15, including double-end prevention, stale-move rejection and failure-preservation controls. Gesture assertions and production code are unchanged. System Chromium was also retried locally and failed at its process-singleton socket with EPERM, so browser validation still belongs to CI.
