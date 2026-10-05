@@ -65,19 +65,39 @@ test('swim course: swimming in your own ink on the straight reaches the game swi
   } finally { w.done(); }
 });
 
+function assertRollStripe(events, sx0, sx1) {
+  const stripe = events.filter(e => e.kind === 'roll').map(e => e.point);
+  assert.ok(stripe.length > 10, `${stripe.length} actual rolling splats`);
+  assert.ok(new Set(stripe.map(sp => sp[2])).size > 10, 'rolling stripe advances along the strip');
+  assert.ok(stripe.every(sp => sp[0] > sx0 - 2 && sp[0] < sx1 + 2), 'stripe stays on the strip');
+}
+
 test('roller court: rolling along the strip lays a stripe on the court floor', async () => {
   const w = await setup('roller');
   try {
     const { a, W, R, tick, put } = w;
     const [sx0, sx1] = R.ZONES.ROLL_STRIP.x;
     put(R.ZONES.ROLL_STAND[0], R.ZONES.ROLL_STAND[1]);
-    W.splats.length = 0;
+    W.splats.length = 0; W.paintEvents.length = 0;
     tick(150, () => { a.intent.fire = true; a.intent.move.set(0, 0, 1); a.aimYaw = 0; });
     a.intent.fire = false; a.intent.move.set(0, 0, 0);
-    const rollSplats = W.splats.filter((sp) => sp[5] === 'roll');
-    assert.ok(rollSplats.length > 10, `${rollSplats.length} roll splats`);
-    assert.ok(rollSplats.every((sp) => sp[0] > sx0 - 2 && sp[0] < sx1 + 2), 'stripe stays on the strip');
+    // First press necessarily flicks. Its stochastic projectile impacts are not drum stripes.
+    assert.ok(W.paintEvents.some(e => e.kind !== 'roll'), 'initial flick paint remains exercised');
+    assertRollStripe(W.paintEvents, sx0, sx1);
     assert.ok(a.pos.z > R.ZONES.ROLL_STAND[1] + 5, 'rolled forward');
+  } finally { w.done(); }
+});
+
+test('roller stripe boundary still rejects real rolling outside the permitted strip', async () => {
+  const w = await setup('roller');
+  try {
+    const { a, W, R, tick, put } = w;
+    const [sx0, sx1] = R.ZONES.ROLL_STRIP.x;
+    put(sx0 - 2.1, R.ZONES.ROLL_STAND[1]);
+    W.splats.length = 0; W.paintEvents.length = 0;
+    tick(150, () => { a.intent.fire = true; a.intent.move.set(0, 0, 1); a.aimYaw = 0; });
+    a.intent.fire = false; a.intent.move.set(0, 0, 0);
+    assert.throws(() => assertRollStripe(W.paintEvents, sx0, sx1), /stripe stays on the strip/);
   } finally { w.done(); }
 });
 
