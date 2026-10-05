@@ -2917,5 +2917,10 @@
       "factor": 0.8928571428571428,
       "rawValue": 1.68
     }
+  },
+  "weapons.charger.postShotSwimTime": {
+    "value": 0.25,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
   }
 }
