@@ -15,18 +15,34 @@ export function adaptHud(rel, code) {
     if (begin < 0 || end < begin || !method.includes('    const resultsCurrent = () => ')) {
       throw new Error(`Reliability HUD owner missing: ${rel}; apply results/start first`);
     }
-    code = replaceOnce(code,
-      'names: this.palette.names || TEAM_NAMES });\n    await (judgeP || new Promise((r) => setTimeout(r, 4000)));',
-      'names: this.palette.names || TEAM_NAMES, isCurrent: resultsCurrent });\n    const judged = await (judgeP || new Promise((r) => setTimeout(r, 4000)));\n    if (judged?.cancelled === true) return;', rel);
+    const plainJudge = 'names: this.palette.names || TEAM_NAMES });\n    await (judgeP || new Promise((r) => setTimeout(r, 4000)));';
+    const authoritativeJudge = 'names: this.palette.names || TEAM_NAMES, winner: m.result.winner });\n    await (judgeP || new Promise((r) => setTimeout(r, 4000)));';
+    if (code.includes(authoritativeJudge)) {
+      code = replaceOnce(code, authoritativeJudge,
+        'names: this.palette.names || TEAM_NAMES, winner: m.result.winner, isCurrent: resultsCurrent });\n    const judged = await (judgeP || new Promise((r) => setTimeout(r, 4000)));\n    if (judged?.cancelled === true) return;', rel);
+    } else {
+      code = replaceOnce(code, plainJudge,
+        'names: this.palette.names || TEAM_NAMES, isCurrent: resultsCurrent });\n    const judged = await (judgeP || new Promise((r) => setTimeout(r, 4000)));\n    if (judged?.cancelled === true) return;', rel);
+    }
   }
   if (rel !== 'src/ui/hud.js') return code;
-  code = replaceOnce(code,
-    "  judge({ colors = ['#ff8a14', '#2f5bff'], percents = [50, 50], names = TEAM_NAMES } = {}) {\n    return new Promise((resolve) => {",
-    `  judge({ colors = ['#ff8a14', '#2f5bff'], percents = [50, 50], names = TEAM_NAMES, isCurrent = () => true } = {}) {
+  const plainHud = "  judge({ colors = ['#ff8a14', '#2f5bff'], percents = [50, 50], names = TEAM_NAMES } = {}) {\n    return new Promise((resolve) => {";
+  const authoritativeHud = "  judge({ colors = ['#ff8a14', '#2f5bff'], percents = [50, 50], names = TEAM_NAMES, winner: authoritativeWinner = null } = {}) {\n    return new Promise((resolve) => {";
+  if (code.includes(authoritativeHud)) {
+    code = replaceOnce(code, authoritativeHud,
+      `  judge({ colors = ['#ff8a14', '#2f5bff'], percents = [50, 50], names = TEAM_NAMES, winner: authoritativeWinner = null, isCurrent = () => true } = {}) {
     const current = () => { try { return !!isCurrent(); } catch { return false; } };
     if (this._judgeDisposed || !current()) return Promise.resolve({ cancelled: true });
     this._judgeOwner?.cancel();
     return new Promise((resolve) => {`, rel);
+  } else {
+    code = replaceOnce(code, plainHud,
+      `  judge({ colors = ['#ff8a14', '#2f5bff'], percents = [50, 50], names = TEAM_NAMES, isCurrent = () => true } = {}) {
+    const current = () => { try { return !!isCurrent(); } catch { return false; } };
+    if (this._judgeDisposed || !current()) return Promise.resolve({ cancelled: true });
+    this._judgeOwner?.cancel();
+    return new Promise((resolve) => {`, rel);
+  }
   code = replaceOnce(code, '      const snd = (n) => this._snd(n);', `      const sounds = new Set();
       const stopSound = (voice) => {
         try { if (voice?.stop) voice.stop(0); else voice?.v?.dispose?.(); } catch { /* optional audio */ }
