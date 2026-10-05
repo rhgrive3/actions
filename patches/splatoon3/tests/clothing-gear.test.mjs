@@ -65,9 +65,9 @@ test('RP assist-only contributors do not penalize a victim killed by someone els
  const f=await setup(),a=f.make(),e=f.make(),helper=f.make();e.team=1;dress(helper,'respawnPunisher');e.special=80;
  f.emit('damage',{attacker:helper,victim:e,amount:20,source:'shooter'});e.splat(a);near(e.special,40);near(e.respawnTimer,f.PLAYER.respawnTime);
 });
-test('real NetMatch sends bit24 without changing21 columns and rejects foreign/stale equipment snapshots',async()=>{
+test('real NetMatch sends bit24 without changing the current22 columns and rejects foreign/stale equipment snapshots',async()=>{
  const f=await setup(),a=f.make();a.nid=1;a.owner='owner';dress(a,'respawnPunisher');const n=Object.create(f.NetMatch.prototype);n.byNid=new Map([[1,a]]);n.stats={out:0,in:0};n.out=[];n.s={hostId:'host',tr:{broadcast:d=>n.packet=d}};n.peers=new Map();n._sendTick();
- const row=n.packet.a[0];assert.equal(row.length,21);assert.ok(row[10]&f.RESPAWN_PUNISHER_FLAG);
+ const row=n.packet.a[0];assert.equal(row.length,22);assert.ok(row[10]&f.RESPAWN_PUNISHER_FLAG);
  const remote=f.make();remote.remote=true;remote.owner='owner';remote.nid=1;remote.net={buf:[]};n.byNid.set(1,remote);
  n._tick('foreign',{ts:1,a:[row]});assert.equal(f.respawnPunisherEquipped(remote),false);
  n._tick('owner',{ts:2,a:[row]});assert.equal(f.respawnPunisherEquipped(remote),true);
