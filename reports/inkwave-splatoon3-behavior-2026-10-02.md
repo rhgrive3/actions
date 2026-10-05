@@ -250,3 +250,17 @@ cloud/Halyard cube allocation at default high settings, not only after later
 runtime refresh. Existing formats, appearance policy and gameplay stay intact.
 These are project resource dimensions, not Nintendo/Switch memory values.
 See [the cold-boot budget report](inkwave-cold-boot-budgets-2026-10-04.md).
+
+## 2026-10-06: ローラー振り抜け後のサブ・イカゲート（#635、重複 #636）
+
+開始mainは `37ab02fcb7314eee8a6b3e6e8e6b0593610e7bff`。公開対象は `inkwave-public/` と有効な `patches/splatoon3/`。本家の実機計測を新たに追加した変更ではない。
+
+| 項目 | 内容 |
+|---|---|
+| 本家の根拠 | [S3メインウェポン前隙・後隙の検証表](https://wikiwiki.jp/splatoon3mix/%E6%A4%9C%E8%A8%BC/%E3%83%A1%E3%82%A4%E3%83%B3%E3%82%A6%E3%82%A7%E3%83%9D%E3%83%B3/%E5%89%8D%E9%9A%99%E3%83%BB%E5%BE%8C%E9%9A%99)のスプラローラー振り後隙：横振り サブ14F / イカ15F、縦振り サブ18F / イカ19F。コミュニティ検証表の値であり、Switch実機を再計測したものではない |
+| INKWAVE の実装箇所 | `patches/splatoon3/runtime/roller.mjs` が振りリリースtickに `s3FlickPostSub` / `s3FlickPostSquid` を固定1/60で開き、同じ `_roller` で毎tick減算。`patches/splatoon3/runtime/weapons.mjs` の `busy()` がゲート中はイカ形態を拒否、`roller.mjs` の `update` ラッパはゲート中は `inp.sub` / `inp.subReleased` を無効化する。以前は `flick < 0` になると次のtickでイカが成立し、サブは一切計測されていた |
+| 再現操作 | ローラーで振り→振り抜け（tick0）→横振りなら14F目でサブが成立、15F目でイカ成立。振り中にサブを押して離してもゲート内では投擲されない。縦振りは18F/19F |
+| プレイへの影響 | 振りを中断して潜る／サブを使うのがS3の振り後隙ぶん遅くなる。`flickRecover`（移動速度）、`inkRecoverStop`、ロール中断16F/5F/6F、ロール遷移、振りの発射・間隔・弾道・ダメージ・塗りは変更しない |
+| 確認状態 | **ロジック確認済み**（source-fixture、実 `Actor.update`、1/60 tick）`issue-635-roller-post-release-gates.test.mjs` 4/4、修正前は3/4が失敗。既存ローラー/サブ/入力回帰71/71、`--quick` OK、ビルド成功・startup budget 合格。**本家Switch Ver.11.3.0での実機フレーム計測と、30/60/120Hz描画差の実端末確認は未確認** |
+
+振り後のインク回復待ち、ロール中断・ロール遷移、#527の振り開始・リピートは別ルートとして変更していない。

@@ -21,19 +21,46 @@ export function rollerMode(w, vertical) {
   return vertical ? { ...w, flickWindup: w.verticalWindup, flickInterval: w.verticalInterval ?? w.flickInterval, flickInk: w.verticalInk } : w;
 }
 
+// Issue #635: Splat Roller post-release action gates from the reference
+// post-lag table — horizontal 14F sub / 15F squid, vertical 18F sub / 19F squid.
+// They are separate from flickRecover (movement), inkRecoverStop (ink), the
+// roll-interruption rows and the post-roll transition timing.
+const POST_SUB = { horizontal: 14 / 60, vertical: 18 / 60 };
+const POST_SQUID = { horizontal: 15 / 60, vertical: 19 / 60 };
+
 export function installRollerLogic({ WeaponRunner }, _profile) {
   const roller = WeaponRunner.prototype._roller, reset = WeaponRunner.prototype.reset;
   WeaponRunner.prototype.reset = function (...args) {
     const result = reset.apply(this, args);
     this.s3RollerAttack = null;
+    this.s3FlickPostSub = 0; this.s3FlickPostSquid = 0;
     if (this.a.character) {
       this.a.character.s3RollerFlick = null;
       this.a.character._s3CancelRollerFlick?.();
     }
     return result;
   };
+  // Issue #635: while the post-release sub gate is open, hold `inp.sub` /
+  // `inp.subReleased` off. Actor.update derives both flags from the raw intent,
+  // so a sub held across the release can neither start aiming nor release a
+  // throw that skips the remaining Roller lock.
+  const runnerUpdate = WeaponRunner.prototype.update;
+  WeaponRunner.prototype.update = function (dt, inp) {
+    if (this.s3FlickPostSub > 0 && (inp.sub || inp.subReleased)) {
+      return runnerUpdate.call(this, dt, { ...inp, sub: false, subReleased: false });
+    }
+    return runnerUpdate.call(this, dt, inp);
+  };
   WeaponRunner.prototype._roller = function (dt, inp, w) {
     const a = this.a;
+    if (this.s3FlickPostSub > 0) {
+      this.s3FlickPostSub -= dt;
+      if (this.s3FlickPostSub < EPS) this.s3FlickPostSub = 0;
+    }
+    if (this.s3FlickPostSquid > 0) {
+      this.s3FlickPostSquid -= dt;
+      if (this.s3FlickPostSquid < EPS) this.s3FlickPostSquid = 0;
+    }
     const starting = this.flick < 0 && inp.firePressed && this.cooldown <= EPS && a.ink >= (!a.grounded ? w.verticalInk : w.flickInk);
     if (starting) {
       this.cooldown = Math.min(0, this.cooldown);
@@ -56,6 +83,12 @@ export function installRollerLogic({ WeaponRunner }, _profile) {
     if (state && winding && this.flick < 0) {
       state.elapsed = mode.flickWindup;
       state.released = true;
+      // Issue #635: open the post-release gates on this fixed tick. The release
+      // tick counts as the first elapsed frame, so admission lands exactly on
+      // 14F/15F (horizontal) and 18F/19F (vertical) after release.
+      const edge = this.s3FlickVertical ? 'vertical' : 'horizontal';
+      this.s3FlickPostSub = Math.max(0, POST_SUB[edge] - dt);
+      this.s3FlickPostSquid = Math.max(0, POST_SQUID[edge] - dt);
     }
     if (state && state.elapsed + EPS >= state.interval) {
       this.s3RollerAttack = null;
