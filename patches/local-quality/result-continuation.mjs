@@ -14,8 +14,9 @@ export function continuationNavigation(menus, name, opts) {
 }
 export function resultChangeButton(menus, result) {
   if (menus._resultContinuationDisposed || !result || result !== menus._results || result.online || result.mode === 'boss' || typeof menus.api.rematch !== 'function') return null;
+  const generation = menus._swapToken;
   return menus._btn({id:'change-gear-continue',label:'CHANGE GEAR, THEN GO!',cls:'iw-btn--wide iw-in iw-in--pop',sound:'ui_click',accept:()=>{
-    if (menus._resultContinuationDisposed || menus.current !== 'results' || menus._results !== result || menus._modal) return;
+    if (menus._resultContinuationDisposed || menus._swapToken !== generation || menus.current !== 'results' || menus._results !== result || menus._modal) return;
     menus._resultContinuation = {result,opening:true,committed:false};
     menus._go('loadout');
   }});

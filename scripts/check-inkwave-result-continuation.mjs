@@ -18,6 +18,7 @@ export async function checkResultContinuation({page,tap,settle,capture,entry}) {
   };
   try {
     await ready();await tap(page,'.iw-res__title');await ready();await captureAction('results-change-gear','[data-id="change-gear-continue"]','.iw-res__foot button');
+    await page.evaluate(()=>window.__oldChangeContinuation=menus._binds.get(document.querySelector('[data-id="change-gear-continue"]')).accept);
     await tap(page,'[data-id="change-gear-continue"]');await page.waitForFunction(()=>menus.current==='loadout'&&menus._scr?.name==='loadout');await ready();
     const before=await page.evaluate(()=>menus.api.getLoadout().weapon);
     const different=page.locator('.iw-loadout .iw-wcard');
@@ -26,6 +27,8 @@ export async function checkResultContinuation({page,tap,settle,capture,entry}) {
     await captureAction('loadout-continue','[data-id="continue-with-gear"]','.iw-continuation-actions button');await ready();
     await tap(page,'.iw-loadout .iw-backbtn');await page.waitForFunction(()=>menus.current==='results'&&menus._scr?.name==='results');await ready();
     assert.deepEqual(await page.evaluate(()=>__continuationCalls),[],'Back cannot start');
+    await page.evaluate(()=>__oldChangeContinuation('kbm'));
+    assert.equal(await page.evaluate(()=>menus.current),'results','old result callback cannot reopen after Back');
     assert(await page.evaluate(()=>menus._results===__continuationResult&&JSON.stringify(menus._results)===__continuationResultJSON),'old results unchanged after equipment save');
     await tap(page,'[data-id="change-gear-continue"]');await page.waitForFunction(()=>menus.current==='loadout'&&menus._scr?.name==='loadout');await ready();
     await tap(page,'.iw-loadout [data-id="look"]');await page.waitForFunction(()=>menus.current==='locker'&&menus._scr?.name==='locker');await ready();
@@ -34,8 +37,8 @@ export async function checkResultContinuation({page,tap,settle,capture,entry}) {
     await tap(page,'[data-id="continue-with-gear"]');
     await page.evaluate(()=>document.querySelector('[data-id="continue-with-gear"]').click());
     assert.deepEqual(await page.evaluate(()=>__continuationCalls),[{kind:'prepare'},{kind:'rematch',weapon:next}]);
-    entry.resultContinuation={status:'passed',changedWeapon:next,starts:1,resultPreserved:true,backWithoutStart:true,lockerRoundtrip:true};
+    entry.resultContinuation={status:'passed',changedWeapon:next,starts:1,resultPreserved:true,backWithoutStart:true,staleResultRejected:true,lockerRoundtrip:true};
   } finally {
-    await page.evaluate(()=>{Object.assign(menus.api,__continuationOriginal);menus.show('main',{wipe:false});delete window.__continuationOriginal;delete window.__continuationCalls;delete window.__continuationResult;delete window.__continuationResultJSON;});
+    await page.evaluate(()=>{Object.assign(menus.api,__continuationOriginal);menus.show('main',{wipe:false});delete window.__continuationOriginal;delete window.__continuationCalls;delete window.__continuationResult;delete window.__continuationResultJSON;delete window.__oldChangeContinuation;});
   }
 }
