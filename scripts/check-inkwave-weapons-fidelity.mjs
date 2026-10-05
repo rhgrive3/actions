@@ -12,17 +12,21 @@ const near = (a,b,t=1e-7) => assert.ok(Math.abs(a-b) <= t, `${a} != ${b} ±${t}`
 
 const data = await measure({ site, fidelity: true, detail: false });
 const golden = {
-  shooter:[12.6,12,13.625,1],
-  'dualies-normal':[12.2,11.3,13.375,1],
-  'dualies-post':[12.2,11.3,13.375,1],
-  blaster:[13.5,10.7,11.875,1],
-  'splatling-partial':[15,14.2,15.875,1],
-  'splatling-first':[20.3,19.5,21.125,1],
-  'splatling-full':[20.3,19.5,21.125,1],
-  'charger-1':[24.7,24.7,24.375,0],
-  'roller-horizontal':[12.2,5.8,12.625,12],
-  'roller-vertical':[16.3,6.9,16.125,5],
-  slosher:[12.7,11.9,14.125,8],
+  shooter:[12.6,12.2,13.125,1],
+  'dualies-normal':[12.3,11.5,12.625,1],
+  'dualies-post':[12.3,11.5,12.625,1],
+  blaster:[13.5,10.8,11.875,1],
+  'splatling-partial':[14.1,13.5,14.875,1],
+  'splatling-first':[19.4,18.6,20.125,1],
+  'splatling-full':[19.4,18.6,20.125,1],
+  'charger-0':[9.8,9.8,13.375,0],
+  'charger-0.25':[13.5,13.5,16.375,0],
+  'charger-0.5':[17.3,17.3,20.125,0],
+  'charger-0.75':[21.0,21.0,23.625,0],
+  'charger-1':[24.8,24.8,26.625,0],
+  'roller-horizontal':[11.2,6.2,13.375,13],
+  'roller-vertical':[16.4,6.8,15.875,5],
+  slosher:[13.9,13.9,15.375,9],
 };
 for (const [key,[hit,full,paint,count]] of Object.entries(golden)) {
   const c = data.cases[key];
@@ -64,4 +68,4 @@ for (const key of ['shooter','roller-horizontal','roller-vertical']) {
     assert.equal(q.damage,0,key+' ghost damage');
   }
 }
-console.log(JSON.stringify({status:'passed',contentHash:data.artifactIdentity.contentHash,cases:Object.keys(golden).length,networkModes:3}));
+console.log(JSON.stringify({status:'passed',contentHash:data.artifactIdentity.contentHash,cases:Object.keys(golden).length,networkModes:3,completion:'finite-charger-continuous-collision'}));
