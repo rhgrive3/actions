@@ -76,9 +76,9 @@ export function rangeWorld(R) {
   for (const it of R.dressingFor('range')) { const r = kit.add(it.type, it); if (r && r.colliders) colliders.push(...r.colliders); }
   G.level = new Level(LAYOUT, colliders);
   G.physics = new Physics(G.level);
-  const splats = [];
-  G.paint = { splat: (p, r, team, paint = {}) => { splats.push([p.x, p.y, p.z, r, team, paint.kind || null]); return 0; }, sample: () => 0, clear() { splats.length = 0; }, version: 0 };
+  const splats = [], paintEvents = [];
+  G.paint = { splat: (p, r, team, options) => { const point = [p.x, p.y, p.z, r, team]; splats.push(point); paintEvents.push({ point, kind: options?.kind ?? null }); return 0; }, sample: () => 0, clear() { splats.length = 0; paintEvents.length = 0; }, version: 0 };
   G.projectiles = { clear() {} };
   G.time = 0; G.actors = [];
-  return { splats };
+  return { splats, paintEvents };
 }
