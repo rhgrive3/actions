@@ -125,5 +125,45 @@ export async function checkHudAuthority({ page, evidence }) {
   });
   await page.waitForTimeout(800);
   if(await page.locator('.iw-jd').count())throw Error('Judd overlay survived completed cleanup');
+  // Isolated display probe: uses native HUD callout + production WIPEOUT
+  // presentation, never changes the live actors, scores or Match state.
+  result.teamWipeouts=[];
+  for(const own of [false,true]){
+    try {
+      const row=await page.evaluate(async(own)=>{
+        const {G}=await import(new URL('src/core/ctx.js',document.baseURI).href);
+        const {queueTeamWipeHud,flushTeamWipeHud}=await import(new URL('patches/local-quality/team-wipeout.mjs',document.baseURI).href);
+        const {t}=await import(new URL('src/i18n.js',document.baseURI).href);
+        const native=G.game.hud,me=G.game.match.local;
+        const holder=Object.create(Object.getPrototypeOf(native));
+        holder.callouts=native.callouts.cloneNode(false);holder.callouts.dataset.wipeoutProbe='true';
+        native.callouts.parentElement.appendChild(holder.callouts);
+        globalThis.__wipeoutProbe=holder.callouts;
+        holder._local=()=>me;holder._live=()=>true;
+        const sounds=[];holder.playSound=name=>sounds.push(name);
+        const match={mode:'turf',state:'playing',actors:G.game.match.actors};
+        const timeout=globalThis.setTimeout,timers=[];
+        try {
+          globalThis.setTimeout=(...args)=>{const id=timeout(...args);timers.push(id);return id;};
+          queueTeamWipeHud(holder,{match,team:own?me.team:1-me.team,sequence:1},match);
+          flushTeamWipeHud(holder,match,t);
+        } finally {globalThis.setTimeout=timeout;timers.forEach(clearTimeout);}
+        const el=holder.callouts.lastElementChild;
+        for(const animation of el.getAnimations({subtree:true})){animation.pause();animation.currentTime=600;}
+        const label=el.querySelector('.iw-call__txt'),sub=el.querySelector('.iw-call__sub');
+        const rect=label.getBoundingClientRect(),color=getComputedStyle(label).color;
+        const visible=label.checkVisibility({checkOpacity:true,checkVisibilityCSS:true})&&getComputedStyle(el).opacity==='1';
+        const expected=own?'rgb(17, 17, 17)':'rgb(255, 255, 255)';
+        if(label.textContent!=='WIPEOUT!!!'||color!==expected||!visible||rect.width<=0||rect.left<0||rect.right>innerWidth||rect.top<0||rect.bottom>innerHeight)throw Error('WIPEOUT visibility/color/label regression');
+        if(!el.classList.contains(own?'is-own-wipeout':'is-enemy-wipeout')||sounds.length!==1||sounds[0]!== (own?'defeat_jingle':'special_ready'))throw Error('WIPEOUT team variant regression');
+        if(sub.textContent!==t(own?'Your whole team is splatted':'The whole team is splatted'))throw Error('WIPEOUT subtitle regression');
+        return {own,color,visible,label:label.textContent,subtitle:sub.textContent,sound:sounds[0],width:rect.width};
+      },own);
+      await page.screenshot({path:path.join(evidence,`wipeout-${own?'own':'enemy'}-team.png`),timeout:90000});
+      const retained=await page.locator('[data-wipeout-probe] .iw-call__txt').isVisible();
+      if(!retained)throw Error('WIPEOUT probe disappeared during capture');
+      result.teamWipeouts.push({...row,retained});
+    } finally {await page.evaluate(()=>{globalThis.__wipeoutProbe?.remove();delete globalThis.__wipeoutProbe;});}
+  }
   return result;
 }

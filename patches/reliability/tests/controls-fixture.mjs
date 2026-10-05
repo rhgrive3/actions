@@ -32,7 +32,7 @@ export async function fixture() {
     localStorage:{getItem:k=>storage.get(k)??null,setItem:(k,v)=>storage.set(k,v)},
     navigator:{userAgent:'controls fixture',maxTouchPoints:0,getGamepads:()=>pads},
     window:{addEventListener(n,fn){listeners.set(n,[...(listeners.get(n)||[]),fn]);}},
-    document:{documentElement:{classList:classes},addEventListener(){},pointerLockElement:null}
+    document:{documentElement:{classList:classes},addEventListener(){},querySelector(){return null;},pointerLockElement:null}
   });
   const modules = new Map();
   function resolve(spec, from) {

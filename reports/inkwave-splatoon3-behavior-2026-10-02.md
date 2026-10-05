@@ -371,3 +371,27 @@ The [#518 comparison](inkwave-dualies-reticle-state-2026-10-05.md) makes HUD pos
 ## Death-time Turf Map navigation (#409)
 
 [Respawn navigation comparison](inkwave-respawn-navigation-2026-10-05.md) separates live map/target selection from disabled dead-body input. Deferred requests remain cancellable and wait for actual respawn grounding; shared HUD/diorama routing preserves the standard-pad A-confirmation owner. Exact physical Squid Spawn timing and the separate #273/#362 behaviors remain independently tracked.
+
+## 2026-10-05 Controller disable look state
+
+The [#521 comparison](inkwave-controller-disable-look-2026-10-05.md) clears transient pad filter/boost once when the controller becomes disabled, preventing stale neutral-stick camera motion after pause or respawn. Current physical input, weapon/gameplay values and gyro/mouse mappings remain independent.
+## 2026-10-05 Held-axis touch ownership
+
+The [#497 comparison](inkwave-touch-pad-arbitration-2026-10-05.md) keeps a live touch pointer/stick gesture from being canceled by repeated samples of an already-deflected pad axis. Final-contact release restores the existing pad acquisition rule; input math, thresholds and actual ownership-reset semantics remain separate.
+## 2026-10-05: non-battle studio shadow budget
+
+Showcase now uses the native effective shadowSize with its historical2048 ceiling,
+releases old targets on quality changes/dispose, and preserves animated per-frame
+and portrait refresh. [Scope and native/emitted checks](inkwave-showcase-shadow-2026-10-05.md)
+separate resource dimensions from unmeasured physical-device performance.
+## 2026-10-05: #540 team WIPEOUT producer and HUD ownership
+
+The all-dead check is moved from local final-killer credit into ordinary 4v4 Match life transitions. Both teams publish one identity-scoped event per wipe; respawn rearms it. HUD preserves kill/assist/streak bookkeeping, prioritizes own-team danger on simultaneous wipes, and distinguishes own/enemy text and existing sounds. Flow #505 remains separate. See reports/inkwave-team-wipeout-2026-10-05.md for primary announcement, native/minified regressions and unverified device/network/audio limits. No physical S3 equivalence is claimed.
+### #409 follow-up: held pad axes versus a fresh navigation owner
+
+A real touch pin's deferred request survives unchanged held-axis repolling.
+Navigation-only provenance retains explicit owner-change cancellation for new
+button/key/touch input and native-threshold axis transitions, without changing
+general device acquisition. Source/emitted 31/31; negative baseline reproduced;
+new native-browser acceptance remains pending the combined batch. See
+`inkwave-respawn-navigation-2026-10-05.md` for scope and analog ambiguity.

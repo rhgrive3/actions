@@ -1,5 +1,8 @@
+import { adaptHudSnapshots } from './hud-snapshots-adapter.mjs';
 import { adaptTenacity } from './tenacity-adapter.mjs';
 import { adaptResultContinuation } from './result-continuation-adapter.mjs';
+import { adaptShowcaseShadow } from './showcase-shadow-adapter.mjs';
+import { adaptTeamWipeout } from './team-wipeout-adapter.mjs';
 // Build-only quality corrections composed after the gameplay, touch-layout and
 // reliability adapters. Upstream inkwave-public/ remains byte-for-byte intact.
 import fs from 'node:fs';
@@ -15,9 +18,12 @@ import { adaptTouchRelayout } from './touch-relayout.mjs';
 
 export const QUALITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
 const IDENTITY_FILES = [
+  'hud-snapshots-adapter.mjs', 'hud-snapshots.mjs',
   'hud-authority-adapter.mjs',
   'tenacity-adapter.mjs', 'tenacity.mjs',
   'result-continuation-adapter.mjs', 'result-continuation.mjs',
+  'showcase-shadow.mjs', 'showcase-shadow-adapter.mjs',
+  'team-wipeout.mjs', 'team-wipeout-adapter.mjs',
   'idle-adapter.mjs', 'idle-resources.mjs', 'music-idle.mjs',
   'lobby-resource-adapter.mjs', 'minimap-resource-adapter.mjs',
   'adapter.mjs', 'gyro.mjs', 'install.mjs', 'menu-preview.mjs', 'menu.mjs',
@@ -33,8 +39,11 @@ export function replaceOnce(code, before, after, label) {
 }
 
 export function adaptQualitySource(rel, code) {
+  code = adaptHudSnapshots(rel, code, replaceOnce);
   code = adaptTenacity(rel, code, replaceOnce);
   code = adaptResultContinuation(rel, code, replaceOnce);
+  code = adaptShowcaseShadow(rel, code, replaceOnce);
+  code = adaptTeamWipeout(rel, code, replaceOnce);
   code = adaptIdleSource(rel, code, replaceOnce);
   code = adaptLobbyResources(rel, code);
   code = adaptMinimapResources(rel, code);

@@ -157,7 +157,8 @@ test('browser gauge evidence requires native intro dismissal and visible desktop
   const browser=fs.readFileSync(new URL('scripts/check-inkwave-browser.mjs',root),'utf8');
   const checks=fs.readFileSync(new URL('scripts/check-inkwave-hud-authority.mjs',root),'utf8');
   assert.match(browser,/waitForFunction\(\(\) => globalThis\.s3ProbeG.game.hud\?\._visible && !document\.querySelector\('\.iw-lineup'\)/);
-  assert.equal((checks.match(/checkVisibility\(\{checkOpacity:true,checkVisibilityCSS:true\}\)/g)||[]).length,3);
+  const gaugeChecks=checks.split('// Isolated display probe:')[0];
+  assert.equal((gaugeChecks.match(/checkVisibility\(\{checkOpacity:true,checkVisibilityCSS:true\}\)/g)||[]).length,3);
 });
 
 
@@ -179,3 +180,11 @@ test('touch screenshot acceptance checks rendered ownership before and after cap
   assert.match(code,/touchAfterCapture=await touchState\(\);requireTouch\(result\.touchAfterCapture\)/);
   assert.match(code,/locator\('\.iwm-b--special'\)\.screenshot/);
 });
+
+ test('WIPEOUT browser evidence separately requires both team variants and actual visible labels',()=>{
+  const checks=fs.readFileSync(new URL('scripts/check-inkwave-hud-authority.mjs',root),'utf8');
+  const start=checks.indexOf('// Isolated display probe:');assert.ok(start>=0);const wipe=checks.slice(start);
+  assert.equal((wipe.match(/checkVisibility\(\{checkOpacity:true,checkVisibilityCSS:true\}\)/g)||[]).length,1);
+  assert.match(wipe,/for\(const own of \[false,true\]\)/);assert.match(wipe,/rgb\(17, 17, 17\)/);assert.match(wipe,/rgb\(255, 255, 255\)/);
+  assert.match(wipe,/WIPEOUT visibility\/color\/label regression/);assert.match(wipe,/WIPEOUT probe disappeared during capture/);
+ });

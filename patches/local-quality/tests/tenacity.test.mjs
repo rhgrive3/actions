@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import { advanceTenacity, TENACITY_RATES } from '../tenacity.mjs';
+import { sampleTeamWipes } from '../team-wipeout.mjs';
 import { adaptQualitySource } from '../adapter.mjs';
 import { fixture } from '../../splatoon3/tests/source-fixture.mjs';
 function actor(team, alive=true) { return {team,alive,special:0,s3:{loadout:[{main:'tenacity'}],tenacityBaseCost:180},specialCost(){return 180;},specialReady(){return this.special>=this.specialCost();}}; }
@@ -35,7 +36,7 @@ test('actual Match update awards after coherent roster updates; raw negative, pa
  for(const patched of [false,true]){
   const source=patched?adaptQualitySource('src/game/match.js',raw):raw;
   const start=source.indexOf('  update(dt) {'),end=source.indexOf('\n  updateController',start);
-  const G={},events=[];const Native=vm.runInNewContext(`class Match {${source.slice(start,end)}};Match`,{G,emit:(...x)=>events.push(x),advanceTenacity,PLAYER:{radius:.3},MATCH:{finalCountdown:10},Math});
+  const G={},events=[];const Native=vm.runInNewContext(`class Match {${source.slice(start,end)}};Match`,{G,emit:(...x)=>events.push(x),advanceTenacity,sampleTeamWipes,PLAYER:{radius:.3},MATCH:{finalCountdown:10},Math});
   const m=Object.assign(new Native(),match(),{stateT:0,setState(s){this.state=s;}});
   m.actors.forEach((a,i)=>{a.pos={x:i*3,y:0,z:0};a.update=()=>{};});
   // A teammate dies during its native update. Every owner sees this final list.

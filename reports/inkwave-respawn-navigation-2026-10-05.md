@@ -23,3 +23,25 @@ A confirmed dead-time choice is held by actor identity (or a cloned spawn point)
 The native source tests exercise Actor.splat/respawn, Input and PlayerController plus the extracted actual composed Match/HUD/diorama methods. Emitted mode executes the actual minified controller/Actor; canonical Chromium/WebKit acceptance additionally imports the emitted Match/HUD/DioramaOverlay classes and routes a touch PointerEvent through the native pin listener. This is not a physical controller/sensor or rendered-stage parity claim.
 
 Tests cover four input modes, body/aim isolation, delayed landing admission, cancellation and identity, 30/60/120/144Hz fixed-clock equivalence and existing #391/#421 controls. Baseline negative control uses the unchanged #536 tree. Full aggregate/build and remote CI results are recorded on the PR only after completion.
+
+## Follow-up: held-axis polling is not a fresh navigation choice
+
+The integration audit reproduced a native HUD/Diorama touch-pin request being
+cancelled by the next unchanged gamepad-axis poll (no Mobile control contact).
+The source regression fails on db233550 with a null pending target.
+
+Input now exposes navigationDevice separately from lastDevice. The latter and
+all native acquisition/filtering remain unchanged. During pollPad, a same-pad,
+same signed threshold-region axis sample does not acquire navigation ownership.
+New button edges, key/touch events, per-axis neutral/sign crossings, disconnect
+and replacement-pad samples still acquire ownership and cancel a prior request.
+The threshold is the existing native acquisition value 0.3, not a new tuning
+coefficient. Changes inside the same threshold region deliberately count as a
+held input; raw analog samples alone cannot distinguish deliberate motion from
+noise. Explicit map close/menu/lifecycle/target invalidation remain unchanged.
+
+Validation: source and emitted navigation 31/31 each; full gameplay 960 pass,
+0 fail, 1 optional emitted-only skip; build ce285cae5be3. The native browser
+acceptance probe now holds axes across 120 polls after the real Diorama touch
+listener and separately verifies that a new pad button still cancels. That new
+probe awaits the next combined CI; it is not claimed as locally browser-tested.

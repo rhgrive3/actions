@@ -14,7 +14,7 @@ function method(code,start,end){const a=code.indexOf(start),b=code.indexOf(end,a
 function matchRig({raw=false,random=()=>{throw Error('Tie judge used RNG');}}={}){
   const G={},math=Object.create(Math);math.random=random;
   const source=raw?read('src/game/match.js'):compose('src/game/match.js');
-  const Match=vm.runInNewContext(`class Match {${method(source,'  _judge() {','\n  teamSummary() {')}};Match`,{G,Math:math});
+  const Match=vm.runInNewContext(`class Match {${method(source,'  _judge() {','\n  teamSummary(')}};Match`,{G,Math:math});
   const m=new Match();m.bossMode=null;m.setState=state=>{m.state=state;};
   return {G,m,judge(cov,localTeam=0){G.paint={coverage:()=>cov};m.local={team:localTeam};m._judge();return m.result;}};
 }

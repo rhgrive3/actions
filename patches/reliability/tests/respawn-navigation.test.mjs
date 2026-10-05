@@ -126,3 +126,29 @@ test('#409 an explicit touch choice adopts the new Input owner after keyboard op
  assert.equal(h.c.requestMapJump(h.allies[0]),true);h.a.respawn();h.a.grounded=true;h.m.updateController(STEP);
  assert.equal(h.a.superJumpState?.target,h.allies[0]);
 });
+
+test('#409 held-axis polls preserve native touch pin intent without Mobile contact',async()=>{
+ for(const name of ['HUD','Diorama']){
+  const h=await rig();h.dead();h.frame([3]);assert.equal(h.c.mapHeld,true);h.input.keys.add('Tab');
+  h.event('pointerdown',{pointerType:'touch'});assert.equal(h.input.lastDevice,'touch');assert.equal(h.input.mobile._ptr.size,0);assert.equal(h.input.mobile._stick.id,-1);
+  const rel=name==='HUD'?'src/ui/hud.js':'src/ui/diorama.js',start=name==='HUD'?'  _jumpTo(i) {':'  _jump(i, me) {',end=name==='HUD'?'\n  _updMarkers(':'\n  _flash(';
+  const native=adaptQualitySource(rel,adaptReliability(rel,adaptTouchLayout(rel,adaptSource(rel,fs.readFileSync(path.join(root,'inkwave-public',rel),'utf8')))));
+  const C=vm.runInNewContext(`class ${name} {${method(native,start,end)}};${name}`,{G:h.G});const obj=Object.assign(new C(),{pins:[{target:h.allies[0]}],beacons:[{}],_beaconTargets:()=>[{ok:true,actor:h.allies[0]}],_local:()=>h.a,_snd(){},_restart(){},_flash(){}});
+  if(name==='HUD')obj._jumpTo(0);else obj._jump(0,h.a);assert.equal(h.c.pendingRespawnJump.actor,h.allies[0]);assert.equal(h.c._respawnNavigationOwner,'touch');
+  h.frame([]);assert.equal(h.input.lastDevice,'pad');assert.equal(h.c.pendingRespawnJump.actor,h.allies[0]);assert.equal(h.input.navigationDevice,'touch');
+  for(let i=0;i<120;i++)h.frame([]);h.a.respawn();h.a.grounded=true;h.m.updateController(STEP);assert.equal(h.a.superJumpState?.target,h.allies[0]);
+ }
+});
+
+for (const action of ['button','neutral-axis','keyboard','disconnect-axis','replacement-axis','opposite-axis','second-axis']) test(`#409 fresh ${action} cancels after automatic held-axis reacquisition`,async()=>{
+ const h=await rig();h.dead();h.frame([3]);h.input.keys.add('Tab');h.event('pointerdown',{pointerType:'touch'});h.c.requestMapJump(h.allies[0]);h.frame([]);
+ assert.equal(h.input.lastDevice,'pad');assert.equal(h.input.navigationDevice,'touch');assert.ok(h.c.pendingRespawnJump);
+ if(action==='button')h.frame([0]);
+ if(action==='keyboard')h.event('keydown',{code:'KeyW',preventDefault(){}});
+ if(action==='neutral-axis'){const p=pad();p[0].axes=[0,0,0,0];h.setPads(p);h.input.pollPad();h.frame([]);}
+ if(action==='disconnect-axis'){h.setPads([]);h.input.pollPad();h.frame([]);}
+ if(action==='opposite-axis'){const p=pad();p[0].axes[0]=-.9;h.setPads(p);h.input.pollPad();}
+ if(action==='second-axis'){const p=pad();p[0].axes[1]=0;h.setPads(p);h.input.pollPad();}
+ if(action==='replacement-axis'){const p=pad();p[0].id='new-pad';h.setPads(p);h.input.pollPad();}
+ h.m.updateController(STEP);assert.equal(h.c.pendingRespawnJump,null);h.a.respawn();h.a.grounded=true;h.m.updateController(STEP);assert.equal(h.a.superJumpState,null);
+});

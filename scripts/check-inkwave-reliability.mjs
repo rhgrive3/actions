@@ -313,6 +313,8 @@ try {
         const ally={alive:true,team:0,pos:new THREE.Vector3(2,0,3)};
         const camera={yaw:.4,pitch:.2},c=new controller.constructor(a,camera,input);c.computeAim=()=>{};
         const match={state:'playing',paused:false,local:a,controller:c};
+        const padDescriptor=Object.getOwnPropertyDescriptor(navigator,'getGamepads');
+        const pad={index:0,id:'respawn-intent',connected:true,mapping:'standard',axes:[.9,-.5,.8,.7],buttons:Array.from({length:17},()=>({pressed:false,value:0}))};
         let hud,dio;
         try {
           G.match=match;G.actors=[a,ally];G.input=input;G.level={spawnPads:[new THREE.Vector3()]};
@@ -322,21 +324,28 @@ try {
           hud=new HUD();hud._local=()=>a;hud._beaconTargets=()=>[{ok:true,actor:ally}];hud._jumpTo(0);
           const hudQueued=c.pendingRespawnJump?.actor===ally&&!a.superJumpState;
           c.pendingRespawnJump=null;
+          Object.defineProperty(navigator,'getGamepads',{configurable:true,value:()=>[pad]});input.pollPad();
           dio=new DioramaOverlay(document.body);dio.on=true;dio.k=1;dio.pins[0].target=ally;
           dio.pins[0].el.dispatchEvent(new PointerEvent('pointerdown',{pointerType:'touch',bubbles:true,cancelable:true}));
           const dioramaQueued=c.pendingRespawnJump?.actor===ally&&!a.superJumpState;
+          for(let i=0;i<120;i++){input.pollPad();Match.prototype.updateController.call(match,1/60);}
+          const heldAxesPreserve=c.pendingRespawnJump?.actor===ally&&input.lastDevice==='pad'&&input.navigationDevice==='touch';
           a.alive=true;Match.prototype.updateController.call(match,1/60);const waitsForLanding=!a.superJumpState;
           a.grounded=true;Match.prototype.updateController.call(match,1/60);const landed=a.superJumpState?.target===ally&&!c.pendingRespawnJump;
           a.alive=false;a.superJumpState=null;Match.prototype.updateController.call(match,1/60);c.requestMapJump(ally);
-          c.menuBlocked=true;Match.prototype.updateController.call(match,1/60);
+          window.dispatchEvent(new PointerEvent('pointerdown',{pointerType:'touch'}));c.requestMapJump(ally);input.pollPad();
+          pad.buttons[0]={pressed:true,value:1};input.pollPad();Match.prototype.updateController.call(match,1/60);
+          const freshPadCancels=!c.pendingRespawnJump;
+          c.requestMapJump(ally);c.menuBlocked=true;Match.prototype.updateController.call(match,1/60);
           const pauseCancels=!c.pendingRespawnJump&&!c.mapHeld&&!a.intent.fire;
-          return {deadBlocked,hudQueued,dioramaQueued,waitsForLanding,landed,pauseCancels};
+          return {deadBlocked,hudQueued,dioramaQueued,waitsForLanding,landed,pauseCancels,heldAxesPreserve,freshPadCancels};
         } finally {
-          hud?.dispose();dio?.el.remove();input.keys.clear();input.pressed.clear();input.mouse.left=false;input.lastDevice=old.device;
+          if(padDescriptor)Object.defineProperty(navigator,'getGamepads',padDescriptor);else delete navigator.getGamepads;
+          input.pollPad();hud?.dispose();dio?.el.remove();input.keys.clear();input.pressed.clear();input.mouse.left=false;input.lastDevice=old.device;
           mobile.setMap(false);G.match=old.match;G.actors=old.actors;G.input=old.input;G.level=old.level;
         }
       });
-      assert.deepEqual(respawnNavigation,{deadBlocked:true,hudQueued:true,dioramaQueued:true,waitsForLanding:true,landed:true,pauseCancels:true});
+      assert.deepEqual(respawnNavigation,{deadBlocked:true,hudQueued:true,dioramaQueued:true,waitsForLanding:true,landed:true,pauseCancels:true,heldAxesPreserve:true,freshPadCancels:true});
       entry.checks.push('actual-built-Match-HUD-diorama-dead-map-selection-and-deferred-respawn-admission');
 
       }

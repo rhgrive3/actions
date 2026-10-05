@@ -90,7 +90,27 @@ export function adaptSource(rel, code) {
       '<script>if ("serviceWorker" in navigator && location.protocol === "https:") { addEventListener("load", () => { const root = new URL("./", location.href); navigator.serviceWorker.register(new URL("sw.js", root).href, { scope: root.pathname }).catch(() => {}); }); }</script>\n</body>',
       'pwa service worker');
   }
+  if (rel === 'src/core/input.js') {
+    code = replaceOnce(code, '    const ax = pad.axes;', `    const touchContact = this.lastDevice === 'touch' && this.mobile?.active && !this.mobile._destroyed &&
+      ((this.mobile._ptr?.size || 0) > 0 || (this.mobile._stick?.id ?? -1) >= 0);
+    const ax = pad.axes;`, 'live touch gesture owns axis arbitration');
+    return replaceOnce(code,
+      "if (Math.abs(ax[0]) > 0.3 || Math.abs(ax[1]) > 0.3 || Math.abs(ax[2]) > 0.3 || Math.abs(ax[3]) > 0.3) this.lastDevice = 'pad';",
+      "if (!touchContact && (Math.abs(ax[0]) > 0.3 || Math.abs(ax[1]) > 0.3 || Math.abs(ax[2]) > 0.3 || Math.abs(ax[3]) > 0.3)) this.lastDevice = 'pad';",
+      'held axis cannot cancel live touch');
+  }
   if (rel === 'src/game/player.js') {
+    code = replaceOnce(code, '  update(dt) {', `  _s3ClearDisabledLook() {
+    if (this.padLook) this.padLook.x = this.padLook.y = 0;
+    this.edgeT = 0;
+    if (this.assist) this.assist.has = false;
+  }
+  get enabled() { return this._s3Enabled; }
+  set enabled(value) {
+    if (!value && this._s3Enabled) this._s3ClearDisabledLook();
+    this._s3Enabled = value;
+  }
+  update(dt) {`, 'controller disable neutralizes transient pad look');
     const start = code.indexOf('    if (this.onTarget && this.onTarget !== G.boss) {');
     const end = code.indexOf('    // is the crosshair point inside', start);
     if (start < 0 || end < start) throw new Error('INKWAVE patch conflict: camera aim connection');

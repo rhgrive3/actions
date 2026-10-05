@@ -2,6 +2,31 @@
 import { replaceOnce } from './input-adapter.mjs';
 export function adaptRespawnNavigation(rel, code) {
   const patch = (before, after, label) => { code = replaceOnce(code, before, after, 'respawn navigation: ' + label); };
+  if (rel === 'src/core/input.js') {
+    // Device presentation keeps its existing acquisition policy. Navigation records
+    // deliberate input separately so an unchanged held axis cannot revoke a choice.
+    patch('  set lastDevice(v) {', `  get navigationDevice() { return this._navigationDevice ?? this.lastDevice; }
+  set lastDevice(v) {
+    if (v !== 'pad' || !this._navigationPolling || this.padPressed.size ||
+        this.pad?.index !== this._navigationPadIndex || this.pad?.id !== this._navigationPadId ||
+        navigationAxisZones(this.pad).some((zone, i) => zone !== this._navigationAxisZones?.[i])) this._navigationDevice = v;`, 'explicit navigation owner');
+    code += `
+function navigationAxisZones(pad) {
+  return Array.from({length: 4}, (_, i) => Math.abs(pad?.axes?.[i] || 0) > 0.3 ? Math.sign(pad.axes[i]) : 0);
+}
+const navigationPollPad = Input.prototype.pollPad;
+Input.prototype.pollPad = function (...args) {
+  // The same threshold as native acquisition, without changing axis filtering.
+  this._navigationPolling = true;
+  try { return navigationPollPad.apply(this, args); }
+  finally {
+    this._navigationPolling = false;
+    this._navigationPadIndex = this.pad?.index; this._navigationPadId = this.pad?.id;
+    this._navigationAxisZones = navigationAxisZones(this.pad);
+  }
+};
+`;
+  }
   if (rel === 'src/game/match.js') {
     patch('    this.controller.update(dt);',
       "    this.controller.navigationEnabled = this.state === 'playing' && !this.paused && !this.attract && !this.controller.menuBlocked;\n    this.controller.update(dt);", 'navigation permission separate from body');
@@ -48,7 +73,7 @@ const METHODS = `  canRequestMapJump() {
     }
     if (!this.a.alive || (this._respawnNavigationActive && !this.a.grounded)) {
       // A fresh explicit choice belongs to the device that made that choice.
-      this._respawnNavigationOwner = this.input.lastDevice;
+      this._respawnNavigationOwner = this.input.navigationDevice ?? this.input.lastDevice;
       this.pendingRespawnJump = target.pos?.isVector3 ? { actor: target } : { point: target.clone() };
       return true;
     }
@@ -85,7 +110,7 @@ const METHODS = `  canRequestMapJump() {
     }
     if (a.alive) {
       if (this._respawnNavigationActive) {
-        if (!this.respawnMapOpen() || inp.lastDevice !== this._respawnNavigationOwner) this.clearRespawnNavigation();
+        if (!this.respawnMapOpen() || (inp.navigationDevice ?? inp.lastDevice) !== this._respawnNavigationOwner) this.clearRespawnNavigation();
         else if (a.grounded) {
           const pending = this.pendingRespawnJump;
           this.clearRespawnNavigation();
@@ -102,10 +127,10 @@ const METHODS = `  canRequestMapJump() {
     }
     if (this._respawnNavigationActive && this._respawnNavigationLife !== (a.netTp || 0)) this.clearRespawnNavigation();
     if (!this._respawnNavigationActive) this._respawnNavigationLife = a.netTp || 0;
-    if (this._respawnNavigationActive && inp.lastDevice !== this._respawnNavigationOwner) {
+    if (this._respawnNavigationActive && (inp.navigationDevice ?? inp.lastDevice) !== this._respawnNavigationOwner) {
       this.pendingRespawnJump = null; this.padJumpTarget = null; this.padJumpIndex = -1;
     }
-    this._respawnNavigationActive = true; this._respawnNavigationOwner = inp.lastDevice;
+    this._respawnNavigationActive = true; this._respawnNavigationOwner = inp.navigationDevice ?? inp.lastDevice;
     const it = a.intent, touch = inp.mobile?.active && inp.mobile.root ? inp.mobile : null;
     it.move.set(0, 0, 0); it.fire = it.jump = it.squid = it.sub = it.special = false;
     this.padLook.x = this.padLook.y = 0; this.edgeT = 0; this.assist.has = this.assist.prevValid = false;
