@@ -98,7 +98,16 @@ export function adaptNetworkSource(rel, code) {
       if (!actor?.remote || actor.owner !== from) return;
     }
     switch (e[1]) {`, 'event ownership');
-    patch("case 'b': { const a = this.byNid.get(e[2]); if (a) G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9]); break; }", `case 'b': {
+    const kitBombCase = "case 'b': { const a = this.byNid.get(e[2]); if (a) G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9], e[10], e[11]); break; }";
+    if (code.includes(kitBombCase)) patch(kitBombCase, `case 'b': {
+        for (let index = 4; index <= 9; index++) if (!Number.isFinite(e[index])) return;
+        const a = this.byNid.get(e[2]), b = a && G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9], e[10], e[11]);
+        if (b) {
+          b._netBorn = e[0]; b._netBornTick = e._netTick; b._netPeer = this.peers.get(from); b._netSteps = 0;
+        }
+        break;
+      }`, 'bomb timeline birth with kit identity');
+    else patch("case 'b': { const a = this.byNid.get(e[2]); if (a) G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9]); break; }", `case 'b': {
         for (let index = 4; index <= 9; index++) if (!Number.isFinite(e[index])) return;
         const a = this.byNid.get(e[2]), b = a && G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9]);
         if (b) {
@@ -106,7 +115,16 @@ export function adaptNetworkSource(rel, code) {
         }
         break;
       }`, 'bomb timeline birth');
-    patch("case 'ev': this._playEvent(e[2], e[3]); break;", `case 'ev': {
+    const kitEventCase = "case 'ev': this._playEvent(e[2], e[3], from); break;";
+    if (code.includes(kitEventCase)) patch(kitEventCase, `case 'ev': {
+        const before = G.projectiles?.beams.length || 0;
+        const actor = this.byNid.get(e[3]?.actor?.n);
+        if (actor && e[2] === 'weapon:fire') actor._netFlickFirst = e[3].projectileFirst;
+        try { this._playEvent(e[2],e[3],from); } finally { if (actor) actor._netFlickFirst = undefined; }
+        for (let i = before; i < (G.projectiles?.beams.length || 0); i++) { const b = G.projectiles.beams[i]; b._netPeer = this.peers.get(from); b._netBorn = e[0]; b._netBornTick = e._netTick; b._netOwner = actor; b._netSteps = 0; }
+        break;
+      }`, 'beam birth clock with kit sender');
+    else patch("case 'ev': this._playEvent(e[2], e[3]); break;", `case 'ev': {
         const before = G.projectiles?.beams.length || 0;
         const actor = this.byNid.get(e[3]?.actor?.n);
         if (actor && e[2] === 'weapon:fire') actor._netFlickFirst = e[3].projectileFirst;
