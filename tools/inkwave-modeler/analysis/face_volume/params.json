@@ -1222,28 +1222,6 @@
    ]
   },
   {
-   "name": "forehead_fill",
-   "kind": "warp",
-   "after_delta_smooth": true,
-   "vec_mm": [
-    0,
-    0,
-    3.0
-   ],
-   "bumps": [
-    {
-     "centre": [
-      0.0,
-      40.0,
-      95.0
-     ],
-     "rx": 32.0,
-     "ry": 14.0,
-     "rz": 20.0
-    }
-   ]
-  },
-  {
    "name": "forehead_profile_smooth",
    "kind": "smooth",
    "factor": 0.5,
@@ -1259,6 +1237,87 @@
      "rx": 28.0,
      "ry": 26.0,
      "rz": 20.0
+    }
+   ]
+  },
+  {
+   "name": "forehead_fit",
+   "kind": "profile_fit",
+   "after_delta_smooth": true,
+   "also": [
+    "HAIR_scalp"
+   ],
+   "profile": [
+    [
+     58,
+     0
+    ],
+    [
+     54,
+     1.2
+    ],
+    [
+     50,
+     2.2
+    ],
+    [
+     47,
+     1.6
+    ],
+    [
+     44,
+     0.0
+    ],
+    [
+     41,
+     -1.4
+    ],
+    [
+     37,
+     -2.3
+    ],
+    [
+     33,
+     -2.2
+    ],
+    [
+     30,
+     -1.7
+    ],
+    [
+     26,
+     -0.7
+    ],
+    [
+     21,
+     -0.4
+    ],
+    [
+     17,
+     0
+    ]
+   ],
+   "x": [
+    20,
+    55
+   ]
+  },
+  {
+   "name": "forehead_fit_smooth",
+   "kind": "smooth",
+   "factor": 0.5,
+   "iters": 60,
+   "after_delta_smooth": true,
+   "bumps": [
+    {
+     "centre": [
+      0.0,
+      44.0,
+      90.0
+     ],
+     "rx": 60.0,
+     "ry": 16.0,
+     "rz": 30.0
     }
    ]
   },

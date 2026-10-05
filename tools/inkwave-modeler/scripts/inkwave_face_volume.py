@@ -47,7 +47,8 @@ EYEBALLS = ['HEAD_eyes', 'HEAD_eyes_02', 'HEAD_eyes_18', 'HEAD_eyes_19']
 IRIS_BALLS = {'HEAD_eyes_18': -1, 'HEAD_eyes': 1}
 EAR_PARTS = ['HEAD_face_02', 'HEAD_face_03', 'HEADGEAR_headgear', 'HEADGEAR_headgear_02']
 NECK = 'BODY_torso'
-CHANGED = list(dict.fromkeys([FACE] + FOLLOWERS + list(IRIS_BALLS) + EYEBALLS + EAR_PARTS + [NECK]))   # backed up / restored
+SCALP = 'HAIR_scalp'   # moved with the upper forehead (profile_fit 'also')
+CHANGED = list(dict.fromkeys([FACE] + FOLLOWERS + list(IRIS_BALLS) + EYEBALLS + EAR_PARTS + [NECK, SCALP]))   # backed up / restored
 
 
 def restore(drop=False):
@@ -2228,6 +2229,31 @@ def main():
                         me.vertices[j].co = co
                 me.update()
                 print('FACE_VOLUME', step['name'], 'neck vertices', int((wn > 0.001).sum()), 'mm', step.get('mm_side', step.get('mm')), 'lean', step.get('lean'))
+                continue
+            elif step['kind'] == 'profile_fit':
+                # the side-view profile of the forehead had a groove (head y 44-48 mm) over a part that stood forward
+                # (y 31-43 mm) of the reference's smooth arc: forward (+) / back (-) move (head z, mm) by height
+                # (step['profile'] = [[y_mm, dz_mm], ...], measured row by row against the reference outline), full
+                # near the midline and fading to the sides (step['x'] = [full, none], |x| mm), front only (z > 60 mm).
+                # Blender's Warp, one for the forward part and one for the back part
+                # step['also']: meshes lying on that part (the scalp shell over the upper forehead) take the same
+                # field, else the moved face cuts through them in a line
+                pr = np.array(step['profile'], float)
+                o = np.argsort(pr[:, 0])
+                x0, x1 = step['x']
+                before = er.world(face)
+                for obj in [face] + [bpy.data.objects[n] for n in step.get('also', [])]:
+                    ol = loc if obj is face else M.to_local(er.world(obj)) * 1000
+                    d = np.interp(ol[:, 1], pr[o, 0], pr[o, 1], left=0.0, right=0.0)
+                    t = np.clip((x1 - np.abs(ol[:, 0])) / (x1 - x0), 0, 1)
+                    d *= t * t * (3 - 2 * t) * np.clip((ol[:, 2] - 60) / 20, 0, 1)
+                    for sign in (1, -1):
+                        part = np.maximum(sign * d, 0)
+                        if part.max() > 0:
+                            warp(obj, part / part.max(), [0, 0, sign * float(part.max())], ol)
+                print('FACE_VOLUME', step['name'], 'max move mm',
+                      round(float(np.linalg.norm(er.world(face) - before, axis=1).max() * 1000), 2),
+                      'seam gap closed mm', round(float(join_seam(face, pairs)), 3))
                 continue
             elif step['kind'] == 'neck_normals':
                 # the face laid on the neck (jaw_tuck) ends on it: its own shading differs from the neck's, so the
