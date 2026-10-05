@@ -107,15 +107,20 @@ for (const run of RUNS) {
         return push.call(this, p);
       };
       const hpBefore = target?.hp;
+      s.last = null;
+      let hit = null;
       try {
         g.debug.fire(true); const t0 = performance.now();
-        while (!s.last && performance.now() - t0 < 30000) await new Promise((r) => setTimeout(r, 250));
+        while (performance.now() - t0 < 30000) {
+          if (s.last?.target === target && s.last.amount > 0) { hit = s.last; break; }
+          await new Promise((r) => setTimeout(r, 250));
+        }
         g.debug.fire(false);
       } finally {
         if (push) G.projectiles._push = push;
         g.debug.fire(false);
       }
-      if (s.last) return { target: s.last.target.name, amount: s.last.amount, dist: s.last.dist, card: document.querySelector('.iwr-card')?.classList.contains('is-on') };
+      if (hit) return { target: hit.target.name, amount: hit.amount, dist: hit.dist, card: document.querySelector('.iwr-card')?.classList.contains('is-on') };
       return {
         miss: true,
         actor: {
