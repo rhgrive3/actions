@@ -199,6 +199,172 @@ test('reset during a real Character windup cancels the legacy pose and drum impu
   b.intent.squid = false; f.tick(b, 5); assert.equal(b.form, 'kid');
   assert.equal(f.shots.length, 1, 'emerging without fire does not create another flick');
 });
+
+test('post-release roll admission separates horizontal 7F vs vertical 22F at 60Hz (#517)', async () => {
+  const f = await fixture();
+  // 1. Horizontal flick: 21F windup -> 7F roll admission (enters rolling at tick 28)
+  const aH = f.make('roller'), rH = aH.weaponRunner;
+  start(f, aH, false, 1 / 60);
+  for (let i = 0; i < 20; i++) rH.update(1 / 60, { fire: true });
+  assert.equal(f.shots.length, 0);
+  rH.update(1 / 60, { fire: true }); // tick 21 (from start, 0-indexed after start is tick 21): release!
+  assert.equal(f.shots.length, 1);
+  assert.equal(rH.rolling, false, 'no rolling on release tick');
+  for (let i = 1; i <= 6; i++) {
+    rH.update(1 / 60, { fire: true });
+    assert.equal(rH.rolling, false, `horizontal post-release tick ${i} must not roll before 7F`);
+  }
+  rH.update(1 / 60, { fire: true }); // tick 7 post-release
+  assert.equal(rH.rolling, true, 'horizontal reaches authoritative rolling on tick 7 post-release');
+
+  // 2. Vertical flick: 26F windup -> 22F roll admission (enters rolling at tick 48)
+  const aV = f.make('roller'), rV = aV.weaponRunner;
+  start(f, aV, true, 1 / 60);
+  for (let i = 0; i < 25; i++) rV.update(1 / 60, { fire: true });
+  assert.equal(f.shots.length, 1);
+  rV.update(1 / 60, { fire: true }); // tick 26: release!
+  assert.equal(f.shots.length, 2);
+  assert.equal(rV.rolling, false, 'no rolling on vertical release tick');
+  aV.grounded = true; // landed immediately upon release
+  for (let i = 1; i <= 21; i++) {
+    rV.update(1 / 60, { fire: true });
+    assert.equal(rV.rolling, false, `vertical post-release tick ${i} must not roll before 22F (horizontal 7F was tick 7)`);
+  }
+  rV.update(1 / 60, { fire: true }); // tick 22 post-release
+  assert.equal(rV.rolling, true, 'vertical reaches authoritative rolling on tick 22 post-release');
+});
+
+test('vertical flick does not deal roll contact damage or produce roll paint during the 22F admission delay (#517)', async () => {
+  const f = await fixture(), a = f.make('roller'), r = a.weaponRunner;
+  const enemy = f.make('shooter');
+  enemy.team = 1; enemy.alive = true; enemy.pos.set(0, 0, 2.5);
+  f.G.actors = [a, enemy];
+  const splats = [], hits = [];
+  f.G.paint.splat = (...args) => { splats.push(args); return 0.5; };
+  f.G.projectiles.applyHit = (...args) => hits.push(args);
+
+  start(f, a, true, 1 / 60);
+  for (let i = 0; i < 26; i++) r.update(1 / 60, { fire: true });
+  assert.equal(f.shots.length, 1);
+  a.grounded = true;
+  a.pos.set(0, 0, 0); a.vel.set(0, 0, 6);
+
+  // During ticks 1..21 post-release: grounded with held fire and forward speed, but rolling is not admitted
+  for (let i = 1; i <= 21; i++) {
+    a.pos.z += 0.1;
+    r.update(1 / 60, { fire: true });
+    assert.equal(r.rolling, false);
+    assert.equal(hits.length, 0, `no roll contact damage on post-release tick ${i}`);
+    assert.equal(splats.filter(s => s[3]?.kind === 'roll').length, 0, `no roll paint stripe on post-release tick ${i}`);
+  }
+
+  // On tick 22 post-release: rolling is admitted and contact hit occurs
+  a.pos.z += 0.1;
+  r.update(1 / 60, { fire: true });
+  assert.equal(r.rolling, true, 'rolling admitted on tick 22 post-release');
+  assert.ok(hits.length > 0, 'roll contact damage applies once admitted');
+
+  // On tick 23 post-release: movement produces paint stripe
+  a.pos.z += 0.35;
+  r.update(1 / 60, { fire: true });
+  const rollSplats = splats.filter(s => s[3]?.kind === 'roll');
+  assert.ok(rollSplats.length > 0, 'roll paint stripe produced once admitted and moved');
+});
+
+test('release input before roll admission cancels transition, and runner reset cancels rolling (#517)', async () => {
+  const f = await fixture(), a = f.make('roller'), r = a.weaponRunner;
+  start(f, a, true, 1 / 60);
+  for (let i = 0; i < 26; i++) r.update(1 / 60, { fire: true });
+  a.grounded = true;
+  for (let i = 1; i <= 10; i++) r.update(1 / 60, { fire: true });
+  // Release fire at tick 10 post-release
+  for (let i = 11; i <= 30; i++) r.update(1 / 60, { fire: false });
+  assert.equal(r.rolling, false, 'unheld fire does not enter rolling');
+
+  // Reset clears state cleanly
+  start(f, a, true, 1 / 60);
+  for (let i = 0; i < 15; i++) r.update(1 / 60, { fire: true });
+  r.reset();
+  assert.equal(r.s3RollerAttack, null);
+  assert.equal(r.rolling, false);
+});
+
+test('post-release roll admission timing maintains parity across 30Hz, 60Hz, and 120Hz (#517)', async () => {
+  for (const hz of [30, 60, 120]) {
+    const dt = 1 / hz;
+    const f = await fixture();
+
+    // Horizontal: 0.35s windup + 7/60s roll delay
+    const aH = f.make('roller'), rH = aH.weaponRunner;
+    start(f, aH, false, dt);
+    const hReleaseTicks = Math.ceil(0.35 / dt - 1e-9);
+    for (let i = 0; i < hReleaseTicks - 1; i++) rH.update(dt, { fire: true });
+    assert.equal(rH.rolling, false);
+    rH.update(dt, { fire: true }); // release tick
+    assert.equal(rH.rolling, false);
+    const hAdmitTicks = Math.ceil((7 / 60) / dt - 1e-9);
+    for (let i = 1; i < hAdmitTicks; i++) {
+      rH.update(dt, { fire: true });
+      assert.equal(rH.rolling, false, `${hz}Hz horizontal tick ${i} should not roll before ${hAdmitTicks}`);
+    }
+    rH.update(dt, { fire: true });
+    assert.equal(rH.rolling, true, `${hz}Hz horizontal rolls at tick ${hAdmitTicks} post-release`);
+
+    // Vertical: 26/60s windup + 22/60s roll delay
+    const aV = f.make('roller'), rV = aV.weaponRunner;
+    start(f, aV, true, dt);
+    const vReleaseTicks = Math.ceil((26 / 60) / dt - 1e-9);
+    for (let i = 0; i < vReleaseTicks - 1; i++) rV.update(dt, { fire: true });
+    assert.equal(rV.rolling, false);
+    rV.update(dt, { fire: true }); // release tick
+    assert.equal(rV.rolling, false);
+    aV.grounded = true;
+    const vAdmitTicks = Math.ceil((22 / 60) / dt - 1e-9);
+    for (let i = 1; i < vAdmitTicks; i++) {
+      rV.update(dt, { fire: true });
+      assert.equal(rV.rolling, false, `${hz}Hz vertical tick ${i} should not roll before ${vAdmitTicks}`);
+    }
+    rV.update(dt, { fire: true });
+    assert.equal(rV.rolling, true, `${hz}Hz vertical rolls at tick ${vAdmitTicks} post-release`);
+  }
+});
+
+test('procedural vertical follow-through hands off to roll push pose on the exact admission tick (#517)', async () => {
+  const f = await fixture(), { Character } = await realCharacter();
+  const a = new f.Actor({ team: 0, name: 'pose handoff rig', weapon: 'roller', CharacterClass: Character });
+  const c = a.character, r = a.weaponRunner; c.actor = a;
+  settle(a, c, 1 / 60);
+  start(f, a, true, 1 / 60);
+  const state = { form: 'kid', grounded: false, speed: 0, vy: 0, firing: true, rolling: false, localMove: { x: 0, z: 0 } };
+  for (let i = 0; i < 26; i++) {
+    r.update(1 / 60, { fire: true });
+    c.update(1 / 60, state);
+  }
+  // Land at release
+  state.grounded = true; a.grounded = true; c.trigger('land', 7.5);
+  for (let i = 1; i <= 21; i++) {
+    r.update(1 / 60, { fire: true });
+    state.rolling = r.rolling;
+    c.update(1 / 60, state);
+    assert.equal(r.rolling, false);
+    assert.ok(c.wRoll < 0.05, `wRoll must not ramp before admission (post-release tick ${i})`);
+  }
+  // Tick 22 post-release (tick 48 from start)
+  r.update(1 / 60, { fire: true });
+  assert.equal(r.rolling, true, 'rolling begins on tick 22 post-release');
+  state.rolling = r.rolling;
+  c.update(1 / 60, state);
+  assert.ok(c.wRoll > 0.1, 'wRoll begins blending immediately on the exact admission tick');
+  // Over next 15 ticks, wRoll ramps smoothly to > 0.9 without popping
+  for (let i = 0; i < 15; i++) {
+    r.update(1 / 60, { fire: true });
+    state.rolling = r.rolling;
+    c.update(1 / 60, state);
+  }
+  assert.ok(c.wRoll > 0.9, 'wRoll completes transition into rolling push pose');
+  c.dispose();
+});
+
 test('Character channel/drum hooks are hash locked and fail closed', () => {
   assert.doesNotThrow(() => checkCompatibility(path.join(ROOT, 'inkwave-public')));
   for (const name of ['character.js', 'character-weapons.js']) assert.throws(() => adaptSource('src/game/' + name, ''), /conflict/);
