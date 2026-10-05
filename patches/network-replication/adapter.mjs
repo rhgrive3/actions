@@ -102,12 +102,19 @@ export function adaptNetworkSource(rel, code) {
       }`, 'bomb timeline birth');
     patch("case 'ev': this._playEvent(e[2], e[3]); break;", `case 'ev': {
         const before = G.projectiles?.beams.length || 0;
+        const flightBefore = G.projectiles?._fidelityChargerFlights?.length || 0;
         const actor = this.byNid.get(e[3]?.actor?.n);
         if (actor && e[2] === 'weapon:fire') actor._netFlickFirst = e[3].projectileFirst;
         try { this._playEvent(e[2],e[3]); } finally { if (actor) actor._netFlickFirst = undefined; }
-        for (let i = before; i < (G.projectiles?.beams.length || 0); i++) { const b = G.projectiles.beams[i]; b._netPeer = this.peers.get(from); b._netBorn = e[0]; b._netBornTick = e._netTick; b._netOwner = actor; b._netSteps = 0; }
+        const peer = this.peers.get(from);
+        for (let i = before; i < (G.projectiles?.beams.length || 0); i++) { const b = G.projectiles.beams[i]; b._netPeer = peer; b._netBorn = e[0]; b._netBornTick = e._netTick; b._netOwner = actor; b._netSteps = 0; }
+        for (let i = flightBefore; i < (G.projectiles?._fidelityChargerFlights?.length || 0); i++) {
+          const job = G.projectiles._fidelityChargerFlights[i];
+          if (!job?.ghost) continue;
+          job._netPeer = peer; job._netBorn = e[0]; job._netBornTick = e._netTick; job._netSteps = 0;
+        }
         break;
-      }`, 'beam birth clock');
+      }`, 'beam and finite Charger birth clock');
     patch("case 'p': { const a = this.byNid.get(e[2]); if (a) G.projectiles?.ghostProjectile(a, e); break; }", `case 'p': {
         for (let index = 5; index <= 18; index++) if (!Number.isFinite(e[index])) return;
         if (e[11] < 0 || e[12] <= 0) return;
