@@ -35,7 +35,8 @@ test('actual roll consumes one jump edge and routes armor overflow through damag
   f.tick(a); assert.ok(a.s3.roll); assert.ok(a.vel.z < 0); assert.equal(a.invuln, 0);
   const first = a.s3.roll; f.tick(a); assert.equal(a.s3.roll, first);
   a.damage(60, null, 'shooter'); assert.equal(a.hp, 100);
-  a.damage(60, null, 'shooter'); assert.equal(a.hp, 80);
+  // The first 60 breaks 30 HP armor while absorbing that entire hit.
+  a.damage(60, null, 'shooter'); assert.equal(a.hp, 40);
 });
 test('surge holds still, fully charges, launches on release and cancels on loss of wall', async () => {
   const f = await fixture(), a = f.make(); a.form = 'squid'; a.intent.squid = true; a.climbing = true;
