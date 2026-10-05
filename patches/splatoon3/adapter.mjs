@@ -159,6 +159,18 @@ export function adaptSource(rel, code) {
     const end = code.indexOf('    // ---- weapons (', start);
     if (start < 0 || end < start) throw new Error('INKWAVE patch conflict: actor resource connection');
     code = replaceOnce(code, code.slice(start, end), '    updateResources(this, dt);\n\n', 'post-movement resources');
+    // Issue #623: the special-owned branches return before the post-movement
+    // resource phase, so the Storm throw lock froze s3.enemyInkTime and skipped
+    // passive enemy-ink damage while the user is vulnerable (armor:false). Run
+    // the same shared phase exactly once on those owned frames too — no
+    // special-only duplicate formula, existing invuln gate preserved. Ordinary
+    // frames keep their single post-movement call.
+    code = replaceOnce(code, '    if (this.specialActive) { this._updateSpecial(dt); this._finishFrame(dt); return; }',
+      '    if (this.specialActive) { this._updateSpecial(dt); updateResources(this, dt); this._finishFrame(dt); return; }',
+      'special-owned resource phase');
+    code = replaceOnce(code, '    if (specialPressed && this.specialReady()) { this._startSpecial(); this._finishFrame(dt); return; }',
+      '    if (specialPressed && this.specialReady()) { this._startSpecial(); updateResources(this, dt); this._finishFrame(dt); return; }',
+      'special activation resource phase');
     return `import { prepareSuperJump, rememberSuperJumpGround, superJumpTarget, updateSuperJumpMain, SUPERJUMP_MAIN_PROGRESS } from '../../patches/splatoon3/runtime/superjump.mjs';\nimport { beforeActions } from '../../patches/splatoon3/runtime/movement.mjs';\nimport { updateResources } from '../../patches/splatoon3/runtime/resources.mjs';\n` + code;
   }
   if (rel === 'src/game/character-weapons.js') {
