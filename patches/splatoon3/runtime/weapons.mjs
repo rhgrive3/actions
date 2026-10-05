@@ -58,7 +58,7 @@ export function installWeapons(context, profile) {
   const reset = WeaponRunner.prototype.reset, busy = WeaponRunner.prototype.busy;
   WeaponRunner.prototype.reset = function (...args) {
     const result = reset.apply(this, args);
-    this.s3Stored = null; this.s3Turret = false; this.s3FlickVertical = false; this.s3BlasterWindup = 0;
+    this.s3Stored = null; this.s3Turret = false; this.s3FlickVertical = false; this.s3BlasterWindup = 0; this.s3BlasterFromSwim = false;
     this.s3SloshRecovery = false; return result;
   };
   WeaponRunner.prototype.busy = function () {
@@ -198,6 +198,7 @@ export function installWeapons(context, profile) {
       // Issue #465: form-specific first-shot admission — 14f humanoid / 24f swim
       // instead of treating the 10f profile preDelay as the entire startup.
       this.s3BlasterWindup = blasterStartupWindup(this.a, input.firePressed, dt, PLAYER.emergeDelay, w.preDelay);
+      this.s3BlasterFromSwim = false;
       this.firingT = .35;
       return;
     }

@@ -3,13 +3,22 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { fixture } from './source-fixture.mjs';
+import { fixture as sourceFixture } from './source-fixture.mjs';
 import { FixedClock } from '../runtime/clock.mjs';
 import {
   blasterStartupWindup,
   S3_BLASTER_HUMANOID_STARTUP_S,
   S3_BLASTER_SWIM_STARTUP_S,
 } from '../runtime/issue-465-blaster-startup.mjs';
+
+import { adaptSource } from '../adapter.mjs';
+import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
+import { adaptReliability } from '../../reliability/adapter.mjs';
+import { adaptQualitySource } from '../../local-quality/adapter.mjs';
+const fixture = () => sourceFixture({
+  adaptNative: (rel, code) => adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code)))),
+  adaptRuntime: adaptQualitySource,
+});
 
 // Issue #465: Splatoon 3 Ver. 11.3.0 Blaster form-specific first-shot startup.
 //   humanoid -> first shot 14f | swim form -> first shot 24f | repeat 50f.
@@ -48,7 +57,7 @@ async function swimRelease(limit = 120) {
 }
 
 test('issue-465 helper: form-specific wind-up (14f/24f), repeat falls back to preDelay', () => {
-  const swimWindup = blasterStartupWindup({ kidT: 5 / 60 }, true, FRAME, 0.07, 10 / 60);
+  const swimWindup = blasterStartupWindup({ kidT: 5 / 60, weaponRunner: { s3BlasterFromSwim: true } }, true, FRAME, 0.07, 10 / 60);
   assert.ok(Math.abs(swimWindup - (S3_BLASTER_SWIM_STARTUP_S - 5 / 60)) < 1e-9);
   assert.ok(Math.abs(swimWindup - 19 / 60) < 1e-9, 'swim waits 24f minus the 5f already elapsed');
   const kidWindup = blasterStartupWindup({ kidT: 99 }, true, FRAME, 0.07, 10 / 60);
@@ -178,4 +187,12 @@ test('startup and post-shot recovery remain independent timers; emergeDelay unto
   assert.equal(blasterShots(f), 1);
   assert.ok(a.weaponRunner.s3BlasterWindup === 0, 'startup timer is done');
   assert.ok(a.weaponRunner.cooldown > 0, 'post-shot cooldown runs independently');
+});
+
+test('recently emerged humanoid press uses actual kid origin, not small kidT heuristic', async () => {
+  const f = await fixture(), a = f.make('blaster');
+  a.form = 'kid'; a.kidT = f.PLAYER.emergeDelay; a.intent.fire = true;
+  f.tick(a); assert.equal(a.weaponRunner.s3BlasterWindup, 14 / 60);
+  f.tick(a, 13); assert.equal(blasterShots(f), 0);
+  f.tick(a); assert.equal(blasterShots(f), 1);
 });

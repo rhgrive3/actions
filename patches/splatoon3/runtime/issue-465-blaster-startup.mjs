@@ -32,10 +32,9 @@ export const S3_BLASTER_SWIM_STARTUP_S = 24 / 60;
 // Returns > 0 in every branch so the runner can never deadlock on a zero timer.
 export function blasterStartupWindup(a, firePressed, dt, emergeDelay, preDelay) {
   const kidT = a.kidT;
-  // The emerge gate (`kidT >= emergeDelay`) first opens within one fixed step of
-  // `emergeDelay`; a fresh swim press is admitted on exactly that tick, so a
-  // `kidT` still pinned at the gate identifies a shot that began in swim form.
-  if (kidT <= emergeDelay + dt) return Math.max(dt, S3_BLASTER_SWIM_STARTUP_S - kidT);
+  // The native Actor records form at the actual press, before emergence.
+  // kidT supplies elapsed swim emergence only after that origin is established.
+  if (firePressed && a.weaponRunner?.s3BlasterFromSwim) return Math.max(dt, S3_BLASTER_SWIM_STARTUP_S - kidT);
   if (firePressed) return S3_BLASTER_HUMANOID_STARTUP_S;
   return preDelay;
 }
