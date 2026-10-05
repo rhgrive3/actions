@@ -269,3 +269,15 @@ owner 所有、ダメージ、ネットワーク、pool 再利用/ハイウォ�
 | 再現操作 | 実 `Projectiles`（weapon-edgecases fixture + 実アダペータ合成）で volley を投げ `clear()`／床への自然完了を待つと、修正前は pool 内レコードの `owner` が Actor のまま残る |
 | プレイへの影響 | 試合後メニュー／アトラクト中に旧試合の Actor グラフ（Character、WeaponRunner、アニメーション状態）が GC されず、モバイルのヒープ圧と GC トラバーサルが増える |
 | 確認状態 | **ロジック確認済み**（`projectile-lifetime.test.mjs` が修正前に失敗・修正後に合格、weapon-edgecases 16/16、network 全49/49、action-admission、movement-composition、full build chain 85 モジュール合成）。**実機 DevTools ヒープスナップショット／GC による保持の実測は未確認**。未確認項目として維持する |
+
+## インクストローーム投擲ロック中の敵インク受動ダメージ（#623、2026-10-06）
+
+インクストローーム発動直後の投擲ロック（~0.35s、`armor: false`、無敵なし）中、`Actor.update()` が specialOwned の早期 return で通常移動系の後処理を省略するため、合成済みの資源フェーズ `updateResources()`（`s3.enemyInkTime` と敵インク受動ダメージの唯一の実行元）が1 tick も走らず、脆弱なまま受動ダメージと接触時間だけが凍っていた。Issue の修正方針どおり、同じ `updateResources(this, dt)` を specialOwned フレーム（発動フレーム + `_updateSpecial`）で返る前に1回だけ共有実行するようにした。通常フレームの1回実行、`invuln <= 0` ゲート、専用の重複公式の創出は変更しない。
+
+| 項目 | 内容 |
+|---|---|
+| 本家の根拠 | [Inkipedia — Competitive: Ink Storm](https://splatoonwiki.org/wiki/Competitive:Ink_Storm)（使用中も脆弱）と [Inkipedia — Damage](https://splatoonwiki.org/wiki/Damage)（0 AP で無待機、0.3 HP/フレーム = 18 HP/s、上限40 HP）。基準は Splatoon 3 Ver. 11.3.0。数値は公開資料由来で、実機フレーム計測は行っていない |
+| INKWAVE の実装箇所 | raw `inkwave-public/src/game/actor.js` の specialOwned 早期 return（変更せず）を、`patches/splatoon3/adapter.mjs` が `updateResources(this, dt)` 付きへ合成。資源本体は `patches/splatoon3/runtime/resources.mjs`（従来どおり唯一の実行元） |
+| 再現操作 | source-fixture・固定60 Hz・足元が敵インク（`paint.sample=2`）で待機 → Storm を発動 → 発動フレームとロック全フレームで `s3.enemyInkTime` と HP が毎 tick 進むこと、経過フレーム数×0.3 HP と完全一致（二重実行・欠落なし）を確認。修正前は発動フレームで両者が凍結し回帰が失敗する |
+| プレイへの影響 | 修正前は Storm を敵インク上で発動して約21フレーム・約6.3 HP のチップダメージを回避できた。修正後は通常どおり18 HP/s が流れ、無敵状態（`invuln > 0`）でのみ受動ダメージが止まる。Storm の発射・雲・ダメージ・塗り・移動・スペシャルゲージは変更しない |
+| 確認状態 | **ロジック確認済み**（source-fixture、固定1/60 tick、`issue-623-storm-resource.test.mjs` 3件が修正前 failing / 修正後 passing、特殊入力・モーション系 focused19ファイルが合計全パス）。**本家実機（Switch Ver.11.3.0）での計測比較は未確認**。30/60/120 Hz レンダリング間隔の不変は既存 FixedClock の固定シミュレーション経路に依存し、本回帰は固定 tick の決定性のみを直接証明する。水死（#592）、発動時インク回復（#76）、AP 依存グレース（#75）は本変更で解消済みにしない |
