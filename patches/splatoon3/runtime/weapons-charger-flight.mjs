@@ -8,7 +8,7 @@ export function chargerPaintParameters(raw,charge){
   interval:2*depth*(1-value(raw.SplashSpawnParam,'OnTopRate'))*Math.max(1,raw.SplashSpawnParam.SkipNum),
   terminalRate:1.5}; // community-reported omitted default, NOT an explicit pinned field
 }
-const INSTALLED=Symbol.for('inkwave.charger-flight.v1'),EPS=1e-10;
+const INSTALLED=Symbol.for('inkwave.charger-flight.v1'),EPS=1e-10,SIM_DT=1/60;
 // Finite straight flight. Source supplies endpoints and radii, not recovered engine
 // interpolation code. Uses the existing weapon:fire packet; no new network fields.
 export function installChargerFlight(api,completion) {
@@ -104,7 +104,19 @@ export function installChargerFlight(api,completion) {
   }
   P.update=function(dt){
     const list=this._fidelityChargerFlights;
-    if(list)for(let i=list.length-1;i>=0;i--)if(step(this,list[i],dt))list.splice(i,1);
+    if(list)for(let i=list.length-1;i>=0;i--){
+      const job=list[i],beam=job.beam,peer=job.ghost&&beam?._netPeer;
+      let ended=false;
+      if(peer){
+        const clock=Math.min(peer.tr,peer.lastTs??peer.tr);
+        const target=Math.max(0,Math.floor((Number.isFinite(peer.sim)&&Number.isFinite(beam._netBornTick)
+          ? peer.sim-beam._netBornTick : (clock-beam._netBorn)/SIM_DT)+.0306)+1);
+        job._netSteps??=0;
+        const maxSteps=Math.ceil(job.range/Math.max(EPS,job.speed*SIM_DT))+2;
+        while(!ended&&job._netSteps<target&&job._netSteps<maxSteps){ended=step(this,job,SIM_DT);job._netSteps++;}
+      }else ended=step(this,job,dt);
+      if(ended)list.splice(i,1);
+    }
     return nativeUpdate.call(this,dt);
   };
   P.clear=function(...args){this._fidelityChargerFlights=[];return nativeClear.apply(this,args);};
