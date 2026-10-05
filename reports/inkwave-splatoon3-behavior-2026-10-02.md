@@ -250,3 +250,34 @@ cloud/Halyard cube allocation at default high settings, not only after later
 runtime refresh. Existing formats, appearance policy and gameplay stay intact.
 These are project resource dimensions, not Nintendo/Switch memory values.
 See [the cold-boot budget report](inkwave-cold-boot-budgets-2026-10-04.md).
+
+## バレルスピナーのチャージ中断回復（#679、2026-10-05）
+
+Issue #679: established Heavy Splatling charge cancelled by a later ZL press enters
+swim immediately instead of the reference charge-interruption recovery.
+
+| 項目 | 内容 |
+|---|---|
+| 本家の根拠 | Issue #679 が引用する[メイン武器の前隙・後隙検証表](https://wikiwiki.jp/splatoon3mix/%E6%A4%9C%E8%A8%BC/%E3%83%A1%E3%82%A4%E3%83%B3%E3%82%A6%E3%82%A7%E3%83%9D%E3%83%B3/%E5%89%8D%E9%9A%99%E3%83%BB%E5%BE%8C%E9%9A%99)の「チャージ中断回復」行。バレルスピナーはサブ 5F / イカ 6F / インク回復 29F。本件はイカ化（6F）のみを扱う。**Ver.11.3.0 実機での当該ラボの再計測は未実施**であり、表の数値は issue 引用の二次根拠として扱う |
+| INKWAVE の実装箇所 | `patches/splatoon3/runtime/weapons.mjs`。共有ヘルパ `SPLATLING_INTERRUPT = 6/60` / `splatlingInterrupt(runner, actor, 'charge')` / `tickSplatlingInterrupt(runner, dt)` / `releaseSplatlingInterrupt(runner, press)` が `WeaponRunner.prototype.busy` の後段ラッパで回復窗口を武装・判定し、`_splatling` の武器アップデートで1回だけ減算、イカ化確定（`form === 'squid'` 分岐）で消す。#686 の連射中断は同じヘルパの `stream` スロット（`s3StreamInterrupt`）を使う。`reset()` で初期化。`actor.js` の form 判定順序は変更していない |
+| 再現操作 | バレルスピナーで地面チャージ成立→ZL を押す。修正前はその次の1/60 tick で `form === 'squid'`、同 tick でチャージが0になる。修正後は6F（=6/60秒）経過まで kid のまま、境界到達で1度だけイカ化 |
+| プレイへの影響 | チャージを止めて逃げる動作が本家より即座に成立し、チャージ中断の窮地時間が短かった。中断時に発射・バーストは発生しない（回帰で確認）。チャージ本体の 48F/72F は変更していない |
+| 確認状態 | **ロジック確認済み**（source-fixture、実 Actor.update、1/60 固定刻みと 30/60/120 Hz の可変 dt の双方、修正前は1 tick 目で失敗する回帰を用意）。**Switch 実機でのフレーム計測は未確認**。同じ中断表のサブ 5F とインク回復 29F は**未実装のまま残す**（本件では6Fのみ実装し、汎用タイマーで流用しない） |
+
+PR #701（issue #416）は Charger 側の部分チャージ取消 6F 回復を扱い、本文・回帰で「Splatling には回復を武装しない（bypass は維持）」と明記している。#679 はその Splatling 行が未修正のまま残る別ルートであり、#701 の Charger 判定には手を触れていない。#701 と同一 main へ合成する際は、両 PR が `busy` 周辺に別々のラッパを持つため、ラッパの順序と #701 の anchor（元の `busy` 3行を不変に保つ必要がある）を確認する。
+
+## 2026-10-06: ヘビースピナーの連射中断→イカ（#686）
+
+開始mainは `6a9710307549e72d65a9bea53b59bce55e7faba2`。公開対象は `inkwave-public/` と有効な `patches/splatoon3/` であり、旧 `game/` は対象外。本家の実機計測を新たに追加した変更ではない。
+
+| 項目 | 内容 |
+|---|---|
+| 本家の根拠 | [S3 メインウェポン前隙・後隙の検証表](https://wikiwiki.jp/splatoon3mix/%E6%A4%9C%E8%A8%BC/%E3%83%A1%E3%82%A4%E3%83%B3%E3%82%A6%E3%82%A7%E3%83%9D%E3%83%B3/%E5%89%8D%E9%9A%99%E3%83%BB%E5%BE%8C%E9%9A%99)。連射中断後隙（`連射中断後隙`）の行で、バレルスピナーの射撃中断→イカ状態は**6F**（サブ5F / インク回復40F は別行）。コミュニティ検証表の値であり、今回の変更でSwitch実機を再計測したものではない |
+| INKWAVE の実装箇所 | `patches/splatoon3/runtime/weapons.mjs`。`WeaponRunner.prototype.busy` が射撃中の `streaming` を検知して `s3StreamInterrupt = 6/60` を開始し、その間 `Actor.update` のイカ形態を保留する。`WeaponRunner.prototype._splatling` は中断状態で射撃スケジュールを停止する。以前はイカ入力が新しいと `busy()` が無条件 false を返し、同一固定tickでイカ形態になってから射撃を消していた |
+| 再現操作 | ヘビースピナーをフルチャージ→ZR解放で `streaming === true`→射撃中にZL押下。固定1/60 tickで、押下tickを0として `form === 'kid'` が5完了フレーム継続し、6F境界で `squid` になることを確認する |
+| プレイへの影響 | 射撃中にZLで即イカに潜れなくなり、S3の連射中断後隙ぶん射撃姿勢が残る。攻撃を中断したときの被弾猶予が伸びる。48F/72Fチャージ閾値、80F/160Fのストリーム時間、4F連射間隔、弾道、拡散、移動値は変更していない |
+| 確認状態 | **ロジック確認済み**（source-fixture、実 `Actor.update`、1/60 tick）、`patches/splatoon3/tests/issue-686-splatling-stream-interrupt.test.mjs` 5/5 と既存のスピナー合成回帰。**本家Switch Ver.11.3.0でのフレーム単位実機比較と、30/60/120 Hz描画差の実端末確認は未確認**。サブ5F・インク回復40Fの中断族は本件では実装していない（別root） |
+
+自然な連射終了（#501のストリーム終了経路）と、チャージ中断→イカの経路は本件とは別状態として扱い、変更していない。伝令の Character 表示は authoritative な `form` を読むため、追加の1フレームsnapは導入していない。
+
+注: #679（チャージ中断）と #686（連射中断）は同一の6F回復ルートを2相で分けていたため、本ブランチ `inkwave/c-add100-fb6` で1つの変更に合成した。武装・1tick消費・解放の counter logic は `splatlingInterrupt` / `tickSplatlingInterrupt` / `releaseSplatlingInterrupt` に1箇所だけ残し、各相は独立したカウンタ（`s3ChargeInterruptT` / `s3StreamInterrupt`）を持つ。したがって #686 の「チャージ中断はこのタイマーを共有しない」という受入は、スロット分離と回帰 `issue-686-splatling-stream-interrupt.test.mjs` で確認している。修正前は両相とも ZL 押下の次の1 tick で `form === 'squid'` になることを、修正後は6完了フレーム保持・6F境界で1度だけ遷移することを同一の実コード fixture で確認した（Switch 実機のフレーム比較は未実施）。

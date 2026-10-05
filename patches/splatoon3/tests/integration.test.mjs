@@ -131,7 +131,10 @@ test('bomb sub power normalizes the low base once and reaches the raw high value
 });
 test('splatling diving cancels both charging and an active stream', async () => {
   const f=await fixture(),a=f.make('splatling');a.intent.fire=true;f.tick(a,30);assert.equal(a.weaponRunner.charging,true);
-  a.intent.squid=true;f.tick(a);assert.equal(a.form,'squid');assert.equal(a.weaponRunner.charging,false);assert.equal(f.shots.length,0);
+  // #679: an established charge is admitted to swim only after the 6f charge-interruption recovery
+  a.intent.squid=true;
+  for(let i=0;i<6;i++){f.tick(a);assert.equal(a.form,'kid');assert.equal(a.weaponRunner.charging,true);assert.equal(f.shots.length,0);}
+  f.tick(a);assert.equal(a.form,'squid');assert.equal(a.weaponRunner.charging,false);assert.equal(f.shots.length,0);
   a.reset();a.intent.squid=false;a.intent.fire=true;f.tick(a,73);a.intent.fire=false;f.tick(a,2);assert.equal(a.weaponRunner.streaming,true);
   const count=f.shots.length;a.intent.squid=true;f.tick(a,45);assert.equal(a.weaponRunner.streaming,false);assert.equal(f.shots.length,count);
 });
