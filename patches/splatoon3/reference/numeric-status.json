@@ -2752,5 +2752,50 @@
     "value": 100,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
+  },
+  "gearExtra.quickRespawnAroundFrames.0": {
+    "value": 90,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/misc/params.json#/Dying_AroundFrm",
+      "index": 2,
+      "factor": 1,
+      "rawValue": 90
+    }
+  },
+  "gearExtra.quickRespawnAroundFrames.1": {
+    "value": 60,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/misc/params.json#/Dying_AroundFrm",
+      "index": 1,
+      "factor": 1,
+      "rawValue": 60
+    }
+  },
+  "gearExtra.quickRespawnAroundFrames.2": {
+    "value": 30,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/misc/params.json#/Dying_AroundFrm",
+      "index": 0,
+      "factor": 1,
+      "rawValue": 30
+    }
+  },
+  "stealth.sneakRatio": {
+    "value": 0.6,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "stealth.ninjaDelay": {
+    "value": 0.5,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "stealth.ninjaSwimMultiplier": {
+    "value": 0.9,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
   }
 }
