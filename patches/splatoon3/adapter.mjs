@@ -133,6 +133,15 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, 'const p = _v.copy(a.pos); p.y += 1.35;', 'const p = _v.copy(a.pos); p.y += 1.35; bombPreviewPosition(a, p);', 'bomb preview origin');
     code = replaceOnce(code, '        vel.y -= 24 * dt;', '        vel.y -= SUB.bomb.gravity * dt;', 'bomb preview gravity');
     code = replaceOnce(code, 'if (b.fuse <= 0) {', 'if (b.fuse <= 1e-10) {', 'bomb fuse frame boundary');
+    // #246: the Ink Storm cloud belongs to the device's first real terrain/object
+    // contact. The old `age > 1.1` branch deployed a cloud from elapsed air time
+    // alone, so a device that had not hit anything rained mid-air. Keep only a
+    // non-gameplay memory guard for a device that never contacts anything; it
+    // releases the device without a cloud and is not an S3 timing value.
+    code = replaceOnce(code,
+      "if (b.kind === 'storm' && b.age > 1.1) { this._spawnCloud(b); if (b.ghost) this.clouds[this.clouds.length - 1].ghost = true; this._releaseBomb(b); this.bombs.splice(i, 1); continue; }",
+      "if (b.kind === 'storm' && b.age > 30) { this._releaseBomb(b); this.bombs.splice(i, 1); continue; }",
+      'storm airborne deploy');
     code = adaptWeaponEdgecases(rel, code, replaceOnce);
     code = adaptWeaponsFidelity(code, replaceOnce);
     return `import { applyProjectileHit, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\n` + code;
