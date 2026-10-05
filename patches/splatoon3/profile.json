@@ -146,7 +146,8 @@
       "chargeTime": 1,
       "inkRecoverStop": 0.3333333333333333,
       "damagePartialMax": 80,
-      "fieldCollisionRadius": 0.02
+      "fieldCollisionRadius": 0.02,
+      "fullChargeJumpVelocity": 4.2
     },
     "roller": {
       "rollSpeed": 7.92,
@@ -414,21 +415,24 @@
       "minimumInput": 0,
       "minimumAngle": 1.5707963267948966,
       "duration": 0.25,
-      "armorTime": 0.13333333333333333,
-      "armorHP": 100,
+      "armorTime": 0.3,
+      "armorHP": 30,
       "jumpVelocity": 9.4,
       "chainRetention": 0.85,
       "chainReset": 1.5,
-      "speedGraceTime": 0.16666666666666666
+      "speedGraceTime": 0.16666666666666666,
+      "wallArmorTime": 0.75,
+      "armorThreshold": 100
     },
     "surge": {
       "chargeTime": 0.75,
       "duration": 0.3,
       "minimumVelocity": 4,
       "velocity": 15,
-      "armorTime": 0.13333333333333333,
-      "armorHP": 100,
-      "chargeMoveScale": 0.25
+      "armorTime": 0.75,
+      "armorHP": 30,
+      "chargeMoveScale": 0.25,
+      "armorThreshold": 100
     },
     "wallRollMaximumAngle": 0.7853981633974483
   },
@@ -1374,6 +1378,11 @@
       "index": null,
       "factor": 1,
       "rawValue": 0.4234
+    },
+    "weapons.charger.fullChargeJumpVelocity": {
+      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/WeaponParam/JumpHeightFullCharge",
+      "factor": 60,
+      "rawValue": 0.07
     }
   },
   "gearExtra": {
