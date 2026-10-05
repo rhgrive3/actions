@@ -61,6 +61,9 @@ export function installWeapons(context, profile) {
     this.s3SloshRecovery = false; return result;
   };
   WeaponRunner.prototype.busy = function () {
+    // Issue #635: a Roller flick release blocks squid-form admission for its
+    // post-release gate (14F/15F horizontal, 18F/19F vertical).
+    if (this.a.weapon.kind === 'roller' && this.s3FlickPostSquid > 0) return true;
     if (['charger','splatling'].includes(this.a.weapon.kind) && this.a.intent.squid && this.a._squidPressT > this.a._firePressT) return false;
     return this.s3BlasterWindup > 0 || busy.call(this);
   };
