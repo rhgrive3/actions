@@ -1,0 +1,392 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import vm from 'node:vm';
+import { fileURLToPath } from 'node:url';
+import { adaptSource } from '../../splatoon3/adapter.mjs';
+import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
+import { adaptReliability } from '../../reliability/adapter.mjs';
+import { adaptQualitySource } from '../adapter.mjs';
+import { syncWorldTexlib, updateLobbyTexlib, stageHasPack, stagePackFor } from '../texlib.mjs';
+
+const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
+
+function compose(rel) {
+  const raw = fs.readFileSync(path.join(ROOT, 'inkwave-public', rel), 'utf8');
+  return adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, raw))));
+}
+
+async function loadComposedModule(rel, globals = {}) {
+  const context = vm.createContext({ console, performance, ...globals });
+  const modules = new Map();
+  const upstream = path.join(ROOT, 'inkwave-public');
+
+  function resolve(spec, from) {
+    if (spec === 'three') return path.join(upstream, 'vendor/three/build/three.module.js');
+    if (spec.startsWith('three/addons/')) return path.join(upstream, 'vendor/three/jsm', spec.slice(13));
+    if (spec.startsWith('../patches/') || spec.startsWith('../../patches/')) {
+      return path.resolve(path.dirname(from), spec).replace('/inkwave-public/patches/', '/patches/');
+    }
+    return path.resolve(path.dirname(from), spec);
+  }
+
+  function load(file) {
+    if (modules.has(file)) return modules.get(file);
+    const relPath = path.relative(upstream, file);
+    let code;
+    if (relPath.startsWith('..')) {
+      code = fs.readFileSync(file, 'utf8');
+    } else {
+      code = compose(relPath);
+    }
+    const mod = new vm.SourceTextModule(code, { context, identifier: file });
+    modules.set(file, mod);
+    return mod;
+  }
+
+  const rootMod = load(path.join(upstream, rel));
+  await rootMod.link((spec, from) => load(resolve(spec, from.identifier)));
+  await rootMod.evaluate();
+  return rootMod.namespace;
+}
+
+// Stand-in mock renderer for headless real Three.js target construction
+function createMockRenderer(THREE, maxAnisotropy = 16) {
+  let currentRT = null;
+  const renderer = {
+    coordinateSystem: THREE.WebGLCoordinateSystem ?? 2000,
+    capabilities: {
+      getMaxAnisotropy: () => maxAnisotropy,
+    },
+    autoClear: true,
+    xr: { enabled: false },
+    initRenderTarget(rt) {
+      rt.__initialized = true;
+    },
+    getRenderTarget() {
+      return currentRT;
+    },
+    setRenderTarget(rt, layer = 0) {
+      currentRT = rt;
+      if (rt) rt.__activeLayer = layer;
+    },
+    async compileAsync(scene, cam) {
+      return Promise.resolve();
+    },
+    compile(scene, cam) {},
+    render(scene, cam) {},
+    readRenderTargetPixels(rt, x, y, w, h, buf, face, attachment) {
+      buf[0] = 128; buf[1] = 128; buf[2] = 128; buf[3] = 255;
+    },
+  };
+  return renderer;
+}
+
+test('real native catalog generation: coldboot Tidewater produces 25 shared layers, Cargo pack produces 28 layers', async () => {
+  const THREE = await import(path.join(ROOT, 'inkwave-public/vendor/three/build/three.module.js'));
+  const texlibMod = await loadComposedModule('src/world/texlib.js');
+  const { createTextureLibrary, MATERIALS } = texlibMod;
+
+  assert.equal(MATERIALS.length, 25, 'Unpatched STAGE_SURFACES must not be unconditionally appended to base MATERIALS');
+
+  const renderer = createMockRenderer(THREE);
+
+  // 1. Cold boot on Tidewater (no stage pack)
+  const tideLib = await createTextureLibrary(renderer, { size: 256, stage: 'tidewater' });
+  assert.equal(tideLib.names.length, 25, 'Tidewater cold boot must generate exactly 25 shared layers');
+  assert.equal(tideLib.albedo.image.depth, 25, 'Albedo array target depth must be 25');
+  assert.equal(tideLib.normal.image.depth, 25, 'Normal array target depth must be 25');
+  assert.equal(tideLib.orm.image.depth, 25, 'ORM array target depth must be 25');
+  assert.equal(tideLib.size, 256);
+  assert.equal(tideLib.stage, 'tidewater');
+  assert.equal(tideLib.albedo.colorSpace, THREE.SRGBColorSpace);
+  assert.equal(tideLib.normal.colorSpace, THREE.NoColorSpace);
+  assert.equal(tideLib.orm.colorSpace, THREE.NoColorSpace);
+  assert.equal(tideLib.layers['cargo:tarmac'], undefined, 'Cargo tarmac must not exist in Tidewater library');
+  assert.equal(tideLib.layers['cargo:quay'], undefined, 'Cargo quay must not exist in Tidewater library');
+  assert.equal(tideLib.layers['cargo:chequer'], undefined, 'Cargo chequer must not exist in Tidewater library');
+  assert.equal(tideLib.layers.concrete, 0);
+  assert.equal(tideLib.layers.gel, 24);
+
+  // 2. Cargo stage (includes 3 stage pack layers)
+  const cargoLib = await createTextureLibrary(renderer, { size: 256, stage: 'cargo' });
+  assert.equal(cargoLib.names.length, 28, 'Cargo library must generate 25 shared + 3 Cargo layers = 28 layers');
+  assert.equal(cargoLib.albedo.image.depth, 28);
+  assert.equal(cargoLib.normal.image.depth, 28);
+  assert.equal(cargoLib.orm.image.depth, 28);
+  assert.equal(cargoLib.stage, 'cargo');
+  assert.equal(cargoLib.layers['cargo:tarmac'], 25);
+  assert.equal(cargoLib.layers['cargo:quay'], 26);
+  assert.equal(cargoLib.layers['cargo:chequer'], 27);
+  assert.equal(cargoLib.layers.concrete, 0);
+  assert.equal(cargoLib.layers.gel, 24);
+  assert.ok(cargoLib.meta['cargo:tarmac']);
+  assert.equal(cargoLib.meta['cargo:tarmac'].scale, 4.0);
+  assert.equal(cargoLib.meta['cargo:tarmac'].mode, 2); // HEX
+  assert.equal(cargoLib.meta['cargo:tarmac'].mask, true);
+
+  // Clean disposal
+  tideLib.dispose();
+  assert.equal(tideLib.disposed, true);
+  cargoLib.dispose();
+  assert.equal(cargoLib.disposed, true);
+});
+
+test('slot metadata before-after: Cargo -> Tidewater -> Cargo preserves 32 slots and stable semantics without shader mismatch', async () => {
+  const THREE = await import(path.join(ROOT, 'inkwave-public/vendor/three/build/three.module.js'));
+  const texlibMod = await loadComposedModule('src/world/texlib.js');
+  const levelMatMod = await loadComposedModule('src/world/levelMaterial.js');
+  const { createTextureLibrary } = texlibMod;
+  const { createLevelMaterial } = levelMatMod;
+  const renderer = createMockRenderer(THREE);
+
+  const dummyPaint = { texture: new THREE.DataTexture(new Uint8Array(16), 2, 2), size: 2 };
+  const dummyMurals = { userData: {} };
+
+  // Phase 1: Cargo stage active
+  const cargoLib1 = await createTextureLibrary(renderer, { size: 512, stage: 'cargo' });
+  const cargoMat1 = createLevelMaterial(dummyPaint.texture, dummyPaint.size, dummyMurals, { texlib: cargoLib1 });
+  assert.equal(cargoMat1.defines.TL_SLOTS, 32, 'TL_SLOTS must remain stable at 32');
+
+  const uTL_cargo = cargoMat1.userData.uniforms.uTL.value;
+  const uTLt_cargo = cargoMat1.userData.uniforms.uTLt.value;
+  assert.equal(uTL_cargo.length, 32);
+  // Shared slot 0: concrete
+  assert.equal(uTL_cargo[0].x, 0, 'Slot 0 is concrete (layer 0)');
+  // Cargo slots 28, 29, 30
+  assert.equal(uTL_cargo[28].x, 25, 'Cargo slot 28 points to layer 25 (tarmac)');
+  assert.equal(uTL_cargo[28].y, 1 / 4.0, 'Tarmac scale 4.0');
+  assert.equal(uTL_cargo[28].z, 2, 'Tarmac HEX mode 2');
+  assert.equal(uTL_cargo[28].w, 7, 'Tarmac sym 7');
+  assert.equal(uTLt_cargo[28].x, 2, 'Tarmac tint mode 2 (mask)');
+  assert.equal(uTLt_cargo[28].z, 3, 'Tarmac onWall 3 (PATTERN.concrete)');
+
+  assert.equal(uTL_cargo[29].x, 26, 'Cargo slot 29 points to layer 26 (quay)');
+  assert.equal(uTL_cargo[29].y, 1 / 4.8, 'Quay scale 4.8');
+  assert.equal(uTL_cargo[29].z, 1, 'Quay GRID mode 1');
+  assert.equal(uTL_cargo[29].w, 7, 'Quay sym 7');
+
+  assert.equal(uTL_cargo[30].x, 27, 'Cargo slot 30 points to layer 27 (chequer)');
+  assert.equal(uTL_cargo[30].y, 1 / 1.2, 'Chequer scale 1.2');
+  assert.equal(uTL_cargo[30].z, 1, 'Chequer GRID mode 1');
+  assert.equal(uTL_cargo[30].w, 3, 'Chequer sym 3');
+  assert.equal(uTLt_cargo[30].z, 18, 'Chequer onWall 18 (hullpaint)');
+
+  // Phase 2: Transition to Tidewater (retire Cargo, install 25-layer library)
+  cargoMat1.dispose();
+  cargoLib1.dispose();
+
+  const tideLib = await createTextureLibrary(renderer, { size: 512, stage: 'tidewater' });
+  const tideMat = createLevelMaterial(dummyPaint.texture, dummyPaint.size, dummyMurals, { texlib: tideLib });
+  assert.equal(tideMat.defines.TL_SLOTS, 32, 'TL_SLOTS must remain stable at 32 on Tidewater');
+
+  const uTL_tide = tideMat.userData.uniforms.uTL.value;
+  const uTLt_tide = tideMat.userData.uniforms.uTLt.value;
+  // Shared slot 0 must be identical
+  assert.equal(uTL_tide[0].x, 0);
+  assert.equal(uTL_tide[0].y, uTL_cargo[0].y);
+  assert.equal(uTL_tide[0].z, uTL_cargo[0].z);
+  assert.equal(uTL_tide[0].w, uTL_cargo[0].w);
+
+  // Inactive Cargo slots 28..30 must map safely to concrete layer 0 without out-of-bounds layer access
+  for (const s of [28, 29, 30]) {
+    assert.equal(uTL_tide[s].x, 0, `Inactive slot ${s} must map to layer 0 (concrete)`);
+    assert.equal(uTL_tide[s].y, 1 / 4.0, `Inactive slot ${s} scale falls back to concrete`);
+    assert.equal(uTL_tide[s].z, 1, `Inactive slot ${s} mode falls back to concrete`);
+    assert.equal(uTL_tide[s].w, 7, `Inactive slot ${s} sym falls back to concrete`);
+    assert.equal(uTLt_tide[s].x, 1, `Inactive slot ${s} tint falls back to concrete`);
+  }
+
+  // Phase 3: Transition back to Cargo (Cargo -> Tidewater -> Cargo)
+  tideMat.dispose();
+  tideLib.dispose();
+
+  const cargoLib2 = await createTextureLibrary(renderer, { size: 512, stage: 'cargo' });
+  const cargoMat2 = createLevelMaterial(dummyPaint.texture, dummyPaint.size, dummyMurals, { texlib: cargoLib2 });
+
+  const uTL_cargo2 = cargoMat2.userData.uniforms.uTL.value;
+  const uTLt_cargo2 = cargoMat2.userData.uniforms.uTLt.value;
+  assert.equal(uTL_cargo2[28].x, 25);
+  assert.equal(uTL_cargo2[28].y, 1 / 4.0);
+  assert.equal(uTL_cargo2[29].x, 26);
+  assert.equal(uTL_cargo2[30].x, 27);
+  assert.equal(uTLt_cargo2[30].z, 18);
+
+  cargoMat2.dispose();
+  cargoLib2.dispose();
+  dummyPaint.texture.dispose();
+});
+
+test('async Game._buildWorld integration: bounded replacement/disposal, stage pack caching and lobby texlib safety', async () => {
+  const THREE = await import(path.join(ROOT, 'inkwave-public/vendor/three/build/three.module.js'));
+  const texlibMod = await loadComposedModule('src/world/texlib.js');
+  const { createTextureLibrary } = texlibMod;
+  const renderer = createMockRenderer(THREE);
+
+  // Fake Game instance to verify syncWorldTexlib & updateLobbyTexlib
+  const game = {
+    settings: { quality: 'medium' },
+    mobile: { touch: true },
+    texlib: null,
+    showcase: {
+      lob: {
+        set: {
+          texlib: null,
+          mat: {
+            surface: {
+              uniforms: {
+                tAlbedo: { value: null },
+                tNormal: { value: null },
+                tOrm: { value: null },
+                uTL: { value: Array.from({ length: 12 }, () => new THREE.Vector4()) },
+                uTLt: { value: Array.from({ length: 12 }, () => new THREE.Vector4()) },
+              },
+            },
+            ground: {
+              uniforms: {
+                tAlbedo: { value: null },
+                tNormal: { value: null },
+                tOrm: { value: null },
+                uAs: { value: new THREE.Vector4() },
+              },
+            },
+          },
+          U: { uAs: new THREE.Vector4() },
+        },
+      },
+    },
+  };
+
+  const createFn = (r, opts) => createTextureLibrary(r, opts);
+
+  // 1. Initial cold boot on Tidewater (256 size on mobile)
+  const cold = await syncWorldTexlib(game, 'tidewater', renderer, 256, createFn);
+  assert.ok(cold.nextTexlib);
+  assert.equal(cold.nextTexlib.names.length, 25);
+  assert.equal(cold.oldTexlib, null);
+  game.texlib = cold.nextTexlib;
+  updateLobbyTexlib(game, cold.nextTexlib);
+
+  const lobbySet = game.showcase.lob.set;
+  assert.equal(lobbySet.texlib, cold.nextTexlib);
+  assert.equal(lobbySet.mat.surface.uniforms.tAlbedo.value, cold.nextTexlib.albedo);
+  assert.equal(lobbySet.mat.ground.uniforms.tAlbedo.value, cold.nextTexlib.albedo);
+  assert.equal(lobbySet.mat.ground.uniforms.uAs.value.x, cold.nextTexlib.layers.asphalt);
+
+  // 2. Switching to Kelpline: both are non-pack stages -> should retain existing library without allocation
+  const kelp = await syncWorldTexlib(game, 'kelpline', renderer, 256, createFn);
+  assert.equal(kelp.nextTexlib, game.texlib, 'Re-uses existing shared texlib for stage with same pack');
+  assert.equal(kelp.oldTexlib, null);
+
+  // 3. Switching to Cargo: needs 28-layer library
+  const cargoSwitch = await syncWorldTexlib(game, 'cargo', renderer, 256, createFn);
+  assert.ok(cargoSwitch.nextTexlib);
+  assert.equal(cargoSwitch.nextTexlib.names.length, 28);
+  assert.equal(cargoSwitch.oldTexlib, cold.nextTexlib);
+
+  // Retire previous level/material refs, update lobby, dispose old library
+  const oldTideLib = cargoSwitch.oldTexlib;
+  game.texlib = cargoSwitch.nextTexlib;
+  updateLobbyTexlib(game, cargoSwitch.nextTexlib);
+  oldTideLib.dispose();
+
+  assert.equal(oldTideLib.disposed, true, 'Old Tidewater library must be disposed');
+  assert.equal(lobbySet.texlib, cargoSwitch.nextTexlib, 'LobbySet must reference fresh Cargo texlib');
+  assert.equal(lobbySet.mat.surface.uniforms.tAlbedo.value, cargoSwitch.nextTexlib.albedo);
+  assert.notEqual(lobbySet.mat.surface.uniforms.tAlbedo.value, oldTideLib.albedo, 'LobbySet must not point to disposed texture');
+  assert.equal(lobbySet.mat.ground.uniforms.tAlbedo.value, cargoSwitch.nextTexlib.albedo);
+
+  // 4. Switching back to Tidewater: returns to 25 layers, disposes Cargo library
+  const cargoLibRef = game.texlib;
+  const tideSwitch = await syncWorldTexlib(game, 'tidewater', renderer, 256, createFn);
+  assert.ok(tideSwitch.nextTexlib);
+  assert.equal(tideSwitch.nextTexlib.names.length, 25);
+  assert.equal(tideSwitch.oldTexlib, cargoLibRef);
+
+  game.texlib = tideSwitch.nextTexlib;
+  updateLobbyTexlib(game, tideSwitch.nextTexlib);
+  cargoLibRef.dispose();
+
+  assert.equal(cargoLibRef.disposed, true, 'Previous Cargo library must be disposed when leaving Cargo');
+  assert.equal(lobbySet.texlib, tideSwitch.nextTexlib);
+  assert.equal(lobbySet.mat.surface.uniforms.tAlbedo.value, tideSwitch.nextTexlib.albedo);
+  assert.notEqual(lobbySet.mat.surface.uniforms.tAlbedo.value, cargoLibRef.albedo, 'LobbySet must never sample disposed Cargo library');
+
+  // Final cleanup
+  game.texlib.dispose();
+});
+
+test('resolution fidelity and renderer state: no arbitrary resolution downgrade, state restored after generation', async () => {
+  const THREE = await import(path.join(ROOT, 'inkwave-public/vendor/three/build/three.module.js'));
+  const texlibMod = await loadComposedModule('src/world/texlib.js');
+  const { createTextureLibrary } = texlibMod;
+  const renderer = createMockRenderer(THREE);
+
+  const initialRT = { isDummyRT: true };
+  renderer.setRenderTarget(initialRT);
+  renderer.autoClear = true;
+  renderer.xr.enabled = false;
+
+  // High desktop quality: size 512
+  const highLib = await createTextureLibrary(renderer, { size: 512, stage: 'tidewater' });
+  assert.equal(highLib.size, 512);
+  assert.equal(highLib.albedo.image.width, 512);
+  assert.equal(highLib.albedo.image.height, 512);
+  assert.equal(highLib.stats.size, 512);
+  assert.ok(highLib.stats.ms >= 0);
+  assert.ok(highLib.stats.compileMs >= 0);
+
+  // Touch / mobile quality: size 256
+  const lowLib = await createTextureLibrary(renderer, { size: 256, stage: 'tidewater' });
+  assert.equal(lowLib.size, 256);
+  assert.equal(lowLib.albedo.image.width, 256);
+  assert.equal(lowLib.albedo.image.height, 256);
+  assert.equal(lowLib.stats.size, 256);
+
+  // Renderer state must be restored to exact prior values
+  assert.equal(renderer.getRenderTarget(), initialRT, 'Renderer active render target must be restored');
+  assert.equal(renderer.autoClear, true, 'autoClear must be restored');
+  assert.equal(renderer.xr.enabled, false, 'xr.enabled must be restored');
+
+  // Mipmap generation verified on textures
+  for (const t of [highLib.albedo, highLib.normal, highLib.orm]) {
+    assert.equal(t.generateMipmaps, true, 'Full mip chain must be enabled on all 3 array attachments');
+    assert.equal(t.minFilter, THREE.LinearMipmapLinearFilter);
+    assert.equal(t.magFilter, THREE.LinearFilter);
+  }
+
+  highLib.dispose();
+  lowLib.dispose();
+});
+
+test('negative control: unpatched upstream baseline generates all 28 layers unconditionally on cold boot', async () => {
+  const THREE = await import(path.join(ROOT, 'inkwave-public/vendor/three/build/three.module.js'));
+  const rawTexlibCode = fs.readFileSync(path.join(ROOT, 'inkwave-public/src/world/texlib.js'), 'utf8');
+
+  // Verify that upstream source contains the eager push of STAGE_SURFACES into MATERIALS
+  assert.match(rawTexlibCode, /for\s*\(\s*const\s+s\s+of\s+STAGE_SURFACES\s*\)\s*MATERIALS\.push/);
+
+  // In unpatched baseline, createTextureLibrary ignores stage and always creates depth = 28
+  const context = vm.createContext({ console, performance });
+  const upstream = path.join(ROOT, 'inkwave-public');
+  function resolve(spec, from) {
+    if (spec === 'three') return path.join(upstream, 'vendor/three/build/three.module.js');
+    return path.resolve(path.dirname(from), spec);
+  }
+  function loadRaw(file) {
+    const code = fs.readFileSync(file, 'utf8');
+    const mod = new vm.SourceTextModule(code, { context, identifier: file });
+    return mod;
+  }
+  const rawMod = loadRaw(path.join(upstream, 'src/world/texlib.js'));
+  await rawMod.link((spec, from) => loadRaw(resolve(spec, from.identifier)));
+  await rawMod.evaluate();
+
+  const renderer = createMockRenderer(THREE);
+  const baselineLib = await rawMod.namespace.createTextureLibrary(renderer, { size: 256, stage: 'tidewater' });
+  assert.equal(baselineLib.names.length, 28, 'Unpatched baseline unconditionally generates 28 layers including Cargo');
+  assert.equal(baselineLib.albedo.image.depth, 28, 'Unpatched baseline pins 28 layers on coldboot Tidewater');
+  baselineLib.dispose();
+});
+

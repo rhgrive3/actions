@@ -234,3 +234,11 @@ cloud/Halyard cube allocation at default high settings, not only after later
 runtime refresh. Existing formats, appearance policy and gameplay stay intact.
 These are project resource dimensions, not Nintendo/Switch memory values.
 See [the cold-boot budget report](inkwave-cold-boot-budgets-2026-10-04.md).
+
+## 2026-10-05: stage-aware texture library generation (#542)
+
+Cold boot generation for non-pack stages (Tidewater/Kelpline) allocates and compiles only the 25 shared surface layers, deferring the 3 Cargo stage-pack layers until Cargo Terminal is selected.
+Switching stages performs bounded replacement/disposal of retired texture libraries once previous level and material references are retired, updating LobbySet uniforms so lobby users never sample disposed libraries.
+Preserves stable shader slot indirection semantics (32 slots) and material metadata, preventing shader recompilation hitches or slot mismatches, and prevents monotonically growing GPU texture memory across stage switches.
+These are INKWAVE GPU asset layout budgets, not Nintendo Switch hardware measurements.
+
