@@ -477,7 +477,7 @@ test('adapted-native result fixture: positive native splats awards Enemy Splatte
   assert.equal(ally1Awards[1].metal, 'silver');
 });
 
-test('teamwide zero assists yields no Overall Splatter (zero/missing assists => no Overall)', () => {
+test('known zero assists permits combined splat ranking while missing assists remains unknown', () => {
   const artCode = compose('src/ui/menu-art.js');
   const mod = vm.runInNewContext(`
     let tr = (s, ctx) => ctx ? s.replace(/\\{(\\w+)\\}/g, (_, k) => ctx[k]) : s;
@@ -499,17 +499,12 @@ test('teamwide zero assists yields no Overall Splatter (zero/missing assists => 
   const results = mod.computeAwards(zeroAssistsSquad).byPlayer;
   const awardLabels = results.flat().map(a => a.label);
 
-  // Overall Splatter and Splat Assister must NOT be awarded when assists are zero
-  assert.ok(!awardLabels.includes('#1 Overall Splatter'), 'Zero assists must not award Overall Splatter');
-  assert.ok(!awardLabels.includes('#2 Overall Splatter'), 'Zero assists must not award Overall Splatter');
-  assert.ok(!awardLabels.includes('#1 Splat Assister'), 'Zero assists must not award Splat Assister');
-  assert.ok(!awardLabels.includes('#2 Splat Assister'), 'Zero assists must not award Splat Assister');
-
-  // Enemy Splatter and Turf Inker are still cleanly awarded
-  assert.equal(results[0][0].label, '#1 Turf Inker');
-  assert.equal(results[0][1].label, '#1 Enemy Splatter');
-  assert.equal(results[1][0].label, '#2 Turf Inker');
-  assert.equal(results[1][1].label, '#2 Enemy Splatter');
+  assert.ok(awardLabels.includes('#1 Overall Splatter'), 'Known zero assists permits a known positive combined total');
+  assert.ok(awardLabels.includes('#2 Overall Splatter'));
+  assert.ok(!awardLabels.includes('#1 Splat Assister'));
+  assert.ok(!awardLabels.includes('#2 Splat Assister'));
+  assert.deepEqual(Array.from(results[0], a => a.label), ['#1 Overall Splatter', '#1 Turf Inker', '#1 Enemy Splatter']);
+  assert.deepEqual(Array.from(results[1], a => a.label), ['#2 Overall Splatter', '#2 Turf Inker', '#2 Enemy Splatter']);
 });
 
 test('complete authoritative assists enables Overall Splatter and Splat Assister, incomplete assists excludes teamwide', () => {
