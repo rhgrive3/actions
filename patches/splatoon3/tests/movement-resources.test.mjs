@@ -38,6 +38,7 @@ test('enemy ink grace integrates only exposure after its boundary, then resets o
   const f = await fixture(), a = f.make();
   // This is an interval arithmetic regression, not a proposed Splatoon grace value.
   f.profile.resources.enemyInkGrace = .025;
+  a.s3.modifiers.enemyInkGrace = .025; // actor-local Ink Resistance owns the applied grace
   f.profile.resources.enemyInkGraceReset = 0; // isolate interval arithmetic from #315's 45F reset policy
   f.G.paint.sample = () => 2; f.tick(a); close(a.hp, 100);
   f.tick(a); close(a.damageFromInk, f.profile.resources.enemyInkDps * (2 / 60 - .025));
