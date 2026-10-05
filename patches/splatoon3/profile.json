@@ -147,7 +147,9 @@
       "inkRecoverStop": 0.3333333333333333,
       "damagePartialMax": 80,
       "fieldCollisionRadius": 0.02,
-      "fullChargeJumpVelocity": 4.2
+      "fullChargeJumpVelocity": 4.2,
+      "scopedCharge": false,
+      "postShotSwimTime": 0.25
     },
     "roller": {
       "rollSpeed": 7.92,
