@@ -283,3 +283,15 @@ upstream は `upstream-lock.json` で固定しているためバイト列を変�
 入力端末（マウス／パッド／タッチ／ジャイロ）は同一の `_buildReticle` を共有する。
 回帰は `patches/splatoon3/tests/hud-slosher-reticle.test.mjs`（合成後コードを実行）。
 本家実機での同一照準確認は未確認項目として残す。
+## スーパージャンプ着地塗りと加点の分離（#645 / #646、2026-10-06）
+
+Splatoon 3 Ver. 11.3.0 において通常のスーパージャンプは移動手段であり、着地時にインク塗りを残さず、塗り面積による個人ポイント加算やスペシャルゲージ増加も生じない。INKWAVE 公開版の `Actor._updateSuperJump()` では着地時に無条件で `G.paint.splat(..., 1.4, ...)` と `this.addTurf(...)` を呼び出しており、未塗装や敵インクへのジャンプで不当な塗り・スコア・SP加点が発生していた。
+
+| 項目 | 内容 |
+|---|---|
+| 本家の根拠 | [Nintendo Support Splatoon 3 更新履歴](https://en-americas-support.nintendo.com/app/answers/detail/a_id/59461/)、[Inkipedia: Super Jump](https://splatoonwiki.org/wiki/Super_Jump)、[SmashWiki: Super Jump](https://www.ssbwiki.com/Super_Jump)。S3 の通常スーパージャンプは移動のみで着地ダメージや地面塗りを伴わない（着地爆発・塗りはテイオウイカやウルトラチャクチ等のスペシャル効果による別挙動）。 |
+| INKWAVE の実装箇所 | `inkwave-public/src/game/actor.js:754` の `this.addTurf(G.paint.splat(_v.copy(this.pos).setY(this.pos.y + 0.3), 1.4, this.team, { seed: Math.random() }));`。ビルド時アダプタ `patches/splatoon3/adapter.mjs` で該当呼び出しを除去。 |
+| 再現操作 | 敵インクまたは未塗装地点に味方へ向けて通常スーパージャンプを行う。着地tickで半径1.4mの自色塗りと個人Turf・SPゲージ加算が発生していた。 |
+| プレイへの影響 | 安全な通常ジャンプを繰り返すだけでナワバリ面積やSPゲージを不当に稼ぐことができていた。修正後は着地時のゲームプレイ塗り・Turf加算・SP加算が0になる。 |
+| 確認状態 | **ロジック確認済み**（`patches/splatoon3/tests/superjump-gameplay.test.mjs` で未塗装地面・敵インク地面着地時の塗り呼び出し0、Turf加算0、SP加算0、VFX/audio演出維持を確認）。テイオウイカ／テイダルスラム等のスペシャル着地攻撃は専用パスで維持。Switch実機との操作感・未公開内部数値は未確認。 |
+
