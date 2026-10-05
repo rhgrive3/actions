@@ -58,7 +58,7 @@ export async function replay(network,kind){
   const t=1000+frame*DT;owner.clock.set(t);receiver.clock.set(t);owner.G.time=t;receiver.G.time=t;
   P.update(DT);maxLocal=Math.max(maxLocal,P.list.length);
   if(frame%3===0){onm._sendTick();for(const packet of packets.splice(0)){bytes+=Buffer.byteLength('b|'+JSON.stringify(packet));packetCount++;eventCount+=packet.e?.length||0;rnm.onMessage('me',packet);}}
-  const peer=rnm.peers.get('me');if(peer){peer.tr=t;peer.sim=peer.physicsPoints?.at(-1);rnm._playEvents();}receiver.projectiles.update(DT);maxRemote=Math.max(maxRemote,receiver.projectiles.list.length);
+  const peer=rnm.peers.get('me');if(peer){peer.tr=t;peer.sim=peer.physicsPoints?.at(-1);if(kind==='storm'){rnm._sample(ra,t,DT);rnm.applyRemote(ra,DT);}rnm._playEvents();}receiver.projectiles.update(DT);maxRemote=Math.max(maxRemote,receiver.projectiles.list.length);
   if(P.bombs[0])sourceBomb.push({age:P.bombs[0].age,pos:P.bombs[0].pos.toArray()});if(receiver.projectiles.bombs[0])remoteBomb.push({age:receiver.projectiles.bombs[0].age,pos:receiver.projectiles.bombs[0].pos.toArray()});
   if(P.beams[0])sourceBeam.push(beam(owner));if(receiver.projectiles.beams[0])remoteBeam.push(beam(receiver));
   if(P.clouds[0])sourceCloud.push({age:P.clouds[0].t,pos:P.clouds[0].group.position.toArray()});if(receiver.projectiles.clouds[0])remoteCloud.push({age:receiver.projectiles.clouds[0].t,pos:receiver.projectiles.clouds[0].group.position.toArray()});
