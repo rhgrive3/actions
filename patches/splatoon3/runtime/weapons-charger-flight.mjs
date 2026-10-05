@@ -1,12 +1,29 @@
 import { capsuleEntry, sweptWorldHit } from './weapons-collision.mjs';
+// Splatoon-3-normalized partial-charge coordinate for Charger paint endpoints.
+// The authoritative charge progression reaches charge = 1/6 after the first
+// legal 8 frames at 60Hz (chargeT = 8/60 through the installed charge curve)
+// and 1 at the full 60th frame, so the pinned S3 11.3.0 MinCharge family
+// anchors to the first legal release and the MaxCharge family to 60f;
+// charge >= .999 keeps the extracted FullCharge step. Charge-rate modifiers
+// (airborne/empty tank) only change how fast the progression advances, and
+// releases below the boundary clamp to 0, so the legal minimum endpoint never
+// shifts. Damage (#506), range (#514), projectile speed, ink consumption and
+// the sub-8f release gate (#304) keep consuming the raw charge separately.
+export const CHARGER_FIRST_LEGAL_CHARGE = 1 / 6;
+export function chargerPartialCharge(charge) {
+  const c = Math.max(0, Math.min(1, Number.isFinite(charge) ? charge : 0));
+  if (c >= .999) return 1;
+  return c <= CHARGER_FIRST_LEGAL_CHARGE ? 0 : (c - CHARGER_FIRST_LEGAL_CHARGE) / (1 - CHARGER_FIRST_LEGAL_CHARGE);
+}
 // Linear interpolation of extracted endpoints; ellipse rasterization remains INKWAVE's.
 export function chargerPaintParameters(raw,charge){
- const full=charge>=.999,q=Math.max(0,Math.min(1,charge));
- const value=(record,name)=>full?record[name+'FullCharge']:record[name+'MinCharge']+(record[name+'MaxCharge']-record[name+'MinCharge'])*q;
- const width=value(raw.SplashPaintParam,'WidthHalf'),depth=value(raw.SplashPaintParam,'DepthHalf');
- return {width,depth,impact:value(raw.PaintParam,'Radius'),nearest:raw.SplashPaintParam.RadiusSpawnNearest,
-  interval:2*depth*(1-value(raw.SplashSpawnParam,'OnTopRate'))*Math.max(1,raw.SplashSpawnParam.SkipNum),
-  terminalRate:1.5}; // community-reported omitted default, NOT an explicit pinned field
+  const full=charge>=.999,q=chargerPartialCharge(charge);
+  const value=(record,name)=>full?record[name+'FullCharge']:record[name+'MinCharge']+(record[name+'MaxCharge']-record[name+'MinCharge'])*q;
+  const width=value(raw.SplashPaintParam,'WidthHalf'),depth=value(raw.SplashPaintParam,'DepthHalf');
+  const onTop=value(raw.SplashSpawnParam,'OnTopRate');
+  return {width,depth,impact:value(raw.PaintParam,'Radius'),nearest:raw.SplashPaintParam.RadiusSpawnNearest,
+    onTop,interval:2*depth*(1-onTop)*Math.max(1,raw.SplashSpawnParam.SkipNum),
+    terminalRate:1.5}; // community-reported omitted default, NOT an explicit pinned field
 }
 const INSTALLED=Symbol.for('inkwave.charger-flight.v1'),EPS=1e-10,SIM_DT=1/60;
 // Finite straight flight. Source supplies endpoints and radii, not recovered engine
