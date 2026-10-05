@@ -571,6 +571,12 @@ test('adapter composition retains existing gyro configure for both raw and PR496
   // aimProfile selector is added
   assert.ok(adaptedRawMenus.includes("key: 'aimProfile'"), 'aimProfile added to menus');
 
+  const composedMenus = compose('src/ui/menus.js');
+  const touchRows = composedMenus.slice(composedMenus.indexOf('const TOUCH_TAB ='), composedMenus.indexOf('const SETTINGS_TABS ='));
+  const keys = [...touchRows.matchAll(/key: '([^']+)'/g)].map(match => match[1]);
+  assert.equal(keys[0], '_layout', 'existing touch editor stays the first actionable setting');
+  assert.equal(keys[1], 'aimProfile', 'profile selector follows touch layout editing');
+
   // 2. PR 496 applied composition
   const pr496AppliedMobile = adaptGyroInvertPR496('src/core/mobile.js', rawMobile);
   const pr496AppliedMenus = adaptGyroInvertPR496('src/ui/menus.js', rawMenus);

@@ -185,7 +185,7 @@ export function adaptAimProfiles(rel, code) {
 
   if (rel === 'src/ui/menus.js') {
     // 1. Add aimProfile selector to TOUCH_TAB (leave gyroInvertX/Y solely to PR 496)
-    const touchTabAnchor = "const TOUCH_TAB = { id: 'touch', label: 'Touch', icon: 'hand', rows: [\n";
+    const touchTabAnchor = "  { key: '_layout', label: 'Edit button layout', type: 'link', linkLabel: 'EDIT', help: 'Drag buttons where you want them and resize them. Saved per device.' },\n";
     const touchTabAimProfile = touchTabAnchor +
       "  { key: 'aimProfile', label: 'Aim control mode', type: 'seg', options: [['tv', 'TV / Tabletop'], ['handheld', 'Handheld']], help: 'Splatoon 3 stores independent aim settings for TV/Tabletop and Handheld modes. Select which profile is active.' },\n";
     code = replaceOnce(code, touchTabAnchor, touchTabAimProfile, 'menus TOUCH_TAB aimProfile');
