@@ -189,6 +189,8 @@ const deferredIntegrationPreloads = new Set([
   'patches/splatoon3/runtime/weapons-fidelity.mjs',
   'patches/splatoon3/runtime/weapons-charger-flight.mjs',
   'patches/splatoon3/runtime/weapons-collision.mjs',
+  // PR694 made this existing helper reachable; defer only its preload, not caching.
+  'patches/splatoon3/runtime/superjump.mjs',
 ]);
 const preloadOrder = order.filter((f) => !deferredIntegrationPreloads.has(f));
 const preload = preloadOrder.filter((f) => fs.existsSync(path.join(BUILD, f))).map((f) => `<link rel="modulepreload" href="./${f}">`).join('\n');

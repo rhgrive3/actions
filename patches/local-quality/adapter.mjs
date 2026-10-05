@@ -1,6 +1,7 @@
 // Build-only quality corrections composed after the gameplay, touch-layout and
 // reliability adapters. Upstream inkwave-public/ remains byte-for-byte intact.
 import fs from 'node:fs';
+import { adaptUiActorLifetime } from './ui-actor-lifetime-adapter.mjs';
 import { adaptIdleSource } from './idle-adapter.mjs';
 import { adaptPlatformSource } from './platform-adapter.mjs';
 import { adaptLandingRigidity } from './landing-rigidity-adapter.mjs';
@@ -13,6 +14,7 @@ import { adaptLobbyResources } from './lobby-resource-adapter.mjs';
 
 export const QUALITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
 const IDENTITY_FILES = [
+  'ui-actor-lifetime-adapter.mjs',
   'idle-adapter.mjs', 'idle-resources.mjs', 'music-idle.mjs',
   'lobby-resource-adapter.mjs', 'minimap-resource-adapter.mjs',
   'adapter.mjs', 'gyro.mjs', 'install.mjs', 'menu-preview.mjs', 'menu.mjs',
@@ -34,6 +36,7 @@ export function adaptQualitySource(rel, code) {
   code = adaptIdleSource(rel, code, replaceOnce);
   code = adaptLobbyResources(rel, code);
   code = adaptMinimapResources(rel, code);
+  code = adaptUiActorLifetime(rel, code, replaceOnce);
   code = adaptLandingRigidity(rel, code);
   if (rel === 'src/core/mobile.js') {
     code = adaptFirstTouch(rel, code);
