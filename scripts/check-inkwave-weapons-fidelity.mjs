@@ -162,4 +162,34 @@ assert.equal(ghost.f.paints.length,0,'ghost wall-drop cannot mutate turf');
   assert.equal(victim.hp,hp,'retained wall ink never deals projectile HP damage');
 }
 
+// Network catch-up originally budgets a ghost from the projectile's flight life.
+ // Blaster wall-drop outlives its 13F airburst lifetime, so the terrain transition
+ // must extend that existing projectile's budget without adding a packet field.
+ {
+  const f=await fixture({site,fidelity:true,floor:true,seed:0x576597,network:true});
+  f.wall(4,{height:8});
+  const a=f.make('blaster'); a.nid=42; a.aimPoint.set(0,1.05,20);
+  const packets=[];
+  const recorder={mute:0,_rec:e=>packets.push([0,...e]),recProj:f.NetMatch.prototype.recProj,recSplat(){},shouldApplyHit:f.NetMatch.prototype.shouldApplyHit};
+  f.G.netm=recorder;
+  f.projectiles.fireBlaster(a,a.weapon,0);
+  assert.equal(packets.length,1,'Blaster birth packet recorded');
+  const ghost=f.make('blaster',{name:'remote'}); ghost.remote=true;
+  f.projectiles.list.length=0; f.paints.length=0;
+  f.projectiles.ghostProjectile(ghost,packets[0]);
+  const q=f.projectiles.list[0];
+  assert.ok(q?.ghost,'remote Blaster ghost reconstructed');
+  q._netBorn=0; q._netBornTick=0; q._netSteps=0;
+  q._netPeer={tr:4,lastTs:4,sim:240};
+  q._netMaxSteps=Math.ceil((q.life+Math.max(0,q.delay||0))*60)+2;
+  const birthBudget=q._netMaxSteps;
+  f.G.netm={mute:0};
+  f.projectiles.update(1/60);
+  assert.ok(q.fidelityWallDrop,'ghost reaches retained wall-drop during catch-up');
+  assert.ok(q._netMaxSteps>birthBudget,'wall-drop extends the original ghost catch-up budget');
+  for(let i=0;i<4&&f.projectiles.list.includes(q);i++) f.projectiles.update(1/60);
+  assert.ok(!f.projectiles.list.includes(q),'extended ghost budget reaches deterministic wall-drop terminal');
+  assert.equal(f.paints.length,0,'network ghost wall-drop remains non-authoritative for turf');
+ }
+
 console.log(JSON.stringify({status:'passed',contentHash:data.artifactIdentity.contentHash,cases:Object.keys(golden).length,networkModes:3,wallDropFamilies:2,completion:'finite-charger-continuous-collision-wall-drop'}));
