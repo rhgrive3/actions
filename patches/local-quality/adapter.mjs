@@ -11,8 +11,11 @@ import { adaptFirstTouch } from './first-touch-adapter.mjs';
 import { adaptTouchRelayout } from './touch-relayout.mjs';
 import { adaptMedalSource } from './medal-adapter.mjs';
 
+import { adaptAimProfiles } from './aim-profile-adapter.mjs';
+
 export const QUALITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
 const IDENTITY_FILES = [
+  'aim-profile-adapter.mjs', 'aim-profile.mjs',
   'idle-adapter.mjs', 'idle-resources.mjs', 'music-idle.mjs',
   'lobby-resource-adapter.mjs', 'minimap-resource-adapter.mjs',
   'adapter.mjs', 'gyro.mjs', 'install.mjs', 'menu-preview.mjs', 'menu.mjs',
@@ -29,6 +32,7 @@ export function replaceOnce(code, before, after, label) {
 }
 
 export function adaptQualitySource(rel, code) {
+  code = adaptAimProfiles(rel, code);
   code = adaptIdleSource(rel, code, replaceOnce);
   code = adaptLobbyResources(rel, code);
   code = adaptMinimapResources(rel, code);
