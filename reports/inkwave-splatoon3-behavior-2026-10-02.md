@@ -250,3 +250,8 @@ cloud/Halyard cube allocation at default high settings, not only after later
 runtime refresh. Existing formats, appearance policy and gameplay stay intact.
 These are project resource dimensions, not Nintendo/Switch memory values.
 See [the cold-boot budget report](inkwave-cold-boot-budgets-2026-10-04.md).
+See [the cold-boot budget report](inkwave-cold-boot-budgets-2026-10-04.md).
+
+## 2026-10-06: Charger earliest legal 8f launch speed (#617)
+
+`WeaponRunner._charger`'s upstream S-curve reaches `charge = 1/6` after the S3 8-frame legal minimum, while `patches/splatoon3/runtime/weapons-charger-flight.mjs::begin()` mapped that raw coordinate linearly onto `SpawnSpeedMinCharge..SpawnSpeedMaxCharge` (pinned Ver. 11.3.0 completion table). The first legal 8f Splat Charger shot therefore launched at `60*(2.4+2.4/6) = 168 u/s` instead of the minimum endpoint `144 u/s` (+16.67%); the full 60f shot stayed at `288 u/s`. The flight layer now normalizes `[1/6, 1] -> [0, 1]` before the endpoint lerp (`chargerLaunchSpeed`), clamping sub-minimum taps to the minimum endpoint. Damage (#506), range (#514), the minimum-release gate (#304) and ink cost (#675) still consume the raw runner charge and are untouched; paint, distance, ghost playback and beam presentation keep their existing consumers. Reproduced and verified at fixed 60 Hz logic only through `_charger -> fireCharger -> begin()` by `patches/splatoon3/tests/charger-launch-speed.test.mjs` (fails `168 ~= 144` before the change, passes after; full/monotonic checks unchanged). The 8-frame legal minimum follows the issue's cited S3 references, not a Switch measurement: partial launch speeds between the endpoints stay unverified against hardware, and no other frame interval was measured.
