@@ -41,7 +41,7 @@ export function installWeaponMotion({ Character, WeaponRunner, CHARACTER_TIMERS:
   if (!Character || !channels) throw Error('Weapon motion requires the actual Character and its exact pose channels');
   if (Projectiles && !muzzleInstalled.has(Projectiles.prototype)) {
     muzzleInstalled.add(Projectiles.prototype);
-    const muzzle = Projectiles.prototype._muzzle, origin = new THREE.Vector3(), hit = new Hit();
+    const muzzle = Projectiles.prototype._muzzle, origin = new THREE.Vector3(), delta = new THREE.Vector3(), hit = new Hit();
     Projectiles.prototype._muzzle = function (actor, out) {
       muzzle.call(this, actor, out);
       if (actor.weapon?.kind !== 'slosher') return out;
@@ -49,9 +49,14 @@ export function installWeaponMotion({ Character, WeaponRunner, CHARACTER_TIMERS:
       // spawn inside that omitted wall sliver. Use the actual full segment,
       // keeping the native emitter and its existing fallback in free space.
       origin.copy(actor.pos); origin.y += actor.form === 'squid' ? .4 : 1.05;
-      if (G.physics.segment(origin, out, hit, true).hit) {
+      const blocked = (end) => {
+        delta.copy(end).sub(origin);
+        const distance = delta.length();
+        return distance > EPS && G.physics.raycast(origin, delta.multiplyScalar(1 / distance), distance, hit, true).hit;
+      };
+      if (blocked(out)) {
         out.copy(origin).addScaledVector(actor.aimDir, .3);
-        if (G.physics.segment(origin, out, hit, true).hit) out.copy(origin);
+        if (blocked(out)) out.copy(origin);
       }
       return out;
     };
