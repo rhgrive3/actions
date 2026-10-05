@@ -7,9 +7,9 @@
 | 項目 | 内容 |
 |---|---|
 | 本家の根拠 | Inkipedia「Splat Charger」: 弾の飛距離はチャージ量に応じて 10.75 から 25.75 units へ連続的に伸びる（Issue #711 の引用どおり）。フルチャージ以外は途中の距離で消える。INKWAVE が取り込んだ抽出パラメータ `MoveParam.DistanceMinCharge / DistanceMaxCharge / DistanceFullCharge`（9.033 / 24.037 / 24.037）は別スケールの値であり、Inkipedia の数値と同一視していない。 |
-| INKWAVE の実装箇所 | 判定: `inkwave-public/src/game/player.js` `PlayerController.computeAim()` の末尾（上流は `w.rangeMax` 固定）。修正: `patches/splatoon3/adapter.mjs` の `src/game/player.js` 節で `replaceOnce` により、`weaponRunner.charge`（0〜1 にクランプ）から求めた射程へ置換。射程の式: `patches/splatoon3/runtime/weapons-charger-flight.mjs` の `installChargerFlight` 内 `reachFor`。`begin` と新しい `Projectiles.prototype.chargerReach(charge)` が同じ式を使う。チャージャー飛行が未導入の場合は上流の `lerp(rangeMin, rangeMax, charge)` に相当する式へ戻る。 |
+| INKWAVE の実装箇所 | 判定: `inkwave-public/src/game/player.js` `PlayerController.computeAim()` の末尾（上流は `w.rangeMax` 固定）。修正: `patches/splatoon3/adapter.mjs` の `src/game/player.js` 節で `replaceOnce` により、`weaponRunner.charge`（0〜1 にクランプ。イカ状態のチャージキープ中は保持中の `s3Stored.charge`）から求めた射程へ置換。射程の式: `patches/splatoon3/runtime/weapons-charger-flight.mjs` の `installChargerFlight` 内 `reachFor`。`begin` と新しい `Projectiles.prototype.chargerReach(charge)` が同じ式を使う。チャージャー飛行が未導入の場合は上流の `lerp(rangeMin, rangeMax, charge)` に相当する式へ戻る。 |
 | 再現操作 | チャージャーを持ち、チャージせずに、最小射程と最大射程の中間距離にある地点へ照準を合わせる。修正前は HUD が「射程内」（`is-far` なし）を示すが、ZR を即離すと弾は最小チャージ距離で消える。フルチャージまで溜めると射程内になる。 |
-| プレイへの影響 | 未チャージ・低チャージでは届かない地点でも射程内と表示され、撃つ前の射程判断を誤らせていた。修正後は現在のチャージ量に応じて射程内表示が切り替わり、チャージが進むと射程内に移る（単調）。`+ 0.5` の許容幅、ローラー（6）、その他のブキ（`range \|\| 12`）の判定は変更なし。弾道・数値・チャージ速度も変更なし。 |
+| プレイへの影響 | 未チャージ・低チャージでは届かない地点でも射程内と表示され、撃つ前の射程判断を誤らせていた。修正後は現在のチャージ量に応じて射程内表示が切り替わり、チャージが進むと射程内に移る（単調）。チャージしていない待機中は最小射程で判定する（タップ撃ちの射程）。チャージキープ中は保持チャージの射程で判定する。待機中の表示が本家でどうなるかは未確認。`+ 0.5` の許容幅、ローラー（6）、その他のブキ（`range \|\| 12`）の判定は変更なし。弾道・数値・チャージ速度も変更なし。 |
 | 確認状態 | **ロジックのみ確認済み**: `patches/splatoon3/tests/charger-hud-reach.test.mjs`（実 Actor、実 Projectiles、導入済み飛行ジョブの `range` と `chargerReach` が c = 0 / 0.5 / 0.998 / 1 で一致、単調性、非チャージャー不変、導入前の lerp 代替、main 構成で charge 0 が射程内になる否定対照）。**ブラウザ上の実表示は未確認**。**本家実機（Switch）での射程内表示の挙動比較は未確認**。HUD の is-far 遷移の見た目（不透明度 .42 等）は上流のままで、本家との一致は未判定。 |
 
 ## #709 ブラスターの拡散がレティクル内側の円まで拡大する

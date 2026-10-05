@@ -86,7 +86,7 @@ test('#711 the composed player.js contains the charge-dependent reach exactly on
   const f = await fixedBoot();
   assert.equal(f.composed.player.split('chargerReach(chargeNow)').length - 1, 1);
   assert.equal(f.composed.player.includes(ORIGINAL_RANGE), false);
-  assert.match(f.composed.player, /const chargeNow = clamp\(a\.weaponRunner\?\.charge \|\| 0, 0, 1\);/);
+  assert.match(f.composed.player, /const chargeNow = clamp\(a\.weaponRunner\?\.s3Stored\?\.charge \?\? a\.weaponRunner\?\.charge \?\? 0, 0, 1\);/);
   assert.match(f.composed.player, /import \{ G, clamp, lerp, angleDiff \} from '\.\.\/core\/ctx\.js';/);
 });
 
@@ -141,6 +141,15 @@ test('#711 computeAim inRange follows the live charge (installed flight reach)',
   assert.equal(seen, true);
   assert.equal(f.inRange(a, 5, full + .4), true, 'charge is clamped');
   assert.equal(f.inRange(a, -5, mid), false);
+});
+
+test('#711 a squid-form charge keep reports the stored full-charge reach', async () => {
+  const f = await fixedBoot();
+  const a = f.make('charger'), P = f.real, mid = (P.chargerReach(0) + P.chargerReach(1)) / 2;
+  a.weaponRunner.s3Stored = { charge: 1, remaining: 1 };
+  assert.equal(f.inRange(a, 0, mid), true, 'stored full charge keeps full reach while submerged (live charge is 0)');
+  a.weaponRunner.s3Stored = null;
+  assert.equal(f.inRange(a, 0, mid), false, 'no store: live charge 0 is minimum reach');
 });
 
 test('#711 non-charger ranges are unchanged and ignore charge', async () => {
