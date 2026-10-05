@@ -32,7 +32,7 @@ export async function syncWorldTexlib(game, layoutId, renderer, size, createFn, 
   let nextTexlib = null;
   try {
     const fn = createFn || (async (r, opts) => {
-      const { createTextureLibrary } = await import('./world/texlib.js');
+      const { createTextureLibrary } = await import('../../src/world/texlib.js');
       return createTextureLibrary(r, opts);
     });
     nextTexlib = await fn(renderer, { size, stage: targetStage, surfaces });

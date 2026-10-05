@@ -748,3 +748,115 @@ test('negative control: unpatched upstream baseline generates all 28 layers unco
   assert.equal(baselineLib.albedo.image.depth, 28, 'Unpatched baseline pins 28 layers on coldboot Tidewater');
   baselineLib.dispose();
 });
+
+// Resolve the same module URLs the built browser uses. Injecting createFn would
+// conceal a broken default dynamic-import route during a real stage transition.
+async function publishedLoader(overrides = {}) {
+  const errors = [];
+  const context = vm.createContext({ console: { ...console, error: (...v) => errors.push(v) }, performance });
+  const modules = new Map();
+  const resolve = (spec, from) => {
+    if (spec === 'three') return 'https://inkwave.test/vendor/three/build/three.module.js';
+    if (spec.startsWith('three/addons/')) return 'https://inkwave.test/vendor/three/jsm/' + spec.slice(13);
+    return new URL(spec, from).href;
+  };
+  const load = (url) => {
+    if (modules.has(url)) return modules.get(url);
+    const rel = new URL(url).pathname.slice(1);
+    const code = overrides[rel] ?? (rel.startsWith('patches/')
+      ? fs.readFileSync(path.join(ROOT, rel), 'utf8') : compose(rel));
+    const mod = new vm.SourceTextModule(code, {
+      context, identifier: url,
+      importModuleDynamically: async (spec, from) => {
+        const child = load(resolve(spec, from.identifier));
+        if (child.status === 'unlinked') await child.link(linker);
+        if (child.status === 'linked') await child.evaluate();
+        return child;
+      },
+    });
+    modules.set(url, mod);
+    return mod;
+  };
+  const linker = (spec, from) => load(resolve(spec, from.identifier));
+  return {
+    errors,
+    async get(rel) {
+      const mod = load('https://inkwave.test/' + rel);
+      if (mod.status === 'unlinked') await mod.link(linker);
+      if (mod.status === 'linked') await mod.evaluate();
+      return mod.namespace;
+    },
+  };
+}
+
+test('native world commit uses the published default factory route and preserves single cold generation', async () => {
+  const loader = await publishedLoader();
+  const THREE = await loader.get('vendor/three/build/three.module.js');
+  const native = await loader.get('src/world/texlib.js');
+  const runtime = await loader.get('patches/local-quality/texlib.mjs');
+  const levelMaterial = await loader.get('src/world/levelMaterial.js');
+  const renderer = createMockRenderer(THREE);
+  let generations = 0;
+  renderer.compileAsync = async () => { generations++; };
+  const cold = await native.createTextureLibrary(renderer, { size: 256, stage: 'tidewater' });
+  const reuse = await runtime.syncWorldTexlib({ texlib: cold }, 'tidewater', renderer, 256, null, native.STAGE_SURFACES);
+  assert.equal(reuse.nextTexlib, cold);
+  assert.equal(generations, 1, 'first world must reuse cold generation');
+
+  const main = compose('src/main.js');
+  const at = main.indexOf('  async _buildWorld(');
+  const until = main.indexOf('\n  // deck slabs over the sea:', at);
+  assert.ok(at >= 0 && until > at);
+  const G = { scene: new THREE.Scene(), renderer, teamColors: [], paint: null };
+  const resources = [];
+  class Paint {
+    constructor(_r, _l, opts) { this.size = opts.atlasSize; this.texture = new THREE.DataTexture(new Uint8Array(4), 1, 1); resources.push(this); }
+    dispose() { this.disposed = true; this.texture.dispose(); }
+  }
+  const context = vm.createContext({
+    G, THREE, console, Promise,
+    MAP_LAYOUTS: { tidewater: {}, cargo: {}, kelpline: {} },
+    effectiveQuality: () => ({ paintAtlas: 2048 }), dressingFor: () => [],
+    Level: class { constructor() { this.bounds = {}; } buildGeometry() { return new THREE.BoxGeometry(); } },
+    Physics: class {}, SwimWake: class { reset() {} }, Decor: class { dispose() {} },
+    NavGraph: class {}, Minimap: class {}, PaintSystem: Paint,
+    createLevelMaterial: levelMaterial.createLevelMaterial,
+    STAGE_SURFACES: native.STAGE_SURFACES,
+    syncWorldTexlib: runtime.syncWorldTexlib, updateLobbyTexlib: runtime.updateLobbyTexlib,
+  });
+  const Game = vm.runInContext(`class Game {\n${main.slice(at, until)}\n}; Game;`, context);
+  const game = new Game();
+  game.texlib = cold; game.layoutId = 'tidewater'; game.settings = {}; game.mobile = false;
+  game.murals = { userData: { setStage() {} } }; game._loadLightmap = async () => null;
+  await game._buildWorld({ id: 'cargo' });
+  assert.equal(game.texlib.names.length, 28, 'default factory must actually load native Cargo pack');
+  assert.equal(game.texlib.stage, 'cargo');
+  assert.equal(game.levelMat.userData.uniforms.uTL.value[28].x, 25);
+  assert.equal(cold.disposed, true);
+  assert.equal(generations, 2);
+  const cargo = game.texlib;
+  await game._buildWorld({ id: 'kelpline' });
+  assert.equal(game.texlib.names.length, 25);
+  assert.equal(game.texlib.stage, null);
+  assert.equal(cargo.disposed, true);
+  assert.equal(generations, 3);
+  assert.equal(loader.errors.length, 0);
+  game.texlib.dispose(); game.levelMat.dispose(); game.grateMat.dispose();
+  game.levelMesh.geometry.dispose(); game.grateMesh.geometry.dispose();
+  for (const p of resources) if (!p.disposed) p.dispose();
+});
+
+test('negative control catches the former misplaced runtime-relative factory import', async () => {
+  const source = fs.readFileSync(path.join(ROOT, 'patches/local-quality/texlib.mjs'), 'utf8');
+  assert.ok(source.includes("import('../../src/world/texlib.js')"));
+  const loader = await publishedLoader({
+    'patches/local-quality/texlib.mjs': source.replace("import('../../src/world/texlib.js')", "import('./world/texlib.js')"),
+  });
+  const THREE = await loader.get('vendor/three/build/three.module.js');
+  const native = await loader.get('src/world/texlib.js');
+  const runtime = await loader.get('patches/local-quality/texlib.mjs');
+  const renderer = createMockRenderer(THREE);
+  const result = await runtime.syncWorldTexlib({}, 'cargo', renderer, 256, null, native.STAGE_SURFACES);
+  assert.equal(result.nextTexlib, null, 'broken route must fail rather than being hidden by injected factory');
+  assert.equal(loader.errors.length, 1);
+});

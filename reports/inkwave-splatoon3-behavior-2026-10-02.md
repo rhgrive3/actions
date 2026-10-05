@@ -251,3 +251,5 @@ Cold boot generation for non-pack stages (Tidewater/Kelpline) allocates and comp
 | メモリ占有ライフサイクル | 遷移完了後の定常状態は常にライブラリ1つ（residency = 1）。生成中のみ旧ライブラリと新ライブラリが一時的に並行存在（transient residency = 2）。旧レベル・マテリアル参照が破棄された直後に旧ライブラリをdispose |
 | 確認状態 | **ロジック・ネイティブ結合確認済み** (`patches/local-quality/tests/texlib-stage-pack.test.mjs` 10テスト全通過、`scripts/check-inkwave-patches.mjs --quick` 合格)。**本家実機（Switch Ver.11.3.0）でのGPU実物理メモリ・フレームヒッチ実測は未確認**。記載のMiB値はThree.js DataArrayRenderTargetのフォーマット（RGBA8×3MRT+mips）に基づく計算アセット予算であり、ドライバ物理VRAM測定値ではない |
 
+
+The stage-pack integration also tests the actual published module URLs and the default native factory, without an injected factory. Native composed `_buildWorld` commits Cargo28 layers then Kelpline25 layers and disposes prior libraries. A negative control restores the former misplaced runtime-relative import and proves it fails. Generator tests construct real Three targets and native shader callbacks with a headless renderer; these are not physical GPU memory or timing measurements.
