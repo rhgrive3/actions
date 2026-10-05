@@ -104,7 +104,21 @@ export function installChargerFlight(api,completion) {
   }
   P.update=function(dt){
     const list=this._fidelityChargerFlights;
-    if(list)for(let i=list.length-1;i>=0;i--)if(step(this,list[i],dt))list.splice(i,1);
+    if(list)for(let i=list.length-1;i>=0;i--){
+      const job=list[i];
+      if(job.ghost&&job._netPeer){
+        const peer=job._netPeer,clock=Math.min(peer.tr,peer.lastTs??peer.tr);
+        const target=Math.floor((Number.isFinite(peer.sim)&&Number.isFinite(job._netBornTick)
+          ? peer.sim-job._netBornTick : (clock-job._netBorn)/(1/60))+.0306)+1;
+        job._netSteps??=0;
+        const maxSteps=Math.ceil(job.range/Math.max(EPS,job.speed*(1/60)))+2;
+        let ended=false;
+        while(!ended&&job._netSteps<target&&job._netSteps<maxSteps){
+          ended=step(this,job,1/60); job._netSteps++;
+        }
+        if(ended)list.splice(i,1);
+      }else if(step(this,job,dt))list.splice(i,1);
+    }
     return nativeUpdate.call(this,dt);
   };
   P.clear=function(...args){this._fidelityChargerFlights=[];return nativeClear.apply(this,args);};
