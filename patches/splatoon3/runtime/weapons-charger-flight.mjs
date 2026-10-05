@@ -8,7 +8,7 @@ export function chargerPaintParameters(raw,charge){
   interval:2*depth*(1-value(raw.SplashSpawnParam,'OnTopRate'))*Math.max(1,raw.SplashSpawnParam.SkipNum),
   terminalRate:1.5}; // community-reported omitted default, NOT an explicit pinned field
 }
-const INSTALLED=Symbol.for('inkwave.charger-flight.v1'),EPS=1e-10;
+const INSTALLED=Symbol.for('inkwave.charger-flight.v1'),EPS=1e-10,SIM_DT=1/60;
 // Finite straight flight. Source supplies endpoints and radii, not recovered engine
 // interpolation code. Uses the existing weapon:fire packet; no new network fields.
 export function installChargerFlight(api,completion) {
@@ -106,18 +106,16 @@ export function installChargerFlight(api,completion) {
     const list=this._fidelityChargerFlights;
     if(list)for(let i=list.length-1;i>=0;i--){
       const job=list[i],beam=job.beam,peer=job.ghost&&beam?._netPeer;
+      let ended=false;
       if(peer){
-        // Flight and its beam share the same authoritative playback clock.
-        // A frozen/duplicate packet must not move the flight on wall time.
-        if(!this.beams.includes(beam)){list.splice(i,1);continue;}
-        const tick=1/60,clock=Math.min(peer.tr,peer.lastTs??peer.tr);
-        const elapsed=Number.isFinite(peer.sim)&&Number.isFinite(beam._netBornTick)
-          ?peer.sim-beam._netBornTick:(clock-beam._netBorn)/tick;
-        const target=Math.min(Math.floor(elapsed+.0306)+1,Math.ceil(job.range/(job.speed*tick))+1);
-        job.netSteps??=0;let ended=false;
-        while(!ended&&job.netSteps<target){job.netSteps++;ended=step(this,job,tick);}
-        if(ended)list.splice(i,1);
-      }else if(step(this,job,dt))list.splice(i,1);
+        const clock=Math.min(peer.tr,peer.lastTs??peer.tr);
+        const target=Math.max(0,Math.floor((Number.isFinite(peer.sim)&&Number.isFinite(beam._netBornTick)
+          ? peer.sim-beam._netBornTick : (clock-beam._netBorn)/SIM_DT)+.0306)+1);
+        job._netSteps??=0;
+        const maxSteps=Math.ceil(job.range/Math.max(EPS,job.speed*SIM_DT))+2;
+        while(!ended&&job._netSteps<target&&job._netSteps<maxSteps){ended=step(this,job,SIM_DT);job._netSteps++;}
+      }else ended=step(this,job,dt);
+      if(ended)list.splice(i,1);
     }
     return nativeUpdate.call(this,dt);
   };
