@@ -8,6 +8,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { adaptIssue415 } from './runtime/issue-415-adapter.mjs';
+import { adaptIssue498 } from './issue-498-adapter.mjs';
 export const PATCH_ROOT = path.dirname(fileURLToPath(import.meta.url));
 export const sha256 = value => crypto.createHash('sha256').update(value).digest('hex');
 
@@ -113,6 +114,7 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, '        vel.y -= 24 * dt;', '        vel.y -= SUB.bomb.gravity * dt;', 'bomb preview gravity');
     code = replaceOnce(code, 'if (b.fuse <= 0) {', 'if (b.fuse <= 1e-10) {', 'bomb fuse frame boundary');
     code = adaptWeaponEdgecases(rel, code, replaceOnce);
+    code = adaptIssue498(rel, code, replaceOnce);
     return `import { applyProjectileHit, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\n` + code;
   }
   if (rel === 'src/game/actor.js') {
