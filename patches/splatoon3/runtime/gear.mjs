@@ -111,7 +111,7 @@ export function installGear(api, tuning) {
     const lockedMode = this.rolling || this.charging && w.kind === 'charger';
     const attacking = this.firingT > 0 || this.charging || this.streaming;
     const gear = lockedMode ? 1 : attacking ? m.runSpeedFiring ?? 1 : m.runSpeed ?? 1;
-    return moveSpeed.call(this) * gear * (this.a.s3?.flow?.active ? tuning.flow.runMultiplier : 1);
+    return moveSpeed.call(this) * gear;
   };
   const horizontal = Actor.prototype._horizontal;
   Actor.prototype._horizontal = function (dt, squid, enemy) {
@@ -119,10 +119,9 @@ export function installGear(api, tuning) {
     // The upstream method reads a shared configuration. Provide scoped values
     // synchronously, restoring even when collision/weapon code throws.
     const original = { swimSpeed: api.PLAYER.swimSpeed, enemyInkSpeed: api.PLAYER.enemyInkSpeed };
-    const m = this.s3?.modifiers || {}, flow = this.s3?.flow?.active;
-    api.PLAYER.swimSpeed *= (m.swimSpeed ?? 1) * (flow ? tuning.flow.swimMultiplier : 1);
+    const m = this.s3?.modifiers || {};
+    api.PLAYER.swimSpeed *= m.swimSpeed ?? 1;
     api.PLAYER.enemyInkSpeed = (this.intent.fire ? m.enemyShotSpeed : m.enemyMoveSpeed) ?? original.enemyInkSpeed;
-    api.PLAYER.enemyInkSpeed *= flow ? tuning.flow.enemyInkSpeedMultiplier : 1;
     try { return horizontal.call(this, dt, squid, enemy); }
     finally { Object.assign(api.PLAYER, original); }
   };
