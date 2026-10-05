@@ -1383,6 +1383,24 @@
       "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/WeaponParam/JumpHeightFullCharge",
       "factor": 60,
       "rawValue": 0.07
+    },
+    "gearExtra.quickRespawnAroundFrames.0": {
+      "parameter": "data/parameter/1130/misc/params.json#/Dying_AroundFrm",
+      "index": 2,
+      "factor": 1,
+      "rawValue": 90
+    },
+    "gearExtra.quickRespawnAroundFrames.1": {
+      "parameter": "data/parameter/1130/misc/params.json#/Dying_AroundFrm",
+      "index": 1,
+      "factor": 1,
+      "rawValue": 60
+    },
+    "gearExtra.quickRespawnAroundFrames.2": {
+      "parameter": "data/parameter/1130/misc/params.json#/Dying_AroundFrm",
+      "index": 0,
+      "factor": 1,
+      "rawValue": 30
     }
   },
   "gearExtra": {
@@ -1440,6 +1458,11 @@
       0,
       26,
       39
+    ],
+    "quickRespawnAroundFrames": [
+      90,
+      60,
+      30
     ]
   },
   "respawnChaseTime": 4.5,
@@ -3157,5 +3180,10 @@
       "chargerPaint": "pinned width/depth/radius endpoints drive existing rasterizer; spacing formula and terminal multiplier remain source-guided/community-modelled",
       "rollerAgeDamage": "linear multiplier to pinned DamageRejectRate between pinned start/end frames; subframe rounding unverified"
     }
+  },
+  "stealth": {
+    "sneakRatio": 0.6,
+    "ninjaDelay": 0.5,
+    "ninjaSwimMultiplier": 0.9
   }
 }
