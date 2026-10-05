@@ -234,3 +234,10 @@ cloud/Halyard cube allocation at default high settings, not only after later
 runtime refresh. Existing formats, appearance policy and gameplay stay intact.
 These are project resource dimensions, not Nintendo/Switch memory values.
 See [the cold-boot budget report](inkwave-cold-boot-budgets-2026-10-04.md).
+
+## 2026-10-05: Tenacity passive-charge implementation
+
+The owner-side live Turf path now represents head-main Tenacity and its
+active-team deficit source. Effective/base special-cost conversion preserves
+SCU-independent normalized fill. See [scope and verification](inkwave-tenacity-2026-10-05.md)
+for native/emitted negative controls and unverified hardware/network conditions.
