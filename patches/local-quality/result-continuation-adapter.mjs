@@ -11,6 +11,6 @@ export function adaptResultContinuation(rel, code, once) {
     code="import { restoreOfflineResultShowcase } from '../patches/local-quality/result-continuation.mjs';\n"+code;
     return once(code,'    if (!this.showcase) return;','    if (!this.showcase) return;\n    restoreOfflineResultShowcase(this, G, s);','continuation original result podium');
   }
-  if(rel==='styles/ui.css')return code+'\n/* #478: existing loadout actions, preserving responsive flow. */\n.iw-continuation-actions { flex-direction: column; gap: 12px; }\n.iw-res__btns { flex-wrap: wrap; }\n';
+  if(rel==='styles/ui.css')return code+'\n/* #478: existing loadout actions, preserving responsive flow. */\n.iw-continuation-actions { flex-direction: column; gap: 12px; }\n.iw-res__btns { flex-wrap: wrap; }\n.iw-results .iw-res__btns [data-id="change-gear-continue"] { height: auto; min-height: 48px; padding-top: 10px; padding-bottom: 10px; }\n';
   return code;
 }

@@ -14,6 +14,7 @@ export async function checkResultContinuation({page,tap,settle,capture,entry}) {
   const captureAction=async(name, selector, controls)=>{
     const button=page.locator(selector);await button.scrollIntoViewIfNeeded();await settle(page);
     assert(await button.evaluate(el=>{const r=el.getBoundingClientRect();let opacity=1;for(let p=el;p;p=p.parentElement){const s=getComputedStyle(p);if(s.display==='none'||s.visibility==='hidden')return false;opacity*=Number(s.opacity);}return opacity>.95&&r.top>=-1&&r.left>=-1&&r.bottom<=innerHeight+1&&r.right<=innerWidth+1;}),name+': action must actually be visible at capture');
+    assert(await button.evaluate(el=>{const b=el.getBoundingClientRect(),l=el.querySelector('.iw-btn__label').getBoundingClientRect();return l.top>=b.top-1&&l.bottom<=b.bottom+1&&l.left>=b.left-1&&l.right<=b.right+1;}),name+': label must fit inside the button without clipping');
     await capture(name,controls);
   };
   try {
