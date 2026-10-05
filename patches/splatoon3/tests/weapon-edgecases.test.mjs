@@ -31,7 +31,7 @@ test('dualies waiting shot cancels for sub, squid, death/reset, special and weap
 });
 test('dualies emerging timing remains separate; turret continues every 4F',async()=>{
  const f=await setup('dualies');f.a.intent.squid=true;f.tick(f.a,10);f.a.intent.fire=true;
- assert.deepEqual(trace(f,6),[[6,1]]);
+ assert.deepEqual(trace(f,18),[[13,1],[18,1]]);
  const g=await setup('dualies');g.a.weaponRunner.s3Turret=true;g.a.weaponRunner.cooldown=1/60;g.a.intent.fire=true;assert.deepEqual(trace(g,13),[[1,1],[5,1],[9,1],[13,1]]);
 });
 test('30/60/120Hz rendering produces exactly the same fixed-step initial and repeat ticks',async()=>{

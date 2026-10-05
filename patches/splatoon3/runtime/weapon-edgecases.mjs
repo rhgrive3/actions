@@ -55,13 +55,27 @@ export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYE
   Object.defineProperty(WeaponRunner.prototype, tag, { value: true });
   const clear = r => { r.s3DualiesStart = 0; r.s3DualiesHeld = false; };
   const reset = WeaponRunner.prototype.reset;
-  WeaponRunner.prototype.reset = function (...args) { const out = reset.apply(this, args); clear(this); this.s3DualiesEmerging = false; return out; };
+  WeaponRunner.prototype.reset = function (...args) { const out = reset.apply(this, args); clear(this); this.s3DualiesEmerging = false; this.s3DualiesSwimStart = null; return out; };
   const update = Actor.prototype.update;
   Actor.prototype.update = function (dt) {
     const r = this.weaponRunner;
     if (r && this.weapon.kind === 'dualies') {
       if (this.form === 'squid') { clear(r); r.s3DualiesEmerging = true; }
       else if (this.kidT > PLAYER.emergeDelay && !this.intent.fire) r.s3DualiesEmerging = false;
+      const canceled = !this.alive || !this.intent.fire || this.intent.sub || this.specialActive || this.superJumpState ||
+        this.intent.special && this.specialReady() || r.dodge || r.lockT > 0 ||
+        r.s3DualiesSwimStart != null && this._prevIntent.fire && (this.form === 'squid' || this.intent.squid && !this._prevIntent.squid);
+      if (canceled) {
+        // A released/canceled swim startup cannot survive in native fireBuffer.
+        if (r.s3DualiesSwimStart != null) { this.fireBuffer = 0; r.s3DualiesEmerging = false; }
+        r.s3DualiesSwimStart = null;
+      } else if (this.form === 'squid' && !this._prevIntent.fire) {
+        // Count input recognition as frame1. The generic emerge gate runs
+        // concurrently; never add another 13F after it admits the runner.
+        r.s3DualiesSwimStart = this.weapon.swimFirstShotDelay;
+      } else if (r.s3DualiesSwimStart != null) {
+        r.s3DualiesSwimStart = Math.max(0, r.s3DualiesSwimStart - dt);
+      }
       if (!this.alive || this.specialActive || this.superJumpState || this.intent.special && this.specialReady()) clear(r);
     }
     return update.call(this, dt);
@@ -73,6 +87,11 @@ export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYE
     if (blocked || postRoll) clear(this);
     if (inp.sub) return dualies.call(this, dt, { ...inp, fire: false }, w);
     if (!blocked && !postRoll) {
+      if (this.s3DualiesSwimStart != null) {
+        if (this.s3DualiesSwimStart > EPS) { this.cooldown = Math.max(0, this.cooldown); this.firingT = .35; return; }
+        this.s3DualiesSwimStart = null;
+        this.s3DualiesEmerging = true; // total swim gate already includes startup
+      }
       if (!this.s3DualiesHeld) {
         this.s3DualiesHeld = true;
         this.cooldown = Math.max(0, this.cooldown);

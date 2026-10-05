@@ -62,6 +62,7 @@
       "spreadLock": 0,
       "range": 12.5,
       "humanoidFirstShotDelay": 0.03333333333333333,
+      "swimFirstShotDelay": 0.2,
       "spawnPlayerForwardRate": 2,
       "ballistics": {
         "endSpeed": 140.54999999999998
@@ -150,6 +151,7 @@
       "moveSpeedFiring": 1.2,
       "keepChargeTime": 1.25,
       "chargeTime": 1,
+      "swimChargeStartDelay": 0.1,
       "inkRecoverStop": 0.3333333333333333,
       "damagePartialMax": 80,
       "impactPaint": {
@@ -514,7 +516,7 @@
       "superjump airborne vulnerability window/trajectory/landing paint and respawn timing/armor; raw 80F preparation/138F flight are pinned and landing protection is removed per Nintendo 9.3.0 fix",
       "aim response, gyro, animation, terrain/network and physical-device validation; see movement-resources comparison matrix and Switch/iOS/two-peer measurement protocol",
       "upstream acceleration/braking/turn/air-control/jump and landing feel",
-      "Dualies 1F released-tap cancellation is a conservative non-buffering choice; stable held-human first shot is measured3F, squid timing remains unchanged and unverified.",
+      "Dualies first shot counts the recognized input as frame1: stable human3F (2 elapsed intervals), swim13F (12 elapsed intervals). Swim13F is a community reference target, not a direct raw-table extraction; physical input/display latency remains unverified. Released startup taps cancel.",
       "Splatling grounded pitch1.6deg uses the existing radial sampler with separate axes; S3 PDF, bias, air/IA correlations are unverified.",
       "Roller near-unit count1 is corroborated by S3 unit research, not an inferred omitted BulletNum; velocity and width use relative mappings, sampler/absolute spawn calibration remains unverified.",
       "Blaster terrain damage is half of normalized existing bands, floor to0.1HP after scaling;35HP cap is sourced, complete S3 falloff curve remains uncalibrated.",

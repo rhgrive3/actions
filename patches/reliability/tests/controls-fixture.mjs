@@ -15,7 +15,7 @@ const MAP_GYRO_BASELINE = process.env.INKWAVE_MAP_GYRO_BASELINE === '1';
 const NEGATIVE = process.env.INKWAVE_CONTROLS_BASELINE === '1';
 const NAVIGATION_BASELINE = process.env.INKWAVE_NAVIGATION_BASELINE === '1';
 const UPSTREAM = BUILT ? path.resolve(BUILT) : process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
-export async function fixture({ diorama = false, match = false, character = false, network = false } = {}) {
+export async function fixture({ diorama = false, match = false, character = false, network = false, fxHooks = false, fidelity = false } = {}) {
   // The negative control omits only the adapter under test from the real order.
   let reliability = adaptReliability;
   if (NEGATIVE || NAVIGATION_BASELINE || MAP_GYRO_BASELINE) {
@@ -65,6 +65,7 @@ export async function fixture({ diorama = false, match = false, character = fals
     export * from './inkwave-public/src/game/player.js';
     ${diorama ? "export * from './inkwave-public/src/ui/diorama.js';" : ''}
 
+    ${fxHooks ? "export * from './inkwave-public/src/fx/fxHooks.js';" : ''}
     ${match ? "export * from './inkwave-public/src/game/match.js';" : ''}
     export * from './inkwave-public/src/core/input.js';
     export * from './inkwave-public/src/net/netmatch.js';
@@ -73,6 +74,7 @@ export async function fixture({ diorama = false, match = false, character = fals
     export { FixedClock, installClock, runSimulation } from './patches/splatoon3/runtime/clock.mjs';
     export * from './patches/splatoon3/runtime/movement.mjs';
     export * from './patches/splatoon3/runtime/weapons.mjs';
+    ${fidelity ? "export * from './patches/splatoon3/runtime/weapons-fidelity.mjs';" : ''}
     export * from './patches/splatoon3/runtime/gear.mjs';
     export * from './patches/splatoon3/runtime/flow.mjs';
     export * from './patches/splatoon3/runtime/resources.mjs';

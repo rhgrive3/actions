@@ -15,3 +15,23 @@ test('stale/duplicate events and old match pending messages cannot leak',async()
 test('HUD lifecycle reset drops queued events and ordinary callout sound stays unchanged',async()=>{const f=await fixture(),r=rig(f);f.emit('team:wipeout',{match:r.m,team:1,sequence:1});Object.assign(r.h,{kcards:new El(),tpops:new El(),downLayer:new El(),turfNum:new El(),_lineup(){}});r.h.boss.setMode=()=>{};r.h._startMatchHud(r.m);r.h.update(.01,{});assert.equal(r.sounds.length,0);r.h._callout('FIRST SPLAT!',null,false);assert.equal(r.sounds.at(-1),'ui_confirm');r.h._callout('TRIPLE!',null,true);assert.equal(r.sounds.at(-1),'special_ready');});
 test('local rearm and mutable teamSummary transport never retain previous-frame objects',async()=>{const f=await fixture(),r=rig(f);const frame={teams:[{players:[]},{players:[]}]};wipe(r.m,1);r.m.update(.01);r.h.update(.01,frame);const a=r.m.actors[4];a.alive=true;f.rearmTeamWipe(r.m,a);a.alive=false;frame.teams[1].players.length=0;r.m.update(.01);r.h.update(.01,frame);assert.equal(r.sounds.length,2);});
 test('missing adapter anchors fail closed and old local-killer branch is removed',()=>{const raw=fs.readFileSync(path.join(ROOT,'inkwave-public/src/ui/hud.js'),'utf8');assert(raw.includes("enemies.every((a) => !a.alive)"));const fixed=adaptQualitySource('src/ui/hud.js',raw);assert(!fixed.includes('enemies.every'));assert.throws(()=>adaptQualitySource('src/ui/hud.js',raw.replace('  _callout(text, sub, big) {','')));});
+
+test('#593 Turf suppresses each personal streak ribbon without losing direct kill cards',async()=>{
+ for(const state of ['first','double','triple','quad','revenge','shutdown','streak3','streak5']){
+  const f=await fixture(),r=rig(f),v=r.m.actors[4],K=r.h._kills;
+  K.first=state!=='first';K.times=state==='double'?[.5]:state==='triple'?[.4,.5]:state==='quad'?[.3,.4,.5]:[];
+  K.streak=state==='streak3'?2:state==='streak5'?4:0;K.lastKiller=state==='revenge'?v:null;
+  K.perActor=new Map([[v,state==='shutdown'?3:0]]);
+  const before=K.streak,observed=[];f.on('splatted',e=>observed.push(e));
+  f.emit('splatted',{victim:v,attacker:r.m.local});
+  assert.deepEqual(r.cards,['kill'],state);assert.equal(K.streak,before+1,state);
+  assert.equal(observed.length,1,'independent event consumers still receive the event');
+  assert.equal(r.h.callouts.children.length,0,state);assert.equal(r.sounds.length,0,state);
+ }
+});
+test('#593 local death cleanup and non-Turf original presentation remain available',async()=>{
+ const f=await fixture(),r=rig(f);let cleared=0;r.h._clearDamageDirs=()=>cleared++;
+ f.emit('splatted',{victim:r.m.local,attacker:r.m.actors[4]});assert.equal(cleared,1);assert.equal(r.h._kills.lastKiller,r.m.actors[4]);
+ r.m.mode='boss';r.h._kills.first=false;f.emit('splatted',{victim:r.m.actors[4],attacker:r.m.local});
+ assert.equal(r.h.callouts.children.length,1);assert.match(r.h.callouts.lastElementChild.textContent,/FIRST SPLAT/);
+});

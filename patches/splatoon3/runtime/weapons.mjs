@@ -101,6 +101,9 @@ export function installWeapons(context, profile) {
       }
       return;
     }
+    // Fresh charge observes the native form-exit clock, including manual
+    // emergence before ZR. Existing stored-charge readiness is a separate owner.
+    if (!this.charging && !this.s3Stored && a.kidT + 1e-10 < (w.swimChargeStartDelay || 0)) return;
     if (this.s3Stored) {
       // Held through the keep, so the store survives emergeDelay with inp.fire
       // masked, and is restored once the actor forwards the trigger again.

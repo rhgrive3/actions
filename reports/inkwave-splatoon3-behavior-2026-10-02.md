@@ -545,3 +545,47 @@ Keyboard events continue through existing key/edge/menu handlers while a physica
 ### #595: remove the zero-rate discontinuity in calibrated gyro trust
 
 The existing absolute disagreement floor now applies at zero attitude speed as well as nearby nonzero speed. No threshold is added, Android remains attitude-only, and the existing raw handoff owner is preserved. Source trust/handoff16/16, emitted trust/viability21/21 and exact #588 focus composition19/19 passed. This preserves calibration continuity; it does not remove physical residual bias. See [the #595 record](inkwave-gyro-stationary-trust-595.md).
+
+## Issue 560: projected HUD spread ownership (2026-10-05)
+
+Remove the HUD's independent recoil/shot additions from already-projected weapon accuracy. Clear stale decorative `--bl` on switching into an accuracy reticle. Native and actual emitted HUD regressions each pass 9/9; old emitted output fails the two new cases. The new computed-style browser probe remains pending combined CI. No Nintendo pixel or hardware-equivalence claim is made. See `reports/inkwave-hud-spread-560-2026-10-05.md` for exact scope and evidence.
+
+## Issue 564: Boss audio lifetime (2026-10-05)
+
+Release the audio director's matching Boss reference on judge/results and before native Match.dispose tears down the model. Cancel its positional interval immediately and keep the singleton installation. Source/emitted lifecycle3/3 each, old emitted3 failures, runtime/WIPEOUT10/10. Physical heap/audio/long-soak remain unverified; HULLBREAKER is an INKWAVE-specific mode. Details: `reports/inkwave-boss-audio-564-2026-10-05.md`.
+
+## Issue 593: Turf personal streak ribbons (2026-10-05)
+
+Turf direct kills retain ordinary splat cards and bookkeeping but no longer emit FIRST/multi/revenge/shutdown/personal-streak ribbons. Team WIPEOUT keeps its independent producer; Flow scoring is unchanged. Native and emitted full Match/HUD tests10/10 each, with an old-source failure. Browser visual acceptance remains pending. Details: `reports/inkwave-turf-callouts-593-2026-10-05.md`.
+
+## Issue 589: Range signage backing budget (2026-10-05)
+
+At signage construction, LOW or touch uses1024² backing pixels while desktop non-LOW retains2048². Logical packing/UV/world geometry stay identical; ready fonts avoid redundant redraw. Native/emitted2/2, old-emitted negative2 failures, Range suite28/28. Phone/tablet label readability and new browser atlas/disposal probes remain pending CI. No actual GPU-memory/FPS or Nintendo-equivalence claim. Details: `reports/inkwave-range-signage-589-2026-10-05.md`.
+
+## Issue 565: winner-only Turf showcase (2026-10-05)
+
+Normal judge and offline gear-Back restoration select authoritative winner team/colour/victory choreography. Local win/XP/audio/table stay local-relative. Native/emitted Game tests3/3 each and old-source2 failures; existing result lifetime/continuation checks remain successful. Browser/physical visual acceptance remains pending. Details: `reports/inkwave-winner-podium-565-2026-10-05.md`.
+
+### #555 FxHooks actor cache lifetime
+
+Actor state and Roller flick caches are weakly keyed and explicitly retire only the actor/Match supplied by existing lifecycle events. This removes boot-long strong ownership without altering projectile stamp collection or live respawn effects. Native and minified lifecycle/explicit-GC cases pass; see [the focused report](inkwave-fx-actor-lifetime-555.md). #564 supplies the existing disposal event. Browser heap and unrelated system ownership are not claimed.
+
+## 2026-10-05: Ink Storm rain lifetime (#563)
+
+Pinned11.3.0 RainyFrame480の終了境界をvisual fadeから分離。実main60Hzでは462回/184.8 rawHPだった雨damageを480回/192 rawHPへ戻し、cloudの終了を480tickに揃えた。DPS・半径・durationは変更しない。source/実emitted各5ケースで末尾tick、owner/ghost、対象/LOS、30/60/120/144Hzを検証。固定60Hzの契約であり、実機・任意variable-dt・未統合PR322の回復helperまでは認定しない。[差分と根拠](inkwave-storm-lifetime-2026-10-05.md)。
+
+## 2026-10-05: Dualies swim startup (#590)
+
+Fresh fire recognized in swim form uses an independent total13-counted-frame startup (12 elapsed 60Hz intervals). It overlaps the native generic emergence gate and cancels stale buffered taps. Stable human3F, continuous5F and existing turret4F remain separate. The13F target is a community reference, not a raw-table extraction or measured physical latency. See [timing and cancellation evidence](inkwave-dualies-swim-590-2026-10-05.md).
+
+## 2026-10-05: fresh Charger emergence (#566)
+
+Fresh Charger progression now waits for native kidT to reach6 elapsed simulation frames after form exit, rather than the generic5-frame threshold. This gate skips charging and stored-charge states, preserving their owners. Source6/6, emitted6/6 and existing Charger18/18 pass; actual PR600 source composition7/7 separately covers min8F, rates and stored readiness. Community observation boundaries and unmeasured physical latency remain explicit in [the report](inkwave-charger-start-566-2026-10-05.md).
+
+## 2026-10-05: Slosher release presentation (#596)
+
+The actual 12F release now maps to the existing native raised/forward .25 key rather than its low/back .13 key. Accepted remote weapon:fire advances the same presentation despite a stale slosh flag; gameplay remains 12F/29F. Pose-derived muzzle origins consequently move; an actual full-segment Slosher muzzle guard closes the native LOS endpoint-sliver regression found by the wall tests. This is not a claim of unchanged launch geometry or exact Nintendo animation. See [scope and evidence](inkwave-slosher-release-596-2026-10-05.md).
+
+## 2026-10-05: weapon four × published input/water five
+
+Five new differential source tests pass over published ef712f89-equivalent9543e3e. They cover water-death/cloud lifetime, action reset, hybrid input/Map startup, focused gyro ownership, and guarded Slosher birth replication. No additional production fix was required. See [the bounded composition evidence](inkwave-weapon-fixed-five-composition-2026-10-05.md).

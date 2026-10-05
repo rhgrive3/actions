@@ -42,8 +42,9 @@ export function augmentContinuationLoadout(menus, screen) {
 export function restoreOfflineResultShowcase(game, G, screen) {
   const m=game.match;
   if (screen!=='results'||G.netm||m?.mode!=='turf'||m.state!=='results'||game.showcase?.mode==='results')return;
-  const team=m.local?.team??0,won=m.result?.winner===team;
-  game.showcase.showResults(team,won,G.teamColors[team],m.actors.filter(a=>a.team===team).map(a=>({
+  const team=m.result?.winner;
+  if(team!==0&&team!==1)return;
+  game.showcase.showResults(team,true,G.teamColors[team],m.actors.filter(a=>a.team===team).map(a=>({
     weapon:a.weaponId,style:a.character.style||{hair:a.slot%4,skin:(a.slot*3)%4},name:a.name,
   })));
 }

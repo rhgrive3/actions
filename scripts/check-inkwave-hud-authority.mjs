@@ -45,6 +45,130 @@ export function inspectSplatlingStages({charge,streaming,left,first,second,settl
   } finally {if(changed){if(oldStyle===null)changed.removeAttribute('style');else changed.setAttribute('style',oldStyle);if(oldRadius===null)changed.removeAttribute('r');else changed.setAttribute('r',oldRadius);}}
 }
 
+// #560: computed spread is evidence only when the actual SVG can be painted.
+export function inspectAccuracyReticle(negative=null) {
+  const probe=globalThis.__splatlingProbe,h=probe.holder,svg=h.ret.querySelector('svg');
+  const old=h.xh.getAttribute('style'),oldSpread=h.ret.style.getPropertyValue('--sp');
+  if(negative==='hidden')h.xh.style.setProperty('visibility','hidden','important');
+  if(negative==='opacity'){h.xh.style.setProperty('transition','none','important');h.xh.style.setProperty('opacity','0','important');}
+  if(negative==='spread')h.ret.style.setProperty('--sp','25.3');
+  try {
+    const ancestors=[];for(let el=svg;el;el=el.parentElement){const c=getComputedStyle(el);ancestors.push({display:c.display,visibility:c.visibility,opacity:c.opacity,contentVisibility:c.contentVisibility});}
+    const b=svg?.getBoundingClientRect(),bounds=b?{left:b.left,right:b.right,top:b.top,bottom:b.bottom,width:b.width,height:b.height}:null;
+    const visible=!!svg&&svg.checkVisibility({checkOpacity:true,checkVisibilityCSS:true})&&!ancestors.some(c=>c.display==='none'||c.visibility==='hidden'||c.visibility==='collapse'||Number(c.opacity)<=0||c.contentVisibility==='hidden');
+    const strokes=svg?[...svg.querySelectorAll('circle,path')].map(el=>{const c=getComputedStyle(el);return{length:el.getTotalLength(),stroke:c.stroke,width:parseFloat(c.strokeWidth),opacity:Number(c.opacity)*Number(c.strokeOpacity),visibility:c.visibility};}):[];
+    const paintable=strokes.some(x=>x.length>0&&x.width>0&&x.opacity>0&&x.visibility==='visible'&&x.stroke!=='none'&&x.stroke!=='transparent'&&!/rgba\([^)]*,\s*0\s*\)/.test(x.stroke));
+    const css=getComputedStyle(h.ret),spread=+css.getPropertyValue('--sp'),bloom=+css.getPropertyValue('--bl');
+    const geometry=[...h.ret.querySelectorAll('.iw-ret__tick,.iw-ret__svg')].map(el=>getComputedStyle(el).transform),errors=[];
+    if(spread!==18.3||bloom!==0)errors.push('spread');
+    if(!visible||!paintable)errors.push('visibility');
+    if(!bounds||!Object.values(bounds).every(Number.isFinite)||bounds.width<=0||bounds.height<=0||bounds.left<0||bounds.right>innerWidth||bounds.top<0||bounds.bottom>innerHeight)errors.push('viewport');
+    const changed=getComputedStyle(h.xh),negativeApplied=!negative||(negative==='spread'?spread===25.3:negative==='hidden'?changed.visibility==='hidden':Number(changed.opacity)===0);
+    const row={spread,bloom,geometry,visible,paintable,bounds,ancestors,strokes,negative,negativeApplied,errors};probe.last=row;return row;
+  } finally {if(old===null)h.xh.removeAttribute('style');else h.xh.setAttribute('style',old);if(oldSpread)h.ret.style.setProperty('--sp',oldSpread);else h.ret.style.removeProperty('--sp');}
+}
+
+// #565: render real native Showcase characters from a private result receiver.
+// Result input is a fixture; this does not claim a new winner/scoring test.
+export async function checkWinnerPodium({page,evidence,sourceSha,contentHash}) {
+  let primaryError=null,failureReceipt=null;
+  try {
+    await page.evaluate(async()=>{
+      const {G}=await import(new URL('src/core/ctx.js',document.baseURI).href),live=G.game;
+      if(G.netm)throw Error('winner podium probe requires offline acceptance session');
+      const showcase=new live.showcase.constructor(live.showcase.r,live.CharacterClass);
+      globalThis.__winnerPodiumProbe={showcase};showcase._warmup();
+    });
+    await page.waitForFunction(()=>globalThis.__winnerPodiumProbe?.showcase._warmState==='done',null,{timeout:90000});
+    const receipt=await page.evaluate(async()=>{
+      const {G}=await import(new URL('src/core/ctx.js',document.baseURI).href);
+      const {restoreOfflineResultShowcase}=await import(new URL('patches/local-quality/result-continuation.mjs',document.baseURI).href);
+      const THREE=await import('three'),live=G.game,s=globalThis.__winnerPodiumProbe.showcase,r=s.r;
+      const initialProfile=JSON.stringify(live.profile),savedProfile=localStorage.getItem('inkwave.profile');
+      const actorsSnapshot=()=>JSON.stringify(live.match.actors.map(a=>({team:a.team,alive:a.alive,weapon:a.weaponId,pos:a.pos.toArray(),stats:a.stats})));
+      const originalActors=actorsSnapshot(),matchIdentity=live.match,images=[],states=[];
+      const timeout=globalThis.setTimeout,audio=G.audio,timers=[],sounds=[];
+      const oldTarget=r.getRenderTarget(),oldColor=r.getClearColor(new THREE.Color()),oldAlpha=r.getClearAlpha();
+      let selected=null;
+      const trace=globalThis.__winnerPodiumProbe.trace={states,phase:'setup',selected:null};
+      const originalShow=s.showResults;
+      s.showResults=function(team,won,color,styles){selected={team,won,color:color.getHexString(),names:styles.map(a=>a.name),weapons:styles.map(a=>a.weapon)};trace.selected=selected;return originalShow.call(this,team,won,color,styles);};
+      const capture=(name,winner,expectedNames)=>{
+        trace.phase=name;trace.expectedNames=expectedNames;
+        for(let frame=0;frame<180;frame++)s.update(1/60);
+        if(s.mode!=='results'||!s.won||s.chars.length!==4||s.chars.some(c=>!c.root.visible||!c._landed||c.dance!=='victory'))throw Error('winner podium native choreography regression');
+        if(selected.team!==winner||!selected.won||selected.color!==G.teamColors[winner].getHexString()||JSON.stringify(selected.names)!==JSON.stringify(expectedNames))throw Error('winner podium roster/color regression');
+        r.setRenderTarget(null);r.setClearColor(0x181c24,1);r.clear(true,true,true);
+        const gl=r.getContext(),w=gl.drawingBufferWidth,h=gl.drawingBufferHeight,before=new Uint8Array(w*h*4),after=new Uint8Array(w*h*4);
+        gl.readPixels(0,0,w,h,gl.RGBA,gl.UNSIGNED_BYTE,before);s.render();gl.readPixels(0,0,w,h,gl.RGBA,gl.UNSIGNED_BYTE,after);
+        let changed=0;for(let i=0;i<after.length;i+=4)if(Math.abs(after[i]-before[i])+Math.abs(after[i+1]-before[i+1])+Math.abs(after[i+2]-before[i+2])>12)changed++;
+        if(changed<1000||gl.getError()!==gl.NO_ERROR)throw Error('winner podium not painted');
+        s.scene.updateMatrixWorld(true);s.camera.updateMatrixWorld(true);
+        const characters=s.chars.map(c=>{let visibleMeshes=0;c.root.traverse(o=>{if(!o.isMesh||!o.geometry?.attributes?.position?.count)return;for(let p=o;p;p=p.parent)if(!p.visible)return;const mats=Array.isArray(o.material)?o.material:[o.material];if(mats.some(m=>m?.visible!==false&&m?.opacity>0))visibleMeshes++;});const box=new THREE.Box3().setFromObject(c.root),center=box.getCenter(new THREE.Vector3()).project(s.camera);return{name:c.name,dance:c.dance,visible:c.root.visible,visibleMeshes,landed:c._landed,center:center.toArray()};});
+        if(characters.some(c=>c.visibleMeshes===0||c.center.some(x=>!Number.isFinite(x))||c.center.some(x=>Math.abs(x)>1)))throw Error('winner podium character outside camera');
+        images.push({name,png:r.domElement.toDataURL('image/png')});return{...selected,characters,paintedPixels:changed,width:w,height:h};
+      };
+      try {
+        globalThis.setTimeout=(fn,ms)=>{timers.push({fn,ms});return -timers.length;};G.audio={play:name=>sounds.push(name)};
+        for(const winner of [0,1]){
+          const localTeam=1-winner,actors=live.match.actors.map(a=>({...a,isLocal:false,stats:{...a.stats},character:{style:{...a.character.style}}}));
+          if(actors.filter(a=>a.team===winner).length!==4)throw Error('winner podium requires complete team');
+          const local=actors.find(a=>a.team===localTeam);local.isLocal=true;
+          const m={mode:'turf',state:'judge',actors,local,result:{winner,coverage:winner?[.4,.6]:[.6,.4]},setState(state){this.state=state;}};
+          const receiver=Object.create(Object.getPrototypeOf(live));
+          let result;
+          Object.assign(receiver,{match:m,profile:JSON.parse(initialProfile),palette:live.palette,mapDef:live.mapDef,rig:{overview(){}},hud:{hideSplatted(){},setVisible(){},judge:async()=>({winner})},showcase:s,menus:{current:'results',showResults:data=>{result=data;},show(){}},_playMusic:name=>sounds.push(name)});
+          await receiver._judge();
+          if(result?.win!==false||receiver.profile.wins!==live.profile.wins||result.players.find(a=>a.isSelf)?.team!==localTeam)throw Error('winner podium changed local loss perspective');
+          const expectedNames=actors.filter(a=>a.team===winner).map(a=>a.name);
+          const initial=capture(`winner-podium-${winner}-loss`,winner,expectedNames),xp=receiver.profile.xp;
+          s.showLoadout('roller',G.teamColors[localTeam],local.character.style);for(let frame=0;frame<30;frame++)s.update(1/60);
+          if(s.mode!=='loadout')throw Error('winner podium gear preview did not open');
+          restoreOfflineResultShowcase(receiver,G,'results');
+          const restored=capture(`winner-podium-${winner}-back`,winner,expectedNames);
+          if(receiver.profile.xp!==xp)throw Error('winner podium Back awarded XP twice');
+          states.push({winner,localTeam,localWin:result.win,xpGained:result.xp.gained,initial,restored});
+        }
+        const musicTimers=timers.filter(t=>t.ms===2600);if(musicTimers.length!==2)throw Error('winner podium result music timer ownership');
+        for(const t of musicTimers)t.fn();
+        if(sounds.filter(x=>x==='defeat_jingle').length!==2||sounds.filter(x=>x==='results_lose').length!==2||sounds.includes('victory_fanfare')||sounds.includes('results_win'))throw Error('winner podium changed local loss audio/music');
+      } catch(error) {
+        trace.error=String(error);trace.mode=s.mode;trace.won=s.won;trace.choreography=s.chars.map(c=>({name:c.name,dance:c.dance,visible:c.root.visible,landed:c._landed}));
+        const failure=globalThis.__winnerPodiumProbe.failure={trace};
+        try {r.setRenderTarget(null);r.setClearColor(0x181c24,1);r.clear(true,true,true);s.render();failure.png=r.domElement.toDataURL('image/png');failure.captureKind='private fixture before cleanup';}catch(captureError){failure.captureError=String(captureError);}
+        throw error;
+      } finally {
+        globalThis.setTimeout=timeout;G.audio=audio;r.setRenderTarget(oldTarget);r.setClearColor(oldColor,oldAlpha);
+        if(savedProfile===null)localStorage.removeItem('inkwave.profile');else localStorage.setItem('inkwave.profile',savedProfile);
+      }
+      if(G.game.match!==matchIdentity||JSON.stringify(live.profile)!==initialProfile||actorsSnapshot()!==originalActors||localStorage.getItem('inkwave.profile')!==savedProfile)throw Error('winner podium fixture leaked into live session');
+      return{states,images,sounds,delayedMusicCallbacks:2,profileRestored:true,liveActorsUnchanged:true,fixtureResultInput:true};
+    });
+    for(const {name,png}of receipt.images)fs.writeFileSync(path.join(evidence,name+'.png'),Buffer.from(png.split(',')[1],'base64'));
+    delete receipt.images;
+    fs.writeFileSync(path.join(evidence,'winner-podium-probe.json'),JSON.stringify({status:'passed',sourceSha,contentHash,...receipt},null,2));
+    return receipt;
+  } catch(error){
+    primaryError=error;
+    const diagnostic=await page.evaluate(()=>{
+      const p=globalThis.__winnerPodiumProbe;if(p?.failure)return p.failure;
+      const s=p?.showcase,d={trace:p?.trace||null,warmState:s?._warmState,mode:s?.mode,won:s?.won,choreography:s?.chars.map(c=>({name:c.name,dance:c.dance,visible:c.root.visible,landed:c._landed}))};
+      if(s?.mode){const r=s.r,target=r.getRenderTarget(),color=r.getClearColor(s.color.clone()),alpha=r.getClearAlpha();try{r.setRenderTarget(null);r.setClearColor(0x181c24,1);r.clear(true,true,true);s.render();d.png=r.domElement.toDataURL('image/png');d.captureKind='private fixture before cleanup';}catch(e){d.captureError=String(e);}finally{r.setRenderTarget(target);r.setClearColor(color,alpha);}}
+      return d;
+    }).catch(e=>({readError:String(e)}));
+    if(diagnostic.png){fs.writeFileSync(path.join(evidence,'winner-podium-failure.png'),Buffer.from(diagnostic.png.split(',')[1],'base64'));delete diagnostic.png;}
+    failureReceipt={status:'failed',sourceSha,contentHash,error:String(error),diagnostic};
+    fs.writeFileSync(path.join(evidence,'winner-podium-probe.json'),JSON.stringify(failureReceipt,null,2));throw error;
+  } finally {
+    try {await page.evaluate(()=>{try{globalThis.__winnerPodiumProbe?.showcase.dispose();}finally{delete globalThis.__winnerPodiumProbe;}});}
+    catch(cleanupError){
+      const receipt={...(failureReceipt||{status:'failed',sourceSha,contentHash}),cleanupError:String(cleanupError)};
+      try{fs.writeFileSync(path.join(evidence,'winner-podium-probe.json'),JSON.stringify(receipt,null,2));}catch(writeError){console.error('winner podium cleanup receipt',String(writeError));}
+      if(!primaryError)throw cleanupError;
+    }
+  }
+}
+
 export async function checkHudAuthority({ page, evidence, sourceSha = null, contentHash = null }) {
   const result = await page.evaluate(async () => {
     const { G } = await import(new URL('src/core/ctx.js', document.baseURI).href);
@@ -229,6 +353,13 @@ export async function checkHudAuthority({ page, evidence, sourceSha = null, cont
       result.teamWipeouts.push({...row,retained});
     } finally {await page.evaluate(()=>{globalThis.__wipeoutProbe?.remove();delete globalThis.__wipeoutProbe;});}
   }
+  Object.assign(result, await checkUiVisualProbes({page,evidence,sourceSha,contentHash}));
+  return result;
+}
+
+// Narrow diagnostic entry; full HUD acceptance calls the exact same assertions.
+export async function checkUiVisualProbes({page,evidence,sourceSha=null,contentHash=null}) {
+  const result={};
   // #508 display-only reticle fixture uses the loaded native HUD methods.
   // Live actors/weapon state and weapon timing are never changed.
   result.splatlingStages=[];
@@ -264,6 +395,33 @@ export async function checkHudAuthority({ page, evidence, sourceSha = null, cont
       result.splatlingNegatives.push(row);
       await page.evaluate(async()=>{const xh=globalThis.__splatlingProbe.xh;await Promise.all(xh.getAnimations({subtree:true}).filter(a=>a.effect?.getTiming().iterations!==Infinity).map(a=>a.finished.catch(()=>{})));});
     }
+    // #560: private native HUD clone, with the live match left untouched.
+    result.authoritativeSpread=[];
+    for(const weapon of ['shooter','dualies','splatling','blaster']){
+      await page.evaluate(async weapon=>{
+        const h=globalThis.__splatlingProbe.holder;h.spIcon=document.createElement('div');
+        h._kick=0;h._bloom=0;h._updCrosshair({weapon,charge:.5,crosshair:{spread:18.3}},0);
+        await Promise.all(h.xh.getAnimations({subtree:true}).filter(a=>a.effect?.getTiming().iterations!==Infinity).map(a=>a.finished.catch(()=>{})));
+      },weapon);
+      const before=await page.evaluate(inspectAccuracyReticle);
+      await page.evaluate(async weapon=>{
+        const h=globalThis.__splatlingProbe.holder;h._kick=1;h._bloom=1;h._updCrosshair({weapon,charge:.5,crosshair:{spread:18.3}},0);
+        await Promise.all(h.xh.getAnimations({subtree:true}).filter(a=>a.effect?.getTiming().iterations!==Infinity).map(a=>a.finished.catch(()=>{})));
+      },weapon);
+      const after=await page.evaluate(inspectAccuracyReticle);
+      if(before.errors.length||after.errors.length||JSON.stringify(before.geometry)!==JSON.stringify(after.geometry))throw Error('authoritative reticle spread/visibility regression: '+JSON.stringify({weapon,before,after}));
+      const negatives=[];
+      for(const mutation of ['spread','hidden','opacity']){
+        const row=await page.evaluate(inspectAccuracyReticle,mutation),expected=mutation==='spread'?'spread':'visibility';
+        if(!row.negativeApplied||!row.errors.includes(expected))throw Error('reticle spread negative control accepted '+mutation);
+        negatives.push(row);
+        await page.evaluate(async()=>{const xh=globalThis.__splatlingProbe.xh;await Promise.all(xh.getAnimations({subtree:true}).filter(a=>a.effect?.getTiming().iterations!==Infinity).map(a=>a.finished.catch(()=>{})));});
+      }
+      const restored=await page.evaluate(inspectAccuracyReticle);if(restored.errors.length)throw Error('reticle negative cleanup remained hidden');
+      await page.screenshot({path:path.join(evidence,`authoritative-spread-${weapon}.png`),timeout:90000});
+      result.authoritativeSpread.push({weapon,before,after,negatives});
+    }
+    fs.writeFileSync(path.join(evidence,'authoritative-spread-probe.json'),JSON.stringify({status:'passed',sourceSha,contentHash,states:result.authoritativeSpread},null,2));
     fs.writeFileSync(path.join(evidence,'splatling-reticle-probe.json'),JSON.stringify({status:'passed',sourceSha,contentHash,stages:result.splatlingStages,negatives:result.splatlingNegatives},null,2));
   } catch(error) {
     const diagnostic=await page.evaluate(()=>globalThis.__splatlingProbe?.last||null).catch(()=>null);
@@ -271,5 +429,6 @@ export async function checkHudAuthority({ page, evidence, sourceSha = null, cont
     fs.writeFileSync(path.join(evidence,'splatling-reticle-probe.json'),JSON.stringify({status:'failed',sourceSha,contentHash,error:String(error),stages:result.splatlingStages,diagnostic},null,2));
     throw error;
   } finally {await page.evaluate(()=>{const s=globalThis.__splatlingProbe;if(s){s.xh.remove();s.native.style.visibility=s.old;delete globalThis.__splatlingProbe;}});}
+  result.winnerPodium=await checkWinnerPodium({page,evidence,sourceSha,contentHash});
   return result;
 }

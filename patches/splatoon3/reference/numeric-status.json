@@ -407,6 +407,11 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "weapons.dualies.swimFirstShotDelay": {
+    "value": 0.2,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
   "weapons.dualies.spawnPlayerForwardRate": {
     "value": 2,
     "status": "derived from pinned extracted data; physical scale unverified",
@@ -902,6 +907,11 @@
   },
   "weapons.charger.chargeTime": {
     "value": 1,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.charger.swimChargeStartDelay": {
+    "value": 0.1,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },

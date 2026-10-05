@@ -43,7 +43,7 @@ export function installPracticeRange(Game) {
   Game.prototype._buildWorld = async function (map, ...rest) {
     const r = await buildWorld.call(this, map, ...rest);
     const want = this.layoutId === RANGE_ID;
-    if (want && !this.rangeSignage) this.rangeSignage = new RangeSignage(G.scene);
+    if (want && !this.rangeSignage) this.rangeSignage = new RangeSignage(G.scene, this.settings || G.settings || {}, this.mobile || G.mobile || {});
     else if (!want && this.rangeSignage) { this.rangeSignage.dispose(); this.rangeSignage = null; }
     return r;
   };
