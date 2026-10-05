@@ -1,6 +1,8 @@
 import { adaptWeaponEdgecases } from './weapon-edgecases-adapter.mjs';
 // Apply only to a disposable BUILD tree. Upstream sources are never modified.
 // Every connection has a unique exact anchor; missing/duplicated hooks are errors.
+import { adaptMovementPhysics } from './movement-physics-adapter.mjs';
+import { adaptSubSpecialFidelity } from './sub-special-adapter.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
@@ -30,6 +32,8 @@ export function checkCompatibility(src, patchRoot = PATCH_ROOT) {
 
 export function adaptSource(rel, code) {
   if (rel === 'patches/splatoon3/runtime/resources.mjs') return adaptIssue415(rel, code);
+  code = adaptMovementPhysics(rel, code, replaceOnce);
+  code = adaptSubSpecialFidelity(rel, code, replaceOnce);
   if (rel === 'src/game/character.js') {
     code = replaceOnce(code, 'const PN = _k;', 'const PN = _k;\nexport const CHARACTER_CHANNELS = Object.freeze({ HIPS_P,HIPS,SPINE,CHEST,NECK,HEAD,CLAVL,CLAVR,UARML,UARMR,FARML,FARMR,HANDL,HANDR,FOOTL,FOOTLR,FOOTR,FOOTRR,ANC,ANCR,POLER,POLEL,IKR,IKL,LTGT,LTGTR,LTW,LTROT,KNEEL,KNEER,STAB,WPL,WPR,TIPTOE,AFOLT,AFOLR,MODEL,MODELR,SQY,SQXZ,HLP });', 'character pose channels');
     code = replaceOnce(code, 'const BALL_Z = 0.11, HEEL_Z = 0.065;', 'const BALL_Z = 0.11, HEEL_Z = 0.065;\nexport const CHARACTER_FOOT_METRICS = Object.freeze({ ANKLE_H, BALL_Z, HEEL_Z });', 'character foot metrics');
@@ -132,7 +136,9 @@ export function adaptSource(rel, code) {
     return `import { beforeActions } from '../../patches/splatoon3/runtime/movement.mjs';\nimport { updateResources } from '../../patches/splatoon3/runtime/resources.mjs';\n` + code;
   }
   if (rel === 'src/game/character-weapons.js') {
-    return replaceOnce(code, '    if (ft >= 0.15 && ft - dt < 0.15) w.drumW += 34;', '    const release = st.flickReleaseTime ?? 0.15;\n    if (ft >= release && ft - dt < release) w.drumW += 34;', 'roller drum release impulse');
+    code = replaceOnce(code, '    if (ft >= 0.15 && ft - dt < 0.15) w.drumW += 34;', '    const release = st.flickReleaseTime ?? 0.15;\n    if (ft >= release && ft - dt < release) w.drumW += 34;', 'roller drum release impulse');
+    code = replaceOnce(code, 'const BUILDERS = { shooter: buildShooter, roller: buildRoller,', 'const BUILDERS = { shooter: buildShooter, roller: () => rollerModel(buildRoller()),', 'roller drum proportions');
+    return "import { rollerModel } from '../../patches/splatoon3/runtime/roller-model.mjs';\n" + code;
   }
   if (rel === 'src/main.js') {
     const start = code.indexOf('    G.time += dt;\n', code.indexOf('  _frame(dt) {'));

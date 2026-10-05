@@ -43,5 +43,15 @@ export function adaptInput(rel, code) {
   if (rel !== INPUT_REL) return code;
   code = replaceOnce(code, BLUR_BEFORE, BLUR_AFTER, 'blur focus reset');
   code = replaceOnce(code, NOPAD_BEFORE, NOPAD_AFTER, 'gamepad disconnect reset');
+  code = replaceOnce(code,
+    '    pad.buttons.forEach((b, i) => {',
+    '    pad.buttons.forEach((b, i) => {\n' +
+    '      // Trigger edges use the same threshold as canonical held fire/swim.\n' +
+    '      if (i === 6 || i === 7) b = { pressed: b.value > 0.3 };',
+    'canonical gamepad trigger threshold');
+  code = replaceOnce(code,
+    'if (!this.locked) { this.mouse.left = this.mouse.right = false; this.onUnlock?.(); }',
+    'if (!this.locked) { this.mouse.left = this.mouse.right = false; this.mouse.leftPressed = this.mouse.rightPressed = false; this.mouse.dx = this.mouse.dy = 0; this.onUnlock?.(); }',
+    'pointer loss cancels pending mouse input');
   return code;
 }
