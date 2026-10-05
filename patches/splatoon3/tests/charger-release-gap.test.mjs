@@ -113,6 +113,7 @@ test('a special that owns the next tick cannot replay the old Charger release af
   const f = await fixture(), a = await charged(f), r = a.weaponRunner;
   a.weapon = { ...a.weapon, special: 'storm' };
   f.G.projectiles.throwStorm = () => {};
+  a._resolve = () => {}; // this fixture's physics omits body collisions; test action ownership only
   a.special = a.specialCost();
   a.intent.fire = false;
   f.tick(a);

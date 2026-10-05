@@ -27,8 +27,11 @@ function launch(f, frames) {
   system.applyHit = () => {};
   f.G.projectiles = system;
   r._charger(1 / 60, { fire: false }, a.weapon);
+  assert.equal(system._fidelityChargerFlights?.length ?? 0, 0, 'release tick preserves the 1F gap');
+  f.G.time += 1 / 60;
+  r._charger(1 / 60, { fire: false }, a.weapon);
   const jobs = system._fidelityChargerFlights;
-  assert.equal(jobs.length, 1, 'release created exactly one fidelity flight');
+  assert.equal(jobs.length, 1, 'R+1 created exactly one fidelity flight');
   return jobs[0];
 }
 

@@ -332,3 +332,5 @@ PR #701（issue #416）は Charger 側の部分チャージ取消 6F 回復を�
 自然な連射終了（#501のストリーム終了経路）と、チャージ中断→イカの経路は本件とは別状態として扱い、変更していない。伝令の Character 表示は authoritative な `form` を読むため、追加の1フレームsnapは導入していない。
 
 注: #679（チャージ中断）と #686（連射中断）は同一の6F回復ルートを2相で分けていたため、本ブランチ `inkwave/c-add100-fb6` で1つの変更に合成した。武装・1tick消費・解放の counter logic は `splatlingInterrupt` / `tickSplatlingInterrupt` / `releaseSplatlingInterrupt` に1箇所だけ残し、各相は独立したカウンタ（`s3ChargeInterruptT` / `s3StreamInterrupt`）を持つ。したがって #686 の「チャージ中断はこのタイマーを共有しない」という受入は、スロット分離と回帰 `issue-686-splatling-stream-interrupt.test.mjs` で確認している。修正前は両相とも ZL 押下の次の1 tick で `form === 'squid'` になることを、修正後は6完了フレーム保持・6F境界で1度だけ遷移することを同一の実コード fixture で確認した（Switch 実機のフレーム比較は未実施）。
+
+Batch C13 integration: an ordinary Charger release is cancelled if diving preempts its due tick, and expires after an action owning that tick. Native Actor regressions prove that resurfacing or Storm completion cannot replay the stale release. Launch-speed endpoint tests now exercise R+1 while asserting that R creates no flight; endpoint and piercing assertions remain unchanged.
