@@ -319,9 +319,9 @@ Before this change `fidelityProjectileTargets()` skipped every same-team
 actor before the capsule sweep, and the adapted consumer loop re-checked the
 team, so an ally never entered projectile collision chronology: a
 Splattershot round flew through a friendly body and damaged an enemy behind
-it. Now same-team live capsules (excluding the firing owner) join the same
-earliest-contact sweep once the contact-time age has reached the source
-friend-through window; an ally contact consumes the round without friendly
+it. Now ordinary Shooter rounds admit same-team live capsules (excluding the firing owner)
+to the same earliest-contact sweep once the contact-time age has reached the
+Shooter source friend-through window; an ally contact consumes the round without friendly
 damage, kill credit, volley bookkeeping or enemy-hit side effects; a missing
 source record keeps the previous skip instead of a global collider rule.
 Blaster (1000f) pass-through and enemy-first chronology are unchanged.
@@ -335,3 +335,5 @@ change). 未確認: Switch 実機での挙動比較、短い非ゼロ窓（ロ�
 のエンジン意味合い、チャージャー有限飛行・ビーム・サブ/スペシャルの味方接触は
 今回の範囲外で未確認のまま。フレーム値の推測や実機測定の代用は行っていない。
 
+
+Batch C14 scope review: #656 teammate blocking is confined to ordinary Shooter rounds. Dualies, Splatling, Roller, Slosher and Blaster retain their existing pass-through behavior; no additional family timing is inferred from a field name. Native Dualies/Splatling and existing Blaster controls verify unchanged pass-through.

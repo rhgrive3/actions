@@ -140,3 +140,15 @@ test('#656 30/60/120 Hz rendering around the same fixed simulation blocks identi
   assert.equal(outcomes[0].enemyHp, 100, 'the block holds in every cadence');
   assert.equal(outcomes[0].allyHp, 100);
 });
+
+for (const kind of ['dualies', 'splatling']) {
+  test(`#656 unrelated ${kind} rounds preserve teammate pass-through`, async () => {
+    const { ps, shooter, ally, enemy } = await setup(kind);
+    ally.pos.set(0, 0, 2); enemy.pos.set(0, 0, 6);
+    if (kind === 'dualies') ps.fireDualies(shooter, shooter.weapon, 0, 0);
+    else ps.fireSplatling(shooter, shooter.weapon, 0);
+    step(ps);
+    assert.equal(ally.hp, 100, 'friendly actor remains unharmed');
+    assert.ok(enemy.hp < 100, 'unrelated family still passes the ally and hits the enemy');
+  });
+}

@@ -65,9 +65,9 @@ function fieldRadiusAt(p,age) { return radiusAt(p.fidelityFieldCollision,age,p.f
 function setCollision(p,c,offset=0) {
   p.fidelityPlayerCollision=collisionRecord(c,'Player',offset);
   p.fidelityFieldCollision=collisionRecord(c,'Field',offset);
-  // S3 teammate pass-through window from the pinned source CollisionParam
-  // (Splattershot0f blocks immediately, Blaster1000f never blocks in its life).
-  p.fidelityFriendThrough=Number.isFinite(c.FriendThroughFrameForPlayer)?c.FriendThroughFrameForPlayer:null;
+  // #656 only corrects ordinary Shooter rounds. Other weapon families retain
+  // their existing teammate pass-through until their separate semantics are verified.
+  p.fidelityFriendThrough=p.s3Weapon?.kind==='shooter' && Number.isFinite(c.FriendThroughFrameForPlayer)?c.FriendThroughFrameForPlayer:null;
   // Existing packet size carries initial radius; layout is unchanged.
   p.size=p.fidelityPlayerCollision.initRadius;
 }
