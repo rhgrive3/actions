@@ -69,15 +69,15 @@ export function installMenuQuality(Menus, env=globalThis){
     m._qualityCursorCredit=0;
   }
   if(loop)P._loop=function(t){
-    if(retired.has(this)||this._platformDriven||!lifecycle.active||!active(this)){stop(this,records.get(this));return;}
+    if(retired.has(this)||this._platformDriven||!lifecycle.active||env.document?.hidden||!active(this)){stop(this,records.get(this));return;}
     return loop.call(this,t);
   };
   function ensure(m){
     let r=records.get(m);if(r)return r;
     r={timer:null,off:null};records.set(m,r);
-    const arm=()=>{if(r.timer===null&&!m._platformDriven&&!retired.has(m)&&active(m)&&lifecycle.active)r.timer=env.setTimeout(watch,80);};
+    const arm=()=>{if(r.timer===null&&!m._platformDriven&&!retired.has(m)&&active(m)&&lifecycle.active&&!env.document?.hidden)r.timer=env.setTimeout(watch,80);};
     const watch=()=>{
-      r.timer=null;if(m._platformDriven||retired.has(m)||!lifecycle.active||!active(m))return;
+      r.timer=null;if(m._platformDriven||retired.has(m)||!lifecycle.active||env.document?.hidden||!active(m))return;
       const age=env.performance.now()-m._extTick;
       if(age>=80){
         // The external owner stopped. Hand animation back without a burst of
@@ -102,6 +102,7 @@ export function installMenuQuality(Menus, env=globalThis){
   P.update=function(dt){
     if(retired.has(this)||!lifecycle.active)return;
     const r=ensure(this);
+    if(env.document?.hidden){stop(this,r);this._extTick=env.performance.now();return;}
     if(this._raf){env.cancelAnimationFrame(this._raf);this._raf=0;}
     if(!active(this)){stop(this,r);this._extTick=env.performance.now();return;}
     const result=update.call(this,dt);r.arm();return result;
