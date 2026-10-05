@@ -250,3 +250,11 @@ cloud/Halyard cube allocation at default high settings, not only after later
 runtime refresh. Existing formats, appearance policy and gameplay stay intact.
 These are project resource dimensions, not Nintendo/Switch memory values.
 See [the cold-boot budget report](inkwave-cold-boot-budgets-2026-10-04.md).
+
+## 2026-10-06: 自動的な味方ダウンマーカー (#631)
+
+- 本家の根拠：現行Splatoon 3で被弾した味方の位置は、本人が明示的に Ouch...（やられた）シグナルを送った時だけ世界座標として伝わる。通常のトップロスター表示は別物で、位置を固定マーカーとして置かない。
+- INKWAVE の実装箇所：`inkwave-public/src/ui/hud.js` の `_onSplatted()` が `if (me && victim.team === me.team) this._allyDown(victim, attacker);` で毎回マーカーを生成していた。`patches/splatoon3/adapter.mjs` の hud.js 接続がこの1行を exact-anchor で除去する（upstream未変更、接続欠落は fail-closed）。
+- 再現操作：4v4で味方が、シグナル入力なしに倒される。従来は実座標に死亡アイコン＋名前が約3秒投影された。ロジック検証は `patches/splatoon3/tests/ally-down-marker.test.mjs`（スタブHUDに実装済みHUDメソッドを展開して `_onSplatted` を実行）。
+- プレイへの影響：壁越しなどから自動的に死亡位置が読める情報が消える。キル/アシストカード、ストリーク、ロスターの生存/被弾表示、チームワイプアウト、ミニマップ、ローカル死亡表示は不変。
+- 確認状態：ロジック単独の検証。ブラウザ実機・Switch実機の確認は未実施。将来の明示シグナル実装は別Issue（位置情報の公開要否とボットの合成ルールを含む）。
