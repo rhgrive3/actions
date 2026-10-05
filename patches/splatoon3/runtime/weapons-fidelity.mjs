@@ -2,6 +2,7 @@
 // uncertainty live in reference/weapons-fidelity-reference.json.
 // Source fields and interpreted equations are explicitly separated in the profile.
 import {distanceDamage, groupDamage, applyProjectileHit as legacyHit} from './weapons.mjs';
+import {damageGroupId} from './final-damage.mjs';
 import { capsuleEntry, sweptWorldHit } from './weapons-collision.mjs';
 import { installChargerFlight } from './weapons-charger-flight.mjs';
 export const EPSILON = 1e-10;
@@ -169,7 +170,7 @@ export function applyFidelitySlosherSplash(system,p,victim,amount) {
   if(rawWeapon(p.s3Weapon||p.owner.weapon)?.UnitGroupParam)return;
   if(p.ghost)return;
   const delta=groupDamage(p.s3DamageGroup,victim,amount);
-  if(delta>0)system.applyHit(p.owner,victim,delta,p.wid||'slosher');
+  if(delta>0)system.applyHit(p.owner,victim,delta,p.wid||'slosher',damageGroupId(p.s3DamageGroup));
 }
 export function fidelityDamage(p,point) {
   const w=p.s3Weapon||p.owner.weapon;
@@ -197,7 +198,7 @@ export function fidelityDamage(p,point) {
 export function applyFidelityProjectileHit(system,p,victim,amount,point) {
   if(p.ghost)return;
   amount=groupDamage(p.s3DamageGroup,victim,fidelityDamage(p,point));
-  if(amount>0)system.applyHit(p.owner,victim,amount,p.wid||p.type);
+  if(amount>0)system.applyHit(p.owner,victim,amount,p.wid||p.type,damageGroupId(p.s3DamageGroup));
 }
 
 export function splatlingLaunchSpeed(weapon,charge) {
