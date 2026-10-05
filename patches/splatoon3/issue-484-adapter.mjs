@@ -22,11 +22,11 @@ export function replaceOnce(code, before, after, label) {
 }
 
 export function adaptIssue484Net(code) {
-  // 1. Add specialReady to network flags F
+  // 1. Add specialReady after the swim-visibility bits owned by #323
   code = replaceOnce(
     code,
-    '  invuln: 262144, enemy: 524288,',
-    '  invuln: 262144, enemy: 524288, specialReady: 1048576,',
+    '  invuln: 262144, enemy: 524288, quietTrail: 1048576, quietSplash: 2097152, swimVisibility: 4194304,',
+    '  invuln: 262144, enemy: 524288, quietTrail: 1048576, quietSplash: 2097152, swimVisibility: 4194304, specialReady: 8388608,',
     'netmatch F specialReady flag'
   );
 
