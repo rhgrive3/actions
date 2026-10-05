@@ -250,3 +250,15 @@ cloud/Halyard cube allocation at default high settings, not only after later
 runtime refresh. Existing formats, appearance policy and gameplay stay intact.
 These are project resource dimensions, not Nintendo/Switch memory values.
 See [the cold-boot budget report](inkwave-cold-boot-budgets-2026-10-04.md).
+
+## 2026-10-06: floor Squid Roll の方向閾値 (#307)
+
+インクウェーブ側の実装箇所は `patches/splatoon3/profile.json` の `movement.roll.minimumAngle`（`pi/2` → `pi/3`）と、それを消費する `patches/splatoon3/runtime/movement.mjs::rollEligible`。修正はスティック方向と現在の移動方向の角度比較のみで、最低速度・スティック深度・10F猶予・wall-roll 判定（`wallRollMinimumInput`）には触れていない。
+
+| 項目 | 内容 |
+| --- | --- |
+| 本家の根拠 | Splatoon 3 Ver.11.3.0 の床イカロールはスティックを進行方向から60°以上に倒す条件。[splatoon3mix システム詳細仕様](https://wikiwiki.jp/splatoon3mix/%E3%82%B7%E3%82%B9%E3%83%86%E3%83%A0%E8%A9%B3%E7%B4%B0%E4%BB%95%E6%A7%98) と検証動画（進行方向に対して60°以上）を照合。Nintendo 公式は角度閾値を公開していない。 |
+| INKWAVE の実装箇所 | `profile.json` roll.minimumAngle、`runtime/movement.mjs::rollEligible`。`installMovement` が `profile.movement` をそのまま `cfg` に渡し、実ランタイムと同じ関数を回帰テストが評価する。 |
+| 再現操作 | 自インクの平地面で速度条件を満たして泳ぎ、速度方向から59/60/75/89/90/180°の方向へフル深度でスティックを倒して B（ジャンプ）。修正前は60°以上90°未満が不成立。 |
+| プレイへの影響 | 60°以上90°未満の斜め前・斜め横イカロールが復活し、進行を保った回避が本家寄りになる。90°以上の挙動は不変。 |
+| 確認状態 | `movement.test.mjs` の実profile回帰が修正前 fail(90°)/修正後 pass(pi/3)。`roll-chain-window`/`squidroll-motion` 36件も pass。Community検証の校正値であり、Switch実機での角度境界やWU換算の確認済みにはしない。 |
