@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { PlatformLifecycle, PlatformFrameDriver, getPlatformLifecycle } from '../../patches/local-quality/platform-lifecycle.mjs';
+import { PlatformLifecycle, PlatformFrameDriver, getPlatformLifecycle, MAX_PLATFORM_GAP } from '../../patches/local-quality/platform-lifecycle.mjs';
 import { GyroPermission, gyroCapability, gyroStatusMessage } from '../../patches/local-quality/gyro-permission.mjs';
 import { resetPlatformInput } from '../../patches/local-quality/platform-input.mjs';
 import { installAudioPlatform } from '../../patches/local-quality/platform-audio.mjs';
