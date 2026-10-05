@@ -43,6 +43,7 @@ test('S3 Charger uncharged run and post-release speeds are unchanged', async () 
   r._charger(1 / 60, { fire: false }, a.weapon);
   assert.equal(r.charging, false);
   close(r.moveSpeed(), a.weapon.moveSpeedFiring, 'after release firing window');
+  r._charger(1 / 60, { fire: false }, a.weapon);   // consume the S3 1F release gap
   // Advance past the 0.35s firing window plus the 0.28s cooldown path.
   r.update(0.7, { fire: false });
   close(r.moveSpeed(), f.PLAYER.runSpeed, 'cooldown expiry restores run');

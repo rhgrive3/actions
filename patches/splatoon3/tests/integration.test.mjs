@@ -11,7 +11,7 @@ test('actual Actor stores a full charger charge and expires it without firing un
 test('stored charge survives emergence on a held ZR and fires on release; reset clears it', async () => {
   const f = await fixture(), a = f.make('charger'); a.intent.fire = true; f.tick(a, 61);
   a.intent.squid = true; f.tick(a); a.intent.squid = false; f.tick(a, 6); assert.equal(f.shots.length, 0);
-  a.intent.fire = false; f.tick(a);
+  a.intent.fire = false; f.tick(a, 2);   // S3 1F release gap: shot on R+1
   assert.equal(f.shots.length, 1); assert.equal(f.shots[0].charge, 1);
   a.reset(); assert.equal(a.weaponRunner.s3Stored, null);
 });
@@ -137,7 +137,7 @@ test('splatling diving cancels both charging and an active stream', async () => 
 });
 test('a charger tap uses the minimum ink without forcing a 12 percent charge', async () => {
   const f=await fixture(),a=f.make('charger'),r=a.weaponRunner;a.ink=2.25;
-  r.update(1/60,{fire:true});r.update(1/60,{fire:false});
+  r.update(1/60,{fire:true});r.update(1/60,{fire:false});r.update(1/60,{fire:false});
   assert.equal(f.shots.length,1);assert.ok(f.shots[0].charge<.12);assert.ok(a.ink<1e-9);
 });
 test('global menu time cannot skip an actor ink recovery wait', async () => {

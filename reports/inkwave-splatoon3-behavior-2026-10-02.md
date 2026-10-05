@@ -295,3 +295,10 @@ In the published-source path, `src/game/weapons.js` used `_ballistic()` with leg
 Reproduction: in the composed production fixture, place a level aim point 10.5 INKWAVE world units forward from the muzzle, freeze randomness, fire each weapon with zero spread, and measure height where the projectile crosses the target's horizontal distance. Before the fix, the live shooter path crossed 0.1602 world units low; deterministic diagnostics also showed the same direction/flight mismatch for Dualies and Splatling. After the fix, the installed integrator crosses within 0.02 INKWAVE world units for all three at 30, 60 and 120 Hz render cadences. A copied-profile sensitivity regression changes the shooter's source-backed end-speed cap and confirms both the predicted launch pitch and actual integrated path use the changed record.
 
 This establishes internal INKWAVE consistency only. The test's world units are not asserted as Nintendo metres, and it does not verify Nintendo camera compensation, Switch frame measurements, real-device shot placement, or the uncertain brake/free curve. Splatoon 3 Ver. 11.3.0 hardware comparison remains unconfirmed.
+## 2026-10-06: Charger 通常リリースの発射隙 (#680)
+
+- 本家の根拠：現行Splatoon 3の検証資料はチャージャーの時間分解を `startup + charge + 発射隙 + shot(1F)` とし、通常のZR解放認識から攻撃ヒットボックスまでを **1F** とする（検証Wiki「メインウェポン」、確認はコード差分の前提に限定し独自数値は追加しない）。
+- INKWAVE の実装箇所：`patches/splatoon3/runtime/weapons.mjs` の `WeaponRunner.prototype._charger` に、S3通常リリース用の1F固定ステップ状態を追加。解放tick R では `charging` を解除し、チャージ量・解放方向の基準をラッチして発射しない。R+1 で `weapon:fire`・有限flight・インク/cooldown・recoil を生成する。
+- 再現操作：フル充填または途中充填からZRを離す。解放tickで弾が生成されず、次tickで1発だけ生成されることを、実 `Actor`/`WeaponRunner` の固定60Hzロジックで確認した（`patches/splatoon3/tests/charger-release-gap.test.mjs`）。
+- プレイへの影響：解放直後の早撃ち・トレードがS3より1F先行していたずれを解消する。8F最小チャージ、リピート/cooldown、stored-charge resurfacing、charge-cancel recovery、post-shot swim lock は変更しない。
+- 確認状態：ロジック単独（source-fixture）で30/60/120Hzの同一固定intervalを確認。Switch実機の新規録画や、本家の公開されていないフレーム値の推定は行っていない。

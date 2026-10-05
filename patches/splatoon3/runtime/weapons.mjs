@@ -58,7 +58,7 @@ export function installWeapons(context, profile) {
   WeaponRunner.prototype.reset = function (...args) {
     const result = reset.apply(this, args);
     this.s3Stored = null; this.s3Turret = false; this.s3FlickVertical = false; this.s3BlasterWindup = 0;
-    this.s3SloshRecovery = false; return result;
+    this.s3SloshRecovery = false; this.s3ReleaseHold = false; this.s3HeldCharge = 0; this.s3HeldChargeT = 0; return result;
   };
   WeaponRunner.prototype.busy = function () {
     if (['charger','splatling'].includes(this.a.weapon.kind) && this.a.intent.squid && this.a._squidPressT > this.a._firePressT) return false;
@@ -95,6 +95,31 @@ export function installWeapons(context, profile) {
       // masked, and is restored once the actor forwards the trigger again.
       if (!inp.fire) { this.charge = 1; return; }
       this.charge = this.s3Stored.charge; this.chargeT = 1; this.charging = true; this.s3Stored = null;
+    }
+    // Splatoon 3 defines a 1F release gap (発射隙) between recognizing that ZR
+    // was released and the attack hitbox becoming active. Latch the charge and
+    // its amount on the release tick, then create the authoritative shot on the
+    // following fixed simulation tick. One tick per fixed step keeps the gap
+    // identical at 30/60/120 Hz render cadence because the gameplay clock
+    // always advances in STEP increments.
+    if (this.s3ReleaseHold) {
+      this.s3ReleaseHold = false;
+      this.charging = true;
+      this.charge = this.s3HeldCharge;
+      this.chargeT = this.s3HeldChargeT;
+      this.s3HeldCharge = 0; this.s3HeldChargeT = 0;
+      return charger.call(this, dt, { fire: false }, w);
+    }
+    if (this.charging && !held && !inp.fire) {
+      this.s3ReleaseHold = true;
+      this.s3HeldCharge = this.charge;
+      this.s3HeldChargeT = this.chargeT;
+      this.charging = false;
+      // The release pose begins at recognition; only the attack/ink/cooldown are
+      // deferred to the shot frame by the S3 release gap.
+      this.firingT = Math.max(this.firingT, 0.35);
+      this.chargeLoop?.stop(.05); this.chargeLoop = null;
+      return;
     }
     return charger.call(this, dt, inp, w);
   };
