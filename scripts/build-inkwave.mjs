@@ -163,8 +163,33 @@ const visit = (rel) => {
 };
 visit('src/main.js');
 visit('patches/splatoon3/bootstrap.mjs');
-const preload = order.filter((f) => fs.existsSync(path.join(BUILD, f))).map((f) => `<link rel="modulepreload" href="./${f}">`).join('\n');
-const html = html0.replace('</head>', `<!-- build: module graph preloaded (${order.length} modules) -->\n${preload}\n</head>`);
+// #61's accepted startup baseline preloaded 145 modules (131 core + 14 range).
+// Later workstreams add these runtime dependencies to the static graph. Keep
+// them in the immutable revision + Service Worker precache, but let their
+// importing modules request them instead of adding 16 new eager preload
+// requests to the critical HTML. Browser startup/offline CI validates the
+// resulting dependency fetch path and timing.
+const deferredIntegrationPreloads = new Set([
+  'patches/local-quality/first-touch-adapter.mjs',
+  'patches/local-quality/gyro-permission.mjs',
+  'patches/local-quality/idle-resources.mjs',
+  'patches/local-quality/mobile-platform.mjs',
+  'patches/local-quality/music-idle.mjs',
+  'patches/local-quality/platform-audio.mjs',
+  'patches/local-quality/platform-game.mjs',
+  'patches/local-quality/platform-input.mjs',
+  'patches/local-quality/platform-lifecycle.mjs',
+  'patches/local-quality/platform-transport.mjs',
+  'patches/local-quality/touch-relayout.mjs',
+  'patches/splatoon3/runtime/issue-415-adapter.mjs',
+  'patches/splatoon3/runtime/movement-physics.mjs',
+  'patches/splatoon3/runtime/roller-model.mjs',
+  'patches/splatoon3/runtime/sub-special-fidelity.mjs',
+  'patches/splatoon3/runtime/weapon-edgecases.mjs',
+]);
+const preloadOrder = order.filter((f) => !deferredIntegrationPreloads.has(f));
+const preload = preloadOrder.filter((f) => fs.existsSync(path.join(BUILD, f))).map((f) => `<link rel="modulepreload" href="./${f}">`).join('\n');
+const html = html0.replace('</head>', `<!-- build: module graph preloaded (${preloadOrder.length} modules) -->\n${preload}\n</head>`);
 fs.writeFileSync(path.join(BUILD, 'index.html'), html);
 fs.writeFileSync(path.join(BUILD, '.nojekyll'), '');
 const loadingPlan = prepareLoading(BUILD, order);
@@ -198,4 +223,4 @@ console.log(`patch: splatoon3+quality+range · build ${identity.contentHash.slic
 
 console.log(`JS : ${kb(rawJs)} → ${kb(minJs)}  (gzip ${kb(gzRaw)} → ${kb(gzMin)})`);
 console.log(`CSS: ${kb(rawCss)} → ${kb(minCss)}`);
-console.log(`modulepreload: ${order.length} modules`);
+console.log(`modulepreload: ${preloadOrder.length} modules (${order.length - preloadOrder.length} deferred, all precached)`);
