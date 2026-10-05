@@ -93,3 +93,35 @@ test('repeat/recharge cooldown after the gap shot is not lengthened', async () =
   // The native release branch arms 0.28s; the extra frame lives only in the gap.
   assert.ok(cooldown > 0.27 && cooldown < 0.29, `cooldown ${cooldown}`);
 });
+
+test('submerging during the release gap retires the pending shot instead of replaying it after emergence', async () => {
+  const f = await fixture(), a = await charged(f), r = a.weaponRunner;
+  a.intent.fire = false;
+  f.tick(a);
+  assert.equal(r.s3ReleaseHold, true);
+  a.intent.squid = true;
+  f.tick(a);
+  assert.equal(a.form, 'squid');
+  assert.equal(r.s3ReleaseHold, false, 'dive retires the pending release');
+  f.tick(a, 10);
+  a.intent.squid = false;
+  f.tick(a, 30);
+  assert.equal(f.shots.length, 0, 'emergence does not replay an old release');
+});
+
+test('a special that owns the next tick cannot replay the old Charger release after finishing', async () => {
+  const f = await fixture(), a = await charged(f), r = a.weaponRunner;
+  a.weapon = { ...a.weapon, special: 'storm' };
+  f.G.projectiles.throwStorm = () => {};
+  a.special = a.specialCost();
+  a.intent.fire = false;
+  f.tick(a);
+  assert.equal(r.s3ReleaseHold, true);
+  a.intent.special = true;
+  f.tick(a);
+  assert.equal(a.specialActive?.id, 'storm', 'special owns the due-shot tick');
+  f.tick(a, 60);
+  assert.equal(a.specialActive, null);
+  assert.equal(r.s3ReleaseHold, false);
+  assert.equal(f.shots.length, 0, 'no stale shot after the special');
+});

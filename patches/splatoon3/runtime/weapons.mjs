@@ -58,7 +58,7 @@ export function installWeapons(context, profile) {
   WeaponRunner.prototype.reset = function (...args) {
     const result = reset.apply(this, args);
     this.s3Stored = null; this.s3Turret = false; this.s3FlickVertical = false; this.s3BlasterWindup = 0;
-    this.s3SloshRecovery = false; this.s3ReleaseHold = false; this.s3HeldCharge = 0; this.s3HeldChargeT = 0; return result;
+    this.s3SloshRecovery = false; this.s3ReleaseHold = false; this.s3HeldCharge = 0; this.s3HeldChargeT = 0; this.s3ReleaseAt = 0; return result;
   };
   WeaponRunner.prototype.busy = function () {
     if (['charger','splatling'].includes(this.a.weapon.kind) && this.a.intent.squid && this.a._squidPressT > this.a._firePressT) return false;
@@ -76,6 +76,13 @@ export function installWeapons(context, profile) {
   };
   WeaponRunner.prototype._charger = function (dt, inp, w) {
     const a = this.a, held = !!a.intent.fire;
+    // A release may execute only on its next authoritative tick. If another
+    // action skipped that tick, retire it rather than replaying it on emergence
+    // or after a special finishes. Diving also cancels the pending release.
+    if (this.s3ReleaseHold && (a.form === 'squid' || G.time - this.s3ReleaseAt > dt + 1e-10)) {
+      this.s3ReleaseHold = false; this.s3HeldCharge = 0; this.s3HeldChargeT = 0;
+      cancelStored(this);
+    }
     if (this.s3Stored && !held) cancelStored(this);
     if (a.form === 'squid') {
       if (this.charging) {
@@ -112,6 +119,7 @@ export function installWeapons(context, profile) {
     }
     if (this.charging && !held && !inp.fire) {
       this.s3ReleaseHold = true;
+      this.s3ReleaseAt = G.time;
       this.s3HeldCharge = this.charge;
       this.s3HeldChargeT = this.chargeT;
       this.charging = false;
