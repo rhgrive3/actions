@@ -45,6 +45,18 @@ export function beginChargeCancel(runner) {
   return runner;
 }
 
+// The #416 admission predicate, shared by every call site so there is exactly
+// one definition of "a later ZL/squid press is cancelling this live partial
+// charge". Pure: it reads state and never mutates it, so it is safe to evaluate
+// from both `busy()` and the weapon-update boundary.
+export function cancelPartialAdmission(runner) {
+  const a = runner?.a;
+  if (!a) return false;
+  return !!a.intent?.squid && a._squidPressT > a._firePressT &&
+    a.weapon?.kind === 'charger' && a.form !== 'squid' &&
+    !!runner.charging && runner.charge < .999;
+}
+
 // Advance the recovery once per weapon update (never per busy() read, which
 // Actor.update and the ink refill both perform each tick).
 export function tickChargeCancel(runner, dt) {
@@ -60,7 +72,7 @@ const ISSUE_416_BUSY_ANCHOR = `  WeaponRunner.prototype.busy = function () {
 const ISSUE_416_CHARGER_HEAD_ANCHOR = '    const a = this.a, held = !!a.intent.fire;';
 const ISSUE_416_CHARGER_TAIL_ANCHOR = '    return charger.call(this, dt, inp, w);';
 const ISSUE_416_RESET_ANCHOR = '    this.s3SloshRecovery = false; return result;';
-const ISSUE_416_IMPORT = `import { chargeCancelActive, beginChargeCancel, tickChargeCancel } from './issue-416-adapter.mjs';`;
+const ISSUE_416_IMPORT = `import { chargeCancelActive, beginChargeCancel, tickChargeCancel, cancelPartialAdmission } from './issue-416-adapter.mjs';`;
 
 const ISSUE_416_BUSY_REPLACEMENT = `  WeaponRunner.prototype.busy = function () {
     const a = this.a;
@@ -70,12 +82,8 @@ const ISSUE_416_BUSY_REPLACEMENT = `  WeaponRunner.prototype.busy = function () 
     // true here keeps the kid form — and ordinary kid movement — for the whole
     // recovery instead of diving in the same tick that receives ZL.
     if (chargeCancelActive(this)) return true;
+    if (cancelPartialAdmission(this)) { beginChargeCancel(this); return true; }
     const laterSquid = !!a.intent.squid && a._squidPressT > a._firePressT;
-    if (laterSquid && a.weapon.kind === 'charger' && a.form !== 'squid' &&
-        this.charging && this.charge < .999) {
-      beginChargeCancel(this);
-      return true;
-    }
     // Unchanged admission for every other path: the Splatling later-squid
     // press and a legal full-charge keep (stored or still held) bypass the
     // charging busy exactly as before, and a Charger with no live charge
@@ -86,6 +94,14 @@ const ISSUE_416_BUSY_REPLACEMENT = `  WeaponRunner.prototype.busy = function () 
   };`;
 
 const ISSUE_416_CHARGER_HEAD = `    const a = this.a, held = !!a.intent.fire;
+    // Issue #416 admitted at the shared weapon-update boundary, BEFORE the
+    // cancelRecovery snapshot. busy() normally arms this first, but input
+    // paths that never read busy() — the main-only Super Jump prelanding kid
+    // segment, which calls weaponRunner.update() directly — must run the same
+    // admission or a later squid press would release the partial on ZR
+    // release. Both sites share one predicate and neither decrements the
+    // timer, so re-evaluating here is idempotent for the ordinary path.
+    if (cancelPartialAdmission(this)) beginChargeCancel(this);
     // Snapshot the recovery for this tick, then advance it exactly once per
     // weapon update. The snapshot keeps the final recovery tick suppressing a
     // fresh charge start even as the timer reaches zero, so a held ZR can

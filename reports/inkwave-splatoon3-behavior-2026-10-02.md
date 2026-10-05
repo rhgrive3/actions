@@ -260,3 +260,22 @@ See [the cold-boot budget report](inkwave-cold-boot-budgets-2026-10-04.md).
 `patches/splatoon3/adapter.mjs` から専用 adapter を呼び、実 `WeaponRunner._auto` が `fireShooter` 後に projectile list を1件増やした場合だけ位相を進める。dry fire、remote owner、ghost round は位相を進めない。`SplitNum` による8発の周回以外に、射撃解放・死亡・ブキ交換で S3 側の位相がどうリセットされるかは固定データと公開解説から確認できない。本実装は未確認の reset hook を加えず Actor ごとの位相を保持するため、これらの中断条件での本家一致は未確認。
 
 ロジック回帰は native `WeaponRunner` / `Projectiles` を使い、床の足元塗りが発射後・壁遮蔽下でも壁着弾前に記録されること、通常の飛行 trail と壁着弾の `PaintSystem.splat` 入力が分離して残ることを確認した。`PaintSystem.splat` 自身の壁 drip の見た目・時間・本家比較は測っていない。30/60/120 Hz は60 Hz固定tickのCPU replayで一致し、ブラウザ/WebGLやSwitch実機の測定ではない。再現・検証範囲は issue-507 のfocused testに限定する。
+
+
+## Charger partial charge キャンセルと Super Jump 接続（#416、2026-10-06）
+
+比較対象は Issue #416 に記載された Splatoon 3 Ver.11.3.0 の6Fキャンセル動作。公開 INKWAVE は後から押したZLが `busy()` を即falseにして同tickで泳ぎへ移った。partialを捨て、native Actor/Runner内で6 fixed ticksのrecoveryを消費してから通常の変身/移動を許可する。full-charge keep、Splatling、単なる潜り、射撃後の経路は別に保持する。6FはIssue記載値で、引用先wikiの取得は403、Switch実機の新規計測はしていない。
+
+最新main b4d5c31 のSuper Jump main-only射撃は `busy()` を読まずRunner更新へ進むため、独立reviewでキャンセルの迂回を発見した。同じpartial admissionを `busy()` と `_charger` のrecovery snapshot前で共有し、flight trajectory/landing時刻や他武器の値は変更しない。native Actor/Runnerのflight経路、raw negative control、ZR解放、6tick境界、reset、非Charger、通常の30/60/120Hzを確認。長いflight fixtureに加えてprofileの138F flightでcancelからlandingまで確認する。実機のprelanding ZL優先度/charge keepの完全比較は未確認。
+
+
+## Batch C: 通信・入力・終了表示・描画寿命（2026-10-06）
+
+比較 baseline は Splatoon 3 Ver.11.3.0 と各 Issue の再現条件。対象は公開 INKWAVE のビルド後の接続で、実機・物理コントローラー比較は未実施。
+
+| Issue / 条件 | INKWAVE の原因・変更 | 確認範囲と未確認 |
+| --- | --- | --- |
+| [#569](https://github.com/rhgrive3/actions/issues/569): Boss の移動/子体イベント、guest・旧host・重複配送 | `NetMatch._play` が `bm` / `bc` を現行 `session.hostId` と照合せず適用。既存 sequence gate 後に現行hostと payload の有限値を確認する。通常の player paint/projectile authority は維持。 | native receiver の host変更・stale/duplicate・不正値・非host・通常戦闘回帰を確認。S3 と同じ wire protocol、暗号認証、実ネットワークの障害復旧を認定するものではない。 |
+| [#579](https://github.com/rhgrive3/actions/issues/579): Turf Map を開閉し、スティックを放す/保持 | map中の look filter 停止が開く前の `padLook` / `edgeT` を再利用。map中も現在のスティックから filter を更新し、camera output は抑止する。 | native Input / PlayerController、keyboard/touch/gamepad、disabled、30/60/120/144Hz、sensitivity を確認。移動/射撃 input は変更しない。S3 実機との曲線/感度一致は未確認。 |
+| [#580](https://github.com/rhgrive3/actions/issues/580): 通常 Turf の 0:00、finish → judge | TIME'S UP の短期 card を team-neutral FINISH tape に置換。既存 match clock / phase / judge の決定は変更せず、judge/new round で消す。Boss の別終了経路を維持する。 | native HUD/Match 接続と desktop/phone の実ブラウザ表示を確認。実際の Switch の字形、テープ配置、animation 時間の完全一致は未認定。 |
+| [#581](https://github.com/rhgrive3/actions/issues/581): arena / marina を反復切替 | Environment の reflection除外配列が旧mesh/atlasへの参照を保持。arena rebuild と marina mode変更で cache list/key を無効化し、次のreflectionで現行sceneから同じ除外規則で構築する。 | 実 Environment prototype の参照寿命・lazy再構築・繰返し切替を確認。gameplay値を変更しない。到達可能性の検証であり、GC後heap/VRAMの実測やS3内部memory管理の比較ではない。 |

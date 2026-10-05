@@ -53,6 +53,15 @@ test('issue-416 transform rewrites busy/charger/reset once and is routed through
   assert.equal(CHARGE_CANCEL_RECOVERY, 6 / 60, 'documented 6f at the 60 fps reference capture');
   assert.ok(patched.includes('beginChargeCancel(this);'), 'busy override arms the recovery');
   assert.ok(patched.includes('chargeCancelActive(this)'), 'busy override gates on the recovery');
+  // Integration guard: the admission must also run inside _charger, before the
+  // cancelRecovery snapshot, so an input path that never reads busy() (the
+  // main-only Super Jump prelanding kid segment) cannot bypass #416.
+  assert.ok(patched.includes('if (cancelPartialAdmission(this)) beginChargeCancel(this);'),
+    'the shared weapon-update boundary admits #416 before the cancelRecovery snapshot');
+  const head = patched.indexOf('if (cancelPartialAdmission(this)) beginChargeCancel(this);');
+  const snapshot = patched.indexOf('const cancelRecovery = chargeCancelActive(this);');
+  assert.ok(head > -1 && snapshot > head, 'the admission precedes the cancelRecovery snapshot');
+  assert.ok(patched.includes('cancelPartialAdmission } from'), 'the shared predicate is imported');
   assert.ok(patched.includes('if (cancelRecovery) return;'), '_charger suppresses a fresh charge while recovering');
   assert.ok(patched.includes('this.s3ChargeCancelT = 0;'), 'reset clears the recovery');
   assert.ok(patched.includes(`from './issue-416-adapter.mjs'`), 'helper import injected');
@@ -253,6 +262,125 @@ test('the 6f recovery counts fixed 60Hz simulation ticks, not render frames (30/
   }
 });
 
+// --- Super Jump integration (blocker in b11-main-final-review.md) ----------
+// The main-only Super Jump input path returns before the native latest-press
+// form selection and its busy() read, then calls weaponRunner.update() with raw
+// intent.fire. Without the shared-boundary admission in _charger, a later squid
+// press during the pre-landing kid segment would release the partial on ZR
+// release. The trajectory stays owned by native _updateSuperJump; only weapon
+// admission is asserted here.
+async function prelandingCharger(f) {
+  const a = f.make('charger');
+  a.ink = 100;
+  // Enter the pre-landing kid window (k = .85 > SUPERJUMP_MAIN_PROGRESS .82)
+  // with enough flight time left for the whole 6f recovery plus the release.
+  a.superJumpState = {
+    wallSupport: null, phase: 'flight', t: 8.5, dur: 10, marker: 0,
+    from: a.pos.clone(), to: a.pos.clone(), target: null,
+  };
+  a.intent.fire = true;
+  f.tick(a, 30);
+  assert.equal(a.form, 'kid', 'precondition: still in the prelanding kid segment');
+  assert.ok(a.superJumpState, 'precondition: still airborne');
+  assert.ok(a.weaponRunner.charging, 'precondition: charging mid-flight');
+  assert.ok(a.weaponRunner.charge > 0 && a.weaponRunner.charge < .999, 'precondition: partial charge');
+  return a;
+}
+
+test('prelanding partial charge is discarded by a later squid press and recovers for exactly 6f', async () => {
+  const f = await production();
+  const a = await prelandingCharger(f);
+  const r = a.weaponRunner;
+
+  a.intent.squid = true; // the later ZL press, mid-flight
+  f.tick(a); // cancel tick
+  assert.ok(chargeCancelActive(r), 'the shared boundary armed #416 without busy() being read');
+  assert.equal(r.charging, false, 'partial cleared on the cancel tick');
+  assert.equal(r.charge, 0, 'charge discarded, not banked');
+  assert.equal(r.s3Stored, null, 'a partial never becomes a stored charge');
+  assert.equal(f.shots.length, 0, 'no shot left the barrel on the cancel tick');
+  assert.equal(a.form, 'kid', 'prelanding kid segment retained on the cancel tick');
+
+  // Release ZR *during* the recovery: the discarded partial must not come back
+  // as a fresh charge, and nothing may be released once the window closes.
+  a.intent.fire = false;
+  let ticks = 1; // the cancel tick already consumed one frame
+  while (chargeCancelActive(r) && ticks < 12) {
+    f.tick(a);
+    assert.equal(r.charge, 0, `no fresh charge re-arms at tick ${ticks}`);
+    assert.equal(r.charging, false, `charger stays idle at tick ${ticks}`);
+    assert.equal(f.shots.length, 0, `no shot at tick ${ticks}`);
+    assert.equal(a.form, 'kid', `prelanding kid segment retained at tick ${ticks}`);
+    ticks++;
+  }
+  assert.equal(ticks, 6, 'exactly the documented 6 fixed ticks own the gate after the cancel tick');
+  assert.ok(!chargeCancelActive(r), 'recovery consumed exactly at the 6f boundary');
+  f.tick(a, 5);
+  assert.equal(f.shots.length, 0, 'releasing ZR during recovery never fires the discarded partial');
+  assert.equal(r.charge, 0, 'and no later charge appears from the release');
+  assert.ok(a.superJumpState, 'the native flight trajectory was left alone');
+
+  // Reset still clears a recovery armed through this boundary. ZL is released
+  // first so the re-arm uses a genuinely fresh later-squid edge.
+  a.intent.squid = false;
+  f.tick(a);
+  a.intent.fire = true;
+  f.tick(a, 10);
+  assert.ok(r.charging && r.charge < .999, 'precondition: a fresh partial charge');
+  a.intent.squid = true; // fresh rising edge -> new _squidPressT
+  f.tick(a);
+  assert.ok(chargeCancelActive(r), 're-armed through the same boundary on a fresh edge');
+  a.intent.fire = false; // release during recovery, as before
+  f.tick(a, 2);
+  r.reset();
+  assert.ok(!chargeCancelActive(r), 'weapon reset clears a boundary-armed recovery');
+  assert.equal(r.s3Stored, null, 'reset keeps its existing stored-charge contract');
+  f.tick(a, 3);
+  assert.equal(f.shots.length, 0, 'nothing fired across the whole scenario');
+});
+
+test('negative control: without the boundary connection the prelanding partial fires on release', async () => {
+  const f = await fixture(); // raw sources — no adaptRuntime, so no #416 connection
+  const a = f.make('charger');
+  a.ink = 100;
+  a.superJumpState = {
+    wallSupport: null, phase: 'flight', t: 8.5, dur: 10, marker: 0,
+    from: a.pos.clone(), to: a.pos.clone(), target: null,
+  };
+  a.intent.fire = true;
+  f.tick(a, 30);
+  assert.equal(a.form, 'kid', 'precondition: prelanding kid segment');
+  assert.ok(a.weaponRunner.charge > 0 && a.weaponRunner.charge < .999, 'precondition: partial charge');
+
+  a.intent.squid = true;
+  f.tick(a);
+  assert.ok(!chargeCancelActive(a.weaponRunner), 'raw source has no #416 recovery state');
+  a.intent.fire = false;
+  f.tick(a);
+  assert.equal(f.shots.length, 1, 'the defect #416 blocks: the partial is released mid-flight');
+  assert.ok(f.shots[0].charge < .999, 'and it was only a partial charge');
+});
+
+test('the shared boundary leaves non-Charger weapons unchanged in the same window', async () => {
+  const f = await production();
+  const a = f.make('shooter');
+  a.ink = 100;
+  a.superJumpState = {
+    wallSupport: null, phase: 'flight', t: 8.5, dur: 10, marker: 0,
+    from: a.pos.clone(), to: a.pos.clone(), target: null,
+  };
+  a.intent.fire = true;
+  f.tick(a, 10);
+  const fired = f.shots.length;
+  assert.ok(fired > 0, 'precondition: the shooter fired in the prelanding window');
+  a.intent.squid = true;
+  f.tick(a, 5);
+  assert.ok(!chargeCancelActive(a.weaponRunner), 'no charge-cancel recovery for a shooter');
+  assert.ok(f.shots.length > fired, 'the shooter keeps firing; no #416 penalty');
+  assert.equal(a.weaponRunner.charging, false, 'shooter never charges');
+  assert.equal(f.shots.filter(s => s.kind === 'charger').length, 0, 'no charger shot was invented');
+});
+
 test('death and weapon reset clear the recovery so no gate outlives the weapon lifecycle', async () => {
   const f = await production();
 
@@ -277,4 +405,37 @@ test('death and weapon reset clear the recovery so no gate outlives the weapon l
   f.tick(rec);
   assert.equal(rec.form, 'squid', 'no stuck gate after a weapon reset');
   assert.equal(f.shots.length, 0, 'neither path leaves a shot behind');
+});
+
+
+test('partial cancel fits the actual 138F prelanding window and stays discarded after landing', async () => {
+  const f = await production();
+  // Use native Physics for the landing (the shared fixture otherwise omits
+  // collision methods because its ordinary weapon cases never resolve bodies).
+  const floor = { id: 0, solid: true, grate: false,
+    aabbMin: new f.THREE.Vector3(-50, -1, -50), aabbMax: new f.THREE.Vector3(50, 0, 50),
+    center: new f.THREE.Vector3(0, -.5, 0), half: new f.THREE.Vector3(50, .5, 50),
+    axes: [new f.THREE.Vector3(1, 0, 0), new f.THREE.Vector3(0, 1, 0), new f.THREE.Vector3(0, 0, 1)],
+    faces: [-1, -1, -1, -1, -1, -1] };
+  f.G.level = { blocks: [floor], faces: [], groundHeight: () => 0,
+    queryBlocks(_x, _z, _xx, _zz, out) { out.length = 0; out.push(0); return out; } };
+  f.G.physics = new f.Physics(f.G.level);
+  const a = f.make('charger');
+  a.superJumpState = { phase: 'flight', t: 120 / 60, dur: a.s3.jumpFlightTime,
+    marker: 0, from: a.pos.clone(), to: a.pos.clone(), target: null, wallSupport: null };
+  assert.equal(a.superJumpState.dur, 138 / 60, 'current profile flight duration');
+  a.intent.fire = true;
+  f.tick(a, 6);
+  assert.ok(a.weaponRunner.charging && a.weaponRunner.charge > 0 && a.weaponRunner.charge < .999);
+  a.intent.squid = true;
+  f.tick(a);
+  a.intent.fire = false;
+  f.tick(a, 5);
+  assert.ok(!chargeCancelActive(a.weaponRunner), 'six ticks consumed');
+  assert.equal(a.weaponRunner.charge, 0);
+  assert.equal(f.shots.length, 0);
+  assert.equal(a.superJumpState.phase, 'flight', 'cancel did not end flight');
+  f.tick(a, 8);
+  assert.equal(a.superJumpState, null, 'native flight landed on schedule');
+  assert.equal(f.shots.length, 0, 'no discarded partial released after landing');
 });
