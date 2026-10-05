@@ -74,8 +74,9 @@ test('roller court: rolling along the strip lays a stripe on the court floor', a
     W.splats.length = 0;
     tick(150, () => { a.intent.fire = true; a.intent.move.set(0, 0, 1); a.aimYaw = 0; });
     a.intent.fire = false; a.intent.move.set(0, 0, 0);
-    assert.ok(W.splats.length > 10, `${W.splats.length} roll splats`);
-    assert.ok(W.splats.every((sp) => sp[0] > sx0 - 2 && sp[0] < sx1 + 2), 'stripe stays on the strip');
+    const rollSplats = W.splats.filter((sp) => sp[5] === 'roll');
+    assert.ok(rollSplats.length > 10, `${rollSplats.length} roll splats`);
+    assert.ok(rollSplats.every((sp) => sp[0] > sx0 - 2 && sp[0] < sx1 + 2), 'stripe stays on the strip');
     assert.ok(a.pos.z > R.ZONES.ROLL_STAND[1] + 5, 'rolled forward');
   } finally { w.done(); }
 });
