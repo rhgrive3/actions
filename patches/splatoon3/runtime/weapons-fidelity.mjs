@@ -117,8 +117,8 @@ export function beginFidelityWallDrop(system, p, hit) {
     paintCarry: 0, paintIndex: 0,
     hit: new api.Hit(), from: new api.THREE.Vector3(), next: new api.THREE.Vector3(), paintPoint: new api.THREE.Vector3(),
   };
-  p.prev.copy(p.pos);
   p.pos.copy(hit.point).addScaledVector(hit.normal, .025);
+  p.prev.copy(p.pos);
   p.vel.set(0, -firstSpeed * 60, 0);
   wallDropPaint(p, p.pos, state.shockRadius, state, 0x5a0c);
 
