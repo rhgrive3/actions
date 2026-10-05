@@ -17,7 +17,7 @@ export function adaptGearSub(rel,code,replace){
   patch('const noSub = ink < subCost - 1e-3;', 'const noSub = !(subReady ?? (ink >= subCost));','exact mobile sub admission');
  }
  if(rel==='src/game/actor.js'){
-  patch('const wantSquid = intent.squid && !fireWins && !this.weaponRunner.busy();', 'const wantSquid = intent.squid && !intent.sub && !fireWins && !this.weaponRunner.busy();','sub press emerges before 10F ready');
+  patch('const wantSquid = intent.squid && !fireWins && !this.weaponRunner.busy() && !chargerSwimLocked(this);', 'const wantSquid = intent.squid && !intent.sub && !fireWins && !this.weaponRunner.busy() && !chargerSwimLocked(this);','sub press + charger swim gate composition');
  }
  if(rel==='src/game/weapons.js'){
   patch('  throwBomb(a) {\n    const b = SUB.bomb;', '  throwBomb(a) {\n    const b = subThrowSpec(a, SUB.bomb);','actor-local bomb launch speed');
