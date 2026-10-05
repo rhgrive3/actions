@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {assertPortraitAspectTransition,trackTouchSequence} from '../../../scripts/inkwave-touch-transition-cases.mjs';
@@ -26,4 +27,12 @@ test('cleanup reports its error without masking an earlier transition assertion'
 });
 test('cleanup failure without an earlier assertion is still reported',async()=>{
  const failure=new Error('cleanup failure');const sequence=trackTouchSequence(async type=>{if(type==='touchEnd')throw failure;});await sequence.send('touchStart',[{id:1}]);await assert.rejects(sequence.finish(),error=>error===failure);
+});
+
+test('live portrait evidence and tablet capture precede destructive transition coverage',()=>{
+ const code=fs.readFileSync(new URL('../../../scripts/check-inkwave-reliability.mjs',import.meta.url),'utf8');
+ const portrait=code.indexOf('entry.portraitGuard=await page.evaluate'),capture=code.indexOf("engineName + '-tablet-controls.png'"),destroySuite=code.indexOf('await runTouchTransitionCases({');
+ assert(portrait>=0&&capture>portrait&&destroySuite>capture);
+ const transitions=fs.readFileSync(new URL('../../../scripts/inkwave-touch-transition-cases.mjs',import.meta.url),'utf8');
+ assert(transitions.includes('mobile.destroy();'));assert(transitions.includes('Post-destroy resize does not recreate elements'));
 });

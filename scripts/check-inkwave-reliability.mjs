@@ -468,9 +468,6 @@ try {
       assert.equal(await page.evaluate(() => actionActor.intent.jump), false);
       entry.checks.push('native-taps-and-DOM-touch-repress-reach-actual-Actor-Runner-Character-once');
       }
-      await runTouchTransitionCases({
-        page, context, cdp, engineName, gesture, entry, report, negativeControl,
-      });
       if (!focusedOnly && !negativeControl) {
         const previousViewport=page.viewportSize();
         try {
@@ -496,6 +493,11 @@ try {
         entry.checks.push('portrait-guard-visible-native-DOM-routing-neutral-landscape-restored');
       }
       await page.screenshot({ path: path.join(evidence, engineName + '-tablet-controls.png') });
+      // Transition coverage ends by destroying MobileInput; run it after every
+      // probe that requires the live overlay, retaining its destruction checks.
+      await runTouchTransitionCases({
+        page, context, cdp, engineName, gesture, entry, report, negativeControl,
+      });
     } finally { await context.close(); }
   }
   assert.deepEqual(errors, []); report.status = 'passed';

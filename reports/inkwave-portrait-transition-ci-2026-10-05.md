@@ -11,3 +11,7 @@ The canonical browser runner was attempted locally with only its output-root ass
 ## Native touch protocol follow-up
 
 Run 37270065126 exposed the case's duplicate cleanup touchEnd. The case now tracks only successfully established active sequences, clears that state after end/cancel, and ends from finally only when still active. Cleanup errors remain visible; when an assertion already failed, an AggregateError retains that original failure as its cause and first error instead of replacing it. Contract/protocol tests: 15/15, including double-end prevention, stale-move rejection and failure-preservation controls. Gesture assertions and production code are unchanged. System Chromium was also retried locally and failed at its process-singleton socket with EPERM, so browser validation still belongs to CI.
+
+## Live-overlay probe ordering
+
+Run 37270951720 passed the repaired transition/protocol case, then timed out in the new portrait-overlay visibility probe. That probe followed runTouchTransitionCases, whose final invariant intentionally calls mobile.destroy and proves the root stays removed. The runner now executes the portrait probe before the destructive transition suite. All visibility, neutral-input, fresh-landscape-edge, repeated transition, and post-destroy checks remain intact. The prior failed CI is the concrete destroyed-overlay negative case; this is a verifier ordering correction, with runtime/build content unchanged. Syntax and the 15 contract/protocol controls pass locally; the real browser path remains a CI gate.
