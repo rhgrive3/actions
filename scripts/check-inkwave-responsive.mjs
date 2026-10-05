@@ -107,6 +107,7 @@ const geometry = async (page, selector, label) => {
   return measurements;
 };
 const tap = async (page, selector) => { const el = page.locator(selector).first(); await el.scrollIntoViewIfNeeded(); await el.tap(); };
+const activeCodeInput = page => page.locator('.iw-screen:not(.is-leaving) .iw-code-input').first();
 const engines = arg('--engine') ? [arg('--engine')] : ['chromium', 'webkit'];
 try {
   for (const engineName of engines) {
@@ -123,6 +124,7 @@ try {
       const entry = { engine: engineName, browserVersion: context.browser()?.version(), viewport: config.viewport, name, screens: {} };
       result.cases.push(entry);
       const page = context.pages()[0] || await context.newPage();
+      const codeInput = activeCodeInput(page);
       page.on('pageerror', (e) => result.errors.push(`${engineName}/${name}: ${e.message}`));
       await page.addInitScript(() => {
         window.responsiveEvents = [];
@@ -148,7 +150,7 @@ try {
             entry.coreMenus = 'desktop-composition-passed';
             await show(page, 'online');
           }
-          entry.nativeInputHidden = await page.locator('.iw-online:not(.is-leaving) .iw-code-input').count() === 0 || !(await page.locator('.iw-online:not(.is-leaving) .iw-code-input').isVisible());
+          entry.nativeInputHidden = await codeInput.count() === 0 || !(await codeInput.isVisible());
           assert(entry.nativeInputHidden);
           const slot = page.locator('.iw-code__box').first(); await slot.click();
           await page.keyboard.type('bc'); await page.keyboard.press('Backspace');
@@ -171,14 +173,15 @@ try {
         entry.screens.online = await geometry(page, '.iw-code-input, .iw-join__btns button, .iw-hubcard--create, .iw-hub__chip, .iw-online .iw-backbtn', 'online');
         await page.screenshot({ path: path.join(evidence, `${engineName}-${name}-online.png`) });
         if (audit) continue;
-        await tap(page, '.iw-online:not(.is-leaving) .iw-code-input');
-        assert.equal(await page.locator('.iw-online:not(.is-leaving) .iw-code-input').evaluate((el) => document.activeElement === el), true);
-        await page.locator('.iw-online:not(.is-leaving) .iw-code-input').fill('bc');
-        await page.locator('.iw-online:not(.is-leaving) .iw-code-input').press('Backspace');
-        assert.equal(await page.locator('.iw-online:not(.is-leaving) .iw-code-input').inputValue(), 'B');
-        await page.locator('.iw-online:not(.is-leaving) .iw-code-input').fill('BO1-C');
-        assert.equal(await page.locator('.iw-online:not(.is-leaving) .iw-code-input').inputValue(), 'BC');
-        await page.locator('.iw-online:not(.is-leaving) .iw-code-input').fill('BC234');
+        await codeInput.scrollIntoViewIfNeeded();
+        await codeInput.tap();
+        assert.equal(await codeInput.evaluate((el) => document.activeElement === el), true);
+        await codeInput.fill('bc');
+        await codeInput.press('Backspace');
+        assert.equal(await codeInput.inputValue(), 'B');
+        await codeInput.fill('BO1-C');
+        assert.equal(await codeInput.inputValue(), 'BC');
+        await codeInput.fill('BC234');
         await page.waitForTimeout(500);
         assert.equal(await page.evaluate(() => G.net.state), 'offline', 'native typing must allow correction before joining');
         await tap(page, '.iw-join__btns .is-go');
@@ -217,19 +220,19 @@ try {
         assert.equal(await page.evaluate(() => G.net.lobby.players.find((p) => p.you).ready), true);
         await page.evaluate(() => G.net.leave());
         await show(page, 'online');
-        await page.locator('.iw-online:not(.is-leaving) .iw-code-input').fill('ZZZZZ');
+        await codeInput.fill('ZZZZZ');
         await tap(page, '.iw-join__btns .is-go');
         await page.waitForFunction(() => document.querySelector('.iw-jstat')?.classList.contains('is-on'));
-        assert.equal(await page.locator('.iw-online:not(.is-leaving) .iw-code-input').isDisabled(), false);
-        await page.locator('.iw-online:not(.is-leaving) .iw-code-input').evaluate((el) => {
+        assert.equal(await codeInput.isDisabled(), false);
+        await codeInput.evaluate((el) => {
           const clipboardData = new DataTransfer(); clipboardData.setData('text/plain', 'Join my room: BC234');
           el.dispatchEvent(new ClipboardEvent('paste', { clipboardData, bubbles: true, cancelable: true }));
         });
-        assert.equal(await page.locator('.iw-online:not(.is-leaving) .iw-code-input').inputValue(), 'BC234');
+        assert.equal(await codeInput.inputValue(), 'BC234');
         await page.waitForTimeout(500);
         assert.equal(await page.evaluate(() => G.net.state), 'error', 'native paste must wait for JOIN');
         await page.evaluate(() => menus.setInputMode('kbm'));
-        assert.equal(await page.locator('.iw-online:not(.is-leaving) .iw-code-input').isVisible(), true, 'touch device layout must survive an attached keyboard or compatibility mouse event');
+        assert.equal(await codeInput.isVisible(), true, 'touch device layout must survive an attached keyboard or compatibility mouse event');
         assert.equal(await page.locator('.iw-online').evaluate((el) => getComputedStyle(el).overflowY), 'auto');
         await page.evaluate(() => menus.setInputMode('touch'));
         await page.evaluate(() => G.net.leave());

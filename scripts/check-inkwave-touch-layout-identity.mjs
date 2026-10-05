@@ -9,9 +9,10 @@ import { fileURLToPath } from 'node:url';
 
 const option = name => { const i = process.argv.indexOf(name); assert(i >= 0 && process.argv[i + 1], 'Required ' + name); return path.resolve(process.argv[i + 1]); };
 const site = option('--site'), source = option('--source'), checkout = option('--checkout-dir'), evidence = option('--evidence-dir');
+const network = process.argv.includes('--network');
 const reliability = process.argv.includes('--reliability');
-const input = reliability ? 'reliability/input-adapter.mjs' : 'touch-layout/mobile.js';
-const relativeInput = reliability ? 'patches/reliability/input-adapter.mjs' : 'patches/touch-layout/mobile.js';
+const input = network ? 'network-replication/adapter.mjs' : reliability ? 'reliability/input-adapter.mjs' : 'touch-layout/mobile.js';
+const relativeInput = network ? 'patches/network-replication/adapter.mjs' : reliability ? 'patches/reliability/input-adapter.mjs' : 'patches/touch-layout/mobile.js';
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const physical = p => fs.existsSync(p) ? fs.realpathSync(p) : path.join(physical(path.dirname(p)), path.basename(p));
 for (const dir of [checkout, evidence]) assert(physical(dir).startsWith('/mnt/workspace/'), 'Persistent workspace required');
@@ -25,6 +26,9 @@ const sourcePath = key => {
   if (key.startsWith('touch-layout/')) return ['patches/touch-layout/' + key.slice(13), path.join(repo, 'patches/touch-layout', key.slice(13))];
   if (key.startsWith('reliability/')) return ['patches/reliability/' + key.slice(12), path.join(repo, 'patches/reliability', key.slice(12))];
   if (key.startsWith('local-quality/')) return ['patches/local-quality/' + key.slice(14), path.join(repo, 'patches/local-quality', key.slice(14))];
+  if (key.startsWith('network-replication/')) return ['patches/network-replication/' + key.slice(20), path.join(repo, 'patches/network-replication', key.slice(20))];
+  if (key.startsWith('loading-cache/')) return ['patches/loading-cache/' + key.slice(14), path.join(repo, 'patches/loading-cache', key.slice(14))];
+  if (key.startsWith('practice-range/')) return ['patches/practice-range/' + key.slice(15), path.join(repo, 'patches/practice-range', key.slice(15))];
   throw new Error('Unknown input ' + key);
 };
 for (const [key, expected] of Object.entries(identity.files)) {
@@ -44,7 +48,8 @@ execFileSync('git', ['-c', 'user.name=INKWAVE Test', '-c', 'user.email=inkwave-t
 const changed = path.join(checkout, relativeInput);
 fs.appendFileSync(changed, '\n// Deliberately uncommitted identity-test input.\n');
 identity.files[input] = hash(fs.readFileSync(changed));
-if (reliability) identity.build.reliability['input-adapter.mjs'] = identity.files[input];
+if (network) identity.build.network['adapter.mjs'] = identity.files[input];
+else if (reliability) identity.build.reliability['input-adapter.mjs'] = identity.files[input];
 else identity.build.touchLayout['mobile.js'] = identity.files[input];
 identity.inputHash = hash(JSON.stringify(identity.files));
 const candidate = path.join(checkout, 'candidate-site'); fs.mkdirSync(candidate);
@@ -54,7 +59,7 @@ const check = spawnSync(process.execPath, [path.join(checkout, 'scripts/check-in
   '--evidence-dir', evidence, '--profile-dir', path.join(checkout, 'browser-profile'), '--exact-source'], { encoding: 'utf8', timeout: 30000 });
 assert.notEqual(check.status, 0, 'Dirty editor must fail exact-source verification');
 assert(check.stderr.includes('Build input differs from commit: ' + relativeInput), 'Reject the dirty overlay specifically');
-const result = { status: 'passed', regression: 'uncommitted-' + (reliability ? 'reliability-overlay' : 'touch-editor') + '-rejected-despite-forged-input-hash', fixtureCommit: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: checkout, encoding: 'utf8' }).trim(), productCommitAttested: false };
-const file = path.join(evidence, (reliability ? 'reliability' : 'touch-layout') + '-identity-result.json');
+const result = { status: 'passed', regression: 'uncommitted-' + (network ? 'network-overlay' : reliability ? 'reliability-overlay' : 'touch-editor') + '-rejected-despite-forged-input-hash', fixtureCommit: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: checkout, encoding: 'utf8' }).trim(), productCommitAttested: false };
+const file = path.join(evidence, (network ? 'network' : reliability ? 'reliability' : 'touch-layout') + '-identity-result.json');
 fs.writeFileSync(file + '.writing', JSON.stringify(result, null, 2)); fs.renameSync(file + '.writing', file);
 console.log(JSON.stringify(result));

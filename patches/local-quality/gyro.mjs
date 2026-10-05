@@ -1,6 +1,9 @@
+import { getPlatformLifecycle } from './platform-lifecycle.mjs';
+import { GyroPermission, gyroStatusMessage } from './gyro-permission.mjs';
 // Sensor reliability overlay. All angles in the original processing pipeline
 // remain radians; motion events are only admitted while attitude agrees.
-// No new aiming deadzone, sensitivity curve, permission prompt, or input API.
+// Existing Android/quaternion math is unchanged. Permission and page lifetime
+// are integrated here, rather than stacking another sensor wrapper.
 const INSTALL = Symbol.for('inkwave.local-quality.gyro.v1');
 const RAD = Math.PI / 180;
 const zeros = () => ({ n: 0, a: 0, b: 0, ra: 0, rb: 0 });
@@ -17,7 +20,6 @@ function fallback(g, reason) {
 }
 export function gyroRateTrusted(g, rate, time) {
   const s = state(g), age = time - s.orientationTime;
-  // No unbounded dead reckoning through a suspended attitude stream.
   if (!(age >= 0 && age <= 75)) return false;
   const a = rate.alpha, b = rate.beta, c = rate.gamma;
   const k = g._rrScale * RAD;
@@ -25,17 +27,51 @@ export function gyroRateTrusted(g, rate, time) {
   const y = (g._src === 'rrA' ? c : b) * k;
   const z = (g._src === 'rrA' ? a : c) * k;
   const [ox, oy, oz] = s.rate, speed = Math.hypot(ox, oy, oz);
-  // This is an attitude consistency check, NOT a look deadzone. Arbitrarily
-  // slow real orientation changes still take the unchanged quaternion path.
   if (speed <= 1e-8) return Math.hypot(x, y, z) <= 1e-8;
   return Math.hypot(x - ox, y - oy, z - oz) <= Math.max(.025, speed * .3);
 }
-export function installGyroQuality(Gyro, getScreenAngle, isAndroid = () => /Android/i.test(globalThis.navigator?.userAgent || '')) {
+export function installGyroQuality(Gyro, getScreenAngle, isAndroid = () => /Android/i.test(globalThis.navigator?.userAgent || ''), env = globalThis) {
   const P = Gyro.prototype;
   if (Object.hasOwn(P, INSTALL)) return;
   Object.defineProperty(P, INSTALL, { value: true });
   const start = P.start, stop = P.stop, resync = P.resync;
   const orientation = P._orientation, motion = P._motion, calibrate = P._calibrate;
+  const lifecycle = getPlatformLifecycle(env);
+  const accessFor = g => {
+    if (g._platformGyroAccess) return g._platformGyroAccess;
+    const access = g._platformGyroAccess = new GyroPermission(env, lifecycle);
+    g.supported = access.capability.supported;
+    const halt = () => {
+      stop.call(g); g.resync(); g.working = false;
+      access.stopListening('suspend'); access.cancelRequest();
+    };
+    access.unsubscribeLifecycle = lifecycle.subscribe({
+      suspend: halt,
+      resume: () => { if (access.wanted && access.allowed) g.start(); else access.stopListening(); },
+      blur: () => g.resync(),
+      screen: () => screenChanged(g),
+    });
+    return access;
+  };
+  P.request = function () {
+    const access = accessFor(this);
+    const promise = access.request();
+    return promise.then(ok => { this.granted = access.allowed; return ok; });
+  };
+  Object.defineProperty(P, 'needsPermission', { configurable: true,
+    get() { return accessFor(this).needsPermission; } });
+  Object.defineProperty(P, 'platformStatus', { configurable: true,
+    get() { return accessFor(this).snapshot(); } });
+  P.statusMessage = function () {
+    return gyroStatusMessage(accessFor(this).snapshot(), env.document?.documentElement?.lang || 'en');
+  };
+  P.onPlatformStatus = function (callback) { return accessFor(this).subscribe(callback); };
+  P.disposePlatform = function () {
+    const access = this._platformGyroAccess;
+    stop.call(this); this.resync(); this.working = false;
+    access?.unsubscribeLifecycle?.(); access?.dispose();
+  };
+
   const screenChanged = g => {
     const s = state(g), value = Number(getScreenAngle()) || 0;
     if (s.screen === null) { s.screen = value; return false; }
@@ -50,17 +86,29 @@ export function installGyroQuality(Gyro, getScreenAngle, isAndroid = () => /Andr
     fallback(this, 'resync');
   };
   P.start = function () {
-    if (this.enabled || !this.supported) return start.call(this);
+    const access = accessFor(this);
+    if (access.disposed) return false;
+    access.wanted = true;
+    if (!lifecycle.active || !access.allowed) return false;
+    if (this._platformCanStart && !this._platformCanStart()) { access.stopListening(); return false; }
+    if (this.enabled) return true;
+    this.supported = access.capability.supported;
     this.resync(); state(this).screen = Number(getScreenAngle()) || 0;
-    return start.call(this);
+    this._platformSensorStart = env.performance.now();
+    try { start.call(this); }
+    catch (error) {
+      stop.call(this); access.availability = 'unavailable';
+      access.reason = 'sensor-start-error'; access.notify(); return false;
+    }
+    access.beginListening(); return this.enabled;
   };
   P.stop = function () {
-    const result = stop.call(this); this.resync(); return result;
+    const access = accessFor(this); access.wanted = false;
+    access.cancelRequest(false); access.stopListening();
+    const result = stop.call(this); this.resync(); this.working = false; return result;
   };
   P._calibrate = function (x, y, z, time) {
     const s = state(this); s.rate[0] = x; s.rate[1] = y; s.rate[2] = z; s.orientationTime = time;
-    // Android keeps the already-screen-corrected quaternion source. Raw gyro
-    // bias must not become permanent camera velocity after one good turn.
     if (isAndroid()) { if (this._src !== 'ori') fallback(this, 'android-attitude'); return; }
     if (this._src !== 'ori' && this._rr) {
       const r = { alpha: this._rr[0], beta: this._rr[1], gamma: this._rr[2] };
@@ -69,19 +117,24 @@ export function installGyroQuality(Gyro, getScreenAngle, isAndroid = () => /Andr
     return calibrate.call(this, x, y, z, time);
   };
   P._orientation = function (e) {
-    if (!this.enabled || !finiteEvent(e, ['alpha', 'beta', 'gamma'])) return;
+    if (!this.enabled || !lifecycle.active || !finiteEvent(e, ['alpha', 'beta', 'gamma'])) return;
     screenChanged(this);
-    const t = e.timeStamp || performance.now();
+    const t = e.timeStamp || env.performance.now();
     if (!Number.isFinite(t)) return;
+    if (t < this._platformSensorStart && this._platformSensorStart - t < 3600000) return;
     if (this._hasQ && (t < this._tQ || t - this._tQ > 500)) this.resync();
+    accessFor(this).sample(t);
     if (isAndroid() && this._src !== 'ori') fallback(this, 'android-attitude');
     return orientation.call(this, e);
   };
   P._motion = function (e) {
-    if (!this.enabled || !finiteEvent(e.rotationRate, ['alpha', 'beta', 'gamma'])) return;
+    if (!this.enabled || !lifecycle.active || !finiteEvent(e.rotationRate, ['alpha', 'beta', 'gamma'])) return;
+    if (accessFor(this).motionPermission === 'denied') return;
     screenChanged(this);
-    const t = e.timeStamp || performance.now();
+    const t = e.timeStamp || env.performance.now();
     if (!Number.isFinite(t)) return;
+    if (t < this._platformSensorStart && this._platformSensorStart - t < 3600000) return;
+    if (this._tRR && (t < this._tRR || t - this._tRR > 500)) this.resync();
     if (this._src !== 'ori' && (isAndroid() || !gyroRateTrusted(this, e.rotationRate, t))) fallback(this, 'untrusted-motion');
     return motion.call(this, e);
   };

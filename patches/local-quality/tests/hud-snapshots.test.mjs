@@ -1,3 +1,4 @@
+import {pathToFileURL} from 'node:url';
 import {test} from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import vm from 'node:vm';import path from 'node:path';
 import {teamHudSnapshot,hudFrameSnapshot} from '../hud-snapshots.mjs';import {adaptQualitySource} from '../adapter.mjs';
 import {adaptSource} from '../../splatoon3/adapter.mjs';import {adaptTouchLayout} from '../../touch-layout/adapter.mjs';import {adaptReliability} from '../../reliability/adapter.mjs';import {fixture} from '../../splatoon3/tests/source-fixture.mjs';
@@ -38,10 +39,10 @@ test('#510 adapters reject missing/duplicate source connections and preserve unr
  const rel='src/game/match.js',s=raw(rel);assert.throws(()=>compose(rel,s.replace('  teamSummary() {','  lost() {')));assert.throws(()=>compose(rel,s+s));assert.equal(adaptQualitySource('unrelated.txt','same'),'same');
 });
 test('#510 emitted full Game/Match modules preserve reusable transport and live scalar updates',{skip:!process.env.INKWAVE_HUD_SNAPSHOT_SITE},async()=>{
- const site=path.resolve(process.env.INKWAVE_HUD_SNAPSHOT_SITE),mods=new Map(),context=vm.createContext({console,performance,URLSearchParams,location:{search:""},innerWidth:800,innerHeight:600});
+ const site=path.resolve(process.env.INKWAVE_HUD_SNAPSHOT_SITE),mods=new Map(),context=vm.createContext({console,performance,URL,URLSearchParams,location:{search:""},innerWidth:800,innerHeight:600});
  function load(file){if(mods.has(file))return mods.get(file);let code=fs.readFileSync(file,'utf8');if(file===path.join(site,'src/main.js')){
   const boot=/const ([\w$]+)=new ([\w$]+);\1\.boot\(\)\.catch\([\s\S]*$/;const hit=code.match(boot);assert.ok(hit,'unique production auto-boot tail');code=code.replace(boot,`export { ${hit[2]} as Game };`);
- }const m=new vm.SourceTextModule(code,{context,identifier:file});mods.set(file,m);return m;}
+ }const m=new vm.SourceTextModule(code,{context,identifier:file,initializeImportMeta(meta){meta.url=pathToFileURL(file).href;}});mods.set(file,m);return m;}
  const main=load(path.join(site,'src/main.js'));await main.link((s,m)=>load(s==='three'?path.join(site,'vendor/three/build/three.module.js'):s.startsWith('three/addons/')?path.join(site,'vendor/three/jsm',s.slice('three/addons/'.length)):path.resolve(path.dirname(m.identifier),s)));await main.evaluate();
  const f=await setup(),G=mods.get(path.join(site,'src/core/ctx.js')).namespace.G;G.camera=f.G.camera;G.teamHex=f.G.teamHex;
  const Match=mods.get(path.join(site,'src/game/match.js')).namespace.Match;f.m.teamSummary=Match.prototype.teamSummary;f.game._updateHud=main.namespace.Game.prototype._updateHud;

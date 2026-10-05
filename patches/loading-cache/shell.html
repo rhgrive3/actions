@@ -1,0 +1,20 @@
+<style>
+#inkwave-startup-shell{position:fixed;inset:0;z-index:51;display:grid;place-content:center;gap:16px;padding:24px;background:#101018;color:#fff;font:16px/1.65 system-ui,-apple-system,sans-serif;text-align:center}
+#inkwave-startup-shell[hidden],#inkwave-startup-retry[hidden],#inkwave-cache-status[hidden]{display:none}
+#inkwave-startup-shell h1{font-size:clamp(32px,8vw,56px);line-height:1.1;letter-spacing:.04em;margin:0}
+#inkwave-startup-shell p{margin:0;max-width:36em}
+#inkwave-startup-retry{color:#b6f477;min-height:44px;display:grid;place-items:center}
+#inkwave-cache-status{position:fixed;bottom:max(8px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);z-index:45;max-width:90vw;box-sizing:border-box;padding:6px 12px;border-radius:8px;background:#101018ed;color:#fff;font:14px/1.5 system-ui;pointer-events:none}
+</style>
+<section id="inkwave-startup-shell" aria-label="INKWAVE 起動中">
+<h1>INKWAVE</h1><p id="inkwave-startup-status" role="status">ゲームを準備しています…</p>
+<a id="inkwave-startup-retry" href="" hidden>もう一度開く</a>
+<noscript>このゲームにはJavaScriptが必要です。</noscript>
+</section>
+<p id="inkwave-cache-status" role="status" hidden></p>
+<script>
+try { performance.mark('inkwave:shell-script'); } catch {}
+if (navigator.onLine === false) document.getElementById('inkwave-startup-status').textContent = 'オフラインです。保存済みデータを確認しています。';
+// An empty href resolves against the revision base; use the actual document URL for explicit manual retry.
+document.getElementById('inkwave-startup-retry').href = location.href;
+</script>

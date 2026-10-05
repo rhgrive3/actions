@@ -12,6 +12,8 @@ const wrap = (x, period = TAU) => ((x % period) + period) % period;
 export const SWIM_MOTION_CALIBRATION = Object.freeze({
   speedReference: 11, speedFollow: 16, headingFollow: 10, poseFollow: 26,
   bankFollow: 6, bankScale: .08, bankLimit: .5,
+  // A resting squid sinks fully under its ink; swimming rises to the glide.
+  restDepth: .19, surfacePower: .35, sinkFollow: 6,
   status: 'visual calibration; original swim joint curves and wave rates unknown',
 });
 
@@ -47,7 +49,7 @@ function eligible(ch, s, owner) {
 function makeState(ch, owner, THREE) {
   const c = SWIM_MOTION_CALIBRATION, power = clamp(ch.hs / c.speedReference);
   const pivot = ch.squid.pivot, time = ch.t;
-  return { active: true, applied: false, owner, age: 0, power,
+  return { active: true, applied: false, owner, age: 0, power, sink: 0,
     yaw: ch.yaw + ch.sqYaw, bank: ch.sqRoll,
     bodyPhase: wrap(time * (5 + 9 * power)),
     swayPhase: wrap(time * (4 + 7 * power)),
@@ -103,7 +105,12 @@ function advance(ch, m, dt, s) {
   ch.model.getWorldQuaternion(m.modelQuaternion);
   m.targetQuaternion.premultiply(m.modelQuaternion.invert());
   m.quaternion.copy(m.modelQuaternion).multiply(m.worldQuaternion);
-  m.targetPosition.set(0, -.085 + .012 * Math.sin(m.heightPhase), 0);
+  // Nintendo's footage shows a squid resting in its own ink as hidden under the
+  // surface (only a ripple), and a mound while it swims. The native glide keeps
+  // the mantle back ~0.1 above the ink even at rest. Sink with falling speed.
+  const surface = clamp(m.power / c.surfacePower);
+  m.sink += (c.restDepth * (1 - surface * surface * (3 - 2 * surface)) - m.sink) * -Math.expm1(-c.sinkFollow * dt);
+  m.targetPosition.set(0, -.085 + .012 * Math.sin(m.heightPhase) - m.sink, 0);
   m.offset.set(0, -.12, 0).applyQuaternion(m.targetQuaternion);
   m.targetPosition.add(m.offset);
   m.position.lerp(m.targetPosition, poseK);

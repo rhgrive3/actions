@@ -52,6 +52,8 @@ test('emitted complete Match module contains the production passive path', {skip
  const root=load(path.join(site,'src/game/match.js'));await root.link((spec,from)=>load(spec==='three'?path.join(site,'vendor/three/build/three.module.js'):path.resolve(path.dirname(from.identifier),spec)));await root.evaluate();
  const m=Object.assign(Object.create(root.namespace.Match.prototype),match(),{stateT:0,setState(s){this.state=s;}});
  m.actors.forEach((a,i)=>{a.pos={x:i*3,y:0,z:0};a.update=()=>{};});m.update(1);assert.equal(m.actors[0].special,3.26);
+ for(const range of [true,false,true]){const next=Object.assign(Object.create(root.namespace.Match.prototype),match(3),{opts:{range},stateT:0,setState(s){this.state=s;}});next.actors.forEach((a,i)=>{a.pos={x:i*3,y:0,z:0};a.update=()=>{};if(a.team===1)a.rangeTarget={index:i};});for(let i=0;i<60;i++)next.update(1/60);assert.ok(Math.abs(next.actors[0].special-(range?0:7.59))<1e-10,`emitted range=${range} reentry`);}
+
 });
 test('actual gear panel exposes Tenacity once, only on head main, and persists through existing storage handler',()=>{
  const source=adaptQualitySource('patches/splatoon3/runtime/gear.mjs',fs.readFileSync('patches/splatoon3/runtime/gear.mjs','utf8'));
@@ -63,4 +65,17 @@ test('actual gear panel exposes Tenacity once, only on head main, and persists t
  new Menus()._scr_loadout();const selects=elements.filter(n=>n.tag==='select');assert.equal(selects.length,12);
  for(const [i,s]of selects.entries())assert.equal(s.children.filter(n=>n.value==='tenacity').length,i===0?1:0);
  selects[0].value='tenacity';selects[0].handlers.change();const loadout=JSON.parse(saved.get('inkwave.splatoon3.gear.v1'));assert.equal(loadout[0].main,'tenacity');assert.equal(context.gear.normalizeLoadout(loadout)[0].main,'tenacity');
+});
+
+test('Practice Range dummy population never earns Tenacity and reentry does not alter battle ownership',()=>{
+ const raw=fs.readFileSync('inkwave-public/src/game/match.js','utf8'),source=adaptQualitySource('src/game/match.js',raw),start=source.indexOf('  update(dt) {'),end=source.indexOf('\n  updateController',start);
+ const events=[],Native=vm.runInNewContext(`class Match {${source.slice(start,end)}};Match`,{G:{},emit:(...x)=>events.push(x),advanceTenacity,sampleTeamWipes,PLAYER:{radius:.3},MATCH:{finalCountdown:10},Math});
+ for(const range of [true,false,true]){const m=Object.assign(new Native(),match(3),{opts:{range},stateT:0,setState(s){this.state=s;}});m.actors.forEach((a,i)=>{a.pos={x:i*3,y:0,z:0};a.update=()=>{};if(a.team===1)a.rangeTarget={index:i};});for(let i=0;i<60;i++)m.update(1/60);assert.ok(Math.abs(m.actors[0].special-(range?0:7.59))<1e-10);}
+ assert.equal(events.length,0);
+ const remote=match(3);remote.actors[0].remote=true;advanceTenacity(remote,1,()=>{});assert.equal(remote.actors[0].special,0);
+});
+test('negative control without the range gate awards passive points for training targets',()=>{
+ const source=fs.readFileSync('patches/local-quality/tenacity.mjs','utf8');assert(source.includes(' || match.opts?.range'));
+ const old=vm.runInNewContext(source.replace(' || match.opts?.range','').replaceAll('export ','')+';advanceTenacity');
+ const m=Object.assign(match(3),{opts:{range:true}});old(m,1,()=>{});assert.equal(m.actors[0].special,7.59);
 });

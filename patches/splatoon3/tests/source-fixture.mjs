@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { adaptSource } from '../adapter.mjs';
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const UPSTREAM = process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
-export async function fixture({ adaptRuntime = (_rel, source) => source } = {}) {
+export async function fixture({ adapt = adaptSource, adaptRuntime = (_rel, source) => source } = {}) {
   const context = vm.createContext({ console, performance });
   const modules = new Map();
   function resolve(spec, from) {
@@ -21,7 +21,7 @@ export async function fixture({ adaptRuntime = (_rel, source) => source } = {}) 
   function load(file) {
     if (modules.has(file)) return modules.get(file);
     const relative = path.relative(UPSTREAM, file);
-    const native = file.startsWith(UPSTREAM + path.sep) ? adaptSource(relative, fs.readFileSync(file, 'utf8')) : fs.readFileSync(file, 'utf8');
+    const native = file.startsWith(UPSTREAM + path.sep) ? adapt(relative, fs.readFileSync(file, 'utf8')) : fs.readFileSync(file, 'utf8');
     const source = file.startsWith(UPSTREAM + path.sep) ? native : adaptRuntime(path.relative(ROOT, file), native);
     const mod = new vm.SourceTextModule(source, { context, identifier: file }); modules.set(file, mod); return mod;
   }
@@ -34,12 +34,15 @@ export async function fixture({ adaptRuntime = (_rel, source) => source } = {}) 
     export * from './inkwave-public/src/game/player.js';
     export * from './inkwave-public/src/core/shadowcache.js';
     export * as THREE from 'three';
+    export const VM_MATH = Math;
     export * from './patches/splatoon3/runtime/movement.mjs';
     export * from './patches/splatoon3/runtime/weapons.mjs';
     export * from './patches/splatoon3/runtime/gear.mjs';
     export * from './patches/splatoon3/runtime/flow.mjs';
     export * from './patches/splatoon3/runtime/resources.mjs';
     export * from './patches/splatoon3/runtime/render.mjs';
+    export * from './patches/splatoon3/runtime/sub-special-fidelity.mjs';
+    export const TEST_MATH = Math;
   `, { context, identifier: path.join(ROOT, 'fixture.mjs') });
   await root.link((spec, from) => load(resolve(spec, from.identifier))); await root.evaluate();
   const api = { ...root.namespace }, { G, THREE, PLAYER, WEAPONS, SUB, SPECIALS } = api;
@@ -69,5 +72,12 @@ export async function fixture({ adaptRuntime = (_rel, source) => source } = {}) 
     return a;
   }
   function tick(a, frames = 1) { for (let i = 0; i < frames; i++) { G.time += 1 / 60; a.update(1 / 60); } }
-  return { ...api, profile, make, tick, shots };
+  const originalRandom = vm.runInContext('Math.random', context);
+  function setRandom(random) {
+    context.__inkwaveTestRandom = random;
+    vm.runInContext('Math.random = globalThis.__inkwaveTestRandom', context);
+    delete context.__inkwaveTestRandom;
+  }
+  function restoreRandom() { setRandom(originalRandom); }
+  return { ...api, profile, make, tick, shots, setRandom, restoreRandom };
 }

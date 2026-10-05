@@ -49,7 +49,7 @@ test('#467 ground speed and inherited takeoff momentum are retained',async()=>{
 });
 test('#467 attack, ready, special, squid, and action-specific owners keep prior multipliers',async()=>{
  const f=await fixture();
- const cases=[['shooter',r=>r.firingT=1],['charger',r=>r.charging=true],['splatling',r=>r.charging=true],['splatling',r=>r.streaming=true],['roller',r=>r.rolling=true],['roller',r=>r.flick=.1],['roller',r=>r.flickRecover=.1],['slosher',r=>r.slosh=.1],['shooter',r=>r.aimingSub=true],['shooter',r=>r.a.specialActive={id:'storm'}],['shooter',r=>r.a.superJumpState={phase:'flight'}],['shooter',r=>r.a.form='squid']];
+ const cases=[['shooter',r=>r.firingT=1],['charger',r=>r.charging=true],['splatling',r=>r.charging=true],['splatling',r=>r.streaming=true],['roller',r=>r.flick=.1],['roller',r=>r.flickRecover=.1],['slosher',r=>r.slosh=.1],['shooter',r=>r.aimingSub=true],['shooter',r=>r.a.specialActive={id:'storm'}],['shooter',r=>r.a.superJumpState={phase:'flight'}],['shooter',r=>r.a.form='squid']];
  for(const[kind,configure]of cases){const a=equip(f,kind,57),r=a.weaponRunner;configure(r);const grounded=r.moveSpeed();a.grounded=false;close(r.moveSpeed(),grounded);}
 });
 test('#467 ordinary air leaves the existing independent Flow multiplier unchanged',async()=>{
@@ -57,4 +57,10 @@ test('#467 ordinary air leaves the existing independent Flow multiplier unchange
  for(const p of [a,b]){p.grounded=false;p.s3.flow.active=true;}
  close(a.weaponRunner.moveSpeed(),b.weaponRunner.moveSpeed());
  close(a.weaponRunner.moveSpeed(),f.PLAYER.runSpeed*f.profile.flow.runMultiplier);
+});
+
+test('#467 roller ground profile stays ground-only while the airborne fallback ignores run AP',async()=>{
+ const f=await fixture();for(const points of [0,57]){const a=equip(f,'roller',points),r=a.weaponRunner;r.rolling=true;r.rollT=0;
+  close(r.moveSpeed(),a.weapon.rollBaseSpeed??a.weapon.rollSpeed);a.grounded=false;close(r.moveSpeed(),f.PLAYER.runSpeed);
+ }
 });

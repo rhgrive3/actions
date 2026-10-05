@@ -65,8 +65,28 @@ function contact(api,ch,plantedOnly=false){
   const normal=new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0),f.cn)
    .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),f.cyaw));
   const expected=new THREE.Vector3(0,ay,az).applyQuaternion(normal).add(f.cw);
-  const error=ch.bones[i===0?'footL':'footR'].getWorldPosition(new THREE.Vector3()).distanceTo(expected);
-  assert.ok(error<.001,'drawn ankle follows its native heel/toe pivot: '+error);
+  const actual=ch.bones[i===0?'footL':'footR'].getWorldPosition(new THREE.Vector3());
+  const error=actual.distanceTo(expected);
+  const poseWeight=ch.P[i===0?C.WPL:C.WPR], contactWeight=poseWeight*ch.plantW*(ch.feetValid?1:0);
+  const localTarget=(i===0?ch._fL:ch._fR).clone(),targetWorld=localTarget.clone().applyMatrix4(ch.kid.matrixWorld);
+  const leg=i===0?ch.limbs.legL:ch.limbs.legR,parentPos=new THREE.Vector3(),parentQ=new THREE.Quaternion();
+  ch._kidXform(leg.up.parent,parentPos,parentQ);
+  const hipKid=leg.up.position.clone().applyQuaternion(parentQ).add(parentPos);
+  const targetDist=hipKid.distanceTo(localTarget),dmax=(leg.a+leg.b)*.9995;
+  const invKid=ch.kid.matrixWorld.clone().invert(),expectedLocal=expected.clone().applyMatrix4(invKid);
+  const ex=expectedLocal.x-hipKid.x,ey=expectedLocal.y-hipKid.y,ez=expectedLocal.z-hipKid.z;
+  const expectedDist=Math.hypot(ex,ey,ez),expectedHorizontal=Math.hypot(ex,ez);
+  const rootFoot=Math.hypot(f.pw.x-ch.root.position.x,f.pw.z-ch.root.position.z);
+  assert.ok(error<.001,'drawn ankle follows its native heel/toe pivot: '+error+
+    ' weight='+contactWeight+' poseWeight='+poseWeight+' plantW='+ch.plantW+
+    ' ikErr='+ch.ikErr[i+2]+' legReach='+ch.legReach+
+    ' contactToTarget='+expected.distanceTo(targetWorld)+' targetToDrawn='+targetWorld.distanceTo(actual)+
+    ' targetDist='+targetDist+' dmax='+dmax+' expectedDist='+expectedDist+
+    ' expectedHorizontal='+expectedHorizontal+' expectedVertical='+Math.abs(ey)+' rootFoot='+rootFoot+
+    ' hipKid='+hipKid.toArray().join(',')+' root='+ch.root.position.toArray().join(',')+
+    ' kidScale='+ch.kid.scale.toArray().join(',')+
+    ' localTarget='+localTarget.toArray().join(',')+' targetWorld='+targetWorld.toArray().join(',')+
+    ' actual='+actual.toArray().join(',')+' expected='+expected.toArray().join(','));
   assert.ok(ch.ikErr[i+2]<1e-6,'native planted leg is reachable');
  }
  const mesh=ch.lodSets[ch.lod.tier].list.find(m=>m.isSkinnedMesh&&m.geometry.index);
