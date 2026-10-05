@@ -234,3 +234,17 @@ cloud/Halyard cube allocation at default high settings, not only after later
 runtime refresh. Existing formats, appearance policy and gameplay stay intact.
 These are project resource dimensions, not Nintendo/Switch memory values.
 See [the cold-boot budget report](inkwave-cold-boot-budgets-2026-10-04.md).
+
+## 2026-10-05: TV/テーブルトップと携帯モードの独立エイム設定プロファイル (#503)
+
+Splatoon 3 (Ver. 11.3.0) のオプション設定では、「TV/テーブルトップモード」と「携帯モード」でエイム操作設定が独立して保持される。
+公開版 INKWAVE では `inkwave.settings` に単一のフラットな設定オブジェクトしかなく、TV・携帯の区分が保持されていなかったため、コントローラーとタッチ／端末保持の間で異なる感度や反転設定を維持できなかった。
+
+| 項目 | 内容 |
+|---|---|
+| 本家の根拠 | [Inkipedia — Options](https://splatoonwiki.org/wiki/Options)（S2/S3 の TV/Tabletop Mode と Handheld Mode で Motion-Control Sensitivity, Right Stick Sensitivity, Right Stick Up/Down, Right Stick Left/Right, Motion Controls ON/OFF が独立保持）、[Nintendo Support Ver. 11.3.0](https://en-americas-support.nintendo.com/app/answers/detail/a_id/59461/)、[Nintendo JP ジャイロQA](https://www.nintendo.com/jp/games/feature/splatoonqa/other/gyro/index.html)。未公開の角速度・回転定数は創作しない |
+| INKWAVE の実装箇所 | build-only `patches/local-quality/aim-profile.mjs` および `aim-profile-adapter.mjs`（`patches/local-quality/adapter.mjs` に登録）。`src/config.js` に `aimProfile` および `aimProfiles: { tv, handheld }` を追加。`src/main.js` の `migrateAimProfiles` で既存フラット保存値を両プロファイルへ決定論的移行（ユーザー設定値保持）。`src/ui/menus.js` でモード選択（TV/テーブルトップ vs 携帯）を提供しプロファイル別設定・UI 反映を同期。`src/game/player.js` でスティック左右反転（invertX）適用とタッチ切り替え時の残留ジャイロ破棄。`src/core/mobile.js` でジャイロ軸反転非公開（#439 互換）とプロファイル更新時のリセットを保証。生の `inkwave-public/` は変更しない |
+| 再現操作 | 修正前: タッチジャイロ感度やコントローラー感度を変更すると単一のキー（`gyroSens`, `padSensitivity`）が上書きされ、端末切り替えや操作形態変更時に別プロファイルの復元が不可能。修正後: TV/テーブルトップと携帯モードを独立設定でき、一方の変更が他方に波及せず、localStorage への再読み込み後も両プロファイルが保持される |
+| プレイへの影響 | モード切替時にプレイヤーが意図した感度・反転（上下／左右）が正確に適用される。ブラウザ環境では端末形状から物理 Nintendo プレイモードを推測できないため明示的なモード選択を提供。マウス感度・スワイプ感度・レイアウト等の非本家設定はグローバルのまま共有され、既存コード向けのフラット active 値も維持される |
+| 確認状態 | **ロジック確認済み**（`patches/local-quality/tests/aim-profile.test.mjs` 11/11 pass：レガシー移行、保存/再読込、独立プロファイル同時保持、グローバル設定共有、UI モード切替/コントロール同期、MobileInput 反映、PlayerController スティック/反転/残留ジャイロ破棄、デスクトップ/タッチ環境分離、再移行の冪等性）。**本家実機（Switch Ver. 11.3.0）との物理センサー・フレーム単位応答曲線の比較は未確認**。非公開の角速度・ゲイン定数は創作していない |
+
