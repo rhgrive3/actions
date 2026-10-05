@@ -137,8 +137,9 @@ test('#247 splatling release does not select a different enemy speed during its 
 test('#247 restores shared tuning even when movement throws, preserving other actors and dry movement', async () => {
   const f=await fixture(), a=f.make('charger'), b=f.make();equip(a,57);a.weaponRunner.charging=true;a.weaponRunner.charge=1;
   const shared=f.PLAYER.enemyInkSpeed; speed(a);close(f.PLAYER.enemyInkSpeed,shared);close(speed(b),1.44);
-  a.weaponRunner.dodgeVel=()=>{throw Error('movement probe');};
-  assert.throws(()=>a._horizontal(1/60,false,true),/movement probe/);close(f.PLAYER.enemyInkSpeed,shared);
+  const move=a.intent.move;
+  a.intent.move={get x(){throw Error('movement probe');},z:0};
+  assert.throws(()=>a._horizontal(1/60,false,true),/movement probe/);a.intent.move=move;close(f.PLAYER.enemyInkSpeed,shared);
   equip(b,57,'runSpeed');assert.ok(speed(b,false)>f.PLAYER.runSpeed);close(speed(b),1.44);
 });
 
