@@ -50,6 +50,156 @@ export function advanceFidelityProjectile(p, dt) {
 // Source records supply endpoints/counts. Added random draws are deterministic
 // under the fixture seed; the source PRNG/bias distribution is not recovered.
 function rawWeapon(w) { return completion?.weapons[w.id || w.kind]; }
+
+function seededUnit(seed, salt = 0) {
+  let x = (((Number.isFinite(seed) ? seed : 0) * 0x100000000) >>> 0) ^ (salt >>> 0);
+  x = Math.imul(x ^ (x >>> 16), 0x7feb352d);
+  x = Math.imul(x ^ (x >>> 15), 0x846ca68b);
+  return ((x ^ (x >>> 16)) >>> 0) / 0x100000000;
+}
+function seededFrames(seed, min, max, salt) {
+  min = Math.max(0, Math.round(min ?? 0)); max = Math.max(min, Math.round(max ?? min));
+  return min + Math.min(max - min, Math.floor(seededUnit(seed, salt) * (max - min + 1)));
+}
+// Current horizontal births have two disjoint, source-defined speed envelopes.
+// Nominal-speed nearest selection misclassifies slow main globs as near globs.
+// This does not recover an immutable unit after a future player-velocity addition.
+export function horizontalRollerReplayUnit(units, speed) {
+  if (units?.length !== 2 || !Number.isFinite(speed)) return null;
+  const [a, b] = units;
+  if ([a, b].some(u => !Number.isFinite(u.SpawnSpeedBase) || !Number.isFinite(u.SpawnSpeedRandom) ||
+      u.SpawnSpeedRandom < 0 || (u.AfterOffsetSpawnSpeed || 0) !== 0)) return null;
+  const alo = (a.SpawnSpeedBase - a.SpawnSpeedRandom) * 60, ahi = (a.SpawnSpeedBase + a.SpawnSpeedRandom) * 60;
+  const blo = (b.SpawnSpeedBase - b.SpawnSpeedRandom) * 60, bhi = (b.SpawnSpeedBase + b.SpawnSpeedRandom) * 60;
+  if (!(ahi < blo || bhi < alo)) return null;
+  // Distance to the intervals also handles wire rounding just outside an endpoint.
+  const da = Math.max(alo - speed, speed - ahi, 0), db = Math.max(blo - speed, speed - bhi, 0);
+  return da <= db ? a : b;
+}
+function wallDropSource(p) {
+  const w = p.s3Weapon || p.owner?.weapon;
+  if (!w) return null;
+  const raw = rawWeapon(w);
+  let move, paint;
+  if (w.kind === 'roller') {
+    // Roller wall-drop data belongs to the exact flick unit that produced the
+    // glob (horizontal main/near or one of the vertical units), not the weapon
+    // top level. configureFidelityFlick/initialize already preserve that unit.
+    const unit = p.fidelityRollerUnit?.UnitParam;
+    move = unit?.WallDropMoveParam; paint = unit?.WallDropCollisionPaintParam;
+  } else if (w.kind === 'blaster' || w.kind === 'splatling') {
+    move = raw?.WallDropMoveParam; paint = raw?.WallDropCollisionPaintParam;
+  } else return null;
+  return move && paint ? { w, move, paint } : null;
+}
+function eligibleWallDropHit(hit) {
+  if (!hit?.hit || Math.abs(hit.normal.y) >= .55) return false;
+  const level = api?.G?.physics?.level, block = level?.blocks?.[hit.block];
+  if (block?.grate || block?.solid === false) return false;
+  const face = hit.face >= 0 ? level?.faces?.[hit.face] : null;
+  return !face || face.paintable !== false;
+}
+function wallDropPaint(p, point, radius, state, salt) {
+  if (p.ghost || !(radius > 0) || !api.G.paint) return 0;
+  const area = api.G.paint.splat(point, radius, p.team, { seed: seededUnit(p.seed, salt + state.paintIndex++) });
+  if (Number.isFinite(area)) p.owner?.addTurf?.(area);
+  return area || 0;
+}
+function wallDropFallPaint(p, state, from, to) {
+  if (p.ghost || !(state.fallRadius > 0)) return;
+  const distance = from.distanceTo(to); if (distance <= EPSILON) return;
+  const spacing = state.paintSpacing;
+  let cursor = spacing - state.paintCarry;
+  while (cursor <= distance + EPSILON) {
+    state.paintPoint.copy(from).lerp(to, Math.min(1, cursor / distance));
+    wallDropPaint(p, state.paintPoint, state.fallRadius, state, 0x51f15e);
+    cursor += spacing;
+  }
+  state.paintCarry = (state.paintCarry + distance) % spacing;
+}
+
+// #519/#576/#597: the source mirror already contains the pinned S3 WallDrop
+// records (per-unit for Roller, top-level for Blaster/Splatling). Convert their
+// per-frame target speeds to this runtime's world-units/second convention, but
+// retain phase lengths in source frames. Omitted source fields retain their
+// zero/default meaning rather than inheriting a different unit's constants.
+// First/last random durations are derived from the projectile seed so local and
+// ghost playback need no packet extension and consume no extra PRNG draws.
+export function beginFidelityWallDrop(system, p, hit) {
+  const source = wallDropSource(p);
+  if (!source || !eligibleWallDropHit(hit)) return false;
+  const { move, paint } = source;
+  const firstFrames = seededFrames(p.seed, move.FallPeriodFirstFrameMin, move.FallPeriodFirstFrameMax, 0x576);
+  const lastFrames = seededFrames(p.seed, move.FallPeriodLastFrameMin, move.FallPeriodLastFrameMax, 0x597);
+  const secondFrames = Math.max(0, Math.round(move.FallPeriodSecondFrame ?? 0));
+  const firstSpeed = Number(move.FallPeriodFirstTargetSpeed ?? 0), secondSpeed = Number(move.FallPeriodSecondTargetSpeed ?? 0);
+  if (![firstSpeed, secondSpeed].every(v => Number.isFinite(v) && v >= 0)) throw new RangeError('Invalid wall-drop target speed');
+  const state = p.fidelityWallDrop = {
+    frame: 0, firstFrames, secondFrames, lastFrames, totalFrames: firstFrames + secondFrames + lastFrames, done: false,
+    firstSpeed, secondSpeed,
+    shockRadius: Number(paint.PaintRadiusShock) || 0,
+    fallRadius: Number(paint.PaintRadiusFall) || 0,
+    groundRadius: Number(paint.PaintRadiusGround) || 0,
+    paintSpacing: Math.max(.08, (Number(paint.PaintRadiusFall) || 0) * .5),
+    paintCarry: 0, paintIndex: 0,
+    hit: new api.Hit(), from: new api.THREE.Vector3(), next: new api.THREE.Vector3(), paintPoint: new api.THREE.Vector3(),
+  };
+  p.pos.copy(hit.point).addScaledVector(hit.normal, .025);
+  p.prev.copy(p.pos);
+  p.vel.set(0, -firstSpeed * 60, 0);
+  wallDropPaint(p, p.pos, state.shockRadius, state, 0x5a0c);
+  // Network ghosts are born with a catch-up budget derived from the projectile's
+  // original flight lifetime. Wall-drop can outlive that budget by 70+ source
+  // frames, so extend it at the deterministic terrain transition. The network
+  // adapter snapshots the old limit for the current catch-up loop; the next
+  // update observes this larger budget and continues the same projectile ID.
+  if (Number.isFinite(p._netMaxSteps)) {
+    p._netMaxSteps = Math.max(p._netMaxSteps, (p._netSteps || 0) + state.totalFrames + 2);
+  }
+
+  // Keep the existing Blaster terrain burst exactly once and preserve its
+  // terrain-only damage modifier; the wall-drop itself adds no HP damage.
+  if (p.type === 'blast') {
+    const before = p.s3TerrainBurst; p.s3TerrainBurst = true;
+    try { system._blastBurst(p, hit.point, null); }
+    finally { p.s3TerrainBurst = before; }
+  } else {
+    api.emit('weapon:impact', { pos: hit.point.clone(), normal: hit.normal.clone(), team: p.team, kind: p.type === 'drop' ? 'drop' : 'shot', radius: state.shockRadius });
+    api.G.fx?.burst(hit.point, hit.normal, p.owner.color, { count: 5, speed: 3, size: .07, paint: false });
+  }
+  return true;
+}
+
+// null = ordinary projectile, false = retained wall-drop, true = wall-drop done.
+// The last period has no separate target-speed field in the source record, so it
+// retains the sourced second-period target rather than inventing another value.
+export function advanceFidelityWallDrop(system, p, dt) {
+  const state = p.fidelityWallDrop;
+  if (!state) return null;
+  if (!(dt > 0)) return false;
+  p.prev.copy(p.pos);
+  let frames = dt * 60;
+  while (frames > EPSILON && state.frame < state.totalFrames - EPSILON) {
+    const firstEnd = state.firstFrames, secondEnd = firstEnd + state.secondFrames;
+    const phaseEnd = state.frame < firstEnd ? firstEnd : state.frame < secondEnd ? secondEnd : state.totalFrames;
+    const stepFrames = Math.min(frames, phaseEnd - state.frame);
+    const speed = state.frame < firstEnd ? state.firstSpeed : state.secondSpeed;
+    state.from.copy(p.pos); state.next.copy(p.pos); state.next.y -= speed * stepFrames;
+    const hit = api.G.physics.segment(state.from, state.next, state.hit, true);
+    if (hit.hit) {
+      p.pos.copy(hit.point).addScaledVector(hit.normal, .02);
+      if (hit.normal.y > .45) wallDropPaint(p, p.pos, state.groundRadius, state, 0x6a0d);
+      p.vel.set(0, 0, 0); state.done = true;
+      return true;
+    }
+    p.pos.copy(state.next); p.vel.set(0, -speed * 60, 0);
+    wallDropFallPaint(p, state, state.from, state.next);
+    state.frame += stepFrames; frames -= stepFrames;
+  }
+  const done = state.frame + EPSILON >= state.totalFrames;
+  if (done) state.done = true;
+  return done;
+}
 function collisionRecord(c, target, offset = 0) {
   return { initRadius:Math.max(0,c['InitRadiusFor'+target]+offset*(c['AfterOffsetInitRadiusFor'+target]||0)),
     endRadius:Math.max(0,c['EndRadiusFor'+target]+offset*(c['AfterOffsetEndRadiusFor'+target]||0)),
@@ -134,6 +284,10 @@ export function fidelityBossHit(system,p) {
 export function fidelityProjectileTargets(system,p) {
   const s=scratch(system),{G,PLAYER}=api;
   s.worldReady=s.bossReady=false;s.boss=null;s.targets.length=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;
+  // A completed wall-drop is an inert ink state, never a damaging projectile.
+  // Keep the generic actor loop structurally intact for the network adapter, but
+  // give it no targets on the terminal wall-drop frame.
+  if (p.fidelityWallDrop?.done) return s.targets;
   // Ghosts share visual collision chronology, but never damage/paint ownership.
   const r0=radiusAt(p.fidelityPlayerCollision,p.fidelityPrevAge??p.age,p.size);
   const r1=fidelityPlayerCollisionRadius(p),radius=PLAYER.radius+Math.max(r0,r1);
@@ -250,7 +404,7 @@ export function installWeaponsFidelity(context,profile) {
   const fresh=Projectiles.prototype._new,push=Projectiles.prototype._push,ghost=Projectiles.prototype.ghostProjectile,clear=Projectiles.prototype.clear;
   Projectiles.prototype.clear=function(...args){const result=clear.apply(this,args);this._fidelityCollision=null;this._fidelitySloshContext=null;return result;};
   Projectiles.prototype._new=function(...args){
-    const p=fresh.apply(this,args);p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityRollerUnit=null;p.fidelitySloshUnit=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;return p;
+    const p=fresh.apply(this,args);p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityRollerUnit=null;p.fidelitySloshUnit=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;return p;
   };
   function initialize(p,w){
     if(!w)return;
@@ -269,10 +423,13 @@ export function installWeaponsFidelity(context,profile) {
       p.fidelityMode=vertical?'vertical':'horizontal';p.s3Vertical=vertical;
       if(!p.fidelityRollerUnit){
         const units=raw[vertical?'VerticalSwingUnitGroupParam':'WideSwingUnitGroupParam'].Unit;
-        let best=Infinity;
-        for(const u of units)for(let i=0;i<(u.BulletNum??1);i++){
-          const d=Math.abs(p.vel.length()-60*(u.SpawnSpeedBase+i*(u.AfterOffsetSpawnSpeed||0)));
-          if(d<best){best=d;p.fidelityRollerUnit=u;}
+        p.fidelityRollerUnit=p.ghost&&!vertical?horizontalRollerReplayUnit(units,p.vel.length()):null;
+        if(!p.fidelityRollerUnit){
+          let best=Infinity;
+          for(const u of units)for(let i=0;i<(u.BulletNum??1);i++){
+            const d=Math.abs(p.vel.length()-60*(u.SpawnSpeedBase+i*(u.AfterOffsetSpawnSpeed||0)));
+            if(d<best){best=d;p.fidelityRollerUnit=u;}
+          }
         }
         setCollision(p,p.fidelityRollerUnit.UnitParam.CollisionParam);
       }
