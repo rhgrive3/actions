@@ -341,3 +341,12 @@ presentation, including a host/local player on Bravo. The historical 0.1%
 display-bonus note is not treated as a newly calibrated S3 parameter.
 See [the scoped tie-policy report](inkwave-alpha-tie-2026-10-04.md) for source
 provenance, native roster/packet checks and remaining physical-device limits.
+## 2026-10-04 Charger paint / Dualies and Roller launch dependency
+
+[#407/#420/#414/#431 comparison](inkwave-weapon-paint-inertia-2026-10-04.md) separates Charger impact and line-spacing endpoint ratios from absolute distance calibration, and adds the sourced player-forward launch dependency at final projectile publication. Native/minified regressions are distinguished from still-unverified Nintendo internal basis/clamps and Switch/browser physical acceptance.
+## 2026-10-05: Tenacity passive-charge implementation
+
+The owner-side live Turf path now represents head-main Tenacity and its
+active-team deficit source. Effective/base special-cost conversion preserves
+SCU-independent normalized fill. See [scope and verification](inkwave-tenacity-2026-10-05.md)
+for native/emitted negative controls and unverified hardware/network conditions.

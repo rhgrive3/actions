@@ -387,6 +387,15 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "weapons.dualies.spawnPlayerForwardRate": {
+    "value": 2,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json#/GameParameters/spl__SpawnBulletAdditionMovePlayerParam/ZRate",
+      "rawValue": 2,
+      "factor": 1
+    }
+  },
   "weapons.blaster.inkPerShot": {
     "value": 10,
     "status": "derived from pinned extracted data; physical scale unverified",
@@ -837,6 +846,87 @@
       "rawValue": 800
     }
   },
+  "weapons.charger.impactPaint.min": {
+    "value": 0.906,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/PaintParam/RadiusMinCharge",
+      "rawValue": 0.906,
+      "factor": 1
+    }
+  },
+  "weapons.charger.impactPaint.max": {
+    "value": 2.719,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/PaintParam/RadiusMaxCharge",
+      "rawValue": 2.719,
+      "factor": 1
+    }
+  },
+  "weapons.charger.impactPaint.full": {
+    "value": 3.263,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/PaintParam/RadiusFullCharge",
+      "rawValue": 3.263,
+      "factor": 1
+    }
+  },
+  "weapons.charger.lineSpacing.depthMin": {
+    "value": 2.73,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/SplashPaintParam/DepthHalfMinCharge",
+      "rawValue": 2.73,
+      "factor": 1
+    }
+  },
+  "weapons.charger.lineSpacing.depthMax": {
+    "value": 1.56,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/SplashPaintParam/DepthHalfMaxCharge",
+      "rawValue": 1.56,
+      "factor": 1
+    }
+  },
+  "weapons.charger.lineSpacing.depthFull": {
+    "value": 1.56,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/SplashPaintParam/DepthHalfFullCharge",
+      "rawValue": 1.56,
+      "factor": 1
+    }
+  },
+  "weapons.charger.lineSpacing.overlapMin": {
+    "value": 0.125,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/SplashSpawnParam/OnTopRateMinCharge",
+      "rawValue": 0.125,
+      "factor": 1
+    }
+  },
+  "weapons.charger.lineSpacing.overlapMax": {
+    "value": 0.25,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/SplashSpawnParam/OnTopRateMaxCharge",
+      "rawValue": 0.25,
+      "factor": 1
+    }
+  },
+  "weapons.charger.lineSpacing.overlapFull": {
+    "value": 0.34,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/SplashSpawnParam/OnTopRateFullCharge",
+      "rawValue": 0.34,
+      "factor": 1
+    }
+  },
   "weapons.roller.rollSpeed": {
     "value": 7.92,
     "status": "calibration or derived value; see reference raw table and unverified list",
@@ -1101,6 +1191,15 @@
     "value": 0.5,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
+  },
+  "weapons.roller.spawnPlayerForwardRate": {
+    "value": 2,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/spl__SpawnBulletAdditionMovePlayerParam/ZRate",
+      "rawValue": 2,
+      "factor": 1
+    }
   },
   "weapons.slosher.inkPerShot": {
     "value": 7.6,

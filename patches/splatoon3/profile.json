@@ -55,7 +55,8 @@
       "lockInterval": 0.06666666666666667,
       "spreadLock": 0.0,
       "range": 12.5,
-      "humanoidFirstShotDelay": 0.03333333333333333
+      "humanoidFirstShotDelay": 0.03333333333333333,
+      "spawnPlayerForwardRate": 2
     },
     "blaster": {
       "inkPerShot": 10.0,
@@ -128,7 +129,20 @@
       "keepChargeTime": 1.25,
       "chargeTime": 1,
       "inkRecoverStop": 0.3333333333333333,
-      "damagePartialMax": 80
+      "damagePartialMax": 80,
+      "impactPaint": {
+        "min": 0.906,
+        "max": 2.719,
+        "full": 3.263
+      },
+      "lineSpacing": {
+        "depthMin": 2.73,
+        "depthMax": 1.56,
+        "depthFull": 1.56,
+        "overlapMin": 0.125,
+        "overlapMax": 0.25,
+        "overlapFull": 0.34
+      }
     },
     "roller": {
       "rollSpeed": 7.92,
@@ -200,7 +214,8 @@
         "halfAngleDegrees": 4,
         "mainWidthReference": 0.8,
         "widthRatio": 0.5
-      }
+      },
+      "spawnPlayerForwardRate": 2
     },
     "slosher": {
       "inkPerShot": 7.6,
@@ -1240,6 +1255,61 @@
       "index": null,
       "factor": 1,
       "rawValue": 0.8
+    },
+    "weapons.charger.impactPaint.min": {
+      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/PaintParam/RadiusMinCharge",
+      "rawValue": 0.906,
+      "factor": 1
+    },
+    "weapons.charger.impactPaint.max": {
+      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/PaintParam/RadiusMaxCharge",
+      "rawValue": 2.719,
+      "factor": 1
+    },
+    "weapons.charger.impactPaint.full": {
+      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/PaintParam/RadiusFullCharge",
+      "rawValue": 3.263,
+      "factor": 1
+    },
+    "weapons.charger.lineSpacing.depthMin": {
+      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/SplashPaintParam/DepthHalfMinCharge",
+      "rawValue": 2.73,
+      "factor": 1
+    },
+    "weapons.charger.lineSpacing.depthMax": {
+      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/SplashPaintParam/DepthHalfMaxCharge",
+      "rawValue": 1.56,
+      "factor": 1
+    },
+    "weapons.charger.lineSpacing.depthFull": {
+      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/SplashPaintParam/DepthHalfFullCharge",
+      "rawValue": 1.56,
+      "factor": 1
+    },
+    "weapons.charger.lineSpacing.overlapMin": {
+      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/SplashSpawnParam/OnTopRateMinCharge",
+      "rawValue": 0.125,
+      "factor": 1
+    },
+    "weapons.charger.lineSpacing.overlapMax": {
+      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/SplashSpawnParam/OnTopRateMaxCharge",
+      "rawValue": 0.25,
+      "factor": 1
+    },
+    "weapons.charger.lineSpacing.overlapFull": {
+      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/SplashSpawnParam/OnTopRateFullCharge",
+      "rawValue": 0.34,
+      "factor": 1
+    },
+    "weapons.dualies.spawnPlayerForwardRate": {
+      "parameter": "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json#/GameParameters/spl__SpawnBulletAdditionMovePlayerParam/ZRate",
+      "rawValue": 2,
+      "factor": 1
+    },
+    "weapons.roller.spawnPlayerForwardRate": {
+      "parameter": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/spl__SpawnBulletAdditionMovePlayerParam/ZRate",
+      "rawValue": 2,
+      "factor": 1
     }
   },
   "gearExtra": {
