@@ -185,7 +185,7 @@ function retireNetworkGhosts(owner = null) {
           }
         } finally { if (nm) nm.mute--; }
         dead ||= p._netEnded && p._netSteps >= p._netEndStep;
-        if (dead) { p._qualityDead = true; list[i] = list[list.length-1]; list.pop(); this.pool.push(p); }
+        if (dead) { p._qualityDead = true; list[i] = list[list.length-1]; list.pop(); this._recycle(p); }
         continue;
       }
       const elapsed = Math.max(0, dt - Math.max(0, p.delay || 0));
@@ -210,7 +210,7 @@ function retireNetworkGhosts(owner = null) {
             }
           } finally { if (nm) nm.mute--; }
           dead ||= p._netEnded && p._netSteps >= p._netEndStep;
-          if (dead) { p._qualityDead = true; list[i] = list[list.length-1]; list.pop(); this.pool.push(p); }
+          if (dead) { p._qualityDead = true; list[i] = list[list.length-1]; list.pop(); this._recycle(p); }
           continue;
         }
         if (p.delay > 0) { p.delay -= dt; if (p.delay > 0) continue; }`, 'owner timeline projectile advancement');

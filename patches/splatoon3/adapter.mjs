@@ -133,6 +133,23 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, 'const p = _v.copy(a.pos); p.y += 1.35;', 'const p = _v.copy(a.pos); p.y += 1.35; bombPreviewPosition(a, p);', 'bomb preview origin');
     code = replaceOnce(code, '        vel.y -= 24 * dt;', '        vel.y -= SUB.bomb.gravity * dt;', 'bomb preview gravity');
     code = replaceOnce(code, 'if (b.fuse <= 0) {', 'if (b.fuse <= 1e-10) {', 'bomb fuse frame boundary');
+    // #622: pooled records survive match transitions inside the persistent
+    // G.projectiles pool. Every recycle path must sever the Actor reference
+    // before the record is pooled, or a disposed match stays reachable.
+    code = replaceOnce(code, '  clear() {',
+      '  // Pooled records wait inside the persistent G.projectiles pool across matches;\n' +
+      '  // sever the Actor reference before the record is pooled (#622).\n' +
+      '  _recycle(p) {\n' +
+      '    p.owner = null;\n' +
+      '    this.pool.push(p);\n' +
+      '  }\n\n' +
+      '  clear() {', 'projectile owner-severing recycle helper');
+    code = replaceOnce(code, '  clear() {\n    for (const p of this.list) this.pool.push(p);',
+      '  clear() {\n    for (const p of this.list) this._recycle(p);',
+      'clear recycles without owners');
+    code = replaceOnce(code, '{ list[i] = list[list.length - 1]; list.pop(); this.pool.push(p); } }',
+      '{ list[i] = list[list.length - 1]; list.pop(); this._recycle(p); } }',
+      'normal completion recycles without owners');
     code = adaptWeaponEdgecases(rel, code, replaceOnce);
     code = adaptWeaponsFidelity(code, replaceOnce);
     return `import { applyProjectileHit, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\n` + code;
