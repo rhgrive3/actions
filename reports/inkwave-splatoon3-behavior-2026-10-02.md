@@ -113,7 +113,7 @@ P05 は泳ぎ 180 F・ヒト 600 F の回復基点とブキ別の待ち時間を
 
 ローラーは公式縦振り映像と比べ、頭上への振りかぶり、縦の振り下ろし、着地後の回復を加えた。ゲーム側の横21F/縦26Fの射出時刻に、骨格・持ち手・ドラム回転を同期する。表示確認で見つかった縦回復中の床貫通も修正した。正確なジャンプ受付や原作の全関節曲線・硬直は未確認。[ローラー比較](../patches/splatoon3/roller-behavior.md)に詳細を残した。
 
-さらにスプラトゥーン3 Ver.11.3.0実測値に基づくローラーの塗り進み移行時間（ヨコ振り7F vs タテ振り22F）を反映した（#517）。公開版の `WeaponRunner._roller` は共通の `cooldown <= 0.25` により、タテ振り後に接地してZRを維持した場合もヨコ振りと同様に発射後約7Fで塗り進み（接触判定・塗り・SE）に入っていた。修正後は確定した攻撃モード（`state.vertical`）に応じた明示的な発射後経過時間（ヨコ7F／タテ22F）を満たすまで塗り進み移行を抑止し、タテ振り発射後の22F遅延中における早期接触ダメージ・塗り線発生を防止した。姿勢更新（`wRoll`）も同一の確定ローリング状態に同期して滑らかに移行する。
+さらにIssue #517が指定するローラーの塗り進み移行時間（ヨコ振り7F vs タテ振り22F）を反映した。固定したVer.11.3.0パラメータ表で確認できるのは振り開始21F/26Fであり、この発射後移行時間はIssue由来の実装目標である。実機での7F/22F一致は未検証。公開版の `WeaponRunner._roller` は共通の `cooldown <= 0.25` により、タテ振り後に接地してZRを維持した場合もヨコ振りと同様に発射後約7Fで塗り進み（接触判定・塗り・SE）に入っていた。修正後は確定した攻撃モード（`state.vertical`）に応じた明示的な発射後経過時間（ヨコ7F／タテ22F）を満たすまで塗り進み移行を抑止し、タテ振り発射後の22F遅延中における早期接触ダメージ・塗り線発生を防止した。姿勢更新（`wRoll`）も同一の確定ローリング状態に同期して滑らかに移行する。
 
 
 自律担当が未確認項目を再調査し、ソースと実行結果で確定した不具合を修正した。移動・回復では塗り境界と離着陸後の判定、ロールの速度係数の重複・衝突後の速度復元、敵インク猶予の部分tick、スーパージャンプの追加着地保護を直した。[移動・回復の全比較と実機測定手順](inkwave-movement-resources-2026-10-02.md)に残る23条件を記録した。
@@ -260,12 +260,12 @@ Cold boot generation for non-pack stages (Tidewater/Kelpline) allocates and comp
 
 | 項目 | 内容 |
 |---|---|
-| 本家の根拠 | スプラトゥーン3では現在選択されていないステージの専用マテリアル・テクスチャはメモリ上に事前確保・保持されない。ステージ遷移時にのみ必要なアセットが読み込まれ、前のステージ固有アセットは破棄される |
+| 設計上の根拠（推論） | 未使用ステージ資源を保持せず、現在ステージに必要な層のみ生成するINKWAVE側の資源管理方針。本家の確保・破棄方式を示す公開Nintendo資料や実機計測はなく、本家エンジンの動作としては未確認 |
 | INKWAVE の実装箇所 | `patches/local-quality/texlib.mjs` (`stagePackFor`, `syncWorldTexlib`, `updateLobbyTexlib`), `patches/local-quality/texlib-adapter.mjs` (`src/world/texlib.js`, `src/world/levelMaterial.js`, `src/game/lobbySet-mats.js`, `src/main.js`) |
 | 再現操作 | 1. Tidewater でコールドブート起動（共有25層のみ生成、pack identity: null）。<br>2. 最初の `_buildWorld` で再生成せずコールドブート資源を再利用。<br>3. Kelpline への遷移で再生成ゼロで継続利用。<br>4. Cargo への遷移で28層（共有25+Cargo3）を生成し、旧ライブラリをコミット後に破棄。<br>5. Tidewater/Kelpline への復帰で共有25層へ遷移し、Cargoライブラリを破棄 |
-| プレイへの影響 | コールドブート時のテクスチャ容量削減（256解像度で約3.3 MiB、512解像度で約13.1 MiB節約）。ステージ遷移時のメモリ単調増加を抑止。シェーダーの32スロット間接参照（`TL_SLOTS: 32`）およびマテリアル名を維持し、シェーダー再コンパイルやスロット不整合なし。LobbySetマテリアルの事前・事後コンパイルuniform更新により破棄済みテクスチャのサンプリングを防止 |
+| プレイへの影響 | コールドブート時のテクスチャ容量削減（256解像度で公称3 MiB、512解像度で公称12 MiB節約）。ステージ遷移時のメモリ単調増加を抑止。シェーダーの32スロット間接参照（`TL_SLOTS: 32`）およびマテリアル名を維持し、シェーダー再コンパイルやスロット不整合なし。LobbySetマテリアルの事前・事後コンパイルuniform更新により破棄済みテクスチャのサンプリングを防止 |
 | メモリ占有ライフサイクル | 遷移完了後の定常状態は常にライブラリ1つ（residency = 1）。生成中のみ旧ライブラリと新ライブラリが一時的に並行存在（transient residency = 2）。旧レベル・マテリアル参照が破棄された直後に旧ライブラリをdispose |
-| 確認状態 | **ロジック・ネイティブ結合確認済み** (`patches/local-quality/tests/texlib-stage-pack.test.mjs` 10テスト全通過、`scripts/check-inkwave-patches.mjs --quick` 合格)。**本家実機（Switch Ver.11.3.0）でのGPU実物理メモリ・フレームヒッチ実測は未確認**。記載のMiB値はThree.js DataArrayRenderTargetのフォーマット（RGBA8×3MRT+mips）に基づく計算アセット予算であり、ドライバ物理VRAM測定値ではない |
+| 確認状態 | **ロジック・ネイティブ結合確認済み** (`patches/local-quality/tests/texlib-stage-pack.test.mjs` 14テスト全通過、`scripts/check-inkwave-patches.mjs --quick` 合格)。**本家実機（Switch Ver.11.3.0）でのGPU実物理メモリ・フレームヒッチ実測は未確認**。記載のMiB値はThree.js DataArrayRenderTargetのフォーマット（RGBA8×3MRT+mips）に基づく計算アセット予算であり、ドライバ物理VRAM測定値ではない |
 
 
 The stage-pack integration also tests the actual published module URLs and the default native factory, without an injected factory. Native composed `_buildWorld` commits Cargo28 layers then Kelpline25 layers and disposes prior libraries. A negative control restores the former misplaced runtime-relative import and proves it fails. Generator tests construct real Three targets and native shader callbacks with a headless renderer; these are not physical GPU memory or timing measurements.
