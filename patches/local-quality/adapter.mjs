@@ -11,7 +11,7 @@ const IDENTITY_FILES = [
   'roller-motion.mjs', 'roller-visual.mjs', 'surface.mjs',
   'platform-adapter.mjs', 'platform-lifecycle.mjs', 'platform-game.mjs',
   'platform-input.mjs', 'platform-audio.mjs', 'platform-transport.mjs',
-  'mobile-platform.mjs', 'gyro-permission.mjs',
+  'mobile-platform.mjs', 'gyro-permission.mjs', 'gyro-startup.mjs',
 ];
 
 export function replaceOnce(code, before, after, label) {

@@ -16,6 +16,11 @@ export function gyroCapability(env = globalThis) {
     motionRequest: typeof motion?.requestPermission === 'function' };
 }
 
+// Only a default: native settings merging still gives every saved choice priority.
+export function initialGyroDefaults(defaults, profile, env = globalThis) {
+  return { ...defaults, gyro: !!profile?.touch && gyroCapability(env).supported };
+}
+
 export class GyroPermission {
   constructor(env = globalThis, lifecycle) {
     this.env = env; this.lifecycle = lifecycle;
@@ -56,6 +61,9 @@ export class GyroPermission {
   notify() { const value = this.snapshot(); for (const callback of [...this.listeners]) try { callback(value); } catch {} }
   request() {
     if (this.disposed || !this.capability.supported) return Promise.resolve(false);
+    // A new explicit attempt must not replay the prior no-data notification
+    // into MobileInput's current intent before its promise can finish.
+    if (this.reason === 'no-sensor-data') { this.availability = 'idle'; this.reason = null; }
     this.wanted = true;
     if (!this.needsPermission) { this.notify(); return Promise.resolve(this.allowed); }
     // A fresh user activation owns a fresh permission attempt. Never coalesce it
@@ -110,7 +118,8 @@ export class GyroPermission {
     this.probe = this.env.setTimeout(() => {
       this.probe = null;
       if (this.disposed || !this.lifecycle.active || generation !== this.generation || this.received) return;
-      this.availability = 'unavailable'; this.reason = 'no-sensor-data'; this.notify();
+      this.availability = 'unavailable'; this.reason = 'no-sensor-data'; this.wanted = false;
+      this.onUnavailable?.(); this.notify();
     }, 2000);
     this.notify();
   }
@@ -129,7 +138,7 @@ export class GyroPermission {
   }
   dispose() {
     if (this.disposed) return;
-    this.disposed = true; this.wanted = false; this.stopProbe(); this.cancelRequest(false); this.listeners.clear();
+    this.disposed = true; this.wanted = false; this.stopProbe(); this.cancelRequest(false); this.listeners.clear(); this.onUnavailable = null;
   }
 }
 
@@ -150,7 +159,7 @@ export function gyroStatusMessage(status, lang = 'en') {
       return text('現在センサーの値を受信できていません。拒否や非対応とは断定できません。GYROから再試行するか、タッチ操作を使用してください。', 'No sensor data is arriving. This does not prove denial or lack of support. Retry with GYRO or use touch controls.');
     case 'unknown-error': return text('センサーの許可確認中にエラーが発生しました。GYROから再試行するか、タッチ操作を使用してください。', 'An error occurred while checking motion permission. Retry with GYRO or use touch controls.');
     default:
-      if (status.availability === 'waiting') return text('ジャイロON：センサーの受信を待っています。', 'Gyro ON: waiting for sensor data.');
+      if (status.availability === 'waiting') return text('ジャイロ：センサーの受信を待っています。', 'Gyro: waiting for sensor data.');
       return status.permission === 'not-required' ? text('この環境では追加の許可操作はありません。', 'No additional permission prompt is required in this environment.') : text('ジャイロの許可を取得済みです。', 'Motion permission is granted for this page session.');
   }
 }

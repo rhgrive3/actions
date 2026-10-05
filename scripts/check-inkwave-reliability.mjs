@@ -247,6 +247,56 @@ try {
       });
       assert.deepEqual(menuPad, { startEdges: 2, menuAcceptOwned: true, nextGameplayPressRestored: true });
       entry.checks.push('actual-built-Input-menu-pad-edge-and-hold-ownership-through-144Hz-clock');
+      const gyroViability = await page.evaluate(async () => {
+        await mobile.setGyro(false);mobile.setVisible(true);
+        const access=mobile.gyro._platformGyroAccess,permission=access.permission;
+        // A fixture-supplied session grant; this probe never requests browser/OS permission.
+        access.permission='granted';
+        try {
+          await mobile.setGyro(true);
+          const waiting=mobile.gyro.platformStatus.availability==='waiting'&&!mobile.els.gyro.classList.contains('is-on')&&mobile.els.gyro.getAttribute('aria-busy')==='true';
+          mobile.moveX=.4;mobile.buttons.fire=true;mobile.lookDX=.2;
+          await new Promise(resolve=>setTimeout(resolve,2150));
+          const stopped=!mobile.gyro.enabled&&!mobile._gyroWanted&&!mobile.s.gyro&&mobile.gyro.platformStatus.reason==='no-sensor-data';
+          const offUI=!mobile.els.gyro.classList.contains('is-on')&&mobile.els.gyro.getAttribute('aria-pressed')==='false';
+          const inputPreserved=mobile.moveX===.4&&mobile.buttons.fire&&mobile.lookDX===.2;
+          await mobile.setGyro(true);
+          mobile.gyro._orientation({alpha:0,beta:0,gamma:0,timeStamp:performance.now()+1});
+          mobile.gyro._orientation({alpha:20,beta:0,gamma:0,timeStamp:performance.now()+18});
+          const recovered=mobile.gyro.enabled&&mobile.gyro.platformStatus.availability==='active'&&mobile.els.gyro.classList.contains('is-on');
+          return {waiting,stopped,offUI,inputPreserved,recovered};
+        } finally {await mobile.setGyro(false);mobile.reset();access.permission=permission;}
+      });
+      assert.deepEqual(gyroViability,{waiting:true,stopped:true,offUI:true,inputPreserved:true,recovered:true});
+      entry.checks.push('actual-built-gyro-no-data-stops-ON-state-and-explicit-retry-recovers');
+      const startupGrant = await page.evaluate(async () => {
+        const {prepareGyroStartup,startGyroStartup}=await import('/patches/local-quality/gyro-startup.mjs');
+        const {initialGyroDefaults}=await import('/patches/local-quality/gyro-permission.mjs');
+        await mobile.setGyro(false);mobile.setVisible(true);
+        const gyro=mobile.gyro,original=gyro.request,descriptor=Object.getOwnPropertyDescriptor(gyro,'needsPermission');
+        const access=gyro._platformGyroAccess,permission=access.permission;
+        let resolve,count=0;
+        try {
+          Object.defineProperty(gyro,'needsPermission',{configurable:true,value:true});
+          gyro.request=()=>{count++;return new Promise(r=>{resolve=r;});};
+          const game={input:{mobile},settings:{gyro:true},match:{state:'playing',paused:false},menus:{current:null}},world={mode:'match'};
+          const prepared=prepareGyroStartup(game,world);const started=startGyroStartup(game,world);
+          const stayedOff=!gyro.enabled&&count===1;
+          access.permission='granted';gyro.request=original;Object.defineProperty(gyro,'needsPermission',{configurable:true,value:false});resolve(true);
+          await prepared;await started;
+          gyro._orientation({alpha:0,beta:0,gamma:0,timeStamp:performance.now()+1});
+          gyro._orientation({alpha:15,beta:0,gamma:0,timeStamp:performance.now()+18});
+          return {stayedOff,started:gyro.enabled&&gyro.platformStatus.availability==='active',onePrompt:count===1,
+            mobileDefault:initialGyroDefaults({gyro:false},{touch:true}).gyro,desktopDefault:initialGyroDefaults({gyro:false},{touch:false}).gyro};
+        } finally {
+          gyro.request=original;if(descriptor)Object.defineProperty(gyro,'needsPermission',descriptor);else delete gyro.needsPermission;
+          await mobile.setGyro(false);access.permission=permission;
+        }
+      });
+      assert.deepEqual(startupGrant,{stayedOff:true,started:true,onePrompt:true,mobileDefault:true,desktopDefault:false});
+      entry.checks.push('actual-built-late-START-grant-and-device-specific-default');
+
+
       await page.screenshot({ path: path.join(evidence, engineName + '-tablet-controls.png') });
     } finally { await context.close(); }
   }

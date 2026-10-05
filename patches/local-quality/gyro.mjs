@@ -41,6 +41,10 @@ export function installGyroQuality(Gyro, getScreenAngle, isAndroid = () => /Andr
     if (g._platformGyroAccess) return g._platformGyroAccess;
     const access = g._platformGyroAccess = new GyroPermission(env, lifecycle);
     g.supported = access.capability.supported;
+    access.onUnavailable = () => {
+      // Stop native listening without clearing the diagnostic failure reason.
+      stop.call(g); g.resync(); g.working = false;
+    };
     const halt = () => {
       stop.call(g); g.resync(); g.working = false;
       access.stopListening('suspend'); access.cancelRequest();
