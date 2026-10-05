@@ -98,11 +98,12 @@ export function adaptIssue484Net(code) {
 }
 
 export function adaptIssue484Actor(code) {
-  // 1. In reset(), clear presentation overrides
+  // 1. In reset(), clear presentation overrides. Insert at the function
+  // boundary so later/current-main reset bookkeeping can compose freely.
   code = replaceOnce(
     code,
-    '  reset() {\n    this.alive = true;\n    this.hp = PLAYER.hp;',
-    '  reset() {\n    this.alive = true;\n    delete this.s3SpecialCost;\n    delete this.s3SpecialReady;\n    this.hp = PLAYER.hp;',
+    '  reset() {\n',
+    '  reset() {\n    delete this.s3SpecialCost;\n    delete this.s3SpecialReady;\n',
     'actor reset cleanup'
   );
 
