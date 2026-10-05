@@ -10,7 +10,7 @@ import { CATALOG_MODULES, CATALOG_SCENARIOS, catalogRenderFrames, validateCatalo
 
 const hash = 'a'.repeat(64), pixel = { pixels: 960 * 720, changedPixels: 30, totalRgbDifference: 1000, maxChannelDifference: 100 };
 function gateFixture() {
-  const files = [...CATALOG_MODULES.map(([id]) => 'patches/splatoon3/runtime/' + id + '-motion.mjs'), 'patches/splatoon3/runtime/install.mjs', 'patches/splatoon3/runtime/walk.mjs', 'src/game/actor.js', 'src/game/character.js', 'src/game/weapons.js', 'src/game/physics.js'];
+  const files = [...CATALOG_MODULES.map(([id]) => 'patches/splatoon3/runtime/' + id + '-motion.mjs'), 'patches/splatoon3/runtime/install.mjs', 'patches/splatoon3/runtime/walk.mjs', 'src/game/actor.js', 'src/game/character.js', 'src/game/weapons.js', 'src/game/physics.js', 'src/game/match.js', 'patches/splatoon3/runtime/turf-finish.mjs'];
   const artifacts = Object.fromEntries(files.map(file => ['_versions/fixture/' + file, hash]));
   const data = CATALOG_SCENARIOS.map(scenario => {
     const samples = Array.from({ length: scenario.frames }, (_, frame) => ({ frame, visible: true, grounded: true, visualGameplayInvariant: true, root: [0, 0, 0], velocity: [0, 0, 0], hp: 90, kidScale: 1, walkActive: true, pose: { length: 150, minimum: -1, maximum: 1, l1: 50 }, ik: [0, 0, 0, 0], hands: { left: [0, 1, 0], right: [0, 1, 0] }, grip: { left: { held: true, gap: .001, weight: 1, explicitTarget: 0, swapped: 0 }, right: { held: true, gap: .001, weight: 1, explicitTarget: 0, swapped: 0 } }, feet: [0, 1].map(() => ({ planted: true, contactEpoch: 1, contactWeight: 1, actual: [0, .1, 0], expected: [0, .1, 0], contact: [0, 0, 0], normal: [0, 1, 0], error: 0, drift: 0 })), snapshots: Object.fromEntries(CATALOG_MODULES.map(([id]) => [id, null])) }));
@@ -42,10 +42,15 @@ function gateFixture() {
     for (const r of renders) if (!samples[r.tick].visible) { r.visible = false; r.rig.changedPixels = r.rig.totalRgbDifference = r.rig.maxChannelDifference = 0; }
     return row;
   });
-  return { schema: 1, source: 'built-production-native', installCalls: 1, contentHash: crypto.createHash('sha256').update(JSON.stringify(artifacts)).digest('hex'), artifacts, loaded: Object.entries(artifacts).map(([file, sha256]) => ({ file, sha256, bytes: 100 })), images: ['fixture.png', 'fixture-hidden.png', 'fixture-sheet.png'].map(file => ({ file, sha256: hash, bytes: 100 })), errors: [], gpu: { renderer: 'fabricated gate string, never GPU evidence', contextLost: false, pixelControls: {dither:false,samples:0,target:'explicit-srgb-rgba8'} }, duplicateRealm: { modules: CATALOG_MODULES.length, unchanged: true }, data, previewRates: [30, 60, 120].map(hz => ({ hz, frames: hz, finite: true })), cleanup: { rendererDisposed: true, domRemoved: true, geometries: 0, textures: 0, fixtureTextureDisposals:[{labels:['compiled-uniform.dfgLUT'],wasLive:true,remainsLive:false}] } };
+  return { schema: 1, source: 'built-production-native', installCalls: 1, turfFinish: { captured: [.51,.49], judged: [.51,.49], frozen: true, winner: 0, reads: 1, state: 'judge' }, contentHash: crypto.createHash('sha256').update(JSON.stringify(artifacts)).digest('hex'), artifacts, loaded: Object.entries(artifacts).map(([file, sha256]) => ({ file, sha256, bytes: 100 })), images: ['fixture.png', 'fixture-hidden.png', 'fixture-sheet.png'].map(file => ({ file, sha256: hash, bytes: 100 })), errors: [], gpu: { renderer: 'fabricated gate string, never GPU evidence', contextLost: false, pixelControls: {dither:false,samples:0,target:'explicit-srgb-rgba8'} }, duplicateRealm: { modules: CATALOG_MODULES.length, unchanged: true }, data, previewRates: [30, 60, 120].map(hz => ({ hz, frames: hz, finite: true })), cleanup: { rendererDisposed: true, domRemoved: true, geometries: 0, textures: 0, fixtureTextureDisposals:[{labels:['compiled-uniform.dfgLUT'],wasLive:true,remainsLive:false}] } };
 }
 test('synthetic gate schema can exercise every acceptance branch; this proves no motion or GPU output', () => assert.equal(validateCatalogResult(gateFixture()).length, CATALOG_SCENARIOS.length));
 for (const [name, mutate, pattern] of [
+  ['missing Match dependency', r => r.loaded = r.loaded.filter(x => !x.file.endsWith('/src/game/match.js')), /missing-module loaded/],
+  ['missing Match-only runtime helper', r => r.loaded = r.loaded.filter(x => !x.file.endsWith('/turf-finish.mjs')), /missing-module installed graph/],
+  ['missing native Turf proof', r => delete r.turfFinish, /native Turf finish/],
+  ['late paint changes judge', r => r.turfFinish.judged = [.4,.6], /native Turf finish/],
+  ['judge rereads live paint', r => r.turfFinish.reads = 2, /native Turf finish/],
   ['missing scenario', r => r.data.pop(), /scenario denominator/],
   ['missing frame', r => r.data[0].samples.pop(), /frame denominator/],
   ['duplicate render frame', r => r.data[0].renders[1].frame = r.data[0].renders[0].frame, /render frame denominator/],

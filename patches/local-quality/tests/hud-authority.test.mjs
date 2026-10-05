@@ -157,7 +157,7 @@ test('browser gauge evidence requires native intro dismissal and visible desktop
   const browser=fs.readFileSync(new URL('scripts/check-inkwave-browser.mjs',root),'utf8');
   const checks=fs.readFileSync(new URL('scripts/check-inkwave-hud-authority.mjs',root),'utf8');
   assert.match(browser,/waitForFunction\(\(\) => globalThis\.s3ProbeG.game.hud\?\._visible && !document\.querySelector\('\.iw-lineup'\)/);
-  const gaugeChecks=checks.split('// Isolated display probe:')[0];
+  const gaugeStart=checks.indexOf('export async function checkHudAuthority');assert.ok(gaugeStart>=0);const gaugeChecks=checks.slice(gaugeStart).split('// Isolated display probe:')[0];
   assert.equal((gaugeChecks.match(/checkVisibility\(\{checkOpacity:true,checkVisibilityCSS:true\}\)/g)||[]).length,3);
 });
 
@@ -191,7 +191,12 @@ test('touch screenshot acceptance checks rendered ownership before and after cap
 
  test('staged reticle browser evidence checks rendered ring visibility and progress separately',()=>{
   const checks=fs.readFileSync(new URL('scripts/check-inkwave-hud-authority.mjs',root),'utf8');
-  const start=checks.indexOf('// #508 display-only reticle fixture');assert.ok(start>=0);const stages=checks.slice(start);
+  const start=checks.indexOf('// #508 display-only reticle fixture');assert.ok(start>=0);const inspector=checks.slice(checks.indexOf('export function inspectSplatlingStages'),checks.indexOf('export async function checkHudAuthority'));const stages=checks.slice(start)+inspector;
+  assert.match(stages,/page.evaluate\(inspectSplatlingStages/);
+  assert.match(stages,/splatling-reticle-probe\.json/);
+  assert.match(stages,/splatling-reticle-failure\.png/);
+  assert.match(stages,/rawCircleVisible/);
+  assert.match(stages,/isPointInStroke/);
   assert.match(stages,/checkVisibility\(\{checkOpacity:true,checkVisibilityCSS:true\}\)/);
   assert.match(stages,/Splatling second stage is not a distinct outer ring/);
   assert.match(stages,/Splatling rendered ring has not reached expected progress/);

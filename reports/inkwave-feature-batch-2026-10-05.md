@@ -50,3 +50,29 @@ scoped separately instead of counting unrelated later probes.
 
 New canonical browser captures/probes remain pending exact composed-head CI.
 No main merge, Issue closure or source-branch deletion is performed.
+
+## First browser run and bounded verifier repair
+
+Run37268081215 at head aacd4f48 passed validate/network/range/startup but failed
+three verifier boundaries. Correct all three together before one new CI run:
+
+- Portrait transition no longer demands the gameplay hold that #142 rejects.
+  It now requires portrait rejection, no ownership from a stale moved gesture,
+  one fresh landscape press/owner, release cleanup, and no false gyro resync.
+- Reticle evidence separates box visibility from SVG shape geometry/paint.
+  Ancestors, inline/settled progress, stroke samples and six negative controls
+  remain mandatory. A failing fixture is captured before teardown with detailed
+  source/content-bound diagnostics. The previous generic exception did not
+  preserve which conjunct failed, so no specific cause is declared proven yet.
+- Catalog imports the real Match dependency entry and exercises native
+  finish→late repaint→judge. Match and every runtime module remain mandatory
+  byte receipts; no module is removed from the denominator. The saved old
+ 27-scenario artifact has no additional scenario failure under diagnostic-only
+  receipt/proof substitution; that is not acceptance and the original artifact
+  is unchanged. Real retrieval/native proof remains required in the next CI.
+
+Production inputs and all502 artifact hashes remain unchanged at
+30af7443fcef392c380370644a41341a31bb6b65960d12d3fb64263cf3995bf5.
+Reuse the passed production tests above; affected contracts/gates pass37/37 and
+71/71, including emitted Turf proof. Browser acceptance still awaits the new
+exact-head run. No extra Issue or gameplay correction is added by this repair.

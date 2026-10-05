@@ -270,7 +270,7 @@ try {
     if(!flow.activePresentation.visible||flow.activePresentation.aliveParticles<1||flow.inactivePresentation.visible||flow.inactivePresentation.phase!=='off')throw Error('Compiled Flow exterior did not follow actual actor state');
     return {fixture:'loaded match Actor/WeaponRunner -> complete Character; fixed pose position; Chromium WebGL',dualies,slosher:{windup,firstWindupFrames,releaseFrames},reset,flow};
   });
-  result.hudAuthority = await checkHudAuthority({ page, evidence });
+  result.hudAuthority = await checkHudAuthority({ page, evidence, sourceSha, contentHash: manifest.contentHash });
   result.status = 'passed';
 } catch (error) {
   result = { ...(result || {}), status: 'failed', error: error.message };

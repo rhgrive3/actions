@@ -1,3 +1,4 @@
+import {catalogTurfFinishProbe,validateCatalogTurfFinish} from '../../../scripts/check-inkwave-motion-catalog.mjs';
 import {FixedClock} from '../runtime/clock.mjs';
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import path from 'node:path';import vm from 'node:vm';
 import {adaptSource} from '../adapter.mjs';import {adaptTouchLayout} from '../../touch-layout/adapter.mjs';import {adaptReliability} from '../../reliability/adapter.mjs';import {adaptQualitySource} from '../../local-quality/adapter.mjs';
@@ -34,4 +35,12 @@ test('#410 Boss result path bypasses Turf coverage and preserves native result d
 
 test('#410 fixed-step deadline and Alpha tie are stable across 30/60/120/144Hz render partitions',async()=>{
  for(const hz of [30,60,120,144]){const f=await fixture(),clock=new FixedClock();f.setCoverage([.5,.5]);f.m.time=.045;for(let frame=0;frame<hz*3;frame++)clock.advance(1/hz,dt=>{f.m.update(dt);if(f.m.state==='finish')f.G.paint.splat();});assert.deepEqual(plain(f.m.result),{coverage:[.5,.5],winner:0});assert.equal(f.reads,1);assert.ok(f.calls>0);}
+});
+
+test('catalog Match entry executes native finish/judge and rejects an uncaptured negative control',async()=>{
+ const f=await fixture(),paint=f.G.paint,net=f.G.netm;
+ validateCatalogTurfFinish(catalogTurfFinishProbe(f.Match,f.G));assert.equal(f.G.paint,paint);assert.equal(f.G.netm,net);
+ class Uncaptured extends f.Match { setState(state){this.state=state;} }
+ assert.throws(()=>validateCatalogTurfFinish(catalogTurfFinishProbe(Uncaptured,f.G)),/native Turf finish/);
+ assert.equal(f.G.paint,paint);assert.equal(f.G.netm,net);
 });

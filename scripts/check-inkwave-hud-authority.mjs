@@ -1,7 +1,49 @@
 // Acceptance inside the already-loaded production app; uses actual Actor -> Game
 // HUD frames and actual native Judd DOM/FX. No replacement HUD implementation.
 import path from 'node:path';
-export async function checkHudAuthority({ page, evidence }) {
+import fs from 'node:fs';
+
+// Serialized into the browser by Playwright. SVG graphics need SVG geometry
+// checks; checkVisibility is box-based. Keep its raw result for diagnosis.
+export function inspectSplatlingStages({charge,streaming,left,first,second,settled=false,negative=null}) {
+  const probe=globalThis.__splatlingProbe,h=probe.holder,runner=h._local().weaponRunner;
+  if(!settled){runner.streaming=streaming;runner.burstT=left;h._updCrosshair({weapon:'splatling',charge},1/60);}
+  const svg=h.ret.querySelector('svg'),rings=[h._chargeEl,h._chargeSecond],expected=[first,second],errors=[];
+  let changed=null,oldStyle=null,oldRadius=null;
+  if(negative){changed=negative==='hidden'?svg:negative==='opacity'||negative==='offscreen'?h.xh:rings[1];oldStyle=changed.getAttribute('style');oldRadius=changed.getAttribute('r');
+    if(negative==='hidden')changed.style.visibility='hidden';
+    if(negative==='opacity')changed.style.opacity='0';
+    if(negative==='offscreen')changed.style.left='200vw';
+    if(negative==='stroke')changed.style.stroke='none';
+    if(negative==='zero-size')changed.setAttribute('r','0');
+    if(negative==='progress')changed.style.strokeDashoffset='100';
+  }
+  try {
+    const viewport={width:innerWidth,height:innerHeight};
+    const box=el=>{const r=el.getBoundingClientRect();return{x:r.x,y:r.y,left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height};};
+    const css=el=>{const c=getComputedStyle(el);return{tag:el.tagName,display:c.display,visibility:c.visibility,opacity:c.opacity,contentVisibility:c.contentVisibility,stroke:c.stroke,strokeWidth:c.strokeWidth,strokeOpacity:c.strokeOpacity,strokeDashoffset:c.strokeDashoffset,transform:c.transform};};
+    const ancestors=[];for(let el=svg;el;el=el.parentElement)ancestors.push(css(el));
+    const svgVisible=svg.checkVisibility({checkOpacity:true,checkVisibilityCSS:true});
+    if(!svgVisible||ancestors.some(c=>c.display==='none'||c.visibility==='hidden'||c.visibility==='collapse'||Number(c.opacity)<=0||c.contentVisibility==='hidden'))errors.push('container/ancestor hidden');
+    const rows=rings.map((ring,i)=>{
+      const bounds=box(ring),style=css(ring),progress=1-Number(ring.style.strokeDashoffset)/100;
+      const computedProgress=1-parseFloat(style.strokeDashoffset)/100;
+      let strokeSamples=0;const radius=ring.r.baseVal.value,cx=ring.cx.baseVal.value,cy=ring.cy.baseVal.value;
+      for(let n=0;n<32;n++){const angle=(n+.5)*Math.PI*2/32;if(ring.isPointInStroke({x:cx+radius*Math.cos(angle),y:cy+radius*Math.sin(angle)}))strokeSamples++;}
+      const rawCircleVisible=ring.checkVisibility({checkOpacity:true,checkVisibilityCSS:true});
+      if(!Number.isFinite(progress)||Math.abs(progress-expected[i])>.0001)errors.push(`ring${i}: inline progress`);
+      if(!Object.values(bounds).every(Number.isFinite)||bounds.width<=0||bounds.height<=0||bounds.left<0||bounds.right>innerWidth||bounds.top<0||bounds.bottom>innerHeight)errors.push(`ring${i}: geometry/viewport`);
+      if(style.display==='none'||style.visibility!=='visible'||Number(style.opacity)<=0||style.stroke==='none'||style.stroke==='transparent'||/rgba\([^)]*,\s*0\s*\)/.test(style.stroke)||!(parseFloat(style.strokeWidth)>0)||!(Number(style.strokeOpacity)>0))errors.push(`ring${i}: stroke hidden`);
+      if(settled&&(!Number.isFinite(computedProgress)||Math.abs(computedProgress-expected[i])>.001))errors.push('Splatling rendered ring has not reached expected progress');
+      if(settled&&((expected[i]>0&&strokeSamples===0)||(expected[i]===0&&strokeSamples>1)))errors.push(`ring${i}: SVG stroke samples`);
+      return{progress,computedProgress,rawCircleVisible,strokeSamples,bounds,style};
+    });
+    if(rows[1].bounds.width<=rows[0].bounds.width)errors.push('Splatling second stage is not a distinct outer ring');
+    const row={charge,streaming,left,expected,settled,negative,viewport,mount:probe.mount,svgVisible,svgBounds:box(svg),ancestors,rings:rows,errors};probe.last=row;return row;
+  } finally {if(changed){if(oldStyle===null)changed.removeAttribute('style');else changed.setAttribute('style',oldStyle);if(oldRadius===null)changed.removeAttribute('r');else changed.setAttribute('r',oldRadius);}}
+}
+
+export async function checkHudAuthority({ page, evidence, sourceSha = null, contentHash = null }) {
   const result = await page.evaluate(async () => {
     const { G } = await import(new URL('src/core/ctx.js', document.baseURI).href);
     const g=G.game,a=g.match.local,h=g.hud;
@@ -199,23 +241,30 @@ export async function checkHudAuthority({ page, evidence }) {
       const a={alive:true,weapon:WEAPONS.splatling,weaponRunner:{streaming:false}};
       Object.assign(holder,{xh,ret,_L:{weapon:'splatling',kind:'splatling'},_kick:0,_bloom:0,shield:document.createElement('div'),subChip:document.createElement('div'),_local:()=>a,_restart(){}});
       holder._buildReticle('splatling');xh.className='iw-xh iw-xh--splatling';
+      const style=getComputedStyle(xh);globalThis.__splatlingProbe.mount={opacity:style.opacity,visibility:style.visibility,display:style.display,animations:xh.getAnimations({subtree:true}).map(a=>({playState:a.playState,timing:a.effect?.getTiming()}))};
     });
+    await page.evaluate(async()=>{const xh=globalThis.__splatlingProbe.xh;await Promise.all(xh.getAnimations({subtree:true}).filter(a=>a.effect?.getTiming().iterations!==Infinity).map(a=>a.finished.catch(()=>{})));});
     for(const [name,charge,streaming,left,first,second]of [['first',2/3,false,0,1,0],['second',5/6,false,0,1,.5],['full',1,false,0,1,1],['partial-stream',1,true,80/60,1,0]]){
-      const row=await page.evaluate(({charge,streaming,left,first,second})=>{
-        const h=globalThis.__splatlingProbe.holder,runner=h._local().weaponRunner;
-        runner.streaming=streaming;runner.burstT=left;h._updCrosshair({weapon:'splatling',charge},1/60);
-        const rings=[h._chargeEl,h._chargeSecond],expected=[first,second];
-        const rows=rings.map((ring,i)=>{const r=ring.getBoundingClientRect(),style=getComputedStyle(ring);const progress=1-Number(ring.style.strokeDashoffset)/100;
-          if(Math.abs(progress-expected[i])>.0001||!ring.checkVisibility({checkOpacity:true,checkVisibilityCSS:true})||r.width<=0||r.left<0||r.right>innerWidth||style.stroke==='none')throw Error('Splatling stage geometry/progress regression');
-          return{progress,width:r.width,stroke:style.stroke};});
-        if(rows[1].width<=rows[0].width)throw Error('Splatling second stage is not a distinct outer ring');
-        return{streaming,rings:rows};
-      },{charge,streaming,left,first,second});
+      let row=await page.evaluate(inspectSplatlingStages,{charge,streaming,left,first,second});
+      if(row.errors.length)throw Error('Splatling stage geometry/progress regression: '+JSON.stringify(row));
       await page.waitForTimeout(100);
-      await page.evaluate(({first,second})=>{const h=globalThis.__splatlingProbe.holder;for(const [ring,p]of [[h._chargeEl,first],[h._chargeSecond,second]])if(Math.abs(parseFloat(getComputedStyle(ring).strokeDashoffset)-100*(1-p))>.1)throw Error('Splatling rendered ring has not reached expected progress');},{first,second});
+      row=await page.evaluate(inspectSplatlingStages,{charge,streaming,left,first,second,settled:true});
+      if(row.errors.length)throw Error('Splatling stage geometry/progress regression: '+JSON.stringify(row));
       await page.screenshot({path:path.join(evidence,`splatling-reticle-${name}.png`),timeout:90000});
       result.splatlingStages.push({name,...row});
     }
+    result.splatlingNegatives=[];
+    for(const negative of ['hidden','opacity','offscreen','stroke','zero-size','progress']){
+      const row=await page.evaluate(inspectSplatlingStages,{charge:5/6,streaming:false,left:0,first:1,second:.5,negative});
+      if(!row.errors.length)throw Error('Splatling negative control accepted '+negative);
+      result.splatlingNegatives.push(row);
+    }
+    fs.writeFileSync(path.join(evidence,'splatling-reticle-probe.json'),JSON.stringify({status:'passed',sourceSha,contentHash,stages:result.splatlingStages,negatives:result.splatlingNegatives},null,2));
+  } catch(error) {
+    const diagnostic=await page.evaluate(()=>globalThis.__splatlingProbe?.last||null).catch(()=>null);
+    await page.screenshot({path:path.join(evidence,'splatling-reticle-failure.png'),timeout:90000}).catch(()=>{});
+    fs.writeFileSync(path.join(evidence,'splatling-reticle-probe.json'),JSON.stringify({status:'failed',sourceSha,contentHash,error:String(error),stages:result.splatlingStages,diagnostic},null,2));
+    throw error;
   } finally {await page.evaluate(()=>{const s=globalThis.__splatlingProbe;if(s){s.xh.remove();s.native.style.visibility=s.old;delete globalThis.__splatlingProbe;}});}
   return result;
 }

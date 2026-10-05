@@ -116,7 +116,7 @@ export function validateCatalogReceipts(manifest, receipts) {
   if (crypto.createHash('sha256').update(JSON.stringify(manifest.artifacts)).digest('hex') !== manifest.contentHash) fail('immutable manifest content hash');
   const required = [...CATALOG_MODULES.map(([id]) => 'patches/splatoon3/runtime/' + id + '-motion.mjs'),
     'patches/splatoon3/runtime/install.mjs', 'patches/splatoon3/runtime/walk.mjs',
-    'src/game/actor.js', 'src/game/character.js', 'src/game/weapons.js', 'src/game/physics.js'];
+    'src/game/actor.js', 'src/game/character.js', 'src/game/weapons.js', 'src/game/physics.js', 'src/game/match.js'];
   for (const suffix of required) {
     const keys = Object.keys(manifest.artifacts).filter(k => k.endsWith('/' + suffix));
     if (keys.length !== 1) fail('missing-module manifest ' + suffix);
@@ -130,6 +130,7 @@ export function validateCatalogResult(result) {
   if (result?.schema !== 1 || result.installCalls !== 1 || result.source !== 'built-production-native' || result.gpu?.contextLost !== false || !result.gpu?.renderer || result.errors?.length !== 0) fail('runtime identity / shader errors');
   if (result.gpu.pixelControls?.dither !== false || result.gpu.pixelControls?.samples !== 0 || result.gpu.pixelControls?.target !== 'explicit-srgb-rgba8') fail('controlled pixel framebuffer');
   validateCatalogReceipts({ contentHash: result.contentHash, artifacts: result.artifacts }, result.loaded);
+  validateCatalogTurfFinish(result.turfFinish);
   if (result.duplicateRealm?.modules !== CATALOG_MODULES.length || result.duplicateRealm?.unchanged !== true) fail('cross-realm install');
   if (!Array.isArray(result.data) || result.data.length !== CATALOG_SCENARIOS.length || new Set(result.data.map(r => r.name)).size !== CATALOG_SCENARIOS.length) fail('scenario denominator');
   if (!Array.isArray(result.images) || new Set(result.images.map(r => r.file)).size !== result.images.length || result.images.some(r => !/^[a-z0-9-]+\.png$/.test(r.file) || !/^[a-f0-9]{64}$/.test(r.sha256) || !Number.isInteger(r.bytes) || r.bytes <= 0)) fail('screenshot receipt denominator');
@@ -260,11 +261,33 @@ export function validateCatalogResult(result) {
 
 // This function is serialized into the browser; all classes below are imported
 // from the immutable built graph, with no surrogate Actor, Runner or IK.
+export function catalogTurfFinishProbe(Match, G) {
+  const priorPaint = G.paint, priorNet = G.netm;
+  let reads = 0;
+  const coverage = [.51, .49];
+  try {
+    G.paint = { coverage() { reads++; return coverage; } }; G.netm = null;
+    const match = Object.assign(Object.create(Match.prototype), { state: 'playing', stateT: 0, follower: false, bossMode: null, local: null });
+    match.setState('finish');
+    const captured = match.s3FinishCoverage ? [...match.s3FinishCoverage] : null;
+    const frozen = Object.isFrozen(match.s3FinishCoverage);
+    coverage[0] = .4; coverage[1] = .6;
+    match._judge();
+    return { captured, frozen, judged: [...match.result.coverage], winner: match.result.winner, reads, state: match.state };
+  } finally { G.paint = priorPaint; G.netm = priorNet; }
+}
+export function validateCatalogTurfFinish(proof) {
+  if (!proof || JSON.stringify(proof.captured) !== '[0.51,0.49]' || JSON.stringify(proof.judged) !== '[0.51,0.49]' || proof.frozen !== true || proof.winner !== 0 || proof.reads !== 1 || proof.state !== 'judge') fail('native Turf finish/judge proof');
+}
+
 async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout }) {
   const THREE = await import('three');
   const profile = await fetch(prefix + 'patches/splatoon3/profile.json').then(r => r.json());
   const { install } = await import(prefix + 'patches/splatoon3/runtime/install.mjs');
   const api = install(profile), { Actor, Character, Projectiles, Physics, G, CHARACTER_CHANNELS: C, CHARACTER_FOOT_METRICS: F } = api;
+  // Exercise the real Match dependency entry, including its deadline helper.
+  const { Match } = await import(prefix + 'src/game/match.js');
+  const turfFinish = globalThis.catalogTurfFinishProbe(Match, G);
   // Prefer native named exports. Only older frozen builds need the strictly
   // source-verified adjacent-slot fallback, never an unverified inferred index.
   const contactChannels = footLayout.named ? [C.WPL, C.WPR] : [C.WPL ?? C.STAB - footLayout.leftBeforeStab, C.WPR ?? C.STAB - footLayout.rightBeforeStab];
@@ -630,7 +653,7 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout 
       try { ch.update(0, null); const time = ch.t; for (let i = 0; i < hz; i++) ch.update(1 / hz, null); previewRates.push({ hz, frames: hz, finite: Array.from(ch.P).every(Number.isFinite) && Array.from(ch.ikErr).every(Number.isFinite), elapsed: ch.t - time }); }
       finally { collect(ch.root); ch.dispose(); }
     }
-    const result = { schema: 1, source: 'built-production-native', installCalls: 1, contentHash, duplicateRealm, gpu, data, images, previewRates, fixture: { render: 'actual Chromium WebGL (software ANGLE SwiftShader); native shaders compiled; same-frame RGB visibility pairs; native hero audit LOD', geometry: 'actual native indexed/skinned CPU output; does not include custom GPU vertex deformation', gameplay: 'native isolated methods; case driver and diagnostic assignments disclosed', parity: 'Nintendo executable version/gear/input/joint curves remain unknown; no console/iOS/full-match parity claim' } };
+    const result = { schema: 1, source: 'built-production-native', installCalls: 1, contentHash, turfFinish, duplicateRealm, gpu, data, images, previewRates, fixture: { render: 'actual Chromium WebGL (software ANGLE SwiftShader); native shaders compiled; same-frame RGB visibility pairs; native hero audit LOD', geometry: 'actual native indexed/skinned CPU output; does not include custom GPU vertex deformation', gameplay: 'native isolated methods; case driver and diagnostic assignments disclosed', parity: 'Nintendo executable version/gear/input/joint curves remain unknown; no console/iOS/full-match parity claim' } };
     globalThis.catalogPartial = result; return result;
   } finally {
     projectiles.clear(); collect(scene);
@@ -704,7 +727,7 @@ async function main() {
       catch (e) { error(e.message); await route.abort(); }
     });
     await page.goto('http://127.0.0.1:' + server.address().port + '/motion-catalog');
-    await page.addScriptTag({ content: 'globalThis.catalogPixelDifference=' + pixelDifference.toString() + ';globalThis.catalogRenderFrames=' + catalogRenderFrames.toString() + ';' });
+    await page.addScriptTag({ content: 'globalThis.catalogPixelDifference=' + pixelDifference.toString() + ';globalThis.catalogRenderFrames=' + catalogRenderFrames.toString() + ';globalThis.catalogTurfFinishProbe=' + catalogTurfFinishProbe.toString() + ';' });
     result = await page.evaluate(runCatalog, { prefix, contentHash: manifest.contentHash, scenarios: CATALOG_SCENARIOS, modules: CATALOG_MODULES, footLayout });
     // finally executes after the returned object was built; fetch its cleanup
     // snapshot explicitly so a missing cleanup cannot pass as a successful run.

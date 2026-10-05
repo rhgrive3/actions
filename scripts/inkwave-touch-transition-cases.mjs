@@ -11,7 +11,7 @@
 // 3. Reject noncanvas menu/HUD targets and hidden gameplay controls.
 // 4. Same-angle actual viewport resize and resize storm holding FIRE, stick, and look.
 // 5. Fixed-stick same-coordinate movement after same-angle viewport relayout.
-// 6. Keyboard aspect flip with fixed angle preserving owned hold with no gyro resync.
+// 6. Portrait rejects gameplay; fixed-angle aspect recovery requires a fresh touch without gyro resync.
 // 7. True rotation clears all old ownership.
 // 8. Native lostpointercapture cleanup of holds, edges, and tracked pointers.
 // 9. Repeated transitions and cleanup after destroy.
@@ -21,6 +21,19 @@
 // - WebKit: DOM hit-tested PointerEvents ('DOM-PointerEvent')
 
 import assert from 'node:assert/strict';
+
+export function assertPortraitAspectTransition({ portrait, landscape, fresh, released }) {
+  for (const [phase, value] of [['portrait', portrait], ['landscape stale gesture', landscape], ['released', released]]) {
+    assert.equal(value.fireDown, false, phase + ' must not hold FIRE');
+    assert.equal(value.fireEdge, false, phase + ' must not retain a FIRE edge');
+    assert.equal(value.ptrSize, 0, phase + ' must not retain pointer ownership');
+    assert.equal(value.stickActive, false, phase + ' must not retain movement');
+  }
+  assert.equal(fresh.fireDown, true, 'Fresh landscape touch must restore FIRE');
+  assert.equal(fresh.fireEdge, true, 'Fresh landscape touch must deliver its real press edge');
+  assert.equal(fresh.ptrSize, 1, 'Fresh landscape touch must have exactly one pointer owner');
+  for (const value of [landscape, fresh, released]) assert.equal(value.resyncCalls, 0, 'Fixed-angle aspect change must not resync gyro');
+}
 
 /**
  * Execute the complete suite of touch transition and resize regression checks
@@ -561,8 +574,8 @@ export async function runTouchTransitionCases({
   entry.checks.push('fixed-stick-same-coordinate-movement-after-same-angle-relayout');
 
   // =========================================================================
-  // 7c. KEYBOARD ASPECT FLIP WITH FIXED ANGLE (768x1024 -> 768x400)
-  //     MUST PRESERVE OWNED HOLD, NO GYRO RESYNC
+  // 7c. PORTRAIT GUARD -> FIXED-ANGLE LANDSCAPE RECOVERY
+  //     REJECT HIDDEN CONTROLS, NO STALE REPLAY, FRESH TOUCH WORKS
   // =========================================================================
   await resetMobileState();
   await page.evaluate(() => {
@@ -574,49 +587,41 @@ export async function runTouchTransitionCases({
     }
   });
   await setViewport(768, 1024);
-
   const portraitFire = await page.evaluate(() => {
     const f = mobile._box('fire');
     return { x: Math.round(f.x), y: Math.round(f.y) };
   });
-
-  await gesture('touchStart', [{ id: 26, x: portraitFire.x, y: portraitFire.y }]);
-  const preFlipHold = await page.evaluate(() => ({
-    fireDown: mobile.down('fire'),
-    pointerId: [...mobile._ptr.keys()][0],
+  const state = () => page.evaluate(() => ({
+    fireDown: mobile.down('fire'), fireEdge: mobile.wasPressed('fire'),
+    ptrSize: mobile._ptr.size, stickActive: mobile._stick.active,
+    resyncCalls: window._gyroSpy?.resyncCalls ?? 0,
   }));
-  assert(preFlipHold.fireDown && preFlipHold.pointerId !== undefined, 'FIRE hold established in portrait layout');
-
-  // Spy on mobile.gyro.resync to assert no gyro resync occurs on keyboard aspect flip
+  await gesture('touchStart', [{ id: 26, x: portraitFire.x, y: portraitFire.y }]);
+  const portrait = await state();
   await page.evaluate(() => {
-    window._gyroSpy = {
-      origResync: mobile.gyro.resync,
-      resyncCalls: 0,
-    };
+    window._gyroSpy = { origResync: mobile.gyro.resync, resyncCalls: 0 };
     mobile.gyro.resync = function(...args) {
       window._gyroSpy.resyncCalls++;
       return window._gyroSpy.origResync.apply(this, args);
     };
   });
-
   try {
-    // Keyboard appearance flips aspect ratio from portrait (768x1024) to landscape (768x400)
-    // while screen angle remains fixed at 0
+    // A keyboard/aspect change does not change the physical screen angle.
+    // The gesture rejected in portrait must not acquire ownership on move.
     await setViewport(768, 400);
-
-    const postFlipState = await page.evaluate((pointerId) => {
-      const spy = window._gyroSpy || {};
-      return {
-        fireDown: mobile.down('fire'),
-        hasPtr: mobile._ptr.has(pointerId),
-        ptrSize: mobile._ptr.size,
-        resyncCalls: spy.resyncCalls ?? 0,
-      };
-    }, preFlipHold.pointerId);
-
-    assert(postFlipState.fireDown, 'Held button must survive keyboard aspect flip with fixed angle');
-    assert(postFlipState.hasPtr, 'Pointer ownership must survive keyboard aspect flip with fixed angle');
-    assert.equal(postFlipState.resyncCalls, 0, 'Keyboard aspect flip with fixed angle must NOT trigger gyro resync');
+    const landscapeFire = await page.evaluate(() => {
+      const f = mobile._box('fire'); return { x: Math.round(f.x), y: Math.round(f.y) };
+    });
+    await gesture('touchMove', [{ id: 26, x: landscapeFire.x, y: landscapeFire.y }]);
+    const landscape = await state();
+    await gesture('touchEnd', []);
+    await gesture('touchStart', [{ id: 27, x: landscapeFire.x, y: landscapeFire.y }]);
+    const fresh = await state();
+    await gesture('touchEnd', []);
+    // A valid fresh edge is consumed by the normal fixed-step owner.
+    await page.evaluate(() => input.endFrame());
+    const released = await state();
+    assertPortraitAspectTransition({ portrait, landscape, fresh, released });
   } finally {
     await page.evaluate(() => {
       if (window._gyroSpy) {
@@ -627,7 +632,7 @@ export async function runTouchTransitionCases({
     await gesture('touchEnd', []);
     await setViewport(1024, 768);
   }
-  entry.checks.push('keyboard-aspect-flip-with-fixed-angle-preserves-ownedhold-no-gyro-resync');
+  entry.checks.push('portrait-rejects-controls-fixed-angle-recovery-needs-fresh-touch-no-gyro-resync');
 
   // =========================================================================
   // 8. TRUE ROTATION CLEARS ALL OLD OWNERSHIP
