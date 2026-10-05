@@ -41,7 +41,7 @@ export function installInputPlatform(Input) {
       this.padPrev = this.pad ? this.pad.buttons.map(button => !!button.pressed) : [];
       this.pad?.buttons.forEach((button, i) => { if (button.pressed) this.padMenuBlocked.add(i); });
     }
-    if (this._platformPadAxes && (!this.pad || this.pad.axes.every(value => Math.abs(value) <= .14))) this._platformPadAxes = false;
+    if (this._platformPadAxes && (!this.pad || this.pad.axes.every((value, i) => i >= 4 || Math.abs(value || 0) <= .14))) this._platformPadAxes = false;
     return result;
   };
   P.padAxis = function (...args) { return this._platformPadAxes ? 0 : axis.apply(this, args); };

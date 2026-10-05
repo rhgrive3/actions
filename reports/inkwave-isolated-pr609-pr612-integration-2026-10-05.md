@@ -33,3 +33,9 @@ Production build/content: 6f52753187e34440779e2fb90562844f1be3fdb48ad5816c9e220a
 Source PR CI histories are not this composition's acceptance. PR609 had a legacy terminal-wall expectation and an earlier baseline Charger comparison failure; PR612's comparison reordered Storm presentation and its browser network failure lacked packet diagnostics. These are recorded, not represented as source-green acceptance.
 
 The Storm proof intentionally fails closed if no active accepted snapshot survives, including termination/death/life advancement before playback. Historical reconstruction without that evidence, and PR322/668 delayed hold-to-throw, are outside this pair. Real hardware and Nintendo parity are unverified. Browser acceptance requires the new dedicated integration PR's exact CI. No main merge or deployment is performed.
+
+## Follow-up after accepted PR705 merged
+
+The original pair passed all seven required jobs in run37387892831 at head38507f7b, merge9084141a and content6f527531. After the separately accepted PR705 was merged, main advanced to fdc2806c0464813baa5af1d9b2c16044ca03d0a9 with exactly its tested treeaaa41c56. This pair is now composed on that main:705's seven Issue fixes are inherited base, not additions to this pair's five-Issue delta.
+
+The three-way tree combines without source conflicts; duplicate precision/verifier fixes occur once. Private composed build/content f182fb6adfc9df62defe8170805352e0068ee46d819d02f990853dedfd8f12d8 passes the shared35-case Storm authority, native floor precision, horizontal wall-unit and Roller/Storm coverage tests, plus emitted canonical15goldens/3packet modes/5wall cases and complete startup/artifact gates. No second full local aggregate was run. A new exact merge-candidate CI is required for this changed base; the earlier pair's all-green run is historical evidence, not acceptance for this new composition.
