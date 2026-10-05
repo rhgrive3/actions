@@ -1,17 +1,5 @@
-// S3 11.3.0 endpoint ratios, retaining INKWAVE's existing calibration anchors.
-// Intermediate charge uses the existing normalized charge coordinate and linear
-// interpolation. Absolute Nintendo distance and internal clamping remain unverified.
-const partial = (charge, min, max) => min + (max - min) * Math.max(0, Math.min(1, charge));
-export function chargerImpactRadius(w, charge) {
-  const p = w.impactPaint;
-  return w.impactRadius * (charge >= .999 ? p.full : partial(charge, p.min, p.max)) / p.max;
-}
-export function chargerLineSpacing(w, charge) {
-  const p = w.lineSpacing;
-  const depth = charge >= .999 ? p.depthFull : partial(charge, p.depthMin, p.depthMax);
-  const overlap = charge >= .999 ? p.overlapFull : partial(charge, p.overlapMin, p.overlapMax);
-  return w.lineSplatEvery * depth * (1 - overlap) / (p.depthMin * (1 - p.overlapMin));
-}
+// Player-forward launch inheritance remains separate from canonical ballistics.
+// Charger paint/spacing now belongs to weapons-charger-flight.mjs and pinned raw data.
 export function addPlayerForwardVelocity(p) {
   const a = p.owner, w = p.s3Weapon ?? a?.weapon;
   if (!a || a.remote || p.ghost || p.s3ForwardVelocityApplied) return;

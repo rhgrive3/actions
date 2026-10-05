@@ -198,6 +198,10 @@ const deferredIntegrationPreloads = new Set([
   'patches/splatoon3/runtime/roller-model.mjs',
   'patches/splatoon3/runtime/sub-special-fidelity.mjs',
   'patches/splatoon3/runtime/weapon-edgecases.mjs',
+  // PR587 dependencies: defer only eager hints; retain the complete precache graph.
+  'patches/splatoon3/runtime/weapons-fidelity.mjs',
+  'patches/splatoon3/runtime/weapons-collision.mjs',
+  'patches/splatoon3/runtime/weapons-charger-flight.mjs',
 ]);
 const preloadOrder = order.filter((f) => !deferredIntegrationPreloads.has(f));
 const preload = preloadOrder.filter((f) => fs.existsSync(path.join(BUILD, f))).map((f) => `<link rel="modulepreload" href="./${f}">`).join('\n');

@@ -1,33 +1,68 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from './weapon-edgecases-fixture.mjs';
-import { chargerImpactRadius, chargerLineSpacing, addPlayerForwardVelocity } from '../runtime/weapon-paint-inertia.mjs';
+import { addPlayerForwardVelocity } from '../runtime/weapon-paint-inertia.mjs';
 const near=(a,b)=>assert.ok(Math.abs(a-b)<1e-9,`${a} != ${b}`);
 async function setup(kind='charger') {
  const f=await fixture(),a=f.make(kind),ps=new f.Projectiles(new f.THREE.Scene());
  f.G.actors=[];f.G.boss=null;f.setRandom(()=>.5);a.yaw=0;a.aimDir.set(0,0,1);a.aimPoint.set(0,1.05,100);return {...f,a,ps};
 }
-async function paint(charge) {
- const f=await setup(),paint=[];let casts=0;
- f.G.physics.raycast=(from,dir,range,h)=>{casts++;h.hit=true;h.dist=10;h.point.copy(from).addScaledVector(dir,dir.y<-.5?1:10);h.normal.set(0,1,0);return h;};
+async function paint(charge,{ground=false,ghost=false,dt=1/60}={}) {
+ const f=await setup(),paint=[],impacts=[],V=f.THREE.Vector3;
+ const axes=[new V(1,0,0),new V(0,1,0),new V(0,0,1)];
+ const blocks=[{id:0,solid:true,center:new V(0,-.1,20),half:new V(100,.1,100),axes,faces:[-1,-1,-1,-1,-1,-1]}];
+ if(!ground)blocks.push({id:1,solid:true,center:new V(0,1,8),half:new V(10,2,.1),axes,faces:[-1,-1,-1,-1,-1,-1]});
+ const level={blocks,faces:[],queryBlocks:(_x,_z,_xx,_zz,out)=>{out.length=0;for(let i=0;i<blocks.length;i++)out.push(i);return out;}};
+ f.G.level=level;f.G.physics=new f.Physics(level);
+ f.G.camera={position:new V(0,20,0)};
+ if(ground){f.a.aimDir.set(0,-.2,1).normalize();f.a.aimPoint.set(0,1.05,.3).addScaledVector(f.a.aimDir,100);}
  f.G.paint.splat=(p,r,team,opts)=>{paint.push({pos:p.clone(),r,team,opts});return 1;};
- f.ps.fireCharger(f.a,f.a.weapon,charge);f.ps.clear();return {...f,paint,casts};
+ f.on('weapon:impact',e=>impacts.push(e));
+ if(ghost)f.ps.ghostFire(f.a,{weapon:'charger',charge,muzzle:new V(0,1.05,.3),dir:f.a.aimDir.clone()});
+ else f.ps.fireCharger(f.a,f.a.weapon,charge);
+ // Production now owns a finite flight; launch itself cannot paint or hit.
+ assert.equal(paint.length,0);assert.equal(impacts.length,0);
+ assert.equal(f.ps._fidelityChargerFlights.length,1);
+ let frames=0;
+ while(f.ps._fidelityChargerFlights.length && frames++<120)f.ps.update(dt);
+ assert.equal(f.ps._fidelityChargerFlights.length,0,'finite flight reaches its obstacle');
+ f.ps.clear();return {...f,paint,impacts,frames};
 }
-test('#407 actual ground impact follows three sourced endpoint ratios and full-charge step',async()=>{
- const a=await paint(0),b=await paint(.998999),c=await paint(1);
- near(a.paint.at(-1).r,1.2*.906/2.719);near(c.paint.at(-1).r,1.2*3.263/2.719);
- assert.ok(c.paint.at(-1).r/b.paint.at(-1).r>1.2);
- near(chargerImpactRadius(a.a.weapon,1)/chargerImpactRadius(a.a.weapon,.998999),c.paint.at(-1).r/b.paint.at(-1).r);
- assert.equal(c.paint.at(-1).opts.stretchAmt,.6); // actual impact, not line splashes
-});
-test('#420 actual line centers tighten with charge; first offset and footprint stay separate',async()=>{
- for(const charge of [0,.5,.998999,1]) {
-  const f=await paint(charge),line=f.paint.filter(p=>p.opts.stretchAmt===1.2),step=chargerLineSpacing(f.a.weapon,charge);
-  assert.ok(line.length>2);near(line[0].pos.z,.3+1.2);
-  for(let i=1;i<line.length;i++)near(line[i].pos.z-line[i-1].pos.z,step);
-  near(line[0].r,f.a.weapon.lineRadius*(.8+charge*.4));
+test('#407 finite Charger ground/wall impacts and events retain raw endpoint ratios and full-charge step',async()=>{
+ for(const ground of [false,true]){
+  const cases=[];
+  for(const [charge,want] of [[0,.906],[.5,1.8125],[.998999,2.717185187],[.999,3.263],[1,3.263]]){
+   const f=await paint(charge,{ground}),impact=f.paint.at(-1);
+   assert.equal(f.impacts.length,1);assert.equal(impact.opts.stretchAmt,.6);
+   near(impact.r,want);near(f.impacts[0].radius,impact.r);
+   assert.ok(f.frames>0);cases.push(f);
+  }
+  near(cases[0].paint.at(-1).r/cases[4].paint.at(-1).r,.906/3.263);
+  assert.ok(cases[3].paint.at(-1).r/cases[2].paint.at(-1).r>1.2);
  }
- const f=await setup();near(chargerLineSpacing(f.a.weapon,0),1.2);near(chargerLineSpacing(f.a.weapon,1)/1.2,2.0592/4.7775);
+});
+test('#420 finite Charger line centers follow raw spacing and keep nearest footprint separate',async()=>{
+ const spacings=[];
+ for(const [charge,spacing,width,depth] of [[0,4.7775,.78,2.73],[.5,3.485625,1.17,2.145],[.998999,2.342147438085293,1.55921922,1.56117117],[.999,2.0592,1.56,1.56],[1,2.0592,1.56,1.56]]){
+  const f=await paint(charge),line=f.paint.slice(0,-1);
+  assert.ok(line.length>=2);near(line[0].pos.z,.3+1.2);near(line[0].r,1.2);
+  for(let i=1;i<line.length;i++){near(line[i].pos.z-line[i-1].pos.z,spacing);near(line[i].r,width);}
+  for(const p of line){near(p.opts.stretchAmt,depth/width-1);assert.ok(p.pos.z<7.9,'line centres stop before wall');}
+  spacings.push(line[1].pos.z-line[0].pos.z);
+ }
+ near(spacings[4]/spacings[0],2.0592/4.7775);
+ assert.ok(spacings[0]>spacings[1]&&spacings[1]>spacings[2]&&spacings[2]>spacings[3]);
+});
+test('finite Charger paint is independent of update subdivision and ghost flights never paint',async()=>{
+ for(const charge of [0,.5,1]){
+  const baseline=await paint(charge);
+  for(const dt of [1/30,1/120]){
+   const other=await paint(charge,{dt});assert.equal(other.paint.length,baseline.paint.length);
+   other.paint.forEach((p,i)=>{near(p.pos.distanceTo(baseline.paint[i].pos),0);near(p.r,baseline.paint[i].r);});
+   near(other.impacts[0].radius,baseline.impacts[0].radius);
+  }
+  const ghost=await paint(charge,{ghost:true});assert.equal(ghost.paint.length,0);assert.equal(ghost.impacts.length,0);
+ }
 });
 async function launch(kind,{speed=0,strafe=0,yaw=0,vertical=false,hand=0,remote=false}={}) {
  const f=await setup(kind);f.a.yaw=yaw;f.a.remote=remote;f.a.aimDir.set(Math.sin(yaw),0,Math.cos(yaw));f.a.aimPoint.copy(f.a.aimDir).multiplyScalar(100);f.a.aimPoint.y=1.05;

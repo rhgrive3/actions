@@ -7,7 +7,7 @@ test('baseline reproduces publication ordering; final packet preserves native lo
  for(const network of [false,true]){
   const f=await fixture({network}),nm=f.makeNetMatch(f.makeSession()),a=f.makeActor({nid:0,owner:'me',vertical:true});f.bind(nm,[a]);
   f.projectiles.fireFlick(a,a.weapon);const p=f.projectiles.list[0],e=nm.out[0];
-  assert.equal(p.grav,144);assert.equal(p.drag,6);assert.equal(e[16],network?p.grav:26);assert.equal(e[17],network?p.drag:.4);
+  assert.equal(p.grav,144);assert.equal(p.drag,6);assert.equal(e[16],p.grav);assert.equal(e[17],p.drag);
   if(network){assert.equal(e[27],1);assert.equal(e[28],p.seed);assert.equal(e[29],p._netId);}
  }
 });
@@ -38,8 +38,10 @@ test('native bomb and forwarded-event sequence replay is idempotent',async()=>{
  const f=await fixture(),nm=f.makeNetMatch(f.makeSession()),a=f.makeActor({nid:0,owner:'p2',remote:true});f.bind(nm,[a]);nm.peers.set('p2',{tr:1000});nm._rec(['b',0,'bomb',0,3,0,0,5,10,1,2]);const b=nm.out.pop();nm._play('p2',b);nm._play('p2',b);assert.equal(f.projectiles.bombs.length,1);
 });
 test('terminal replay retains the native blaster airburst before recycling',async()=>{
- const f=await fixture(),nm=f.makeNetMatch(f.makeSession()),a=f.makeActor({nid:0,owner:'p2',remote:true,roller:false});f.bind(nm,[a]);const peer={tr:1000.2};nm.peers.set('p2',peer);let bursts=0;f.projectiles._blastBurst=()=>bursts++;
- const e=[1000,'p',0,'blast','blaster',0,30,0,0,0,10,0,.1,99,.2,.2,0,0,0,0,.1,.8,1.3,.03,26,.3,3,0,.123,1];nm._play('p2',e);nm._play('p2',[1000.1,'pe',0,1,0]);f.projectiles.update(1/60);assert.equal(bursts,1);assert.equal(f.projectiles.list.length,0);
+ const f=await fixture(),nm=f.makeNetMatch(f.makeSession()),a=f.makeActor({nid:0,owner:'p2',remote:true,roller:false});f.bind(nm,[a]);
+ const life=f.WEAPONS.blaster.ballistics.burstTime,straight=f.WEAPONS.blaster.ballistics.straightTime,peer={tr:1000+life+1/60};nm.peers.set('p2',peer);let bursts=0;f.projectiles._blastBurst=()=>bursts++;
+ const e=[1000,'p',0,'blast','blaster',0,30,0,0,0,10,0,life,straight,.2,.2,0,0,0,0,.1,.8,1.3,.03,26,.3,3,0,.123,1];
+ nm._play('p2',e);nm._play('p2',[1000+life,'pe',0,1,0]);f.projectiles.update(1/60);assert.equal(bursts,1);assert.equal(f.projectiles.list.length,0);
 });
 
 

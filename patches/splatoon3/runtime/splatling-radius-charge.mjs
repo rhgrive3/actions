@@ -1,31 +1,7 @@
-// #403 fixes only the sourced relative collider size; absolute world scale is
-// explicitly provisional. Visual size, field sweep and paint remain independent.
-export const playerCollisionRadius = p => p.s3PlayerRadius ?? p.size;
-
-export function installSplatlingRadiusCharge({ Projectiles, WeaponRunner }, profile) {
-  const cfg = profile.splatlingPlayerCollision;
-  if (!cfg || ![cfg.referenceRadius, cfg.referenceShooterRadius, cfg.shooterWorldRadius]
-    .every(value => Number.isFinite(value) && value > 0)) {
-    throw new Error('Invalid Heavy Splatling player collision profile');
-  }
-  const shooterRadius = cfg.shooterWorldRadius;
-  const splatlingRadius = shooterRadius * cfg.referenceRadius / cfg.referenceShooterRadius;
-  const fresh = Projectiles.prototype._new, push = Projectiles.prototype._push;
-  Projectiles.prototype._new = function (...args) {
-    const p = fresh.apply(this, args);
-    p.s3PlayerRadius = null;
-    return p;
-  };
-  Projectiles.prototype._push = function (p) {
-    // Ghosts bypass _push and never gain authoritative collisions. Snapshots
-    // cannot change when a live actor switches weapon or charge after firing.
-    const kind = p.owner?.weapon?.kind;
-    if (!p.ghost && p.type === 'shot') {
-      if (kind === 'shooter') p.s3PlayerRadius = shooterRadius;
-      if (kind === 'splatling') p.s3PlayerRadius = splatlingRadius;
-    }
-    return push.call(this, p);
-  };
+// #403 collision ownership moved to the canonical continuous fidelity solver.
+// Its raw Shooter .285 / Heavy .225 radii retain the sourced relative ratio;
+// no old world-scale snapshot overrides that owner. #470 charge walking remains.
+export function installSplatlingRadiusCharge({ WeaponRunner }) {
   const moveSpeed = WeaponRunner.prototype.moveSpeed;
   WeaponRunner.prototype.moveSpeed = function () {
     const w = this.a.weapon;

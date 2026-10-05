@@ -505,3 +505,23 @@ Bomb aim/release now owns the final native dispatcher, cancels interruptible mai
 ## 2026-10-05 special movement spawn boundary (#582)
 
 Slam and Storm movement now apply the existing enemy spawn clamp once after native collision resolution; Slam does so before authoritative impact. Original radius, height condition, velocity response, phase timers and damage/paint rules are retained. Source/emitted10/10 and full1101/0 pass; all4 current map spawn settings, fixed cadence, ordinary movement and native owner/remote packet position are covered. [Evidence and limits](inkwave-special-spawn-boundary-2026-10-05.md).
+
+
+## PR587 integration: preserve startup preload budget (2026-10-05)
+
+The new main-weapon fidelity graph adds `weapons-fidelity.mjs`,
+`weapons-collision.mjs`, and `weapons-charger-flight.mjs`. Their eager HTML
+modulepreload hints raised core requests from 131 to 134. Extend the existing
+preload-only deferral list by these three modules; `prepareLoading(BUILD, order)`
+still receives the full graph. All three remain immutable, digest-verified
+Service Worker precache dependencies. No weapon or gameplay values change.
+
+On the dedicated main fc057af + PR536 composition snapshot, the unchanged
+startup checker rejects the prior build's core request count and accepts the
+corrected build: 131 core + 14 range hints, 199 precache entries, 4,586,825
+precache bytes. Static dependency closure and every revision asset digest pass.
+Only index.html and sw.js differ among non-versioned output artifacts.
+Loading adapter regressions pass 7/7 using actual compiled pre-loading Main;
+worker regressions pass 28/28, with the optional historical worker fixture
+unavailable. Native browser startup/offline timing and Switch hardware behavior
+remain unverified locally; browser CI is required for the new composition.
