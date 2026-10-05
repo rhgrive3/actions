@@ -58,13 +58,16 @@ test('lifecycle converges across 24 hide/show cycles without duplicate frame loo
     assert.equal(owner.snapshot().listeners,initialListeners);
     assert.equal(owner.snapshot().subscribers,1);
   }
-  // First resumed frame rebases to zero. A later 30 s active wall-clock gap also
-  // rebases to zero rather than feeding a catch-up delta to simulation.
+  // First resumed frame rebases to zero. A short foreground stall advances a
+  // bounded slice so a slow active browser cannot starve fixed simulation;
+  // a real 30 s gap still resumes from zero.
   let cb=env._raf.cb; cb(env.performance.now());
   assert.equal(dts.at(-1),0);
+  env._advance(400); cb=env._raf.cb; cb(env.performance.now());
+  assert.equal(dts.at(-1),MAX_PLATFORM_GAP);
   env._advance(30000); cb=env._raf.cb; cb(env.performance.now());
   assert.equal(dts.at(-1),0);
-  assert.equal(driver.snapshot().gaps,1);
+  assert.equal(driver.snapshot().gaps,2);
   assert.equal(driver.snapshot().pendingRAF,1);
   assert.equal(owner.snapshot().listeners,initialListeners);
   driver.dispose(); owner.dispose();
