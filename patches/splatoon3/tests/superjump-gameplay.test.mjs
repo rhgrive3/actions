@@ -148,3 +148,48 @@ test('30/60/120Hz frames have identical support, flight, damage, shots, landing 
     assert.ok(shotCount > 2); assert.equal(a.superJumpState, null);
   }
 });
+
+for (const mutation of ['move', 'splat', 'reset']) test(`#362 confirmation locks destination before teammate ${mutation}`, async t => {
+  const f = await boot(); t.after(f.close); const a = f.make(), target = f.make({pos:[10,0,7]});
+  assert.equal(a.superJump(target), true);
+  const committed = plain(a.superJumpState.to.toArray());
+  assert.ok(a.superJumpState.to.distanceTo(new f.THREE.Vector3(10,0,7)) < 1e-9);
+  assert.notEqual(a.superJumpState.target,target);
+  if(mutation==='move') target.pos.set(30,0,25);
+  if(mutation==='splat') target.splat(null,'water');
+  if(mutation==='reset') target.spawnAt(new f.THREE.Vector3(30,0,25),0);
+  f.tick(a,80); assert.equal(a.superJumpState.phase,'flight');
+  assert.deepEqual(plain(a.superJumpState.to.toArray()),committed);
+});
+
+test('#362 rejects invalid targets before changing actor state or emitting a charge', async t => {
+  const f=await boot();t.after(f.close);const a=f.make(),dead=f.make(),enemy=f.make({team:1}),air=f.make({pos:[20,5,0]});
+  dead.splat(null,'water');let charges=0;f.on('superjump',({actor,phase})=>{if(actor===a&&phase==='charge')charges++;});
+  for(const target of [dead,enemy,air,a,null,{},new f.THREE.Vector3(NaN,0,0)]) {
+    assert.equal(a.superJump(target),false);assert.equal(a.superJumpState,null);assert.equal(a.form,'kid');
+  }
+  assert.equal(charges,0);
+});
+
+test('#362 fixed spawn points snapshot immediately; own death still cancels committed jump', async t => {
+  const f=await boot();t.after(f.close);const a=f.make(),point=new f.THREE.Vector3(25,0,8);
+  assert.equal(a.superJump(point),true);point.set(90,0,90);
+  assert.deepEqual(plain(a.superJumpState.to.toArray()),[25,0,8]);
+  a.splat(null,'water');assert.equal(a.superJumpState,null);
+});
+
+test('#362 30/60/120Hz preserve one committed destination and flight announcement', async t => {
+  let expected;
+  for(const hz of [30,60,120]) {
+    const f=await boot();t.after(f.close);const a=f.make(),target=f.make({pos:[10,0,7]}),clock=new f.FixedClock(),trace=[],events=[];
+    f.on('superjump',({actor,phase,to})=>{if(actor===a)events.push([phase,to?plain(to.toArray()):null]);});
+    a.superJump(target);const committed=plain(a.superJumpState.to.toArray());
+    for(let i=0;i<hz*2;i++)clock.advance(1/hz,dt=>{
+      target.pos.x+=.1;if(clock.ticks===20)target.splat(null,'water');
+      a.update(dt);trace.push([a.superJumpState?.phase,plain(a.superJumpState?.to.toArray() ?? null),plain(a.pos.toArray())]);
+    });
+    const result=plain({trace,events});if(expected)assert.deepEqual(result,expected);else expected=result;
+    assert.deepEqual(events,[['charge',null],['flight',committed]]);
+    assert.ok(new f.THREE.Vector3(...committed).distanceTo(new f.THREE.Vector3(10,0,7)) < 1e-9);
+  }
+});

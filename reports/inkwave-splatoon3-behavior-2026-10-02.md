@@ -187,3 +187,7 @@ Flow の外殻・粒・リボンが GTAO の法線／深度パスに不透明な
 `patches/splatoon3/tests/superjump-gameplay.test.mjs` は実Actor・Physics・Level・WeaponRunner・Projectiles・NetMatch・Characterと全production installerを同じrealmで合成する。音/GPU描画/塗りのsampleだけfixture境界で、別ゲームモデルではない。`INKWAVE_SUPERJUMP_SITE=<build出力>` でminify済み公開生成物にも同じ受入を実施する。30/60/120Hz描画相当のFixedClock入力で各60Hz tickの座標・状態・HP・インク・発射数・cooldownを比較する。
 
 公開操作の追試: 落下してからマップで帰還選択、味方が地上→低い壁/高い壁に上った状態へのジャンプ、準備から着地までZR保持、上昇/降下/着地tickへの通常弾・チャージャー・ボム・継続ダメージを比較する。実Switchの映像比較、実ブラウザGPU描画、遅延付き2peer実機計測は今回のCPU合成検証に含めない。Wiki本文は閲覧時点の資料でありNintendoの一次資料ではない。
+
+## Super Jump target commitment (#362)
+
+[Target commitment comparison](inkwave-superjump-target-lock-2026-10-04.md) records selection-time grounding validation and destination snapshotting on PR #301. Later teammate movement/death cannot redirect or cancel an admitted jump. Own-death cancellation, fixed spawn points and timing remain independent; current physical-device parity is unverified.

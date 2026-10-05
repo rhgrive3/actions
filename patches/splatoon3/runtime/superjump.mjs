@@ -40,7 +40,10 @@ export function prepareSuperJump(a, dt) {
 }
 
 export function superJumpTarget(target, out) {
-  if (!target?.pos?.isVector3) { out.copy(target); return true; }
+  if (!target?.pos?.isVector3) {
+    if (!target?.isVector3 || ![target.x, target.y, target.z].every(Number.isFinite)) return false;
+    out.copy(target); return true;
+  }
   if (!target.alive) return false;
   rememberSuperJumpGround(target);
   // Never silently fall back to an airborne coordinate. Newly seen airborne
