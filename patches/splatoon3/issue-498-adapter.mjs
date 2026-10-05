@@ -7,7 +7,7 @@
 //     ChangeFrameWidthRate = 0.6, ChangeWidthStartFrame = 20, ChangeWidthEndFrame = 50
 //   VerticalSwingUnitGroupParam.Unit[0..2].UnitParam.PaintParam
 //     ChangeFrameWidthRate = 0.6, ChangeWidthStartFrame = 30, ChangeWidthEndFrame = 50
-// Parameter-semantics reference (wikiwiki splatoon3mix パラメータ情報): 
+// Parameter-semantics reference (wikiwiki splatoon3mix パラメータ情報):
 //   ChangeFrameWidthRate = minimum paint-radius multiplier caused by elapsed time;
 //   ChangeWidthStartFrame = frame at which the paint-radius reduction begins;
 //   ChangeWidthEndFrame = frame by which the reduction has completed.
