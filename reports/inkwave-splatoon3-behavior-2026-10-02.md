@@ -268,3 +268,11 @@ Splatoon 3 (Ver.11.3.0) のオプションにはモーション操作の感度�
 | 再現操作 | 修正前: Touch 設定で Gyro vertical/horizontal を Invert にすると保存され、次回起動以降の傾け・旋回でヨー/ピッチ符号が反転する。修正後: UI に行がなく、保存済み `gyroInvertX/Y = true` があってもネイティブ符号のまま |
 | プレイへの影響 | 準拠プロファイルで反転できる軸が消える。既存の保存値は gyro 経路から読まれなくなり（省略による移行）、隠れた反転状態が残らない。ヨー/ピッチ積分・感度曲線・権限/リスナ寿命（#426）・右スティック/マウス反転（#309 系）・カメラリセット（#490 系）は変更しない |
 | 確認状態 | **ロジック確認済み**：reliability focused suite 378 pass（実 `_setSettings` → `applySettings` → `Gyro.configure`、実 `_orientation` の符号等価と反転コントロール、評価済み TOUCH_TAB 行）、local-quality production composition 49 pass。**本家実機（Switch Ver.11.3.0）との操作比較は未確認**。キャリブレーション値・感度曲線は変更していない |
+## 2026-10-04: first-allocation mobile resource budget
+
+A cold-boot follow-up for #375/#395 uses the already-published G.mobile profile
+until G.game exists. The established touch budget now applies on the first
+cloud/Halyard cube allocation at default high settings, not only after later
+runtime refresh. Existing formats, appearance policy and gameplay stay intact.
+These are project resource dimensions, not Nintendo/Switch memory values.
+See [the cold-boot budget report](inkwave-cold-boot-budgets-2026-10-04.md).
