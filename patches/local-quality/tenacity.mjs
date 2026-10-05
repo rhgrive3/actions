@@ -2,7 +2,7 @@
 // S3 baseline points/second, not effective (SCU-discounted) actor points.
 export const TENACITY_RATES = Object.freeze([0, 3.26, 5.44, 7.59]);
 export function advanceTenacity(match, dt, emit) {
-  if (!Number.isFinite(dt) || dt <= 0 || match.mode !== 'turf' || match.attract || match.opts?.range ||
+  if (!Number.isFinite(dt) || dt <= 0 || match.mode !== 'turf' || match.attract ||
       match.paused || match.state !== 'playing' || !(match.time > 0)) return;
   const actors = match.actors;
   // Snapshot after all native actor updates: roster ordering cannot change the
