@@ -209,6 +209,16 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, 'const game = new Game();', 'installGame(Game);\nconst game = new Game();', 'game installation');
     return `import { runSimulation, installGame } from '../patches/splatoon3/runtime/clock.mjs';\n` + code;
   }
+  if (rel === 'src/core/shadowcache.js') {
+    // #658: a stage switch must release the previously collected static-caster
+    // generation immediately. While Shadows are OFF no shadow-map render runs,
+    // so the dirty flag alone never rebuilds `this.static` and the stale array
+    // would keep the disposed previous stage (meshes, PropKit atlas) alive.
+    code = replaceOnce(code,
+      '  setStaticRoots(roots) {\n    this.roots = roots.filter(Boolean);\n    this.dynamic = new WeakSet();\n    this.dirty = true;\n  }',
+      '  setStaticRoots(roots) {\n    this.roots = roots.filter(Boolean);\n    this.static.length = 0; // #658: release the previous collected caster generation at the root handoff\n    this.dynamic = new WeakSet();\n    this.dirty = true;\n  }',
+      'stage-root static release');
+  }
   return code;
 }
 
