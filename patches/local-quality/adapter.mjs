@@ -9,6 +9,7 @@ import { adaptLobbyResources } from './lobby-resource-adapter.mjs';
 import { adaptLandingRigidity } from './landing-rigidity-adapter.mjs';
 import { adaptFirstTouch } from './first-touch-adapter.mjs';
 import { adaptTouchRelayout } from './touch-relayout.mjs';
+import { adaptTexlibSource } from './texlib-adapter.mjs';
 
 export const QUALITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
 const IDENTITY_FILES = [
@@ -16,6 +17,7 @@ const IDENTITY_FILES = [
   'lobby-resource-adapter.mjs', 'minimap-resource-adapter.mjs',
   'adapter.mjs', 'gyro.mjs', 'install.mjs', 'menu-preview.mjs', 'menu.mjs',
   'roller-motion.mjs', 'roller-visual.mjs', 'surface.mjs', 'landing-rigidity-adapter.mjs', 'first-touch-adapter.mjs', 'touch-relayout.mjs',
+  'texlib-adapter.mjs', 'texlib.mjs',
 ];
 
 export function replaceOnce(code, before, after, label) {
@@ -27,6 +29,7 @@ export function replaceOnce(code, before, after, label) {
 }
 
 export function adaptQualitySource(rel, code) {
+  code = adaptTexlibSource(rel, code);
   code = adaptIdleSource(rel, code, replaceOnce);
   code = adaptLobbyResources(rel, code);
   code = adaptMinimapResources(rel, code);
