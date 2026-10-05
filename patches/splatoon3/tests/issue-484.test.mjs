@@ -146,7 +146,7 @@ test('issue-484 adapter transforms Actor and NetMatch with exact connections', (
   assert.ok(!patchedActor.includes('- 0.01'), 'Must not contain -0.01 epsilon');
 
   const patchedNet = adaptIssue484('src/net/netmatch.js', netSrc);
-  assert.ok(patchedNet.includes('specialReady: 1048576'));
+  assert.ok(patchedNet.includes('specialReady: 8388608'));
   assert.ok(patchedNet.includes('if (a.specialReady?.()) f |= F.specialReady;'));
   assert.ok(patchedNet.includes('snap.spCost = d.sc?.[a.nid]'));
   assert.ok(!patchedNet.includes('spCost: s[21]'), 'tuple slot21 remains available for existing statistics extensions');
@@ -303,7 +303,7 @@ test('root acceptance: patched INKWAVE synchronizes specialReady and effective s
   assert.ok(hostPacket);
   assert.equal(hostPacket.a[0].length, 21, 'original actor tuple is unchanged');
   assert.equal(Math.round(hostPacket.sc[owner.nid]), 165, 'named sidecar carries effective cost');
-  assert.ok(hostPacket.a[0][10] & 1048576, 'Flags contain specialReady bit');
+  assert.ok(hostPacket.a[0][10] & 8388608, 'Flags contain specialReady bit');
 
   // Deliver tick to client
   clientNM.onMessage('host-id', hostPacket);
@@ -637,7 +637,7 @@ test('mixed stream: seamless transitions between new protocol and legacy samples
 
   // Step 1: Original tuple plus named cost sidecar and ready flag
   const newSnapshot = [
-    proxy.nid, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 | 1048576,
+    proxy.nid, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 | 8388608,
     100, 100, 165, 0, 50, 0, 0, 0, 0, 0, 165
   ];
   receiveFixtureSnapshot(nm, 'host-id', { k: 't', ts: 1.0, sc: { [proxy.nid]: 165 }, a: [newSnapshot] });
@@ -715,7 +715,7 @@ test('sampling alignment: Hermite interpolation aligns cost with earlier snapsho
   ];
   // Snapshot 1: t=1.1, spCost=165, sp=165, flags=1 | specialReady (ready)
   const snap1 = [
-    proxy.nid, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 | 1048576,
+    proxy.nid, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 | 8388608,
     100, 100, 165, 0, 50, 0, 0, 0, 0, 0, 165
   ];
 
@@ -775,7 +775,7 @@ test('admission checks: out-of-order and non-authoritative packets are rejected'
 
   // 1. Authoritative packet at ts=2.0
   const validSnap = [
-    proxy.nid, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 | 1048576,
+    proxy.nid, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 | 8388608,
     100, 100, 165, 0, 50, 0, 0, 0, 0, 0, 165
   ];
   receiveFixtureSnapshot(nm, 'host-id', { k: 't', ts: 2.0, sc: { [proxy.nid]: 165 }, a: [validSnap] });
