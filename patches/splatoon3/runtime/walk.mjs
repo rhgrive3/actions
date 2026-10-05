@@ -104,9 +104,13 @@ function updateFeet(ch,dt){
       const f=F[i];let elapsed=dt;
       if(f.planted){
         f.stT+=dt;f.stU+=dt*ch.cad/ch.duty;
-        const far=Math.hypot(f.pw.x-R.x,f.pw.z-R.z)>tuning.catchDistance;
+        const rootDist=Math.hypot(f.pw.x-R.x,f.pw.z-R.z),far=rootDist>tuning.catchDistance;
+        // A freshly landed foot normally owns at least 60 ms of stance to avoid
+        // chatter. Do not keep that hold once the gameplay root has moved farther
+        // than the whole leg can possibly span (common on a sharp reversal).
+        const hardOverreach=rootDist>ch.legReach;
         if(f.stU>=1){elapsed=(f.stU-1)*ch.duty/ch.cad;startSwing(ch,f,false,undefined,elapsed);}
-        else if(far&&f.stT>.06){startSwing(ch,f,false,Math.min(tuning.firstStepTime,(1-ch.duty)/ch.cad));elapsed=0;}
+        else if(far&&(f.stT>.06||hardOverreach)){startSwing(ch,f,false,Math.min(tuning.firstStepTime,(1-ch.duty)/ch.cad));elapsed=0;}
       }
       if(f.sw){
         f.su+=elapsed/f.dur;
@@ -238,7 +242,7 @@ export function walkSwingUnloaded(ch,f){return state(ch).active?f.sw:f.sw&&f.su>
 // original additional swing margin.
 export function walkFootReach(ch,f){
   if(!states.get(ch)?.active||!f.planted)return ch.legReach*.97;
-  const leg=f.side>0?ch.limbs.legL:ch.limbs.legR;return leg.a+leg.b;
+  const leg=f.side>0?ch.limbs.legL:ch.limbs.legR;return (leg.a+leg.b)*.9995;
 }
 
 // A filtered pelvis can lag behind the support constraint during a reversal.
