@@ -47,10 +47,11 @@ async function boot({ floor = true, grate = false, wall = false } = {}) {
     level, physics: new Physics(level), mode: 'match', teamColors: [new THREE.Color('#ff8a14'), new THREE.Color('#2f5bff')],
     match: { playing: () => true, canRespawn: () => false }, paint: { sample: () => 1, splat: () => 0 } });
   G.projectiles = new api.Projectiles(G.scene);
-  function make({ pos = [0, 0, 0], weapon = 'shooter', team = 0 } = {}) {
-    const a = new api.Actor({ team, name: 'superjump regression', weapon, CharacterClass: api.Character,
+  function make({ pos = [0, 0, 0], weapon = 'shooter', team = 0, isLocal = false, remote = false } = {}) {
+    const a = new api.Actor({ team, name: 'superjump regression', weapon, isLocal, CharacterClass: api.Character,
       style: { hair: 0, skin: 2, outfit: 0, eyes: 0 } });
     a.character.actor = a; G.actors.push(a); G.scene.add(a.character.root);
+    a.remote = remote;
     a.spawnAt(new THREE.Vector3(...pos), 0); a.invuln = 0; return a;
   }
   const tick = (a, count = 1) => { for (let i = 0; i < count; i++) { G.time += STEP; a.update(STEP); } };
@@ -226,7 +227,7 @@ for (const ground of ['unpainted', 'enemy']) test(`#645 plain Super Jump landing
   assert.equal(turfEmitted, 0, 'no turf events emitted from landing');
 });
 
-test('#645 online and offline landing feedback preserves VFX/audio and zero paint', async t => {
+test('#645 plain Super Jump landing preserves landing VFX burst and superjump:land event with zero paint', async t => {
   const f = await boot(); t.after(f.close);
   const a = f.make({ team: 0 });
   a.s3.jumpChargeTime = STEP;
@@ -248,5 +249,62 @@ test('#645 online and offline landing feedback preserves VFX/audio and zero pain
   assert.equal(landEvents, 1, 'superjump:land event emitted');
   assert.equal(a.stats.turf, 0);
   assert.equal(a.special, 0);
+});
+
+test('#645 native remote Super Jump visual/landing regression creates 0 paint/turf/SP and preserves feedback', async t => {
+  const f = await boot(); t.after(f.close);
+  const a = f.make({ team: 0, isLocal: false, remote: true });
+  a.s3.jumpChargeTime = STEP;
+  a.s3.jumpFlightTime = 96 * STEP;
+
+  let burstCount = 0;
+  let landEvents = 0;
+  let shakeEvents = 0;
+  let paintCalls = 0;
+  f.G.fx = { burst: () => burstCount++, ring: () => {} };
+  f.G.paint.splat = () => { paintCalls++; return 10; };
+  f.on('superjump:land', () => landEvents++);
+  f.on('shake', () => shakeEvents++);
+
+  const initialTurf = a.stats.turf;
+  const initialSpecial = a.special;
+
+  assert.equal(a.superJump(new f.THREE.Vector3(20, 0, 0)), true);
+  f.tick(a, 50);
+  assert.equal(a.superJumpState.phase, 'flight');
+  assert.equal(paintCalls, 0);
+
+  // Advance flight to landing
+  f.tick(a, 48);
+
+  assert.equal(a.superJumpState, null, 'remote super jump state cleared on landing');
+  assert.equal(paintCalls, 0, 'remote landing creates 0 paint');
+  assert.equal(a.stats.turf, initialTurf, 'remote landing adds 0 personal turf score');
+  assert.equal(a.special, initialSpecial, 'remote landing adds 0 special gauge');
+  assert.ok(burstCount > 0, 'remote landing VFX burst preserved');
+  assert.equal(landEvents, 1, 'superjump:land event emitted for remote landing');
+  assert.equal(shakeEvents, 0, 'remote actor landing does not emit local screen shake');
+  assert.equal(a.form, 'kid', 'actor returns to kid form');
+});
+
+test('#645 special-owned _slamImpact paint and turf remain intact', async t => {
+  const f = await boot(); t.after(f.close);
+  const a = f.make({ team: 0 });
+
+  let paintSplatCalls = 0;
+  f.G.paint.splat = () => {
+    paintSplatCalls++;
+    return 12;
+  };
+
+  const initialTurf = a.stats.turf;
+  const initialSpecial = a.special;
+
+  // Trigger special-owned slam impact (e.g. Tidal Slam / Triple Splashdown)
+  a._slamImpact({ radius: 4.5 });
+
+  assert.equal(paintSplatCalls, 10, '_slamImpact executes 1 center + 9 radial paint splats');
+  assert.ok(a.stats.turf > initialTurf, '_slamImpact awards un-special turf score via addTurfNoSpecial');
+  assert.equal(a.special, initialSpecial, 'addTurfNoSpecial does not charge special');
 });
 
