@@ -250,3 +250,13 @@ cloud/Halyard cube allocation at default high settings, not only after later
 runtime refresh. Existing formats, appearance policy and gameplay stay intact.
 These are project resource dimensions, not Nintendo/Switch memory values.
 See [the cold-boot budget report](inkwave-cold-boot-budgets-2026-10-04.md).
+
+## Splattershot の足元塗り周期 (#507、2026-10-06)
+
+比較条件は Splatoon 3 Ver.11.3.0、Splattershot、接地したプレイヤーが床上で通常射撃を16発連続成功させる条件。参照した [Leanny/splat3 の固定コミット](https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponShooterNormal.game__GameParameterTable.json) は SHA-256 `dfca9f45fd0df3b6afab8f6ec0e47034912f3a6fc411936b9fd7257fe85c4cb9`。そこでは `SplashSpawnParam.SplitNum=8`、`ForceSpawnNearestAddNumArray=[4]`、別グループの `SplashPaintParam.WidthHalfNearest=2.0608` を確認した。[メインブキのパラメータ解説](https://wikiwiki.jp/splatoon3mix/%E6%A4%9C%E8%A8%BC/%E3%83%91%E3%83%A9%E3%83%A1%E3%83%BC%E3%82%BF%E6%83%85%E5%A0%B1/%E3%83%A1%E3%82%A4%E3%83%B3) は `SplitNum` をループ発数、強制配列の発数と `SplitNum` 発目を足元塗りとして説明している。この組み合わせから shot 4/8、次の連続ループで12/16となる。
+
+`WidthHalfNearest=0.7` は固定データの値ではない。解説資料の係数 `raw × 0.2` を適用した値は `0.41216` パラメータ単位。本プロファイルは既存の `worldUnitScale=1` を明示的に引き継ぐが、これは Switch と INKWAVE ワールド間の実測校正ではない。したがって `0.41216` は現在の `PaintSystem.splat` に渡す暫定ローカル半径であり、本家での塗り半径や面積一致を示さない。`0.7` への換算根拠は確認できず、採用していない。
+
+`patches/splatoon3/adapter.mjs` から専用 adapter を呼び、実 `WeaponRunner._auto` が `fireShooter` 後に projectile list を1件増やした場合だけ位相を進める。dry fire、remote owner、ghost round は位相を進めない。`SplitNum` による8発の周回以外に、射撃解放・死亡・ブキ交換で S3 側の位相がどうリセットされるかは固定データと公開解説から確認できない。本実装は未確認の reset hook を加えず Actor ごとの位相を保持するため、これらの中断条件での本家一致は未確認。
+
+ロジック回帰は native `WeaponRunner` / `Projectiles` を使い、床の足元塗りが発射後・壁遮蔽下でも壁着弾前に記録されること、通常の飛行 trail と壁着弾の `PaintSystem.splat` 入力が分離して残ることを確認した。`PaintSystem.splat` 自身の壁 drip の見た目・時間・本家比較は測っていない。30/60/120 Hz は60 Hz固定tickのCPU replayで一致し、ブラウザ/WebGLやSwitch実機の測定ではない。再現・検証範囲は issue-507 のfocused testに限定する。

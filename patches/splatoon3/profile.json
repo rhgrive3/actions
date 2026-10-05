@@ -34,7 +34,24 @@
       "ballistics": {
         "endSpeed": 89.58000000000001
       },
-      "fieldCollisionRadius": 0.2
+      "fieldCollisionRadius": 0.2,
+      "nearestPaintCycle": {
+        "sourceUrl": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponShooterNormal.game__GameParameterTable.json",
+        "sourceCommit": "7280ff9cde8bb1c5dcef46c700c326471584d2e6",
+        "sourceSha256": "dfca9f45fd0df3b6afab8f6ec0e47034912f3a6fc411936b9fd7257fe85c4cb9",
+        "SplashSpawnParam": {
+          "SplitNum": 8,
+          "ForceSpawnNearestAddNumArray": [
+            4
+          ]
+        },
+        "SplashPaintParam": {
+          "WidthHalfNearest": 2.0608,
+          "parameterUnitMultiplier": 0.2,
+          "worldUnitScale": 1,
+          "worldUnitScaleConfidence": "inherited provisional scale; no independent Switch-to-world paint calibration"
+        }
+      }
     },
     "dualies": {
       "inkPerShot": 0.72,
