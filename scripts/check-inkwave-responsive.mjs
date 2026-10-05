@@ -137,7 +137,8 @@ try {
         if (name === 'desktop') {
           if (section !== 'expansion') {
             await checkCoreMenus({ page, entry, config, engineName, evidence, show, settle,
-              geometry: async (page, selector) => { assert(await page.locator(selector).count()); return 'desktop-captured'; }, tap, audit: true });
+              geometry: async (page, selector) => { assert(await page.locator(selector).count()); return 'desktop-captured'; },
+              tap: async (page, selector) => { const el=page.locator(selector).first();await el.scrollIntoViewIfNeeded();await el.click(); }, audit: true, testContinuation: !audit });
             for (const [screen, selector] of [['main', '.iw-main__menu'], ['setup', '.iw-ss__hero'], ['settings', '.iw-settings__panel']]) {
               await show(page, screen);
               assert.equal(await page.locator(selector).evaluate((el) => getComputedStyle(el).position), 'absolute', `${screen}: desktop composition must remain unchanged`);

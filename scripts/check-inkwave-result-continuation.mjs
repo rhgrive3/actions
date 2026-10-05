@@ -11,14 +11,19 @@ export async function checkResultContinuation({page,tap,settle,capture,entry}) {
     menus.wipe.cancel();menus.show('results',{force:true,wipe:false});
   });
   const ready=async()=>{await settle(page);await page.waitForFunction(()=>performance.now()-menus._shownAt>=220&&!document.querySelector('.iw-screen.is-leaving'));};
+  const captureAction=async(name, selector, controls)=>{
+    const button=page.locator(selector);await button.scrollIntoViewIfNeeded();await settle(page);
+    assert(await button.evaluate(el=>{const r=el.getBoundingClientRect();let opacity=1;for(let p=el;p;p=p.parentElement){const s=getComputedStyle(p);if(s.display==='none'||s.visibility==='hidden')return false;opacity*=Number(s.opacity);}return opacity>.95&&r.top>=-1&&r.left>=-1&&r.bottom<=innerHeight+1&&r.right<=innerWidth+1;}),name+': action must actually be visible at capture');
+    await capture(name,controls);
+  };
   try {
-    await ready();await tap(page,'.iw-res__title');await ready();await capture('results-change-gear','.iw-res__foot button');
+    await ready();await tap(page,'.iw-res__title');await ready();await captureAction('results-change-gear','[data-id="change-gear-continue"]','.iw-res__foot button');
     await tap(page,'[data-id="change-gear-continue"]');await page.waitForFunction(()=>menus.current==='loadout'&&menus._scr?.name==='loadout');await ready();
     const before=await page.evaluate(()=>menus.api.getLoadout().weapon);
     const different=page.locator('.iw-loadout .iw-wcard');
     const ids=await different.evaluateAll(xs=>xs.map(x=>x._wid));const next=ids.find(id=>id!==before);assert(next);
     await tap(page,'[data-id="w-'+next+'"]');assert.equal(await page.evaluate(()=>menus.api.getLoadout().weapon),next);
-    await capture('loadout-continue','.iw-continuation-actions button');await ready();
+    await captureAction('loadout-continue','[data-id="continue-with-gear"]','.iw-continuation-actions button');await ready();
     await tap(page,'.iw-loadout .iw-backbtn');await page.waitForFunction(()=>menus.current==='results'&&menus._scr?.name==='results');await ready();
     assert.deepEqual(await page.evaluate(()=>__continuationCalls),[],'Back cannot start');
     assert(await page.evaluate(()=>menus._results===__continuationResult&&JSON.stringify(menus._results)===__continuationResultJSON),'old results unchanged after equipment save');
