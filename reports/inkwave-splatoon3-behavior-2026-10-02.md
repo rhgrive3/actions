@@ -234,3 +234,10 @@ cloud/Halyard cube allocation at default high settings, not only after later
 runtime refresh. Existing formats, appearance policy and gameplay stay intact.
 These are project resource dimensions, not Nintendo/Switch memory values.
 See [the cold-boot budget report](inkwave-cold-boot-budgets-2026-10-04.md).
+
+## 2026-10-05: offline Turf gear-change continuation
+
+An explicit result→existing loadout→continue path preserves native equipment
+saving, Back/locker history, and the previous result/podium. Repeated or obsolete
+callbacks cannot start another round. See [the scoped continuation report](inkwave-result-continuation-2026-10-05.md).
+Online per-player continuation and physical Switch timing remain unresolved.

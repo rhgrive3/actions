@@ -1,3 +1,4 @@
+import { checkResultContinuation } from './check-inkwave-result-continuation.mjs';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 
@@ -170,6 +171,7 @@ export async function checkCoreMenus({ page, entry, config, engineName, evidence
       await tap(page, '.iw-res__foot button:last-child');
     }
   }
+  if (!audit) await checkResultContinuation({ page, tap, settle, capture, entry });
   await page.evaluate(() => { menus._results = null; });
   await settle(page);
   entry.coreMenus = audit ? 'audited' : 'passed';
