@@ -34,7 +34,7 @@ export function launch(f,a,c,spread=0) {
   else if(c.id==='slosher')f.projectiles.fireSlosh(a,w);
   else if(c.id==='dualies')f.projectiles.fireDualies(a,w,spread,0);
   else if(c.id==='blaster')f.projectiles.fireBlaster(a,w,spread);
-  else if(c.id==='splatling')f.projectiles.fireSplatling(a,w,spread);
+  else if(c.id==='splatling')f.projectiles.fireSplatling(a,{...w,spreadPitchGround:0},spread); // geometry fixture: neutralize both spread axes
   else f.projectiles.fireShooter(a,w,spread);
 }
 export function finish(f,a,maxFrames=240, trace=null) {
