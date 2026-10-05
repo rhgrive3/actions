@@ -32,7 +32,7 @@ test('Kid, Squid and Roller owner trajectories survive snapshot reconstruction a
       source.pos.x+=source.vel.x/60;source.pos.z+=source.vel.z/60;
       if(tick%3===0){
         lastTs=1000+tick/60;f.clock.set(lastTs);
-        nm.onMessage('p2',{k:'t',ts:lastTs,u:tick,a:[f.packActor(source)]});
+        nm.onMessage('p2',{k:'t',ts:lastTs,u:tick,a:[f.packActor(source)],l:{7:source.netLife??0}});
       }
     }
     const peer=nm.peers.get('p2');assert(peer,'remote peer missing');peer.tr=lastTs;peer.rate=1;peer.delay=.1;
