@@ -34,6 +34,7 @@ export async function fixture({ adapt = adaptSource, adaptRuntime = (_rel, sourc
     export * from './inkwave-public/src/game/weapons.js';
     export * from './inkwave-public/src/game/physics.js';
     export * from './inkwave-public/src/game/player.js';
+    export * from './inkwave-public/src/game/cameraRig.js';
     export * from './inkwave-public/src/net/netmatch.js';
     export * from './inkwave-public/src/core/shadowcache.js';
     export * as THREE from 'three';
