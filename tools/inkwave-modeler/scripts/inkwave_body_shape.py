@@ -171,6 +171,65 @@ def collar_lower(cfg):
               round(float(np.linalg.norm(er.world(obj) - before, axis=1).max() * 1000), 2))
 
 
+def head_side_field(obj, cfg):
+    """Inward move (mm, head-frame |x|) of the sides of the head round the ear root: in the front view the head
+    behind the cheek (|x| 92-95 mm at z -10..20) stood 3-9 px outside the reference's cheek outline, so the cheek
+    and the jaw angle read wide and square.  Amount by height per side (cfg['profile_right'] for x < 0,
+    cfg['profile_left'] for x > 0, [y_mm, mm] pairs), full over cfg['z'][1]..cfg['z'][2] and none beyond
+    cfg['z'][0] / cfg['z'][3] (the cheek front and the back of the head stay), none inside |x| cfg['x'][0]."""
+    L = er.M.to_local(er.world(obj)) * 1000
+    out = np.zeros(len(L))
+    for key, side in (('profile_right', -1), ('profile_left', 1)):
+        pr = np.array(cfg[key], float)
+        o = np.argsort(pr[:, 0])
+        d = np.interp(L[:, 1], pr[o, 0], pr[o, 1], left=0.0, right=0.0)
+        out = np.where(np.sign(L[:, 0]) == side, d, out)
+    z0, z1, z2, z3 = cfg['z']
+    out *= smoothstep((L[:, 2] - z0) / (z1 - z0)) * smoothstep((z3 - L[:, 2]) / (z3 - z2))
+    x0, x1 = cfg['x']
+    return out * smoothstep((np.abs(L[:, 0]) - x0) / (x1 - x0)), L
+
+
+def head_side_in(cfg):
+    """The same field on the head and the shaved-temple shell over it (Blender's Warp, one vector per side)."""
+    for name in cfg['meshes']:
+        obj = bpy.data.objects[name]
+        f, L = head_side_field(obj, cfg)
+        peak = float(f.max())
+        if peak <= 0:
+            continue
+        before = er.world(obj)
+        for side in (-1, 1):
+            vec = er.M.to_world_delta(np.array([[-side * 1.0, 0.0, 0.0]]))[0]
+            vec = vec / np.linalg.norm(vec) * peak / 1000
+            warp(obj, f * (np.sign(L[:, 0]) == side) / peak, tuple(vec))
+        print('BODY_SHAPE head_side_in', name, 'vertices', int((f > 1e-3).sum()), 'max move mm',
+              round(float(np.linalg.norm(er.world(obj) - before, axis=1).max() * 1000), 2))
+
+
+def skull_back(cfg):
+    """The back of the skull bulged out behind the reference's line in the left side view (10-12 px over rows
+    300-345): forward move (head z, Blender's Warp) by height (cfg['profile'] = [y_mm, mm]), on the back only
+    (cfg['z'] = [none, full], head z mm), on the left half (cfg['x_side'] = [none, full], head x mm) and fading to the
+    sides (cfg['x_out'] = [full, none], |x| mm); the same field on the head and on the shells that lie on it."""
+    fwd = er.M.to_world_delta(np.array([[0.0, 0.0, 1.0]]))[0]
+    fwd /= np.linalg.norm(fwd)
+    pr = np.array(cfg['profile'], float)
+    o = np.argsort(pr[:, 0])
+    peak = float(pr[:, 1].max())
+    for name in cfg['meshes']:
+        obj = bpy.data.objects[name]
+        L = er.M.to_local(er.world(obj)) * 1000
+        d = np.interp(L[:, 1], pr[o, 0], pr[o, 1], left=0.0, right=0.0)
+        (z0, z1), (s0, s1), (x0, x1) = cfg['z'], cfg['x_side'], cfg['x_out']
+        w = d / peak * smoothstep((z0 - L[:, 2]) / (z0 - z1)) * smoothstep((L[:, 0] - s0) / (s1 - s0))
+        w *= smoothstep((x1 - np.abs(L[:, 0])) / (x1 - x0))
+        before = er.world(obj)
+        warp(obj, w, tuple(fwd * peak / 1000))
+        print('BODY_SHAPE skull_back', name, 'vertices', int((w > 1e-3).sum()), 'max move mm',
+              round(float(np.linalg.norm(er.world(obj) - before, axis=1).max() * 1000), 2))
+
+
 def jacket_field(W, cfg):
     """Outward move of the jacket's open front edges at the waist (front parts only)."""
     x, y, z = W[:, 0], W[:, 1], W[:, 2]
@@ -650,6 +709,8 @@ def main():
         names += [n for n in [sl] + riders if n not in names]
     names += [n for n in p.get('nape', {}).get('meshes', []) if n not in names]
     names += [n for n in p.get('collar_lower', {}).get('meshes', []) if n not in names]
+    names += [n for n in p.get('head_side_in', {}).get('meshes', []) if n not in names]
+    names += [n for n in p.get('skull_back', {}).get('meshes', []) if n not in names]
     remove_made()
     restore_legwear()
     print('BODY_SHAPE restored', restore(names, drop=args.restore), 'meshes')
@@ -715,6 +776,10 @@ def main():
             nape(p['nape'])
         if p.get('collar_lower'):
             collar_lower(p['collar_lower'])
+        if p.get('head_side_in'):
+            head_side_in(p['head_side_in'])
+        if p.get('skull_back'):
+            skull_back(p['skull_back'])
         if p.get('nails'):
             mat = nail_material(p['nails'])
             for hand in p['nails']['hands']:
