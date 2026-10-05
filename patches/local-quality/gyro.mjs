@@ -2,20 +2,21 @@ import { getPlatformLifecycle } from './platform-lifecycle.mjs';
 import { GyroPermission, gyroStatusMessage } from './gyro-permission.mjs';
 // Sensor reliability overlay. All angles in the original processing pipeline
 // remain radians; motion events are only admitted while attitude agrees.
-// Existing Android/quaternion math is unchanged. Permission and page lifetime
+// Quaternion math remains native; a fresh zero-rate observation can reject
+// Android attitude-reference drift. Permission and page lifetime
 // are integrated here, rather than stacking another sensor wrapper.
 const INSTALL = Symbol.for('inkwave.local-quality.gyro.v1');
 const RAD = Math.PI / 180;
 const zeros = () => ({ n: 0, a: 0, b: 0, ra: 0, rb: 0 });
 const state = g => g._qualityGyro || (g._qualityGyro = {
   orientationTime: -Infinity, rate: [0, 0, 0], screen: null,
-  fallbacks: 0, reason: null,
+  fallbacks: 0, reason: null, motionTime: -Infinity, stationaryMotion: false, rawStart: null,
 });
 const finiteEvent = (e, keys) => keys.every(k => typeof e?.[k] === 'number' && Number.isFinite(e[k]));
 function fallback(g, reason) {
   const s = state(g);
   if (g._src !== 'ori') { s.fallbacks++; s.reason = reason; }
-  g._src = 'ori'; g._rrScale = 1; g._cal = zeros();
+  g._src = 'ori'; g._rrScale = 1; g._cal = zeros(); s.rawStart = null;
   g._sm.y = g._sm.p = 0;
 }
 export function gyroRateTrusted(g, rate, time) {
@@ -41,6 +42,10 @@ export function installGyroQuality(Gyro, getScreenAngle, isAndroid = () => /Andr
     if (g._platformGyroAccess) return g._platformGyroAccess;
     const access = g._platformGyroAccess = new GyroPermission(env, lifecycle);
     g.supported = access.capability.supported;
+    access.onUnavailable = () => {
+      // Stop native listening without clearing the diagnostic failure reason.
+      stop.call(g); g.resync(); g.working = false;
+    };
     const halt = () => {
       stop.call(g); g.resync(); g.working = false;
       access.stopListening('suspend'); access.cancelRequest();
@@ -81,7 +86,7 @@ export function installGyroQuality(Gyro, getScreenAngle, isAndroid = () => /Andr
   };
   P.resync = function () {
     resync.call(this);
-    const s = state(this); s.orientationTime = -Infinity; s.rate.fill(0);
+    const s = state(this); s.orientationTime = s.motionTime = -Infinity; s.stationaryMotion = false; s.rate.fill(0);
     this._tQ = this._tRR = 0; this.dYaw = this.dPitch = 0;
     fallback(this, 'resync');
   };
@@ -114,7 +119,10 @@ export function installGyroQuality(Gyro, getScreenAngle, isAndroid = () => /Andr
       const r = { alpha: this._rr[0], beta: this._rr[1], gamma: this._rr[2] };
       if (time - this._tRR > 75 || !gyroRateTrusted(this, r, time)) fallback(this, 'attitude-disagreement');
     }
-    return calibrate.call(this, x, y, z, time);
+    const wasOrientation = this._src === 'ori';
+    const result = calibrate.call(this, x, y, z, time);
+    if (wasOrientation && this._src !== 'ori') s.rawStart = time;
+    return result;
   };
   P._orientation = function (e) {
     if (!this.enabled || !lifecycle.active || !finiteEvent(e, ['alpha', 'beta', 'gamma'])) return;
@@ -125,7 +133,17 @@ export function installGyroQuality(Gyro, getScreenAngle, isAndroid = () => /Andr
     if (this._hasQ && (t < this._tQ || t - this._tQ > 500)) this.resync();
     accessFor(this).sample(t);
     if (isAndroid() && this._src !== 'ori') fallback(this, 'android-attitude');
-    return orientation.call(this, e);
+    const observed = state(this), age = t - observed.motionTime;
+    const stationary = isAndroid() && observed.stationaryMotion && age >= 0 && age <= 75;
+    const yaw = this.dYaw, pitch = this.dPitch;
+    const result = orientation.call(this, e);
+    if (stationary) {
+      // Zero is invariant under axis/sign/unit calibration. Keep the updated
+      // attitude reference, but do not turn its correction into camera motion.
+      // Older, already queued real turn deltas are retained.
+      this.dYaw = yaw; this.dPitch = pitch; this._sm.y = this._sm.p = 0;
+    }
+    return result;
   };
   P._motion = function (e) {
     if (!this.enabled || !lifecycle.active || !finiteEvent(e.rotationRate, ['alpha', 'beta', 'gamma'])) return;
@@ -135,7 +153,16 @@ export function installGyroQuality(Gyro, getScreenAngle, isAndroid = () => /Andr
     if (!Number.isFinite(t)) return;
     if (t < this._platformSensorStart && this._platformSensorStart - t < 3600000) return;
     if (this._tRR && (t < this._tRR || t - this._tRR > 500)) this.resync();
+    const observed = state(this); observed.motionTime = t;
+    observed.stationaryMotion = e.rotationRate.alpha === 0 && e.rotationRate.beta === 0 && e.rotationRate.gamma === 0;
     if (this._src !== 'ori' && (isAndroid() || !gyroRateTrusted(this, e.rotationRate, t))) fallback(this, 'untrusted-motion');
+    const s = state(this), rawStart = s.rawStart;
+    if (this._src !== 'ori' && rawStart !== null) {
+      this._tRR = rawStart;
+      const result = motion.call(this, e);
+      if (t - rawStart > 2) s.rawStart = null;
+      return result;
+    }
     return motion.call(this, e);
   };
 }

@@ -8,8 +8,8 @@ test('actual Tenacity gear wrapper preserves Roller target while normalized pass
   assert.equal(a.s3.loadout[0].main,'tenacity');assert.equal(f.abilityPoints(a.s3.loadout).tenacity,undefined);assert.ok(a.specialCost()<a.s3.tenacityBaseCost);a.special=0;
   r.update(1/60,{fire:true,firePressed:true});const speed=r.moveSpeed();near(speed,2.88*a.s3.modifiers.runSpeed*(flow?f.profile.flow.runMultiplier:1));
   const actors=[a,...Array.from({length:2},()=>({team:1,alive:true,remote:true}))],match={mode:'turf',state:'playing',time:180,actors};
-  for(let i=0;i<(vertical?26:21);i++){near(r.moveSpeed(),speed);r.update(1/60,{fire:false});advanceTenacity(match,1/60,()=>{});}
-  near(a.special/a.specialCost(),3.26*(vertical?26:21)/60/a.s3.tenacityBaseCost);near(a.ink,91.5);assert.equal(f.shots.length,1);
+  for(let i=0;i<(vertical?31:21);i++){near(r.moveSpeed(),speed);r.update(1/60,{fire:false});advanceTenacity(match,1/60,()=>{});}
+  near(a.special/a.specialCost(),3.26*(vertical?31:21)/60/a.s3.tenacityBaseCost);near(a.ink,91.5);assert.equal(f.shots.length,1);
   a.reset();assert.equal(a.s3.loadout[0].main,'tenacity');near(a.s3.tenacityBaseCost,f.WEAPONS.roller.specialCost);
  }
 });

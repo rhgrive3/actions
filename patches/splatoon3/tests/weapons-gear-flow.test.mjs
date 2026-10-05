@@ -54,7 +54,7 @@ test('actual Flow uses hostile damage credit for an assist extension', async () 
   let paints = 0; f.G.paint.splat = () => { paints++; return 0; };
   f.emit('damage', { victim, attacker: helper, amount: 20, source: 'shooter' });
   f.emit('splatted', { victim, attacker: killer });
-  assert.equal(helper.s3.flow.remaining, 15); assert.equal(paints, 1);
+  assert.equal(helper.s3.flow.remaining, 20); assert.equal(paints, 1);
   assert.equal(helper.s3.splatsThisLife || 0, 0);
 });
 

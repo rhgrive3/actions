@@ -10,23 +10,24 @@ import { adaptReliability } from '../../reliability/adapter.mjs';
 import { adaptQualitySource } from '../../local-quality/adapter.mjs';
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const BUILT = process.env.INKWAVE_CONTROLS_SITE;
+const MAP_GYRO_BASELINE = process.env.INKWAVE_MAP_GYRO_BASELINE === '1';
 const NEGATIVE = process.env.INKWAVE_CONTROLS_BASELINE === '1';
 const NAVIGATION_BASELINE = process.env.INKWAVE_NAVIGATION_BASELINE === '1';
 const UPSTREAM = BUILT ? path.resolve(BUILT) : process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
-export async function fixture() {
+export async function fixture({ diorama = false, match = false } = {}) {
   // The negative control omits only the adapter under test from the real order.
   let reliability = adaptReliability;
-  if (NEGATIVE || NAVIGATION_BASELINE) {
+  if (NEGATIVE || NAVIGATION_BASELINE || MAP_GYRO_BASELINE) {
     if (BUILT) throw new Error('Baseline control requires raw source');
     const dispatcher = fs.readFileSync(path.join(ROOT,'patches/reliability/adapter.mjs'),'utf8');
     const names = dispatcher.match(/const adapters = \[([^\]]+)\]/)[1].split(',').map(x=>x.trim());
     const imports = new Map([...dispatcher.matchAll(/import \{ (\w+) \} from '(\.\/[^']+)';/g)].map(m=>[m[1],m[2]]));
     const adapters=[];
-    for(const name of names) if((!NEGATIVE || name!=='adaptControls') && (!NAVIGATION_BASELINE || name!=='adaptNavigation')) adapters.push((await import(new URL('../'+imports.get(name).slice(2),import.meta.url)))[name]);
+    for(const name of names) if((!NEGATIVE || name!=='adaptControls') && (!NAVIGATION_BASELINE || name!=='adaptNavigation') && (!MAP_GYRO_BASELINE || name!=='adaptMapGyro')) adapters.push((await import(new URL('../'+imports.get(name).slice(2),import.meta.url)))[name]);
     reliability=(rel,code)=>adapters.reduce((value,adapt)=>adapt(rel,value),code);
   }
   const listeners = new Map(), storage = new Map(); let pads = [];
-  const classes = {add(){},remove(){},toggle(){}};
+  const classes = {add(){},remove(){},toggle(){},contains(){return false;}};
   const context = vm.createContext({ console, performance, URL, AbortController, setTimeout, clearTimeout,
     screen:{width:1000,height:700,orientation:{angle:0}},innerWidth:1000,innerHeight:700,
     localStorage:{getItem:k=>storage.get(k)??null,setItem:(k,v)=>storage.set(k,v)},
@@ -58,6 +59,9 @@ export async function fixture() {
     export * from './inkwave-public/src/game/weapons.js';
     export * from './inkwave-public/src/game/physics.js';
     export * from './inkwave-public/src/game/player.js';
+    ${diorama ? "export * from './inkwave-public/src/ui/diorama.js';" : ''}
+
+    ${match ? "export * from './inkwave-public/src/game/match.js';" : ''}
     export * from './inkwave-public/src/core/input.js';
     export * from './inkwave-public/src/net/netmatch.js';
     export * from './inkwave-public/src/core/shadowcache.js';

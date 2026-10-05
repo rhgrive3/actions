@@ -260,6 +260,56 @@ try {
       });
       assert.deepEqual(menuPad, { startEdges: 2, menuAcceptOwned: true, nextGameplayPressRestored: true });
       entry.checks.push('actual-built-Input-menu-pad-edge-and-hold-ownership-through-144Hz-clock');
+      const gyroViability = await page.evaluate(async () => {
+        await mobile.setGyro(false);mobile.setVisible(true);
+        const access=mobile.gyro._platformGyroAccess,permission=access.permission;
+        // A fixture-supplied session grant; this probe never requests browser/OS permission.
+        access.permission='granted';
+        try {
+          await mobile.setGyro(true);
+          const waiting=mobile.gyro.platformStatus.availability==='waiting'&&!mobile.els.gyro.classList.contains('is-on')&&mobile.els.gyro.getAttribute('aria-busy')==='true';
+          mobile.moveX=.4;mobile.buttons.fire=true;mobile.lookDX=.2;
+          await new Promise(resolve=>setTimeout(resolve,2150));
+          const stopped=!mobile.gyro.enabled&&!mobile._gyroWanted&&!mobile.s.gyro&&mobile.gyro.platformStatus.reason==='no-sensor-data';
+          const offUI=!mobile.els.gyro.classList.contains('is-on')&&mobile.els.gyro.getAttribute('aria-pressed')==='false';
+          const inputPreserved=mobile.moveX===.4&&mobile.buttons.fire&&mobile.lookDX===.2;
+          await mobile.setGyro(true);
+          mobile.gyro._orientation({alpha:0,beta:0,gamma:0,timeStamp:performance.now()+1});
+          mobile.gyro._orientation({alpha:20,beta:0,gamma:0,timeStamp:performance.now()+18});
+          const recovered=mobile.gyro.enabled&&mobile.gyro.platformStatus.availability==='active'&&mobile.els.gyro.classList.contains('is-on');
+          return {waiting,stopped,offUI,inputPreserved,recovered};
+        } finally {await mobile.setGyro(false);mobile.reset();access.permission=permission;}
+      });
+      assert.deepEqual(gyroViability,{waiting:true,stopped:true,offUI:true,inputPreserved:true,recovered:true});
+      entry.checks.push('actual-built-gyro-no-data-stops-ON-state-and-explicit-retry-recovers');
+      const startupGrant = await page.evaluate(async () => {
+        const {prepareGyroStartup,startGyroStartup}=await import('/patches/local-quality/gyro-startup.mjs');
+        const {initialGyroDefaults}=await import('/patches/local-quality/gyro-permission.mjs');
+        await mobile.setGyro(false);mobile.setVisible(true);
+        const gyro=mobile.gyro,original=gyro.request,descriptor=Object.getOwnPropertyDescriptor(gyro,'needsPermission');
+        const access=gyro._platformGyroAccess,permission=access.permission;
+        let resolve,count=0;
+        try {
+          Object.defineProperty(gyro,'needsPermission',{configurable:true,value:true});
+          gyro.request=()=>{count++;return new Promise(r=>{resolve=r;});};
+          const game={input:{mobile},settings:{gyro:true},match:{state:'playing',paused:false},menus:{current:null}},world={mode:'match'};
+          const prepared=prepareGyroStartup(game,world);const started=startGyroStartup(game,world);
+          const stayedOff=!gyro.enabled&&count===1;
+          access.permission='granted';gyro.request=original;Object.defineProperty(gyro,'needsPermission',{configurable:true,value:false});resolve(true);
+          await prepared;await started;
+          gyro._orientation({alpha:0,beta:0,gamma:0,timeStamp:performance.now()+1});
+          gyro._orientation({alpha:15,beta:0,gamma:0,timeStamp:performance.now()+18});
+          return {stayedOff,started:gyro.enabled&&gyro.platformStatus.availability==='active',onePrompt:count===1,
+            mobileDefault:initialGyroDefaults({gyro:false},{touch:true}).gyro,desktopDefault:initialGyroDefaults({gyro:false},{touch:false}).gyro};
+        } finally {
+          gyro.request=original;if(descriptor)Object.defineProperty(gyro,'needsPermission',descriptor);else delete gyro.needsPermission;
+          await mobile.setGyro(false);access.permission=permission;
+        }
+      });
+      assert.deepEqual(startupGrant,{stayedOff:true,started:true,onePrompt:true,mobileDefault:true,desktopDefault:false});
+      entry.checks.push('actual-built-late-START-grant-and-device-specific-default');
+
+
       // Native touch action, actual shared PlayerController reset, and actual gyro
       // rebaseline. No sensor permission is requested: the fixture supplies samples.
       for (const gyroOn of [false, true]) {
@@ -344,6 +394,29 @@ try {
       });
       assert.deepEqual(respawnNavigation,{deadBlocked:true,hudQueued:true,dioramaQueued:true,waitsForLanding:true,landed:true,pauseCancels:true,heldAxesPreserve:true,freshPadCancels:true});
       entry.checks.push('actual-built-Match-HUD-diorama-dead-map-selection-and-deferred-respawn-admission');
+      const mapGyro = await page.evaluate(() => {
+        const old={match:G.match,actors:G.actors,rig:G.rig,camera:G.camera,level:G.level,device:input.lastDevice,active:mobile.active,enabled:mobile.gyro.enabled};
+        const a={alive:true,grounded:true,team:0,yaw:0,weapon:{kind:'shooter',range:12},pos:new THREE.Vector3(),intent:{move:new THREE.Vector3()},canSuperJump(){return true;}};
+        const rig={yaw:.2,pitch:.3,dioLook:{x:0,y:0},mapK:0},c=new controller.constructor(a,rig,input);c.computeAim=()=>{};
+        const match={state:'playing',paused:false,local:a,controller:c};let dio;
+        try {
+          G.match=match;G.actors=[a];G.rig=rig;G.level={spawnPads:[new THREE.Vector3()]};
+          G.camera=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,.1,100);G.camera.position.set(0,8,12);G.camera.lookAt(0,0,0);G.camera.updateMatrixWorld();
+          mobile.active=true;mobile.gyro.enabled=true;mobile.setMap(false);input.lastDevice='touch';input.keys.add('Tab');
+          dio=new DioramaOverlay(document.body);Match.prototype.updateController.call(match,1/60);dio.update(1/60,1);
+          const x=dio.cx,y=dio.cy;mobile.gyro.dYaw=.04;mobile.gyro.dPitch=.03;Match.prototype.updateController.call(match,1/60);dio.update(1/60,1);
+          const cursorMoves=dio.cx<x&&dio.cy<y,frozen=rig.yaw===.2&&rig.pitch===.3,after=[dio.cx,dio.cy];dio.update(1/60,1);
+          const once=dio.cx===after[0]&&dio.cy===after[1];input.keys.delete('Tab');mobile.gyro.dYaw=.5;Match.prototype.updateController.call(match,1/60);
+          const noReplay=rig.yaw===.2;mobile.gyro.dYaw=.02;Match.prototype.updateController.call(match,1/60);const battleResumes=rig.yaw>.2;
+          return {cursorMoves,frozen,once,noReplay,battleResumes};
+        } finally {
+          dio?.el.remove();input.keys.clear();input.pressed.clear();mobile.gyro.discard();mobile.gyro.enabled=old.enabled;mobile.active=old.active;input.lastDevice=old.device;
+          G.match=old.match;G.actors=old.actors;G.rig=old.rig;G.camera=old.camera;G.level=old.level;
+        }
+      });
+      assert.deepEqual(mapGyro,{cursorMoves:true,frozen:true,once:true,noReplay:true,battleResumes:true});
+      entry.checks.push('actual-built-gyro-map-cursor-single-consumption-and-camera-ownership');
+
 
       // Complete built action pipeline, including the native Character trigger.
       // Ground collision/paint/projectile display are bounded fixture surfaces.
@@ -398,6 +471,30 @@ try {
       await runTouchTransitionCases({
         page, context, cdp, engineName, gesture, entry, report, negativeControl,
       });
+      if (!focusedOnly && !negativeControl) {
+        const previousViewport=page.viewportSize();
+        try {
+          await page.setViewportSize({width:390,height:844});
+          await page.evaluate(()=>{input.lastDevice='touch';mobile.reset();mobile.setVisible(true);document.documentElement.classList.add('iw-touch');});
+          await page.waitForFunction(()=>{const el=mobile.root.querySelector('.iwm-rotate');return el&&getComputedStyle(el).display!=='none'&&el.getBoundingClientRect().width>0;});
+          entry.portraitGuard=await page.evaluate(()=>{
+            const overlay=mobile.root.querySelector('.iwm-rotate'),rows=[],gyro=mobile.gyro.enabled;
+            const neutral=()=>mobile._ptr.size===0&&mobile._stick.id===-1&&mobile.moveX===0&&mobile.moveY===0&&mobile.lookDX===0&&mobile.lookDY===0&&mobile.pressed.size===0&&!mobile.mapOpen&&Object.values(mobile.buttons).every(v=>!v);
+            const route=(id,x,y)=>{for(const [type,dx,dy]of [['pointerdown',0,0],['pointermove',30,20],['pointerup',30,20]])overlay.dispatchEvent(new PointerEvent(type,{bubbles:true,cancelable:true,pointerType:'touch',pointerId:id,clientX:x+dx,clientY:y+dy}));};
+            for(const [i,id]of ['fire','squid','jump','sub','special','map','gyro','pause'].entries()){const b=mobile._box(id);route(i+90,b.x,b.y);if(!neutral())throw Error('Portrait hidden control routed: '+id);rows.push(id);}
+            for(const x of [30,360]){route(110+x,x,400);if(!neutral())throw Error('Portrait overlay drag routed');}
+            if(mobile.gyro.enabled!==gyro)throw Error('Portrait pointer changed gyro');
+            const r=overlay.getBoundingClientRect();return {controls:rows,neutral:neutral(),gyroUnchanged:true,visible:getComputedStyle(overlay).display!=='none',width:r.width,height:r.height};
+          });
+          await page.screenshot({path:path.join(evidence,engineName+'-portrait-guard.png'),animations:'disabled'});
+        } finally {if(previousViewport)await page.setViewportSize(previousViewport);await page.evaluate(()=>{mobile.reset();input.lastDevice='touch';mobile.setVisible(true);});}
+        await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+        const fire=await page.evaluate(()=>mobile._box('fire'));
+        await page.touchscreen.tap(fire.x,fire.y);
+        assert(await page.evaluate(()=>mobile.pressed.has('fire')),'landscape FIRE edge restores after portrait');
+        await page.evaluate(()=>mobile.reset());
+        entry.checks.push('portrait-guard-visible-native-DOM-routing-neutral-landscape-restored');
+      }
       await page.screenshot({ path: path.join(evidence, engineName + '-tablet-controls.png') });
     } finally { await context.close(); }
   }

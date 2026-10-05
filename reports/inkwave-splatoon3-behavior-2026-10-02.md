@@ -411,3 +411,90 @@ button/key/touch input and native-threshold axis transitions, without changing
 general device acquisition. Source/emitted 31/31; negative baseline reproduced;
 new native-browser acceptance remains pending the combined batch. See
 `inkwave-respawn-navigation-2026-10-05.md` for scope and analog ambiguity.
+
+## Issue #523: corner map is an explicit custom aid, not the default information model
+
+- Baseline: Splatoon 3 comparison remains 11.3.0. Nintendo-hosted GameWith guide https://www.nintendo.com/jp/ichikara/av5ja/03_en.html (guide information dated 2024-04-01) describes pressing X to open the map and inspect territory. This establishes the explicit-map model; it is not a new 11.3.0 frame-value source or Switch measurement.
+- Before: native DEFAULT_SETTINGS enabled a constantly visible corner map, giving fresh/default players map information without choosing to open the full map. After: build adapter defaults that option to false and labels it “Corner map (non-S3 aid)” with English/Japanese explanation. Existing explicit saved true remains an opt-in custom aid; partial, absent, invalid, or null saved settings inherit false through the unchanged native loadJSON.
+- Scope: default/configuration and settings explanation only. Full Turf Map, touch/controller/keyboard map controls, dead-map selection, pending respawn Super Jump, and explicit opt-in corner map are retained. No weapon, movement, sensor, camera, or hair file changes.
+- Validation: actual config and actual loadJSON source cover persistence cases; actual native Game._updateHud executes 120 default hidden-map frames, then opt-in and opt-out. Emitted config is tested separately. Existing actual controller/respawn navigation suite exercises full-map access with the new default false. No browser screenshot or Switch side-by-side validation is claimed.
+- Results: full patch suite 955 pass / 0 fail / 2 skip (957 total; started before the final additional HUD test); final focused policy + actual respawn-navigation suite 28/28 including emitted config and HUD test; local-quality/gates 132 pass / 0 fail / 3 skip (135 total). Canonical browser verifier already explicitly initializes minimap=false, then enables true for its opt-in check; no implicit true browser-fixture requirement was found. Actual browser rendering is still pending integration acceptance.
+- Review follow-up for #523: a separate actual emitted Game._updateHud + emitted Match.teamSummary test now uses emitted DEFAULT_SETTINGS. On the composed #510 mutable HUD transport,120 default-off frames invoke only tickHidden and produce map=null; explicit opt-in resumes the real map payload. All6 policy tests pass both on the standalone emitted build and the four-change combined build. Game's rendering constructor/boot is not run in this CPU module test.
+
+## Issue #527: distinguish Roller raw swing frames from complete release/repeat phases
+
+The pinned raw vertical SwingFrame26 is a component, while published verification gives kid31F, squid44F, repeat56F. Previous profile incorrectly used26/47F. New vertical timing is31/56F; a Roller-only13F native actor admission delay gives squid44F and horizontal34F, preserving horizontal kid21/repeat42. Buffered taps survive that interval; subsequent explicit squid input, death/reset cancel normally. Original public raw files remain unchanged. See `patches/splatoon3/reference/roller-startup-phases-527.md` for exact sources/derivation and limitations.
+
+Native Actor→WeaponRunner tests cover held/tap × kid/squid × horizontal/vertical, elapsed0 convention, consecutive56/42F releases, and identical30/60/120/144Hz render schedules. Actual Character bones/drum assertions are retimed to the same authoritative31F release. Existing .18 movement recovery, post-shot sub/swim admission, vertical roll-transition22F, and physical Nintendo/mobile validation remain separate and unverified; this is an Addresses patch, not closure of all broader acceptance points.
+
+Validation: final full gameplay/reliability976 pass/0fail/1 optional skip (977 total); quality/gates155 pass/0fail/4 optional skips (159 total); production emitted startup+movement9/9, final emitted startup including unchanged non-Roller admission5/5; actual Character geometry10/10. Previous emitted baseline fails the new startup/repeat endpoint tests (2 failures,3 invariant/cancellation controls pass). Pinned reference verifier:11 files/146 extracted/14 unknown, unchanged. Source31/56/13 are derived from the ver11.0.0 verification table; continuity to11.3.0 is an inference from the absence of a corresponding update-history change, not an11.3.0 physical measurement.
+- Review follow-up for #527: mode selection occurs at runner admission, not at the input edge; the eight startup conditions keep ground/air state fixed. Four additional actual Actor/runner cases record land/leave at8F versus20F around the13F wait (34/44F outcomes), and pass in the emitted build. Ground flags are controlled rather than physical landings. Nintendo's dynamic emergence/mode-recognition boundary and future PR49625F freefall-threshold crossing remain unverified, with no speculative mode-snapshot change. See the added reference section.
+
+## Issue #410: judge Turf from the TIME UP boundary
+
+- Root at the current integration base: Match enters finish at time0, then the global projectile system continues painting while the native judge waits2.6s. A deterministic actual Match reproduction captured51:49 at0:00 and later judged40:60/winner1. This is a result-integrity correction; no Nintendo numerical timing, weapon strength, physics coefficient, or new world scale is inferred. The source timer/fixed-step boundary ordering is preserved.
+- The host now copies two coverage scalars before the playing→finish state event and before the remainder of that tick. Delayed `_judge` copies those frozen values into its normal result and uses the existing assigned-Alpha tie policy. Duplicate finish does not resnapshot; intro/playing resets the snapshot for a new cycle. Boss judging bypasses this path. Followers continue accepting the normal host result packet and do not judge their local paint. New host-election/migration consensus is not added.
+- At the same Turf transition, local current/previous fire/sub/jump/squid/special inputs and buffers are neutralized together. Clearing current sub alone would synthesize a release in the following Actor update; matching previous state avoids that unintended bomb throw.
+- Real native and emitted Match/NetMatch/Projectiles tests execute delayed judging, synchronous finish listeners, actual bomb splash calls and actual cloud rain calls against a deterministic paint fixture, host packet/follower receipt, repeated/new match state, Boss exclusion, actual Actor input-edge handling, and30/60/120/144Hz render partitions. The fixture measures result ownership, not GPU ink rasterization or a live remote transport session.
+- Finish presentation and projectile/paint simulation continue. Only coverage/winner is frozen: personal Turf statistics, late damage statistics, visuals, and network paint convergence are not certified or frozen by this change. Physical Splatoon3/iOS/Android comparison remains unmeasured. This implements the Issue's stated minimum snapshot invariant without claiming all post-time simulation effects have been removed.
+- Final validation: full gameplay/reliability978 pass/0fail/1 optional skip (979 total); quality/gates155 pass/0fail/4 optional skips (159 total); actual emitted new result tests7/7, emitted/result-tie combination15pass/1 optional skip. Previous emitted baseline fails6 new deadline/input tests while Boss control passes. Initial adapter-order diagnostic mismatch was fixed by retaining the original Alpha-tie hook as the first fail-closed check; the final full suite passes without weakening that test.
+
+## 2026-10-05: #508 Heavy Splatling staged HUD
+
+The two-ring reticle reads the current weapon's48F/72F charge boundary. Streaming maps authoritative remaining burst time to the two stages instead of treating each partial release's normalized remaining fraction as full charge. This changes presentation only. See reports/inkwave-splatling-reticle-2026-10-05.md for native/minified tests and unmeasured Nintendo pixel/hardware limits.
+
+### #533: DeviceMotion reaches the Super Jump map cursor
+
+Map-owned gyro deltas now move the actual Diorama cursor instead of being thrown
+away. The battle camera is frozen, each delta is consumed once, and boundary/OFF/
+reset cleanup prevents aim replay. Existing A confirmation and explicit D-pad
+priority remain; dead choices use #409's landing queue. Source/emitted 39/39;
+alive/dead negative controls fail without this adapter. Native browser acceptance
+awaits the next combined CI. `inkwave-map-gyro-2026-10-05.md` records the reference
+behavior and unverified physical sensitivity/FOV limits.
+
+### #505: a team WIPEOUT contributes the separate Flow bonus
+
+The shared #540 Match event now awards the sourced10 fp to each inactive member
+of the other team, including teammates waiting to respawn. Current-match and
+sequence guards prevent repeats; existing splat/assist activation and active
+extension remain independent. Native/emitted7/7 and #540/#48920/20 pass;
+#549's real #481 scoring adapter composes as23+10 on the final attacker. The old
+runtime negative gives0 instead of10. See `inkwave-flow-wipeout-2026-10-05.md`
+for producer scope and unmeasured physical/order limits. Browser acceptance
+awaits combined CI.
+
+### #504: active Flow extensions use10 seconds, capped at30
+
+The authoritative profile now matches the sourced10-second extension. Native
+local splat/assist and600-tick cadence tests pass; source17/17 and emitted Flow
+10/10 preserve #505's non-extending team bonus. Actual online attacker-owner
+credit is still blocked by the separately owned #427 / PR #494 dependency on
+this base, verified by a failing two-owner wire probe. The duration correction
+must not be described as complete online acceptance; see the dedicated report.
+
+#505 integration review clarification: the passed Match/bus tests do not prove
+cross-peer owner/proxy agreement under delayed or reordered full-roster updates.
+That online acceptance remains open; no team-event transport was introduced.
+
+#505 follow-up: native two-owner replay now confirms false and missed bonuses
+under delayed/coalesced natural-respawn snapshots. The consumer is consequently
+limited to offline matches (G.netm absent); online remains unresolved.
+
+## Issues #520 / #500: separate turf progress from incomplete damage assistance
+
+- Reference: [Nintendo's11.0.0 overview](https://www.nintendo.com/au/news-and-articles/whats-new-in-the-splatoon-3-version-11-update/) describes turf and assistance making a later splat activation easier; it does not publish fp coefficients. The [original community Flow verification](https://wikiwiki.jp/splatoon3mix/検証/イカフロー), read2026-10-05, lists100fp threshold,0.8fp per10 Turf points, and damage-assist gain upon a qualifying assist. Neither new value is claimed as a direct Nintendo parameter extraction or our own Switch measurement. Acceptance baseline remains11.3.0, with the same evidence limits as the existing community-derived Flow rules.
+- #520: retain threshold3 and the existing native Actor.addTurf point stream; weight0.003→0.0024 yields10 displayed Turf units→0.8fp and100→8fp. Native point totals and special charge still receive the full original amount. The current area-to-displayed-point mapping and continuous fractional accrual are preserved; this does not independently calibrate Nintendo physical paint units or prove10p quantum timing. Anarchy is not implemented, so no unsupported0.6 mode is fabricated. Custom Boss continues inheriting the global Flow profile and is not an S3 mode-equivalence claim.
+- #500: weightdamage0.003→0 stops immediate progress from merely hitting an enemy and stops those zero gains from resetting idle decay. The damage-credit map remains intact: a later teammate splat still reaches the existing assist handler. Splat gating, assist coefficient, streak rules, active extension, death/decay and reset logic are not rewritten. In particular, #544's14/4 assist-category split remains separate.
+- Real native/emitted Actor event tests verify10/100/fractional Turf gains, unchanged stats/special, actual PaintSystem._cpuSplat ownership/repaint zero, turf-alone nonactivation, accepted HP damage with zero immediate fp and unchanged idle clock, retained damage-assist credit, and existing active-assist extension. This is CPU/native-module validation, not live network consensus or physical console measurement.
+- Final checks: full gameplay/reliability977 pass/0fail/1 optional skip (978 total); quality/gates155 pass/0fail/4 optional skips (159 total); new actual emitted tests6/6. Previous emitted baseline fails5 new assertions with1 active-extension control passing. The earlier decay test now explicitly includes positive damage as a zero-gain case and uses positive turf for its reset assertion. A dedicated local composition with movement #504/#505 headb567566 retains its10s extension/offline-only WIPEOUT policy:37 source Flow/motion tests and25 focused tests including emitted new point rules plus movement WIPEOUT/extension tests pass, build02ca0fc89f3e. That composition is not included in this source branch.
+
+## Gyro entry, Android stationary guard, and raw handoff on current main — 2026-10-05
+
+Recomposed #551 (#376/#404/#364/#368), #187, and #524 onto the reviewed main/PR536 foundation at 5a2350f. The new main retains screenChanged, createTouchRelayout ownership, and the diagnostic long press; the superseded relayout rewrite is excluded. Waiting for sensor data does not claim gyro is active; a no-data timeout switches the preference off until explicit retry. Startup grants remain scoped to their original owner. Android fresh exact-zero rotationRate may reject attitude-reference drift within the existing 75 ms trust interval; iOS ori-to-raw adoption starts at the last accepted orientation timestamp. No gains, nonzero bias threshold, permission policy, or Android raw-source adoption changed.
+
+Full gameplay aggregate 1028 pass / 0 fail / 1 optional emitted-mode test. Source focused 50/50, source quality/platform/workflow 204 pass with 4 optional emitted-mode tests, actual emitted gyro 38/38. The Android stationary runs also assert source stays ori and rawStart stays null; the raw handoff cases cover 64 frequency/order/axis traces. Build cdf2b9b38929 succeeded. Browser startup probes are carried forward for integration CI; physical-device drift calibration, biased/non-reporting sensors, and hardware gyro feel remain unverified.
+
+## 2026-10-05: #142 portrait guard ownership
+
+The existing mandatory rotate UI now suppresses hidden-control pointer routing and offline fixed simulation until landscape returns. Online keeps world time running and blocks only local control. Rotation does not mutate manual pause or menu/history ownership, and resumes with neutral input/zero elapsed time. See reports/inkwave-portrait-guard-2026-10-05.md for native/full-emitted regression boundaries and unverified physical-device/peer limits.

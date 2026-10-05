@@ -17,6 +17,16 @@ export const VERTICAL_SWING = Object.freeze({ coil: -2.45, release: -.04, follow
 // Read-only view for regressions; the arrays stay owned by this module.
 export const ROLLER_POSE = Object.freeze({ READY_ANCHOR, READY_ROTATION, ROLL_ANCHOR, ROLL_ROTATION, ROLL_LEAN });
 
+// Observed S3 squid startup adds 13F to either swing. Keep the existing
+// actor transition and buffered press; only this weapon's admission is delayed.
+export function rollerEmergeDelay(actor, fallback) {
+  return actor.weapon.kind === 'roller' ? actor.weapon.squidFlickDelay ?? fallback : fallback;
+}
+export function rollerFireBuffer(actor, fallback, dt) {
+  return actor.form === 'squid' && actor.weapon.kind === 'roller'
+    ? Math.max(fallback, rollerEmergeDelay(actor, fallback) + dt) : fallback;
+}
+
 export function rollerMode(w, vertical) {
   return vertical ? { ...w, flickWindup: w.verticalWindup, flickInterval: w.verticalInterval ?? w.flickInterval, flickInk: w.verticalInk } : w;
 }
@@ -49,7 +59,7 @@ export function installRollerLogic({ WeaponRunner }, _profile) {
     const state = this.s3RollerAttack, mode = rollerMode(w, this.s3FlickVertical);
     const winding = this.flick >= 0;
     if (state && !starting) state.elapsed = Math.min(state.interval, state.elapsed + dt);
-    // Float accumulation must not add a 22nd/27th tick to a 21F/26F windup.
+    // Float accumulation must not add a extra tick at the sourced windup boundary.
     if (winding && this.flick + dt + EPS >= mode.flickWindup) this.flick = mode.flickWindup;
     const result = roller.call(this, dt, inp, mode);
     if (state) state.rolling = this.rolling;

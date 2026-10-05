@@ -91,6 +91,7 @@ export async function checkHudAuthority({ page, evidence }) {
   result.alphaTies=await page.evaluate(async()=>{
     const {G}=await import(new URL('src/core/ctx.js',document.baseURI).href);
     const {Match}=await import(new URL('src/game/match.js',document.baseURI).href);
+    const {awardFlow}=await import(new URL('patches/splatoon3/runtime/flow.mjs',document.baseURI).href);
     // Invoke the loaded native judge with frozen coverage and an isolated result
     // sink. Do not finish the live rendering match or send network traffic.
     const coverage=G.paint.coverage,net=G.netm,random=Math.random,rows=[];
@@ -127,6 +128,25 @@ export async function checkHudAuthority({ page, evidence }) {
   if(await page.locator('.iw-jd').count())throw Error('Judd overlay survived completed cleanup');
   // Isolated display probe: uses native HUD callout + production WIPEOUT
   // presentation, never changes the live actors, scores or Match state.
+  result.teamWipeoutFlow=await page.evaluate(async()=>{
+    const {G,emit}=await import(new URL('src/core/ctx.js',document.baseURI).href);
+    const {Match}=await import(new URL('src/game/match.js',document.baseURI).href);
+    const {awardFlow}=await import(new URL('patches/splatoon3/runtime/flow.mjs',document.baseURI).href);
+    const {Vector3}=await import('three');
+    const profile=await (await fetch(new URL('patches/splatoon3/profile.json',document.baseURI))).json();
+    for(const [remaining,expected] of [[10,20],[15,25],[25,30]]){const state={active:true,remaining};awardFlow(state,'splat',1,profile.flow);if(state.remaining!==expected)throw Error('Flow extension is not ten seconds capped at thirty');}
+    const old={match:G.match,actors:G.actors},m=new Match({});
+    try {
+      m.actors=Array.from({length:8},(_,i)=>({team:i>>2,alive:true,pos:new Vector3(i*4,0,0),s3:{flow:{active:false,remaining:0,score:0,idleTime:2}},update(){}}));
+      m.local=m.actors[0];m.state='playing';m.time=60;G.match=m;G.actors=m.actors;
+      m.update(1/60);m.actors.slice(4).forEach(a=>a.alive=false);m.update(1/60);
+      const fp=a=>a.s3.flow.score*profile.flow.progress.referenceThreshold/profile.flow.threshold;
+      const first=m.actors.slice(0,4).map(fp);emit('team:wipeout',{match:m,team:1,sequence:1});m.update(1/60);
+      const once=m.actors.slice(0,4).every(a=>Math.abs(fp(a)-10)<1e-9);
+      if(!first.every(x=>Math.abs(x-10)<1e-9)||!once)throw Error('WIPEOUT Flow team award missing or repeated');
+      return {first,once};
+    } finally {G.match=old.match;G.actors=old.actors;}
+  });
   result.teamWipeouts=[];
   for(const own of [false,true]){
     try {
@@ -165,5 +185,37 @@ export async function checkHudAuthority({ page, evidence }) {
       result.teamWipeouts.push({...row,retained});
     } finally {await page.evaluate(()=>{globalThis.__wipeoutProbe?.remove();delete globalThis.__wipeoutProbe;});}
   }
+  // #508 display-only reticle fixture uses the loaded native HUD methods.
+  // Live actors/weapon state and weapon timing are never changed.
+  result.splatlingStages=[];
+  try {
+    await page.evaluate(async()=>{
+      const {G}=await import(new URL('src/core/ctx.js',document.baseURI).href);
+      const {WEAPONS}=await import(new URL('src/config.js',document.baseURI).href);
+      const h=G.game.hud,holder=Object.create(Object.getPrototypeOf(h));
+      const xh=h.xh.cloneNode(false),ret=h.ret.cloneNode(false);xh.appendChild(ret);h.xh.parentElement.appendChild(xh);
+      const old=h.xh.style.visibility;h.xh.style.visibility='hidden';
+      globalThis.__splatlingProbe={xh,native:h.xh,old,holder};
+      const a={alive:true,weapon:WEAPONS.splatling,weaponRunner:{streaming:false}};
+      Object.assign(holder,{xh,ret,_L:{weapon:'splatling',kind:'splatling'},_kick:0,_bloom:0,shield:document.createElement('div'),subChip:document.createElement('div'),_local:()=>a,_restart(){}});
+      holder._buildReticle('splatling');xh.className='iw-xh iw-xh--splatling';
+    });
+    for(const [name,charge,streaming,left,first,second]of [['first',2/3,false,0,1,0],['second',5/6,false,0,1,.5],['full',1,false,0,1,1],['partial-stream',1,true,80/60,1,0]]){
+      const row=await page.evaluate(({charge,streaming,left,first,second})=>{
+        const h=globalThis.__splatlingProbe.holder,runner=h._local().weaponRunner;
+        runner.streaming=streaming;runner.burstT=left;h._updCrosshair({weapon:'splatling',charge},1/60);
+        const rings=[h._chargeEl,h._chargeSecond],expected=[first,second];
+        const rows=rings.map((ring,i)=>{const r=ring.getBoundingClientRect(),style=getComputedStyle(ring);const progress=1-Number(ring.style.strokeDashoffset)/100;
+          if(Math.abs(progress-expected[i])>.0001||!ring.checkVisibility({checkOpacity:true,checkVisibilityCSS:true})||r.width<=0||r.left<0||r.right>innerWidth||style.stroke==='none')throw Error('Splatling stage geometry/progress regression');
+          return{progress,width:r.width,stroke:style.stroke};});
+        if(rows[1].width<=rows[0].width)throw Error('Splatling second stage is not a distinct outer ring');
+        return{streaming,rings:rows};
+      },{charge,streaming,left,first,second});
+      await page.waitForTimeout(100);
+      await page.evaluate(({first,second})=>{const h=globalThis.__splatlingProbe.holder;for(const [ring,p]of [[h._chargeEl,first],[h._chargeSecond,second]])if(Math.abs(parseFloat(getComputedStyle(ring).strokeDashoffset)-100*(1-p))>.1)throw Error('Splatling rendered ring has not reached expected progress');},{first,second});
+      await page.screenshot({path:path.join(evidence,`splatling-reticle-${name}.png`),timeout:90000});
+      result.splatlingStages.push({name,...row});
+    }
+  } finally {await page.evaluate(()=>{const s=globalThis.__splatlingProbe;if(s){s.xh.remove();s.native.style.visibility=s.old;delete globalThis.__splatlingProbe;}});}
   return result;
 }

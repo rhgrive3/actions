@@ -48,12 +48,12 @@ test('simultaneous jump and fire go through actual Actor and retain vertical mod
   assert.equal(a.weaponRunner.s3FlickVertical, true);
   assert.equal(a.weaponRunner.s3RollerAttack.elapsed, 0);
   a.grounded = true; a.intent.jump = false;
-  f.tick(a, 25); assert.equal(f.shots.length, 0);
+  f.tick(a, 30); assert.equal(f.shots.length, 0);
   f.tick(a); assert.equal(f.shots.length, 1);
-  assert.equal(f.shots[0].windup, 26 / 60);
+  assert.equal(f.shots[0].windup, 31 / 60);
   assert.equal(a.weaponRunner.s3RollerAttack.vertical, true);
 });
-test('horizontal/vertical windups release on 21/26 elapsed ticks without an extra float tick', async () => {
+test('horizontal/vertical windups release on 21/31 elapsed ticks without an extra float tick', async () => {
   for (const vertical of [false, true]) for (const dt of [1 / 30, 1 / 60, 1 / 120]) {
     const f = await fixture(), a = f.make('roller'); start(f, a, vertical, dt);
     const windup = vertical ? a.weapon.verticalWindup : a.weapon.flickWindup;
@@ -74,7 +74,7 @@ test('jump after starting a horizontal attack keeps its selected mode; the next 
   assert.equal(r.s3FlickVertical, false); assert.equal(f.shots.length, 1);
   r.update(1 / 60, { fire: true, firePressed: true });
   assert.equal(r.s3FlickVertical, true); assert.equal(r.s3RollerAttack.vertical, true);
-  for (let i = 0; i < 26; i++) r.update(1 / 60, { fire: false });
+  for (let i = 0; i < 31; i++) r.update(1 / 60, { fire: false });
   assert.equal(f.shots.length, 2);
 });
 test('a new flick lifts the rolling drum, a held trigger resumes rolling, release stops it', async () => {
@@ -117,20 +117,20 @@ test('actual bones and weapon rotate vertically and the drum impulse waits for g
   const c = a.character, r = a.weaponRunner; c.actor = a;
   start(f, a, true);
   const frames = [], state = { form: 'kid', grounded: false, speed: 0, vy: 0, firing: true, rolling: false, localMove: { x: 0, z: 0 } };
-  for (let i = 0; i < 48; i++) {
+  for (let i = 0; i < 57; i++) {
     if (i) r.update(1 / 60, { fire: false });
     if (i === 20) { state.grounded = true; c.trigger('land', 7.5); }
     c.update(1 / 60, state); c.root.updateMatrixWorld(true);
     frames.push({ drum: c.weapon.drumW, angle: c.P[C.ANCR + 2], arm: c.bones.handR.getWorldPosition(a.pos.clone()), weapon: c.weapon.drum.getWorldPosition(a.pos.clone()), bottom: drumMinimum(c, f.THREE) });
   }
   assert.ok(frames[18].angle > 1.4, 'drum axis is rotated upright before release');
-  assert.equal(frames[25].drum, 0, 'no 0.15s visual impulse during windup');
-  assert.ok(frames[26].drum > 30, 'drum spins on the actual 26F release');
-  assert.ok(frames[18].weapon.distanceTo(frames[26].weapon) > .35, 'full weapon rig follows the downward swing');
-  assert.ok(frames[18].arm.distanceTo(frames[26].arm) > .12, 'arm bones follow the grip IK');
+  assert.equal(frames[30].drum, 0, 'no 0.15s visual impulse during windup');
+  assert.ok(frames[31].drum > 30, 'drum spins on the actual 31F release');
+  assert.ok(frames[18].weapon.distanceTo(frames[31].weapon) > .35, 'full weapon rig follows the downward swing');
+  assert.ok(frames[18].arm.distanceTo(frames[31].arm) > .12, 'arm bones follow the grip IK');
   for (const frame of frames) for (const vec of [frame.arm, frame.weapon]) assert.ok(vec.toArray().every(Number.isFinite));
-  assert.ok(frames.slice(26).every(frame => frame.bottom >= -.02), 'the upright drum clears the floor during landed recovery');
-  assert.ok(frames[47].angle > .8, 'unheld recovery returns to the tilted shoulder carry');
+  assert.ok(frames.slice(31).every(frame => frame.bottom >= -.02), 'the upright drum clears the floor during landed recovery');
+  assert.ok(frames[56].angle > .8, 'unheld recovery returns to the tilted shoulder carry');
   a.setWeapon('shooter'); assert.equal(c.s3RollerFlick, null);
   c.dispose();
 });
@@ -159,7 +159,7 @@ test('actual moving roller geometry and both grips stay synchronized through lif
       c.update(dt, s); c.root.updateMatrixWorld(true);
       rows.push({ t, bottom: drumMinimum(c, THREE), gripL: gripError(c, THREE, 'handL'), gripR: gripError(c, THREE, 'handR'), rolling: r.rolling, roll: c.wRoll, axis: c.P[C.ANCR + 2] });
       if (vertical && r.s3RollerAttack && !restart && t < .78) assert.equal(r.s3RollerAttack.vertical, true);
-      if (t < (vertical ? 26 : 21) / 60) assert.equal(c.weapon.drumW, 0, 'lift does not spin the drum before release');
+      if (t + 1e-10 < (vertical ? 31 : 21) / 60) assert.equal(c.weapon.drumW, 0, 'lift does not spin the drum before release');
     }
     const label = `${hz}Hz ${vertical ? `vertical land ${landAt}s` : 'horizontal'} ${held ? 'held/restart' : 'released'}`;
     assert.ok(rows.every(x => x.bottom >= -.006), `${label}: actual vertices clear the floor (${Math.min(...rows.map(x => x.bottom))})`);

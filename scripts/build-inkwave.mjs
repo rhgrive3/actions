@@ -170,6 +170,10 @@ visit('patches/splatoon3/bootstrap.mjs');
 // requests to the critical HTML. Browser startup/offline CI validates the
 // resulting dependency fetch path and timing.
 const deferredIntegrationPreloads = new Set([
+  'patches/local-quality/portrait-guard.mjs',
+  'patches/local-quality/gyro-startup.mjs',
+  'patches/local-quality/splatling-reticle.mjs',
+  'patches/splatoon3/runtime/turf-finish.mjs',
   // PR536 additions follow the same preload-only deferral; all remain precached.
   'patches/local-quality/team-wipeout.mjs',
   'patches/local-quality/tenacity.mjs',

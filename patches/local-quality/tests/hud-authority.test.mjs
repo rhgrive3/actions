@@ -183,8 +183,16 @@ test('touch screenshot acceptance checks rendered ownership before and after cap
 
  test('WIPEOUT browser evidence separately requires both team variants and actual visible labels',()=>{
   const checks=fs.readFileSync(new URL('scripts/check-inkwave-hud-authority.mjs',root),'utf8');
-  const start=checks.indexOf('// Isolated display probe:');assert.ok(start>=0);const wipe=checks.slice(start);
+  const start=checks.indexOf('// Isolated display probe:'),end=checks.indexOf('// #508 display-only reticle fixture');assert.ok(start>=0&&end>start);const wipe=checks.slice(start,end);
   assert.equal((wipe.match(/checkVisibility\(\{checkOpacity:true,checkVisibilityCSS:true\}\)/g)||[]).length,1);
   assert.match(wipe,/for\(const own of \[false,true\]\)/);assert.match(wipe,/rgb\(17, 17, 17\)/);assert.match(wipe,/rgb\(255, 255, 255\)/);
   assert.match(wipe,/WIPEOUT visibility\/color\/label regression/);assert.match(wipe,/WIPEOUT probe disappeared during capture/);
+ });
+
+ test('staged reticle browser evidence checks rendered ring visibility and progress separately',()=>{
+  const checks=fs.readFileSync(new URL('scripts/check-inkwave-hud-authority.mjs',root),'utf8');
+  const start=checks.indexOf('// #508 display-only reticle fixture');assert.ok(start>=0);const stages=checks.slice(start);
+  assert.match(stages,/checkVisibility\(\{checkOpacity:true,checkVisibilityCSS:true\}\)/);
+  assert.match(stages,/Splatling second stage is not a distinct outer ring/);
+  assert.match(stages,/Splatling rendered ring has not reached expected progress/);
  });

@@ -9,9 +9,19 @@ const install = (code, module, name, Class, prefix = '../../') =>
 const badMessage = receiver => `t(${receiver}.gyro.supported ? 'Gyro permission was denied. Allow motion access in Safari settings.' : 'Gyro is not available on this device.')`;
 export function adaptPlatformSource(rel, code) {
   if (rel === 'src/main.js') {
+    code = replaceOnce(code,
+      "    this.settings = G.settings = loadJSON('inkwave.settings', DEFAULT_SETTINGS);\n    this.mobile = G.mobile = deviceProfile();",
+      "    this.mobile = G.mobile = deviceProfile();\n    this.settings = G.settings = loadJSON('inkwave.settings', initialGyroDefaults(DEFAULT_SETTINGS, this.mobile));", 'first-run gyro preference');
+    code = replaceOnce(code,
+      "  _prepareGyro() {\n    const mob = this.input?.mobile;\n    if (mob && !mob._destroyed && this.settings.gyro && mob.gyro.needsPermission) mob.gyro.request();\n  }",
+      "  _prepareGyro() { return prepareGyroStartup(this, G); }", 'owned startup permission');
+    code = replaceOnce(code,
+      "  _startGyro() {\n    const mob = this.input?.mobile;\n    if (!mob || mob._destroyed || !this.settings.gyro) return;\n    if (mob.gyro.needsPermission) { mob.toast(t('Tap GYRO to turn on gyro aim'), 2.4); return; }\n    mob.setGyro(true);\n  }",
+      "  _startGyro() { return startGyroStartup(this, G); }", 'join startup to pending grant');
+
     code = replaceOnce(code, badMessage('mob'), 'mob.gyro.statusMessage()', 'settings gyro status');
     code = replaceOnce(code, 'const game = new Game();', 'installPlatformGame(Game, G);\n\nconst game = new Game();', 'game lifecycle install after clock installer');
-    return "import { installPlatformGame } from '../patches/local-quality/platform-game.mjs';\n" + code;
+    return "import { initialGyroDefaults } from '../patches/local-quality/gyro-permission.mjs';\nimport { prepareGyroStartup, startGyroStartup } from '../patches/local-quality/gyro-startup.mjs';\nimport { installPlatformGame } from '../patches/local-quality/platform-game.mjs';\n" + code;
   }
   if (rel === 'src/core/mobile.js') {
     code = replaceOnce(code, badMessage('this'), 'this.gyro.statusMessage()', 'mobile gyro status');

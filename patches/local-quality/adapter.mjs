@@ -3,6 +3,10 @@ import { adaptTenacity } from './tenacity-adapter.mjs';
 import { adaptResultContinuation } from './result-continuation-adapter.mjs';
 import { adaptShowcaseShadow } from './showcase-shadow-adapter.mjs';
 import { adaptTeamWipeout } from './team-wipeout-adapter.mjs';
+
+import { adaptSplatlingReticle } from './splatling-reticle-adapter.mjs';
+
+import { adaptPortraitGuard } from './portrait-guard-adapter.mjs';
 // Build-only quality corrections composed after the gameplay, touch-layout and
 // reliability adapters. Upstream inkwave-public/ remains byte-for-byte intact.
 import fs from 'node:fs';
@@ -25,13 +29,17 @@ const IDENTITY_FILES = [
   'result-continuation-adapter.mjs', 'result-continuation.mjs',
   'showcase-shadow.mjs', 'showcase-shadow-adapter.mjs',
   'team-wipeout.mjs', 'team-wipeout-adapter.mjs',
+
+  'splatling-reticle.mjs', 'splatling-reticle-adapter.mjs',
+
+  'portrait-guard.mjs', 'portrait-guard-adapter.mjs',
   'idle-adapter.mjs', 'idle-resources.mjs', 'music-idle.mjs',
   'lobby-resource-adapter.mjs', 'minimap-resource-adapter.mjs',
   'adapter.mjs', 'gyro.mjs', 'install.mjs', 'menu-preview.mjs', 'menu.mjs',
   'roller-motion.mjs', 'roller-visual.mjs', 'surface.mjs', 'landing-rigidity-adapter.mjs', 'first-touch-adapter.mjs', 'touch-relayout.mjs',
   'platform-adapter.mjs', 'platform-lifecycle.mjs', 'platform-game.mjs',
   'platform-input.mjs', 'platform-audio.mjs', 'platform-transport.mjs',
-  'mobile-platform.mjs', 'gyro-permission.mjs',
+  'mobile-platform.mjs', 'gyro-permission.mjs', 'gyro-startup.mjs',
 ];
 
 export function replaceOnce(code, before, after, label) {
@@ -48,6 +56,10 @@ export function adaptQualitySource(rel, code) {
   if (rel !== 'src/ui/menus.js') code = adaptResultContinuation(rel, code, replaceOnce);
   code = adaptShowcaseShadow(rel, code, replaceOnce);
   code = adaptTeamWipeout(rel, code, replaceOnce);
+
+  code = adaptSplatlingReticle(rel, code, replaceOnce);
+
+  code = adaptPortraitGuard(rel, code, replaceOnce);
   code = adaptIdleSource(rel, code, replaceOnce);
   code = adaptLobbyResources(rel, code);
   code = adaptMinimapResources(rel, code);

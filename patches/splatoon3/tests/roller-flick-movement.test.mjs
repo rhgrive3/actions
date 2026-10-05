@@ -5,9 +5,9 @@ import {FixedClock} from '../runtime/clock.mjs';
 const near=(a,b)=>assert.ok(Math.abs(a-b)<1e-9,`${a} != ${b}`);
 const dt=1/60;
 async function setup(vertical=false){const f=await fixture(),a=f.make('roller');a.grounded=!vertical;return {...f,a,r:a.weaponRunner};}
-test('#373 horizontal/vertical actual windup holds 2.88 without changing 21/26F release or ink',async()=>{
+test('#373 horizontal/vertical actual windup holds 2.88 without changing 21/31F release or ink',async()=>{
  for(const vertical of [false,true]){
-  const f=await setup(vertical),{a,r}=f;r.update(dt,{fire:true,firePressed:true});const frames=vertical?26:21;
+  const f=await setup(vertical),{a,r}=f;r.update(dt,{fire:true,firePressed:true});const frames=vertical?31:21;
   for(let i=0;i<frames;i++){near(r.moveSpeed(),2.88);assert.equal(f.shots.length,0);r.update(dt,{fire:false});}
   assert.equal(f.shots.length,1);near(a.ink,91.5);assert.equal(r.s3RollerAttack.released,true);near(r.s3RollerAttack.elapsed,frames/60);
  }
