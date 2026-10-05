@@ -1,3 +1,4 @@
+import { refreshFlowEffects } from './flow-effects.mjs';
 // Gear uses three equipment pieces, each with one 10 AP main and three 3 AP subs.
 export const ABILITIES = Object.freeze({
   none: 'なし', runSpeed: 'ヒト移動速度アップ', swimSpeed: 'イカダッシュ速度アップ',
@@ -47,6 +48,10 @@ export function readLoadout() {
 }
 export function installGear(api, tuning) {
   const { Actor, WeaponRunner, G } = api;
+  const refreshFlow = actor => refreshFlowEffects(actor, api, tuning, abilityPoints, gearCurve);
+  api.on('actor:flow', ({ actor }) => refreshFlow(actor));
+  const actorUpdate = Actor.prototype.update;
+  Actor.prototype.update = function (...args) { refreshFlow(this); return actorUpdate.apply(this, args); };
   const reset = Actor.prototype.reset, setWeapon = Actor.prototype.setWeapon;
   function equip(a) {
     a.s3 ||= {};
@@ -75,6 +80,7 @@ export function installGear(api, tuning) {
     if (Number.isFinite(a.weapon.spreadAir) && Number.isFinite(a.weapon.spreadGround)) a.weapon.spreadAir = a.weapon.spreadGround + (a.weapon.spreadAir - a.weapon.spreadGround) * (1 - m.actionAirSpread);
     for (const field of ['inkPerShot', 'inkFull', 'inkMin', 'flickInk', 'verticalInk', 'rollInkPerMeter']) if (field in a.weapon) a.weapon[field] *= m.inkSaverMain ?? 1;
     a.weapon.specialCost /= m.specialCharge ?? 1;
+    refreshFlow(a);
   }
   Actor.prototype.reset = function (...args) {
     const result = reset.apply(this, args); equip(this);
@@ -84,21 +90,22 @@ export function installGear(api, tuning) {
   Actor.prototype.setWeapon = function (...args) { const result = setWeapon.apply(this, args); equip(this); return result; };
   const moveSpeed = WeaponRunner.prototype.moveSpeed;
   WeaponRunner.prototype.moveSpeed = function () {
+    refreshFlow(this.a);
     const m = this.a.s3?.modifiers || {}, w = this.a.weapon;
     const lockedMode = this.rolling || this.charging && w.kind === 'charger';
     const attacking = this.firingT > 0 || this.charging || this.streaming;
     const gear = lockedMode ? 1 : attacking ? m.runSpeedFiring ?? 1 : m.runSpeed ?? 1;
-    return moveSpeed.call(this) * gear * (this.a.s3?.flow?.active ? tuning.flow.runMultiplier : 1);
+    return moveSpeed.call(this) * gear;
   };
   const horizontal = Actor.prototype._horizontal;
   Actor.prototype._horizontal = function (dt, squid, enemy) {
+    refreshFlow(this);
     // The upstream method reads a shared configuration. Provide scoped values
     // synchronously, restoring even when collision/weapon code throws.
     const original = { swimSpeed: api.PLAYER.swimSpeed, enemyInkSpeed: api.PLAYER.enemyInkSpeed };
-    const m = this.s3?.modifiers || {}, flow = this.s3?.flow?.active;
-    api.PLAYER.swimSpeed *= (m.swimSpeed ?? 1) * (flow ? tuning.flow.swimMultiplier : 1);
+    const m = this.s3?.modifiers || {};
+    api.PLAYER.swimSpeed *= m.swimSpeed ?? 1;
     api.PLAYER.enemyInkSpeed = (this.intent.fire ? m.enemyShotSpeed : m.enemyMoveSpeed) ?? original.enemyInkSpeed;
-    api.PLAYER.enemyInkSpeed *= flow ? tuning.flow.enemyInkSpeedMultiplier : 1;
     try { return horizontal.call(this, dt, squid, enemy); }
     finally { Object.assign(api.PLAYER, original); }
   };
@@ -117,6 +124,7 @@ export function installGear(api, tuning) {
   api.on('splatted', ({ attacker }) => { if (attacker?.s3) attacker.s3.splatsThisLife = (attacker.s3.splatsThisLife || 0) + 1; });
   const update = WeaponRunner.prototype.update;
   WeaponRunner.prototype.update = function (dt, input) {
+    refreshFlow(this.a);
     const a = this.a, m = a.s3?.modifiers || {}, beforeInk = a.ink;
     const saved = { inkCost: api.SUB.bomb.inkCost, throwSpeed: api.SUB.bomb.throwSpeed };
     api.SUB.bomb.inkCost *= m.inkSaverSub ?? 1;

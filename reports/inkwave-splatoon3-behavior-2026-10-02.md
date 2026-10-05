@@ -170,6 +170,14 @@ Flow の外殻・粒・リボンが GTAO の法線／深度パスに不透明な
 終了時に残っていた1textureはnative THREEの共有DFG_LUTで、compiled dfgLUT uniformから所有元を確認した。隔離された描画fixtureの終了時に実GL handleの存在と解放を測り、geometry/textureの残留0を確認する。ゲーム本体や共有shaderの実装変更ではなく、検証fixtureの管理対象を明示する修正である。これらのfocused診断は最終候補の全ケースCIを代用しない。
 
 停止姿勢の全画面beauty再描画では、実際の時計・骨・座標が同一でもnative fragmentの数pixelの色差が反復描画ごとに変化する。停止のモーション検証は、そのbeauty画像を両方保存したうえで、最終描画色だけを固定した別materialによる実GPU比較へ分けた。実際にコンパイルされたnative／比較側vertex shaderのSHA256一致、骨行列・pose・全node world行列・ゲーム時計の不変性、固定色画像の既存0差分条件を必須とする。各ケースで実rootを0.03動かす反例も描き、16pixel以上の変化を検出できない比較器は合格にしない。通常の全339描画ペア、Flow／壁のGTAO、表示中・中断・解放の検査はnative beauty shaderのままであり、この停止の比較を本家の画像一致の証拠にはしない。
+# 2026-10-04: Flow temporary ability effects (#181 / #222)
+
+One shared defect now connects Flow's sourced +30 AP (cap57) to existing Run/Swim,
+Ink Resistance and Intensify Action curves. Permanent gear and actor/weapon clocks
+are preserved; legacy speed multipliers no longer double-apply. Main's Flow
+activation/lifetime/death policy is unchanged. Grace/quantization acceptance depends
+on PR315; reviewed PR315/323/327 composition passes54 source regressions and11
+emitted-graph cases. See [sources, reproduction, limits and merge resolutions](inkwave-flow-effects-2026-10-04.md).
 
 
 ## Action reliability workstream (2026-10-04)
