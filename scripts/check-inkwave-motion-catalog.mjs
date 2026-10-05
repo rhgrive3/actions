@@ -35,7 +35,7 @@ export const CATALOG_SCENARIOS = Object.freeze([
   { name: 'swim-turn-brake', kind: 'shooter', frames: 180 },
   { name: 'wall-surge-ready-crest', kind: 'shooter', frames: 180, probes: [64, 65, 74, 75, 80, 100] },
   { name: 'form-both-directions-interrupt', kind: 'shooter', frames: 180, probes: [76, 82, 100, 145] },
-  { name: 'dualies-roll-lock-interrupt', kind: 'dualies', frames: 180, probes: [110, 115, 132, 155] },
+  { name: 'dualies-roll-lock-interrupt', kind: 'dualies', frames: 240, probes: [110, 115, 125, 132, 155, 164, 190, 195, 198, 210] },
   { name: 'roller-horizontal-push', kind: 'roller', frames: 180, probes: [17, 125] },
   { name: 'roller-vertical-land', kind: 'roller', frames: 180 },
   // Native preparation + flight + .8s visual touchdown must all expire.
@@ -209,7 +209,7 @@ export function validateCatalogResult(result) {
     if (label === 'swim-turn-brake') need(count(s => s.snapshots.swim?.active) >= 90 && Math.max(...row.samples.map(s => Math.abs(s.snapshots.swim?.bank || 0))) > .05 && row.samples.at(-1).snapshots.swim?.power < .01, 'swim turn/brake');
     if (label === 'wall-surge-ready-crest') need(phase('wall', 'charge') >= 20 && count(s => s.snapshots.wall?.ready && s.snapshots.wall?.glow > 0) >= 1 && phase('wall', 'launch') >= 1 && phase('wall', 'crest') >= 1 && row.renders.some(r => r.glint?.changedPixels > 0), 'native surge readiness/launch/crest');
     if (label === 'form-both-directions-interrupt') need(phase('form', 'dive') >= 5 && phase('form', 'emerge') >= 5 && count(s => s.snapshots.form?.reversing) >= 1 && count(s => s.snapshots.form?.actionBlocked) >= 1, 'form directions/reversal/interruption');
-    if (label === 'dualies-roll-lock-interrupt') need(phase('dualies', 'roll') >= 5 && phase('dualies', 'plant') >= 10 && count(s => s.snapshots.dualies?.blockedRoll) >= 1 && row.events.some(e => e.name === 'fireDualies'), 'actual dualies roll/lock/interruption');
+    if (label === 'dualies-roll-lock-interrupt') validateCatalogDualies(row);
     if (label.startsWith('roller-')) need(phase('roller-detail', 'startup') >= 1 && phase('roller-detail', 'recovery') >= 2 && row.events.filter(e => e.name === 'fireFlick').length === 1 && (label.includes('horizontal') ? count(s => s.rolling) >= 10 : count(s => s.snapshots['roller-detail']?.vertical) >= 10), 'native roller startup/release/recovery/push');
     if (label.startsWith('superjump-')) need(phase('superjump', 'charge') >= 10 && phase('superjump', 'flight') >= 10 && phase('superjump', 'descent') >= 1 && phase('superjump', 'touchdown') >= 1 && row.samples.at(-1).snapshots.superjump?.phase === null, 'native superjump flight/landing');
     if (label.startsWith('squidroll-')) need(phase('squidroll', 'roll') >= 5 && row.samples.at(-1).snapshots.squidroll?.phase === null && (label.endsWith('finish') || row.samples[13].snapshots.squidroll?.phase === null), 'roll finish/interruption');
@@ -261,6 +261,43 @@ export function validateCatalogResult(result) {
 
 // This function is serialized into the browser; all classes below are imported
 // from the immutable built graph, with no surrogate Actor, Runner or IK.
+// Diagnostic inputs use native admission and visibility; no runner state is forced.
+export function catalogDualiesInput(frame, actor, character, THREE) {
+  const input = { fire: frame < 145 || frame === 190, sub: frame >= 115 && frame < 132 || frame >= 155 && frame < 165 };
+  if (frame === 0 || frame === 110 || frame === 190) {
+    actor.intent.fire = true;
+    if (!actor.weaponRunner.tryDodge(new THREE.Vector3(1, 0, 0))) throw Error('Native dodge refused at ' + frame);
+  }
+  if (actor.weaponRunner.dodgeVel(actor.vel)) actor.pos.addScaledVector(actor.vel, 1 / 60); else actor.vel.set(0, 0, 0);
+  if (frame === 195) character.setVisible(false);
+  if (frame === 198) character.setVisible(true);
+  return input;
+}
+export function validateCatalogDualies(row) {
+  for (const s of row.samples) {
+    const d = s.dualiesAction;
+    if (!d || !['subRequested','aimingSub','dodge'].every(k => typeof d[k] === 'boolean') || !Number.isFinite(d.lockT) || d.lockT < 0) fail('dualies action trace denominator');
+  }
+  const at = frame => row.samples.find(s => s.frame === frame);
+  const phase = s => s?.snapshots.dualies?.phase;
+  if (row.samples.filter(s => phase(s) === 'roll').length < 5 || row.samples.filter(s => phase(s) === 'plant').length < 10 || !row.events.some(e => e.name === 'fireDualies')) fail('actual dualies roll/lock');
+  for (const frame of [115, 125]) {
+    const s = at(frame), d = s?.dualiesAction;
+    if (!d?.subRequested || d.aimingSub !== false || s.snapshots.dualies?.blockedRoll !== false || (frame === 115 ? !d.dodge || phase(s) !== 'roll' : !(d.lockT > 0) || phase(s) !== 'plant')) fail('dualies rejected sub must preserve committed action');
+  }
+  for (const frame of [155, 164]) {
+    const s = at(frame), d = s?.dualiesAction;
+    if (!d?.subRequested || d.aimingSub !== true || d.dodge !== false || d.lockT > 1e-10 || phase(s) !== null) fail('dualies admitted sub must own presentation');
+  }
+  if (row.events.some(e => e.name === 'fireDualies' && e.frame >= 155 && e.frame < 165)) fail('dualies main fire during admitted sub');
+  for (const frame of [195, 198]) {
+    const s = at(frame);
+    if (!s?.dualiesAction?.dodge || s.visible !== (frame === 198) || s.snapshots.dualies?.blockedRoll !== true || phase(s) !== null) fail('dualies visibility interruption must not replay same roll');
+  }
+  const end = row.samples.at(-1);
+  if (end.dualiesAction?.dodge !== false || end.dualiesAction?.lockT > 1e-10) fail('dualies final action tail incomplete');
+}
+
 export function catalogTurfFinishProbe(Match, G) {
   const priorPaint = G.paint, priorNet = G.netm;
   let reads = 0;
@@ -446,7 +483,7 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout 
     });
     const pose = Array.from(ch.P);
     if (!pose.every(Number.isFinite)) throw Error('Non-finite native pose');
-    return { frame, time: ch.t, timers: Object.fromEntries(Object.entries(api.CHARACTER_TIMERS).map(([k, i]) => [k, ch.tr[i]])), alive: a?.alive ?? true, grounded: ch.grounded, specialActive: a?.specialActive ? { id: a.specialActive.id, phase: a.specialActive.phase, time: a.specialActive.t } : null, visible: ch.root.visible, root: ch.root.position.toArray(), velocity: a?.vel.toArray() || [0, 0, 0], input: a?.intent.move.toArray() || [0, 0, 0], hp: a?.hp ?? 100, ink: a?.ink ?? 100, plantWeight: ch.plantW, hipDrop: ch.hipDrop, kidScale: ch.kidScale, squidScale: ch.sqScale, walkActive: walkActive(ch), pose: { length: pose.length, minimum: Math.min(...pose), maximum: Math.max(...pose), l1: pose.reduce((sum, x) => sum + Math.abs(x), 0) }, ik: Array.from(ch.ikErr), hands: { left: ch.bones.handL.getWorldPosition(new THREE.Vector3()).toArray(), right: ch.bones.handR.getWorldPosition(new THREE.Vector3()).toArray() }, grip: { left: grip(ch, 'left'), right: grip(ch, 'right') }, feet, rolling: !!a?.weaponRunner.rolling, heldBomb: ch.bomb.group.visible, dance: ch.dance, danceWeight: ch.wDance, snapshots: snap(ch), visualGameplayInvariant: invariant };
+    return { frame, time: ch.t, timers: Object.fromEntries(Object.entries(api.CHARACTER_TIMERS).map(([k, i]) => [k, ch.tr[i]])), alive: a?.alive ?? true, grounded: ch.grounded, specialActive: a?.specialActive ? { id: a.specialActive.id, phase: a.specialActive.phase, time: a.specialActive.t } : null, visible: ch.root.visible, root: ch.root.position.toArray(), velocity: a?.vel.toArray() || [0, 0, 0], input: a?.intent.move.toArray() || [0, 0, 0], hp: a?.hp ?? 100, ink: a?.ink ?? 100, plantWeight: ch.plantW, hipDrop: ch.hipDrop, kidScale: ch.kidScale, squidScale: ch.sqScale, walkActive: walkActive(ch), pose: { length: pose.length, minimum: Math.min(...pose), maximum: Math.max(...pose), l1: pose.reduce((sum, x) => sum + Math.abs(x), 0) }, ik: Array.from(ch.ikErr), hands: { left: ch.bones.handL.getWorldPosition(new THREE.Vector3()).toArray(), right: ch.bones.handR.getWorldPosition(new THREE.Vector3()).toArray() }, grip: { left: grip(ch, 'left'), right: grip(ch, 'right') }, feet, rolling: !!a?.weaponRunner.rolling, heldBomb: ch.bomb.group.visible, dualiesAction: a?.weapon.kind === 'dualies' ? { subRequested: !!a.intent.sub, aimingSub: !!a.weaponRunner.aimingSub, dodge: !!a.weaponRunner.dodge, lockT: a.weaponRunner.lockT } : null, dance: ch.dance, danceWeight: ch.wDance, snapshots: snap(ch), visualGameplayInvariant: invariant };
   }
   async function capture(ch, scenario, frame, tick) {
     projectiles._draw();
@@ -605,7 +642,7 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout 
           if (n === 'swim-turn-brake') { horizontal(frame < 115 ? 11 : 0, frame >= 45 && frame < 80 ? 1 : 0, frame >= 45 && frame < 80 ? 0 : frame >= 80 ? -1 : 1, true); driver = 'Native Actor._horizontal swim acceleration/turn/brake and _integrate/native own-ink floor; squid form/submerged diagnostic assignment; no full match'; }
           if (n === 'wall-surge-ready-crest') { a.intent.jump = frame >= 20 && frame < 75; a._updateClimb(1 / 60, true); beforeActions(a, 1 / 60, false); a._integrate(1 / 60, true, false); }
           if (n === 'form-both-directions-interrupt') { if ([0, 70, 82].includes(frame)) { a.form = 'squid'; a.submerged = true; } if ([40, 76, 100].includes(frame)) { a.form = 'kid'; a.submerged = false; } input.fire = frame >= 100 && frame < 120; input.sub = frame >= 140 && frame < 155; }
-          if (n === 'dualies-roll-lock-interrupt') { input.fire = frame < 145; if (frame === 0 || frame === 110) { a.intent.fire = true; if (!a.weaponRunner.tryDodge(new THREE.Vector3(1, 0, 0))) throw Error('Native dodge refused'); } if (a.weaponRunner.dodgeVel(a.vel)) a.pos.addScaledVector(a.vel, 1 / 60); else a.vel.set(0, 0, 0); input.sub = frame >= 115 && frame < 132; }
+          if (n === 'dualies-roll-lock-interrupt') Object.assign(input, globalThis.catalogDualiesInput(frame, a, ch, THREE));
           if (n === 'roller-horizontal-push') { input.fire = frame < 125; input.firePressed = frame === 0; move(frame >= 45 && frame < 125 ? a.weapon.rollSpeed : 0); }
           if (n === 'roller-vertical-land') { input.fire = frame < 60; input.firePressed = frame === 0; if (!a.grounded) a._integrate(1 / 60, false, false); }
           if (n.startsWith('superjump-') && a.superJumpState) a._updateSuperJump(1 / 60);
@@ -727,7 +764,7 @@ async function main() {
       catch (e) { error(e.message); await route.abort(); }
     });
     await page.goto('http://127.0.0.1:' + server.address().port + '/motion-catalog');
-    await page.addScriptTag({ content: 'globalThis.catalogPixelDifference=' + pixelDifference.toString() + ';globalThis.catalogRenderFrames=' + catalogRenderFrames.toString() + ';globalThis.catalogTurfFinishProbe=' + catalogTurfFinishProbe.toString() + ';' });
+    await page.addScriptTag({ content: 'globalThis.catalogPixelDifference=' + pixelDifference.toString() + ';globalThis.catalogRenderFrames=' + catalogRenderFrames.toString() + ';globalThis.catalogTurfFinishProbe=' + catalogTurfFinishProbe.toString() + ';globalThis.catalogDualiesInput=' + catalogDualiesInput.toString() + ';' });
     result = await page.evaluate(runCatalog, { prefix, contentHash: manifest.contentHash, scenarios: CATALOG_SCENARIOS, modules: CATALOG_MODULES, footLayout });
     // finally executes after the returned object was built; fetch its cleanup
     // snapshot explicitly so a missing cleanup cannot pass as a successful run.

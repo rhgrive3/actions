@@ -26,7 +26,13 @@ function gateFixture() {
       case 'swim-turn-brake': fill('swim', { active: true, bank: .1, power: .5 }, 0, 100); fill('swim', { active: true, bank: 0, power: 0 }, 100); break;
       case 'wall-surge-ready-crest': fill('wall', { phase: 'charge', ready: true, glow: .5 }, 0, 30); fill('wall', { phase: 'launch' }, 30, 40); fill('wall', { phase: 'crest' }, 40, 50); renders[0].glint = { ...pixel }; break;
       case 'form-both-directions-interrupt': fill('form', { phase: 'dive', reversing: true, actionBlocked: false }, 0, 10); fill('form', { phase: 'emerge', reversing: false, actionBlocked: true }, 10, 20); break;
-      case 'dualies-roll-lock-interrupt': fill('dualies', { phase: 'roll' }, 0, 10); fill('dualies', { phase: 'plant', blockedRoll: true }, 10, 30); row.events.push({ name: 'fireDualies', frame: 20 }); break;
+      case 'dualies-roll-lock-interrupt':
+        fill('dualies', { phase: 'roll', blockedRoll: false }, 0, 10); fill('dualies', { phase: 'plant', blockedRoll: false }, 10, 30);
+        for (const s of samples) s.dualiesAction = { subRequested: false, aimingSub: false, dodge: false, lockT: 0 };
+        for (const frame of [115,125]) { samples[frame].dualiesAction = {subRequested:true,aimingSub:false,dodge:frame===115,lockT:frame===125?.3:0}; samples[frame].snapshots.dualies={phase:frame===115?'roll':'plant',blockedRoll:false}; }
+        for (const frame of [155,164]) { samples[frame].dualiesAction={subRequested:true,aimingSub:true,dodge:false,lockT:0}; samples[frame].snapshots.dualies={phase:null,blockedRoll:false}; }
+        for (const frame of [195,198]) { samples[frame].dualiesAction.dodge=true;samples[frame].visible=frame===198;samples[frame].snapshots.dualies={phase:null,blockedRoll:true}; }
+        row.events.push({ name: 'fireDualies', frame: 20 }); break;
       case 'roller-horizontal-push': case 'roller-vertical-land': fill('roller-detail', { phase: 'startup', vertical: true }, 0, 15); fill('roller-detail', { phase: 'swing', vertical: true }, 15, 23); fill('roller-detail', { phase: 'recovery', vertical: true }, 23, 40); for (const s of samples.slice(40, 60)) s.rolling = true; row.events.push({ name: 'fireFlick', frame: 23 }); break;
       case 'squidroll-finish': case 'squidroll-interrupt': fill('squidroll', { phase: 'roll' }, 0, 10); fill('squidroll', { phase: null }, 10); break;
       case 'hit-spawn-reset': fill('hit-spawn', { phase: 'entry', coating: .9 }, 0, 5); fill('hit-spawn', { phase: 'protected', coating: .9 }, 5, 20); fill('hit-spawn', { phase: 'expiry', coating: .5 }, 20, 25); fill('hit-spawn', { coating: 0 }, 25); renders[0].coating = { ...pixel }; break;
@@ -51,6 +57,13 @@ for (const [name, mutate, pattern] of [
   ['missing native Turf proof', r => delete r.turfFinish, /native Turf finish/],
   ['late paint changes judge', r => r.turfFinish.judged = [.4,.6], /native Turf finish/],
   ['judge rereads live paint', r => r.turfFinish.reads = 2, /native Turf finish/],
+  ['missing dualies action trace', r => delete r.data.find(x=>x.name==='dualies-roll-lock-interrupt').samples[100].dualiesAction, /dualies action trace denominator/],
+  ['rejected sub suppresses actual roll', r => r.data.find(x=>x.name==='dualies-roll-lock-interrupt').samples[115].snapshots.dualies.phase=null, /dualies rejected sub/],
+  ['rejected sub becomes aiming', r => r.data.find(x=>x.name==='dualies-roll-lock-interrupt').samples[125].dualiesAction.aimingSub=true, /dualies rejected sub/],
+  ['admitted sub leaves plant pose', r => r.data.find(x=>x.name==='dualies-roll-lock-interrupt').samples[155].snapshots.dualies.phase='plant', /dualies admitted sub/],
+  ['main fire during admitted sub', r => r.data.find(x=>x.name==='dualies-roll-lock-interrupt').events.push({name:'fireDualies',frame:160}), /dualies main fire/],
+  ['visible interrupted token replays', r => r.data.find(x=>x.name==='dualies-roll-lock-interrupt').samples[198].snapshots.dualies.blockedRoll=false, /dualies visibility interruption/],
+  ['dualies tail truncated', r => r.data.find(x=>x.name==='dualies-roll-lock-interrupt').samples.at(-1).dualiesAction.lockT=.1, /dualies final action tail/],
   ['missing scenario', r => r.data.pop(), /scenario denominator/],
   ['missing frame', r => r.data[0].samples.pop(), /frame denominator/],
   ['duplicate render frame', r => r.data[0].renders[1].frame = r.data[0].renders[0].frame, /render frame denominator/],
