@@ -69,6 +69,7 @@ export async function fixture({ network = true } = {}) {
     export * from './inkwave-public/src/game/weapons.js';
     export * from './inkwave-public/src/net/netmatch.js';
     export * from './patches/splatoon3/runtime/weapons.mjs';
+    export * from './patches/splatoon3/runtime/weapons-fidelity.mjs';
     export * from './patches/splatoon3/runtime/sub-special-fidelity.mjs';
     export * from './patches/local-quality/roller-visual.mjs';
     export * as THREE from 'three';
@@ -85,6 +86,7 @@ export async function fixture({ network = true } = {}) {
   for (const [id, data] of Object.entries(profile.weapons)) Object.assign(WEAPONS[id], data);
 
   api.installWeapons(api, profile);
+  api.installWeaponsFidelity(api, profile);
   api.installRollerVisualQuality(api);
 
   // ---- world stubs: physics only reports a flat floor at y = 0, no actors, no boss

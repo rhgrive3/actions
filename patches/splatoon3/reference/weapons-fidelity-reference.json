@@ -1,0 +1,1158 @@
+{
+  "schema": 1,
+  "scope": "main weapons only",
+  "game": "Splatoon 3",
+  "referenceVersion": "11.3.0",
+  "sourceCommit": "7280ff9cde8bb1c5dcef46c700c326471584d2e6",
+  "checkedAt": "2026-10-04T02:20:31+09:00",
+  "versionPolicy": "Respect main profile pin; do not mix Splatoon 1/2 or newer weapon balance into this version.",
+  "sources": [
+    {
+      "id": "shooter",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponShooterNormal.game__GameParameterTable.json",
+      "game": "Splatoon 3",
+      "version": "11.3.0",
+      "weapon": "Splattershot",
+      "sourceCommit": "7280ff9cde8bb1c5dcef46c700c326471584d2e6",
+      "expectedFileSha256": "dfca9f45fd0df3b6afab8f6ec0e47034912f3a6fc411936b9fd7257fe85c4cb9",
+      "method": "Direct read of the pinned public datamine JSON using GitHub connector. Expected full-file hash inherited from main curated-numbers; this offline run did not re-download all raw files for a fresh whole-file hash check.",
+      "confidence": "high for explicit field transcription; engine semantics and world scaling are separate",
+      "official": false
+    },
+    {
+      "id": "dualies",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json",
+      "game": "Splatoon 3",
+      "version": "11.3.0",
+      "weapon": "Splat Dualies",
+      "sourceCommit": "7280ff9cde8bb1c5dcef46c700c326471584d2e6",
+      "expectedFileSha256": "55e37c4d8db92b63d48f281015a30a9aaccd1ff838edf88ae4103124c365eb07",
+      "method": "Direct read of the pinned public datamine JSON using GitHub connector. Expected full-file hash inherited from main curated-numbers; this offline run did not re-download all raw files for a fresh whole-file hash check.",
+      "confidence": "high for explicit field transcription; engine semantics and world scaling are separate",
+      "official": false
+    },
+    {
+      "id": "charger",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json",
+      "game": "Splatoon 3",
+      "version": "11.3.0",
+      "weapon": "Splat Charger",
+      "sourceCommit": "7280ff9cde8bb1c5dcef46c700c326471584d2e6",
+      "expectedFileSha256": "dfe4637def507f933b0bbecbc805331f6357bb69ac165608a6e558406a4b72c1",
+      "method": "Direct read of the pinned public datamine JSON using GitHub connector. Expected full-file hash inherited from main curated-numbers; this offline run did not re-download all raw files for a fresh whole-file hash check.",
+      "confidence": "high for explicit field transcription; engine semantics and world scaling are separate",
+      "official": false
+    },
+    {
+      "id": "roller",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json",
+      "game": "Splatoon 3",
+      "version": "11.3.0",
+      "weapon": "Splat Roller",
+      "sourceCommit": "7280ff9cde8bb1c5dcef46c700c326471584d2e6",
+      "expectedFileSha256": "5b423eb35d4cac268a1e4085ec8321d27639ddbfc8f3775bb65696af5c2449c7",
+      "method": "Direct read of the pinned public datamine JSON using GitHub connector. Expected full-file hash inherited from main curated-numbers; this offline run did not re-download all raw files for a fresh whole-file hash check.",
+      "confidence": "high for explicit field transcription; engine semantics and world scaling are separate",
+      "official": false
+    },
+    {
+      "id": "blaster",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponBlasterMiddle.game__GameParameterTable.json",
+      "game": "Splatoon 3",
+      "version": "11.3.0",
+      "weapon": "Blaster",
+      "sourceCommit": "7280ff9cde8bb1c5dcef46c700c326471584d2e6",
+      "expectedFileSha256": "36139282d2bd915f675424d99d5641800f184bcc9a9d1b0c94be533d38f64e18",
+      "method": "Direct read of the pinned public datamine JSON using GitHub connector. Expected full-file hash inherited from main curated-numbers; this offline run did not re-download all raw files for a fresh whole-file hash check.",
+      "confidence": "high for explicit field transcription; engine semantics and world scaling are separate",
+      "official": false
+    },
+    {
+      "id": "slosher",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponSlosherStrong.game__GameParameterTable.json",
+      "game": "Splatoon 3",
+      "version": "11.3.0",
+      "weapon": "Slosher",
+      "sourceCommit": "7280ff9cde8bb1c5dcef46c700c326471584d2e6",
+      "expectedFileSha256": "1d20043ad7efaf2831801afbce601fb1e14bfd11947063903c6fadd6c98f5298",
+      "method": "Direct read of the pinned public datamine JSON using GitHub connector. Expected full-file hash inherited from main curated-numbers; this offline run did not re-download all raw files for a fresh whole-file hash check.",
+      "confidence": "high for explicit field transcription; engine semantics and world scaling are separate",
+      "official": false
+    },
+    {
+      "id": "splatling",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json",
+      "game": "Splatoon 3",
+      "version": "11.3.0",
+      "weapon": "Heavy Splatling",
+      "sourceCommit": "7280ff9cde8bb1c5dcef46c700c326471584d2e6",
+      "expectedFileSha256": "92647d586beee1764ca8984820fa37e0fd7887e2a756f7ca18e10e1aef97fd08",
+      "method": "Direct read of the pinned public datamine JSON using GitHub connector. Expected full-file hash inherited from main curated-numbers; this offline run did not re-download all raw files for a fresh whole-file hash check.",
+      "confidence": "high for explicit field transcription; engine semantics and world scaling are separate",
+      "official": false
+    },
+    {
+      "id": "analyst-defaults",
+      "url": "https://splatoonwiki.org/wiki/User%3AXarrotD/paramtable",
+      "game": "Splatoon 3",
+      "version": null,
+      "weapon": "shared simple bullet / roller defaults",
+      "method": "Original investigator parameter table and documented experiments, retrieved via web search. Unversioned, not a pinned 11.3.0 dump.",
+      "confidence": "medium; version applicability not independently confirmed",
+      "official": false
+    },
+    {
+      "id": "official-weapons",
+      "url": "https://www.nintendo.com/jp/character/splatoon/en/fashion/index.html",
+      "game": "Splatoon series; includes Splatoon 3",
+      "version": null,
+      "weapon": "weapon family descriptions",
+      "method": "Nintendo qualitative explanation; used for mode distinctions only, not internal numbers.",
+      "confidence": "high for qualitative features only",
+      "official": true
+    },
+    {
+      "id": "official-version",
+      "url": "https://support.nintendo.com/jp/switch/software_support/av5ja/index.html",
+      "game": "Splatoon 3",
+      "version": "11.3.0",
+      "weapon": "all",
+      "method": "Nintendo update index; existing project pins this version. No migration to another version.",
+      "confidence": "high for version identification only",
+      "official": true
+    }
+  ],
+  "explicitFields": [
+    {
+      "sourceId": "shooter",
+      "pointer": "/GameParameters/MoveParam/SpawnSpeed",
+      "value": 2.266,
+      "unit": "raw distance/frame",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "shooter",
+      "pointer": "/GameParameters/MoveParam/GoStraightStateEndMaxSpeed",
+      "value": 1.493,
+      "unit": "raw distance/frame",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "shooter",
+      "pointer": "/GameParameters/MoveParam/GoStraightToBrakeStateFrame",
+      "value": 4,
+      "unit": "frames",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "dualies",
+      "pointer": "/GameParameters/MoveParam/SpawnSpeed",
+      "value": 2.37,
+      "unit": "raw distance/frame",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "dualies",
+      "pointer": "/GameParameters/MoveParam/GoStraightStateEndMaxSpeed",
+      "value": 2.3425,
+      "unit": "raw distance/frame",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "dualies",
+      "pointer": "/GameParameters/MoveParam/GoStraightToBrakeStateFrame",
+      "value": 3,
+      "unit": "frames",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "blaster",
+      "pointer": "/GameParameters/MoveParam/SpawnSpeed",
+      "value": 0.945,
+      "unit": "raw distance/frame",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "blaster",
+      "pointer": "/GameParameters/MoveParam/GoStraightStateEndMaxSpeed",
+      "value": 0.9131,
+      "unit": "raw distance/frame",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "blaster",
+      "pointer": "/GameParameters/MoveParam/GoStraightToBrakeStateFrame",
+      "value": 9,
+      "unit": "frames",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "splatling",
+      "pointer": "/GameParameters/MoveParam/SpawnSpeed",
+      "value": 1.05,
+      "unit": "raw distance/frame",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "splatling",
+      "pointer": "/GameParameters/MoveParam/GoStraightStateEndMaxSpeed",
+      "value": 1.5105,
+      "unit": "raw distance/frame",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "splatling",
+      "pointer": "/GameParameters/MoveParam/GoStraightToBrakeStateFrame",
+      "value": 8,
+      "unit": "frames",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "splatling",
+      "pointer": "/GameParameters/MoveParam/SpawnSpeedFirstLastAndSecond",
+      "value": 2.1,
+      "unit": "raw distance/frame",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "blaster",
+      "pointer": "/GameParameters/WeaponParam/RepeatFrame",
+      "value": 50,
+      "unit": "frames",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "blaster",
+      "pointer": "/GameParameters/WeaponParam/PreDelayFrame_HumanShot",
+      "value": 10,
+      "unit": "frames",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "charger",
+      "pointer": "/GameParameters/MoveParam/DistanceMinCharge",
+      "value": 9.033,
+      "unit": "raw distance",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "charger",
+      "pointer": "/GameParameters/MoveParam/DistanceMaxCharge",
+      "value": 24.037,
+      "unit": "raw distance",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "charger",
+      "pointer": "/GameParameters/MoveParam/DistanceFullCharge",
+      "value": 24.037,
+      "unit": "raw distance",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "charger",
+      "pointer": "/GameParameters/DamageParam/ValueMinCharge",
+      "value": 400,
+      "unit": "raw HP/10",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "charger",
+      "pointer": "/GameParameters/DamageParam/ValueMaxCharge",
+      "value": 800,
+      "unit": "raw HP/10",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "charger",
+      "pointer": "/GameParameters/DamageParam/ValueFullCharge",
+      "value": 1600,
+      "unit": "raw HP/10",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "roller",
+      "pointer": "/GameParameters/WideSwingUnitGroupParam/Unit/0/UnitParam/MoveParam/GoStraightToBrakeStateFrame",
+      "value": 7,
+      "unit": "frames",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "roller",
+      "pointer": "/GameParameters/WideSwingUnitGroupParam/Unit/0/UnitParam/MoveParam/FreeAirResist",
+      "value": 0.1,
+      "unit": "fraction removed/frame",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "roller",
+      "pointer": "/GameParameters/WideSwingUnitGroupParam/Unit/0/UnitParam/MoveParam/FreeGravity",
+      "value": 0.04,
+      "unit": "raw distance/frame^2",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "roller",
+      "pointer": "/GameParameters/VerticalSwingUnitGroupParam/Unit/0/UnitParam/MoveParam/GoStraightToBrakeStateFrame",
+      "value": 6,
+      "unit": "frames",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "roller",
+      "pointer": "/GameParameters/VerticalSwingUnitGroupParam/Unit/0/UnitParam/MoveParam/FreeAirResist",
+      "value": 0.1,
+      "unit": "fraction removed/frame",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "roller",
+      "pointer": "/GameParameters/VerticalSwingUnitGroupParam/Unit/0/UnitParam/MoveParam/FreeGravity",
+      "value": 0.04,
+      "unit": "raw distance/frame^2",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "roller",
+      "pointer": "/GameParameters/WideSwingUnitGroupParam/DamageParam/Outside/DamageMaxDistance",
+      "value": 2,
+      "unit": "raw distance",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "roller",
+      "pointer": "/GameParameters/WideSwingUnitGroupParam/DamageParam/Outside/DamageMaxValue",
+      "value": 1000,
+      "unit": "raw HP/10",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "roller",
+      "pointer": "/GameParameters/WideSwingUnitGroupParam/DamageParam/Outside/DamageHighDistance",
+      "value": 7.2,
+      "unit": "raw distance",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "roller",
+      "pointer": "/GameParameters/WideSwingUnitGroupParam/DamageParam/Outside/DamageHighValue",
+      "value": 500,
+      "unit": "raw HP/10",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "roller",
+      "pointer": "/GameParameters/WideSwingUnitGroupParam/DamageParam/Outside/DamageLowDistance",
+      "value": 7.2,
+      "unit": "raw distance",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "roller",
+      "pointer": "/GameParameters/WideSwingUnitGroupParam/DamageParam/Outside/DamageLowValue",
+      "value": 500,
+      "unit": "raw HP/10",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "roller",
+      "pointer": "/GameParameters/WideSwingUnitGroupParam/DamageParam/Outside/DamageMinDistance",
+      "value": 9.2,
+      "unit": "raw distance",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "roller",
+      "pointer": "/GameParameters/WideSwingUnitGroupParam/DamageParam/Outside/DamageMinValue",
+      "value": 350,
+      "unit": "raw HP/10",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "roller",
+      "pointer": "/GameParameters/WideSwingUnitGroupParam/DamageParam/Inside/Degree",
+      "value": 16,
+      "unit": "degrees",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "roller",
+      "pointer": "/GameParameters/WideSwingUnitGroupParam/DamageParam/Inside/InsideDistanceXZ",
+      "value": 1.2,
+      "unit": "raw distance",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "roller",
+      "pointer": "/GameParameters/VerticalSwingUnitGroupParam/Unit/0/SpawnSpeedBase",
+      "value": 1.8338,
+      "unit": "raw distance/frame",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "roller",
+      "pointer": "/GameParameters/VerticalSwingUnitGroupParam/Unit/0/SpawnRotateXDegreeBase",
+      "value": 7.5,
+      "unit": "degrees",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "roller",
+      "pointer": "/GameParameters/VerticalSwingUnitGroupParam/Unit/0/SpawnRotateYDegree",
+      "value": 0,
+      "unit": "degrees",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "roller",
+      "pointer": "/GameParameters/VerticalSwingUnitGroupParam/Unit/1/BulletNum",
+      "value": 2,
+      "unit": "count",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "roller",
+      "pointer": "/GameParameters/VerticalSwingUnitGroupParam/Unit/1/SpawnSpeedBase",
+      "value": 1.6338,
+      "unit": "raw distance/frame",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "roller",
+      "pointer": "/GameParameters/VerticalSwingUnitGroupParam/Unit/1/SpawnRotateXDegreeBase",
+      "value": 5,
+      "unit": "degrees",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "roller",
+      "pointer": "/GameParameters/VerticalSwingUnitGroupParam/Unit/1/SpawnRotateYDegree",
+      "value": 0,
+      "unit": "degrees",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "roller",
+      "pointer": "/GameParameters/VerticalSwingUnitGroupParam/Unit/1/AfterOffsetSpawnSpeed",
+      "value": -0.2,
+      "unit": "raw distance/frame",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "roller",
+      "pointer": "/GameParameters/VerticalSwingUnitGroupParam/Unit/1/AfterOffsetSpawnRotateXDegree",
+      "value": -2.5,
+      "unit": "degrees",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "roller",
+      "pointer": "/GameParameters/VerticalSwingUnitGroupParam/Unit/2/BulletNum",
+      "value": 2,
+      "unit": "count",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "roller",
+      "pointer": "/GameParameters/VerticalSwingUnitGroupParam/Unit/2/SpawnSpeedBase",
+      "value": 1.2338,
+      "unit": "raw distance/frame",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "roller",
+      "pointer": "/GameParameters/VerticalSwingUnitGroupParam/Unit/2/SpawnRotateYDegree",
+      "value": 0,
+      "unit": "degrees",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "roller",
+      "pointer": "/GameParameters/VerticalSwingUnitGroupParam/Unit/2/AfterOffsetSpawnSpeed",
+      "value": -0.2,
+      "unit": "raw distance/frame",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "roller",
+      "pointer": "/GameParameters/VerticalSwingUnitGroupParam/Unit/2/AfterOffsetSpawnRotateXDegree",
+      "value": -2.5,
+      "unit": "degrees",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "roller",
+      "pointer": "/GameParameters/WideSwingUnitGroupParam/Unit/0/UnitParam/CollisionParam/InitRadiusForPlayer",
+      "value": 0.12,
+      "unit": "raw distance",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "roller",
+      "pointer": "/GameParameters/WideSwingUnitGroupParam/Unit/0/UnitParam/CollisionParam/EndRadiusForPlayer",
+      "value": 1.02,
+      "unit": "raw distance",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "roller",
+      "pointer": "/GameParameters/WideSwingUnitGroupParam/Unit/0/UnitParam/CollisionParam/ChangeFrameForPlayer",
+      "value": 4,
+      "unit": "frames",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "roller",
+      "pointer": "/GameParameters/VerticalSwingUnitGroupParam/Unit/0/UnitParam/CollisionParam/InitRadiusForPlayer",
+      "value": 0.116,
+      "unit": "raw distance",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "roller",
+      "pointer": "/GameParameters/VerticalSwingUnitGroupParam/Unit/0/UnitParam/CollisionParam/EndRadiusForPlayer",
+      "value": 0.87,
+      "unit": "raw distance",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "roller",
+      "pointer": "/GameParameters/VerticalSwingUnitGroupParam/Unit/0/UnitParam/CollisionParam/ChangeFrameForPlayer",
+      "value": 4,
+      "unit": "frames",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "roller",
+      "pointer": "/GameParameters/VerticalSwingUnitGroupParam/Unit/1/UnitParam/CollisionParam/InitRadiusForPlayer",
+      "value": 0.116,
+      "unit": "raw distance",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "roller",
+      "pointer": "/GameParameters/VerticalSwingUnitGroupParam/Unit/1/UnitParam/CollisionParam/EndRadiusForPlayer",
+      "value": 0.87,
+      "unit": "raw distance",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "roller",
+      "pointer": "/GameParameters/VerticalSwingUnitGroupParam/Unit/1/UnitParam/CollisionParam/ChangeFrameForPlayer",
+      "value": 4,
+      "unit": "frames",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "roller",
+      "pointer": "/GameParameters/VerticalSwingUnitGroupParam/Unit/2/UnitParam/CollisionParam/InitRadiusForPlayer",
+      "value": 0.116,
+      "unit": "raw distance",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "roller",
+      "pointer": "/GameParameters/VerticalSwingUnitGroupParam/Unit/2/UnitParam/CollisionParam/EndRadiusForPlayer",
+      "value": 0.82,
+      "unit": "raw distance",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    },
+    {
+      "sourceId": "roller",
+      "pointer": "/GameParameters/VerticalSwingUnitGroupParam/Unit/2/UnitParam/CollisionParam/ChangeFrameForPlayer",
+      "value": 4,
+      "unit": "frames",
+      "confidence": "high for explicit JSON field",
+      "method": "Pinned datamine field transcription",
+      "official": false
+    }
+  ],
+  "analystDefaults": [
+    {
+      "sourceId": "analyst-defaults",
+      "parameter": "BrakeAirResist",
+      "value": 0.36,
+      "version": null,
+      "confidence": "medium",
+      "official": false,
+      "status": "source-guided model assumption; NOT an extracted 11.3.0 override"
+    },
+    {
+      "sourceId": "analyst-defaults",
+      "parameter": "BrakeGravity",
+      "value": 0.07,
+      "version": null,
+      "confidence": "medium",
+      "official": false,
+      "status": "source-guided model assumption; NOT an extracted 11.3.0 override"
+    },
+    {
+      "sourceId": "analyst-defaults",
+      "parameter": "BrakeToFreeVelocityY",
+      "value": -0.15,
+      "version": null,
+      "confidence": "medium",
+      "official": false,
+      "status": "source-guided model assumption; NOT an extracted 11.3.0 override"
+    },
+    {
+      "sourceId": "analyst-defaults",
+      "parameter": "FreeAirResist",
+      "value": 0.02,
+      "version": null,
+      "confidence": "medium",
+      "official": false,
+      "status": "source-guided model assumption; NOT an extracted 11.3.0 override"
+    },
+    {
+      "sourceId": "analyst-defaults",
+      "parameter": "FreeGravity",
+      "value": 0.016,
+      "version": null,
+      "confidence": "medium",
+      "official": false,
+      "status": "source-guided model assumption; NOT an extracted 11.3.0 override"
+    },
+    {
+      "sourceId": "analyst-defaults",
+      "parameter": "BurstFrame",
+      "value": 13,
+      "version": null,
+      "confidence": "medium",
+      "official": false,
+      "status": "source-guided model assumption; NOT an extracted 11.3.0 override"
+    },
+    {
+      "sourceId": "analyst-defaults",
+      "parameter": "BulletNum",
+      "value": 1,
+      "version": null,
+      "confidence": "medium",
+      "official": false,
+      "status": "source-guided model assumption; NOT an extracted 11.3.0 override"
+    },
+    {
+      "sourceId": "analyst-defaults",
+      "parameter": "SpawnRotateXDegreeBase",
+      "value": 0,
+      "version": null,
+      "confidence": "medium",
+      "official": false,
+      "status": "source-guided model assumption; NOT an extracted 11.3.0 override"
+    }
+  ],
+  "changes": [
+    {
+      "parameter": "shooter.brakeEntryMaxSpeed",
+      "currentValue": null,
+      "referenceValue": 1.493,
+      "adoptedValue": 89.58000000000001,
+      "reason": "Connect explicit speed cap once at straight->brake transition; multiply per-frame speed by 60. No range-meter conversion.",
+      "confidence": "high transcription / medium dynamic model",
+      "sourceIds": [
+        "shooter",
+        "analyst-defaults"
+      ],
+      "officialValue": false
+    },
+    {
+      "parameter": "dualies.brakeEntryMaxSpeed",
+      "currentValue": null,
+      "referenceValue": 2.3425,
+      "adoptedValue": 140.54999999999998,
+      "reason": "Connect explicit speed cap once at straight->brake transition; multiply per-frame speed by 60. No range-meter conversion.",
+      "confidence": "high transcription / medium dynamic model",
+      "sourceIds": [
+        "dualies",
+        "analyst-defaults"
+      ],
+      "officialValue": false
+    },
+    {
+      "parameter": "splatling.brakeEntryMaxSpeed",
+      "currentValue": null,
+      "referenceValue": 1.5105,
+      "adoptedValue": 90.63,
+      "reason": "Connect explicit speed cap once at straight->brake transition; multiply per-frame speed by 60. No range-meter conversion.",
+      "confidence": "high transcription / medium dynamic model",
+      "sourceIds": [
+        "splatling",
+        "analyst-defaults"
+      ],
+      "officialValue": false
+    },
+    {
+      "parameter": "blaster.brakeEntryMaxSpeed",
+      "currentValue": null,
+      "referenceValue": 0.9131,
+      "adoptedValue": 54.786,
+      "reason": "Connect explicit speed cap once at straight->brake transition; multiply per-frame speed by 60. No range-meter conversion.",
+      "confidence": "high transcription / medium dynamic model",
+      "sourceIds": [
+        "blaster",
+        "analyst-defaults"
+      ],
+      "officialValue": false
+    },
+    {
+      "parameter": "simpleProjectile.integration",
+      "currentValue": "gravity then weak per-second drag; no brake state",
+      "referenceValue": {
+        "states": [
+          "straight",
+          "brake",
+          "free"
+        ],
+        "brakeResistance": 0.36,
+        "brakeGravity": 0.07,
+        "freeY": -0.15,
+        "freeResistance": 0.02
+      },
+      "adoptedValue": {
+        "schema": 1,
+        "status": "source-guided; Switch parity not certified",
+        "brakeDragPerFrame": 0.36,
+        "brakeGravity": 252,
+        "brakeToFreeVelocityY": -9,
+        "freeDragPerFrame": 0.02,
+        "freeGravity": 57.599999999999994,
+        "defaultProvenance": "XarrotD/paramtable; not version-pinned 11.3.0 datamine; medium confidence"
+      },
+      "reason": "Use investigator-documented state model at the existing fixed 60 Hz step. This is a reviewed model, not independently verified Nintendo bytecode.",
+      "confidence": "medium; unresolved version/default interpretation",
+      "sourceIds": [
+        "analyst-defaults"
+      ],
+      "officialValue": false
+    },
+    {
+      "parameter": "blaster.shotIntervalMeasuredFrames",
+      "currentValue": 40,
+      "referenceValue": 50,
+      "adoptedValue": 50,
+      "reason": "Existing windup double-subtracted cooldown; clear accumulated negative cooldown only when releasing an admitted blaster shot. Keep 10F startup and all other cadence paths.",
+      "confidence": "high",
+      "sourceIds": [
+        "blaster"
+      ],
+      "officialValue": false
+    },
+    {
+      "parameter": "blaster.straightFrames",
+      "currentValue": 5940,
+      "referenceValue": 9,
+      "adoptedValue": 9,
+      "reason": "Connect explicit bullet straight duration instead of native straight=99 seconds.",
+      "confidence": "high transcription / medium overall flight",
+      "sourceIds": [
+        "blaster"
+      ],
+      "officialValue": false
+    },
+    {
+      "parameter": "blaster.burstLifetimeFrames",
+      "currentValue": 14.074074074074076,
+      "referenceValue": 13,
+      "adoptedValue": 13,
+      "reason": "Use separately documented BurstFrame default; display/practical range is not a lifetime.",
+      "confidence": "medium; default is unversioned",
+      "sourceIds": [
+        "analyst-defaults"
+      ],
+      "officialValue": false
+    },
+    {
+      "parameter": "splatling.firstBarSpeedCurve",
+      "currentValue": {
+        "allCharges": 63
+      },
+      "referenceValue": {
+        "minimum": 1.05,
+        "endFirstAndSecond": 2.1
+      },
+      "adoptedValue": {
+        "minimum": 63,
+        "endFirstAndSecond": 126,
+        "between": "linear during first bar, constant after"
+      },
+      "reason": "Snapshot released charge once, not the decreasing burst HUD fraction. Explicit endpoints are wired; in-between curve is a minimal labelled interpolation, random velocity bias remains unimplemented.",
+      "confidence": "high endpoints / medium interpolation",
+      "sourceIds": [
+        "splatling"
+      ],
+      "officialValue": false
+    },
+    {
+      "parameter": "roller.horizontalStraightFrames",
+      "currentValue": 0,
+      "referenceValue": 7,
+      "adoptedValue": 7,
+      "reason": "Connect explicit mode straight phase.",
+      "confidence": "high transcription / medium default brake behavior",
+      "sourceIds": [
+        "roller",
+        "analyst-defaults"
+      ],
+      "officialValue": false
+    },
+    {
+      "parameter": "roller.verticalStraightFrames",
+      "currentValue": 0,
+      "referenceValue": 6,
+      "adoptedValue": 6,
+      "reason": "Connect explicit mode straight phase; field transmitted by existing recProj.",
+      "confidence": "high transcription / medium default brake behavior",
+      "sourceIds": [
+        "roller",
+        "analyst-defaults"
+      ],
+      "officialValue": false
+    },
+    {
+      "parameter": "roller.horizontalLaunchPitchDegrees",
+      "currentValue": 18.334649444186343,
+      "referenceValue": 0,
+      "adoptedValue": 0,
+      "reason": "Replace generic 0.32rad upward heave with omitted zero-pitch default; preserve native player aim clamp, yaw distribution, speed sampling and six RNG draws/drop.",
+      "confidence": "medium; omitted default",
+      "sourceIds": [
+        "analyst-defaults",
+        "roller"
+      ],
+      "officialValue": false
+    },
+    {
+      "parameter": "roller.verticalLaunchLayers",
+      "currentValue": "5 copies of horizontal-style fan sampling",
+      "referenceValue": {
+        "explicitUnits": [
+          1.8338,
+          1.6338,
+          1.2338
+        ],
+        "count": [
+          null,
+          2,
+          2
+        ],
+        "afterSpeedStep": -0.2,
+        "pitches": [
+          7.5,
+          5,
+          null
+        ],
+        "afterPitchStep": -2.5
+      },
+      "adoptedValue": [
+        {
+          "count": 1,
+          "speed": null,
+          "speedStep": 0,
+          "pitchDegrees": 7.5,
+          "pitchStepDegrees": 0
+        },
+        {
+          "count": 2,
+          "speed": 98.02799999999999,
+          "speedStep": -12,
+          "pitchDegrees": 5,
+          "pitchStepDegrees": -2.5
+        },
+        {
+          "count": 2,
+          "speed": 74.028,
+          "speedStep": -12,
+          "pitchDegrees": 0,
+          "pitchStepDegrees": -2.5
+        }
+      ],
+      "reason": "Expand the three selected units into 1+2+2 layers. Missing count/pitch use the author documented defaults. Keep existing five gameplay projectiles and all random draws. Do not add a guessed origin-height conversion.",
+      "confidence": "high fields / medium omitted defaults and unit expansion",
+      "sourceIds": [
+        "roller",
+        "analyst-defaults"
+      ],
+      "officialValue": false
+    },
+    {
+      "parameter": "roller.horizontalOutsideDamage",
+      "currentValue": "inside bands applied to all globs",
+      "referenceValue": {
+        "damageRaw": [
+          [
+            2,
+            1000
+          ],
+          [
+            7.2,
+            500
+          ],
+          [
+            7.2,
+            500
+          ],
+          [
+            9.2,
+            350
+          ]
+        ]
+      },
+      "adoptedValue": [
+        [
+          2,
+          100
+        ],
+        [
+          7.2,
+          50
+        ],
+        [
+          7.2,
+          50
+        ],
+        [
+          9.2,
+          35
+        ]
+      ],
+      "reason": "Use explicit outside values for inherited rays outside 16deg and beyond near override; retained displacement-distance metric and source yaw interpretation need Switch validation.",
+      "confidence": "high bands / medium inside-angle classification",
+      "sourceIds": [
+        "roller"
+      ],
+      "officialValue": false
+    },
+    {
+      "parameter": "mainProjectile.collisionOrdering",
+      "currentValue": "actor array order; endpoint-only 3WU broadphase; wall tested after actor",
+      "referenceValue": "first encountered valid obstruction",
+      "adoptedValue": "swept broadphase; closest native capsule projection before wall/boss",
+      "reason": "Engine correctness: array order must not make distant players absorb a shot through a nearer player or solid wall. Native capsule radius/query is retained, not claimed as Nintendo CCD.",
+      "confidence": "high engine correctness; native closest-point contact approximation retained",
+      "sourceIds": [],
+      "officialValue": false
+    },
+    {
+      "parameter": "mainProjectile.expiration",
+      "currentValue": "integrates a complete extra tick then age > life",
+      "referenceValue": "declared projectile lifetime",
+      "adoptedValue": "integrate only remaining lifetime; epsilon-inclusive expiration",
+      "reason": "Engine invariant; lifetime does not secretly buy another movement tick. No guessed source lifetime substituted for other families.",
+      "confidence": "high engine correctness",
+      "sourceIds": [],
+      "officialValue": false
+    },
+    {
+      "parameter": "slosher.volleyDamage",
+      "currentValue": "first touched weak glob could suppress a stronger glob; splash uses independent path",
+      "referenceValue": "existing installed max-per-volley contract",
+      "adoptedValue": "max of all direct/splash contributions per victim in same volley",
+      "reason": "Fix contradictory first-only and max-group gates. Splash writes the same maximum ledger to prevent a new splash+direct double hit. This preserves the intended existing 70HP volley cap, not a claim of native Splatoon aggregation.",
+      "confidence": "high consistency / source parity unverified",
+      "sourceIds": [],
+      "officialValue": false
+    },
+    {
+      "parameter": "roller.playerCollisionRadiusGrowth",
+      "currentValue": "fixed p.size=0.15 for player collision",
+      "referenceValue": {
+        "horizontal": {
+          "initRadius": 0.12,
+          "endRadius": 1.02,
+          "changeFrame": 4
+        },
+        "vertical": [
+          {
+            "initRadius": 0.116,
+            "endRadius": 0.87,
+            "changeFrame": 4
+          },
+          {
+            "initRadius": 0.116,
+            "endRadius": 0.87,
+            "changeFrame": 4
+          },
+          {
+            "initRadius": 0.116,
+            "endRadius": 0.82,
+            "changeFrame": 4
+          }
+        ]
+      },
+      "adoptedValue": {
+        "horizontal": {
+          "initRadius": 0.12,
+          "endRadius": 1.02,
+          "changeTime": 0.06666666666666667
+        },
+        "vertical": [
+          {
+            "initRadius": 0.116,
+            "endRadius": 0.87,
+            "changeTime": 0.06666666666666667
+          },
+          {
+            "initRadius": 0.116,
+            "endRadius": 0.87,
+            "changeTime": 0.06666666666666667
+          },
+          {
+            "initRadius": 0.116,
+            "endRadius": 0.82,
+            "changeTime": 0.06666666666666667
+          }
+        ]
+      },
+      "reason": "Connect explicit per-unit player collision growth to the existing swept capsule hit test. This removes deterministic roller hit holes without guessing origin height or field/world collision semantics.",
+      "confidence": "high transcription / medium engine-composition parity",
+      "sourceIds": [
+        "roller"
+      ],
+      "officialValue": false
+    }
+  ],
+  "uncertainties": [
+    "Independent Switch-to-world distance calibration is absent; inherited scale=1 is explicitly provisional, not an official range-meter mapping.",
+    "Charger chargeTime=60F, .28s recovery, nonlinear time->charge curve, minimum-charge timing and keep-charge release/resource edge behavior are retained and not certified. Damage/range endpoints are supported; internal nonlinear interpolation evidence is insufficient to replace the existing curve.",
+    "Charger remains the existing hitscan/beam implementation; raw SpawnSpeedMinCharge=2.4 and FullCharge=4.8 per frame indicate finite travel but the exact native release/collision/painting timing is not reconstructed. No latency parity claim.",
+    "Splatling partial velocity interpolation is minimal and not recovered native curve. SpawnSpeedRandomBias/Rate are not wired. Existing cumulative second-charge 72F interpretation and ink-to-charge curve remain provisional.",
+    "Shooter/Dualies/Splatling spread uses existing elliptical cone with bloom/first-shot factors, not recovered native bias distribution. Jump and post-dodge spreads measured, not probability parity certified.",
+    "Roller horizontal speed/yaw/position randomness and omitted second horizontal unit, vertical height offsets, field/world collision radius growth, depletion and late damage rejection remain unimplemented or inherited. Player collision radius growth is connected from explicit 11.3.0 fields.",
+    "Paint radii, spacing, surface splat morphology and cosmetic splash opacity are inherited; actual scoring footprints are measured. They are not assumed equal to raw WidthHalf/DepthScale.",
+    "Slosher travel, timing of poured units and splash26HP remain inherited; raw 11.3.0 unit structure not fully mapped.",
+    "Render/GPU visuals, Switch side-by-side footage and live two-device network timing are not measured by the simulation fixture. Mixed old/new revision clients must not be described as bit-identical.",
+    "Analyst brake and default fields are unversioned. BrakeToFreeStateFrame and XZ threshold semantics are not sufficiently established; not combined speculatively with the documented Y transition."
+  ],
+  "unitConversions": {
+    "distance": "raw * inherited provisional distanceScale=1",
+    "speed": "raw/frame * 60",
+    "gravity": "raw/frame^2 * 3600",
+    "damage": "raw / 10",
+    "ink": "fraction * 100",
+    "frames": "/60"
+  }
+}
