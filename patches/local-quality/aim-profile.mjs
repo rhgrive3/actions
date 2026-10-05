@@ -32,6 +32,25 @@ export const DEFAULT_AIM_PROFILES = Object.freeze({
   }),
 });
 
+export function createDefaultAimProfiles() {
+  return {
+    tv: {
+      gyro: false,
+      gyroSens: 0,
+      padSensitivity: 1.0,
+      invertY: false,
+      invertX: false,
+    },
+    handheld: {
+      gyro: false,
+      gyroSens: 0,
+      padSensitivity: 1.0,
+      invertY: false,
+      invertX: false,
+    },
+  };
+}
+
 export function sanitizeAimProfile(profile, fallback = {}) {
   return {
     gyro: profile?.gyro != null ? Boolean(profile.gyro) : (fallback.gyro ?? false),
@@ -57,14 +76,13 @@ export function syncActiveAimValues(settings) {
 
 export function migrateAimProfiles(settings, defaults = {}) {
   if (!settings || typeof settings !== 'object') return settings;
-  if (!settings.aimProfiles || typeof settings.aimProfiles !== 'object') {
-    settings.aimProfiles = {};
-  }
-  const profiles = settings.aimProfiles;
-  const tvFallback = defaults.aimProfiles?.tv || DEFAULT_AIM_PROFILES.tv;
-  const hhFallback = defaults.aimProfiles?.handheld || DEFAULT_AIM_PROFILES.handheld;
 
-  // Preserve existing flat values deterministically into both profiles if missing
+  const hasExistingProfiles = Boolean(settings.aimProfiles && typeof settings.aimProfiles === 'object');
+  const existingProfiles = hasExistingProfiles ? settings.aimProfiles : null;
+
+  // Deep-owned container for profiles so instances and DEFAULT_SETTINGS never share pointers
+  settings.aimProfiles = {};
+
   const userFlat = {
     gyro: settings.gyro,
     gyroSens: settings.gyroSens,
@@ -73,16 +91,22 @@ export function migrateAimProfiles(settings, defaults = {}) {
     invertX: settings.invertX,
   };
 
-  const baseForTv = sanitizeAimProfile(userFlat, tvFallback);
-  const baseForHh = sanitizeAimProfile(userFlat, hhFallback);
+  const defaultProfiles = createDefaultAimProfiles();
+  const baseForTv = sanitizeAimProfile(userFlat, defaultProfiles.tv);
+  const baseForHh = sanitizeAimProfile(userFlat, defaultProfiles.handheld);
 
-  profiles.tv = sanitizeAimProfile(profiles.tv, baseForTv);
-  profiles.handheld = sanitizeAimProfile(profiles.handheld, baseForHh);
+  if (existingProfiles) {
+    settings.aimProfiles.tv = sanitizeAimProfile(existingProfiles.tv, baseForTv);
+    settings.aimProfiles.handheld = sanitizeAimProfile(existingProfiles.handheld, baseForHh);
+  } else {
+    settings.aimProfiles.tv = sanitizeAimProfile(userFlat, defaultProfiles.tv);
+    settings.aimProfiles.handheld = sanitizeAimProfile(userFlat, defaultProfiles.handheld);
+  }
 
   // An explicit mode selector is required because browser form factors cannot
   // be reliably guessed as physical Switch console play modes.
   if (settings.aimProfile !== 'tv' && settings.aimProfile !== 'handheld') {
-    settings.aimProfile = defaults.aimProfile || 'tv';
+    settings.aimProfile = (defaults && defaults.aimProfile === 'handheld') ? 'handheld' : 'tv';
   }
 
   syncActiveAimValues(settings);
@@ -93,8 +117,15 @@ export function applyAimSettingsChange(settings, partial) {
   if (!settings || !partial || typeof partial !== 'object') return settings;
   if (!settings.aimProfiles) migrateAimProfiles(settings);
 
-  // 1. Explicit profile selection
-  if (partial.aimProfile === 'tv' || partial.aimProfile === 'handheld') {
+  // 1. Explicit profile selection or reset to defaults
+  if (partial.aimProfiles === null) {
+    const def = createDefaultAimProfiles();
+    settings.aimProfiles = {
+      tv: { ...def.tv },
+      handheld: { ...def.handheld },
+    };
+    settings.aimProfile = 'tv';
+  } else if (partial.aimProfile === 'tv' || partial.aimProfile === 'handheld') {
     settings.aimProfile = partial.aimProfile;
   }
 

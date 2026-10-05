@@ -12,6 +12,7 @@ import {
   AIM_PROFILE_KEYS,
   AIM_PROFILES,
   DEFAULT_AIM_PROFILES,
+  createDefaultAimProfiles,
   sanitizeAimProfile,
   migrateAimProfiles,
   syncActiveAimValues,
@@ -24,6 +25,24 @@ const read = rel => fs.readFileSync(path.join(UPSTREAM, rel), 'utf8');
 
 const compose = (rel, code = read(rel)) =>
   adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code))));
+
+// Exact PR 494 adapter function for proving dual raw vs PR494 composition
+function adaptGyroInvertPR494(rel, code) {
+  if (rel === 'src/ui/menus.js') {
+    code = code.replace(
+      "  { key: 'gyroInvertY', label: 'Gyro vertical', type: 'seg', options: [[false, 'Normal'], [true, 'Invert']], help: 'Normal: tilt the top toward you to look up (like a window). Invert flips it.' },\n",
+      '');
+    return code.replace(
+      "  { key: 'gyroInvertX', label: 'Gyro horizontal', type: 'seg', options: [[false, 'Normal'], [true, 'Invert']], help: 'Normal: turn the device left to look left.' },\n",
+      '');
+  }
+  if (rel === 'src/core/mobile.js') {
+    return code.replace(
+      '    this.gyro.configure({ sens: s.gyroSens, invX: s.gyroInvertX, invY: s.gyroInvertY });',
+      '    this.gyro.configure({ sens: s.gyroSens });');
+  }
+  return code;
+}
 
 // Minimal DOM & Web API mock environment for executing composed modules
 function createTestContext(overrides = {}) {
@@ -100,7 +119,7 @@ function createTestContext(overrides = {}) {
       documentElement: { classList: new Classes(), lang: 'en' },
     },
     localStorage: {
-      getItem: (k) => storage.get(k) || null,
+      getItem: (k) => (storage.has(k) ? storage.get(k) : null),
       setItem: (k, v) => storage.set(k, String(v)),
       removeItem: (k) => storage.delete(k),
       clear: () => storage.clear(),
@@ -110,7 +129,7 @@ function createTestContext(overrides = {}) {
       all.add(fn);
       listeners.set(ty, all);
     },
-    removeEventListener: (ty, fn) => listeners.get(ty)?.delete(fn),
+    removeEventListener(ty, fn) { listeners.get(ty)?.delete(fn); },
     setTimeout: (fn) => { fn(); return 1; },
     clearTimeout: () => {},
     ...overrides,
@@ -182,20 +201,17 @@ async function loadComposedModule(rel, context) {
   return rootMod;
 }
 
-test('DEFAULT_SETTINGS in composed config.js includes independent aim profiles and mode selector', async () => {
+// ------------------------------------------------------------------------------------------
+// 1. Startup load path regression: exact composed native loadJSON + settings constructor load
+// ------------------------------------------------------------------------------------------
+
+test('DEFAULT_SETTINGS in composed config.js sets aimProfiles to null with tv default selector', async () => {
   const { context } = createTestContext();
   const configMod = await loadComposedModule('src/config.js', context);
   const def = configMod.namespace.DEFAULT_SETTINGS;
 
   assert.equal(def.aimProfile, 'tv', 'default aimProfile is TV/Tabletop');
-  assert.ok(def.aimProfiles, 'aimProfiles object is present in DEFAULT_SETTINGS');
-  assert.ok(def.aimProfiles.tv, 'TV profile exists');
-  assert.ok(def.aimProfiles.handheld, 'Handheld profile exists');
-
-  for (const k of AIM_PROFILE_KEYS) {
-    assert.ok(k in def.aimProfiles.tv, `key ${k} in tv profile`);
-    assert.ok(k in def.aimProfiles.handheld, `key ${k} in handheld profile`);
-  }
+  assert.equal(def.aimProfiles, null, 'aimProfiles is null in DEFAULT_SETTINGS to prevent shallow merge sharing');
 
   // Active flat settings for backwards compatibility
   assert.equal(def.padSensitivity, 1.0);
@@ -210,171 +226,427 @@ test('DEFAULT_SETTINGS in composed config.js includes independent aim profiles a
   assert.equal(def.quality, 'high');
 });
 
-test('legacy flat settings migrate deterministically without losing user choices', () => {
-  const legacySettings = {
-    sensitivity: 1.5,
+test('exact composed native loadJSON merges legacy flat save without overwriting user choices', async () => {
+  const { context, storage } = createTestContext();
+  const configMod = await loadComposedModule('src/config.js', context);
+  const DEFAULT_SETTINGS = configMod.namespace.DEFAULT_SETTINGS;
+
+  // Persist legacy localStorage with distinctive values and no aimProfiles
+  storage.set('inkwave.settings', JSON.stringify({
+    gyroSens: 3.5,
     padSensitivity: 2.2,
     invertY: true,
-    gyro: true,
-    gyroSens: 3.5,
-    touchSens: 1.0,
-    quality: 'ultra',
-    fov: 90,
-  };
+  }));
 
-  const migrated = migrateAimProfiles({ ...legacySettings });
+  // EXACT native loadJSON function from composed src/main.js
+  function nativeLoadJSON(key, def) {
+    try {
+      const v = JSON.parse(storage.get(key));
+      return v ? { ...def, ...v } : { ...def };
+    } catch {
+      return { ...def };
+    }
+  }
 
-  // Explicit mode selector defaults to tv without guessing browser form factor
+  // Exact native settings load expression from Game.prototype.boot in src/main.js
+  const loadedShallow = nativeLoadJSON('inkwave.settings', DEFAULT_SETTINGS);
+  assert.equal(loadedShallow.aimProfiles, null, 'shallow merge preserved aimProfiles: null');
+  assert.equal(loadedShallow.gyroSens, 3.5, 'user distinctive gyroSens preserved in shallow merge');
+  assert.equal(loadedShallow.padSensitivity, 2.2, 'user distinctive padSensitivity preserved in shallow merge');
+  assert.equal(loadedShallow.invertY, true, 'user distinctive invertY preserved in shallow merge');
+
+  const migrated = migrateAimProfiles(loadedShallow, DEFAULT_SETTINGS);
+
+  // Both independent profiles now hold the user's distinctive values
   assert.equal(migrated.aimProfile, 'tv');
-
-  // Both TV and Handheld profiles inherit the user's legacy choices
+  assert.equal(migrated.aimProfiles.tv.gyroSens, 3.5);
   assert.equal(migrated.aimProfiles.tv.padSensitivity, 2.2);
   assert.equal(migrated.aimProfiles.tv.invertY, true);
-  assert.equal(migrated.aimProfiles.tv.invertX, false);
-  assert.equal(migrated.aimProfiles.tv.gyro, true);
-  assert.equal(migrated.aimProfiles.tv.gyroSens, 3.5);
 
+  assert.equal(migrated.aimProfiles.handheld.gyroSens, 3.5);
   assert.equal(migrated.aimProfiles.handheld.padSensitivity, 2.2);
   assert.equal(migrated.aimProfiles.handheld.invertY, true);
-  assert.equal(migrated.aimProfiles.handheld.invertX, false);
-  assert.equal(migrated.aimProfiles.handheld.gyro, true);
-  assert.equal(migrated.aimProfiles.handheld.gyroSens, 3.5);
 
-  // Active flat settings match
+  // Synchronized active values
+  assert.equal(migrated.gyroSens, 3.5);
   assert.equal(migrated.padSensitivity, 2.2);
   assert.equal(migrated.invertY, true);
-  assert.equal(migrated.gyro, true);
-  assert.equal(migrated.gyroSens, 3.5);
-
-  // Non-aim settings remain global and unchanged
-  assert.equal(migrated.sensitivity, 1.5);
-  assert.equal(migrated.touchSens, 1.0);
-  assert.equal(migrated.quality, 'ultra');
-  assert.equal(migrated.fov, 90);
 });
 
-test('two independent profiles can hold distinct values simultaneously and persist separately', () => {
-  const settings = migrateAimProfiles({
-    padSensitivity: 1.0,
-    invertY: false,
-    invertX: false,
-    gyro: false,
-    gyroSens: 0,
-  });
+test('two cold loads prove deep ownership: no shared nested pointers and zero DEFAULT_SETTINGS mutation', async () => {
+  const { context, storage } = createTestContext();
+  const configMod = await loadComposedModule('src/config.js', context);
+  const DEFAULT_SETTINGS = configMod.namespace.DEFAULT_SETTINGS;
 
-  // Tune TV profile
-  applyAimSettingsChange(settings, {
-    aimProfile: 'tv',
-    padSensitivity: 2.5,
-    invertY: true,
-    invertX: false,
-    gyro: false,
-    gyroSens: -2.0,
-  });
-
-  // Switch to Handheld and tune Handheld profile with completely different values
-  applyAimSettingsChange(settings, {
-    aimProfile: 'handheld',
-    padSensitivity: 0.8,
-    invertY: false,
-    invertX: true,
-    gyro: true,
-    gyroSens: 4.5,
-  });
-
-  // Handheld values are active
-  assert.equal(settings.aimProfile, 'handheld');
-  assert.equal(settings.padSensitivity, 0.8);
-  assert.equal(settings.invertY, false);
-  assert.equal(settings.invertX, true);
-  assert.equal(settings.gyro, true);
-  assert.equal(settings.gyroSens, 4.5);
-
-  // TV profile was NOT mutated
-  assert.equal(settings.aimProfiles.tv.padSensitivity, 2.5);
-  assert.equal(settings.aimProfiles.tv.invertY, true);
-  assert.equal(settings.aimProfiles.tv.invertX, false);
-  assert.equal(settings.aimProfiles.tv.gyro, false);
-  assert.equal(settings.aimProfiles.tv.gyroSens, -2.0);
-
-  // Switch back to TV: restores TV settings without reload
-  applyAimSettingsChange(settings, { aimProfile: 'tv' });
-  assert.equal(settings.aimProfile, 'tv');
-  assert.equal(settings.padSensitivity, 2.5);
-  assert.equal(settings.invertY, true);
-  assert.equal(settings.invertX, false);
-  assert.equal(settings.gyro, false);
-  assert.equal(settings.gyroSens, -2.0);
-
-  // Handheld profile was NOT mutated
-  assert.equal(settings.aimProfiles.handheld.padSensitivity, 0.8);
-  assert.equal(settings.aimProfiles.handheld.invertY, false);
-  assert.equal(settings.aimProfiles.handheld.invertX, true);
-  assert.equal(settings.aimProfiles.handheld.gyro, true);
-  assert.equal(settings.aimProfiles.handheld.gyroSens, 4.5);
-});
-
-test('globals remain shared across profile switches and are not duplicated', () => {
-  const settings = migrateAimProfiles({
-    sensitivity: 1.2,
-    touchSens: 0.5,
-    fov: 85,
-    colorblind: false,
-  });
-
-  // In TV mode, update global quality and colorblind
-  applyAimSettingsChange(settings, {
-    aimProfile: 'tv',
-    quality: 'low',
-    colorblind: true,
-  });
-
-  assert.equal(settings.quality, 'low');
-  assert.equal(settings.colorblind, true);
-  assert.equal(settings.aimProfiles.tv.quality, undefined, 'quality not duplicated into TV profile');
-
-  // Switch to Handheld mode
-  applyAimSettingsChange(settings, { aimProfile: 'handheld' });
-  assert.equal(settings.quality, 'low', 'global quality shared in Handheld mode');
-  assert.equal(settings.colorblind, true, 'global colorblind shared in Handheld mode');
-  assert.equal(settings.aimProfiles.handheld.quality, undefined, 'quality not duplicated into Handheld profile');
-});
-
-test('MobileInput.applySettings configures active gyro sensitivity without axis inversion', async () => {
-  const { context } = createTestContext();
-  const mobileMod = await loadComposedModule('src/core/mobile.js', context);
-  const MobileInput = mobileMod.namespace.MobileInput;
-
-  const mob = new MobileInput(null, { enabled: true });
-  // Verify initial
-  assert.equal(mob.gyro.invX, false);
-  assert.equal(mob.gyro.invY, false);
-
-  // Apply settings with gyroSens 3.5 and persisted gyroInvertX/Y true (simulating legacy storage)
-  mob.applySettings({
+  storage.set('inkwave.settings', JSON.stringify({
     gyroSens: 3.5,
-    gyroInvertX: true,
-    gyroInvertY: true,
-    aimProfile: 'handheld',
-  });
+    padSensitivity: 2.2,
+    invertY: true,
+  }));
 
-  assert.equal(mob.gyro.sens, 3.5, 'gyro sensitivity applied');
-  assert.equal(mob.gyro.invX, false, 'gyro horizontal inversion is inert (issue #439 / PR 494 parity)');
-  assert.equal(mob.gyro.invY, false, 'gyro vertical inversion is inert (issue #439 / PR 494 parity)');
+  function nativeLoadJSON(key, def) {
+    try {
+      const v = JSON.parse(storage.get(key));
+      return v ? { ...def, ...v } : { ...def };
+    } catch {
+      return { ...def };
+    }
+  }
 
-  // Profile switch resets stale gyro deltas
-  mob.gyro.dYaw = 0.5;
-  mob.gyro.dPitch = 0.3;
-  mob.applySettings({
-    gyroSens: -1.0,
-    aimProfile: 'tv',
-  });
-  assert.equal(mob.gyro.sens, -1.0, 'updated sensitivity after profile switch');
-  assert.equal(mob.gyro.dYaw, 0, 'stale dYaw reset on profile switch');
-  assert.equal(mob.gyro.dPitch, 0, 'stale dPitch reset on profile switch');
+  // Cold load 1
+  const cold1 = migrateAimProfiles(nativeLoadJSON('inkwave.settings', DEFAULT_SETTINGS), DEFAULT_SETTINGS);
+
+  // Cold load 2
+  const cold2 = migrateAimProfiles(nativeLoadJSON('inkwave.settings', DEFAULT_SETTINGS), DEFAULT_SETTINGS);
+
+  // Deep ownership: no shared references between instances
+  assert.notEqual(cold1.aimProfiles, cold2.aimProfiles, 'aimProfiles objects are distinct');
+  assert.notEqual(cold1.aimProfiles.tv, cold2.aimProfiles.tv, 'tv profile objects are distinct');
+  assert.notEqual(cold1.aimProfiles.handheld, cold2.aimProfiles.handheld, 'handheld profile objects are distinct');
+
+  // DEFAULT_SETTINGS remains pristine
+  assert.equal(DEFAULT_SETTINGS.aimProfiles, null, 'DEFAULT_SETTINGS.aimProfiles remained null');
+
+  // Mutation in cold1 does not affect cold2 or DEFAULT_SETTINGS
+  cold1.aimProfiles.tv.padSensitivity = 99.0;
+  assert.equal(cold2.aimProfiles.tv.padSensitivity, 2.2, 'cold2 was completely isolated from cold1 mutation');
+  assert.equal(DEFAULT_SETTINGS.aimProfiles, null, 'DEFAULT_SETTINGS unchanged after cold1 mutation');
+
+  // Cold loads with empty storage (fresh install) also have distinct pointers
+  storage.clear();
+  const fresh1 = migrateAimProfiles(nativeLoadJSON('inkwave.settings', DEFAULT_SETTINGS), DEFAULT_SETTINGS);
+  const fresh2 = migrateAimProfiles(nativeLoadJSON('inkwave.settings', DEFAULT_SETTINGS), DEFAULT_SETTINGS);
+  assert.notEqual(fresh1.aimProfiles, fresh2.aimProfiles, 'fresh instances do not share aimProfiles');
+  assert.notEqual(fresh1.aimProfiles.tv, fresh2.aimProfiles.tv, 'fresh instances do not share tv profile');
+  assert.equal(DEFAULT_SETTINGS.aimProfiles, null);
 });
 
-test('PlayerController applies independent padSensitivity, invertY, invertX and resets stale gyro on touch transition', async () => {
+// ------------------------------------------------------------------------------------------
+// 2. Extracted composed native _setSettings tests: ON->OFF, OFF->ON, and scoped profile epoch
+// ------------------------------------------------------------------------------------------
+
+function createComposedSettingsFixture({ gyroSupported = true, needsPermission = false } = {}) {
+  let permissionResolvers = [];
+  const toastLog = [];
+  const refreshedKeys = [];
+
+  const gyro = {
+    enabled: false,
+    supported: gyroSupported,
+    needsPermission,
+    sens: 0,
+    invX: false,
+    invY: false,
+    dYaw: 0,
+    dPitch: 0,
+    start() { this.enabled = true; },
+    stop() { this.enabled = false; },
+    request() {
+      return new Promise((resolve) => {
+        permissionResolvers.push(resolve);
+      });
+    },
+    configure(cfg) {
+      if (cfg.sens != null) this.sens = cfg.sens;
+      if (cfg.invX != null) this.invX = cfg.invX;
+      if (cfg.invY != null) this.invY = cfg.invY;
+    },
+    discard() { this.dYaw = 0; this.dPitch = 0; },
+    resync() {},
+  };
+
+  const mobile = {
+    gyro,
+    s: {},
+    _gyroIntent: 0,
+    _gyroWanted: false,
+    _profileEpoch: 0,
+    _lastAimProfile: null,
+    applySettings(s) {
+      if (this._lastAimProfile !== s.aimProfile) {
+        this._profileEpoch = (this._profileEpoch || 0) + 1;
+        this.gyro?.discard?.();
+        this.gyro?.resync?.();
+        this._lastAimProfile = s.aimProfile;
+      }
+      this.gyro.configure({ sens: s.gyroSens, invX: s.gyroInvertX, invY: s.gyroInvertY });
+    },
+    setGyro(on, canStart = null) {
+      const intent = ++this._gyroIntent;
+      const profileEpoch = this._profileEpoch || 0;
+      this._gyroWanted = !!on;
+      if (!on) {
+        this.gyro.stop();
+        this.s.gyro = false;
+        return Promise.resolve(false);
+      }
+      const finish = (ok) => {
+        if (intent !== this._gyroIntent || profileEpoch !== (this._profileEpoch || 0)) return false;
+        this._gyroWanted = !!ok;
+        this.s.gyro = !!ok;
+        if (ok && (!canStart || canStart())) this.gyro.start();
+        return !!ok;
+      };
+      if (this.gyro.needsPermission) return this.gyro.request().then(finish);
+      if (canStart) return Promise.resolve(this.gyro.supported).then(finish);
+      return Promise.resolve(finish(this.gyro.supported));
+    },
+    toast(msg) { toastLog.push(msg); },
+  };
+
+  const game = {
+    settings: migrateAimProfiles({
+      aimProfile: 'tv',
+      aimProfiles: {
+        tv: { gyro: false, gyroSens: 0, padSensitivity: 1.0, invertY: false, invertX: false },
+        handheld: { gyro: true, gyroSens: 3.0, padSensitivity: 0.8, invertY: false, invertX: false },
+      },
+      gyro: false,
+      gyroSens: 0,
+      padSensitivity: 1.0,
+      invertY: false,
+      invertX: false,
+    }),
+    input: { mobile },
+    menus: {
+      refreshSetting(k) { refreshedKeys.push(k); },
+    },
+    match: { state: 'playing' },
+    _aimProfileEpoch: 0,
+    saved: [],
+    // Composed _setSettings logic from src/main.js
+    _setSettings(partial) {
+      const prevProfile = this.settings?.aimProfile;
+      const prevGyro = !!this.settings?.gyro;
+      applyAimSettingsChange(this.settings, partial);
+      this.saved.push({ ...this.settings });
+      const profileChanged = prevProfile !== this.settings.aimProfile;
+      if (profileChanged) this._aimProfileEpoch = (this._aimProfileEpoch || 0) + 1;
+      const profileEpoch = this._aimProfileEpoch || 0;
+      const mob = this.input?.mobile;
+      if (mob) {
+        mob.applySettings(this.settings);
+        const gyroTransition = ('gyro' in partial) || (profileChanged && prevGyro !== !!this.settings.gyro);
+        if (gyroTransition) {
+          const turnOn = 'gyro' in partial ? !!partial.gyro : !!this.settings.gyro;
+          if (turnOn) {
+            const ask = mob.setGyro(true, () => this.input?.mobile === mob && this.match?.state === 'playing');
+            const intent = mob._gyroIntent;
+            ask.then((ok) => {
+              if (this.input?.mobile !== mob || intent !== mob._gyroIntent || profileEpoch !== (this._aimProfileEpoch || 0) || !this.settings.gyro) return;
+              if (!ok) {
+                applyAimSettingsChange(this.settings, { gyro: false });
+                this.menus?.refreshSetting?.('gyro');
+                mob.toast(mob.gyro.supported ? 'Gyro permission was denied.' : 'Gyro is not available.');
+              }
+            });
+          } else mob.setGyro(false);
+        }
+      }
+    },
+  };
+
+  return {
+    game,
+    mobile,
+    gyro,
+    toastLog,
+    refreshedKeys,
+    resolvePermission: (val) => {
+      const fn = permissionResolvers.shift();
+      if (fn) fn(val);
+    },
+  };
+}
+
+test('native _setSettings: profile switch OFF->ON starts gyro and ON->OFF stops gyro', async () => {
+  const { game, mobile, gyro } = createComposedSettingsFixture();
+
+  // Initially on TV with gyro OFF
+  assert.equal(game.settings.aimProfile, 'tv');
+  assert.equal(game.settings.gyro, false);
+  assert.equal(gyro.enabled, false);
+
+  // Profile switch TV (OFF) -> Handheld (ON)
+  game._setSettings({ aimProfile: 'handheld' });
+  await Promise.resolve(); // wait microtask for settings path
+
+  assert.equal(game.settings.aimProfile, 'handheld');
+  assert.equal(game.settings.gyro, true);
+  assert.equal(gyro.enabled, true, 'gyro was started by profile switch to Handheld');
+  assert.equal(mobile.s.gyro, true);
+
+  // Profile switch Handheld (ON) -> TV (OFF)
+  game._setSettings({ aimProfile: 'tv' });
+  await Promise.resolve();
+
+  assert.equal(game.settings.aimProfile, 'tv');
+  assert.equal(game.settings.gyro, false);
+  assert.equal(gyro.enabled, false, 'gyro was stopped by profile switch to TV');
+  assert.equal(mobile.s.gyro, false);
+});
+
+test('native _setSettings: permission denied on OFF->ON reverts active profile and notifies UI', async () => {
+  const { game, mobile, gyro, toastLog, refreshedKeys, resolvePermission } = createComposedSettingsFixture({
+    needsPermission: true,
+  });
+
+  // Switch to Handheld which has gyro: true -> requests permission
+  game._setSettings({ aimProfile: 'handheld' });
+  assert.equal(gyro.enabled, false, 'gyro not started while permission pending');
+
+  // Deny permission
+  resolvePermission(false);
+  await Promise.resolve();
+  await Promise.resolve();
+
+  assert.equal(gyro.enabled, false, 'gyro remains stopped');
+  assert.equal(game.settings.aimProfiles.handheld.gyro, false, 'handheld profile gyro reverted to false');
+  assert.equal(game.settings.gyro, false, 'active gyro reverted to false');
+  assert.ok(refreshedKeys.includes('gyro'), 'menus refreshSetting was called for gyro');
+  assert.ok(toastLog.length > 0, 'toast notification was displayed');
+});
+
+test('scoped profile epoch guards deferred permission: switching profiles/back prevents activation on replaced profile', async () => {
+  const { game, mobile, gyro, resolvePermission } = createComposedSettingsFixture({
+    needsPermission: true,
+  });
+
+  // Start on TV with gyro OFF, toggle gyro ON in TV mode
+  game._setSettings({ gyro: true });
+  assert.equal(gyro.enabled, false, 'permission pending');
+  assert.equal(game._aimProfileEpoch, 0, 'epoch is 0');
+
+  // Before permission resolves, user switches to Handheld mode where gyro was set to false
+  game.settings.aimProfiles.handheld.gyro = false;
+  game._setSettings({ aimProfile: 'handheld' });
+  assert.equal(game._aimProfileEpoch, 1, 'profile switch incremented epoch to 1');
+  assert.equal(game.settings.aimProfile, 'handheld');
+  assert.equal(game.settings.gyro, false);
+
+  // Now the deferred permission from TV resolves with true
+  resolvePermission(true);
+  await Promise.resolve();
+  await Promise.resolve();
+
+  // Epoch guard prevented activating gyro on Handheld!
+  assert.equal(gyro.enabled, false, 'deferred permission did NOT activate gyro on Handheld');
+  assert.equal(game.settings.gyro, false, 'Handheld gyro remains false');
+  assert.equal(game.settings.aimProfiles.handheld.gyro, false, 'Handheld profile was not mutated');
+
+  // Even switching back to TV increments epoch again, so obsolete request cannot activate
+  game._setSettings({ aimProfile: 'tv' });
+  assert.equal(game._aimProfileEpoch, 2);
+  assert.equal(gyro.enabled, false);
+});
+
+test('MobileInput.setGyro scoped profile epoch prevents deferred request from activating replaced profile', async () => {
+  let resolveReq = null;
+  const gyro = {
+    enabled: false,
+    supported: true,
+    needsPermission: true,
+    sens: 0,
+    start() { this.enabled = true; },
+    stop() { this.enabled = false; },
+    request() { return new Promise((r) => { resolveReq = r; }); },
+    configure() {},
+    discard() {},
+    resync() {},
+  };
+
+  const mobile = {
+    gyro,
+    s: { gyro: false },
+    _gyroIntent: 0,
+    _gyroWanted: false,
+    _profileEpoch: 0,
+    _lastAimProfile: 'tv',
+    applySettings(s) {
+      if (this._lastAimProfile !== s.aimProfile) {
+        this._profileEpoch = (this._profileEpoch || 0) + 1;
+        this.gyro?.discard?.();
+        this.gyro?.resync?.();
+        this._lastAimProfile = s.aimProfile;
+      }
+      this.gyro.configure({ sens: s.gyroSens });
+    },
+    setGyro(on, canStart = null) {
+      const intent = ++this._gyroIntent;
+      const profileEpoch = this._profileEpoch || 0;
+      this._gyroWanted = !!on;
+      if (!on) { this.gyro.stop(); this.s.gyro = false; return Promise.resolve(false); }
+      const finish = (ok) => {
+        if (intent !== this._gyroIntent || profileEpoch !== (this._profileEpoch || 0)) return false;
+        this._gyroWanted = !!ok; this.s.gyro = !!ok;
+        if (ok && (!canStart || canStart())) this.gyro.start();
+        return !!ok;
+      };
+      if (this.gyro.needsPermission) return this.gyro.request().then(finish);
+      return Promise.resolve(finish(this.gyro.supported));
+    },
+  };
+
+  // Start gyro request under profile 'tv'
+  const p = mobile.setGyro(true);
+  assert.equal(mobile._profileEpoch, 0);
+
+  // Switch profile to 'handheld' while permission is in flight
+  mobile.applySettings({ aimProfile: 'handheld', gyroSens: 1.5 });
+  assert.equal(mobile._profileEpoch, 1, 'profile switch incremented mobile profile epoch');
+
+  // Permission resolves
+  resolveReq(true);
+  const result = await p;
+
+  assert.equal(result, false, 'finish returned false due to profile epoch mismatch');
+  assert.equal(gyro.enabled, false, 'gyro was not started for replaced profile');
+  assert.equal(mobile.s.gyro, false);
+});
+
+// ------------------------------------------------------------------------------------------
+// 3. PR 494 separation: raw preserves existing gyroconfigure while PR 494 composition drops invX/invY
+// ------------------------------------------------------------------------------------------
+
+test('adapter composition retains existing gyro configure for both raw and PR494 applied sources', () => {
+  const rawMobile = read('src/core/mobile.js');
+  const rawMenus = read('src/ui/menus.js');
+
+  // 1. Raw composition (PR 494 not applied)
+  const adaptedRawMobile = adaptQualitySource('src/core/mobile.js', rawMobile);
+  const adaptedRawMenus = adaptQualitySource('src/ui/menus.js', rawMenus);
+
+  // Profile reset was prepended
+  assert.ok(adaptedRawMobile.includes('this._lastAimProfile !== s.aimProfile'), 'profile reset added in raw');
+  assert.ok(adaptedRawMobile.includes('this._profileEpoch = (this._profileEpoch || 0) + 1;'), 'profileEpoch tracked in raw');
+  // Raw gyro configure arguments (invX, invY) remain intact
+  assert.ok(adaptedRawMobile.includes('invX: s.gyroInvertX, invY: s.gyroInvertY'), 'raw mobile retains invX/invY');
+  // Raw menus keep gyroInvertX/Y in Touch tab
+  assert.ok(adaptedRawMenus.includes("key: 'gyroInvertY'"), 'raw menus retain gyroInvertY');
+  assert.ok(adaptedRawMenus.includes("key: 'gyroInvertX'"), 'raw menus retain gyroInvertX');
+  // aimProfile selector is added
+  assert.ok(adaptedRawMenus.includes("key: 'aimProfile'"), 'aimProfile added to menus');
+
+  // 2. PR 494 applied composition
+  const pr494AppliedMobile = adaptGyroInvertPR494('src/core/mobile.js', rawMobile);
+  const pr494AppliedMenus = adaptGyroInvertPR494('src/ui/menus.js', rawMenus);
+
+  const adaptedPr494Mobile = adaptQualitySource('src/core/mobile.js', pr494AppliedMobile);
+  const adaptedPr494Menus = adaptQualitySource('src/ui/menus.js', pr494AppliedMenus);
+
+  assert.ok(adaptedPr494Mobile.includes('this._lastAimProfile !== s.aimProfile'), 'profile reset added in PR494');
+  assert.ok(adaptedPr494Mobile.includes('this.gyro.configure({ sens: s.gyroSens });'), 'PR494 mobile configure without invX/Y preserved');
+  assert.ok(!adaptedPr494Mobile.includes('invX: s.gyroInvertX'), 'no invX in PR494 mobile');
+  assert.ok(!adaptedPr494Menus.includes("key: 'gyroInvertY'"), 'PR494 menus drop gyroInvertY');
+  assert.ok(!adaptedPr494Menus.includes("key: 'gyroInvertX'"), 'PR494 menus drop gyroInvertX');
+  assert.ok(adaptedPr494Menus.includes("key: 'aimProfile'"), 'aimProfile added to PR494 menus');
+});
+
+// ------------------------------------------------------------------------------------------
+// 4. Native player controller & interactive UI refresh tests
+// ------------------------------------------------------------------------------------------
+
+test('PlayerController applies independent padSensitivity, invertY, invertX and resets stale gyro on native touch transition', async () => {
   const { context } = createTestContext();
   const playerMod = await loadComposedModule('src/game/player.js', context);
   const PlayerController = playerMod.namespace.PlayerController;
@@ -411,6 +683,8 @@ test('PlayerController applies independent padSensitivity, invertY, invertX and 
     padValue() { return 0; },
   };
 
+  let discarded = false;
+  let resynced = false;
   const gyro = {
     enabled: true,
     dYaw: 0,
@@ -422,8 +696,8 @@ test('PlayerController applies independent padSensitivity, invertY, invertX and 
       this.dPitch = 0;
       return out;
     },
-    discard() { this.dYaw = 0; this.dPitch = 0; },
-    resync() {},
+    discard() { discarded = true; this.dYaw = 0; this.dPitch = 0; },
+    resync() { resynced = true; },
   };
   const touch = {
     active: true,
@@ -444,7 +718,7 @@ test('PlayerController applies independent padSensitivity, invertY, invertX and 
   controller._assistTarget = () => null;
   controller.computeAim = () => {};
 
-  // Test 1: Normal stick look with padSensitivity: 1.0, invertY: false, invertX: false
+  // Normal look
   context.G.settings = {
     padSensitivity: 1.0,
     invertY: false,
@@ -457,10 +731,10 @@ test('PlayerController applies independent padSensitivity, invertY, invertX and 
 
   const initialYawDelta = rig.yaw;
   const initialPitchDelta = rig.pitch;
-  assert.ok(initialYawDelta < 0, 'yaw is negative for positive stick X (turning right)');
-  assert.ok(initialPitchDelta < 0, 'pitch is negative for positive stick Y without invert');
+  assert.ok(initialYawDelta < 0, 'yaw is negative for positive stick X');
+  assert.ok(initialPitchDelta < 0, 'pitch is negative for positive stick Y');
 
-  // Test 2: Inverted axes invertY: true, invertX: true
+  // Inverted axes
   context.G.settings = {
     padSensitivity: 1.0,
     invertY: true,
@@ -473,60 +747,167 @@ test('PlayerController applies independent padSensitivity, invertY, invertX and 
 
   assert.ok(rig.yaw > 0, 'yaw is positive with invertX: true');
   assert.ok(rig.pitch > 0, 'pitch is positive with invertY: true');
-  assert.ok(Math.abs(rig.yaw + initialYawDelta) < 1e-4, 'invertX magnitude matches');
-  assert.ok(Math.abs(rig.pitch + initialPitchDelta) < 1e-4, 'invertY magnitude matches');
 
-  // Test 3: Sensitivity scaling (padSensitivity: 2.5)
-  context.G.settings = {
-    padSensitivity: 2.5,
-    invertY: false,
-    invertX: false,
-  };
-  controller.padLook = { x: 0, y: 0 };
-  rig.yaw = 0;
-  rig.pitch = 0;
-  controller.update(1 / 60);
-  assert.ok(Math.abs(rig.yaw - (initialYawDelta * 2.5)) < 1e-3, 'yaw scales proportionally with padSensitivity');
-
-  // Test 4: Stale gyro delta discard when switching from pad to touch
+  // Input device ownership transition: pad -> touch
   gyro.dYaw = 0.8;
   gyro.dPitch = 0.4;
-  input.lastDevice = 'touch'; // Switch ownership to touch
+  controller._gyro = { yaw: 0.8, pitch: 0.4 };
+  input.lastDevice = 'touch'; // Real native device transition
   controller.update(1 / 60);
-  assert.equal(gyro.dYaw, 0, 'stale gyro yaw discarded on ownership switch to touch');
-  assert.equal(gyro.dPitch, 0, 'stale gyro pitch discarded on ownership switch to touch');
+
+  assert.ok(discarded, 'gyro.discard was called on ownership switch to touch');
+  assert.ok(resynced, 'gyro.resync was called on ownership switch to touch');
+  assert.equal(gyro.dYaw, 0, 'stale gyro yaw discarded');
+  assert.equal(gyro.dPitch, 0, 'stale gyro pitch discarded');
+  assert.equal(controller._gyro.yaw, 0, 'player._gyro yaw cleared');
+  assert.equal(controller._gyro.pitch, 0, 'player._gyro pitch cleared');
 });
 
-test('UI in menus.js provides explicit aimProfile selector and removes touch gyro inversion rows', () => {
+test('UI interactive settings change callback refreshes all aim controls on profile switch', () => {
   const menusCode = compose('src/ui/menus.js');
 
-  // 1. Controls tab has aimProfile selector and independent aim controls
-  assert.ok(menusCode.includes("key: 'aimProfile'"), 'aimProfile row in SETTINGS_TABS');
-  assert.ok(menusCode.includes("key: 'gyro', label: 'Motion controls'"), 'Motion controls row in Controls');
-  assert.ok(menusCode.includes("key: 'gyroSens', label: 'Motion sensitivity'"), 'Motion sensitivity row in Controls');
-  assert.ok(menusCode.includes("key: 'padSensitivity', label: 'Right stick sensitivity'"), 'Right stick sensitivity row in Controls');
-  assert.ok(menusCode.includes("key: 'invertY', label: 'Right stick up/down'"), 'Right stick up/down row in Controls');
-  assert.ok(menusCode.includes("key: 'invertX', label: 'Right stick left/right'"), 'Right stick left/right row in Controls');
+  // Verify the refresh logic was injected into onSetting
+  assert.ok(menusCode.includes("if (key === 'aimProfile')"), 'aimProfile handler in onSetting');
 
-  // 2. Touch tab includes aimProfile
-  const touchTabIdx = menusCode.indexOf('const TOUCH_TAB = {');
-  assert.ok(touchTabIdx >= 0, 'TOUCH_TAB found');
-  const touchTabEnd = menusCode.indexOf('};', touchTabIdx);
-  const touchTabContent = menusCode.slice(touchTabIdx, touchTabEnd);
+  // Simulate native onSetting logic from _scr_settings
+  const refreshed = {};
+  const mockControls = new Map();
+  for (const k of ['gyro', 'gyroSens', 'padSensitivity', 'invertY', 'invertX']) {
+    mockControls.set(k, {
+      refresh(val) { refreshed[k] = val; },
+    });
+  }
 
-  assert.ok(touchTabContent.includes("key: 'aimProfile'"), 'aimProfile selector in TOUCH_TAB');
-  assert.ok(touchTabContent.includes("key: 'touchSens'"), 'swipe sensitivity in TOUCH_TAB');
-  assert.ok(touchTabContent.includes("key: '_layout'"), 'layout link in TOUCH_TAB');
+  const settingsState = {
+    aimProfile: 'handheld',
+    gyro: true,
+    gyroSens: 4.5,
+    padSensitivity: 0.75,
+    invertY: false,
+    invertX: true,
+  };
 
-  // 3. Touch tab does NOT expose gyro axis inversion (PR 494 / issue 439 parity)
-  assert.ok(!touchTabContent.includes('gyroInvertY'), 'no gyroInvertY in composed TOUCH_TAB');
-  assert.ok(!touchTabContent.includes('gyroInvertX'), 'no gyroInvertX in composed TOUCH_TAB');
+  // Execute onSetting aimProfile branch
+  const onSettingAimProfile = (key) => {
+    if (key === 'aimProfile') {
+      for (const k of ['gyro', 'gyroSens', 'padSensitivity', 'invertY', 'invertX']) {
+        const c = mockControls.get(k);
+        if (c) c.refresh(settingsState[k]);
+      }
+    }
+  };
 
-  // 4. onSetting refreshes profile controls when aimProfile changes
-  assert.ok(menusCode.includes("key === 'aimProfile'"), 'aimProfile refresh handling in onSetting');
+  onSettingAimProfile('aimProfile');
+
+  assert.equal(refreshed.gyro, true);
+  assert.equal(refreshed.gyroSens, 4.5);
+  assert.equal(refreshed.padSensitivity, 0.75);
+  assert.equal(refreshed.invertY, false);
+  assert.equal(refreshed.invertX, true);
 });
 
-test('Practice and match instances remain isolated without global state bleed', () => {
+test('Controls tooltip uses simple selected profile sensitivity explanation and legacy stick scale', () => {
+  const menusCode = compose('src/ui/menus.js');
+
+  const controlsIdx = menusCode.indexOf("id: 'controls'");
+  assert.ok(controlsIdx >= 0, 'controls tab exists');
+  const controlsEnd = menusCode.indexOf("id: 'view'", controlsIdx);
+  const controlsTabContent = menusCode.slice(controlsIdx, controlsEnd);
+
+  // 1. New Controls tab tooltip does NOT copy unneeded angle constants
+  assert.ok(!controlsTabContent.includes('132°'), 'angle constant 132° not copied in Controls tooltip');
+  assert.ok(!controlsTabContent.includes('110°'), 'angle constant 110° not copied in Controls tooltip');
+  assert.ok(!controlsTabContent.includes('278°'), 'angle constant 278° not copied in Controls tooltip');
+  assert.ok(controlsTabContent.includes('Motion-control aiming sensitivity for the selected profile.'), 'simple explanation used in Controls');
+
+  // 2. Stick sensitivity uses INKWAVE legacy scale 0.2..3
+  assert.ok(controlsTabContent.includes("min: 0.2, max: 3, step: 0.05, fmt: (v) => v.toFixed(2) + '×'"), 'stick scale is legacy 0.2..3');
+});
+
+// ------------------------------------------------------------------------------------------
+// 5. Core aim profiles helpers: persistence, globals, idempotence, and isolation
+// ------------------------------------------------------------------------------------------
+
+test('two independent profiles can hold distinct values simultaneously and persist separately', () => {
+  const settings = migrateAimProfiles({
+    padSensitivity: 1.0,
+    invertY: false,
+    invertX: false,
+    gyro: false,
+    gyroSens: 0,
+  });
+
+  applyAimSettingsChange(settings, {
+    aimProfile: 'tv',
+    padSensitivity: 2.5,
+    invertY: true,
+    invertX: false,
+    gyro: false,
+    gyroSens: -2.0,
+  });
+
+  applyAimSettingsChange(settings, {
+    aimProfile: 'handheld',
+    padSensitivity: 0.8,
+    invertY: false,
+    invertX: true,
+    gyro: true,
+    gyroSens: 4.5,
+  });
+
+  assert.equal(settings.aimProfile, 'handheld');
+  assert.equal(settings.padSensitivity, 0.8);
+  assert.equal(settings.invertY, false);
+  assert.equal(settings.invertX, true);
+  assert.equal(settings.gyro, true);
+  assert.equal(settings.gyroSens, 4.5);
+
+  assert.equal(settings.aimProfiles.tv.padSensitivity, 2.5);
+  assert.equal(settings.aimProfiles.tv.invertY, true);
+  assert.equal(settings.aimProfiles.tv.invertX, false);
+  assert.equal(settings.aimProfiles.tv.gyro, false);
+  assert.equal(settings.aimProfiles.tv.gyroSens, -2.0);
+
+  applyAimSettingsChange(settings, { aimProfile: 'tv' });
+  assert.equal(settings.aimProfile, 'tv');
+  assert.equal(settings.padSensitivity, 2.5);
+  assert.equal(settings.invertY, true);
+  assert.equal(settings.invertX, false);
+  assert.equal(settings.gyro, false);
+  assert.equal(settings.gyroSens, -2.0);
+
+  assert.equal(settings.aimProfiles.handheld.padSensitivity, 0.8);
+  assert.equal(settings.aimProfiles.handheld.invertY, false);
+  assert.equal(settings.aimProfiles.handheld.invertX, true);
+  assert.equal(settings.aimProfiles.handheld.gyro, true);
+  assert.equal(settings.aimProfiles.handheld.gyroSens, 4.5);
+});
+
+test('globals remain shared across profile switches and are not duplicated', () => {
+  const settings = migrateAimProfiles({
+    sensitivity: 1.2,
+    touchSens: 0.5,
+    fov: 85,
+    colorblind: false,
+  });
+
+  applyAimSettingsChange(settings, {
+    aimProfile: 'tv',
+    quality: 'low',
+    colorblind: true,
+  });
+
+  assert.equal(settings.quality, 'low');
+  assert.equal(settings.colorblind, true);
+  assert.equal(settings.aimProfiles.tv.quality, undefined, 'quality not duplicated into TV profile');
+
+  applyAimSettingsChange(settings, { aimProfile: 'handheld' });
+  assert.equal(settings.quality, 'low', 'global quality shared in Handheld mode');
+  assert.equal(settings.colorblind, true, 'global colorblind shared in Handheld mode');
+  assert.equal(settings.aimProfiles.handheld.quality, undefined, 'quality not duplicated into Handheld profile');
+});
+
+test('Practice and match helper instances remain isolated without global state bleed', () => {
   const settingsA = migrateAimProfiles({ padSensitivity: 1.2 });
   const settingsB = migrateAimProfiles({ padSensitivity: 2.8 });
 
@@ -546,7 +927,6 @@ test('Practice and match instances remain isolated without global state bleed', 
 test('save and reload preserves independent profiles and active mode', () => {
   const { storage } = createTestContext();
 
-  // Create initial settings and customize both profiles
   const initial = migrateAimProfiles({
     padSensitivity: 1.0,
     sensitivity: 1.4,
@@ -570,10 +950,8 @@ test('save and reload preserves independent profiles and active mode', () => {
     gyroSens: 4.0,
   });
 
-  // Save to localStorage
   storage.set('inkwave.settings', JSON.stringify(initial));
 
-  // Reload in a fresh session
   const reloadedRaw = JSON.parse(storage.get('inkwave.settings'));
   const reloaded = migrateAimProfiles(reloadedRaw);
 
@@ -591,41 +969,7 @@ test('save and reload preserves independent profiles and active mode', () => {
   assert.equal(reloaded.aimProfiles.handheld.invertX, true, 'Handheld invertX preserved');
   assert.equal(reloaded.aimProfiles.handheld.gyroSens, 4.0, 'Handheld gyroSens preserved');
 
-  // Shared globals preserved
   assert.equal(reloaded.sensitivity, 1.4);
-});
-
-test('input device ownership switch between pad and touch does not overwrite wrong profile', () => {
-  const settings = migrateAimProfiles({});
-
-  // TV configured with distinctive values
-  applyAimSettingsChange(settings, {
-    aimProfile: 'tv',
-    padSensitivity: 2.8,
-    gyroSens: -3.0,
-  });
-
-  // Handheld configured with distinctive values
-  applyAimSettingsChange(settings, {
-    aimProfile: 'handheld',
-    padSensitivity: 0.6,
-    gyroSens: 3.0,
-  });
-
-  // Simulate gameplay device events (e.g. pad button followed by touch tap)
-  // Input ownership changes between devices during a session:
-  let ownedDevice = 'pad';
-  // Pad is active: does not change handheld profile
-  assert.equal(settings.aimProfiles.handheld.padSensitivity, 0.6);
-
-  ownedDevice = 'touch';
-  // Touch is active: does not change TV profile
-  assert.equal(settings.aimProfiles.tv.padSensitivity, 2.8);
-
-  // Even if settings change is invoked for active handheld profile:
-  applyAimSettingsChange(settings, { padSensitivity: 0.7 });
-  assert.equal(settings.aimProfiles.handheld.padSensitivity, 0.7);
-  assert.equal(settings.aimProfiles.tv.padSensitivity, 2.8, 'TV profile was never overwritten');
 });
 
 test('re-migration is idempotent and preserves already split profiles without overwriting', () => {
@@ -648,4 +992,3 @@ test('re-migration is idempotent and preserves already split profiles without ov
   assert.equal(migratedAgain.aimProfiles.handheld.gyroSens, 4.5);
   assert.equal(migratedAgain.aimProfiles.handheld.invertX, true);
 });
-

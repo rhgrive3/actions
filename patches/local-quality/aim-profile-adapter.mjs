@@ -15,7 +15,7 @@ export function adaptAimProfiles(rel, code) {
     code = replaceOnce(
       code,
       "  padSensitivity: 1.0,\n  invertY: false,",
-      "  padSensitivity: 1.0,\n  invertY: false,\n  invertX: false,\n  aimProfile: 'tv',\n  aimProfiles: {\n    tv: { gyro: false, gyroSens: 0, padSensitivity: 1.0, invertY: false, invertX: false },\n    handheld: { gyro: false, gyroSens: 0, padSensitivity: 1.0, invertY: false, invertX: false },\n  },",
+      "  padSensitivity: 1.0,\n  invertY: false,\n  invertX: false,\n  aimProfile: 'tv',\n  aimProfiles: null,",
       'config aim profiles default'
     );
     return code;
@@ -33,27 +33,62 @@ export function adaptAimProfiles(rel, code) {
       'main settings load migration'
     );
 
-    // Apply aim settings in _setSettings
-    code = replaceOnce(
-      code,
-      "  _setSettings(partial) {\n    Object.assign(this.settings, partial);\n    saveJSON('inkwave.settings', this.settings);",
-      "  _setSettings(partial) {\n    applyAimSettingsChange(this.settings, partial);\n    saveJSON('inkwave.settings', this.settings);",
-      'main _setSettings aim update'
-    );
+    // Apply aim settings in _setSettings and handle profile-induced gyro transitions
+    const setSettingsHeadAnchor = "  _setSettings(partial) {\n" +
+      "    Object.assign(this.settings, partial);\n" +
+      "    saveJSON('inkwave.settings', this.settings);\n" +
+      "    const mob = this.input?.mobile;\n" +
+      "    if (mob) {\n" +
+      "      mob.applySettings(this.settings);\n" +
+      "      if ('gyro' in partial) {\n" +
+      "        // turning gyro on from the settings toggle: that tap is the user gesture iOS needs for the permission prompt\n" +
+      "        if (partial.gyro) {";
 
-    // If gyro permission denied, revert using applyAimSettingsChange
-    code = replaceOnce(
-      code,
-      "this.settings.gyro = false; saveJSON('inkwave.settings', this.settings);",
-      "applyAimSettingsChange(this.settings, { gyro: false }); saveJSON('inkwave.settings', this.settings);",
-      'main gyro permission denied revert'
-    );
+    const setSettingsHeadTarget = "  _setSettings(partial) {\n" +
+      "    const prevProfile = this.settings?.aimProfile;\n" +
+      "    const prevGyro = !!this.settings?.gyro;\n" +
+      "    applyAimSettingsChange(this.settings, partial);\n" +
+      "    saveJSON('inkwave.settings', this.settings);\n" +
+      "    const profileChanged = prevProfile !== this.settings.aimProfile;\n" +
+      "    if (profileChanged) this._aimProfileEpoch = (this._aimProfileEpoch || 0) + 1;\n" +
+      "    const profileEpoch = this._aimProfileEpoch || 0;\n" +
+      "    const mob = this.input?.mobile;\n" +
+      "    if (mob) {\n" +
+      "      mob.applySettings(this.settings);\n" +
+      "      const gyroTransition = ('gyro' in partial) || (profileChanged && prevGyro !== !!this.settings.gyro);\n" +
+      "      if (gyroTransition) {\n" +
+      "        const turnOn = 'gyro' in partial ? !!partial.gyro : !!this.settings.gyro;\n" +
+      "        if (turnOn) {";
+
+    code = replaceOnce(code, setSettingsHeadAnchor, setSettingsHeadTarget, 'main _setSettings aim transition');
+
+    // Scoped profile epoch guards deferred permission resolution
+    if (code.includes('intent !== mob._gyroIntent')) {
+      const gyroAdapterAskResolveAnchor = "            if (this.input?.mobile !== mob || mob._destroyed || intent !== mob._gyroIntent || !this.settings.gyro) return;\n" +
+        "            if (!ok) {\n" +
+        "              this.settings.gyro = false; saveJSON('inkwave.settings', this.settings);";
+      const gyroAdapterAskResolveTarget = "            if (this.input?.mobile !== mob || mob._destroyed || intent !== mob._gyroIntent || profileEpoch !== (this._aimProfileEpoch || 0) || !this.settings.gyro) return;\n" +
+        "            if (!ok) {\n" +
+        "              applyAimSettingsChange(this.settings, { gyro: false }); saveJSON('inkwave.settings', this.settings);";
+      code = replaceOnce(code, gyroAdapterAskResolveAnchor, gyroAdapterAskResolveTarget, 'main gyroAdapter ask resolve');
+    } else {
+      const rawAskResolveAnchor = "          const ask = mob.gyro.needsPermission ? mob.gyro.request() : Promise.resolve(mob.gyro.supported);\n" +
+        "          ask.then((ok) => {\n" +
+        "            if (!ok) {\n" +
+        "              this.settings.gyro = false; saveJSON('inkwave.settings', this.settings);";
+      const rawAskResolveTarget = "          const ask = mob.gyro.needsPermission ? mob.gyro.request() : Promise.resolve(mob.gyro.supported);\n" +
+        "          ask.then((ok) => {\n" +
+        "            if (profileEpoch !== (this._aimProfileEpoch || 0)) return;\n" +
+        "            if (!ok) {\n" +
+        "              applyAimSettingsChange(this.settings, { gyro: false }); saveJSON('inkwave.settings', this.settings);";
+      code = replaceOnce(code, rawAskResolveAnchor, rawAskResolveTarget, 'main raw ask resolve');
+    }
 
     // Startup gyro toggle handler
     code = replaceOnce(
       code,
-      "        this.settings.gyro = !!on;\n        saveJSON('inkwave.settings', this.settings);\n        this.menus?.refreshSetting?.('gyro');",
-      "        applyAimSettingsChange(this.settings, { gyro: !!on });\n        saveJSON('inkwave.settings', this.settings);\n        this.menus?.refreshSetting?.('gyro');",
+      "this.settings.gyro = !!on;\n        saveJSON('inkwave.settings', this.settings);",
+      "applyAimSettingsChange(this.settings, { gyro: !!on });\n        saveJSON('inkwave.settings', this.settings);",
       'main onGyroToggle aim update'
     );
 
@@ -92,58 +127,84 @@ export function adaptAimProfiles(rel, code) {
   }
 
   if (rel === 'src/core/mobile.js') {
-    // Handle both cases (PR 494 applied vs not applied) fail-closed
-    const rawGyroConfig = "    this.gyro.configure({ sens: s.gyroSens, invX: s.gyroInvertX, invY: s.gyroInvertY });";
-    const pr494GyroConfig = "    this.gyro.configure({ sens: s.gyroSens });";
-    const targetConfigure = "    if (this._lastAimProfile !== s.aimProfile) {\n" +
+    // Retain whatever gyro configure is present (raw with invX/invY or PR494 without) and prepend profile reset
+    const profileResetPrefix = "    if (this._lastAimProfile !== s.aimProfile) {\n" +
+      "      this._profileEpoch = (this._profileEpoch || 0) + 1;\n" +
       "      this.gyro?.discard?.();\n" +
       "      this.gyro?.resync?.();\n" +
       "      this._lastAimProfile = s.aimProfile;\n" +
-      "    }\n" +
-      "    this.gyro.configure({ sens: s.gyroSens });";
+      "    }\n";
+    const rawGyroConfig = "    this.gyro.configure({ sens: s.gyroSens, invX: s.gyroInvertX, invY: s.gyroInvertY });";
+    const pr494GyroConfig = "    this.gyro.configure({ sens: s.gyroSens });";
 
     if (code.includes(rawGyroConfig)) {
-      code = replaceOnce(code, rawGyroConfig, targetConfigure, 'mobile gyro configure raw');
+      code = replaceOnce(code, rawGyroConfig, profileResetPrefix + rawGyroConfig, 'mobile gyro configure raw');
     } else if (code.includes(pr494GyroConfig)) {
-      code = replaceOnce(code, pr494GyroConfig, targetConfigure, 'mobile gyro configure pr494');
+      code = replaceOnce(code, pr494GyroConfig, profileResetPrefix + pr494GyroConfig, 'mobile gyro configure pr494');
     } else {
       throw new Error('INKWAVE aim profile patch conflict (mobile gyro configure): anchor not found');
+    }
+
+    // Scoped profile epoch in MobileInput.setGyro prevents deferred permission from activating a replaced profile
+    if (code.includes('const intent = ++this._gyroIntent;')) {
+      code = replaceOnce(
+        code,
+        "  setGyro(on, canStart = null) {\n    const intent = ++this._gyroIntent;",
+        "  setGyro(on, canStart = null) {\n    const intent = ++this._gyroIntent;\n    const profileEpoch = this._profileEpoch || 0;",
+        'mobile setGyro epoch capture adapted'
+      );
+      code = replaceOnce(
+        code,
+        "      if (this._destroyed || intent !== this._gyroIntent) return false;",
+        "      if (this._destroyed || intent !== this._gyroIntent || profileEpoch !== (this._profileEpoch || 0)) return false;",
+        'mobile setGyro finish epoch guard adapted'
+      );
+    } else {
+      const rawSetGyroAnchor = "  setGyro(on) {\n" +
+        "    if (!on) { this.gyro.stop(); this.s.gyro = false; this._gyroBtn(); return Promise.resolve(false); }\n" +
+        "    const go = () => { this.gyro.start(); this.s.gyro = true; this._gyroBtn(); return true; };\n" +
+        "    if (this.gyro.needsPermission) return this.gyro.request().then((ok) => (ok ? go() : (this._gyroBtn(), false)));\n" +
+        "    if (!this.gyro.supported) return Promise.resolve(false);\n" +
+        "    return Promise.resolve(go());\n" +
+        "  }";
+      const rawSetGyroTarget = "  setGyro(on) {\n" +
+        "    const profileEpoch = this._profileEpoch || 0;\n" +
+        "    if (!on) { this.gyro.stop(); this.s.gyro = false; this._gyroBtn(); return Promise.resolve(false); }\n" +
+        "    const go = () => {\n" +
+        "      if (profileEpoch !== (this._profileEpoch || 0)) return false;\n" +
+        "      this.gyro.start(); this.s.gyro = true; this._gyroBtn(); return true;\n" +
+        "    };\n" +
+        "    if (this.gyro.needsPermission) return this.gyro.request().then((ok) => (ok ? go() : (this._gyroBtn(), false)));\n" +
+        "    if (!this.gyro.supported) return Promise.resolve(false);\n" +
+        "    return Promise.resolve(go());\n" +
+        "  }";
+      code = replaceOnce(code, rawSetGyroAnchor, rawSetGyroTarget, 'mobile setGyro raw');
     }
 
     return code;
   }
 
   if (rel === 'src/ui/menus.js') {
-    // 1. Hide touch gyro inversion rows if PR 494 was not applied yet
-    const gyroInvYLine = "  { key: 'gyroInvertY', label: 'Gyro vertical', type: 'seg', options: [[false, 'Normal'], [true, 'Invert']], help: 'Normal: tilt the top toward you to look up (like a window). Invert flips it.' },\n";
-    const gyroInvXLine = "  { key: 'gyroInvertX', label: 'Gyro horizontal', type: 'seg', options: [[false, 'Normal'], [true, 'Invert']], help: 'Normal: turn the device left to look left.' },\n";
-    if (code.includes(gyroInvYLine)) {
-      code = replaceOnce(code, gyroInvYLine, '', 'menus remove gyroInvertY');
-    }
-    if (code.includes(gyroInvXLine)) {
-      code = replaceOnce(code, gyroInvXLine, '', 'menus remove gyroInvertX');
-    }
-
-    // 2. Add aimProfile selector to TOUCH_TAB
+    // 1. Add aimProfile selector to TOUCH_TAB (leave gyroInvertX/Y solely to PR 494)
     const touchTabAnchor = "const TOUCH_TAB = { id: 'touch', label: 'Touch', icon: 'hand', rows: [\n";
     const touchTabAimProfile = touchTabAnchor +
       "  { key: 'aimProfile', label: 'Aim control mode', type: 'seg', options: [['tv', 'TV / Tabletop'], ['handheld', 'Handheld']], help: 'Splatoon 3 stores independent aim settings for TV/Tabletop and Handheld modes. Select which profile is active.' },\n";
     code = replaceOnce(code, touchTabAnchor, touchTabAimProfile, 'menus TOUCH_TAB aimProfile');
 
-    // 3. Update SETTINGS_TABS controls tab with independent aim settings
+    // 2. Update SETTINGS_TABS controls tab with independent aim settings
     const controlsOldRows = "    { key: 'padSensitivity', label: 'Controller sensitivity', type: 'slider', min: 0.2, max: 3, step: 0.05, fmt: (v) => v.toFixed(2) + '×', help: 'Camera turn speed with the right stick.' },\n" +
       "    { key: 'invertY', label: 'Invert vertical look', type: 'toggle', help: 'Push up to look down, like a flight stick.' },";
 
     const controlsNewRows = "    { key: 'aimProfile', label: 'Aim control mode', type: 'seg', options: [['tv', 'TV / Tabletop'], ['handheld', 'Handheld']], help: 'Splatoon 3 stores independent aim settings for TV/Tabletop and Handheld modes. Select which profile is active.' },\n" +
       "    { key: 'gyro', label: 'Motion controls', type: 'toggle', help: 'Tilt and turn to aim with motion gyro. Stored per profile.' },\n" +
-      "    { key: 'gyroSens', label: 'Motion sensitivity', type: 'slider', min: -5, max: 5, step: 0.5, fmt: sgnFmt, help: 'Same scale as the Switch game: 0 = 132° of device turn per 360°, +5 = 110°, −5 = 278°. Stored per profile.' },\n" +
+      "    { key: 'gyroSens', label: 'Motion sensitivity', type: 'slider', min: -5, max: 5, step: 0.5, fmt: sgnFmt, help: 'Motion-control aiming sensitivity for the selected profile.' },\n" +
       "    { key: 'padSensitivity', label: 'Right stick sensitivity', type: 'slider', min: 0.2, max: 3, step: 0.05, fmt: (v) => v.toFixed(2) + '×', help: 'Camera turn speed with the right stick. Stored per profile.' },\n" +
       "    { key: 'invertY', label: 'Right stick up/down', type: 'seg', options: [[false, 'Normal'], [true, 'Invert']], help: 'Push stick up to look down. Stored per profile.' },\n" +
       "    { key: 'invertX', label: 'Right stick left/right', type: 'seg', options: [[false, 'Normal'], [true, 'Invert']], help: 'Push stick left to look right. Stored per profile.' },";
 
     code = replaceOnce(code, controlsOldRows, controlsNewRows, 'menus SETTINGS_TABS controls rows');
 
-    // 4. Update onSetting in _scr_settings to refresh all profile controls when aimProfile changes
+    // 3. Update onSetting in _scr_settings to refresh all profile controls when aimProfile changes
     const onSettingAnchor = "        if (real !== value && controls.has(key)) { safeCall(() => controls.get(key).refresh(real)); value = real; }";
     const onSettingRefresh = onSettingAnchor + "\n" +
       "        if (key === 'aimProfile') {\n" +
