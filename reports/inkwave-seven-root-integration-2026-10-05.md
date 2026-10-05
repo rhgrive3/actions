@@ -25,3 +25,18 @@ Source-lane evidence is reused for unchanged modules: movement47 source tests,16
 Combined build: ce28155b43828e108faeb3ea3744f7b196e8a99272859fe30aa231fd7d267495. Startup131core+14range; all helpers precached. Canonical15 goldens/3network modes pass. Combined focused24pass (pad17/weapon7) plus UI actual-emitted11/11; the initial optional-minifier import failure was corrected before the successful UI rerun. Complete combined quality100/100 including explicit GC.
 
 The local aggregate invocation did not yield an accepted result: its default log directory inherited the /tmp checkout and the persistent-storage guard rejected it after execution. The guard was not weakened; persistent log storage is now configured. No aggregate success is claimed. The required exact-head CI validate job will run and report the complete aggregate before acceptance. No source-lane or previous-head success substitutes for that exact combined acceptance. Physical gamepads/sensors, device heap/GPU/long-soak and Nintendo parity remain unverified. Node GC proves the targeted reachability property only. No new browser verifier claims are fabricated.
+
+## Prepared verifier-only follow-up
+
+Reuse the accepted Range paint-kind fixture plus real displaced-Actor negative (27/27), and allow the existing validate command sequence12 rather than10 minutes (workflow contracts9/9). Runtime/build ce28155b is unchanged. The old active job completed successfully. Its remaining six acceptance jobs were still queued when the base changed; the approved follow-up supersedes those unstarted jobs rather than waiting for obsolete-base work. No unfinished or cancelled result is counted as success.
+
+
+## Main37ab reconciliation
+
+Main advanced to37ab02fcb7314eee8a6b3e6e8e6b0593610e7bff (PR698) during the initial cycle. Its Roller/Tenacity/Alpha-Turf/Flow owners are retained. Three textual conflicts were resolved: quality identity includes both new owners; Range keeps native paint-kind separation plus the existing stronger progress/displaced-Actor controls. Main now owns the Super Jump/Tenacity preload deferral, deduplicated rather than applied twice.
+
+The rescued Tenacity helper also reintroduced the previously diagnosed Practice Range dummy deficit: a1-versus4 training roster gained7.59points/s. Reuse the already-reviewed one-condition opts.range exclusion and native/emitted reentry/negative tests. No unrelated Batch B runtime is imported.
+
+New build97b27b35635c829e65f36945f3ecb7cbdcff64ffb1941d72b3e67a317bffa66b,480 artifacts; startup131core+14Range passes. Combined complete quality122/122, actual-emitted UI/Tenacity/projectile40/40 and canonical15goldens/3network modes pass. The new-base full aggregate runs with actual persistent workspace logs; its acceptance result is recorded separately when available.
+
+Historical run37379408769 active job111997170088 passed at merge source6a116b681a6fe0339e9def6d6d91804ca8c48f40/contentce28155b. At22:24UTC, no job was running and the other six required jobs remained queued. These old-base results do not certify the reconciled head; the new exact CI must complete all required gates.
