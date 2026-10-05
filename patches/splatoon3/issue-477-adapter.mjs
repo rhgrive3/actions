@@ -53,6 +53,13 @@ export function replaceOnce(code, before, after, label) {
 }
 
 export function adaptIssue477Weapons(code) {
+  // This adapter is composed through the global quality pipeline. Some newer
+  // regression fixtures intentionally provide reduced/synthetic weapons.js
+  // surfaces, so only claim the real upstream Dualies connection. Already
+  // adapted or partial fixture sources must pass through unchanged.
+  const upstreamTryDodge = "  tryDodge(move) {\n    const a = this.a, w = a.weapon;\n    if (w.kind !== 'dualies' || this.dodge || !a.alive || a.form === 'squid' || this.aimingSub || !move) return false;";
+  if (!code.includes(upstreamTryDodge)) return code;
+
   // 1. tryDodge: verify grounded condition
   code = replaceOnce(
     code,
