@@ -35,8 +35,12 @@ export function adaptQualitySource(rel, code) {
   code = adaptLobbyResources(rel, code);
   code = adaptMinimapResources(rel, code);
   code = adaptLandingRigidity(rel, code);
+  if (rel === 'src/core/mobile.js') {
+    code = adaptFirstTouch(rel, code);
+    code = adaptTouchRelayout(rel, code);
+  }
   code = adaptPlatformSource(rel, code);
-  if (rel === 'src/core/mobile.js') return adaptTouchRelayout(rel, adaptFirstTouch(rel, code));
+  if (rel === 'src/core/mobile.js') return code;
   if (rel === 'src/ui/menus.js') {
     code = replaceOnce(code,
       "    if (typeof ResizeObserver !== 'undefined') new ResizeObserver(this._refit).observe(this.el);",
