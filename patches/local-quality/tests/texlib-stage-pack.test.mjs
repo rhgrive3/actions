@@ -8,7 +8,7 @@ import { adaptSource } from '../../splatoon3/adapter.mjs';
 import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
 import { adaptReliability } from '../../reliability/adapter.mjs';
 import { adaptQualitySource } from '../adapter.mjs';
-import { syncWorldTexlib, updateLobbyTexlib, stageHasPack, stagePackFor } from '../texlib.mjs';
+import { syncWorldTexlib, updateLobbyTexlib, stageHasPack, stagePackFor, SLOT, SLOT_LAYER, SLOT_NSTR } from '../texlib.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 
@@ -83,23 +83,24 @@ function createMockRenderer(THREE, maxAnisotropy = 16) {
   return renderer;
 }
 
-test('real native catalog generation: coldboot Tidewater produces 25 shared layers, Cargo pack produces 28 layers', async () => {
+test('real native catalog generation: coldboot Tidewater produces 25 shared layers (stage=null), Cargo pack produces 28 layers (stage=cargo)', async () => {
   const THREE = await import(path.join(ROOT, 'inkwave-public/vendor/three/build/three.module.js'));
   const texlibMod = await loadComposedModule('src/world/texlib.js');
-  const { createTextureLibrary, MATERIALS } = texlibMod;
+  const { createTextureLibrary, MATERIALS, STAGE_SURFACES } = texlibMod;
+  globalThis.__inkwave_stage_surfaces = STAGE_SURFACES;
 
   assert.equal(MATERIALS.length, 25, 'Unpatched STAGE_SURFACES must not be unconditionally appended to base MATERIALS');
 
   const renderer = createMockRenderer(THREE);
 
-  // 1. Cold boot on Tidewater (no stage pack)
+  // 1. Cold boot on Tidewater (no stage pack) -> pack identity normalized to null
   const tideLib = await createTextureLibrary(renderer, { size: 256, stage: 'tidewater' });
   assert.equal(tideLib.names.length, 25, 'Tidewater cold boot must generate exactly 25 shared layers');
   assert.equal(tideLib.albedo.image.depth, 25, 'Albedo array target depth must be 25');
   assert.equal(tideLib.normal.image.depth, 25, 'Normal array target depth must be 25');
   assert.equal(tideLib.orm.image.depth, 25, 'ORM array target depth must be 25');
   assert.equal(tideLib.size, 256);
-  assert.equal(tideLib.stage, 'tidewater');
+  assert.equal(tideLib.stage, null, 'Normalized pack identity for shared-only stage must be null');
   assert.equal(tideLib.albedo.colorSpace, THREE.SRGBColorSpace);
   assert.equal(tideLib.normal.colorSpace, THREE.NoColorSpace);
   assert.equal(tideLib.orm.colorSpace, THREE.NoColorSpace);
@@ -218,16 +219,124 @@ test('slot metadata before-after: Cargo -> Tidewater -> Cargo preserves 32 slots
   dummyPaint.texture.dispose();
 });
 
-test('async Game._buildWorld integration: bounded replacement/disposal, stage pack caching and lobby texlib safety', async () => {
+test('generic stage pack support: dynamic STAGE_SURFACES and injected extra stage without leaking into baseline', async () => {
   const THREE = await import(path.join(ROOT, 'inkwave-public/vendor/three/build/three.module.js'));
   const texlibMod = await loadComposedModule('src/world/texlib.js');
-  const { createTextureLibrary } = texlibMod;
+  const { createTextureLibrary, MATERIALS, STAGE_SURFACES } = texlibMod;
   const renderer = createMockRenderer(THREE);
 
-  // Fake Game instance to verify syncWorldTexlib & updateLobbyTexlib
+  // Verify baseline is exactly 25 materials
+  assert.equal(MATERIALS.length, 25);
+  assert.equal(STAGE_SURFACES.length, 3);
+
+  // Injected extra stage (e.g. pending Practice PR #183) with 1 custom surface
+  const practiceSurface = {
+    stage: 'practice',
+    slot: 31,
+    name: 'practice:grid',
+    group: 2,
+    mat: {
+      detail: 0.5, scale: 2.0, tint: true, mask: false, alpha: false, mode: 1, sym: 7, hr: [-0.002, 0.002], ao: 0.5,
+      prep: 'f[0] = FB(uv, ivec2(4), 2, 0.5, 9901u);',
+      surf: 's.alb = vec3(0.5); s.a = 1.0; s.h = 0.0; s.rough = 0.5; s.cav = 1.0;',
+    },
+  };
+
+  const customSurfaces = [...STAGE_SURFACES, practiceSurface];
+
+  // Verify stagePackFor dynamically recognizes practice without any hardcoding
+  assert.equal(stageHasPack('practice', customSurfaces), true);
+  assert.equal(stagePackFor('practice', customSurfaces), 'practice');
+  assert.equal(stageHasPack('tidewater', customSurfaces), false);
+  assert.equal(stagePackFor('tidewater', customSurfaces), null);
+
+  // Generate library for practice stage
+  const practiceLib = await createTextureLibrary(renderer, { size: 256, stage: 'practice', surfaces: customSurfaces });
+  assert.equal(practiceLib.names.length, 26, 'Practice library must generate 25 shared + 1 practice layer = 26 layers');
+  assert.equal(practiceLib.albedo.image.depth, 26);
+  assert.equal(practiceLib.stage, 'practice');
+  assert.equal(practiceLib.layers['practice:grid'], 25);
+  assert.equal(practiceLib.layers['cargo:tarmac'], undefined, 'Cargo surfaces must not leak into practice pack');
+
+  // Verify baseline is NOT mutated
+  assert.equal(MATERIALS.length, 25, 'Baseline MATERIALS must remain untouched');
+  assert.equal(STAGE_SURFACES.length, 3, 'Baseline STAGE_SURFACES must remain untouched');
+
+  practiceLib.dispose();
+});
+
+test('coldboot-to-first-world single generation and Tidewater/Kelpline zero-generation reuse', async () => {
+  const THREE = await import(path.join(ROOT, 'inkwave-public/vendor/three/build/three.module.js'));
+  const texlibMod = await loadComposedModule('src/world/texlib.js');
+  const { createTextureLibrary, STAGE_SURFACES } = texlibMod;
+  const renderer = createMockRenderer(THREE);
+
+  let generationCount = 0;
+  const createFn = async (r, opts) => {
+    generationCount++;
+    return createTextureLibrary(r, opts);
+  };
+
+  const game = { texlib: null };
+
+  // 1. Cold boot on Tidewater: normalized coldStage is null (stagePackFor('tidewater', STAGE_SURFACES) === null)
+  const coldStage = stagePackFor('tidewater', STAGE_SURFACES);
+  assert.equal(coldStage, null, 'Tidewater cold stage pack identity must be null');
+
+  game.texlib = await createFn(renderer, { size: 256, stage: coldStage, surfaces: STAGE_SURFACES });
+  assert.equal(generationCount, 1, 'Cold boot performs initial generation');
+  assert.equal(game.texlib.stage, null, 'Cold boot library stores stage: null');
+  assert.equal(game.texlib.names.length, 25);
+
+  const initialLib = game.texlib;
+
+  // 2. First _buildWorld call on Tidewater
+  const firstBuild = await syncWorldTexlib(game, 'tidewater', renderer, 256, createFn, STAGE_SURFACES);
+  assert.equal(firstBuild.nextTexlib, initialLib, 'First _buildWorld must reuse coldboot library');
+  assert.equal(firstBuild.oldTexlib, null);
+  assert.equal(generationCount, 1, 'First _buildWorld must NOT trigger a second generation');
+
+  // 3. Stage transition Tidewater -> Kelpline: both have stagePack === null
+  const kelpBuild = await syncWorldTexlib(game, 'kelpline', renderer, 256, createFn, STAGE_SURFACES);
+  assert.equal(kelpBuild.nextTexlib, initialLib, 'Kelpline transition reuses existing shared library');
+  assert.equal(kelpBuild.oldTexlib, null);
+  assert.equal(generationCount, 1, 'Tidewater -> Kelpline must cause 0 new generations');
+
+  // 4. Transition Kelpline -> Cargo: requires Cargo pack
+  const cargoBuild = await syncWorldTexlib(game, 'cargo', renderer, 256, createFn, STAGE_SURFACES);
+  assert.equal(generationCount, 2, 'Kelpline -> Cargo triggers generation');
+  assert.equal(cargoBuild.nextTexlib.stage, 'cargo');
+  assert.equal(cargoBuild.nextTexlib.names.length, 28);
+  assert.equal(cargoBuild.oldTexlib, initialLib);
+
+  // Commit transition and dispose old library
+  game.texlib = cargoBuild.nextTexlib;
+  cargoBuild.oldTexlib.dispose();
+  assert.equal(initialLib.disposed, true);
+
+  // 5. Transition Cargo -> Tidewater: returns to shared pack
+  const cargoLibRef = game.texlib;
+  const backToTide = await syncWorldTexlib(game, 'tidewater', renderer, 256, createFn, STAGE_SURFACES);
+  assert.equal(generationCount, 3);
+  assert.equal(backToTide.nextTexlib.stage, null);
+  assert.equal(backToTide.nextTexlib.names.length, 25);
+  assert.equal(backToTide.oldTexlib, cargoLibRef);
+
+  game.texlib = backToTide.nextTexlib;
+  cargoLibRef.dispose();
+  assert.equal(cargoLibRef.disposed, true);
+
+  // Clean up
+  game.texlib.dispose();
+});
+
+test('async Game._buildWorld integration: bounded replacement/disposal, residency lifecycle (1 steady, 2 transient), and lobby safety', async () => {
+  const THREE = await import(path.join(ROOT, 'inkwave-public/vendor/three/build/three.module.js'));
+  const texlibMod = await loadComposedModule('src/world/texlib.js');
+  const { createTextureLibrary, STAGE_SURFACES } = texlibMod;
+  const renderer = createMockRenderer(THREE);
+
   const game = {
-    settings: { quality: 'medium' },
-    mobile: { touch: true },
     texlib: null,
     showcase: {
       lob: {
@@ -235,24 +344,29 @@ test('async Game._buildWorld integration: bounded replacement/disposal, stage pa
           texlib: null,
           mat: {
             surface: {
-              uniforms: {
-                tAlbedo: { value: null },
-                tNormal: { value: null },
-                tOrm: { value: null },
-                uTL: { value: Array.from({ length: 12 }, () => new THREE.Vector4()) },
-                uTLt: { value: Array.from({ length: 12 }, () => new THREE.Vector4()) },
+              userData: {
+                shaderUniforms: {
+                  tAlbedo: { value: null },
+                  tNormal: { value: null },
+                  tOrm: { value: null },
+                  uTL: { value: Array.from({ length: 12 }, () => new THREE.Vector4()) },
+                  uTLt: { value: Array.from({ length: 12 }, () => new THREE.Vector4()) },
+                },
+                texlibHolder: { lib: null },
               },
             },
             ground: {
-              uniforms: {
-                tAlbedo: { value: null },
-                tNormal: { value: null },
-                tOrm: { value: null },
-                uAs: { value: new THREE.Vector4() },
+              userData: {
+                shaderUniforms: {
+                  tAlbedo: { value: null },
+                  tNormal: { value: null },
+                  tOrm: { value: null },
+                  uAs: { value: new THREE.Vector4() },
+                },
+                texlibHolder: { lib: null },
               },
             },
           },
-          U: { uAs: new THREE.Vector4() },
         },
       },
     },
@@ -260,30 +374,33 @@ test('async Game._buildWorld integration: bounded replacement/disposal, stage pa
 
   const createFn = (r, opts) => createTextureLibrary(r, opts);
 
-  // 1. Initial cold boot on Tidewater (256 size on mobile)
-  const cold = await syncWorldTexlib(game, 'tidewater', renderer, 256, createFn);
+  // 1. Initial cold boot on Tidewater
+  const cold = await syncWorldTexlib(game, 'tidewater', renderer, 256, createFn, STAGE_SURFACES);
   assert.ok(cold.nextTexlib);
   assert.equal(cold.nextTexlib.names.length, 25);
   assert.equal(cold.oldTexlib, null);
   game.texlib = cold.nextTexlib;
   updateLobbyTexlib(game, cold.nextTexlib);
 
+  // Residency check: 1 steady state
+  let steadyResidency = (game.texlib && !game.texlib.disposed ? 1 : 0);
+  assert.equal(steadyResidency, 1, 'Steady state residency after cold boot is 1');
+
   const lobbySet = game.showcase.lob.set;
   assert.equal(lobbySet.texlib, cold.nextTexlib);
-  assert.equal(lobbySet.mat.surface.uniforms.tAlbedo.value, cold.nextTexlib.albedo);
-  assert.equal(lobbySet.mat.ground.uniforms.tAlbedo.value, cold.nextTexlib.albedo);
-  assert.equal(lobbySet.mat.ground.uniforms.uAs.value.x, cold.nextTexlib.layers.asphalt);
+  assert.equal(lobbySet.mat.surface.userData.shaderUniforms.tAlbedo.value, cold.nextTexlib.albedo);
+  assert.equal(lobbySet.mat.ground.userData.shaderUniforms.tAlbedo.value, cold.nextTexlib.albedo);
+  assert.equal(lobbySet.mat.ground.userData.shaderUniforms.uAs.value.x, cold.nextTexlib.layers.asphalt);
 
-  // 2. Switching to Kelpline: both are non-pack stages -> should retain existing library without allocation
-  const kelp = await syncWorldTexlib(game, 'kelpline', renderer, 256, createFn);
-  assert.equal(kelp.nextTexlib, game.texlib, 'Re-uses existing shared texlib for stage with same pack');
-  assert.equal(kelp.oldTexlib, null);
-
-  // 3. Switching to Cargo: needs 28-layer library
-  const cargoSwitch = await syncWorldTexlib(game, 'cargo', renderer, 256, createFn);
+  // 2. Transition to Cargo: during generation, both old and candidate libraries exist (transient residency 2)
+  const cargoSwitch = await syncWorldTexlib(game, 'cargo', renderer, 256, createFn, STAGE_SURFACES);
   assert.ok(cargoSwitch.nextTexlib);
   assert.equal(cargoSwitch.nextTexlib.names.length, 28);
   assert.equal(cargoSwitch.oldTexlib, cold.nextTexlib);
+
+  // During transition before commit: both libraries are valid in memory
+  let transientResidency = (cargoSwitch.nextTexlib ? 1 : 0) + (cargoSwitch.oldTexlib && !cargoSwitch.oldTexlib.disposed ? 1 : 0);
+  assert.equal(transientResidency, 2, 'Residency is temporarily 2 during generation/transition');
 
   // Retire previous level/material refs, update lobby, dispose old library
   const oldTideLib = cargoSwitch.oldTexlib;
@@ -291,30 +408,272 @@ test('async Game._buildWorld integration: bounded replacement/disposal, stage pa
   updateLobbyTexlib(game, cargoSwitch.nextTexlib);
   oldTideLib.dispose();
 
+  // After commit & disposal: residency returns to 1 steady-state
+  steadyResidency = (game.texlib && !game.texlib.disposed ? 1 : 0) + (oldTideLib && !oldTideLib.disposed ? 1 : 0);
+  assert.equal(steadyResidency, 1, 'Residency returns to 1 steady-state after transition');
+
   assert.equal(oldTideLib.disposed, true, 'Old Tidewater library must be disposed');
   assert.equal(lobbySet.texlib, cargoSwitch.nextTexlib, 'LobbySet must reference fresh Cargo texlib');
-  assert.equal(lobbySet.mat.surface.uniforms.tAlbedo.value, cargoSwitch.nextTexlib.albedo);
-  assert.notEqual(lobbySet.mat.surface.uniforms.tAlbedo.value, oldTideLib.albedo, 'LobbySet must not point to disposed texture');
-  assert.equal(lobbySet.mat.ground.uniforms.tAlbedo.value, cargoSwitch.nextTexlib.albedo);
+  assert.equal(lobbySet.mat.surface.userData.shaderUniforms.tAlbedo.value, cargoSwitch.nextTexlib.albedo);
+  assert.notEqual(lobbySet.mat.surface.userData.shaderUniforms.tAlbedo.value, oldTideLib.albedo, 'LobbySet must not point to disposed texture');
+  assert.equal(lobbySet.mat.ground.userData.shaderUniforms.tAlbedo.value, cargoSwitch.nextTexlib.albedo);
 
-  // 4. Switching back to Tidewater: returns to 25 layers, disposes Cargo library
-  const cargoLibRef = game.texlib;
-  const tideSwitch = await syncWorldTexlib(game, 'tidewater', renderer, 256, createFn);
-  assert.ok(tideSwitch.nextTexlib);
-  assert.equal(tideSwitch.nextTexlib.names.length, 25);
-  assert.equal(tideSwitch.oldTexlib, cargoLibRef);
-
-  game.texlib = tideSwitch.nextTexlib;
-  updateLobbyTexlib(game, tideSwitch.nextTexlib);
-  cargoLibRef.dispose();
-
-  assert.equal(cargoLibRef.disposed, true, 'Previous Cargo library must be disposed when leaving Cargo');
-  assert.equal(lobbySet.texlib, tideSwitch.nextTexlib);
-  assert.equal(lobbySet.mat.surface.uniforms.tAlbedo.value, tideSwitch.nextTexlib.albedo);
-  assert.notEqual(lobbySet.mat.surface.uniforms.tAlbedo.value, cargoLibRef.albedo, 'LobbySet must never sample disposed Cargo library');
-
-  // Final cleanup
+  // Clean up
   game.texlib.dispose();
+});
+
+test('native compiled LobbySet materials: precompile and postcompile update holders and uniforms with correct sampler and meta', async () => {
+  const THREE = await import(path.join(ROOT, 'inkwave-public/vendor/three/build/three.module.js'));
+  const texlibMod = await loadComposedModule('src/world/texlib.js');
+  const matsMod = await loadComposedModule('src/game/lobbySet-mats.js');
+  const { createTextureLibrary } = texlibMod;
+  const { surfaceMaterial, groundMaterial, makeUniforms } = matsMod;
+  const renderer = createMockRenderer(THREE);
+
+  const tideLib = await createTextureLibrary(renderer, { size: 256, stage: null });
+  const cargoLib = await createTextureLibrary(renderer, { size: 256, stage: 'cargo' });
+  const tideLib2 = await createTextureLibrary(renderer, { size: 256, stage: null });
+
+  const U = makeUniforms();
+  const dummyDecal = new THREE.DataTexture(new Uint8Array(4), 1, 1);
+  const dummyMask = new THREE.DataTexture(new Uint8Array(4), 1, 1);
+  const dummyEnv = new THREE.DataTexture(new Uint8Array(4), 1, 1);
+
+  // --- Part 1: surfaceMaterial precompile update ---
+  const surfMat = surfaceMaterial(U, tideLib, dummyDecal, dummyEnv);
+  assert.ok(surfMat.userData.texlibHolder);
+  assert.equal(surfMat.userData.texlibHolder.lib, tideLib);
+  assert.equal(surfMat.userData.shaderUniforms, undefined, 'Shader uniforms undefined before compilation');
+
+  // Fake game structure pointing to surfMat
+  const game = {
+    lobbySet: {
+      surfaceMat: surfMat,
+      groundMat: null,
+    },
+  };
+
+  // Precompile update to Cargo library
+  updateLobbyTexlib(game, cargoLib);
+  assert.equal(surfMat.userData.texlibHolder.lib, cargoLib, 'Precompile update modifies texlibHolder.lib');
+
+  // Trigger compilation (Three.js onBeforeCompile callback)
+  const surfShader = {
+    uniforms: {},
+    defines: {},
+    vertexShader: '#include <common>\n#include <uv_vertex>\n#include <beginnormal_vertex>',
+    fragmentShader: '#include <common>\n#include <color_fragment>\n#include <roughnessmap_fragment>\n#include <metalnessmap_fragment>\n#include <normal_fragment_maps>',
+  };
+  surfMat.onBeforeCompile(surfShader);
+
+  assert.ok(surfMat.userData.shaderUniforms, 'Shader uniforms attached on compilation');
+  assert.equal(surfShader.uniforms.tAlbedo.value, cargoLib.albedo, 'Precompiled material picks up updated cargoLib albedo');
+  assert.equal(surfShader.uniforms.tNormal.value, cargoLib.normal);
+  assert.equal(surfShader.uniforms.tOrm.value, cargoLib.orm);
+  assert.equal(surfShader.defines.LS_TEXLIB, 1);
+
+  // Verify meta / slot layer uniforms
+  const uTL = surfShader.uniforms.uTL.value;
+  assert.equal(uTL.length, 12);
+  assert.equal(uTL[0].x, cargoLib.layers.concrete);
+  assert.equal(uTL[SLOT.asphalt].x, cargoLib.layers.asphalt);
+
+  // --- Part 2: surfaceMaterial postcompile update ---
+  updateLobbyTexlib(game, tideLib2);
+  assert.equal(surfMat.userData.texlibHolder.lib, tideLib2, 'Postcompile update updates holder');
+  assert.equal(surfShader.uniforms.tAlbedo.value, tideLib2.albedo, 'Postcompile update mutates sampler uniform');
+  assert.equal(surfShader.uniforms.tNormal.value, tideLib2.normal);
+  assert.equal(surfShader.uniforms.tOrm.value, tideLib2.orm);
+  assert.notEqual(surfShader.uniforms.tAlbedo.value, cargoLib.albedo, 'Must not reference previous library');
+
+  // Verify in-place Vector4 mutation of uTL
+  assert.equal(uTL[0].x, tideLib2.layers.concrete);
+  assert.equal(uTL[SLOT.asphalt].x, tideLib2.layers.asphalt);
+
+  // --- Part 3: groundMaterial precompile and postcompile update ---
+  const groundMat = groundMaterial(U, tideLib, dummyMask, [0, 0, 10, 10], dummyEnv);
+  game.lobbySet.groundMat = groundMat;
+
+  assert.equal(groundMat.userData.texlibHolder.lib, tideLib);
+
+  // Precompile update to Cargo
+  updateLobbyTexlib(game, cargoLib);
+  assert.equal(groundMat.userData.texlibHolder.lib, cargoLib);
+
+  const groundShader = {
+    uniforms: {},
+    defines: {},
+    vertexShader: '#include <common>',
+    fragmentShader: '#include <common>\n#include <color_fragment>\n#include <roughnessmap_fragment>\n#include <normal_fragment_maps>\n#include <lights_fragment_end>',
+  };
+  groundMat.onBeforeCompile(groundShader);
+
+  assert.equal(groundShader.uniforms.tAlbedo.value, cargoLib.albedo);
+  assert.equal(groundShader.uniforms.uAs.value.x, cargoLib.layers.asphalt);
+
+  // Postcompile update to tideLib2
+  updateLobbyTexlib(game, tideLib2);
+  assert.equal(groundShader.uniforms.tAlbedo.value, tideLib2.albedo);
+  assert.equal(groundShader.uniforms.uAs.value.x, tideLib2.layers.asphalt);
+
+  // Clean up
+  tideLib.dispose();
+  cargoLib.dispose();
+  tideLib2.dispose();
+  dummyDecal.dispose();
+  dummyMask.dispose();
+  dummyEnv.dispose();
+});
+
+test('native _buildWorld epoch cancellation: uncommitted candidate library disposed on cancellation without corrupting current texlib', async () => {
+  const THREE = await import(path.join(ROOT, 'inkwave-public/vendor/three/build/three.module.js'));
+  const texlibMod = await loadComposedModule('src/world/texlib.js');
+  const { createTextureLibrary, STAGE_SURFACES } = texlibMod;
+  const renderer = createMockRenderer(THREE);
+
+  const composedMain = compose('src/main.js');
+
+  // Extract the adapted _buildWorld method directly from main.js
+  const at = composedMain.indexOf('  async _buildWorld(');
+  const until = composedMain.indexOf('\n  // deck slabs over the sea:', at);
+  assert.ok(at >= 0 && until > at, 'Must find _buildWorld in composed main.js');
+  const buildWorldSource = composedMain.slice(at, until);
+
+  const initialLib = await createTextureLibrary(renderer, { size: 256, stage: null });
+  let candidateCreated = null;
+
+  // Track disposal
+  const disposedResources = [];
+  const resource = (name, obj = {}) => ({
+    name,
+    disposed: false,
+    dispose() { this.disposed = true; disposedResources.push(name); },
+    ...obj,
+  });
+
+  const scene = {
+    children: new Set(),
+    add(...items) { for (const it of items) this.children.add(it); },
+    remove(...items) { for (const it of items) this.children.delete(it); },
+  };
+
+  const sandbox = {
+    console: { log() {}, warn() {}, error() {} },
+    Promise,
+    G: {
+      scene,
+      renderer,
+      paint: resource('paint', { texture: {}, size: 64 }),
+    },
+    MAP_LAYOUTS: {
+      tidewater: { id: 'tidewater' },
+      cargo: { id: 'cargo' },
+    },
+    effectiveQuality: () => ({ paintAtlas: 256 }),
+    dressingFor: () => [],
+    Level: class {
+      constructor(layout) { this.id = layout.id; this.bounds = {}; }
+      buildGeometry() { return resource('geo:' + this.id, { index: { count: 1 } }); }
+    },
+    Physics: class { constructor(level) {} },
+    SwimWake: class { reset() {} },
+    Decor: class { constructor() {} dispose() {} },
+    NavGraph: class { constructor() {} },
+    Minimap: class { constructor() {} },
+    createLevelMaterial: (tex, size, murals, opts) => resource('mat', { opts }),
+    THREE,
+    STAGE_SURFACES,
+    syncWorldTexlib: async (game, layoutId, r, size, createFn, surfaces) => {
+      // Simulate asynchronous texlib generation for Cargo
+      const lib = await createTextureLibrary(renderer, { size: 256, stage: layoutId, surfaces });
+      candidateCreated = lib;
+      // Invalidate worldCurrent right before returning to _buildWorld to test cancellation handling
+      game._worldBuild = { newEpoch: true };
+      return { nextTexlib: lib, oldTexlib: game.texlib };
+    },
+    updateLobbyTexlib: (game, lib) => {},
+  };
+
+  const context = vm.createContext(sandbox);
+  const Game = vm.runInContext(`class Game {\n${buildWorldSource}\n};\nGame;`, context);
+  const game = new Game();
+
+  game.texlib = initialLib;
+  game.layoutId = 'tidewater';
+  game.settings = { quality: 'medium' };
+  game.mobile = false;
+  game.murals = { userData: { setStage: () => {} } };
+  game._loadLightmap = async () => resource('lightmap');
+
+  // Trigger epoch cancellation during _buildWorld
+  await game._buildWorld({ id: 'cargo', layout: 'cargo' });
+
+  // Assertions:
+  // 1. The candidate Cargo library must have been cleanly disposed upon epoch cancellation
+  assert.ok(candidateCreated, 'Candidate cargo library was generated');
+  assert.equal(candidateCreated.disposed, true, 'Uncommitted candidate library must be disposed on epoch cancellation');
+
+  // 2. game.texlib must NOT have been overwritten with the cancelled candidate
+  assert.equal(game.texlib, initialLib, 'Current texlib must remain untouched');
+  assert.equal(!!game.texlib.disposed, false, 'Current texlib must NOT be disposed');
+  assert.equal(game.layoutId, 'tidewater', 'layoutId must not be committed for cancelled build');
+
+  initialLib.dispose();
+});
+
+test('generation failure resilience: preserves valid current library without disposal or use-after-free, cleans up disposed library', async () => {
+  const THREE = await import(path.join(ROOT, 'inkwave-public/vendor/three/build/three.module.js'));
+  const texlibMod = await loadComposedModule('src/world/texlib.js');
+  const { createTextureLibrary, STAGE_SURFACES } = texlibMod;
+  const renderer = createMockRenderer(THREE);
+
+  const initialLib = await createTextureLibrary(renderer, { size: 256, stage: null });
+
+  const game = {
+    texlib: initialLib,
+    showcase: {
+      lob: {
+        set: {
+          texlib: initialLib,
+          mat: {
+            surface: {
+              userData: {
+                shaderUniforms: { tAlbedo: { value: initialLib.albedo } },
+                texlibHolder: { lib: initialLib },
+              },
+            },
+          },
+        },
+      },
+    },
+  };
+
+  // Failing createFn that throws or rejects
+  const failingCreateFn = async () => {
+    throw new Error('GPU context lost during texture generation');
+  };
+
+  // Case A: Generation failure with currently valid library
+  const result = await syncWorldTexlib(game, 'cargo', renderer, 256, failingCreateFn, STAGE_SURFACES);
+
+  // Must preserve current library
+  assert.equal(result.nextTexlib, initialLib, 'Must preserve valid current library on failure');
+  assert.equal(result.oldTexlib, null, 'oldTexlib must be null so current library is NOT disposed');
+  assert.equal(!!initialLib.disposed, false, 'Valid library must remain not disposed');
+
+  // Case B: Generation failure when current library was already disposed
+  initialLib.dispose();
+  assert.equal(initialLib.disposed, true);
+  game.texlib = initialLib;
+
+  const resultDisposed = await syncWorldTexlib(game, 'cargo', renderer, 256, failingCreateFn, STAGE_SURFACES);
+  assert.equal(resultDisposed.nextTexlib, null, 'Must return null when both generation fails and current library is disposed');
+  assert.equal(resultDisposed.oldTexlib, null);
+
+  // updateLobbyTexlib must ignore disposed library
+  updateLobbyTexlib(game, initialLib);
+  const lobbySurface = game.showcase.lob.set.mat.surface;
+  assert.notEqual(lobbySurface.userData.texlibHolder.lib, initialLib, 'Lobby holder must not retain disposed library');
 });
 
 test('resolution fidelity and renderer state: no arbitrary resolution downgrade, state restored after generation', async () => {
@@ -389,4 +748,3 @@ test('negative control: unpatched upstream baseline generates all 28 layers unco
   assert.equal(baselineLib.albedo.image.depth, 28, 'Unpatched baseline pins 28 layers on coldboot Tidewater');
   baselineLib.dispose();
 });
-

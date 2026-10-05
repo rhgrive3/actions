@@ -240,8 +240,14 @@ See [the cold-boot budget report](inkwave-cold-boot-budgets-2026-10-04.md).
 
 ## 2026-10-05: stage-aware texture library generation (#542)
 
-Cold boot generation for non-pack stages (Tidewater/Kelpline) allocates and compiles only the 25 shared surface layers, deferring the 3 Cargo stage-pack layers until Cargo Terminal is selected.
-Switching stages performs bounded replacement/disposal of retired texture libraries once previous level and material references are retired, updating LobbySet uniforms so lobby users never sample disposed libraries.
-Preserves stable shader slot indirection semantics (32 slots) and material metadata, preventing shader recompilation hitches or slot mismatches, and prevents monotonically growing GPU texture memory across stage switches.
-These are INKWAVE GPU asset layout budgets, not Nintendo Switch hardware measurements.
+Cold boot generation for non-pack stages (Tidewater/Kelpline) allocates and compiles only the 25 shared surface layers, deferring stage-pack layers (e.g. 3 Cargo layers) until a stage with registered stage surfaces is selected.
+
+| 項目 | 内容 |
+|---|---|
+| 本家の根拠 | スプラトゥーン3では現在選択されていないステージの専用マテリアル・テクスチャはメモリ上に事前確保・保持されない。ステージ遷移時にのみ必要なアセットが読み込まれ、前のステージ固有アセットは破棄される |
+| INKWAVE の実装箇所 | `patches/local-quality/texlib.mjs` (`stagePackFor`, `syncWorldTexlib`, `updateLobbyTexlib`), `patches/local-quality/texlib-adapter.mjs` (`src/world/texlib.js`, `src/world/levelMaterial.js`, `src/game/lobbySet-mats.js`, `src/main.js`) |
+| 再現操作 | 1. Tidewater でコールドブート起動（共有25層のみ生成、pack identity: null）。<br>2. 最初の `_buildWorld` で再生成せずコールドブート資源を再利用。<br>3. Kelpline への遷移で再生成ゼロで継続利用。<br>4. Cargo への遷移で28層（共有25+Cargo3）を生成し、旧ライブラリをコミット後に破棄。<br>5. Tidewater/Kelpline への復帰で共有25層へ遷移し、Cargoライブラリを破棄 |
+| プレイへの影響 | コールドブート時のテクスチャ容量削減（256解像度で約3.3 MiB、512解像度で約13.1 MiB節約）。ステージ遷移時のメモリ単調増加を抑止。シェーダーの32スロット間接参照（`TL_SLOTS: 32`）およびマテリアル名を維持し、シェーダー再コンパイルやスロット不整合なし。LobbySetマテリアルの事前・事後コンパイルuniform更新により破棄済みテクスチャのサンプリングを防止 |
+| メモリ占有ライフサイクル | 遷移完了後の定常状態は常にライブラリ1つ（residency = 1）。生成中のみ旧ライブラリと新ライブラリが一時的に並行存在（transient residency = 2）。旧レベル・マテリアル参照が破棄された直後に旧ライブラリをdispose |
+| 確認状態 | **ロジック・ネイティブ結合確認済み** (`patches/local-quality/tests/texlib-stage-pack.test.mjs` 10テスト全通過、`scripts/check-inkwave-patches.mjs --quick` 合格)。**本家実機（Switch Ver.11.3.0）でのGPU実物理メモリ・フレームヒッチ実測は未確認**。記載のMiB値はThree.js DataArrayRenderTargetのフォーマット（RGBA8×3MRT+mips）に基づく計算アセット予算であり、ドライバ物理VRAM測定値ではない |
 
