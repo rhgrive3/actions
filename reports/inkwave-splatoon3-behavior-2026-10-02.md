@@ -266,3 +266,20 @@ See [the cold-boot budget report](inkwave-cold-boot-budgets-2026-10-04.md).
 ## 2026-10-05: Turf Map enemy reveal (#220) — Orchestrator C lane fb8
 
 S3の全体マップは、直近で18ダメージ以上を受けた相手だけを位置表示し、潜伏/壁センプク/ヒトの形態は表示条件ではない。公開版 `main.js` `_updateHud()` は逆に「`anim.form === 'swim'` の相手だけ隠す」形態判定で、無傷のヒト/壁イカは常時表示、20ダメージの潜伏敵は非表示になっていた。`patches/splatoon3/adapter.mjs` で同条件を `enemyRevealedOnMap(o, PLAYER.hp)`（`runtime/map-reveal.mjs`）へ差し替え、被ダメージ閾値（17.9→非表示 / 18.0以上→表示）と明示的索敵フック（`s3.revealed`、本ビルドでは未付与）で管理する。味方/自分のドットとスーパージャンプ対象表示、authoritativeな移動・ダメージ・武器・インクは不変更。回帰は `patches/splatoon3/tests/map-reveal.test.mjs`（差分適用前は2件fail、適用後7件pass）。18という詳細閾値は検証Wiki由来で公式公開表ではなく、現行Switchでの新規実測は未実施。
+## 2026-10-06: スロシャー照準の弾道図除去 (#652)
+
+`src/ui/hud.js::_buildReticle()` の `kind === 'slosher'` 特別分岐は照準点の上に
+弾道アーチ（`M-24 6 Q0 -26 24 6`）、下に着弾バケット括弧を描いていた。`styles/hud.css`
+の `.iw-ret--slosher .iw-ret__arch` と `_updCrosshair` の `--kk` 書き込みが発射毎に
+そのアーチを引き伸ばす。Splatoon 3 Ver. 11.3.0 の定番スロシャー照準はコンパクトな
+円形マーカーと周囲ティックであり、弾道予測図を描かない（Game8 の試し撃ち画面参照。
+半径・線長などの正確な寸法は参考画像の計測が必要で未確認のまま）。
+
+upstream は `upstream-lock.json` で固定しているためバイト列を変更せず、splatoon3 の
+ビルド専用アダプターが該当分岐と `--kk` 書き込みを除去し、スロシャーを標準照準
+（ドット＋細い円＋四方ティック、シューターと同一構造）へフォールスルーさせる。
+合成後ソースは `iw-ret__arch` 要素を生成しないため CSS のアーチ規則は描画されない。
+他のブキの照準、スロシャーの投射物理・威力・射撃間隔・リカバリーは変更していない。
+入力端末（マウス／パッド／タッチ／ジャイロ）は同一の `_buildReticle` を共有する。
+回帰は `patches/splatoon3/tests/hud-slosher-reticle.test.mjs`（合成後コードを実行）。
+本家実機での同一照準確認は未確認項目として残す。
