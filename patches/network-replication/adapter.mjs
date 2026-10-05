@@ -181,9 +181,9 @@ function retireNetworkGhosts(owner = null) {
       p.drag = w.flickDrag ?? p.drag;`, 'final flick physics before publication');
 
     patch('    p.delay = 0; p.head = false;', '    p._netId = undefined; p._netEnded = false; p._netPeer = null; p._netBorn = undefined; p._netBornTick = undefined; p._netSteps = 0; p._netMaxSteps = 0; p._netEndStep = undefined; p._netEndReason = 0; p._netHitActor = false;\n    p.delay = 0; p.head = false;', 'recycled identity reset');
-    patch('    this.list.push(p);\n  }\n\n  ghostBomb', `    p.s3Vertical = e[27] === 1;
-    if (Number.isFinite(e[28])) p.seed = e[28]; // retain the native random draw above
-    p._netId = e[29];
+    patch('    this.list.push(p);\n  }\n\n  ghostBomb', `    p.s3Vertical = e[29] === 1;
+    if (Number.isFinite(e[30])) p.seed = e[30]; // retain the native random draw above
+    p._netId = e[31];
     this.list.push(p);
     return p;
   }
