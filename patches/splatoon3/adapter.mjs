@@ -76,6 +76,12 @@ export function adaptSource(rel, code) {
       '      const winner = Math.abs(pa - pb) < 0.05 ? -1 : pa > pb ? 0 : 1;',
       '      const winner = authoritativeWinner === 0 || authoritativeWinner === 1 ? authoritativeWinner : Math.abs(pa - pb) < 0.05 ? -1 : pa > pb ? 0 : 1;',
       'authoritative Turf winner HUD reveal');
+    // #631: Splatoon 3 reveals a splatted teammate's position only when that
+    // player sends the Ouch... signal. The generic splatted event must not
+    // place a named world-space death-location marker on the local HUD.
+    code = replaceOnce(code,
+      '    if (me && victim.team === me.team) this._allyDown(victim, attacker);\n',
+      '', 'automatic ally-down marker (#631)');
     return "import { t as tr } from '../i18n.js';\n" + code;
   }
   if (rel === 'src/ui/ui-icons.js') {
