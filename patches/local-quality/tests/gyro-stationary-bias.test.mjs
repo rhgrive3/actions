@@ -186,3 +186,20 @@ test('#615 resync (screen change / suspend / restart) resets the learned bias', 
   g.resync();
   assert.deepEqual([...g._qualityGyro.bias], [0, 0, 0], 'resync must clear the learned bias');
 });
+
+test('#615 deliberate aiming below the stillness threshold retains the native attitude response', async () => {
+  const g = await makeGyro(), reference = await makeGyro();
+  const st = newSt(), referenceSt = newSt();
+  promote(g, st, 60, 'beta');
+  stationary(g, st, 60, 8);
+  let actual = 0, expected = 0;
+  for (let i = 0; i < 1200; i++) {
+    const sample = frame(g, st, 60, { attRate: 0.2, rate: 0.9, axis: 'beta' });
+    const control = frame(reference, referenceSt, 60, { attRate: 0.2, rate: 0.2, axis: 'beta' });
+    if (i >= 900) { actual += sample.pitch; expected += control.pitch; }
+  }
+  assert.equal(reference._src, 'ori', 'control uses native attitude integration');
+  assert.ok(Math.abs(expected) > 0.001, 'slow native aiming control remains observable');
+  assert.ok(actual / expected > 0.9 && actual / expected < 1.1,
+    `calibration must preserve slow motion: raw ${actual}, attitude ${expected}`);
+});

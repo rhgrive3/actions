@@ -349,3 +349,5 @@ Batch C14 scope review: #656 teammate blocking is confined to ordinary Shooter r
 | プレイへの影響 | スプラトゥーン3における主要な高機動反転技術であるサブ慣性キャンセルが再現可能になる。通常のヒト形態サブ投擲、コミット後の投擲、インク不足時の不発、イカロール判定（アーマー付与）との完全な独立性を維持。 |
 | 確認状態 | **ロジック・回帰確認済み**（`patches/splatoon3/tests/sub-strafe-admission.test.mjs`、30/60/120 Hz、owner/remote 単一投擲・同期検証）。**本家実機（Switch Ver.11.3.0）での正確なフレーム単位の角速度・停止距離実測比較は未確認**。 |
 
+
+Batch C14 gyro integration: a native 0.2 deg/s deliberate-turn control exposed that learning the whole raw rate erased motion below the engineering stillness threshold. Calibration now learns only the raw-minus-attitude residual. The unchanged native attitude integrator is the slow-motion control; its response is retained while the raw sensor bias converges. This does not claim proprietary Nintendo filter constants.

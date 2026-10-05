@@ -160,10 +160,12 @@ export function installGyroQuality(Gyro, getScreenAngle, isAndroid = () => /Andr
     const att = Math.hypot(s.rate[0], s.rate[1], s.rate[2]) / RAD;
     if (att <= STILL_DEG) s.still += dt; else s.still = 0;
     if (s.still >= HOLD_S) {
+      // Learn the raw-minus-attitude residual, not the measured turn itself.
+      // Deliberate motion below STILL_DEG must keep its native response.
       const k = 1 - Math.exp(-dt / TAU_S);
-      s.bias[0] += (wx - s.bias[0]) * k;
-      s.bias[1] += (wy - s.bias[1]) * k;
-      s.bias[2] += (wz - s.bias[2]) * k;
+      s.bias[0] += (wx - s.rate[0] - s.bias[0]) * k;
+      s.bias[1] += (wy - s.rate[1] - s.bias[1]) * k;
+      s.bias[2] += (wz - s.rate[2] - s.bias[2]) * k;
     }
     return sample.call(this, wx - s.bias[0], wy - s.bias[1], wz - s.bias[2], dt);
   };
