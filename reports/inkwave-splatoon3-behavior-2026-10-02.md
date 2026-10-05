@@ -250,3 +250,7 @@ cloud/Halyard cube allocation at default high settings, not only after later
 runtime refresh. Existing formats, appearance policy and gameplay stay intact.
 These are project resource dimensions, not Nintendo/Switch memory values.
 See [the cold-boot budget report](inkwave-cold-boot-budgets-2026-10-04.md).
+
+## 2026-10-06: 状態専用の更新経路が共有フェーズを飛ばす問題 (#744 / #707)
+
+スーパージャンプのチャージ中は共有のリソース処理（敵インクの継続ダメージ等）を通常と同じく 1 回実行し、飛行中は従来どおり保護する。オフライン一時停止中はゲーム時間 `G.time` を止め、Roller 接触・Boss グループ・Flow アシストの待ち時間が一時停止で進まないようにする。オンラインのリモート味方の最終接地点 (#728) は現 main で既に `applyRemote()` → `_finishFrame()` 経由で更新されており再現しないため、回帰テストのみ追加した。本家の根拠・再現操作・影響・未確認事項は[比較記録](inkwave-state-phases-2026-10-06.md)。いずれもロジック単独の確認であり、本家実機比較・ブラウザ実通信の確認は未確認として残す。
