@@ -121,6 +121,14 @@ export function beginFidelityWallDrop(system, p, hit) {
   p.prev.copy(p.pos);
   p.vel.set(0, -firstSpeed * 60, 0);
   wallDropPaint(p, p.pos, state.shockRadius, state, 0x5a0c);
+  // Network ghosts are born with a catch-up budget derived from the projectile's
+  // original flight lifetime. Wall-drop can outlive that budget by 70+ source
+  // frames, so extend it at the deterministic terrain transition. The network
+  // adapter snapshots the old limit for the current catch-up loop; the next
+  // update observes this larger budget and continues the same projectile ID.
+  if (Number.isFinite(p._netMaxSteps)) {
+    p._netMaxSteps = Math.max(p._netMaxSteps, (p._netSteps || 0) + state.totalFrames + 2);
+  }
 
   // Keep the existing Blaster terrain burst exactly once and preserve its
   // terrain-only damage modifier; the wall-drop itself adds no HP damage.
