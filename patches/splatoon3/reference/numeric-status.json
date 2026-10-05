@@ -564,6 +564,16 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "weapons.blaster.terrainSplashRadiusRate": {
+    "value": 0.4234,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponBlasterMiddle.game__GameParameterTable.json#/GameParameters/BlasterBurstParam/ShotCollisionHitRadiusRate",
+      "index": null,
+      "factor": 1,
+      "rawValue": 0.4234
+    }
+  },
   "weapons.splatling.inkPerShot": {
     "value": 0.5625,
     "status": "calibration or derived value; see reference raw table and unverified list",
@@ -1349,6 +1359,26 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "weapons.roller.rollDamage": {
+    "value": 125,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/BodyParam/Damage",
+      "index": null,
+      "factor": 0.1,
+      "rawValue": 1250
+    }
+  },
+  "weapons.roller.rollInkRecoverStop": {
+    "value": 0.3333333333333333,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WeaponRollParam/InkRecoverStop",
+      "index": null,
+      "factor": 0.016666666666666666,
+      "rawValue": 20
+    }
+  },
   "weapons.slosher.inkPerShot": {
     "value": 7.6,
     "status": "calibration or derived value; see reference raw table and unverified list",
@@ -1894,18 +1924,28 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
-  "movement.wallRollMinimumInput": {
-    "value": 0.3,
+  "resources.enemyInkGraceReset": {
+    "value": 0.75,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "resources.enemyInkReferenceHz": {
+    "value": 60,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "resources.enemyInkDamageQuantum": {
+    "value": 0.1,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
   "movement.roll.minimumSpeed": {
-    "value": 9.216,
+    "value": 8.7,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
   "movement.roll.minimumInput": {
-    "value": 0.3,
+    "value": 0,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
@@ -1949,6 +1989,11 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "movement.roll.speedGraceTime": {
+    "value": 0.16666666666666666,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
   "movement.surge.chargeTime": {
     "value": 0.75,
     "status": "derived from pinned extracted data; physical scale unverified",
@@ -1981,6 +2026,16 @@
   },
   "movement.surge.armorHP": {
     "value": 100,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "movement.surge.chargeMoveScale": {
+    "value": 0.25,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "movement.wallRollMaximumAngle": {
+    "value": 0.7853981633974483,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
@@ -2337,6 +2392,66 @@
       "index": 0,
       "factor": 1,
       "rawValue": 1
+    }
+  },
+  "gearExtra.enemyActionSpeedScale.0": {
+    "value": 0.5,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/misc/params.json#/OpInk_MoveVel_ShotK",
+      "index": 2,
+      "factor": 1,
+      "rawValue": 0.5
+    }
+  },
+  "gearExtra.enemyActionSpeedScale.1": {
+    "value": 0.75,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/misc/params.json#/OpInk_MoveVel_ShotK",
+      "index": 1,
+      "factor": 1,
+      "rawValue": 0.75
+    }
+  },
+  "gearExtra.enemyActionSpeedScale.2": {
+    "value": 1,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/misc/params.json#/OpInk_MoveVel_ShotK",
+      "index": 0,
+      "factor": 1,
+      "rawValue": 1
+    }
+  },
+  "gearExtra.enemyInkGraceFrames.0": {
+    "value": 0,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/misc/params.json#/OpInk_ArmorHP",
+      "index": 2,
+      "factor": 1,
+      "rawValue": 0
+    }
+  },
+  "gearExtra.enemyInkGraceFrames.1": {
+    "value": 26,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/misc/params.json#/OpInk_ArmorHP",
+      "index": 1,
+      "factor": 1,
+      "rawValue": 26
+    }
+  },
+  "gearExtra.enemyInkGraceFrames.2": {
+    "value": 39,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/misc/params.json#/OpInk_ArmorHP",
+      "index": 0,
+      "factor": 1,
+      "rawValue": 39
     }
   },
   "respawnChaseTime": {
