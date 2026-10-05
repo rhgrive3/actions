@@ -57,8 +57,8 @@ export function adaptNetworkSource(rel, code) {
       'while (i < p.events.length && p.events[i][0] <= tr && (!Number.isFinite(p.events[i]._netTick) || !Number.isFinite(p.sim) || p.events[i]._netTick <= p.sim + .0306)) i++;',
       'events share owner simulation time during render hitches');
     patch('      if (drop) { this._remove(a); continue; }\n      a.owner = this.s.hostId;',
-      '      if (drop) { this._remove(a); continue; }\n      retireNetworkGhosts(a);\n      a.owner = this.s.hostId;', 'retire old timeline before remote owner transfer');
-    patch('  _adopt(a) {', '  _adopt(a) {\n    retireNetworkGhosts(a);', 'ownership transfer retirement');
+      '      if (drop) { this._remove(a); continue; }\n      retireNetworkGhosts(a);\n      if (a.net) a.net._stormBirthAuth = null;\n      a.owner = this.s.hostId;', 'retire old timeline before remote owner transfer');
+    patch('  _adopt(a) {', '  _adopt(a) {\n    retireNetworkGhosts(a);\n    if (a.net) a.net._stormBirthAuth = null;', 'ownership transfer retirement');
     patch('r3(o.seed ?? Math.random())', 'o.seed ?? Math.random()', 'preserve paint pattern seed');
     patch('r3(p.delay || 0), r3(p.life), r3(p.straight)', 'p.delay || 0, p.life, p.straight', 'preserve exact physics timing boundaries');
     patch('p.nose ?? 0.3, p.sats ?? 3]);', 'p.nose ?? 0.3, p.sats ?? 3, p.s3Vertical ? 1 : 0, p.seed, (p._netId = this._projectileSeq = (this._projectileSeq || 0) + 1)]);', 'append birth mode, appearance seed, identity');
@@ -94,7 +94,16 @@ export function adaptNetworkSource(rel, code) {
     switch (e[1]) {`, 'event ownership');
     patch("case 'b': { const a = this.byNid.get(e[2]); if (a) G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9]); break; }", `case 'b': {
         for (let index = 4; index <= 9; index++) if (!Number.isFinite(e[index])) return;
-        const a = this.byNid.get(e[2]), b = a && G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9]);
+        const a = this.byNid.get(e[2]);
+        if (e[3] === 'storm') {
+          const auth = a?.net?._stormBirthAuth;
+          if (!a?.alive || a.weapon?.special !== 'storm' || a.specialActive?.id !== 'storm'
+            || !auth || auth.used || auth.owner !== from
+            || !Number.isSafeInteger(e._netTick) || e._netTick !== auth.tick
+            || !Number.isSafeInteger(e._netSeq) || e._netSeq <= auth.useSeq) break;
+          auth.used = true;
+        }
+        const b = a && G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9]);
         if (b) {
           b._netBorn = e[0]; b._netBornTick = e._netTick; b._netPeer = this.peers.get(from); b._netSteps = 0;
         }
@@ -103,11 +112,19 @@ export function adaptNetworkSource(rel, code) {
     patch("case 'ev': this._playEvent(e[2], e[3]); break;", `case 'ev': {
         const before = G.projectiles?.beams.length || 0;
         const actor = this.byNid.get(e[3]?.actor?.n);
+        if (actor && e[2] === 'special:use') {
+          if (e[3]?.id === 'storm' && actor.alive && actor.weapon?.special === 'storm'
+            && actor.specialActive?.id === 'storm' && Number.isSafeInteger(e._netTick) && Number.isSafeInteger(e._netSeq)) {
+            actor.net._stormBirthAuth = { owner: from, tick: e._netTick, useSeq: e._netSeq, used: false };
+          } else if (actor.net) actor.net._stormBirthAuth = null;
+        }
         if (actor && e[2] === 'weapon:fire') actor._netFlickFirst = e[3].projectileFirst;
         try { this._playEvent(e[2],e[3]); } finally { if (actor) actor._netFlickFirst = undefined; }
         for (let i = before; i < (G.projectiles?.beams.length || 0); i++) { const b = G.projectiles.beams[i]; b._netPeer = this.peers.get(from); b._netBorn = e[0]; b._netBornTick = e._netTick; b._netOwner = actor; b._netSteps = 0; }
         break;
       }`, 'beam birth clock');
+    patch('    victim.specialActive = null; victim.superJumpState = null;', '    if (victim.net) victim.net._stormBirthAuth = null;\n    victim.specialActive = null; victim.superJumpState = null;', 'death invalidates storm admission');
+    patch('  _remoteRespawn(a) {\n    a.alive = true;', '  _remoteRespawn(a) {\n    if (a.net) a.net._stormBirthAuth = null;\n    a.alive = true;', 'respawn invalidates storm admission');
     patch("case 'p': { const a = this.byNid.get(e[2]); if (a) G.projectiles?.ghostProjectile(a, e); break; }", `case 'p': {
         for (let index = 5; index <= 18; index++) if (!Number.isFinite(e[index])) return;
         if (e[11] < 0 || e[12] <= 0) return;
