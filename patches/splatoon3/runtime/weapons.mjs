@@ -1,3 +1,4 @@
+import { installFinalDamage, damageGroupId } from './final-damage.mjs';
 import { installWeaponEdgecases } from './weapon-edgecases.mjs';
 import { installRollerLogic } from './roller.mjs';
 let api;
@@ -37,7 +38,7 @@ export function applyProjectileHit(system, projectile, victim, amount, point) {
   if (['shooter', 'dualies', 'splatling'].includes(weapon.kind)) amount = ageDamage(weapon, projectile.age, amount);
   if (weapon.kind === 'roller' && point) amount = distanceDamage(projectile.s3Vertical ? weapon.verticalDamageBands : weapon.flickDamageBands, projectile.start.distanceTo(point));
   amount = groupDamage(projectile.s3DamageGroup, victim, amount);
-  if (amount > 0) system.applyHit(projectile.owner, victim, amount, projectile.wid || projectile.type);
+  if (amount > 0) system.applyHit(projectile.owner, victim, amount, projectile.wid || projectile.type, damageGroupId(projectile.s3DamageGroup));
 }
 export function installWeapons(context, profile) {
   api = context;
@@ -214,5 +215,6 @@ export function installWeapons(context, profile) {
     if (this.charging && w.kind === 'charger' && Number.isFinite(w.moveSpeedFiring)) return w.moveSpeedFiring;
     return moveSpeed.call(this);
   };
+  installFinalDamage(api);
   installWeaponEdgecases(api);
 }
