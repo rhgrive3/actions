@@ -165,42 +165,87 @@ function retireNetworkGhosts(owner = null) {
   }
 
   ghostBomb`, 'exact ghost metadata');
-    patch('      if (p.delay > 0) { p.delay -= dt; if (p.delay > 0) continue; }', `      if (p.ghost && p._netPeer) {
+    if (code.includes('      const elapsed = Math.max(0, dt - Math.max(0, p.delay || 0));')) {
+      patch(`      const elapsed = Math.max(0, dt - Math.max(0, p.delay || 0));
+      p.delay = Math.max(0, (p.delay || 0) - dt);
+      if (elapsed <= 1e-10) continue;`, `      if (p.ghost && p._netPeer) {
         const clock = Math.min(p._netPeer.tr,p._netPeer.lastTs ?? p._netPeer.tr);
-        const elapsed = Number.isFinite(p._netPeer.sim) && Number.isFinite(p._netBornTick) ? p._netPeer.sim - p._netBornTick : (clock-p._netBorn)/SIM_DT;
-        const target = Math.min(Math.floor(elapsed+.0306)+1,p._netEndStep ?? Infinity);
-        // Step on the owner's playback clock, never on receipt wall time.
-        // .0306 tick tolerates 0.51 ms legacy timestamp rounding, not travel distance.
-        // Finite lifetime bounds catch-up work, including a delayed birth.
+        const ownerElapsed = Number.isFinite(p._netPeer.sim) && Number.isFinite(p._netBornTick) ? p._netPeer.sim - p._netBornTick : (clock-p._netBorn)/SIM_DT;
+        const target = Math.min(Math.floor(ownerElapsed+.0306)+1,p._netEndStep ?? Infinity);
         const limit = p._netMaxSteps;
         let dead = false;
         if (nm) nm.mute++;
         try {
           while (!dead && p._netSteps < target && p._netSteps < limit) {
             p._netSteps++;
-            if (p.delay > 0) { p.delay -= SIM_DT; if (p.delay > 0) continue; }
-            dead = this._step(p, SIM_DT);
+            const activeDt = Math.max(0, SIM_DT - Math.max(0, p.delay || 0));
+            p.delay = Math.max(0, (p.delay || 0) - SIM_DT);
+            if (activeDt <= 1e-10) continue;
+            dead = this._step(p, activeDt);
           }
         } finally { if (nm) nm.mute--; }
         dead ||= p._netEnded && p._netSteps >= p._netEndStep;
         if (dead) { p._qualityDead = true; list[i] = list[list.length-1]; list.pop(); this.pool.push(p); }
         continue;
       }
-      if (p.delay > 0) { p.delay -= dt; if (p.delay > 0) continue; }`, 'owner timeline projectile advancement');
+      const elapsed = Math.max(0, dt - Math.max(0, p.delay || 0));
+      p.delay = Math.max(0, (p.delay || 0) - dt);
+      if (elapsed <= 1e-10) continue;`, 'owner timeline projectile advancement with fractional delay');
+    } else {
+      patch('      if (p.delay > 0) { p.delay -= dt; if (p.delay > 0) continue; }', `      if (p.ghost && p._netPeer) {
+          const clock = Math.min(p._netPeer.tr,p._netPeer.lastTs ?? p._netPeer.tr);
+          const elapsed = Number.isFinite(p._netPeer.sim) && Number.isFinite(p._netBornTick) ? p._netPeer.sim - p._netBornTick : (clock-p._netBorn)/SIM_DT;
+          const target = Math.min(Math.floor(elapsed+.0306)+1,p._netEndStep ?? Infinity);
+          // Step on the owner's playback clock, never on receipt wall time.
+          // .0306 tick tolerates 0.51 ms legacy timestamp rounding, not travel distance.
+          // Finite lifetime bounds catch-up work, including a delayed birth.
+          const limit = p._netMaxSteps;
+          let dead = false;
+          if (nm) nm.mute++;
+          try {
+            while (!dead && p._netSteps < target && p._netSteps < limit) {
+              p._netSteps++;
+              if (p.delay > 0) { p.delay -= SIM_DT; if (p.delay > 0) continue; }
+              dead = this._step(p, SIM_DT);
+            }
+          } finally { if (nm) nm.mute--; }
+          dead ||= p._netEnded && p._netSteps >= p._netEndStep;
+          if (dead) { p._qualityDead = true; list[i] = list[list.length-1]; list.pop(); this.pool.push(p); }
+          continue;
+        }
+        if (p.delay > 0) { p.delay -= dt; if (p.delay > 0) continue; }`, 'owner timeline projectile advancement');
+    }
     patch('      if (!dead && p.pos.y < PLAYER.waterY - 1.8) dead = true;\n      return dead;', `      if (!dead && p.pos.y < PLAYER.waterY - 1.8) dead = true;
       if (dead && !p.ghost && p._netId !== undefined && G.netm) G.netm._rec(p._netHitActor ? ['pe',p.owner.nid,p._netId,1,p._netHitX,p._netHitY,p._netHitZ] : ['pe',p.owner.nid,p._netId,0]);
       return dead;`, 'owner terminal publication');
     patch('          let dmg = p.damage;', '          p._netHitActor = true; p._netHitX = _v.x; p._netHitY = _v.y; p._netHitZ = _v.z;\n          let dmg = p.damage;', 'capture owner actor impact');
-    patch('      p.pos.addScaledVector(p.vel, dt);\n      let dead = false;', `      p.pos.addScaledVector(p.vel, dt);
+    if (code.includes('      advanceFidelityProjectile(p, dt);')) {
+      patch('      advanceFidelityProjectile(p, dt);', `      advanceFidelityProjectile(p, dt);
       if (p.ghost && p._netEndReason === 1 && p._netSteps >= p._netEndStep) {
         _v.set(p._netHitX,p._netHitY,p._netHitZ);
         G.fx?.burst(_v,_v2.copy(p.vel).normalize().negate(),p.owner.color,{count:6,speed:3,size:.07});
         if (p.type === 'blast') this._blastBurst(p,_v,null);
         if (p.type === 'slosh' && p.head) this._sloshSplash(p,_v,null);
         return true;
-      }
-      let dead = false;`, 'owner actor terminal effect');
-    patch('      // actors\n      for (const e of G.actors) {', '      // Actor collisions belong to the shooter; terminal events retire ghosts.\n      for (const e of G.actors) {\n        if (p.ghost) break;', 'authoritative actor collision ownership');
+      }`, 'owner actor terminal effect with fidelity integration');
+    } else {
+      patch('      p.pos.addScaledVector(p.vel, dt);\n      let dead = false;', `      p.pos.addScaledVector(p.vel, dt);
+        if (p.ghost && p._netEndReason === 1 && p._netSteps >= p._netEndStep) {
+          _v.set(p._netHitX,p._netHitY,p._netHitZ);
+          G.fx?.burst(_v,_v2.copy(p.vel).normalize().negate(),p.owner.color,{count:6,speed:3,size:.07});
+          if (p.type === 'blast') this._blastBurst(p,_v,null);
+          if (p.type === 'slosh' && p.head) this._sloshSplash(p,_v,null);
+          return true;
+        }
+        let dead = false;`, 'owner actor terminal effect');
+    }
+    if (code.includes('      for (const e of fidelityProjectileTargets(this, p)) {')) {
+      patch('      for (const e of fidelityProjectileTargets(this, p)) {',
+        '      for (const e of fidelityProjectileTargets(this, p)) {\n        if (p.ghost) break;',
+        'authoritative actor collision ownership with fidelity chronology');
+    } else {
+      patch('      // actors\n      for (const e of G.actors) {', '      // Actor collisions belong to the shooter; terminal events retire ghosts.\n      for (const e of G.actors) {\n        if (p.ghost) break;', 'authoritative actor collision ownership');
+    }
     patch('      if (!dead && G.boss) {', '      if (!dead && G.boss && !p.ghost) {', 'authoritative boss collision ownership');
     patch('    if (b.dir) b.dir.set(vx, 0, vz).normalize();', '    if (b.dir) b.dir.set(vx, 0, vz).normalize();\n    return b;', 'ghost bomb handle');
     const bombStart = code.indexOf('  _updateBombs(dt) {'), bombEnd = code.indexOf('  _updateClouds(dt) {', bombStart);

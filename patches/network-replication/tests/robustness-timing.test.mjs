@@ -35,10 +35,11 @@ test('a fractional slosh delay survives the wire so later globs leave on the sam
   f.projectiles.fireSlosh(local, local.weapon);
   const events = nm.out.filter((e) => e[1] === 'p');
   assert.ok(events.length > 1, 'slosher produced no volley');
-  // glob i delays by i * 0.012; the exact fractions must round-trip
+  // #64 uses the pinned UnitDelayFrame/AfterOffsetDelayFrame source values.
+  // They are exact 60 Hz frame fractions and must round-trip without r3 ms loss.
   const delays = events.map((e) => e[11]).filter((d) => d > 0);
   assert.ok(delays.length > 0, 'no delayed globs were recorded');
-  for (const d of delays) assert.ok(Math.abs(d * 1000 - Math.round(d * 1000)) < 1e-9, `delay lost precision: ${d}`);
+  for (const d of delays) assert.ok(Math.abs(d * 60 - Math.round(d * 60)) < 1e-9, `delay lost source-frame precision: ${d}`);
 });
 
 test('a ghost storm cloud advances on the owner clock and retires at its duration', async () => {

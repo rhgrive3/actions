@@ -10,7 +10,7 @@ export function numericStatus(profile) {
       const binding = profile.bindings?.[key] || null;
       result[key] = { value, status: binding ? 'derived from pinned extracted data; physical scale unverified' : 'calibration or derived value; see reference raw table and unverified list', binding };
     } else if (value && typeof value === 'object') {
-      for (const [name, next] of Object.entries(value)) if (name !== 'bindings' && name !== 'calibration') visit(next, key ? `${key}.${name}` : name);
+      for (const [name, next] of Object.entries(value)) if (name !== 'bindings' && name !== 'calibration' && name !== 'weaponsFidelityCompletion') visit(next, key ? `${key}.${name}` : name);
     }
   }
   visit(profile, ''); return result;
