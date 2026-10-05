@@ -15,21 +15,20 @@
 // Scope: only the radius handed to G.paint.splat at a Roller flick glob's own
 // paint events is scaled by that glob's flight age. The multiplier is applied
 // exactly once per paint event and composes multiplicatively with whatever
-// width is already selected for that event, so #411's per-group near/far
-// widths (still pending: the runtime only stores those parameters, it has no
-// runtime age composition yet) stay independently selectable, and the
+// width is already selected for that event. Per-group distance-width selection
+// remains a separate dimension, as does the
 // depletion paint scaling, player/field collision radii (#402), visual draw
 // size and the age damage falloff (#124/#128) all stay separate dimensions.
 //
 // The transition is linear between the pinned start/end frames — the same
-// validated semantics the active runtime already uses for the sibling
-// ChangeFrame age windows (`ageDamage` in runtime/weapons.mjs interpolates
-// linearly between its frame-converted seconds). Splatoon 3 publishes no
-// sub-frame curve for these fields, so no other curve is asserted here.
+// interpolation convention used by this reconstruction's sibling ageDamage
+// window. The pinned table establishes the endpoints, not the engine curve;
+// this linear interpolation is an explicit implementation inference and has
+// not been verified against original-game sub-frame captures.
 //
-// Remote ghosts never carry the owner's weapon tag (`ghostProjectile` pushes
-// them without `_push`) and their paint is muted by NetMatch while they step,
-// so this cannot turn a ghost into an authoritative painter.
+// Current main also tags remote ghosts with weapon metadata. The explicit
+// p.ghost guard keeps those visual replicas outside age-based paint changes;
+// NetMatch independently mutes their authoritative paint while they step.
 export const ROLLER_PAINT_AGE = Object.freeze({
   // Pinned Ver. 11.3.0 values; frames are S3 60 Hz frames, compared as seconds.
   matureRate: 0.6,

@@ -56,6 +56,11 @@ function isolateGlob(ps, glob) {
   ps.list.push(glob);
   glob.pos.set(0, 1.3, 0); glob.prev.copy(glob.pos); glob.start.copy(glob.pos);
   glob.vel.set(0, 0, 1); glob.grav = 0; glob.drag = 0;
+  // Current main has a phase-based flight overlay in addition to grav/drag.
+  // Isolate paint chronology from trajectory, as this fixture already does
+  // for native flight; otherwise overlay gravity hits the ground before 50f.
+  // Actual flight remains covered by the unchanged weapon edge-case suite.
+  glob.fidelityMove = null;
   glob.trail = 0; glob.trailEvery = 1e9;   // never drips until the test arms it
   return glob;
 }
@@ -82,9 +87,15 @@ function stepTrailAt(ps, glob, frames) {
 function stepImpactAt(f, ps, glob, frames) {
   for (let i = 1; i < frames; i++) assert.equal(ps._step(glob, DT), false, `glob survives to ${frames}f`);
   const at = new f.THREE.Vector3(0, 1.3, 0);
-  f.G.physics.segment = () => ({ hit: true, point: at.clone(), normal: new f.THREE.Vector3(0, 1, 0) });
-  assert.equal(ps._step(glob, DT), true, 'world contact retires the glob');
+  assert.equal(ps._step(glob, DT), false, 'neutral flight advances to the impact age');
   close(glob.age * 60, frames, 1e-6);
+  const before = { size: glob.size, radius: glob.radius, vis: glob.vis,
+    damage: glob.damage, dmgFar: glob.dmgFar, seed: glob.seed };
+  // Inject the contact at the native impact boundary. Current main's swept
+  // collision bypasses the older Physics.segment stub; collision itself is
+  // covered by the unchanged fidelity edge-case tests, not this paint test.
+  ps._impact(glob, { hit: true, point: at, normal: new f.THREE.Vector3(0, 1, 0) });
+  return before;
 }
 
 test('pinned reference, runtime constants and both native paint connections agree', async () => {
@@ -196,8 +207,7 @@ test('only the paint footprint moves: collision, visual size, damage and the imp
   const glob = fireRollerGlob(ps, a, true);
   const events = [];
   const off = f.on('weapon:impact', e => events.push(e));
-  const before = { size: glob.size, radius: glob.radius, vis: glob.vis, damage: glob.damage, dmgFar: glob.dmgFar, seed: glob.seed };
-  stepImpactAt(f, ps, glob, 50);
+  const before = stepImpactAt(f, ps, glob, 50);
   off();
   close(paints[0].radius, before.radius * 0.6);
   assert.equal(glob.size, before.size, 'player collision radius is a separate dimension (#402)');
@@ -228,9 +238,10 @@ test('owner paint stays authoritative and remote ghosts never paint', async () =
   assert.equal(ps.list.length, 13);
   for (const ghost of ps.list) {
     assert.ok(ghost.ghost);
-    assert.equal(ghost.s3Weapon, null, 'a ghost carries no owner weapon tag');
+    assert.equal(ghost.s3Weapon?.kind, 'roller', 'current fidelity preserves replica weapon metadata');
     ghost.pos.set(0, 1.3, 0); ghost.prev.copy(ghost.pos); ghost.start.copy(ghost.pos);
     ghost.vel.set(0, 0, 1); ghost.grav = 0; ghost.drag = 0;
+    ghost.fidelityMove = null;
     ghost.trail = 0; ghost.trailEvery = 1e9;
   }
   for (let i = 1; i < 50; i++) ps.update(DT);

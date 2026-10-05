@@ -29,8 +29,9 @@
     "ChangeWidthStartFrame": "frame at which the paint-radius reduction begins",
     "ChangeWidthEndFrame": "frame by which the paint-radius reduction has completed"
   },
-  "transition": "Linear between ChangeWidthStartFrame and ChangeWidthEndFrame: no reduction at or before the start frame, ChangeFrameWidthRate exactly at the end frame. Splatoon 3 publishes no sub-frame curve for these fields, so no other curve is claimed.",
+  "transition": "This reconstruction chooses linear interpolation between the pinned endpoints, consistent with its existing ageDamage convention. The parameter table does not establish the original engine interpolation curve; physical sub-frame parity is unverified.",
   "explicitUnknowns": [
+    "original-engine interpolation curve within the transition window is unverified",
     "sub-frame interpolation rounding inside the transition window is unverified",
     "whether the reduction is sampled per frame or continuously by the original integrator is unverified",
     "INKWAVE world-unit calibration is not involved: this dimension is a frame-based multiplier only"
