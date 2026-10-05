@@ -1469,71 +1469,6 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
-  "conditionalGear.lastDitchWindow": {
-    "value": 30,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "conditionalGear.lastDitchAP": {
-    "value": 18,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "conditionalGear.comebackDuration": {
-    "value": 20,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "conditionalGear.comebackAP": {
-    "value": 10,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "conditionalGear.openingDuration": {
-    "value": 30,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "conditionalGear.openingAP": {
-    "value": 30,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "conditionalGear.openingExtension": {
-    "value": 15,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "gear.subResistance.0": {
-    "value": 1,
-    "status": "derived from pinned extracted data; physical scale unverified",
-    "binding": {
-      "parameter": "data/parameter/1130/misc/params.json#/DamageRt_BombH",
-      "index": 2,
-      "factor": 1,
-      "rawValue": 1
-    }
-  },
-  "gear.subResistance.1": {
-    "value": 0.75,
-    "status": "derived from pinned extracted data; physical scale unverified",
-    "binding": {
-      "parameter": "data/parameter/1130/misc/params.json#/DamageRt_BombH",
-      "index": 1,
-      "factor": 1,
-      "rawValue": 0.75
-    }
-  },
-  "gear.subResistance.2": {
-    "value": 0.5,
-    "status": "derived from pinned extracted data; physical scale unverified",
-    "binding": {
-      "parameter": "data/parameter/1130/misc/params.json#/DamageRt_BombH",
-      "index": 0,
-      "factor": 1,
-      "rawValue": 0.5
-    }
-  },
   "gear.runSpeed.0": {
     "value": 1,
     "status": "derived from pinned extracted data; physical scale unverified",
@@ -1892,6 +1827,36 @@
       "index": null,
       "factor": 0.022222222222222223,
       "rawValue": 5
+    }
+  },
+  "gear.subResistance.0": {
+    "value": 1,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/misc/params.json#/DamageRt_BombH",
+      "index": 2,
+      "factor": 1,
+      "rawValue": 1
+    }
+  },
+  "gear.subResistance.1": {
+    "value": 0.75,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/misc/params.json#/DamageRt_BombH",
+      "index": 1,
+      "factor": 1,
+      "rawValue": 0.75
+    }
+  },
+  "gear.subResistance.2": {
+    "value": 0.5,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/misc/params.json#/DamageRt_BombH",
+      "index": 0,
+      "factor": 1,
+      "rawValue": 0.5
     }
   },
   "resources.inkRefillSwim": {
@@ -2681,6 +2646,41 @@
   },
   "weaponsFidelity.freeGravity": {
     "value": 57.599999999999994,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "conditionalGear.lastDitchWindow": {
+    "value": 30,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "conditionalGear.lastDitchAP": {
+    "value": 18,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "conditionalGear.comebackDuration": {
+    "value": 20,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "conditionalGear.comebackAP": {
+    "value": 10,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "conditionalGear.openingDuration": {
+    "value": 30,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "conditionalGear.openingAP": {
+    "value": 30,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "conditionalGear.openingExtension": {
+    "value": 15,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   }
