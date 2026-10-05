@@ -896,3 +896,29 @@ test('actual native factory failures retire candidate resources and restore rend
     current.dispose(); prevRT.dispose();
   }
 });
+
+test('native lobby materials invalidate cached programs only when texlib presence changes', async () => {
+  const THREE = await import(path.join(ROOT, 'inkwave-public/vendor/three/build/three.module.js'));
+  const native = await loadComposedModule('src/world/texlib.js');
+  const mats = await loadComposedModule('src/game/lobbySet-mats.js');
+  const lib = await native.createTextureLibrary(createMockRenderer(THREE), { size: 256 });
+  const texture = new THREE.DataTexture(new Uint8Array(4), 1, 1);
+  const surface = mats.surfaceMaterial(mats.makeUniforms(), null, texture, texture);
+  const ground = mats.groundMaterial(mats.makeUniforms(), null, texture, new THREE.Vector4(), texture);
+  const game = { showcase: { lob: { set: { mat: { surface, ground } } } } };
+  const versions = [surface.version, ground.version];
+  updateLobbyTexlib(game, lib);
+  [surface, ground].forEach((m, i) => assert.equal(m.version, versions[i] + 1, 'Three renderer requires needsUpdate to acquire the newly texlib-enabled shader'));
+  updateLobbyTexlib(game, lib);
+  [surface, ground].forEach((m, i) => assert.equal(m.version, versions[i] + 1, 'Stable texlib presence updates uniforms without recompiling'));
+  lib.dispose();
+  surface.userData.shaderUniforms = { tAlbedo: { value: lib.albedo }, tNormal: { value: lib.normal }, tOrm: { value: lib.orm } };
+  updateLobbyTexlib(game, null);
+  [surface, ground].forEach((m, i) => {
+    assert.equal(m.version, versions[i] + 2, 'Disposed library removal must acquire the procedural shader');
+    assert.equal(m.userData.texlibHolder.lib, null);
+  });
+  assert.equal(surface.userData.shaderUniforms.tAlbedo.value, null);
+  assert.equal(game.showcase.lob.set.texlib, null);
+  surface.dispose(); ground.dispose(); texture.dispose();
+});

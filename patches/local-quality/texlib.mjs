@@ -53,19 +53,13 @@ export function updateLobbyTexlib(game, newLib) {
   const validLib = (newLib && !newLib.disposed) ? newLib : null;
   const set = game?.showcase?.lob?.set || game?.showcase?.lobbySet || game?.lobbySet;
   if (!set) return;
-  if (validLib) {
-    set.texlib = validLib;
-  } else if (set.texlib?.disposed) {
-    set.texlib = null;
-  }
+  set.texlib = validLib;
   const mats = [set.surfaceMat, set.groundMat, set.mats?.surface, set.mats?.ground, set.mat?.surface, set.mat?.ground].filter(Boolean);
   for (const m of mats) {
     if (m.userData?.texlibHolder) {
-      if (validLib) {
-        m.userData.texlibHolder.lib = validLib;
-      } else if (m.userData.texlibHolder.lib?.disposed) {
-        m.userData.texlibHolder.lib = null;
-      }
+      const holder = m.userData.texlibHolder;
+      if (!!holder.lib !== !!validLib) m.needsUpdate = true;
+      holder.lib = validLib;
     }
     const u = m.userData?.shaderUniforms;
     if (u) {
@@ -111,9 +105,9 @@ export function updateLobbyTexlib(game, newLib) {
           }
         }
       } else {
-        if (u.tAlbedo && (u.tAlbedo.value?.disposed || newLib?.disposed)) u.tAlbedo.value = null;
-        if (u.tNormal && (u.tNormal.value?.disposed || newLib?.disposed)) u.tNormal.value = null;
-        if (u.tOrm && (u.tOrm.value?.disposed || newLib?.disposed)) u.tOrm.value = null;
+        if (u.tAlbedo) u.tAlbedo.value = null;
+        if (u.tNormal) u.tNormal.value = null;
+        if (u.tOrm) u.tOrm.value = null;
       }
     }
   }

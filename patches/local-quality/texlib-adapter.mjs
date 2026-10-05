@@ -96,7 +96,7 @@ export function adaptTexlibSource(rel, code) {
       '    if (this.stageLightmap) { this.stageLightmap.dispose(); this.stageLightmap = null; }\n' +
       '    if (this.props) { this.props.dispose?.(); this.props = null; }\n' +
       '    G.paint?.dispose();\n' +
-      '    if (nextTexlib) { this.texlib = nextTexlib; updateLobbyTexlib(this, nextTexlib); } else if (this.texlib?.disposed) { this.texlib = null; }\n' +
+      '    if (nextTexlib) { this.texlib = nextTexlib; updateLobbyTexlib(this, nextTexlib); } else if (this.texlib?.disposed) { this.texlib = null; updateLobbyTexlib(this, null); }\n' +
       '    if (oldTexlib && oldTexlib !== nextTexlib && !oldTexlib.disposed) oldTexlib.dispose();\n' +
       '    this.layoutId = layoutId;',
       'main _buildWorld transition');
