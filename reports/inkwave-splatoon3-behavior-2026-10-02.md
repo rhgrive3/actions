@@ -234,3 +234,7 @@ cloud/Halyard cube allocation at default high settings, not only after later
 runtime refresh. Existing formats, appearance policy and gameplay stay intact.
 These are project resource dimensions, not Nintendo/Switch memory values.
 See [the cold-boot budget report](inkwave-cold-boot-budgets-2026-10-04.md).
+
+## 2026-10-05 Roller flick target (#373)
+
+The [Roller movement comparison](inkwave-roller-flick-movement-2026-10-05.md) replaces the native windup-progress slowdown with the already sourced2.88 WU/s attack target for horizontal/vertical swings. Release timing, ink, pose, gear ownership and rolling/post-release branches stay separate; absolute physical scale and Switch acceptance remain unverified.
