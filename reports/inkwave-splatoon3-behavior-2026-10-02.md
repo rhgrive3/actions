@@ -250,3 +250,22 @@ cloud/Halyard cube allocation at default high settings, not only after later
 runtime refresh. Existing formats, appearance policy and gameplay stay intact.
 These are project resource dimensions, not Nintendo/Switch memory values.
 See [the cold-boot budget report](inkwave-cold-boot-budgets-2026-10-04.md).
+
+## 2026-10-05: projectile pool owner severing (#622)
+
+Issue #622: `inkwave-public/src/game/weapons.js` の `Projectiles` は、通常完了
+（`update()` 内のリサイクル）と `Projectiles.clear()`（マッチ遷移）の双方でレコードを
+永続 `G.projectiles.pool` へ `p.owner` を切断しないまま戻していた。network ghost の完了
+挿入（`patches/network-replication/adapter.mjs` の2系統）も同様で、廃棄済みマッチの
+Actor グラフが当該レコードが再利用されるまで強参照され続けた。修正は splatoon3 ソース
+アダペータが `Projectiles._recycle(p)`（`p.owner = null` → pool 追加）を追加し、native
+2 箇所と network ghost 挿入 2 箇所をそのヘルパ経由に変更したもの。アクティブ中の
+owner 所有、ダメージ、ネットワーク、pool 再利用/ハイウォーター挙動は維持する。
+
+| 項目 | 内容 |
+|---|---|
+| 本家の根拠 | 本項目は INKWAVE の JS ライフサイクル欠陥であり、スプラトゥーン3 の数値・フレーム仕様には依存しない。本家の実機メモリ計測は行っていない |
+| INKWAVE の実装箇所 | `patches/splatoon3/adapter.mjs`（weapons.js セクションの `_recycle` と2リサイクル点）、`patches/network-replication/adapter.mjs`（ghost 完了の2挿入） |
+| 再現操作 | 実 `Projectiles`（weapon-edgecases fixture + 実アダペータ合成）で volley を投げ `clear()`／床への自然完了を待つと、修正前は pool 内レコードの `owner` が Actor のまま残る |
+| プレイへの影響 | 試合後メニュー／アトラクト中に旧試合の Actor グラフ（Character、WeaponRunner、アニメーション状態）が GC されず、モバイルのヒープ圧と GC トラバーサルが増える |
+| 確認状態 | **ロジック確認済み**（`projectile-lifetime.test.mjs` が修正前に失敗・修正後に合格、weapon-edgecases 16/16、network 全49/49、action-admission、movement-composition、full build chain 85 モジュール合成）。**実機 DevTools ヒープスナップショット／GC による保持の実測は未確認**。未確認項目として維持する |
