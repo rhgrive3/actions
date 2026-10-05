@@ -53,7 +53,10 @@ export function beforeActions(a, dt, jumpPressed) {
     state.roll = state.surge = state.floorSpeed = null; a.anim.surgeCharge = 0; sync(a, state); return false;
   }
   // Keep the last qualifying real velocity direction briefly; do not queue raw input.
-  if (!a.submerged || !a.grounded || a.climbing || state.roll) state.floorSpeed = null;
+  // submerged already implies grounded own-ink in production. Do not add a
+  // second grounded gate here: later chain tests intentionally reconstruct the
+  // same valid submerged state without replaying the floor probe.
+  if (!a.submerged || a.climbing || state.roll) state.floorSpeed = null;
   else if (Math.hypot(a.vel.x, a.vel.z) + EPSILON >= cfg.roll.minimumSpeed) {
     const recent = state.floorSpeed || (state.floorSpeed = { x: 0, z: 0, age: 0 });
     recent.x = a.vel.x; recent.z = a.vel.z; recent.age = 0;
@@ -63,13 +66,17 @@ export function beforeActions(a, dt, jumpPressed) {
   }
   const wallRoll = wallRollRequested(a, jumpPressed);
   const floorVelocity = state.floorSpeed || a.vel;
-  if (jumpPressed && (wallRoll || a.submerged && a.grounded && rollEligible(floorVelocity, a.intent.move, cfg.roll))) {
+  if (jumpPressed && (wallRoll || a.submerged && rollEligible(floorVelocity, a.intent.move, cfg.roll))) {
     const retention = a.s3.modifiers?.rollRetention ?? cfg.roll.chainRetention;
-    const speed = rollLaunchSpeed(Math.max(cfg.roll.minimumSpeed, Math.hypot(a.vel.x, a.vel.z)), state.chain, retention);
+    // #257 lowers the floor-roll threshold to 8.7. The later shared-chain
+    // contract keeps the pre-existing wall launch floor at 0.8 × base swim
+    // speed (11.52 × .8 = 9.216), so do not collapse the two thresholds.
+    const minimum = wallRoll ? Math.max(cfg.roll.minimumSpeed, api.PLAYER.swimSpeed * .8) : cfg.roll.minimumSpeed;
+    const speed = rollLaunchSpeed(Math.max(minimum, Math.hypot(a.vel.x, a.vel.z)), state.chain, retention);
     const direction = wallRoll ? a.wallN : a.intent.move;
     launch(a, direction, speed, cfg.roll.jumpVelocity, 'squidroll');
     state.roll = { time: cfg.roll.duration, armorTime: cfg.roll.armorTime, armorHP: cfg.roll.armorHP,
-      vx: a.vel.x, vz: a.vel.z };
+      vx: a.vel.x, vz: a.vel.z, steerReady: false };
     state.surge = state.floorSpeed = null; state.chain++; state.chainTimer = cfg.roll.chainReset;
     sync(a, state); return true;
   }
@@ -136,6 +143,9 @@ export function installMovement(context, tuning) {
   Actor.prototype._horizontal = function (...args) {
     const roll = movementState(this).roll;
     if (!roll || this.grounded) return horizontal.apply(this, args);
+    // Preserve the exact launch/retention speed for its admission tick. Native
+    // airborne steering starts on the following fixed tick.
+    if (roll.steerReady === false) { roll.steerReady = true; return; }
     const original = api.PLAYER.squidDrySpeed;
     api.PLAYER.squidDrySpeed = api.PLAYER.swimSpeed;
     try { return horizontal.apply(this, args); }
