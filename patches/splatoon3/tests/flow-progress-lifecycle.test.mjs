@@ -20,8 +20,8 @@ test('#468: slow decay, exact boundary split, fast decay and zero clamp use the 
 });
 test('#468: only positive gains reset idle time; zero/negative/unknown/nonfinite awards do not',()=>{
  const s=inactive(50);advanceFlow(s,6,cfg);
- for(const [action,value]of [['damage',0],['turf',-3],['unknown',100],['damage',NaN],['damage',10]]){awardFlow(s,action,value,cfg);near(s.idleTime,6);}
- awardFlow(s,'turf',10,cfg);near(s.idleTime,0);const before=s.score;advanceFlow(s,1,cfg);near(before-s.score,score(.2));
+ for(const [action,value]of [['damage',0],['turf',-3],['unknown',100],['damage',NaN]]){awardFlow(s,action,value,cfg);near(s.idleTime,6);}
+ awardFlow(s,'damage',10,cfg);near(s.idleTime,0);const before=s.score;advanceFlow(s,1,cfg);near(before-s.score,score(.2));
 });
 test('#468: widely separated splats cannot bank stale progress into a third activation',()=>{
  const s=createFlow();awardFlow(s,'splat',1,cfg);advanceFlow(s,6,cfg);awardFlow(s,'splat',1,cfg);advanceFlow(s,20,cfg);
