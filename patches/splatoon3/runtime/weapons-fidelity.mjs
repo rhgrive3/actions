@@ -108,7 +108,7 @@ export function beginFidelityWallDrop(system, p, hit) {
   const firstSpeed = Number(move.FallPeriodFirstTargetSpeed), secondSpeed = Number(move.FallPeriodSecondTargetSpeed);
   if (![firstSpeed, secondSpeed].every(v => Number.isFinite(v) && v >= 0)) throw new RangeError('Invalid wall-drop target speed');
   const state = p.fidelityWallDrop = {
-    frame: 0, firstFrames, secondFrames, lastFrames, totalFrames: firstFrames + secondFrames + lastFrames,
+    frame: 0, firstFrames, secondFrames, lastFrames, totalFrames: firstFrames + secondFrames + lastFrames, done: false,
     firstSpeed, secondSpeed,
     shockRadius: Number(paint.PaintRadiusShock) || 0,
     fallRadius: Number(paint.PaintRadiusFall) || 0,
@@ -154,14 +154,16 @@ export function advanceFidelityWallDrop(system, p, dt) {
     if (hit.hit) {
       p.pos.copy(hit.point).addScaledVector(hit.normal, .02);
       if (hit.normal.y > .45) wallDropPaint(p, p.pos, state.groundRadius, state, 0x6a0d);
-      p.vel.set(0, 0, 0);
+      p.vel.set(0, 0, 0); state.done = true;
       return true;
     }
     p.pos.copy(state.next); p.vel.set(0, -speed * 60, 0);
     wallDropFallPaint(p, state, state.from, state.next);
     state.frame += stepFrames; frames -= stepFrames;
   }
-  return state.frame + EPSILON >= state.totalFrames;
+  const done = state.frame + EPSILON >= state.totalFrames;
+  if (done) state.done = true;
+  return done;
 }
 function collisionRecord(c, target, offset = 0) {
   return { initRadius:Math.max(0,c['InitRadiusFor'+target]+offset*(c['AfterOffsetInitRadiusFor'+target]||0)),
@@ -247,6 +249,10 @@ export function fidelityBossHit(system,p) {
 export function fidelityProjectileTargets(system,p) {
   const s=scratch(system),{G,PLAYER}=api;
   s.worldReady=s.bossReady=false;s.boss=null;s.targets.length=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;
+  // A completed wall-drop is an inert ink state, never a damaging projectile.
+  // Keep the generic actor loop structurally intact for the network adapter, but
+  // give it no targets on the terminal wall-drop frame.
+  if (p.fidelityWallDrop?.done) return s.targets;
   // Ghosts share visual collision chronology, but never damage/paint ownership.
   const r0=radiusAt(p.fidelityPlayerCollision,p.fidelityPrevAge??p.age,p.size);
   const r1=fidelityPlayerCollisionRadius(p),radius=PLAYER.radius+Math.max(r0,r1);
