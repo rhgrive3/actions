@@ -281,6 +281,49 @@ Four current-public defects #366/#370 (one duplicate pair), #375, #384, #395 are
 
 See [weapon edge-case comparison](inkwave-weapon-edgecases-2026-10-04.md) for #354/#356/#357/#361: stable-human Dualies3F first emission; Splatling separate ground1.6° pitch envelope; terrain Blaster35HP cap; horizontal Roller12+1 gameplay units. The report separates actual source/minified/composed-code tests from S3 probability/position/falloff and released-tap calibration still pending. No native source or deployed main is changed by the draft.
 
+
+## 2026-10-05: Roller natural free-fall 25F horizontal grace (#479)
+
+スプラトゥーン3（Ver. 11.3.0）におけるローラーの縦振り／横振り選択において、ジャンプ入力なしで崖・段差から自然落下（natural free fall）した際、空中最初の25フレーム（25/60秒 ≒ 約0.417秒）間はZR押下で横振りが維持され、25F経過後（26F以降）に初めて縦振りに移行する仕様（25F grace）が存在する。一方、通常のBジャンプおよび各種アクション射出（イカロール、イカノボリ、スーパージャンプ）では空中1F目から即座に縦振りが選択される。また、崖から足を踏み外した後にBボタンを押下／長押ししても、コヨーテ時間切れ等でネイティブのジャンプ受付（native jump admission）が成立しない単なる入力はジャンプ扱いとならず、25F猶予内であれば横振りが維持される。一度選択された攻撃モード（横振り／縦振り）は攻撃中にジャンプや着地を挟んでもラッチされ、途中でモードが再分類されることはない。
+
+INKWAVEの既存公開実装（`patches/splatoon3/runtime/roller.mjs:29-34`）では、攻撃開始判定が単一の `!a.grounded` で行われており、空中移行の原因（ジャンプ vs 自然落下）の区別および自然落下滞空時間の計測が存在しなかった。そのため、崖から足を踏み外した直後（1F, 10F, 20F等）のZR押下でも即座に縦振りが選択されていた。
+
+Issue #479 の修正（`patches/splatoon3/issue-479-adapter.mjs` および `patches/splatoon3/runtime/roller-freefall.mjs`）により、空中移行状態（`s3JumpAirborne` vs `s3NaturalAirborne`）および自然落下滞空時間（`s3NaturalAirTime` / 診断用 `s3NaturalAirTicks`）を計測し、25F grace および攻撃中ラッチを導入した。また以下の受入ギャップを完全に解消した：
+1. **未承認ジャンプ入力の排除**: 生の `intent.jump` ショートカットを撤廃し、Actor 本体の更新でネイティブ承認（`jumped === true` / `character.trigger('jump')`）された場合のみジャンプと判定。コヨーテ失効後の空中B入力は横振りを維持。
+2. **ラッパー順序非依存・正式移動射出の認識**: `installMovement` が武器／フリーフォール後にインストールされる順序でも、イカロール（`squidroll`）やイカノボリ（`squidsurge` / `squidsurge_top`）の正式射出を正しく認識し、自然落下と誤判定せず即座に縦振りを選択。
+3. **非ローラーアクターの軽量ガード**: 非ローラーアクター（シューター、チャージャー等）は `isRollerActor` ガードにより毎フレームのラッパー・クロージャ生成を完全に排除し、通常移動速度を維持。
+4. **経過時間基準の境界（dt不変性）**: 境界判定を `25 / 60` 秒（`S3_ROLLER_NATURAL_FREEFALL_GRACE_SEC`）の経過秒数に基づかせ、`dt = 1/120` 等の小刻みな更新間隔でも tick 数と秒数が競合することなく一貫した猶予期間を保証。
+5. **カタログ診断シナリオ（roller-vertical-land）の正式射出受付の整合**: モーションカタログ（`scripts/check-inkwave-motion-catalog.mjs`）の `roller-vertical-land` は物理統合のみで空中初速を注入していたため、25F grace により誤って横振りが選択され swing フェーズ RGB サンプルが欠落していた。ネイティブの正式ジャンプ受付（`ch.trigger('jump')` および `api.emit('actor:jump')`）を実行して即時縦振りを発生させ、`recordMovementLaunch` / `selectRollerFlickVertical` / `reset` 側でもトリガーフックを確実に同期するよう修正。
+
+| 項目 | 内容 |
+|---|---|
+| 本家の根拠 | [Splatoon 3 攻略＆検証 Wiki — ローラー属](https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%83%AD%E3%83%BC%E3%83%A9%E3%83%BC%E5%B1%9E) および [Inkipedia — Roller](https://splatoonwiki.org/wiki/Roller)。崖落ち・金網抜け等のジャンプを伴わない空中落下開始から25F間は横振りが維持され、25F経過後に縦振りへ移行する。 |
+| INKWAVE の実装箇所 | `patches/splatoon3/runtime/roller-freefall.mjs`（`selectRollerFlickVertical`, `installActorFreefallHooks`, `stepAirborneTransition`, `recordMovementLaunch`, `isMovementLaunchActive`）、`patches/splatoon3/issue-479-adapter.mjs`（`adaptIssue479`）、および `scripts/check-inkwave-motion-catalog.mjs`（`roller-vertical-land`）。`patches/splatoon3/runtime/roller.mjs` の新規攻撃開始判定で `selectRollerFlickVertical(a, this)` を参照。 |
+| 再現操作 | ローラーを装備し平地の端からジャンプ（B）を入力せずに前進して落下。落下後 1F, 10F, 20F, 25F で ZR を入力すると横振り（21F風切り、12+1弾扇状拡散）、26F以降で ZR を入力すると縦振り（26F風切り、5弾直線拡散）。対照としてBジャンプ空中1F、またはイカロール／イカノボリ後の空中射撃は即座に縦振り。コヨーテ失効後の空中B入力は横振りを維持。 |
+| プレイへの影響 | 段差や高台端からの飛び降り撃ちにおいて、スプラトゥーン2/3の操作感覚どおりに近接の横振りを即座に出せるようになり、不本意な縦振り（硬直増・横幅減少）への誤化を防止。 |
+| 確認状態 | **ロジック確認済み**（source-fixture、Actor 実 tick、FixedClock による 30Hz / 60Hz / 120Hz シミュレーション完全一致、未承認入力ネガティブシナリオ、イカロール・ノボリ正式射出、ネガティブコントロール検証、モーションカタログ `roller-vertical-land` 縦振り startup/swing/recovery 全 RGB サンプル通過）。**Switch 実機での精密ポーズ・着地直前微小落下距離の物理的確証は未確認**。本修正は25F graceおよび選択モードのラッチのみを対象とし、他ブキや既存ローラー数値（ダメージ・インク消費・射程・拡散角）は一切改変していない。 |
+## イカノボリ部分チャージのアーマー付与（#473、2026-10-05）
+
+スプラトゥーン3（Ver. 11.3.0）のイカノボリ（Squid Surge）は、完全チャージ（目元発光／45F）に達する前の早期解放（部分チャージ）でも発進動作として成立し、壁からの飛び出し（launch）直後には壁イカロールと同等の短時間アーマーが付与される。INKWAVE の baseline では移動ランタイムにおいて `surge.armorTime = surge.charge >= 1 ? cfg.surge.armorTime : 0;` と完全チャージ（100%）時のみにアーマーが限定されており、1F〜44F の有効な部分チャージ発進時にアーマー保護が一切得られないバイナリクリフが生じていた。
+
+| 項目 | 内容 |
+|---|---|
+| 本家の根拠 | [スプラトゥーン3 操作方法 / イカノボリ](https://wikiwiki.jp/splatoon3mix/%E6%93%8D%E4%BD%9C%E6%96%B9%E6%B3%95) および [イカロール・イカノボリ考察](https://wikiwiki.jp/splatoon3mix/%E4%BA%88%E6%83%B3%E3%83%BB%E8%80%83%E5%AF%9F/%E3%82%A4%E3%82%AB%E3%83%AD%E3%83%BC%E3%83%AB%E3%83%BB%E3%82%A4%E3%82%AB%E3%83%8E%E3%83%9C%E3%83%AA)。イカノボリはフルチャージ前でも解放可能であり、壁から飛び出した直後に短時間のアーマーが付与される仕様が明記され、フルチャージ限定とはされていない |
+| INKWAVE の実装箇所 | `patches/splatoon3/issue-473-adapter.mjs` による `patches/splatoon3/runtime/movement.mjs` のビルド時変換。有効なノボリ発進（`surge.charge > 0` かつ jump 解放）時に `cfg.surge.armorTime`（8F = 0.1333s）と `cfg.surge.armorHP`（100）を均一に付与。burst 移動時間が短時間（例: 1F〜15F）で終了した場合も 8F のアーマー保護窓口を維持し、床接地・ヒト化・デス・リセット・スペシャル・スパジャンで即時解除 |
+| 再現操作 | 自インク壁潜伏からジャンプ長押しでチャージ（例: 15F、30F、44F）し、45F 未満でジャンプ解放。baseline では `surge.phase === 'burst'` かつ `armorTime === 0` となり、直後の被弾を 0 軽減。修正後は 8F 間のアーマー保護窓口（最大 100 HP 吸収）が正常に機能する |
+| プレイへの影響 | 壁際での緊急離脱や牽制、段差越えにおいて、部分チャージノボリを選択した場合のリスク／リターンが正常化され、意図せぬ無防備状態が解消される |
+| 確認状態 | **ロジック確認済み**（`patches/splatoon3/tests/issue-473-surge-armor.test.mjs` にて 10/10 pass。1F/15F/30F/44F 部分チャージおよび 45F フルチャージでの均一アーマー、運動速度スケーリング維持、未発進・途中キャンセル時のアーマー非付与、接地・ヒト化・デス・リセットでの即時解除、30/60/120Hz 描画一致）。**Switch Ver. 11.3.0 実機でのマイクロ秒単位のパケット同期・詳細関節角は未確認**。耐久値（100 HP）・時間（8F）の数値設定は既存 profile.json を維持し、勝手な数値改変は行わない |
+## 2026-10-04: ジャイロ軸反転設定の公開なし (#439)
+
+Splatoon 3 (Ver.11.3.0) のオプションにはモーション操作の感度と ON/OFF のみで、独立したモーション軸反転設定は存在しない。公開版 INKWAVE の Touch 設定は `gyroInvertY` / `gyroInvertX` 行を公開し、`MobileInput.applySettings` が保存済み値を `Gyro.configure` へ渡していたため、非準拠の符号がセッションを跨いでネイティブのヨー/ピッチへ適用されていた。
+
+| 項目 | 内容 |
+|---|---|
+| 本家の根拠 | [Inkipedia — Options](https://splatoonwiki.org/wiki/Options)（S1/S2/S3 の操作設定一覧にモーション軸反転なし）、[Nintendo Support Ver.11.3.0](https://en-americas-support.nintendo.com/app/answers/detail/a_id/59461/)。非公開のキャリブレーション値は推定しない |
+| INKWAVE の実装箇所 | build-only `patches/reliability/gyro-invert-adapter.mjs`（dispatcher `patches/reliability/adapter.mjs` に登録）。`src/ui/menus.js` の TOUCH_TAB から2行を除去し、`src/core/mobile.js` の `configure({ sens: s.gyroSens, invX: s.gyroInvertX, invY: s.gyroInvertY })` を `configure({ sens: s.gyroSens })` へ縮減。生の `inkwave-public/` は変更しない |
+| 再現操作 | 修正前: Touch 設定で Gyro vertical/horizontal を Invert にすると保存され、次回起動以降の傾け・旋回でヨー/ピッチ符号が反転する。修正後: UI に行がなく、保存済み `gyroInvertX/Y = true` があってもネイティブ符号のまま |
+| プレイへの影響 | 準拠プロファイルで反転できる軸が消える。既存の保存値は gyro 経路から読まれなくなり（省略による移行）、隠れた反転状態が残らない。ヨー/ピッチ積分・感度曲線・権限/リスナ寿命（#426）・右スティック/マウス反転（#309 系）・カメラリセット（#490 系）は変更しない |
+| 確認状態 | **ロジック確認済み**：reliability focused suite 378 pass（実 `_setSettings` → `applySettings` → `Gyro.configure`、実 `_orientation` の符号等価と反転コントロール、評価済み TOUCH_TAB 行）、local-quality production composition 49 pass。**本家実機（Switch Ver.11.3.0）との操作比較は未確認**。キャリブレーション値・感度曲線は変更していない |
 ## 2026-10-04: first-allocation mobile resource budget
 
 A cold-boot follow-up for #375/#395 uses the already-published G.mobile profile

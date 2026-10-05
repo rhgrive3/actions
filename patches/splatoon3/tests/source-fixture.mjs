@@ -10,7 +10,7 @@ const BUILT = process.env.INKWAVE_BUILT_SITE || process.env.INKWAVE_CLOTHING_BUI
 const UPSTREAM = BUILT ? path.resolve(BUILT) : process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
 export async function fixture(options = {}) {
   const extraExports = typeof options === 'string' ? options : options.extraExports || '';
-  const adapt = typeof options === 'string' ? adaptSource : options.adapt ?? adaptSource;
+  const adapt = typeof options === 'string' ? adaptSource : options.adaptNative ?? options.adapt ?? adaptSource;
   const adaptRuntime = typeof options === 'string' ? ((_rel, source) => source) : options.adaptRuntime ?? ((_rel, source) => source);
   const context = vm.createContext({ console, performance });
   const modules = new Map();

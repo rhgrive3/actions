@@ -574,7 +574,7 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout 
         if (scenario.name.startsWith('squidroll-')) { a.form = 'squid'; a.submerged = true; for (let i = 0; i < 35; i++) step(); a.vel.set(0, 0, 11); a.intent.move.set(0, 0, -1); if (!beforeActions(a, 0, true)) throw Error('Native roll refused'); }
         if (scenario.name.startsWith('victory-')) { ch.setDance('victory'); ch.danceVar = scenario.variant; }
         if (scenario.name.startsWith('native-')) { frame = 0; a.special = a.specialCost(); a._startSpecial(); driver = drivers.special; }
-        if (scenario.name === 'roller-vertical-land') { a.grounded = false; a.pos.y = .4; a.vel.y = 7; driver = drivers.physics; }
+        if (scenario.name === 'roller-vertical-land') { a.grounded = false; a.pos.y = .4; a.vel.y = 7; ch.trigger('jump'); api.emit('actor:jump', { actor: a, surface: a.groundTeam, swim: false }); driver = drivers.physics; }
         const runFrame = () => {
           const n = scenario.name, input = {};
           if (n === 'carry-walk-fire-return') { const speed = frame < 25 ? .15 : frame < 65 ? 1.2 : frame < 105 ? 5.76 : frame < 165 ? 2.4 : 0; horizontal(speed, frame >= 70 && frame < 90 ? 1 : 0, frame >= 70 && frame < 90 ? 0 : frame >= 90 && frame < 105 ? -1 : 1); input.fire = frame >= 105 && frame < 145; driver = 'Native Actor._horizontal input slew and _integrate/native floor, real Runner fire/release and _finishFrame; isolated arena, no whole-game update'; }
