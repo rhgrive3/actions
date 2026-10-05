@@ -118,7 +118,16 @@ export class PlatformFrameDriver {
       const wallGap = this.lastWall === null ? 0 : (wall - this.lastWall) / 1000;
       const gap = !Number.isFinite(dt) || dt < 0 || dt > MAX_PLATFORM_GAP || wallGap > MAX_PLATFORM_GAP;
       this.last = time; this.lastWall = wall;
-      if (gap) { this.metrics.gaps++; this.rebase('timer-gap'); dt = 0; }
+      if (gap) {
+        this.metrics.gaps++;
+        const shortForegroundStall = Number.isFinite(dt) && dt >= 0 && dt <= 2 &&
+          wallGap >= 0 && wallGap <= 2 && this.owner.focused && !this.env.document?.hidden;
+        this.rebase('timer-gap');
+        // A short foreground stall is not a lifecycle resume. Run a bounded
+        // fixed-tick catch-up so low-FPS/WebKit cannot starve gameplay forever.
+        // Real/long gaps still resume from zero and never replay stale time.
+        dt = shortForegroundStall ? Math.min(dt, MAX_PLATFORM_GAP) : 0;
+      }
       this.metrics.frames++; this.metrics.maxDelta = Math.max(this.metrics.maxDelta, dt);
       this.frame(dt);
     };
