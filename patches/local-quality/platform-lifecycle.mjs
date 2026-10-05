@@ -120,13 +120,14 @@ export class PlatformFrameDriver {
       this.last = time; this.lastWall = wall;
       if (gap) {
         this.metrics.gaps++;
-        const shortForegroundStall = Number.isFinite(dt) && dt >= 0 && dt <= 2 &&
-          wallGap >= 0 && wallGap <= 2 && this.owner.focused && !this.env.document?.hidden;
+        const foregroundStall = Number.isFinite(dt) && dt >= 0 &&
+          Number.isFinite(wallGap) && wallGap >= 0 && this.owner.focused && !this.env.document?.hidden;
         this.rebase('timer-gap');
-        // A short foreground stall is not a lifecycle resume. Run a bounded
-        // fixed-tick catch-up so low-FPS/WebKit cannot starve gameplay forever.
-        // Real/long gaps still resume from zero and never replay stale time.
-        dt = shortForegroundStall ? Math.min(dt, MAX_PLATFORM_GAP) : 0;
+        // A visible/focused stall is not a lifecycle resume, regardless of how
+        // long the main thread was blocked. Advance at most one bounded slice so
+        // low-FPS devices cannot starve fixed simulation. Real hide/suspend
+        // transitions stop/reset the driver separately and still resume at zero.
+        dt = foregroundStall ? Math.min(dt, MAX_PLATFORM_GAP) : 0;
       }
       this.metrics.frames++; this.metrics.maxDelta = Math.max(this.metrics.maxDelta, dt);
       this.frame(dt);
