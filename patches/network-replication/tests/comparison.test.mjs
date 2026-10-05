@@ -67,12 +67,12 @@ test('horizontal roller: local physics uses final gravity/drag and the wire carr
     assert(local.length > 0, 'flick produced drops');
     for (const p of local) { assert.equal(p.grav, 144); assert.equal(p.drag, 6); }
   }
-  // Baseline: the recorded packet still carries the pre-final reference values.
-  assert.equal(baseline.packets[0][16], 26);
-  assert.equal(baseline.packets[0][17], 0.4);
-  // Fixed: the packet carries the same final values the shooter integrates.
-  assert.equal(fixed.packets[0][16], 144);
-  assert.equal(fixed.packets[0][17], 6);
+  // #64 finalizes active Roller physics before _push, so both the base recorder
+  // and the network overlay see the exact physics the shooter integrates.
+  for (const row of [baseline, fixed]) {
+    assert.equal(row.packets[0][16], row.local[0].grav);
+    assert.equal(row.packets[0][17], row.local[0].drag);
+  }
   // And the birth mode is explicit, never inferred from cosmetic nose/tail.
   assert.equal(fixed.packets[0][27], 0);
 });
@@ -95,13 +95,12 @@ test('vertical roller: remote ink no longer flies too far on the wire', async ()
   const baseDist = horizontal(wireBaseline.end);
   const fixedDist = horizontal(wireFixed.end);
 
-  // Baseline reproduces the reported bug: the reconstructed remote drop travels
-  // substantially farther than the shooter's own drop.
-  assert(baseDist > localDist * 1.4,
-    `baseline remote overshoot reproduced (local ${localDist.toFixed(2)} vs wire ${baseDist.toFixed(2)})`);
-  // Fixed: the wire reconstruction tracks the local flight within packet rounding.
+  // Weapons Fidelity now closes the old publication-order gap before either
+  // recorder runs; both packet paths must track the actual local flight.
+  assert(Math.abs(baseDist - localDist) < localDist * 0.05,
+    `base recorder tracks local (local ${localDist.toFixed(2)} vs wire ${baseDist.toFixed(2)})`);
   assert(Math.abs(fixedDist - localDist) < localDist * 0.05,
-    `fixed wire tracks local (local ${localDist.toFixed(2)} vs wire ${fixedDist.toFixed(2)})`);
+    `network recorder tracks local (local ${localDist.toFixed(2)} vs wire ${fixedDist.toFixed(2)})`);
 });
 
 test('60 Hz trajectory envelope matches local across the flight', async () => {

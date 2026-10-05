@@ -70,6 +70,9 @@ function setCollision(p,c,offset=0) {
 }
 export function configureFidelityFlick(p, actor, weapon, index, angle, speed) {
   const b=weapon.ballistics, raw=rawWeapon(weapon);if(!b||!raw)return;
+  // The attack argument owns this projectile's physics. Preserve it through
+  // _push so a later actor/profile mutation cannot rewrite an already-fired volley.
+  p.s3Weapon={...weapon}; p.wid=weapon.id;
   const vertical=!!actor.weaponRunner.s3FlickVertical;
   const group=raw[vertical?'VerticalSwingUnitGroupParam':'WideSwingUnitGroupParam'];
   let offset=index,unit;
@@ -295,7 +298,7 @@ export function installWeaponsFidelity(context,profile) {
     }else if(p.fidelityMove){p.straight=w.straightTime;p.grav=w.referenceGravity;p.drag=p.fidelityMove.freeDrag*60;}
   }
   Projectiles.prototype._push=function(p){
-    const w=WEAPONS[p.wid]||p.owner?.weapon,active=this._fidelitySloshContext;
+    const w=p.s3Weapon||WEAPONS[p.wid]||p.owner?.weapon,active=this._fidelitySloshContext;
     if(active&&p.type==='slosh'){
       let index=active.index++,u;
       for(const unit of rawWeapon(w).UnitGroupParam.Unit){if(index<(unit.BulletNum??1)){u=unit;break;}index-=unit.BulletNum??1;}
