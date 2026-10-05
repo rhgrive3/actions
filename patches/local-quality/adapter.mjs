@@ -10,6 +10,7 @@ import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { adaptMinimapResources } from './minimap-resource-adapter.mjs';
 import { adaptLobbyResources } from './lobby-resource-adapter.mjs';
+import { adaptFrameOrder } from './frame-order-adapter.mjs';
 
 export const QUALITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
 const IDENTITY_FILES = [
@@ -20,6 +21,7 @@ const IDENTITY_FILES = [
   'platform-adapter.mjs', 'platform-lifecycle.mjs', 'platform-game.mjs',
   'platform-input.mjs', 'platform-audio.mjs', 'platform-transport.mjs',
   'mobile-platform.mjs', 'gyro-permission.mjs',
+  'screen-angle.mjs', 'frame-order-adapter.mjs', 'charger-sight.mjs',
 ];
 
 export function replaceOnce(code, before, after, label) {
@@ -30,7 +32,12 @@ export function replaceOnce(code, before, after, label) {
   return code.slice(0, at) + after + code.slice(at + before.length);
 }
 
+// Presentation-order corrections run last, on this layer's finished output (see frame-order-adapter.mjs).
 export function adaptQualitySource(rel, code) {
+  return adaptFrameOrder(rel, adaptQualityLayer(rel, code));
+}
+
+function adaptQualityLayer(rel, code) {
   code = adaptIdleSource(rel, code, replaceOnce);
   code = adaptLobbyResources(rel, code);
   code = adaptMinimapResources(rel, code);
@@ -211,6 +218,13 @@ export function adaptQualitySource(rel, code) {
   }
 
   if (rel === 'src/core/gyro.js') {
+    // Sensor-frame screen rotation (iPad: screen.orientation.angle is landscape-natural, the motion axes are not).
+    code = replaceOnce(code,
+      "import { screenAngle } from './device.js';",
+      "import { screenAngle as deviceScreenAngle } from './device.js';\n" +
+      "import { sensorScreenAngle } from '../../patches/local-quality/screen-angle.mjs';\n" +
+      'const screenAngle = () => sensorScreenAngle(globalThis, deviceScreenAngle);',
+      'gyro sensor-frame screen angle');
     return "import { installGyroQuality } from '../../patches/local-quality/gyro.mjs';\n" + code +
       '\ninstallGyroQuality(Gyro, screenAngle);\n';
   }
