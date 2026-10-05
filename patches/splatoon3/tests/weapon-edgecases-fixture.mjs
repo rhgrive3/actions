@@ -8,7 +8,7 @@ import { adaptSource } from '../adapter.mjs';
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const SITE = process.env.INKWAVE_EDGECASE_SITE;
 const UPSTREAM = SITE || process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
-export async function fixture() {
+export async function fixture({ profileTransform } = {}) {
   const math = Object.create(Math); math.random = Math.random;
   const context = vm.createContext({ console, performance, Math: math });
   const modules = new Map();
@@ -48,6 +48,7 @@ export async function fixture() {
   await root.link((spec, from) => load(resolve(spec, from.identifier))); await root.evaluate();
   const api = { ...root.namespace }, { G, THREE, PLAYER, WEAPONS, SUB, SPECIALS } = api;
   const profile = JSON.parse(fs.readFileSync(path.join(SITE || ROOT, 'patches/splatoon3/profile.json'), 'utf8'));
+  profileTransform?.(profile);
   Object.assign(PLAYER, profile.player); Object.assign(SUB.bomb, profile.bomb);
   for (const [id, data] of Object.entries(profile.weapons)) Object.assign(WEAPONS[id], data);
   for (const install of ['installWeapons', 'installMovement', 'installGear', 'installFlow', 'installResources', 'installRendering']) api[install](api, profile);
