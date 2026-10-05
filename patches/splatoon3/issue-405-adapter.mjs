@@ -16,6 +16,10 @@ export function replaceOnce(code, before, after, label) {
 export function adaptIssue405(rel, code) {
   const normalized = rel.replace(/^inkwave-public\//, '');
   if (normalized === 'src/game/actor.js') {
+    // Current movement-physics replaces the entire grounded velocity owner with
+    // stepGroundVelocity(), which already uses one deceleration rate for neutral
+    // and reversal. Only patch the legacy native block when that owner remains.
+    if (code.includes('stepGroundVelocity(this.vel')) return code;
     code = replaceOnce(
       code,
       'const r = Math.max(P.reverseDecel, D) * dt * (onEnemy ? 0.5 : 1);',
