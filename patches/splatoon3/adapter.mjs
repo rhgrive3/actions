@@ -185,6 +185,18 @@ export function adaptSource(rel, code) {
     const end = code.indexOf('    // ---- weapons (', start);
     if (start < 0 || end < start) throw new Error('INKWAVE patch conflict: actor resource connection');
     code = replaceOnce(code, code.slice(start, end), '    updateResources(this, dt);\n\n', 'post-movement resources');
+    code = replaceOnce(code,
+      'this._squidPressT = -1; this._firePressT = -1;',
+      'this._squidPressT = -1; this._firePressT = -1; this._subPressT = -1;',
+      'track sub press timestamp');
+    code = replaceOnce(code,
+      '    const subReleased = !intent.sub && prev.sub;\n    const specialPressed = intent.special && !prev.special;\n    if (intent.squid && !prev.squid) this._squidPressT = G.time;\n    if (firePressed) this._firePressT = G.time;',
+      '    const subPressed = intent.sub && !prev.sub;\n    const subReleased = !intent.sub && prev.sub;\n    const specialPressed = intent.special && !prev.special;\n    if (intent.squid && !prev.squid) this._squidPressT = G.time;\n    if (firePressed) this._firePressT = G.time;\n    if (subPressed) this._subPressT = G.time;',
+      'record sub button press timestamp');
+    code = replaceOnce(code,
+      '    const fireWins = (intent.fire || this.fireBuffer > 0) && this._firePressT >= this._squidPressT;\n    const wantSquid = intent.squid && !fireWins && !this.weaponRunner.busy();',
+      '    const fireWins = (intent.fire || this.fireBuffer > 0) && this._firePressT >= this._squidPressT;\n    const subWins = intent.sub && (this._subPressT ?? -1) >= this._squidPressT;\n    const wantSquid = intent.squid && !fireWins && !subWins && !this.weaponRunner.busy();',
+      'sub input admission from swim form');
     return `import { prepareSuperJump, rememberSuperJumpGround, superJumpTarget, updateSuperJumpMain, SUPERJUMP_MAIN_PROGRESS } from '../../patches/splatoon3/runtime/superjump.mjs';\nimport { beforeActions } from '../../patches/splatoon3/runtime/movement.mjs';\nimport { updateResources } from '../../patches/splatoon3/runtime/resources.mjs';\n` + code;
   }
   if (rel === 'src/game/character-weapons.js') {
