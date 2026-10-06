@@ -166,10 +166,22 @@ visit('patches/splatoon3/bootstrap.mjs');
 // #61's accepted startup baseline preloaded 145 modules (131 core + 14 range).
 // Later workstreams add these runtime dependencies to the static graph. Keep
 // them in the immutable revision + Service Worker precache, but let their
-// importing modules request them instead of adding 19 new eager preload
+// importing modules request them instead of adding new eager preload
 // requests to the critical HTML. Browser startup/offline CI validates the
 // resulting dependency fetch path and timing.
 const deferredIntegrationPreloads = new Set([
+  'patches/local-quality/portrait-guard.mjs',
+  'patches/local-quality/gyro-startup.mjs',
+  'patches/local-quality/splatling-reticle.mjs',
+  'patches/splatoon3/runtime/turf-finish.mjs',
+  // PR536 additions follow the same preload-only deferral; all remain precached.
+  'patches/local-quality/team-wipeout.mjs',
+  'patches/local-quality/tenacity.mjs',
+  'patches/local-quality/hud-snapshots.mjs',
+  'patches/local-quality/result-continuation.mjs',
+  'patches/local-quality/showcase-shadow.mjs',
+  'patches/splatoon3/runtime/splatling-radius-charge.mjs',
+  'patches/splatoon3/runtime/weapon-paint-inertia.mjs',
   'patches/local-quality/first-touch-adapter.mjs',
   'patches/local-quality/gyro-permission.mjs',
   'patches/local-quality/idle-resources.mjs',
@@ -181,16 +193,16 @@ const deferredIntegrationPreloads = new Set([
   'patches/local-quality/platform-lifecycle.mjs',
   'patches/local-quality/platform-transport.mjs',
   'patches/local-quality/touch-relayout.mjs',
-  'patches/local-quality/tenacity.mjs',
   'patches/splatoon3/runtime/issue-415-adapter.mjs',
   'patches/splatoon3/runtime/movement-physics.mjs',
   'patches/splatoon3/runtime/roller-model.mjs',
   'patches/splatoon3/runtime/sub-special-fidelity.mjs',
   'patches/splatoon3/runtime/superjump.mjs',
   'patches/splatoon3/runtime/weapon-edgecases.mjs',
+  // PR587 dependencies: defer only eager hints; retain the complete precache graph.
   'patches/splatoon3/runtime/weapons-fidelity.mjs',
-  'patches/splatoon3/runtime/weapons-charger-flight.mjs',
   'patches/splatoon3/runtime/weapons-collision.mjs',
+  'patches/splatoon3/runtime/weapons-charger-flight.mjs',
 ]);
 const preloadOrder = order.filter((f) => !deferredIntegrationPreloads.has(f));
 const preload = preloadOrder.filter((f) => fs.existsSync(path.join(BUILD, f))).map((f) => `<link rel="modulepreload" href="./${f}">`).join('\n');

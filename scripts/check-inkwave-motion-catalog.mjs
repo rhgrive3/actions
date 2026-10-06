@@ -35,7 +35,7 @@ export const CATALOG_SCENARIOS = Object.freeze([
   { name: 'swim-turn-brake', kind: 'shooter', frames: 180 },
   { name: 'wall-surge-ready-crest', kind: 'shooter', frames: 180, probes: [64, 65, 74, 75, 80, 100] },
   { name: 'form-both-directions-interrupt', kind: 'shooter', frames: 180, probes: [76, 82, 100, 145] },
-  { name: 'dualies-roll-lock-interrupt', kind: 'dualies', frames: 180, probes: [110, 115, 132, 155] },
+  { name: 'dualies-roll-lock-interrupt', kind: 'dualies', frames: 240, probes: [110, 115, 125, 132, 155, 164, 190, 195, 198, 210] },
   { name: 'roller-horizontal-push', kind: 'roller', frames: 180, probes: [17, 125] },
   { name: 'roller-vertical-land', kind: 'roller', frames: 180 },
   // Native preparation + flight + .8s visual touchdown must all expire.
@@ -116,7 +116,7 @@ export function validateCatalogReceipts(manifest, receipts) {
   if (crypto.createHash('sha256').update(JSON.stringify(manifest.artifacts)).digest('hex') !== manifest.contentHash) fail('immutable manifest content hash');
   const required = [...CATALOG_MODULES.map(([id]) => 'patches/splatoon3/runtime/' + id + '-motion.mjs'),
     'patches/splatoon3/runtime/install.mjs', 'patches/splatoon3/runtime/walk.mjs',
-    'src/game/actor.js', 'src/game/character.js', 'src/game/weapons.js', 'src/game/physics.js'];
+    'src/game/actor.js', 'src/game/character.js', 'src/game/weapons.js', 'src/game/physics.js', 'src/game/match.js'];
   for (const suffix of required) {
     const keys = Object.keys(manifest.artifacts).filter(k => k.endsWith('/' + suffix));
     if (keys.length !== 1) fail('missing-module manifest ' + suffix);
@@ -130,6 +130,7 @@ export function validateCatalogResult(result) {
   if (result?.schema !== 1 || result.installCalls !== 1 || result.source !== 'built-production-native' || result.gpu?.contextLost !== false || !result.gpu?.renderer || result.errors?.length !== 0) fail('runtime identity / shader errors');
   if (result.gpu.pixelControls?.dither !== false || result.gpu.pixelControls?.samples !== 0 || result.gpu.pixelControls?.target !== 'explicit-srgb-rgba8') fail('controlled pixel framebuffer');
   validateCatalogReceipts({ contentHash: result.contentHash, artifacts: result.artifacts }, result.loaded);
+  validateCatalogTurfFinish(result.turfFinish);
   if (result.duplicateRealm?.modules !== CATALOG_MODULES.length || result.duplicateRealm?.unchanged !== true) fail('cross-realm install');
   if (!Array.isArray(result.data) || result.data.length !== CATALOG_SCENARIOS.length || new Set(result.data.map(r => r.name)).size !== CATALOG_SCENARIOS.length) fail('scenario denominator');
   if (!Array.isArray(result.images) || new Set(result.images.map(r => r.file)).size !== result.images.length || result.images.some(r => !/^[a-z0-9-]+\.png$/.test(r.file) || !/^[a-f0-9]{64}$/.test(r.sha256) || !Number.isInteger(r.bytes) || r.bytes <= 0)) fail('screenshot receipt denominator');
@@ -208,7 +209,7 @@ export function validateCatalogResult(result) {
     if (label === 'swim-turn-brake') need(count(s => s.snapshots.swim?.active) >= 90 && Math.max(...row.samples.map(s => Math.abs(s.snapshots.swim?.bank || 0))) > .05 && row.samples.at(-1).snapshots.swim?.power < .01, 'swim turn/brake');
     if (label === 'wall-surge-ready-crest') need(phase('wall', 'charge') >= 20 && count(s => s.snapshots.wall?.ready && s.snapshots.wall?.glow > 0) >= 1 && phase('wall', 'launch') >= 1 && phase('wall', 'crest') >= 1 && row.renders.some(r => r.glint?.changedPixels > 0), 'native surge readiness/launch/crest');
     if (label === 'form-both-directions-interrupt') need(phase('form', 'dive') >= 5 && phase('form', 'emerge') >= 5 && count(s => s.snapshots.form?.reversing) >= 1 && count(s => s.snapshots.form?.actionBlocked) >= 1, 'form directions/reversal/interruption');
-    if (label === 'dualies-roll-lock-interrupt') need(phase('dualies', 'roll') >= 5 && phase('dualies', 'plant') >= 10 && count(s => s.snapshots.dualies?.blockedRoll) >= 1 && row.events.some(e => e.name === 'fireDualies'), 'actual dualies roll/lock/interruption');
+    if (label === 'dualies-roll-lock-interrupt') validateCatalogDualies(row);
     if (label.startsWith('roller-')) need(phase('roller-detail', 'startup') >= 1 && phase('roller-detail', 'recovery') >= 2 && row.events.filter(e => e.name === 'fireFlick').length === 1 && (label.includes('horizontal') ? count(s => s.rolling) >= 10 : count(s => s.snapshots['roller-detail']?.vertical) >= 10), 'native roller startup/release/recovery/push');
     if (label.startsWith('superjump-')) need(phase('superjump', 'charge') >= 10 && phase('superjump', 'flight') >= 10 && phase('superjump', 'descent') >= 1 && phase('superjump', 'touchdown') >= 1 && row.samples.at(-1).snapshots.superjump?.phase === null, 'native superjump flight/landing');
     if (label.startsWith('squidroll-')) need(phase('squidroll', 'roll') >= 5 && row.samples.at(-1).snapshots.squidroll?.phase === null && (label.endsWith('finish') || row.samples[13].snapshots.squidroll?.phase === null), 'roll finish/interruption');
@@ -260,11 +261,70 @@ export function validateCatalogResult(result) {
 
 // This function is serialized into the browser; all classes below are imported
 // from the immutable built graph, with no surrogate Actor, Runner or IK.
+// Diagnostic inputs use native admission and visibility; no runner state is forced.
+export function catalogDualiesInput(frame, actor, character, THREE) {
+  const input = { fire: frame < 145 || frame === 190, sub: frame >= 115 && frame < 132 || frame >= 155 && frame < 165 };
+  if (frame === 0 || frame === 110 || frame === 190) {
+    actor.intent.fire = true;
+    if (!actor.weaponRunner.tryDodge(new THREE.Vector3(1, 0, 0))) throw Error('Native dodge refused at ' + frame);
+  }
+  if (actor.weaponRunner.dodgeVel(actor.vel)) actor.pos.addScaledVector(actor.vel, 1 / 60); else actor.vel.set(0, 0, 0);
+  if (frame === 195) character.setVisible(false);
+  if (frame === 198) character.setVisible(true);
+  return input;
+}
+export function validateCatalogDualies(row) {
+  for (const s of row.samples) {
+    const d = s.dualiesAction;
+    if (!d || !['subRequested','aimingSub','dodge'].every(k => typeof d[k] === 'boolean') || !Number.isFinite(d.lockT) || d.lockT < 0) fail('dualies action trace denominator');
+  }
+  const at = frame => row.samples.find(s => s.frame === frame);
+  const phase = s => s?.snapshots.dualies?.phase;
+  if (row.samples.filter(s => phase(s) === 'roll').length < 5 || row.samples.filter(s => phase(s) === 'plant').length < 10 || !row.events.some(e => e.name === 'fireDualies')) fail('actual dualies roll/lock');
+  for (const frame of [115, 125]) {
+    const s = at(frame), d = s?.dualiesAction;
+    if (!d?.subRequested || d.aimingSub !== false || s.snapshots.dualies?.blockedRoll !== false || (frame === 115 ? !d.dodge || phase(s) !== 'roll' : !(d.lockT > 0) || phase(s) !== 'plant')) fail('dualies rejected sub must preserve committed action');
+  }
+  for (const frame of [155, 164]) {
+    const s = at(frame), d = s?.dualiesAction;
+    if (!d?.subRequested || d.aimingSub !== true || d.dodge !== false || d.lockT > 1e-10 || phase(s) !== null) fail('dualies admitted sub must own presentation');
+  }
+  if (row.events.some(e => e.name === 'fireDualies' && e.frame >= 155 && e.frame < 165)) fail('dualies main fire during admitted sub');
+  for (const frame of [195, 198]) {
+    const s = at(frame);
+    if (!s?.dualiesAction?.dodge || s.visible !== (frame === 198) || s.snapshots.dualies?.blockedRoll !== true || phase(s) !== null) fail('dualies visibility interruption must not replay same roll');
+  }
+  const end = row.samples.at(-1);
+  if (end.dualiesAction?.dodge !== false || end.dualiesAction?.lockT > 1e-10) fail('dualies final action tail incomplete');
+}
+
+export function catalogTurfFinishProbe(Match, G) {
+  const priorPaint = G.paint, priorNet = G.netm;
+  let reads = 0;
+  const coverage = [.51, .49];
+  try {
+    G.paint = { coverage() { reads++; return coverage; } }; G.netm = null;
+    const match = Object.assign(Object.create(Match.prototype), { state: 'playing', stateT: 0, follower: false, bossMode: null, local: null });
+    match.setState('finish');
+    const captured = match.s3FinishCoverage ? [...match.s3FinishCoverage] : null;
+    const frozen = Object.isFrozen(match.s3FinishCoverage);
+    coverage[0] = .4; coverage[1] = .6;
+    match._judge();
+    return { captured, frozen, judged: [...match.result.coverage], winner: match.result.winner, reads, state: match.state };
+  } finally { G.paint = priorPaint; G.netm = priorNet; }
+}
+export function validateCatalogTurfFinish(proof) {
+  if (!proof || JSON.stringify(proof.captured) !== '[0.51,0.49]' || JSON.stringify(proof.judged) !== '[0.51,0.49]' || proof.frozen !== true || proof.winner !== 0 || proof.reads !== 1 || proof.state !== 'judge') fail('native Turf finish/judge proof');
+}
+
 async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout }) {
   const THREE = await import('three');
   const profile = await fetch(prefix + 'patches/splatoon3/profile.json').then(r => r.json());
   const { install } = await import(prefix + 'patches/splatoon3/runtime/install.mjs');
   const api = install(profile), { Actor, Character, Projectiles, Physics, G, CHARACTER_CHANNELS: C, CHARACTER_FOOT_METRICS: F } = api;
+  // Exercise the real Match dependency entry, including its deadline helper.
+  const { Match } = await import(prefix + 'src/game/match.js');
+  const turfFinish = globalThis.catalogTurfFinishProbe(Match, G);
   // Prefer native named exports. Only older frozen builds need the strictly
   // source-verified adjacent-slot fallback, never an unverified inferred index.
   const contactChannels = footLayout.named ? [C.WPL, C.WPR] : [C.WPL ?? C.STAB - footLayout.leftBeforeStab, C.WPR ?? C.STAB - footLayout.rightBeforeStab];
@@ -423,7 +483,7 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout 
     });
     const pose = Array.from(ch.P);
     if (!pose.every(Number.isFinite)) throw Error('Non-finite native pose');
-    return { frame, time: ch.t, timers: Object.fromEntries(Object.entries(api.CHARACTER_TIMERS).map(([k, i]) => [k, ch.tr[i]])), alive: a?.alive ?? true, grounded: ch.grounded, specialActive: a?.specialActive ? { id: a.specialActive.id, phase: a.specialActive.phase, time: a.specialActive.t } : null, visible: ch.root.visible, root: ch.root.position.toArray(), velocity: a?.vel.toArray() || [0, 0, 0], input: a?.intent.move.toArray() || [0, 0, 0], hp: a?.hp ?? 100, ink: a?.ink ?? 100, plantWeight: ch.plantW, hipDrop: ch.hipDrop, kidScale: ch.kidScale, squidScale: ch.sqScale, walkActive: walkActive(ch), pose: { length: pose.length, minimum: Math.min(...pose), maximum: Math.max(...pose), l1: pose.reduce((sum, x) => sum + Math.abs(x), 0) }, ik: Array.from(ch.ikErr), hands: { left: ch.bones.handL.getWorldPosition(new THREE.Vector3()).toArray(), right: ch.bones.handR.getWorldPosition(new THREE.Vector3()).toArray() }, grip: { left: grip(ch, 'left'), right: grip(ch, 'right') }, feet, rolling: !!a?.weaponRunner.rolling, heldBomb: ch.bomb.group.visible, dance: ch.dance, danceWeight: ch.wDance, snapshots: snap(ch), visualGameplayInvariant: invariant };
+    return { frame, time: ch.t, timers: Object.fromEntries(Object.entries(api.CHARACTER_TIMERS).map(([k, i]) => [k, ch.tr[i]])), alive: a?.alive ?? true, grounded: ch.grounded, specialActive: a?.specialActive ? { id: a.specialActive.id, phase: a.specialActive.phase, time: a.specialActive.t } : null, visible: ch.root.visible, root: ch.root.position.toArray(), velocity: a?.vel.toArray() || [0, 0, 0], input: a?.intent.move.toArray() || [0, 0, 0], hp: a?.hp ?? 100, ink: a?.ink ?? 100, plantWeight: ch.plantW, hipDrop: ch.hipDrop, kidScale: ch.kidScale, squidScale: ch.sqScale, walkActive: walkActive(ch), pose: { length: pose.length, minimum: Math.min(...pose), maximum: Math.max(...pose), l1: pose.reduce((sum, x) => sum + Math.abs(x), 0) }, ik: Array.from(ch.ikErr), hands: { left: ch.bones.handL.getWorldPosition(new THREE.Vector3()).toArray(), right: ch.bones.handR.getWorldPosition(new THREE.Vector3()).toArray() }, grip: { left: grip(ch, 'left'), right: grip(ch, 'right') }, feet, rolling: !!a?.weaponRunner.rolling, heldBomb: ch.bomb.group.visible, dualiesAction: a?.weapon.kind === 'dualies' ? { subRequested: !!a.intent.sub, aimingSub: !!a.weaponRunner.aimingSub, dodge: !!a.weaponRunner.dodge, lockT: a.weaponRunner.lockT } : null, dance: ch.dance, danceWeight: ch.wDance, snapshots: snap(ch), visualGameplayInvariant: invariant };
   }
   async function capture(ch, scenario, frame, tick) {
     projectiles._draw();
@@ -582,7 +642,7 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout 
           if (n === 'swim-turn-brake') { horizontal(frame < 115 ? 11 : 0, frame >= 45 && frame < 80 ? 1 : 0, frame >= 45 && frame < 80 ? 0 : frame >= 80 ? -1 : 1, true); driver = 'Native Actor._horizontal swim acceleration/turn/brake and _integrate/native own-ink floor; squid form/submerged diagnostic assignment; no full match'; }
           if (n === 'wall-surge-ready-crest') { a.intent.jump = frame >= 20 && frame < 75; a._updateClimb(1 / 60, true); beforeActions(a, 1 / 60, false); a._integrate(1 / 60, true, false); }
           if (n === 'form-both-directions-interrupt') { if ([0, 70, 82].includes(frame)) { a.form = 'squid'; a.submerged = true; } if ([40, 76, 100].includes(frame)) { a.form = 'kid'; a.submerged = false; } input.fire = frame >= 100 && frame < 120; input.sub = frame >= 140 && frame < 155; }
-          if (n === 'dualies-roll-lock-interrupt') { input.fire = frame < 145; if (frame === 0 || frame === 110) { a.intent.fire = true; if (!a.weaponRunner.tryDodge(new THREE.Vector3(1, 0, 0))) throw Error('Native dodge refused'); } if (a.weaponRunner.dodgeVel(a.vel)) a.pos.addScaledVector(a.vel, 1 / 60); else a.vel.set(0, 0, 0); input.sub = frame >= 115 && frame < 132; }
+          if (n === 'dualies-roll-lock-interrupt') Object.assign(input, globalThis.catalogDualiesInput(frame, a, ch, THREE));
           if (n === 'roller-horizontal-push') { input.fire = frame < 125; input.firePressed = frame === 0; move(frame >= 45 && frame < 125 ? a.weapon.rollSpeed : 0); }
           if (n === 'roller-vertical-land') { input.fire = frame < 60; input.firePressed = frame === 0; if (!a.grounded) a._integrate(1 / 60, false, false); }
           if (n.startsWith('superjump-') && a.superJumpState) a._updateSuperJump(1 / 60);
@@ -630,7 +690,7 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout 
       try { ch.update(0, null); const time = ch.t; for (let i = 0; i < hz; i++) ch.update(1 / hz, null); previewRates.push({ hz, frames: hz, finite: Array.from(ch.P).every(Number.isFinite) && Array.from(ch.ikErr).every(Number.isFinite), elapsed: ch.t - time }); }
       finally { collect(ch.root); ch.dispose(); }
     }
-    const result = { schema: 1, source: 'built-production-native', installCalls: 1, contentHash, duplicateRealm, gpu, data, images, previewRates, fixture: { render: 'actual Chromium WebGL (software ANGLE SwiftShader); native shaders compiled; same-frame RGB visibility pairs; native hero audit LOD', geometry: 'actual native indexed/skinned CPU output; does not include custom GPU vertex deformation', gameplay: 'native isolated methods; case driver and diagnostic assignments disclosed', parity: 'Nintendo executable version/gear/input/joint curves remain unknown; no console/iOS/full-match parity claim' } };
+    const result = { schema: 1, source: 'built-production-native', installCalls: 1, contentHash, turfFinish, duplicateRealm, gpu, data, images, previewRates, fixture: { render: 'actual Chromium WebGL (software ANGLE SwiftShader); native shaders compiled; same-frame RGB visibility pairs; native hero audit LOD', geometry: 'actual native indexed/skinned CPU output; does not include custom GPU vertex deformation', gameplay: 'native isolated methods; case driver and diagnostic assignments disclosed', parity: 'Nintendo executable version/gear/input/joint curves remain unknown; no console/iOS/full-match parity claim' } };
     globalThis.catalogPartial = result; return result;
   } finally {
     projectiles.clear(); collect(scene);
@@ -704,7 +764,7 @@ async function main() {
       catch (e) { error(e.message); await route.abort(); }
     });
     await page.goto('http://127.0.0.1:' + server.address().port + '/motion-catalog');
-    await page.addScriptTag({ content: 'globalThis.catalogPixelDifference=' + pixelDifference.toString() + ';globalThis.catalogRenderFrames=' + catalogRenderFrames.toString() + ';' });
+    await page.addScriptTag({ content: 'globalThis.catalogPixelDifference=' + pixelDifference.toString() + ';globalThis.catalogRenderFrames=' + catalogRenderFrames.toString() + ';globalThis.catalogTurfFinishProbe=' + catalogTurfFinishProbe.toString() + ';globalThis.catalogDualiesInput=' + catalogDualiesInput.toString() + ';' });
     result = await page.evaluate(runCatalog, { prefix, contentHash: manifest.contentHash, scenarios: CATALOG_SCENARIOS, modules: CATALOG_MODULES, footLayout });
     // finally executes after the returned object was built; fetch its cleanup
     // snapshot explicitly so a missing cleanup cannot pass as a successful run.
