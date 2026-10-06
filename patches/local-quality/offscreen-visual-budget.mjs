@@ -18,9 +18,9 @@
 //   * `renderer.info.render.frame` on `G.renderer` is the matching current frame
 //     counter, so "not drawn for N renderer frames" is an objective signal and
 //     not a scene-graph `visible` check.
-//   * `Character.update(dt, s)` receives the **Actor** as `s`
-//     (Actor._finishFrame -> `ch.update(dt, this)`), so owner detection reads
-//     `s.isLocal`.
+//   * `Character.update(dt, s)` receives `Actor.anim`, not the Actor itself
+//     (Actor._finishFrame -> `ch.update(dt, this.anim)`). Current authoritative
+//     ownership must therefore be checked through the active Match actor roster.
 //   * `_ground(x, z, n)` returns `root.position.y` with an upward normal whenever
 //     `this.phys` is unset. That native fallback is reused verbatim for the
 //     budgeted tick, so the physics raycast disappears without inventing a height.
@@ -28,10 +28,11 @@
 //     `feetValid / headInit / _headSet`; replaying that on the return-to-view
 //     tick is what makes the first visible frame replant and re-init.
 //
-// Rendering-only: nothing here writes an authoritative Actor field. Movement,
-// weapons, hitboxes, ink, damage, networking and bot AI keep their fixed
-// simulation; only the visual recomputation for pixels nobody is drawing is
-// deferred, and it is always caught up before the next draw.
+// Native Projectiles._muzzle / _muzzleHand read Character's actual weapon world
+// transforms. A Character owned by an Actor is therefore part of authoritative
+// shot origin/direction even when that Actor is an offline bot and isLocal=false.
+// Only detached presentation Characters may defer pose/IK work; Actor-owned
+// Characters always stay on the native full-rate path.
 //
 // No Nintendo timing value is invented: the grace below is counted in
 // *renderer frames* (a presentation cadence owned by this layer), not in any
@@ -123,6 +124,15 @@ export function inViewVolume(ch, cam) {
   return true;
 }
 
+/** Native Match stores authoritative Actors in both G.match.actors and G.actors. */
+function ownedByLiveActor(ch, G) {
+  const matchActors = G?.match?.actors;
+  const gameActors = G?.actors;
+  if (Array.isArray(matchActors)) for (let i = 0; i < matchActors.length; i++) if (matchActors[i]?.character === ch) return true;
+  if (Array.isArray(gameActors) && gameActors !== matchActors) for (let i = 0; i < gameActors.length; i++) if (gameActors[i]?.character === ch) return true;
+  return false;
+}
+
 function gameCamera(G) {
   return G?.rig?.gameCam || G?.camera || null;
 }
@@ -191,6 +201,13 @@ export function offscreenBudgeted(ch, s, G) {
   // Any reason to stay at full rate also restarts the outside streak, so the
   // budget can only start from two uninterrupted "outside" verdicts.
   const reset = () => { ch._ovbOutsideStreak = 0; return false; };
+  // Actor._finishFrame passes actor.anim (not the Actor object) into
+  // Character.update. Resolve ownership through the live Match roster as well
+  // as tolerating direct owner-bearing states. Native Projectiles muzzle from
+  // this Character's current weapon world transforms; skipping pose maintenance
+  // can change projectile origin/direction. This includes offline bots whose
+  // isLocal flag is false.
+  if (s.character === ch || ownedByLiveActor(ch, G)) return reset();
   // Owner / local actor is always full rate: death camera, super-jump target,
   // spectate and imminent first-person visibility all live here.
   if (s.isLocal || ch.isLocal) return reset();

@@ -12,7 +12,8 @@ export function installQuality(profile){
   installRollerMotionQuality(api,rollerDetailMotionSnapshot);
   installRollerVisualQuality(api);
   installMenuQuality(Menus);
-  // #845: rendering-only. Frustum-culled actors keep authoritative simulation and
-  // stop paying for pose/hair/foot-IK work nobody draws.
+  // #845: detached presentation Characters may budget offscreen pose/IK work.
+  // Actor-owned Characters remain full-rate because projectiles read their live
+  // weapon transforms for authoritative muzzle origins and directions.
   installOffscreenVisualBudget(api,G);
 }

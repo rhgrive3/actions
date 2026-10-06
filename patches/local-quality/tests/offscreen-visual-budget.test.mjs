@@ -36,6 +36,7 @@ const counters = { ray: 0 };
 const api = await realCharacter();
 const G = api.G, THREE = api.THREE;
 const proto = api.Character.prototype;
+const nativeUpdate = proto.update;
 {
   const rawBuild = proto._buildPose, rawApply = proto._applyPose;
   proto._buildPose = function (...a) { counts.pose++; return rawBuild.apply(this, a); };
@@ -51,7 +52,7 @@ const renderer = {
 };
 
 G.scene = new THREE.Scene();
-G.physics = { raycast: (_o, _d, _f, hit) => { counters.ray++; hit.hit = false; return hit; } };
+G.physics = { raycast: (_o, _d, _f, hit) => { counters.ray++; hit.hit = false; return hit; }, los: () => true };
 G.renderer = renderer;
 G.match = {};
 G.rig = null;
@@ -78,7 +79,7 @@ function markDrawn(frame) {
 /** Reset the world and settle into a walking gait with the camera facing the actor. */
 function reset({ range = false, frames = 120 } = {}) {
   counters.ray = 0;
-  G.physics = { raycast: (_o, _d, _f, hit) => { counters.ray++; hit.hit = false; return hit; } };
+  G.physics = { raycast: (_o, _d, _f, hit) => { counters.ray++; hit.hit = false; return hit; }, los: () => true };
   G.match = range ? { opts: { range: true } } : {};
   G.camera = camera;
   G.renderer = renderer;
@@ -97,6 +98,23 @@ function reset({ range = false, frames = 120 } = {}) {
   s.isLocal = false;
   turnTo();
   for (let i = 0; i < frames; i++) step();
+}
+
+let offlineActor;
+function liveOfflineActor() {
+  if (!offlineActor) {
+    G.teamColors = [new THREE.Color('#ff8a14'), new THREE.Color('#2f5bff')];
+    offlineActor = new api.Actor({ team: 0, slot: 1, name: 'offline authority', weapon: 'shooter', isLocal: false, isBot: true, CharacterClass: api.Character });
+    offlineActor.character.inWorld = true;
+    offlineActor.character.setVisible(true);
+    offlineActor.character._warmed = true;
+    offlineActor.weaponRunner.firingPose = () => true;
+    G.scene.add(offlineActor.character.root);
+  }
+  G.actors = [offlineActor];
+  G.match = { actors: G.actors, opts: {} };
+  G.local = null;
+  return offlineActor;
 }
 
 test('wiring: the owned helper is connected from installQuality and carries a build identity', () => {
@@ -134,7 +152,7 @@ test('baseline: while in view / just drawn the native pose+hair and foot-IK rayc
   assert.equal(ch._ovbBudgetTicks - ticks0, 0, 'nothing is budgeted while in view');
 });
 
-test('#845: frustum-culled actors stop pose/hair work and every foot-IK physics raycast', () => {
+test('#845 presentation-only control: a detached Character can defer offscreen pose/IK work', () => {
   reset();
   markDrawn(100);
   turnAway();
@@ -341,4 +359,122 @@ test('decision guards are individually testable and never invent a Nintendo timi
   probe.root.position.z = 200;
   assert.equal(offscreenBudgeted(probe, {}, G2), false, 'first outside verdict does not budget');
   assert.equal(offscreenBudgeted(probe, {}, G2), true, 'second consecutive outside verdict budgets');
+});
+
+test('#845 authoritative muzzle guard: offline shooter and both Dualies hands keep native shot parity offscreen', () => {
+  const native = new api.Projectiles(G.scene);
+  const actor = liveOfflineActor();
+  const target = actor.character;
+  const slope = { value: 0 };
+  G.physics = {
+    los: () => true,
+    raycast: (origin, _direction, _distance, hit) => {
+      counters.ray++;
+      hit.hit = true;
+      hit.point.set(origin.x, slope.value * origin.x, origin.z);
+      hit.normal.set(-slope.value, 1, 0).normalize();
+      return hit;
+    },
+  };
+  target.phys = G.physics;
+  G.audio = null; G.fx = null;
+  turnAway();
+  actor._nearCamera = () => false;
+  const scenarios = [
+    { weapon: 'shooter', hand: 0, slope: 0.18, pitch: 0.12, label: 'Shooter on a slope' },
+    { weapon: 'shooter', hand: 0, slope: 0, pitch: Math.PI / 2 - 0.03, label: 'Shooter near vertical aim' },
+    { weapon: 'dualies', hand: 0, slope: 0.18, pitch: 0.12, label: 'Dualies right hand on a slope' },
+    { weapon: 'dualies', hand: 1, slope: 0.18, pitch: 0.12, label: 'Dualies left hand on a slope' },
+    { weapon: 'dualies', hand: 0, slope: 0, pitch: Math.PI / 2 - 0.03, label: 'Dualies right hand near vertical' },
+    { weapon: 'dualies', hand: 1, slope: 0, pitch: Math.PI / 2 - 0.03, label: 'Dualies left hand near vertical' },
+  ];
+  let nativeMuzzleCalls = 0, nativeHandCalls = 0;
+  const rawMuzzle = native._muzzle, rawMuzzleHand = native._muzzleHand;
+  native._muzzle = function (...args) { nativeMuzzleCalls++; return rawMuzzle.apply(this, args); };
+  native._muzzleHand = function (...args) { nativeHandCalls++; return rawMuzzleHand.apply(this, args); };
+  const xyz = v => [v.x, v.y, v.z];
+  const fireSnapshot = scenario => {
+    const w = api.WEAPONS[scenario.weapon];
+    assert.ok(w, `native weapon data exists for ${scenario.weapon}`);
+    actor.character.setWeapon(scenario.weapon);
+    if (scenario.weapon === 'dualies') assert.ok(actor.character.weapon?.left, 'native Dualies rig owns its left pistol');
+    actor.weaponRunner.rumbleT = 1;
+    const muzzle = new THREE.Vector3();
+    if (scenario.weapon === 'shooter') native._muzzle(actor, muzzle);
+    else native._muzzleHand(actor, scenario.hand, muzzle);
+    const before = native.list.length;
+    if (scenario.weapon === 'shooter') native.fireShooter(actor, w, 0);
+    else native.fireDualies(actor, w, 0, scenario.hand);
+    const shot = native.list[before];
+    assert.ok(shot, `${scenario.label}: native Projectiles firing creates a projectile`);
+    const out = { muzzle: xyz(muzzle), origin: xyz(shot.pos), velocity: xyz(shot.vel) };
+    native.clear();
+    return out;
+  };
+
+  for (const scenario of scenarios) {
+    actor.character.setWeapon(scenario.weapon);
+    actor.weapon = api.WEAPONS[scenario.weapon];
+    actor.weaponId = scenario.weapon;
+    slope.value = scenario.slope;
+    actor.pos.set(0.35, slope.value * 0.35, 0);
+    actor.aimPitch = scenario.pitch;
+    actor.aimDir.set(Math.sin(scenario.pitch), Math.cos(scenario.pitch), -0.15).normalize();
+    actor.aimPoint.copy(actor.pos).addScaledVector(actor.aimDir, 24);
+    actor.grounded = scenario.pitch < 1;
+    actor.vel.set(0.3, 0, 0);
+    const subject = actor.character;
+    subject.phys = G.physics;
+    // A real Match roster must protect the native Actor.anim state from the
+    // visual budget; Actor._finishFrame passes that state, not the Actor.
+    renderer.info.render.frame = 1000 + GRACE_FRAMES;
+    subject._camFrame = 1000;
+    subject._ovbOutsideStreak = 0;
+    assert.equal(actor.isLocal, false, 'the native bot is non-local');
+    const match = G.match, actors = G.actors;
+    G.match = { actors: [] }; G.actors = [];
+    assert.equal(offscreenBudgeted(subject, actor.anim, G), false, `${scenario.label}: first outside verdict`);
+    assert.equal(offscreenBudgeted(subject, actor.anim, G), true, `${scenario.label}: without roster ownership the non-local state would be deferred`);
+    G.match = match; G.actors = actors; subject._ovbOutsideStreak = 0;
+    assert.equal(offscreenBudgeted(subject, actor.anim, G), false, `${scenario.label}: native Match roster owns this Character`);
+    assert.equal(offscreenBudgeted(subject, actor.anim, G), false, `${scenario.label}: offline bots remain full rate`);
+
+    const installedUpdate = subject.update;
+    subject.update = nativeUpdate;
+    try { actor._finishFrame(DT); } finally { subject.update = installedUpdate; }
+    const baseline = fireSnapshot(scenario);
+    subject._ovbOutsideStreak = 0;
+    subject._ovbWasBudgeted = false;
+    actor._finishFrame(0); // Actor -> Character installed path, at the same pose time
+    assert.equal(subject._ovbWasBudgeted, false, `${scenario.label}: no offscreen defer for an authoritative Actor`);
+    const patched = fireSnapshot(scenario);
+    for (const key of ['muzzle', 'origin', 'velocity']) for (let axis = 0; axis < 3; axis++) {
+      assert.ok(Math.abs(patched[key][axis] - baseline[key][axis]) <= 1e-8,
+        `${scenario.label}: ${key}[${axis}] parity (${baseline[key][axis]} vs ${patched[key][axis]})`);
+    }
+  }
+  assert.ok(nativeMuzzleCalls >= 4, 'Shooter launches used Projectiles._muzzle');
+  assert.ok(nativeHandCalls >= 8, 'both Dualies launches used Projectiles._muzzleHand');
+});
+
+test('#845 camera return guard: an offline Actor is full-rate before the first visible native render hook', () => {
+  reset();
+  turnAway();
+  const actor = liveOfflineActor();
+  const subject = actor.character;
+  subject.phys = G.physics;
+  actor.vel.set(0.3, 0, 0);
+  subject._camFrame = renderer.info.render.frame;
+  renderer.info.render.frame += GRACE_FRAMES;
+  subject._ovbOutsideStreak = 0;
+  const before = counts.pose;
+  actor._finishFrame(DT);
+  actor._finishFrame(DT);
+  assert.equal(subject._ovbWasBudgeted, false, 'offline authoritative actors are never deferred');
+  assert.equal(counts.pose - before, 4, 'both pose passes ran for each offscreen tick');
+  turnTo();
+  const current = renderer.info.render.frame;
+  subject._camHook(renderer, G.scene, camera);
+  assert.equal(subject._camFrame, current, 'native _camHook marks the first returned visible submission');
+  assert.equal(subject._ovbWasBudgeted, false, 'no deferred catch-up or stale pose remains on return');
 });

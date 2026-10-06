@@ -124,3 +124,11 @@ before/after は**同一プロセス内**で比較している（in view / just 
 - 順序競合テストは**静的カメラ証明ではない**: update 時は `turnAway()`、`rig.update` 相当で `turnTo()` と向きを実際に変え、そのうえで実際の投入フック `mesh.onBeforeRender(...)` を呼ぶ。旋回後に `Character.update` を挟まない点が本件の核心（next tick に逃げない）。
 
 制限は前節のとおり変わらない。**ブラウザ実行・端末 Performance trace・実機比較は未確認、FPS/frame-time の改善は主張しない。** 補正の正当性は「投入前に遅延分が回収される」「未モデル投影を full rate に落とす」という論理検証と呼び出し回数に限る。オフスクリーン時の通常 tick は従来どおり抑止されており、回収は「budgeted のまま実際に描画される」少数フレームでのみ発生する。
+
+## 2026-10-07 SOLE845 corrective handoff — authoritative muzzle guard
+
+この節は上記の「live Actor の武器・権威状態に影響しない」「Issue #845 の live actor workload を抑制できた」という結論を訂正する。`Actor._finishFrame(dt)` は `ch.update(dt, actor.anim)` を呼ぶ一方、Actor は `actor.character === ch` で Character を所有し、active roster は `G.match.actors` / `G.actors` に保持される。native `Projectiles._muzzle()` は `Character.getMuzzle()` の weapon world transform を読み、Dualies の `_muzzleHand()` は右手と左手の各 muzzle world transform を読む。`getAimMuzzle()` の blend/fallback があっても実 muzzle が使われる経路を排除しない。Offline bot もこの Actor 経路を通り、`isLocal === false` のため local-only guard では不足する。Pose を省略すれば projectile origin/direction が変わり得る。
+
+修正は `offscreenBudgeted()` で state の owner link または active roster 所属 `actor.character === ch` を検出したら必ず streak を reset し、native Character update を full rate に保つ。これは local player、remote player、offline bot すべてに適用する。Detached presentation-only Character に対する frustum/grace/camera-return 経路は引き続きテストするが、**通常 gameplay Actor の offscreen pose/IK/hair は最適化しない**。したがって Issue #845 は **PARTIAL / fixed=false**。以前の 0 pose/0 raycast の単一 Node 測定は detached harness のみを表し、live Actor や gameplay performance の改善根拠として取り消す。Actor JSON equality は muzzle parity の代用にしない。
+
+Focused native regression は byte-locked `inkwave-public/src/game/character.js` の Character と `inkwave-public/src/game/weapons.js` の Projectiles を使い、実 `Actor._finishFrame` → `Actor.anim` → Character ordering で Shooter と Dualies 右/左 hand を slope・near-vertical aim・offscreen camera から native `fireShooter`/`fireDualies` に通し、unwrapped baseline と installed wrapper の projectile origin/velocity を比較する。camera return の実 native `_camHook` も確認する。これは renderer/raycast stub を使う logic-level check で、実ブラウザ・端末 Performance trace・Nintendo Switch Ver.11.3.0 実機比較ではない。Focused suite は **13/13 pass**。実機の射撃 parity と CPU 利得は引き続き **未確認**。
