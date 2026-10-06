@@ -137,7 +137,9 @@ export function installWeapons(context, profile) {
       const delta = Math.max(0, targetPaid - (this.s3ChargerSpent || 0));
       const spent = Math.min(a.ink, delta);
       if (spent > epsilon) {
-        a.ink -= spent; a.lastFire = 0;
+        // Progressive charge consumption must not redefine the independently
+        // verified shot/cancel refill-stop clock.
+        a.ink -= spent;
         this.s3ChargerSpent = (this.s3ChargerSpent || 0) + spent;
       }
       return result;
