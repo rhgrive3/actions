@@ -21,11 +21,114 @@ export function rollerMode(w, vertical) {
   return vertical ? { ...w, flickWindup: w.verticalWindup, flickInterval: w.verticalInterval ?? w.flickInterval, flickInk: w.verticalInk } : w;
 }
 
-export function installRollerLogic({ WeaponRunner }, _profile) {
+// Action-interruption windows that start when an authoritative roll ENDS.
+// These are the 塗り進み interruption row of the S3 verification table, not the
+// horizontal/vertical swing post-lag and not the rolling ink-recovery lock (#176).
+// They are separate boundaries, so none of them may be substituted for another.
+export const ROLL_STOP_LOCKS = Object.freeze({ main: 16 / 60, sub: 5 / 60, squid: 6 / 60 });
+
+/** Which admissions a roll-stop interruption still owns at `now`.
+ * Deadlines are absolute, so the boundaries do not drift with the render rate.
+ * G.time accumulates float error across fixed ticks, so the comparison carries
+ * the same epsilon the rest of the movement clocks use: without it the boundary
+ * tick itself can land a hair before its own deadline and wait one frame more. */
+export function rollStopBlocks(now, locks) {
+  if (!locks) return { main: false, sub: false, squid: false };
+  return {
+    main: now < locks.main - EPS,
+    sub: now < locks.sub - EPS,
+    squid: now < locks.squid - EPS,
+  };
+}
+
+/** Arm the roll-end deadlines at `now`, the roll-end tick itself being frame 0. */
+export function rollStopLocks(now) {
+  return { main: now + ROLL_STOP_LOCKS.main, sub: now + ROLL_STOP_LOCKS.sub, squid: now + ROLL_STOP_LOCKS.squid };
+}
+
+export function installRollerLogic({ WeaponRunner, Actor, G }, _profile) {
   const roller = WeaponRunner.prototype._roller, reset = WeaponRunner.prototype.reset;
+  const update = WeaponRunner.prototype.update;
+  // An established roll that the player simply lets go of arms the sourced
+  // interruption. A dry roll (#541) and a roll released into a flick keep their
+  // existing behaviour, so neither arming nor admission changes for them.
+  const armsInterruption = runner => {
+    const a = runner.a;
+    return a.grounded && a.ink > 0.5 && runner.flick < 0;
+  };
+  // Whether this tick's `fire` keeps the roll alive. `_roller` recomputes the same
+  // canRoll terms, so a tick that cannot hold them ends the roll: an estimate, not a
+  // second engine, and both callers below discard it again if the roll survives.
+  // A roll cannot start while a window is live (main gates fire), so any live
+  // window means no roll is in flight and nothing needs re-arming.
+  const rollWillStop = (runner, fire) => {
+    const a = runner.a;
+    return runner.rolling === true && !fire && armsInterruption(runner);
+  };
+  // Arm ahead of the tick when it can already be told that the roll ends, so the
+  // lock owns frame 0 instead of starting one tick after it. The real Actor picks
+  // its form BEFORE it calls the runner, so a lock armed inside the runner arrives
+  // after the form decision and a simultaneous release+squid still enters. The arm
+  // is rolled back below whenever the roll turns out to have survived.
+  const armAheadOf = (runner, now, fire) => {
+    const live = rollStopBlocks(now, runner.s3RollStop);
+    if ((live.main || live.sub || live.squid) || !rollWillStop(runner, fire)) return false;
+    runner.s3RollStop = rollStopLocks(now);
+    return true;
+  };
+  const disarmIf = (runner, armed) => {
+    // The prediction is only kept when the real runner agrees the roll ended and the
+    // same terms the post-arm check uses still hold.
+    if (armed && (runner.rolling === true || !armsInterruption(runner))) runner.s3RollStop = null;
+  };
+  WeaponRunner.prototype.update = function (dt, inp = {}) {
+    const now = G.time;
+    const armed = armAheadOf(this, now, !!inp.fire);
+    const locks = this.s3RollStop;
+    let input = inp;
+    if (locks && this.a.weapon?.kind === 'roller') {
+      const blocked = rollStopBlocks(now, locks);
+      if (blocked.main || blocked.sub) {
+        input = { ...inp };
+        // Admission only. Buffered intent may survive; the action itself must not
+        // become authoritative before its own boundary expires. A tick that armed
+        // the lock is not gated on fire: its own `inp.fire` is what stopped the roll,
+        // and blocking it here would make the prediction decide the roll.
+        if (blocked.main && !armed) { input.fire = false; input.firePressed = false; }
+        if (blocked.sub) { input.sub = false; input.subReleased = false; }
+      }
+    }
+    const wasRolling = this.rolling === true;
+    const result = update.call(this, dt, input);
+    disarmIf(this, armed);
+    if (wasRolling && this.rolling !== true && armsInterruption(this)) this.s3RollStop = rollStopLocks(now);
+    return result;
+  };
+  // Squid admission lives in the locked Actor form gate, which reads the generic
+  // busy set. Extending busy() would also pause ink recovery and would entangle
+  // this root with #176, so form admission is gated here instead.
+  const actorUpdate = Actor.prototype.update;
+  Actor.prototype.update = function (dt, ...rest) {
+    const runner = this.weaponRunner;
+    if (!runner) return actorUpdate.call(this, dt, ...rest);
+    const now = G.time;
+    // The Actor builds its own fire from the raw intent, so the same estimate is
+    // read here rather than duplicated: a buffered pop-out shot keeps fire alive.
+    const armed = armAheadOf(runner, now, !!(this.intent?.fire || this.fireBuffer > 0));
+    const blockSquid = rollStopBlocks(now, runner.s3RollStop).squid;
+    if (blockSquid && this.intent?.squid) {
+      const held = this.intent.squid;
+      this.intent.squid = false;
+      try { return actorUpdate.call(this, dt, ...rest); }
+      finally { this.intent.squid = held; disarmIf(runner, armed); }
+    }
+    try { return actorUpdate.call(this, dt, ...rest); }
+    finally { disarmIf(runner, armed); }
+  };
   WeaponRunner.prototype.reset = function (...args) {
     const result = reset.apply(this, args);
     this.s3RollerAttack = null;
+    this.s3RollStop = null;
     if (this.a.character) {
       this.a.character.s3RollerFlick = null;
       this.a.character._s3CancelRollerFlick?.();

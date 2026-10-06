@@ -498,7 +498,8 @@
       "Blaster terrain damage is half of normalized existing bands, floor to0.1HP after scaling;35HP cap is sourced, complete S3 falloff curve remains uncalibrated.",
       "PR64 completion: finite Charger flight, continuous collision, source-mirrored unit layouts and model-labelled interpolation; physical Switch parity remains unverified.",
       "Rescued from PR #489: Flow progress now decays/penalizes and survives respawn while active; community loss values remain calibration, not Nintendo primary data.",
-      "Rescued from PR #547/#491/#545: Roller swing movement target, deterministic Alpha ties, and Tenacity owner-only passive charge remain subject to current-main combined validation."
+      "Rescued from PR #547/#491/#545: Roller swing movement target, deterministic Alpha ties, and Tenacity owner-only passive charge remain subject to current-main combined validation.",
+      "Roller roll-stop action interruption (main 16F / sub 5F / squid 6F) is a community frame measurement from the S3 verification table '検証/メインウェポン/前隙・後隙', 塗り進み interruption row. The page returned HTTP 403 on the 2026-10-06 re-fetch, so the three numbers are recorded with that source and NOT claimed as re-verified here; the frame-to-second conversion is /60 and the endpoint convention is 'roll-end tick is frame 0'. They are not pinned Ver. 11.3.0 parameter-table fields."
     ],
     "movementResourcesEvidence": "reports/inkwave-movement-resources-2026-10-02.md"
   },
