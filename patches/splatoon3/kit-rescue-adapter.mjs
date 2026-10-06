@@ -23,7 +23,17 @@ export function adaptKitRescue(rel, code, replaceOnce) {
     patch('    this.respawnTimer = PLAYER.respawnTime;','    setRespawnTimer(this, cause);','death-cause respawn');
     code="import { setRespawnTimer } from '../../patches/splatoon3/runtime/resources.mjs';\n"+code;
   } else if(rel==='src/main.js'){
-    patch('subCost: SUB.bomb.inkCost / PLAYER.inkMax,','subCost: selectedSubCost(a, SUB) / PLAYER.inkMax,','frame sub cost');
+    // Gear/Sub runs earlier in the gameplay stack and may already have lifted the
+    // actor-local bomb cost into a shared subCost used by both readiness and HUD.
+    // Replace that producer so the selected kit sub keeps the same gear-adjusted
+    // single source of truth. Retain the raw fallback for direct/legacy composition.
+    if (code.includes('    const subCost = subInkSpec(a, SUB.bomb).inkCost;')) {
+      patch('    const subCost = subInkSpec(a, SUB.bomb).inkCost;',
+        '    const subCost = selectedSubCost(a, SUB);','frame sub cost');
+    } else {
+      patch('subCost: SUB.bomb.inkCost / PLAYER.inkMax,',
+        'subCost: selectedSubCost(a, SUB) / PLAYER.inkMax,','frame sub cost');
+    }
     code="import { selectedSubCost } from '../patches/splatoon3/runtime/kit-composition.mjs';\n"+code;
   } else if(rel==='src/net/netmatch.js'){
     patch("'splatted', 'respawn'];","'splatted', 'respawn', ...KIT_FORWARD];",'kit event forward');
