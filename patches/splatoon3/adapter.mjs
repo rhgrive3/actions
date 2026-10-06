@@ -596,12 +596,16 @@ export function adaptSource(rel, code) {
       'S3 ShotGuideFrame HUD projection');
     {
       const rawEnemyReveal = "          // enemies only show on the map when visible to your team (not submerged far away)\n          if (o.anim.form === 'swim') continue;";
-      const composedEnemyReveal = "          // S3 Turf Map: opponents appear only once damaged (>=18) or explicitly marked.\n          if (!enemyRevealedOnMap(o, PLAYER.hp)) continue;";
-      if (code.includes(rawEnemyReveal)) {
-        code = replaceOnce(code, rawEnemyReveal, composedEnemyReveal, 'enemy map reveal');
+      const scoreHudEnemyReveal = "          if (!mapActorVisible(o, a, PLAYER.hp, G.time)) continue;";
+      const directEnemyReveal = "          // S3 Turf Map: opponents appear only once damaged (>=18) or explicitly marked.\n          if (!enemyRevealedOnMap(o, PLAYER.hp)) continue;";
+      const combinedEnemyReveal = "          // S3 Turf Map: preserve timed/team reveal and explicit recon marking; damage >=18 satisfies both.\n          if (!mapActorVisible(o, a, PLAYER.hp, G.time) && !enemyRevealedOnMap(o, PLAYER.hp)) continue;";
+      if (code.includes(scoreHudEnemyReveal)) {
+        code = replaceOnce(code, scoreHudEnemyReveal, combinedEnemyReveal, 'enemy map reveal after score HUD');
+      } else if (code.includes(rawEnemyReveal)) {
+        code = replaceOnce(code, rawEnemyReveal, directEnemyReveal, 'enemy map reveal');
       } else {
-        const count = code.split(composedEnemyReveal).length - 1;
-        if (count !== 1) throw new Error('INKWAVE patch conflict (enemy map reveal): expected raw or composed connection');
+        const accepted = [directEnemyReveal, combinedEnemyReveal].reduce((n, value) => n + (code.split(value).length - 1), 0);
+        if (accepted !== 1) throw new Error('INKWAVE patch conflict (enemy map reveal): expected raw, score-HUD, or composed connection');
       }
     }
     return `import { runSimulation, installGame } from '../patches/splatoon3/runtime/clock.mjs';\nimport { projectShotGuide } from '../patches/splatoon3/runtime/weapons-fidelity.mjs';\nimport { enemyRevealedOnMap } from '../patches/splatoon3/runtime/map-reveal.mjs';\n` + code;
