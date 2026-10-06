@@ -8,7 +8,7 @@ import { adaptSource } from '../adapter.mjs';
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const BUILT = process.env.INKWAVE_BUILT_SITE;
 const UPSTREAM = BUILT ? path.resolve(BUILT) : process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
-export async function fixture({ adapt = adaptSource, adaptRuntime = (_rel, source) => source } = {}) {
+export async function fixture({ adapt = adaptSource, adaptRuntime = (_rel, source) => source, extraExports = '' } = {}) {
   const context = vm.createContext({ console, performance });
   const modules = new Map();
   function resolve(spec, from) {

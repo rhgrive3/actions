@@ -78,11 +78,12 @@ export function adaptIssue482Net(code) {
     'netmatch remote lastAttackerHitAge advance'
   );
 
-  // Clear lastAttacker and lastAttackerHitAge on remote respawn
+  // Extend the unique respawn tail, preserving Super Jump and network-auth resets.
+  // Do not replace the complete method: other owners prepend their retirement.
   code = replaceOnce(
     code,
-    '  _remoteRespawn(a) {\n    a.alive = true; a.hp = PLAYER.hp; a.invuln = PLAYER.spawnInvuln;\n    a.respawnTimer = 0;\n    a.net.spawnPending = true;\n  }',
-    '  _remoteRespawn(a) {\n    a.alive = true; a.hp = PLAYER.hp; a.invuln = PLAYER.spawnInvuln;\n    a.respawnTimer = 0;\n    a.net.spawnPending = true;\n    a.lastAttacker = null; a.lastAttackerHitAge = 99;\n  }',
+    '    a.net.spawnPending = true;\n  }',
+    '    a.net.spawnPending = true;\n    a.lastAttacker = null; a.lastAttackerHitAge = 99;\n  }',
     'netmatch remote respawn attacker clear'
   );
 
