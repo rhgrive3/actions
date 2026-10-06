@@ -1,3 +1,4 @@
+import { installFinalDamage, damageGroupId } from './final-damage.mjs';
 import { installSplatlingRadiusCharge } from './splatling-radius-charge.mjs';
 import { installWeaponEdgecases } from './weapon-edgecases.mjs';
 import { installSplatling } from './splatling.mjs';
@@ -51,7 +52,7 @@ export function applyProjectileHit(system, projectile, victim, amount, point) {
   if (['shooter', 'dualies', 'splatling'].includes(weapon.kind)) amount = ageDamage(weapon, projectile.age, amount);
   if (weapon.kind === 'roller' && point) amount = distanceDamage(projectile.s3Vertical ? weapon.verticalDamageBands : weapon.flickDamageBands, projectile.start.distanceTo(point));
   amount = groupDamage(projectile.s3DamageGroup, victim, amount);
-  if (amount > 0) system.applyHit(projectile.owner, victim, amount, projectile.wid || projectile.type);
+  if (amount > 0) system.applyHit(projectile.owner, victim, amount, projectile.wid || projectile.type, damageGroupId(projectile.s3DamageGroup));
 }
 export function installWeapons(context, profile) {
   api = context;
@@ -245,5 +246,6 @@ export function installWeapons(context, profile) {
   installSplatlingRadiusCharge(api, profile);
   installWeaponGates(api);
   installAgent3WeaponPhysics(api, profile);
+  installFinalDamage(api);
   installWeaponEdgecases(api);
 }
