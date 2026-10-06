@@ -130,10 +130,23 @@ test('charge visuals and active actions clear on form switch, jump takeover and 
 test('super jump uses raw preparation/flight times and grants no landing protection', async () => {
   const f = await fixture(), a = f.make();
   a._probeGround = () => {}; a._resolve = () => { a.grounded = true; };
+  // Takeoff is the charge duration PLUS the human startup. Both are authoritative profile values,
+  // so derive the boundary instead of hardcoding a frame index that drifts whenever either changes.
+  // The pre-startup boundary was 80 frames; with startupHumanoidF = 22 the real takeoff is 102.
+  const CHARGE_F = f.profile.superJump.chargeTime * 60;
+  const STARTUP = f.profile.superJump.startupHumanoidF;
+  const TAKEOFF = STARTUP + CHARGE_F;
+  // A separate actor proves the startup is actually present: it must still be charging at the old
+  // 80F boundary. If the startup were ever dropped this fails, instead of the boundary silently moving.
+  const b = f.make();
+  b._probeGround = () => {}; b._resolve = () => { b.grounded = true; };
+  b.superJump(new f.THREE.Vector3(0, 0, 10));
+  f.tick(b, CHARGE_F); assert.equal(b.superJumpState.phase, 'charge',
+    `${STARTUP}F of human startup is missing: takeoff must not happen at the pre-startup ${CHARGE_F}F boundary`);
   a.superJump(new f.THREE.Vector3(0, 0, 10));
-  f.tick(a, 79); assert.equal(a.superJumpState.phase, 'charge');
+  f.tick(a, TAKEOFF - 1); assert.equal(a.superJumpState.phase, 'charge');
   f.tick(a); assert.equal(a.superJumpState.phase, 'flight'); close(a.invuln, 0);
-  close(a.superJumpState.dur, 138 / 60);
+  close(a.superJumpState.dur, f.profile.superJump.flightTime);
   a.invuln = 99; f.tick(a, 138); assert.equal(a.superJumpState, null); close(a.invuln, 0);
   a.damage(36, null, 'shooter'); close(a.hp, 64);
 });

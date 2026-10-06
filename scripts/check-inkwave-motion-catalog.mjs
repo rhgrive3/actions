@@ -28,6 +28,14 @@ export const CATALOG_MODULES = Object.freeze([
   ['carry', 'carryMotionSnapshot', 'installCarryMotion'],
 ]);
 // Fixed named denominators; shortening an action cannot silently skip its tail.
+const CATALOG_ROOT = fileURLToPath(new URL('../', import.meta.url));
+const CATALOG_PROFILE = JSON.parse(fs.readFileSync(path.join(CATALOG_ROOT, 'patches/splatoon3/profile.json'), 'utf8'));
+// The shipped charge gate is `s.t + 1e-10 >= jumpChargeTime + startup`, and
+// these actors are admitted in humanoid form, so the 80F charge wait is
+// followed by startupHumanoidF. Catalog frame 0 already performs the first
+// advance, so the takeoff sample sits one frame before the derived call count.
+// Derive it; never hardcode a boundary that a profile change would invalidate.
+const SUPERJUMP_TAKEOFF = Math.round((CATALOG_PROFILE.superJump.chargeTime + CATALOG_PROFILE.superJump.startupHumanoidF / 60) * 60) - 1;
 export const CATALOG_SCENARIOS = Object.freeze([
   { name: 'carry-walk-fire-return', kind: 'shooter', frames: 240 },
   { name: 'ordinary-aimed-jump', kind: 'shooter', frames: 180, probes: [23, 38] },
@@ -39,7 +47,8 @@ export const CATALOG_SCENARIOS = Object.freeze([
   { name: 'roller-horizontal-push', kind: 'roller', frames: 180, probes: [17, 125] },
   { name: 'roller-vertical-land', kind: 'roller', frames: 180 },
   // Native preparation + flight + .8s visual touchdown must all expire.
-  ...['short', 'vertical', 'long'].map(distance => ({ name: 'superjump-' + distance, kind: 'shooter', frames: 300, probes: [79, 80, 200, 217, 265] })),
+  // Sample the last preparation frame and the derived takeoff itself.
+  ...['short', 'vertical', 'long'].map(distance => ({ name: 'superjump-' + distance, kind: 'shooter', frames: 300, probes: [SUPERJUMP_TAKEOFF - 1, SUPERJUMP_TAKEOFF, 200, 217, 265] })),
   { name: 'squidroll-finish', kind: 'shooter', frames: 120 },
   { name: 'squidroll-interrupt', kind: 'shooter', frames: 120 },
   { name: 'hit-spawn-reset', kind: 'shooter', frames: 180, probes: [20, 110, 150] },
