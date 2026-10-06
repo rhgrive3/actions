@@ -30,16 +30,27 @@ for (const p of [evidence, cache]) {
 const require = createRequire(import.meta.url);
 const { chromium, webkit, devices } = require('playwright');
 const patchStyles = fs.existsSync(path.join(source, 'patches/splatoon3/ui.css')) ? '<link rel="stylesheet" href="/patches/splatoon3/ui.css">' : '';
+const runtimeFiles = patchStyles ? ['patches/splatoon3/runtime/install.mjs', 'patches/splatoon3/runtime/gear.mjs', 'patches/splatoon3/runtime/conditional-gear.mjs', 'patches/splatoon3/runtime/sub-resistance.mjs', 'patches/splatoon3/profile.json'] : [];
+for (const file of runtimeFiles) assert(fs.existsSync(path.join(source, file)), `Missing installed UI input: ${file}`);
+const runtimeInstaller = patchStyles ? `
+import { install } from '/patches/splatoon3/runtime/install.mjs';
+const tuningResponse = await fetch('/patches/splatoon3/profile.json');
+if (!tuningResponse.ok) throw Error('Published gameplay profile unavailable');
+const tuning = await tuningResponse.json();
+install(tuning);
+` : '';
 const html = `<!doctype html><html lang="ja"><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <link rel="stylesheet" href="/styles/ui.css"><link rel="stylesheet" href="/styles/mobile.css">
 ${patchStyles}
 <style>html,body{margin:0;overflow:hidden;background:#0d1020;touch-action:none}#ui-root{position:fixed;inset:0}</style>
+<script type="importmap">{"imports":{"three":"/vendor/three/build/three.module.js","three/addons/":"/vendor/three/jsm/"}}</script>
 <div id="ui-root"></div><script type="module">
 import { Menus } from '/src/ui/menus.js';
 import { G } from '/src/core/ctx.js';
 import { MockNet } from '/src/net/mock.js';
 import { DEFAULT_SETTINGS } from '/src/config.js';
+${runtimeInstaller}
 let settings={...DEFAULT_SETTINGS}, profile={name:'Test Squidkid',level:5,xp:1200}, loadout={weapon:'shooter'};
 G.settings=settings; G.net=new MockNet();
 window.G=G;window.menuState=()=>({settings,profile,loadout});window.menus=new Menus(document.getElementById('ui-root'),{
@@ -68,8 +79,9 @@ const server = http.createServer((request, response) => {
 await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
 const address = `http://127.0.0.1:${server.address().port}/__menus?netmock=1&mockauto=0&mocklat=0&news=0`;
 const result = { kind: 'production-menu-dom-with-offline-session', source, section, selectedCases, realDeviceVerified: false, baseline: baseline || null, cases: [], errors: [] };
+result.runtimeInstalled = !!patchStyles;
 const hash = (b) => crypto.createHash('sha256').update(b).digest('hex');
-const sourceHashes = () => Object.fromEntries(['styles/mobile.css', 'styles/ui.css', 'src/ui/menus.js', 'src/ui/news.js', 'src/core/device.js', ...(patchStyles ? ['patches/splatoon3/ui.css'] : [])].map((f) => {
+const sourceHashes = () => Object.fromEntries(['styles/mobile.css', 'styles/ui.css', 'src/ui/menus.js', 'src/ui/news.js', 'src/core/device.js', ...(patchStyles ? ['patches/splatoon3/ui.css'] : []), ...runtimeFiles].map((f) => {
   const original = baseline && ['styles/mobile.css', 'src/ui/menus.js', 'src/ui/news.js'].includes(f);
   return [f, hash(fs.readFileSync(original ? path.join(path.resolve(baseline), 'inkwave-public', f) : path.join(source, f)))];
 }));

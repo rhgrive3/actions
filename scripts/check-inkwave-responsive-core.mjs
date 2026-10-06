@@ -74,6 +74,29 @@ export async function checkCoreMenus({ page, entry, config, engineName, evidence
   await show(page, 'loadout');
   await capture('loadout', '.iw-loadout .iw-wcard, .iw-loadout__look button, .iw-loadout .iw-backbtn');
   if (!audit) {
+    // Exercise actual native selects/storage, rather than only inspecting the
+    // ABILITIES object. Only head-main may offer the three conditional powers.
+    await tap(page, '.s3-gear summary');
+    const selects = page.locator('.s3-gear select');
+    assert.equal(await selects.count(), 12);
+    for (const id of ['lastDitchEffort', 'comeback', 'openingGambit']) {
+      assert.equal(await selects.nth(0).locator(`option[value="${id}"]`).count(), 1);
+      for (let i = 1; i < 12; i++) assert.equal(await selects.nth(i).locator(`option[value="${id}"]`).count(), 0);
+      await selects.nth(0).selectOption(id);
+      assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('inkwave.splatoon3.gear.v1'))[0].main), id);
+    }
+    for (let i = 0; i < 12; i++) assert.equal(await selects.nth(i).locator('option[value="subResistance"]').count(), 1);
+    await selects.nth(1).selectOption('subResistance');
+    await show(page, 'setup'); await show(page, 'loadout');
+    assert.equal(await page.locator('.s3-gear select').nth(0).inputValue(), 'openingGambit');
+    assert.equal(await page.locator('.s3-gear select').nth(1).inputValue(), 'subResistance');
+    if (!await page.locator('.s3-gear').evaluate(el => el.open)) await page.locator('.s3-gear summary').tap();
+    await page.locator('.s3-gear select').nth(0).selectOption('none');
+    await page.locator('.s3-gear select').nth(1).selectOption('none');
+    // The expanded native details panel is an overlay. Close it with the same
+    // summary action as a player before tapping a weapon behind that panel.
+    await tap(page, '.s3-gear summary');
+    assert.equal(await page.locator('.s3-gear').evaluate(el => el.open), false, 'gear panel closes before returning to weapon selection');
     const card = page.locator('.iw-loadout .iw-wcard').last();
     const weapon = await card.evaluate((el) => el._wid);
     await card.scrollIntoViewIfNeeded(); await card.tap();
