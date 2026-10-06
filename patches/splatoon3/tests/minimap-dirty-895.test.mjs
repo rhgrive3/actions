@@ -47,7 +47,7 @@ function makeStage({ W, D }) {
   return { level, makePaint, face, nu, nv };
 }
 
-function makeHarness({ minimapOff = false } = {}) {
+function makeHarness({ minimapOff = false, nativeDrawInk = false } = {}) {
   const state = { minimapOff, paints: [] };
   const mkCtx = (canvas) => ({
     _canvas: canvas,
@@ -74,6 +74,18 @@ function makeHarness({ minimapOff = false } = {}) {
   sandbox.globalThis = sandbox;
   const context = vm.createContext(sandbox);
   let code = compose('src/game/minimap.js');
+  if (nativeDrawInk) {
+    // Independent control: use the actual unmodified upstream raster method,
+    // including its flash history. Keep the same class/cadence and dirty driver.
+    const raw = read('inkwave-public/src/game/minimap.js');
+    const endMarker = '\n  // ------------------------------------------------------------------------------------------ per frame';
+    const a = raw.indexOf('  _drawInk(y0 = 0, y1 = this.h) {');
+    const b = raw.indexOf(endMarker, a);
+    const c = code.indexOf('  _drawInk(y0 = 0, y1 = this.h, x0 = 0, x1 = this.w) {');
+    const d = code.indexOf(endMarker, c);
+    assert.ok(a >= 0 && b > a && c >= 0 && d > c);
+    code = code.slice(0, c) + raw.slice(a, b) + code.slice(d);
+  }
   code = code.replace("import { G, on } from '../core/ctx.js';", 'const on = () => () => {};');
   code = code.replace("import { SPECIALS, SUB } from '../config.js';", 'const SPECIALS = { slam: { radius: 3 }, storm: { radius: 3.4 } }; const SUB = { bomb: { radius: 3, fuse: 1 } };');
   code = code.replace(/export class Minimap/, 'class Minimap');
@@ -324,6 +336,31 @@ test('#895 a large repaint keeps the existing 3-band spike bound', async () => {
   // transition history upstream, so only ownership is compared here.
   assert.deepEqual(bytes(mm.inkImg.data), bytes(ref.inkImg.data), 'the banded whole-map path matches a single-shot full refresh');
 });
+
+for (const [name, dimensions] of Object.entries(STAGES)) {
+  test(`#895 ${name} retains each fresh band flash like the native raster`, () => {
+    const stage = makeStage(dimensions);
+    const maps = [makeHarness(), makeHarness({ nativeDrawInk: true })].map(h => {
+      const paint = stage.makePaint();
+      const map = new h.Minimap(stage.level, paint);
+      map.update(0.016, true);
+      paint.grid.fill(1);
+      for (let j = 0; j < stage.nv; j++) for (let i = 0; i < stage.nu; i++) {
+        PaintSystem.prototype._inkMark.call(paint, stage.face, i, j);
+      }
+      paint.version++;
+      return map;
+    });
+    for (const dt of [0.2, 1 / 60, 1 / 60]) {
+      for (const map of maps) map.update(dt);
+      assert.deepEqual(bytes(maps[0].flashImg.data), bytes(maps[1].flashImg.data),
+        'all earlier bands remain visible throughout this native refresh');
+      assert.deepEqual(bytes(maps[0].inkImg.data), bytes(maps[1].inkImg.data));
+      assert.equal(maps[0].flashT, maps[1].flashT);
+    }
+    assert.equal(maps[0]._band, 0);
+  });
+}
 
 test('#895 Minimap OFF never runs the live raster and keeps the dirty region O(1)', async () => {
   const stage = makeStage(STAGES.Halyard);

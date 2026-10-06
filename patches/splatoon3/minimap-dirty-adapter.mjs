@@ -41,7 +41,7 @@ export function adaptMinimapDirty(rel, code, replaceOnce) {
         code.includes('else this._drawDirtyInk(_rec);') &&
         code.includes('const ry0 = Math.max(0, y0 - 1), ry1 = Math.min(H, y1 + 1);') &&
         code.includes('const _pb = this._lastFlashBox;') &&
-        code.includes('this._lastFlashBox = flashes > 0 && fz0 >= 0')) return code;
+        code.includes('this._lastFlashBox = _nextFlash;')) return code;
     code = replaceOnce(code,
       '  _drawInk(y0 = 0, y1 = this.h) {',
       '  _drawInk(y0 = 0, y1 = this.h, x0 = 0, x1 = this.w) {',
@@ -58,8 +58,9 @@ export function adaptMinimapDirty(rel, code, replaceOnce) {
     // is a transition history: pixels flashed by an earlier pass keep their
     // alpha until some later pass rewrites them, so a partial redraw that only
     // touched its own rectangle let the global flashT reset resurrect old
-    // flashes. Clear + upload only the previously flashed bounding box before
-    // this pass writes (bounded union with the incoming rectangle) — no global
+    // flashes. Clear + upload the previous refresh's flashed bounding box before
+    // a NEW refresh writes. Band continuations keep the current refresh's flashes
+    // (bounded union with the incoming rectangle) — no global
     // ownership rescan, no raster outside the two localized boxes.
     code = replaceOnce(code,
       '    const d = this.inkImg.data, fd = this.flashImg.data, own = this.owner;\n    if (y0 === 0) this._rgb = this._teamRGB();',
@@ -68,7 +69,7 @@ export function adaptMinimapDirty(rel, code, replaceOnce) {
       '    // (bounded union with this rectangle) so a later flashT reset can never\n' +
       '    // resurrect flashes this pass does not rewrite.\n' +
       '    const _pb = this._lastFlashBox;\n' +
-      '    if (_pb && !(_pb.x0 >= x0 && _pb.x1 <= x1 && _pb.y0 >= y0 && _pb.y1 <= y1)) {\n' +
+      '    if (!this._band && _pb && !(_pb.x0 >= x0 && _pb.x1 <= x1 && _pb.y0 >= y0 && _pb.y1 <= y1)) {\n' +
       '      for (let _by = _pb.y0; _by < _pb.y1; _by++) {\n' +
       '        let _bo = (_by * W + _pb.x0) * 4 + 3;\n' +
       '        for (let _bx = _pb.x0; _bx < _pb.x1; _bx++, _bo += 4) fd[_bo] = 0;\n' +
@@ -110,7 +111,14 @@ export function adaptMinimapDirty(rel, code, replaceOnce) {
     code = replaceOnce(code,
       '        own[i] = now;\n      }\n    }',
       '        own[i] = now;\n      }\n    }\n' +
-      '    this._lastFlashBox = flashes > 0 && fz0 >= 0 ? { x0: fz0, y0: fy0, x1: fz1, y1: fy1 } : null;',
+      '    // Band continuations belong to the same refresh: retain their fresh flashes\n' +
+      '    // and accumulate their bounds for cleanup when the NEXT refresh starts.\n' +
+      '    let _nextFlash = flashes > 0 && fz0 >= 0 ? { x0: fz0, y0: fy0, x1: fz1, y1: fy1 } : null;\n' +
+      '    if (this._band && _pb) _nextFlash = _nextFlash ? {\n' +
+      '      x0: Math.min(_pb.x0, _nextFlash.x0), y0: Math.min(_pb.y0, _nextFlash.y0),\n' +
+      '      x1: Math.max(_pb.x1, _nextFlash.x1), y1: Math.max(_pb.y1, _nextFlash.y1)\n' +
+      '    } : _pb;\n' +
+      '    this._lastFlashBox = _nextFlash;',
       'minimap flash bounding box export');
     code = replaceOnce(code,
       '    } else if (force || (this.timer <= 0 && this.version !== this.paint.version)) {\n' +
