@@ -1,3 +1,4 @@
+import { turfExperience } from '../runtime/results-scoring.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -14,7 +15,7 @@ function method(code,start,end){const a=code.indexOf(start),b=code.indexOf(end,a
 function matchRig({raw=false,random=()=>{throw Error('Tie judge used RNG');}}={}){
   const G={},math=Object.create(Math);math.random=random;
   const source=raw?read('src/game/match.js'):compose('src/game/match.js');
-  const Match=vm.runInNewContext(`class Match {${method(source,'  _judge() {','\n  teamSummary() {')}};Match`,{G,Math:math});
+  const Match=vm.runInNewContext(`class Match {${method(source,'  _judge() {','\n  teamSummary(')}};Match`,{G,Math:math});
   const m=new Match();m.bossMode=null;m.setState=state=>{m.state=state;};
   return {G,m,judge(cov,localTeam=0){G.paint={coverage:()=>cov};m.local={team:localTeam};m._judge();return m.result;}};
 }
@@ -59,7 +60,7 @@ test('#158: actual host result packet and receiver preserve Alpha for either loc
 
 test('#158 + #381: native Game/Judd results show Alpha for both local teams on exact equality',async()=>{
   for(const team of [0,1])for(const cov of [[0,0],[.4,.4]]){
-    const r=matchRig(),h=await hudFixture({hudSource:compose('src/ui/hud.js'),gameSource:compose('src/main.js')});
+    const r=matchRig(),h=await hudFixture({hudSource:compose('src/ui/hud.js'),gameSource:compose('src/main.js'),globals:{turfExperience}});
     h.match.local.team=team;h.match.result=r.judge(cov,team);
     const p=h.game._judge();await h.advance(3900);assert(h.judges()[0].classList.contains('is-win-a'));
     assert(!h.judges()[0].classList.contains('is-tie'));await h.advance(2300);await p;

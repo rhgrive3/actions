@@ -190,7 +190,8 @@ export function installGear(api, tuning) {
       kind === 'splatling' && (runner.charging || runner.streaming || firing) ||
       kind === 'slosher' && (runner.slosh >= 0 || firing);
     const walk = m.enemyMoveSpeed ?? original.enemyInkSpeed;
-    if (scaledAction && !squid) api.PLAYER.enemyInkSpeed = Math.min(walk, moveSpeed.call(runner) * (m.enemyActionSpeedScale ?? 1));
+    if (runner.aimingSub && !squid) api.PLAYER.enemyInkSpeed = m.enemyShotSpeed ?? walk;
+    else if (scaledAction && !squid) api.PLAYER.enemyInkSpeed = Math.min(walk, moveSpeed.call(runner) * (m.enemyActionSpeedScale ?? 1));
     else if (fixedShot && !squid) api.PLAYER.enemyInkSpeed = m.enemyShotSpeed ?? walk;
     else api.PLAYER.enemyInkSpeed = kind === 'roller' && this.intent.fire && !squid ? m.enemyShotSpeed ?? walk : walk;
     try { return horizontal.call(this, dt, squid, enemy); }

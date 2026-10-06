@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {observeColdEnvironment,inspectColdBoot} from '../check-inkwave-idle-resources.mjs';
+import fs from 'node:fs';
+import vm from 'node:vm';
+import {observeColdEnvironment,inspectColdBoot,retireDesktopForCold} from '../check-inkwave-idle-resources.mjs';
 let sequence=0;
 async function rig(run){
  const oldWindow=globalThis.window,oldDocument=globalThis.document;
@@ -25,3 +27,33 @@ test('failed context imports retain their stage without inventing a cold allocat
  await assert.rejects(observeColdEnvironment('data:text/javascript,throw%20Error(%22context%20failure%22)'));
  const d=inspectColdBoot();assert.equal(d.observerPhase,'importing-context');assert.equal(d.context,null);assert.equal(d.hasColdEnvironment,false);assert.equal(d.visibility,'visible');assert.equal(d.focused,false);
 }));
+
+test('completed desktop rendering is retired before the new cold context, without swallowing close failure',async()=>{
+ let finish,closed=false;const p={close:()=>new Promise(resolve=>{finish=()=>{closed=true;resolve();};})};let settled=false;
+ const done=retireDesktopForCold(p).then(x=>{settled=true;return x;});await Promise.resolve();assert.equal(settled,false);finish();assert.equal(await done,null);assert.equal(closed,true);
+ const failure=Error('close failed');await assert.rejects(retireDesktopForCold({close:async()=>{throw failure;}}),e=>e===failure);
+ const s=fs.readFileSync(new URL('../check-inkwave-idle-resources.mjs',import.meta.url),'utf8');
+ assert.ok(s.indexOf('result.gpu=')<s.indexOf('page=await retireDesktopForCold(page)'));
+ assert.ok(s.indexOf('page=await retireDesktopForCold(page)')<s.indexOf('const coldContext='));
+ assert.match(s,/timeout:180000/);
+});
+test('existing startup profiler phases and stage milestones are bounded and observation-only',()=>rig(async(G,url)=>{
+ await observeColdEnvironment(url);G.level={};G.paint={};G.nav={};G.scene={children:[{},{}]};G.renderer={info:{programs:[{}]}};
+ const report={marks:Object.fromEntries(Array.from({length:100},(_,i)=>['m'+i,i])),phases:Array.from({length:100},(_,i)=>({name:i===99?'boot/stage-build':'done',end:i===99?null:i})),longTasks:Array.from({length:60},(_,i)=>({duration:i})),errors:Array(30).fill('test'),dropped:2};
+ window.__inkwaveStartup={snapshot:()=>report};const got=inspectColdBoot();
+ assert.deepEqual([got.context.hasLevel,got.context.hasPaint,got.context.hasNav,got.context.sceneChildren,got.context.programs],[true,true,true,2,1]);
+ assert.deepEqual([Object.keys(got.startup.marks).length,got.startup.phases.length,got.startup.longTasks.length,got.startup.errors.length],[64,64,32,20]);
+ assert.deepEqual(got.startup.phases.at(-1),{name:'boot/stage-build',end:null});assert.equal(report.phases.length,100);assert.equal(got.hasColdEnvironment,false);
+}));
+test('actual cold route tracks bounded unresolved requests and retires every completed request',async()=>{
+ const s=fs.readFileSync(new URL('../check-inkwave-idle-resources.mjs',import.meta.url),'utf8'),start=s.indexOf("await coldPage.route(address+'**',"),end=s.indexOf("\n   await coldPage.goto",start);
+ assert.ok(start>=0&&end>start);const callback=s.slice(start+"await coldPage.route(address+'**',".length,end).trim().replace(/\);$/,'');
+ const context={URL,Date,manifest:{artifacts:{}},coldLoaded:new Set(),coldPending:new Map(),pendingSerial:0,pendingDropped:0,errors:[],hooked:true,mainReleased:false};
+ const routeHandler=vm.runInNewContext('('+callback+')',context),resolvers=[],work=[];let fulfilled=0;
+ for(let i=0;i<258;i++){const url='http://localhost/test-'+i+'.js';work.push(routeHandler({request:()=>({url:()=>url,resourceType:()=> 'script'}),fetch:()=>new Promise(resolve=>resolvers.push(()=>resolve({url:()=>url,body:async()=>''}))),fulfill:async()=>{fulfilled++;},abort:async()=>assert.fail('unexpected abort')}));}
+ assert.equal(context.coldPending.size,256);assert.equal(context.pendingDropped,2);
+ for(const resolve of resolvers)resolve();await Promise.all(work);
+ assert.equal(context.coldPending.size,0);assert.equal(context.coldLoaded.size,258);assert.equal(fulfilled,258);assert.deepEqual(context.errors,[]);
+ await routeHandler({request:()=>({url:()=> 'http://localhost/fail.js',resourceType:()=> 'script'}),fetch:async()=>{throw Error('network failure');},abort:async()=>{}});
+ assert.equal(context.coldPending.size,0);assert.match(context.errors[0],/network failure/);
+});

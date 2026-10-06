@@ -19,9 +19,8 @@ const loadout = (ability, points) => {
 
 // The cap the grounded movement model actually reads, observed on the real
 // PLAYER object during Actor._horizontal instead of inferred from velocity.
-// The scoped writer emits a fixed access pattern per tick — read the shared
-// base, write the selected curve, read it back for the movement model, apply
-// the Flow multiplier, restore the base. The movement model owns access 3.
+// The current scoped writer reads the base, selects the curve, lets the
+// native movement model read it, then restores the shared base.
 function spyCap(f) {
   const log = [];
   let store = f.PLAYER.enemyInkSpeed;
@@ -33,8 +32,8 @@ function spyCap(f) {
 
 // Drives the real Actor.update, so intent.fire/sub, form and onEnemy all come
 // from production code. Returns the per-tick cap the movement model applied.
-async function trace({ points = 0, mode, ticks = 90, hz = 60, weapon = 'shooter', hold = Infinity, isLocal = false, resetAt = -1 }) {
-  const f = await fixture();
+async function trace({ points = 0, mode, ticks = 90, hz = 60, weapon = 'shooter', hold = Infinity, isLocal = false, resetAt = -1, legacyReady = false }) {
+  const f = await fixture({adaptRuntime:(rel,code)=>legacyReady&&rel==='patches/splatoon3/runtime/gear.mjs'?code.replace('    if (runner.aimingSub && !squid) api.PLAYER.enemyInkSpeed = m.enemyShotSpeed ?? walk;\n    else if (scaledAction', '    if (scaledAction'):code});
   f.G.paint.sample = () => 2;                      // enemy ink under the feet
   f.G.projectiles.throwBomb = () => 0;
   const a = f.make(weapon);
@@ -43,12 +42,14 @@ async function trace({ points = 0, mode, ticks = 90, hz = 60, weapon = 'shooter'
   a.intent.move.set(0, 0, 1); a.vel.set(0, 0, 0);
   const log = spyCap(f);
   const step = dt => {
+    if(a.ticks===resetAt){a.reset();a.grounded=true;a.intent.move.set(0,0,1);}
+
     if (mode === 'fire') a.intent.fire = true;
     if (mode === 'sub' || mode === 'squidSub') a.intent.sub = a.ticks < hold;
     if (mode === 'squidSub') a.intent.squid = a.ticks < hold;
     // a.ticks is the 0-based update index, so caps[i] is the selection made by
     // update i and a reset at resetAt lands on caps[resetAt].
-    if (a.ticks === resetAt) a.reset();
+
     a.ticks++;
     a.update(dt);
     log.onTick();
@@ -61,13 +62,11 @@ async function trace({ points = 0, mode, ticks = 90, hz = 60, weapon = 'shooter'
     const clock = new FixedClock();
     for (let frame = 0; frame < Math.ceil(ticks / 60 * hz); frame++) clock.advance(1 / hz, step);
   }
-  // Access 2 of each tick is the scoped write: the curve the runtime selected.
-  // Access 3 is the read the grounded movement model performs, which only
-  // happens while the actor actually stands in enemy ink.
+  // Each actor must select, consume, and restore its own scoped value.
   const caps = perTick.filter(entries => entries.length).map(entries => {
-    assert.ok(entries.length === 6 || entries.length === 5, 'unexpected scoped enemy-ink access pattern');
-    assert.equal(entries[1][0], 'set', 'the runtime must select a curve');
-    if (entries.length === 6) assert.equal(entries[2][0], 'get', 'the movement model must read the scoped cap');
+    assert.deepEqual(entries.map(e=>e[0]),['get','set','get','set'],'current scoped select/read/restore contract');
+    assert.equal(entries[2][1],entries[1][1],'native movement reads selected cap');
+    assert.equal(entries[3][1],entries[0][1],'shared cap restored after each actor');
     return entries[1][1];
   });
   return { f, a, caps, ticks: a.ticks, settled: a.vel.length() };
@@ -134,12 +133,12 @@ test('#731 releasing the sub leaves the attack/ready curve exactly once with no 
     'the ordinary curve must not reappear after the release');
 });
 
-test('#731 squid form holding sub does not inherit the grounded attack/ready branch', async () => {
+test('#731 enemy-floor squid exits invalid swim and the admitted sub then owns the ready curve', async () => {
   const f = await fixture();
   const run = await trace({ mode: 'squidSub', ticks: 60 });
-  assert.equal(run.a.form, 'squid');
-  assert.equal(run.a.weaponRunner.aimingSub, false);
-  near(run.caps.at(-1), walkCap(f, 0), 'squid keeps the ordinary curve');
+  assert.equal(run.a.form, 'kid');
+  assert.equal(run.a.weaponRunner.aimingSub, true);
+  near(run.caps.at(-1), shotCap(f, 0), 'current enemy-floor form owner precedes admitted sub readiness');
 });
 
 test('#731 readiness is read from weapon state, not the raw button', () => {
@@ -208,3 +207,5 @@ test('#731 the scoped enemy-ink cap never leaks into shared state or another act
   near(f.PLAYER.enemyInkSpeed, shared);
   assert.notEqual(a.s3.modifiers.enemyShotSpeed, b.s3.modifiers.enemyShotSpeed);
 });
+
+test('#731 missing ready connection reproduces ordinary cap and settled speed despite admitted sub',async()=>{const old=await trace({mode:'sub',legacyReady:true});assert.equal(old.a.weaponRunner.aimingSub,true);near(old.caps.at(-1),walkCap(old.f,0));near(old.settled,walkCap(old.f,0));assert.notEqual(old.settled,shotCap(old.f,0));});

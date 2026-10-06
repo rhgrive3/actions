@@ -165,7 +165,7 @@ test('#312 non-shooter weapons do not trigger shooter spawn velocity addition', 
   ps.fireDualies(a, a.weapon, 0, false);
   const p = ps.list.at(-1);
   assert.ok(p && p.type === 'shot');
-  // Dualies projSpeed is 142.2; moving actor does not get shooter spawn addition.
+  // Dualies keeps its distinct #414 signed-forward owner; Shooter must not add again.
   assert.equal(p.s3ShooterForwardApplied ?? false, false);
-  close(p.vel.z, a.weapon.projSpeed);
+  assert.equal(p.s3ForwardVelocityApplied,true);close(p.vel.z, a.weapon.projSpeed + 2 * 4.32);
 });

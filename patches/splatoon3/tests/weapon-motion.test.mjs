@@ -105,11 +105,12 @@ test('Charger holds its real charge through form return on a held ZR and release
       for (let i = 0; i < 2 * hz; i++) r.step(1 / hz, { fire: true });
       assert.equal(r.a.weaponRunner.charge, 1); assert.ok(r.ch.weapon.coil.userData.u.uCharge.value > .999);
       // Charge keep belongs to the held shot, so ZR stays down across the form change.
-      r.a.form = 'squid'; for (let i = 0; i < hz / 4; i++) r.step(1 / hz, { fire: true });
-      assert.equal(r.a.weaponRunner.s3Stored.charge, 1); assert.equal(r.f.shots.length, 0);
+      r.a.form = 'squid'; for (let i = 0; i < Math.ceil(hz * r.a.weapon.storedFireDelay); i++) r.step(1 / hz, { fire: true });
+      assert.equal(r.a.weaponRunner.s3Stored.charge, 1); assert.equal(r.a.weaponRunner.s3Stored.fireDelay, 0); assert.equal(r.f.shots.length, 0);
       r.a.form = 'kid'; for (let i = 0; i < hz / 3; i++) r.step(1 / hz, { fire: true });
       assert.equal(r.f.shots.length, 0); assert.ok(r.ch.weapon.coil.userData.u.uCharge.value > .999);
-      r.step(1 / hz, { fire: true }); r.step(1 / hz, { fire: false }); r.step(1 / hz, { fire: false }); // S3 1F release gap
+      r.step(1 / hz, { fire: true });
+      r.step(1 / 60, { fire: false }); assert.equal(r.f.shots.length, 0, 'native release waits one fixed tick'); r.step(1 / 60, { fire: false }); // S3 1F release gap
       assert.equal(r.f.shots.length, 1); assert.equal(r.f.shots[0].charge, 1);
       assert.ok(r.ch.chargeFlash > .7 && r.ch.lastRelease < .05, 'actual release event drives Character');
       r.a.weaponRunner.reset(); assert.equal(r.ch.chargeFlash, 0);

@@ -1,3 +1,7 @@
+import { enemyRevealedOnMap } from '../runtime/map-reveal.mjs';
+import { selectedSubCost } from '../runtime/kit-composition.mjs';
+import { projectShotGuide } from '../runtime/weapons-fidelity.mjs';
+import { hudFrameSnapshot } from '../../local-quality/hud-snapshots.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -25,22 +29,22 @@ test('#236 one authoritative assist list serves stats/Flow/HUD, excluding repeat
   const f = await fixture(), { a, b, c, enemy } = fighters(f); let event;
   f.on('splatted', e => { event = e; });
   enemy.damage(10, a, 'shooter'); enemy.damage(10, a, 'shooter'); enemy.damage(10, c, 'shooter');
-  f.G.time += 1; enemy.damage(100, b, 'shooter');
+  f.G.time += 1; enemy.damage(100, b, 'shooter'); f.tick(enemy);
   assert.equal(a.stats.assists, 1); assert.equal(c.stats.assists, 1); assert.equal(b.stats.assists, 0);
   assert.equal(a.stats.splats, 0); assert.equal(b.stats.splats, 1); assert.deepEqual(plain(event.assists.map(x => x.nid)), [1, 3]);
-  const code = section(composed('src/ui/hud.js'), '  _onSplatted(', '\n  // ---------------------------------------------------------------- kill / assist');
-  const Hud = vm.runInNewContext(`class Hud {${code}}; Hud`, { tr: x => x, STREAKS: [] });
+  const code = section(composed('src/ui/hud.js'), '  _onSplatted(', '\n  _assistMark(');
+  const Hud = vm.runInNewContext(`class Hud {${code}\n}; Hud`, { tr: x => x, STREAKS: [] });
   const hud = new Hud(), cards = [];
-  Object.assign(hud, { _live: () => true, _local: () => a, _now: () => f.G.time, _kills: { dealt: new Map() }, _killCard: (_v, type) => cards.push(type) });
-  hud._onSplatted(event); assert.deepEqual(cards, ['assist']);
-  enemy.reset(); enemy.damage(100, b, 'shooter'); assert.equal(a.stats.assists, 1, 'victim respawn clears old hit credits');
-  enemy.reset(); enemy.damage(10, a, 'shooter'); f.G.time += f.profile.flow.assistWindow + .01; enemy.damage(100, b, 'shooter'); assert.equal(a.stats.assists, 1, 'expired hit is not a new assist');
+  Object.assign(hud, { _live: () => true, _local: () => a, _now: () => f.G.time, _kills: { dealt: new Map() }, _killCard: (_v, type) => cards.push(type), _assistMark: victim => cards.push({ assist: victim }) });
+  hud._onSplatted(event); assert.equal(cards.length, 1); assert.equal(cards[0].assist, enemy, '#561 sends the same accepted assist to its world marker');
+  enemy.reset(); enemy.damage(100, b, 'shooter'); f.tick(enemy); assert.equal(a.stats.assists, 1, 'victim respawn clears old hit credits');
+  enemy.reset(); enemy.damage(10, a, 'shooter'); f.G.time += f.profile.flow.assistWindow + .01; enemy.damage(100, b, 'shooter'); f.tick(enemy); assert.equal(a.stats.assists, 1, 'expired hit is not a new assist');
   a.reset(); assert.equal(a.stats.assists, 1, 'helper respawn preserves match statistics'); assert.equal(f.make().stats.assists, 0, 'new match actor starts empty');
 });
 
 test('#236 actual event packing/replay and result transport preserve assist counts without duplicate replay', async () => {
   const f = await fixture(), p = fighters(f); let event;
-  f.on('splatted', e => { event = e; }); p.enemy.damage(10, p.a, 'shooter'); p.enemy.damage(100, p.b, 'shooter');
+  f.on('splatted', e => { event = e; }); p.enemy.damage(10, p.a, 'shooter'); p.enemy.damage(100, p.b, 'shooter'); f.tick(p.enemy);
   const sender = Object.create(f.NetMatch.prototype); sender._rec = row => { sender.row = row; }; f.G.netm = sender;
   sender._onLocalEvent('splatted', event); assert.deepEqual(plain(sender.row[2].assists), [1]);
   const r = await fixture(), q = fighters(r), receiver = Object.create(r.NetMatch.prototype);
@@ -55,7 +59,7 @@ test('#236 actual event packing/replay and result transport preserve assist coun
 
 test('#256 actual CPU paint preserves wall ink/cache updates while awarding only eligible floor area', async () => {
   const f = await fixture(), a = f.make();
-  const wall = { turf: false, grid: 0, nu: 8, nv: 8, cu: .5, cv: .5 }, floor = { ...wall, turf: true, grid: 64 };
+  const wall = { turf: false, grid: 0, n: { y: 0 }, nu: 8, nv: 8, cu: .5, cv: .5 }, floor = { ...wall, n: { y: 1 }, turf: true, grid: 64 };
   const paint = Object.create(f.PaintSystem.prototype); Object.assign(paint, { paintFaces: [wall, floor], grid: new Uint8Array(128), dead: new Uint8Array(128), counts: [0, 0], version: 0 });
   const splat = (face, team) => paint._cpuSplat(face, 2, 2, 1, team, .5, 1, 0, 0, 0);
   a.addTurf(splat(wall, 0)); assert.equal(a.stats.turf, 0); assert.equal(a.special, 0); assert.ok(paint.grid.slice(0, 64).some(x => x === 1));
@@ -142,7 +146,7 @@ test('#220/#231 actual Game HUD frame keeps map damage, enemy health visibility,
   f.G.actors = [a, b, enemy]; a.character.root.position.set(-2, 0, 0); b.character.root.position.set(2, 0, 0);
   b.hp = enemy.hp = 50; enemy.lastDamage = 0;
   const source = composed('src/main.js'), code = section(source, '  _updateHud(dt) {', '\n  // ---------------------------------------------------------------------------------------- touch / gyro');
-  const Game = vm.runInNewContext(`class Game {${code}}; Game`, { G: f.G, PLAYER: f.PLAYER, SUB: f.SUB, THREE: f.THREE,
+  const Game = vm.runInNewContext(`class Game {${code}}; Game`, { G: f.G, PLAYER: f.PLAYER, SUB: f.SUB, THREE: f.THREE, selectedSubCost, projectShotGuide, hudFrameSnapshot, enemyRevealedOnMap,
     mapActorVisible: f.mapActorVisible, buildHealthMarkers: f.buildHealthMarkers, innerWidth: 800, innerHeight: 600, t: x => x });
   const game = new Game(); let frame;
   Object.assign(game, { match: { local: a, actors: f.G.actors, time: 150, duration: 180, state: 'playing', teamSummary: () => [{},{}] },

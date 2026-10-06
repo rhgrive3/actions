@@ -8,14 +8,15 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { fixture } from './source-fixture.mjs';
+import { fixture as baseFixture } from './source-fixture.mjs';
+async function fixture(){const f=await baseFixture({extraExports:"export {installWeaponsFidelity} from './patches/splatoon3/runtime/weapons-fidelity.mjs';"});f.installWeaponsFidelity(f,f.profile);f.G.physics.segment=(_a,_b,out)=>{out.hit=false;return out;};return f;}
 import { adaptSource } from '../adapter.mjs';
 
 test('projectile chronology connection fails closed when the upstream collision loop changes', () => {
   const root = fileURLToPath(new URL('../../../', import.meta.url));
   const weapons = fs.readFileSync(root + 'inkwave-public/src/game/weapons.js', 'utf8');
   assert.throws(() => adaptSource('src/game/weapons.js', weapons.replace('      // actors\n', '      // actors moved\n')),
-    /projectile nearest-collision chronology/);
+    /weapons fidelity: collision chronology/);
 });
 
 // A straight-flight Splattershot round: one 60 Hz step advances ~2.266 units.
@@ -84,9 +85,10 @@ test('#119 a nearer world surface beats a farther actor (no same-tick hit throug
     out.point.set(0.4 * SHOOTER_STEP, 0, 0); out.normal.set(-1, 0, 0); return out;
   };
   const p = projectile(f, f.make());
-  assert.equal(system._step(p, 1 / 60), true);
+  assert.equal(system._step(p, 1 / 60), false, 'the current wall contact retains its sourced wall-drop phase');
+  assert.ok(p.fidelityWallDrop);
   assert.equal(hits.length, 0, 'the enemy behind the nearer cover is not damaged');
-  assert.equal(impactCount(), 1, 'the projectile impacts the nearer world surface');
+  assert.equal(impactCount(), 0, 'wall-drop owns the contact without a duplicate generic impact');
 });
 
 test('#119 an actor nearer than the world surface still receives the hit', async () => {
@@ -115,6 +117,7 @@ test('#87 a full-charge Charger damages every aligned enemy in near-to-far order
   for (const order of [[victims[2], victims[0], victims[1]], [victims[1], victims[2], victims[0]]]) {
     hits.length = 0; G.actors = [a, ...order];
     system.fireCharger(a, a.weapon, 1);
+    for(let i=0;i<120&&system._fidelityChargerFlights.length;i++)system.update(1/60);
     assert.deepEqual(hits.map(h => h.target), victims, 'hits are ordered by distance, not roster slot');
     assert.ok(hits.every(h => h.damage === 160));
   }
@@ -218,12 +221,12 @@ test('world wins exact actor-entry ties, and nearest boss intercepts actors', as
   const f = await fixture(), target = enemy(f, 1), { system, hits, impactCount } = setup(f);
   f.G.actors = [target];
   const p = projectile(f, f.make()); p.pos.y = 1;
-  const entryDistance = 1 - (f.PLAYER.radius * .95 + p.size);
+  const entryDistance = 1 - (f.PLAYER.radius + p.size);
   f.G.physics.segment = (_a, _b, out) => {
     out.hit = true; out.dist = entryDistance; out.point.set(entryDistance, 1, 0); out.normal.set(-1, 0, 0); return out;
   };
   system._step(p, 1 / 60);
-  assert.equal(hits.length, 0); assert.equal(impactCount(), 1);
+  assert.equal(hits.length, 0); assert.ok(p.fidelityWallDrop); assert.equal(impactCount(), 0);
   f.G.physics.segment = () => ({ hit: false });
   let bossHits = 0;
   f.G.boss = { segHit: () => ({ dist: .1 }) };

@@ -1,14 +1,22 @@
+import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
+import { adaptReliability } from '../../reliability/adapter.mjs';
+import { adaptQualitySource } from '../../local-quality/adapter.mjs';
+import { selectedSubCost } from '../runtime/kit-composition.mjs';
+import { projectShotGuide } from '../runtime/weapons-fidelity.mjs';
+import { hudFrameSnapshot } from '../../local-quality/hud-snapshots.mjs';
+import { enemyRevealedOnMap } from '../runtime/map-reveal.mjs';
+import { buildHealthMarkers, mapActorVisible } from '../runtime/combat-info.mjs';
 import {test} from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import path from 'node:path';import {fileURLToPath} from 'node:url';
 import {fixture} from './source-fixture.mjs';import {adaptSource} from '../adapter.mjs';import {subInkSpec} from '../runtime/sub-ready.mjs';
 const ROOT=fileURLToPath(new URL('../../../',import.meta.url)),DT=1/60,near=(a,b)=>assert.ok(Math.abs(a-b)<1e-9,`${a} != ${b}`);
 const extra="export {HUD} from './inkwave-public/src/ui/hud.js'; export {MobileInput} from './inkwave-public/src/core/mobile.js';";
 function equip(a,gp){let found;for(let m=0;m<=3;m++){const n=(gp-m*10)/3;if(Number.isInteger(n)&&n>=0&&n<=9){found=Array.from({length:3},(_,i)=>({main:i<m?'inkSaverSub':'none',subs:Array.from({length:3},(_,j)=>i*3+j<n?'inkSaverSub':'none')}));break;}}a.isLocal=false;a.s3.loadout=found;a.setWeapon(a.weaponId);}
 function gameClass(f){
- const built=process.env.INKWAVE_BUILT_SITE,raw=fs.readFileSync(path.join(built||path.join(ROOT,'inkwave-public'),'src/main.js'),'utf8'),src=built?raw:adaptSource('src/main.js',raw);
+ const built=process.env.INKWAVE_BUILT_SITE,raw=fs.readFileSync(path.join(built||path.join(ROOT,'inkwave-public'),'src/main.js'),'utf8'),src=built?raw:adaptQualitySource('src/main.js',adaptReliability('src/main.js',adaptTouchLayout('src/main.js',adaptSource('src/main.js',raw))));
  const start=src.search(/_updateHud\([^)]*\)\s*\{/),end=src.indexOf('_onDevice(',start);assert.ok(start>=0&&end>start);
  // Select the unmodified real method. Both the public minifier and source
  // retain method property names; comments before the next method are harmless.
- const method=src.slice(start,end),args={innerWidth:1280,innerHeight:720};
+ const method=src.slice(start,end),args={innerWidth:1280,innerHeight:720,selectedSubCost,projectShotGuide,hudFrameSnapshot,enemyRevealedOnMap,buildHealthMarkers,mapActorVisible};
  for(const match of src.matchAll(/\bimport\s*([^;]+?)\s*from\s*["']([^"']+)["']/g)){
   const [,bindings,url]=match;const values=url==='three'?f.THREE:url.endsWith('/ctx.js')?f:url.endsWith('/config.js')?f:url.endsWith('/i18n.js')?{t:s=>s}:url.endsWith('/sub-ready.mjs')?{subInkSpec}:null;if(!values)continue;
   const ns=bindings.match(/^\s*\*\s*as\s+(\w+)/);if(ns){args[ns[1]]=values;continue;}
@@ -33,7 +41,7 @@ test('#349: real Game, HUD, tank and Mobile agree with actual bomb payment below
 test('#349: changing actor-local modifiers, equipment, respawn and local actor refreshes labels without sharing costs',async()=>{
  const f=await fixture(extra),a=f.make(),b=f.make();equip(a,57);equip(b,0);a.ink=b.ink=50;const gs=game(f,a),display=ui(f,a);
  for(const scale of [.65,1,.825,.65]){a.s3.modifiers.inkSaverSub=scale;const out=gs.read();near(out.hud.subCost,.7*scale);assert.equal(display.read({...out.hud,subAim:true},out.mobile).label,`${Math.round(70*scale)}%`);near(b.s3.modifiers.inkSaverSub,1);near(f.SUB.bomb.inkCost,70);}
- equip(a,0);near(gs.read().hud.subCost,.7);a.reset();near(gs.read().hud.subCost,.7);equip(a,57);near(gs.read().hud.subCost,.455);gs.g.match.local=b;b.isLocal=true;near(gs.read().hud.subCost,.7);
+ equip(a,0);near(gs.read().hud.subCost,.7);a.reset();near(gs.read().hud.subCost,.7);equip(a,57);near(gs.read().hud.subCost,subInkSpec(a,f.SUB.bomb).inkCost/100);gs.g.match.local=b;b.isLocal=true;near(gs.read().hud.subCost,.7);
 });
 test('#349: UI-lab frames without optional readiness use the same unrounded threshold',async()=>{
  const f=await fixture(extra),a=f.make(),u=ui(f,a);

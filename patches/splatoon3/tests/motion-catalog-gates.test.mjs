@@ -30,7 +30,7 @@ function gateFixture() {
         fill('dualies', { phase: 'roll', blockedRoll: false }, 0, 10); fill('dualies', { phase: 'plant', blockedRoll: false }, 10, 30);
         for (const s of samples) s.dualiesAction = { subRequested: false, aimingSub: false, dodge: false, lockT: 0 };
         for (const frame of [115,125]) { samples[frame].dualiesAction = {subRequested:true,aimingSub:false,dodge:frame===115,lockT:frame===125?.3:0}; samples[frame].snapshots.dualies={phase:frame===115?'roll':'plant',blockedRoll:false}; }
-        for (const frame of [155,164]) { samples[frame].dualiesAction={subRequested:true,aimingSub:true,dodge:false,lockT:0}; samples[frame].snapshots.dualies={phase:null,blockedRoll:false}; }
+        for (const frame of [160,164]) { samples[frame].dualiesAction={subRequested:true,aimingSub:true,dodge:false,lockT:0}; samples[frame].snapshots.dualies={phase:null,blockedRoll:false}; }
         for (const frame of [195,198]) { samples[frame].dualiesAction.dodge=true;samples[frame].visible=frame===198;samples[frame].snapshots.dualies={phase:null,blockedRoll:true}; }
         row.events.push({ name: 'fireDualies', frame: 20 }); break;
       case 'roller-horizontal-push': case 'roller-vertical-land': fill('roller-detail', { phase: 'startup', vertical: true }, 0, 15); fill('roller-detail', { phase: 'swing', vertical: true }, 15, 23); fill('roller-detail', { phase: 'recovery', vertical: true }, 23, 40); for (const s of samples.slice(40, 60)) s.rolling = true; row.events.push({ name: 'fireFlick', frame: 23 }); break;
@@ -38,7 +38,7 @@ function gateFixture() {
       case 'hit-spawn-reset': fill('hit-spawn', { phase: 'entry', coating: .9 }, 0, 5); fill('hit-spawn', { phase: 'protected', coating: .9 }, 5, 20); fill('hit-spawn', { phase: 'expiry', coating: .5 }, 20, 25); fill('hit-spawn', { coating: 0 }, 25); renders[0].coating = { ...pixel }; break;
       case 'quiet-idle-held-sub': fill('idle', { quiet: true }); for (const s of samples.slice(40, 80)) { s.heldBomb = true; s.grip.left.held = false; } row.events.push({ name: 'throwBomb', frame: 80 }); break;
       case 'native-slam-phases': for (const [i, phase] of ['rise', 'hang', 'fall', 'slam-recovery'].entries()) fill('special', { phase }, i * 10, (i + 1) * 10); fill('special', { phase: null }, 40); for (const s of samples.slice(40)) s.velocity[2] = 2.4; break;
-      case 'native-storm-deploy': fill('special', { phase: 'storm-deploy' }, 0, 10); fill('special', { phase: 'storm-recovery' }, 10, 20); fill('special', { phase: null }, 20); row.events.push({ name: 'throwStorm', frame: 0 }); break;
+      case 'native-storm-deploy': fill('special', { phase: 'storm-hold' }, 0, 10); fill('special', { phase: 'storm-deploy' }, 10, 20); fill('special', { phase: 'storm-recovery' }, 20, 30); fill('special', { phase: null }, 30); row.events.push({ name: 'throwStorm', frame: 10 }); break;
       case 'gaze-face-actions': for (const [i, mode] of ['fire', 'sub-aim', 'throw'].entries()) fill('face', { mode, blink: [.8, .8] }, i * 20, (i + 1) * 20); renders[0].face = { ...pixel }; break;
       case 'lifecycle-interruptions': row.transitions = ['form', 'sub', 'dance', 'reset', 'death', 'hide', 'weapon']; samples[135].visible = false; break;
     }
@@ -60,7 +60,7 @@ for (const [name, mutate, pattern] of [
   ['missing dualies action trace', r => delete r.data.find(x=>x.name==='dualies-roll-lock-interrupt').samples[100].dualiesAction, /dualies action trace denominator/],
   ['rejected sub suppresses actual roll', r => r.data.find(x=>x.name==='dualies-roll-lock-interrupt').samples[115].snapshots.dualies.phase=null, /dualies rejected sub/],
   ['rejected sub becomes aiming', r => r.data.find(x=>x.name==='dualies-roll-lock-interrupt').samples[125].dualiesAction.aimingSub=true, /dualies rejected sub/],
-  ['admitted sub leaves plant pose', r => r.data.find(x=>x.name==='dualies-roll-lock-interrupt').samples[155].snapshots.dualies.phase='plant', /dualies admitted sub/],
+  ['admitted sub leaves plant pose', r => r.data.find(x=>x.name==='dualies-roll-lock-interrupt').samples[160].snapshots.dualies.phase='plant', /dualies admitted sub/],
   ['main fire during admitted sub', r => r.data.find(x=>x.name==='dualies-roll-lock-interrupt').events.push({name:'fireDualies',frame:160}), /dualies main fire/],
   ['visible interrupted token replays', r => r.data.find(x=>x.name==='dualies-roll-lock-interrupt').samples[198].snapshots.dualies.blockedRoll=false, /dualies visibility interruption/],
   ['dualies tail truncated', r => r.data.find(x=>x.name==='dualies-roll-lock-interrupt').samples.at(-1).dualiesAction.lockT=.1, /dualies final action tail/],

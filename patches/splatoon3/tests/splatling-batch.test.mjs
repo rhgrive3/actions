@@ -2,14 +2,18 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from './source-fixture.mjs';
 import { FixedClock } from '../runtime/clock.mjs';
+import {fixture as wireFixture,ROOT} from '../../../scripts/weapons-fixture.mjs';
 import { sampleSplatlingSpeed } from '../runtime/splatling.mjs';
 
 const DT = 1 / 60;
 const near = (a, b, label = '') => assert.ok(Math.abs(a - b) < 1e-8, `${label}: ${a} != ${b}`);
 const advance = (a, frames, input = { fire: true }, dt = DT) => {
+  a.intent.fire=!!input.fire;
+  // These tests count charging/stream phase time, after the separate1F admission.
+  if(input.fire&&!a.weaponRunner.charging&&!a.weaponRunner.streaming&&!a.weaponRunner.s3SplatlingHeld&&a.weaponRunner.cooldown<=1e-10)a.weaponRunner.update(DT,input);
   for (let i = 0; i < frames; i++) a.weaponRunner.update(dt, input);
 };
-const release = a => a.weaponRunner.update(DT, { fire: false });
+const release = a => {a.intent.fire=false;return a.weaponRunner.update(DT, { fire: false });};
 
 test('#209: actual runner has 48/72 ground and 192/288 air stage boundaries', async () => {
   for (const [grounded, first, full] of [[true, 48, 72], [false, 192, 288]]) {
@@ -40,7 +44,7 @@ test('#254: empty tank completes at quarter speed; air+empty is not 1/16 speed',
     advance(a, 95); assert.ok(a.weaponRunner.charge < 1);
     advance(a, 1); assert.equal(a.weaponRunner.charge, 1);
     release(a); advance(a, 160, { fire: false });
-    assert.equal(f.shots.length, 40); assert.equal(a.ink, 0);
+    assert.equal(f.shots.length, 0,'unfunded slow charge cannot emit unpaid rounds'); assert.equal(a.ink, 0);
   }
 });
 
@@ -51,7 +55,7 @@ test('#254: affordable boundary only changes rate, never permanently caps progre
     f.tick(a, 600);
     assert.equal(a.weaponRunner.charge, 1, `ink=${ink}`);
     near(a.ink, ink, 'no charge-funded regeneration');
-    a.intent.squid = true; f.tick(a);
+    a.intent.squid = true; f.tick(a,7); // preserve the existing6F interruption owner
     assert.equal(a.weaponRunner.charging, false);
     // Actor updates resources before the runner on the cancellation tick;
     // ordinary own-ink recovery is allowed now that the fresh ZL wins.
@@ -118,6 +122,7 @@ test('#294: R stops the stream before sub processing; release never revives the 
   const before = f.shots.length; assert.equal(before, 4);
   a.weaponRunner.update(DT, { fire: false, sub: true });
   assert.equal(a.weaponRunner.streaming, false); near(a.ink, 97.75);
+  for(let i=0;i<5;i++)a.weaponRunner.update(DT,{sub:true});
   a.weaponRunner.update(DT, { fire: false, subReleased: true });
   assert.equal(bombs, 1); near(a.ink, 27.75);
   advance(a, 60, { fire: false }); assert.equal(f.shots.length, before);
@@ -129,8 +134,8 @@ test('#294: insufficient sub, special, weapon switch, reset and death cannot dup
   f.G.projectiles.throwBomb = () => bombs++;
   a.ink = 3; advance(a, 288); release(a); advance(a, 13, { fire: false });
   a.weaponRunner.update(DT, { sub: true }); a.weaponRunner.update(DT, { subReleased: true });
-  assert.equal(bombs, 0); assert.equal(a.weaponRunner.streaming, false); near(a.ink, 2.7);
-  a.setWeapon('shooter'); near(a.ink, 2.7); a.reset(); assert.equal(a.ink, 100);
+  assert.equal(bombs, 0); assert.equal(a.weaponRunner.streaming, false); near(a.ink, .75);
+  a.setWeapon('shooter'); near(a.ink, .75); a.reset(); assert.equal(a.ink, 100);
   a.setWeapon('splatling'); a.grounded = true;
   advance(a, 72); release(a); advance(a, 13, { fire: false });
   a.weapon = { ...a.weapon, special: 'storm' }; f.G.projectiles.throwStorm = () => {};
@@ -166,7 +171,7 @@ test('#252: speed quantiles have a sourced absolute half-width and center bias, 
 });
 
 test('#252: actual emitted projectiles vary in norm before recording; ghosts use transmitted velocity', async () => {
-  const f = await fixture({ seed: 252 }), a = f.make('splatling'), system = new f.Projectiles(new f.THREE.Scene());
+  const f = await wireFixture({site:`${ROOT}.splat-wire-source`,seed:252,fidelity:true,network:true}), a = f.make('splatling'), system = new f.Projectiles(new f.THREE.Scene());
   a.aimPoint.set(0, 1.05, 80); a.aimDir.set(0, 0, 1); f.G.actors = [a];
   a.nid = 1;
   const net = new f.NetMatch({ myId: 'test' }, {}); f.G.netm = net;

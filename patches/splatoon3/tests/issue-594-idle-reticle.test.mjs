@@ -52,7 +52,8 @@ function rig({ local = null } = {}) {
   const WEAPONS = Object.fromEntries(['shooter', 'blaster', 'charger', 'splatling', 'roller', 'dualies', 'slosher']
     .map(k => [k, { kind: k, special: 'slam' }]));
   const clamp = (v, a = 0, b = 1) => (v < a ? a : v > b ? b : v);
-  const Hud = vm.runInNewContext(`class Hud {\n${methods}\n}; Hud`, {
+  const helper = section(source, 'function chargerReticleView(', '\n}') + '\n}';
+  const Hud = vm.runInNewContext(`${helper}\nclass Hud {\n${methods}\n}; Hud`, {
     WEAPONS, clamp, specialIcon: () => '<svg></svg>', G: {}, innerWidth: 1280, innerHeight: 720,
     SUB: { bomb: { id: 'bomb', inkCost: 70 } }, SUB_ICONS: { bomb: '' },
     applyShotGuide, selectedSub, selectedSubCost, updateSplatlingStages,
@@ -80,15 +81,19 @@ test('#594 composes with the current squid-only #715 gate and preserves shield/s
 });
 
 test('#594: idle Charger shows no charge-reticle cluster; charging shows it, release hides it again', () => {
-  const h = rig();
+  const runner = { charging: false, chargeT: 0 };
+  const h = rig({ local: { weaponRunner: runner } });
   h._updCrosshair({ weapon: 'charger', charge: 0 }, 1 / 60);
   assert.ok(h.ret.classList.contains('iw-ret--charger'));
   assert.equal(idle(h), true, 'idle Charger must be gated');
+  Object.assign(runner, { charging: true, chargeT: .45 });
   h._updCrosshair({ weapon: 'charger', charge: 0.45 }, 1 / 60);
   assert.equal(idle(h), false, 'charge in progress must reveal the reticle');
   assert.equal(h.ret.classList.contains('is-charging'), true);
+  runner.chargeT = 1;
   h._updCrosshair({ weapon: 'charger', charge: 1 }, 1 / 60);
   assert.equal(idle(h), false, 'full charge stays visible');
+  Object.assign(runner, { charging: false, chargeT: 0 });
   h._updCrosshair({ weapon: 'charger', charge: 0 }, 1 / 60);
   assert.equal(idle(h), true, 'release back to zero must re-gate');
   assert.equal(h.ret.classList.contains('is-charging'), false);

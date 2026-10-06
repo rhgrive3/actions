@@ -182,6 +182,7 @@ const deferredIntegrationPreloads = new Set([
   'patches/splatoon3/runtime/hair-cache.mjs',
   'patches/splatoon3/runtime/agent3-weapon-physics.mjs',
   'patches/splatoon3/runtime/splatling.mjs',
+  'patches/splatoon3/runtime/splatling-startup-compat.mjs', // Same runner phase; static import and precache retained.
   'patches/splatoon3/runtime/weapon-gates.mjs',
   'patches/splatoon3/runtime/storm-effects.mjs',
   'patches/local-quality/aim-profile.mjs',

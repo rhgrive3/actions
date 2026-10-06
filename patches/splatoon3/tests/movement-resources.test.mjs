@@ -42,10 +42,10 @@ test('landing into own ink begins recovery in the landing tick', async () => {
 test('enemy ink grace integrates only exposure after its boundary, then resets on exit', async () => {
   const f = await fixture(), a = f.make();
   // This is an interval arithmetic regression, not a proposed Splatoon grace value.
-  f.profile.resources.enemyInkGrace = .025;
+  a.s3.modifiers.enemyInkGrace = .025;
   f.G.paint.sample = () => 2; f.tick(a); close(a.hp, 100);
   f.tick(a); close(a.damageFromInk, f.profile.resources.enemyInkDps * (2 / 60 - .025));
-  f.G.paint.sample = () => 0; f.tick(a); close(a.s3.enemyInkTime, 0);
+  f.G.paint.sample = () => 0; f.tick(a, Math.ceil(f.profile.resources.enemyInkGraceReset*60)); close(a.s3.enemyInkTime, 0);
   f.G.paint.sample = () => 2; const hp = a.hp; f.tick(a); close(a.hp, hp);
 });
 
@@ -58,7 +58,10 @@ test('enemy contact suppresses health recovery even while its damage grace is ac
 
 test('contact ink remains nonlethal and bounded, including return after leaving it', async () => {
   const f = await fixture(), a = f.make(); a.hp = 20; f.G.paint.sample = () => 2;
-  f.tick(a, 180); close(a.hp, 1); close(a.damageFromInk, f.profile.resources.enemyInkDamageCap);
+  f.tick(a,180);close(a.hp,20);close(a.damageFromInk,0,'existing total HP loss already exceeds contact cap');
+  a.hp=100;f.tick(a,180);close(a.hp,100-a.s3.modifiers.enemyDamageCap);close(a.damageFromInk,a.s3.modifiers.enemyDamageCap);
+  f.G.paint.sample=()=>0;f.tick(a);const hp=a.hp;f.G.paint.sample=()=>2;f.tick(a);close(a.hp,hp,'exit does not grant damage beyond total loss cap');
+  a.hp=1;f.tick(a);close(a.hp,1);
   a.damage(2, null, 'shooter'); assert.equal(a.alive, true, 'lethal decision is pending for one fixed tick');
   f.tick(a); assert.equal(a.alive, false);
 });
@@ -69,7 +72,7 @@ test('refill predicates distinguish own ink, wall, dry/enemy squid, and stored c
   f.G.paint.sample = () => 2; f.tick(a, 5);
   assert.equal(a.form, 'kid', 'a grounded enemy surface exits invalid squid state');
   close(a.ink, f.profile.resources.inkRefillKid * 5 / 60);
-  f.G.paint.sample = () => 1; a.intent.fire = true; a.weaponRunner.s3Stored = { charge: 1, remaining: 1 };
+  f.G.paint.sample = () => 1; a.intent.fire = true; a.weaponRunner.s3Stored = { charge: 1, remaining: 1, fireDelay:1, paid:a.weapon.inkFull };
   a.ink = 0;
   f.tick(a, 5); close(a.ink, 0);
   a.weaponRunner.s3Stored = null; a.intent.fire = false;
@@ -119,7 +122,7 @@ test('roll collision clipping persists instead of restoring its pre-collision la
   a.vel.set(0, 0, f.PLAYER.swimSpeed);
   a._integrate = () => { a.vel.x = 0; a.vel.z = 0; };
   f.tick(a); assert.ok(a.s3.roll);
-  a._integrate = () => {}; f.tick(a); close(a.vel.lengthSq() - a.vel.y ** 2, 0);
+  a._integrate = () => {}; a.intent.move.set(0,0,0); f.tick(a); close(a.vel.lengthSq() - a.vel.y ** 2, 0);
 });
 
 test('the extracted 45-frame no-gear surge charge reaches full exactly on frame 45', async () => {

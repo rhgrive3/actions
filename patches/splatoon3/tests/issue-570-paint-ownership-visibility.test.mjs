@@ -25,6 +25,7 @@ async function loadPaint(adapt) {
     } else if (file.startsWith(path.join(ROOT, 'inkwave-public') + path.sep)) {
       file = path.join(UPSTREAM, path.relative(path.join(ROOT, 'inkwave-public'), file));
     }
+    if (file.startsWith(path.join(ROOT, 'src/'))) file = path.join(UPSTREAM, path.relative(ROOT, file));
     return file;
   }
   function load(file) {
@@ -61,6 +62,8 @@ function makePaint(PaintSystem, THREE) {
     queryBlocks: () => [0],
   };
   paint.growing = [];
+  if (paint._takeSplatEntries) Object.assign(paint, { _splatEntryPool: [], _splatGrowthPool: [], _splatPoolsDisposed: false,
+    _splatPoolStats: { entryArraysCreated: 0, entryArraysReused: 0, growthRecordsCreated: 0, growthRecordsReused: 0 } });
   paint.grid = new Uint8Array(face.nu * face.nv);
   paint.dead = new Uint8Array(face.nu * face.nv);
   paint.counts = [0, 0];
@@ -154,10 +157,10 @@ test('native roller CPU ownership and first-frame shader body disagree before th
 
 test('paint adapter fails closed if the native body shape connection changes', () => {
   const pooledAppendShape = PAINT_SOURCE.replace('else this.growing.push(g);', 'else { this.growing.push(g); }');
-  assert.match(adaptSource('src/world/paint.js', pooledAppendShape), /installIssue570PaintPresentation\(PaintSystem\)/,
-    'a brace-wrapped native growth append remains a compatible source shape');
+  assert.throws(() => adaptSource('src/world/paint.js', pooledAppendShape), /return or retain growth lease/,
+    'the installed pool layer rejects unknown native append shapes before the presentation layer');
   assert.throws(() => adaptSource('src/world/paint.js', PAINT_SOURCE.replace('float grow = mix(0.4, 1.0, tb);', 'float grow = 1.0;')),
     /paint native body growth/);
   assert.throws(() => adaptSource('src/world/paint.js', PAINT_SOURCE.replace('this.growing.push(g);', 'this._other.push(g);')),
-    /paint deferred growth record/);
+    /return or retain growth lease|paint deferred growth record/);
 });

@@ -30,7 +30,7 @@ import { FixedClock } from '../runtime/clock.mjs';
  *   Verify Actor.reset(), splat(), and setWeapon() properly clear charge keep state.
  */
 
-async function runScenario(hz, { secondAction = 'floor' } = {}) {
+async function runScenario(hz, { secondAction = 'floor', keepSquid = false } = {}) {
   const f = await fixture();
   const a = f.make('charger');
   const clock = new FixedClock();
@@ -84,7 +84,7 @@ async function runScenario(hz, { secondAction = 'floor' } = {}) {
       if (t === 62) {
         a.intent.jump = false;
         obs.roll1Active = !!a.s3.actions.roll;
-        obs.roll1Chain = a.s3.actions.chain;
+        obs.roll1Chain = a.s3.actions.chain;obs.roll1LaunchSpeed=a.s3.actions.chainSpeed;
         obs.roll1Stored = a.weaponRunner.s3Stored ? { ...a.weaponRunner.s3Stored } : null;
       }
 
@@ -109,14 +109,14 @@ async function runScenario(hz, { secondAction = 'floor' } = {}) {
       }
 
       // Phase 5: Tick 80: Re-emerge to kid form
-      if (t === 80) {
+      if (t === 80 && !keepSquid) {
         a.intent.squid = false;
       }
       // Tick 85: Start fresh charging after cancellation
-      if (t === 85) {
+      if (t === 85 && !keepSquid) {
         a.intent.fire = true;
       }
-      if (t === 86) {
+      if (t === 86 && !keepSquid) {
         obs.reemergeCharge = a.weaponRunner.charge;
         obs.reemergeCharging = a.weaponRunner.charging;
         // Stop firing, return to squid for the upcoming 70F roll action
@@ -191,15 +191,15 @@ test('Issue #377 regression: charger charging movement speed capped at 1.2 WU/s 
 });
 
 test('Issue #386 regression: roll-chain second floor action at 70F retains .85 attenuation', async () => {
-  const { obs } = await runScenario(60, { secondAction: 'floor' });
+  const { obs } = await runScenario(60, { secondAction: 'floor', keepSquid:true });
   // S3 roll chain window is ~90F (1.5s). At 70F (1.167s), chain must remain active (chain === 2) and retain 0.85 speed.
   assert.equal(obs.squidrollTriggers, 2, `Expected exactly 2 real squidroll triggers to prove second action launched, got ${obs.squidrollTriggers}`);
   assert.equal(obs.secondActionChain, 2, `Expected chain === 2 at 70F (90F window), got ${obs.secondActionChain}`);
-  assert.ok(Math.abs(obs.secondActionSpeed - 11.52 * 0.85) < 1e-5, `Expected speed == ${11.52 * 0.85} WU/s, got ${obs.secondActionSpeed}`);
+  assert.ok(Math.abs(obs.secondActionSpeed - 11.52 * 0.85) < 1e-5, `Expected speed == ${11.52 * 0.85} WU/s, got ${obs.secondActionSpeed}; first=${obs.roll1LaunchSpeed}`);
 });
 
 test('Issue #386 regression: roll-chain second wall action at 70F retains .85 attenuation', async () => {
-  const { obs } = await runScenario(60, { secondAction: 'wall' });
+  const { obs } = await runScenario(60, { secondAction: 'wall', keepSquid:true });
   assert.ok(Math.abs(obs.roll1LaunchSpeed - 11.52) < 1e-5, 'first real floor launch records 11.52');
   // #808 keeps the prior floor launch across wall reattachment; the vertical
   // climb velocity does not replace the shared roll history with wall minimum.

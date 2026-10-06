@@ -114,7 +114,7 @@ test('#724 the other weapon reticles keep their own dedicated structures', () =>
   assert.match(html('dualies'), /iw-ret__lock/);
   assert.match(html('splatling'), /iw-ret__segs/);
   assert.match(html('splatling'), /iw-ret__charge/);
-  assert.match(html('slosher'), /iw-ret__arch/);
+  assert.equal(html('slosher'), html('shooter'), '#652 compact Slosher marker remains installed');
   // The shared compact fallback (shooter) is untouched by this fix.
   assert.match(html('shooter'), /<circle r="15" class="iw-ret__ring thin"\/>/);
   assert.equal(count(html('shooter'), 'iw-ret__tick'), 4);

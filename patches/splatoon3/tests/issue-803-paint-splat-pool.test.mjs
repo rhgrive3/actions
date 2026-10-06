@@ -16,7 +16,11 @@ async function loadPaintSystem({ adapted, countNativeAllocations = false }) {
   const context = vm.createContext({ console, performance });
   const modules = new Map();
   function resolve(spec, from) {
-    return spec === 'three' ? THREE_PATH : path.resolve(path.dirname(from), spec);
+    if (spec === 'three') return THREE_PATH;
+    let file = path.resolve(path.dirname(from), spec);
+    if (file.startsWith(path.join(UPSTREAM, 'patches/'))) file = path.join(ROOT, path.relative(UPSTREAM, file));
+    if (file.startsWith(path.join(ROOT, 'src/'))) file = path.join(UPSTREAM, path.relative(ROOT, file));
+    return file;
   }
   function load(file) {
     if (modules.has(file)) return modules.get(file);
@@ -121,7 +125,10 @@ test('#803: installed adapter preserves native seeded Turf area, cell ownership,
 
   const before = run(native, false);
   const after = run(installed, true);
-  assert.deepEqual(after, before);
+  const immediate = e => e[2] === 3 && e[3] === 0 && e[4] === false;
+  assert.equal(after.events.filter(immediate).length, 5, 'current #570 submits exactly one immediate body for each non-instant splat');
+  assert.deepEqual(after.events.filter(immediate).map(e => e.slice(0, 5)), [[0,.14,3,0,false],[1,.73,3,0,false],[1,.8,3,0,false],[0,.37,3,0,false],[1,.91,3,0,false]]);
+  assert.deepEqual({ ...after, events: after.events.filter(e => !immediate(e)) }, before);
   assert.ok(before.areas.some(area => area > 0));
   assert.ok(before.special > 0);
 });
@@ -196,8 +203,9 @@ test('#803: newer ink force-emits older opposing growth first; instant and netwo
   const center = new THREE.Vector3(9, 0.05, 9);
   paint.splat(center, 0.6, 0, { seed: 0.2, kind: 'trail' });
   const old = paint.growing[0], oldEntries = old.entries;
+  const growthEvents = () => events.filter(e => !(e[2] === 3 && e[3] === 0 && e[4] === false));
   paint.splat(center, 0.6, 1, { seed: 0.8, kind: 'trail' });
-  assert.deepEqual(events[0].slice(0, 3), [0, 0.2, 3]);
+  assert.deepEqual(growthEvents()[0].slice(0, 3), [0, 0.2, 3]);
   assert.equal(paint.growing[0], old);
   assert.equal(old.team, 1);
   assert.notEqual(old.entries, oldEntries);
@@ -206,8 +214,8 @@ test('#803: newer ink force-emits older opposing growth first; instant and netwo
   assert.equal(paint.growing[0].team, 1);
 
   paint.splat(center, 0.3, 1, { seed: 0.9, kind: 'trail', instant: true });
-  assert.equal(events[1][0], 1);
-  assert.equal(events[1][2], 3);
+  assert.equal(growthEvents()[1][0], 1);
+  assert.equal(growthEvents()[1][2], 3);
   for (let frame = 0; frame < 30; frame++) paint.flush(1 / 60);
   assert.equal(paint.growing.length, 0);
 
@@ -236,7 +244,8 @@ test('#803: wall drips retain their leased entries through the final drip emissi
   assert.equal(leasedGrowth.entries, leasedEntries);
   assert.equal(leasedEntries.length, 7);
   nativeRig.paint.flush(1.75); installedRig.paint.flush(1.75);
-  assert.deepEqual(installedEvents, nativeEvents);
+  assert.deepEqual(installedEvents[0].slice(0, 5), [0, .2, 3, 0, false], 'current immediate body precedes unchanged native drip submissions');
+  assert.deepEqual(installedEvents.slice(1), nativeEvents);
   assert.equal(installedRig.paint.growing.length, 0);
   assert.equal(leasedGrowth.entries, null);
   assert.equal(leasedEntries.length, 0);

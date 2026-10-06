@@ -4,6 +4,7 @@ import { installFinalDamage, damageGroupId } from './final-damage.mjs';
 import { installSplatlingRadiusCharge } from './splatling-radius-charge.mjs';
 import { installWeaponEdgecases } from './weapon-edgecases.mjs';
 import { installSplatling } from './splatling.mjs';
+import { installSplatlingStartupCompat } from './splatling-startup-compat.mjs';
 import { installWeaponGates } from './weapon-gates.mjs';
 import { installAgent3WeaponPhysics } from './agent3-weapon-physics.mjs';
 import { installRollerLogic } from './roller.mjs';
@@ -534,6 +535,7 @@ export function installWeapons(context, profile) {
     if (!input.fire) this.cooldown = Math.max(0, this.cooldown);
   };
   installSplatling(api, profile, { splatlingChargeCap, splatlingReservation, tickSplatlingInterrupt, releaseSplatlingInterrupt });
+  installSplatlingStartupCompat(api);
   // Movement Physics owns roller rolling speed/recovery. Add only the latest
   // Charger charging-speed rule here, then delegate every other movement state.
   const moveSpeed = WeaponRunner.prototype.moveSpeed;

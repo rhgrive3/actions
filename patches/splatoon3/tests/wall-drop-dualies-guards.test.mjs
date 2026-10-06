@@ -147,7 +147,7 @@ test('#638/#637 live Splat Bomb flight and its preview both integrate the profil
 
 for (const weapon of ['shooter', 'charger', 'roller']) test(`#644/#643 ${weapon}: Splat Bomb release holds refill for its own 1.0 s stop`, async t => {
   const f = await boot(); t.after(f.close);
-  const a = f.make({ weapon }); f.tick(a); a.ink = 100;
+  const a = f.make({ weapon }); f.tick(a); a.weapon={...a.weapon,sub:'bomb'}; a.ink = 100; // named Splat Bomb test, not the weapon's later verified Kit
   a.intent.sub = true; f.tick(a, 20); a.intent.sub = false; f.tick(a);
   assert.equal(f.G.projectiles.bombs.length, 1, 'bomb thrown on release');
   const after = a.ink; let first = null;

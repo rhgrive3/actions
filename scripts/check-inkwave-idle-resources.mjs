@@ -28,7 +28,7 @@ export async function observeColdEnvironment(url) {
  const trace=window.__coldResourceProbe={phase:'importing-context'};
  const {G}=await import(url);
  trace.phase='observing-environment';
- trace.snapshot=()=>({hasEnvironment:!!G.env,hasGame:!!G.game,hasRenderer:!!G.renderer,hasMenus:!!G.menus,menu:G.menus?.current||null,quality:G.settings?.quality||null,touch:G.mobile?.touch===true,mode:G.mode||null});
+ trace.snapshot=()=>({hasEnvironment:!!G.env,hasGame:!!G.game,hasRenderer:!!G.renderer,hasMenus:!!G.menus,hasLevel:!!G.level,hasPaint:!!G.paint,hasNav:!!G.nav,sceneChildren:G.scene?.children?.length??null,programs:G.renderer?.info?.programs?.length??null,menu:G.menus?.current||null,quality:G.settings?.quality||null,touch:G.mobile?.touch===true,mode:G.mode||null});
  const capture=env=>{if(env){trace.phase='captured';window.__coldEnvironment={quality:G.settings?.quality,touch:G.mobile?.touch===true,gamePublishedAtAllocation:!!G.game,marina:env._marina===true,cloud:[env._cloudRT?.width,env._cloudRT?.height],farSize:env._farRT?.width,cloudId:env._cloudRT?.texture.uuid,farId:env._farRT?.texture.uuid};}};
  // Module ordering may publish Environment before the main.js response is
  // observed. That is still a valid cold-allocation observation iff Game
@@ -43,9 +43,12 @@ export async function observeColdEnvironment(url) {
  }});
 }
 export function inspectColdBoot() {
- const p=window.__coldResourceProbe;
- return {observerPhase:p?.phase||null,context:p?.snapshot?.()||null,hasPublicContext:!!window.__G,hasPublicGame:!!window.__G?.game,hasColdEnvironment:!!window.__coldEnvironment,coldEnvironment:window.__coldEnvironment||null,readyState:document.readyState,visibility:document.visibilityState,focused:document.hasFocus(),screen:document.querySelector('.iw-ui')?.dataset.screen||null,loadingText:document.querySelector('.iw-loading')?.textContent?.slice(0,600)||null};
+ const p=window.__coldResourceProbe,report=window.__inkwaveStartup?.snapshot?.();
+ const startup=report?{marks:Object.fromEntries(Object.entries(report.marks||{}).slice(-64)),phases:(report.phases||[]).slice(-64),longTasks:(report.longTasks||[]).slice(-32),errors:(report.errors||[]).slice(-20),dropped:report.dropped,memory:report.memory}:null;
+ return {startup,observerPhase:p?.phase||null,context:p?.snapshot?.()||null,hasPublicContext:!!window.__G,hasPublicGame:!!window.__G?.game,hasColdEnvironment:!!window.__coldEnvironment,coldEnvironment:window.__coldEnvironment||null,readyState:document.readyState,visibility:document.visibilityState,focused:document.hasFocus(),screen:document.querySelector('.iw-ui')?.dataset.screen||null,loadingText:document.querySelector('.iw-loading')?.textContent?.slice(0,600)||null};
 }
+
+export async function retireDesktopForCold(page){await page.close();return null;}
 
 async function main(){
  const option=n=>{const i=process.argv.indexOf(n);if(i<0||!process.argv[i+1])throw Error('Required '+n);return path.resolve(process.argv[i+1]);};
@@ -151,13 +154,18 @@ async function main(){
   result.gpu=await page.evaluate(()=>{const gl=__G.renderer.getContext(),ext=gl.getExtension('WEBGL_debug_renderer_info');return {webgl:gl.getParameter(gl.VERSION),renderer:ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER)};});
   for(const f of ['patches/local-quality/idle-resources.mjs','patches/local-quality/music-idle.mjs'])if(![...loaded].some(p=>p.endsWith('/'+f)))throw Error('Runtime module not actually loaded: '+f);
   phase='cold-boot-mobile';
+  // The preceding desktop measurements are complete. Retire its live renderer
+  // before measuring an isolated cold mobile allocation in a fresh context.
+  page=await retireDesktopForCold(page);
   const coldContext=await browser.browser().newContext({viewport:{width:844,height:390},hasTouch:true,isMobile:true});
-  const coldPage=await coldContext.newPage();let hooked=false,mainReleased=false,coldError=null;const coldLoaded=new Set();
+  const coldPage=await coldContext.newPage();let hooked=false,mainReleased=false,coldError=null;const coldLoaded=new Set(),coldPending=new Map();let pendingDropped=0,pendingSerial=0;
   try {
    coldPage.on('pageerror',e=>errors.push('cold boot: '+e.message));
    coldPage.on('console',m=>{if(m.type()==='error')errors.push('cold boot console: '+m.text().slice(0,1500));});
    await coldPage.addInitScript(()=>localStorage.setItem('inkwave.settings',JSON.stringify({quality:'high',shadows:false,bloom:false,music:0,sfx:0})));
    await coldPage.route(address+'**',async route=>{
+    const pendingKey=++pendingSerial,pendingPath=new URL(route.request().url()).pathname;
+    if(coldPending.size<256)coldPending.set(pendingKey,{path:pendingPath,started:Date.now(),type:route.request().resourceType()});else pendingDropped++;
     try {
      const response=await route.fetch(),body=await response.body(),key=decodeURIComponent(new URL(response.url()).pathname).slice(1)||'index.html';
      if(manifest.artifacts[key]&&sha(body)!==manifest.artifacts[key])throw Error('Cold loaded byte mismatch '+key);
@@ -171,15 +179,16 @@ async function main(){
      await route.fulfill({response,body});
      if(key.endsWith('/src/main.js'))mainReleased=true;
     }catch(error){errors.push('cold boot route: '+error.message);await route.abort();}
+    finally{coldPending.delete(pendingKey);}
    });
-   await coldPage.goto(address+'?devstage&skipTitle&map=halyard',{waitUntil:'domcontentloaded'});
+   await coldPage.goto(address+'?devstage&skipTitle&map=halyard&startupProfile',{waitUntil:'domcontentloaded'});
    await coldPage.waitForFunction(()=>!!window.__G?.game&&!!window.__coldEnvironment,null,{timeout:180000});
    result.coldBoot=await coldPage.evaluate(()=>{const G=window.__G,c=window.__coldEnvironment;G.game.debug.freeze();return {...c,sameTargetsAfterBoot:c.cloudId===G.env._cloudRT?.texture.uuid&&c.farId===G.env._farRT?.texture.uuid};});
    if(!hooked||![...coldLoaded].some(p=>p.endsWith('/src/world/environment.js')))throw Error('Cold native Environment bytes not observed');
    await coldPage.screenshot({path:path.join(output,'cold-boot-mobile-halyard.png'),animations:'disabled'});
   } catch(error) {
    coldError=error;
-   const diagnostic=result.coldDiagnostic={hooked,mainReleased,loaded:[...coldLoaded].sort()};
+   const diagnostic=result.coldDiagnostic={hooked,mainReleased,desktopRetired:page===null,loaded:[...coldLoaded].sort(),pendingDropped,pending:[...coldPending].slice(0,256).map(([,r])=>({path:r.path,type:r.type,elapsedMs:Math.max(0,Date.now()-r.started)}))};
    let timer;
    try {diagnostic.page=await Promise.race([coldPage.evaluate(inspectColdBoot),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Cold diagnostic evaluation timed out')),10000);})]);}
    catch(inspectError){diagnostic.inspectionError=String(inspectError);}finally{clearTimeout(timer);}

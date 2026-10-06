@@ -41,7 +41,7 @@ test('#208 actual Actor receives armor overflow and consumes the shield on the f
   a.damage(40,null,'shooter');close(a.hp,60);a.damage(40,null,'shooter');close(a.hp,20);
   const b=roll(f);b.damage(20,null,'shooter');b.damage(90,null,'shooter');close(b.hp,100);
   const c=roll(f);c.damage(180,null,'bomb');close(c.hp,20);
-  const d=roll(f);d.damage(250,null,'charger');assert.equal(d.alive,false);
+  const d=roll(f);d.damage(250,null,'charger');assert.equal(d.alive,true,'current lethal decision waits one fixed tick');f.tick(d);assert.equal(d.alive,false);
 });
 
 test('#208 floor 18F and wall 45F armor outlive the 15F roll motion without extending it',async()=>{
@@ -57,16 +57,16 @@ test('#208 floor 18F and wall 45F armor outlive the 15F roll motion without exte
   }
 });
 
-test('#208 full surge owns 45F armor after its 18F burst ends; partial charge does not grant it',async()=>{
+test('#208 surge armor retains its independent45F clock after boost; partial charge is covered too',async()=>{
   const f=await fixture(),a=f.make();wallFixture(f,a);burst(f,a);
   const shield=a.s3.actions.armor;close(shield.armorTime,.75);
   for(let i=0;i<44;i++)f.beforeActions(a,1/60,false);
-  assert.equal(a.s3.surge,null);assert.ok(shield.armorTime>0);
+  assert.equal(a.s3.surge.phase,'auto-climb');close(a.s3.surge.time,0);assert.ok(shield.armorTime>0);
   a.damage(20,null,'shooter');close(a.hp,100);
   f.beforeActions(a,1/60,false);a.damage(20,null,'shooter');close(a.hp,80);
   const b=f.make();wallFixture(f,b);b.intent.jump=true;f.beforeActions(b,1/60,false);
-  b.intent.jump=false;f.beforeActions(b,1/60,false);assert.equal(b.s3.actions.armor,undefined);
-  b.damage(20,null,'shooter');close(b.hp,80);
+  b.intent.jump=false;f.beforeActions(b,1/60,false);assert.ok(b.s3.actions.armor.armorTime>0);
+  b.damage(20,null,'shooter');close(b.hp,100);
 });
 
 test('#208 ink bypasses the shield and form/death/reset/special/jump transitions cancel it',async()=>{

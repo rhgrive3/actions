@@ -144,7 +144,7 @@ try {
     await tap('play'); await menuIs('mode');
     await tap('mode-turf'); await menuIs('setup');
     await tap('start');
-    await until(() => { const m = window.__G.match; return m && !m.attract && m.state === 'playing'; }, null, 300000, 'battle playing');
+    await until(() => { const m = window.__G.match; return m && !m.attract && m.state === 'playing' && Number.isFinite(m.time) && Number.isFinite(m.duration) && m.time < m.duration; }, null, 300000, 'battle playing with a completed fixed tick');
     await page.waitForTimeout(600);
     const play = (round.play = await snap());
     check(i + 1, 'play', play.mode === 'match' && play.menu === null && play.screen === null, 'menus closed in play', play);

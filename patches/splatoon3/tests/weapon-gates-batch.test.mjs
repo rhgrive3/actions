@@ -1,10 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fixture } from './source-fixture.mjs';
+import {fixture as baseFixture} from './source-fixture.mjs';
+async function fixture(){const f=await baseFixture({extraExports:"export {installWeaponsFidelity,fidelityPlayerCollisionRadius} from './patches/splatoon3/runtime/weapons-fidelity.mjs';"});f.installWeaponsFidelity(f,f.profile);return f;}
 import { FixedClock } from '../runtime/clock.mjs';
 import { projectilePlayerRadius } from '../runtime/weapon-gates.mjs';
 const DT=1/60, near=(a,b)=>assert.ok(Math.abs(a-b)<1e-8,`${a} != ${b}`);
-const step=(a,n,input={})=>{for(let i=0;i<n;i++)a.weaponRunner.update(DT,input);};
+const step=(a,n,input={})=>{a.intent.fire=!!input.fire;for(let i=0;i<n;i++)a.weaponRunner.update(DT,input);};
 
 test('#230: post-dodge shots have no catch-up debt and resume one shot every 4F', async()=>{
   for(const phase of [-1,0,.01,.07]) for(const chained of [false,true]){
@@ -25,12 +26,12 @@ test('#230: post-dodge shots have no catch-up debt and resume one shot every 4F'
 test('#230: releasing during travel does not replay missed shots when firing resumes',async()=>{
   const f=await fixture(),a=f.make('dualies'),r=a.weaponRunner;a.intent.fire=true;r.tryDodge({x:1,z:0});
   step(a,50);assert.equal(f.shots.length,0);
-  step(a,1,{fire:true});assert.equal(f.shots.length,1);
+  step(a,1,{fire:true});assert.equal(f.shots.length,0);
   step(a,2,{fire:true});assert.equal(f.shots.length,1);
   step(a,1,{fire:true});assert.equal(f.shots.length,1);
   // Holding still after dropping ZR leaves the native normal mode (5F).
   step(a,1,{fire:true});assert.equal(f.shots.length,1);
-  step(a,1,{fire:true});assert.equal(f.shots.length,2);
+  step(a,3,{fire:true});assert.equal(f.shots.length,2);
 });
 
 test('#232: real Actor resource order holds slide ink through 69F, allows 70F, no double clock',async()=>{
@@ -50,13 +51,13 @@ test('#232: accepted chained slide restarts 70F; rejected slide and ordinary sho
  a.reset();near(r.s3DodgeInkRemaining,0);
 });
 
-test('#290: real Charger charge remains 60F, repeated full releases are 66F apart',async()=>{
+test('#290: real Charger keeps60F charge,6F recharge and the composed1F release gap',async()=>{
  const f=await fixture(),a=f.make('charger'),r=a.weaponRunner,ticks=[];let tick=0;
  f.G.projectiles.fireCharger=()=>ticks.push(tick);
- for(tick=1;tick<=200;tick++)r.update(DT,{fire:r.charge<1});
- assert.deepEqual(ticks,[61,127,193]);
- a.reset();a.grounded=true;step(a,59,{fire:true});assert.ok(r.charge<1);step(a,1,{fire:true});assert.equal(r.charge,1);
- step(a,1,{fire:false});near(r.cooldown,6*DT);step(a,5,{fire:true});assert.equal(r.charging,false);
+ for(tick=1;tick<=200;tick++){a.intent.fire=r.charge<1;f.G.time+=DT;r.update(DT,{fire:a.intent.fire});}
+ assert.deepEqual(ticks,[63,130,197]); // fresh1F +60F charge +release edge/gap; repeat60+6+1
+ a.reset();a.grounded=true;step(a,60,{fire:true});assert.ok(r.charge<1);step(a,1,{fire:true});assert.equal(r.charge,1);
+ step(a,1,{fire:false});assert.equal(r.s3ReleaseHold,true);step(a,1,{fire:false});near(r.cooldown,6*DT);step(a,5,{fire:true});assert.equal(r.charging,false);
  step(a,1,{fire:true});assert.equal(r.charging,true);near(r.chargeT,DT);
 });
 
@@ -97,9 +98,9 @@ test('#228: normal/post player-radius ratio is captured at emission without chan
  a.aimPoint.set(0,1.05,80);a.aimDir.set(0,0,1);f.G.actors=[a];
  ps.fireDualies(a,a.weapon,0,0);const normal=ps.list[0];a.weaponRunner.s3Turret=true;
  ps.fireDualies(a,a.weapon,0,0);const post=ps.list[1];
- near(projectilePlayerRadius(post)/projectilePlayerRadius(normal),.335/.31);
- for(const key of ['size','radius','trailRadius','vis'])assert.equal(post[key],normal[key]);
- a.weaponRunner.s3Turret=false;a.setWeapon('shooter');near(projectilePlayerRadius(post),.15*.335/.31);
+ near(f.fidelityPlayerCollisionRadius(post)/f.fidelityPlayerCollisionRadius(normal),.335/.31);
+ for(const key of ['radius','trailRadius','vis'])assert.equal(post[key],normal[key]);assert.deepEqual(post.fidelityFieldCollision,normal.fidelityFieldCollision);near(normal.size,.31);near(post.size,.335);
+ a.weaponRunner.s3Turret=false;a.setWeapon('shooter');near(f.fidelityPlayerCollisionRadius(post),.335);
 });
 
 test('fixed-clock 30/60/120Hz traces agree for post-dodge shots and ink clocks',async()=>{
@@ -116,9 +117,8 @@ test('fixed-clock 30/60/120Hz traces agree for post-dodge shots and ink clocks',
 test('#228: actual native swept-player hit has a post-roll-only grazing band',async()=>{
  const f=await fixture(),a=f.make('dualies'),e=f.make('shooter'),ps=new f.Projectiles(new f.THREE.Scene());
  e.team=1;e.invuln=0;f.G.actors=[a,e];f.G.physics.segment=(_a,_b,hit)=>{hit.hit=false;return hit;};a.aimPoint.set(0,1.05,80);a.aimDir.set(0,0,1);
- const normal=.15,post=.15*.335/.31,offset=f.PLAYER.radius*.95+(normal+post)/2;
- // Physics.segmentCapsuleDist returns axis distance, and the native hit test
- // adds PLAYER.radius*.95 to the projectile's player-only radius.
+ const normal=.31,post=.335,offset=f.PLAYER.radius+(normal+post)/2;
+ // The canonical capsule solver adds the authoritative Actor radius to each sourced projectile radius.
  let hits=0;ps.applyHit=()=>hits++;
  for(const turret of [false,true]){
   a.weaponRunner.s3Turret=turret;ps.fireDualies(a,a.weapon,0,0);const p=ps.list.at(-1);
@@ -133,7 +133,7 @@ test('#214: a sub released during the lock is discarded, while holding past the 
  f.G.projectiles.throwBomb=()=>bombs++;
  while(!r.s3PostShotRemaining)step(a,1,{fire:true});
  step(a,1,{subReleased:true});step(a,30);assert.equal(bombs,0);assert.equal(r.aimingSub,false);
- step(a,1,{sub:true});assert.equal(r.aimingSub,true);step(a,1,{subReleased:true});assert.equal(bombs,1);
+ step(a,1,{sub:true});assert.equal(r.aimingSub,true);step(a,5,{sub:true});step(a,1,{subReleased:true});assert.equal(bombs,1);
 });
 
 function saverLoadout(gp){

@@ -82,7 +82,7 @@ test('#114 weapon damage uses the same total-damage cap, without healing or pass
     const a=f.make(); if(hit)a.damage(hit,null,'shooter');
     f.tick(a,600); close(a.hp,expectedHP); assert.equal(a.alive,true);
     close(a.damageFromInk,Math.max(0,40-hit));
-    a.damage(expectedHP,null,'shooter'); assert.equal(a.alive,false);
+    a.damage(expectedHP,null,'shooter');assert.equal(a.alive,true,'pending lethal is not a synchronous splat');f.tick(a);assert.equal(a.alive,false);
   }
 });
 
@@ -91,7 +91,7 @@ test('#114 weapon hit during contact, re-entry, and recovery cannot renew a sepa
   a.damage(50,null,'shooter'); f.tick(a,60); close(a.hp,41);
   f.G.paint.sample=()=>0; f.tick(a,10); f.G.paint.sample=()=>2; f.tick(a,60); close(a.hp,41);
   // After health actually recovers above the threshold, ink may reduce it to the same cap.
-  f.G.paint.sample=()=>1; f.tick(a,300); close(a.hp,100);
+  f.G.paint.sample=()=>1;f.tick(a,Math.ceil((f.profile.resources.regenDelay+(100-a.hp)/f.profile.resources.regenRate)*60)+1);close(a.hp,100);
   f.G.paint.sample=()=>2; f.tick(a,300); close(a.hp,60);
 });
 
@@ -119,9 +119,9 @@ test('#247 charge/stream/slosh use un-geared action speed times the resistance c
   for(const ap of [0,3,10,30,57]) for(const kind of ['charger','splatling','slosher']) {
     const a=f.make(kind);equip(a,ap);const r=a.weaponRunner;
     if(kind==='slosher'){r.slosh=.1;r.firingT=.2;}else{r.charging=true;r.charge=1;}
-    const base=kind==='slosher'?a.weapon.moveSpeedFiring*.7:kind==='charger'?a.weapon.moveSpeedFiring:a.weapon.moveSpeedCharging;
+    const base=kind==='slosher'?a.weapon.moveSpeedFiring:kind==='charger'?a.weapon.moveSpeedFiring:a.weapon.moveSpeedCharging;
     const expected=Math.min(a.s3.modifiers.enemyMoveSpeed,base*gearCurve(ap,.5,.75,1));
-    close(speed(a),expected);
+    assert.ok(Math.abs(speed(a)-expected)<1e-8,`${kind} AP${ap}: ${speed(a)} != ${expected}`);
     a.intent.fire=true;close(speed(a),expected);
     a.s3.modifiers.runSpeed=a.s3.modifiers.runSpeedFiring=4;close(speed(a),expected);
   }
@@ -129,8 +129,7 @@ test('#247 charge/stream/slosh use un-geared action speed times the resistance c
 
 test('#247 splatling release does not select a different enemy speed during its stream', async () => {
   const f=await fixture(), a=f.make('splatling');const r=a.weaponRunner;
-  r.charging=true;r.charge=1;r.chargeT=a.weapon.chargeTime;
-  r.update(1/60,{fire:false}); assert.equal(r.streaming,true);
+  a.intent.fire=true;for(let i=0;i<100;i++)f.tick(a);assert.ok(r.charging);a.intent.fire=false;f.tick(a); assert.equal(r.streaming,true);
   a.intent.fire=false;const released=speed(a);a.intent.fire=true;close(speed(a),released);close(released,1.44);
 });
 

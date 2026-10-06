@@ -1,3 +1,6 @@
+import { syncPortraitFrame } from '../../local-quality/portrait-guard.mjs';
+import { idleAttractMenuBudget } from '../../local-quality/idle-resources.mjs';
+import { updateSplatGhosts } from '../issue-284-adapter.mjs';
 // #53: results presentation keeps only the draw/animation work it needs.
 // The test drives the actually composed (installed) Game._frame — the full
 // adapter chain output, not a mirror of the guard — and compares PLAYING vs
@@ -76,9 +79,9 @@ async function nativeFrameFixture() {
   };
   const frame = slice('  _frame(dt) {', '\n  // continuous sounds');
   const loop = slice('  _loop() {', '\n  // keep weaker GPUs playable');
-  const Game = new Function('G', 'runSimulation', 'pausedWorldFrame', 'performance', 'damp', 'clamp', 'THREE',
+  const Game = new Function('G', 'runSimulation', 'pausedWorldFrame', 'performance', 'damp', 'clamp', 'THREE', 'syncPortraitFrame', 'idleAttractMenuBudget', 'updateSplatGhosts',
     `return class Game {\n${frame}\n${loop}\n}`)
-    (G, runSimulation, pausedWorldFrame, performance, api.damp, api.clamp, api.THREE);
+    (G, runSimulation, pausedWorldFrame, performance, api.damp, api.clamp, api.THREE, syncPortraitFrame, idleAttractMenuBudget, updateSplatGhosts);
   const f = new Game();
   Object.assign(f, {
     input, settings: { quality: 'high', frameRate: 'display' }, timer: { update() {}, getDelta: () => 1 / 60 },
@@ -132,9 +135,9 @@ function frameFixture() {
     projectiles: { updateArc: count('arc') }, paint: { flush: count('paint') },
     camera: { position: vector, up: vector },
   };
-  const Frame = new Function('G', 'runSimulation', 'pausedWorldFrame', 'performance', 'damp', 'clamp', 'THREE',
+  const Frame = new Function('G', 'runSimulation', 'pausedWorldFrame', 'performance', 'damp', 'clamp', 'THREE', 'syncPortraitFrame', 'idleAttractMenuBudget', 'updateSplatGhosts',
     'return class Frame {\n' + source.slice(start, end) + '\n}')
-    (G, count('simulation'), pausedWorldFrame, performance, (a, b) => b, x => x, {});
+    (G, count('simulation'), pausedWorldFrame, performance, (a, b) => b, x => x, {}, syncPortraitFrame, idleAttractMenuBudget, updateSplatGhosts);
   const f = new Frame();
   f.settings = { quality: 'high' };
   f.match = { paused: false, attract: false, state: 'playing', local: null, actors: [] };

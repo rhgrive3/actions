@@ -21,17 +21,17 @@ async function paint(charge,{ground=false,ghost=false,dt=1/60}={}) {
  if(ghost)f.ps.ghostFire(f.a,{weapon:'charger',charge,muzzle:new V(0,1.05,.3),dir:f.a.aimDir.clone()});
  else f.ps.fireCharger(f.a,f.a.weapon,charge);
  // Production now owns a finite flight; launch itself cannot paint or hit.
- assert.equal(paint.length,0);assert.equal(impacts.length,0);
+ assert.equal(paint.length,ghost?0:1,'only the dedicated feet stamp exists at launch');if(!ghost){assert.equal(paint[0].opts.kind,'trail');near(paint[0].r,f.a.weapon.feetPaintRadius);}assert.equal(impacts.length,0);
  assert.equal(f.ps._fidelityChargerFlights.length,1);
  let frames=0;
  while(f.ps._fidelityChargerFlights.length && frames++<120)f.ps.update(dt);
  assert.equal(f.ps._fidelityChargerFlights.length,0,'finite flight reaches its obstacle');
- f.ps.clear();return {...f,paint,impacts,frames};
+ const feet=paint.filter(p=>p.opts?.kind==='trail');const flightPaint=paint.filter(p=>p.opts?.kind!=='trail');f.ps.clear();return {...f,paint:flightPaint,feet,impacts,frames};
 }
 test('#407 finite Charger ground/wall impacts and events retain raw endpoint ratios and full-charge step',async()=>{
  for(const ground of [false,true]){
   const cases=[];
-  for(const [charge,want] of [[0,.906],[.5,1.8125],[.998999,2.717185187],[.999,3.263],[1,3.263]]){
+  for(const [charge,want] of [[1/6,.906],[7/12,1.8125],[1/6+5/6*.998,2.715374],[.999,3.263],[1,3.263]]){
    const f=await paint(charge,{ground}),impact=f.paint.at(-1);
    assert.equal(f.impacts.length,1);assert.equal(impact.opts.stretchAmt,.6);
    near(impact.r,want);near(f.impacts[0].radius,impact.r);
@@ -43,7 +43,7 @@ test('#407 finite Charger ground/wall impacts and events retain raw endpoint rat
 });
 test('#420 finite Charger line centers follow raw spacing and keep nearest footprint separate',async()=>{
  const spacings=[];
- for(const [charge,spacing,width,depth] of [[0,4.7775,.78,2.73],[.5,3.485625,1.17,2.145],[.998999,2.342147438085293,1.55921922,1.56117117],[.999,2.0592,1.56,1.56],[1,2.0592,1.56,1.56]]){
+ for(const [charge,spacing,width,depth] of [[1/6,4.7775,.78,2.73],[7/12,3.485625,1.17,2.145],[1/6+5/6*.998,2.34429117,1.55844,1.56234],[.999,2.0592,1.56,1.56],[1,2.0592,1.56,1.56]]){
   const f=await paint(charge),line=f.paint.slice(0,-1);
   assert.ok(line.length>=2);near(line[0].pos.z,.3+1.2);near(line[0].r,1.2);
   for(let i=1;i<line.length;i++){near(line[i].pos.z-line[i-1].pos.z,spacing);near(line[i].r,width);}
@@ -88,8 +88,8 @@ test('launch snapshots cannot change after movement/weapon switch and reused obj
  const f=await launch('dualies',{speed:4}),p=f.ps.list[0],v=p.vel.clone();f.a.vel.set(99,99,99);f.a.setWeapon('roller');addPlayerForwardVelocity(p);near(p.vel.distanceTo(v),0);
  f.ps.clear();f.a.setWeapon('dualies');f.a.vel.set(0,0,-4);f.ps.fireDualies(f.a,f.a.weapon,0,0);assert.equal(f.ps.list[0],p);assert.equal(p.s3ForwardVelocityApplied,true);assert.ok(p.vel.z<v.z);f.ps.clear();
 });
-test('non-target family and replayed ghosts never inherit owner velocity',async()=>{
- const a=await launch('shooter'),b=await launch('shooter',{speed:8});near(a.vels[0].distanceTo(b.vels[0]),0);a.ps.clear();b.ps.clear();
+test('Shooter has its own2x forward owner while replayed ghosts never inherit again',async()=>{
+ const a=await launch('shooter'),b=await launch('shooter',{speed:8});near(b.vels[0].z-a.vels[0].z,16);near(b.vels[0].x-a.vels[0].x,0);near(b.vels[0].y-a.vels[0].y,0);a.ps.clear();b.ps.clear();
  const f=await launch('dualies',{speed:4});const event=[0,'p',0,'shot','dualies',0,1,0,3,4,5,0,1,.2,1,.15,28,.8,0,0,.1,.8,1,0,0,0,0];
  f.ps.clear();f.ps.ghostProjectile(f.a,event);const p=f.ps.list[0];addPlayerForwardVelocity(p);assert.deepEqual([p.vel.x,p.vel.y,p.vel.z],[3,4,5]);assert.equal(p.s3ForwardVelocityApplied,false);f.ps.clear();
 });

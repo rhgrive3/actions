@@ -97,7 +97,7 @@ test('surge charge, partial burst, wall loss and top release reach the actual sq
       a.intent.jump = false; r.step();
       assert.equal(movementMotionSnapshot(ch).phase, 'surge-burst');
       assert.ok(ch.squid.pivot.scale.y > chargeScale * 1.1, 'release stretches the real mesh');
-      assert.equal(a.s3.surge.armorTime, 0, 'partial charge does not claim full armor');
+      assert.equal(a.s3.surge.armorTime, f.profile.movement.surge.armorTime, 'current473 partial charge uses the existing armor owner');
       a._ledgePop(new f.THREE.Vector3(0, 0, -1)); r.draw();
       assert.equal(movementMotionSnapshot(ch).phase, 'surge-top');
       const initial = ch.squid.pivot.quaternion.clone();

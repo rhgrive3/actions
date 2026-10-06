@@ -69,7 +69,8 @@ test('the other weapon reticles keep their dedicated structures', () => {
   assert.match(html('charger'), /iw-ret__charge/);
   assert.match(html('charger'), /iw-ret__notch/);
   assert.match(html('blaster'), /<circle r="23" class="iw-ret__ring"/);
-  assert.match(html('roller'), /viewBox="-80 -40 160 80"/);
+  assert.match(html('roller'), /viewBox="-40 -40 80 80"/);
+  assert.match(html('roller'), /<circle r="7.5" class="iw-ret__ring thin"\/>/);
   assert.match(html('dualies'), /iw-ret__twin/);
   assert.match(html('dualies'), /iw-ret__lock/);
   assert.match(html('splatling'), /iw-ret__segs/);

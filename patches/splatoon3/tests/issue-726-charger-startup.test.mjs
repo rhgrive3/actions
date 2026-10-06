@@ -71,7 +71,7 @@ test('input order: release during startup fires nothing, release after charge fi
     close(r.chargeT, 10 / 60, 'charge frames before release');
     const charge = r.charge;
     a.intent.fire = false;
-    f.tick(a);
+    f.tick(a);assert.equal(f.shots.length,0,'release gap has not elapsed');f.tick(a);
     assert.equal(f.shots.length, 1);
     close(f.shots[0].charge, charge, 'released shot carries the runner charge');
     assert.ok(charge > 0 && charge < 1, 'partial shot stays partial');
@@ -127,7 +127,7 @@ test('re-charge after a prior shot omits the fresh-start pre-gap (repeat formula
   f.tick(a, 61);                      // startup + 60 charge frames
   close(r.charge, 1, 'full charge');
   a.intent.fire = false;              // release -> shot (R edge; the R+1 latch is #680, untouched)
-  f.tick(a);
+  f.tick(a);assert.equal(f.shots.length,0,'release gap has not elapsed');f.tick(a);
   assert.equal(f.shots.length, 1);
   close(f.shots[0].charge, 1, 'full shot');
   // Hold ZR again through the post-shot cooldown: the repeat cycle starts
@@ -171,10 +171,10 @@ test('fixed 30/60/120 Hz render cadences yield identical fixed-tick startup timi
   assert.deepEqual(traces[2], traces[0], '120Hz matches 30Hz per-tick states');
 });
 
-test('other weapons keep their immediate fire path (no global delay)', async () => {
+test('other weapons retain their independent Shooter3F startup', async () => {
   const f = await fixture(), a = f.make('shooter');
   a.ink = 100;
   a.intent.fire = true;
-  f.tick(a);
-  assert.equal(f.shots.length, 1, 'a shooter still fires on the first held update');
+  f.tick(a,2);assert.equal(f.shots.length,0);f.tick(a);
+  assert.equal(f.shots.length, 1, 'the Shooter keeps its own3F owner');
 });

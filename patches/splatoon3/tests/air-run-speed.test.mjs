@@ -49,8 +49,8 @@ test('#467 ground speed and inherited takeoff momentum are retained',async()=>{
 });
 test('#467 attack, ready, special, squid, and action-specific owners keep prior multipliers',async()=>{
  const f=await fixture();
- const cases=[['shooter',r=>r.firingT=1],['charger',r=>r.charging=true],['splatling',r=>r.charging=true],['splatling',r=>r.streaming=true],['roller',r=>r.flick=.1],['roller',r=>r.flickRecover=.1],['slosher',r=>r.slosh=.1],['shooter',r=>r.aimingSub=true],['shooter',r=>r.a.specialActive={id:'storm'}],['shooter',r=>r.a.superJumpState={phase:'flight'}],['shooter',r=>r.a.form='squid']];
- for(const[kind,configure]of cases){const a=equip(f,kind,57),r=a.weaponRunner;configure(r);const grounded=r.moveSpeed();a.grounded=false;close(r.moveSpeed(),grounded);}
+ const cases=[['shooter',r=>r.firingT=1],['charger',r=>r.charging=true],['splatling',r=>r.charging=true],['splatling',r=>r.streaming=true],['roller',r=>r.flick=.1],['roller',r=>r.flickRecover=.1],['slosher',r=>r.slosh=.1],['shooter',r=>r.a.specialActive={id:'storm'}],['shooter',r=>r.a.superJumpState={phase:'flight'}],['shooter',r=>r.a.form='squid']];
+ for(const[kind,configure]of cases){const a=equip(f,kind,57),r=a.weaponRunner;configure(r);const grounded=r.moveSpeed();a.grounded=false;assert.ok(Math.abs(r.moveSpeed()-grounded)<1e-10,kind+String(configure)+`: ${r.moveSpeed()} != ${grounded}`);}
 });
 test('#467 ordinary air leaves the existing independent Flow multiplier unchanged',async()=>{
  const f=await fixture(),a=equip(f,'shooter',0),b=equip(f,'shooter',57);
@@ -64,3 +64,5 @@ test('#467 roller ground profile stays ground-only while the airborne fallback i
   close(r.moveSpeed(),a.weapon.rollBaseSpeed??a.weapon.rollSpeed);a.grounded=false;close(r.moveSpeed(),f.PLAYER.runSpeed);
  }
 });
+
+test('#467 current sub-ready ground target is separate from its airborne gear owner',async()=>{const f=await fixture(),a=equip(f,'shooter',57),r=a.weaponRunner;r.aimingSub=true;close(r.moveSpeed(),f.profile.bomb.holdMoveSpeed);a.grounded=false;close(r.moveSpeed(),f.PLAYER.runSpeed*a.s3.modifiers.runSpeed);});

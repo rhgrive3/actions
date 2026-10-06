@@ -52,7 +52,7 @@ test('negative control: unpatched native fires the frozen pre-special charge', a
   assert.equal(r.charging, true, 'native leaves the charge suspended');
   a.specialActive = null; // special window ends; runner was frozen throughout
   const inkBefore = a.ink;
-  drive(r, { fire: false });
+  drive(r, { fire: false });assert.equal(chargerShots(f),0,'existing1F release gap');drive(r, { fire: false });
   assert.equal(chargerShots(f), 1, 'native stale release fires');
   assert.equal(a.ink, inkBefore, 'current continuous-debit owner does not charge twice on stale release');
 });
@@ -165,7 +165,7 @@ test('patched: owner/remote parity and normal post-special charger use', async (
     a.ink = 100;
     for (let i = 0; i < 70; i++) drive(r, { fire: true });
     assert.equal(r.charging, true, 'fresh charge works local=' + local);
-    drive(r, { fire: false });
+    drive(r, { fire: false });assert.equal(chargerShots(f),n,'existing1F release gap');drive(r, { fire: false });
     assert.equal(chargerShots(f), n + 1, 'fresh release fires local=' + local);
   }
 });

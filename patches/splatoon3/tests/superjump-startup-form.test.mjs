@@ -118,8 +118,9 @@ test('#708 the added humanoid startup frames stay vulnerable and flight authorit
   let guard = 0;
   while (a.superJumpState?.phase === 'charge' && guard++ < 400) f.tick(a);
   assert.equal(a.superJumpState.phase, 'flight', 'the humanoid jump launches at the charge boundary');
+  const flightHp = a.hp;assert.ok(flightHp >= charged,'existing health recovery may run during preparation');
   f.G.projectiles.applyHit(enemy, a, 2, 'shooter');
-  assert.equal(a.hp, charged, 'flight-only authority is unchanged by the startup term');
+  assert.equal(a.hp, flightHp, 'flight-only authority is unchanged by the startup term');
 });
 
 test('#708 Quick Super Jump still scales charge and flight, and never the initial-form term', async t => {

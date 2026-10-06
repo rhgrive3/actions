@@ -1,3 +1,4 @@
+import {updateStormHold} from '../runtime/storm-effects.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {fixture} from '../../reliability/tests/controls-fixture.mjs';
@@ -42,16 +43,18 @@ test('592×563: dead Storm owner retains one cloud through480 recipient ticks',a
  for(const ghost of [false,true]){
   const f=await world(),a=actor(f,'charger'),n=net(f,a,ghost?'B':'A');let deaths=0,damage=0,paint=0,ends=0;
   f.on('splatted',()=>deaths++);f.on('storm:end',()=>ends++);f.G.paint.splat=()=>{paint++;return 0;};
-  if(!ghost){a.pos.y=-2;f.G.level.groundHeight=()=>-Infinity;a.special=a.specialCost();a.intent.special=true;f.tick(a);assert.equal(deaths,1);assert.equal(a.alive,false);assert.equal(f.ps.bombs.length,1);}
-  else {f.ps.ghostBomb(a,'storm',0,-.55,0,0,14.4,0);n._remoteSplat(a,null,'water');assert.equal(a.alive,false);}
-  // The actual thrown bomb, not an invented cloud, owns the later spawn.
-  for(let i=0;i<70&&!f.ps.clouds.length;i++){f.G.time+=DT;f.ps._updateBombs(DT);}
+  if(!ghost){a.weapon={...a.weapon,special:'storm'};a.special=a.specialCost();a.intent.special=true;f.tick(a);assert.equal(f.ps.bombs.length,0);a.intent.sub=true;updateStormHold(a,DT,f.G);a.intent.sub=false;updateStormHold(a,DT,f.G);a.pos.y=-2;f.G.level.groundHeight=()=>-Infinity;f.tick(a);assert.equal(deaths,1);assert.equal(a.alive,false);assert.equal(f.ps.bombs.length,1);}
+  else {f.ps.ghostBomb(a,'storm',0,1,0,0,14.4,0);n._remoteSplat(a,null,'water');assert.equal(a.alive,false);}
+  // Deployment now requires actual terrain contact; the old1.1s air timeout was retired.
+  const V=f.THREE.Vector3;f.G.level.blocks=[{id:0,solid:true,center:new V(0,-.1,100),half:new V(100,.1,200),axes:[new V(1,0,0),new V(0,1,0),new V(0,0,1)],faces:[-1,-1,-1,-1,-1,-1]}];f.G.level.queryBlocks=(_a,_b,_c,_d,out)=>{out.length=0;out.push(0);return out;};
+  //30s is the installed Storm projectile retirement bound, not a new flight timer.
+  for(let i=0;i<30/DT&&!f.ps.clouds.length;i++){f.G.time+=DT;f.ps._updateBombs(DT);}
   assert.equal(f.ps.clouds.length,1);assert.equal(f.ps.bombs.length,0);const cloud=f.ps.clouds[0];assert.equal(cloud.owner,a);
   if(ghost){cloud.ghost=true;cloud._netPeer={sim:0,tr:0,lastTs:100};cloud._netBornTick=0;cloud._netSteps=0;}
   f.G.physics.los=()=>true;f.G.physics.raycast=(p,_d,_l,h)=>{h.hit=true;h.point.copy(p).setY(0);h.normal.set(0,1,0);return h;};
   f.G.actors=[{alive:true,remote:false,team:1,pos:cloud.group.position.clone().add(new f.THREE.Vector3(0,-2,0)),damage(_v,owner){assert.equal(owner,a);damage++;return false;}},
    {alive:true,remote:true,team:1,pos:cloud.group.position.clone(),damage(){throw Error('remote damage doubled');}}];
-  for(let i=0;i<481;i++){f.G.time+=DT;if(ghost)cloud._netPeer.sim=i;f.ps._updateClouds(DT);if(i===478)assert.equal(damage,479);}
+  for(let i=0;i<481;i++){f.G.actors[0].pos.copy(cloud.group.position).add(new f.THREE.Vector3(0,-2,0));f.G.time+=DT;if(ghost)cloud._netPeer.sim=i;f.ps._updateClouds(DT);if(i===478)assert.equal(damage,479);}
   assert.equal(damage,480);assert.equal(ends,1);assert.equal(f.ps.clouds.length,0);assert.equal(ghost?paint===0:paint>0,true);n.dispose();
  }
 });
@@ -92,7 +95,7 @@ test('596 owner guard is transported once; remote pose cannot relocate nine birt
  const f=await world(true),a=actor(f,'slosher',true),n=net(f,a),V=f.THREE.Vector3;
  const wall={id:0,solid:true,center:new V(0,1,.5),half:new V(10,4,.05),axes:[new V(1,0,0),new V(0,1,0),new V(0,0,1)],faces:[-1,-1,-1,-1,-1,-1]};f.G.level.blocks=[wall];f.G.level.queryBlocks=(_a,_b,_c,_d,out)=>{out.length=0;out.push(0);return out;};
  a.intent.fire=true;for(let i=0;i<13;i++){a.weaponRunner.update(DT,{fire:true});a._finishFrame(DT);}
- const packets=n.out.filter(e=>e[1]==='p');assert.equal(packets.length,9);assert.ok(packets.every(e=>e.length===33));assert.ok(f.ps.list.every(p=>p.pos.z<.45));
+ const packets=n.out.filter(e=>e[1]==='p');assert.equal(packets.length,9);assert.ok(packets.every(e=>e.length===35));assert.ok(f.ps.list.every(p=>p.pos.z<.45));
  const g=await world(true),b=actor(g,'slosher',true),remote=net(g,b,'B');b.pos.set(100,20,-100);b.character.getMuzzle=()=>{throw Error('remote recomputed local muzzle');};
  for(const packet of packets){remote._play('A',packet);}
  assert.equal(g.ps.list.length,9);for(let i=0;i<9;i++){assert.ok(g.ps.list[i].pos.distanceTo(f.ps.list[i].pos)<.009);assert.deepEqual(Array.from(g.ps.list[i].vel.toArray()),Array.from(f.ps.list[i].vel.toArray()));}

@@ -11,7 +11,7 @@ const UPSTREAM = BUILT ? path.resolve(BUILT) : process.env.INKWAVE_UPSTREAM_SOUR
 export async function fixture(options = {}) {
   const extraExports = typeof options === 'string' ? options : options.extraExports || '';
   const { adapt = adaptSource, adaptNative = adapt, adaptRuntime = (_rel, source) => source } = typeof options === 'string' ? {} : options;
-  const context = vm.createContext({ console, performance });
+  const context = vm.createContext({ console, performance, URL, innerWidth:1280, innerHeight:720 });
   const modules = new Map();
   function resolve(spec, from) {
     if (spec === 'three') return path.join(UPSTREAM, 'vendor/three/build/three.module.js');
@@ -27,7 +27,7 @@ export async function fixture(options = {}) {
     const relative = path.relative(UPSTREAM, file);
     const native = !BUILT && file.startsWith(UPSTREAM + path.sep) ? adaptNative(relative, fs.readFileSync(file, 'utf8')) : fs.readFileSync(file, 'utf8');
     const source = file.startsWith(UPSTREAM + path.sep) ? native : adaptRuntime(path.relative(ROOT, file), native);
-    const mod = new vm.SourceTextModule(source, { context, identifier: file }); modules.set(file, mod); return mod;
+    const mod = new vm.SourceTextModule(source, { context, identifier: file, initializeImportMeta(meta) { meta.url = new URL(file, 'file:').href; } }); modules.set(file, mod); return mod;
   }
   const root = new vm.SourceTextModule(`
     export * from './inkwave-public/src/core/ctx.js';

@@ -141,8 +141,8 @@ test('#205 kill/death/no-kill/death becomes eligible immediately after the ineli
 test('#205 initial and environmental deaths do not qualify; environment preserves an existing interval',async()=>{
   const f=await fixture(),a=f.make(),killer=enemy(f);equip(a,57);respawnServices(f);
   const base=f.PLAYER.respawnTime;
-  a.splat(null,'water');close(a.respawnTimer,base);a.respawn();a.splat(killer);close(a.respawnTimer,base);
-  a.respawn();a.splat(killer,'water');close(a.respawnTimer,base);a.respawn();a.splat(killer);close(a.respawnTimer,base-4);
+  a.splat(null,'water');close(a.respawnTimer,f.profile.respawn.water);a.respawn();a.splat(killer);close(a.respawnTimer,base);
+  a.respawn();a.splat(killer,'water');close(a.respawnTimer,f.profile.respawn.water);a.respawn();a.splat(killer);close(a.respawnTimer,base-4);
   a.respawn();f.emit('splatted',{victim:killer,attacker:a});a.splat(null,'fall');a.respawn();a.splat(killer);close(a.respawnTimer,base);
 });
 
