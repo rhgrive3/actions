@@ -285,7 +285,15 @@ test('30/60/120Hz fixed-clock rendering, pause, interruptions and disposal', asy
       for (let i = 0; i < 30; i++) r.step(); assert.equal(r.snapshot().mode, null);
       r.a.weaponRunner.reset(); r.a.form = 'squid'; r.visual(); assert.equal(r.snapshot().mode, null);
       r.a.form = 'kid'; r.visual(); assert.equal(r.snapshot().mode, null);
-      r.a.setWeapon('charger'); r.step(1 / 60, { fire: true }); assert.equal(r.snapshot().mode, 'charge');
+      r.a.setWeapon('charger');
+      // The charger now completes its charge in the profile's chargeTime (1 frame), so a single
+      // step can already be past the charge preview. Drive the real state to the charge phase
+      // inside a bounded window and record the sequence so a lifecycle regression is legible.
+      const chargeSeq = [];
+      for (let i = 0; i < 8; i++) { r.step(1 / 60, { fire: true }); chargeSeq.push(r.snapshot().mode); if (r.snapshot().mode === 'charge') break; }
+      assert.ok(chargeSeq.includes('charge'),
+        `firing the charger must produce a charge preview, saw ${JSON.stringify(chargeSeq)}`);
+      r.a.weaponRunner.reset();
       r.a.setWeapon('shooter'); assert.equal(r.snapshot(), null); r.visual(); assert.equal(r.snapshot().mode, null);
       r.ch.trigger('hit', 1); r.step(1 / 60, { fire: true }); assert.equal(r.snapshot().mode, null);
       r.a.reset(); assert.equal(r.snapshot(), null); r.a.grounded = true; r.step(1 / 60, { fire: true });

@@ -22,15 +22,21 @@ async function chargingAt(frame, dt = 1 / 60) {
   return { f, a, r, speed };
 }
 
-test('S3 Charger uses 1.2 u/s from charging entry (frames 1/8/12/18/full)', async () => {
+test('S3 Charger uses 1.2 u/s from charging entry (startup 1F, frames 2/8/12/18/full)', async () => {
   const f0 = await fixture();
   assert.equal(f0.profile.weapons.charger.moveSpeedFiring, 1.2);
   assert.equal(f0.PLAYER.runSpeed, 5.76);
-  for (const frame of [1, 8, 12, 18]) {
+  // #726: the ZR edge is the 1F humanoid startup — charging has not begun, so
+  // the uncharged run speed still applies on that frame.
+  const startup = await chargingAt(1);
+  close(startup.speed, f0.PLAYER.runSpeed, 'startup frame');
+  assert.equal(startup.r.charging, false, 'no charging state during the 1F startup');
+  // The charging baseline applies unchanged from the charging entry (frame 2).
+  for (const frame of [2, 8, 12, 18]) {
     const { speed } = await chargingAt(frame);
     close(speed, 1.2, `frame ${frame}`);
   }
-  const full = await chargingAt(60);
+  const full = await chargingAt(61);   // 1F startup + 60 charge frames
   close(full.speed, 1.2, 'full charge');
   assert.equal(full.r.chargeT, 1);
 });
@@ -62,9 +68,10 @@ test('Charger composes with #470 Splatling charge target and unchanged Roller br
 });
 
 test('S3 Charger charging speed holds across 30/60/120Hz render cadences', async () => {
-  // One wall-clock second per cadence: hz render frames of dt 1/hz fed into
-  // FixedClock(STEP=1/60) so every cadence yields exactly 60 real
-  // Actor.update ticks and chargeTime 1 reaches chargeT 1 with same states.
+  // Two wall-clock seconds per cadence: hz render frames of dt 1/hz fed into
+  // FixedClock(STEP=1/60) so every cadence yields exactly 120 real
+  // Actor.update ticks: tick 1 is the #726 1F startup and chargeTime 1 is
+  // reached at tick 61 with the same states on every cadence.
   const traces = [];
   for (const hz of [30, 60, 120]) {
     const f = await fixture();
@@ -73,20 +80,25 @@ test('S3 Charger charging speed holds across 30/60/120Hz render cadences', async
     a.intent.move.set(0, 0, 1);
     const clock = new FixedClock();
     const states = [];
-    for (let frame = 0; frame < hz; frame++) {
+    let firstCharging = null;
+    for (let frame = 0; frame < 2 * hz; frame++) {
       clock.advance(1 / hz, (dt) => {
         f.G.time += dt;
         a.update(dt);
-        states.push({ chargeT: a.weaponRunner.chargeT, speed: a.weaponRunner.moveSpeed() });
+        states.push({ chargeT: a.weaponRunner.chargeT, charging: a.weaponRunner.charging, speed: a.weaponRunner.moveSpeed() });
+        if (firstCharging === null && a.weaponRunner.charging) firstCharging = clock.ticks;
       });
     }
-    assert.equal(clock.ticks, 60, `${hz}Hz yields 60 ticks`);
+    assert.equal(clock.ticks, 120, `${hz}Hz yields 120 ticks`);
+    assert.equal(firstCharging, 1, `${hz}Hz: charging enters on tick 2 after the 1F startup`);
     assert.equal(a.weaponRunner.chargeT, 1, `${hz}Hz reaches full charge`);
     assert.equal(a.weaponRunner.charging, true, `${hz}Hz still charging`);
-    // Charging baseline from the first charge state on every cadence.
-    close(states[0].speed, 1.2, `first charge state at ${hz}Hz`);
-    for (let i = 0; i < states.length; i++) {
-      close(states[i].speed, 1.2, `${hz}Hz tick ${i + 1}`);
+    // Startup frame keeps the uncharged run speed; the charging baseline is
+    // 1.2 from the entry tick on (#377 unchanged, entry shifted by #726 1F).
+    close(states[0].speed, f.PLAYER.runSpeed, `startup frame at ${hz}Hz`);
+    assert.equal(states[0].charging, false, `startup frame at ${hz}Hz`);
+    for (let i = 1; i < states.length; i++) {
+      close(states[i].speed, 1.2, `charging tick ${i + 1} at ${hz}Hz`);
     }
     traces.push(states);
   }
@@ -101,14 +113,19 @@ test('actual Actor horizontal converges below 1.2 and lockT keeps priority', asy
   a.intent.move.set(0, 0, 1);
   a.vel.set(0, 0, 0);
   const clock = new FixedClock();
+  // Tick 1 is the #726 1F startup: no charging state yet.
+  clock.advance(STEP, (dt) => { f.G.time += dt; a.update(dt); });
+  assert.equal(clock.ticks, 1);
+  assert.equal(a.weaponRunner.charging, false);
+  // Tick 2 enters charging and targets the baseline immediately.
   clock.advance(STEP, (dt) => { f.G.time += dt; a.update(dt); });
   assert.equal(a.weaponRunner.charging, true);
-  close(a.weaponRunner.moveSpeed(), 1.2, 'runner target after first tick');
+  close(a.weaponRunner.moveSpeed(), 1.2, 'runner target at charging entry');
   const speed = Math.hypot(a.vel.x, a.vel.z);
-  assert.ok(speed > 0 && speed <= 1.2 + 1e-6, `horizontal speed ${speed}`);
-  // Run the full one-second charge: velocity converges to the baseline.
-  for (let i = 1; i < 60; i++) clock.advance(STEP, (dt) => { f.G.time += dt; a.update(dt); });
-  assert.equal(clock.ticks, 60);
+  assert.ok(speed >= 0 && speed <= 1.2 + 1e-6, `horizontal speed ${speed}`);
+  // Run the full charge after the startup tick: velocity converges to 1.2.
+  for (let i = 2; i < 61; i++) clock.advance(STEP, (dt) => { f.G.time += dt; a.update(dt); });
+  assert.equal(clock.ticks, 61);
   assert.equal(a.weaponRunner.chargeT, 1);
   const settled = Math.hypot(a.vel.x, a.vel.z);
   assert.ok(Math.abs(settled - 1.2) < 1e-6, `converged speed ${settled}`);

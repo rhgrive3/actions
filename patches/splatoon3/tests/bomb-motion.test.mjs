@@ -5,6 +5,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { adaptSource } from '../adapter.mjs';
+import { ARC_PREVIEW_MIN_INTERVAL_S } from '../runtime/weapons.mjs';
 
 // The complete production installer and adapter run once in one VM. Duplicate
 // installers are exercised separately and must retain the original registry.
@@ -578,6 +579,176 @@ test('native drawn arc follows actual bomb origin, velocity and gravity at every
       fs.renameSync(pending, file);
     }
   } finally { api.PLAYER.waterY = waterY; r.close(); }
+});
+
+// Issue #798: continuous movement and aim share a bounded local presentation
+// refresh cadence. Discontinuities still delegate to the unchanged native path.
+test('issue 798: aiming micro-drift reuses the cached arc without new collision queries', async () => {
+  const api = await production(), r = rig(api);
+  const waterY = api.PLAYER.waterY, originalPhysics = api.G.physics;
+  try {
+    api.PLAYER.waterY = -10000;
+    r.a.yaw = 0.64; r.a.pitch = -0.19;
+    for (let i = 0; i < 40; i++) r.step(1 / 60, { sub: true });
+    r.projectiles.updateArc(r.a, true);
+    const attribute = r.projectiles.arcGeo.getAttribute('position');
+    const landedBefore = r.projectiles._arcCache.landed;
+    let segments = 0;
+    const physics = api.G.physics, native = physics.segment;
+    physics.segment = function (...args) { segments++; return native.apply(this, args); };
+    try {
+      // Hold G.time inside one throttle interval and drift aim/position by
+      // less than the quantization epsilon: no native recompute may run.
+      const drift = 0.001;
+      for (let i = 0; i < 10; i++) {
+        r.a.pos.x += drift; r.a.pos.z += drift;
+        r.a.aimYaw += drift * 0.01; r.a.aimPitch += drift * 0.005;
+        r.projectiles.updateArc(r.a, true);
+        assert.equal(segments, 0, 'micro drift within one interval must not query Physics');
+        assert.equal(r.projectiles.arcLine.visible, true, 'cached guide stays visible every frame');
+        assert.equal(r.projectiles.arcRing.visible, landedBefore, 'landing marker follows the cached result');
+      }
+      const colorBefore = Array.from(r.projectiles.arcLine.material.color.toArray());
+      const ringScaleBefore = r.projectiles.arcRing.scale.x;
+      r.a.color.setRGB(0.12, 0.35, 0.7);
+      api.G.time += 0.01;
+      r.projectiles.updateArc(r.a, true);
+      assert.equal(segments, 0, 'live presentation refresh does not query Physics');
+      assert.notDeepEqual(Array.from(r.projectiles.arcLine.material.color.toArray()), colorBefore,
+        'cached guide color follows current actor ink/color state');
+      assert.notEqual(r.projectiles.arcRing.scale.x, ringScaleBefore, 'ring pulse follows current presentation time');
+      // A large throw-parameter change must recompute through the native path.
+      r.a.pos.x += 5; r.a.aimYaw += 0.5;
+      const beforeVertices = Array.from({ length: r.projectiles.arcGeo.drawRange.count },
+        (_, i) => [attribute.getX(i), attribute.getY(i), attribute.getZ(i)]);
+      r.projectiles.updateArc(r.a, true);
+      assert.ok(segments > 0, 'large aim/position change recomputes through native Physics');
+      assert.ok(segments <= 126, 'one recompute still runs at most one native preview pass');
+      const afterVertices = Array.from({ length: r.projectiles.arcGeo.drawRange.count },
+        (_, i) => [attribute.getX(i), attribute.getY(i), attribute.getZ(i)]);
+      assert.notDeepEqual(afterVertices, beforeVertices, 'large motion moves the drawn guide');
+      // Advancing past the throttle interval recomputes even when the native
+      // exact-value cache would still hit: drift again so both the wrapper
+      // interval and the native inputs change, then confirm the native pass.
+      r.a.pos.x += 0.2; r.a.aimYaw += 0.02;
+      api.G.time += ARC_PREVIEW_MIN_INTERVAL_S + 1 / 60;
+      const count = segments;
+      r.projectiles.updateArc(r.a, true);
+      assert.equal(segments, count, 'ordinary cadence retains one cached draw after the previous refresh');
+      r.a.pos.x += 0.01; r.a.aimYaw += 0.01; api.G.time += 1 / 60;
+      r.projectiles.updateArc(r.a, true);
+      assert.ok(segments > count, 'the following bounded tick refreshes the guide through the native path');
+      // Aiming off hides the guide through the native guard and resets state.
+      r.projectiles.updateArc(r.a, false);
+      assert.equal(r.projectiles.arcLine.visible, false);
+      // Re-show has no wrapper throttle state. Invalidate the underlying exact
+      // native cache too, so this proves the show path reaches Physics again.
+      r.projectiles._arcCache.physics = null;
+      const beforeShow = segments;
+      r.projectiles.updateArc(r.a, true);
+      assert.ok(segments > beforeShow, 'show after hide refreshes through native Physics');
+
+      // Actor, Physics instance and throw-speed changes retain immediate guards.
+      const other = rig(api);
+      try {
+        r.projectiles._arcCache.physics = null;
+        const beforeActor = segments;
+        r.projectiles.updateArc(other.a, true);
+        assert.ok(segments > beforeActor, 'actor change refreshes through native Physics');
+      } finally { other.close(); }
+      const previousPhysics = api.G.physics, changedPhysics = new api.Physics(api.G.level);
+      const changedSegment = changedPhysics.segment;
+      changedPhysics.segment = function (...args) { segments++; return changedSegment.apply(this, args); };
+      api.G.physics = changedPhysics;
+      const beforePhysics = segments;
+      r.projectiles.updateArc(r.a, true);
+      assert.ok(segments > beforePhysics, 'Physics instance change refreshes through native Physics');
+      api.G.physics = previousPhysics;
+      const oldThrowSpeed = api.SUB.bomb.throwSpeed;
+      api.SUB.bomb.throwSpeed = oldThrowSpeed + 0.1;
+      const beforeThrowSpeed = segments;
+      r.projectiles.updateArc(r.a, true);
+      assert.ok(segments > beforeThrowSpeed, 'throw-speed parameter change above epsilon refreshes');
+      api.SUB.bomb.throwSpeed = oldThrowSpeed;
+      // Actual bomb creation still uses the live pose, never the cached line.
+      api.G.projectiles = r.projectiles;
+      r.a.weaponRunner.update(0, { subReleased: true });
+      assert.equal(r.projectiles.bombs.length, 1, 'actual bomb gameplay is unchanged by the preview budget');
+    } finally {
+      physics.segment = native;
+    }
+  } finally {
+    api.G.physics = originalPhysics;
+    api.PLAYER.waterY = waterY;
+    r.close();
+  }
+});
+
+test('issue 798: installed native updateArc bounds walking and continuous aim queries at 30/60/120/144 Hz', async t => {
+  const api = await production(), waterY = api.PLAYER.waterY, originalPhysics = api.G.physics;
+  const originalThrowSpeed = api.SUB.bomb.throwSpeed, rows = [];
+  const installStamp = Symbol.for('inkwave.s3.arc-preview-performance.install.v1');
+  assert.equal(api.Projectiles.prototype[installStamp], true, 'the production Projectiles updater has the budget wrapper installed');
+  api.PLAYER.waterY = -10000;
+  try {
+    for (const mode of ['walking', 'aim']) for (const hz of [30, 60, 120, 144]) {
+      const r = rig(api), physics = api.G.physics, nativeSegment = physics.segment;
+      let queries = 0, lastQueryTime = NaN;
+      const refreshTimes = [];
+      physics.segment = function (...args) {
+        queries++;
+        if (api.G.time !== lastQueryTime) {
+          refreshTimes.push(api.G.time);
+          lastQueryTime = api.G.time;
+        }
+        return nativeSegment.apply(this, args);
+      };
+      const frames = hz, dt = 1 / hz;
+      let maximumFrameQueries = 0, maximumCacheAge = 0, cumulativeCacheAge = 0;
+      try {
+        for (let frame = 0; frame < frames; frame++) {
+          const before = queries;
+          api.G.time += dt;
+          if (mode === 'walking') r.a.pos.x += 4.32 * dt;
+          else r.a.aimYaw += 1.2 * dt;
+          r.projectiles.updateArc(r.a, true);
+          const frameQueries = queries - before;
+          maximumFrameQueries = Math.max(maximumFrameQueries, frameQueries);
+          assert.ok(frameQueries <= 126, `${mode} ${hz}Hz frame ${frame} must stay within one native preview pass`);
+          if (frameQueries) assert.equal(frameQueries, 126, 'empty-space native preview performs its real 126 segment queries');
+          assert.ok(refreshTimes.length > 0, 'native Physics.segment queries were observed');
+          const age = api.G.time - refreshTimes[refreshTimes.length - 1];
+          maximumCacheAge = Math.max(maximumCacheAge, age);
+          cumulativeCacheAge += age;
+          assert.ok(age <= ARC_PREVIEW_MIN_INTERVAL_S + dt + 1e-9,
+            `${mode} ${hz}Hz cached guide age stays within the 30Hz budget plus one render sample`);
+        }
+        for (let i = 1; i < refreshTimes.length; i++) {
+          assert.ok(refreshTimes[i] - refreshTimes[i - 1] >= ARC_PREVIEW_MIN_INTERVAL_S - 1e-9,
+            `${mode} ${hz}Hz continuous input cannot refresh above 30Hz`);
+        }
+        const expectedBudget = Math.min(30, hz / 2);
+        assert.ok(refreshTimes.length >= expectedBudget - 2 && refreshTimes.length <= expectedBudget,
+          `${mode} ${hz}Hz refreshes=${refreshTimes.length}; times=${JSON.stringify(refreshTimes)}; expected near ${expectedBudget}`);
+        assert.ok(queries <= frames * 126 / 2,
+          `${mode} ${hz}Hz reduces actual continuous-input collision queries by at least half`);
+        assert.ok(cumulativeCacheAge <= frames * (ARC_PREVIEW_MIN_INTERVAL_S + dt + 1e-9),
+          `${mode} ${hz}Hz cumulative sampled cache age stays bounded`);
+        assert.equal(queries, refreshTimes.length * 126, 'measured queries come from actual native preview passes');
+        rows.push({ mode, renderHz: hz, seconds: frames / hz, nativeRefreshes: refreshTimes.length,
+          segmentQueries: queries, maxQueriesPerRenderFrame: maximumFrameQueries,
+          maxCacheAgeSeconds: maximumCacheAge, cumulativeSampledCacheAgeSeconds: cumulativeCacheAge });
+      } finally {
+        physics.segment = nativeSegment;
+        r.close();
+      }
+    }
+    t.diagnostic(JSON.stringify(rows));
+  } finally {
+    api.G.physics = originalPhysics;
+    api.SUB.bomb.throwSpeed = originalThrowSpeed;
+    api.PLAYER.waterY = waterY;
+  }
 });
 
 test('a duplicate installer from a different VM realm preserves the original prototype hooks and live helper state', async () => {
