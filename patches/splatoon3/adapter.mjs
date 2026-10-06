@@ -426,7 +426,13 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, '    this.grounded = grounded;\n    this.airTime', '    this.grounded = grounded;\n    rememberSuperJumpGround(this);\n    this.airTime', 'record resolved jump destination');
     code = replaceOnce(code, 'this.groundN.copy(gh.normal); }\n  }', 'this.groundN.copy(gh.normal); }\n    rememberSuperJumpGround(this);\n  }', 'record spawn jump destination');
     code = replaceOnce(code, "    if (this.superJumpState) { this._updateSuperJump(dt); this._finishFrame(dt); return; }", "    if (this.superJumpState) { this._updateSuperJump(dt); updateSuperJumpMain(this, dt, firePressed); if (this.alive) this._finishFrame(dt); return; }", 'super jump main input');
-    code = replaceOnce(code, "    if (this.specialActive) { this._updateSpecial(dt); this._finishFrame(dt); return; }", "    if (this.specialActive) { const stormResources = this.specialActive.id === 'storm'; this._updateSpecial(dt); if (stormResources && this.alive) updateResources(this, dt); if (this.alive) this._finishFrame(dt); return; }", 'special active resources');
+    const specialActiveHead = code.includes("    if (stormHolding) updateStormHold(this, dt, G);\n    if (this.specialActive && !isStormHolding(this)) { this._updateSpecial(dt); this._finishFrame(dt); return; }")
+      ? "    if (stormHolding) updateStormHold(this, dt, G);\n    if (this.specialActive && !isStormHolding(this)) { this._updateSpecial(dt); this._finishFrame(dt); return; }"
+      : "    if (this.specialActive) { this._updateSpecial(dt); this._finishFrame(dt); return; }";
+    const specialActiveTarget = specialActiveHead.includes('stormHolding')
+      ? "    if (stormHolding) updateStormHold(this, dt, G);\n    if (this.specialActive && !isStormHolding(this)) { const stormResources = this.specialActive.id === 'storm'; this._updateSpecial(dt); if (stormResources && this.alive) updateResources(this, dt); if (this.alive) this._finishFrame(dt); return; }"
+      : "    if (this.specialActive) { const stormResources = this.specialActive.id === 'storm'; this._updateSpecial(dt); if (stormResources && this.alive) updateResources(this, dt); if (this.alive) this._finishFrame(dt); return; }";
+    code = replaceOnce(code, specialActiveHead, specialActiveTarget, 'special active resources');
     // Issue #624 residual: activation also returns before ordinary resources.
     // Admit only a live Storm user; other specials retain their resource gates.
     code = replaceOnce(code, "    if (specialPressed && this.specialReady()) { this._startSpecial(); this._finishFrame(dt); return; }",
