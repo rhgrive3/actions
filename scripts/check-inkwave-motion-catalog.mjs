@@ -550,7 +550,7 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout 
           // This fixture calls Runner directly instead of Actor.update. Advance
           // the Actor-owned post-fire clock at the same pre-Runner point so the
           // production 4F shooter lock can expire before later sub-aim actions.
-          a.lastFire += dt;
+          if (a.weapon.kind === 'shooter') a.lastFire += dt;
           a.weaponRunner.update(dt, input); a._finishFrame(dt);
         }
         else ch.update(dt, null);
