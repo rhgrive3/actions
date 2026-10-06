@@ -138,18 +138,12 @@ function adaptQualityLayer(rel, code) {
       'authoritative HUD spread, no second recoil cone');
   }
   code = adaptHudSnapshots(rel, code, replaceOnce);
-  code = adaptAimProfiles(rel, code);
-  code = adaptMedalSource(rel, code);
-  code = adaptResourceSource(rel, code, replaceOnce);
   code = adaptTenacity(rel, code, replaceOnce);
   if (rel !== 'src/ui/menus.js') code = adaptResultContinuation(rel, code, replaceOnce);
   code = adaptShowcaseShadow(rel, code, replaceOnce);
   code = adaptTeamWipeout(rel, code, replaceOnce);
   code = adaptSplatlingReticle(rel, code, replaceOnce);
   code = adaptPortraitGuard(rel, code, replaceOnce);
-  code = adaptIssue482(rel, code);
-  code = adaptIssue405(rel, code);
-  code = adaptIssue484(rel, code);
   code = adaptIdleSource(rel, code, replaceOnce);
   code = adaptIssue480Source(rel, code);
   code = adaptReflSkip(rel, code, replaceOnce);
@@ -161,7 +155,6 @@ function adaptQualityLayer(rel, code) {
   code = adaptHudAuthority(rel, code);
   // Issue #580: rewrites only src/ui/hud.js + styles/hud.css; inert everywhere else.
   code = adaptFinishTape(rel, code);
-  code = adaptHudAuthority(rel, code);
   if (rel === 'src/core/mobile.js') {
     code = adaptFirstTouch(rel, code);
     code = adaptTouchRelayout(rel, code);
