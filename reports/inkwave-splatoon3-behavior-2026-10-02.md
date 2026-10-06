@@ -357,3 +357,18 @@ Reset now clears the pending damage attacker and angle together with the cancell
 ## 2026-10-06 — Dualies wall-drop (#604) and composed-runtime guards
 
 Base main `67fec182`. Splat Dualies wall impacts now enter the existing sourced wall-drop state using the pinned 11.3.0 top-level `WallDropMoveParam`/`WallDropCollisionPaintParam` (shock 1.3, fall 0.65, ground 0.6; 20–40F + 10F + 15–35F at 0.06). Previously the round died on the contact frame after one generic impact. Damage is unchanged. Shooter (#385) and Charger (#625/#268) are excluded: Shooter is owned elsewhere, and the Charger record omits three period fields. #770, #777, #638/#637, #644/#643 and #556 were already correct after adapter composition (the reports read raw source). They are now pinned by composed-runtime tests. This is logic-level and emitted-verifier evidence; a Switch visual/frame comparison is still 未確認. Details: [inkwave-wall-drop-dualies-guards-2026-10-06.md](inkwave-wall-drop-dualies-guards-2026-10-06.md).
+
+## 2026-10-07 — 最終10秒カウントの単調性 (#831)
+
+Base main `f31f5da439134fe49bb89018dad5557671a49c67`。`inkwave-public/src/game/match.js:173` の `match:count` 発火条件は `c !== this.lastCount` のみで、`c = Math.ceil(this.time)` をオンライン追従側（follower）が書き換え得る `match.time` から算出していた。`src/net/netmatch.js` の `_hostClock()` は遅延したホストスナップショットへ `m.time += (time - m.time) * 0.5` の半分補正（|差| > 0.2s のときだけ適用）を行うため、巻き戻しが起きると**既に出した数字が再発火**し（8 の後に 9 が再来）、大きく進む補正では交差した数字の扱いが未定義になっていた。これが問題の本体で、最終カウントの表示そのものを任天堂の仕様と断定していない。
+
+修正は owned の `patches/local-quality/` 層のみ（`inkwave-public/` は無変更、時計・プロトコルは書き換えていない）。`final-count-adapter.mjs` が発火条件を `c > 0 && c < this.lastCount`（**厳密に小さい**マイルストーン）へ置き換え、`award` 相当の発火源を「残り時間の数値が伸びたか」ではなく「適格なカウントイベントそのもの」に切り替えた。結果、列は構造的に単調になり、
+
+- オフライン（`time` が減るだけ）では従来と**同一の列**を出す
+- 後方向（巻き戻し）補正は既出数字を再武装・逆転できない
+- 前方向（早送り）補正は現在の数字のみを一度提示し、交差した数字は一度だけスキップ。`lastCount` が過ぎた数字は後から再生しない
+- TIME UP のホスト権限、follower の権限ゼロ、1:00 マイルストーン、平滑化時計、全ゲームプレイタイミングは不変
+
+**未確認（確定ではない）**: 本家の最終10秒カウントの実際の表示順・表示形式は任天堂実機の計測ではない。100/250/500ms のスナップショット周期・遅延はネットコードの代表値であって実サーバ計測ではない。前方向（>0.2s でホストが遅れる）経路は本モデルでは生じないため、専用の forward-skip テストで担保している。ブラウザ / Switch 実機の表示比較、およびネットワーク越しの表示重複は未計測。
+
+検証は `patches/local-quality/tests/final-count-adapter.test.mjs` の8項目（実 `Match.update` と実 `_hostClock()` のスライスを使用）。現在ツリーで **8/8 pass (exit 0)**。未変更 main を対象にした専用の負コントロールが「8 の後に 9 が再来する」残存根を確認している。オフライン列は 30/60/120Hz に加え低FPS **20/10Hz** でも baseline と同一。固定 100/250/500ms ＋決定論的ジッタのスナップショット交通では、実の 0.2s 閾値が実際に発火することを非空虚性として検証したうえで、厳減・各値1回・window 内・1 まで到達を確認。ローカル品質全体は **188 tests / 185 pass / 3 pre-existing skip / 0 fail (exit 0)**。
