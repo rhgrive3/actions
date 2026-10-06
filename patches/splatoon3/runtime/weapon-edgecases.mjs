@@ -49,10 +49,29 @@ export function appendRollerNearUnit(system, a, w) {
   system._push(p);
 }
 
-export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYER }) {
+export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYER, G, THREE, Hit }) {
   const tag = Symbol.for('inkwave.s3.weapon-edgecases.v1');
   if (WeaponRunner.prototype[tag]) return;
   Object.defineProperty(WeaponRunner.prototype, tag, { value: true });
+  // Each Dualies hand owns its birth origin. LOS intentionally omits an end
+  // margin, so validate the full segment before allowing an origin in cover.
+  const nativeMuzzleHand = Projectiles.prototype._muzzleHand;
+  const muzzleFrom = new THREE.Vector3(), muzzleDelta = new THREE.Vector3(), muzzleHit = new Hit();
+  const obstructed = end => {
+    muzzleDelta.copy(end).sub(muzzleFrom);
+    const distance = muzzleDelta.length();
+    return distance > EPS && G.physics.raycast(muzzleFrom, muzzleDelta.multiplyScalar(1 / distance), distance, muzzleHit, true).hit;
+  };
+  Projectiles.prototype._muzzleHand = function (actor, hand, out) {
+    nativeMuzzleHand.call(this, actor, hand, out);
+    if (actor.weapon?.kind !== 'dualies') return out;
+    muzzleFrom.copy(actor.pos); muzzleFrom.y += actor.form === 'squid' ? .4 : 1.05;
+    if (!Number.isFinite(out.x) || !Number.isFinite(out.y) || !Number.isFinite(out.z) || obstructed(out)) {
+      out.copy(muzzleFrom).addScaledVector(actor.aimDir, .3);
+      if (!Number.isFinite(out.x) || !Number.isFinite(out.y) || !Number.isFinite(out.z) || obstructed(out)) out.copy(muzzleFrom);
+    }
+    return out;
+  };
   const clear = r => { r.s3DualiesStart = 0; r.s3DualiesHeld = false; };
   const reset = WeaponRunner.prototype.reset;
   WeaponRunner.prototype.reset = function (...args) { const out = reset.apply(this, args); clear(this); this.s3DualiesEmerging = false; return out; };

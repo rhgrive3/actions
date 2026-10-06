@@ -8,7 +8,7 @@ export const FLOW_MOTION_CALIBRATION = Object.freeze({
   status: 'visible calibration; original particle curves and expiry unmeasured',
 });
 const INSTALL = Symbol.for('inkwave.s3.flow-motion.install.v1');
-const states = new WeakMap(), disposed = new WeakSet();
+const states = new WeakMap(), disposed = new WeakSet(), resumptions = new WeakMap();
 const TAU = Math.PI * 2, EPS = 1e-10;
 const smooth = x => { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); };
 
@@ -312,7 +312,12 @@ function step(ch, dt, THREE) {
   if (!enabled || s.owner && s.owner !== actor) clear(ch);
   s.owner = enabled ? actor : null;
   const active = !!(enabled && flow?.active);
-  if (active && !s.active) {
+  if (active && !s.active && resumptions.get(ch) === flow) {
+    // The same authoritative Flow survived a life transition; resume its
+    // steady appearance without a second activation/paint/entry event.
+    s.phase = 'active'; s.age = FLOW_MOTION_CALIBRATION.entryTime; s.time = 0;
+    s.event = null; s.eventAge = 0; resumptions.delete(ch);
+  } else if (active && !s.active) {
     s.phase = 'entry'; s.age = s.time = 0; s.event = 'entry'; s.eventAge = 0; s.activationCount++;
   } else if (active && flow.remaining > s.remaining + EPS) {
     s.event = 'extension'; s.eventAge = 0; s.extensionCount++;
@@ -387,9 +392,21 @@ export function installFlowMotion({ THREE, Character, Actor }) {
       for (const mat of r.ownedMaterials) mat.dispose();
       r.glints.dispose();
     }
-    states.delete(this); return dispose.apply(this, args);
+    states.delete(this); resumptions.delete(this); return dispose.apply(this, args);
   };
   const reset = A.reset, splat = A.splat;
-  A.reset = function (...args) { const result = reset.apply(this, args); clear(this.character); return result; };
-  A.splat = function (...args) { const result = splat.apply(this, args); if (!this.alive) clear(this.character); return result; };
+  A.reset = function (...args) {
+    const result = reset.apply(this, args); clear(this.character);
+    if (!this.s3?.flow?.active || resumptions.get(this.character) !== this.s3.flow) resumptions.delete(this.character);
+    return result;
+  };
+  A.splat = function (...args) {
+    const result = splat.apply(this, args);
+    if (!this.alive) {
+      if (this.s3?.flow?.active) resumptions.set(this.character, this.s3.flow);
+      else resumptions.delete(this.character);
+      clear(this.character);
+    }
+    return result;
+  };
 }
