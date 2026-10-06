@@ -249,8 +249,8 @@ test('#645 ordinary landing and special-owned paint controls', async t => {
 });
 
 // #744: Super Jump charge stays damageable (#255 protects flight only), so it
-// must keep the shared post-movement resource phase. Flight still skips it.
-test('#744 charge in enemy ink runs the resource phase exactly once per tick; flight skips it', async t => {
+// must keep the shared post-movement resource phase. Flight runs HP recovery only.
+test('#744 charge in enemy ink runs the resource phase exactly once per tick; flight only recovers HP', async t => {
   const f = await boot(); t.after(f.close); f.G.paint.sample = () => 2;
   const a = f.make(), control = f.make({ pos: [0, 0, 30] });
   const dps = 18, cap = 40, recovery = 30;
@@ -277,11 +277,12 @@ test('#744 charge in enemy ink runs the resource phase exactly once per tick; fl
   assert.ok(Math.abs(a.s3.enemyInkAwayTime - Math.min(f.profile.resources.enemyInkGraceReset || 0, STEP)) < 1e-9,
     'takeoff respects the current contact-grace reset owner');
   assert.ok(Math.abs(a.damageFromInk - (inkDamage - recovery * STEP)) < 1e-9);
-  const flightHp = a.hp, flightInkDamage = a.damageFromInk, flightInk = a.ink;
+  let flightHp = a.hp; const flightInkDamage = a.damageFromInk, flightInk = a.ink;
   while (a.superJumpState) {
     f.tick(a);
     if (!a.superJumpState) break;
-    assert.equal(a.hp, flightHp); assert.equal(a.damageFromInk, flightInkDamage); assert.equal(a.ink, flightInk);
+    if (a.lastDamage + 1e-10 >= f.profile.resources.regenDelay) flightHp = Math.min(100, flightHp + f.profile.resources.regenRate * STEP);
+    assert.ok(Math.abs(a.hp - flightHp) < 1e-8); assert.equal(a.damageFromInk, flightInkDamage); assert.equal(a.ink, flightInk);
   }
 });
 

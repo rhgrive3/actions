@@ -12,6 +12,9 @@ export function adaptControls(rel, code) {
   }
   if (rel === 'src/main.js') return replaceOnce(code, "if (actor?.isLocal && phase === 'charge') this.input.mobile?.setMap(false);", "if (actor?.isLocal && phase === 'charge') { if (this.match?.controller) this.match.controller.padMapOpen = false; this.input.mobile?.setMap(false); }", 'successful jump closes pad map');
   if (rel !== 'src/game/player.js') return code;
+  // invertY is the persisted per-profile Right Stick option, not a global camera sign.
+  code = replaceOnce(code, 'rig.pitch -= mdy * sens * inv;', 'rig.pitch -= mdy * sens;', 'mouse excludes right-stick vertical inversion');
+  code = replaceOnce(code, 'rig.pitch -= touch.lookDY * friction * inv;', 'rig.pitch -= touch.lookDY * friction;', 'touch swipe excludes right-stick vertical inversion');
   code = replaceOnce(code, '    if (!this.enabled) {', '    if (!this.enabled) {\n      this.padMapOpen = false; this.padLook.x = this.padLook.y = 0; this.edgeT = 0;', 'disabled input state');
   code = replaceOnce(code, "    const usingPad = !!inp.pad && inp.lastDevice === 'pad';", "    const standardPad = inp.pad?.mapping === 'standard';\n    if (!standardPad) this.padMapOpen = false;\n    if (standardPad && inp.padPressed.has(3)) { this.padMapOpen = !this.padMapOpen; inp.padPressed.delete(3); }\n    const padMap = standardPad ? !!this.padMapOpen : inp.padButton(8);\n    const gyroActive = !!touch?.gyro?.enabled;\n    if (gyroActive || this._gyroAxisActive !== gyroActive) this.padLook.y = 0;\n    this._gyroAxisActive = gyroActive;\n    const usingPad = !!inp.pad && inp.lastDevice === 'pad';", 'pad map and gyro ownership');
   for (const before of [

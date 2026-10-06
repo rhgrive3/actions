@@ -1,3 +1,4 @@
+import { chargerPostShotBlocksSub } from './weapon-gates.mjs';
 export function subThrowSpec(a, base) { return { ...base, throwSpeed: base.throwSpeed * (a.s3?.modifiers?.subPower ?? 1) }; }
 export function subInkSpec(a, base) { return { ...base, inkCost: base.inkCost * (a.s3?.modifiers?.inkSaverSub ?? 1) }; }
 const EPS=1e-10;
@@ -25,6 +26,9 @@ export function installSubReady({Actor,WeaponRunner,SUB},profile){
  wr.update=function(dt,input){
   const a=this.a;
   if(!a.alive||a.specialActive||a.superJumpState){cancel(this);return update.call(this,dt,{...input,sub:false,subReleased:false});}
+  if(chargerPostShotBlocksSub(this)){
+   cancel(this);return update.call(this,dt,{...input,sub:false,subReleased:false});
+  }
   let s=this.s3SubReady;
   if(s)s.age+=Math.max(0,dt);
   if(!s&&input.sub&&!(this.s3PostShotRemaining>EPS)){
@@ -44,7 +48,7 @@ export function installSubReady({Actor,WeaponRunner,SUB},profile){
   const result=update.call(this,dt,next);
   // A main shot can create a post-shot gate inside the nested update. Never
   // replay an R release that the action owner rejected on that same tick.
-  if(this.s3PostShotRemaining>EPS)cancel(this);
+  if(this.s3PostShotRemaining>EPS||chargerPostShotBlocksSub(this))cancel(this);
   return result;
  };
 }

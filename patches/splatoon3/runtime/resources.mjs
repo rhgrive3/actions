@@ -21,6 +21,14 @@ export function resourceSurface(a) {
 export function enemyInkDamageRate(rate, referenceHz = 60, quantum = 0.1) {
   return Math.max(0, Math.floor(rate / referenceHz / quantum + 1e-10)) * quantum * referenceHz;
 }
+// State-owned airborne actions share HP recovery without running ground contact
+// damage, surface sampling, ink refill, or resource recovery clocks.
+export function updateHealthRecovery(a, dt, onEnemy = false, submerged = false) {
+  const P = api.PLAYER, r = tuning, rain = stormRecoveryState(a, api);
+  if (!onEnemy && !rain.enemy && a.lastDamage + 1e-10 >= r.regenDelay && a.hp < P.hp) {
+    a.hp = Math.min(P.hp, a.hp + (submerged || rain.ally ? r.regenRateSwim : r.regenRate) * dt);
+  }
+}
 export function updateResources(a, dt) {
   if (!api) throw new Error('INKWAVE resource patch not installed');
   const P = api.PLAYER, r = tuning, mods = a.s3?.modifiers || {};
@@ -48,10 +56,7 @@ export function updateResources(a, dt) {
     }
     a.damageFromInk = Math.max(0, a.damageFromInk - dt * r.enemyInkRecovery);
   }
-  const rain = stormRecoveryState(a, api);
-  if (!onEnemy && !rain.enemy && a.lastDamage + 1e-10 >= r.regenDelay && a.hp < P.hp) {
-    a.hp = Math.min(P.hp, a.hp + (a.submerged || rain.ally ? r.regenRateSwim : r.regenRate) * dt);
-  }
+  updateHealthRecovery(a, dt, onEnemy, a.submerged);
   const wasFull = a.ink >= P.inkMax;
   const rollingRecovery = a.weapon.kind === 'roller' && a.s3?.rollerRefillMode;
   const weaponDelay = rollingRecovery ? 0 : a.weapon.inkRecoverStop ?? r.inkRefillDelay;

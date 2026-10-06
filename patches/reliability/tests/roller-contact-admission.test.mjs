@@ -101,14 +101,14 @@ test('remote Roller retries on native cadence after lost confirmation and ignore
     const lateFirstAck = receiver.wire.at(-1).data;
     assert.ok(lateFirstAck.e?.some(event => event[1] === 'ev' && event[2] === 'hit'));
 
-    sender.G.time = 1.5;
+    sender.G.time = 1.4 - 1e-6;
     runner._roller(1 / 60, { fire: true, firePressed: false }, sender.WEAPONS.roller);
-    assert.equal(sender.wire.length, 1, 'the existing contact gate remains closed at exactly 0.5 seconds');
+    assert.equal(sender.wire.length, 1, 'the existing contact gate remains closed before the 0.4-second boundary');
 
     // sendHit returns true when tr/sendTo is absent. Let this native-cadence
     // retry disappear, then prove another retry can still reach the owner.
     sender.net.s.tr = null;
-    sender.G.time = 1.500001;
+    sender.G.time = 1.4;
     runner._roller(1 / 60, { fire: true, firePressed: false }, sender.WEAPONS.roller);
     assert.equal(sender.wire.length, 1);
     assert.equal(runner.rollHits.get(victim), sender.G.time, 'the transport-absent request keeps the native finite retry timestamp');
@@ -117,9 +117,9 @@ test('remote Roller retries on native cadence after lost confirmation and ignore
 
     const transport = { sendTo: (to, data) => sender.wire.push({ to, data: JSON.parse(JSON.stringify(data)) }) };
     sender.net.s.tr = transport;
-    sender.G.time = 2.000002;
+    sender.G.time = 1.8;
     runner._roller(1 / 60, { fire: true, firePressed: false }, sender.WEAPONS.roller);
-    assert.equal(sender.wire.length, 2, 'ongoing contact recovers after the existing 0.5-second debounce');
+    assert.equal(sender.wire.length, 2, 'ongoing contact recovers after the configured 0.4-second debounce');
     const second = sender.wire[1].data;
     assert.equal(second.h, 3, 'the current confirmed-hit owner reserves a sequence before transport delivery');
     assert.equal(second.l, first.l, 'the retry targets the same owner life');
@@ -202,7 +202,7 @@ test('remote Roller contact waits for owner acceptance, retries after rejection,
     assert.equal(runner.rollHits.has(victim), false, 'rejection clears the in-flight marker without starting a success debounce');
 
     runner._roller(1 / 60, { fire: true, firePressed: false }, sender.WEAPONS.roller);
-    assert.equal(sender.wire.length, 2, 'the rejection acknowledgement admits a retry without starting the 0.5-second debounce');
+    assert.equal(sender.wire.length, 2, 'the rejection acknowledgement admits a retry without starting the configured 0.4-second debounce');
     assert.equal(runner.rollHits.get(victim), sender.G.time);
     assert.deepEqual(Object.keys(sender.wire[1].data).sort(), ['a', 'd', 'h', 'k', 'l', 'rp', 'v', 'w']);
     assert.equal(sender.wire[1].data.rp, false, 'ordinary contact carries the accepted equipment flag without inventing Punisher');

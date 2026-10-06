@@ -124,7 +124,8 @@ export function installChargerFlight(api,completion) {
     if(boss&&boss.dist<distance-EPS){distance=boss.dist;ended=true;normal=job.dir.clone().negate();target='boss';}
     const actors=[];
     for(const actor of G.actors){
-      if(!actor.alive||actor.team===job.team||job.seen.has(actor))continue;
+      // Partial rounds meet allied bodies; full rounds retain teammate piercing.
+      if(!actor.alive||actor===job.owner||(job.full&&actor.team===job.team)||job.seen.has(actor))continue;
       job.base.copy(actor.pos); // same authoritative basis as ordinary projectiles
       const t=capsuleEntry(job.prev,job.pos,job.base,PLAYER.radius,actor.form==='squid'?PLAYER.squidHeight:PLAYER.height,
         collision.InitRadiusForPlayer,collision.EndRadiusForPlayer);
@@ -133,7 +134,7 @@ export function installChargerFlight(api,completion) {
     actors.sort((a,b)=>a.d-b.d||String(a.actor.nid??a.actor.name).localeCompare(String(b.actor.nid??b.actor.name)));
     const amount=job.damage;
     for(const a of actors){
-      job.seen.add(a.actor);if(!job.ghost)system.applyHit(job.owner,a.actor,amount,job.weapon.id);
+      job.seen.add(a.actor);if(!job.ghost&&a.actor.team!==job.team)system.applyHit(job.owner,a.actor,amount,job.weapon.id);
       if(!job.full){distance=a.d;ended=true;target=a.actor;normal=job.dir.clone().negate();break;}
     }
     if(target==='boss'&&!job.ghost)G.boss.hit(job.owner,amount,boss.target,job.weapon.id,boss.point.clone());
@@ -153,7 +154,7 @@ export function installChargerFlight(api,completion) {
           {seed:Math.random(),stretch:job.dir,stretchAmt:.6});job.owner.addTurf(area);
         G.fx?.burst(world.point,world.normal,job.owner.color,{count:10,speed:4,size:.09,paint:false});
       }
-      if(!job.ghost)emit('weapon:impact',{pos:job.pos.clone(),normal,team:job.team,kind:'charger',radius:job.paint.impact,victim:target==='boss'?null:target});
+      if(!job.ghost)emit('weapon:impact',{pos:job.pos.clone(),normal,team:job.team,kind:'charger',radius:job.paint.impact,victim:target==='boss'||target?.team===job.team?null:target});
     }
     return ended;
   }

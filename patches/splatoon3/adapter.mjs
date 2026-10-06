@@ -593,9 +593,9 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, "    if (this.superJumpState) { this._updateSuperJump(dt); this._finishFrame(dt); return; }", "    if (this.superJumpState) { this._updateSuperJump(dt); updateSuperJumpMain(this, dt, firePressed); if (this.alive) this._finishFrame(dt); return; }", 'super jump main input');
     // Issue #744: the Super Jump branch returns before the shared post-movement
     // resource phase. Charge stays damageable (#255 protects flight only), so a
-    // tick that starts in charge runs the same phase once; flight still skips it.
+    // tick that starts in charge runs the same phase once. Flight runs HP only.
     code = replaceOnce(code, '    if (this.superJumpState) { this._updateSuperJump(dt); updateSuperJumpMain(',
-      "    if (this.superJumpState) { const superJumpCharge = this.superJumpState.phase === 'charge'; this._updateSuperJump(dt); if (this.alive && superJumpCharge) updateResources(this, dt); updateSuperJumpMain(",
+      "    if (this.superJumpState) { const superJumpCharge = this.superJumpState.phase === 'charge'; this._updateSuperJump(dt); if (this.alive) { if (superJumpCharge) updateResources(this, dt); else if (!this.remote) updateHealthRecovery(this, dt); } updateSuperJumpMain(",
       'super jump charge resource phase');
     const specialActiveHead = code.includes("    if (stormHolding) updateStormHold(this, dt, G);\n    if (this.specialActive && !isStormHolding(this)) { this._updateSpecial(dt); this._finishFrame(dt); return; }")
       ? "    if (stormHolding) updateStormHold(this, dt, G);\n    if (this.specialActive && !isStormHolding(this)) { this._updateSpecial(dt); this._finishFrame(dt); return; }"
@@ -672,7 +672,7 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, '    this._spawnBarrier();',
       '    // S3 Spawners use stage geometry and spawn protection, not a universal radial body clamp.',
       'S3 universal spawn barrier removal');
-    return `import { finalWeaponDamage } from '../../patches/splatoon3/runtime/final-damage.mjs';\nimport { swimSplashVisible } from '../../patches/splatoon3/runtime/swim-stealth.mjs';\nimport { prepareSuperJump, rememberSuperJumpGround, superJumpTarget, superJumpStartupTime, updateSuperJumpMain, SUPERJUMP_MAIN_PROGRESS } from '../../patches/splatoon3/runtime/superjump.mjs';\nimport { beforeActions, wallRollRequested, crossSurgeInkGap, normalJumpVelocity } from '../../patches/splatoon3/runtime/movement.mjs';\nimport { updateResources } from '../../patches/splatoon3/runtime/resources.mjs';\nimport { scheduleLethal, flushPendingLethal, clearPendingLethal, hasPendingLethal } from '../../patches/splatoon3/runtime/damage-timing.mjs';\n` + code;
+    return `import { finalWeaponDamage } from '../../patches/splatoon3/runtime/final-damage.mjs';\nimport { swimSplashVisible } from '../../patches/splatoon3/runtime/swim-stealth.mjs';\nimport { prepareSuperJump, rememberSuperJumpGround, superJumpTarget, superJumpStartupTime, updateSuperJumpMain, SUPERJUMP_MAIN_PROGRESS } from '../../patches/splatoon3/runtime/superjump.mjs';\nimport { beforeActions, wallRollRequested, crossSurgeInkGap, normalJumpVelocity } from '../../patches/splatoon3/runtime/movement.mjs';\nimport { updateResources, updateHealthRecovery } from '../../patches/splatoon3/runtime/resources.mjs';\nimport { scheduleLethal, flushPendingLethal, clearPendingLethal, hasPendingLethal } from '../../patches/splatoon3/runtime/damage-timing.mjs';\n` + code;
   }
   if (rel === 'src/game/character-weapons.js') {
     code = replaceOnce(code, '    if (ft >= 0.15 && ft - dt < 0.15) w.drumW += 34;', '    const release = st.flickReleaseTime ?? 0.15;\n    if (ft >= release && ft - dt < release) w.drumW += 34;', 'roller drum release impulse');

@@ -24,7 +24,7 @@ const UPSTREAM=SITE||RAW;
 const {adoptCanvasTouch,continueCanvasTouch}=SITE?await import(path.join(SITE,'patches/local-quality/first-touch-adapter.mjs')):{adoptCanvasTouch:sourceAdopt,continueCanvasTouch:sourceContinue};
 const IDS = ['jump', 'squid', 'fire', 'sub', 'special'];
 const read = rel => fs.readFileSync(path.join(RAW, rel), 'utf8');
-const classList = () => ({ add() {}, remove() {}, toggle() {} });
+const classList = () => ({ add() {}, remove() {}, toggle() {}, contains() { return false; } });
 
 async function boot({exit='async'}={}) {
  const f=await fixture(),listeners=new Map(),docListeners=new Map(),modules=new Map();let exits=0,requests=0,unlocks=0;

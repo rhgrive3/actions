@@ -1691,6 +1691,11 @@
       "rawValue": 20
     }
   },
+  "weapons.roller.rollContactInterval": {
+    "value": 0.4,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
   "weapons.slosher.inkPerShot": {
     "value": 7.6,
     "status": "calibration or derived value; see reference raw table and unverified list",

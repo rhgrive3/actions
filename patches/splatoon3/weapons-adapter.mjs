@@ -66,5 +66,11 @@ export function adaptWeaponsFidelity(code,replaceOnce) {
     "    if (route === 'send') {\n      if (victim.invuln > 0) return 'rejected-invulnerable';\n      if (!nm.sendHit(attacker, victim, dmg, weaponId)) return 'rejected';\n      return 'pending';\n    }\n    const hpBefore = victim.hp;\n    killed = victim.damage(dmg, attacker, weaponId);\n    if (!(victim.hp < hpBefore)) return victim.invuln > 0 ? 'rejected-invulnerable' : 'rejected';", 'accepted damage admission');
   patch('    if (attacker.isLocal) rumble(attacker, killed ? 0.35 : 0.06, killed ? 0.4 : 0.16, killed ? 150 : 45);',
     "    if (attacker.isLocal) rumble(attacker, killed ? 0.35 : 0.06, killed ? 0.4 : 0.16, killed ? 150 : 45);\n    return killed ? 'killed' : 'accepted';", 'accepted feedback result');
+  patch('const last = this.rollHits.get(e) || -9;',
+    'const last = this.rollHits.get(e) ?? -Infinity;', 'Roller contact timestamp zero');
+  patch('if (G.time - last > 0.5)',
+    'if (G.time - last + 1e-10 >= w.rollContactInterval)', 'Roller same-target contact interval');
+  patch('G.time - (this.rollHits.get(key) || -9) > 0.5',
+    'G.time - (this.rollHits.get(key) ?? -Infinity) + 1e-10 >= w.rollContactInterval', 'Roller Boss contact interval');
   return "import { EPSILON as WEAPONS_FIDELITY_EPSILON, advanceFidelityProjectile, advanceFidelityWallDrop, beginFidelityWallDrop, configureFidelityFlick, fidelityProjectileTargets, fidelityPlayerCollisionRadius, fidelityVolleyDamage, fidelityBossHit, fidelityWorldHit, applyFidelityProjectileHit, applyFidelitySlosherSplash, fidelityAimConvergence } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n"+code;
 }

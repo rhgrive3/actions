@@ -2,6 +2,11 @@
 const EPS = 1e-10;
 const INSTALLED = Symbol.for('inkwave.s3.weapon-gates.v1');
 const elapsed = (value, dt) => value - dt <= EPS ? 0 : value - dt;
+// The existing actual-shot clock is16F for squid admission. Sub preparation
+// becomes legal at15F, when only its final1F remains. No second clock is advanced.
+export function chargerPostShotBlocksSub(runner) {
+  return runner.a?.weapon?.kind === 'charger' && (runner.s3ChargerPostShot || 0) > 1 / 60 + EPS;
+}
 export const projectilePlayerRadius = p => p.s3PlayerRadius ?? p.size;
 export function installWeaponGates({ Actor, WeaponRunner, Projectiles }) {
   const wr = WeaponRunner.prototype;

@@ -238,6 +238,13 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on }, _profile) {
     if (state && winding && this.flick < 0) {
       state.elapsed = mode.flickWindup;
       state.released = true;
+      // InkRecoverStop belongs to this actual release, not the paid windup.
+      if (!a.remote) {
+        a.lastFire = 0;
+        a.s3 ||= {};
+        const delay = state.vertical ? w.verticalInkRecoverStop ?? w.inkRecoverStop : w.inkRecoverStop;
+        a.s3.recoverStopRemaining = Math.max(a.s3.recoverStopRemaining || 0, delay || 0);
+      }
       const edge = this.s3FlickVertical ? 'vertical' : 'horizontal';
       this.s3FlickPostSub = Math.max(0, POST_SUB[edge] - dt);
       this.s3FlickPostSquid = Math.max(0, POST_SQUID[edge] - dt);

@@ -1,3 +1,4 @@
+import { chargerPostShotBlocksSub } from './weapon-gates.mjs';
 // #750: the nearest glob uses the pinned swing DrawSizeParam; gameplay is unchanged.
 import { rollerFlickDrawRadius } from './weapons-fidelity.mjs';
 const EPS = 1e-10, DEG = Math.PI / 180;
@@ -135,6 +136,13 @@ export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYE
   };
   const weaponUpdate = WeaponRunner.prototype.update;
   WeaponRunner.prototype.update = function (dt, input) {
+    if (this.a.weapon.kind === 'charger' && (input?.sub || input?.subReleased)) {
+      const source = input, runner = this;
+      return weaponUpdate.call(this, dt, { ...source,
+        get sub() { return chargerPostShotBlocksSub(runner) ? false : source.sub; },
+        get subReleased() { return chargerPostShotBlocksSub(runner) ? false : source.subReleased; },
+      });
+    }
     if (this.a.weapon.kind !== 'dualies') return weaponUpdate.call(this, dt, input);
     const source = input || {}, locked = this.s3DualiesPostShot > EPS;
     if (locked) {
