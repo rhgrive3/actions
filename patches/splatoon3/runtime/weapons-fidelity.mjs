@@ -6,9 +6,10 @@ import { capsuleEntry, sweptWorldHit } from './weapons-collision.mjs';
 import { installChargerFlight } from './weapons-charger-flight.mjs';
 export const EPSILON = 1e-10;
 const INSTALLED = Symbol.for('inkwave.weapons-fidelity.v1');
-let api, completion;
+let api, completion, installedMoves = new Map();
 const clamp01 = value => Math.max(0, Math.min(1, value));
 const radians = degrees => degrees * Math.PI / 180;
+const MAIN_SHOT_LIFETIME = 1.2;
 
 function freezeDeep(value) {
   if (value && typeof value === 'object' && !Object.isFrozen(value)) {
@@ -45,6 +46,100 @@ export function advanceFidelityProjectile(p, dt) {
     if (brake && (p.vel.y < move.freeVelocityY || move.freeFrame!=null && (p.age-p.straight)*move.hz+EPSILON>=move.freeFrame)) p.fidelityPhase = 2;
   }
   p.pos.addScaledVector(p.vel, step);
+}
+
+// Reuse the production integrator and shooter-family lifetime for a zero-spread centerline prediction.
+// The scratch projectile is shared because firing and aim solving are synchronous.
+let aimProbe = null;
+
+function fidelityAimHeight(from, dx, dz, distance, pitch, speed, straight, move) {
+  const probe = aimProbe || (aimProbe = {
+    pos: new api.THREE.Vector3(), prev: new api.THREE.Vector3(), vel: new api.THREE.Vector3(),
+    age: 0, life: MAIN_SHOT_LIFETIME, straight: 0, grav: 0, drag: 0,
+    fidelityMove: null, fidelityPhase: 0, fidelityPrevAge: 0,
+  });
+  const horizontal = Math.cos(pitch) * speed;
+  probe.pos.copy(from);
+  probe.prev.copy(from);
+  probe.vel.set(dx * horizontal, Math.sin(pitch) * speed, dz * horizontal);
+  probe.age = 0;
+  probe.life = MAIN_SHOT_LIFETIME;
+  probe.straight = straight;
+  probe.grav = move.freeGravity;
+  probe.drag = move.freeDrag * move.hz;
+  probe.fidelityMove = move;
+  probe.fidelityPhase = 0;
+
+  const dt = 1 / move.hz;
+  let beforeAlong = 0;
+  for (let frame = 0; frame < move.hz * MAIN_SHOT_LIFETIME; frame++) {
+    const beforeY = probe.pos.y;
+    advanceFidelityProjectile(probe, dt);
+    const afterAlong = (probe.pos.x - from.x) * dx + (probe.pos.z - from.z) * dz;
+    if (afterAlong >= distance) {
+      const fraction = (distance - beforeAlong) / (afterAlong - beforeAlong);
+      return beforeY + (probe.pos.y - beforeY) * fraction - from.y;
+    }
+    beforeAlong = afterAlong;
+  }
+  return NaN;
+}
+
+/** Adjust only the launch pitch, using the same installed movement record and integrator as the fired round. */
+export function fidelityAimConvergence(from, dir, target, weapon, speed = weapon?.projSpeed) {
+  const move = installedMoves.get(weapon?.id);
+  if (!move) throw new Error(`Missing fidelity movement record for aim convergence: ${weapon?.id}`);
+
+  const targetX = target.x - from.x, targetZ = target.z - from.z;
+  const distance = Math.hypot(targetX, targetZ);
+  const dirLength = Math.hypot(dir.x, dir.z);
+  const maxDist = weapon.range;
+  if (distance < 1.5 || distance > maxDist || !Number.isFinite(speed) || speed <= 0 || dirLength < 1e-4) return false;
+
+  const dx = dir.x / dirLength, dz = dir.z / dirLength;
+  const targetHeight = target.y - from.y;
+  const initialPitch = Math.atan2(dir.y, dirLength);
+  const initialError = fidelityAimHeight(from, dx, dz, distance, initialPitch, speed, weapon.straightTime, move) - targetHeight;
+  if (!Number.isFinite(initialError) || Math.abs(initialError) < 0.005) return false;
+
+  // Search only around the camera-derived pitch, preserving the old solver's
+  // bounded correction and avoiding a high-arc solution on the other branch.
+  const low = Math.max(-1.2, initialPitch - 0.35);
+  const high = Math.min(1.2, initialPitch + 0.35);
+  const scans = 32;
+  let previousPitch = low;
+  let previousError = fidelityAimHeight(from, dx, dz, distance, previousPitch, speed, weapon.straightTime, move) - targetHeight;
+  let bracketLow = NaN, bracketHigh = NaN, bracketErrorLow = NaN, closest = Infinity;
+  for (let i = 1; i <= scans; i++) {
+    const pitch = low + (high - low) * i / scans;
+    const error = fidelityAimHeight(from, dx, dz, distance, pitch, speed, weapon.straightTime, move) - targetHeight;
+    if (Number.isFinite(previousError) && Number.isFinite(error) && (previousError === 0 || error === 0 || (previousError < 0) !== (error < 0))) {
+      const candidateDistance = Math.abs((previousPitch + pitch) * 0.5 - initialPitch);
+      if (candidateDistance < closest) {
+        closest = candidateDistance;
+        bracketLow = previousPitch;
+        bracketHigh = pitch;
+        bracketErrorLow = previousError;
+      }
+    }
+    previousPitch = pitch;
+    previousError = error;
+  }
+  if (!Number.isFinite(bracketLow)) return false;
+
+  let solvedPitch = (bracketLow + bracketHigh) * 0.5;
+  for (let i = 0; i < 18; i++) {
+    solvedPitch = (bracketLow + bracketHigh) * 0.5;
+    const error = fidelityAimHeight(from, dx, dz, distance, solvedPitch, speed, weapon.straightTime, move) - targetHeight;
+    if (!Number.isFinite(error)) return false;
+    if (Math.abs(error) < 0.005) break;
+    if ((bracketErrorLow < 0) !== (error < 0)) bracketHigh = solvedPitch;
+    else { bracketLow = solvedPitch; bracketErrorLow = error; }
+  }
+
+  const cp = Math.cos(solvedPitch);
+  dir.set(dx * cp, Math.sin(solvedPitch), dz * cp);
+  return true;
 }
 
 // Source records supply endpoints/counts. Added random draws are deterministic
@@ -404,6 +499,7 @@ export function installWeaponsFidelity(context,profile) {
       freeGravity:w.kind==='roller'?w.flickGravity:w.referenceGravity??defaults.freeGravity,
       freeVelocityY:defaults.brakeToFreeVelocityY}));
   }
+  installedMoves = moves;
   Object.defineProperty(Projectiles.prototype,INSTALLED,{value:true});
   const fresh=Projectiles.prototype._new,push=Projectiles.prototype._push,ghost=Projectiles.prototype.ghostProjectile,clear=Projectiles.prototype.clear;
   Projectiles.prototype.clear=function(...args){const result=clear.apply(this,args);this._fidelityCollision=null;this._fidelitySloshContext=null;return result;};
