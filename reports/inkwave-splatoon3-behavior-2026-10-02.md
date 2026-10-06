@@ -280,3 +280,26 @@ After all fingers release, an explicit mouse pointerdown on the canvas can recla
 Evidence:source focused66/66 (new13 plus existing input/pause/touch/first-touch),20 actual-method touch↔mouse cycles with stable listener count, FIRE/stick/look across synchronous/asynchronous/throwing exit, late acquisition, queued notifications, fresh mouse/Escape, and non-live lock rejection. Authentic full build and actual emitted13/13 are recorded in the completion handoff. VM browser-API timing surfaces are controlled fixtures; actual trusted Pointer Lock/browser hardware interaction remains for batch browser acceptance. Existing Main Map _relock can also request on the same mouse gesture; no functional failure was found and that independent owner is not rewritten here.
 
 The W3C Pointer Lock API explicitly separates lock-target state from queued pointerlockchange notification (https://www.w3.org/TR/pointerlock-2/); Pointer Events define the distinct touch/pointer lifetime (https://www.w3.org/TR/pointerevents3/). The target is coherent control ownership during play, not a claim of measured Switch/iPad/Android latency or hardware equivalence.
+
+## 2026-10-06: #245 bomb-aiming ground humanoid speed
+
+Splatoon 3 Ver.11.3.0 keeps a throwing stance on the ground at a fixed speed:
+the bomb-aiming top speed is 0.72 DU/f against the 0.96 DU/f medium-weight
+normal walk, a ratio of **0.75**, and Run Speed Up gear does not apply while the
+throw button is held (57AP/0AP stays 1.00). Only the forward component matters;
+squid form and swim are unaffected.
+
+Before, `WeaponRunner.moveSpeed()` had no `aimingSub` branch, so cocking a bomb
+kept the full normal-walk speed, and the gear wrapper omitted `aimingSub` from
+`lockedMode`, so Human Speed gear still multiplied it (measured 57AP/0AP = 1.50).
+
+The gear wrapper now treats `aimingSub` as gear-locked and caps, rather than
+replaces, the upstream speed at `PLAYER.runSpeed * 0.75`, so a weapon-specific
+speed that is already lower keeps its authoritative value. Locked upstream
+`inkwave-public/` is unchanged.
+
+- ロジック確認済み / 実機未確認. The 0.75 ratio is taken from the S3 documented
+  0.72/0.96 pair and matches the existing `PLAYER.runSpeed * 0.75` splatling
+  charge coefficient; no interpolation or device measurement was invented.
+- Regression: `patches/splatoon3/tests/issue-245-bomb-aim-speed.test.mjs`
+  (fails 3/4 on `ecfdd268` without the fix, 4/4 with it).
