@@ -60,7 +60,7 @@ export function installWeapons(context, profile) {
     this.s3Stored = null; this.s3Turret = false; this.s3FlickVertical = false; this.s3BlasterWindup = 0;
     this.s3SloshRecovery = false;
     this.s3ChargerPostShot = 0; this.s3DualiesPostShot = 0; this.s3DodgeShotPending = 0;
-    this.s3BlasterJumpT = null; this.s3WasGrounded = false;
+    this.s3BlasterJumpT = null; this.s3BlasterWasGrounded = false;
     return result;
   };
   WeaponRunner.prototype.busy = function () {
@@ -195,40 +195,48 @@ export function installWeapons(context, profile) {
   const blasterJumpBias = age => age <= BLASTER_START ? BLASTER_BIAS_MAX
     : age >= BLASTER_END ? 0
       : BLASTER_BIAS_MAX * (BLASTER_END - age) / (BLASTER_END - BLASTER_START);
-  // `envelope` is the sourced maximum angular endpoint (Jump_DegSwerve, gear-
-  // scaled); `cone` is the expected deviation the HUD reticle and the shot share.
+  // `envelope` is the sourced outer angular endpoint (Jump_DegSwerve, gear-scaled).
+  // `bias` stays independent: the sampler chooses inner vs outer shots, while the
+  // HUD draws the full envelope and presents the probability as a separate cue.
   WeaponRunner.prototype.s3BlasterJumpState = function (w) {
     if (!w || w.kind !== 'blaster' || !blasterJumpSupported())
-      return { supported: false, active: false, age: null, frames: null, bias: 0, envelope: 0, ground: 0, cone: 0 };
+      return { supported: false, active: false, age: null, frames: null, bias: 0, envelope: 0, ground: 0, phase: 'idle', recovering: false };
     const active = this.s3BlasterJumpT != null, bias = active ? blasterJumpBias(this.s3BlasterJumpT) : 0;
     const envelope = w.spreadAir, ground = w.spreadGround;
+    const frames = active ? this.s3BlasterJumpT * BLASTER_REF_HZ : null;
+    const phase = !active ? 'idle' : frames <= BLASTER_START * BLASTER_REF_HZ ? 'held'
+      : frames < BLASTER_END * BLASTER_REF_HZ ? 'recovering' : 'recovered';
     return { supported: true, active, age: active ? this.s3BlasterJumpT : null,
-      frames: active ? this.s3BlasterJumpT * BLASTER_REF_HZ : null, bias, envelope, ground,
-      cone: ground + (envelope - ground) * bias };
+      frames, bias, envelope, ground, phase, recovering: phase === 'recovering' };
   };
-  const runnerUpdate = WeaponRunner.prototype.update;
+  const blasterRunnerUpdate = WeaponRunner.prototype.update;
   WeaponRunner.prototype.update = function (dt, input) {
     const w = this.a?.weapon;
     if (blasterJumpSupported() && w?.kind === 'blaster') {
       const grounded = !!this.a.grounded;
       // The state starts on the actual leave-ground edge, so a runner that never
       // jumped keeps the plain grounded/airborne endpoints (#556).
-      if (this.s3WasGrounded === true && !grounded) this.s3BlasterJumpT = 0;
+      if (this.s3BlasterWasGrounded === true && !grounded) this.s3BlasterJumpT = 0;
       else if (this.s3BlasterJumpT != null) this.s3BlasterJumpT += dt;
-      this.s3WasGrounded = grounded;
+      this.s3BlasterWasGrounded = grounded;
       // Landing never erases the remaining jump accuracy early: the state runs
       // to the sourced end frame and only then returns to the ground endpoint.
       if (this.s3BlasterJumpT != null && grounded && this.s3BlasterJumpT >= BLASTER_END) this.s3BlasterJumpT = null;
-    } else if (this.s3BlasterJumpT != null) { this.s3BlasterJumpT = null; this.s3WasGrounded = false; }
-    return runnerUpdate.call(this, dt, input);
+    } else {
+      // This wrapper owns only its namespaced Blaster state. Shooter #98 may
+      // wrap update on the same runner and owns its distinct s3WasGrounded field.
+      this.s3BlasterJumpT = null;
+      this.s3BlasterWasGrounded = false;
+    }
+    return blasterRunnerUpdate.call(this, dt, input);
   };
   WeaponRunner.prototype._spreadDeg = function (w) {
     // The upstream blaster reads `spread`, while the pinned profile supplies
-    // Stand_DegSwerve as spreadGround. Connect both ground and jump values, and
-    // while a jump-accuracy state is live use its timed cone.
+    // Stand_DegSwerve as spreadGround. Connect the ground endpoint and, while
+    // jumping, publish the full outer envelope; shot bias remains independent.
     if (w.kind === 'blaster') {
       const state = this.s3BlasterJumpState(w);
-      return state.active ? state.cone : (this.a.grounded ? w.spreadGround : w.spreadAir);
+      return state.active ? state.envelope : (this.a.grounded ? w.spreadGround : w.spreadAir);
     }
     return w.kind === 'dualies' && this.s3Turret ? w.spreadLock : spread.call(this, w);
   };
