@@ -137,7 +137,10 @@ test('splatling diving cancels both charging and an active stream', async () => 
 });
 test('a charger tap uses the minimum ink without forcing a 12 percent charge', async () => {
   const f=await fixture(),a=f.make('charger'),r=a.weaponRunner;a.ink=2.25;
-  r.update(1/60,{fire:true});r.update(1/60,{fire:false});
+  // #726: the first held update is the 1F startup, so a charge frame only
+  // exists from the second update; release afterwards still spends exactly the
+  // ink floor and still emits the minimum partial shot.
+  r.update(1/60,{fire:true});r.update(1/60,{fire:true});r.update(1/60,{fire:false});
   assert.equal(f.shots.length,1);assert.ok(f.shots[0].charge<.12);assert.ok(a.ink<1e-9);
 });
 test('global menu time cannot skip an actor ink recovery wait', async () => {

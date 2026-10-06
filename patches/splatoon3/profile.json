@@ -462,7 +462,9 @@
   },
   "superJump": {
     "chargeTime": 1.3333333333333333,
-    "flightTime": 2.3
+    "flightTime": 2.3,
+    "startupSwimF": 1,
+    "startupHumanoidF": 22
   },
   "calibration": {
     "status": "partial; numeric data extracted, Switch behavior parity NOT verified",
@@ -497,6 +499,7 @@
       "Surge burst velocity/armor/partial charge and post-wall air control (including the Ver.11.3.0 lateral-distance fix); 45F base charge timing is pinned",
       "HP regen delay/rate and enemy ink grace/contact-damage recovery; post-movement contact and partial-tick grace arithmetic are regression-verified only",
       "superjump airborne vulnerability window/trajectory/landing paint and respawn timing/armor; raw 80F preparation/138F flight are pinned and landing protection is removed per Nintendo 9.3.0 fix",
+    "super jump initial-form term (1F swim / 22F humanoid, issue #708) is a published community measurement from the S3 main-weapon verification table, not an extracted 11.3.0 parameter; the 80F charge wait and 138F flight it precedes stay pinned and Quick Super Jump scaling still applies only to those two components",
       "aim response, gyro, animation, terrain/network and physical-device validation; see movement-resources comparison matrix and Switch/iOS/two-peer measurement protocol",
       "upstream acceleration/braking/turn/air-control/jump and landing feel",
       "Dualies 1F released-tap cancellation is a conservative non-buffering choice; stable held-human first shot is measured3F, squid timing remains unchanged and unverified.",

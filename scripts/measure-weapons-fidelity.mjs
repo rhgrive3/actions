@@ -116,7 +116,7 @@ export async function measure({site=BASELINE,fidelity=false,detail=true}={}) {
   result.runner={};
   for(const c of CASES){
     if(c.id==='charger'&&c.charge===0)continue;
-    const a=reset(f,c);const r=a.weaponRunner;const chargeFrames=c.id==='charger'?Math.round(c.charge*a.weapon.chargeTime*60):c.id==='splatling'?Math.round(c.charge*a.weapon.chargeTime*60):0;
+    const a=reset(f,c);const r=a.weaponRunner;const chargeFrames=c.id==='charger'?1+Math.round(c.charge*a.weapon.chargeTime*60):c.id==='splatling'?Math.round(c.charge*a.weapon.chargeTime*60):0; // #726: charger counts the 1F humanoid startup before its charge frames
     if(c.id==='roller'&&c.vertical)a.grounded=false;
     const charge=[];
     // Hold ZR until the weapon actually reaches the case's target charge instead

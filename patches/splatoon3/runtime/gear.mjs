@@ -79,6 +79,10 @@ export function installGear(api, tuning) {
     m.rollRetention = gearCurve(ap.actionIntensify || 0, ...extra.rollRetention);
     a.s3.jumpChargeTime = tuning.superJump.chargeTime * (m.quickSuperJump ?? 1);
     a.s3.jumpFlightTime = tuning.superJump.flightTime * gearCurve(ap.quickSuperJump || 0, ...extra.jumpFlightTime);
+    // The S3 initial-form term is form-dependent, not equipment-dependent, so
+    // Quick Super Jump must not reach it.
+    a.s3.jumpStartupSwimF = tuning.superJump.startupSwimF;
+    a.s3.jumpStartupHumanoidF = tuning.superJump.startupHumanoidF;
     a.s3.modifiers.surgeChargeScale = m.actionIntensify ?? 1;
     // Actor-local copy. An opponent's equipment never changes shared stats.
     a.weapon = { ...api.WEAPONS[a.weaponId] };
@@ -93,6 +97,7 @@ export function installGear(api, tuning) {
   Actor.prototype.reset = function (...args) {
     const result = reset.apply(this, args); equip(this);
     this.s3.recoverStopRemaining = 0; this.s3.enemyInkTime = 0;
+    this.s3.chargerInterruptRecover = 0;   // #737: a new life never inherits a charge-interruption lock
     return result;
   };
   Actor.prototype.setWeapon = function (...args) { const result = setWeapon.apply(this, args); equip(this); return result; };

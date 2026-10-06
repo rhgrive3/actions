@@ -8,6 +8,17 @@ import { PLAYER } from '../../../src/config.js';
 // frame value. Nintendo confirms pre-landing attacks but not their exact gate.
 export const SUPERJUMP_MAIN_PROGRESS = 0.82;
 
+// S3 starts the Super Jump clock from the form the destination was confirmed
+// in: a 1F term while already swimming, 22F from humanoid form. It sits in
+// front of the unchanged 80F charge wait and is never folded into
+// jumpChargeTime, so Quick Super Jump still scales only charge and flight.
+// The admission form is captured by Actor.superJump() before it forces squid.
+export function superJumpStartupTime(a) {
+  const s3 = a.s3, s = a.superJumpState;
+  const frames = s && s.startForm === 'kid' ? s3.jumpStartupHumanoidF : s3.jumpStartupSwimF;
+  return (frames || 0) / 60;
+}
+
 export function rememberSuperJumpGround(a) {
   if (!a.alive || !a.grounded || a.climbing || a.superJumpState?.phase === 'flight') return;
   if (!Number.isFinite(a.pos.x + a.pos.y + a.pos.z)) return;

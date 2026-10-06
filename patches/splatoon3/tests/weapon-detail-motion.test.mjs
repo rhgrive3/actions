@@ -133,7 +133,18 @@ test('second-realm helpers observe the installed weapon attack and reset state',
     const r = rig(api, kind);
     try {
       r.step(1 / 60, { fire: true });
-      if (kind === 'charger') r.step();
+      // The charger's charge now completes in the profile's chargeTime, so a fixed one-extra-step
+      // can land before the release state exists. Record the release age across the whole lifecycle
+      // and gate on it appearing at all, rather than on a hardcoded step count.
+      if (kind === 'charger') {
+        const seq = [r.snapshot().chargerReleaseAge];
+        for (let i = 0; i < 8 && r.snapshot().chargerReleaseAge === null; i++) {
+          r.step(1 / 60, { fire: i % 2 === 0 });
+          seq.push(r.snapshot().chargerReleaseAge);
+        }
+        assert.notEqual(r.snapshot().chargerReleaseAge, null,
+          `the charger must reach a released state, saw ${JSON.stringify(seq)}`);
+      }
       const active = r.snapshot();
       assert.notEqual(kind === 'slosher' ? active.sloshElapsed : active.chargerReleaseAge, null);
       assert.deepEqual(JSON.parse(JSON.stringify(snapshotFromAnotherRealm(r.ch))), JSON.parse(JSON.stringify(active)));

@@ -87,6 +87,10 @@ export function installWeapons(context, profile) {
     this.s3SloshRecovery = false;
     this.s3SplatlingStartup = 0; this.s3SplatlingEmerging = false; this.s3SplatlingEmergeT = 0;
     this.s3SplatlingHeld = false;
+    // #726 fresh-start state: pending humanoid startup seconds, the
+    // held-through-forwarding-gate (squid-origin) marker, and the repeat-cycle
+    // marker that suppresses the pre-gap after a shot.
+    this.s3ChargerStartupT = 0; this.s3ChargerHeldGate = false; this.s3ChargerRepeat = false;
     this.s3ChargerPostShot = 0; this.s3DualiesPostShot = 0; this.s3DodgeShotPending = 0;
     return result;
   };
@@ -110,6 +114,13 @@ export function installWeapons(context, profile) {
   WeaponRunner.prototype._charger = function (dt, inp, w) {
     const a = this.a, held = !!a.intent.fire;
     if (this.s3Stored && !held) cancelStored(this);
+    // #726 fresh-start bookkeeping. A fully released trigger abandons a pending
+    // humanoid startup, while a ZR held through the actor's forwarding gate
+    // (dive / emerge window, where inp.fire is masked although intent.fire is
+    // down) marks the next start as squid-origin, so the independent #566 lane
+    // keeps its current emerge-boundary start with no inserted pre-gap.
+    if (!inp.fire) { this.s3ChargerStartupT = 0; this.s3ChargerHeldGate = false; }
+    if (held && !inp.fire) this.s3ChargerHeldGate = true;
     if (a.form === 'squid') {
       if (this.charging) {
         // Submerging with ZR already released never opens a keep window.
@@ -128,6 +139,28 @@ export function installWeapons(context, profile) {
       // masked, and is restored once the actor forwards the trigger again.
       if (!inp.fire) { this.charge = 1; return; }
       this.charge = this.s3Stored.charge; this.chargeT = 1; this.charging = true; this.s3Stored = null;
+    }
+    // The release edge that still holds a live charge is the shot; every later
+    // charge is an S3 repeat cycle (`repeat frames = charge frames +
+    // recharge-unavailable frames`, no startup) and must not reinsert the
+    // fresh-start pre-gap.
+    if (this.charging && !inp.fire) this.s3ChargerRepeat = true;
+    // #726: S3 humanoid fresh start. The ZR edge consumes the verified 1F
+    // startup (前隙, community-verified S3 table) before any charge frame
+    // accumulates: the edge update starts nothing, the next update enters
+    // charging and lands charge frame 1, so full charge stays 1F + 60 charge
+    // frames from the edge. Stable humanoid only — emerge-held starts
+    // (s3ChargerHeldGate) and repeat cycles skip the pre-gap; the release edge,
+    // 8F minimum (#304), 1F release gap (#680) and recharge timing (#290) all
+    // stay on their own paths behind `charger.call`.
+    if (!this.charging && inp.fire && this.cooldown <= 0) {
+      if (this.s3ChargerStartupT > 1e-10) {
+        this.s3ChargerStartupT = Math.max(0, this.s3ChargerStartupT - dt);
+        if (this.s3ChargerStartupT > 1e-10) return;   // startup frame still elapsing
+      } else if (!this.s3ChargerRepeat && !this.s3ChargerHeldGate && a.ink >= w.inkMin) {
+        this.s3ChargerStartupT = 1 / 60;              // arm the 1F startup
+        return;                                       // the edge update advances nothing
+      }
     }
     return charger.call(this, dt, inp, w);
   };
