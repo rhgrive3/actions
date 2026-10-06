@@ -1,6 +1,7 @@
 // Only boundary resets and held-pad suppression. No action buffering changes.
 import { getPlatformLifecycle } from './platform-lifecycle.mjs';
 const INSTALLED = Symbol.for('inkwave.platform.input.v1');
+const heldPadButton = (button, index) => index === 6 || index === 7 ? (button?.value || 0) > 0.3 : !!button?.pressed;
 export function resetPlatformInput(input, controller) {
   if (!input) return;
   input.keys?.clear(); input.pressed?.clear(); input.padPressed?.clear(); input.padMenuPressed?.clear();
@@ -53,8 +54,8 @@ export function installInputPlatform(Input, env = globalThis) {
     if (this._platformPadRebase) {
       this._platformPadRebase = false;
       this.padPressed.clear(); this.padMenuPressed?.clear();
-      this.padPrev = this.pad ? this.pad.buttons.map(button => !!button.pressed) : [];
-      this.pad?.buttons.forEach((button, i) => { if (button.pressed) this.padMenuBlocked.add(i); });
+      this.padPrev = this.pad ? this.pad.buttons.map((button, i) => heldPadButton(button, i)) : [];
+      this.pad?.buttons.forEach((button, i) => { if (heldPadButton(button, i)) this.padMenuBlocked.add(i); });
     }
     if (this._platformPadAxes && (!this.pad || this.pad.axes.every((value, i) => i >= 4 || Math.abs(value || 0) <= .14))) this._platformPadAxes = false;
     return result;

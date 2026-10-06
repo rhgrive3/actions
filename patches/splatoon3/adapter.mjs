@@ -111,6 +111,12 @@ export function adaptSource(rel, code) {
     return code;
   }
   if (rel === 'src/game/weapons.js') {
+    code = replaceOnce(code, '  applyHit(attacker, victim, dmg, weaponId) {',
+      '  applyHit(attacker, victim, dmg, weaponId, slosherVolleyId) {', 'Slosher volley identity admission');
+    code = replaceOnce(code,
+      "    if (route === 'send') nm.sendHit(attacker, victim, dmg, weaponId);   // the kill confirm arrives with their splat",
+      "    if (route === 'send') nm.sendHit(attacker, victim, dmg, weaponId, slosherVolleyId);   // the kill confirm arrives with their splat",
+      'Slosher volley identity transport');
     code = replaceOnce(code,
       '    if (this.flick >= 0) return lerp(w.moveSpeedFiring, w.moveSpeedFiring * 0.45, clamp(this.flick / w.flickWindup, 0, 1));',
       "    if (this.flick >= 0 && w.kind === 'roller') return w.moveSpeedFiring; // S3 swing target is independent of windup progress\n    if (this.flick >= 0) return lerp(w.moveSpeedFiring, w.moveSpeedFiring * 0.45, clamp(this.flick / w.flickWindup, 0, 1));",
