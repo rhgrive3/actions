@@ -90,7 +90,10 @@ export function installGear(api, tuning) {
     // throw button is held. aimingSub therefore joins lockedMode, and the speed is
     // capped rather than replaced so a weapon-specific speed that is already lower
     // keeps its authoritative value.
-    const subAim = !!this.aimingSub;
+    // Ground + humanoid only. Actor._horizontal also calls moveSpeed() on its
+    // airborne branch (actor.js:377), so an unconditional cap would silently
+    // retune air steering, which is outside this issue's grounded scope.
+    const subAim = !!this.aimingSub && this.a.grounded === true && this.a.form !== 'squid';
     const lockedMode = this.rolling || this.charging && w.kind === 'charger' || subAim;
     const attacking = this.firingT > 0 || this.charging || this.streaming;
     const gear = lockedMode ? 1 : attacking ? m.runSpeedFiring ?? 1 : m.runSpeed ?? 1;

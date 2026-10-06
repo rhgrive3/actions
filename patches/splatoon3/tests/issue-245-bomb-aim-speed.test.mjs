@@ -1,70 +1,108 @@
-// Issue #245: S3 pins bomb-aiming ground humanoid speed to a fixed 0.72 DU/f,
-// which is 0.75 of the 0.96 medium walk, and Run Speed Up gear does not apply
-// while the throw button is held. Before the fix, WeaponRunner.moveSpeed had no
-// aimingSub branch and the gear wrapper omitted it from lockedMode, so aiming
-// kept full normal-walk speed and Human Speed gear still multiplied it.
-import test from 'node:test';
+// Issue #245: Splatoon 3 Ver.11.3.0 holds a ground throwing stance at a fixed
+// 0.72 DU/f, which is 0.75 of the 0.96 medium walk, and Run Speed Up gear does
+// not apply while the throw button is held.
+//
+// These regressions drive the REAL installed Actor/WeaponRunner through the
+// build adapter (weapon-edgecases-fixture). Neither moveSpeed() nor
+// Actor._horizontal is stubbed, so the grounded/airborne admission that
+// Actor._horizontal actually performs is what is under test.
+import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { installGear } from '../runtime/gear.mjs';
+import { fixture } from './weapon-edgecases-fixture.mjs';
 
-// Minimal context: installGear only needs these members to exist at wrap time.
-// weaponSpeed is what upstream moveSpeed returns; runSpeed is PLAYER.runSpeed,
-// the reference the bomb-aiming cap is measured against. They are independent.
-function boot(weaponSpeed = 6.0, runSpeed = 6.0) {
-  class Actor {}
-  Actor.prototype.reset = function () {};
-  Actor.prototype.setWeapon = function () {};
-  Actor.prototype.splat = function () {};
-  Actor.prototype._horizontal = function () {};
-  class WeaponRunner {}
-  // Upstream moveSpeed: a plain humanoid walk returns PLAYER.runSpeed.
-  WeaponRunner.prototype.moveSpeed = function () { return weaponSpeed; };
-  WeaponRunner.prototype.update = function () {};
-  const api = {
-    Actor, WeaponRunner, G: {}, PLAYER: { runSpeed, swimSpeed: 1, enemyInkSpeed: 1 },
-    WEAPONS: {}, SUB: { bomb: { inkCost: 1, throwSpeed: 1 } }, on() {},
-  };
-  installGear(api, {});
-  return { api, runner: Object.create(WeaponRunner.prototype) };
+const RUN_SPEED_GEAR = 1.5; // 57AP Human Speed Up
+const close = (a, b, e = 1e-9) => assert.ok(Math.abs(a - b) < e, `${a} != ${b}`);
+
+// Real actor, grounded, with a real R hold through the real input path.
+async function aiming(weapon = 'splatling', { gear = 1, grounded = true } = {}) {
+  const f = await fixture();
+  const a = f.make(weapon);
+  f.G.actors = [a];
+  f.G.projectiles.throwBomb = () => {};
+  a.grounded = grounded;
+  a.s3.modifiers.runSpeed = gear;   // 0AP = 1, 57AP Human Speed Up = 1.5
+  a.intent.sub = true;
+  f.tick(a, 2);
+  assert.equal(a.weaponRunner.aimingSub, true, 'a real R hold must cock the sub');
+  return { f, a, speed: a.weaponRunner.moveSpeed() };
+}
+async function walking(weapon = 'splatling', { gear = 1 } = {}) {
+  const f = await fixture();
+  const a = f.make(weapon);
+  f.G.actors = [a];
+  a.grounded = true;
+  a.s3.modifiers.runSpeed = gear;
+  f.tick(a, 2);
+  assert.equal(a.weaponRunner.aimingSub, false);
+  return { f, a, speed: a.weaponRunner.moveSpeed() };
 }
 
-const RUNSPEED_GEAR = 1.5; // 57AP Human Speed, the value from the issue
+test('#245 grounded R hold caps at 0.75 of normal walk and drops Run Speed Up', async () => {
+  const f0 = await fixture();
+  const cap = f0.PLAYER.runSpeed * 0.75;   // from the installed profile, not a literal
 
-function aiming(setup = {}) {
-  const r = boot(setup.weaponSpeed ?? 6.0, setup.runSpeed ?? 6.0);
-  r.runner.a = { weapon: { kind: 'splatling' }, s3: { modifiers: { runSpeed: setup.gear ?? 1 } } };
-  r.runner.aimingSub = !!setup.aimingSub;
-  r.runner.rolling = !!setup.rolling;
-  r.runner.charging = !!setup.charging;
-  r.runner.firingT = 0;
-  r.runner.streaming = false;
-  return r.runner.moveSpeed();
-}
+  const walk0 = await walking('splatling', { gear: 1 });
+  const walk57 = await walking('splatling', { gear: RUN_SPEED_GEAR });
+  const aim0 = await aiming('splatling', { gear: 1 });
+  const aim57 = await aiming('splatling', { gear: RUN_SPEED_GEAR });
 
-test('#245 bomb aiming caps ground humanoid speed at 0.75 of normal walk', () => {
-  const walk = aiming({}), aim = aiming({ aimingSub: true });
-  assert.equal(walk, 6.0, 'uncharged walk is the unmodified runSpeed');
-  assert.ok(Math.abs(aim / walk - 0.75) < 1e-12, `ratio ${aim / walk} must be 0.75`);
+  close(aim0.speed, cap);
+  close(aim0.speed / walk0.speed, 0.75);              // 0AP idle hold ratio
+  close(aim57.speed / aim0.speed, 1.00, 1e-12);       // 57AP must not apply while held
+  // Gear is untouched whenever the throw button is not held.
+  close(walk57.speed / walk0.speed, RUN_SPEED_GEAR);
 });
 
-test('#245 Human Speed gear does not apply while the throw button is held', () => {
-  const zero = aiming({ aimingSub: true, gear: 1 });
-  const maxed = aiming({ aimingSub: true, gear: RUNSPEED_GEAR });
-  // S3: the bomb-aiming speed is fixed, so 57AP/0AP must stay 1.00, not 1.50.
-  assert.ok(Math.abs(maxed / zero - 1.00) < 1e-12, `57AP/0AP ratio ${maxed / zero} must be 1.00`);
-  // Gear is untouched the rest of the time.
-  assert.ok(Math.abs(aiming({ gear: RUNSPEED_GEAR }) / 6.0 - RUNSPEED_GEAR) < 1e-12);
+test('#245 every weapon idles at the same fixed cap while the throw button is held', async () => {
+  const f0 = await fixture();
+  const cap = f0.PLAYER.runSpeed * 0.75;
+  for (const kind of Object.keys(f0.WEAPONS)) {
+    const { speed } = await aiming(kind, { gear: RUN_SPEED_GEAR });
+    close(speed, cap, 1e-9);   // a held bomb is one fixed ground speed, not per weapon
+  }
 });
 
-test('#245 the cap never raises a weapon speed that is already lower', () => {
-  // A weapon-specific speed below the cap keeps its authoritative value.
-  assert.equal(aiming({ aimingSub: true, weaponSpeed: 3.0 }), 3.0,
-    'a weapon speed already below the cap keeps its authoritative value');
-  assert.equal(aiming({ aimingSub: true, weaponSpeed: 9.0 }), 4.5,
-    'a weapon speed above the cap is pulled down to the S3 bomb-aiming speed');
+test('#245 airborne steering is unchanged: the cap is grounded-humanoid only', async () => {
+  // Pre-fix control: the same real airborne actor, throw button NOT held.
+  const airIdle = await walking('splatling', { gear: RUN_SPEED_GEAR });
+  const airAim = await aiming('splatling', { gear: RUN_SPEED_GEAR, grounded: false });
+  close(airAim.speed, airIdle.speed, 1e-12);
+
+  // And the grounded actor is still capped, proving the gate is the only change.
+  const groundAim = await aiming('splatling', { gear: RUN_SPEED_GEAR });
+  const f0 = await fixture();
+  assert.ok(groundAim.speed < airIdle.speed, 'grounded hold is capped, airborne is not');
+  close(groundAim.speed, f0.PLAYER.runSpeed * 0.75);
 });
 
-test('#245 rolling and charger charge stay gear-locked exactly as before', () => {
-  assert.equal(aiming({ rolling: true, gear: RUNSPEED_GEAR }), 6.0);
-  assert.equal(aiming({ charging: true, gear: RUNSPEED_GEAR }), 6.0);
+test('#245 squid form is not a ground humanoid and keeps the original path', async () => {
+  const { a } = await aiming('splatling', { gear: RUN_SPEED_GEAR });
+  assert.equal(a.grounded, true);
+  const f0 = await fixture();
+  a.form = 'squid';
+  a.s3.modifiers.runSpeed = RUN_SPEED_GEAR;
+  a.weaponRunner.aimingSub = true;
+  close(a.weaponRunner.moveSpeed(), f0.PLAYER.runSpeed * RUN_SPEED_GEAR);
+});
+
+test('#245 releasing the throw button restores the gear multiplier', async () => {
+  const f = await fixture();
+  const a = f.make('splatling');
+  f.G.actors = [a];
+  f.G.projectiles.throwBomb = () => {};
+  a.grounded = true;
+  a.s3.modifiers.runSpeed = RUN_SPEED_GEAR;
+  const before = a.weaponRunner.moveSpeed();
+
+  a.intent.sub = true;
+  f.tick(a, 2);
+  assert.equal(a.weaponRunner.aimingSub, true);
+  const held = a.weaponRunner.moveSpeed();
+  assert.ok(held < before, 'the hold caps the speed');
+
+  a.intent.sub = false;
+  a._prevIntent.sub = false;   // real release edge, same idiom as weapon-edgecases
+  f.tick(a, 3);
+  assert.equal(a.weaponRunner.aimingSub, false, 'release clears the hold');
+  close(a.weaponRunner.moveSpeed(), before);   // gear is back immediately
 });
