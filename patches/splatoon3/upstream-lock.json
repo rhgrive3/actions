@@ -19,6 +19,8 @@
     "src/core/ctx.js": "3bac560e4a49b949890b54f7cbbdf9c7ed378aa2c9a1c3878b1d6df2589e5c04",
     "src/game/character.js": "264230c01feb1eaae2967ee5c990d59b5711cd412647031f0e7767febfb26c8d",
     "src/game/character-weapons.js": "aa6f865e329016aff6efac127ee69dd288b046a911f89189466a4f18c68f5f89",
-    "src/net/netmatch.js": "5a08210a2a7e5b1910494b70982f576ff6026340e9fab69834869a2ac0d598e6"
+    "src/net/netmatch.js": "5a08210a2a7e5b1910494b70982f576ff6026340e9fab69834869a2ac0d598e6",
+    "src/core/mobile.js": "4d8de2a521522a96edae3b026545adf3cd39631bd6edfef1349325b450eb7044",
+    "src/game/cameraRig.js": "c00a66368c0f2175a53db212bb8fdd8bc812d15958119bd5927bcad5a726c7c7"
   }
 }
