@@ -53,10 +53,50 @@ test('index reuse with disconnect notification and id/mapping changes are explic
   }
 });
 
-test('same device snapshots and ordinary no-pad reconnect preserve existing semantics', async () => {
+test('same-device fresh snapshots work, but held reconnect waits for release', async () => {
   const h = await boot(); h.setPads([device(0)]); h.input.pollPad();
   h.setPads([device(0, [0])]); h.input.pollPad(); assert.equal(h.input.padPressed.has(0), true);
-  h.setPads([]); h.input.pollPad(); h.setPads([device(0, [0])]); h.input.pollPad(); assert.equal(h.input.padPressed.has(0), true);
+  h.setPads([]); h.input.pollPad(); h.setPads([device(0, [0])]); h.input.pollPad();
+  assert.equal(h.input.padPressed.has(0), false); assert.equal(h.input.padButton(0), false);
+  h.input.pollPad(); assert.equal(h.input.padPressed.size, 0);
+  h.setPads([device(0)]); h.input.pollPad();
+  h.setPads([device(0, [0])]); h.input.pollPad();
+  assert.equal(h.input.padPressed.has(0), true); assert.equal(h.input.padButton(0), true);
+  h.input.pollPad(); assert.equal(h.input.padPressed.size, 0);
+});
+
+for (const mapping of ['standard', '']) test(`${mapping || 'raw'} no-pad boundary rejects held reconnect even at the same identity`, async () => {
+  for (const replacement of [false, true]) {
+    for (const oldReconnect of [false, true]) {
+      const h = await boot(true, { transform: (rel, source) => {
+        if (!oldReconnect || rel !== 'src/core/input.js') return source;
+        const anchor = 'this._platformPadFocusRebase || disconnected || previous';
+        assert.equal(source.split(anchor).length, 2);
+        return source.replace(anchor, 'this._platformPadFocusRebase || previous');
+      } });
+      h.setPads([device(0, [], mapping)]); h.input.pollPad();
+      h.setPads([]); h.input.pollPad();
+      const b = device(replacement ? 1 : 0, [0], mapping);
+      b.buttons[7] = { pressed: false, value: .4 }; b.axes = [.8, 0, .9, 0];
+      h.input.lastDevice = 'touch'; h.setPads([b]); h.input.pollPad();
+      assert.equal(h.input.padPressed.has(0), oldReconnect);
+      assert.equal(h.input.padMenuPressed.has(0), oldReconnect);
+      assert.equal(h.input.padButton(0), oldReconnect);
+      assert.equal(h.input.padValue(7), oldReconnect ? .4 : 0);
+      assert.equal(h.input.padAxis(0) > 0, oldReconnect);
+      assert.equal(h.input.lastDevice, oldReconnect ? 'pad' : 'touch');
+      if (oldReconnect) continue;
+      h.input.pollPad(); assert.equal(h.input.padPressed.size, 0);
+      b.buttons[0] = { pressed: false, value: 0 }; b.buttons[7].value = .3; b.axes.fill(0);
+      h.input.pollPad();
+      b.buttons[0] = { pressed: true, value: 1 }; b.buttons[7].value = .4; b.axes[0] = .8;
+      h.input.pollPad();
+      assert.equal(h.input.padPressed.has(0), true); assert.equal(h.input.padPressed.has(7), true);
+      assert.equal(h.input.padMenuPressed.has(0), true); assert.ok(h.input.padAxis(0) > 0);
+      assert.equal(h.input.lastDevice, 'pad');
+      h.input.pollPad(); assert.equal(h.input.padPressed.size, 0); assert.equal(h.input.padMenuPressed.size, 0);
+    }
+  }
 });
 
 test('simultaneous lifecycle rebase cannot turn a blocked analog hold into an edge', async () => {

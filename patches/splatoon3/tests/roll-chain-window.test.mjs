@@ -139,8 +139,8 @@ test('roll retention is unchanged: one coefficient per launch, never compounded 
   const f = await fixture();
   assert.equal(f.profile.movement.roll.chainRetention, RETENTION);
   close(rollLaunchSpeed(SPEED, 0, RETENTION), SPEED);
-  close(rollLaunchSpeed(SPEED, 1, RETENTION), SPEED * RETENTION);
-  close(rollLaunchSpeed(SPEED, 9, RETENTION), SPEED * RETENTION);
+  close(rollLaunchSpeed(SPEED, 1, RETENTION, SPEED), SPEED * RETENTION);
+  close(rollLaunchSpeed(SPEED, 9, RETENTION, SPEED), SPEED * RETENTION);
   // A fresh actor has no Action Intensify AP, so the equipped factor is the
   // neutral profile value; the longer window must not change it.
   close(f.make().s3.modifiers.rollRetention, RETENTION);
@@ -176,4 +176,29 @@ test('roll armor is unchanged: the longer window does not extend or shorten the 
   for (let i = 0; i < cfg.armorTime * 60; i++) { prepare(a, 'floor'); f.beforeActions(a, STEP, false); }
   close(a.s3.roll.armorTime, 0, 'armor expires on its own schedule, not the chain schedule');
   a.damage(60, null, 'shooter'); close(a.hp, 40, 'damage lands once the armor window closes');
+});
+
+test('chain history survives wall reattachment; former velocity-only rule is a negative control', async () => {
+  for (const legacy of [false, true]) {
+    const f = await fixture({ adaptRuntime: (rel, source) => legacy && rel === 'patches/splatoon3/runtime/movement.mjs'
+      ? source.replace('return chain > 0 && previous > 0 ? previous * retention : speed;', 'return speed * (chain > 0 ? retention : 1);') : source });
+    const a = f.make(), speeds = [];
+    for (let i = 0; i < 3; i++) {
+      a.form = 'squid'; a.climbing = true; a.submerged = false;
+      a.wallN.set(0, 0, 1); a.intent.move.set(0, 0, 1);
+      a.vel.set(0, 11.52, 0); // Actual reattachment loses planar launch velocity.
+      const before = rollLaunches(a); f.beforeActions(a, STEP, true);
+      assert.equal(rollLaunches(a), before + 1);
+      speeds.push(Math.hypot(a.vel.x, a.vel.z));
+    }
+    const initial = f.profile.movement.roll.minimumSpeed;
+    close(speeds[0], initial); close(speeds[1], initial * RETENTION);
+    close(speeds[2], initial * (legacy ? RETENTION : RETENTION ** 2));
+    if (!legacy) {
+      close(a.s3.actions.chainSpeed, speeds[2]);
+      f.beforeActions(a, WINDOW_SECONDS, false);
+      assert.equal(a.s3.actions.chainSpeed, 0);
+      close(launch(f, a, 'floor', 'expired history'), SPEED);
+    }
+  }
 });

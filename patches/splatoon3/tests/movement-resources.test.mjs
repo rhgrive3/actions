@@ -77,7 +77,7 @@ test('recover-stop countdown stays tied to actor ticks and refill starts at its 
 test('consecutive roll momentum applies one retention coefficient per new launch', () => {
   let speed = 20;
   for (let chain = 0; chain < 4; chain++) {
-    speed = rollLaunchSpeed(speed, chain, .85);
+    speed = rollLaunchSpeed(speed, chain, .85, speed);
     close(speed, 20 * .85 ** Math.max(0, chain));
   }
 });

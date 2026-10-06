@@ -138,8 +138,16 @@ test('blur and disconnect clear menu channel; reconnect permits a fresh owned bu
   assert.equal(h.input.padMenuPressed.size, 0);
   h.input.consumePadMenuButton(0); h.setPads([]); h.input.pollPad();
   assert.equal(h.input.padMenuBlocked.size, 0); assert.equal(h.input.padMenuPressed.size, 0);
-  h.setPads(pad([0])); h.input.pollPad(); assert.equal(h.input.padMenuPressed.has(0), true);
+  h.setPads(pad([0])); h.input.pollPad();
+  assert.equal(h.input.padMenuPressed.size, 0); assert.equal(h.input.padPressed.size, 0);
+  assert.equal(h.input.padButton(0), false);
+  h.input.pollPad(); assert.equal(h.input.padMenuPressed.size, 0);
+  h.setPads(pad()); h.input.pollPad(); h.setPads(pad([0])); h.input.pollPad();
+  assert.equal(h.input.padMenuPressed.has(0), true); assert.equal(h.input.padPressed.has(0), true);
   assert.equal(h.input.padButton(0), true);
+  h.input.consumePadMenuButton(0);
+  assert.equal(h.input.padButton(0), false, 'menu consumption still owns the fresh press');
+  h.input.pollPad(); assert.equal(h.input.padMenuPressed.size, 0);
 });
 
 test('adapter rejects missing/duplicated/already applied anchors and leaves unrelated modules intact', () => {
