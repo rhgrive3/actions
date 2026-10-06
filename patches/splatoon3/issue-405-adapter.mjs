@@ -19,8 +19,11 @@ export function adaptIssue405(rel, code) {
     const needle = 'Math.max(P.reverseDecel, D)';
     const at = code.indexOf(needle);
     if (at < 0) {
-      if (code.includes('const r = D * dt * (onEnemy ? 0.5 : 1);')) return code;
-      throw new Error('INKWAVE issue-405 patch conflict (reverse deceleration expression): expected one current reverse-decel expression');
+      // Current Movement Physics owns grounded reversal through one vector-acceleration
+      // step; the legacy reverseDecel branch has been intentionally removed.
+      if (code.includes('stepGroundVelocity(this.vel, mv.x, mv.z, vt, accel, dt);') ||
+          code.includes('const r = D * dt * (onEnemy ? 0.5 : 1);')) return code;
+      throw new Error('INKWAVE issue-405 patch conflict (reverse deceleration expression): expected one current reverse-decel owner');
     }
     if (code.indexOf(needle, at + needle.length) !== -1) {
       throw new Error('INKWAVE issue-405 patch conflict (reverse deceleration expression): expected exactly one current reverse-decel expression');
