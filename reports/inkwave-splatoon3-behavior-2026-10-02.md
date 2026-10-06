@@ -180,6 +180,18 @@ Flow の外殻・粒・リボンが GTAO の法線／深度パスに不透明な
 
 ローラー横／縦振りの owner physics を packet 化する順序を修正し、remote の trajectory と projectile に紐付く curtain の時間軸を一致させた。基準射程・威力・spread・local physics・animation pose の変更はない。全武器の native replay、二人の WebSocket arena、遅延／重複／退出回帰の詳細は [Network replication report](network-replication-report.md) に記録する。これは INKWAVE 内の同期比較であり、本家の実機比較、原作の射程校正、physical iOS 検証の未確認項目を解消したという意味ではない。
 
+### #206: remote Roller の縦振り状態
+
+| 項目 | 比較記録 |
+|---|---|
+| 本家の根拠・条件 | Nintendo の Splatoon 3 更新ページは 2026-10-06 時点の最新版を Ver.11.3.0（2026-08-19 公開）とし、Carbon Roller 系の変更を「vertical swings」の距離別ダメージ減衰として個別に記載する。[公式更新情報](https://en-americas-support.nintendo.com/app/answers/detail/a_id/59461/p/1076/c/950)。ここではローラーの縦振りが横振りと異なる攻撃区分だと確認する。ページは通信表現や縦振りの入力境界・姿勢曲線を公開していない。比較実装は INKWAVE の `roller`（Swell Roller）profile。公式更新の該当武器は Carbon Roller、Carbon Roller Deco、Carbon Roller ANG-L で、同一モデルの姿勢比較ではない。ギアなしの fixture を使い、公式資料に記載のないギア差は未確認。 |
+| INKWAVE の実装箇所 | `patches/splatoon3/runtime/roller.mjs` は空中で始めた振りを `s3RollerAttack.vertical` として選び、回復区間まで保持する。公開版 `inkwave-public/src/net/netmatch.js` は actor row の形を保って flags を送るが、従来は一般 flick bit のみで縦横を送らなかった。`patches/splatoon3/adapter.mjs` で既存 flags に `1 << 24` を追加し、remote actor の攻撃状態・Character 姿勢へ選択を渡す。 |
+| 再現操作 | ルームの owner がローラーを空中で ZR 入力して振りを開始し、回復が終わる前に着地する。同じ試合を remote client で見る。修正前の source regression では縦振り選択 bit がなく、修正後は同じ 21 要素 actor row の flags に選択 bit があること、remote の実 Character pose が縦振りを選ぶことを確認する。正確な Switch の入力フレーム境界は未計測。 |
+| プレイへの影響 | remote 側で攻撃者の姿勢から縦振りを判別できず、選択された振りと表示が食い違う。修正は既存 owner 判定・projectile ownership・row 形状を変更せず、proxy に選択状態を伝える。 |
+| 確認状態 | **INKWAVE の installed path 回帰確認済み**：source adapter、owner packing、実 NetMatch 受信、実 Character の姿勢、空中開始から着地・解放／回復、重複 event の一回再生、古い逆モード snapshot の拒否、後続横振り、reset と remote splat を検査。Nintendo Switch Ver.11.3.0 の同条件実機映像・ギア別比較、未公開の通信・フレーム値は未確認。 |
+
+open PR #758（#692 の current-main rescue）は flags の bit 20–22 を swim 表示用に使う。#206 はこの範囲と重ならない bit 24 を使い、flags は同じ word に収まるため actor row は変わらない。CPU fixture は実 adapter／NetMatch／Character を通すが、ブラウザ実動作や Switch 実機比較の代用にはしない。
+
 ## 練習場（2026-10-03）
 
 ブランチ `inkwave/practice-range` に、既存システムを測るためのソロ練習場を独立パッチ `patches/practice-range/` として追加した（[練習場レポート](practice-range-report.md)）。歩行・泳ぎ・射撃・塗り・ボム・スペシャル・被弾の数値とロジックは変更していない。練習場の目盛りはワールド座標（1 m = 1 ワールド単位）で、本家の距離単位との対応は引き続き未確認（`distanceScale` は推定）。この記録の既存の差分・未確認項目は、練習場の追加によって解消済みとしない。
@@ -326,6 +338,121 @@ This is a follow-on delta after #721 at `33aa331`, itself based on main `37ab02f
 Only the navigator.getGamepads capability read is caught. A failed read supplies the existing no-pad cleanup path and advances the existing #721 pad epoch, so a render-pending old controller edge and its Player filter cannot survive the failure. The polling API is tried again on subsequent frames, allowing recovery without a new permission request or environment setting change. Match/controller/render errors are not caught here. No automatic input-mode switch, gyro setting, sensitivity, or game tuning changes.
 
 Dedicated source 6/6: 300 render frames at each 30/60/120Hz continue with keyboard movement; 300 touch frames retain native stick/button ownership, swipe and actual Gyro.consume delivery. A previously held pad loses all gameplay/menu edges and filtered look, and cannot consume a ready special through a buffered edge. Mouse, absent API, normal pad recovery and unrelated controller exception propagation are positive/negative controls. Combined input/pause/clock regressions are recorded with the completed patch. These are VM input/runtime tests, not a physical restricted iframe/WebView test or a Splatoon 3 hardware comparison. Combined emitted/browser acceptance remains with the integration batch; no separate PR/CI/build was started.
+
+## 2026-10-06: マッチ開始の Opening（#605）
+
+本家のスプラトゥーン3はマッチ開始時専用の短い Opening を鳴らす（Inkipedia の楽曲表では「Opening (C-Side)」を Multiplayer (Match start) で再生と記載、参照は Ver.11.3.0）。これは最初の2分のバトル曲とも最終1分の曲とも別の楽曲である。公開版の INKWAVE は `src/main.js` の `_intro()` が `this._playMusic(null)` を呼んでいたため、ローディング後のイントロ 4.2 秒は独自の `ready` SFX 以外が無音で、`battle` は GO の `playing` で初めて鳴り始めていた。オフラインとオンラインは同じ `_intro()` 経路を通る。
+
+`patches/splatoon3/adapter.mjs` のビルド時変換で、`src/audio/music.js` に原本の合成曲 `opening`（'Opening Sting'、140 BPM、A minor、4小節）を追加し、`_intro()` の無音要求を `this.match?.mode === 'boss' ? null : 'opening'` に置き換えた。Nintendo の音源は使っていない。テンポが `battle` / `battle_final`（ともに 150 BPM）と異なるため、`music.play()` が同じ BPM のときだけ次的小節待ちにする仕組み（`cur.song.bpm === song.bpm`）に掛からず、GO で即時のクロスフェードに入る。GO の `battle`、1分経過の `battle_final`、終了時の `stop`、結果画面、Boss の `_playMusic(null)`、固定シミュレーション、練習場とアトラクトの分岐は変更していない。Boss 導入は `_intro()` の先頭で抜けるため到達せず、`mode === 'boss'` の判定は boss エンティティ未解決時の保険である。
+
+確認は `patches/splatoon3/tests/issue-605-opening-cue.test.mjs` によるソース級の検証（原本が無音であること、構成後イントロが `opening` を要求すること、`getSong('opening')` が警告ゼロで 4 小節を返すこと、他トランジションと Boss/練習場分岐の不変、接続の欠落・重複・再適用が fail-closed であること）と、構成後全ソースの構文ゲート、`adapter.test.mjs` の実行。実ブラウザでの試聴と実機比較は行っていない。本家の Opening の正確な尺、GO との前後関係、クロスフェードの聞こえ方は未確認のまま残す。イントロ 4.2 秒に対し 140 BPM 4小節は約 6.9 秒なので、GO で曲の途中からクロスフェードで切られる（Issue の契約は「ends/cuts into the normal battle track at GO」を許容）。計測が必要な差分として扱う。
+
+## 2026-10-06: #561 assist splat presentation
+
+Splatoon 2/3 ではアシストしたプレイヤーには通常のたおし通知が出ず、撃破地点の上に別のスプラットアイコンだけが現れる。INKWAVE は同じ認識済みのアシストを中央 HUD のキルカードスタックへ `ASSIST <victim>`（約 1.7 秒）として送り、加えて専用の `hit_marker` 音を鳴らしていた。
+
+| 項目 | 内容 |
+| --- | --- |
+| 本家の根拠 | [Inkipedia — Splat (occurrence)](https://splatoonwiki.org/wiki/Splat_(occurrence))。Issue #561 に記録された参照と同一。参照版は Splatoon 3 Ver. 11.3.0 |
+| INKWAVE の実装箇所 | 新規 `patches/splatoon3/assist-presentation-adapter.mjs`（`adapter.mjs` から `adaptAssistPresentation` を呼ぶ）。接続先は上流 `inkwave-public/src/ui/hud.js` の `_onSplatted` のアシスト分岐、`_killCard` の `kind === 'assist'` 3 箇所、アシスト用の `hit_marker` 音。接続欠落はビルドを取り消して公開しない |
+| 再現操作 | ローカル実戦で自分のダメージが敵 A を傷つけ、4 秒以内に味方が A を打つ。`splatted` イベントで中央 HUD に `ASSIST` カード（相手の名前入り、約 1.7 秒）と `hit_marker` 音が出た。直接たおしした場合は変更していない |
+| プレイへの影響 | 中央 HUD の文字での確認を失うかわりに、撃破地点の空間マーカーだけで認識する。直接スプラットや縦道内の演出と並べて出ていた `ASSIST` カードと、その約 1.7 秒の可視時間を削除。認識そのものと Flow Aura への加点、`K.dealt` の消費は変更していない |
+| 確認状態 | **ロジックと installed path の確認済み**。上流の生バイト、`adaptSource` の合成、ビルド済みサイト（`INKWAVE_ASSIST_BUILT_SITE`）の 3 経路で実際の HUD メソッドを実行し、アシストは `iw-down iw-down--assist` マーカーのみ、カード 0、音 0。直接たおしは従来どおりカード 1、2200 ms。**本家実機（Switch Ver.11.3.0）でのアイコン形状・表示時間・表示位置の実測比較は未確認**。マーカーの大きさ、色、フェードは既存の `iw-down` の投影経路に追従させただけで、参照版から新規に確定していない |
+
+アシストの認識窓（4 秒）と入場判定は変更していない。マーカーの投影経路は既存の ally-down 実装を再利用したもので、本家との実測比較の対象ではない。キルカードスタック内の表示、`K.perActor` の記録、#139 の結果統計は変更していない。上流 `hud.js` が `isJa` を import しない件の補正は `patches/practice-range/adapter.mjs` が公式ビルドで行っており、本件では触れていない。**フレーム間隔（Hz）を変えた時のマーカー投影の挙動は未検証**。
+
+
+## Roller contact rejected by spawn invulnerability — #558 (2026-10-06)
+
+Baseline main: `ecfdd268f70bb7041f81138736b26e42306b630d`. The locked `inkwave-public/` sources remain unchanged. This change is in the installed weapons and network adapters.
+
+| 項目 | 比較・確認 |
+|---|---|
+| 本家の根拠・範囲 | Splatoon 3 Ver. 11.3.0 を参照対象とする。任天堂の[更新履歴](https://en-americas-support.nintendo.com/app/answers/detail/a_id/61257/~/splatoon-3-update-history)はスペシャル後の無敵時間を明記するが、復活直後のローラー接触についてフレーム値・受付順・接触debounce値を公開していない。本家の復活無敵とローラー接触の同 tick 順序は実機未計測。非公開値をこの修正へ持ち込まない。 |
+| INKWAVE の実装 | 公開 native `src/game/weapons.js::WeaponRunner._roller()` は `rollHits` に `G.time` を記録し、経過時間が `0.5 s` を超えてから次の接触を許可する。native `Actor.damage()` は `invuln > 0` なら false を返すが、従来の `applyHit()` はそのまま `hit` event・body hit 音を出す。`patches/splatoon3/weapons-adapter.mjs` の installed adapter が reject / pending / accepted / killed を返し、HP が変化しない拒否では generic feedback を出さない。remote 接触でも native の有限時刻を保ち、既存 owner/life `h` / `l` gate が各送信packetの再生を抑止する。既存ACK eventにはrequest IDがないため、一件だけの未確定ACKを対応づけ、次のnative cadenceで別packetが送られた後は古いACKを新しい接触へ対応づけない。 |
+| 再現操作 | 60 Hz gameplay tick。Team 0 の移動中 Roller を Team 1 の生存 actor より先に更新し、接触体積を保ったまま `invuln = 0.01` で接触させる。これはIssue由来のCPU再現入力で、本家の測定値ではない。修正前の実 native fixture ではHP `100` のまま `rollHits` が記録され、`hit` event と `ink_hit_body` が各1回出た。 |
+| 修正後・影響 | 同じ拒否ではHP、generic `hit` event、body hit音、Roller成功接触debounceを変えない。次の vulnerable tick は既存profileのroller damage `140` を適用し、accepted contactから既存の `0.5 s` debounceが始まる。remote hitは送信時刻でnative cadenceへ戻るため、transportがなくても接触再試行が永久停止しない。owner拒否ACKは未確定の一件と対応できる間は即時に時刻を解除する。ACK未着のまま次packetが送られた後は相関不能なACKを無視し、同じ attacker/victim の組ではその `WeaponRunner` の寿命中ACK相関を再開しない。owner確認のない待機がnative retry間隔を超えてcooldownを延ばさない。owner/life変更とrunner resetでは時刻と未確定状態を整理する。wire fieldは追加していない。 |
+| 確認状態 | `patches/reliability/tests/roller-contact-admission.test.mjs` の実 native Actor / WeaponRunner / Projectiles fixture: local rejected feedback・debounce・実 `Actor.update()` で保護が切れた後の140 damageを確認。Actor更新順を逆にした境界ケースと、accepted contact後の既存debounceも確認した。実 `NetMatch` fixtureではACKを落とし、厳密な0.5秒境界後のretry、transport不在中の消失sendからの回復、同一owner/lifeの遅延ACK、owner拒否の即時解除、同じlife packetの重複、life/owner変更とrunner resetを確認。ブラウザ実動作とSwitch Ver. 11.3.0実機比較は未実施。 |
+
+本家側の復活無敵の正確な長さ、ローラー本体接触の受付frame、実機でのnet遅延差は引き続き未確認である。ロジック fixture は実機比較の代わりとしない。
+
+
+## ローラー攻撃 glob の描画半径（#750、2026-10-06）
+
+描画サイズだけの差分。`CollisionParam` 由来の当たり判定、インク塗り、ダメージ、発生分布、初速、
+弾道・飛行・衝突のタイミングはいずれも変更していない。
+
+| 項目 | 内容 |
+|---|---|
+| 本家の根拠 | 固定 Splat Roller Ver. 11.3.0 パラメータ（[WeaponRollerNormal](https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json)）。`DrawSizeParam` は弾の描画サイズで、水平 `WideSwingUnitGroupParam` は主ユニット（BulletNum 12）と最近接 1 個ユニット（BulletNum 1）の両方が `InitRadius 0.30 / EndRadius 0.30`、垂直 `VerticalSwingUnitGroupParam` の 3 ユニットはすべて `InitRadius 0.36 / EndRadius 0.36`。垂直/水平の描画半径比は 0.36/0.30 = 1.2。`DrawSizeParam` は衝突・塗りとは別の項目 |
+| INKWAVE の実装箇所 | `patches/splatoon3/runtime/weapons-fidelity.mjs` の `setDrawRadius` / `rollerFlickDrawRadius`（ユニット選択を `flickUnitFor` に共通化）と `configureFidelityFlick`。同じ描画半径を共有するため、`patches/splatoon3/runtime/weapon-edgecases.mjs` の `appendRollerNearUnit` が最近接 1 個ユニットの `vis: .185` を固定表の 0.30 から読む。`inkwave-public/` は変更していない |
+| 再現操作 | 標準 Splat Roller で地上の水平攻撃を 1 回撃つ。修正前は 13 個の `p.vis` が 0.101〜0.197 にばらつき、中央付近が最も大きく両端が最も小さく、加えて各 glob に 0.03 のランダムが乗っていた。垂直 5 個も同じ勾配だった。修正後は水平 13 個が全て 0.30、垂直 5 個が全て 0.36 で、続けて撃った場合も同じ値になる |
+| プレイへの影響 | ローラーのインクシートの見え方のみ。水平で中央を強調し両端を小さくしていた表示と、縦横で同じ式を使っていた表示を、固定表の宣言値に一致させる。弾の個数・配置・速さ・当たり判定・塗りは従来通りで、描画サイズだけが表の値になる |
+| 確認状態 | **ロジック確認済み**（実 `Projectiles.fireFlick` + `configureFidelityFlick`、`_draw` の実描画式、変更前の乱数ストリーム・発生位置・初速・seed・当たり半径・衛星数・`Math.random()` 消費回数の指紋一致、mutation 検証）。**本家実機（Switch Ver.11.3.0）での映像・フレーム比較は未確認**。ロジック単独の測定を実機比較の代用にしない |
+
+`FourPetals*` の描画形状は別項目として未実装のまま残す。#619（Blaster 速度）、#206
+（remote Roller の垂直状態）は、それぞれ別所有者のため本件では触っていない。
+
+## バトル開始演出の Splashtag アイデンティティ表示（#673、2026-10-06）
+
+スプラトゥーン3ではバトル開始時に参加者全員の Splashtag（ニックネーム/ID・バナー・タイトル・バッジ）が表示されるが、INKWAVE では独自の2カラム＋VSロスター（チーム名見出し・VSスプラット・全ブキ名・YOU表記）となっていた。Issue #673 により、通常マッチの intro 表示を S3 準拠の Splashtag 演出へ移行した。
+
+| 項目 | 内容 |
+|---|---|
+| 本家の根拠 | [Nintendo Splatoon 3 Overview](https://www.nintendo.com/us/whatsnew/splatoon-3-makes-a-big-splash-in-new-video-preview-filled-to-the-gills-with-fresh-gameplay-and-new-details/) / [Inkipedia Splashtag](https://splatoonwiki.org/wiki/Splashtag)。S3 のバトル開始時に各参加者の Splashtag（ニックネーム、ID番号、バナーアート、二つ名タイトル、最大3個のバッジ）が表示される |
+| INKWAVE の実装箇所 | `patches/splatoon3/adapter.mjs` (`src/ui/hud.js` および `src/ui/menus.js`)、`patches/splatoon3/ui.css`。`hud.js::_lineup()` の通常バトルパスで 8 名の参加者に `.iw-stag` を適用し、参加者プレゼンテーション・メタデータ入力契約（`title`、`tagNum`/`id`、`banner`、`badges`）を消費・サニタイズして描画。バッジ枠には提供されたグリフ（`GLYPHS`）・アワード（`AWARDS`/`AWARD_ICONS`）・安全なSVG・短縮テキストを安全に最大3枠レンダリング。メタデータ未指定時は既存の決定論的デフォルト（`tagTitle(nm)`、`tagNum(nm)`、`tagArt(fnv(nm))`）にフォールバックし、ボットやオフライン参加者に架空のバッジIDを捏造しない |
+| パイプライン限界と宣言 | 既存のロビー・ネット通信パイプライン（`session.js`、`netmatch.js`）は `{ name, weapon, style }` のみをパケット伝送しており、プロトコル書き換えを回避して機能限界・デフォルト限界を正確に宣言。参加者カード描画関数 `makeStag` は契約に基づきローカル・リモート双方のメタデータを安全に受け入れ、未提供値には安定したデフォルトを充当する |
+| クライアント対称性 | Alpha / Bravo クライアントは同一の 8 名ロスターに対して Team A（左列）と Team B（右列）を共有順序で描画し、全参加者の表示位置・順序が一致する。`_myTeam`（0 または 1）およびローカルハイライト（`.is-self` 枠線強調）のみが自機に応じて異なり、独自 YOU ラベルは廃止 |
+| オーバーレイ管理 | `_lineup` 開始時に既存の `.iw-lineup` を全削除して単一インスタンスを保証し、3500ms タイマーで確実に自動クリーンアップする。ボス戦（Hullbreaker）演出・マッチ時間（180秒）・Ready/GO・スポーン・得点判定・ゲームプレイ権威は一切変更しない |
+| 確認状態 | **DOM / HUD ロジック検証レベル**（`patches/splatoon3/tests/issue-673-splashtag-intro.test.mjs` で 11/11 合格。adapter 変換、DOM ツリー構造、メタデータ消費・サニタイズ、バッジ描画、デフォルトフォールバック、Alpha/Bravo 順序共有・ハイライト差異、オーバーレイ単一クリーンアップ、ボス戦分離）。**実 3D WebGL キャラクター描画およびネイティブネットワークソケット実線通信は未主張（DOM/HUD モックレベルでの実証）**。**本家実機（Switch Ver.11.3.0）とのピクセル完全一致は未確認** |
+
+### 2026-10-06 訂正（#673 の親レビュー指摘）
+
+前回の実装は任意の raw SVG バッジとバナーを `innerHTML` に渡していた。その検査は `/<script|javascript:|on\w+=/i` という緩い正規表現で、`onload =`（空白付き）、`ONPOINTEROVER =alert(1)`、`<foreignObject>`、`xlink:href="javascript:..."` を通す。また `b.html` / `b.svg` は任意の文字列を受け入れた。いずれも「安全に見える」フィールドから remote の値が active markup を innerHTML へ持ち込む経路になる。
+
+訂正として raw SVG を受け付ける経路を削除した。DOM へ到達する値は次の3つだけである。
+
+1. 数値（または数字のみ文字列）のバナー seed。描画は既存の `tagArt(seed)` が行う。
+2. リポジトリ内の信頼済みアセットキー（`GLYPHS` / `AWARDS` / `AWARD_ICONS`）。
+3. プレーンテキスト。`h()` の text ノードなので escape される。
+
+メタデータの取得元も `a.profile` / `a.tag` から `a.style.splashtag` へ変更した。`a.profile` と `a.tag` は Actor が生成しない値であり、`src/net/session.js` の `_newPlayer` が実際に載せるのは `{ name, weapon, style }` であるためである。protocol の形は変更していない。`style.splashtag` が無い場合は従来どおり `tagTitle` / `tagNum` / `tagArt(fnv(name))` の決定的なフォールバックを使う。
+
+Alpha/Bravo の固定順序、YOU 表記の不在、ブキ名、3.5 秒のクリーンアップは変更していない。`inkwave-public/` と旧 Game / Hex には触れていない。
+
+確認状態は **DOM / HUD ロジック検証レベル**（`issue-673-splashtag-intro.test.mjs` で 13/13 合格）。対抗的なメタデータとして `<svg onload = "...">`、`<script>`、`foreignObject`、`ONPOINTEROVER =` を含む文字列を title / num / banner / badges の全フィールドへ入れ、バッジが1件も描画されず、art スロットに `tagArt` 由来の markup 以外が入らないことを確認した。テストは DOM fixture のみを使い、**ブラウザ実行・ネットワーク実線通信は主張していない**。**本家実機（Switch Ver.11.3.0）とのピクセル一致は未確認**。
+
+## チャージ reticle の 5F 表示ディレイ（#572、2026-10-06）
+
+Charge HUD timing only. The authoritative `WeaponRunner` charge, shot damage, range, ink cost,
+minimum-shot admission and projectile timing are untouched.
+
+| 項目 | 内容 |
+|---|---|
+| 本家の根拠 | Splatoon 3 攻略＆検証 Wiki「メインウェポン検証」のチャージャー項目（チャージ量・ゲージ表示）。チャージ開始からチャージ reticle が表示されるまでの遅延は常に 5F、標準 Splat Charger のゲージ遅延も 5F。ゲージ表示値は `clamp((chargeFrames - gaugeDelayFrames) / (fullChargeFrames - gaugeDelayFrames), 0, 1)`、60F 基準で 1〜5F はゲージが進まず、6F が `(6-5)/(60-5) = 1/55 ≒ 1.8%`。Ver. 11.3.0 を基準 |
+| INKWAVE の実装箇所 | `patches/splatoon3/adapter.mjs` の `src/ui/hud.js` 分岐。`chargerReticleView(runner, w)` を追加し、`_updCrosshair` の charger 分岐を `f.charge` の直参照から `chargerReticleView(this._local()?.weaponRunner, WEAPONS[w])` へ差し替え。表示ディレイ値は武器プロファイルが所有する `patches/splatoon3/profile.json` の `weapons.charger.reticleDelayF = 5`（`reference/numeric-status.json` も再生成） |
+| 再現操作 | 標準 Splat Charger を装備し、idle（`weaponRunner.charge === 0`）から 60 Hz の固定 tick で fire を保持する。`weaponRunner.chargeT` は 1 tick ごとに立ち上がり、HUD は 1〜5F でリング非表示・ゲージ 0、6F でリング点灯・ゲージ 1/55、既存の 60F フルチャージで 100% とフルフラッシュとなる。描画更新を 1/2/3 回に増やしても、同じ tick なら表示は同じ |
+| プレイへの影響 | チャージの視覚フィードバックが 1 tick 早く始まり、本家より早い。最小ショットの成立・ダメージ/射程・インク消費・弾の挙動は従来通りで、見えるリングとゲージだけが 5F 遅れて始まり、ゲージの刻みもそれに合わせてずれる |
+| 確認状態 | **ロジック確認済み**（adapter 適用後の実 `src/ui/hud.js` と実 `Actor`/`WeaponRunner`、60 Hz 固定 tick、30/60/120 Hz の描画 cadence 差分）。**本家実機（Switch Ver.11.3.0）でのフレーム単位の実測比較は未確認**。ロジック単独の測定を実機比較の代用にしない |
+
+Goo Tuber や Grizzco Charger などの亜種は検証表で例外が記録されている。`reticleDelayF` は
+武器プロファイルが所有するため亜種追加時に個別設定できるが、本コミットは標準 Splat Charger
+のみを実装した。潜伏直後の fresh charge startup は本件とは別系統のゲームプレイ側タイマーであり、
+HUD 表示ディレイと同じ 5F でも別条項として扱う。表示スレッド側の時間ではなく固定 tick の
+`chargeT` を読むため、描画 cadence を変えても HUD のタイミングは動かない。
+
+### 5F の非表示期間に本体レティクルが残っていた件の是正（2026-10-06）
+
+先行実装は `is-charging` とゲージの塗りだけを抑止していたため、`.iw-ret__track`（灰色の環）、
+`.iw-ret__notch` の目盛り、3 本の `.iw-ret__line` が 1〜5F でも描画され続けていた。本家では
+5F の表示待ち期間にレティクル自体が出ないため、`chargerReticleView` が `charging`（実チャージ中）と
+`delayed`（その待機期間内）を区別して返すようにし、実チャージが待機期間内のときだけ
+`is-charge-delay` を付ける。`patches/splatoon3/ui.css` の
+`.iw-ret--charger.is-charge-delay { visibility: hidden; }` が Charger レティクル全体を隠す。
+idle の Charger / Splatling の可視性は別所有者の領域（#594、parent PR785）であり、Splatling と
+streaming は変更しない。authoritative phase clock、チャージ開始、ダメージ、60F のフルチャージ位置は
+いずれも変更していない。表示クラスはレティクル再構築時にリセットするため（`_L.chargeDelay`）、
+武器を切り替えて戻っても表示状態が残らない。
 
 
 ### Live Turf lead / Danger (#99, duplicate #748)
