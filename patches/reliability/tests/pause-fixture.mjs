@@ -21,16 +21,15 @@ assert.ok(order?.length, 'production reliability dispatcher adapter order');
 const imports=new Map([...dispatcher.matchAll(/import \{ (\w+) \} from '(\.\/[^']+)';/g)].map(m=>[m[1],m[2]]));
 const preceding=[];
 for(const name of order){
- if(name==='adaptPause')continue;
  assert.ok(imports.has(name),`actual dispatcher import ${name}`);
  const module=await import(new URL(imports.get(name),pathToFileURL(ROOT+'/patches/reliability/adapter.mjs')));
  preceding.push(module[name]);
 }
-function composed(rel, patched=false){let s=adaptTouchLayout(rel,adaptSource(rel,fs.readFileSync(UP+'/'+rel,'utf8')));for(const adapt of preceding)s=adapt(rel,s);if(patched)s=adaptPause(rel,s);hashes[rel]=crypto.createHash('sha256').update(s).digest('hex');return s;}
+function composed(rel, patched=false){let s=adaptTouchLayout(rel,adaptSource(rel,fs.readFileSync(UP+'/'+rel,'utf8')));for(const adapt of preceding){if(adapt===adaptPause&&!patched)continue;s=adapt(rel,s);}hashes[rel]=crypto.createHash('sha256').update(s).digest('hex');return s;}
 function section(s,a,b){const at=s.indexOf(a),end=s.indexOf(b,at);assert.ok(at>=0&&end>at,a);return s.slice(at,end);}
 function sources(patched){const main=composed('src/main.js',patched),match=composed('src/game/match.js',patched);
 const methods=[section(main,'  pause() {','\n  async quitToMenu() {'),section(main,'  _padMenus() {','\n  _updateHud(dt) {'),section(main,'  _onKey(e, repeat) {','\n  _onPointerUnlock() {')].join('\n');return {main,match,methods};}
-export async function boot(patched=true){
+export async function boot(patched=true,{transform=(_rel,source)=>source}={}){
  const {match,methods}=sources(patched);
  const f=await fixture(), modules=new Map(),listeners=new Map();let pads=[];
  const cls=()=>({add(){},remove(){},toggle(){}});
@@ -40,7 +39,7 @@ export async function boot(patched=true){
  function load(file){if(modules.has(file))return modules.get(file);const rel=path.relative(UP,file);let m;
  if(['src/core/ctx.js','src/config.js','src/game/physics.js'].includes(rel))m=synthetic(file,f);
  else if(file==='three')m=synthetic(file,{...f.THREE});
- else m=new vm.SourceTextModule(file.startsWith(UP+'/')?composed(rel,patched):fs.readFileSync(file,'utf8'),{context,identifier:file});modules.set(file,m);return m;}
+ else m=new vm.SourceTextModule(transform(rel,file.startsWith(UP+'/')?composed(rel,patched):fs.readFileSync(file,'utf8')),{context,identifier:file});modules.set(file,m);return m;}
  const entry=new vm.SourceTextModule("export { Input } from './src/core/input.js'; export { PlayerController } from './src/game/player.js';",{context,identifier:UP+'/resume-entry.js'});
  await entry.link((s,from)=>load(s==='three'?s:path.resolve(path.dirname(from.identifier),s)));await entry.evaluate();
  const input=new entry.namespace.Input({}),a=f.make('shooter'),rig={yaw:0,pitch:0,mode:'follow',target:a};
