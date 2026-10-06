@@ -299,7 +299,12 @@
       "damageTail": 50,
       "range": 14.5,
       "drops": 9,
-      "splashDamage": 0
+      "splashDamage": 0,
+      "shotGuide": {
+        "unitOrderNum": 1,
+        "bulletOrderNumInUnit": 0,
+        "frame": 13
+      }
     }
   },
   "bomb": {

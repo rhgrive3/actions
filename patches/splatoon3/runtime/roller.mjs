@@ -40,16 +40,26 @@ export function rollerDepletionVolley(group, vertical) {
   return entries.length ? entries : null;
 }
 
-export function installRollerLogic({ WeaponRunner }, profile) {
+export function installRollerLogic({ WeaponRunner, Actor, G }, profile) {
   const raw = profile?.weaponsFidelityCompletion?.weapons?.roller;
   const depletion = {
     horizontal: rollerDepletionVolley(raw?.WideSwingUnitGroupParam, false),
     vertical: rollerDepletionVolley(raw?.VerticalSwingUnitGroupParam, true),
   };
-  const roller = WeaponRunner.prototype._roller, reset = WeaponRunner.prototype.reset;
+  const roller = WeaponRunner.prototype._roller, reset = WeaponRunner.prototype.reset, actorUpdate = Actor.prototype.update;
+  Actor.prototype.update = function (dt) {
+    const r = this.weaponRunner;
+    if (r && this.weapon?.kind === 'roller') {
+      const prev = this._prevIntent || {};
+      if (this.intent?.fire && !prev.fire) r.s3RollerSquidPressT = this.form === 'squid' ? G.time : null;
+      if (!this.alive || this.specialActive || this.superJumpState) r.s3RollerSquidPressT = null;
+    }
+    return actorUpdate.call(this, dt);
+  };
   WeaponRunner.prototype.reset = function (...args) {
     const result = reset.apply(this, args);
     this.s3RollerAttack = null;
+    this.s3RollerSquidPressT = null;
     if (this.a.character) {
       this.a.character.s3RollerFlick = null;
       this.a.character._s3CancelRollerFlick?.();
@@ -66,8 +76,13 @@ export function installRollerLogic({ WeaponRunner }, profile) {
       this.cooldown = Math.min(0, this.cooldown);
       this.s3FlickVertical = vertical;
       const mode = rollerMode(w, this.s3FlickVertical);
-      this.s3RollerAttack = { vertical: this.s3FlickVertical, depleted, depletionDrops: depleted ? depletion[attackMode].length : 0,
-        windup: mode.flickWindup, interval: mode.flickInterval, elapsed: 0, released: false, rolling: false };
+      let windup = mode.flickWindup;
+      if (!this.s3FlickVertical && Number.isFinite(this.s3RollerSquidPressT)) {
+        const elapsed = Math.max(0, G.time - this.s3RollerSquidPressT);
+        windup = Math.max(EPS, 34 / 60 - elapsed);
+      }
+      this.s3RollerAttack = { vertical: this.s3FlickVertical, depleted, depletionDrops: depleted ? depletion[attackMode].length : 0, windup, interval: mode.flickInterval, elapsed: 0, released: false, rolling: false };
+      this.s3RollerSquidPressT = null;
       a.character.s3RollerFlick = this.s3RollerAttack;
       if (depleted) { a.ink = 0; a.lastFire = 0; }
       // Starting a new flick lifts the drum. The public runner otherwise leaves
@@ -75,7 +90,9 @@ export function installRollerLogic({ WeaponRunner }, profile) {
       this.rolling = false; this.rollT = 0;
       this.rollLoop?.stop(.12); this.rollLoop = null;
     }
-    const state = this.s3RollerAttack, mode = rollerMode(w, this.s3FlickVertical);
+    const state = this.s3RollerAttack;
+    let mode = rollerMode(w, this.s3FlickVertical);
+    if (state) mode = { ...mode, flickWindup: state.windup, flickInterval: state.interval };
     const runnerMode = state?.depleted ? { ...mode, flickInk: 0 } : mode;
     const winding = this.flick >= 0;
     if (state && !starting) state.elapsed = Math.min(state.interval, state.elapsed + dt);

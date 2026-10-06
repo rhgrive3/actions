@@ -11,6 +11,7 @@ import { adaptUiActorLifetime } from './ui-actor-lifetime-adapter.mjs';
 import { adaptIdleSource } from './idle-adapter.mjs';
 import { adaptPlatformSource } from './platform-adapter.mjs';
 import { adaptLandingRigidity } from './landing-rigidity-adapter.mjs';
+import { adaptMatchRetainers } from './match-retainer-adapter.mjs';
 import { adaptFirstTouch } from './first-touch-adapter.mjs';
 import { adaptTouchRelayout } from './touch-relayout.mjs';
 import crypto from 'node:crypto';
@@ -29,7 +30,7 @@ const IDENTITY_FILES = [
   'idle-adapter.mjs', 'idle-resources.mjs', 'music-idle.mjs',
   'lobby-resource-adapter.mjs', 'minimap-resource-adapter.mjs',
   'adapter.mjs', 'gyro.mjs', 'install.mjs', 'menu-preview.mjs', 'menu.mjs',
-  'roller-motion.mjs', 'roller-visual.mjs', 'surface.mjs', 'landing-rigidity-adapter.mjs', 'first-touch-adapter.mjs', 'touch-relayout.mjs',
+  'roller-motion.mjs', 'roller-visual.mjs', 'surface.mjs', 'landing-rigidity-adapter.mjs', 'match-retainer-adapter.mjs', 'first-touch-adapter.mjs', 'touch-relayout.mjs',
   'platform-adapter.mjs', 'platform-lifecycle.mjs', 'platform-game.mjs',
   'platform-input.mjs', 'platform-audio.mjs', 'platform-transport.mjs',
   'mobile-platform.mjs', 'gyro-permission.mjs',
@@ -55,6 +56,7 @@ export function adaptQualitySource(rel, code) {
   code = adaptMinimapResources(rel, code);
   code = adaptUiActorLifetime(rel, code, replaceOnce);
   code = adaptLandingRigidity(rel, code);
+  code = adaptMatchRetainers(rel, code, replaceOnce);
   if (rel === 'src/core/mobile.js') {
     code = adaptFirstTouch(rel, code);
     code = adaptTouchRelayout(rel, code);
