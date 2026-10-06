@@ -11,7 +11,7 @@ test('actual Actor stores a full charger charge and expires it without firing un
 test('stored charge survives emergence on a held ZR and fires on release; reset clears it', async () => {
   const f = await fixture(), a = f.make('charger'); a.intent.fire = true; f.tick(a, 61);
   a.intent.squid = true; f.tick(a); a.intent.squid = false; f.tick(a, 6); assert.equal(f.shots.length, 0);
-  a.intent.fire = false; f.tick(a, 2);   // S3 1F release gap: shot on R+1
+  a.intent.fire = false; f.tick(a);
   assert.equal(f.shots.length, 1); assert.equal(f.shots[0].charge, 1);
   a.reset(); assert.equal(a.weaponRunner.s3Stored, null);
 });
@@ -131,16 +131,13 @@ test('bomb sub power normalizes the low base once and reaches the raw high value
 });
 test('splatling diving cancels both charging and an active stream', async () => {
   const f=await fixture(),a=f.make('splatling');a.intent.fire=true;f.tick(a,30);assert.equal(a.weaponRunner.charging,true);
-  // #679: an established charge is admitted to swim only after the 6f charge-interruption recovery
-  a.intent.squid=true;
-  for(let i=0;i<6;i++){f.tick(a);assert.equal(a.form,'kid');assert.equal(a.weaponRunner.charging,true);assert.equal(f.shots.length,0);}
-  f.tick(a);assert.equal(a.form,'squid');assert.equal(a.weaponRunner.charging,false);assert.equal(f.shots.length,0);
+  a.intent.squid=true;f.tick(a);assert.equal(a.form,'squid');assert.equal(a.weaponRunner.charging,false);assert.equal(f.shots.length,0);
   a.reset();a.intent.squid=false;a.intent.fire=true;f.tick(a,73);a.intent.fire=false;f.tick(a,2);assert.equal(a.weaponRunner.streaming,true);
   const count=f.shots.length;a.intent.squid=true;f.tick(a,45);assert.equal(a.weaponRunner.streaming,false);assert.equal(f.shots.length,count);
 });
 test('a charger tap uses the minimum ink without forcing a 12 percent charge', async () => {
   const f=await fixture(),a=f.make('charger'),r=a.weaponRunner;a.ink=2.25;
-  r.update(1/60,{fire:true});r.update(1/60,{fire:false});r.update(1/60,{fire:false});
+  r.update(1/60,{fire:true});r.update(1/60,{fire:false});
   assert.equal(f.shots.length,1);assert.ok(f.shots[0].charge<.12);assert.ok(a.ink<1e-9);
 });
 test('global menu time cannot skip an actor ink recovery wait', async () => {

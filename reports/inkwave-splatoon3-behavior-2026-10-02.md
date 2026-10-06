@@ -251,89 +251,6 @@ runtime refresh. Existing formats, appearance policy and gameplay stay intact.
 These are project resource dimensions, not Nintendo/Switch memory values.
 See [the cold-boot budget report](inkwave-cold-boot-budgets-2026-10-04.md).
 
-## 2026-10-05: projectile pool owner severing (#622)
-
-Issue #622: `inkwave-public/src/game/weapons.js` の `Projectiles` は、通常完了
-（`update()` 内のリサイクル）と `Projectiles.clear()`（マッチ遷移）の双方でレコードを
-永続 `G.projectiles.pool` へ `p.owner` を切断しないまま戻していた。network ghost の完了
-挿入（`patches/network-replication/adapter.mjs` の2系統）も同様で、廃棄済みマッチの
-Actor グラフが当該レコードが再利用されるまで強参照され続けた。修正は splatoon3 ソース
-アダペータが `Projectiles._recycle(p)`（`p.owner = null` → pool 追加）を追加し、native
-2 箇所と network ghost 挿入 2 箇所をそのヘルパ経由に変更したもの。アクティブ中の
-owner 所有、ダメージ、ネットワーク、pool 再利用/ハイウォーター挙動は維持する。
-
-| 項目 | 内容 |
-|---|---|
-| 本家の根拠 | 本項目は INKWAVE の JS ライフサイクル欠陥であり、スプラトゥーン3 の数値・フレーム仕様には依存しない。本家の実機メモリ計測は行っていない |
-| INKWAVE の実装箇所 | `patches/splatoon3/adapter.mjs`（weapons.js セクションの `_recycle` と2リサイクル点）、`patches/network-replication/adapter.mjs`（ghost 完了の2挿入） |
-| 再現操作 | 実 `Projectiles`（weapon-edgecases fixture + 実アダペータ合成）で volley を投げ `clear()`／床への自然完了を待つと、修正前は pool 内レコードの `owner` が Actor のまま残る |
-| プレイへの影響 | 試合後メニュー／アトラクト中に旧試合の Actor グラフ（Character、WeaponRunner、アニメーション状態）が GC されず、モバイルのヒープ圧と GC トラバーサルが増える |
-| 確認状態 | **ロジック確認済み**（`projectile-lifetime.test.mjs` が修正前に失敗・修正後に合格、weapon-edgecases 16/16、network 全49/49、action-admission、movement-composition、full build chain 85 モジュール合成）。**実機 DevTools ヒープスナップショット／GC による保持の実測は未確認**。未確認項目として維持する |
-
-## インクストローーム投擲ロック中の敵インク受動ダメージ（#623、2026-10-06）
-
-インクストローーム発動直後の投擲ロック（~0.35s、`armor: false`、無敵なし）中、`Actor.update()` が specialOwned の早期 return で通常移動系の後処理を省略するため、合成済みの資源フェーズ `updateResources()`（`s3.enemyInkTime` と敵インク受動ダメージの唯一の実行元）が1 tick も走らず、脆弱なまま受動ダメージと接触時間だけが凍っていた。Issue の修正方針どおり、同じ `updateResources(this, dt)` を specialOwned フレーム（発動フレーム + `_updateSpecial`）で返る前に1回だけ共有実行するようにした。通常フレームの1回実行、`invuln <= 0` ゲート、専用の重複公式の創出は変更しない。
-
-| 項目 | 内容 |
-|---|---|
-| 本家の根拠 | [Inkipedia — Competitive: Ink Storm](https://splatoonwiki.org/wiki/Competitive:Ink_Storm)（使用中も脆弱）と [Inkipedia — Damage](https://splatoonwiki.org/wiki/Damage)（0 AP で無待機、0.3 HP/フレーム = 18 HP/s、上限40 HP）。基準は Splatoon 3 Ver. 11.3.0。数値は公開資料由来で、実機フレーム計測は行っていない |
-| INKWAVE の実装箇所 | raw `inkwave-public/src/game/actor.js` の specialOwned 早期 return（変更せず）を、`patches/splatoon3/adapter.mjs` が `updateResources(this, dt)` 付きへ合成。資源本体は `patches/splatoon3/runtime/resources.mjs`（従来どおり唯一の実行元） |
-| 再現操作 | source-fixture・固定60 Hz・足元が敵インク（`paint.sample=2`）で待機 → Storm を発動 → 発動フレームとロック全フレームで `s3.enemyInkTime` と HP が毎 tick 進むこと、経過フレーム数×0.3 HP と完全一致（二重実行・欠落なし）を確認。修正前は発動フレームで両者が凍結し回帰が失敗する |
-| プレイへの影響 | 修正前は Storm を敵インク上で発動して約21フレーム・約6.3 HP のチップダメージを回避できた。修正後は通常どおり18 HP/s が流れ、無敵状態（`invuln > 0`）でのみ受動ダメージが止まる。Storm の発射・雲・ダメージ・塗り・移動・スペシャルゲージは変更しない |
-| 確認状態 | **ロジック確認済み**（source-fixture、固定1/60 tick、`issue-623-storm-resource.test.mjs` 3件が修正前 failing / 修正後 passing、特殊入力・モーション系 focused19ファイルが合計全パス）。**本家実機（Switch Ver.11.3.0）での計測比較は未確認**。30/60/120 Hz レンダリング間隔の不変は既存 FixedClock の固定シミュレーション経路に依存し、本回帰は固定 tick の決定性のみを直接証明する。水死（#592）、発動時インク回復（#76）、AP 依存グレース（#75）は本変更で解消済みにしない |
-See [the cold-boot budget report](inkwave-cold-boot-budgets-2026-10-04.md).
-
-## 2026-10-06: Charger earliest legal 8f launch speed (#617)
-
-`WeaponRunner._charger`'s upstream S-curve reaches `charge = 1/6` after the S3 8-frame legal minimum, while `patches/splatoon3/runtime/weapons-charger-flight.mjs::begin()` mapped that raw coordinate linearly onto `SpawnSpeedMinCharge..SpawnSpeedMaxCharge` (pinned Ver. 11.3.0 completion table). The first legal 8f Splat Charger shot therefore launched at `60*(2.4+2.4/6) = 168 u/s` instead of the minimum endpoint `144 u/s` (+16.67%); the full 60f shot stayed at `288 u/s`. The flight layer now normalizes `[1/6, 1] -> [0, 1]` before the endpoint lerp (`chargerLaunchSpeed`), clamping sub-minimum taps to the minimum endpoint. Damage (#506), range (#514), the minimum-release gate (#304) and ink cost (#675) still consume the raw runner charge and are untouched; paint, distance, ghost playback and beam presentation keep their existing consumers. Reproduced and verified at fixed 60 Hz logic only through `_charger -> fireCharger -> begin()` by `patches/splatoon3/tests/charger-launch-speed.test.mjs` (fails `168 ~= 144` before the change, passes after; full/monotonic checks unchanged). The 8-frame legal minimum follows the issue's cited S3 references, not a Switch measurement: partial launch speeds between the endpoints stay unverified against hardware, and no other frame interval was measured.
-## 2026-10-06: main-weapon aim convergence and installed flight model (#608)
-
-Reference: [Splatoon 3 Ver. 11.3.0](https://en-americas-support.nintendo.com/app/answers/detail/a_id/59461/); Splattershot (shooter), Dualies and Splatling main shots; zero gear effects; grounded human, stationary, default uncharged Splatling state; deterministic zero-spread INKWAVE fixtures. The pinned Splattershot movement record is sourced from [Ver. 11.3.0 weapon parameters](https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponShooterNormal.game__GameParameterTable.json); the repository's pinned weapon fields remain in `../patches/splatoon3/profile.json` and `../patches/splatoon3/reference/weapons-fidelity-reference.json`. This change does not retune those values. Brake/free transition defaults remain modelled where the reference marks them uncertain; no native Switch trajectory is inferred from them.
-
-In the published-source path, `src/game/weapons.js` used `_ballistic()` with legacy gravity `28` and drag `0.8` before `../patches/splatoon3/runtime/weapons-fidelity.mjs` initialized the fired round with its per-weapon straight boundary, speed cap, brake and free-flight movement. The launch direction and subsequent flight therefore used different INKWAVE models. `../patches/splatoon3/weapons-adapter.mjs` now routes the centerline through `fidelityAimConvergence()`, which samples the same installed `advanceFidelityProjectile()` integrator and that weapon's installed movement record. Existing spread remains after convergence; muzzle fallback, projectile timing, damage, collision and network records are unchanged.
-
-Reproduction: in the composed production fixture, place a level aim point 10.5 INKWAVE world units forward from the muzzle, freeze randomness, fire each weapon with zero spread, and measure height where the projectile crosses the target's horizontal distance. Before the fix, the live shooter path crossed 0.1602 world units low; deterministic diagnostics also showed the same direction/flight mismatch for Dualies and Splatling. After the fix, the installed integrator crosses within 0.02 INKWAVE world units for all three at 30, 60 and 120 Hz render cadences. A copied-profile sensitivity regression changes the shooter's source-backed end-speed cap and confirms both the predicted launch pitch and actual integrated path use the changed record.
-
-This establishes internal INKWAVE consistency only. The test's world units are not asserted as Nintendo metres, and it does not verify Nintendo camera compensation, Switch frame measurements, real-device shot placement, or the uncertain brake/free curve. Splatoon 3 Ver. 11.3.0 hardware comparison remains unconfirmed.
-## 2026-10-06: Charger 通常リリースの発射隙 (#680)
-
-- 本家の根拠：現行Splatoon 3の検証資料はチャージャーの時間分解を `startup + charge + 発射隙 + shot(1F)` とし、通常のZR解放認識から攻撃ヒットボックスまでを **1F** とする（検証Wiki「メインウェポン」、確認はコード差分の前提に限定し独自数値は追加しない）。
-- INKWAVE の実装箇所：`patches/splatoon3/runtime/weapons.mjs` の `WeaponRunner.prototype._charger` に、S3通常リリース用の1F固定ステップ状態を追加。解放tick R では `charging` を解除し、チャージ量をラッチして発射しない。R+1 で `weapon:fire`・有限flight・インク/cooldown・recoil を生成する。
-- 再現操作：フル充填または途中充填からZRを離す。解放tickで弾が生成されず、次tickで1発だけ生成されることを、実 `Actor`/`WeaponRunner` の固定60Hzロジックで確認した（`patches/splatoon3/tests/charger-release-gap.test.mjs`）。
-- プレイへの影響：解放直後の早撃ち・トレードがS3より1F先行していたずれを解消する。8F最小チャージ、リピート/cooldown、stored-charge resurfacing、charge-cancel recovery、post-shot swim lock は変更しない。
-- 確認状態：ロジック単独（source-fixture）で30/60/120Hzの同一固定intervalを確認。Switch実機の新規録画や、本家の公開されていないフレーム値の推定は行っていない。
-## バレルスピナーのチャージ中断回復（#679、2026-10-05）
-
-Issue #679: established Heavy Splatling charge cancelled by a later ZL press enters
-swim immediately instead of the reference charge-interruption recovery.
-
-| 項目 | 内容 |
-|---|---|
-| 本家の根拠 | Issue #679 が引用する[メイン武器の前隙・後隙検証表](https://wikiwiki.jp/splatoon3mix/%E6%A4%9C%E8%A8%BC/%E3%83%A1%E3%82%A4%E3%83%B3%E3%82%A6%E3%82%A7%E3%83%9D%E3%83%B3/%E5%89%8D%E9%9A%99%E3%83%BB%E5%BE%8C%E9%9A%99)の「チャージ中断回復」行。バレルスピナーはサブ 5F / イカ 6F / インク回復 29F。本件はイカ化（6F）のみを扱う。**Ver.11.3.0 実機での当該ラボの再計測は未実施**であり、表の数値は issue 引用の二次根拠として扱う |
-| INKWAVE の実装箇所 | `patches/splatoon3/runtime/weapons.mjs`。共有ヘルパ `SPLATLING_INTERRUPT = 6/60` / `splatlingInterrupt(runner, actor, 'charge')` / `tickSplatlingInterrupt(runner, dt)` / `releaseSplatlingInterrupt(runner, press)` が `WeaponRunner.prototype.busy` の後段ラッパで回復窗口を武装・判定し、`_splatling` の武器アップデートで1回だけ減算、イカ化確定（`form === 'squid'` 分岐）で消す。#686 の連射中断は同じヘルパの `stream` スロット（`s3StreamInterrupt`）を使う。`reset()` で初期化。`actor.js` の form 判定順序は変更していない |
-| 再現操作 | バレルスピナーで地面チャージ成立→ZL を押す。修正前はその次の1/60 tick で `form === 'squid'`、同 tick でチャージが0になる。修正後は6F（=6/60秒）経過まで kid のまま、境界到達で1度だけイカ化 |
-| プレイへの影響 | チャージを止めて逃げる動作が本家より即座に成立し、チャージ中断の窮地時間が短かった。中断時に発射・バーストは発生しない（回帰で確認）。チャージ本体の 48F/72F は変更していない |
-| 確認状態 | **ロジック確認済み**（source-fixture、実 Actor.update、1/60 固定刻みと 30/60/120 Hz の可変 dt の双方、修正前は1 tick 目で失敗する回帰を用意）。**Switch 実機でのフレーム計測は未確認**。同じ中断表のサブ 5F とインク回復 29F は**未実装のまま残す**（本件では6Fのみ実装し、汎用タイマーで流用しない） |
-
-PR #701（issue #416）は Charger 側の部分チャージ取消 6F 回復を扱い、本文・回帰で「Splatling には回復を武装しない（bypass は維持）」と明記している。#679 はその Splatling 行が未修正のまま残る別ルートであり、#701 の Charger 判定には手を触れていない。#701 と同一 main へ合成する際は、両 PR が `busy` 周辺に別々のラッパを持つため、ラッパの順序と #701 の anchor（元の `busy` 3行を不変に保つ必要がある）を確認する。
-
-## 2026-10-06: ヘビースピナーの連射中断→イカ（#686）
-
-開始mainは `6a9710307549e72d65a9bea53b59bce55e7faba2`。公開対象は `inkwave-public/` と有効な `patches/splatoon3/` であり、旧 `game/` は対象外。本家の実機計測を新たに追加した変更ではない。
-
-| 項目 | 内容 |
-|---|---|
-| 本家の根拠 | [S3 メインウェポン前隙・後隙の検証表](https://wikiwiki.jp/splatoon3mix/%E6%A4%9C%E8%A8%BC/%E3%83%A1%E3%82%A4%E3%83%B3%E3%82%A6%E3%82%A7%E3%83%9D%E3%83%B3/%E5%89%8D%E9%9A%99%E3%83%BB%E5%BE%8C%E9%9A%99)。連射中断後隙（`連射中断後隙`）の行で、バレルスピナーの射撃中断→イカ状態は**6F**（サブ5F / インク回復40F は別行）。コミュニティ検証表の値であり、今回の変更でSwitch実機を再計測したものではない |
-| INKWAVE の実装箇所 | `patches/splatoon3/runtime/weapons.mjs`。`WeaponRunner.prototype.busy` が射撃中の `streaming` を検知して `s3StreamInterrupt = 6/60` を開始し、その間 `Actor.update` のイカ形態を保留する。`WeaponRunner.prototype._splatling` は中断状態で射撃スケジュールを停止する。以前はイカ入力が新しいと `busy()` が無条件 false を返し、同一固定tickでイカ形態になってから射撃を消していた |
-| 再現操作 | ヘビースピナーをフルチャージ→ZR解放で `streaming === true`→射撃中にZL押下。固定1/60 tickで、押下tickを0として `form === 'kid'` が5完了フレーム継続し、6F境界で `squid` になることを確認する |
-| プレイへの影響 | 射撃中にZLで即イカに潜れなくなり、S3の連射中断後隙ぶん射撃姿勢が残る。攻撃を中断したときの被弾猶予が伸びる。48F/72Fチャージ閾値、80F/160Fのストリーム時間、4F連射間隔、弾道、拡散、移動値は変更していない |
-| 確認状態 | **ロジック確認済み**（source-fixture、実 `Actor.update`、1/60 tick）、`patches/splatoon3/tests/issue-686-splatling-stream-interrupt.test.mjs` 5/5 と既存のスピナー合成回帰。**本家Switch Ver.11.3.0でのフレーム単位実機比較と、30/60/120 Hz描画差の実端末確認は未確認**。サブ5F・インク回復40Fの中断族は本件では実装していない（別root） |
-
-自然な連射終了（#501のストリーム終了経路）と、チャージ中断→イカの経路は本件とは別状態として扱い、変更していない。伝令の Character 表示は authoritative な `form` を読むため、追加の1フレームsnapは導入していない。
-
-注: #679（チャージ中断）と #686（連射中断）は同一の6F回復ルートを2相で分けていたため、本ブランチ `inkwave/c-add100-fb6` で1つの変更に合成した。武装・1tick消費・解放の counter logic は `splatlingInterrupt` / `tickSplatlingInterrupt` / `releaseSplatlingInterrupt` に1箇所だけ残し、各相は独立したカウンタ（`s3ChargeInterruptT` / `s3StreamInterrupt`）を持つ。したがって #686 の「チャージ中断はこのタイマーを共有しない」という受入は、スロット分離と回帰 `issue-686-splatling-stream-interrupt.test.mjs` で確認している。修正前は両相とも ZL 押下の次の1 tick で `form === 'squid'` になることを、修正後は6完了フレーム保持・6F境界で1度だけ遷移することを同一の実コード fixture で確認した（Switch 実機のフレーム比較は未実施）。
-
-Batch C13 integration: an ordinary Charger release is cancelled if diving preempts its due tick, and expires after an action owning that tick. Native Actor regressions prove that resurfacing or Storm completion cannot replay the stale release. Launch-speed endpoint tests now exercise R+1 while asserting that R creates no flight; endpoint and piercing assertions remain unchanged.
 ## Gamepad lifecycle axes and disconnect camera filters — #681 / #676 (2026-10-05)
 
 Baseline main: b4d5c31e33258a0b6f874e42234448e404eec2d4. Owner comments were posted after checking all comments, timelines and open PR scopes. #654/#655 are excluded because existing PR536 already normalizes trigger rebase; #701 owns the separate Map look-filter interval.
@@ -347,8 +264,6 @@ Verification:16 behavioral regressions fail on unchanged baseline and pass after
 ### UI Actor lifetime: #616 / #672 / #685
 
 Page-lifetime HUD and Diorama state now releases its matching Match's Actor references at disposal; closed/stale map pins cannot call an old Actor. Minimap jump FX uses weakly correlated scalar tokens while preserving native landing fade. This is JavaScript lifecycle ownership, with no Nintendo numerical calibration or gameplay change. Source/minified/production-target regressions and explicit Node GC pass; physical heap/long-soak remains unverified. See [the focused report](inkwave-ui-actor-lifetime-2026-10-05.md).
-
-C13 CI integration: native browser records confirmed the Charger driver releases at frame80 and fires exactly one full-charge attack at81, with release pose first observed at81. The renderer verifier and failure fixtures now require81, rejecting80 and82, while preserving shot count/charge/pose-return/rig thresholds. Touch input regressions preserve one delivered edge and now explicitly assert the authoritative R/R+1 gap for both held releases and completed taps.
 
 ## 2026-10-05 teammate map information: #718
 
@@ -411,3 +326,34 @@ This is a follow-on delta after #721 at `33aa331`, itself based on main `37ab02f
 Only the navigator.getGamepads capability read is caught. A failed read supplies the existing no-pad cleanup path and advances the existing #721 pad epoch, so a render-pending old controller edge and its Player filter cannot survive the failure. The polling API is tried again on subsequent frames, allowing recovery without a new permission request or environment setting change. Match/controller/render errors are not caught here. No automatic input-mode switch, gyro setting, sensitivity, or game tuning changes.
 
 Dedicated source 6/6: 300 render frames at each 30/60/120Hz continue with keyboard movement; 300 touch frames retain native stick/button ownership, swipe and actual Gyro.consume delivery. A previously held pad loses all gameplay/menu edges and filtered look, and cannot consume a ready special through a buffered edge. Mouse, absent API, normal pad recovery and unrelated controller exception propagation are positive/negative controls. Combined input/pause/clock regressions are recorded with the completed patch. These are VM input/runtime tests, not a physical restricted iframe/WebView test or a Splatoon 3 hardware comparison. Combined emitted/browser acceptance remains with the integration batch; no separate PR/CI/build was started.
+
+
+### Live Turf lead / Danger (#99, duplicate #748)
+
+The quality adapter now supplies read-only physical-team lead/danger flags from total-stage coverage, preserves native Bravo HUD ordering and clears state below a 10-percentage-point gap or outside live Turf. Per-player status remains independent. Source/minified/emitted each pass 13 focused checks (including two verifier-negative checks); the prepared existing active-game probe covers both viewers, two viewport widths and controlled finish/Range suppression. Browser PNG/computed-style acceptance remains pending the consolidated CI. The 1.08 icon emphasis is a local layout value, not an exact Splatoon measurement. Full scope and reference caveats: `inkwave-live-turf-lead-99-748.md`.
+
+## 2026-10-05 final-minute BGM timing: #742
+
+Main now requests the existing zero-fade/no-bar-wait path only for the non-Boss one-minute event. Normal1.2-second transitions remain unchanged. Actual MusicEngine/Player tests at8bar phases show request+60ms incoming start, with existing30ms gain fade and50ms outgoing scheduling stop; native Match/FixedClock controls pass at30/60/90/120Hz. Source/minified/actual emitted9 each pass. This is scheduling-state evidence, not physical audio/Switch or multiplayer network latency measurement. [Details and limits](inkwave-final-minute-music-742.md).
+
+## 2026-10-06 — #780 visible blur cannot regain gamepad authority
+
+Base main `a3993f37a00cc2f0a7b01d954591b98fb6ae97e3`. The actual Input/PlayerController and PlatformGame/Lifecycle connection reproduced the Issue: visible blur, one neutral poll, then fresh stick and button input produced yaw -0.031207394862975805, pitch -0.013003081192906586, movement magnitude 0.8148148148148149, all five action intents true and lastDevice=pad while focused=false and lifecycle state=ACTIVE. This is a browser input-authority correction, not a change to Splatoon numerical tuning or a console-fidelity claim.
+
+InputPlatform now reads the existing page focus owner before polling. A new blur generation retires pending controller edges through the existing pad epoch. Polling cannot expose gameplay/menu pad state while unfocused. On focus return, the first available device goes through the existing direct-takeover owner, preserving consumed-stick neutral gates and canonical trigger thresholds; held buttons need physical release. It does not add a lifecycle subscriber/listener, broad simulation pause, permission request, sensor setting change or a second device-ownership mechanism. A no-pad interval preserves the pending rebase until a device is observable.
+
+Dedicated actual-module source tests 7/7 passed, with 30/60/120Hz schedules, whole blurred intervals, focus held/fresh boundaries, blur/focus between polls, render-pending special, analog triggers, direct replacement, absent pads and twenty lifecycle cycles. Adjacent input/pause/pad/clock/gyro tests passed 65/65. Authentic build `1ebf9cb1ac2037278d1116594dc0c359e58a90d5b9dc7e6b590f4c0028f16f22` passed. Actual emitted input/platform modules passed three 30/60/120Hz focus cases plus the existing combined policy boundary case (4/4). Independent review also passed four first-poll/held-return/keyboard-mouse/epoch cases. Physical browser focus dispatch and real Bluetooth/USB controllers remain unmeasured.
+
+Main advanced to `3d8a48d37ea5d6206e4f4185fa4a8229ae1c6977` during completion; its only new files are the separate Bomb contact fuse adapter/test/report (#723), with no overlap here. This local delta is held for a combined next batch; no individual source PR or CI run is started.
+
+## ScreenFX pending-damage reset — #772
+
+Reset now clears the pending damage attacker and angle together with the cancelled timer. This closes the pause→quit retainer without altering the native60ms burst, direction or paused visual clock. Source/minified9 each pass, including an isolated Node forced-GC baseline/fix comparison; physical full-game heap/GPU measurements are not claimed. See [scope and evidence](inkwave-screenfx-damage-reset-772.md).
+
+## 2026-10-06: reticle state / visible-vs-authoritative footprint (#711 #709 #757)
+
+チャージャー HUD の射程内判定を、フルチャージ固定から現在のチャージ量に応じた飛行距離（`chargerReach`）へ変更し、ブラスターの拡散拡大を外周リングのみに限定した（内側リングは静止サイズ）。インクストームの塗り位置を、その tick の見た目の雨半径と同じ範囲から選ぶようにした（#757）。弾道・数値・半径は不変。いずれも**ロジックのみ確認**で、ブラウザの実表示と Switch 実機との比較は**未確認**。本家の根拠・実装箇所・再現操作・影響は[詳細](inkwave-reticle-state-2026-10-06.md)を参照。
+
+## 2026-10-06 — Dualies wall-drop (#604) and composed-runtime guards
+
+Base main `67fec182`. Splat Dualies wall impacts now enter the existing sourced wall-drop state using the pinned 11.3.0 top-level `WallDropMoveParam`/`WallDropCollisionPaintParam` (shock 1.3, fall 0.65, ground 0.6; 20–40F + 10F + 15–35F at 0.06). Previously the round died on the contact frame after one generic impact. Damage is unchanged. Shooter (#385) and Charger (#625/#268) are excluded: Shooter is owned elsewhere, and the Charger record omits three period fields. #770, #777, #638/#637, #644/#643 and #556 were already correct after adapter composition (the reports read raw source). They are now pinned by composed-runtime tests. This is logic-level and emitted-verifier evidence; a Switch visual/frame comparison is still 未確認. Details: [inkwave-wall-drop-dualies-guards-2026-10-06.md](inkwave-wall-drop-dualies-guards-2026-10-06.md).

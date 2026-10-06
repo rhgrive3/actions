@@ -9,65 +9,6 @@ export function splatlingChargeCap(ink, w) {
   const fraction = Math.max(0, Math.min(1, ink / w.inkFull)), first = w.burstFirst / w.burstMax, boundary = w.firstChargeTime / w.chargeTime;
   return fraction <= first ? fraction / first * boundary : boundary + (fraction - first) / (1 - first) * (1 - boundary);
 }
-// Issues #679 / #686 — Heavy Splatling interruption → squid admission. The
-// S3 Ver. 11.3.0 verification table gives both cancel rows the same 6F
-// boundary: #679 charge interruption (sub 5F / squid 6F / ink recovery 29F)
-// and #686 continuous-fire interruption of an active stream (sub 5F / squid 6F
-// / ink recovery 40F). Both windows run on the simulation clock (6/60 s), so
-// the authoritative transition boundary is identical at every render cadence.
-// The sub and ink-recovery boundaries of both rows are deliberately not
-// modelled, and each cancel owns its own counter so neither recovery consumes
-// the other's window.
-export const SPLATLING_INTERRUPT = 6 / 60;
-const INTERRUPT_EPS = 1e-10;
-const INTERRUPT_SLOTS = {
-  // #679: the press cancels an established charge. The charge itself survives
-  // until the cancel commits, then is cleared exactly once.
-  charge: { time: 's3ChargeInterruptT', press: 's3ChargeInterruptPressT', live: r => r.charging },
-  // #686: the press interrupts an active stream, which the interruption itself
-  // stops — the later form switch never clears gameplay state.
-  stream: { time: 's3StreamInterrupt', press: 's3StreamInterruptPressT', live: r => r.streaming },
-};
-
-// Arms a slot on a fresh charge/stream-cancel press and reports whether its
-// window still owns the form decision. Arming happens on the press edge only,
-// so the second `busy()` call inside one actor update never restarts a running
-// window, and a press made while the state is not live never opens one.
-export function splatlingInterrupt(runner, actor, slot) {
-  const s = INTERRUPT_SLOTS[slot];
-  if (actor.weapon.kind !== 'splatling') return false;
-  const cancel = !!actor.intent.squid && actor._squidPressT > actor._firePressT;
-  if ((runner[s.press] ?? -1) !== actor._squidPressT) {
-    runner[s.press] = actor._squidPressT;
-    runner[s.time] = cancel && s.live(runner) ? SPLATLING_INTERRUPT : 0;
-  }
-  return (runner[s.time] ?? 0) > INTERRUPT_EPS;
-}
-
-// Shared once-per-weapon-update consumption of the two windows: exactly one
-// decrement per tick, never one per render frame, and at most one window is
-// live at a time because charging and streaming are mutually exclusive. The
-// slot that was live when the update started is returned so `_splatling` can
-// keep the stream interruption's own stop-firing behaviour.
-export function tickSplatlingInterrupt(runner, dt) {
-  if (runner.s3StreamInterrupt > 0) {
-    runner.s3StreamInterrupt = Math.max(0, runner.s3StreamInterrupt - dt);
-    return 'stream';
-  }
-  if (runner.s3ChargeInterruptT > 0) {
-    runner.s3ChargeInterruptT = Math.max(0, runner.s3ChargeInterruptT - dt);
-    return 'charge';
-  }
-  return null;
-}
-
-// Closes both windows (commit of the cancel, weapon reset, death). `press`
-// remembers the cancel press so an already-held ZL cannot re-arm the window it
-// just consumed; reset passes -1 because no press is outstanding there.
-export function releaseSplatlingInterrupt(runner, press) {
-  for (const s of Object.values(INTERRUPT_SLOTS)) { runner[s.time] = 0; runner[s.press] = press; }
-}
-
 export function ageDamage(weapon, age, baseDamage) {
   if (!(weapon.damageReduceEnd > weapon.damageReduceStart) || weapon.damageReduceStart < 0) return baseDamage;
   const k = Math.max(0, Math.min(1, (age - weapon.damageReduceStart) / (weapon.damageReduceEnd - weapon.damageReduceStart)));
@@ -117,23 +58,11 @@ export function installWeapons(context, profile) {
   WeaponRunner.prototype.reset = function (...args) {
     const result = reset.apply(this, args);
     this.s3Stored = null; this.s3Turret = false; this.s3FlickVertical = false; this.s3BlasterWindup = 0;
-    releaseSplatlingInterrupt(this, -1);
-    this.s3SloshRecovery = false; this.s3ReleaseHold = false; this.s3HeldCharge = 0; this.s3HeldChargeT = 0; this.s3ReleaseAt = 0; return result;
+    this.s3SloshRecovery = false; return result;
   };
   WeaponRunner.prototype.busy = function () {
     if (['charger','splatling'].includes(this.a.weapon.kind) && this.a.intent.squid && this.a._squidPressT > this.a._firePressT) return false;
     return this.s3BlasterWindup > 0 || busy.call(this);
-  };
-  // Issues #679 / #686: the later-squid bypass above must not skip either
-  // Heavy Splatling interruption. While a window is pending it owns the action,
-  // so Actor.update keeps the kid form; `_splatling` consumes the window on the
-  // authoritative weapon update. Installed after the override above so the
-  // build-time #416 Charger adapter keeps its anchor and stays composed.
-  const busyBeforeSplatlingInterrupt = WeaponRunner.prototype.busy;
-  WeaponRunner.prototype.busy = function () {
-    if (splatlingInterrupt(this, this.a, 'stream')) return true;
-    if (splatlingInterrupt(this, this.a, 'charge')) return true;
-    return busyBeforeSplatlingInterrupt.call(this);
   };
   const charger = WeaponRunner.prototype._charger;
   // S3 keeps a full charge only while ZR stays down; letting go of ZR before
@@ -147,13 +76,6 @@ export function installWeapons(context, profile) {
   };
   WeaponRunner.prototype._charger = function (dt, inp, w) {
     const a = this.a, held = !!a.intent.fire;
-    // A release may execute only on its next authoritative tick. If another
-    // action skipped that tick, retire it rather than replaying it on emergence
-    // or after a special finishes. Diving also cancels the pending release.
-    if (this.s3ReleaseHold && (a.form === 'squid' || G.time - this.s3ReleaseAt > dt + 1e-10)) {
-      this.s3ReleaseHold = false; this.s3HeldCharge = 0; this.s3HeldChargeT = 0;
-      cancelStored(this);
-    }
     if (this.s3Stored && !held) cancelStored(this);
     if (a.form === 'squid') {
       if (this.charging) {
@@ -173,32 +95,6 @@ export function installWeapons(context, profile) {
       // masked, and is restored once the actor forwards the trigger again.
       if (!inp.fire) { this.charge = 1; return; }
       this.charge = this.s3Stored.charge; this.chargeT = 1; this.charging = true; this.s3Stored = null;
-    }
-    // Splatoon 3 defines a 1F release gap (発射隙) between recognizing that ZR
-    // was released and the attack hitbox becoming active. Latch the charge and
-    // its amount on the release tick, then create the authoritative shot on the
-    // following fixed simulation tick. One tick per fixed step keeps the gap
-    // identical at 30/60/120 Hz render cadence because the gameplay clock
-    // always advances in STEP increments.
-    if (this.s3ReleaseHold) {
-      this.s3ReleaseHold = false;
-      this.charging = true;
-      this.charge = this.s3HeldCharge;
-      this.chargeT = this.s3HeldChargeT;
-      this.s3HeldCharge = 0; this.s3HeldChargeT = 0;
-      return charger.call(this, dt, { fire: false }, w);
-    }
-    if (this.charging && !held && !inp.fire) {
-      this.s3ReleaseHold = true;
-      this.s3ReleaseAt = G.time;
-      this.s3HeldCharge = this.charge;
-      this.s3HeldChargeT = this.chargeT;
-      this.charging = false;
-      // The release pose begins at recognition; only the attack/ink/cooldown are
-      // deferred to the shot frame by the S3 release gap.
-      this.firingT = Math.max(this.firingT, 0.35);
-      this.chargeLoop?.stop(.05); this.chargeLoop = null;
-      return;
     }
     return charger.call(this, dt, inp, w);
   };
@@ -297,20 +193,8 @@ export function installWeapons(context, profile) {
   };
   const splatling = WeaponRunner.prototype._splatling;
   WeaponRunner.prototype._splatling = function (dt, input, w) {
-    // Issues #679/#686: both windows advance only with the authoritative weapon
-    // update — exactly one decrement per tick, never one per render frame.
-    if (tickSplatlingInterrupt(this, dt) === 'stream') {
-      // #686: the interruption stops stream-shot scheduling itself; the later
-      // form switch is never the mechanism that clears gameplay state.
-      this.charging = this.streaming = false;
-      this.charge = this.chargeT = this.burstT = 0;
-      this.spinLoop?.stop(.12); this.spinLoop = null;
-      return;
-    }
     if(this.a.form === 'squid') {
       this.charging = this.streaming = false; this.charge = this.chargeT = this.burstT = 0;
-      // the cancel commits exactly once, when squid form is admitted
-      releaseSplatlingInterrupt(this, this.a._squidPressT);
       this.spinLoop?.stop(.12); this.spinLoop = null; return;
     }
     const charging = this.charging, charge = this.charge;

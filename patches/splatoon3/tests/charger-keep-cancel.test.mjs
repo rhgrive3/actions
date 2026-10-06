@@ -92,7 +92,7 @@ test('a fresh hold after cancellation charges normally and cannot resurrect the 
   assert.equal(r.charging, true);
   assert.ok(r.charge < .999, 'ordinary charging, not a restored full charge');
   a.intent.fire = false;
-  f.tick(a, 2);                                // S3 1F release gap: shot on R+1
+  f.tick(a);
   assert.equal(f.shots.length, 1);
   assert.ok(f.shots[0].charge < 1, 'the stale full charge is never fired');
 });
@@ -200,7 +200,7 @@ test('holding ZR continuously preserves charge keep and still fires the full sho
   assert.equal(r.charging, true);
   assert.ok(r.charge >= .999);
   a.intent.fire = false;                       // release ZR -> fire the kept full charge
-  f.tick(a, 2);                                // S3 1F release gap: shot on R+1
+  f.tick(a);
   assert.equal(f.shots.length, 1);
   assert.equal(f.shots[0].charge, 1);
 });

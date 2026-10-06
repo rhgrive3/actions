@@ -31,11 +31,17 @@ export function installChargerFlight(api,completion) {
   Object.defineProperty(P,INSTALLED,{value:true});
   const raw=completion.weapons.charger.MoveParam,collision=completion.weapons.charger.CollisionParam;
   const nativeGhost=P.ghostFire,nativeUpdate=P.update,nativeClear=P.clear;
+  // Single source of the finite flight distance (world units); begin() and the HUD reach query share it.
+  const reachFor=charge=>{
+    charge=Math.max(0,Math.min(1,Number.isFinite(charge)?charge:0));
+    return charge>=.999?raw.DistanceFullCharge:raw.DistanceMinCharge+(raw.DistanceMaxCharge-raw.DistanceMinCharge)*charge;
+  };
+  P.chargerReach=function(charge){return reachFor(charge);};
   function begin(system,actor,w,charge,origin,dir,ghost=false,maxDistance=null){
     charge=Math.max(0,Math.min(1,Number.isFinite(charge)?charge:0));
     const full=charge>=.999;
     const speed=full?60*raw.SpawnSpeedFullCharge:chargerLaunchSpeed(raw,charge);
-    const distance=maxDistance??(full?raw.DistanceFullCharge:raw.DistanceMinCharge+(raw.DistanceMaxCharge-raw.DistanceMinCharge)*charge);
+    const distance=maxDistance??reachFor(charge);
     const direction=dir.clone().normalize();
     if(!Number.isFinite(distance)||distance<=0||direction.lengthSq()<EPS)return;
     const job={owner:actor,team:actor.team,weapon:{...w},charge,full,speed,range:distance,travel:0,origin:origin.clone(),dir:direction,
