@@ -227,6 +227,18 @@ export function adaptSource(rel, code) {
       '      const k = s.t + 1e-10 >= s.dur ? 1 : Math.min(1, s.t / s.dur);', 'super jump frame boundary');
     code = replaceOnce(code, "      if (k >= 1) {\n        this.superJumpState = null;",
       "      if (k >= 1) {\n        this.invuln = 0; // Spawn protection always ends before landing.\n        this.superJumpState = null;", 'super jump landing vulnerability');
+    code = replaceOnce(code,
+      '    const fireWins = (intent.fire || this.fireBuffer > 0) && this._firePressT >= this._squidPressT;\n' +
+      '    const wantSquid = intent.squid && !fireWins && !this.weaponRunner.busy();\n',
+      '    // Sample the last native ground hit before choosing the next movement/collision form.\n' +
+      '    this._surface();\n' +
+      '    const enemyGrounded = this.grounded && this.groundTeam === 2 && !this.climbing;\n' +
+      '    const fireWins = (intent.fire || this.fireBuffer > 0) && this._firePressT >= this._squidPressT;\n' +
+      '    const wantSquid = intent.squid && !fireWins && !this.weaponRunner.busy() && !enemyGrounded;\n',
+      'enemy ink swim-form eligibility');
+    code = replaceOnce(code,
+      "    // ---- surface under feet (from last frame's ground probe; position hasn't moved since)\n    this._surface();\n",
+      '', 'move surface sample before form selection');
     const start = code.indexOf('    // ---- ink / hp\n');
     const end = code.indexOf('    // ---- weapons (', start);
     if (start < 0 || end < start) throw new Error('INKWAVE patch conflict: actor resource connection');
