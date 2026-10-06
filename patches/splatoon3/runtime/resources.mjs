@@ -29,8 +29,9 @@ export function updateResources(a, dt) {
     if (a.s3) a.s3.enemyInkTime = 0;
     a.damageFromInk = Math.max(0, a.damageFromInk - dt * r.enemyInkRecovery);
   }
+  const swimmingForRecovery = a.submerged || (isSquid && a.climbing);
   if (!onEnemy && a.lastDamage + 1e-10 >= r.regenDelay && a.hp < P.hp) {
-    a.hp = Math.min(P.hp, a.hp + (a.submerged ? r.regenRateSwim : r.regenRate) * dt);
+    a.hp = Math.min(P.hp, a.hp + (swimmingForRecovery ? r.regenRateSwim : r.regenRate) * dt);
   }
   const wasFull = a.ink >= P.inkMax;
   const weaponDelay = a.weapon.inkRecoverStop ?? r.inkRefillDelay;
