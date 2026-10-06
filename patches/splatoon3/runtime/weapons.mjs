@@ -36,6 +36,36 @@ export function chargerDamage(actor, weapon, charge) {
   if (elapsed + 1e-10 < minimum) return legacy;
   return Math.min(weapon.damagePartialMax, weapon.damageMin + (elapsed - minimum) * rate);
 }
+export const SPLATLING_INTERRUPT = 6 / 60;
+const INTERRUPT_EPS = 1e-10;
+const INTERRUPT_SLOTS = {
+  charge: { time: 's3ChargeInterruptT', press: 's3ChargeInterruptPressT', live: r => r.charging },
+  stream: { time: 's3StreamInterrupt', press: 's3StreamInterruptPressT', live: r => r.streaming },
+};
+export function splatlingInterrupt(runner, actor, slot) {
+  const x = INTERRUPT_SLOTS[slot];
+  if (actor.weapon.kind !== 'splatling') return false;
+  const cancel = !!actor.intent.squid && actor._squidPressT > actor._firePressT;
+  if ((runner[x.press] ?? -1) !== actor._squidPressT) {
+    runner[x.press] = actor._squidPressT;
+    runner[x.time] = cancel && x.live(runner) ? SPLATLING_INTERRUPT : 0;
+  }
+  return (runner[x.time] ?? 0) > INTERRUPT_EPS;
+}
+export function tickSplatlingInterrupt(runner, dt) {
+  if (runner.s3StreamInterrupt > 0) {
+    runner.s3StreamInterrupt = Math.max(0, runner.s3StreamInterrupt - dt);
+    return 'stream';
+  }
+  if (runner.s3ChargeInterruptT > 0) {
+    runner.s3ChargeInterruptT = Math.max(0, runner.s3ChargeInterruptT - dt);
+    return 'charge';
+  }
+  return null;
+}
+export function releaseSplatlingInterrupt(runner, press) {
+  for (const x of Object.values(INTERRUPT_SLOTS)) { runner[x.time] = 0; runner[x.press] = press; }
+}
 export function ageDamage(weapon, age, baseDamage) {
   if (!(weapon.damageReduceEnd > weapon.damageReduceStart) || weapon.damageReduceStart < 0) return baseDamage;
   const k = Math.max(0, Math.min(1, (age - weapon.damageReduceStart) / (weapon.damageReduceEnd - weapon.damageReduceStart)));
@@ -120,6 +150,7 @@ export function installWeapons(context, profile) {
     this.s3ChargerStartupT = 0; this.s3ChargerHeldGate = false; this.s3ChargerRepeat = false;
     this.s3ChargerSpent = 0; this.s3ChargerProgressiveSpend = false; this.s3ChargerHeldTime = 0;
     this.s3ReleaseHold = false; this.s3HeldCharge = 0; this.s3HeldChargeT = 0; this.s3ReleaseAt = 0;
+    releaseSplatlingInterrupt(this, -1);
     this.s3ChargerPostShot = 0; this.s3DualiesPostShot = 0; this.s3DodgeShotPending = 0;
     this.s3ShooterHeld = false; this.s3ShooterPendingFirst = false; this.s3ShooterFirstRemaining = 0;
     this.s3SwimFireQueued = false; this.s3SwimFireRemaining = 0; this.s3PostFireLockActive = false;
@@ -169,6 +200,11 @@ export function installWeapons(context, profile) {
       input = next;
     }
     return runnerUpdate.call(this, dt, input);
+  };
+  const busyBeforeSplatlingInterrupt = WeaponRunner.prototype.busy;
+  WeaponRunner.prototype.busy = function () {
+    if (splatlingInterrupt(this, this.a, 'stream') || splatlingInterrupt(this, this.a, 'charge')) return true;
+    return busyBeforeSplatlingInterrupt.call(this);
   };
   const charger = WeaponRunner.prototype._charger;
   const chargerInkAt = (w, progress) => {
@@ -480,7 +516,7 @@ export function installWeapons(context, profile) {
     if (input.fire && this.cooldown <= 0 && this.a.ink >= w.inkPerShot) { this.s3BlasterWindup = w.preDelay; this.firingT = .35; return; }
     if (!input.fire) this.cooldown = Math.max(0, this.cooldown);
   };
-  installSplatling(api, profile, { splatlingChargeCap, splatlingReservation });
+  installSplatling(api, profile, { splatlingChargeCap, splatlingReservation, tickSplatlingInterrupt, releaseSplatlingInterrupt });
   // Movement Physics owns roller rolling speed/recovery. Add only the latest
   // Charger charging-speed rule here, then delegate every other movement state.
   const moveSpeed = WeaponRunner.prototype.moveSpeed;

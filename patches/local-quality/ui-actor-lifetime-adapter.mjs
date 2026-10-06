@@ -46,10 +46,10 @@ export function adaptUiActorLifetime(rel, code, once) {
     patch('    if (!this.on) return;', '    if (!this.on) { this.releaseMatchActors(); return; }', 'closed map drops targets even without further live HUD ticks');
     patch('    if (!me || !cam) return;', '    if (!me || !cam) { this.releaseMatchActors(); return; }', 'missing live owner drops targets');
     patch('    const allies = (G.actors || []).filter', '    this._targetMatch = G.match;\n    const allies = (G.actors || []).filter', 'bind pins to the Match whose roster was displayed');
-    patch('    const p = this.pins[i];\n    if (!me || !me.canSuperJump', `    const p = this.pins[i];
+    patch('  _jump(i, me) {\n    const p = this.pins[i];', `  _jump(i, me) {
+    const p = this.pins[i];
     if (!me || !this.on || this.k < 0.7 || !p || me !== G.match?.local || G.match?.attract ||
-        (i < 3 && (!p.target || !G.actors?.includes(p.target) || p.target === me || p.target.team !== me.team))) return;
-    if (!me || !me.canSuperJump`, 'reject a retired pin before calling the native jump owner');
+        (i < 3 && (!p.target || !G.actors?.includes(p.target) || p.target === me || p.target.team !== me.team))) return;`, 'reject a retired pin before calling the native jump owner');
   }
   if (rel === 'src/game/minimap.js') {
     patch('const fxList = [];', `const fxList = [];

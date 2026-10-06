@@ -24,8 +24,8 @@ export function adaptIdleSource(rel, code, replace) {
     patch("    if ('quality' in partial || 'shadows' in partial || 'bloom' in partial) this.R?.applySettings(this.settings);",
       "    if ('quality' in partial || 'shadows' in partial || 'bloom' in partial) this.R?.applySettings(this.settings);\n    if ('quality' in partial) refreshEnvironmentBudget(G.env, this.settings, this.mobile);", 'resource quality refresh');
     patch('    const worldHidden = setUp;', '    const pausedFrame = pausedWorldFrame(this, G);\n    const menuAttractBudget = idleAttractMenuBudget(this, G);\n    const worldHidden = setUp || pausedFrame.paused || (menuAttractBudget && !this._menuAttractFrame);\n    const worldDt = menuAttractBudget ? this._menuAttractFrameDelta : dt;', 'offline pause and idle attract budget');
-    patch('if (!m || !m.paused) G.fx.update(dt, G.camera);', 'if (!m || !m.paused) G.fx.update(worldDt, G.camera);', 'attract FX cadence');
-    patch('if (!m || !m.paused) this.fxHooks?.update?.(dt);', 'if (!m || !m.paused) this.fxHooks?.update?.(worldDt);', 'attract FX hooks cadence');
+    patch('G.fx.update(dt, G.camera);', 'G.fx.update(worldDt, G.camera);', 'attract FX cadence');
+    patch('this.fxHooks?.update?.(dt);', 'this.fxHooks?.update?.(worldDt);', 'attract FX hooks cadence');
     patch('this.screenfx?.update?.(dt, this);', 'this.screenfx?.update?.(worldDt, this);', 'attract screen FX cadence');
     patch('G.env.update?.(dt, G.camera);', 'G.env.update?.(worldDt, G.camera);', 'attract environment cadence');
     patch('this.decor.update(dt);', 'this.decor.update(worldDt);', 'attract decor cadence');

@@ -24,19 +24,37 @@ function adaptIssue427Net(code) {
     code = replaceOnce(code, before, after, 'issue-427 net: ' + label);
   };
 
-  // Track pending hit on shooter owner when sending cross-owner hit, binding observed victim life
-  if (code.includes("h: (this._hitSeq = (this._hitSeq ?? 0) + 1),")) {
-    patch(
-      "  sendHit(attacker, victim, dmg, wid) {\n    if (victim.owner === this.myId) return false;\n    this.s.tr?.sendTo(victim.owner, { k: 'hit', v: victim.nid, a: attacker.nid, l: victim.netLife, h: (this._hitSeq = (this._hitSeq ?? 0) + 1), d: r2(dmg), w: wid });\n    return true;\n  }",
-      "  sendHit(attacker, victim, dmg, wid) {\n    if (victim.owner === this.myId) return false;\n    const h = (this._hitSeq = (this._hitSeq ?? 0) + 1);\n    (this._pendingHits || (this._pendingHits = new Map())).set(h, { a: attacker.nid, v: victim.nid, vo: victim.owner, vl: victim.netLife ?? 0, al: attacker.netLife ?? 0, ao: attacker.owner, w: wid, d: dmg });\n    if (this._pendingHits.size > 120) this._pendingHits.delete(this._pendingHits.keys().next().value);\n    this.s.tr?.sendTo(victim.owner, { k: 'hit', v: victim.nid, a: attacker.nid, l: victim.netLife, h, d: r2(dmg), w: wid });\n    return true;\n  }",
-      'track pending hit'
-    );
+  // Preserve the current payload (precision, damage group and later sidecars).
+  // Only take ownership of the existing sequence expression and pending receipt.
+  const sequence = "h: (this._hitSeq = (this._hitSeq ?? 0) + 1),";
+  if (code.includes(sequence)) {
+    patch('    if (victim.owner === this.myId) return false;',
+      `    if (victim.owner === this.myId) return false;
+    const h = (this._hitSeq = (this._hitSeq ?? 0) + 1);
+    (this._pendingHits || (this._pendingHits = new Map())).set(h, { a: attacker.nid, v: victim.nid, vo: victim.owner, vl: victim.netLife ?? 0, al: attacker.netLife ?? 0, ao: attacker.owner, w: wid, d: dmg });
+    if (this._pendingHits.size > 120) this._pendingHits.delete(this._pendingHits.keys().next().value);`,
+      'track pending hit');
+    patch(sequence, 'h,', 'pending sequence uses existing payload');
   }
 
-  // Victim owner captures actual accepted damage and killed state during applyHit and sends ACK with victim life
+  // Keep the existing grouped/ungrouped damage call intact inside the ACK scope.
+  const applyHitCall = code.includes('G.projectiles?.applyHit(atk, v, d.d, d.w, d.g);')
+    ? 'G.projectiles?.applyHit(atk, v, d.d, d.w, d.g);'
+    : 'G.projectiles?.applyHit(atk, v, d.d, d.w);';
   patch(
-    "    const applying = this._applyingHit;\n    this._applyingHit = true;\n    try { G.projectiles?.applyHit(atk, v, d.d, d.w); }\n    finally { this._applyingHit = applying; }",
-    "    const applying = this._applyingHit;\n    this._applyingHit = true;\n    let acceptedDmg = 0, killed = false;\n    const unDmg = on('damage', ev => { if (ev.victim === v && ev.attacker === atk) acceptedDmg += ev.amount; });\n    const unSplat = on('splatted', ev => { if (ev.victim === v && ev.attacker === atk) killed = true; });\n    try { G.projectiles?.applyHit(atk, v, d.d, d.w); }\n    finally {\n      unDmg();\n      unSplat();\n      this._applyingHit = applying;\n    }\n    this.s.tr?.sendTo(from ?? atk.owner, { k: 'hit_ack', h: d.h, v: v.nid, a: atk.nid, d: r2(acceptedDmg), kld: killed ? 1 : 0, vl: v.netLife ?? 0 });",
+    "    const applying = this._applyingHit;\n    this._applyingHit = true;\n    try { " + applyHitCall + " }\n    finally { this._applyingHit = applying; }",
+    `    const applying = this._applyingHit;
+    this._applyingHit = true;
+    let acceptedDmg = 0, killed = false;
+    const unDmg = on('damage', ev => { if (ev.victim === v && ev.attacker === atk) acceptedDmg += ev.amount; });
+    const unSplat = on('splatted', ev => { if (ev.victim === v && ev.attacker === atk) killed = true; });
+    try { ${applyHitCall} }
+    finally {
+      unDmg();
+      unSplat();
+      this._applyingHit = applying;
+    }
+    this.s.tr?.sendTo(from ?? atk.owner, { k: 'hit_ack', h: d.h, v: v.nid, a: atk.nid, d: r2(acceptedDmg), kld: killed ? 1 : 0, vl: v.netLife ?? 0 });`,
     'victim send hit_ack'
   );
 
@@ -54,12 +72,20 @@ function adaptIssue427Net(code) {
     'terminal assist event'
   );
 
-  // Clear pending hits on remote actor respawn
-  patch(
-    "  _remoteRespawn(a) {\n    a.alive = true; a.hp = PLAYER.hp; a.invuln = PLAYER.spawnInvuln;\n    a.respawnTimer = 0;\n    a.net.spawnPending = true;\n  }",
-    "  _remoteRespawn(a) {\n    a.alive = true; a.hp = PLAYER.hp; a.invuln = PLAYER.spawnInvuln;\n    a.respawnTimer = 0;\n    a.net.spawnPending = true;\n    if (this._pendingHits) {\n      for (const [h, p] of this._pendingHits) if (p.v === a.nid) this._pendingHits.delete(h);\n    }\n    emit('combat:respawn', { actor: a });\n  }",
-    'clean pending on remote respawn'
-  );
+  // Append retirement after the live owner's complete reset, preserving other fields.
+  const respawnOpen = '  _remoteRespawn(a) {';
+  const respawnStart = code.indexOf(respawnOpen);
+  const respawnEnd = code.indexOf('\n  }\n', respawnStart);
+  if (respawnStart < 0 || respawnEnd < respawnStart || code.indexOf(respawnOpen, respawnStart + respawnOpen.length) >= 0)
+    throw new Error('INKWAVE issue-427 patch conflict (remote respawn boundary)');
+  const respawnMethod = code.slice(respawnStart, respawnEnd + 4);
+  patch(respawnMethod,
+    respawnMethod.slice(0, -4) + `
+    if (this._pendingHits) {
+      for (const [h, p] of this._pendingHits) if (p.v === a.nid) this._pendingHits.delete(h);
+    }
+    emit('combat:respawn', { actor: a });
+  }`, 'clean pending on remote respawn');
 
   // Clear pending hits on reconnect/dispose
   // Keep the native dispose() opening intact for the later network-replication
@@ -115,7 +141,78 @@ function adaptIssue427Net(code) {
   return code;
 }
 
+function adaptCurrentFlow427(code) {
+  const patch = (before, after, label) => { code = replaceOnce(code, before, after, 'issue-427 current flow: ' + label); };
+  patch('credits = new WeakMap(), respawning = new WeakMap();', 'credits = new WeakMap(), respawning = new WeakMap(), terminals = new WeakMap();', 'owner terminal storage');
+  patch('    if (!a?.alive || a.isBot && cfg.bots === false || G.match?.attract) return;', '    if (a?.remote || !a?.alive || a.isBot && cfg.bots === false || G.match?.attract) return;', 'local progression only');
+  patch('    credits.delete(this);', '    credits.delete(this); terminals.delete(this);', 'reset terminal history');
+  patch('    const map = credits.get(victim) || new Map(); map.set(attacker, G.time); credits.set(victim, map);', '    const map = credits.get(victim) || new Map(); map.set(attacker, { time: G.time, victimLife: victim?.netLife ?? 0, helperLife: attacker.netLife ?? 0 }); credits.set(victim, map);', 'credit epochs');
+  patch("    if (attacker && attacker !== victim && attacker.team !== victim.team) award(attacker, 'splat', 1);", "    const term = terminal427(victim, attacker, victim?.netLife ?? 0);\n    splat427(attacker, victim, term);", 'local terminal splat');
+  patch('[...(credits.get(victim) || [])].filter(([, time]) => G.time - time <= cfg.assistWindow).map(([helper]) => helper);', '[...(credits.get(victim) || [])].filter(([helper, credit]) => validCredit427(helper, victim, credit)).map(([helper]) => helper);', 'typed credit filtering');
+  patch("      helper.stats.assists = (helper.stats.assists || 0) + 1;\n      award(helper, 'assist', 1);\n      emit('actor:assist', { actor: helper, victim, attacker });", '      assist427(helper, victim, attacker, term);', 'one assist owner');
+  patch('    penalizeFlowDeath(state(victim), cause, cfg);', '    if (!victim.remote) penalizeFlowDeath(state(victim), cause, cfg);', 'keep local death progress');
+  const helpers = `  function terminal427(victim, attacker, life) {
+    if (!victim || life !== (victim.netLife ?? 0)) return null;
+    const epoch = Number.isFinite(victim.netLife) ? String(life) : 'offline:' + String(victim.stats?.deaths ?? 0);
+    let term = terminals.get(victim);
+    if (!term || term.epoch !== epoch) {
+      term = { epoch, life, time: G.time, killer: attacker, assisted: new Set(), splatAwarded: false };
+      terminals.set(victim, term);
+    }
+    return term;
+  }
+  function validCredit427(helper, victim, credit) {
+    const time = typeof credit === 'number' ? credit : credit.time;
+    return G.time >= time && G.time - time <= cfg.assistWindow &&
+      (typeof credit === 'number' || (credit.victimLife === (victim.netLife ?? 0) && credit.helperLife === (helper.netLife ?? 0)));
+  }
+  function assist427(helper, victim, attacker, term) {
+    if (!term || !helper || helper.remote || helper === attacker || helper === victim || helper.team !== attacker?.team || term.assisted.has(helper)) return;
+    term.assisted.add(helper);
+    helper.stats.assists = (helper.stats.assists || 0) + 1;
+    award(helper, 'assist', 1);
+    emit('actor:assist', { actor: helper, victim, attacker });
+  }
+  function splat427(attacker, victim, term) {
+    if (!term || !attacker?.alive || attacker.remote || term.splatAwarded || attacker === victim || attacker.team === victim.team || G.match?.attract) return;
+    term.splatAwarded = true;
+    // Kept as a single build hook for #481's consecutive-splat owner.
+    if (attacker && attacker !== victim && attacker.team !== victim.team) award(attacker, 'splat', 1);
+  }
+  function terminalAssists427(victim, attacker, term) {
+    for (const [helper, credit] of credits.get(victim) || []) if (validCredit427(helper, victim, credit)) assist427(helper, victim, attacker, term);
+  }
+  on('combat:terminal', ({ victim, attacker, victimLife }) => {
+    const term = terminal427(victim, attacker, victimLife ?? victim?.netLife ?? 0);
+    if (!term) return;
+    terminalAssists427(victim, attacker, term);
+    credits.delete(victim);
+  });
+  on('combat:confirmed', ({ attacker, victim, damage, killed, victimLife, helperLife }) => {
+    if (!attacker || attacker.remote || !victim || attacker === victim || attacker.team === victim.team ||
+      (victimLife ?? victim.netLife ?? 0) !== (victim.netLife ?? 0) ||
+      (helperLife ?? attacker.netLife ?? 0) !== (attacker.netLife ?? 0)) return;
+    if (damage > 0) {
+      award(attacker, 'damage', damage);
+      const term = terminals.get(victim);
+      if (term && term.life === (victim.netLife ?? 0) && !killed && attacker !== term.killer && Math.abs(G.time - term.time) <= cfg.assistWindow) assist427(attacker, victim, term.killer, term);
+      else if (!killed) {
+        const map = credits.get(victim) || new Map(); map.set(attacker, { time: G.time, victimLife: victim.netLife ?? 0, helperLife: attacker.netLife ?? 0 }); credits.set(victim, map);
+      }
+    }
+    if (killed) {
+      const term = terminal427(victim, attacker, victimLife ?? victim.netLife ?? 0);
+      splat427(attacker, victim, term); terminalAssists427(victim, attacker, term); credits.delete(victim);
+    }
+  });
+  for (const event of ['respawn', 'combat:respawn']) on(event, ({ actor }) => { if (actor) { credits.delete(actor); terminals.delete(actor); } });
+`;
+  patch("  on('turf', ({ actor, area }) => award(actor, 'turf', area));", helpers + "  on('turf', ({ actor, area }) => award(actor, 'turf', area));", 'confirmed owner listeners');
+  return code;
+}
+
 function adaptIssue427Flow(code) {
+  if (code.includes('credits = new WeakMap(), respawning = new WeakMap();')) return adaptCurrentFlow427(code);
   const patch = (before, after, label) => {
     code = replaceOnce(code, before, after, 'issue-427 flow: ' + label);
   };
@@ -218,6 +315,19 @@ function adaptIssue427Gear(code) {
   const patch = (before, after, label) => {
     code = replaceOnce(code, before, after, 'issue-427 gear: ' + label);
   };
+  const conditional = `  api.on('splatted', ({ attacker, victim }) => {
+    if (attacker?.s3 && victim && attacker !== victim && attacker.team !== victim.team) {
+      attacker.s3.splatsThisLife = (attacker.s3.splatsThisLife || 0) + 1;
+      if (attacker.s3.quickRespawnHistory) attacker.s3.quickRespawnHistory.splats++;
+    }
+  });`;
+  if (code.includes(conditional)) {
+    const local = conditional.replace('attacker?.s3 && victim', 'attacker?.s3 && !attacker.remote && victim');
+    const confirmed = local.replace("api.on('splatted', ({ attacker, victim })", "api.on('combat:confirmed', ({ attacker, victim, killed })")
+      .replace('if (attacker?.s3', 'if (killed && attacker?.s3');
+    patch(conditional, local + '\n' + confirmed, 'current QR history local and confirmed ownership');
+    return code;
+  }
   patch(
     "  api.on('splatted', ({ attacker }) => { if (attacker?.s3) attacker.s3.splatsThisLife = (attacker.s3.splatsThisLife || 0) + 1; });",
     "  api.on('splatted', ({ attacker }) => { if (attacker && !attacker.remote && attacker?.s3) attacker.s3.splatsThisLife = (attacker.s3.splatsThisLife || 0) + 1; });\n  api.on('combat:confirmed', ({ attacker, killed }) => { if (killed && attacker && !attacker.remote && attacker?.s3) attacker.s3.splatsThisLife = (attacker.s3.splatsThisLife || 0) + 1; });",

@@ -33,8 +33,8 @@ export function adaptIssue484Net(code) {
   // 2. Replicate specialReady flag in packActor
   code = replaceOnce(
     code,
-    '  if (a.invuln > 0) f |= F.invuln;\n  if (a.onEnemy) f |= F.enemy;',
-    '  if (a.invuln > 0) f |= F.invuln;\n  if (a.onEnemy) f |= F.enemy;\n  if (a.specialReady?.()) f |= F.specialReady;',
+    '  if (a.onEnemy) f |= F.enemy;',
+    '  if (a.onEnemy) f |= F.enemy;\n  if (a.specialReady?.()) f |= F.specialReady;',
     'netmatch packActor specialReady flag'
   );
 

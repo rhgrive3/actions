@@ -12,6 +12,7 @@ const INSTALLED = Symbol.for('inkwave.weapons-fidelity.v1');
 let api, completion, moves, slosherVolleySequence = 0;
 const clamp01 = value => Math.max(0, Math.min(1, value));
 const radians = degrees => degrees * Math.PI / 180;
+const MAIN_SHOT_LIFETIME = 1.2;
 
 function freezeDeep(value) {
   if (value && typeof value === 'object' && !Object.isFrozen(value)) {
@@ -50,6 +51,100 @@ export function advanceFidelityProjectile(p, dt) {
   }
   p.pos.addScaledVector(p.vel, step);
   if (isKitProjectile(p)) kitTrizookaOrbitDelta(null, p, step);
+}
+
+// Reuse the production integrator and shooter-family lifetime for a zero-spread centerline prediction.
+// The scratch projectile is shared because firing and aim solving are synchronous.
+let aimProbe = null;
+
+function fidelityAimHeight(from, dx, dz, distance, pitch, speed, straight, move) {
+  const probe = aimProbe || (aimProbe = {
+    pos: new api.THREE.Vector3(), prev: new api.THREE.Vector3(), vel: new api.THREE.Vector3(),
+    age: 0, life: MAIN_SHOT_LIFETIME, straight: 0, grav: 0, drag: 0,
+    fidelityMove: null, fidelityPhase: 0, fidelityPrevAge: 0,
+  });
+  const horizontal = Math.cos(pitch) * speed;
+  probe.pos.copy(from);
+  probe.prev.copy(from);
+  probe.vel.set(dx * horizontal, Math.sin(pitch) * speed, dz * horizontal);
+  probe.age = 0;
+  probe.life = MAIN_SHOT_LIFETIME;
+  probe.straight = straight;
+  probe.grav = move.freeGravity;
+  probe.drag = move.freeDrag * move.hz;
+  probe.fidelityMove = move;
+  probe.fidelityPhase = 0;
+
+  const dt = 1 / move.hz;
+  let beforeAlong = 0;
+  for (let frame = 0; frame < move.hz * MAIN_SHOT_LIFETIME; frame++) {
+    const beforeY = probe.pos.y;
+    advanceFidelityProjectile(probe, dt);
+    const afterAlong = (probe.pos.x - from.x) * dx + (probe.pos.z - from.z) * dz;
+    if (afterAlong >= distance) {
+      const fraction = (distance - beforeAlong) / (afterAlong - beforeAlong);
+      return beforeY + (probe.pos.y - beforeY) * fraction - from.y;
+    }
+    beforeAlong = afterAlong;
+  }
+  return NaN;
+}
+
+/** Adjust only the launch pitch, using the same installed movement record and integrator as the fired round. */
+export function fidelityAimConvergence(from, dir, target, weapon, speed = weapon?.projSpeed) {
+  const move = fidelityMoveFor(weapon);
+  if (!move) throw new Error(`Missing fidelity movement record for aim convergence: ${weapon?.id}`);
+
+  const targetX = target.x - from.x, targetZ = target.z - from.z;
+  const distance = Math.hypot(targetX, targetZ);
+  const dirLength = Math.hypot(dir.x, dir.z);
+  const maxDist = weapon.range;
+  if (distance < 1.5 || distance > maxDist || !Number.isFinite(speed) || speed <= 0 || dirLength < 1e-4) return false;
+
+  const dx = dir.x / dirLength, dz = dir.z / dirLength;
+  const targetHeight = target.y - from.y;
+  const initialPitch = Math.atan2(dir.y, dirLength);
+  const initialError = fidelityAimHeight(from, dx, dz, distance, initialPitch, speed, weapon.straightTime, move) - targetHeight;
+  if (!Number.isFinite(initialError) || Math.abs(initialError) < 0.005) return false;
+
+  // Search only around the camera-derived pitch, preserving the old solver's
+  // bounded correction and avoiding a high-arc solution on the other branch.
+  const low = Math.max(-1.2, initialPitch - 0.35);
+  const high = Math.min(1.2, initialPitch + 0.35);
+  const scans = 32;
+  let previousPitch = low;
+  let previousError = fidelityAimHeight(from, dx, dz, distance, previousPitch, speed, weapon.straightTime, move) - targetHeight;
+  let bracketLow = NaN, bracketHigh = NaN, bracketErrorLow = NaN, closest = Infinity;
+  for (let i = 1; i <= scans; i++) {
+    const pitch = low + (high - low) * i / scans;
+    const error = fidelityAimHeight(from, dx, dz, distance, pitch, speed, weapon.straightTime, move) - targetHeight;
+    if (Number.isFinite(previousError) && Number.isFinite(error) && (previousError === 0 || error === 0 || (previousError < 0) !== (error < 0))) {
+      const candidateDistance = Math.abs((previousPitch + pitch) * 0.5 - initialPitch);
+      if (candidateDistance < closest) {
+        closest = candidateDistance;
+        bracketLow = previousPitch;
+        bracketHigh = pitch;
+        bracketErrorLow = previousError;
+      }
+    }
+    previousPitch = pitch;
+    previousError = error;
+  }
+  if (!Number.isFinite(bracketLow)) return false;
+
+  let solvedPitch = (bracketLow + bracketHigh) * 0.5;
+  for (let i = 0; i < 18; i++) {
+    solvedPitch = (bracketLow + bracketHigh) * 0.5;
+    const error = fidelityAimHeight(from, dx, dz, distance, solvedPitch, speed, weapon.straightTime, move) - targetHeight;
+    if (!Number.isFinite(error)) return false;
+    if (Math.abs(error) < 0.005) break;
+    if ((bracketErrorLow < 0) !== (error < 0)) bracketHigh = solvedPitch;
+    else { bracketLow = solvedPitch; bracketErrorLow = error; }
+  }
+
+  const cp = Math.cos(solvedPitch);
+  dir.set(dx * cp, Math.sin(solvedPitch), dz * cp);
+  return true;
 }
 
 // Source records supply endpoints/counts. Added random draws are deterministic
@@ -242,13 +337,15 @@ function setCollision(p,c,offset=0) {
 export function validFidelityRollerUnitPacket(event) {
   if (!Array.isArray(event)) return false;
   if ([27, 30, 32].includes(event.length)) return true;
-  if (event.length !== 33) return false;
+  if (event.length !== 33 && event.length !== 35) return false;
+  // The composed Kit recorder inserts volley/action slots before network metadata.
+  const kitOffset = event.length === 35 ? 2 : 0;
   const weapons = api?.WEAPONS;
-  const weapon = weapons && Object.hasOwn(weapons, event[4]) ? weapons[event[4]] : null, unit = event[30];
+  const weapon = weapons && Object.hasOwn(weapons, event[4]) ? weapons[event[4]] : null, unit = event[30 + kitOffset];
   if (!weapon) return false;
   if (weapon.kind !== 'roller') return unit === -1;
-  if (event[27] !== 0 && event[27] !== 1) return false;
-  const units = rawWeapon(weapon)?.[event[27] === 1 ? 'VerticalSwingUnitGroupParam' : 'WideSwingUnitGroupParam']?.Unit;
+  if (event[27 + kitOffset] !== 0 && event[27 + kitOffset] !== 1) return false;
+  const units = rawWeapon(weapon)?.[event[27 + kitOffset] === 1 ? 'VerticalSwingUnitGroupParam' : 'WideSwingUnitGroupParam']?.Unit;
   return Number.isSafeInteger(unit) && unit >= 0 && !!units && unit < units.length;
 }
 export function configureFidelityFlick(p, actor, weapon, index, angle, speed) {
@@ -468,6 +565,28 @@ export function applyShooterSpawnVelocity(p) {
   p.s3ShooterForwardApplied=true;
 }
 
+// Issue #619: pinned Ver.11.3.0 WeaponBlasterMiddle carries
+// spl__SpawnBulletAdditionMovePlayerParam.ZRate = 2, but native fireBlaster
+// launches with dir * projSpeed only. Apply the sourced yaw-local forward
+// contribution once at spawn, before the wrapped push records the round for
+// the network. Pure strafe/vertical motion contributes zero; backward motion
+// changes sign. Basis, clamps and post-launch decomposition beyond the
+// sourced ZRate remain unverified and are not inferred.
+export function applyBlasterSpawnVelocity(p) {
+  if(!p||p.ghost||p.s3BlasterForwardApplied)return;
+  if(p.type!=='blast')return;
+  const a=p.owner;
+  if(!a||a.remote)return;
+  const w=p.s3Weapon||a.weapon;
+  if(!w||w.kind!=='blaster')return;
+  const rate=rawWeapon(w)?.spl__SpawnBulletAdditionMovePlayerParam?.ZRate;
+  if(!Number.isFinite(rate)||!Number.isFinite(a.yaw)||!Number.isFinite(a.vel?.x)||!Number.isFinite(a.vel?.z))return;
+  const x=Math.sin(a.yaw),z=Math.cos(a.yaw);
+  const amount=(a.vel.x*x+a.vel.z*z)*rate;
+  p.vel.x+=x*amount;p.vel.z+=z*amount;
+  p.s3BlasterForwardApplied=true;
+}
+
 export function installWeaponsFidelity(context,profile) {
   const {WeaponRunner,Projectiles,WEAPONS}=context;
   if(Object.hasOwn(Projectiles.prototype,INSTALLED))return;
@@ -511,7 +630,7 @@ export function installWeaponsFidelity(context,profile) {
   const fresh=Projectiles.prototype._new,push=Projectiles.prototype._push,ghost=Projectiles.prototype.ghostProjectile,clear=Projectiles.prototype.clear;
   Projectiles.prototype.clear=function(...args){const result=clear.apply(this,args);this._fidelityCollision=null;this._fidelitySloshContext=null;return result;};
   Projectiles.prototype._new=function(...args){
-    const p=fresh.apply(this,args);kitTrizookaClearPooled(p);p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityFriendThrough=null;p.fidelityRollerUnit=null;p.fidelityRollerUnitIndex=null;p.fidelitySloshUnit=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;p.fidelitySectorYaw=null;p.s3ShooterForwardApplied=false;return p;
+    const p=fresh.apply(this,args);kitTrizookaClearPooled(p);p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityFriendThrough=null;p.fidelityRollerUnit=null;p.fidelityRollerUnitIndex=null;p.fidelitySloshUnit=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;p.fidelitySectorYaw=null;p.s3ShooterForwardApplied=false;p.s3BlasterForwardApplied=false;return p;
   };
   function initialize(p,w){
     if(!w)return;
@@ -585,6 +704,7 @@ export function installWeaponsFidelity(context,profile) {
     }
     initialize(p,w);
     applyShooterSpawnVelocity(p);
+    applyBlasterSpawnVelocity(p);
     const group=p.s3DamageGroup;const result=push.call(this,p);
     // The generic wrapper snapshots owner state too; retain a single per-volley owner.
     if(group)p.s3DamageGroup=group;
@@ -593,7 +713,7 @@ export function installWeaponsFidelity(context,profile) {
   Projectiles.prototype.ghostProjectile=function(actor,event){
     if(!validFidelityRollerUnitPacket(event))return null;
     const before=this.list.length;const result=ghost.call(this,actor,event);
-    if(this.list.length>before){const p=this.list.at(-1);if(event.length===33&&event[30]>=0){p.fidelityRollerUnitIndex=event[30];p.fidelityMode=event[27]===1?'vertical':'horizontal';}initialize(p,p.s3SpecialWeapon||WEAPONS[p.wid]||actor.weapon);}
+    if(this.list.length>before){const p=this.list.at(-1);const kitOffset=event.length===35?2:0;if((event.length===33||event.length===35)&&event[30+kitOffset]>=0){p.fidelityRollerUnitIndex=event[30+kitOffset];p.fidelityMode=event[27+kitOffset]===1?'vertical':'horizontal';}initialize(p,p.s3SpecialWeapon||WEAPONS[p.wid]||actor.weapon);}
     return result;
   };
   const slosh=Projectiles.prototype.fireSlosh;
@@ -643,6 +763,7 @@ export function installWeaponsFidelity(context,profile) {
       const p=shots[hand],out=points[hand],dir=dirs[hand];
       this._muzzleHand(actor,hand,p.pos);p.prev.copy(p.pos);p.start.copy(p.pos);
       this._aimFrom(actor,p.pos,dir);
+      fidelityAimConvergence(p.pos,dir,actor.aimPoint,w,w.projSpeed);
       p.owner=actor;p.type='shot';p.wid=w.id;p.s3Weapon={...w};p.age=0;p.life=1.2;p.straight=w.straightTime;
       p.delay=0;p.ghost=false;p.size=w.impactRadius??.15;p.fidelityPhase=0;p.fidelityMove=null;p.fidelityPrevAge=0;
       p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;
@@ -781,12 +902,12 @@ function guideLaunchState(actor, weapon, out) {
   const probe = out.probe, runner = actor.weaponRunner;
   const charge = runner?.fidelitySplatlingCharge ?? runner?.charge ?? 0;
   projectiles._muzzle(actor, out.muzzle);
-  // _aimFrom is the installed launch direction law. _ballistic is already the
-  // installed identity (gravity acts on the bullet), and _spread is skipped on
-  // purpose: the guide point is not a sampled bullet.
+  // Match the installed centerline convergence before advancing the guide.
+  // Skip the random cone and spawn-speed bias so this is a deterministic guide.
   projectiles._aimFrom(actor, out.muzzle, out.dir);
   const speed = weapon.kind === 'splatling' ? splatlingLaunchSpeed(weapon, charge) : weapon.projSpeed;
   if (!Number.isFinite(speed) || speed <= 0) return null;
+  fidelityAimConvergence(out.muzzle, out.dir, actor.aimPoint, weapon, speed);
   const move = fidelityMoveFor(weapon);
   probe.pos.copy(out.muzzle); probe.prev.copy(out.muzzle);
   probe.vel.copy(out.dir).multiplyScalar(speed);

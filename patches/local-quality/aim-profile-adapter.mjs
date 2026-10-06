@@ -242,7 +242,14 @@ export function adaptAimProfiles(rel, code) {
       "    { key: 'invertY', label: 'Right stick up/down', type: 'seg', options: [[false, 'Normal'], [true, 'Invert']], help: 'Push stick up to look down. Stored per profile.' },\n" +
       "    { key: 'invertX', label: 'Right stick left/right', type: 'seg', options: [[false, 'Normal'], [true, 'Invert']], help: 'Push stick left to look right. Stored per profile.' },";
 
-    code = replaceOnce(code, controlsOldRows, controlsNewRows, 'menus SETTINGS_TABS controls rows');
+    const padRow = "    { key: 'padInvertX', label: 'Invert right-stick horizontal look', type: 'toggle', help: 'Reverse controller left/right look only. Mouse, touch and gyro are unchanged.' },\n";
+    code = replaceVariantOnce(code, [
+      { before: controlsOldRows, after: controlsNewRows },
+      {
+        before: controlsOldRows.replace('\n', '\n' + padRow),
+        after: controlsNewRows.replace("    { key: 'invertY'", padRow + "    { key: 'invertY'"),
+      },
+    ], 'menus SETTINGS_TABS controls rows');
 
     // 3. Update onSetting in _scr_settings to refresh all profile controls when aimProfile changes
     const onSettingAnchor = "        if (real !== value && controls.has(key)) { safeCall(() => controls.get(key).refresh(real)); value = real; }";

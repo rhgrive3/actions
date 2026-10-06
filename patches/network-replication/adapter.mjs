@@ -25,8 +25,9 @@ export function adaptNetworkSource(rel, code) {
       const replacement = `    const hit = ${payload};\n    if (slosherVolleyId != null) hit.g = slosherVolleyId;\n    this.s.tr?.sendTo(victim.owner, hit);`;
       code = code.slice(0, match.index) + replacement + code.slice(match.index + match[0].length);
     }
-    patch('G.projectiles?.applyHit(atk, v, d.d, d.w);',
-      'G.projectiles?.applyHit(atk, v, d.d, d.w, d.g);', 'Slosher volley identity owner admission');
+    const groupedHit = 'G.projectiles?.applyHit(atk, v, d.d, d.w, d.g);';
+    patch(code.includes(groupedHit) ? groupedHit : 'G.projectiles?.applyHit(atk, v, d.d, d.w);',
+      groupedHit, 'Slosher volley identity owner admission');
     patch('  dispose() {\n    for (const u of this.unsubs)', `  dispose() {
     retireNetworkGhosts();
     for (const u of this.unsubs)`, 'session disposal retirement');
@@ -190,7 +191,7 @@ export function adaptNetworkSource(rel, code) {
         break;
       }`, 'beam birth clock');
     patch('    victim.specialActive = null; victim.superJumpState = null;', '    if (victim.net) victim.net._stormBirthAuth = null;\n    victim.specialActive = null; victim.superJumpState = null;', 'death invalidates storm admission');
-    patch('  _remoteRespawn(a) {\n    a.superJumpGround = null;\n    a.alive = true;', '  _remoteRespawn(a) {\n    if (a.net) a.net._stormBirthAuth = null;\n    a.superJumpGround = null;\n    a.alive = true;', 'respawn invalidates storm admission');
+    patch('  _remoteRespawn(a) {', '  _remoteRespawn(a) {\n    if (a.net) a.net._stormBirthAuth = null;', 'respawn invalidates storm admission');
     patch("case 'p': { const a = this.byNid.get(e[2]); if (a) G.projectiles?.ghostProjectile(a, e); break; }", `case 'p': {
         for (let index = 5; index <= 18; index++) if (!Number.isFinite(e[index])) return;
         if (e[11] < 0 || e[12] <= 0) return;
@@ -291,7 +292,7 @@ ${bombHit}`;
           }
         } finally { if (nm) nm.mute--; }
         dead ||= p._netEnded && p._netSteps >= p._netEndStep;
-        if (dead) { p._qualityDead = true; list[i] = list[list.length-1]; list.pop(); this.pool.push(p); }
+        if (dead) { p._qualityDead = true; list[i] = list[list.length-1]; list.pop(); this._recycle(p); }
         continue;
       }
       const elapsed = Math.max(0, dt - Math.max(0, p.delay || 0));
@@ -316,7 +317,7 @@ ${bombHit}`;
             }
           } finally { if (nm) nm.mute--; }
           dead ||= p._netEnded && p._netSteps >= p._netEndStep;
-          if (dead) { p._qualityDead = true; list[i] = list[list.length-1]; list.pop(); this.pool.push(p); }
+          if (dead) { p._qualityDead = true; list[i] = list[list.length-1]; list.pop(); this._recycle(p); }
           continue;
         }
         if (p.delay > 0) { p.delay -= dt; if (p.delay > 0) continue; }`, 'owner timeline projectile advancement');

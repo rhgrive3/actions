@@ -7,11 +7,20 @@ function replaceOnce(code, before, after, label) {
 const install = (code, module, name, Class, prefix = '../../') =>
   `import { ${name} } from '${prefix}patches/local-quality/${module}.mjs';\n` + code + `\n${name}(${Class});\n`;
 const badMessage = receiver => `t(${receiver}.gyro.supported ? 'Gyro permission was denied. Allow motion access in Safari settings.' : 'Gyro is not available on this device.')`;
+export function adaptInitialGyroPreference(code) {
+  const raw = "    this.settings = G.settings = loadJSON('inkwave.settings', DEFAULT_SETTINGS);\n    this.mobile = G.mobile = deviceProfile();";
+  const profiled = "    this.settings = G.settings = migrateAimProfiles(loadJSON('inkwave.settings', DEFAULT_SETTINGS), DEFAULT_SETTINGS);\n    saveJSON('inkwave.settings', this.settings);\n    this.mobile = G.mobile = deviceProfile();";
+  const candidates = [raw, profiled].filter(anchor => code.includes(anchor));
+  if (candidates.length !== 1) throw new Error('INKWAVE platform anchor mismatch: first-run gyro preference variants');
+  const before = candidates[0];
+  const after = "    this.mobile = G.mobile = deviceProfile();\n" + before
+    .replace("\n    this.mobile = G.mobile = deviceProfile();", '')
+    .replace("loadJSON('inkwave.settings', DEFAULT_SETTINGS)", "loadJSON('inkwave.settings', initialGyroDefaults(DEFAULT_SETTINGS, this.mobile))");
+  return replaceOnce(code, before, after, 'first-run gyro preference');
+}
 export function adaptPlatformSource(rel, code) {
   if (rel === 'src/main.js') {
-    code = replaceOnce(code,
-      "    this.settings = G.settings = loadJSON('inkwave.settings', DEFAULT_SETTINGS);\n    this.mobile = G.mobile = deviceProfile();",
-      "    this.mobile = G.mobile = deviceProfile();\n    this.settings = G.settings = loadJSON('inkwave.settings', initialGyroDefaults(DEFAULT_SETTINGS, this.mobile));", 'first-run gyro preference');
+    code = adaptInitialGyroPreference(code);
     code = replaceOnce(code,
       "  _prepareGyro() {\n    const mob = this.input?.mobile;\n    if (mob && !mob._destroyed && this.settings.gyro && mob.gyro.needsPermission) mob.gyro.request();\n  }",
       "  _prepareGyro() { return prepareGyroStartup(this, G); }", 'owned startup permission');

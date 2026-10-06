@@ -14,7 +14,7 @@ export function sampleSplatlingSpeed(base, halfWidth, bias, uniform) {
   return Math.max(0, base + Math.sign(signed) * halfWidth * magnitude);
 }
 
-export function installSplatling(api, profile, { splatlingChargeCap, splatlingReservation }) {
+export function installSplatling(api, profile, { splatlingChargeCap, splatlingReservation, tickSplatlingInterrupt, releaseSplatlingInterrupt }) {
   const { WeaponRunner, Projectiles, Actor, G, PLAYER } = api;
   if (WeaponRunner.prototype[INSTALLED]) return;
   Object.defineProperty(WeaponRunner.prototype, INSTALLED, { value: true });
@@ -56,6 +56,11 @@ export function installSplatling(api, profile, { splatlingChargeCap, splatlingRe
 
   WeaponRunner.prototype._splatling = function (dt, input, w) {
     const a = this.a;
+    if (tickSplatlingInterrupt?.(this, dt) === 'stream') {
+      // Retire/refund through the dedicated owner once, preserving its paid state.
+      cancel(this); return;
+    }
+    if (a.form === 'squid') releaseSplatlingInterrupt?.(this, a._squidPressT);
     // R starts the native sub-ready workflow. It must end the old stream
     // before native update() admits/charges the sub later in this tick.
     if (a.form === 'squid' || input.sub || input.subReleased || this.aimingSub) {

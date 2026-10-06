@@ -39,7 +39,8 @@ export function runSimulation(game, dt) {
   game._menuAttractFrameDelta = 0;
   if (!menuAttractBudget) game._menuAttractSimulationElapsed = 0;
   game._s3Ticked = clock.advance(dt, step => {
-    G.time += step;
+    // Offline pause must freeze the same gameplay clock as actors/projectiles (#707).
+    if (!(m && m.paused && !m.attract)) G.time += step;
     if (m && !(covered && m.attract)) {
       let simDt = step;
       if (menuAttractBudget) {

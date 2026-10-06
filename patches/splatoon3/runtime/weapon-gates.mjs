@@ -87,9 +87,11 @@ export function installWeaponGates({ Actor, WeaponRunner, Projectiles }) {
   Projectiles.prototype._push = function (p) {
     const a = p.owner, w = a?.weapon;
     if (!p.ghost && w?.kind === 'dualies') {
-      // Preserve the uncalibrated native normal radius; apply only the sourced
-      // mode ratio. Field/paint/visual/boss radii retain their native values.
-      p.s3PlayerRadius = p.size * (a.weaponRunner.s3Turret ? w.playerRadiusAfterRoll / w.playerRadiusNormal : 1);
+      // The later-installed fidelity owner has already selected the sourced
+      // normal/turret collision record. Only legacy non-fidelity shots need
+      // this relative-radius fallback; multiplying canonical radii applies it twice.
+      p.s3PlayerRadius = p.fidelityPlayerCollision ? null
+        : p.size * (a.weaponRunner.s3Turret ? w.playerRadiusAfterRoll / w.playerRadiusNormal : 1);
     }
     return push.call(this, p);
   };

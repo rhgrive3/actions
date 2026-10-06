@@ -98,7 +98,12 @@ export async function fixture({site = BASELINE, seed = 0x1a2b3c4d, floor = true,
     queryBlocks(_x0,_z0,_x1,_z1,out=[]) {out.length=0; for(let i=0;i<this.blocks.length;i++)out.push(i);return out;}};
   G.physics = new api.Physics(G.level);
   // The atlas renderer is omitted, not the scoring rasterizer or splat shape.
-  class CpuPaint extends api.PaintSystem { _initGPU() {this.quads=0;} }
+  class CpuPaint extends api.PaintSystem {
+    _initGPU() { this.quads = 0; }
+    // Immediate body presentation (#570) also reaches this GPU-only sink.
+    // Keep native splat/_emitGrowth/grid work, but enqueue no absent atlas draw.
+    _pushQuad() {}
+  }
   G.paint = new CpuPaint(null,G.level,{atlasSize:4096,maxDensity:8,cell});
   const paints=[]; const splat=G.paint.splat;
   G.paint.splat=function(center,radius,team,opts={}) {const area=splat.call(this,center,radius,team,opts);paints.push({time:G.time,center:center.toArray(),radius,team,seed:opts.seed,kind:opts.kind??null,stretch:opts.stretch?.toArray()??null,stretchAmt:opts.stretchAmt??null,cosmetic:!!opts.cosmetic,area});return area;};

@@ -213,6 +213,35 @@ const deferredIntegrationPreloads = new Set([
   'patches/splatoon3/runtime/weapons-fidelity.mjs',
   'patches/splatoon3/runtime/weapons-collision.mjs',
   'patches/splatoon3/runtime/weapons-charger-flight.mjs',
+  // PR868 combat and Actor rules; the importing runtime still requests these dependencies.
+  'patches/splatoon3/runtime/final-damage.mjs',
+  'patches/splatoon3/runtime/swim-stealth.mjs',
+  'patches/splatoon3/runtime/respawn-lifecycle.mjs',
+  'patches/splatoon3/runtime/damage-timing.mjs',
+  'patches/splatoon3/runtime/charger-surface.mjs',
+  'patches/splatoon3/runtime/contact-recovery.mjs',
+  'patches/splatoon3/runtime/projectile-collision.mjs',
+  'patches/splatoon3/runtime/sub-ready.mjs',
+  'patches/splatoon3/runtime/storm-power.mjs',
+  'patches/splatoon3/runtime/conditional-gear.mjs',
+  'patches/splatoon3/runtime/flow-effects.mjs',
+  'patches/splatoon3/runtime/sub-resistance.mjs',
+  // Kit simulation, replication and metadata retain their static imports and precache entries.
+  'patches/splatoon3/runtime/kit-trizooka.mjs',
+  'patches/splatoon3/runtime/trizooka-collision.mjs',
+  'patches/splatoon3/runtime/kit-subs.mjs',
+  'patches/splatoon3/runtime/kit-composition.mjs',
+  'patches/splatoon3/runtime/kit-ink-vac.mjs',
+  'patches/splatoon3/runtime/kit-network.mjs',
+  'patches/splatoon3/runtime/kit-defense.mjs',
+  'patches/splatoon3/runtime/kit-big-bubbler.mjs',
+  // Match/result presentation and renderer support need no additional eager HTML hints.
+  'patches/splatoon3/issue-460-marker.mjs',
+  'patches/splatoon3/issue-460-gauge.mjs',
+  'patches/splatoon3/runtime/results-scoring.mjs',
+  'patches/splatoon3/runtime/combat-info.mjs',
+  'patches/local-quality/depth-cache.mjs',
+  'patches/local-quality/resource-budget.mjs',
 ]);
 const preloadOrder = order.filter((f) => !deferredIntegrationPreloads.has(f));
 const preload = preloadOrder.filter((f) => fs.existsSync(path.join(BUILD, f))).map((f) => `<link rel="modulepreload" href="./${f}">`).join('\n');

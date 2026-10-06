@@ -26,3 +26,23 @@ Source e5640caa09d84560d1fdf792a74511b806384081; Issues #516 and #526. The two o
 ## PR765 fixed six-root set
 
 Source 6236a2ec3894d7c2c4f1ec72404b9b0f4429491c: #615 gyro stationary bias, #631 ally-down marker ownership, #635 Roller post-release gates, #620 Charger minimum-charge paint, #656 teammate body-block connection, and #591 sub-strafe admission. Existing focus/Android input, Roller #626, Shooter/Slosher/Roller collision contracts and early sub-release reservation are preserved. Focused evidence: gyro 18, bodyblock/marker 31, Roller 17, Charger 3 and sub-strafe 9, plus existing ready controls. The #620 paint helper was separately reconciled with newly ported #617 launch speed; actual Actor/Runner/Projectiles three-case check passed while the existing speed helper and flight writer remain byte-identical. All touched JavaScript parsed. Full aggregate build/CI remains pending; PR786 and remaining PR699 work are not part of this set.
+
+## PR785 and the second PR761/782 fixed set
+
+Source PR785 7f934088504ca1ee4fd211527d109f126fb8ee7d: #360 projected turf area, #594 idle reticle presentation and #619 Blaster birth velocity/identity. Source PR761 afdba0d7fdce4a1a142e19d30b057e78eb220992: #622 pooled projectile owner release, #608 firing/guide convergence and #679/#686 Splatling interruption timing. Source PR782 6aed9fb4b73d480dfe862fb7d1ee7a53bbd7c4e3: #707 offline paused clock. These completed scopes form a fixed port; #744/#728 and #870 are excluded.
+
+The port preserves current 35-field projectile packets and accepts their existing 33-field predecessor with layout-specific validation. Existing ACK/respawn/life guards, HUD lifetime, Kit cost/QR behavior, gyro preference and results-quiet/paused attract guards are composed through narrow adapters rather than old whole-method replacement.
+
+Focused pre-composition evidence is 34 UI/network/adapter cases, 45 weapon/pause cases and one semantic motion gate. The final shared candidate additionally passed five targeted projectile-owner and convergence/guide cases with no skips. These are bounded source checks, not browser or physical-device acceptance. Full aggregate CI remains required.
+
+### Aggregate entry checks for this fixed port
+
+All 268 build transformation inputs pass their exact adapter guards after the existing Diorama retired-pin, menus controls-row and modern Flow credit/terminal connections are reconciled. The three connection repairs preserve their existing lifetime, control-setting, death/respawn and one-use credit owners; their focused checks total 12 cases with independent review. A normal esbuild 0.28.2 build completed as content 4e5720db52dd5f02c647850d60e93756dfc19119b728d6b0c3efec52c388284a before startup-hint follow-up. The CPU-only projectile verifier now explicitly sinks GPU quad submission while retaining native paint grid/growth; actual emitted paint matches a real-buffer control in two positive/negative cases. This build result does not replace the pending startup budget and canonical/browser acceptance.
+
+### Final local acceptance and explicit residuals
+
+Final normal build content: 5e83190f0c76ffa2cb85329e25ab186c49e6512976565e3d48852f0c269da21f. Startup file/dependency gate passed with 145 modulepreloads (core 131, Range 14), 234 complete precache entries and unchanged numerical limits. Only 26 existing gameplay modules' optional preload hints were reclassified; static imports and all precache dependencies remain intact.
+
+The canonical Dualies radius now has one owner: the legacy gate does not re-scale an existing fidelity record. Three focused positive/negative cases preserve .31 normal/.335 turret, field radius and legacy fallback. The previous .362016 double scale and 11.6 full-damage range were reproduced and repaired without changing the 11.5 golden.
+
+The aggregate emitted canonical gate is NOT accepted yet: it now stops at the pre-existing Splatling 14.2 versus 14.1 range mismatch. A fixed 82d5 source comparison reproduces the same Splatling and Roller measurements, so these are retained as separate baseline composition defects rather than silently changing goldens. Splatling's two speed samplers and the Roller golden difference are the next bounded investigation. Full CI/browser acceptance remains pending. No default-branch merge or early Issue close is performed.

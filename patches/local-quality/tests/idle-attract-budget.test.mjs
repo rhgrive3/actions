@@ -5,14 +5,15 @@ import { adaptNetworkSource } from '../../network-replication/adapter.mjs';
 import { adaptRange } from '../../practice-range/adapter.mjs';
 import { idleAttractMenuBudget, pausedWorldFrame } from '../idle-resources.mjs';
 import { installClock, runSimulation } from '../../splatoon3/runtime/clock.mjs';
+import { syncPortraitFrame } from '../portrait-guard.mjs';
 
 const source = adaptRange('src/main.js', adaptNetworkSource('src/main.js', compose('src/main.js')));
 const start = source.indexOf('  _frame(dt) {');
 const end = source.indexOf('\n  // continuous sounds', start);
 assert.ok(start >= 0 && end > start, 'composed installed Game._frame exists');
-const makeFrame = G => new Function('G', 'runSimulation', 'pausedWorldFrame', 'idleAttractMenuBudget', 'performance', 'damp', 'clamp', 'THREE',
+const makeFrame = G => new Function('G', 'runSimulation', 'pausedWorldFrame', 'idleAttractMenuBudget', 'performance', 'damp', 'clamp', 'THREE', 'syncPortraitFrame',
   `return class Frame {\n${source.slice(start, end)}\n}`)
-  (G, runSimulation, pausedWorldFrame, idleAttractMenuBudget, performance, (a, b) => b, x => x, {});
+  (G, runSimulation, pausedWorldFrame, idleAttractMenuBudget, performance, (a, b) => b, x => x, {}, syncPortraitFrame);
 
 const vector = () => ({ copy() { return this; }, set() { return this; }, getWorldDirection() { return this; } });
 function fixture({ mode = 'menu', attract = true, touch = true, quality = 'high', fullFrame = false } = {}) {

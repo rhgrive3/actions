@@ -147,6 +147,15 @@ export function adaptSource(rel, code) {
     return "import { dualiesMotionLock, dualiesMotionAllowsFootPlant } from '../../patches/splatoon3/runtime/action-admission.mjs';\nimport { specialMotionAllowsFootPlant } from '../../patches/splatoon3/runtime/special-motion.mjs';\nimport { applyWalkLocomotion, walkLean, walkSwingUnloaded, walkFootReach, walkPelvisDrop, walkTreadAllowed, walkActive } from '../../patches/splatoon3/runtime/walk.mjs';\n"+code;
   }
   if (rel === 'src/ui/hud.js') {
+    code = replaceOnce(code,
+      "    if (L.kind === 'slosher') {",
+      "    // S3 charge-reticle lifecycle (#594): a charging weapon shows no charge cluster while idle.\n" +
+      "    if (L.kind === 'charger' || L.kind === 'splatling') {\n" +
+      "      const retIdle = !(+f.charge > 0.001) && !(L.kind === 'splatling' && !!L.streaming);\n" +
+      "      this.ret.classList.toggle('is-idle', retIdle);\n" +
+      "    }\n" +
+      "    if (L.kind === 'slosher') {",
+      'idle charge reticle lifecycle');
     // #631: teammate death location is disclosed only by the explicit Ouch signal.
     code = replaceOnce(code, '    if (me && victim.team === me.team) this._allyDown(victim, attacker);\n', '', 'automatic ally-down marker (#631)');
     code = replaceOnce(code,
@@ -378,6 +387,20 @@ export function adaptSource(rel, code) {
       "if (b.kind === 'storm' && b.age > 1.1) { this._spawnCloud(b); if (b.ghost) this.clouds[this.clouds.length - 1].ghost = true; this._releaseBomb(b); this.bombs.splice(i, 1); continue; }",
       "if (b.kind === 'storm' && b.age > 30) { this._releaseBomb(b); this.bombs.splice(i, 1); continue; }",
       'storm airborne deploy');
+    code = replaceOnce(code, '  clear() {',
+      '  // Pooled records wait inside the persistent G.projectiles pool across matches;\n' +
+      '  // sever the Actor reference before the record is pooled (#622).\n' +
+      '  _recycle(p) {\n' +
+      '    p.owner = null;\n' +
+      '    this.pool.push(p);\n' +
+      '  }\n\n' +
+      '  clear() {', 'projectile owner-severing recycle helper');
+    code = replaceOnce(code, '  clear() {\n    for (const p of this.list) this.pool.push(p);',
+      '  clear() {\n    for (const p of this.list) this._recycle(p);',
+      'clear recycles without owners');
+    code = replaceOnce(code, '{ list[i] = list[list.length - 1]; list.pop(); this.pool.push(p); } }',
+      '{ list[i] = list[list.length - 1]; list.pop(); this._recycle(p); } }',
+      'normal completion recycles without owners');
     code = adaptWeaponEdgecases(rel, code, replaceOnce);
     code = adaptWeaponPaintInertia(rel, code, replaceOnce);
     code = adaptWeaponsFidelity(code, replaceOnce);
