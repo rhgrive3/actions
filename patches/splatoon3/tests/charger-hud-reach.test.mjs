@@ -8,6 +8,7 @@ import { adaptSource } from '../adapter.mjs';
 import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
 import { adaptReliability } from '../../reliability/adapter.mjs';
 import { adaptQualitySource } from '../../local-quality/adapter.mjs';
+import { splatlingLaunchSpeed } from '../runtime/weapons-fidelity.mjs';
 // #711: Charger HUD inRange must follow the live charge's flight reach, not full-charge reach.
 // Logic-only: real composed player.js/weapons.js + the full splatoon3 install on the VM. Not a browser or Switch comparison.
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
@@ -161,6 +162,43 @@ test('#711 non-charger ranges are unchanged and ignore charge', async () => {
       assert.equal(f.inRange(a, charge, r + .5 + 1e-6), false, `${id} charge ${charge}`);
     }
   }
+});
+
+test('#858 Splatling HUD reach follows the released charge snapshot and expires with its stream', async () => {
+  const f = await fixedBoot(), a = f.make('splatling'), P = f.real;
+  const circle = a.weapon.firstChargeTime / a.weapon.chargeTime;
+  const lowReach = P.splatlingReach(a.weapon, 0), firstReach = P.splatlingReach(a.weapon, circle);
+  const mid = (lowReach + firstReach) / 2;
+  assert.ok(lowReach < firstReach);
+  assert.equal(firstReach, a.weapon.range, 'profile range anchors first-circle speed');
+  assert.ok(Math.abs(lowReach / firstReach - splatlingLaunchSpeed(a.weapon, 0) / splatlingLaunchSpeed(a.weapon, circle)) < 1e-12,
+    'nominal reach uses the same no-random speed helper as installed Splatling shots');
+  assert.equal(P.splatlingReach(a.weapon, NaN), lowReach, 'invalid charge uses the deterministic minimum');
+
+  const main = await mainBoot(), baseline = main.make('splatling');
+  assert.equal(main.inRange(baseline, 0, mid), true, 'baseline fixed w.range incorrectly reports low charge in range');
+  assert.equal(main.inRange(baseline, circle, mid), true);
+  assert.equal(f.inRange(a, 0, mid), false, 'low charge cannot reach the fixed target');
+  assert.equal(f.inRange(a, circle, mid), true, 'first-circle charge reaches the same target');
+
+  a.weaponRunner.charge = circle;
+  a.weaponRunner.charging = true;
+  a.weaponRunner.streaming = false;
+  a.weaponRunner.fidelitySplatlingCharge = null;
+  a.weaponRunner._splatling(1 / 60, { fire: false }, a.weapon);
+  assert.equal(a.weaponRunner.streaming, true);
+  assert.equal(a.weaponRunner.fidelitySplatlingCharge, circle, 'release snapshot is captured by the installed runner');
+  assert.equal(f.inRange(a, 0, mid), true, 'HUD uses the same release snapshot while shots stream');
+
+  const isolated = f.make('splatling');
+  assert.equal(f.inRange(isolated, 0, mid), false, 'another Actor does not inherit the released charge');
+  a.weaponRunner.burstT = 1 / 120;
+  a.weaponRunner._splatling(1 / 60, { fire: false }, a.weapon);
+  assert.equal(a.weaponRunner.streaming, false);
+  assert.equal(f.inRange(a, 0, mid), false, 'completed stream ignores its retained snapshot');
+
+  const shooter = f.make('shooter');
+  assert.equal(f.inRange(shooter, 1, shooter.weapon.range), true, 'Shooter keeps its configured range');
 });
 
 test('#711 native fallback (no chargerReach) lerps rangeMin to rangeMax by charge', async () => {

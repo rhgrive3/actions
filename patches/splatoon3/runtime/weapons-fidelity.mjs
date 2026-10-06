@@ -367,6 +367,17 @@ export function splatlingLaunchSpeed(weapon,charge) {
   return weapon.projSpeed+(maximum-weapon.projSpeed)*clamp01(charge/first);
 }
 
+export function splatlingReach(weapon,charge) {
+  const range=weapon?.range;
+  const maximum=splatlingLaunchSpeed(weapon,1);
+  const speed=splatlingLaunchSpeed(weapon,Number.isFinite(charge)?charge:0);
+  if(!Number.isFinite(range)||range<0||!Number.isFinite(maximum)||maximum<=0||!Number.isFinite(speed))return 0;
+  // INKWAVE's configured range anchors the first-charge endpoint. The nominal
+  // no-random reach scales by the installed charge-speed ratio; native units,
+  // spread and Nintendo's exact speed law are not inferred here.
+  return range*Math.max(0,Math.min(1,speed/maximum));
+}
+
 export function installWeaponsFidelity(context,profile) {
   const {WeaponRunner,Projectiles,WEAPONS}=context;
   if(Object.hasOwn(Projectiles.prototype,INSTALLED))return;
@@ -405,6 +416,7 @@ export function installWeaponsFidelity(context,profile) {
       freeVelocityY:defaults.brakeToFreeVelocityY}));
   }
   Object.defineProperty(Projectiles.prototype,INSTALLED,{value:true});
+  Projectiles.prototype.splatlingReach=function(weapon,charge){return splatlingReach(weapon,charge);};
   const fresh=Projectiles.prototype._new,push=Projectiles.prototype._push,ghost=Projectiles.prototype.ghostProjectile,clear=Projectiles.prototype.clear;
   Projectiles.prototype.clear=function(...args){const result=clear.apply(this,args);this._fidelityCollision=null;this._fidelitySloshContext=null;return result;};
   Projectiles.prototype._new=function(...args){
