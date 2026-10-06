@@ -365,3 +365,15 @@ Reference: Splatoon 3 Ver. 11.3.0, standard Slosher, humanoid firing, no gear ef
 The native `inkwave-public/src/game/weapons.js` admission path starts `lastFire` before the 12F windup, while the composed `patches/splatoon3/runtime/weapons.mjs` adapter releases the glob group later. `patches/splatoon3/runtime/resources.mjs` gates recovery using that same timer. With fire first pressed on fixed tick 1, the old composed runtime released at tick 13 but had already spent 12 recovery ticks during windup, so ink first refilled at tick 41: only 28 ticks after release, despite the configured 40F stop. Reproduce in `patches/splatoon3/tests/slosher-timing.test.mjs` by running the actual Actor/WeaponRunner/resource path at 30, 60, or 120 render Hz for two seconds.
 
 The S3 runtime adapter now resets the existing recovery timer on glob release. The focused fixture observes release at tick 13 and the first refill at tick 53 at all three render rates. The existing 12F windup, 29F repeat interval, ink spend and projectile release are preserved; the ordinary Shooter 20F fire-event recovery control still refills at tick 21. The focused Slosher suite passes 10/10, the remote per-drop delay/lifetime wire control passes 1/1, and the Range isolation control passes 7/7. The native public source and Range adapter are unchanged. These are deterministic logic tests; browser rendering and physical Splatoon 3 timing remain unmeasured.
+
+## 2026-10-07 — #889 Charger laser-dot raycast reuse
+
+参照条件は Splatoon 3 Ver. 11.3.0。公開資料では内部の物理 raycast 回数や描画頻度ごとの費用は確認できないため、本家の raycast 回数を推測しない。これは INKWAVE の表示側で重複していた問い合わせの修正で、移動・衝突・damage・射撃 timing・塗り分布は対象外。
+
+main `f31f5da439134fe49bb89018dad5557671a49c67` の `Projectiles._updateBeams()` は照準線の長さを決める terrain hit を取得し、`FxHooks._beams()` は dot の point/normal を求めるため、近距離の Charger sight ごとに endpoint 近傍の raycast を描画 frame ごとに再実行していた。公開ソースの一次 query は raw では grates を含むが、適用済みの `patches/splatoon3/weapon-edgecases-adapter.mjs` が `skipGrates=true` を付けており、FX query と同じ mask になる。
+
+`patches/splatoon3/charger-sight-cache-adapter.mjs` は一次 query の範囲を既存 FX probe の端 (`0.6 - 0.25 = 0.35 m`) まで延長し、表示する線の長さは従来の weapon range で clamp する。一次 hit の point/normal を sight mesh の userData に一度コピーし、FX はその値を読み、sight が隠れた場合は cache を無効にする。Charge 中の Charger のみを通る既存 gate、grate mask、射程外端の dot、local/remote sight は維持する。通常 weapon と Practice Range の source は変更しない。`inkwave-public/` は変更していない。
+
+再現は Charger の charge を保ち、発射せずに sight endpoint と `Physics.raycast` 呼出元を計数する。変更後は cache 有効時に `FxHooks._beams()` が raycast を呼ばず、一次 hit をローカル・remote sight が繰り返し読む。Focused source test は 3/3 passed。これはロジックと adapter 出力の確認であり、ブラウザでの 60/90/120/144 Hz 計測および Switch 実機比較は未確認。
+
+2026-10-07 の overlap 再確認時に open PR #868 の head は `7c2ef70820d784792490741c1d710adf98b9c155` (`2a8cab53726d3cebfd82e5f22a0988431a8bfa79` から更新) だった。現 head の `frame-order-adapter.mjs` と `charger-sight.mjs` の immutable file patches は、カメラ更新後に `_placeSight()` を描画 frame ごとに実行するが、`FxHooks._beams()` の endpoint query は変更しない。この変更は sight body 内の cache 書込みと合成できる一方、PR #868 と合成された場合の一次 sight query 頻度は表示 frame に依存し得る。ここでは重複 FX query の除去のみを確認し、合成後の CPU 費用や物理デバイス性能は未確認として残す。
