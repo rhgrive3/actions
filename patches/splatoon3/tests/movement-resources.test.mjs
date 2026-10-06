@@ -104,11 +104,13 @@ test('recover-stop countdown stays tied to actor ticks and refill starts at its 
 });
 
 test('consecutive roll momentum applies one retention coefficient per new launch', () => {
-  let speed = 20;
+  let previous = 0;
   for (let chain = 0; chain < 4; chain++) {
-    speed = rollLaunchSpeed(speed, chain, .85);
+    const speed = rollLaunchSpeed(20, chain, .85, previous);
     close(speed, 20 * .85 ** Math.max(0, chain));
+    previous = speed;
   }
+  close(rollLaunchSpeed(20, 3, .85, 0), 20, 1e-8);
 });
 
 test('the actual action dispatcher does not double-apply retained momentum on the third roll', async () => {
