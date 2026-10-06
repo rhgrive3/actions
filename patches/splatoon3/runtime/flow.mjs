@@ -72,8 +72,14 @@ export function installFlow({ Actor, on, emit, G }, tuning) {
   }
   function netState(nm) {
     let s = netFirstSplats.get(nm);
-    if (!s) { s = { decision: null, observed: null, applied: false }; netFirstSplats.set(nm, s); }
+    if (!s) { s = { decision: null, observed: new WeakMap(), applied: false }; netFirstSplats.set(nm, s); }
     return s;
+  }
+  function observeSplat(s, attacker, victim) {
+    if (s.applied) return;
+    let victims = s.observed.get(attacker);
+    if (!victims) { victims = new WeakSet(); s.observed.set(attacker, victims); }
+    victims.add(victim);
   }
   function applyConfirmedBonus(nm, s, attacker) {
     if (s.applied) return;
@@ -87,7 +93,7 @@ export function installFlow({ Actor, on, emit, G }, tuning) {
     if (nm) {
       if (nm.match !== match) return;
       const s = netState(nm), pair = { attacker, victim };
-      s.observed = pair;
+      observeSplat(s, attacker, victim);
       if (nm.isHost && !s.decision && typeof nm.claimFirstSplat === 'function'
         && nm.claimFirstSplat(attacker, victim)) {
         s.decision = pair; s.applied = true;
@@ -110,13 +116,13 @@ export function installFlow({ Actor, on, emit, G }, tuning) {
     if (s.decision) return;
     const pair = { attacker, victim };
     s.decision = pair;
-    if (sameDecision(s.observed, attacker, victim)) applyConfirmedBonus(nm, s, attacker);
+    if (s.observed.get(attacker)?.has(victim)) applyConfirmedBonus(nm, s, attacker);
   });
   on('flow:splat-observed', ({ match, attacker, victim } = {}) => {
     const nm = G.netm;
     if (!nm || nm.match !== match || G.match !== match || !qualifies(match, attacker, victim)) return;
     const s = netState(nm), pair = { attacker, victim };
-    s.observed = pair;
+    observeSplat(s, attacker, victim);
     if (!s.decision && nm.isHost && typeof nm.claimFirstSplat === 'function'
       && nm.claimFirstSplat(attacker, victim)) s.decision = pair;
     if (sameDecision(s.decision, attacker, victim)) applyConfirmedBonus(nm, s, attacker);

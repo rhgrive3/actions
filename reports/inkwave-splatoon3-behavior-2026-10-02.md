@@ -377,3 +377,7 @@ INKWAVE 公開版 `inkwave-public/src/game/cameraRig.js` の `CameraRig._follow`
 再現: Turf の通常追従カメラで移動・照準・射撃を止め、カメラのばねが静止した後に `cameraProbe` と `raycast` の呼出数を数える。キャッシュなしの実装は各更新で 15 本を発行する。アダプターは静止中の反復プローブを 250 ms 周期へ抑え、壁に向けて動くときは入力差を検出してその更新で再計算する。
 
 影響・確認: 変更対象はカメラ表示用の同一衝突結果の再利用のみ。プレイヤー速度、身体衝突、ダメージ、ブキ時刻、インク量/分布は更新しない。実際の公開 CameraRig を使うロジックハーネスで 30/60/120 Hz の静止カメラ出力と未変更ソースを比較し、出力一致、静止時 75% 以上のプローブレイ削減、壁への移動時の即時再計算、Level/target/mode 切替え、肩 raycast の同数を確認した。ブラウザ実動作、実 CPU 時間、Switch 実機比較は未確認。ソースはアダプターに実装済みで、親統合前の Issue #862 は GitHub 上で開いたまま。詳細: [inkwave-issue-862-camera-probe-cache-2026-10-06.md](inkwave-issue-862-camera-probe-cache-2026-10-06.md)。
+
+### First-splat integration review correction
+
+An independent completed-diff review reproduced an ordering failure: the remote peer observed the winning splat and then another splat before the host confirmation arrived. Retaining only the latest observed pair lost the +10 FP bonus permanently. The match-local state now keeps weak attacker/victim observation pairs until the authoritative decision, without changing ordinary awards or applying the bonus twice. An end-to-end two-peer fixture installs the actual NetMatch and Flow modules, delays the real host confirmation behind the other splat, and verifies the additive award and duplicate suppression. That new test fails on the original integrated source and passes after this correction; the combined owned tests pass 29/29. Real relay jitter, browser CPU timings and Switch measurements remain unmeasured.

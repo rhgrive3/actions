@@ -2,6 +2,36 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from './robustness-fixture.mjs';
 
+test('a late host decision still awards the observed first pair after another remote splat', async () => {
+  const h = await fixture({ flow: true }), g = await fixture({ flow: true }), sent = [];
+  const hs = h.makeSession('host', 'host', [['host','Host'],['guest','Guest']]);
+  const gs = g.makeSession('guest', 'host', [['host','Host'],['guest','Guest']]);
+  hs.tr.broadcast = packet => sent.push(packet);
+  const hn = h.makeNetMatch(hs, { id: 'interleaved-first' });
+  const gn = g.makeNetMatch(gs, { id: 'interleaved-first' });
+  const actors = f => [
+    f.makeActor({ nid: 0, owner: 'host', team: 0, roller: false }),
+    f.makeActor({ nid: 1, owner: 'guest', team: 1, roller: false }),
+    f.makeActor({ nid: 2, owner: 'guest', team: 1, roller: false }),
+    f.makeActor({ nid: 3, owner: 'host', team: 0, roller: false }),
+  ];
+  const ha = actors(h), ga = actors(g);
+  h.G.match = h.bind(hn, ha); g.G.match = g.bind(gn, ga);
+  hn._remoteSplat(ha[1], ha[0], 'shooter');
+  g.emit('splatted', { attacker: ga[0], victim: ga[1] });
+  gn._remoteSplat(ga[3], ga[2], 'shooter');
+  const confirmation = sent.find(packet => packet.k === 'fs');
+  assert.ok(confirmation);
+  assert.equal(ga[0].s3.flow.score, 1, 'ordinary local award precedes host decision');
+  gn.onMessage('host', confirmation);
+  assert.ok(Math.abs(ga[0].s3.flow.score - 1.3) < 1e-9, 'interleaved remote pair cannot erase the first observation');
+  assert.ok(Math.abs(ha[0].s3.flow.score - 0.3) < 1e-9, 'host applies its one first-splat bonus');
+  gn.onMessage('host', confirmation);
+  gn._remoteSplat(ga[1], ga[0], 'shooter');
+  assert.ok(Math.abs(ga[0].s3.flow.score - 1.3) < 1e-9, 'confirmation and observation repeats never grant the bonus twice');
+  assert.equal(ga[2].s3?.flow?.score || 0, 0, 'the intervening remote attacker does not gain the first bonus');
+});
+
 test('host serializes one first splat for opposing same-frame candidates, even when its attacker is dead', async () => {
   for (const firstBlue of [false, true]) {
     const f = await fixture(), sent = [];
