@@ -7,8 +7,8 @@ import { installResources, updateResources } from '../runtime/resources.mjs';
 
 test('actual floor area can choose a different winner from counting cells', () => {
   const paint = { paintFaces: [
-    { turf: true, n: { y: 1 }, grid: 0, nu: 2, nv: 1, cu: 0.1, cv: 1 },
-    { turf: true, n: { y: 1 }, grid: 2, nu: 1, nv: 1, cu: 0.5, cv: 1 },
+    { turf: true, grid: 0, nu: 2, nv: 1, cu: 0.1, cv: 1 },
+    { turf: true, grid: 2, nu: 1, nv: 1, cu: 0.5, cv: 1 },
     { turf: false, grid: 3, nu: 1, nv: 1, cu: 10, cv: 10 },
   ], grid: new Uint8Array([1, 1, 2, 1]), dead: new Uint8Array(4) };
   const coverage = floorCoverage(paint); assert.ok(coverage[1] > coverage[0]);

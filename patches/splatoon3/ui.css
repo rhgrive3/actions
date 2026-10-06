@@ -6,3 +6,6 @@
 @media (max-width: 500px) { .s3-gear { left: 1rem; right: 1rem; width: auto; } .s3-gear label { font-size: .8rem; } }
 /* #594: Splatoon 3 shows no charge-reticle cluster on a charging weapon while it is idle. */
 .iw-ret--charger.is-idle, .iw-ret--splatling.is-idle { visibility: hidden; }
+/* Blaster reticle: live spread (--sp, set on .iw-ret) widens only the outer dashed ring; the inner thin ring keeps its rest size. */
+.iw-ret--blaster .iw-ret__svg { transform: none; transition: none; }
+.iw-ret--blaster .iw-ret__svg circle.iw-ret__ring:not(.thin) { transform: scale(calc(1 + var(--sp, 0) * .012)); transform-box: fill-box; transform-origin: center; transition: transform .1s linear; }
