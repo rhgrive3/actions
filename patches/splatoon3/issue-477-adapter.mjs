@@ -72,13 +72,25 @@ export function adaptIssue477Weapons(code) {
     'weapons tryDodge 4F startup initialization'
   );
 
-  // 3. dodgeVel: do not own horizontal velocity or apply displacement curve during startup
-  code = replaceOnce(
-    code,
-    '  dodgeVel(vel) {\n    const d = this.dodge;\n    if (!d) return false;',
-    '  dodgeVel(vel) {\n    const d = this.dodge;\n    if (!d || (d.startup !== undefined && d.startup > 1e-10)) return false;',
-    'weapons dodgeVel startup gate'
-  );
+  // 3. dodgeVel: do not own horizontal velocity during startup. Movement Physics
+  // may already have replaced the native integral with writeDodgeVelocity().
+  const nativeDodgeVel = '  dodgeVel(vel) {\n    const d = this.dodge;\n    if (!d) return false;';
+  const movementDodgeVel = '  dodgeVel(vel, dt = 1 / 60) {\n    return writeDodgeVelocity(this, vel, dt);\n  }';
+  if (code.includes(movementDodgeVel)) {
+    code = replaceOnce(
+      code,
+      movementDodgeVel,
+      '  dodgeVel(vel, dt = 1 / 60) {\n    const d = this.dodge;\n    if (!d || (d.startup !== undefined && d.startup > 1e-10)) return false;\n    return writeDodgeVelocity(this, vel, dt);\n  }',
+      'weapons movement-physics dodgeVel startup gate'
+    );
+  } else {
+    code = replaceOnce(
+      code,
+      nativeDodgeVel,
+      '  dodgeVel(vel) {\n    const d = this.dodge;\n    if (!d || (d.startup !== undefined && d.startup > 1e-10)) return false;',
+      'weapons dodgeVel startup gate'
+    );
+  }
 
   // 4. _dualies: countdown startup before advancing 12F movement clock; suppress trail paint during startup
   code = replaceOnce(
@@ -88,13 +100,25 @@ export function adaptIssue477Weapons(code) {
     'weapons _dualies startup countdown'
   );
 
-  // 5. _dualies: exact 12F duration float tolerance and post-roll cooldown gate
-  code = replaceOnce(
-    code,
-    '      if (d.t >= d.dur) { this.dodge = null; this.lockT = w.lockTime; }',
-    '      if (d.t >= d.dur - 1e-5) { this.dodge = null; this.lockT = w.lockTime; if (this.cooldown < 0) this.cooldown = 0; }',
-    'weapons _dualies exact 12F duration float tolerance'
-  );
+  // 5. _dualies: exact 12F duration and post-roll gate. Preserve Movement
+  // Physics' recovery carry when that adapter already owns the end boundary.
+  const nativeDodgeEnd = '      if (d.t >= d.dur) { this.dodge = null; this.lockT = w.lockTime; }';
+  const movementDodgeEnd = '      if (d.t + MOVEMENT_EPSILON >= d.dur) { this.dodge = null; this.lockT = Math.max(0, w.lockTime - Math.max(0, d.t - d.dur)); }';
+  if (code.includes(movementDodgeEnd)) {
+    code = replaceOnce(
+      code,
+      movementDodgeEnd,
+      '      if (d.t >= d.dur - 1e-5) { this.dodge = null; this.lockT = Math.max(0, w.lockTime - Math.max(0, d.t - d.dur)); if (this.cooldown < 0) this.cooldown = 0; }',
+      'weapons movement-physics exact 12F duration'
+    );
+  } else {
+    code = replaceOnce(
+      code,
+      nativeDodgeEnd,
+      '      if (d.t >= d.dur - 1e-5) { this.dodge = null; this.lockT = w.lockTime; if (this.cooldown < 0) this.cooldown = 0; }',
+      'weapons _dualies exact 12F duration float tolerance'
+    );
+  }
 
   return code;
 }
