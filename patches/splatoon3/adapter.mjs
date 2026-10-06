@@ -1,6 +1,7 @@
 import { adaptWeaponPaintInertia } from './weapon-paint-inertia-adapter.mjs';
 import { adaptWeaponEdgecases } from './weapon-edgecases-adapter.mjs';
 import { adaptWeaponsFidelity } from './weapons-adapter.mjs';
+import { adaptRespawnLifecycle } from './respawn-lifecycle-adapter.mjs';
 import { adaptStormEffects } from './storm-effects-adapter.mjs';
 import { adaptAgent3WeaponPhysics } from './agent3-weapon-physics-adapter.mjs';
 // Apply only to a disposable BUILD tree. Upstream sources are never modified.
@@ -35,6 +36,7 @@ export function checkCompatibility(src, patchRoot = PATCH_ROOT) {
 }
 
 export function adaptSource(rel, code) {
+  code = adaptRespawnLifecycle(rel, code, replaceOnce);
   code = adaptStormEffects(rel, code);
   if (rel === 'src/config.js') return replaceOnce(code,
     '  minimap: true,', '  minimap: false,', 'optional corner map default');

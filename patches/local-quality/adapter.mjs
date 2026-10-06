@@ -1,3 +1,7 @@
+import { adaptIssue460Source } from '../splatoon3/issue-460-adapter.mjs';
+import { adaptIssue427 } from '../splatoon3/issue-427-adapter.mjs';
+import { adaptIssue461Source } from './issue-461-sfx-mute.mjs';
+import { adaptIssue480Source } from './issue-480-camera-shake-fidelity.mjs';
 import { adaptTenacity } from './tenacity-adapter.mjs';
 import { adaptFxActorLifetime } from './fx-actor-lifetime-adapter.mjs';
 import { adaptHudSnapshots } from './hud-snapshots-adapter.mjs';
@@ -44,6 +48,7 @@ const IDENTITY_FILES = [
   'final-minute-music-adapter.mjs',
   'turf-lead-adapter.mjs',
   'score-reticle-adapter.mjs', 'map-teammate-status-adapter.mjs',
+  'issue-461-sfx-mute.mjs', 'issue-480-camera-shake-fidelity.mjs',
   'resource-adapter.mjs', 'resource-budget.mjs', 'depth-cache.mjs',
   'aim-profile-adapter.mjs', 'aim-profile.mjs', 'medal-adapter.mjs',
   'ui-actor-lifetime-adapter.mjs',
@@ -71,6 +76,9 @@ export function adaptQualitySource(rel, code) {
   code = adaptTurfLead(rel, code, replaceOnce);
   code = adaptScoreReticle(rel, code, replaceOnce);
   code = adaptMapTeammateStatus(rel, code, replaceOnce);
+  code = adaptIssue427(rel, code);
+  code = adaptIssue460Source(rel, code);
+  code = adaptIssue461Source(rel, code);
   code = adaptAimProfiles(rel, code);
   code = adaptMedalSource(rel, code);
   code = adaptResourceSource(rel, code, replaceOnce);
@@ -119,6 +127,7 @@ export function adaptQualitySource(rel, code) {
   code = adaptSplatlingReticle(rel, code, replaceOnce);
   code = adaptPortraitGuard(rel, code, replaceOnce);
   code = adaptIdleSource(rel, code, replaceOnce);
+  code = adaptIssue480Source(rel, code);
   code = adaptLobbyResources(rel, code);
   code = adaptMinimapResources(rel, code);
   code = adaptUiActorLifetime(rel, code, replaceOnce);
