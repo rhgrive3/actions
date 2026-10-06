@@ -131,12 +131,30 @@ export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYE
   // reads, because the projectile returns to the pool as soon as `_impact` returns.
   const terrainBurst = Projectiles.prototype._blastBurst;
   const projectilesUpdate = Projectiles.prototype.update;
+  const projectilesClear = Projectiles.prototype.clear;
+  Projectiles.prototype.clear = function (...args) {
+    try {
+      return projectilesClear.apply(this, args);
+    } finally {
+      if (this.s3BlastQueue) {
+        this.s3BlastQueue.length = 0;
+        this.s3BlastQueue = null;
+      }
+    }
+  };
   Projectiles.prototype.flushBlastImpacts = function () {
     const queue = this.s3BlastQueue;
     if (!queue || !queue.length) return 0;
-    this.s3BlastQueue = [];
+    this.s3BlastQueue = null;
     flushing++;
-    try { for (const e of queue) this._blastBurst(e.p, e.point, e.victim); }
+    try {
+      const nm = G.netm;
+      for (const e of queue) {
+        if (e.p.ghost && nm) nm.mute++;
+        try { this._blastBurst(e.p, e.point, e.victim); }
+        finally { if (e.p.ghost && nm) nm.mute--; }
+      }
+    }
     finally { flushing--; }
     return queue.length;
   };
