@@ -3,7 +3,7 @@
 // Every connection is a unique exact anchor. A missing or duplicated anchor throws so the
 // build fails closed instead of silently shipping a half-patched input module.
 //
-// adaptInput() returns `code` unchanged for every module except src/core/input.js.
+// Input polling plus the disconnected PlayerController filter boundary.
 
 const INPUT_REL = 'src/core/input.js';
 
@@ -40,6 +40,8 @@ const NOPAD_BEFORE = '    this.padPressed.clear();\n    if (!pad) return;';
 const NOPAD_AFTER = '    this.padPressed.clear();\n    if (!pad) { this.padPrev = []; return; }';
 
 export function adaptInput(rel, code) {
+  if (rel === 'src/game/player.js') return replaceOnce(code, '    const it = a.intent;\n    if (!this.enabled) {',
+    '    const it = a.intent;\n    // A missing pad cannot retain camera velocity for a later reconnect (#676).\n    if (!inp.pad) { this.padLook.x = this.padLook.y = 0; this.edgeT = 0; }\n    if (!this.enabled) {', 'disconnected pad camera filter');
   if (rel !== INPUT_REL) return code;
   code = replaceOnce(code, BLUR_BEFORE, BLUR_AFTER, 'blur focus reset');
   code = replaceOnce(code, NOPAD_BEFORE, NOPAD_AFTER, 'gamepad disconnect reset');

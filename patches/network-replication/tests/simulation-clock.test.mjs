@@ -43,10 +43,11 @@ test('render-batch terminal waits for its owner physics tick before playback',as
 });
 
 test('storm catch-up never applies historical cloud damage as a burst',async()=>{
- const f=await fixture(),nm=f.makeNetMatch(f.makeSession()),a=f.makeActor({nid:0,owner:'p2',remote:true});f.bind(nm,[a]);const peer={tr:1000.1};nm.peers.set('p2',peer);
- nm._play('p2',[1000,'b',0,'storm',0,.5,0,0,-10,0,4,6]);f.projectiles.update(1/60);const c=f.projectiles.clouds[0];assert(c?.ghost);
+ const f=await fixture(),nm=f.makeNetMatch(f.makeSession()),a=f.makeActor({nid:0,owner:'p2',remote:true});a.weapon={...a.weapon,special:'storm'};f.bind(nm,[a]);const peer=nm._peer('p2');peer.tr=1000.1;
+ const use=[1000,'ev','special:use',{actor:{n:0},id:'storm'},4,5];use._netTick=4;use._netSeq=5;const birth=[1000,'b',0,'storm',0,.5,0,0,-10,0,4,6];birth._netTick=4;birth._netSeq=6;
+ nm.onMessage('p2',{k:'t',ts:1000,r:2,u:4,l:{0:0},a:[f.packActor(a,{f:1|8192})],e:[use,birth]});peer.tr=1000;nm._playEvents();nm.onMessage('p2',{k:'t',ts:1000.1,u:10,l:{0:0},a:[f.packActor(a,{f:1|8192})]});peer.tr=1000.1;peer.sim=10;f.projectiles.update(1/60);const c=f.projectiles.clouds[0];assert(c?.ghost);
  const victim=f.makeActor({nid:1,owner:'me',remote:false,team:1});victim.pos.copy(c.group.position);victim.pos.y=0;const damage=[];victim.damage=d=>{damage.push(d);return false;};f.G.actors=[victim];
- peer.tr=1000.5;f.projectiles.update(1/60);assert.equal(damage.length,1);assert.equal(damage[0],f.SPECIALS.storm.dps/60);
+ nm.onMessage('p2',{k:'t',ts:1000.5,u:34,l:{0:0},a:[f.packActor(a,{f:1})]});peer.tr=1000.5;peer.sim=34;f.projectiles.update(1/60);assert.equal(damage.length,1);assert.equal(damage[0],f.SPECIALS.storm.dps/60);
 });
 
 

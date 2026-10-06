@@ -60,3 +60,31 @@ test('roller player collision grows from pinned initial to end radius over four 
   p.age = 1; assert.equal(fidelityPlayerCollisionRadius(p), 0.87);
   p.fidelityPlayerCollision = null; assert.equal(fidelityPlayerCollisionRadius(p), 0.15);
 });
+
+
+test('Roller wall-drop source remains bound per flick unit', () => {
+  const profile = JSON.parse(fs.readFileSync(new URL('patches/splatoon3/profile.json', root)));
+  const roller = profile.weaponsFidelityCompletion.weapons.roller;
+  const wideMain = roller.WideSwingUnitGroupParam.Unit[0].UnitParam;
+  const wideNear = roller.WideSwingUnitGroupParam.Unit[1].UnitParam;
+  const vertical = roller.VerticalSwingUnitGroupParam.Unit[0].UnitParam;
+  assert.deepEqual(
+    [wideMain.WallDropMoveParam.FallPeriodFirstFrameMin, wideMain.WallDropMoveParam.FallPeriodFirstFrameMax,
+      wideMain.WallDropMoveParam.FallPeriodSecondFrame, wideMain.WallDropMoveParam.FallPeriodSecondTargetSpeed,
+      wideMain.WallDropMoveParam.FallPeriodLastFrameMin, wideMain.WallDropMoveParam.FallPeriodLastFrameMax,
+      wideMain.WallDropCollisionPaintParam.PaintRadiusGround],
+    [60, 80, 5, .08, 20, 35, .5],
+  );
+  assert.deepEqual(
+    [wideNear.WallDropMoveParam.FallPeriodFirstTargetSpeed, wideNear.WallDropMoveParam.FallPeriodSecondTargetSpeed,
+      wideNear.WallDropCollisionPaintParam.PaintRadiusShock, wideNear.WallDropCollisionPaintParam.PaintRadiusFall,
+      wideNear.WallDropCollisionPaintParam.PaintRadiusGround],
+    [.06, .08, 1.3, .65, .5],
+  );
+  assert.deepEqual(
+    [vertical.WallDropMoveParam.FallPeriodFirstTargetSpeed, vertical.WallDropMoveParam.FallPeriodSecondTargetSpeed,
+      vertical.WallDropCollisionPaintParam.PaintRadiusShock, vertical.WallDropCollisionPaintParam.PaintRadiusFall,
+      vertical.WallDropCollisionPaintParam.PaintRadiusGround],
+    [.08, .10, 1.4, .7, .65],
+  );
+});
