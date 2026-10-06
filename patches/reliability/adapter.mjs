@@ -15,17 +15,18 @@ import { adaptStart } from './start-adapter.mjs';
 import { adaptAttract } from './attract-adapter.mjs';
 import { adaptHud } from './hud-adapter.mjs';
 import { adaptGyro } from './gyro-adapter.mjs';
+import { adaptGyroInvert } from './gyro-invert-adapter.mjs';
 import { adaptPause } from './pause-adapter.mjs';
 import { adaptCombatLife } from './combat-life-adapter.mjs';
 import { adaptCombatCredit } from './combat-credit-adapter.mjs';
 
 export const RELIABILITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
-const adapters = [adaptInput, adaptNet, adaptResults, adaptMobile, adaptTouchEdges, adaptIntro, adaptStart, adaptAttract, adaptHud, adaptGyro, adaptPause, adaptCombatLife, adaptCombatCredit, adaptTouchPointerLock, adaptTouchGyroOwner, adaptPadHandoff];
+const adapters = [adaptInput, adaptNet, adaptResults, adaptMobile, adaptTouchEdges, adaptIntro, adaptStart, adaptAttract, adaptHud, adaptGyro, adaptGyroInvert, adaptPause, adaptCombatLife, adaptCombatCredit, adaptTouchPointerLock, adaptTouchGyroOwner, adaptPadHandoff];
 export function adaptReliability(rel, code) {
   for (const adapt of adapters) code = adapt(rel, code);
   return code;
 }
 export function reliabilityIdentity() {
-  const files = ['adapter.mjs', 'touch-pointerlock-adapter.mjs', 'input-adapter.mjs', 'net-adapter.mjs', 'results-adapter.mjs', 'mobile-adapter.mjs', 'touch-edge-adapter.mjs', 'intro-adapter.mjs', 'start-adapter.mjs', 'attract-adapter.mjs', 'hud-adapter.mjs', 'gyro-adapter.mjs', 'pause-adapter.mjs', 'combat-life-adapter.mjs', 'combat-credit-adapter.mjs', 'touch-gyro-owner-adapter.mjs', 'pad-handoff-adapter.mjs'];
+  const files = ['adapter.mjs', 'touch-pointerlock-adapter.mjs', 'input-adapter.mjs', 'net-adapter.mjs', 'results-adapter.mjs', 'mobile-adapter.mjs', 'touch-edge-adapter.mjs', 'intro-adapter.mjs', 'start-adapter.mjs', 'attract-adapter.mjs', 'hud-adapter.mjs', 'gyro-adapter.mjs', 'gyro-invert-adapter.mjs', 'pause-adapter.mjs', 'combat-life-adapter.mjs', 'combat-credit-adapter.mjs', 'touch-gyro-owner-adapter.mjs', 'pad-handoff-adapter.mjs'];
   return Object.fromEntries(files.map(file => [file, crypto.createHash('sha256').update(fs.readFileSync(new URL(file, import.meta.url))).digest('hex')]));
 }
