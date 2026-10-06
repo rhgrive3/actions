@@ -98,7 +98,8 @@
         "straightTime": 0.15,
         "burstTime": 0.21666666666666667
       },
-      "fieldCollisionRadius": 0.2
+      "fieldCollisionRadius": 0.2,
+      "terrainSplashRadiusRate": 0.4234
     },
     "splatling": {
       "inkPerShot": 0.5625,
@@ -146,7 +147,10 @@
       "chargeTime": 1,
       "inkRecoverStop": 0.3333333333333333,
       "damagePartialMax": 80,
-      "fieldCollisionRadius": 0.02
+      "fieldCollisionRadius": 0.02,
+      "fullChargeJumpVelocity": 4.2,
+      "scopedCharge": false,
+      "postShotSwimTime": 0.25
     },
     "roller": {
       "rollSpeed": 7.92,
@@ -288,7 +292,9 @@
           "endRadius": 1.02,
           "changeTime": 0.06666666666666667
         }
-      }
+      },
+      "rollDamage": 125,
+      "rollInkRecoverStop": 0.3333333333333333
     },
     "slosher": {
       "inkPerShot": 7.6,
@@ -325,7 +331,15 @@
         30
       ]
     ],
-    "inkRecoverStop": 1
+    "inkRecoverStop": 1,
+    "readyTimeKid": 0.08333333333333333,
+    "readyTimeSquid": 0.16666666666666666,
+    "holdMoveSpeed": 4.32,
+    "inkSaverCurve": [
+      1,
+      0.825,
+      0.65
+    ]
   },
   "specials": {
     "storm": {
@@ -351,8 +365,8 @@
     ],
     "inkSaverSub": [
       1,
-      0.9,
-      0.8
+      0.825,
+      0.65
     ],
     "inkRecovery": [
       180,
@@ -393,6 +407,11 @@
       1,
       0.4,
       0.1111111111111111
+    ],
+    "specialPower": [
+      0,
+      0.5,
+      1
     ]
   },
   "resources": {
@@ -406,29 +425,37 @@
     "enemyInkDamageCap": 40,
     "enemyInkGrace": 0,
     "enemyInkRegenSuppression": 0.4,
-    "enemyInkRecovery": 30
+    "enemyInkRecovery": 30,
+    "enemyInkGraceReset": 0.75,
+    "enemyInkReferenceHz": 60,
+    "enemyInkDamageQuantum": 0.1
   },
   "movement": {
-    "wallRollMinimumInput": 0.3,
     "roll": {
-      "minimumSpeed": 9.216,
-      "minimumInput": 0.3,
+      "minimumSpeed": 8.7,
+      "minimumInput": 0,
       "minimumAngle": 1.5707963267948966,
       "duration": 0.25,
-      "armorTime": 0.13333333333333333,
-      "armorHP": 100,
+      "armorTime": 0.3,
+      "armorHP": 30,
       "jumpVelocity": 9.4,
       "chainRetention": 0.85,
-      "chainReset": 1.5
+      "chainReset": 1.5,
+      "speedGraceTime": 0.16666666666666666,
+      "wallArmorTime": 0.75,
+      "armorThreshold": 100
     },
     "surge": {
       "chargeTime": 0.75,
       "duration": 0.3,
       "minimumVelocity": 4,
       "velocity": 15,
-      "armorTime": 0.13333333333333333,
-      "armorHP": 100
-    }
+      "armorTime": 0.75,
+      "armorHP": 30,
+      "chargeMoveScale": 0.25,
+      "armorThreshold": 100
+    },
+    "wallRollMaximumAngle": 0.7853981633974483
   },
   "flow": {
     "threshold": 3,
@@ -504,7 +531,8 @@
       "Blaster terrain damage is half of normalized existing bands, floor to0.1HP after scaling;35HP cap is sourced, complete S3 falloff curve remains uncalibrated.",
       "PR64 completion: finite Charger flight, continuous collision, source-mirrored unit layouts and model-labelled interpolation; physical Switch parity remains unverified.",
       "Rescued from PR #489: Flow progress now decays/penalizes and survives respawn while active; community loss values remain calibration, not Nintendo primary data.",
-      "Rescued from PR #547/#491/#545: Roller swing movement target, deterministic Alpha ties, and Tenacity owner-only passive charge remain subject to current-main combined validation."
+      "Rescued from PR #547/#491/#545: Roller swing movement target, deterministic Alpha ties, and Tenacity owner-only passive charge remain subject to current-main combined validation.",
+      "Rescued #299/#315/#340 residuals: roll/surge control, enemy-ink grace/quantization/action speed, Roller contact/recovery and terrain Blaster hit ratio; current #5 projectile chronology remains authoritative."
     ],
     "movementResourcesEvidence": "reports/inkwave-movement-resources-2026-10-02.md"
   },
@@ -858,22 +886,22 @@
       "rawValue": 0.55
     },
     "gear.inkSaverSub.0": {
-      "parameter": "data/parameter/1130/misc/params.json#/ConsumeRt_Sub_Lv0",
+      "parameter": "data/parameter/1130/misc/params.json#/ConsumeRt_Sub_Lv2",
       "index": 2,
       "factor": 1,
       "rawValue": 1
     },
     "gear.inkSaverSub.1": {
-      "parameter": "data/parameter/1130/misc/params.json#/ConsumeRt_Sub_Lv0",
+      "parameter": "data/parameter/1130/misc/params.json#/ConsumeRt_Sub_Lv2",
       "index": 1,
       "factor": 1,
-      "rawValue": 0.9
+      "rawValue": 0.825
     },
     "gear.inkSaverSub.2": {
-      "parameter": "data/parameter/1130/misc/params.json#/ConsumeRt_Sub_Lv0",
+      "parameter": "data/parameter/1130/misc/params.json#/ConsumeRt_Sub_Lv2",
       "index": 0,
       "factor": 1,
-      "rawValue": 0.8
+      "rawValue": 0.65
     },
     "gear.inkRecovery.0": {
       "parameter": "data/parameter/1130/misc/params.json#/InkRecoverFrm_Stealth",
@@ -1330,6 +1358,137 @@
       "index": null,
       "factor": 1,
       "rawValue": 0.8
+    },
+    "gearExtra.enemyActionSpeedScale.0": {
+      "parameter": "data/parameter/1130/misc/params.json#/OpInk_MoveVel_ShotK",
+      "index": 2,
+      "factor": 1,
+      "rawValue": 0.5
+    },
+    "gearExtra.enemyActionSpeedScale.1": {
+      "parameter": "data/parameter/1130/misc/params.json#/OpInk_MoveVel_ShotK",
+      "index": 1,
+      "factor": 1,
+      "rawValue": 0.75
+    },
+    "gearExtra.enemyActionSpeedScale.2": {
+      "parameter": "data/parameter/1130/misc/params.json#/OpInk_MoveVel_ShotK",
+      "index": 0,
+      "factor": 1,
+      "rawValue": 1
+    },
+    "gearExtra.enemyInkGraceFrames.0": {
+      "parameter": "data/parameter/1130/misc/params.json#/OpInk_ArmorHP",
+      "index": 2,
+      "factor": 1,
+      "rawValue": 0
+    },
+    "gearExtra.enemyInkGraceFrames.1": {
+      "parameter": "data/parameter/1130/misc/params.json#/OpInk_ArmorHP",
+      "index": 1,
+      "factor": 1,
+      "rawValue": 26
+    },
+    "gearExtra.enemyInkGraceFrames.2": {
+      "parameter": "data/parameter/1130/misc/params.json#/OpInk_ArmorHP",
+      "index": 0,
+      "factor": 1,
+      "rawValue": 39
+    },
+    "weapons.roller.rollDamage": {
+      "parameter": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/BodyParam/Damage",
+      "index": null,
+      "factor": 0.1,
+      "rawValue": 1250
+    },
+    "weapons.roller.rollInkRecoverStop": {
+      "parameter": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WeaponRollParam/InkRecoverStop",
+      "index": null,
+      "factor": 0.016666666666666666,
+      "rawValue": 20
+    },
+    "weapons.blaster.terrainSplashRadiusRate": {
+      "parameter": "data/parameter/1130/weapon/WeaponBlasterMiddle.game__GameParameterTable.json#/GameParameters/BlasterBurstParam/ShotCollisionHitRadiusRate",
+      "index": null,
+      "factor": 1,
+      "rawValue": 0.4234
+    },
+    "weapons.charger.fullChargeJumpVelocity": {
+      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/WeaponParam/JumpHeightFullCharge",
+      "factor": 60,
+      "rawValue": 0.07
+    },
+    "gearExtra.quickRespawnAroundFrames.0": {
+      "parameter": "data/parameter/1130/misc/params.json#/Dying_AroundFrm",
+      "index": 2,
+      "factor": 1,
+      "rawValue": 90
+    },
+    "gearExtra.quickRespawnAroundFrames.1": {
+      "parameter": "data/parameter/1130/misc/params.json#/Dying_AroundFrm",
+      "index": 1,
+      "factor": 1,
+      "rawValue": 60
+    },
+    "gearExtra.quickRespawnAroundFrames.2": {
+      "parameter": "data/parameter/1130/misc/params.json#/Dying_AroundFrm",
+      "index": 0,
+      "factor": 1,
+      "rawValue": 30
+    },
+    "bomb.inkSaverCurve.0": {
+      "parameter": "data/parameter/1130/misc/params.json#/ConsumeRt_Sub_Lv2",
+      "index": 2,
+      "factor": 1,
+      "rawValue": 1
+    },
+    "bomb.inkSaverCurve.1": {
+      "parameter": "data/parameter/1130/misc/params.json#/ConsumeRt_Sub_Lv2",
+      "index": 1,
+      "factor": 1,
+      "rawValue": 0.825
+    },
+    "bomb.inkSaverCurve.2": {
+      "parameter": "data/parameter/1130/misc/params.json#/ConsumeRt_Sub_Lv2",
+      "index": 0,
+      "factor": 1,
+      "rawValue": 0.65
+    },
+    "gearExtra.stormDurationFrames.0": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpInkStorm.game__GameParameterTable.json#/GameParameters/CloudParam/RainyFrame/Low",
+      "index": null,
+      "factor": 1,
+      "rawValue": 480
+    },
+    "gearExtra.stormDurationFrames.1": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpInkStorm.game__GameParameterTable.json#/GameParameters/CloudParam/RainyFrame/Mid",
+      "index": null,
+      "factor": 1,
+      "rawValue": 540
+    },
+    "gearExtra.stormDurationFrames.2": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpInkStorm.game__GameParameterTable.json#/GameParameters/CloudParam/RainyFrame/High",
+      "index": null,
+      "factor": 1,
+      "rawValue": 600
+    },
+    "gearExtra.stormThrowScale.0": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpInkStorm.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeedZSpecUp/Low",
+      "index": null,
+      "factor": 0.8928571428571428,
+      "rawValue": 1.12
+    },
+    "gearExtra.stormThrowScale.1": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpInkStorm.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeedZSpecUp/Mid",
+      "index": null,
+      "factor": 0.8928571428571428,
+      "rawValue": 1.4
+    },
+    "gearExtra.stormThrowScale.2": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpInkStorm.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeedZSpecUp/High",
+      "index": null,
+      "factor": 0.8928571428571428,
+      "rawValue": 1.68
     }
   },
   "gearExtra": {
@@ -1377,6 +1536,31 @@
       0,
       0.75,
       1
+    ],
+    "enemyActionSpeedScale": [
+      0.5,
+      0.75,
+      1
+    ],
+    "enemyInkGraceFrames": [
+      0,
+      26,
+      39
+    ],
+    "quickRespawnAroundFrames": [
+      90,
+      60,
+      30
+    ],
+    "stormDurationFrames": [
+      480,
+      540,
+      600
+    ],
+    "stormThrowScale": [
+      1,
+      1.25,
+      1.5
     ]
   },
   "respawnChaseTime": 4.5,
@@ -3094,5 +3278,10 @@
       "chargerPaint": "pinned width/depth/radius endpoints drive existing rasterizer; spacing formula and terminal multiplier remain source-guided/community-modelled",
       "rollerAgeDamage": "linear multiplier to pinned DamageRejectRate between pinned start/end frames; subframe rounding unverified"
     }
+  },
+  "stealth": {
+    "sneakRatio": 0.6,
+    "ninjaDelay": 0.5,
+    "ninjaSwimMultiplier": 0.9
   }
 }
