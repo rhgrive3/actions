@@ -8,6 +8,10 @@ const tick = (world) => {
   world.net._sendTick();
   return world.wire.at(-1).data;
 };
+const flushLethal = world => {
+  world.G.time += 1 / 60;
+  world.victim.update(1 / 60);
+};
 
 test('stale life hit is dropped, matching life hit damages the same life', async () => {
   const shooter = await combatWorld('A'), defender = await combatWorld('B');
@@ -45,6 +49,8 @@ test('dead then respawned hit window expires without damaging the new life', asy
     shooter.G.projectiles.applyHit(shooter.attacker, shooter.victim, 100, 'shooter');
     const lethal = shooter.wire.at(-1).data;
     defender.net.onMessage('A', lethal);
+    assert.equal(defender.victim.alive, true, 'receive tick retains the one-frame trade window');
+    flushLethal(defender);
     assert.equal(defender.victim.alive, false);
     const held = structuredClone(lethal);
     const deaths = defender.victim.stats.deaths;
