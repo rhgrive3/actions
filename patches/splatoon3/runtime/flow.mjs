@@ -84,9 +84,22 @@ export function installFlow({ Actor, on, emit, G }, tuning) {
     const map = credits.get(victim) || new Map(); map.set(attacker, G.time); credits.set(victim, map);
     award(attacker, 'damage', amount);
   });
-  on('splatted', ({ victim, attacker, cause }) => {
+  on('splatted', (event) => {
+    const { victim, attacker, cause } = event;
     if (attacker && attacker !== victim && attacker.team !== victim.team) award(attacker, 'splat', 1);
-    for (const [helper, time] of credits.get(victim) || []) if (helper !== attacker && G.time - time <= cfg.assistWindow) award(helper, 'assist', 1);
-    credits.delete(victim); penalizeFlowDeath(state(victim), cause, cfg);
+    // One victim-authoritative assist list feeds stats, Flow and conditional gear
+    // while the current-main death-progress policy remains authoritative.
+    const candidates = Array.isArray(event.assists) ? event.assists :
+      [...(credits.get(victim) || [])].filter(([, time]) => G.time - time <= cfg.assistWindow).map(([helper]) => helper);
+    const helpers = attacker && attacker !== victim && attacker.team !== victim.team
+      ? [...new Set(candidates)].filter(helper => helper !== attacker && helper !== victim && helper.team === attacker.team) : [];
+    event.assists = helpers;
+    for (const helper of helpers) {
+      helper.stats.assists = (helper.stats.assists || 0) + 1;
+      award(helper, 'assist', 1);
+      emit('actor:assist', { actor: helper, victim, attacker });
+    }
+    credits.delete(victim);
+    penalizeFlowDeath(state(victim), cause, cfg);
   });
 }
