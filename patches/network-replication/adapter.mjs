@@ -239,11 +239,16 @@ function retireNetworkGhosts(owner = null) {
     patch('    const c = b.pos;\n    let area = G.paint.splat',
       '    const c = b.pos;\n    const detonationLocalTime = b.ghost ? b._netBornLocal + b.age : null;\n    let area = G.paint.splat',
       'bomb detonation playback time');
-    patch("      this.applyHit(b.owner, e, distanceDamage(s.damageBands, d, false), 'bomb');",
-      `      if (b.ghost && (!Number.isFinite(detonationLocalTime)
-        || !Number.isFinite(e._netLifeStartedAt) || e._netLifeStartedAt > detonationLocalTime)) continue;
-      this.applyHit(b.owner, e, distanceDamage(s.damageBands, d, false), 'bomb');`,
-      'reject bomb from prior recipient life');
+    {
+      const rawBombHit = "      this.applyHit(b.owner, e, distanceDamage(s.damageBands, d, false), 'bomb');";
+      const kitBombHit = "      this.applyHit(b.owner, e, distanceDamage(kitBombDamageBands(SUB, b, s.damageBands), d, false), 'bomb');";
+      const bombHit = code.includes(kitBombHit) ? kitBombHit : rawBombHit;
+      patch(bombHit,
+        `      if (b.ghost && (!Number.isFinite(detonationLocalTime)
+          || !Number.isFinite(e._netLifeStartedAt) || e._netLifeStartedAt > detonationLocalTime)) continue;
+${bombHit}`,
+        'reject bomb from prior recipient life');
+    }
     patch('    const up = clamp(a.aimPitch, -0.2, 0.5) + 0.32;', '    const up = clamp(a.aimPitch, -0.2, 0.5) + 0.32;\n    let projectileFirst;', 'attack-owned first projectile');
     patch("      this._push(p);\n    }\n    appendRollerNearUnit(this, a, w);\n    if (a.isLocal) emit('recoil', { amount: 0.007 });", "      this._push(p);\n      if (i === 0) projectileFirst = p._netId;\n    }\n    appendRollerNearUnit(this, a, w);\n    if (a.isLocal) emit('recoil', { amount: 0.007 });", 'capture exact volley during generation');
     patch('weapon: w.id, muzzle: new THREE.Vector3(m.x + fx * 0.6, m.y + 0.3, m.z + fz * 0.6)', 'weapon: w.id, projectileFirst, muzzle: new THREE.Vector3(m.x + fx * 0.6, m.y + 0.3, m.z + fz * 0.6)', 'publish exact volley event');
