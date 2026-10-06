@@ -156,6 +156,7 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, '    this.grounded = grounded;\n    this.airTime', '    this.grounded = grounded;\n    rememberSuperJumpGround(this);\n    this.airTime', 'record resolved jump destination');
     code = replaceOnce(code, 'this.groundN.copy(gh.normal); }\n  }', 'this.groundN.copy(gh.normal); }\n    rememberSuperJumpGround(this);\n  }', 'record spawn jump destination');
     code = replaceOnce(code, "    if (this.superJumpState) { this._updateSuperJump(dt); this._finishFrame(dt); return; }", "    if (this.superJumpState) { this._updateSuperJump(dt); updateSuperJumpMain(this, dt, firePressed); if (this.alive) this._finishFrame(dt); return; }", 'super jump main input');
+    code = replaceOnce(code, "    if (this.specialActive) { this._updateSpecial(dt); this._finishFrame(dt); return; }", "    if (this.specialActive) { this._updateSpecial(dt); updateResources(this, dt); if (this.alive) this._finishFrame(dt); return; }", 'special active resources');
     code = replaceOnce(code, "    this.superJumpState = { phase: 'charge',", "    if (target?.pos?.isVector3 && (target === this || target.team !== this.team || target.superJumpState)) return false;\n    const destination = new THREE.Vector3();\n    if (!superJumpTarget(target, destination)) return false;\n    target = destination.clone();\n    rememberSuperJumpGround(this);\n    this.superJumpState = { wallSupport: this.climbing ? this.wallN.clone() : null, phase: 'charge',", 'super jump wall support and destination admission');
     code = replaceOnce(code, 'target, from: new THREE.Vector3(), to: new THREE.Vector3(), marker: 0', 'target, from: new THREE.Vector3(), to: destination, marker: 0', 'super jump committed destination');
     code = replaceOnce(code, "      this.vel.set(0, 0, 0);\n      this.form = 'squid';\n      this._probeGround();", '      const supported = prepareSuperJump(this, dt);\n      if (!this.alive) return;', 'super jump preparation physics');
@@ -205,6 +206,21 @@ export function adaptSource(rel, code) {
       'authoritative Turf winner Game to HUD');
     code = replaceOnce(code, 'const game = new Game();', 'installGame(Game);\nconst game = new Game();', 'game installation');
     return `import { runSimulation, installGame } from '../patches/splatoon3/runtime/clock.mjs';\n` + code;
+  }
+  if (rel === 'src/world/paint.js') {
+    code = replaceOnce(code,
+      '    let claimed = 0;\n    const cellA = f.cu * f.cv;',
+      '    let claimed = 0, changed = 0;\n    const cellA = f.cu * f.cv;',
+      'cpu splat changed tracking');
+    code = replaceOnce(code,
+      '        this.grid[k] = val;\n        claimed += cellA;\n        if (f.turf && !this.dead[k]) {',
+      '        this.grid[k] = val;\n        changed++;\n        if (f.turf && !this.dead[k]) {\n          claimed += cellA;',
+      'turf eligible claimed area');
+    code = replaceOnce(code,
+      '    if (claimed > 0) this.version++;\n    return claimed;',
+      '    if (changed > 0) this.version++;\n    return claimed;',
+      'cpu splat version bump');
+    return code;
   }
   return code;
 }

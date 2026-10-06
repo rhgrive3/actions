@@ -357,3 +357,27 @@ Base: main `3d8a48d37ea5d6206e4f4185fa4a8229ae1c6977`. The reference target is S
 For #627, reproduce by letting an early glob contact a live player while `Actor.invuln > 0`, then let a later glob from that same throw contact after protection ends. The real INKWAVE Actor rejected the first damage call, but the installed projectile helper had already stored 70 in the shared group; the later vulnerable hit therefore had zero delta. The helper now commits the per-victim maximum only after accepted HP damage. For online victims the sender carries an optional volley identity to the victim owner, which applies and records the group there; rejected hits leave it available, accepted hits deduplicate later contacts, and pooled projectiles clear the identity. The native fixture verifies this state path and its gameplay effect. Exact Nintendo boundary timing and the same scenario on a Switch remain unmeasured, so hardware parity is unconfirmed.
 
 For #654, the INKWAVE condition is one connected controller held across a browser lifecycle boundary, trigger 7 at `{ value: 0.40, pressed: false }`, then continued polling without physical release. Reliability already treats that trigger as held above 0.30; the platform rebase now seeds the same canonical held state and blocks gameplay values until release. The focused fixture confirms no resumed edge or fire hold, then admits a new press after release. This browser lifecycle has no direct Switch equivalent, and Nintendo does not expose the browser's analog `pressed` threshold; Switch resume behavior with a held trigger remains unverified. Keyboard, pad selection, and touch ownership policies were not otherwise retuned.
+
+## 2026-10-06 — #624 アメフラシ投擲待機中の相手インク受動ダメージ欠落の解消
+
+開始mainは `c9b1c022ad4dfa0ce437698e697952deca4d94cb`。公開対象は `inkwave-public/` と有効な `patches/splatoon3/` であり、旧 `game/` は対象外。
+
+| 項目 | 内容 |
+|---|---|
+| 本家の根拠 | スプラトゥーン3 Ver.11.3.0 ([任天堂更新履歴](https://support.nintendo.com/jp/switch/software_support/av5ja/1130.html))。アメフラシ (Ink Storm) 発動中はアーマーを持たない脆弱状態（非無敵）であり、相手インクとの接触時は相手インク影響軽減ギアの仕様通り受動ダメージ（0 AP で毎秒 18 HP / 60Hz あたり 0.3 HP/tick）を受ける。 |
+| INKWAVE の実装箇所 | `patches/splatoon3/adapter.mjs` の `src/game/actor.js` アダプタにおいて、`if (this.specialActive) { this._updateSpecial(dt); this._finishFrame(dt); return; }` の早期脱出時に `updateResources(this, dt)` を共通実行するよう変更 (`if (this.specialActive) { this._updateSpecial(dt); updateResources(this, dt); if (this.alive) this._finishFrame(dt); return; }`)。 |
+| 再現操作 | 0 AP 相手インク影響軽減で敵インク上に接地した状態でアメフラシを発動。修正前は約 0.35 秒（22 ticks）の投擲ロック中に HP 減少および `s3.enemyInkTime` の積算が停止していた。修正後は投擲ロック中も毎 tick 0.3 HP の受動ダメージを受け、初回・最終ロック tick での重複実行もない。 |
+| プレイへの影響 | アメフラシ発動による敵インク被弾無効化（不当な生存性向上）を是正。スペシャル効果時間・投擲・ゲージ挙動・通常武器被弾・水没判定 (#592) はそのまま維持。 |
+| 確認状態 | **ロジック確認済み**（実 Actor + 実 Physics / Paint / Resources 環境での専用回帰 `patches/splatoon3/tests/storm-throwlock-resources.test.mjs` 6/6 通過、30/60/120 Hz で同一判定）。**Switch Ver.11.3.0 実機での精密フレーム測定は未確認**。 |
+
+## 2026-10-06 — #736 非Turf壁面塗りによるTurfポイントおよびスペシャルゲージ誤付与の解消
+
+開始mainは `c9b1c022ad4dfa0ce437698e697952deca4d94cb`。公開対象は `inkwave-public/` と有効な `patches/splatoon3/` であり、旧 `game/` は対象外。
+
+| 項目 | 内容 |
+|---|---|
+| 本家の根拠 | スプラトゥーン3 Ver.11.3.0 ナワバリバトルルール説明 ([任天堂公式](https://www.nintendo.com/jp/switch/av5ja/battle-nawabari/index.html))。壁面などの垂直面はインクで塗って登ることができるが、ナワバリ面積およびスペシャルゲージ蓄積・個人塗りポイントには計上されない（上から見える床面のみが対象）。 |
+| INKWAVE の実装箇所 | `patches/splatoon3/adapter.mjs` の `src/world/paint.js` アダプタにおいて、`_cpuSplat` の `claimed += cellA;` を `if (f.turf && !this.dead[k])` の内側へ移動。セル色更新・GPU描画・壁登り用のバージョン更新は `changed > 0` で維持しつつ、スコア対象の `claimed` 面積は非Turf壁面および `dead[k]` セルで 0 を返すよう分離。 |
+| 再現操作 | 垂直壁面 (`wall: true`, `turf: false`) に着弾させた際、修正前は `_cpuSplat` が正の `claimed` 面積を返し、`Actor.addTurf(claimed)` により `stats.turf` と `special` が増加していた。修正後は壁面のインク塗り・壁登り可能性を保ちつつ、`claimed` が 0 となり個人塗り・スペシャルへの計上が行われない。床・壁混在着弾時は適格な床面のみ計上される。 |
+| プレイへの影響 | 壁面塗りを悪用したスペシャルの早期充填や塗りポイントの水増しを防止。試合終了時の勝敗判定 (`coverage()`) および PR #785 (C15) の投影セル面積計算と整合。 |
+| 確認状態 | **ロジック確認済み**（実 PaintSystem + Actor / scoring 環境での専用回帰 `patches/splatoon3/tests/wall-turf-credit.test.mjs` 6/6 通過）。**Switch Ver.11.3.0 実機との比較は未確認**。 |
