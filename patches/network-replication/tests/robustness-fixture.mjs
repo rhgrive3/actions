@@ -124,8 +124,8 @@ export async function fixture({ network = true } = {}) {
     tr: { broadcast: () => {}, sendTo: () => {} },
   });
 
-  function makeNetMatch(session) {
-    const nm = new NetMatch(session, { map: 'map', difficulty: 'normal' });
+  function makeNetMatch(session, cfg = {}) {
+    const nm = new NetMatch(session, { id: 'fixture-match', map: 'map', difficulty: 'normal', ...cfg });
     G.netm = nm;
     return nm;
   }

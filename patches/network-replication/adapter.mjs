@@ -15,6 +15,57 @@ export function networkIdentity() {
 export function adaptNetworkSource(rel, code) {
   const patch = (before,after,label) => { code = once(code,before,after,rel+': '+label); };
   if (rel === 'src/net/netmatch.js') {
+    patch('    this.cfg = cfg;\n    this.myId = session.myId;', '    this.cfg = cfg;\n    this._firstSplatState = firstSplatStateFor(session,cfg);\n    this.myId = session.myId;', 'match-scoped first-splat decision state');
+    patch('    G.netm = this;\n    for (const a of match.actors)', '    G.netm = this;\n    this._requestFirstSplat();\n    for (const a of match.actors)', 'reconnect first-splat decision request');
+    patch("      case 'own': if (from === this.s.hostId) this._ownership(d.map); break;", "      case 'own': if (from === this.s.hostId) this._ownership(d.map); break;\n      case 'fs': this._acceptFirstSplat(from,d); break;\n      case 'fsq': this._answerFirstSplat(from,d); break;", 'first-splat host confirmation packets');
+    patch('  _remoteSplat(victim, attacker, cause) {', `  _requestFirstSplat() {
+    const id = this.cfg?.id;
+    if (!this.isHost && typeof id === 'string' && id && this.s.hostId) this.s.tr?.sendTo(this.s.hostId,{k:'fsq',m:id});
+  }
+
+  _firstSplatPair(attackerNid,victimNid) {
+    const m = this.match, validNid = n => Number.isSafeInteger(n) && n >= 0;
+    if (!m || G.netm !== this || m.attract || m.range || m.opts?.range
+      || !validNid(attackerNid) || !validNid(victimNid) || attackerNid === victimNid) return null;
+    const attacker = this.byNid.get(attackerNid), victim = this.byNid.get(victimNid);
+    if (!attacker || !victim || !m.actors?.includes(attacker) || !m.actors?.includes(victim)
+      || attacker.team === victim.team) return null;
+    return { attacker, victim };
+  }
+
+  claimFirstSplat(attacker,victim) {
+    const state = this._firstSplatState;
+    if (!this.isHost || !state.matchId || state.matchId !== this.cfg?.id || state.claimed
+      || !attacker || !victim) return false;
+    const pair = this._firstSplatPair(attacker.nid,victim.nid);
+    if (!pair || pair.attacker !== attacker || pair.victim !== victim) return false;
+    state.claimed = true;
+    state.attackerNid = attacker.nid; state.victimNid = victim.nid;
+    this._sendNow({k:'fs',m:state.matchId,a:state.attackerNid,v:state.victimNid});
+    return true;
+  }
+
+  _acceptFirstSplat(from,d) {
+    const state = this._firstSplatState;
+    if (from !== this.s.hostId || !state.matchId || d?.m !== this.cfg?.id || d.m !== state.matchId || state.claimed) return false;
+    const pair = this._firstSplatPair(d.a,d.v);
+    if (!pair) return false;
+    state.claimed = true;
+    state.attackerNid = pair.attacker.nid; state.victimNid = pair.victim.nid;
+    emit('flow:first-splat-confirmed',{match:this.match,matchId:d.m,attacker:pair.attacker,victim:pair.victim});
+    return true;
+  }
+
+  _answerFirstSplat(from,d) {
+    const state = this._firstSplatState;
+    if (!this.isHost || from === this.myId || !this.s._members?.has(from)
+      || !state.matchId || d?.m !== this.cfg?.id || d.m !== state.matchId || !state.claimed) return false;
+    this.s.tr?.sendTo(from,{k:'fs',m:state.matchId,a:state.attackerNid,v:state.victimNid});
+    return true;
+  }
+
+  _remoteSplat(victim, attacker, cause) {`, 'host-authoritative first-splat protocol');
+    patch('    if (!victim || !victim.alive) return;\n    victim.alive = false;', "    if (!victim || !victim.alive) return;\n    emit('flow:splat-observed',{match:this.match,victim,attacker,cause});\n    victim.alive = false;", 'Flow observes only accepted remote splats');
     patch('  dispose() {\n    for (const u of this.unsubs)', `  dispose() {
     retireNetworkGhosts();
     for (const u of this.unsubs)`, 'session disposal retirement');
@@ -180,6 +231,16 @@ function retireNetworkGhosts(owner = null) {
   for (let i = P.clouds.length-1; i >= 0; i--) if (P.clouds[i].ghost && owns(P.clouds[i])) { P._releaseCloud(P.clouds[i],.3); P.clouds.splice(i,1); }
   for (let i = P.beams.length-1; i >= 0; i--) { const b = P.beams[i]; if (b._netPeer && (!owner || b._netOwner === owner)) { b.mesh.visible = false; P.beamPool.push(b.mesh); P.beams.splice(i,1); } }
   for (const [a,mesh] of P.sights) if (a.remote && (!owner || a === owner)) { P.scene.remove(mesh); mesh.material.dispose(); P.sights.delete(a); }
+}
+const firstSplatSessions = new WeakMap();
+function firstSplatStateFor(session,cfg) {
+  const id = typeof cfg?.id === 'string' && cfg.id ? cfg.id : null;
+  if (!id) return { matchId:null, claimed:false, attackerNid:null, victimNid:null };
+  let matches = firstSplatSessions.get(session);
+  if (!matches) { matches = new Map(); firstSplatSessions.set(session,matches); }
+  let state = matches.get(id);
+  if (!state) { state = { matchId:id, claimed:false, attackerNid:null, victimNid:null }; matches.set(id,state); }
+  return state;
 }
 `;
   }
