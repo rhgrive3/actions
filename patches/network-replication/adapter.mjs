@@ -104,7 +104,22 @@ export function adaptNetworkSource(rel, code) {
       const actor = this.byNid.get(nid);
       if (!actor?.remote || actor.owner !== from) return;
     }
-    switch (e[1]) {`, 'event ownership');
+    // Boss hazard/crablet timeline records are host-authoritative at admission:
+    // recBoss() only ever records 'bm'/'bc' on the host, so a queue that is not the
+    // session's current host's must never reach Boss.onMove/_crabBurst. The
+    // simulating host would turn a forged move record into authoritative hazard
+    // damage, and every guest would diverge from the host's crablet state. Payload
+    // shape is checked before it can mutate Boss state; duplicates and stale
+    // records are already rejected by the sequence gate above, and a host handoff
+    // re-evaluates every later record against the session's current hostId.
+    if (e[1] === 'bm' || e[1] === 'bc') {
+      if (from !== this.s.hostId) return;
+      if (e[1] === 'bm') {
+        const move = e[2];
+        if (!move || typeof move !== 'object' || !Number.isFinite(move.t0)) return;
+      } else if (!Number.isSafeInteger(e[2]) || !Number.isFinite(e[3]) || !Number.isFinite(e[4]) || !Number.isFinite(e[5])) return;
+    }
+    switch (e[1]) {`, 'event ownership and host-only Boss timeline admission');
     patch("case 'b': { const a = this.byNid.get(e[2]); if (a) G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9]); break; }", `case 'b': {
         for (let index = 4; index <= 9; index++) if (!Number.isFinite(e[index])) return;
         const a = this.byNid.get(e[2]);
