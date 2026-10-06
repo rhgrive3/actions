@@ -7,7 +7,8 @@ import { installFlow } from '../runtime/flow.mjs';
 // #529: Splatoon 3 gives the player who scores the first enemy splat of the match an
 // additional +10 Flow points, separate from the ordinary splat award. The bonus is
 // match-global (once per battle, not per player/team), survives respawns, cannot be
-// duplicated by stale network events, and stacks into the ordinary splat gain.
+// duplicated by a repeated event callback, and stacks into the ordinary splat gain.
+// The repeat control checks the bonus only; it does not claim network/base-award dedup.
 // Uses the installed runtime (runtime/flow.mjs) with the shipped profile config.
 const profile = JSON.parse(fs.readFileSync(fileURLToPath(new URL('../../../patches/splatoon3/profile.json', import.meta.url)), 'utf8'));
 const cfg = profile.flow;
@@ -46,13 +47,13 @@ test('#529: the first enemy splat of a battle earns ordinary + 10fp; later splat
   near(r.score(a), 2 * SPLAT + fpScore(bonusFp), 'no repeated bonus for the same attacker');
 });
 
-test('#529: bonus is match-global once per battle; duplicates and respawns cannot repeat it', () => {
+test('#529: repeated splatted callback cannot repeat +10; ordinary reward remains per callback', () => {
   const r = rig();
   const a = r.actor(0), v = r.actor(1);
   r.splat(a, v);
   near(r.score(a), SPLAT + fpScore(bonusFp));
   r.splat(a, v);
-  near(r.score(a), 2 * SPLAT + fpScore(bonusFp), 'duplicate/stale event grants no second bonus');
+  near(r.score(a), 2 * SPLAT + fpScore(bonusFp), 'repeated callback retains its ordinary gain but gets no second +10');
   a.reset();
   r.splat(a, r.actor(1));
   near(r.score(a), SPLAT, 'respawn clears flow state but not bonus eligibility');
@@ -70,11 +71,40 @@ test('#529: non-qualifying first splats keep eligibility; the flag is global acr
   const mate = r.actor(0);
   r.splat(mate, r.actor(0));
   near(r.score(mate), 0, 'same-team splat awards nothing');
-  r.splat(a, r.actor(1));
-  near(r.score(a), SPLAT + fpScore(bonusFp), 'bonus still pending for the first qualifying splat');
+  r.splat(a, r.actor(1), 'water');
+  near(r.score(a), SPLAT, 'environmental attribution keeps its ordinary path but does not consume the first-event bonus');
+  r.G.match.attract = true;
+  const attractActor = r.actor(0);
+  r.splat(attractActor, r.actor(1));
+  near(r.score(attractActor), 0, 'attract still awards no Flow');
+  r.G.match.attract = false;
+  const firstPlayerSplat = r.actor(0);
+  r.splat(firstPlayerSplat, r.actor(1));
+  near(r.score(firstPlayerSplat), SPLAT + fpScore(bonusFp), 'bonus still pending for the first player-caused enemy splat');
   const enemy = r.actor(1);
   r.splat(enemy, r.actor(0));
   near(r.score(enemy), SPLAT, 'flag is match-global, not once per team/player');
+});
+
+test('#529: a dead first attacker consumes the match event before local Flow eligibility', () => {
+  const r = rig();
+  const dead = r.actor(0), later = r.actor(0);
+  dead.alive = false;
+  r.splat(dead, r.actor(1));
+  near(r.score(dead), 0, 'dead attacker cannot receive Flow');
+  r.splat(later, r.actor(1));
+  near(r.score(later), SPLAT, 'later alive attacker gets ordinary reward only');
+});
+
+test('#529: a bot excluded by cfg.bots=false still consumes the match event', () => {
+  const tuning = { ...profile, flow: { ...cfg, bots: false } };
+  const r = rig({ tuning });
+  const bot = r.actor(0), later = r.actor(0);
+  bot.isBot = true;
+  r.splat(bot, r.actor(1));
+  near(r.score(bot), 0, 'disabled bot cannot receive Flow');
+  r.splat(later, r.actor(1));
+  near(r.score(later), SPLAT, 'later alive human gets ordinary reward only');
 });
 
 test('#529: fixed-step runs at 30/60/120 Hz produce identical bonus outcomes', () => {
