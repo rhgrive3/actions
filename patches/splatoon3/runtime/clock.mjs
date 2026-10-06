@@ -29,7 +29,10 @@ export function runSimulation(game, dt) {
   G.net?.update?.(dt);
   const m = game.match, covered = !!game.showcase?.fullFrame;
   game._s3Ticked = clock.advance(dt, step => {
-    G.time += step;
+    // G.time is gameplay time: Roller contact/Boss grouping and Flow assist
+    // windows compare against it. Offline pause freezes Match/projectiles, so
+    // it must freeze this clock too (#707). Online pause never sets `paused`.
+    if (!(m && m.paused && !m.attract)) G.time += step;
     if (m && !(covered && m.attract)) {
       m.updateController(step);
       m.controller?.computeAim?.();
