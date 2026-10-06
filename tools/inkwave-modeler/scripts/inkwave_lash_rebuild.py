@@ -665,66 +665,58 @@ def lower_edge(rays, design, corner, n_up, lid):
 
 
 def build_corner_fill(rays, design):
-    """Skin over the eyeball where the model's outer lower corner opens past the reference (corner_clip): cells of a
-    0.2 px grid that see the eyeball and lie outside the clip (plus 0.3 px under the rim), grown by 2 cells onto
-    the skin round them (no gap at the skin's edge).  Each vertex lies on whatever is in front (eyeball or skin)
-    along its front ray; the depth is smoothed over the grid but kept between corner_fill_lift_mm and
-    corner_fill_max_mm in front of it, so the patch passes smoothly from the skin onto the eyeball.
-    Returns verts, faces (head mm) or None."""
+    """Skin over the eyeball where the model's outer lower corner opens past the reference (corner_clip).  Rows every
+    0.2 px across the clipped rows; each row runs from 0.6 px outside the opening (on the skin) to 0.3 px past the
+    clip line (under the rim), in 12 even steps, so both edges are smooth lines (a cell grid made a staircase that
+    showed as teeth in the 3/4 view).  Vertices over the skin stay just under it (hidden), vertices over the eyeball
+    lie corner_fill_lift_mm .. corner_fill_max_mm in front of it, smoothed over the grid, so the patch is one smooth
+    sheet from under the skin to the eyeball.  Returns verts, faces (head mm) or None."""
     clip = corner_clip(design)
     if clip is None:
         return None
     cc = np.array(design['corner_clip'], float)
-    step = 0.2
-    xs = np.arange(cc[:, 1].max() + 0.6, 95.0, -step)[::-1]
-    ys = np.arange(cc[:, 0].min() - 1.0, cc[:, 0].max() + 1.0, step)
-    eye = np.array([[rays.on_eye(x, y) for x in xs] for y in ys])
-    out = np.array([[x < clip(y) + 0.3 for x in xs] for y in ys])
-    core = eye & out
-    if not core.any():
+    ys = np.arange(cc[:, 0].min() - 1.0, cc[:, 0].max() + 1.0, 0.2)
+    rows = []
+    for y in ys:
+        xr = clip(y)
+        if xr < -1e8:
+            continue
+        xs = np.arange(xr, 95.0, -0.1)
+        seen = np.array([rays.on_eye(x, y) for x in xs])
+        if not seen[1:].any():
+            continue
+        xl = xs[np.nonzero(seen)[0][-1]]                     # outer end of the opening on this row
+        if xl > xr - 0.2:
+            continue
+        rows.append((y, xl - 0.6, xr + 0.3))
+    if len(rows) < 3:
         return None
-    keep = core.copy()
-    for _ in range(design.get('corner_fill_grow', 2)):
-        g = keep.copy()
-        g[1:] |= keep[:-1]; g[:-1] |= keep[1:]; g[:, 1:] |= keep[:, :-1]; g[:, :-1] |= keep[:, 1:]
-        keep = g & out
-    used = np.zeros((len(ys) + 1, len(xs) + 1), bool)
-    for j, i in np.argwhere(keep):
-        used[j:j + 2, i:i + 2] = True
-    ny, nx = used.shape
-    O = np.zeros((ny, nx, 3)); D = np.zeros((ny, nx, 3)); H = np.full((ny, nx), np.nan)
-    for j, i in np.argwhere(used):
-        o, d, t = rays.ray((xs[0] - step / 2 + i * step, ys[0] - step / 2 + j * step))
-        O[j, i], D[j, i], H[j, i] = o, d, t
+    R = np.array(rows)
+    R[:, 1] = er.smooth_rows(R[:, 1], 2.0)                  # smooth outer edge (it lies on the skin)
+    ncol = 12
+    f = np.linspace(0, 1, ncol)
+    px = np.stack([R[:, 1:2] + f[None] * (R[:, 2:3] - R[:, 1:2]), np.repeat(R[:, :1], ncol, 1)], -1)
+    O = np.zeros(px.shape[:2] + (3,)); D = np.zeros_like(O); H = np.zeros(px.shape[:2]); ball = np.zeros(px.shape[:2], bool)
+    for j in range(len(R)):
+        for i in range(ncol):
+            o, d, t = rays.ray(tuple(px[j, i]))
+            O[j, i], D[j, i], H[j, i] = o, d, t
+            ball[j, i] = rays.on_eye(*px[j, i])
     lo = design.get('corner_fill_lift_mm', 0.05) / 1000
     hi = design.get('corner_fill_max_mm', 0.6) / 1000
-    # vertices over the skin stay just under it (hidden; the skin's own edge is jagged), vertices over the eyeball
-    # may rise up to hi toward the skin, so the patch is one smooth sheet from under the skin to the eyeball
-    on_ball = np.zeros(used.shape, bool)
-    for j, i in np.argwhere(used):
-        on_ball[j, i] = rays.on_eye(xs[0] - step / 2 + i * step, ys[0] - step / 2 + j * step)
     under = design.get('corner_fill_under_mm', 0.0) / 1000
-    near_lim = np.where(on_ball, H - hi, H + under)
-    far_lim = np.where(on_ball, H - lo, H + under)
-    depth = np.where(used, far_lim, 0.0)
+    near_lim = np.where(ball, H - hi, H + under)
+    far_lim = np.where(ball, H - lo, H + under)
+    depth = far_lim.copy()
     for _ in range(40):
-        p = np.pad(depth, 1, mode='edge')
-        m = np.pad(used.astype(float), 1)
-        nb = (p[:-2, 1:-1] * m[:-2, 1:-1] + p[2:, 1:-1] * m[2:, 1:-1] + p[1:-1, :-2] * m[1:-1, :-2] + p[1:-1, 2:] * m[1:-1, 2:])
-        cnt = m[:-2, 1:-1] + m[2:, 1:-1] + m[1:-1, :-2] + m[1:-1, 2:]
-        avg = np.where(cnt > 0, nb / np.maximum(cnt, 1), depth)
-        depth = np.where(used, np.clip(0.5 * depth + 0.5 * avg, near_lim, far_lim), 0.0)
-    idx = -np.ones(used.shape, int)
-    pts = []
-    for j, i in np.argwhere(used):
-        idx[j, i] = len(pts)
-        pts.append(O[j, i] + D[j, i] * depth[j, i])
-    faces = [(idx[j, i], idx[j, i + 1], idx[j + 1, i + 1], idx[j + 1, i]) for j, i in np.argwhere(keep)]
-    verts = M.to_local(np.array(pts)) * 1000
-    q = verts[list(faces[0])]
+        depth = np.clip(er.smooth_rows(er.smooth_rows(depth, 1.5), 1.5, axis=1), near_lim, far_lim)
+    verts = M.to_local((O + D * depth[..., None]).reshape(-1, 3)) * 1000
+    faces = [(j * ncol + i, j * ncol + i + 1, (j + 1) * ncol + i + 1, (j + 1) * ncol + i)
+             for j in range(len(R) - 1) for i in range(ncol - 1)]
+    q = verts[list(faces[len(faces) // 2])]
     if np.cross(q[1] - q[0], q[2] - q[0])[2] < 0:
-        faces = [f[::-1] for f in faces]
-    print('CORNER_FILL', len(faces), 'cells')
+        faces = [fc[::-1] for fc in faces]
+    print('CORNER_FILL', len(R), 'rows')
     return verts, faces
 
 
