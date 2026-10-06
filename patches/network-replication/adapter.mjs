@@ -69,9 +69,35 @@ export function adaptNetworkSource(rel, code) {
     patch('while (i < p.events.length && p.events[i][0] <= tr) i++;',
       'while (i < p.events.length && p.events[i][0] <= tr && (!Number.isFinite(p.events[i]._netTick) || !Number.isFinite(p.sim) || p.events[i]._netTick <= p.sim + .0306)) i++;',
       'events share owner simulation time during render hitches');
+    patch('  _playEvents() {\n    for (const [id, p] of this.peers) {',
+      '  _playEvents() {\n    const allDue = [];\n    for (const [id, p] of this.peers) {', 'due event queue across peers');
+    patch('      const due = p.events.splice(0, i);\n      for (const e of due) this._play(id, e);\n    }',
+      `      const due = p.events.splice(0, i);
+      for (const e of due) allDue.push({ id, e });
+    }
+    if (allDue.length > 1) {
+      allDue.sort((a, b) => {
+        const ta = a.e[0], tb = b.e[0];
+        if (ta !== tb) return ta - tb;
+        const tickA = a.e._netTick ?? 0, tickB = b.e._netTick ?? 0;
+        if (tickA !== tickB) return tickA - tickB;
+        const seqA = a.e._netSeq ?? 0, seqB = b.e._netSeq ?? 0;
+        if (seqA !== seqB) return seqA - seqB;
+        return a.id < b.id ? -1 : (a.id > b.id ? 1 : 0);
+      });
+    }
+    for (const item of allDue) this._play(item.id, item.e);`, 'deterministic multi-peer event playback order');
     patch('      if (drop) { this._remove(a); continue; }\n      a.owner = this.s.hostId;',
-      '      if (drop) { this._remove(a); continue; }\n      retireNetworkGhosts(a);\n      if (a.net) a.net._stormBirthAuth = null;\n      a.owner = this.s.hostId;', 'retire old timeline before remote owner transfer');
-    patch('  _adopt(a) {', '  _adopt(a) {\n    retireNetworkGhosts(a);\n    if (a.net) a.net._stormBirthAuth = null;', 'ownership transfer retirement');
+      '      if (drop) { this._remove(a); continue; }\n      retireNetworkGhosts(a);\n      if (a.net) a.net._stormBirthAuth = null;\n      a._netDeathLife = null;\n      a.owner = this.s.hostId;', 'retire old timeline before remote owner transfer');
+    patch('  _adopt(a) {', '  _adopt(a) {\n    retireNetworkGhosts(a);\n    if (a.net) a.net._stormBirthAuth = null;\n    a._netDeathLife = null;', 'ownership transfer retirement');
+    patch("  recSplat(c, radius, team, o) {\n    if (this.applying || this.mute > 0 || o.cosmetic) return;\n    const st = o.stretch;\n    this._rec(['s', r2(c.x), r2(c.y), r2(c.z), r2(radius), team, r3(o.seed ?? Math.random()), o.kind ?? 0,",
+      `  recSplat(c, radius, team, o) {
+    if (this.applying || this.mute > 0 || o.cosmetic) return;
+    const st = o.stretch;
+    const tick = Math.round((G.time || 0)*60);
+    const seq = (this._eventSeq || 0) + 1;
+    o._netKey = computeSplatOrderKey(tick, team, this.myId, seq);
+    this._rec(['s', r2(c.x), r2(c.y), r2(c.z), r2(radius), team, r3(o.seed ?? Math.random()), o.kind ?? 0,`, 'origin splat canonical order key');
     patch('r3(o.seed ?? Math.random())', 'o.seed ?? Math.random()', 'preserve paint pattern seed');
     patch('r3(p.delay || 0), r3(p.life), r3(p.straight)', 'p.delay || 0, p.life, p.straight', 'preserve exact physics timing boundaries');
     patch('p.nose ?? 0.3, p.sats ?? 3]);', 'p.nose ?? 0.3, p.sats ?? 3, p.s3Vertical ? 1 : 0, p.seed, (p._netId = this._projectileSeq = (this._projectileSeq || 0) + 1)]);', 'append birth mode, appearance seed, identity');
@@ -100,11 +126,32 @@ export function adaptNetworkSource(rel, code) {
       if (!actor?.remote || actor.owner !== from) return;
     }
     if (e[1] === 'ev') {
-      const nid = e[3]?.actor?.n ?? e[3]?.victim?.n;
-      const actor = this.byNid.get(nid);
-      if (!actor?.remote || actor.owner !== from) return;
+      if (e[2] === 'splatted') {
+        const victim = this.byNid.get(e[3]?.victim?.n);
+        if (!victim?.remote || victim.owner !== from) return;
+        const currentLife = victim.net?.lastLife ?? victim.netLife ?? 0;
+        const life = Number.isSafeInteger(e[3]?.victimLife) ? e[3].victimLife
+          : (Number.isSafeInteger(e[3]?.l) ? e[3].l : currentLife);
+        if (!victim.alive || life !== currentLife || victim._netDeathLife === currentLife) return;
+        victim._netDeathLife = currentLife;
+      } else {
+        const nid = e[3]?.actor?.n ?? e[3]?.victim?.n;
+        const actor = this.byNid.get(nid);
+        if (!actor?.remote || actor.owner !== from) return;
+      }
     }
-    switch (e[1]) {`, 'event ownership');
+    switch (e[1]) {
+      case 's': {
+        this.applying = true;
+        const st = e[9] || e[10] || e[11] ? _v2.set(e[9], e[10], e[11]) : undefined;
+        const opts = { seed: e[7] };
+        if (e[8]) opts.kind = e[8];
+        if (st) { opts.stretch = st; opts.stretchAmt = e[12]; }
+        opts._netKey = computeSplatOrderKey(e._netTick, e[6], from, e._netSeq);
+        G.paint?.splat(_v.set(e[2], e[3], e[4]), e[5], e[6], opts);
+        this.applying = false;
+        break;
+      }`, 'event ownership and splat order key');
     patch("case 'b': { const a = this.byNid.get(e[2]); if (a) G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9]); break; }", `case 'b': {
         for (let index = 4; index <= 9; index++) if (!Number.isFinite(e[index])) return;
         const a = this.byNid.get(e[2]);
@@ -139,8 +186,10 @@ export function adaptNetworkSource(rel, code) {
         for (let i = before; i < (G.projectiles?.beams.length || 0); i++) { const b = G.projectiles.beams[i]; b._netPeer = this.peers.get(from); b._netBorn = e[0]; b._netBornTick = e._netTick; b._netOwner = actor; b._netSteps = 0; }
         break;
       }`, 'beam birth clock');
-    patch('    victim.specialActive = null; victim.superJumpState = null;', '    if (victim.net) victim.net._stormBirthAuth = null;\n    victim.specialActive = null; victim.superJumpState = null;', 'death invalidates storm admission');
-    patch('  _remoteRespawn(a) {\n    a.superJumpGround = null;\n    a.alive = true;', '  _remoteRespawn(a) {\n    if (a.net) a.net._stormBirthAuth = null;\n    a.superJumpGround = null;\n    a.alive = true;', 'respawn invalidates storm admission');
+    patch('    victim.specialActive = null; victim.superJumpState = null;',
+      '    if (victim.net) victim.net._stormBirthAuth = null;\n    victim._netDeathLife = victim.net?.lastLife ?? victim.netLife ?? 0;\n    victim.specialActive = null; victim.superJumpState = null;', 'death invalidates storm admission and sets death life');
+    patch('  _remoteRespawn(a) {\n    a.superJumpGround = null;\n    a.alive = true;',
+      '  _remoteRespawn(a) {\n    if (a.net) a.net._stormBirthAuth = null;\n    a._netDeathLife = null;\n    a.superJumpGround = null;\n    a.alive = true;', 'respawn invalidates storm and death admission');
     patch("case 'p': { const a = this.byNid.get(e[2]); if (a) G.projectiles?.ghostProjectile(a, e); break; }", `case 'p': {
         for (let index = 5; index <= 18; index++) if (!Number.isFinite(e[index])) return;
         if (e[11] < 0 || e[12] <= 0) return;
@@ -156,6 +205,17 @@ export function adaptNetworkSource(rel, code) {
         break;
       }`, 'birth and terminal events');
     code += `
+function computeSplatOrderKey(tick, team, from, seq) {
+  const t = Number.isSafeInteger(tick) ? tick : 0;
+  const s = Number.isSafeInteger(seq) ? seq : 0;
+  let r = team ? 1 : 0;
+  if (typeof from === 'string') {
+    let h = 0;
+    for (let i = 0; i < from.length; i++) h = (h * 31 + from.charCodeAt(i)) & 0xff;
+    r = (r << 8) | h;
+  }
+  return t * 100000000 + r * 10000 + (s % 10000);
+}
 function stormSnapshotAllows(actor, proof, from) {
   const latest = actor?.net?.buf?.at(-1);
   return !!(proof && actor?.alive && actor.remote && actor.owner === from && proof.owner === from
@@ -364,6 +424,50 @@ function retireNetworkGhosts(owner = null) {
       }
       aC[i4] = C[i3]; aC[i4 + 1] = C[i3 + 1]; aC[i4 + 2] = C[i3 + 2]; aC[i4 + 3] = a;`, 'puff presentation belongs to source');
 
+  }
+  if (rel === 'src/world/paint.js') {
+    patch('    this.grid = new Uint8Array(total);      // 0 none, 1 team0, 2 team1\n    this.dead = new Uint8Array(total);      // cells buried inside other geometry',
+      '    this.grid = new Uint8Array(total);      // 0 none, 1 team0, 2 team1\n    this.gridOrder = new Float64Array(total);\n    this._recentSplats = [];\n    this.dead = new Uint8Array(total);      // cells buried inside other geometry',
+      'paint grid canonical order tracking');
+    patch('    this.grid.fill(0);\n    this.counts[0] = this.counts[1] = 0;',
+      '    this.grid.fill(0);\n    if (this.gridOrder) this.gridOrder.fill(0);\n    if (this._recentSplats) this._recentSplats.length = 0;\n    this.counts[0] = this.counts[1] = 0;',
+      'clear paint order tracking');
+    patch('if (!nm.applying) { if (opts.seed === undefined) opts.seed = Math.random(); nm.recSplat(center, radius, team, opts); }\n    }',
+      `if (!nm.applying) { if (opts.seed === undefined) opts.seed = Math.random(); nm.recSplat(center, radius, team, opts); }\n    }
+    const prevNetKey = this._currentNetKey;
+    this._currentNetKey = opts._netKey;`, 'bind active splat order key');
+    patch('    return claimed;\n  }\n\n  // Cosmetic micro-splat',
+      '    this._currentNetKey = prevNetKey;\n    return claimed;\n  }\n\n  // Cosmetic micro-splat',
+      'restore active splat order key');
+    patch('        const k = f.grid + j * f.nu + i;\n        const prev = this.grid[k];\n        if (prev === val) continue;\n        this.grid[k] = val;\n        claimed += cellA;',
+      `        const k = f.grid + j * f.nu + i;
+        const prev = this.grid[k];
+        const prevKey = this.gridOrder ? this.gridOrder[k] : 0;
+        if (this._currentNetKey !== undefined && this._currentNetKey < prevKey) continue;
+        if (prev === val) { if (this.gridOrder && this._currentNetKey !== undefined) this.gridOrder[k] = this._currentNetKey; continue; }
+        this.grid[k] = val;
+        if (this.gridOrder && this._currentNetKey !== undefined) this.gridOrder[k] = this._currentNetKey;
+        claimed += cellA;`, 'deterministic cell ownership by canonical order key');
+    patch('      if (opts.instant) this._emitGrowth(g, 3, 1, false);\n      else this.growing.push(g);',
+      `      const curKey = this._currentNetKey ?? 0;
+      g._netKey = curKey;
+      if (this._recentSplats) {
+        this._recentSplats.push(g);
+        if (this._recentSplats.length > 50) this._recentSplats.shift();
+      }
+      if (opts.instant) this._emitGrowth(g, 3, 1, false);
+      else this.growing.push(g);
+      if (this._recentSplats && curKey) {
+        for (const prevG of this._recentSplats) {
+          if (prevG !== g && prevG._netKey > curKey && prevG.team !== team) {
+            const dx = prevG.cx - center.x, dy = prevG.cy - center.y, dz = prevG.cz - center.z;
+            const rs = (prevG.R * 2.5 + radius * 2.5);
+            if (dx * dx + dy * dy + dz * dz < rs * rs) {
+              this._emitGrowth(prevG, 3, 1, false);
+            }
+          }
+        }
+      }`, 'GPU paint ownership alignment with CPU canonical order');
   }
   return code;
 }
