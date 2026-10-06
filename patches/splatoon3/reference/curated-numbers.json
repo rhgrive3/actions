@@ -1353,6 +1353,14 @@
       "status": "extracted",
       "unit": "raw reference width",
       "notes": "Near/main width ratio .4/.8=.5; absolute mapping and full/half width semantics remain provisional."
+    },
+    "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json#/GameParameters/WeaponParam/ShotGuideFrame": {
+      "value": 7,
+      "pointer": "/GameParameters/WeaponParam/ShotGuideFrame",
+      "sourceId": "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; behavior and physical units are verified separately."
     }
   }
 }
