@@ -47,7 +47,10 @@ export function adaptKitRescue(rel, code, replaceOnce) {
       '      r3(p.vis ?? 0.1), p.tail0 ?? 0.8, p.tailK ?? 1.3, p.wob ?? 0.035, p.wobF ?? 26, p.nose ?? 0.3, p.sats ?? 3, kitVolleyPacketIndex(p.s3VolleyIndex), kitVolleyPacketIndex(p.s3ActionIndex)]);','trizooka packet identity');
     code="import { KIT_FORWARD } from '../../patches/splatoon3/runtime/kit-network.mjs';\nimport { kitVolleyPacketIndex } from '../../patches/splatoon3/runtime/trizooka-collision.mjs';\nimport { kitBombPacket } from '../../patches/splatoon3/runtime/kit-subs.mjs';\nimport { setRespawnTimer } from '../../patches/splatoon3/runtime/resources.mjs';\n"+code;
   } else if(rel==='src/game/weapons.js'){
-    patch('    // ---- sub weapon (splat bomb)\n    const bomb = SUB.bomb;','    // ---- sub weapon (selected kit sub)\n    const bomb = kitSubRelease(SUB, this, dt, inp);','selected sub release');
+    const plainSubRelease = '    // ---- sub weapon (splat bomb)\n    const bomb = SUB.bomb;';
+    const gearedSubRelease = '    // ---- sub weapon (splat bomb)\n    const bomb = subInkSpec(a, SUB.bomb);';
+    const subReleaseAnchor = code.includes(gearedSubRelease) ? gearedSubRelease : plainSubRelease;
+    patch(subReleaseAnchor,'    // ---- sub weapon (selected kit sub)\n    const bomb = kitSubRelease(SUB, this, dt, inp);','selected sub release');
     patch("    if (G.netm && !a.remote) G.netm.recBomb(this.bombs[this.bombs.length - 1]);\n    if (a.isLocal || a._nearCamera())",
       "    kitBombAttach(SUB, this, a, a.weaponRunner?.s3Release);\n    if (G.netm && !a.remote) G.netm.recBomb(this.bombs[this.bombs.length - 1]);\n    if (a.isLocal || a._nearCamera())",'attach bomb identity');
     patch("      if (hit.hit) {\n        if (b.kind === 'storm') {","      if (hit.hit) {\n        const s3Took = kitBombContact(SUB, b, hit, dt);\n        if (b.kind === 'storm') {",'sub contact');
