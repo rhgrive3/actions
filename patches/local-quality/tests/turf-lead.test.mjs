@@ -153,3 +153,20 @@ test('browser probe saves the failed controlled scene and phase before restoring
  assert.equal(receipt.phase.name,'ahead');assert.equal(receipt.phase.viewer,0);assert.equal(receipt.rows.length,0);assert.equal(receipt.screenshot,'turf-lead-failure.png');assert(calls.some(c=>c[0]==='screenshot'&&c[1]===true),'capture must precede restoring controlled coverage');
  assert.equal(f.G.paint.coverage,saved.coverage);assert.equal(Object.hasOwn(f.G.paint,'coverage'),false);assert.equal(f.g.match.local,saved.local);assert.deepEqual(f.g.match.actors.map(a=>a.isLocal),saved.flags);assert.equal(f.g.match.state,'playing');assert.equal(f.ctx.turfLeadProof,undefined);assert.equal(calls.at(-1)[1],900);
 });
+
+
+test('active fixture waits for the native intro HUD reveal before simulation fast-forward',()=>{
+ const script=fs.readFileSync(new URL('scripts/check-inkwave-browser.mjs',ROOT),'utf8');
+ const start=script.indexOf("await G.game.startMatch({mapId:'tidewater'"),wait=script.indexOf("g.match?.state !== 'intro'",start),step=script.indexOf('for (let i=0;i<270;i++)',start);
+ assert(start>=0&&wait>start&&step>wait,'native intro timer must run before explicit fixed ticks leave intro');
+ const admission=script.slice(start,step);assert(admission.includes('!h?._visible'));assert(admission.includes("style.visibility === 'visible'"));assert(admission.includes('Number(style.opacity) >= .99'));assert(!/setVisible\(true\)|classList\.remove\(['"]is-hidden/.test(admission),'fixture must wait for production reveal, not force visibility');
+});
+
+
+test('browser helper import follows exact-source rejection in isolated identity fixtures',()=>{
+ const script=fs.readFileSync(new URL('scripts/check-inkwave-browser.mjs',ROOT),'utf8');
+ assert(!/^import .*inkwave-turf-lead-probe/m.test(script));
+ const reject=script.indexOf('Build input differs from commit: '),helper=script.indexOf("await import('./lib/inkwave-turf-lead-probe.mjs')"),browser=script.indexOf('const {chromium}=await import');
+ assert(reject>=0&&helper>reject&&browser>helper,'an uncommitted overlay must reject before any optional browser helper import');
+ const isolation=fs.readFileSync(new URL('scripts/check-inkwave-touch-layout-identity.mjs',ROOT),'utf8');assert(isolation.includes("'scripts/build-inkwave.mjs', 'scripts/check-inkwave-browser.mjs'"));assert(isolation.includes("check.stderr.includes('Build input differs from commit: ' + relativeInput)"));
+});

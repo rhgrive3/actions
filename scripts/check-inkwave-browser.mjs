@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 import fs from 'node:fs';
-import { probeTurfLead } from './lib/inkwave-turf-lead-probe.mjs';
 import path from 'node:path';
 import http from 'node:http';
 import crypto from 'node:crypto';
@@ -40,6 +39,8 @@ if(process.argv.includes('--exact-source')) {
   const blobs=execFileSync('git',['hash-object','--',...files],{cwd:ROOT,encoding:'utf8'}).trim().split('\n');
   files.forEach((file,i)=>{if(blobs[i]!==tree.get(file))throw new Error('Build input differs from commit: '+file);});
 }
+// Identity-negative fixtures intentionally stop before loading browser helpers.
+const { probeTurfLead } = await import('./lib/inkwave-turf-lead-probe.mjs');
 const {chromium}=await import(process.env.PLAYWRIGHT_MODULE?pathToFileURL(process.env.PLAYWRIGHT_MODULE).href:'playwright');
 const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json','.svg':'image/svg+xml','.png':'image/png','.jpg':'image/jpeg','.webp':'image/webp','.woff2':'font/woff2','.glb':'model/gltf-binary'};
 const server=http.createServer((request,response)=>{
@@ -101,6 +102,16 @@ try {
   await page.screenshot({path:path.join(evidence,'loadout-small-viewport.png'),animations:'disabled',timeout:90000});
   await page.setViewportSize({width:1280,height:800});
   await page.evaluate(async () => { const { G } = await import(new URL('src/core/ctx.js',document.baseURI).href); await G.game.startMatch({mapId:'tidewater', difficulty:'easy', duration:180, mode:'turf'}); });
+  // The frozen fixture advances simulation explicitly below. Let the native
+  // wall-clock intro reveal run while this same Match is still in intro;
+  // fast-forwarding first makes its legitimate intro-only timer a no-op.
+  await page.waitForFunction(() => {
+    const g = globalThis.s3ProbeG?.game, h = g?.hud;
+    if (!g?.frozen || g.match?.state !== 'intro' || !h?._visible) return false;
+    const style = getComputedStyle(h.el);
+    return style.visibility === 'visible' && Number(style.opacity) >= .99;
+  }, null, {timeout:15000});
+  result.introHudAdmission = await page.evaluate(() => ({state:s3ProbeG.game.match.state,frozen:s3ProbeG.game.frozen,visible:s3ProbeG.game.hud._visible,nativeIntroReveal:true}));
   result.hiddenMinimap = await page.evaluate(() => {
     const m=globalThis.s3ProbeG.game.minimap;
     return { built:m._built, logical:[m.w,m.h], canvas:[m.canvas.width,m.canvas.height],
