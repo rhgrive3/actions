@@ -59,22 +59,6 @@
     }
   ],
   "parameters": {
-    "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/CollisionParam/InitRadiusForPlayer": {
-      "value": 0.225,
-      "pointer": "/GameParameters/CollisionParam/InitRadiusForPlayer",
-      "sourceId": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json",
-      "status": "extracted",
-      "unit": "raw reference distance",
-      "notes": "InitRadiusForPlayer equals EndRadiusForPlayer; use a common Shooter-anchored scale, not raw distance as world units."
-    },
-    "data/parameter/1130/weapon/WeaponShooterNormal.game__GameParameterTable.json#/GameParameters/CollisionParam/InitRadiusForPlayer": {
-      "value": 0.285,
-      "pointer": "/GameParameters/CollisionParam/InitRadiusForPlayer",
-      "sourceId": "data/parameter/1130/weapon/WeaponShooterNormal.game__GameParameterTable.json",
-      "status": "extracted",
-      "unit": "raw reference distance",
-      "notes": "InitRadiusForPlayer equals EndRadiusForPlayer; use a common Shooter-anchored scale, not raw distance as world units."
-    },
     "data/parameter/1130/misc/params.json#/MoveVel_Human": {
       "value": [
         0.144,
@@ -947,7 +931,7 @@
       "sourceId": "data/parameter/1130/weapon/WeaponSpInkStorm.game__GameParameterTable.json",
       "status": "extracted",
       "unit": "raw reference units",
-      "notes": "Primary extracted field; omitted defaults are not reconstructed. Unit interpretation is recorded separately in profile.calibration."
+      "notes": "Storm power endpoints/control point; duration integer frames, forward-speed ratio to Low."
     },
     "data/parameter/1130/weapon/WeaponSpInkStorm.game__GameParameterTable.json#/GameParameters/CloudParam/DamageRadius": {
       "value": 10,
@@ -1370,6 +1354,22 @@
       "unit": "raw reference width",
       "notes": "Near/main width ratio .4/.8=.5; absolute mapping and full/half width semantics remain provisional."
     },
+    "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/CollisionParam/InitRadiusForPlayer": {
+      "value": 0.225,
+      "pointer": "/GameParameters/CollisionParam/InitRadiusForPlayer",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference distance",
+      "notes": "InitRadiusForPlayer equals EndRadiusForPlayer; use a common Shooter-anchored scale, not raw distance as world units."
+    },
+    "data/parameter/1130/weapon/WeaponShooterNormal.game__GameParameterTable.json#/GameParameters/CollisionParam/InitRadiusForPlayer": {
+      "value": 0.285,
+      "pointer": "/GameParameters/CollisionParam/InitRadiusForPlayer",
+      "sourceId": "data/parameter/1130/weapon/WeaponShooterNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference distance",
+      "notes": "InitRadiusForPlayer equals EndRadiusForPlayer; use a common Shooter-anchored scale, not raw distance as world units."
+    },
     "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/PaintParam/RadiusMinCharge": {
       "value": 0.906,
       "pointer": "/GameParameters/PaintParam/RadiusMinCharge",
@@ -1517,6 +1517,114 @@
       "status": "extracted",
       "unit": "damage multiplier",
       "notes": "High/Mid/Low. Current scope is Splat Bomb far splash only; lethal near band is excluded by the separately verified weapon rule."
+    },
+    "data/parameter/1130/misc/params.json#/OpInk_MoveVel_ShotK": {
+      "value": [
+        1,
+        0.75,
+        0.5
+      ],
+      "pointer": "/OpInk_MoveVel_ShotK",
+      "sourceId": "data/parameter/1130/misc/params.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; enemy action-speed classification is documented separately in the enemy-ink batch report."
+    },
+    "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/WeaponParam/JumpHeightFullCharge": {
+      "value": 0.07,
+      "pointer": "/GameParameters/WeaponParam/JumpHeightFullCharge",
+      "sourceId": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "m/F (interpretation corroborated by S3 Wiki 0.7 DU/F)",
+      "notes": "Full-charge held Splat Charger only; partial-charge interpolation and simultaneous release are not inferred."
+    },
+    "data/parameter/1130/misc/params.json#/Dying_AroundFrm": {
+      "value": [
+        30,
+        60,
+        90
+      ],
+      "pointer": "/Dying_AroundFrm",
+      "sourceId": "data/parameter/1130/misc/params.json",
+      "status": "extracted",
+      "unit": "frames at 60Hz",
+      "notes": "Quick Respawn self-camera phase; floor each phase separately before subtracting from its no-gear duration."
+    },
+    "data/parameter/1130/misc/params.json#/ConsumeRt_Sub_Lv2": {
+      "value": [
+        0.65,
+        0.825,
+        1
+      ],
+      "pointer": "/ConsumeRt_Sub_Lv2",
+      "sourceId": "data/parameter/1130/misc/params.json",
+      "status": "extracted",
+      "unit": "multiplier",
+      "notes": "Splat Bomb class mapping corroborated with S3 Wiki 35AP two-bomb and GP57 45.5% checkpoints; not inferred from omitted SubWeaponSetting."
+    },
+    "data/parameter/1130/weapon/WeaponSpInkStorm.game__GameParameterTable.json#/GameParameters/CloudParam/RainyFrame/Mid": {
+      "value": 540,
+      "pointer": "/GameParameters/CloudParam/RainyFrame/Mid",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpInkStorm.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Storm power endpoints/control point; duration integer frames, forward-speed ratio to Low."
+    },
+    "data/parameter/1130/weapon/WeaponSpInkStorm.game__GameParameterTable.json#/GameParameters/CloudParam/RainyFrame/High": {
+      "value": 600,
+      "pointer": "/GameParameters/CloudParam/RainyFrame/High",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpInkStorm.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Storm power endpoints/control point; duration integer frames, forward-speed ratio to Low."
+    },
+    "data/parameter/1130/weapon/WeaponSpInkStorm.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeedZSpecUp/Low": {
+      "value": 1.12,
+      "pointer": "/GameParameters/MoveParam/SpawnSpeedZSpecUp/Low",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpInkStorm.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Storm power endpoints/control point; duration integer frames, forward-speed ratio to Low."
+    },
+    "data/parameter/1130/weapon/WeaponSpInkStorm.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeedZSpecUp/Mid": {
+      "value": 1.4,
+      "pointer": "/GameParameters/MoveParam/SpawnSpeedZSpecUp/Mid",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpInkStorm.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Storm power endpoints/control point; duration integer frames, forward-speed ratio to Low."
+    },
+    "data/parameter/1130/weapon/WeaponSpInkStorm.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeedZSpecUp/High": {
+      "value": 1.68,
+      "pointer": "/GameParameters/MoveParam/SpawnSpeedZSpecUp/High",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpInkStorm.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Storm power endpoints/control point; duration integer frames, forward-speed ratio to Low."
+    },
+    "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/BodyParam/Damage": {
+      "value": 1250,
+      "pointer": "/GameParameters/BodyParam/Damage",
+      "sourceId": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Pinned 11.3.0 raw field; HP / frames / dimensionless rate conversion recorded in profile."
+    },
+    "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WeaponRollParam/InkRecoverStop": {
+      "value": 20,
+      "pointer": "/GameParameters/WeaponRollParam/InkRecoverStop",
+      "sourceId": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Pinned 11.3.0 raw field; HP / frames / dimensionless rate conversion recorded in profile."
+    },
+    "data/parameter/1130/weapon/WeaponBlasterMiddle.game__GameParameterTable.json#/GameParameters/BlasterBurstParam/ShotCollisionHitRadiusRate": {
+      "value": 0.4234,
+      "pointer": "/GameParameters/BlasterBurstParam/ShotCollisionHitRadiusRate",
+      "sourceId": "data/parameter/1130/weapon/WeaponBlasterMiddle.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Pinned 11.3.0 raw field; HP / frames / dimensionless rate conversion recorded in profile."
     }
   }
 }
