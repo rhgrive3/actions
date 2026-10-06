@@ -629,7 +629,10 @@ test('issue 798: aiming micro-drift reuses the cached arc without new collision 
       api.G.time += ARC_PREVIEW_MIN_INTERVAL_S + 1 / 60;
       const count = segments;
       r.projectiles.updateArc(r.a, true);
-      assert.ok(segments > count, 'the next 30 Hz tick refreshes the guide through the native path');
+      assert.equal(segments, count, 'ordinary cadence retains one cached draw after the previous refresh');
+      r.a.pos.x += 0.01; r.a.aimYaw += 0.01; api.G.time += 1 / 60;
+      r.projectiles.updateArc(r.a, true);
+      assert.ok(segments > count, 'the following bounded tick refreshes the guide through the native path');
       // Aiming off hides the guide through the native guard and resets state.
       r.projectiles.updateArc(r.a, false);
       assert.equal(r.projectiles.arcLine.visible, false);
@@ -721,7 +724,7 @@ test('issue 798: installed native updateArc bounds walking and continuous aim qu
         }
         const expectedBudget = Math.min(30, hz / 2);
         assert.ok(refreshTimes.length >= expectedBudget - 2 && refreshTimes.length <= expectedBudget,
-          `${mode} ${hz}Hz respects both the 30Hz ceiling and a cached draw between ordinary refreshes`);
+          `${mode} ${hz}Hz refreshes=${refreshTimes.length}; times=${JSON.stringify(refreshTimes)}; expected near ${expectedBudget}`);
         assert.ok(queries <= frames * 126 / 2,
           `${mode} ${hz}Hz reduces actual continuous-input collision queries by at least half`);
         assert.ok(cumulativeCacheAge <= frames * (ARC_PREVIEW_MIN_INTERVAL_S + dt + 1e-9),

@@ -405,7 +405,9 @@ export const ARC_PREVIEW_MIN_INTERVAL_S = 1 / 30;
 // These are local discontinuity detectors for presentation scheduling, not
 // Splatoon 3 movement or aim values. Smooth changes are refreshed on cadence.
 export const ARC_PREVIEW_POSITION_JUMP_M = 0.5;
-export const ARC_PREVIEW_VELOCITY_JUMP_MPS = 2;
+// 30 Hz normal 1.2 rad/s aim can move throw velocity by more than 2 m/s.
+// Keep that continuous input on cadence; larger steps still refresh at once.
+export const ARC_PREVIEW_VELOCITY_JUMP_MPS = 4;
 export const ARC_PREVIEW_SPEED_EPSILON = 0.05;
 
 const ARC_PREVIEW_INSTALL = Symbol.for('inkwave.s3.arc-preview-performance.install.v1');
