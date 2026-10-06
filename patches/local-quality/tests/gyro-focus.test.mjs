@@ -26,7 +26,7 @@ test('#588 an actually calibrated raw-rate source is also non-authoritative whil
  const h=await viabilityFixture();t.after(h.close);h.env.navigator.userAgent='iPhone';await h.m.setGyro(true);const g=h.m.gyro;
  for(let i=0;i<=40;i++){h.orientation({timeStamp:1100+i*1000/60,alpha:0,beta:i*2,gamma:0});h.motion({timeStamp:1100+(i+.5)*1000/60,rotationRate:{alpha:0,beta:120,gamma:0}});}
  assert.equal(g._src,'rrA');assert.ok(Math.abs(consume(g).pitch)>0);h.fire('blur');
- for(let i=0;i<10;i++)h.motion({rotationRate:{alpha:0,beta:120,gamma:0}});assert.deepEqual(consume(g),{yaw:0,pitch:0});assert.equal(g._tRR,0);assert.equal(g._qualityGyro.rawStart,null);
+ for(let i=0;i<10;i++)h.motion({rotationRate:{alpha:0,beta:120,gamma:0}});assert.deepEqual(consume(g),{yaw:0,pitch:0});assert.equal(g._tRR,0);assert.equal(g._qualityGyro.rawPendingBoundary,null);
  h.fire('focus');h.orientation({alpha:100});assert.deepEqual(consume(g),{yaw:0,pitch:0});h.orientation({alpha:110});assert.notEqual(consume(g).yaw,0);
 });
 test('#588 queued pre-focus samples are ignored and duplicate focus cannot discard a real turn',async t=>{

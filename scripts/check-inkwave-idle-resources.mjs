@@ -9,6 +9,7 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { verifyWallBuild } from './check-inkwave-wall-render.mjs';
 const ROOT=fileURLToPath(new URL('../',import.meta.url));
+const BROWSER_ARGS=['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader'];
 const sha=b=>crypto.createHash('sha256').update(b).digest('hex');
 export function validateIdleResult(r) {
   const c=r.coldBoot;
@@ -48,14 +49,27 @@ export function inspectColdBoot() {
  return {startup,observerPhase:p?.phase||null,context:p?.snapshot?.()||null,hasPublicContext:!!window.__G,hasPublicGame:!!window.__G?.game,hasColdEnvironment:!!window.__coldEnvironment,coldEnvironment:window.__coldEnvironment||null,readyState:document.readyState,visibility:document.visibilityState,focused:document.hasFocus(),screen:document.querySelector('.iw-ui')?.dataset.screen||null,loadingText:document.querySelector('.iw-loading')?.textContent?.slice(0,600)||null};
 }
 
-export async function retireDesktopForCold(page){await page.close();return null;}
+export async function retireDesktopForCold(page,browser){await page.close();await browser?.close();return null;}
+export async function closeProbeOwner(owner,primaryError=null){
+ try{await owner?.close();}catch(error){
+  if(primaryError)throw new AggregateError([primaryError,error],'Probe failed and browser cleanup failed',{cause:primaryError});
+  throw error;
+ }
+}
+export async function launchColdMobileBrowser(chromium,profile){
+ // A fresh process owns the cold compositor/RAF, as well as its storage. No
+ // completed desktop renderer or persistent-context lifetime is reused here.
+ const context=await chromium.launchPersistentContext(path.join(profile,'cold-mobile'),{headless:true,viewport:{width:844,height:390},hasTouch:true,isMobile:true,args:BROWSER_ARGS});
+ try{return {context,page:context.pages()[0]??await context.newPage()};}
+ catch(error){await closeProbeOwner(context,error);throw error;}
+}
 
 async function main(){
  const option=n=>{const i=process.argv.indexOf(n);if(i<0||!process.argv[i+1])throw Error('Required '+n);return path.resolve(process.argv[i+1]);};
  const site=fs.realpathSync(option('--site')),output=option('--evidence-dir'),profile=option('--profile-dir');
  for(const d of [output,profile]){if(['/tmp','/var/tmp','/dev/shm'].some(p=>d===p||d.startsWith(p+'/')))throw Error('Persistent evidence required');fs.mkdirSync(d,{recursive:true});}
  const publish=r=>fs.writeFileSync(path.join(output,'idle-resources-result.json'),JSON.stringify(r,null,2)+'\n');
- let browser,server,page,identity,result;const errors=[];let phase='identity';
+ let browser,server,page,identity,result,failure=null;const errors=[];let phase='identity';
  publish({status:'running',phase});
  try{
   identity=verifyWallBuild(site,process.argv.includes('--exact-source'));
@@ -68,7 +82,7 @@ async function main(){
   server=http.createServer((req,res)=>{try{const url=new URL(req.url,'http://localhost'),p=path.resolve(site,'.'+(url.pathname==='/'?'/index.html':decodeURIComponent(url.pathname)));if(!p.startsWith(site+path.sep)||!fs.statSync(p).isFile())throw Error('missing');res.writeHead(200,{'content-type':mime[path.extname(p)]||'application/octet-stream'});fs.createReadStream(p).pipe(res);}catch{res.writeHead(404);res.end();}});
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const address='http://127.0.0.1:'+server.address().port+'/';
   const {chromium}=await import(process.env.PLAYWRIGHT_MODULE?pathToFileURL(process.env.PLAYWRIGHT_MODULE).href:'playwright');
-  browser=await chromium.launchPersistentContext(profile,{headless:true,viewport:{width:800,height:600},args:['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+  browser=await chromium.launchPersistentContext(profile,{headless:true,viewport:{width:800,height:600},args:BROWSER_ARGS});
   page=await browser.newPage();page.setDefaultTimeout(120000);page.on('pageerror',e=>errors.push(e.message));
   page.on('console',m=>{if(m.type()==='error')errors.push(m.text().slice(0,1500));});
   const loaded=new Set();await page.route(address+'**',async route=>{try{const response=await route.fetch(),body=await response.body(),key=decodeURIComponent(new URL(response.url()).pathname).slice(1)||'index.html';if(manifest.artifacts[key]&&sha(body)!==manifest.artifacts[key])throw Error('Loaded byte mismatch '+key);loaded.add(key);await route.fulfill({response,body});}catch(e){errors.push(e.message);await route.abort();}});
@@ -156,9 +170,8 @@ async function main(){
   phase='cold-boot-mobile';
   // The preceding desktop measurements are complete. Retire its live renderer
   // before measuring an isolated cold mobile allocation in a fresh context.
-  page=await retireDesktopForCold(page);
-  const coldContext=await browser.browser().newContext({viewport:{width:844,height:390},hasTouch:true,isMobile:true});
-  const coldPage=await coldContext.newPage();let hooked=false,mainReleased=false,coldError=null;const coldLoaded=new Set(),coldPending=new Map();let pendingDropped=0,pendingSerial=0;
+  page=await retireDesktopForCold(page,browser);browser=null;
+  const {context:coldContext,page:coldPage}=await launchColdMobileBrowser(chromium,profile);const coldBrowserVersion=coldContext.browser()?.version();let hooked=false,mainReleased=false,coldError=null;const coldLoaded=new Set(),coldPending=new Map();let pendingDropped=0,pendingSerial=0;
   try {
    coldPage.on('pageerror',e=>errors.push('cold boot: '+e.message));
    coldPage.on('console',m=>{if(m.type()==='error')errors.push('cold boot console: '+m.text().slice(0,1500));});
@@ -189,16 +202,16 @@ async function main(){
    await coldPage.screenshot({path:path.join(output,'cold-boot-mobile-halyard.png'),animations:'disabled'});
   } catch(error) {
    coldError=error;
-   const diagnostic=result.coldDiagnostic={hooked,mainReleased,desktopRetired:page===null,loaded:[...coldLoaded].sort(),pendingDropped,pending:[...coldPending].slice(0,256).map(([,r])=>({path:r.path,type:r.type,elapsedMs:Math.max(0,Date.now()-r.started)}))};
+   const diagnostic=result.coldDiagnostic={error:String(error),hooked,mainReleased,desktopRetired:page===null,loaded:[...coldLoaded].sort(),pendingDropped,pending:[...coldPending].slice(0,256).map(([,r])=>({path:r.path,type:r.type,elapsedMs:Math.max(0,Date.now()-r.started)}))};
    let timer;
    try {diagnostic.page=await Promise.race([coldPage.evaluate(inspectColdBoot),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Cold diagnostic evaluation timed out')),10000);})]);}
    catch(inspectError){diagnostic.inspectionError=String(inspectError);}finally{clearTimeout(timer);}
    try{await coldPage.screenshot({path:path.join(output,'cold-boot-failure.png'),timeout:15000});}catch(captureError){diagnostic.screenshotError=String(captureError);}
    throw error;
-  } finally {try{await coldContext.close();}catch(closeError){if(!coldError)throw closeError;result.coldDiagnostic.closeError=String(closeError);}}
+  } finally {try{await closeProbeOwner(coldContext,coldError);}catch(closeError){if(coldError)result.coldDiagnostic.closeError=String(closeError.errors?.at(-1)||closeError);throw closeError;}}
   result.errors=errors;const summary=validateIdleResult(result);
-  publish({status:'passed',...result,summary,sourceSha:identity.source.sourceSha,contentHash:manifest.contentHash,verifierSha256:sha(fs.readFileSync(fileURLToPath(import.meta.url))),browser:browser.browser()?.version()});
- }catch(error){publish({status:'failed',phase,error:error.stack,errors,result,sourceSha:identity?.source.sourceSha,contentHash:identity?.manifest.contentHash});if(page)await page.screenshot({path:path.join(output,'failure.png')}).catch(()=>{});throw error;}
- finally{await browser?.close();if(server)await new Promise(r=>server.close(r));}
+  publish({status:'passed',...result,summary,sourceSha:identity.source.sourceSha,contentHash:manifest.contentHash,verifierSha256:sha(fs.readFileSync(fileURLToPath(import.meta.url))),browser:coldBrowserVersion});
+ }catch(error){failure=error;publish({status:'failed',phase,error:error.stack,errors,result,sourceSha:identity?.source.sourceSha,contentHash:identity?.manifest.contentHash});if(page)await page.screenshot({path:path.join(output,'failure.png')}).catch(()=>{});throw error;}
+ finally{try{await closeProbeOwner(browser,failure);}finally{if(server)await new Promise(r=>server.close(r));}}
 }
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url))main().catch(e=>{console.error(e);process.exitCode=1;});

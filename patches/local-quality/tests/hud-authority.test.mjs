@@ -7,11 +7,12 @@ import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
 import { adaptReliability } from '../../reliability/adapter.mjs';
 import { adaptQualitySource, qualityIdentity } from '../adapter.mjs';
 import { adaptHudAuthority, SPECIAL_SEGMENTS, specialGaugeSVG } from '../hud-authority-adapter.mjs';
+import { turfExperience } from '../../splatoon3/runtime/results-scoring.mjs';
 import { fixture, readSource } from '../../reliability/tests/hud-fixture.mjs';
 const root = new URL('../../../', import.meta.url);
 const compose = (rel, input = readSource(rel)) => adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, input))));
 const hudCode = compose('src/ui/hud.js'), gameCode = compose('src/main.js');
-const fixed = () => fixture({ hudSource: hudCode, gameSource: gameCode });
+const fixed = () => fixture({ hudSource: hudCode, gameSource: gameCode, globals:{turfExperience} });
 function specialRig(code = hudCode) {
   const a = code.indexOf('  _updSpecial(f, dt) {'), b = code.indexOf('  // ---------------------------------------------------------------- turf ticker', a);
   const Hud = vm.runInNewContext(`class Hud { ${code.slice(a,b)} }; Hud`, { clamp: v => Math.min(1,Math.max(0,v)) });
@@ -80,9 +81,12 @@ test('#381: complete native judge honors both authoritative teams across thresho
   }
 });
 
-test('#381: supplied host winner overrides percentages; missing authority never invents a winner', async () => {
-  for(const winner of [0,1,undefined]){
-    const r=await fixed(),p=r.hud.judge({percents:[60,40],winner});await r.advance(5300);assert.equal((await p).winner,winner??-1);
+test('#381: supplied winner overrides percentages; standalone and existing S3 fallbacks stay separate', async () => {
+  for(const standalone of [false,true])for(const winner of [0,1,undefined]){
+    const r=standalone?await fixture({hudSource:adaptHudAuthority('src/ui/hud.js',readSource('src/ui/hud.js'))}):await fixed();
+    const p=r.hud.judge({percents:[60,40],winner});await r.advance(5300);
+    // Quality alone has no inferred authority; an existing S3 owner explicitly retains native fallback.
+    assert.equal((await p).winner,winner??(standalone?-1:0));
   }
 });
 

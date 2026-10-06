@@ -36,7 +36,7 @@ async function setup() {
 test('frame order: camera update → computeAim → sight sync → render', () => {
   const main = compose('src/main.js', read('src/main.js'));
   const frame = main.slice(main.indexOf('  _frame(dt) {'), main.indexOf('  _dynRes(dt)') > main.indexOf('  _frame(dt) {') ? main.indexOf('  _dynRes(dt)') : undefined);
-  const rig = frame.indexOf('this.rig.update(dt);'), aim = frame.indexOf('m.controller.computeAim?.();', rig);
+  const rig = frame.indexOf('this.rig.update(worldDt);'), aim = frame.indexOf('m.controller.computeAim?.();', rig);
   const sync = frame.indexOf('G.projectiles.syncSights?.();', aim), render = frame.indexOf('this.R.render()', sync);
   assert.ok(rig > 0 && aim > rig && sync > aim && render > sync, JSON.stringify({ rig, aim, sync, render }));
   assert.equal(main.split('G.projectiles.syncSights?.()').length - 1, 1);
@@ -81,18 +81,32 @@ test('every frame interval: 120 Hz (no tick between draws) and low FPS (several 
   a.intent.fire = false; tick(1);
 });
 
-test('the released shot travels along the sight the player last saw; a sight without a charge stays hidden', async () => {
+test('the released shot converges on the last sight target across the release gap; an uncharged sight stays hidden', async () => {
   const w = await setup();
   const { a, P, aimAt, tick, sight, shotDir, sightDir, THREE } = w;
   aimAt(0.3, 0.04); a.intent.fire = true; tick(70);
   aimAt(0.42, 0.06); P.syncSights();
-  const seen = sightDir();
+  const seen = sightDir(), seenOrigin = sight().position.clone(), target = a.aimPoint.clone();
+  assert.ok(seen.angleTo(target.clone().sub(seenOrigin).normalize()) < 1e-6, 'last visible ray points at its current target');
+  let actual = null;
+  const off = w.R.on('weapon:fire', event => { if (event.actor === a && event.weapon === 'charger') actual = event; });
   let fired = null;
   const fire = P.fireCharger;
   P.fireCharger = function (actor, ...rest) { if (actor === a) fired = shotDir(); return fire.call(this, actor, ...rest); };
-  try { a.intent.fire = false; tick(2); } finally { P.fireCharger = fire; }
+  try {
+    a.intent.fire = false; tick(1);
+    assert.equal(fired,null,'existing release gap does not emit on its first tick');
+    P.syncSights();
+    assert.equal(sight().visible,false,'release gap has no charging sight to re-place');
+    tick(1);
+  } finally { P.fireCharger = fire; off(); }
   assert.ok(fired, 'the charger fired on release');
-  assert.ok(fired.angleTo(seen) < 1e-6, `shot ray = displayed sight (${fired.angleTo(seen)})`);
+  assert.ok(actual, 'actual finite-flight release publishes its launch ray');
+  assert.ok(actual.dir.angleTo(fired) < 1e-6, 'actual release uses the synchronous owner ray');
+  assert.ok(actual.dir.angleTo(target.clone().sub(actual.muzzle).normalize()) < 1e-6, 'moving muzzle still converges on the displayed target');
+  // A hidden sight from before the gap has a different origin after the pose advances.
+  // Equal directions would be incorrect parallax evidence for these two rays.
+  assert.ok(actual.muzzle.distanceTo(seenOrigin) > 1e-6, 'the real release gap advances the muzzle pose');
   tick(2);
   assert.equal(a.weaponRunner.charging, false);
   P.syncSights();

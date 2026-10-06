@@ -1,3 +1,4 @@
+import {continuationNavigation} from '../result-continuation.mjs';
 // Screen ownership of input across wiped menu transitions (results → main menu → battle): the real composed
 // Menus.show / _swap / _nav sections with the local-quality installer, a tiny DOM stand-in and a manual wipe clock.
 // Logic-only evidence; the browser round trip lives in scripts/check-inkwave-rematch-lifecycle.mjs.
@@ -44,7 +45,7 @@ function fixture() {
   const methods = [section(source, '  show(name = null, opts = {}) {', '\n  setLoading('), section(source, '  _swap(name, opts) {', '\n  /** mode:'), section(source, '  _setFocus(el,', '\n  _candidates()'), section(source, '  _nav(dir) {', '\n  /** Keyboard / pad focus move')].join('\n');
   const document = new Node('document');
   const env = { performance: { now: () => 0 }, getComputedStyle: (n) => ({ opacity: String(n.opacity ?? 1), borderTopLeftRadius: '4px' }), setTimeout: () => 0, clearTimeout() {}, requestAnimationFrame: () => 0, cancelAnimationFrame() {}, CSS: { escape: (s) => s } };
-  const Menus = vm.runInNewContext(consts + '\nclass Menus {' + methods + '\n  _updateCursor() {}\n}; Menus', { ...env, h: () => new Node('dimbg'), safeCall: (f) => f(), prefersReducedMotion: () => false, console });
+  const Menus = vm.runInNewContext(consts + '\nclass Menus {' + methods + '\n  _updateCursor() {}\n}; Menus', { ...env, continuationNavigation, h: () => new Node('dimbg'), safeCall: (f) => f(), prefersReducedMotion: () => false, console });
   installMenuQuality(Menus, env);
   const m = new Menus();
   const ui = new Node('ui'), layer = new Node('layer'); document.append(ui); ui.append(layer);

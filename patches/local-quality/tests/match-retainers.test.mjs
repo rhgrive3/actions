@@ -50,7 +50,7 @@ async function realm({ baseline = false } = {}) {
 const actor = (name, team = 0) => ({ name, team, alive: false, pos: new THREE.Vector3(),
   character: { root: { visible: false }, dispose() {} }, weaponRunner: { reset() {} } });
 function matchOf(f, actors, boss = null) {
-  return Object.assign(Object.create(f.Match.prototype), { actors, bossMode: boss ? { dispose() {} } : null, boss, unsubs: [] });
+  return Object.assign(Object.create(f.Match.prototype), { actors, bossMode: boss ? { dispose() {} } : null, boss, events: [], unsubs: [] });
 }
 function rigOf(f) {
   const rig = Object.create(f.CameraRig.prototype);
@@ -192,5 +192,5 @@ test('verbatim anchors other adapters patch are preserved after the transform', 
   const m = adaptQualitySource('src/game/match.js', upToReliability('src/game/match.js'));
   const w = adaptQualitySource('src/game/weapons.js', upToReliability('src/game/weapons.js'));
   assert(m.includes('  dispose() {\n') && m.includes('    this.bossMode?.dispose(); this.bossMode = null; this.boss = null;'));
-  assert(w.includes('  clear() {\n    for (const p of this.list) this.pool.push(p);') && w.split('  clear() {').length === 2);
+  assert(w.includes('  clear() {\n    for (const p of this.list) this._recycle(p);') && w.split('  clear() {').length === 2, 'current native recycling retains one clear owner');
 });

@@ -10,6 +10,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import crypto from 'node:crypto';
+import { adaptFinishTape } from '../finish-tape-adapter.mjs';
 import { adaptSource } from '../../splatoon3/adapter.mjs';
 import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
 import { adaptReliability } from '../../reliability/adapter.mjs';
@@ -42,7 +43,9 @@ test('composed hud.js ships the Finish tape instead of the two-splat TIME\'S UP 
 test('composed styles/hud.css gains the tape rules append-only', () => {
   const raw = read('inkwave-public/styles/hud.css');
   const css = compose('styles/hud.css');
-  assert.ok(css.startsWith(raw), 'append-only: cannot fight an existing rule');
+  const tape = adaptFinishTape('styles/hud.css', '');
+  assert.equal(adaptFinishTape('styles/hud.css', raw), raw + tape, 'the finish owner only appends its rules');
+  assert.equal(css.split(tape).length - 1, 1, 'the exact appended tape survives all other CSS owners once');
   assert.ok(css.includes('.iw-bn--finish') && css.includes('@keyframes iw-bn-fin'), 'tape CSS present');
   assert.ok(css.includes('repeating-linear-gradient(115deg'), 'striped ribbon present');
 });

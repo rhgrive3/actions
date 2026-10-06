@@ -59,8 +59,21 @@ test('exact-source checker rejects forged loading input despite self-consistent 
  const dir=fs.mkdtempSync(path.join(TEST_TMP,'iw-identity-'));
  try{
  const fixture=path.join(dir,'repo'),site=path.join(dir,'site');fs.mkdirSync(path.join(fixture,'scripts'),{recursive:true});fs.mkdirSync(path.join(fixture,'patches/loading-cache/runtime'),{recursive:true});fs.mkdirSync(site);
- fs.copyFileSync(path.join(root,'scripts/check-inkwave-browser.mjs'),path.join(fixture,'scripts/check-inkwave-browser.mjs'));
- fs.copyFileSync(path.join(root,'scripts/check-inkwave-hud-authority.mjs'),path.join(fixture,'scripts/check-inkwave-hud-authority.mjs'));
+ // Copy the checker's real static local import closure. Browser-only dynamic
+ // imports are reached after the identity gate and are deliberately not invoked.
+ const copied=new Set();
+ function copyModule(rel){
+  if(copied.has(rel))return;copied.add(rel);
+  const original=path.join(root,rel),target=path.join(fixture,rel),code=fs.readFileSync(original,'utf8');
+  fs.mkdirSync(path.dirname(target),{recursive:true});fs.copyFileSync(original,target);
+  for(const node of parse(code,{ecmaVersion:'latest',sourceType:'module'}).body){
+   if(!['ImportDeclaration','ExportNamedDeclaration','ExportAllDeclaration'].includes(node.type))continue;
+   const spec=node.source?.value;if(typeof spec!=='string'||!spec.startsWith('.'))continue;
+   const dep=path.normalize(path.join(path.dirname(rel),spec));assert(!dep.startsWith('..')&&!path.isAbsolute(dep),'fixture dependencies stay inside repository');copyModule(dep);
+  }
+ }
+ copyModule('scripts/check-inkwave-browser.mjs');
+ for(const dep of ['scripts/check-inkwave-hud-authority.mjs','patches/local-quality/quality-probe.mjs','patches/local-quality/paint-mipmap-probe.mjs'])assert(copied.has(dep),dep);
  fs.writeFileSync(path.join(fixture,'scripts/build-inkwave.mjs'),'// committed builder\n');const target=path.join(fixture,'patches/loading-cache/runtime/startup.mjs');fs.writeFileSync(target,'// committed startup\n');
  const git=(...args)=>execFileSync('git',args,{cwd:fixture,stdio:'pipe'});
  git('init','-q');git('add','.');git('-c','user.name=Identity Fixture','-c','user.email=fixture@example.invalid','commit','-qm','fixture');

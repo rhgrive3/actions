@@ -4,7 +4,7 @@ function motion(f,time,rate={alpha:0,beta:0,gamma:0}){f.m.gyro._motion({timeStam
 function orientation(f,time,alpha){f.m.gyro._orientation({timeStamp:time,alpha,beta:0,gamma:90});}
 const consume=f=>({...f.m.gyro.consume({})});
 for(const hz of [30,60,90,120])test(`#187 Android ${hz}Hz reference drift with fresh exact-zero rate never accumulates aim`,async t=>{
- const f=await setup();t.after(f.close);orientation(f,1000,0);let yaw=0,pitch=0;for(let i=1;i<=hz*10;i++){const time=1000+i*1000/hz;motion(f,time);orientation(f,time,i/hz);const d=consume(f);yaw+=d.yaw;pitch+=d.pitch;}assert.ok(Math.hypot(yaw,pitch)<1e-9,`stationary look drift ${yaw}, ${pitch} radians`);assert.equal(f.m.gyro.enabled,true);assert.equal(f.m.gyro._src,'ori');assert.equal(f.m.gyro._qualityGyro.rawStart,null);
+ const f=await setup();t.after(f.close);orientation(f,1000,0);let yaw=0,pitch=0;for(let i=1;i<=hz*10;i++){const time=1000+i*1000/hz;motion(f,time);orientation(f,time,i/hz);const d=consume(f);yaw+=d.yaw;pitch+=d.pitch;}assert.ok(Math.hypot(yaw,pitch)<1e-9,`stationary look drift ${yaw}, ${pitch} radians`);assert.equal(f.m.gyro.enabled,true);assert.equal(f.m.gyro._src,'ori');assert.equal(f.m.gyro._qualityGyro.rawPendingBoundary,null);
 });
 test('#187 nonzero turn samples remain native in both landscape orientations',async t=>{
  for(const angle of [90,270]){const f=await setup();t.after(f.close);f.env.screen.orientation.angle=angle;orientation(f,1000,0);for(let i=1;i<=60;i++){const time=1000+i*1000/60;motion(f,time,{alpha:30,beta:0,gamma:0});orientation(f,time,i/2);}const d=consume(f);assert.ok(Math.hypot(d.yaw,d.pitch)>.1);}

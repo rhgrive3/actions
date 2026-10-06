@@ -1,4 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import vm from 'node:vm';
+import {migrateAimProfiles,applyAimSettingsChange} from '../aim-profile.mjs';
 import {viabilityFixture} from './gyro-viability-fixture.mjs';import {initialGyroDefaults} from '../gyro-permission.mjs';
 import {adaptSource} from '../../splatoon3/adapter.mjs';import {adaptTouchLayout} from '../../touch-layout/adapter.mjs';import {adaptReliability} from '../../reliability/adapter.mjs';import {adaptQualitySource} from '../adapter.mjs';
 const raw=fs.readFileSync(new URL('../../../inkwave-public/src/main.js',import.meta.url),'utf8');
@@ -7,13 +8,13 @@ function settings(saved,profile,env) {
  const persistence=raw.slice(raw.indexOf('function loadJSON'),raw.indexOf('const DEFAULT_PROFILE'));
  const begin=main.indexOf('    this.mobile = G.mobile = deviceProfile();'),end=main.indexOf('\n    //',begin);
  assert.ok(begin>=0&&end>begin);const G={},storage={value:saved===undefined?null:JSON.stringify(saved),getItem(){return this.value;},setItem(_k,v){this.value=v;}};
- const Game=vm.runInNewContext(`${persistence}\nclass Game{bootSettings(){${main.slice(begin,end)}}};Game`,{G,localStorage:storage,DEFAULT_SETTINGS:{gyro:false,fovMode:'h'},deviceProfile:()=>profile,initialGyroDefaults:(d,p)=>initialGyroDefaults(d,p,env)});
+ const Game=vm.runInNewContext(`${persistence}\nclass Game{bootSettings(){${main.slice(begin,end)}}};Game`,{G,migrateAimProfiles,localStorage:storage,DEFAULT_SETTINGS:{gyro:false,fovMode:'h'},deviceProfile:()=>profile,initialGyroDefaults:(d,p)=>initialGyroDefaults(d,p,env)});
  const game=new Game();game.bootSettings();return {value:game.settings,G,game,storage};
 }
 for(const saved of [undefined,{}, {gyro:false},{gyro:true}])test(`#404 existing settings merge preserves ${JSON.stringify(saved)}`,()=>{
  let requests=0;const env={isSecureContext:true,DeviceOrientationEvent:{requestPermission(){requests++;}},document:{}};
  const h=settings(saved,{touch:true},env);assert.equal(h.value.gyro,saved?.gyro??true);assert.equal(requests,0);
- h.storage.value=JSON.stringify({...h.value,gyro:false});h.game.bootSettings();assert.equal(h.game.settings.gyro,false);assert.equal(requests,0);
+ applyAimSettingsChange(h.value,{gyro:false});h.storage.value=JSON.stringify(h.value);h.game.bootSettings();assert.equal(h.game.settings.gyro,false);assert.equal(requests,0);
 });
 test('#404 non-touch, motion-only and insecure defaults stay off',()=>{
  const cap={isSecureContext:true,DeviceOrientationEvent:function(){},document:{}};
@@ -56,4 +57,10 @@ test('#364/#368 a second start call cannot retarget an older armed permission to
  const prepared=h.prepare(game,G);const first=h.start(game,G);game.match={state:'playing',paused:false};
  assert.equal(await h.start(game,G),false);h.answers.shift()('granted');await prepared;await first;
  assert.equal(h.m.gyro.enabled,false);assert.equal(h.prompts.length,1);
+});
+
+test('#404 a stale flat flag cannot override the saved active profile; actual settings changes persist',()=>{
+ const env={isSecureContext:true,DeviceOrientationEvent:function(){},document:{}},h=settings({gyro:true},{touch:true},env);
+ h.storage.value=JSON.stringify({...h.value,gyro:false});h.game.bootSettings();assert.equal(h.game.settings.gyro,true,'profile remains authoritative');
+ applyAimSettingsChange(h.game.settings,{gyro:false});h.storage.value=JSON.stringify(h.game.settings);h.game.bootSettings();assert.equal(h.game.settings.gyro,false);
 });

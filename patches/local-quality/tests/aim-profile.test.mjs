@@ -10,6 +10,7 @@ import { adaptSource } from '../../splatoon3/adapter.mjs';
 import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
 import { adaptReliability } from '../../reliability/adapter.mjs';
 import { adaptQualitySource } from '../adapter.mjs';
+import { initialGyroDefaults } from '../gyro-permission.mjs';
 import { installMobilePlatform } from '../mobile-platform.mjs';
 import {
   AIM_PROFILE_KEYS,
@@ -42,7 +43,7 @@ function settingsLoader(context, defaults) {
   const statement = main.match(/this\.settings = G\.settings = migrateAimProfiles\([^\n]+/)?.[0];
   assert.ok(load && statement, 'actual native boot load and migration must be present');
   return vm.runInNewContext(`${load}\nfunction bootSettings() { ${statement} return this.settings; }; bootSettings`, {
-    localStorage: context.localStorage, G: context.G, DEFAULT_SETTINGS: defaults, migrateAimProfiles,
+    localStorage: context.localStorage, G: context.G, DEFAULT_SETTINGS: defaults, migrateAimProfiles, initialGyroDefaults,
   });
 }
 

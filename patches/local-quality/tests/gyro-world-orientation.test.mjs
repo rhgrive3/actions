@@ -89,6 +89,7 @@ async function loadGyro({ adapted }) {
   const mod = new vm.SourceTextModule(code, { context, identifier: REL });
   await mod.link((spec) => {
     if (spec === './device.js') return device;
+    if (spec === '../../patches/local-quality/screen-angle.mjs') return new vm.SourceTextModule(fs.readFileSync(`${ROOT}patches/local-quality/screen-angle.mjs`,'utf8'),{context,identifier:spec});
     throw new Error(`unexpected gyro import ${spec}`);
   });
   await mod.evaluate();

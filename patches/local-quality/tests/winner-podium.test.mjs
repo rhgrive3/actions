@@ -1,3 +1,4 @@
+import {turfExperience} from '../../splatoon3/runtime/results-scoring.mjs';
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import path from 'node:path';import vm from 'node:vm';
 import {parse} from '../../loading-cache/vendor/acorn.mjs';
 import {adaptSource} from '../../splatoon3/adapter.mjs';import {adaptReliability} from '../../reliability/adapter.mjs';import {adaptTouchLayout} from '../../touch-layout/adapter.mjs';import {adaptQualitySource} from '../adapter.mjs';
@@ -12,7 +13,7 @@ const cfg=fs.readFileSync(path.join(root,'inkwave-public/src/config.js'),'utf8')
 const PROGRESSION=vm.runInNewContext(cfg.slice(a,b+3).replace('export const PROGRESSION =','(').replace(/;$/,'')+ ')');
 async function run({team=0,winner=1,online=false,swap=false}={}){
  const calls=[],timers=[],G={teamHex:['#f80','#05f'],teamColors:['orange','blue'],audio:{play:n=>calls.push(['audio',n])},netm:online?{}:null,net:online?{isHost:false,tr:{}}:null};
- const values={G,PROGRESSION,TEAM_NAMES:['A','B'],saveJSON:(key,p)=>calls.push(['saved',key,{...p}]),setTimeout:(fn,ms)=>{timers.push({fn,ms});return timers.length;}};
+ const values={G,PROGRESSION,turfExperience,TEAM_NAMES:['A','B'],saveJSON:(key,p)=>calls.push(['saved',key,{...p}]),setTimeout:(fn,ms)=>{timers.push({fn,ms});return timers.length;}};
  for(const imp of ast.body.filter(n=>n.type==='ImportDeclaration'))for(const sp of imp.specifiers)if(sp.imported?.name in values)values[sp.local.name]=values[sp.imported.name];
  const saveFn=ast.body.find(n=>n.type==='FunctionDeclaration'&&code.slice(n.start,n.end).includes('localStorage.setItem'));
  if(saveFn){values.localStorage={setItem:(key,value)=>calls.push(['saved',key,JSON.parse(value)])};values[saveFn.id.name]=vm.runInNewContext('('+code.slice(saveFn.start,saveFn.end)+')',values);}
@@ -27,7 +28,7 @@ test('#565 actual judge selects the authoritative winning team for both local si
   const {calls,game}=await run({team,winner,online}),p=calls.find(c=>c[0]==='podium'),result=calls.find(c=>c[0]==='results')[1],won=team===winner;
   assert.equal(p[1],winner);assert.equal(p[2],true);assert.equal(p[3],winner?'blue':'orange');assert.deepEqual(Array.from(p[4],a=>a.name),Array.from({length:4},(_,i)=>'P'+(winner*4+i)));
   assert.equal(result.win,won);assert.equal(result.online,online?true:undefined);assert.equal(result.players.length,8);assert.equal(result.players.find(p=>p.isSelf).team,team);
-  assert.equal(game.profile.wins,won?1:0);assert.equal(game.profile.matches,1);assert.equal(result.xp.gained,Math.round((won?PROGRESSION.xpWin:PROGRESSION.xpLose)+100*PROGRESSION.xpPerTurfPoint+2*PROGRESSION.xpPerSplat));
+  assert.equal(game.profile.wins,won?1:0);assert.equal(game.profile.matches,1);assert.equal(result.xp.gained,300+100+(won?600:0));
   assert(calls.some(c=>c[0]==='audio'&&c[1]===(won?'victory_fanfare':'defeat_jingle')));assert(calls.some(c=>c[0]==='music'&&c[1]===(won?'results_win':'results_lose')));
  }
 });

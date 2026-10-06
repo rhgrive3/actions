@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { updateSplatGhosts } from '../../splatoon3/issue-284-adapter.mjs';
 import assert from 'node:assert/strict';
 import { compose } from './idle-fixture.mjs';
 import { adaptNetworkSource } from '../../network-replication/adapter.mjs';
@@ -11,9 +12,9 @@ const source = adaptRange('src/main.js', adaptNetworkSource('src/main.js', compo
 const start = source.indexOf('  _frame(dt) {');
 const end = source.indexOf('\n  // continuous sounds', start);
 assert.ok(start >= 0 && end > start, 'composed installed Game._frame exists');
-const makeFrame = G => new Function('G', 'runSimulation', 'pausedWorldFrame', 'idleAttractMenuBudget', 'performance', 'damp', 'clamp', 'THREE', 'syncPortraitFrame',
+const makeFrame = G => new Function('updateSplatGhosts', 'G', 'runSimulation', 'pausedWorldFrame', 'idleAttractMenuBudget', 'performance', 'damp', 'clamp', 'THREE', 'syncPortraitFrame',
   `return class Frame {\n${source.slice(start, end)}\n}`)
-  (G, runSimulation, pausedWorldFrame, idleAttractMenuBudget, performance, (a, b) => b, x => x, {}, syncPortraitFrame);
+  (updateSplatGhosts, G, runSimulation, pausedWorldFrame, idleAttractMenuBudget, performance, (a, b) => b, x => x, {}, syncPortraitFrame);
 
 const vector = () => ({ copy() { return this; }, set() { return this; }, getWorldDirection() { return this; } });
 function fixture({ mode = 'menu', attract = true, touch = true, quality = 'high', fullFrame = false } = {}) {
