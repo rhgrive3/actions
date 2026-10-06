@@ -200,10 +200,11 @@ test('Issue #386 regression: roll-chain second floor action at 70F retains .85 a
 
 test('Issue #386 regression: roll-chain second wall action at 70F retains .85 attenuation', async () => {
   const { obs } = await runScenario(60, { secondAction: 'wall' });
-  // Wall roll minimum speed is 9.216 WU/s. Retaining 0.85 yields 7.8336 WU/s.
+  // The shared chain carries the first roll's penalized launch state across
+  // wall reattachment; wall-climb minimum velocity must not rebase the chain.
   assert.equal(obs.squidrollTriggers, 2, `Expected exactly 2 real squidroll triggers to prove second action launched, got ${obs.squidrollTriggers}`);
   assert.equal(obs.secondActionChain, 2, `Expected chain === 2 at 70F (90F window), got ${obs.secondActionChain}`);
-  assert.ok(Math.abs(obs.secondActionSpeed - 9.216 * 0.85) < 1e-5, `Expected speed == ${9.216 * 0.85} WU/s, got ${obs.secondActionSpeed}`);
+  assert.ok(Math.abs(obs.secondActionSpeed - 11.52 * 0.85) < 1e-5, `Expected speed == ${11.52 * 0.85} WU/s, got ${obs.secondActionSpeed}`);
 });
 
 test('Issue #390 regression: releasing fire while squid cancels store without shot or ink consumption', async () => {
