@@ -1,3 +1,4 @@
+import { adaptAssistPresentation } from './assist-presentation-adapter.mjs';
 import { adaptMatchHud } from './match-hud-adapter.mjs';
 import { adaptChargerSurface } from './charger-surface-adapter.mjs';
 import { adaptGearSub } from './gear-sub-adapter.mjs';
@@ -53,6 +54,7 @@ export function adaptSource(rel, code) {
   code = adaptScoreHud(rel, code);
   code = adaptRespawnLifecycle(rel, code, replaceOnce);
   if (rel !== 'src/game/weapons.js') code = adaptStormEffects(rel, code);
+  code = adaptAssistPresentation(rel, code, replaceOnce);
   if (rel === 'src/config.js') return replaceOnce(code,
     '  minimap: true,', '  minimap: false,', 'optional corner map default');
   if (rel === 'src/ui/menus.js') {

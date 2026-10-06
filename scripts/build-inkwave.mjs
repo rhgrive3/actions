@@ -216,6 +216,7 @@ const deferredIntegrationPreloads = new Set([
   'patches/splatoon3/runtime/map-reveal.mjs',
   'patches/splatoon3/runtime/movement-physics.mjs',
   'patches/splatoon3/runtime/roller-model.mjs',
+  'patches/splatoon3/runtime/roller-freefall.mjs',
   'patches/splatoon3/runtime/sub-special-fidelity.mjs',
   'patches/splatoon3/runtime/superjump.mjs',
   'patches/splatoon3/runtime/weapon-edgecases.mjs',

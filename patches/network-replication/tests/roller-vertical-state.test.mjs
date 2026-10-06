@@ -76,6 +76,9 @@ test('installed NetMatch carries owner-selected vertical Roller state through la
   receiver.bind({ actors: [remote], state: 'playing', time: 180 });
 
   const dt = 1 / 60;
+  // This transport probe starts from the native accepted-launch event. Natural
+  // falls now intentionally select horizontal during the separate #479 grace.
+  owner.emit('actor:jump', { actor: local });
   ownerStep({ owner, local }, dt, { fire: true, firePressed: true });
   const airborne = snapshot(sender);
   assert.equal(airborne.a[0].length, 22, 'the existing packed actor row shape is unchanged');
@@ -153,6 +156,7 @@ test('installed NetMatch carries owner-selected vertical Roller state through la
   assert.equal(local.character.s3RollerFlick, null, 'owner reset drops the matching pose state');
 
   local.grounded = false;
+  owner.emit('actor:jump', { actor: local });
   ownerStep({ owner, local }, dt, { fire: true, firePressed: true });
   receive({ receiver, remote }, snapshot(sender));
   assert.equal(remote.character.s3RollerFlick?.vertical, true);

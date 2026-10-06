@@ -372,7 +372,7 @@ export async function checkUiVisualProbes({page,evidence,sourceSha=null,contentH
       const old=h.xh.style.visibility;h.xh.style.visibility='hidden';
       globalThis.__splatlingProbe={xh,native:h.xh,old,holder};
       const a={alive:true,weapon:WEAPONS.splatling,weaponRunner:{streaming:false}};
-      Object.assign(holder,{xh,ret,_L:{weapon:'splatling',kind:'splatling'},_kick:0,_bloom:0,shield:document.createElement('div'),subChip:document.createElement('div'),_local:()=>a,_restart(){}});
+      Object.assign(holder,{xh,ret,_L:{weapon:'splatling',kind:'splatling'},_kick:0,_bloom:0,shield:document.createElement('div'),subChip:h.subChip.cloneNode(true),_local:()=>a,_restart(){}});
       holder._buildReticle('splatling');xh.className='iw-xh iw-xh--splatling';
       const style=getComputedStyle(xh);globalThis.__splatlingProbe.mount={opacity:style.opacity,visibility:style.visibility,display:style.display,animations:xh.getAnimations({subtree:true}).map(a=>({playState:a.playState,timing:a.effect?.getTiming()}))};
     });

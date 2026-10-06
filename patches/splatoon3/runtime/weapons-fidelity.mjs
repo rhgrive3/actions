@@ -479,7 +479,7 @@ export function fidelityProjectileTargets(system,p) {
     if(friendly&&!Number.isFinite(p.fidelityFriendThrough))continue;
     if(actor.pos.x<Math.min(p.prev.x,p.pos.x)-radius||actor.pos.x>Math.max(p.prev.x,p.pos.x)+radius||
        actor.pos.z<Math.min(p.prev.z,p.pos.z)-radius||actor.pos.z>Math.max(p.prev.z,p.pos.z)+radius)continue;
-    s.base.set(actor.pos.x,actor.pos.y+(actor.smoothY||0),actor.pos.z);
+    s.base.copy(actor.pos); // render easing does not move the authoritative capsule
     const kr=kitTrizookaActorRadius(system,p);
     const t=kr==null?capsuleEntry(p.prev,p.pos,s.base,PLAYER.radius,actor.form==='squid'?PLAYER.squidHeight:PLAYER.height,r0,r1):kitSegmentCapsuleEntry(p.prev,p.pos,s.base,PLAYER.radius,actor.form==='squid'?PLAYER.squidHeight:PLAYER.height,kr);
     if(t===null)continue;

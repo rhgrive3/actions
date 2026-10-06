@@ -147,3 +147,8 @@
    its profile's delay, so this hides the Charger reticle for exactly those frames. Idle
    Charger/Splatling visibility is a separate owner and is not gated here. */
 .iw-ret--charger.is-charge-delay { visibility: hidden; }
+
+/* Issue #561 Splatoon 3 assist presentation: no splat notification for the assister.
+   A distinct splat icon sits above the splatted location in the existing world-marker pool. */
+.iw-down--assist i { left: -15px; top: -52px; width: 30px; height: 30px; color: #fff; animation-name: iw-assist-in; }
+@keyframes iw-assist-in { 0% { opacity: 0; scale: .3; translate: 0 8px; } 60% { scale: 1.15; } }

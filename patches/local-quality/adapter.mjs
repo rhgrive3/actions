@@ -1,5 +1,6 @@
 import { adaptClothingGear } from '../splatoon3/clothing-gear-adapter.mjs';
 import { adaptIssue465 } from '../splatoon3/issue-465-adapter.mjs';
+import { adaptIssue479 } from '../splatoon3/issue-479-adapter.mjs';
 import { adaptIssue481 } from '../splatoon3/issue-481-adapter.mjs';
 import { adaptQualityIssue418 } from './issue-418-adapter.mjs';
 import { adaptTexlibSource } from './texlib-adapter.mjs';
@@ -167,6 +168,7 @@ function adaptQualityLayer(rel, code) {
   code = adaptPortraitGuard(rel, code, replaceOnce);
   code = adaptIssue465(rel, code);
   code = adaptIssue481(rel, code);
+  code = adaptIssue479(rel, code);
   code = adaptTexlibSource(rel, code);
   code = adaptIssue477Source(rel, code);
   code = adaptIdleSource(rel, code, replaceOnce);

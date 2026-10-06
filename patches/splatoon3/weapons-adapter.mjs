@@ -44,11 +44,11 @@ export function adaptWeaponsFidelity(code,replaceOnce) {
   patch('try { if (this._step(p, dt))', 'try { if (this._step(p, elapsed))', 'delayed movement duration');
   patch('      if (!dead && p.trailEvery) {','      if (!dead && !p.ghost && p.trailEvery) {','ghost trails never score paint');
   patch(`    this._ballistic(m, dir, a.aimPoint, w.projSpeed, w.straightTime, 28, 0.8, w.range);
-    this._spread(dir, spreadDeg ?? (a.grounded ? w.spreadGround : w.spreadAir));
+    spreadWeaponRound(this, dir, a, w, spreadDeg);
     const p = this._new();
     // trail starts ~2.5 m out`,
     `    fidelityAimConvergence(m, dir, a.aimPoint, w, w.projSpeed);
-    this._spread(dir, spreadDeg ?? (a.grounded ? w.spreadGround : w.spreadAir));
+    spreadWeaponRound(this, dir, a, w, spreadDeg);
     const p = this._new();
     // trail starts ~2.5 m out`, 'shooter centerline convergence');
   patch(`    this._ballistic(m, dir, a.aimPoint, w.projSpeed, w.straightTime, 28, 0.8, w.range);

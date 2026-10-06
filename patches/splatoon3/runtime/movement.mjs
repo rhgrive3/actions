@@ -100,7 +100,7 @@ export function beforeActions(a, dt, jumpPressed) {
     else if (!a.intent.jump) {
       surge.phase = 'burst'; surge.time = cfg.surge.duration * surge.charge;
       surge.speed = cfg.surge.minimumVelocity + (cfg.surge.velocity - cfg.surge.minimumVelocity) * surge.charge;
-      surge.armorTime = surge.charge >= 1 ? cfg.surge.armorTime : 0;
+      surge.armorTime = surge.charge > 0 ? cfg.surge.armorTime : 0;
       surge.armorHP = cfg.surge.armorHP; surge.armorThreshold = cfg.surge.armorThreshold;
       if (surge.armorTime > 0) state.armor = surge;
       a.jumpBuffer = 0; a.anim.surgeCharge = 0;
