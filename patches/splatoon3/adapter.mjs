@@ -9,6 +9,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { adaptIssue415 } from './runtime/issue-415-adapter.mjs';
+import { adaptMatchClock } from './match-clock-adapter.mjs';
 export const PATCH_ROOT = path.dirname(fileURLToPath(import.meta.url));
 export const sha256 = value => crypto.createHash('sha256').update(value).digest('hex');
 
@@ -33,6 +34,7 @@ export function checkCompatibility(src, patchRoot = PATCH_ROOT) {
 
 export function adaptSource(rel, code) {
   if (rel === 'src/game/match.js') {
+    code = adaptMatchClock(rel, code, replaceOnce);
     code = replaceOnce(code,
       'const win = cov[0] === cov[1] ? (Math.random() < 0.5 ? 0 : 1) : cov[0] > cov[1] ? 0 : 1;',
       'const win = cov[0] >= cov[1] ? 0 : 1; // Exact tie belongs to the assigned Alpha side.',

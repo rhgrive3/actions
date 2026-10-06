@@ -16,7 +16,62 @@ export class FixedClock {
   reset() { this.accumulator = 0; }
 }
 let context;
+let activeVisibilityGame = null;
+let pendingHiddenAt = null;
+const visibilityDocuments = new WeakSet();
+const hiddenIntervals = new WeakMap();
+
 export function installClock(api) { context = api; }
+
+function monotonicNow() {
+  try {
+    const value = globalThis.performance?.now?.();
+    return Number.isFinite(value) ? value : null;
+  } catch { return null; }
+}
+
+function captureHiddenInterval(game, at = pendingHiddenAt) {
+  if (!game || hiddenIntervals.has(game)) return;
+  at ??= monotonicNow();
+  if (!Number.isFinite(at)) return;
+  const match = game.match, netm = context?.G?.netm;
+  const session = netm?.s;
+  hiddenIntervals.set(game, { at, match, netm, session, hostId: session?.hostId, myId: session?.myId,
+    wasHost: netm ? !!netm.isHost : null });
+}
+
+function resumeHiddenInterval(game, now = monotonicNow()) {
+  const hidden = game && hiddenIntervals.get(game);
+  if (!hidden) return;
+  hiddenIntervals.delete(game);
+  const elapsed = (now - hidden.at) / 1000;
+  const netm = context?.G?.netm, match = hidden.match;
+  if (!Number.isFinite(elapsed) || elapsed <= 0 || !match || game.match !== match ||
+      !hidden.netm || netm !== hidden.netm || netm.match !== match || hidden.wasHost !== !!netm.isHost ||
+      netm.s !== hidden.session || netm.s?.hostId !== hidden.hostId || netm.s?.myId !== hidden.myId ||
+      typeof match._s3AdvanceClock !== 'function') return;
+  // Reconcile only Match's authoritative timer. No fixed-step actor/projectile
+  // simulation or NetMatch tick backlog runs for the hidden interval.
+  match._s3AdvanceClock(elapsed);
+}
+
+function watchVisibility() {
+  const doc = globalThis.document;
+  if (!doc?.addEventListener || visibilityDocuments.has(doc)) return;
+  visibilityDocuments.add(doc);
+  if (doc.hidden && pendingHiddenAt === null) pendingHiddenAt = monotonicNow();
+  doc.addEventListener('visibilitychange', () => {
+    const now = monotonicNow();
+    if (doc.hidden) {
+      if (pendingHiddenAt === null) pendingHiddenAt = now;
+      captureHiddenInterval(activeVisibilityGame, pendingHiddenAt);
+    } else {
+      resumeHiddenInterval(activeVisibilityGame, now);
+      pendingHiddenAt = null;
+    }
+  });
+}
+
 export function runSimulation(game, dt) {
   if (!context) throw new Error('INKWAVE patches were not installed');
   const { G } = context;
@@ -48,15 +103,20 @@ export function runSimulation(game, dt) {
   });
 }
 export function installGame(Game) {
+  watchVisibility();
   const original = Game.prototype._loop;
   Game.prototype._loop = function () {
+    activeVisibilityGame = this;
     // A hidden tab explicitly suspends local play; it cannot accumulate hours
     // of catch-up. Foreground slow frames retain all their elapsed time.
     if (globalThis.document?.hidden) {
+      if (pendingHiddenAt === null) pendingHiddenAt = monotonicNow();
+      captureHiddenInterval(this, pendingHiddenAt);
       this.timer.update(); this.s3Clock?.reset();
       requestAnimationFrame(() => this._loop());
       return;
     }
+    resumeHiddenInterval(this);
     return original.call(this);
   };
 }
