@@ -676,13 +676,23 @@ def build_corner_fill(rays, design):
         return None
     cc = np.array(design['corner_clip'], float)
     ys = np.arange(cc[:, 0].min() - 1.0, cc[:, 0].max() + 1.0, 0.2)
+
+    def face_or_ball(u, v):
+        """(distance to the face or eyeball, whichever is first; True if the eyeball).  The see-through skin
+        layers are left out: the eyeball shows through them in the render."""
+        o, d, _ = rays.ray((u, v))
+        he = rays.eye_tree.ray_cast(Vector(o), Vector(d), 50)
+        hf = rays.skin_tree.ray_cast(Vector(o), Vector(d), 50)
+        te = he[3] if he[0] is not None else 1e9
+        tf = hf[3] if hf[0] is not None else 1e9
+        return min(te, tf), te < tf
     rows = []
     for y in ys:
         xr = clip(y)
         if xr < -1e8:
             continue
         xs = np.arange(xr, 95.0, -0.1)
-        seen = np.array([rays.on_eye(x, y) for x in xs])
+        seen = np.array([face_or_ball(x, y)[1] for x in xs])
         if not seen[1:].any():
             continue
         xl = xs[np.nonzero(seen)[0][-1]]                     # outer end of the opening on this row
@@ -699,9 +709,9 @@ def build_corner_fill(rays, design):
     O = np.zeros(px.shape[:2] + (3,)); D = np.zeros_like(O); H = np.zeros(px.shape[:2]); ball = np.zeros(px.shape[:2], bool)
     for j in range(len(R)):
         for i in range(ncol):
-            o, d, t = rays.ray(tuple(px[j, i]))
-            O[j, i], D[j, i], H[j, i] = o, d, t
-            ball[j, i] = rays.on_eye(*px[j, i])
+            o, d, _ = rays.ray(tuple(px[j, i]))
+            O[j, i], D[j, i] = o, d
+            H[j, i], ball[j, i] = face_or_ball(*px[j, i])
     lo = design.get('corner_fill_lift_mm', 0.05) / 1000
     hi = design.get('corner_fill_max_mm', 0.6) / 1000
     under = design.get('corner_fill_under_mm', 0.0) / 1000
