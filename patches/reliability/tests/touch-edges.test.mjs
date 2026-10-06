@@ -141,12 +141,14 @@ for (const hz of [20, 30, 60, 90, 120, 144]) test(`${hz}Hz rendering delivers to
   assert.equal(h.rig.yaw, -.25); assert.equal(h.rig.pitch, -.1);
 });
 
-test('actual charger charges while held and fires once on release; completed fire tap releases next tick', async () => {
+test('actual charger holds the 1F release gap without replaying a completed fire tap', async () => {
   const h = await boot({ weapon: 'charger' }), held = h.press('fire');
   for (let i = 0; i < 20; i++) h.frame();
   assert.equal(h.actor.weaponRunner.charging, true); assert.ok(h.actor.weaponRunner.charge > 0);
   assert.equal(h.shots.length, 0);
   h.release(held); h.frame();
+  assert.equal(h.shots.length, 0, 'release recognition tick creates no attack');
+  h.frame();
   assert.equal(h.shots.length, 1); assert.equal(h.shots[0].kind, 'charger');
   assert.equal(h.actor.weaponRunner.charging, false);
   for (let i = 0; i < 30; i++) h.frame();
@@ -155,7 +157,12 @@ test('actual charger charges while held and fires once on release; completed fir
   assert.equal(h.rows.at(-1).fire, true); assert.equal(h.actor.weaponRunner.charging, true);
   h.frame();
   assert.equal(h.rows.at(-1).fire, false); assert.equal(h.actor.weaponRunner.charging, false);
+  assert.equal(h.shots.length, 1, 'tap release recognition also holds the gap');
+  h.frame();
+  assert.equal(h.rows.at(-1).fire, false, 'the completed input edge is not replayed');
   assert.equal(h.shots.length, 2);
+  h.frame();
+  assert.equal(h.shots.length, 2, 'the deferred tap attack is applied exactly once');
 });
 
 test('actual roller completes a tap flick and stops rolling after a held trigger releases', async () => {

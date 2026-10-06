@@ -46,6 +46,8 @@ test('detail accepts valid semantic records and rejects original false-pass coun
   r=>row(r,'shooter-recoil').samples[99].rcP=.04,
   r=>row(r,'charger-return').samples[110].aim=.7,
   r=>row(r,'charger-return').events[0].frame=79,
+  r=>row(r,'charger-return').events[0].frame=80, // rejects old same-tick fire (#680)
+  r=>row(r,'charger-return').events[0].frame=82, // rejects an extra delayed tick
   r=>delete row(r,'charger-return').events[0].charge,
   r=>row(r,'bomb-standing').renderMetrics.find(m=>m.frame===30).releasedBomb.nearestLeft=.3,
   r=>delete row(r,'bomb-standing').releaseFrames[0].meshOriginError,

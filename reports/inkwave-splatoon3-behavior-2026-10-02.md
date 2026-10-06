@@ -298,7 +298,7 @@ This establishes internal INKWAVE consistency only. The test's world units are n
 ## 2026-10-06: Charger 通常リリースの発射隙 (#680)
 
 - 本家の根拠：現行Splatoon 3の検証資料はチャージャーの時間分解を `startup + charge + 発射隙 + shot(1F)` とし、通常のZR解放認識から攻撃ヒットボックスまでを **1F** とする（検証Wiki「メインウェポン」、確認はコード差分の前提に限定し独自数値は追加しない）。
-- INKWAVE の実装箇所：`patches/splatoon3/runtime/weapons.mjs` の `WeaponRunner.prototype._charger` に、S3通常リリース用の1F固定ステップ状態を追加。解放tick R では `charging` を解除し、チャージ量・解放方向の基準をラッチして発射しない。R+1 で `weapon:fire`・有限flight・インク/cooldown・recoil を生成する。
+- INKWAVE の実装箇所：`patches/splatoon3/runtime/weapons.mjs` の `WeaponRunner.prototype._charger` に、S3通常リリース用の1F固定ステップ状態を追加。解放tick R では `charging` を解除し、チャージ量をラッチして発射しない。R+1 で `weapon:fire`・有限flight・インク/cooldown・recoil を生成する。
 - 再現操作：フル充填または途中充填からZRを離す。解放tickで弾が生成されず、次tickで1発だけ生成されることを、実 `Actor`/`WeaponRunner` の固定60Hzロジックで確認した（`patches/splatoon3/tests/charger-release-gap.test.mjs`）。
 - プレイへの影響：解放直後の早撃ち・トレードがS3より1F先行していたずれを解消する。8F最小チャージ、リピート/cooldown、stored-charge resurfacing、charge-cancel recovery、post-shot swim lock は変更しない。
 - 確認状態：ロジック単独（source-fixture）で30/60/120Hzの同一固定intervalを確認。Switch実機の新規録画や、本家の公開されていないフレーム値の推定は行っていない。
@@ -347,3 +347,5 @@ Verification:16 behavioral regressions fail on unchanged baseline and pass after
 ### UI Actor lifetime: #616 / #672 / #685
 
 Page-lifetime HUD and Diorama state now releases its matching Match's Actor references at disposal; closed/stale map pins cannot call an old Actor. Minimap jump FX uses weakly correlated scalar tokens while preserving native landing fade. This is JavaScript lifecycle ownership, with no Nintendo numerical calibration or gameplay change. Source/minified/production-target regressions and explicit Node GC pass; physical heap/long-soak remains unverified. See [the focused report](inkwave-ui-actor-lifetime-2026-10-05.md).
+
+C13 CI integration: native browser records confirmed the Charger driver releases at frame80 and fires exactly one full-charge attack at81, with release pose first observed at81. The renderer verifier and failure fixtures now require81, rejecting80 and82, while preserving shot count/charge/pose-return/rig thresholds. Touch input regressions preserve one delivered edge and now explicitly assert the authoritative R/R+1 gap for both held releases and completed taps.
