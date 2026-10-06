@@ -1523,6 +1523,27 @@
    ]
   },
   {
+   "name": "under_ear_smooth",
+   "kind": "smooth",
+   "factor": 0.5,
+   "protect_lips": false,
+   "after_delta_smooth": true,
+   "iters": 200,
+   "bumps": [
+    {
+     "centre": [
+      60.0,
+      -72.0,
+      8.0
+     ],
+     "rx": 13.0,
+     "ry": 11.0,
+     "rz": 20.0,
+     "front_only": false
+    }
+   ]
+  },
+  {
    "name": "neck_normals",
    "kind": "neck_normals",
    "after_delta_smooth": true,
