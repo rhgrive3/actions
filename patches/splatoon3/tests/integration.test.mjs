@@ -139,10 +139,25 @@ test('splatling diving cancels both charging and an active stream', async () => 
   a.reset();a.intent.squid=false;a.intent.fire=true;f.tick(a,73);a.intent.fire=false;f.tick(a,2);assert.equal(a.weaponRunner.streaming,true);
   const count=f.shots.length;a.intent.squid=true;f.tick(a,45);assert.equal(a.weaponRunner.streaming,false);assert.equal(f.shots.length,count);
 });
-test('a charger tap uses the minimum ink without forcing a 12 percent charge', async () => {
+test('an 8F legal Charger charge has already spent the 2.25 percent minimum before release', async () => {
   const f=await fixture(),a=f.make('charger'),r=a.weaponRunner;a.ink=2.25;
-  r.update(1/60,{fire:true});r.update(1/60,{fire:false});
-  assert.equal(f.shots.length,1);assert.ok(f.shots[0].charge<.12);assert.ok(a.ink<1e-9);
+  // C22's 1F humanoid startup precedes the eight legal charge frames.
+  r.update(1/60,{fire:true});
+  for(let i=0;i<8;i++)r.update(1/60,{fire:true});
+  assert.ok(a.ink<1e-9,'minimum charge ink is committed during charging');
+  const charge=r.charge;
+  r.update(1/60,{fire:false});
+  assert.equal(f.shots.length,1);assert.equal(f.shots[0].charge,charge);
+  assert.ok(a.ink<1e-9,'release does not debit the already-paid charge again');
+});
+test('airborne Charger charge advances at one third rate without resetting across landing', async () => {
+  const f=await fixture(),a=f.make('charger'),r=a.weaponRunner;a.ink=100;a.grounded=false;
+  r.update(1/60,{fire:true}); // 1F humanoid startup
+  for(let i=0;i<60;i++)r.update(1/60,{fire:true});
+  assert.ok(Math.abs(r.chargeT-1/3)<1e-9);assert.ok(r.charge<.999);
+  a.grounded=true;
+  for(let i=0;i<40;i++)r.update(1/60,{fire:true});
+  assert.ok(Math.abs(r.chargeT-1)<1e-9);assert.ok(r.charge>=.999);
 });
 test('global menu time cannot skip an actor ink recovery wait', async () => {
   const f=await fixture(),a=f.make();a.form='squid';a.intent.squid=true;a.ink=0;a.lastFire=2;a.s3.recoverStopRemaining=.5;

@@ -54,7 +54,8 @@ test('enemy contact suppresses health recovery even while its damage grace is ac
 test('contact ink remains nonlethal and bounded, including return after leaving it', async () => {
   const f = await fixture(), a = f.make(); a.hp = 20; f.G.paint.sample = () => 2;
   f.tick(a, 180); close(a.hp, 1); close(a.damageFromInk, f.profile.resources.enemyInkDamageCap);
-  a.damage(2, null, 'shooter'); assert.equal(a.alive, false);
+  a.damage(2, null, 'shooter'); assert.equal(a.alive, true, 'lethal decision is pending for one fixed tick');
+  f.tick(a); assert.equal(a.alive, false);
 });
 
 test('refill predicates distinguish own ink, wall, dry/enemy squid, and stored charge', async () => {
@@ -63,7 +64,9 @@ test('refill predicates distinguish own ink, wall, dry/enemy squid, and stored c
   f.G.paint.sample = () => 2; f.tick(a, 5); close(a.ink, 0);
   f.G.paint.sample = () => 1; a.intent.fire = true; a.weaponRunner.s3Stored = { charge: 1, remaining: 1 };
   f.tick(a, 5); close(a.ink, 0);
-  a.weaponRunner.s3Stored = null; a.climbing = true; a._updateClimb = () => {}; a.grounded = false;
+  a.weaponRunner.s3Stored = null; a.intent.fire = false;
+  a.fireBuffer = 0; a.weaponRunner.charging = false; a.weaponRunner.charge = 0; a.weaponRunner.chargeT = 0;
+  a.climbing = true; a._updateClimb = () => {}; a.grounded = false;
   f.tick(a); close(a.ink, f.profile.resources.inkRefillSwim / 60);
 });
 
@@ -74,11 +77,12 @@ test('recover-stop countdown stays tied to actor ticks and refill starts at its 
   f.tick(a); close(a.ink, f.profile.resources.inkRefillSwim / 60);
 });
 
-test('consecutive roll momentum applies one retention coefficient per new launch', () => {
-  let speed = 20;
+test('consecutive roll momentum compounds from the previous retained launch', () => {
+  let previous = 0;
   for (let chain = 0; chain < 4; chain++) {
-    speed = rollLaunchSpeed(speed, chain, .85);
-    close(speed, 20 * .85 ** Math.max(0, chain));
+    const speed = rollLaunchSpeed(20, chain, .85, previous);
+    close(speed, 20 * .85 ** chain);
+    previous = speed;
   }
 });
 
@@ -130,10 +134,23 @@ test('charge visuals and active actions clear on form switch, jump takeover and 
 test('super jump uses raw preparation/flight times and grants no landing protection', async () => {
   const f = await fixture(), a = f.make();
   a._probeGround = () => {}; a._resolve = () => { a.grounded = true; };
+  // Takeoff is the charge duration PLUS the human startup. Both are authoritative profile values,
+  // so derive the boundary instead of hardcoding a frame index that drifts whenever either changes.
+  // The pre-startup boundary was 80 frames; with startupHumanoidF = 22 the real takeoff is 102.
+  const CHARGE_F = f.profile.superJump.chargeTime * 60;
+  const STARTUP = f.profile.superJump.startupHumanoidF;
+  const TAKEOFF = STARTUP + CHARGE_F;
+  // A separate actor proves the startup is actually present: it must still be charging at the old
+  // 80F boundary. If the startup were ever dropped this fails, instead of the boundary silently moving.
+  const b = f.make();
+  b._probeGround = () => {}; b._resolve = () => { b.grounded = true; };
+  b.superJump(new f.THREE.Vector3(0, 0, 10));
+  f.tick(b, CHARGE_F); assert.equal(b.superJumpState.phase, 'charge',
+    `${STARTUP}F of human startup is missing: takeoff must not happen at the pre-startup ${CHARGE_F}F boundary`);
   a.superJump(new f.THREE.Vector3(0, 0, 10));
-  f.tick(a, 79); assert.equal(a.superJumpState.phase, 'charge');
+  f.tick(a, TAKEOFF - 1); assert.equal(a.superJumpState.phase, 'charge');
   f.tick(a); assert.equal(a.superJumpState.phase, 'flight'); close(a.invuln, 0);
-  close(a.superJumpState.dur, 138 / 60);
+  close(a.superJumpState.dur, f.profile.superJump.flightTime);
   a.invuln = 99; f.tick(a, 138); assert.equal(a.superJumpState, null); close(a.invuln, 0);
   a.damage(36, null, 'shooter'); close(a.hp, 64);
 });
@@ -141,7 +158,8 @@ test('super jump uses raw preparation/flight times and grants no landing protect
 test('a targeted jump can be splatted during preparation', async () => {
   const f = await fixture(), a = f.make(); a._probeGround = () => {};
   a.superJump(new f.THREE.Vector3(0, 0, 10)); f.tick(a, 1);
-  a.damage(100, null, 'shooter'); assert.equal(a.alive, false);
+  a.damage(100, null, 'shooter'); assert.equal(a.alive, true);
+  f.tick(a); assert.equal(a.alive, false);
 });
 
 for (const hz of [20, 30, 60, 120, 144]) {

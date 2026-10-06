@@ -254,7 +254,9 @@ test('native directional hits and splat disappearance remain gameplay-identical'
     assert.notDeepEqual(Array.from(after.ch.bones.chest.matrixWorld.elements), initialChest,
       'actual native side-hit torso motion remains');
     evidenceRows.push({ stage: 'native-hit-preserved', before: posed(before), after: posed(after) });
-    for (const r of [before, after]) { r.a.damage(100, null); }
+    for (const r of [before, after]) r.a.damage(100, null);
+    assert.equal(after.a.alive, true, 'lethal damage remains pending for the rest of its fixed tick');
+    for (const r of [before, after]) r.a.update(1 / 60);
     assert.deepEqual(gameplay(after), gameplay(before)); assert.equal(after.a.alive, false);
     assert.equal(after.ch.root.visible, false); assert.equal(after.snapshot().visible, false);
     const timer = after.a.respawnTimer; after.a.update(.1);
