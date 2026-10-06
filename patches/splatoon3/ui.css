@@ -10,3 +10,18 @@
 
 /* Slosher ShotGuide offsets only aiming feedback; tank/sub/status stay centred. */
 .iw-ret, .iw-hit, .iw-kill { translate: var(--gx, 0px) var(--gy, 0px); }
+
+/* Generic field-contact cue; separate from and does not reposition ShotGuide. */
+.iw-xh.is-muzzle-blocked::after {
+  content: "";
+  position: absolute;
+  left: var(--muzzle-hit-x, 0px);
+  top: var(--muzzle-hit-y, 0px);
+  width: 9px;
+  height: 9px;
+  border: 1px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, .9);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}

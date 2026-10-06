@@ -145,6 +145,20 @@ export function adaptSource(rel, code) {
     }
     // per-shot kick (recoil events) on top of the live cone the engine reports in screen px (already includes bloom)`,
       'Bucket Slosher ShotGuide HUD projection');
+    code = replaceOnce(code,
+      '    const ch = f.crosshair || {};',
+      `    const ch = f.crosshair || {};
+    const muzzleBlock = L.kind === 'shooter' && Number.isFinite(ch.muzzleBlock?.x) && Number.isFinite(ch.muzzleBlock?.y) ? ch.muzzleBlock : null;
+    const muzzleBlockKey = muzzleBlock ? \`\${muzzleBlock.x.toFixed(1)}|\${muzzleBlock.y.toFixed(1)}\` : '';
+    if (muzzleBlockKey !== L.muzzleBlock) {
+      L.muzzleBlock = muzzleBlockKey;
+      if (muzzleBlock) {
+        this.xh.style.setProperty('--muzzle-hit-x', \`\${muzzleBlock.x.toFixed(1)}px\`);
+        this.xh.style.setProperty('--muzzle-hit-y', \`\${muzzleBlock.y.toFixed(1)}px\`);
+      }
+    }
+    this.xh.classList.toggle('is-muzzle-blocked', !!muzzleBlock);`,
+      'Shooter muzzle contact presentation state');
     return "import { t as tr } from '../i18n.js';\n" + code;
   }
   if (rel === 'src/ui/ui-icons.js') {
@@ -311,6 +325,24 @@ export function adaptSource(rel, code) {
       '    const judgeP = this.hud?.judge({ colors: [G.teamHex[0], G.teamHex[1]], percents: [cov[0] * 100, cov[1] * 100], names: this.palette.names || TEAM_NAMES, winner: m.result.winner });',
       'authoritative Turf winner Game to HUD');
     code = replaceOnce(code, 'const game = new Game();', 'installGame(Game);\nconst game = new Game();', 'game installation');
+    code = replaceOnce(code,
+      '    const frame = {\n      time: m.time,',
+      `    const muzzleContact = w.kind === 'shooter' ? G.projectiles?.muzzleBlockFeedback?.(a) : null;
+    let muzzleBlock = null;
+    if (muzzleContact) {
+      const projectedContact = this._muzzleBlockScreen || (this._muzzleBlockScreen = new THREE.Vector3());
+      projectedContact.copy(muzzleContact.point).project(cam);
+      if (projectedContact.z >= -1 && projectedContact.z <= 1
+        && Math.abs(projectedContact.x) <= 1 && Math.abs(projectedContact.y) <= 1) {
+        muzzleBlock = { x: projectedContact.x * W / 2, y: -projectedContact.y * H / 2 };
+      }
+    }
+    const frame = {\n      time: m.time,`,
+      'projected Shooter muzzle contact');
+    code = replaceOnce(code,
+      "      crosshair: { spread, onTarget: m.controller?.onTarget ? 'enemy' : null, inRange: m.controller ? m.controller.inRange !== false : true },",
+      "      crosshair: { spread, onTarget: m.controller?.onTarget ? 'enemy' : null, inRange: m.controller ? m.controller.inRange !== false : true, muzzleBlock },",
+      'Shooter muzzle contact HUD data');
     return `import { runSimulation, installGame } from '../patches/splatoon3/runtime/clock.mjs';\n` + code;
   }
   return code;

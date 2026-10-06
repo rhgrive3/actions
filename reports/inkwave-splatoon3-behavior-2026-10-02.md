@@ -375,3 +375,20 @@ Base main `67fec182`. Splat Dualies wall impacts now enter the existing sourced 
 native runtime の bounded workload trace として、production build の Projectiles fire methods を30.0006秒、Shooter 100ms / Dualies 83ms / Splatling 66msで呼び、各発射後に production `_impact` handler を1回呼んだ。Baseline は fire 1,117・impact 1,117・Vector3 clone 5,378件（event 由来4,468件と変更対象外の Splatling spread 910件）。Candidate は同じ fire / impact / network packet 数で clone 910件（Splatling spread のみ）となり、対象 event 由来 clone は0件。3つの seeded fire packet の payload と byte length `[96,109,98]` は baseline と一致し、charger の FX hook も同じ muzzle / direction / impact / normal を受け取った。V8 allocation sampling は30秒で Baseline 495 samples / 656,264 sampled bytes、Candidate 489 samples / 587,888 sampled bytes。標本値には runtime overhead と sampling variation が含まれるため、allocation 改善の判定には clone instrumentation を使い、sampled bytes は Node native runtime 上の補助値として記録する。browser heap bytes の推定には使っていない。
 
 これはゲーム内射撃規則の変更ではなく、Switch Ver.11.3.0 実機との差分は予想していないという実装上の推定である。射撃 cadence、projectile、RNG、damage、paint、HUD kick、audio、packet dispatch loop は adapter で変更していない。ただし native trace は physics / paint / audio を stub にし、browser HUD、実 FX rendering / GPU を動かしていないため、それらの runtime parity は未確認。Switch Ver.11.3.0 実機比較、browser frame pacing、mobile GC も未確認。イベント payload object 自体は各 event に1つ必要なため再利用しておらず、本結果は Vector3 transport allocation の削減を測定したもの。
+
+## 2026-10-07 — #94 shooter muzzle line-of-sight cue
+
+### Splatoon 3 comparison
+
+- Reference: Splatoon 3 Ver. 11.3.0; Nintendo's update notes list its release as August 19, 2026 and summarize the version's multiplayer changes ([Nintendo Support](https://en-americas-support.nintendo.com/app/answers/detail/a_id/59461/p/1076/c/950)). The local fixture uses INKWAVE's generic `shooter` class; its exact Splatoon 3 weapon mapping is not established. Gear is not configured in the fixture. The controlled state is a stationary human-form actor, held camera direction, near solid cover, and no fire input. No Switch session was run.
+- The official update notes do not specify standard Shooter reticle placement when camera and muzzle lines disagree. That behavior, the corresponding gear/input conditions, and whether Splatoon 3 presents a muzzle-contact cue remain **未確認**; this change makes no visual-parity claim.
+
+### INKWAVE implementation and reproduction
+
+- `inkwave-public/src/game/player.js` derives `aimPoint` from the gameplay camera ray. The production adapter removes the raw-source enemy body-axis rewrite in `patches/splatoon3/adapter.mjs`; the current composed aim point therefore remains camera/world based.
+- `patches/splatoon3/runtime/muzzle-feedback.mjs` calls the installed `Projectiles._muzzle()` and `_aimFrom()` and asks the existing `G.physics.raycast()` for the first solid contact on that line, with the existing grate mask. The full production adapter sends that point through the rendered camera projection and draws a separate generic contact cue in `patches/splatoon3/ui.css`. Existing Slosher/Blaster ShotGuide projection is left intact.
+- Reproduction: the focused test loads the production installer with the adapted public `Actor`, `Character`, `PlayerController`, `Projectiles`, and `Physics`; a synthetic cover edge misses the camera ray but intersects the actual rig-muzzle line. The returned field point is on-screen. Repeated presentation queries at 30/60/120 sample rates return the same contact without firing or consuming RNG.
+
+### Impact and status
+
+The cue reports the straight muzzle-to-camera-aim line's first field contact. It is not a complete projectile trajectory or a promise of final shot impact. The change adds one LOS ray query on Shooter HUD updates, but does not alter fixed-step timing, firing, RNG, projectile birth, packets, damage, paint, ink cost, or collision rules. The composed runtime tests and full production build pass. Browser-visible placement and Splatoon 3 console behavior remain **未確認**.
