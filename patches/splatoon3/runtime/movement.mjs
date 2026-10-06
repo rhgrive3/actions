@@ -21,6 +21,10 @@ export function movementState(a) {
   return a.s3.actions || (a.s3.actions = { chain: 0, chainTimer: 0, chainSpeed: 0, roll: null, surge: null });
 }
 function sync(a, state) { a.s3.roll = state.roll; a.s3.surge = state.surge; }
+function advanceChainTimer(state, dt) {
+  state.chainTimer = Math.max(0, state.chainTimer - dt);
+  if (state.chainTimer <= 1e-10) { state.chain = 0; state.chainTimer = 0; state.chainSpeed = 0; }
+}
 function launch(a, direction, speed, vertical, kind) {
   const length = Math.hypot(direction.x, direction.z) || 1;
   a._setClimb(false); a.grounded = false; a.coyote = 0; a.jumpBuffer = 0;
@@ -32,8 +36,7 @@ function launch(a, direction, speed, vertical, kind) {
 export function beforeActions(a, dt, jumpPressed) {
   if (!api) throw new Error('INKWAVE movement patch not installed');
   const state = movementState(a), cfg = config;
-  state.chainTimer = Math.max(0, state.chainTimer - dt);
-  if (state.chainTimer <= 1e-10) { state.chain = 0; state.chainTimer = 0; state.chainSpeed = 0; }
+  advanceChainTimer(state, dt);
   for (const action of [state.roll, state.surge]) if (action) {
     const remaining = (action.armorTime || 0) - dt;
     action.armorTime = remaining <= 1e-10 ? 0 : remaining;
@@ -130,6 +133,7 @@ export function installMovement(context, tuning) {
   };
   const superJumpUpdate = Actor.prototype._updateSuperJump;
   Actor.prototype._updateSuperJump = function (...args) {
+    advanceChainTimer(movementState(this), args[0]);
     const value = superJumpUpdate.apply(this, args);
     // Charge probes the floor. Once launched, the rendered body is airborne;
     // keeping the charge's ground flag selected the dry-squid idle animation.
