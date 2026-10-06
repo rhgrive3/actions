@@ -77,6 +77,7 @@ async function runScenario(hz, { secondAction = 'floor' } = {}) {
         a.intent.jump = false;
         obs.roll1Active = !!a.s3.actions.roll;
         obs.roll1Chain = a.s3.actions.chain;
+        obs.roll1LaunchSpeed = a.s3.actions.chainSpeed;
         obs.roll1Stored = a.weaponRunner.s3Stored ? { ...a.weaponRunner.s3Stored } : null;
       }
 
@@ -187,10 +188,12 @@ test('Issue #386 regression: roll-chain second floor action at 70F retains .85 a
 
 test('Issue #386 regression: roll-chain second wall action at 70F retains .85 attenuation', async () => {
   const { obs } = await runScenario(60, { secondAction: 'wall' });
-  // Wall roll minimum speed is 9.216 WU/s. Retaining 0.85 yields 7.8336 WU/s.
+  assert.ok(Math.abs(obs.roll1LaunchSpeed - 11.52) < 1e-5, 'first real floor launch records 11.52');
+  // #808 keeps the prior floor launch across wall reattachment; the vertical
+  // climb velocity does not replace the shared roll history with wall minimum.
   assert.equal(obs.squidrollTriggers, 2, `Expected exactly 2 real squidroll triggers to prove second action launched, got ${obs.squidrollTriggers}`);
   assert.equal(obs.secondActionChain, 2, `Expected chain === 2 at 70F (90F window), got ${obs.secondActionChain}`);
-  assert.ok(Math.abs(obs.secondActionSpeed - 9.216 * 0.85) < 1e-5, `Expected speed == ${9.216 * 0.85} WU/s, got ${obs.secondActionSpeed}`);
+  assert.ok(Math.abs(obs.secondActionSpeed - obs.roll1LaunchSpeed * 0.85) < 1e-5, `Expected speed == ${obs.roll1LaunchSpeed * 0.85} WU/s, got ${obs.secondActionSpeed}`);
 });
 
 test('Issue #390 regression: releasing fire while squid cancels store without shot or ink consumption', async () => {
