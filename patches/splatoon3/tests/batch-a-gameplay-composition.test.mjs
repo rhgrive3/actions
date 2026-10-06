@@ -10,10 +10,12 @@ import { FixedClock } from '../runtime/clock.mjs';
  *   - #377: Splat Charger charging movement speed initial-frame clamp (1.2 WU/s vs lerp 3.855 WU/s)
  *   - #386: Squid Roll consecutive chain reset window (~90F community reference vs 60F baseline)
  *   - #390: Splat Charger stored charge cancellation upon ZR release during charge keep
+ *   - #726: 1F humanoid startup before the charge frames (entry/frame anchors below shifted +1F)
  *
  * Unified Scenario:
- *   1. Begin charging Charger from tick 0. Verify movement speed is clamped to 1.2 WU/s on tick 1 (#377).
- *   2. Reach full charge (60 ticks / 1.0s), submerge into friendly ink holding fire -> charge stored (#390).
+ *   1. Press ZR from tick 0: the #726 1F startup frame does not charge; movement speed is
+ *      clamped to 1.2 WU/s immediately at the charging entry on tick 1 (#377).
+ *   2. Reach full charge (1F startup + 60 ticks / 1.0167s), submerge into friendly ink holding fire -> charge stored (#390).
  *   3. Initiate first squid roll with physical held fire -> roll launches, charge keep maintained (#390/#386).
  *   4. While submerged with stored charge (60F remaining), release fire trigger -> store cancelled immediately
  *      without firing shot or consuming ink (#390, per evidence/charge-keep-reference-adjudication.md).
@@ -41,7 +43,7 @@ async function runScenario(hz, { secondAction = 'floor' } = {}) {
     clock.advance(1 / hz, dt => {
       const t = clock.ticks;
 
-      // Phase 1: Tick 0: Start charging charger while pressing forward
+      // Phase 1: Tick 0: press ZR on the #726 1F humanoid startup frame
       if (t === 0) {
         a.intent.fire = true;
         a.intent.move.set(0, 0, 1);
@@ -55,13 +57,19 @@ async function runScenario(hz, { secondAction = 'floor' } = {}) {
         obs.firstTickCharging = a.weaponRunner.charging;
         obs.firstTickCharge = a.weaponRunner.charge;
       }
+      if (t === 1) {
+        // #377 clamp now observes at the charging entry tick (startup 1F prior).
+        obs.entryTickCharging = a.weaponRunner.charging;
+        obs.entryTickMoveSpeed = a.weaponRunner.moveSpeed();
+      }
 
-      // Phase 2: Tick 59..60: Full charge reached (60 ticks), submerge into friendly ink holding fire
-      if (t === 59) {
+      // Phase 2: Tick 60..61: full charge at 1F startup + 60 charge frames (#726),
+      // then submerge into friendly ink holding fire -> charge stored (#390).
+      if (t === 60) {
         a.intent.squid = true;
         a._squidPressT = f.G.time;
       }
-      if (t === 60) {
+      if (t === 61) {
         obs.submerged = a.submerged;
         obs.storedOnSubmerge = a.weaponRunner.s3Stored ? { ...a.weaponRunner.s3Stored } : null;
       }
@@ -170,11 +178,16 @@ test('store while holding fire and roll maintaining charge (#390 / #386 baseline
   assert.equal(obs.roll1Stored.charge, 1, 'stored charge remains 1.0 during roll');
 });
 
-test('Issue #377 regression: charger charging movement speed capped at 1.2 WU/s from tick 1', async () => {
+test('Issue #377 regression: charger charging movement speed capped at 1.2 WU/s from charging entry', async () => {
   const { obs } = await runScenario(60);
-  // S3 MoveSpeedFullCharge = 0.02 DU/frame (pinned 0.02, not 0.20; 1.2 WU/s at 60Hz) clamps immediately on frame 1 without slow ease.
-  assert.equal(obs.firstTickCharging, true, 'Charger enters charging state on tick 1');
-  assert.ok(obs.firstTickMoveSpeed <= 1.2 + 1e-5, `Expected <= 1.2 WU/s on tick 1, got ${obs.firstTickMoveSpeed}`);
+  // #726: the ZR edge is the 1F humanoid startup, so tick 1 is not charging and
+  // keeps the uncharged run speed. S3 MoveSpeedFullCharge = 0.02 DU/frame
+  // (pinned 0.02, not 0.20; 1.2 WU/s at 60Hz) then clamps immediately on the
+  // charging entry tick without slow ease (#377 unchanged).
+  assert.equal(obs.firstTickCharging, false, 'Charger is in its 1F startup on tick 1');
+  assert.equal(obs.firstTickCharge, 0, 'the startup tick advances no charge progress');
+  assert.equal(obs.entryTickCharging, true, 'Charger enters charging state on tick 2');
+  assert.ok(obs.entryTickMoveSpeed <= 1.2 + 1e-5, `Expected <= 1.2 WU/s at charging entry, got ${obs.entryTickMoveSpeed}`);
 });
 
 test('Issue #386 regression: roll-chain second floor action at 70F retains .85 attenuation', async () => {
