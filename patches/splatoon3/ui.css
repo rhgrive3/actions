@@ -4,3 +4,95 @@
 .s3-gear label { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
 .s3-gear select { max-width: 70%; font: inherit; padding: .25rem; color: #fff; background: #25353e; }
 @media (max-width: 500px) { .s3-gear { left: 1rem; right: 1rem; width: auto; } .s3-gear label { font-size: .8rem; } }
+
+/* Issue #673: Splatoon 3 battle-start Splashtag intro presentation */
+.iw-lineup.iw-lineup--stags {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--u) * 3);
+  bottom: 8%;
+  pointer-events: none;
+}
+.iw-lineup__col {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * .6);
+  width: calc(var(--u) * 23);
+}
+.iw-lineup__col--a {
+  align-items: flex-end;
+}
+.iw-lineup__col--b {
+  align-items: flex-start;
+}
+.iw-stag--intro {
+  position: relative;
+  width: calc(var(--u) * 22);
+  height: calc(var(--u) * 4.6);
+  padding: 0 calc(var(--u) * 1) 0 calc(var(--u) * 4.2);
+  border-radius: calc(var(--u) * .8);
+  box-shadow: 0 calc(var(--u) * .3) 0 rgba(0, 0, 0, .45), inset 0 0 0 1.5px rgba(255, 255, 255, .3);
+  animation: iw-stag-in-a .55s var(--spring, ease-out) backwards;
+  animation-delay: calc(var(--i, 0) * 80ms + 150ms);
+}
+.iw-lineup__col--b .iw-stag--intro {
+  animation-name: iw-stag-in-b;
+}
+.iw-stag--intro.is-self {
+  box-shadow: 0 0 0 calc(var(--u) * .2) #fff, 0 calc(var(--u) * .3) 0 rgba(0, 0, 0, .55);
+}
+.iw-stag--intro .iw-stag__name {
+  font: 400 calc(var(--u) * 1.25) / 1 'Titan One', 'IW JP Display', sans-serif;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.iw-stag--intro .iw-stag__title {
+  font: 800 calc(var(--u) * .62) / 1 'Rubik', 'IW JP Body', sans-serif;
+  letter-spacing: .04em;
+  color: rgba(255, 255, 255, .9);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.iw-stag--intro .iw-stag__w {
+  left: calc(var(--u) * -.6);
+  width: calc(var(--u) * 4.2);
+  height: calc(var(--u) * 4.2);
+  margin-top: calc(var(--u) * -2.1);
+  box-shadow: 0 0 0 2px var(--k, #0e0b16);
+  background: var(--tc);
+}
+.iw-stag--intro .iw-stag__num {
+  left: calc(var(--u) * 4.2);
+  bottom: calc(var(--u) * .25);
+  font: 900 calc(var(--u) * .55) / 1 'Rubik', sans-serif;
+}
+.iw-stag--intro .iw-stag__badges {
+  position: absolute;
+  right: calc(var(--u) * .6);
+  bottom: calc(var(--u) * .3);
+  display: flex;
+  gap: calc(var(--u) * .2);
+}
+@keyframes iw-stag-in-a {
+  from { opacity: 0; translate: calc(var(--u) * -20) 0; }
+}
+@keyframes iw-stag-in-b {
+  from { opacity: 0; translate: calc(var(--u) * 20) 0; }
+}
+.iw-lineup.is-out .iw-lineup__col--a {
+  animation: iw-stag-out-a .45s var(--in, ease-in) forwards;
+}
+.iw-lineup.is-out .iw-lineup__col--b {
+  animation: iw-stag-out-b .45s var(--in, ease-in) forwards;
+}
+@keyframes iw-stag-out-a {
+  to { opacity: 0; translate: calc(var(--u) * -18) 0; }
+}
+@keyframes iw-stag-out-b {
+  to { opacity: 0; translate: calc(var(--u) * 18) 0; }
+}

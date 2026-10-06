@@ -76,7 +76,35 @@ export function adaptSource(rel, code) {
       '      const winner = Math.abs(pa - pb) < 0.05 ? -1 : pa > pb ? 0 : 1;',
       '      const winner = authoritativeWinner === 0 || authoritativeWinner === 1 ? authoritativeWinner : Math.abs(pa - pb) < 0.05 ? -1 : pa > pb ? 0 : 1;',
       'authoritative Turf winner HUD reveal');
-    return "import { t as tr } from '../i18n.js';\n" + code;
+    code = replaceOnce(code,
+      "    const el = h('div', { class: 'iw-lineup' },\n" +
+      "      side(this._myTeam()),\n" +
+      "      h('div', { class: 'iw-lu__vs' }, h('span', { class: 'iw-lu__vsplat', html: splatSVG({ seed: 77, fill: '#fff', r: 56, arms: 10, drops: 6 }) }), h('span', { class: 'iw-display' }, 'VS')),\n" +
+      "      side(1 - this._myTeam()));",
+      "    // Issue #673: battle-start S3 Splashtag intro presentation\n" +
+      "    const makeStag = (a, i) => {\n" +
+      "      const nm = a.name || 'Player';\n" +
+      "      const card = h('div', { class: 'iw-stag iw-stag--intro' + (a.isLocal ? ' is-self' : ''), style: { '--i': i } },\n" +
+      "        h('span', { class: 'iw-stag__art', html: tagArt(fnv(String(nm).toLowerCase())) }),\n" +
+      "        h('span', { class: 'iw-stag__w', html: weaponIcon(kindOf(a.weaponId)) }),\n" +
+      "        h('span', { class: 'iw-stag__txt' },\n" +
+      "          h('span', { class: 'iw-stag__title' }, tagTitle(nm)),\n" +
+      "          h('b', { class: 'iw-stag__name' }, nm)),\n" +
+      "        h('span', { class: 'iw-stag__num' }, tagNum(nm)),\n" +
+      "        h('span', { class: 'iw-stag__badges' }));\n" +
+      "      colorVars(card, 'tc', col(a.team));\n" +
+      "      return card;\n" +
+      "    };\n" +
+      "    const teamSide = (t) => {\n" +
+      "      const list = actors.filter((a) => a.team === t);\n" +
+      "      return h('div', { class: 'iw-lineup__col iw-lineup__col--' + (t ? 'b' : 'a') },\n" +
+      "        list.map((a, i) => makeStag(a, i)));\n" +
+      "    };\n" +
+      "    const el = h('div', { class: 'iw-lineup iw-lineup--stags' },\n" +
+      "      teamSide(this._myTeam()),\n" +
+      "      teamSide(1 - this._myTeam()));",
+      'intro Splashtags presentation');
+    return "import { t as tr } from '../i18n.js';\nimport { tagArt } from './menu-art.js';\nimport { fnv, tagTitle, tagNum } from './menus.js';\n" + code;
   }
   if (rel === 'src/ui/ui-icons.js') {
     return replaceOnce(code,
@@ -199,6 +227,21 @@ export function adaptSource(rel, code) {
       'authoritative Turf winner Game to HUD');
     code = replaceOnce(code, 'const game = new Game();', 'installGame(Game);\nconst game = new Game();', 'game installation');
     return `import { runSimulation, installGame } from '../patches/splatoon3/runtime/clock.mjs';\n` + code;
+  }
+  if (rel === 'src/ui/menus.js') {
+    code = replaceOnce(code,
+      'const fnv = (str) => { let x = 2166136261;',
+      'export const fnv = (str) => { let x = 2166136261;',
+      'export fnv');
+    code = replaceOnce(code,
+      'const tagTitle = (name) => {',
+      'export const tagTitle = (name) => {',
+      'export tagTitle');
+    code = replaceOnce(code,
+      'const tagNum = (name) =>',
+      'export const tagNum = (name) =>',
+      'export tagNum');
+    return code;
   }
   return code;
 }
