@@ -1353,30 +1353,6 @@
       "status": "extracted",
       "unit": "raw reference width",
       "notes": "Near/main width ratio .4/.8=.5; absolute mapping and full/half width semantics remain provisional."
-    },
-    "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/BodyParam/Damage": {
-      "value": 1250,
-      "pointer": "/GameParameters/BodyParam/Damage",
-      "sourceId": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json",
-      "status": "extracted",
-      "unit": "raw reference units",
-      "notes": "Pinned 11.3.0 raw field; HP / frames / dimensionless rate conversion recorded in profile."
-    },
-    "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WeaponRollParam/InkRecoverStop": {
-      "value": 20,
-      "pointer": "/GameParameters/WeaponRollParam/InkRecoverStop",
-      "sourceId": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json",
-      "status": "extracted",
-      "unit": "raw reference units",
-      "notes": "Pinned 11.3.0 raw field; HP / frames / dimensionless rate conversion recorded in profile."
-    },
-    "data/parameter/1130/weapon/WeaponBlasterMiddle.game__GameParameterTable.json#/GameParameters/BlasterBurstParam/ShotCollisionHitRadiusRate": {
-      "value": 0.4234,
-      "pointer": "/GameParameters/BlasterBurstParam/ShotCollisionHitRadiusRate",
-      "sourceId": "data/parameter/1130/weapon/WeaponBlasterMiddle.game__GameParameterTable.json",
-      "status": "extracted",
-      "unit": "raw reference units",
-      "notes": "Pinned 11.3.0 raw field; HP / frames / dimensionless rate conversion recorded in profile."
     }
   }
 }

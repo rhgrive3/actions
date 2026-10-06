@@ -15,19 +15,14 @@ import { adaptStart } from '../start-adapter.mjs';
 import { adaptAttract } from '../attract-adapter.mjs';
 import { adaptHud } from '../hud-adapter.mjs';
 import { adaptGyro } from '../gyro-adapter.mjs';
-import { adaptGyroInvert } from '../gyro-invert-adapter.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const SOURCE_ROOT = process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
 const PRECEDING = [adaptInput, adaptNet, adaptResults, adaptMobile, adaptTouchEdges, adaptIntro, adaptStart, adaptAttract, adaptHud];
-export function gyroSource(rel, { before = false, invert = true } = {}) {
+export function gyroSource(rel, { before = false } = {}) {
   let code = adaptTouchLayout(rel, adaptSource(rel, fs.readFileSync(path.join(SOURCE_ROOT, rel), 'utf8')));
   for (const adapt of PRECEDING) code = adapt(rel, code);
-  if (!before) code = adaptGyro(rel, code);
-  // `invert: false` composes everything except the #439 gyro-inversion fix, so
-  // tests keep a root-present negative control against the real settings path.
-  if (!before && invert) code = adaptGyroInvert(rel, code);
-  return code;
+  return before ? code : adaptGyro(rel, code);
 }
 export function section(code, start, end) {
   const at = code.indexOf(start), until = code.indexOf(end, at);
@@ -39,7 +34,7 @@ export async function drain() { for (let i = 0; i < 8; i++) await Promise.resolv
 // Full composed Gyro and MobileInput modules; real settings/start methods and boot
 // callback. Permission APIs, DOM nodes and timers are deterministic platform fixtures.
 // This is lifetime evidence, not browser user activation or physical sensor evidence.
-export async function gyroFixture({ before = false, permission = true, supported = true, motion = false, invert = true } = {}) {
+export async function gyroFixture({ before = false, permission = true, supported = true, motion = false } = {}) {
   const asks = [], events = [], saves = [], timers = new Map(), listeners = new Map();
   let serial = 0;
   class Classes {
@@ -73,16 +68,16 @@ export async function gyroFixture({ before = false, permission = true, supported
   });
   const module = code => new vm.SourceTextModule(code, { context });
   const device = module('export const touchPrimary=false,touchCapable=false; export const screenAngle=()=>0;');
-  const gyro = module(gyroSource('src/core/gyro.js', { before, invert }));
+  const gyro = module(gyroSource('src/core/gyro.js', { before }));
   await gyro.link(() => device); await gyro.evaluate();
   const i18n = module('export const t=value=>value;');
   const icons = module("export const WEAPON_ICONS={},SUB_ICONS={},SQUID='',specialIcon=()=>'';");
-  const mobile = module(gyroSource('src/core/mobile.js', { before, invert }));
+  const mobile = module(gyroSource('src/core/mobile.js', { before }));
   await mobile.link(spec => ({ './gyro.js': gyro, './device.js': device, '../i18n.js': i18n, '../ui/ui-icons.js': icons })[spec]);
   await mobile.evaluate();
   const mob = new mobile.namespace.MobileInput({}, {});
   mob.toastEl = element(); mob.els = { gyro: element() };
-  const main = gyroSource('src/main.js', { before, invert });
+  const main = gyroSource('src/main.js', { before });
   const settings = section(main, '  _setSettings(partial) {', '  _applyAudioVolumes()');
   const starts = section(main, '  _prepareGyro() {', '\n}\n\ninstallGame(Game);');
   const Game = vm.runInContext('(class {' + settings + starts + '})', context);

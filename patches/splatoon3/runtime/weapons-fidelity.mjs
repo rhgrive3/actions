@@ -81,7 +81,11 @@ function wallDropSource(p) {
   if (!w) return null;
   const raw = rawWeapon(w);
   let move, paint;
-  if (w.kind === 'roller') {
+  if (w.kind === 'dualies') {
+    // #604: Splat Dualies keep their pinned wall-drop records at the weapon
+    // top level, like Blaster/Splatling; both hands share them unchanged.
+    move = raw?.WallDropMoveParam; paint = raw?.WallDropCollisionPaintParam;
+  } else if (w.kind === 'roller') {
     // Roller wall-drop data belongs to the exact flick unit that produced the
     // glob (horizontal main/near or one of the vertical units), not the weapon
     // top level. configureFidelityFlick/initialize already preserve that unit.
@@ -215,22 +219,8 @@ function fieldRadiusAt(p,age) { return radiusAt(p.fidelityFieldCollision,age,p.f
 function setCollision(p,c,offset=0) {
   p.fidelityPlayerCollision=collisionRecord(c,'Player',offset);
   p.fidelityFieldCollision=collisionRecord(c,'Field',offset);
-  // Existing size carries initial radius; Roller unit identity is transmitted separately.
+  // Existing packet size carries initial radius; layout is unchanged.
   p.size=p.fidelityPlayerCollision.initRadius;
-}
-// Legacy projectile packets have no unit discriminator. New packets preserve
-// their first30 entries, then carry unit before the existing owner tick/sequence.
-export function validFidelityRollerUnitPacket(event) {
-  if (!Array.isArray(event)) return false;
-  if ([27, 30, 32].includes(event.length)) return true;
-  if (event.length !== 33) return false;
-  const weapons = api?.WEAPONS;
-  const weapon = weapons && Object.hasOwn(weapons, event[4]) ? weapons[event[4]] : null, unit = event[30];
-  if (!weapon) return false;
-  if (weapon.kind !== 'roller') return unit === -1;
-  if (event[27] !== 0 && event[27] !== 1) return false;
-  const units = rawWeapon(weapon)?.[event[27] === 1 ? 'VerticalSwingUnitGroupParam' : 'WideSwingUnitGroupParam']?.Unit;
-  return Number.isSafeInteger(unit) && unit >= 0 && !!units && unit < units.length;
 }
 export function configureFidelityFlick(p, actor, weapon, index, angle, speed) {
   const b=weapon.ballistics, raw=rawWeapon(weapon);if(!b||!raw)return;
@@ -263,7 +253,7 @@ export function configureFidelityFlick(p, actor, weapon, index, angle, speed) {
   const cp=Math.cos(pitch);
   p.vel.set(Math.sin(angle)*cp*speed,Math.sin(pitch)*speed,Math.cos(angle)*cp*speed);
   p.fidelityYaw=Math.atan2(Math.sin(angle-actor.yaw),Math.cos(angle-actor.yaw));
-  p.fidelityMode=vertical?'vertical':'horizontal';p.fidelityRollerUnit=unit;p.fidelityRollerUnitIndex=group.Unit.indexOf(unit);
+  p.fidelityMode=vertical?'vertical':'horizontal';p.fidelityRollerUnit=unit;
   setCollision(p,unit.UnitParam.CollisionParam);
   p.straight=unit.UnitParam.MoveParam.GoStraightToBrakeStateFrame/60;
   p.grav=weapon.flickGravity;p.drag=weapon.flickDrag;
@@ -310,8 +300,7 @@ export function fidelityProjectileTargets(system,p) {
     if(actor.team===p.team||!actor.alive)continue;
     if(actor.pos.x<Math.min(p.prev.x,p.pos.x)-radius||actor.pos.x>Math.max(p.prev.x,p.pos.x)+radius||
        actor.pos.z<Math.min(p.prev.z,p.pos.z)-radius||actor.pos.z>Math.max(p.prev.z,p.pos.z)+radius)continue;
-    // smoothY belongs to render easing, not the authoritative body capsule.
-    s.base.copy(actor.pos);
+    s.base.set(actor.pos.x,actor.pos.y+(actor.smoothY||0),actor.pos.z);
     const t=capsuleEntry(p.prev,p.pos,s.base,PLAYER.radius,actor.form==='squid'?PLAYER.squidHeight:PLAYER.height,r0,r1);
     if(t!==null&&(t<best-EPSILON||Math.abs(t-best)<EPSILON&&String(actor.nid??actor.name)<String(nearest?.nid??nearest?.name))){best=t;nearest=actor;}
   }
@@ -419,7 +408,7 @@ export function installWeaponsFidelity(context,profile) {
   const fresh=Projectiles.prototype._new,push=Projectiles.prototype._push,ghost=Projectiles.prototype.ghostProjectile,clear=Projectiles.prototype.clear;
   Projectiles.prototype.clear=function(...args){const result=clear.apply(this,args);this._fidelityCollision=null;this._fidelitySloshContext=null;return result;};
   Projectiles.prototype._new=function(...args){
-    const p=fresh.apply(this,args);p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityRollerUnit=null;p.fidelityRollerUnitIndex=null;p.fidelitySloshUnit=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;return p;
+    const p=fresh.apply(this,args);p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityRollerUnit=null;p.fidelitySloshUnit=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;return p;
   };
   function initialize(p,w){
     if(!w)return;
@@ -434,15 +423,14 @@ export function installWeaponsFidelity(context,profile) {
       p.straight=w.ballistics.straightTime;p.life=w.ballistics.burstTime;
       p.grav=p.fidelityMove.freeGravity;p.drag=p.fidelityMove.freeDrag*60;
     }else if(w.kind==='roller'){
-      const vertical=p.fidelityMode==='vertical'||p.ghost&&p.fidelityMode===null&&Math.round(p.straight*60)===Math.round(w.ballistics.verticalStraightTime*60);
+      const vertical=p.fidelityMode==='vertical'||p.ghost&&Math.round(p.straight*60)===Math.round(w.ballistics.verticalStraightTime*60);
       p.fidelityMode=vertical?'vertical':'horizontal';p.s3Vertical=vertical;
-      const units=raw[vertical?'VerticalSwingUnitGroupParam':'WideSwingUnitGroupParam'].Unit;
       // WideSwing has no recurring intermediate splash system. Impact paint
       // and the separately owned VerticalSwing trail remain unchanged.
       if(!vertical)p.trailEvery=0;
       if(!p.fidelityRollerUnit){
-        if(Number.isSafeInteger(p.fidelityRollerUnitIndex)&&units[p.fidelityRollerUnitIndex])p.fidelityRollerUnit=units[p.fidelityRollerUnitIndex];
-        if(!p.fidelityRollerUnit)p.fidelityRollerUnit=p.ghost&&!vertical?horizontalRollerReplayUnit(units,p.vel.length()):null;
+        const units=raw[vertical?'VerticalSwingUnitGroupParam':'WideSwingUnitGroupParam'].Unit;
+        p.fidelityRollerUnit=p.ghost&&!vertical?horizontalRollerReplayUnit(units,p.vel.length()):null;
         if(!p.fidelityRollerUnit){
           let best=Infinity;
           for(const u of units)for(let i=0;i<(u.BulletNum??1);i++){
@@ -452,7 +440,6 @@ export function installWeaponsFidelity(context,profile) {
         }
         setCollision(p,p.fidelityRollerUnit.UnitParam.CollisionParam);
       }
-      p.fidelityRollerUnitIndex=units.indexOf(p.fidelityRollerUnit);
       p.straight=(vertical?w.ballistics.verticalStraightTime:w.ballistics.horizontalStraightTime);
       p.grav=w.flickGravity;p.drag=w.flickDrag;
     }else if(w.kind==='slosher'){
@@ -498,9 +485,8 @@ export function installWeaponsFidelity(context,profile) {
     return result;
   };
   Projectiles.prototype.ghostProjectile=function(actor,event){
-    if(!validFidelityRollerUnitPacket(event))return null;
     const before=this.list.length;const result=ghost.call(this,actor,event);
-    if(this.list.length>before){const p=this.list.at(-1);if(event.length===33&&event[30]>=0){p.fidelityRollerUnitIndex=event[30];p.fidelityMode=event[27]===1?'vertical':'horizontal';}initialize(p,WEAPONS[p.wid]||actor.weapon);}
+    if(this.list.length>before){const p=this.list.at(-1);initialize(p,WEAPONS[p.wid]||actor.weapon);}
     return result;
   };
   const slosh=Projectiles.prototype.fireSlosh;
@@ -508,6 +494,34 @@ export function installWeaponsFidelity(context,profile) {
     const previous=this._fidelitySloshContext;this._fidelitySloshContext={index:0,group:new Map()};
     try{return slosh.call(this,actor,{...w,drops:rawWeapon(w).UnitGroupParam.Unit.reduce((n,u)=>n+(u.BulletNum??1),0)});}
     finally{this._fidelitySloshContext=previous;}
+  };
+  Projectiles.prototype.s3SlosherGuide=function(actor,w){
+    const guide=w?.shotGuide,raw=rawWeapon(w);
+    const unit=guide&&raw?.UnitGroupParam?.Unit?.[guide.unitOrderNum];
+    const index=guide?.bulletOrderNumInUnit;
+    if(!unit||!Number.isInteger(index)||index<0||index>=(unit.BulletNum??1)||!Number.isFinite(guide.frame))return null;
+    // The selected Bucket Slosher guide projectile (unit 1 / bullet 0) has
+    // random yaw disabled in the pinned source. Refuse to invent a random HUD
+    // guide if a future profile selects a randomized projectile instead.
+    if((unit.RandomRotateYDegree||0)!==0&&!unit.RandomRotateYOffOrderNum?.includes(index))return null;
+    const THREE=context.THREE;
+    const p=this._s3SlosherGuideProjectile||(this._s3SlosherGuideProjectile={
+      pos:new THREE.Vector3(),prev:new THREE.Vector3(),start:new THREE.Vector3(),vel:new THREE.Vector3()
+    });
+    this._muzzle(actor,p.pos);p.prev.copy(p.pos);p.start.copy(p.pos);
+    p.owner=actor;p.type='slosh';p.wid=w.id;p.s3Weapon={...w};p.age=0;p.life=2.4;p.straight=0;
+    p.delay=((unit.UnitDelayFrame||0)+index*(unit.AfterOffsetDelayFrame||0))/60;
+    p.fidelitySloshUnit=unit;p.fidelitySloshIndex=index;p.fidelityPhase=0;p.fidelityMove=null;
+    p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;
+    const speed=((actor.grounded?unit.SpawnSpeedGround:unit.SpawnSpeedAir)+index*(unit.AfterOffsetSpawnSpeed||0))*60;
+    const aim=(this._s3SlosherGuideAim||(this._s3SlosherGuideAim=new THREE.Vector3())).copy(actor.aimDir).normalize();
+    const yaw=Math.atan2(aim.x,aim.z)+radians(unit.BaseRotateYDegree||0);
+    const pitch=Math.atan2(aim.y,Math.hypot(aim.x,aim.z)),horizontal=Math.cos(pitch)*speed;
+    p.vel.set(Math.sin(yaw)*horizontal,Math.sin(pitch)*speed+horizontal*(unit.AddSpawnSpeedYRateByXZ||0),Math.cos(yaw)*horizontal);
+    initialize(p,w);
+    let remaining=Math.max(0,guide.frame/60-p.delay);
+    while(remaining>EPSILON){const step=Math.min(1/60,remaining);advanceFidelityProjectile(p,step);remaining-=step;}
+    return p.pos;
   };
   const reset=WeaponRunner.prototype.reset,auto=WeaponRunner.prototype._auto,spin=WeaponRunner.prototype._splatling;
   WeaponRunner.prototype.reset=function(...args){const result=reset.apply(this,args);this.fidelitySplatlingCharge=null;return result;};

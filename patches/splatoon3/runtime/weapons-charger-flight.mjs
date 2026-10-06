@@ -17,11 +17,17 @@ export function installChargerFlight(api,completion) {
   Object.defineProperty(P,INSTALLED,{value:true});
   const raw=completion.weapons.charger.MoveParam,collision=completion.weapons.charger.CollisionParam;
   const nativeGhost=P.ghostFire,nativeUpdate=P.update,nativeClear=P.clear;
+  // Single source of the finite flight distance (world units); begin() and the HUD reach query share it.
+  const reachFor=charge=>{
+    charge=Math.max(0,Math.min(1,Number.isFinite(charge)?charge:0));
+    return charge>=.999?raw.DistanceFullCharge:raw.DistanceMinCharge+(raw.DistanceMaxCharge-raw.DistanceMinCharge)*charge;
+  };
+  P.chargerReach=function(charge){return reachFor(charge);};
   function begin(system,actor,w,charge,origin,dir,ghost=false,maxDistance=null){
     charge=Math.max(0,Math.min(1,Number.isFinite(charge)?charge:0));
     const full=charge>=.999;
     const speed=60*(full?raw.SpawnSpeedFullCharge:raw.SpawnSpeedMinCharge+(raw.SpawnSpeedMaxCharge-raw.SpawnSpeedMinCharge)*charge);
-    const distance=maxDistance??(full?raw.DistanceFullCharge:raw.DistanceMinCharge+(raw.DistanceMaxCharge-raw.DistanceMinCharge)*charge);
+    const distance=maxDistance??reachFor(charge);
     const direction=dir.clone().normalize();
     if(!Number.isFinite(distance)||distance<=0||direction.lengthSq()<EPS)return;
     const job={owner:actor,team:actor.team,weapon:{...w},charge,full,speed,range:distance,travel:0,origin:origin.clone(),dir:direction,
@@ -70,8 +76,7 @@ export function installChargerFlight(api,completion) {
     const actors=[];
     for(const actor of G.actors){
       if(!actor.alive||actor.team===job.team||job.seen.has(actor))continue;
-      // Match ordinary projectile collision: render smoothing cannot move a hurtbox.
-      job.base.copy(actor.pos);
+      job.base.copy(actor.pos);job.base.y+=actor.smoothY||0;
       const t=capsuleEntry(job.prev,job.pos,job.base,PLAYER.radius,actor.form==='squid'?PLAYER.squidHeight:PLAYER.height,
         collision.InitRadiusForPlayer,collision.EndRadiusForPlayer);
       if(t!==null&&t*length<distance-EPS)actors.push({actor,d:t*length});

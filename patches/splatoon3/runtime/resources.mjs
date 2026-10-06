@@ -1,10 +1,5 @@
-let api, tuning, respawnTuning;
-export function installResources(context, values) { api = context; tuning = values.resources; respawnTuning = values.respawn || {}; }
-export function respawnTimeForCause(cause, fallback = api?.PLAYER?.respawnTime ?? 8.5) {
-  if (cause === 'water' || cause === 'drowning') return respawnTuning?.water ?? fallback;
-  if (cause === 'out-of-bounds' || cause === 'fall' || cause === 'void') return respawnTuning?.outOfBounds ?? fallback;
-  return respawnTuning?.weapon ?? fallback;
-}
+let api, tuning;
+export function installResources(context, values) { api = context; tuning = values.resources; }
 export function resourceSurface(a) {
   // Integration may have crossed a paint edge, taken off, or landed this tick.
   // The pre-movement surface is only suitable for movement, not recovery.
@@ -38,11 +33,10 @@ export function updateResources(a, dt) {
     a.hp = Math.min(P.hp, a.hp + (a.submerged ? r.regenRateSwim : r.regenRate) * dt);
   }
   const wasFull = a.ink >= P.inkMax;
-  const rollingRecovery = a.weapon.kind === 'roller' && a.s3?.rollerRefillMode;
-  const weaponDelay = rollingRecovery ? 0 : a.weapon.inkRecoverStop ?? r.inkRefillDelay;
+  const weaponDelay = a.weapon.inkRecoverStop ?? r.inkRefillDelay;
   const delay = Math.max(weaponDelay, a.s3?.inkRecoverStop || 0);
   if(a.s3) a.s3.recoverStopRemaining = Math.max(0,(a.s3.recoverStopRemaining || 0)-dt);
-  const canRefill = (rollingRecovery ? !a.weaponRunner.rolling && a.lastFire + 1e-10 >= (a.s3?.inkRecoverStop || 0) : a.lastFire + 1e-10 >= delay) && (a.s3?.recoverStopRemaining || 0) <= 1e-10 && !a.weaponRunner.busy() && !a.weaponRunner.s3Stored;
+  const canRefill = a.lastFire + 1e-10 >= delay && (a.s3?.recoverStopRemaining || 0) <= 1e-10 && !a.weaponRunner.busy() && !a.weaponRunner.s3Stored;
   if (canRefill) {
     let rate = 0;
     if (a.submerged || a.climbing) rate = r.inkRefillSwim;

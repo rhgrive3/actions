@@ -5,18 +5,6 @@ const EPS = 1e-10, DEG = Math.PI / 180;
 // scalar is evidence for scaling PitchDegSwerve. Air/IA remain uncalibrated.
 export function spreadWeaponRound(system, dir, a, w, spread) {
   const horizontal = spread ?? (a.grounded ? w.spreadGround : w.spreadAir);
-  if (w.kind === 'shooter' || w.kind === 'blaster') {
-    if (horizontal <= 0) return dir;
-    // Keep the existing two-draw radial law; correct only the scalar cone
-    // geometry. This is not a new claim about Nintendo's bias/PDF.
-    const radius = horizontal * DEG * Math.sqrt(Math.random()), angle = Math.random() * Math.PI * 2;
-    const right = dir.clone().set(-dir.z, 0, dir.x);
-    if (right.lengthSq() < 1e-4) right.set(1, 0, 0).addScaledVector(dir, -dir.x);
-    right.normalize();
-    const up = dir.clone().cross(right).normalize();
-    return dir.addScaledVector(right, Math.cos(angle) * Math.tan(radius))
-      .addScaledVector(up, Math.sin(angle) * Math.tan(radius)).normalize();
-  }
   if (w.kind !== 'splatling' || !a.grounded || !Number.isFinite(w.spreadPitchGround)) return system._spread(dir, horizontal);
   const radius = Math.sqrt(Math.random()), angle = Math.random() * Math.PI * 2;
   const right = dir.clone().set(-dir.z, 0, dir.x);
@@ -85,17 +73,59 @@ export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYE
     return out;
   };
   const clear = r => { r.s3DualiesStart = 0; r.s3DualiesHeld = false; };
+  const clearDualiesLocks = r => {
+    r.s3DualiesPostShot = 0; r.s3DodgeShotPending = 0;
+    r.s3DualiesSubBuffered = false; r.s3DualiesSubReleaseBuffered = false;
+  };
   const reset = WeaponRunner.prototype.reset;
-  WeaponRunner.prototype.reset = function (...args) { const out = reset.apply(this, args); clear(this); this.s3DualiesEmerging = false; return out; };
+  WeaponRunner.prototype.reset = function (...args) {
+    const out = reset.apply(this, args);
+    clear(this); clearDualiesLocks(this); this.s3DualiesEmerging = false; this.s3ChargerPostShot = 0;
+    return out;
+  };
   const update = Actor.prototype.update;
   Actor.prototype.update = function (dt) {
     const r = this.weaponRunner;
+    if (r) {
+      if (r.s3ChargerPostShot > 0) r.s3ChargerPostShot = Math.max(0, r.s3ChargerPostShot - dt);
+      if (r.s3DualiesPostShot > 0) r.s3DualiesPostShot = Math.max(0, r.s3DualiesPostShot - dt);
+      const cancelAction = !this.alive || this.specialActive || this.superJumpState || this.intent.special && this.specialReady();
+      if (cancelAction) {
+        r.s3ChargerPostShot = 0;
+        clearDualiesLocks(r);
+      }
+    }
     if (r && this.weapon.kind === 'dualies') {
-      if (this.form === 'squid') { clear(r); r.s3DualiesEmerging = true; }
+      if (this.form === 'squid') { clear(r); clearDualiesLocks(r); r.s3DualiesEmerging = true; }
       else if (this.kidT > PLAYER.emergeDelay && !this.intent.fire) r.s3DualiesEmerging = false;
       if (!this.alive || this.specialActive || this.superJumpState || this.intent.special && this.specialReady()) clear(r);
     }
     return update.call(this, dt);
+  };
+  const weaponUpdate = WeaponRunner.prototype.update;
+  WeaponRunner.prototype.update = function (dt, input) {
+    if (this.a.weapon.kind !== 'dualies') return weaponUpdate.call(this, dt, input);
+    const source = input || {}, locked = this.s3DualiesPostShot > EPS;
+    if (locked) {
+      if (source.sub) this.s3DualiesSubBuffered = true;
+      if (source.subReleased) this.s3DualiesSubReleaseBuffered = true;
+    }
+    let prepared = locked ? { ...source, sub: false, subReleased: false } : { ...source };
+    if (!locked && this.s3DualiesSubReleaseBuffered) {
+      prepared.sub = true; prepared.subReleased = true;
+      this.s3DualiesSubBuffered = false; this.s3DualiesSubReleaseBuffered = false;
+    }
+    const runner = this;
+    const gated = new Proxy(prepared, { get(target, prop) {
+      if ((prop === 'sub' || prop === 'subReleased') && runner.s3DualiesPostShot > EPS) return false;
+      return target[prop];
+    }});
+    const out = weaponUpdate.call(this, dt, gated);
+    if (this.s3DualiesPostShot > EPS) {
+      if (prepared.sub) this.s3DualiesSubBuffered = true;
+      if (prepared.subReleased) this.s3DualiesSubReleaseBuffered = true;
+    }
+    return out;
   };
   const dualies = WeaponRunner.prototype._dualies;
   WeaponRunner.prototype._dualies = function (dt, inp, w) {
