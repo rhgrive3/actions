@@ -399,6 +399,16 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "weapons.dualies.shotGuideFrame": {
+    "value": 7,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json#/GameParameters/WeaponParam/ShotGuideFrame",
+      "index": null,
+      "factor": 1,
+      "rawValue": 7
+    }
+  },
   "weapons.blaster.inkPerShot": {
     "value": 10,
     "status": "derived from pinned extracted data; physical scale unverified",
@@ -906,6 +916,21 @@
   },
   "weapons.charger.fieldCollisionRadius": {
     "value": 0.02,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.charger.minimumChargeTime": {
+    "value": 0.13333333333333333,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.charger.airChargeRate": {
+    "value": 0.3333333333333333,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.charger.emptyChargeRate": {
+    "value": 0.3333333333333333,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
