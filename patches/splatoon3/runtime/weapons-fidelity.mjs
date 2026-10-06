@@ -87,7 +87,10 @@ function wallDropSource(p) {
     // top level. configureFidelityFlick/initialize already preserve that unit.
     const unit = p.fidelityRollerUnit?.UnitParam;
     move = unit?.WallDropMoveParam; paint = unit?.WallDropCollisionPaintParam;
-  } else if (w.kind === 'blaster' || w.kind === 'splatling') {
+  } else if (w.kind === 'blaster' || w.kind === 'splatling' || w.kind === 'shooter') {
+    // #385: the pinned Splattershot source keeps its wall-drop records at the
+    // weapon top level (like Blaster/Splatling), so the existing generic
+    // lifecycle admits them unchanged. No field or timing is derived here.
     move = raw?.WallDropMoveParam; paint = raw?.WallDropCollisionPaintParam;
   } else return null;
   return move && paint ? { w, move, paint } : null;
