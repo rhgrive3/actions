@@ -514,6 +514,11 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "weapons.blaster.shotGuideFrame": {
+    "value": 13,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
   "weapons.blaster.actionAirSpreadCurve.0": {
     "value": 0,
     "status": "derived from pinned extracted data; physical scale unverified",

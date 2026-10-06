@@ -771,9 +771,12 @@ export function applyShotGuide(hud, projected, width, height) {
   const x = projected && width > 0 ? projected.x - width / 2 : 0;
   const y = projected && height > 0 ? projected.y - height / 2 : 0;
   const L = hud._L || (hud._L = {});
-  if (L.guideX == null || Math.abs(x - L.guideX) > 0.05 || Math.abs(y - L.guideY) > 0.05) {
-    L.guideX = x; L.guideY = y;
-    ret.style.translate = `${x.toFixed(1)}px ${y.toFixed(1)}px`;
+  const hasGuide = !!projected;
+  if (L.guideProjected !== hasGuide || L.guideX == null || Math.abs(x - L.guideX) > 0.05 || Math.abs(y - L.guideY) > 0.05) {
+    L.guideX = x; L.guideY = y; L.guideProjected = hasGuide;
+    // No projected guide: restore the inherited Bucket/Blaster CSS offsets.
+    // Inline zero would override translate(var(--gx) var(--gy)) on the reticle.
+    ret.style.translate = hasGuide ? `${x.toFixed(1)}px ${y.toFixed(1)}px` : '';
   }
   return L;
 }

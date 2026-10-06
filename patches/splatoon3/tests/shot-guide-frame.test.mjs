@@ -287,9 +287,14 @@ test('#459/#769: HUD placement moves only guide weapons and always clears the gu
   // A weapon without a guide frame sends no point: the reticle returns to centre
   // on any viewport, not only a 1920-wide one.
   r.applyShotGuide(hud, null, 1280, 720);
+  assert.equal(placed(), '', 'missing guide clears inline translation so inherited weapon CSS applies');
+  r.applyShotGuide(hud, null, 1920, 1080);
+  assert.equal(placed(), '', 'missing guide clears inline translation so inherited weapon CSS applies');
+  // Centre-aligned projected guides must still set an inline value after a null guide.
+  r.applyShotGuide(hud, { x: 960, y: 540, frames: 8 }, 1920, 1080);
   assert.equal(placed(), '0.0px 0.0px');
   r.applyShotGuide(hud, null, 1920, 1080);
-  assert.equal(placed(), '0.0px 0.0px');
+  assert.equal(placed(), '', 'Bucket/Blaster CSS takes over after weapon switch');
   // Re-entry after a weapon switch installs the new guide placement.
   r.applyShotGuide(hud, { x: 800, y: 600, frames: 11 }, 1920, 1080);
   assert.equal(placed(), '-160.0px 60.0px');
