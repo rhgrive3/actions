@@ -80,10 +80,10 @@ export function adaptSource(rel, code) {
       '    // per-shot kick (recoil events) on top of the live cone the engine reports in screen px (already includes bloom)',
       `    // S3 weapon ShotGuide projection: only aiming feedback moves; tank/sub/status remain centred.
     let guideX = 0, guideY = 0;
+    const guideMe = this._local(), guideCam = G.rig?.gameCam || G.camera;
     if (L.kind === 'slosher' || L.kind === 'blaster') {
-      const me = this._local(), cam = G.rig?.gameCam || G.camera;
-      const point = me && cam && G.projectiles?.s3WeaponGuide?.(me, me.weapon);
-      const projected = point ? this._project(cam, point.x, point.y, point.z) : null;
+      const point = guideMe && guideCam && G.projectiles?.s3WeaponGuide?.(guideMe, guideMe.weapon);
+      const projected = point ? this._project(guideCam, point.x, point.y, point.z) : null;
       if (projected && projected.z < 1) {
         guideX = projected.x * innerWidth * 0.5;
         guideY = -projected.y * innerHeight * 0.5;
@@ -95,8 +95,28 @@ export function adaptSource(rel, code) {
       this.xh.style.setProperty('--gx', \`\${guideX.toFixed(1)}px\`);
       this.xh.style.setProperty('--gy', \`\${guideY.toFixed(1)}px\`);
     }
+    if (L.kind === 'dualies') {
+      const pair = guideMe && guideCam && G.projectiles?.s3DualiesGuides?.(guideMe, guideMe.weapon);
+      const projected = pair?.map(point => this._project(guideCam, point.x, point.y, point.z)) || [];
+      const offsets = projected.map(point => point && point.z < 1
+        ? [point.x * innerWidth * .5, -point.y * innerHeight * .5] : [0, 0]);
+      const key = offsets.map(v => v.map(n => n.toFixed(1)).join(',')).join('|');
+      if (key !== L.dualGuide && this._twin) {
+        L.dualGuide = key;
+        // _twin is [right, left], matching s3DualiesGuides hand order.
+        for (let i = 0; i < 2; i++) this._twin[i]?.setAttribute('transform',
+          \`translate(\${offsets[i][0].toFixed(2)} \${offsets[i][1].toFixed(2)})\`);
+      }
+    } else if (L.dualGuide != null) {
+      L.dualGuide = null;
+      for (const twin of this._twin || []) twin?.removeAttribute('transform');
+    }
     // per-shot kick (recoil events) on top of the live cone the engine reports in screen px (already includes bloom)`,
-      'Bucket Slosher ShotGuide HUD projection');
+      'S3 weapon ShotGuide HUD projection');
+    code = replaceOnce(code,
+      '    const pad = G.level && G.level.spawnPads && G.level.spawnPads[me.team];',
+      '    const pad = G.level && (G.level.homeSuperJumpPoints?.[me.team] || G.level.spawnPads?.[me.team]);',
+      'home Super Jump HUD target');
     return "import { t as tr } from '../i18n.js';\n" + code;
   }
   if (rel === 'src/ui/ui-icons.js') {
@@ -118,6 +138,39 @@ export function adaptSource(rel, code) {
     return replaceOnce(code, '</body>',
       '<script>if ("serviceWorker" in navigator && location.protocol === "https:") { addEventListener("load", () => { const root = new URL("./", location.href); navigator.serviceWorker.register(new URL("sw.js", root).href, { scope: root.pathname }).catch(() => {}); }); }</script>\n</body>',
       'pwa service worker');
+  }
+  if (rel === 'src/world/level.js') {
+    code = replaceOnce(code,
+      '    this.spawnPads = layout.spawnPads.map((p) => new THREE.Vector3(...p));',
+      '    this.spawnPads = layout.spawnPads.map((p) => new THREE.Vector3(...p));\n    this.homeSuperJumpPoints = (layout.homeSuperJumpPoints || layout.spawnPads).map((p) => new THREE.Vector3(...p));',
+      'home Super Jump points');
+    return code;
+  }
+  if (rel === 'src/world/maps.js') {
+    code = replaceOnce(code,
+      '  spawnPads: [[0, 2.2, -39.2], [0, 2.2, 39.2]],',
+      '  spawnPads: [[0, 2.2, -39.2], [0, 2.2, 39.2]],\n  homeSuperJumpPoints: [[0, 0, -33.5], [0, 0, 33.5]],',
+      'Tidewater home Super Jump');
+    code = replaceOnce(code,
+      '  spawnPads: [[0, 3.2, -44], [0, 3.2, 44]],',
+      '  spawnPads: [[0, 3.2, -44], [0, 3.2, 44]],\n  homeSuperJumpPoints: [[0, 0, -38.5], [0, 0, 38.5]],',
+      'Kelpline home Super Jump');
+    code = replaceOnce(code,
+      '  spawnPads: [[0, 2.4, -42], [0, 2.4, 42]],',
+      '  spawnPads: [[0, 2.4, -42], [0, 2.4, 42]],\n  homeSuperJumpPoints: [[0, 0, -31.5], [0, 0, 31.5]],',
+      'Halyard home Super Jump');
+    return code;
+  }
+  if (rel === 'src/world/stages/cargo/layout.js') {
+    code = replaceOnce(code,
+      'const pad = W(0, 2.6, -43.6);',
+      'const pad = W(0, 2.6, -43.6);\nconst home = W(0, 0, -36.5);',
+      'Cargo home Super Jump datum');
+    code = replaceOnce(code,
+      '  spawnPads: [pad, [-pad[0], pad[1], -pad[2]]],',
+      '  spawnPads: [pad, [-pad[0], pad[1], -pad[2]]],\n  homeSuperJumpPoints: [home, [-home[0], home[1], -home[2]]],',
+      'Cargo home Super Jump');
+    return code;
   }
   if (rel === 'src/game/nav.js') {
     // S3 does not reserve a universal radial enemy spawn zone; traversability is stage geometry.
@@ -151,6 +204,10 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, 'it.fire = inp.mouse.left ||', 'it.fire = inp.mouse.leftPressed || inp.mouse.left ||', 'latched fire input');
     code = replaceOnce(code, "it.sub = inp.mouse.right || inp.down('KeyE')", "it.sub = inp.mouse.rightPressed || inp.wasPressed('KeyE') || inp.mouse.right || inp.down('KeyE')", 'latched sub input');
     code = replaceOnce(code, "it.special = inp.down('KeyF')", "it.special = inp.wasPressed('KeyF') || inp.wasPressed('KeyQ') || inp.down('KeyF')", 'latched special input');
+    code = replaceOnce(code,
+      "      if (inp.wasPressed('Digit4') || inp.padPressed.has(13) || tj === 3) { const p = G.level.spawnPads[a.team]; a.superJump(p.clone()); }",
+      "      if (inp.wasPressed('Digit4') || inp.padPressed.has(13) || tj === 3) { const p = G.level.homeSuperJumpPoints?.[a.team] || G.level.spawnPads[a.team]; a.superJump(p.clone()); }",
+      'home Super Jump controller target');
     // HUD in-range state follows the live charge (a squid-form charge keep counts as its stored charge) via the
     // installed flight's reach, or native lerp, instead of full-charge reach.
     code = replaceOnce(code, "    const range = w.kind === 'charger' ? w.rangeMax : w.kind === 'roller' ? 6 : (w.range || 12);",
@@ -195,9 +252,21 @@ export function adaptSource(rel, code) {
     return code;
   }
   if (rel === 'src/game/actor.js') {
-    code = replaceOnce(code, '    this.superJumpState = null;\n    this.yawVel', '    this.superJumpState = null; this.superJumpGround = null;\n    this.yawVel', 'reset super jump ground');
+    code = replaceOnce(code, '    this.superJumpState = null;\n    this.yawVel', '    this.superJumpState = null; this.superJumpGround = null;\n    clearPendingLethal(this);\n    this.yawVel', 'reset super jump ground');
     code = replaceOnce(code, '    this.alive = false;\n    this.hp = 0;', '    this.alive = false;\n    this.superJumpState = null; this.superJumpGround = null;\n    this.hp = 0;', 'clear dead super jump');
     code = replaceOnce(code, '    if (this.invuln > 0) return false;', "    if (this.invuln > 0 || this.superJumpState?.phase === 'flight') return false;", 'super jump flight damage admission');
+    code = replaceOnce(code, '    if (!this.alive || amount <= 0) return false;',
+      '    if (!this.alive || amount <= 0) return false;\n    if (hasPendingLethal(this)) return false;',
+      'pending lethal damage admission');
+    code = replaceOnce(code, '    if (this.hp <= 0) { this.splat(attacker, source); return true; }',
+      '    if (this.hp <= 0) { scheduleLethal(this, attacker, source); return true; }',
+      'one-frame lethal decision delay');
+    code = replaceOnce(code, '  splat(attacker, cause = \'weapon\') {\n    if (!this.alive) return;',
+      '  splat(attacker, cause = \'weapon\') {\n    clearPendingLethal(this);\n    if (!this.alive) return;',
+      'clear pending lethal on direct splat');
+    code = replaceOnce(code, '  update(dt) {\n    this.anim.time = G.time;',
+      '  update(dt) {\n    flushPendingLethal(this);\n    this.anim.time = G.time;',
+      'flush lethal on next fixed tick');
     code = replaceOnce(code, '  _finishFrame(dt) {', '  _finishFrame(dt) {\n    rememberSuperJumpGround(this);', 'record grounded jump destination');
     code = replaceOnce(code, '    this.grounded = grounded;\n    this.airTime', '    this.grounded = grounded;\n    rememberSuperJumpGround(this);\n    this.airTime', 'record resolved jump destination');
     code = replaceOnce(code, 'this.groundN.copy(gh.normal); }\n  }', 'this.groundN.copy(gh.normal); }\n    rememberSuperJumpGround(this);\n  }', 'record spawn jump destination');
@@ -234,12 +303,46 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, '    this._spawnBarrier();',
       '    // S3 Spawners use stage geometry and spawn protection, not a universal radial body clamp.',
       'S3 universal spawn barrier removal');
-    return `import { prepareSuperJump, rememberSuperJumpGround, superJumpTarget, updateSuperJumpMain, SUPERJUMP_MAIN_PROGRESS } from '../../patches/splatoon3/runtime/superjump.mjs';\nimport { beforeActions } from '../../patches/splatoon3/runtime/movement.mjs';\nimport { updateResources } from '../../patches/splatoon3/runtime/resources.mjs';\n` + code;
+    return `import { prepareSuperJump, rememberSuperJumpGround, superJumpTarget, updateSuperJumpMain, SUPERJUMP_MAIN_PROGRESS } from '../../patches/splatoon3/runtime/superjump.mjs';\nimport { beforeActions } from '../../patches/splatoon3/runtime/movement.mjs';\nimport { updateResources } from '../../patches/splatoon3/runtime/resources.mjs';\nimport { scheduleLethal, flushPendingLethal, clearPendingLethal, hasPendingLethal } from '../../patches/splatoon3/runtime/damage-timing.mjs';\n` + code;
   }
   if (rel === 'src/game/character-weapons.js') {
     code = replaceOnce(code, '    if (ft >= 0.15 && ft - dt < 0.15) w.drumW += 34;', '    const release = st.flickReleaseTime ?? 0.15;\n    if (ft >= release && ft - dt < release) w.drumW += 34;', 'roller drum release impulse');
     code = replaceOnce(code, 'const BUILDERS = { shooter: buildShooter, roller: buildRoller,', 'const BUILDERS = { shooter: buildShooter, roller: () => rollerModel(buildRoller()),', 'roller drum proportions');
     return "import { rollerModel } from '../../patches/splatoon3/runtime/roller-model.mjs';\n" + code;
+  }
+  if (rel === 'src/audio/music.js') {
+    code = replaceOnce(code,
+      '  constructor() {\n    this.ctx = null; this.players = []; this.current = null; this.intensity = 1; this._want = undefined;\n  }',
+      '  constructor() {\n    this.ctx = null; this.players = []; this.current = null; this.intensity = 1; this._want = undefined; this._timerPaused = false;\n  }',
+      'music visibility state');
+    code = replaceOnce(code, '  _startTimer() {\n    const tick = () => this._tick();',
+      '  _startTimer() {\n    if (this.offline || this._timerPaused || this.worker || this.timer) return;\n    const tick = () => this._tick();',
+      'music timer idempotence');
+    code = replaceOnce(code,
+      '      this.worker.onerror = () => { this.worker = null; if (!this.timer) this.timer = setInterval(tick, TICK_MS); };',
+      '      this.worker.onerror = () => { this.worker = null; if (!this._timerPaused && !this.timer) this.timer = setInterval(tick, TICK_MS); };',
+      'music worker hidden fallback');
+    code = replaceOnce(code, '      this.timer = setInterval(tick, TICK_MS);',
+      '      if (!this._timerPaused) this.timer = setInterval(tick, TICK_MS);',
+      'music timer hidden fallback');
+    code = replaceOnce(code, '  _tick() {',
+      '  _pauseTimer() {\n    if (this.offline) return;\n    this._timerPaused = true;\n    if (this.worker) this.worker.postMessage(0);\n    if (this.timer) { clearInterval(this.timer); this.timer = null; }\n  }\n\n  _resumeTimer() {\n    if (this.offline || !this.ctx) return;\n    const paused = this._timerPaused; this._timerPaused = false;\n    if (this.worker) this.worker.postMessage(TICK_MS); else if (!this.timer) this._startTimer();\n    if (paused) this._tick();\n  }\n\n  _tick() {',
+      'music visibility timer controls');
+    code = replaceOnce(code, '  dispose() {\n    for (const p of this.players) p.dispose();',
+      '  dispose() {\n    this._timerPaused = true;\n    for (const p of this.players) p.dispose();',
+      'music dispose visibility state');
+    return code;
+  }
+  if (rel === 'src/audio/audio.js') {
+    code = replaceOnce(code,
+      '  resume() {\n    const c = this.ctx;\n    if (c && !this.offline && c.state !== \'running\' && c.state !== \'closed\' && c.resume) c.resume().catch(() => {});\n  }',
+      '  resume() {\n    const c = this.ctx;\n    if (!c || this.offline || c.state === \'closed\') return;\n    if (c.state === \'running\') { this.music?._resumeTimer?.(); return; }\n    if (c.resume) c.resume().then(() => this.music?._resumeTimer?.()).catch(() => {});\n  }',
+      'audio lifecycle resume');
+    code = replaceOnce(code,
+      "    if (typeof document !== 'undefined') document.addEventListener('visibilitychange', () => { if (!document.hidden) h(); });",
+      "    if (typeof document !== 'undefined') document.addEventListener('visibilitychange', () => {\n      if (document.hidden) {\n        this.music?._pauseTimer?.();\n        const c = this.ctx;\n        if (c && !this.offline && c.state !== 'closed' && c.suspend) c.suspend().catch(() => {});\n      } else h();\n    });",
+      'audio visibility suspend');
+    return code;
   }
   if (rel === 'src/main.js') {
     const start = code.indexOf('    G.time += dt;\n', code.indexOf('  _frame(dt) {'));
