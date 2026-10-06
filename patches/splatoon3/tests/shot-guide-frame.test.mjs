@@ -60,12 +60,13 @@ test('#769/#459: the pinned 11.3.0 ShotGuideFrame is promoted into the live prof
   assert.equal(completion.splatling.WeaponParam.ShotGuideFrame, 11);
   assert.equal(profile.weapons.shooter.shotGuideFrame, 8);
   assert.equal(profile.weapons.splatling.shotGuideFrame, 11);
-  // Only the two owned weapons gain a guide; every other reticle keeps its
-  // existing screen-centre placement even where the mirror holds a pinned value.
-  for (const id of ['dualies', 'roller', 'charger', 'slosher']) {
+  // Dualies now promotes its pinned 7F value for the independent per-hand
+  // guide. Roller/Charger/Slosher still do not use this generic live field.
+  assert.equal(completion.dualies.WeaponParam.ShotGuideFrame, 7, 'pinned Dualies source');
+  assert.equal(profile.weapons.dualies.shotGuideFrame, 7, 'Dualies live per-hand guide frame');
+  for (const id of ['roller', 'charger', 'slosher']) {
     assert.equal(profile.weapons[id].shotGuideFrame, undefined, id);
   }
-  assert.equal(completion.dualies.WeaponParam.ShotGuideFrame, 7, 'pinned source untouched');
   assert.equal(completion.blaster.WeaponParam.ShotGuideFrame, 13, 'pinned source untouched');
   assert.equal(profile.weapons.blaster.shotGuideFrame, 13, 'main #820 owns the Blaster guide');
 });
@@ -312,10 +313,12 @@ test('#459/#769: HUD placement moves only guide weapons and always clears the gu
   assert.equal(writes, 0, 'an unchanged guide does not rewrite the reticle style');
   r.applyShotGuide(hud, { x: 810, y: 600, frames: 11 }, 1280, 720);
   assert.equal(writes, 1, 'a real guide change writes once');
-  // Roller/charger/slosher/dualies/blaster keep their existing centre reticle.
-  for (const id of ['roller', 'charger', 'slosher', 'dualies']) {
+  // Roller/charger/slosher have no live ShotGuideFrame. Dualies exposes 7F
+  // for its separate two-hand guide path rather than the generic centreline.
+  for (const id of ['roller', 'charger', 'slosher']) {
     assert.equal(r.shotGuideFrames(profile.weapons[id]), null, id);
   }
+  assert.equal(r.shotGuideFrames(profile.weapons.dualies), 7, 'Dualies per-hand guide frame');
   assert.equal(r.shotGuideFrames(profile.weapons.shooter), 8);
   assert.equal(r.shotGuideFrames(profile.weapons.splatling), 11);
   assert.equal(r.shotGuideFrames(profile.weapons.blaster), 13, 'main #820 live guide field retained');
