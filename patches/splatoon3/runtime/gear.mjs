@@ -85,21 +85,10 @@ export function installGear(api, tuning) {
   const moveSpeed = WeaponRunner.prototype.moveSpeed;
   WeaponRunner.prototype.moveSpeed = function () {
     const m = this.a.s3?.modifiers || {}, w = this.a.weapon;
-    // #245: S3 pins bomb-aiming ground humanoid speed to a fixed 0.72 DU/f, which is
-    // 0.75 of the 0.96 medium walk, and Run Speed Up gear does not apply while the
-    // throw button is held. aimingSub therefore joins lockedMode, and the speed is
-    // capped rather than replaced so a weapon-specific speed that is already lower
-    // keeps its authoritative value.
-    // Ground + humanoid only. Actor._horizontal also calls moveSpeed() on its
-    // airborne branch (actor.js:377), so an unconditional cap would silently
-    // retune air steering, which is outside this issue's grounded scope.
-    const subAim = !!this.aimingSub && this.a.grounded === true && this.a.form !== 'squid';
-    const lockedMode = this.rolling || this.charging && w.kind === 'charger' || subAim;
+    const lockedMode = this.rolling || this.charging && w.kind === 'charger';
     const attacking = this.firingT > 0 || this.charging || this.streaming;
     const gear = lockedMode ? 1 : attacking ? m.runSpeedFiring ?? 1 : m.runSpeed ?? 1;
-    const base = moveSpeed.call(this);
-    const speed = subAim ? Math.min(base, api.PLAYER.runSpeed * 0.75) : base;
-    return speed * gear * (this.a.s3?.flow?.active ? tuning.flow.runMultiplier : 1);
+    return moveSpeed.call(this) * gear * (this.a.s3?.flow?.active ? tuning.flow.runMultiplier : 1);
   };
   const horizontal = Actor.prototype._horizontal;
   Actor.prototype._horizontal = function (dt, squid, enemy) {
