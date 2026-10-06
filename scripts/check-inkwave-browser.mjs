@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import { runQualityBrowserProbe } from '../patches/local-quality/quality-probe.mjs';
+import { runPaintMipmapBrowserProbe } from '../patches/local-quality/paint-mipmap-probe.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
@@ -264,8 +266,20 @@ try {
     for(let i=0;i<30;i++)tick();flow.inactiveGlow=glow();flow.inactivePresentation=flowMotionSnapshot(ch);
     if(!Number.isFinite(flow.activeGlow)||flow.activeGlow<=0||flow.specialGlow>.001||flow.inactiveGlow>=.001)throw Error('Compiled Flow material did not follow actual actor state');
     if(!flow.activePresentation.visible||flow.activePresentation.aliveParticles<1||flow.inactivePresentation.visible||flow.inactivePresentation.phase!=='off')throw Error('Compiled Flow exterior did not follow actual actor state');
-    return {fixture:'loaded match Actor/WeaponRunner -> complete Character; fixed pose position; Chromium WebGL',dualies,slosher:{windup,firstWindupFrames,releaseFrames},reset,flow};
+    // Actual compiled runtime installation must cancel a pre-special charge.
+    prepare('charger');
+    const cr=a.weaponRunner; for(let i=0;i<36;i++)cr.update(1/60,{fire:true});
+    const suspendedCharge=cr.charge; a.special=a.specialCost(); const beforeSpecial=a.stats.specials;
+    a._startSpecial();
+    const specialCharge={suspendedCharge,active:!!a.specialActive,specials:a.stats.specials-beforeSpecial,
+      charging:cr.charging,charge:cr.charge,chargeT:cr.chargeT,stored:cr.s3Stored??null};
+    if(suspendedCharge<.5||!specialCharge.active||specialCharge.specials!==1||cr.charging||cr.charge!==0||cr.chargeT!==0||specialCharge.stored!==null)
+      throw Error('Compiled successful special did not cancel suspended Charger charge');
+    a.specialActive=null;
+    return {fixture:'loaded match Actor/WeaponRunner -> complete Character; fixed pose position; Chromium WebGL',dualies,slosher:{windup,firstWindupFrames,releaseFrames},reset,flow,specialCharge};
   });
+  result.runtimeQuality = await runQualityBrowserProbe(page);
+  result.paintMipmaps = await runPaintMipmapBrowserProbe(page);
   result.status = 'passed';
 } catch (error) {
   result = { ...(result || {}), status: 'failed', error: error.message };
