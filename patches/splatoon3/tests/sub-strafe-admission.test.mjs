@@ -252,4 +252,3 @@ test('#591 local and network replication: once-only broadcast on committed throw
   remote.weaponRunner.update(STEP, { sub: false, subReleased: true });
   assert.equal(recBombs.length, 1, 'remote actor never calls recBomb');
 });
-
