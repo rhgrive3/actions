@@ -51,6 +51,46 @@ export function installWeapons(context, profile) {
     if (['shooter', 'dualies', 'splatling'].includes(p.s3Weapon?.kind) && Number.isFinite(p.s3Weapon.referenceGravity)) p.grav = p.s3Weapon.referenceGravity;
     return pushProjectile.call(this, p);
   };
+  // Bucket Slosher ShotGuide: project the selected live projectile at the
+  // pinned fixed-step frame using the same semi-implicit step as _step().
+  Projectiles.prototype.s3SlosherGuide = function (a, w) {
+    const guide = w?.shotGuide;
+    if (!guide || guide.unitOrderNum !== 1 || guide.bulletOrderNumInUnit !== 0 || !Number.isFinite(guide.frame)) return null;
+    const m = this._s3GuideM || (this._s3GuideM = new THREE.Vector3());
+    const vel = this._s3GuideVel || (this._s3GuideVel = new THREE.Vector3());
+    const out = a.s3ShotGuidePoint || (a.s3ShotGuidePoint = new THREE.Vector3());
+    this._muzzle(a, m);
+    const delta = this._s3GuideDelta || (this._s3GuideDelta = new THREE.Vector3());
+    delta.copy(a.aimPoint).sub(m);
+    let hd = Math.hypot(delta.x, delta.z);
+    const yaw = hd > .3 ? Math.atan2(delta.x, delta.z) : a.aimYaw;
+    hd = Math.max(1.2, Math.min(w.range, hd));
+    const dy = Math.max(-4, Math.min(5, delta.y)), g = w.grav, T0 = .32;
+    let speed = w.projSpeed, pitch;
+    const den = 2 * Math.cos(T0) * Math.cos(T0) * (hd * Math.tan(T0) - dy);
+    const vT = den > 1e-3 ? Math.sqrt((g * hd * hd) / den) : Infinity;
+    if (vT <= speed) { speed = Math.max(5.5, vT); pitch = T0; }
+    else {
+      const disc = speed ** 4 - g * (g * hd * hd + 2 * dy * speed * speed);
+      pitch = disc >= 0 ? Math.atan((speed * speed - Math.sqrt(disc)) / (g * hd)) : Math.PI / 4;
+      pitch = Math.max(T0, Math.min(1.2, pitch));
+    }
+    // Current INKWAVE's poured wave is linearized; unit 1 / bullet 0 maps to
+    // the second emitted glob while the source-unit migration remains separate.
+    const n = Math.max(1, w.drops || 1), i = Math.min(n - 1, 1), k = n > 1 ? i / (n - 1) : 0;
+    const sp = speed * (1 - .18 * k), pt = pitch - .04 * k;
+    const yw = yaw + (i === 0 ? 0 : (i % 2 ? 1 : -1) * .028 * Math.min(1, i / 3));
+    const cp = Math.cos(pt), step = 1 / 60;
+    out.copy(m);
+    vel.set(Math.sin(yw) * cp * sp, Math.sin(pt) * sp + g * step * .5, Math.cos(yw) * cp * sp);
+    let age = 0;
+    for (let frame = 0; frame < Math.max(0, Math.round(guide.frame)); frame++) {
+      age += step;
+      if (age > 0) vel.y -= g * step;
+      out.addScaledVector(vel, step);
+    }
+    return out;
+  };
   // The public shooter raises the launch ray to compensate for drop at the
   // camera target. Use the launch ray as aimed; gravity acts on the bullet.
   Projectiles.prototype._ballistic = function (_from, direction) { return direction; };
@@ -58,10 +98,15 @@ export function installWeapons(context, profile) {
   WeaponRunner.prototype.reset = function (...args) {
     const result = reset.apply(this, args);
     this.s3Stored = null; this.s3Turret = false; this.s3FlickVertical = false; this.s3BlasterWindup = 0;
-    this.s3SloshRecovery = false; return result;
+    this.s3SloshRecovery = false;
+    this.s3ChargerPostShot = 0; this.s3DualiesPostShot = 0; this.s3DodgeShotPending = 0;
+    return result;
   };
   WeaponRunner.prototype.busy = function () {
-    if (['charger','splatling'].includes(this.a.weapon.kind) && this.a.intent.squid && this.a._squidPressT > this.a._firePressT) return false;
+    const kind = this.a.weapon.kind;
+    if (kind === 'charger' && this.s3ChargerPostShot > 1e-10) return true;
+    if (kind === 'dualies' && this.s3DualiesPostShot > 1e-10) return true;
+    if (['charger','splatling'].includes(kind) && this.a.intent.squid && this.a._squidPressT > this.a._firePressT) return false;
     return this.s3BlasterWindup > 0 || busy.call(this);
   };
   const charger = WeaponRunner.prototype._charger;
@@ -146,12 +191,26 @@ export function installWeapons(context, profile) {
       return result;
     };
   }
+  const fireDualies = Projectiles.prototype.fireDualies;
+  Projectiles.prototype.fireDualies = function (a, w, spreadDeg, hand) {
+    const result = fireDualies.call(this, a, w, spreadDeg, hand);
+    if (a.weaponRunner) a.weaponRunner.s3DualiesPostShot = 4 / 60;
+    return result;
+  };
   const dualies = WeaponRunner.prototype._dualies, spread = WeaponRunner.prototype._spreadDeg;
   WeaponRunner.prototype._dualies = function (dt, inp, w) {
     const dodging = !!this.dodge;
+    if (this.s3DodgeShotPending > 1e-10 && (!inp.fire || inp.sub || this.a.form === 'squid')) this.s3DodgeShotPending = 0;
     if (this.s3Turret && (!inp.fire || Math.hypot(this.a.intent.move.x, this.a.intent.move.z) > .01 && this.lockT <= 0 || this.a.form === 'squid' || inp.sub)) this.s3Turret = false;
+    if (this.s3DodgeShotPending > 1e-10) {
+      this.s3DodgeShotPending = Math.max(0, this.s3DodgeShotPending - dt);
+      if (this.s3DodgeShotPending > 1e-10) return dualies.call(this, dt, { ...inp, fire: false, firePressed: false }, this.s3Turret ? { ...w, fireInterval: w.lockInterval } : w);
+    }
     const result = dualies.call(this, dt, inp, this.s3Turret ? { ...w, fireInterval: w.lockInterval } : w);
-    if (dodging && !this.dodge) this.s3Turret = true;
+    if (dodging && !this.dodge) {
+      this.s3Turret = true;
+      this.s3DodgeShotPending = 4 / 60;
+    }
     return result;
   };
   WeaponRunner.prototype._spreadDeg = function (w) {
@@ -162,6 +221,7 @@ export function installWeapons(context, profile) {
   };
   const fireCharger = Projectiles.prototype.fireCharger;
   Projectiles.prototype.fireCharger = function (a, w, charge) {
+    if (a.weaponRunner) a.weaponRunner.s3ChargerPostShot = 16 / 60;
     if (charge < .999) return fireCharger.call(this, a, w, charge);
     const muzzle = this._muzzle(a, new THREE.Vector3()).clone(), dir = this._aimFrom(a, muzzle, new THREE.Vector3()).clone();
     const hit = G.physics.raycast(muzzle, dir, w.rangeMax, new Hit(), true);
