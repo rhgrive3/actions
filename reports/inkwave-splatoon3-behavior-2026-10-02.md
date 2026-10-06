@@ -357,3 +357,15 @@ Reset now clears the pending damage attacker and angle together with the cancell
 ## 2026-10-06 — Dualies wall-drop (#604) and composed-runtime guards
 
 Base main `67fec182`. Splat Dualies wall impacts now enter the existing sourced wall-drop state using the pinned 11.3.0 top-level `WallDropMoveParam`/`WallDropCollisionPaintParam` (shock 1.3, fall 0.65, ground 0.6; 20–40F + 10F + 15–35F at 0.06). Previously the round died on the contact frame after one generic impact. Damage is unchanged. Shooter (#385) and Charger (#625/#268) are excluded: Shooter is owned elsewhere, and the Charger record omits three period fields. #770, #777, #638/#637, #644/#643 and #556 were already correct after adapter composition (the reports read raw source). They are now pinned by composed-runtime tests. This is logic-level and emitted-verifier evidence; a Switch visual/frame comparison is still 未確認. Details: [inkwave-wall-drop-dualies-guards-2026-10-06.md](inkwave-wall-drop-dualies-guards-2026-10-06.md).
+
+## 2026-10-07 — Flow Aura が30秒上限で overflow 塗りを落とす (#893)
+
+Base main `f31f5da439134fe49bb89018dad5557671a49c67`。`patches/splatoon3/runtime/flow.mjs` の `award()` は overflow の足元塗りを `activated || flow.remaining > before` で判定しており、伸長イベントそのものではなく**上限クランプ後のタイマー増分**を代理指標にしていた。`awardFlow()` の active 分岐は `Math.min(cfg.maxDuration, remaining + cfg.extension)` で伸長するため、`remaining === maxDuration`（30秒）では有効な splat / assist が伸長経路に入っても数値が増えず、`G.paint.splat` が一度も発火しない。
+
+本家の記載では、Flow Aura は約30秒で、追加の適格 splat や自身が与えたダメージ相手の撃破で延長され、**延長のたびに足元の塗りが再発火**する。塗りは「残り時間が上限を超えて増えたか」ではなく「適格な発動/延長イベントが起きたか」に結び付いている。
+
+修正は install 層のみ。active 状態機械が伸長対象とする action を `extendsFlow(action)`（splat / assist）として1箇所に定義し、`award()` は `activated || (wasActive && extendsFlow(action))` で塗る。上限クランプ、非アクティブのスコア蓄積・しきい値判定、`G.paint.splat(p, cfg.paintRadius, a.team, { kind:'trail', seed:0.5 })` の単一経路、Range 除外ゲートは変更していない。`turf` / `damage` は active 中でも塗らず、毎フレーム塗りは追加していない。伸長量 (#504) と first-splat (#529 / Open #892) は別 root として触っていない。
+
+**未確認（確定ではない）**: 公式の30秒という値と「延長で足元が塗られる」という記述は任天堂の説明に基づくが、同一ステップ内の複数 splat で本家が何回塗るかの実測はしていない（本実装は適格イベントごとに1回）。`cfg.paintRadius` は既存の calibration のまま。ブラウザ / Switch 実機の塗り比較、ネットワーク越しの塗り重複は未計測。
+
+検証は `patches/splatoon3/tests/flow-cap-overflow.test.mjs` の9項目。変更後 9/9 pass（exit 0）、未変更 main では上限クランプ時の塗り欠落を捉えて 9項目中4項目が fail（exit 1）。隣接する既存 flow lifecycle / storage cap / core テスト 25/25 は両方で pass。
