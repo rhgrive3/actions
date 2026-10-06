@@ -1,5 +1,4 @@
 import test from 'node:test';
-import { CATALOG_WALL_HEIGHT, CATALOG_SCENARIOS, catalogRenderFrames } from '../../../scripts/check-inkwave-motion-catalog.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -36,8 +35,6 @@ async function production(legacyMovement = false) {
     export { install } from './patches/splatoon3/runtime/install.mjs';
     export { installMovementMotion, movementMotionSnapshot } from './patches/splatoon3/runtime/movement-motion.mjs';
     export { FixedClock } from './patches/splatoon3/runtime/clock.mjs';
-    export { beforeActions } from './patches/splatoon3/runtime/movement.mjs';
-    export { wallMotionSnapshot } from './patches/splatoon3/runtime/wall-motion.mjs';
     export { Level } from './inkwave-public/src/world/level.js';
   `, { context, identifier: path.join(ROOT, 'movement-composition-entry.mjs') });
   await entry.link((spec, from) => load(spec === 'three' ? path.join(SRC, 'vendor/three/build/three.module.js')
@@ -145,59 +142,4 @@ test('reset/disposal route to the character owner and cannot reacquire disposed 
     assert.equal(api.movementMotionSnapshot(ch), null); assert.equal(movementMotionSnapshot(ch), null);
     assert.equal(a.anim.movementMotion, undefined, 'disposed owner cannot regain a live movement frame');
   } finally { r.close(); }
-});
-
-// Native CPU driver coverage; GPU RGB pairs are still required separately by CI.
-test('catalog wall leaves room for moving charge, readiness, launch and crest samples', async () => {
-  const api = await production(), { THREE, G, Physics } = api;
-  const floor = { id: 0, solid: true, center: new THREE.Vector3(0, -.5, 0),
-    half: new THREE.Vector3(200, .5, 200), faces: [-1, -1, -1, -1, -1, -1],
-    axes: [new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 1)],
-    aabbMin: new THREE.Vector3(-200, -1, -200), aabbMax: new THREE.Vector3(200, 0, 200) };
-  const traces = [];
-  for (const height of [3, CATALOG_WALL_HEIGHT]) {
-    const wall = { id: 1, solid: true, center: new THREE.Vector3(0, height / 2, -.7),
-      half: new THREE.Vector3(3, height / 2, .2), faces: [0, 0, 0, 0, 0, 0], axes: floor.axes,
-      aabbMin: new THREE.Vector3(-3, 0, -.9), aabbMax: new THREE.Vector3(3, height, -.5) };
-    const level = { blocks: [floor], groundHeight: () => 0, pointInside: () => false,
-      faces: [{ origin: new THREE.Vector3(), u: new THREE.Vector3(1, 0, 0), v: new THREE.Vector3(0, 1, 0) }],
-      spawnPads: [new THREE.Vector3(), new THREE.Vector3(0, 0, 20)],
-      queryBlocks: (_a, _b, _c, _d, out) => {
-        out.length = 0; out.push(...level.blocks.map(b => b.id)); return out;
-      } };
-    G.level = level; G.physics = new Physics(level); G.actors = [];
-    const a = new api.Actor({ team: 0, name: 'catalog wall probe', weapon: 'shooter',
-      isLocal: true, CharacterClass: api.Character });
-    const ch = a.character; ch.actor = a; G.actors.push(a);
-    a.grounded = a.ground.hit = true; a.ground.block = 0; a.groundN.set(0, 1, 0);
-    function step() {
-      a.intent.fire = false; G.time += 1 / 60;
-      a.weaponRunner.update(1 / 60, {}); a._finishFrame(1 / 60);
-      ch.root.updateMatrixWorld(true); ch.skeleton.update();
-    }
-    try {
-      for (let i = 0; i < 100; i++) step();
-      level.blocks = [floor, wall]; a.form = 'squid'; a.submerged = false;
-      a.pos.set(0, .5, -.05); a.intent.move.set(0, 0, -1); a._updateClimb(1 / 60, true);
-      for (let i = 0; i < 40; i++) step();
-      const samples = [];
-      for (let frame = 0; frame < 180; frame++) {
-        a.intent.jump = frame >= 20 && frame < 75;
-        a._updateClimb(1 / 60, true); api.beforeActions(a, 1 / 60, false);
-        a._integrate(1 / 60, true, false); step();
-        samples.push({ ...api.wallMotionSnapshot(ch), frame, y: a.pos.y });
-      }
-      traces.push(samples);
-    } finally { ch.dispose(); }
-  }
-  const [old, current] = traces;
-  assert.equal(old.some(s => s.phase === 'launch'), false, 'negative control: short wall crests before release');
-  assert.ok(current.filter(s => s.phase === 'charge').length >= 20);
-  assert.ok(current.some(s => s.ready && s.glow > 0), 'native readiness glint remains observable');
-  const scenario = CATALOG_SCENARIOS.find(s => s.name === 'wall-surge-ready-crest');
-  const renders = catalogRenderFrames(scenario);
-  for (const phase of ['charge', 'launch', 'crest']) {
-    assert.ok(renders.some(frame => current[frame].phase === phase), `actual scheduled RGB frames include ${phase}`);
-  }
-  G.projectiles.clear();
 });

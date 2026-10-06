@@ -44,11 +44,20 @@ near(data.runner['charger-1'].inkSpent,18);
 for (const key of ['shooter','roller-horizontal','roller-vertical']) {
   const c = CASES.find(x => x.key === key);
   const f = await fixture({ site, fidelity:true, floor:false, network:true });
-  const a = reset(f,c); a.nid=42; const packets=[];
-  const network={mute:0,_rec:e=>packets.push([0,...e]),recProj:f.NetMatch.prototype.recProj,recSplat(){},shouldApplyHit:f.NetMatch.prototype.shouldApplyHit};
-  f.G.netm=network; launch(f,a,c); const locals=[...f.projectiles.list];
+  const a = reset(f,c); a.nid=42;
+  // Use the installed recorder, including the existing birth metadata and
+  // owner-tick/sequence footer. This adds no protocol fields or runtime changes.
+  const network={mute:0,out:[],_rec:f.NetMatch.prototype._rec,recProj:f.NetMatch.prototype.recProj,recSplat(){},shouldApplyHit:f.NetMatch.prototype.shouldApplyHit};
+  f.G.netm=network; launch(f,a,c); const locals=[...f.projectiles.list], packets=network.out;
   assert.equal(packets.length,locals.length,key);
-  assert.equal(packets.every(p=>p.length===27),true,key+' packet shape');
+  for (const [i,p] of packets.entries()) {
+    assert.equal(p.length,32,key+' complete installed packet shape');
+    assert.equal(p[27],locals[i].s3Vertical?1:0,key+' birth mode');
+    assert.equal(p[28],locals[i].seed,key+' appearance seed');
+    assert.equal(p[29],locals[i]._netId,key+' projectile identity');
+    assert.equal(p[30],Math.round((f.G.time||0)*60),key+' owner tick');
+    assert.equal(p[31],i+1,key+' event sequence');
+  }
   const ghost=f.make(c.id,{name:'remote'}); ghost.remote=true; f.projectiles.list.length=0;
   packets.forEach(e=>f.projectiles.ghostProjectile(ghost,e)); const ghosts=[...f.projectiles.list];
   assert.equal(ghosts.length,locals.length,key);
@@ -68,4 +77,142 @@ for (const key of ['shooter','roller-horizontal','roller-vertical']) {
     assert.equal(q.damage,0,key+' ghost damage');
   }
 }
-console.log(JSON.stringify({status:'passed',contentHash:data.artifactIdentity.contentHash,cases:Object.keys(golden).length,networkModes:3,completion:'finite-charger-continuous-collision'}));
+async function wallDropCase(id, dt = 1/60, ghost = false) {
+  const f = await fixture({ site, fidelity:true, floor:true, seed:0x576597 });
+  f.wall(4, { height:8 });
+  const weapon = id.startsWith('roller-') ? 'roller' : id;
+  const a = f.make(weapon);
+  a.aimPoint.set(0, 1.05, 20);
+  let bursts = 0;
+  const nativeBurst = f.projectiles._blastBurst;
+  f.projectiles._blastBurst = function (...args) { bursts++; return nativeBurst.apply(this,args); };
+  if (id === 'blaster') f.projectiles.fireBlaster(a,a.weapon,0);
+  else if (id === 'splatling') {
+    a.weaponRunner.fidelitySplatlingCharge = 1;
+    f.projectiles.fireSplatling(a,a.weapon,0);
+  } else if (id === 'dualies') f.projectiles.fireDualies(a,a.weapon,0,0);
+  else {
+    a.weaponRunner.s3FlickVertical = id === 'roller-vertical';
+    f.projectiles.fireFlick(a,a.weapon);
+  }
+  let p;
+  if (id === 'roller-horizontal-near') p = f.projectiles.list.find(x=>x.s3FlickUnit===1);
+  else p = f.projectiles.list[0];
+  assert.ok(p, id+' projectile created');
+  if (id.startsWith('roller-')) f.projectiles.list.splice(0,f.projectiles.list.length,p);
+  if (ghost) p.ghost = true;
+  let state = null;
+  for (let i=0; i<600 && f.projectiles.list.includes(p); i++) {
+    f.G.time += dt;
+    f.projectiles.update(dt);
+    if (!state && p.fidelityWallDrop) {
+      assert.ok(p.prev.distanceTo(p.pos)<1e-9,id+' contact frame starts at the wall, not overshoot');
+      const s=p.fidelityWallDrop;
+      state={firstFrames:s.firstFrames,secondFrames:s.secondFrames,lastFrames:s.lastFrames,
+        firstSpeed:s.firstSpeed,secondSpeed:s.secondSpeed,shockRadius:s.shockRadius,
+        fallRadius:s.fallRadius,groundRadius:s.groundRadius};
+    }
+  }
+  assert.ok(state,id+' retained wall-drop state');
+  assert.ok(!f.projectiles.list.includes(p),id+' wall-drop terminates');
+  return {f,p,state,bursts};
+}
+
+const wallExpected={
+  blaster:{first:[15,30],second:35,last:[20,35],speeds:[.07,.04],radii:[1.3,1,.6]},
+  splatling:{first:[15,30],second:5,last:[15,30],speeds:[.06,.06],radii:[1.3,.65,.6]},
+  dualies:{first:[20,40],second:10,last:[15,35],speeds:[.06,.06],radii:[1.3,.65,.6]},
+  'roller-horizontal-main':{first:[60,80],second:5,last:[20,35],speeds:[0,.08],radii:[0,0,.5]},
+  'roller-horizontal-near':{first:[60,80],second:5,last:[20,35],speeds:[.06,.08],radii:[1.3,.65,.5]},
+  'roller-vertical':{first:[60,80],second:5,last:[20,35],speeds:[.08,.10],radii:[1.4,.7,.65]},
+};
+for (const id of Object.keys(wallExpected)) {
+  const r=await wallDropCase(id),e=wallExpected[id],s=r.state;
+  assert.ok(s.firstFrames>=e.first[0]&&s.firstFrames<=e.first[1],id+' first phase');
+  assert.equal(s.secondFrames,e.second,id+' second phase');
+  assert.ok(s.lastFrames>=e.last[0]&&s.lastFrames<=e.last[1],id+' last phase');
+  near(s.firstSpeed,e.speeds[0]); near(s.secondSpeed,e.speeds[1]);
+  near(s.shockRadius,e.radii[0]); near(s.fallRadius,e.radii[1]); near(s.groundRadius,e.radii[2]);
+  for (const radius of e.radii.filter(x=>x>0)) assert.ok(r.f.paints.some(x=>Math.abs(x.radius-radius)<1e-9),id+' paint radius '+radius);
+  if (id==='blaster') assert.equal(r.bursts,1,'terrain Blaster burst remains single-application');
+}
+
+// Render/update cadence cannot choose different sourced random periods or lose
+// the terminal ground paint. The authoritative game still runs fixed 60 Hz;
+// this regression additionally keeps the retained state stable if scheduling
+// hands it 30/60/120 Hz-sized chunks.
+const cadence=[];
+for (const dt of [1/30,1/60,1/120]) {
+  const r=await wallDropCase('blaster',dt);
+  cadence.push([r.state.firstFrames,r.state.lastFrames]);
+  assert.ok(r.f.paints.some(x=>Math.abs(x.radius-.6)<1e-9),'ground paint at '+Math.round(1/dt)+' Hz');
+}
+assert.deepEqual(cadence,[cadence[0],cadence[0],cadence[0]],'wall-drop source periods are cadence-independent');
+
+// A remote/ghost projectile replays the same retained motion but never owns
+// authoritative paint. No new packet field is required because its existing
+// seed chooses the same first/last source-frame periods.
+const ghost=await wallDropCase('splatling',1/60,true);
+assert.equal(ghost.f.paints.length,0,'ghost wall-drop cannot mutate turf');
+const ghostDualies=await wallDropCase('dualies',1/60,true);
+assert.equal(ghostDualies.f.paints.length,0,'ghost Dualies wall-drop cannot mutate turf');
+
+// Player contact remains terminal projectile damage, not terrain wall-drop.
+{
+  const f=await fixture({site,fidelity:true,floor:true,seed:0x576597});
+  f.wall(5,{height:8});
+  const a=f.make('blaster'),victim=f.make('shooter',{team:1,z:2,hp:100000});
+  a.aimPoint.set(0,1.05,20); f.G.actors=[a,victim];
+  f.projectiles.fireBlaster(a,a.weapon,0);
+  const p=f.projectiles.list[0];
+  for(let i=0;i<60&&f.projectiles.list.includes(p);i++){f.G.time+=1/60;f.projectiles.update(1/60);}
+  assert.equal(p.fidelityWallDrop,null,'direct player hit never enters wall-drop');
+}
+
+// Once a terrain hit has converted the projectile to wall ink, that retained
+// state must never regain projectile HP damage on its terminal frame.
+{
+  const f=await fixture({site,fidelity:true,floor:true,seed:0x576597});
+  f.wall(4,{height:8});
+  const a=f.make('blaster'); a.aimPoint.set(0,1.05,20); f.G.actors=[a];
+  f.projectiles.fireBlaster(a,a.weapon,0);
+  const p=f.projectiles.list[0];
+  for(let i=0;i<120&&!p.fidelityWallDrop;i++){f.G.time+=1/60;f.projectiles.update(1/60);}
+  assert.ok(p.fidelityWallDrop,'wall-drop begins before terminal damage guard test');
+  const victim=f.make('shooter',{team:1,z:p.pos.z,hp:100000});
+  f.G.actors.push(victim); const hp=victim.hp;
+  for(let i=0;i<300&&f.projectiles.list.includes(p);i++){f.G.time+=1/60;f.projectiles.update(1/60);}
+  assert.equal(victim.hp,hp,'retained wall ink never deals projectile HP damage');
+}
+
+// Network catch-up originally budgets a ghost from the projectile's flight life.
+ // Blaster wall-drop outlives its 13F airburst lifetime, so the terrain transition
+ // must extend that existing projectile's budget without adding a packet field.
+ {
+  const f=await fixture({site,fidelity:true,floor:true,seed:0x576597,network:true});
+  f.wall(4,{height:8});
+  const a=f.make('blaster'); a.nid=42; a.aimPoint.set(0,1.05,20);
+  const packets=[];
+  const recorder={mute:0,_rec:e=>packets.push([0,...e]),recProj:f.NetMatch.prototype.recProj,recSplat(){},shouldApplyHit:f.NetMatch.prototype.shouldApplyHit};
+  f.G.netm=recorder;
+  f.projectiles.fireBlaster(a,a.weapon,0);
+  assert.equal(packets.length,1,'Blaster birth packet recorded');
+  const ghost=f.make('blaster',{name:'remote'}); ghost.remote=true;
+  f.projectiles.list.length=0; f.paints.length=0;
+  f.projectiles.ghostProjectile(ghost,packets[0]);
+  const q=f.projectiles.list[0];
+  assert.ok(q?.ghost,'remote Blaster ghost reconstructed');
+  q._netBorn=0; q._netBornTick=0; q._netSteps=0;
+  q._netPeer={tr:4,lastTs:4,sim:240};
+  q._netMaxSteps=Math.ceil((q.life+Math.max(0,q.delay||0))*60)+2;
+  const birthBudget=q._netMaxSteps;
+  f.G.netm={mute:0};
+  f.projectiles.update(1/60);
+  assert.ok(q.fidelityWallDrop,'ghost reaches retained wall-drop during catch-up');
+  assert.ok(q._netMaxSteps>birthBudget,'wall-drop extends the original ghost catch-up budget');
+  for(let i=0;i<4&&f.projectiles.list.includes(q);i++) f.projectiles.update(1/60);
+  assert.ok(!f.projectiles.list.includes(q),'extended ghost budget reaches deterministic wall-drop terminal');
+  assert.equal(f.paints.length,0,'network ghost wall-drop remains non-authoritative for turf');
+ }
+
+console.log(JSON.stringify({status:'passed',contentHash:data.artifactIdentity.contentHash,cases:Object.keys(golden).length,networkModes:3,wallDropFamilies:4,wallDropCases:Object.keys(wallExpected).length,completion:'finite-charger-continuous-collision-wall-drop'}));

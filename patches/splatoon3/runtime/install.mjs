@@ -13,7 +13,6 @@ import { installMovement } from './movement.mjs';
 import { installMovementMotion } from './movement-motion.mjs';
 import { installWeapons } from './weapons.mjs';
 import { installWeaponsFidelity } from './weapons-fidelity.mjs';
-import { installChargerSurface } from './charger-surface.mjs';
 import { installSubSpecialFidelity } from './sub-special-fidelity.mjs';
 import { installGear } from './gear.mjs';
 import { installFlow } from './flow.mjs';
@@ -38,6 +37,7 @@ import { installRollerDetailMotion } from './roller-detail-motion.mjs';
 import { installSuperjumpMotion } from './superjump-motion.mjs';
 import { installSquidrollMotion } from './squidroll-motion.mjs';
 import { installHitSpawnMotion } from './hit-spawn-motion.mjs';
+import { installDeathCamera } from './death-camera.mjs';
 import { installIdleMotion } from './idle-motion.mjs';
 import { installEmotesMotion } from './emotes-motion.mjs';
 import { installSpecialMotion } from './special-motion.mjs';
@@ -83,6 +83,7 @@ export function install(profile) {
   installSuperjumpMotion(api, profile);
   installSquidrollMotion(api, profile);
   installHitSpawnMotion(api, profile);
+  installDeathCamera(api);
   installIdleMotion(api, profile);
   installEmotesMotion(api, profile);
   installSpecialMotion(api, profile);
@@ -91,7 +92,6 @@ export function install(profile) {
   // Main-weapon fidelity must be installed on the same canonical context before
   // gameplay can create projectiles; bootstrap's compatibility call is then a no-op.
   installWeaponsFidelity(api, profile);
-  installChargerSurface(api);
   // Aim remains tied to the actual camera ray. No target-dependent auto-turn.
   DEFAULT_SETTINGS.aimAssist = 0; DEFAULT_SETTINGS.aimAssistMouse = false;
   PlayerController.prototype._assistTarget = () => null;

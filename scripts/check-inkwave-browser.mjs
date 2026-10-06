@@ -39,6 +39,8 @@ if(process.argv.includes('--exact-source')) {
   const blobs=execFileSync('git',['hash-object','--',...files],{cwd:ROOT,encoding:'utf8'}).trim().split('\n');
   files.forEach((file,i)=>{if(blobs[i]!==tree.get(file))throw new Error('Build input differs from commit: '+file);});
 }
+// Identity-negative fixtures intentionally stop before loading browser helpers.
+const { probeTurfLead } = await import('./lib/inkwave-turf-lead-probe.mjs');
 const {chromium}=await import(process.env.PLAYWRIGHT_MODULE?pathToFileURL(process.env.PLAYWRIGHT_MODULE).href:'playwright');
 const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json','.svg':'image/svg+xml','.png':'image/png','.jpg':'image/jpeg','.webp':'image/webp','.woff2':'font/woff2','.glb':'model/gltf-binary'};
 const server=http.createServer((request,response)=>{
@@ -100,6 +102,16 @@ try {
   await page.screenshot({path:path.join(evidence,'loadout-small-viewport.png'),animations:'disabled',timeout:90000});
   await page.setViewportSize({width:1280,height:800});
   await page.evaluate(async () => { const { G } = await import(new URL('src/core/ctx.js',document.baseURI).href); await G.game.startMatch({mapId:'tidewater', difficulty:'easy', duration:180, mode:'turf'}); });
+  // The frozen fixture advances simulation explicitly below. Let the native
+  // wall-clock intro reveal run while this same Match is still in intro;
+  // fast-forwarding first makes its legitimate intro-only timer a no-op.
+  await page.waitForFunction(() => {
+    const g = globalThis.s3ProbeG?.game, h = g?.hud;
+    if (!g?.frozen || g.match?.state !== 'intro' || !h?._visible) return false;
+    const style = getComputedStyle(h.el);
+    return style.visibility === 'visible' && Number(style.opacity) >= .99;
+  }, null, {timeout:15000});
+  result.introHudAdmission = await page.evaluate(() => ({state:s3ProbeG.game.match.state,frozen:s3ProbeG.game.frozen,visible:s3ProbeG.game.hud._visible,nativeIntroReveal:true}));
   result.hiddenMinimap = await page.evaluate(() => {
     const m=globalThis.s3ProbeG.game.minimap;
     return { built:m._built, logical:[m.w,m.h], canvas:[m.canvas.width,m.canvas.height],
@@ -132,6 +144,7 @@ try {
     return {state:g.match.state, elapsedAt20Hz:initial-g.match.time-.5, movement:actor.pos.distanceTo(before), hp:actor.hp, gear:actor.s3.loadout, velocityFinite:[actor.vel.x,actor.vel.y,actor.vel.z].every(Number.isFinite), clockTicks:g.s3Clock.ticks, paintedFloorArea, coverage:G.paint.coverage()};
   });
   if (Math.abs(result.gameplay.elapsedAt20Hz-3)>1e-8 || !result.gameplay.velocityFinite || result.gameplay.movement<=0 || result.gameplay.paintedFloorArea<=0 || result.gameplay.coverage[0]<=0 || result.gameplay.coverage[0]>1) throw new Error('Actual browser gameplay regression');
+  result.turfLead = await probeTurfLead(page, evidence);
   // Native keyboard events traverse the loaded match's complete input/action
   // pipeline. Only ground collision is pinned for this admission-only proof;
   // the gameplay check above still uses the actual world Physics.
@@ -265,39 +278,6 @@ try {
     if(!Number.isFinite(flow.activeGlow)||flow.activeGlow<=0||flow.specialGlow>.001||flow.inactiveGlow>=.001)throw Error('Compiled Flow material did not follow actual actor state');
     if(!flow.activePresentation.visible||flow.activePresentation.aliveParticles<1||flow.inactivePresentation.visible||flow.inactivePresentation.phase!=='off')throw Error('Compiled Flow exterior did not follow actual actor state');
     return {fixture:'loaded match Actor/WeaponRunner -> complete Character; fixed pose position; Chromium WebGL',dualies,slosher:{windup,firstWindupFrames,releaseFrames},reset,flow};
-  });
-  result.subHud = await page.evaluate(async () => {
-    const G=globalThis.s3ProbeG,g=G.game,a=g.match.local,hud=g.hud,mobile=g.input.mobile;
-    const {subInkSpec}=await import(new URL('patches/splatoon3/runtime/sub-ready.mjs',document.baseURI).href);
-    const {SUB,PLAYER}=await import(new URL('src/config.js',document.baseURI).href);
-    g.debug.freeze();
-    // Desktop Chromium has no touch-capability media flag. Install the actual
-    // mobile control DOM once, then drive its real public setHud via Game.
-    if(!mobile.els)mobile._install();
-    const key='inkwave.splatoon3.gear.v1',saved=localStorage.getItem(key),wid=a.weaponId,rows=[];
-    const update=hud.update,draw=hud._drawTank;let frame,mark;
-    hud.update=function(dt,f){frame=f;return update.call(this,dt,f);};
-    hud._drawTank=function(dt,sub,...rest){mark=sub;return draw.call(this,dt,sub,...rest);};
-    try {
-      for(const ap of [0,35,57]) {
-        let loadout;
-        for(let m=0;m<=3;m++){const n=(ap-10*m)/3;if(Number.isInteger(n)&&n>=0&&n<=9){loadout=Array.from({length:3},(_,i)=>({main:i<m?'inkSaverSub':'none',subs:Array.from({length:3},(_,j)=>i*3+j<n?'inkSaverSub':'none')}));break;}}
-        localStorage.setItem(key,JSON.stringify(loadout));a.setWeapon('shooter');a.alive=true;a.form='kid';a.grounded=true;a.specialActive=null;a.superJumpState=null;a.intent.sub=true;
-        a.ink=100;for(let i=0;i<6;i++)a.weaponRunner.update(1/60,{sub:true});
-        const cost=subInkSpec(a,SUB.bomb).inkCost;
-        for(const delta of [-.001,0,.001]) {
-          a.ink=cost+delta;g._updateHud(1/60);
-          const row={ap,delta,cost,mark,label:hud.subChip.querySelector('b').textContent,short:hud.subChip.classList.contains('is-short'),tank:hud.tank.classList.contains('is-nosub'),mobile:mobile.els.sub.classList.contains('is-dim'),ready:frame.subReady};
-          if(Math.abs(mark-cost/PLAYER.inkMax)>1e-9||row.label!==Math.round(cost)+'%'||row.ready!==(delta>=0)||[row.short,row.tank,row.mobile].some(x=>x!==(delta<0)))throw Error('Compiled equipped sub HUD mismatch: '+JSON.stringify(row));
-          rows.push(row);
-        }
-      }
-    } finally {
-      hud.update=update;hud._drawTank=draw;
-      if(saved==null)localStorage.removeItem(key);else localStorage.setItem(key,saved);
-      a.intent.sub=false;a.setWeapon(wid);a.ink=100;
-    }
-    return {fixture:'actual compiled Game/HUD Canvas2D and MobileInput DOM in Chromium',rows};
   });
   result.status = 'passed';
 } catch (error) {

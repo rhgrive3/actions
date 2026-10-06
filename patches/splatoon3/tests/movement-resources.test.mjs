@@ -34,27 +34,27 @@ test('landing into own ink begins recovery in the landing tick', async () => {
   f.tick(a); assert.equal(a.submerged, true); close(a.ink, f.profile.resources.inkRefillSwim / 60);
 });
 
-test('enemy ink grace integrates only exposure after its boundary, then resets after the configured absence', async () => {
+test('enemy ink grace integrates only exposure after its boundary, then resets on exit', async () => {
   const f = await fixture(), a = f.make();
   // This is an interval arithmetic regression, not a proposed Splatoon grace value.
-  a.s3.modifiers.enemyInkGrace = .025;
+  f.profile.resources.enemyInkGrace = .025;
   f.G.paint.sample = () => 2; f.tick(a); close(a.hp, 100);
   f.tick(a); close(a.damageFromInk, f.profile.resources.enemyInkDps * (2 / 60 - .025));
-  f.G.paint.sample = () => 0; f.tick(a, 45); close(a.s3.enemyInkTime, 0);
+  f.G.paint.sample = () => 0; f.tick(a); close(a.s3.enemyInkTime, 0);
   f.G.paint.sample = () => 2; const hp = a.hp; f.tick(a); close(a.hp, hp);
 });
 
 test('enemy contact suppresses health recovery even while its damage grace is active', async () => {
   const f = await fixture(), a = f.make();
-  f.profile.resources.regenDelay = 0; a.s3.modifiers.enemyInkGrace = 100;
+  f.profile.resources.regenDelay = 0; f.profile.resources.enemyInkGrace = 100;
   a.hp = 50; a.lastDamage = 99; f.G.paint.sample = () => 2;
   f.tick(a, 5); close(a.hp, 50);
 });
 
 test('contact ink remains nonlethal and bounded, including return after leaving it', async () => {
   const f = await fixture(), a = f.make(); a.hp = 20; f.G.paint.sample = () => 2;
-  f.tick(a, 180); close(a.hp, 20); close(a.damageFromInk, 0);
-  a.damage(20, null, 'shooter'); assert.equal(a.alive, false);
+  f.tick(a, 180); close(a.hp, 1); close(a.damageFromInk, f.profile.resources.enemyInkDamageCap);
+  a.damage(2, null, 'shooter'); assert.equal(a.alive, false);
 });
 
 test('refill predicates distinguish own ink, wall, dry/enemy squid, and stored charge', async () => {
@@ -97,7 +97,7 @@ test('configured armor expires on its exact tick boundary without a floating-poi
   a.vel.set(0, 0, 20); a.intent.move.set(0, 0, -1);
   f.beforeActions(a, 1 / 60, true);
   for (let i = 0; i < f.profile.movement.roll.armorTime * 60; i++) f.beforeActions(a, 1 / 60, false);
-  assert.equal(a.s3.roll, null); close(a.s3.actions.armor.armorTime, 0); a.damage(60, null, 'shooter'); close(a.hp, 40);
+  close(a.s3.roll.armorTime, 0); a.damage(60, null, 'shooter'); close(a.hp, 40);
 });
 
 test('roll collision clipping persists instead of restoring its pre-collision launch velocity', async () => {
@@ -106,9 +106,6 @@ test('roll collision clipping persists instead of restoring its pre-collision la
   a.vel.set(0, 0, f.PLAYER.swimSpeed);
   a._integrate = () => { a.vel.x = 0; a.vel.z = 0; };
   f.tick(a); assert.ok(a.s3.roll);
-  // Neutral input preserves the clipped stop. A fresh direction may steer on
-  // later ticks, but collision never restores the saved launch vector.
-  a.intent.move.set(0, 0, 0);
   a._integrate = () => {}; f.tick(a); close(a.vel.lengthSq() - a.vel.y ** 2, 0);
 });
 

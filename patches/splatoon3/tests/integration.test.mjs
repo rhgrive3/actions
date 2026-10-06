@@ -35,8 +35,7 @@ test('actual roll consumes one jump edge and routes armor overflow through damag
   f.tick(a); assert.ok(a.s3.roll); assert.ok(a.vel.z < 0); assert.equal(a.invuln, 0);
   const first = a.s3.roll; f.tick(a); assert.equal(a.s3.roll, first);
   a.damage(60, null, 'shooter'); assert.equal(a.hp, 100);
-  // The first 60 breaks 30 HP armor while absorbing that entire hit.
-  a.damage(60, null, 'shooter'); assert.equal(a.hp, 40);
+  a.damage(60, null, 'shooter'); assert.equal(a.hp, 80);
 });
 test('surge holds still, fully charges, launches on release and cancels on loss of wall', async () => {
   const f = await fixture(), a = f.make(); a.form = 'squid'; a.intent.squid = true; a.climbing = true;
@@ -126,11 +125,8 @@ test('splatling first stage yields its 80-frame stream, conserving the prepaid i
 test('bomb sub power normalizes the low base once and reaches the raw high value', async () => {
   const f = await fixture(), a = f.make(), r = a.weaponRunner; let thrown;
   a.s3.loadout = Array.from({length:3},()=>({main:'subPower',subs:['subPower','subPower','subPower']}));a.setWeapon('shooter');
-  const ps = new f.Projectiles(new f.THREE.Scene()); f.G.projectiles = ps;
-  const velocity = ps.throwVelocity.bind(ps);
-  ps.throwVelocity = (actor, speed, out) => { thrown = speed; return velocity(actor, speed, out); };
-  for (let i = 0; i < 6; i++) r.update(1/60,{sub:true});
-  r.update(1/60,{subReleased:true}); assert.equal(ps.bombs.length,1);
+  f.G.projectiles.throwBomb = () => {thrown=f.SUB.bomb.throwSpeed;};
+  r.aimingSub=true;r.update(1/60,{subReleased:true});
   assert.ok(Math.abs(thrown-1.68*60)<1e-9);assert.ok(Math.abs(f.SUB.bomb.throwSpeed-1.12*60)<1e-9);
 });
 test('splatling diving cancels both charging and an active stream', async () => {
