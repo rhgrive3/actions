@@ -154,6 +154,41 @@ export function installSubSpecialFidelity(api, profile) {
     return startSpecial.apply(this, args);
   };
 
+  // Triple Splashdown's Super-Jump variant is an admitted action, not the
+  // ordinary rise/hang/fall state. Keep the active token only to lock/refill
+  // semantics and replication while Super Jump remains authoritative.
+  const actorUpdate = Actor.prototype.update;
+  Actor.prototype.update = function (dt) {
+    const jump = this.superJumpState;
+    const specialPressed = !!this.intent?.special && !this._prevIntent?.special;
+    if (jump?.phase === 'flight' && specialPressed && !jump.s3SlamArmed
+      && this.weapon?.special === 'slam' && this.specialReady()) {
+      const token = { id: 'slam', t: 0, phase: 'superjump', armor: false, startY: this.pos.y, superJump: true };
+      jump.s3SlamArmed = token;
+      this.specialActive = token;
+      this.special = 0;
+      this.ink = PLAYER.inkMax;
+      this.stats.specials++;
+      api.emit('special:use', { actor: this, id: 'slam' });
+      G.audio?.play('special_activate', { pos: this.isLocal ? undefined : this.pos, volume: this.isLocal ? 1 : 0.7 });
+    }
+    return actorUpdate.call(this, dt);
+  };
+
+  const updateSuperJump = Actor.prototype._updateSuperJump;
+  Actor.prototype._updateSuperJump = function (...args) {
+    const jump = this.superJumpState;
+    const token = jump?.s3SlamArmed;
+    const result = updateSuperJump.apply(this, args);
+    if (token && this.superJumpState !== jump && this.alive && this.specialActive === token) {
+      this.character.trigger('special_slam');
+      try { this._slamImpact(SPECIALS.slam); }
+      finally { if (this.specialActive === token) this.specialActive = null; }
+      this.invuln = Math.max(this.invuln, 0.3);
+    }
+    return result;
+  };
+
   Object.defineProperty(Projectiles.prototype, INSTALL, { value: true, configurable: false });
   Object.defineProperty(Projectiles.prototype, Symbol.for('inkwave.s3.sub-special-fidelity.originals.v1'), {
     value: Object.freeze({ throwVelocity, explodeBomb }), configurable: false,

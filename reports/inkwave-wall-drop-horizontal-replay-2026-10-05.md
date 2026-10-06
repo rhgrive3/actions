@@ -1,0 +1,11 @@
+# PR609 current-envelope replay repair
+
+Private baseline: integration 2dc15d1 (main37ab + PR609/612), plus integration owner's one-line network respawn-anchor reconciliation staged separately as433566b. Only the final runtime/test/report delta is handed back; that preparation commit is not part of the repair.
+
+A new PR609 wall-motion divergence was reproduced with the actual existing32-field recorder, JSON round trip and ghost constructor, with no movement inheritance. Fixed seed13 horizontal glob8 belongs to the main unit, speed44.5190461. Quantized ghost speed44.5221978 is closer to the near unit's nominal28.8 than the main nominal63, so the old nearest-center logic selects the wrong unit. At the same source seed the phases are73/5/33F for both, but firstSpeed is0 for owner and.06 units/frame for ghost. After10 native wall-drop updates the owner stays at y3 while the ghost is at y2.4. Ghost painting remains prohibited; the defect is reconstructed motion/state.
+
+The pinned source intervals are disjoint: horizontal main (1.05±.36)*60 =41.4..84.6; horizontal near (.48±.11)*60 =22.2..35.4. The new helper chooses minimum distance to these source intervals, including component rounding at interval endpoints, instead of to nominal center speeds. It is used only for ghost horizontal reconstruction when exactly two finite, non-overlapping, non-offset source intervals exist. Unsupported/overlapping layouts fall back to the prior selection; vertical and all local birth unit ownership remain unchanged.
+
+No new threshold, profile value, packet field or33-field extension is introduced. This does not solve future #531 player-velocity inheritance: once moving birth speed may cross source intervals, immutable unit identity is a separate required contract. That larger dependency is not silently imported.
+
+Focused source evidence:9/9 (4 new plus5 existing fidelity contracts). New tests cover the fixedseed13 actual32-field counterexample and all13 wall states/10F traces, raw lower/upper bounds for main and near plus2-decimal component rounding, vertical unit/collision preservation, and rejection of overlapping/offset/unsupported source layouts. No new build/full CI was run; integration owns one composed acceptance cycle.
