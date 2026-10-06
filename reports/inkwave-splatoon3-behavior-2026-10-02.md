@@ -250,3 +250,11 @@ cloud/Halyard cube allocation at default high settings, not only after later
 runtime refresh. Existing formats, appearance policy and gameplay stay intact.
 These are project resource dimensions, not Nintendo/Switch memory values.
 See [the cold-boot budget report](inkwave-cold-boot-budgets-2026-10-04.md).
+
+## 2026-10-06: マッチ開始の Opening（#605）
+
+本家のスプラトゥーン3はマッチ開始時専用の短い Opening を鳴らす（Inkipedia の楽曲表では「Opening (C-Side)」を Multiplayer (Match start) で再生と記載、参照は Ver.11.3.0）。これは最初の2分のバトル曲とも最終1分の曲とも別の楽曲である。公開版の INKWAVE は `src/main.js` の `_intro()` が `this._playMusic(null)` を呼んでいたため、ローディング後のイントロ 4.2 秒は独自の `ready` SFX 以外が無音で、`battle` は GO の `playing` で初めて鳴り始めていた。オフラインとオンラインは同じ `_intro()` 経路を通る。
+
+`patches/splatoon3/adapter.mjs` のビルド時変換で、`src/audio/music.js` に原本の合成曲 `opening`（'Opening Sting'、140 BPM、A minor、4小節）を追加し、`_intro()` の無音要求を `this.match?.mode === 'boss' ? null : 'opening'` に置き換えた。Nintendo の音源は使っていない。テンポが `battle` / `battle_final`（ともに 150 BPM）と異なるため、`music.play()` が同じ BPM のときだけ次的小節待ちにする仕組み（`cur.song.bpm === song.bpm`）に掛からず、GO で即時のクロスフェードに入る。GO の `battle`、1分経過の `battle_final`、終了時の `stop`、結果画面、Boss の `_playMusic(null)`、固定シミュレーション、練習場とアトラクトの分岐は変更していない。Boss 導入は `_intro()` の先頭で抜けるため到達せず、`mode === 'boss'` の判定は boss エンティティ未解決時の保険である。
+
+確認は `patches/splatoon3/tests/issue-605-opening-cue.test.mjs` によるソース級の検証（原本が無音であること、構成後イントロが `opening` を要求すること、`getSong('opening')` が警告ゼロで 4 小節を返すこと、他トランジションと Boss/練習場分岐の不変、接続の欠落・重複・再適用が fail-closed であること）と、構成後全ソースの構文ゲート、`adapter.test.mjs` の実行。実ブラウザでの試聴と実機比較は行っていない。本家の Opening の正確な尺、GO との前後関係、クロスフェードの聞こえ方は未確認のまま残す。イントロ 4.2 秒に対し 140 BPM 4小節は約 6.9 秒なので、GO で曲の途中からクロスフェードで切られる（Issue の契約は「ends/cuts into the normal battle track at GO」を許容）。計測が必要な差分として扱う。
