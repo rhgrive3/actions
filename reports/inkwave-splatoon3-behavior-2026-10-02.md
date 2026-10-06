@@ -203,6 +203,9 @@ Flow の外殻・粒・リボンが GTAO の法線／深度パスに不透明な
 Nintendoの非公開protocolや通信時刻を推定して本家一致とはしない。
 実装範囲、既存PR重複監査と確定した検証結果は
 [batch C記録](inkwave-batch-c-issues.md)に記録する。
+## 2026-10-04 Heavy Splatling player radius / charge-walk
+
+[#403/#470 comparison](inkwave-splatling-radius-charge-2026-10-04.md) records the sourced `.225/.285` relative player-collider correction and the active-charge3.72 target. Visual/field dimensions, Actor acceleration, and charge/stream timing are preserved. The report distinguishes native/minified-module regressions, negative controls, and actual PR64 composition from unverified absolute Switch distance and real-device parity.
 
 ## 2026-10-04 B: モバイル入力の欠落 (#389 / #288)
 
@@ -238,9 +241,61 @@ C batch 02 (#433/#419/#415): 未使用Online資源とMinimap OFFの描画バッ�
 
 Four current-public defects #366/#370 (one duplicate pair), #375, #384, #395 are addressed by the local-quality idle adapter. Music=0 parks only music scheduling; LOW/touch cloud color payload is 2.5 MiB; leaving marina disposes its far cubemap; offline pause presents one invalidation-driven frozen backdrop. These are browser resource policies, not Nintendo memory measurements. Gameplay timing, attacks, scoring and match durations are unchanged. See [implementation, sources, regression evidence and remaining physical-device limits](idle-resource-batch-2026-10-04.md). New full-app WebGL/Web Audio acceptance runs in Actions; do not infer success from CPU mocks.
 
+## 2026-10-04 Flow progress and respawn continuity
+
+[#468/#471/#306 comparison](inkwave-flow-progress-lifecycle-2026-10-04.md) records inactive decay, cause-sensitive death losses, preserved active/inactive Flow through native respawn, and full-reset clearing. The existing synthetic award scale is retained with explicit fp-loss normalization; community verification is distinguished from official/pinned numerical data. Real-character regressions require the aura to hide on death and resume without replaying activation.
+
 ## 2026-10-04 weapon edge-case supplement
 
 See [weapon edge-case comparison](inkwave-weapon-edgecases-2026-10-04.md) for #354/#356/#357/#361: stable-human Dualies3F first emission; Splatling separate ground1.6° pitch envelope; terrain Blaster35HP cap; horizontal Roller12+1 gameplay units. The report separates actual source/minified/composed-code tests from S3 probability/position/falloff and released-tap calibration still pending. No native source or deployed main is changed by the draft.
+
+## 2026-10-04 — touch/gyro pitch and connected gamepad ownership (#474, #475)
+
+- Base: `17602ab094da6efb663d872934458e818ae3c93e`; target remains published `inkwave-public/` composed with gameplay, touch-layout and reliability adapters. Upstream source and gyro gain/filter math are unchanged.
+- #474 / S3 Ver.11.3.0 comparison: motion controls own pitch while the stick surrogate keeps horizontal turning. This is a mobile mapping rule, not a claim that Nintendo supports touch-swipe aiming. See [issue #474](https://github.com/rhgrive3/actions/issues/474) for its Nintendo/Options reference sources. The new reliability adapter gates vertical swipe production for look/FIRE/SQUID/SUB together and gates consumption while gyro is active. A shared gyro-state synchronizer clears queued vertical input before the first new OFF swipe, preserving that new swipe instead of swallowing it. Gyro pitch and horizontal swipe remain independent.
+- #475 / hybrid input: continuous pad axes and held gameplay buttons now require actual `lastDevice === 'pad'`. Physical polling still acquires pad ownership on deliberate movement/button edges. Leaving pad clears pending gameplay button edges and the controller's filtered look/edge boost; existing menu hold masking is preserved. This is an input ownership correction, without claiming Nintendo dead-zone equivalence or changing the current 0.3 acquisition threshold or stick response curves.
+- Focused production-module tests: 20 passing, including ten-second neutral-owner drift traces at 30/60/120/144 Hz, deliberate acquisition, held-button suppression, pad→touch filter reset, gyro pitch with swipe yaw, stale transition clearing, and first fresh OFF swipe for four drag paths at sensitivity -5/0/+5.
+- Final reliability suite: 373 passing; existing pause/menu-owned gamepad edge/hold coverage retained. Upstream/reference quick compatibility check passed. All 85 transformed public JS modules syntax-checked. Existing #325 controls adapter composes in its intended position after reliability.
+- Complete serial gameplay+reliability suite result recorded in the corresponding PR after completion. Browser rendering, physical Android Chromium/iPadOS Safari with Bluetooth controllers, real drifting hardware, and comparison on Nintendo hardware were not performed in this constrained cloud run; #475 hardware acceptance remains unverified. No deployment or quality reductions.
+
+## 2026-10-04: 標準コントローラー・マップ・ジャイロの入力所有権（#197 / #265 / #276 / #309）
+
+公開 main `0859bf4fab08edc74c25fcb790e662a748a91ec9` の全 adapter 合成を対象とする。比較版は Splatoon 3 Ver.11.3.0。対象はブラウザの `mapping === "standard"` ゲームパッドと、既存の DeviceMotion ジャイロ。Nintendo コントローラー独自の motion API は追加しない。
+
+### 出典
+
+- [Nintendo S3 ジャイロ設定](https://www.nintendo.com/jp/games/feature/splatoonqa/other/gyro/index.html): ON/OFF と、OFF では Rスティックで照準を合わせる説明。
+- [Nintendo S2 公式基本操作](https://support-jp.nintendo.com/app/answers/detail/a_id/34693): Yカメラリセット、Xマップ、右スティック押込みスペシャル、ジャイロON時の右スティック左右操作。S2資料をS3固有フレーム値の根拠にはしない。
+- [S3検証Wiki 操作方法](https://wikiwiki.jp/splatoon3mix/操作方法): 同じS3ボタン割当、X再押下でマップを閉じる、ジャイロON時の右スティック上下無効、マップ表示中もプレイヤー操作可能。
+- [Inkipedia Options](https://splatoonwiki.org/wiki/Options): S3の右スティック左右反転と上下反転の独立設定、motion ON時の上下無効。
+- [W3C Gamepad §14](https://www.w3.org/TR/gamepad/#remapping): standard index 2=右側十字の左、3=上、8=中央左、11=右スティック押込み。raw mapping の配列順序は推測しない。
+- [しりゅ*本人の射撃練習記事](https://note.com/yukkurisiryu/n/n3be81c8de943): 「フリック操作はしていないのに当たらない場合」に、マップを開いたままRブラスターで連続直撃を練習する記述。本人の経験であり、任天堂の仕様公表や実機フレーム計測ではない。
+
+### 修正と再現
+
+`patches/reliability/controls-adapter.mjs` を既存の入力edge・pause処理の後に適用し、物理Inputやメニューのボタン順序は変更せず、PlayerControllerのゲーム内消費先を修正した。
+
+- #197: standard の top face（Nintendo X / index3）でマップを切り替え、Specialは右stick押込み（index11）に限定。left face（Nintendo Y / index2）を新しい単一 `resetCamera()` へ一度だけ配送。Actorのheading・neutral pitchへ戻し、filtered stick/gyro滞留量を破棄する。raw/nonstandardは従来割当を保持。操作ガイドも標準物理位置を明示し、キーボード・タッチ・Pauseメニューの割当は維持。成功したSJではpadマップも閉じる。
+- #265: マップ選択のマウスクリックは引き続きメインに渡さず、独立したpad ZRを保持する。チャージャー30tick保持→XまたはTabでマップ→保持継続では発射0、実際にZR解放した時だけ1発。シューターは通常のインク・間隔で継続する。サブ/特殊行動の制限やマップ中のカメラ操作は一括解除しない。
+- #276: 実際のgyro enabled状態を縦lookの唯一の所有権条件にし、ON時は右stickのfiltered Yとpitch加算を止める。Xの反応曲線・速度はそのまま。ON/OFF切替時に古いYを消し、OFF復帰時の惰性入力を防ぐ。gyroとtouch swipe自身の符号・感度は維持。
+- #309: persisted `padInvertX=false` と独立toggleを追加し、pad yawだけを反転。縦反転との4組合せ、mouse/touch/gyroに影響しないこと、native saveJSON/loadJSONによる再読込を確認。
+
+未計測事項: #197のカメラリセットはこのエンジンのneutral pitchを使う。Nintendoの物理姿勢ごとの正確なcamera/gyro再基準化曲線、各機種のraw mapping、実Pro Controller/Joy-Conセンサー、実iOS/Androidの体感遅延やGPU表示は未検証。#287の−5〜+5感度を未測定倍率へ単に貼り替える修正はしていない。既存の「D-padで即SJ」やマップカメラの独自仕様も本バッチで完全S3一致とはしない。
+
+重複除外: #303は既存 `pause-adapter.mjs` が `menuBlocked` を保持し Match.updateControllerで判定するため、raw sourceだけを読んだ報告と判断。#271も本番 `runtime/install.mjs` が defaults.aimAssist=0 と `_assistTarget=()=>null` を適用済み。正しい公開挙動を再修正しない。PR #60（platform lifecycle）/#62（物理edge配送）/#184（menu performance）の最新差分を読み、この4件の重複実装を除外した。
+
+受入では実Input.pollPad、PlayerController、Actor、WeaponRunnerとnative保存関数を使用。UI/センサー/描画のみをfixture化し、30/60/120Hzから同じ60Hz tickのmap/charge/fire履歴を比較。PR #62 の正確な input-adapter/touch-edge-adapter を一時合成した35試験も成功。CPU負例はcontrols adapterだけを実dispatcher順序から外し、4件の故障を検出する。GPU/実機成功とは別扱い。
+
+最終ローカル検証: 全体754/754（失敗/skipなし）、controls受入12/12、公開minify出力12/12、負例は2pass/10fail、既存pauseとの専用合計35/35。PR #62 `683957332748ea173fa49408b1df2dca42f16265` の正確な物理edge処理を合成して35/35、PR #63 `bfae5fd133c1e4682d0def2d87c5321929cb449d` のprofile/weapons/resourcesを合成して12/12。別PRの全変更を統合済みとはしない。local-quality8/8、motion/workflowゲート10/10、raw upstream差分なし。exact-head GitHub browser CIはPRで追跡する。
+## 2026-10-04: authoritative HUD follow-up (#425 / #381)
+
+The build-only quality layer replaces the continuous special percentage with
+23 visible segments and forwards the authoritative match winner to Judd.
+Points/costs/charge rates, roster readiness and match rules are unchanged.
+Close non-ties no longer become presentation-only ties; exact-tie gameplay
+#158 remains outside this batch. Sources, negative controls, full native-method
+checks and unverified browser/physical-device limits are recorded in
+[the scoped HUD report](inkwave-authoritative-hud-2026-10-04.md).
 
 ## 2026-10-04: first-allocation mobile resource budget
 
@@ -250,6 +305,290 @@ cloud/Halyard cube allocation at default high settings, not only after later
 runtime refresh. Existing formats, appearance policy and gameplay stay intact.
 These are project resource dimensions, not Nintendo/Switch memory values.
 See [the cold-boot budget report](inkwave-cold-boot-budgets-2026-10-04.md).
+
+## 2026-10-04 — Run Speed Up の通常空中ターゲット分離 (#467)
+
+- 対象は公開 `inkwave-public/` の実 Actor/WeaponRunner と既存 S3 gear wrapper。比較基準は Splatoon 3 Ver.11.3.0 の Run Speed Up「地上ヒト移動を強化し、通常ジャンプ距離を増やさない」という範囲。参照リンクと条件は [#467](https://github.com/rhgrive3/actions/issues/467)。Nintendo の距離単位と WU の一致は仮定しない。
+- 非攻撃・非構え・非特殊行動のヒト空中状態だけで、通常走行用 `runSpeed` AP 倍率をターゲット速度へ掛けない。地上速度、既に得た踏切時の水平速度、武器攻撃・チャージ・ローラー・サブ構え・特殊行動・イカ状態の倍率は従来経路を維持。速度ベクトルを直接書き換える補正ではない。既存の独立 Flow 倍率もこの修正では再設計しない。
+- 新規 10 試験は実 Actor の `_horizontal` / `_integrate` / `_resolve` / 着地処理を使用。衝突面だけを平面fixtureとし、7ブキ×初速0/3/8.64×描画30/60/120/144Hzで同じ60Hz固定clockを進める。0APと57APの同初期状態の全空中軌跡・着地座標が一致。地上では引き続き速度差があり、別々の踏切初速を与えた場合は慣性差を保持する。
+- 同じ新規試験を未修正mainのgear wrapperに戻した反例は 9/10 不合格、修正後は10/10合格。これはロジック/接触fixtureの検証で、Nintendo実機やブラウザ描画の比較を代用しない。
+
+## 2026-10-04 — pad map confirmation and shared touch camera reset (#391, #421)
+
+Dependency: existing controls PR #325. This batch reuses its standard mapping and
+`PlayerController.resetCamera`; it does not recreate or claim that prior work.
+Initial reference head `af41abe1`, reconciled against integration head `c5be5666`.
+Public imported upstream remains unchanged; only build-time navigation connections
+and bounded regression/browser checks are added.
+
+- #391: standard D-pad selects a stable actor identity (or spawn), without jumping.
+  A fresh right-face A press confirms; holding A while newly selecting a direction
+  also confirms. Invalid/dead/removed targets never redirect to another teammate.
+  Close, input-owner change and disabled play clear selection. Existing native HUD
+  beacon, legend and jump-line rendering display the selected target. Mouse/touch
+  direct selection and unknown/raw-pad behavior remain separate.
+- W3C standard mapping explicitly identifies right-face button1, top-face3,
+  left-face2, and directional buttons12–15: https://w3c.github.io/gamepad/#remapping .
+  This extends the Nintendo-position mapping already implemented in #325; no raw
+  device-specific mapping is guessed. S3 map-confirm references and acceptance
+  conditions are retained in https://github.com/rhgrive3/actions/issues/391 .
+- #421: a dedicated camera-reset icon is added beside gyro/pause, including Japanese
+  accessible names and an independent saved/resizable layout entry. It consumes
+  one touch press through the same shared reset function as standard Y, without
+  toggling gyro. Reset clears swipe/pending sensor/tracking state and resynchronizes
+  attitude so the next sample starts a new baseline. Exact Nintendo reset-angle
+  calibration remains unclaimed; existing #325 heading/neutral-pitch semantics
+  are retained. Reference scope: https://github.com/rhgrive3/actions/issues/421 .
+- New production-module tests cover all four targets, confirmation/hold, cancel,
+  removed/dead targets, roster reorder, input ownership, menu-held confirmation,
+  raw/keyboard/touch parity, actual HUD selection output and actual gyro rebaseline.
+  The fixed-clock path covers30/60/120/144Hz render input. A negative control excludes
+  only the navigation adapter; every new case detects the missing behavior.
+- Existing Chromium/WebKit gates are extended with native reset taps, actual sensor
+  rebaseline, native HUD highlight/screenshots, and reset-control layout save/reload.
+  These browser results are reported by exact-head CI; physical Switch/iOS/Android
+  hardware comparison and unmeasured Nintendo motion-reset constants are not claimed.
+## 2026-10-04: deterministic assigned-Alpha Turf ties (#158)
+
+The native Turf judge now preserves the lobby/roster's Alpha team0 assignment
+on exact equality instead of drawing a new random winner. Non-ties, Boss and
+actual coverage are unchanged. It composes with PR486's authoritative Judd
+presentation, including a host/local player on Bravo. The historical 0.1%
+display-bonus note is not treated as a newly calibrated S3 parameter.
+See [the scoped tie-policy report](inkwave-alpha-tie-2026-10-04.md) for source
+provenance, native roster/packet checks and remaining physical-device limits.
+## 2026-10-04 Charger paint / Dualies and Roller launch dependency
+
+[#407/#420/#414/#431 comparison](inkwave-weapon-paint-inertia-2026-10-04.md) separates Charger impact and line-spacing endpoint ratios from absolute distance calibration, and adds the sourced player-forward launch dependency at final projectile publication. Native/minified regressions are distinguished from still-unverified Nintendo internal basis/clamps and Switch/browser physical acceptance.
+## 2026-10-05: Tenacity passive-charge implementation
+
+The owner-side live Turf path now represents head-main Tenacity and its
+active-team deficit source. Effective/base special-cost conversion preserves
+SCU-independent normalized fill. See [scope and verification](inkwave-tenacity-2026-10-05.md)
+for native/emitted negative controls and unverified hardware/network conditions.
+## 2026-10-05 Roller flick target (#373)
+
+The [Roller movement comparison](inkwave-roller-flick-movement-2026-10-05.md) replaces the native windup-progress slowdown with the already sourced2.88 WU/s attack target for horizontal/vertical swings. Release timing, ink, pose, gear ownership and rolling/post-release branches stay separate; absolute physical scale and Switch acceptance remain unverified.
+## 2026-10-05: offline Turf gear-change continuation
+
+An explicit result→existing loadout→continue path preserves native equipment
+saving, Back/locker history, and the previous result/podium. Repeated or obsolete
+callbacks cannot start another round. See [the scoped continuation report](inkwave-result-continuation-2026-10-05.md).
+Online per-player continuation and physical Switch timing remain unresolved.
+
+## 2026-10-05 Heavy Splatling accounting / natural-end recovery
+
+The [#543/#501 report](inkwave-splatling-accounting-recovery-2026-10-05.md) unifies whole-round reservations with ink spending, and replaces the generic0.22-second natural stream recovery with the independently sourced4F field. Partial-duration rounding is explicitly an internal consistency choice; Nintendo quantization and physical-device comparison remain unverified.
+
+## 2026-10-05 Dualies reticle lifetime
+
+The [#518 comparison](inkwave-dualies-reticle-state-2026-10-05.md) makes HUD post-roll state follow the same s3Turret owner as concentrated firing after the separate movement-lock timer expires. Existing visual geometry and exact Nintendo pixel matching remain outside this state-lifetime repair.
+
+## Death-time Turf Map navigation (#409)
+
+[Respawn navigation comparison](inkwave-respawn-navigation-2026-10-05.md) separates live map/target selection from disabled dead-body input. Deferred requests remain cancellable and wait for actual respawn grounding; shared HUD/diorama routing preserves the standard-pad A-confirmation owner. Exact physical Squid Spawn timing and the separate #273/#362 behaviors remain independently tracked.
+
+## 2026-10-05 Controller disable look state
+
+The [#521 comparison](inkwave-controller-disable-look-2026-10-05.md) clears transient pad filter/boost once when the controller becomes disabled, preventing stale neutral-stick camera motion after pause or respawn. Current physical input, weapon/gameplay values and gyro/mouse mappings remain independent.
+## 2026-10-05 Held-axis touch ownership
+
+The [#497 comparison](inkwave-touch-pad-arbitration-2026-10-05.md) keeps a live touch pointer/stick gesture from being canceled by repeated samples of an already-deflected pad axis. Final-contact release restores the existing pad acquisition rule; input math, thresholds and actual ownership-reset semantics remain separate.
+## 2026-10-05: non-battle studio shadow budget
+
+Showcase now uses the native effective shadowSize with its historical2048 ceiling,
+releases old targets on quality changes/dispose, and preserves animated per-frame
+and portrait refresh. [Scope and native/emitted checks](inkwave-showcase-shadow-2026-10-05.md)
+separate resource dimensions from unmeasured physical-device performance.
+## 2026-10-05: #540 team WIPEOUT producer and HUD ownership
+
+The all-dead check is moved from local final-killer credit into ordinary 4v4 Match life transitions. Both teams publish one identity-scoped event per wipe; respawn rearms it. HUD preserves kill/assist/streak bookkeeping, prioritizes own-team danger on simultaneous wipes, and distinguishes own/enemy text and existing sounds. Flow #505 remains separate. See reports/inkwave-team-wipeout-2026-10-05.md for primary announcement, native/minified regressions and unverified device/network/audio limits. No physical S3 equivalence is claimed.
+### #409 follow-up: held pad axes versus a fresh navigation owner
+
+A real touch pin's deferred request survives unchanged held-axis repolling.
+Navigation-only provenance retains explicit owner-change cancellation for new
+button/key/touch input and native-threshold axis transitions, without changing
+general device acquisition. Source/emitted 31/31; negative baseline reproduced;
+new native-browser acceptance remains pending the combined batch. See
+`inkwave-respawn-navigation-2026-10-05.md` for scope and analog ambiguity.
+
+## Issue #523: corner map is an explicit custom aid, not the default information model
+
+- Baseline: Splatoon 3 comparison remains 11.3.0. Nintendo-hosted GameWith guide https://www.nintendo.com/jp/ichikara/av5ja/03_en.html (guide information dated 2024-04-01) describes pressing X to open the map and inspect territory. This establishes the explicit-map model; it is not a new 11.3.0 frame-value source or Switch measurement.
+- Before: native DEFAULT_SETTINGS enabled a constantly visible corner map, giving fresh/default players map information without choosing to open the full map. After: build adapter defaults that option to false and labels it “Corner map (non-S3 aid)” with English/Japanese explanation. Existing explicit saved true remains an opt-in custom aid; partial, absent, invalid, or null saved settings inherit false through the unchanged native loadJSON.
+- Scope: default/configuration and settings explanation only. Full Turf Map, touch/controller/keyboard map controls, dead-map selection, pending respawn Super Jump, and explicit opt-in corner map are retained. No weapon, movement, sensor, camera, or hair file changes.
+- Validation: actual config and actual loadJSON source cover persistence cases; actual native Game._updateHud executes 120 default hidden-map frames, then opt-in and opt-out. Emitted config is tested separately. Existing actual controller/respawn navigation suite exercises full-map access with the new default false. No browser screenshot or Switch side-by-side validation is claimed.
+- Results: full patch suite 955 pass / 0 fail / 2 skip (957 total; started before the final additional HUD test); final focused policy + actual respawn-navigation suite 28/28 including emitted config and HUD test; local-quality/gates 132 pass / 0 fail / 3 skip (135 total). Canonical browser verifier already explicitly initializes minimap=false, then enables true for its opt-in check; no implicit true browser-fixture requirement was found. Actual browser rendering is still pending integration acceptance.
+- Review follow-up for #523: a separate actual emitted Game._updateHud + emitted Match.teamSummary test now uses emitted DEFAULT_SETTINGS. On the composed #510 mutable HUD transport,120 default-off frames invoke only tickHidden and produce map=null; explicit opt-in resumes the real map payload. All6 policy tests pass both on the standalone emitted build and the four-change combined build. Game's rendering constructor/boot is not run in this CPU module test.
+
+## Issue #527: distinguish Roller raw swing frames from complete release/repeat phases
+
+The pinned raw vertical SwingFrame26 is a component, while published verification gives kid31F, squid44F, repeat56F. Previous profile incorrectly used26/47F. New vertical timing is31/56F; a Roller-only13F native actor admission delay gives squid44F and horizontal34F, preserving horizontal kid21/repeat42. Buffered taps survive that interval; subsequent explicit squid input, death/reset cancel normally. Original public raw files remain unchanged. See `patches/splatoon3/reference/roller-startup-phases-527.md` for exact sources/derivation and limitations.
+
+Native Actor→WeaponRunner tests cover held/tap × kid/squid × horizontal/vertical, elapsed0 convention, consecutive56/42F releases, and identical30/60/120/144Hz render schedules. Actual Character bones/drum assertions are retimed to the same authoritative31F release. Existing .18 movement recovery, post-shot sub/swim admission, vertical roll-transition22F, and physical Nintendo/mobile validation remain separate and unverified; this is an Addresses patch, not closure of all broader acceptance points.
+
+Validation: final full gameplay/reliability976 pass/0fail/1 optional skip (977 total); quality/gates155 pass/0fail/4 optional skips (159 total); production emitted startup+movement9/9, final emitted startup including unchanged non-Roller admission5/5; actual Character geometry10/10. Previous emitted baseline fails the new startup/repeat endpoint tests (2 failures,3 invariant/cancellation controls pass). Pinned reference verifier:11 files/146 extracted/14 unknown, unchanged. Source31/56/13 are derived from the ver11.0.0 verification table; continuity to11.3.0 is an inference from the absence of a corresponding update-history change, not an11.3.0 physical measurement.
+- Review follow-up for #527: mode selection occurs at runner admission, not at the input edge; the eight startup conditions keep ground/air state fixed. Four additional actual Actor/runner cases record land/leave at8F versus20F around the13F wait (34/44F outcomes), and pass in the emitted build. Ground flags are controlled rather than physical landings. Nintendo's dynamic emergence/mode-recognition boundary and future PR49625F freefall-threshold crossing remain unverified, with no speculative mode-snapshot change. See the added reference section.
+
+## Issue #410: judge Turf from the TIME UP boundary
+
+- Root at the current integration base: Match enters finish at time0, then the global projectile system continues painting while the native judge waits2.6s. A deterministic actual Match reproduction captured51:49 at0:00 and later judged40:60/winner1. This is a result-integrity correction; no Nintendo numerical timing, weapon strength, physics coefficient, or new world scale is inferred. The source timer/fixed-step boundary ordering is preserved.
+- The host now copies two coverage scalars before the playing→finish state event and before the remainder of that tick. Delayed `_judge` copies those frozen values into its normal result and uses the existing assigned-Alpha tie policy. Duplicate finish does not resnapshot; intro/playing resets the snapshot for a new cycle. Boss judging bypasses this path. Followers continue accepting the normal host result packet and do not judge their local paint. New host-election/migration consensus is not added.
+- At the same Turf transition, local current/previous fire/sub/jump/squid/special inputs and buffers are neutralized together. Clearing current sub alone would synthesize a release in the following Actor update; matching previous state avoids that unintended bomb throw.
+- Real native and emitted Match/NetMatch/Projectiles tests execute delayed judging, synchronous finish listeners, actual bomb splash calls and actual cloud rain calls against a deterministic paint fixture, host packet/follower receipt, repeated/new match state, Boss exclusion, actual Actor input-edge handling, and30/60/120/144Hz render partitions. The fixture measures result ownership, not GPU ink rasterization or a live remote transport session.
+- Finish presentation and projectile/paint simulation continue. Only coverage/winner is frozen: personal Turf statistics, late damage statistics, visuals, and network paint convergence are not certified or frozen by this change. Physical Splatoon3/iOS/Android comparison remains unmeasured. This implements the Issue's stated minimum snapshot invariant without claiming all post-time simulation effects have been removed.
+- Final validation: full gameplay/reliability978 pass/0fail/1 optional skip (979 total); quality/gates155 pass/0fail/4 optional skips (159 total); actual emitted new result tests7/7, emitted/result-tie combination15pass/1 optional skip. Previous emitted baseline fails6 new deadline/input tests while Boss control passes. Initial adapter-order diagnostic mismatch was fixed by retaining the original Alpha-tie hook as the first fail-closed check; the final full suite passes without weakening that test.
+
+## 2026-10-05: #508 Heavy Splatling staged HUD
+
+The two-ring reticle reads the current weapon's48F/72F charge boundary. Streaming maps authoritative remaining burst time to the two stages instead of treating each partial release's normalized remaining fraction as full charge. This changes presentation only. See reports/inkwave-splatling-reticle-2026-10-05.md for native/minified tests and unmeasured Nintendo pixel/hardware limits.
+
+### #533: DeviceMotion reaches the Super Jump map cursor
+
+Map-owned gyro deltas now move the actual Diorama cursor instead of being thrown
+away. The battle camera is frozen, each delta is consumed once, and boundary/OFF/
+reset cleanup prevents aim replay. Existing A confirmation and explicit D-pad
+priority remain; dead choices use #409's landing queue. Source/emitted 39/39;
+alive/dead negative controls fail without this adapter. Native browser acceptance
+awaits the next combined CI. `inkwave-map-gyro-2026-10-05.md` records the reference
+behavior and unverified physical sensitivity/FOV limits.
+
+### #505: a team WIPEOUT contributes the separate Flow bonus
+
+The shared #540 Match event now awards the sourced10 fp to each inactive member
+of the other team, including teammates waiting to respawn. Current-match and
+sequence guards prevent repeats; existing splat/assist activation and active
+extension remain independent. Native/emitted7/7 and #540/#48920/20 pass;
+#549's real #481 scoring adapter composes as23+10 on the final attacker. The old
+runtime negative gives0 instead of10. See `inkwave-flow-wipeout-2026-10-05.md`
+for producer scope and unmeasured physical/order limits. Browser acceptance
+awaits combined CI.
+
+### #504: active Flow extensions use10 seconds, capped at30
+
+The authoritative profile now matches the sourced10-second extension. Native
+local splat/assist and600-tick cadence tests pass; source17/17 and emitted Flow
+10/10 preserve #505's non-extending team bonus. Actual online attacker-owner
+credit is still blocked by the separately owned #427 / PR #494 dependency on
+this base, verified by a failing two-owner wire probe. The duration correction
+must not be described as complete online acceptance; see the dedicated report.
+
+#505 integration review clarification: the passed Match/bus tests do not prove
+cross-peer owner/proxy agreement under delayed or reordered full-roster updates.
+That online acceptance remains open; no team-event transport was introduced.
+
+#505 follow-up: native two-owner replay now confirms false and missed bonuses
+under delayed/coalesced natural-respawn snapshots. The consumer is consequently
+limited to offline matches (G.netm absent); online remains unresolved.
+
+## Issues #520 / #500: separate turf progress from incomplete damage assistance
+
+- Reference: [Nintendo's11.0.0 overview](https://www.nintendo.com/au/news-and-articles/whats-new-in-the-splatoon-3-version-11-update/) describes turf and assistance making a later splat activation easier; it does not publish fp coefficients. The [original community Flow verification](https://wikiwiki.jp/splatoon3mix/検証/イカフロー), read2026-10-05, lists100fp threshold,0.8fp per10 Turf points, and damage-assist gain upon a qualifying assist. Neither new value is claimed as a direct Nintendo parameter extraction or our own Switch measurement. Acceptance baseline remains11.3.0, with the same evidence limits as the existing community-derived Flow rules.
+- #520: retain threshold3 and the existing native Actor.addTurf point stream; weight0.003→0.0024 yields10 displayed Turf units→0.8fp and100→8fp. Native point totals and special charge still receive the full original amount. The current area-to-displayed-point mapping and continuous fractional accrual are preserved; this does not independently calibrate Nintendo physical paint units or prove10p quantum timing. Anarchy is not implemented, so no unsupported0.6 mode is fabricated. Custom Boss continues inheriting the global Flow profile and is not an S3 mode-equivalence claim.
+- #500: weightdamage0.003→0 stops immediate progress from merely hitting an enemy and stops those zero gains from resetting idle decay. The damage-credit map remains intact: a later teammate splat still reaches the existing assist handler. Splat gating, assist coefficient, streak rules, active extension, death/decay and reset logic are not rewritten. In particular, #544's14/4 assist-category split remains separate.
+- Real native/emitted Actor event tests verify10/100/fractional Turf gains, unchanged stats/special, actual PaintSystem._cpuSplat ownership/repaint zero, turf-alone nonactivation, accepted HP damage with zero immediate fp and unchanged idle clock, retained damage-assist credit, and existing active-assist extension. This is CPU/native-module validation, not live network consensus or physical console measurement.
+- Final checks: full gameplay/reliability977 pass/0fail/1 optional skip (978 total); quality/gates155 pass/0fail/4 optional skips (159 total); new actual emitted tests6/6. Previous emitted baseline fails5 new assertions with1 active-extension control passing. The earlier decay test now explicitly includes positive damage as a zero-gain case and uses positive turf for its reset assertion. A dedicated local composition with movement #504/#505 headb567566 retains its10s extension/offline-only WIPEOUT policy:37 source Flow/motion tests and25 focused tests including emitted new point rules plus movement WIPEOUT/extension tests pass, build02ca0fc89f3e. That composition is not included in this source branch.
+
+## Gyro entry, Android stationary guard, and raw handoff on current main — 2026-10-05
+
+Recomposed #551 (#376/#404/#364/#368), #187, and #524 onto the reviewed main/PR536 foundation at 5a2350f. The new main retains screenChanged, createTouchRelayout ownership, and the diagnostic long press; the superseded relayout rewrite is excluded. Waiting for sensor data does not claim gyro is active; a no-data timeout switches the preference off until explicit retry. Startup grants remain scoped to their original owner. Android fresh exact-zero rotationRate may reject attitude-reference drift within the existing 75 ms trust interval; iOS ori-to-raw adoption starts at the last accepted orientation timestamp. No gains, nonzero bias threshold, permission policy, or Android raw-source adoption changed.
+
+Full gameplay aggregate 1028 pass / 0 fail / 1 optional emitted-mode test. Source focused 50/50, source quality/platform/workflow 204 pass with 4 optional emitted-mode tests, actual emitted gyro 38/38. The Android stationary runs also assert source stays ori and rawStart stays null; the raw handoff cases cover 64 frequency/order/axis traces. Build cdf2b9b38929 succeeded. Browser startup probes are carried forward for integration CI; physical-device drift calibration, biased/non-reporting sensors, and hardware gyro feel remain unverified.
+
+## 2026-10-05: #142 portrait guard ownership
+
+The existing mandatory rotate UI now suppresses hidden-control pointer routing and offline fixed simulation until landscape returns. Online keeps world time running and blocks only local control. Rotation does not mutate manual pause or menu/history ownership, and resumes with neutral input/zero elapsed time. See reports/inkwave-portrait-guard-2026-10-05.md for native/full-emitted regression boundaries and unverified physical-device/peer limits.
+## 2026-10-05 main/sub action ownership (#530)
+
+Bomb aim/release now owns the final native dispatcher, cancels interruptible main state without a release shot, and clears a buffered emergence attack. Committed windup/Dodge clocks complete before new sub admission. Existing PR302 Splatling refund and PR318 post-shot gates retain ownership; their mechanics are not duplicated. Source/emitted21/21, fixed cadence and actual Actor/Character checks passed. Independent review also corrected cooldown debt, stale Roller visual release, actual sub-payment recovery attribution and retained Dualies fire suppression. Full evidence and pending browser/device limits: [sub action report](inkwave-sub-action-ownership-2026-10-05.md).
+
+## 2026-10-05 special movement spawn boundary (#582)
+
+Slam and Storm movement now apply the existing enemy spawn clamp once after native collision resolution; Slam does so before authoritative impact. Original radius, height condition, velocity response, phase timers and damage/paint rules are retained. Source/emitted10/10 and full1101/0 pass; all4 current map spawn settings, fixed cadence, ordinary movement and native owner/remote packet position are covered. [Evidence and limits](inkwave-special-spawn-boundary-2026-10-05.md).
+
+
+## PR587 integration: preserve startup preload budget (2026-10-05)
+
+The new main-weapon fidelity graph adds `weapons-fidelity.mjs`,
+`weapons-collision.mjs`, and `weapons-charger-flight.mjs`. Their eager HTML
+modulepreload hints raised core requests from 131 to 134. Extend the existing
+preload-only deferral list by these three modules; `prepareLoading(BUILD, order)`
+still receives the full graph. All three remain immutable, digest-verified
+Service Worker precache dependencies. No weapon or gameplay values change.
+
+On the dedicated main fc057af + PR536 composition snapshot, the unchanged
+startup checker rejects the prior build's core request count and accepts the
+corrected build: 131 core + 14 range hints, 199 precache entries, 4,586,825
+precache bytes. Static dependency closure and every revision asset digest pass.
+Only index.html and sw.js differ among non-versioned output artifacts.
+Loading adapter regressions pass 7/7 using actual compiled pre-loading Main;
+worker regressions pass 28/28, with the optional historical worker fixture
+unavailable. Native browser startup/offline timing and Switch hardware behavior
+remain unverified locally; browser CI is required for the new composition.
+
+### #592: water death during special-owned movement
+
+Storm's early return no longer bypasses the existing water hazard. Ordinary and special paths share the unchanged sea-threshold/dry-dock/attribution predicate, and special activation also checks before publishing its finishing frame. Native owner packets carry the death; accepted remote event playback applies it. Tidal Slam movement was checked through the same helper; Super Jump remains outside this correction. See [the #592 record](inkwave-special-water-hazard-592.md) for evidence and original-game/browser limitations.
+
+### #588: visible blur rejects gyro input until focus restoration
+
+Sensor admission now observes lifecycle focus as well as visibility/activity. Focus restoration rebaselines and rejects queued pre-focus samples; an unfinished startup probe is paused during blur so the remembered gyro request survives. Permission and hidden/freeze owners remain unchanged. Source quality 236/0 with 5 existing optional skips and actual emitted focus/startup/handoff 20/20 passed. Browser address-bar transfers and physical hardware remain unverified; see [the #588 record](inkwave-gyro-focus-588.md).
+
+### #571: deliberate keyboard/pad takeover clears the touch map latch
+
+A touch map is closed through native `setMap(false)` when the existing explicit navigation owner changes away from touch. Held-axis presentation repolls preserve #550 touch intent; fresh input still works when the displayed owner was already pad. Same-touch pointer cleanup and each new device's map controls retain their existing behavior. Source 57/57 and emitted 37/37 passed; physical hybrid-input devices remain unverified. See [the #571 record](inkwave-touch-map-takeover-571.md).
+
+### #567: keyboard keydown preserves live touch contacts
+
+Keyboard events continue through existing key/edge/menu handlers while a physically owned touch gesture retains its device owner. The next fresh keyboard event after all contacts end can acquire keyboard ownership normally. No synthetic pointer or deferred action queue is introduced. Source focused16/16, exact #571 adapter composition16/16 and emitted47/47 passed; physical hybrid-device verification remains pending. See [the #567 record](inkwave-touch-keyboard-contact-567.md).
+
+### #595: remove the zero-rate discontinuity in calibrated gyro trust
+
+The existing absolute disagreement floor now applies at zero attitude speed as well as nearby nonzero speed. No threshold is added, Android remains attitude-only, and the existing raw handoff owner is preserved. Source trust/handoff16/16, emitted trust/viability21/21 and exact #588 focus composition19/19 passed. This preserves calibration continuity; it does not remove physical residual bias. See [the #595 record](inkwave-gyro-stationary-trust-595.md).
+
+## Issue 560: projected HUD spread ownership (2026-10-05)
+
+Remove the HUD's independent recoil/shot additions from already-projected weapon accuracy. Clear stale decorative `--bl` on switching into an accuracy reticle. Native and actual emitted HUD regressions each pass 9/9; old emitted output fails the two new cases. The new computed-style browser probe remains pending combined CI. No Nintendo pixel or hardware-equivalence claim is made. See `reports/inkwave-hud-spread-560-2026-10-05.md` for exact scope and evidence.
+
+## Issue 564: Boss audio lifetime (2026-10-05)
+
+Release the audio director's matching Boss reference on judge/results and before native Match.dispose tears down the model. Cancel its positional interval immediately and keep the singleton installation. Source/emitted lifecycle3/3 each, old emitted3 failures, runtime/WIPEOUT10/10. Physical heap/audio/long-soak remain unverified; HULLBREAKER is an INKWAVE-specific mode. Details: `reports/inkwave-boss-audio-564-2026-10-05.md`.
+
+## Issue 593: Turf personal streak ribbons (2026-10-05)
+
+Turf direct kills retain ordinary splat cards and bookkeeping but no longer emit FIRST/multi/revenge/shutdown/personal-streak ribbons. Team WIPEOUT keeps its independent producer; Flow scoring is unchanged. Native and emitted full Match/HUD tests10/10 each, with an old-source failure. Browser visual acceptance remains pending. Details: `reports/inkwave-turf-callouts-593-2026-10-05.md`.
+
+## Issue 589: Range signage backing budget (2026-10-05)
+
+At signage construction, LOW or touch uses1024² backing pixels while desktop non-LOW retains2048². Logical packing/UV/world geometry stay identical; ready fonts avoid redundant redraw. Native/emitted2/2, old-emitted negative2 failures, Range suite28/28. Phone/tablet label readability and new browser atlas/disposal probes remain pending CI. No actual GPU-memory/FPS or Nintendo-equivalence claim. Details: `reports/inkwave-range-signage-589-2026-10-05.md`.
+
+## Issue 565: winner-only Turf showcase (2026-10-05)
+
+Normal judge and offline gear-Back restoration select authoritative winner team/colour/victory choreography. Local win/XP/audio/table stay local-relative. Native/emitted Game tests3/3 each and old-source2 failures; existing result lifetime/continuation checks remain successful. Browser/physical visual acceptance remains pending. Details: `reports/inkwave-winner-podium-565-2026-10-05.md`.
+
+### #555 FxHooks actor cache lifetime
+
+Actor state and Roller flick caches are weakly keyed and explicitly retire only the actor/Match supplied by existing lifecycle events. This removes boot-long strong ownership without altering projectile stamp collection or live respawn effects. Native and minified lifecycle/explicit-GC cases pass; see [the focused report](inkwave-fx-actor-lifetime-555.md). #564 supplies the existing disposal event. Browser heap and unrelated system ownership are not claimed.
+
+## 2026-10-05: Ink Storm rain lifetime (#563)
+
+Pinned11.3.0 RainyFrame480の終了境界をvisual fadeから分離。実main60Hzでは462回/184.8 rawHPだった雨damageを480回/192 rawHPへ戻し、cloudの終了を480tickに揃えた。DPS・半径・durationは変更しない。source/実emitted各5ケースで末尾tick、owner/ghost、対象/LOS、30/60/120/144Hzを検証。固定60Hzの契約であり、実機・任意variable-dt・未統合PR322の回復helperまでは認定しない。[差分と根拠](inkwave-storm-lifetime-2026-10-05.md)。
+
+## 2026-10-05: Dualies swim startup (#590)
+
+Fresh fire recognized in swim form uses an independent total13-counted-frame startup (12 elapsed 60Hz intervals). It overlaps the native generic emergence gate and cancels stale buffered taps. Stable human3F, continuous5F and existing turret4F remain separate. The13F target is a community reference, not a raw-table extraction or measured physical latency. See [timing and cancellation evidence](inkwave-dualies-swim-590-2026-10-05.md).
+
+## 2026-10-05: fresh Charger emergence (#566)
+
+Fresh Charger progression now waits for native kidT to reach6 elapsed simulation frames after form exit, rather than the generic5-frame threshold. This gate skips charging and stored-charge states, preserving their owners. Source6/6, emitted6/6 and existing Charger18/18 pass; actual PR600 source composition7/7 separately covers min8F, rates and stored readiness. Community observation boundaries and unmeasured physical latency remain explicit in [the report](inkwave-charger-start-566-2026-10-05.md).
+
+## 2026-10-05: Slosher release presentation (#596)
+
+The actual 12F release now maps to the existing native raised/forward .25 key rather than its low/back .13 key. Accepted remote weapon:fire advances the same presentation despite a stale slosh flag; gameplay remains 12F/29F. Pose-derived muzzle origins consequently move; an actual full-segment Slosher muzzle guard closes the native LOS endpoint-sliver regression found by the wall tests. This is not a claim of unchanged launch geometry or exact Nintendo animation. See [scope and evidence](inkwave-slosher-release-596-2026-10-05.md).
+
+## 2026-10-05: weapon four × published input/water five
+
+Five new differential source tests pass over published ef712f89-equivalent9543e3e. They cover water-death/cloud lifetime, action reset, hybrid input/Map startup, focused gyro ownership, and guarded Slosher birth replication. No additional production fix was required. See [the bounded composition evidence](inkwave-weapon-fixed-five-composition-2026-10-05.md).
 
 ## Gamepad lifecycle axes and disconnect camera filters — #681 / #676 (2026-10-05)
 
