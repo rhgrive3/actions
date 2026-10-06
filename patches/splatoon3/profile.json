@@ -1341,6 +1341,12 @@
       "index": null,
       "factor": 1,
       "rawValue": 0.8
+    },
+    "weapons.dualies.shotGuideFrame": {
+      "parameter": "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json#/GameParameters/WeaponParam/ShotGuideFrame",
+      "index": null,
+      "factor": 1,
+      "rawValue": 7
     }
   },
   "gearExtra": {
