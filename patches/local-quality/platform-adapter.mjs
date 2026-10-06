@@ -8,6 +8,13 @@ const install = (code, module, name, Class, prefix = '../../') =>
   `import { ${name} } from '${prefix}patches/local-quality/${module}.mjs';\n` + code + `\n${name}(${Class});\n`;
 const badMessage = receiver => `t(${receiver}.gyro.supported ? 'Gyro permission was denied. Allow motion access in Safari settings.' : 'Gyro is not available on this device.')`;
 export function adaptPlatformSource(rel, code) {
+  if (rel === 'src/game/match.js') {
+    code = replaceOnce(code,
+      "    this.controller.enabled = this.state === 'playing' && !this.paused && this.local.alive;",
+      "    this.controller.enabled = this.state === 'playing' && !this.paused && this.local.alive && !(G.netm && G.game?.menus?.current === 'pause');",
+      'online pause local controller gate');
+    return code;
+  }
   if (rel === 'src/main.js') {
     code = replaceOnce(code, badMessage('mob'), 'mob.gyro.statusMessage()', 'settings gyro status');
     code = replaceOnce(code, 'const game = new Game();', 'installPlatformGame(Game, G);\n\nconst game = new Game();', 'game lifecycle install after clock installer');
