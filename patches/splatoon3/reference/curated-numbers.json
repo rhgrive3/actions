@@ -1465,6 +1465,46 @@
       "status": "extracted",
       "unit": "frames at 60 Hz",
       "notes": "Heavy Splatling natural stream-end recovery; independent of RepeatFrame and InkRecoverStop."
+    },
+    "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeedRandomRate": {
+      "value": 0.12,
+      "pointer": "/GameParameters/MoveParam/SpawnSpeedRandomRate",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Pinned 11.3.0 Splatling launch-speed random half-width source field."
+    },
+    "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeedRandomBias": {
+      "value": 0.2,
+      "pointer": "/GameParameters/MoveParam/SpawnSpeedRandomBias",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Pinned 11.3.0 Splatling launch-speed random bias source field."
+    },
+    "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json#/GameParameters/CollisionParam/InitRadiusForPlayer": {
+      "value": 0.31,
+      "pointer": "/GameParameters/CollisionParam/InitRadiusForPlayer",
+      "sourceId": "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Pinned 11.3.0 Dualies normal player-collision radius ratio."
+    },
+    "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json#/GameParameters/CollisionLapOverParam/InitRadiusForPlayer": {
+      "value": 0.335,
+      "pointer": "/GameParameters/CollisionLapOverParam/InitRadiusForPlayer",
+      "sourceId": "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Pinned 11.3.0 Dualies post-roll player-collision radius ratio."
+    },
+    "data/parameter/1130/weapon/WeaponBlasterMiddle.game__GameParameterTable.json#/GameParameters/WeaponParam/PostDelayFrame_Blaster": {
+      "value": 22,
+      "pointer": "/GameParameters/WeaponParam/PostDelayFrame_Blaster",
+      "sourceId": "data/parameter/1130/weapon/WeaponBlasterMiddle.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Pinned 11.3.0 Blaster post-shot delay in frames."
     }
   }
 }
