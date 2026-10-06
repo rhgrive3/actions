@@ -257,9 +257,11 @@ See [the cold-boot budget report](inkwave-cold-boot-budgets-2026-10-04.md).
 
 | 項目 | 内容 |
 |---|---|
-| 本家の根拠 | [Nintendo Splatoon 3 Overview](https://www.nintendo.com/us/whatsnew/splatoon-3-makes-a-big-splash-in-new-video-preview-filled-to-the-gills-with-fresh-gameplay-and-new-details/) / [Inkipedia Splashtag](https://splatoonwiki.org/wiki/Splashtag)。S3 のバトル開始時に各参加者の Splashtag が表示される |
-| INKWAVE の実装箇所 | `patches/splatoon3/adapter.mjs` (`src/ui/hud.js` および `src/ui/menus.js`)、`patches/splatoon3/ui.css`。`hud.js::_lineup()` の通常バトルパスで 8 名の参加者に `.iw-stag` を適用し、既存の FNV 決定論的タイトル・タグ番号・バナーアートとブキアイコンを表示。自プレイヤーは S3 同様に強調（枠線）し独自 YOU ラベルは廃止 |
-| 再現操作 | 通常 4v4 Turf War を開始。intro 中に `.iw-lineup` が表示される際、以前の独自 VS ロスターではなく各参加者の Splashtag が 4v4 の両陣営で表示される |
-| プレイへの影響 | 開始演出の視覚的アイデンティティが S3 準拠となる。試合時間（180秒）、Ready/GO、スポーン遷移、武器選択、得点・勝敗ロジックには影響しない。ボス戦の Hullbreaker 演出は既存どおり維持 |
-| 確認状態 | **ロジック・DOM確認済み**（adapter 変換、DOM ツリー構造、既存メニューヘルパー再利用、8名カード生成、ボス戦分離）。**本家実機（Switch Ver.11.3.0）とのピクセル完全一致は未確認**（レイアウトは独自実装であり、任天堂の意匠ピクセル完全再現は主張しない） |
+| 本家の根拠 | [Nintendo Splatoon 3 Overview](https://www.nintendo.com/us/whatsnew/splatoon-3-makes-a-big-splash-in-new-video-preview-filled-to-the-gills-with-fresh-gameplay-and-new-details/) / [Inkipedia Splashtag](https://splatoonwiki.org/wiki/Splashtag)。S3 のバトル開始時に各参加者の Splashtag（ニックネーム、ID番号、バナーアート、二つ名タイトル、最大3個のバッジ）が表示される |
+| INKWAVE の実装箇所 | `patches/splatoon3/adapter.mjs` (`src/ui/hud.js` および `src/ui/menus.js`)、`patches/splatoon3/ui.css`。`hud.js::_lineup()` の通常バトルパスで 8 名の参加者に `.iw-stag` を適用し、参加者プレゼンテーション・メタデータ入力契約（`title`、`tagNum`/`id`、`banner`、`badges`）を消費・サニタイズして描画。バッジ枠には提供されたグリフ（`GLYPHS`）・アワード（`AWARDS`/`AWARD_ICONS`）・安全なSVG・短縮テキストを安全に最大3枠レンダリング。メタデータ未指定時は既存の決定論的デフォルト（`tagTitle(nm)`、`tagNum(nm)`、`tagArt(fnv(nm))`）にフォールバックし、ボットやオフライン参加者に架空のバッジIDを捏造しない |
+| パイプライン限界と宣言 | 既存のロビー・ネット通信パイプライン（`session.js`、`netmatch.js`）は `{ name, weapon, style }` のみをパケット伝送しており、プロトコル書き換えを回避して機能限界・デフォルト限界を正確に宣言。参加者カード描画関数 `makeStag` は契約に基づきローカル・リモート双方のメタデータを安全に受け入れ、未提供値には安定したデフォルトを充当する |
+| クライアント対称性 | Alpha / Bravo クライアントは同一の 8 名ロスターに対して Team A（左列）と Team B（右列）を共有順序で描画し、全参加者の表示位置・順序が一致する。`_myTeam`（0 または 1）およびローカルハイライト（`.is-self` 枠線強調）のみが自機に応じて異なり、独自 YOU ラベルは廃止 |
+| オーバーレイ管理 | `_lineup` 開始時に既存の `.iw-lineup` を全削除して単一インスタンスを保証し、3500ms タイマーで確実に自動クリーンアップする。ボス戦（Hullbreaker）演出・マッチ時間（180秒）・Ready/GO・スポーン・得点判定・ゲームプレイ権威は一切変更しない |
+| 確認状態 | **DOM / HUD ロジック検証レベル**（`patches/splatoon3/tests/issue-673-splashtag-intro.test.mjs` で 11/11 合格。adapter 変換、DOM ツリー構造、メタデータ消費・サニタイズ、バッジ描画、デフォルトフォールバック、Alpha/Bravo 順序共有・ハイライト差異、オーバーレイ単一クリーンアップ、ボス戦分離）。**実 3D WebGL キャラクター描画およびネイティブネットワークソケット実線通信は未主張（DOM/HUD モックレベルでの実証）**。**本家実機（Switch Ver.11.3.0）とのピクセル完全一致は未確認** |
+
 

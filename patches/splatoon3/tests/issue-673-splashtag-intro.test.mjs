@@ -47,6 +47,7 @@ class MockNode {
     }
     this.innerHTML = attrs.html || '';
     this.textContent = '';
+    this.title = attrs.title || '';
     this._connected = true;
   }
   get isConnected() { return this._connected; }
@@ -89,7 +90,7 @@ class MockNode {
   }
 }
 
-function createHudRig(hudCode, { isBoss = false } = {}) {
+function createHudRig(hudCode, { isBoss = false, myTeam = 0 } = {}) {
   const overLayer = new MockNode('div', { class: 'iw-hud-over' });
   const sounds = [];
   const timers = [];
@@ -140,6 +141,22 @@ function createHudRig(hudCode, { isBoss = false } = {}) {
   const tagNum = (name) => '#' + String(1000 + (fnv('#' + String(name || '')) % 9000));
   const tagArt = (seed) => `<svg data-seed="${seed}"></svg>`;
 
+  const GLYPHS = {
+    star: '<svg class="glyph-star"></svg>',
+    crown: '<svg class="glyph-crown"></svg>',
+    squidlet: '<svg class="glyph-squidlet"></svg>',
+    bot: '<svg class="glyph-bot"></svg>',
+  };
+  const AWARDS = {
+    mvp: { label: 'MVP', metal: 'gold', icon: 'star', desc: 'Best all-round score' },
+    turf: { label: 'TURF KING', metal: 'gold', icon: 'crown', desc: 'Most turf inked' },
+  };
+  const AWARD_ICONS = {
+    star: '<svg class="icon-star"></svg>',
+    crown: '<svg class="icon-crown"></svg>',
+  };
+  const awardIcon = (id) => AWARD_ICONS[id] || `<svg class="icon-${id}"></svg>`;
+
   const ctx = {
     h,
     toHex,
@@ -157,6 +174,10 @@ function createHudRig(hudCode, { isBoss = false } = {}) {
     tagTitle,
     tagNum,
     tagArt,
+    GLYPHS,
+    AWARDS,
+    AWARD_ICONS,
+    awardIcon,
     timers,
     setTimeout: (fn, ms) => timers.push({ fn, ms }),
   };
@@ -165,7 +186,7 @@ function createHudRig(hudCode, { isBoss = false } = {}) {
     overLayer,
     boss: { on: isBoss },
     _actors: () => [],
-    _myTeam: () => 0,
+    _myTeam: () => myTeam,
     _snd: (name, opts) => sounds.push({ name, opts }),
   };
 
@@ -183,7 +204,7 @@ function createHudRig(hudCode, { isBoss = false } = {}) {
     { name: 'Player8', team: 1, weaponId: 'dualies', isLocal: false },
   ];
 
-  return { hud, overLayer, sounds, make8Roster, tagTitle, tagNum, fnv };
+  return { hud, overLayer, sounds, make8Roster, tagTitle, tagNum, fnv, timers };
 }
 
 // ---------------------------------------------------------------- Tests
@@ -333,3 +354,184 @@ test('#673: adapter transforms fail closed on missing or duplicate anchors', () 
   // Missing anchor in menus.js must throw
   assert.throws(() => adaptSource('src/ui/menus.js', rawMenus.replace('const fnv = (str) => { let x = 2166136261;', '/* removed */')), /export fnv/);
 });
+
+test('#673: participant presentation metadata contract - provided title, ID, banner, and badge records survive into DOM for local and remote cards', () => {
+  const composedHud = compose('src/ui/hud.js');
+  const rig = createHudRig(composedHud);
+  const roster = rig.make8Roster();
+
+  // Attach metadata to local card (card 0)
+  roster[0].title = 'Grand Champion';
+  roster[0].tagNum = '#7777';
+  roster[0].banner = 4;
+  roster[0].badges = ['star', 'crown', 'mvp'];
+
+  // Attach nested profile metadata to remote card (card 1)
+  roster[1].profile = {
+    title: 'Tidal Wave',
+    tagNum: '1234',
+    banner: 2,
+    badges: [{ icon: 'squidlet' }, { id: 'turf' }],
+  };
+
+  // Attach custom SVG banner and custom SVG + text badges to remote card (card 4)
+  roster[4].banner = '<svg class="custom-banner"></svg>';
+  roster[4].badges = ['<svg class="custom-badge"></svg>', 'PRO'];
+
+  const match = { actors: roster };
+  rig.hud._lineup(match);
+
+  const stags = rig.overLayer.querySelectorAll('.iw-stag');
+  assert.equal(stags.length, 8, '8 Splashtags rendered');
+
+  // Card 0 (local)
+  const card0 = stags[0];
+  assert.equal(card0.querySelector('.iw-stag__title').textContent, 'Grand Champion');
+  assert.equal(card0.querySelector('.iw-stag__num').textContent, '#7777');
+  assert.ok(card0.querySelector('.iw-stag__art').innerHTML.includes('data-seed="4"'));
+  const badges0 = card0.querySelectorAll('.iw-stag__badge');
+  assert.equal(badges0.length, 3, 'Card 0 renders 3 badges');
+  assert.ok(badges0[0].innerHTML.includes('glyph-star'));
+  assert.ok(badges0[1].innerHTML.includes('glyph-crown'));
+  assert.ok(badges0[2].innerHTML.includes('icon-star'));
+
+  // Card 1 (remote nested profile)
+  const card1 = stags[1];
+  assert.equal(card1.querySelector('.iw-stag__title').textContent, 'Tidal Wave');
+  assert.equal(card1.querySelector('.iw-stag__num').textContent, '#1234', 'Formatted with leading #');
+  assert.ok(card1.querySelector('.iw-stag__art').innerHTML.includes('data-seed="2"'));
+  const badges1 = card1.querySelectorAll('.iw-stag__badge');
+  assert.equal(badges1.length, 2, 'Card 1 renders 2 badges');
+  assert.ok(badges1[0].innerHTML.includes('glyph-squidlet'));
+  assert.ok(badges1[1].innerHTML.includes('icon-crown'));
+
+  // Card 4 (custom SVG and text badge)
+  const card4 = stags[4];
+  assert.ok(card4.querySelector('.iw-stag__art').innerHTML.includes('custom-banner'));
+  const badges4 = card4.querySelectorAll('.iw-stag__badge');
+  assert.equal(badges4.length, 2, 'Card 4 renders 2 badges');
+  assert.ok(badges4[0].innerHTML.includes('custom-badge'));
+  assert.equal(badges4[1].textContent, 'PRO');
+});
+
+test('#673: absent participant metadata falls back to stable deterministic defaults without inventing badge IDs', () => {
+  const composedHud = compose('src/ui/hud.js');
+  const rig = createHudRig(composedHud);
+  const match = { actors: rig.make8Roster() };
+  rig.hud._lineup(match);
+
+  const stags = rig.overLayer.querySelectorAll('.iw-stag');
+  match.actors.forEach((a, i) => {
+    const card = stags[i];
+    assert.equal(card.querySelector('.iw-stag__title').textContent, rig.tagTitle(a.name));
+    assert.equal(card.querySelector('.iw-stag__num').textContent, rig.tagNum(a.name));
+    assert.ok(card.querySelector('.iw-stag__art').innerHTML.includes(`data-seed="${rig.fnv(a.name.toLowerCase())}"`));
+    // Badge container exists but contains NO invented badge elements
+    const badgesContainer = card.querySelector('.iw-stag__badges');
+    assert.ok(badgesContainer, 'Badge slot container exists');
+    assert.equal(card.querySelectorAll('.iw-stag__badge').length, 0, 'No fake badge IDs invented for offline/bot participants');
+  });
+});
+
+test('#673: online Alpha and Bravo clients share identical identity order while _myTeam and local highlight differ', () => {
+  const composedHud = compose('src/ui/hud.js');
+  const rosterAlpha = [
+    { name: 'Alpha1', team: 0, weaponId: 'shooter', isLocal: true },
+    { name: 'Alpha2', team: 0, weaponId: 'roller', isLocal: false },
+    { name: 'Alpha3', team: 0, weaponId: 'charger', isLocal: false },
+    { name: 'Alpha4', team: 0, weaponId: 'dualies', isLocal: false },
+    { name: 'Bravo1', team: 1, weaponId: 'shooter', isLocal: false },
+    { name: 'Bravo2', team: 1, weaponId: 'roller', isLocal: false },
+    { name: 'Bravo3', team: 1, weaponId: 'charger', isLocal: false },
+    { name: 'Bravo4', team: 1, weaponId: 'dualies', isLocal: false },
+  ];
+  const rosterBravo = [
+    { name: 'Alpha1', team: 0, weaponId: 'shooter', isLocal: false },
+    { name: 'Alpha2', team: 0, weaponId: 'roller', isLocal: false },
+    { name: 'Alpha3', team: 0, weaponId: 'charger', isLocal: false },
+    { name: 'Alpha4', team: 0, weaponId: 'dualies', isLocal: false },
+    { name: 'Bravo1', team: 1, weaponId: 'shooter', isLocal: true },
+    { name: 'Bravo2', team: 1, weaponId: 'roller', isLocal: false },
+    { name: 'Bravo3', team: 1, weaponId: 'charger', isLocal: false },
+    { name: 'Bravo4', team: 1, weaponId: 'dualies', isLocal: false },
+  ];
+
+  const rigAlpha = createHudRig(composedHud, { myTeam: 0 });
+  const rigBravo = createHudRig(composedHud, { myTeam: 1 });
+
+  assert.equal(rigAlpha.hud._myTeam(), 0, 'Alpha client _myTeam is 0');
+  assert.equal(rigBravo.hud._myTeam(), 1, 'Bravo client _myTeam is 1');
+
+  rigAlpha.hud._lineup({ actors: rosterAlpha });
+  rigBravo.hud._lineup({ actors: rosterBravo });
+
+  const stagsAlpha = rigAlpha.overLayer.querySelectorAll('.iw-stag');
+  const stagsBravo = rigBravo.overLayer.querySelectorAll('.iw-stag');
+  assert.equal(stagsAlpha.length, 8);
+  assert.equal(stagsBravo.length, 8);
+
+  // Both clients see the EXACT same order of 8 participant identities
+  for (let i = 0; i < 8; i++) {
+    const nameA = stagsAlpha[i].querySelector('.iw-stag__name').textContent;
+    const nameB = stagsBravo[i].querySelector('.iw-stag__name').textContent;
+    assert.equal(nameA, nameB, `Participant at position ${i} has identical identity on both clients`);
+
+    const titleA = stagsAlpha[i].querySelector('.iw-stag__title').textContent;
+    const titleB = stagsBravo[i].querySelector('.iw-stag__title').textContent;
+    assert.equal(titleA, titleB, `Title at position ${i} is identical`);
+
+    const numA = stagsAlpha[i].querySelector('.iw-stag__num').textContent;
+    const numB = stagsBravo[i].querySelector('.iw-stag__num').textContent;
+    assert.equal(numA, numB, `Tag number at position ${i} is identical`);
+  }
+
+  // Alpha client highlights local player Alpha1 (index 0) with .is-self
+  assert.ok(stagsAlpha[0].classList.contains('is-self'), 'Alpha client highlights Alpha1');
+  assert.ok(!stagsAlpha[4].classList.contains('is-self'), 'Alpha client does not highlight Bravo1');
+
+  // Bravo client highlights local player Bravo1 (index 4) with .is-self
+  assert.ok(!stagsBravo[0].classList.contains('is-self'), 'Bravo client does not highlight Alpha1');
+  assert.ok(stagsBravo[4].classList.contains('is-self'), 'Bravo client highlights Bravo1');
+});
+
+test('#673: lineup cleans up previous overlay and maintains exactly one intro overlay instance', () => {
+  const composedHud = compose('src/ui/hud.js');
+  const rig = createHudRig(composedHud);
+  const match = { actors: rig.make8Roster() };
+
+  // First call
+  rig.hud._lineup(match);
+  assert.equal(rig.overLayer.querySelectorAll('.iw-lineup').length, 1);
+
+  // Second call replaces prior overlay cleanly
+  rig.hud._lineup(match);
+  assert.equal(rig.overLayer.querySelectorAll('.iw-lineup').length, 1, 'Only one overlay remains attached');
+
+  // Timer removes the overlay after timeout
+  assert.equal(rig.timers.length > 0, true);
+  const cleanupTimer = rig.timers.filter((t) => t.ms === 3500).at(-1);
+  assert.ok(cleanupTimer, 'Timer for 3500ms removal scheduled');
+  cleanupTimer.fn();
+  assert.equal(rig.overLayer.querySelectorAll('.iw-lineup').length, 0, 'Overlay removed after cleanup timer');
+});
+
+test('#673: badge and banner sanitization prevents script injection safely', () => {
+  const composedHud = compose('src/ui/hud.js');
+  const rig = createHudRig(composedHud);
+  const roster = rig.make8Roster();
+
+  roster[0].banner = '<svg><script>alert("xss")</script></svg>';
+  roster[0].badges = ['<script>evil()</script>', '<svg onload="alert(1)"></svg>'];
+
+  const match = { actors: roster };
+  assert.doesNotThrow(() => rig.hud._lineup(match));
+
+  const card = rig.overLayer.querySelectorAll('.iw-stag')[0];
+  const artHtml = card.querySelector('.iw-stag__art').innerHTML;
+  assert.ok(!artHtml.includes('<script>'), 'Script tag stripped from banner');
+  assert.ok(artHtml.includes('data-seed='), 'Fell back to deterministic seed');
+
+  const badges = card.querySelectorAll('.iw-stag__badge');
+  assert.equal(badges.length, 0, 'Injected badges stripped and not rendered');
+});
+

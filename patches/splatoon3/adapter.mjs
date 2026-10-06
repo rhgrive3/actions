@@ -82,16 +82,80 @@ export function adaptSource(rel, code) {
       "      h('div', { class: 'iw-lu__vs' }, h('span', { class: 'iw-lu__vsplat', html: splatSVG({ seed: 77, fill: '#fff', r: 56, arms: 10, drops: 6 }) }), h('span', { class: 'iw-display' }, 'VS')),\n" +
       "      side(1 - this._myTeam()));",
       "    // Issue #673: battle-start S3 Splashtag intro presentation\n" +
+      "    const sanitizeSvg = (s) => (typeof s === 'string' && !/<script|javascript:|on\\w+=/i.test(s) ? s : '');\n" +
+      "    const renderBadge = (b) => {\n" +
+      "      if (!b) return null;\n" +
+      "      let content = '', cls = 'iw-stag__badge', title = '';\n" +
+      "      if (typeof b === 'string') {\n" +
+      "        const k = b.trim();\n" +
+      "        if (typeof GLYPHS !== 'undefined' && GLYPHS[k]) {\n" +
+      "          content = GLYPHS[k]; cls += ' iw-stag__badge--glyph'; title = k;\n" +
+      "        } else if (typeof AWARDS !== 'undefined' && AWARDS[k]) {\n" +
+      "          content = awardIcon(AWARDS[k].icon); cls += ' iw-stag__badge--award is-' + (AWARDS[k].metal || 'gold'); title = AWARDS[k].label;\n" +
+      "        } else if (typeof AWARD_ICONS !== 'undefined' && AWARD_ICONS[k]) {\n" +
+      "          content = awardIcon(k); cls += ' iw-stag__badge--award'; title = k;\n" +
+      "        } else if (k.startsWith('<svg') && k.endsWith('</svg>')) {\n" +
+      "          content = sanitizeSvg(k);\n" +
+      "        } else if (/^[A-Za-z0-9_ -]{1,8}$/.test(k)) {\n" +
+      "          return h('span', { class: 'iw-stag__badge iw-stag__badge--text', title: k }, k.slice(0, 4));\n" +
+      "        }\n" +
+      "      } else if (typeof b === 'object') {\n" +
+      "        if (b.html || b.svg) {\n" +
+      "          content = sanitizeSvg(b.html || b.svg);\n" +
+      "        } else if (b.icon && typeof GLYPHS !== 'undefined' && GLYPHS[b.icon]) {\n" +
+      "          content = GLYPHS[b.icon]; cls += ' iw-stag__badge--glyph';\n" +
+      "        } else if (b.icon && typeof AWARD_ICONS !== 'undefined' && AWARD_ICONS[b.icon]) {\n" +
+      "          content = awardIcon(b.icon); cls += ' iw-stag__badge--award';\n" +
+      "        } else if (b.id && typeof AWARDS !== 'undefined' && AWARDS[b.id]) {\n" +
+      "          content = awardIcon(AWARDS[b.id].icon); cls += ' iw-stag__badge--award is-' + (AWARDS[b.id].metal || 'gold'); title = AWARDS[b.id].label;\n" +
+      "        } else if (b.icon) {\n" +
+      "          content = awardIcon(b.icon);\n" +
+      "        } else if (b.label || b.text) {\n" +
+      "          return h('span', { class: 'iw-stag__badge iw-stag__badge--text' }, String(b.label || b.text).slice(0, 4));\n" +
+      "        }\n" +
+      "        if (b.metal) cls += ' is-' + b.metal;\n" +
+      "        if (b.title) title = b.title;\n" +
+      "      }\n" +
+      "      if (!content) return null;\n" +
+      "      return h('span', { class: cls, title, html: content });\n" +
+      "    };\n" +
       "    const makeStag = (a, i) => {\n" +
-      "      const nm = a.name || 'Player';\n" +
+      "      const nm = String(a.nickname || a.name || a.profile?.name || a.tag?.name || 'Player').trim().slice(0, 32) || 'Player';\n" +
+      "      const rawTitle = a.title ?? a.tagTitle ?? a.profile?.title ?? a.tag?.title;\n" +
+      "      const titleVal = (typeof rawTitle === 'string' && rawTitle.trim()) ? rawTitle.trim().slice(0, 48) : tagTitle(nm);\n" +
+      "      const rawNum = a.tagNum ?? a.tagId ?? a.tagNumber ?? a.id ?? a.num ?? a.profile?.tagNum ?? a.profile?.tagId ?? a.tag?.num;\n" +
+      "      let numVal = '';\n" +
+      "      if (rawNum != null && String(rawNum).trim()) {\n" +
+      "        const s = String(rawNum).trim();\n" +
+      "        numVal = (s.startsWith('#') ? s : '#' + s).slice(0, 16);\n" +
+      "      } else {\n" +
+      "        numVal = tagNum(nm);\n" +
+      "      }\n" +
+      "      const rawArt = a.banner ?? a.bannerArt ?? a.tagArt ?? a.bannerSeed ?? a.profile?.banner ?? a.tag?.art;\n" +
+      "      let artHtml = '';\n" +
+      "      if (typeof rawArt === 'number' && Number.isFinite(rawArt)) {\n" +
+      "        artHtml = tagArt(rawArt);\n" +
+      "      } else if (typeof rawArt === 'string' && rawArt.trim()) {\n" +
+      "        const s = rawArt.trim();\n" +
+      "        if (/^-?\\d+$/.test(s)) {\n" +
+      "          artHtml = tagArt(Number(s));\n" +
+      "        } else if (s.startsWith('<svg') && s.endsWith('</svg>')) {\n" +
+      "          artHtml = sanitizeSvg(s);\n" +
+      "        }\n" +
+      "      }\n" +
+      "      if (!artHtml) {\n" +
+      "        artHtml = tagArt(fnv(String(nm).toLowerCase()));\n" +
+      "      }\n" +
+      "      const rawBadges = a.badges ?? a.profile?.badges ?? a.tag?.badges;\n" +
+      "      const badgeEls = Array.isArray(rawBadges) ? rawBadges.slice(0, 3).map(renderBadge).filter(Boolean) : [];\n" +
       "      const card = h('div', { class: 'iw-stag iw-stag--intro' + (a.isLocal ? ' is-self' : ''), style: { '--i': i } },\n" +
-      "        h('span', { class: 'iw-stag__art', html: tagArt(fnv(String(nm).toLowerCase())) }),\n" +
+      "        h('span', { class: 'iw-stag__art', html: artHtml }),\n" +
       "        h('span', { class: 'iw-stag__w', html: weaponIcon(kindOf(a.weaponId)) }),\n" +
       "        h('span', { class: 'iw-stag__txt' },\n" +
-      "          h('span', { class: 'iw-stag__title' }, tagTitle(nm)),\n" +
+      "          h('span', { class: 'iw-stag__title' }, titleVal),\n" +
       "          h('b', { class: 'iw-stag__name' }, nm)),\n" +
-      "        h('span', { class: 'iw-stag__num' }, tagNum(nm)),\n" +
-      "        h('span', { class: 'iw-stag__badges' }));\n" +
+      "        h('span', { class: 'iw-stag__num' }, numVal),\n" +
+      "        h('span', { class: 'iw-stag__badges' }, ...badgeEls));\n" +
       "      colorVars(card, 'tc', col(a.team));\n" +
       "      return card;\n" +
       "    };\n" +
@@ -101,10 +165,10 @@ export function adaptSource(rel, code) {
       "        list.map((a, i) => makeStag(a, i)));\n" +
       "    };\n" +
       "    const el = h('div', { class: 'iw-lineup iw-lineup--stags' },\n" +
-      "      teamSide(this._myTeam()),\n" +
-      "      teamSide(1 - this._myTeam()));",
+      "      teamSide(0),\n" +
+      "      teamSide(1));",
       'intro Splashtags presentation');
-    return "import { t as tr } from '../i18n.js';\nimport { tagArt } from './menu-art.js';\nimport { fnv, tagTitle, tagNum } from './menus.js';\n" + code;
+    return "import { t as tr } from '../i18n.js';\nimport { tagArt, AWARDS, AWARD_ICONS, awardIcon } from './menu-art.js';\nimport { fnv, tagTitle, tagNum } from './menus.js';\n" + code;
   }
   if (rel === 'src/ui/ui-icons.js') {
     return replaceOnce(code,
