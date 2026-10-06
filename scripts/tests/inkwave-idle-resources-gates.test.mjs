@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { validateIdleResult } from '../check-inkwave-idle-resources.mjs';
+import { validateIdleResult, captureColdDiagnostics } from '../check-inkwave-idle-resources.mjs';
 const sample=()=>({
   coldBoot:{quality:'high',touch:true,gamePublishedAtAllocation:false,marina:true,cloud:[1024,320],farSize:256,sameTargetsAfterBoot:true},
   clouds:['day','sunset','golden'].map(theme=>({theme,highBytes:10485760,lowBytes:2621440,meanByteError:1,largeErrorFraction:.001,highRepeatChanged:0,nonzero:1000})),
@@ -56,6 +56,77 @@ test('closes the warm page after its evidence and preserves a real independent c
   return at;
  });
  assert.deepEqual(coldPositions,[...coldPositions].sort((a,b)=>a-b),'cold context must retain actual loaded bytes, pre-allocation observation and target identity order');
- assert.ok(source.includes('result.coldBootDiagnostics={hooked,coldLoaded:[...coldLoaded].sort()}'),
+ assert.ok(source.includes('result.coldBootDiagnostics=await captureColdDiagnostics('),
   'failed cold startup must preserve the actual loaded-stage evidence');
+ assert.ok(source.includes('gamePublished')&&source.includes('coldEnvironmentPublished')&&source.includes('documentReadyState'),
+  'failure diagnostics must separate game, env, and document ready state');
+});
+test('cold failure diagnostics separate game vs env publication and bound hanging renderer',async()=>{
+ const mockPageMissingEnv={
+  evaluate:async()=>({
+   documentReadyState:'complete',
+   runtimeUrl:'http://127.0.0.1:1234/?devstage&skipTitle&map=halyard',
+   observerInstalled:true,
+   envSetCalls:0,
+   hasG:true,
+   gamePublished:true,
+   envPublished:false,
+   coldEnvironmentPublished:false,
+   coldEnvironment:null
+  }),
+  screenshot:async()=>{}
+ };
+ const diagA=await captureColdDiagnostics({
+  coldPage:mockPageMissingEnv,
+  hooked:true,
+  coldLoaded:new Set(['index.html','src/main.js']),
+  coldPendingUrls:new Set(),
+  evalTimeoutMs:50,
+  screenshotTimeoutMs:50
+ });
+ assert.equal(diagA.hooked,true);
+ assert.equal(diagA.gamePublished,true);
+ assert.equal(diagA.envPublished,false);
+ assert.equal(diagA.coldEnvironmentPublished,false);
+ assert.equal(diagA.documentReadyState,'complete');
+ assert.notEqual(diagA.gamePublished,diagA.coldEnvironmentPublished,'distinguishes missing env from missing game');
+
+ const mockHangingPage={
+  evaluate:()=>new Promise(()=>{}),
+  screenshot:()=>new Promise(()=>{})
+ };
+ const start=performance.now();
+ const diagB=await captureColdDiagnostics({
+  coldPage:mockHangingPage,
+  hooked:true,
+  coldLoaded:new Set(['index.html','src/main.js','src/world/environment.js']),
+  coldPendingUrls:new Set(['src/world/stage.js']),
+  coldPageErrors:['Uncaught test error'],
+  output:'/nonexistent-test-dir',
+  evalTimeoutMs:50,
+  screenshotTimeoutMs:50
+ });
+ const elapsed=performance.now()-start;
+ assert.ok(elapsed<1000,`bounded timeout must return quickly, took ${elapsed}ms`);
+ assert.equal(diagB.hooked,true);
+ assert.deepEqual(diagB.coldLoaded,['index.html','src/main.js','src/world/environment.js']);
+ assert.deepEqual(diagB.pendingUrls,['src/world/stage.js']);
+ assert.deepEqual(diagB.pageErrors,['Uncaught test error']);
+ assert.equal(diagB.documentReadyState,null);
+ assert.equal(diagB.gamePublished,false);
+ assert.equal(diagB.coldEnvironmentPublished,false);
+ assert.ok(diagB.evaluateError.includes('timed out after 50ms'),'eval error honestly recorded');
+ assert.ok(diagB.screenshot.error.includes('timed out after 50ms'),'screenshot error honestly recorded');
+
+ const diagC=await captureColdDiagnostics({
+  coldPage:mockHangingPage,
+  coldCrashed:true,
+  hooked:true,
+  coldLoaded:new Set(['index.html']),
+  evalTimeoutMs:50,
+  screenshotTimeoutMs:50
+ });
+ assert.equal(diagC.crashed,true);
+ assert.equal(diagC.evaluateError,'page crashed');
+ assert.equal(diagC.screenshot.error,'page crashed');
 });
