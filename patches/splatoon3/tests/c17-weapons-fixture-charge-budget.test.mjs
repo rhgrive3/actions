@@ -10,6 +10,7 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { fixture } from '../../../scripts/weapons-fixture.mjs';
 import { CASES, reset, round, runChargeCase } from '../../../scripts/measure-weapons-fidelity.mjs';
+import { verifyWallBuild } from '../../../scripts/check-inkwave-wall-render.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const isWithin = (base, file) => file === base || file.startsWith(base.endsWith(path.sep) ? base : base + path.sep);
@@ -30,19 +31,11 @@ function checkedLocation(location, allowedRoot) {
 }
 
 function persistentCacheRoot() {
-  if (process.env.GITHUB_WORKSPACE) {
-    const workspace = fs.realpathSync(process.env.GITHUB_WORKSPACE);
-    const cache = checkedLocation(path.join(workspace, '.ci-scratch', 'cache', 'inkwave-c26-fixture'), workspace);
-    fs.mkdirSync(cache, { recursive: true });
-    const resolved = fs.realpathSync(cache);
-    assert.ok(isWithin(workspace, resolved), 'Actions fixture cache resolves under its workspace');
-    return { cache: resolved, allowedRoot: workspace };
-  }
-  const workspace = fs.realpathSync('/mnt/workspace');
-  const cache = checkedLocation('/mnt/workspace/.dev-state/agent-work/cache/inkwave-c26-fixture', workspace);
+  const workspace = fs.realpathSync(process.env.GITHUB_WORKSPACE || root);
+  const cache = checkedLocation(path.join(workspace, '.ci-scratch', 'cache', 'inkwave-c26-fixture'), workspace);
   fs.mkdirSync(cache, { recursive: true });
   const resolved = fs.realpathSync(cache);
-  assert.ok(isWithin(workspace, resolved), 'fixture cache resolves under persistent workspace storage');
+  assert.ok(isWithin(workspace, resolved), 'fixture cache resolves under its persistent checkout');
   return { cache: resolved, allowedRoot: workspace };
 }
 
@@ -51,25 +44,19 @@ async function emittedSite() {
     const { cache, allowedRoot } = persistentCacheRoot();
     const sourceSha = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim();
     assert.match(sourceSha, /^[0-9a-f]{40}$/, 'fixture build is keyed to the checked-out source commit');
-    const buildKey = crypto.createHash('sha256')
-      .update(fs.readFileSync(path.join(root, 'scripts/build-inkwave.mjs')))
-      .update(fs.readFileSync(path.join(root, 'patches/splatoon3/adapter.mjs')))
-      .update(fs.readFileSync(path.join(root, 'patches/splatoon3/profile.json')))
-      .digest('hex').slice(0, 12);
-    const site = checkedLocation(path.join(cache, `site-${sourceSha}-${buildKey}`), allowedRoot);
-    const identity = path.join(site, 'inkwave-build.json');
-    if (!fs.existsSync(path.join(site, 'index.html')) || !fs.existsSync(identity)) {
-      execFileSync(process.execPath, [path.join(root, 'scripts/build-inkwave.mjs'), path.join(root, 'inkwave-public'), site], {
-        cwd: root,
-        stdio: 'inherit',
-      });
-    }
+    // Memoize only within this test process. A fresh transaction per invocation
+    // includes dirty runtime and selected upstream inputs without stale reuse.
+    const site = checkedLocation(path.join(cache, `site-${sourceSha}-${crypto.randomUUID()}`), allowedRoot);
+    execFileSync(process.execPath, [path.join(root, 'scripts/build-inkwave.mjs'), path.join(root, 'inkwave-public'), site], {
+      cwd: root,
+      stdio: 'inherit',
+    });
     const resolvedSite = fs.realpathSync(site);
     assert.ok(isWithin(allowedRoot, resolvedSite), 'emitted fixture site resolves under persistent workspace storage');
     assert.equal(forbiddenRoots.some(base => resolvedSite === base || resolvedSite.startsWith(base + path.sep)), false,
       'emitted fixture site must not resolve into transient storage');
-    const built = JSON.parse(fs.readFileSync(identity, 'utf8'));
-    assert.ok(built.contentHash && built.inputHash, 'fixture uses a complete emitted build identity');
+    const { manifest: built } = verifyWallBuild(site);
+    assert.ok(built.contentHash && built.inputHash, 'fixture validates current inputs and every emitted artifact');
     return site;
   })();
   return sitePromise;
@@ -120,4 +107,30 @@ test('charger startup telemetry and 18 ink golden stay in the shared production 
   close(got.chargeAtRelease, 1, 1e-9, 'charger-1 charge at release');
   for (let frame = 0; frame < 240; frame++) f.tick(got.a, { fire: false });
   close(round(100 - got.a.ink), 18, 1e-7, 'the charger-1 ink golden is unchanged');
+});
+
+test('the emitted fixture rejects a stale input receipt and changed artifact bytes', async () => {
+  const site = await emittedSite();
+  const manifestPath = path.join(site, 'inkwave-build.json');
+  const originalManifest = fs.readFileSync(manifestPath);
+  const manifest = JSON.parse(originalManifest);
+  const inputKey = 'patch/runtime/weapons-fidelity.mjs';
+  assert.ok(manifest.files[inputKey], 'actual gameplay input is bound by the build');
+  manifest.files[inputKey] = crypto.createHash('sha256').update('stale runtime source').digest('hex');
+  manifest.inputHash = crypto.createHash('sha256').update(JSON.stringify(manifest.files)).digest('hex');
+  try {
+    fs.writeFileSync(manifestPath, JSON.stringify(manifest));
+    assert.throws(() => verifyWallBuild(site), /build input differs from source/);
+  } finally {
+    fs.writeFileSync(manifestPath, originalManifest);
+  }
+  const artifact = path.join(site, 'patches/splatoon3/runtime/weapons-fidelity.mjs');
+  const originalArtifact = fs.readFileSync(artifact);
+  try {
+    fs.appendFileSync(artifact, '\n// altered emitted bytes\n');
+    assert.throws(() => verifyWallBuild(site), /artifact mismatch/);
+  } finally {
+    fs.writeFileSync(artifact, originalArtifact);
+  }
+  verifyWallBuild(site);
 });
