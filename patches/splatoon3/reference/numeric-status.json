@@ -386,13 +386,8 @@
   },
   "weapons.dualies.shotGuideFrame": {
     "value": 7,
-    "status": "derived from pinned extracted data; physical scale unverified",
-    "binding": {
-      "parameter": "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json#/GameParameters/WeaponParam/ShotGuideFrame",
-      "index": null,
-      "factor": 1,
-      "rawValue": 7
-    }
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
   },
   "weapons.dualies.ballistics.endSpeed": {
     "value": 140.54999999999998,
