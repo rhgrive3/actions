@@ -130,6 +130,12 @@ P05 は泳ぎ 180 F・ヒト 600 F の回復基点とブキ別の待ち時間を
 
 再開後はジャイロの遅延許可が最新設定を上書きする競合と、高リフレッシュレートのメニューパッド押下再利用、オンラインのポーズ中に自分の入力が続く不具合を修正した。パッチ473件と Chromium/WebKit の生成物24項目で確認した。センサー計算と感度値は維持し、本家の同条件実機一致・物理iPad・実リレーの未確認項目は解消済みとしない。
 
+## 2026-10-06 — #204 メニュー attract の更新予算
+
+公開 INKWAVE の `patches/splatoon3/runtime/clock.mjs` は通常 menu attract 中も 60 Hz 固定 tick ごとに Match/controller/projectile/8-bot attract を進め、`patches/local-quality/idle-adapter.mjs` は各 render frame で world presentation を更新・描画していた。touch または LOW 品質の通常 title/settings menu に限り、それらを20 Hzへまとめる。固定時計、入力/menu、network pump、showcase は render cadence を維持し、live match と desktop HIGH は変更しない。
+
+比較参照は本書冒頭の Splatoon 3 Ver.11.3.0。メニュー attract の更新頻度を定める公開数値は確認できず、ブキ・ギア・battle state は対象外。したがって20 Hzは INKWAVE の端末向け presentation budget であり、本家との同 cadence や gameplay fidelity を主張しない。再現操作は INKWAVE で title/settings を開き、touch 端末または LOW 品質で通常の背景 demo を表示すること。match/gameplay の simulation は変えない。ブラウザ実表示・物理端末の frame/GPU 計測と本家実機比較は未確認で、解消済みにしない。差分、回帰範囲、open PR 重複監査は [#204 の実装記録](inkwave-idle-attract-budget-204-2026-10-06.md) を参照。
+
 ## 全モーションの追加と統合再確認（2026-10-03）
 
 更新される OSS 本体を編集せず、表示ロジックを独立パッチとして実装し、全 14 種類を本番インストーラーに接続した。各比較記録は公式任天堂の映像・公開説明、保持した原資料のハッシュと映像の時刻、実エンジンの検証、未取得の本家数値を区別する。
