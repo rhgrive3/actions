@@ -7,6 +7,7 @@ import { adaptIssue479Source } from '../splatoon3/issue-479-adapter.mjs';
 import { adaptPropRetention } from './prop-retention-adapter.mjs';
 import { adaptBossHit } from './boss-hit-adapter.mjs';
 import { adaptPropAtlas } from './prop-atlas-adapter.mjs';
+import { adaptScreenfxDamageReset } from './screenfx-damage-reset-adapter.mjs';
 import { adaptFinalMinuteMusic } from './final-minute-music-adapter.mjs';
 import { adaptTurfLead } from './turf-lead-adapter.mjs';
 import { adaptScoreReticle } from './score-reticle-adapter.mjs';
@@ -24,6 +25,7 @@ import { adaptLobbyResources } from './lobby-resource-adapter.mjs';
 
 export const QUALITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
 const IDENTITY_FILES = [
+  'screenfx-damage-reset-adapter.mjs',
   'final-minute-music-adapter.mjs',
   'turf-lead-adapter.mjs',
   'score-reticle-adapter.mjs', 'map-teammate-status-adapter.mjs',
@@ -48,6 +50,7 @@ export function replaceOnce(code, before, after, label) {
 }
 
 export function adaptQualitySource(rel, code) {
+  code = adaptScreenfxDamageReset(rel, code, replaceOnce);
   code = adaptFinalMinuteMusic(rel, code, replaceOnce);
   code = adaptTurfLead(rel, code, replaceOnce);
   code = adaptScoreReticle(rel, code, replaceOnce);
