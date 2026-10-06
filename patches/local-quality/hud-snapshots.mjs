@@ -21,7 +21,7 @@ export function teamHudSnapshot(match, colors, viewerTeam = 0, paint = null) {
     let p = cache.players.get(a);
     if (!p) { p = {}; cache.players.set(a, p); }
     p.name = a.name; p.weapon = a.weaponId; p.alive = a.alive;
-    p.respawn = a.alive ? 0 : a.team === match.local?.team ? Math.max(0, a.respawnTimer) : null;
+    p.respawn = a.alive ? 0 : null;
     p.specialReady = a.specialReady(); p.isSelf = a.isLocal;
     if (a.team === 0) t0.players[n0++] = p; else t1.players[n1++] = p;
   }

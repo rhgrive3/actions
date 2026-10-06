@@ -3,32 +3,34 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import { fixture, compose } from './match-hud-fixture.mjs';
+import {sampleRespawnCountdown} from '../runtime/respawn-lifecycle.mjs';
 const ROOT=new URL('../../../',import.meta.url);
 const composed=rel=>compose(rel,fs.readFileSync(new URL('inkwave-public/'+rel,ROOT),'utf8'));
 function section(s,start,end){const a=s.indexOf(start),b=s.indexOf(end,a);assert.ok(a>=0&&b>a,start);return s.slice(a,b);}
 const plain=x=>JSON.parse(JSON.stringify(x));
 const STEP=1/60;
 
-for(const team of [0,1]) test(`#112 actual team summary and actual HUD hide only opposing timers (local team ${team})`,async()=>{
+for(const team of [0,1]) test(`#112/#886 actual top status HUD hides both teams timers (local team ${team})`,async()=>{
  const f=await fixture(),local=f.make(),ally=f.make(),enemy=f.make();local.team=ally.team=team;enemy.team=1-team;
  ally.alive=enemy.alive=false;ally.respawnTimer=2.3;enemy.respawnTimer=7.2;
  const m=Object.create(f.Match.prototype);Object.assign(m,{local,actors:[local,ally,enemy]});
- let summary=m.teamSummary(team);assert.equal(summary[1].players[0].respawn,null);assert.equal(summary[0].players[1].respawn,2.3);
+ let summary=m.teamSummary(team);assert.equal(summary[1].players[0].respawn,null);assert.equal(summary[0].players[1].respawn,null);
  const node=()=>({style:{},classList:{values:new Map(),add(){},remove(){},toggle(k,v){this.values.set(k,v);}},animate(){},querySelector(k){return this.parts[k]||(this.parts[k]=node());},parts:{}});
  const squads=Array.from({length:2},()=>Object.assign(node(),{children:Array.from({length:4},node),dataset:{}}));
  const hud=Object.create(f.HUD.prototype);Object.assign(hud,{_L:{},squads,_restart(){},_actorFor:()=>null});
  hud._updSquads(summary);
- assert.equal(squads[0].children[1].querySelector('.iw-sq__n').textContent,'3');
+ assert.equal(squads[0].children[1].querySelector('.iw-sq__n').textContent,'');
+ assert.equal(squads[0].children[1].querySelector('.iw-sq__ring circle').style.display,'none');
  const opposite=squads[1].children[0];assert.equal(opposite.querySelector('.iw-sq__n').textContent,'');assert.equal(opposite.querySelector('.iw-sq__ring circle').style.display,'none');
  assert.equal(opposite.querySelector('.iw-sq__ring circle').style.animationDuration,undefined);
  // Defense in depth: an old/raw summary still cannot disclose its numeric timer.
- summary[1].players[0].respawn=.9;hud._L={};hud._updSquads(summary);assert.equal(opposite.querySelector('.iw-sq__n').textContent,'');
+ summary[1].players[0].respawn=.9;summary[0].players[1].respawn=12.2;hud._L={};hud._updSquads(summary);assert.equal(opposite.querySelector('.iw-sq__n').textContent,'');assert.equal(squads[0].children[1].querySelector('.iw-sq__n').textContent,'');
  const pooledSummary=summary, pooledEnemy=summary[1].players[0];
  enemy.respawnTimer=.1;summary=m.teamSummary(team);assert.equal(summary,pooledSummary);assert.equal(summary[1].players[0],pooledEnemy);assert.equal(pooledEnemy.respawn,null);
  enemy.alive=true;enemy.special=enemy.specialCost();summary=m.teamSummary(team);hud._updSquads(summary);
  assert.equal(opposite.classList.values.get('is-dead'),false);assert.equal(opposite.classList.values.get('is-ready'),true);
  // Reusing the same actor scalar snapshot across a viewer/roster change must overwrite an old allied timer.
- enemy.alive=false;enemy.respawnTimer=6;m.local=enemy;summary=m.teamSummary(1-team);assert.equal(summary[0].players[0],pooledEnemy);assert.equal(pooledEnemy.respawn,6);m.local=local;m.teamSummary(team);assert.equal(pooledEnemy.respawn,null);
+ enemy.alive=false;enemy.respawnTimer=6;m.local=enemy;summary=m.teamSummary(1-team);assert.equal(summary[0].players[0],pooledEnemy);assert.equal(pooledEnemy.respawn,null);m.local=local;m.teamSummary(team);assert.equal(pooledEnemy.respawn,null);
 });
 
 test('#112 pause snapshot and roster refresh cannot reveal opponents remaining seconds',async()=>{
@@ -99,4 +101,19 @@ test('30/60/120Hz schedules preserve special counters and true shortage event ti
 test('90-second user-selected Turf and existing 180-second Turf durations remain valid',async()=>{
  const f=await fixture();for(const duration of [90,180]){const m=new f.Match({duration});assert.equal(m.duration,duration);assert.equal(m.time,duration);}
  assert.deepEqual(plain(f.MATCH.durations),[90,180]);
+});
+
+test('#886 snapshot avoids exact dead-player timers for both views and keeps pooled identity',async()=>{
+ const f=await fixture(),a=f.make(),b=f.make();a.team=0;b.team=1;a.alive=b.alive=false;
+ for(const actor of [a,b])Object.defineProperty(actor,'respawnTimer',{get(){throw Error('top HUD read authoritative respawn seconds');}});
+ const m=Object.create(f.Match.prototype);Object.assign(m,{local:a,actors:[a,b]});
+ const first=m.teamSummary(0),p0=first[0].players[0],p1=first[1].players[0];p0.respawn=77;p1.respawn=88;
+ for(const online of [false,true]){f.G.netm=online?{match:m}:null;for(const team of [0,1]){m.local=team?b:a;const row=m.teamSummary(team);assert.equal(row[0].players[0],team?p1:p0);assert.equal(row[1].players[0],team?p0:p1);for(const t of row)for(const p of t.players){assert.equal(p.respawn,null);assert.equal(p.alive,false);}}}
+});
+test('#886 local respawn overlay keeps its own native numeric countdown',()=>{
+ const source=composed('src/ui/hud.js'),method=section(source,'  showSplatted(', '\n  hideSplatted(');
+ const h=(tag,attrs,...children)=>({tag,attrs,children,textContent:children.filter(c=>typeof c==='string').join(''),animate(){},querySelector(){return {style:{}};}});
+ const Hud=vm.runInNewContext(`class Hud{${method}};Hud`,{h,Math,richText:x=>x,splatSVG:()=>'',colorVars(){},toHex:x=>x,BUMP:{},sampleRespawnCountdown});
+ const hud=Object.assign(new Hud(),{_kills:{lastKiller:null},_fxTime:0,el:{prepend(){}},splatLayer:{appendChild(){}},hideSplatted(){},_snd(){},_addFx(name,fn){this.fx=fn;}});
+ hud.showSplatted({respawn:6.2});assert.equal(hud._splatted.num.textContent,'7');hud._fxTime=1.5;hud.fx();assert.equal(hud._splatted.num.textContent,'5');hud._fxTime=6.2;hud.fx();assert.equal(hud._splatted.num.textContent,'GO');
 });

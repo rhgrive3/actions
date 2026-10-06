@@ -15,9 +15,9 @@ export function adaptMatchHud(rel,code) {
     return region(code,'  async _judge() {','\n  _fade(to, ms)',s=>once(s,'deaths: a.stats.deaths, isSelf:','deaths: a.stats.deaths, specials: a.stats.specials || 0, isSelf:','authoritative special count in Turf results'));
   }
   if(rel==='src/ui/hud.js') {
-    code=once(code,"const key = `${p.alive ? 1 : 0}|${p.alive ? 0 : Math.ceil(p.respawn || 0)}|", "const key = `${p.alive ? 1 : 0}|${p.alive || t === 1 ? 0 : Math.ceil(p.respawn || 0)}|",'enemy timer cache key');
-    code=once(code,"el.querySelector('.iw-sq__n').textContent = p.alive ? '' : String(Math.max(0, Math.ceil(p.respawn || 0)) || '');", "el.querySelector('.iw-sq__n').textContent = p.alive || t === 1 ? '' : String(Math.max(0, Math.ceil(p.respawn || 0)) || '');",'enemy numeric countdown hidden');
-    return once(code,"ring.style.animationDuration = `${Math.max(0.2, p.respawn || PLAYER.respawnTime)}s`;", "ring.style.display = t === 1 ? 'none' : '';\n          if (t === 0) ring.style.animationDuration = `${Math.max(0.2, p.respawn || PLAYER.respawnTime)}s`;",'enemy countdown ring hidden');
+    code=once(code,"const key = `${p.alive ? 1 : 0}|${p.alive ? 0 : Math.ceil(p.respawn || 0)}|", "const key = `${p.alive ? 1 : 0}|0|",'qualitative squad status cache key');
+    code=once(code,"el.querySelector('.iw-sq__n').textContent = p.alive ? '' : String(Math.max(0, Math.ceil(p.respawn || 0)) || '');", "el.querySelector('.iw-sq__n').textContent = '';",'squad numeric countdown hidden');
+    return once(code,"ring.style.animationDuration = `${Math.max(0.2, p.respawn || PLAYER.respawnTime)}s`;", "ring.style.display = 'none';",'squad countdown ring hidden');
   }
   if(rel==='src/ui/menus.js') {
     code=once(code,'respawn: x.alive === false ? Math.max(0, +x.respawnTimer || 0) : 0','respawn: x.alive === false ? x.team === m.local?.team ? Math.max(0, +x.respawnTimer || 0) : null : 0','pause snapshot excludes opposing timer');
