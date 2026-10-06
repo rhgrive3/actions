@@ -96,7 +96,7 @@ test('disabled shadows use the original renderer without touching an unallocated
   assert.equal(calls, 1); assert.equal(cache.cache, null);
 });
 test('a released short keyboard/mouse tap reaches the actual controller once', async () => {
-  const f = await fixture(), a = f.make(), camera = new f.THREE.PerspectiveCamera(); f.G.camera = camera; f.G.settings = {};
+  const f = await fixture({ fidelity: true }), a = f.make(), camera = new f.THREE.PerspectiveCamera(); f.G.camera = camera; f.G.settings = {};
   const pressed = new Set(['Space']), mouse = {dx:0,dy:0,left:false,leftPressed:true};
   const input = {mouse, down:()=>false, wasPressed:key=>pressed.has(key), padPressed:new Set(), padButton:()=>false, padValue:()=>0};
   const controller = new f.PlayerController(a, {yaw:0,pitch:0,gameCam:camera}, input);

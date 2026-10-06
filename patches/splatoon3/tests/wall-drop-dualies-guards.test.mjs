@@ -108,8 +108,11 @@ test('#604 floor contact and the already-routed families keep their prior behavi
 test('#770 Super Jump landing leaves no invulnerability tail; flight still rejects hits', async t => {
   const f = await boot(); t.after(f.close);
   const a = f.make(), enemy = f.make({ team: 1, pos: [30, 0, 0] });
-  a.s3.jumpChargeTime = STEP; a.superJump(new f.THREE.Vector3(10, 0, 0));
-  f.tick(a); assert.equal(a.superJumpState.phase, 'flight');
+  a.s3.jumpChargeTime = STEP;
+  assert.equal(a.superJump(new f.THREE.Vector3(10, 0, 0)), true);
+  assert.equal(a.superJumpState.startForm, 'kid');
+  f.tick(a, a.s3.jumpStartupHumanoidF + 1);
+  assert.equal(a.superJumpState.phase, 'flight', 'the 22F humanoid startup and one charge frame have elapsed');
   f.G.projectiles.applyHit(enemy, a, 30, 'shooter'); assert.equal(a.hp, 100, 'flight is protected (#255)');
   let ticks = 0; while (a.superJumpState && ticks++ < 400) f.tick(a);
   assert.equal(a.superJumpState, null); assert.equal(a.invuln, 0, 'no landing shield remains');

@@ -11,6 +11,7 @@ import { fixture } from '../../splatoon3/tests/source-fixture.mjs';
 import { installClock, runSimulation, STEP } from '../../splatoon3/runtime/clock.mjs';
 import { adaptInput } from '../input-adapter.mjs';
 import { adaptTouchEdges } from '../touch-edge-adapter.mjs';
+import { resolveFixtureModule } from './pause-fixture.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const UPSTREAM = process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
@@ -47,7 +48,7 @@ async function boot({ patched = true, weapon = 'shooter' } = {}) {
   const entry = new vm.SourceTextModule("export { Input } from './src/core/input.js'; export { PlayerController } from './src/game/player.js';", {
     context, identifier: path.join(UPSTREAM, 'touch-test-entry.js'),
   });
-  await entry.link((spec, from) => load(spec === 'three' ? spec : path.resolve(path.dirname(from.identifier), spec)));
+  await entry.link((spec, from) => load(resolveFixtureModule(spec, from.identifier)));
   await entry.evaluate();
   const input = new entry.namespace.Input({}), mobile = input.mobile;
   // Mobile constructor skipped installing display DOM on this headless device.

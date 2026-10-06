@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { adaptSource } from '../adapter.mjs';
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const UPSTREAM = process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
-export async function fixture({ adapt = adaptSource, adaptRuntime = (_rel, source) => source } = {}) {
+export async function fixture({ adapt = adaptSource, adaptRuntime = (_rel, source) => source, fidelity = false } = {}) {
   const context = vm.createContext({ console, performance });
   const modules = new Map();
   function resolve(spec, from) {
@@ -46,6 +46,7 @@ export async function fixture({ adapt = adaptSource, adaptRuntime = (_rel, sourc
     export * from './patches/splatoon3/runtime/render.mjs';
     export * from './patches/splatoon3/runtime/sub-special-fidelity.mjs';
     export * from './patches/splatoon3/runtime/clock.mjs';
+    ${fidelity ? "export * from './patches/splatoon3/runtime/weapons-fidelity.mjs';" : ''}
     export const TEST_MATH = Math;
   `, { context, identifier: path.join(ROOT, 'fixture.mjs') });
   await root.link((spec, from) => load(resolve(spec, from.identifier))); await root.evaluate();
@@ -54,12 +55,16 @@ export async function fixture({ adapt = adaptSource, adaptRuntime = (_rel, sourc
   Object.assign(PLAYER, profile.player); Object.assign(SUB.bomb, profile.bomb);
   for (const [id, data] of Object.entries(profile.weapons)) Object.assign(WEAPONS[id], data);
   for (const install of ['installWeapons', 'installMovement', 'installGear', 'installFlow', 'installResources', 'installRendering']) api[install](api, profile);
+  if (fidelity) {
+    api.installWeaponsFidelity(api, profile);
+    api.installShotGuide(api, profile);
+  }
   G.teamColors = [new THREE.Color('#ff8a14'), new THREE.Color('#2f5bff')];
   G.level = { blocks: [], groundHeight: () => 0 }; G.time = 0;
   G.physics = { los: () => true, raycast: (_a, _b, _c, h) => { h.hit = false; return h; } };
   G.paint = { sample: () => 1, splat: () => 0 }; G.match = { playing: () => true };
   const shots = [];
-  G.projectiles = { fireCharger: (actor, weapon, charge) => shots.push({ kind: 'charger', charge }),
+  G.projectiles = fidelity ? new api.Projectiles(new THREE.Scene()) : { fireCharger: (actor, weapon, charge) => shots.push({ kind: 'charger', charge }),
     fireShooter: () => shots.push({ kind: 'shooter' }), fireDualies: (_a, _w, spread) => shots.push({ kind: 'dualies', spread }),
     fireFlick: (actor, weapon) => shots.push({ kind: 'roller', windup: weapon.flickWindup }), fireBlaster: () => shots.push({ kind: 'blaster' }),
     fireSplatling: () => shots.push({ kind: 'splatling' }) };
