@@ -17,6 +17,8 @@ export function validateIdleResult(r) {
   if(r.far?.length!==4||r.far.some(v=>v.size!==256||v.disposes!==1||!v.deleted||!v.cleared||!v.sameEnvironment))throw Error('Far reflection disposal gate');
   if(r.pause?.renders!==1||r.pause.environment!==0||r.pause.paint!==0||r.pause.shadowMarks!==0||r.pause.menuTicks!==120||!r.pause.matchUnchanged||r.pause.resizeRenders!==1||r.pause.resumedRenders!==1||r.pause.onlineRenders!==3)throw Error('Offline pause work gate');
   if(!r.audio?.running||r.audio.initialPlayers!==0||r.audio.initialScheduler||r.audio.mutedTicks!==0||r.audio.mutedNodes!==0||r.audio.mutedPlayers!==0||r.audio.mutedScheduler||!r.audio.sfxPlayed||r.audio.resumedTrack!=='battle'||r.audio.toggleMaxPlayers!==1)throw Error('Muted music/SFX gate');
+  const work=r.resultsWork;
+  if(!work||work.frames!==120||work.playing.actorUpdates<=0||work.playing.projectileUpdates!==120||work.playing.paintFlushes!==120||work.playing.fxUpdates!==120||work.results.actorUpdates!==0||work.results.projectileUpdates!==0||work.results.paintFlushes!==0||work.results.fxUpdates!==0||work.playing.worldRenders!==120||work.results.worldRenders!==120||[work.playing,work.results].some(v=>!Number.isFinite(v.cpuSubmissionMs)||v.cpuSubmissionMs<0||!Number.isSafeInteger(v.gpuDrawSubmissions)||v.gpuDrawSubmissions<=0))throw Error('RESULT native work comparison gate');
   if(r.errors?.length||!r.gpu?.webgl?.startsWith('WebGL 2.0')||!r.gpu.renderer)throw Error('Browser/GPU errors');
   return {cloudMiB:[10,2.5],farTransitions:4,pausedWorldRenders:'1/120',mutedSchedulerTicks:0};
 }
@@ -106,6 +108,21 @@ async function main(){
     const net=G.netm;G.netm={};g.match.paused=true;draws=0;try{for(let i=0;i<3;i++)g._frame(1/60);}finally{G.netm=net;g.match.paused=false;}return {resizeRenders,resumedRenders,onlineRenders:draws};
    }finally{g.R.render=old;}
   });Object.assign(result.pause,extra);
+  // #53 compares actual published-frame CPU producers and WebGL draw submissions.
+  // CPU submission time includes JS/driver submission, not asynchronous GPU time.
+  // Results still need backdrop/presentation draws, so no FPS/draw-reduction target
+  // is invented. The existing browser/GL and exact-source identities remain gates.
+  phase='results-work';result.resultsWork=await page.evaluate(()=>{
+   const G=__G,g=G.game,match=g.match,gl=G.renderer.getContext(),restore=[];
+   const beforeState=match.state,beforePaused=match.paused;let counts;
+   const hook=(obj,key,label)=>{const old=obj[key];if(typeof old!=='function')throw Error('Missing native work producer '+key);obj[key]=function(...args){counts[label]++;return old.apply(this,args);};restore.push(()=>{obj[key]=old;});};
+   for(const a of G.actors)hook(a,'update','actorUpdates');
+   for(const [obj,key,label] of [[G.projectiles,'update','projectileUpdates'],[G.paint,'flush','paintFlushes'],[G.fx,'update','fxUpdates'],[g.R,'render','worldRenders']])hook(obj,key,label);
+   for(const key of ['drawArrays','drawElements','drawArraysInstanced','drawElementsInstanced'])hook(gl,key,'gpuDrawSubmissions');
+   const sample=state=>{counts={actorUpdates:0,projectileUpdates:0,paintFlushes:0,fxUpdates:0,worldRenders:0,gpuDrawSubmissions:0};match.state=state;match.paused=false;const start=performance.now();for(let i=0;i<120;i++)g._frame(1/60);return {...counts,cpuSubmissionMs:performance.now()-start};};
+   try{return {frames:120,playing:sample('playing'),results:sample('results'),measurement:'native published Game._frame producers and real WebGL submission counts; not GPU execution time or device power'};}
+   finally{restore.forEach(f=>f());match.state=beforeState;match.paused=beforePaused;}
+  });
   result.gpu=await page.evaluate(()=>{const gl=__G.renderer.getContext(),ext=gl.getExtension('WEBGL_debug_renderer_info');return {webgl:gl.getParameter(gl.VERSION),renderer:ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER)};});
   for(const f of ['patches/local-quality/idle-resources.mjs','patches/local-quality/music-idle.mjs'])if(![...loaded].some(p=>p.endsWith('/'+f)))throw Error('Runtime module not actually loaded: '+f);
   phase='cold-boot-mobile';
