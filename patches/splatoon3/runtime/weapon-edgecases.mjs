@@ -83,6 +83,14 @@ export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYE
     clear(this); clearDualiesLocks(this); this.s3DualiesEmerging = false; this.s3ChargerPostShot = 0;
     return out;
   };
+  // Dodge admission uses the current action input, not firingT's recent-fire
+  // presentation window. Keep that timer available to recoil/pose code while
+  // preventing a released Dualies trigger from consuming a Jump as a roll.
+  const tryDodge = WeaponRunner.prototype.tryDodge;
+  WeaponRunner.prototype.tryDodge = function (...args) {
+    if (this.a?.weapon?.kind === 'dualies' && !this.a.intent?.fire) return false;
+    return tryDodge.apply(this, args);
+  };
   const update = Actor.prototype.update;
   Actor.prototype.update = function (dt) {
     const r = this.weaponRunner;
