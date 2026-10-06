@@ -11,7 +11,7 @@ import { Menus } from '../../../src/ui/menus.js';
 import { ShadowCache } from '../../../src/core/shadowcache.js';
 import { installMovement } from './movement.mjs';
 import { installMovementMotion } from './movement-motion.mjs';
-import { installWeapons } from './weapons.mjs';
+import { installWeapons, installArcPreviewPerformance } from './weapons.mjs';
 import { installWeaponsFidelity } from './weapons-fidelity.mjs';
 import { installShotGuide } from './weapons-fidelity.mjs';
 import { installSubSpecialFidelity } from './sub-special-fidelity.mjs';
@@ -43,7 +43,6 @@ import { installEmotesMotion } from './emotes-motion.mjs';
 import { installSpecialMotion } from './special-motion.mjs';
 import { installFaceMotion } from './face-motion.mjs';
 import { installCarryMotion } from './carry-motion.mjs';
-import { installArcPreviewPerformance } from './arc-preview-performance.mjs';
 
 let installed = false;
 export function install(profile) {
