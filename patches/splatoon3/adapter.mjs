@@ -95,11 +95,11 @@ export function adaptSource(rel, code) {
         guideY = -projected.y * innerHeight * 0.5;
       }
     }
-    const guideKey = \`${guideX.toFixed(1)}|${guideY.toFixed(1)}\`;
+    const guideKey = \`\${guideX.toFixed(1)}|\${guideY.toFixed(1)}\`;
     if (guideKey !== L.guide) {
       L.guide = guideKey;
-      this.xh.style.setProperty('--gx', \`${guideX.toFixed(1)}px\`);
-      this.xh.style.setProperty('--gy', \`${guideY.toFixed(1)}px\`);
+      this.xh.style.setProperty('--gx', \`\${guideX.toFixed(1)}px\`);
+      this.xh.style.setProperty('--gy', \`\${guideY.toFixed(1)}px\`);
     }
     // per-shot kick (recoil events) on top of the live cone the engine reports in screen px (already includes bloom)`,
       'S3 weapon ShotGuide HUD projection');
