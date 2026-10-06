@@ -59,6 +59,7 @@ export function installWeapons(context, profile) {
     const result = reset.apply(this, args);
     this.s3Stored = null; this.s3Turret = false; this.s3FlickVertical = false; this.s3BlasterWindup = 0;
     this.s3SloshRecovery = false;
+    this.s3ChargerSpent = 0;
     this.s3ChargerPostShot = 0; this.s3DualiesPostShot = 0; this.s3DodgeShotPending = 0;
     return result;
   };
@@ -70,28 +71,40 @@ export function installWeapons(context, profile) {
     return this.s3BlasterWindup > 0 || busy.call(this);
   };
   const charger = WeaponRunner.prototype._charger;
+  const chargerInkAt = (w, progress) => {
+    const p = Math.max(0, Math.min(1, progress)), minT = w.minimumChargeTime ?? (8 / 60);
+    if (p <= minT) return w.inkMin * p / Math.max(1e-10, minT);
+    return w.inkMin + (w.inkFull - w.inkMin) * (p - minT) / Math.max(1e-10, 1 - minT);
+  };
+  const chargerProgressForInk = (w, ink) => {
+    const value = Math.max(0, ink), minT = w.minimumChargeTime ?? (8 / 60);
+    if (value <= w.inkMin) return minT * value / Math.max(1e-10, w.inkMin);
+    return Math.min(1, minT + (1 - minT) * (value - w.inkMin) / Math.max(1e-10, w.inkFull - w.inkMin));
+  };
   // S3 keeps a full charge only while ZR stays down; letting go of ZR before
-  // leaving the keep cancels the charge. `inp.fire` cannot express that, because
-  // the actor masks it to false while squid and through emergeDelay, which makes
-  // "still holding ZR underwater" and "released ZR underwater" the same value.
-  // `a.intent.fire` is the canonical actor-side hold state and keeps them apart.
+  // leaving the keep cancels the charge. Ink already committed to a partial or
+  // full charge is never refunded.
   const cancelStored = r => {
     r.s3Stored = null; r.charging = false; r.charge = 0; r.chargeT = 0; r.chargeDinged = false;
+    r.s3ChargerSpent = 0;
     r.chargeLoop?.stop(.05); r.chargeLoop = null;
   };
   WeaponRunner.prototype._charger = function (dt, inp, w) {
-    const a = this.a, held = !!a.intent.fire;
+    const a = this.a, held = !!a.intent.fire, epsilon = 1e-10;
     if (this.s3Stored && !held) cancelStored(this);
     if (a.form === 'squid') {
       if (this.charging) {
         // Submerging with ZR already released never opens a keep window.
-        if (this.charge >= .999 && held) this.s3Stored = { charge: 1, remaining: w.keepChargeTime };
+        if (this.charge >= .999 && held) this.s3Stored = {
+          charge: 1, remaining: w.keepChargeTime, paid: Math.max(this.s3ChargerSpent || 0, w.inkFull)
+        };
         this.charging = false; this.charge = 0; this.chargeT = 0;
+        if (!this.s3Stored) this.s3ChargerSpent = 0;
         this.chargeLoop?.stop(.05); this.chargeLoop = null;
       }
       if (this.s3Stored) {
         this.s3Stored.remaining -= dt;
-        if (this.s3Stored.remaining <= 1e-10) this.s3Stored = null;
+        if (this.s3Stored.remaining <= epsilon) { this.s3Stored = null; this.s3ChargerSpent = 0; }
       }
       return;
     }
@@ -99,7 +112,47 @@ export function installWeapons(context, profile) {
       // Held through the keep, so the store survives emergeDelay with inp.fire
       // masked, and is restored once the actor forwards the trigger again.
       if (!inp.fire) { this.charge = 1; return; }
-      this.charge = this.s3Stored.charge; this.chargeT = 1; this.charging = true; this.s3Stored = null;
+      this.charge = this.s3Stored.charge; this.chargeT = 1; this.charging = true;
+      this.s3ChargerSpent = this.s3Stored.paid ?? w.inkFull; this.s3Stored = null;
+    }
+
+    if (inp.fire && this.cooldown <= 0) {
+      if (!this.charging) this.s3ChargerSpent = 0;
+      const beforeT = this.chargeT || 0, realInk = a.ink;
+      const low = realInk + epsilon < w.inkMin;
+      const rate = (!a.grounded ? (w.airChargeRate ?? 1 / 3) : low ? (w.emptyChargeRate ?? 1 / 3) : 1);
+      let targetT = Math.min(1, beforeT + dt / Math.max(epsilon, w.chargeTime) * rate);
+      const affordableT = chargerProgressForInk(w, (this.s3ChargerSpent || 0) + realInk);
+      targetT = Math.min(targetT, affordableT);
+      const scaledDt = Math.max(0, targetT - beforeT) * w.chargeTime;
+
+      // The upstream owner still contains its old static ink-cap check. Give it
+      // a temporary full tank only for state advancement; the real tank is
+      // debited below from the sourced min/full endpoints.
+      a.ink = Math.max(realInk, w.inkFull);
+      const result = charger.call(this, scaledDt, inp, w);
+      a.ink = realInk;
+
+      const targetPaid = chargerInkAt(w, this.chargeT || 0);
+      const delta = Math.max(0, targetPaid - (this.s3ChargerSpent || 0));
+      const spent = Math.min(a.ink, delta);
+      if (spent > epsilon) {
+        a.ink -= spent; a.lastFire = 0;
+        this.s3ChargerSpent = (this.s3ChargerSpent || 0) + spent;
+      }
+      return result;
+    }
+
+    if (!inp.fire && this.charging) {
+      // Neutralise the legacy release-only debit. The real ink was already
+      // consumed progressively while chargeT advanced.
+      const realInk = a.ink, c = Math.max(0, this.charge || 0);
+      const legacyDebit = Math.max(w.inkMin, w.inkFull * c);
+      a.ink = realInk + legacyDebit;
+      const result = charger.call(this, dt, inp, w);
+      a.ink = realInk;
+      this.s3ChargerSpent = 0;
+      return result;
     }
     return charger.call(this, dt, inp, w);
   };
