@@ -1528,7 +1528,7 @@
    "factor": 0.5,
    "protect_lips": false,
    "after_delta_smooth": true,
-   "iters": 200,
+   "iters": 300,
    "bumps": [
     {
      "centre": [
@@ -1536,9 +1536,30 @@
       -72.0,
       8.0
      ],
-     "rx": 13.0,
+     "rx": 16.0,
+     "ry": 13.0,
+     "rz": 24.0,
+     "front_only": false
+    }
+   ]
+  },
+  {
+   "name": "under_ear_hollow",
+   "kind": "displace",
+   "mm": -3.5,
+   "weight_smooth": 10,
+   "protect_lips": false,
+   "after_delta_smooth": true,
+   "bumps": [
+    {
+     "centre": [
+      58.0,
+      -70.0,
+      4.0
+     ],
+     "rx": 11.0,
      "ry": 11.0,
-     "rz": 20.0,
+     "rz": 15.0,
      "front_only": false
     }
    ]
