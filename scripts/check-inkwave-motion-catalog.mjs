@@ -545,7 +545,11 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout 
         projectiles[name] = function (...args) { const value = original.apply(this, args); if (args[0] === a && frame >= 0) events.push({ name, frame }); return value; };
       }
       function step(dt = 1 / 60, input = {}) {
-        if (a) { a.intent.fire = !!input.fire; a.intent.sub = !!input.sub; G.time += dt; a.weaponRunner.update(dt, input); a._finishFrame(dt); }
+        if (a) { a.intent.fire = !!input.fire; a.intent.sub = !!input.sub; G.time += dt;
+          // Dualies post-shot admission clocks belong to Actor.update.
+          if (scenario.name === 'dualies-roll-lock-interrupt') a.update(dt);
+          else { a.weaponRunner.update(dt, input); a._finishFrame(dt); }
+        }
         else ch.update(dt, null);
         ch.root.updateMatrixWorld(true); ch.skeleton.update();
       }
@@ -582,7 +586,7 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout 
           if (n === 'swim-turn-brake') { horizontal(frame < 115 ? 11 : 0, frame >= 45 && frame < 80 ? 1 : 0, frame >= 45 && frame < 80 ? 0 : frame >= 80 ? -1 : 1, true); driver = 'Native Actor._horizontal swim acceleration/turn/brake and _integrate/native own-ink floor; squid form/submerged diagnostic assignment; no full match'; }
           if (n === 'wall-surge-ready-crest') { a.intent.jump = frame >= 20 && frame < 75; a._updateClimb(1 / 60, true); beforeActions(a, 1 / 60, false); a._integrate(1 / 60, true, false); }
           if (n === 'form-both-directions-interrupt') { if ([0, 70, 82].includes(frame)) { a.form = 'squid'; a.submerged = true; } if ([40, 76, 100].includes(frame)) { a.form = 'kid'; a.submerged = false; } input.fire = frame >= 100 && frame < 120; input.sub = frame >= 140 && frame < 155; }
-          if (n === 'dualies-roll-lock-interrupt') { input.fire = frame < 145; if (frame === 0 || frame === 110) { a.intent.fire = true; if (!a.weaponRunner.tryDodge(new THREE.Vector3(1, 0, 0))) throw Error('Native dodge refused'); } if (a.weaponRunner.dodgeVel(a.vel)) a.pos.addScaledVector(a.vel, 1 / 60); else a.vel.set(0, 0, 0); input.sub = frame >= 115 && frame < 132; }
+          if (n === 'dualies-roll-lock-interrupt') { input.fire = frame < 145; if (frame === 0 || frame === 110) { a.intent.fire = true; if (!a.weaponRunner.tryDodge(new THREE.Vector3(1, 0, 0))) throw Error('Native dodge refused'); } input.sub = frame >= 115 && frame < 132; driver = 'Native Actor.update owns Dualies action clocks, movement and _finishFrame; real Runner and Character, isolated arena'; }
           if (n === 'roller-horizontal-push') { input.fire = frame < 125; input.firePressed = frame === 0; move(frame >= 45 && frame < 125 ? a.weapon.rollSpeed : 0); }
           if (n === 'roller-vertical-land') { input.fire = frame < 60; input.firePressed = frame === 0; if (!a.grounded) a._integrate(1 / 60, false, false); }
           if (n.startsWith('superjump-') && a.superJumpState) a._updateSuperJump(1 / 60);
