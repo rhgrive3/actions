@@ -141,11 +141,17 @@ async function main(){
       // Observe the real G.env publication before the unmodified main module
       // executes. No constructor, target factory, budget, or served bytes change.
       await coldPage.evaluate(async url=>{
-       const {G}=await import(url);if(G.game||G.env)throw Error('Cold observer installed too late');
+       const {G}=await import(url);
+       const capture=env=>{if(env)window.__coldEnvironment={quality:G.settings?.quality,touch:G.mobile?.touch===true,gamePublishedAtAllocation:!!G.game,marina:env._marina===true,cloud:[env._cloudRT?.width,env._cloudRT?.height],farSize:env._farRT?.width,cloudId:env._cloudRT?.texture.uuid,farId:env._farRT?.texture.uuid};};
+       // Module ordering may publish Environment before the main.js response is
+       // observed. That is still a valid cold-allocation observation iff Game
+       // has not been published yet; capture it immediately instead of waiting
+       // forever for a setter that already fired.
+       if(G.env){if(G.game)throw Error('Cold observer installed after Game publication');capture(G.env);return;}
+       if(G.game)throw Error('Cold Game published before Environment observation');
        const original=Object.getOwnPropertyDescriptor(G,'env')||{configurable:true,enumerable:true,writable:true,value:undefined};let value=G.env;
        Object.defineProperty(G,'env',{configurable:true,enumerable:original.enumerable,get:()=>value,set:env=>{
-        value=env;
-        if(env)window.__coldEnvironment={quality:G.settings?.quality,touch:G.mobile?.touch===true,gamePublishedAtAllocation:!!G.game,marina:env._marina===true,cloud:[env._cloudRT?.width,env._cloudRT?.height],farSize:env._farRT?.width,cloudId:env._cloudRT?.texture.uuid,farId:env._farRT?.texture.uuid};
+        value=env;capture(env);
         Object.defineProperty(G,'env',{...original,value:env});
        }});
       },new URL('./core/ctx.js',response.url()).href);
