@@ -340,3 +340,49 @@ Dedicated source 6/6: 300 render frames at each 30/60/120Hz continue with keyboa
 | 再現操作 | 新規マッチで最初の相手プレイヤー splat → 受賞可能な攻撃者に通常報酬（weights.splat）+ 0.3。2体目以降は通常報酬のみ。自己/味方/環境死はボーナス枠を消費しない。死亡中の攻撃者、または `flow.bots=false` で除外された bot が最初の相手 splat を取ると、本人は Flow を受けず枠だけ消費し、後続の人間は通常報酬のみ。respawn は資格を戻さず、新しい `G.match` で資格が戻る。重複 callback のテストは同じイベント callback を installer に再送し +10 が二重にならないことだけを確認し、通常報酬は各 callback で加算される。これはネットワーク配送・base award の冪等性を検証するものではない |
 | プレイへの影響 | 試合開始の初回相手プレイヤー splat を受賞可能な攻撃者が取ると Flow 進行が10fp相当先に進み、到達タイミングが早まる。最初の攻撃者が死亡中または無効 bot ならイベント枠は消費されるが本人には Flow が付かず、後続者へ bonus を移さない。加算は通常 splat と同一 gain のため他の gain を置き換えない。通常 splat 値（#481）、減少（#468）、死亡ペナルティ（#471）は変更していない |
 | 確認状態 | **ロジック確認済み**（`patches/splatoon3/tests/issue-529-first-splat-bonus.test.mjs` 7/7。補正前の回帰 run で dead attacker / disabled bot / attributed water の3 control が失敗し、補正後に通過。`installFlow` 実体＋実 profile、30/60/120Hz 同一結果。重複 callback 確認は +10 の一回性に限定し、network/base-award idempotence は未確認）。死亡中 recipient / disabled bot の event-slot 方針は event と受賞可否を分離する runtime policy で、本家実機の edge-case behavior は未確認。`flow-progress-lifecycle` / `weapons-gear-flow` の focused regression と quick profile validator を別途実行。**Switch Ver.11.3.0 実機での +10fp 効果と fp 尺度の較正は未確認**。weights.splat のキャリブレーションは profile の status どおり未較正のまま。表示・受動効果の実機一致は主張しない |
+
+
+## Slosher 2F teammate-through grace window (#717, 2026-10-06)
+
+Splatoon 3 Ver. 11.3.0 Standard Slosher (バケットスロッシャー) projectile collision
+parameters explicitly define `FriendThroughFrameForPlayer = 2` for all three
+projectile units:
+- UnitGroupParam.Unit[0].CollisionParam.FriendThroughFrameForPlayer = 2
+- UnitGroupParam.Unit[1].CollisionParam.FriendThroughFrameForPlayer = 2
+- UnitGroupParam.Unit[2].CollisionParam.FriendThroughFrameForPlayer = 2
+
+本家の根拠: Leanny Splatoon 3 Ver. 11.3.0 パラメータテーブル (`WeaponSlosherStrong.game__GameParameterTable.json`)
+および検証Wiki（味方を貫通する時間: 2フレーム）。シューター等の未使用設定とは異なり、スロッシャーでは
+有効なパラメータとして定義されている。
+
+INKWAVE の実装箇所:
+`patches/splatoon3/runtime/weapons-fidelity.mjs`
+- `collisionRecord()`: `FriendThroughFrameForPlayer` を保持。
+- `setCollision()`: `p.fidelityFriendThrough` を設定（shooter および slosher の検証済みブキ種に限定）。
+- `fidelityProjectileTargets()`: 味方アクター（発射者 owner を除く）の capsuleEntry を判定し、
+  スイープ内の接触時刻における projectile age が `p.fidelityFriendThrough`（2F = 2/60秒）未満の場合は透過（pass-through）、
+  2F 以上の場合は衝突遮蔽（obstruction）として最短候補に含める。
+- `fidelityVolleyDamage()`, `applyFidelityProjectileHit()`, `applyFidelitySlosherSplash()`:
+  味方接触による消費時はフレンドリーダメージ 0、キル判定なし、飛沫スプラッシュを遮蔽味方の後方に発生させない。
+`patches/splatoon3/weapons-adapter.mjs`:
+- `weapons.js` 内の生の `e.team === p.team` スキップをアダプタで除去し、`fidelityProjectileTargets` の時限判定に委譲。
+- 味方消費時の sloshSplash 発生を抑止。
+
+再現操作:
+1. スロッシャーを装備し、直線上の味方 B、その直後の敵 C を配置。
+2. B が発射点から 2F 到達以降の距離（例: z = 4.5）にある場合、修正前はスロッシャー弾が味方を永久透過して敵 C に命中（ダメージ 70）。
+3. 修正後は、味方 B との接触時刻が 2F 到達以降であれば味方 B の身体で弾が消費・遮蔽され、味方 B はノーダメージ、背後の敵 C にも命中しない。
+4. 味方 B が 2F 未満の至近距離（例: z = 1.0）にある場合は、2F 猶予期間内として透過し、背後の敵 C に命中する。
+5. 1ステップ内で 2F 境界をまたぐ場合（例: 1.5F から 2.5F の移動）、ステップ終端時刻ではなく候補接触時刻（contact age）で判定され、2F 未満接触なら透過、2F 以上接触なら遮蔽される。
+
+プレイへの影響:
+- 狭い通路や味方の密集時に、2F 猶予後（中遠距離）の味方による弾の遮蔽（ボディブロック）が本家同様に機能する。
+- 発射直後（<2F）の味方誤射による無駄な弾消えは防がれつつ、遠くの味方を貫通して敵に当たる不具合が解消される。
+- 他ブキ（Dualies, Splatling, Blaster など）の透過挙動は変更されず、Slosher の 2F 窓のみが正しく適用される。
+
+確認状態:
+- 固定 60 Hz ロジックおよびリグレッション検証 (`patches/splatoon3/tests/slosher-teammate-through.test.mjs` 12項目):
+  Unit 0/1/2 の値保持、<2F 透過、>=2F 遮蔽、味方ノーダメージ、背後敵ノーダメージ、接触時刻ベースの境界判定、
+  発射者自身の透過、敵先行時の判定順序、ゴースト弾の単一消費、プール再利用時の初期化、
+  Dualies/Splatling/Blaster の非継承確認、30/60/120 Hz での同一挙動、最大ボレーダメージ制限の維持、地形遮蔽優先。
+- 未確認: Switch 実機での精密なピクセル・フレーム同期比較、ローラー等の他ブキ種の非ゼロ窓、チャージャー・ボム等の味方接触挙動。
