@@ -37,6 +37,8 @@ test('late roller fire links exactly its immutable volley after catch-up',async(
 test('native bomb and forwarded-event sequence replay is idempotent',async()=>{
  const f=await fixture(),nm=f.makeNetMatch(f.makeSession()),a=f.makeActor({nid:0,owner:'p2',remote:true});f.bind(nm,[a]);nm.peers.set('p2',{tr:1000});nm._rec(['b',0,'bomb',0,3,0,0,5,10,1,2]);const b=nm.out.pop();nm._play('p2',b);nm._play('p2',b);assert.equal(f.projectiles.bombs.length,1);
 });
+// Storm authority is exercised through real received snapshots and native update
+// ordering in storm-authority-order.test.mjs, including lifecycle retirement.
 test('terminal replay retains the native blaster airburst before recycling',async()=>{
  const f=await fixture(),nm=f.makeNetMatch(f.makeSession()),a=f.makeActor({nid:0,owner:'p2',remote:true,roller:false});f.bind(nm,[a]);
  const life=f.WEAPONS.blaster.ballistics.burstTime,straight=f.WEAPONS.blaster.ballistics.straightTime,peer={tr:1000+life+1/60};nm.peers.set('p2',peer);let bursts=0;f.projectiles._blastBurst=()=>bursts++;
