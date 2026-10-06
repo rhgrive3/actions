@@ -47,7 +47,8 @@ EYEBALLS = ['HEAD_eyes', 'HEAD_eyes_02', 'HEAD_eyes_18', 'HEAD_eyes_19']
 IRIS_BALLS = {'HEAD_eyes_18': -1, 'HEAD_eyes': 1}
 EAR_PARTS = ['HEAD_face_02', 'HEAD_face_03', 'HEADGEAR_headgear', 'HEADGEAR_headgear_02']
 NECK = 'BODY_torso'
-CHANGED = list(dict.fromkeys([FACE] + FOLLOWERS + list(IRIS_BALLS) + EYEBALLS + EAR_PARTS + [NECK]))   # backed up / restored
+SCALP = 'HAIR_scalp'   # moved with the upper forehead (profile_fit 'also')
+CHANGED = list(dict.fromkeys([FACE] + FOLLOWERS + list(IRIS_BALLS) + EYEBALLS + EAR_PARTS + [NECK, SCALP]))   # backed up / restored
 
 
 def restore(drop=False):
@@ -1648,6 +1649,19 @@ def soften_lights(cfg):
         if SUFFIX + '_energy' not in light:
             light[SUFFIX + '_energy'] = light.energy
         light.energy = energy
+    # the key was warm (1, 0.9, 0.82) and the fill and the sky cool: lit parts came out orange and the parts
+    # under them grey-brown (the reference is lit evenly in colour); colours nearer white, the sky a little stronger
+    for name, colour in cfg.get('colour', {}).items():
+        light = bpy.data.objects[name].data
+        if SUFFIX + '_colour' not in light:
+            light[SUFFIX + '_colour'] = list(light.color)
+        light.color = colour
+    if 'world' in cfg:
+        world = bpy.context.scene.world
+        bg = next(n for n in world.node_tree.nodes if n.type == 'BACKGROUND')
+        if SUFFIX + '_strength' not in world:
+            world[SUFFIX + '_strength'] = bg.inputs['Strength'].default_value
+        bg.inputs['Strength'].default_value = cfg['world']
     if cfg.get('side_suns'):
         # the reference lights the sides of the face about as brightly as the front; here the sides (the cheek
         # below the triangle, the side of the jaw) were 5-8 L darker in the 3/4 and side views while the front
@@ -1740,13 +1754,34 @@ def eye_look(cfg):
             t.links.new(rng.outputs['Result'], mx.inputs[0])
             t.links.new(rw.outputs['Result'], mx.inputs[1])
             t.links.new(mx.outputs[0], mul.inputs[7])
-        t.links.new(mul.outputs[2], bsdf.inputs['Base Color'])
+        out = mul.outputs[2]
+        if cfg.get('gain'):
+            # the eye colours are brighter than the reference's (front view white about 245 vs 217, iris teal
+            # 63/207/187 vs 35/152/143): the colour is multiplied by cfg['gain']; the near-white catch lights
+            # (keep_white mask) stay as they are
+            gmix = t.nodes.new('ShaderNodeMix')
+            gmix.data_type, gmix.blend_type = 'RGBA', 'MIX'
+            gmix.inputs[6].default_value = (*cfg['gain'], 1.0)
+            gmix.inputs[7].default_value = (1.0, 1.0, 1.0, 1.0)
+            gmul = t.nodes.new('ShaderNodeMix')
+            gmul.data_type, gmul.blend_type = 'RGBA', 'MULTIPLY'
+            gmul.inputs['Factor'].default_value = 1.0
+            for n in (gmix, gmul):
+                n.name = n.label = EYE_LOOK + '_gain_' + n.blend_type
+            if cfg.get('keep_white'):
+                t.links.new(rw.outputs['Result'], gmix.inputs['Factor'])
+            else:
+                gmix.inputs['Factor'].default_value = 0.0
+            t.links.new(out, gmul.inputs[6])
+            t.links.new(gmix.outputs[2], gmul.inputs[7])
+            out = gmul.outputs[2]
+        t.links.new(out, bsdf.inputs['Base Color'])
         if cfg.get('emission'):
             # the white behind the iris lies in the socket's shadow and went black in the side view, where the
             # reference shows it white: a little of the eye's own colour as emission (old value kept)
             if SUFFIX + '_emit' not in bpy.data.materials[mat_name]:
                 bpy.data.materials[mat_name][SUFFIX + '_emit'] = bsdf.inputs['Emission Strength'].default_value
-            t.links.new(mul.outputs[2], bsdf.inputs['Emission Color'])
+            t.links.new(out, bsdf.inputs['Emission Color'])
             bsdf.inputs['Emission Strength'].default_value = cfg['emission']
 
 
@@ -1759,7 +1794,7 @@ def restore_eye_look():
         mine = [n for n in t.nodes if n.name.startswith(EYE_LOOK)]
         if not mine:
             continue
-        mul = next(n for n in mine if n.bl_idname == 'ShaderNodeMix')
+        mul = next(n for n in mine if n.name == EYE_LOOK + '_ShaderNodeMix')
         src = mul.inputs[6].links[0].from_socket
         bsdf = next(n for n in t.nodes if n.type == 'BSDF_PRINCIPLED')
         if SUFFIX + '_emit' in mat:
@@ -1798,6 +1833,13 @@ def restore_lights():
         if SUFFIX + '_energy' in light:
             light.energy = light[SUFFIX + '_energy']
             del light[SUFFIX + '_energy']
+        if SUFFIX + '_colour' in light:
+            light.color = list(light[SUFFIX + '_colour'])
+            del light[SUFFIX + '_colour']
+    world = bpy.context.scene.world
+    if world is not None and SUFFIX + '_strength' in world:
+        next(n for n in world.node_tree.nodes if n.type == 'BACKGROUND').inputs['Strength'].default_value = world[SUFFIX + '_strength']
+        del world[SUFFIX + '_strength']
 
 
 CORNEA_MATERIAL = 'eyes_000000'
@@ -1858,6 +1900,14 @@ def raise_iris(cfg):
         uvl.foreach_set('uv', uv.ravel())
         me.update()
         print('FACE_VOLUME iris', name, 'up px', cfg['px'], 'uv shift', np.round(duv, 4).tolist())
+        if cfg.get('scale', 1.0) != 1.0:
+            # the painted iris is smaller than the reference's (front view radius 13.6 / 12.9 px, reference 14.3 /
+            # 14.2): the UV map shrinks about the UV under the front-view iris centre, so the iris grows on the ball
+            c = uv_at(*cfg['scale_centre_px'][0 if side < 0 else 1])
+            uv = c + (uv - c) / cfg['scale']
+            uvl.foreach_set('uv', uv.ravel())
+            me.update()
+            print('FACE_VOLUME iris', name, 'scale', cfg['scale'], 'about uv', np.round(c, 4).tolist())
 
 
 IRIS_IMAGES = {'Image_0': (184.5, 134.0), 'Image_1': (198.5, 134.0)}
@@ -2208,6 +2258,31 @@ def main():
                         me.vertices[j].co = co
                 me.update()
                 print('FACE_VOLUME', step['name'], 'neck vertices', int((wn > 0.001).sum()), 'mm', step.get('mm_side', step.get('mm')), 'lean', step.get('lean'))
+                continue
+            elif step['kind'] == 'profile_fit':
+                # the side-view profile of the forehead had a groove (head y 44-48 mm) over a part that stood forward
+                # (y 31-43 mm) of the reference's smooth arc: forward (+) / back (-) move (head z, mm) by height
+                # (step['profile'] = [[y_mm, dz_mm], ...], measured row by row against the reference outline), full
+                # near the midline and fading to the sides (step['x'] = [full, none], |x| mm), front only (z > 60 mm).
+                # Blender's Warp, one for the forward part and one for the back part
+                # step['also']: meshes lying on that part (the scalp shell over the upper forehead) take the same
+                # field, else the moved face cuts through them in a line
+                pr = np.array(step['profile'], float)
+                o = np.argsort(pr[:, 0])
+                x0, x1 = step['x']
+                before = er.world(face)
+                for obj in [face] + [bpy.data.objects[n] for n in step.get('also', [])]:
+                    ol = loc if obj is face else M.to_local(er.world(obj)) * 1000
+                    d = np.interp(ol[:, 1], pr[o, 0], pr[o, 1], left=0.0, right=0.0)
+                    t = np.clip((x1 - np.abs(ol[:, 0])) / (x1 - x0), 0, 1)
+                    d *= t * t * (3 - 2 * t) * np.clip((ol[:, 2] - 60) / 20, 0, 1)
+                    for sign in (1, -1):
+                        part = np.maximum(sign * d, 0)
+                        if part.max() > 0:
+                            warp(obj, part / part.max(), [0, 0, sign * float(part.max())], ol)
+                print('FACE_VOLUME', step['name'], 'max move mm',
+                      round(float(np.linalg.norm(er.world(face) - before, axis=1).max() * 1000), 2),
+                      'seam gap closed mm', round(float(join_seam(face, pairs)), 3))
                 continue
             elif step['kind'] == 'neck_normals':
                 # the face laid on the neck (jaw_tuck) ends on it: its own shading differs from the neck's, so the

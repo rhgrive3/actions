@@ -105,9 +105,26 @@ def nape_field(obj, cfg):
     prof = np.array(cfg['profile'], float)
     order = np.argsort(prof[:, 0])
     d = np.interp(L[:, 1], prof[order, 0], prof[order, 1], left=0.0, right=0.0)
+    if cfg.get('profile_left'):
+        # the left (+x) back of the neck stood 10-14 px behind the reference in the left side view while the right
+        # one matched: the left half takes its own profile (negative = forward), blended across the midline
+        pl = np.array(cfg['profile_left'], float)
+        ol = np.argsort(pl[:, 0])
+        dl = np.interp(L[:, 1], pl[ol, 0], pl[ol, 1], left=0.0, right=0.0)
+        m0, m1 = cfg.get('x_mix', [-8.0, 8.0])
+        t = smoothstep((L[:, 0] - m0) / (m1 - m0))
+        d = d * (1 - t) + dl * t
+    else:
+        t = np.zeros(len(L))
     x_full, x_out = cfg['x']
     z0, z1 = cfg['z_back']
-    return d * smoothstep((x_out - np.abs(L[:, 0])) / (x_out - x_full)) * smoothstep((z0 - L[:, 2]) / (z0 - z1))
+    fade = smoothstep((x_out - np.abs(L[:, 0])) / (x_out - x_full))
+    if cfg.get('profile_left') and cfg.get('x_left'):
+        # the left side view's back edge is on the side of the neck (|x| 17-35 mm), where the right profile has
+        # faded: the left half fades over its own, wider range
+        xl_full, xl_out = cfg['x_left']
+        fade = fade * (1 - t) + smoothstep((xl_out - np.abs(L[:, 0])) / (xl_out - xl_full)) * t
+    return d * fade * smoothstep((z0 - L[:, 2]) / (z0 - z1))
 
 
 def nape(cfg):
@@ -118,11 +135,118 @@ def nape(cfg):
     peak = max(m for _, m in cfg['profile'])
     for name in cfg['meshes']:
         obj = bpy.data.objects[name]
-        w = nape_field(obj, cfg) / peak
+        f = nape_field(obj, cfg)
         before = er.world(obj)
-        warp(obj, w, tuple(back * peak / 1000))
+        for sign in (1, -1):        # back (profile > 0) and forward (profile_left < 0) as two Warps
+            w = np.maximum(sign * f, 0) / peak
+            if w.max() > 0:
+                warp(obj, w, tuple(sign * back * peak / 1000))
         print('BODY_SHAPE nape', name, 'vertices', int((w > 1e-3).sum()), 'max move mm',
               round(float(np.linalg.norm(er.world(obj) - before, axis=1).max() * 1000), 2))
+
+
+def collar_lower(cfg):
+    """The collar (turtleneck) top stood higher than the reference in the side and back views (left side view
+    14-16 px, back right 10-12, right 4-8; the front matched): its top part goes down (head-frame -y, Blender's
+    Warp) by an amount that depends on the direction round the neck (cfg['angles'] = [deg, mm]: 0 = front,
+    90 = left (+x), 180 = back), full from cfg['y'][1] up, nothing from cfg['y'][0] down (the collar is squeezed,
+    not moved), only within cfg['r_max'] mm of the neck axis (cfg['centre_xz'])."""
+    down = er.M.to_world_delta(np.array([[0.0, -1.0, 0.0]]))[0]
+    down /= np.linalg.norm(down)
+    ang = np.array(cfg['angles'], float)
+    ang = np.r_[ang[-1:] - [360, 0], ang, ang[:1] + [360, 0]]
+    peak = float(ang[:, 1].max())
+    cx, cz = cfg['centre_xz']
+    y0, y1 = cfg['y']
+    for name in cfg['meshes']:
+        obj = bpy.data.objects[name]
+        L = er.M.to_local(er.world(obj)) * 1000
+        phi = np.degrees(np.arctan2(L[:, 0] - cx, L[:, 2] - cz)) % 360
+        amount = np.interp(phi, ang[:, 0], ang[:, 1])
+        r = np.hypot(L[:, 0] - cx, L[:, 2] - cz)
+        w = amount / peak * smoothstep((L[:, 1] - y0) / (y1 - y0)) * smoothstep((cfg['r_max'] - r) / 10.0)
+        before = er.world(obj)
+        warp(obj, w, tuple(down * peak / 1000))
+        print('BODY_SHAPE collar_lower', name, 'vertices', int((w > 1e-3).sum()), 'max move mm',
+              round(float(np.linalg.norm(er.world(obj) - before, axis=1).max() * 1000), 2))
+
+
+def head_side_field(obj, cfg):
+    """Inward move (mm, head-frame |x|) of the sides of the head round the ear root: in the front view the head
+    behind the cheek (|x| 92-95 mm at z -10..20) stood 3-9 px outside the reference's cheek outline, so the cheek
+    and the jaw angle read wide and square.  Amount by height per side (cfg['profile_right'] for x < 0,
+    cfg['profile_left'] for x > 0, [y_mm, mm] pairs), full over cfg['z'][1]..cfg['z'][2] and none beyond
+    cfg['z'][0] / cfg['z'][3] (the cheek front and the back of the head stay), none inside |x| cfg['x'][0]."""
+    L = er.M.to_local(er.world(obj)) * 1000
+    out = np.zeros(len(L))
+    for key, side in (('profile_right', -1), ('profile_left', 1)):
+        pr = np.array(cfg[key], float)
+        o = np.argsort(pr[:, 0])
+        d = np.interp(L[:, 1], pr[o, 0], pr[o, 1], left=0.0, right=0.0)
+        out = np.where(np.sign(L[:, 0]) == side, d, out)
+    z0, z1, z2, z3 = cfg['z']
+    out *= smoothstep((L[:, 2] - z0) / (z1 - z0)) * smoothstep((z3 - L[:, 2]) / (z3 - z2))
+    x0, x1 = cfg['x']
+    return out * smoothstep((np.abs(L[:, 0]) - x0) / (x1 - x0)), L
+
+
+def head_side_in(cfg):
+    """The same field on the head and the shaved-temple shell over it (Blender's Warp, one vector per side)."""
+    for name in cfg['meshes']:
+        obj = bpy.data.objects[name]
+        f, L = head_side_field(obj, cfg)
+        peak = float(f.max())
+        if peak <= 0:
+            continue
+        before = er.world(obj)
+        for side in (-1, 1):
+            vec = er.M.to_world_delta(np.array([[-side * 1.0, 0.0, 0.0]]))[0]
+            vec = vec / np.linalg.norm(vec) * peak / 1000
+            warp(obj, f * (np.sign(L[:, 0]) == side) / peak, tuple(vec))
+        print('BODY_SHAPE head_side_in', name, 'vertices', int((f > 1e-3).sum()), 'max move mm',
+              round(float(np.linalg.norm(er.world(obj) - before, axis=1).max() * 1000), 2))
+
+
+def skull_back(cfg):
+    """The back of the skull bulged out behind the reference's line in the left side view (10-12 px over rows
+    300-345): forward move (head z, Blender's Warp) by height (cfg['profile'] = [y_mm, mm]), on the back only
+    (cfg['z'] = [none, full], head z mm), on the left half (cfg['x_side'] = [none, full], head x mm) and fading to the
+    sides (cfg['x_out'] = [full, none], |x| mm); the same field on the head and on the shells that lie on it."""
+    fwd = er.M.to_world_delta(np.array([[0.0, 0.0, 1.0]]))[0]
+    fwd /= np.linalg.norm(fwd)
+    pr = np.array(cfg['profile'], float)
+    o = np.argsort(pr[:, 0])
+    peak = float(pr[:, 1].max())
+    for name in cfg['meshes']:
+        obj = bpy.data.objects[name]
+        L = er.M.to_local(er.world(obj)) * 1000
+        d = np.interp(L[:, 1], pr[o, 0], pr[o, 1], left=0.0, right=0.0)
+        (z0, z1), (s0, s1), (x0, x1) = cfg['z'], cfg['x_side'], cfg['x_out']
+        w = d / peak * smoothstep((z0 - L[:, 2]) / (z0 - z1)) * smoothstep((L[:, 0] - s0) / (s1 - s0))
+        w *= smoothstep((x1 - np.abs(L[:, 0])) / (x1 - x0))
+        before = er.world(obj)
+        warp(obj, w, tuple(fwd * peak / 1000))
+        print('BODY_SHAPE skull_back', name, 'vertices', int((w > 1e-3).sum()), 'max move mm',
+              round(float(np.linalg.norm(er.world(obj) - before, axis=1).max() * 1000), 2))
+
+
+def seam_normals(cfg):
+    """A line ran from under the ear to under the jaw in the side and 3/4 views where the face (laid on the neck by
+    face_volume jaw_tuck) meets the neck: the shading jumped there (clay +5 brighter on the neck side).  The face
+    near the neck takes the neck's normals (Blender's Data Transfer, custom normals): full within cfg['mm'][0] of
+    the neck surface, none beyond cfg['mm'][1], below head y cfg['y_max'].  Last of all, after every step that moves
+    the neck or the face (nape, collar, ...), so the copied normals match the final neck."""
+    from mathutils.bvhtree import BVHTree
+    face, neck = bpy.data.objects[cfg['face']], bpy.data.objects[cfg['neck']]
+    tree = BVHTree.FromObject(neck, bpy.context.evaluated_depsgraph_get())
+    inv = neck.matrix_world.inverted()
+    W = er.world(face)
+    dist = np.array([tree.find_nearest(inv @ Vector(q))[3] for q in W]) * 1000
+    d0, d1 = cfg['mm']
+    w = smoothstep((d1 - dist) / (d1 - d0)) * (er.M.to_local(W)[:, 1] * 1000 < cfg['y_max'])
+    er.apply_weighted_modifier(face, w, 'DATA_TRANSFER', object=neck, use_loop_data=True,
+                               data_types_loops={'CUSTOM_NORMAL'}, loop_mapping='POLYINTERP_NEAREST')
+    print('BODY_SHAPE seam_normals vertices', int((w > 1e-3).sum()), 'full', int((w > 0.999).sum()))
 
 
 def jacket_field(W, cfg):
@@ -603,6 +727,10 @@ def main():
     for sl, _, riders in p.get('sleeves', {}).get('pairs', []):
         names += [n for n in [sl] + riders if n not in names]
     names += [n for n in p.get('nape', {}).get('meshes', []) if n not in names]
+    names += [n for n in p.get('collar_lower', {}).get('meshes', []) if n not in names]
+    names += [n for n in p.get('head_side_in', {}).get('meshes', []) if n not in names]
+    names += [n for n in p.get('skull_back', {}).get('meshes', []) if n not in names]
+    names += [n for n in [p.get('seam_normals', {}).get('face')] if n and n not in names]
     remove_made()
     restore_legwear()
     print('BODY_SHAPE restored', restore(names, drop=args.restore), 'meshes')
@@ -666,10 +794,18 @@ def main():
             slim_sleeves(p['sleeves'])
         if p.get('nape'):
             nape(p['nape'])
+        if p.get('collar_lower'):
+            collar_lower(p['collar_lower'])
+        if p.get('head_side_in'):
+            head_side_in(p['head_side_in'])
+        if p.get('skull_back'):
+            skull_back(p['skull_back'])
         if p.get('nails'):
             mat = nail_material(p['nails'])
             for hand in p['nails']['hands']:
                 nails(bpy.data.objects[hand], p['nails'], mat)
+        if p.get('seam_normals'):
+            seam_normals(p['seam_normals'])
     if args.save:
         bpy.ops.wm.save_as_mainfile(filepath=args.save, compress=True)
 
