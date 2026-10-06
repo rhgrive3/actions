@@ -370,3 +370,19 @@ Base main `67fec182`. Splat Dualies wall impacts now enter the existing sourced 
 | 再現操作 | 通常のナワバリバトルを時間切れまで進めて `judge` 状態を見る。結果プレート中央にその試合の stage と塗り領域を持つ Minimap canvas のスナップショットが表示され、両側に Judd（ローカルチーム）と Li'l Judd（相手チーム）、下部に確定 coverage 値とチーム名が並ぶ。抽象 race track は表示されない。実マップの塗り表示と勝敗百分率の集計は別経路で、権威 `winner` と確定 `coverage` は変更しないため、中立 turf を含む実 coverage 値をそのまま表示する。自チームが Bravo の場合は Judd が右（team1）に立つ |
 | プレイへの影響 | ランダムな仮百分率は表示しない。勝敗側の flag class が対応 CSS により上がり、敗者側は下がる。内部 track nodes は #720 を含む既存 coverage contracts を壊さないよう DOM に残るが、scene 内で非表示。タイムライン、`judge_drumroll` / `judge_reveal`、resolve、owner/cancel、結果画面、XP、network、Range は変更していない。`prefers-reduced-motion` では最初の frame から同じマップ・二人の審判・勝敗・確定値を表示する |
 | 確認状態 | `patches/splatoon3/tests/judd-result-scene.test.mjs` **12/12**：公開版との前後比較、実マップ canvas fixture と保留塗り band の更新、race track を隠す scene CSS rule、勝敗に応じた flag/CSS selector の一致、権威勝敗、自チーム側の入れ替わり、reduced-motion、owner cancellation、勝敗双方の既存遷移。別の **headless Chromium CSS-engine fixture**（1280×800）では track の `display:none` と client rect なし、stage/map/coverage/winner labels の可視 box を確認した。`turf-alpha-tie.test.mjs`、local-quality `score-reticle.test.mjs`、reliability `results.test.mjs` / `hud.test.mjs`、network-replication `robustness-ownership.test.mjs` は合計 **82 pass / 1 skip**（skip は built-site-only probe、`INKWAVE_TIE_BUILT_SITE` 未設定）。この Chromium fixture は本番ゲームの screenshot や map pixel の視覚確認ではない。**実ゲームのブラウザ表示と Switch 実機（Ver.11.3.0）のマップ構図・猫・旗アニメーション比較は未確認**。公式アセット・ポーズ・フレーム値は使用しておらず、審判の姿は独自 SVG/CSS のスタイライズ描画である |
+
+## 2026-10-07 — ライブミニマップの局所更新 (#895)
+
+基準 main `f31f5da439134fe49bb89018dad5557671a49c67`。本家の参照版はスプラトゥーン3 Ver.11.3.0。ステージ配置は INKWAVE の3レイアウト（Tidewater 50×88m、Kelpline 48×96m、Halyard 48×92m、既定 7 px/m でそれぞれ 350×616 / 336×672 / 336×644 px）を使い、本家の特定ステージ名とは対応させていない。
+
+本家のミニマップは塗り替わった領域だけが順次更新され、味方/敵タンクやステージ全体の再走査を常時行わない、という観察可能な挙動を基準にする。ただし本家内部の更新単位・フレーム値は公開されていないため、その数値をこちらへ写していない。
+
+修正：`PaintSystem._cpuSplat` の所有権書き込み地点で変更セルのマップ座標を記録し（`_inkMark`）、ミニマップは150ms窓で合流した矩形のみを再描画する（`_drawDirtyInk` → 既存 `_drawInk` のx範囲引数）。立体エンボスのため矩形を1px拡張し、セル中心のバイリニア参照に2セル分のパディングを付ける。判定材料：
+
+- **ロジックのみ確認**：3ステージすべてで、局所更新の `inkImg` バイト列が強制全描画と毎ステップ一致。描画した putImageData 面積は定常交戦フィクスチャで全描画の5%未満。
+- ちらつきレイヤ（`flashImg`）は遷移履歴であり、部分更新では再描画矩形の外側だけが全描画と異なる（矩形内は完全一致）。
+- 全体無効化は維持：初回構築、`PaintSystem.clear()`、視点チーム反転、チーム色変更、テーマ変更、ステージ再構築は全描画。広域の変更は既存の3バンド経路（幅=全幅、高さ<全高、`_band=1`）へフォールバックし、1フレームのスパイク上限を保つ。
+- ミニマップOFF時（`tickHidden`）はラスタ・ImageData を一切実行せず、ダーティ領域を O(1) の全体無効化へ畳む。復帰時は全体を1回再描画。
+- 3バンド間で古い領域を残さない（合流窓内の複数スプラットは1回の更新に合流し、和集合内に継ぎ目なし）。
+
+検証は `node --test` のロジック/CPU レベル（フォーカス9/9、基準未適用2/9）と、#419ミニマップ資源10/10・splatoon3合成10/10・練習場7/7・通信契約13/13 の隣接制御。ブラウザ canvas/GPU 実測と Switch 実機比較は**未確認**。速度の実測値は主張しない。詳細は[専用レポート](inkwave-minimap-dirty-bounds-895-2026-10-07.md)。

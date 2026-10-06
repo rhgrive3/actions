@@ -5,12 +5,14 @@ import { Actor } from '../../../src/game/actor.js';
 import { Character, CHARACTER_CHANNELS, CHARACTER_TIMERS, CHARACTER_FOOT_MODES, CHARACTER_FOOT_METRICS, CHARACTER_BOMB_POSE } from '../../../src/game/character.js';
 import { WeaponRunner, Projectiles } from '../../../src/game/weapons.js';
 import { PaintSystem } from '../../../src/world/paint.js';
+import { Minimap } from '../../../src/game/minimap.js';
 import { PlayerController } from '../../../src/game/player.js';
 import { Physics, Hit } from '../../../src/game/physics.js';
 import { Menus } from '../../../src/ui/menus.js';
 import { ShadowCache } from '../../../src/core/shadowcache.js';
 import { installMovement } from './movement.mjs';
 import { installMovementMotion } from './movement-motion.mjs';
+import { installMinimapDirty } from './minimap-dirty.mjs';
 import { installWeapons } from './weapons.mjs';
 import { installWeaponsFidelity } from './weapons-fidelity.mjs';
 import { installSubSpecialFidelity } from './sub-special-fidelity.mjs';
@@ -48,7 +50,7 @@ let installed = false;
 export function install(profile) {
   if (installed) throw new Error('INKWAVE patches already installed');
   if (profile.schema !== 1 || profile.referenceVersion !== '11.3.0') throw new Error('Unsupported gameplay profile');
-  const api = { THREE, G, on, emit, PLAYER, WEAPONS, SUB, SPECIALS, Actor, Character, CHARACTER_CHANNELS, CHARACTER_TIMERS, CHARACTER_FOOT_MODES, CHARACTER_FOOT_METRICS, CHARACTER_BOMB_POSE, WeaponRunner, Projectiles, PaintSystem, PlayerController, Menus, ShadowCache, Physics, Hit };
+  const api = { THREE, G, on, emit, PLAYER, WEAPONS, SUB, SPECIALS, Actor, Character, CHARACTER_CHANNELS, CHARACTER_TIMERS, CHARACTER_FOOT_MODES, CHARACTER_FOOT_METRICS, CHARACTER_BOMB_POSE, WeaponRunner, Projectiles, PaintSystem, Minimap, PlayerController, Menus, ShadowCache, Physics, Hit };
   Object.assign(PLAYER, profile.player);
   for (const [kind, data] of Object.entries(profile.weapons)) {
     if (!WEAPONS[kind]) throw new Error(`Missing upstream weapon ${kind}`);
@@ -92,6 +94,9 @@ export function install(profile) {
   // Main-weapon fidelity must be installed on the same canonical context before
   // gameplay can create projectiles; bootstrap's compatibility call is then a no-op.
   installWeaponsFidelity(api, profile);
+  // #895: bounded partial minimap redraw. Adds PaintSystem._inkMark (consumed by
+  // the adapter hook in _cpuSplat) and Minimap._drawDirtyInk; no raster work here.
+  installMinimapDirty(api);
   // Aim remains tied to the actual camera ray. No target-dependent auto-turn.
   DEFAULT_SETTINGS.aimAssist = 0; DEFAULT_SETTINGS.aimAssistMouse = false;
   PlayerController.prototype._assistTarget = () => null;

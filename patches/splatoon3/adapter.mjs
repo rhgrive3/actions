@@ -1,5 +1,6 @@
 import { adaptWeaponEdgecases } from './weapon-edgecases-adapter.mjs';
 import { adaptWeaponsFidelity } from './weapons-adapter.mjs';
+import { adaptMinimapDirty } from './minimap-dirty-adapter.mjs';
 // Apply only to a disposable BUILD tree. Upstream sources are never modified.
 // Every connection has a unique exact anchor; missing/duplicated hooks are errors.
 import { adaptMovementPhysics } from './movement-physics-adapter.mjs';
@@ -33,6 +34,7 @@ export function checkCompatibility(src, patchRoot = PATCH_ROOT) {
 }
 
 export function adaptSource(rel, code) {
+  code = adaptMinimapDirty(rel, code, replaceOnce);
   if (rel === 'src/game/match.js') {
     code = replaceOnce(code,
       'const win = cov[0] === cov[1] ? (Math.random() < 0.5 ? 0 : 1) : cov[0] > cov[1] ? 0 : 1;',
