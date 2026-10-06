@@ -194,6 +194,11 @@
       "rawValue": 4
     }
   },
+  "weapons.shooter.shotGuideFrame": {
+    "value": 8,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
   "weapons.shooter.referenceGravity": {
     "value": 57.6,
     "status": "derived from pinned extracted data; physical scale unverified",
@@ -668,6 +673,11 @@
       "factor": 0.016666666666666666,
       "rawValue": 8
     }
+  },
+  "weapons.splatling.shotGuideFrame": {
+    "value": 11,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
   },
   "weapons.splatling.referenceGravity": {
     "value": 57.6,
