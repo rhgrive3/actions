@@ -4,6 +4,7 @@ import { adaptWeaponsFidelity } from './weapons-adapter.mjs';
 // Every connection has a unique exact anchor; missing/duplicated hooks are errors.
 import { adaptMovementPhysics } from './movement-physics-adapter.mjs';
 import { adaptSubSpecialFidelity } from './sub-special-adapter.mjs';
+import { adaptAssistPresentation } from './assist-presentation-adapter.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
@@ -41,6 +42,7 @@ export function adaptSource(rel, code) {
   if (rel === 'patches/splatoon3/runtime/resources.mjs') return adaptIssue415(rel, code);
   code = adaptMovementPhysics(rel, code, replaceOnce);
   code = adaptSubSpecialFidelity(rel, code, replaceOnce);
+  code = adaptAssistPresentation(rel, code, replaceOnce);
   if (rel === 'src/game/character.js') {
     code = replaceOnce(code, 'const PN = _k;', 'const PN = _k;\nexport const CHARACTER_CHANNELS = Object.freeze({ HIPS_P,HIPS,SPINE,CHEST,NECK,HEAD,CLAVL,CLAVR,UARML,UARMR,FARML,FARMR,HANDL,HANDR,FOOTL,FOOTLR,FOOTR,FOOTRR,ANC,ANCR,POLER,POLEL,IKR,IKL,LTGT,LTGTR,LTW,LTROT,KNEEL,KNEER,STAB,WPL,WPR,TIPTOE,AFOLT,AFOLR,MODEL,MODELR,SQY,SQXZ,HLP });', 'character pose channels');
     code = replaceOnce(code, 'const BALL_Z = 0.11, HEEL_Z = 0.065;', 'const BALL_Z = 0.11, HEEL_Z = 0.065;\nexport const CHARACTER_FOOT_METRICS = Object.freeze({ ANKLE_H, BALL_Z, HEEL_Z });', 'character foot metrics');

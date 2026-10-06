@@ -250,3 +250,17 @@ cloud/Halyard cube allocation at default high settings, not only after later
 runtime refresh. Existing formats, appearance policy and gameplay stay intact.
 These are project resource dimensions, not Nintendo/Switch memory values.
 See [the cold-boot budget report](inkwave-cold-boot-budgets-2026-10-04.md).
+
+## 2026-10-06: #561 assist splat presentation
+
+Splatoon 2/3 ではアシストしたプレイヤーには通常のたおし通知が出ず、撃破地点の上に別のスプラットアイコンだけが現れる。INKWAVE は同じ認識済みのアシストを中央 HUD のキルカードスタックへ `ASSIST <victim>`（約 1.7 秒）として送り、加えて専用の `hit_marker` 音を鳴らしていた。
+
+| 項目 | 内容 |
+| --- | --- |
+| 本家の根拠 | [Inkipedia — Splat (occurrence)](https://splatoonwiki.org/wiki/Splat_(occurrence))。Issue #561 に記録された参照と同一。参照版は Splatoon 3 Ver. 11.3.0 |
+| INKWAVE の実装箇所 | 新規 `patches/splatoon3/assist-presentation-adapter.mjs`（`adapter.mjs` から `adaptAssistPresentation` を呼ぶ）。接続先は上流 `inkwave-public/src/ui/hud.js` の `_onSplatted` のアシスト分岐、`_killCard` の `kind === 'assist'` 3 箇所、アシスト用の `hit_marker` 音。接続欠落はビルドを取り消して公開しない |
+| 再現操作 | ローカル実戦で自分のダメージが敵 A を傷つけ、4 秒以内に味方が A を打つ。`splatted` イベントで中央 HUD に `ASSIST` カード（相手の名前入り、約 1.7 秒）と `hit_marker` 音が出た。直接たおしした場合は変更していない |
+| プレイへの影響 | 中央 HUD の文字での確認を失うかわりに、撃破地点の空間マーカーだけで認識する。直接スプラットや縦道内の演出と並べて出ていた `ASSIST` カードと、その約 1.7 秒の可視時間を削除。認識そのものと Flow Aura への加点、`K.dealt` の消費は変更していない |
+| 確認状態 | **ロジックと installed path の確認済み**。上流の生バイト、`adaptSource` の合成、ビルド済みサイト（`INKWAVE_ASSIST_BUILT_SITE`）の 3 経路で実際の HUD メソッドを実行し、アシストは `iw-down iw-down--assist` マーカーのみ、カード 0、音 0。直接たおしは従来どおりカード 1、2200 ms。**本家実機（Switch Ver.11.3.0）でのアイコン形状・表示時間・表示位置の実測比較は未確認**。マーカーの大きさ、色、フェードは既存の `iw-down` の投影経路に追従させただけで、参照版から新規に確定していない |
+
+アシストの認識窓（4 秒）と入場判定は変更していない。マーカーの投影経路は既存の ally-down 実装を再利用したもので、本家との実測比較の対象ではない。キルカードスタック内の表示、`K.perActor` の記録、#139 の結果統計は変更していない。上流 `hud.js` が `isJa` を import しない件の補正は `patches/practice-range/adapter.mjs` が公式ビルドで行っており、本件では触れていない。**フレーム間隔（Hz）を変えた時のマーカー投影の挙動は未検証**。
