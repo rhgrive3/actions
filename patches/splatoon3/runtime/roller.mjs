@@ -21,11 +21,21 @@ export function rollerMode(w, vertical) {
   return vertical ? { ...w, flickWindup: w.verticalWindup, flickInterval: w.verticalInterval ?? w.flickInterval, flickInk: w.verticalInk } : w;
 }
 
-export function installRollerLogic({ WeaponRunner }, _profile) {
-  const roller = WeaponRunner.prototype._roller, reset = WeaponRunner.prototype.reset;
+export function installRollerLogic({ WeaponRunner, Actor, G }, _profile) {
+  const roller = WeaponRunner.prototype._roller, reset = WeaponRunner.prototype.reset, actorUpdate = Actor.prototype.update;
+  Actor.prototype.update = function (dt) {
+    const r = this.weaponRunner;
+    if (r && this.weapon?.kind === 'roller') {
+      const prev = this._prevIntent || {};
+      if (this.intent?.fire && !prev.fire) r.s3RollerSquidPressT = this.form === 'squid' ? G.time : null;
+      if (!this.alive || this.specialActive || this.superJumpState) r.s3RollerSquidPressT = null;
+    }
+    return actorUpdate.call(this, dt);
+  };
   WeaponRunner.prototype.reset = function (...args) {
     const result = reset.apply(this, args);
     this.s3RollerAttack = null;
+    this.s3RollerSquidPressT = null;
     if (this.a.character) {
       this.a.character.s3RollerFlick = null;
       this.a.character._s3CancelRollerFlick?.();
@@ -39,7 +49,13 @@ export function installRollerLogic({ WeaponRunner }, _profile) {
       this.cooldown = Math.min(0, this.cooldown);
       this.s3FlickVertical = !a.grounded;
       const mode = rollerMode(w, this.s3FlickVertical);
-      this.s3RollerAttack = { vertical: this.s3FlickVertical, windup: mode.flickWindup, interval: mode.flickInterval, elapsed: 0, released: false, rolling: false };
+      let windup = mode.flickWindup;
+      if (!this.s3FlickVertical && Number.isFinite(this.s3RollerSquidPressT)) {
+        const elapsed = Math.max(0, G.time - this.s3RollerSquidPressT);
+        windup = Math.max(EPS, 34 / 60 - elapsed);
+      }
+      this.s3RollerAttack = { vertical: this.s3FlickVertical, windup, interval: mode.flickInterval, elapsed: 0, released: false, rolling: false };
+      this.s3RollerSquidPressT = null;
       a.character.s3RollerFlick = this.s3RollerAttack;
       // Starting a new flick lifts the drum. The public runner otherwise leaves
       // rolling=true through its early windup return, including in the air.
@@ -48,25 +64,18 @@ export function installRollerLogic({ WeaponRunner }, _profile) {
     }
     const state = this.s3RollerAttack;
     const vertical = state ? state.vertical : this.s3FlickVertical;
-    const mode = rollerMode(w, vertical);
+    let mode = rollerMode(w, vertical);
+    if (state) mode = { ...mode, flickWindup: state.windup, flickInterval: state.interval };
     const winding = this.flick >= 0;
     if (state && !starting) state.elapsed += dt;
     // Float accumulation must not add a 22nd/27th tick to a 21F/26F windup.
     if (winding && this.flick + dt + EPS >= mode.flickWindup) this.flick = mode.flickWindup;
-
-    // Splatoon 3 Ver. 11.3.0 roll admission: horizontal 7F vs vertical 22F post-release.
-    // The native WeaponRunner._roller shared cooldown <= 0.25 admits rolling ~7F post-release
-    // for both modes. For vertical flick, rolling must not be admitted until the sourced 22F
-    // post-release transition has elapsed.
     let rollInp = inp;
     if (state && state.released) {
       const rollDelay = state.vertical ? (22 / 60) : (7 / 60);
       const postRelease = state.elapsed - state.windup;
-      if (postRelease + EPS < rollDelay) {
-        rollInp = inp.fire ? { ...inp, fire: false } : inp;
-      }
+      if (postRelease + EPS < rollDelay) rollInp = inp.fire ? { ...inp, fire: false } : inp;
     }
-
     const result = roller.call(this, dt, rollInp, mode);
     if (state) state.rolling = this.rolling;
     if (state && winding && this.flick < 0) {
