@@ -11,6 +11,27 @@ export function rebasePlatformGame(game) {
   game.input?.mobile?.gyro?.resync?.();
 }
 
+// A suspended authoritative Turf host may resume with the same live match.
+// Only its clock catches up; actors, projectiles and global simulation do not.
+function captureHiddenHostClock(game, G, env) {
+  const match = game.match, session = G.net, net = G.netm, at = env.performance?.now?.();
+  if (!env.document?.hidden || !match || match.mode !== 'turf' || match.attract || match.paused || match.state !== 'playing' ||
+      !session?.isHost || session.state !== 'match' || !net?.isHost || net.match !== match || session.match !== net ||
+      !Number.isFinite(at) || !Number.isFinite(match.time)) return null;
+  return { match, session, net, hostId: session.hostId, at, remaining: Math.max(0, match.time) };
+}
+function resumeHiddenHostClock(saved, game, G, env) {
+  if (!saved) return;
+  const { match, session, net, hostId, at, remaining } = saved, now = env.performance?.now?.();
+  if (game.match !== match || G.net !== session || G.netm !== net || session.match !== net || net.match !== match ||
+      session.hostId !== hostId || !session.isHost || !net.isHost || session.state !== 'match' ||
+      match.state !== 'playing' || match.mode !== 'turf' || match.attract || match.paused ||
+      !Number.isFinite(now) || now < at || !Number.isFinite(match.time)) return;
+  // A separate legitimate advance during suspension must never be rolled back.
+  match.time = Math.max(0, Math.min(match.time, remaining - (now - at) / 1000));
+  if (match.time <= 0) match.setState('finish');
+}
+
 export function installPlatformGame(Game, G, env = globalThis) {
   const P = Game.prototype;
   if (Object.hasOwn(P, INSTALLED)) return;
@@ -36,8 +57,11 @@ export function installPlatformGame(Game, G, env = globalThis) {
       rebasePlatformGame(game);
     };
     r.off = owner.subscribe({
-      suspend: clear,
-      prepareResume() { clear(); game.R?.resize?.(); },
+      suspend() { r.hiddenHostClock = captureHiddenHostClock(game, G, env); clear(); },
+      prepareResume() {
+        const saved = r.hiddenHostClock; r.hiddenHostClock = null;
+        clear(); resumeHiddenHostClock(saved, game, G, env); game.R?.resize?.();
+      },
       blur() { resetPlatformInput(game.input, game.match?.controller); },
       screen() { resetPlatformInput(game.input, game.match?.controller); },
     });
@@ -101,6 +125,7 @@ export function installPlatformGame(Game, G, env = globalThis) {
   };
   P.disposePlatform = function () {
     const r = this.platform; if (!r) return;
+    r.hiddenHostClock = null;
     r.driver.dispose(); r.off(); r.notice?.remove(); for (const dispose of r.disposers) dispose();
     this.menus?.setPlatformDriven?.(false); this.input?.mobile?.destroy?.();
     G.audio?.disposePlatform?.();

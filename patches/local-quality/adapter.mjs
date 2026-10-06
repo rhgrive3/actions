@@ -1,3 +1,4 @@
+import { adaptBotPaintObservation } from './bot-paint-observation-adapter.mjs';
 import { adaptClothingGear } from '../splatoon3/clothing-gear-adapter.mjs';
 import { adaptIssue465 } from '../splatoon3/issue-465-adapter.mjs';
 import { adaptIssue479 } from '../splatoon3/issue-479-adapter.mjs';
@@ -56,6 +57,7 @@ import { adaptFinishTape } from './finish-tape-adapter.mjs';
 
 export const QUALITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
 const IDENTITY_FILES = [
+  'bot-paint-observation-adapter.mjs',
   'issue-418-adapter.mjs','world-quality.mjs','quality-probe.mjs','texlib-adapter.mjs','texlib.mjs',
   'boss-hit-adapter.mjs',
   'issue-190-adapter.mjs', 'paint-mipmap-probe.mjs', 'issue-472-adapter.mjs',
@@ -107,6 +109,7 @@ export function adaptQualitySource(rel, code) {
 }
 
 function adaptQualityLayer(rel, code) {
+  code = adaptBotPaintObservation(rel, code);
   code = adaptPropRetention(rel, code);
   code = adaptPropAtlas(rel, code);
   code = adaptScreenfxDamageReset(rel, code, replaceOnce);

@@ -46,7 +46,7 @@ export const CATALOG_SCENARIOS = Object.freeze([
   { name: 'swim-turn-brake', kind: 'shooter', frames: 180 },
   { name: 'wall-surge-ready-crest', kind: 'shooter', frames: 180, surgeReleaseFrame: SURGE_RELEASE_FRAME, probes: [SURGE_RELEASE_FRAME - 1, SURGE_RELEASE_FRAME, 64, 65, 74, 75, 80, 100] },
   { name: 'form-both-directions-interrupt', kind: 'shooter', frames: 180, probes: [76, 82, 100, 145] },
-  { name: 'dualies-roll-lock-interrupt', kind: 'dualies', frames: 240, probes: [110, 115, 125, 132, 155, 164, 190, 195, 198, 210] },
+  { name: 'dualies-roll-lock-interrupt', kind: 'dualies', frames: 240, probes: [110, 115, 125, 132, 160, 164, 190, 195, 198, 210] },
   { name: 'roller-horizontal-push', kind: 'roller', frames: 180, probes: [17, 125] },
   { name: 'roller-vertical-land', kind: 'roller', frames: 180 },
   // Native preparation + flight + .8s visual touchdown must all expire.
@@ -304,6 +304,13 @@ export function catalogDualiesInput(frame, actor, character, THREE) {
   if (frame === 198) character.setVisible(true);
   return input;
 }
+// A natural drop has #479's horizontal grace. This named vertical scenario
+// first uses an accepted native jump so its mode is chosen by the real owner.
+export function catalogRollerVerticalLaunch(actor) {
+  actor.intent.jump = true;
+  try { actor.update(1 / 60); } finally { actor.intent.jump = false; }
+  if (actor.grounded || !actor.s3JumpAirborne) throw Error('Native vertical Roller jump refused');
+}
 export function validateCatalogDualies(row) {
   for (const s of row.samples) {
     const d = s.dualiesAction;
@@ -316,7 +323,7 @@ export function validateCatalogDualies(row) {
     const s = at(frame), d = s?.dualiesAction;
     if (!d?.subRequested || d.aimingSub !== false || s.snapshots.dualies?.blockedRoll !== false || (frame === 115 ? !d.dodge || phase(s) !== 'roll' : !(d.lockT > 0) || phase(s) !== 'plant')) fail('dualies rejected sub must preserve committed action');
   }
-  for (const frame of [155, 164]) {
+  for (const frame of [160, 164]) {
     const s = at(frame), d = s?.dualiesAction;
     if (!d?.subRequested || d.aimingSub !== true || d.dodge !== false || d.lockT > 1e-10 || phase(s) !== null) fail('dualies admitted sub must own presentation');
   }
@@ -685,7 +692,7 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout,
         if (scenario.name.startsWith('squidroll-')) { a.form = 'squid'; a.submerged = true; for (let i = 0; i < 35; i++) step(); a.vel.set(0, 0, 11); a.intent.move.set(0, 0, -1); if (!beforeActions(a, 0, true)) throw Error('Native roll refused'); }
         if (scenario.name.startsWith('victory-')) { ch.setDance('victory'); ch.danceVar = scenario.variant; }
         if (scenario.name.startsWith('native-')) { if (!['slam', 'storm'].includes(scenario.nativeSpecial)) throw Error('Missing catalog native special owner'); frame = 0; a.weapon = { ...a.weapon, special: scenario.nativeSpecial }; a.special = a.specialCost(); a._startSpecial(); driver = drivers.special; }
-        if (scenario.name === 'roller-vertical-land') { a.grounded = false; a.pos.y = .4; a.vel.y = 7; driver = drivers.physics; }
+        if (scenario.name === 'roller-vertical-land') { globalThis.catalogRollerVerticalLaunch(a); driver = drivers.physics; }
         const runFrame = () => {
           const n = scenario.name, input = {};
           if (n === 'carry-walk-fire-return') { const speed = frame < 25 ? .15 : frame < 65 ? 1.2 : frame < 105 ? 5.76 : frame < 165 ? 2.4 : 0; horizontal(speed, frame >= 70 && frame < 90 ? 1 : 0, frame >= 70 && frame < 90 ? 0 : frame >= 90 && frame < 105 ? -1 : 1); input.fire = frame >= 105 && frame < 145; driver = 'Native Actor._horizontal input slew and _integrate/native floor, real Runner fire/release and _finishFrame; isolated arena, no whole-game update'; }
@@ -816,7 +823,7 @@ async function main() {
       catch (e) { error(e.message); await route.abort(); }
     });
     await page.goto('http://127.0.0.1:' + server.address().port + '/motion-catalog');
-    await page.addScriptTag({ content: 'globalThis.catalogPixelDifference=' + pixelDifference.toString() + ';globalThis.catalogRenderFrames=' + catalogRenderFrames.toString() + ';globalThis.catalogTurfFinishProbe=' + catalogTurfFinishProbe.toString() + ';globalThis.catalogDualiesInput=' + catalogDualiesInput.toString() + ';' });
+    await page.addScriptTag({ content: 'globalThis.catalogPixelDifference=' + pixelDifference.toString() + ';globalThis.catalogRenderFrames=' + catalogRenderFrames.toString() + ';globalThis.catalogTurfFinishProbe=' + catalogTurfFinishProbe.toString() + ';globalThis.catalogRollerVerticalLaunch=' + catalogRollerVerticalLaunch.toString() + ';globalThis.catalogDualiesInput=' + catalogDualiesInput.toString() + ';' });
     result = await page.evaluate(runCatalog, { prefix, contentHash: manifest.contentHash, scenarios: CATALOG_SCENARIOS, modules: CATALOG_MODULES, footLayout, wallHeight: CATALOG_WALL_HEIGHT });
     // finally executes after the returned object was built; fetch its cleanup
     // snapshot explicitly so a missing cleanup cannot pass as a successful run.

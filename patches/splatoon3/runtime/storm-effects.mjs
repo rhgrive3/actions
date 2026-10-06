@@ -10,6 +10,10 @@ export function startStormHold(a) {
   a.specialActive = { id: 'storm', t: 0, phase: 'hold', armor: false, subWasDown: !!a.intent.sub, subArmed: false };
   a.fireBuffer = 0; a.weaponRunner.reset();
 }
+export function cancelStormPendingInput(a) {
+  if (!isStormHolding(a)) return;
+  a.specialActive.subWasDown = false; a.specialActive.subArmed = false;
+}
 export function updateStormHold(a, dt, G) {
   if (!isStormHolding(a)) return;
   const s = a.specialActive;

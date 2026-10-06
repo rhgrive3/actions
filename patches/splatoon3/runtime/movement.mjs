@@ -110,7 +110,11 @@ export function beforeActions(a, dt, jumpPressed) {
   }
   if (state.surge?.phase === 'burst') {
     const burst = state.surge; burst.time -= dt;
-    if (burst.time <= 1e-10 || !a.climbing && a.grounded) state.surge = null;
+    if (burst.time <= 1e-10) {
+      // The existing boost ends here; neutral auto-climb is a separate native-speed phase.
+      if (a.climbing) { burst.phase = 'auto-climb'; burst.time = 0; }
+      else state.surge = null;
+    } else if (!a.climbing && a.grounded) state.surge = null;
     else if (a.climbing) {
       a.climbV = burst.speed; a.vel.y = burst.speed; a.jumpBuffer = 0;
       sync(a, state); return true;
@@ -212,6 +216,12 @@ export function installMovement(context, tuning) {
   const climb = Actor.prototype._updateClimb;
   Actor.prototype._updateClimb = function (...args) {
     const was = this.climbing, state = movementState(this);
+    // A fresh held B may start the existing charge path again after the boost.
+    if (state.surge?.phase === 'auto-climb' && this.intent.jump) { state.surge = null; sync(this, state); }
+    const move = this.intent.move, savedX = move.x, savedZ = move.z;
+    const continueNeutral = was && state.surge?.phase === 'auto-climb' && this.form === 'squid' &&
+      !this.specialActive && !this.superJumpState && Math.hypot(move.x, move.z) <= EPSILON;
+    if (continueNeutral) { move.x = -this.wallN.x; move.z = -this.wallN.z; }
     const charging = this.alive && this.form === 'squid' && this.climbing && this.intent.jump &&
       !this.specialActive && !this.superJumpState && (!state.surge || state.surge.phase === 'charge');
     const P = api.PLAYER, speed = P.climbSpeed, side = P.climbSideSpeed;
@@ -221,7 +231,8 @@ export function installMovement(context, tuning) {
     }
     let value;
     try { value = climb.apply(this, args); }
-    finally { P.climbSpeed = speed; P.climbSideSpeed = side; }
+    finally { P.climbSpeed = speed; P.climbSideSpeed = side; if (continueNeutral) { move.x = savedX; move.z = savedZ; } }
+    if (was && !this.climbing && movementState(this).surge?.phase === 'auto-climb') { movementState(this).surge = null; sync(this, state); }
     // Losing an inked wall cancels charge. A ledge burst is kept in the air.
     if (was && !this.climbing && movementState(this).surge?.phase === 'charge') { movementState(this).surge = null; this.anim.surgeCharge = 0; }
     return value;

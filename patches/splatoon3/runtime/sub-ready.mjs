@@ -6,6 +6,8 @@ export function installSubReady({Actor,WeaponRunner,SUB},profile){
  const tag=Symbol.for('inkwave.s3.sub-ready.v1'),wr=WeaponRunner.prototype;
  if(wr[tag])return;Object.defineProperty(wr,tag,{value:true});
  const cancel=r=>{r.s3SubReady=null;r.s3SubFromSquid=false;r.aimingSub=false;};
+ const cancelInput=wr.cancelPendingInput;
+ wr.cancelPendingInput=function(...args){cancel(this);return cancelInput?.apply(this,args);};
  const reset=wr.reset,busy=wr.busy,update=wr.update;
  wr.reset=function(...args){cancel(this);return reset.apply(this,args);};
  wr.busy=function(){return !!this.s3SubReady?.pending||busy.call(this);};

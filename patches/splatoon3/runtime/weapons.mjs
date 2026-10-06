@@ -225,6 +225,21 @@ export function installWeapons(context, profile) {
     r.s3ChargerSpent = 0;
     r.chargeLoop?.stop(.05); r.chargeLoop = null;
   };
+  // Input suppression is not a life/weapon reset: recovery, Dodge and hit history continue.
+  WeaponRunner.prototype.cancelPendingInput = function () {
+    if (this.a.weapon.kind === 'charger') {
+      cancelStored(this);
+      this.s3ChargerStartupT = 0; this.s3ChargerHeldGate = false; this.s3ChargerRepeat = false;
+      this.s3ChargerProgressiveSpend = false; this.s3ChargerHeldTime = 0;
+      this.s3ReleaseHold = false; this.s3HeldCharge = this.s3HeldChargeT = this.s3ReleaseAt = 0;
+    }
+    this.s3ShooterHeld = false; this.s3ShooterPendingFirst = false; this.s3ShooterFirstRemaining = 0;
+    this.s3SwimFireQueued = false; this.s3SwimFireRemaining = 0;
+    this.s3BlasterWindup = 0; this.s3BlasterFromSwim = false;
+    this.s3SplatlingStartup = 0; this.s3SplatlingEmerging = false; this.s3SplatlingEmergeT = 0; this.s3SplatlingHeld = false;
+    if (!this.s3SloshRecovery) this.slosh = -1;
+    this.s3DodgeShotPending = 0;
+  };
   WeaponRunner.prototype._charger = function (dt, inp, w) {
     const a = this.a, held = !!a.intent.fire, epsilon = 1e-10;
     // #680: retain the already-paid charge across the one fixed release frame.

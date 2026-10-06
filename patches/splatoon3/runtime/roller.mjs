@@ -141,6 +141,14 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on }, _profile) {
   // matching for this victim so a late earlier event cannot settle the newer hit.
   on?.('hit', event => resolveRemoteContact(event, true));
   on?.('hit:rejected', event => resolveRemoteContact(event, false));
+  const cancelInput = WeaponRunner.prototype.cancelPendingInput;
+  WeaponRunner.prototype.cancelPendingInput = function (...args) {
+    if (this.a?.weapon?.kind === 'roller' && this.flick >= 0) {
+      this.flick = -1; this.s3RollerAttack = null; this.s3RollerSquidPressT = null;
+      this.a.character?._s3CancelRollerFlick?.();
+    }
+    return cancelInput?.apply(this, args);
+  };
   WeaponRunner.prototype.reset = function (...args) {
     const uncorrelated = this.s3RollHitConfirmDisabled || new WeakSet();
     for (const victim of this.s3PendingRollHits?.keys() || []) uncorrelated.add(victim);

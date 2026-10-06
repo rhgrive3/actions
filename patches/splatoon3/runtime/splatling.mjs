@@ -31,6 +31,11 @@ export function installSplatling(api, profile, { splatlingChargeCap, splatlingRe
     runner.spinLoop?.stop(.12); runner.spinLoop = null;
   }
 
+  const cancelInput = WeaponRunner.prototype.cancelPendingInput;
+  WeaponRunner.prototype.cancelPendingInput = function (...args) {
+    if (this.a?.weapon?.kind === 'splatling') cancel(this, this.a?.alive !== false);
+    return cancelInput?.apply(this, args);
+  };
   const reset = WeaponRunner.prototype.reset;
   WeaponRunner.prototype.reset = function (...args) {
     cancel(this, this.a?.alive !== false);
