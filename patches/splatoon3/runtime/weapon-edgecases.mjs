@@ -111,8 +111,12 @@ export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYE
       if (source.subReleased) this.s3DualiesSubReleaseBuffered = true;
     }
     let prepared = locked ? { ...source, sub: false, subReleased: false } : { ...source };
-    if (!locked && this.s3DualiesSubReleaseBuffered) {
-      prepared.sub = true; prepared.subReleased = true;
+    if (!locked) {
+      // A release on the unlock tick belongs to the hold admitted while locked.
+      if (this.s3DualiesSubReleaseBuffered || this.s3DualiesSubBuffered && source.subReleased) {
+        prepared.sub = true; prepared.subReleased = true;
+      }
+      // A live hold now belongs to native aimingSub; cancelled input must not linger.
       this.s3DualiesSubBuffered = false; this.s3DualiesSubReleaseBuffered = false;
     }
     const runner = this;
