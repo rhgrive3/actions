@@ -38,6 +38,18 @@ export function awardFlow(state, action, value, cfg, capProgress = true) {
   if (action !== 'splat' || state.score < cfg.threshold) return false;
   state.active = true; state.remaining = cfg.duration; state.score = 0; return true;
 }
+// Shared across repeated installs so an authoritative Match transition is awarded once.
+const wipeoutSequences = new WeakMap();
+export function awardWipeoutFlow(flow, cfg) {
+  if (flow.active) return;
+  const gain = (cfg.progress?.wipeoutBonus || 0) * cfg.threshold / cfg.progress?.referenceThreshold;
+  if (!(Number.isFinite(gain) && gain > 0)) return;
+  // Retain the later ordinary-Turf storage cap while restoring the team award.
+  const p = cfg.progress;
+  const cap = Number.isFinite(p?.referenceCap) && p.referenceCap >= 0 && p.referenceThreshold > 0
+    ? p.referenceCap * cfg.threshold / p.referenceThreshold : Infinity;
+  flow.score = Math.min(cap, flow.score + gain); flow.idleTime = 0;
+}
 export function installFlow({ Actor, on, emit, G }, tuning) {
   const cfg = tuning.flow, credits = new WeakMap(), respawning = new WeakMap();
   function state(a) { a.s3 ||= {}; return a.s3.flow || (a.s3.flow = createFlow()); }
@@ -79,6 +91,26 @@ export function installFlow({ Actor, on, emit, G }, tuning) {
     if (was && !flow.active) emit('actor:flow', { actor: this, active: false });
     return update.call(this, dt);
   };
+  on('match:state', ({ match, state: phase }) => {
+    if (match && phase === 'intro') wipeoutSequences.delete(match);
+  });
+  on('team:wipeout', ({ match, team, sequence } = {}) => {
+    // Client roster inference is not an authoritative online team event.
+    // Delay this new bonus online until confirmed ownership/timeline transport exists.
+    if (G.netm) return;
+    if (!match || match !== G.match || match.mode !== 'turf' || match.attract ||
+        match.state !== 'playing' || match.paused || !(match.time > 0) ||
+        (team !== 0 && team !== 1) || !Number.isSafeInteger(sequence) || sequence < 1 || !Array.isArray(match.actors)) return;
+    const wiped = match.actors.filter(a => a.team === team);
+    const teammates = match.actors.filter(a => a.team === 1 - team);
+    if (wiped.length !== 4 || teammates.length !== 4 || wiped.some(a => a.alive)) return;
+    const seen = wipeoutSequences.get(match) || [0, 0];
+    if (sequence <= seen[team]) return;
+    seen[team] = sequence; wipeoutSequences.set(match, seen);
+    // The verified bonus is team-wide, including a teammate waiting to respawn.
+    // It is not a splat/assist: do not activate or extend Flow or paint a burst.
+    for (const actor of teammates) if (!(actor.isBot && cfg.bots === false)) awardWipeoutFlow(state(actor), cfg);
+  });
   on('turf', ({ actor, area }) => award(actor, 'turf', area));
   on('damage', ({ victim, attacker, amount, source }) => {
     if (!attacker || attacker === victim || source === 'ink' || victim.team === attacker.team) return;

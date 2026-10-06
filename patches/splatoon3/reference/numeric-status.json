@@ -1187,6 +1187,11 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "weapons.charger.reticleDelayF": {
+    "value": 5,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
   "weapons.roller.rollSpeed": {
     "value": 7.92,
     "status": "calibration or derived value; see reference raw table and unverified list",
@@ -2543,6 +2548,11 @@
   },
   "flow.progress.referenceCap": {
     "value": 200,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "flow.progress.wipeoutBonus": {
+    "value": 10,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },

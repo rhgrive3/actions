@@ -55,10 +55,24 @@ export function adaptSource(rel, code) {
   if (rel !== 'src/game/weapons.js') code = adaptStormEffects(rel, code);
   if (rel === 'src/config.js') return replaceOnce(code,
     '  minimap: true,', '  minimap: false,', 'optional corner map default');
-  if (rel === 'src/ui/menus.js') return replaceOnce(code,
+  if (rel === 'src/ui/menus.js') {
+    code = replaceOnce(code,
+      'const fnv = (str) => { let x = 2166136261;',
+      'export const fnv = (str) => { let x = 2166136261;',
+      'export fnv');
+    code = replaceOnce(code,
+      'const tagTitle = (name) => {',
+      'export const tagTitle = (name) => {',
+      'export tagTitle');
+    code = replaceOnce(code,
+      'const tagNum = (name) =>',
+      'export const tagNum = (name) =>',
+      'export tagNum');
+    return replaceOnce(code,
     "{ key: 'minimap', label: 'Minimap', type: 'toggle', help: 'Show the turf minimap in the corner during matches.' },",
     "{ key: 'minimap', label: 'Corner map (non-S3 aid)', type: 'toggle', help: 'Optional aid outside the S3 baseline. The full Turf Map remains available.' },",
     'optional corner map explanation');
+  }
   if (rel === 'src/i18n.js') return replaceOnce(code,
     "  'Minimap': 'ミニマップ',",
     "  'Corner map (non-S3 aid)': '画面端マップ（本家外の補助）', 'Optional aid outside the S3 baseline. The full Turf Map remains available.': '本家の標準とは異なる任意の補助です。全体マップは引き続き使用できます。',\n  'Minimap': 'ミニマップ',",
@@ -149,6 +163,34 @@ export function adaptSource(rel, code) {
     return "import { dualiesMotionLock, dualiesMotionAllowsFootPlant } from '../../patches/splatoon3/runtime/action-admission.mjs';\nimport { specialMotionAllowsFootPlant } from '../../patches/splatoon3/runtime/special-motion.mjs';\nimport { applyWalkLocomotion, walkLean, walkSwingUnloaded, walkFootReach, walkPelvisDrop, walkTreadAllowed, walkActive } from '../../patches/splatoon3/runtime/walk.mjs';\n"+code;
   }
   if (rel === 'src/ui/hud.js') {
+    code = replaceOnce(code,
+      '// ------------------------------------------------------------------ HUD-only art',
+      "// Splatoon 3 drives the charge reticle off the runner's fixed-tick charge clock, never the\n" +
+      "// render cadence. The standard Splat Charger keeps the whole reticle off for its profile's\n" +
+      "// 5F display delay, then fills (chargeFrames - delay) / (fullChargeFrames - delay), so 6F\n" +
+      "// already reads 1/55. `delayed` separates a real charge still inside that dead period from\n" +
+      "// an idle runner, so only the former hides the reticle: idle Charger/Splatling visibility is\n" +
+      "// a separate owner and is deliberately not gated here. Presentation only: the authoritative\n" +
+      "// runner charge, shot damage, range, ink cost and projectile timing are never read back.\n" +
+      'function chargerReticleView(runner, w) {\n' +
+      '  if (!runner || !runner.charging) return { visible: false, charging: false, delayed: false, gauge: 0 };\n' +
+      '  const fullFrames = Math.max(1, Math.round((w.chargeTime || 1) * 60));\n' +
+      '  const frames = Math.max(0, +runner.chargeT || 0) * fullFrames;\n' +
+      '  const delay = Math.max(0, +w.reticleDelayF || 0);\n' +
+      '  if (frames <= delay + 1e-9) return { visible: false, charging: true, delayed: true, gauge: 0 };\n' +
+      '  return { visible: true, charging: true, delayed: false, gauge: clamp((frames - delay) / Math.max(1, fullFrames - delay)) };\n' +
+      '}\n' +
+      '\n' +
+      '// ------------------------------------------------------------------ HUD-only art',
+      'charger charge-reticle display delay helper');
+    code = replaceOnce(code,
+      "    if (L.kind === 'charger') {\n      const c = clamp(+f.charge || 0);\n      if (L.charge == null || Math.abs(c - L.charge) > 0.004) {\n        L.charge = c;\n        this._chargeEl.style.strokeDashoffset = (this._chargeC * (1 - c)).toFixed(2);\n        this.ret.style.setProperty('--ch', c.toFixed(3));\n      }\n      const full = c >= 0.999;\n      if (full !== L.full) { L.full = full; this.ret.classList.toggle('is-full', full); if (full) this._restart(this.ret, 'is-flash'); }\n      const charging = c > 0.001;\n      if (charging !== L.charging) { L.charging = charging; this.ret.classList.toggle('is-charging', charging); }\n    } else if",
+      "    if (L.kind === 'charger') {\n      const view = chargerReticleView(this._local()?.weaponRunner, WEAPONS[w] || {});\n      const c = view.gauge;\n      if (L.charge == null || Math.abs(c - L.charge) > 0.004) {\n        L.charge = c;\n        this._chargeEl.style.strokeDashoffset = this._chargeC * (1 - c);\n        this.ret.style.setProperty('--ch', c.toFixed(3));\n      }\n      const full = view.visible && c >= 0.999;\n      if (full !== L.full) { L.full = full; this.ret.classList.toggle('is-full', full); if (full) this._restart(this.ret, 'is-flash'); }\n      const charging = view.visible;\n      if (charging !== L.charging) { L.charging = charging; this.ret.classList.toggle('is-charging', charging); }\n      const delayed = view.delayed;\n      if (delayed !== L.chargeDelay) { L.chargeDelay = delayed; this.ret.classList.toggle('is-charge-delay', delayed); }\n    } else if",
+      'charger charge-reticle display delay');
+    code = replaceOnce(code,
+      '    this._L.spread = null; this._L.charge = null; this._L.full = null;',
+      '    this._L.spread = null; this._L.charge = null; this._L.full = null; this._L.chargeDelay = null;',
+      'reset the charge-delay reticle gate on rebuild');
     code = replaceOnce(code,
       "    if (L.kind === 'slosher') {",
       "    // S3 charge-reticle lifecycle (#594): a charging weapon shows no charge cluster while idle.\n" +
@@ -248,7 +290,71 @@ export function adaptSource(rel, code) {
       '    const pad = G.level && G.level.spawnPads && G.level.spawnPads[me.team];',
       '    const pad = G.level && (G.level.homeSuperJumpPoints?.[me.team] || G.level.spawnPads?.[me.team]);',
       'home Super Jump HUD target');
-    return "import { t as tr } from '../i18n.js';\nimport { applyShotGuide } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n" + code;
+    code = replaceOnce(code,
+      "    const el = h('div', { class: 'iw-lineup' },\n" +
+      "      side(this._myTeam()),\n" +
+      "      h('div', { class: 'iw-lu__vs' }, h('span', { class: 'iw-lu__vsplat', html: splatSVG({ seed: 77, fill: '#fff', r: 56, arms: 10, drops: 6 }) }), h('span', { class: 'iw-display' }, 'VS')),\n" +
+      "      side(1 - this._myTeam()));",
+      "    // Issue #673: Splashtag intro identity.\n" +
+      "    // Presentation metadata rides the native style payload (a.style.splashtag) that\n" +
+      "    // src/net/session.js already packs as {name, weapon, style}; there is no a.profile\n" +
+      "    // or a.tag producer, so nothing else is consulted. Exactly three safe shapes reach\n" +
+      "    // the DOM: a numeric banner seed, a trusted in-repo asset key, and plain text.\n" +
+      "    // Raw markup is never accepted, so no remote field can smuggle active content\n" +
+      "    // into innerHTML through a value that only looks safe.\n" +
+      "    const stagOf = (a) => (a && a.style && typeof a.style === 'object' && a.style.splashtag && typeof a.style.splashtag === 'object' && !Array.isArray(a.style.splashtag)) ? a.style.splashtag : null;\n" +
+      "    const stagText = (v, max) => (typeof v === 'string' ? v.trim().slice(0, max) : '');\n" +
+      "    const stagSeed = (v) => {\n" +
+      "      if (typeof v === 'number') return Number.isFinite(v) ? v : null;\n" +
+      "      if (typeof v === 'string' && /^[0-9]+$/.test(v.trim())) return Number(v.trim());\n" +
+      "      return null;\n" +
+      "    };\n" +
+      "    const renderBadge = (b) => {\n" +
+      "      const rec = (b && typeof b === 'object') ? b : null;\n" +
+      "      const key = stagText(rec ? (rec.key ?? rec.id) : b, 32);\n" +
+      "      if (key) {\n" +
+      "        if (typeof GLYPHS !== 'undefined' && GLYPHS[key]) return h('span', { class: 'iw-stag__badge iw-stag__badge--glyph', title: key, html: GLYPHS[key] });\n" +
+      "        if (typeof AWARDS !== 'undefined' && AWARDS[key]) {\n" +
+      "          const aw = AWARDS[key];\n" +
+      "          return h('span', { class: 'iw-stag__badge iw-stag__badge--award is-' + (aw.metal || 'gold'), title: stagText(aw.label, 48), html: awardIcon(aw.icon) });\n" +
+      "        }\n" +
+      "        if (typeof AWARD_ICONS !== 'undefined' && AWARD_ICONS[key]) return h('span', { class: 'iw-stag__badge iw-stag__badge--award', title: key, html: awardIcon(key) });\n" +
+      "      }\n" +
+      "      const label = stagText(rec ? (rec.label ?? rec.text) : b, 8);\n" +
+      "      if (label && /^[A-Za-z0-9_ -]+$/.test(label)) return h('span', { class: 'iw-stag__badge iw-stag__badge--text', title: label }, label.slice(0, 4));\n" +
+      "      return null;\n" +
+      "    };\n" +
+      "    const makeStag = (a, i) => {\n" +
+      "      const nm = stagText(a.name, 32) || 'Player';\n" +
+      "      const stag = stagOf(a);\n" +
+      "      const titleVal = stagText(stag && stag.title, 48) || tagTitle(nm);\n" +
+      "      const rawNum = stagText(stag && (stag.num ?? stag.number), 16).replace(/^#/, '');\n" +
+      "      const numVal = rawNum ? '#' + rawNum : tagNum(nm);\n" +
+      "      const seed = stagSeed(stag && (stag.banner ?? stag.bannerSeed));\n" +
+      "      const artHtml = tagArt(seed === null ? fnv(String(nm).toLowerCase()) : seed);\n" +
+      "      const rawBadges = stag && stag.badges;\n" +
+      "      const badgeEls = Array.isArray(rawBadges) ? rawBadges.slice(0, 3).map(renderBadge).filter(Boolean) : [];\n" +
+      "      const card = h('div', { class: 'iw-stag iw-stag--intro' + (a.isLocal ? ' is-self' : ''), style: { '--i': i } },\n" +
+      "        h('span', { class: 'iw-stag__art', html: artHtml }),\n" +
+      "        h('span', { class: 'iw-stag__w', html: weaponIcon(kindOf(a.weaponId)) }),\n" +
+      "        h('span', { class: 'iw-stag__txt' },\n" +
+      "          h('span', { class: 'iw-stag__title' }, titleVal),\n" +
+      "          h('b', { class: 'iw-stag__name' }, nm)),\n" +
+      "        h('span', { class: 'iw-stag__num' }, numVal),\n" +
+      "        h('span', { class: 'iw-stag__badges' }, ...badgeEls));\n" +
+      "      colorVars(card, 'tc', col(a.team));\n" +
+      "      return card;\n" +
+      "    };\n" +
+      "    const teamSide = (t) => {\n" +
+      "      const list = actors.filter((a) => a.team === t);\n" +
+      "      return h('div', { class: 'iw-lineup__col iw-lineup__col--' + (t ? 'b' : 'a') },\n" +
+      "        list.map((a, i) => makeStag(a, i)));\n" +
+      "    };\n" +
+      "    const el = h('div', { class: 'iw-lineup iw-lineup--stags' },\n" +
+      "      teamSide(0),\n" +
+      "      teamSide(1));",
+      'intro Splashtags presentation');
+    return "import { t as tr } from '../i18n.js';\nimport { applyShotGuide } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\nimport { tagArt, AWARDS, AWARD_ICONS, awardIcon } from './menu-art.js';\nimport { fnv, tagTitle, tagNum } from './menus.js';\n" + code;
   }
   if (rel === 'src/ui/ui-icons.js') {
     return replaceOnce(code,
@@ -572,6 +678,39 @@ export function adaptSource(rel, code) {
     return "import { rollerModel } from '../../patches/splatoon3/runtime/roller-model.mjs';\n" + code;
   }
   if (rel === 'src/audio/music.js') {
+    // Match-start Opening cue (issue #605): an original short sting for the pre-GO intro.
+    // Distinct id/name/tempo from battle and battle_final (both 150 bpm): at 140 bpm the GO
+    // hand-off to the battle track takes the engine's immediate cross-fade path instead of
+    // delaying the battle downbeat to the next bar line.
+    const OPENING = `  // Splatoon-style match-start Opening cue (issue #605): plays through the pre-GO intro.
+  // Original INKWAVE composition; distinct from battle / battle_final (see the GO hand-off).
+  opening: {
+    name: 'Opening Sting', bpm: 140, swing: 0, key: 'A minor', pump: 0.3,
+    inst: { bass: 'punk', chords: 'guitar', arp: 'pluck' },
+    mix: { hats: 0.15, arp: 0.12 },
+    sections: {
+      A: {
+        bars: 4, crash: true, chords: ['A5', 'A5', 'C5 D5', 'G5 A5'], riser: 1,
+        drums: {
+          k: 'X...X...X...X...',
+          s: '....X.......X...',
+          h: 'x.x.x.x.x.x.x.x.',
+        },
+        fills: { s: 'x.x.x.x.xxxxXXXX' },
+        bass: 'R.R.R.R.R.R.R.R.',
+        stabs: 'X-------X-------',
+        arp: { rate: 2, pattern: 'up', oct: 1, lo: 64 },
+      },
+    },
+    order: ['A'], loopFrom: 0,
+  },
+
+`;
+    // Re-applying the adapter to already-patched music must fail closed instead of duplicating the cue.
+    if (code.includes("  opening: {\n    name: 'Opening Sting',")) {
+      throw new Error('INKWAVE patch conflict (match-start Opening cue): expected exactly one connection. Review upstream changes; site was not built.');
+    }
+    code = replaceOnce(code, "  results_win: {\n    name: 'Fresh Victory',", OPENING + "  results_win: {\n    name: 'Fresh Victory',", 'match-start Opening cue');
     code = replaceOnce(code,
       '  constructor() {\n    this.ctx = null; this.players = []; this.current = null; this.intensity = 1; this._want = undefined;\n  }',
       '  constructor() {\n    this.ctx = null; this.players = []; this.current = null; this.intensity = 1; this._want = undefined; this._timerPaused = false;\n  }',
@@ -652,6 +791,14 @@ export function adaptSource(rel, code) {
       '    const judgeP = this.hud?.judge({ colors: [G.teamHex[0], G.teamHex[1]], percents: [cov[0] * 100, cov[1] * 100], names: this.palette.names || TEAM_NAMES, winner: m.result.winner });',
       'authoritative Turf winner Game to HUD');
     code = replaceOnce(code, 'const game = new Game();', 'installGame(Game);\nconst game = new Game();', 'game installation');
+    // Issue #605: the turf intro starts the dedicated Opening cue instead of silence.
+    // The boss intro keeps its own _playMusic(null); mode is guarded for a boss match
+    // without a resolved entity. Practice Range / attract never reach _intro().
+    code = replaceOnce(code,
+      "    setTimeout(() => { if (this.match?.state === 'intro') this.hud?.setVisible(true); }, 3000);\n    this._playMusic(null);",
+      "    setTimeout(() => { if (this.match?.state === 'intro') this.hud?.setVisible(true); }, 3000);\n    this._playMusic(this.match?.mode === 'boss' ? null : 'opening');   // #605 match-start Opening cue",
+      'match-start Opening cue');
+
     code = replaceOnce(code,
       "      crosshair: { spread, onTarget: m.controller?.onTarget ? 'enemy' : null, inRange: m.controller ? m.controller.inRange !== false : true },",
       "      crosshair: { spread, onTarget: m.controller?.onTarget ? 'enemy' : null, inRange: m.controller ? m.controller.inRange !== false : true, guide: projectShotGuide(m.controller?.enabled && m.controller?.a?.alive ? m.controller.shotGuide : null, cam, W, H) },",

@@ -37,3 +37,16 @@ test('#505 team bonus remains progress-only at the activation threshold',async()
 test('#505 unconfirmed client-side online wipes cannot award progression',async()=>{
  const f=await world();f.G.netm={match:f.m};f.wipe(1);f.tick();assert.equal(f.events.length,1);for(const a of f.m.actors.slice(0,4))near(f.fp(a),0);f.emit('team:wipeout',f.events[0]);near(f.fp(f.m.local),0);
 });
+
+test('#505 restored team bonus preserves the later 200fp Turf cap without activation',async()=>{
+ const f=await world();f.m.local.s3.flow.score=195*f.profile.flow.threshold/f.profile.flow.progress.referenceThreshold;
+ f.wipe(1);f.tick();near(f.fp(f.m.local),200);assert.equal(f.m.local.s3.flow.active,false);near(f.m.local.s3.flow.remaining,0);
+});
+test('#505 existing active browser probe receives one team bonus from actual Match transitions',async()=>{
+ const f=await world(),m=f.m;
+ m.actors=Array.from({length:8},(_,i)=>({team:i>>2,alive:true,pos:new f.THREE.Vector3(i*4,0,0),s3:{flow:{active:false,remaining:0,score:0,idleTime:2}},update(){}}));
+ m.local=m.actors[0];f.G.actors=m.actors;m.time=60;
+ m.update(1/60);m.actors.slice(4).forEach(a=>a.alive=false);m.update(1/60);
+ const first=m.actors.slice(0,4).map(f.fp);f.emit('team:wipeout',{match:m,team:1,sequence:1});m.update(1/60);
+ for(const value of first)near(value,10);for(const a of m.actors.slice(0,4))near(f.fp(a),10);
+});

@@ -3,7 +3,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { adaptSource } from '../adapter.mjs';
 import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
 import { adaptReliability } from '../../reliability/adapter.mjs';
@@ -15,7 +15,7 @@ const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const BUILT = process.env.INKWAVE_MATCH_HUD_SITE;
 const UPSTREAM = BUILT ? path.resolve(BUILT) : process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
 export async function fixture() {
-  const context = vm.createContext({ console, performance, innerWidth: 800, innerHeight: 600 });
+  const context = vm.createContext({ console, performance, URL, innerWidth: 800, innerHeight: 600 });
   const modules = new Map();
   function resolve(spec, from) {
     if (spec === 'three') return path.join(UPSTREAM, 'vendor/three/build/three.module.js');
@@ -31,7 +31,7 @@ export async function fixture() {
     const relative = path.relative(UPSTREAM, file);
     let source = fs.readFileSync(file, 'utf8');
     if (!BUILT) source = compose(file.startsWith(UPSTREAM + path.sep) ? relative : path.relative(ROOT, file), source);
-    const mod = new vm.SourceTextModule(source, { context, identifier: file }); modules.set(file, mod); return mod;
+    const mod = new vm.SourceTextModule(source, { context, identifier: file, initializeImportMeta(meta) { meta.url = pathToFileURL(file).href; } }); modules.set(file, mod); return mod;
   }
   const root = new vm.SourceTextModule(`
     export * from './inkwave-public/src/core/ctx.js';

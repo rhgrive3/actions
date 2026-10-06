@@ -195,7 +195,8 @@
       "feetPaintRadius": 0.7,
       "minReleaseTime": 0.13333333333333333,
       "storedFireDelay": 0.5166666666666667,
-      "allowEmptyCharge": true
+      "allowEmptyCharge": true,
+      "reticleDelayF": 5
     },
     "roller": {
       "rollSpeed": 7.92,
@@ -530,6 +531,7 @@
     "progress": {
       "referenceThreshold": 100,
       "referenceCap": 200,
+      "wipeoutBonus": 10,
       "decayPerSecond": 0.2,
       "fastDecayAfter": 5,
       "fastDecayPerSecond": 3.3,
@@ -597,7 +599,8 @@
       "Charger feetPaintRadius 0.7 is a local footprint calibration for guaranteed feet paint; physical Switch radius remains unverified.",
       "Death-cause respawn totals 8.5/7.0/5.5s are public-reference values retained from PR #186; official 11.3.0 parameter confirmation remains unavailable.",
       "Roller roll-stop action interruption (main 16F / sub 5F / squid 6F) is a community frame measurement from the S3 verification table '検証/メインウェポン/前隙・後隙', 塗り進み interruption row. The page returned HTTP 403 on the 2026-10-06 re-fetch, so the three numbers are recorded with that source and NOT claimed as re-verified here; the frame-to-second conversion is /60 and the endpoint convention is 'roll-end tick is frame 0'. They are not pinned Ver. 11.3.0 parameter-table fields.",
-      "Rescued from PR #63: shooter fire gates, charger air/empty/min-release/store timing, HP regen rates and death-cause respawn routing remain regression-backed; physical-device confirmation is still pending."
+      "Rescued from PR #63: shooter fire gates, charger air/empty/min-release/store timing, HP regen rates and death-cause respawn routing remain regression-backed; physical-device confirmation is still pending.",
+      "weapons.charger.reticleDelayF (5F charge-reticle display delay, S3 main-weapon verification table) is a published community measurement, not an extracted 11.3.0 game parameter and not confirmed by a new Switch capture; per-variant gauge delays (Goo Tuber, Grizzco) are not implemented"
     ],
     "movementResourcesEvidence": "reports/inkwave-movement-resources-2026-10-02.md"
   },

@@ -11,6 +11,8 @@ import {adaptTouchLayout} from '../../touch-layout/adapter.mjs';
 import {adaptReliability} from '../../reliability/adapter.mjs';
 import {adaptQualitySource,replaceOnce,qualityIdentity} from '../adapter.mjs';
 import {adaptScoreReticle} from '../score-reticle-adapter.mjs';
+import {applyShotGuide} from '../../splatoon3/runtime/weapons-fidelity.mjs';
+import {selectedSub,selectedSubCost} from '../../splatoon3/runtime/kit-composition.mjs';
 
 const ROOT=new URL('../../../',import.meta.url),read=rel=>fs.readFileSync(new URL('inkwave-public/'+rel,ROOT),'utf8');
 const site=process.env.INKWAVE_SCORE_RETICLE_SITE;
@@ -21,6 +23,7 @@ class El {
     this.tag=tag;this.children=[];this.dataset={};this.style={setProperty(k,v){this[k]=v;}};this.names=new Set();this.parts=new Map();
     this.classList={add:(...ns)=>ns.forEach(n=>this.names.add(n)),remove:(...ns)=>ns.forEach(n=>this.names.delete(n)),toggle:(n,on)=>on?this.names.add(n):this.names.delete(n),contains:n=>this.names.has(n)};
   }
+  insertAdjacentHTML(_where,s){this.html=(this.html||'')+s;}
   set className(s){this.names=new Set(s.split(/\s+/).filter(Boolean));} get className(){return [...this.names].join(' ');}
   set innerHTML(s){this.html=s;this.parts.clear();} get innerHTML(){return this.html||'';}
   appendChild(c){c.parentNode=this;this.children.push(c);return c;} setAttribute(k,v){this[k]=v;} addEventListener(){} remove(){} animate(){return{};}
@@ -30,7 +33,7 @@ class El {
 }
 async function fixture({baseline=false}={}) {
   const G={settings:{},match:null},nodes=[];
-  const context=vm.createContext({console,performance,Math,setTimeout:()=>0,tr:(s,p)=>p?s.replace('{team}',p.team):s,document:{createElement:tag=>{const e=new El(tag);nodes.push(e);return e;},createTextNode:text=>({textContent:text})}});
+  const context=vm.createContext({console,performance,Math,innerWidth:800,innerHeight:600,setTimeout:()=>0,tr:(s,p)=>p?s.replace('{team}',p.team):s,document:{createElement:tag=>{const e=new El(tag);nodes.push(e);return e;},createTextNode:text=>({textContent:text})}});
   const config=new vm.SourceTextModule(read('src/config.js'),{context});await config.link(()=>{throw Error('unexpected config dependency');});await config.evaluate();
   const translate=(s,p)=>p?s.replace('{team}',p.team):s;
   const i18n=new vm.SyntheticModule(['tx','isJa'],function(){this.setExport('tx',translate);this.setExport('isJa',()=>false);},{context});
@@ -39,7 +42,7 @@ async function fixture({baseline=false}={}) {
   let code=baseline?adaptSource('src/ui/hud.js',read('src/ui/hud.js')):site?fs.readFileSync(path.join(site,'src/ui/hud.js'),'utf8'):adaptQualitySource('src/ui/hud.js',adaptReliability('src/ui/hud.js',adaptTouchLayout('src/ui/hud.js',adaptSource('src/ui/hud.js',read('src/ui/hud.js')))));
   if(minify)code=transform(code,{loader:'js',format:'esm',minify:true}).code;
   const imports=new Map();for(const n of parse(code,{ecmaVersion:'latest',sourceType:'module'}).body)if(n.type==='ImportDeclaration'){if(!imports.has(n.source.value))imports.set(n.source.value,new Set());for(const s of n.specifiers)imports.get(n.source.value).add(s.imported?.name||'default');}
-  const values={G,on:()=>()=>{},t:translate,...config.namespace,GLYPHS:{},SUB_ICONS:{},weaponIcon:x=>x,specialIcon:x=>x,keycap:x=>x,richText:x=>x};
+  const values={applyShotGuide,selectedSub,selectedSubCost,G,on:()=>()=>{},t:translate,...config.namespace,GLYPHS:{},SUB_ICONS:{},weaponIcon:x=>x,specialIcon:x=>x,keycap:x=>x,richText:x=>x};
   const mod=new vm.SourceTextModule(code,{context});await mod.link(spec=>spec==='./ui-util.js'?util:new vm.SyntheticModule([...imports.get(spec)],function(){for(const k of imports.get(spec))this.setExport(k,k in values?values[k]:()=>{});},{context}));await mod.evaluate();
   const hud=()=>Object.assign(Object.create(mod.namespace.HUD.prototype),{_L:{},_bloom:0,_kick:0,_fxTime:0,overLayer:new El(),ret:new El(),xh:new El(),spIcon:new El(),shield:new El(),subChip:new El(),_snd(){},_restart(){},_addFx(_name,fn){this.fx=fn;}});
   return {G,hud,nodes};
@@ -64,10 +67,11 @@ for(const hz of [30,60,120])test(`#720 ${hz}Hz reveal preserves team shares, neu
 for(const hz of [30,60,120])test(`#715 ${hz}Hz native weapon state keeps updating while only the swim reticle is hidden`,async()=>{
  const f=await fixture(),h=f.hud(),actor={form:'kid',alive:true,invuln:1,weaponRunner:{aimingSub:true}};f.G.match={local:actor};
  for(const weapon of ['shooter','blaster','roller','charger','dualies','splatling','slosher']){
+  Object.assign(actor.weaponRunner,{charging:true,chargeT:.2,charge:.2});
   h._updCrosshair({weapon,charge:.2,ink:1,subCost:.7},1/hz);assert.equal(h.ret.style.visibility,'');const shape=h.ret.innerHTML;
-  actor.form='squid';h._updCrosshair({weapon,charge:1,ink:1,subCost:.7},1/hz);assert.equal(h.ret.style.visibility,'hidden');assert.equal(h.ret.innerHTML,shape);assert(h.shield.classList.contains('is-up'));assert(h.subChip.classList.contains('is-on'));
+  actor.form='squid';Object.assign(actor.weaponRunner,{charging:true,chargeT:1,charge:1});h._updCrosshair({weapon,charge:1,ink:1,subCost:.7},1/hz);assert.equal(h.ret.style.visibility,'hidden');assert.equal(h.ret.innerHTML,shape);assert(h.shield.classList.contains('is-up'));assert(h.subChip.classList.contains('is-on'));
   if(weapon==='charger'||weapon==='splatling')assert.equal(h._L.charge,1);
-  actor.form='kid';h._updCrosshair({weapon,charge:.1,ink:1,subCost:.7},1/hz);assert.equal(h.ret.style.visibility,'');assert.equal(h.ret.innerHTML,shape);
+  actor.form='kid';Object.assign(actor.weaponRunner,{charging:true,chargeT:.1,charge:.1});h._updCrosshair({weapon,charge:.1,ink:1,subCost:.7},1/hz);assert.equal(h.ret.style.visibility,'');assert.equal(h.ret.innerHTML,shape);
  }
  actor.form='squid';for(const weapon of ['charger','shooter','roller']){h._updCrosshair({weapon,charge:1},0);assert.equal(h.ret.style.visibility,'hidden');}
  f.G.match=null;h._updCrosshair({weapon:'shooter'},0);assert.equal(h.ret.style.visibility,'','lab or absent actor recovers visible native reticle');

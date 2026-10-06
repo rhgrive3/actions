@@ -1,3 +1,5 @@
+// #750: the nearest glob uses the pinned swing DrawSizeParam; gameplay is unchanged.
+import { rollerFlickDrawRadius } from './weapons-fidelity.mjs';
 const EPS = 1e-10, DEG = Math.PI / 180;
 
 // #729 — S3 Ver.11.3.0 resolves an impact-triggered blast one fixed frame after the
@@ -45,7 +47,7 @@ export function appendRollerNearUnit(system, a, w) {
   const p = system._new();
   Object.assign(p, { type: 'drop', owner: a, team: a.team, age: 0, life: 1.4, straight: w.ballistics?.horizontalStraightTime ?? 0,
     radius: 1, damage: w.flickDamageNear, dmgFar: w.flickDamageFar, size: .15, trail: 0, trailEvery: 1.8, trailRadius: .45,
-    grav: w.flickGravity ?? 26, drag: w.flickDrag ?? .4, seed: Math.random(), vis: .185, tail0: .4, tailK: 1, wob: .1, wobF: 19, nose: 0, sats: 2,
+    grav: w.flickGravity ?? 26, drag: w.flickDrag ?? .4, seed: Math.random(), vis: rollerFlickDrawRadius(w, false, Math.max(0, (w.flickDrops ?? 2) - 1), 0, .185), tail0: .4, tailK: 1, wob: .1, wobF: 19, nose: 0, sats: 2,
     s3FlickUnit: 1, fidelityMode: 'horizontal', fidelityYaw: angle - a.yaw, fidelitySectorYaw: a.yaw });
   p.pos.set(a.pos.x + fx * .6 + fz * lateral, a.pos.y + 1.3, a.pos.z + fz * .6 - fx * lateral);
   p.prev.copy(p.pos); p.start.copy(p.pos);
