@@ -104,8 +104,16 @@ export function adaptSource(rel, code) {
       if (key !== L.dualGuide && this._twin) {
         L.dualGuide = key;
         // _twin is [right, left], matching s3DualiesGuides hand order.
-        for (let i = 0; i < 2; i++) this._twin[i]?.setAttribute('transform',
-          \`translate(\${offsets[i][0].toFixed(2)} \${offsets[i][1].toFixed(2)})\`);
+        // Remove the SVG's native +/-10.5 ring centres so each ring centre is
+        // the projected projectile point. In turret mode also pre-cancel the
+        // native CSS +/-4px pull-tight so both semantic guides truly merge.
+        const turret = !!guideMe?.weaponRunner?.s3Turret;
+        for (let i = 0; i < 2; i++) {
+          const baseX = i === 0 ? 10.5 : -10.5;
+          const lockX = turret ? (i === 0 ? 4 : -4) : 0;
+          this._twin[i]?.setAttribute('transform',
+            \`translate(\${(offsets[i][0] - baseX + lockX).toFixed(2)} \${offsets[i][1].toFixed(2)})\`);
+        }
       }
     } else if (L.dualGuide != null) {
       L.dualGuide = null;
