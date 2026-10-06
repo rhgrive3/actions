@@ -35,6 +35,9 @@ export function advanceFidelityProjectile(p, dt) {
     if (p.fidelityPhase === 0) {
       const speed = p.vel.length();
       if (move.endSpeed !== null && speed > move.endSpeed) p.vel.multiplyScalar(move.endSpeed / speed);
+      // #713: the break/free paint depth is selected by the height this glob
+      // enters that phase from, so the boundary height is recorded once.
+      p.fidelityBreakFreeY = p.pos.y;
       p.fidelityPhase = 1;
     }
     const brake = p.fidelityPhase === 1;
@@ -340,6 +343,23 @@ export function rollerHitAngle(p,point) {
   const yaw=Math.atan2(dx,dz)-p.fidelitySectorYaw;
   return Math.atan2(Math.sin(yaw),Math.cos(yaw));
 }
+// #713: the pinned Roller PaintParam carries the two break/free longitudinal
+// depth scales and the two heights at which each endpoint applies. Endpoints
+// and thresholds are extracted; the blend between them, and taking the height
+// from the break/free boundary down to the landing point, are a labelled
+// minimal model rather than recovered Nintendo code. Straight-flight depth
+// belongs to the separate straight/free root, and every other round keeps the
+// caller's existing paint amount.
+export function rollerBreakFreeDepth(p,point) {
+  if(p.ghost||!(p.fidelityPhase>0))return null;
+  const paint=p.fidelityRollerUnit?.UnitParam?.PaintParam;
+  const atMax=paint?.HeightUseDepthScaleMaxBreakFree,atMin=paint?.HeightUseDepthScaleMinBreakFree;
+  const max=paint?.DepthScaleMaxBreakFree,min=paint?.DepthScaleMinBreakFree;
+  if(![atMax,atMin,max,min].every(Number.isFinite)||atMin===atMax)return null;
+  const base=Number.isFinite(p.fidelityBreakFreeY)?p.fidelityBreakFreeY:p.start.y;
+  const height=Math.max(0,base-point.y);
+  return max+(min-max)*clamp01((height-atMax)/(atMin-atMax));
+}
 export function fidelityDamage(p,point) {
   const w=p.s3Weapon||p.owner.weapon;
   if(w.kind==='roller'&&w.ballistics){
@@ -420,7 +440,7 @@ export function installWeaponsFidelity(context,profile) {
   const fresh=Projectiles.prototype._new,push=Projectiles.prototype._push,ghost=Projectiles.prototype.ghostProjectile,clear=Projectiles.prototype.clear;
   Projectiles.prototype.clear=function(...args){const result=clear.apply(this,args);this._fidelityCollision=null;this._fidelitySloshContext=null;return result;};
   Projectiles.prototype._new=function(...args){
-    const p=fresh.apply(this,args);p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityRollerUnit=null;p.fidelitySloshUnit=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;p.fidelitySectorYaw=null;return p;
+    const p=fresh.apply(this,args);p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityRollerUnit=null;p.fidelitySloshUnit=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;p.fidelitySectorYaw=null;p.fidelityBreakFreeY=null;return p;
   };
   function initialize(p,w){
     if(!w)return;

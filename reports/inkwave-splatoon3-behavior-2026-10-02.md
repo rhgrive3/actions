@@ -341,3 +341,17 @@ Splat Roller の命中判定は各弾の**spawn 位置から実際のヒット�
 | 再現操作 | 独立ジオメトリの fixture: spawn `(0,0,0)`・sector 0° で ±15.99° は Inside、±16.01° と 180° は Outside。同じヒット点 `(0,0,4)` に対して spawn `(0,0,0)` は Inside、lateral spawn `(6,0,0)` は Outside、mirrored `(-6,0,0)` は角度符号が反転し同 table。sector を `-90°`（-X 向き）にすると 14° オフが Inside になるが、同じ座標を世界 +Z 基準で読むと 76° になる。issue の overlap 例（`fidelityYaw=+18°` で正面ヒット `xz=2`）は Inside、inner launch が 20° オフへ到達すると Outside。`fidelityYaw` を ±18°/0° で振っても結果は不変 |
 | プレイへの影響 | 重なり領域で ±16° 境界付近のダメージが「どちらの弾が勝ったか」ではなく実際のヒット幾何で決まる。距離減衰・ダメージ帯・1 挥ぎ 1 最大命中・vertical 帯・near unit・pool reset・ghost の無ダメージは変更しない。sector 基準を持たない弾（remote ghost）は Inside のまま保持し、packet 拡張はしない |
 | 確認状態 | **ロジック確認済み**（`patches/splatoon3/tests/issue-734-roller-hit-sector.test.mjs` 7/7、baseline `a3993f37` では 0/7 failing→修正後 7/7。Roller/weapons focused 7 ファイル 53/53）。**本家実機（Switch Ver.11.3.0）での ±16° 境界・overlap 実測は未確認**。描画間隔（30/60/120 Hz）依存は角度判定に無く固定 tick の決定性のみを直接証明。#611（straight/free 選択）・#674（入射角深度）・#58 は別 root のまま |
+
+## ローラー break/free 塗りが高さで縦深度を選ぶ（#713、2026-10-06）
+
+Issue #713: Roller の impacts は `Projectiles._impact()` の generic `stretchAmt: 0.7` を
+通るだけで、pinned `PaintParam` の `HeightUseDepthScaleMaxBreakFree = 1.5` /
+`HeightUseDepthScaleMinBreakFree = 10` を runtime が一切読んでいなかった。
+
+| 項目 | 内容 |
+|---|---|
+| 本家の根拠 | Issue #713 が引用する[Splat Roller Ver.11.3.0 の pinned パラメータ表](https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json)。基準は Splatoon 3 Ver. 11.3.0。横 main/near は `DepthScaleMaxBreakFree = 2.4` / `DepthScaleMinBreakFree = 1.2`、vertical は `1.76` / `1.32`、いずれも高さセレクタ 1.5 / 10 を持つ。**高さの実測（どの基準面かを含む）は Switch 実機未確認** |
+| INKWAVE の実装箇所 | `patches/splatoon3/runtime/weapons-fidelity.mjs`: `advanceFidelityProjectile()` が straight→brake 遷移で `p.fidelityBreakFreeY` を 1 度だけ記録、`rollerBreakFreeDepth()` を新設、`_new` が reset に追加。`patches/splatoon3/weapons-adapter.mjs` が native `Projectiles._impact()` の generic 描画 `stretchAmt: 0.7` を `rollerBreakFreeDepth(p, _v) ?? 0.7` へ接続（import も 1 個追加）。poll ではなく build-time の exact anchor なので欠落・重複は fail closed |
+| 再現操作 | 実際の `_impact()` と `G.paint.splat` 記録で固定射撃: horizontal 13 発は straight 終了時の高さ 1.30（paint 中心 0.14 上乗せ後の高さ 1.16）で 1.5 未満のため `2.4` に clamp。vertical 5 発は境界高さが 3.236 / 2.154 / 1.675 / 0.300 / 0.029 で、それぞれ `1.6774 / 1.7334 / 1.7582 / 1.76 / 1.76` に解決。同じ unit でも境界高さを上げた controlled fixture では `stretchAmt` が小さく（短く）なる。Selectors を入れ替えた複製 record では結果も反転し、両フィールドが入力であることを確認 |
+| プレイへの影響 | break/free 着弾の fore/aft の伸びが高さで変わる。ラスタライザでは reach が `radius*3.73`（0.7）から `radius*5.76`（2.4、vertical 低域で `4.08`）へ広がり、`sAmt >= 1` のため band kind が K_SHOT から K_LINE へ移る。**ダメージ・当たり判定・軌道・vertical の飛行中 drip・travel-distance ベースの塗りは変更しない**。straight 飛行中の着弾・非 Roller・ghost・セレクタ無し record は従来値 0.7 のまま |
+| 確認状態 | **ロジック確認済み**（`patches/splatoon3/tests/issue-713-roller-break-free-depth.test.mjs` 6/6、baseline `a3993f37` では 0/6 failing → 修正後 6/6）。**高さの基準面（break/free 境界から着地点まで）と 1.5/10 の端点対応は、pinned フィールド名と水平の実測 1.16≒1.5 から整合した最小モデルであり、Nintendo コードの復元でも実機測定でもない**。実 Switch（Ver.11.3.0）での着弾 footprint と depth 実測、30/60/120 Hz 実端末は**未確認**。#611（straight/free 選択）・#674（入射角 `DegreeUseDepthScaleMin`）・#411（near/far 幅）・#498（経時幅減衰）は別 root のまま未実装 |
