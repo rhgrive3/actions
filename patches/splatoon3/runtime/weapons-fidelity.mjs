@@ -233,14 +233,28 @@ export function configureFidelityFlick(p, actor, weapon, index, angle, speed) {
   for(const u of group.Unit){if(offset<(u.BulletNum??1)){unit=u;break;}offset-=u.BulletNum??1;}
   if(!unit)throw new RangeError('Roller index exceeds pinned units + labelled defaults');
   let pitch=Math.max(-.2,Math.min(.5,actor.aimPitch));
+  // #771: sourced per-unit horizontal swerve, in radians, kept in a local so the
+  // separated inside/outside classification offset below stays byte-identical.
+  let swerve=0;
   if(vertical){
     speed=60*(unit.SpawnSpeedBase+offset*(unit.AfterOffsetSpawnSpeed||0));
     pitch+=radians((unit.SpawnRotateXDegreeBase||0)+offset*(unit.AfterOffsetSpawnRotateXDegree||0));
     angle=actor.yaw+radians(unit.SpawnRotateYDegree||0);
   }else{
     const count=unit.BulletNum??1,fan=count>1?offset/(count-1)*2-1:0;
-    speed=60*(unit.SpawnSpeedBase+(Math.random()*2-1)*(unit.SpawnSpeedRandom||0));
-    angle=actor.yaw+fan*radians(unit.SpawnWideDegree||0);
+    // #771: the pinned 11.3.0 WideSwingUnitGroupParam units carry a non-zero
+    // SwerveRateBySpeed. The base emitter's swerve term was lost when this S3
+    // layer overwrote `angle`, so each main index kept one fixed fan yaw. Reuse
+    // the single normalized speed draw for the swerve so the yaw is tied to the
+    // glob's own sampled speed and no extra RNG draw, packet field or numeric
+    // default is added (owner/remote replay stays identical). The mapping
+    // (SwerveRateBySpeed x normalized speed deviation, radians) is an explicit,
+    // unverified model: the native swerve law is not recovered. A missing/zero
+    // source field leaves the previous fan angle exactly.
+    const speedSample=Math.random()*2-1;
+    speed=60*(unit.SpawnSpeedBase+speedSample*(unit.SpawnSpeedRandom||0));
+    swerve=speedSample*(unit.SwerveRateBySpeed||0);
+    angle=actor.yaw+fan*radians(unit.SpawnWideDegree||0)+swerve;
     pitch+=radians(b.horizontalPitchDegrees); // retained calibrated launch angle, NOT extracted
     const side=fan*(unit.SpawnPositionWidth||0),j=unit.SpawnPositionRandomCube||0;
     p.pos.x+=Math.cos(actor.yaw)*side+(Math.random()*2-1)*j;
@@ -252,7 +266,9 @@ export function configureFidelityFlick(p, actor, weapon, index, angle, speed) {
   p.prev.copy(p.pos);p.start.copy(p.pos);
   const cp=Math.cos(pitch);
   p.vel.set(Math.sin(angle)*cp*speed,Math.sin(pitch)*speed,Math.cos(angle)*cp*speed);
-  p.fidelityYaw=Math.atan2(Math.sin(angle-actor.yaw),Math.cos(angle-actor.yaw));
+  // #734 keeps the deterministic fan offset for the inside/outside boundary; the
+  // #771 swerve is removed here so that boundary is not silently retuned.
+  p.fidelityYaw=Math.atan2(Math.sin(angle-swerve-actor.yaw),Math.cos(angle-swerve-actor.yaw));
   p.fidelityMode=vertical?'vertical':'horizontal';p.fidelityRollerUnit=unit;
   setCollision(p,unit.UnitParam.CollisionParam);
   p.straight=unit.UnitParam.MoveParam.GoStraightToBrakeStateFrame/60;

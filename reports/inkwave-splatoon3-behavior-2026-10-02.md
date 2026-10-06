@@ -357,3 +357,15 @@ Reset now clears the pending damage attacker and angle together with the cancell
 ## 2026-10-06 — Dualies wall-drop (#604) and composed-runtime guards
 
 Base main `67fec182`. Splat Dualies wall impacts now enter the existing sourced wall-drop state using the pinned 11.3.0 top-level `WallDropMoveParam`/`WallDropCollisionPaintParam` (shock 1.3, fall 0.65, ground 0.6; 20–40F + 10F + 15–35F at 0.06). Previously the round died on the contact frame after one generic impact. Damage is unchanged. Shooter (#385) and Charger (#625/#268) are excluded: Shooter is owned elsewhere, and the Charger record omits three period fields. #770, #777, #638/#637, #644/#643 and #556 were already correct after adapter composition (the reports read raw source). They are now pinned by composed-runtime tests. This is logic-level and emitted-verifier evidence; a Switch visual/frame comparison is still 未確認. Details: [inkwave-wall-drop-dualies-guards-2026-10-06.md](inkwave-wall-drop-dualies-guards-2026-10-06.md).
+
+## 2026-10-07 — ローラー横振りが SwerveRateBySpeed を捨て、弾ごとの yaw を固定していた (#771)
+
+Base main `f31f5da439134fe49bb89018dad5557671a49c67`。ピン留めした Ver.11.3.0 の `WideSwingUnitGroupParam` は横振りの両 unit に `SwerveRateBySpeed`（主 0.05 / 近 0.1）を持つが、`patches/splatoon3/runtime/weapons-fidelity.mjs` の `configureFidelityFlick()` は fan 角 `actor.yaw + fan * radians(SpawnWideDegree)` だけを書き、この field を一度も読んでいなかった（ツリー内の一致は `profile.json` の2箇所のみ）。そのため actor yaw を固定すると主 12 個の弾は毎回同じ 12 方向に発射され、弾ごとの速度サンプルと発射角が無関係だった。
+
+公開版の基準エミッタ `inkwave-public/src/game/weapons.js` の `fireFlick()` は `(Math.random()-0.5)*0.05` を加えており、この 0.05 は主 unit の `SwerveRateBySpeed` と一致する。ところが S3 fidelity 層が `angle` をこの fan 角で上書きするため、その swerve 項は失われていた。
+
+修正は install 層のみ。速度用に既に引いている正規化サンプル（`Math.random()*2-1`）を再利用し、`angle` に `speedSample * unit.SwerveRateBySpeed`（radians）を加える。乱数消費数は変えず（1 flick = 176 draws、変更前後で同一）、wire field も増やさないので owner/remote replay と 30/60/120 Hz は同一。`SpawnWideDegree` の fan、主 12 / 近 1 の個数、`SpawnSpeedBase/Random`、`SpawnPositionWidth`、`SpawnPositionRandomCube`、ダメージ帯、one-volley 集約、縦振り経路は不変。`fidelityYaw`（#734 の内側/外側境界）は swerve を除いた fan 角のままにし、この境界を黙って動かさない。
+
+**未確認（確定ではない）**: `SwerveRateBySpeed` の本家の実際の式は、ピン留めした Leanny 11.3.0 データにも本 repo にも定義が見つからない。ここで入れた写像（正規化速度偏差 × rate、radians）は、既存の `SpawnSpeedRandomRate` と同じく**明示された未検証モデル**であり、任天堂の式を復元した主張ではない。また近接 unit の 1 弾について、実測した発射角は seed 依存だが本層の変更に反応しなかった（変更前後で同一値）。近接弾の実発射経路は本ラウンドで帰属を特定しておらず、同 unit の 0.1 が本経路へ流れたことは実証していない。実機での角度分布計測は未実施。
+
+検証は `patches/splatoon3/tests/roller-flick-swerve.test.mjs` の4項目。変更後 4/4 pass（exit 0）、未変更 main では主群の field 未消費と yaw 固定を捉えて 2/4 fail（exit 1）。縦振り不変と draw 予算 176 は両方で pass。描画・ブラウザ・本家実機の比較は行っていない。
