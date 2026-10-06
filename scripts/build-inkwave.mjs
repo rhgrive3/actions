@@ -170,7 +170,6 @@ visit('patches/splatoon3/bootstrap.mjs');
 // requests to the critical HTML. Browser startup/offline CI validates the
 // resulting dependency fetch path and timing.
 const deferredIntegrationPreloads = new Set([
-  'patches/local-quality/charger-sight.mjs',
   'patches/local-quality/first-touch-adapter.mjs',
   'patches/local-quality/gyro-permission.mjs',
   'patches/local-quality/idle-resources.mjs',
@@ -181,12 +180,13 @@ const deferredIntegrationPreloads = new Set([
   'patches/local-quality/platform-input.mjs',
   'patches/local-quality/platform-lifecycle.mjs',
   'patches/local-quality/platform-transport.mjs',
-  'patches/local-quality/screen-angle.mjs',
   'patches/local-quality/touch-relayout.mjs',
+  'patches/local-quality/tenacity.mjs',
   'patches/splatoon3/runtime/issue-415-adapter.mjs',
   'patches/splatoon3/runtime/movement-physics.mjs',
   'patches/splatoon3/runtime/roller-model.mjs',
   'patches/splatoon3/runtime/sub-special-fidelity.mjs',
+  'patches/splatoon3/runtime/superjump.mjs',
   'patches/splatoon3/runtime/weapon-edgecases.mjs',
   'patches/splatoon3/runtime/weapons-fidelity.mjs',
   'patches/splatoon3/runtime/weapons-charger-flight.mjs',

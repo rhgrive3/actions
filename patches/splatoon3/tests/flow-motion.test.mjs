@@ -236,7 +236,7 @@ test('posed indexed shell geometry follows kid/squid, airborne, weapons and LOD 
   } finally { r.close(); victim.close(); }
 });
 
-test('hidden/form return never replays entry; reset/death clear immediately; special-ready stays independent', async () => {
+test('hidden/form return never replays entry; death hides and respawn resumes; full reset clears', async () => {
   const api = await production(), r = rig(api), victim = rig(api, 'shooter', 1);
   try {
     prepare(api, r.a); award(api, r.a, victim.a); r.step();
@@ -255,7 +255,17 @@ test('hidden/form return never replays entry; reset/death clear immediately; spe
     assert.equal(r.snapshot().resources, resources); assert.equal(r.a.s3.flow.active, false);
     prepare(api, r.a); award(api, r.a, victim.a); r.step();
     r.a.splat(null); assert.equal(r.snapshot().phase, 'off'); assert.equal(group.visible, false);
-    assert.equal(r.a.alive, false); assert.equal(r.a.s3.flow.active, false);
+    assert.equal(r.a.alive, false); assert.equal(r.a.s3.flow.active, true);
+    const activationCount = r.snapshot().activationCount;
+    const remaining = r.a.s3.flow.remaining;
+    api.G.level.spawnPads = [new api.THREE.Vector3(), new api.THREE.Vector3(0,0,20)];
+    api.G.physics.groundProbe = (_x,_y,_z,_r,_d,_foot,hit) => { hit.hit = false; return hit; };
+    for (let i = 0; i < 60; i++) r.step();
+    assert.ok(Math.abs(r.a.s3.flow.remaining - (remaining - 1)) < 1e-8);
+    r.a.respawn(); r.step();
+    assert.equal(r.a.s3.flow.active, true); assert.equal(r.snapshot().phase, 'active');
+    assert.equal(r.snapshot().activationCount, activationCount); assert.equal(r.snapshot().event, null);
+    assert.equal(r.snapshot().visible, true); assert.equal(r.snapshot().resources, resources);
   } finally { r.close(); victim.close(); }
 });
 

@@ -111,7 +111,6 @@ test('Android gyro never promotes raw rotationRate after calibration and station
   await entry.link(async spec => {
     if (spec === './device.js') return new vm.SourceTextModule('export function screenAngle(){return globalThis.__angle||0;}',{context,identifier:'src/core/device.js'});
     if (spec === '../../patches/local-quality/gyro.mjs') return new vm.SourceTextModule(read('patches/local-quality/gyro.mjs'),{context,identifier:'patches/local-quality/gyro.mjs'});
-    if (spec === '../../patches/local-quality/screen-angle.mjs') return new vm.SourceTextModule(read('patches/local-quality/screen-angle.mjs'),{context,identifier:'patches/local-quality/screen-angle.mjs'});
     if (spec === './platform-lifecycle.mjs') return new vm.SourceTextModule(read('patches/local-quality/platform-lifecycle.mjs'),{context,identifier:'patches/local-quality/platform-lifecycle.mjs'});
     if (spec === './gyro-permission.mjs') return new vm.SourceTextModule(read('patches/local-quality/gyro-permission.mjs'),{context,identifier:'patches/local-quality/gyro-permission.mjs'});
     throw new Error('unexpected import '+spec);

@@ -49,8 +49,7 @@ export async function rangeRealm() {
     export { Projectiles } from './src/game/weapons.js';
     export { STAGE_SURFACES, STAGE_SLOTS, FIRST_STAGE_SLOT, LAST_STAGE_SLOT } from './src/world/stages/surfaces.js';
     export { STAGES } from './src/world/stages/index.js';
-    export { installPracticeRange, isRangeMatch, RANGE_MATCH_TIME } from './patches/practice-range/install.mjs';
-    export { HUD } from './src/ui/hud.js';
+    export { installPracticeRange, isRangeMatch } from './patches/practice-range/install.mjs';
     export { RANGE_MAP, isRangeMap, rangeMapFor } from './patches/practice-range/range-map.mjs';
     export { PropKit } from './src/world/props.js';
     export { dressingFor } from './src/world/dressing.js';
@@ -77,9 +76,9 @@ export function rangeWorld(R) {
   for (const it of R.dressingFor('range')) { const r = kit.add(it.type, it); if (r && r.colliders) colliders.push(...r.colliders); }
   G.level = new Level(LAYOUT, colliders);
   G.physics = new Physics(G.level);
-  const splats = [];
-  G.paint = { splat: (p, r, team, paint = {}) => { splats.push([p.x, p.y, p.z, r, team, paint.kind || null]); return 0; }, sample: () => 0, clear() { splats.length = 0; }, version: 0 };
+  const splats = [], paintEvents = [];
+  G.paint = { splat: (p, r, team, options) => { const point = [p.x, p.y, p.z, r, team]; splats.push(point); paintEvents.push({ point, kind: options?.kind ?? null }); return 0; }, sample: () => 0, clear() { splats.length = 0; paintEvents.length = 0; }, version: 0 };
   G.projectiles = { clear() {} };
   G.time = 0; G.actors = [];
-  return { splats };
+  return { splats, paintEvents };
 }

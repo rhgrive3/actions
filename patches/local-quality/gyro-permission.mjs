@@ -7,10 +7,13 @@ export function gyroCapability(env = globalThis) {
   if (env.isSecureContext === false) reason = 'insecure-context';
   else if (!orientation) reason = 'orientation-api-missing';
   const policy = env.document?.permissionsPolicy || env.document?.featurePolicy;
-  try {
-    const orientationAllowed = policy?.allowsFeature?.('gyroscope');
-    if (orientationAllowed === false) reason = 'permissions-policy';
-  } catch {}
+  // Relative orientation/motion needs both sensors. Query independently: an
+  // unknown feature throwing must not hide an explicit denial of the other.
+  for (const feature of ['accelerometer', 'gyroscope']) {
+    try {
+      if (policy?.allowsFeature?.(feature) === false) reason = 'permissions-policy';
+    } catch {}
+  }
   return { supported: !reason, reason, orientation, motion,
     orientationRequest: typeof orientation?.requestPermission === 'function',
     motionRequest: typeof motion?.requestPermission === 'function' };

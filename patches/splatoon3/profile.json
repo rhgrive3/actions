@@ -440,7 +440,18 @@
     "swimMultiplier": 1.2,
     "enemyInkSpeedMultiplier": 1.5,
     "paintRadius": 0.6,
-    "bots": true
+    "bots": true,
+    "progress": {
+      "referenceThreshold": 100,
+      "referenceCap": 200,
+      "decayPerSecond": 0.2,
+      "fastDecayAfter": 5,
+      "fastDecayPerSecond": 3.3,
+      "deathPenalty": 5,
+      "environmentDeathPenalty": 10,
+      "source": "https://wikiwiki.jp/splatoon3mix/検証/イカフロー",
+      "status": "community verification; loss values normalized to existing threshold, award weights remain uncalibrated"
+    }
   },
   "superJump": {
     "chargeTime": 1.3333333333333333,
@@ -485,7 +496,9 @@
       "Splatling grounded pitch1.6deg uses the existing radial sampler with separate axes; S3 PDF, bias, air/IA correlations are unverified.",
       "Roller near-unit count1 is corroborated by S3 unit research, not an inferred omitted BulletNum; velocity and width use relative mappings, sampler/absolute spawn calibration remains unverified.",
       "Blaster terrain damage is half of normalized existing bands, floor to0.1HP after scaling;35HP cap is sourced, complete S3 falloff curve remains uncalibrated.",
-      "PR64 completion: finite Charger flight, continuous collision, source-mirrored unit layouts and model-labelled interpolation; physical Switch parity remains unverified."
+      "PR64 completion: finite Charger flight, continuous collision, source-mirrored unit layouts and model-labelled interpolation; physical Switch parity remains unverified.",
+      "Rescued from PR #489: Flow progress now decays/penalizes and survives respawn while active; community loss values remain calibration, not Nintendo primary data.",
+      "Rescued from PR #547/#491/#545: Roller swing movement target, deterministic Alpha ties, and Tenacity owner-only passive charge remain subject to current-main combined validation."
     ],
     "movementResourcesEvidence": "reports/inkwave-movement-resources-2026-10-02.md"
   },
