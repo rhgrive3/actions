@@ -41,6 +41,11 @@ export function rollStopBlocks(now, locks) {
   };
 }
 
+/** Arm the roll-end deadlines at `now`, the roll-end tick itself being frame 0. */
+export function rollStopLocks(now) {
+  return { main: now + ROLL_STOP_LOCKS.main, sub: now + ROLL_STOP_LOCKS.sub, squid: now + ROLL_STOP_LOCKS.squid };
+}
+
 export function installRollerLogic({ WeaponRunner, Actor, G }, _profile) {
   const roller = WeaponRunner.prototype._roller, reset = WeaponRunner.prototype.reset;
   const update = WeaponRunner.prototype.update;
@@ -51,24 +56,52 @@ export function installRollerLogic({ WeaponRunner, Actor, G }, _profile) {
     const a = runner.a;
     return a.grounded && a.ink > 0.5 && runner.flick < 0;
   };
+  // Whether this tick's `fire` keeps the roll alive. `_roller` recomputes the same
+  // canRoll terms, so a tick that cannot hold them ends the roll: an estimate, not a
+  // second engine, and both callers below discard it again if the roll survives.
+  // A roll cannot start while a window is live (main gates fire), so any live
+  // window means no roll is in flight and nothing needs re-arming.
+  const rollWillStop = (runner, fire) => {
+    const a = runner.a;
+    return runner.rolling === true && !fire && armsInterruption(runner);
+  };
+  // Arm ahead of the tick when it can already be told that the roll ends, so the
+  // lock owns frame 0 instead of starting one tick after it. The real Actor picks
+  // its form BEFORE it calls the runner, so a lock armed inside the runner arrives
+  // after the form decision and a simultaneous release+squid still enters. The arm
+  // is rolled back below whenever the roll turns out to have survived.
+  const armAheadOf = (runner, now, fire) => {
+    const live = rollStopBlocks(now, runner.s3RollStop);
+    if ((live.main || live.sub || live.squid) || !rollWillStop(runner, fire)) return false;
+    runner.s3RollStop = rollStopLocks(now);
+    return true;
+  };
+  const disarmIf = (runner, armed) => {
+    // The prediction is only kept when the real runner agrees the roll ended and the
+    // same terms the post-arm check uses still hold.
+    if (armed && (runner.rolling === true || !armsInterruption(runner))) runner.s3RollStop = null;
+  };
   WeaponRunner.prototype.update = function (dt, inp = {}) {
-    const locks = this.s3RollStop, now = G.time;
+    const now = G.time;
+    const armed = armAheadOf(this, now, !!inp.fire);
+    const locks = this.s3RollStop;
     let input = inp;
     if (locks && this.a.weapon?.kind === 'roller') {
       const blocked = rollStopBlocks(now, locks);
       if (blocked.main || blocked.sub) {
         input = { ...inp };
         // Admission only. Buffered intent may survive; the action itself must not
-        // become authoritative before its own boundary expires.
-        if (blocked.main) { input.fire = false; input.firePressed = false; }
+        // become authoritative before its own boundary expires. A tick that armed
+        // the lock is not gated on fire: its own `inp.fire` is what stopped the roll,
+        // and blocking it here would make the prediction decide the roll.
+        if (blocked.main && !armed) { input.fire = false; input.firePressed = false; }
         if (blocked.sub) { input.sub = false; input.subReleased = false; }
       }
     }
     const wasRolling = this.rolling === true;
     const result = update.call(this, dt, input);
-    if (wasRolling && this.rolling !== true && armsInterruption(this)) {
-      this.s3RollStop = { main: now + ROLL_STOP_LOCKS.main, sub: now + ROLL_STOP_LOCKS.sub, squid: now + ROLL_STOP_LOCKS.squid };
-    }
+    disarmIf(this, armed);
+    if (wasRolling && this.rolling !== true && armsInterruption(this)) this.s3RollStop = rollStopLocks(now);
     return result;
   };
   // Squid admission lives in the locked Actor form gate, which reads the generic
@@ -76,13 +109,21 @@ export function installRollerLogic({ WeaponRunner, Actor, G }, _profile) {
   // this root with #176, so form admission is gated here instead.
   const actorUpdate = Actor.prototype.update;
   Actor.prototype.update = function (dt, ...rest) {
-    const runner = this.weaponRunner, now = G.time;
-    if (runner?.s3RollStop && this.intent?.squid && rollStopBlocks(now, runner.s3RollStop).squid) {
+    const runner = this.weaponRunner;
+    if (!runner) return actorUpdate.call(this, dt, ...rest);
+    const now = G.time;
+    // The Actor builds its own fire from the raw intent, so the same estimate is
+    // read here rather than duplicated: a buffered pop-out shot keeps fire alive.
+    const armed = armAheadOf(runner, now, !!(this.intent?.fire || this.fireBuffer > 0));
+    const blockSquid = rollStopBlocks(now, runner.s3RollStop).squid;
+    if (blockSquid && this.intent?.squid) {
       const held = this.intent.squid;
       this.intent.squid = false;
-      try { return actorUpdate.call(this, dt, ...rest); } finally { this.intent.squid = held; }
+      try { return actorUpdate.call(this, dt, ...rest); }
+      finally { this.intent.squid = held; disarmIf(runner, armed); }
     }
-    return actorUpdate.call(this, dt, ...rest);
+    try { return actorUpdate.call(this, dt, ...rest); }
+    finally { disarmIf(runner, armed); }
   };
   WeaponRunner.prototype.reset = function (...args) {
     const result = reset.apply(this, args);
