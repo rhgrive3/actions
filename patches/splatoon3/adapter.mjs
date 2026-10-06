@@ -78,6 +78,27 @@ export function adaptSource(rel, code) {
       '      const winner = Math.abs(pa - pb) < 0.05 ? -1 : pa > pb ? 0 : 1;',
       '      const winner = authoritativeWinner === 0 || authoritativeWinner === 1 ? authoritativeWinner : Math.abs(pa - pb) < 0.05 ? -1 : pa > pb ? 0 : 1;',
       'authoritative Turf winner HUD reveal');
+    code = replaceOnce(code,
+      '    // per-shot kick (recoil events) on top of the live cone the engine reports in screen px (already includes bloom)',
+      `    // S3 weapon ShotGuide projection: only aiming feedback moves; tank/sub/status remain centred.
+    let guideX = 0, guideY = 0;
+    if (L.kind === 'slosher' || L.kind === 'blaster') {
+      const me = this._local(), cam = G.rig?.gameCam || G.camera;
+      const point = me && cam && G.projectiles?.s3WeaponGuide?.(me, me.weapon);
+      const projected = point ? this._project(cam, point.x, point.y, point.z) : null;
+      if (projected && projected.z < 1) {
+        guideX = projected.x * innerWidth * 0.5;
+        guideY = -projected.y * innerHeight * 0.5;
+      }
+    }
+    const guideKey = \`\${guideX.toFixed(1)}|\${guideY.toFixed(1)}\`;
+    if (guideKey !== L.guide) {
+      L.guide = guideKey;
+      this.xh.style.setProperty('--gx', \`\${guideX.toFixed(1)}px\`);
+      this.xh.style.setProperty('--gy', \`\${guideY.toFixed(1)}px\`);
+    }
+    // per-shot kick (recoil events) on top of the live cone the engine reports in screen px (already includes bloom)`,
+      'Bucket Slosher ShotGuide HUD projection');
     return "import { t as tr } from '../i18n.js';\n" + code;
   }
   if (rel === 'src/ui/ui-icons.js') {
@@ -99,6 +120,28 @@ export function adaptSource(rel, code) {
     return replaceOnce(code, '</body>',
       '<script>if ("serviceWorker" in navigator && location.protocol === "https:") { addEventListener("load", () => { const root = new URL("./", location.href); navigator.serviceWorker.register(new URL("sw.js", root).href, { scope: root.pathname }).catch(() => {}); }); }</script>\n</body>',
       'pwa service worker');
+  }
+  if (rel === 'src/game/nav.js') {
+    // S3 does not reserve a universal radial enemy spawn zone; traversability is stage geometry.
+    code = replaceOnce(code,
+      '          for (let t = 0; t < 2; t++) {\n            const pad = L.spawnPads[t];\n            if (Math.hypot(x - pad.x, z - pad.z) < L.spawnBarrier + 0.6 && y > pad.y - 1) node.zone = t;\n          }',
+      '          // No global spawn-radius navigation exclusion in the S3 composition.',
+      'navigation spawn-radius exclusion');
+
+    // Reuse A* heap backing arrays after warm-up. Logical length resets; storage capacity stays owned by NavGraph.
+    code = replaceOnce(code, '    const heap = new Heap();',
+      '    const heap = this._heap || (this._heap = new Heap()); heap.clear();', 'reusable A* heap');
+    code = replaceOnce(code, '  constructor() { this.ids = []; this.pr = []; }',
+      '  constructor() { this.ids = []; this.pr = []; this.n = 0; }\n  clear() { this.n = 0; }', 'heap logical length');
+    code = replaceOnce(code, '  get size() { return this.ids.length; }',
+      '  get size() { return this.n; }', 'heap logical size');
+    code = replaceOnce(code, '    let i = ids.length; ids.push(id); pr.push(p);',
+      '    let i = this.n++; ids[i] = id; pr[i] = p;', 'heap push reuse');
+    code = replaceOnce(code,
+      '    const top = ids[0];\n    const lid = ids.pop(), lp = pr.pop();\n    if (ids.length) {\n      let i = 0; const n = ids.length;',
+      '    const top = ids[0];\n    const n = --this.n, lid = ids[n], lp = pr[n];\n    if (n) {\n      let i = 0;',
+      'heap pop reuse');
+    return code;
   }
   if (rel === 'src/game/player.js') {
     const start = code.indexOf('    if (this.onTarget && this.onTarget !== G.boss) {');
@@ -191,6 +234,9 @@ export function adaptSource(rel, code) {
     const end = code.indexOf('    // ---- weapons (', start);
     if (start < 0 || end < start) throw new Error('INKWAVE patch conflict: actor resource connection');
     code = replaceOnce(code, code.slice(start, end), '    updateResources(this, dt);\n\n', 'post-movement resources');
+    code = replaceOnce(code, '    this._spawnBarrier();',
+      '    // S3 Spawners use stage geometry and spawn protection, not a universal radial body clamp.',
+      'S3 universal spawn barrier removal');
     return `import { prepareSuperJump, rememberSuperJumpGround, superJumpTarget, updateSuperJumpMain, SUPERJUMP_MAIN_PROGRESS } from '../../patches/splatoon3/runtime/superjump.mjs';\nimport { beforeActions } from '../../patches/splatoon3/runtime/movement.mjs';\nimport { updateResources } from '../../patches/splatoon3/runtime/resources.mjs';\n` + code;
   }
   if (rel === 'src/game/character-weapons.js') {

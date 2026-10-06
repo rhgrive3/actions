@@ -46,6 +46,7 @@ import { installRollerDetailMotion } from './roller-detail-motion.mjs';
 import { installSuperjumpMotion } from './superjump-motion.mjs';
 import { installSquidrollMotion } from './squidroll-motion.mjs';
 import { installHitSpawnMotion } from './hit-spawn-motion.mjs';
+import { installDeathCamera } from './death-camera.mjs';
 import { installIdleMotion } from './idle-motion.mjs';
 import { installEmotesMotion } from './emotes-motion.mjs';
 import { installSpecialMotion } from './special-motion.mjs';
@@ -99,6 +100,7 @@ export function install(profile) {
   installSuperjumpMotion(api, profile);
   installSquidrollMotion(api, profile);
   installHitSpawnMotion(api, profile);
+  installDeathCamera(api);
   installIdleMotion(api, profile);
   installEmotesMotion(api, profile);
   installSpecialMotion(api, profile);
