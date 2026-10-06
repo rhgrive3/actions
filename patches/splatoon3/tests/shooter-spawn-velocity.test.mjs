@@ -131,6 +131,16 @@ test('#312 ghosts, remote owners and repeated application never inherit', async 
   ps.fireShooter(a, a.weapon, 0);
   const fresh = ps.list.at(-1);
   close(fresh.vel.z, s.base);
+  ps.clear();
+  a.vel.set(0, 0, s.moveSpeedFiring);
+  ps.fireShooter(a, a.weapon, 0);
+  const reused = ps.list.at(-1);
+  assert.equal(reused, fresh, 'the native pool reuses the previously released projectile');
+  close(reused.vel.z, s.base + s.zrate * s.moveSpeedFiring);
+  assert.equal(reused.s3ShooterForwardApplied, true);
+  const reusedVelocity = reused.vel.clone();
+  applyShooterSpawnVelocity(reused);
+  assert.deepEqual(reused.vel.toArray(), reusedVelocity.toArray(), 'reused inheritance remains once-only');
 });
 
 test('#312 synchronous launch is recorded once after player-forward addition', async () => {
