@@ -47,10 +47,11 @@ async function boot({ floor = true, grate = false, wall = false } = {}) {
     level, physics: new Physics(level), mode: 'match', teamColors: [new THREE.Color('#ff8a14'), new THREE.Color('#2f5bff')],
     match: { playing: () => true, canRespawn: () => false }, paint: { sample: () => 1, splat: () => 0 } });
   G.projectiles = new api.Projectiles(G.scene);
-  function make({ pos = [0, 0, 0], weapon = 'shooter', team = 0 } = {}) {
-    const a = new api.Actor({ team, name: 'superjump regression', weapon, CharacterClass: api.Character,
+  function make({ pos = [0, 0, 0], weapon = 'shooter', team = 0, isLocal = false, remote = false } = {}) {
+    const a = new api.Actor({ team, name: 'superjump regression', weapon, isLocal, CharacterClass: api.Character,
       style: { hair: 0, skin: 2, outfit: 0, eyes: 0 } });
     a.character.actor = a; G.actors.push(a); G.scene.add(a.character.root);
+    a.remote = remote;
     a.spawnAt(new THREE.Vector3(...pos), 0); a.invuln = 0; return a;
   }
   const tick = (a, count = 1) => { for (let i = 0; i < count; i++) { G.time += STEP; a.update(STEP); } };
@@ -194,4 +195,54 @@ test('#362 30/60/120Hz preserve one committed destination and flight announcemen
     assert.deepEqual(events,[['charge',null],['flight',committed]]);
     assert.ok(new f.THREE.Vector3(...committed).distanceTo(new f.THREE.Vector3(10,0,7)) < 1e-9);
   }
+});
+
+// Reuse the same installed fixture for these related landing controls. Each
+// case gets a fresh Actor and scoped event subscriptions; importing/building
+// the native engine five times would only duplicate expensive fixture work.
+test('#645 ordinary landing and special-owned paint controls', async t => {
+  const f = await boot(); t.after(f.close);
+  for (const { ground, remote } of [
+    { ground: 'unpainted', remote: false },
+    { ground: 'enemy', remote: false },
+    { ground: 'enemy', remote: true },
+  ]) {
+    await t.test(`${remote ? 'remote Actor' : 'owner path'} lands on ${ground} without paint, turf or SP and retains feedback`, () => {
+      const a = f.make({ team: 0, isLocal: false, remote });
+      a.s3.jumpChargeTime = STEP; a.s3.jumpFlightTime = 96 * STEP;
+      let paintCalls = 0, turfEvents = 0, bursts = 0, lands = 0, shakes = 0;
+      f.G.paint.sample = () => ground === 'enemy' ? 2 : 0;
+      f.G.paint.splat = () => { paintCalls++; return 10; };
+      const previousFx = f.G.fx;
+      f.G.fx = { burst: () => bursts++, ring: () => {} };
+      const unsubscribe = [f.on('turf', () => turfEvents++),
+        f.on('superjump:land', () => lands++), f.on('shake', () => shakes++)];
+      const initialTurf = a.stats.turf, initialSpecial = a.special;
+      try {
+        assert.equal(a.superJump(new f.THREE.Vector3(20, 0, 0)), true);
+        f.tick(a, 50);
+        assert.equal(a.superJumpState.phase, 'flight');
+        assert.equal(paintCalls, 0);
+        f.tick(a, 48);
+        assert.equal(a.superJumpState, null, 'landing completes');
+        assert.equal(paintCalls, 0, 'ordinary landing paints no ink');
+        assert.equal(a.stats.turf, initialTurf, 'no personal turf credit');
+        assert.equal(a.special, initialSpecial, 'no special gauge credit');
+        assert.equal(turfEvents, 0, 'no turf events');
+        assert.ok(bursts > 0, 'landing VFX remains');
+        assert.equal(lands, 1, 'exactly one landing event');
+        assert.equal(shakes, 0, 'nonlocal Actor does not shake local screen');
+        assert.equal(a.form, 'kid');
+      } finally { for (const off of unsubscribe) off(); f.G.fx = previousFx; }
+    });
+  }
+  await t.test('special-owned _slamImpact still paints and awards turf without special gain', () => {
+    const a = f.make({ team: 0 }); let paintCalls = 0;
+    f.G.paint.splat = () => { paintCalls++; return 12; };
+    const initialTurf = a.stats.turf, initialSpecial = a.special;
+    a._slamImpact({ radius: 4.5 });
+    assert.equal(paintCalls, 10, 'one center plus nine radial splats');
+    assert.ok(a.stats.turf > initialTurf);
+    assert.equal(a.special, initialSpecial);
+  });
 });
