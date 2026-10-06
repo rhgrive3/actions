@@ -64,10 +64,12 @@ for(const hz of [30,60,120])test(`#720 ${hz}Hz reveal preserves team shares, neu
 for(const hz of [30,60,120])test(`#715 ${hz}Hz native weapon state keeps updating while only the swim reticle is hidden`,async()=>{
  const f=await fixture(),h=f.hud(),actor={form:'kid',alive:true,invuln:1,weaponRunner:{aimingSub:true}};f.G.match={local:actor};
  for(const weapon of ['shooter','blaster','roller','charger','dualies','splatling','slosher']){
+  // #572 Charger HUD reads the native runner clock, not the copied HUD charge.
+  Object.assign(actor.weaponRunner,{charging:true,chargeT:.2,charge:.2});
   h._updCrosshair({weapon,charge:.2,ink:1,subCost:.7},1/hz);assert.equal(h.ret.style.visibility,'');const shape=h.ret.innerHTML;
-  actor.form='squid';h._updCrosshair({weapon,charge:1,ink:1,subCost:.7},1/hz);assert.equal(h.ret.style.visibility,'hidden');assert.equal(h.ret.innerHTML,shape);assert(h.shield.classList.contains('is-up'));assert(h.subChip.classList.contains('is-on'));
+  actor.form='squid';Object.assign(actor.weaponRunner,{charging:true,chargeT:1,charge:1});h._updCrosshair({weapon,charge:1,ink:1,subCost:.7},1/hz);assert.equal(h.ret.style.visibility,'hidden');assert.equal(h.ret.innerHTML,shape);assert(h.shield.classList.contains('is-up'));assert(h.subChip.classList.contains('is-on'));
   if(weapon==='charger'||weapon==='splatling')assert.equal(h._L.charge,1);
-  actor.form='kid';h._updCrosshair({weapon,charge:.1,ink:1,subCost:.7},1/hz);assert.equal(h.ret.style.visibility,'');assert.equal(h.ret.innerHTML,shape);
+  actor.form='kid';Object.assign(actor.weaponRunner,{charging:true,chargeT:.1,charge:.1});h._updCrosshair({weapon,charge:.1,ink:1,subCost:.7},1/hz);assert.equal(h.ret.style.visibility,'');assert.equal(h.ret.innerHTML,shape);
  }
  actor.form='squid';for(const weapon of ['charger','shooter','roller']){h._updCrosshair({weapon,charge:1},0);assert.equal(h.ret.style.visibility,'hidden');}
  f.G.match=null;h._updCrosshair({weapon:'shooter'},0);assert.equal(h.ret.style.visibility,'','lab or absent actor recovers visible native reticle');
