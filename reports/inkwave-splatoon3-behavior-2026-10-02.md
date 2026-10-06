@@ -357,3 +357,13 @@ Reset now clears the pending damage attacker and angle together with the cancell
 ## 2026-10-06 — Dualies wall-drop (#604) and composed-runtime guards
 
 Base main `67fec182`. Splat Dualies wall impacts now enter the existing sourced wall-drop state using the pinned 11.3.0 top-level `WallDropMoveParam`/`WallDropCollisionPaintParam` (shock 1.3, fall 0.65, ground 0.6; 20–40F + 10F + 15–35F at 0.06). Previously the round died on the contact frame after one generic impact. Damage is unchanged. Shooter (#385) and Charger (#625/#268) are excluded: Shooter is owned elsewhere, and the Charger record omits three period fields. #770, #777, #638/#637, #644/#643 and #556 were already correct after adapter composition (the reports read raw source). They are now pinned by composed-runtime tests. This is logic-level and emitted-verifier evidence; a Switch visual/frame comparison is still 未確認. Details: [inkwave-wall-drop-dualies-guards-2026-10-06.md](inkwave-wall-drop-dualies-guards-2026-10-06.md).
+
+## 2026-10-06 — Online Splat Bomb damage owner (#355)
+
+| 比較項目 | 記録 |
+| --- | --- |
+| 本家参照 | Splatoon 3 Ver.3.0.0 を対象にした、プライベートマッチのさんぽ中に被弾側を一時停止する実機検証では、スプラッシュボム近爆風180／遠爆風30のダメージ判定を被弾側としている。[検証方法と表](https://smssmooth.hatenablog.com/entry/2023/03/05/151247) は非公式の実機検証で、任天堂の公開仕様ではない。記事にはブキ以外のギア条件が記されていないため、ギア条件は不明。Ver.11.3.0実機で同じ判定試験を行ったとは扱わない。 |
+| INKWAVE 基準・実装 | main `f31f5da439134fe49bb89018dad5557671a49c67`。locked `inkwave-public/` は変更せず、Network adapter が `src/game/weapons.js` の `applyHit/_explodeBomb`、`src/net/netmatch.js` の `shouldApplyHit/_hit`、`src/game/actor.js` の `spawnAt` に接続する。damageBands、爆風半径、LOS式、塗り権限は変更しない。 |
+| 再現条件 | 現行の公開ランタイムを adapter-compose した二つのVM fixture。通常対戦、ギア／armor／spawn無敵なし、同じ爆発に対して攻撃側距離5／被弾側距離9、その逆を比較。別のfocused testで実Projectilesの爆発距離・LOS、ordered birth重複、life遷移を確認する。ロジック測定であり、遅延を入れた二台ブラウザやSwitch実機ではない。 |
+| main での差分と影響 | `shouldApplyHit` は従来、攻撃側の `remote` 位置でボムも判定し、攻撃者が送るdamage値を被害者ownerが適用していた。被害者側ghostはdamageをdropしていたため、視点のずれで爆風外の被害者が減る／爆風内なのに減らない。修正後は被害者ownerのghost爆発だけがそのowner配下のactor位置とLOSを使う。攻撃側のボムhitは送らず、旧形式のボムhit packetも無視する。既存のordered event sequenceをbomb birth IDに使い、爆発時刻より後に始まった被害者lifeへの遅延damageを落とす。通常弾の攻撃者判定、Storm、owner paintは別経路のまま。 |
+| 確認状態 | 逆向きの5／9視点再現は `codex3-r27-network-range/issue-355-current-main-repro.json` に修正前の結果を保存。修正後は専用fixture 3/3を通過。二台の本番relay動作、ネットワーク時計offsetの実機誤差、Ver.11.3.0 Switch比較は未確認。非致死bomb hit markerは複製しない。kill confirmationは既存splatted経路を使う。 |
