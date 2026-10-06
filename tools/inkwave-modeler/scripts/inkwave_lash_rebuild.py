@@ -713,13 +713,16 @@ def build_corner_fill(rays, design):
             O[j, i], D[j, i] = o, d
             H[j, i], ball[j, i] = face_or_ball(*px[j, i])
     lo = design.get('corner_fill_lift_mm', 0.05) / 1000
-    hi = design.get('corner_fill_max_mm', 0.6) / 1000
-    under = design.get('corner_fill_under_mm', 0.0) / 1000
-    near_lim = np.where(ball, H - hi, H + under)
-    far_lim = np.where(ball, H - lo, H + under)
-    depth = far_lim.copy()
+    # in front of the nearest surface round each vertex (the face lies BEHIND the eyeball's rim at the corner: a
+    # patch laid on the face there dips under the eyeball and a white line shows), smoothed, never behind the
+    # surface right under it
+    r = design.get('corner_fill_reach', 3)
+    Hp = np.pad(H, r, mode='edge')
+    env = np.min([Hp[r + dj:r + dj + H.shape[0], r + di:r + di + H.shape[1]]
+                  for dj in range(-r, r + 1) for di in range(-r, r + 1)], axis=0)
+    depth = env - lo
     for _ in range(40):
-        depth = np.clip(er.smooth_rows(er.smooth_rows(depth, 1.5), 1.5, axis=1), near_lim, far_lim)
+        depth = np.minimum(er.smooth_rows(er.smooth_rows(depth, 1.5), 1.5, axis=1), env - lo)
     verts = M.to_local((O + D * depth[..., None]).reshape(-1, 3)) * 1000
     faces = [(j * ncol + i, j * ncol + i + 1, (j + 1) * ncol + i + 1, (j + 1) * ncol + i)
              for j in range(len(R) - 1) for i in range(ncol - 1)]
