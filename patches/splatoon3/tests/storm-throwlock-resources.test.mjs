@@ -151,3 +151,16 @@ test('Storm throwlock does not grant armor against weapon hits', async () => {
   assert.equal(dealt, false);
   close(a.hp, 60, 'Storm user takes full weapon damage without armor reduction');
 });
+
+// #624 is a Storm resource-path correction. Other special phases retain their
+// existing refill/HP gates, including the Slam rise tick used as this control.
+test('#624 Storm resource admission does not enable HP or ink recovery during Slam', async () => {
+  const f = await fixture();
+  const a = setupActor(f, { special: 'slam', grounded: false, onEnemy: false });
+  a.hp = 80; a.ink = 50; a.lastDamage = 10; a.lastFire = 10;
+  a.specialActive = { id: 'slam', phase: 'rise', t: 0 };
+  f.tick(a);
+  assert.equal(a.specialActive?.id, 'slam');
+  close(a.hp, 80, 'unrelated Slam HP recovery remains unchanged');
+  close(a.ink, 50, 'unrelated Slam ink refill remains unchanged');
+});
