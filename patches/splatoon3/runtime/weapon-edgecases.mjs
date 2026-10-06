@@ -4,37 +4,43 @@ const EPS = 1e-10, DEG = Math.PI / 180;
 // Ground pitch has its own angular envelope; neither bloom nor the horizontal
 // scalar is evidence for scaling PitchDegSwerve. Air/IA remain uncalibrated.
 export function spreadWeaponRound(system, dir, a, w, spread) {
-  const horizontal = spread ?? (a.grounded ? w.spreadGround : w.spreadAir);
+  const spreadDeg = spread ?? (a.grounded ? w.spreadGround : w.spreadAir);
   // #883 — Splat Dualies only: the pinned Ver.11.3.0 WeaponManeuverNormal table
   // exposes one scalar shot-deviation envelope (Stand_DegSwerve 2°,
   // Jump_DegSwerve 7.5°, LapOver_DegSwerve 0°) and no separate pitch-spread
   // field, so a sampled shot must reach the scalar angle at every azimuth. The
-  // native generic sampler below keeps an unsourced fixed 0.55 pitch-axis
+  // native generic _spread path keeps an unsourced fixed 0.55 pitch-axis
   // compression, which caps a pure vertical Dualies sample at
   // atan(0.55*tan(envelope)). Sample an azimuth-independent gnomonic cone
-  // instead: horizontal samples stay bit-identical to the existing rule, and
+  // instead: horizontal samples keep the existing scalar angle and draw, and
   // profile values, projectile speed, collision, damage and cadence are
   // untouched. Heavy Splatling keeps its separately sourced PitchDegSwerve
   // branch (that family really has a second envelope), and every other family
   // keeps the native path for the separate shooter/blaster roots (#607/#677).
   if (w.kind === 'dualies') {
-    if (horizontal <= 0) return dir;                    // LapOver_DegSwerve = 0 (post-roll turret)
-    const radius = horizontal * DEG * Math.sqrt(Math.random());
+    if (spreadDeg <= 0) return dir;                     // LapOver_DegSwerve = 0 (post-roll turret)
+    const radius = spreadDeg * DEG * Math.sqrt(Math.random());
     const angle = Math.random() * Math.PI * 2;
-    const right = dir.clone().set(-dir.z, 0, dir.x);
-    if (right.lengthSq() < 1e-4) right.set(1, 0, 0);
+    const aim = dir.clone().normalize();
+    const right = aim.clone().set(-aim.z, 0, aim.x);
+    if (right.lengthSq() < 1e-4) {
+      // Keep the native fallback orientation, projected onto the tangent plane.
+      // Without projection, near-vertical aims give the fallback a small forward
+      // component and make the sampled scalar angle azimuth-dependent again.
+      right.set(1, 0, 0).addScaledVector(aim, -aim.x);
+    }
     right.normalize();
-    const up = dir.clone().cross(right);
-    return dir.addScaledVector(right, Math.cos(angle) * Math.tan(radius))
+    const up = aim.clone().cross(right);
+    return dir.copy(aim).addScaledVector(right, Math.cos(angle) * Math.tan(radius))
       .addScaledVector(up, Math.sin(angle) * Math.tan(radius)).normalize();
   }
-  if (w.kind !== 'splatling' || !a.grounded || !Number.isFinite(w.spreadPitchGround)) return system._spread(dir, horizontal);
+  if (w.kind !== 'splatling' || !a.grounded || !Number.isFinite(w.spreadPitchGround)) return system._spread(dir, spreadDeg);
   const radius = Math.sqrt(Math.random()), angle = Math.random() * Math.PI * 2;
   const right = dir.clone().set(-dir.z, 0, dir.x);
   if (right.lengthSq() < 1e-4) right.set(1, 0, 0);
   right.normalize();
   const up = dir.clone().cross(right);
-  return dir.addScaledVector(right, Math.cos(angle) * Math.tan(Math.max(0, horizontal) * DEG * radius))
+  return dir.addScaledVector(right, Math.cos(angle) * Math.tan(Math.max(0, spreadDeg) * DEG * radius))
     .addScaledVector(up, Math.sin(angle) * Math.tan(w.spreadPitchGround * DEG * radius)).normalize();
 }
 
