@@ -21,15 +21,39 @@ export function movementState(a) {
   a.s3 ||= {};
   const state = a.s3.actions || (a.s3.actions = {
     chain: 0, chainTimer: 0, chainSpeed: 0, roll: null, surge: null,
-    fullCancelCandidate: null, fullCancelJumpVelocity: null
+    fullCancelCandidate: null, fullCancelJumpVelocity: null, fullCancelGroundAttack: null
   });
   state.fullCancelCandidate ??= null;
   state.fullCancelJumpVelocity ??= null;
+  state.fullCancelGroundAttack ??= null;
   return state;
 }
 function sync(a, state) { a.s3.roll = state.roll; a.s3.surge = state.surge; }
 export function clearFullCancelCandidate(a) {
-  if (a?.s3?.actions) a.s3.actions.fullCancelCandidate = null;
+  if (a?.s3?.actions) {
+    a.s3.actions.fullCancelCandidate = null;
+    a.s3.actions.fullCancelJumpVelocity = null;
+    a.s3.actions.fullCancelGroundAttack = null;
+  }
+}
+function fullCancelGroundAttackReady(a, state) {
+  const context = state?.fullCancelGroundAttack;
+  if (!context || !api) return false;
+  const age = api.G.time - context.pressT, window = api.PLAYER.fireBuffer;
+  const valid = a.alive && !a.specialActive && !a.superJumpState && a.form === 'kid' &&
+    a.weapon?.kind === 'roller' && a._firePressT === context.pressT &&
+    Number.isFinite(age) && Number.isFinite(window) && age >= -EPSILON && age <= window + EPSILON;
+  if (!valid) state.fullCancelGroundAttack = null;
+  return valid;
+}
+export function hasFullCancelGroundAttack(a) {
+  return fullCancelGroundAttackReady(a, a?.s3?.actions);
+}
+export function takeFullCancelGroundAttack(a) {
+  const state = a?.s3?.actions;
+  if (!fullCancelGroundAttackReady(a, state)) return false;
+  state.fullCancelGroundAttack = null;
+  return true;
 }
 export function takeFullCancelJumpVelocity(a) {
   const state = a?.s3?.actions;
@@ -57,11 +81,12 @@ export function beforeActions(a, dt, jumpPressed, input = {}) {
   // that tick's actual submerged state and velocity so ordinary kid movement
   // cannot brake away the roll eligibility before a fresh B edge arrives.
   if (!a.alive || a.specialActive || a.superJumpState || a.form === 'squid') {
-    state.fullCancelCandidate = null;
+    state.fullCancelCandidate = null; state.fullCancelGroundAttack = null;
   } else if (input.wasSquid && input.wasSubmerged && !input.wasClimbing && input.firePressed && input.fireWins &&
       !state.roll && !state.surge) {
     state.fullCancelCandidate = { pressT: a._firePressT, vx: a.vel.x, vz: a.vel.z };
   }
+  if (state.fullCancelGroundAttack) fullCancelGroundAttackReady(a, state);
   const candidate = state.fullCancelCandidate;
   if (candidate) {
     const age = api.G.time - candidate.pressT, window = api.PLAYER.fireBuffer;
@@ -79,6 +104,7 @@ export function beforeActions(a, dt, jumpPressed, input = {}) {
         a.vel.x = a.intent.move.x / length * speed;
         a.vel.z = a.intent.move.z / length * speed;
         state.fullCancelJumpVelocity = cfg.roll.jumpVelocity;
+        state.fullCancelGroundAttack = a.weapon?.kind === 'roller' ? { pressT: candidate.pressT } : null;
         state.chainSpeed = speed; state.chain++; state.chainTimer = cfg.roll.chainReset;
         sync(a, state); return false;
       }
@@ -162,6 +188,11 @@ export function installMovement(context, tuning) {
     }
     return damage.call(this, amount, attacker, source);
   };
+  const splat = Actor.prototype.splat;
+  if (splat) Actor.prototype.splat = function (...args) {
+    clearFullCancelCandidate(this);
+    return splat.apply(this, args);
+  };
   const horizontal = Actor.prototype._horizontal;
   Actor.prototype._horizontal = function (...args) {
     const state = movementState(this), roll = state.roll;
@@ -199,6 +230,7 @@ export function installMovement(context, tuning) {
     Actor.prototype[method] = function (...args) {
       const result = original.apply(this, args);
       if (this.specialActive || this.superJumpState) {
+        clearFullCancelCandidate(this);
         const state = movementState(this); state.roll = state.surge = null; this.anim.surgeCharge = 0; sync(this, state);
       }
       return result;

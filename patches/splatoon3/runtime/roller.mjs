@@ -1,5 +1,6 @@
 import { specialMotionAllowsAction } from './action-admission.mjs';
 import { ROLLER_DRUM } from './roller-model.mjs';
+import { hasFullCancelGroundAttack, takeFullCancelGroundAttack } from './movement.mjs';
 // Roller-specific refinements. Timing comes from the existing gameplay profile;
 // joint curves are visual calibration against Nintendo's public roller videos.
 const EPS = 1e-10;
@@ -44,10 +45,13 @@ export function installRollerLogic({ WeaponRunner, Actor, G }, _profile) {
   };
   WeaponRunner.prototype._roller = function (dt, inp, w) {
     const a = this.a;
-    const starting = this.flick < 0 && inp.firePressed && this.cooldown <= EPS && a.ink >= (!a.grounded ? w.verticalInk : w.flickInk);
+    const fullCancelGroundAttack = hasFullCancelGroundAttack(a);
+    const starting = this.flick < 0 && inp.firePressed && this.cooldown <= EPS &&
+      a.ink >= (fullCancelGroundAttack ? w.flickInk : !a.grounded ? w.verticalInk : w.flickInk);
     if (starting) {
       this.cooldown = Math.min(0, this.cooldown);
-      this.s3FlickVertical = !a.grounded;
+      const groundedCancel = takeFullCancelGroundAttack(a);
+      this.s3FlickVertical = !groundedCancel && !a.grounded;
       const mode = rollerMode(w, this.s3FlickVertical);
       let windup = mode.flickWindup;
       if (!this.s3FlickVertical && Number.isFinite(this.s3RollerSquidPressT)) {
