@@ -46,19 +46,26 @@ test('a ghost storm cloud advances on the owner clock and retires at its duratio
   const f = await fixture();
   const nm = f.makeNetMatch(f.makeSession('me', 'p2', [['me', 'Me'], ['p2', 'P2']]));
   const a = f.makeActor({ nid: 7, owner: 'p2', remote: true, roller: false });
+  a.weapon = { ...a.weapon, special: 'storm' };
   f.bind(nm, [a]);
-  const peer = { tr: 1000 };
-  nm.peers.set('p2', peer);
-  // a ghost storm bomb placed on the floor lands immediately and spawns the cloud
-  nm._play('p2', [1000, 'b', 7, 'storm', 0, 0.5, 0, 0, 0, 0, 4, 6]);
-  peer.tr = 1002;
+  const peer = nm._peer('p2'); peer.tr = 1000;
+  // Reproduce the real admitted owner timeline: special use precedes its one Storm birth on the same simulation tick.
+  const use = [1000, 'ev', 'special:use', { actor: { n: 7 }, id: 'storm' }, 4, 5];
+  use._netTick = 4; use._netSeq = 5;
+  const birth = [1000, 'b', 7, 'storm', 0, 0.5, 0, 0, 0, 0, 4, 6];
+  birth._netTick = 4; birth._netSeq = 6;
+  nm.onMessage('p2', { k:'t', ts:1000, r:2, u:4, l:{7:0}, a:[f.packActor(a,{f:1|8192})], e:[use,birth] });
+  peer.tr=1000; nm._playEvents();
+  nm.onMessage('p2', {k:'t',ts:1002,u:124,l:{7:0},a:[f.packActor(a,{f:1})]});
+  peer.tr = 1002; peer.sim = 124;
   for (let i = 0; i < 30; i++) { f.clock.advance(1 / 60); f.projectiles.update(1 / 60); }
   const cloud = f.projectiles.clouds.find((c) => c.ghost);
   assert.ok(cloud, 'no ghost cloud was created');
   assert.equal(!!cloud._netPeer, true, 'cloud did not inherit the owner playback clock');
   assert.ok(cloud._netSteps > 0, 'cloud did not advance on the owner clock');
   // retire once the owner timeline passes the storm duration
-  peer.tr = 1000 + 30;
+  nm.onMessage('p2', {k:'t',ts:1030,u:1804,l:{7:0},a:[f.packActor(a,{f:1})]});
+  peer.tr = 1030; peer.sim = 1804;
   for (let i = 0; i < 30; i++) { f.clock.advance(1 / 60); f.projectiles.update(1 / 60); }
   assert.equal(f.projectiles.clouds.filter((c) => c.ghost).length, 0, 'ghost cloud never retired');
 });
@@ -90,8 +97,7 @@ test('a ghost bomb steps on the owner playback clock, not on how long it was del
   const nm = f.makeNetMatch(f.makeSession('me', 'p2', [['me', 'Me'], ['p2', 'P2']]));
   const a = f.makeActor({ nid: 7, owner: 'p2', remote: true, roller: false });
   f.bind(nm, [a]);
-  const peer = { tr: 1000 };
-  nm.peers.set('p2', peer);
+  const peer = nm._peer('p2'); peer.tr = 1000;
   nm._play('p2', [1000, 'b', 7, 'bomb', 0, 3.35, 0, 0, 6.5, 12.5, 4.8, 1.7]);
   const b = f.projectiles.bombs.find((x) => x.ghost);
   assert.ok(b && b._netPeer);
