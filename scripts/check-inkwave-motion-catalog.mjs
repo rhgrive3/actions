@@ -28,6 +28,14 @@ export const CATALOG_MODULES = Object.freeze([
   ['carry', 'carryMotionSnapshot', 'installCarryMotion'],
 ]);
 // Fixed named denominators; shortening an action cannot silently skip its tail.
+const CATALOG_ROOT = fileURLToPath(new URL('../', import.meta.url));
+const CATALOG_PROFILE = JSON.parse(fs.readFileSync(path.join(CATALOG_ROOT, 'patches/splatoon3/profile.json'), 'utf8'));
+// The shipped charge gate is `s.t + 1e-10 >= jumpChargeTime + startup`, and
+// these actors are admitted in humanoid form, so the 80F charge wait is
+// followed by startupHumanoidF. Catalog frame 0 already performs the first
+// advance, so the takeoff sample sits one frame before the derived call count.
+// Derive it; never hardcode a boundary that a profile change would invalidate.
+const SUPERJUMP_TAKEOFF = Math.round((CATALOG_PROFILE.superJump.chargeTime + CATALOG_PROFILE.superJump.startupHumanoidF / 60) * 60) - 1;
 export const CATALOG_SCENARIOS = Object.freeze([
   { name: 'carry-walk-fire-return', kind: 'shooter', frames: 240 },
   { name: 'ordinary-aimed-jump', kind: 'shooter', frames: 180, probes: [23, 38] },
@@ -39,7 +47,8 @@ export const CATALOG_SCENARIOS = Object.freeze([
   { name: 'roller-horizontal-push', kind: 'roller', frames: 180, probes: [17, 125] },
   { name: 'roller-vertical-land', kind: 'roller', frames: 180 },
   // Native preparation + flight + .8s visual touchdown must all expire.
-  ...['short', 'vertical', 'long'].map(distance => ({ name: 'superjump-' + distance, kind: 'shooter', frames: 300, probes: [79, 80, 200, 217, 265] })),
+  // Sample the last preparation frame and the derived takeoff itself.
+  ...['short', 'vertical', 'long'].map(distance => ({ name: 'superjump-' + distance, kind: 'shooter', frames: 300, probes: [SUPERJUMP_TAKEOFF - 1, SUPERJUMP_TAKEOFF, 200, 217, 265] })),
   { name: 'squidroll-finish', kind: 'shooter', frames: 120 },
   { name: 'squidroll-interrupt', kind: 'shooter', frames: 120 },
   { name: 'hit-spawn-reset', kind: 'shooter', frames: 300, probes: [20, 246, 250, 280] },
@@ -58,6 +67,14 @@ export function catalogRenderFrames(s) {
 }
 const fail = message => { throw Error('Catalog ' + message); };
 const contains = (parent, child) => parent === child || child.startsWith(parent.endsWith(path.sep) ? parent : parent + path.sep);
+export function validateDeathCameraInstallSources(renderSource, installSource) {
+  if (typeof renderSource !== 'string' || !/export\s+function\s+installDeathCamera\s*\(/.test(renderSource) ||
+      !/Actor\.prototype\.splat\s*=/.test(renderSource) || !/CameraRig\.prototype\.update\s*=/.test(renderSource) ||
+      !/canvas\.style\.opacity/.test(renderSource)) fail('death-camera render implementation');
+  if (typeof installSource !== 'string' ||
+      !/import\s*\{[^}]*\binstallDeathCamera\b[^}]*\}\s*from\s*['"]\.\/render\.mjs['"]\s*;/.test(installSource) ||
+      !/\binstallDeathCamera\s*\(\s*api\s*\)\s*;/.test(installSource)) fail('death-camera install call');
+}
 const physicalPath = name => {
   const absolute = path.resolve(name);
   let exists = false;
@@ -114,17 +131,28 @@ function pixels(p, label, visible) {
 export function validateCatalogReceipts(manifest, receipts) {
   if (!/^[a-f0-9]{64}$/.test(manifest?.contentHash || '') || !manifest.artifacts || !Array.isArray(receipts)) fail('manifest/loaded denominator');
   if (crypto.createHash('sha256').update(JSON.stringify(manifest.artifacts)).digest('hex') !== manifest.contentHash) fail('immutable manifest content hash');
+  validateDeathCameraInstallSources(
+    fs.readFileSync(path.join(CATALOG_ROOT, 'patches/splatoon3/runtime/render.mjs'), 'utf8'),
+    fs.readFileSync(path.join(CATALOG_ROOT, 'patches/splatoon3/runtime/install.mjs'), 'utf8'));
   const required = [...CATALOG_MODULES.map(([id]) => 'patches/splatoon3/runtime/' + id + '-motion.mjs'),
-    'patches/splatoon3/runtime/install.mjs', 'patches/splatoon3/runtime/walk.mjs',
+    'patches/splatoon3/runtime/install.mjs', 'patches/splatoon3/runtime/render.mjs', 'patches/splatoon3/runtime/walk.mjs',
     'src/game/actor.js', 'src/game/character.js', 'src/game/weapons.js', 'src/game/physics.js', 'src/game/match.js'];
   for (const suffix of required) {
     const keys = Object.keys(manifest.artifacts).filter(k => k.endsWith('/' + suffix));
     if (keys.length !== 1) fail('missing-module manifest ' + suffix);
+    // Build artifacts are minified. Input identity is verified separately by
+    // verifyWallBuild / validateCatalogInputReceipts; here compare loaded bytes
+    // to the immutable emitted-artifact hash, never to the raw source hash.
     if (!receipts.some(r => r.file === keys[0] && r.sha256 === manifest.artifacts[keys[0]] && r.bytes > 0)) fail('missing-module loaded ' + suffix);
   }
   for (const r of receipts) if (!manifest.artifacts[r.file] || r.sha256 !== manifest.artifacts[r.file] || !Number.isInteger(r.bytes) || r.bytes <= 0) fail('loaded-byte identity ' + r.file);
-  for (const file of Object.keys(manifest.artifacts).filter(k => k.startsWith('_versions/') && /\/patches\/splatoon3\/runtime\/.*\.mjs$/.test(k)))
+  for (const file of Object.keys(manifest.artifacts).filter(k => k.startsWith('_versions/') && /\/patches\/splatoon3\/runtime\/.*\.mjs$/.test(k))) {
+    // death-camera.mjs is a shipped compatibility re-export, not an imported
+    // core module. The implementation and install edge are required above via
+    // render.mjs and install.mjs.
+    if (file.endsWith('/patches/splatoon3/runtime/death-camera.mjs')) continue;
     if (!receipts.some(r => r.file === file && r.sha256 === manifest.artifacts[file])) fail('missing-module installed graph ' + file);
+  }
 }
 export function validateCatalogResult(result) {
   if (result?.schema !== 1 || result.installCalls !== 1 || result.source !== 'built-production-native' || result.gpu?.contextLost !== false || !result.gpu?.renderer || result.errors?.length !== 0) fail('runtime identity / shader errors');
@@ -336,6 +364,10 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout 
   const { isStormHolding, updateStormHold } = await import(prefix + 'patches/splatoon3/runtime/storm-effects.mjs');
   const { FixedClock } = await import(prefix + 'patches/splatoon3/runtime/clock.mjs');
   const { advanceSpawnProtection } = await import(prefix + 'patches/splatoon3/runtime/respawn-lifecycle.mjs');
+  // src/main.js imports runtime/map-reveal.mjs for the Turf Map HUD; load it
+  // in the catalog realm as well so immutable installed-graph receipts cover it.
+  const { enemyRevealedOnMap } = await import(prefix + 'patches/splatoon3/runtime/map-reveal.mjs');
+  if (typeof enemyRevealedOnMap !== 'function' || enemyRevealedOnMap({ alive: true, hp: 100, maxHp: 100 }, 100) !== false || enemyRevealedOnMap({ alive: true, hp: 82, maxHp: 100 }, 100) !== true) throw Error('Installed map-reveal helper mismatch');
   const { FIST_OFFSET, GRIP_HOLE_L } = await import(prefix + 'src/game/character-weapons.js');
   const methods = [Character, Actor, api.WeaponRunner].flatMap(Type => Reflect.ownKeys(Type.prototype).filter(k => typeof Object.getOwnPropertyDescriptor(Type.prototype, k).value === 'function').map(key => [Type.prototype, key, Type.prototype[key]]));
   const iframe = document.createElement('iframe'); iframe.src = '/motion-catalog'; document.body.appendChild(iframe);
