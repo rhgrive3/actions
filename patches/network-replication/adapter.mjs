@@ -926,6 +926,30 @@ function networkPaintSourceNear(x,y,z,source,range) {
   return [x,y,z,source?.x,source?.y,source?.z].every(Number.isFinite)
     && Math.hypot(x-source.x,y-source.y,z-source.z)<=range;
 }
+function networkPaintFlightMatches(weapon,event,speed) {
+  const kind=weapon?.kind, type=event?.[3], wid=event?.[4];
+  const roller=kind==='roller'&&type==='drop', slosh=kind==='slosher'&&type==='slosh';
+  const blast=kind==='blaster'&&type==='blast', shot=['shooter','dualies','splatling'].includes(kind)&&type==='shot';
+  if (!(roller||slosh||blast||shot)) return false;
+  const usesWid=['roller','dualies','splatling','slosher'].includes(kind);
+  if (usesWid ? wid!==weapon.id : wid!==0) return false;
+  const ref=weapon.projSpeed??weapon.flickSpeed;
+  if (!Number.isFinite(ref)||ref<=0) return false;
+  const vertical=roller&&event[27]===1, ballistics=weapon.ballistics;
+  const rollerMin=vertical?(weapon.verticalSpeed||ref)*0.6:ref*0.6;
+  const rollerMax=vertical?(weapon.verticalSpeed||ref)*1.1:ref*1.4;
+  if (roller ? speed<rollerMin-0.5||speed>rollerMax+0.5 : slosh ? speed<4.4||speed>ref+0.25 : Math.abs(speed-ref)>Math.max(0.25,ref*0.025)) return false;
+  const life=roller?1.4:slosh?2.4:blast?weapon.range/ref:1.2;
+  const straight=roller?(vertical?ballistics?.verticalStraightTime:ballistics?.horizontalStraightTime):slosh?0:blast?99:(weapon.straightTime||0);
+  const radiusOk=roller?event[14]>=0.5&&event[14]<=1.5:slosh?event[14]>=0.55&&event[14]<=1.07:Math.abs(event[14]-(weapon.impactRadius||0))<=0.025;
+  const sizeOk=event[15]>=0.08&&event[15]<=0.35;
+  const grav=roller?weapon.flickGravity:slosh?weapon.grav:blast?0:28, drag=roller?weapon.flickDrag:slosh||blast?0:0.8;
+  return Number.isFinite(weapon.impactRadius) && Number.isFinite(straight) && Number.isFinite(grav) && Number.isFinite(drag)
+    && Math.abs(event[12]-life)<=0.005
+    && Math.abs(event[13]-straight)<=0.005 && radiusOk && sizeOk
+    && Math.abs(event[16]-grav)<=0.01 && Math.abs(event[17]-drag)<=0.01
+    && (slosh?event[11]>=0&&event[11]<=0.09:event[11]>=0&&event[11]<=0.005);
+}
 function stampNetworkPaintSource(projectile,actor,source) {
   if (!projectile || !source || source.actor!==actor) return projectile;
   projectile._netOwner=actor; projectile._netPeer=source.peer;
@@ -943,17 +967,14 @@ const nativeNetworkGhostProjectile=Projectiles.prototype.ghostProjectile;
 Projectiles.prototype.ghostProjectile=function(actor,event,...args) {
   const projectile=nativeNetworkGhostProjectile.call(this,actor,event,...args);
   const source=actor?.net?._netPaintSource || event?._netPaintSource, weapon=WEAPONS[source?.weaponId];
-  const speed=Math.hypot(event?.[8],event?.[9],event?.[10]), expected=weapon?.projSpeed ?? weapon?.flickSpeed;
-  const rollerDrop=weapon?.kind==='roller' && event?.[3]==='drop' && event?.[4]===0;
-  const valid=!!(source?.clockValid && weapon && Number.isFinite(expected) && expected>0
-    && (event?.[4]===source.weaponId || rollerDrop)
+  const speed=Math.hypot(event?.[8],event?.[9],event?.[10]);
+  const valid=!!(source?.clockValid && weapon && networkPaintFlightMatches(weapon,event,speed)
     && [event?.[5],event?.[6],event?.[7],event?.[8],event?.[9],event?.[10],event?.[11],event?.[12],event?.[13],event?.[14],event?.[15],event?.[16],event?.[17]].every(Number.isFinite)
     && networkPaintSourceNear(event[5],event[6],event[7],source.position,5)
-    && speed>1 && speed<=100 && event[11]>=0 && event[11]<=0.5
-    && event[12]>0 && event[12]<=3 && event[13]>=0 && event[13]<=1
-    && event[14]>0 && event[14]<=3 && event[15]>0 && event[15]<=2
-    && event[16]>=0 && event[16]<=200 && event[17]>=0 && event[17]<=10);
-  const maxTravel=Math.min(60,speed*(event?.[12] || 0)+2);
+    && speed>1);
+  const rollerBands=event?.[27]===1?weapon?.verticalDamageBands:weapon?.flickDamageBands;
+  const profileRange=Array.isArray(rollerBands)?rollerBands.at(-1)?.[0]:NaN;
+  const maxTravel=Math.min(60,Number.isFinite(profileRange)?profileRange+2:(Number.isFinite(weapon?.range)?weapon.range:speed*(event?.[12]||0))+2);
   return stampNetworkPaintSource(projectile,actor,source ? {...source,clockValid:valid,maxTravel} : null);
 };
 const nativeNetworkGhostBomb=Projectiles.prototype.ghostBomb;

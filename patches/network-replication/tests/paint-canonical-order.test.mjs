@@ -390,7 +390,7 @@ test('host rejects forged oversized paint and stale owner clock fields but admit
   shotHost.nm._playEvents();
   const ghost=shotHost.f.projectiles.list.find(projectile=>projectile.ghost&&projectile._netOwnerAliveAtSource===true);
   assert.ok(ghost,'actual NetMatch replay retained a host-observed live volley as bounded source authority');
-  assert.ok(ghost._netSourceClockValid,'the projectile birth has a fresh owner snapshot and a bounded flight payload');
+  assert.ok(ghost._netSourceClockValid,`the projectile birth has a fresh owner snapshot and a bounded flight payload: ${JSON.stringify({type:ghost.type,wid:ghost.wid,speed:ghost.vel.length(),life:ghost.life,straight:ghost.straight,radius:ghost.radius,size:ghost.size,grav:ghost.grav,drag:ghost.drag,delay:ghost.delay,weapon:shooter.weapon.id})}`);
   shotHost.nm._remoteSplat(shotHost.actors.get('guestA'),null,'test');
   shooter.alive=false; shooter.hp=0;
   const localShot=shotGuest.f.projectiles.list.find(projectile=>!projectile.ghost&&projectile.owner===shooter);
@@ -452,6 +452,24 @@ test('a guest-authored projectile origin or ballistic payload cannot authorize r
   receive(speedHost,'guestA',flushTick(speedGuest));
   assert.equal(speedHost.paint.grid.some(cell=>cell!==0),false,'a forged projectile flight cannot supply source authority');
   assert.equal(speedHost.nm.out.some(event=>event[1]==='s'),false,'an unphysical projectile creates no canonical paint receipt');
+
+  const profileHostF=await fixture(), profileHost=peer(profileHostF,'host');
+  const profileGuestF=await fixture(), profileGuest=peer(profileGuestF,'guestA');
+  primeOwner(profileHost,profileGuest,[3.4,0,4]);
+  profileGuest.actors.get('guestA').weaponRunner.firingT=0.12;
+  profileGuest.f.flickPacket(profileGuest.nm,profileGuest.actors.get('guestA'));
+  const forgedProfile=flushTick(profileGuest), profileBirths=forgedProfile.e.filter(event=>event[1]==='p');
+  assert.ok(profileBirths.length>0);
+  for(const projectile of profileBirths) projectile[12]=3; // plausible finite flight, outside this weapon's birth profile.
+  receive(profileHost,'guestA',forgedProfile);
+  profileHost.nm._peer('guestA').tr=Infinity; profileHost.nm._playEvents();
+  const profileGhosts=profileHost.f.projectiles.list.filter(projectile=>projectile.ghost);
+  assert.ok(profileGhosts.length>0&&profileGhosts.every(projectile=>projectile._netSourceClockValid===false),'a guest-authored plausible duration is checked against the active weapon profile');
+  for(const projectile of profileGhosts) projectile.pos.set(7.5,0.14,7.5);
+  ownerSplat(profileGuest,'guestA',0,[7.5,0,7.5],3);
+  receive(profileHost,'guestA',flushTick(profileGuest));
+  assert.equal(profileHost.paint.grid.some(cell=>cell!==0),false,'a profile-forged projectile cannot authorize wide canonical paint');
+  assert.equal(profileHost.nm.out.some(event=>event[1]==='s'),false,'the invalid weapon profile emits no canonical receipt');
 });
 
 test('a projectile born before owner clock calibration cannot authorize later paint', async () => {
