@@ -11,6 +11,20 @@ async function rig(){
 }
 const pad=(index,buttons=[],axes=[0,0,0,0])=>({index,id:'controller'+index,connected:true,mapping:'standard',axes,buttons:Array.from({length:17},(_,i)=>({pressed:buttons.includes(i),value:buttons.includes(i)?1:0}))});
 
+for(const hz of [30,60,120])test(`${hz}Hz emitted page focus gates gamepad authority`,{skip:!built},async()=>{
+ const h=await rig(),owner=h.getPlatformLifecycle(),poll=()=>{h.input.pollPad();h.c.update(1/hz);};
+ try{
+  h.setPads([pad(0)]);poll();h.input.endFrame();h.input.lastDevice='touch';h.event('blur',{});poll();
+  h.setPads([pad(0,[0,3,5,6,7,11],[.8,0,.9,.6])]);
+  const neutral=()=>{assert.equal(h.camera.yaw,0);assert.equal(h.camera.pitch,0);assert.equal(h.a.intent.move.length(),0);for(const k of ['fire','jump','squid','sub','special'])assert.equal(h.a.intent[k],false);};
+  for(let i=0;i<hz;i++){poll();neutral();}
+  assert.equal(owner.focused,false);assert.equal(owner.state,'ACTIVE');assert.equal(h.input.lastDevice,'touch');
+  h.event('focus',{});for(let i=0;i<3;i++){poll();neutral();assert.equal(h.input.padPressed.size,0);}
+  h.setPads([pad(0)]);poll();h.setPads([pad(0,[0,7],[.8,0,.9,.6])]);poll();
+  assert.notEqual(h.camera.yaw,0);assert.ok(h.a.intent.move.length()>0);assert.equal(h.a.intent.fire,true);assert.equal(h.input.lastDevice,'pad');
+ }finally{owner.dispose();}
+});
+
 test('actual emitted input policy boundaries', {skip:!built},async()=>{
  for(const device of ['kbm','pad']){
   const h=await rig(),m=h.input.mobile,g=m.gyro;Object.assign(m,{active:true,visible:true,root:{classList:cls(),querySelectorAll:()=>[]},_gyroWanted:true});m.s.gyro=true;g.enabled=true;h.input.lastDevice='touch';

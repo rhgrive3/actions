@@ -21,13 +21,16 @@ export function penalizeFlowDeath(state, cause, cfg) {
   const lossFp = cause === 'water' || cause === 'fall' ? p.environmentDeathPenalty : p.deathPenalty;
   state.score = Math.max(0, state.score - lossFp * cfg.threshold / p.referenceThreshold);
 }
-export function awardFlow(state, action, value, cfg) {
+export function awardFlow(state, action, value, cfg, capProgress = true) {
   if (state.active) {
     if (action === 'splat' || action === 'assist') state.remaining = Math.min(cfg.maxDuration, state.remaining + cfg.extension);
     return false;
   }
   const gain = Number.isFinite(value) ? Math.max(0, value) * (cfg.weights[action] || 0) : 0;
-  state.score += gain;
+  const p = cfg.progress;
+  const cap = capProgress && Number.isFinite(p?.referenceCap) && p.referenceCap >= 0 && p.referenceThreshold > 0
+    ? p.referenceCap * cfg.threshold / p.referenceThreshold : Infinity;
+  state.score = Math.min(cap, state.score + gain);
   if (gain > 0) state.idleTime = 0;
   // Nintendo describes accumulated turf/assists making the next opponent
   // splat more likely to activate Flow. They do not activate it by themselves.
@@ -40,7 +43,9 @@ export function installFlow({ Actor, on, emit, G }, tuning) {
   function award(a, action, value) {
     if (!a?.alive || a.isBot && cfg.bots === false || G.match?.attract) return;
     const flow = state(a), before = flow.remaining;
-    const activated = awardFlow(flow, action, value, cfg);
+    // The reference storage limit describes ordinary Turf; the custom Boss
+    // economy and non-match tools retain their existing accumulation policy.
+    const activated = awardFlow(flow, action, value, cfg, G.match?.mode === 'turf');
     if (activated) emit('actor:flow', { actor: a, active: true });
     // The official trigger is entering/extending Flow, rather than a passive
     // stream of paint for the entire active period. Radius remains calibration.

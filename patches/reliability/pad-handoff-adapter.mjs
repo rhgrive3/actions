@@ -10,7 +10,8 @@ export function adaptPadHandoff(rel, code) {
     });`, 'pad identity lifecycle');
     code = replaceOnce(code, '    this.pad = pad;', `    const previous = this._padIdentity;
     const identity = pad ? { index: pad.index, id: pad.id, mapping: pad.mapping } : null;
-    const changed = previous && identity && (this._padIdentityLost || previous.index !== identity.index || previous.id !== identity.id || previous.mapping !== identity.mapping);
+    const changed = identity && (this._platformPadFocusRebase || previous && (this._padIdentityLost || previous.index !== identity.index || previous.id !== identity.id || previous.mapping !== identity.mapping));
+    if (identity) this._platformPadFocusRebase = false;
     this._padIdentity = identity; this._padIdentityLost = false;
     if (changed) {
       ++this._padEpoch;
