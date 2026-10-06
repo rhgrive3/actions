@@ -1,4 +1,11 @@
 export function adaptHudSnapshots(rel, code, once) {
+  if (rel === 'src/core/mobile.js') {
+    code = once(code, '  setHud({ special = 0,', '  setHud({ inkLow = false, special = 0,', 'touch shortage feedback input');
+    return once(code,
+      "    if (ik !== L.ink) { L.ink = ik; E.fire.style.setProperty('--ink', ik.toFixed(2)); E.fire.classList.toggle('is-low', ik < 0.2); }",
+      "    if (ik !== L.ink) { L.ink = ik; E.fire.style.setProperty('--ink', ik.toFixed(2)); }\n    const low = !!inkLow;\n    if (low !== L.low) { L.low = low; E.fire.classList.toggle('is-low', low); }",
+      'touch shortage follows failed-use feedback');
+  }
   if (rel === 'src/game/match.js') {
     const plain = "  teamSummary() {\n    return [0, 1].map((t) => ({\n      color: G.teamHex[t],\n      players: this.actors.filter((a) => a.team === t).map((a) => ({\n        name: a.name, weapon: a.weaponId, alive: a.alive, respawn: a.alive ? 0 : Math.max(0, a.respawnTimer), specialReady: a.specialReady(), isSelf: a.isLocal,\n      })),\n    }));\n  }";
     let source = plain;

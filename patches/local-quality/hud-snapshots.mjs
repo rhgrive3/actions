@@ -33,7 +33,7 @@ export function hudFrameSnapshot(game, m, a, w, spread, players, markers, prompt
   if (!cache) cache = game._hudTransport = { frame: {}, crosshair: {}, map: {}, mobile: {} };
   const frame = cache.frame, crosshair = cache.crosshair, map = cache.map;
   frame.time = m.time; frame.teams = m.teamSummary(a.team);
-  frame.ink = a.ink / PLAYER.inkMax; frame.inkLow = a.ink < 18 || game._lowInkFlash > 0; frame.subCost = subCost / PLAYER.inkMax; frame.subReady = a.ink >= subCost;
+  frame.ink = a.ink / PLAYER.inkMax; frame.inkLow = game._lowInkFlash > 0; frame.subCost = subCost / PLAYER.inkMax; frame.subReady = a.ink >= subCost;
   frame.special = a.specialFrac(); frame.specialReady = a.specialReady(); frame.specialActive = !!a.specialActive;
   frame.hp = a.hp / PLAYER.hp; frame.weapon = a.weaponId; frame.charge = a.weaponRunner.charge;
   crosshair.spread = spread; crosshair.onTarget = m.controller?.onTarget ? 'enemy' : null; crosshair.inRange = m.controller ? m.controller.inRange !== false : true;
@@ -43,6 +43,6 @@ export function hudFrameSnapshot(game, m, a, w, spread, players, markers, prompt
   frame.map = showMinimap ? map : null; frame.markers = markers; frame.prompt = prompt; frame.fps = game.settings.showFps ? game.fps : undefined;
   const mobile = cache.mobile;
   mobile.special = frame.special; mobile.ready = frame.specialReady; mobile.activeSp = frame.specialActive; mobile.weapon = w.kind || a.weaponId;
-  mobile.specialId = w.special; mobile.ink = frame.ink; mobile.subCost = frame.subCost; mobile.subReady = frame.subReady;
+  mobile.specialId = w.special; mobile.ink = frame.ink; mobile.inkLow = frame.inkLow; mobile.subCost = frame.subCost; mobile.subReady = frame.subReady;
   return frame;
 }
