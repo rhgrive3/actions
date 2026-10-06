@@ -33,7 +33,7 @@ async function boot({ floor = true, grate = false, wall = false } = {}) {
     export { install } from './patches/splatoon3/runtime/install.mjs';
     export { FixedClock } from './patches/splatoon3/runtime/clock.mjs';
     export { Level } from './src/world/level.js';
-    export { NetMatch } from './src/net/netmatch.js';
+    export { NetMatch, NET_FLAGS } from './src/net/netmatch.js';
   `, { context, identifier: path.join(SRC, 'superjump-test-entry.mjs') });
   await entry.link((spec, from) => load(spec === 'three' ? path.join(SRC, 'vendor/three/build/three.module.js')
     : spec.startsWith('three/addons/') ? path.join(SRC, 'vendor/three/jsm', spec.slice(13)) : path.resolve(path.dirname(from.identifier), spec)));
@@ -194,4 +194,103 @@ test('#362 30/60/120Hz preserve one committed destination and flight announcemen
     assert.deepEqual(events,[['charge',null],['flight',committed]]);
     assert.ok(new f.THREE.Vector3(...committed).distanceTo(new f.THREE.Vector3(10,0,7)) < 1e-9);
   }
+});
+
+// #744: Super Jump charge stays damageable (#255 protects flight only), so it
+// must keep the shared post-movement resource phase. Flight still skips it.
+test('#744 charge in enemy ink runs the resource phase exactly once per tick; flight skips it', async t => {
+  const f = await boot(); t.after(f.close); f.G.paint.sample = () => 2;
+  const a = f.make(), control = f.make({ pos: [0, 0, 30] });
+  const dps = 18, cap = 40, recovery = 30;
+  f.tick(a); f.tick(control);
+  assert.ok(Math.abs(a.s3.enemyInkTime - STEP) < 1e-9 && Math.abs(a.hp - (100 - dps * STEP)) < 1e-9, 'ordinary baseline tick');
+  assert.equal(a.superJump(new f.THREE.Vector3(40, 0, 0)), true);
+  for (let charge = 1; charge < 80; charge++) {
+    const before = a.s3.enemyInkTime;
+    f.tick(a); f.tick(control);
+    assert.equal(a.superJumpState.phase, 'charge');
+    assert.ok(Math.abs(a.s3.enemyInkTime - before - STEP) < 1e-9, `charge tick ${charge} advanced exposure exactly once`);
+  }
+  // Same exposure, damage and cap progression as an ordinary actor standing in the same ink.
+  assert.ok(Math.abs(a.s3.enemyInkTime - control.s3.enemyInkTime) < 1e-9);
+  assert.ok(Math.abs(a.damageFromInk - control.damageFromInk) < 1e-9);
+  assert.ok(Math.abs(a.hp - control.hp) < 1e-9);
+  assert.ok(Math.abs(a.damageFromInk - Math.min(cap, 80 * dps * STEP)) < 1e-9, '80 vulnerable ticks at 0 AP');
+  // Takeoff tick: like an ordinary jump, the airborne actor leaves enemy ink (exposure resets, no damage).
+  const hpBefore = a.hp, inkDamage = a.damageFromInk;
+  f.tick(a);
+  assert.equal(a.superJumpState.phase, 'flight');
+  assert.equal(a.hp, hpBefore); assert.equal(a.s3.enemyInkTime, 0);
+  assert.ok(Math.abs(a.damageFromInk - (inkDamage - recovery * STEP)) < 1e-9);
+  const flightHp = a.hp, flightInkDamage = a.damageFromInk, flightInk = a.ink;
+  while (a.superJumpState) {
+    f.tick(a);
+    if (!a.superJumpState) break;
+    assert.equal(a.hp, flightHp); assert.equal(a.damageFromInk, flightInkDamage); assert.equal(a.ink, flightInk);
+  }
+});
+
+test('#744 charge keeps the invulnerability gate and normal weapon damage admission', async t => {
+  const f = await boot(); t.after(f.close); f.G.paint.sample = () => 2;
+  const a = f.make(), enemy = f.make({ team: 1, pos: [0, 0, 30] });
+  a.invuln = 10; assert.equal(a.superJump(new f.THREE.Vector3(40, 0, 0)), true);
+  f.tick(a, 30);
+  assert.equal(a.hp, 100, 'invulnerable charge takes no passive ink damage');
+  assert.ok(Math.abs(a.s3.enemyInkTime - 30 * STEP) < 1e-9, 'exposure is still tracked');
+  a.invuln = 0; f.tick(a);
+  assert.ok(a.hp < 100, 'vulnerable charge takes passive ink damage');
+  const hp = a.hp; f.G.projectiles.applyHit(enemy, a, 36, 'shooter');
+  assert.ok(Math.abs(a.hp - (hp - 36)) < 1e-9, 'weapon hit still admitted during charge');
+});
+
+test('#744 30/60/120Hz charge in enemy ink produces identical resource state', async t => {
+  let expected;
+  for (const hz of [30, 60, 120]) {
+    const f = await boot(); t.after(f.close); f.G.paint.sample = () => 2;
+    const a = f.make(); a.s3.jumpFlightTime = 96 / 60;
+    a.superJump(new f.THREE.Vector3(20, 0, 0));
+    const clock = new f.FixedClock(), rows = [];
+    for (let frame = 0; frame < hz * 3; frame++) clock.advance(1 / hz, dt => {
+      f.G.time += dt; a.update(dt);
+      rows.push([a.superJumpState?.phase ?? null, a.hp, a.damageFromInk, a.s3.enemyInkTime, a.ink]);
+    });
+    const result = plain(rows); if (expected) assert.deepEqual(result, expected); else expected = result;
+  }
+});
+
+// #728 guard: remote teammates are driven by NetMatch.applyRemote(), not
+// Actor.update(). applyRemote() ends in Actor._finishFrame(), which already
+// applies the shared support-history rule; keep that contract covered.
+function remoteRig(f, pos) {
+  const nm = Object.create(f.NetMatch.prototype); nm.byNid = new Map(); nm.peers = new Map(); nm.s = { myId: 'me' }; nm.myId = 'me';
+  const b = f.make({ pos }); b.remote = true; b.owner = 'peer';
+  b.net = { ready: true, err: new f.THREE.Vector3(), prevGrounded: true, prevVy: 0, buf: [], sjTo: null, sjRing: 0 };
+  const F = f.NET_FLAGS;
+  let tp = 0;
+  const sample = (x, y, z, flags) => {
+    b.net.tp = ++tp;
+    b.net.cur = { tp, x, y, z, vx: 0, vy: 0, vz: 0, yaw: 0, aimYaw: 0, aimPitch: 0, f: F.alive | flags, hp: 100, ink: 100, sp: 0, turf: 0, ch: 0, lock: 0, life: 0, wx: 1, wy: 0, wz: 0 };
+    nm.applyRemote(b, STEP);
+  };
+  return { nm, b, F, sample };
+}
+
+test('#728 remote playback keeps the latest supported point; airborne/climb/flight samples never overwrite it', async t => {
+  const f = await boot(); t.after(f.close); const a = f.make(), r = remoteRig(f, [0, 0, 0]);
+  r.sample(-30, 0, 5, r.F.grounded); r.sample(25, 0, -12, r.F.grounded);
+  r.sample(26, 3, -12, 0); r.sample(26, 6, -12, r.F.climb); r.sample(27, 8, -12, r.F.sjFlight); r.sample(28, 9, -12, 0);
+  assert.deepEqual(plain(r.b.superJumpGround.toArray()), [25, 0, -12]);
+  assert.equal(a.superJump(r.b), true, 'airborne remote teammate is a valid target');
+  assert.deepEqual(plain(a.superJumpState.to.toArray()), [25, 0, -12], 'latest supported point, not spawn or an old selection');
+});
+
+test('#728 remote respawn clears support history and the first grounded sample rebuilds it', async t => {
+  const f = await boot(); t.after(f.close); const a = f.make(), r = remoteRig(f, [0, 0, 0]);
+  r.sample(10, 0, 10, r.F.grounded);
+  r.b.net.deathTp = r.b.net.tp; r.nm._remoteRespawn(r.b); assert.equal(r.b.superJumpGround, null);
+  r.sample(-5, 4, 0, 0); assert.equal(r.b.superJumpGround, null, 'airborne sample after respawn does not seed history');
+  assert.equal(a.superJump(r.b), false, 'a teammate with genuinely no support sample is still rejected');
+  r.sample(-6, 0, 2, r.F.grounded); r.sample(-7, 5, 2, 0);
+  assert.equal(a.superJump(r.b), true);
+  assert.deepEqual(plain(a.superJumpState.to.toArray()), [-6, 0, 2]);
 });
