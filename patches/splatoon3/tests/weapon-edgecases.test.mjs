@@ -120,3 +120,113 @@ test('zero-time update does not advance pending shot; separate actors and reset 
  const f=await setup('dualies'),b=f.make('dualies');f.a.intent.fire=true;f.tick(f.a);const left=f.a.weaponRunner.s3DualiesStart;f.a.weaponRunner.update(0,{fire:true});close(f.a.weaponRunner.s3DualiesStart,left);assert.equal(f.shots.length,0);
  b.intent.fire=true;f.tick(b);f.tick(f.a);assert.equal(f.shots.length,0);f.tick(f.a);assert.equal(f.shots.length,1);f.tick(b);assert.equal(f.shots.length,1);f.tick(b);assert.equal(f.shots.length,2);
 });
+// #385: Splattershot wall contacts never reached the pinned WallDropMove /
+// WallDropCollisionPaintParam phase. Real OBB wall/floor + the real native
+// Physics, so this exercises the installed wall-hit path and not a stub.
+async function shooterWallDrop({floor=true,dt=1/60,ghost=false}={}){
+ const f=await setup('shooter'),ps=projectiles(f),V=f.THREE.Vector3;
+ f.a.aimPoint.set(0,1.05,20);f.setRandom(()=>.5);
+ const axes=[new V(1,0,0),new V(0,1,0),new V(0,0,1)],faces=[-1,-1,-1,-1,-1,-1];
+ const blocks=[{id:0,solid:true,center:new V(0,1,4),half:new V(10,4,.1),axes,faces}];
+ if(floor)blocks.push({id:1,solid:true,center:new V(0,-.1,0),half:new V(100,.1,100),axes,faces});
+ const level={blocks,queryBlocks:(_x,_z,_xx,_zz,out)=>{out.length=0;for(const b of blocks)out.push(b.id);return out;}};
+ f.G.level=level;f.G.physics=new f.Physics(level);
+ const paints=[],owned=[];
+ f.G.paint.splat=(point,radius)=>{paints.push({radius,y:point.y});return 1;};
+ f.a.addTurf=area=>{owned.push(area);};
+ let impacts=0;const impact=ps._impact;ps._impact=function(p,h){impacts++;return impact.call(this,p,h);};
+ ps.fireShooter(f.a,f.a.weapon,0);
+ const p=ps.list[0];if(ghost)p.ghost=true;
+ let state=null,contact=null;
+ for(let i=0;i<600&&ps.list.length;i++){
+  f.G.time+=dt;ps.update(dt);
+  if(!state&&p.fidelityWallDrop){contact=p.pos.clone();const s=p.fidelityWallDrop;
+   assert.ok(p.prev.distanceTo(p.pos)<1e-9,'contact frame starts at the wall, not overshoot');
+   state={firstFrames:s.firstFrames,secondFrames:s.secondFrames,lastFrames:s.lastFrames,totalFrames:s.totalFrames,
+    firstSpeed:s.firstSpeed,secondSpeed:s.secondSpeed,shockRadius:s.shockRadius,fallRadius:s.fallRadius,groundRadius:s.groundRadius,
+    y0:p.pos.y};}
+ }
+ return {f,ps,p,state,contact,impacts,paints,owned,live:ps.list.includes(p)};
+}
+test('splattershot wall contact runs the pinned WallDropMove/CollisionPaint phase, not one generic splat',async()=>{
+ const r=await shooterWallDrop(),s=r.state;
+ assert.ok(s,'actual Splattershot wall contact enters retained wall-drop');
+ // The pinned S3 11.3.0 mirror already held these records; only family admission was missing.
+ assert.ok(s.firstFrames>=20&&s.firstFrames<=40,'first period 20-40f');assert.equal(s.secondFrames,10);
+ assert.ok(s.lastFrames>=15&&s.lastFrames<=35,'last period 15-35f');
+ close(s.firstSpeed,.06);close(s.secondSpeed,.06);close(s.shockRadius,1.56);close(s.fallRadius,.65);close(s.groundRadius,.6);
+ assert.equal(r.impacts,0,'wall-drop is not a second generic terminal impact');
+ const at=radius=>r.paints.filter(p=>Math.abs(p.radius-radius)<1e-9).length;
+ assert.equal(at(1.56),1,'shock paints once at the pinned contact radius');
+ assert.ok(at(.65)>=1,'falling ink retains the pinned PaintRadiusFall');
+ assert.ok(at(.6)>=1,'terminal ground phase paints the pinned PaintRadiusGround');
+ assert.ok(r.paints.every(p=>[1.56,.65,.6].some(x=>Math.abs(p.radius-x)<1e-9)),'no generic impact radius is used');
+ // one authoritative owner credit per owned splat
+ assert.equal(r.owned.length,r.paints.length,'CPU owner is credited exactly once per owned splat');
+ assert.ok(r.paints[0].y>r.paints[r.paints.length-1].y,'ink is laid top-down from the contact point');
+ assert.equal(r.p.fidelityWallDrop.done,true,'sourced wall-drop retires');assert.equal(r.live,false);
+ assert.equal(r.f.a.ink,100,'wall-drop never spends shooter ink');
+});
+test('splattershot wall-drop completes on its own source frames with no floor, and 30/60/120 Hz agree',async()=>{
+ const r=await shooterWallDrop({floor:false});
+ assert.ok(r.state,'no-floor wall still enters wall-drop');
+ assert.equal(r.p.fidelityWallDrop.done,true,'retires on totalFrames, not on a terminal impact');
+ assert.equal(r.impacts,0);assert.ok(r.paints.some(p=>Math.abs(p.radius-.65)<1e-9));
+ const cadence=[];
+ for(const dt of [1/30,1/60,1/120]){const c=await shooterWallDrop({floor:false,dt});
+  cadence.push([c.state.firstFrames,c.state.secondFrames,c.state.lastFrames,c.paints.length]);}
+ assert.deepEqual(cadence,[cadence[0],cadence[0],cadence[0]],'source periods and paint count are cadence-independent');
+});
+test('splattershot ghost replays the retained wall-drop without authority or paint credit',async()=>{
+ const local=await shooterWallDrop(),ghost=await shooterWallDrop({ghost:true});
+ assert.ok(ghost.state,'ghost reaches the same retained wall-drop');
+ assert.equal(ghost.state.firstFrames,local.state.firstFrames);
+ assert.equal(ghost.state.lastFrames,local.state.lastFrames);
+ close(ghost.state.y0,local.state.y0,1e-9);
+ assert.equal(ghost.paints.length,0,'ghost wall-drop cannot mutate turf');
+ assert.equal(ghost.owned.length,0,'ghost wall-drop never credits the CPU owner');
+ assert.ok(local.paints.length>0);
+});
+test('splattershot pool recycle and dispose clear retain no wall-drop state',async()=>{
+ const r=await shooterWallDrop({floor:false});
+ assert.equal(r.p.fidelityWallDrop.done,true);
+ // the retired round returns to the pool; the next borrow must start clean
+ r.ps.fireShooter(r.f.a,r.f.a.weapon,0);const reused=r.ps.list[0];
+ assert.equal(reused,r.p,'pool reuse returns the same round');assert.equal(reused.fidelityWallDrop,null);
+ r.ps.update(1/60);
+ for(let i=0;i<600&&r.ps.list.length;i++)r.ps.update(1/60);
+ assert.equal(r.ps.list.length,0,'reused round retires normally');
+ assert.ok(reused.fidelityWallDrop,'reused round re-enters wall-drop cleanly');
+ // a round discarded mid-wall-drop must not leak its retained state either
+ r.ps.fireShooter(r.f.a,r.f.a.weapon,0);const mid=r.ps.list[0];
+ for(let i=0;i<30&&r.ps.list.length&&!mid.fidelityWallDrop;i++)r.ps.update(1/60);
+ assert.ok(mid.fidelityWallDrop,'discarded round is mid wall-drop');
+ r.ps.clear();assert.equal(r.ps.list.length,0);
+ r.ps.fireShooter(r.f.a,r.f.a.weapon,0);
+ assert.equal(r.ps.list[0].fidelityWallDrop,null,'dispose clear retains no wall-drop');
+});
+test('ordinary floor contact stays a single generic impact for every family',async()=>{
+ // Admitting shooter must not turn ground contact into a wall-drop: the shared
+ // eligibility rule already rejects near-horizontal normals, so every family
+ // keeps exactly one native terminal impact on the floor.
+ const rounds={shooter:1,dualies:2,blaster:1,splatling:1};
+ for(const [kind,expected] of Object.entries(rounds)){
+  const f=await setup(kind),ps=projectiles(f),V=f.THREE.Vector3;
+  f.a.aimPoint.set(0,0.02,20);f.setRandom(()=>.5);
+  const axes=[new V(1,0,0),new V(0,1,0),new V(0,0,1)];
+  const blocks=[{id:0,solid:true,center:new V(0,-.1,0),half:new V(100,.1,100),axes,faces:[-1,-1,-1,-1,-1,-1]}];
+  const level={blocks,queryBlocks:(_x,_z,_xx,_zz,out)=>{out.length=0;out.push(0);return out;}};
+  f.G.level=level;f.G.physics=new f.Physics(level);
+  let paint=0;f.G.paint.splat=()=>{paint++;return 0;};
+  let impacts=0;const impact=ps._impact;ps._impact=function(p,h){impacts++;return impact.call(this,p,h);};
+  if(kind==='shooter')ps.fireShooter(f.a,f.a.weapon,0);
+  else if(kind==='blaster')ps.fireBlaster(f.a,f.a.weapon,0);
+  else if(kind==='splatling'){f.a.weaponRunner.fidelitySplatlingCharge=1;ps.fireSplatling(f.a,f.a.weapon,0);}
+  else for(const hand of ['s3DualiesLeft','s3DualiesRight'])ps.fireDualies(f.a,f.a.weapon,0,hand);
+  const live=[...ps.list];
+  for(let i=0;i<200&&ps.list.length;i++)ps.update(1/60);
+  assert.ok(live.every(p=>p.fidelityWallDrop===null),kind+' floor contact never enters wall-drop');
+  assert.equal(impacts,expected,kind+' floor stays one generic impact per round');
+  assert.ok(paint>=expected,kind+' floor still paints');
+ }
+});
