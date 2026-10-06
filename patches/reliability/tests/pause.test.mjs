@@ -132,14 +132,17 @@ test('menu RB cannot leak as a held bomb after resuming', async () => {
   assert.equal(h.actor.intent.sub, true);
 });
 
-test('blur and disconnect clear menu channel; reconnect permits a fresh owned button', async () => {
+test('blur and no-pad disconnect clear menu state; reconnect requires release before a fresh button', async () => {
   const h = await boot(); h.setPads(pad([0])); h.input.pollPad();
   assert.equal(h.input.padMenuPressed.has(0), true); h.event('blur', {});
   assert.equal(h.input.padMenuPressed.size, 0);
   h.input.consumePadMenuButton(0); h.setPads([]); h.input.pollPad();
   assert.equal(h.input.padMenuBlocked.size, 0); assert.equal(h.input.padMenuPressed.size, 0);
-  h.setPads(pad([0])); h.input.pollPad(); assert.equal(h.input.padMenuPressed.has(0), true);
-  assert.equal(h.input.padButton(0), true);
+  h.setPads(pad([0])); h.input.pollPad();
+  assert.equal(h.input.padMenuPressed.has(0), false); assert.equal(h.input.padButton(0), false);
+  h.setPads(pad()); h.input.pollPad();
+  h.setPads(pad([0])); h.input.pollPad();
+  assert.equal(h.input.padMenuPressed.has(0), true); assert.equal(h.input.padButton(0), true);
 });
 
 test('adapter rejects missing/duplicated/already applied anchors and leaves unrelated modules intact', () => {
