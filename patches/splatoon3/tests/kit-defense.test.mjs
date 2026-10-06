@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fixture } from './source-fixture.mjs';
+import { fixture } from './kit-composed-fixture.mjs';
 import { installKitDefense } from '../runtime/kit-defense.mjs';
 async function setup() {
   const f = await fixture(); installKitDefense(f);
@@ -23,7 +23,7 @@ test('native step chooses a nearer defense without damage, burst or a second int
 test('nearer terrain and exact terrain ties suppress defense side effects', async () => {
   for (const distance of [1, 2]) {
     const { f, system, p, counts } = await setup();
-    f.G.physics.segment = () => ({ hit: true, dist: distance });
+    f.G.physics.segment = (_a,_b,out) => {out.hit=true;out.dist=distance;out.point.set(distance,1,0);out.normal.set(0,1,0);return out;};
     assert.equal(system._step(p, 1 / 60), true); assert.deepEqual(counts(), [0, 0, 1]);
   }
 });
@@ -57,6 +57,7 @@ test('partial and piercing charger beams stop at defense; piercing hits before i
     system.kitBarrierCandidate = () => ({ distance: 3, onHit: () => { contacts++; } });
     system.applyHit = (_a, e) => hits.push(e);
     system.fireCharger(owner, { ...owner.weapon, rangeMin: 10, rangeMax: 10 }, charge);
+    assert.equal(contacts,0,'finite flight has not reached defense at birth');system.update(1/60);
     assert.equal(contacts, 1, 'one authoritative defense hit per beam');
     assert.equal(hits.length, 0, 'actor behind defense excluded');
     assert.equal(system.beams[0].mesh.scale.z, 3, 'native visual beam uses the intercepted length');
@@ -72,7 +73,7 @@ test('partial and piercing charger beams stop at defense; piercing hits before i
   system.kitBarrierCandidate = () => ({ distance: 3, onHit: () => { contacts++; } });
   system.applyHit = (_a, e) => hits.push(e);
   system.fireCharger(owner, { ...owner.weapon, rangeMin: 10, rangeMax: 10 }, 1);
-  assert.deepEqual(hits, [near]); assert.equal(contacts, 1);
+  assert.equal(hits.length,0);system.update(1/60);assert.deepEqual(hits, [near]); assert.equal(contacts, 1);
 });
 
 test('actual Bubbler mechanics participate in the native sweep and preserve ghost and nearer-wall authority', async () => {
@@ -85,7 +86,7 @@ test('actual Bubbler mechanics participate in the native sweep and preserve ghos
     const dome = bigBubblerDomes()[0], hp = dome.hp;
     const shooter = f.make(); shooter.team = 1; shooter.nid = 9;
     f.G.actors = [owner]; f.G.boss = null;
-    f.G.physics.segment = () => mode === 'nearer-wall' ? { hit: true, dist: .1 } : { hit: false };
+    f.G.physics.segment=(_a,_b,out)=>{out.hit=mode==='nearer-wall';out.dist=.1;out.point.set(.1,1,0);out.normal.set(0,1,0);return out;};
     let hits = 0, impacts = 0; system.applyHit = () => { hits++; }; system._impact = () => { impacts++; };
     const p = system._new(); Object.assign(p, { owner: shooter, team: 1, type: 'shot', wid: 'shooter', damage: 36,
       size: .15, radius: .3, age: 0, life: 1, straight: 1, grav: 0, drag: 0, trailEvery: 0, ghost: mode === 'ghost' });
@@ -119,4 +120,19 @@ test('native blast shielding consumes durability once for protected actors and p
     assert.equal(system.s3ExplosionDefense, undefined, 'context restored, no pooled state');
     system.clear();
   }
+});
+
+test('Slosher defense before a paintable wall does not become an agent3 wall drop',async()=>{
+ for(const defense of [false,true]) {
+ const f=await fixture(); installKitDefense(f);
+ const system=new f.Projectiles(new f.THREE.Scene()),owner=f.make('slosher');
+ f.G.actors=[];f.G.boss=null;
+ system.fireSlosh(owner,owner.weapon);const p=system.list[0];assert.ok(p.fidelitySloshUnit);
+ p.pos.set(0,1,0);p.prev.copy(p.pos);p.start.copy(p.pos);p.vel.set(600,0,0);
+ let contacts=0;
+ system.kitBarrierCandidate=()=>defense?({distance:.01,onHit:()=>contacts++}):null;
+ f.G.physics.segment=(_a,_b,out)=>{out.hit=true;out.dist=.02;out.point.set(.02,1,0);out.normal.set(-1,0,0);out.face=0;out.block=0;return out;};
+ assert.equal(system._step(p,1/60),defense);
+ assert.equal(contacts,defense?1:0);assert.equal(p.agent3SlosherWallDrop==null,defense);
+ }
 });

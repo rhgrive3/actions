@@ -15,7 +15,8 @@ const STEP = 1 / 60;
 const plain = value => JSON.parse(JSON.stringify(value));
 
 // Same source composition and installer as build-inkwave, including all motion
-// hooks and native Character/Physics/Runner/Projectiles. With
+// hooks and native Actor/Physics/Runner/Projectiles. Character is a render sink;
+// this file asserts no bones, pose or pixels. With
 // INKWAVE_SUPERJUMP_SITE this executes emitted/minified files. No GPU claim.
 async function boot({ floor = true, grate = false, wall = false } = {}) {
   const context = vm.createContext({ console, performance, URL, innerHeight: 720 }), modules = new Map();
@@ -47,8 +48,19 @@ async function boot({ floor = true, grate = false, wall = false } = {}) {
     level, physics: new Physics(level), mode: 'match', teamColors: [new THREE.Color('#ff8a14'), new THREE.Color('#2f5bff')],
     match: { playing: () => true, canRespawn: () => false }, paint: { sample: () => 1, splat: () => 0 } });
   G.projectiles = new api.Projectiles(G.scene);
+  // Keep native _finishFrame and its actor events; only the expensive visual rig
+  // is replaced. Animation state and triggers remain observable in this sink.
+  class GameplayCharacter {
+    constructor() { this.root = new THREE.Object3D(); this.color = new THREE.Color(); this.events = []; }
+    _owner() { return this.actor; }
+    trigger(...args) { this.events.push(args); }
+    update(_dt, state) { this.lastState = state; }
+    getMuzzle(out) { return out.copy(this.root.position).add(new THREE.Vector3(0, 1.05, .3)); }
+    setVisible(value) { this.root.visible = value; }
+    setHurt() {} setWeapon() {} dispose() {}
+  }
   function make({ pos = [0, 0, 0], weapon = 'shooter', team = 0, isLocal = false, remote = false } = {}) {
-    const a = new api.Actor({ team, name: 'superjump regression', weapon, isLocal, CharacterClass: api.Character,
+    const a = new api.Actor({ team, name: 'superjump regression', weapon, isLocal, CharacterClass: GameplayCharacter,
       style: { hair: 0, skin: 2, outfit: 0, eyes: 0 } });
     a.character.actor = a; G.actors.push(a); G.scene.add(a.character.root);
     a.remote = remote;
@@ -278,12 +290,14 @@ test('#744 charge in enemy ink runs the resource phase exactly once per tick; fl
     'takeoff respects the current contact-grace reset owner');
   assert.ok(Math.abs(a.damageFromInk - (inkDamage - recovery * STEP)) < 1e-9);
   let flightHp = a.hp; const flightInkDamage = a.damageFromInk, flightInk = a.ink;
-  while (a.superJumpState) {
+  const flightBound = Math.ceil(a.superJumpState.dur / STEP) + 1;
+  for (let n = 0; a.superJumpState && n < flightBound; n++) {
     f.tick(a);
     if (!a.superJumpState) break;
     if (a.lastDamage + 1e-10 >= f.profile.resources.regenDelay) flightHp = Math.min(100, flightHp + f.profile.resources.regenRate * STEP);
     assert.ok(Math.abs(a.hp - flightHp) < 1e-8); assert.equal(a.damageFromInk, flightInkDamage); assert.equal(a.ink, flightInk);
   }
+  assert.equal(a.superJumpState, null, `flight must retire within ${flightBound} ticks: ${JSON.stringify(a.superJumpState)}`);
 });
 
 test('#744 charge keeps the invulnerability gate and normal weapon damage admission', async t => {

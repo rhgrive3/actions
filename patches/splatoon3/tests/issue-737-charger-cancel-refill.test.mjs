@@ -123,7 +123,9 @@ test('full-charge storage and the normal fired-shot path never take the partial-
     a.intent.fire = true;
     f.tick(a, 61);
     a.intent.fire = false;
-    f.tick(a);                          // release -> shot (lastFire = 0)
+    f.tick(a);                          // release enters the existing 1F gap
+    assert.equal(f.shots.length, 0);
+    f.tick(a);                          // actual shot (lastFire = 0)
     assert.equal(f.shots.length, 1);
     assert.ok(lock(a) <= 1e-10, 'a normal shot does not arm the interruption lock');
     a.ink = 50;
@@ -133,7 +135,7 @@ test('full-charge storage and the normal fired-shot path never take the partial-
   }
 });
 
-test('dry and enemy-ink squid forms gain no refill inside or after the interval', async () => {
+test('dry cancellation and enemy-ink rejected form entry cannot gain refill', async () => {
   for (const surface of ['dry', 'enemy']) {
     const f = await fixture();
     f.G.paint.sample = () => (surface === 'enemy' ? 2 : 0);
@@ -141,10 +143,20 @@ test('dry and enemy-ink squid forms gain no refill inside or after the interval'
     const before = a.ink;
     a.intent.squid = true;
     f.tick(a);                          // cancel tick
-    assert.equal(a.form, 'squid');
-    assert.equal(a.ink, before, `${surface}: no refill on the cancel update`);
-    f.tick(a, 30);                      // through the whole 19F lock and beyond
-    assert.equal(a.ink, before, `${surface}: no refill at any point`);
+    assert.equal(a.form, surface === 'enemy' ? 'kid' : 'squid', 'enemy ink keeps the current form admission gate');
+    if (surface === 'enemy') {
+      assert.equal(a.weaponRunner.charging, true, 'rejected squid entry does not cancel the charge');
+      assert.equal(lock(a), 0, 'no interruption timer without accepted cancellation');
+      assert.ok(a.ink < before, 'continued charge pays its current incremental cost');
+      const paid = a.ink;
+      f.tick(a, 30);
+      assert.ok(a.ink < paid, 'continued paid charge never refills on enemy ink');
+    } else {
+      assert.equal(a.ink, before, 'dry: no refill on the cancel update');
+      assert.ok(lock(a) > 0, 'dry cancellation still owns its recovery gate');
+      f.tick(a, 30);
+      assert.equal(a.ink, before, 'dry: no refill after the whole interruption interval');
+    }
   }
 });
 

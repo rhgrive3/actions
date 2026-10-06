@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { composeKits, VERIFIED_KITS, selectedSubCost, registerKitMetadata } from '../runtime/kit-composition.mjs';
-const reference = JSON.parse(fs.readFileSync(new URL('../reference/curated-numbers.json', import.meta.url)));
+const reference = JSON.parse(fs.readFileSync(new URL('../reference/kit-main-reference.json', import.meta.url)));
 function registries() {
   return { WEAPONS: Object.fromEntries(['shooter','roller','charger','blaster'].map(id => [id,{id,sub:'bomb',special:'slam',specialCost:999}])),
     SUB: { bomb:{id:'bomb',inkCost:70}, suction:{id:'suction',inkCost:null,inkCostFallback:70}, curling:{id:'curling',inkCost:65} },
@@ -17,6 +17,7 @@ test('all three required base kits agree with pinned extracted main rows', () =>
   };
   assert.deepEqual(Object.keys(VERIFIED_KITS).sort(), ['charger','roller','shooter'], 'literal required-kit denominator');
   const profile = JSON.parse(fs.readFileSync(new URL('../profile.json', import.meta.url)));
+  const configured=registries();for(const [id,w]of Object.entries(profile.weapons))if(configured.WEAPONS[id])Object.assign(configured.WEAPONS[id],w);composeKits(configured);
   for (const [main, kit] of Object.entries(expected)) {
     const prefix=`data/mush/1130/WeaponInfoMain.json#/${kit.row}/`;
     assert.equal(reference.parameters[prefix+'__RowId'].value,kit.main);
@@ -26,7 +27,7 @@ test('all three required base kits agree with pinned extracted main rows', () =>
     assert.deepEqual(VERIFIED_KITS[main], {main:kit.main,sub:kit.sub,special:kit.special,specialCost:kit.specialCost});
     assert.equal(api.WEAPONS[main].sub,kit.sub);assert.equal(api.WEAPONS[main].special,kit.special);
     assert.equal(api.WEAPONS[main].specialCost,kit.specialCost);
-    assert.equal(profile.weapons[main].specialCost,kit.specialCost);
+    assert.equal(configured.WEAPONS[main].specialCost,kit.specialCost);
   }
   assert.equal(api.WEAPONS.blaster.kitStatus,'original-inkwave-kit');
   assert.equal(api.WEAPONS.blaster.special,'slam');

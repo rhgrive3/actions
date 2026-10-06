@@ -120,6 +120,8 @@ export function installChargerFlight(api,completion) {
     job.pos.copy(job.prev).addScaledVector(job.dir,length);
     const world=sweptWorldHit(G.physics,job.prev,job.pos,collision.InitRadiusForField,collision.EndRadiusForField,job.hit,true);
     let distance=world.hit?world.dist:length,ended=world.hit,normal=world.hit?world.normal.clone():job.dir.clone().negate(),target=null;
+    const defense=system.kitDefenseCandidate?.({owner:job.owner,team:job.team,prev:job.prev,pos:job.pos,vel:job.dir,damage:job.damage,type:'beam',size:0,ghost:job.ghost});
+    if(defense&&(!world.hit||defense.distance<world.dist-EPS)){distance=defense.distance;ended=true;target='defense';normal=job.dir.clone().negate();}
     const boss=G.boss?.segHit(job.prev,job.pos,collision.InitRadiusForPlayer);
     if(boss&&boss.dist<distance-EPS){distance=boss.dist;ended=true;normal=job.dir.clone().negate();target='boss';}
     const actors=[];
@@ -138,13 +140,14 @@ export function installChargerFlight(api,completion) {
       if(!job.full){distance=a.d;ended=true;target=a.actor;normal=job.dir.clone().negate();break;}
     }
     if(target==='boss'&&!job.ghost)G.boss.hit(job.owner,amount,boss.target,job.weapon.id,boss.point.clone());
+    if(target==='defense')defense.onHit();
     job.pos.copy(job.prev).addScaledVector(job.dir,distance);job.travel+=distance;
     paintTravel(job,job.travel);
     if(job.beam){job.beam.mesh.scale.z=Math.max(.0001,job.travel);job.beam.mesh.material.uniforms.uLen.value=Math.max(.0001,job.travel);}
     ended=ended||job.travel+EPS>=job.range;
     if(ended){
       // Final trail stamp at the stopping point, never beyond an obstruction.
-      if(!job.ghost && !(world.hit && !target)){
+      if(!job.ghost && target!=='defense' && !(world.hit && !target)){
         const h=G.physics.raycast(job.pos,new THREE.Vector3(0,-1,0),3.5,new Hit(),true);
         if(h.hit)job.owner.addTurf(G.paint.splat(h.point.clone().addScaledVector(h.normal,.1),job.paint.width*job.paint.terminalRate,job.team,
           {seed:Math.random(),stretch:job.dir,stretchAmt:Math.max(0,job.paint.depth/job.paint.width-1)}));
@@ -154,7 +157,7 @@ export function installChargerFlight(api,completion) {
           {seed:Math.random(),stretch:job.dir,stretchAmt:.6});job.owner.addTurf(area);
         G.fx?.burst(world.point,world.normal,job.owner.color,{count:10,speed:4,size:.09,paint:false});
       }
-      if(!job.ghost)emit('weapon:impact',{pos:job.pos.clone(),normal,team:job.team,kind:'charger',radius:job.paint.impact,victim:target==='boss'||target?.team===job.team?null:target});
+      if(!job.ghost)emit('weapon:impact',{pos:job.pos.clone(),normal,team:job.team,kind:'charger',radius:job.paint.impact,victim:target==='boss'||target==='defense'||target?.team===job.team?null:target});
     }
     return ended;
   }

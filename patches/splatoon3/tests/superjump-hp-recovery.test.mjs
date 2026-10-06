@@ -45,7 +45,9 @@ test('dead actors and remote flight proxies never gain locally simulated HP',asy
 });
 test('landing and first ordinary update apply at most one configured recovery step',async()=>{
  const f=await setup(),{a}=f,r=f.profile.resources;
- while(a.superJumpState){const hp=a.hp;f.tick();near(a.hp,Math.min(100,hp+r.regenRate*STEP));}
+ const bound=Math.ceil(a.superJumpState.dur/STEP)+1;
+ for(let n=0;a.superJumpState&&n<bound;n++){const hp=a.hp;f.tick();near(a.hp,Math.min(100,hp+r.regenRate*STEP));}
+ assert.equal(a.superJumpState,null,`flight must retire within ${bound} ticks: ${JSON.stringify(a.superJumpState)}`);
  const hp=a.hp;f.tick();near(a.hp,Math.min(100,hp+r.regenRate*STEP));
 });
 

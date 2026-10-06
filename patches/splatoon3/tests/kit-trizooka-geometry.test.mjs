@@ -10,7 +10,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { adaptSource } from '../adapter.mjs';
+import {adaptKitSource as adaptSource} from './kit-composed-fixture.mjs';
 import { installKitTrizooka, VOLLEY_CONFIG, throwVolley, trizookaSpecialWeapon } from '../runtime/kit-trizooka.mjs';
 import {
   kitTrizookaWorldSweep, kitTrizookaFlight, kitTrizookaActorRadius, isDamageCarrier,
@@ -295,7 +295,7 @@ test('recProj -> JSON -> _play -> ghostProjectile preserves the volley presentat
   a.nid = 7;
 
   // the REAL native NetMatch, built on its own prototype with no session
-  const nm = Object.create(api.NetMatch.prototype);
+  const nm = new api.NetMatch({myId:'local',hostId:'peer',isHost:false,_members:new Map([['peer','peer']])},{});
   nm.out = []; nm.mute = 0; nm.applying = false;
   nm.byNid = new Map(); nm.replayKitEvent = () => false;
   api.G.netm = nm;
@@ -309,11 +309,11 @@ test('recProj -> JSON -> _play -> ghostProjectile preserves the volley presentat
   assert.equal(packets.length, VOLLEY_CONFIG.lobes, 'one packet per lobe, exactly once');
 
   // the peer replays them through the REAL _play
-  const ghostOwner = shooter(api); ghostOwner.team = 1; ghostOwner.nid = 7;
+  const ghostOwner = shooter(api); ghostOwner.team = 1; ghostOwner.nid = 7;ghostOwner.remote=true;ghostOwner.owner='peer';
   nm.byNid.set(7, ghostOwner);
   api.G.actors = [ghostOwner];
   const before = projectiles.list.length;
-  for (const e of packets) api.NetMatch.prototype._play.call(nm, 7, e);
+  for (const e of packets) api.NetMatch.prototype._play.call(nm, 'peer', e);
   const ghosts = projectiles.list.slice(before);
   assert.equal(ghosts.length, VOLLEY_CONFIG.lobes, 'the peer reconstructed every lobe');
 
@@ -742,7 +742,7 @@ test('the volley identity rides the main projectile packet, and old packets stil
   const { projectiles } = world(api, []);
   const a = shooter(api);
   a.nid = 7;
-  const nm = Object.create(api.NetMatch.prototype);
+  const nm = new api.NetMatch({myId:'local',hostId:'peer',isHost:false,_members:new Map([['peer','peer']])},{});
   nm.out = []; nm.mute = 0; nm.applying = false;
   nm.byNid = new Map(); nm.replayKitEvent = () => false;
   api.G.netm = nm;
@@ -753,16 +753,16 @@ test('the volley identity rides the main projectile packet, and old packets stil
   assert.equal(packets.length, VOLLEY_CONFIG.lobes);
   // the two appended fields are the last two, and they are the lobe index
   for (let i = 0; i < VOLLEY_CONFIG.lobes; i++) {
-    assert.equal(packets[i].at(-2), i, `packet ${i} carries its own volley index`);
-    assert.equal(packets[i].at(-1), 0, 'and the action index');
+    assert.equal(packets[i][27], i, `packet ${i} carries its own volley index`);
+    assert.equal(packets[i][28], 0, 'and the action index');
   }
 
   nm.out.length = 0;
-  const ghostOwner = shooter(api); ghostOwner.team = 1; ghostOwner.nid = 7;
+  const ghostOwner = shooter(api); ghostOwner.team = 1; ghostOwner.nid = 7;ghostOwner.remote=true;ghostOwner.owner='peer';
   nm.byNid.set(7, ghostOwner);
   api.G.actors = [ghostOwner];
   let before = projectiles.list.length;
-  for (const e of packets) api.NetMatch.prototype._play.call(nm, 7, e);
+  for (const e of packets) api.NetMatch.prototype._play.call(nm, 'peer', e);
   const ghosts = projectiles.list.slice(before);
   assert.equal(ghosts.length, VOLLEY_CONFIG.lobes);
   assert.deepEqual([...ghosts.map((g) => g.s3VolleyIndex)], [0, 1, 2],
@@ -774,9 +774,9 @@ test('the volley identity rides the main projectile packet, and old packets stil
   for (const g of ghosts) assert.equal(g.damageOwner, false, 'and none of them carries authority');
 
   // an OLD packet, with no appended fields at all, must still replay
-  const legacy = packets.map((e) => e.slice(0, -2));
+  const legacy = packets.map((e) => e.slice(0, 27));
   before = projectiles.list.length;
-  for (const e of legacy) api.NetMatch.prototype._play.call(nm, 7, e);
+  for (const e of legacy) api.NetMatch.prototype._play.call(nm, 'peer', e);
   const old = projectiles.list.slice(before);
   assert.equal(old.length, VOLLEY_CONFIG.lobes, 'an older packet still reconstructs every lobe');
   for (const g of old) {
@@ -787,10 +787,10 @@ test('the volley identity rides the main projectile packet, and old packets stil
   // a hostile or malformed value is bounded on the way in: the same packet the
   // real recorder produced, with only its two appended fields tampered with
   const evil = packets[0].slice();
-  evil[evil.length - 2] = 1e9;
-  evil[evil.length - 1] = -5;
+  evil[27] = 1e9;
+  evil[28] = -5;
   before = projectiles.list.length;
-  api.NetMatch.prototype._play.call(nm, 7, evil);
+  api.NetMatch.prototype._play.call(nm, 'peer', evil);
   const bounded = projectiles.list.slice(before);
   assert.equal(bounded.length, 1);
   assert.equal(bounded[0].s3VolleyIndex, 2, 'a huge index is clamped to the last lobe');

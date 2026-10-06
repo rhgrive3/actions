@@ -182,6 +182,7 @@ async function main(){
     finally{coldPending.delete(pendingKey);}
    });
    await coldPage.goto(address+'?devstage&skipTitle&map=halyard&startupProfile',{waitUntil:'domcontentloaded'});
+   await coldPage.bringToFront();
    await coldPage.waitForFunction(()=>!!window.__G?.game&&!!window.__coldEnvironment,null,{timeout:180000});
    result.coldBoot=await coldPage.evaluate(()=>{const G=window.__G,c=window.__coldEnvironment;G.game.debug.freeze();return {...c,sameTargetsAfterBoot:c.cloudId===G.env._cloudRT?.texture.uuid&&c.farId===G.env._farRT?.texture.uuid};});
    if(!hooked||![...coldLoaded].some(p=>p.endsWith('/src/world/environment.js')))throw Error('Cold native Environment bytes not observed');

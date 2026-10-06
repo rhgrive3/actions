@@ -14,7 +14,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { fixture } from './source-fixture.mjs';
+import { fixture } from './kit-composed-fixture.mjs';
 import {
   installKitBigBubbler, bigBubblerDomes, bigBubblerRemoteDomes, bigBubblerSnapshot,
   bigBubblerOwnerId, kitBarrierCandidate, kitBarrierHitRecord, clearBigBubblers,
@@ -549,11 +549,11 @@ test('only a charged, single, live native activation deploys a structure', async
   clearBigBubblers('test-next-activation');
   // the ordinary path runs the native common activation exactly once
   let refills = 0;
-  const stopRefill = f.on('special:refill', () => refills++);
+  let tank=a.ink;Object.defineProperty(a,'ink',{configurable:true,get(){return tank;},set(v){if(v===f.PLAYER.inkMax&&tank!==v)refills++;tank=v;}});
   f.G.actors = [a];
   a.ink = 23;
   a.special = a.specialCost(); a.intent.special = true; f.tick(a);
-  stopRefill();
+  Object.defineProperty(a,'ink',{configurable:true,writable:true,value:tank});
   assert.equal(bigBubblerDomes().length, 1, 'one real activation deploys exactly one dome');
   assert.equal(a.stats.specials, 2, 'only the valid outer activation and ordinary activation spend the gauge');
   assert.equal(a.special, 0);

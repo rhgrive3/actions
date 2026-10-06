@@ -166,8 +166,10 @@ test('actual moving roller geometry and both grips stay synchronized through lif
     assert.ok(rows.every(x => x.gripL < .02 && x.gripR < .002), `${label}: arms reach the weapon grips (${Math.max(...rows.map(x => x.gripL))})`);
     if (held) {
       // Allow the late landing at 40F and the lowering spring to finish before
-      // checking sustained contact; all transition vertices are checked above.
-      const roll = rows.filter(x => x.t >= 1.1 && x.t < 1.2);
+      // checking sustained contact at the end of the held interval; the current vertical
+      // roll admission is31+22F, and all earlier transition vertices are checked above.
+      const roll = rows.filter(x => x.t >= 1.2 && x.t < 1.25);
+      assert.ok(roll.length > 0, 'the final held interval is actually sampled');
       assert.ok(roll.every(x => x.rolling && x.roll > .9 && Math.abs(x.axis) < .15));
       assert.ok(roll.every(x => x.bottom < .055), `${label}: rolling drum stays near the floor (${Math.max(...roll.map(x => x.bottom))})`);
       assert.ok(rows.some(x => x.t > 1.52 && !x.rolling), 'pressing again lifts the drum');

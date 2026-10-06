@@ -73,6 +73,7 @@ export function adaptKitRescue(rel, code, replaceOnce) {
     patch("      b.vel.y -= (b.kind === 'bomb' ? SUB.bomb.gravity : 24) * dt;","      b.vel.y -= kitBombGravity(SUB, b) * dt;",'kit bomb gravity');
     patch('distanceDamage(s.damageBands, d, false)','distanceDamage(kitBombDamageBands(SUB, b, s.damageBands), d, false)','kit bomb bands');
     patch('      if (d > s.radius) continue;','      if (d > kitBombRadius(SUB, b, s.radius)) continue;','kit bomb radius');
+    patch("const fuseContact = b.kind !== 'bomb' || hit.hit || b.s3FuseNormal &&","const fuseContact = kitBombKeepsFuse(b) || b.kind !== 'bomb' || hit.hit || b.s3FuseNormal &&",'Kit attached fuse owns contact');
     patch('        const k = 1 - b.fuse / SUB.bomb.fuse;','        const k = 1 - b.fuse / kitBombFuseTotal(SUB, b);','kit fuse');
     patch("    G.boss?.splash(b.owner, c, s.radius, s.damageMax, s.damageMin, 'bomb');",
       "    G.boss?.splash(b.owner, c, kitBombRadius(SUB, b, s.radius), kitBombDamageMax(SUB, b, s.damageMax), kitBombDamageMin(SUB, b, s.damageMin), 'bomb');",'kit boss splash');
@@ -107,7 +108,7 @@ export function adaptKitRescue(rel, code, replaceOnce) {
     patch(impactAnchor, impactTarget, 'kit defense world contact');
     patch('nose, sats] = e;','nose, sats, s3Volley, s3Action] = e;','trizooka ghost identity');
     patch("    this.list.push(p);\n  }","    kitTrizookaGhost(p, a, SPECIALS, { volleyIndex: s3Volley, actionIndex: s3Action });\n    this.list.push(p);\n  }",'trizooka ghost reconstruction');
-    code="import { kitPaintAuthority, kitTrizookaGhost, kitTrizookaSteppedBands } from '../../patches/splatoon3/runtime/trizooka-collision.mjs';\nimport { kitSubRelease, kitBombAttach, kitBombGravity, kitBombContact, kitBombTrail, kitBombFuseTotal, kitBombRadius, kitBombFxRadius, kitBombDamageBands, kitBombDamageMax, kitBombDamageMin, kitGhostBombAttach, withGhostBombSpawn } from '../../patches/splatoon3/runtime/kit-subs.mjs';\n"+code;
+    code="import { kitPaintAuthority, kitTrizookaGhost, kitTrizookaSteppedBands } from '../../patches/splatoon3/runtime/trizooka-collision.mjs';\nimport { kitSubRelease, kitBombAttach, kitBombGravity, kitBombContact, kitBombTrail, kitBombFuseTotal, kitBombKeepsFuse, kitBombRadius, kitBombFxRadius, kitBombDamageBands, kitBombDamageMax, kitBombDamageMin, kitGhostBombAttach, withGhostBombSpawn } from '../../patches/splatoon3/runtime/kit-subs.mjs';\n"+code;
   }
   return code;
 }

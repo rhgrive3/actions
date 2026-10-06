@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fixture } from './source-fixture.mjs';
+import { fixture } from './kit-composed-fixture.mjs';
 import { installKitInkVac, INK_VAC_EVENTS as EV } from '../runtime/kit-ink-vac.mjs';
 import { installKitNetwork } from '../runtime/kit-network.mjs';
 async function setup() {
@@ -72,7 +72,7 @@ test('actual native countershot packet restores charge-scaled blast and its ghos
   receiver._play('peer-A', JSON.parse(JSON.stringify(packet)));
   const ghost = f.G.projectiles.list.at(-1); assert.ok(ghost.ghost);
   assert.equal(ghost.damage, 0); assert.equal(ghost.s3SpecialWeapon.burstRadius, 10);
-  assert.equal(ghost.life, .833); assert.equal(ghost.grav, p.grav);
+  assert.equal(ghost.life, p.life); assert.equal(ghost.grav, p.grav);
   let paint = 0, damage = 0, turf = 0;
   f.G.paint.splat = () => { paint++; return 1; };
   f.G.projectiles.applyHit = () => { damage++; }; proxy.addTurf = () => { turf++; };

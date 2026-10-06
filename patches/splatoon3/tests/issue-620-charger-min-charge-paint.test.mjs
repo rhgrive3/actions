@@ -36,6 +36,8 @@ async function releasedPaint(frames) {
   const runnerCharge = a.weaponRunner.charge;
   a.intent.fire = false;
   f.tick(a);
+  assert.equal(system._fidelityChargerFlights?.length || 0, 0, 'release remains pending during the existing 1F gap');
+  f.tick(a);
   assert.equal(system._fidelityChargerFlights?.length, 1, 'release created exactly one finite charger flight');
   return { runnerCharge, job: system._fidelityChargerFlights[0] };
 }

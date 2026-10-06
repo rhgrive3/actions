@@ -106,7 +106,7 @@ export function agent3RollerBodyContact(actor, target, horizontalSpeed) {
 }
 
 function eligibleSlosherWallHit(hit) {
-  if (!hit?.hit || Math.abs(hit.normal?.y ?? 1) >= 0.6) return false;
+  if (!hit?.hit || hit.kitDefense || Math.abs(hit.normal?.y ?? 1) >= 0.6) return false;
   const level = api?.G?.physics?.level;
   const block = Number.isInteger(hit.block) ? level?.blocks?.[hit.block] : null;
   if (block?.grate || block?.solid === false) return false;

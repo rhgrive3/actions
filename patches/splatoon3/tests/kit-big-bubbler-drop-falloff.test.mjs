@@ -15,7 +15,7 @@
 // native `fireFlick` assigns to one drop.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { fixture } from './source-fixture.mjs';
+import { fixture } from './kit-composed-fixture.mjs';
 import {
   installKitBigBubbler, bigBubblerDomes, bigBubblerRemoteDomes,
   clearBigBubblers, kitBarrierCandidate,
@@ -29,7 +29,7 @@ const FAR_CASE_HP = 12597;         // the previously-measured dome HP before the
 async function composed() {
   const f = await fixture();
   const scene = new f.THREE.Scene();
-  f.G.scene = scene;
+  f.G.scene = scene;f.G.camera={position:new f.THREE.Vector3(0,20,0)};
   f.G.projectiles = new f.Projectiles(scene);
   f.SPECIALS.bubbler = { id: 'bubbler', name: 'Big Bubbler', blurb: 'dome', cost: 180 };
   const api = { ...f, Actor: f.Actor, Projectiles: f.Projectiles, THREE: f.THREE, G: f.G,
@@ -82,6 +82,8 @@ function spawnFlick(f, owner, from, aim, { damage, dmgFar, speed = 20 }) {
   p.pos.copy(from); p.prev.copy(from); p.start.copy(from);
   p.vel.copy(aim).normalize().multiplyScalar(speed);
   f.G.projectiles._push(p);
+  // Controlled straight drop isolates barrier falloff from the current Roller gravity/phase owner.
+  p.straight=999;p.grav=0;p.drag=0;p.fidelityMove=null;p.life=6;
   return p;
 }
 
@@ -175,7 +177,7 @@ test('BB-04: an ordinary (non-drop) round is NOT distance-scaled', async () => {
     seed: 0, vis: 0.1, tail0: 4, tailK: 1, wob: 0, wobF: 19, nose: 0, sats: 1 });
   p.pos.copy(start); p.prev.copy(start); p.start.copy(start);
   p.vel.set(0, 0, 20);
-  f.G.projectiles._push(p);
+  f.G.projectiles._push(p);p.straight=999;p.grav=0;p.drag=0;p.fidelityMove=null;p.life=6;
   assert.ok(runPinningBeforeContact(f, p, dome, 40000));
   assert.equal(dome.hp, 40000 - 36 * RAW_PER_DAMAGE_UNIT,
     'a normal shot spends its own damage regardless of travel');

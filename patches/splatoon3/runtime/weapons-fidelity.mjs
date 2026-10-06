@@ -237,6 +237,7 @@ function wallDropFallPaint(p, state, from, to) {
 // First/last random durations are derived from the projectile seed so local and
 // ghost playback need no packet extension and consume no extra PRNG draws.
 export function beginFidelityWallDrop(system, p, hit) {
+  if(hit.kitDefense)return false; // the existing defense callback owns this contact
   const source = wallDropSource(p);
   if (!source || !eligibleWallDropHit(hit)) return false;
   const { move, paint } = source;
@@ -342,7 +343,10 @@ export function validFidelityRollerUnitPacket(event) {
   const kitOffset = event.length === 35 ? 2 : 0;
   const weapons = api?.WEAPONS;
   const weapon = weapons && Object.hasOwn(weapons, event[4]) ? weapons[event[4]] : null, unit = event[30 + kitOffset];
-  if (!weapon) return false;
+  if (!weapon) {
+    const specials=api?.SPECIALS,entry=specials&&Object.hasOwn(specials,event[4])?specials[event[4]]:null;
+    return typeof entry?.projectileDescriptor==='function' && unit===-1;
+  }
   if (weapon.kind !== 'roller') return unit === -1;
   if (event[27 + kitOffset] !== 0 && event[27 + kitOffset] !== 1) return false;
   const units = rawWeapon(weapon)?.[event[27 + kitOffset] === 1 ? 'VerticalSwingUnitGroupParam' : 'WideSwingUnitGroupParam']?.Unit;
@@ -414,6 +418,7 @@ export function configureFidelityFlick(p, actor, weapon, index, angle, speed) {
   const cp=Math.cos(pitch);
   p.vel.set(Math.sin(angle)*cp*speed,Math.sin(pitch)*speed,Math.cos(angle)*cp*speed);
   p.fidelityYaw=Math.atan2(Math.sin(angle-actor.yaw),Math.cos(angle-actor.yaw));
+  p.fidelitySectorYaw=vertical?null:actor.yaw;
   p.fidelityMode=vertical?'vertical':'horizontal';p.fidelityRollerUnit=unit;p.fidelityRollerUnitIndex=group.Unit.indexOf(unit);
   setCollision(p,unit.UnitParam.CollisionParam);
   setDrawRadius(p,unit);
@@ -666,9 +671,15 @@ export function installWeaponsFidelity(context,profile) {
   const fresh=Projectiles.prototype._new,push=Projectiles.prototype._push,ghost=Projectiles.prototype.ghostProjectile,clear=Projectiles.prototype.clear;
   Projectiles.prototype.clear=function(...args){const result=clear.apply(this,args);this._fidelityCollision=null;this._fidelitySloshContext=null;return result;};
   Projectiles.prototype._new=function(...args){
+    // Clear the outgoing kit before native _new erases wid and the generic
+    // wrapper erases its descriptor, while authority is still identifiable.
+    const recycled=this.pool[this.pool.length-1];if(recycled)kitTrizookaClearPooled(recycled);
     const p=fresh.apply(this,args);kitTrizookaClearPooled(p);p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityFriendThrough=null;p.fidelityRollerUnit=null;p.fidelityRollerUnitIndex=null;p.fidelitySloshUnit=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;p.fidelitySectorYaw=null;p.s3ShooterForwardApplied=false;p.s3BlasterForwardApplied=false;return p;
   };
   function initialize(p,w){
+    // Kit descriptors own their identity, flight and collision. They use wid,
+    // not the main-weapon id field, and must survive owner weapon changes.
+    if(p.s3SpecialWeapon)return;
     if(!w)return;
     const raw=rawWeapon(w);p.s3Weapon={...w};p.wid=w.id;p.fidelityPhase=0;
     p.fidelityMove=moves.get(w.id)||null;
@@ -749,7 +760,9 @@ export function installWeaponsFidelity(context,profile) {
   Projectiles.prototype.ghostProjectile=function(actor,event){
     if(!validFidelityRollerUnitPacket(event))return null;
     const before=this.list.length;const result=ghost.call(this,actor,event);
-    if(this.list.length>before){const p=this.list.at(-1);const kitOffset=event.length===35?2:0;if((event.length===33||event.length===35)&&event[30+kitOffset]>=0){p.fidelityRollerUnitIndex=event[30+kitOffset];p.fidelityMode=event[27+kitOffset]===1?'vertical':'horizontal';}initialize(p,p.s3SpecialWeapon||WEAPONS[p.wid]||actor.weapon);}
+    if(this.list.length>before){const p=this.list.at(-1);const special=api.SPECIALS&&Object.hasOwn(api.SPECIALS,p.wid)?api.SPECIALS[p.wid]:null;
+      if(!p.s3SpecialWeapon&&typeof special?.projectileDescriptor==='function'){p.s3SpecialWeapon=special.projectileDescriptor(p);p.s3Weapon=p.s3SpecialWeapon;}
+      const kitOffset=event.length===35?2:0;if((event.length===33||event.length===35)&&event[30+kitOffset]>=0){p.fidelityRollerUnitIndex=event[30+kitOffset];p.fidelityMode=event[27+kitOffset]===1?'vertical':'horizontal';}initialize(p,p.s3SpecialWeapon||WEAPONS[p.wid]||actor.weapon);}
     return result;
   };
   const slosh=Projectiles.prototype.fireSlosh;
@@ -857,7 +870,7 @@ export function installWeaponsFidelity(context,profile) {
   // boss path used a separate seven-unit falloff and an unrelated 0.3s throttle.
   const bossImpact=Projectiles.prototype._bossImpact,blastBurst=Projectiles.prototype._blastBurst;
   Projectiles.prototype._bossImpact=function(p,hit){
-    if(p.ghost)return;
+    if(p.ghost||!kitVolleyHitAuthority(p))return;
     const w=p.s3Weapon||p.owner.weapon;
     if(!['roller','slosher','shooter','dualies','splatling'].includes(w.kind))return bossImpact.call(this,p,hit);
     const victim=hit.target?.hp!==undefined&&hit.target?.id!==undefined?hit.target:context.G.boss;

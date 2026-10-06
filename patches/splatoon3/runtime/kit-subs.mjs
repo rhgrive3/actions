@@ -530,6 +530,10 @@ export function kitBombTrail(SUB, b, paint, projectiles) {
 // the bomb's own total is used rather than the generic bomb's. Presentation-only:
 // the pulse and the scale-up are how a bomb reads as "about to go", and a ghost
 // has to go off when the owner's did.
+export function kitBombKeepsFuse(b) {
+  const mode=presentedOf(b)?.spec?.mode;
+  return mode==='stick'&&b.s3Mode==='stuck'||mode==='roll'&&b.s3Mode==='rolling';
+}
 export function kitBombFuseTotal(SUB, b) {
   const t = presentedOf(b)?.fuse;
   return Number.isFinite(t) && t > 0 ? t : SUB.bomb.fuse;

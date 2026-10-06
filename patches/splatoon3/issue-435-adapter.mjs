@@ -53,6 +53,13 @@ export function adaptSlosherEmergeGate(rel, code) {
   for (const anchor of ['  reset() {', '  superJump(target) {', '  _startSpecial() {']) {
     code = replaceOnce(code, anchor, anchor + '\n    this._s435SwimExit = false;', 'issue #435 lifecycle ' + anchor);
   }
-  return replaceOnce(code, SLOSHER_EMERGE_ANCHOR, SLOSHER_EMERGE_REPLACEMENT,
+  const rollerGate = 'this.kidT + 1e-10 >= rollerEmergeDelay(this, P.emergeDelay)';
+  const rollerAnchor = SLOSHER_EMERGE_ANCHOR.replace('this.kidT >= P.emergeDelay', rollerGate);
+  const anchors = [SLOSHER_EMERGE_ANCHOR, rollerAnchor].filter(anchor => code.includes(anchor));
+  if (anchors.length !== 1) throw new Error('INKWAVE patch conflict (issue #435 emerge owner): expected exactly one known connection');
+  const replacement = anchors[0] === rollerAnchor
+    ? SLOSHER_EMERGE_REPLACEMENT.replace('this.kidT >= P.emergeDelay', rollerGate)
+    : SLOSHER_EMERGE_REPLACEMENT;
+  return replaceOnce(code, anchors[0], replacement,
     'issue #435 slosher swim-exit emerge gate');
 }

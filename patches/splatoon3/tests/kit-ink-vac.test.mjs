@@ -3,7 +3,7 @@
 // Projectiles exhale entry and the projectile-collision candidate hook.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fixture } from './source-fixture.mjs';
+import { fixture } from './kit-composed-fixture.mjs';
 import { installKitInkVac, inkVacAbsorbCandidate, disposeInkVac, blastRadius, intakeNearRadius,
   intakeFarRadius, exhaleDamage, exhaleSpeed, inkVacBlastDescriptor, INK_VAC_CALIBRATION, VAC_ID }
   from '../runtime/kit-ink-vac.mjs';
@@ -324,8 +324,9 @@ test('death during an update does not restore the special token', async () => {
   assert.equal(f.G.scene.children.length, 1, 'the held intake owns a visible visual');
   // Die during the native pass of the very update that would restore the token.
   const enemy = f.make(); enemy.team = 1;
-  a._finishFrame = () => { a.hp = 0; a.damage(60, enemy, 'inkvac'); };
+  let dealt=false;a._finishFrame = () => {if(!dealt){dealt=true;a.hp=0;a.damage(60,enemy,'inkvac');}};
   f.tick(a);
+  assert.equal(a.alive,true,'the accepted lethal hit waits for the existing1F determination');f.tick(a);
   assert.equal(a.alive, false, 'the actor really died');
   assert.equal(a.specialActive, null, 'the token is not restored after death');
   assert.equal(f.inkVacState(a), null, 'death disposes the intake state');

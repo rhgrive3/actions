@@ -12,7 +12,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { adaptSource } from '../adapter.mjs';
+import {adaptKitSource as adaptSource} from './kit-composed-fixture.mjs';
 import { installKitTrizooka, VOLLEY_CONFIG, throwVolley, trizookaSpecialWeapon, TRIZOOKA_PROJECTILE_FIELDS, TRIZOOKA } from '../runtime/kit-trizooka.mjs';
 import { kitTrizookaClearPooled, kitTrizookaGhost, isDamageCarrier, kitTrizookaFlight } from '../runtime/trizooka-collision.mjs';
 

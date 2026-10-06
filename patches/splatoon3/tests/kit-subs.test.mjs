@@ -12,7 +12,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { adaptSource } from '../adapter.mjs';
+import {adaptKitSource as adaptSource} from './kit-composed-fixture.mjs';
 import { KIT_SUBS, SUCTION, CURLING, registerKitSubs, kitSubFor, kitSubRelease, kitBombGravity, kitBombRadius, kitBombFxRadius, kitBombPaintRadius, kitBombDamageBands, kitBombDamageMax, kitBombDamageMin, kitBombTrail, kitBombFuseTotal, kitBombPacket, kitGhostBombAttach, ghostBombSpawning, withGhostBombSpawn, curlingChargeFraction, curlingThrowSpeed, curlingBlastParams, NATIVE_STORM_GRAVITY } from '../runtime/kit-subs.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
@@ -158,7 +158,7 @@ function makeScene(api) {
 function tick(api, projectiles, seconds, hz = 60) {
   const dt = 1 / hz;
   const steps = Math.round(seconds * hz);
-  for (let i = 0; i < steps; i++) { api.G.time += dt; projectiles._updateBombs(dt); }
+  for (let i = 0; i < steps; i++) { api.G.time += dt;for(const b of projectiles.bombs)if(b.ghost&&b._netPeer){b._netPeer.sim=(b._netBornTick??0)+b._netSteps;b._netPeer.tr=b._netBorn+(b._netSteps+1)*dt;b._netPeer.lastTs=b._netPeer.tr;}projectiles._updateBombs(dt); }
   return projectiles.bombs[0] || null;
 }
 
@@ -308,7 +308,8 @@ test('the real native PaintSystem accepts the rolling trail centre', async () =>
   // Genuine native probe: run the REAL PaintSystem.prototype.splat on that exact
   // vector, outside the level AABB. Native code reads centre.x/y/z and returns 0
   // without reaching the GPU-atlas density internals a plain object could not pass.
-  const nativePaint = Object.create(api.PaintSystem.prototype);
+  class CpuPaint extends api.PaintSystem {_initGPU(){}}
+  const nativePaint = new CpuPaint(null,api.G.level,{atlasSize:256});
   nativePaint.level = api.G.level; nativePaint._qb = []; nativePaint.growing = []; nativePaint.atlas = { size: 256 };
   nativePaint.grid = new Int32Array(1024 * 1024);
   const probe = cur.s3TrailPoint;
@@ -369,14 +370,14 @@ test('native release charges suction ink 70 and rejects a 69 tank', async () => 
   // the real native update: sufficient ink releases and is charged exactly once
   const ok = releaseWith(api, 'suction', 100);
   const before = ok.actor.ink;
-  ok.runner.update(1 / 60, { fire: false, firePressed: false, sub: true, subReleased: false });
+  for(let i=0;i<6;i++)ok.runner.update(1 / 60, { fire: false, firePressed: false, sub: true, subReleased: false });
   ok.runner.update(1 / 60, { fire: false, firePressed: false, sub: false, subReleased: true });
   assert.equal(ok.projectiles.bombs.length, 1, 'a real native release created the bomb');
   assert.equal(before - ok.actor.ink, 70, 'ink charged exactly the resolved cost');
 
   // one point short: the native ink check must refuse and create nothing
   const short = releaseWith(api, 'suction', 69);
-  short.runner.update(1 / 60, { fire: false, firePressed: false, sub: true, subReleased: false });
+  for(let i=0;i<6;i++)short.runner.update(1 / 60, { fire: false, firePressed: false, sub: true, subReleased: false });
   short.runner.update(1 / 60, { fire: false, firePressed: false, sub: false, subReleased: true });
   assert.equal(short.projectiles.bombs.length, 0, 'a 69 tank cannot afford the release');
   assert.equal(short.actor.ink, 69, 'a refused release costs nothing');
@@ -503,7 +504,7 @@ function recordBomb(api, nm, weaponSub, hold) {
   nm.byNid.set(3, actor);
   api.G.local = actor;
   api.G.actors = [actor];
-  for (let i = 0; i < Math.max(1, Math.round(hold * 60)); i++) runner.update(1 / 60, { fire: false, firePressed: false, sub: true, subReleased: false });
+  for (let i = 0; i < Math.max(6, Math.round(hold * 60)); i++) runner.update(1 / 60, { fire: false, firePressed: false, sub: true, subReleased: false });
   runner.update(1 / 60, { fire: false, firePressed: false, sub: false, subReleased: true });
   assert.equal(projectiles.bombs.length, 1, 'the release produced exactly one bomb to record');
   const events = nm.out.filter(e => e[1] === 'b');
@@ -526,7 +527,7 @@ function playEvents(api, nm, events, actor) {
   const peer = nm._peer('peer');
   peer.init = true;
   peer.tr = Infinity;
-  for (const e of events) peer.events.push(e);
+  for (const e of events) {if(e.length===15){e._netTick=e.at(-2);e._netSeq=e.at(-1);}peer.events.push(e);}peer.sim=events[0]?._netTick??0;peer.lastTs=events[0]?.[0]??0;
   nm._playEvents();
 }
 
@@ -535,15 +536,15 @@ test('the native recBomb packet carries the sub id and the held charge', async (
   ground(api, 'record');
   const nm = makeNet(api);
   const suction = recordBomb(api, nm, 'suction', 0);
-  assert.equal(suction[0][10], 'suction', 'the recorded event names the sub');
-  assert.equal(suction[0][11], 0, 'a non-chargeable sub records no charge');
+  assert.equal(suction[0][11], 'suction', 'the recorded event names the sub');
+  assert.equal(suction[0][12], 0, 'a non-chargeable sub records no charge');
   const curling = recordBomb(api, nm, 'curling', 1);
-  assert.equal(curling[0][10], 'curling');
-  near(curling[0][11], 1, 'a full hold crosses the wire');
+  assert.equal(curling[0][11], 'curling');
+  near(curling[0][12], 1, 'a full hold crosses the wire');
   const tap = recordBomb(api, nm, 'curling', 0.2);
-  assert.ok(tap[0][11] > 0 && tap[0][11] < 1, 'a partial hold crosses the wire as a fraction');
+  assert.ok(tap[0][12] > 0 && tap[0][12] < 1, 'a partial hold crosses the wire as a fraction');
   // The native indices are untouched, so an older peer reads the same event.
-  assert.equal(curling[0].length, 12);
+  assert.equal(curling[0].length, 15);
   assert.equal(curling[0][2], 3, 'nid is still index 2');
 });
 
@@ -662,7 +663,7 @@ test('a ghost carries no paint, damage, turf or record authority', async () => {
   const muteSeen = [];
   const explode = api.G.projectiles._explodeBomb.bind(api.G.projectiles);
   api.G.projectiles._explodeBomb = (b) => { muteSeen.push(nm.mute); return explode(b); };
-  for (let i = 0; i < 400 && api.G.projectiles.bombs.length; i++) { api.G.time += 1 / 60; api.G.projectiles._updateBombs(1 / 60); }
+  for (let i = 0; i < 400 && api.G.projectiles.bombs.length; i++) tick(api,api.G.projectiles,1/60);
   assert.equal(api.G.projectiles.bombs.length, 0, 'the ghost detonated and left the native list');
   assert.equal(muteSeen.length, 1, 'the native blast ran once');
   assert.ok(muteSeen[0] > 0, 'the native ghost mute guard was raised during the blast');
@@ -706,10 +707,12 @@ test('the spawn guard refuses an authoritative attach inside the ghost window', 
   actor.remote = false;                    // an adopted peer: the native guard is open
   playEvents(api, nm, events, actor);
   const ghost = api.G.projectiles.bombs[api.G.projectiles.bombs.length - 1];
-  assert.ok(ghost, 'the ghost exists');
-  assert.equal(ghost.s3Resolved, undefined, 'the attach hook refused it inside the spawn window');
-  assert.equal(ghost.s3Sub, undefined);
-  assert.equal(ghost.s3GhostResolved.spec.id, 'suction', 'so only the presentation spec was attached');
+  assert.equal(ghost,undefined,'transport correctly refuses a newly local adopted actor');
+  api.G.projectiles.ghostBomb(actor,...events[0].slice(3,13));
+  const guarded=api.G.projectiles.bombs.at(-1);assert.ok(guarded,'direct native ghost spawn still exercises its intrinsic scope');
+  assert.equal(guarded.s3Resolved, undefined, 'the attach hook refused it inside the spawn window');
+  assert.equal(guarded.s3Sub, undefined);
+  assert.equal(guarded.s3GhostResolved.spec.id, 'suction', 'so only the presentation spec was attached');
   // The remote actor's own held charge is not ours to consume.
   assert.equal(actor.weaponRunner.s3SubHold, 0.5, "a ghost replay does not clear another owner's hold");
 });
@@ -826,7 +829,7 @@ test('parent: a native ghost bomb remains visual after transport disposal and pe
   const ghost = api.G.projectiles.bombs.at(-1); assert.equal(ghost.owner, actor, 'wire nid resolves the actual peer proxy');
   api.G.netm = null; actor.remote = false;
   let paints = 0, hits = 0, turf = 0, visuals = 0;
-  api.G.paint.splat = () => { paints++; return 1; }; actor.addTurf = () => { turf++; };
+  api.G.paint.splat = () => { paints++; return 1; }; actor.addTurf = amount => {assert.equal(amount,0,'no authoritative turf is credited');turf+=amount;};
   const victim = { team: 0, alive: true, pos: ghost.pos.clone(), damage() { hits++; return false; } };
   api.G.actors = [victim]; api.G.physics.los = () => true;
   api.G.fx = { explosion() { visuals++; } }; ghost.s3Mode = 'stuck'; ghost.fuse = 0;

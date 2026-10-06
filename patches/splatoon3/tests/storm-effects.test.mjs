@@ -1,3 +1,4 @@
+import { damageTenths } from '../runtime/final-damage.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from './storm-effects-fixture.mjs';
@@ -91,9 +92,10 @@ for (const count of [1, 2, 3]) test(`#225 ${count} overlapping rains deal only o
   const f = await fixture(), p = system(f), victim = f.make(); victim.team = 1; f.G.actors = [victim];
   const owners = Array.from({ length: count }, (_, i) => { const a = f.make(); a.nid = i + 1; return a; });
   owners.forEach(owner => cloud(f, owner)); p.clouds.reverse();
-  p._updateClouds(STEP); close(victim.hp, 100 - f.SPECIALS.storm.dps * STEP); assert.equal(victim.lastAttacker, owners[0]);
-  p.clouds.reverse(); p._updateClouds(STEP); close(victim.hp, 100 - f.SPECIALS.storm.dps * STEP * 2);
-  victim.damage(10, owners.at(-1), 'shooter'); close(victim.hp, 90 - f.SPECIALS.storm.dps * STEP * 2, 'other weapon damage stays independent');
+  const raw=[];const nativeDamage=victim.damage;victim.damage=function(amount,...args){raw.push(amount);return nativeDamage.call(this,amount,...args);};
+  p._updateClouds(STEP); assert.deepEqual(raw,[f.SPECIALS.storm.dps*STEP],'one unrounded rain amount reaches the actual Actor'); close(victim.hp, 100 - damageTenths(f.SPECIALS.storm.dps * STEP)); assert.equal(victim.lastAttacker, owners[0]);
+  p.clouds.reverse(); p._updateClouds(STEP); assert.deepEqual(raw,[f.SPECIALS.storm.dps*STEP,f.SPECIALS.storm.dps*STEP]); close(victim.hp, 100 - damageTenths(f.SPECIALS.storm.dps * STEP) * 2);
+  victim.damage(10, owners.at(-1), 'shooter'); close(victim.hp, 90 - damageTenths(f.SPECIALS.storm.dps * STEP) * 2, 'other weapon damage stays independent');
   p.clear();
 });
 
@@ -102,7 +104,7 @@ test('#225 each cloud retains paint, while exit, expiration, ghost ownership and
   const one = cloud(f, owner), two = cloud(f, owner); one.rainT = two.rainT = 0;
   let paint = 0; f.G.physics.raycast = (_p, _d, _len, h) => { h.hit = true; h.point.set(0,0,0); h.normal.set(0,1,0); return h; };
   f.G.paint.splat = () => { paint++; return 1; };
-  p._updateClouds(STEP); assert.equal(paint, 2); close(a.hp, 100 - f.SPECIALS.storm.dps * STEP);
+  p._updateClouds(STEP); assert.equal(paint, 2); close(a.hp, 100 - damageTenths(f.SPECIALS.storm.dps * STEP));
   a.pos.x = 20; const hp = a.hp; p._updateClouds(STEP); close(a.hp, hp);
   a.pos.x = 0; one.t = two.t = 8; p._updateClouds(STEP); close(a.hp, hp);
   cloud(f, owner, { ghost: true }); a.remote = true; p._updateClouds(STEP); close(a.hp, hp, 'remote victims remain owned by their client');
@@ -117,6 +119,6 @@ test('30/60/120Hz render schedules give identical overlap damage and gauge-lock 
     const clock = new f.FixedClock(), rows = [];
     for (let frame = 0; frame < hz * 8; frame++) clock.advance(1 / hz, dt => { f.G.time += dt; a.update(dt); p._updateClouds(dt); rows.push([a.hp, a.stormGaugeLock]); });
     if (expected) assert.deepEqual(rows, expected); else expected = rows;
-    close(a.stormGaugeLock, 0); close(a.hp, 1000 - f.SPECIALS.storm.dps * 8); p.clear();
+    close(a.stormGaugeLock, 0); close(a.hp, 1000 - damageTenths(f.SPECIALS.storm.dps * STEP) * 480); p.clear();
   }
 });

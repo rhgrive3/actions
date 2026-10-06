@@ -41,6 +41,15 @@ function resolveRollHitEpochs(runner) {
   }
 }
 
+// Recovered #527 admission contract: retain native buffering and current profile timing.
+export function rollerEmergeDelay(actor, fallback) {
+  return actor.weapon.kind === 'roller' ? actor.weapon.squidFlickDelay ?? fallback : fallback;
+}
+export function rollerFireBuffer(actor, fallback, dt) {
+  return actor.form === 'squid' && actor.weapon.kind === 'roller'
+    ? Math.max(fallback, rollerEmergeDelay(actor, fallback) + dt) : fallback;
+}
+
 export function rollerMode(w, vertical) {
   return vertical ? { ...w, flickWindup: w.verticalWindup, flickInterval: w.verticalInterval ?? w.flickInterval, flickInk: w.verticalInk } : w;
 }
