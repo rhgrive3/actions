@@ -145,6 +145,8 @@
       "chargeTime": 1,
       "inkRecoverStop": 0.3333333333333333,
       "damagePartialMax": 80,
+      "damageMinChargeTime": 0.13333333333333333,
+      "partialDamagePerSecond": 138.46,
       "fieldCollisionRadius": 0.02
     },
     "roller": {

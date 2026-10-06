@@ -9,6 +9,17 @@ export function splatlingChargeCap(ink, w) {
   const fraction = Math.max(0, Math.min(1, ink / w.inkFull)), first = w.burstFirst / w.burstMax, boundary = w.firstChargeTime / w.chargeTime;
   return fraction <= first ? fraction / first * boundary : boundary + (fraction - first) / (1 - first) * (1 - boundary);
 }
+export function chargerDamage(actor, weapon, charge) {
+  const legacy = weapon.damageMin + (weapon.damagePartialMax - weapon.damageMin) * charge;
+  const minimum = weapon.damageMinChargeTime, rate = weapon.partialDamagePerSecond;
+  if (!Number.isFinite(minimum) || !Number.isFinite(rate) || rate <= 0) return legacy;
+  const progress = Number.isFinite(actor.weaponRunner?.chargeT) ? actor.weaponRunner.chargeT : charge;
+  const elapsed = progress * weapon.chargeTime;
+  // The minimum-charge fire gate is tracked separately. Preserve its existing
+  // sub-8F output until that independent action-admission fix is composed.
+  if (elapsed + 1e-10 < minimum) return legacy;
+  return Math.min(weapon.damagePartialMax, weapon.damageMin + (elapsed - minimum) * rate);
+}
 export function ageDamage(weapon, age, baseDamage) {
   if (!(weapon.damageReduceEnd > weapon.damageReduceStart) || weapon.damageReduceStart < 0) return baseDamage;
   const k = Math.max(0, Math.min(1, (age - weapon.damageReduceStart) / (weapon.damageReduceEnd - weapon.damageReduceStart)));

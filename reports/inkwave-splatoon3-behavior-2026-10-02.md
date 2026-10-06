@@ -349,3 +349,13 @@ Main advanced to `3d8a48d37ea5d6206e4f4185fa4a8229ae1c6977` during completion; i
 ## ScreenFX pending-damage reset — #772
 
 Reset now clears the pending damage attacker and angle together with the cancelled timer. This closes the pause→quit retainer without altering the native60ms burst, direction or paused visual clock. Source/minified9 each pass, including an isolated Node forced-GC baseline/fix comparison; physical full-game heap/GPU measurements are not claimed. See [scope and evidence](inkwave-screenfx-damage-reset-772.md).
+
+## 2026-10-06 — Splat Charger partial-damage curve (#506)
+
+参照条件は Splatoon 3 Ver.11.3.0 の Splat Charger。ギアなし、地上ヒト状態、十分なインク、特殊状態なしでチャージして release する。Nintendo Support は Ver.11.3.0 を現行版としている。11.3.0 の武器調整一覧に Splat Charger の通常威力変更はなく、11.3.0 固定パラメータから通常ノーチャージ 40、partial 上限 80、full 160 を抽出した。
+
+部分威力の時間カーブは community measurement として [Splat Charger 検証表](https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%B9%E3%83%97%E3%83%A9%E3%83%81%E3%83%A3%E3%83%BC%E3%82%B8%E3%83%A3%E3%83%BC)を参照する。表の武器別性能は Ver.11.0.0 現在と明記され、最短チャージ 8F、partial 40.0–79.9、威力増加 138.46 damage/s、full charge 60F と記載。11.3.0 までの Nintendo update notes を確認したが、その後 Charger の基礎威力変更は列挙されていない。これは表の値を 11.3.0 に適用する根拠であり、Switch 実機での再計測ではない。raw parameter の partial endpoint は 80.0。0.1単位の丸め・境界は未確認のため、INKWAVE は raw cap 80.0 を保持する。
+
+INKWAVE の `inkwave-public/src/game/weapons.js` は generic S-curve の `charge` を damage 補間へ流していた。active S3 adapter は partial endpoint を 80 に直していたが、8 tick (`chargeT=8/60`, generic `charge=1/6`) の shot は 46.6667 damage になり、30 tick も partial ceiling に達していなかった。`patches/splatoon3/runtime/weapons.mjs` の専用 damage mapping は weapon charge progress を使い、8F で40、以降 138.46 damage/s、partial cap80、full 60Fで160を返す。射程には元の generic charge ratioを維持する。7F以下の発射 admission は別差分のため変更していない。
+
+再現・影響: 固定 tick で charge 8F→release、次に30F→release、最後に60F→release。修正前は8Fで46.6667、修正後は40。30Fでは部分上限80、60Fは160。射程計算の入力は各ケースで修正前と同一。native Actor と実 Projectiles source を使う回帰で、30/60/120 Hz rendering の固定 tick 結果を照合する。ロジック単独確認であり browser gameplay と Switch 実機比較は未実施。Ver.11.0.0 のcommunity表から11.3.0への適用、damage の per-frame 端数処理、最大 partial の表示79.9とraw80.0の差は未確認として残す。
