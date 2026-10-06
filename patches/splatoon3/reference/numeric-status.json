@@ -1399,6 +1399,21 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "weapons.slosher.shotGuide.unitOrderNum": {
+    "value": 1,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.slosher.shotGuide.bulletOrderNumInUnit": {
+    "value": 0,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.slosher.shotGuide.frame": {
+    "value": 13,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
   "bomb.fuse": {
     "value": 1,
     "status": "calibration or derived value; see reference raw table and unverified list",
