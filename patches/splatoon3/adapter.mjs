@@ -144,25 +144,31 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code,
       '// ------------------------------------------------------------------ HUD-only art',
       "// Splatoon 3 drives the charge reticle off the runner's fixed-tick charge clock, never the\n" +
-      "// render cadence. The standard Splat Charger keeps the ring and the gauge dark for its\n" +
-      "// profile's 5F display delay, then fills (chargeFrames - delay) / (fullChargeFrames - delay),\n" +
-      "// so 6F already reads 1/55. Presentation only: the authoritative runner charge, shot damage,\n" +
-      "// range, ink cost and projectile timing are never read back from here.\n" +
+      "// render cadence. The standard Splat Charger keeps the whole reticle off for its profile's\n" +
+      "// 5F display delay, then fills (chargeFrames - delay) / (fullChargeFrames - delay), so 6F\n" +
+      "// already reads 1/55. `delayed` separates a real charge still inside that dead period from\n" +
+      "// an idle runner, so only the former hides the reticle: idle Charger/Splatling visibility is\n" +
+      "// a separate owner and is deliberately not gated here. Presentation only: the authoritative\n" +
+      "// runner charge, shot damage, range, ink cost and projectile timing are never read back.\n" +
       'function chargerReticleView(runner, w) {\n' +
-      '  if (!runner || !runner.charging) return { visible: false, gauge: 0 };\n' +
+      '  if (!runner || !runner.charging) return { visible: false, charging: false, delayed: false, gauge: 0 };\n' +
       '  const fullFrames = Math.max(1, Math.round((w.chargeTime || 1) * 60));\n' +
       '  const frames = Math.max(0, +runner.chargeT || 0) * fullFrames;\n' +
       '  const delay = Math.max(0, +w.reticleDelayF || 0);\n' +
-      '  if (frames <= delay + 1e-9) return { visible: false, gauge: 0 };\n' +
-      '  return { visible: true, gauge: clamp((frames - delay) / Math.max(1, fullFrames - delay)) };\n' +
+      '  if (frames <= delay + 1e-9) return { visible: false, charging: true, delayed: true, gauge: 0 };\n' +
+      '  return { visible: true, charging: true, delayed: false, gauge: clamp((frames - delay) / Math.max(1, fullFrames - delay)) };\n' +
       '}\n' +
       '\n' +
       '// ------------------------------------------------------------------ HUD-only art',
       'charger charge-reticle display delay helper');
     code = replaceOnce(code,
       "    if (L.kind === 'charger') {\n      const c = clamp(+f.charge || 0);\n      if (L.charge == null || Math.abs(c - L.charge) > 0.004) {\n        L.charge = c;\n        this._chargeEl.style.strokeDashoffset = (this._chargeC * (1 - c)).toFixed(2);\n        this.ret.style.setProperty('--ch', c.toFixed(3));\n      }\n      const full = c >= 0.999;\n      if (full !== L.full) { L.full = full; this.ret.classList.toggle('is-full', full); if (full) this._restart(this.ret, 'is-flash'); }\n      const charging = c > 0.001;\n      if (charging !== L.charging) { L.charging = charging; this.ret.classList.toggle('is-charging', charging); }\n    } else if",
-      "    if (L.kind === 'charger') {\n      const view = chargerReticleView(this._local()?.weaponRunner, WEAPONS[w] || {});\n      const c = view.gauge;\n      if (L.charge == null || Math.abs(c - L.charge) > 0.004) {\n        L.charge = c;\n        this._chargeEl.style.strokeDashoffset = this._chargeC * (1 - c);\n        this.ret.style.setProperty('--ch', c.toFixed(3));\n      }\n      const full = view.visible && c >= 0.999;\n      if (full !== L.full) { L.full = full; this.ret.classList.toggle('is-full', full); if (full) this._restart(this.ret, 'is-flash'); }\n      const charging = view.visible;\n      if (charging !== L.charging) { L.charging = charging; this.ret.classList.toggle('is-charging', charging); }\n    } else if",
+      "    if (L.kind === 'charger') {\n      const view = chargerReticleView(this._local()?.weaponRunner, WEAPONS[w] || {});\n      const c = view.gauge;\n      if (L.charge == null || Math.abs(c - L.charge) > 0.004) {\n        L.charge = c;\n        this._chargeEl.style.strokeDashoffset = this._chargeC * (1 - c);\n        this.ret.style.setProperty('--ch', c.toFixed(3));\n      }\n      const full = view.visible && c >= 0.999;\n      if (full !== L.full) { L.full = full; this.ret.classList.toggle('is-full', full); if (full) this._restart(this.ret, 'is-flash'); }\n      const charging = view.visible;\n      if (charging !== L.charging) { L.charging = charging; this.ret.classList.toggle('is-charging', charging); }\n      const delayed = view.delayed;\n      if (delayed !== L.chargeDelay) { L.chargeDelay = delayed; this.ret.classList.toggle('is-charge-delay', delayed); }\n    } else if",
       'charger charge-reticle display delay');
+    code = replaceOnce(code,
+      '    this._L.spread = null; this._L.charge = null; this._L.full = null;',
+      '    this._L.spread = null; this._L.charge = null; this._L.full = null; this._L.chargeDelay = null;',
+      'reset the charge-delay reticle gate on rebuild');
     code = replaceOnce(code,
       "  judge({ colors = ['#ff8a14', '#2f5bff'], percents = [50, 50], names = TEAM_NAMES } = {}) {",
       "  judge({ colors = ['#ff8a14', '#2f5bff'], percents = [50, 50], names = TEAM_NAMES, winner: authoritativeWinner = null } = {}) {",
