@@ -2,6 +2,11 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { combatWorld } from './combat-integration-fixture.mjs';
 
+const flushLethal = world => {
+  world.G.time += 1 / 60;
+  world.victim.update(1 / 60);
+};
+
 test('combined wire path rejects a held lethal old-life hit and admits a new-life hit', async () => {
   const shooter = await combatWorld('A'), defender = await combatWorld('B');
   try {
@@ -28,6 +33,8 @@ test('combined lethal owner hit transfers exact original burst credit once throu
   try {
     shooter.G.projectiles.applyHit(shooter.attacker, shooter.victim, 100, 'shooter');
     defender.net.onMessage('A', shooter.wire.at(-1).data);
+    assert.equal(defender.victim.alive, true, 'lethal hit is pending on its receive tick');
+    flushLethal(defender);
     assert.equal(defender.victim.alive, false);
     assert.equal(defender.paint.length, 1, 'one authoritative death-burst paint');
     defender.net._sendTick(); const terminal = defender.wire.at(-1).data;
@@ -52,6 +59,7 @@ test('reverse ownership retains the exact same splat reward', async () => {
   try {
     shooter.G.projectiles.applyHit(shooter.victim, shooter.attacker, 100, 'shooter');
     defender.net.onMessage('B', shooter.wire.at(-1).data);
+    flushLethal(defender);
     defender.net._sendTick(); shooter.deliver('A', defender.wire.at(-1).data);
     assert.equal(shooter.victim.stats.turf, .123456789);
     assert.equal(shooter.victim.special, .123456789);
@@ -65,6 +73,7 @@ test('snapshot/death presentation does not swallow pending reward or suppress it
   try {
     shooter.G.projectiles.applyHit(shooter.attacker, shooter.victim, 100, 'shooter');
     defender.net.onMessage('A', shooter.wire.at(-1).data);
+    flushLethal(defender);
     shooter.victim.alive = false; shooter.victim.hp = 0;
     shooter.attacker.specialActive = { id: 'storm' };
     defender.net._sendTick(); shooter.deliver('B', defender.wire.at(-1).data);
@@ -79,6 +88,7 @@ test('late original-life terminal rewards its shooter but cannot splat the newer
   try {
     shooter.G.projectiles.applyHit(shooter.attacker, shooter.victim, 100, 'shooter');
     defender.net.onMessage('A', shooter.wire.at(-1).data);
+    flushLethal(defender);
     defender.net._sendTick(); const terminal = defender.wire.at(-1).data;
     shooter.victim.netLife++; shooter.victim.net.lastLife = shooter.victim.netLife;
     shooter.deliver('B', terminal);
@@ -115,6 +125,8 @@ test('offline damage and death-burst rewards remain native with no network owner
     world.G.projectiles.applyHit(world.attacker, world.victim, 30, 'shooter');
     assert.equal(world.victim.hp, 70); assert.equal(world.paint.length, 0);
     world.G.projectiles.applyHit(world.attacker, world.victim, 70, 'shooter');
+    assert.equal(world.victim.alive, true);
+    flushLethal(world);
     assert.equal(world.attacker.stats.turf, .123456789);
     assert.equal(world.attacker.special, .123456789);
     assert.equal(world.paint.length, 1);
@@ -161,6 +173,7 @@ test('malformed terminal area cannot consume the legitimate credit for that life
   try {
     a.G.projectiles.applyHit(a.attacker, a.victim, 100, 'shooter');
     b.net.onMessage('A', a.wire.at(-1).data);
+    flushLethal(b);
     b.net._sendTick(); const original = b.wire.at(-1).data;
     const packed = original.e.find(e => e[1] === 'ev' && e[2] === 'splatted');
     let time = original.ts;
@@ -182,7 +195,7 @@ test('remote scorer proxy converges through the native integer-precision reward 
   const a = await combatWorld('A', { paintArea:area }), b = await combatWorld('B', { paintArea:area });
   try {
     a.G.projectiles.applyHit(a.attacker, a.victim, 100, 'shooter');
-    b.net.onMessage('A', a.wire.at(-1).data); b.net._sendTick();
+    b.net.onMessage('A', a.wire.at(-1).data); flushLethal(b); b.net._sendTick();
     a.deliver('B', b.wire.at(-1).data);
     assert.equal(a.attacker.stats.turf, area);
     assert.equal(a.attacker.special, area);
