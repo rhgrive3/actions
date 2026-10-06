@@ -72,13 +72,17 @@ export function adaptIssue477Weapons(code) {
     'weapons tryDodge 4F startup initialization'
   );
 
-  // 3. dodgeVel: do not own horizontal velocity or apply displacement curve during startup
-  code = replaceOnce(
-    code,
-    '  dodgeVel(vel) {\n    const d = this.dodge;\n    if (!d) return false;',
-    '  dodgeVel(vel) {\n    const d = this.dodge;\n    if (!d || (d.startup !== undefined && d.startup > 1e-10)) return false;',
-    'weapons dodgeVel startup gate'
-  );
+  // Modern movement delegates to the shared interval integrator. Its startup
+  // gate is connected below, including Actor's direct integration entry.
+  const movementDodgeVel = '  dodgeVel(vel, dt = 1 / 60) {\n    return writeDodgeVelocity(this, vel, dt);\n  }';
+  if (code.includes(movementDodgeVel)) {
+    code = replaceOnce(code, movementDodgeVel, movementDodgeVel, 'weapons shared dodge velocity owner');
+  } else {
+    code = replaceOnce(code,
+      '  dodgeVel(vel) {\n    const d = this.dodge;\n    if (!d) return false;',
+      '  dodgeVel(vel) {\n    const d = this.dodge;\n    if (!d || (d.startup !== undefined && d.startup > 1e-10)) return false;',
+      'weapons dodgeVel startup gate');
+  }
 
   // 4. _dualies: countdown startup before advancing 12F movement clock; suppress trail paint during startup
   code = replaceOnce(
@@ -88,13 +92,18 @@ export function adaptIssue477Weapons(code) {
     'weapons _dualies startup countdown'
   );
 
-  // 5. _dualies: exact 12F duration float tolerance and post-roll cooldown gate
-  code = replaceOnce(
-    code,
-    '      if (d.t >= d.dur) { this.dodge = null; this.lockT = w.lockTime; }',
-    '      if (d.t >= d.dur - 1e-5) { this.dodge = null; this.lockT = w.lockTime; if (this.cooldown < 0) this.cooldown = 0; }',
-    'weapons _dualies exact 12F duration float tolerance'
-  );
+  // Preserve the installed movement owner's exact end and recovery carry.
+  const movementEnd = '      if (d.t + MOVEMENT_EPSILON >= d.dur) { this.dodge = null; this.lockT = Math.max(0, w.lockTime - Math.max(0, d.t - d.dur)); }';
+  if (code.includes(movementEnd)) {
+    code = replaceOnce(code, movementEnd,
+      movementEnd.replace(' }', ' if (this.cooldown < 0) this.cooldown = 0; }'),
+      'weapons shared dodge end and recovery carry');
+  } else {
+    code = replaceOnce(code,
+      '      if (d.t >= d.dur) { this.dodge = null; this.lockT = w.lockTime; }',
+      '      if (d.t >= d.dur - 1e-5) { this.dodge = null; this.lockT = w.lockTime; if (this.cooldown < 0) this.cooldown = 0; }',
+      'weapons _dualies exact 12F duration float tolerance');
+  }
 
   return code;
 }
@@ -272,11 +281,25 @@ export function adaptIssue477Net(code) {
   return code;
 }
 
+export function adaptIssue477MovementPhysics(code) {
+  // Startup owns only the roll displacement. Native gravity, contact and
+  // external velocity still run; admission already arrests previous walking.
+  code = replaceOnce(code,
+    '  const d = r.dodge;\n  if (!d) return false;',
+    '  const d = r.dodge;\n  if (!d || d.startup > MOVEMENT_EPSILON) return false;',
+    'shared dodge velocity waits for startup');
+  return replaceOnce(code,
+    '  if (!d || a.climbing || a.specialActive || a.superJumpState || !(dt > 0)) {',
+    '  if (!d || d.startup > MOVEMENT_EPSILON || a.climbing || a.specialActive || a.superJumpState || !(dt > 0)) {',
+    'Actor integration waits for startup');
+}
+
 export function adaptIssue477Source(rel, code) {
   const normalized = rel.replace(/^inkwave-public\//, '');
   if (normalized === 'src/game/weapons.js') return adaptIssue477Weapons(code);
   if (normalized === 'src/game/actor.js') return adaptIssue477Actor(code);
   if (normalized === 'src/net/netmatch.js') return adaptIssue477Net(code);
   if (normalized === 'patches/splatoon3/runtime/dualies-motion.mjs') return adaptIssue477DualiesMotion(code);
+  if (normalized === 'patches/splatoon3/runtime/movement-physics.mjs') return adaptIssue477MovementPhysics(code);
   return code;
 }
