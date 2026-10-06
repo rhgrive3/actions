@@ -104,7 +104,9 @@ export function adaptAimProfiles(rel, code) {
 
   if (rel === 'src/game/player.js') {
     // Gyro stale delta discard on input ownership change to touch
-    const gyroAnchor = "    // gyro: device turn → camera turn (its own invert settings; the Splatoon handheld feel)\n    if (touch && touch.gyro.enabled) {";
+    // Earlier reliability/gameplay adapters may rewrite the explanatory comment
+    // around this branch. Own the semantic branch itself, not comment bytes.
+    const gyroAnchor = "    if (touch && touch.gyro.enabled) {";
     const gyroResetCode = "    if (this._lastOwnedInput !== inp.lastDevice) {\n" +
       "      if (this._lastOwnedInput && inp.lastDevice === 'touch') {\n" +
       "        const mob = touch || inp.mobile;\n" +
