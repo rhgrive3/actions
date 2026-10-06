@@ -10,6 +10,17 @@ function replaceOnce(code, before, after, label) {
   return code.slice(0, at) + after + code.slice(at + before.length);
 }
 
+function replaceVariantOnce(code, variants, label) {
+  const found = variants.filter(({ before }) => {
+    const at = code.indexOf(before);
+    return at >= 0 && code.indexOf(before, at + before.length) < 0;
+  });
+  if (found.length !== 1) {
+    throw new Error(`INKWAVE quality patch conflict (aim profile: ${label}): expected exactly one composed connection`);
+  }
+  return replaceOnce(code, found[0].before, found[0].after, label);
+}
+
 export function adaptAimProfiles(rel, code) {
   if (rel === 'src/config.js') {
     // Reliability may already own an independent padInvertX default between
@@ -128,11 +139,28 @@ export function adaptAimProfiles(rel, code) {
       gyroAnchor;
     code = replaceOnce(code, gyroAnchor, gyroResetCode, 'player gyro reset on ownership switch');
 
-    // Right stick horizontal inversion (invertX). Map ownership may nest this
-    // output one block deeper, so anchor the statement rather than indentation.
-    const stickLookAnchor = "rig.yaw -= this.padLook.x * 3.6 * ps * boost * friction * dt;";
-    const stickLookPatched = "const invX = s.invertX ? -1 : 1;\n      rig.yaw -= this.padLook.x * 3.6 * ps * boost * friction * dt * invX;";
-    code = replaceOnce(code, stickLookAnchor, stickLookPatched, 'player pad invertX');
+    // Right stick horizontal inversion (invertX). Reliability may already own
+    // a global padInvertX multiplier, and map ownership may already suppress the
+    // camera output while keeping the stick filter live. Compose with every
+    // accepted predecessor shape without dropping either owner.
+    code = replaceVariantOnce(code, [
+      {
+        before: "      if (!mapUp) rig.yaw -= this.padLook.x * 3.6 * ps * boost * friction * dt * (s.padInvertX ? -1 : 1);",
+        after: "      const invX = s.invertX ? -1 : 1;\n      if (!mapUp) rig.yaw -= this.padLook.x * 3.6 * ps * boost * friction * dt * (s.padInvertX ? -1 : 1) * invX;",
+      },
+      {
+        before: "      rig.yaw -= this.padLook.x * 3.6 * ps * boost * friction * dt * (s.padInvertX ? -1 : 1);",
+        after: "      const invX = s.invertX ? -1 : 1;\n      rig.yaw -= this.padLook.x * 3.6 * ps * boost * friction * dt * (s.padInvertX ? -1 : 1) * invX;",
+      },
+      {
+        before: "      if (!mapUp) rig.yaw -= this.padLook.x * 3.6 * ps * boost * friction * dt;",
+        after: "      const invX = s.invertX ? -1 : 1;\n      if (!mapUp) rig.yaw -= this.padLook.x * 3.6 * ps * boost * friction * dt * invX;",
+      },
+      {
+        before: "      rig.yaw -= this.padLook.x * 3.6 * ps * boost * friction * dt;",
+        after: "      const invX = s.invertX ? -1 : 1;\n      rig.yaw -= this.padLook.x * 3.6 * ps * boost * friction * dt * invX;",
+      },
+    ], 'player pad invertX');
 
     return code;
   }
