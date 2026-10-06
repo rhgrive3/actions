@@ -60,6 +60,7 @@ export function installWeapons(context, profile) {
     this.s3Stored = null; this.s3Turret = false; this.s3FlickVertical = false; this.s3BlasterWindup = 0;
     this.s3SloshRecovery = false;
     this.s3ChargerPostShot = 0; this.s3DualiesPostShot = 0; this.s3DodgeShotPending = 0;
+    this.s3BlasterJumpT = null; this.s3WasGrounded = false;
     return result;
   };
   WeaponRunner.prototype.busy = function () {
@@ -173,11 +174,74 @@ export function installWeapons(context, profile) {
     }
     return result;
   };
+  // #684: the S3 Blaster carries a jump-accuracy state on the fixed simulation
+  // clock. Only the sourced boundaries are modelled — recovery starts at
+  // Jump_DegBiasDecreaseStartFrame, reaches its endpoint at Jump_DegBiasEndFrame,
+  // and the initial outer-reticle bias is Jump_DegBiasMax. The frames come from
+  // the pinned extraction and convert with the pinned referenceHz. The curve
+  // *between* the two boundaries is not a sourced Nintendo value and is kept
+  // replaceable in one place.
+  const blasterParam = profile.weaponsFidelityCompletion?.weapons?.blaster?.WeaponParam;
+  const BLASTER_REF_HZ = Number.isFinite(profile.referenceHz) ? profile.referenceHz : 60;
+  const BLASTER_START = Number.isFinite(blasterParam?.Jump_DegBiasDecreaseStartFrame)
+    ? blasterParam.Jump_DegBiasDecreaseStartFrame / BLASTER_REF_HZ : null;
+  const BLASTER_END = Number.isFinite(blasterParam?.Jump_DegBiasEndFrame)
+    ? blasterParam.Jump_DegBiasEndFrame / BLASTER_REF_HZ : null;
+  const BLASTER_BIAS_MAX = Number.isFinite(blasterParam?.Jump_DegBiasMax) ? blasterParam.Jump_DegBiasMax : null;
+  const blasterJumpSupported = () =>
+    Number.isFinite(BLASTER_START) && Number.isFinite(BLASTER_END) && BLASTER_END > BLASTER_START && BLASTER_BIAS_MAX > 0;
+  // Placeholder monotone ramp between the sourced boundaries; sourcing the real
+  // curve means replacing this function only.
+  const blasterJumpBias = age => age <= BLASTER_START ? BLASTER_BIAS_MAX
+    : age >= BLASTER_END ? 0
+      : BLASTER_BIAS_MAX * (BLASTER_END - age) / (BLASTER_END - BLASTER_START);
+  // `envelope` is the sourced maximum angular endpoint (Jump_DegSwerve, gear-
+  // scaled); `cone` is the expected deviation the HUD reticle and the shot share.
+  WeaponRunner.prototype.s3BlasterJumpState = function (w) {
+    if (!w || w.kind !== 'blaster' || !blasterJumpSupported())
+      return { supported: false, active: false, age: null, frames: null, bias: 0, envelope: 0, ground: 0, cone: 0 };
+    const active = this.s3BlasterJumpT != null, bias = active ? blasterJumpBias(this.s3BlasterJumpT) : 0;
+    const envelope = w.spreadAir, ground = w.spreadGround;
+    return { supported: true, active, age: active ? this.s3BlasterJumpT : null,
+      frames: active ? this.s3BlasterJumpT * BLASTER_REF_HZ : null, bias, envelope, ground,
+      cone: ground + (envelope - ground) * bias };
+  };
+  const runnerUpdate = WeaponRunner.prototype.update;
+  WeaponRunner.prototype.update = function (dt, input) {
+    const w = this.a?.weapon;
+    if (blasterJumpSupported() && w?.kind === 'blaster') {
+      const grounded = !!this.a.grounded;
+      // The state starts on the actual leave-ground edge, so a runner that never
+      // jumped keeps the plain grounded/airborne endpoints (#556).
+      if (this.s3WasGrounded === true && !grounded) this.s3BlasterJumpT = 0;
+      else if (this.s3BlasterJumpT != null) this.s3BlasterJumpT += dt;
+      this.s3WasGrounded = grounded;
+      // Landing never erases the remaining jump accuracy early: the state runs
+      // to the sourced end frame and only then returns to the ground endpoint.
+      if (this.s3BlasterJumpT != null && grounded && this.s3BlasterJumpT >= BLASTER_END) this.s3BlasterJumpT = null;
+    } else if (this.s3BlasterJumpT != null) { this.s3BlasterJumpT = null; this.s3WasGrounded = false; }
+    return runnerUpdate.call(this, dt, input);
+  };
   WeaponRunner.prototype._spreadDeg = function (w) {
     // The upstream blaster reads `spread`, while the pinned profile supplies
-    // Stand_DegSwerve as spreadGround. Connect both ground and jump values.
-    if (w.kind === 'blaster') return this.a.grounded ? w.spreadGround : w.spreadAir;
+    // Stand_DegSwerve as spreadGround. Connect both ground and jump values, and
+    // while a jump-accuracy state is live use its timed cone.
+    if (w.kind === 'blaster') {
+      const state = this.s3BlasterJumpState(w);
+      return state.active ? state.cone : (this.a.grounded ? w.spreadGround : w.spreadAir);
+    }
     return w.kind === 'dualies' && this.s3Turret ? w.spreadLock : spread.call(this, w);
+  };
+  const fireBlaster = Projectiles.prototype.fireBlaster;
+  Projectiles.prototype.fireBlaster = function (a, w, spreadDeg) {
+    const state = a?.weaponRunner?.s3BlasterJumpState?.(w);
+    if (state?.active) {
+      // The sourced state is an inner/outer reticle bias, not one uniform cone:
+      // with probability `bias` the glob leaves on the airborne envelope,
+      // otherwise it stays on the grounded endpoint.
+      return fireBlaster.call(this, a, w, Math.random() < state.bias ? state.envelope : state.ground);
+    }
+    return fireBlaster.call(this, a, w, spreadDeg);
   };
   const fireCharger = Projectiles.prototype.fireCharger;
   Projectiles.prototype.fireCharger = function (a, w, charge) {

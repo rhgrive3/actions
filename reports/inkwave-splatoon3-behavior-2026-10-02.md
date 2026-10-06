@@ -357,3 +357,11 @@ Reset now clears the pending damage attacker and angle together with the cancell
 ## 2026-10-06 — Dualies wall-drop (#604) and composed-runtime guards
 
 Base main `67fec182`. Splat Dualies wall impacts now enter the existing sourced wall-drop state using the pinned 11.3.0 top-level `WallDropMoveParam`/`WallDropCollisionPaintParam` (shock 1.3, fall 0.65, ground 0.6; 20–40F + 10F + 15–35F at 0.06). Previously the round died on the contact frame after one generic impact. Damage is unchanged. Shooter (#385) and Charger (#625/#268) are excluded: Shooter is owned elsewhere, and the Charger record omits three period fields. #770, #777, #638/#637, #644/#643 and #556 were already correct after adapter composition (the reports read raw source). They are now pinned by composed-runtime tests. This is logic-level and emitted-verifier evidence; a Switch visual/frame comparison is still 未確認. Details: [inkwave-wall-drop-dualies-guards-2026-10-06.md](inkwave-wall-drop-dualies-guards-2026-10-06.md).
+
+## 2026-10-07 — Blaster のジャンプ精度タイムライン (#684)
+
+Base main `f31f5da439134fe49bb89018dad5557671a49c67`。本家 Ver.11.3.0 のブラスターは、ジャンプ直後に外側レティクルへ寄る確率（Jump_DegBiasMax=0.5）を持ち、Jump_DegBiasDecreaseStartFrame=25F まで保持したのち、Jump_DegBiasEndFrame=70F で回復端点に達する。INKWAVE の `patches/splatoon3/runtime/weapons.mjs` の `_spreadDeg` はブラスターを `a.grounded ? spreadGround : spreadAir` の二値に縮退させており、この時間状態を消費していなかった（pinned の `Jump_DegBias*` に runtime 消費者なし）。
+
+固定シミュレーションクロック上にジャンプ精度状態を追加し、出典のある端点（25F 開始 / 70F 終端 / 初期 bias 0.5 / 空中包絡 10.0°・地上 0°）のみを実装した。25F→70F の中間補間則は本家資料に無いため Nintendo 値として断定せず、置換可能な1関数に留める。着地後も 70F まで状態を保持し、HUD（`weaponRunner.spread`）と弾道サンプラ（bias による内外レティクル選択）が同じ状態を消費する。ダメージ・弾道・射程・ローラー等の他ブキは不変。
+
+**ロジックのみ確認**（focused test 9/9、before=1/9、既存 #556 回帰 1/1）。ブラウザ実表示・Switch 実機のレティクル遷移比較は**未確認**。本家の根拠・実装箇所・再現操作・影響は[詳細](inkwave-blaster-jump-accuracy-684-2026-10-07.md)を参照。
