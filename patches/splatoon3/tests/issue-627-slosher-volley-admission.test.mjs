@@ -81,9 +81,9 @@ test('the victim owner commits only accepted Slosher damage for a remote volley'
     assert.equal(ownedVictim.hp, 30, 'the owner deduplicates later contacts from that volley');
     const groups = owner.G.projectiles._s3SlosherOwnerGroups;
     assert.equal(groups.size, 1);
-    const disposable = { _s3SlosherOwnerGroups: groups, list: [], pool: [], bombs: [], clouds: [], beams: [],
-      sights: new Map(), blobs: { count: 0 }, scene: { remove() {} } };
-    owner.Projectiles.prototype.clear.call(disposable);
+    const disposable = new owner.Projectiles(new owner.THREE.Scene());
+    disposable._s3SlosherOwnerGroups = groups;
+    disposable.clear();
     assert.equal(groups.size, 0, 'projectile reset releases per-match owner group state');
   } finally {
     shooter.dispose(); owner.dispose();
@@ -155,9 +155,9 @@ test('host adoption gives a reused Slosher volley id an independent victim budge
     assert.equal(groups.size, 2, 'the accepted ledgers are scoped to the old and current owner');
     assert.ok([...groups.values()].every(group => Object.prototype.toString.call(group) === '[object WeakMap]'),
       'victim budgets do not retain Actor keys strongly');
-    const disposable = { _s3SlosherOwnerGroups: groups, list: [], pool: [], bombs: [], clouds: [], beams: [],
-      sights: new Map(), blobs: { count: 0 }, scene: { remove() {} } };
-    victimOwner.Projectiles.prototype.clear.call(disposable);
+    const disposable = new victimOwner.Projectiles(new victimOwner.THREE.Scene());
+    disposable._s3SlosherOwnerGroups = groups;
+    disposable.clear();
     assert.equal(groups.size, 0, 'native projectile clear releases per-match owner group state');
   } finally {
     oldOwner.dispose(); newHost.dispose(); victimOwner.dispose();
