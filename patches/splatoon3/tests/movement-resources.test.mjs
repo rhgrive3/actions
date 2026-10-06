@@ -16,8 +16,13 @@ test('contact resources use the newly resolved paint surface on both sides of a 
   close(a.ink, 0); close(a.hp, 100 - f.profile.resources.enemyInkDps / 60);
   a._integrate = () => { a.ground.u = 0; };
   const hp = a.hp; f.tick(a);
-  assert.equal(a.submerged, true); assert.equal(a.onEnemy, false);
-  close(a.hp, hp); close(a.ink, f.profile.resources.inkRefillSwim / 60);
+  assert.equal(a.form, 'kid', 'the enemy surface sampled before movement owns this frame\'s form');
+  assert.equal(a.submerged, false); assert.equal(a.onEnemy, false);
+  close(a.hp, hp); close(a.ink, f.profile.resources.inkRefillKid / 60);
+  f.tick(a);
+  assert.equal(a.form, 'squid', 'the newly resolved own surface admits held Swim on the next tick');
+  assert.equal(a.submerged, true);
+  close(a.ink, (f.profile.resources.inkRefillKid + f.profile.resources.inkRefillSwim) / 60);
 });
 
 test('takeoff clears submerged recovery and enemy contact during the same actor tick', async () => {
@@ -61,12 +66,16 @@ test('contact ink remains nonlethal and bounded, including return after leaving 
 test('refill predicates distinguish own ink, wall, dry/enemy squid, and stored charge', async () => {
   const f = await fixture(), a = f.make('charger'); a.form = 'squid'; a.intent.squid = true; a.ink = 0;
   f.G.paint.sample = () => 0; f.tick(a, 5); close(a.ink, 0);
-  f.G.paint.sample = () => 2; f.tick(a, 5); close(a.ink, 0);
+  f.G.paint.sample = () => 2; f.tick(a, 5);
+  assert.equal(a.form, 'kid', 'a grounded enemy surface exits invalid squid state');
+  close(a.ink, f.profile.resources.inkRefillKid * 5 / 60);
   f.G.paint.sample = () => 1; a.intent.fire = true; a.weaponRunner.s3Stored = { charge: 1, remaining: 1 };
+  a.ink = 0;
   f.tick(a, 5); close(a.ink, 0);
   a.weaponRunner.s3Stored = null; a.intent.fire = false;
   a.fireBuffer = 0; a.weaponRunner.charging = false; a.weaponRunner.charge = 0; a.weaponRunner.chargeT = 0;
   a.climbing = true; a._updateClimb = () => {}; a.grounded = false;
+  a.intent.fire = false; a.weaponRunner.reset();
   f.tick(a); close(a.ink, f.profile.resources.inkRefillSwim / 60);
 });
 

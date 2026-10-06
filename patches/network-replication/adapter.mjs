@@ -34,6 +34,17 @@ export function adaptNetworkSource(rel, code) {
     retireNetworkGhosts(a);
     this.byNid.delete(a.nid);`, 'departed owner retirement');
 
+    patch('  _hit(d, from) {', `  _hit(d, from) {
+    // Bomb damage is victim-owned. Ignore attack-side guesses, including packets
+    // from older clients; the ordered bomb event is replayed on the victim owner.
+    if (d.w === 'bomb') return;`, 'reject shooter bomb hit');
+    patch("  shouldApplyHit(attacker, victim) {\n    // ghosts never hurt anyone; the shooter's client decides, the victim's owner applies\n    if (this._applyingHit) return 'local';",
+      `  shouldApplyHit(attacker, victim, weaponId) {
+    // A bomb ghost tests local actors using their owner's position and LOS.
+    // Never accept the attacker's remote-actor geometry as bomb authority.
+    if (this._applyingHit) return 'local';
+    if (weaponId === 'bomb') return victim.remote ? 'drop' : 'local';`, 'bomb recipient authority');
+
     patch('  _rec(e) { this.out.push([r3(now()), ...e]); }', `  _rec(e) {
     const seq = this._eventSeq = (this._eventSeq || 0) + 1;
     const tick = Math.round((G.time || 0)*60);
@@ -144,6 +155,7 @@ export function adaptNetworkSource(rel, code) {
         const b = a && G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9], e[10]);
         if (b) {
           b._netBorn = e[0]; b._netBornTick = e._netTick; b._netPeer = this.peers.get(from); b._netSteps = 0;
+          b._netBornLocal = Number.isFinite(b._netPeer?.off) ? e[0] + b._netPeer.off : NaN;
         }
         break;
       }`, 'bomb timeline birth with optional metadata');
@@ -219,6 +231,16 @@ function retireNetworkGhosts(owner = null) {
 `;
   }
   if (rel === 'src/game/weapons.js') {
+    patch("    const route = nm ? nm.shouldApplyHit(attacker, victim) : 'local';",
+      "    const route = nm ? nm.shouldApplyHit(attacker, victim, weaponId) : 'local';", 'pass weapon to damage authority');
+    patch('    const c = b.pos;\n    let area = G.paint.splat',
+      '    const c = b.pos;\n    const detonationLocalTime = b.ghost ? b._netBornLocal + b.age : null;\n    let area = G.paint.splat',
+      'bomb detonation playback time');
+    patch("      this.applyHit(b.owner, e, distanceDamage(s.damageBands, d, false), 'bomb');",
+      `      if (b.ghost && (!Number.isFinite(detonationLocalTime)
+        || !Number.isFinite(e._netLifeStartedAt) || e._netLifeStartedAt > detonationLocalTime)) continue;
+      this.applyHit(b.owner, e, distanceDamage(s.damageBands, d, false), 'bomb');`,
+      'reject bomb from prior recipient life');
     patch('    const up = clamp(a.aimPitch, -0.2, 0.5) + 0.32;', '    const up = clamp(a.aimPitch, -0.2, 0.5) + 0.32;\n    let projectileFirst;', 'attack-owned first projectile');
     patch("      this._push(p);\n    }\n    appendRollerNearUnit(this, a, w);\n    if (a.isLocal) emit('recoil', { amount: 0.007 });", "      this._push(p);\n      if (i === 0) projectileFirst = p._netId;\n    }\n    appendRollerNearUnit(this, a, w);\n    if (a.isLocal) emit('recoil', { amount: 0.007 });", 'capture exact volley during generation');
     patch('weapon: w.id, muzzle: new THREE.Vector3(m.x + fx * 0.6, m.y + 0.3, m.z + fz * 0.6)', 'weapon: w.id, projectileFirst, muzzle: new THREE.Vector3(m.x + fx * 0.6, m.y + 0.3, m.z + fz * 0.6)', 'publish exact volley event');
@@ -366,6 +388,11 @@ function retireNetworkGhosts(owner = null) {
         while (b._netSteps < target && b.t < b.life) { b.t += SIM_DT; b._netSteps++; }
       } else b.t += dt;`, 'beam owner age');
 
+  }
+  if (rel === 'src/game/actor.js') {
+    patch('    this.netLife = (this.netLife ?? 0) + 1;',
+      '    this.netLife = (this.netLife ?? 0) + 1;\n    this._netLifeStartedAt = performance.now() / 1000;',
+      'record recipient life start for late bomb replay');
   }
   if (rel === 'patches/local-quality/roller-visual.mjs') {
     patch('P._push=function(p){', 'P._push=function(p){\n    if (p.type === \'drop\' && p.owner?.weapon?.kind === \'roller\') p.s3Vertical = !!p.owner.weaponRunner?.s3FlickVertical;', 'capture birth mode before visual and gameplay finalization');

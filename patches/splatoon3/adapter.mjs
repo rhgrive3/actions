@@ -474,6 +474,18 @@ export function adaptSource(rel, code) {
       '        this.addTurf(G.paint.splat(_v.copy(this.pos).setY(this.pos.y + 0.3), 1.4, this.team, { seed: Math.random() }));\n',
       '        // Splatoon 3: Ordinary Super Jump does not leave ink, grant turf points, or charge special at landing.\n',
       'super jump landing paint');
+    code = replaceOnce(code,
+      '    const fireWins = (intent.fire || this.fireBuffer > 0) && this._firePressT >= this._squidPressT;\n' +
+      '    const wantSquid = intent.squid && !fireWins && !this.weaponRunner.busy();\n',
+      '    // Sample the last native ground hit before choosing the next movement/collision form.\n' +
+      '    this._surface();\n' +
+      '    const enemyGrounded = this.grounded && this.groundTeam === 2 && !this.climbing;\n' +
+      '    const fireWins = (intent.fire || this.fireBuffer > 0) && this._firePressT >= this._squidPressT;\n' +
+      '    const wantSquid = intent.squid && !fireWins && !this.weaponRunner.busy() && !enemyGrounded;\n',
+      'enemy ink swim-form eligibility');
+    code = replaceOnce(code,
+      "    // ---- surface under feet (from last frame's ground probe; position hasn't moved since)\n    this._surface();\n",
+      '', 'move surface sample before form selection');
     const start = code.indexOf('    // ---- ink / hp\n');
     const end = code.indexOf('    // ---- weapons (', start);
     if (start < 0 || end < start) throw new Error('INKWAVE patch conflict: actor resource connection');
