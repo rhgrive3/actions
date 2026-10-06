@@ -16,6 +16,17 @@ export function adaptNetworkSource(rel, code) {
   const patch = (before,after,label) => { code = once(code,before,after,rel+': '+label); };
   if (rel === 'src/net/netmatch.js') {
     code = "import { validFidelityRollerUnitPacket } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n" + code;
+    patch('  sendHit(attacker, victim, dmg, wid) {',
+      '  sendHit(attacker, victim, dmg, wid, slosherVolleyId) {', 'Slosher volley identity send');
+    {
+      const matches = [...code.matchAll(/    this\.s\.tr\?\.sendTo\(victim\.owner, \{ k: 'hit',[^\n]+\}\);/g)];
+      if (matches.length !== 1) throw Error('Network replication anchor mismatch: ' + rel + ': Slosher volley identity wire field');
+      const match = matches[0], payload = match[0].slice(match[0].indexOf('{'), -2);
+      const replacement = `    const hit = ${payload};\n    if (slosherVolleyId != null) hit.g = slosherVolleyId;\n    this.s.tr?.sendTo(victim.owner, hit);`;
+      code = code.slice(0, match.index) + replacement + code.slice(match.index + match[0].length);
+    }
+    patch('G.projectiles?.applyHit(atk, v, d.d, d.w);',
+      'G.projectiles?.applyHit(atk, v, d.d, d.w, d.g);', 'Slosher volley identity owner admission');
     patch('  dispose() {\n    for (const u of this.unsubs)', `  dispose() {
     retireNetworkGhosts();
     for (const u of this.unsubs)`, 'session disposal retirement');
@@ -100,7 +111,15 @@ export function adaptNetworkSource(rel, code) {
       const actor = this.byNid.get(nid);
       if (!actor?.remote || actor.owner !== from) return;
     }
-    switch (e[1]) {`, 'event ownership');
+    // Boss hazard/crablet timeline records are host-authoritative at admission.
+    if (e[1] === 'bm' || e[1] === 'bc') {
+      if (from !== this.s.hostId) return;
+      if (e[1] === 'bm') {
+        const move = e[2];
+        if (!move || typeof move !== 'object' || !Number.isFinite(move.t0)) return;
+      } else if (!Number.isSafeInteger(e[2]) || !Number.isFinite(e[3]) || !Number.isFinite(e[4]) || !Number.isFinite(e[5])) return;
+    }
+    switch (e[1]) {`, 'event ownership and host-only Boss timeline admission');
     {
       const bombWithMeta = "case 'b': { const a = this.byNid.get(e[2]); if (a) G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9], e[10]); break; }";
       const bombPlain = "case 'b': { const a = this.byNid.get(e[2]); if (a) G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9]); break; }";
