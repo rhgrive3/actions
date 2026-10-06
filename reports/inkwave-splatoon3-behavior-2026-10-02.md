@@ -375,3 +375,15 @@ Before the fix, INKWAVE selected the right Roller unit for projectile fidelity b
 Reproduction: run `node --experimental-vm-modules --test patches/splatoon3/tests/roller-four-petals-shape.test.mjs`. The actual installed module test checks source values, per-head renderer attributes for local and ghost volleys, the installed shader hook/source transformation, horizontal defaults, unit-2 defaults, unchanged packet shape and gameplay fields, and unchanged seeded projectile position/velocity traces. No collision, damage, paint, spawn, count, velocity, trajectory, or timing code changes in this fix.
 
 Status: INKWAVE's CPU-side instanced data and shader source consumer are verified. The static four-lobed profile is a local rendering representation of the sourced ratios, not a claim of exact Nintendo geometry. Actual GPU pixels, Splatoon 3 Switch footage, and exact petal orientation or animation are unconfirmed; no phase, easing, or frame value is inferred.
+
+## 2026-10-07 — Flow Aura が30秒上限で overflow 塗りを落とす (#893)
+
+Base main `f31f5da439134fe49bb89018dad5557671a49c67`。`patches/splatoon3/runtime/flow.mjs` の `award()` は overflow の足元塗りを `activated || flow.remaining > before` で判定しており、伸長イベントそのものではなく**上限クランプ後のタイマー増分**を代理指標にしていた。`awardFlow()` の active 分岐は `Math.min(cfg.maxDuration, remaining + cfg.extension)` で伸長するため、`remaining === maxDuration`（30秒）では有効な splat / assist が伸長経路に入っても数値が増えず、`G.paint.splat` が一度も発火しない。
+
+本家の記載では、Flow Aura は約30秒で、追加の適格 splat や自身が与えたダメージ相手の撃破で延長され、**延長のたびに足元の塗りが再発火**する。塗りは「残り時間が上限を超えて増えたか」ではなく「適格な発動/延長イベントが起きたか」に結び付いている。
+
+修正は install 層のみ。active 状態機械が伸長対象とする action を `extendsFlow(action)`（splat / assist）として1箇所に定義し、`award()` は `activated || (wasActive && extendsFlow(action))` で塗る。上限クランプ、非アクティブのスコア蓄積・しきい値判定、`G.paint.splat(p, cfg.paintRadius, a.team, { kind:'trail', seed:0.5 })` の単一経路、Range 除外ゲートは変更していない。`turf` / `damage` は active 中でも塗らず、毎フレーム塗りは追加していない。伸長量 (#504) と first-splat (#529 / Open #892) は別 root として触っていない。
+
+**未確認（確定ではない）**: 公式の30秒という値と「延長で足元が塗られる」という記述は任天堂の説明に基づくが、同一ステップ内の複数 splat で本家が何回塗るかの実測はしていない（本実装は適格イベントごとに1回）。`cfg.paintRadius` は既存の calibration のまま。ブラウザ / Switch 実機の塗り比較、ネットワーク越しの塗り重複は未計測。
+
+検証は `patches/splatoon3/tests/flow-cap-overflow.test.mjs` の9項目。変更後 9/9 pass（exit 0）、未変更 main では上限クランプ時の塗り欠落を捉えて 9項目中4項目が fail（exit 1）。隣接する既存 flow lifecycle / storage cap / core テスト 25/25 は両方で pass。

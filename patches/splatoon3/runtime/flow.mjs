@@ -21,9 +21,12 @@ export function penalizeFlowDeath(state, cause, cfg) {
   const lossFp = cause === 'water' || cause === 'fall' ? p.environmentDeathPenalty : p.deathPenalty;
   state.score = Math.max(0, state.score - lossFp * cfg.threshold / p.referenceThreshold);
 }
+// #893: the active Flow state machine accepts exactly these actions as
+// extensions, so they are also the qualifying overflow-paint events.
+export function extendsFlow(action) { return action === 'splat' || action === 'assist'; }
 export function awardFlow(state, action, value, cfg, capProgress = true) {
   if (state.active) {
-    if (action === 'splat' || action === 'assist') state.remaining = Math.min(cfg.maxDuration, state.remaining + cfg.extension);
+    if (extendsFlow(action)) state.remaining = Math.min(cfg.maxDuration, state.remaining + cfg.extension);
     return false;
   }
   const gain = Number.isFinite(value) ? Math.max(0, value) * (cfg.weights[action] || 0) : 0;
@@ -42,14 +45,18 @@ export function installFlow({ Actor, on, emit, G }, tuning) {
   function state(a) { a.s3 ||= {}; return a.s3.flow || (a.s3.flow = createFlow()); }
   function award(a, action, value) {
     if (!a?.alive || a.isBot && cfg.bots === false || G.match?.attract) return;
-    const flow = state(a), before = flow.remaining;
+    const flow = state(a), wasActive = flow.active;
     // The reference storage limit describes ordinary Turf; the custom Boss
     // economy and non-match tools retain their existing accumulation policy.
     const activated = awardFlow(flow, action, value, cfg, G.match?.mode === 'turf');
     if (activated) emit('actor:flow', { actor: a, active: true });
     // The official trigger is entering/extending Flow, rather than a passive
     // stream of paint for the entire active period. Radius remains calibration.
-    if (activated || flow.remaining > before) {
+    // #893: gate on the qualifying event itself, not on the clamped timer
+    // growing, so an extension that lands exactly on cfg.maxDuration still
+    // emits its single overflow burst. Non-qualifying awards (turf/damage)
+    // never paint while Flow is active.
+    if (activated || wasActive && extendsFlow(action)) {
       const p = a.pos.clone(); p.y += 0.15;
       G.paint.splat(p, cfg.paintRadius, a.team, { kind: 'trail', seed: 0.5 });
     }
