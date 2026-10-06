@@ -1,5 +1,11 @@
 const EPS = 1e-10, DEG = Math.PI / 180;
 
+// #729 — S3 Ver.11.3.0 resolves an impact-triggered blast one fixed frame after the
+// contact (tick N impact -> tick N+1 burst), so a target can move between the two
+// frames. Queued bursts are resolved from inside `Projectiles.update`; this flag keeps
+// a resolved burst from being captured and queued again.
+let flushing = 0;
+
 // This retains the existing two-draw radial sampler, not a claimed S3 PDF.
 // Ground pitch has its own angular envelope; neither bloom nor the horizontal
 // scalar is evidence for scaling PitchDegSwerve. Air/IA remain uncalibrated.
@@ -116,4 +122,39 @@ export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYE
   };
   const fresh = Projectiles.prototype._new;
   Projectiles.prototype._new = function (...args) { const p = fresh.apply(this, args); p.s3FlickUnit = 0; p.s3TerrainBurst = false; return p; };
+  // #729 — an impact-triggered Blaster burst must resolve on the next fixed tick, not in
+  // the contact tick. `_impact` above and the sourced wall-drop transition are the only
+  // callers that raise a burst while `s3TerrainBurst` is set, so that marker alone
+  // separates the terrain burst from direct victim hits, boss hits and the natural timed
+  // mid-air explosion (all of which keep their current tick). The snapshot clones the
+  // contact point (the shared physics scratch hit) and copies the fields the burst chain
+  // reads, because the projectile returns to the pool as soon as `_impact` returns.
+  const terrainBurst = Projectiles.prototype._blastBurst;
+  const projectilesUpdate = Projectiles.prototype.update;
+  Projectiles.prototype.flushBlastImpacts = function () {
+    const queue = this.s3BlastQueue;
+    if (!queue || !queue.length) return 0;
+    this.s3BlastQueue = [];
+    flushing++;
+    try { for (const e of queue) this._blastBurst(e.p, e.point, e.victim); }
+    finally { flushing--; }
+    return queue.length;
+  };
+  Projectiles.prototype._blastBurst = function (p, point, victim) {
+    if (!flushing && p.s3TerrainBurst) {
+      (this.s3BlastQueue ??= []).push({
+        point: point.clone(), victim,
+        p: { owner: p.owner, team: p.team, ghost: !!p.ghost, wid: p.wid,
+          s3Weapon: p.s3Weapon ?? null, s3TerrainBurst: true },
+      });
+      return;
+    }
+    return terrainBurst.call(this, p, point, victim);
+  };
+  // Fixed-tick entry: the queued terrain burst of tick N resolves before anything moves
+  // in tick N+1, so render cadence cannot change the ordering.
+  Projectiles.prototype.update = function (dt) {
+    this.flushBlastImpacts();
+    return projectilesUpdate.call(this, dt);
+  };
 }
