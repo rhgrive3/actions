@@ -16,6 +16,7 @@ async function kept(f) {
   a.intent.squid = true;
   f.tick(a);
   assert.equal(a.form, 'squid', 'precondition: submerged');
+  assert.equal(a.submerged, true, 'precondition: actual Actor reports an own-ink submerged state');
   assert.ok(a.weaponRunner.s3Stored, 'precondition: charge kept');
   return a;
 }
