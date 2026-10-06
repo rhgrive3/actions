@@ -40,7 +40,6 @@ export async function fixture() {
     export * from './patches/splatoon3/runtime/movement.mjs';
     export * from './patches/splatoon3/runtime/weapons.mjs';
     export * from './patches/splatoon3/runtime/weapons-fidelity.mjs';
-    export * from './patches/splatoon3/runtime/shot-guide.mjs';
     export * from './patches/splatoon3/runtime/gear.mjs';
     export * from './patches/splatoon3/runtime/flow.mjs';
     export * from './patches/splatoon3/runtime/resources.mjs';

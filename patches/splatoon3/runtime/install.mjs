@@ -13,7 +13,7 @@ import { installMovement } from './movement.mjs';
 import { installMovementMotion } from './movement-motion.mjs';
 import { installWeapons } from './weapons.mjs';
 import { installWeaponsFidelity } from './weapons-fidelity.mjs';
-import { installShotGuide } from './shot-guide.mjs';
+import { installShotGuide } from './weapons-fidelity.mjs';
 import { installSubSpecialFidelity } from './sub-special-fidelity.mjs';
 import { installGear } from './gear.mjs';
 import { installFlow } from './flow.mjs';

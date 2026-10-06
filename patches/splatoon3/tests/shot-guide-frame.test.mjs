@@ -410,16 +410,61 @@ test('#459/#769: the installed controller camera-aim path publishes the guide po
   assert.equal(r.f.computeShotGuide({ weapon: { kind: 'shooter' } }), null, 'an actor without a live weapon has no guide');
 });
 
+test('#459/#769: a stale guide is never projected while the controller is disabled or dead', async () => {
+  const r = await rig();
+  const { f, G, a } = r;
+
+  // Evaluate the REAL composed HUD argument expression out of the adapted main.js
+  // rather than restating it here, so this control fails if that gate is removed.
+  const main = adaptSource('src/main.js', read('inkwave-public/src/main.js'));
+  const guideArg = main.match(/guide: projectShotGuide\((.+?), cam, W, H\)/)?.[1];
+  assert.ok(guideArg, 'the HUD projection gate expression is present in adapted main.js');
+  const gate = new Function('projectShotGuide', 'm', 'cam', 'W', 'H',
+    `return projectShotGuide(${guideArg}, cam, W, H);`);
+
+  const cam = G.camera;
+  const W = 1280, H = 720;
+  const controller = { a, enabled: true, onTarget: null, inRange: true };
+  assert.ok(r.f.updateShotGuide(controller), 'a live controller publishes a guide');
+  const stale = controller.shotGuide;
+  assert.ok(gate(f.projectShotGuide, { controller }, cam, W, H), 'a live controller projects its guide');
+
+  // Authoritative HUD state is never touched by the presentation gate.
+  controller.onTarget = null; controller.inRange = true;
+  assert.equal(controller.onTarget, null); assert.equal(controller.inRange, true);
+
+  // Stale-state negative control: updateShotGuide stops running for a disabled
+  // controller (PlayerController.update returns early), so shotGuide still holds
+  // the last valid point. The HUD gate must refuse it instead of drawing it.
+  controller.enabled = false;
+  assert.equal(controller.shotGuide, stale, 'the disabled controller retains its last valid guide state');
+  assert.equal(gate(f.projectShotGuide, { controller }, cam, W, H), null,
+    'a disabled controller projects no guide even though a stale point is retained');
+  assert.equal(f.applyShotGuide({ ret: { style: {} } }, gate(f.projectShotGuide, { controller }, cam, W, H), W, H).guideX, 0,
+    'the reticle falls back to the centre anchor rather than the stale point');
+
+  // Same for a dead actor.
+  controller.enabled = true; a.alive = false;
+  assert.equal(f.updateShotGuide(controller), null, 'a dead actor publishes no guide');
+  controller.shotGuide = stale;
+  assert.equal(gate(f.projectShotGuide, { controller }, cam, W, H), null,
+    'a dead controller projects no guide even though a stale point is retained');
+
+  // A match with no controller at all is the null-controller case.
+  assert.equal(gate(f.projectShotGuide, {}, cam, W, H), null, 'no controller projects no guide');
+  a.alive = true;
+});
+
 test('#459/#769: the three adapter connections are present and fail closed', () => {
   const player = adaptSource('src/game/player.js', read('inkwave-public/src/game/player.js'));
   assert.match(player, /updateShotGuide\(this\);/);
-  assert.match(player, /import \{ updateShotGuide \} from '\.\.\/\.\.\/patches\/splatoon3\/runtime\/shot-guide\.mjs';/);
+  assert.match(player, /import \{ updateShotGuide \} from '\.\.\/\.\.\/patches\/splatoon3\/runtime\/weapons-fidelity\.mjs';/);
   const main = adaptSource('src/main.js', read('inkwave-public/src/main.js'));
-  assert.match(main, /guide: projectShotGuide\(m\.controller\?\.shotGuide, cam, W, H\)/);
-  assert.match(main, /import \{ projectShotGuide \} from '\.\.\/patches\/splatoon3\/runtime\/shot-guide\.mjs';/);
+  assert.match(main, /guide: projectShotGuide\(m\.controller\?\.enabled && m\.controller\?\.a\?\.alive \? m\.controller\.shotGuide : null, cam, W, H\)/);
+  assert.match(main, /import \{ projectShotGuide \} from '\.\.\/patches\/splatoon3\/runtime\/weapons-fidelity\.mjs';/);
   const hud = adaptSource('src/ui/hud.js', read('inkwave-public/src/ui/hud.js'));
   assert.match(hud, /applyShotGuide\(this, ch\.guide, innerWidth, innerHeight\);/);
-  assert.match(hud, /import \{ applyShotGuide \} from '\.\.\/\.\.\/patches\/splatoon3\/runtime\/shot-guide\.mjs';/);
+  assert.match(hud, /import \{ applyShotGuide \} from '\.\.\/\.\.\/patches\/splatoon3\/runtime\/weapons-fidelity\.mjs';/);
 
   // Negative control: every new connection must be unique or the build stops.
   const anchors = [
