@@ -10,3 +10,12 @@
 
 /* Slosher ShotGuide offsets only aiming feedback; tank/sub/status stay centred. */
 .iw-ret, .iw-hit, .iw-kill { translate: var(--gx, 0px) var(--gy, 0px); }
+
+/* Turf's fourth statistic; Boss keeps its separate native columns. */
+.iw-ttable--turf .iw-ttable__head, .iw-ttable--turf .iw-prow { grid-template-columns: calc(var(--u) * 2.7) minmax(0, 1fr) calc(var(--u) * 8) repeat(3, calc(var(--u) * 3.3)); }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ttable--turf .iw-ttable__head,
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ttable--turf .iw-prow { grid-template-columns: 28px minmax(0, 1fr) 86px repeat(3, 36px); }
+@media (max-width: 700px) {
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ttable--turf .iw-ttable__head,
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ttable--turf .iw-prow { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
