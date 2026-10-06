@@ -190,7 +190,25 @@ export function adaptSource(rel, code) {
     const start = code.indexOf('    G.time += dt;\n', code.indexOf('  _frame(dt) {'));
     const end = code.indexOf('    // A full-frame lobby/showcase completely covers', start);
     if (start < 0 || end < start) throw new Error('INKWAVE patch conflict: fixed simulation connection');
-    code = code.slice(0, start) + '    const m = this.match;\n    const setUp = !!this.showcase?.fullFrame;\n    runSimulation(this, dt);\n' + code.slice(end);
+    code = code.slice(0, start)
+      + '    const m = this.match;\n'
+      + '    const setUp = !!this.showcase?.fullFrame;\n'
+      + '    runSimulation(this, dt);\n'
+      // #53: RESULT keeps only the stage/GUI animation it actually needs; the
+      // paint atlas and gameplay FX stop behind the results screen (offline and
+      // online alike). The results stage, GUI, backdrop draw and renderer keep
+      // their cadence so the reveal stays visible and rematch/resize resume.
+      + "    const resultsQuiet = this.match?.state === 'results';\n"
+      + code.slice(end);
+    code = replaceOnce(code,
+      '      if (!m || !m.paused) G.fx.update(dt, G.camera);\n      if (!m || !m.paused) this.fxHooks?.update?.(dt);',
+      '      if (!m || (!m.paused && !resultsQuiet)) G.fx.update(dt, G.camera);\n      if (!m || (!m.paused && !resultsQuiet)) this.fxHooks?.update?.(dt);',
+      '#53 gameplay FX behind results');
+    code = replaceOnce(code, '      G.paint.flush(dt);', '      if (!resultsQuiet) G.paint.flush(dt);', '#53 paint atlas behind results');
+    code = replaceOnce(code,
+      '      if (this.swimWake && (!m || !m.paused)) this.swimWake.update(dt, this.levelMat.userData.uniforms, G.camera.position);',
+      '      if (this.swimWake && (!m || (!m.paused && !resultsQuiet))) this.swimWake.update(dt, this.levelMat.userData.uniforms, G.camera.position);',
+      '#53 swim wakes behind results');
     code = replaceOnce(code, '    dt = Math.min(dt, 1 / 24);\n', '', 'elapsed time');
     code = replaceOnce(code, '    this.input.endFrame();\n', '', 'input consumption');
     code = replaceOnce(code,

@@ -1,14 +1,15 @@
 // #53: the RESULT screen must not keep authoritative actor/projectile
 // simulation running behind it. The test drives the actual installed fixed
 // 60Hz driver (runtime/clock.mjs runSimulation), not a mirror of the guard.
-// Presentation ticks, input consumption and online owner/remote application
-// keep their existing cadence.
+// Presentation ticks and input consumption keep their existing cadence;
+// online matches keep owner/remote snapshot application (once per tick)
+// without any local authoritative acting.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { installClock, runSimulation } from '../runtime/clock.mjs';
 
 function rig({ state = 'results', netm = null } = {}) {
-  const calls = { controller: 0, sim: 0, projectile: 0, endFrame: 0 };
+  const calls = { controller: 0, sim: 0, projectile: 0, endFrame: 0, applied: 0 };
   const G = { time: 0, projectiles: { update() { calls.projectile++; } }, netm };
   installClock({ G });
   const input = {
@@ -17,7 +18,7 @@ function rig({ state = 'results', netm = null } = {}) {
     endFrame() { calls.endFrame++; },
   };
   const match = {
-    attract: false, paused: false, state,
+    attract: false, paused: false, state, actors: [],
     updateController() { calls.controller++; },
     update() { calls.sim++; },
     controller: null, local: null,
@@ -50,10 +51,19 @@ test('a new match resumes simulation from the same fixed clock, and results free
   assert.equal(calls.sim, 1, 'the results freeze applies again after a later match');
 });
 
-test('online results keeps the owner/remote application pipeline intact', () => {
-  const { game, calls } = rig({ state: 'results', netm: { myId: 'me' } });
+test('online RESULT stops local authoritative acting while owner/remote application and the pump stay healthy', () => {
+  const { G, game, calls, match } = rig({ state: 'results', netm: { myId: 'me', applyRemote() { calls.applied++; } } });
+  match.actors.push({ remote: true }, { remote: false });
+  const pumps = [];
+  G.net = { update(dt) { pumps.push(dt); } };   // NetSession/NetMatch pump, control, event delivery
   for (let i = 0; i < 60; i++) runSimulation(game, 1 / 60);
-  assert.equal(calls.sim, 60, 'network matches still apply remote state; protocol semantics are preserved');
+  assert.equal(calls.sim, 0, 'network RESULT must not keep Match.update acting behind the results screen');
+  assert.equal(calls.controller, 0, 'controller admission stops with local acting');
+  assert.equal(calls.projectile, 0, 'projectile simulation stops with local acting');
+  assert.equal(calls.applied, 60, 'remote owner snapshots apply exactly once per tick — never frozen or double-applied');
+  assert.equal(pumps.length, 60, 'network pump/control/event delivery keeps one update per rendered frame');
+  assert.ok(G.time > 0, 'the fixed presentation/input clock still advances');
+  assert.equal(calls.endFrame, 60, 'input edges are still consumed once per tick for menu navigation');
 });
 
 test('ordinary playing matches and paused matches keep their current behaviour', () => {
