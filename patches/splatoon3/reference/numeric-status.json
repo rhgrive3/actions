@@ -1950,7 +1950,7 @@
     "binding": null
   },
   "movement.roll.minimumAngle": {
-    "value": 1.5707963267948966,
+    "value": 1.0471975511965976,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
