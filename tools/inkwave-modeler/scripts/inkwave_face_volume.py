@@ -891,6 +891,9 @@ def rebuild_ears(cfg):
     print('FACE_VOLUME ears rebuilt', len(ear.data.vertices), 'vertices each')
 
 
+BAR_MATERIAL = 'headgear_2cc6c8'
+
+
 def place_piercings(ear, nv, PI):
     tree = BVHTree.FromPolygons([Vector(v) for v in er.world(ear)], [list(p.vertices) for p in ear.data.polygons])
 
@@ -931,6 +934,11 @@ def place_piercings(ear, nv, PI):
             Lb[lb == bi] += hole + nv * [-side, 1, 1] * PI['bead_out'] - Lb[lb == bi].mean(0)
     set_local_mm(hg, Lh)
     set_local_mm(bar, Lb)
+    if PI.get('bar_colour'):
+        # the reference bar is a pale blue-grey metal, not teal
+        mat = bpy.data.materials[BAR_MATERIAL]
+        keep_material(mat)
+        next(n for n in mat.node_tree.nodes if n.type == 'BSDF_PRINCIPLED').inputs['Base Color'].default_value = list(PI['bar_colour']) + [1.0]
     # the reference has the bar on the left ear too: a mirrored copy
     inv = np.array(bar.matrix_world.inverted())
     Wm = M.to_world(Lb[on_bar] * [-1, 1, 1] / 1000)
@@ -1152,7 +1160,7 @@ def keep_material(mat):
 def restore_materials():
     if bpy.data.materials.get(EAR_MATERIAL) is not None and not bpy.data.materials[EAR_MATERIAL].users:
         bpy.data.materials.remove(bpy.data.materials[EAR_MATERIAL])
-    for name in DECAL_MATERIALS.values():
+    for name in list(DECAL_MATERIALS.values()) + [BAR_MATERIAL]:
         mat = bpy.data.materials.get(name)
         if mat is None or SUFFIX not in mat:
             continue
