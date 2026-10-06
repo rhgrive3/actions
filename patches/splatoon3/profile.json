@@ -417,7 +417,7 @@
     "roll": {
       "minimumSpeed": 9.216,
       "minimumInput": 0.3,
-      "minimumAngle": 1.5707963267948966,
+      "minimumAngle": 1.0471975511965976,
       "duration": 0.25,
       "armorTime": 0.13333333333333333,
       "armorHP": 100,
