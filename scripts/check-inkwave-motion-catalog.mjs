@@ -641,12 +641,16 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout 
       function step(dt = 1 / 60, input = {}) {
         if (a) {
           a.intent.fire = !!input.fire; a.intent.sub = !!input.sub; G.time += dt;
-          if (input.stormTick) {
-            if (isStormHolding(a)) updateStormHold(a, dt, G);
-            if (a.specialActive && !isStormHolding(a)) a._updateSpecial(dt);
-            else if (!a.specialActive) a.weaponRunner.update(dt, input);
-          } else a.weaponRunner.update(dt, input);
-          a._finishFrame(dt);
+          // Dualies post-shot admission clocks belong to Actor.update.
+          if (scenario.name === 'dualies-roll-lock-interrupt') a.update(dt);
+          else {
+            if (input.stormTick) {
+              if (isStormHolding(a)) updateStormHold(a, dt, G);
+              if (a.specialActive && !isStormHolding(a)) a._updateSpecial(dt);
+              else if (!a.specialActive) a.weaponRunner.update(dt, input);
+            } else a.weaponRunner.update(dt, input);
+            a._finishFrame(dt);
+          }
         } else ch.update(dt, null);
         ch.root.updateMatrixWorld(true); ch.skeleton.update();
       }
