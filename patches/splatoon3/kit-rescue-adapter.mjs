@@ -64,7 +64,9 @@ export function adaptKitRescue(rel, code, replaceOnce) {
     patch('    // paint under the burst','    if (p.ghost) return; // owner packets carry authoritative paint/damage\n    // paint under the burst','ghost blast authority');
     patch('  _impact(p, hit) {\n    _v.copy(hit.point)','  _impact(p, hit) {\n    if (!kitPaintAuthority(p)) { if (p.type === \'blast\') this._blastBurst(p, hit.point, null); return; }\n    _v.copy(hit.point)','kit impact paint authority');
     patch('      if (!dead && !p.ghost && p.trailEvery) {','      if (!dead && !p.ghost && kitPaintAuthority(p) && p.trailEvery) {','kit trail authority');
-    patch('        if (hit.hit) {\n          this._impact(p, hit);','        if (hit.hit) {\n          if (hit.kitDefense) hit.kitDefense.onHit(); else this._impact(p, hit);','kit defense world contact');
+    patch('          if (beginFidelityWallDrop(this, p, hit)) return false;\n          this._impact(p, hit);',
+      '          if (hit.kitDefense) hit.kitDefense.onHit();\n          else { if (beginFidelityWallDrop(this, p, hit)) return false; this._impact(p, hit); }',
+      'kit defense world contact');
     patch('nose, sats] = e;','nose, sats, s3Volley, s3Action] = e;','trizooka ghost identity');
     patch("    this.list.push(p);\n  }","    kitTrizookaGhost(p, a, SPECIALS, { volleyIndex: s3Volley, actionIndex: s3Action });\n    this.list.push(p);\n  }",'trizooka ghost reconstruction');
     code="import { kitPaintAuthority, kitTrizookaGhost, kitTrizookaSteppedBands } from '../../patches/splatoon3/runtime/trizooka-collision.mjs';\nimport { kitSubRelease, kitBombAttach, kitBombGravity, kitBombContact, kitBombTrail, kitBombFuseTotal, kitBombRadius, kitBombFxRadius, kitBombDamageBands, kitBombDamageMax, kitBombDamageMin, kitGhostBombAttach, withGhostBombSpawn } from '../../patches/splatoon3/runtime/kit-subs.mjs';\n"+code;
