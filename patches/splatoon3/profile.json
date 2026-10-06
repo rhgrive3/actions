@@ -92,6 +92,7 @@
       ],
       "preDelay": 0.16666666666666666,
       "range": 13.3,
+      "shotGuideFrame": 13,
       "actionAirSpreadCurve": [
         0,
         0.5,
