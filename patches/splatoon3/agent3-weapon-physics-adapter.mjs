@@ -6,9 +6,17 @@ export function adaptAgent3WeaponPhysics(rel, code, replaceOnce) {
     '      const agent3WallDropDone = stepAgent3SlosherWallDrop(this, p, dt);\n      if (agent3WallDropDone !== null) return agent3WallDropDone;\n      advanceFidelityProjectile(p, dt);',
     'agent3 weapon physics: Slosher retained wall-drop step',
   );
-  code = replaceOnce(
+  const plainImpact = '          this._impact(p, hit);';
+  const kitImpact = '          if (hit.kitDefense) hit.kitDefense.onHit(); else this._impact(p, hit);';
+  if (code.includes(kitImpact)) code = replaceOnce(
     code,
-    '          this._impact(p, hit);',
+    kitImpact,
+    '          if (beginAgent3SlosherWallDrop(this, p, hit)) return false;\n' + kitImpact,
+    'agent3 weapon physics: Slosher wall-hit admission with kit defense',
+  );
+  else code = replaceOnce(
+    code,
+    plainImpact,
     '          if (beginAgent3SlosherWallDrop(this, p, hit)) return false;\n          this._impact(p, hit);',
     'agent3 weapon physics: Slosher wall-hit admission',
   );

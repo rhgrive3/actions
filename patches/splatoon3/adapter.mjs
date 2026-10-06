@@ -379,6 +379,7 @@ export function adaptSource(rel, code) {
     code = adaptWeaponEdgecases(rel, code, replaceOnce);
     code = adaptWeaponPaintInertia(rel, code, replaceOnce);
     code = adaptWeaponsFidelity(code, replaceOnce);
+    code = adaptKitRescue(rel, code, replaceOnce);
     code = adaptAgent3WeaponPhysics(rel, code, replaceOnce);
     return `import { applyProjectileHit, chargerDamage, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\n` + code;
   }

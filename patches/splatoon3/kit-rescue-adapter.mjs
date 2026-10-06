@@ -31,9 +31,17 @@ export function adaptKitRescue(rel, code, replaceOnce) {
     patch('  _playEvent(name, d) {','  _playEvent(name, d, from) {','event signature');
     patch('    if (!e) return;\n    const a = e.actor || e.victim;','    if (!e) return;\n    if (this.replayKitEvent?.(name, e, from)) return;\n    const a = e.actor || e.victim;','typed kit replay');
     patch('    victim.respawnTimer = PLAYER.respawnTime;','    setRespawnTimer(victim, cause);','remote respawn cause');
-    patch("    this._rec(['b', o.nid, b.kind, r2(b.pos.x), r2(b.pos.y), r2(b.pos.z), r2(b.vel.x), r2(b.vel.y), r2(b.vel.z)]);",
+    const plainBombRecord = "    this._rec(['b', o.nid, b.kind, r2(b.pos.x), r2(b.pos.y), r2(b.pos.z), r2(b.vel.x), r2(b.vel.y), r2(b.vel.z)]);";
+    const stormBombRecord = "    this._rec(['b', o.nid, b.kind, r2(b.pos.x), r2(b.pos.y), r2(b.pos.z), r2(b.vel.x), r2(b.vel.y), r2(b.vel.z), b.kind === 'storm' ? { stormDuration: b.s3StormDuration } : null]);";
+    if (code.includes(stormBombRecord)) patch(stormBombRecord,
+      "    const s3kit = kitBombPacket(b); if (!s3kit) return; this._rec(['b', o.nid, b.kind, r2(b.pos.x), r2(b.pos.y), r2(b.pos.z), r2(b.vel.x), r2(b.vel.y), r2(b.vel.z), b.kind === 'storm' ? { stormDuration: b.s3StormDuration } : null, s3kit[0], s3kit[1]]);",'bomb identity');
+    else patch(plainBombRecord,
       "    const s3kit = kitBombPacket(b); if (!s3kit) return; this._rec(['b', o.nid, b.kind, r2(b.pos.x), r2(b.pos.y), r2(b.pos.z), r2(b.vel.x), r2(b.vel.y), r2(b.vel.z), s3kit[0], s3kit[1]]);",'bomb identity');
-    patch("      case 'b': { const a = this.byNid.get(e[2]); if (a) G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9]); break; }",
+    const plainBombReplay = "      case 'b': { const a = this.byNid.get(e[2]); if (a) G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9]); break; }";
+    const stormBombReplay = "      case 'b': { const a = this.byNid.get(e[2]); if (a) G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9], e[10]); break; }";
+    if (code.includes(stormBombReplay)) patch(stormBombReplay,
+      "      case 'b': { const a = this.byNid.get(e[2]); if (a) G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9], e[10], e[11], e[12]); break; }",'bomb replay identity');
+    else patch(plainBombReplay,
       "      case 'b': { const a = this.byNid.get(e[2]); if (a) G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9], e[10], e[11]); break; }",'bomb replay identity');
     patch('      r3(p.vis ?? 0.1), p.tail0 ?? 0.8, p.tailK ?? 1.3, p.wob ?? 0.035, p.wobF ?? 26, p.nose ?? 0.3, p.sats ?? 3]);',
       '      r3(p.vis ?? 0.1), p.tail0 ?? 0.8, p.tailK ?? 1.3, p.wob ?? 0.035, p.wobF ?? 26, p.nose ?? 0.3, p.sats ?? 3, kitVolleyPacketIndex(p.s3VolleyIndex), kitVolleyPacketIndex(p.s3ActionIndex)]);','trizooka packet identity');
@@ -53,9 +61,18 @@ export function adaptKitRescue(rel, code, replaceOnce) {
     patch("    G.boss?.splash(b.owner, c, s.radius, s.damageMax, s.damageMin, 'bomb');",
       "    G.boss?.splash(b.owner, c, kitBombRadius(SUB, b, s.radius), kitBombDamageMax(SUB, b, s.damageMax), kitBombDamageMin(SUB, b, s.damageMin), 'bomb');",'kit boss splash');
     patch('G.fx?.explosion(c, G.teamColors[b.team], s.radius);','G.fx?.explosion(c, G.teamColors[b.team], kitBombFxRadius(SUB, b, s.radius));','kit bomb FX');
-    patch("  ghostBomb(a, kind, px, py, pz, vx, vy, vz) {\n    const s = this.bombs.length;\n    if (kind === 'storm') this.throwStorm(a); else this.throwBomb(a);",
+    const plainGhostHead = "  ghostBomb(a, kind, px, py, pz, vx, vy, vz) {\n    const s = this.bombs.length;\n    if (kind === 'storm') this.throwStorm(a); else this.throwBomb(a);";
+    const metaGhostHead = "  ghostBomb(a, kind, px, py, pz, vx, vy, vz, metadata) {\n    const s = this.bombs.length;\n    if (kind === 'storm') this.throwStorm(a); else this.throwBomb(a);";
+    if (code.includes(metaGhostHead)) patch(metaGhostHead,
+      "  ghostBomb(a, kind, px, py, pz, vx, vy, vz, metadata, s3kit, s3charge) {\n    const s = this.bombs.length;\n    withGhostBombSpawn(() => { if (kind === 'storm') this.throwStorm(a); else this.throwBomb(a); });",'ghost bomb scope');
+    else patch(plainGhostHead,
       "  ghostBomb(a, kind, px, py, pz, vx, vy, vz, s3kit, s3charge) {\n    const s = this.bombs.length;\n    withGhostBombSpawn(() => { if (kind === 'storm') this.throwStorm(a); else this.throwBomb(a); });",'ghost bomb scope');
-    patch("    if (!b) return;\n    b.ghost = true;\n    b.pos.set(px, py, pz);","    if (!b) return;\n    b.ghost = true; kitGhostBombAttach(SUB, this, b, s3kit, s3charge);\n    b.pos.set(px, py, pz);",'ghost bomb kit');
+    const plainGhostBody = "    if (!b) return;\n    b.ghost = true;\n    b.pos.set(px, py, pz);";
+    const metaGhostBody = "    if (!b) return;\n    b.ghost = true;\n    if (kind === 'storm' && Number.isFinite(metadata?.stormDuration)) b.s3StormDuration = Math.max(8, Math.min(10, metadata.stormDuration));\n    b.pos.set(px, py, pz);";
+    if (code.includes(metaGhostBody)) patch(metaGhostBody,
+      "    if (!b) return;\n    b.ghost = true;\n    if (kind === 'storm' && Number.isFinite(metadata?.stormDuration)) b.s3StormDuration = Math.max(8, Math.min(10, metadata.stormDuration));\n    kitGhostBombAttach(SUB, this, b, s3kit, s3charge);\n    b.pos.set(px, py, pz);",'ghost bomb kit');
+    else patch(plainGhostBody,
+      "    if (!b) return;\n    b.ghost = true; kitGhostBombAttach(SUB, this, b, s3kit, s3charge);\n    b.pos.set(px, py, pz);",'ghost bomb kit');
     patch('    const w = WEAPONS.blaster;','    const w = p.s3SpecialWeapon || WEAPONS.blaster;','special blast descriptor');
     patch("      this.applyHit(p.owner, e, blasterBurstDamage(p, w, d, distanceDamage), 'blaster');",
       "      this.applyHit(p.owner, e, p.s3SpecialWeapon ? distanceDamage(w.splashBands || w.damageBands, d, !kitTrizookaSteppedBands(p)) : blasterBurstDamage(p, w, d, distanceDamage), p.wid || 'blaster');",'special blast bands');

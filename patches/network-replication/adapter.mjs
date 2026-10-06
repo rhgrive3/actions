@@ -138,9 +138,12 @@ export function adaptNetworkSource(rel, code) {
     }
     switch (e[1]) {`, 'event ownership and host-only Boss timeline admission');
     {
+      const bombWithKitMeta = "case 'b': { const a = this.byNid.get(e[2]); if (a) G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9], e[10], e[11], e[12]); break; }";
+      const bombWithKit = "case 'b': { const a = this.byNid.get(e[2]); if (a) G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9], e[10], e[11]); break; }";
       const bombWithMeta = "case 'b': { const a = this.byNid.get(e[2]); if (a) G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9], e[10]); break; }";
       const bombPlain = "case 'b': { const a = this.byNid.get(e[2]); if (a) G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9]); break; }";
-      const before = code.includes(bombWithMeta) ? bombWithMeta : bombPlain;
+      const before = code.includes(bombWithKitMeta) ? bombWithKitMeta : code.includes(bombWithKit) ? bombWithKit : code.includes(bombWithMeta) ? bombWithMeta : bombPlain;
+      const bombReplayArgs = before === bombWithKitMeta ? ', e[10], e[11], e[12]' : before === bombWithKit ? ', e[10], e[11]' : before === bombWithMeta ? ', e[10]' : '';
       patch(before, `case 'b': {
         for (let index = 4; index <= 9; index++) if (!Number.isFinite(e[index])) return;
         const a = this.byNid.get(e[2]);
@@ -152,13 +155,13 @@ export function adaptNetworkSource(rel, code) {
             || !Number.isSafeInteger(e._netSeq) || e._netSeq <= auth.useSeq) break;
           auth.used = true;
         }
-        const b = a && G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9], e[10]);
+        const b = a && G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9]${bombReplayArgs});
         if (b) {
           b._netBorn = e[0]; b._netBornTick = e._netTick; b._netPeer = this.peers.get(from); b._netSteps = 0;
           b._netBornLocal = Number.isFinite(b._netPeer?.off) ? e[0] + b._netPeer.off : NaN;
         }
         break;
-      }`, 'bomb timeline birth with optional metadata');
+      }`, 'bomb timeline birth with optional metadata and kit identity');
     }
     const kitEventCase = "case 'ev': this._playEvent(e[2], e[3], from); break;";
     if (code.includes(kitEventCase)) patch(kitEventCase, `case 'ev': {
