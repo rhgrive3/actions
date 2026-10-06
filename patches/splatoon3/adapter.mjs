@@ -88,11 +88,18 @@ export function adaptSource(rel, code) {
       '        <path class="iw-ret__ring" d="M46 -15 L56 -15 Q60 -15 60 -11 L60 11 Q60 15 56 15 L46 15"/>\n' +
       '        <path class="iw-ret__ring thin" d="M-30 22 Q0 30 30 22"/></svg>`;',
       '    } else if (kind === \'roller\') {\n' +
-      '      // Compact central aim marker only. The ring radius stays on the shared\n' +
-      '      // compact reticle scale; the native Splatoon 3 pixel geometry is still\n' +
-      '      // unpinned (reference/roller-reticle-presentation-2026-10-06.md).\n' +
+      '      // Measured from the pinned official Splatoon 3 Roller capture (1280x720,\n' +
+      '      // sha256 349f7c9f...0183750): a thin ~13 px ring about the aim point plus\n' +
+      '      // four short diagonal strokes at (+/-45.3, +/-22.6) px, each lying\n' +
+      '      // perpendicular to its own radius. Normalised onto this shared 80-unit\n' +
+      '      // canvas (7.5 units = 13 px) the ring is r=7.5 and the four strokes sit at\n' +
+      '      // (+/-26.1, +/-13.0). No bracket pair and no lower arc.\n' +
       '      r.innerHTML = `<i class="iw-ret__dot"></i><svg class="iw-ret__svg" viewBox="-40 -40 80 80" aria-hidden="true">\n' +
-      '        <circle r="15" class="iw-ret__ring thin"/></svg>`;',
+      '        <circle r="7.5" class="iw-ret__ring thin"/>\n' +
+      '        <path class="iw-ret__ring thin" d="M-25.04 -15.15 L-27.11 -11.04"/>\n' +
+      '        <path class="iw-ret__ring thin" d="M27.27 -10.92 L25.23 -15.04"/>\n' +
+      '        <path class="iw-ret__ring thin" d="M-27.05 11.04 L-24.98 15.15"/>\n' +
+      '        <path class="iw-ret__ring thin" d="M25.04 15.15 L27.11 11.04"/></svg>`;',
       'compact Roller reticle');
     return "import { t as tr } from '../i18n.js';\n" + code;
   }

@@ -66,18 +66,44 @@ test('#724 the Roller reticle emits no invented wide bracket, lower arc or 160 p
   assert.equal(roller.includes('Q-60 -15'), false, 'bracket corner geometry must not be emitted');
 });
 
-test('#724 the Roller reticle is a compact central aim marker on the shared 80 px canvas', () => {
+test('#724 the Roller reticle reproduces the pinned official ring plus four diagonal strokes', () => {
   const roller = html('roller');
-  assert.match(roller, /viewBox="-40 -40 80 80"/, 'compact shared canvas');
+  assert.match(roller, /viewBox="-40 -40 80 80"/, 'compact shared canvas, not the retired 160 px one');
   assert.match(roller, /<i class="iw-ret__dot"><\/i>/, 'centre dot is kept');
-  assert.equal(count(roller, 'iw-ret__ring'), 1, 'one ring only, no bracket/arc strokes');
-  assert.equal(roller.includes('iw-ret__tick'), false, 'no spread ticks are invented for the Roller');
-  // Every emitted coordinate stays inside the compact canvas, so the retired
-  // 160 px silhouettes cannot be reintroduced through another path.
-  for (const [, x, y] of roller.matchAll(/(?:c|circle[^r]*)="(-?\d+(?:\.\d+)?) (-?\d+(?:\.\d+)?)"/g)) {
-    assert.ok(Math.abs(+x) <= 40 && Math.abs(+y) <= 40, `coordinate ${x} ${y} leaves the compact canvas`);
+
+  // Pinned official capture: 1280x720, sha256 349f7c9f...0183750. Measured ring
+  // radius 13 px and four ~8 px strokes at (+/-45.3, +/-22.6) px from the aim
+  // point, each perpendicular to its own radius. Normalised at 7.5 units = 13 px.
+  const RING = 7.5, PX_PER_UNIT = 13 / RING;
+  const ring = roller.match(/<circle r="([\d.]+)" class="iw-ret__ring thin"\/>/);
+  assert.ok(ring, 'a thin ring is present');
+  assert.equal(+ring[1], RING, 'ring radius matches the measured official ratio');
+
+  const paths = [...roller.matchAll(/<path class="iw-ret__ring thin" d="M(-?[\d.]+) (-?[\d.]+) L(-?[\d.]+) (-?[\d.]+)"\/>/g)];
+  assert.equal(paths.length, 4, 'the official capture shows four strokes, not zero');
+
+  // Each stroke centre must land on the measured (+/-3.48r, +/-1.74r) offsets and
+  // run perpendicular to its own radius.
+  for (const [, x1, y1, x2, y2] of paths) {
+    const mx = (+x1 + +x2) / 2, my = (+y1 + +y2) / 2;
+    const ux = mx / RING, uy = my / RING;
+    assert.ok(Math.abs(Math.abs(ux) - 3.48) < 0.05, `stroke |x| offset ${Math.abs(ux)} must be 3.48 ring radii`);
+    assert.ok(Math.abs(Math.abs(uy) - 1.74) < 0.05, `stroke |y| offset ${Math.abs(uy)} must be 1.74 ring radii`);
+    // dot(stroke direction, unit radius vector) must vanish: strokes lie across
+    // the radius, which is what makes them read as four corner marks.
+    const norm = Math.hypot(mx, my);
+    const dot = ((+x2 - +x1) * mx + (+y2 - +y1) * my) / norm;
+    assert.ok(Math.abs(dot) < 0.05, `each stroke is perpendicular to its radius (dot ${dot.toFixed(3)})`);
+    const length = Math.hypot(+x2 - +x1, +y2 - +y1);
+    assert.ok(Math.abs(length - 4.6) < 0.2, `stroke length ${length.toFixed(2)} matches the measured 4.6 units`);
   }
-  assert.match(roller, /<circle r="15"/, 'compact ring radius stays on the shared HUD scale');
+  // All four quadrants are occupied, and nothing leaves the compact canvas.
+  const quads = new Set(paths.map(([, x1, y1]) => `${Math.sign(+x1)},${Math.sign(+y1)}`));
+  assert.equal(quads.size, 4, 'one stroke in each quadrant');
+  // Every emitted coordinate, ring radius included, stays inside the shared canvas.
+  const coords = [+ring[1], ...paths.flatMap(([, ax, ay, bx, by]) => [+ax, +ay, +bx, +by])];
+  assert.equal(coords.length, 17, 'ring radius plus four stroke endpoints');
+  assert.ok(coords.every(v => Math.abs(v) <= 40), 'no coordinate leaves the compact 80-unit canvas');
 });
 
 test('#724 the other weapon reticles keep their own dedicated structures', () => {
@@ -135,17 +161,36 @@ test('#724 the pinned official reference image is unmodified', { skip: fs.exists
   assert.deepEqual(jpegSize(bytes), { width: 1280, height: 720 });
 });
 
-test('#724 the reference verdict stays partial and claims no screenshot match', { skip: fs.existsSync(path.join(EVIDENCE, 'manifest.json')) ? false : 'reference manifest not fetched in this environment' }, () => {
+test('#724 the reference record carries the measured geometry, not the retracted absence claim', { skip: fs.existsSync(path.join(EVIDENCE, 'manifest.json')) ? false : 'reference manifest not fetched in this environment' }, () => {
   const manifest = JSON.parse(fs.readFileSync(path.join(EVIDENCE, 'manifest.json'), 'utf8'));
   assert.equal(manifest.issue, 724);
   assert.equal(manifest.url, 'https://www.nintendo.com/jp/ichikara/av5ja/photo/01/027.jpg');
   assert.equal(manifest.sha256, PINNED_SHA256);
   assert.deepEqual(manifest.dimensions_px, { width: 1280, height: 720 });
-  assert.equal(manifest.verdict, 'PARTIAL', 'the fetched image must not be recorded as a resolved match');
-  assert.match(manifest.verdict_detail.compact_marker_supported, /NOT CONFIRMED/);
-  assert.match(manifest.verdict_detail.pixel_geometry, /STILL UNKNOWN/);
-  assert.match(manifest.verdict_detail.old_wide_bracket_lower_arc_absent, /NOT PROVEN/);
-  // Both template correlations stayed at noise level in the recorded analysis.
-  assert.match(manifest.inspection.template_old_geometry, /0\.2852/);
-  assert.match(manifest.inspection.template_compact_ring, /0\.3276/);
+
+  // Reticle presence is the parent's direct visual inspection of this image; the
+  // numbers below are this lane's targeted re-measurement at the parent-supplied
+  // aim point. Both must stay on the record, with the retracted claim retained
+  // only as history.
+  const c = manifest.correction;
+  assert.equal(manifest.verdict, 'CORRECTED');
+  assert.equal(c.reticle_resolvable, true);
+  assert.deepEqual(c.aim_point_px, { x: 649, y: 333 });
+  assert.equal(c.ring.radius_px, 13);
+  assert.equal(c.strokes.count, 4);
+  assert.equal(c.strokes.length_px, 7.98);
+  assert.deepEqual(c.normalised_geometry.stroke_offset_in_ring_radii, { x: 3.48, y: 1.74 });
+  assert.deepEqual(c.normalised_geometry.svg_paths, [
+    'M-25.04 -15.15 L-27.11 -11.04', 'M27.27 -10.92 L25.23 -15.04',
+    'M-27.05 11.04 L-24.98 15.15', 'M25.04 15.15 L27.11 11.04'
+  ]);
+  assert.match(c.acceptance_outcome.old_wide_bracket_lower_arc_absent, /CONFIRMED/);
+  assert.match(c.acceptance_outcome.pinned_relative_geometry, /PROVEN and implemented/);
+  // The retracted "no resolvable reticle" finding must stay visible as history,
+  // never silently deleted.
+  assert.equal(manifest.superseded_analysis.previous_verdict, 'PARTIAL (no resolvable reticle)');
+  assert.match(manifest.superseded_analysis.why_wrong, /GRAY, semi-transparent/);
+  assert.match(manifest.superseded_analysis.detected_by, /parent visual inspection/);
+  // Stroke weight, opacity and flick states are still not pinned by this capture.
+  assert.match(c.acceptance_outcome.native_pixel_geometry, /Still unknown/);
 });

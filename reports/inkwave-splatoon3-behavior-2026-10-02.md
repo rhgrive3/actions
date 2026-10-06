@@ -420,3 +420,33 @@ Also recorded honestly: during the previous round the baseline-failure procedure
 audit, ownership was confirmed by timestamp, the file was removed, and the foreign `/tmp/probe625.mjs`
 belonging to another lane was deliberately left untouched. No file was cleaned up that this lane did not
 create.
+
+### 2026-10-06 correction — #724 reticle geometry from the pinned official capture
+
+**The previous CV conclusion in this report was wrong and is retracted.** That analysis used a fixed
+near-white threshold (>=210/215) across the whole frame. The Roller reticle is a gray, semi-transparent
+stroke over busy ink, so it never crossed the threshold; the classifier failed, the reticle did not.
+The parent visually inspected the same pinned `027.jpg` and reported the reticle clearly visible. A
+targeted re-measurement at the parent-supplied aim point (649,333), using local adaptive contrast
+(background median 91 + 2 sd = 189.4), corroborates it quantitatively. No wide sweep or template search
+was repeated.
+
+Measured from the pinned capture (1280x720, sha256 `349f7c9f…0183750`): a thin **ring of radius 13 px**
+(radial mean luma 142.1 at r=13 versus a background median of 91; r=12 gives 125.4, r=14 gives 95.4),
+plus **four short strokes** with centres at (±45.2, ±22.7) px, 11x12 px each, full length 7.98 px, each
+lying **perpendicular to its own radius**. Overall footprint about 110 x 60 px. No bracket pair and no
+lower arc. Normalised to the ring radius: stroke offsets x = 3.48 r, y = 1.74 r.
+
+Source corrected accordingly (presentation only, build adapter, shared 80-unit canvas, existing
+`iw-ret__ring thin` classes, no new CSS class and no locked-upstream edit): ring `r=7.5` plus the four
+measured strokes, mapped at 7.5 units = 13 px. `tests/issue-724-roller-reticle.test.mjs` now asserts the
+pinned relative geometry — ring radius, the four offsets, the perpendicular orientation and the stroke
+length — rather than a ring-only shape.
+
+Still not pinned by this capture: absolute stroke weight, opacity, and any horizontal/vertical-flick
+state change. Those need a current-version in-engine capture and remain parent-owned.
+
+The retracted finding is retained as history in `issue724-reference/manifest.json` under
+`superseded_analysis` and is asserted by the test, so it is visible rather than silently deleted.
+#649 remains untouched and held out; this correction touches no #649, gameplay, protocol or locked
+upstream path.
