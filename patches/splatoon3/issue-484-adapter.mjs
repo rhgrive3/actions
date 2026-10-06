@@ -96,12 +96,14 @@ export function adaptIssue484Net(code) {
 
 export function adaptIssue484Actor(code) {
   // 1. In reset(), clear presentation overrides
-  code = replaceOnce(
-    code,
-    '  reset() {\n    this.alive = true;\n    this.hp = PLAYER.hp;',
-    '  reset() {\n    this.alive = true;\n    delete this.s3SpecialCost;\n    delete this.s3SpecialReady;\n    this.hp = PLAYER.hp;',
-    'actor reset cleanup'
+  const plainReset = '  reset() {\n    this.alive = true;\n    this.hp = PLAYER.hp;';
+  const scoredReset = '  reset() {\n    if (this.s3) delete this.s3.revealedUntil;\n    this.alive = true;\n    this.hp = PLAYER.hp;';
+  const resetAnchor = code.includes(scoredReset) ? scoredReset : plainReset;
+  const resetTarget = resetAnchor.replace(
+    '    this.alive = true;\n    this.hp = PLAYER.hp;',
+    '    this.alive = true;\n    delete this.s3SpecialCost;\n    delete this.s3SpecialReady;\n    this.hp = PLAYER.hp;'
   );
+  code = replaceOnce(code, resetAnchor, resetTarget, 'actor reset cleanup');
 
   // 2. In splat(), clear presentation overrides
   code = replaceOnce(
