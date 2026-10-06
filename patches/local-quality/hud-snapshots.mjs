@@ -22,20 +22,21 @@ export function teamHudSnapshot(match, colors, viewerTeam = 0) {
   t0.players.length = n0; t1.players.length = n1;
   return viewerTeam === 1 ? cache.reverse : cache.forward;
 }
-export function hudFrameSnapshot(game, m, a, w, spread, players, markers, prompt, showMinimap, PLAYER, SUB) {
+export function hudFrameSnapshot(game, m, a, w, spread, players, markers, prompt, showMinimap, PLAYER, SUB, subCost = SUB.bomb.inkCost, guide) {
   let cache = game._hudTransport;
   if (!cache) cache = game._hudTransport = { frame: {}, crosshair: {}, map: {}, mobile: {} };
   const frame = cache.frame, crosshair = cache.crosshair, map = cache.map;
   frame.time = m.time; frame.teams = m.teamSummary(a.team);
-  frame.ink = a.ink / PLAYER.inkMax; frame.inkLow = a.ink < 18 || game._lowInkFlash > 0; frame.subCost = SUB.bomb.inkCost / PLAYER.inkMax;
+  frame.ink = a.ink / PLAYER.inkMax; frame.inkLow = a.ink < 18 || game._lowInkFlash > 0; frame.subCost = subCost / PLAYER.inkMax; frame.subReady = a.ink >= subCost;
   frame.special = a.specialFrac(); frame.specialReady = a.specialReady(); frame.specialActive = !!a.specialActive;
   frame.hp = a.hp / PLAYER.hp; frame.weapon = a.weaponId; frame.charge = a.weaponRunner.charge;
   crosshair.spread = spread; crosshair.onTarget = m.controller?.onTarget ? 'enemy' : null; crosshair.inRange = m.controller ? m.controller.inRange !== false : true;
+  if (guide === undefined) delete crosshair.guide; else crosshair.guide = guide;
   frame.crosshair = crosshair;
   map.canvas = showMinimap ? game.minimap.canvas : null; map.expanded = false; map.players = players;
   frame.map = showMinimap ? map : null; frame.markers = markers; frame.prompt = prompt; frame.fps = game.settings.showFps ? game.fps : undefined;
   const mobile = cache.mobile;
   mobile.special = frame.special; mobile.ready = frame.specialReady; mobile.activeSp = frame.specialActive; mobile.weapon = w.kind || a.weaponId;
-  mobile.specialId = w.special; mobile.ink = frame.ink; mobile.subCost = frame.subCost;
+  mobile.specialId = w.special; mobile.ink = frame.ink; mobile.subCost = frame.subCost; mobile.subReady = frame.subReady;
   return frame;
 }

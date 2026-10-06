@@ -1,9 +1,13 @@
 export function adaptGearSub(rel,code,replace){
  const patch=(before,after,label)=>{code=replace(code,before,after,'gear/sub: '+label);};
  if(rel==='src/main.js'){
+  if(code.includes('    const frame = hudFrameSnapshot(')){
+   patch('showMinimap, PLAYER, SUB, SUB.bomb.inkCost', 'showMinimap, PLAYER, SUB, subInkSpec(a, SUB.bomb).inkCost', 'equipped persistent HUD sub cost');
+  }else{
   patch('    const frame = {\n      time: m.time,', '    const subCost = subInkSpec(a, SUB.bomb).inkCost;\n    const frame = {\n      time: m.time,','equipped HUD sub cost');
   patch('subCost: SUB.bomb.inkCost / PLAYER.inkMax,', 'subCost: subCost / PLAYER.inkMax, subReady: a.ink >= subCost,','raw admission and normalized mark');
   patch('ink: frame.ink, subCost: frame.subCost });', 'ink: frame.ink, subCost: frame.subCost, subReady: frame.subReady });','same readiness for mobile');
+  }
   return "import { subInkSpec } from '../patches/splatoon3/runtime/sub-ready.mjs';\n"+code;
  }
  if(rel==='src/ui/hud.js'){

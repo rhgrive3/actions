@@ -25,7 +25,7 @@ export function installWeaponGates({ Actor, WeaponRunner, Projectiles }) {
   const reset = wr.reset, busy = wr.busy, update = wr.update;
   wr.reset = function (...args) {
     this.s3PostShotRemaining = this.s3DodgeInkRemaining = this.s3DodgeShotRemaining = 0;
-    this.s3GateInActor = false; this.s3DodgeShotPending = false;
+    this.s3GateInActor = false; this.s3GateDodgeShotPending = false;
     return reset.apply(this, args);
   };
   wr.busy = function () { return this.s3PostShotRemaining > EPS || busy.call(this); };
@@ -55,7 +55,7 @@ export function installWeaponGates({ Actor, WeaponRunner, Projectiles }) {
     const accepted = dodge.apply(this, args);
     if (accepted) {
       this.s3DodgeInkRemaining = this.a.weapon.rollInkRecoverStop;
-      this.s3DodgeShotRemaining = 0; this.s3DodgeShotPending = true;
+      this.s3DodgeShotRemaining = 0; this.s3GateDodgeShotPending = true;
       this.cooldown = 0; // forbidden travel never accrues a shot debt
     }
     return accepted;
@@ -69,13 +69,13 @@ export function installWeaponGates({ Actor, WeaponRunner, Projectiles }) {
       const result = dualies.call(this, dt, input, w);
       this.cooldown = 0; return result;
     }
-    if (!travelling && this.s3DodgeShotPending && input.fire) {
-      this.cooldown = 0; this.s3DodgeShotPending = false;
+    if (!travelling && this.s3GateDodgeShotPending && input.fire) {
+      this.cooldown = 0; this.s3GateDodgeShotPending = false;
     }
     if (Math.abs(this.cooldown) <= EPS) this.cooldown = 0;
     const result = dualies.call(this, dt, input, w);
     if (travelling && !this.dodge) {
-      this.s3DodgeShotRemaining = w.rollShotDelay; this.s3DodgeShotPending = true;
+      this.s3DodgeShotRemaining = w.rollShotDelay; this.s3GateDodgeShotPending = true;
       this.cooldown = 0;
     }
     return result;
@@ -94,3 +94,4 @@ export function installWeaponGates({ Actor, WeaponRunner, Projectiles }) {
     return push.call(this, p);
   };
 }
+
