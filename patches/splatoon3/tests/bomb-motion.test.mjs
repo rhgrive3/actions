@@ -159,7 +159,7 @@ function countCalls(ch) {
   return counts;
 }
 
-test('real release creates its projectile immediately in whip posture, without a second cock', async () => {
+test('admitted release creates its projectile in whip posture without a second cock after minimum ready time', async () => {
   const api = await production(), C = api.CHARACTER_CHANNELS, T = api.CHARACTER_TIMERS;
   const measurements = [];
   for (const hz of [30, 60, 120]) for (const holdFrames of [1, hz / 2]) {
@@ -169,6 +169,11 @@ test('real release creates its projectile immediately in whip posture, without a
         for (let i = 0; i < holdFrames; i++) x.step(1 / hz, { sub: true });
         assert.equal(x.projectiles.bombs.length, 0);
         x.step(1 / hz, { subReleased: true });
+        // A short tap is now queued by the native gameplay ready gate. The
+        // pose assertions below concern actual emission, not physical R-up.
+        for (let wait = 0; x.a.weaponRunner.s3SubReady?.pending && wait < Math.ceil(hz * 5 / 60) + 2; wait++) {
+          assert.equal(x.projectiles.bombs.length, 0); x.step(1 / hz);
+        }
         assert.equal(x.projectiles.bombs.length, 1);
         assert.equal(x.a.ink, 30, 'actual 70 ink cost remains on the release tick');
         assert.ok(Math.abs(x.ch.tr[T.T_THROW] - 1 / hz) < 1e-8, 'native Float32 clock advances by exactly one rendered update');
@@ -308,7 +313,7 @@ test('hidden, form, death, reset, disposal and weapon swap invalidate owned bomb
   for (const action of ['reset', 'swap', 'form', 'hide', 'death']) {
     const r = rig(api);
     try {
-      r.step(1 / 60, { sub: true }); r.step(1 / 60, { subReleased: true });
+      for (let ready = 0; ready < 6; ready++) r.step(1 / 60, { sub: true }); r.step(1 / 60, { subReleased: true });
       assert.equal(api.bombMotionSnapshot(r.ch).throwing, true);
       const beforeClock = r.ch.tr[T.T_THROW];
       if (action === 'reset') r.a.weaponRunner.reset();
@@ -598,6 +603,7 @@ test('a duplicate installer from a different VM realm preserves the original pro
     const before = preservedRig(r, api), first = api.bombPreviewPosition(r.a, new api.THREE.Vector3());
     const second = duplicate.namespace.bombPreviewPosition(r.a, new api.THREE.Vector3());
     assert.ok(second.distanceTo(first) < 1e-12); assert.deepEqual(preservedRig(r, api), before);
+    for (let ready = 0; ready < 5; ready++) r.step(1 / 60, { sub: true });
     r.step(1 / 60, { subReleased: true });
     assert.equal(r.projectiles.bombs.length, 1);
     assert.equal(duplicate.namespace.bombMotionSnapshot(r.ch).throwing, true, 'second-realm helper reads the actual first-installer state');
@@ -633,7 +639,7 @@ test('admission cancellation preserves paired native throw clocks through hide, 
     const baseline = rig(api, 'dualies', false), r = rig(api, 'dualies');
     try {
       for (const x of [baseline, r]) {
-        x.step(1 / hz, { sub: true }); x.step(1 / hz, { subReleased: true });
+        for (let ready = 0; ready < Math.ceil(hz * 5 / 60) + 1; ready++) x.step(1 / hz, { sub: true }); x.step(1 / hz, { subReleased: true });
         if (action === 'hide') x.ch.setVisible(false);
         if (action === 'ancestor') api.G.scene.visible = false;
         if (action === 'dance') x.ch.setDance('future-custom-presentation');
@@ -664,7 +670,7 @@ test('admission cancellation preserves paired native throw clocks through hide, 
         assert.ok(drawnVertices(r.ch.weapon.left.pivot, api.THREE).length > 100);
         assert.ok(r.ch.ikErr.every(Number.isFinite));
         r.a.ink = 100; // a fresh actual release requires the native 70-ink cost
-        r.step(1 / hz, { sub: true }); r.step(1 / hz, { subReleased: true });
+        for (let ready = 0; ready < Math.ceil(hz * 5 / 60) + 1; ready++) r.step(1 / hz, { sub: true }); r.step(1 / hz, { subReleased: true });
         assert.equal(api.bombMotionSnapshot(r.ch).throwing, true, `${action}: a fresh native event restarts owned presentation`);
       }
     } finally {
@@ -684,6 +690,7 @@ test('admission bomb hold and read-only release preview resume after mapped Spec
     const candidate = new api.THREE.Vector3(1, 2, 3), before = preservedRig(r, api, true);
     const preview = api.bombPreviewPosition(r.a, candidate.clone());
     assert.ok(preview.distanceTo(candidate) > .5); assert.deepEqual(preservedRig(r, api, true), before);
+    for (let ready = 0; ready < 5; ready++) r.step(1 / 60, { sub: true });
     r.step(1 / 60, { subReleased: true });
     assert.equal(r.projectiles.bombs.length, 1); assert.equal(api.bombMotionSnapshot(r.ch).throwing, true);
     assert.equal(r.ch.tr[T.T_THROW], Math.fround(1 / 60));

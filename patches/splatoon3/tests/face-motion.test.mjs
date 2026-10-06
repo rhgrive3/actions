@@ -280,6 +280,7 @@ test('30/60/120Hz fixed-clock rendering, pause, interruptions and disposal', asy
       r.snapshot().gazeUniform.forEach((v, i) => assert.ok(Math.abs(v - saved.gazeUniform[i]) < 1e-8));
       r.a.weaponRunner.reset(); assert.equal(r.snapshot(), null); r.visual(); assert.equal(r.snapshot().mode, null);
       r.step(1 / 60, { sub: true }); assert.equal(r.snapshot().mode, 'sub-aim');
+      for (let ready = 0; ready < 5; ready++) r.step(1 / 60, { sub: true });
       r.step(1 / 60, { subReleased: true }); assert.equal(r.snapshot().mode, 'throw');
       for (let i = 0; i < 30; i++) r.step(); assert.equal(r.snapshot().mode, null);
       r.a.weaponRunner.reset(); r.a.form = 'squid'; r.visual(); assert.equal(r.snapshot().mode, null);
