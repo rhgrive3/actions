@@ -23,6 +23,20 @@ export function abilityPoints(loadout) {
   }
   return ap;
 }
+/** True while enemy-ink movement follows the attack/ready curve
+ * (OpInk_MoveVel_Shot) instead of the ordinary walk curve (OpInk_MoveVel).
+ *
+ * Pinned 11.3.0 keeps both curves, and Nintendo's own Splatoon 2 Ver. 1.4.0
+ * notes list "moving while preparing to throw a bomb or sub weapon" among the
+ * states Ink Resistance Up must apply; the Splatoon 3 ability documentation
+ * states it works the same way as in Splatoon 2. Readiness is read from the
+ * weapon's own ready state, not from the raw button, so the release and cancel
+ * frames cannot leak the ordinary curve. Squid form never enters a sub ready
+ * state, so the grounded humanoid branch is the only one affected.
+ */
+export function enemyInkAttackReady(actor) {
+  return !!actor?.intent?.fire || actor?.weaponRunner?.aimingSub === true;
+}
 export function gearCurve(points, min, mid, max) {
   const AP = Math.max(0, Math.min(57, points));
   const p = Math.min(100, 3.3 * AP - 0.027 * AP * AP) / 100;
@@ -97,7 +111,7 @@ export function installGear(api, tuning) {
     const original = { swimSpeed: api.PLAYER.swimSpeed, enemyInkSpeed: api.PLAYER.enemyInkSpeed };
     const m = this.s3?.modifiers || {}, flow = this.s3?.flow?.active;
     api.PLAYER.swimSpeed *= (m.swimSpeed ?? 1) * (flow ? tuning.flow.swimMultiplier : 1);
-    api.PLAYER.enemyInkSpeed = (this.intent.fire ? m.enemyShotSpeed : m.enemyMoveSpeed) ?? original.enemyInkSpeed;
+    api.PLAYER.enemyInkSpeed = (enemyInkAttackReady(this) ? m.enemyShotSpeed : m.enemyMoveSpeed) ?? original.enemyInkSpeed;
     api.PLAYER.enemyInkSpeed *= flow ? tuning.flow.enemyInkSpeedMultiplier : 1;
     try { return horizontal.call(this, dt, squid, enemy); }
     finally { Object.assign(api.PLAYER, original); }

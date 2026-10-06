@@ -85,6 +85,8 @@ export function installWeapons(context, profile) {
     const result = reset.apply(this, args);
     this.s3Stored = null; this.s3Turret = false; this.s3FlickVertical = false; this.s3BlasterWindup = 0;
     this.s3SloshRecovery = false;
+    this.s3SplatlingStartup = 0; this.s3SplatlingEmerging = false; this.s3SplatlingEmergeT = 0;
+    this.s3SplatlingHeld = false;
     this.s3ChargerPostShot = 0; this.s3DualiesPostShot = 0; this.s3DodgeShotPending = 0;
     return result;
   };
@@ -239,12 +241,43 @@ export function installWeapons(context, profile) {
   };
   const splatling = WeaponRunner.prototype._splatling;
   WeaponRunner.prototype._splatling = function (dt, input, w) {
-    if(this.a.form === 'squid') {
+    if (this.a.form === 'squid') {
       this.charging = this.streaming = false; this.charge = this.chargeT = this.burstT = 0;
-      this.spinLoop?.stop(.12); this.spinLoop = null; return;
+      this.spinLoop?.stop(.12); this.spinLoop = null;
+      this.s3SplatlingStartup = 0;
+      this.s3SplatlingEmerging = true;
+      this.s3SplatlingEmergeT = 6 / 60;
+      this.s3SplatlingHeld = false;
+      return;
+    }
+    if (this.s3SplatlingEmerging) {
+      if (this.s3SplatlingEmergeT > 1e-5) {
+        this.s3SplatlingEmergeT = Math.max(0, this.s3SplatlingEmergeT - dt);
+        if (input.fire) this.s3SplatlingHeld = true;
+        return;
+      }
+      this.s3SplatlingEmerging = false;
+    }
+    if (this.streaming) {
+      this.s3SplatlingStartup = 0;
+      this.s3SplatlingEmerging = false;
+      return splatling.call(this, dt, input, { ...w, inkPerShot: 0 });
+    }
+    if (!input.fire) {
+      this.s3SplatlingHeld = false;
+      this.s3SplatlingStartup = 0;
+    } else if (this.cooldown <= 0 && !this.charging && this.a.ink >= w.inkPerShot * 5) {
+      if (!this.s3SplatlingHeld) {
+        this.s3SplatlingHeld = true;
+        this.s3SplatlingStartup = 1 / 60;
+      }
+      if (this.s3SplatlingStartup > 1e-5) {
+        this.s3SplatlingStartup = Math.max(0, this.s3SplatlingStartup - dt);
+        return;
+      }
     }
     const charging = this.charging, charge = this.charge;
-    const result = splatling.call(this, dt, input, this.streaming ? { ...w, inkPerShot: 0 } : w);
+    const result = splatling.call(this, dt, input, w);
     if (charging && !input.fire && this.streaming) {
       this.burstDur = this.burstT = splatlingBurst(w, charge);
       this.a.ink = Math.max(0, this.a.ink - w.inkFull * this.burstDur / w.burstMax); this.a.lastFire = 0;

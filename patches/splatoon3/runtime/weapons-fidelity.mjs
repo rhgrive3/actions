@@ -95,7 +95,10 @@ function wallDropSource(p) {
     // top level. configureFidelityFlick/initialize already preserve that unit.
     const unit = p.fidelityRollerUnit?.UnitParam;
     move = unit?.WallDropMoveParam; paint = unit?.WallDropCollisionPaintParam;
-  } else if (w.kind === 'blaster' || w.kind === 'splatling') {
+  } else if (w.kind === 'blaster' || w.kind === 'splatling' || w.kind === 'shooter') {
+    // #385: the pinned Splattershot source keeps its wall-drop records at the
+    // weapon top level (like Blaster/Splatling), so the existing generic
+    // lifecycle admits them unchanged. No field or timing is derived here.
     move = raw?.WallDropMoveParam; paint = raw?.WallDropCollisionPaintParam;
   } else return null;
   return move && paint ? { w, move, paint } : null;
@@ -211,7 +214,8 @@ export function advanceFidelityWallDrop(system, p, dt) {
 function collisionRecord(c, target, offset = 0) {
   return { initRadius:Math.max(0,c['InitRadiusFor'+target]+offset*(c['AfterOffsetInitRadiusFor'+target]||0)),
     endRadius:Math.max(0,c['EndRadiusFor'+target]+offset*(c['AfterOffsetEndRadiusFor'+target]||0)),
-    changeTime:Math.max(0,(c['ChangeFrameFor'+target]||0)/60) };
+    changeTime:Math.max(0,(c['ChangeFrameFor'+target]||0)/60),
+    FriendThroughFrameForPlayer:Number.isFinite(c.FriendThroughFrameForPlayer)?c.FriendThroughFrameForPlayer:null };
 }
 function radiusAt(c, age, fallback) {
   if(!c)return fallback;
@@ -223,6 +227,10 @@ function fieldRadiusAt(p,age) { return radiusAt(p.fidelityFieldCollision,age,p.f
 function setCollision(p,c,offset=0) {
   p.fidelityPlayerCollision=collisionRecord(c,'Player',offset);
   p.fidelityFieldCollision=collisionRecord(c,'Field',offset);
+  // S3 teammate pass-through window from the pinned source CollisionParam.
+  // Confined to verified Slosher (#717); Shooter (#656) is owned by parent PR #765.
+  const kind=p.s3Weapon?.kind;
+  p.fidelityFriendThrough=kind==='slosher' && Number.isFinite(c.FriendThroughFrameForPlayer)?c.FriendThroughFrameForPlayer:null;
   // Existing packet size carries initial radius; layout is unchanged.
   p.size=p.fidelityPlayerCollision.initRadius;
 }
@@ -257,6 +265,9 @@ export function configureFidelityFlick(p, actor, weapon, index, angle, speed) {
   const cp=Math.cos(pitch);
   p.vel.set(Math.sin(angle)*cp*speed,Math.sin(pitch)*speed,Math.cos(angle)*cp*speed);
   p.fidelityYaw=Math.atan2(Math.sin(angle-actor.yaw),Math.cos(angle-actor.yaw));
+  // #734: the damage sector's straight ahead is the swing forward, kept apart
+  // from the fan offset above. Only this reference enters the hit-angle test.
+  p.fidelitySectorYaw=actor.yaw;
   p.fidelityMode=vertical?'vertical':'horizontal';p.fidelityRollerUnit=unit;
   setCollision(p,unit.UnitParam.CollisionParam);
   p.straight=unit.UnitParam.MoveParam.GoStraightToBrakeStateFrame/60;
@@ -301,12 +312,24 @@ export function fidelityProjectileTargets(system,p) {
   const r1=fidelityPlayerCollisionRadius(p),radius=PLAYER.radius+Math.max(r0,r1);
   let nearest=null,best=Infinity;
   for(const actor of G.actors){
-    if(actor.team===p.team||!actor.alive)continue;
+    if(!actor.alive||actor===p.owner)continue;
+    const friendly=actor.team===p.team;
+    // S3 teammate body-block: friendly capsules follow the per-family source
+    // FriendThroughFrameForPlayer window. A missing source record keeps the
+    // native same-team skip instead of inventing one global collider rule.
+    if(friendly&&!Number.isFinite(p.fidelityFriendThrough))continue;
     if(actor.pos.x<Math.min(p.prev.x,p.pos.x)-radius||actor.pos.x>Math.max(p.prev.x,p.pos.x)+radius||
        actor.pos.z<Math.min(p.prev.z,p.pos.z)-radius||actor.pos.z>Math.max(p.prev.z,p.pos.z)+radius)continue;
     s.base.set(actor.pos.x,actor.pos.y+(actor.smoothY||0),actor.pos.z);
     const t=capsuleEntry(p.prev,p.pos,s.base,PLAYER.radius,actor.form==='squid'?PLAYER.squidHeight:PLAYER.height,r0,r1);
-    if(t!==null&&(t<best-EPSILON||Math.abs(t-best)<EPSILON&&String(actor.nid??actor.name)<String(nearest?.nid??nearest?.name))){best=t;nearest=actor;}
+    if(t===null)continue;
+    if(friendly){
+      // The window is measured in source frames at the contact point of this
+      // sweep, so the fixed-step result is identical at any render cadence.
+      const prevAge=p.fidelityPrevAge??p.age;
+      if((prevAge+(p.age-prevAge)*t)*60<p.fidelityFriendThrough-EPSILON)continue;
+    }
+    if(t<best-EPSILON||Math.abs(t-best)<EPSILON&&String(actor.nid??actor.name)<String(nearest?.nid??nearest?.name)){best=t;nearest=actor;}
   }
   if(nearest){
     const length=p.prev.distanceTo(p.pos),world=fidelityWorldHit(system,p),boss=fidelityBossHit(system,p);
@@ -321,22 +344,40 @@ export function fidelityProjectileTargets(system,p) {
 // the already-installed maximum-per-volley damage group when a stronger glob
 // reaches a victim after a weaker glob. No second full hit is awarded.
 export function fidelityVolleyDamage(p,victim,amount) {
+  // Teammate body-block contact consumes the round without friendly damage,
+  // kill credit, or volley/damage-group bookkeeping.
+  if(victim.team===p.team)return 0;
   if(!p.vol)return amount;
   const seen=p.vol.hits.includes(victim);
   if(!seen)p.vol.hits.push(victim);
   return seen && !p.s3DamageGroup ? 0 : amount;
 }
 export function applyFidelitySlosherSplash(system,p,victim,amount) {
+  // A glob consumed by a teammate never splashes enemies behind the blocker.
+  if(victim.team===p.team)return;
   // Active Splat Bucket units have no SplashSlosherHitParam records. No radial damage.
   if(rawWeapon(p.s3Weapon||p.owner.weapon)?.UnitGroupParam)return;
   if(p.ghost)return;
   return applySlosherVolleyHit(system,p.owner,victim,p.s3DamageGroup,p.s3DamageGroupId,amount,p.wid||'slosher');
 }
+// #734: S3 measures the horizontal Inside/Outside sector from each glob's own
+// spawn point to the actual hit position. p.fidelityYaw only records which fan
+// slot was fired, so overlapping globs resolved the same hit differently. A
+// projectile with no recorded sector reference keeps the inside table instead
+// of inventing an outside one.
+export function rollerHitAngle(p,point) {
+  if(!Number.isFinite(p.fidelitySectorYaw))return null;
+  const dx=point.x-p.start.x,dz=point.z-p.start.z;
+  if(!(dx*dx+dz*dz>0))return 0;
+  const yaw=Math.atan2(dx,dz)-p.fidelitySectorYaw;
+  return Math.atan2(Math.sin(yaw),Math.cos(yaw));
+}
 export function fidelityDamage(p,point) {
   const w=p.s3Weapon||p.owner.weapon;
   if(w.kind==='roller'&&w.ballistics){
     const b=w.ballistics,d=p.start.distanceTo(point),xz=Math.hypot(point.x-p.start.x,point.z-p.start.z);
-    const outside=!p.s3Vertical&&xz>b.horizontalInsideDistance&&Math.abs(p.fidelityYaw)>radians(b.horizontalInsideDegrees);
+    const hitAngle=rollerHitAngle(p,point);
+    const outside=!p.s3Vertical&&hitAngle!==null&&xz>b.horizontalInsideDistance&&Math.abs(hitAngle)>radians(b.horizontalInsideDegrees);
     const bands=p.s3Vertical?w.verticalDamageBands:outside?b.horizontalOutsideDamageBands:w.flickDamageBands;
     const source=rawWeapon(w)[p.s3Vertical?'VerticalSwingUnitGroupParam':'WideSwingUnitGroupParam'].DamageParam;
     const age=(p.fidelityPrevAge??p.age??0)+((p.age??0)-(p.fidelityPrevAge??p.age??0))*(p.fidelityImpactT??1);
@@ -356,6 +397,9 @@ export function fidelityDamage(p,point) {
   return p.damage;
 }
 export function applyFidelityProjectileHit(system,p,victim,amount,point) {
+  // Teammate body-block: the round is already consumed by the solver; never
+  // route friendly damage, kill credit, or enemy-hit side effects.
+  if(victim.team===p.team)return;
   if(p.ghost)return;
   amount=fidelityDamage(p,point);
   const weapon=p.s3Weapon||p.owner.weapon;
@@ -415,7 +459,7 @@ export function installWeaponsFidelity(context,profile) {
   const fresh=Projectiles.prototype._new,push=Projectiles.prototype._push,ghost=Projectiles.prototype.ghostProjectile,clear=Projectiles.prototype.clear;
   Projectiles.prototype.clear=function(...args){const result=clear.apply(this,args);this._fidelityCollision=null;this._fidelitySloshContext=null;return result;};
   Projectiles.prototype._new=function(...args){
-    const p=fresh.apply(this,args);p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityRollerUnit=null;p.fidelitySloshUnit=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;return p;
+    const p=fresh.apply(this,args);p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityFriendThrough=null;p.fidelityRollerUnit=null;p.fidelitySloshUnit=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;p.fidelitySectorYaw=null;return p;
   };
   function initialize(p,w){
     if(!w)return;
