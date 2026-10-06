@@ -47,13 +47,46 @@ test('actual Bomb and Storm throws use their separate inherited-Y caps', () => {
   const actor = { pos: new THREE.Vector3(1,0,2), vel: new THREE.Vector3(2,12,0),
     aimYaw:.2, aimPitch:.1, team:0, remote:false, isLocal:false, _nearCamera:()=>false };
   p.throwBomb(actor);
-  const b=p.bombs.at(-1), expectBomb=fidelityThrowVelocity(actor,'bomb',new THREE.Vector3());
+  const b=p.bombs.at(-1), expectBomb=fidelityThrowVelocity(actor,'bomb',new THREE.Vector3(), actor.s3?.modifiers?.subPower ?? 1);
   assert.ok(b.vel.distanceTo(expectBomb)<1e-9);
   p.throwStorm(actor);
   const storm=p.bombs.at(-1), expectStorm=fidelityThrowVelocity(actor,'storm',new THREE.Vector3());
   assert.ok(storm.vel.distanceTo(expectStorm)<1e-9);
   assert.ok(expectBomb.y>expectStorm.y);
   p.clear();
+});
+
+test('actual Splat Bomb throw scales forward travel speed with equipped Sub Power Up exactly once', () => {
+  resetG();
+  const p = new Projectiles(new THREE.Scene());
+  const mk = (subPower, storm = false) => ({
+    pos: new THREE.Vector3(), vel: new THREE.Vector3(),
+    aimYaw: 0, aimPitch: 0, team: 0, remote: false, isLocal: false, _nearCamera: () => false,
+    s3: { modifiers: storm ? {} : { subPower } },
+  });
+  const v0 = p.throwVelocity(mk(1), 67.2, new THREE.Vector3());
+  assert.ok(Math.abs(v0.z - SUB_SPECIAL_FIDELITY.bomb.spawnSpeedZ) < 1e-9);
+  for (const [ap, expected] of [[1.048285, 1.048285], [1.1515, 1.1515], [1.5, 1.5]]) {
+    const v = p.throwVelocity(mk(ap), 67.2, new THREE.Vector3());
+    assert.ok(Math.abs(v.z / v0.z - expected) < 1e-9, `AP ratio ${v.z / v0.z} !== ${expected}`);
+  }
+  // One actor's gear cannot affect another actor's bomb (owner-scoped).
+  const other = p.throwVelocity(mk(1), 67.2, new THREE.Vector3());
+  assert.ok(Math.abs(other.z - v0.z) < 1e-12);
+  // Storm never reads Splat Bomb Sub Power Up.
+  const sys = new Projectiles(new THREE.Scene());
+  const s0 = mk(1, true), s57 = mk(1, true);
+  s57.s3.modifiers.subPower = 1.5;
+  sys.throwStorm(s0); const st0 = sys.bombs.at(-1).vel.clone();
+  const sys2 = new Projectiles(new THREE.Scene());
+  sys2.throwStorm(s57); const st57 = sys2.bombs.at(-1).vel.clone();
+  assert.ok(st0.distanceTo(st57) < 1e-9);
+  // Remote visual packets carry authoritative velocity and overwrite (no double-apply).
+  const g = new Projectiles(new THREE.Scene());
+  const owner = mk(1.5);
+  g.ghostBomb(owner, 'bomb', 1, 2, 3, 10, 20, 30);
+  const ghost = g.bombs.at(-1);
+  assert.ok(Math.abs(ghost.vel.x - 10) < 1e-9 && Math.abs(ghost.vel.y - 20) < 1e-9 && Math.abs(ghost.vel.z - 30) < 1e-9);
 });
 
 test('first vertical-wall contact arms Splat Bomb using the native single collision query', () => {
