@@ -419,7 +419,7 @@ function retireNetworkGhosts(owner = null) {
       '    this._currentNetKey = prevNetKey;\n    return claimed;\n  }\n\n  // Cosmetic micro-splat',
       'restore the active splat order identity');
     patch('    const entries = [];\n    let wall = false;',
-      '    const entries = [];\n    let wall = false;\n    let live = 0;',
+      '    const entries = [];\n    let wall = false;\n    let live = 0;\n    const runs = [];',
       'count faces that still owe GPU ink');
     patch('        if (!cosmetic) claimed += this._cpuSplat(f, lu, lv, rr, team, seed, sdu, sdv, sa, kind);\n        entries.push(f, lu, lv, dn, sdu, sdv, sa);',
       `        this._lastOrderWins = 0;
@@ -430,11 +430,39 @@ function retireNetworkGhosts(owner = null) {
         // the atlas would contradict the gameplay grid it is supposed to match.
         const liveFace = cosmetic || this._currentNetKey === undefined || won > 0 || this._lastOrderWins > 0;
         if (liveFace) live++;
-        entries.push(f, lu, lv, dn, sdu, sdv, sa, liveFace ? 1 : 0);`,
-      'record per-face GPU paint authority');
+        // Entry stride 10. Slot 8 is where this face's won cell runs start in the
+        // splat run list and slot 9 is how many there are; -1 means the splat has no
+        // canonical order and keeps the plain one-quad-per-face growth draw.
+        const runCount = this._currentNetKey === undefined ? -1 : (this._runs.length / 3);
+        entries.push(f, lu, lv, dn, sdu, sdv, sa, liveFace ? 1 : 0, runs.length, runCount);
+        for (let r = 0; r < this._runs.length; r++) runs.push(this._runs[r]);`,
+      'record per-face GPU paint authority and won cell runs');
     patch('    if (entries.length) {\n      // an older splat of the other team still spreading underneath this one finishes instantly',
       '    if (live > 0) {\n      // an older splat of the other team still spreading underneath this one finishes instantly',
       'skip GPU growth for a fully superseded splat');
+    patch('  _cpuSplat(f, lu, lv, r, team, seed, sdu, sdv, sa, kind) {\n    if (r <= 0.02) return 0;',
+      '  _cpuSplat(f, lu, lv, r, team, seed, sdu, sdv, sa, kind) {\n    this._runs = [];\n    if (r <= 0.02) return 0;',
+      'reset the per-face won cell run list');
+    patch('    if (claimed > 0) this.version++;\n    return claimed;\n  }',
+      `    const order = this._currentNetKey;
+    if (order !== undefined) {
+      // Record exactly which cells this splat may draw. The order array already
+      // answers that, so no second shape evaluation is needed. Row runs keep the
+      // GPU quad count near the number of scanlines the splat covers.
+      for (let j = j0; j <= j1; j++) {
+        let start = -1;
+        const row = f.grid + j * f.nu;
+        for (let i = i0; i <= i1; i++) {
+          if (this.gridOrder[row + i] === order) { if (start < 0) start = i; }
+          else if (start >= 0) { this._runs.push(start, i, j); start = -1; }
+        }
+        if (start >= 0) this._runs.push(start, i1 + 1, j);
+      }
+    }
+    if (claimed > 0) this.version++;
+    return claimed;
+  }`,
+      'collect the exact won cell runs for the GPU growth pass');
     patch('        const k = f.grid + j * f.nu + i;\n        const prev = this.grid[k];\n        if (prev === val) continue;\n        this.grid[k] = val;\n        claimed += cellA;',
       `        const k = f.grid + j * f.nu + i;
         const prev = this.grid[k];
@@ -449,9 +477,57 @@ function retireNetworkGhosts(owner = null) {
         this.grid[k] = val;
         claimed += cellA;`,
       'deterministic cell ownership by canonical order identity');
-    patch('    const E = g.entries, R = g.R, kind = g.kind;\n    const reachK = REACH[kind];\n    for (let i = 0; i < E.length; i += 7) {\n      const f = E[i], lu = E[i + 1], lv = E[i + 2], dn = E[i + 3], sdu = E[i + 4], sdv = E[i + 5], sa = E[i + 6];',
-      '    const E = g.entries, R = g.R, kind = g.kind;\n    const reachK = REACH[kind];\n    for (let i = 0; i < E.length; i += 8) {\n      const f = E[i], lu = E[i + 1], lv = E[i + 2], dn = E[i + 3], sdu = E[i + 4], sdv = E[i + 5], sa = E[i + 6];\n      if (!E[i + 7]) continue;                  // newer canonical ink already covers this whole face',
-      'GPU growth follows the same canonical ownership');
+    patch('        cx: center.x, cy: center.y, cz: center.z,\n      };',
+      '        cx: center.x, cy: center.y, cz: center.z,\n        runs: runs.length ? runs : null,\n      };',
+      'carry the won cell runs with the growth splat');
+    patch('    const E = g.entries, R = g.R, kind = g.kind;\n    const reachK = REACH[kind];\n    for (let i = 0; i < E.length; i += 7) {\n      const f = E[i], lu = E[i + 1], lv = E[i + 2], dn = E[i + 3], sdu = E[i + 4], sdv = E[i + 5], sa = E[i + 6];\n      if (dn >= R) continue;\n      const rr = Math.sqrt(R * R - dn * dn);\n      if (dripOnly) {\n        if (!f.wall || rr < R * 0.3) continue;\n        this._pushQuad(f, lu - rr * 0.95, lu + rr * 0.95, lv - rr * DRIP_REACH, lv - rr * 0.3, lu, lv, dn, R, g.team, g.seed, kind, sdu, sdv, sa, tn, dT, 1);\n      } else {\n        const ext = rr * (reachK + 1.4 * sa);\n        const down = f.wall && g.dripDur ? rr * DRIP_REACH : 0;\n        this._pushQuad(f, lu - ext, lu + ext, lv - Math.max(ext, down), lv + ext, lu, lv, dn, R, g.team, g.seed, kind, sdu, sdv, sa, tn, dT, 0);\n      }\n    }',
+      `    const E = g.entries, R = g.R, kind = g.kind;
+    const reachK = REACH[kind];
+    for (let i = 0; i < E.length; i += 10) {
+      const f = E[i], lu = E[i + 1], lv = E[i + 2], dn = E[i + 3], sdu = E[i + 4], sdv = E[i + 5], sa = E[i + 6];
+      if (!E[i + 7]) continue;                  // newer canonical ink already covers this whole face
+      if (dn >= R) continue;
+      const rr = Math.sqrt(R * R - dn * dn);
+      const runCount = E[i + 9];
+      if (runCount === 0) continue;             // every cell of this face was canonically lost
+      if (runCount < 0) {                       // no canonical order: unchanged one-quad-per-face growth
+        if (dripOnly) {
+          if (!f.wall || rr < R * 0.3) continue;
+          this._pushQuad(f, lu - rr * 0.95, lu + rr * 0.95, lv - rr * DRIP_REACH, lv - rr * 0.3, lu, lv, dn, R, g.team, g.seed, kind, sdu, sdv, sa, tn, dT, 1);
+        } else {
+          const ext = rr * (reachK + 1.4 * sa);
+          const down = f.wall && g.dripDur ? rr * DRIP_REACH : 0;
+          this._pushQuad(f, lu - ext, lu + ext, lv - Math.max(ext, down), lv + ext, lu, lv, dn, R, g.team, g.seed, kind, sdu, sdv, sa, tn, dT, 0);
+        }
+        continue;
+      }
+      // Canonically ordered: draw only the cell runs this splat won, so the atlas
+      // can never show ink the gameplay grid already gave away. Same shape function
+      // and same blend, so every pixel still drawn is identical to the unclipped
+      // draw, and the quad count stays near the number of scanlines covered.
+      const runs = g.runs;
+      for (let r = 0; r < runCount; r++) {
+        const o = E[i + 8] + r * 3;
+        // Keep the atlas pad bleed the unclipped draw had, so ink still covers the
+        // mip guard band at the face edge; only cells another splat owns are cut.
+        const padM = (f.atlas.pad - 0.5) / f.atlas.ppm;
+        const cu0 = runs[o] * f.cu - padM, cu1 = runs[o + 1] * f.cu + padM;
+        const cv0 = runs[o + 2] * f.cv - padM, cv1 = cv0 + f.cv + padM;
+        if (dripOnly) {
+          if (!f.wall || rr < R * 0.3) continue;
+          const u0 = Math.max(cu0, lu - rr * 0.95), u1 = Math.min(cu1, lu + rr * 0.95);
+          const v0 = Math.max(cv0, lv - rr * DRIP_REACH), v1 = Math.min(cv1, lv - rr * 0.3);
+          if (u1 > u0 && v1 > v0) this._pushQuad(f, u0, u1, v0, v1, lu, lv, dn, R, g.team, g.seed, kind, sdu, sdv, sa, tn, dT, 1);
+        } else {
+          const ext = rr * (reachK + 1.4 * sa);
+          const down = f.wall && g.dripDur ? rr * DRIP_REACH : 0;
+          const u0 = Math.max(cu0, lu - ext), u1 = Math.min(cu1, lu + ext);
+          const v0 = Math.max(cv0, lv - Math.max(ext, down)), v1 = Math.min(cv1, lv + ext);
+          if (u1 > u0 && v1 > v0) this._pushQuad(f, u0, u1, v0, v1, lu, lv, dn, R, g.team, g.seed, kind, sdu, sdv, sa, tn, dT, 0);
+        }
+      }
+    }`,
+      'GPU growth draws exactly the canonically won cells');
   }
   return code;
 }
