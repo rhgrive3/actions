@@ -756,12 +756,12 @@ def fan_nodes(clump):
     return ng
 
 
-def fan_layout(rays, design, eye_name):
+def fan_layout(rays, design, eye_name, cfg=None):
     """Roots, directions (head frame) and lengths of the upper lash fan.  Roots sit on the upper lid margin (the
     front-view lid edge from the outer corner to the inner end, cast onto this side's skin) and stand off it along
     the eyeball normal.  Each lash leaves the lid along the eyeball normal tilted up by elev_deg and toward the outer
     corner by splay_deg, then curls up (curl_deg): lashes grow out of the lid, they do not lie on it."""
-    cfg = design['fan']
+    cfg = cfg or design['fan']
     eye = eye_centre_mm(eye_name)
     chain = np.array(design[cfg.get('chain', 'liner_bottom')], float)
     x0, x1 = cfg['margin_x']
@@ -800,10 +800,25 @@ def fan_layout(rays, design, eye_name):
 
 
 def build_fan(rays, design, eye_name):
-    """The upper lashes as one fan of lash clumps placed along the lid margin with Geometry Nodes (Instance on
-    Points), applied to a mesh.  Returns head-frame mm vertices and faces like the other builders."""
-    layout = fan_layout(rays, design, eye_name)
-    clump = lash_clump(design['fan'])
+    """The upper lashes: the main clumps (design['fan']) and, between them, shorter thin ones (fan['fill'], keys
+    that override the main ones) that thicken the fringe seen from the side.  Returns head-frame mm vertices
+    and faces like the other builders."""
+    groups = [design['fan']]
+    if 'fill' in design['fan']:
+        groups.append(dict(design['fan'], **design['fan']['fill']))
+    verts, faces = np.zeros((0, 3)), []
+    for cfg in groups:
+        v, f = build_fan_group(rays, design, eye_name, cfg)
+        faces += [tuple(i + len(verts) for i in fc) for fc in f]
+        verts = np.r_[verts, v]
+    return verts, faces
+
+
+def build_fan_group(rays, design, eye_name, cfg):
+    """One group of lash clumps placed on the strip's top edge with Geometry Nodes (Instance on Points), applied
+    to a mesh."""
+    layout = fan_layout(rays, design, eye_name, cfg)
+    clump = lash_clump(cfg)
     pts = bpy.data.meshes.new(FAN_TAG + '_pts')
     roots_w = M.to_world(np.array([r for r, _, _, _ in layout]) / 1000)
     pts.from_pydata(roots_w.tolist(), [], [])
