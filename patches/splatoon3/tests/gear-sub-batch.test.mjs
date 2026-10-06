@@ -1,3 +1,4 @@
+import { updateStormHold } from '../runtime/storm-effects.mjs';
 import {test} from 'node:test';import assert from 'node:assert/strict';
 import {fixture} from './source-fixture.mjs';
 import {ABILITIES,normalizeLoadout,abilityPoints,gearCurve} from '../runtime/gear.mjs';
@@ -8,6 +9,7 @@ function loadout(points,ability){
  throw Error('unrepresentable GP');
 }
 function equip(a,gp,ability){a.s3.loadout=loadout(gp,ability);a.setWeapon(a.weaponId);}
+function throwStorm(f,a){a._startSpecial();assert.equal(a.specialActive.phase,'hold');a.intent.sub=true;updateStormHold(a,DT,f.G);a.intent.sub=false;updateStormHold(a,DT,f.G);assert.equal(a.specialActive.phase,'throw');}
 const step=(a,n,input={})=>{for(let i=0;i<n;i++)a.weaponRunner.update(DT,input);};
 
 test('#193: Splat Bomb per-sub Lv2 curve crosses the two-bomb boundary at 35AP, not 34AP',async()=>{
@@ -74,7 +76,7 @@ test('#298: special-power gear survives normalization/AP collection and follows 
 test('#298: actor-local activation snapshot changes Storm launch component, not inherited movement or other clouds',async()=>{
  const f=await fixture(),ps=new f.Projectiles(new f.THREE.Scene());f.G.projectiles=ps;
  const a=f.make(),b=f.make();equip(a,57,'specialPower');equip(b,0,'specialPower');
- for(const x of [a,b]){x.weapon.special='storm';x.aimYaw=.3;x.aimPitch=.2;x.vel.set(2,7,-3);x._startSpecial();}
+ for(const x of [a,b]){x.weapon.special='storm';x.aimYaw=.3;x.aimPitch=.2;x.vel.set(2,7,-3);throwStorm(f,x);}
  const [hi,lo]=ps.bombs;near(hi.s3StormDuration,10);near(lo.s3StormDuration,8);
  const inherited=new f.THREE.Vector3(2*.4,1.5,-3*.4);
  near(hi.vel.clone().sub(inherited).length()/lo.vel.clone().sub(inherited).length(),1.5);
@@ -84,7 +86,7 @@ test('#298: actor-local activation snapshot changes Storm launch component, not 
 
 test('#298: real bomb packet and ghost preserve duration even when remote actor has no gear',async()=>{
  const f=await fixture(),ps=new f.Projectiles(new f.THREE.Scene()),a=f.make();f.G.projectiles=ps;equip(a,57,'specialPower');a.nid=7;a.weapon.special='storm';
- const net=new f.NetMatch({myId:'local'},{});f.G.netm=net;a._startSpecial();
+ const net=new f.NetMatch({myId:'local'},{});f.G.netm=net;throwStorm(f,a);
  const packet=JSON.parse(JSON.stringify(net.out.find(e=>e[1]==='b')));near(packet[10].stormDuration,10);
  const remote=f.make();remote.nid=7;remote.remote=true;remote.owner='peer';net.byNid.set(7,remote);net.peers.set('peer',{tr:packet[0]});
  const count=ps.bombs.length;net._play('peer',packet);assert.equal(ps.bombs.length,count+1);
@@ -104,7 +106,7 @@ test('sub pending throw and ink spending have identical fixed-tick traces at30/6
 test('#298: cloud lifetime expires at its exact480/491/600F snapshot, never one floating-point tick late',async()=>{
  for(const [gp,frames]of [[0,480],[3,491],[57,600]]){
   const f=await fixture(),a=f.make(),ps=new f.Projectiles(new f.THREE.Scene());f.G.projectiles=ps;f.G.actors=[a];f.G.camera={position:new f.THREE.Vector3()};
-  equip(a,gp,'specialPower');a.weapon.special='storm';a._startSpecial();ps._spawnCloud(ps.bombs[0]);
+  equip(a,gp,'specialPower');a.weapon.special='storm';throwStorm(f,a);ps._spawnCloud(ps.bombs[0]);
   for(let i=0;i<frames-1;i++)ps._updateClouds(DT);assert.equal(ps.clouds.length,1);ps._updateClouds(DT);assert.equal(ps.clouds.length,0);
  }
 });
@@ -143,7 +145,7 @@ test('#267: nested other-actor guide and throw cannot inherit the first actors57
 test('#267: subPower and Storm specialPower do not strengthen each others launch',async()=>{
  const f=await fixture(),ps=new f.Projectiles(new f.THREE.Scene());f.G.projectiles=ps;
  const sub=f.make(),special=f.make();equip(sub,57,'subPower');equip(special,57,'specialPower');
- sub.weapon.special=special.weapon.special='storm';sub._startSpecial();special._startSpecial();const [normal,powered]=ps.bombs;
+ sub.weapon.special=special.weapon.special='storm';throwStorm(f,sub);throwStorm(f,special);const [normal,powered]=ps.bombs;
  near(powered.vel.clone().sub(new f.THREE.Vector3(0,1.5,0)).length()/normal.vel.clone().sub(new f.THREE.Vector3(0,1.5,0)).length(),1.5);
  ps.throwBomb(special);ps.throwBomb(sub);const plain=ps.bombs[2].vel.clone().sub(new f.THREE.Vector3(0,1.5,0)),strong=ps.bombs[3].vel.clone().sub(new f.THREE.Vector3(0,1.5,0));near(strong.length()/plain.length(),1.5);
 });

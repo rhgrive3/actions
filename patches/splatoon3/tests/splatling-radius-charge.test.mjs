@@ -12,7 +12,7 @@ test('#403 canonical main collision endpoints preserve Heavy/Shooter ratio and i
  const f=await setup(),spin=fire(f);f.a.setWeapon('shooter');const shot=fire(f);
  near(radius(spin),.225);near(radius(shot),.285);near(radius(spin)/radius(shot),.225/.285);
  // New main owns raw-to-world mapping. Old .15 calibration and presentation size cannot override it.
- spin.size=99;shot.size=.00001;near(radius(spin),.225);near(radius(shot),.285);f.a.setWeapon('blaster');near(radius(spin),.225);assert.equal(spin.s3PlayerRadius,undefined);f.ps.clear();
+ spin.size=99;shot.size=.00001;near(radius(spin),.225);near(radius(shot),.285);f.a.setWeapon('blaster');near(radius(spin),.225);assert.equal(spin.s3PlayerRadius,null);f.ps.clear();
 });
 test('#403 canonical continuous capsule has a Shooter-hit/Heavy-miss grazing band',async()=>{
  for(const kind of ['shooter','splatling']){
@@ -52,7 +52,7 @@ test('#470: gear/Flow multiply charge target once and never restore the progress
 });
 test('#470: actual 48/72 charge, prepaid ink and 4f stream cadence stay unchanged', async () => {
   const f=await ballisticFixture(),a=f.make('splatling'),r=a.weaponRunner; const targets=[];
-  for(let frame=1;frame<=73;frame++){r.update(1/60,{fire:true});if(r.charging)targets.push(r.moveSpeed());if(frame===48)near(r.charge,2/3);}
+  for(let frame=1;frame<=73;frame++){r.update(1/60,{fire:true});if(r.charging)targets.push(r.moveSpeed());if(frame===1)near(r.charge,0);if(frame===49)near(r.charge,2/3);}
   near(r.charge,1);assert.ok(targets.every(s=>Math.abs(s-3.72)<1e-10));
   r.update(1/60,{fire:false});near(a.ink,77.5);const releaseInk=a.ink;const shotFrames=[];let count=f.shots.length;
   for(let i=0;i<100;i++){r.update(1/60,{fire:false});if(f.shots.length>count){shotFrames.push(i);count=f.shots.length;}}

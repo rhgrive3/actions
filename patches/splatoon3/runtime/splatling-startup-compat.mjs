@@ -31,6 +31,7 @@ export function installSplatlingStartupCompat({WeaponRunner}) {
     }
     if (this.streaming) {
       this.s3SplatlingStartup=0;this.s3SplatlingEmerging=false;
+      this.s3SplatlingHeld=!!input.fire;
       return runner.call(this,dt,input,w);
     }
     if (!input.fire) { this.s3SplatlingHeld=false;this.s3SplatlingStartup=0; }

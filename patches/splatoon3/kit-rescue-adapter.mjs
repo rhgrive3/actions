@@ -57,6 +57,8 @@ export function adaptKitRescue(rel, code, replaceOnce) {
       '      r3(p.vis ?? 0.1), p.tail0 ?? 0.8, p.tailK ?? 1.3, p.wob ?? 0.035, p.wobF ?? 26, p.nose ?? 0.3, p.sats ?? 3, kitVolleyPacketIndex(p.s3VolleyIndex), kitVolleyPacketIndex(p.s3ActionIndex)]);','trizooka packet identity');
     code="import { KIT_FORWARD } from '../../patches/splatoon3/runtime/kit-network.mjs';\nimport { kitVolleyPacketIndex } from '../../patches/splatoon3/runtime/trizooka-collision.mjs';\nimport { kitBombPacket } from '../../patches/splatoon3/runtime/kit-subs.mjs';\nimport { setRespawnTimer } from '../../patches/splatoon3/runtime/resources.mjs';\n"+code;
   } else if(rel==='src/game/weapons.js'){
+    patch('this.throwVelocity(a, subThrowSpec(a, SUB.bomb).throwSpeed, vel);',
+      'this.throwVelocity(a, this.s3PreviewSubSpeed ?? subThrowSpec(a, SUB.bomb).throwSpeed, vel);','actor-local preview speed');
     const plainSubRelease = '    // ---- sub weapon (splat bomb)\n    const bomb = SUB.bomb;';
     const gearedSubRelease = '    // ---- sub weapon (splat bomb)\n    const bomb = subInkSpec(a, SUB.bomb);';
     const subReleaseAnchor = code.includes(gearedSubRelease) ? gearedSubRelease : plainSubRelease;

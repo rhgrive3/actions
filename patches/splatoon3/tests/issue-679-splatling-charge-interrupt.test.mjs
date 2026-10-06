@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { FixedClock } from '../runtime/clock.mjs';
 import { fixture } from './weapon-edgecases-fixture.mjs';
 import { SPLATLING_INTERRUPT, splatlingInterrupt, tickSplatlingInterrupt } from '../runtime/weapons.mjs';
 
@@ -90,34 +91,25 @@ test('#679: the recovery is armed by the press edge and consumed on the authorit
 });
 
 test('#679: the 6f boundary is a simulation-time boundary at 30/60/120 Hz rendering', async () => {
+  let expected;
   for (const hz of [30, 60, 120]) {
-    const f = await fixture();
-    const a = f.make('splatling');
-    a.ink = 100;
-    a.intent.fire = true;
-    const dt = 1 / hz;
-    f.G.time += dt;
-    a.update(dt);
-    assert.ok(a.weaponRunner.charging, `precondition: charging at ${hz}Hz`);
-    assert.ok(a.weaponRunner.charge > 0, `precondition: charge progressed at ${hz}Hz`);
-
+    const f = await fixture(), a = f.make('splatling'), clock = new FixedClock();
+    a.ink = 100; a.intent.fire = true;
+    let chargeTicks = 0;
+    while (chargeTicks < 2) clock.advance(1 / hz, dt => {
+      f.G.time += dt; a.update(dt); chargeTicks++;
+      if (chargeTicks === 1) assert.equal(a.weaponRunner.charge, 0, 'existing1F startup');
+    });
+    assert.ok(a.weaponRunner.charging && a.weaponRunner.charge > 0);
     a.intent.squid = true;
-    let elapsed = 0, admittedAt = null;
-    for (let i = 1; i <= 40; i++) {
-      f.G.time += dt;
-      a.update(dt);
-      elapsed += dt;
-      if (a.form === 'squid') { admittedAt = elapsed; break; }
-      assert.ok(elapsed < SPLATLING_INTERRUPT + EPS,
-        `${hz}Hz: never admitted before the 6f boundary (elapsed ${elapsed})`);
-    }
-    assert.ok(admittedAt !== null, `${hz}Hz: the recovery completes`);
-    assert.ok(admittedAt >= SPLATLING_INTERRUPT - EPS,
-      `${hz}Hz: admitted at the shared 6f simulation boundary (elapsed ${admittedAt})`);
-    assert.ok(admittedAt <= SPLATLING_INTERRUPT + dt + EPS,
-      `${hz}Hz: admitted at the first update that reaches the boundary`);
-    assert.equal(a.weaponRunner.charge, 0, `${hz}Hz: the committed cancel clears the charge`);
-    assert.equal(f.shots.length, 0, `${hz}Hz: no projectile from the cancel`);
+    const forms = [];
+    for (let render = 0; render < hz && forms.length < 7; render++) clock.advance(1 / hz, dt => {
+      f.G.time += dt; a.update(dt); if (forms.length < 7) forms.push(a.form);
+    });
+    assert.deepEqual(forms, ['kid', 'kid', 'kid', 'kid', 'kid', 'kid', 'squid']);
+    if (expected) assert.deepEqual(forms, expected); else expected = forms;
+    assert.equal(a.weaponRunner.charge, 0, 'the committed cancel clears the charge');
+    assert.equal(f.shots.length, 0, 'cancel emits no projectile at any render rate');
   }
 });
 
@@ -143,6 +135,7 @@ test('#679: 48f first stage and 72f full charge timings are unchanged', async ()
   a.ink = 100;
   a.intent.fire = true;
 
+  f.tick(a); assert.equal(a.weaponRunner.charge,0,'existing1F startup precedes the measured charge frames');
   f.tick(a, 48);
   assert.ok(Math.abs(a.weaponRunner.charge - w.firstChargeTime / w.chargeTime) < EPS,
     `first stage boundary at 48f (charge ${a.weaponRunner.charge})`);

@@ -36,7 +36,7 @@ test('#73: team/dead/range gates and repeat contact interval stay unchanged',asy
  const f=await fixture(),a=rolling(f),e=f.make();e.pos.set(0,0,1);f.G.actors=[e];world(f,[]);let hits=0;f.G.projectiles.applyHit=()=>hits++;
  a.weaponRunner.update(DT,{fire:true});assert.equal(hits,0);e.team=1;e.alive=false;a.weaponRunner.update(DT,{fire:true});assert.equal(hits,0);
  e.alive=true;e.pos.z=3;a.weaponRunner.update(DT,{fire:true});assert.equal(hits,0);e.pos.z=1;f.G.time=1;
- a.weaponRunner.update(DT,{fire:true});assert.equal(hits,1);f.G.time=1.4;a.weaponRunner.update(DT,{fire:true});assert.equal(hits,1);f.G.time=1.6;a.weaponRunner.update(DT,{fire:true});assert.equal(hits,2);
+ a.weaponRunner.update(DT,{fire:true});assert.equal(hits,1);f.G.time=1+a.weapon.rollContactInterval-1e-6;a.weaponRunner.update(DT,{fire:true});assert.equal(hits,1);f.G.time=1+a.weapon.rollContactInterval;a.weaponRunner.update(DT,{fire:true});assert.equal(hits,2);
 });
 
 test('#176: last actual roll ink use reaches first refill at20F, not inherited43F',async()=>{
@@ -48,7 +48,7 @@ test('#176: last actual roll ink use reaches first refill at20F, not inherited43
 
 test('#176: horizontal43F / vertical58F swing stops retain their own boundaries',async()=>{
  for(const [grounded,frames]of [[true,43],[false,58]]){
-  const f=await fixture(),a=f.make('roller');a.grounded=grounded;a.intent.fire=true;f.tick(a);const ink=a.ink;near(ink,91.5);a.intent.fire=false;
+  const f=await fixture(),a=f.make('roller');a.grounded=grounded;a.intent.fire=true;f.tick(a);const ink=a.ink;near(ink,91.5);a.intent.fire=false;let startup=0;while(!f.shots.length&&startup++<120)f.tick(a);assert.equal(f.shots.length,1,'native release must occur before recovery measurement');
   for(let i=1;i<frames;i++){f.tick(a);near(a.ink,ink);}f.tick(a);assert.ok(a.ink>ink,`${frames}F`);assert.equal(a.s3.rollerRefillMode,false);
  }
 });
@@ -68,7 +68,7 @@ test('#221: actual terrain impact cuts player admission to0.4234 at floor/wall/s
  for(const normal of [[0,1,0],[0,0,-1],[0,.8,-.6]]){
   const f=await fixture(),{ps,p,a,at}=blast(f),e=f.make();e.team=1;f.G.actors=[e];let damage=[];ps.applyHit=(_a,_e,d)=>damage.push(d);
   const limit=a.weapon.splashRadius*.4234;const n=new f.THREE.Vector3(...normal);
-  for(const [distance,expected]of [[limit-.001,1],[limit+.001,0],[a.weapon.splashRadius-.001,0]]){e.pos.set(distance,0,0);damage=[];ps._impact(p,{point:at,normal:n});assert.equal(damage.length,expected);}
+  for(const [distance,expected]of [[limit-.001,1],[limit+.001,0],[a.weapon.splashRadius-.001,0]]){e.pos.set(distance,0,0);damage=[];ps._impact(p,{point:at,normal:n});assert.equal(damage.length,0,'terrain blast is deferred');ps.update(DT);assert.equal(damage.length,expected);}
   e.pos.set(a.weapon.splashRadius-.001,0,0);damage=[];const prior=p.s3TerrainBurst;ps._blastBurst(p,at,null);assert.equal(damage.length,1);assert.equal(p.s3TerrainBurst,prior);
  }
 });
@@ -78,7 +78,7 @@ test('#221: direct-hit exclusion, terrain LOS, boss splash and paint/visual size
  const paint=[],visual=[];f.G.paint.splat=(_p,r)=>{paint.push(r);return 0;};f.G.fx={explosion:(_p,_c,r)=>visual.push(r),burst:()=>{}};
  f.G.physics.raycast=(from,dir,_d,out)=>{out.hit=dir.y<-.9;if(out.hit){out.point.copy(from).setY(0);out.normal.set(0,1,0);}return out;};
  f.G.boss={splash:(...args)=>boss.push(args)};ps._blastBurst(p,at,e);assert.equal(hits.length,1);assert.equal(hits[0][0],other);
- f.G.physics.los=()=>false;hits=[];ps._impact(p,{point:at,normal:new f.THREE.Vector3(0,1,0)});assert.equal(hits.length,0);near(boss.at(-1)[2],a.weapon.splashRadius);
+ f.G.physics.los=()=>false;hits=[];ps._impact(p,{point:at,normal:new f.THREE.Vector3(0,1,0)});assert.equal(hits.length,0);ps.update(DT);assert.equal(hits.length,0);near(boss.at(-1)[2],a.weapon.splashRadius);
  near(a.weapon.directDamage,125);near(a.weapon.terrainSplashRadiusRate,.4234);near(paint[0],a.weapon.impactRadius);near(paint.at(-1),a.weapon.impactRadius);assert.ok(visual.length>=2);for(const radius of visual)near(radius,a.weapon.burstRadius);
 });
 
@@ -111,7 +111,7 @@ test('#350: real tap/held repeated horizontal/vertical flicks use firing gear at
 });
 test('#350: idle walking retains normal gear, while reset, re-equip, enemy ink and other actors do not compound it',async()=>{
  const f=await fixture(),a=f.make('roller'),b=f.make('roller');a.s3.loadout=runLoadout(57);a.setWeapon('roller');near(a.weaponRunner.moveSpeed()/b.weaponRunner.moveSpeed(),1.5);
- for(let i=0;i<3;i++){a.weaponRunner.update(DT,{firePressed:true});near(a.weaponRunner.moveSpeed(),2.88*1.25);a.reset();a.setWeapon('roller');near(a.weaponRunner.moveSpeed(),f.PLAYER.runSpeed*1.5);}
+ for(let i=0;i<3;i++){a.weaponRunner.update(DT,{firePressed:true});near(a.weaponRunner.moveSpeed(),2.88*1.25);a.reset();a.grounded=true;a.setWeapon('roller');near(a.weaponRunner.moveSpeed(),f.PLAYER.runSpeed*1.5);}
  a.weaponRunner.update(DT,{firePressed:true});a.grounded=true;a.intent.fire=true;a.intent.move.set(1,0,0);a.vel.set(a.s3.modifiers.enemyShotSpeed,0,0);a._horizontal(DT,false,true);near(a.vel.x,a.s3.modifiers.enemyShotSpeed);near(b.weaponRunner.moveSpeed(),f.PLAYER.runSpeed);
  a.setWeapon('shooter');near(a.weaponRunner.moveSpeed(),f.PLAYER.runSpeed*1.5);a.weaponRunner.firingT=.2;near(a.weaponRunner.moveSpeed(),a.weapon.moveSpeedFiring*1.25);
 });

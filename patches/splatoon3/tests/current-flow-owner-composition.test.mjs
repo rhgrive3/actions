@@ -19,7 +19,17 @@ test('terminal-before-ACK and ACK-before-terminal award a local helper once and 
  }
 });
 test('accepted native assists count for a dead local helper without granting dead Flow or proxy progression',async()=>{
- const f=await ready(),{a,v,h}=actors(f);h.alive=false;f.emit('splatted',{victim:v,attacker:a,assists:[h,h],cause:'shooter'});assert.equal(h.stats.assists,1);assert.equal(h.s3.flow.score,0);f.emit('splatted',{victim:v,attacker:a,assists:[h],cause:'shooter'});assert.equal(h.stats.assists,1);
+ const f=await ready(),{a,v,h}=actors(f);a.nid=11;v.nid=12;h.nid=13;h.alive=false;
+ // An unqualified helper list is no longer an accepted life receipt.
+ f.emit('splatted',{victim:v,attacker:a,assists:[h],cause:'shooter'});assert.equal(h.stats.assists,0);assert.equal(h.s3.flow.score,0);
+ const proxy=f.make();proxy.nid=14;proxy.netLife=2;proxy.remote=true;
+ const sender=Object.create(f.NetMatch.prototype);let payload;sender._rec=row=>{payload=JSON.parse(JSON.stringify(row[2]));};
+ f.G.netm=sender;v.remote=false;
+ try{sender._onLocalEvent('splatted',{victim:v,attacker:a,assists:[h,h,proxy],cause:'shooter'});}finally{v.remote=true;f.G.netm=null;}
+ assert.deepEqual(payload.assists,[13,13,14]);assert.equal(payload.assistLives[13],h.netLife);assert.equal(payload.assistLives[14],proxy.netLife);
+ const receiver=Object.create(f.NetMatch.prototype);receiver.byNid=new Map([[11,a],[12,v],[13,h],[14,proxy]]);v.net={buf:[],tp:0};
+ receiver._playEvent('splatted',payload);assert.equal(h.stats.assists,1);assert.equal(h.s3.flow.score,0);assert.equal(proxy.stats.assists,0);assert.equal(proxy.s3.flow.score,0);
+ receiver._playEvent('splatted',payload);f.emit('splatted',{victim:v,attacker:a,assists:[h],assistLives:payload.assistLives,cause:'shooter'});assert.equal(h.stats.assists,1,'native and direct consumer replay cannot duplicate accepted assist stats');
 });
 test('respawn retirement admits a new accepted victim life and rejects the previous one',async()=>{
  const f=await ready(),{a,v}=actors(f);ack(f,a,v);const first=a.s3.flow.score;v.netLife=4;f.emit('combat:respawn',{actor:v});ack(f,a,v);assert.equal(a.s3.flow.score,first);ack(f,a,v,{victimLife:4});assert.equal(a.s3.flow.score,first+f.profile.flow.weights.splat);

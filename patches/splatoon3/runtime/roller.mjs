@@ -46,8 +46,10 @@ export function rollerEmergeDelay(actor, fallback) {
   return actor.weapon.kind === 'roller' ? actor.weapon.squidFlickDelay ?? fallback : fallback;
 }
 export function rollerFireBuffer(actor, fallback, dt) {
-  return actor.form === 'squid' && actor.weapon.kind === 'roller'
-    ? Math.max(fallback, rollerEmergeDelay(actor, fallback) + dt) : fallback;
+  if (actor.weapon.kind !== 'roller') return fallback;
+  const delay = rollerEmergeDelay(actor, fallback);
+  const remaining = actor.form === 'squid' ? delay : Math.max(0, delay - actor.kidT);
+  return Math.max(fallback, remaining + dt);
 }
 
 export function rollerMode(w, vertical) {

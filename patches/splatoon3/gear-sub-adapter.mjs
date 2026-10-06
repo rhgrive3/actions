@@ -42,8 +42,18 @@ export function adaptGearSub(rel,code,replace){
  // Optional composition with the existing PR #259 implementation. Its
  // explicit vector owns Z/Y/inheritance; scale ONLY Z before pitch rotation.
  if(rel==='patches/splatoon3/runtime/sub-special-fidelity.mjs'){
+  const explicit = '  const speed = Number.isFinite(forwardSpeed) ? forwardSpeed : p.spawnSpeedZ;';
+  const legacy = '  const horizontal = p.spawnSpeedZ * cp - p.spawnSpeedY * sp;';
+  const count = needle => code.split(needle).length - 1;
+  if (count(explicit) + count(legacy) !== 1) throw new Error('gear/sub: expected one fidelity launch-speed owner');
+  const scale = "(kind === 'storm' ? actor.s3?.stormPowerSnapshot?.throwScale ?? 1 : actor.s3?.modifiers?.subPower ?? 1)";
+  if (code.includes(explicit)) {
+   // Explicit speeds already include the selected Kit and actor's power.
+   patch(explicit, '  const speed = Number.isFinite(forwardSpeed) ? forwardSpeed : p.spawnSpeedZ * ' + scale + ';', 'resolved launch speed without double power');
+  } else {
   patch('  const horizontal = p.spawnSpeedZ * cp - p.spawnSpeedY * sp;', "  const spawnZ = p.spawnSpeedZ * (kind === 'storm' ? actor.s3?.stormPowerSnapshot?.throwScale ?? 1 : actor.s3?.modifiers?.subPower ?? 1);\n  const horizontal = spawnZ * cp - p.spawnSpeedY * sp;",'PR259 sub/special forward component');
   patch('  let vy = p.spawnSpeedZ * sp + p.spawnSpeedY * cp;', '  let vy = spawnZ * sp + p.spawnSpeedY * cp;','PR259 power pitch component');
+  }
  }
  return code;
 }

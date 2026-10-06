@@ -229,15 +229,11 @@ export function installGear(api, tuning) {
     refresh(this.a);
     const a = this.a, m = a.s3?.modifiers || {}, beforeInk = a.ink;
     const sub = selectedSub(a, api.SUB);
-    const saved = { inkCost: sub.inkCost, throwSpeed: sub.throwSpeed, throwSpeedMaxCharge: sub.throwSpeedMaxCharge };
     const hold = this.s3SubHold || 0;
     const charge = sub.chargeable ? Math.min(1, Math.max(0, hold / sub.maxChargeTime)) : 0;
     const subDelay = sub.inkRecoverStopMaxCharge == null ? sub.inkRecoverStop
       : sub.inkRecoverStop + (sub.inkRecoverStopMaxCharge - sub.inkRecoverStop) * charge;
-    sub.inkCost = (sub.inkCost ?? sub.inkCostFallback) * (m.inkSaverSub ?? 1);
-    if (Number.isFinite(sub.throwSpeed)) sub.throwSpeed *= m.subPower ?? 1;
-    if (Number.isFinite(sub.throwSpeedMaxCharge)) sub.throwSpeedMaxCharge *= m.subPower ?? 1;
-    const effectiveSubCost = sub.inkCost;
+    const effectiveSubCost = (sub.inkCost ?? sub.inkCostFallback) * (m.inkSaverSub ?? 1);
     const bombsBefore = G.projectiles?.bombs?.length ?? 0;
     try { return update.call(this, dt, input); }
     finally {
@@ -245,7 +241,6 @@ export function installGear(api, tuning) {
       const progressiveChargerSpend = !!this.s3ChargerProgressiveSpend;
       this.s3ChargerProgressiveSpend = false;
       const spent = Math.max(0, beforeInk - a.ink);
-      Object.assign(sub, saved);
       if (spent > 1e-10) {
         a.s3 ||= {};
         const mainSpent = (sub === api.SUB.bomb ? (!bombSpent || spent > effectiveSubCost + 1e-8) : !input.subReleased) && !progressiveChargerSpend;

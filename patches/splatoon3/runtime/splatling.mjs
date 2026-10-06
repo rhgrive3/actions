@@ -93,7 +93,7 @@ export function installSplatling(api, profile, { splatlingChargeCap, splatlingRe
       this.spinLoop?.set({ pitch: 1.5 + .06 * Math.sin(G.time * 31), pos });
       if (this.burstT <= EPS) {
         this.streaming = false; this.charge = this.burstFrac = 0;
-        this.s3Spin = null; this.cooldown = Math.max(this.cooldown, .22);
+        this.s3Spin = null; this.cooldown = Math.max(this.cooldown, w.postStreamDelay ?? .22);
         this.spinLoop?.stop(.12); this.spinLoop = null;
         if (a.isLocal || a._nearCamera()) G.audio?.play('splatling_wind', { pos, volume: a.isLocal ? .6 : .42 });
       }

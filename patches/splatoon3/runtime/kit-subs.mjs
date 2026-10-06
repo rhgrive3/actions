@@ -286,13 +286,20 @@ export function resolveSubAtCharge(sub, charge) {
 // runner has not been reset yet still resolves the sub its weapon actually carries.
 // Both are per-actor, and the values read from them are the gear-scoped ones, so
 // two owners releasing in the same frame cannot see each other's cost or speed.
+function actorSubSpec(actor, sub) {
+  const m = actor?.s3?.modifiers || {}, power = m.subPower ?? 1;
+  const cost = sub.inkCost ?? sub.inkCostFallback;
+  return { ...sub, inkCost: Number.isFinite(cost) ? cost * (m.inkSaverSub ?? 1) : cost,
+    throwSpeed: Number.isFinite(sub.throwSpeed) ? sub.throwSpeed * power : sub.throwSpeed,
+    throwSpeedMaxCharge: Number.isFinite(sub.throwSpeedMaxCharge) ? sub.throwSpeedMaxCharge * power : sub.throwSpeedMaxCharge };
+}
 export function resolveSubForThrow(actor, subHoldSeconds, SUB) {
   const id = actor?.weapon?.sub;
   const sub = actor?.weaponRunner?.s3Sub
     || (id ? (SUB?.[id] || KIT_SUBS[id]) : null)
     || kitSubFor(actor?.weapon, SUB);
   if (!sub) return null;
-  return resolveSubAtCharge(sub, sub.chargeable ? curlingChargeFraction(subHoldSeconds || 0, sub) : 0);
+  return resolveSubAtCharge(actorSubSpec(actor, sub), sub.chargeable ? curlingChargeFraction(subHoldSeconds || 0, sub) : 0);
 }
 
 // ---- Narrow native hooks -----------------------------------------------------
@@ -343,7 +350,7 @@ let G_REF = null, PLAYER_REF = null, PHYSICS_REF = null;
 export function kitSubRelease(SUB, runner, dt, inp) {
   if (inp?.sub) runner.s3SubHold = (runner.s3SubHold || 0) + dt;
   else if (!inp?.subReleased) runner.s3SubHold = 0;
-  const sub = kitSubFor(runner.a?.weapon, SUB);
+  const sub = actorSubSpec(runner.a, kitSubFor(runner.a?.weapon, SUB));
   const hold = runner.s3SubHold || 0;
   const charge = sub.chargeable ? curlingChargeFraction(hold, sub) : 0;
   const tpl = kitTemplate(sub);
@@ -686,10 +693,10 @@ export function installKitSubs(api, profile) {
   Projectiles.prototype.updateArc = function (actor, show) {
     const resolved = resolveSubForThrow(actor, actor?.weaponRunner?.s3SubHold, SUB);
     if (!resolved || resolved.throwSpeed == null) return updateArc.call(this, actor, show);
-    const saved = SUB.bomb.throwSpeed;
-    SUB.bomb.throwSpeed = resolved.throwSpeed;
+    const saved = this.s3PreviewSubSpeed;
+    this.s3PreviewSubSpeed = resolved.throwSpeed;
     try { return updateArc.call(this, actor, show); }
-    finally { SUB.bomb.throwSpeed = saved; }
+    finally { this.s3PreviewSubSpeed = saved; }
   };
 
   // Charge state and death / weapon-change reset live on the real runner.

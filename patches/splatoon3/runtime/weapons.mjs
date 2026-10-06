@@ -615,7 +615,7 @@ const ARC_PREVIEW_INSTALL = Symbol.for('inkwave.s3.arc-preview-performance.insta
 const ARC_PREVIEW_STATE = Symbol('inkwave.s3.arc-preview-performance.state');
 
 function previewInputs(system, api, actor) {
-  const speed = api.SUB?.bomb?.throwSpeed;
+  const speed = system.s3PreviewSubSpeed ?? api.SUB?.bomb?.throwSpeed;
   if (typeof system.throwVelocity !== 'function' || !Number.isFinite(speed)) return null;
   const scratch = system._arcPreviewPerfScratch
     || (system._arcPreviewPerfScratch = new api.THREE.Vector3());
