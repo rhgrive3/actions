@@ -49,8 +49,12 @@ export function beforeActions(a, dt, jumpPressed) {
   if (jumpPressed && (wallRoll || a.submerged && rollEligible(a.vel, a.intent.move, cfg.roll))) {
     const retention = a.s3.modifiers?.rollRetention ?? cfg.roll.chainRetention;
     const speed = rollLaunchSpeed(Math.max(cfg.roll.minimumSpeed, Math.hypot(a.vel.x, a.vel.z)), state.chain, retention);
-    const direction = wallRoll ? a.wallN : a.intent.move;
-    launch(a, direction, speed, cfg.roll.jumpVelocity, 'squidroll');
+    // The stick angle inside the admitted outward cone is the heading (#767). Passing
+    // the wall normal here discarded it, so every admitted wall roll launched along the
+    // normal regardless of how the stick was aimed. Admission, speed, vertical velocity,
+    // chain and action timing are unchanged: launch() normalises whatever it is given,
+    // and this is the same vector the own-ink roll path already used. No curve is added.
+    launch(a, a.intent.move, speed, cfg.roll.jumpVelocity, 'squidroll');
     state.roll = { time: cfg.roll.duration, armorTime: cfg.roll.armorTime, armorHP: cfg.roll.armorHP,
       vx: a.vel.x, vz: a.vel.z };
     state.surge = null; state.chain++; state.chainTimer = cfg.roll.chainReset;
