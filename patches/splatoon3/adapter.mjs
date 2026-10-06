@@ -4,6 +4,7 @@ import { adaptWeaponsFidelity } from './weapons-adapter.mjs';
 // Every connection has a unique exact anchor; missing/duplicated hooks are errors.
 import { adaptMovementPhysics } from './movement-physics-adapter.mjs';
 import { adaptSubSpecialFidelity } from './sub-special-adapter.mjs';
+import { adaptJuddResult } from './judd-result-adapter.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
@@ -97,6 +98,8 @@ export function adaptSource(rel, code) {
     }
     // per-shot kick (recoil events) on top of the live cone the engine reports in screen px (already includes bloom)`,
       'Bucket Slosher ShotGuide HUD projection');
+    // #894: the judge presentation becomes the Judd + Li'l Judd stage result scene.
+    code = adaptJuddResult(rel, code, replaceOnce);
     return "import { t as tr } from '../i18n.js';\n" + code;
   }
   if (rel === 'src/ui/ui-icons.js') {
