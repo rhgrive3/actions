@@ -152,6 +152,9 @@ export function installWeapons(context, profile) {
     if (this.s3Turret && (!inp.fire || Math.hypot(this.a.intent.move.x, this.a.intent.move.z) > .01 && this.lockT <= 0 || this.a.form === 'squid' || inp.sub)) this.s3Turret = false;
     const result = dualies.call(this, dt, inp, this.s3Turret ? { ...w, fireInterval: w.lockInterval } : w);
     if (dodging && !this.dodge) this.s3Turret = true;
+    // The movement recovery owner releases the roll resource independently of
+    // trigger release and turret presentation. Never replenish during a roll.
+    if (!this.dodge && this.lockT <= 0) this.rollsLeft = w.rolls;
     return result;
   };
   WeaponRunner.prototype._spreadDeg = function (w) {
