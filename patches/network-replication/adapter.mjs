@@ -28,15 +28,9 @@ export function adaptNetworkSource(rel, code) {
     const tick = Math.round((G.time || 0)*60);
     const event = [r3(now()), ...e, tick, seq]; event._netSeq = seq; event._netTick = tick; this.out.push(event);
   }`, 'ordered event identity');
-    {
-      const lifeTick = "const msg = { k: 't', ts: r3(now()), a, l: Object.fromEntries([...this.byNid.values()].filter(x => !x.remote).map(x => [x.nid, x.netLife ?? 0])) };";
-      if (code.includes(lifeTick)) patch(lifeTick,
-        "const msg = { k: 't', ts: r3(now()), a, l: Object.fromEntries([...this.byNid.values()].filter(x => !x.remote).map(x => [x.nid, x.netLife ?? 0])), u: Math.round((G.time || 0)*60) };",
-        'owner simulation tick with combat life');
-      else patch("const msg = { k: 't', ts: r3(now()), a };",
-        "const msg = { k: 't', ts: r3(now()), a, u: Math.round((G.time || 0)*60) };",
-        'owner simulation tick');
-    }
+    patch("const msg = { k: 't', ts: r3(now()), a",
+      "const msg = { k: 't', ts: r3(now()), a, u: Math.round((G.time || 0)*60)",
+      'owner simulation tick preserving existing sidecars');
     patch('for (const p of this.peers.values()) this._advance(p, dt);', 'for (const p of this.peers.values()) { this._advance(p,dt); sampleOwnerSimulation(p); }', 'sample owner simulation clock');
     patch('    // actors\n    if (d.a)', `    if (Number.isSafeInteger(d.u)) {
       const points = p.physicsPoints || (p.physicsPoints = []);
@@ -107,7 +101,11 @@ export function adaptNetworkSource(rel, code) {
       if (!actor?.remote || actor.owner !== from) return;
     }
     switch (e[1]) {`, 'event ownership');
-    patch("case 'b': { const a = this.byNid.get(e[2]); if (a) G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9]); break; }", `case 'b': {
+    {
+      const bombWithMeta = "case 'b': { const a = this.byNid.get(e[2]); if (a) G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9], e[10]); break; }";
+      const bombPlain = "case 'b': { const a = this.byNid.get(e[2]); if (a) G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9]); break; }";
+      const before = code.includes(bombWithMeta) ? bombWithMeta : bombPlain;
+      patch(before, `case 'b': {
         for (let index = 4; index <= 9; index++) if (!Number.isFinite(e[index])) return;
         const a = this.byNid.get(e[2]);
         if (e[3] === 'storm') {
@@ -118,12 +116,13 @@ export function adaptNetworkSource(rel, code) {
             || !Number.isSafeInteger(e._netSeq) || e._netSeq <= auth.useSeq) break;
           auth.used = true;
         }
-        const b = a && G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9]);
+        const b = a && G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9], e[10]);
         if (b) {
           b._netBorn = e[0]; b._netBornTick = e._netTick; b._netPeer = this.peers.get(from); b._netSteps = 0;
         }
         break;
-      }`, 'bomb timeline birth');
+      }`, 'bomb timeline birth with optional metadata');
+    }
     patch("case 'ev': this._playEvent(e[2], e[3]); break;", `case 'ev': {
         const before = G.projectiles?.beams.length || 0;
         const actor = this.byNid.get(e[3]?.actor?.n);

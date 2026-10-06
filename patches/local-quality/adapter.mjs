@@ -1,3 +1,6 @@
+import { adaptIssue482 } from '../splatoon3/issue-482-adapter.mjs';
+import { adaptIssue405 } from '../splatoon3/issue-405-adapter.mjs';
+import { adaptIssue484 } from '../splatoon3/issue-484-adapter.mjs';
 import { adaptIssue460Source } from '../splatoon3/issue-460-adapter.mjs';
 import { adaptIssue427 } from '../splatoon3/issue-427-adapter.mjs';
 import { adaptIssue461Source } from './issue-461-sfx-mute.mjs';
@@ -71,6 +74,9 @@ export function replaceOnce(code, before, after, label) {
 }
 
 export function adaptQualitySource(rel, code) {
+  code = adaptIssue482(rel, code);
+  code = adaptIssue405(rel, code);
+  code = adaptIssue484(rel, code);
   code = adaptScreenfxDamageReset(rel, code, replaceOnce);
   code = adaptFinalMinuteMusic(rel, code, replaceOnce);
   code = adaptTurfLead(rel, code, replaceOnce);
