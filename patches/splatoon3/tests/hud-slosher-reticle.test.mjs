@@ -95,4 +95,3 @@ test('no kick-driven arch geometry survives in the installed HUD source', () => 
   assert.ok(kkRules.length <= 1, 'kick transform limited to the arch rule');
   for (const rule of kkRules) assert.match(rule, /\.iw-ret--slosher \.iw-ret__arch\s*\{/, 'kick rule targets only the never-emitted arch');
 });
-
