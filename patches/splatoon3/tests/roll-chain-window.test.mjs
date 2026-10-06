@@ -135,14 +135,17 @@ test('the window is scheduled identically at 30, 60 and 120 Hz render cadence', 
   }
 });
 
-test('roll retention is unchanged: one coefficient per launch, never compounded by chain count', async () => {
+test('roll retention compounds once from each previous launch inside the shared chain', async () => {
   const f = await fixture();
   assert.equal(f.profile.movement.roll.chainRetention, RETENTION);
-  close(rollLaunchSpeed(SPEED, 0, RETENTION), SPEED);
-  close(rollLaunchSpeed(SPEED, 1, RETENTION), SPEED * RETENTION);
-  close(rollLaunchSpeed(SPEED, 9, RETENTION), SPEED * RETENTION);
-  // A fresh actor has no Action Intensify AP, so the equipped factor is the
-  // neutral profile value; the longer window must not change it.
+  const first = rollLaunchSpeed(SPEED, 0, RETENTION, 0);
+  const second = rollLaunchSpeed(SPEED, 1, RETENTION, first);
+  const third = rollLaunchSpeed(SPEED, 2, RETENTION, second);
+  close(first, SPEED);
+  close(second, SPEED * RETENTION);
+  close(third, SPEED * RETENTION * RETENTION);
+  // A fresh actor has no Action Intensify AP, so the equipped factor remains
+  // the neutral profile value; only consecutive launch state compounds it.
   close(f.make().s3.modifiers.rollRetention, RETENTION);
 });
 
