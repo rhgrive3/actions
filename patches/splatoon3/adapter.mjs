@@ -253,7 +253,7 @@ export function adaptSource(rel, code) {
   }
   if (rel === 'src/game/actor.js') {
     code = replaceOnce(code, '    this.superJumpState = null;\n    this.yawVel', '    this.superJumpState = null; this.superJumpGround = null;\n    clearPendingLethal(this);\n    this.yawVel', 'reset super jump ground');
-    code = replaceOnce(code, '    this.alive = false;\n    this.hp = 0;', '    this.alive = false;\n    this.superJumpState = null; this.superJumpGround = null;\n    this.hp = 0;', 'clear dead super jump');
+    code = replaceOnce(code, '    this.alive = false;\n    this.hp = 0;', '    this.alive = false;\n    clearPendingLethal(this);\n    this.superJumpState = null; this.superJumpGround = null;\n    this.hp = 0;', 'clear dead super jump');
     code = replaceOnce(code, '    if (this.invuln > 0) return false;', "    if (this.invuln > 0 || this.superJumpState?.phase === 'flight') return false;", 'super jump flight damage admission');
     code = replaceOnce(code, '    if (!this.alive || amount <= 0) return false;',
       '    if (!this.alive || amount <= 0) return false;\n    if (hasPendingLethal(this)) return false;',
@@ -261,9 +261,6 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, '    if (this.hp <= 0) { this.splat(attacker, source); return true; }',
       '    if (this.hp <= 0) { scheduleLethal(this, attacker, source); return true; }',
       'one-frame lethal decision delay');
-    code = replaceOnce(code, '  splat(attacker, cause = \'weapon\') {\n    if (!this.alive) return;',
-      '  splat(attacker, cause = \'weapon\') {\n    clearPendingLethal(this);\n    if (!this.alive) return;',
-      'clear pending lethal on direct splat');
     code = replaceOnce(code, '  update(dt) {\n    this.anim.time = G.time;',
       '  update(dt) {\n    flushPendingLethal(this);\n    this.anim.time = G.time;',
       'flush lethal on next fixed tick');
