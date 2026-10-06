@@ -104,6 +104,8 @@ test('#599 native late terminal keeps reward but cannot splat a newer owner life
     const hit = shooter.wire.find(x => x.to === 'B' && x.data.k === 'hit').data;
     assert.equal(hit.l, 4);
     defender.net.onMessage('A', hit);
+    assert.equal(defender.victim.alive, true, 'owner lethal is pending on the receive tick');
+    flushLethal(defender);
     assert.equal(defender.victim.alive, false);
     assert.equal(defender.victim.stats.deaths, 1);
     defender.advance(); defender.net._sendTick();
