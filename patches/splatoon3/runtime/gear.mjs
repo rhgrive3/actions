@@ -79,6 +79,7 @@ export function installGear(api, tuning) {
   Actor.prototype.reset = function (...args) {
     const result = reset.apply(this, args); equip(this);
     this.s3.recoverStopRemaining = 0; this.s3.enemyInkTime = 0;
+    this.s3.chargerInterruptRecover = 0;   // #737: a new life never inherits a charge-interruption lock
     return result;
   };
   Actor.prototype.setWeapon = function (...args) { const result = setWeapon.apply(this, args); equip(this); return result; };
