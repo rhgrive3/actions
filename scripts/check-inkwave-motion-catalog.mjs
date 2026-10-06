@@ -140,10 +140,9 @@ export function validateCatalogReceipts(manifest, receipts) {
   for (const suffix of required) {
     const keys = Object.keys(manifest.artifacts).filter(k => k.endsWith('/' + suffix));
     if (keys.length !== 1) fail('missing-module manifest ' + suffix);
-    if (suffix === 'patches/splatoon3/runtime/render.mjs' || suffix === 'patches/splatoon3/runtime/install.mjs') {
-      const sourceHash = crypto.createHash('sha256').update(fs.readFileSync(path.join(CATALOG_ROOT, suffix))).digest('hex');
-      if (manifest.artifacts[keys[0]] !== sourceHash) fail('death-camera installed source identity ' + suffix);
-    }
+    // Build artifacts are minified. Input identity is verified separately by
+    // verifyWallBuild / validateCatalogInputReceipts; here compare loaded bytes
+    // to the immutable emitted-artifact hash, never to the raw source hash.
     if (!receipts.some(r => r.file === keys[0] && r.sha256 === manifest.artifacts[keys[0]] && r.bytes > 0)) fail('missing-module loaded ' + suffix);
   }
   for (const r of receipts) if (!manifest.artifacts[r.file] || r.sha256 !== manifest.artifacts[r.file] || !Number.isInteger(r.bytes) || r.bytes <= 0) fail('loaded-byte identity ' + r.file);

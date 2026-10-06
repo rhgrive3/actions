@@ -11,8 +11,7 @@ import { CATALOG_MODULES, CATALOG_SCENARIOS, catalogRenderFrames, validateCatalo
 const hash = 'a'.repeat(64), pixel = { pixels: 960 * 720, changedPixels: 30, totalRgbDifference: 1000, maxChannelDifference: 100 };
 function gateFixture() {
   const files = [...CATALOG_MODULES.map(([id]) => 'patches/splatoon3/runtime/' + id + '-motion.mjs'), 'patches/splatoon3/runtime/install.mjs', 'patches/splatoon3/runtime/render.mjs', 'patches/splatoon3/runtime/death-camera.mjs', 'patches/splatoon3/runtime/walk.mjs', 'src/game/actor.js', 'src/game/character.js', 'src/game/weapons.js', 'src/game/physics.js'];
-  const sourceHashes = new Map(['patches/splatoon3/runtime/install.mjs', 'patches/splatoon3/runtime/render.mjs'].map(file => [file, crypto.createHash('sha256').update(fs.readFileSync(path.join(process.cwd(), file))).digest('hex')]));
-  const artifacts = Object.fromEntries(files.map(file => ['_versions/fixture/' + file, sourceHashes.get(file) || hash]));
+  const artifacts = Object.fromEntries(files.map(file => ['_versions/fixture/' + file, hash]));
   const data = CATALOG_SCENARIOS.map(scenario => {
     const samples = Array.from({ length: scenario.frames }, (_, frame) => ({ frame, visible: true, grounded: true, visualGameplayInvariant: true, root: [0, 0, 0], velocity: [0, 0, 0], hp: 90, kidScale: 1, walkActive: true, pose: { length: 150, minimum: -1, maximum: 1, l1: 50 }, ik: [0, 0, 0, 0], hands: { left: [0, 1, 0], right: [0, 1, 0] }, grip: { left: { held: true, gap: .001, weight: 1, explicitTarget: 0, swapped: 0 }, right: { held: true, gap: .001, weight: 1, explicitTarget: 0, swapped: 0 } }, feet: [0, 1].map(() => ({ planted: true, contactEpoch: 1, contactWeight: 1, actual: [0, .1, 0], expected: [0, .1, 0], contact: [0, 0, 0], normal: [0, 1, 0], error: 0, drift: 0 })), snapshots: Object.fromEntries(CATALOG_MODULES.map(([id]) => [id, null])) }));
     const renders = catalogRenderFrames(scenario).map(frame => ({ frame, tick: scenario.hz ? Math.min(scenario.frames - 1, Math.floor((frame + 1) * 60 / scenario.hz) - 1) : frame, visible: true, shaderErrors: 0, programs: [{ linked: true, vertexCompiled: true, fragmentCompiled: true }], materials: [{ type: 'fabricated gate material', linked: true, vertexCompiled: true, fragmentCompiled: true }], rig: { ...pixel }, image: 'fixture.png', hiddenImage: 'fixture-hidden.png', geometry: { indexedVertices: 300, triangles: 100, skinnedVertices: 300, meshes: 1, min: [0, 0, 0], max: [1, 1, 1] } }));
@@ -52,6 +51,9 @@ test('installed death-camera catalog edge uses render implementation and install
   const manifest = { contentHash: result.contentHash, artifacts: result.artifacts };
   const renderFile = Object.keys(result.artifacts).find(file => file.endsWith('/patches/splatoon3/runtime/render.mjs'));
   const facadeFile = Object.keys(result.artifacts).find(file => file.endsWith('/patches/splatoon3/runtime/death-camera.mjs'));
+  assert.notEqual(result.artifacts[renderFile], crypto.createHash('sha256')
+    .update(fs.readFileSync(path.join(process.cwd(), 'patches/splatoon3/runtime/render.mjs'))).digest('hex'),
+    'emitted/minified artifact identity is distinct from raw source-input identity');
   assert.ok(result.loaded.some(receipt => receipt.file === renderFile));
   assert.ok(result.loaded.some(receipt => receipt.file.endsWith('/patches/splatoon3/runtime/install.mjs')));
   assert.equal(result.loaded.some(receipt => receipt.file === facadeFile), false);
