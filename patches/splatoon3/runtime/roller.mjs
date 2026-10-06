@@ -17,6 +17,10 @@ export const VERTICAL_SWING = Object.freeze({ coil: -2.45, release: -.04, follow
 // Read-only view for regressions; the arrays stay owned by this module.
 export const ROLLER_POSE = Object.freeze({ READY_ANCHOR, READY_ROTATION, ROLL_ANCHOR, ROLL_ROTATION, ROLL_LEAN });
 
+// Issue #635: gates after flick release, independent of roll-stop locks.
+const POST_SUB = { horizontal: 14 / 60, vertical: 18 / 60 };
+const POST_SQUID = { horizontal: 15 / 60, vertical: 19 / 60 };
+
 export function rollerMode(w, vertical) {
   return vertical ? { ...w, flickWindup: w.verticalWindup, flickInterval: w.verticalInterval ?? w.flickInterval, flickInk: w.verticalInk } : w;
 }
@@ -66,10 +70,11 @@ export function installRollerLogic({ WeaponRunner, Actor, G }, _profile) {
     const armed = armAheadOf(this, now, !!inp.fire);
     const locks = this.s3RollStop;
     let input = inp;
+    if (this.s3FlickPostSub > 0 && (input.sub || input.subReleased)) input = { ...input, sub: false, subReleased: false };
     if (locks && this.a.weapon?.kind === 'roller') {
       const blocked = rollStopBlocks(now, locks);
       if (blocked.main || blocked.sub) {
-        input = { ...inp };
+        input = { ...input };
         if (blocked.main && !armed) { input.fire = false; input.firePressed = false; }
         if (blocked.sub) { input.sub = false; input.subReleased = false; }
       }
@@ -103,6 +108,7 @@ export function installRollerLogic({ WeaponRunner, Actor, G }, _profile) {
     this.s3RollerAttack = null;
     this.s3RollerSquidPressT = null;
     this.s3RollStop = null;
+    this.s3FlickPostSub = 0; this.s3FlickPostSquid = 0;
     if (this.a.character) {
       this.a.character.s3RollerFlick = null;
       this.a.character._s3CancelRollerFlick?.();
@@ -111,6 +117,14 @@ export function installRollerLogic({ WeaponRunner, Actor, G }, _profile) {
   };
   WeaponRunner.prototype._roller = function (dt, inp, w) {
     const a = this.a;
+    if (this.s3FlickPostSub > 0) {
+      this.s3FlickPostSub -= dt;
+      if (this.s3FlickPostSub < EPS) this.s3FlickPostSub = 0;
+    }
+    if (this.s3FlickPostSquid > 0) {
+      this.s3FlickPostSquid -= dt;
+      if (this.s3FlickPostSquid < EPS) this.s3FlickPostSquid = 0;
+    }
     const starting = this.flick < 0 && inp.firePressed && this.cooldown <= EPS && a.ink >= (!a.grounded ? w.verticalInk : w.flickInk);
     if (starting) {
       this.cooldown = Math.min(0, this.cooldown);
@@ -141,6 +155,9 @@ export function installRollerLogic({ WeaponRunner, Actor, G }, _profile) {
     if (state && winding && this.flick < 0) {
       state.elapsed = mode.flickWindup;
       state.released = true;
+      const edge = this.s3FlickVertical ? 'vertical' : 'horizontal';
+      this.s3FlickPostSub = Math.max(0, POST_SUB[edge] - dt);
+      this.s3FlickPostSquid = Math.max(0, POST_SQUID[edge] - dt);
     }
     if (state && state.elapsed + EPS >= state.interval) {
       this.s3RollerAttack = null;

@@ -128,6 +128,7 @@ export function installWeapons(context, profile) {
   };
   WeaponRunner.prototype.busy = function () {
     const kind = this.a.weapon.kind;
+    if (kind === 'roller' && this.s3FlickPostSquid > 0) return true;
     if (kind === 'shooter') {
       if (this.s3ShooterPendingFirst) return true;
       if (this.s3PostFireLockActive) {

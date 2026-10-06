@@ -10,6 +10,8 @@ const zeros = () => ({ n: 0, a: 0, b: 0, ra: 0, rb: 0 });
 const state = g => g._qualityGyro || (g._qualityGyro = {
   orientationTime: -Infinity, rate: [0, 0, 0], screen: null,
   fallbacks: 0, reason: null, motionTime: -Infinity, stationaryMotion: false,
+  // #615 raw zero-rate bias; retain the current Android and handoff owners.
+  bias: [0, 0, 0], still: 0, biasSrc: null,
 });
 const finiteEvent = (e, keys) => keys.every(k => typeof e?.[k] === 'number' && Number.isFinite(e[k]));
 function fallback(g, reason) {
@@ -130,6 +132,7 @@ export function installGyroQuality(Gyro, getScreenAngle, isAndroid = () => /Andr
   P.resync = function () {
     resync.call(this);
     const s = state(this); s.orientationTime = s.motionTime = -Infinity; s.stationaryMotion = false; s.rate.fill(0);
+    s.bias[0] = s.bias[1] = s.bias[2] = 0; s.still = 0; s.biasSrc = null;
     s.boundary=null;s.attitudes=[];s.event=null;
     this._tQ = this._tRR = 0; this.dYaw = this.dPitch = 0;
     fallback(this, 'resync');
@@ -234,5 +237,31 @@ export function installGyroQuality(Gyro, getScreenAngle, isAndroid = () => /Andr
       if(this._src!=='ori' && s.rawPendingBoundary!=null && s.boundary?.time===s.rawPendingBoundary)this._tRR=s.rawPendingBoundary;
       return motion.call(this,e);
     }finally{s.event=null;}
+  };
+  // #615 stationary stability calibration. Only the raw rotationRate path can
+  // hold a zero-rate offset; the attitude path integrates no bias. Learn the
+  // offset as a bias strictly while the attitude stream says the device is
+  // still (below STILL_DEG for HOLD_S seconds), subtract it from every raw
+  // sample, and time-normalize with dt so event frequency cannot change the
+  // result. Thresholds are engineering values for this overlay — not
+  // Nintendo's unpublished calibration constants. Raw-minus-attitude residual
+  // learning preserves deliberate motion even below the stillness threshold.
+  const STILL_DEG = 0.35, HOLD_S = 1.2, TAU_S = 2;
+  const calibratedSample = P._sample;
+  P._sample = function (wx, wy, wz, dt) {
+    const s = state(this);
+    if (this._src === 'ori' || !(dt > 0)) return calibratedSample.call(this, wx, wy, wz, dt);
+    if (s.biasSrc !== this._src) { s.biasSrc = this._src; s.bias[0] = s.bias[1] = s.bias[2] = 0; s.still = 0; }
+    const att = Math.hypot(s.rate[0], s.rate[1], s.rate[2]) / RAD;
+    if (att <= STILL_DEG) s.still += dt; else s.still = 0;
+    if (s.still >= HOLD_S) {
+      // Learn the raw-minus-attitude residual, not the measured turn itself.
+      // Deliberate motion below STILL_DEG must keep its native response.
+      const k = 1 - Math.exp(-dt / TAU_S);
+      s.bias[0] += (wx - s.rate[0] - s.bias[0]) * k;
+      s.bias[1] += (wy - s.rate[1] - s.bias[1]) * k;
+      s.bias[2] += (wz - s.rate[2] - s.bias[2]) * k;
+    }
+    return calibratedSample.call(this, wx - s.bias[0], wy - s.bias[1], wz - s.bias[2], dt);
   };
 }

@@ -147,7 +147,7 @@ test('#717 projectile pool reset clears fidelityFriendThrough', async () => {
   assert.equal(ps.list.length, 0, 'clear resets pool');
 });
 
-test('#717 native other-family control: Shooter remains main-transparent at >5F while Slosher 2F still blocks', async () => {
+test('#717/#656 composed family windows: Shooter blocks from birth while Slosher blocks after 2F', async () => {
   // 1. Slosher at >=2F blocks on ally, enemy behind takes 0 damage
   {
     const { ps, shooter, ally, enemy } = await setup('slosher');
@@ -160,16 +160,16 @@ test('#717 native other-family control: Shooter remains main-transparent at >5F 
     assert.equal(enemy.hp, 100, 'Slosher round blocked after 2F, enemy behind takes no damage');
   }
 
-  // 2. Shooter control: at >5F distance (ally at z = 10.5), Shooter remains main-transparent
+  // 2. #656 restores Shooter zero-frame blocking, independently of Slosher 2F.
   {
     const { ps, shooter, ally, enemy } = await setup('shooter');
     ally.pos.set(0, 0, 10.5); // reached at >5F
     enemy.pos.set(0, 0, 11.5);
     ps.fireShooter(shooter, shooter.weapon, 0);
-    assert.equal(ps.list[0].fidelityFriendThrough, null, 'Shooter does not inherit fidelityFriendThrough, keeping native main behavior');
+    assert.equal(ps.list[0].fidelityFriendThrough, 0, 'Shooter uses its own zero-frame window');
     step(ps);
     assert.equal(ally.hp, 100, 'Shooter ally takes no friendly damage');
-    assert.equal(enemy.hp, 64, 'Shooter bullet passes through ally at >5F to hit enemy behind (main-transparent)');
+    assert.equal(enemy.hp, 100, 'Shooter bullet is blocked by ally without friendly damage');
   }
 
   // 3. Other families (Dualies, Splatling, Blaster) maintain pass-through

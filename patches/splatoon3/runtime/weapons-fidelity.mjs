@@ -232,6 +232,8 @@ function fieldRadiusAt(p,age) { return radiusAt(p.fidelityFieldCollision,age,p.f
 function setCollision(p,c,offset=0) {
   p.fidelityPlayerCollision=collisionRecord(c,'Player',offset);
   p.fidelityFieldCollision=collisionRecord(c,'Field',offset);
+  // Restore the pinned family-specific window consumed by the existing solver.
+  p.fidelityFriendThrough=['shooter','slosher','roller'].includes(p.s3Weapon?.kind) ? p.fidelityPlayerCollision.FriendThroughFrameForPlayer : null;
   // Existing size carries initial radius; Roller unit identity is transmitted separately.
   p.size=p.fidelityPlayerCollision.initRadius;
 }

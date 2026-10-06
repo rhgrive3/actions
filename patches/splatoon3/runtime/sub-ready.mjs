@@ -14,7 +14,10 @@ export function installSubReady({Actor,WeaponRunner,SUB},profile){
   if(!this.alive||this.specialActive||this.superJumpState)cancel(r);
   else {
    if(!r.s3SubReady&&this.intent.sub&&this.form==='squid')r.s3SubFromSquid=true;
-   if(r.s3SubReady&&this._prevIntent.sub&&!this.intent.sub)r.s3SubReady.pending=true;
+   if(r.s3SubReady&&this._prevIntent.sub&&!this.intent.sub){
+    if(this.intent.squid)cancel(r);
+    else r.s3SubReady.pending=true;
+   }
   }
   return actorUpdate.call(this,dt,...args);
  };

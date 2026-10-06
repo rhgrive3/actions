@@ -193,7 +193,7 @@ test('#626 a buffered pop-out shot on the release tick is a swing, not a roll st
 
 test('#626 the same-tick boundaries are exact at 30/60/120 Hz render schedules', async () => {
   const END = 100;
-  for (const hz of [30, 60, 120]) {
+  for (const hz of [30, 60, 120]) for (const action of ['sub','squid']) {
     const f = await fixture();
     const a = f.make('roller');
     a.grounded = true; a.intent.move.set(0, 0, 1);
@@ -204,7 +204,7 @@ test('#626 the same-tick boundaries are exact at 30/60/120 Hz render schedules',
       clock.advance(1 / hz, dt => {
         const tick = clock.ticks;
         a.intent.fire = tick < END;
-        if (tick >= END) { a.intent.sub = true; a.intent.squid = true; }
+        if (tick >= END) a.intent[action] = true; // Held sub intentionally excludes squid (#591).
         f.G.time += dt; a.update(dt);
         if (r.rolling) seen = true;
         if (seen && endTick < 0 && !r.rolling) endTick = tick;
@@ -215,8 +215,8 @@ test('#626 the same-tick boundaries are exact at 30/60/120 Hz render schedules',
     assert.equal(clock.ticks, 300, `${hz} Hz tick count`);
     assert.equal(endTick, END, `${hz} Hz roll-end tick`);
     // Frame 0 is the release tick itself, so both requests are already late there.
-    assert.equal(subAt - endTick, FRAMES.sub, `${hz} Hz sub boundary`);
-    assert.equal(squidAt - endTick, FRAMES.squid, `${hz} Hz squid boundary`);
+    if (action === 'sub') assert.equal(subAt - endTick, FRAMES.sub, `${hz} Hz sub boundary`);
+    else assert.equal(squidAt - endTick, FRAMES.squid, `${hz} Hz squid boundary`);
   }
 });
 
@@ -301,7 +301,7 @@ test('#626 a remote actor gates its own actions identically and never borrows an
 test('#626 30/60/120 Hz render schedules produce the same admission boundaries', async () => {
   const END = 100;                               // the roll-end tick
   const traces = [];
-  for (const hz of [30, 60, 120]) {
+  for (const hz of [30, 60, 120]) for (const action of ['sub','squid']) {
     const f = await fixture();
     const a = f.make('roller');
     a.grounded = true; a.intent.move.set(0, 0, 1);

@@ -22,3 +22,7 @@ Source PR761 afdba0d7fdce4a1a142e19d30b057e78eb220992; target aa094850fdd60b3b70
 ## PR751 fixed PropKit set
 
 Source e5640caa09d84560d1fdf792a74511b806384081; Issues #516 and #526. The two original leaf adapters and dedicated fixtures/tests are connected through narrow quality registration hunks. Seven focused actual PropKit/Three cases passed: LOW/touch atlas 1024, Halyard retained parts 12793 to 0, geometry/UV/collider/animation equivalence and rebuild/add/clear/dispose. Fixture realpath normalization ensures transformed native imports also work through symlinks. This is a complete implementation port for these two root scopes, with full aggregate CI pending; other PR751 roots remain unported.
+
+## PR765 fixed six-root set
+
+Source 6236a2ec3894d7c2c4f1ec72404b9b0f4429491c: #615 gyro stationary bias, #631 ally-down marker ownership, #635 Roller post-release gates, #620 Charger minimum-charge paint, #656 teammate body-block connection, and #591 sub-strafe admission. Existing focus/Android input, Roller #626, Shooter/Slosher/Roller collision contracts and early sub-release reservation are preserved. Focused evidence: gyro 18, bodyblock/marker 31, Roller 17, Charger 3 and sub-strafe 9, plus existing ready controls. The #620 paint helper was separately reconciled with newly ported #617 launch speed; actual Actor/Runner/Projectiles three-case check passed while the existing speed helper and flight writer remain byte-identical. All touched JavaScript parsed. Full aggregate build/CI remains pending; PR786 and remaining PR699 work are not part of this set.
