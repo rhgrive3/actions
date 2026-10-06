@@ -6,10 +6,10 @@ export function adaptTouchPointerLock(rel, code) {
   code=replaceOnce(code,'    this._dev = v;','    this._dev = v;\n    if (v === \'touch\') this._releaseMouseForTouch();','touch releases mouse ownership');
   code=replaceOnce(code,"    window.addEventListener('pointerdown', (e) => { if (e.pointerType === 'touch') this.lastDevice = 'touch'; }, { capture: true, passive: true });",`    window.addEventListener('pointerdown', (e) => {
       if (e.pointerType === 'touch') this.lastDevice = 'touch';
-      else if (e.pointerType === 'mouse' && e.target === this.canvas && this.enabled && this._touchRelockWanted &&
+      else if (e.pointerType === 'mouse' && this.enabled && this._touchRelockWanted && this._isTouchOverlayReacquireTarget(e.target) &&
         !this.mobile?._ptr?.size && !(this.mobile?._stick?.id >= 0)) {
         this.lastDevice = 'kbm';
-        if (!this._touchUnlockPending && G.mode === 'match' && G.match?.state === 'playing' &&
+        if (!this._touchUnlockPending && !this.mobile?.editing && G.mode === 'match' && G.match?.state === 'playing' &&
           !G.match.paused && !G.match.attract && !G.game?.menus?.current) {
           if (document.pointerLockElement === this.canvas) { this.locked = true; this._touchRelockWanted = false; }
           else this.requestLock();
@@ -31,7 +31,24 @@ export function adaptTouchPointerLock(rel, code) {
       this._touchUnlockPending = false;
       this.mouse.left = this.mouse.right = false; this.mouse.leftPressed = this.mouse.rightPressed = false; this.mouse.dx = this.mouse.dy = 0;
       if (!touchUnlock && wasLocked) this.onUnlock?.();`,'touch unlock is not Escape');
-  return replaceOnce(code,'  requestLock() {',`  _releaseMouseForTouch() {
+  return replaceOnce(code,'  requestLock() {',`  _isTouchOverlayReacquireTarget(target) {
+    const mobile = this.mobile;
+    if (!mobile || mobile.editing) return false;
+    if (target === this.canvas) return true;
+    if (mobile.mapOpen) return false;
+    const root = mobile.root;
+    if (!root) return false;
+    if (typeof target?.closest === 'function') {
+      try {
+        if (target.closest('#iw-mobile-controls .iwm-edit, #iw-mobile-controls .iwm-rotate')) return false;
+        if (target.closest('#iw-mobile-controls .iwm-look, #iw-mobile-controls .iwm-movezone, #iw-mobile-controls .iwm-b')) return true;
+      } catch { return false; }
+    }
+    try { if (typeof root.contains === 'function' && root.contains(target)) return target !== root; } catch { return false; }
+    return false;
+  }
+
+  _releaseMouseForTouch() {
     this.mouse.left = this.mouse.right = this.mouse.leftPressed = this.mouse.rightPressed = false;
     this.mouse.dx = this.mouse.dy = 0;
     if (!this.locked && document.pointerLockElement !== this.canvas) return;
