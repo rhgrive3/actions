@@ -21,12 +21,11 @@ assert.ok(order?.length, 'production reliability dispatcher adapter order');
 const imports=new Map([...dispatcher.matchAll(/import \{ (\w+) \} from '(\.\/[^']+)';/g)].map(m=>[m[1],m[2]]));
 const preceding=[];
 for(const name of order){
- if(name==='adaptPause')continue;
  assert.ok(imports.has(name),`actual dispatcher import ${name}`);
  const module=await import(new URL(imports.get(name),pathToFileURL(ROOT+'/patches/reliability/adapter.mjs')));
  preceding.push(module[name]);
 }
-function composed(rel, patched=false){let s=adaptTouchLayout(rel,adaptSource(rel,fs.readFileSync(UP+'/'+rel,'utf8')));for(const adapt of preceding)s=adapt(rel,s);if(patched)s=adaptPause(rel,s);hashes[rel]=crypto.createHash('sha256').update(s).digest('hex');return s;}
+function composed(rel, patched=false){let s=adaptTouchLayout(rel,adaptSource(rel,fs.readFileSync(UP+'/'+rel,'utf8')));for(const adapt of preceding){if(adapt===adaptPause&&!patched)continue;s=adapt(rel,s);}hashes[rel]=crypto.createHash('sha256').update(s).digest('hex');return s;}
 function section(s,a,b){const at=s.indexOf(a),end=s.indexOf(b,at);assert.ok(at>=0&&end>at,a);return s.slice(at,end);}
 function sources(patched){const main=composed('src/main.js',patched),match=composed('src/game/match.js',patched);
 const methods=[section(main,'  pause() {','\n  async quitToMenu() {'),section(main,'  _padMenus() {','\n  _updateHud(dt) {'),section(main,'  _onKey(e, repeat) {','\n  _onPointerUnlock() {')].join('\n');return {main,match,methods};}
