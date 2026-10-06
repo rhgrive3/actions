@@ -82,7 +82,11 @@ function wallDropSource(p) {
   if (!w) return null;
   const raw = rawWeapon(w);
   let move, paint;
-  if (w.kind === 'roller') {
+  if (w.kind === 'dualies') {
+    // #604: Splat Dualies keep their pinned wall-drop records at the weapon
+    // top level, like Blaster/Splatling; both hands share them unchanged.
+    move = raw?.WallDropMoveParam; paint = raw?.WallDropCollisionPaintParam;
+  } else if (w.kind === 'roller') {
     // Roller wall-drop data belongs to the exact flick unit that produced the
     // glob (horizontal main/near or one of the vertical units), not the weapon
     // top level. configureFidelityFlick/initialize already preserve that unit.
