@@ -249,6 +249,9 @@ export function configureFidelityFlick(p, actor, weapon, index, angle, speed) {
   const cp=Math.cos(pitch);
   p.vel.set(Math.sin(angle)*cp*speed,Math.sin(pitch)*speed,Math.cos(angle)*cp*speed);
   p.fidelityYaw=Math.atan2(Math.sin(angle-actor.yaw),Math.cos(angle-actor.yaw));
+  // #734: the damage sector's straight ahead is the swing forward, kept apart
+  // from the fan offset above. Only this reference enters the hit-angle test.
+  p.fidelitySectorYaw=actor.yaw;
   p.fidelityMode=vertical?'vertical':'horizontal';p.fidelityRollerUnit=unit;
   setCollision(p,unit.UnitParam.CollisionParam);
   p.straight=unit.UnitParam.MoveParam.GoStraightToBrakeStateFrame/60;
@@ -325,11 +328,24 @@ export function applyFidelitySlosherSplash(system,p,victim,amount) {
   const delta=groupDamage(p.s3DamageGroup,victim,amount);
   if(delta>0)system.applyHit(p.owner,victim,delta,p.wid||'slosher');
 }
+// #734: S3 measures the horizontal Inside/Outside sector from each glob's own
+// spawn point to the actual hit position. p.fidelityYaw only records which fan
+// slot was fired, so overlapping globs resolved the same hit differently. A
+// projectile with no recorded sector reference keeps the inside table instead
+// of inventing an outside one.
+export function rollerHitAngle(p,point) {
+  if(!Number.isFinite(p.fidelitySectorYaw))return null;
+  const dx=point.x-p.start.x,dz=point.z-p.start.z;
+  if(!(dx*dx+dz*dz>0))return 0;
+  const yaw=Math.atan2(dx,dz)-p.fidelitySectorYaw;
+  return Math.atan2(Math.sin(yaw),Math.cos(yaw));
+}
 export function fidelityDamage(p,point) {
   const w=p.s3Weapon||p.owner.weapon;
   if(w.kind==='roller'&&w.ballistics){
     const b=w.ballistics,d=p.start.distanceTo(point),xz=Math.hypot(point.x-p.start.x,point.z-p.start.z);
-    const outside=!p.s3Vertical&&xz>b.horizontalInsideDistance&&Math.abs(p.fidelityYaw)>radians(b.horizontalInsideDegrees);
+    const hitAngle=rollerHitAngle(p,point);
+    const outside=!p.s3Vertical&&hitAngle!==null&&xz>b.horizontalInsideDistance&&Math.abs(hitAngle)>radians(b.horizontalInsideDegrees);
     const bands=p.s3Vertical?w.verticalDamageBands:outside?b.horizontalOutsideDamageBands:w.flickDamageBands;
     const source=rawWeapon(w)[p.s3Vertical?'VerticalSwingUnitGroupParam':'WideSwingUnitGroupParam'].DamageParam;
     const age=(p.fidelityPrevAge??p.age??0)+((p.age??0)-(p.fidelityPrevAge??p.age??0))*(p.fidelityImpactT??1);
@@ -404,7 +420,7 @@ export function installWeaponsFidelity(context,profile) {
   const fresh=Projectiles.prototype._new,push=Projectiles.prototype._push,ghost=Projectiles.prototype.ghostProjectile,clear=Projectiles.prototype.clear;
   Projectiles.prototype.clear=function(...args){const result=clear.apply(this,args);this._fidelityCollision=null;this._fidelitySloshContext=null;return result;};
   Projectiles.prototype._new=function(...args){
-    const p=fresh.apply(this,args);p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityRollerUnit=null;p.fidelitySloshUnit=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;return p;
+    const p=fresh.apply(this,args);p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityRollerUnit=null;p.fidelitySloshUnit=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;p.fidelitySectorYaw=null;return p;
   };
   function initialize(p,w){
     if(!w)return;
