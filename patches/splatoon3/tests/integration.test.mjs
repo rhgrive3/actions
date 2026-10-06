@@ -139,6 +139,16 @@ test('splatling diving cancels both charging and an active stream', async () => 
   a.reset();a.intent.squid=false;a.intent.fire=true;f.tick(a,73);a.intent.fire=false;f.tick(a,2);assert.equal(a.weaponRunner.streaming,true);
   const count=f.shots.length;a.intent.squid=true;f.tick(a,45);assert.equal(a.weaponRunner.streaming,false);assert.equal(f.shots.length,count);
 });
+test('charger release before the 8F minimum cancels the shot without refunding progressive ink', async () => {
+  const f=await fixture(),a=f.make('charger'),r=a.weaponRunner;a.ink=100;
+  r.update(1/60,{fire:true}); // current 1F humanoid startup
+  for(let i=0;i<7;i++)r.update(1/60,{fire:true});
+  const paid=100-a.ink;
+  assert.ok(paid>0,'progressive charge committed ink before release');
+  r.update(1/60,{fire:false});
+  assert.equal(f.shots.length,0,'sub-8F release must not fire');
+  assert.ok(Math.abs((100-a.ink)-paid)<1e-9,'cancel does not refund already committed charge ink');
+});
 test('an 8F legal Charger charge has already spent the 2.25 percent minimum before release', async () => {
   const f=await fixture(),a=f.make('charger'),r=a.weaponRunner;a.ink=2.25;
   // C22's 1F humanoid startup precedes the eight legal charge frames.

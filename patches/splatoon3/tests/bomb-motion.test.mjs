@@ -100,7 +100,7 @@ function rig(api, kind = 'shooter', enabled = true) {
   function step(dt = 1 / 60, input = {}) {
     G.projectiles = projectiles;
     a.intent.fire = !!input.fire; a.intent.sub = !!input.sub;
-    G.time += dt; a.weaponRunner.update(dt, input); a._finishFrame(dt); ch.root.updateMatrixWorld(true);
+    G.time += dt; a.lastFire += dt; a.weaponRunner.update(dt, input); a._finishFrame(dt); ch.root.updateMatrixWorld(true);
     assert.ok(Array.from(ch.P).every(Number.isFinite));
     assert.ok(ch.getMuzzle(new THREE.Vector3()).toArray().every(Number.isFinite));
   }
@@ -335,6 +335,16 @@ test('held and release overlays reserve the left hand during main attacks, movem
     try {
       r.a.vel.set(1.5, 0, 1); r.a.grounded = false;
       for (let i = 0; i < 40; i++) { r.a.pos.addScaledVector(r.a.vel, 1 / 60); r.step(1 / 60, { sub: true, fire: true }); r.a.ink = 100; }
+      // Splattershot's verified post-shot sub lock can interrupt a simultaneous
+      // sub hold. Releasing main fire must admit the still-held sub after 4F.
+      if (kind === 'shooter' && !r.ch.bombHeld) {
+        for (let i = 0; i < 4; i++) r.step(1 / 60, { sub: true, fire: false });
+        assert.equal(r.a.weaponRunner.aimingSub, true, 'gameplay sub is admitted after the 4F lock');
+        // Gameplay admission is exact; the held-bomb pose eases the free hand
+        // into place over subsequent presentation frames.
+        for (let i = 0; i < 4; i++) r.step(1 / 60, { sub: true, fire: false });
+        for (let i = 0; i < 36 && r.ch.P[C.IKL] >= .01; i++) r.step(1 / 60, { sub: true, fire: false });
+      }
       assert.equal(r.ch.bombHeld, true); assert.ok(r.ch.P[C.IKL] < .01, kind);
       r.step(1 / 60, { subReleased: true, fire: true });
       assert.equal(r.ch.bomb.group.visible, false); assert.ok(r.ch.P[C.IKL] < .01, kind);
