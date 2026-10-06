@@ -231,26 +231,6 @@ export function adaptQualitySource(rel, code) {
   }
 
   if (rel === 'src/core/gyro.js') {
-    // #678: the DeviceOrientation earth frame is Z-up (the module's own downInDevice
-    // returns earth down (0,0,-1)), so world yaw is the COMPLETE projection of
-    // screen-space omega onto earth-down rotated into screen space. The shipped
-    // formula normalized by all three gravity components but projected only
-    // (gy*py + gz*pz), dropping the screen-x term gx*px. Whenever gravity has a
-    // screen-x component - every rolled or landscape pose - that term cancels or
-    // destroys genuine world yaw and pure roll is reported as yaw.
-    // Only this projection term is replaced; the smooth tier, the +/-45 degree roll
-    // relax, gain/gyroTurnDeg, resync/rebase, the rotationRate adoption path and
-    // every other sensor behaviour are byte-unchanged. The published upstream file
-    // is never edited: this is a fail-closed build-time replacement.
-    code = replaceOnce(code, `    const d = this._down;
-    const gy = d[0] * s + d[1] * c, gz = d[2];
-    const gl = Math.hypot(d[0] * c - d[1] * s, gy, gz) || 1;
-    // player-space yaw: the part of the turn around real vertical, allowed to borrow from roll (±45° relax)
-    const worldYaw = -(gy * py + gz * pz) / gl;`, `    const d = this._down;
-    const gx = d[0] * c - d[1] * s, gy = d[0] * s + d[1] * c, gz = d[2];
-    const gl = Math.hypot(gx, gy, gz) || 1;
-    // player-space yaw: the part of the turn around real vertical, allowed to borrow from roll (±45° relax)
-    const worldYaw = -(gx * px + gy * py + gz * pz) / gl;`, 'gyro world-orientation projection');
     return "import { installGyroQuality } from '../../patches/local-quality/gyro.mjs';\n" + code +
       '\ninstallGyroQuality(Gyro, screenAngle);\n';
   }

@@ -393,19 +393,6 @@ A Super Jump confirmed from humanoid form is now ~0.35s slower than the same jum
 **未確認（実機）** — the 1F/22F initial-form term has not been measured on hardware against Ver. 11.3.0; the numbers come from a published community measurement. **未確認（描画）** — during the added startup frames the actor is still rendered through the normal squid charge presentation, so the S3 human-to-squid transformation animation itself is not reproduced here; only its duration is. Deterministic VM fixtures, not a device or browser-render comparison.
 
 
-## 2026-10-06 Gyro world-orientation projection — #678
-
-本家の根拠: W3C Device Orientation and Motion の仕様（読み取り 2026-10-06）は deviceorientation を `Rz(alpha)·Rx(beta)·Ry(gamma)` の device→earth 回転として定義する。この earth 系は Z 上向きで、INKWAVE 自身の `downInDevice` も earth の下 (0,0,−1) を device 系で返す。したがって World Orientation のヨーは、screen 空間の ω を earth-down（screen 空間へ回転したもの）へ**全成分**で射影した値であるべきで、`gx*px` を欠いた射影は本家解釈の定義に反する。座標変換のみを修正したので、任天堂のジャイロ実機値は本件に不要である。
-
-INKWAVE の実装箇所: `patches/local-quality/adapter.mjs` の `adaptQualitySource` が `src/core/gyro.js` に対して fail-closed な `replaceOnce` で行う。公開 upstream `inkwave-public/` は一切編集せず（`git hash-object` が HEAD と一致）、ビルド時にのみ置換する。permission overlay（`adaptGyro`）には「センサー処理を byte 同一に保つ」という既存契約があるため触れていない。`min(|worldYaw|*1.41, yawAxes)` のロール緩和、smoothing 段、`gyroTurnDeg` と gain、resync/rebase、rotationRate 採用、入力所有権、ゲームパッドはいずれも不変。
-
-再現操作: 端末を転がした状態（重力が screen-x 成分を持つ）で、画面角度をまたぐ回転を行う。正しい world ヨーは姿勢差の回転軸の earth +Z 成分で判定できる。実測では旧式は screen-x 重力 `gx≈0.985` の姿勢で world ヨー 4.19 rad/s に対し 0.13 rad/s しか出力せず、4.08 倍不足していた（`gx*px` が打ち消す）。純粋なロール（px=0）では両式が一致するため、この欠落は α/β 回転と画面角度の特定の組み合わせでのみ現れる。
-
-プレイへの影響: 横持ち・転がした操作で減少していた旋回追従を回復する。感度カーブと重みは変えない。
-
-確認状態: native の単体テストのみ（実 quaternion による判定、6 姿勢）。ブラウザの実動作および実機（Switch/iOS/Android）との比較は未実施である。**残課題**: 最終出力はなお下流の `min(|worldYaw|*1.41, yawAxes)` ロール緩和で上限が決まる。「±45° のロール緩和」という意図的なガードであり本件では変更していないため、そのガード自体を本家準拠へ改めるかは hardware 実測を要する。
-
-
 ## 2026-10-06 — #780 visible blur cannot regain gamepad authority
 
 Base main `a3993f37a00cc2f0a7b01d954591b98fb6ae97e3`. The actual Input/PlayerController and PlatformGame/Lifecycle connection reproduced the Issue: visible blur, one neutral poll, then fresh stick and button input produced yaw -0.031207394862975805, pitch -0.013003081192906586, movement magnitude 0.8148148148148149, all five action intents true and lastDevice=pad while focused=false and lifecycle state=ACTIVE. This is a browser input-authority correction, not a change to Splatoon numerical tuning or a console-fidelity claim.
