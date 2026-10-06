@@ -23,8 +23,11 @@ export function runSimulation(game, dt) {
   const clock = game.s3Clock || (game.s3Clock = new FixedClock());
   // pollPad clears edges. Preserve those collected on a render without a tick.
   const pending = new Set(game.input.padPressed);
+  const pendingPadEpoch = game.input._padEpoch;
   game.input.pollPad();
-  for (const key of pending) game.input.padPressed.add(key);
+  if (pendingPadEpoch === game.input._padEpoch) {
+    for (const key of pending) game.input.padPressed.add(key);
+  }
   game._padMenus();
   G.net?.update?.(dt);
   const m = game.match, covered = !!game.showcase?.fullFrame;
