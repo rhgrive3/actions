@@ -64,7 +64,7 @@ test('#801 all five active Roller flick units expose a 3F friend-through window'
     assert.equal(c.ps.list.length, vertical ? 5 : 13);
     for (const p of c.ps.list) {
       assert.equal(p.fidelityFriendThrough, 3, 'glob receives fidelityFriendThrough = 3');
-      assert.equal(p.fidelityPlayerCollision.friendThrough, 3, 'player collision record preserves the 3F window');
+      assert.equal(p.fidelityPlayerCollision.FriendThroughFrameForPlayer, 3, 'player collision record preserves the 3F window');
     }
     assert.equal(c.ps.list[0].fidelityPlayerCollision.initRadius, vertical ? 0.116 : 0.12);
     assert.equal(c.ps.list[0].fidelityPlayerCollision.endRadius, vertical ? 0.87 : 1.02);
