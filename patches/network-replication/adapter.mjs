@@ -105,6 +105,28 @@ export function adaptNetworkSource(rel, code) {
       if (!actor?.remote || actor.owner !== from) return;
     }
     switch (e[1]) {`, 'event ownership');
+    patch(`  recSplat(c, radius, team, o) {
+    if (this.applying || this.mute > 0 || o.cosmetic) return;
+    const st = o.stretch;`, `  recSplat(c, radius, team, o) {
+    if (this.applying || this.mute > 0 || o.cosmetic) return;
+    const st = o.stretch;
+    // Stamp the origin's own splat with the room-wide order identity every
+    // receiver derives from the same wire fields, so the immediate local apply
+    // and the delayed remote replay converge on one canonical order.
+    o._netKey = netSplatKey(Math.round((G.time || 0) * 60), this.myId, team, (this._eventSeq || 0) + 1);`, 'origin splat canonical order identity');
+    patch(`        const opts = { seed: e[7] };
+        if (e[8]) opts.kind = e[8];
+        if (st) { opts.stretch = st; opts.stretchAmt = e[12]; }
+        G.paint?.splat(_v.set(e[2], e[3], e[4]), e[5], e[6], opts);`, `        const opts = { seed: e[7] };
+        if (e[8]) opts.kind = e[8];
+        if (st) { opts.stretch = st; opts.stretchAmt = e[12]; }
+        // Paint ownership is not commutative, so a replayed splat only lands when
+        // it carries the order identity. Anything unorderable is dropped by every
+        // client alike rather than being applied in arrival order.
+        if (!Number.isSafeInteger(e._netTick) || !Number.isSafeInteger(e._netSeq)
+          || e._netTick < 0 || e._netSeq < 1 || (e[6] !== 0 && e[6] !== 1)) return;
+        opts._netKey = netSplatKey(e._netTick, from, e[6], e._netSeq);
+        G.paint?.splat(_v.set(e[2], e[3], e[4]), e[5], e[6], opts);`, 'remote splat canonical order identity');
     patch("case 'b': { const a = this.byNid.get(e[2]); if (a) G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9]); break; }", `case 'b': {
         for (let index = 4; index <= 9; index++) if (!Number.isFinite(e[index])) return;
         const a = this.byNid.get(e[2]);
@@ -156,6 +178,19 @@ export function adaptNetworkSource(rel, code) {
         break;
       }`, 'birth and terminal events');
     code += `
+// One room-wide, globally comparable order for non-commutative paint writes:
+// (owner simulation tick, sender, team, per-sender event sequence). The origin
+// stamps it from the same fields it puts on the wire and every receiver rebuilds
+// it from the packet, so conflicting splats compare identically on all clients
+// without a second territory engine or a protocol change. 53 bits: exact in a
+// double, so ordering never depends on floating point rounding.
+function netSplatKey(tick, from, team, seq) {
+  const t = Math.max(0, Math.min(0xFFFFF, Math.round(tick)));
+  let h = 0x811c9dc5;
+  const id = typeof from === 'string' ? from : '';
+  for (let i = 0; i < id.length; i++) { h ^= id.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+  return t * 8589934592 + (h & 0xFFFFF) * 8192 + (team ? 1 : 0) * 4096 + (seq & 0xFFF);
+}
 function stormSnapshotAllows(actor, proof, from) {
   const latest = actor?.net?.buf?.at(-1);
   return !!(proof && actor?.alive && actor.remote && actor.owner === from && proof.owner === from
@@ -364,6 +399,59 @@ function retireNetworkGhosts(owner = null) {
       }
       aC[i4] = C[i3]; aC[i4 + 1] = C[i3 + 1]; aC[i4 + 2] = C[i3 + 2]; aC[i4 + 3] = a;`, 'puff presentation belongs to source');
 
+  }
+  if (rel === 'src/world/paint.js') {
+    // Cell ownership is "newest applied splat wins" and that write is not
+    // commutative, so every cell also remembers the room-wide order identity of
+    // the splat that last wrote it. A splat only writes a cell it is ordered
+    // after, which makes the final grid independent of arrival order on every
+    // client, and lets the GPU growth pass read the same authority.
+    patch('    this.grid = new Uint8Array(total);      // 0 none, 1 team0, 2 team1\n    this.dead = new Uint8Array(total);      // cells buried inside other geometry',
+      '    this.grid = new Uint8Array(total);      // 0 none, 1 team0, 2 team1\n    this.gridOrder = new Float64Array(total); // canonical order identity of the last writer per cell\n    this.dead = new Uint8Array(total);      // cells buried inside other geometry',
+      'paint grid canonical order tracking');
+    patch('    this.grid.fill(0);\n    this.counts[0] = this.counts[1] = 0;',
+      '    this.grid.fill(0);\n    if (this.gridOrder) this.gridOrder.fill(0);\n    this.counts[0] = this.counts[1] = 0;',
+      'clear paint order tracking');
+    patch('if (!nm.applying) { if (opts.seed === undefined) opts.seed = Math.random(); nm.recSplat(center, radius, team, opts); }\n    }',
+      'if (!nm.applying) { if (opts.seed === undefined) opts.seed = Math.random(); nm.recSplat(center, radius, team, opts); }\n    }\n    const prevNetKey = this._currentNetKey;\n    this._currentNetKey = opts._netKey;',
+      'bind the active splat order identity');
+    patch('    return claimed;\n  }\n\n  // Cosmetic micro-splat',
+      '    this._currentNetKey = prevNetKey;\n    return claimed;\n  }\n\n  // Cosmetic micro-splat',
+      'restore the active splat order identity');
+    patch('    const entries = [];\n    let wall = false;',
+      '    const entries = [];\n    let wall = false;\n    let live = 0;',
+      'count faces that still owe GPU ink');
+    patch('        if (!cosmetic) claimed += this._cpuSplat(f, lu, lv, rr, team, seed, sdu, sdv, sa, kind);\n        entries.push(f, lu, lv, dn, sdu, sdv, sa);',
+      `        this._lastOrderWins = 0;
+        const won = cosmetic ? 0 : this._cpuSplat(f, lu, lv, rr, team, seed, sdu, sdv, sa, kind);
+        claimed += won;
+        // Entry stride 8: the eighth slot records whether this face still owes GPU
+        // ink to this splat. A face a stale packet fully lost must not redraw, or
+        // the atlas would contradict the gameplay grid it is supposed to match.
+        const liveFace = cosmetic || this._currentNetKey === undefined || won > 0 || this._lastOrderWins > 0;
+        if (liveFace) live++;
+        entries.push(f, lu, lv, dn, sdu, sdv, sa, liveFace ? 1 : 0);`,
+      'record per-face GPU paint authority');
+    patch('    if (entries.length) {\n      // an older splat of the other team still spreading underneath this one finishes instantly',
+      '    if (live > 0) {\n      // an older splat of the other team still spreading underneath this one finishes instantly',
+      'skip GPU growth for a fully superseded splat');
+    patch('        const k = f.grid + j * f.nu + i;\n        const prev = this.grid[k];\n        if (prev === val) continue;\n        this.grid[k] = val;\n        claimed += cellA;',
+      `        const k = f.grid + j * f.nu + i;
+        const prev = this.grid[k];
+        const key = this._currentNetKey;
+        if (key !== undefined) {
+          const prevKey = this.gridOrder[k];
+          if (key < prevKey) continue;          // a newer canonically ordered splat owns this cell
+          if (key > prevKey) this._lastOrderWins++;
+          this.gridOrder[k] = key;
+        }
+        if (prev === val) continue;
+        this.grid[k] = val;
+        claimed += cellA;`,
+      'deterministic cell ownership by canonical order identity');
+    patch('    const E = g.entries, R = g.R, kind = g.kind;\n    const reachK = REACH[kind];\n    for (let i = 0; i < E.length; i += 7) {\n      const f = E[i], lu = E[i + 1], lv = E[i + 2], dn = E[i + 3], sdu = E[i + 4], sdv = E[i + 5], sa = E[i + 6];',
+      '    const E = g.entries, R = g.R, kind = g.kind;\n    const reachK = REACH[kind];\n    for (let i = 0; i < E.length; i += 8) {\n      const f = E[i], lu = E[i + 1], lv = E[i + 2], dn = E[i + 3], sdu = E[i + 4], sdv = E[i + 5], sa = E[i + 6];\n      if (!E[i + 7]) continue;                  // newer canonical ink already covers this whole face',
+      'GPU growth follows the same canonical ownership');
   }
   return code;
 }

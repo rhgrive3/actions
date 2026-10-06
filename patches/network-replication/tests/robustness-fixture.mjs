@@ -67,6 +67,7 @@ export async function fixture({ network = true } = {}) {
     export * from './inkwave-public/src/game/physics.js';
     export * from './inkwave-public/src/game/actor.js';
     export * from './inkwave-public/src/game/weapons.js';
+    export * from './inkwave-public/src/world/paint.js';
     export * from './inkwave-public/src/net/netmatch.js';
     export * from './patches/splatoon3/runtime/weapons.mjs';
     export * from './patches/splatoon3/runtime/weapons-fidelity.mjs';
@@ -168,11 +169,51 @@ export async function fixture({ network = true } = {}) {
     ...(e ? { e } : {}),
   });
 
+  // The real PaintSystem on a minimal paintable level: real atlas layout, real
+  // CPU grid, real growth/qu emission. Only the GL device is replaced, so every
+  // ownership decision under test is the shipped code path.
+  function makePaint({ su = 4, sv = 4, atlasSize = 256, maxDensity = 20 } = {}) {
+    const face = {
+      paintable: true, turf: true, block: 0, su, sv, origin: new THREE.Vector3(0, 0, 0),
+      u: new THREE.Vector3(1, 0, 0), v: new THREE.Vector3(0, 0, 1), n: new THREE.Vector3(0, 1, 0),
+    };
+    const lvl = {
+      faces: [face],
+      pointInside: () => false,
+      queryBlocks: (_x0, _z0, _x1, _z1, out) => { out.push(0); return out; },
+      blocks: [{
+        faces: [0, -1, -1, -1, -1, -1],
+        aabbMin: new THREE.Vector3(-20, -20, -20),
+        aabbMax: new THREE.Vector3(20, 20, 20),
+      }],
+    };
+    const device = {
+      capabilities: { getMaxAnisotropy: () => 1 },
+      getRenderTarget: () => null,
+      setRenderTarget: () => {},
+      getClearColor: (c) => c || new THREE.Color(0, 0, 0),
+      getClearAlpha: () => 1,
+      setClearColor: () => {},
+      clear: () => {},
+      render: () => {},
+      autoClear: false,
+    };
+    const p = new api.PaintSystem(device, lvl, { atlasSize, maxDensity });
+    // Record which faces actually reach the atlas so a test can read GPU paint
+    // authority without a GL context.
+    const quads = [];
+    p._netQuads = quads;
+    const push = p._pushQuad.bind(p);
+    p._pushQuad = (...args) => { quads.push({ team: args[9], u0: args[0], u1: args[1], v0: args[2], v1: args[3] }); return push(...args); };
+    G.paint = p;
+    return p;
+  }
+
   return {
     ...api, profile, G, THREE, NetMatch, Projectiles, projectiles, WEAPONS, PLAYER,
     network,
     clock: { now: () => seconds, set: (v) => { seconds = v; }, advance: (dt) => { seconds += dt; } },
-    makeSession, makeNetMatch, makeActor, bind, packActor, tick,
+    makeSession, makeNetMatch, makeActor, bind, packActor, tick, makePaint,
     // the real roller flick path: owner records a projectile event, we return it
     flickPacket(nm, actor) {
       nm.out.length = 0;
