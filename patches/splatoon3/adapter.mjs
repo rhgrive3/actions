@@ -75,6 +75,42 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, '    victim.alive = false; victim.hp = 0;', '    victim.alive = false; victim.hp = 0; victim.superJumpGround = null;', 'remote jump target death');
     code = replaceOnce(code, '    a.alive = true; a.hp = PLAYER.hp;', '    a.superJumpGround = null;\n    a.alive = true; a.hp = PLAYER.hp;', 'remote jump target respawn');
   }
+  if (rel === 'src/audio/music.js') {
+    // Match-start Opening cue (issue #605): an original short sting for the pre-GO intro.
+    // Distinct id/name/tempo from battle and battle_final (both 150 bpm): at 140 bpm the GO
+    // hand-off to the battle track takes the engine's immediate cross-fade path instead of
+    // delaying the battle downbeat to the next bar line.
+    const OPENING = `  // Splatoon-style match-start Opening cue (issue #605): plays through the pre-GO intro.
+  // Original INKWAVE composition; distinct from battle / battle_final (see the GO hand-off).
+  opening: {
+    name: 'Opening Sting', bpm: 140, swing: 0, key: 'A minor', pump: 0.3,
+    inst: { bass: 'punk', chords: 'guitar', arp: 'pluck' },
+    mix: { hats: 0.15, arp: 0.12 },
+    sections: {
+      A: {
+        bars: 4, crash: true, chords: ['A5', 'A5', 'C5 D5', 'G5 A5'], riser: 1,
+        drums: {
+          k: 'X...X...X...X...',
+          s: '....X.......X...',
+          h: 'x.x.x.x.x.x.x.x.',
+        },
+        fills: { s: 'x.x.x.x.xxxxXXXX' },
+        bass: 'R.R.R.R.R.R.R.R.',
+        stabs: 'X-------X-------',
+        arp: { rate: 2, pattern: 'up', oct: 1, lo: 64 },
+      },
+    },
+    order: ['A'], loopFrom: 0,
+  },
+
+`;
+    // Re-applying the adapter to already-patched music must fail closed instead of duplicating the cue.
+    if (code.includes("  opening: {\n    name: 'Opening Sting',")) {
+      throw new Error('INKWAVE patch conflict (match-start Opening cue): expected exactly one connection. Review upstream changes; site was not built.');
+    }
+    code = replaceOnce(code, "  results_win: {\n    name: 'Fresh Victory',", OPENING + "  results_win: {\n    name: 'Fresh Victory',", 'match-start Opening cue');
+    return code;
+  }
   if (rel === 'src/game/character.js') {
     code = replaceOnce(code, 'const PN = _k;', 'const PN = _k;\nexport const CHARACTER_CHANNELS = Object.freeze({ HIPS_P,HIPS,SPINE,CHEST,NECK,HEAD,CLAVL,CLAVR,UARML,UARMR,FARML,FARMR,HANDL,HANDR,FOOTL,FOOTLR,FOOTR,FOOTRR,ANC,ANCR,POLER,POLEL,IKR,IKL,LTGT,LTGTR,LTW,LTROT,KNEEL,KNEER,STAB,WPL,WPR,TIPTOE,AFOLT,AFOLR,MODEL,MODELR,SQY,SQXZ,HLP });', 'character pose channels');
     code = replaceOnce(code, 'const BALL_Z = 0.11, HEEL_Z = 0.065;', 'const BALL_Z = 0.11, HEEL_Z = 0.065;\nexport const CHARACTER_FOOT_METRICS = Object.freeze({ ANKLE_H, BALL_Z, HEEL_Z });', 'character foot metrics');
@@ -227,6 +263,13 @@ export function adaptSource(rel, code) {
       '    const judgeP = this.hud?.judge({ colors: [G.teamHex[0], G.teamHex[1]], percents: [cov[0] * 100, cov[1] * 100], names: this.palette.names || TEAM_NAMES, winner: m.result.winner });',
       'authoritative Turf winner Game to HUD');
     code = replaceOnce(code, 'const game = new Game();', 'installGame(Game);\nconst game = new Game();', 'game installation');
+    // Issue #605: the turf intro starts the dedicated Opening cue instead of silence.
+    // The boss intro keeps its own _playMusic(null); mode is guarded for a boss match
+    // without a resolved entity. Practice Range / attract never reach _intro().
+    code = replaceOnce(code,
+      "    setTimeout(() => { if (this.match?.state === 'intro') this.hud?.setVisible(true); }, 3000);\n    this._playMusic(null);",
+      "    setTimeout(() => { if (this.match?.state === 'intro') this.hud?.setVisible(true); }, 3000);\n    this._playMusic(this.match?.mode === 'boss' ? null : 'opening');   // #605 match-start Opening cue",
+      'match-start Opening cue');
     return `import { runSimulation, installGame } from '../patches/splatoon3/runtime/clock.mjs';\n` + code;
   }
   return code;
