@@ -51,6 +51,35 @@ test('enemy contact suppresses health recovery even while its damage grace is ac
   f.tick(a, 5); close(a.hp, 50);
 });
 
+test('own-ink wall climbing uses swim HP recovery for local and owner-remote actors', async () => {
+  const f = await fixture();
+  f.profile.resources.regenDelay = 0; f.G.paint.sample = () => 1;
+  for (const remote of [false, true]) {
+    const a = f.make(); a.form = 'squid'; a.intent.squid = true;
+    // Actor._updateClimb preserves this state only while wall paint is own ink.
+    a.climbing = true; a.grounded = false; a.remote = remote; a.isLocal = !remote;
+    a.hp = 50; a.lastDamage = 99; a._updateClimb = () => {};
+    f.tick(a);
+    assert.equal(a.submerged, false);
+    close(a.hp, 50 + f.profile.resources.regenRateSwim / 60);
+  }
+  const floor = f.make(); floor.form = 'squid'; floor.intent.squid = true;
+  floor.hp = 50; floor.lastDamage = 99;
+  floor._surface = () => { floor.grounded = true; floor.groundTeam = 1; };
+  f.updateResources(floor, 1 / 60);
+  assert.equal(floor.submerged, true);
+  close(floor.hp, 50 + f.profile.resources.regenRateSwim / 60);
+  for (const paint of [0, 2]) {
+    const noClimb = f.make(); noClimb.form = 'squid'; noClimb.intent.squid = true;
+    noClimb.climbing = false; noClimb.grounded = false; noClimb.hp = 50; noClimb.lastDamage = 99;
+    noClimb._surface = () => { noClimb.grounded = false; noClimb.groundTeam = 0; };
+    f.G.paint.sample = () => paint;
+    f.updateResources(noClimb, 1 / 60);
+    assert.equal(noClimb.submerged, false);
+    close(noClimb.hp, 50 + f.profile.resources.regenRate / 60);
+  }
+});
+
 test('contact ink remains nonlethal and bounded, including return after leaving it', async () => {
   const f = await fixture(), a = f.make(); a.hp = 20; f.G.paint.sample = () => 2;
   f.tick(a, 180); close(a.hp, 1); close(a.damageFromInk, f.profile.resources.enemyInkDamageCap);
