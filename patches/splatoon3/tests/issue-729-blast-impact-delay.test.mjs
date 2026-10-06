@@ -194,4 +194,3 @@ test('#729 Projectiles.clear() drops pending terrain blast without resolving; re
   assert.equal(splats.length, 3, 'fresh burst paint splat applied at N+1');
   assert.ok(!s.ps.s3BlastQueue?.length, 'queue is drained after resolution');
 });
-
