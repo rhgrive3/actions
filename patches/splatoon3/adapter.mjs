@@ -41,6 +41,40 @@ export function adaptSource(rel, code) {
   if (rel === 'patches/splatoon3/runtime/resources.mjs') return adaptIssue415(rel, code);
   code = adaptMovementPhysics(rel, code, replaceOnce);
   code = adaptSubSpecialFidelity(rel, code, replaceOnce);
+  if (rel === 'src/net/netmatch.js') {
+    code = replaceOnce(code,
+      '  invuln: 262144, enemy: 524288,',
+      '  invuln: 262144, enemy: 524288, flickVertical: 16777216,',
+      'network vertical Roller flag');
+    code = replaceOnce(code,
+      '  if (wr.flick >= 0) f |= F.flick;',
+      '  if (wr.flick >= 0) f |= F.flick;\n  if (wr.s3RollerAttack?.vertical) f |= F.flickVertical;',
+      'network vertical Roller owner state');
+    code = replaceOnce(code,
+      '    wr.flick = f & F.flick ? Math.max(0, wr.flick) : -1;\n    wr.slosh = f & F.slosh ? Math.max(0, wr.slosh) : -1;',
+      `    wr.flick = f & F.flick ? Math.max(0, wr.flick) : -1;
+    if (a.weapon.kind === 'roller' && (f & F.flickVertical)) {
+      const w = a.weapon;
+      if (!wr.s3RollerAttack?.networkRemote) wr.s3RollerAttack = {
+        networkRemote: true, vertical: true, windup: w.verticalWindup,
+        interval: w.verticalInterval ?? w.flickInterval, elapsed: 0, released: false, rolling: false,
+      };
+      const attack = wr.s3RollerAttack;
+      attack.elapsed = Math.min(attack.interval, attack.elapsed + Math.max(0, dt));
+      attack.released = !(f & F.flick); attack.rolling = wr.rolling;
+      wr.s3FlickVertical = true;
+      a.character.s3RollerFlick = attack;
+    } else if (wr.s3RollerAttack?.networkRemote) {
+      wr.s3RollerAttack = null; wr.s3FlickVertical = false;
+      a.character.s3RollerFlick = null;
+    }
+    wr.slosh = f & F.slosh ? Math.max(0, wr.slosh) : -1;`,
+      'network vertical Roller remote state');
+    // Keep the existing remote death/respawn lifecycle anchors in this shared
+    // NetMatch pass so another composed NetMatch adapter cannot return first.
+    code = replaceOnce(code, '    victim.alive = false; victim.hp = 0;', '    victim.alive = false; victim.hp = 0; victim.superJumpGround = null;', 'remote jump target death');
+    code = replaceOnce(code, '    a.alive = true; a.hp = PLAYER.hp;', '    a.superJumpGround = null;\n    a.alive = true; a.hp = PLAYER.hp;', 'remote jump target respawn');
+  }
   if (rel === 'src/game/character.js') {
     code = replaceOnce(code, 'const PN = _k;', 'const PN = _k;\nexport const CHARACTER_CHANNELS = Object.freeze({ HIPS_P,HIPS,SPINE,CHEST,NECK,HEAD,CLAVL,CLAVR,UARML,UARMR,FARML,FARMR,HANDL,HANDR,FOOTL,FOOTLR,FOOTR,FOOTRR,ANC,ANCR,POLER,POLEL,IKR,IKL,LTGT,LTGTR,LTW,LTROT,KNEEL,KNEER,STAB,WPL,WPR,TIPTOE,AFOLT,AFOLR,MODEL,MODELR,SQY,SQXZ,HLP });', 'character pose channels');
     code = replaceOnce(code, 'const BALL_Z = 0.11, HEEL_Z = 0.065;', 'const BALL_Z = 0.11, HEEL_Z = 0.065;\nexport const CHARACTER_FOOT_METRICS = Object.freeze({ ANKLE_H, BALL_Z, HEEL_Z });', 'character foot metrics');
@@ -136,11 +170,6 @@ export function adaptSource(rel, code) {
     code = adaptWeaponEdgecases(rel, code, replaceOnce);
     code = adaptWeaponsFidelity(code, replaceOnce);
     return `import { applyProjectileHit, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\n` + code;
-  }
-  if (rel === 'src/net/netmatch.js') {
-    code = replaceOnce(code, '    victim.alive = false; victim.hp = 0;', '    victim.alive = false; victim.hp = 0; victim.superJumpGround = null;', 'remote jump target death');
-    code = replaceOnce(code, '    a.alive = true; a.hp = PLAYER.hp;', '    a.superJumpGround = null;\n    a.alive = true; a.hp = PLAYER.hp;', 'remote jump target respawn');
-    return code;
   }
   if (rel === 'src/game/actor.js') {
     code = replaceOnce(code, '    this.superJumpState = null;\n    this.yawVel', '    this.superJumpState = null; this.superJumpGround = null;\n    this.yawVel', 'reset super jump ground');

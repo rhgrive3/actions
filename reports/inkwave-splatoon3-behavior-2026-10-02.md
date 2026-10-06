@@ -180,6 +180,18 @@ Flow の外殻・粒・リボンが GTAO の法線／深度パスに不透明な
 
 ローラー横／縦振りの owner physics を packet 化する順序を修正し、remote の trajectory と projectile に紐付く curtain の時間軸を一致させた。基準射程・威力・spread・local physics・animation pose の変更はない。全武器の native replay、二人の WebSocket arena、遅延／重複／退出回帰の詳細は [Network replication report](network-replication-report.md) に記録する。これは INKWAVE 内の同期比較であり、本家の実機比較、原作の射程校正、physical iOS 検証の未確認項目を解消したという意味ではない。
 
+### #206: remote Roller の縦振り状態
+
+| 項目 | 比較記録 |
+|---|---|
+| 本家の根拠・条件 | Nintendo の Splatoon 3 更新ページは 2026-10-06 時点の最新版を Ver.11.3.0（2026-08-19 公開）とし、Carbon Roller 系の変更を「vertical swings」の距離別ダメージ減衰として個別に記載する。[公式更新情報](https://en-americas-support.nintendo.com/app/answers/detail/a_id/59461/p/1076/c/950)。ここではローラーの縦振りが横振りと異なる攻撃区分だと確認する。ページは通信表現や縦振りの入力境界・姿勢曲線を公開していない。比較実装は INKWAVE の `roller`（Swell Roller）profile。公式更新の該当武器は Carbon Roller、Carbon Roller Deco、Carbon Roller ANG-L で、同一モデルの姿勢比較ではない。ギアなしの fixture を使い、公式資料に記載のないギア差は未確認。 |
+| INKWAVE の実装箇所 | `patches/splatoon3/runtime/roller.mjs` は空中で始めた振りを `s3RollerAttack.vertical` として選び、回復区間まで保持する。公開版 `inkwave-public/src/net/netmatch.js` は actor row の形を保って flags を送るが、従来は一般 flick bit のみで縦横を送らなかった。`patches/splatoon3/adapter.mjs` で既存 flags に `1 << 24` を追加し、remote actor の攻撃状態・Character 姿勢へ選択を渡す。 |
+| 再現操作 | ルームの owner がローラーを空中で ZR 入力して振りを開始し、回復が終わる前に着地する。同じ試合を remote client で見る。修正前の source regression では縦振り選択 bit がなく、修正後は同じ 21 要素 actor row の flags に選択 bit があること、remote の実 Character pose が縦振りを選ぶことを確認する。正確な Switch の入力フレーム境界は未計測。 |
+| プレイへの影響 | remote 側で攻撃者の姿勢から縦振りを判別できず、選択された振りと表示が食い違う。修正は既存 owner 判定・projectile ownership・row 形状を変更せず、proxy に選択状態を伝える。 |
+| 確認状態 | **INKWAVE の installed path 回帰確認済み**：source adapter、owner packing、実 NetMatch 受信、実 Character の姿勢、空中開始から着地・解放／回復、重複 event の一回再生、古い逆モード snapshot の拒否、後続横振り、reset と remote splat を検査。Nintendo Switch Ver.11.3.0 の同条件実機映像・ギア別比較、未公開の通信・フレーム値は未確認。 |
+
+open PR #758（#692 の current-main rescue）は flags の bit 20–22 を swim 表示用に使う。#206 はこの範囲と重ならない bit 24 を使い、flags は同じ word に収まるため actor row は変わらない。CPU fixture は実 adapter／NetMatch／Character を通すが、ブラウザ実動作や Switch 実機比較の代用にはしない。
+
 ## 練習場（2026-10-03）
 
 ブランチ `inkwave/practice-range` に、既存システムを測るためのソロ練習場を独立パッチ `patches/practice-range/` として追加した（[練習場レポート](practice-range-report.md)）。歩行・泳ぎ・射撃・塗り・ボム・スペシャル・被弾の数値とロジックは変更していない。練習場の目盛りはワールド座標（1 m = 1 ワールド単位）で、本家の距離単位との対応は引き続き未確認（`distanceScale` は推定）。この記録の既存の差分・未確認項目は、練習場の追加によって解消済みとしない。
