@@ -1,13 +1,13 @@
 // Main-weapon gameplay only. Values live in profile.json; provenance and retained
 // uncertainty live in reference/weapons-fidelity-reference.json.
 // Source fields and interpreted equations are explicitly separated in the profile.
-import {distanceDamage, groupDamage, applyProjectileHit as legacyHit} from './weapons.mjs';
+import {distanceDamage, groupDamage, applyProjectileHit as legacyHit, applySlosherVolleyHit} from './weapons.mjs';
 import {damageGroupId} from './final-damage.mjs';
 import { capsuleEntry, sweptWorldHit } from './weapons-collision.mjs';
 import { installChargerFlight } from './weapons-charger-flight.mjs';
 export const EPSILON = 1e-10;
 const INSTALLED = Symbol.for('inkwave.weapons-fidelity.v1');
-let api, completion;
+let api, completion, moves, slosherVolleySequence = 0;
 const clamp01 = value => Math.max(0, Math.min(1, value));
 const radians = degrees => degrees * Math.PI / 180;
 
@@ -52,6 +52,10 @@ export function advanceFidelityProjectile(p, dt) {
 // under the fixture seed; the source PRNG/bias distribution is not recovered.
 function rawWeapon(w) { return completion?.weapons[w.id || w.kind]; }
 
+// The installed straight/brake/free record for a weapon, so a dry prediction can
+// reuse the same law the live projectile advances under instead of restating it.
+export function fidelityMoveFor(weapon) { return moves?.get(weapon?.id) ?? null; }
+
 function seededUnit(seed, salt = 0) {
   let x = (((Number.isFinite(seed) ? seed : 0) * 0x100000000) >>> 0) ^ (salt >>> 0);
   x = Math.imul(x ^ (x >>> 16), 0x7feb352d);
@@ -92,7 +96,10 @@ function wallDropSource(p) {
     // top level. configureFidelityFlick/initialize already preserve that unit.
     const unit = p.fidelityRollerUnit?.UnitParam;
     move = unit?.WallDropMoveParam; paint = unit?.WallDropCollisionPaintParam;
-  } else if (w.kind === 'blaster' || w.kind === 'splatling') {
+  } else if (w.kind === 'blaster' || w.kind === 'splatling' || w.kind === 'shooter') {
+    // #385: the pinned Splattershot source keeps its wall-drop records at the
+    // weapon top level (like Blaster/Splatling), so the existing generic
+    // lifecycle admits them unchanged. No field or timing is derived here.
     move = raw?.WallDropMoveParam; paint = raw?.WallDropCollisionPaintParam;
   } else return null;
   return move && paint ? { w, move, paint } : null;
@@ -208,7 +215,8 @@ export function advanceFidelityWallDrop(system, p, dt) {
 function collisionRecord(c, target, offset = 0) {
   return { initRadius:Math.max(0,c['InitRadiusFor'+target]+offset*(c['AfterOffsetInitRadiusFor'+target]||0)),
     endRadius:Math.max(0,c['EndRadiusFor'+target]+offset*(c['AfterOffsetEndRadiusFor'+target]||0)),
-    changeTime:Math.max(0,(c['ChangeFrameFor'+target]||0)/60) };
+    changeTime:Math.max(0,(c['ChangeFrameFor'+target]||0)/60),
+    FriendThroughFrameForPlayer:Number.isFinite(c.FriendThroughFrameForPlayer)?c.FriendThroughFrameForPlayer:null };
 }
 function radiusAt(c, age, fallback) {
   if(!c)return fallback;
@@ -300,6 +308,9 @@ export function fidelityBossHit(system,p) {
 // The original loop selected actor-array order and tested the wall afterwards.
 // One reusable scratch record avoids per-projectile sorting/allocation and
 // also avoids a second terrain query when the segment reaches the world.
+// #801: Roller flicks admit same-team capsules only after the pinned 3F
+// teammate-through window. The window is measured at this sweep's candidate
+// contact age (fixed 60 Hz frames), so render cadence cannot move the boundary.
 export function fidelityProjectileTargets(system,p) {
   const s=scratch(system),{G,PLAYER}=api;
   s.worldReady=s.bossReady=false;s.boss=null;s.targets.length=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;
@@ -312,12 +323,24 @@ export function fidelityProjectileTargets(system,p) {
   const r1=fidelityPlayerCollisionRadius(p),radius=PLAYER.radius+Math.max(r0,r1);
   let nearest=null,best=Infinity;
   for(const actor of G.actors){
-    if(actor.team===p.team||!actor.alive)continue;
+    if(!actor.alive||actor===p.owner)continue;
+    const friendly=actor.team===p.team;
+    // S3 teammate body-block: friendly capsules follow the per-family source
+    // FriendThroughFrameForPlayer window. A missing source record keeps the
+    // native same-team skip instead of inventing one global collider rule.
+    if(friendly&&!Number.isFinite(p.fidelityFriendThrough))continue;
     if(actor.pos.x<Math.min(p.prev.x,p.pos.x)-radius||actor.pos.x>Math.max(p.prev.x,p.pos.x)+radius||
        actor.pos.z<Math.min(p.prev.z,p.pos.z)-radius||actor.pos.z>Math.max(p.prev.z,p.pos.z)+radius)continue;
     s.base.set(actor.pos.x,actor.pos.y+(actor.smoothY||0),actor.pos.z);
     const t=capsuleEntry(p.prev,p.pos,s.base,PLAYER.radius,actor.form==='squid'?PLAYER.squidHeight:PLAYER.height,r0,r1);
-    if(t!==null&&(t<best-EPSILON||Math.abs(t-best)<EPSILON&&String(actor.nid??actor.name)<String(nearest?.nid??nearest?.name))){best=t;nearest=actor;}
+    if(t===null)continue;
+    if(friendly){
+      // The window is measured in source frames at the contact point of this
+      // sweep, so the fixed-step result is identical at any render cadence.
+      const prevAge=p.fidelityPrevAge??p.age;
+      if((prevAge+(p.age-prevAge)*t)*60<p.fidelityFriendThrough-EPSILON)continue;
+    }
+    if(t<best-EPSILON||Math.abs(t-best)<EPSILON&&String(actor.nid??actor.name)<String(nearest?.nid??nearest?.name)){best=t;nearest=actor;}
   }
   if(nearest){
     const length=p.prev.distanceTo(p.pos),world=fidelityWorldHit(system,p),boss=fidelityBossHit(system,p);
@@ -332,23 +355,40 @@ export function fidelityProjectileTargets(system,p) {
 // the already-installed maximum-per-volley damage group when a stronger glob
 // reaches a victim after a weaker glob. No second full hit is awarded.
 export function fidelityVolleyDamage(p,victim,amount) {
+  // Teammate body-block contact consumes the round without friendly damage,
+  // kill credit, or volley/damage-group bookkeeping.
+  if(victim.team===p.team)return 0;
   if(!p.vol)return amount;
   const seen=p.vol.hits.includes(victim);
   if(!seen)p.vol.hits.push(victim);
   return seen && !p.s3DamageGroup ? 0 : amount;
 }
 export function applyFidelitySlosherSplash(system,p,victim,amount) {
+  // A glob consumed by a teammate never splashes enemies behind the blocker.
+  if(victim.team===p.team)return;
   // Active Splat Bucket units have no SplashSlosherHitParam records. No radial damage.
   if(rawWeapon(p.s3Weapon||p.owner.weapon)?.UnitGroupParam)return;
   if(p.ghost)return;
-  const delta=groupDamage(p.s3DamageGroup,victim,amount);
-  if(delta>0)system.applyHit(p.owner,victim,delta,p.wid||'slosher',damageGroupId(p.s3DamageGroup));
+  return applySlosherVolleyHit(system,p.owner,victim,p.s3DamageGroup,p.s3DamageGroupId,amount,p.wid||'slosher');
+}
+// #734: S3 measures the horizontal Inside/Outside sector from each glob's own
+// spawn point to the actual hit position. p.fidelityYaw only records which fan
+// slot was fired, so overlapping globs resolved the same hit differently. A
+// projectile with no recorded sector reference keeps the inside table instead
+// of inventing an outside one.
+export function rollerHitAngle(p,point) {
+  if(!Number.isFinite(p.fidelitySectorYaw))return null;
+  const dx=point.x-p.start.x,dz=point.z-p.start.z;
+  if(!(dx*dx+dz*dz>0))return 0;
+  const yaw=Math.atan2(dx,dz)-p.fidelitySectorYaw;
+  return Math.atan2(Math.sin(yaw),Math.cos(yaw));
 }
 export function fidelityDamage(p,point) {
   const w=p.s3Weapon||p.owner.weapon;
   if(w.kind==='roller'&&w.ballistics){
     const b=w.ballistics,d=p.start.distanceTo(point),xz=Math.hypot(point.x-p.start.x,point.z-p.start.z);
-    const outside=!p.s3Vertical&&xz>b.horizontalInsideDistance&&Math.abs(p.fidelityYaw)>radians(b.horizontalInsideDegrees);
+    const hitAngle=rollerHitAngle(p,point);
+    const outside=!p.s3Vertical&&hitAngle!==null&&xz>b.horizontalInsideDistance&&Math.abs(hitAngle)>radians(b.horizontalInsideDegrees);
     const bands=p.s3Vertical?w.verticalDamageBands:outside?b.horizontalOutsideDamageBands:w.flickDamageBands;
     const source=rawWeapon(w)[p.s3Vertical?'VerticalSwingUnitGroupParam':'WideSwingUnitGroupParam'].DamageParam;
     const age=(p.fidelityPrevAge??p.age??0)+((p.age??0)-(p.fidelityPrevAge??p.age??0))*(p.fidelityImpactT??1);
@@ -368,8 +408,15 @@ export function fidelityDamage(p,point) {
   return p.damage;
 }
 export function applyFidelityProjectileHit(system,p,victim,amount,point) {
+  // Teammate body-block: the round is already consumed by the solver; never
+  // route friendly damage, kill credit, or enemy-hit side effects.
+  if(victim.team===p.team)return;
   if(p.ghost)return;
-  amount=groupDamage(p.s3DamageGroup,victim,fidelityDamage(p,point));
+  amount=fidelityDamage(p,point);
+  const weapon=p.s3Weapon||p.owner.weapon;
+  if(weapon.kind==='slosher'&&p.s3DamageGroup)
+    return applySlosherVolleyHit(system,p.owner,victim,p.s3DamageGroup,p.s3DamageGroupId,amount,p.wid||p.type||'slosher');
+  amount=groupDamage(p.s3DamageGroup,victim,amount);
   if(amount>0)system.applyHit(p.owner,victim,amount,p.wid||p.type,damageGroupId(p.s3DamageGroup));
 }
 
@@ -394,7 +441,7 @@ export function installWeaponsFidelity(context,profile) {
   if(roller?.ballistics && roller.ballistics.verticalUnits.reduce((n,u)=>n+u.count,0)!==roller.verticalDrops)throw new Error('Vertical roller unit count differs from profile');
   api=context;completion=profile.weaponsFidelityCompletion;
   if(!completion||completion.schema!==1)throw new Error('Missing completion source table');
-  const moves=new Map();
+  moves=new Map();
   for(const [id,w]of Object.entries(WEAPONS)){
     if(!w.ballistics)continue;
     const b=w.ballistics;
@@ -411,6 +458,8 @@ export function installWeaponsFidelity(context,profile) {
       }
     }
     if(w.kind==='blaster'){finite(b.straightTime,'straight time');finite(b.burstTime,'burst time');}
+    if(w.kind==='dualies' && w.shotGuideFrame !== rawWeapon(w)?.WeaponParam?.ShotGuideFrame)
+      throw new Error('Dualies ShotGuideFrame differs from pinned source');
     if(w.kind==='splatling')finite(b.firstChargeSpeed,'charged speed');
     freezeDeep(b);
     moves.set(id,freezeDeep({hz:profile.referenceHz,endSpeed:b.endSpeed??null,
@@ -423,7 +472,7 @@ export function installWeaponsFidelity(context,profile) {
   const fresh=Projectiles.prototype._new,push=Projectiles.prototype._push,ghost=Projectiles.prototype.ghostProjectile,clear=Projectiles.prototype.clear;
   Projectiles.prototype.clear=function(...args){const result=clear.apply(this,args);this._fidelityCollision=null;this._fidelitySloshContext=null;return result;};
   Projectiles.prototype._new=function(...args){
-    const p=fresh.apply(this,args);p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityRollerUnit=null;p.fidelityRollerUnitIndex=null;p.fidelitySloshUnit=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;return p;
+    const p=fresh.apply(this,args);p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityFriendThrough=null;p.fidelityRollerUnit=null;p.fidelityRollerUnitIndex=null;p.fidelitySloshUnit=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;p.fidelitySectorYaw=null;return p;
   };
   function initialize(p,w){
     if(!w)return;
@@ -493,7 +542,7 @@ export function installWeaponsFidelity(context,profile) {
       const pitch=Math.atan2(aim.y,Math.hypot(aim.x,aim.z)),horizontal=Math.cos(pitch)*speed;
       p.vel.set(Math.sin(yaw)*horizontal,Math.sin(pitch)*speed+horizontal*(u.AddSpawnSpeedYRateByXZ||0),Math.cos(yaw)*horizontal);
       p.damage=u.DamageParam.ValueMax/10;p.head=!!u.HitEffectBigOrderNum?.includes(index);
-      p.s3DamageGroup=active.group;
+      p.s3DamageGroup=active.group;p.s3DamageGroupId=active.groupId;
     }
     initialize(p,w);
     const group=p.s3DamageGroup;const result=push.call(this,p);
@@ -509,7 +558,7 @@ export function installWeaponsFidelity(context,profile) {
   };
   const slosh=Projectiles.prototype.fireSlosh;
   Projectiles.prototype.fireSlosh=function(actor,w){
-    const previous=this._fidelitySloshContext;this._fidelitySloshContext={index:0,group:new Map()};
+    const previous=this._fidelitySloshContext;this._fidelitySloshContext={index:0,group:new Map(),groupId:`${actor.nid??'local'}:${++slosherVolleySequence}`};
     try{return slosh.call(this,actor,{...w,drops:rawWeapon(w).UnitGroupParam.Unit.reduce((n,u)=>n+(u.BulletNum??1),0)});}
     finally{this._fidelitySloshContext=previous;}
   };
@@ -540,6 +589,35 @@ export function installWeaponsFidelity(context,profile) {
     let remaining=Math.max(0,guide.frame/60-p.delay);
     while(remaining>EPSILON){const step=Math.min(1/60,remaining);advanceFidelityProjectile(p,step);remaining-=step;}
     return p.pos;
+  };
+  Projectiles.prototype.s3DualiesGuides=function(actor,w){
+    const frame=w?.shotGuideFrame;
+    if(w?.kind!=='dualies'||!Number.isFinite(frame))return null;
+    const THREE=context.THREE;
+    const points=this._s3DualiesGuidePoints||(this._s3DualiesGuidePoints=[new THREE.Vector3(),new THREE.Vector3()]);
+    const dirs=this._s3DualiesGuideDirs||(this._s3DualiesGuideDirs=[new THREE.Vector3(),new THREE.Vector3()]);
+    const shots=this._s3DualiesGuideProjectiles||(this._s3DualiesGuideProjectiles=[0,1].map(()=>({
+      pos:new THREE.Vector3(),prev:new THREE.Vector3(),start:new THREE.Vector3(),vel:new THREE.Vector3()
+    })));
+    for(let hand=0;hand<2;hand++){
+      const p=shots[hand],out=points[hand],dir=dirs[hand];
+      this._muzzleHand(actor,hand,p.pos);p.prev.copy(p.pos);p.start.copy(p.pos);
+      this._aimFrom(actor,p.pos,dir);
+      p.owner=actor;p.type='shot';p.wid=w.id;p.s3Weapon={...w};p.age=0;p.life=1.2;p.straight=w.straightTime;
+      p.delay=0;p.ghost=false;p.size=w.impactRadius??.15;p.fidelityPhase=0;p.fidelityMove=null;p.fidelityPrevAge=0;
+      p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;
+      p.vel.copy(dir).multiplyScalar(w.projSpeed);
+      initialize(p,w);
+      let remaining=Math.max(0,frame/60);
+      while(remaining>EPSILON){const step=Math.min(1/60,remaining);advanceFidelityProjectile(p,step);remaining-=step;}
+      out.copy(p.pos);
+    }
+    if(actor.weaponRunner?.s3Turret){
+      const center=this._s3DualiesGuideCenter||(this._s3DualiesGuideCenter=new THREE.Vector3());
+      center.copy(points[0]).add(points[1]).multiplyScalar(.5);
+      points[0].copy(center);points[1].copy(center);
+    }
+    return points;
   };
   Projectiles.prototype.s3WeaponGuide=function(actor,w){
     if(w?.kind==='slosher')return this.s3SlosherGuide(actor,w);
@@ -605,4 +683,160 @@ export function installWeaponsFidelity(context,profile) {
     else context.G.fx?.burst(hit.point,hit.normal,p.owner.color,{count:5,speed:3,size:.07,paint:false});
   };
   installChargerFlight(context,completion);
+}
+
+// ---------------------------------------------------------------------------
+// S3 ShotGuideFrame aiming guide — #769 (Heavy Splatling) and #459 (Splattershot).
+//
+// These helpers live here rather than in a dedicated module because every one of
+// them is a pure function of the installed main-weapon motion law below, and a
+// separate core module would have added a static import to the core preload
+// graph and broken the startup request budget.
+//
+// The pinned Ver. 11.3.0 WeaponParam.ShotGuideFrame was already mirrored in
+// profile.json's weaponsFidelityCompletion table (shooter 8, splatling 11) but
+// never reached the live weapon profile, so nothing downstream could consume it
+// and the reticle stayed on the generic screen-centre anchor.
+//
+// Rules this section keeps:
+//  * The live `shotGuideFrame` value must equal the pinned source value, or the
+//    install fails closed. The field is promoted, not invented.
+//  * The guide is a pure dry prediction. It reuses the installed projectile
+//    motion law (advanceFidelityProjectile + the installed move record) and the
+//    installed muzzle/aim/launch-speed law, advances exactly ShotGuideFrame
+//    fixed 60 Hz steps, and consumes no random draw. There is no second
+//    projectile engine and no spread sample.
+//  * Authoritative state is untouched: camera aim, aimPoint, onTarget, inRange,
+//    launch direction, damage, trajectory and the PRNG stream are not modified.
+//    The guide never steers a projectile toward a screen point.
+const GUIDE_HZ = 60;
+// Screen inset used when a guide point leaves the viewport. This mirrors the
+// existing ally-marker clamp in main.js; it is an INKWAVE presentation choice
+// and is not claimed as an unpublished Nintendo screen-pixel value.
+const GUIDE_EDGE_MARGIN = 40;
+// Deliberately separate from `api`: installShotGuide may run before or after
+// installWeaponsFidelity, and the guide must not depend on that ordering.
+let guideApi;
+
+export function shotGuideFrames(weapon) {
+  const frames = weapon?.shotGuideFrame;
+  return Number.isInteger(frames) && frames > 0 ? frames : null;
+}
+
+function guideScratch() {
+  return guideApi._shotGuide || (guideApi._shotGuide = {
+    muzzle: new guideApi.THREE.Vector3(), dir: new guideApi.THREE.Vector3(), projected: new guideApi.THREE.Vector3(),
+    probe: {
+      pos: new guideApi.THREE.Vector3(), prev: new guideApi.THREE.Vector3(), vel: new guideApi.THREE.Vector3(),
+      age: 0, life: 1, straight: 0, grav: 0, drag: 0, fidelityMove: null, fidelityPhase: 0, fidelityPrevAge: 0,
+    },
+    state: { x: 0, y: 0, z: 0, frames: 0 },
+  });
+}
+
+// Deterministic no-spread launch state for one weapon, exactly as the installed
+// launch path would build it before the random cone is applied.
+function guideLaunchState(actor, weapon, out) {
+  const projectiles = guideApi.G.projectiles;
+  const probe = out.probe, runner = actor.weaponRunner;
+  const charge = runner?.fidelitySplatlingCharge ?? runner?.charge ?? 0;
+  projectiles._muzzle(actor, out.muzzle);
+  // _aimFrom is the installed launch direction law. _ballistic is already the
+  // installed identity (gravity acts on the bullet), and _spread is skipped on
+  // purpose: the guide point is not a sampled bullet.
+  projectiles._aimFrom(actor, out.muzzle, out.dir);
+  const speed = weapon.kind === 'splatling' ? splatlingLaunchSpeed(weapon, charge) : weapon.projSpeed;
+  if (!Number.isFinite(speed) || speed <= 0) return null;
+  const move = fidelityMoveFor(weapon);
+  probe.pos.copy(out.muzzle); probe.prev.copy(out.muzzle);
+  probe.vel.copy(out.dir).multiplyScalar(speed);
+  probe.age = 0; probe.fidelityPhase = 0; probe.fidelityPrevAge = 0;
+  probe.straight = weapon.straightTime; probe.grav = weapon.referenceGravity;
+  probe.drag = move ? move.freeDrag * GUIDE_HZ : 0;
+  probe.fidelityMove = move;
+  // Exactly the requested age, so the installed lifetime clamp never truncates
+  // the guide short of ShotGuideFrame.
+  probe.life = Number.MAX_SAFE_INTEGER;
+  return probe;
+}
+
+// World point the weapon's own projectile passes through after ShotGuideFrame
+// fixed steps. Returns the shared state object, or null when the weapon has no
+// guide frame / no installed launch path.
+export function computeShotGuide(actor) {
+  const weapon = actor?.weapon, frames = shotGuideFrames(weapon);
+  // Partial/source-only test realms can execute the adapted PlayerController
+  // before installShotGuide owns a runtime context. That path has no guide,
+  // rather than being allowed to dereference an uninstalled scratch owner.
+  if (!guideApi || frames === null || (weapon?.kind !== 'shooter' && weapon?.kind !== 'splatling') || !guideApi.G?.projectiles) return null;
+  const s = guideScratch();
+  s.state.frames = 0;
+  const probe = guideLaunchState(actor, weapon, s);
+  if (!probe) return null;
+  for (let i = 0; i < frames; i++) advanceFidelityProjectile(probe, 1 / GUIDE_HZ);
+  s.state.x = probe.pos.x; s.state.y = probe.pos.y; s.state.z = probe.pos.z; s.state.frames = frames;
+  return s.state;
+}
+
+// Called from the installed camera aim path. Writes the HUD-only guide state on
+// the controller; the authoritative aim fields are not read back or changed.
+// The result is copied into a per-controller record: computeShotGuide hands back a
+// shared scratch, so publishing that reference would let another owner's guide
+// overwrite this one (lab rigs and spectate both build a second controller).
+export function updateShotGuide(controller) {
+  if (!controller) return null;
+  if (!controller.enabled || controller.a?.alive === false) { controller.shotGuide = null; return null; }
+  const computed = computeShotGuide(controller.a);
+  if (!computed) { controller.shotGuide = null; return null; }
+  const state = controller._shotGuide || (controller._shotGuide = { x: 0, y: 0, z: 0, frames: 0 });
+  state.x = computed.x; state.y = computed.y; state.z = computed.z; state.frames = computed.frames;
+  controller.shotGuide = state;
+  return state;
+}
+
+// World point -> screen pixels for the HUD only. Behind-camera and off-viewport
+// results are clamped to the viewport edge so the guide stays reachable.
+export function projectShotGuide(state, camera, width, height) {
+  if (!guideApi || !state || !camera || !(width > 0) || !(height > 0)) return null;
+  const s = guideScratch();
+  s.projected.set(state.x, state.y, state.z).project(camera);
+  if (!Number.isFinite(s.projected.x) || !Number.isFinite(s.projected.y)) return null;
+  let x = (s.projected.x * 0.5 + 0.5) * width, y = (-s.projected.y * 0.5 + 0.5) * height;
+  if (s.projected.z > 1) { x = width - x; y = height - y; }
+  const clamp = (v, limit) => Math.min(limit - GUIDE_EDGE_MARGIN, Math.max(GUIDE_EDGE_MARGIN, v));
+  return { x: clamp(x, width), y: clamp(y, height), frames: state.frames };
+}
+
+// HUD reticle placement, relative to the screen-centre anchor the reticle already
+// uses. Weapons without a guide frame (and frames without a projected point) keep
+// the existing centre placement untouched. Numeric dirty check: this runs on every
+// render frame and must not allocate.
+export function applyShotGuide(hud, projected, width, height) {
+  const ret = hud?.ret;
+  if (!ret) return null;
+  const x = projected && width > 0 ? projected.x - width / 2 : 0;
+  const y = projected && height > 0 ? projected.y - height / 2 : 0;
+  const L = hud._L || (hud._L = {});
+  const hasGuide = !!projected;
+  if (L.guideProjected !== hasGuide || L.guideX == null || Math.abs(x - L.guideX) > 0.05 || Math.abs(y - L.guideY) > 0.05) {
+    L.guideX = x; L.guideY = y; L.guideProjected = hasGuide;
+    // No projected guide: restore the inherited Bucket/Blaster CSS offsets.
+    // Inline zero would override translate(var(--gx) var(--gy)) on the reticle.
+    ret.style.translate = hasGuide ? `${x.toFixed(1)}px ${y.toFixed(1)}px` : '';
+  }
+  return L;
+}
+
+export function installShotGuide(context, profile) {
+  guideApi = context;
+  const completion = profile.weaponsFidelityCompletion;
+  if (!completion || completion.schema !== 1) throw new Error('Missing completion source table');
+  // Promoted live field must agree with the pinned 11.3.0 source, per weapon.
+  for (const [id, weapon] of Object.entries(context.WEAPONS)) {
+    const live = weapon.shotGuideFrame;
+    if (live == null) continue;
+    if (!Number.isInteger(live) || live <= 0) throw new RangeError(`INKWAVE shot guide: ${id} shotGuideFrame must be a positive integer`);
+    const pinned = completion.weapons[id]?.WeaponParam?.ShotGuideFrame;
+    if (live !== pinned) throw new Error(`INKWAVE shot guide: ${id} live shotGuideFrame ${live} does not match pinned source ${pinned}`);
+  }
 }

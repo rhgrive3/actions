@@ -49,7 +49,31 @@ export function updateResources(a, dt) {
   const weaponDelay = rollingRecovery ? 0 : a.weapon.inkRecoverStop ?? r.inkRefillDelay;
   const delay = Math.max(weaponDelay, a.s3?.inkRecoverStop || 0);
   if(a.s3) a.s3.recoverStopRemaining = Math.max(0,(a.s3.recoverStopRemaining || 0)-dt);
-  const canRefill = (rollingRecovery ? !a.weaponRunner.rolling && a.lastFire + 1e-10 >= (a.s3?.inkRecoverStop || 0) : a.lastFire + 1e-10 >= delay) && (a.s3?.recoverStopRemaining || 0) <= 1e-10 && (a.weaponRunner.s3DodgeInkRemaining || 0) <= 1e-10 && !a.weaponRunner.busy() && !a.weaponRunner.s3Stored;
+  // #737: an active partial/fresh Splat Charger charge cleared by this update's
+  // form change is a charge interruption. The S3 verification table gives
+  // charge-interruption → ink recovery = 19F for the Splat Charger, separate
+  // from #416's 6F cancel→squid form recovery and from the ordinary post-shot
+  // delay above. The resource pass runs before the weapon wrapper clears
+  // `charging`, so detection here locks the cancellation update itself; after
+  // this tick's decrement the lock is rewritten to exactly 19F, which blocks
+  // 19 fixed ticks (cancel tick .. cancel+18F) and reopens eligibility at
+  // cancel+19F. Full-charge keeps (charge >= .999 → s3Stored) never take this
+  // path. Community-verified S3 table, no Switch re-measurement is claimed.
+  if (a.s3) a.s3.chargerInterruptRecover = Math.max(0, (a.s3.chargerInterruptRecover || 0) - dt);
+  const runner = a.weaponRunner;
+  if (runner?.charging && isSquid && a.weapon.kind === 'charger' && runner.charge < .999) {
+    a.s3 ||= {};
+    a.s3.chargerInterruptRecover = 19 / 60;
+  }
+  const chargerInterruptRecover = a.weapon.kind === 'charger' ? (a.s3?.chargerInterruptRecover || 0) : 0;
+  const chargerLowRecovery = a.weapon?.kind === 'charger' && runner?.charging &&
+    a.ink + 1e-10 < (a.weapon.inkMin ?? 0) && chargerInterruptRecover <= 1e-10;
+  const canRefill = chargerLowRecovery ||
+    ((rollingRecovery ? !a.weaponRunner.rolling && a.lastFire + 1e-10 >= (a.s3?.inkRecoverStop || 0) : a.lastFire + 1e-10 >= delay)
+      && (a.s3?.recoverStopRemaining || 0) <= 1e-10
+      && (a.weaponRunner.s3DodgeInkRemaining || 0) <= 1e-10
+      && chargerInterruptRecover <= 1e-10
+      && !a.weaponRunner.busy() && !a.weaponRunner.s3Stored);
   if (canRefill) {
     let rate = 0;
     if (a.submerged || a.climbing) rate = r.inkRefillSwim;
