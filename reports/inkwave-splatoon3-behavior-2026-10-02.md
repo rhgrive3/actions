@@ -350,6 +350,9 @@ Main advanced to `3d8a48d37ea5d6206e4f4185fa4a8229ae1c6977` during completion; i
 
 Reset now clears the pending damage attacker and angle together with the cancelled timer. This closes the pause→quit retainer without altering the native60ms burst, direction or paused visual clock. Source/minified9 each pass, including an isolated Node forced-GC baseline/fix comparison; physical full-game heap/GPU measurements are not claimed. See [scope and evidence](inkwave-screenfx-damage-reset-772.md).
 
+## 2026-10-06: reticle state / visible-vs-authoritative footprint (#711 #709 #757)
+
+チャージャー HUD の射程内判定を、フルチャージ固定から現在のチャージ量に応じた飛行距離（`chargerReach`）へ変更し、ブラスターの拡散拡大を外周リングのみに限定した（内側リングは静止サイズ）。インクストームの塗り位置を、その tick の見た目の雨半径と同じ範囲から選ぶようにした（#757）。弾道・数値・半径は不変。いずれも**ロジックのみ確認**で、ブラウザの実表示と Switch 実機との比較は**未確認**。本家の根拠・実装箇所・再現操作・影響は[詳細](inkwave-reticle-state-2026-10-06.md)を参照。
 ## 2026-10-06 — #626 roller roll-stop action interruption (main 16F / sub 5F / squid 6F)
 
 Base: main `3d8a48d3`. Reference: Splatoon 3 Ver. 11.3.0, and the S3 verification table `検証/メインウェポン/前隙・後隙`, 塗り進み (rolling) interruption row. These are community frame measurements, not pinned 11.3.0 parameter-table fields, and they are a different quantity from both the horizontal/vertical swing post-lag and the rolling ink-recovery lock (#176).

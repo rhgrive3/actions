@@ -76,11 +76,6 @@ export function adaptSource(rel, code) {
       '      const winner = Math.abs(pa - pb) < 0.05 ? -1 : pa > pb ? 0 : 1;',
       '      const winner = authoritativeWinner === 0 || authoritativeWinner === 1 ? authoritativeWinner : Math.abs(pa - pb) < 0.05 ? -1 : pa > pb ? 0 : 1;',
       'authoritative Turf winner HUD reveal');
-    // #724: the Roller-only 160 px canvas (side bracket pair + broad lower arc) is
-    // an invented aiming guide that current Splatoon 3 Roller imagery does not
-    // show. Presentation only: projectile, damage, collision, paint and range
-    // paths are untouched, and the replacement stays on the shared 80 px canvas so
-    // styles/hud.css `.iw-ret__svg.wide` can never match an emitted element again.
     code = replaceOnce(code,
       '    } else if (kind === \'roller\') {\n' +
       '      r.innerHTML = `<i class="iw-ret__dot"></i><svg class="iw-ret__svg wide" viewBox="-80 -40 160 80" aria-hidden="true">\n' +
@@ -88,12 +83,6 @@ export function adaptSource(rel, code) {
       '        <path class="iw-ret__ring" d="M46 -15 L56 -15 Q60 -15 60 -11 L60 11 Q60 15 56 15 L46 15"/>\n' +
       '        <path class="iw-ret__ring thin" d="M-30 22 Q0 30 30 22"/></svg>`;',
       '    } else if (kind === \'roller\') {\n' +
-      '      // Measured from the pinned official Splatoon 3 Roller capture (1280x720,\n' +
-      '      // sha256 349f7c9f...0183750): a thin ~13 px ring about the aim point plus\n' +
-      '      // four short diagonal strokes at (+/-45.3, +/-22.6) px, each lying\n' +
-      '      // perpendicular to its own radius. Normalised onto this shared 80-unit\n' +
-      '      // canvas (7.5 units = 13 px) the ring is r=7.5 and the four strokes sit at\n' +
-      '      // (+/-26.1, +/-13.0). No bracket pair and no lower arc.\n' +
       '      r.innerHTML = `<i class="iw-ret__dot"></i><svg class="iw-ret__svg" viewBox="-40 -40 80 80" aria-hidden="true">\n' +
       '        <circle r="7.5" class="iw-ret__ring thin"/>\n' +
       '        <path class="iw-ret__ring thin" d="M-25.04 -15.15 L-27.11 -11.04"/>\n' +
@@ -133,9 +122,18 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, 'it.fire = inp.mouse.left ||', 'it.fire = inp.mouse.leftPressed || inp.mouse.left ||', 'latched fire input');
     code = replaceOnce(code, "it.sub = inp.mouse.right || inp.down('KeyE')", "it.sub = inp.mouse.rightPressed || inp.wasPressed('KeyE') || inp.mouse.right || inp.down('KeyE')", 'latched sub input');
     code = replaceOnce(code, "it.special = inp.down('KeyF')", "it.special = inp.wasPressed('KeyF') || inp.wasPressed('KeyQ') || inp.down('KeyF')", 'latched special input');
+    // HUD in-range state follows the live charge (a squid-form charge keep counts as its stored charge) via the
+    // installed flight's reach, or native lerp, instead of full-charge reach.
+    code = replaceOnce(code, "    const range = w.kind === 'charger' ? w.rangeMax : w.kind === 'roller' ? 6 : (w.range || 12);",
+      "    const chargeNow = clamp(a.weaponRunner?.s3Stored?.charge ?? a.weaponRunner?.charge ?? 0, 0, 1);\n" +
+      "    const range = w.kind === 'charger' ? (G.projectiles?.chargerReach ? G.projectiles.chargerReach(chargeNow) : w.rangeMin + (w.rangeMax - w.rangeMin) * chargeNow) : w.kind === 'roller' ? 6 : (w.range || 12);",
+      'charger HUD reach follows charge');
     return code;
   }
   if (rel === 'src/game/weapons.js') {
+    // Issue #757: authoritative Storm rain paint samples the same growth/fade-scaled
+    // radius as that tick's visible rain and Boss rain (RNG call order unchanged).
+    code = replaceOnce(code, 'r = Math.sqrt(Math.random()) * sp.radius;', 'r = Math.sqrt(Math.random()) * (sp.radius * s);', 'storm rain paint active radius');
     code = replaceOnce(code,
       '    if (this.flick >= 0) return lerp(w.moveSpeedFiring, w.moveSpeedFiring * 0.45, clamp(this.flick / w.flickWindup, 0, 1));',
       "    if (this.flick >= 0 && w.kind === 'roller') return w.moveSpeedFiring; // S3 swing target is independent of windup progress\n    if (this.flick >= 0) return lerp(w.moveSpeedFiring, w.moveSpeedFiring * 0.45, clamp(this.flick / w.flickWindup, 0, 1));",

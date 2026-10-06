@@ -11,6 +11,7 @@ import { adaptUiActorLifetime } from './ui-actor-lifetime-adapter.mjs';
 import { adaptIdleSource } from './idle-adapter.mjs';
 import { adaptPlatformSource } from './platform-adapter.mjs';
 import { adaptLandingRigidity } from './landing-rigidity-adapter.mjs';
+import { adaptMatchRetainers } from './match-retainer-adapter.mjs';
 import { adaptFirstTouch } from './first-touch-adapter.mjs';
 import { adaptTouchRelayout } from './touch-relayout.mjs';
 import crypto from 'node:crypto';
@@ -29,7 +30,7 @@ const IDENTITY_FILES = [
   'idle-adapter.mjs', 'idle-resources.mjs', 'music-idle.mjs',
   'lobby-resource-adapter.mjs', 'minimap-resource-adapter.mjs',
   'adapter.mjs', 'gyro.mjs', 'install.mjs', 'menu-preview.mjs', 'menu.mjs',
-  'roller-motion.mjs', 'roller-visual.mjs', 'surface.mjs', 'landing-rigidity-adapter.mjs', 'first-touch-adapter.mjs', 'touch-relayout.mjs',
+  'roller-motion.mjs', 'roller-visual.mjs', 'surface.mjs', 'landing-rigidity-adapter.mjs', 'match-retainer-adapter.mjs', 'first-touch-adapter.mjs', 'touch-relayout.mjs',
   'platform-adapter.mjs', 'platform-lifecycle.mjs', 'platform-game.mjs',
   'platform-input.mjs', 'platform-audio.mjs', 'platform-transport.mjs',
   'mobile-platform.mjs', 'gyro-permission.mjs',
@@ -55,6 +56,7 @@ export function adaptQualitySource(rel, code) {
   code = adaptMinimapResources(rel, code);
   code = adaptUiActorLifetime(rel, code, replaceOnce);
   code = adaptLandingRigidity(rel, code);
+  code = adaptMatchRetainers(rel, code, replaceOnce);
   if (rel === 'src/core/mobile.js') {
     code = adaptFirstTouch(rel, code);
     code = adaptTouchRelayout(rel, code);
@@ -235,16 +237,6 @@ export function adaptQualitySource(rel, code) {
       '\ninstallGyroQuality(Gyro, screenAngle);\n';
   }
 
-  // #363/#367: Splatoon 3 holds the lens off the player's right even when the boom is
-  // clear. The shipped term only reached that while the boom was forced short, because
-  // closeK hits 0 at curDist >= 2.8, so normal follow stayed vertically centred behind the
-  // crosshair. SH0 adds a persistent baseline and keeps the obstruction-driven shift at its
-  // full current range at closeK = 1.
-  // SH0 is deliberately modest and explicitly unquantified: Splatoon 3 publishes no shoulder
-  // offset and none is pinned in this repository, so this is NOT a claimed Nintendo constant.
-  // The shift stays a parallel lens+target offset, so the aim direction is unchanged; the
-  // right-side wall probe, muzzle-to-target parallax, obstacle avoidance, input axes and the
-  // Charger zoom profile are all untouched.
   if (rel === 'src/game/cameraRig.js') {
     code = replaceOnce(code, `    const closeK = clamp((2.8 - this.curDist) / 1.8, 0, 1);
     let shT = 0.55 * closeK * closeK * (3 - 2 * closeK);
@@ -254,14 +246,8 @@ export function adaptQualitySource(rel, code) {
     }
     this.shoulder = damp(this.shoulder || 0, shT, 8, dt);
     if (this.shoulder > 1e-3) cam.position.addScaledVector(_right, this.shoulder);`, `    const closeK = clamp((2.8 - this.curDist) / 1.8, 0, 1);
-    const SH0 = 0.28;   // persistent right-shoulder framing; not a pinned S3 value
+    const SH0 = 0.28;
     let shT = SH0 + (0.55 - SH0) * closeK * closeK * (3 - 2 * closeK);
-    // C19-CAMERA-COLLISION-TRANSITION: the wall probe used to be target-only. With SH0 the damped
-    // shoulder is normally 0.28, so when a right-side wall then becomes reachable the probe only
-    // ever looked as far as the new target and the *applied* (still-damped) value kept rendering the
-    // lens inside the 0.25 m clearance for several frames. Probe as far as the lens actually is, and
-    // clamp the applied value as well as the target, so the first frame after the transition is safe.
-    // The open case is untouched: no hit means no cap, so the damped return to SH0 is unchanged.
     let shMax = Infinity;
     if (shT > 0.01 && G.physics) {
       const hr = G.physics.raycast(cam.position, _right, Math.max(shT, this.shoulder || 0) + 0.25, _hit, true);
