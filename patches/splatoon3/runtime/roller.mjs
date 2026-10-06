@@ -21,11 +21,73 @@ export function rollerMode(w, vertical) {
   return vertical ? { ...w, flickWindup: w.verticalWindup, flickInterval: w.verticalInterval ?? w.flickInterval, flickInk: w.verticalInk } : w;
 }
 
-export function installRollerLogic({ WeaponRunner }, _profile) {
+// Action-interruption windows that start when an authoritative roll ENDS.
+// These are the 塗り進み interruption row of the S3 verification table, not the
+// horizontal/vertical swing post-lag and not the rolling ink-recovery lock (#176).
+// They are separate boundaries, so none of them may be substituted for another.
+export const ROLL_STOP_LOCKS = Object.freeze({ main: 16 / 60, sub: 5 / 60, squid: 6 / 60 });
+
+/** Which admissions a roll-stop interruption still owns at `now`.
+ * Deadlines are absolute, so the boundaries do not drift with the render rate.
+ * G.time accumulates float error across fixed ticks, so the comparison carries
+ * the same epsilon the rest of the movement clocks use: without it the boundary
+ * tick itself can land a hair before its own deadline and wait one frame more. */
+export function rollStopBlocks(now, locks) {
+  if (!locks) return { main: false, sub: false, squid: false };
+  return {
+    main: now < locks.main - EPS,
+    sub: now < locks.sub - EPS,
+    squid: now < locks.squid - EPS,
+  };
+}
+
+export function installRollerLogic({ WeaponRunner, Actor, G }, _profile) {
   const roller = WeaponRunner.prototype._roller, reset = WeaponRunner.prototype.reset;
+  const update = WeaponRunner.prototype.update;
+  // An established roll that the player simply lets go of arms the sourced
+  // interruption. A dry roll (#541) and a roll released into a flick keep their
+  // existing behaviour, so neither arming nor admission changes for them.
+  const armsInterruption = runner => {
+    const a = runner.a;
+    return a.grounded && a.ink > 0.5 && runner.flick < 0;
+  };
+  WeaponRunner.prototype.update = function (dt, inp = {}) {
+    const locks = this.s3RollStop, now = G.time;
+    let input = inp;
+    if (locks && this.a.weapon?.kind === 'roller') {
+      const blocked = rollStopBlocks(now, locks);
+      if (blocked.main || blocked.sub) {
+        input = { ...inp };
+        // Admission only. Buffered intent may survive; the action itself must not
+        // become authoritative before its own boundary expires.
+        if (blocked.main) { input.fire = false; input.firePressed = false; }
+        if (blocked.sub) { input.sub = false; input.subReleased = false; }
+      }
+    }
+    const wasRolling = this.rolling === true;
+    const result = update.call(this, dt, input);
+    if (wasRolling && this.rolling !== true && armsInterruption(this)) {
+      this.s3RollStop = { main: now + ROLL_STOP_LOCKS.main, sub: now + ROLL_STOP_LOCKS.sub, squid: now + ROLL_STOP_LOCKS.squid };
+    }
+    return result;
+  };
+  // Squid admission lives in the locked Actor form gate, which reads the generic
+  // busy set. Extending busy() would also pause ink recovery and would entangle
+  // this root with #176, so form admission is gated here instead.
+  const actorUpdate = Actor.prototype.update;
+  Actor.prototype.update = function (dt, ...rest) {
+    const runner = this.weaponRunner, now = G.time;
+    if (runner?.s3RollStop && this.intent?.squid && rollStopBlocks(now, runner.s3RollStop).squid) {
+      const held = this.intent.squid;
+      this.intent.squid = false;
+      try { return actorUpdate.call(this, dt, ...rest); } finally { this.intent.squid = held; }
+    }
+    return actorUpdate.call(this, dt, ...rest);
+  };
   WeaponRunner.prototype.reset = function (...args) {
     const result = reset.apply(this, args);
     this.s3RollerAttack = null;
+    this.s3RollStop = null;
     if (this.a.character) {
       this.a.character.s3RollerFlick = null;
       this.a.character._s3CancelRollerFlick?.();
