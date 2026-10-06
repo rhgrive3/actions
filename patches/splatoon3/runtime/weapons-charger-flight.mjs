@@ -1,4 +1,16 @@
 import { capsuleEntry, sweptWorldHit } from './weapons-collision.mjs';
+// #514: the native runner's eased charge is 1/6 after the first legal 8 charge
+// frames (chargeT = 8/60 through the installed S-curve), so that value — not
+// raw zero — anchors the pinned S3 DistanceMinCharge endpoint. Raw charge
+// below the anchor clamps to the minimum endpoint; full (>= .999) keeps the
+// extracted full endpoint. Damage, speed and paint keep their own laws.
+export const CHARGER_MIN_LEGAL_CHARGE = 1 / 6;
+export function chargerRangeCharge(charge){
+  const c=Math.max(0,Math.min(1,Number.isFinite(charge)?charge:0));
+  if(c>=.999)return 1;
+  if(c<=CHARGER_MIN_LEGAL_CHARGE)return 0;
+  return (c-CHARGER_MIN_LEGAL_CHARGE)/(1-CHARGER_MIN_LEGAL_CHARGE);
+}
 // Linear interpolation of extracted endpoints; ellipse rasterization remains INKWAVE's.
 export function chargerPaintParameters(raw,charge){
  const full=charge>=.999,q=Math.max(0,Math.min(1,charge));
@@ -20,7 +32,9 @@ export function installChargerFlight(api,completion) {
   // Single source of the finite flight distance (world units); begin() and the HUD reach query share it.
   const reachFor=charge=>{
     charge=Math.max(0,Math.min(1,Number.isFinite(charge)?charge:0));
-    return charge>=.999?raw.DistanceFullCharge:raw.DistanceMinCharge+(raw.DistanceMaxCharge-raw.DistanceMinCharge)*charge;
+    if(charge>=.999)return raw.DistanceFullCharge;
+    const q=chargerRangeCharge(charge);
+    return raw.DistanceMinCharge+(raw.DistanceMaxCharge-raw.DistanceMinCharge)*q;
   };
   P.chargerReach=function(charge){return reachFor(charge);};
   function begin(system,actor,w,charge,origin,dir,ghost=false,maxDistance=null){
