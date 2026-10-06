@@ -8,7 +8,9 @@ import { adaptSource } from '../adapter.mjs';
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const BUILT = process.env.INKWAVE_BUILT_SITE;
 const UPSTREAM = BUILT ? path.resolve(BUILT) : process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
-export async function fixture({ adapt = adaptSource, adaptRuntime = (_rel, source) => source, extraExports = '' } = {}) {
+export async function fixture(options = {}) {
+  const { adapt = adaptSource, adaptRuntime = (_rel, source) => source, extraExports = '' } =
+    typeof options === 'string' ? { extraExports: options } : options;
   const context = vm.createContext({ console, performance });
   const modules = new Map();
   function resolve(spec, from) {
@@ -23,7 +25,7 @@ export async function fixture({ adapt = adaptSource, adaptRuntime = (_rel, sourc
     if (BUILT && file.startsWith(path.join(ROOT, 'patches/'))) file = path.join(UPSTREAM, path.relative(ROOT, file));
     if (modules.has(file)) return modules.get(file);
     const relative = path.relative(UPSTREAM, file);
-    const native = file.startsWith(UPSTREAM + path.sep) ? adapt(relative, fs.readFileSync(file, 'utf8')) : fs.readFileSync(file, 'utf8');
+    const native = !BUILT && file.startsWith(UPSTREAM + path.sep) ? adapt(relative, fs.readFileSync(file, 'utf8')) : fs.readFileSync(file, 'utf8');
     const source = file.startsWith(UPSTREAM + path.sep) ? native : adaptRuntime(path.relative(ROOT, file), native);
     const mod = new vm.SourceTextModule(source, { context, identifier: file }); modules.set(file, mod); return mod;
   }
