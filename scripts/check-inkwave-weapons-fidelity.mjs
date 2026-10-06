@@ -77,15 +77,30 @@ for (const key of ['shooter','roller-horizontal','roller-vertical']) {
     assert.equal(q.damage,0,key+' ghost damage');
   }
 }
-async function wallDropCase(id, dt = 1/60, ghost = false) {
+// `duplicateBurst` is the positive control only: it forces one extra REAL native
+// application inside the wall-drop so the applied-burst accounting below is proven to
+// report 2 and therefore able to fail the single-application assertion.
+async function wallDropCase(id, dt = 1/60, ghost = false, { duplicateBurst = false } = {}) {
   const f = await fixture({ site, fidelity:true, floor:true, seed:0x576597 });
   f.wall(4, { height:8 });
   const weapon = id.startsWith('roller-') ? 'roller' : id;
   const a = f.make(weapon);
   a.aimPoint.set(0, 1.05, 20);
-  let bursts = 0;
+  // Count the burst where it is APPLIED to the world, not where it is requested.
+  // #729 deliberately turns one terrain impact into an enqueue plus a next-tick
+  // application, so wrapping _blastBurst counted the deferral as a second burst and
+  // reported a duplicate that never reaches the world. G.fx.explosion is the native
+  // application boundary the upstream burst calls, so it measures the effect itself
+  // and cannot miss an unrelated burst that took some other path.
+  let bursts = 0, ticks = 0;
+  const explosionTicks = [];
+  const fx = f.G.fx ?? (f.G.fx = {});
+  // G.fx was null here, so every fx call was already an optional-call no-op. Supply the
+  // plain particle entry point as a no-op and keep anything the fixture already had.
+  if (typeof fx.burst !== 'function') fx.burst = () => {};
+  const realExplosion = fx.explosion;
+  fx.explosion = (...args) => { bursts++; explosionTicks.push(ticks); return realExplosion?.apply(fx,args); };
   const nativeBurst = f.projectiles._blastBurst;
-  f.projectiles._blastBurst = function (...args) { bursts++; return nativeBurst.apply(this,args); };
   if (id === 'blaster') f.projectiles.fireBlaster(a,a.weapon,0);
   else if (id === 'splatling') {
     a.weaponRunner.fidelitySplatlingCharge = 1;
@@ -100,8 +115,9 @@ async function wallDropCase(id, dt = 1/60, ghost = false) {
   assert.ok(p, id+' projectile created');
   if (id.startsWith('roller-')) f.projectiles.list.splice(0,f.projectiles.list.length,p);
   if (ghost) p.ghost = true;
-  let state = null;
+  let state = null, contactTick = -1, injected = false;
   for (let i=0; i<600 && f.projectiles.list.includes(p); i++) {
+    ticks++;
     f.G.time += dt;
     f.projectiles.update(dt);
     if (!state && p.fidelityWallDrop) {
@@ -110,11 +126,21 @@ async function wallDropCase(id, dt = 1/60, ghost = false) {
       state={firstFrames:s.firstFrames,secondFrames:s.secondFrames,lastFrames:s.lastFrames,
         firstSpeed:s.firstSpeed,secondSpeed:s.secondSpeed,shockRadius:s.shockRadius,
         fallRadius:s.fallRadius,groundRadius:s.groundRadius};
+      contactTick = ticks;
+      // A real duplicate: apply the native burst once more with the #729 deferral
+      // marker cleared, so the extra explosion is genuinely applied to the world.
+      if (duplicateBurst && !injected) {
+        injected = true;
+        const marked = p.s3TerrainBurst;
+        p.s3TerrainBurst = false;
+        try { nativeBurst.call(f.projectiles, p, p.pos, null); }
+        finally { p.s3TerrainBurst = marked; }
+      }
     }
   }
   assert.ok(state,id+' retained wall-drop state');
   assert.ok(!f.projectiles.list.includes(p),id+' wall-drop terminates');
-  return {f,p,state,bursts};
+  return {f,p,state,bursts,explosionTicks,contactTick};
 }
 
 const wallExpected={
@@ -132,7 +158,21 @@ for (const id of Object.keys(wallExpected)) {
   near(s.firstSpeed,e.speeds[0]); near(s.secondSpeed,e.speeds[1]);
   near(s.shockRadius,e.radii[0]); near(s.fallRadius,e.radii[1]); near(s.groundRadius,e.radii[2]);
   for (const radius of e.radii.filter(x=>x>0)) assert.ok(r.f.paints.some(x=>Math.abs(x.radius-radius)<1e-9),id+' paint radius '+radius);
-  if (id==='blaster') assert.equal(r.bursts,1,'terrain Blaster burst remains single-application');
+  if (id==='blaster') {
+    assert.equal(r.bursts,1,'terrain Blaster burst remains single-application');
+    // The applied burst must stay exactly one fixed tick after contact, so this
+    // accounting fix cannot quietly relax #729's post-tick ordering.
+    assert.ok(r.contactTick>0,'the wall-drop contact tick is recorded');
+    assert.deepEqual(r.explosionTicks,[r.contactTick+1],'the single applied terrain burst stays at N+1');
+  }
+}
+
+// Positive control: a genuinely duplicated terrain burst must be counted as 2, so the
+// single-application assertion above is proven able to fail rather than always passing.
+{
+  const dup = await wallDropCase('blaster', 1/60, false, { duplicateBurst: true });
+  assert.equal(dup.bursts, 2, 'a genuinely duplicated terrain blast must be counted, or the single-application assertion is vacuous');
+  assert.notEqual(dup.bursts, 1, 'the duplicate control must not collapse back to a single applied burst');
 }
 
 // Render/update cadence cannot choose different sourced random periods or lose
