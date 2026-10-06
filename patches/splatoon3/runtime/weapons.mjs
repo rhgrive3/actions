@@ -59,14 +59,15 @@ export function installWeapons(context, profile) {
     const result = reset.apply(this, args);
     this.s3Stored = null; this.s3Turret = false; this.s3FlickVertical = false; this.s3BlasterWindup = 0;
     this.s3SloshRecovery = false;
-    // #726 fresh-start state: pending humanoid startup seconds, the
-    // held-through-forwarding-gate (squid-origin) marker, and the repeat-cycle
-    // marker that suppresses the pre-gap after a shot.
     this.s3ChargerStartupT = 0; this.s3ChargerHeldGate = false; this.s3ChargerRepeat = false;
+    this.s3ChargerPostShot = 0; this.s3DualiesPostShot = 0; this.s3DodgeShotPending = 0;
     return result;
   };
   WeaponRunner.prototype.busy = function () {
-    if (['charger','splatling'].includes(this.a.weapon.kind) && this.a.intent.squid && this.a._squidPressT > this.a._firePressT) return false;
+    const kind = this.a.weapon.kind;
+    if (kind === 'charger' && this.s3ChargerPostShot > 1e-10) return true;
+    if (kind === 'dualies' && this.s3DualiesPostShot > 1e-10) return true;
+    if (['charger','splatling'].includes(kind) && this.a.intent.squid && this.a._squidPressT > this.a._firePressT) return false;
     return this.s3BlasterWindup > 0 || busy.call(this);
   };
   const charger = WeaponRunner.prototype._charger;
@@ -82,11 +83,6 @@ export function installWeapons(context, profile) {
   WeaponRunner.prototype._charger = function (dt, inp, w) {
     const a = this.a, held = !!a.intent.fire;
     if (this.s3Stored && !held) cancelStored(this);
-    // #726 fresh-start bookkeeping. A fully released trigger abandons a pending
-    // humanoid startup, while a ZR held through the actor's forwarding gate
-    // (dive / emerge window, where inp.fire is masked although intent.fire is
-    // down) marks the next start as squid-origin, so the independent #566 lane
-    // keeps its current emerge-boundary start with no inserted pre-gap.
     if (!inp.fire) { this.s3ChargerStartupT = 0; this.s3ChargerHeldGate = false; }
     if (held && !inp.fire) this.s3ChargerHeldGate = true;
     if (a.form === 'squid') {
@@ -108,26 +104,14 @@ export function installWeapons(context, profile) {
       if (!inp.fire) { this.charge = 1; return; }
       this.charge = this.s3Stored.charge; this.chargeT = 1; this.charging = true; this.s3Stored = null;
     }
-    // The release edge that still holds a live charge is the shot; every later
-    // charge is an S3 repeat cycle (`repeat frames = charge frames +
-    // recharge-unavailable frames`, no startup) and must not reinsert the
-    // fresh-start pre-gap.
     if (this.charging && !inp.fire) this.s3ChargerRepeat = true;
-    // #726: S3 humanoid fresh start. The ZR edge consumes the verified 1F
-    // startup (前隙, community-verified S3 table) before any charge frame
-    // accumulates: the edge update starts nothing, the next update enters
-    // charging and lands charge frame 1, so full charge stays 1F + 60 charge
-    // frames from the edge. Stable humanoid only — emerge-held starts
-    // (s3ChargerHeldGate) and repeat cycles skip the pre-gap; the release edge,
-    // 8F minimum (#304), 1F release gap (#680) and recharge timing (#290) all
-    // stay on their own paths behind `charger.call`.
     if (!this.charging && inp.fire && this.cooldown <= 0) {
       if (this.s3ChargerStartupT > 1e-10) {
         this.s3ChargerStartupT = Math.max(0, this.s3ChargerStartupT - dt);
-        if (this.s3ChargerStartupT > 1e-10) return;   // startup frame still elapsing
+        if (this.s3ChargerStartupT > 1e-10) return;
       } else if (!this.s3ChargerRepeat && !this.s3ChargerHeldGate && a.ink >= w.inkMin) {
-        this.s3ChargerStartupT = 1 / 60;              // arm the 1F startup
-        return;                                       // the edge update advances nothing
+        this.s3ChargerStartupT = 1 / 60;
+        return;
       }
     }
     return charger.call(this, dt, inp, w);
@@ -180,12 +164,26 @@ export function installWeapons(context, profile) {
       return result;
     };
   }
+  const fireDualies = Projectiles.prototype.fireDualies;
+  Projectiles.prototype.fireDualies = function (a, w, spreadDeg, hand) {
+    const result = fireDualies.call(this, a, w, spreadDeg, hand);
+    if (a.weaponRunner) a.weaponRunner.s3DualiesPostShot = 4 / 60;
+    return result;
+  };
   const dualies = WeaponRunner.prototype._dualies, spread = WeaponRunner.prototype._spreadDeg;
   WeaponRunner.prototype._dualies = function (dt, inp, w) {
     const dodging = !!this.dodge;
+    if (this.s3DodgeShotPending > 1e-10 && (!inp.fire || inp.sub || this.a.form === 'squid')) this.s3DodgeShotPending = 0;
     if (this.s3Turret && (!inp.fire || Math.hypot(this.a.intent.move.x, this.a.intent.move.z) > .01 && this.lockT <= 0 || this.a.form === 'squid' || inp.sub)) this.s3Turret = false;
+    if (this.s3DodgeShotPending > 1e-10) {
+      this.s3DodgeShotPending = Math.max(0, this.s3DodgeShotPending - dt);
+      if (this.s3DodgeShotPending > 1e-10) return dualies.call(this, dt, { ...inp, fire: false, firePressed: false }, this.s3Turret ? { ...w, fireInterval: w.lockInterval } : w);
+    }
     const result = dualies.call(this, dt, inp, this.s3Turret ? { ...w, fireInterval: w.lockInterval } : w);
-    if (dodging && !this.dodge) this.s3Turret = true;
+    if (dodging && !this.dodge) {
+      this.s3Turret = true;
+      this.s3DodgeShotPending = 4 / 60;
+    }
     return result;
   };
   WeaponRunner.prototype._spreadDeg = function (w) {
@@ -196,6 +194,7 @@ export function installWeapons(context, profile) {
   };
   const fireCharger = Projectiles.prototype.fireCharger;
   Projectiles.prototype.fireCharger = function (a, w, charge) {
+    if (a.weaponRunner) a.weaponRunner.s3ChargerPostShot = 16 / 60;
     if (charge < .999) return fireCharger.call(this, a, w, charge);
     const muzzle = this._muzzle(a, new THREE.Vector3()).clone(), dir = this._aimFrom(a, muzzle, new THREE.Vector3()).clone();
     const hit = G.physics.raycast(muzzle, dir, w.rangeMax, new Hit(), true);
