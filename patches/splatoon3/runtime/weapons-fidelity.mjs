@@ -495,26 +495,204 @@ export function installWeaponsFidelity(context,profile) {
     try{return slosh.call(this,actor,{...w,drops:rawWeapon(w).UnitGroupParam.Unit.reduce((n,u)=>n+(u.BulletNum??1),0)});}
     finally{this._fidelitySloshContext=previous;}
   };
-  Projectiles.prototype.s3SlosherGuide=function(actor,w){
-    const guide=w?.shotGuide,raw=rawWeapon(w);
-    const unit=guide&&raw?.UnitGroupParam?.Unit?.[guide.unitOrderNum];
+  // The HUD writes ShotGuide offsets at 0.1 CSS-pixel precision. A tiny native
+  // idle-pose change can therefore reuse the prior *presentation* point only
+  // when a conservative projection bound proves that rounding cannot change.
+  // LOS reuse has a separate geometric certificate: the muzzle-to-body segment
+  // must stay clear inside an expanded OBB tube. All gameplay inputs remain exact.
+  const THREE=context.THREE;
+  const S3_GUIDE_POSE_RADIUS=.02;
+  const S3_GUIDE_FIELDS=Object.freeze([
+    'mode','actor','weapon','actorWeapon','character','getMuzzle','getAimMuzzle','aimReadyMethod','aimReady',
+    'weaponId','weaponKind','weaponShotGuideFrame','frame','shotGuide','unitOrder','bulletOrder','randomGuideBlocked',
+    'raw','unitGroup','unitArray','unit','move','weaponBallistics','ballisticStraight','ballisticBurst',
+    'projectileSpeed','weaponStraight','weaponGravity','weaponDrag','moveFreeGravity','moveFreeDrag',
+    'moveEndSpeed','moveBrakeDrag','moveBrakeGravity','moveFreeVelocityY','moveFreeFrame','moveHz',
+    'unitDelay','unitOffsetDelay','unitBulletNum','unitGroundSpeed','unitAirSpeed','unitOffsetSpeed','unitBaseYaw',
+    'unitRandomYaw','unitRandomOffOrder','unitAddYRate','unitMove','unitGoStraightFrame','unitEndSpeed',
+    'unitBrakeDrag','unitBrakeGravity','unitFreeDrag','unitFreeGravity','unitFreeVelocityY','unitFreeFrame',
+    'actorForm','grounded','climbing','dancing','specialActive','superJumpState','aimPitch',
+    'aimDirX','aimDirY','aimDirZ','aimPointX','aimPointY','aimPointZ','actorPosX','actorPosY','actorPosZ',
+    'runner','runnerCharge','runnerChargeT','runnerCharging','runnerStreaming','runnerFidelityCharge',
+    'runnerBlasterJump','runnerBlasterWindup',
+    'game','stage','gameLevel','physics','physicsLos','physicsRaycast','level','levelLayout','levelExtra',
+    'levelBlocks','levelFaces','levelHash','levelBlocksLength','levelFacesLength','levelHashLength','geometryGeneration',
+    'poseX','poseY','poseZ'
+  ]);
+  const S3_GUIDE_CORE_FIELDS=Object.freeze(S3_GUIDE_FIELDS.filter(k=>k!=='poseX'&&k!=='poseY'&&k!=='poseZ'));
+  function s3GuideCache(system){
+    return system._s3GuideCache||(system._s3GuideCache={
+      sample:{},key:{},point:new THREE.Vector3(),queryIds:[],valid:false,mode:null,clearRadius:0,
+      pose:{muzzle:new THREE.Vector3(),aimMuzzle:new THREE.Vector3(),base:new THREE.Vector3(),fallback:new THREE.Vector3(),
+        delta:new THREE.Vector3(),relative:new THREE.Vector3()},pointX:0,pointY:0,pointZ:0
+    });
+  }
+  function captureS3Guide(system,actor,w,mode,cache){
+    const ch=actor?.character,dir=actor?.aimDir,target=actor?.aimPoint,pose=cache.pose,s=cache.sample;
+    if(!actor||!w||!ch?.getMuzzle||!actor.pos||!dir||!target)return false;
+    ch.getMuzzle(pose.muzzle);
+    const ready=typeof ch.aimReady==='function'?ch.aimReady():1;
+    if(ready<.98&&typeof ch.getAimMuzzle==='function'&&ch.getAimMuzzle(pose.aimMuzzle,actor.aimPitch))
+      pose.muzzle.lerp(pose.aimMuzzle,1-ready);
+    pose.base.copy(actor.pos);pose.base.y+=actor.form==='squid' ? .4 : 1.05;
+    const raw=rawWeapon(w),guide=w.shotGuide,unit=mode==='slosher'?guide&&raw?.UnitGroupParam?.Unit?.[guide.unitOrderNum]:null;
+    const unitMove=unit?.MoveParam,move=moves.get(w.id)||null,runner=actor.weaponRunner;
+    const game=api.G,physics=game?.physics,level=physics?.level||game?.level||null;
+    s.mode=mode;s.actor=actor;s.weapon=w;s.actorWeapon=actor.weapon;s.character=ch;
+    s.getMuzzle=ch.getMuzzle;s.getAimMuzzle=ch.getAimMuzzle;s.aimReadyMethod=ch.aimReady;s.aimReady=ready;
+    s.weaponId=w.id;s.weaponKind=w.kind;s.weaponShotGuideFrame=w.shotGuideFrame;
+    s.frame=mode==='slosher'?guide?.frame:w.shotGuideFrame;s.shotGuide=guide;
+    s.unitOrder=guide?.unitOrderNum;s.bulletOrder=guide?.bulletOrderNumInUnit;
+    s.randomGuideBlocked=!!unit&&(unit.RandomRotateYDegree||0)!==0&&!unit.RandomRotateYOffOrderNum?.includes(guide.bulletOrderNumInUnit);
+    s.raw=raw;s.unitGroup=raw?.UnitGroupParam;s.unitArray=raw?.UnitGroupParam?.Unit;s.unit=unit;s.move=move;
+    s.weaponBallistics=w.ballistics;s.ballisticStraight=w.ballistics?.straightTime;s.ballisticBurst=w.ballistics?.burstTime;
+    s.projectileSpeed=w.projSpeed;s.weaponStraight=w.straightTime;s.weaponGravity=w.referenceGravity;s.weaponDrag=w.drag;
+    s.moveFreeGravity=move?.freeGravity;s.moveFreeDrag=move?.freeDrag;s.moveEndSpeed=move?.endSpeed;
+    s.moveBrakeDrag=move?.brakeDrag;s.moveBrakeGravity=move?.brakeGravity;s.moveFreeVelocityY=move?.freeVelocityY;
+    s.moveFreeFrame=move?.freeFrame;s.moveHz=move?.hz;
+    s.unitDelay=unit?.UnitDelayFrame;s.unitOffsetDelay=unit?.AfterOffsetDelayFrame;s.unitBulletNum=unit?.BulletNum;
+    s.unitGroundSpeed=unit?.SpawnSpeedGround;s.unitAirSpeed=unit?.SpawnSpeedAir;s.unitOffsetSpeed=unit?.AfterOffsetSpawnSpeed;
+    s.unitBaseYaw=unit?.BaseRotateYDegree;s.unitRandomYaw=unit?.RandomRotateYDegree;
+    s.unitRandomOffOrder=unit?.RandomRotateYOffOrderNum;s.unitAddYRate=unit?.AddSpawnSpeedYRateByXZ;s.unitMove=unitMove;
+    s.unitGoStraightFrame=unitMove?.GoStraightToBrakeStateFrame;s.unitEndSpeed=unitMove?.GoStraightStateEndMaxSpeed;
+    s.unitBrakeDrag=unitMove?.BrakeAirResist;s.unitBrakeGravity=unitMove?.BrakeGravity;
+    s.unitFreeDrag=unitMove?.FreeAirResist;s.unitFreeGravity=unitMove?.FreeGravity;
+    s.unitFreeVelocityY=unitMove?.BrakeToFreeVelocityY;s.unitFreeFrame=unitMove?.BrakeToFreeStateFrame;
+    s.actorForm=actor.form;s.grounded=actor.grounded;s.climbing=actor.climbing;s.dancing=actor.dance;
+    s.specialActive=actor.specialActive;s.superJumpState=actor.superJumpState;s.aimPitch=actor.aimPitch;
+    s.aimDirX=dir.x;s.aimDirY=dir.y;s.aimDirZ=dir.z;s.aimPointX=target.x;s.aimPointY=target.y;s.aimPointZ=target.z;
+    s.actorPosX=actor.pos.x;s.actorPosY=actor.pos.y;s.actorPosZ=actor.pos.z;
+    s.runner=runner;s.runnerCharge=runner?.charge;s.runnerChargeT=runner?.chargeT;s.runnerCharging=runner?.charging;
+    s.runnerStreaming=runner?.streaming;s.runnerFidelityCharge=runner?.fidelitySplatlingCharge;
+    s.runnerBlasterJump=runner?.s3BlasterJumpT;s.runnerBlasterWindup=runner?.s3BlasterWindup;
+    s.game=game;s.stage=game?.stage??game?.map??null;s.gameLevel=game?.level;s.physics=physics;
+    s.physicsLos=physics?.los;s.physicsRaycast=physics?.raycast;s.level=level;s.levelLayout=level?.layout;s.levelExtra=level?.extra;
+    s.levelBlocks=level?.blocks;s.levelFaces=level?.faces;s.levelHash=level?.hash;
+    s.levelBlocksLength=level?.blocks?.length;s.levelFacesLength=level?.faces?.length;s.levelHashLength=level?.hash?.length;
+    s.geometryGeneration=level?.geometryGeneration??level?._geometryGeneration??level?._generation;
+    s.poseX=pose.muzzle.x;s.poseY=pose.muzzle.y;s.poseZ=pose.muzzle.z;
+    return true;
+  }
+  function sameS3GuideFields(a,b,fields){for(const k of fields)if(a[k]!==b[k])return false;return true;}
+  function copyS3GuideFields(out,input){for(const k of S3_GUIDE_FIELDS)out[k]=input[k];}
+  function s3GuidePoseError(cache,mode){
+    const a=cache.key,b=cache.sample,dx=b.poseX-a.poseX,dy=b.poseY-a.poseY,dz=b.poseZ-a.poseZ;
+    const moved=Math.hypot(dx,dy,dz);
+    if(!Number.isFinite(moved))return Infinity;
+    if(mode==='slosher')return moved; // fixed aimDir and movement law: the whole prediction translates with its muzzle.
+    const x=a.aimPointX-a.poseX,y=a.aimPointY-a.poseY,z=a.aimPointZ-a.poseZ;
+    const nx=a.aimPointX-b.poseX,ny=a.aimPointY-b.poseY,nz=a.aimPointZ-b.poseZ;
+    const d0=Math.hypot(x,y,z),d1=Math.hypot(nx,ny,nz);
+    const dot0=x*a.aimDirX+y*a.aimDirY+z*a.aimDirZ,dot1=nx*a.aimDirX+ny*a.aimDirY+nz*a.aimDirZ;
+    const fallback0=d0<2||dot0<0,fallback1=d1<2||dot1<0;
+    if(fallback0!==fallback1)return Infinity;
+    if(fallback0)return moved;
+    const dmin=Math.min(d0,d1),speed=Math.abs(a.projectileSpeed),duration=Math.max(0,a.frame/60);
+    if(!(dmin>0)&&moved>0||!Number.isFinite(speed)||!Number.isFinite(duration))return Infinity;
+    const directionDelta=Math.min(2,2*moved/dmin);
+    // Gravity and drag are position-independent; the installed drag law never amplifies a direction delta.
+    return moved+speed*duration*directionDelta;
+  }
+  function pixelRoundingClearance(px){const v=px*10;return Math.abs((v-Math.floor(v))-.5)/10;}
+  function projectedS3GuideErrorFits(point,camera,width,height,error){
+    const v=camera?.matrixWorldInverse?.elements,p=camera?.projectionMatrix?.elements;
+    if(!v||!p||!(width>0)||!(height>0)||!Number.isFinite(error))return false;
+    const x=point.x,y=point.y,z=point.z;
+    const ex=v[0]*x+v[4]*y+v[8]*z+v[12],ey=v[1]*x+v[5]*y+v[9]*z+v[13],ez=v[2]*x+v[6]*y+v[10]*z+v[14];
+    const cx=p[0]*ex+p[4]*ey+p[8]*ez+p[12],cy=p[1]*ex+p[5]*ey+p[9]*ez+p[13];
+    const cz=p[2]*ex+p[6]*ey+p[10]*ez+p[14],cw=p[3]*ex+p[7]*ey+p[11]*ez+p[15];
+    const qx0=p[0]*v[0]+p[4]*v[1]+p[8]*v[2],qx1=p[0]*v[4]+p[4]*v[5]+p[8]*v[6],qx2=p[0]*v[8]+p[4]*v[9]+p[8]*v[10];
+    const qy0=p[1]*v[0]+p[5]*v[1]+p[9]*v[2],qy1=p[1]*v[4]+p[5]*v[5]+p[9]*v[6],qy2=p[1]*v[8]+p[5]*v[9]+p[9]*v[10];
+    const qz0=p[2]*v[0]+p[6]*v[1]+p[10]*v[2],qz1=p[2]*v[4]+p[6]*v[5]+p[10]*v[6],qz2=p[2]*v[8]+p[6]*v[9]+p[10]*v[10];
+    const qw0=p[3]*v[0]+p[7]*v[1]+p[11]*v[2],qw1=p[3]*v[4]+p[7]*v[5]+p[11]*v[6],qw2=p[3]*v[8]+p[7]*v[9]+p[11]*v[10];
+    const dw=error*Math.hypot(qw0,qw1,qw2),absW=Math.abs(cw),den=absW-dw;
+    if(!(cw>0)||!(den>1e-9))return false;
+    const dx=error*Math.hypot(qx0,qx1,qx2),dy=error*Math.hypot(qy0,qy1,qy2),dz=error*Math.hypot(qz0,qz1,qz2);
+    const bx=(dx*absW+Math.abs(cx)*dw)/(absW*den),by=(dy*absW+Math.abs(cy)*dw)/(absW*den),bz=(dz*absW+Math.abs(cz)*dw)/(absW*den);
+    const ndcZ=cz/cw,px=(cx/cw)*width*.5,py=-(cy/cw)*height*.5;
+    if(!Number.isFinite(bx)||!Number.isFinite(by)||!Number.isFinite(bz)||!(ndcZ+bz<1))return false;
+    return bx*width*.5<pixelRoundingClearance(px)&&by*height*.5<pixelRoundingClearance(py);
+  }
+  function segmentTouchesExpandedBlock(start,end,block,r,pose){
+    const center=block?.center,half=block?.half,axes=block?.axes;
+    if(!center||!half||!axes||axes.length<3)return true;
+    pose.delta.copy(end).sub(start);pose.relative.copy(start).sub(center);
+    let enter=0,leave=1;
+    for(let k=0;k<3;k++){
+      const axis=axes[k],h=(k===0?half.x:k===1?half.y:half.z)+r;
+      const o=pose.relative.dot(axis),d=pose.delta.dot(axis);
+      if(!Number.isFinite(o)||!Number.isFinite(d)||!Number.isFinite(h))return true;
+      if(Math.abs(d)<1e-9){if(o < -h||o > h)return false;continue;}
+      let lo=(-h-o)/d,hi=(h-o)/d;if(lo>hi){const t=lo;lo=hi;hi=t;}
+      enter=Math.max(enter,lo);leave=Math.min(leave,hi);if(enter>leave)return false;
+    }
+    return leave>=0&&enter<=1;
+  }
+  function certifyS3GuideMuzzleRadius(cache,actor,usedMuzzle){
+    const pose=cache.pose,raw=pose.muzzle,r=S3_GUIDE_POSE_RADIUS;
+    if(!Number.isFinite(raw.x)||!Number.isFinite(raw.y)||!Number.isFinite(raw.z)||
+       usedMuzzle.x!==raw.x||usedMuzzle.y!==raw.y||usedMuzzle.z!==raw.z)return 0;
+    const d2=raw.distanceToSquared(pose.base),len=Math.sqrt(d2);
+    if(!(d2<=2.5)||!(len>r+1e-4)||d2+2*len*r+r*r>=2.5)return 0;
+    pose.fallback.copy(pose.base).addScaledVector(actor.aimDir,.3);
+    if(raw.x===pose.fallback.x&&raw.y===pose.fallback.y&&raw.z===pose.fallback.z)return 0;
+    const level=api.G?.physics?.level,blocks=level?.blocks;
+    if(!level?.queryBlocks||!blocks)return 0;
+    const ids=cache.queryIds;
+    const found=level.queryBlocks(Math.min(pose.base.x,raw.x)-r,Math.min(pose.base.z,raw.z)-r,
+      Math.max(pose.base.x,raw.x)+r,Math.max(pose.base.z,raw.z)+r,ids)||ids;
+    for(let i=0;i<found.length;i++){
+      const block=blocks[found[i]];if(!block)return 0;
+      if(!block.solid||block.grate)continue;
+      if(segmentTouchesExpandedBlock(pose.base,raw,block,r,pose))return 0;
+    }
+    // Level builds immutable block/hash/face geometry in its constructor. The
+    // Level + those references/counts above act as the geometry generation.
+    return r;
+  }
+  function cachedS3Guide(system,actor,w,mode,camera,width,height){
+    const cache=s3GuideCache(system),guide=w?.shotGuide,raw=rawWeapon(w);
+    const unit=mode==='slosher'&&guide&&raw?.UnitGroupParam?.Unit?.[guide.unitOrderNum];
+    const index=guide?.bulletOrderNumInUnit;
+    if(mode==='slosher'){
+      if(w?.kind!=='slosher'||!unit||!Number.isInteger(index)||index<0||index>=(unit.BulletNum??1)||!Number.isFinite(guide.frame)||
+         ((unit.RandomRotateYDegree||0)!==0&&!unit.RandomRotateYOffOrderNum?.includes(index))){cache.valid=false;return null;}
+    }else if(mode!=='blaster'||w?.kind!=='blaster'||!Number.isFinite(w.shotGuideFrame)){cache.valid=false;return null;}
+    if(!captureS3Guide(system,actor,w,mode,cache)){cache.valid=false;return mode==='slosher'?computeS3SlosherGuide(system,actor,w):computeS3BlasterGuide(system,actor,w);}
+    if(cache.valid&&cache.mode===mode&&cache.point.x===cache.pointX&&cache.point.y===cache.pointY&&cache.point.z===cache.pointZ){
+      if(sameS3GuideFields(cache.key,cache.sample,S3_GUIDE_FIELDS))return cache.point;
+      if(sameS3GuideFields(cache.key,cache.sample,S3_GUIDE_CORE_FIELDS)){
+        const moved=Math.hypot(cache.sample.poseX-cache.key.poseX,cache.sample.poseY-cache.key.poseY,cache.sample.poseZ-cache.key.poseZ);
+        if(moved<=cache.clearRadius){
+          const error=s3GuidePoseError(cache,mode);
+          if(projectedS3GuideErrorFits(cache.point,camera,width,height,error))return cache.point;
+        }
+      }
+    }
+    cache.valid=false;
+    const point=mode==='slosher'?computeS3SlosherGuide(system,actor,w):computeS3BlasterGuide(system,actor,w);
+    if(!point)return null;
+    cache.point.copy(point);cache.pointX=cache.point.x;cache.pointY=cache.point.y;cache.pointZ=cache.point.z;
+    copyS3GuideFields(cache.key,cache.sample);cache.mode=mode;cache.valid=true;cache.clearRadius=0;
+    const projectile=mode==='slosher'?system._s3SlosherGuideProjectile:system._s3BlasterGuideProjectile;
+    if(projectile?.start)cache.clearRadius=certifyS3GuideMuzzleRadius(cache,actor,projectile.start);
+    return cache.point;
+  }
+  function computeS3SlosherGuide(system,actor,w){
+    const guide=w?.shotGuide,raw=rawWeapon(w),unit=guide&&raw?.UnitGroupParam?.Unit?.[guide.unitOrderNum];
     const index=guide?.bulletOrderNumInUnit;
     if(!unit||!Number.isInteger(index)||index<0||index>=(unit.BulletNum??1)||!Number.isFinite(guide.frame))return null;
-    // The selected Bucket Slosher guide projectile (unit 1 / bullet 0) has
-    // random yaw disabled in the pinned source. Refuse to invent a random HUD
-    // guide if a future profile selects a randomized projectile instead.
     if((unit.RandomRotateYDegree||0)!==0&&!unit.RandomRotateYOffOrderNum?.includes(index))return null;
-    const THREE=context.THREE;
-    const p=this._s3SlosherGuideProjectile||(this._s3SlosherGuideProjectile={
+    const p=system._s3SlosherGuideProjectile||(system._s3SlosherGuideProjectile={
       pos:new THREE.Vector3(),prev:new THREE.Vector3(),start:new THREE.Vector3(),vel:new THREE.Vector3()
     });
-    this._muzzle(actor,p.pos);p.prev.copy(p.pos);p.start.copy(p.pos);
+    system._muzzle(actor,p.pos);p.prev.copy(p.pos);p.start.copy(p.pos);
     p.owner=actor;p.type='slosh';p.wid=w.id;p.s3Weapon={...w};p.age=0;p.life=2.4;p.straight=0;
     p.delay=((unit.UnitDelayFrame||0)+index*(unit.AfterOffsetDelayFrame||0))/60;
     p.fidelitySloshUnit=unit;p.fidelitySloshIndex=index;p.fidelityPhase=0;p.fidelityMove=null;
     p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;
     const speed=((actor.grounded?unit.SpawnSpeedGround:unit.SpawnSpeedAir)+index*(unit.AfterOffsetSpawnSpeed||0))*60;
-    const aim=(this._s3SlosherGuideAim||(this._s3SlosherGuideAim=new THREE.Vector3())).copy(actor.aimDir).normalize();
+    const aim=(system._s3SlosherGuideAim||(system._s3SlosherGuideAim=new THREE.Vector3())).copy(actor.aimDir).normalize();
     const yaw=Math.atan2(aim.x,aim.z)+radians(unit.BaseRotateYDegree||0);
     const pitch=Math.atan2(aim.y,Math.hypot(aim.x,aim.z)),horizontal=Math.cos(pitch)*speed;
     p.vel.set(Math.sin(yaw)*horizontal,Math.sin(pitch)*speed+horizontal*(unit.AddSpawnSpeedYRateByXZ||0),Math.cos(yaw)*horizontal);
@@ -522,18 +700,16 @@ export function installWeaponsFidelity(context,profile) {
     let remaining=Math.max(0,guide.frame/60-p.delay);
     while(remaining>EPSILON){const step=Math.min(1/60,remaining);advanceFidelityProjectile(p,step);remaining-=step;}
     return p.pos;
-  };
-  Projectiles.prototype.s3WeaponGuide=function(actor,w){
-    if(w?.kind==='slosher')return this.s3SlosherGuide(actor,w);
+  }
+  function computeS3BlasterGuide(system,actor,w){
     const frame=w?.shotGuideFrame;
     if(w?.kind!=='blaster'||!Number.isFinite(frame))return null;
-    const THREE=context.THREE;
-    const p=this._s3BlasterGuideProjectile||(this._s3BlasterGuideProjectile={
+    const p=system._s3BlasterGuideProjectile||(system._s3BlasterGuideProjectile={
       pos:new THREE.Vector3(),prev:new THREE.Vector3(),start:new THREE.Vector3(),vel:new THREE.Vector3()
     });
-    const dir=this._s3BlasterGuideDir||(this._s3BlasterGuideDir=new THREE.Vector3());
-    this._muzzle(actor,p.pos);p.prev.copy(p.pos);p.start.copy(p.pos);
-    this._aimFrom(actor,p.pos,dir);
+    const dir=system._s3BlasterGuideDir||(system._s3BlasterGuideDir=new THREE.Vector3());
+    system._muzzle(actor,p.pos);p.prev.copy(p.pos);p.start.copy(p.pos);
+    system._aimFrom(actor,p.pos,dir);
     p.owner=actor;p.type='blast';p.wid=w.id;p.s3Weapon={...w};p.age=0;p.life=2;p.straight=0;
     p.delay=0;p.ghost=false;p.fidelityPhase=0;p.fidelityMove=null;p.fidelityPrevAge=0;
     p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;
@@ -542,6 +718,14 @@ export function installWeaponsFidelity(context,profile) {
     let remaining=Math.max(0,frame/60);
     while(remaining>EPSILON){const step=Math.min(1/60,remaining);advanceFidelityProjectile(p,step);remaining-=step;}
     return p.pos;
+  }
+  Projectiles.prototype.s3SlosherGuide=function(actor,w,camera,width,height){
+    return cachedS3Guide(this,actor,w,'slosher',camera,width,height);
+  };
+  Projectiles.prototype.s3WeaponGuide=function(actor,w,camera,width,height){
+    if(w?.kind==='slosher')return this.s3SlosherGuide(actor,w,camera,width,height);
+    if(w?.kind!=='blaster'){if(this._s3GuideCache)this._s3GuideCache.valid=false;return null;}
+    return cachedS3Guide(this,actor,w,'blaster',camera,width,height);
   };
   const reset=WeaponRunner.prototype.reset,auto=WeaponRunner.prototype._auto,spin=WeaponRunner.prototype._splatling;
   WeaponRunner.prototype.reset=function(...args){const result=reset.apply(this,args);this.fidelitySplatlingCharge=null;return result;};
