@@ -102,6 +102,7 @@ export function installWeapons(context, profile) {
     // held-through-forwarding-gate (squid-origin) marker, and the repeat-cycle
     // marker that suppresses the pre-gap after a shot.
     this.s3ChargerStartupT = 0; this.s3ChargerHeldGate = false; this.s3ChargerRepeat = false;
+    this.s3ChargerSpent = 0; this.s3ChargerProgressiveSpend = false;
     this.s3ChargerPostShot = 0; this.s3DualiesPostShot = 0; this.s3DodgeShotPending = 0;
     this.s3WasSquid = false;
     return result;
@@ -114,80 +115,117 @@ export function installWeapons(context, profile) {
     return this.s3BlasterWindup > 0 || busy.call(this);
   };
   const charger = WeaponRunner.prototype._charger;
-  // S3 keeps a full charge only while ZR stays down; letting go of ZR before
-  // leaving the keep cancels the charge. `inp.fire` cannot express that, because
-  // the actor masks it to false while squid and through emergeDelay, which makes
-  // "still holding ZR underwater" and "released ZR underwater" the same value.
-  // `a.intent.fire` is the canonical actor-side hold state and keeps them apart.
+  const chargerInkAt = (w, progress) => {
+    const p = Math.max(0, Math.min(1, progress)), minT = w.minimumChargeTime ?? (8 / 60);
+    if (p <= minT) return w.inkMin * p / Math.max(1e-10, minT);
+    return w.inkMin + (w.inkFull - w.inkMin) * (p - minT) / Math.max(1e-10, 1 - minT);
+  };
+  const chargerProgressForInk = (w, ink) => {
+    const value = Math.max(0, ink), minT = w.minimumChargeTime ?? (8 / 60);
+    if (value <= w.inkMin) return minT * value / Math.max(1e-10, w.inkMin);
+    return Math.min(1, minT + (1 - minT) * (value - w.inkMin) / Math.max(1e-10, w.inkFull - w.inkMin));
+  };
+  // Stored-charge lifetime/startup ownership from C22 is composed with #775's
+  // progressive ink commitment. Paid ink is never refunded by cancel/keep.
   const cancelStored = r => {
     r.s3Stored = null; r.charging = false; r.charge = 0; r.chargeT = 0; r.chargeDinged = false;
+    r.s3ChargerSpent = 0;
     r.chargeLoop?.stop(.05); r.chargeLoop = null;
   };
   WeaponRunner.prototype._charger = function (dt, inp, w) {
-    const a = this.a, held = !!a.intent.fire;
+    const a = this.a, held = !!a.intent.fire, epsilon = 1e-10;
     if (this.s3Stored && !held) {
       cancelStored(this); this.s3WasSquid = a.form === 'squid';
       this.s3ChargerStartupT = 0; this.s3ChargerHeldGate = false;
       return;
     }
-    // #726 fresh-start bookkeeping. A fully released trigger abandons a pending
-    // humanoid startup, while a ZR held through the actor's forwarding gate
-    // (dive / emerge window, where inp.fire is masked although intent.fire is
-    // down) marks the next start as squid-origin, so the independent #566 lane
-    // keeps its current emerge-boundary start with no inserted pre-gap.
+
+    // #726 fresh-start bookkeeping. A held trigger masked by squid/emerge keeps
+    // its origin marker; a physical release abandons pending startup.
     if (!inp.fire) { this.s3ChargerStartupT = 0; this.s3ChargerHeldGate = false; }
     if (held && !inp.fire) this.s3ChargerHeldGate = true;
+
     if (a.form === 'squid') {
       this.s3WasSquid = true;
       if (this.charging) {
-        // Submerging with ZR already released never opens a keep window.
-        if (this.charge >= .999 && held) this.s3Stored = { charge: 1, remaining: w.keepChargeTime };
+        if (this.charge >= .999 && held) this.s3Stored = {
+          charge: 1, remaining: w.keepChargeTime, paid: Math.max(this.s3ChargerSpent || 0, w.inkFull)
+        };
         this.charging = false; this.charge = 0; this.chargeT = 0;
+        if (!this.s3Stored) this.s3ChargerSpent = 0;
         this.chargeLoop?.stop(.05); this.chargeLoop = null;
       }
       if (this.s3Stored) {
         this.s3Stored.remaining -= dt;
-        if (this.s3Stored.remaining <= 1e-10) this.s3Stored = null;
+        if (this.s3Stored.remaining <= epsilon) { this.s3Stored = null; this.s3ChargerSpent = 0; }
       }
       return;
     }
-    // #810: a valid squid→humanoid transition with ZR still held refreshes the
-    // per-keep-cycle lifetime to a full w.keepChargeTime (75F / 1.25 s), so the
-    // next submerge starts a fresh window instead of the depleted remainder.
-    // `s3WasSquid` records the previous actor tick, so this is edge-triggered.
-    // It only writes an existing record; it does not create a store or change
-    // #359's separate initial-eligibility path. #390 release cancellation and
-    // the #291/#101 resurfacing delays remain on their existing paths:
-    // presentation stays `charge = 1` until inp.fire returns.
+
+    // #810: a held squid→humanoid edge refreshes only an existing keep record.
     if (this.s3Stored && this.s3WasSquid) this.s3Stored.remaining = w.keepChargeTime;
     this.s3WasSquid = false;
     if (this.s3Stored) {
-      // Held through the keep, so the store survives emergeDelay with inp.fire
-      // masked, and is restored once the actor forwards the trigger again.
       if (!inp.fire) { this.charge = 1; return; }
-      this.charge = this.s3Stored.charge; this.chargeT = 1; this.charging = true; this.s3Stored = null;
+      this.charge = this.s3Stored.charge; this.chargeT = 1; this.charging = true;
+      this.s3ChargerSpent = this.s3Stored.paid ?? w.inkFull;
+      this.s3Stored = null;
     }
-    // The release edge that still holds a live charge is the shot; every later
-    // charge is an S3 repeat cycle (`repeat frames = charge frames +
-    // recharge-unavailable frames`, no startup) and must not reinsert the
-    // fresh-start pre-gap.
+
+    // A release from a live charge enters the repeat cycle. Release handling
+    // below neutralizes only the legacy debit, not the shot/recovery clocks.
     if (this.charging && !inp.fire) this.s3ChargerRepeat = true;
-    // #726: S3 humanoid fresh start. The ZR edge consumes the verified 1F
-    // startup (前隙, community-verified S3 table) before any charge frame
-    // accumulates: the edge update starts nothing, the next update enters
-    // charging and lands charge frame 1, so full charge stays 1F + 60 charge
-    // frames from the edge. Stable humanoid only — emerge-held starts
-    // (s3ChargerHeldGate) and repeat cycles skip the pre-gap; the release edge,
-    // 8F minimum (#304), 1F release gap (#680) and recharge timing (#290) all
-    // stay on their own paths behind `charger.call`.
+
+    // #726: stable humanoid fresh start consumes exactly 1F before charge.
+    // Low/empty ink is allowed to enter the charge state; #775 then advances it
+    // at the sourced 1/3 rate while recovery funds the minimum.
     if (!this.charging && inp.fire && this.cooldown <= 0) {
-      if (this.s3ChargerStartupT > 1e-10) {
+      if (this.s3ChargerStartupT > epsilon) {
         this.s3ChargerStartupT = Math.max(0, this.s3ChargerStartupT - dt);
-        if (this.s3ChargerStartupT > 1e-10) return;   // startup frame still elapsing
-      } else if (!this.s3ChargerRepeat && !this.s3ChargerHeldGate && a.ink >= w.inkMin) {
-        this.s3ChargerStartupT = 1 / 60;              // arm the 1F startup
-        return;                                       // the edge update advances nothing
+        if (this.s3ChargerStartupT > epsilon) return;
+      } else if (!this.s3ChargerRepeat && !this.s3ChargerHeldGate) {
+        this.s3ChargerStartupT = 1 / 60;
+        return;
       }
+    }
+
+    if (inp.fire && this.cooldown <= 0) {
+      if (!this.charging) this.s3ChargerSpent = 0;
+      const beforeT = this.chargeT || 0, realInk = a.ink;
+      const fundedInk = (this.s3ChargerSpent || 0) + realInk;
+      const low = fundedInk + epsilon < w.inkMin;
+      const rate = !a.grounded ? (w.airChargeRate ?? 1 / 3) : low ? (w.emptyChargeRate ?? 1 / 3) : 1;
+      let targetT = Math.min(1, beforeT + dt / Math.max(epsilon, w.chargeTime) * rate);
+      targetT = Math.min(targetT, chargerProgressForInk(w, fundedInk));
+      const scaledDt = Math.max(0, targetT - beforeT) * w.chargeTime;
+
+      // Advance the native charge owner with a temporary admissible tank, then
+      // debit the real tank from the sourced min/full endpoints.
+      a.ink = Math.max(realInk, w.inkFull);
+      const result = charger.call(this, scaledDt, inp, w);
+      a.ink = realInk;
+
+      const targetPaid = chargerInkAt(w, this.chargeT || 0);
+      const delta = Math.max(0, targetPaid - (this.s3ChargerSpent || 0));
+      const spent = Math.min(a.ink, delta);
+      if (spent > epsilon) {
+        a.ink -= spent;
+        this.s3ChargerSpent = (this.s3ChargerSpent || 0) + spent;
+        this.s3ChargerProgressiveSpend = true;
+      }
+      return result;
+    }
+
+    if (!inp.fire && this.charging) {
+      // Native release still owns projectile/recovery state, but its old
+      // release-only ink debit is neutralized because charge progress paid it.
+      const realInk = a.ink, c = Math.max(0, this.charge || 0);
+      const legacyDebit = Math.max(w.inkMin, w.inkFull * c);
+      a.ink = realInk + legacyDebit;
+      const result = charger.call(this, dt, inp, w);
+      a.ink = realInk;
+      this.s3ChargerSpent = 0;
+      return result;
     }
     return charger.call(this, dt, inp, w);
   };
