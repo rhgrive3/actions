@@ -381,3 +381,9 @@ main `f31f5da439134fe49bb89018dad5557671a49c67` の `Projectiles._updateBeams()`
 ### 今回の残差修正
 
 2026-10-07 の overlap 再確認時に open PR #868 の head は `7c2ef70820d784792490741c1d710adf98b9c155` (`2a8cab53726d3cebfd82e5f22a0988431a8bfa79` から更新) だった。現 head の `frame-order-adapter.mjs` と `charger-sight.mjs` の immutable file patches は、カメラ更新後に `_placeSight()` を描画 frame ごとに実行するが、`FxHooks._beams()` の endpoint query は変更しない。この変更は sight body 内の cache 書込みと合成できる一方、PR #868 と合成された場合の一次 sight query 頻度は表示 frame に依存し得る。ここでは重複 FX query の除去のみを確認し、合成後の CPU 費用や物理デバイス性能は未確認として残す。
+
+## 2026-10-07 — touch-primary mouse handoff (#859), combined C31
+
+A touch-owned startup had never entered the earlier mouse-to-touch relock path, so the first deliberate canvas mouse press could not request Pointer Lock. The installed reliability adapter now admits that press with no live touch pointer/stick and no pending asynchronous unlock. Menus, pause, map, editing, finished and attract states still suppress gameplay lock; mouse motion alone cannot take ownership. Three new cases and the thirteen existing touch/lock controls pass. This is INKWAVE's mixed-input contract; Splatoon 3 does not publish an equivalent mouse/Pointer Lock API, and Android tablet/Bluetooth mouse behavior remains unmeasured. Native gameplay/collision/damage/weapon timing and Range rules are unchanged.
+
+The initially-unfocused #843 source was excluded from C31 when updated Open PR #868 independently implemented the same construction-time hasFocus check. That source and review remain saved; no duplicate fix is included.
