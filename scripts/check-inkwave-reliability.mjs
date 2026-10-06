@@ -9,6 +9,7 @@ import http from 'node:http';
 import crypto from 'node:crypto';
 import { createRequire } from 'node:module';
 import { runTouchTransitionCases } from './inkwave-touch-transition-cases.mjs';
+import { runFocusLossCase } from './inkwave-focus-loss-case.mjs';
 
 const option = name => { const i = process.argv.indexOf(name); assert(i >= 0 && process.argv[i + 1], 'Required ' + name); return path.resolve(process.argv[i + 1]); };
 const site = option('--site'), evidence = option('--evidence-dir'), cache = option('--profile-dir');
@@ -142,10 +143,8 @@ try {
         await reset();
       }
       entry.checks.push('native-five-button-taps-survive-render-only-frame-and-consume-once');
-      await page.locator('[data-c="fire"]').tap(); await page.evaluate(() => { mobile.jumpTarget = 2; window.dispatchEvent(new Event('blur')); });
-      assert.deepEqual(await page.evaluate(() => ({ edges: [...mobile.pressed], target: mobile.jumpTarget, look: [mobile.lookDX, mobile.lookDY] })), { edges: [], target: -1, look: [0, 0] });
-      await page.evaluate(() => advance(1 / 60)); assert.equal(await page.evaluate(() => intents.at(-1).fire), false);
-      entry.checks.push('focus-loss-cancels-pending-touch-action-and-jump-target');
+      await page.locator('[data-c="fire"]').tap();
+      await runFocusLossCase(page, entry);
       const network = await page.evaluate(async () => {
         const real = { WebSocket, setTimeout, clearTimeout, setInterval, clearInterval }, sockets = [], timers = new Map(); let seq = 0;
         window.setTimeout = (fn, ms) => { const id = ++seq; timers.set(id, { fn, ms }); return id; };
@@ -235,6 +234,8 @@ try {
         try {
           Object.defineProperty(navigator, 'getGamepads', { configurable: true, value: () => [pad] });
           input.padPrev = []; input.padPressed.clear(); input.padMenuPressed.clear(); input.padMenuBlocked.clear();
+          // Focus return needs one real neutral sample before new pad presses.
+          buttons([]); input.pollPad(); input.endFrame();
           let startEdges = 0;
           sim._padMenus = () => {
             if (input.padMenuPressed.has(9)) startEdges++;
