@@ -94,13 +94,16 @@ export function installGear(api, tuning) {
   Actor.prototype._horizontal = function (dt, squid, enemy) {
     // The upstream method reads a shared configuration. Provide scoped values
     // synchronously, restoring even when collision/weapon code throws.
-    const original = { swimSpeed: api.PLAYER.swimSpeed, enemyInkSpeed: api.PLAYER.enemyInkSpeed };
+    const swimSpeed = api.PLAYER.swimSpeed, enemyInkSpeed = api.PLAYER.enemyInkSpeed;
     const m = this.s3?.modifiers || {}, flow = this.s3?.flow?.active;
     api.PLAYER.swimSpeed *= (m.swimSpeed ?? 1) * (flow ? tuning.flow.swimMultiplier : 1);
-    api.PLAYER.enemyInkSpeed = (this.intent.fire ? m.enemyShotSpeed : m.enemyMoveSpeed) ?? original.enemyInkSpeed;
+    api.PLAYER.enemyInkSpeed = (this.intent.fire ? m.enemyShotSpeed : m.enemyMoveSpeed) ?? enemyInkSpeed;
     api.PLAYER.enemyInkSpeed *= flow ? tuning.flow.enemyInkSpeedMultiplier : 1;
     try { return horizontal.call(this, dt, squid, enemy); }
-    finally { Object.assign(api.PLAYER, original); }
+    finally {
+      api.PLAYER.swimSpeed = swimSpeed;
+      api.PLAYER.enemyInkSpeed = enemyInkSpeed;
+    }
   };
   const splat = Actor.prototype.splat;
   Actor.prototype.splat = function (...args) {
@@ -118,7 +121,7 @@ export function installGear(api, tuning) {
   const update = WeaponRunner.prototype.update;
   WeaponRunner.prototype.update = function (dt, input) {
     const a = this.a, m = a.s3?.modifiers || {}, beforeInk = a.ink;
-    const saved = { inkCost: api.SUB.bomb.inkCost, throwSpeed: api.SUB.bomb.throwSpeed };
+    const bombInkCost = api.SUB.bomb.inkCost, bombThrowSpeed = api.SUB.bomb.throwSpeed;
     api.SUB.bomb.inkCost *= m.inkSaverSub ?? 1;
     api.SUB.bomb.throwSpeed *= m.subPower ?? 1;
     const effectiveBombCost = api.SUB.bomb.inkCost;
@@ -127,7 +130,8 @@ export function installGear(api, tuning) {
     finally {
       const bombSpent = (G.projectiles?.bombs?.length ?? bombsBefore) > bombsBefore;
       const spent = Math.max(0, beforeInk - a.ink);
-      Object.assign(api.SUB.bomb, saved);
+      api.SUB.bomb.inkCost = bombInkCost;
+      api.SUB.bomb.throwSpeed = bombThrowSpeed;
       if (spent > 1e-10) {
         a.s3 ||= {};
         const mainSpent = !bombSpent || spent > effectiveBombCost + 1e-8;
