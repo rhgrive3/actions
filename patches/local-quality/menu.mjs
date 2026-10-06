@@ -7,58 +7,73 @@ const INSTALLED=Symbol.for('inkwave.local-quality.menu.v1');
 export function installMenuQuality(Menus, env=globalThis){
   const P=Menus.prototype;if(Object.hasOwn(P,INSTALLED))return;
   const records=new WeakMap(),retired=new WeakSet(),lifecycle=getPlatformLifecycle(env);Object.defineProperty(P,INSTALLED,{value:records});
-  const update=P.update,dispose=P.dispose,settings=P._scr_settings,swap=P._swap,loop=P._loop;
+  const update=P.update,dispose=P.dispose,settings=P._scr_settings,swap=P._swap,loop=P._loop,show=P.show,nav=P._nav;
   const active=m=>!!(m.current||m._scr);
   const focus=P._setFocus, inputMode=P.setInputMode, cursor=P._updateCursor;
   // A CSS opacity fade must not leave a retired ring over the old item.
-  // Keep native fade-in and the moving spring; hide only the logically off ring.
+  // Keep native fade-in and pulse; hide only the logically off ring.
   const syncRingVisibility=m=>{const style=m.cursorEl.style,want=m._cur.on?'':'hidden';if(style.visibility!==want)style.visibility=want;};
-  // One spring clock: an input task can spend the elapsed part of the current
-  // frame immediately; the engine's next cursor tick subtracts that credit.
-  // This starts visual motion now without an extra rAF or double advancement.
-  if(cursor)P._updateCursor=function(dt){
-    if(!this._cur.on||this._cur.snapNext)this._qualityCursorCredit=0;
-    if(dt>0&&this._qualityCursorCredit){
-      const credit=this._qualityCursorCredit;
-      this._qualityCursorCredit=Math.max(0,credit-dt);dt=Math.max(0,dt-credit);
-    }
-    if(!this._focus?.isConnected)this._cur.targetEl=null;
-    const result=cursor.call(this,dt);syncRingVisibility(this);this._qualityCursorAt=env.performance.now();return result;
-  };
-  function retarget(m,advance=true){
-    const now=env.performance.now();
-    const elapsed=m._qualityCursorAt==null?0:Math.max(0,(now-m._qualityCursorAt)/1000);
-    const step=!advance||m._frozen?.()?0:Math.min(1/60,elapsed)*(m.timeScale>0?m.timeScale:1);
+  // The ring IS the selection display: its geometry is the focused item's
+  // geometry, never a spring travelling toward it. Native springs (k 560,
+  // c 34: under-damped, ~0.2 s to settle) made the outline trail every
+  // keyboard/pad/touch move and chase rapid input from behind while the
+  // item's own focus state had already changed. Each owner tick re-reads the
+  // geometry (scrolling lists, entrance layout); selection changes commit it
+  // in the same input task. Opacity fade-in and the CSS pulse stay.
+  const place=(m,dt)=>{
     if(!m._focus?.isConnected)m._cur.targetEl=null;
-    const springClock=m._cur.on&&!m._cur.snapNext,advancing=step>0&&springClock;
-    cursor.call(m,step);syncRingVisibility(m);if(advance)m._qualityCursorAt=now;
-    if(advancing&&m._cur.on)m._qualityCursorCredit=(m._qualityCursorCredit||0)+step;
-    else if(!m._cur.on||!springClock)m._qualityCursorCredit=0;
-  }
-  // Logical selection, geometric target and first visual step all commit in
+    m._cur.snapNext=true;
+    const result=cursor.call(m,dt);syncRingVisibility(m);return result;
+  };
+  if(cursor)P._updateCursor=function(dt){return place(this,dt);};
+  // Logical selection, geometric target and the painted ring all commit in
   // this task, including touch's own-row highlight and deselection.
   if(focus&&cursor)P._setFocus=function(...args){
     const old=this._focus,result=focus.apply(this,args);
-    if(old!==this._focus)retarget(this);
+    if(old!==this._focus)place(this,0);
     return result;
   };
   if(inputMode&&cursor)P.setInputMode=function(...args){
-    const old=this._input,wasOn=this._cur.on,result=inputMode.apply(this,args);
+    const old=this._input,result=inputMode.apply(this,args);
     // Input-mode callbacks can reflow the same focused element.
-    if(old!==this._input){
-      this._cur.targetEl=null;
-      // Mode changes precede navigation in the same input task. Do not spend
-      // its spring clock on the old item before logical selection changes.
-      retarget(this,false);
-      // A newly revealed ring has not painted yet. Keep native first-appearance
-      // snapping pending until navigation or the next animation-owner tick.
-      if(!wasOn&&this._cur.on)this._cur.snapNext=true;
-    }
+    if(old!==this._input){this._cur.targetEl=null;place(this,0);}
     return result;
+  };
+  // Screen ownership of input. show() changes the logical screen at once but
+  // a wiped transition (results→null/main, title→main…) mounts the next one
+  // only at the wipe's midpoint, and the following screen mounts while its
+  // items are still invisible (entrance animation). Taps kept landing on
+  // both: the closed results screen stayed live for ~0.4 s (a second tap
+  // could REMATCH after MAIN MENU), and a tap begun there — or an impatient
+  // tap on the not-yet-visible next screen — activated whatever item ended
+  // up under the finger (LOADOUT, ONLINE…). A pending screen is inert; a
+  // click needs a press that began on the same live screen, on a visible item.
+  const pending=m=>!!(m._scr&&m.current!==m._scr.name);
+  const closing=m=>{const el=m._scr?.el;if(!el||!pending(m))return;el.inert=true;el.style.pointerEvents='none';el.classList.add('is-closing');};
+  if(show)P.show=function(...args){const result=show.apply(this,args);closing(this);return result;};
+  if(nav)P._nav=function(dir){if(pending(this))return true;return nav.call(this,dir);};
+  const visibleItem=(t,root)=>{
+    let k=1;
+    for(let e=t.closest?.('[data-nav]')||t;e&&e!==root.parentNode;e=e.parentElement){
+      const o=+env.getComputedStyle?.(e)?.opacity;if(Number.isFinite(o))k*=o;
+      if(e===root)break;
+    }
+    return k>0.6;
+  };
+  const guardInput=m=>{
+    if(m._qualityInputGuard||!m.el?.addEventListener)return;
+    m._qualityInputGuard=true;
+    m.el.addEventListener('pointerdown',e=>{m._qualityPress={screen:m._scr?.el||null,target:e.target};},{capture:true,passive:true});
+    m.el.addEventListener('click',e=>{
+      const scr=m._scr;if(!scr?.el?.contains?.(e.target))return;
+      const press=m._qualityPress;m._qualityPress=null;
+      if(!pending(m)&&!scr.el.inert&&(!press||press.screen===scr.el)&&visibleItem(e.target,scr.el))return;
+      e.stopImmediatePropagation();e.preventDefault();
+    },true);
   };
   if(settings)P._scr_settings=function(...args){preparePreviewRoot(this.el,env);return settings.apply(this,args);};
   if(swap)P._swap=function(...args){
-    clearPreviewRoot(this.el);this._qualityCursorCredit=0;
+    clearPreviewRoot(this.el);guardInput(this);
     const result=swap.apply(this,args),r=ensure(this);
     if(active(this))r.arm();else stop(this,r);
     return result;
@@ -66,7 +81,6 @@ export function installMenuQuality(Menus, env=globalThis){
   function stop(m,r){
     if(m._raf){env.cancelAnimationFrame(m._raf);m._raf=0;}
     if(r?.timer!==null&&r?.timer!==undefined){env.clearTimeout(r.timer);r.timer=null;}
-    m._qualityCursorCredit=0;
   }
   if(loop)P._loop=function(t){
     if(retired.has(this)||this._platformDriven||!lifecycle.active||env.document?.hidden||!active(this)){stop(this,records.get(this));return;}
@@ -89,7 +103,7 @@ export function installMenuQuality(Menus, env=globalThis){
     r.arm=arm;
     r.off=lifecycle.subscribe({
       suspend(){stop(m,r);},
-      prepareResume(){stop(m,r);m._lastT=env.performance.now();m._extTick=-Infinity;m._qualityCursorAt=env.performance.now();},
+      prepareResume(){stop(m,r);m._lastT=env.performance.now();m._extTick=-Infinity;},
       resume:arm,
     });
     return r;
