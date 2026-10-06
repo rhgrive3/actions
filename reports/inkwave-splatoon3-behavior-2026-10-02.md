@@ -375,3 +375,20 @@ Baseline main: `ecfdd268f70bb7041f81138736b26e42306b630d`. The locked `inkwave-p
 | 確認状態 | `patches/reliability/tests/roller-contact-admission.test.mjs` の実 native Actor / WeaponRunner / Projectiles fixture: local rejected feedback・debounce・実 `Actor.update()` で保護が切れた後の140 damageを確認。Actor更新順を逆にした境界ケースと、accepted contact後の既存debounceも確認した。実 `NetMatch` fixtureではACKを落とし、厳密な0.5秒境界後のretry、transport不在中の消失sendからの回復、同一owner/lifeの遅延ACK、owner拒否の即時解除、同じlife packetの重複、life/owner変更とrunner resetを確認。ブラウザ実動作とSwitch Ver. 11.3.0実機比較は未実施。 |
 
 本家側の復活無敵の正確な長さ、ローラー本体接触の受付frame、実機でのnet遅延差は引き続き未確認である。ロジック fixture は実機比較の代わりとしない。
+
+
+## ローラー攻撃 glob の描画半径（#750、2026-10-06）
+
+描画サイズだけの差分。`CollisionParam` 由来の当たり判定、インク塗り、ダメージ、発生分布、初速、
+弾道・飛行・衝突のタイミングはいずれも変更していない。
+
+| 項目 | 内容 |
+|---|---|
+| 本家の根拠 | 固定 Splat Roller Ver. 11.3.0 パラメータ（[WeaponRollerNormal](https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json)）。`DrawSizeParam` は弾の描画サイズで、水平 `WideSwingUnitGroupParam` は主ユニット（BulletNum 12）と最近接 1 個ユニット（BulletNum 1）の両方が `InitRadius 0.30 / EndRadius 0.30`、垂直 `VerticalSwingUnitGroupParam` の 3 ユニットはすべて `InitRadius 0.36 / EndRadius 0.36`。垂直/水平の描画半径比は 0.36/0.30 = 1.2。`DrawSizeParam` は衝突・塗りとは別の項目 |
+| INKWAVE の実装箇所 | `patches/splatoon3/runtime/weapons-fidelity.mjs` の `setDrawRadius` / `rollerFlickDrawRadius`（ユニット選択を `flickUnitFor` に共通化）と `configureFidelityFlick`。同じ描画半径を共有するため、`patches/splatoon3/runtime/weapon-edgecases.mjs` の `appendRollerNearUnit` が最近接 1 個ユニットの `vis: .185` を固定表の 0.30 から読む。`inkwave-public/` は変更していない |
+| 再現操作 | 標準 Splat Roller で地上の水平攻撃を 1 回撃つ。修正前は 13 個の `p.vis` が 0.101〜0.197 にばらつき、中央付近が最も大きく両端が最も小さく、加えて各 glob に 0.03 のランダムが乗っていた。垂直 5 個も同じ勾配だった。修正後は水平 13 個が全て 0.30、垂直 5 個が全て 0.36 で、続けて撃った場合も同じ値になる |
+| プレイへの影響 | ローラーのインクシートの見え方のみ。水平で中央を強調し両端を小さくしていた表示と、縦横で同じ式を使っていた表示を、固定表の宣言値に一致させる。弾の個数・配置・速さ・当たり判定・塗りは従来通りで、描画サイズだけが表の値になる |
+| 確認状態 | **ロジック確認済み**（実 `Projectiles.fireFlick` + `configureFidelityFlick`、`_draw` の実描画式、変更前の乱数ストリーム・発生位置・初速・seed・当たり半径・衛星数・`Math.random()` 消費回数の指紋一致、mutation 検証）。**本家実機（Switch Ver.11.3.0）での映像・フレーム比較は未確認**。ロジック単独の測定を実機比較の代用にしない |
+
+`FourPetals*` の描画形状は別項目として未実装のまま残す。#619（Blaster 速度）、#206
+（remote Roller の垂直状態）は、それぞれ別所有者のため本件では触っていない。
