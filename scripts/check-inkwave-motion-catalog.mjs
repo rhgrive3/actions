@@ -27,6 +27,9 @@ export const CATALOG_MODULES = Object.freeze([
   ['face', 'faceMotionSnapshot', 'installFaceMotion'],
   ['carry', 'carryMotionSnapshot', 'installCarryMotion'],
 ]);
+// Charge now permits wall movement. Keep enough actual wall above the actor
+// to observe readiness and launch before cresting; the 3-unit wall ended mid-charge.
+export const CATALOG_WALL_HEIGHT = 6;
 // Fixed named denominators; shortening an action cannot silently skip its tail.
 export const CATALOG_SCENARIOS = Object.freeze([
   { name: 'carry-walk-fire-return', kind: 'shooter', frames: 240 },
@@ -260,7 +263,7 @@ export function validateCatalogResult(result) {
 
 // This function is serialized into the browser; all classes below are imported
 // from the immutable built graph, with no surrogate Actor, Runner or IK.
-async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout }) {
+async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout, wallHeight }) {
   const THREE = await import('three');
   const profile = await fetch(prefix + 'patches/splatoon3/profile.json').then(r => r.json());
   const { install } = await import(prefix + 'patches/splatoon3/runtime/install.mjs');
@@ -306,7 +309,7 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout 
   const gpu = { renderer: debug ? gl.getParameter(debug.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER), version: gl.getParameter(gl.VERSION), contextLost: gl.isContextLost(), pixelControls: { defaultDither, dither: gl.isEnabled(gl.DITHER), samples: pixelTarget.samples, target: 'explicit-srgb-rgba8' } };
   const ownedGeometries = new Set(), allMaterials = new Set(), fixtureTextures = new Set(), textureLabels = new Map();
   const floor = { id: 0, solid: true, center: new THREE.Vector3(0, -.5, 0), half: new THREE.Vector3(200, .5, 200), faces: [-1, -1, -1, -1, -1, -1], axes: [new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 1)], aabbMin: new THREE.Vector3(-200, -1, -200), aabbMax: new THREE.Vector3(200, 0, 200) };
-  const wall = { id: 1, solid: true, center: new THREE.Vector3(0, 1.5, -.7), half: new THREE.Vector3(3, 1.5, .2), faces: [0, 0, 0, 0, 0, 0], axes: floor.axes, aabbMin: new THREE.Vector3(-3, 0, -.9), aabbMax: new THREE.Vector3(3, 3, -.5) };
+  const wall = { id: 1, solid: true, center: new THREE.Vector3(0, wallHeight / 2, -.7), half: new THREE.Vector3(3, wallHeight / 2, .2), faces: [0, 0, 0, 0, 0, 0], axes: floor.axes, aabbMin: new THREE.Vector3(-3, 0, -.9), aabbMax: new THREE.Vector3(3, wallHeight, -.5) };
   const level = { blocks: [floor], faces: [{ origin: new THREE.Vector3(), u: new THREE.Vector3(1, 0, 0), v: new THREE.Vector3(0, 1, 0) }], groundHeight: () => 0, spawnPads: [new THREE.Vector3(), new THREE.Vector3(0, 0, 20)], pointInside: () => false, queryBlocks: (_a, _b, _c, _d, out) => { out.length = 0; out.push(...level.blocks.map(b => b.id)); return out; } };
   Object.assign(G, { scene, camera, renderer, settings: { quality: 'high', shadows: false }, mode: 'match', actors: [], time: 0, teamColors: [new THREE.Color('#ff8a14'), new THREE.Color('#2f5bff')], level, paint: { sample: () => 1, splat: () => 0 }, match: { playing: () => true, canRespawn: () => false }, physics: new Physics(level) });
   scene.add(new THREE.HemisphereLight(0xffffff, 0x667477, 2.2));
@@ -580,7 +583,7 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout 
           if (n === 'carry-walk-fire-return') { const speed = frame < 25 ? .15 : frame < 65 ? 1.2 : frame < 105 ? 5.76 : frame < 165 ? 2.4 : 0; horizontal(speed, frame >= 70 && frame < 90 ? 1 : 0, frame >= 70 && frame < 90 ? 0 : frame >= 90 && frame < 105 ? -1 : 1); input.fire = frame >= 105 && frame < 145; driver = 'Native Actor._horizontal input slew and _integrate/native floor, real Runner fire/release and _finishFrame; isolated arena, no whole-game update'; }
           if (n === 'ordinary-aimed-jump' || n === 'hard-landing-recovery') { if (!a.grounded) a._integrate(1 / 60, false, false); input.fire = n.includes('aimed') && frame < 100; }
           if (n === 'swim-turn-brake') { horizontal(frame < 115 ? 11 : 0, frame >= 45 && frame < 80 ? 1 : 0, frame >= 45 && frame < 80 ? 0 : frame >= 80 ? -1 : 1, true); driver = 'Native Actor._horizontal swim acceleration/turn/brake and _integrate/native own-ink floor; squid form/submerged diagnostic assignment; no full match'; }
-          if (n === 'wall-surge-ready-crest') { a.intent.jump = frame >= 20 && frame < 75; a._updateClimb(1 / 60, true); beforeActions(a, 1 / 60, false); a._integrate(1 / 60, true, false); }
+          if (n === 'wall-surge-ready-crest') { a.intent.jump = frame < 75; a._updateClimb(1 / 60, true); beforeActions(a, 1 / 60, false); a._integrate(1 / 60, true, false); }
           if (n === 'form-both-directions-interrupt') { if ([0, 70, 82].includes(frame)) { a.form = 'squid'; a.submerged = true; } if ([40, 76, 100].includes(frame)) { a.form = 'kid'; a.submerged = false; } input.fire = frame >= 100 && frame < 120; input.sub = frame >= 140 && frame < 155; }
           if (n === 'dualies-roll-lock-interrupt') { input.fire = frame < 145; if (frame === 0 || frame === 110) { a.intent.fire = true; if (!a.weaponRunner.tryDodge(new THREE.Vector3(1, 0, 0))) throw Error('Native dodge refused'); } if (a.weaponRunner.dodgeVel(a.vel)) a.pos.addScaledVector(a.vel, 1 / 60); else a.vel.set(0, 0, 0); input.sub = frame >= 115 && frame < 132; }
           if (n === 'roller-horizontal-push') { input.fire = frame < 125; input.firePressed = frame === 0; move(frame >= 45 && frame < 125 ? a.weapon.rollSpeed : 0); }
@@ -705,7 +708,7 @@ async function main() {
     });
     await page.goto('http://127.0.0.1:' + server.address().port + '/motion-catalog');
     await page.addScriptTag({ content: 'globalThis.catalogPixelDifference=' + pixelDifference.toString() + ';globalThis.catalogRenderFrames=' + catalogRenderFrames.toString() + ';' });
-    result = await page.evaluate(runCatalog, { prefix, contentHash: manifest.contentHash, scenarios: CATALOG_SCENARIOS, modules: CATALOG_MODULES, footLayout });
+    result = await page.evaluate(runCatalog, { prefix, contentHash: manifest.contentHash, scenarios: CATALOG_SCENARIOS, modules: CATALOG_MODULES, footLayout, wallHeight: CATALOG_WALL_HEIGHT });
     // finally executes after the returned object was built; fetch its cleanup
     // snapshot explicitly so a missing cleanup cannot pass as a successful run.
     result.cleanup = await page.evaluate(() => globalThis.catalogPartial?.cleanup || null);
