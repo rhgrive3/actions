@@ -46,7 +46,7 @@ export function installFinalDamage({Actor, Projectiles}) {
   Projectiles.prototype.applyHit=function(attacker,victim,amount,weaponId,group=null){
     const previous=victim.s3PendingHitGroup;
     victim.s3PendingHitGroup=Number.isSafeInteger(group)&&group>0?group:null;
-    try{return hit.call(this,attacker,victim,amount,weaponId);}
+    try{return hit.call(this,attacker,victim,amount,weaponId,group);}
     finally{victim.s3PendingHitGroup=previous;}
   };
 }

@@ -16,9 +16,9 @@ const golden = {
   'dualies-normal':[12.3,11.5,12.625,1],
   'dualies-post':[12.3,11.5,12.625,1],
   blaster:[13.5,10.8,11.875,1],
-  'splatling-partial':[14.1,13.5,15.125,1],
-  'splatling-first':[19.4,18.6,20.375,1],
-  'splatling-full':[19.4,18.6,20.375,1],
+  'splatling-partial':[14.8,14.1,15.625,1],
+  'splatling-first':[20.2,19.4,21.125,1],
+  'splatling-full':[20.2,19.4,21.125,1],
   'charger-0':[9.8,9.8,13.375,0],
   'charger-0.25':[13.5,13.5,16.625,0],
   'charger-0.5':[17.3,17.3,20.125,0],
@@ -52,13 +52,15 @@ for (const key of ['shooter','roller-horizontal','roller-vertical']) {
   f.G.netm=network; launch(f,a,c); const locals=[...f.projectiles.list], packets=network.out;
   assert.equal(packets.length,locals.length,key);
   for (const [i,p] of packets.entries()) {
-    assert.equal(p.length,33,key+' complete packet shape');
-    assert.equal(p[27],locals[i].s3Vertical?1:0,key+' birth mode');
-    assert.equal(p[28],locals[i].seed,key+' appearance seed');
-    assert.equal(p[29],locals[i]._netId,key+' projectile identity');
-    assert.equal(p[30],locals[i].fidelityRollerUnitIndex ?? -1,key+' immutable roller unit');
-    assert.equal(p[31],Math.round((f.G.time||0)*60),key+' owner tick');
-    assert.equal(p[32],i+1,key+' event sequence');
+    assert.equal(p.length,35,key+' complete packet shape');
+    assert.equal(p[27],0,key+' ordinary projectile volley index');
+    assert.equal(p[28],0,key+' ordinary projectile action index');
+    assert.equal(p[29],locals[i].s3Vertical?1:0,key+' birth mode');
+    assert.equal(p[30],locals[i].seed,key+' appearance seed');
+    assert.equal(p[31],locals[i]._netId,key+' projectile identity');
+    assert.equal(p[32],locals[i].fidelityRollerUnitIndex ?? -1,key+' immutable roller unit');
+    assert.equal(p[33],Math.round((f.G.time||0)*60),key+' owner tick');
+    assert.equal(p[34],i+1,key+' event sequence');
   }
   const ghost=f.make(c.id,{name:'remote'}); ghost.remote=true; f.projectiles.list.length=0;
   packets.forEach(e=>f.projectiles.ghostProjectile(ghost,e)); const ghosts=[...f.projectiles.list];
@@ -259,7 +261,7 @@ assert.equal(ghostDualies.f.paints.length,0,'ghost Dualies wall-drop cannot muta
   f.wall(4,{height:8});
   const a=f.make('blaster'); a.nid=42; a.aimPoint.set(0,1.05,20);
   const packets=[];
-  const recorder={mute:0,_rec:e=>packets.push([0,...e]),recProj:f.NetMatch.prototype.recProj,recSplat(){},shouldApplyHit:f.NetMatch.prototype.shouldApplyHit};
+  const recorder={mute:0,out:packets,_rec:f.NetMatch.prototype._rec,recProj:f.NetMatch.prototype.recProj,recSplat(){},shouldApplyHit:f.NetMatch.prototype.shouldApplyHit};
   f.G.netm=recorder;
   f.projectiles.fireBlaster(a,a.weapon,0);
   assert.equal(packets.length,1,'Blaster birth packet recorded');

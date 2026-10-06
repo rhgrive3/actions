@@ -219,9 +219,9 @@ export async function checkHudAuthority({ page, evidence, sourceSha = null, cont
       const {MobileInput}=await import(new URL('src/core/mobile.js',document.baseURI).href);
       const g=G.game,a=g.match.local,original=g.input.mobile;
       const m=original.root?original:new MobileInput(original.canvas,g.input);
-      const saved={original,m,created:m!==original,device:g.input.lastDevice,special:a.special,active:a.specialActive,visible:m.visible,touch:document.documentElement.classList.contains('iw-touch-ui')};
+      const saved={original,m,created:m!==original,inputActive:m.active,device:g.input.lastDevice,special:a.special,active:a.specialActive,visible:m.visible,touch:document.documentElement.classList.contains('iw-touch-ui')};
       globalThis.__hudTouchFixture=saved;
-      if(!m.active){m.active=true;m._install();}
+      m.active=true;if(!m.root)m._install();
       g.input.mobile=m;g.input.lastDevice='touch';document.documentElement.classList.add('iw-touch-ui');m.setVisible(true);
       if(resumeForTouch)g.resume();
       const rows=[];
@@ -251,7 +251,7 @@ export async function checkHudAuthority({ page, evidence, sourceSha = null, cont
       const s=globalThis.__hudTouchFixture;if(!s)return;
       const {G}=await import(new URL('src/core/ctx.js',document.baseURI).href);
       G.game.input.mobile=s.original;G.game.input.lastDevice=s.device;G.game.match.local.special=s.special;G.game.match.local.specialActive=s.active;
-      if(s.created)s.m.destroy();else s.m.setVisible(s.visible);
+      if(s.created)s.m.destroy();else {s.m.active=s.inputActive;s.m.setVisible(s.visible);}
       document.documentElement.classList.toggle('iw-touch-ui',s.touch);G.game._updateHud(1/60);delete globalThis.__hudTouchFixture;
     });
     if(viewport)await page.setViewportSize(viewport);

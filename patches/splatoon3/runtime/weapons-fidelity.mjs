@@ -812,10 +812,9 @@ export function installWeaponsFidelity(context,profile) {
   };
   const fireSpin=Projectiles.prototype.fireSplatling;
   Projectiles.prototype.fireSplatling=function(actor,w,spread){
-    let speed=splatlingLaunchSpeed(w,actor.weaponRunner.fidelitySplatlingCharge??actor.weaponRunner.charge??0);
-    const rate=rawWeapon(w).MoveParam.SpawnSpeedRandomRate;
-    // Bounds are extracted. Uniform law is an explicit model; native bias law is unknown.
-    speed*=1+(Math.random()*2-1)*rate;
+    // Charge selects the deterministic base. The dedicated Splatling _fireRound
+    // owner applies the sourced absolute speed sampling once, before recording.
+    const speed=splatlingLaunchSpeed(w,actor.weaponRunner.fidelitySplatlingCharge??actor.weaponRunner.charge??0);
     return fireSpin.call(this,actor,{...w,projSpeed:speed},spread);
   };
   // Boss and player hits share the same weapon damage envelope. The old native

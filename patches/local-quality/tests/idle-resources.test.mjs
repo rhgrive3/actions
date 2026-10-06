@@ -105,7 +105,7 @@ test('actual composed Game._frame skips only offline paused world; UI/net/input 
     env:{theme:'day',update:count('env')},fx:{update:count('fx')},projectiles:{updateArc:count('arc')},paint:{flush:count('paint')},camera:{position:vector,up:vector}};
   const Frame=new Function('syncPortraitFrame','G','runSimulation','pausedWorldFrame','idleAttractMenuBudget','performance','damp','clamp','THREE',
     'return class Frame {\n'+source.slice(start,end)+'\n}')
-  const Frame=new Function('syncPortraitFrame','G','runSimulation','pausedWorldFrame','idleAttractMenuBudget','performance','damp','clamp','THREE',
+    (syncPortraitFrame,G,count('simulation'),pausedWorldFrame,idleAttractMenuBudget,performance,(a,b)=>b,x=>x,{});
   const f=new Frame();f.settings={quality:'high'};f.match={paused:true,attract:false,state:'playing',local:null};
   f.showcase={fullFrame:false,mode:null,update:count('showcase'),render:count('showcaseRender')};
   f.R={render:count('worldRender'),grade:{uniforms:{uHurt:{value:0}}}};f.decor={update:count('decor')};f.props={update:count('props')};

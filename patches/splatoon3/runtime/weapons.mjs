@@ -534,7 +534,10 @@ export function installWeapons(context, profile) {
   installWeaponEdgecases(api);
   const applyHit = Projectiles.prototype.applyHit;
   Projectiles.prototype.applyHit = function (attacker, victim, damage, weaponId, groupId) {
-    if (groupId == null) return applyHit.call(this, attacker, victim, damage, weaponId);
+    // Only Slosher wire hits carry a cumulative volley maximum. Other families
+    // already supply incremental damage; preserve their group for final rounding.
+    if (groupId == null || api.WEAPONS?.[weaponId]?.kind !== 'slosher')
+      return applyHit.call(this, attacker, victim, damage, weaponId, groupId);
     const route = G.netm?.shouldApplyHit?.(attacker, victim);
     if (route === 'send' || route === 'drop') return applyHit.call(this, attacker, victim, damage, weaponId, groupId);
     const groups = this._s3SlosherOwnerGroups || (this._s3SlosherOwnerGroups = new Map());

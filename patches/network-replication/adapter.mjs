@@ -235,6 +235,10 @@ function retireNetworkGhosts(owner = null) {
 `;
   }
   if (rel === 'src/game/weapons.js') {
+    patch('  applyHit(attacker, victim, dmg, weaponId) {',
+      '  applyHit(attacker, victim, dmg, weaponId, slosherVolleyId) {', 'Slosher volley identity projectile entry');
+    patch('nm.sendHit(attacker, victim, dmg, weaponId);',
+      'nm.sendHit(attacker, victim, dmg, weaponId, slosherVolleyId);', 'Slosher volley identity projectile forwarding');
     patch("    const route = nm ? nm.shouldApplyHit(attacker, victim) : 'local';",
       "    const route = nm ? nm.shouldApplyHit(attacker, victim, weaponId) : 'local';", 'pass weapon to damage authority');
     patch('    const c = b.pos;\n    let area = G.paint.splat',

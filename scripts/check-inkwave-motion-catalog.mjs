@@ -37,12 +37,14 @@ const CATALOG_PROFILE = JSON.parse(fs.readFileSync(path.join(CATALOG_ROOT, 'patc
 // advance, so the takeoff sample sits one frame before the derived call count.
 // Derive it; never hardcode a boundary that a profile change would invalidate.
 const SUPERJUMP_TAKEOFF = Math.round((CATALOG_PROFILE.superJump.chargeTime + CATALOG_PROFILE.superJump.startupHumanoidF / 60) * 60) - 1;
+// Release on the current AP0 readiness boundary, before slow charge-climb crests the fixture wall.
+const SURGE_RELEASE_FRAME = Math.round(CATALOG_PROFILE.movement.surge.chargeTime * 60);
 export const CATALOG_SCENARIOS = Object.freeze([
   { name: 'carry-walk-fire-return', kind: 'shooter', frames: 240 },
   { name: 'ordinary-aimed-jump', kind: 'shooter', frames: 180, probes: [23, 38] },
   { name: 'hard-landing-recovery', kind: 'shooter', frames: 120 },
   { name: 'swim-turn-brake', kind: 'shooter', frames: 180 },
-  { name: 'wall-surge-ready-crest', kind: 'shooter', frames: 180, probes: [64, 65, 74, 75, 80, 100] },
+  { name: 'wall-surge-ready-crest', kind: 'shooter', frames: 180, surgeReleaseFrame: SURGE_RELEASE_FRAME, probes: [SURGE_RELEASE_FRAME - 1, SURGE_RELEASE_FRAME, 64, 65, 74, 75, 80, 100] },
   { name: 'form-both-directions-interrupt', kind: 'shooter', frames: 180, probes: [76, 82, 100, 145] },
   { name: 'dualies-roll-lock-interrupt', kind: 'dualies', frames: 240, probes: [110, 115, 125, 132, 155, 164, 190, 195, 198, 210] },
   { name: 'roller-horizontal-push', kind: 'roller', frames: 180, probes: [17, 125] },
@@ -55,8 +57,8 @@ export const CATALOG_SCENARIOS = Object.freeze([
   { name: 'hit-spawn-reset', kind: 'shooter', frames: 300, probes: [20, 246, 250, 280] },
   { name: 'quiet-idle-held-sub', kind: 'shooter', frames: 180, probes: [55, 100] },
   ...[0, 1, 2].map(variant => ({ name: 'victory-fade-lobby-' + variant, kind: 'shooter', frames: 360, variant, probes: [240, 279, 280, 290, 310] })),
-  { name: 'native-slam-phases', kind: 'shooter', frames: 180, probes: [33, 49, 54, 79, 133] },
-  { name: 'native-storm-deploy', kind: 'charger', frames: 120 },
+  { name: 'native-slam-phases', kind: 'shooter', nativeSpecial: 'slam', frames: 180, probes: [33, 49, 54, 79, 133] },
+  { name: 'native-storm-deploy', kind: 'charger', nativeSpecial: 'storm', frames: 120 },
   { name: 'gaze-face-actions', kind: 'shooter', frames: 180 },
   { name: 'lifecycle-interruptions', kind: 'shooter', frames: 180, probes: [105, 119, 135, 140, 145, 150, 165] },
   { name: 'nullable-preview', kind: 'shooter', frames: 90 },
@@ -682,14 +684,14 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout,
         if (scenario.name.startsWith('superjump-')) { const d = scenario.name.slice(10), target = d === 'short' ? new THREE.Vector3(1, 0, 0) : d === 'vertical' ? new THREE.Vector3(0, 0, 0) : new THREE.Vector3(40, 0, 15); if (!a.superJump(target)) throw Error('Native superjump refused'); driver = drivers.superjump; }
         if (scenario.name.startsWith('squidroll-')) { a.form = 'squid'; a.submerged = true; for (let i = 0; i < 35; i++) step(); a.vel.set(0, 0, 11); a.intent.move.set(0, 0, -1); if (!beforeActions(a, 0, true)) throw Error('Native roll refused'); }
         if (scenario.name.startsWith('victory-')) { ch.setDance('victory'); ch.danceVar = scenario.variant; }
-        if (scenario.name.startsWith('native-')) { frame = 0; a.special = a.specialCost(); a._startSpecial(); driver = drivers.special; }
+        if (scenario.name.startsWith('native-')) { if (!['slam', 'storm'].includes(scenario.nativeSpecial)) throw Error('Missing catalog native special owner'); frame = 0; a.weapon = { ...a.weapon, special: scenario.nativeSpecial }; a.special = a.specialCost(); a._startSpecial(); driver = drivers.special; }
         if (scenario.name === 'roller-vertical-land') { a.grounded = false; a.pos.y = .4; a.vel.y = 7; driver = drivers.physics; }
         const runFrame = () => {
           const n = scenario.name, input = {};
           if (n === 'carry-walk-fire-return') { const speed = frame < 25 ? .15 : frame < 65 ? 1.2 : frame < 105 ? 5.76 : frame < 165 ? 2.4 : 0; horizontal(speed, frame >= 70 && frame < 90 ? 1 : 0, frame >= 70 && frame < 90 ? 0 : frame >= 90 && frame < 105 ? -1 : 1); input.fire = frame >= 105 && frame < 145; driver = 'Native Actor._horizontal input slew and _integrate/native floor, real Runner fire/release and _finishFrame; isolated arena, no whole-game update'; }
           if (n === 'ordinary-aimed-jump' || n === 'hard-landing-recovery') { if (!a.grounded) a._integrate(1 / 60, false, false); input.fire = n.includes('aimed') && frame < 100; }
           if (n === 'swim-turn-brake') { horizontal(frame < 115 ? 11 : 0, frame >= 45 && frame < 80 ? 1 : 0, frame >= 45 && frame < 80 ? 0 : frame >= 80 ? -1 : 1, true); driver = 'Native Actor._horizontal swim acceleration/turn/brake and _integrate/native own-ink floor; squid form/submerged diagnostic assignment; no full match'; }
-          if (n === 'wall-surge-ready-crest') { a.intent.jump = frame < 75; a._updateClimb(1 / 60, true); beforeActions(a, 1 / 60, false); a._integrate(1 / 60, true, false); }
+          if (n === 'wall-surge-ready-crest') { a.intent.jump = frame < scenario.surgeReleaseFrame; a._updateClimb(1 / 60, true); beforeActions(a, 1 / 60, false); a._integrate(1 / 60, true, false); }
           if (n === 'form-both-directions-interrupt') { if ([0, 70, 82].includes(frame)) { a.form = 'squid'; a.submerged = true; } if ([40, 76, 100].includes(frame)) { a.form = 'kid'; a.submerged = false; } input.fire = frame >= 100 && frame < 120; input.sub = frame >= 140 && frame < 155; }
           if (n === 'dualies-roll-lock-interrupt') Object.assign(input, globalThis.catalogDualiesInput(frame, a, ch, THREE));
           if (n === 'roller-horizontal-push') { input.fire = frame < 125; input.firePressed = frame === 0; move(frame >= 45 && frame < 125 ? a.weapon.rollSpeed : 0); }
@@ -700,7 +702,7 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout,
           if (n === 'quiet-idle-held-sub') { input.sub = frame >= 40 && frame < 100; input.subReleased = frame === 100; if (frame === 55) { ch.fidget = 4; ch.fidgetT = 0; } }
           if (n.startsWith('victory-')) { if (frame === 280) ch.setDance(null); if (frame === 310) ch.setDance('lobby_pose'); }
           if (n === 'native-storm-deploy') { input.sub = frame >= 8 && frame < 12; input.stormTick = true; }
-          else if (n.startsWith('native-')) { if (a.specialActive) a._updateSpecial(1 / 60); if (n === 'native-slam-phases') move(2.4); }
+          else if (n.startsWith('native-')) { if (a.specialActive) a._updateSpecial(1 / 60); if (n === 'native-slam-phases' && !a.specialActive) move(2.4); }
           if (n === 'gaze-face-actions') { input.fire = frame < 40; input.sub = frame >= 55 && frame < 85; input.subReleased = frame === 85; a.aimDir.set(.08, .05, 1).normalize(); a.aimPoint.copy(a.pos).add(new THREE.Vector3(.5, 1.3, 8)); if (frame === 100) { a.damage(10, null); ch._blink(true); } if (frame === 140) ch.trigger('wink'); }
           if (n === 'lifecycle-interruptions') { input.fire = frame < 15; if (frame === 20) { a.form = 'squid'; transitions.push('form'); } if (frame === 40) a.form = 'kid'; input.sub = frame >= 50 && frame < 65; if (frame === 50) transitions.push('sub'); if (frame === 75) { ch.setDance('victory'); transitions.push('dance'); } if (frame === 90) { a.reset(); a.grounded = true; transitions.push('reset'); } if (frame === 105) { a.splat(); transitions.push('death'); } if (frame === 120) { a.spawnAt(new THREE.Vector3(), 0); } if (frame === 135) { ch.setVisible(false); transitions.push('hide'); } if (frame === 145) ch.setVisible(true); if (frame === 150) { a.setWeapon('charger'); transitions.push('weapon'); } if (frame === 165) a.setWeapon('shooter'); }
           if (scenario.hz) { move(frame < 40 ? 2.4 : 0); input.fire = frame >= 20 && frame < 35; }

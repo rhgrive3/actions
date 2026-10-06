@@ -379,7 +379,10 @@ try {
           hud=new HUD();hud._local=()=>a;hud._beaconTargets=()=>[{ok:true,actor:ally}];hud._jumpTo(0);
           const hudQueued=c.pendingRespawnJump?.actor===ally&&!a.superJumpState;
           c.pendingRespawnJump=null;
-          Object.defineProperty(navigator,'getGamepads',{configurable:true,value:()=>[pad]});input.pollPad();
+          Object.defineProperty(navigator,'getGamepads',{configurable:true,value:()=>[pad]});
+          // Reconnected pads require neutral before this fixture establishes a held-axis owner.
+          const heldAxes = pad.axes; pad.axes = [0,0,0,0]; input.pollPad();
+          pad.axes = heldAxes; input.pollPad();
           dio=new DioramaOverlay(document.body);dio.on=true;dio.k=1;dio.pins[0].target=ally;
           dio.pins[0].el.dispatchEvent(new PointerEvent('pointerdown',{pointerType:'touch',bubbles:true,cancelable:true}));
           const dioramaQueued=c.pendingRespawnJump?.actor===ally&&!a.superJumpState;
