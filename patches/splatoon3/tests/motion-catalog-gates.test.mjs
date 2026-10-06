@@ -6,12 +6,13 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import { CATALOG_MODULES, CATALOG_SCENARIOS, catalogRenderFrames, validateCatalogResult, catalogStoragePath, catalogInputPath, validateCatalogInputReceipts, catalogFootLayout } from '../../../scripts/check-inkwave-motion-catalog.mjs';
+import { CATALOG_MODULES, CATALOG_SCENARIOS, catalogRenderFrames, validateCatalogResult, validateCatalogReceipts, validateDeathCameraInstallSources, catalogStoragePath, catalogInputPath, validateCatalogInputReceipts, catalogFootLayout } from '../../../scripts/check-inkwave-motion-catalog.mjs';
 
 const hash = 'a'.repeat(64), pixel = { pixels: 960 * 720, changedPixels: 30, totalRgbDifference: 1000, maxChannelDifference: 100 };
 function gateFixture() {
-  const files = [...CATALOG_MODULES.map(([id]) => 'patches/splatoon3/runtime/' + id + '-motion.mjs'), 'patches/splatoon3/runtime/install.mjs', 'patches/splatoon3/runtime/walk.mjs', 'src/game/actor.js', 'src/game/character.js', 'src/game/weapons.js', 'src/game/physics.js'];
-  const artifacts = Object.fromEntries(files.map(file => ['_versions/fixture/' + file, hash]));
+  const files = [...CATALOG_MODULES.map(([id]) => 'patches/splatoon3/runtime/' + id + '-motion.mjs'), 'patches/splatoon3/runtime/install.mjs', 'patches/splatoon3/runtime/render.mjs', 'patches/splatoon3/runtime/death-camera.mjs', 'patches/splatoon3/runtime/walk.mjs', 'src/game/actor.js', 'src/game/character.js', 'src/game/weapons.js', 'src/game/physics.js'];
+  const sourceHashes = new Map(['patches/splatoon3/runtime/install.mjs', 'patches/splatoon3/runtime/render.mjs'].map(file => [file, crypto.createHash('sha256').update(fs.readFileSync(path.join(process.cwd(), file))).digest('hex')]));
+  const artifacts = Object.fromEntries(files.map(file => ['_versions/fixture/' + file, sourceHashes.get(file) || hash]));
   const data = CATALOG_SCENARIOS.map(scenario => {
     const samples = Array.from({ length: scenario.frames }, (_, frame) => ({ frame, visible: true, grounded: true, visualGameplayInvariant: true, root: [0, 0, 0], velocity: [0, 0, 0], hp: 90, kidScale: 1, walkActive: true, pose: { length: 150, minimum: -1, maximum: 1, l1: 50 }, ik: [0, 0, 0, 0], hands: { left: [0, 1, 0], right: [0, 1, 0] }, grip: { left: { held: true, gap: .001, weight: 1, explicitTarget: 0, swapped: 0 }, right: { held: true, gap: .001, weight: 1, explicitTarget: 0, swapped: 0 } }, feet: [0, 1].map(() => ({ planted: true, contactEpoch: 1, contactWeight: 1, actual: [0, .1, 0], expected: [0, .1, 0], contact: [0, 0, 0], normal: [0, 1, 0], error: 0, drift: 0 })), snapshots: Object.fromEntries(CATALOG_MODULES.map(([id]) => [id, null])) }));
     const renders = catalogRenderFrames(scenario).map(frame => ({ frame, tick: scenario.hz ? Math.min(scenario.frames - 1, Math.floor((frame + 1) * 60 / scenario.hz) - 1) : frame, visible: true, shaderErrors: 0, programs: [{ linked: true, vertexCompiled: true, fragmentCompiled: true }], materials: [{ type: 'fabricated gate material', linked: true, vertexCompiled: true, fragmentCompiled: true }], rig: { ...pixel }, image: 'fixture.png', hiddenImage: 'fixture-hidden.png', geometry: { indexedVertices: 300, triangles: 100, skinnedVertices: 300, meshes: 1, min: [0, 0, 0], max: [1, 1, 1] } }));
@@ -42,9 +43,30 @@ function gateFixture() {
     for (const r of renders) if (!samples[r.tick].visible) { r.visible = false; r.rig.changedPixels = r.rig.totalRgbDifference = r.rig.maxChannelDifference = 0; }
     return row;
   });
-  return { schema: 1, source: 'built-production-native', installCalls: 1, contentHash: crypto.createHash('sha256').update(JSON.stringify(artifacts)).digest('hex'), artifacts, loaded: Object.entries(artifacts).map(([file, sha256]) => ({ file, sha256, bytes: 100 })), images: ['fixture.png', 'fixture-hidden.png', 'fixture-sheet.png'].map(file => ({ file, sha256: hash, bytes: 100 })), errors: [], gpu: { renderer: 'fabricated gate string, never GPU evidence', contextLost: false, pixelControls: {dither:false,samples:0,target:'explicit-srgb-rgba8'} }, duplicateRealm: { modules: CATALOG_MODULES.length, unchanged: true }, data, previewRates: [30, 60, 120].map(hz => ({ hz, frames: hz, finite: true })), cleanup: { rendererDisposed: true, domRemoved: true, geometries: 0, textures: 0, fixtureTextureDisposals:[{labels:['compiled-uniform.dfgLUT'],wasLive:true,remainsLive:false}] } };
+  const loaded = Object.entries(artifacts).filter(([file]) => !file.endsWith('/patches/splatoon3/runtime/death-camera.mjs')).map(([file, sha256]) => ({ file, sha256, bytes: 100 }));
+  return { schema: 1, source: 'built-production-native', installCalls: 1, contentHash: crypto.createHash('sha256').update(JSON.stringify(artifacts)).digest('hex'), artifacts, loaded, images: ['fixture.png', 'fixture-hidden.png', 'fixture-sheet.png'].map(file => ({ file, sha256: hash, bytes: 100 })), errors: [], gpu: { renderer: 'fabricated gate string, never GPU evidence', contextLost: false, pixelControls: {dither:false,samples:0,target:'explicit-srgb-rgba8'} }, duplicateRealm: { modules: CATALOG_MODULES.length, unchanged: true }, data, previewRates: [30, 60, 120].map(hz => ({ hz, frames: hz, finite: true })), cleanup: { rendererDisposed: true, domRemoved: true, geometries: 0, textures: 0, fixtureTextureDisposals:[{labels:['compiled-uniform.dfgLUT'],wasLive:true,remainsLive:false}] } };
 }
 test('synthetic gate schema can exercise every acceptance branch; this proves no motion or GPU output', () => assert.equal(validateCatalogResult(gateFixture()).length, CATALOG_SCENARIOS.length));
+test('installed death-camera catalog edge uses render implementation and install call', () => {
+  const result = gateFixture();
+  const manifest = { contentHash: result.contentHash, artifacts: result.artifacts };
+  const renderFile = Object.keys(result.artifacts).find(file => file.endsWith('/patches/splatoon3/runtime/render.mjs'));
+  const facadeFile = Object.keys(result.artifacts).find(file => file.endsWith('/patches/splatoon3/runtime/death-camera.mjs'));
+  assert.ok(result.loaded.some(receipt => receipt.file === renderFile));
+  assert.ok(result.loaded.some(receipt => receipt.file.endsWith('/patches/splatoon3/runtime/install.mjs')));
+  assert.equal(result.loaded.some(receipt => receipt.file === facadeFile), false);
+  assert.doesNotThrow(() => validateCatalogReceipts(manifest, result.loaded));
+
+  const renderSource = fs.readFileSync(path.join(process.cwd(), 'patches/splatoon3/runtime/render.mjs'), 'utf8');
+  const installSource = fs.readFileSync(path.join(process.cwd(), 'patches/splatoon3/runtime/install.mjs'), 'utf8');
+  assert.doesNotThrow(() => validateDeathCameraInstallSources(renderSource, installSource));
+  assert.throws(() => validateDeathCameraInstallSources(renderSource, installSource.replace('installDeathCamera(api);', '')), /death-camera install call/);
+
+  const missingRender = { ...manifest, artifacts: { ...manifest.artifacts } };
+  delete missingRender.artifacts[renderFile];
+  missingRender.contentHash = crypto.createHash('sha256').update(JSON.stringify(missingRender.artifacts)).digest('hex');
+  assert.throws(() => validateCatalogReceipts(missingRender, result.loaded.filter(receipt => receipt.file !== renderFile)), /missing-module manifest patches\/splatoon3\/runtime\/render\.mjs/);
+});
 for (const [name, mutate, pattern] of [
   ['missing scenario', r => r.data.pop(), /scenario denominator/],
   ['missing frame', r => r.data[0].samples.pop(), /frame denominator/],
