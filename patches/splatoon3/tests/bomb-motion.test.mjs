@@ -5,7 +5,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { adaptSource } from '../adapter.mjs';
-import { ARC_PREVIEW_MIN_INTERVAL_S } from '../runtime/arc-preview-performance.mjs';
+import { ARC_PREVIEW_MIN_INTERVAL_S } from '../runtime/weapons.mjs';
 
 // The complete production installer and adapter run once in one VM. Duplicate
 // installers are exercised separately and must retain the original registry.
