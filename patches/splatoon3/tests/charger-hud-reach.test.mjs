@@ -205,6 +205,22 @@ test('#858 Splatling HUD reach follows the released charge snapshot and expires 
   assert.ok(Math.abs(firstReach - higherFlight) < 1e-9, 'higher charge keeps the first-circle launch-speed cap');
   assert.equal(P.splatlingReach(a.weapon, NaN), lowReach, 'invalid charge uses the deterministic minimum');
 
+  const guideProjectile=P._s3SplatlingReachProjectile, advance=guideProjectile.pos.addScaledVector;
+  let guideSteps=0;
+  guideProjectile.pos.addScaledVector=function(...args){guideSteps++;return advance.apply(this,args);};
+  try {
+    const births=P.list.length;
+    for(let i=0;i<60;i++)assert.equal(P.splatlingReach(a.weapon,0),lowReach);
+    assert.equal(guideSteps,0,'steady charge reuses the exact nominal flight result');
+    assert.equal(P.list.length,births,'HUD reach does not emit gameplay projectiles');
+    assert.equal(P.splatlingReach(a.weapon,circle),firstReach);
+    assert.ok(guideSteps>0,'changed charge recomputes the installed flight');
+    guideSteps=0;
+    const changed={...a.weapon,straightTime:a.weapon.straightTime+STEP};
+    assert.ok(Number.isFinite(P.splatlingReach(changed,circle)));
+    assert.ok(guideSteps>0,'changed flight inputs invalidate the memoized result');
+  } finally {guideProjectile.pos.addScaledVector=advance;}
+
   const main = await mainBoot(), baseline = main.make('splatling');
   assert.equal(main.inRange(baseline, 0, mid), true, 'baseline fixed w.range reports this target in range at low charge');
   assert.equal(main.inRange(baseline, circle, mid), true, 'baseline fixed w.range gives the same result at first circle');

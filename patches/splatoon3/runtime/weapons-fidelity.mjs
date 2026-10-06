@@ -433,7 +433,15 @@ export function installWeaponsFidelity(context,profile) {
     const p=this._s3SplatlingReachProjectile||(this._s3SplatlingReachProjectile={
       pos:new THREE.Vector3(),prev:new THREE.Vector3(),start:new THREE.Vector3(),vel:new THREE.Vector3()
     });
-    return simulateSplatlingReach(p,weapon,charge,initializeSplatlingFlight);
+    const speed=splatlingLaunchSpeed(weapon,Number.isFinite(charge)?charge:0);
+    // Installed movement records are immutable. These are the remaining inputs
+    // to the nominal flight; steady charge must not replay 72 frames per HUD tick.
+    if(p.reachWeaponId===weapon.id&&p.reachSpeed===speed&&p.reachStraight===weapon.straightTime&&
+       p.reachGravity===weapon.referenceGravity&&p.reachValue!==undefined)return p.reachValue;
+    const reach=simulateSplatlingReach(p,weapon,charge,initializeSplatlingFlight);
+    p.reachWeaponId=weapon.id;p.reachSpeed=speed;p.reachStraight=weapon.straightTime;
+    p.reachGravity=weapon.referenceGravity;p.reachValue=reach;
+    return reach;
   };
   const fresh=Projectiles.prototype._new,push=Projectiles.prototype._push,ghost=Projectiles.prototype.ghostProjectile,clear=Projectiles.prototype.clear;
   Projectiles.prototype.clear=function(...args){const result=clear.apply(this,args);this._fidelityCollision=null;this._fidelitySloshContext=null;return result;};
