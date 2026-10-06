@@ -38,3 +38,13 @@ The same run's UI job `112057077539` passed touch layout (6 engine/viewport case
 ### New-main composition after the first CI
 
 Only the already-merged PR764 input-policy delta was inherited before the corrected CI. Main764 plus both UI roots passes 60 focused source checks including the existing intro lifetime and relevant gyro/pad boundaries; quality is 175 passed with two existing optional skips. The one rebuilt combined site passes the 24 UI emitted checks and the existing input-policy emitted composite case. The UI production adapter bytes are unchanged; the new content hash reflects the inherited main runtime. No source PR or extra root was added.
+
+## Fixed PR766 stack for final merge order
+
+The parent fixed the merge order to PR766 then this UI batch. PR766 is pinned to public `213d0b6ce8b17755cba6ed16ddf6b5ee8abea985`, tree `b5a419cbb70bc34f76751eed5649c4a06af814c9`, local equivalent `470a3fd4100c5c9fc6e118a5fefecdde8e197200`. Its three-file #723 bomb-contact correction is an inherited base dependency, not an added UI root or a duplicate claim. The UI delta against that fixed tree remains 11 files.
+
+The final stack passes 35 focused source and 35 authentic emitted checks (24 UI/verifier plus 11 inherited bomb-contact cases) with content `b4ef7460511ef30ea7f3e6a8d48cc8c4456f7b5c864beced2a95d73bf2e5180e`, 145 preloads. Earlier source/input-policy and quality evidence is retained above; the final stacked source still requires its own CI receipt.
+
+The corrected a399-based run `37399241288` completed all seven jobs successfully. Its UI and active receipts both bind merge source `a80a5032c8de681e73b61e9639c79ed960bf8f71` to content `4324b94cffa4c673f7a51fea0e7fc6d0efa4cc5c5afe7e73896baf3f2b7aa990`. The newly added active-game probe passed, including its eight PNG capture calls. The official artifact `11385201545` ZIP digest is `2ea3916f08a7b54f07519577e93a6043e066f05fbf22512f61cc250aa8c982c7`.
+
+Manual PNG inspection from that run is **not complete**: the official artifact tool returned a download reference, but reading that temporary delivery URL returned HTTP 403 (`error code: 1010`) while its signature was still valid. A metadata/body check confirmed the same refusal. No alternate host, credential, user-agent change, or other access-control bypass was attempted. The URL is not recorded here. Successful computed-style assertions are not substituted for manual visual acceptance. The final stack's independent CI artifacts must be inspected through a working permitted route before claiming the visual gate.
