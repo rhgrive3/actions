@@ -306,3 +306,16 @@ Splatoon 3 Ver. 11.3.0 において通常のスーパージャンプは移動手
 | 再現操作 | 自インクの平地面で速度条件を満たして泳ぎ、速度方向から59/60/75/89/90/180°の方向へフル深度でスティックを倒して B（ジャンプ）。修正前は60°以上90°未満が不成立。 |
 | プレイへの影響 | 60°以上90°未満の斜め前・斜め横イカロールが復活し、進行を保った回避が本家寄りになる。90°以上の挙動は不変。 |
 | 確認状態 | `movement.test.mjs` の実profile回帰が修正前 fail(90°)/修正後 pass(pi/3)。`roll-chain-window`/`squidroll-motion` 36件も pass。Community検証の校正値であり、Switch実機での角度境界やWU換算の確認済みにはしない。 |
+## Gamepad lifecycle axes and disconnect camera filters — #681 / #676 (2026-10-05)
+
+Baseline main: b4d5c31e33258a0b6f874e42234448e404eec2d4. Owner comments were posted after checking all comments, timelines and open PR scopes. #654/#655 are excluded because existing PR536 already normalizes trigger rebase; #701 owns the separate Map look-filter interval.
+
+The existing accepted non-standard pad fallback can expose extra axes. The W3C Gamepad API distinguishes raw input layout from standard mapping (https://w3c.github.io/gamepad/#dom-gamepad-mapping and https://w3c.github.io/gamepad/#dom-gamepad-axes). INKWAVE currently consumes axes0/1 and2/3 for movement/look. Its lifecycle neutral gate now tests only those four consumed axes, retaining its existing .14 threshold and held-input suppression. A fifth axis resting at -1/+1 no longer permanently disables both sticks. No raw-controller mapping is invented.
+
+When no pad is selected, the PlayerController now zeros only padLook x/y and edgeT before its enabled gate. A disconnect therefore cannot preserve filtered camera velocity and replay it on centered reconnect. Mouse look remains live; a new deliberate stick movement is admitted on the next update. The connected-pad response curve and #701 Map filter remain separate.
+
+Verification:16 behavioral regressions fail on unchanged baseline and pass after the two bounded production changes. Source focused input/pause/boundary tests:47/47. Minified module VM plus exact PR701 map-look adapter:18/18, including both adapter orders and Map→disconnect→neutral reconnect→close. Native raw input/player/actor/weapons hashes were verified equal to the baseline despite shared read-only fixture storage. Authentic full build succeeded with content hash22e12a31f49b6b76b2f1a65ddaef030dfca47068b06134cf4b051afe63d3d5da;10 additional VM cases against its actual emitted Input/PlayerController/platform modules passed (extra axes, held axes0..3, disconnect at30/60/120/144Hz). Full aggregate and browser CI remain for batch acceptance. No physical Android/iPadOS controller, Switch timing/latency or full device parity is claimed; no S3 numerical parameter was added or retuned.
+
+### UI Actor lifetime: #616 / #672 / #685
+
+Page-lifetime HUD and Diorama state now releases its matching Match's Actor references at disposal; closed/stale map pins cannot call an old Actor. Minimap jump FX uses weakly correlated scalar tokens while preserving native landing fade. This is JavaScript lifecycle ownership, with no Nintendo numerical calibration or gameplay change. Source/minified/production-target regressions and explicit Node GC pass; physical heap/long-soak remains unverified. See [the focused report](inkwave-ui-actor-lifetime-2026-10-05.md).
