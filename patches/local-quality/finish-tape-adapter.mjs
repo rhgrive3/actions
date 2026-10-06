@@ -87,9 +87,9 @@ export function adaptFinishTape(rel, code) {
 
     // 5) cleared exactly at the judge transition (state order itself is untouched)
     code = replaceOnceFinish(code,
-      `        if (state === 'finish' || state === 'judge') { this.el.classList.remove('is-live'); this._clearDamageDirs(); }`,
-      `        if (state === 'finish' || state === 'judge') { this.el.classList.remove('is-live'); this._clearDamageDirs(); }
-        if (state === 'judge') this.clearFinishTape();`,
+      `        if (state === 'finish' || state === 'judge') {`,
+      `        if (state === 'judge') this.clearFinishTape();
+        if (state === 'finish' || state === 'judge') {`,
       'finish tape cleared at judge');
 
     // 6) and again for a fresh round / attract, so no tape survives into the next match
