@@ -9,6 +9,11 @@ const INSTALLED = Symbol.for('inkwave.weapons-fidelity.v1');
 let api, completion;
 const clamp01 = value => Math.max(0, Math.min(1, value));
 const radians = degrees => degrees * Math.PI / 180;
+function weaponOverrideView(source, key, value) {
+  const view = Object.create(source);
+  Object.defineProperty(view, key, { value, enumerable: true });
+  return view;
+}
 
 function freezeDeep(value) {
   if (value && typeof value === 'object' && !Object.isFrozen(value)) {
@@ -224,9 +229,9 @@ function setCollision(p,c,offset=0) {
 }
 export function configureFidelityFlick(p, actor, weapon, index, angle, speed) {
   const b=weapon.ballistics, raw=rawWeapon(weapon);if(!b||!raw)return;
-  // The attack argument owns this projectile's physics. Preserve it through
-  // _push so a later actor/profile mutation cannot rewrite an already-fired volley.
-  p.s3Weapon={...weapon}; p.wid=weapon.id;
+  // Gear changes rebind actor.weapon, so this reference stays a shot-time
+  // snapshot while avoiding one full config copy for every flick projectile.
+  p.s3Weapon=weapon; p.wid=weapon.id;
   const vertical=!!actor.weaponRunner.s3FlickVertical;
   const group=raw[vertical?'VerticalSwingUnitGroupParam':'WideSwingUnitGroupParam'];
   let offset=index,unit;
@@ -412,7 +417,7 @@ export function installWeaponsFidelity(context,profile) {
   };
   function initialize(p,w){
     if(!w)return;
-    const raw=rawWeapon(w);p.s3Weapon={...w};p.wid=w.id;p.fidelityPhase=0;
+    const raw=rawWeapon(w);p.s3Weapon=w;p.wid=w.id;p.fidelityPhase=0;
     p.fidelityMove=moves.get(w.id)||null;
     if(raw?.CollisionParam){
       const c=w.kind==='dualies'&&p.owner?.weaponRunner?.s3Turret?raw.CollisionLapOverParam:raw.CollisionParam;
@@ -492,7 +497,7 @@ export function installWeaponsFidelity(context,profile) {
   const slosh=Projectiles.prototype.fireSlosh;
   Projectiles.prototype.fireSlosh=function(actor,w){
     const previous=this._fidelitySloshContext;this._fidelitySloshContext={index:0,group:new Map()};
-    try{return slosh.call(this,actor,{...w,drops:rawWeapon(w).UnitGroupParam.Unit.reduce((n,u)=>n+(u.BulletNum??1),0)});}
+    try{return slosh.call(this,actor,weaponOverrideView(w,'drops',rawWeapon(w).UnitGroupParam.Unit.reduce((n,u)=>n+(u.BulletNum??1),0)));}
     finally{this._fidelitySloshContext=previous;}
   };
   Projectiles.prototype.s3SlosherGuide=function(actor,w){
@@ -509,7 +514,7 @@ export function installWeaponsFidelity(context,profile) {
       pos:new THREE.Vector3(),prev:new THREE.Vector3(),start:new THREE.Vector3(),vel:new THREE.Vector3()
     });
     this._muzzle(actor,p.pos);p.prev.copy(p.pos);p.start.copy(p.pos);
-    p.owner=actor;p.type='slosh';p.wid=w.id;p.s3Weapon={...w};p.age=0;p.life=2.4;p.straight=0;
+    p.owner=actor;p.type='slosh';p.wid=w.id;p.s3Weapon=w;p.age=0;p.life=2.4;p.straight=0;
     p.delay=((unit.UnitDelayFrame||0)+index*(unit.AfterOffsetDelayFrame||0))/60;
     p.fidelitySloshUnit=unit;p.fidelitySloshIndex=index;p.fidelityPhase=0;p.fidelityMove=null;
     p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;
@@ -534,7 +539,7 @@ export function installWeaponsFidelity(context,profile) {
     const dir=this._s3BlasterGuideDir||(this._s3BlasterGuideDir=new THREE.Vector3());
     this._muzzle(actor,p.pos);p.prev.copy(p.pos);p.start.copy(p.pos);
     this._aimFrom(actor,p.pos,dir);
-    p.owner=actor;p.type='blast';p.wid=w.id;p.s3Weapon={...w};p.age=0;p.life=2;p.straight=0;
+    p.owner=actor;p.type='blast';p.wid=w.id;p.s3Weapon=w;p.age=0;p.life=2;p.straight=0;
     p.delay=0;p.ghost=false;p.fidelityPhase=0;p.fidelityMove=null;p.fidelityPrevAge=0;
     p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;
     p.vel.copy(dir).multiplyScalar(w.projSpeed);
@@ -559,7 +564,7 @@ export function installWeaponsFidelity(context,profile) {
     const rate=rawWeapon(w).MoveParam.SpawnSpeedRandomRate;
     // Bounds are extracted. Uniform law is an explicit model; native bias law is unknown.
     speed*=1+(Math.random()*2-1)*rate;
-    return fireSpin.call(this,actor,{...w,projSpeed:speed},spread);
+    return fireSpin.call(this,actor,weaponOverrideView(w,'projSpeed',speed),spread);
   };
   // Boss and player hits share the same weapon damage envelope. The old native
   // boss path used a separate seven-unit falloff and an unrelated 0.3s throttle.
