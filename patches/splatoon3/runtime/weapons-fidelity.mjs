@@ -510,6 +510,54 @@ export function installWeaponsFidelity(context,profile) {
     try{return slosh.call(this,actor,{...w,drops:rawWeapon(w).UnitGroupParam.Unit.reduce((n,u)=>n+(u.BulletNum??1),0)});}
     finally{this._fidelitySloshContext=previous;}
   };
+  Projectiles.prototype.s3SlosherGuide=function(actor,w){
+    const guide=w?.shotGuide,raw=rawWeapon(w);
+    const unit=guide&&raw?.UnitGroupParam?.Unit?.[guide.unitOrderNum];
+    const index=guide?.bulletOrderNumInUnit;
+    if(!unit||!Number.isInteger(index)||index<0||index>=(unit.BulletNum??1)||!Number.isFinite(guide.frame))return null;
+    // The selected Bucket Slosher guide projectile (unit 1 / bullet 0) has
+    // random yaw disabled in the pinned source. Refuse to invent a random HUD
+    // guide if a future profile selects a randomized projectile instead.
+    if((unit.RandomRotateYDegree||0)!==0&&!unit.RandomRotateYOffOrderNum?.includes(index))return null;
+    const THREE=context.THREE;
+    const p=this._s3SlosherGuideProjectile||(this._s3SlosherGuideProjectile={
+      pos:new THREE.Vector3(),prev:new THREE.Vector3(),start:new THREE.Vector3(),vel:new THREE.Vector3()
+    });
+    this._muzzle(actor,p.pos);p.prev.copy(p.pos);p.start.copy(p.pos);
+    p.owner=actor;p.type='slosh';p.wid=w.id;p.s3Weapon={...w};p.age=0;p.life=2.4;p.straight=0;
+    p.delay=((unit.UnitDelayFrame||0)+index*(unit.AfterOffsetDelayFrame||0))/60;
+    p.fidelitySloshUnit=unit;p.fidelitySloshIndex=index;p.fidelityPhase=0;p.fidelityMove=null;
+    p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;
+    const speed=((actor.grounded?unit.SpawnSpeedGround:unit.SpawnSpeedAir)+index*(unit.AfterOffsetSpawnSpeed||0))*60;
+    const aim=(this._s3SlosherGuideAim||(this._s3SlosherGuideAim=new THREE.Vector3())).copy(actor.aimDir).normalize();
+    const yaw=Math.atan2(aim.x,aim.z)+radians(unit.BaseRotateYDegree||0);
+    const pitch=Math.atan2(aim.y,Math.hypot(aim.x,aim.z)),horizontal=Math.cos(pitch)*speed;
+    p.vel.set(Math.sin(yaw)*horizontal,Math.sin(pitch)*speed+horizontal*(unit.AddSpawnSpeedYRateByXZ||0),Math.cos(yaw)*horizontal);
+    initialize(p,w);
+    let remaining=Math.max(0,guide.frame/60-p.delay);
+    while(remaining>EPSILON){const step=Math.min(1/60,remaining);advanceFidelityProjectile(p,step);remaining-=step;}
+    return p.pos;
+  };
+  Projectiles.prototype.s3WeaponGuide=function(actor,w){
+    if(w?.kind==='slosher')return this.s3SlosherGuide(actor,w);
+    const frame=w?.shotGuideFrame;
+    if(w?.kind!=='blaster'||!Number.isFinite(frame))return null;
+    const THREE=context.THREE;
+    const p=this._s3BlasterGuideProjectile||(this._s3BlasterGuideProjectile={
+      pos:new THREE.Vector3(),prev:new THREE.Vector3(),start:new THREE.Vector3(),vel:new THREE.Vector3()
+    });
+    const dir=this._s3BlasterGuideDir||(this._s3BlasterGuideDir=new THREE.Vector3());
+    this._muzzle(actor,p.pos);p.prev.copy(p.pos);p.start.copy(p.pos);
+    this._aimFrom(actor,p.pos,dir);
+    p.owner=actor;p.type='blast';p.wid=w.id;p.s3Weapon={...w};p.age=0;p.life=2;p.straight=0;
+    p.delay=0;p.ghost=false;p.fidelityPhase=0;p.fidelityMove=null;p.fidelityPrevAge=0;
+    p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;
+    p.vel.copy(dir).multiplyScalar(w.projSpeed);
+    initialize(p,w);
+    let remaining=Math.max(0,frame/60);
+    while(remaining>EPSILON){const step=Math.min(1/60,remaining);advanceFidelityProjectile(p,step);remaining-=step;}
+    return p.pos;
+  };
   const reset=WeaponRunner.prototype.reset,auto=WeaponRunner.prototype._auto,spin=WeaponRunner.prototype._splatling;
   WeaponRunner.prototype.reset=function(...args){const result=reset.apply(this,args);this.fidelitySplatlingCharge=null;return result;};
   WeaponRunner.prototype._auto=function(dt,input,w){
