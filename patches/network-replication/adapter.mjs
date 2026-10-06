@@ -115,7 +115,15 @@ export function adaptNetworkSource(rel, code) {
       const actor = this.byNid.get(nid);
       if (!actor?.remote || actor.owner !== from) return;
     }
-    switch (e[1]) {`, 'event ownership');
+    // Boss hazard/crablet timeline records are host-authoritative at admission.
+    if (e[1] === 'bm' || e[1] === 'bc') {
+      if (from !== this.s.hostId) return;
+      if (e[1] === 'bm') {
+        const move = e[2];
+        if (!move || typeof move !== 'object' || !Number.isFinite(move.t0)) return;
+      } else if (!Number.isSafeInteger(e[2]) || !Number.isFinite(e[3]) || !Number.isFinite(e[4]) || !Number.isFinite(e[5])) return;
+    }
+    switch (e[1]) {`, 'event ownership and host-only Boss timeline admission');
     patch("case 'b': { const a = this.byNid.get(e[2]); if (a) G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9]); break; }", `case 'b': {
         for (let index = 4; index <= 9; index++) if (!Number.isFinite(e[index])) return;
         const a = this.byNid.get(e[2]);
