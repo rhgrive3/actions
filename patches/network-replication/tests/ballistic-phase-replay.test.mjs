@@ -16,8 +16,11 @@ test('projectile recorder preserves all three velocity components exactly',async
   const f=await fixture(),nm=f.makeNetMatch(f.makeSession()),a=f.makeActor({nid:0,owner:'me'});
   f.bind(nm,[a]);f.projectiles.fireFlick(a,a.weapon);
   const p=f.projectiles.list[0];p.vel.set(12.345678901,-.000123456789,98.765432109);
-  nm.out=[];nm.recProj(p);
+  const previousSequence=nm._eventSeq;nm.out=[];nm.recProj(p);
   const e=JSON.parse(JSON.stringify(nm.out[0]));
   assert.deepEqual(e.slice(8,11),Array.from(p.vel.toArray()));
+  assert.equal(e.length,32,'retain the existing envelope without a Roller-unit field');
+  assert.equal(e[30],Math.round(f.G.time*60),'owner tick stays at30');
+  assert.equal(e[31],previousSequence+1,'event sequence stays last');
   nm.dispose();
 });

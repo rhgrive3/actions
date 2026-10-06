@@ -57,7 +57,7 @@ jobs:
   validate:
     if: inputs.diagnostic_only != true
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
         with:
@@ -366,13 +366,6 @@ jobs:
           pending=root/'ci-result.json.pending'; pending.write_text(json.dumps(receipt,indent=2)+'\n'); pending.replace(root/'ci-result.json')
           print(json.dumps(receipt))
           PY
-      - uses: actions/upload-artifact@v4
-        if: failure() && matrix.suite == 'active'
-        with:
-          name: inkwave-game-failure-${{ github.sha }}
-          if-no-files-found: warn
-          path: ${{ env.CI_STORAGE }}/evidence/game/
-          retention-days: 7
       - uses: actions/upload-artifact@v4
         if: failure() && matrix.suite == 'active'
         with:

@@ -1,17 +1,13 @@
-import { adaptFxActorLifetime } from './fx-actor-lifetime-adapter.mjs';
-import { adaptHudSnapshots } from './hud-snapshots-adapter.mjs';
 import { adaptTenacity } from './tenacity-adapter.mjs';
-import { adaptResultContinuation } from './result-continuation-adapter.mjs';
-import { adaptShowcaseShadow } from './showcase-shadow-adapter.mjs';
-import { adaptTeamWipeout } from './team-wipeout-adapter.mjs';
-
-import { adaptSplatlingReticle } from './splatling-reticle-adapter.mjs';
-
-import { adaptPortraitGuard } from './portrait-guard-adapter.mjs';
 // Build-only quality corrections composed after the gameplay, touch-layout and
 // reliability adapters. Upstream inkwave-public/ remains byte-for-byte intact.
 import fs from 'node:fs';
-import { adaptHudAuthority } from './hud-authority-adapter.mjs';
+import { adaptScreenfxDamageReset } from './screenfx-damage-reset-adapter.mjs';
+import { adaptFinalMinuteMusic } from './final-minute-music-adapter.mjs';
+import { adaptTurfLead } from './turf-lead-adapter.mjs';
+import { adaptScoreReticle } from './score-reticle-adapter.mjs';
+import { adaptMapTeammateStatus } from './map-teammate-status-adapter.mjs';
+import { adaptUiActorLifetime } from './ui-actor-lifetime-adapter.mjs';
 import { adaptIdleSource } from './idle-adapter.mjs';
 import { adaptPlatformSource } from './platform-adapter.mjs';
 import { adaptLandingRigidity } from './landing-rigidity-adapter.mjs';
@@ -24,24 +20,19 @@ import { adaptLobbyResources } from './lobby-resource-adapter.mjs';
 
 export const QUALITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
 const IDENTITY_FILES = [
-  'fx-actor-lifetime-adapter.mjs',
-  'hud-snapshots-adapter.mjs', 'hud-snapshots.mjs',
-  'hud-authority-adapter.mjs',
+  'screenfx-damage-reset-adapter.mjs',
+  'final-minute-music-adapter.mjs',
+  'turf-lead-adapter.mjs',
+  'score-reticle-adapter.mjs', 'map-teammate-status-adapter.mjs',
+  'ui-actor-lifetime-adapter.mjs',
   'tenacity-adapter.mjs', 'tenacity.mjs',
-  'result-continuation-adapter.mjs', 'result-continuation.mjs',
-  'showcase-shadow.mjs', 'showcase-shadow-adapter.mjs',
-  'team-wipeout.mjs', 'team-wipeout-adapter.mjs',
-
-  'splatling-reticle.mjs', 'splatling-reticle-adapter.mjs',
-
-  'portrait-guard.mjs', 'portrait-guard-adapter.mjs',
   'idle-adapter.mjs', 'idle-resources.mjs', 'music-idle.mjs',
   'lobby-resource-adapter.mjs', 'minimap-resource-adapter.mjs',
   'adapter.mjs', 'gyro.mjs', 'install.mjs', 'menu-preview.mjs', 'menu.mjs',
   'roller-motion.mjs', 'roller-visual.mjs', 'surface.mjs', 'landing-rigidity-adapter.mjs', 'first-touch-adapter.mjs', 'touch-relayout.mjs',
   'platform-adapter.mjs', 'platform-lifecycle.mjs', 'platform-game.mjs',
   'platform-input.mjs', 'platform-audio.mjs', 'platform-transport.mjs',
-  'mobile-platform.mjs', 'gyro-permission.mjs', 'gyro-startup.mjs',
+  'mobile-platform.mjs', 'gyro-permission.mjs',
 ];
 
 export function replaceOnce(code, before, after, label) {
@@ -53,57 +44,17 @@ export function replaceOnce(code, before, after, label) {
 }
 
 export function adaptQualitySource(rel, code) {
-  code = adaptFxActorLifetime(rel, code, replaceOnce);
-  if (rel === 'src/main.js') {
-    code = replaceOnce(code,
-      "    // your team on the podium\n    const team = m.actors.filter((a) => a.team === myTeam);\n    this.showcase.showResults(myTeam, won, G.teamColors[myTeam], team.map((a) => ({ weapon: a.weaponId, style: a.character.style || { hair: a.slot % 4, skin: (a.slot * 3) % 4 }, name: a.name })));",
-      "    // #565: showcase authority is independent of local rewards/audio.\n    const podiumTeam = m.result.winner;\n    const team = m.actors.filter((a) => a.team === podiumTeam);\n    if (podiumTeam === 0 || podiumTeam === 1) this.showcase.showResults(podiumTeam, true, G.teamColors[podiumTeam], team.map((a) => ({ weapon: a.weaponId, style: a.character.style || { hair: a.slot % 4, skin: (a.slot * 3) % 4 }, name: a.name })));",
-      'winner-only Turf showcase');
-  }
-  if (rel === 'src/game/match.js') {
-    code = replaceOnce(code,
-      '    this.bossMode?.dispose(); this.bossMode = null; this.boss = null;',
-      "    emit('match:dispose', { match: this });\n    this.bossMode?.dispose(); this.bossMode = null; this.boss = null;",
-      'release match-owned boss audio before disposal');
-  }
-  if (rel === 'src/audio/bossAudio.js') {
-    code = replaceOnce(code,
-      'const end = () => { stopAll(0.4); st.active = false; st.boss = null; st.track = null; setRemap(false); };',
-      'const end = () => { stopAll(0.4); if (followId) { clearInterval(followId); followId = 0; } st.active = false; st.boss = null; st.track = null; setRemap(false); };',
-      'boss audio terminal interval owner');
-    code = replaceOnce(code,
-      "  on('match:state', ({ state, match }) => {",
-      "  on('match:dispose', ({ match }) => { if (st.active && match?.boss && match.boss === st.boss) end(); });\n  on('match:state', ({ state, match }) => {",
-      'boss audio follows its matching disposal');
-    code = replaceOnce(code,
-      "    if (state === 'results' || state === 'judge') { stopAll(0.3); setRemap(false); }",
-      "    if ((state === 'results' || state === 'judge') && match.mode === 'boss' && match.boss === st.boss) end();",
-      'boss audio terminal state releases retained graph');
-  }
-  if (rel === 'src/ui/hud.js') {
-    code = replaceOnce(code,
-      "      this._killCard(victim, 'kill');",
-      "      this._killCard(victim, 'kill');\n      // #593: Turf uses ordinary splat confirmation and independent team WIPEOUT.\n      if (G.match?.mode === 'turf') return;",
-      'Turf excludes arcade personal streak ribbons');
-    code = replaceOnce(code,
-      "      const kk = L.kind === 'blaster' ? 0 : this._kick * this._kick * (L.kind === 'splatling' ? 4 : 7);\n      const sp = clamp((+ch.spread || 0) + this._bloom * (L.kind === 'blaster' ? 5 : 2.5) + kk, 0, 90);",
-      "      // #560: Game already projects the authoritative weapon cone.\n      const sp = clamp(+ch.spread || 0, 0, 90);\n      if (L.bl !== 0) { L.bl = 0; this.ret.style.setProperty('--bl', '0'); }",
-      'authoritative HUD spread, no second recoil cone');
-  }
-  code = adaptHudSnapshots(rel, code, replaceOnce);
+  code = adaptScreenfxDamageReset(rel, code, replaceOnce);
+  code = adaptFinalMinuteMusic(rel, code, replaceOnce);
+  code = adaptTurfLead(rel, code, replaceOnce);
+  code = adaptScoreReticle(rel, code, replaceOnce);
+  code = adaptMapTeammateStatus(rel, code, replaceOnce);
   code = adaptTenacity(rel, code, replaceOnce);
-  if (rel !== 'src/ui/menus.js') code = adaptResultContinuation(rel, code, replaceOnce);
-  code = adaptShowcaseShadow(rel, code, replaceOnce);
-  code = adaptTeamWipeout(rel, code, replaceOnce);
-
-  code = adaptSplatlingReticle(rel, code, replaceOnce);
-
-  code = adaptPortraitGuard(rel, code, replaceOnce);
   code = adaptIdleSource(rel, code, replaceOnce);
   code = adaptLobbyResources(rel, code);
   code = adaptMinimapResources(rel, code);
+  code = adaptUiActorLifetime(rel, code, replaceOnce);
   code = adaptLandingRigidity(rel, code);
-  code = adaptHudAuthority(rel, code);
   if (rel === 'src/core/mobile.js') {
     code = adaptFirstTouch(rel, code);
     code = adaptTouchRelayout(rel, code);
@@ -142,11 +93,10 @@ export function adaptQualitySource(rel, code) {
       '        C.w.target = r.width + pad * 2; C.h.target = r.height + pad * 2;\n' +
       '      }\n      if (C.on)',
       'hidden cursor logical target');
-    code = replaceOnce(code,
+    return replaceOnce(code,
       '    C.x.target = tx; C.y.target = ty; C.w.target = tw; C.h.target = th;',
       '    C.targetEl = f;\n    C.x.target = tx; C.y.target = ty; C.w.target = tw; C.h.target = th;',
       'cursor target owner');
-    return adaptResultContinuation(rel, code, replaceOnce);
   }
   if (rel === 'src/ui/menu-art.js') {
     code = replaceOnce(code,

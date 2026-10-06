@@ -19,7 +19,6 @@ import { pathToFileURL } from 'node:url';
 const option = (name) => { const i = process.argv.indexOf(name); if (i < 0 || !process.argv[i + 1]) throw new Error('Required ' + name); return path.resolve(process.argv[i + 1]); };
 const site = option('--site'), evidence = option('--evidence-dir'), profile = option('--profile-dir');
 const quick = process.argv.includes('--quick');
-const signageOnly = process.argv.includes('--signage-only');
 const physical = (p) => (fs.existsSync(p) ? fs.realpathSync(p) : path.join(physical(path.dirname(p)), path.basename(p)));
 for (const d of [evidence, profile]) {
   const r = physical(d);
@@ -81,29 +80,6 @@ for (const run of RUNS) {
     });
     const st = out.checks.stage;
     if (st.layout !== 'range' || !st.lightmap || !st.signage || st.targets !== 11 || st.pads !== 14 || st.bots !== 0 || !st.rosterHidden || !st.telemetry) throw new Error('stage check ' + JSON.stringify(st));
-    // #589: inspect the real constrained atlas and a separate desktop-HIGH instance.
-    const signageEvidence=await page.evaluate(async desktop=>{
-      const G=window.__G,g=window.__inkwave;
-      await document.fonts.ready;
-      const capture=(sign,size)=>{
-        const cells=[...sign.cells.values()];
-        if(sign.canvas.width!==size||sign.canvas.height!==size||sign.tex.image!==sign.canvas||sign.mat.map!==sign.mat.emissiveMap)throw Error('Range signage backing budget regression');
-        if(cells.some(c=>c.x<0||c.y<0||c.x+c.pw>2048||c.y+c.ph>2048))throw Error('Range signage packing overflow');
-        return {width:size,height:size,cells:cells.length,positionCount:sign.mesh.geometry.attributes.position.count,png:sign.canvas.toDataURL('image/png')};
-      };
-      const active=capture(g.rangeSignage,1024),result={active};
-      if(desktop){
-        const {RangeSignage}=await import(new URL('patches/practice-range/runtime/signage.mjs',document.baseURI).href);
-        const scene=new G.scene.constructor(),high=new RangeSignage(scene,{quality:'high'},{touch:false});
-        try {result.high=capture(high,2048);let disposed=0;for(const x of [high.tex,high.mat,high.mesh.geometry])x.addEventListener('dispose',()=>disposed++);high.dispose();if(disposed!==3||scene.children.length)throw Error('Range signage HIGH disposal regression');result.high.disposed=disposed;}
-        finally {if(!high.disposed)high.dispose();}
-      }
-      return result;
-    },!run.touch);
-    for(const [kind,row]of Object.entries(signageEvidence)){
-      fs.writeFileSync(path.join(evidence,`${run.name}-signage-${kind}.png`),Buffer.from(row.png.split(',')[1],'base64'));delete row.png;
-    }
-    out.checks.signageBudget=signageEvidence;
     if (run.touch) {
       out.checks.touchOverlap = await page.evaluate(() => {
         const R = (e) => e.getBoundingClientRect(), hit = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
@@ -114,21 +90,6 @@ for (const run of RUNS) {
       if (out.checks.touchOverlap.overlaps.length) throw new Error('range HUD covers touch controls ' + JSON.stringify(out.checks.touchOverlap));
     }
     await page.screenshot({ path: path.join(evidence, run.name + '-spawn.png'), timeout: 240000 });
-    // Atlas pixels alone cannot prove in-world readability: preserve natural
-    // gallery/wall camera views at each real viewport for visual acceptance.
-    out.checks.signageViews=[];
-    for(const zone of ['gallery','wall']){
-      await page.evaluate(zone=>window.__G.match.range.travel(zone),zone);
-      await page.waitForTimeout(2500);
-      const view=await page.evaluate(zone=>{
-        const G=window.__G,g=window.__inkwave,c=g.rig.camera;
-        const tiles=[...g.rangeSignage.cells.values()].filter(x=>x.art.kind==='gauge'||x.art.kind==='dist');
-        return {zone,canvasWidth:g.rangeSignage.canvas.width,viewport:{width:innerWidth,height:innerHeight},camera:{position:c.position.toArray(),quaternion:c.quaternion.toArray(),fov:c.fov},actor:G.local.pos.toArray(),labels:tiles.map(x=>({art:x.art,logicalWidth:x.pw,logicalHeight:x.ph})),visualReviewRequired:true};
-      },zone);
-      await page.screenshot({path:path.join(evidence,`${run.name}-signage-world-${zone}.png`),timeout:240000});
-      out.checks.signageViews.push(view);
-    }
-    if (!signageOnly) {
     // a hit on the 10 m gallery target from its stand mark
     out.checks.hit = await page.evaluate(async () => {
       const G = window.__G, g = window.__inkwave, s = G.match.range, a = G.local;
@@ -224,7 +185,6 @@ for (const run of RUNS) {
       const iso = out.checks.isolation;
       if (iso.layout !== 'tidewater' || iso.range || iso.rangeOpt || iso.actors !== 8 || iso.targets || iso.signage || iso.hudClass || iso.rangeDom || iso.maps.includes('range') || iso.scenePads || !['intro', 'playing'].includes(iso.state)) throw new Error('isolation ' + JSON.stringify(iso));
     }
-    }
     if (out.errors.length) throw new Error('page errors: ' + out.errors.join(' | '));
     if (out.missing.length) throw new Error('missing assets: ' + out.missing.join(' | '));
     out.status = 'passed';
@@ -234,6 +194,6 @@ for (const run of RUNS) {
   console.log(run.name, out.status, out.failure || '');
 }
 server.close();
-const result = { scope: signageOnly ? 'signage-only' : 'full-range', fullAcceptance: !signageOnly, status: failed ? 'failed' : 'passed', contentHash: manifest.contentHash, runs: results };
+const result = { status: failed ? 'failed' : 'passed', contentHash: manifest.contentHash, runs: results };
 fs.writeFileSync(path.join(evidence, 'range-result.json'), JSON.stringify(result, null, 2) + '\n');
 if (failed) process.exitCode = 1;

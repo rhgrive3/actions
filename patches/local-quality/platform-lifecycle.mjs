@@ -29,11 +29,7 @@ export class PlatformLifecycle {
     this._listen(env, 'blur', () => {
       this.focused = false; this.metrics.blurs++; this._notify('blur'); this.reconcile('blur');
     });
-    this._listen(env, 'focus', () => {
-      const wasFocused = this.focused; this.focused = true;
-      if (!wasFocused) this._notify('focus');
-      this.reconcile('focus');
-    });
+    this._listen(env, 'focus', () => { this.focused = true; this.reconcile('focus'); });
     const screen = () => this._notify('screen');
     this._listen(env.screen?.orientation, 'change', screen);
     this._listen(env, 'orientationchange', screen);

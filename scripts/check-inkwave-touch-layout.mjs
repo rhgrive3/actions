@@ -108,9 +108,8 @@ try {
         assert.equal(firstRow, '_layout', 'Layout editing must be the first touch setting');
         await page.locator('.iw-row').first().tap();
         assert(await page.evaluate(() => mobile.editing));
-        const expectedControls = ['fire', 'jump', 'stick', 'squid', 'sub', 'special', 'map', ...(built ? ['cameraReset'] : []), 'gyro', 'pause'];
-        assert.deepEqual(await page.locator('.iwm-layout-control option').evaluateAll(options => options.map(option => option.value)), expectedControls);
-        entry.checks.push('settings-entry-and-exact-control-registry');
+        assert.equal(await page.locator('.iwm-layout-control option').count(), 9);
+        entry.checks.push('settings-entry-and-nine-controls');
         const bars = await page.locator('.iwm-edit__bar, .iwm-edit__sel').evaluateAll(els => els.map(el => {
           const r = el.getBoundingClientRect(); return { x: r.x, right: r.right, y: r.y, bottom: r.bottom, w: innerWidth, h: innerHeight };
         }));
@@ -157,15 +156,6 @@ try {
         await pointer(page, 'pointerup', 52, 85, config.viewport.height / 2);
         assert(await page.evaluate(s => mobile._cfg('fire').s > s, scale));
         entry.checks.push('pinch-and-cancel');
-        if (built) {
-          await page.locator('.iwm-layout-control').selectOption('cameraReset');
-          await page.locator('.iwm-edit__size').focus(); await page.keyboard.press('End');
-          assert.equal(await page.evaluate(() => mobile._cfg('cameraReset').s), 1.7);
-          const resetBox = await box(page, 'cameraReset');
-          assert(resetBox.x >= resetBox.d / 2 && resetBox.y >= resetBox.d / 2);
-          assert.deepEqual(await page.evaluate(() => [...mobile.pressed]), []);
-          entry.checks.push('camera-reset-editor-size-and-persistence');
-        }
         const draft = await page.evaluate(() => mobile.layout);
         await page.locator('[data-e="save"]').tap();
         assert.equal(await page.evaluate(() => mobile.editing), false, 'Real touch save closes editor');

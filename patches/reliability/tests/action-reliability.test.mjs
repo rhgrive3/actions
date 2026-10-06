@@ -106,9 +106,8 @@ test('repeated keyboard events and repeated pad polling cannot invent another ph
 });
 
 test('all sampled gamepad action edges match canonical tap and release semantics', async () => {
-  for (const mapping of ['standard', '']) for (const [id, button] of [['jump', 0], ['squid', 6], ['fire', 7], ['sub', 5], ['special', 11], ...(mapping === '' ? [['special', 3]] : [])]) {
+  for (const [id, button] of [['jump', 0], ['squid', 6], ['fire', 7], ['sub', 5], ['special', 3], ['special', 11]]) {
     const h = await boot({ weapon: 'shooter' }), set = device(h, 'gamepad');
-    h.input.pollPad(); h.input.pad.mapping = mapping;
     if (id === 'jump' || id === 'fire' || id === 'sub') set(id, true);
     else { h.input.pollPad(); h.input.pad.buttons[button].pressed = true; h.input.pad.buttons[button].value = 1; }
     h.frame(0);
@@ -117,14 +116,6 @@ test('all sampled gamepad action edges match canonical tap and release semantics
     h.frame(STEP / 2); assert.equal(h.rows[0][id], true, `${id}/${button}`);
     h.frame(); assert.equal(h.rows[1][id], false, `${id}/${button} release`);
   }
-});
-
-test('standard top-face tap toggles map without emitting a Special action', async () => {
-  const h = await boot({ weapon: 'shooter' }); device(h, 'gamepad'); h.input.pollPad();
-  const top = h.input.pad.buttons[3]; top.pressed = true; top.value = 1; h.frame(0);
-  top.pressed = false; top.value = 0; h.frame(STEP / 2); h.frame(STEP / 2);
-  assert.equal(h.controller.padMapOpen, true); assert.equal(h.rows[0].special, false);
-  h.frame(); assert.equal(h.controller.padMapOpen, true); assert.equal(h.rows[1].special, false);
 });
 
 test('pointer lock loss cancels pending mouse fire without replay', async () => {

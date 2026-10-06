@@ -26,8 +26,8 @@ test('jump initiation selects vertical roller windup, retaining it after landing
   const f = await fixture(), a = f.make('roller'), r = a.weaponRunner;
   a.grounded = false; r.update(1 / 60, { fire: true, firePressed: true });
   assert.equal(r.s3FlickVertical, true); a.grounded = true;
-  for (let i = 0; i < 31; i++) r.update(1 / 60, { fire: true });
-  assert.equal(f.shots.length, 1); assert.equal(f.shots[0].windup, 31 / 60);
+  for (let i = 0; i < 27; i++) r.update(1 / 60, { fire: true });
+  assert.equal(f.shots.length, 1); assert.equal(f.shots[0].windup, 26 / 60);
 });
 test('actual roll consumes one jump edge and routes armor overflow through damage', async () => {
   const f = await fixture(), a = f.make(); a.form = 'squid'; a.intent.squid = true;

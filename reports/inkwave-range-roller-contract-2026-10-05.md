@@ -16,3 +16,9 @@ The minimal correction is test-only:
 - exercise a real Actor rolling from outside the allowed strip and require the same boundary assertion to reject it.
 
 Focused positive and displaced-Actor negative:2/2. Complete exact-source Practice Range suite:27/27. No production source, random generator, border, profile, timing, speed or numeric tolerance is changed by the patch. Seed control exists only in the retained diagnostic copy, not the shipped test harness. Real rendering and physical hardware claims are unchanged.
+
+## Reuse for the seven-root batch
+
+Current main b4d5c31 retains the original mixed-paint fixture. Source PR703's validate log111995977888 reproduces the same strip assertion while the UI-only runtime changes do not enter that harness. PR697@a90d94fa separately adopts native paint.kind filtering. The seven-root integration reuses this previously reviewed test-only correction, including its stronger progress and real out-of-strip negative controls. All27 Range tests pass against the seven-root runtime; no rebuild or production change is needed.
+
+The companion validation-job timeout moves10→12minutes, following PR701's existing adjustment after source PR704 run37379233659 was cancelled at the10-minute boundary with gameplay898/898 and network49/49 already successful. Commands, validation thresholds and browser jobs are unchanged. The old run remains historical; the corrected exact head still requires its own CI acceptance.

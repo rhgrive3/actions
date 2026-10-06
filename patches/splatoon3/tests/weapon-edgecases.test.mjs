@@ -31,7 +31,7 @@ test('dualies waiting shot cancels for sub, squid, death/reset, special and weap
 });
 test('dualies emerging timing remains separate; turret continues every 4F',async()=>{
  const f=await setup('dualies');f.a.intent.squid=true;f.tick(f.a,10);f.a.intent.fire=true;
- assert.deepEqual(trace(f,18),[[13,1],[18,1]]);
+ assert.deepEqual(trace(f,6),[[6,1]]);
  const g=await setup('dualies');g.a.weaponRunner.s3Turret=true;g.a.weaponRunner.cooldown=1/60;g.a.intent.fire=true;assert.deepEqual(trace(g,13),[[1,1],[5,1],[9,1],[13,1]]);
 });
 test('30/60/120Hz rendering produces exactly the same fixed-step initial and repeat ticks',async()=>{
@@ -105,7 +105,15 @@ test('near-unit real native integration hits nearby floor and wall through actua
   const b={id:0,solid:true,center:wall?new V(0,1,1.7):new V(0,-.1,0),half:wall?new V(10,4,.1):new V(100,.1,100),axes:[new V(1,0,0),new V(0,1,0),new V(0,0,1)],faces:[-1,-1,-1,-1,-1,-1]};
   const level={blocks:[b],queryBlocks:(_x,_z,_xx,_zz,out)=>{out.length=0;out.push(0);return out;}};f.G.level=level;f.G.physics=new f.Physics(level);f.setRandom(()=>.5);
   ps.fireFlick(f.a,f.a.weapon);const near=ps.list.find(p=>p.s3FlickUnit===1);ps.list.splice(0,ps.list.length,near);let impacts=0,paint=0;const impact=ps._impact;ps._impact=function(p,h){assert.equal(p,near);assert.ok(h.hit);impacts++;return impact.call(this,p,h);};f.G.paint.splat=()=>{paint++;return 0;};
-  for(let i=0;i<100&&ps.list.length;i++)ps.update(1/60);assert.equal(impacts,1);assert.ok(paint>0);assert.equal(ps.list.length,0);
+  let wallDrop=null;const flightBudget=Math.ceil(near.life*60)+2;
+  for(let i=0;i<flightBudget&&ps.list.length&&!wallDrop;i++){ps.update(1/60);wallDrop=near.fidelityWallDrop;}
+  if(wall){
+   assert.ok(wallDrop,'actual wall contact enters retained wall-drop instead of generic terminal impact');
+   assert.equal(impacts,0,'wall-drop shock is not a second generic impact');assert.ok(paint>0,'sourced wall shock paints at contact');
+   for(let i=0;i<wallDrop.totalFrames+2&&ps.list.length;i++)ps.update(1/60);
+   assert.equal(wallDrop.done,true,'sourced wall-drop duration completes');assert.equal(impacts,0);
+  }else assert.equal(impacts,1,'floor remains a single terminal native impact');
+  assert.ok(paint>0);assert.equal(ps.list.length,0);
  }
 });
 test('zero-time update does not advance pending shot; separate actors and reset never share start state',async()=>{

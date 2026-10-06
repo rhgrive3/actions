@@ -115,6 +115,58 @@ test('ghost Bomb does not receive authoritative replacement paint', () => {
   assert.equal(painted,0);
 });
 
+test('Super Jump slam press is armed in flight and impacts exactly at landing', () => {
+  resetG();
+  const a=f.make('shooter');
+  a.weapon={...a.weapon,special:'slam',specialCost:100};
+  a.special=100; a.ink=3;
+  const jump={phase:'flight',t:.2,dur:1,from:a.pos.clone(),to:a.pos.clone(),marker:0};
+  a.superJumpState=jump;
+  a._resolve=()=>{a.grounded=true;};
+  a.addTurf=()=>{};
+  let impacts=0;
+  a._slamImpact=()=>{impacts++;};
+  a.intent.special=true;
+  a.update(1/60);
+  assert.equal(a.superJumpState,jump);
+  assert.equal(a.special,0);
+  assert.equal(a.ink,PLAYER.inkMax);
+  assert.equal(a.specialActive?.phase,'superjump');
+  assert.equal(jump.s3SlamArmed,a.specialActive);
+  assert.equal(impacts,0);
+  assert.equal(a.character.events.some(([name])=>name==='special_leap'),false);
+
+  // Releasing before landing does not lose the admitted action.
+  a.intent.special=false;
+  jump.t=jump.dur-1/120;
+  a.update(1/60);
+  assert.equal(a.superJumpState,null);
+  assert.equal(a.specialActive,null);
+  assert.equal(impacts,1);
+  assert.equal(a.character.events.filter(([name])=>name==='special_slam').length,1);
+});
+
+test('Super Jump slam admission is fresh-edge, ready-gauge and slam-only', () => {
+  resetG();
+  const makeJumpActor=(special='slam',gauge=100)=>{
+    const a=f.make('shooter');
+    a.weapon={...a.weapon,special,specialCost:100};
+    a.special=gauge;
+    a.superJumpState={phase:'flight',t:.1,dur:1,from:a.pos.clone(),to:a.pos.clone(),marker:0};
+    a.intent.special=true;
+    return a;
+  };
+  const unready=makeJumpActor('slam',99);
+  unready.update(1/60);
+  assert.equal(unready.specialActive,null);
+  assert.equal(unready.superJumpState.s3SlamArmed,undefined);
+
+  const other=makeJumpActor('storm',100);
+  other.update(1/60);
+  assert.equal(other.specialActive,null);
+  assert.equal(other.superJumpState.s3SlamArmed,undefined);
+});
+
 test('special activation refills ink before native Storm startup', () => {
   resetG();
   let throws=0; G.projectiles={throwStorm(){throws++;}};

@@ -1,4 +1,3 @@
-import { syncPortraitFrame } from '../portrait-guard.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { idleFixture, audioFixture, compose } from './idle-fixture.mjs';
@@ -103,9 +102,9 @@ test('actual composed Game._frame skips only offline paused world; UI/net/input 
   const vector={copy(){},set(){},getWorldDirection(){return this;}};
   const G={time:1,level:{},teamColors:[{},{}],renderer:{info:{reset:count('info'),render:{calls:0,triangles:0}},shadowMap:{needsUpdate:false}},
     env:{theme:'day',update:count('env')},fx:{update:count('fx')},projectiles:{updateArc:count('arc')},paint:{flush:count('paint')},camera:{position:vector,up:vector}};
-  const Frame=new Function('syncPortraitFrame','G','runSimulation','pausedWorldFrame','performance','damp','clamp','THREE',
+  const Frame=new Function('G','runSimulation','pausedWorldFrame','performance','damp','clamp','THREE',
     'return class Frame {\n'+source.slice(start,end)+'\n}')
-    (syncPortraitFrame,G,count('simulation'),pausedWorldFrame,performance,(a,b)=>b,x=>x,{});
+    (G,count('simulation'),pausedWorldFrame,performance,(a,b)=>b,x=>x,{});
   const f=new Frame();f.settings={quality:'high'};f.match={paused:true,attract:false,state:'playing',local:null};
   f.showcase={fullFrame:false,mode:null,update:count('showcase'),render:count('showcaseRender')};
   f.R={render:count('worldRender'),grade:{uniforms:{uHurt:{value:0}}}};f.decor={update:count('decor')};f.props={update:count('props')};

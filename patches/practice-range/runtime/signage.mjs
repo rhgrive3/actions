@@ -170,16 +170,13 @@ const ART = {
 const NORMAL = { '+x': [1, 0, 0], '-x': [-1, 0, 0], '+z': [0, 0, 1], '-z': [0, 0, -1], '+y': [0, 1, 0] };
 
 export class RangeSignage {
-  constructor(scene, settings = {}, mobile = {}) {
-    // Keep logical packing/UVs/world coordinates unchanged; budget backing pixels only.
-    const size = settings.quality === 'low' || mobile.touch ? 1024 : 2048;
-    this.canvas = document.createElement('canvas'); this.canvas.width = size; this.canvas.height = size;
+  constructor(scene) {
+    this.canvas = document.createElement('canvas'); this.canvas.width = W; this.canvas.height = H;
     this.tex = new THREE.CanvasTexture(this.canvas);
     this.tex.colorSpace = THREE.SRGBColorSpace; this.tex.anisotropy = 8;
     this.cells = this._layout();
     this._draw();
-    const fonts = ['120px "Titan One"', '800 100px Rubik'];
-    if (document.fonts?.load && !fonts.every(font => document.fonts.check?.(font))) Promise.all(fonts.map(font => document.fonts.load(font))).then(() => { if (!this.disposed) this._draw(); }).catch(() => {});
+    if (document.fonts?.load) Promise.all([document.fonts.load('120px "Titan One"'), document.fonts.load('800 100px Rubik')]).then(() => { if (!this.disposed) this._draw(); }).catch(() => {});
     this.mat = new THREE.MeshStandardMaterial({ map: this.tex, roughness: 0.55, metalness: 0, emissive: 0xffffff, emissiveMap: this.tex, emissiveIntensity: 0.22 });
     this.mesh = new THREE.Mesh(this._geometry(), this.mat);
     this.mesh.name = 'range:signage'; this.mesh.receiveShadow = true; this.mesh.castShadow = false; this.mesh.matrixAutoUpdate = false;
@@ -216,14 +213,12 @@ export class RangeSignage {
 
   _draw() {
     const g = this.canvas.getContext('2d');
-    g.save(); g.scale(this.canvas.width / W, this.canvas.height / H);
     g.clearRect(0, 0, W, H);
     for (const c of this.cells.values()) {
       g.save(); g.translate(c.x, c.y); g.beginPath(); g.rect(0, 0, c.pw, c.ph); g.clip();
       try { ART[c.art.kind]?.(g, c.pw, c.ph, c.art); } catch (e) { console.error('[range] sign', c.art, e); }
       g.restore();
     }
-    g.restore();
     this.tex.needsUpdate = true;
   }
 

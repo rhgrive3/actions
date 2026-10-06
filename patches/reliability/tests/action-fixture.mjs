@@ -14,7 +14,7 @@ import { adaptQualitySource } from '../../local-quality/adapter.mjs';
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const UPSTREAM = process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
 const IDS = ['jump', 'squid', 'fire', 'sub', 'special'];
-const classList = () => { const values=new Set(); return {add(...names){names.forEach(n=>values.add(n));},remove(...names){names.forEach(n=>values.delete(n));},contains(n){return values.has(n);},toggle(n,on=!values.has(n)){if(on)values.add(n);else values.delete(n);return on;}}; };
+const classList = () => ({ add() {}, remove() {}, toggle() {} });
 
 export async function boot({ adapt = (rel, source) => adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, source)))), weapon = 'dualies' } = {}) {
   const f = await fixture({ adapt }), listeners = new Map(), modules = new Map();

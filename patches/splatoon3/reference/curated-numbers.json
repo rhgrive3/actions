@@ -59,22 +59,6 @@
     }
   ],
   "parameters": {
-    "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/CollisionParam/InitRadiusForPlayer": {
-      "value": 0.225,
-      "pointer": "/GameParameters/CollisionParam/InitRadiusForPlayer",
-      "sourceId": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json",
-      "status": "extracted",
-      "unit": "raw reference distance",
-      "notes": "InitRadiusForPlayer equals EndRadiusForPlayer; use a common Shooter-anchored scale, not raw distance as world units."
-    },
-    "data/parameter/1130/weapon/WeaponShooterNormal.game__GameParameterTable.json#/GameParameters/CollisionParam/InitRadiusForPlayer": {
-      "value": 0.285,
-      "pointer": "/GameParameters/CollisionParam/InitRadiusForPlayer",
-      "sourceId": "data/parameter/1130/weapon/WeaponShooterNormal.game__GameParameterTable.json",
-      "status": "extracted",
-      "unit": "raw reference distance",
-      "notes": "InitRadiusForPlayer equals EndRadiusForPlayer; use a common Shooter-anchored scale, not raw distance as world units."
-    },
     "data/parameter/1130/misc/params.json#/MoveVel_Human": {
       "value": [
         0.144,
@@ -1369,102 +1353,6 @@
       "status": "extracted",
       "unit": "raw reference width",
       "notes": "Near/main width ratio .4/.8=.5; absolute mapping and full/half width semantics remain provisional."
-    },
-    "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/PaintParam/RadiusMinCharge": {
-      "value": 0.906,
-      "pointer": "/GameParameters/PaintParam/RadiusMinCharge",
-      "sourceId": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json",
-      "status": "extracted",
-      "unit": "raw reference distance",
-      "notes": "Used as a relative ratio with existing local calibration; absolute scale and intermediate mapping unverified."
-    },
-    "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/PaintParam/RadiusMaxCharge": {
-      "value": 2.719,
-      "pointer": "/GameParameters/PaintParam/RadiusMaxCharge",
-      "sourceId": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json",
-      "status": "extracted",
-      "unit": "raw reference distance",
-      "notes": "Used as a relative ratio with existing local calibration; absolute scale and intermediate mapping unverified."
-    },
-    "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/PaintParam/RadiusFullCharge": {
-      "value": 3.263,
-      "pointer": "/GameParameters/PaintParam/RadiusFullCharge",
-      "sourceId": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json",
-      "status": "extracted",
-      "unit": "raw reference distance",
-      "notes": "Used as a relative ratio with existing local calibration; absolute scale and intermediate mapping unverified."
-    },
-    "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/SplashPaintParam/DepthHalfMinCharge": {
-      "value": 2.73,
-      "pointer": "/GameParameters/SplashPaintParam/DepthHalfMinCharge",
-      "sourceId": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json",
-      "status": "extracted",
-      "unit": "raw reference distance",
-      "notes": "Used as a relative ratio with existing local calibration; absolute scale and intermediate mapping unverified."
-    },
-    "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/SplashPaintParam/DepthHalfMaxCharge": {
-      "value": 1.56,
-      "pointer": "/GameParameters/SplashPaintParam/DepthHalfMaxCharge",
-      "sourceId": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json",
-      "status": "extracted",
-      "unit": "raw reference distance",
-      "notes": "Used as a relative ratio with existing local calibration; absolute scale and intermediate mapping unverified."
-    },
-    "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/SplashPaintParam/DepthHalfFullCharge": {
-      "value": 1.56,
-      "pointer": "/GameParameters/SplashPaintParam/DepthHalfFullCharge",
-      "sourceId": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json",
-      "status": "extracted",
-      "unit": "raw reference distance",
-      "notes": "Used as a relative ratio with existing local calibration; absolute scale and intermediate mapping unverified."
-    },
-    "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/SplashSpawnParam/OnTopRateMinCharge": {
-      "value": 0.125,
-      "pointer": "/GameParameters/SplashSpawnParam/OnTopRateMinCharge",
-      "sourceId": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json",
-      "status": "extracted",
-      "unit": "multiplier",
-      "notes": "Used as a relative ratio with existing local calibration; absolute scale and intermediate mapping unverified."
-    },
-    "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/SplashSpawnParam/OnTopRateMaxCharge": {
-      "value": 0.25,
-      "pointer": "/GameParameters/SplashSpawnParam/OnTopRateMaxCharge",
-      "sourceId": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json",
-      "status": "extracted",
-      "unit": "multiplier",
-      "notes": "Used as a relative ratio with existing local calibration; absolute scale and intermediate mapping unverified."
-    },
-    "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/SplashSpawnParam/OnTopRateFullCharge": {
-      "value": 0.34,
-      "pointer": "/GameParameters/SplashSpawnParam/OnTopRateFullCharge",
-      "sourceId": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json",
-      "status": "extracted",
-      "unit": "multiplier",
-      "notes": "Used as a relative ratio with existing local calibration; absolute scale and intermediate mapping unverified."
-    },
-    "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json#/GameParameters/spl__SpawnBulletAdditionMovePlayerParam/ZRate": {
-      "value": 2,
-      "pointer": "/GameParameters/spl__SpawnBulletAdditionMovePlayerParam/ZRate",
-      "sourceId": "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json",
-      "status": "extracted",
-      "unit": "multiplier",
-      "notes": "Used as a relative ratio with existing local calibration; absolute scale and intermediate mapping unverified."
-    },
-    "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/spl__SpawnBulletAdditionMovePlayerParam/ZRate": {
-      "value": 2,
-      "pointer": "/GameParameters/spl__SpawnBulletAdditionMovePlayerParam/ZRate",
-      "sourceId": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json",
-      "status": "extracted",
-      "unit": "multiplier",
-      "notes": "Used as a relative ratio with existing local calibration; absolute scale and intermediate mapping unverified."
-    },
-    "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/WeaponParam/PostDelayFrame": {
-      "value": 4,
-      "pointer": "/GameParameters/WeaponParam/PostDelayFrame",
-      "sourceId": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json",
-      "status": "extracted",
-      "unit": "frames at 60 Hz",
-      "notes": "Heavy Splatling natural stream-end recovery; independent of RepeatFrame and InkRecoverStop."
     }
   }
 }

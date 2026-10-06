@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-import { checkHudAuthority, checkUiVisualProbes } from './check-inkwave-hud-authority.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
@@ -8,7 +7,6 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 const option = name => { const i=process.argv.indexOf(name); if(i<0 || !process.argv[i+1]) throw new Error('Required '+name); return path.resolve(process.argv[i+1]); };
 const site=option('--site'), evidence=option('--evidence-dir'), profile=option('--profile-dir');
-const uiProbesOnly = process.argv.includes('--ui-probes-only');
 const ROOT = fileURLToPath(new URL('../',import.meta.url));
 const physicalLocation = name => fs.existsSync(name) ? fs.realpathSync(name) : path.join(physicalLocation(path.dirname(name)),path.basename(name));
 for(const directory of [evidence,profile]) {
@@ -41,6 +39,8 @@ if(process.argv.includes('--exact-source')) {
   const blobs=execFileSync('git',['hash-object','--',...files],{cwd:ROOT,encoding:'utf8'}).trim().split('\n');
   files.forEach((file,i)=>{if(blobs[i]!==tree.get(file))throw new Error('Build input differs from commit: '+file);});
 }
+// Identity-negative fixtures intentionally stop before loading browser helpers.
+const { probeTurfLead } = await import('./lib/inkwave-turf-lead-probe.mjs');
 const {chromium}=await import(process.env.PLAYWRIGHT_MODULE?pathToFileURL(process.env.PLAYWRIGHT_MODULE).href:'playwright');
 const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json','.svg':'image/svg+xml','.png':'image/png','.jpg':'image/jpeg','.webp':'image/webp','.woff2':'font/woff2','.glb':'model/gltf-binary'};
 const server=http.createServer((request,response)=>{
@@ -82,13 +82,6 @@ try {
     if (!document.baseURI.includes(build.build.revision)) throw new Error('Active asset revision mismatch');
     return { baseURI:document.baseURI, mode: G.mode, patch: G.s3, contentHash: build.contentHash, clockTicks: G.game.s3Clock?.ticks, sourceEntry: [...document.querySelectorAll('script[src]')].map(s => s.getAttribute('src')) };
   });
-  if (uiProbesOnly) {
-    // Same native offline bootstrap, intro dismissal and frozen match as full acceptance.
-    await page.evaluate(async () => { const G=globalThis.s3ProbeG; G.game.debug.freeze(); G.game.menus.wipe.cancel(); await G.game.startMatch({mapId:'tidewater',difficulty:'easy',duration:180,mode:'turf'}); });
-    await page.waitForFunction(() => globalThis.s3ProbeG.game.hud?._visible && !document.querySelector('.iw-lineup'), null, {timeout:15000});
-    await page.evaluate(() => { const g=globalThis.s3ProbeG.game; g.debug.freezeBots(); g._skipRender=true; try {for(let i=0;i<270;i++)g._frame(1/60);} finally {g._skipRender=false;} });
-    result.hudAuthority = await checkUiVisualProbes({page,evidence,sourceSha,contentHash:manifest.contentHash});
-  } else {
   // Exercise the native menu interval that previously pinned an unused LobbySet.
   await page.waitForFunction(() => !!globalThis.s3ProbeG?.game?.timer, null, { timeout:30000 });
   await page.waitForTimeout(2800);
@@ -109,6 +102,16 @@ try {
   await page.screenshot({path:path.join(evidence,'loadout-small-viewport.png'),animations:'disabled',timeout:90000});
   await page.setViewportSize({width:1280,height:800});
   await page.evaluate(async () => { const { G } = await import(new URL('src/core/ctx.js',document.baseURI).href); await G.game.startMatch({mapId:'tidewater', difficulty:'easy', duration:180, mode:'turf'}); });
+  // The frozen fixture advances simulation explicitly below. Let the native
+  // wall-clock intro reveal run while this same Match is still in intro;
+  // fast-forwarding first makes its legitimate intro-only timer a no-op.
+  await page.waitForFunction(() => {
+    const g = globalThis.s3ProbeG?.game, h = g?.hud;
+    if (!g?.frozen || g.match?.state !== 'intro' || !h?._visible) return false;
+    const style = getComputedStyle(h.el);
+    return style.visibility === 'visible' && Number(style.opacity) >= .99;
+  }, null, {timeout:15000});
+  result.introHudAdmission = await page.evaluate(() => ({state:s3ProbeG.game.match.state,frozen:s3ProbeG.game.frozen,visible:s3ProbeG.game.hud._visible,nativeIntroReveal:true}));
   result.hiddenMinimap = await page.evaluate(() => {
     const m=globalThis.s3ProbeG.game.minimap;
     return { built:m._built, logical:[m.w,m.h], canvas:[m.canvas.width,m.canvas.height],
@@ -122,9 +125,6 @@ try {
     return { built:m._built, canvas:[m.canvas.width,m.canvas.height], logical:[m.w,m.h], imageBytes:m.inkImg.data.byteLength+m.flashImg.data.byteLength };
   });
   if (!result.visibleMinimap.built || result.visibleMinimap.canvas.some((n,i)=>n!==result.visibleMinimap.logical[i]) || result.visibleMinimap.imageBytes!==8*result.visibleMinimap.logical[0]*result.visibleMinimap.logical[1]) throw new Error('Reenabled Minimap did not initialize native layers');
-  // The clock is frozen: let the real intro UI timers reveal HUD/remove lineup
-  // before fast-forwarding simulation, otherwise screenshots only show intro.
-  await page.waitForFunction(() => globalThis.s3ProbeG.game.hud?._visible && !document.querySelector('.iw-lineup'), null, {timeout:15000});
   result.gameplay = await page.evaluate(() => {
     const G = globalThis.s3ProbeG, g = G.game; g.debug.freezeBots(); g._skipRender = true;
     for (let i=0;i<270;i++) g._frame(1/60);
@@ -144,6 +144,7 @@ try {
     return {state:g.match.state, elapsedAt20Hz:initial-g.match.time-.5, movement:actor.pos.distanceTo(before), hp:actor.hp, gear:actor.s3.loadout, velocityFinite:[actor.vel.x,actor.vel.y,actor.vel.z].every(Number.isFinite), clockTicks:g.s3Clock.ticks, paintedFloorArea, coverage:G.paint.coverage()};
   });
   if (Math.abs(result.gameplay.elapsedAt20Hz-3)>1e-8 || !result.gameplay.velocityFinite || result.gameplay.movement<=0 || result.gameplay.paintedFloorArea<=0 || result.gameplay.coverage[0]<=0 || result.gameplay.coverage[0]>1) throw new Error('Actual browser gameplay regression');
+  result.turfLead = await probeTurfLead(page, evidence);
   // Native keyboard events traverse the loaded match's complete input/action
   // pipeline. Only ground collision is pinned for this admission-only proof;
   // the gameplay check above still uses the actual world Physics.
@@ -278,8 +279,6 @@ try {
     if(!flow.activePresentation.visible||flow.activePresentation.aliveParticles<1||flow.inactivePresentation.visible||flow.inactivePresentation.phase!=='off')throw Error('Compiled Flow exterior did not follow actual actor state');
     return {fixture:'loaded match Actor/WeaponRunner -> complete Character; fixed pose position; Chromium WebGL',dualies,slosher:{windup,firstWindupFrames,releaseFrames},reset,flow};
   });
-  result.hudAuthority = await checkHudAuthority({ page, evidence, sourceSha, contentHash: manifest.contentHash });
-  }
   result.status = 'passed';
 } catch (error) {
   result = { ...(result || {}), status: 'failed', error: error.message };
@@ -287,7 +286,6 @@ try {
   await page.screenshot({ path:path.join(evidence,'browser-failure.png') }).catch(() => {});
 } finally {
 
-  result.scope = uiProbesOnly ? 'ui-probes-only' : 'full-active'; result.fullAcceptance = !uiProbesOnly;
   result.sourceSha = sourceSha; result.verifiedResponses = receipts.length;
   result.verifiedRuntimeFiles = [...new Set(receipts)].sort();
   for (const required of ['patches/splatoon3/bootstrap.mjs','patches/splatoon3/profile.json','patches/splatoon3/runtime/install.mjs','patches/splatoon3/runtime/weapons.mjs','patches/splatoon3/runtime/movement.mjs','patches/splatoon3/runtime/walk.mjs','patches/splatoon3/runtime/roller.mjs','patches/splatoon3/runtime/movement-motion.mjs','patches/splatoon3/runtime/weapon-motion.mjs','patches/splatoon3/runtime/bomb-motion.mjs','patches/splatoon3/runtime/flow-motion.mjs','patches/splatoon3/runtime/weapon-detail-motion.mjs','src/main.js','src/game/actor.js','src/game/character.js','src/game/weapons.js']) if(!receipts.includes(required)) errors.push('Required runtime was not verified: '+required);

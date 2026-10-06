@@ -61,19 +61,14 @@ export function installMobilePlatform(MobileInput, env = globalThis) {
       blur() { reset(m); },
     });
     r.offStatus = m.gyro.onPlatformStatus?.(status => {
-      const stoppedForMissingData = status.reason === 'no-sensor-data' && m._gyroWanted;
-      if (stoppedForMissingData) {
-        ++m._gyroIntent; m._gyroWanted = m.s.gyro = false;
-      }
-      m._gyroBtn();
       const button = m.els?.gyro;
       if (button) {
         button.dataset.gyroState = status.state;
-        button.setAttribute('aria-busy', String(status.pending || status.availability === 'waiting'));
-        button.setAttribute('aria-pressed', String(!!m._gyroWanted && status.availability === 'active'));
+        button.setAttribute('aria-busy', String(status.pending));
+        button.setAttribute('aria-pressed', String(!!m._gyroWanted));
         button.title = m.gyro.statusMessage();
       }
-      if (stoppedForMissingData && r.lastNotice !== status.reason && runnable(m)) {
+      if (status.reason === 'no-sensor-data' && r.lastNotice !== status.reason && runnable(m) && m._gyroWanted) {
         m.toast(m.gyro.statusMessage(), 4); r.lastNotice = status.reason;
       } else if (status.availability === 'active' || status.availability === 'waiting') r.lastNotice = null;
     });
@@ -87,11 +82,6 @@ export function installMobilePlatform(MobileInput, env = globalThis) {
     return r;
   }
   P._install = function (...args) { const result = install.apply(this, args); ensure(this); return result; };
-  P._gyroBtn = function () {
-    const status = this.gyro.platformStatus, active = this.gyro.enabled && status.availability === 'active';
-    this.els?.gyro?.classList.toggle('is-on', active);
-    this.els?.gyro?.setAttribute('aria-pressed', String(!!active));
-  };
   P.setGyro = function (on, canStart = null) {
     ensure(this);
     const intent = ++this._gyroIntent, epoch = lifecycle.epoch;
@@ -106,7 +96,7 @@ export function installMobilePlatform(MobileInput, env = globalThis) {
       if (this._destroyed || intent !== this._gyroIntent || epoch !== lifecycle.epoch || !lifecycle.active) return false;
       this._gyroWanted = this.s.gyro = !!ok;
       if (ok && runnable(this) && (!canStart || canStart())) this.gyro.start();
-      this._gyroBtn();
+      this._gyroBtn(); this.els?.gyro?.setAttribute('aria-pressed', String(!!ok));
       return !!ok;
     };
     return this.gyro.request().then(finish);
@@ -117,7 +107,7 @@ export function installMobilePlatform(MobileInput, env = globalThis) {
     const promise = this.setGyro(on), intent = this._gyroIntent, epoch = lifecycle.epoch;
     promise.then(ok => {
       if (this._destroyed || intent !== this._gyroIntent || epoch !== lifecycle.epoch) return;
-      this.toast(on && (!ok || this.gyro.platformStatus.availability !== 'active') ? this.gyro.statusMessage() :
+      this.toast(on && !ok ? this.gyro.statusMessage() :
         (env.document?.documentElement?.lang?.startsWith('ja') ? (ok ? 'ジャイロ ON' : 'ジャイロ OFF') : (ok ? 'Gyro ON' : 'Gyro OFF')), on && !ok ? 4 : 1.1);
       this.onGyroToggle?.(ok);
     });

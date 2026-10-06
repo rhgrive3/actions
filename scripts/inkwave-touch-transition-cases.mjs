@@ -11,7 +11,7 @@
 // 3. Reject noncanvas menu/HUD targets and hidden gameplay controls.
 // 4. Same-angle actual viewport resize and resize storm holding FIRE, stick, and look.
 // 5. Fixed-stick same-coordinate movement after same-angle viewport relayout.
-// 6. Portrait rejects gameplay; fixed-angle aspect recovery requires a fresh touch without gyro resync.
+// 6. Keyboard aspect flip with fixed angle preserving owned hold with no gyro resync.
 // 7. True rotation clears all old ownership.
 // 8. Native lostpointercapture cleanup of holds, edges, and tracked pointers.
 // 9. Repeated transitions and cleanup after destroy.
@@ -21,130 +21,6 @@
 // - WebKit: DOM hit-tested PointerEvents ('DOM-PointerEvent')
 
 import assert from 'node:assert/strict';
-
-// Cleanup all acquired browser input even if an assertion or one cleanup fails.
-export async function withBrowserCleanup(operation, cleanups) {
-  let failed = false, primaryError;
-  try { return await operation(); }
-  catch (error) { failed = true; primaryError = error; throw error; }
-  finally {
-    const failures = [];
-    for (const cleanup of cleanups) {
-      try { await cleanup(); } catch (error) { failures.push(error); }
-    }
-    if (failures.length) {
-      if (failed) throw new AggregateError([primaryError, ...failures],
-        'Browser cleanup failed after the original case', { cause: primaryError });
-      if (failures.length === 1) throw failures[0];
-      throw new AggregateError(failures, 'Multiple browser cleanup operations failed');
-    }
-  }
-}
-export function withWindowFocusRestored(operation, restoreFocus) {
-  return withBrowserCleanup(operation, [restoreFocus]);
-}
-
-// A completed native-CDP sequence must never receive a second touchEnd.
-export function trackTouchSequence(gesture) {
-  let active = false;
-  const sequence = {
-    get active() { return active; },
-    async send(type, points) {
-      if ((type === 'touchMove' || type === 'touchEnd' || type === 'touchCancel') && !active)
-        throw new Error('Touch sequence requires touchStart before ' + type);
-      await gesture(type, points);
-      if (type === 'touchStart' || type === 'touchEnd' || type === 'touchCancel')
-        active = type !== 'touchCancel' && points.length > 0;
-    },
-    async finish(primaryError = null) {
-      if (!active) return;
-      try { await sequence.send('touchEnd', []); }
-      catch (cleanupError) {
-        if (primaryError) throw new AggregateError([primaryError, cleanupError],
-          'Touch cleanup failed after: ' + primaryError.message, { cause: primaryError });
-        throw cleanupError;
-      }
-    },
-  };
-  return sequence;
-}
-
-export function assertHybridKeyboardMapReceipt(r) {
-  assert.equal(r.before.ptrIds.length, 1, 'native FIRE owns one pointer before keyboard input');
-  assert.equal(r.before.fire, true);
-  assert.deepEqual(r.held.ptrIds, r.before.ptrIds, 'the same physical touch remains owned');
-  assert.equal(r.held.owner, 'touch'); assert.equal(r.held.navigation, 'touch');
-  assert.equal(r.held.fire, true); assert.equal(r.held.intentFire, true); assert.equal(r.held.moving, true);
-  assert.equal(r.fresh.owner, 'kbm'); assert.equal(r.fresh.navigation, 'kbm');
-  assert.equal(r.fresh.ptrIds.length, 0); assert.equal(r.fresh.fire, false); assert.equal(r.fresh.intentFire, false);
-  assert.deepEqual(r.mapOpened, { mapOpen: true, button: true, classOn: true, held: true });
-  assert.deepEqual(r.mapClosed, { mapOpen: false, button: false, classOn: false, held: false, owner: 'kbm', navigation: 'kbm' });
-}
-
-export async function runHybridKeyboardMapCases({ page, gesture, entry }) {
-  const sequence = trackTouchSequence(gesture), keys = new Set();
-  const receipt = entry.hybridKeyboardMap = {};
-  const down = async key => { keys.add(key); await page.keyboard.down(key); };
-  const up = async key => { if (keys.has(key)) { await page.keyboard.up(key); keys.delete(key); } };
-  const reset = () => page.evaluate(() => {
-    input.keys.clear(); input.pressed.clear(); input.padPressed.clear();
-    input.mouse.left = input.mouse.right = input.mouse.leftPressed = input.mouse.rightPressed = false;
-    input.mouse.dx = input.mouse.dy = 0;
-    input.lastDevice = 'touch'; mobile.reset(); mobile.setVisible(true);
-    mobile.layout = {}; mobile._layoutAll();
-    controller.enabled = true; controller.navigationEnabled = true;
-    controller.menuBlocked = controller.orientationBlocked = false;
-    controller.clearRespawnNavigation?.(); controller.clearMapGyro?.();
-    controller.padMapOpen = controller.mapHeld = false; rig.mapK = 0;
-  });
-  const snapshot = () => page.evaluate(() => ({
-    ptrIds: [...mobile._ptr.keys()], owner: input.lastDevice, navigation: input.navigationDevice,
-    fire: mobile.down('fire'), intentFire: !!controller.a.intent.fire,
-    moving: controller.a.intent.move.length() > 0,
-  }));
-  await withBrowserCleanup(async () => {
-    await reset();
-    const fire = await page.evaluate(() => mobile._box('fire'));
-    await sequence.send('touchStart', [{ id: 917, x: fire.x, y: fire.y }]);
-    const before = receipt.before = await snapshot();
-    await down('w'); await page.evaluate(() => controller.update(1 / 60));
-    const held = receipt.held = await snapshot();
-    await page.evaluate(() => input.endFrame());
-    await sequence.send('touchEnd', []); await up('w');
-    await down('d'); await page.evaluate(() => controller.update(1 / 60));
-    const fresh = receipt.fresh = await snapshot(); await page.evaluate(() => input.endFrame()); await up('d');
-    await reset();
-    await page.locator('[data-c="map"]').tap();
-    const mapOpened = receipt.mapOpened = await page.evaluate(() => {
-      controller.update(1 / 60);
-      return { mapOpen: mobile.mapOpen, button: mobile.buttons.map,
-        classOn: mobile.root.classList.contains('is-map'), held: controller.mapHeld };
-    });
-    await down('w');
-    const mapClosed = receipt.mapClosed = await page.evaluate(() => {
-      controller.update(1 / 60);
-      return { mapOpen: mobile.mapOpen, button: mobile.buttons.map,
-        classOn: mobile.root.classList.contains('is-map'), held: controller.mapHeld,
-        owner: input.lastDevice, navigation: input.navigationDevice };
-    });
-    assertHybridKeyboardMapReceipt(receipt);
-    entry.checks.push('native-touch-fire-with-keyboard-preserves-contact-and-fresh-takeover');
-    entry.checks.push('native-touch-map-latch-closes-on-fresh-keyboard-input');
-  }, [() => sequence.finish(), () => up('w'), () => up('d'), reset]);
-}
-
-export function assertPortraitAspectTransition({ portrait, landscape, fresh, released }) {
-  for (const [phase, value] of [['portrait', portrait], ['landscape stale gesture', landscape], ['released', released]]) {
-    assert.equal(value.fireDown, false, phase + ' must not hold FIRE');
-    assert.equal(value.fireEdge, false, phase + ' must not retain a FIRE edge');
-    assert.equal(value.ptrSize, 0, phase + ' must not retain pointer ownership');
-    assert.equal(value.stickActive, false, phase + ' must not retain movement');
-  }
-  assert.equal(fresh.fireDown, true, 'Fresh landscape touch must restore FIRE');
-  assert.equal(fresh.fireEdge, true, 'Fresh landscape touch must deliver its real press edge');
-  assert.equal(fresh.ptrSize, 1, 'Fresh landscape touch must have exactly one pointer owner');
-  for (const value of [landscape, fresh, released]) assert.equal(value.resyncCalls, 0, 'Fixed-angle aspect change must not resync gyro');
-}
 
 /**
  * Execute the complete suite of touch transition and resize regression checks
@@ -685,8 +561,8 @@ export async function runTouchTransitionCases({
   entry.checks.push('fixed-stick-same-coordinate-movement-after-same-angle-relayout');
 
   // =========================================================================
-  // 7c. PORTRAIT GUARD -> FIXED-ANGLE LANDSCAPE RECOVERY
-  //     REJECT HIDDEN CONTROLS, NO STALE REPLAY, FRESH TOUCH WORKS
+  // 7c. KEYBOARD ASPECT FLIP WITH FIXED ANGLE (768x1024 -> 768x400)
+  //     MUST PRESERVE OWNED HOLD, NO GYRO RESYNC
   // =========================================================================
   await resetMobileState();
   await page.evaluate(() => {
@@ -698,46 +574,49 @@ export async function runTouchTransitionCases({
     }
   });
   await setViewport(768, 1024);
+
   const portraitFire = await page.evaluate(() => {
     const f = mobile._box('fire');
     return { x: Math.round(f.x), y: Math.round(f.y) };
   });
-  const state = () => page.evaluate(() => ({
-    fireDown: mobile.down('fire'), fireEdge: mobile.wasPressed('fire'),
-    ptrSize: mobile._ptr.size, stickActive: mobile._stick.active,
-    resyncCalls: window._gyroSpy?.resyncCalls ?? 0,
+
+  await gesture('touchStart', [{ id: 26, x: portraitFire.x, y: portraitFire.y }]);
+  const preFlipHold = await page.evaluate(() => ({
+    fireDown: mobile.down('fire'),
+    pointerId: [...mobile._ptr.keys()][0],
   }));
-  const portraitSequence = trackTouchSequence(gesture);
-  await portraitSequence.send('touchStart', [{ id: 26, x: portraitFire.x, y: portraitFire.y }]);
-  const portrait = await state();
+  assert(preFlipHold.fireDown && preFlipHold.pointerId !== undefined, 'FIRE hold established in portrait layout');
+
+  // Spy on mobile.gyro.resync to assert no gyro resync occurs on keyboard aspect flip
   await page.evaluate(() => {
-    window._gyroSpy = { origResync: mobile.gyro.resync, resyncCalls: 0 };
+    window._gyroSpy = {
+      origResync: mobile.gyro.resync,
+      resyncCalls: 0,
+    };
     mobile.gyro.resync = function(...args) {
       window._gyroSpy.resyncCalls++;
       return window._gyroSpy.origResync.apply(this, args);
     };
   });
-  let transitionFailure = null;
+
   try {
-    // A keyboard/aspect change does not change the physical screen angle.
-    // The gesture rejected in portrait must not acquire ownership on move.
+    // Keyboard appearance flips aspect ratio from portrait (768x1024) to landscape (768x400)
+    // while screen angle remains fixed at 0
     await setViewport(768, 400);
-    const landscapeFire = await page.evaluate(() => {
-      const f = mobile._box('fire'); return { x: Math.round(f.x), y: Math.round(f.y) };
-    });
-    await portraitSequence.send('touchMove', [{ id: 26, x: landscapeFire.x, y: landscapeFire.y }]);
-    const landscape = await state();
-    await portraitSequence.send('touchEnd', []);
-    await portraitSequence.send('touchStart', [{ id: 27, x: landscapeFire.x, y: landscapeFire.y }]);
-    const fresh = await state();
-    await portraitSequence.send('touchEnd', []);
-    // A valid fresh edge is consumed by the normal fixed-step owner.
-    await page.evaluate(() => input.endFrame());
-    const released = await state();
-    assertPortraitAspectTransition({ portrait, landscape, fresh, released });
-  } catch (error) {
-    transitionFailure = error;
-    throw error;
+
+    const postFlipState = await page.evaluate((pointerId) => {
+      const spy = window._gyroSpy || {};
+      return {
+        fireDown: mobile.down('fire'),
+        hasPtr: mobile._ptr.has(pointerId),
+        ptrSize: mobile._ptr.size,
+        resyncCalls: spy.resyncCalls ?? 0,
+      };
+    }, preFlipHold.pointerId);
+
+    assert(postFlipState.fireDown, 'Held button must survive keyboard aspect flip with fixed angle');
+    assert(postFlipState.hasPtr, 'Pointer ownership must survive keyboard aspect flip with fixed angle');
+    assert.equal(postFlipState.resyncCalls, 0, 'Keyboard aspect flip with fixed angle must NOT trigger gyro resync');
   } finally {
     await page.evaluate(() => {
       if (window._gyroSpy) {
@@ -745,10 +624,10 @@ export async function runTouchTransitionCases({
         delete window._gyroSpy;
       }
     });
-    await portraitSequence.finish(transitionFailure);
+    await gesture('touchEnd', []);
     await setViewport(1024, 768);
   }
-  entry.checks.push('portrait-rejects-controls-fixed-angle-recovery-needs-fresh-touch-no-gyro-resync');
+  entry.checks.push('keyboard-aspect-flip-with-fixed-angle-preserves-ownedhold-no-gyro-resync');
 
   // =========================================================================
   // 8. TRUE ROTATION CLEARS ALL OLD OWNERSHIP

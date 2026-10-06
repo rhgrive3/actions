@@ -48,12 +48,12 @@ test('S3 Charger uncharged run and post-release speeds are unchanged', async () 
   close(r.moveSpeed(), f.PLAYER.runSpeed, 'cooldown expiry restores run');
 });
 
-test('Charger composes with #470 Splatling charge target and unchanged Roller branch', async () => {
+test('Splatling charging curve and other branches are unchanged', async () => {
   const f = await fixture();
   const a = f.make('splatling'), r = a.weaponRunner;
   r.charging = true; r.charge = 0.2;
-  // #470 intentionally replaces the old charge-progress ramp with this target.
-  const expected = a.weapon.moveSpeedCharging;
+  const expected = f.PLAYER.runSpeed * 0.75
+    + (a.weapon.moveSpeedCharging - f.PLAYER.runSpeed * 0.75) * Math.min(1, 0.2 * 2.5);
   close(r.moveSpeed(), expected, 'splatling charging branch');
   const roller = f.make('roller');
   roller.weaponRunner.rolling = true; roller.weaponRunner.rollT = 2;
