@@ -1,4 +1,5 @@
 import { capsuleEntry, sweptWorldHit } from './weapons-collision.mjs';
+import { chargerDamage } from './weapons.mjs';
 // Linear interpolation of extracted endpoints; ellipse rasterization remains INKWAVE's.
 export function chargerPaintParameters(raw,charge){
  const full=charge>=.999,q=Math.max(0,Math.min(1,charge));
@@ -26,11 +27,16 @@ export function installChargerFlight(api,completion) {
   function begin(system,actor,w,charge,origin,dir,ghost=false,maxDistance=null){
     charge=Math.max(0,Math.min(1,Number.isFinite(charge)?charge:0));
     const full=charge>=.999;
+    // The native runner resets chargeT immediately after this synchronous release
+    // call. Snapshot it here and keep it with the in-flight shot; `charge` stays
+    // the generic nonlinear value used for range and launch speed.
+    const chargeT=!ghost&&Number.isFinite(actor.weaponRunner?.chargeT)?actor.weaponRunner.chargeT:null;
+    const damage=ghost?0:full?w.damageMax:chargerDamage({weaponRunner:{chargeT}},w,charge);
     const speed=60*(full?raw.SpawnSpeedFullCharge:raw.SpawnSpeedMinCharge+(raw.SpawnSpeedMaxCharge-raw.SpawnSpeedMinCharge)*charge);
     const distance=maxDistance??reachFor(charge);
     const direction=dir.clone().normalize();
     if(!Number.isFinite(distance)||distance<=0||direction.lengthSq()<EPS)return;
-    const job={owner:actor,team:actor.team,weapon:{...w},charge,full,speed,range:distance,travel:0,origin:origin.clone(),dir:direction,
+    const job={owner:actor,team:actor.team,weapon:{...w},charge,chargeT,damage,full,speed,range:distance,travel:0,origin:origin.clone(),dir:direction,
       pos:origin.clone(),prev:origin.clone(),hit:new Hit(),base:new THREE.Vector3(),seen:new Set(),ghost,nextPaint:1.2,paint:chargerPaintParameters(completion.weapons.charger,charge),beam:null};
     system._ghostBeam(actor,origin,direction,.0001,charge,false);
     job.beam=system.beams.at(-1);
@@ -82,7 +88,7 @@ export function installChargerFlight(api,completion) {
       if(t!==null&&t*length<distance-EPS)actors.push({actor,d:t*length});
     }
     actors.sort((a,b)=>a.d-b.d||String(a.actor.nid??a.actor.name).localeCompare(String(b.actor.nid??b.actor.name)));
-    const amount=job.full?job.weapon.damageMax:job.weapon.damageMin+(job.weapon.damagePartialMax-job.weapon.damageMin)*job.charge;
+    const amount=job.damage;
     for(const a of actors){
       job.seen.add(a.actor);if(!job.ghost)system.applyHit(job.owner,a.actor,amount,job.weapon.id);
       if(!job.full){distance=a.d;ended=true;target=a.actor;normal=job.dir.clone().negate();break;}
