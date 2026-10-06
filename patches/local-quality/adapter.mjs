@@ -18,6 +18,7 @@ import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { adaptMinimapResources } from './minimap-resource-adapter.mjs';
 import { adaptLobbyResources } from './lobby-resource-adapter.mjs';
+import { adaptPaintFootprint } from './paint-footprint-adapter.mjs';
 
 export const QUALITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
 const IDENTITY_FILES = [
@@ -31,6 +32,7 @@ const IDENTITY_FILES = [
   'lobby-resource-adapter.mjs', 'minimap-resource-adapter.mjs',
   'adapter.mjs', 'gyro.mjs', 'install.mjs', 'menu-preview.mjs', 'menu.mjs',
   'roller-motion.mjs', 'roller-visual.mjs', 'surface.mjs', 'landing-rigidity-adapter.mjs', 'match-retainer-adapter.mjs', 'first-touch-adapter.mjs', 'touch-relayout.mjs',
+  'paint-footprint.mjs', 'paint-footprint-adapter.mjs',
   'platform-adapter.mjs', 'platform-lifecycle.mjs', 'platform-game.mjs',
   'platform-input.mjs', 'platform-audio.mjs', 'platform-transport.mjs',
   'mobile-platform.mjs', 'gyro-permission.mjs',
@@ -62,6 +64,7 @@ export function adaptQualitySource(rel, code) {
     code = adaptTouchRelayout(rel, code);
   }
   code = adaptPlatformSource(rel, code);
+  code = adaptPaintFootprint(rel, code, replaceOnce);
   if (rel === 'src/core/mobile.js') return code;
   if (rel === 'src/ui/menus.js') {
     code = replaceOnce(code,

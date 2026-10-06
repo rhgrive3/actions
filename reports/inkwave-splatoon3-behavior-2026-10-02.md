@@ -357,3 +357,13 @@ Reset now clears the pending damage attacker and angle together with the cancell
 ## 2026-10-06 — Dualies wall-drop (#604) and composed-runtime guards
 
 Base main `67fec182`. Splat Dualies wall impacts now enter the existing sourced wall-drop state using the pinned 11.3.0 top-level `WallDropMoveParam`/`WallDropCollisionPaintParam` (shock 1.3, fall 0.65, ground 0.6; 20–40F + 10F + 15–35F at 0.06). Previously the round died on the contact frame after one generic impact. Damage is unchanged. Shooter (#385) and Charger (#625/#268) are excluded: Shooter is owned elsewhere, and the Charger record omits three period fields. #770, #777, #638/#637, #644/#643 and #556 were already correct after adapter composition (the reports read raw source). They are now pinned by composed-runtime tests. This is logic-level and emitted-verifier evidence; a Switch visual/frame comparison is still 未確認. Details: [inkwave-wall-drop-dualies-guards-2026-10-06.md](inkwave-wall-drop-dualies-guards-2026-10-06.md).
+
+## 2026-10-06 — CPU/GPU 塗り footprint の内部整合 (#264)
+
+Base main `f31f5da4`。公開版 `inkwave-public/src/world/paint.js` は 1 バイトも変更せず、ビルドアダプタ `patches/local-quality/paint-footprint-adapter.mjs` と新規モジュール `patches/local-quality/paint-footprint.mjs` で、非 cosmetic な splat の rays／satellite droplets／fine spatter／wall drips を authoritative な CPU ownership grid に反映した。従来は `_cpuSplat()` が main body と Roller band しか記録せず、atlas shader が union する追加形状は `sample()/sampleWorld()/coverage()` から見えなかった。
+
+`_emitGrowth()` が受理した quad の metadata を保留し、`_drawQuads()` の native render が戻った後にだけ `_cpuSplatGrowth()` を確定するため、まだ描かれていない未来の成長形状を先に所有しない。`_cpuCellWrite()` は cell の owner が実際に変わった時だけ面積を返し（同 team の再描画は 0）、`paintOrder` の wraparound 比較で古い splat の成長が新しい塗りを上書きできない。stale growth / duplicate flush / `clear()` / muted remote の経路は fixture で確認した。
+
+shader の形状 hash は `fract(...)` ベースの共通演算に置き換え、tone は元の sin hash（`toneHash`）のまま保持した。**このため固定 seed に対する rays／satellite／spatter／drip の形は以前と変わる**（その見た目の差自体は今回計測していない）。形状数・reach・成長時間・damage・ブキ速度・network protocol は変更しない。
+
+検証はビルドとロジックのみ：`node --experimental-vm-modules --test patches/local-quality/tests/*.test.mjs`（191 tests／188 pass／3 pre-existing skip／0 fail）と `scripts/build-inkwave.mjs` のフルアダプタチェーンが通り、`inkwave-public/` はゼロ差分、`patches/network-replication/adapter.mjs` は未変更。**ブラウザの CPU 挙動、物理 GPU、Switch 実機、実ステージ全 face、FPS 差による細部は未確認**であり、公開版の実機比較の代用にはしない。late growth の owner への turf/special/Flow credit は `splat(..., { owner })` と `lateAreaByTeam` / `onLateCredit` で提供するが、native の呼び出し側はまだ `owner` を渡していないため、既存の body credit（`splat()` の返値）は従来どおりで、追加 cell の credit は既定では集計のみに留まる。
