@@ -88,7 +88,7 @@ test('a fresh hold after cancellation charges normally and cannot resurrect the 
   f.tick(a, 6);                                // surface past the emerge delay
   assert.equal(r.s3Stored, null);
   a.intent.fire = true;                         // press ZR again
-  f.tick(a, 5);
+  f.tick(a, 8);
   assert.equal(r.charging, true);
   assert.ok(r.charge < .999, 'ordinary charging, not a restored full charge');
   a.intent.fire = false;
@@ -195,7 +195,7 @@ test('holding ZR continuously preserves charge keep and still fires the full sho
   f.tick(a, 2);
   assert.equal(a.form, 'kid');
   assert.ok(r.s3Stored, 'store survives emergeDelay while ZR stays held');
-  f.tick(a, 4);                                // past emergeDelay the store is restored
+  f.tick(a, 29);                               // complete the 31F stored-fire gate
   assert.equal(r.s3Stored, null);
   assert.equal(r.charging, true);
   assert.ok(r.charge >= .999);
