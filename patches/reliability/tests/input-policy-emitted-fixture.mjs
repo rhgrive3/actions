@@ -4,18 +4,26 @@ import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
-import { adaptSource } from '../adapter.mjs';
-import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
-import { adaptReliability } from '../../reliability/adapter.mjs';
-import { adaptQualitySource } from '../../local-quality/adapter.mjs';
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
-const BUILT = process.env.INKWAVE_STORM_SITE;
-const UPSTREAM = BUILT ? path.resolve(BUILT) : process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
+const BUILT = process.env.INKWAVE_INPUT_POLICY_SITE;
+if (!BUILT) throw new Error('Set INKWAVE_INPUT_POLICY_SITE to an authentic build');
+const UPSTREAM = path.resolve(BUILT);
 export async function fixture() {
-  const context = vm.createContext({ console, performance });
+  const listeners = new Map(), storage = new Map(); let pads = [];
+  const classes = {add(){},remove(){},toggle(){},contains(){return false;}};
+  const context = vm.createContext({ console, performance, URL, AbortController, setTimeout, clearTimeout,
+    addEventListener(n,fn){listeners.set(n,[...(listeners.get(n)||[]),fn]);},
+    removeEventListener(n,fn){listeners.set(n,(listeners.get(n)||[]).filter(x=>x!==fn));},
+    screen:{width:1000,height:700,orientation:{angle:0}},innerWidth:1000,innerHeight:700,
+    localStorage:{getItem:k=>storage.get(k)??null,setItem:(k,v)=>storage.set(k,v)},
+    navigator:{userAgent:'controls fixture',maxTouchPoints:0,getGamepads:()=>pads},
+    window:{addEventListener(n,fn){listeners.set(n,[...(listeners.get(n)||[]),fn]);}},
+    document:{documentElement:{classList:classes},addEventListener(n,fn){listeners.set(n,[...(listeners.get(n)||[]),fn]);},removeEventListener(n,fn){listeners.set(n,(listeners.get(n)||[]).filter(x=>x!==fn));},querySelector(){return null;},pointerLockElement:null}
+  });
   const modules = new Map();
   function resolve(spec, from) {
     if (spec === 'three') return path.join(UPSTREAM, 'vendor/three/build/three.module.js');
+    if (spec.startsWith('three/addons/')) return path.join(UPSTREAM, 'vendor/three/jsm', spec.slice('three/addons/'.length));
     let file = path.resolve(path.dirname(from), spec);
     if (file.startsWith(path.join(ROOT, 'inkwave-public/'))) file = path.join(UPSTREAM, path.relative(path.join(ROOT, 'inkwave-public'), file));
     if (!BUILT && file.startsWith(path.join(UPSTREAM, 'patches/'))) file = path.join(ROOT, path.relative(UPSTREAM, file));
@@ -27,7 +35,7 @@ export async function fixture() {
     if (modules.has(file)) return modules.get(file);
     const relative = path.relative(UPSTREAM, file);
     const raw = fs.readFileSync(file, 'utf8');
-    const source = !BUILT && file.startsWith(UPSTREAM + path.sep) ? adaptQualitySource(relative, adaptReliability(relative, adaptTouchLayout(relative, adaptSource(relative, raw)))) : raw;
+    const source = raw; // Actual emitted bytes, never re-adapted.
     const mod = new vm.SourceTextModule(source, { context, identifier: file }); modules.set(file, mod); return mod;
   }
   const root = new vm.SourceTextModule(`
@@ -37,13 +45,13 @@ export async function fixture() {
     export * from './inkwave-public/src/game/weapons.js';
     export * from './inkwave-public/src/game/physics.js';
     export * from './inkwave-public/src/game/player.js';
-    export * from './inkwave-public/src/game/bots.js';
+
+    export * from './inkwave-public/src/core/input.js';
+    export { getPlatformLifecycle } from './patches/local-quality/platform-lifecycle.mjs';
     export * from './inkwave-public/src/net/netmatch.js';
     export * from './inkwave-public/src/core/shadowcache.js';
     export * as THREE from 'three';
-    export * from './patches/splatoon3/runtime/storm-effects.mjs';
-    export { FixedClock } from './patches/splatoon3/runtime/clock.mjs';
-    ${process.env.INKWAVE_STORM_FIDELITY ? 'export * from ' + JSON.stringify(process.env.INKWAVE_STORM_FIDELITY) + ';' : ''}
+    export { FixedClock, installClock, runSimulation } from './patches/splatoon3/runtime/clock.mjs';
     export * from './patches/splatoon3/runtime/movement.mjs';
     export * from './patches/splatoon3/runtime/weapons.mjs';
     export * from './patches/splatoon3/runtime/gear.mjs';
@@ -57,7 +65,6 @@ export async function fixture() {
   Object.assign(PLAYER, profile.player); Object.assign(SUB.bomb, profile.bomb);
   for (const [id, data] of Object.entries(profile.weapons)) Object.assign(WEAPONS[id], data);
   for (const install of ['installWeapons', 'installMovement', 'installGear', 'installFlow', 'installResources', 'installRendering']) api[install](api, profile);
-  if (api.installSubSpecialFidelity) api.installSubSpecialFidelity(api, profile);
   G.teamColors = [new THREE.Color('#ff8a14'), new THREE.Color('#2f5bff')];
   G.level = { blocks: [], groundHeight: () => 0 }; G.time = 0;
   G.physics = { los: () => true, raycast: (_a, _b, _c, h) => { h.hit = false; return h; } };
@@ -80,5 +87,7 @@ export async function fixture() {
     return a;
   }
   function tick(a, frames = 1) { for (let i = 0; i < frames; i++) { G.time += 1 / 60; a.update(1 / 60); } }
-  return { ...api, profile, make, tick, shots };
+  return { ...api, profile, make, tick, shots, storage, setPads:p=>{pads=p;},
+    event:(name,value)=>{for(const fn of listeners.get(name)||[])fn(value);},
+    sources:modules };
 }
