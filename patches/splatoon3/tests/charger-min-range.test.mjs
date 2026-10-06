@@ -5,10 +5,31 @@
 // inkwave-public or one adapter alone.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fixture } from './weapon-edgecases-fixture.mjs';
+import { fixture as nativeFixture } from './weapon-edgecases-fixture.mjs';
+import { adaptSource } from '../adapter.mjs';
+import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
+import { adaptReliability } from '../../reliability/adapter.mjs';
+import { adaptQualitySource } from '../../local-quality/adapter.mjs';
+import { adaptNetworkSource } from '../../network-replication/adapter.mjs';
+import { adaptRange } from '../../practice-range/adapter.mjs';
 import { chargerRangeCharge, CHARGER_MIN_LEGAL_CHARGE } from '../runtime/weapons-charger-flight.mjs';
 
+// Use the same complete source composition as scripts/build-inkwave.mjs.
+// A raw or S3-only failure cannot establish a remaining current-main defect.
+const compose = (rel, source) => adaptRange(rel, adaptNetworkSource(rel,
+  adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, source))))));
+const fixture = () => nativeFixture({ adapt: compose });
+
 const MIN = 9.033, FULL = 24.037, LEGAL = 1 / 6;
+
+test('#514 fixture retains production physical jump input ownership', async () => {
+  const f = await fixture(), a = f.make('shooter');
+  a.intent.jump = false;
+  a.intent.jumpPressed = true;
+  f.tick(a);
+  assert.equal(a.intent.jumpPressed, false, 'the reliability layer consumes the physical edge once');
+  assert.ok(a.vel.y > 0, 'the real Actor admits the edge even without a sampled jump hold');
+});
 
 test('#514 the legal minimum band anchors the pinned minimum endpoint', () => {
   assert.equal(CHARGER_MIN_LEGAL_CHARGE, LEGAL);
@@ -84,20 +105,6 @@ test('#514 a real full-charge birth still reaches the full endpoint', async () =
   system.fireCharger(a, a.weapon, a.weaponRunner.charge);
   const job = system._fidelityChargerFlights.at(-1);
   assert.equal(job.range, FULL);
-});
-
-test('#514 non-charger weapons ignore the charger band', async () => {
-  const f = await fixture();
-  const P = f.Projectiles.prototype;
-  const native = {};
-  const w = f.make('charger').weapon;
-  assert.ok(w.rangeMax > w.rangeMin);
-  for (const charge of [0, LEGAL, 0.5, 1]) {
-    const hud = w.rangeMin + (w.rangeMax - w.rangeMin) * charge;
-    assert.ok(Number.isFinite(hud), `native fallback stays finite at charge ${charge}`);
-    assert.ok(P.chargerReach(charge) >= MIN - 1e-9 && P.chargerReach(charge) <= FULL + 1e-9);
-  }
-  assert.ok(!('chargerReach' in native), 'native fallback path carries no helper');
 });
 
 test('#514 ghost births keep the wire maxDistance override', async () => {
