@@ -4,6 +4,7 @@ import { adaptWeaponsFidelity } from './weapons-adapter.mjs';
 // Every connection has a unique exact anchor; missing/duplicated hooks are errors.
 import { adaptMovementPhysics } from './movement-physics-adapter.mjs';
 import { adaptSubSpecialFidelity } from './sub-special-adapter.mjs';
+import { adaptTopRosterPrivacy } from './top-roster-privacy-adapter.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
@@ -32,6 +33,7 @@ export function checkCompatibility(src, patchRoot = PATCH_ROOT) {
 }
 
 export function adaptSource(rel, code) {
+  code = adaptTopRosterPrivacy(rel, code);
   if (rel === 'src/game/match.js') {
     code = replaceOnce(code,
       'const win = cov[0] === cov[1] ? (Math.random() < 0.5 ? 0 : 1) : cov[0] > cov[1] ? 0 : 1;',
