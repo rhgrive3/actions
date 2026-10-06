@@ -17,58 +17,15 @@ export const VERTICAL_SWING = Object.freeze({ coil: -2.45, release: -.04, follow
 // Read-only view for regressions; the arrays stay owned by this module.
 export const ROLLER_POSE = Object.freeze({ READY_ANCHOR, READY_ROTATION, ROLL_ANCHOR, ROLL_ROTATION, ROLL_LEAN });
 
-function observedLife(actor) {
-  if (Number.isSafeInteger(actor?.netLife)) return actor.netLife;
-  if (Number.isSafeInteger(actor?.net?.lastLife)) return actor.net.lastLife;
-  return null;
-}
-
-function resolveRollHitEpochs(runner) {
-  const epochs = runner.s3RollHitEpochs;
-  if (!epochs?.size) return;
-  for (const [victim, epoch] of epochs) {
-    const life = observedLife(victim);
-    if (!victim.alive || !victim.remote || victim.owner !== epoch.owner || life !== epoch.life) {
-      if (runner.s3PendingRollHits.has(victim)) runner.s3RollHitConfirmDisabled.add(victim);
-      runner.s3PendingRollHits.delete(victim);
-      epochs.delete(victim);
-      runner.rollHits.delete(victim);
-    }
-  }
-}
-
 export function rollerMode(w, vertical) {
   return vertical ? { ...w, flickWindup: w.verticalWindup, flickInterval: w.verticalInterval ?? w.flickInterval, flickInk: w.verticalInk } : w;
 }
 
-export function installRollerLogic({ WeaponRunner, G, on }, _profile) {
+export function installRollerLogic({ WeaponRunner }, _profile) {
   const roller = WeaponRunner.prototype._roller, reset = WeaponRunner.prototype.reset;
-  const resolveRemoteContact = (event, accepted) => {
-    const attacker = event?.attacker, victim = event?.victim;
-    const runner = attacker?.weaponRunner;
-    const pending = runner?.a === attacker && runner.s3PendingRollHits?.get(victim);
-    if (!pending || runner.s3RollHitConfirmDisabled.has(victim) || !victim?.remote
-      || pending.owner !== victim.owner || pending.life !== observedLife(victim)) return;
-    const exactWeapon = event.weaponId === pending.weaponId;
-    const exactContact = exactWeapon && event.damage === pending.damage;
-    if (accepted ? (!exactWeapon || (!event.killed && !exactContact)) : !exactContact) return;
-    runner.s3PendingRollHits.delete(victim);
-    if (accepted) runner.rollHits.set(victim, G.time);
-    else runner.rollHits.delete(victim);
-  };
-  // Existing events have no hit-request ID. One outstanding request can be
-  // correlated; when native contact cadence sends another packet, retire ACK
-  // matching for this victim so a late earlier event cannot settle the newer hit.
-  on?.('hit', event => resolveRemoteContact(event, true));
-  on?.('hit:rejected', event => resolveRemoteContact(event, false));
   WeaponRunner.prototype.reset = function (...args) {
-    const uncorrelated = this.s3RollHitConfirmDisabled || new Set();
-    for (const victim of this.s3PendingRollHits?.keys() || []) uncorrelated.add(victim);
     const result = reset.apply(this, args);
     this.s3RollerAttack = null;
-    this.s3PendingRollHits = new Map();
-    this.s3RollHitEpochs = new Map();
-    this.s3RollHitConfirmDisabled = uncorrelated;
     if (this.a.character) {
       this.a.character.s3RollerFlick = null;
       this.a.character._s3CancelRollerFlick?.();
@@ -77,7 +34,6 @@ export function installRollerLogic({ WeaponRunner, G, on }, _profile) {
   };
   WeaponRunner.prototype._roller = function (dt, inp, w) {
     const a = this.a;
-    resolveRollHitEpochs(this);
     const starting = this.flick < 0 && inp.firePressed && this.cooldown <= EPS && a.ink >= (!a.grounded ? w.verticalInk : w.flickInk);
     if (starting) {
       this.cooldown = Math.min(0, this.cooldown);
@@ -95,39 +51,7 @@ export function installRollerLogic({ WeaponRunner, G, on }, _profile) {
     if (state && !starting) state.elapsed = Math.min(state.interval, state.elapsed + dt);
     // Float accumulation must not add a 22nd/27th tick to a 21F/26F windup.
     if (winding && this.flick + dt + EPS >= mode.flickWindup) this.flick = mode.flickWindup;
-    const projectiles = G.projectiles, applyHit = projectiles?.applyHit;
-    let result;
-    if (typeof applyHit === 'function') {
-      const runner = this;
-      const admittedHit = function (attacker, victim, ...args) {
-        const admission = applyHit.call(this, attacker, victim, ...args);
-        if (attacker === a && args[1] === 'roller') {
-          if (admission === 'rejected') {
-            if (runner.s3PendingRollHits.has(victim)) runner.s3RollHitConfirmDisabled.add(victim);
-            runner.s3PendingRollHits.delete(victim);
-            runner.rollHits.delete(victim);
-          } else if (admission === 'rejected-invulnerable') {
-            if (runner.s3PendingRollHits.has(victim)) runner.s3RollHitConfirmDisabled.add(victim);
-            runner.s3PendingRollHits.delete(victim);
-            runner.rollHits.delete(victim);
-          } else if (admission === 'pending') {
-            runner.s3RollHitEpochs.set(victim, { owner: victim.owner, life: observedLife(victim) });
-            if (runner.s3RollHitConfirmDisabled.has(victim) || runner.s3PendingRollHits.has(victim)) {
-              runner.s3PendingRollHits.delete(victim);
-              runner.s3RollHitConfirmDisabled.add(victim);
-            } else {
-              runner.s3PendingRollHits.set(victim, {
-                owner: victim.owner, life: observedLife(victim), damage: args[0], weaponId: args[1],
-              });
-            }
-          }
-        }
-        return admission;
-      };
-      projectiles.applyHit = admittedHit;
-      try { result = roller.call(this, dt, inp, mode); }
-      finally { if (projectiles.applyHit === admittedHit) projectiles.applyHit = applyHit; }
-    } else result = roller.call(this, dt, inp, mode);
+    const result = roller.call(this, dt, inp, mode);
     if (state) state.rolling = this.rolling;
     if (state && winding && this.flick < 0) {
       state.elapsed = mode.flickWindup;

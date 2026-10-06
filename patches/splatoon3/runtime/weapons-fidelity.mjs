@@ -218,50 +218,16 @@ function setCollision(p,c,offset=0) {
   // Existing packet size carries initial radius; layout is unchanged.
   p.size=p.fidelityPlayerCollision.initRadius;
 }
-// #750: the swing unit declares the head's *rendered* size in
-// UnitParam.DrawSizeParam, separately from CollisionParam and from paint.
-// Splat Roller 11.3.0 ships constant 0.30/0.30 horizontal and 0.36/0.36
-// vertical, so one radius per unit with no fan-position gradient. This replaces
-// the generic emitter's centre-biased random radius on p.vis; that draw is still
-// consumed upstream, so the RNG order and count are unchanged. A unit without
-// DrawSizeParam keeps the generic radius rather than inventing one.
-function drawRadiusRecord(draw) {
-  if(!draw)return null;
-  const init=Number(draw.InitRadius),end=Number(draw.EndRadius??draw.InitRadius);
-  if(!(init>0)||!(end>=0))return null;
-  return {initRadius:init,endRadius:end,changeTime:Math.max(0,Number(draw.ChangeFrame??0)/60)};
-}
-function setDrawRadius(p,unit) {
-  const record=drawRadiusRecord(unit?.UnitParam?.DrawSizeParam);
-  if(!record)return;
-  p.fidelityDrawRadius=record;
-  p.vis=radiusAt(record,p.age,p.size);
-}
-// One unit-selection rule, shared by the main volley and the appended
-// nearest-glob unit, so both read the same pinned DrawSizeParam.
-function flickUnitFor(weapon,vertical,index) {
-  const raw=rawWeapon(weapon);
-  const group=raw?raw[vertical?'VerticalSwingUnitGroupParam':'WideSwingUnitGroupParam']:null;
-  if(!group)return null;
-  let offset=index;
-  for(const u of group.Unit){if(offset<(u.BulletNum??1))return {unit:u,offset};offset-=u.BulletNum??1;}
-  return null;
-}
-export function rollerFlickDrawRadius(weapon,vertical,index,age=0,fallback=null) {
-  const picked=flickUnitFor(weapon,vertical,index);
-  if(!picked)return fallback;
-  const record=drawRadiusRecord(picked.unit.UnitParam?.DrawSizeParam);
-  return record?radiusAt(record,age,fallback):fallback;
-}
 export function configureFidelityFlick(p, actor, weapon, index, angle, speed) {
   const b=weapon.ballistics, raw=rawWeapon(weapon);if(!b||!raw)return;
   // The attack argument owns this projectile's physics. Preserve it through
   // _push so a later actor/profile mutation cannot rewrite an already-fired volley.
   p.s3Weapon={...weapon}; p.wid=weapon.id;
   const vertical=!!actor.weaponRunner.s3FlickVertical;
-  const picked=flickUnitFor(weapon,vertical,index);
-  if(!picked)throw new RangeError('Roller index exceeds pinned units + labelled defaults');
-  const {unit,offset}=picked;
+  const group=raw[vertical?'VerticalSwingUnitGroupParam':'WideSwingUnitGroupParam'];
+  let offset=index,unit;
+  for(const u of group.Unit){if(offset<(u.BulletNum??1)){unit=u;break;}offset-=u.BulletNum??1;}
+  if(!unit)throw new RangeError('Roller index exceeds pinned units + labelled defaults');
   let pitch=Math.max(-.2,Math.min(.5,actor.aimPitch));
   if(vertical){
     speed=60*(unit.SpawnSpeedBase+offset*(unit.AfterOffsetSpawnSpeed||0));
@@ -285,7 +251,6 @@ export function configureFidelityFlick(p, actor, weapon, index, angle, speed) {
   p.fidelityYaw=Math.atan2(Math.sin(angle-actor.yaw),Math.cos(angle-actor.yaw));
   p.fidelityMode=vertical?'vertical':'horizontal';p.fidelityRollerUnit=unit;
   setCollision(p,unit.UnitParam.CollisionParam);
-  setDrawRadius(p,unit);
   p.straight=unit.UnitParam.MoveParam.GoStraightToBrakeStateFrame/60;
   p.grav=weapon.flickGravity;p.drag=weapon.flickDrag;
 }
