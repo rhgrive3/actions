@@ -453,3 +453,12 @@ idle の Charger / Splatling の可視性は別所有者の領域（#594、paren
 streaming は変更しない。authoritative phase clock、チャージ開始、ダメージ、60F のフルチャージ位置は
 いずれも変更していない。表示クラスはレティクル再構築時にリセットするため（`_L.chargeDelay`）、
 武器を切り替えて戻っても表示状態が残らない。
+
+
+### Live Turf lead / Danger (#99, duplicate #748)
+
+The quality adapter now supplies read-only physical-team lead/danger flags from total-stage coverage, preserves native Bravo HUD ordering and clears state below a 10-percentage-point gap or outside live Turf. Per-player status remains independent. Source/minified/emitted each pass 13 focused checks (including two verifier-negative checks); the prepared existing active-game probe covers both viewers, two viewport widths and controlled finish/Range suppression. Browser PNG/computed-style acceptance remains pending the consolidated CI. The 1.08 icon emphasis is a local layout value, not an exact Splatoon measurement. Full scope and reference caveats: `inkwave-live-turf-lead-99-748.md`.
+
+## 2026-10-05 final-minute BGM timing: #742
+
+Main now requests the existing zero-fade/no-bar-wait path only for the non-Boss one-minute event. Normal1.2-second transitions remain unchanged. Actual MusicEngine/Player tests at8bar phases show request+60ms incoming start, with existing30ms gain fade and50ms outgoing scheduling stop; native Match/FixedClock controls pass at30/60/90/120Hz. Source/minified/actual emitted9 each pass. This is scheduling-state evidence, not physical audio/Switch or multiplayer network latency measurement. [Details and limits](inkwave-final-minute-music-742.md).
