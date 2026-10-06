@@ -396,6 +396,8 @@ export function installWeaponsFidelity(context,profile) {
       }
     }
     if(w.kind==='blaster'){finite(b.straightTime,'straight time');finite(b.burstTime,'burst time');}
+    if(w.kind==='dualies' && w.shotGuideFrame !== rawWeapon(w)?.WeaponParam?.ShotGuideFrame)
+      throw new Error('Dualies ShotGuideFrame differs from pinned source');
     if(w.kind==='splatling')finite(b.firstChargeSpeed,'charged speed');
     freezeDeep(b);
     moves.set(id,freezeDeep({hz:profile.referenceHz,endSpeed:b.endSpeed??null,
