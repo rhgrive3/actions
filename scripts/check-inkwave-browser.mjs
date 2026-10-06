@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { checkHudAuthority, checkUiVisualProbes } from './check-inkwave-hud-authority.mjs';
+import { checkHudAuthority } from './check-inkwave-hud-authority.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
@@ -136,6 +137,8 @@ try {
   if (!result.visibleMinimap.built || result.visibleMinimap.canvas.some((n,i)=>n!==result.visibleMinimap.logical[i]) || result.visibleMinimap.imageBytes!==8*result.visibleMinimap.logical[0]*result.visibleMinimap.logical[1]) throw new Error('Reenabled Minimap did not initialize native layers');
   // The clock is frozen: let the real intro UI timers reveal HUD/remove lineup
   // before fast-forwarding simulation, otherwise screenshots only show intro.
+  await page.waitForFunction(() => globalThis.s3ProbeG.game.hud?._visible && !document.querySelector('.iw-lineup'), null, {timeout:15000});
+  // Let native intro UI reveal HUD before authority screenshots/probes.
   await page.waitForFunction(() => globalThis.s3ProbeG.game.hud?._visible && !document.querySelector('.iw-lineup'), null, {timeout:15000});
   result.gameplay = await page.evaluate(() => {
     const G = globalThis.s3ProbeG, g = G.game; g.debug.freezeBots(); g._skipRender = true;
@@ -326,6 +329,7 @@ try {
   });
   result.hudAuthority = await checkHudAuthority({ page, evidence, sourceSha, contentHash: manifest.contentHash });
   }
+  result.hudAuthority = await checkHudAuthority({ page, evidence });
   result.status = 'passed';
 } catch (error) {
   result = { ...(result || {}), status: 'failed', error: error.message };
