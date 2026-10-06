@@ -7,20 +7,21 @@
 // the grid without changing a single byte of inkwave-public/.
 //
 // The build adapter (paint-footprint-adapter.mjs) rewrites the native shader hash to the float-stable
-// `hsh` used here, redirects `_cpuSplat` to `_cpuSplatOwned`, gates `_emitGrowth` on the submitted
-// quad, and appends `installPaintFootprint(...)`. Everything else lives here.
+// `hsh` used here, redirects `_cpuSplat` to `_cpuSplatOwned`, carries local scoring owners on growth
+// records, and appends `installPaintFootprint(...)`. A 60 Hz accumulator applies growth ownership
+// before the unchanged native atlas flush, so a skipped/failed render cannot defer the CPU grid.
 //
 // Reference: parent-rejected native prototype 2336ffdd91ce12d8653f4057e23205e364f0d76b (removed
 // source only; the geometry was transferred, not copied).
 //
 // Honest scope (see reports/inkwave-splatoon3-behavior-2026-10-02.md):
 //  * The shadowed native grid is authoritative only in the same sense the native body already was:
-//    secondary cells are written when their growth quad is actually submitted, so what the CPU owns
-//    is a subset of what was presented, never a superset.
+//    secondary cells are written from native growth values on fixed 60 Hz ownership steps, without
+//    waiting for a GPU quad submission or renderer call.
 //  * The stable shape hash changes ray/satellite/spatter/drip geometry for a fixed seed relative to
 //    the previous sin-based hash. Shader tone is preserved through `toneHash`.
-//  * `owner` credit for late cells is opt-in via `splat(..., { owner })`; no native call site is
-//    rewritten here. When absent, the area still lands in `lateAreaByTeam` / `onLateCredit`.
+//  * Late area credit is routed to the native scoring owner and method carried by supported local
+//    splat call sites. Remote actors and replayed network splats have no scoring owner.
 
 export const SHAPE_COUNTS = [
   [5, 7, 8, 3],    // shot
@@ -63,10 +64,10 @@ const MARK = Symbol.for('inkwave.paintFootprint.v1');
 /**
  * Install the footprint mirroring on a native PaintSystem class.
  * @param {Function} PaintSystem  the native class (already defined, not yet instantiated)
- * @param {object}   opts         { blobWobble, maxQuads }
+ * @param {object}   opts         { blobWobble }
  * @returns {boolean} true when installed, false when it was already present
  */
-export function installPaintFootprint(PaintSystem, { blobWobble, maxQuads = 6000 } = {}) {
+export function installPaintFootprint(PaintSystem, { blobWobble } = {}) {
   if (typeof blobWobble !== 'function') throw new Error('paint footprint requires the native blobWobble edge');
   const proto = PaintSystem.prototype;
   if (proto[MARK]) return false;
@@ -74,20 +75,18 @@ export function installPaintFootprint(PaintSystem, { blobWobble, maxQuads = 6000
 
   const K_SHOT = 0, K_LINE = 1, K_TRAIL = 4, K_DROP = 5, K_ROLL = 6;
   const TEAM_COUNT = 2;
+  const CPU_STEP = 1 / 60;
 
-  const initGrid = proto._initGrid, clear = proto.clear, drawQuads = proto._drawQuads;
+  const initGrid = proto._initGrid, clear = proto.clear, emitGrowth = proto._emitGrowth;
+  const flush = proto.flush, dispose = proto.dispose;
 
   proto._initGrid = function (...args) {
     const result = initGrid.apply(this, args);
     // Last visible ownership event per cell; rejects growth from an older splat writing over newer ink.
     this.paintOrder = new Uint32Array(this.grid.length);
     this._paintOrder = 0;
-    this._pendingCpuGrowth = new Array(maxQuads);
-    this._pendingCpuEntry = new Uint32Array(maxQuads);
-    this._pendingCpuTn = new Float32Array(maxQuads);
-    this._pendingCpuDt = new Float32Array(maxQuads);
-    this._pendingCpuMode = new Uint8Array(maxQuads);
-    this._pendingCpuCount = 0;
+    this._paintDisposed = false;
+    this._cpuStepAcc = 0;
     this._cpuFeature = new Float64Array(16);
     this._cpuBounds = new Float64Array(4);
     this.lateAreaByTeam = new Array(TEAM_COUNT).fill(0);
@@ -95,18 +94,44 @@ export function installPaintFootprint(PaintSystem, { blobWobble, maxQuads = 6000
   };
 
   proto.clear = function (...args) {
+    if (this._paintDisposed) return;
     const result = clear.apply(this, args);
     if (this.paintOrder) { this.paintOrder.fill(0); this._paintOrder = 0; }
-    if (this._pendingCpuGrowth) { this._pendingCpuGrowth.fill(null); this._pendingCpuCount = 0; }
+    this._cpuStepAcc = 0;
     if (this.lateAreaByTeam) this.lateAreaByTeam.fill(0);
     return result;
   };
 
-  // CPU growth follows the batch that was actually presented, never a future growth step.
-  proto._drawQuads = function (...args) {
-    const result = drawQuads.apply(this, args);
-    this._commitCpuGrowth();
-    return result;
+  // Keep the native flush and its visible growth clock unchanged. CPU ownership runs on the separate
+  // fixed accumulator, even when its atlas draw is skipped.
+  proto.flush = function (...args) {
+    if (this._paintDisposed) return;
+    return flush.apply(this, args);
+  };
+
+  proto.dispose = function (...args) {
+    if (this._paintDisposed) return;
+    this._paintDisposed = true;
+    if (this.growing) this.growing.length = 0;
+    if (this.paintOrder) this.paintOrder.fill(0);
+    this._cpuStepAcc = 0;
+    if (this.lateAreaByTeam) this.lateAreaByTeam.fill(0);
+    return dispose.apply(this, args);
+  };
+
+  // Feed ownership from fixed 60 Hz simulation ticks. The caller may run on any display cadence;
+  // accumulated elapsed time is converted into the same fixed steps even when atlas draws are skipped.
+  proto.advanceCpuOwnership = function (dt) {
+    if (this._paintDisposed || !Number.isFinite(dt) || dt <= 0) return 0;
+    this._cpuStepAcc += dt;
+    let steps = 0;
+    while (this._cpuStepAcc + 1e-10 >= CPU_STEP) {
+      this._cpuStepAcc = Math.max(0, this._cpuStepAcc - CPU_STEP);
+      if (this._cpuStepAcc < 1e-10) this._cpuStepAcc = 0;
+      this._stepCpuGrowth(CPU_STEP);
+      steps++;
+    }
+    return steps;
   };
 
   proto._nextPaintOrder = function () {
@@ -344,35 +369,52 @@ export function installPaintFootprint(PaintSystem, { blobWobble, maxQuads = 6000
     return claimed;
   };
 
-  proto._queueCpuGrowth = function (g, entry, tn, dT, dripOnly) {
-    if (!g.order || g.kind < K_SHOT || g.kind > K_DROP) return;
-    const n = this._pendingCpuCount++;
-    this._pendingCpuGrowth[n] = g;
-    this._pendingCpuEntry[n] = entry;
-    this._pendingCpuTn[n] = tn;
-    this._pendingCpuDt[n] = dT;
-    this._pendingCpuMode[n] = dripOnly ? 1 : 0;
+  proto._applyCpuGrowth = function (g, tn, dT, dripOnly) {
+    if (this._paintDisposed || !g?.order || g.kind < K_SHOT || g.kind > K_DROP) return 0;
+    let claimed = 0;
+    const E = g.entries;
+    for (let o = 0; o < E.length; o += 7) {
+      claimed += this._cpuSplatGrowth(E[o], E[o + 1], E[o + 2], E[o + 3], g.R, g.team, g.seed,
+        E[o + 4], E[o + 5], E[o + 6], g.kind, tn, dT, dripOnly, g.order);
+    }
+    if (claimed > 0) {
+      this.lateAreaByTeam[g.team] = (this.lateAreaByTeam[g.team] || 0) + claimed;
+      // New ownership is credited once. Preserve the caller's existing special/no-special turf route.
+      const method = g.ownerMethod === 'addTurfNoSpecial' ? 'addTurfNoSpecial' : 'addTurf';
+      if (g.owner && typeof g.owner[method] === 'function') g.owner[method](claimed);
+      if (this.onLateCredit) this.onLateCredit(g.team, claimed, g.order, g.owner || null, method);
+    }
+    return claimed;
   };
 
-  proto._commitCpuGrowth = function () {
-    const count = this._pendingCpuCount;
-    if (!count) return;
-    for (let n = 0; n < count; n++) {
-      const g = this._pendingCpuGrowth[n], o = this._pendingCpuEntry[n];
-      this._pendingCpuGrowth[n] = null;
-      if (!g) continue;
-      const E = g.entries;
-      const claimed = this._cpuSplatGrowth(E[o], E[o + 1], E[o + 2], E[o + 3], g.R, g.team, g.seed,
-        E[o + 4], E[o + 5], E[o + 6], g.kind, this._pendingCpuTn[n], this._pendingCpuDt[n],
-        this._pendingCpuMode[n] !== 0, g.order);
-      if (claimed > 0) {
-        this.lateAreaByTeam[g.team] = (this.lateAreaByTeam[g.team] || 0) + claimed;
-        // A cell only reports area when its owner actually changed, so this credits once per cell.
-        if (g.owner && typeof g.owner.addTurf === 'function') g.owner.addTurf(claimed);
-        if (this.onLateCredit) this.onLateCredit(g.team, claimed, g.order, g.owner || null);
+  proto._stepCpuGrowth = function (dt) {
+    if (this._paintDisposed) return;
+    for (const g of this.growing) {
+      if (g.cpuSettled) continue;
+      g.cpuAge = (g.cpuAge || 0) + dt;
+      const tn = g.cpuAge / g.dur;
+      const td = g.dripDur ? Math.min(1, g.cpuAge / g.dripDur) : 1;
+      const dT = 1 - Math.pow(1 - td, 2.2);
+      const bodyDone = tn >= 1.75;
+      if (bodyDone && td >= 1) {
+        this._applyCpuGrowth(g, 3, 1, !!g.dripDur);
+        g.cpuSettled = true;
+      } else {
+        this._applyCpuGrowth(g, Math.min(tn, 3), dT, bodyDone);
       }
     }
-    this._pendingCpuCount = 0;
+  };
+
+  // Preserve immediate/forced-final splats outside the fixed accumulator. Ordinary growth is owned
+  // by advanceCpuOwnership; _drawQuads remains presentation work and never gates the CPU grid.
+  proto._emitGrowth = function (...args) {
+    if (this._paintDisposed) return;
+    const g = args[0];
+    if (g && !g.cpuSettled && args[1] >= 3 && args[2] >= 1) {
+      this._applyCpuGrowth(g, 3, 1, false);
+      g.cpuSettled = true;
+    }
+    return emitGrowth.apply(this, args);
   };
 
   return true;

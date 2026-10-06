@@ -7,7 +7,8 @@ import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
 import { adaptReliability } from '../../reliability/adapter.mjs';
 import { adaptQualitySource } from '../adapter.mjs';
 import { adaptPaintFootprint } from '../paint-footprint-adapter.mjs';
-import { shapeHash, sdRay, smoothMin, SHAPE_COUNTS } from '../paint-footprint.mjs';
+import { CPU_CIRCLE, CPU_DRIP, CPU_ELLIPSE, CPU_RAY, shapeHash, sdRay, smoothMin, SHAPE_COUNTS } from '../paint-footprint.mjs';
+import { FixedClock } from '../../splatoon3/runtime/clock.mjs';
 
 const replaceOnce = (code, before, after, label) => {
   const at = code.indexOf(before);
@@ -30,24 +31,47 @@ test('paint footprint adapter rewrites the native seams but leaves inkwave-publi
   assert.match(native, /float hsh\(float n\) \{ return fract\(sin\(n\) \* 43758\.5453123\); \}/);
   assert.match(native, /gl_FragColor = vec4\(team, 1\.0, hsh\(seed \* 1\.73\), a\);/);
   assert.doesNotMatch(native, /installPaintFootprint|_cpuSplatOwned|toneHash/);
+  assert.ok(out.includes('dur: kind === K_SPECK ? 0.05 : 0.085 + Math.min(0.22, radius * 0.075),'));
+  assert.ok(out.includes('g.age += dt;'), 'native paint growth timing remains on its existing clock');
+  const clockSource = read('patches/splatoon3/runtime/clock.mjs');
+  const clock = compose('patches/splatoon3/runtime/clock.mjs', clockSource);
+  assert.ok(clock.includes('    G.paint.advanceCpuOwnership(step);\n    game.input.endFrame();'), 'ownership advances at the end of each fixed simulation tick');
+  assert.ok(clock.indexOf('m.update(step);') < clock.indexOf('G.paint.advanceCpuOwnership(step);'));
+  assert.ok(clock.indexOf('G.projectiles.update(step);') < clock.indexOf('G.paint.advanceCpuOwnership(step);'), 'shot-created growth receives the same tick before presentation');
+  assert.equal((clock.match(/G\.paint\.advanceCpuOwnership\(step\);/g) || []).length, 1);
   // Seams landed exactly once.
   for (const needle of [
-    'installPaintFootprint(PaintSystem, { blobWobble, maxQuads: MAX_QUADS });',
+    'installPaintFootprint(PaintSystem, { blobWobble });',
     'float toneHash(float n) { return fract(sin(n) * 43758.5453123); }',
     "import { installPaintFootprint } from '../../patches/local-quality/paint-footprint.mjs';",
     'const order = cosmetic ? 0 : this._nextPaintOrder();',
     'this._cpuSplatOwned(f, lu, lv, rr, team, seed, sdu, sdv, sa, kind, order)',
-    'kind, order, owner: opts.owner || null, age: 0,',
-    'this._queueCpuGrowth(g, i, tn, dT, true);',
-    'this._queueCpuGrowth(g, i, tn, dT, false);',
-    'if (u1 <= u0 || v1 <= v0) return 0;',
-    'return dripOnly === 2 ? 2 : 1;',
+    "ownerMethod: opts.ownerMethod === 'addTurfNoSpecial' ? 'addTurfNoSpecial' : 'addTurf', age: 0,",
     'toneHash(seed * 1.73)',
   ]) assert.ok(out.includes(needle), needle);
+  assert.doesNotMatch(out, /_queueCpuGrowth|_commitCpuGrowth/);
   // Re-adapting the composed source must fail loudly instead of double-patching.
   assert.throws(() => adaptQualitySource('src/world/paint.js', out), /quality patch conflict/);
   // Unrelated files pass straight through this adapter.
   assert.equal(adaptPaintFootprint('src/world/inkShading.js', 'const x = 1;', replaceOnce), 'const x = 1;');
+});
+
+test('existing actor and weapon credit sites pass their owner without changing the network event schema', () => {
+  const actor = compose('src/game/actor.js');
+  const weapons = compose('src/game/weapons.js');
+  const chargerFlight = read('patches/splatoon3/runtime/weapons-charger-flight.mjs');
+  const weaponFidelity = read('patches/splatoon3/runtime/weapons-fidelity.mjs');
+  assert.ok(actor.includes('owner: attacker'), 'splat victim credits its attacker');
+  assert.ok(actor.includes("owner: this, ownerMethod: 'addTurfNoSpecial'"), 'Splat Slam retains its no-special turf route');
+  for (const owner of ['owner: a', 'owner: b.owner', 'owner: p.owner', 'owner: c.owner']) {
+    assert.ok(weapons.includes(owner), owner);
+  }
+  assert.equal((chargerFlight.match(/owner:job\.owner/g) || []).length, 3, 'all three native Charger paint routes carry their scoring actor');
+  assert.match(weaponFidelity, /seed: seededUnit\(p\.seed, salt \+ state\.paintIndex\+\+\), owner: p\.owner/,
+    'native wall-drop paint carries its local projectile owner');
+  const recSplat = read('inkwave-public/src/net/netmatch.js').split('  recSplat(')[1].split('\n  recProj(')[0];
+  assert.match(recSplat, /this\._rec\(\['s',/);
+  assert.doesNotMatch(recSplat, /owner|ownerMethod/);
 });
 
 // ---------------------------------------------------------------- pure helpers
@@ -63,6 +87,26 @@ test('shape hash is deterministic, in range, and float-stable across scales', ()
   assert.equal(values.size, 6);
 });
 
+test('composed GLSL geometry hash matches the CPU float32 sequence and keeps the native tone hash', () => {
+  const out = compose('src/world/paint.js');
+  assert.match(out, /float hsh\(float n\) \{[\s\S]*?return fract\(x \+ 0\.056\);\n\}/);
+  assert.ok(out.includes('float toneHash(float n) { return fract(sin(n) * 43758.5453123); }'));
+  const f = Math.fround;
+  const shaderHash = (seed, seedScale, index, indexScale) => {
+    const n = f(f(f(seed) * f(seedScale)) + f(f(index) * f(indexScale)));
+    let x = f(n * f(0.1031));
+    x = f(x - Math.floor(x));
+    x = f(x * f(x + f(33.33)));
+    x = f(x * f(x + x));
+    x = f(x + f(0.056));
+    return x - Math.floor(x);
+  };
+  for (const [seed, scale, index, indexScale] of [
+    [0.5, 7.31, 0, 1.93], [0.5, 3.17, 4, 5.71], [0.25, 17.9, 8, 4.13],
+    [0.123456, 13.1, 9, 7.7], [0.9, 8.1, 3, 2.9],
+  ]) assert.equal(shapeHash(seed, scale, index, indexScale), shaderHash(seed, scale, index, indexScale));
+});
+
 test('smooth min is a C1-ish union that never exceeds the hard minimum', () => {
   for (let x = -2; x <= 2; x += 0.13) {
     const v = smoothMin(x, 0.4, 0.6);
@@ -74,9 +118,51 @@ test('smooth min is a C1-ish union that never exceeds the hard minimum', () => {
 });
 
 test('per-kind shape counts mirror the shader kindShape table', () => {
-  assert.deepEqual(SHAPE_COUNTS.slice(0, 6), [[5, 7, 8, 3], [3, 4, 5, 2], [7, 9, 10, 4], [10, 12, 14, 5], [3, 4, 4, 2], [2, 2, 0, 1]]);
+  const shader = read('inkwave-public/src/world/paint.js');
+  const kindShape = shader.match(/vec4 kindShape\(float k\) \{([\s\S]*?)\n\}/)?.[1];
+  assert.ok(kindShape, 'native shader kindShape table exists');
+  const nativeCounts = [...kindShape.matchAll(/return vec4\((\d+(?:\.\d+)?),\s*(\d+(?:\.\d+)?),\s*(\d+(?:\.\d+)?),\s*(\d+(?:\.\d+)?)\)/g)]
+    .map((m) => m.slice(1).map(Number));
+  assert.deepEqual(SHAPE_COUNTS.slice(0, nativeCounts.length), nativeCounts);
   assert.deepEqual(SHAPE_COUNTS[6], [0, 0, 0, 0]);
   assert.deepEqual(SHAPE_COUNTS[7], [0, 0, 0, 0]);
+});
+
+test('composed native shot, line, blast, bomb, trail and drop splats exercise each supported shape family', async () => {
+  const { paint, level } = await bootPaint();
+  const feature = paint._cpuShapeFeature;
+  const kinds = ['shot', 'line', 'blast', 'bomb', 'trail', 'drop'];
+  for (let i = 0; i < kinds.length; i++) {
+    paint.clear();
+    const seen = new Set();
+    paint._cpuShapeFeature = function (...args) {
+      seen.add(this._cpuFeature[0]);
+      return feature.apply(this, args);
+    };
+    paint.splat(new V3(0, 0, 0), i === 5 ? 0.62 : 1.3, 0, { seed: 0.5, kind: kinds[i], instant: true });
+    assert.ok(seen.has(CPU_RAY), `${kinds[i]} includes rays`);
+    assert.ok(seen.has(CPU_ELLIPSE), `${kinds[i]} includes satellite droplets`);
+    if (SHAPE_COUNTS[i][2] > 0) assert.ok(seen.has(CPU_CIRCLE), `${kinds[i]} includes fine spatter`);
+    assert.ok(ownedAll(paint, level) > 0, `${kinds[i]} updates the composed CPU grid`);
+  }
+
+  paint.clear();
+  const wall = level.faces[1], seen = new Set();
+  paint._cpuShapeFeature = function (...args) {
+    seen.add(this._cpuFeature[0]);
+    return feature.apply(this, args);
+  };
+  paint.splat(new V3(0, 4, 0), 1.3, 0, { seed: 0.5, kind: 'shot', instant: true });
+  assert.ok(seen.has(CPU_DRIP), 'the native wall entry adds drip geometry');
+  assert.ok(owned(paint, wall) > 0);
+
+  paint.clear(); seen.clear();
+  paint.splat(new V3(0, 0, 0), 0.62, 0, { seed: 0.5, kind: 'roll', stretch: new V3(1, 0, 0), instant: true });
+  assert.equal(seen.size, 0, 'Roller keeps its native band-only footprint');
+  paint.clear(); seen.clear();
+  paint.splat(new V3(0, 0, 0), 0.12, 0, { seed: 0.5, kind: 'speck', cosmetic: true, instant: true });
+  assert.equal(seen.size, 0, 'cosmetic specks do not enter the gameplay footprint');
+  assert.equal(ownedAll(paint, level), 0);
 });
 
 // ---------------------------------------------------------------- runtime fixture
@@ -187,7 +273,12 @@ const maxRadius = (paint, f, lu, lv) => {
   }
   return m;
 };
-const flushFor = (paint, seconds) => { for (let i = 0; i < Math.ceil(seconds * 60); i++) paint.flush(1 / 60); };
+const flushFor = (paint, seconds) => {
+  for (let i = 0; i < Math.ceil(seconds * 60); i++) {
+    paint.advanceCpuOwnership(1 / 60);
+    paint.flush(1 / 60);
+  }
+};
 
 // ---------------------------------------------------------------- behaviour
 
@@ -223,17 +314,73 @@ test('growth credit lands exactly once and the settled grid stops changing', asy
   assert.ok(late > 0, 'late growth credited some area');
   assert.ok(Math.abs(owner.total - late) < 1e-9, `${owner.total} vs ${late}`);
   const settledGrid = owned(paint, floor), settledTotal = owner.total, settledLate = late;
+  const settledCalls = owner.calls;
   flushFor(paint, 6);
   assert.equal(owned(paint, floor), settledGrid, 'settled grid is idempotent');
   assert.equal(owner.total, settledTotal, 'no additional owner credit');
+  assert.equal(owner.calls, settledCalls, 'no duplicate owner callback after settle');
   assert.equal(paint.lateAreaByTeam[0], settledLate, 'no additional late area');
+
+  paint.clear();
+  const noSpecialOwner = {
+    specialCalls: 0, turfCalls: 0, total: 0,
+    addTurf() { this.specialCalls++; },
+    addTurfNoSpecial(a) { this.turfCalls++; this.total += a; },
+  };
+  paint.splat(new V3(8, 0, 8), 2.7, 0, { seed: 0.5, kind: 'bomb', owner: noSpecialOwner, ownerMethod: 'addTurfNoSpecial' });
+  flushFor(paint, 5);
+  assert.equal(noSpecialOwner.specialCalls, 0, 'the native no-special route stays no-special');
+  assert.ok(noSpecialOwner.turfCalls > 0);
+  assert.ok(Math.abs(noSpecialOwner.total - paint.lateAreaByTeam[0]) < 1e-9);
+});
+
+test('native growth ownership is fixed-step invariant at 30/60/120/144 Hz and survives skipped paint renders', async () => {
+  const snapshots = [];
+  const scenarios = [
+    { simHz: 30, renderEvery: 2 }, { simHz: 60, renderEvery: 2 },
+    { simHz: 120, renderEvery: 2 }, { simHz: 144, renderEvery: 2 },
+    { simHz: 60, renderEvery: Infinity },
+  ];
+  for (const { simHz, renderEvery } of scenarios) {
+    const { paint, level } = await bootPaint();
+    const clock = new FixedClock();
+    const owner = { calls: 0, total: 0, addTurf(a) { this.calls++; this.total += a; } };
+    paint.splat(new V3(0, 0, 0), 2.7, 0, { seed: 0.5, kind: 'bomb', owner });
+    const draw = paint._drawQuads.bind(paint);
+    const step = paint._stepCpuGrowth.bind(paint);
+    let fixedSteps = 0, fixedTicks = 0, frame = 0, rendered = 0, skipped = 0;
+    paint._stepCpuGrowth = function (...args) { fixedSteps++; return step(...args); };
+    paint._drawQuads = function (...args) {
+      if (renderEvery === Infinity || frame % renderEvery !== 0) { skipped++; return; }
+      rendered++;
+      return draw(...args);
+    };
+    const frames = simHz * 5, dt = 1 / simHz;
+    for (frame = 0; frame < frames; frame++) {
+      clock.advance(dt, stepDt => { fixedTicks++; paint.advanceCpuOwnership(stepDt); });
+      paint.flush(dt);
+    }
+    const result = {
+      grid: [...paint.grid], counts: [...paint.counts], late: [...paint.lateAreaByTeam],
+      ownerTotal: owner.total, ownerCalls: owner.calls, painted: ownedAll(paint, level),
+    };
+    assert.ok(owner.total > 0, `late cells credited at ${simHz} Hz`);
+    assert.equal(fixedTicks, 300, `the native simulation clock emitted 300 ticks at ${simHz} Hz`);
+    assert.equal(fixedSteps, 300, `same 60 Hz simulation at ${simHz} Hz display cadence`);
+    if (renderEvery === Infinity) { assert.equal(rendered, 0); assert.ok(skipped > 0); }
+    else { assert.equal(rendered, Math.ceil(frames / renderEvery)); assert.ok(skipped > 0); }
+    snapshots.push(result);
+    paint.dispose();
+  }
+  for (const result of snapshots.slice(1)) assert.deepEqual(result, snapshots[0]);
 });
 
 test('an older splat cannot overwrite newer paint with late growth', async () => {
   const { paint, level } = await bootPaint();
   const floor = level.faces[0];
   paint.splat(new V3(0, 0, 0), 2.7, 0, { seed: 0.5, kind: 'bomb' });
-  paint.flush(1 / 60);                       // first growth step of the older splat is committed
+  paint.advanceCpuOwnership(1 / 60);
+  paint.flush(1 / 60);                       // first fixed growth step of the older splat is committed
   // The newer splat covers the band the older splat's rays/spatter will still grow into.
   paint.splat(new V3(0, 0, 0), 2.7, 1, { seed: 0.9, kind: 'bomb' });
   const newer = [];
@@ -259,7 +406,27 @@ test('muted ghost splats claim nothing and never enter the credit path', async (
   G.netm = null;
 });
 
-test('clear resets ownership, order and pending growth without breaking later splats', async () => {
+test('remote-owned and replayed splats update their local grid without duplicating actor turf credit', async () => {
+  const { paint, G } = await bootPaint();
+  const remote = { remote: true, calls: 0, total: 0, addTurf(a) { this.calls++; this.total += a; } };
+  paint.splat(new V3(0, 0, 0), 2.7, 1, { seed: 0.5, kind: 'bomb', owner: remote });
+  flushFor(paint, 5);
+  assert.ok(paint.lateAreaByTeam[1] > 0, 'remote ink still has local CPU ownership');
+  assert.equal(remote.total, 0, 'a remote Actor is not locally credited');
+  assert.equal(remote.calls, 0);
+
+  const replay = await bootPaint();
+  const replayCredits = [];
+  replay.paint.onLateCredit = (...args) => replayCredits.push(args);
+  replay.G.netm = { mute: 0, applying: true, recSplat() { throw new Error('replay was recorded again'); } };
+  replay.paint.splat(new V3(0, 0, 0), 2.7, 1, { seed: 0.5, kind: 'bomb' });
+  flushFor(replay.paint, 5);
+  assert.ok(replay.paint.lateAreaByTeam[1] > 0, 'network replay updates the receiving grid');
+  assert.ok(replayCredits.length > 0);
+  assert.ok(replayCredits.every((args) => args[3] === null), 'replay has no local Actor owner');
+});
+
+test('clear resets ownership, order and native growth without breaking later splats', async () => {
   const { paint, level } = await bootPaint();
   const floor = level.faces[0];
   paint.splat(new V3(0, 0, 0), 2.7, 0, { seed: 0.5, kind: 'bomb' });
@@ -270,12 +437,26 @@ test('clear resets ownership, order and pending growth without breaking later sp
   assert.equal(owned(paint, floor), 0);
   assert.deepEqual([...paint.lateAreaByTeam], [0, 0]);
   assert.equal(paint.paintOrder.every((v) => v === 0), true);
-  assert.equal(paint._pendingCpuCount, 0);
   // Still usable after a clear: a later splat grows again.
   paint.splat(new V3(0, 0, 0), 2.7, 0, { seed: 0.5, kind: 'bomb' });
   const body = owned(paint, floor);
   flushFor(paint, 4);
   assert.ok(owned(paint, floor) > body);
+});
+
+test('dispose drops growth owners and makes stale simulation/render calls inert', async () => {
+  const { paint } = await bootPaint();
+  const owner = { calls: 0, total: 0, addTurf(a) { this.calls++; this.total += a; } };
+  paint.splat(new V3(0, 0, 0), 2.7, 0, { seed: 0.5, kind: 'bomb', owner });
+  const callsAtDispose = owner.calls, totalAtDispose = owner.total;
+  paint.dispose();
+  assert.equal(paint.growing.length, 0);
+  assert.equal(paint.paintOrder.every((v) => v === 0), true);
+  assert.deepEqual([...paint.lateAreaByTeam], [0, 0]);
+  assert.doesNotThrow(() => paint.flush(1 / 60));
+  assert.equal(paint.advanceCpuOwnership(1 / 60), 0);
+  assert.equal(owner.calls, callsAtDispose);
+  assert.equal(owner.total, totalAtDispose);
 });
 
 test('wall drips own cells below the contact edge, flagged cosmetically-safe kinds do not', async () => {
