@@ -298,6 +298,13 @@ replaces, the upstream speed at `PLAYER.runSpeed * 0.75`, so a weapon-specific
 speed that is already lower keeps its authoritative value. Locked upstream
 `inkwave-public/` is unchanged.
 
+**Grounded humanoid only.** `Actor._horizontal` also calls `moveSpeed()` on its
+airborne branch (`actor.js:377`), so an unconditional cap silently retunes air
+steering. The cap and the gear sub-lock are therefore gated on
+`a.grounded === true && a.form !== 'squid'`; airborne and squid-form paths keep
+their original coefficients. Enemy ink keeps its own independent curve in
+`Actor._horizontal`, which this change does not touch.
+
 - ロジック確認済み / 実機未確認. The 0.75 ratio is taken from the S3 documented
   0.72/0.96 pair and matches the existing `PLAYER.runSpeed * 0.75` splatling
   charge coefficient; no interpolation or device measurement was invented.
