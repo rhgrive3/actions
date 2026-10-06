@@ -37,7 +37,7 @@ test('bomb damage follows the victim owner view when attack and victim positions
     const remoteVictim = damageActor(attackerView.makeActor({ nid: 2, owner: 'p2', remote: true, team: 1, roller: false }));
     addActors(attackerView, shooterNet, shooter, remoteVictim);
     remoteVictim.pos.set(0, 0.6, 5); // attack owner sees the victim inside the blast
-    attackerView.G.projectiles.applyHit(shooter, remoteVictim, 30, 'bomb');
+    for(const cause of ['bomb','splat-bomb-far']) attackerView.G.projectiles.applyHit(shooter, remoteVictim, 30, cause);
     assert.equal(remoteVictim.hp, 100, 'shooter-side bomb geometry cannot damage a remote victim');
     assert.deepEqual(sent, [], 'bomb authority does not send a shooter-side damage packet');
     attackerView.G.projectiles.applyHit(shooter, remoteVictim, 30, 'shooter');
@@ -115,10 +115,30 @@ test('one ordered bomb birth is replayed once, old bomb hit packets are ignored,
     assert.equal(f.projectiles.bombs.filter((bomb) => bomb.ghost).length, 1, 'duplicate event sequence cannot create a second bomb');
     assert.equal(f.projectiles.bombs.find((bomb) => bomb.ghost)._netBornLocal, 999.5, 'birth timestamp maps through the peer clock offset');
 
-    nm.onMessage('p1', { k: 'hit', v: victim.nid, a: attacker.nid, d: 100, w: 'bomb', l: victim.netLife, h: 1 });
+    for(const cause of ['bomb','splat-bomb-far']) nm.onMessage('p1', { k: 'hit', v: victim.nid, a: attacker.nid, d: 100, w: cause, l: victim.netLife, h: 1 });
     assert.equal(victim.hp, 100, 'legacy shooter-authority bomb hit packets cannot duplicate recipient damage');
 
     nm.onMessage('p1', { k: 'hit', v: victim.nid, a: attacker.nid, d: 30, w: 'shooter', l: victim.netLife, h: 1 });
     assert.equal(victim.hp, 70, 'non-bomb shooter-authoritative hits retain their existing route');
   } finally { f.G.netm?.dispose(); }
+});
+
+test('far bomb victim-owner admission preserves native deferred lethal rather than attacker-side damage',async()=>{
+ const f=await fixture(),nm=f.makeNetMatch(f.makeSession('p2','p1'));
+ class CharacterStub{
+  constructor(){this.root={position:new f.THREE.Vector3(),rotation:{y:0}};}
+  setVisible(){} setHurt(){} trigger(){} setWeapon(){}
+ }
+ const victim=new f.Actor({team:1,name:'native recipient',CharacterClass:CharacterStub});
+ victim.nid=2;victim.owner='p2';victim.remote=false;victim.invuln=0;victim.hp=20;victim.pos.set(0,.6,5);
+ victim._finishFrame=()=>{};victim.netLife=0;victim._netLifeStartedAt=1000;
+ const attacker=damageActor(f.makeActor({nid:1,owner:'p1',remote:true,team:0,roller:false}));
+ addActors(f,nm,attacker,victim);
+ try{
+  f.projectiles._explodeBomb(ghostBomb(f,attacker));
+  assert.equal(victim.hp,-10,'native accepted30HP far band is pending before splat clamps HP');assert.equal(victim.alive,true,'native lethal remains pending in the collision tick');
+  f.G.time+=1/60;victim.update(1/60);
+  assert.equal(victim.alive,false,'next native Actor tick commits the accepted lethal exactly once');
+  assert.equal(victim.stats.deaths,1);
+ }finally{nm.dispose();}
 });

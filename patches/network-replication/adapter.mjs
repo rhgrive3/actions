@@ -54,13 +54,13 @@ export function adaptNetworkSource(rel, code) {
     patch('  _hit(d, from) {', `  _hit(d, from) {
     // Bomb damage is victim-owned. Ignore attack-side guesses, including packets
     // from older clients; the ordered bomb event is replayed on the victim owner.
-    if (d.w === 'bomb') return;`, 'reject shooter bomb hit');
+    if (d.w === 'bomb' || d.w === 'splat-bomb-far') return;`, 'reject shooter bomb hit');
     patch("  shouldApplyHit(attacker, victim) {\n    // ghosts never hurt anyone; the shooter's client decides, the victim's owner applies\n    if (this._applyingHit) return 'local';",
       `  shouldApplyHit(attacker, victim, weaponId) {
     // A bomb ghost tests local actors using their owner's position and LOS.
     // Never accept the attacker's remote-actor geometry as bomb authority.
     if (this._applyingHit) return 'local';
-    if (weaponId === 'bomb') return victim.remote ? 'drop' : 'local';`, 'bomb recipient authority');
+    if (weaponId === 'bomb' || weaponId === 'splat-bomb-far') return victim.remote ? 'drop' : 'local';`, 'bomb recipient authority');
 
     patch('  _rec(e) { this.out.push([r3(now()), ...e]); }', `  _rec(e) {
     const seq = this._eventSeq = (this._eventSeq || 0) + 1;
@@ -212,7 +212,8 @@ export function adaptNetworkSource(rel, code) {
         for (let index = 5; index <= 18; index++) if (!Number.isFinite(e[index])) return;
         if (e[11] < 0 || e[12] <= 0) return;
         const peer = this.peers.get(from);
-        if (Number.isFinite(e[31]) && peer) { if (e[31] <= (peer._lastProjectileId || 0)) break; peer._lastProjectileId = e[31]; }
+        const birthId = e[e.length === 35 ? 31 : 29];
+        if (Number.isFinite(birthId) && peer) { if (birthId <= (peer._lastProjectileId || 0)) break; peer._lastProjectileId = birthId; }
         const a = this.byNid.get(e[2]), p = a && G.projectiles?.ghostProjectile(a, e);
         if (p) { p._netBorn = e[0]; p._netBornTick = e._netTick; p._netPeer = this.peers.get(from); p._netSteps = 0; p._netMaxSteps = Math.ceil((p.life + Math.max(0,p.delay)) * 60) + 2; }
         break;
@@ -284,9 +285,10 @@ ${bombHit}`;
       p.drag = w.flickDrag ?? p.drag;`, 'final flick physics before publication');
 
     patch('    p.delay = 0; p.head = false;', '    p._netId = undefined; p._netEnded = false; p._netPeer = null; p._netBorn = undefined; p._netBornTick = undefined; p._netSteps = 0; p._netMaxSteps = 0; p._netEndStep = undefined; p._netEndReason = 0; p._netHitActor = false;\n    p.delay = 0; p.head = false;', 'recycled identity reset');
-    patch('    this.list.push(p);\n  }\n\n  ghostBomb', `    p.s3Vertical = e[29] === 1;
-    if (Number.isFinite(e[30])) p.seed = e[30]; // retain the native random draw above
-    p._netId = e[31];
+    patch('    this.list.push(p);\n  }\n\n  ghostBomb', `    const birthOffset = e.length === 35 ? 2 : 0;
+    p.s3Vertical = e[27 + birthOffset] === 1;
+    if (Number.isFinite(e[28 + birthOffset])) p.seed = e[28 + birthOffset]; // retain the native random draw above
+    p._netId = e[29 + birthOffset];
     this.list.push(p);
     return p;
   }

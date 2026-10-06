@@ -15,10 +15,15 @@ for (const [label, velocity] of [['forward', 4.32], ['backward', -4.32], ['stati
       assert.ok(Math.abs(expected[2] - (a.weapon.projSpeed + velocity * 2)) < 1e-9);
       const packet = JSON.parse(JSON.stringify(nm.out.find(e => e[1] === 'p')));
       assert.deepEqual(packet.slice(8, 11), expected, 'real recorder publishes post-inheritance velocity');
-      assert.equal(packet.length, 32, 'wire envelope stays unchanged');
+      assert.equal(packet.length, 35, 'actual Kit identity, immutable unit and ordered footer are present');
       f.projectiles.clear(); a.remote = true; a.owner = 'p2'; a.vel.set(0, 0, velocity * 3);
-      nm.peers.set('p2', { tr: packet[0] });
-      nm._play('p2', packet); nm._play('p2', packet);
+      nm.peers.delete('p2'); // real _tick creates its complete peer event state
+      assert.equal(packet[32],-1,'Shooter has no Roller unit');
+      assert.ok(Number.isSafeInteger(packet[33])&&Number.isSafeInteger(packet[34]));
+      nm.onMessage('p2',{k:'t',ts:packet[0],u:packet[33],r:2,e:[packet]});
+      const decoded=nm.peers.get('p2').events[0];assert.ok(decoded,'real receiver decodes ordered footer');
+      assert.equal(decoded._netTick,packet[33]);assert.equal(decoded._netSeq,packet[34]);
+      nm._play('p2', decoded); nm._play('p2', decoded);
       assert.equal(f.projectiles.list.length, 1, 'duplicate birth is admitted once');
       const ghost = f.projectiles.list[0];
       assert.equal(ghost.ghost, true);

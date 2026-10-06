@@ -1,3 +1,4 @@
+import {respawnPunisherEquipped,withHitPunisher} from '../../splatoon3/runtime/clothing-gear.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -26,11 +27,11 @@ function hitWorld() {
   const emit = (type, detail) => { events.push({ type, detail }); for (const cb of listeners.get(type) || []) cb(detail); };
   const calls = [];
   const G = { projectiles: { applyHit(a, v, damage, weapon, group) {
-    calls.push({ a, v, damage, weapon, group }); emit('damage', { victim: v, attacker: a, amount: damage });
+    calls.push({ a, v, damage, weapon, group, punisher:respawnPunisherEquipped(a) }); emit('damage', { victim: v, attacker: a, amount: damage });
   } } };
-  const C = new Function('G', 'PLAYER', 'on', 'emit', 'r2', 'IW_HIT_MAX_DAMAGE', 'IW_HIT_CAUSES', 'rearmTeamWipe',
+  const C = new Function('G', 'PLAYER', 'on', 'emit', 'r2', 'IW_HIT_MAX_DAMAGE', 'IW_HIT_CAUSES', 'rearmTeamWipe', 'respawnPunisherEquipped', 'withHitPunisher',
     'return class {' + ['sendHit', '_hit', '_hitAck', '_remoteRespawn'].map(method).join('\n') + '}')
-    (G, { hp: 100, spawnInvuln: 3 }, on, emit, x => Math.round(x * 100) / 100, 1000, new Set(['shooter']), rearmTeamWipe);
+    (G, { hp: 100, spawnInvuln: 3 }, on, emit, x => Math.round(x * 100) / 100, 1000, new Set(['shooter']), rearmTeamWipe, respawnPunisherEquipped, withHitPunisher);
   const n = new C();
   Object.assign(n, { myId: 'A', byNid: new Map(), s: { tr: { sendTo(to, data) { sent.push({ to, data }); } } },
     peers: new Map(), _peer(id) { if (!this.peers.has(id)) this.peers.set(id, {}); return this.peers.get(id); } });
@@ -40,9 +41,11 @@ function hitWorld() {
 test('composed #427 keeps unrounded damage/group sidecar and binds one ACK to the current life', () => {
   const f = hitWorld(), a = { nid: 1, owner: 'A', netLife: 1, alive: true, remote: false },
     v = { nid: 2, owner: 'B', netLife: 2, alive: true, remote: true, s3PendingHitGroup: 'volley:7' };
+  a.s3={loadout:[{main:'none'},{main:'respawnPunisher'},{main:'none'}]};
   f.n.byNid.set(1, a); f.n.byNid.set(2, v);
   assert.equal(f.n.sendHit(a, v, 12.34567, 'shooter'), true);
   const message = f.sent[0].data;
+  assert.equal(message.rp,true,'actual equipment helper supplies wire metadata');
   assert.equal(message.d, 12.34567); assert.equal(message.g, 'volley:7');
   assert.equal(f.n._pendingHits.get(message.h).d, 12.34567);
   const ack = { h: message.h, a: 1, v: 2, vl: 2, d: 12.35, kld: 0 };
@@ -56,16 +59,18 @@ test('composed #427 keeps unrounded damage/group sidecar and binds one ACK to th
 test('composed #427 forwards the existing damage group and restores nested apply ownership on throw', () => {
   const f = hitWorld(), a = { nid: 1, owner: 'A', team: 0, remote: true }, v = { nid: 2, owner: 'B', team: 1, remote: false, alive: true, netLife: 2 };
   f.n.byNid.set(1, a); f.n.byNid.set(2, v); f.n.myId = 'B'; f.n._applyingHit = 'outer';
-  const msg = { h: 1, a: 1, v: 2, l: 2, d: 12.34567, w: 'shooter', g: 'volley:7' };
+  const msg = { h: 1, a: 1, v: 2, l: 2, d: 12.34567, w: 'shooter', g: 'volley:7', rp:true };
   f.n._hit(msg, 'A');
+  assert.equal(f.calls[0].punisher,true);assert.equal(a.s3.clothingHitPunisher,undefined,'scoped hit equipment is restored');
   assert.equal(f.calls[0].group, 'volley:7'); assert.equal(f.calls[0].damage, 12.34567);
   assert.equal(f.sent[0].data.k, 'hit_ack'); assert.equal(f.sent[0].data.d, 12.35);
   assert.equal(f.n._applyingHit, 'outer');
-  f.G.projectiles.applyHit = () => { throw Error('damage sink'); };
-  assert.throws(() => f.n._hit({ ...msg, h: 2 }, 'A'), /damage sink/);
+  f.G.projectiles.applyHit = () => { assert.equal(respawnPunisherEquipped(a),false);throw Error('damage sink'); };
+  assert.throws(() => f.n._hit({ ...msg, h: 2, rp:false }, 'A'), /damage sink/);
   assert.equal(f.n._applyingHit, 'outer');
   for (const set of f.listeners.values()) assert.equal(set.size, 0);
   assert.equal(f.sent.length, 1, 'a throwing application produces no forged ACK');
+  assert.equal(a.s3.clothingHitPunisher,undefined,'throw also restores scoped equipment');
 });
 
 test('composed respawn preserves all current retirements and clears only this victim pending hits', () => {

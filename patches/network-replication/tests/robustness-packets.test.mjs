@@ -85,17 +85,20 @@ test('a replayed projectile event cannot create a second ghost or resurrect an e
   f.bind(nm, [a]);
   const peer = { tr: 1000 };
   nm.peers.set('p2', peer);
-  const shot = [1000, 'p', 7, 'shot', 'shooter', 0, 30, 2, 0, 0, 1, 0, 0.2, 0, 0.1, 0.1, 1, 0, 0, 0, 0.1, 0.8, 1.3, 0.03, 26, 0.3, 3, 0, 0.5, 41];
+  a.remote=false;a.owner='me';a.character.getMuzzle=o=>o.copy(a.pos).setY(30);f.projectiles.fireShooter(a,a.weapon,0);
+  const shot=JSON.parse(JSON.stringify(nm.out.find(e=>e[1]==='p')));assert.equal(shot.length,35);assert(Number.isSafeInteger(shot[31]));
+  f.projectiles.clear();a.remote=true;a.owner='p2';
+  nm._play('p3',shot);assert.equal(f.projectiles.list.length,0,'a different sender cannot claim the recorded birth');
   nm._play('p2', shot);
   assert.equal(f.projectiles.list.length, 1, 'first event did not spawn');
   nm._play('p2', shot);                                    // exact replay (same netId)
   assert.equal(f.projectiles.list.length, 1, 'replay duplicated the projectile');
 
   // let it finish, then replay the terminal event and the birth again
-  peer.tr = 1002;
+  peer.tr = shot[0]+shot[11]+shot[12]+1;
   f.projectiles.update(1 / 60);
   assert.equal(f.projectiles.list.length, 0);
-  nm._play('p2', [1001, 'pe', 7, 41]);
+  f.G.time=1;nm._rec(['pe',a.nid,shot[31],0]);const end=nm.out.at(-1);nm._play('p2',end);nm._play('p2',end);
   nm._play('p2', shot);
   assert.equal(f.projectiles.list.length, 0, 'a finished projectile was resurrected');
 });
