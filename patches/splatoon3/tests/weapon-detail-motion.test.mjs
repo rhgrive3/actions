@@ -132,19 +132,10 @@ test('second-realm helpers observe the installed weapon attack and reset state',
   for (const kind of ['slosher', 'charger']) {
     const r = rig(api, kind);
     try {
-      r.step(1 / 60, { fire: true });
-      // The charger's charge now completes in the profile's chargeTime, so a fixed one-extra-step
-      // can land before the release state exists. Record the release age across the whole lifecycle
-      // and gate on it appearing at all, rather than on a hardcoded step count.
       if (kind === 'charger') {
-        const seq = [r.snapshot().chargerReleaseAge];
-        for (let i = 0; i < 8 && r.snapshot().chargerReleaseAge === null; i++) {
-          r.step(1 / 60, { fire: i % 2 === 0 });
-          seq.push(r.snapshot().chargerReleaseAge);
-        }
-        assert.notEqual(r.snapshot().chargerReleaseAge, null,
-          `the charger must reach a released state, saw ${JSON.stringify(seq)}`);
-      }
+        for (let i = 0; i < 8; i++) r.step(1 / 60, { fire: true });
+        r.step(1 / 60);
+      } else r.step(1 / 60, { fire: true });
       const active = r.snapshot();
       assert.notEqual(kind === 'slosher' ? active.sloshElapsed : active.chargerReleaseAge, null);
       assert.deepEqual(JSON.parse(JSON.stringify(snapshotFromAnotherRealm(r.ch))), JSON.parse(JSON.stringify(active)));
@@ -301,9 +292,9 @@ test('actual Charger stores full charge across form on a held ZR, then releases 
       for (let i = 0; i < 2 * hz; i++) r.step(1 / hz, { fire: true });
       assert.ok(r.ch.charge > .99); assert.equal(r.events.length, 0);
       // Charge keep belongs to the held shot, so ZR stays down across the form change.
-      r.a.form = 'squid'; for (let i = 0; i < hz / 4; i++) r.step(1 / hz, { fire: true });
+      r.a.form = 'squid'; for (let i = 0; i < Math.ceil(hz * .28); i++) r.step(1 / hz, { fire: true });
       assert.equal(r.a.weaponRunner.s3Stored.charge, 1);
-      r.a.form = 'kid'; for (let i = 0; i < hz / 4; i++) r.step(1 / hz, { fire: true });
+      r.a.form = 'kid'; for (let i = 0; i < Math.ceil(hz * .28); i++) r.step(1 / hz, { fire: true });
       assert.equal(r.events.length, 0); assert.ok(r.ch.weapon.coil.userData.u.uCharge.value > .99);
       r.step(1 / hz, { fire: true }); r.step(1 / hz);
       assert.equal(r.events.length, 1); assert.equal(r.events[0].charge, 1);

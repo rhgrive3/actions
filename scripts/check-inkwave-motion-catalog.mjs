@@ -641,6 +641,9 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout 
       function step(dt = 1 / 60, input = {}) {
         if (a) {
           a.intent.fire = !!input.fire; a.intent.sub = !!input.sub; G.time += dt;
+          // This fixture calls Runner directly for ordinary scenarios; advance the
+          // Actor-owned Shooter post-fire clock at the same pre-Runner point.
+          if (a.weapon.kind === 'shooter') a.lastFire += dt;
           // Dualies post-shot admission clocks belong to Actor.update.
           if (scenario.name === 'dualies-roll-lock-interrupt') a.update(dt);
           else {
