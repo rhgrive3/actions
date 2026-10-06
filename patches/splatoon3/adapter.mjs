@@ -76,6 +76,15 @@ export function adaptSource(rel, code) {
       '      const winner = Math.abs(pa - pb) < 0.05 ? -1 : pa > pb ? 0 : 1;',
       '      const winner = authoritativeWinner === 0 || authoritativeWinner === 1 ? authoritativeWinner : Math.abs(pa - pb) < 0.05 ? -1 : pa > pb ? 0 : 1;',
       'authoritative Turf winner HUD reveal');
+    code = replaceOnce(code,
+      "    if (L.kind === 'slosher') {",
+      "    // S3 charge-reticle lifecycle (#594): a charging weapon shows no charge cluster while idle.\n" +
+      "    if (L.kind === 'charger' || L.kind === 'splatling') {\n" +
+      "      const retIdle = !(+f.charge > 0.001) && !(L.kind === 'splatling' && !!L.streaming);\n" +
+      "      this.ret.classList.toggle('is-idle', retIdle);\n" +
+      "    }\n" +
+      "    if (L.kind === 'slosher') {",
+      'idle charge reticle lifecycle');
     return "import { t as tr } from '../i18n.js';\n" + code;
   }
   if (rel === 'src/ui/ui-icons.js') {

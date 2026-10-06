@@ -250,3 +250,16 @@ cloud/Halyard cube allocation at default high settings, not only after later
 runtime refresh. Existing formats, appearance policy and gameplay stay intact.
 These are project resource dimensions, not Nintendo/Switch memory values.
 See [the cold-boot budget report](inkwave-cold-boot-budgets-2026-10-04.md).
+
+
+## チャージ系照準の待機時非表示（#594、2026-10-06）
+
+開始mainは `37ab02fcb7314eee8a6b3e6e8e6b0593610e7bff`。公開対象は `inkwave-public/` と有効な `patches/splatoon3/` であり、旧 `game/` は対象外。本家の実機計測を新たに追加した変更ではなく、非公開のフェード値は推定しない。
+
+| 項目 | 内容 |
+|---|---|
+| 本家の根拠 | Issue #594 が引用する [GameFAQs のチャージ系照準スレッド](https://gamefaqs.gamespot.com/boards/313532-splatoon-3/80397396)（Charger/Stringer/Splatling は「充填していない時は照準が見えない」）と[Nintendo の更新履歴（Ver.11.3.0）](https://en-americas-support.nintendo.com/app/answers/detail/a_id/59461/)、参照ゲームプレイ映像。表示開始の追加フェード秒数は一次資料が無いため**主張しない**（#572 の 5F 表示遅延は別件のまま） |
+| INKWAVE の実装箇所 | `patches/splatoon3/adapter.mjs` の `adaptSource('src/ui/hud.js')` アンカー（ラベル `idle charge reticle lifecycle`）が `_updCrosshair` の kind 分岐直前に `if (L.kind === 'charger' \|\| L.kind === 'splatling')` のゲートを挿入し、`charge > 0.001` または Splatling の `streaming` が無いフレームで `ret.classList.toggle('is-idle', …)` を打つ。非表示自体は `patches/splatoon3/ui.css` の `.iw-ret--charger.is-idle, .iw-ret--splatling.is-idle { visibility: hidden; }`（`index.html` adapter が注入する後置 stylesheet）。ロックされた `src/ui/hud.js` と `styles/hud.css` は変更していない |
+| 再現操作 | Charger を装備して無操作→修正前は中央にドット・ライン・チャージリング・ノッチが常時表示、修正後は待機中は非表示。チャージ開始で表示、解放で 0 へ戻り再び非表示。Splatling は `charge=0 & streaming=false` で非表示、充填と連射中は表示、ストリーム終了後は再び非表示。shooter/blaster/roller/dualies/slosher の照準は表示のまま |
+| プレイへの影響 | 待機中のチャージャーが中央の精密照準リファレンスを無償で得られなくなる。バレルスピナーのメーターも充填前に見せない。チャージ時間・ダメージ・射程・拡散・インク消費・弾速・移動・照準 authority は変更していない |
+| 確認状態 | **ロジック確認済み**（composed `src/ui/hud.js` の実 `_buildReticle`/`_updCrosshair` を使用する回帰 `patches/splatoon3/tests/issue-594-idle-reticle.test.mjs` 7/7、修正前に 5 件失敗、30/60/120 Hz で同一判定、`scripts/build-inkwave.mjs` の compatibility check 合格）。**Switch Ver.11.3.0 実機での表示タイミング・フェードの比較は未確認**。#572（5F 表示遅延）・#508（2段ゲージ）は本件では変更せず未確認のまま |
