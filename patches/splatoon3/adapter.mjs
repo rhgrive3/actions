@@ -69,6 +69,35 @@ export function adaptSource(rel, code) {
   }
   if (rel === 'src/ui/hud.js') {
     code = replaceOnce(code,
+      '        <circle r="23" class="iw-ret__ring" pathLength="100" style="stroke-dasharray:19 6;stroke-dashoffset:9.5"/><circle r="9" class="iw-ret__ring thin"/></svg>`;',
+      '        <circle r="23" class="iw-ret__ring" pathLength="100" style="stroke-dasharray:19 6;stroke-dashoffset:9.5"/><circle r="9" class="iw-ret__ring thin"/></svg><span class="iw-ret__bias" hidden aria-hidden="true"></span>`;',
+      'Blaster outer-bias cue element');
+    code = replaceOnce(code,
+      '    this._L.spread = null; this._L.charge = null; this._L.full = null;',
+      '    this._L.spread = null; this._L.charge = null; this._L.full = null;\n' +
+      '    this._L.blasterCue = null; this._L.blasterCuePhase = null;\n' +
+      '    this._blasterBiasEl = kind === \'blaster\' ? r.querySelector(\'.iw-ret__bias\') : null;',
+      'Blaster outer-bias cue ownership');
+    code = replaceOnce(code,
+      '    const ch = f.crosshair || {};',
+      '    const ch = f.crosshair || {};\n' +
+      '    const localActor = this._local();\n' +
+      '    const jumpState = L.kind === \'blaster\' ? localActor?.weaponRunner?.s3BlasterJumpState?.(localActor.weapon) : null;\n' +
+      '    const cueActive = !!(jumpState?.supported && jumpState.active);\n' +
+      '    if (this._blasterBiasEl) {\n' +
+      '      const percent = cueActive ? Math.round(jumpState.bias * 100) : 0;\n' +
+      '      const cuePhase = cueActive ? jumpState.phase : \'idle\';\n' +
+      '      const cue = !cueActive ? \'\' : cuePhase === \'held\' ? `OUTER ${percent}%`\n' +
+      '        : cuePhase === \'recovering\' ? \'RECOVERING\' : `OUTER ${percent}%`;\n' +
+      '      if (cue !== L.blasterCue || cuePhase !== L.blasterCuePhase) {\n' +
+      '        L.blasterCue = cue; L.blasterCuePhase = cuePhase;\n' +
+      '        this._blasterBiasEl.hidden = !cueActive;\n' +
+      '        this._blasterBiasEl.textContent = cue;\n' +
+      '        this._blasterBiasEl.dataset.phase = cuePhase;\n' +
+      '      }\n' +
+      '    }',
+      'Blaster sourced bias and recovery presentation');
+    code = replaceOnce(code,
       "  judge({ colors = ['#ff8a14', '#2f5bff'], percents = [50, 50], names = TEAM_NAMES } = {}) {",
       "  judge({ colors = ['#ff8a14', '#2f5bff'], percents = [50, 50], names = TEAM_NAMES, winner: authoritativeWinner = null } = {}) {",
       'authoritative Turf winner HUD input');

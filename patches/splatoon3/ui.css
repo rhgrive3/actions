@@ -7,6 +7,14 @@
 /* Blaster reticle: live spread (--sp, set on .iw-ret) widens only the outer dashed ring; the inner thin ring keeps its rest size. */
 .iw-ret--blaster .iw-ret__svg { transform: none; transition: none; }
 .iw-ret--blaster .iw-ret__svg circle.iw-ret__ring:not(.thin) { transform: scale(calc(1 + var(--sp, 0) * .012)); transform-box: fill-box; transform-origin: center; transition: transform .1s linear; }
+.iw-ret--blaster .iw-ret__bias[hidden] { display: none; }
+.iw-ret--blaster .iw-ret__bias:not([hidden]) {
+  display: block; position: absolute; left: 50%; top: 29px; translate: -50% 0; z-index: 1;
+  padding: 3px 5px 5px; border: 1px solid rgba(255,255,255,.82); border-radius: 999px;
+  background: rgba(10,12,18,.88); color: #fff; font: 700 9px/1 ui-monospace, monospace;
+  letter-spacing: .035em; white-space: nowrap; pointer-events: none;
+}
+.iw-ret--blaster .iw-ret__bias[data-phase='recovering'] { border-color: #ffe08a; color: #ffe08a; }
 
 /* Slosher ShotGuide offsets only aiming feedback; tank/sub/status stay centred. */
 .iw-ret, .iw-hit, .iw-kill { translate: var(--gx, 0px) var(--gy, 0px); }
