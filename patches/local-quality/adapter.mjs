@@ -230,6 +230,52 @@ export function adaptQualitySource(rel, code) {
     return "import { bindRollerDrop } from '../../patches/local-quality/roller-visual.mjs';\n" + code;
   }
 
+  // #678: the DeviceMotion/DeviceOrientation axis conversion was a *player-space* construction, not the
+  // Splatoon 3 World Orientation mapping. Three separate defects lived in one block:
+  //   1. the yaw projection dropped the screen-x gravity term gx*px, so real world yaw vanished in
+  //      every rolled/landscape pose and pure roll was reported as yaw;
+  //   2. the result was then scaled by a player-space 1.41 magnitude relax and capped against the
+  //      local hypot(py, pz), so angular velocity ORTHOGONAL to world vertical still became camera yaw;
+  //   3. pitch = px unconditionally, so pitch ignored gravity entirely and never reduced at bank.
+  // The whole block becomes one world-orientation projection. The gx*px term is retained because it
+  // falls out of the correct complete projection, not as a cherry-picked partial; the 1.41 relax and
+  // the local magnitude cap are removed because they are precisely the player-space construction the
+  // Issue rejects. Sensitivity (sens / gyroTurnDeg / _gain), inversion, every smoothing and filter
+  // coefficient, _calibrate/_rrScale and the resync/dropout lifecycle below are untouched, and
+  // inkwave-public/ is never edited.
+  if (rel === 'src/core/gyro.js') {
+    code = replaceOnce(code, `    const d = this._down;
+    const gy = d[0] * s + d[1] * c, gz = d[2];
+    const gl = Math.hypot(d[0] * c - d[1] * s, gy, gz) || 1;
+    // player-space yaw: the part of the turn around real vertical, allowed to borrow from roll (±45° relax)
+    const worldYaw = -(gy * py + gz * pz) / gl;
+    const yawAxes = Math.hypot(py, pz);
+    let yaw = Math.sign(worldYaw) * Math.min(Math.abs(worldYaw) * 1.41, yawAxes);
+    let pitch = px;`, `    const d = this._down;
+    const gx = d[0] * c - d[1] * s, gy = d[0] * s + d[1] * c, gz = d[2];
+    const gl = Math.hypot(gx, gy, gz) || 1;
+    const ux = gx / gl, uy = gy / gl, uz = gz / gl;              // unit earth-down, in screen space
+    // World Orientation: one projection of the whole screen-space omega. yaw is the turn about real
+    // vertical and nothing else - no player-space 1.41 magnitude borrow, no hypot(py, pz) cap, so
+    // angular velocity orthogonal to gravity can no longer become camera yaw.
+    let yaw = -(px * ux + py * uy + pz * uz);
+    // pitch: the device pitch axis (screen-right) with its gravity component removed, i.e. the
+    // world-horizontal direction nearest it. Exactly px while gravity is perpendicular to screen-right
+    // (flat / upright portrait); reduced and mixed as the device banks.
+    const hx = 1 - ux * ux, hy = -ux * uy, hz = -ux * uz;       // = e_x - (e_x . u) u
+    const hl = Math.hypot(hx, hy, hz);
+    let pitch;
+    if (hl > 1e-6) pitch = (px * hx + py * hy + pz * hz) / hl;
+    else {
+      // Gravity lies along screen-right: the screen plane is vertical, so the device pitch axis has no
+      // world-horizontal part and gravity alone cannot define the camera pitch axis. Deterministic
+      // documented fallback: screen-up with gravity removed. Splatoon 3 does not publish its behaviour
+      // in this band, so it stays explicitly UNQUANTIFIED and is not a Nintendo constant.
+      const ex = -uy * ux, ey = 1 - uy * uy, ez = -uy * uz;
+      pitch = (px * ex + py * ey + pz * ez) / (Math.hypot(ex, ey, ez) || 1);
+    }`, 'gyro world-orientation axis mapping');
+  }
+
   if (rel === 'src/core/gyro.js') {
     return "import { installGyroQuality } from '../../patches/local-quality/gyro.mjs';\n" + code +
       '\ninstallGyroQuality(Gyro, screenAngle);\n';
