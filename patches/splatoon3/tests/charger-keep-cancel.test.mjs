@@ -161,8 +161,11 @@ test('reset, death and weapon swap all clear a kept charge', async () => {
     const a = await kept(f);
     const r = a.weaponRunner;
     if (teardown === 'reset') a.reset();
-    else if (teardown === 'death') { a.hp = 1; a.damage(60, null, 'shooter'); }
-    else a.setWeapon('shooter');
+    else if (teardown === 'death') {
+      a.hp = 1; a.damage(60, null, 'shooter');
+      assert.ok(r.s3Stored, 'pending lethal keeps state until the next fixed tick');
+      f.tick(a);
+    } else a.setWeapon('shooter');
     assert.equal(r.s3Stored, null, `${teardown} clears the stored charge`);
     assert.equal(r.charging, false);
     assert.equal(r.charge, 0);
