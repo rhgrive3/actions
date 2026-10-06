@@ -42,6 +42,7 @@ import { installEmotesMotion } from './emotes-motion.mjs';
 import { installSpecialMotion } from './special-motion.mjs';
 import { installFaceMotion } from './face-motion.mjs';
 import { installCarryMotion } from './carry-motion.mjs';
+import { installArcPreviewPerformance } from './arc-preview-performance.mjs';
 
 let installed = false;
 export function install(profile) {
@@ -87,6 +88,9 @@ export function install(profile) {
   installSpecialMotion(api, profile);
   installFlowMotion(api);
   installFaceMotion(api, profile);
+  // Issue #798: the arc guide is presentation-only. Throttle its native
+  // collision-query cadence without touching actual bomb physics.
+  installArcPreviewPerformance(api);
   // Main-weapon fidelity must be installed on the same canonical context before
   // gameplay can create projectiles; bootstrap's compatibility call is then a no-op.
   installWeaponsFidelity(api, profile);

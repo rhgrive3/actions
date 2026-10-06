@@ -5,6 +5,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { adaptSource } from '../adapter.mjs';
+import { ARC_PREVIEW_MIN_INTERVAL_S } from '../runtime/arc-preview-performance.mjs';
 
 // The complete production installer and adapter run once in one VM. Duplicate
 // installers are exercised separately and must retain the original registry.
@@ -573,6 +574,70 @@ test('native drawn arc follows actual bomb origin, velocity and gravity at every
       fs.renameSync(pending, file);
     }
   } finally { api.PLAYER.waterY = waterY; r.close(); }
+});
+
+// Issue #798: the trajectory guide must not run 126 collision queries on
+// every render frame while aiming/moving. Micro aim/position drift within a
+// render interval reuses the cached native line (zero new segment queries);
+// the cached line still refreshes per-frame presentation, and large motion
+// or the next 30 Hz tick recomputes through the unchanged native path.
+test('issue 798: aiming micro-drift reuses the cached arc without new collision queries', async () => {
+  const api = await production(), r = rig(api);
+  const waterY = api.PLAYER.waterY;
+  try {
+    api.PLAYER.waterY = -10000;
+    r.a.yaw = 0.64; r.a.pitch = -0.19;
+    for (let i = 0; i < 40; i++) r.step(1 / 60, { sub: true });
+    r.projectiles.updateArc(r.a, true);
+    const attribute = r.projectiles.arcGeo.getAttribute('position');
+    const landedBefore = r.projectiles._arcCache.landed;
+    let segments = 0;
+    const physics = api.G.physics, native = physics.segment;
+    physics.segment = function (...args) { segments++; return native.apply(this, args); };
+    try {
+      // Hold G.time inside one throttle interval and drift aim/position by
+      // less than the quantization epsilon: no native recompute may run.
+      const drift = 0.001;
+      for (let i = 0; i < 10; i++) {
+        r.a.pos.x += drift; r.a.pos.z += drift;
+        r.a.aimYaw += drift * 0.01; r.a.aimPitch += drift * 0.005;
+        r.projectiles.updateArc(r.a, true);
+        assert.equal(segments, 0, 'micro drift within one interval must not query Physics');
+        assert.equal(r.projectiles.arcLine.visible, true, 'cached guide stays visible every frame');
+        assert.equal(r.projectiles.arcRing.visible, landedBefore, 'landing marker follows the cached result');
+      }
+      // A large throw-parameter change must recompute through the native path.
+      r.a.pos.x += 5; r.a.aimYaw += 0.5;
+      const beforeVertices = Array.from({ length: r.projectiles.arcGeo.drawRange.count },
+        (_, i) => [attribute.getX(i), attribute.getY(i), attribute.getZ(i)]);
+      r.projectiles.updateArc(r.a, true);
+      assert.ok(segments > 0, 'large aim/position change recomputes through native Physics');
+      assert.ok(segments <= 126, 'one recompute still runs at most one native preview pass');
+      const afterVertices = Array.from({ length: r.projectiles.arcGeo.drawRange.count },
+        (_, i) => [attribute.getX(i), attribute.getY(i), attribute.getZ(i)]);
+      assert.notDeepEqual(afterVertices, beforeVertices, 'large motion moves the drawn guide');
+      // Advancing past the throttle interval recomputes even when the native
+      // exact-value cache would still hit: drift again so both the wrapper
+      // interval and the native inputs change, then confirm the native pass.
+      r.a.pos.x += 0.2; r.a.aimYaw += 0.02;
+      api.G.time += ARC_PREVIEW_MIN_INTERVAL_S + 1 / 60;
+      const count = segments;
+      r.projectiles.updateArc(r.a, true);
+      assert.ok(segments > count, 'the next 30 Hz tick refreshes the guide through the native path');
+      // Aiming off hides the guide through the native guard and resets state.
+      r.projectiles.updateArc(r.a, false);
+      assert.equal(r.projectiles.arcLine.visible, false);
+      // Actual bomb creation still uses the live pose, never the cached line.
+      api.G.projectiles = r.projectiles;
+      r.a.weaponRunner.update(0, { subReleased: true });
+      assert.equal(r.projectiles.bombs.length, 1, 'actual bomb gameplay is unchanged by the preview budget');
+    } finally {
+      physics.segment = native;
+    }
+  } finally {
+    api.PLAYER.waterY = waterY;
+    r.close();
+  }
 });
 
 test('a duplicate installer from a different VM realm preserves the original prototype hooks and live helper state', async () => {
