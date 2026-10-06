@@ -33,11 +33,16 @@ export function runSimulation(game, dt) {
     if (m && !(covered && m.attract)) {
       // #53: RESULT must not keep authoritative actor/projectile simulation
       // running behind the results screen. Presentation ticks, input polling,
-      // edge consumption and menu navigation keep their own cadence. Network
-      // matches keep the existing owner/remote application pipeline so no remote
-      // snapshot is frozen or later replayed stale.
-      const freezeResults = m.state === 'results' && !G.netm;
-      if (!freezeResults) {
+      // edge consumption and menu navigation keep their own cadence. Online,
+      // Match.update stops too (no local acting, boss or physics) while the
+      // owner/remote pipeline applies each owner's latest snapshot exactly once
+      // per tick — a late owner change lands once and is never frozen and
+      // replayed stale. NetMatch pump, control and event delivery keep their own
+      // cadence from G.net.update above.
+      const results = m.state === 'results';
+      if (results && G.netm) {
+        if (!m.paused) for (const a of m.actors || []) if (a.remote && G.netm.applyRemote) G.netm.applyRemote(a, step);
+      } else if (!results) {
         m.updateController(step);
         m.controller?.computeAim?.();
         m.update(step);
