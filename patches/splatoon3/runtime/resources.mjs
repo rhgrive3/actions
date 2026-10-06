@@ -53,7 +53,10 @@ export function updateResources(a, dt) {
     a.s3.chargerInterruptRecover = 19 / 60;
   }
   const chargerInterruptRecover = a.weapon.kind === 'charger' ? (a.s3?.chargerInterruptRecover || 0) : 0;
-  const canRefill = a.lastFire + 1e-10 >= delay && (a.s3?.recoverStopRemaining || 0) <= 1e-10
+  const chargerLowRecovery = a.weapon?.kind === 'charger' && runner?.charging &&
+    a.ink + 1e-10 < (a.weapon.inkMin ?? 0) && chargerInterruptRecover <= 1e-10;
+  const canRefill = chargerLowRecovery ||
+    a.lastFire + 1e-10 >= delay && (a.s3?.recoverStopRemaining || 0) <= 1e-10
     && chargerInterruptRecover <= 1e-10
     && !a.weaponRunner.busy() && !a.weaponRunner.s3Stored;
   if (canRefill) {
