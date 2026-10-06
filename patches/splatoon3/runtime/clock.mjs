@@ -1,4 +1,6 @@
 // Render cadence is independent of the 60 Hz gameplay clock.
+import { idleAttractMenuBudget, MENU_ATTRACT_STEP } from '../../local-quality/idle-resources.mjs';
+
 export const STEP = 1 / 60;
 export class FixedClock {
   constructor() { this.accumulator = 0; this.ticks = 0; }
@@ -31,34 +33,50 @@ export function runSimulation(game, dt) {
   game._padMenus();
   G.net?.update?.(dt);
   const m = game.match, covered = !!game.showcase?.fullFrame;
+  const menuAttractBudget = idleAttractMenuBudget(game, G);
+  const menuRenderElapsed = menuAttractBudget ? (game._menuAttractRenderElapsed || 0) + dt : 0;
+  game._menuAttractFrame = false;
+  game._menuAttractFrameDelta = 0;
+  if (!menuAttractBudget) game._menuAttractSimulationElapsed = 0;
   game._s3Ticked = clock.advance(dt, step => {
     G.time += step;
     if (m && !(covered && m.attract)) {
-      // #53: RESULT must not keep authoritative actor/projectile simulation
-      // running behind the results screen. Presentation ticks, input polling,
-      // edge consumption and menu navigation keep their own cadence. Online,
-      // Match.update stops too (no local acting, boss or physics) while the
-      // owner/remote pipeline applies each owner's latest snapshot exactly once
-      // per tick — a late owner change lands once and is never frozen and
-      // replayed stale. NetMatch pump, control and event delivery keep their own
-      // cadence from G.net.update above.
-      const results = m.state === 'results';
-      if (results && G.netm) {
-        if (!m.paused) for (const a of m.actors || []) if (a.remote && G.netm.applyRemote) G.netm.applyRemote(a, step);
-      } else if (!results) {
-        m.updateController(step);
-        m.controller?.computeAim?.();
-        m.update(step);
-        if (!m.paused) G.projectiles.update(step);
+      let simDt = step;
+      if (menuAttractBudget) {
+        game._menuAttractSimulationElapsed = (game._menuAttractSimulationElapsed || 0) + step;
+        if (game._menuAttractSimulationElapsed + 1e-10 < MENU_ATTRACT_STEP) simDt = 0;
+        else {
+          simDt = game._menuAttractSimulationElapsed;
+          game._menuAttractSimulationElapsed = 0;
+          game._menuAttractFrame = true;
+        }
       }
-      if (m.attract) game._updateAttract(step);
-      else if (m.state === 'playing' && m.local?.alive && (game.rig.mode !== 'follow' || game.rig.target !== m.local)) game.rig.follow(m.local, true);
+      if (simDt > 0) {
+        // Results keep input/presentation/network cadence without advancing local
+        // authoritative actor/projectile simulation. Menu attract budgeting remains
+        // independent and applies only when that attract match owns the menu backdrop.
+        const results = m.state === 'results';
+        if (results && G.netm) {
+          if (!m.paused) for (const a of m.actors || []) if (a.remote && G.netm.applyRemote) G.netm.applyRemote(a, simDt);
+        } else if (!results) {
+          m.updateController(simDt);
+          m.controller?.computeAim?.();
+          m.update(simDt);
+          if (!m.paused) G.projectiles.update(simDt);
+        }
+        if (m.attract) game._updateAttract(simDt);
+        else if (m.state === 'playing' && m.local?.alive && (game.rig.mode !== 'follow' || game.rig.target !== m.local)) game.rig.follow(m.local, true);
+      }
     }
     game.input.endFrame();
     // Mouse and touch deltas are displacements, not velocities: consume once.
     if (game.input.mobile) game.input.mobile.lookDX = game.input.mobile.lookDY = 0;
     game.input.padPressed.clear();
   });
+  if (menuAttractBudget && game._menuAttractFrame) {
+    game._menuAttractFrameDelta = menuRenderElapsed;
+    game._menuAttractRenderElapsed = 0;
+  } else game._menuAttractRenderElapsed = menuRenderElapsed;
 }
 export function installGame(Game) {
   const original = Game.prototype._loop;

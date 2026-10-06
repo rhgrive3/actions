@@ -81,6 +81,45 @@ export function adaptSource(rel, code) {
   code = adaptSubSpecialFidelity(rel, code, replaceOnce);
   code = adaptPaintSplatPool(rel, code, replaceOnce);
   if (rel !== 'src/game/weapons.js') code = adaptKitRescue(rel, code, replaceOnce);
+  if (rel === 'src/world/paint.js') {
+    code = replaceOnce(code,
+      '  float tn = vGrow.x;',
+      '  float tn = vGrow.x;\n  bool bodyOnly = vGrow.z > 1.5;',
+      'paint body-only shader mode');
+    code = replaceOnce(code,
+      '    float grow = mix(0.4, 1.0, tb);',
+      '    float grow = mix(0.4, 1.0, tb);',
+      'paint native body growth');
+    code = replaceOnce(code,
+      '  if (vGrow.z < 0.5) {',
+      '  if (vGrow.z < 0.5 || bodyOnly) {',
+      'paint body visibility');
+    code = replaceOnce(code,
+      '    // ---- rays: short tapered streaks shot out ahead of the body (the splat\'s "star"), mostly stubby with the odd\n' +
+      '    // long one, each ending in a bead where the ink collected as it flew',
+      '    if (!bodyOnly) {\n' +
+      '    // ---- rays: short tapered streaks shot out ahead of the body (the splat\'s "star"), mostly stubby with the odd\n' +
+      '    // long one, each ending in a bead where the ink collected as it flew',
+      'paint body-only ancillary effects');
+    code = replaceOnce(code,
+      '      sd = min(sd, length(p - u * r * (1.3 + 1.2 * h2)) - rad);\n' +
+      '    }\n' +
+      '  }\n' +
+      '  // ---- drips on walls:',
+      '      sd = min(sd, length(p - u * r * (1.3 + 1.2 * h2)) - rad);\n' +
+      '    }\n' +
+      '    }\n' +
+      '  }\n' +
+      '  // ---- drips on walls:',
+      'paint body-only effect boundary');
+    code = replaceOnce(code,
+      '  if (isWall > 0.5 && fall > 0.3 && ks.w > 0.0) {',
+      '  if (!bodyOnly && isWall > 0.5 && fall > 0.3 && ks.w > 0.0) {',
+      'paint body-only drip suppression');
+    code = replaceOnce(code, '  _emitGrowth(g, tn, dT, dripOnly) {', '  _emitGrowth(g, tn, dT, dripOnly) {', 'paint growth submission');
+    code = replaceOnce(code, '  _pushQuad(f, u0, u1, v0, v1, lu, lv, dn, R, team, seed, kind, sdu, sdv, sa, tn, dT, dripOnly) {', '  _pushQuad(f, u0, u1, v0, v1, lu, lv, dn, R, team, seed, kind, sdu, sdv, sa, tn, dT, dripOnly) {', 'paint quad submission');
+    code = replaceOnce(code, 'this.growing.push(g);', 'this.growing.push(g);', 'paint deferred growth record');
+  }
   if (rel === 'src/game/character.js') {
     code = replaceOnce(code, 'const PN = _k;', 'const PN = _k;\nexport const CHARACTER_CHANNELS = Object.freeze({ HIPS_P,HIPS,SPINE,CHEST,NECK,HEAD,CLAVL,CLAVR,UARML,UARMR,FARML,FARMR,HANDL,HANDR,FOOTL,FOOTLR,FOOTR,FOOTRR,ANC,ANCR,POLER,POLEL,IKR,IKL,LTGT,LTGTR,LTW,LTROT,KNEEL,KNEER,STAB,WPL,WPR,TIPTOE,AFOLT,AFOLR,MODEL,MODELR,SQY,SQXZ,HLP });', 'character pose channels');
     code = replaceOnce(code, 'const BALL_Z = 0.11, HEEL_Z = 0.065;', 'const BALL_Z = 0.11, HEEL_Z = 0.065;\nexport const CHARACTER_FOOT_METRICS = Object.freeze({ ANKLE_H, BALL_Z, HEEL_Z });', 'character foot metrics');
@@ -528,6 +567,10 @@ export function adaptSource(rel, code) {
       'stage-root static release');
   }
 
+  if (rel === 'src/world/paint.js') {
+    return "import { installIssue570PaintPresentation } from '../../patches/splatoon3/runtime/render.mjs';\n" +
+      code + '\ninstallIssue570PaintPresentation(PaintSystem);\n';
+  }
   return code;
 }
 
