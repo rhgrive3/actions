@@ -719,8 +719,11 @@ test('issue 798: installed native updateArc bounds walking and continuous aim qu
           assert.ok(refreshTimes[i] - refreshTimes[i - 1] >= ARC_PREVIEW_MIN_INTERVAL_S - 1e-9,
             `${mode} ${hz}Hz continuous input cannot refresh above 30Hz`);
         }
-        assert.ok(refreshTimes.length >= 28 && refreshTimes.length <= 30,
-          `${mode} ${hz}Hz receives a bounded refresh near the requested 30Hz presentation budget`);
+        const expectedBudget = Math.min(30, hz / 2);
+        assert.ok(refreshTimes.length >= expectedBudget - 2 && refreshTimes.length <= expectedBudget,
+          `${mode} ${hz}Hz respects both the 30Hz ceiling and a cached draw between ordinary refreshes`);
+        assert.ok(queries <= frames * 126 / 2,
+          `${mode} ${hz}Hz reduces actual continuous-input collision queries by at least half`);
         assert.ok(cumulativeCacheAge <= frames * (ARC_PREVIEW_MIN_INTERVAL_S + dt + 1e-9),
           `${mode} ${hz}Hz cumulative sampled cache age stays bounded`);
         assert.equal(queries, refreshTimes.length * 126, 'measured queries come from actual native preview passes');

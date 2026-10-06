@@ -484,8 +484,12 @@ export function installArcPreviewPerformance(api) {
     const intervalElapsed = !state || !Number.isFinite(state.time)
       || (now - state.time) >= ARC_PREVIEW_MIN_INTERVAL_S - 1e-9
       || now < state.time;
+    // Keep at least one cached draw between ordinary refreshes, including at
+    // 30 Hz. A long scheduling gap or reversed clock still refreshes at once.
+    const cadenceReady = intervalElapsed && (!state || state.hits > 0
+      || now < state.time || now - state.time > 2 * ARC_PREVIEW_MIN_INTERVAL_S + 1e-9);
     const mustRecompute = actorChanged || physicsChanged || inputsUnknown
-      || !state?.inputs || cacheStale || intervalElapsed || largeInputStep || speedChanged;
+      || !state?.inputs || cacheStale || cadenceReady || largeInputStep || speedChanged;
     if (!mustRecompute && state && state.inputs) {
       refreshPresentationOnly(this, api, actor);
       // Compare discontinuities to the immediately previous render sample.
