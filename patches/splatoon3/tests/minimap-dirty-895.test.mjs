@@ -119,13 +119,24 @@ function splat(paint, stage, cx, cz, rCells, team = 1) {
 }
 
 const bytes = arr => Buffer.from(arr.buffer, arr.byteOffset, arr.byteLength).toString('base64');
+const intersects = (a, b) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+const bbox = (a, b) => {
+  const x = Math.min(a.x, b.x), y = Math.min(a.y, b.y);
+  return { x, y, w: Math.max(a.x + a.w, b.x + b.w) - x, h: Math.max(a.y + a.h, b.y + b.h) - y };
+};
+const alphaSum = (data, rect, W) => {
+  let s = 0;
+  for (let y = rect.y; y < rect.y + rect.h; y++) {
+    for (let x = rect.x; x < rect.x + rect.w; x++) s += data[(y * W + x) * 4 + 3];
+  }
+  return s;
+};
 
-// The ink layer is the authoritative raster and a pure function of the grid, so
-// it must match a whole-map refresh byte-for-byte. The flash overlay is a
-// transition-history channel: the whole-map path clears flash alpha for every
-// row it processes, while a bounded refresh only reprocesses its own rectangle.
-// Any divergence is therefore allowed *outside* that rectangle and must be
-// exactly zero inside it (no stale ink pixel can hide in the redrawn region).
+// The ink layer is a pure function of the grid. The flash layer is a bounded
+// transition history: the partial path clears the previously flashed box before
+// each draw (bounded historical cleanup), so after the correction it must equal
+// a forced whole-map refresh both inside *and* outside the affected union —
+// this is the #895 resurrection regression check.
 function flashDiff(partial, ref, rect, W, H) {
   let inside = 0, outside = 0;
   for (let y = 0; y < H; y++) {
@@ -235,6 +246,8 @@ for (const [name, bounds] of Object.entries(STAGES)) {
       assert.deepEqual(bytes(mm.inkImg.data), bytes(ref.inkImg.data), `${name}: ink layer identical at step (${cx},${cz})`);
       const fd = flashDiff(mm.flashImg.data, ref.flashImg.data, rec.ink[0], W, H);
       assert.equal(fd.inside, 0, `${name}: flash identical inside the redrawn rect at step (${cx},${cz})`);
+      assert.equal(fd.outside, 0, `${name}: flash identical outside the redrawn rect (stale residue cleared) at step (${cx},${cz})`);
+      assert.deepEqual(bytes(mm.flashImg.data), bytes(ref.flashImg.data), `${name}: flash layer byte-identical at step (${cx},${cz})`);
       assert.ok(rec.ink[0].w * rec.ink[0].h < W * H / 4, `${name}: the refresh is a sub-region, not the whole map`);
     }
     assert.ok(partialArea > 0, 'the partial path really drew');
@@ -356,4 +369,95 @@ test('#895 coalesces several splats inside one presentation window', async () =>
   ref.paint.grid.set(paint.grid);
   ref.update(0.016, true);
   assert.deepEqual(bytes(mm.inkImg.data), bytes(ref.inkImg.data), 'no stale seams inside the coalesced union');
+});
+
+for (const [name, bounds] of Object.entries(STAGES)) {
+  test(`#895 ${name}: a time-separated distant splat never resurrects the old flash`, async () => {
+    const stage = makeStage(bounds);
+    const h = makeHarness();
+    const paint = stage.makePaint();
+    const mm = new h.Minimap(stage.level, paint);
+    const rec = instrument(mm, stage);
+    const ref = new h.Minimap(stage.level, stage.makePaint());
+    instrument(ref, stage);
+    const W = mm.w, H = mm.h;
+    const M = bounds.W, D = bounds.D;
+
+    mm.update(0.016, true);                 // initial whole-map build (both)
+    ref.update(0.016, true);
+
+    // ---- region A: near the origin corner
+    rec.ink.length = 0; rec.flash.length = 0;
+    splat(paint, stage, 8, 8, 3, 1);
+    splat(ref.paint, stage, 8, 8, 3, 1);
+    mm.update(0.2);
+    ref.update(0.2, true);
+    const rectA = rec.ink[0];
+    assert.ok(alphaSum(mm.flashImg.data, rectA, W) > 0, 'region A holds fresh flash alpha');
+    assert.deepEqual(bytes(mm.inkImg.data), bytes(ref.inkImg.data));
+    assert.deepEqual(bytes(mm.flashImg.data), bytes(ref.flashImg.data), 'fresh flash at A matches the baseline');
+
+    // ---- enough wall time passes for the flash fade window (0.45 s) to close
+    for (let i = 0; i < 4; i++) { mm.update(0.2); ref.update(0.2); }
+    assert.ok(mm.flashT > 0.45 && ref.flashT > 0.45, 'the flash has fully faded');
+    assert.ok(alphaSum(mm.flashImg.data, rectA, W) > 0,
+      'the faded flash alpha still sits in the layer — this is the resurrection residue');
+
+    // ---- region B: the far corner, disjoint from region A
+    splat(paint, stage, M - 8, D - 8, 3, 2);
+    splat(ref.paint, stage, M - 8, D - 8, 3, 2);
+    rec.ink.length = 0; rec.flash.length = 0;
+    mm.update(0.2);
+    ref.update(0.2, true);
+    const rectB = rec.ink[0];
+    assert.ok(!intersects(rectA, rectB), 'the two painted regions are genuinely distant');
+
+    // new flash timing/visuals are preserved: both restart into the fade window
+    assert.equal(mm.flashT, ref.flashT, 'flashT is reset by the new flash on both paths');
+    assert.ok(mm.flashT < 0.45, 'the new flash is inside the visible fade window');
+
+    // affected union = old flashed box ∪ new dirty rect: equality inside AND outside
+    const union = bbox(rectA, rectB);
+    const fd = flashDiff(mm.flashImg.data, ref.flashImg.data, union, W, H);
+    assert.equal(fd.inside, 0, 'flash identical inside the affected union');
+    assert.equal(fd.outside, 0, 'flash identical outside the affected union (no resurrection)');
+    assert.deepEqual(bytes(mm.flashImg.data), bytes(ref.flashImg.data), 'flash layer byte-identical to the whole-map baseline');
+    assert.deepEqual(bytes(mm.inkImg.data), bytes(ref.inkImg.data), 'ink layer byte-identical to the whole-map baseline');
+
+    // bounded kernel: the cleanup is exactly one localized re-upload covering the
+    // stale region, and total flash uploads stay far below the whole raster
+    assert.ok(rec.flash.some(r => intersects(r, rectA)), 'the stale region A is explicitly cleared + re-uploaded');
+    const flashArea = rec.flash.reduce((s, r) => s + r.w * r.h, 0);
+    assert.ok(flashArea < W * H / 2, `flash uploads stay bounded (${flashArea} < ${W * H / 2})`);
+  });
+}
+
+test('#895 the alpha/bilinear pass visits only the halo rectangle, never full width', async () => {
+  const stage = makeStage(STAGES.Tidewater);
+  const h = makeHarness();
+  const paint = stage.makePaint();
+  const mm = new h.Minimap(stage.level, paint);
+  const rec = instrument(mm, stage);
+  mm.update(0.016, true);                   // initial build allocates _alpha
+
+  splat(paint, stage, 20, 30, 3, 1);
+  rec.ink.length = 0; rec.flash.length = 0;
+
+  // Every alpha-pass iteration writes al[i] exactly once (all three paths), and
+  // _alpha is used nowhere else, so counting writes counts CPU-visited pixels.
+  let visits = 0;
+  mm._alpha = new Proxy(mm._alpha, {
+    get(t, k) { return t[k]; },
+    set(t, k, v) { visits++; t[k] = v; return true; },
+  });
+  mm.update(0.2);
+  assert.equal(rec.ink.length, 1, 'one partial draw');
+
+  const r = rec.ink[0];
+  const ry0 = Math.max(0, r.y - 1), ry1 = Math.min(mm.h, r.y + r.h + 1);
+  const rx0 = Math.max(0, r.x - 1), rx1 = Math.min(mm.w, r.x + r.w + 1);
+  const halo = (ry1 - ry0) * (rx1 - rx0);
+  const fullWidth = (ry1 - ry0) * mm.w;
+  assert.equal(visits, halo, `the first pass visits exactly the halo rectangle (${halo} pixels)`);
+  assert.ok(halo < fullWidth, `the halo (${halo}) is strictly narrower than the full-width scan (${fullWidth})`);
 });

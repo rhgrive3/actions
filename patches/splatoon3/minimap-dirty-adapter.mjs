@@ -38,7 +38,10 @@ export function adaptMinimapDirty(rel, code, replaceOnce) {
     if (code.includes('  _drawInk(y0 = 0, y1 = this.h, x0 = 0, x1 = this.w) {') &&
         code.includes('for (let px = x0; px < x1; px++)') &&
         code.includes('putImageData(this.inkImg, 0, 0, x0, y0, x1 - x0, y1 - y0)') &&
-        code.includes('else this._drawDirtyInk(_rec);')) return code;
+        code.includes('else this._drawDirtyInk(_rec);') &&
+        code.includes('const ry0 = Math.max(0, y0 - 1), ry1 = Math.min(H, y1 + 1);') &&
+        code.includes('const _pb = this._lastFlashBox;') &&
+        code.includes('this._lastFlashBox = flashes > 0 && fz0 >= 0')) return code;
     code = replaceOnce(code,
       '  _drawInk(y0 = 0, y1 = this.h) {',
       '  _drawInk(y0 = 0, y1 = this.h, x0 = 0, x1 = this.w) {',
@@ -51,6 +54,64 @@ export function adaptMinimapDirty(rel, code, replaceOnce) {
       '    this.ictx.putImageData(this.inkImg, 0, 0, 0, y0, W, y1 - y0);\n    this.fctx.putImageData(this.flashImg, 0, 0, 0, y0, W, y1 - y0);',
       '    this.ictx.putImageData(this.inkImg, 0, 0, x0, y0, x1 - x0, y1 - y0);\n    this.fctx.putImageData(this.flashImg, 0, 0, x0, y0, x1 - x0, y1 - y0);',
       'minimap ink ImageData dirty rectangle');
+    // ---- #895 correction: bounded historical flash cleanup. The flash layer
+    // is a transition history: pixels flashed by an earlier pass keep their
+    // alpha until some later pass rewrites them, so a partial redraw that only
+    // touched its own rectangle let the global flashT reset resurrect old
+    // flashes. Clear + upload only the previously flashed bounding box before
+    // this pass writes (bounded union with the incoming rectangle) — no global
+    // ownership rescan, no raster outside the two localized boxes.
+    code = replaceOnce(code,
+      '    const d = this.inkImg.data, fd = this.flashImg.data, own = this.owner;\n    if (y0 === 0) this._rgb = this._teamRGB();',
+      '    const d = this.inkImg.data, fd = this.flashImg.data, own = this.owner;\n' +
+      '    // #895 correction: clear the stale alpha of the previously flashed box\n' +
+      '    // (bounded union with this rectangle) so a later flashT reset can never\n' +
+      '    // resurrect flashes this pass does not rewrite.\n' +
+      '    const _pb = this._lastFlashBox;\n' +
+      '    if (_pb && !(_pb.x0 >= x0 && _pb.x1 <= x1 && _pb.y0 >= y0 && _pb.y1 <= y1)) {\n' +
+      '      for (let _by = _pb.y0; _by < _pb.y1; _by++) {\n' +
+      '        let _bo = (_by * W + _pb.x0) * 4 + 3;\n' +
+      '        for (let _bx = _pb.x0; _bx < _pb.x1; _bx++, _bo += 4) fd[_bo] = 0;\n' +
+      '      }\n' +
+      '      this.fctx.putImageData(this.flashImg, 0, 0, _pb.x0, _pb.y0, _pb.x1 - _pb.x0, _pb.y1 - _pb.y0);\n' +
+      '    }\n' +
+      '    if (y0 === 0) this._rgb = this._teamRGB();',
+      'minimap historical flash cleanup');
+    // ---- #895 correction: bound the alpha/bilinear pass to the halo the
+    // emboss pass actually reads (one pixel outside the written rect on every
+    // side) instead of scanning full map width for the dirty rows, so the
+    // counted work is the real CPU-visited area rather than the upload alone.
+    code = replaceOnce(code,
+      '    const a0 = Math.max(0, y0 - 1) * W, a1 = Math.min(H, y1 + 1) * W;\n    for (let i = a0; i < a1; i++) {',
+      '    const ry0 = Math.max(0, y0 - 1), ry1 = Math.min(H, y1 + 1);\n' +
+      '    const rx0 = Math.max(0, x0 - 1), rx1 = Math.min(W, x1 + 1);\n' +
+      '    for (let _ry = ry0; _ry < ry1; _ry++) {\n' +
+      '      const _row = _ry * W;\n' +
+      '      for (let i = _row + rx0; i < _row + rx1; i++) {',
+      'minimap alpha halo rectangle');
+    code = replaceOnce(code,
+      '      al[i] = a; tm[i] = a > 0.5 ? t : 0; tt[i] = t;\n    }\n    let flashes = 0;',
+      '      al[i] = a; tm[i] = a > 0.5 ? t : 0; tt[i] = t;\n' +
+      '      }\n' +
+      '    }\n' +
+      '    // #895 correction: remember which pixels this pass actually flashed so the\n' +
+      '    // next bounded refresh clears exactly their stale residue instead of leaving\n' +
+      '    // it for a later flashT reset to resurrect.\n' +
+      '    let fz0 = -1, fz1 = -1, fy0 = -1, fy1 = -1;\n' +
+      '    let flashes = 0;',
+      'minimap alpha halo loop close');
+    // ---- #895 correction: per-pass flashed bounding box
+    code = replaceOnce(code,
+      '        if (now && own[i] !== now) { fd[o] = 255; fd[o + 1] = 255; fd[o + 2] = 255; fd[o + 3] = 170; flashes++; }',
+      '        if (now && own[i] !== now) { fd[o] = 255; fd[o + 1] = 255; fd[o + 2] = 255; fd[o + 3] = 170; flashes++;' +
+      ' if (fz0 < 0 || px < fz0) fz0 = px; if (px + 1 > fz1) fz1 = px + 1;' +
+      ' if (fy0 < 0 || py < fy0) fy0 = py; if (py + 1 > fy1) fy1 = py + 1; }',
+      'minimap flash bounding box');
+    code = replaceOnce(code,
+      '        own[i] = now;\n      }\n    }',
+      '        own[i] = now;\n      }\n    }\n' +
+      '    this._lastFlashBox = flashes > 0 && fz0 >= 0 ? { x0: fz0, y0: fy0, x1: fz1, y1: fy1 } : null;',
+      'minimap flash bounding box export');
     code = replaceOnce(code,
       '    } else if (force || (this.timer <= 0 && this.version !== this.paint.version)) {\n' +
       '      this.timer = 0.15;\n' +
