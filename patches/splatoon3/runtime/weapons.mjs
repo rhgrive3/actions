@@ -59,7 +59,7 @@ export function installWeapons(context, profile) {
     const result = reset.apply(this, args);
     this.s3Stored = null; this.s3Turret = false; this.s3FlickVertical = false; this.s3BlasterWindup = 0;
     this.s3SloshRecovery = false;
-    this.s3ChargerSpent = 0;
+    this.s3ChargerSpent = 0; this.s3ChargerProgressiveSpend = false;
     this.s3ChargerPostShot = 0; this.s3DualiesPostShot = 0; this.s3DodgeShotPending = 0;
     return result;
   };
@@ -119,10 +119,14 @@ export function installWeapons(context, profile) {
     if (inp.fire && this.cooldown <= 0) {
       if (!this.charging) this.s3ChargerSpent = 0;
       const beforeT = this.chargeT || 0, realInk = a.ink;
-      const low = realInk + epsilon < w.inkMin;
+      // Ink already committed to this same charge still funds the minimum
+      // boundary. Starting with exactly 2.25% must therefore reach the legal
+      // 8F minimum at normal ground rate instead of becoming "low" after tick 1.
+      const fundedInk = (this.s3ChargerSpent || 0) + realInk;
+      const low = fundedInk + epsilon < w.inkMin;
       const rate = (!a.grounded ? (w.airChargeRate ?? 1 / 3) : low ? (w.emptyChargeRate ?? 1 / 3) : 1);
       let targetT = Math.min(1, beforeT + dt / Math.max(epsilon, w.chargeTime) * rate);
-      const affordableT = chargerProgressForInk(w, (this.s3ChargerSpent || 0) + realInk);
+      const affordableT = chargerProgressForInk(w, fundedInk);
       targetT = Math.min(targetT, affordableT);
       const scaledDt = Math.max(0, targetT - beforeT) * w.chargeTime;
 
@@ -141,6 +145,7 @@ export function installWeapons(context, profile) {
         // verified shot/cancel refill-stop clock.
         a.ink -= spent;
         this.s3ChargerSpent = (this.s3ChargerSpent || 0) + spent;
+        this.s3ChargerProgressiveSpend = true;
       }
       return result;
     }
