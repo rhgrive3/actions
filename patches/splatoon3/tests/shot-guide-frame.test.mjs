@@ -62,11 +62,12 @@ test('#769/#459: the pinned 11.3.0 ShotGuideFrame is promoted into the live prof
   assert.equal(profile.weapons.splatling.shotGuideFrame, 11);
   // Only the two owned weapons gain a guide; every other reticle keeps its
   // existing screen-centre placement even where the mirror holds a pinned value.
-  for (const id of ['dualies', 'blaster', 'roller', 'charger', 'slosher']) {
+  for (const id of ['dualies', 'roller', 'charger', 'slosher']) {
     assert.equal(profile.weapons[id].shotGuideFrame, undefined, id);
   }
   assert.equal(completion.dualies.WeaponParam.ShotGuideFrame, 7, 'pinned source untouched');
   assert.equal(completion.blaster.WeaponParam.ShotGuideFrame, 13, 'pinned source untouched');
+  assert.equal(profile.weapons.blaster.shotGuideFrame, 13, 'main #820 owns the Blaster guide');
 });
 
 test('#769/#459: a promoted value that disagrees with the pinned source fails closed', async () => {
@@ -312,11 +313,12 @@ test('#459/#769: HUD placement moves only guide weapons and always clears the gu
   r.applyShotGuide(hud, { x: 810, y: 600, frames: 11 }, 1280, 720);
   assert.equal(writes, 1, 'a real guide change writes once');
   // Roller/charger/slosher/dualies/blaster keep their existing centre reticle.
-  for (const id of ['roller', 'charger', 'slosher', 'dualies', 'blaster']) {
+  for (const id of ['roller', 'charger', 'slosher', 'dualies']) {
     assert.equal(r.shotGuideFrames(profile.weapons[id]), null, id);
   }
   assert.equal(r.shotGuideFrames(profile.weapons.shooter), 8);
   assert.equal(r.shotGuideFrames(profile.weapons.splatling), 11);
+  assert.equal(r.shotGuideFrames(profile.weapons.blaster), 13, 'main #820 live guide field retained');
 });
 
 // ------------------------------------------------------- owner / remote values
@@ -481,4 +483,15 @@ test('#459/#769: the three adapter connections are present and fail closed', () 
     assert.throws(() => adaptSource(rel, raw.replace(anchor, '')), /conflict/, rel);
     assert.throws(() => adaptSource(rel, raw + anchor), /conflict/, rel);
   }
+});
+
+// Main #820's Blaster guide must not acquire the Shooter centreline predictor.
+test('main #820 Blaster guide remains in its native per-family HUD path', async () => {
+  const r = await rig('blaster');
+  assert.equal(r.f.computeShotGuide(r.a), null);
+  const point = r.projectiles.s3WeaponGuide(r.a, r.a.weapon);
+  assert.ok(point && ['x', 'y', 'z'].every(k => Number.isFinite(point[k])));
+  const hud = { ret: { style: { translate: '12px 8px' } } };
+  r.f.applyShotGuide(hud, null, 1920, 1080);
+  assert.equal(hud.ret.style.translate, '', 'inherited --gx/--gy stylesheet applies');
 });
