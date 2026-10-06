@@ -1,0 +1,267 @@
+// #845 — offscreen (frustum-culled) Character visual budget.
+//
+// Focused, cheap and installed: it drives the *real* composed Character module
+// (patches/splatoon3/tests/real-character-fixture.mjs loads the byte-locked
+// inkwave-public/src/game/character.js through the build adapters) plus the
+// native `_camHook` draw signal. Only the renderer and the physics raycast are
+// stubbed, exactly as the other local-quality tests do. One Character is
+// constructed (its construction dominates the runtime) and reset between cases.
+//
+// What is proved here:
+//   * baseline (in view / just drawn): the native path still runs pose+hair and
+//     the foot-IK physics raycast on every tick;
+//   * frustum-culled: pose/hair and every foot-IK physics raycast stop, while
+//     the native clocks and the Actor state stay untouched;
+//   * return to view: the first visible tick replants feet and re-inits
+//     head/hair (the native not-drawn invalidation), with no stale flags;
+//   * owner / remote / Range / pause / unknown-camera controls;
+//   * 30/60/120 Hz: the decision is a function of renderer frames, not of the
+//     simulation step size;
+//   * the owned build-adapter wiring is present and idempotent.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { realCharacter } from '../../splatoon3/tests/real-character-fixture.mjs';
+import { installOffscreenVisualBudget, offscreenBudgeted, inViewVolume, GRACE_FRAMES, OUTSIDE_STREAK } from '../offscreen-visual-budget.mjs';
+import { qualityIdentity } from '../adapter.mjs';
+
+const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
+const DT = 1 / 60;
+const counts = { pose: 0 };
+const counters = { ray: 0 };
+
+// Counters are installed *before* the budget so the wrapper chain is
+// count -> budget -> native (the same order the composed build produces).
+const api = await realCharacter();
+const G = api.G, THREE = api.THREE;
+const proto = api.Character.prototype;
+{
+  const rawBuild = proto._buildPose, rawApply = proto._applyPose;
+  proto._buildPose = function (...a) { counts.pose++; return rawBuild.apply(this, a); };
+  proto._applyPose = function (...a) { counts.pose++; return rawApply.apply(this, a); };
+}
+const installed = installOffscreenVisualBudget({ Character: api.Character }, G);
+
+const renderer = {
+  getRenderTarget: () => null,
+  getPixelRatio: () => 1,
+  getSize: (t) => { t.x = 1280; t.y = 720; return t; },
+  info: { render: { frame: 0 } },
+};
+
+G.scene = new THREE.Scene();
+G.physics = { raycast: (_o, _d, _f, hit) => { counters.ray++; hit.hit = false; return hit; } };
+G.renderer = renderer;
+G.match = {};
+G.rig = null;
+const camera = new THREE.PerspectiveCamera(60, 16 / 9, 0.15, 6500);
+G.camera = camera;
+
+const ch = new api.Character({ name: 'offscreen-budget', weapon: 'shooter', style: { hair: 0, skin: 2, outfit: 0, eyes: 0 } });
+G.scene.add(ch.root);
+ch._warmed = true;                       // warmAll needs a real GL renderer
+const s = { form: 'kid', grounded: true, speed: 2.4, localMove: { x: 0, z: -1 }, firing: false, charge: 0, ink: 1, hp: 1, vy: 0, isLocal: false };
+
+function turnTo()   { camera.position.set(0, 1.5, 8); camera.lookAt(0, 1, 0); }
+function turnAway() { camera.position.set(0, 1.5, 8); camera.lookAt(0, 1.5, 100); }
+
+function step() { ch.root.position.z -= 0.04; ch.update(DT, s); }
+
+/** Record the native draw signal exactly the way `_camHook` does on a real submit. */
+function markDrawn(frame) {
+  renderer.info.render.frame = frame;
+  ch._camHook(renderer, G.scene, camera);
+  assert.equal(ch._camFrame, frame, '_camHook must record the renderer frame');
+}
+
+/** Reset the world and settle into a walking gait with the camera facing the actor. */
+function reset({ range = false, frames = 120 } = {}) {
+  counters.ray = 0;
+  G.physics = { raycast: (_o, _d, _f, hit) => { counters.ray++; hit.hit = false; return hit; } };
+  G.match = range ? { opts: { range: true } } : {};
+  G.camera = camera;
+  G.renderer = renderer;
+  ch.root.position.set(0, 0, 0);
+  ch.root.rotation.set(0, 0, 0);
+  ch._camFrame = -1;
+  ch._rendered = false;
+  ch._ovbOutsideStreak = 0;
+  ch._ovbWasBudgeted = false;
+  ch._ovbBudgetTicks = 0;
+  ch._ovbRaycastsSkipped = 0;
+  ch._ovbPoseSkips = 0;
+  ch.replant = true; ch.feetValid = false; ch.headInit = false; ch._headSet = false;
+  ch.lod.force = -1;
+  ch.isLocal = false;
+  s.isLocal = false;
+  turnTo();
+  for (let i = 0; i < frames; i++) step();
+}
+
+test('wiring: the owned helper is connected from installQuality and carries a build identity', () => {
+  assert.equal(installed, true, 'the budget installs exactly once on the composed prototype');
+  assert.equal(installOffscreenVisualBudget({ Character: api.Character }, G), false, 'idempotent');
+  const src = fs.readFileSync(ROOT + 'patches/local-quality/install.mjs', 'utf8');
+  assert.match(src, /import \{ installOffscreenVisualBudget \} from '\.\/offscreen-visual-budget\.mjs';/);
+  assert.match(src, /installOffscreenVisualBudget\(api,G\);/);
+  const id = qualityIdentity()['offscreen-visual-budget.mjs'];
+  assert.ok(id && /^[0-9a-f]{64}$/.test(id), 'shipped file is part of the build identity');
+});
+
+test('view-volume test: facing / away / unusable cameras', () => {
+  reset({ frames: 1 });
+  turnTo();   assert.equal(inViewVolume(ch, camera), true, 'facing the actor');
+  turnAway(); assert.equal(inViewVolume(ch, camera), false, 'looking away');
+  assert.equal(inViewVolume(ch, null), null, 'no camera -> unknown');
+  const holder = new THREE.Object3D();
+  const parented = new THREE.PerspectiveCamera(60, 16 / 9, 0.15, 6500);
+  parented.position.set(0, 1.5, 8); holder.add(parented);
+  assert.equal(inViewVolume(ch, parented), null, 'parented camera -> unknown');
+  const offset = new THREE.PerspectiveCamera(60, 16 / 9, 0.15, 6500);
+  offset.view = { enabled: true, offsetX: 0, offsetY: 0, width: 1, height: 1, fullWidth: 1, fullHeight: 1 };
+  assert.equal(inViewVolume(ch, offset), null, 'offset view -> unknown');
+});
+
+test('baseline: while in view / just drawn the native pose+hair and foot-IK raycast still run every tick', () => {
+  reset();
+  markDrawn(10);
+  turnTo();
+  const pose0 = counts.pose, ray0 = counters.ray, ticks0 = ch._ovbBudgetTicks;
+  for (let i = 0; i < 30; i++) step();
+  assert.equal(counts.pose - pose0, 30 * 2, 'both pose passes run on every native tick (build + apply)');
+  assert.ok(counters.ray - ray0 > 0, `baseline must exercise foot-IK physics raycasts, got ${counters.ray - ray0}`);
+  assert.equal(ch._ovbBudgetTicks - ticks0, 0, 'nothing is budgeted while in view');
+});
+
+test('#845: frustum-culled actors stop pose/hair work and every foot-IK physics raycast', () => {
+  reset();
+  markDrawn(100);
+  turnAway();
+  step();                                       // grace window: full rate
+  assert.equal(ch._ovbWasBudgeted, false, 'inside the grace window');
+  renderer.info.render.frame = 101;
+  step();
+  assert.equal(ch._ovbWasBudgeted, false, 'still inside the grace window');
+
+  renderer.info.render.frame = 100 + GRACE_FRAMES;
+  step();                                       // first outside verdict
+  assert.equal(ch._ovbWasBudgeted, false, 'the first outside verdict alone does not budget');
+  const pose0 = counts.pose, ray0 = counters.ray, t0 = ch.t, tr0 = ch.tr[0], ticks0 = ch._ovbBudgetTicks;
+  for (let i = 0; i < 59; i++) step();
+  assert.equal(counts.pose - pose0, 0, 'no _buildPose/_applyPose while offscreen');
+  assert.equal(counters.ray - ray0, 0, 'no foot-IK physics raycast while offscreen');
+  assert.equal(ch._ovbBudgetTicks - ticks0, 59, 'every tick in the window is budgeted');
+  assert.ok(ch._ovbRaycastsSkipped > 0, 'the native _ground was intercepted instead of being bypassed');
+  // clocks and animation state keep advancing on the fixed simulation clock
+  assert.ok(Math.abs(ch.t - t0 - 59 * DT) < 1e-9, 'Character clock stays continuous');
+  assert.ok(ch.tr[0] > tr0, 'state timers keep advancing offscreen');
+  // authoritative Actor state is untouched by the budget
+  const before = JSON.stringify(s);
+  step();
+  assert.equal(JSON.stringify(s), before, 'the Actor (owner/remote state) is never written');
+});
+
+test('#845: the first visible tick replants feet and re-inits head/hair', () => {
+  reset();
+  markDrawn(200);
+  turnAway();
+  renderer.info.render.frame = 200 + GRACE_FRAMES;
+  step(); step(); step();
+  assert.equal(ch._ovbWasBudgeted, true, 'budgeted before the turn');
+  turnTo();
+  const pose0 = counts.pose, ray0 = counters.ray;
+  step();
+  assert.equal(ch._ovbWasBudgeted, false, 'in view again -> full rate on the same tick');
+  assert.ok(counts.pose - pose0 >= 2, 'both pose passes run on the return tick');
+  assert.ok(counters.ray - ray0 > 0, 'the replant query runs with the real physics raycast');
+  assert.equal(ch.feetValid, true, 'feet replanted on the return tick');
+  assert.equal(ch._ovbBudget, false, 'the suppression flag is cleared after every update');
+  assert.equal(ch._ovbOutsideStreak, 0, 'the outside streak restarts on re-entry');
+});
+
+test('controls: owner, local actor, Range, pause/unrendered and unknown camera stay at full rate', () => {
+  reset();
+  markDrawn(300);
+  renderer.info.render.frame = 320;
+  turnAway();
+  const savedPhysics = G.physics;
+  const fullRate = (label, mutate, restore) => {
+    mutate();
+    ch._ovbOutsideStreak = 0;
+    for (let i = 0; i < OUTSIDE_STREAK + 2; i++) step();
+    assert.equal(ch._ovbWasBudgeted, false, `${label} must never be budgeted`);
+    restore();
+    ch._ovbOutsideStreak = 0;
+  };
+
+  fullRate('local actor (s.isLocal)', () => { s.isLocal = true; }, () => { s.isLocal = false; });
+  fullRate('local Character (ch.isLocal)', () => { ch.isLocal = true; }, () => { ch.isLocal = false; });
+  fullRate('Practice Range', () => { G.match = { opts: { range: true } }; }, () => { G.match = {}; });
+  fullRate('unknown camera', () => { G.camera = null; }, () => { G.camera = camera; });
+  fullRate('never-drawn character', () => { ch._camFrame = -1; }, () => { ch._camFrame = 300; });
+  fullRate('drawn on the previous renderer frame', () => { renderer.info.render.frame = 301; }, () => { renderer.info.render.frame = 320; });
+  fullRate('not in the live match scene', () => { G.physics = null; }, () => { G.physics = savedPhysics; });
+  fullRate('forced LOD (lab / portrait)', () => { ch.lod.force = 0; }, () => { ch.lod.force = -1; });
+
+  // pause / unrendered: the renderer frame stops advancing while the actor is off-screen
+  turnAway(); ch._ovbOutsideStreak = 0; renderer.info.render.frame = 400;
+  for (let i = 0; i < OUTSIDE_STREAK; i++) step();
+  assert.equal(ch._ovbWasBudgeted, true, 'the off-screen actor is budgeted before the pause');
+  const frozen = counts.pose;
+  for (let i = 0; i < 10; i++) step();          // renderer never advances
+  assert.equal(counts.pose, frozen, 'an unrendered world keeps its visual work deferred');
+  assert.equal(renderer.info.render.frame, 400, 'the frame counter really was frozen');
+  // resume: camera back on the actor on the very first tick after the frame moves
+  renderer.info.render.frame = 401;
+  turnTo(); ch._ovbOutsideStreak = 0;
+  step();
+  assert.equal(ch._ovbWasBudgeted, false, 'resume puts the actor back at full rate immediately');
+});
+
+test('30/60/120 Hz: the budget is a function of renderer frames, never of the step size', () => {
+  const covered = [];
+  for (const hz of [30, 60, 120]) {
+    const dt = 1 / hz;
+    reset();
+    markDrawn(500);
+    renderer.info.render.frame = 520;
+    turnAway();
+    ch._ovbOutsideStreak = 0;
+    let budgeted = 0;
+    const prevT = ch.t;
+    for (let i = 0; i < 4 * hz; i++) {          // 4 simulated seconds
+      ch.root.position.z -= 0.04;
+      ch.update(dt, s);
+      if (ch._ovbWasBudgeted) budgeted++;
+    }
+    assert.ok(Math.abs(ch.t - prevT - 4) < 1e-6, `the fixed clock advances 4 s at ${hz} Hz`);
+    // only the single outside warm-up verdict stays full rate; the rest is budgeted
+    assert.equal(budgeted, 4 * hz - 1, `identical budget coverage at ${hz} Hz`);
+    covered.push(4 * hz - budgeted);
+  }
+  assert.deepEqual(covered, [1, 1, 1], 'the full-rate warm-up is exactly one tick at every step size');
+});
+
+test('decision guards are individually testable and never invent a Nintendo timing', () => {
+  assert.equal(GRACE_FRAMES, 2, 'grace is counted in renderer frames');
+  assert.equal(OUTSIDE_STREAK, 2, 'outside streak is a fixed verdict count');
+  const G2 = { renderer: { info: { render: { frame: 100 } } }, camera: null };
+  const probe = { inWorld: true, lod: { force: -1 }, _camFrame: 90, _ovbOutsideStreak: 0, root: null };
+  assert.equal(offscreenBudgeted(probe, {}, G2), false, 'unknown camera');
+  probe.isLocal = true;
+  assert.equal(offscreenBudgeted(probe, {}, G2), false, 'local Character');
+  probe.isLocal = false;
+  probe._camFrame = -1;
+  assert.equal(offscreenBudgeted(probe, {}, G2), false, 'no native draw signal');
+  probe._camFrame = 90;
+  G2.match = { opts: { range: true } };
+  assert.equal(offscreenBudgeted(probe, {}, G2), false, 'Practice Range');
+  G2.match = {};
+  G2.camera = { isPerspectiveCamera: true, view: null, parent: null, fov: 60, aspect: 16 / 9, near: 0.15, far: 6500, updateMatrixWorld() {}, matrixWorld: { elements: [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1.5, 8, 1] } };
+  probe.root = { position: { x: 0, y: 0, z: 0 }, parent: null };
+  assert.equal(offscreenBudgeted(probe, {}, G2), false, 'inside the view volume resets the streak');
+  probe.root.position.z = 200;
+  assert.equal(offscreenBudgeted(probe, {}, G2), false, 'first outside verdict does not budget');
+  assert.equal(offscreenBudgeted(probe, {}, G2), true, 'second consecutive outside verdict budgets');
+});
