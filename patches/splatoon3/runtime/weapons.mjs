@@ -14,11 +14,20 @@ export function ageDamage(weapon, age, baseDamage) {
   const k = Math.max(0, Math.min(1, (age - weapon.damageReduceStart) / (weapon.damageReduceEnd - weapon.damageReduceStart)));
   return weapon.damage + (weapon.damageMin - weapon.damage) * k;
 }
-export function groupDamage(group, victim, amount) {
+export function groupDamageDelta(group, victim, amount) {
   if (!group) return amount;
   const previous = group.get(victim) || 0;
-  group.set(victim, Math.max(previous, amount));
   return Math.max(0, amount - previous);
+}
+export function commitGroupDamage(group, victim, amount) {
+  if (!group) return;
+  const previous = group.get(victim) || 0;
+  if (amount > previous) group.set(victim, amount);
+}
+export function groupDamage(group, victim, amount) {
+  const delta = groupDamageDelta(group, victim, amount);
+  commitGroupDamage(group, victim, amount);
+  return delta;
 }
 export function distanceDamage(bands, distance, linear = true) {
   if (!bands?.length) return 0;
