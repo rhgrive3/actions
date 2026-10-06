@@ -31,7 +31,6 @@ function hidden(root) {
   return false;
 }
 function specialAllows(ch, owner, timers) {
-  if (owner?.specialActive?.id === 'storm' && owner.specialActive.phase === 'hold') return true;
   return specialMotionAllowsAction(ch, !owner?.specialActive
     && ch.tr[timers.T_LEAP] >= 1.9 && ch.tr[timers.T_SLAM] >= 1.4);
 }
@@ -213,7 +212,7 @@ export function installBombMotion({ Character, WeaponRunner, CHARACTER_TIMERS: t
     if (age >= RECOVERY) value.throwing = false;
     if (age >= NATIVE_END) value.externalThrow = false;
     if (value.cancelled) this.bombSwap = 0;
-    if (owner?.specialActive?.id === 'storm' && owner.specialActive.phase !== 'hold') {
+    if (owner?.specialActive?.id === 'storm') {
       value.throwing = false; this.bombHeld = false;
       if (this.bomb) this.bomb.group.visible = false;
       return result;
