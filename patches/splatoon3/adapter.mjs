@@ -69,6 +69,21 @@ export function adaptSource(rel, code) {
   }
   if (rel === 'src/ui/hud.js') {
     code = replaceOnce(code,
+      '    } else {\n' +
+      '      r.innerHTML = `<i class="iw-ret__dot"></i><svg class="iw-ret__svg" viewBox="-40 -40 80 80" aria-hidden="true"><circle r="15" class="iw-ret__ring thin"/></svg>\n' +
+      '        <i class="iw-ret__tick" style="--a:0deg"></i><i class="iw-ret__tick" style="--a:90deg"></i><i class="iw-ret__tick" style="--a:180deg"></i><i class="iw-ret__tick" style="--a:270deg"></i>`;\n' +
+      '    }\n' +
+      '    this._L.spread = null; this._L.charge = null; this._L.full = null;',
+      '    } else if (kind === "shooter") {\n' +
+      '      r.innerHTML = `<i class="iw-ret__dot"></i><svg class="iw-ret__svg" viewBox="-40 -40 80 80" aria-hidden="true"><circle r="15" class="iw-ret__ring thin"/></svg>\n' +
+      '        <div class="iw-ret__corners" aria-hidden="true"><i class="iw-ret__corner nw"></i><i class="iw-ret__corner ne"></i><i class="iw-ret__corner sw"></i><i class="iw-ret__corner se"></i></div>`;\n' +
+      '    } else {\n' +
+      '      r.innerHTML = `<i class="iw-ret__dot"></i><svg class="iw-ret__svg" viewBox="-40 -40 80 80" aria-hidden="true"><circle r="15" class="iw-ret__ring thin"/></svg>\n' +
+      '        <i class="iw-ret__tick" style="--a:0deg"></i><i class="iw-ret__tick" style="--a:90deg"></i><i class="iw-ret__tick" style="--a:180deg"></i><i class="iw-ret__tick" style="--a:270deg"></i>`;\n' +
+      '    }\n' +
+      '    this._L.spread = null; this._L.charge = null; this._L.full = null;',
+      'S3 shooter corner spread reticle');
+    code = replaceOnce(code,
       "  judge({ colors = ['#ff8a14', '#2f5bff'], percents = [50, 50], names = TEAM_NAMES } = {}) {",
       "  judge({ colors = ['#ff8a14', '#2f5bff'], percents = [50, 50], names = TEAM_NAMES, winner: authoritativeWinner = null } = {}) {",
       'authoritative Turf winner HUD input');

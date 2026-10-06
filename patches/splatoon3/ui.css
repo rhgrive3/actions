@@ -10,3 +10,22 @@
 
 /* Slosher ShotGuide offsets only aiming feedback; tank/sub/status stay centred. */
 .iw-ret, .iw-hit, .iw-kill { translate: var(--gx, 0px) var(--gy, 0px); }
+
+/* Shooter-only corners reuse the former tick marks' bounds and draw dimensions.
+   Only horizontal width follows spread; these are not Nintendo pixel measurements. */
+.iw-ret--shooter .iw-ret__corners {
+  position: absolute; left: 0; top: 0;
+  width: calc(45px + var(--sp, 0) * 2px);
+  height: 45px;
+  translate: -50% -50%; pointer-events: none;
+  transition: width .06s linear, height .06s linear;
+}
+.iw-ret--shooter .iw-ret__corner { position: absolute; width: 11px; height: 11px; }
+.iw-ret--shooter .iw-ret__corner::before,
+.iw-ret--shooter .iw-ret__corner::after { content: ''; position: absolute; left: 0; top: 0; background: currentColor; }
+.iw-ret--shooter .iw-ret__corner::before { width: 11px; height: 3px; }
+.iw-ret--shooter .iw-ret__corner::after { width: 3px; height: 11px; }
+.iw-ret--shooter .iw-ret__corner.nw { left: 0; top: 0; }
+.iw-ret--shooter .iw-ret__corner.ne { right: 0; top: 0; transform: scaleX(-1); }
+.iw-ret--shooter .iw-ret__corner.sw { left: 0; bottom: 0; transform: scaleY(-1); }
+.iw-ret--shooter .iw-ret__corner.se { right: 0; bottom: 0; transform: scale(-1); }
