@@ -1,9 +1,9 @@
 // #740: S3 vertical-flick unit records carry sourced FourPetals shape rates.
-// The runtime must transfer them onto render-only projectile state per unit:
+// The build adapter must pass them through the actual instanced renderer:
 // unit 0 and unit 1 expose 0.4667 / 0.3333, the final two-glob vertical unit
 // exposes nothing (its source record omits both fields), and horizontal globs
 // are never in scope. Collision, damage, paint, spawn, count, velocity and
-// trajectory are not touched by this state; the network packet stays 32 fields.
+// trajectory stay untouched; no FourPetals fields are added to network packets.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {fixture} from '../../network-replication/tests/robustness-fixture.mjs';
@@ -24,6 +24,36 @@ async function volley(vertical, draw = () => 0.5) {
   return { f, nm, local, ghosts: [...f.projectiles.list], packets, units: f.profile.weaponsFidelityCompletion.weapons.roller };
 }
 
+function renderFourPetalRates(f, projectiles) {
+  f.projectiles.list = [...projectiles];
+  f.projectiles._draw();
+  const attribute = f.projectiles.blobFourPetals;
+  assert.ok(attribute, 'the actual renderer owns a FourPetals instance buffer');
+  assert.equal(f.projectiles.blobs.geometry.getAttribute('aFourPetals'), attribute);
+  return projectiles.map((_, i) => [Number(attribute.array[i * 2].toFixed(4)), Number(attribute.array[i * 2 + 1].toFixed(4))]);
+}
+
+function gameplayState(p) {
+  return {
+    pos: p.pos.toArray(), prev: p.prev.toArray(), start: p.start.toArray(), vel: p.vel.toArray(),
+    age: p.age, delay: p.delay, life: p.life, size: p.size, damage: p.damage,
+    playerCollision: JSON.parse(JSON.stringify(p.fidelityPlayerCollision)),
+    fieldCollision: JSON.parse(JSON.stringify(p.fidelityFieldCollision)),
+  };
+}
+
+function assertFourPetalShader(f) {
+  const shader = {
+    vertexShader: '#include <common>\n#include <beginnormal_vertex>\n#include <begin_vertex>',
+    fragmentShader: '#include <clipping_planes_fragment>\n#include <emissivemap_fragment>',
+  };
+  f.projectiles.blobs.material.onBeforeCompile(shader);
+  assert.match(shader.vertexShader, /attribute vec2 aFourPetals;/);
+  assert.match(shader.vertexShader, /cos\(4\.0 \* atan\(p\.y, p\.x\)\)/, 'the real blob shader consumes the four-petal cross-section');
+  assert.match(shader.vertexShader, /aFourPetals\.x \+ aFourPetals\.y/);
+  assert.equal(f.projectiles.blobs.material.customProgramCacheKey(), 'iw-blob-4-four-petals');
+}
+
 test('pinned source rates: vertical units 0/1 provide FourPetals, unit 2 omits them', async () => {
   const { f, nm, units } = await volley(true);
   const v = units.VerticalSwingUnitGroupParam.Unit;
@@ -37,7 +67,7 @@ test('pinned source rates: vertical units 0/1 provide FourPetals, unit 2 omits t
   nm.dispose();
 });
 
-test('#740 vertical volley render state distinguishes unit 0/1 from unit 2', async () => {
+test('#740 actual renderer draws sourced rates for vertical unit 0/1 and clears unit 2', async () => {
   const { f, nm, local, ghosts, packets, units } = await volley(true);
   const v = units.VerticalSwingUnitGroupParam.Unit;
   assert.equal(local.length, 5, '1 + 2 + 2 vertical globs');
@@ -47,20 +77,29 @@ test('#740 vertical volley render state distinguishes unit 0/1 from unit 2', asy
   assert.equal(local[2].fidelityRollerUnit, v[1]);
   assert.equal(local[3].fidelityRollerUnit, v[2]);
   assert.equal(local[4].fidelityRollerUnit, v[2]);
-  const shaped = { center: CENTER, petal: PETAL };
-  for (const i of [0, 1, 2]) {
-    assert.deepEqual(local[i].fidelityFourPetals, shaped, `vertical unit ${i === 0 ? 0 : 1} globs expose the sourced rates`);
-  }
-  for (const i of [3, 4]) {
-    assert.equal(local[i].fidelityFourPetals, null, 'unit 2 must not inherit another unit\'s shape');
-  }
-  // Ghost reconstruction derives the same state from its recovered unit record.
+  const localBefore = local.map(gameplayState), ghostBefore = ghosts.map(gameplayState), timeBefore = f.G.time;
+  const packetSnapshot = JSON.parse(JSON.stringify(packets));
+  let paintCalls = 0;
+  const splat = f.G.paint.splat;
+  f.G.paint.splat = (...args) => { paintCalls++; return splat(...args); };
+  const expected = [[CENTER, PETAL], [CENTER, PETAL], [CENTER, PETAL], [0, 0], [0, 0]];
+  assert.deepEqual(renderFourPetalRates(f, local), expected, 'only sourced vertical heads receive the rates');
+  assert.deepEqual(renderFourPetalRates(f, ghosts), expected, 'ghost rendering derives the same rates without packet fields');
+  assert.deepEqual(local.map(gameplayState), localBefore, 'rendering leaves owner projectile gameplay state unchanged');
+  assert.deepEqual(ghosts.map(gameplayState), ghostBefore, 'rendering leaves ghost projectile state unchanged');
+  assert.equal(f.G.time, timeBefore, 'rendering does not advance simulation time');
+  assert.equal(paintCalls, 0, 'rendering does not paint');
+  assertFourPetalShader(f);
+  // Ghost reconstruction derives the same source unit without a protocol extension.
   for (let i = 0; i < local.length; i++) {
-    assert.deepEqual(ghosts[i].fidelityFourPetals, local[i].fidelityFourPetals, `ghost ${i} parity`);
     assert.deepEqual(ghosts[i].fidelityRollerUnit, local[i].fidelityRollerUnit, `ghost ${i} unit parity`);
   }
-  // Presentation-only state: the packet layout and gameplay fields are unchanged.
-  assert.ok(packets.every(e => e.length === 32), 'packet field count stays 32');
+  // Presentation-only state: this adapter adds no packet fields. The current base
+  // uses 32 fields; the live #868 unit-index change uses 33 independently of #740.
+  const packetLengths = packets.map(e => e.length);
+  assert.ok(packetLengths.every(length => length === packetLengths[0]), 'existing packet layout is consistent');
+  assert.ok([32, 33].includes(packetLengths[0]), 'only the current 32-field or #868 33-field layout is accepted');
+  assert.deepEqual(packets, packetSnapshot, 'rendering does not alter packet content');
   for (const p of local) {
     assert.ok(Number.isFinite(p.size) && p.size > 0, 'hit size untouched');
     assert.ok(p.fidelityPlayerCollision && Number.isFinite(p.fidelityPlayerCollision.initRadius), 'collision record untouched');
@@ -70,11 +109,13 @@ test('#740 vertical volley render state distinguishes unit 0/1 from unit 2', asy
   nm.dispose();
 });
 
-test('#740 horizontal volley never carries shape state', async () => {
+test('#740 horizontal globs render with the default shape', async () => {
   const { f, nm, local, ghosts, packets } = await volley(false);
   assert.equal(local.length, 13, 'wide-swing sheet unchanged');
-  for (const p of [...local, ...ghosts]) assert.equal(p.fidelityFourPetals, null);
-  assert.ok(packets.every(e => e.length === 32));
+  const expected = Array.from({ length: local.length }, () => [0, 0]);
+  assert.deepEqual(renderFourPetalRates(f, local), expected, 'horizontal owner globs stay on the default path');
+  assert.deepEqual(renderFourPetalRates(f, ghosts), expected, 'horizontal ghosts stay on the default path');
+  assert.ok(packets.every(e => [32, 33].includes(e.length)));
   nm.dispose();
 });
 

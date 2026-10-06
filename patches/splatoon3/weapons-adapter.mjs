@@ -39,5 +39,43 @@ export function adaptWeaponsFidelity(code,replaceOnce) {
     '      const elapsed = Math.max(0, dt - Math.max(0, p.delay || 0));\n      p.delay = Math.max(0, (p.delay || 0) - dt);\n      if (elapsed <= 1e-10) continue;', 'delayed projectile active fraction');
   patch('try { if (this._step(p, dt))', 'try { if (this._step(p, elapsed))', 'delayed movement duration');
   patch('      if (!dead && p.trailEvery) {','      if (!dead && !p.ghost && p.trailEvery) {','ghost trails never score paint');
+  // #740: use the selected vertical unit's source rates in the actual instanced
+  // projectile renderer. The rates stay render-only and are read from the already
+  // reconstructed unit on both owners and ghosts; no packet fields are added.
+  patch('        attribute vec4 aShape;\n        vec3 iwP;',
+    '        attribute vec4 aShape;\n        attribute vec2 aFourPetals;\n        vec3 iwP;', 'FourPetals shader attribute');
+  patch('          iwP = vec3(p.xy * tau, p.z * fz);',
+    `          iwP = vec3(p.xy * tau, p.z * fz);
+          float iwFPTotal = aFourPetals.x + aFourPetals.y;
+          if (iwFPTotal > 0.0) {
+            float iwFPPetal = max(0.0, cos(4.0 * atan(p.y, p.x)));
+            float iwFPRadius = (aFourPetals.x + aFourPetals.y * iwFPPetal) / iwFPTotal;
+            iwP.xy *= iwFPRadius;
+          }`, 'FourPetals shader profile');
+  patch("    geo.setAttribute('aShape', this.blobShape);\n    this.blobs =",
+    "    geo.setAttribute('aShape', this.blobShape);\n    this.blobFourPetals = new THREE.InstancedBufferAttribute(new Float32Array(MAX_BLOBS * 2), 2);\n    this.blobFourPetals.setUsage(THREE.DynamicDrawUsage);\n    geo.setAttribute('aFourPetals', this.blobFourPetals);\n    this.blobs =",
+    'FourPetals instanced geometry');
+  patch("  mat.customProgramCacheKey = () => 'iw-blob-3';",
+    "  mat.customProgramCacheKey = () => 'iw-blob-4-four-petals';", 'FourPetals shader cache identity');
+  patch('    const B = this.blobs, shp = this.blobShape.array;',
+    '    const B = this.blobs, shp = this.blobShape.array, fourPetals = this.blobFourPetals.array;',
+    'FourPetals per-instance buffer');
+  patch('      let o = n * 4; shp[o] = tail; shp[o + 1] = wob; shp[o + 2] = ph; shp[o + 3] = p.nose || 0;\n      n++;',
+    `      let o = n * 4; shp[o] = tail; shp[o + 1] = wob; shp[o + 2] = ph; shp[o + 3] = p.nose || 0;
+      const unit = p.fidelityMode === 'vertical' ? p.fidelityRollerUnit : null;
+      const center = unit?.FourPetalsCenterRadiusRate, petal = unit?.FourPetalsPetalRadiusRate;
+      const hasFourPetals = Number.isFinite(center) && Number.isFinite(petal) && center >= 0 && petal >= 0 && center + petal > 0;
+      fourPetals[n * 2] = hasFourPetals ? center : 0;
+      fourPetals[n * 2 + 1] = hasFourPetals ? petal : 0;
+      n++;`, 'FourPetals rates reach rendered projectile');
+  patch('        o = n * 4; shp[o] = 1.3 + 0.25 * spk; shp[o + 1] = 0.05; shp[o + 2] = sph * 3; shp[o + 3] = 0;\n        n++;',
+    '        o = n * 4; shp[o] = 1.3 + 0.25 * spk; shp[o + 1] = 0.05; shp[o + 2] = sph * 3; shp[o + 3] = 0;\n        fourPetals[n * 2] = 0; fourPetals[n * 2 + 1] = 0;\n        n++;', 'FourPetals satellites clear shape');
+  patch('    this.blobShape.needsUpdate = true;\n  }',
+    `    this.blobShape.needsUpdate = true;
+    const fr = this._blobFourPetalsRange || (this._blobFourPetalsRange = { start: 0, count: 0 });
+    fr.count = n * this.blobFourPetals.itemSize;
+    this.blobFourPetals.updateRanges.length = 0; this.blobFourPetals.updateRanges.push(fr);
+    this.blobFourPetals.needsUpdate = true;
+  }`, 'FourPetals instance upload');
   return "import { EPSILON as WEAPONS_FIDELITY_EPSILON, advanceFidelityProjectile, advanceFidelityWallDrop, beginFidelityWallDrop, configureFidelityFlick, fidelityProjectileTargets, fidelityPlayerCollisionRadius, fidelityVolleyDamage, fidelityBossHit, fidelityWorldHit, applyFidelityProjectileHit, applyFidelitySlosherSplash } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n"+code;
 }
