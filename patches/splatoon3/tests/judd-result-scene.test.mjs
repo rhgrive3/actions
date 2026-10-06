@@ -224,6 +224,10 @@ test('#894 the rendered scene and the shipped stylesheets agree on its classes',
   assert.match(css, /\.iw-jd__flag\.is-up\s+\.iw-jd__cloth/, 'the raised-flag rule selects the flag that receives is-up');
   assert.match(css, /\.iw-jd__flag\.is-down\s+\.iw-jd__cloth/, 'the lowered-flag rule selects the flag that receives is-down');
   assert.match(css, /\.iw-jd__flag\.is-flat\s+\.iw-jd__cloth/, 'the tie rule selects the flag that receives is-flat');
+  assert.match(css, /\.iw-jd--refs\s+\.iw-jd__track\s*\{\s*display:\s*none\s*;\s*\}/,
+    'the real-map result scene hides the inherited abstract race bar');
+  assert.match(css, /\.iw-jd__stage\s*\{[^}]*min-height:/,
+    'the stage/map plate keeps a visible area when the race bar is hidden');
 
   const rendered = new Set();
   const walk = node => {
@@ -231,7 +235,7 @@ test('#894 the rendered scene and the shipped stylesheets agree on its classes',
     for (const kid of node.children) walk(kid);
   };
   walk(root);
-  for (const cls of ['iw-jd--refs', 'iw-jd__refs', 'iw-jd__ref', 'is-judd', 'is-liljudd', 'iw-jd__flag',
+  for (const cls of ['iw-jd--refs', 'iw-jd__refs', 'iw-jd__ref', 'is-judd', 'is-liljudd', 'iw-jd__flag', 'iw-jd__track',
     'iw-jd__figure', 'iw-jd__refname', 'iw-jd__stage', 'iw-jd__stagemap', 'iw-jd__map-snapshot', 'is-lose', 'is-up', 'is-down']) {
     assert.ok(rendered.has(cls), `scene renders .${cls}`);
   }

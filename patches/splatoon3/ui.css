@@ -22,6 +22,7 @@
 .iw-jd__refs { position: absolute; inset: 0; pointer-events: none; }
 .iw-jd__stage {
   position: absolute; left: 17vw; right: 17vw; top: 50%; translate: 0 -50%;
+  min-height: min(50vh, calc(var(--u) * 64));
   padding: calc(var(--u) * 3) calc(var(--u) * 3.5) calc(var(--u) * 2.6);
   border-radius: calc(var(--u) * 2.6); border: calc(var(--u) * .5) solid var(--k);
   box-shadow: 0 calc(var(--u) * 1.2) 0 calc(var(--u) * .6) rgba(0, 0, 0, .4);
@@ -33,9 +34,22 @@
   position: absolute; inset: 0; display: grid; place-items: center; overflow: hidden;
 }
 .iw-jd__map-snapshot {
-  display: block; width: 100%; height: 100%; object-fit: contain; opacity: .68;
+  display: block; width: 100%; height: 100%; object-fit: contain; opacity: .9;
 }
-.iw-jd--refs .iw-jd__arena { position: relative; left: auto; right: auto; top: auto; translate: none; animation: none; }
+.iw-jd--refs .iw-jd__arena {
+  position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end;
+  padding: calc(var(--u) * 2.2); z-index: 1; animation: none;
+}
+.iw-jd--refs .iw-jd__labels { align-items: center; gap: calc(var(--u) * 1.2); margin: 0; }
+.iw-jd--refs .iw-jd__side {
+  align-items: center; gap: calc(var(--u) * .8); min-width: 0; padding: .35em .55em;
+  border-radius: .55em; background: rgba(10, 8, 18, .86);
+}
+.iw-jd--refs .iw-jd__side .iw-jd__name { font-size: min(calc(var(--u) * 2.4), 4.2vw); }
+.iw-jd--refs .iw-jd__side .iw-jd__num { font-size: min(calc(var(--u) * 3.2), 5.2vw); }
+/* Keep inherited race-bar nodes for the existing result contracts, but never show them here. */
+.iw-jd--refs .iw-jd__track { display: none; }
+.iw-jd--refs .iw-jd__win { top: 88%; z-index: 2; }
 
 /* the two referees flank the stage plate and stay for win, loss and tie alike */
 .iw-jd__ref { position: absolute; top: 50%; translate: 0 -50%; display: flex; flex-direction: column; align-items: center; gap: calc(var(--u) * 1.4); }
