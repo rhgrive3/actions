@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { adaptSource } from '../adapter.mjs';
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const UPSTREAM = process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
-export async function fixture({ adapt = adaptSource, adaptNative = adapt, adaptRuntime = (_rel, source) => source, exportNet = false } = {}) {
+export async function fixture({ adapt = adaptSource, adaptRuntime = (_rel, source) => source } = {}) {
   const context = vm.createContext({ console, performance });
   const modules = new Map();
   function resolve(spec, from) {
@@ -21,12 +21,11 @@ export async function fixture({ adapt = adaptSource, adaptNative = adapt, adaptR
   function load(file) {
     if (modules.has(file)) return modules.get(file);
     const relative = path.relative(UPSTREAM, file);
-    const native = file.startsWith(UPSTREAM + path.sep) ? adaptNative(relative, fs.readFileSync(file, 'utf8')) : fs.readFileSync(file, 'utf8');
+    const native = file.startsWith(UPSTREAM + path.sep) ? adapt(relative, fs.readFileSync(file, 'utf8')) : fs.readFileSync(file, 'utf8');
     const source = file.startsWith(UPSTREAM + path.sep) ? native : adaptRuntime(path.relative(ROOT, file), native);
     const mod = new vm.SourceTextModule(source, { context, identifier: file }); modules.set(file, mod); return mod;
   }
   const root = new vm.SourceTextModule(`
-    ${exportNet ? "export { NetMatch } from './inkwave-public/src/net/netmatch.js';" : ''}
     export * from './inkwave-public/src/core/ctx.js';
     export * from './inkwave-public/src/config.js';
     export * from './inkwave-public/src/game/actor.js';

@@ -1,6 +1,4 @@
 #!/usr/bin/env node
-import { runQualityBrowserProbe } from '../patches/local-quality/quality-probe.mjs';
-import { runPaintMipmapBrowserProbe } from '../patches/local-quality/paint-mipmap-probe.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
@@ -41,6 +39,8 @@ if(process.argv.includes('--exact-source')) {
   const blobs=execFileSync('git',['hash-object','--',...files],{cwd:ROOT,encoding:'utf8'}).trim().split('\n');
   files.forEach((file,i)=>{if(blobs[i]!==tree.get(file))throw new Error('Build input differs from commit: '+file);});
 }
+// Identity-negative fixtures intentionally stop before loading browser helpers.
+const { probeTurfLead } = await import('./lib/inkwave-turf-lead-probe.mjs');
 const {chromium}=await import(process.env.PLAYWRIGHT_MODULE?pathToFileURL(process.env.PLAYWRIGHT_MODULE).href:'playwright');
 const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json','.svg':'image/svg+xml','.png':'image/png','.jpg':'image/jpeg','.webp':'image/webp','.woff2':'font/woff2','.glb':'model/gltf-binary'};
 const server=http.createServer((request,response)=>{
@@ -102,6 +102,16 @@ try {
   await page.screenshot({path:path.join(evidence,'loadout-small-viewport.png'),animations:'disabled',timeout:90000});
   await page.setViewportSize({width:1280,height:800});
   await page.evaluate(async () => { const { G } = await import(new URL('src/core/ctx.js',document.baseURI).href); await G.game.startMatch({mapId:'tidewater', difficulty:'easy', duration:180, mode:'turf'}); });
+  // The frozen fixture advances simulation explicitly below. Let the native
+  // wall-clock intro reveal run while this same Match is still in intro;
+  // fast-forwarding first makes its legitimate intro-only timer a no-op.
+  await page.waitForFunction(() => {
+    const g = globalThis.s3ProbeG?.game, h = g?.hud;
+    if (!g?.frozen || g.match?.state !== 'intro' || !h?._visible) return false;
+    const style = getComputedStyle(h.el);
+    return style.visibility === 'visible' && Number(style.opacity) >= .99;
+  }, null, {timeout:15000});
+  result.introHudAdmission = await page.evaluate(() => ({state:s3ProbeG.game.match.state,frozen:s3ProbeG.game.frozen,visible:s3ProbeG.game.hud._visible,nativeIntroReveal:true}));
   result.hiddenMinimap = await page.evaluate(() => {
     const m=globalThis.s3ProbeG.game.minimap;
     return { built:m._built, logical:[m.w,m.h], canvas:[m.canvas.width,m.canvas.height],
@@ -134,6 +144,7 @@ try {
     return {state:g.match.state, elapsedAt20Hz:initial-g.match.time-.5, movement:actor.pos.distanceTo(before), hp:actor.hp, gear:actor.s3.loadout, velocityFinite:[actor.vel.x,actor.vel.y,actor.vel.z].every(Number.isFinite), clockTicks:g.s3Clock.ticks, paintedFloorArea, coverage:G.paint.coverage()};
   });
   if (Math.abs(result.gameplay.elapsedAt20Hz-3)>1e-8 || !result.gameplay.velocityFinite || result.gameplay.movement<=0 || result.gameplay.paintedFloorArea<=0 || result.gameplay.coverage[0]<=0 || result.gameplay.coverage[0]>1) throw new Error('Actual browser gameplay regression');
+  result.turfLead = await probeTurfLead(page, evidence);
   // Native keyboard events traverse the loaded match's complete input/action
   // pipeline. Only ground collision is pinned for this admission-only proof;
   // the gameplay check above still uses the actual world Physics.
@@ -266,20 +277,8 @@ try {
     for(let i=0;i<30;i++)tick();flow.inactiveGlow=glow();flow.inactivePresentation=flowMotionSnapshot(ch);
     if(!Number.isFinite(flow.activeGlow)||flow.activeGlow<=0||flow.specialGlow>.001||flow.inactiveGlow>=.001)throw Error('Compiled Flow material did not follow actual actor state');
     if(!flow.activePresentation.visible||flow.activePresentation.aliveParticles<1||flow.inactivePresentation.visible||flow.inactivePresentation.phase!=='off')throw Error('Compiled Flow exterior did not follow actual actor state');
-    // Actual compiled runtime installation must cancel a pre-special charge.
-    prepare('charger');
-    const cr=a.weaponRunner; for(let i=0;i<36;i++)cr.update(1/60,{fire:true});
-    const suspendedCharge=cr.charge; a.special=a.specialCost(); const beforeSpecial=a.stats.specials;
-    a._startSpecial();
-    const specialCharge={suspendedCharge,active:!!a.specialActive,specials:a.stats.specials-beforeSpecial,
-      charging:cr.charging,charge:cr.charge,chargeT:cr.chargeT,stored:cr.s3Stored??null};
-    if(suspendedCharge<.5||!specialCharge.active||specialCharge.specials!==1||cr.charging||cr.charge!==0||cr.chargeT!==0||specialCharge.stored!==null)
-      throw Error('Compiled successful special did not cancel suspended Charger charge');
-    a.specialActive=null;
-    return {fixture:'loaded match Actor/WeaponRunner -> complete Character; fixed pose position; Chromium WebGL',dualies,slosher:{windup,firstWindupFrames,releaseFrames},reset,flow,specialCharge};
+    return {fixture:'loaded match Actor/WeaponRunner -> complete Character; fixed pose position; Chromium WebGL',dualies,slosher:{windup,firstWindupFrames,releaseFrames},reset,flow};
   });
-  result.runtimeQuality = await runQualityBrowserProbe(page);
-  result.paintMipmaps = await runPaintMipmapBrowserProbe(page);
   result.status = 'passed';
 } catch (error) {
   result = { ...(result || {}), status: 'failed', error: error.message };

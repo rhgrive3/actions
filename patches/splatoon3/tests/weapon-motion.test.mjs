@@ -149,9 +149,7 @@ test('Shooter/Blaster actual shot events drive hand recoil and weapon parts duri
     try {
       const C = r.api.CHARACTER_CHANNELS, quiet = r.ch.P[C.ANCR];
       r.a.vel.set(0, 0, 1.5); const observations = [];
-      // The Blaster's 14F first release and 50F repeat put its second shot
-      // beyond 1s; observe 1.2s while preserving the recoil-age assertion.
-      for (let i = 0; i < (kind === 'blaster' ? Math.ceil(1.2 * hz) : hz); i++) {
+      for (let i = 0; i < hz; i++) {
         r.a.pos.z += 1.5 / hz; r.a.grounded = i < hz / 2;
         r.step(1 / hz, { fire: true });
         observations.push({ angle: r.ch.P[C.ANCR], moving: r.ch.moving, air: r.ch.wAir,

@@ -2,6 +2,9 @@ import { adaptTenacity } from './tenacity-adapter.mjs';
 // Build-only quality corrections composed after the gameplay, touch-layout and
 // reliability adapters. Upstream inkwave-public/ remains byte-for-byte intact.
 import fs from 'node:fs';
+import { adaptScreenfxDamageReset } from './screenfx-damage-reset-adapter.mjs';
+import { adaptFinalMinuteMusic } from './final-minute-music-adapter.mjs';
+import { adaptTurfLead } from './turf-lead-adapter.mjs';
 import { adaptTexlibSource } from './texlib-adapter.mjs';
 import { adaptIssue477Source } from '../splatoon3/issue-477-adapter.mjs';
 import { adaptIssue483 } from '../splatoon3/issue-483-adapter.mjs';
@@ -13,6 +16,7 @@ import { adaptUiActorLifetime } from './ui-actor-lifetime-adapter.mjs';
 import { adaptIdleSource } from './idle-adapter.mjs';
 import { adaptPlatformSource } from './platform-adapter.mjs';
 import { adaptLandingRigidity } from './landing-rigidity-adapter.mjs';
+import { adaptMatchRetainers } from './match-retainer-adapter.mjs';
 import { adaptFirstTouch } from './first-touch-adapter.mjs';
 import { adaptTouchRelayout } from './touch-relayout.mjs';
 import crypto from 'node:crypto';
@@ -26,6 +30,9 @@ import { adaptPaintMipmaps } from './issue-190-adapter.mjs';
 
 export const QUALITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
 const IDENTITY_FILES = [
+  'screenfx-damage-reset-adapter.mjs',
+  'final-minute-music-adapter.mjs',
+  'turf-lead-adapter.mjs',
   'texlib-adapter.mjs', 'texlib.mjs',
   'issue-190-adapter.mjs', 'issue-418-adapter.mjs', 'world-quality.mjs', 'quality-probe.mjs', 'paint-mipmap-probe.mjs', 'issue-472-adapter.mjs',
   'score-reticle-adapter.mjs', 'map-teammate-status-adapter.mjs',
@@ -34,7 +41,7 @@ const IDENTITY_FILES = [
   'idle-adapter.mjs', 'idle-resources.mjs', 'music-idle.mjs',
   'lobby-resource-adapter.mjs', 'minimap-resource-adapter.mjs',
   'adapter.mjs', 'gyro.mjs', 'install.mjs', 'menu-preview.mjs', 'menu.mjs',
-  'roller-motion.mjs', 'roller-visual.mjs', 'surface.mjs', 'landing-rigidity-adapter.mjs', 'first-touch-adapter.mjs', 'touch-relayout.mjs',
+  'roller-motion.mjs', 'roller-visual.mjs', 'surface.mjs', 'landing-rigidity-adapter.mjs', 'match-retainer-adapter.mjs', 'first-touch-adapter.mjs', 'touch-relayout.mjs',
   'platform-adapter.mjs', 'platform-lifecycle.mjs', 'platform-game.mjs',
   'platform-input.mjs', 'platform-audio.mjs', 'platform-transport.mjs',
   'mobile-platform.mjs', 'gyro-permission.mjs',
@@ -49,6 +56,9 @@ export function replaceOnce(code, before, after, label) {
 }
 
 export function adaptQualitySource(rel, code) {
+  code = adaptScreenfxDamageReset(rel, code, replaceOnce);
+  code = adaptFinalMinuteMusic(rel, code, replaceOnce);
+  code = adaptTurfLead(rel, code, replaceOnce);
   code = adaptScoreReticle(rel, code, replaceOnce);
   code = adaptMapTeammateStatus(rel, code, replaceOnce);
   code = adaptTenacity(rel, code, replaceOnce);
@@ -62,6 +72,7 @@ export function adaptQualitySource(rel, code) {
   code = adaptMinimapResources(rel, code);
   code = adaptUiActorLifetime(rel, code, replaceOnce);
   code = adaptLandingRigidity(rel, code);
+  code = adaptMatchRetainers(rel, code, replaceOnce);
   code = adaptPaintMipmaps(rel, code);
   code = adaptQualityIssue418(rel, code);
   code = patchLobbySetShowcase(rel, code);
