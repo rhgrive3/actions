@@ -47,10 +47,11 @@ async function boot({ floor = true, grate = false, wall = false } = {}) {
     level, physics: new Physics(level), mode: 'match', teamColors: [new THREE.Color('#ff8a14'), new THREE.Color('#2f5bff')],
     match: { playing: () => true, canRespawn: () => false }, paint: { sample: () => 1, splat: () => 0 } });
   G.projectiles = new api.Projectiles(G.scene);
-  function make({ pos = [0, 0, 0], weapon = 'shooter', team = 0 } = {}) {
-    const a = new api.Actor({ team, name: 'superjump regression', weapon, CharacterClass: api.Character,
+  function make({ pos = [0, 0, 0], weapon = 'shooter', team = 0, isLocal = false, remote = false } = {}) {
+    const a = new api.Actor({ team, name: 'superjump regression', weapon, isLocal, CharacterClass: api.Character,
       style: { hair: 0, skin: 2, outfit: 0, eyes: 0 } });
     a.character.actor = a; G.actors.push(a); G.scene.add(a.character.root);
+    a.remote = remote;
     a.spawnAt(new THREE.Vector3(...pos), 0); a.invuln = 0; return a;
   }
   const tick = (a, count = 1) => { for (let i = 0; i < count; i++) { G.time += STEP; a.update(STEP); } };
@@ -58,10 +59,12 @@ async function boot({ floor = true, grate = false, wall = false } = {}) {
   return { ...api, make, tick, close };
 }
 
-for (const grate of [false, true]) test(`#215 grounded ${grate ? 'grate' : 'floor'} preparation launches at 80F`, async t => {
+for (const grate of [false, true]) test(`#215 grounded ${grate ? 'grate' : 'floor'} preparation launches at the charge boundary`, async t => {
   const f = await boot({ grate }); t.after(f.close); const a = f.make();
+  // A spawned Actor is humanoid, so #708's initial-form term precedes the 80F charge wait.
+  const startup = a.s3.jumpStartupHumanoidF;
   assert.equal(a.grounded, true); a.superJump(new f.THREE.Vector3(10, 0, 0));
-  f.tick(a, 79); assert.equal(a.superJumpState.phase, 'charge'); assert.ok(Math.abs(a.pos.y) < 1e-9);
+  f.tick(a, 79 + startup); assert.equal(a.superJumpState.phase, 'charge'); assert.ok(Math.abs(a.pos.y) < 1e-9);
   f.tick(a); assert.equal(a.superJumpState.phase, 'flight'); assert.equal(a.grounded, false);
 });
 
@@ -82,7 +85,7 @@ test('#215 inked wall supports preparation; lost wall ink resumes falling', asyn
   for (const painted of [true, false]) {
     const a = f.make({ pos: [1.7, 5, 0] }); a.climbing = true; a.wallN.set(-1, 0, 0); a.form = 'squid';
     f.G.paint.sample = () => painted ? 1 : 2; a.s3.jumpChargeTime = STEP;
-    a.superJump(new f.THREE.Vector3(-10, 0, 0)); f.tick(a);
+    a.superJump(new f.THREE.Vector3(-10, 0, 0)); f.tick(a, 1 + a.s3.jumpStartupSwimF);
     assert.equal(a.superJumpState.phase, painted ? 'flight' : 'charge');
     assert.equal(a.pos.y === 5, painted);
   }
@@ -107,7 +110,7 @@ for (const frames of [138, 96]) for (const distance of [2, 70]) test(`#255 fligh
   const f = await boot(); t.after(f.close); const a = f.make(), enemy = f.make({ team: 1 });
   a.s3.jumpChargeTime = STEP; a.s3.jumpFlightTime = frames / 60; a.superJump(new f.THREE.Vector3(distance, 0, 0));
   f.G.projectiles.applyHit(enemy, a, 36, 'shooter'); assert.equal(a.hp, 64); a.hp = 100;
-  f.tick(a); assert.equal(a.superJumpState.phase, 'flight');
+  f.tick(a, 1 + a.s3.jumpStartupHumanoidF); assert.equal(a.superJumpState.phase, 'flight');
   const nm = Object.create(f.NetMatch.prototype); nm.byNid = new Map([[1, a], [2, enemy]]); nm.peers = new Map(); nm.s = { myId: 'owner' }; nm.myId = 'owner';
   a.owner = enemy.owner = 'owner'; f.G.netm = nm;
   let hitSeq = 0;
@@ -126,7 +129,7 @@ for (const weapon of ['shooter', 'blaster']) test(`#218 ${weapon} fires before l
   const shots = []; const native = f.G.projectiles[weapon === 'shooter' ? 'fireShooter' : 'fireBlaster'];
   f.G.projectiles[weapon === 'shooter' ? 'fireShooter' : 'fireBlaster'] = function (...args) { shots.push({ tick: a.superJumpState?.t / STEP, pos: plain(a.pos.toArray()), phase: a.superJumpState?.phase }); return native.apply(this, args); };
   let bombs = 0; f.G.projectiles.throwBomb = () => bombs++;
-  a.superJump(new f.THREE.Vector3(20, 0, 0)); f.tick(a, 114); assert.equal(shots.length, 0);
+  a.superJump(new f.THREE.Vector3(20, 0, 0)); f.tick(a, 114 + a.s3.jumpStartupHumanoidF); assert.equal(shots.length, 0);
   f.tick(a, 24); assert.ok(shots.length > 0); assert.equal(shots[0].phase, 'flight'); assert.ok(shots[0].pos[1] > 0);
   if (weapon === 'blaster') assert.ok(shots[0].tick >= 123, 'runner retains native windup');
   assert.equal(bombs, 0); assert.equal(a.specialActive, null);
@@ -160,7 +163,7 @@ for (const mutation of ['move', 'splat', 'reset']) test(`#362 confirmation locks
   if(mutation==='move') target.pos.set(30,0,25);
   if(mutation==='splat') target.splat(null,'water');
   if(mutation==='reset') target.spawnAt(new f.THREE.Vector3(30,0,25),0);
-  f.tick(a,80); assert.equal(a.superJumpState.phase,'flight');
+  f.tick(a,80 + a.s3.jumpStartupHumanoidF); assert.equal(a.superJumpState.phase,'flight');
   assert.deepEqual(plain(a.superJumpState.to.toArray()),committed);
 });
 
@@ -194,4 +197,53 @@ test('#362 30/60/120Hz preserve one committed destination and flight announcemen
     assert.deepEqual(events,[['charge',null],['flight',committed]]);
     assert.ok(new f.THREE.Vector3(...committed).distanceTo(new f.THREE.Vector3(10,0,7)) < 1e-9);
   }
+});
+
+test('#645 ordinary landing and special-owned paint controls', async t => {
+  const f = await boot(); t.after(f.close);
+  for (const { ground, remote } of [
+    { ground: 'unpainted', remote: false },
+    { ground: 'enemy', remote: false },
+    { ground: 'enemy', remote: true },
+  ]) {
+    await t.test(`${remote ? 'remote Actor' : 'owner path'} lands on ${ground} without paint, turf or SP and retains feedback`, () => {
+      const a = f.make({ team: 0, isLocal: false, remote });
+      a.s3.jumpChargeTime = STEP; a.s3.jumpFlightTime = 96 * STEP;
+      let paintCalls = 0, turfEvents = 0, bursts = 0, lands = 0, shakes = 0;
+      f.G.paint.sample = () => ground === 'enemy' ? 2 : 0;
+      f.G.paint.splat = () => { paintCalls++; return 10; };
+      const previousFx = f.G.fx;
+      f.G.fx = { burst: () => bursts++, ring: () => {} };
+      const unsubscribe = [f.on('turf', () => turfEvents++),
+        f.on('superjump:land', () => lands++), f.on('shake', () => shakes++)];
+      const initialTurf = a.stats.turf, initialSpecial = a.special;
+      try {
+        assert.equal(a.superJump(new f.THREE.Vector3(20, 0, 0)), true);
+        // One shortened charge frame plus the existing humanoid startup owns
+        // preparation; then this case uses an exact 96F flight.
+        f.tick(a, 1 + a.s3.jumpStartupHumanoidF);
+        assert.equal(a.superJumpState.phase, 'flight');
+        assert.equal(paintCalls, 0);
+        f.tick(a, 96);
+        assert.equal(a.superJumpState, null, 'landing completes');
+        assert.equal(paintCalls, 0, 'ordinary landing paints no ink');
+        assert.equal(a.stats.turf, initialTurf, 'no personal turf credit');
+        assert.equal(a.special, initialSpecial, 'no special gauge credit');
+        assert.equal(turfEvents, 0, 'no turf events');
+        assert.ok(bursts > 0, 'landing VFX remains');
+        assert.equal(lands, 1, 'exactly one landing event');
+        assert.equal(shakes, 0, 'nonlocal Actor does not shake local screen');
+        assert.equal(a.form, 'kid');
+      } finally { for (const off of unsubscribe) off(); f.G.fx = previousFx; }
+    });
+  }
+  await t.test('special-owned _slamImpact still paints and awards turf without special gain', () => {
+    const a = f.make({ team: 0 }); let paintCalls = 0;
+    f.G.paint.splat = () => { paintCalls++; return 12; };
+    const initialTurf = a.stats.turf, initialSpecial = a.special;
+    a._slamImpact({ radius: 4.5 });
+    assert.equal(paintCalls, 10, 'one center plus nine radial splats');
+    assert.ok(a.stats.turf > initialTurf);
+    assert.equal(a.special, initialSpecial);
+  });
 });
