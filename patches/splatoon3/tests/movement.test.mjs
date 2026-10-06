@@ -1,6 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { rollEligible, absorbArmor } from '../runtime/movement.mjs';
+const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const cfg = { minimumSpeed: 8, minimumInput: .3, minimumAngle: Math.PI / 2 };
 test('Squid Roll uses direction change and pre-braking speed', () => {
   assert.equal(rollEligible({ x: 0, z: 10 }, { x: 0, z: -1 }, cfg), true);
