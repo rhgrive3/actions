@@ -66,7 +66,8 @@ export function beforeActions(a, dt, jumpPressed) {
   const floorVelocity = state.floorSpeed || a.vel;
   if (jumpPressed && (wallRoll || a.submerged && a.grounded && rollEligible(floorVelocity, a.intent.move, cfg.roll))) {
     const retention = a.s3.modifiers?.rollRetention ?? cfg.roll.chainRetention;
-    const speed = rollLaunchSpeed(Math.max(cfg.roll.minimumSpeed, Math.hypot(a.vel.x, a.vel.z)), state.chain, retention, state.chainSpeed);
+    const minimum = wallRoll ? Math.max(cfg.roll.minimumSpeed, api.PLAYER.swimSpeed * .8) : cfg.roll.minimumSpeed;
+    const speed = rollLaunchSpeed(Math.max(minimum, Math.hypot(a.vel.x, a.vel.z)), state.chain, retention, state.chainSpeed);
     // The stick angle inside the admitted outward cone is the heading (#767). Passing
     // the wall normal here discarded it, so every admitted wall roll launched along the
     // normal regardless of how the stick was aimed. Admission, speed, vertical velocity,
@@ -74,7 +75,7 @@ export function beforeActions(a, dt, jumpPressed) {
     // and this is the same vector the own-ink roll path already used. No curve is added.
     launch(a, a.intent.move, speed, cfg.roll.jumpVelocity, 'squidroll');
     state.roll = { time: cfg.roll.duration, armorTime: wallRoll ? cfg.roll.wallArmorTime : cfg.roll.armorTime,
-      armorHP: cfg.roll.armorHP, armorThreshold: cfg.roll.armorThreshold, vx: a.vel.x, vz: a.vel.z };
+      armorHP: cfg.roll.armorHP, armorThreshold: cfg.roll.armorThreshold, vx: a.vel.x, vz: a.vel.z, steerReady: false };
     state.armor = state.roll;
     state.surge = state.floorSpeed = null; state.chainSpeed = speed; state.chain++; state.chainTimer = cfg.roll.chainReset;
     sync(a, state); return true;
@@ -85,7 +86,9 @@ export function beforeActions(a, dt, jumpPressed) {
       const scale = a.s3.modifiers?.surgeChargeScale ?? 1;
       surge.charge = Math.min(1, surge.charge + dt / (cfg.surge.chargeTime * scale));
       if (1 - surge.charge <= 1e-10) surge.charge = 1;
-      // Native climb already resolved slow charge movement; retain that velocity.
+      // Keep tangential/vertical charge movement, removing only native wall-contact bias.
+      const n = a.wallN, vn = a.vel.x * n.x + a.vel.z * n.z;
+      a.vel.x -= n.x * vn; a.vel.z -= n.z * vn;
       a.jumpBuffer = 0;
       a.anim.surgeCharge = surge.charge;
       sync(a, state); return true;
@@ -182,6 +185,8 @@ export function installMovement(context, tuning) {
   Actor.prototype._horizontal = function (...args) {
     const roll = movementState(this).roll;
     if (!roll || this.grounded) return horizontal.apply(this, args);
+    // The admission tick keeps the exact launch speed; steer from the next tick.
+    if (roll.steerReady === false) { roll.steerReady = true; return; }
     const original = api.PLAYER.squidDrySpeed;
     api.PLAYER.squidDrySpeed = api.PLAYER.swimSpeed;
     try { return horizontal.apply(this, args); }

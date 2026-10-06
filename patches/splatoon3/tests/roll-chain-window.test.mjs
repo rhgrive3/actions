@@ -45,6 +45,7 @@ function prepare(a, kind) {
 
 function launch(f, a, kind, note) {
   prepare(a, kind);
+  a.grounded = kind === 'floor'; // Restore actual landed state before a new floor admission.
   const before = rollLaunches(a);
   f.beforeActions(a, STEP, true);
   assert.equal(rollLaunches(a), before + 1, `${note} ${kind} roll must launch`);
@@ -177,7 +178,7 @@ test('roll armor is unchanged: the longer window does not extend or shorten the 
   close(a.s3.roll.armorHP, cfg.armorHP);
   a.damage(cfg.armorHP, null, 'shooter'); close(a.hp, 100, 'a roll hit is absorbed inside the armor window');
   for (let i = 0; i < cfg.armorTime * 60; i++) { prepare(a, 'floor'); f.beforeActions(a, STEP, false); }
-  close(a.s3.roll.armorTime, 0, 'armor expires on its own schedule, not the chain schedule');
+  close(a.s3.actions.armor.armorTime, 0, 'armor expires on its own schedule after the shorter movement action');
   a.damage(60, null, 'shooter'); close(a.hp, 40, 'damage lands once the armor window closes');
 });
 
@@ -194,7 +195,7 @@ test('chain history survives wall reattachment; former velocity-only rule is a n
       assert.equal(rollLaunches(a), before + 1);
       speeds.push(Math.hypot(a.vel.x, a.vel.z));
     }
-    const initial = f.profile.movement.roll.minimumSpeed;
+    const initial = Math.max(f.profile.movement.roll.minimumSpeed, f.PLAYER.swimSpeed * .8);
     close(speeds[0], initial); close(speeds[1], initial * RETENTION);
     close(speeds[2], initial * (legacy ? RETENTION : RETENTION ** 2));
     if (!legacy) {

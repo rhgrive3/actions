@@ -1338,3 +1338,12 @@ Reference conditions remain Splatoon 3 Ver. 11.3.0, Splattershot/Splat Dualies/H
 Restore PR761 #622 pool-owner retirement and #679/#686 six-frame Splatling interruption through the dedicated cancellation/refund owner; all normal/ghost recycling sites route through owner-null retirement. The current whole-round reservation, only-once unused-ink refund, charge boundaries and uninterrupted cadence remain authoritative. Restore PR782 #707 offline-pause clock guard. These are the only additions to the fixed #606/#617/#608/#680 set. Source roots #744/#728 and new #870 are deliberately held outside it.
 
 Evidence retained: lifetime3 (network composition requires the separately owned Kit bomb-life connection); interruption16 plus explicit refund-once1; pause5. The complete eight-root set remains a focused source acceptance, not an emitted/browser/full-CI claim. PR781/784 shared kit, Storm and dedicated weapon ownership is retained rather than overwritten.
+
+
+## 2026-10-06: Restore Super Jump charge resources and remote-support guards (#744/#728)
+
+PR782's missing charge-phase resource connection runs the existing resource owner once on each tick that starts in charge while alive. Flight keeps its existing skip. Current humanoid startup22F plus charge80F, enemy-ink grace reset, invulnerability and current damage precision remain unchanged. No new timing or resource coefficient is introduced.
+
+The source remote-support guard tests are restored without an additional remote runtime rewrite: actual NetMatch playback keeps the newest supported ground point, excludes airborne/climb/flight samples, clears it on remote respawn, and requires a new supported sample before reuse.
+
+Five full composed-source cases pass on the fixed ready composition (782-current-source-final.log,74.27s): three charge resource/admission/fixed-cadence cases and two actual remote playback/respawn cases. This relies on the separately owned current Map/Aim/427/482/484 and other accepted composition connections; they are not duplicated in this delta. No complete browser or emitted acceptance is claimed. Offline pause707 was handed off separately and is not added again.

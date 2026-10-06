@@ -144,13 +144,20 @@ export function installRollerLogic({ WeaponRunner, Actor, G }, _profile) {
       this.rollLoop?.stop(.12); this.rollLoop = null;
     }
     const state = this.s3RollerAttack;
-    let mode = rollerMode(w, this.s3FlickVertical);
+    const vertical = state ? state.vertical : this.s3FlickVertical;
+    let mode = rollerMode(w, vertical);
     if (state) mode = { ...mode, flickWindup: state.windup, flickInterval: state.interval };
     const winding = this.flick >= 0;
-    if (state && !starting) state.elapsed = Math.min(state.interval, state.elapsed + dt);
+    if (state && !starting) state.elapsed += dt;
     // Float accumulation must not add a 22nd/27th tick to a 21F/26F windup.
     if (winding && this.flick + dt + EPS >= mode.flickWindup) this.flick = mode.flickWindup;
-    const result = roller.call(this, dt, inp, mode);
+    let rollInp = inp;
+    if (state && state.released) {
+      const rollDelay = state.vertical ? (22 / 60) : (7 / 60);
+      const postRelease = state.elapsed - state.windup;
+      if (postRelease + EPS < rollDelay) rollInp = inp.fire ? { ...inp, fire: false } : inp;
+    }
+    const result = roller.call(this, dt, rollInp, mode);
     if (state) state.rolling = this.rolling;
     if (state && winding && this.flick < 0) {
       state.elapsed = mode.flickWindup;
@@ -159,9 +166,21 @@ export function installRollerLogic({ WeaponRunner, Actor, G }, _profile) {
       this.s3FlickPostSub = Math.max(0, POST_SUB[edge] - dt);
       this.s3FlickPostSquid = Math.max(0, POST_SQUID[edge] - dt);
     }
-    if (state && state.elapsed + EPS >= state.interval) {
-      this.s3RollerAttack = null;
-      a.character.s3RollerFlick = null;
+    if (state && state.released) {
+      const rollDelay = state.vertical ? (22 / 60) : (7 / 60);
+      const postRelease = state.elapsed - state.windup;
+      if (state.rolling) {
+        if (a.character ? (a.character.wRoll >= 0.95 || postRelease >= rollDelay + 0.25) : postRelease >= rollDelay + 0.1) {
+          this.s3RollerAttack = null;
+          if (a.character) a.character.s3RollerFlick = null;
+        }
+      } else if (!inp.fire && state.elapsed + EPS >= state.interval) {
+        this.s3RollerAttack = null;
+        if (a.character) a.character.s3RollerFlick = null;
+      } else if (state.elapsed + EPS >= Math.max(state.interval, state.windup + rollDelay) && !a.grounded) {
+        this.s3RollerAttack = null;
+        if (a.character) a.character.s3RollerFlick = null;
+      }
     }
     return result;
   };
@@ -207,7 +226,7 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
       // The runner owns whether the drum is rolling. A fixed 0.6s flick timer
       // otherwise delays the arms after gameplay has already resumed painting.
       const rolling = this.kidForm && this.grounded && !this.dance && !!s.rolling;
-      this.wRoll = mix(previous, rolling ? 1 : 0, 1 - Math.exp(-(rolling ? 11 : 6) * dt));
+      this.wRoll = mix(previous, rolling ? 1 : 0, 1 - Math.exp(-(rolling ? 14 : 6) * dt));
     }
     return result;
   };

@@ -140,8 +140,8 @@ test('#767 admission, speed, vertical, chain and action timing are unchanged', a
   const inward = onWall(api, 0); inward.intent.move.set(0, 0, -1);
   assert.equal(launch(api, inward).consumed, false, 'a stick into the wall must not wall-roll');
   const shallow = onWall(api, 0); shallow.intent.move.set(0.99, 0, 0.14);
-  assert.ok(shallow.intent.move.x * shallow.wallN.x + shallow.intent.move.z * shallow.wallN.z
-    < cfg.wallRollMinimumInput, 'the negative control must actually be outside the cone');
+  assert.ok((shallow.intent.move.x * shallow.wallN.x + shallow.intent.move.z * shallow.wallN.z) / shallow.intent.move.length()
+    < Math.cos(cfg.wallRollMaximumAngle), 'the negative control must actually be outside the cone');
   assert.equal(launch(api, shallow).consumed, false, 'a stick outside the cone must not wall-roll');
 });
 

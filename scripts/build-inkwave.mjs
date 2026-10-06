@@ -170,6 +170,10 @@ visit('patches/splatoon3/bootstrap.mjs');
 // requests to the critical HTML. Browser startup/offline CI validates the
 // resulting dependency fetch path and timing.
 const deferredIntegrationPreloads = new Set([
+  // PR786 runtime helpers retain static imports and precache, without extra eager hints.
+  'patches/local-quality/issue-472-adapter.mjs',
+  'patches/splatoon3/issue-196-adapter.mjs',
+  'patches/splatoon3/runtime/hair-cache.mjs',
   'patches/splatoon3/runtime/agent3-weapon-physics.mjs',
   'patches/splatoon3/runtime/splatling.mjs',
   'patches/splatoon3/runtime/weapon-gates.mjs',

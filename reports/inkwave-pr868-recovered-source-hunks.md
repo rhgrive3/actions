@@ -46,3 +46,15 @@ Final normal build content: 5e83190f0c76ffa2cb85329e25ab186c49e6512976565e3d4885
 The canonical Dualies radius now has one owner: the legacy gate does not re-scale an existing fidelity record. Three focused positive/negative cases preserve .31 normal/.335 turret, field radius and legacy fallback. The previous .362016 double scale and 11.6 full-damage range were reproduced and repaired without changing the 11.5 golden.
 
 The aggregate emitted canonical gate is NOT accepted yet: it now stops at the pre-existing Splatling 14.2 versus 14.1 range mismatch. A fixed 82d5 source comparison reproduces the same Splatling and Roller measurements, so these are retained as separate baseline composition defects rather than silently changing goldens. Splatling's two speed samplers and the Roller golden difference are the next bounded investigation. Full CI/browser acceptance remains pending. No default-branch merge or early Issue close is performed.
+
+## Next fixed source set: PR786 six roots, PR699 partial connections, PR782 SuperJump
+
+PR786 source416f7eb20cc635e85de3a0bd6f8c9454319eb282 contributes only #190 paint mipmaps, #472 lobby resources, #483 owned hair cache, #196 special charge cancellation, #435 Slosher emergence and #517 Roller behavior. Original dedicated limited tests pass; existing #635/#626 owners and current Lobby quality composition are retained. Remaining #418/#542/#284/#465/#477/#481 are excluded from this set.
+
+PR699 source55338f2b64bb70021ff129302bcd1ff2e06624c5 contributes narrow movement connections and fixture/catalog follow-through. These remain non-closing references: #213/#257/#386 wall/floor retained speed and chain, #224 first-tick steering, #275 Surge wall-normal handling and #221/#484 fixture coverage. The known #224 reversal and #221 air-burst baseline assertions are not represented as fully resolved. Existing #767 heading, newer threshold/armor and numerical profile remain intact.
+
+PR782 source6aed9fb4b73d480dfe862fb7d1ee7a53bbd7c4e3 contributes #744 charge-phase resource ownership and #728 remote support-history coverage. The already ported #707 pause scope is not duplicated.
+
+All 275 build transformations and a normal build completed with content 81a47d937abc2de3159e2e57a27b3b8329d7e514351e4b1945fb2da3efc589b8. Three newly reachable PR786 helpers have optional eager hints deferred under the existing policy; static imports and the complete precache remain unchanged, and the unchanged 145-hint startup gate passes. Full aggregate/browser acceptance and previously recorded Splatling/Roller residuals remain pending.
+
+The new combined movement/SuperJump boundary checks passed six movement cases plus five #744/#728 cases with no skips. Browser-runner static validation exposed an inherited duplicate import and duplicate branch-outside HUD/sub-HUD execution. The minimal verifier repair keeps full-mode bound HUD and sub-HUD once, UI-only visual probes once, and the new paint-mipmap probe once; the retained assertions/finally are byte-identical. Syntax and AST routing checks pass; actual browser execution is still pending.

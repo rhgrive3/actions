@@ -1,3 +1,7 @@
+import { adaptIssue483 } from '../splatoon3/issue-483-adapter.mjs';
+import { adaptSlosherEmergeGate } from '../splatoon3/issue-435-adapter.mjs';
+import { patchLobbySetShowcase } from './issue-472-adapter.mjs';
+import { adaptPaintMipmaps } from './issue-190-adapter.mjs';
 import { adaptPropRetention } from './prop-retention-adapter.mjs';
 import { adaptPropAtlas } from './prop-atlas-adapter.mjs';
 import { adaptIssue482 } from '../splatoon3/issue-482-adapter.mjs';
@@ -44,6 +48,7 @@ import { adaptFinishTape } from './finish-tape-adapter.mjs';
 
 export const QUALITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
 const IDENTITY_FILES = [
+  'issue-190-adapter.mjs', 'paint-mipmap-probe.mjs', 'issue-472-adapter.mjs',
   'screenfx-damage-reset-adapter.mjs',
   'fx-actor-lifetime-adapter.mjs',
   'hud-snapshots-adapter.mjs', 'hud-snapshots.mjs',
@@ -157,6 +162,10 @@ function adaptQualityLayer(rel, code) {
   code = adaptUiActorLifetime(rel, code, replaceOnce);
   code = adaptLandingRigidity(rel, code);
   code = adaptMatchRetainers(rel, code, replaceOnce);
+  code = adaptIssue483(rel, code);
+  code = adaptPaintMipmaps(rel, code);
+  code = patchLobbySetShowcase(rel, code);
+  code = adaptSlosherEmergeGate(rel, code);
   // Issue #580 runs before the final HUD-authority pass so shared HUD anchors
   // are composed once on the finished presentation layer.
   code = adaptFinishTape(rel, code);
