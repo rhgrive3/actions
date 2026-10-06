@@ -523,6 +523,35 @@ export function installWeaponsFidelity(context,profile) {
     while(remaining>EPSILON){const step=Math.min(1/60,remaining);advanceFidelityProjectile(p,step);remaining-=step;}
     return p.pos;
   };
+  Projectiles.prototype.s3DualiesGuides=function(actor,w){
+    const frame=w?.shotGuideFrame;
+    if(w?.kind!=='dualies'||!Number.isFinite(frame))return null;
+    const THREE=context.THREE;
+    const points=this._s3DualiesGuidePoints||(this._s3DualiesGuidePoints=[new THREE.Vector3(),new THREE.Vector3()]);
+    const dirs=this._s3DualiesGuideDirs||(this._s3DualiesGuideDirs=[new THREE.Vector3(),new THREE.Vector3()]);
+    const shots=this._s3DualiesGuideProjectiles||(this._s3DualiesGuideProjectiles=[0,1].map(()=>({
+      pos:new THREE.Vector3(),prev:new THREE.Vector3(),start:new THREE.Vector3(),vel:new THREE.Vector3()
+    })));
+    for(let hand=0;hand<2;hand++){
+      const p=shots[hand],out=points[hand],dir=dirs[hand];
+      this._muzzleHand(actor,hand,p.pos);p.prev.copy(p.pos);p.start.copy(p.pos);
+      this._aimFrom(actor,p.pos,dir);
+      p.owner=actor;p.type='shot';p.wid=w.id;p.s3Weapon={...w};p.age=0;p.life=1.2;p.straight=w.straightTime;
+      p.delay=0;p.ghost=false;p.size=w.impactRadius??.15;p.fidelityPhase=0;p.fidelityMove=null;p.fidelityPrevAge=0;
+      p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;
+      p.vel.copy(dir).multiplyScalar(w.projSpeed);
+      initialize(p,w);
+      let remaining=Math.max(0,frame/60);
+      while(remaining>EPSILON){const step=Math.min(1/60,remaining);advanceFidelityProjectile(p,step);remaining-=step;}
+      out.copy(p.pos);
+    }
+    if(actor.weaponRunner?.s3Turret){
+      const center=this._s3DualiesGuideCenter||(this._s3DualiesGuideCenter=new THREE.Vector3());
+      center.copy(points[0]).add(points[1]).multiplyScalar(.5);
+      points[0].copy(center);points[1].copy(center);
+    }
+    return points;
+  };
   Projectiles.prototype.s3WeaponGuide=function(actor,w){
     if(w?.kind==='slosher')return this.s3SlosherGuide(actor,w);
     const frame=w?.shotGuideFrame;
