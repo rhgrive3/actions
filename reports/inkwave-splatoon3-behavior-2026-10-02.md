@@ -289,3 +289,22 @@ After all fingers release, an explicit mouse pointerdown on the canvas can recla
 Evidence:source focused66/66 (new13 plus existing input/pause/touch/first-touch),20 actual-method touch↔mouse cycles with stable listener count, FIRE/stick/look across synchronous/asynchronous/throwing exit, late acquisition, queued notifications, fresh mouse/Escape, and non-live lock rejection. Authentic full build and actual emitted13/13 are recorded in the completion handoff. VM browser-API timing surfaces are controlled fixtures; actual trusted Pointer Lock/browser hardware interaction remains for batch browser acceptance. Existing Main Map _relock can also request on the same mouse gesture; no functional failure was found and that independent owner is not rewritten here.
 
 The W3C Pointer Lock API explicitly separates lock-target state from queued pointerlockchange notification (https://www.w3.org/TR/pointerlock-2/); Pointer Events define the distinct touch/pointer lifetime (https://www.w3.org/TR/pointerevents3/). The target is coherent control ownership during play, not a claim of measured Switch/iPad/Android latency or hardware equivalence.
+
+## 2026-10-06: #739 Blaster field collision radius audit
+
+Splatoon 3 の Blaster はプレイヤー用の 0.285 に加えて、フィールド（地形）用の衝突半径 0.2 を持つ。中心線が壁を通らなくても、この体積が触れていれば接触する。#739 は「INKWAVE の live 経路は中心線のみで、profile の `fieldCollisionRadius: 0.2` が使われていない」と報告した。
+
+監査の結果、現行 main ではこの報告の主因は再現しなかった。このリポジトリは `inkwave-public/` を変更せずビルド出力だけを変換する方式なので、上流の `_step` を読むだけでは live の経路が分からない。
+
+| 項目 | 内容 |
+| --- | --- |
+| 本家の根拠 | [Inkipedia — Blaster](https://splatoonwiki.org/wiki/Blaster)。プレイヤー判定 0.285、フィールド判定 0.2。参照版は Splatoon 3 Ver. 11.3.0。Issue #739 に記録された参照と同一 |
+| Issue の想定した実装箇所 | Issue は上流 `_step` の `G.physics.segment(p.prev, p.pos, _hit, true)` を live の経路として挙げた |
+| 実際の実装箇所 | `patches/splatoon3/weapons-adapter.mjs` が同じ行を `fidelityWorldHit(this, p)` に置換している。その実装は `runtime/weapons-fidelity.mjs::fidelityWorldHit` で、`runtime/weapons-collision.mjs::sweptWorldHit` を呼び、`fieldRadiusAt()` 経由で `profile.json` の `weaponsFidelityCompletion.weapons.blaster.CollisionParam.InitRadiusForField = 0.2` を使う |
+| 再現操作 | 近傍面が z=0.2 にある板を実ブロックとして組み、中心線が素通りする射線を実コードで実行。隙間 0.15 / 0.05 / 0.01 では `sweptWorldHit` が接触し、中心線の `Physics.segment` はいずれも接触しない。隙間 0.3 / 0.25 / 0.2 では両方とも通過する |
+| プレイへの影響 | 現行 main では影響なし。Blaster の地形接触は参照版のフィールド半径どおりで、爆発の起点も最早期の接触点になる |
+| 確認状態 | **ロジック確認済み**。実 Physics と実ブロックを使い `sweptWorldHit` と `roundedBoxEntry` を直接実行。`blaster-field-collision.test.mjs` は 6/6 pass。**本家実機（Switch Ver.11.3.0）での確認は未実施**。0.2 は profile の抽出済み値からのみ取得しており、新たな定数は作っていない |
+
+`git log -S` により、`fidelityWorldHit` への接続と `InitRadiusForField: 0.2` はともにコミット `5a43b7b` で同時に導入されている。Issue #739 が baseline として挙げた `b4d5c31` にも同じ置換が既にあり、この報告は baseline の時点でも live の挙動を誤認していた。
+
+コードは追加せず、`blaster-field-collision.test.mjs` で挙動を固定し、中心線のみへ戻した場合は test が落ちる negative control を入れた。プレイヤー半径 0.285（#463）、爆発のダメージ帯（#428）、飛行（#310）、着弾後の壁沿い落下（#597）、同時刻の順序（#119）、通信の形状、ink、airburst 13F、壁への着弾遅延 729 はいずれも変更していない。**ブラウザ実動作による爆発起点の確認は未実施**であり、これはロジック単独の測定であって実機比較の代用ではない。
