@@ -49,7 +49,6 @@ import { installRollerDetailMotion } from './roller-detail-motion.mjs';
 import { installSuperjumpMotion } from './superjump-motion.mjs';
 import { installSquidrollMotion } from './squidroll-motion.mjs';
 import { installHitSpawnMotion } from './hit-spawn-motion.mjs';
-import { installChargerSurface } from './charger-surface.mjs';
 import { installIdleMotion } from './idle-motion.mjs';
 import { installEmotesMotion } from './emotes-motion.mjs';
 import { installSpecialMotion } from './special-motion.mjs';
