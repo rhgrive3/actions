@@ -9,7 +9,10 @@ export function adaptWeaponsFidelity(code,replaceOnce) {
       p.pos.addScaledVector(p.vel, dt);`,
     '      const fidelityWallDropDone = advanceFidelityWallDrop(this, p, dt);\n      if (fidelityWallDropDone === null) {\n      advanceFidelityProjectile(p, dt);\n      }','staged projectile integration');
   patch('      // actors\n      for (const e of G.actors) {',
-    '      // Earliest enemy before the first solid obstruction.\n      for (const e of fidelityProjectileTargets(this, p)) {','collision chronology');
+    '      // Earliest contact before the first solid obstruction, including #801\n      // Roller teammate body-blocks after the pinned 3F window.\n      for (const e of fidelityProjectileTargets(this, p)) {','collision chronology');
+  patch(`        if (e.team === p.team || !e.alive) continue;
+        const h = e.form === 'squid' ? PLAYER.squidHeight : PLAYER.height;`,
+    `        // #801: membership, liveness and the Roller-only friendly window are\n        // solved in fidelityProjectileTargets. The consumed ally still reaches\n        // the impact branch below so the glob is blocked without damage.\n        const h = e.form === 'squid' ? PLAYER.squidHeight : PLAYER.height;`,'team membership solved by fidelity solver');
   patch('        if (Math.abs(e.pos.x - p.pos.x) > 3 || Math.abs(e.pos.z - p.pos.z) > 3) continue;',
     '        // Swept broad phase was already checked by fidelityProjectileTargets.','swept broad phase');
   patch('          if (p.vol) { if (p.vol.hits.includes(e)) dmg = 0; else p.vol.hits.push(e); }',
