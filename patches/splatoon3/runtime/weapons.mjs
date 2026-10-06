@@ -1,18 +1,65 @@
 import { installWeaponEdgecases } from './weapon-edgecases.mjs';
 import { installRollerLogic } from './roller.mjs';
 let api;
-const dualiesLockViews = new WeakMap();
-const splatlingStreamViews = new WeakMap();
+const dualiesLockConfigs = new WeakMap();
+const splatlingStreamConfigs = new WeakMap();
 
-function cachedOverrideView(cache, source, key, value) {
-  let view = cache.get(source);
-  if (!view) {
-    view = Object.create(source);
-    Object.defineProperty(view, key, { value, enumerable: true });
-    Object.freeze(view);
-    cache.set(source, view);
+function enumerableWeaponKeys(source) {
+  const keys = [], seen = new Set();
+  for (let current = source; current && current !== Object.prototype; current = Object.getPrototypeOf(current)) {
+    for (const key of Reflect.ownKeys(current)) {
+      if (seen.has(key)) continue;
+      seen.add(key);
+      if (Object.getOwnPropertyDescriptor(current, key)?.enumerable) keys.push(key);
+    }
   }
-  return view;
+  return keys;
+}
+
+// Materialize inherited fields once so native spread consumers keep the full config.
+export function cachedWeaponOverrideConfig(cache, source, key, value) {
+  let variants = cache.get(source);
+  if (!variants) cache.set(source, variants = new Map());
+  let values = variants.get(key);
+  if (!values) variants.set(key, values = new Map());
+  if (!values.has(value)) {
+    const config = {};
+    for (const field of enumerableWeaponKeys(source)) {
+      Object.defineProperty(config, field, { value: source[field], enumerable: true, writable: true, configurable: true });
+    }
+    Object.defineProperty(config, key, { value, enumerable: true, writable: true, configurable: true });
+    values.set(value, Object.freeze(config));
+  }
+  return values.get(value);
+}
+
+// Scoped synchronous scalar overlay: keep a stable, spread-compatible facade
+// for values such as sampled Splatling speed without cloning the full config.
+export function withWeaponScalarOverride(cache, source, key, value, run) {
+  let variants = cache.get(source);
+  if (!variants) cache.set(source, variants = new Map());
+  let entry = variants.get(key);
+  if (!entry) {
+    const values = [];
+    const view = {};
+    for (const field of enumerableWeaponKeys(source)) {
+      Object.defineProperty(view, field, {
+        enumerable: true,
+        get() { return field === key && values.length ? values[values.length - 1] : source[field]; },
+      });
+    }
+    if (!Object.prototype.hasOwnProperty.call(view, key)) {
+      Object.defineProperty(view, key, {
+        enumerable: true,
+        get() { return values.length ? values[values.length - 1] : source[key]; },
+      });
+    }
+    entry = { view: Object.freeze(view), values };
+    variants.set(key, entry);
+  }
+  entry.values.push(value);
+  try { return run(entry.view); }
+  finally { entry.values.pop(); }
 }
 
 function suppressDualiesGateInput(runner, input) {
@@ -200,14 +247,14 @@ export function installWeapons(context, profile) {
         const gatedInput = suppressDualiesGateInput(this, inp);
         try {
           return dualies.call(this, dt, gatedInput,
-            this.s3Turret ? cachedOverrideView(dualiesLockViews, w, 'fireInterval', w.lockInterval) : w);
+            this.s3Turret ? cachedWeaponOverrideConfig(dualiesLockConfigs, w, 'fireInterval', w.lockInterval) : w);
         } finally {
           Object.setPrototypeOf(gatedInput, null);
         }
       }
     }
     const result = dualies.call(this, dt, inp,
-      this.s3Turret ? cachedOverrideView(dualiesLockViews, w, 'fireInterval', w.lockInterval) : w);
+      this.s3Turret ? cachedWeaponOverrideConfig(dualiesLockConfigs, w, 'fireInterval', w.lockInterval) : w);
     if (dodging && !this.dodge) {
       this.s3Turret = true;
       this.s3DodgeShotPending = 4 / 60;
@@ -260,7 +307,7 @@ export function installWeapons(context, profile) {
     }
     const charging = this.charging, charge = this.charge;
     const result = splatling.call(this, dt, input,
-      this.streaming ? cachedOverrideView(splatlingStreamViews, w, 'inkPerShot', 0) : w);
+      this.streaming ? cachedWeaponOverrideConfig(splatlingStreamConfigs, w, 'inkPerShot', 0) : w);
     if (charging && !input.fire && this.streaming) {
       this.burstDur = this.burstT = splatlingBurst(w, charge);
       this.a.ink = Math.max(0, this.a.ink - w.inkFull * this.burstDur / w.burstMax); this.a.lastFire = 0;
