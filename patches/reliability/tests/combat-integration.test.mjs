@@ -2,9 +2,9 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { combatWorld } from './combat-integration-fixture.mjs';
 
-const flushLethal = world => {
+const flushLethal = (world, actor = world.victim) => {
   world.G.time += 1 / 60;
-  world.victim.update(1 / 60);
+  actor.update(1 / 60);
 };
 
 test('combined wire path rejects a held lethal old-life hit and admits a new-life hit', async () => {
@@ -59,7 +59,8 @@ test('reverse ownership retains the exact same splat reward', async () => {
   try {
     shooter.G.projectiles.applyHit(shooter.victim, shooter.attacker, 100, 'shooter');
     defender.net.onMessage('B', shooter.wire.at(-1).data);
-    flushLethal(defender);
+    // Reverse ownership makes defender.attacker the authoritative lethal victim.
+    flushLethal(defender, defender.attacker);
     defender.net._sendTick(); shooter.deliver('A', defender.wire.at(-1).data);
     assert.equal(shooter.victim.stats.turf, .123456789);
     assert.equal(shooter.victim.special, .123456789);
