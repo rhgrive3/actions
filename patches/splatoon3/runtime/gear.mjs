@@ -121,7 +121,7 @@ export function installGear(api, tuning) {
   const update = WeaponRunner.prototype.update;
   WeaponRunner.prototype.update = function (dt, input) {
     const a = this.a, m = a.s3?.modifiers || {}, beforeInk = a.ink;
-    const bombInkCost = api.SUB.bomb.inkCost, bombThrowSpeed = api.SUB.bomb.throwSpeed;
+    const saved = { inkCost: api.SUB.bomb.inkCost, throwSpeed: api.SUB.bomb.throwSpeed };
     api.SUB.bomb.inkCost *= m.inkSaverSub ?? 1;
     api.SUB.bomb.throwSpeed *= m.subPower ?? 1;
     const effectiveBombCost = api.SUB.bomb.inkCost;
@@ -130,8 +130,7 @@ export function installGear(api, tuning) {
     finally {
       const bombSpent = (G.projectiles?.bombs?.length ?? bombsBefore) > bombsBefore;
       const spent = Math.max(0, beforeInk - a.ink);
-      api.SUB.bomb.inkCost = bombInkCost;
-      api.SUB.bomb.throwSpeed = bombThrowSpeed;
+      Object.assign(api.SUB.bomb, saved);
       if (spent > 1e-10) {
         a.s3 ||= {};
         const mainSpent = !bombSpent || spent > effectiveBombCost + 1e-8;
