@@ -6,6 +6,8 @@ import { capsuleEntry, sweptWorldHit } from './weapons-collision.mjs';
 import { installChargerFlight } from './weapons-charger-flight.mjs';
 export const EPSILON = 1e-10;
 const INSTALLED = Symbol.for('inkwave.weapons-fidelity.v1');
+// The public INKWAVE src/game/weapons.js _fireRound assigns every main shot this lifetime.
+const SPLATLING_NOMINAL_LIFETIME = 1.2;
 let api, completion;
 const clamp01 = value => Math.max(0, Math.min(1, value));
 const radians = degrees => degrees * Math.PI / 180;
@@ -367,15 +369,18 @@ export function splatlingLaunchSpeed(weapon,charge) {
   return weapon.projSpeed+(maximum-weapon.projSpeed)*clamp01(charge/first);
 }
 
-export function splatlingReach(weapon,charge) {
-  const range=weapon?.range;
-  const maximum=splatlingLaunchSpeed(weapon,1);
+function simulateSplatlingReach(p,weapon,charge,initializeFlight) {
   const speed=splatlingLaunchSpeed(weapon,Number.isFinite(charge)?charge:0);
-  if(!Number.isFinite(range)||range<0||!Number.isFinite(maximum)||maximum<=0||!Number.isFinite(speed))return 0;
-  // INKWAVE's configured range anchors the first-charge endpoint. The nominal
-  // no-random reach scales by the installed charge-speed ratio; native units,
-  // spread and Nintendo's exact speed law are not inferred here.
-  return range*Math.max(0,Math.min(1,speed/maximum));
+  if(!Number.isFinite(speed)||speed<=0)return 0;
+  p.pos.set(0,0,0);p.prev.copy(p.pos);p.start.copy(p.pos);
+  p.vel.set(0,0,speed);p.age=0;p.life=SPLATLING_NOMINAL_LIFETIME;
+  p.fidelityPrevAge=0;p.fidelityPhase=0;p.fidelityMode=null;
+  if(!initializeFlight(p,weapon))return 0;
+  let remaining=p.life;
+  while(remaining>EPSILON){const step=Math.min(1/60,remaining);advanceFidelityProjectile(p,step);remaining-=step;}
+  // The reticle range compares straight-line aim distance; use the nominal
+  // forward XZ extent and leave gravity/collision to the installed flight.
+  return Math.hypot(p.pos.x-p.start.x,p.pos.z-p.start.z);
 }
 
 export function installWeaponsFidelity(context,profile) {
@@ -415,8 +420,21 @@ export function installWeaponsFidelity(context,profile) {
       freeGravity:w.kind==='roller'?w.flickGravity:w.referenceGravity??defaults.freeGravity,
       freeVelocityY:defaults.brakeToFreeVelocityY}));
   }
+  function initializeSplatlingFlight(p,w){
+    const move=moves.get(w.id)||null;
+    p.fidelityMove=move;
+    if(!move||!Number.isFinite(w.straightTime)||!Number.isFinite(w.referenceGravity))return false;
+    p.straight=w.straightTime;p.grav=w.referenceGravity;p.drag=move.freeDrag*60;
+    return true;
+  }
   Object.defineProperty(Projectiles.prototype,INSTALLED,{value:true});
-  Projectiles.prototype.splatlingReach=function(weapon,charge){return splatlingReach(weapon,charge);};
+  Projectiles.prototype.splatlingReach=function(weapon,charge){
+    const THREE=context.THREE;
+    const p=this._s3SplatlingReachProjectile||(this._s3SplatlingReachProjectile={
+      pos:new THREE.Vector3(),prev:new THREE.Vector3(),start:new THREE.Vector3(),vel:new THREE.Vector3()
+    });
+    return simulateSplatlingReach(p,weapon,charge,initializeSplatlingFlight);
+  };
   const fresh=Projectiles.prototype._new,push=Projectiles.prototype._push,ghost=Projectiles.prototype.ghostProjectile,clear=Projectiles.prototype.clear;
   Projectiles.prototype.clear=function(...args){const result=clear.apply(this,args);this._fidelityCollision=null;this._fidelitySloshContext=null;return result;};
   Projectiles.prototype._new=function(...args){
@@ -471,6 +489,8 @@ export function installWeaponsFidelity(context,profile) {
       p.fidelityMove={hz:60,endSpeed:c.GoStraightStateEndMaxSpeed*60,brakeDrag:c.BrakeAirResist,brakeGravity:c.BrakeGravity*3600,
         freeDrag:c.FreeAirResist,freeGravity:c.FreeGravity*3600,freeVelocityY:c.BrakeToFreeVelocityY*60,freeFrame:c.BrakeToFreeStateFrame};
       p.grav=c.FreeGravity*3600;p.drag=c.FreeAirResist*60;
+    }else if(w.kind==='splatling'){
+      initializeSplatlingFlight(p,w);
     }else if(p.fidelityMove){p.straight=w.straightTime;p.grav=w.referenceGravity;p.drag=p.fidelityMove.freeDrag*60;}
   }
   Projectiles.prototype._push=function(p){
