@@ -58,7 +58,7 @@ export function installWeapons(context, profile) {
   WeaponRunner.prototype.reset = function (...args) {
     const result = reset.apply(this, args);
     this.s3Stored = null; this.s3Turret = false; this.s3FlickVertical = false; this.s3BlasterWindup = 0;
-    this.s3SloshRecovery = false; return result;
+    this.s3SloshRecovery = false; this.s3WasSquid = false; return result;
   };
   WeaponRunner.prototype.busy = function () {
     if (['charger','splatling'].includes(this.a.weapon.kind) && this.a.intent.squid && this.a._squidPressT > this.a._firePressT) return false;
@@ -76,8 +76,9 @@ export function installWeapons(context, profile) {
   };
   WeaponRunner.prototype._charger = function (dt, inp, w) {
     const a = this.a, held = !!a.intent.fire;
-    if (this.s3Stored && !held) cancelStored(this);
+    if (this.s3Stored && !held) { cancelStored(this); this.s3WasSquid = a.form === 'squid'; return; }
     if (a.form === 'squid') {
+      this.s3WasSquid = true;
       if (this.charging) {
         // Submerging with ZR already released never opens a keep window.
         if (this.charge >= .999 && held) this.s3Stored = { charge: 1, remaining: w.keepChargeTime };
@@ -90,6 +91,15 @@ export function installWeapons(context, profile) {
       }
       return;
     }
+    // #810: a valid squid→humanoid transition with ZR still held refreshes the
+    // per-keep-cycle lifetime to a full w.keepChargeTime (75F / 1.25 s), so the
+    // next submerge starts a fresh window instead of the depleted remainder.
+    // The flag is edge-triggered (`s3WasSquid` from the previous tick) and the
+    // record itself is never recreated here, so #359 (no dry/enemy/air store),
+    // #390 (ZR release still cancels) and the #291/#101 resurfacing delays are
+    // untouched: presentation stays `charge = 1` until inp.fire returns.
+    if (this.s3Stored && this.s3WasSquid) this.s3Stored.remaining = w.keepChargeTime;
+    this.s3WasSquid = false;
     if (this.s3Stored) {
       // Held through the keep, so the store survives emergeDelay with inp.fire
       // masked, and is restored once the actor forwards the trigger again.
