@@ -15,6 +15,23 @@ export function networkIdentity() {
 export function adaptNetworkSource(rel, code) {
   const patch = (before,after,label) => { code = once(code,before,after,rel+': '+label); };
   if (rel === 'src/net/netmatch.js') {
+    patch("const FORWARD = ['actor:jump', 'superjump', 'superjump:land', 'special:use', 'special:slam', 'weapon:dodge', 'weapon:fire', 'splatted', 'respawn'];",
+      "const FORWARD = ['actor:jump', 'superjump', 'superjump:land', 'special:use', 'special:slam', 'weapon:dodge', 'weapon:fire', 'splatted', 'respawn', 'hit', 'hit:rejected'];",
+      'authoritative hit admission feedback');
+    patch('    if (!a || a.remote || a.nid === undefined || G.netm !== this) return;',
+      "    if (!a || a.remote || a.nid === undefined || G.netm !== this) return;\n    if (name === 'hit' && e.killed) return;",
+      'lethal confirmation remains owned by splat event');
+    {
+      const hitCalls = [
+        'G.projectiles?.applyHit(atk, v, d.d, d.w);',
+        'G.projectiles?.applyHit(atk, v, d.d, d.w, d.g);'
+      ];
+      const hitCall = hitCalls.find(candidate => code.includes(candidate));
+      if (!hitCall) throw Error('Network replication anchor mismatch: ' + rel + ': owner hit admission result');
+      patch(hitCall,
+        `const hitAdmission = ${hitCall.slice(0, -1)};\n    if (hitAdmission === 'rejected-invulnerable') emit('hit:rejected', { attacker: atk, victim: v, damage: d.d, weaponId: d.w });`,
+        'owner confirms invulnerability rejection');
+    }
     patch('  dispose() {\n    for (const u of this.unsubs)', `  dispose() {
     retireNetworkGhosts();
     for (const u of this.unsubs)`, 'session disposal retirement');

@@ -360,3 +360,18 @@ Splatoon 2/3 ではアシストしたプレイヤーには通常のたおし通�
 | 確認状態 | **ロジックと installed path の確認済み**。上流の生バイト、`adaptSource` の合成、ビルド済みサイト（`INKWAVE_ASSIST_BUILT_SITE`）の 3 経路で実際の HUD メソッドを実行し、アシストは `iw-down iw-down--assist` マーカーのみ、カード 0、音 0。直接たおしは従来どおりカード 1、2200 ms。**本家実機（Switch Ver.11.3.0）でのアイコン形状・表示時間・表示位置の実測比較は未確認**。マーカーの大きさ、色、フェードは既存の `iw-down` の投影経路に追従させただけで、参照版から新規に確定していない |
 
 アシストの認識窓（4 秒）と入場判定は変更していない。マーカーの投影経路は既存の ally-down 実装を再利用したもので、本家との実測比較の対象ではない。キルカードスタック内の表示、`K.perActor` の記録、#139 の結果統計は変更していない。上流 `hud.js` が `isJa` を import しない件の補正は `patches/practice-range/adapter.mjs` が公式ビルドで行っており、本件では触れていない。**フレーム間隔（Hz）を変えた時のマーカー投影の挙動は未検証**。
+
+
+## Roller contact rejected by spawn invulnerability — #558 (2026-10-06)
+
+Baseline main: `ecfdd268f70bb7041f81138736b26e42306b630d`. The locked `inkwave-public/` sources remain unchanged. This change is in the installed weapons and network adapters.
+
+| 項目 | 比較・確認 |
+|---|---|
+| 本家の根拠・範囲 | Splatoon 3 Ver. 11.3.0 を参照対象とする。任天堂の[更新履歴](https://en-americas-support.nintendo.com/app/answers/detail/a_id/61257/~/splatoon-3-update-history)はスペシャル後の無敵時間を明記するが、復活直後のローラー接触についてフレーム値・受付順・接触debounce値を公開していない。本家の復活無敵とローラー接触の同 tick 順序は実機未計測。非公開値をこの修正へ持ち込まない。 |
+| INKWAVE の実装 | 公開 native `src/game/weapons.js::WeaponRunner._roller()` は `rollHits` を記録してから `Projectiles.applyHit()` を呼ぶ。native `Actor.damage()` は `invuln > 0` なら false を返すが、従来の `applyHit()` はそのまま `hit` event・body hit 音を出す。`patches/splatoon3/weapons-adapter.mjs` の installed adapter が reject / pending / accepted / killed を返し、HP が変化しない拒否では generic feedback を出さない。`patches/splatoon3/runtime/roller.mjs` は reject 時に `rollHits` を取り消す。 |
+| 再現操作 | 60 Hz gameplay tick。Team 0 の移動中 Roller を Team 1 の生存 actor より先に更新し、接触体積を保ったまま `invuln = 0.01` で接触させる。これはIssue由来のCPU再現入力で、本家の測定値ではない。修正前の実 native fixture ではHP `100` のまま `rollHits` が記録され、`hit` event と `ink_hit_body` が各1回出た。 |
+| 修正後・影響 | 同じ拒否ではHP、generic `hit` event、body hit音、Roller成功接触debounceを変えない。次の vulnerable tick は既存profileのroller damage `140` を適用し、accepted contactから既存の `0.5 s` debounceが始まる。remote victimでは送信を acceptance と見なさず1件を pending に保持する。victim owner の invulnerability rejection は `hit:rejected` event で pending を解除し、accepted `hit` / `splatted` event と同じ既存 `ev` 配列・ownership / event-sequence gateで届ける。packetのフィールド構成は追加していない。 |
+| 確認状態 | `patches/reliability/tests/roller-contact-admission.test.mjs` の実 native Actor / WeaponRunner / Projectiles fixture: local rejected feedback・debounce・実 `Actor.update()` で保護が切れた後の140 damageを確認。Actor更新順を逆にした境界ケースと、accepted contact後の既存debounceも確認した。二者NetMatch fixtureではowner拒否ack後の再試行・受理済みevent・重複packet拒否を確認。ブラウザ実動作とSwitch Ver. 11.3.0実機比較は未実施。 |
+
+本家側の復活無敵の正確な長さ、ローラー本体接触の受付frame、実機でのnet遅延差は引き続き未確認である。ロジック fixture は実機比較の代わりとしない。

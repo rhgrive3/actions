@@ -8,8 +8,9 @@ import { adaptSource } from '../../splatoon3/adapter.mjs';
 import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
 import { adaptReliability } from '../adapter.mjs';
 import { adaptQualitySource } from '../../local-quality/adapter.mjs';
+import { adaptNetworkSource } from '../../network-replication/adapter.mjs';
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
-export async function combatWorld(owner, { emitted = process.env.INKWAVE_COMBAT_SITE, paintArea = .123456789 } = {}) {
+export async function combatWorld(owner, { emitted = process.env.INKWAVE_COMBAT_SITE, paintArea = .123456789, network = false } = {}) {
   const SRC = emitted ? path.resolve(emitted) : path.join(ROOT, 'inkwave-public');
   let clock = 1000;
   const context = vm.createContext({ console, performance: { now: () => clock * 1000 } });
@@ -27,6 +28,7 @@ export async function combatWorld(owner, { emitted = process.env.INKWAVE_COMBAT_
     if (!emitted) {
       const rel = file.startsWith(SRC + path.sep) ? path.relative(SRC, file) : path.relative(ROOT, file);
       source = adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, source))));
+      if (network) source = adaptNetworkSource(rel, source);
     }
     const mod = new vm.SourceTextModule(source, { context, identifier: file }); mods.set(file, mod); return mod;
   };
@@ -76,7 +78,7 @@ export async function combatWorld(owner, { emitted = process.env.INKWAVE_COMBAT_
   const net = new api.NetMatch(session, { map: 'reef' });
   const match = { actors: G.actors, state: 'playing', time: 180, canRespawn: () => true };
   G.match = match; net.bind(match);
-  G.projectiles = { applyHit: api.Projectiles.prototype.applyHit };
+  G.projectiles = { list: [], bombs: [], clouds: [], beams: [], sights: new Map(), applyHit: api.Projectiles.prototype.applyHit };
   const deliver = (from, data) => {
     net.onMessage(from, JSON.parse(JSON.stringify(data)));
     const peer = net.peers.get(from);
