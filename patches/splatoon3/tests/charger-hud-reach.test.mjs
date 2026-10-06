@@ -8,7 +8,7 @@ import { adaptSource } from '../adapter.mjs';
 import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
 import { adaptReliability } from '../../reliability/adapter.mjs';
 import { adaptQualitySource } from '../../local-quality/adapter.mjs';
-import { splatlingLaunchSpeed } from '../runtime/weapons-fidelity.mjs';
+import { advanceFidelityProjectile, splatlingLaunchSpeed } from '../runtime/weapons-fidelity.mjs';
 // #711: Charger HUD inRange must follow the live charge's flight reach, not full-charge reach.
 // Logic-only: real composed player.js/weapons.js + the full splatoon3 install on the VM. Not a browser or Switch comparison.
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
@@ -18,7 +18,8 @@ const ORIGINAL_RANGE = "    const range = w.kind === 'charger' ? w.rangeMax : w.
 
 // main: reproduce origin/main's player.js (full-charge reach) by reverting only the #711 lines of the composed source.
 async function boot({ main = false } = {}) {
-  const context = vm.createContext({ console, performance, URL, innerHeight: 720 }), modules = new Map();
+  const math = Object.create(Math);
+  const context = vm.createContext({ console, performance, URL, innerHeight: 720, Math: math }), modules = new Map();
   const composed = {};
   const load = requested => {
     let file = requested;
@@ -72,7 +73,7 @@ async function boot({ main = false } = {}) {
     return controller.inRange;
   }
   const close = () => { for (const a of G.actors) a.character.dispose(); real.clear(); };
-  return { ...api, make, inRange, close, composed, real };
+  return { ...api, make, inRange, close, composed, real, math };
 }
 
 const CHARGES = [0, .5, .998, 1];
@@ -167,19 +168,53 @@ test('#711 non-charger ranges are unchanged and ignore charge', async () => {
 test('#858 Splatling HUD reach follows the released charge snapshot and expires with its stream', async () => {
   const f = await fixedBoot(), a = f.make('splatling'), P = f.real;
   const circle = a.weapon.firstChargeTime / a.weapon.chargeTime;
+  function actualForwardReach(charge) {
+    const random = f.math.random;
+    try {
+      f.math.random = () => .5; // neutralize the installed speed bias and launch decoration draws
+      a.aimDir.set(0, 0, 1);
+      a.aimPoint.copy(a.pos).add(a.aimDir); // under 2 units: native _fireRound keeps the forward direction
+      a.weaponRunner.charge = charge;
+      a.weaponRunner.fidelitySplatlingCharge = charge;
+      const before = f.real.list.length;
+      f.real.fireSplatling(a, a.weapon, 0);
+      assert.equal(f.real.list.length, before + 1, 'the production fire path emits one real reference projectile');
+      const p = f.real.list.at(-1), start = p.pos.clone();
+      assert.equal(p.life, 1.2, 'public _fireRound lifetime is copied without changing its owner');
+      assert.equal(p.straight, a.weapon.straightTime, 'production uses the configured straight phase');
+      assert.equal(p.fidelityMove.endSpeed, a.weapon.ballistics.endSpeed, 'production uses the configured brake speed cap');
+      assert.ok(Math.abs(p.vel.length() - splatlingLaunchSpeed(a.weapon, charge)) < 1e-9,
+        'the production launch uses the same deterministic no-random speed');
+      while (p.age < p.life - 1e-10) {
+        const step = Math.min(STEP, p.life - p.age);
+        advanceFidelityProjectile(p, step);
+      }
+      return Math.hypot(p.pos.x - start.x, p.pos.z - start.z);
+    } finally {
+      f.math.random = random;
+    }
+  }
+  const lowFlight = actualForwardReach(0), firstFlight = actualForwardReach(circle), higherFlight = actualForwardReach(.9);
   const lowReach = P.splatlingReach(a.weapon, 0), firstReach = P.splatlingReach(a.weapon, circle);
-  const mid = (lowReach + firstReach) / 2;
+  assert.ok(Math.abs(lowReach - lowFlight) < 1e-9, 'HUD helper endpoint matches an actual minimum-charge projectile');
+  assert.ok(Math.abs(firstReach - firstFlight) < 1e-9, 'HUD helper endpoint matches an actual first-circle projectile');
+  assert.ok(Math.abs(P.splatlingReach(a.weapon, .9) - higherFlight) < 1e-9,
+    'HUD helper follows the production first-charge speed cap above the circle');
+  const mid = (lowReach + Math.min(firstReach, a.weapon.range + .5)) / 2;
   assert.ok(lowReach < firstReach);
-  assert.equal(firstReach, a.weapon.range, 'profile range anchors first-circle speed');
-  assert.ok(Math.abs(lowReach / firstReach - splatlingLaunchSpeed(a.weapon, 0) / splatlingLaunchSpeed(a.weapon, circle)) < 1e-12,
-    'nominal reach uses the same no-random speed helper as installed Splatling shots');
+  assert.ok(Math.abs(firstReach - higherFlight) < 1e-9, 'higher charge keeps the first-circle launch-speed cap');
   assert.equal(P.splatlingReach(a.weapon, NaN), lowReach, 'invalid charge uses the deterministic minimum');
 
   const main = await mainBoot(), baseline = main.make('splatling');
-  assert.equal(main.inRange(baseline, 0, mid), true, 'baseline fixed w.range incorrectly reports low charge in range');
-  assert.equal(main.inRange(baseline, circle, mid), true);
+  assert.equal(main.inRange(baseline, 0, mid), true, 'baseline fixed w.range reports this target in range at low charge');
+  assert.equal(main.inRange(baseline, circle, mid), true, 'baseline fixed w.range gives the same result at first circle');
   assert.equal(f.inRange(a, 0, mid), false, 'low charge cannot reach the fixed target');
   assert.equal(f.inRange(a, circle, mid), true, 'first-circle charge reaches the same target');
+  const insideBoth = Math.max(0, lowFlight - 2), beyondBoth = firstFlight + 3;
+  assert.equal(f.inRange(a, 0, insideBoth), true, 'a target clearly inside both native-flight extents remains in range');
+  assert.equal(f.inRange(a, circle, insideBoth), true);
+  assert.equal(f.inRange(a, 0, beyondBoth), false, 'a target beyond both native-flight extents remains out of range');
+  assert.equal(f.inRange(a, circle, beyondBoth), false);
 
   a.weaponRunner.charge = circle;
   a.weaponRunner.charging = true;
@@ -199,6 +234,9 @@ test('#858 Splatling HUD reach follows the released charge snapshot and expires 
 
   const shooter = f.make('shooter');
   assert.equal(f.inRange(shooter, 1, shooter.weapon.range), true, 'Shooter keeps its configured range');
+  const charger = f.make('charger'), chargerMid = (P.chargerReach(0) + P.chargerReach(1)) / 2;
+  assert.equal(f.inRange(charger, 0, chargerMid), false, 'Charger still uses its installed minimum-charge flight reach');
+  assert.equal(f.inRange(charger, 1, chargerMid), true, 'Charger still uses its installed full-charge flight reach');
 });
 
 test('#711 native fallback (no chargerReach) lerps rangeMin to rangeMax by charge', async () => {
