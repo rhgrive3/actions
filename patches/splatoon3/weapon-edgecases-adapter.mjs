@@ -5,11 +5,8 @@ export function adaptWeaponEdgecases(rel, code, replace) {
     '  _fireRound(a, w, spreadDeg, m, look, snd, sndVol, pitch) {\n    const dir = this._aimFrom(a, m, _dir);\n    this._ballistic(m, dir, a.aimPoint, w.projSpeed, w.straightTime, 28, 0.8, w.range);\n    this._spread(dir, spreadDeg ?? (a.grounded ? w.spreadGround : w.spreadAir));',
     '  _fireRound(a, w, spreadDeg, m, look, snd, sndVol, pitch) {\n    const dir = this._aimFrom(a, m, _dir);\n    this._ballistic(m, dir, a.aimPoint, w.projSpeed, w.straightTime, 28, 0.8, w.range);\n    spreadWeaponRound(this, dir, a, w, spreadDeg);', 'splatling independent ground pitch');
   code = replace(code,
-    '    this._spread(dir, spreadDeg ?? (a.grounded ? w.spreadGround : w.spreadAir));',
-    '    spreadWeaponRound(this, dir, a, w, spreadDeg);', 'shooter scalar spread cone');
-  code = replace(code,
-    '    this._spread(dir, spreadDeg ?? 1.2);',
-    '    spreadWeaponRound(this, dir, a, w, spreadDeg);', 'blaster scalar spread cone');
+    '        const hit = G.physics.raycast(m, dir, range, _hit);',
+    '        const hit = G.physics.raycast(m, dir, range, _hit, true);', 'charger sight shares ink grate mask');
   code = replace(code,
     "    if (a.isLocal) emit('recoil', { amount: 0.007 });",
     "    appendRollerNearUnit(this, a, w);\n    if (a.isLocal) emit('recoil', { amount: 0.007 });", 'roller secondary horizontal unit');

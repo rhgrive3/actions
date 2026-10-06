@@ -4,12 +4,3 @@
 .s3-gear label { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
 .s3-gear select { max-width: 70%; font: inherit; padding: .25rem; color: #fff; background: #25353e; }
 @media (max-width: 500px) { .s3-gear { left: 1rem; right: 1rem; width: auto; } .s3-gear label { font-size: .8rem; } }
-
-/* Turf's fourth statistic; Boss keeps its separate native columns. */
-.iw-ttable--turf .iw-ttable__head, .iw-ttable--turf .iw-prow { grid-template-columns: calc(var(--u) * 2.7) minmax(0, 1fr) calc(var(--u) * 8) repeat(3, calc(var(--u) * 3.3)); }
-:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ttable--turf .iw-ttable__head,
-:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ttable--turf .iw-prow { grid-template-columns: 28px minmax(0, 1fr) 86px repeat(3, 36px); }
-@media (max-width: 700px) {
-  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ttable--turf .iw-ttable__head,
-  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-ttable--turf .iw-prow { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-}

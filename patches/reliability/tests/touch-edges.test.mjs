@@ -141,7 +141,7 @@ for (const hz of [20, 30, 60, 90, 120, 144]) test(`${hz}Hz rendering delivers to
   assert.equal(h.rig.yaw, -.25); assert.equal(h.rig.pitch, -.1);
 });
 
-test('actual charger fires legal holds once and cancels completed sub-8F fire taps', async () => {
+test('actual charger charges while held and fires once on release; completed fire tap releases next tick', async () => {
   const h = await boot({ weapon: 'charger' }), held = h.press('fire');
   for (let i = 0; i < 20; i++) h.frame();
   assert.equal(h.actor.weaponRunner.charging, true); assert.ok(h.actor.weaponRunner.charge > 0);
@@ -155,7 +155,7 @@ test('actual charger fires legal holds once and cancels completed sub-8F fire ta
   assert.equal(h.rows.at(-1).fire, true); assert.equal(h.actor.weaponRunner.charging, true);
   h.frame();
   assert.equal(h.rows.at(-1).fire, false); assert.equal(h.actor.weaponRunner.charging, false);
-  assert.equal(h.shots.length, 1);
+  assert.equal(h.shots.length, 2);
 });
 
 test('actual roller completes a tap flick and stops rolling after a held trigger releases', async () => {

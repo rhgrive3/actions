@@ -73,7 +73,7 @@ try{
   globalThis.clock=100000;Object.defineProperty(performance,'now',{configurable:true,value:()=>globalThis.clock});
   globalThis.trace={births:[],steps:[],paint:[],maxProjectiles:0,maxFx:0,linkedFrames:0,invalidLinkedVisible:0,maxEnvelopeError:0,maxPuffs:0,maxRemote:0,projectileAllocations:0,puffLinkedFrames:0,remoteDropLinks:0,remotePuffLinks:0,curtains:0,unboundCurtains:0,puffEnvelopeError:0,invalidPuffVisible:0};
   for(const a of G.actors){a.net.buf=[];a.weaponRunner.reset();a.ink=100;a.aimPitch=.05;}
-  const P=G.projectiles,record=p=>({owner:p.owner.nid,id:p._netId??p._comparisonId,ghost:p.ghost,vertical:p.s3Vertical,grav:p.grav,drag:p.drag,life:p.life,delay:p.delay,start:p.start.toArray(),vel:p.vel.toArray(),age:p.age,pos:p.pos.toArray(),seed:p.seed});
+  const P=G.projectiles,record=p=>({owner:p.owner.nid,id:p._netId??p._comparisonId,ghost:p.ghost,vertical:p.s3Vertical,grav:p.grav,drag:p.drag,life:p.life,delay:p.delay,start:p.start.toArray(),vel:p.vel.toArray(),age:p.age,pos:p.pos.toArray(),seed:p.seed,straight:p.straight,fidelityPhase:p.fidelityPhase,fidelityMode:p.fidelityMode,fidelityMove:p.fidelityMove,fidelityPlayerCollision:p.fidelityPlayerCollision,fidelityFieldCollision:p.fidelityFieldCollision});
   let ownedBirth=0,remoteBirth=0;const fresh=P._new.bind(P);P._new=()=>{if(!P.pool.length)trace.projectileAllocations++;return fresh();};
   const push=P._push.bind(P);P._push=p=>{push(p);p._comparisonId=++ownedBirth;trace.births.push(record(p));};
   const ghost=P.ghostProjectile.bind(P);P.ghostProjectile=(a,e)=>{const p=ghost(a,e)||P.list.at(-1);p._comparisonId=++remoteBirth;trace.births.push(record(p));return p;};
@@ -103,7 +103,9 @@ try{
  await runFrames(120);
  for(let i=0;i<2;i++){await pages[i].evaluate(()=>{NG.renderer.render(NG.scene,NG.camera);});await pages[i].screenshot({path:path.join(evidence,'player-'+i+'.png'),timeout:90000});}
  const traces=await Promise.all(pages.map(p=>p.evaluate(()=>({trace,remaining:NG.projectiles.list.filter(p=>p.ghost).length,myId:NG.net.myId,actors:NG.actors.map(a=>({nid:a.nid,owner:a.owner,remote:a.remote})),stats:NG.netm.stats,puffSourceSlots:NG.fx.puffs._netSource?.length||0,puffGenerationBytes:NG.fx.puffs._netGeneration?.byteLength||0}))));
- let paired=0,maxPositionError=0,maxVelocityError=0,maxSpawnError=0;
+ // Keep raw evidence before any acceptance assertion can throw.
+ fs.writeFileSync(path.join(evidence,'network-traces.json'),JSON.stringify(traces));
+ let paired=0,maxPositionError=0,maxVelocityError=0,maxSpawnError=0,worstPosition=null;
  for(let i=0;i<2;i++){
   const local=traces[i].trace,remote=traces[1-i].trace;
   for(const birth of local.births.filter(p=>!p.ghost)){
@@ -112,14 +114,14 @@ try{
    const distance=(a,b)=>Math.hypot(...a.map((v,i)=>v-b[i]));maxSpawnError=Math.max(maxSpawnError,distance(b.start,birth.start));maxVelocityError=Math.max(maxVelocityError,distance(b.vel,birth.vel));
    const source=local.steps.filter(p=>!p.ghost&&p.owner===birth.owner&&p.id===birth.id),target=remote.steps.filter(p=>p.ghost&&p.owner===birth.owner&&p.id===birth.id);
    assert(target.length,'remote never advanced');
-   for(const s of target){const l=source.find(p=>Math.abs(p.age-s.age)<1e-8);if(!baseline)assert(l,'remote physics age absent from authoritative trace '+s.age);if(l)maxPositionError=Math.max(maxPositionError,distance(l.pos,s.pos));}
+   for(const s of target){const l=source.find(p=>Math.abs(p.age-s.age)<1e-8);if(!baseline)assert(l,'remote physics age absent from authoritative trace '+s.age);if(l){const delta=distance(l.pos,s.pos);if(delta>maxPositionError){maxPositionError=delta;worstPosition={ownerPlayer:i,birth,remoteBirth:b,authoritative:l,reconstructed:s,delta};}}}
   }
   assert.equal(traces[i].remaining,0,'remote projectile residue');if(!baseline){assert.equal(local.invalidLinkedVisible,0,'dead projectile left visible curtain');assert.equal(local.invalidPuffVisible,0,'dead projectile left visible puff');assert(local.remoteDropLinks>0&&local.remotePuffLinks>0,'remote render linkage was not exercised');assert.equal(local.unboundCurtains,0,'a roller curtain bypassed authoritative sources');assert.equal(local.curtains,10,'both owners must render all five volleys');assert(local.maxEnvelopeError<.001&&local.puffEnvelopeError<.001,'rendered curtain outside source segment');}
  }
- assert(paired>0);assert(maxSpawnError<.01);assert(maxVelocityError<.01);if(!baseline)assert(maxPositionError<.08,`trajectory quantization tolerance: ${maxPositionError}`);assert.equal(errors.length,0,JSON.stringify(errors));
+ fs.writeFileSync(path.join(evidence,'network-comparison-diagnostic.json'),JSON.stringify({sourceSha,contentHash:build.contentHash,paired,maxSpawnError,maxVelocityError,maxPositionError,worstPosition}));
+ assert(paired>0);assert(maxSpawnError<.01);assert(maxVelocityError<.01);if(!baseline)assert(maxPositionError<.08,'trajectory quantization tolerance');assert.equal(errors.length,0,JSON.stringify(errors));
  const ticks=wire.filter(p=>p.text.startsWith('b|')&&JSON.parse(p.text.slice(2)).k==='t');
  result={status:baseline?'baseline-reproduced':'passed',baseline,delayFrames,sourceSha,contentHash:build.contentHash,fixtureHash:hash(fixtureCode),transport:'real WebSocket + production RoomDurableObject.handleSession',arena:'native replication modules and physics; UI/character meshes/audio omitted',players:2,attacksPerPlayer:5,paired, maxSpawnError,maxVelocityError,maxPositionError,virtualSeconds:(15+275+120)/60,tickPackets:ticks.length,tickBytes:ticks.reduce((s,p)=>s+p.bytes,0),traces:traces.map(x=>({actors:x.actors,remaining:x.remaining,stats:x.stats,puffSourceSlots:x.puffSourceSlots,puffGenerationBytes:x.puffGenerationBytes,maxProjectiles:x.trace.maxProjectiles,maxFx:x.trace.maxFx,maxPuffs:x.trace.maxPuffs,maxRemote:x.trace.maxRemote,projectileAllocations:x.trace.projectileAllocations,puffLinkedFrames:x.trace.puffLinkedFrames,remoteDropLinks:x.trace.remoteDropLinks,remotePuffLinks:x.trace.remotePuffLinks,curtains:x.trace.curtains,unboundCurtains:x.trace.unboundCurtains,puffEnvelopeError:x.trace.puffEnvelopeError,invalidPuffVisible:x.trace.invalidPuffVisible,linkedFrames:x.trace.linkedFrames,maxEnvelopeError:x.trace.maxEnvelopeError})),loadedArtifacts:[...receipts],errors};
- fs.writeFileSync(path.join(evidence,'network-traces.json'),JSON.stringify(traces));
 }catch(error){const diagnostic=await Promise.all(pages.map(async p=>{const d=await p.evaluate(()=>({mode:globalThis.NG?.mode,s3:globalThis.NG?.s3,game:!!globalThis.NG?.game,bootError:document.querySelector('#boot-error')?.textContent,base:document.baseURI})).catch(e=>({error:e.message}));await p.screenshot({path:path.join(evidence,'failure-'+pages.indexOf(p)+'.png'),timeout:15000}).catch(()=>{});return d;}));result={diagnostic,status:'failed',sourceSha,contentHash:build.contentHash,error:error.stack,errors};process.exitCode=1;}
 finally{for(const c of contexts)await c.close();for(const ws of relay.clients)ws.terminate();await new Promise(r=>relay.close(r));await new Promise(r=>server.close(r));}
 const out=path.join(evidence,'network-browser-result.json');fs.writeFileSync(out+'.pending',JSON.stringify(result,null,2)+'\n');fs.renameSync(out+'.pending',out);console.log(JSON.stringify({...result,loadedArtifacts:result.loadedArtifacts?.length}));

@@ -545,14 +545,7 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout 
         projectiles[name] = function (...args) { const value = original.apply(this, args); if (args[0] === a && frame >= 0) events.push({ name, frame }); return value; };
       }
       function step(dt = 1 / 60, input = {}) {
-        if (a) {
-          a.intent.fire = !!input.fire; a.intent.sub = !!input.sub; G.time += dt;
-          // This fixture calls Runner directly instead of Actor.update. Advance
-          // the Actor-owned post-fire clock at the same pre-Runner point so the
-          // production 4F shooter lock can expire before later sub-aim actions.
-          a.lastFire += dt;
-          a.weaponRunner.update(dt, input); a._finishFrame(dt);
-        }
+        if (a) { a.intent.fire = !!input.fire; a.intent.sub = !!input.sub; G.time += dt; a.weaponRunner.update(dt, input); a._finishFrame(dt); }
         else ch.update(dt, null);
         ch.root.updateMatrixWorld(true); ch.skeleton.update();
       }
@@ -581,7 +574,7 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout 
         if (scenario.name.startsWith('squidroll-')) { a.form = 'squid'; a.submerged = true; for (let i = 0; i < 35; i++) step(); a.vel.set(0, 0, 11); a.intent.move.set(0, 0, -1); if (!beforeActions(a, 0, true)) throw Error('Native roll refused'); }
         if (scenario.name.startsWith('victory-')) { ch.setDance('victory'); ch.danceVar = scenario.variant; }
         if (scenario.name.startsWith('native-')) { frame = 0; a.special = a.specialCost(); a._startSpecial(); driver = drivers.special; }
-        if (scenario.name === 'roller-vertical-land') { a.grounded = false; a.pos.y = .4; a.vel.y = 7; ch.trigger('jump'); api.emit('actor:jump', { actor: a, surface: a.groundTeam, swim: false }); driver = drivers.physics; }
+        if (scenario.name === 'roller-vertical-land') { a.grounded = false; a.pos.y = .4; a.vel.y = 7; driver = drivers.physics; }
         const runFrame = () => {
           const n = scenario.name, input = {};
           if (n === 'carry-walk-fire-return') { const speed = frame < 25 ? .15 : frame < 65 ? 1.2 : frame < 105 ? 5.76 : frame < 165 ? 2.4 : 0; horizontal(speed, frame >= 70 && frame < 90 ? 1 : 0, frame >= 70 && frame < 90 ? 0 : frame >= 90 && frame < 105 ? -1 : 1); input.fire = frame >= 105 && frame < 145; driver = 'Native Actor._horizontal input slew and _integrate/native floor, real Runner fire/release and _finishFrame; isolated arena, no whole-game update'; }

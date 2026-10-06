@@ -5,18 +5,6 @@ const EPS = 1e-10, DEG = Math.PI / 180;
 // scalar is evidence for scaling PitchDegSwerve. Air/IA remain uncalibrated.
 export function spreadWeaponRound(system, dir, a, w, spread) {
   const horizontal = spread ?? (a.grounded ? w.spreadGround : w.spreadAir);
-  if (w.kind === 'shooter' || w.kind === 'blaster') {
-    if (horizontal <= 0) return dir;
-    // Keep the existing two-draw radial law; correct only the scalar cone
-    // geometry. This is not a new claim about Nintendo's bias/PDF.
-    const radius = horizontal * DEG * Math.sqrt(Math.random()), angle = Math.random() * Math.PI * 2;
-    const right = dir.clone().set(-dir.z, 0, dir.x);
-    if (right.lengthSq() < 1e-4) right.set(1, 0, 0).addScaledVector(dir, -dir.x);
-    right.normalize();
-    const up = dir.clone().cross(right).normalize();
-    return dir.addScaledVector(right, Math.cos(angle) * Math.tan(radius))
-      .addScaledVector(up, Math.sin(angle) * Math.tan(radius)).normalize();
-  }
   if (w.kind !== 'splatling' || !a.grounded || !Number.isFinite(w.spreadPitchGround)) return system._spread(dir, horizontal);
   const radius = Math.sqrt(Math.random()), angle = Math.random() * Math.PI * 2;
   const right = dir.clone().set(-dir.z, 0, dir.x);
@@ -61,10 +49,29 @@ export function appendRollerNearUnit(system, a, w) {
   system._push(p);
 }
 
-export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYER }) {
+export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYER, G, THREE, Hit }) {
   const tag = Symbol.for('inkwave.s3.weapon-edgecases.v1');
   if (WeaponRunner.prototype[tag]) return;
   Object.defineProperty(WeaponRunner.prototype, tag, { value: true });
+  // Each Dualies hand owns its birth origin. LOS intentionally omits an end
+  // margin, so validate the full segment before allowing an origin in cover.
+  const nativeMuzzleHand = Projectiles.prototype._muzzleHand;
+  const muzzleFrom = new THREE.Vector3(), muzzleDelta = new THREE.Vector3(), muzzleHit = new Hit();
+  const obstructed = end => {
+    muzzleDelta.copy(end).sub(muzzleFrom);
+    const distance = muzzleDelta.length();
+    return distance > EPS && G.physics.raycast(muzzleFrom, muzzleDelta.multiplyScalar(1 / distance), distance, muzzleHit, true).hit;
+  };
+  Projectiles.prototype._muzzleHand = function (actor, hand, out) {
+    nativeMuzzleHand.call(this, actor, hand, out);
+    if (actor.weapon?.kind !== 'dualies') return out;
+    muzzleFrom.copy(actor.pos); muzzleFrom.y += actor.form === 'squid' ? .4 : 1.05;
+    if (!Number.isFinite(out.x) || !Number.isFinite(out.y) || !Number.isFinite(out.z) || obstructed(out)) {
+      out.copy(muzzleFrom).addScaledVector(actor.aimDir, .3);
+      if (!Number.isFinite(out.x) || !Number.isFinite(out.y) || !Number.isFinite(out.z) || obstructed(out)) out.copy(muzzleFrom);
+    }
+    return out;
+  };
   const clear = r => { r.s3DualiesStart = 0; r.s3DualiesHeld = false; };
   const reset = WeaponRunner.prototype.reset;
   WeaponRunner.prototype.reset = function (...args) { const out = reset.apply(this, args); clear(this); this.s3DualiesEmerging = false; return out; };

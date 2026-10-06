@@ -30,7 +30,6 @@ for (const patched of [false, true]) test(`online pause ${patched ? 'blocks' : '
   assert.equal(h.controller.enabled, !patched);
   assert.equal(h.actor.intent.move.length(), patched ? 0 : 1);
   assert.equal(h.actor.intent.fire, !patched);
-  if (!patched) { h.frame(STEP); h.frame(STEP); }
   assert.equal(h.ownedShots.filter(a => a === h.actor).length, patched ? 0 : 1);
 });
 
@@ -42,7 +41,7 @@ test('online pause preserves actual Match clock and another actual actor firing;
   assert.ok(h.m.time < time); assert.equal(h.game.s3Clock.ticks, 5);
   assert.ok(h.ownedShots.some(a => a === h.other)); assert.ok(!h.ownedShots.some(a => a === h.actor));
   assert.equal(h.actor.intent.move.length(), 0);
-  h.game.resume(); for (let i = 0; i < 3; i++) h.frame(STEP);
+  h.game.resume(); h.frame(STEP);
   assert.equal(h.controller.enabled, true); assert.equal(h.actor.intent.move.length(), 1);
   assert.ok(h.ownedShots.some(a => a === h.actor));
 });
@@ -55,8 +54,7 @@ for (const hz of [120, 144]) test(`${hz}Hz online Start blocks only local input 
   assert.equal(h.controller.enabled, false); assert.equal(h.ownedShots.length, 0);
   h.setPads(pad()); h.frame(1 / hz); h.setPads(pad([9])); h.frame(1 / hz);
   assert.equal(h.menus.current, null);
-  for (let i = 0; i < 3; i++) h.frame(STEP);
-  assert.equal(h.controller.enabled, true); assert.ok(h.ownedShots.length > 0);
+  h.frame(STEP); assert.equal(h.controller.enabled, true); assert.ok(h.ownedShots.length > 0);
 });
 
 test('released controls and discarded look during online pause do not replay after resume', async () => {
@@ -72,7 +70,7 @@ test('offline pause still freezes actual Match time and actors; resume restores 
   const h = await boot(); h.game.pause(); const time = h.m.time;
   h.input.keys.add('KeyW'); h.input.mouse.left = true; h.frame(STEP);
   assert.equal(h.controller.enabled, false); assert.equal(h.m.time, time);
-  assert.equal(h.ownedShots.length, 0); h.game.resume(); for (let i = 0; i < 3; i++) h.frame(STEP);
+  assert.equal(h.ownedShots.length, 0); h.game.resume(); h.frame(STEP);
   assert.ok(h.m.time < time); assert.equal(h.actor.intent.move.length(), 1);
   assert.equal(h.ownedShots.length, 1);
 });

@@ -89,11 +89,6 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
-  "player.respawnTime": {
-    "value": 8.5,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
   "weapons.shooter.inkPerShot": {
     "value": 0.9199999999999999,
     "status": "derived from pinned extracted data; physical scale unverified",
@@ -226,31 +221,6 @@
   },
   "weapons.shooter.fieldCollisionRadius": {
     "value": 0.2,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "weapons.shooter.firstShotDelay": {
-    "value": 0.05,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "weapons.shooter.swimFirstShotDelay": {
-    "value": 0.2,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "weapons.shooter.postFireSwimLock": {
-    "value": 0.06666666666666667,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "weapons.shooter.jumpSpreadHold": {
-    "value": 0.4166666666666667,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "weapons.shooter.jumpSpreadRecoverEnd": {
-    "value": 1.1666666666666667,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
@@ -594,16 +564,6 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
-  "weapons.blaster.terrainSplashRadiusRate": {
-    "value": 0.4234,
-    "status": "derived from pinned extracted data; physical scale unverified",
-    "binding": {
-      "parameter": "data/parameter/1130/weapon/WeaponBlasterMiddle.game__GameParameterTable.json#/GameParameters/BlasterBurstParam/ShotCollisionHitRadiusRate",
-      "index": null,
-      "factor": 1,
-      "rawValue": 0.4234
-    }
-  },
   "weapons.splatling.inkPerShot": {
     "value": 0.5625,
     "status": "calibration or derived value; see reference raw table and unverified list",
@@ -921,26 +881,6 @@
   },
   "weapons.charger.fieldCollisionRadius": {
     "value": 0.02,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "weapons.charger.airChargeRate": {
-    "value": 0.3333333333333333,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "weapons.charger.emptyChargeRate": {
-    "value": 0.3333333333333333,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "weapons.charger.minReleaseTime": {
-    "value": 0.13333333333333333,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "weapons.charger.storedFireDelay": {
-    "value": 0.5166666666666667,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
@@ -1408,26 +1348,6 @@
     "value": 0.06666666666666667,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
-  },
-  "weapons.roller.rollDamage": {
-    "value": 125,
-    "status": "derived from pinned extracted data; physical scale unverified",
-    "binding": {
-      "parameter": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/BodyParam/Damage",
-      "index": null,
-      "factor": 0.1,
-      "rawValue": 1250
-    }
-  },
-  "weapons.roller.rollInkRecoverStop": {
-    "value": 0.3333333333333333,
-    "status": "derived from pinned extracted data; physical scale unverified",
-    "binding": {
-      "parameter": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WeaponRollParam/InkRecoverStop",
-      "index": null,
-      "factor": 0.016666666666666666,
-      "rawValue": 20
-    }
   },
   "weapons.slosher.inkPerShot": {
     "value": 7.6,
@@ -1925,17 +1845,17 @@
     "binding": null
   },
   "resources.regenDelay": {
-    "value": 1,
+    "value": 1.3,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
   "resources.regenRate": {
-    "value": 12.5,
+    "value": 22,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
   "resources.regenRateSwim": {
-    "value": 100,
+    "value": 60,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
@@ -2131,6 +2051,11 @@
   },
   "flow.progress.referenceThreshold": {
     "value": 100,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "flow.progress.referenceCap": {
+    "value": 200,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
@@ -2721,51 +2646,6 @@
   },
   "weaponsFidelity.freeGravity": {
     "value": 57.599999999999994,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "clothingGear.respawnPunisher.targetFrames": {
-    "value": 45,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "clothingGear.respawnPunisher.selfFrames": {
-    "value": 68,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "clothingGear.respawnPunisher.targetSpecialLoss": {
-    "value": 0.15,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "clothingGear.respawnPunisher.selfSpecialLoss": {
-    "value": 0.225,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "clothingGear.respawnPunisher.quickRespawnAPScale": {
-    "value": 0.15,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "clothingGear.respawnPunisher.specialSaverAPScale": {
-    "value": 0.7,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "respawn.weapon": {
-    "value": 8.5,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "respawn.water": {
-    "value": 7,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "respawn.outOfBounds": {
-    "value": 5.5,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   }
