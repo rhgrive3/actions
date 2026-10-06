@@ -133,10 +133,15 @@ export function installWeapons(context, profile) {
     const original = Projectiles.prototype[method];
     Projectiles.prototype[method] = function (a, weapon) {
       let w = weapon;
-      if (method === 'fireFlick' && a.weaponRunner.s3FlickVertical) w = { ...weapon,
-        flickDrops: weapon.verticalDrops, flickSpreadDeg: weapon.verticalSpreadDeg, flickSpeed: weapon.verticalSpeed,
-        flickDamageNear: weapon.verticalDamageNear, flickDamageFar: weapon.verticalDamageFar,
-      };
+      if (method === 'fireFlick') {
+        const attack = a.weaponRunner.s3RollerAttack;
+        if (a.weaponRunner.s3FlickVertical) w = { ...weapon,
+          flickDrops: attack?.depleted ? attack.depletionDrops : weapon.verticalDrops,
+          flickSpreadDeg: weapon.verticalSpreadDeg, flickSpeed: weapon.verticalSpeed,
+          flickDamageNear: weapon.verticalDamageNear, flickDamageFar: weapon.verticalDamageFar,
+        };
+        else if (attack?.depleted) w = { ...weapon, flickDrops: attack.depletionDrops };
+      }
       const before = new Set(this.list); const result = original.call(this, a, w); const group = new Map();
       for (const p of this.list) if (!before.has(p)) {
         p.s3DamageGroup = group;

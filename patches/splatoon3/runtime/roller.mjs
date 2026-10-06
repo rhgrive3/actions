@@ -21,7 +21,31 @@ export function rollerMode(w, vertical) {
   return vertical ? { ...w, flickWindup: w.verticalWindup, flickInterval: w.verticalInterval ?? w.flickInterval, flickInk: w.verticalInk } : w;
 }
 
-export function installRollerLogic({ WeaponRunner }, _profile) {
+// Depletion is a separate volley described by the pinned unit groups. Horizontal
+// depletion applies to the main unit; the ordinary near unit is not part of it.
+// Vertical Unit[0] omits both count fields in the source mirror. As elsewhere in
+// this adapter, an omitted unit count uses the existing one-projectile default.
+export function rollerDepletionVolley(group, vertical) {
+  const units = group?.Unit;
+  if (!Array.isArray(units) || !units.length) return null;
+  const selected = vertical ? units : units.slice(0, 1);
+  const entries = [];
+  for (const unit of selected) {
+    const count = Number.isInteger(unit.DepletionBulletNum)
+      ? unit.DepletionBulletNum
+      : vertical ? (unit.BulletNum ?? 1) : 0;
+    if (!Number.isInteger(count) || count < 0) return null;
+    for (let offset = 0; offset < count; offset++) entries.push({ unit, offset, count });
+  }
+  return entries.length ? entries : null;
+}
+
+export function installRollerLogic({ WeaponRunner }, profile) {
+  const raw = profile?.weaponsFidelityCompletion?.weapons?.roller;
+  const depletion = {
+    horizontal: rollerDepletionVolley(raw?.WideSwingUnitGroupParam, false),
+    vertical: rollerDepletionVolley(raw?.VerticalSwingUnitGroupParam, true),
+  };
   const roller = WeaponRunner.prototype._roller, reset = WeaponRunner.prototype.reset;
   WeaponRunner.prototype.reset = function (...args) {
     const result = reset.apply(this, args);
@@ -34,24 +58,30 @@ export function installRollerLogic({ WeaponRunner }, _profile) {
   };
   WeaponRunner.prototype._roller = function (dt, inp, w) {
     const a = this.a;
-    const starting = this.flick < 0 && inp.firePressed && this.cooldown <= EPS && a.ink >= (!a.grounded ? w.verticalInk : w.flickInk);
+    const vertical = !a.grounded, attackMode = vertical ? 'vertical' : 'horizontal';
+    const cost = vertical ? w.verticalInk : w.flickInk;
+    const depleted = Number.isFinite(a.ink) && a.ink > 0 && a.ink < cost && !!depletion[attackMode];
+    const starting = this.flick < 0 && inp.firePressed && this.cooldown <= EPS && (a.ink >= cost || depleted);
     if (starting) {
       this.cooldown = Math.min(0, this.cooldown);
-      this.s3FlickVertical = !a.grounded;
+      this.s3FlickVertical = vertical;
       const mode = rollerMode(w, this.s3FlickVertical);
-      this.s3RollerAttack = { vertical: this.s3FlickVertical, windup: mode.flickWindup, interval: mode.flickInterval, elapsed: 0, released: false, rolling: false };
+      this.s3RollerAttack = { vertical: this.s3FlickVertical, depleted, depletionDrops: depleted ? depletion[attackMode].length : 0,
+        windup: mode.flickWindup, interval: mode.flickInterval, elapsed: 0, released: false, rolling: false };
       a.character.s3RollerFlick = this.s3RollerAttack;
+      if (depleted) { a.ink = 0; a.lastFire = 0; }
       // Starting a new flick lifts the drum. The public runner otherwise leaves
       // rolling=true through its early windup return, including in the air.
       this.rolling = false; this.rollT = 0;
       this.rollLoop?.stop(.12); this.rollLoop = null;
     }
     const state = this.s3RollerAttack, mode = rollerMode(w, this.s3FlickVertical);
+    const runnerMode = state?.depleted ? { ...mode, flickInk: 0 } : mode;
     const winding = this.flick >= 0;
     if (state && !starting) state.elapsed = Math.min(state.interval, state.elapsed + dt);
     // Float accumulation must not add a 22nd/27th tick to a 21F/26F windup.
     if (winding && this.flick + dt + EPS >= mode.flickWindup) this.flick = mode.flickWindup;
-    const result = roller.call(this, dt, inp, mode);
+    const result = roller.call(this, dt, inp, runnerMode);
     if (state) state.rolling = this.rolling;
     if (state && winding && this.flick < 0) {
       state.elapsed = mode.flickWindup;

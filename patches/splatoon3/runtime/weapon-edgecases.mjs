@@ -27,7 +27,7 @@ export function blasterBurstDamage(p, w, distance, distanceDamage) {
 
 export function appendRollerNearUnit(system, a, w) {
   const u = w.nearFlickUnit;
-  if (!u || a.weaponRunner.s3FlickVertical || a.remote) return;
+  if (!u || a.weaponRunner.s3FlickVertical || a.weaponRunner.s3RollerAttack?.depleted || a.remote) return;
   const angle = a.yaw + (Math.random() * 2 - 1) * u.halfAngleDegrees * DEG;
   const speed = w.flickSpeed * (u.speedBase + (Math.random() * 2 - 1) * u.speedRandom) / u.mainSpeedBase;
   // Width is a full-width local span in this provisional mapping. A future

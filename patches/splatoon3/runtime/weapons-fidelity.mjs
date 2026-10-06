@@ -4,6 +4,7 @@
 import {distanceDamage, groupDamage, applyProjectileHit as legacyHit} from './weapons.mjs';
 import { capsuleEntry, sweptWorldHit } from './weapons-collision.mjs';
 import { installChargerFlight } from './weapons-charger-flight.mjs';
+import { rollerDepletionVolley } from './roller.mjs';
 export const EPSILON = 1e-10;
 const INSTALLED = Symbol.for('inkwave.weapons-fidelity.v1');
 let api, completion;
@@ -200,9 +201,9 @@ export function advanceFidelityWallDrop(system, p, dt) {
   if (done) state.done = true;
   return done;
 }
-function collisionRecord(c, target, offset = 0) {
-  return { initRadius:Math.max(0,c['InitRadiusFor'+target]+offset*(c['AfterOffsetInitRadiusFor'+target]||0)),
-    endRadius:Math.max(0,c['EndRadiusFor'+target]+offset*(c['AfterOffsetEndRadiusFor'+target]||0)),
+function collisionRecord(c, target, offset = 0, rate = 1) {
+  return { initRadius:Math.max(0,c['InitRadiusFor'+target]+offset*(c['AfterOffsetInitRadiusFor'+target]||0))*rate,
+    endRadius:Math.max(0,c['EndRadiusFor'+target]+offset*(c['AfterOffsetEndRadiusFor'+target]||0))*rate,
     changeTime:Math.max(0,(c['ChangeFrameFor'+target]||0)/60) };
 }
 function radiusAt(c, age, fallback) {
@@ -212,9 +213,10 @@ function radiusAt(c, age, fallback) {
 }
 export function fidelityPlayerCollisionRadius(p) { return radiusAt(p.fidelityPlayerCollision,p.age,p.size); }
 function fieldRadiusAt(p,age) { return radiusAt(p.fidelityFieldCollision,age,p.fieldRadius||0); }
-function setCollision(p,c,offset=0) {
-  p.fidelityPlayerCollision=collisionRecord(c,'Player',offset);
-  p.fidelityFieldCollision=collisionRecord(c,'Field',offset);
+function setCollision(p,c,offset=0,rate=1) {
+  const scale=Number.isFinite(rate)&&rate>=0?rate:1;
+  p.fidelityPlayerCollision=collisionRecord(c,'Player',offset,scale);
+  p.fidelityFieldCollision=collisionRecord(c,'Field',offset,scale);
   // Existing packet size carries initial radius; layout is unchanged.
   p.size=p.fidelityPlayerCollision.initRadius;
 }
@@ -225,17 +227,26 @@ export function configureFidelityFlick(p, actor, weapon, index, angle, speed) {
   p.s3Weapon={...weapon}; p.wid=weapon.id;
   const vertical=!!actor.weaponRunner.s3FlickVertical;
   const group=raw[vertical?'VerticalSwingUnitGroupParam':'WideSwingUnitGroupParam'];
-  let offset=index,unit;
-  for(const u of group.Unit){if(offset<(u.BulletNum??1)){unit=u;break;}offset-=u.BulletNum??1;}
+  const depleted=!!actor.weaponRunner.s3RollerAttack?.depleted;
+  const depletionEntries=depleted?rollerDepletionVolley(group,vertical):null;
+  let offset=index,unit,count;
+  if(depleted){
+    const entry=depletionEntries?.[index];
+    if(!entry)throw new RangeError('Roller depletion index exceeds pinned units');
+    ({unit,offset,count}=entry);
+  }else for(const u of group.Unit){if(offset<(u.BulletNum??1)){unit=u;count=u.BulletNum??1;break;}offset-=u.BulletNum??1;}
   if(!unit)throw new RangeError('Roller index exceeds pinned units + labelled defaults');
   let pitch=Math.max(-.2,Math.min(.5,actor.aimPitch));
   if(vertical){
     speed=60*(unit.SpawnSpeedBase+offset*(unit.AfterOffsetSpawnSpeed||0));
+    if(depleted)speed*=unit.DepletionSpeedRate??1;
     pitch+=radians((unit.SpawnRotateXDegreeBase||0)+offset*(unit.AfterOffsetSpawnRotateXDegree||0));
     angle=actor.yaw+radians(unit.SpawnRotateYDegree||0);
   }else{
-    const count=unit.BulletNum??1,fan=count>1?offset/(count-1)*2-1:0;
+    count=count??unit.BulletNum??1;
+    const fan=count>1?offset/(count-1)*2-1:0;
     speed=60*(unit.SpawnSpeedBase+(Math.random()*2-1)*(unit.SpawnSpeedRandom||0));
+    if(depleted)speed*=unit.DepletionSpeedRate??1;
     angle=actor.yaw+fan*radians(unit.SpawnWideDegree||0);
     pitch+=radians(b.horizontalPitchDegrees); // retained calibrated launch angle, NOT extracted
     const side=fan*(unit.SpawnPositionWidth||0),j=unit.SpawnPositionRandomCube||0;
@@ -249,8 +260,13 @@ export function configureFidelityFlick(p, actor, weapon, index, angle, speed) {
   const cp=Math.cos(pitch);
   p.vel.set(Math.sin(angle)*cp*speed,Math.sin(pitch)*speed,Math.cos(angle)*cp*speed);
   p.fidelityYaw=Math.atan2(Math.sin(angle-actor.yaw),Math.cos(angle-actor.yaw));
-  p.fidelityMode=vertical?'vertical':'horizontal';p.fidelityRollerUnit=unit;
-  setCollision(p,unit.UnitParam.CollisionParam);
+  p.fidelityMode=vertical?'vertical':'horizontal';p.fidelityRollerUnit=unit;p.fidelityDepleted=depleted;
+  const collision=unit.UnitParam.CollisionParam;
+  setCollision(p,collision,0,depleted?collision.DepletionRate:1);
+  if(depleted){
+    const paintRate=unit.UnitParam.PaintParam?.DepletionDepthWidthRate;
+    if(Number.isFinite(paintRate)&&paintRate>=0){p.radius*=paintRate;p.trailRadius*=paintRate;}
+  }
   p.straight=unit.UnitParam.MoveParam.GoStraightToBrakeStateFrame/60;
   p.grav=weapon.flickGravity;p.drag=weapon.flickDrag;
 }
@@ -334,7 +350,9 @@ export function fidelityDamage(p,point) {
     const source=rawWeapon(w)[p.s3Vertical?'VerticalSwingUnitGroupParam':'WideSwingUnitGroupParam'].DamageParam;
     const age=(p.fidelityPrevAge??p.age??0)+((p.age??0)-(p.fidelityPrevAge??p.age??0))*(p.fidelityImpactT??1);
     const t=clamp01((age*60-source.DamageRejectStartFrame)/(source.DamageRejectEndFrame-source.DamageRejectStartFrame));
-    return distanceDamage(bands,d)*(1+(source.DamageRejectRate-1)*t);
+    const damageRate=p.fidelityDepleted?(outside?source.Outside?.DepletionDamageRate:source.Inside?.DepletionDamageRate)??1:1;
+    const distanceDamageValue=distanceDamage(bands,d)*damageRate;
+    return distanceDamageValue*(1+(source.DamageRejectRate-1)*t);
   }
   if(w.kind==='slosher'&&p.fidelitySloshUnit){
     const d=p.fidelitySloshUnit.DamageParam,fall=Math.max(0,p.start.y-point.y);
@@ -404,7 +422,7 @@ export function installWeaponsFidelity(context,profile) {
   const fresh=Projectiles.prototype._new,push=Projectiles.prototype._push,ghost=Projectiles.prototype.ghostProjectile,clear=Projectiles.prototype.clear;
   Projectiles.prototype.clear=function(...args){const result=clear.apply(this,args);this._fidelityCollision=null;this._fidelitySloshContext=null;return result;};
   Projectiles.prototype._new=function(...args){
-    const p=fresh.apply(this,args);p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityRollerUnit=null;p.fidelitySloshUnit=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;return p;
+    const p=fresh.apply(this,args);p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityRollerUnit=null;p.fidelityDepleted=false;p.fidelitySloshUnit=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;return p;
   };
   function initialize(p,w){
     if(!w)return;

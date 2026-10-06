@@ -88,10 +88,55 @@ test('a new flick lifts the rolling drum, a held trigger resumes rolling, releas
   r.update(1 / 60, { fire: false }); assert.equal(r.rolling, false);
   r.reset(); assert.equal(r.s3RollerAttack, null); assert.equal(a.character.s3RollerFlick, null);
 });
-test('dry input does not create a phantom pose or spend ink', async () => {
-  const f = await fixture(), a = f.make('roller'); a.ink = 2; start(f, a, true);
+test('empty input does not create a phantom pose or spend ink', async () => {
+  const f = await fixture(), a = f.make('roller'); a.ink = 0; start(f, a, true);
   assert.equal(a.weaponRunner.flick, -1); assert.equal(a.weaponRunner.s3RollerAttack, null);
-  assert.equal(a.character.s3RollerFlick, null); assert.equal(a.ink, 2);
+  assert.equal(a.character.s3RollerFlick, null); assert.equal(a.ink, 0);
+});
+test('low-ink Roller swings use grouped depletion volleys; full-cost and empty boundaries stay separate', async () => {
+  const f = await fixture({ fidelity: true }), system = new f.Projectiles(new f.THREE.Scene()); f.G.projectiles = system;
+  f.setRandom(() => .5);
+  const swing = (ink, vertical) => {
+    const a = f.make('roller'); a.ink = ink; start(f, a, vertical);
+    const frames = vertical ? 26 : 21;
+    for (let i = 0; i < frames; i++) a.weaponRunner.update(1 / 60, { fire: true });
+    return { a, shots: system.list.filter(p => p.owner === a) };
+  };
+  const normalH = swing(100, false);
+  assert.equal(normalH.shots.length, 13); assert.equal(normalH.a.ink, 91.5);
+  assert.ok(normalH.shots.every(p => !p.fidelityDepleted));
+  assert.ok(Math.abs(normalH.shots[0].vel.length() - 63) < 1e-9);
+  assert.ok(Math.abs(normalH.shots[0].fidelityPlayerCollision.initRadius - .12) < 1e-9);
+  assert.equal(f.fidelityDamage(normalH.shots[0], normalH.shots[0].start), 150);
+
+  const lowH = swing(4, false);
+  assert.equal(lowH.a.weaponRunner.s3RollerAttack.depleted, true);
+  assert.equal(lowH.a.ink, 0); assert.equal(lowH.shots.length, 3);
+  assert.ok(lowH.shots.every(p => p.fidelityDepleted && Math.abs(p.vel.length() - 31.5) < 1e-9));
+  assert.ok(lowH.shots.every(p => Math.abs(p.fidelityPlayerCollision.initRadius - .06) < 1e-9));
+  assert.ok(lowH.shots.every(p => Math.abs(p.fidelityFieldCollision.initRadius - .05) < 1e-9));
+  assert.ok(lowH.shots.every(p => Math.abs(p.radius - .5) < 1e-9 && Math.abs(p.trailRadius - .225) < 1e-9));
+  assert.equal(f.fidelityDamage(lowH.shots[0], lowH.shots[0].start), 37.5);
+
+  const normalV = swing(100, true);
+  assert.equal(normalV.shots.length, 5); assert.equal(normalV.a.ink, 91.5);
+  assert.ok(Math.abs(normalV.shots[0].vel.length() - 110.028) < 1e-9);
+  const lowV = swing(4, true);
+  assert.equal(lowV.a.weaponRunner.s3RollerAttack.depleted, true);
+  assert.equal(lowV.a.ink, 0); assert.equal(lowV.shots.length, 3);
+  assert.ok(lowV.shots.every(p => p.fidelityDepleted));
+  assert.ok(Math.abs(lowV.shots[0].vel.length() - 110.028 * .7) < 1e-9);
+  assert.ok(Math.abs(lowV.shots[1].vel.length() - 1.6338 * 60 * .7) < 1e-9);
+  assert.ok(lowV.shots.every(p => Math.abs(p.fidelityPlayerCollision.initRadius - .116 * .5) < 1e-9));
+  assert.ok(lowV.shots.every(p => Math.abs(p.trailRadius - .225) < 1e-9));
+  assert.equal(f.fidelityDamage(lowV.shots[0], lowV.shots[0].start), 150, 'vertical source group supplies no depletion damage-rate field');
+
+  const empty = f.make('roller'); empty.ink = 0; start(f, empty, false);
+  assert.equal(empty.weaponRunner.flick, -1); assert.equal(empty.weaponRunner.s3RollerAttack, null);
+  const idle = f.make('roller'); idle.ink = 4; idle.weaponRunner.update(1 / 60, { fire: false, firePressed: false });
+  assert.equal(idle.weaponRunner.flick, -1); assert.equal(idle.weaponRunner.s3RollerAttack, null); assert.equal(idle.ink, 4);
+  assert.equal(system.list.filter(p => p.owner === empty || p.owner === idle).length, 0);
+  f.restoreRandom();
 });
 test('actual projectile path retains narrow vertical paint flight and one-attack damage aggregation', async () => {
   const f = await fixture(), a = f.make('roller'), system = new f.Projectiles(new f.THREE.Scene());
