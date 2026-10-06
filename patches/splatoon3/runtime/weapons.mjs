@@ -171,6 +171,8 @@ export function installWeapons(context, profile) {
       this.s3Turret = true;
       this.s3DodgeShotPending = 4 / 60;
     }
+    // Movement recovery releases roll resources without changing firing gates.
+    if (!this.dodge && this.lockT <= 0) this.rollsLeft = w.rolls;
     return result;
   };
   WeaponRunner.prototype._spreadDeg = function (w) {
