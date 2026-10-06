@@ -53,10 +53,15 @@ test('index reuse with disconnect notification and id/mapping changes are explic
   }
 });
 
-test('same device snapshots and ordinary no-pad reconnect preserve existing semantics', async () => {
-  const h = await boot(); h.setPads([device(0)]); h.input.pollPad();
-  h.setPads([device(0, [0])]); h.input.pollPad(); assert.equal(h.input.padPressed.has(0), true);
-  h.setPads([]); h.input.pollPad(); h.setPads([device(0, [0])]); h.input.pollPad(); assert.equal(h.input.padPressed.has(0), true);
+test('same-device snapshots keep edges, while a no-pad interval requires release before reconnect input', async () => {
+  const h = await boot(), pad = device(0); h.setPads([pad]); h.input.pollPad();
+  const held = device(0, [0]); h.setPads([held]); h.input.pollPad(); assert.equal(h.input.padPressed.has(0), true);
+  h.input.padPressed.clear();
+  h.setPads([]); h.input.pollPad(); h.setPads([held]); h.input.pollPad();
+  assert.equal(h.input.padPressed.has(0), false); assert.equal(h.input.padButton(0), false);
+  held.buttons[0] = { pressed: false, value: 0 }; h.input.pollPad();
+  held.buttons[0] = { pressed: true, value: 1 }; h.input.pollPad();
+  assert.equal(h.input.padPressed.has(0), true); assert.equal(h.input.padButton(0), true);
 });
 
 test('simultaneous lifecycle rebase cannot turn a blocked analog hold into an edge', async () => {
