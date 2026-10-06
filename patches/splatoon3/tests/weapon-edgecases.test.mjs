@@ -59,26 +59,26 @@ function blast(f,ps){const p=ps._new();Object.assign(p,{type:'blast',owner:f.a,t
 test('terrain floor/wall/slope contact caps at35; air70 and direct exclusion remain',async()=>{
  const f=await setup('blaster'),ps=projectiles(f),e=f.make();e.team=1;e.invuln=0;f.G.actors.push(e);const p=blast(f,ps),at=new f.THREE.Vector3(0,.7,0);
  for(const normal of [new f.THREE.Vector3(0,1,0),new f.THREE.Vector3(0,0,-1),new f.THREE.Vector3(0,.8,.6)]){
-  e.hp=100;e.pos.set(.1,0,0);ps._impact(p,{point:at,normal});close(e.hp,65);assert.equal(p.s3TerrainBurst,false);
+  e.hp=100;e.pos.set(.1,0,0);ps._impact(p,{point:at,normal});assert.equal(e.hp,100,'#729 no radial damage in the contact tick');ps.flushBlastImpacts();close(e.hp,65);assert.equal(p.s3TerrainBurst,false);
   e.hp=100;ps._blastBurst(p,at,null);close(e.hp,30);e.hp=100;ps._blastBurst(p,at,e);close(e.hp,100);
  }
 });
 test('terrain bands are normalized before half damage and 0.1HP floor, with LOS and boundary controls',async()=>{
  const f=await setup('blaster'),ps=projectiles(f),e=f.make();e.team=1;e.invuln=0;f.G.actors.push(e);const p=blast(f,ps),w=f.WEAPONS.blaster,at=new f.THREE.Vector3(0,.7,0),normal=new f.THREE.Vector3(0,1,0);
  const rate=w.terrainSplashRadiusRate??1;
- for(const [d,want] of [[0,35],[1.025,35],[2.205,30],[3.385,25]]){e.hp=100;e.pos.set(d*rate,0,0);ps._impact(p,{point:at,normal});close(100-e.hp,want);}
- e.hp=100;e.pos.set(w.splashRadius*rate+.001,0,0);ps._impact(p,{point:at,normal});close(e.hp,100);
- e.pos.set(.1,0,0);f.G.physics.los=()=>false;ps._impact(p,{point:at,normal});close(e.hp,100);
+ for(const [d,want] of [[0,35],[1.025,35],[2.205,30],[3.385,25]]){e.hp=100;e.pos.set(d*rate,0,0);ps._impact(p,{point:at,normal});ps.flushBlastImpacts();close(100-e.hp,want);}
+ e.hp=100;e.pos.set(w.splashRadius*rate+.001,0,0);ps._impact(p,{point:at,normal});ps.flushBlastImpacts();close(e.hp,100);
+ e.pos.set(.1,0,0);f.G.physics.los=()=>false;ps._impact(p,{point:at,normal});ps.flushBlastImpacts();close(e.hp,100);
 });
 test('terrain cause restored on exception and pooled reuse; paint/FX/boss dimensions stay native',async()=>{
  const f=await setup('blaster'),ps=projectiles(f),p=blast(f,ps),at=new f.THREE.Vector3(),normal=new f.THREE.Vector3(0,1,0);const paint=[],fx=[],boss=[];
  f.G.paint.splat=(_p,r)=>{paint.push(r);return 0;};f.G.fx={burst(){},explosion:(_p,_c,r)=>fx.push(r)};f.G.boss={splash:(...args)=>boss.push(args)};
- ps._impact(p,{point:at,normal});close(fx[0],f.WEAPONS.blaster.burstRadius);close(boss[0][2],f.WEAPONS.blaster.splashRadius);close(boss[0][3],70);assert.ok(paint.length);
+ ps._impact(p,{point:at,normal});ps.flushBlastImpacts();close(fx[0],f.WEAPONS.blaster.burstRadius);close(boss[0][2],f.WEAPONS.blaster.splashRadius);close(boss[0][3],70);assert.ok(paint.length);
  f.G.paint.splat=()=>{throw Error('test impact failure');};assert.throws(()=>ps._impact(p,{point:at,normal}),/test impact failure/);assert.equal(p.s3TerrainBurst,false);p.s3TerrainBurst=true;p.s3FlickUnit=1;ps.pool.push(p);const reused=ps._new();assert.equal(reused.s3TerrainBurst,false);assert.equal(reused.s3FlickUnit,0);
 });
 test('terrain damage routes final35 to network, without halving native125 direct hit',async()=>{
  const f=await setup('blaster'),ps=projectiles(f),e=f.make();e.team=1;e.invuln=0;e.pos.set(.1,0,0);f.G.actors.push(e);const sent=[];f.G.netm={shouldApplyHit:()=> 'send',sendHit:(_a,_e,d)=>sent.push(d)};
- ps._impact(blast(f,ps),{point:new f.THREE.Vector3(0,.7,0),normal:new f.THREE.Vector3(0,1,0)});ps.applyHit(f.a,e,125,'blaster');assert.deepEqual(sent,[35,125]);assert.equal(e.hp,100);
+ ps._impact(blast(f,ps),{point:new f.THREE.Vector3(0,.7,0),normal:new f.THREE.Vector3(0,1,0)});ps.flushBlastImpacts();ps.applyHit(f.a,e,125,'blaster');assert.deepEqual(sent,[35,125]);assert.equal(e.hp,100);
 });
 test('roller release adds separate12+1 unit, shared max group, one8.5 ink payment and unchanged release',async()=>{
  const f=await setup('roller'),ps=projectiles(f),a=f.a;f.setRandom(()=>.5);a.weaponRunner.update(1/60,{fire:false,firePressed:true});
