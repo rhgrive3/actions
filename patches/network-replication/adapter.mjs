@@ -44,11 +44,25 @@ export function adaptNetworkSource(rel, code) {
     // actors
     if (d.a)`, 'snapshot physics tick pair');
     patch('if (this.out.length) { msg.e = this.out; this.out = []; }', 'if (this.out.length) { msg.r = 2; msg.e = this.out; this.out = []; }', 'event schema only in event packets');
-    patch('if (d.e) for (const e of d.e) p.events.push(e);', `if (d.e) for (const e of d.e) {
+    patch('if (d.e) for (const e of d.e) p.events.push(e);', `observePaintAuthorityTick(this,from,d,now(),p);
+    if (d.e) for (const e of d.e) {
       if (!Array.isArray(e) || !Number.isFinite(e[0])) continue;
       if (d.r === 2) { const seq = e[e.length-1]; if (!Number.isSafeInteger(seq) || seq < 1) continue; e._netSeq = seq; const tick = e[e.length-2]; if (Number.isSafeInteger(tick)) e._netTick = tick; }
       // Receiver-created proof only: an event cannot supply its own authority.
       e._stormSnapshot = null;
+      delete e._netPaintSource;
+      const ownerNid = e[1] === 'ev' ? e[3]?.actor?.n : (e[1] === 'p' || e[1] === 'pe' || e[1] === 'b' ? e[2] : null);
+      const ownerActor = this.byNid.get(ownerNid), ownerProof = p._paintObservedOwner;
+      if (ownerActor?.remote && ownerActor.owner === from && ownerProof?.actor === ownerActor) {
+        e._netPaintSource = {
+          owner:from, peer:p, actor:ownerActor, life:ownerProof.life, alive:ownerProof.alive, weaponId:ownerActor.weapon?.id ?? null,
+          attack:ownerProof.attack, position:{ x:ownerProof.x, y:ownerProof.y, z:ownerProof.z },
+          tick:e._netTick, time:e[0], clockValid:!!(p._paintClockValid && p._paintClock?.samples >= 2
+          && ownerProof.alive && ownerProof.attack && ownerProof.tick === d.u
+          && Number.isSafeInteger(e._netTick) && e._netTick <= d.u && d.u-e._netTick <= 4
+          && Number.isFinite(e[0]) && e[0] <= d.ts + 0.002 && d.ts-e[0] <= 0.1)
+        };
+      }
       const stormNid = e[1] === 'b' && e[3] === 'storm' ? e[2]
         : e[1] === 'ev' && e[2] === 'special:use' && e[3]?.id === 'storm' ? e[3]?.actor?.n : null;
       const stormActor = this.byNid.get(stormNid), snap = stormActor?.net?.buf?.at(-1);
@@ -156,6 +170,37 @@ export function adaptNetworkSource(rel, code) {
         break;
       }`, 'birth and terminal events');
     code += `
+function observePaintAuthorityTick(nm,from,d,receivedAt,peer) {
+  if (!nm.isHost || from === nm.s.hostId) return;
+  const actor = [...nm.byNid.values()].find(a => a.remote && a.owner === from && !a.isBot);
+  const snap = actor?.net?.buf?.at(-1) || null;
+  const current = !!(actor && snap?.t === d?.ts), alive = !!(current && (snap.f & F.alive) !== 0 && snap.hp > 0);
+  if (current) {
+    if (peer._paintSnapshotOwner !== from) { peer._paintSnapshotOwner = from; peer._paintSnapshotSeen = false; }
+    if (!peer._paintSnapshotSeen) peer._paintLife = Number.isSafeInteger(peer._paintLife) ? peer._paintLife : 0;
+    else if (!peer._paintSnapshotAlive && alive) peer._paintLife = (Number.isSafeInteger(peer._paintLife) ? peer._paintLife : 0) + 1;
+    peer._paintSnapshotSeen = true; peer._paintSnapshotAlive = alive;
+  }
+  peer._paintObservedOwner = current ? {
+    actor, life:peer._paintLife ?? 0, team:actor.team, tick:d.u,
+    alive, attack:!!(snap.f & (F.firing|F.rolling|F.flick|F.slosh|F.streaming)),
+    x:snap.x, y:snap.y, z:snap.z, snapshotTs:snap.t, at:receivedAt
+  } : null;
+  if (!Number.isSafeInteger(d?.u) || !Number.isFinite(d?.ts)) { peer._paintClockValid = false; return; }
+  const clock = peer._paintClock;
+  if (!clock) {
+    peer._paintClock = { baseTick:d.u, baseTs:d.ts, baseAt:receivedAt, lastTick:d.u, lastTs:d.ts, samples:1 };
+    peer._paintClockValid = false;
+    return;
+  }
+  const elapsed = Math.max(0,receivedAt-clock.baseAt), remoteElapsed = d.ts-clock.baseTs;
+  const maxTick = clock.baseTick + Math.ceil((elapsed + 0.35) * 60);
+  const valid = d.u >= clock.lastTick && d.ts >= clock.lastTs
+    && d.u <= maxTick && remoteElapsed <= elapsed + 0.35
+    && Math.abs((d.u-clock.baseTick)/60 - remoteElapsed) <= 0.65;
+  peer._paintClockValid = valid;
+  if (valid) { clock.lastTick = d.u; clock.lastTs = d.ts; clock.samples++; }
+}
 function stormSnapshotAllows(actor, proof, from) {
   const latest = actor?.net?.buf?.at(-1);
   return !!(proof && actor?.alive && actor.remote && actor.owner === from && proof.owner === from
@@ -368,7 +413,6 @@ function retireNetworkGhosts(owner = null) {
   if (rel === 'src/net/netmatch.js') {
     const ctor = "    this.applying = false;         // replaying someone else's splat (don't re-record)";
     patch(ctor, ctor + "\n    this._paintState = paintOrderStateFor(session,cfg);", 'match-local paint order state');
-
     const recStart = code.indexOf('  recSplat(c, radius, team, o) {');
     const recEnd = code.indexOf('\n  recProj(p) {', recStart);
     if (recStart < 0 || recEnd < 0) throw Error('Network paint recording anchor mismatch');
@@ -487,7 +531,7 @@ function retireNetworkGhosts(owner = null) {
       "}",
       "function paintShapeValid(shape,e) {",
       "  if (![shape.x,shape.y,shape.z,shape.radius,shape.seed,shape.sx,shape.sy,shape.sz,shape.stretchAmt].every(Number.isFinite)",
-      "    || Math.max(Math.abs(shape.x),Math.abs(shape.y),Math.abs(shape.z)) > 10000 || shape.radius <= 0 || shape.radius > 64",
+      "    || Math.max(Math.abs(shape.x),Math.abs(shape.y),Math.abs(shape.z)) > 10000 || shape.radius <= 0 || shape.radius > 8",
       "    || Math.max(Math.abs(shape.sx),Math.abs(shape.sy),Math.abs(shape.sz)) > 10000 || shape.stretchAmt < 0 || shape.stretchAmt > 32",
       "    || (shape.team !== 0 && shape.team !== 1) || shape.seed < 0 || shape.seed >= 1 || !paintKindValid(shape.kind)) return false;",
       "  const baseKind = shape.kind === -1 ? 0 : shape.kind;",
@@ -495,12 +539,66 @@ function retireNetworkGhosts(owner = null) {
       "    && e[5] === r2(shape.radius) && e[7] === r3(shape.seed) && e[8] === baseKind",
       "    && e[9] === r3(shape.sx) && e[10] === r3(shape.sy) && e[11] === r3(shape.sz) && e[12] === r2(shape.stretchAmt);",
       "}",
-      "function paintOwnerAllowed(nm,ownerId,team) {",
-      "  if (!nm.s._members?.has(ownerId)) return false;",
+      "function paintOwnerOnRoster(nm,ownerId,team) {",
       "  const roster = nm.cfg?.roster;",
       "  if (!Array.isArray(roster)) return false;",
       "  if (ownerId === nm.s.hostId) return nm._paintState.hostTeams.has(team);",
-      "  return roster.some(r => r.owner === ownerId && !r.bot && r.team === team);",
+      "  return roster.some(r => r.owner === ownerId && r.team === team);",
+      "}",
+      "function paintOwnerRequestAllowed(nm,ownerId,team) {",
+      "  return nm.s._members?.has(ownerId) && paintOwnerOnRoster(nm,ownerId,team)",
+      "    && (ownerId === nm.s.hostId || nm.cfg?.roster?.some(r => r.owner === ownerId && !r.bot && r.team === team));",
+      "}",
+      "function paintOwnerCanonicalAllowed(nm,ownerId,team) {",
+      "  // The host receipt is authoritative for historical ownership; a departed owner need not remain joined.",
+      "  return paintOwnerOnRoster(nm,ownerId,team);",
+      "}",
+      "function paintRequestClockAllowed(peer,e,d) {",
+      "  const clock = peer?._paintClock;",
+      "  return !!(peer?._paintClockValid && clock?.samples >= 2 && Number.isSafeInteger(d?.u)",
+      "    && Number.isSafeInteger(e._netTick) && e._netTick <= d.u && d.u-e._netTick <= 4",
+      "    && e._netTick <= clock.lastTick && clock.lastTick-e._netTick <= 4 && Number.isFinite(d.ts)",
+      "    && Number.isFinite(e[0]) && e[0] <= d.ts + 0.002 && d.ts-e[0] <= 0.1);",
+      "}",
+      "function paintSourceNear(x,y,z,source,range) {",
+      "  return [x,y,z,source?.x,source?.y,source?.z].every(Number.isFinite)",
+      "    && Math.hypot(x-source.x,y-source.y,z-source.z) <= range;",
+      "}",
+      "function liveProjectilePaintSource(peer,owner,shape,e,proof) {",
+      "  const P = G.projectiles, candidates = [...(P?.list || []),...(P?.bombs || []),...(P?.clouds || []),...(P?.beams || [])];",
+      "  for (const p of candidates) {",
+      "    const sourceOwner = p?._netOwner || p?.owner;",
+      "    if (!(p?.ghost || p?._netPaintBeam === true) || sourceOwner !== owner || p._netPeer !== peer || p._netOwnerAliveAtSource !== true || p._netOwnerLife !== proof?.life",
+      "      || p._netSourceClockValid !== true || !paintSourceNear(p._netOrigin?.x,p._netOrigin?.y,p._netOrigin?.z,p._netShooterPosition,5)",
+      "      || !Number.isSafeInteger(p._netBornTick) || !Number.isSafeInteger(p._netOwnerLife)",
+      "      || !Number.isSafeInteger(e._netTick) || e._netTick < p._netBornTick) continue;",
+      "    const maxSteps = Number.isSafeInteger(p._netMaxSteps) ? p._netMaxSteps : Math.ceil(((p.life || p.dur || 3) + Math.max(0,p.delay || 0))*60) + 2;",
+      "    if (e._netTick > p._netBornTick + maxSteps || shape.radius > 6) continue;",
+      "    const range = Math.max(0.8,shape.radius*1.25+(p.radius || 0.2));",
+      "    if (p._netPaintBeam && paintSourceNearSegment(shape.x,shape.y,shape.z,p._netBeamStart,p._netBeamEnd,range)) return true;",
+      "    const hit = p._netEnded && [p._netHitX,p._netHitY,p._netHitZ].every(Number.isFinite)",
+      "      ? { x:p._netHitX, y:p._netHitY, z:p._netHitZ } : p.pos;",
+      "    if (!p._netPaintBeam && Number.isFinite(p._netPaintMaxTravel)",
+      "      && Math.hypot(hit.x-p._netOrigin.x,hit.z-p._netOrigin.z) > p._netPaintMaxTravel) continue;",
+      "    if (!p._netPaintBeam && paintSourceNear(shape.x,shape.y,shape.z,hit,range)) return true;",
+      "  }",
+      "  return false;",
+      "}",
+      "function paintSourceNearSegment(x,y,z,start,end,range) {",
+      "  if (![x,y,z,start?.x,start?.y,start?.z,end?.x,end?.y,end?.z].every(Number.isFinite)) return false;",
+      "  const dx=end.x-start.x,dy=end.y-start.y,dz=end.z-start.z,den=dx*dx+dy*dy+dz*dz;",
+      "  const t=den?Math.max(0,Math.min(1,((x-start.x)*dx+(y-start.y)*dy+(z-start.z)*dz)/den)):0;",
+      "  return Math.hypot(x-(start.x+t*dx),y-(start.y+t*dy),z-(start.z+t*dz))<=range;",
+      "}",
+      "function paintRequestSourceAllowed(nm,from,e,d,shape) {",
+      "  const peer = nm.peers.get(from), proof = peer?._paintObservedOwner, actor = proof?.actor;",
+      "  if (!proof || proof.tick !== d.u || !actor?.remote || actor.owner !== from || actor.team !== shape.team || !paintRequestClockAllowed(peer,e,d)) return false;",
+      "  const source = { x:proof.x, y:proof.y, z:proof.z };",
+      "  if (proof.alive && proof.attack && Number.isFinite(proof.snapshotTs)",
+      "    && d.ts - proof.snapshotTs <= 0.25) {",
+      "    if (shape.radius <= 2 && paintSourceNear(shape.x,shape.y,shape.z,source,3.5)) return true;",
+      "  }",
+      "  return liveProjectilePaintSource(peer,actor,shape,e,proof);",
       "}",
       "function validPaintRequest(nm,from,e,d) {",
       "  const state = nm._paintState;",
@@ -512,7 +610,7 @@ function retireNetworkGhosts(owner = null) {
       "    || !Number.isSafeInteger(e._netTick) || e._netTick !== e[26] || e._netTick < 0 || e._netTick > d.u",
       "    || !Number.isSafeInteger(e._netSeq) || e._netSeq !== e[27] || e._netSeq < 1 || !Number.isFinite(e[0]) || e[0] > d.ts) return false;",
       "  const shape = paintShapeFrom(e,16);",
-      "  return paintShapeValid(shape,e) && paintOwnerAllowed(nm,from,shape.team);",
+      "  return paintShapeValid(shape,e) && paintOwnerRequestAllowed(nm,from,shape.team) && paintRequestSourceAllowed(nm,from,e,d,shape);",
       "}",
       "function validCanonicalPaint(nm,from,e,d = null) {",
       "  const state = nm._paintState;",
@@ -524,7 +622,7 @@ function retireNetworkGhosts(owner = null) {
       "  if (d && (d.r !== 2 || !Number.isSafeInteger(d.u) || e._netTick > d.u || !Number.isFinite(d.ts) || e[0] > d.ts)) return false;",
       "  const ownerId = e[13], requestId = e[14], shape = paintShapeFrom(e,18);",
       "  if (typeof ownerId !== 'string' || (ownerId === nm.s.hostId ? requestId !== 0 : requestId < 1)) return false;",
-      "  return paintShapeValid(shape,e) && paintOwnerAllowed(nm,ownerId,shape.team);",
+      "  return paintShapeValid(shape,e) && paintOwnerCanonicalAllowed(nm,ownerId,shape.team);",
       "}",
       "function paintOptions(shape,order = null,predictionAck = 0) {",
       "  const opts = { seed:shape.seed };",
@@ -548,6 +646,7 @@ function retireNetworkGhosts(owner = null) {
     ].join('\n');
   }
   if (rel === 'src/world/paint.js') {
+    const footprint = code.includes('installPaintFootprint(PaintSystem, { blobWobble });');
     patch('    this.grid = new Uint8Array(total);      // 0 none, 1 team0, 2 team1\n    this.dead = new Uint8Array(total);',
       '    this.grid = new Uint8Array(total);      // 0 none, 1 team0, 2 team1\n    this.gridCanonical = new Uint8Array(total);\n    this.gridPrediction = new Float64Array(total); this.gridPrediction.fill(-1);\n    this.gridOrderEpoch = new Float64Array(total); this.gridOrderEpoch.fill(-1);\n    this.gridOrderSeq = new Float64Array(total); this.gridOrderSeq.fill(-1);\n    this._paintOrderVersion = 0;\n    this.dead = new Uint8Array(total);',
       'per-cell canonical ownership and immediate local prediction');
@@ -555,12 +654,15 @@ function retireNetworkGhosts(owner = null) {
       '    this.grid.fill(0);\n    this.gridCanonical?.fill(0);\n    this.gridPrediction?.fill(-1);\n    this.gridOrderEpoch?.fill(-1);\n    this.gridOrderSeq?.fill(-1);\n    this._paintOrderVersion = (this._paintOrderVersion || 0) + 1;\n    this.counts[0] = this.counts[1] = 0;',
       'clear canonical paint ownership with the grid');
     patch('  splat(center, radius, team, opts = {}) {',
-      '  splat(center, radius, team, opts = {}) {\n    const previous = this._netPaintContext;\n    this._netPaintContext = paintContextFrom(opts);\n    try { return this._splat(center,radius,team,opts); }\n    finally { this._netPaintContext = previous; }\n  }\n\n  _splat(center, radius, team, opts = {}) {',
+      '  splat(center, radius, team, opts = {}) {\n    if (opts._netPredictionAck > 0) for (let i=this.growing.length-1;i>=0;i--) if (this.growing[i]._netContext?.prediction?.requestId === opts._netPredictionAck) this.growing.splice(i,1);\n    const previous = this._netPaintContext;\n    this._netPaintContext = paintContextFrom(opts);\n    try { return this._splat(center,radius,team,opts); }\n    finally { this._netPaintContext = previous; }\n  }\n\n  _splat(center, radius, team, opts = {}) {',
       'scoped paint context survives exceptions');
     patch('      if (!nm.applying) { if (opts.seed === undefined) opts.seed = Math.random(); nm.recSplat(center, radius, team, opts); }',
       '      if (!nm.applying) { if (opts.seed === undefined) opts.seed = Math.random(); nm.recSplat(center, radius, team, opts); this._netPaintContext = paintContextFrom(opts); }',
       'bind order assigned by the real recorder');
-    patch('        if (!cosmetic) claimed += this._cpuSplat(f, lu, lv, rr, team, seed, sdu, sdv, sa, kind);\n        entries.push(f, lu, lv, dn, sdu, sdv, sa);',
+    patch('      const g = {\n        entries, R: radius,',
+      '      const g = {\n        _netContext: this._netPaintContext,\n        entries, R: radius,',
+      'retain network ownership through deferred visual and CPU growth');
+    if (!footprint) patch('        if (!cosmetic) claimed += this._cpuSplat(f, lu, lv, rr, team, seed, sdu, sdv, sa, kind);\n        entries.push(f, lu, lv, dn, sdu, sdv, sa);',
       `        const owner = this._netPaintContext?.order
           ? { epoch:this._netPaintContext.order.epoch, sequence:this._netPaintContext.order.sequence }
           : this._netPaintContext?.prediction ? { requestId:this._netPaintContext.prediction.requestId } : null;
@@ -575,7 +677,43 @@ function retireNetworkGhosts(owner = null) {
     const growthEnd = code.indexOf('\n  _cpuSplat(', growthStart);
     if (growthStart < 0 || growthEnd < 0) throw Error('Network paint growth anchor mismatch');
     const oldGrowth = code.slice(growthStart, growthEnd);
-    const newGrowth = `  _emitGrowth(g, tn, dT, dripOnly) {
+    const newGrowth = footprint ? `  _emitGrowth(g, tn, dT, dripOnly) {
+    if (!g?._netContext) return this._emitGrowthNative(g,tn,dT,dripOnly);
+    const context = g._netContext, R = g.R, kind = g.kind, reachK = REACH[kind];
+    for (let o = 0; o < g.entries.length; o += 7) {
+      const f = g.entries[o], lu = g.entries[o+1], lv = g.entries[o+2], dn = g.entries[o+3];
+      const sdu = g.entries[o+4], sdv = g.entries[o+5], sa = g.entries[o+6];
+      if (dn >= R) continue;
+      const rr = Math.sqrt(R*R-dn*dn), pad = (f.atlas.pad-0.5)/f.atlas.ppm;
+      const ext = rr*(reachK+1.4*sa), down = f.wall && g.dripDur ? rr*DRIP_REACH : 0;
+      const uReach=dripOnly?rr*0.95:ext, vDown=dripOnly?rr*DRIP_REACH:Math.max(ext,down), vUp=dripOnly?rr*0.3:ext;
+      const i0=Math.max(0,Math.floor((lu-uReach)/f.cu)), i1=Math.min(f.nu-1,Math.floor((lu+uReach)/f.cu));
+      const j0=Math.max(0,Math.floor((lv-vDown)/f.cv)), j1=Math.min(f.nv-1,Math.floor((lv+vUp)/f.cv));
+      for (let row = j0; row <= j1; row++) {
+        let start = -1;
+        for (let col = i0; col <= i1+1; col++) {
+          const k = col <= i1 ? f.grid+row*f.nu+col : -1;
+          const owned = col <= i1 && (context.prediction
+            ? this.gridPrediction[k] === context.prediction.requestId
+            : this.gridPrediction[k] < 0 && this.gridOrderEpoch[k] === context.order.epoch && this.gridOrderSeq[k] === context.order.sequence);
+          if (owned) { if (start < 0) start = col; continue; }
+          if (start < 0) continue;
+          const u0 = start*f.cu-(start===0?pad:0), u1 = col*f.cu+(col===f.nu?pad:0);
+          const v0 = row*f.cv-(row===0?pad:0), v1 = (row+1)*f.cv+(row+1===f.nv?pad:0);
+          if (dripOnly) {
+            if (f.wall && rr >= R*0.3) { const a=Math.max(u0,lu-rr*0.95), b=Math.min(u1,lu+rr*0.95), c=Math.max(v0,lv-rr*DRIP_REACH), d=Math.min(v1,lv-rr*0.3); if (b>a&&d>c) this._pushQuad(f,a,b,c,d,lu,lv,dn,R,g.team,g.seed,kind,sdu,sdv,sa,tn,dT,1); }
+          } else {
+            const a=Math.max(u0,lu-ext), b=Math.min(u1,lu+ext), c=Math.max(v0,lv-Math.max(ext,down)), d=Math.min(v1,lv+ext); if (b>a&&d>c) this._pushQuad(f,a,b,c,d,lu,lv,dn,R,g.team,g.seed,kind,sdu,sdv,sa,tn,dT,0);
+          }
+          start = -1;
+        }
+      }
+    }
+  }
+
+  _emitGrowthNative(g, tn, dT, dripOnly) {
+${oldGrowth.slice(oldGrowth.indexOf('{')+1,oldGrowth.lastIndexOf('}'))}
+  }` : `  _emitGrowth(g, tn, dT, dripOnly) {
     const R = g.R, kind = g.kind, reachK = REACH[kind];
     for (const e of g.entries) {
       const { f, lu, lv, dn, sdu, sdv, sa, owner, range } = e;
@@ -671,15 +809,22 @@ function retireNetworkGhosts(owner = null) {
     patch('    let claimed = 0;\n    const cellA = f.cu * f.cv;',
       '    let claimed = 0, orderChanged = false, gridChanged = false;\n    const cellA = f.cu * f.cv;',
       'track ownership version changes');
-    patch('    if (claimed > 0) this.version++;\n    return claimed;\n  }',
+      patch('    if (claimed > 0) this.version++;\n    return claimed;\n  }',
       '    if (orderChanged) this._paintOrderVersion++;\n    if (gridChanged) this.version++;\n    return claimed;\n  }',
       'version cell-owner changes for deferred growth');
+    patch('  flush(dt = 1 / 60) {\n    this.clock += dt;',
+      '  flush(dt = 1 / 60) {\n    if (this._netRebuildPending?.size) this._netRebuildCanonicalAtlas(this._netRebuildPending);\n    this.clock += dt;',
+      'retry canonical atlas rebuild when the renderer is ready');
     patch('  dispose() { this.rt.dispose();',
       `  cancelPredictedPaint() {
     if (!this.gridPrediction) return;
-    let changed = false;
-    for (let i = 0; i < this.gridPrediction.length; i++) if (this.gridPrediction[i] >= 0) { this.gridPrediction[i] = -1; changed = true; }
+    let changed = false; const affected = new Set();
+    for (const f of this.paintFaces) for (let j = 0; j < f.nv; j++) for (let i = 0; i < f.nu; i++) {
+      const k = f.grid+j*f.nu+i;
+      if (this.gridPrediction[k] >= 0) { affected.add(f); this.gridPrediction[k] = -1; changed = true; }
+    }
     if (!changed) return;
+    for (let i=this.growing.length-1;i>=0;i--) if (this.growing[i]._netContext?.prediction) this.growing.splice(i,1);
     this.grid.set(this.gridCanonical);
     this.counts[0] = this.counts[1] = 0;
     for (const f of this.paintFaces) if (f.turf) for (let j = 0; j < f.nv; j++) for (let i = 0; i < f.nu; i++) {
@@ -688,6 +833,42 @@ function retireNetworkGhosts(owner = null) {
     }
     this._paintOrderVersion++;
     this.version++;
+    this._netRebuildCanonicalAtlas(affected);
+  }
+
+  _netRebuildCanonicalAtlas(faces) {
+    if (!faces?.size) return true;
+    const r=this.renderer;
+    if (!r?.setScissor || !r?.setScissorTest || !r?.getScissor || !r?.getScissorTest || !r?.getViewport || !r?.setViewport) { this._netRebuildPending=new Set(faces); return false; }
+    const prevTarget=r.getRenderTarget(), prevAuto=r.autoClear, prevScissor=r.getScissor(new THREE.Vector4()), prevViewport=r.getViewport(new THREE.Vector4()), prevScissorTest=r.getScissorTest();
+    const prevColor=r.getClearColor(new THREE.Color()), prevAlpha=r.getClearAlpha();
+    try {
+      if (this.quads) { r.setScissorTest(false); this._drawQuads(); }
+      r.autoClear=false; r.setRenderTarget(this.rt); r.setScissorTest(true);
+      for (const f of faces) {
+        const a=f.atlas; r.setScissor(a.x,a.y,a.w,a.h); r.setClearColor(0x000000,0); r.clear(true,false,false);
+        for (let row=0;row<f.nv;row++) {
+          let start=-1, runTeam=-1;
+          for (let col=0;col<=f.nu;col++) {
+            const val=col<f.nu?this.gridCanonical[f.grid+row*f.nu+col]:0;
+            if (val && start<0) { start=col; runTeam=val-1; continue; }
+            if (val && val-1===runTeam) continue;
+            if (start<0) continue;
+            const pad=(a.pad-0.5)/a.ppm, u0=start*f.cu-(start===0?pad:0), u1=col*f.cu+(col===f.nu?pad:0);
+            const v0=row*f.cv-(row===0?pad:0), v1=(row+1)*f.cv+(row+1===f.nv?pad:0), lu=(u0+u1)*0.5, lv=(v0+v1)*0.5;
+            this._pushQuad(f,u0,u1,v0,v1,lu,lv,0,Math.max(f.su,f.sv)*4+1,runTeam,0.5,K_SPECK,0,0,0,3,1,0);
+            if(val) { start=col; runTeam=val-1; } else start=-1;
+          }
+        }
+        this._drawQuads();
+      }
+      this._wetUntil=Math.max(this._wetUntil||0,this.clock+DRY_SECONDS);
+      this._netRebuildPending=null;
+      return true;
+    } catch (error) { this._netRebuildPending=new Set(faces); throw error; }
+    finally {
+      r.setRenderTarget(prevTarget); r.setViewport(prevViewport); r.autoClear=prevAuto; r.setScissor(prevScissor); r.setScissorTest(prevScissorTest); r.setClearColor(prevColor,prevAlpha);
+    }
   }
 
   dispose() { this.rt.dispose();`,
@@ -701,6 +882,113 @@ function paintOrderAfter(epoch,sequence,oldEpoch,oldSequence) {
   return epoch > oldEpoch || (epoch === oldEpoch && sequence > oldSequence);
 }
 `;
+    if (footprint) code += `
+const networkFootprintCellWrite = PaintSystem.prototype._cpuCellWrite;
+PaintSystem.prototype._cpuCellWrite = function(f,k,team,localOrder,coveredFraction=1) {
+  const context=this._netPaintContext;
+  if (!context) { const area=networkFootprintCellWrite.call(this,f,k,team,localOrder,coveredFraction); this.gridCanonical[k]=this.grid[k]; return area; }
+  const prev=this.grid[k], val=team+1, area=networkFootprintCellWrite.call(this,f,k,team,localOrder,coveredFraction);
+  let next=prev;
+  if (context.order) {
+    if (paintOrderAfter(context.order.epoch,context.order.sequence,this.gridOrderEpoch[k],this.gridOrderSeq[k])) { this.gridOrderEpoch[k]=context.order.epoch; this.gridOrderSeq[k]=context.order.sequence; this.gridCanonical[k]=val; this._paintOrderVersion++; }
+    if (context.ack>0 && this.gridPrediction[k]===context.ack) { this.gridPrediction[k]=-1; this._paintOrderVersion++; }
+    next=this.gridPrediction[k]>=0?prev:this.gridCanonical[k];
+  } else if (context.prediction) {
+    if (context.prediction.requestId>this.gridPrediction[k]) { this.gridPrediction[k]=context.prediction.requestId; this._paintOrderVersion++; next=val; }
+  } else { if (this.gridCanonical[k]!==val) this._paintOrderVersion++; this.gridCanonical[k]=val; next=val; }
+  const current=this.grid[k];
+  if (current!==next) { if (f.turf&&!this.dead[k]) { if(current)this.counts[current-1]--; if(next)this.counts[next-1]++; } this.grid[k]=next; }
+  return area;
+};
+const networkFootprintGrowth = PaintSystem.prototype._applyCpuGrowth;
+PaintSystem.prototype._applyCpuGrowth = function(g,...args) {
+  const previous=this._netPaintContext; this._netPaintContext=g?._netContext||null;
+  try { return networkFootprintGrowth.call(this,g,...args); } finally { this._netPaintContext=previous; }
+};
+`;
   }
+  if (rel === 'src/net/netmatch.js') code += `
+const networkPaintSourcePlay = NetMatch.prototype._play;
+NetMatch.prototype._play = function(from,e) {
+  const source=e?._netPaintSource;
+  const nid=e?.[1]==='ev' ? e[3]?.actor?.n : (e?.[1]==='p'||e?.[1]==='b' ? e[2] : null);
+  const actor=this.byNid.get(nid), net=actor?.net;
+  const valid=source?.peer===this.peers.get(from) && source.owner===from && source.actor===actor
+    && actor?.remote && actor.owner===from ? source : null;
+  const previous=net?._netPaintSource;
+  if(net) net._netPaintSource=valid;
+  try { return networkPaintSourcePlay.call(this,from,e); }
+  finally { if(net) { if(previous===undefined) delete net._netPaintSource; else net._netPaintSource=previous; } }
+};
+`;
+  if (rel === 'src/game/weapons.js') code += `
+function networkPaintSourceNear(x,y,z,source,range) {
+  return [x,y,z,source?.x,source?.y,source?.z].every(Number.isFinite)
+    && Math.hypot(x-source.x,y-source.y,z-source.z)<=range;
+}
+function stampNetworkPaintSource(projectile,actor,source) {
+  if (!projectile || !source || source.actor!==actor) return projectile;
+  projectile._netOwner=actor; projectile._netPeer=source.peer;
+  projectile._netOwnerLife=source.life; projectile._netOwnerAliveAtSource=source.alive;
+  projectile._netSourceClockValid=source.clockValid;
+  projectile._netPaintMaxTravel=source.maxTravel;
+  projectile._netShooterPosition={x:source.position.x,y:source.position.y,z:source.position.z};
+  const origin=projectile.pos || projectile.mesh?.position || projectile.group?.position;
+  if (origin) projectile._netOrigin={x:origin.x,y:origin.y,z:origin.z};
+  if (Number.isSafeInteger(source.tick)) projectile._netBornTick=source.tick;
+  if (Number.isFinite(source.time)) projectile._netBorn=source.time;
+  return projectile;
+}
+const nativeNetworkGhostProjectile=Projectiles.prototype.ghostProjectile;
+Projectiles.prototype.ghostProjectile=function(actor,event,...args) {
+  const projectile=nativeNetworkGhostProjectile.call(this,actor,event,...args);
+  const source=actor?.net?._netPaintSource || event?._netPaintSource, weapon=WEAPONS[source?.weaponId];
+  const speed=Math.hypot(event?.[8],event?.[9],event?.[10]), expected=weapon?.projSpeed ?? weapon?.flickSpeed;
+  const rollerDrop=weapon?.kind==='roller' && event?.[3]==='drop' && event?.[4]===0;
+  const valid=!!(source?.clockValid && weapon && Number.isFinite(expected) && expected>0
+    && (event?.[4]===source.weaponId || rollerDrop)
+    && [event?.[5],event?.[6],event?.[7],event?.[8],event?.[9],event?.[10],event?.[11],event?.[12],event?.[13],event?.[14],event?.[15],event?.[16],event?.[17]].every(Number.isFinite)
+    && networkPaintSourceNear(event[5],event[6],event[7],source.position,5)
+    && speed>1 && speed<=100 && event[11]>=0 && event[11]<=0.5
+    && event[12]>0 && event[12]<=3 && event[13]>=0 && event[13]<=1
+    && event[14]>0 && event[14]<=3 && event[15]>0 && event[15]<=2
+    && event[16]>=0 && event[16]<=200 && event[17]>=0 && event[17]<=10);
+  const maxTravel=Math.min(60,speed*(event?.[12] || 0)+2);
+  return stampNetworkPaintSource(projectile,actor,source ? {...source,clockValid:valid,maxTravel} : null);
+};
+const nativeNetworkGhostBomb=Projectiles.prototype.ghostBomb;
+Projectiles.prototype.ghostBomb=function(actor,...args) {
+  const bomb=nativeNetworkGhostBomb.call(this,actor,...args);
+  const source=actor?.net?._netPaintSource, kind=args[0], speed=Math.hypot(args[4],args[5],args[6]);
+  const kindAllowed=kind==='storm' ? actor?.weapon?.special==='storm' : kind==='bomb' && actor?.weapon?.sub==='bomb';
+  const position={x:args[1],y:args[2],z:args[3]};
+  const maxTravel=kind==='storm' ? SPECIALS.storm.throwSpeed*1.8+5 : SUB.bomb.throwSpeed*1.8+5;
+  const valid=!!(source?.clockValid && kindAllowed && [position.x,position.y,position.z,args[4],args[5],args[6]].every(Number.isFinite)
+    && networkPaintSourceNear(position.x,position.y,position.z,source.position,5) && speed>1 && speed<=30);
+  return stampNetworkPaintSource(bomb,actor,source ? {...source,clockValid:valid,maxTravel} : null);
+};
+const nativeNetworkGhostFire=Projectiles.prototype.ghostFire;
+Projectiles.prototype.ghostFire=function(actor,event,...args) {
+  const first=this.beams.length, result=nativeNetworkGhostFire.call(this,actor,event,...args);
+  const source=actor?.net?._netPaintSource;
+  const weapon=WEAPONS[source?.weaponId], start=event?.muzzle, direction=event?.dir, length=event?.len;
+  const unit=direction ? Math.hypot(direction.x,direction.y,direction.z) : NaN;
+  const beamValid=!!(source?.clockValid && weapon?.kind==='charger' && event?.weapon===source.weaponId
+    && start && direction && [start.x,start.y,start.z,direction.x,direction.y,direction.z,length].every(Number.isFinite)
+    && networkPaintSourceNear(start.x,start.y,start.z,source.position,5) && Math.abs(unit-1)<=0.03
+    && length>0 && length<=weapon.rangeMax+0.5);
+  const beamSource=source ? {...source,clockValid:beamValid,maxTravel:(Number.isFinite(length)?length:0)+1} : null;
+  for (let i=first;i<this.beams.length;i++) {
+    const beam=stampNetworkPaintSource(this.beams[i],actor,beamSource);
+    if (!beam) continue;
+    beam._netPaintBeam=true;
+    if (start && direction && Number.isFinite(length)) {
+      beam._netBeamStart={x:start.x,y:start.y,z:start.z};
+      beam._netBeamEnd={x:start.x+direction.x*length,y:start.y+direction.y*length,z:start.z+direction.z*length};
+    }
+  }
+  return result;
+};
+`;
   return code;
 }

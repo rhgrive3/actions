@@ -23,6 +23,11 @@ export const PATCH_ROOT = path.join(ROOT, 'patches/splatoon3');
 export const QUALITY_ROOT = path.join(ROOT, 'patches/local-quality');
 
 const netRoot = path.join(ROOT, 'patches/network-replication');
+function once(code,before,after,label) {
+  const at=code.indexOf(before);
+  if(at<0||code.indexOf(before,at+before.length)>=0) throw Error('Fixture adapter anchor mismatch: '+label);
+  return code.slice(0,at)+after+code.slice(at+before.length);
+}
 
 function relFor(file) {
   if (file.startsWith(UPSTREAM + path.sep)) return path.relative(UPSTREAM, file);
@@ -32,14 +37,20 @@ function relFor(file) {
 }
 
 // One module environment. `network` selects whether the newest adapter participates.
-export async function fixture({ network = true } = {}) {
+export async function fixture({ network = true, paintFootprint = null } = {}) {
   let seconds = 1000;
   const context = vm.createContext({ console, performance: { now: () => seconds * 1000 } });
   const modules = new Map();
 
-  const compose = network
-    ? (rel, code) => adaptRange(rel, adaptNetworkSource(rel, adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code))))))
-    : (rel, code) => adaptRange(rel, adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code)))));
+  const compose = (rel, code) => {
+    code=adaptSource(rel,code);
+    code=adaptTouchLayout(rel,code);
+    code=adaptReliability(rel,code);
+    if(paintFootprint&&rel==='src/world/paint.js') code=paintFootprint.adapt(rel,code,once);
+    code=adaptQualitySource(rel,code);
+    if(network) code=adaptNetworkSource(rel,code);
+    return adaptRange(rel,code);
+  };
 
   function resolve(spec, from) {
     if (spec === 'three') return path.join(UPSTREAM, 'vendor/three/build/three.module.js');
@@ -52,7 +63,8 @@ export async function fixture({ network = true } = {}) {
 
   function load(file) {
     if (modules.has(file)) return modules.get(file);
-    const raw = fs.readFileSync(file, 'utf8');
+    const footprintModule=paintFootprint&&file.endsWith(path.join('patches','local-quality','paint-footprint.mjs'));
+    const raw = footprintModule ? paintFootprint.moduleCode : fs.readFileSync(file, 'utf8');
     const isSource = file.startsWith(UPSTREAM + path.sep) || file.startsWith(PATCH_ROOT + path.sep) || file.startsWith(QUALITY_ROOT + path.sep);
     const source = isSource ? compose(relFor(file), raw) : raw;
     const mod = new vm.SourceTextModule(source, { context, identifier: file });
@@ -196,14 +208,23 @@ export async function fixture({ network = true } = {}) {
         aabbMax: new THREE.Vector3(20, 20, 20),
       }],
     };
+    const clearCalls = [], scissor = new THREE.Vector4(0, 0, atlasSize, atlasSize), viewport = new THREE.Vector4(1, 2, 33, 44);
+    let renderTarget = null;
+    let scissorTest = false, clearColor = new THREE.Color(0, 0, 0), clearAlpha = 1;
     const device = {
       capabilities: { getMaxAnisotropy: () => 1 },
-      getRenderTarget: () => null,
-      setRenderTarget: () => {},
-      getClearColor: (c) => c || new THREE.Color(0, 0, 0),
-      getClearAlpha: () => 1,
-      setClearColor: () => {},
-      clear: () => {},
+      getRenderTarget: () => renderTarget,
+      setRenderTarget: (target) => { renderTarget=target; if(target) viewport.set(0,0,target.width,target.height); },
+      getViewport: (v) => v.copy(viewport),
+      setViewport: (x,y,w,h) => { if(typeof x==='object') viewport.copy(x); else viewport.set(x,y,w,h); },
+      getClearColor: (c) => c ? c.copy(clearColor) : clearColor.clone(),
+      getClearAlpha: () => clearAlpha,
+      setClearColor: (c, a = 1) => { clearColor = new THREE.Color(c); clearAlpha = a; },
+      getScissor: (v) => v.copy(scissor),
+      setScissor: (x, y, w, h) => { if (typeof x === 'object') scissor.copy(x); else scissor.set(x, y, w, h); },
+      getScissorTest: () => scissorTest,
+      setScissorTest: (enabled) => { scissorTest = enabled; },
+      clear: (...args) => clearCalls.push({ args, rect:scissor.clone(), scissorTest, alpha:clearAlpha }),
       render: () => {},
       autoClear: false,
     };
@@ -212,8 +233,9 @@ export async function fixture({ network = true } = {}) {
     // authority without a GL context.
     const quads = [];
     p._netQuads = quads;
+    p._netClearCalls = clearCalls;
     const push = p._pushQuad.bind(p);
-    p._pushQuad = (...args) => { quads.push({ team: args[9], u0: args[1], u1: args[2], v0: args[3], v1: args[4] }); return push(...args); };
+    p._pushQuad = (...args) => { quads.push({ team: args[9], u0: args[1], u1: args[2], v0: args[3], v1: args[4], clearGeneration:clearCalls.length }); return push(...args); };
     G.paint = p;
     return p;
   }
