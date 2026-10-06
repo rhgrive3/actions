@@ -240,7 +240,10 @@ function retireNetworkGhosts(owner = null) {
       '    const c = b.pos;\n    const detonationLocalTime = b.ghost ? b._netBornLocal + b.age : null;\n    let area = G.paint.splat',
       'bomb detonation playback time');
     {
-      const bombHitMatches = [...code.matchAll(/^([ \t]*)this\.applyHit\(b\.owner, e, [^\n]+, 'bomb'\);$/gm)];
+      // Gameplay fidelity may classify the far Splat Bomb band as
+      // 'splat-bomb-far'; the recipient-life guard belongs to the bomb actor,
+      // not to one exact cause-string spelling.
+      const bombHitMatches = [...code.matchAll(/^([ \t]*)this\.applyHit\(b\.owner, e, [^\n]+\);$/gm)];
       if (bombHitMatches.length !== 1) throw Error('Network replication anchor mismatch: ' + rel + ': reject bomb from prior recipient life');
       const bombHit = bombHitMatches[0][0], indent = bombHitMatches[0][1];
       const guarded = `${indent}if (b.ghost && (!Number.isFinite(detonationLocalTime)
