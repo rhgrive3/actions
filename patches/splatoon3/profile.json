@@ -444,6 +444,7 @@
     "bots": true,
     "progress": {
       "referenceThreshold": 100,
+      "referenceCap": 200,
       "decayPerSecond": 0.2,
       "fastDecayAfter": 5,
       "fastDecayPerSecond": 3.3,

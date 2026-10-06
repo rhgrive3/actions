@@ -1,5 +1,3 @@
-import { isKitProjectile, kitTrizookaFlight, kitTrizookaOrbitDelta, kitTrizookaActorRadius, kitTrizookaWorldSweep, kitTrizookaClearPooled, kitVolleyHitAuthority } from './trizooka-collision.mjs';
-import { segmentCapsuleEntry as kitSegmentCapsuleEntry } from './projectile-collision.mjs';
 // Main-weapon gameplay only. Values live in profile.json; provenance and retained
 // uncertainty live in reference/weapons-fidelity-reference.json.
 // Source fields and interpreted equations are explicitly separated in the profile.
@@ -30,7 +28,6 @@ export function advanceFidelityProjectile(p, dt) {
   const step = Math.min(dt, remaining);
   p.age += step;
   const move = p.fidelityMove;
-  if (isKitProjectile(p)) kitTrizookaFlight(null, p, step);
   if (!move) {
     if (p.age > p.straight) p.vel.y -= p.grav * step;
     if (p.drag) p.vel.multiplyScalar(1 - p.drag * step * (p.age > p.straight ? 1 : 0));
@@ -48,7 +45,6 @@ export function advanceFidelityProjectile(p, dt) {
     if (brake && (p.vel.y < move.freeVelocityY || move.freeFrame!=null && (p.age-p.straight)*move.hz+EPSILON>=move.freeFrame)) p.fidelityPhase = 2;
   }
   p.pos.addScaledVector(p.vel, step);
-  if (isKitProjectile(p)) kitTrizookaOrbitDelta(null, p, step);
 }
 
 // Source records supply endpoints/counts. Added random draws are deterministic
@@ -85,7 +81,11 @@ function wallDropSource(p) {
   if (!w) return null;
   const raw = rawWeapon(w);
   let move, paint;
-  if (w.kind === 'roller') {
+  if (w.kind === 'dualies') {
+    // #604: Splat Dualies keep their pinned wall-drop records at the weapon
+    // top level, like Blaster/Splatling; both hands share them unchanged.
+    move = raw?.WallDropMoveParam; paint = raw?.WallDropCollisionPaintParam;
+  } else if (w.kind === 'roller') {
     // Roller wall-drop data belongs to the exact flick unit that produced the
     // glob (horizontal main/near or one of the vertical units), not the weapon
     // top level. configureFidelityFlick/initialize already preserve that unit.
@@ -267,16 +267,7 @@ function scratch(system) {
 }
 export function fidelityWorldHit(system,p) {
   const s=scratch(system);
-  if(!s.worldReady){
-    s.world.kitDefense=null;
-    if(isKitProjectile(p)) kitTrizookaWorldSweep(system,p,s.world,api.G.physics);
-    else sweptWorldHit(api.G.physics,p.prev,p.pos,fieldRadiusAt(p,p.fidelityPrevAge??p.age),fieldRadiusAt(p,p.age),s.world,true);
-    const defense=system.kitDefenseCandidate?.(p);
-    if(defense&&Number.isFinite(defense.distance)&&defense.distance>=0&&(!s.world.hit||defense.distance<s.world.dist-EPSILON)){
-      s.world.hit=true;s.world.dist=defense.distance;s.world.kitDefense=defense;
-    }
-    s.worldReady=true;
-  }
+  if(!s.worldReady){sweptWorldHit(api.G.physics,p.prev,p.pos,fieldRadiusAt(p,p.fidelityPrevAge??p.age),fieldRadiusAt(p,p.age),s.world,true);s.worldReady=true;}
   return s.world;
 }
 export function fidelityBossHit(system,p) {
@@ -310,8 +301,7 @@ export function fidelityProjectileTargets(system,p) {
     if(actor.pos.x<Math.min(p.prev.x,p.pos.x)-radius||actor.pos.x>Math.max(p.prev.x,p.pos.x)+radius||
        actor.pos.z<Math.min(p.prev.z,p.pos.z)-radius||actor.pos.z>Math.max(p.prev.z,p.pos.z)+radius)continue;
     s.base.set(actor.pos.x,actor.pos.y+(actor.smoothY||0),actor.pos.z);
-    const kr=kitTrizookaActorRadius(system,p);
-    const t=kr==null?capsuleEntry(p.prev,p.pos,s.base,PLAYER.radius,actor.form==='squid'?PLAYER.squidHeight:PLAYER.height,r0,r1):kitSegmentCapsuleEntry(p.prev,p.pos,s.base,PLAYER.radius,actor.form==='squid'?PLAYER.squidHeight:PLAYER.height,kr);
+    const t=capsuleEntry(p.prev,p.pos,s.base,PLAYER.radius,actor.form==='squid'?PLAYER.squidHeight:PLAYER.height,r0,r1);
     if(t!==null&&(t<best-EPSILON||Math.abs(t-best)<EPSILON&&String(actor.nid??actor.name)<String(nearest?.nid??nearest?.name))){best=t;nearest=actor;}
   }
   if(nearest){
@@ -327,7 +317,6 @@ export function fidelityProjectileTargets(system,p) {
 // the already-installed maximum-per-volley damage group when a stronger glob
 // reaches a victim after a weaker glob. No second full hit is awarded.
 export function fidelityVolleyDamage(p,victim,amount) {
-  if(!kitVolleyHitAuthority(p)) return 0;
   if(!p.vol)return amount;
   const seen=p.vol.hits.includes(victim);
   if(!seen)p.vol.hits.push(victim);
@@ -419,7 +408,7 @@ export function installWeaponsFidelity(context,profile) {
   const fresh=Projectiles.prototype._new,push=Projectiles.prototype._push,ghost=Projectiles.prototype.ghostProjectile,clear=Projectiles.prototype.clear;
   Projectiles.prototype.clear=function(...args){const result=clear.apply(this,args);this._fidelityCollision=null;this._fidelitySloshContext=null;return result;};
   Projectiles.prototype._new=function(...args){
-    const p=fresh.apply(this,args);kitTrizookaClearPooled(p);p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityRollerUnit=null;p.fidelitySloshUnit=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;return p;
+    const p=fresh.apply(this,args);p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityRollerUnit=null;p.fidelitySloshUnit=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;return p;
   };
   function initialize(p,w){
     if(!w)return;
@@ -497,7 +486,7 @@ export function installWeaponsFidelity(context,profile) {
   };
   Projectiles.prototype.ghostProjectile=function(actor,event){
     const before=this.list.length;const result=ghost.call(this,actor,event);
-    if(this.list.length>before){const p=this.list.at(-1);initialize(p,p.s3SpecialWeapon||WEAPONS[p.wid]||actor.weapon);}
+    if(this.list.length>before){const p=this.list.at(-1);initialize(p,WEAPONS[p.wid]||actor.weapon);}
     return result;
   };
   const slosh=Projectiles.prototype.fireSlosh;
