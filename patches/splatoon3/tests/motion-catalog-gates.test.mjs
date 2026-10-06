@@ -115,6 +115,28 @@ test('a pose explicitly detached by native contact weight is measured but not ca
   const result = gateFixture(); const foot = result.data[0].samples[0].feet[0]; foot.contactWeight = 0; foot.error = .2;
   assert.equal(validateCatalogResult(result).length, CATALOG_SCENARIOS.length);
 });
+test('installed graph requires a byte-exact map-reveal receipt (acceptance logic only)', () => {
+  const files = [...CATALOG_MODULES.map(([id]) => 'patches/splatoon3/runtime/' + id + '-motion.mjs'), 'patches/splatoon3/runtime/install.mjs', 'patches/splatoon3/runtime/walk.mjs', 'src/game/actor.js', 'src/game/character.js', 'src/game/weapons.js', 'src/game/physics.js', 'patches/splatoon3/runtime/map-reveal.mjs'];
+  const artifacts = Object.fromEntries(files.map(file => ['_versions/fixture/' + file, hash]));
+  const manifest = { contentHash: crypto.createHash('sha256').update(JSON.stringify(artifacts)).digest('hex'), artifacts };
+  const receipts = Object.keys(artifacts).map(file => ({ file, sha256: artifacts[file], bytes: 100 }));
+  // The exact CI failure: a missing load receipt is never an accepted graph.
+  assert.throws(() => validateCatalogReceipts(manifest, receipts.filter(r => !r.file.endsWith('map-reveal.mjs'))), /missing-module installed graph _versions\/fixture\/patches\/splatoon3\/runtime\/map-reveal\.mjs/);
+  assert.doesNotThrow(() => validateCatalogReceipts(manifest, receipts));
+  for (const wrong of [{ sha256: 'b'.repeat(64) }, { bytes: 0 }, { bytes: -1 }])
+    assert.throws(() => validateCatalogReceipts(manifest, receipts.map(r => r.file.endsWith('map-reveal.mjs') ? { ...r, ...wrong } : r)), /loaded-byte identity/);
+});
+
+// The catalog browser realm must actually fetch that installed module, not skip
+// the receipt: runCatalog is serialized into the page, so its import is what
+// produces the loaded receipt in the catalog's real realm.
+test('catalog realm loads the installed map-reveal helper (acceptance logic only)', () => {
+  const source = fs.readFileSync(new URL('../../../scripts/check-inkwave-motion-catalog.mjs', import.meta.url), 'utf8');
+  const body = source.slice(source.indexOf('async function runCatalog'), source.indexOf('async function main'));
+  assert.match(body, /await import\(prefix \+ 'patches\/splatoon3\/runtime\/map-reveal\.mjs'\)/);
+  assert.match(body, /typeof enemyRevealedOnMap\s*!==?\s*'function'/);
+});
+
 test('native explicit hand target is measured without claiming foregrip attachment (acceptance logic only)', () => {
   const result = gateFixture(); const hand = result.data[0].samples[0].grip.left;
   Object.assign(hand, { held: false, explicitTarget: 1, gap: .2 });
