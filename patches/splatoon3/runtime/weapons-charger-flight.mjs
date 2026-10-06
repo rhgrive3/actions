@@ -53,6 +53,7 @@ export function installChargerFlight(api,completion) {
     (system._fidelityChargerFlights||(system._fidelityChargerFlights=[])).push(job);
     if(!ghost){
       feetSplash(actor,w);
+      if(actor.weaponRunner)actor.weaponRunner.s3ChargerPostShot=16/60;
       emit('weapon:fire',{actor,weapon:w.id,muzzle:origin.clone(),dir:direction.clone(),charge,len:distance});
       if(actor.isLocal)emit('recoil',{amount:.005+charge*.013});
       if(actor.isLocal)G.input?.rumble?.(.12+charge*.45,.2+charge*.35,80+charge*90);

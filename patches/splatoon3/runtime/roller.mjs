@@ -23,9 +23,65 @@ export function rollerMode(w, vertical) {
 
 export function installRollerLogic({ WeaponRunner }, _profile) {
   const roller = WeaponRunner.prototype._roller, reset = WeaponRunner.prototype.reset;
+
+  const armsInterruption = runner => {
+    const a = runner.a;
+    return a.grounded && a.ink > 0.5 && runner.flick < 0;
+  };
+  const rollWillStop = (runner, fire) => {
+    const a = runner.a;
+    return runner.rolling === true && !fire && armsInterruption(runner);
+  };
+  const armAheadOf = (runner, now, fire) => {
+    const live = rollStopBlocks(now, runner.s3RollStop);
+    if ((live.main || live.sub || live.squid) || !rollWillStop(runner, fire)) return false;
+    runner.s3RollStop = rollStopLocks(now);
+    return true;
+  };
+  const disarmIf = (runner, armed) => {
+    if (armed && (runner.rolling === true || !armsInterruption(runner))) runner.s3RollStop = null;
+  };
+  WeaponRunner.prototype.update = function (dt, inp = {}) {
+    const now = G.time;
+    const armed = armAheadOf(this, now, !!inp.fire);
+    const locks = this.s3RollStop;
+    let input = inp;
+    if (locks && this.a.weapon?.kind === 'roller') {
+      const blocked = rollStopBlocks(now, locks);
+      if (blocked.main || blocked.sub) {
+        input = { ...inp };
+        if (blocked.main && !armed) { input.fire = false; input.firePressed = false; }
+        if (blocked.sub) { input.sub = false; input.subReleased = false; }
+      }
+    }
+    const wasRolling = this.rolling === true;
+    const result = runnerUpdate.call(this, dt, input);
+    disarmIf(this, armed);
+    if (wasRolling && this.rolling !== true && armsInterruption(this)) this.s3RollStop = rollStopLocks(now);
+    return result;
+  };
+
+  const rollStopActorUpdate = Actor.prototype.update;
+  Actor.prototype.update = function (dt, ...rest) {
+    const runner = this.weaponRunner;
+    if (!runner) return rollStopActorUpdate.call(this, dt, ...rest);
+    const now = G.time;
+    const armed = armAheadOf(runner, now, !!(this.intent?.fire || this.fireBuffer > 0));
+    const blockSquid = rollStopBlocks(now, runner.s3RollStop).squid;
+    if (blockSquid && this.intent?.squid) {
+      const held = this.intent.squid;
+      this.intent.squid = false;
+      try { return rollStopActorUpdate.call(this, dt, ...rest); }
+      finally { this.intent.squid = held; disarmIf(runner, armed); }
+    }
+    try { return rollStopActorUpdate.call(this, dt, ...rest); }
+    finally { disarmIf(runner, armed); }
+  };
+
   WeaponRunner.prototype.reset = function (...args) {
     const result = reset.apply(this, args);
     this.s3RollerAttack = null;
+    this.s3RollStop = null;
     if (this.a.character) {
       this.a.character.s3RollerFlick = null;
       this.a.character._s3CancelRollerFlick?.();

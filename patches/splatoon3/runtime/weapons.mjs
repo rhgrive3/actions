@@ -318,6 +318,8 @@ export function installWeapons(context, profile) {
       this.s3Turret = true;
       this.s3DodgeShotPending = 4 / 60;
     }
+    // Movement recovery releases roll resources without changing firing gates.
+    if (!this.dodge && this.lockT <= 0) this.rollsLeft = w.rolls;
     return result;
   };
   WeaponRunner.prototype._spreadDeg = function (w) {
@@ -328,7 +330,6 @@ export function installWeapons(context, profile) {
   };
   const fireCharger = Projectiles.prototype.fireCharger;
   Projectiles.prototype.fireCharger = function (a, w, charge) {
-    if (a.weaponRunner) a.weaponRunner.s3ChargerPostShot = 16 / 60;
     if (charge < .999) return fireCharger.call(this, a, w, charge);
     const muzzle = this._muzzle(a, new THREE.Vector3()).clone(), dir = this._aimFrom(a, muzzle, new THREE.Vector3()).clone();
     const hit = G.physics.raycast(muzzle, dir, w.rangeMax, new Hit(), true);
