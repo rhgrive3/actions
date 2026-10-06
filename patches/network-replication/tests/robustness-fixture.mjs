@@ -3,7 +3,7 @@
 // supplies the socket-free platform, the scene, and physics/paint/audio stubs.
 //
 // Composition order matches scripts/build-inkwave.mjs exactly:
-//   adaptNetworkSource(adaptQualitySource(adaptReliability(adaptTouchLayout(adaptSource(...)))))
+//   adaptRange(adaptNetworkSource(adaptQualitySource(adaptReliability(adaptTouchLayout(adaptSource(...))))))
 // Passing { network: false } omits ONLY the newest adapter so a test can reproduce
 // the pre-fix baseline on the same sources.
 import fs from 'node:fs';
@@ -15,6 +15,7 @@ import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
 import { adaptReliability } from '../../reliability/adapter.mjs';
 import { adaptQualitySource } from '../../local-quality/adapter.mjs';
 import { adaptNetworkSource } from '../adapter.mjs';
+import { adaptRange } from '../../practice-range/adapter.mjs';
 
 export const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 export const UPSTREAM = process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
@@ -37,8 +38,8 @@ export async function fixture({ network = true } = {}) {
   const modules = new Map();
 
   const compose = network
-    ? (rel, code) => adaptNetworkSource(rel, adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code)))))
-    : (rel, code) => adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code))));
+    ? (rel, code) => adaptRange(rel, adaptNetworkSource(rel, adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code))))))
+    : (rel, code) => adaptRange(rel, adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code)))));
 
   function resolve(spec, from) {
     if (spec === 'three') return path.join(UPSTREAM, 'vendor/three/build/three.module.js');
@@ -119,14 +120,18 @@ export async function fixture({ network = true } = {}) {
   G.projectiles = projectiles;
 
   // ---- session / NetMatch helpers
-  const makeSession = (id = 'me', host = 'me', members = [['me', 'Me'], ['p2', 'P2'], ['p3', 'P3']]) => ({
-    myId: id, isHost: id === host, hostId: host,
-    _members: new Map(members),
-    tr: { broadcast: () => {}, sendTo: () => {} },
-  });
+  const makeSession = (id = 'me', host = 'me', members = [['me', 'Me'], ['p2', 'P2'], ['p3', 'P3']]) => {
+    const sent = [];
+    return {
+      myId: id, isHost: id === host, hostId: host,
+      _members: new Map(members), sent,
+      tr: { broadcast: (packet) => sent.push({ to: '*', packet }), sendTo: (to, packet) => sent.push({ to, packet }) },
+    };
+  };
 
-  function makeNetMatch(session) {
-    const nm = new NetMatch(session, { map: 'map', difficulty: 'normal', id: 'fixture-match' });
+  function makeNetMatch(session, cfg = {}) {
+    const roster = cfg.roster || [...session._members.keys()].map((owner, index) => ({ owner, bot: false, team: index % 2 }));
+    const nm = new NetMatch(session, { map: 'map', difficulty: 'normal', id: 'fixture-match', roster, ...cfg });
     G.netm = nm;
     return nm;
   }
@@ -144,7 +149,11 @@ export async function fixture({ network = true } = {}) {
       anim: {}, stats: { turf: 0, splats: 0, deaths: 0 },
       intent: { move: new THREE.Vector3(), fire: false, squid: false, jump: false, sub: false, special: false },
       respawn() {}, respawnTimer: 0, superJumpState: null, specialActive: null, netTp: 0, isBot: false,
-      addTurf() {}, isLocal: !remote, _nearCamera: () => false, _finishFrame() {},
+      creditCalls: 0,
+      specialCost() { return this.weapon.specialCost; },
+      specialReady() { return this.special >= this.specialCost() && !this.specialActive; },
+      addTurf(area) { this.creditCalls++; return api.Actor.prototype.addTurf.call(this, area); },
+      isLocal: !remote, _nearCamera: () => false, _finishFrame() {},
     };
   }
 

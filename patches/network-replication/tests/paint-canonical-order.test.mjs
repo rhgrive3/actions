@@ -1,47 +1,66 @@
-// #365 / #369 — one canonical room-wide order for paint ownership.
-//
-// Paint writes are not commutative ("newest applied splat wins"), so with one
-// client applying its own splat immediately and replaying remote splats later,
-// two overlapping opposing splats used to end on opposite teams. These checks
-// drive the shipped PaintSystem through the real build-time adapter chain and
-// the real NetMatch receive path; only the GL device and the clock are stubs.
+// #365 / #369: exercise paint requests and authoritative receipts through the
+// installed NetMatch/PaintSystem adapters. Only WebGL and wall-clock time are stubbed.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from './robustness-fixture.mjs';
 
-const CENTER = [0, 0, 0];
+const MATCH = 'paint-order-fixture';
+const MEMBERS = [['host', 'Host'], ['guestA', 'Guest A'], ['guestB', 'Guest B'], ['observer', 'Observer']];
+const ROSTER = [
+  { owner:'host', bot:false, team:0 },
+  { owner:'host', bot:true, team:1 },
+  { owner:'guestA', bot:false, team:0 },
+  { owner:'guestB', bot:false, team:1 },
+  { owner:'observer', bot:false, team:1 },
+];
+const CENTER = [4, 0, 4];
 const RADIUS = 1.2;
 
-// The wire shape `_rec()` produces: [ts,'s',x,y,z,radius,team,seed,kind,stx,sty,stz,stAmt,tick,seq]
-function splatPacket({ tick, seq, team, radius = RADIUS, x = 0, y = 0, z = 0, seed = 0.42, sentAt }) {
-  return [sentAt ?? tick + 0.75, 's', x, y, z, radius, team, seed, 0, 0, 0, 0, 0, tick, seq];
+function wire(value) { return JSON.parse(JSON.stringify(value)); }
+
+function peer(f, id, hostId = 'host', { mode = 'turf', roster = ROSTER } = {}) {
+  const session = f.makeSession(id, hostId, MEMBERS);
+  const nm = f.makeNetMatch(session, { id:MATCH, mode, roster });
+  const actors = new Map(MEMBERS.map(([owner]) => [owner, f.makeActor({
+    nid:owner, owner, remote:owner !== id, team:owner === 'guestB' || owner === 'observer' ? 1 : 0,
+  })]));
+  const hostBot = f.makeActor({ nid:'host-bot', owner:'host', remote:id !== 'host', team:1 });
+  hostBot.isBot = true;
+  actors.set('hostBot', hostBot);
+  f.bind(nm, [...actors.values()]);
+  const paint = f.makePaint({ su:8, sv:8, atlasSize:512, maxDensity:30 });
+  f.clock.set(10);
+  f.G.time = 2;
+  return { f, session, nm, actors, paint };
 }
 
-async function receiver(f, myId, peers, paintOptions) {
-  const paint = f.makePaint(paintOptions);
-  const nm = f.makeNetMatch(f.makeSession(myId, peers[0][0], [[myId, 'Me'], ...peers]));
-  f.bind(nm, peers.map(([id], index) => f.makeActor({ nid: id, owner: id, remote: id !== myId, team: index % 2 })));
-  return { paint, nm };
+function flushTick(p) {
+  p.f.clock.advance(0.01);
+  p.f.G.time = 2;
+  p.nm._sendTick();
+  return wire(p.session.sent.at(-1).packet);
 }
 
-// An event is replayed only once the peer's owner-simulation clock has reached
-// its tick, which needs the sender's stream to have moved on a little. Each
-// delivery therefore hands over the event and then keeps the peer clock ticking,
-// the same thing a live connection does.
-async function deliver(nm, from, tick, events, { epoch = nm.cfg.id, ownerTick = tick } = {}) {
-  nm.onMessage(from, { k: 't', ts: tick, r: 2, m: epoch, u: ownerTick, e: events });
-  for (let n = 1; n <= 4; n++) {
-    nm.update(1 / 60);
-    const ts = tick + n / 60;
-    nm.onMessage(from, { k: 't', ts, r: 2, m: nm.cfg.id, u: Math.round(ts) });
-  }
-  for (let n = 0; n < 10; n++) nm.update(1 / 60);
+function ownerSplat(p, ownerId, team, center = CENTER, radius = RADIUS) {
+  const area = p.paint.splat(new p.f.THREE.Vector3(...center), radius, team, { seed:0.42 });
+  p.actors.get(ownerId).addTurf(area); // the same caller-side credit used by weapons and actors
+  return area;
 }
 
-// Replayed splats always spread through the growth list, so let the growth pass
-// finish before reading what actually reached the atlas.
-function settle(paint, frames = 40) {
-  for (let n = 0; n < frames; n++) paint.flush(1 / 60);
+function playThroughNetMatch(p, from, packet) {
+  p.nm.onMessage(from, wire(packet));
+  const timeline = p.nm._peer(from);
+  timeline.tr = Infinity;
+  p.nm._playEvents();
+}
+
+function playOneCanonical(p, event, outerTs) {
+  const tick = event[event.length - 2];
+  playThroughNetMatch(p, 'host', { k:'t', ts:outerTs, r:2, u:tick, e:[event] });
+}
+
+function settle(p, frames = 40) {
+  for (let i = 0; i < frames; i++) p.paint.flush(1 / 60);
 }
 
 function cellAt(paint, u, v) {
@@ -51,305 +70,185 @@ function cellAt(paint, u, v) {
   return f.grid + j * f.nu + i;
 }
 
-function hash(paint) {
-  let h = 0x811c9dc5;
-  for (let k = 0; k < paint.grid.length; k++) {
-    h = (Math.imul(h ^ paint.grid[k], 0x01000193) >>> 0);
-    h = (Math.imul(h ^ (paint.gridOrder[k] | 0), 0x01000193) >>> 0);
-  }
-  return h >>> 0;
-}
-
-function centreOwner(paint) {
-  return paint.grid[cellAt(paint, 0, 0)];
-}
-
-function assertQuadsStayInsideCurrentCellOwners(paint) {
-  const f = paint.paintFaces[0];
-  const eps = 1e-9;
+function assertAtlasMatchesGrid(paint) {
+  const f = paint.paintFaces[0], eps = 1e-9;
   for (const q of paint._netQuads) {
     for (let row = 0; row < f.nv; row++) for (let col = 0; col < f.nu; col++) {
       const u0 = col * f.cu, u1 = (col + 1) * f.cu;
       const v0 = row * f.cv, v1 = (row + 1) * f.cv;
-      const intersectsInterior = q.u1 > u0 + eps && q.u0 < u1 - eps
-        && q.v1 > v0 + eps && q.v0 < v1 - eps;
-      if (!intersectsInterior) continue;
-      const k = f.grid + row * f.nu + col;
-      assert.equal(paint.grid[k], q.team + 1,
-        `team ${q.team} quad crosses cell (${col},${row}) owned by ${paint.grid[k]}`);
+      if (q.u1 <= u0 + eps || q.u0 >= u1 - eps || q.v1 <= v0 + eps || q.v0 >= v1 - eps) continue;
+      const owner = paint.grid[f.grid + row * f.nu + col];
+      assert.equal(q.team + 1, owner, `team ${q.team} growth crossed cell (${col},${row}) owned by ${owner}`);
     }
   }
 }
 
-test('negative baseline control: without canonical order the same two splats diverge by arrival order', async () => {
-  const f = await fixture({ network: false });
-  assert.equal(f.network, false, 'baseline runs the unpatched paint source');
+async function ownerGeneratedPair() {
+  const hf = await fixture(), host = peer(hf, 'host');
+  const guestAF = await fixture(), guestBF = await fixture();
+  const guestA = peer(guestAF, 'guestA'), guestB = peer(guestBF, 'guestB');
+  ownerSplat(guestA, 'guestA', 0, [3.45, 0, 4]);
+  const requestA = flushTick(guestA);
+  ownerSplat(guestB, 'guestB', 1, [4.55, 0, 4]);
+  const requestB = flushTick(guestB);
+  host.nm.onMessage('guestA', requestA);
+  hf.clock.advance(0.01);
+  host.nm.onMessage('guestB', requestB);
+  const canonical = Array.from(host.nm.out.filter((e) => e[1] === 's'), wire);
+  return { host, canonical, guestA, guestB };
+}
 
-  const a = f.makePaint();
-  const grid = Array.from(a.grid);
-  a.splat(new f.THREE.Vector3(...CENTER), RADIUS, 0, { instant: true });
-  const forward = Array.from(a.grid);
-  a.clear();
-  a.splat(new f.THREE.Vector3(...CENTER), RADIUS, 1, { instant: true });
-  a.splat(new f.THREE.Vector3(...CENTER), RADIUS, 0, { instant: true });
-  const reversed = Array.from(a.grid);
+test('guest predictions are accepted once, host ordered, relayed, and credited once', async () => {
+  const hf = await fixture(), host = peer(hf, 'host');
+  const af = await fixture(), guestA = peer(af, 'guestA');
+  const bf = await fixture(), guestB = peer(bf, 'guestB');
+  const areaA = ownerSplat(guestA, 'guestA', 0);
+  const reqA = flushTick(guestA);
+  const areaB = ownerSplat(guestB, 'guestB', 1);
+  const reqB = flushTick(guestB);
 
-  assert.notDeepEqual(forward, reversed, 'baseline control confirms order-dependent ownership');
-  assert.deepEqual(grid, new Array(grid.length).fill(0), 'baseline starts from an empty grid');
+  host.nm.onMessage('guestA', reqA);
+  hf.clock.advance(0.01);
+  host.nm.onMessage('guestB', reqB);
+  assert.deepEqual(Array.from(host.nm.out.filter((e) => e[1] === 's'), (e) => e[16]), [1, 2], 'host assigns order by accepted request arrival');
+
+  const duplicate = { ...reqA, ts:reqA.ts + 0.2 };
+  host.nm.onMessage('guestA', duplicate);
+  assert.equal(host.nm.out.filter((e) => e[1] === 's').length, 2, 'replayed owner request adds no second authoritative splat');
+  assert.equal(host.actors.get('guestA').creditCalls, 0, 'authority applies guest paint without granting owner credit again');
+
+  const relay = flushTick(host);
+  assert.equal(relay.r, 2, 'canonical receipts use the existing event packet marker');
+  assert.equal(relay.e.filter((e) => e[1] === 's').length, 2);
+  playThroughNetMatch(guestA, 'host', relay);
+  playThroughNetMatch(guestB, 'host', relay);
+  settle(host); settle(guestA); settle(guestB);
+
+  assert.equal(host.paint.grid[cellAt(host.paint, CENTER[0], CENTER[2])], 2);
+  assert.deepEqual(Array.from(guestA.paint.grid), Array.from(host.paint.grid));
+  assert.deepEqual(Array.from(guestB.paint.grid), Array.from(host.paint.grid));
+  assert.deepEqual(Array.from(guestA.paint.gridOrderSeq), Array.from(host.paint.gridOrderSeq));
+  assert.deepEqual([...guestA.paint.coverage()], [...host.paint.coverage()]);
+  assert.ok(areaA > 0 && areaB > 0);
+  assert.equal(guestA.actors.get('guestA').creditCalls, 1);
+  assert.equal(guestA.actors.get('guestA').stats.turf, areaA, 'host echo does not double the predicted owner credit');
+  assert.equal(guestB.actors.get('guestB').creditCalls, 1);
+  assert.equal(guestB.actors.get('guestB').stats.turf, areaB);
 });
 
-test('two clients with simultaneous opposing splats converge on the same ownership and coverage (#365, #369)', async () => {
-  const peers = [['p1', 'P1'], ['p2', 'P2']];
+test('out-of-order canonical events converge per cell and stale growth cannot repaint newer cells', async () => {
+  const { canonical } = await ownerGeneratedPair();
+  assert.equal(canonical.length, 2);
+  assert.equal(canonical[0][16], 1);
+  assert.equal(canonical[1][16], 2);
+  const forwardF = await fixture(), reverseF = await fixture();
+  const forward = peer(forwardF, 'observer'), reverse = peer(reverseF, 'observer');
+  playOneCanonical(forward, canonical[0], 20);
+  playOneCanonical(forward, canonical[1], 20.1);
+  playOneCanonical(reverse, canonical[1], 20);
+  playOneCanonical(reverse, canonical[0], 20.1);
+  settle(forward); settle(reverse);
 
-  const fa = await fixture();
-  fa.clock.set(100);
-  const A = await receiver(fa, 'p1', peers);
-  fa.G.time = 100 / 60;
-  A.paint.splat(new fa.THREE.Vector3(...CENTER), RADIUS, 0, { instant: true, seed: 0.42 });
-  const fromA = A.nm.out.filter((e) => e[1] === 's').map((e) => e.slice());
+  assert.deepEqual(Array.from(reverse.paint.grid), Array.from(forward.paint.grid));
+  assert.deepEqual(Array.from(reverse.paint.gridOrderEpoch), Array.from(forward.paint.gridOrderEpoch));
+  assert.deepEqual(Array.from(reverse.paint.gridOrderSeq), Array.from(forward.paint.gridOrderSeq));
+  assert.deepEqual([...reverse.paint.coverage()], [...forward.paint.coverage()]);
+  assertAtlasMatchesGrid(forward.paint);
+  assertAtlasMatchesGrid(reverse.paint);
+  assert.equal(reverse.paint.grid[cellAt(reverse.paint, CENTER[0], CENTER[2])], 2, 'order 1 cannot take the contested cells back from order 2');
 
-  const fb = await fixture();
-  fb.clock.set(100);
-  const B = await receiver(fb, 'p2', peers);
-  fb.G.time = 100 / 60;
-  B.paint.splat(new fb.THREE.Vector3(...CENTER), RADIUS, 1, { instant: true, seed: 0.42 });
-  const fromB = B.nm.out.filter((e) => e[1] === 's').map((e) => e.slice());
-
-  assert.equal(fromA.length, 1, 'origin A recorded exactly one paint packet (no double apply on echo)');
-  assert.equal(fromB.length, 1, 'origin B recorded exactly one paint packet');
-  assert.equal(fromA[0][fromA[0].length - 2], 100, 'origin stamped its own 60 Hz simulation tick');
-
-  await deliver(A.nm, 'p2', 101, fromB);
-  await deliver(B.nm, 'p1', 101, fromA);
-
-  assert.equal(A.paint.grid.length, B.paint.grid.length);
-  assert.deepEqual(Array.from(A.paint.grid), Array.from(B.paint.grid), 'CPU grid must be identical on both owners');
-  assert.deepEqual(Array.from(A.paint.gridOrder), Array.from(B.paint.gridOrder), 'per-cell canonical order must match');
-  assert.deepEqual([...A.paint.coverage()], [...B.paint.coverage()], 'coverage must match on both owners');
-  assert.ok(A.paint.coverage()[0] + A.paint.coverage()[1] > 0, 'the contested cells were actually painted');
-
-  // The GPU atlas is written by the last quad that survives; the CPU grid is the
-  // authority, so the newest quad on each client must be the team the grid says
-  // owns the overlap. Same rule, both clients.
-  const quadTeam = (p) => p._netQuads[p._netQuads.length - 1].team + 1; // grid stores team + 1
-  settle(A.paint);
-  settle(B.paint);
-  assert.equal(quadTeam(A.paint), centreOwner(A.paint), 'client A final GPU write matches the CPU owner');
-  assert.equal(quadTeam(B.paint), centreOwner(B.paint), 'client B final GPU write matches the CPU owner');
-  assert.equal(quadTeam(A.paint), quadTeam(B.paint), 'both clients end on the same GPU team');
+  const quads = reverse.paint._netQuads.length;
+  playOneCanonical(reverse, canonical[1], 20.2);
+  settle(reverse);
+  assert.equal(reverse.paint._netQuads.length, quads, 'a duplicate canonical receipt is neither replayed nor redrawn');
 });
 
-test('reversed one-way lag and a third observer converge on the same grid (#365, #369)', async () => {
-  const packets = [
-    splatPacket({ tick: 200, seq: 1, team: 0, x: -0.4 }),
-    splatPacket({ tick: 200, seq: 1, team: 1, x: 0.4 }),
-  ];
-  const forwardPeers = [['p1', 'P1'], ['p2', 'P2'], ['obs', 'Obs']];
+test('host rejects unauthenticated, wrong-team, wrong-match, malformed, and future paint requests', async () => {
+  const hf = await fixture(), host = peer(hf, 'host');
+  const gf = await fixture(), guest = peer(gf, 'guestA');
+  ownerSplat(guest, 'guestA', 1); // guestA is rostered on team 0
+  const wrongTeam = flushTick(guest);
+  host.nm.onMessage('guestA', wrongTeam);
 
-  const run = async (order) => {
-    const f = await fixture();
-    const { paint, nm } = await receiver(f, 'obs', forwardPeers);
-    let ts = 201;
-    for (const id of order) {
-      await deliver(nm, id, ts, [packets[id === 'p1' ? 0 : 1]]);
-      ts += 1;
-    }
-    return { hash: hash(paint), grid: Array.from(paint.grid), coverage: [...paint.coverage()] };
-  };
+  ownerSplat(guest, 'guestA', 0);
+  const validShape = flushTick(guest);
+  const wrongMatch = wire(validShape); wrongMatch.ts += 0.1; wrongMatch.e[0][14] = 'another-match';
+  host.nm.onMessage('guestA', wrongMatch);
+  const malformed = wire(validShape); malformed.ts += 0.2; malformed.e[0][16] = null;
+  host.nm.onMessage('guestA', malformed);
+  const future = wire(validShape); future.ts += 0.3; future.u = future.e[0][26] - 1;
+  host.nm.onMessage('guestA', future);
+  const outsider = wire(validShape); outsider.ts += 0.4;
+  host.nm.onMessage('intruder', outsider);
 
-  const forward = await run(['p1', 'p2']);
-  const reversed = await run(['p2', 'p1']);
-  assert.equal(reversed.hash, forward.hash, 'an observer converges regardless of arrival order');
-  assert.deepEqual(reversed.grid, forward.grid);
-  assert.deepEqual(reversed.coverage, forward.coverage);
+  assert.equal(host.paint.grid.some((cell) => cell !== 0), false, 'rejected requests do not mutate host gameplay paint');
+  assert.equal(host.nm.out.filter((e) => e[1] === 's').length, 0, 'rejected requests produce no canonical relay');
 });
 
-test('duplicate, replayed and late packets cannot rewrite canonically newer paint (#365, #369)', async () => {
-  const f = await fixture();
-  const { paint, nm } = await receiver(f, 'obs', [['p1', 'P1'], ['p2', 'P2']]);
+test('host authority includes Boss paint while guests remain bound to their roster team', async () => {
+  const bossRoster = MEMBERS.map(([owner], index) => ({ owner, bot:false, team:index === 3 ? 1 : 0 }));
+  const hf = await fixture(), host = peer(hf, 'host', 'host', { mode:'boss', roster:bossRoster });
+  const gf = await fixture(), guest = peer(gf, 'guestA', 'host', { mode:'boss', roster:bossRoster });
+  host.paint.splat(new host.f.THREE.Vector3(...CENTER), RADIUS, 1, { seed:0.42 });
+  const canonical = flushTick(host);
+  playThroughNetMatch(guest, 'host', canonical);
+  assert.equal(guest.paint.grid[cellAt(guest.paint, CENTER[0], CENTER[2])], 2, 'host-owned Boss team ink reaches guests');
 
-  const fresh = splatPacket({ tick: 300, seq: 1, team: 0 });
-  await deliver(nm, 'p1', 301, [fresh]);
-  settle(paint);
-  const owned = Array.from(paint.grid);
-  const coverage = [...paint.coverage()];
-  const order = Array.from(paint.gridOrder);
-  const quads = paint._netQuads.length;
-  assert.equal(centreOwner(paint), 1, 'team 0 owns the overlap after the fresh packet');
-
-  // exact duplicate
-  await deliver(nm, 'p1', 302, [fresh.slice()]);
-  // replayed older sequence number
-  await deliver(nm, 'p1', 303, [splatPacket({ tick: 299, seq: 1, team: 1 })]);
-  // genuinely late packet from another sender, carrying an older canonical tick
-  await deliver(nm, 'p2', 304, [splatPacket({ tick: 120, seq: 7, team: 1 })]);
-
-  settle(paint);
-  assert.deepEqual(Array.from(paint.grid), owned, 'no duplicate or late packet changed ownership');
-  assert.deepEqual(Array.from(paint.gridOrder), order, 'no duplicate or late packet changed the canonical order');
-  assert.deepEqual([...paint.coverage()], coverage, 'coverage is untouched');
-  assert.equal(paint._netQuads.length, quads, 'a stale packet emitted no atlas quad, so GPU ink cannot contradict the grid');
+  const malicious = peer(gf, 'guestA', 'host', { mode:'boss', roster:bossRoster });
+  ownerSplat(malicious, 'guestA', 1);
+  const request = flushTick(malicious);
+  const authority = peer(hf, 'host', 'host', { mode:'boss', roster:bossRoster });
+  authority.nm.onMessage('guestA', request);
+  assert.equal(authority.paint.grid.some((cell) => cell !== 0), false, 'Boss mode does not let a guest claim the boss team');
 });
 
-test('a late packet stays suppressed after more than fifty intervening splats (#365, #369)', async () => {
-  const f = await fixture();
-  const { paint, nm } = await receiver(f, 'obs', [['p1', 'P1'], ['p2', 'P2']]);
+test('host migration advances paint epoch, cancels old predictions, and admits only the new host timeline', async () => {
+  const oldHostF = await fixture(), oldHost = peer(oldHostF, 'host');
+  ownerSplat(oldHost, 'host', 0);
+  const oldHostPacket = flushTick(oldHost);
+  const oldCanonical = oldHostPacket.e.find((e) => e[1] === 's');
 
-  // 64 ordered splats from p1, far more than any bounded splat history could keep.
-  let ts = 401;
-  for (let n = 0; n < 64; n++) {
-    await deliver(nm, 'p1', ts, [splatPacket({ tick: 400 + n, seq: n + 1, team: 0, x: (n % 8) * 0.2 - 0.7 })]);
-    ts += 1;
+  const observerF = await fixture(), observer = peer(observerF, 'observer');
+  playThroughNetMatch(observer, 'host', oldHostPacket);
+  const pendingArea = ownerSplat(observer, 'observer', 1);
+  const pendingRequest = flushTick(observer);
+  assert.ok(pendingArea > 0 && observer.paint.gridPrediction.some((request) => request >= 0));
+
+  const newHostF = await fixture(), newHost = peer(newHostF, 'guestA');
+  for (const p of [observer, newHost]) {
+    p.session.hostId = 'guestA';
+    p.session.isHost = p.session.myId === 'guestA';
+    p.session._members.delete('host');
+    p.nm.onLeave('host', true);
   }
-  const owned = Array.from(paint.grid);
-  const order = Array.from(paint.gridOrder);
-  const coverage = [...paint.coverage()];
-  settle(paint);
-  const quads = paint._netQuads.length;
-  assert.ok(quads > 0, 'the 64 newer splats really did reach the atlas');
+  assert.equal(observer.nm._paintState.epoch, 1);
+  assert.equal(newHost.nm._paintState.epoch, 1);
+  assert.equal(newHost.actors.get('hostBot').owner, 'guestA', 'the new host adopts paint ownership of the departed host bot');
+  assert.equal(observer.paint.gridPrediction.some((request) => request >= 0), false);
+  assert.deepEqual(Array.from(observer.paint.grid), Array.from(observer.paint.gridCanonical), 'host change rolls back only unconfirmed local paint');
 
-  // The old team-1 packet finally lands, long after its canonical position.
-  await deliver(nm, 'p2', ts, [splatPacket({ tick: 150, seq: 3, team: 1 })]);
-  ts += 1;
-  settle(paint);
+  newHost.nm.onMessage('observer', pendingRequest);
+  assert.equal(newHost.paint.grid.some((cell) => cell !== 0), false, 'a pre-migration request carries the old epoch and is refused');
+  playOneCanonical(observer, oldCanonical, 30);
+  assert.deepEqual(Array.from(observer.paint.grid), Array.from(observer.paint.gridCanonical), 'a late packet from the departed host cannot paint');
 
-  assert.deepEqual(Array.from(paint.grid), owned, 'the very late packet changed no cell');
-  assert.deepEqual(Array.from(paint.gridOrder), order, 'the very late packet changed no canonical order');
-  assert.deepEqual([...paint.coverage()], coverage, 'the very late packet changed no coverage');
-  assert.equal(paint._netQuads.length, quads, 'the very late packet emitted no atlas quad after 64 newer splats');
-  assert.equal(centreOwner(paint), 1, 'team 0 still owns the overlap');
-});
+  ownerSplat(newHost, 'hostBot', 1);
+  const newHostPacket = flushTick(newHost);
+  const newEvent = newHostPacket.e.find((e) => e[1] === 's');
+  assert.equal(newEvent[15], 1);
+  assert.equal(newEvent[6], 1, 'the new host can relay paint from a transferred opposite-team bot');
+  playThroughNetMatch(observer, 'guestA', newHostPacket);
+  settle(observer); settle(newHost);
+  assert.deepEqual(Array.from(observer.paint.grid), Array.from(newHost.paint.grid));
 
-test('reconnect clear drops the canonical order with the grid (#365, #369)', async () => {
-  const f = await fixture();
-  const { paint, nm } = await receiver(f, 'obs', [['p1', 'P1'], ['p2', 'P2']]);
-
-  await deliver(nm, 'p1', 501, [splatPacket({ tick: 500, seq: 1, team: 0 })]);
-  assert.equal(centreOwner(paint), 1);
-  assert.ok(paint.gridOrder.some((k) => k > 0), 'the canonical order was recorded');
-
-  paint.clear();
-  assert.ok(paint.grid.every((v) => v === 0), 'the grid is empty after a reconnect clear');
-  assert.ok(paint.gridOrder.every((k) => k === 0), 'the canonical order is empty after a reconnect clear');
-
-  const quads = paint._netQuads.length;
-  await deliver(nm, 'p2', 502, [splatPacket({ tick: 100, seq: 1, team: 1 })]);
-  settle(paint);
-  assert.equal(centreOwner(paint), 2, 'a previously suppressed old packet paints again once the match state is cleared');
-  assert.ok(paint._netQuads.length > quads, 'and it emits GPU ink again');
-});
-
-test('default gutter remains on the face edge and winning/loss run edges stay inside current CPU cells', async () => {
-  const f = await fixture();
-  const paint = f.makePaint({ su: 8, sv: 8, atlasSize: 512, maxDensity: 30 });
-  const face = paint.paintFaces[0];
-  const padM = (face.atlas.pad - 0.5) / face.atlas.ppm;
-  assert.equal(face.atlas.pad, 8, 'the stock atlas gutter is eight texels');
-  assert.equal(face.atlas.ppm, 30, 'this exercises the requested maximum density');
-
-  f.G.netm = null;
-  paint.splat(new f.THREE.Vector3(0, 0, 0), 1.2, 0, { _netKey: 100, seed: 0.42 });
-  settle(paint);
-  assert.ok(paint._netQuads.some((q) => Math.abs(q.u0 + padM) < 1e-8 && Math.abs(q.v0 + padM) < 1e-8),
-    `an edge splat still reaches the two outer face gutters: ${JSON.stringify({ padM, quads: paint._netQuads })}`);
-  assertQuadsStayInsideCurrentCellOwners(paint);
-
-  paint.clear();
-  paint._netQuads.length = 0;
-  paint.splat(new f.THREE.Vector3(8, 0, 8), 1.2, 1, { _netKey: 101, seed: 0.42 });
-  settle(paint);
-  assert.ok(paint._netQuads.some((q) => Math.abs(q.u1 - (8 + padM)) < 1e-8 && Math.abs(q.v1 - (8 + padM)) < 1e-8),
-    'the opposite face corner still reaches its outer gutters');
-  assertQuadsStayInsideCurrentCellOwners(paint);
-});
-
-test('partial overlap prunes stale growth and converges when the old packet arrives after the new one', async () => {
-  const run = async (order) => {
-    const f = await fixture();
-    const { paint } = await receiver(f, 'obs', [['p_old', 'Old'], ['p_new', 'New']],
-      { su: 8, sv: 8, atlasSize: 512, maxDensity: 30 });
-    f.G.netm = null;
-    const events = {
-      old: { center: [0, 0, 1.15], radius: 1.2, team: 1, key: 300 },
-      fresh: { center: [0, 0, 0], radius: 1.2, team: 0, key: 500 },
-    };
-    for (const name of order) {
-      const e = events[name];
-      paint.splat(new f.THREE.Vector3(...e.center), e.radius, e.team,
-        { _netKey: e.key, seed: 0.42 });
-    }
-    settle(paint);
-    const owners = Array.from(paint.grid);
-    const orderGrid = Array.from(paint.gridOrder);
-    const coverage = [...paint.coverage()];
-    const adjacent = { horizontal: false, vertical: false };
-    const face = paint.paintFaces[0];
-    for (let row = 0; row < face.nv; row++) for (let col = 0; col < face.nu; col++) {
-      const k = face.grid + row * face.nu + col;
-      if (col + 1 < face.nu && owners[k] && owners[k] !== owners[k + 1]) adjacent.horizontal = true;
-      if (row + 1 < face.nv && owners[k] && owners[k] !== owners[k + face.nu]) adjacent.vertical = true;
-    }
-    assert.ok(adjacent.horizontal && adjacent.vertical, 'the overlap creates both run-edge directions');
-    assertQuadsStayInsideCurrentCellOwners(paint);
-    return { owners, orderGrid, coverage, adjacent };
-  };
-
-  const oldThenNew = await run(['old', 'fresh']);
-  const newThenOld = await run(['fresh', 'old']);
-  assert.deepEqual(newThenOld.owners, oldThenNew.owners, 'CPU team ownership is independent of arrival order');
-  assert.deepEqual(newThenOld.orderGrid, oldThenNew.orderGrid, 'canonical per-cell order is independent of arrival order');
-  assert.deepEqual(newThenOld.coverage, oldThenNew.coverage, 'territory coverage is independent of arrival order');
-});
-
-test('an unorderable paint packet is dropped by every client instead of applied in arrival order (#365, #369)', async () => {
-  const f = await fixture();
-  const { paint, nm } = await receiver(f, 'obs', [['p1', 'P1']]);
-
-  const legacy = [300, 's', 0, 0, 0, RADIUS, 1, 0.42, 0, 0, 0, 0, 0];
-  await deliver(nm, 'p1', 601, [legacy]);
-  assert.ok(paint.grid.every((v) => v === 0), 'a splat with no order identity never reaches the grid');
-
-  const badTeam = splatPacket({ tick: 300, seq: 1, team: 7 });
-  await deliver(nm, 'p1', 602, [badTeam]);
-  assert.ok(paint.grid.every((v) => v === 0), 'an out-of-range team is refused');
-  assert.equal(paint._netQuads.length, 0, 'and neither one reached the atlas');
-});
-
-test('authenticated sender team, host bot paint, match epoch and malformed/future records are checked before paint mutation', async () => {
-  const guestFixture = await fixture();
-  const guest = await receiver(guestFixture, 'obs', [['p_host', 'Host'], ['p_guest', 'Guest']]);
-  await deliver(guest.nm, 'p_guest', 701,
-    [splatPacket({ tick: 700, seq: 1, team: 0 })]);
-  assert.ok(guest.paint.grid.every((v) => v === 0), 'a guest cannot claim the other roster team');
-  assert.equal(guest.paint._netQuads.length, 0, 'the rejected team claim never reaches GPU growth');
-
-  await deliver(guest.nm, 'intruder', 702,
-    [splatPacket({ tick: 701, seq: 1, team: 1 })]);
-  assert.ok(guest.paint.grid.every((v) => v === 0), 'a sender outside authenticated room membership is ignored');
-
-  const malformed = splatPacket({ tick: 700, seq: 1, team: 1, sentAt: 702.5 });
-  malformed[2] = NaN;
-  await deliver(guest.nm, 'p_guest', 703, [malformed]);
-  const poisonedKind = splatPacket({ tick: 704, seq: 1, team: 1, sentAt: 704.5 });
-  poisonedKind[8] = '__proto__';
-  await deliver(guest.nm, 'p_guest', 705, [poisonedKind]);
-  const future = splatPacket({ tick: Number.MAX_SAFE_INTEGER, seq: 2, team: 1, sentAt: 705.5 });
-  await deliver(guest.nm, 'p_guest', 706, [future], { ownerTick: 706 });
-  assert.ok(guest.paint.grid.every((v) => v === 0), 'malformed and event-future records are refused before CPU mutation');
-  assert.equal(guest.paint._netQuads.length, 0, 'malformed and event-future records are refused before GPU mutation');
-
-  const hostFixture = await fixture();
-  const host = await receiver(hostFixture, 'observer', [['p_host', 'Host'], ['p_guest', 'Guest']]);
-  await deliver(host.nm, 'p_host', 801,
-    [splatPacket({ tick: 800, seq: 1, team: 1 })]);
-  assert.equal(centreOwner(host.paint), 2, 'authenticated host paint for an opposing-team bot remains valid');
-});
-
-test('a paint packet from another match epoch cannot enter a cleared paint grid', async () => {
-  const f = await fixture();
-  const { paint, nm } = await receiver(f, 'obs', [['p1', 'P1'], ['p2', 'P2']]);
-  paint.clear();
-  await deliver(nm, 'p2', 901, [splatPacket({ tick: 900, seq: 1, team: 1 })], { epoch: 'previous-match' });
-  assert.ok(paint.grid.every((v) => v === 0), 'a previous-match epoch is discarded before paint replay');
-  assert.equal(paint._netQuads.length, 0, 'a previous-match packet does not reach the atlas');
+  observer.paint.clear();
+  const emptyAfterReconnect = Array.from(observer.paint.grid);
+  const receiptState = observer.nm._paintState;
+  observer.nm.dispose();
+  const reconnected = observer.f.makeNetMatch(observer.session, { id:MATCH, roster:ROSTER });
+  observer.f.bind(reconnected, [...observer.actors.values()]);
+  observer.nm = reconnected;
+  assert.strictEqual(reconnected._paintState, receiptState, 'same room state survives NetMatch reconstruction');
+  playThroughNetMatch(observer, 'guestA', { ...newHostPacket, ts:newHostPacket.ts + 0.2 });
+  assert.deepEqual(Array.from(observer.paint.grid), emptyAfterReconnect, 'a duplicate pre-clear receipt stays deduplicated after grid clear');
 });

@@ -357,3 +357,19 @@ Reset now clears the pending damage attacker and angle together with the cancell
 ## 2026-10-06 — Dualies wall-drop (#604) and composed-runtime guards
 
 Base main `67fec182`. Splat Dualies wall impacts now enter the existing sourced wall-drop state using the pinned 11.3.0 top-level `WallDropMoveParam`/`WallDropCollisionPaintParam` (shock 1.3, fall 0.65, ground 0.6; 20–40F + 10F + 15–35F at 0.06). Previously the round died on the contact frame after one generic impact. Damage is unchanged. Shooter (#385) and Charger (#625/#268) are excluded: Shooter is owned elsewhere, and the Charger record omits three period fields. #770, #777, #638/#637, #644/#643 and #556 were already correct after adapter composition (the reports read raw source). They are now pinned by composed-runtime tests. This is logic-level and emitted-verifier evidence; a Switch visual/frame comparison is still 未確認. Details: [inkwave-wall-drop-dualies-guards-2026-10-06.md](inkwave-wall-drop-dualies-guards-2026-10-06.md).
+
+## 2026-10-07 — Online paint order and ownership (#365, #369)
+
+### 本家との比較条件
+
+- 本家の参照版はこの台帳の Splatoon 3 Ver.11.3.0。任天堂の更新ページは Ver.11.3.0 を 2026-08-20 配信と記載し、オンライン要素には最新更新が必要としている。[任天堂の更新内容](https://support.nintendo.com/jp/switch/software_support/av5ja/1130.html)
+- モードはナワバリバトルを参照する。同公式説明は3分間に塗られたチームの面積で勝敗を決めるとしているが、同時到着する塗りの採番、通信順、重複イベントの扱いは公開説明にない。[ナワバリバトルの説明](https://www.nintendo.com/jp/switch/av5ja/battle-nawabari/index.html)
+- ブキ・ギア・プレイヤー状態・操作入力・通信経路を使った Switch 実機比較は未実施。したがって本家の同時塗りにおける権威側、所有者へのポイント計上回数、遅延中の表示は未確認であり、今回の変更を本家ネットコードとの一致とは判定しない。
+
+### INKWAVE の再現と変更
+
+公開版 `inkwave-public/src/world/paint.js` の `PaintSystem.splat` は呼び出し元ですぐ CPU の塗りセルを更新し、`_cpuSplat` は最後に処理したチームをセル所有者にする。GPU の塗り面は `growing` 経由で後から描画される。`src/net/netmatch.js` は所有者の `s` イベントを送って遅延再生するため、別クライアントの重なった塗りを異なる順で適用すると、CPU の勝敗面積と GPU 表示が一致しない可能性があった。
+
+build 時に実際に合成する `patches/network-replication/adapter.mjs` で、既存の `t` tick と `s` event の中に要求 ID・ホスト epoch/sequence・再現用の塗り形状を載せる。ゲストの予測は即時表示と所有者の既存 `addTurf` 計上を維持する。ホストは接続中メンバーと roster のチームを検証し、要求を一度だけ CPU グリッドに適用して同じ `t` event 経路で正規順を返す。Boss モードではホスト所有の敵チーム塗りも許可し、ゲストは引き続き roster のチームに制限する。受信側はセルごとに正規順を比較し、重複・遅延した古い順序を無視する。GPU の遅延成長描画も、その時点で同じ塗り順を所有するセルにだけ描く。所有者の予測分をホスト receipt や remote replay が再度 `addTurf` に計上することはない。ホスト交代時は epoch を進め、未確認予測を取り消し、旧ホストの遅延イベントを拒否する。武器ごとの発射時刻、ダメージ、塗り形状・量の定義は変更していない。
+
+再現は実 NetMatch/PaintSystem を読み込む fixture で、2人が反対色で半径1.2の重なる塗りを作り、実際の `_sendTick` 出力を JSON wire round-trip 後にホストの `onMessage`、正規 broadcast、remote playback へ渡した。逆順到着、重複、誤チーム、非メンバー、別 match、破損形状、未来 tick、Boss のホスト塗り、ホスト交代、移管された反対チーム bot、同じ session の NetMatch 再生成も確認した。専用ネットワーク試験は **5/5**、隣接する packet/ownership 回帰は **13/13**。これは実モジュールと実 adapter によるロジック・GPU-growth fixture の結果で、実ブラウザ、実 WebSocket、実 Switch 比較ではない。元の保持部分に対する開始時の専用試験は **3/11** で、未定義の `paintOrderAfter` と古い手作り packet 前提などに失敗していた。現在の実機比較状態は**未確認**のままとする。
