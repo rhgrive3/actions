@@ -89,6 +89,11 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "player.respawnTime": {
+    "value": 8.5,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
   "weapons.shooter.inkPerShot": {
     "value": 0.9199999999999999,
     "status": "derived from pinned extracted data; physical scale unverified",
@@ -194,6 +199,11 @@
       "rawValue": 4
     }
   },
+  "weapons.shooter.shotGuideFrame": {
+    "value": 8,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
   "weapons.shooter.referenceGravity": {
     "value": 57.6,
     "status": "derived from pinned extracted data; physical scale unverified",
@@ -221,6 +231,31 @@
   },
   "weapons.shooter.fieldCollisionRadius": {
     "value": 0.2,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.shooter.firstShotDelay": {
+    "value": 0.05,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.shooter.swimFirstShotDelay": {
+    "value": 0.2,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.shooter.postFireSwimLock": {
+    "value": 0.06666666666666667,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.shooter.jumpSpreadHold": {
+    "value": 0.4166666666666667,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.shooter.jumpSpreadRecoverEnd": {
+    "value": 1.1666666666666667,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
@@ -394,6 +429,60 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "weapons.dualies.playerRadiusNormal": {
+    "value": 0.31,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json#/GameParameters/CollisionParam/InitRadiusForPlayer",
+      "index": null,
+      "factor": 1,
+      "rawValue": 0.31
+    }
+  },
+  "weapons.dualies.playerRadiusAfterRoll": {
+    "value": 0.335,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json#/GameParameters/CollisionLapOverParam/InitRadiusForPlayer",
+      "index": null,
+      "factor": 1,
+      "rawValue": 0.335
+    }
+  },
+  "weapons.dualies.rollInkRecoverStop": {
+    "value": 1.1666666666666667,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.dualies.rollShotDelay": {
+    "value": 0.06666666666666667,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.dualies.swimFirstShotDelay": {
+    "value": 0.2,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.dualies.spawnPlayerForwardRate": {
+    "value": 2,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json#/GameParameters/spl__SpawnBulletAdditionMovePlayerParam/ZRate",
+      "rawValue": 2,
+      "factor": 1
+    }
+  },
+  "weapons.dualies.shotGuideFrame": {
+    "value": 7,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json#/GameParameters/WeaponParam/ShotGuideFrame",
+      "index": null,
+      "factor": 1,
+      "rawValue": 7
+    }
+  },
   "weapons.blaster.inkPerShot": {
     "value": 10,
     "status": "derived from pinned extracted data; physical scale unverified",
@@ -509,6 +598,11 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "weapons.blaster.shotGuideFrame": {
+    "value": 13,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
   "weapons.blaster.actionAirSpreadCurve.0": {
     "value": 0,
     "status": "derived from pinned extracted data; physical scale unverified",
@@ -563,6 +657,26 @@
     "value": 0.2,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
+  },
+  "weapons.blaster.postShotDelay": {
+    "value": 0.36666666666666664,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponBlasterMiddle.game__GameParameterTable.json#/GameParameters/WeaponParam/PostDelayFrame_Blaster",
+      "index": null,
+      "factor": 0.016666666666666666,
+      "rawValue": 22
+    }
+  },
+  "weapons.blaster.terrainSplashRadiusRate": {
+    "value": 0.4234,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponBlasterMiddle.game__GameParameterTable.json#/GameParameters/BlasterBurstParam/ShotCollisionHitRadiusRate",
+      "index": null,
+      "factor": 1,
+      "rawValue": 0.4234
+    }
   },
   "weapons.splatling.inkPerShot": {
     "value": 0.5625,
@@ -784,6 +898,50 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "weapons.splatling.airChargeRate": {
+    "value": 0.25,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.splatling.emptyChargeRate": {
+    "value": 0.25,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.splatling.speedRandomHalfWidth": {
+    "value": 7.2,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeedRandomRate",
+      "index": null,
+      "factor": 60,
+      "rawValue": 0.12
+    }
+  },
+  "weapons.splatling.speedRandomBias": {
+    "value": 0.2,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeedRandomBias",
+      "index": null,
+      "factor": 1,
+      "rawValue": 0.2
+    }
+  },
+  "weapons.splatling.postStreamDelay": {
+    "value": 0.06666666666666667,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/WeaponParam/PostDelayFrame",
+      "rawValue": 4,
+      "factor": 0.016666666666666666
+    }
+  },
+  "weapons.splatling.shotGuideFrame": {
+    "value": 11,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
   "weapons.charger.inkFull": {
     "value": 18,
     "status": "derived from pinned extracted data; physical scale unverified",
@@ -881,6 +1039,151 @@
   },
   "weapons.charger.fieldCollisionRadius": {
     "value": 0.02,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.charger.rechargeDelay": {
+    "value": 0.1,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.charger.swimChargeStartDelay": {
+    "value": 0.1,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.charger.impactPaint.min": {
+    "value": 0.906,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/PaintParam/RadiusMinCharge",
+      "rawValue": 0.906,
+      "factor": 1
+    }
+  },
+  "weapons.charger.impactPaint.max": {
+    "value": 2.719,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/PaintParam/RadiusMaxCharge",
+      "rawValue": 2.719,
+      "factor": 1
+    }
+  },
+  "weapons.charger.impactPaint.full": {
+    "value": 3.263,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/PaintParam/RadiusFullCharge",
+      "rawValue": 3.263,
+      "factor": 1
+    }
+  },
+  "weapons.charger.lineSpacing.depthMin": {
+    "value": 2.73,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/SplashPaintParam/DepthHalfMinCharge",
+      "rawValue": 2.73,
+      "factor": 1
+    }
+  },
+  "weapons.charger.lineSpacing.depthMax": {
+    "value": 1.56,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/SplashPaintParam/DepthHalfMaxCharge",
+      "rawValue": 1.56,
+      "factor": 1
+    }
+  },
+  "weapons.charger.lineSpacing.depthFull": {
+    "value": 1.56,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/SplashPaintParam/DepthHalfFullCharge",
+      "rawValue": 1.56,
+      "factor": 1
+    }
+  },
+  "weapons.charger.lineSpacing.overlapMin": {
+    "value": 0.125,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/SplashSpawnParam/OnTopRateMinCharge",
+      "rawValue": 0.125,
+      "factor": 1
+    }
+  },
+  "weapons.charger.lineSpacing.overlapMax": {
+    "value": 0.25,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/SplashSpawnParam/OnTopRateMaxCharge",
+      "rawValue": 0.25,
+      "factor": 1
+    }
+  },
+  "weapons.charger.lineSpacing.overlapFull": {
+    "value": 0.34,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/SplashSpawnParam/OnTopRateFullCharge",
+      "rawValue": 0.34,
+      "factor": 1
+    }
+  },
+  "weapons.charger.fullChargeJumpVelocity": {
+    "value": 4.2,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/WeaponParam/JumpHeightFullCharge",
+      "factor": 60,
+      "rawValue": 0.07
+    }
+  },
+  "weapons.charger.postShotSwimTime": {
+    "value": 0.25,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.charger.damageMinChargeTime": {
+    "value": 0.13333333333333333,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.charger.partialDamagePerSecond": {
+    "value": 138.46,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.charger.minimumChargeTime": {
+    "value": 0.13333333333333333,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.charger.airChargeRate": {
+    "value": 0.3333333333333333,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.charger.emptyChargeRate": {
+    "value": 0.3333333333333333,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.charger.feetPaintRadius": {
+    "value": 0.7,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.charger.minReleaseTime": {
+    "value": 0.13333333333333333,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.charger.storedFireDelay": {
+    "value": 0.5166666666666667,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
@@ -1349,6 +1652,40 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "weapons.roller.spawnPlayerForwardRate": {
+    "value": 2,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/spl__SpawnBulletAdditionMovePlayerParam/ZRate",
+      "rawValue": 2,
+      "factor": 1
+    }
+  },
+  "weapons.roller.squidFlickDelay": {
+    "value": 0.21666666666666667,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.roller.rollDamage": {
+    "value": 125,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/BodyParam/Damage",
+      "index": null,
+      "factor": 0.1,
+      "rawValue": 1250
+    }
+  },
+  "weapons.roller.rollInkRecoverStop": {
+    "value": 0.3333333333333333,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WeaponRollParam/InkRecoverStop",
+      "index": null,
+      "factor": 0.016666666666666666,
+      "rawValue": 20
+    }
+  },
   "weapons.slosher.inkPerShot": {
     "value": 7.6,
     "status": "calibration or derived value; see reference raw table and unverified list",
@@ -1396,6 +1733,26 @@
   },
   "weapons.slosher.splashDamage": {
     "value": 0,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.slosher.shotGuide.unitOrderNum": {
+    "value": 1,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.slosher.shotGuide.bulletOrderNumInUnit": {
+    "value": 0,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.slosher.shotGuide.frame": {
+    "value": 13,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.slosher.postShotDelay": {
+    "value": 0.26666666666666666,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
@@ -1458,6 +1815,51 @@
     "value": 1,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
+  },
+  "bomb.readyTimeKid": {
+    "value": 0.08333333333333333,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "bomb.readyTimeSquid": {
+    "value": 0.16666666666666666,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "bomb.holdMoveSpeed": {
+    "value": 4.32,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "bomb.inkSaverCurve.0": {
+    "value": 1,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/misc/params.json#/ConsumeRt_Sub_Lv2",
+      "index": 2,
+      "factor": 1,
+      "rawValue": 1
+    }
+  },
+  "bomb.inkSaverCurve.1": {
+    "value": 0.825,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/misc/params.json#/ConsumeRt_Sub_Lv2",
+      "index": 1,
+      "factor": 1,
+      "rawValue": 0.825
+    }
+  },
+  "bomb.inkSaverCurve.2": {
+    "value": 0.65,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/misc/params.json#/ConsumeRt_Sub_Lv2",
+      "index": 0,
+      "factor": 1,
+      "rawValue": 0.65
+    }
   },
   "specials.storm.duration": {
     "value": 8,
@@ -1829,6 +2231,51 @@
       "rawValue": 5
     }
   },
+  "gear.subResistance.0": {
+    "value": 1,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/misc/params.json#/DamageRt_BombH",
+      "index": 2,
+      "factor": 1,
+      "rawValue": 1
+    }
+  },
+  "gear.subResistance.1": {
+    "value": 0.75,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/misc/params.json#/DamageRt_BombH",
+      "index": 1,
+      "factor": 1,
+      "rawValue": 0.75
+    }
+  },
+  "gear.subResistance.2": {
+    "value": 0.5,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/misc/params.json#/DamageRt_BombH",
+      "index": 0,
+      "factor": 1,
+      "rawValue": 0.5
+    }
+  },
+  "gear.specialPower.0": {
+    "value": 0,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "gear.specialPower.1": {
+    "value": 0.5,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "gear.specialPower.2": {
+    "value": 1,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
   "resources.inkRefillSwim": {
     "value": 33.333333333333336,
     "status": "calibration or derived value; see reference raw table and unverified list",
@@ -1894,6 +2341,21 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "resources.enemyInkGraceReset": {
+    "value": 0.75,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "resources.enemyInkReferenceHz": {
+    "value": 60,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "resources.enemyInkDamageQuantum": {
+    "value": 0.1,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
   "movement.roll.minimumSpeed": {
     "value": 8.7,
     "status": "calibration or derived value; see reference raw table and unverified list",
@@ -1944,6 +2406,21 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "movement.roll.speedGraceTime": {
+    "value": 0.16666666666666666,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "movement.roll.wallArmorTime": {
+    "value": 0.75,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "movement.roll.armorThreshold": {
+    "value": 100,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
   "movement.surge.chargeTime": {
     "value": 0.75,
     "status": "derived from pinned extracted data; physical scale unverified",
@@ -1976,6 +2453,21 @@
   },
   "movement.surge.armorHP": {
     "value": 30,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "movement.surge.chargeMoveScale": {
+    "value": 0.25,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "movement.surge.armorThreshold": {
+    "value": 100,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "movement.wallRollMaximumAngle": {
+    "value": 0.7853981633974483,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
@@ -2079,6 +2571,11 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "flow.abilityPoints": {
+    "value": 30,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
   "superJump.chargeTime": {
     "value": 1.3333333333333333,
     "status": "derived from pinned extracted data; physical scale unverified",
@@ -2098,6 +2595,16 @@
       "factor": 0.016666666666666666,
       "rawValue": 138
     }
+  },
+  "superJump.startupSwimF": {
+    "value": 1,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "superJump.startupHumanoidF": {
+    "value": 22,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
   },
   "gearExtra.inkRecoveryKid.0": {
     "value": 600,
@@ -2367,6 +2874,156 @@
       "index": 0,
       "factor": 1,
       "rawValue": 1
+    }
+  },
+  "gearExtra.enemyActionSpeedScale.0": {
+    "value": 0.5,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/misc/params.json#/OpInk_MoveVel_ShotK",
+      "index": 2,
+      "factor": 1,
+      "rawValue": 0.5
+    }
+  },
+  "gearExtra.enemyActionSpeedScale.1": {
+    "value": 0.75,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/misc/params.json#/OpInk_MoveVel_ShotK",
+      "index": 1,
+      "factor": 1,
+      "rawValue": 0.75
+    }
+  },
+  "gearExtra.enemyActionSpeedScale.2": {
+    "value": 1,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/misc/params.json#/OpInk_MoveVel_ShotK",
+      "index": 0,
+      "factor": 1,
+      "rawValue": 1
+    }
+  },
+  "gearExtra.enemyInkGraceFrames.0": {
+    "value": 0,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/misc/params.json#/OpInk_ArmorHP",
+      "index": 2,
+      "factor": 1,
+      "rawValue": 0
+    }
+  },
+  "gearExtra.enemyInkGraceFrames.1": {
+    "value": 26,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/misc/params.json#/OpInk_ArmorHP",
+      "index": 1,
+      "factor": 1,
+      "rawValue": 26
+    }
+  },
+  "gearExtra.enemyInkGraceFrames.2": {
+    "value": 39,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/misc/params.json#/OpInk_ArmorHP",
+      "index": 0,
+      "factor": 1,
+      "rawValue": 39
+    }
+  },
+  "gearExtra.quickRespawnAroundFrames.0": {
+    "value": 90,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/misc/params.json#/Dying_AroundFrm",
+      "index": 2,
+      "factor": 1,
+      "rawValue": 90
+    }
+  },
+  "gearExtra.quickRespawnAroundFrames.1": {
+    "value": 60,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/misc/params.json#/Dying_AroundFrm",
+      "index": 1,
+      "factor": 1,
+      "rawValue": 60
+    }
+  },
+  "gearExtra.quickRespawnAroundFrames.2": {
+    "value": 30,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/misc/params.json#/Dying_AroundFrm",
+      "index": 0,
+      "factor": 1,
+      "rawValue": 30
+    }
+  },
+  "gearExtra.stormDurationFrames.0": {
+    "value": 480,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpInkStorm.game__GameParameterTable.json#/GameParameters/CloudParam/RainyFrame/Low",
+      "index": null,
+      "factor": 1,
+      "rawValue": 480
+    }
+  },
+  "gearExtra.stormDurationFrames.1": {
+    "value": 540,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpInkStorm.game__GameParameterTable.json#/GameParameters/CloudParam/RainyFrame/Mid",
+      "index": null,
+      "factor": 1,
+      "rawValue": 540
+    }
+  },
+  "gearExtra.stormDurationFrames.2": {
+    "value": 600,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpInkStorm.game__GameParameterTable.json#/GameParameters/CloudParam/RainyFrame/High",
+      "index": null,
+      "factor": 1,
+      "rawValue": 600
+    }
+  },
+  "gearExtra.stormThrowScale.0": {
+    "value": 1,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpInkStorm.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeedZSpecUp/Low",
+      "index": null,
+      "factor": 0.8928571428571428,
+      "rawValue": 1.12
+    }
+  },
+  "gearExtra.stormThrowScale.1": {
+    "value": 1.25,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpInkStorm.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeedZSpecUp/Mid",
+      "index": null,
+      "factor": 0.8928571428571428,
+      "rawValue": 1.4
+    }
+  },
+  "gearExtra.stormThrowScale.2": {
+    "value": 1.5,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpInkStorm.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeedZSpecUp/High",
+      "index": null,
+      "factor": 0.8928571428571428,
+      "rawValue": 1.68
     }
   },
   "respawnChaseTime": {
@@ -2644,129 +3301,6 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
-  "weapons.dualies.swimFirstShotDelay": {
-    "value": 0.2,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "weapons.dualies.spawnPlayerForwardRate": {
-    "value": 2,
-    "status": "derived from pinned extracted data; physical scale unverified",
-    "binding": {
-      "parameter": "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json#/GameParameters/spl__SpawnBulletAdditionMovePlayerParam/ZRate",
-      "rawValue": 2,
-      "factor": 1
-    }
-  },
-  "weapons.splatling.postStreamDelay": {
-    "value": 0.06666666666666667,
-    "status": "derived from pinned extracted data; physical scale unverified",
-    "binding": {
-      "parameter": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/WeaponParam/PostDelayFrame",
-      "rawValue": 4,
-      "factor": 0.016666666666666666
-    }
-  },
-  "weapons.charger.swimChargeStartDelay": {
-    "value": 0.1,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "weapons.charger.impactPaint.min": {
-    "value": 0.906,
-    "status": "derived from pinned extracted data; physical scale unverified",
-    "binding": {
-      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/PaintParam/RadiusMinCharge",
-      "rawValue": 0.906,
-      "factor": 1
-    }
-  },
-  "weapons.charger.impactPaint.max": {
-    "value": 2.719,
-    "status": "derived from pinned extracted data; physical scale unverified",
-    "binding": {
-      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/PaintParam/RadiusMaxCharge",
-      "rawValue": 2.719,
-      "factor": 1
-    }
-  },
-  "weapons.charger.impactPaint.full": {
-    "value": 3.263,
-    "status": "derived from pinned extracted data; physical scale unverified",
-    "binding": {
-      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/PaintParam/RadiusFullCharge",
-      "rawValue": 3.263,
-      "factor": 1
-    }
-  },
-  "weapons.charger.lineSpacing.depthMin": {
-    "value": 2.73,
-    "status": "derived from pinned extracted data; physical scale unverified",
-    "binding": {
-      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/SplashPaintParam/DepthHalfMinCharge",
-      "rawValue": 2.73,
-      "factor": 1
-    }
-  },
-  "weapons.charger.lineSpacing.depthMax": {
-    "value": 1.56,
-    "status": "derived from pinned extracted data; physical scale unverified",
-    "binding": {
-      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/SplashPaintParam/DepthHalfMaxCharge",
-      "rawValue": 1.56,
-      "factor": 1
-    }
-  },
-  "weapons.charger.lineSpacing.depthFull": {
-    "value": 1.56,
-    "status": "derived from pinned extracted data; physical scale unverified",
-    "binding": {
-      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/SplashPaintParam/DepthHalfFullCharge",
-      "rawValue": 1.56,
-      "factor": 1
-    }
-  },
-  "weapons.charger.lineSpacing.overlapMin": {
-    "value": 0.125,
-    "status": "derived from pinned extracted data; physical scale unverified",
-    "binding": {
-      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/SplashSpawnParam/OnTopRateMinCharge",
-      "rawValue": 0.125,
-      "factor": 1
-    }
-  },
-  "weapons.charger.lineSpacing.overlapMax": {
-    "value": 0.25,
-    "status": "derived from pinned extracted data; physical scale unverified",
-    "binding": {
-      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/SplashSpawnParam/OnTopRateMaxCharge",
-      "rawValue": 0.25,
-      "factor": 1
-    }
-  },
-  "weapons.charger.lineSpacing.overlapFull": {
-    "value": 0.34,
-    "status": "derived from pinned extracted data; physical scale unverified",
-    "binding": {
-      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/SplashSpawnParam/OnTopRateFullCharge",
-      "rawValue": 0.34,
-      "factor": 1
-    }
-  },
-  "weapons.roller.spawnPlayerForwardRate": {
-    "value": 2,
-    "status": "derived from pinned extracted data; physical scale unverified",
-    "binding": {
-      "parameter": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/spl__SpawnBulletAdditionMovePlayerParam/ZRate",
-      "rawValue": 2,
-      "factor": 1
-    }
-  },
-  "weapons.roller.squidFlickDelay": {
-    "value": 0.21666666666666667,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
   "splatlingPlayerCollision.referenceRadius": {
     "value": 0.225,
     "status": "derived from pinned extracted data; physical scale unverified",
@@ -2790,86 +3324,6 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
-  "weapons.dualies.playerRadiusNormal": {
-    "value": 0.31,
-    "status": "derived from pinned extracted data; physical scale unverified",
-    "binding": {
-      "parameter": "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json#/GameParameters/CollisionParam/InitRadiusForPlayer",
-      "index": null,
-      "factor": 1,
-      "rawValue": 0.31
-    }
-  },
-  "weapons.dualies.playerRadiusAfterRoll": {
-    "value": 0.335,
-    "status": "derived from pinned extracted data; physical scale unverified",
-    "binding": {
-      "parameter": "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json#/GameParameters/CollisionLapOverParam/InitRadiusForPlayer",
-      "index": null,
-      "factor": 1,
-      "rawValue": 0.335
-    }
-  },
-  "weapons.dualies.rollInkRecoverStop": {
-    "value": 1.1666666666666667,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "weapons.dualies.rollShotDelay": {
-    "value": 0.06666666666666667,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "weapons.blaster.postShotDelay": {
-    "value": 0.36666666666666664,
-    "status": "derived from pinned extracted data; physical scale unverified",
-    "binding": {
-      "parameter": "data/parameter/1130/weapon/WeaponBlasterMiddle.game__GameParameterTable.json#/GameParameters/WeaponParam/PostDelayFrame_Blaster",
-      "index": null,
-      "factor": 0.016666666666666666,
-      "rawValue": 22
-    }
-  },
-  "weapons.splatling.airChargeRate": {
-    "value": 0.25,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "weapons.splatling.emptyChargeRate": {
-    "value": 0.25,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "weapons.splatling.speedRandomHalfWidth": {
-    "value": 7.2,
-    "status": "derived from pinned extracted data; physical scale unverified",
-    "binding": {
-      "parameter": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeedRandomRate",
-      "index": null,
-      "factor": 60,
-      "rawValue": 0.12
-    }
-  },
-  "weapons.splatling.speedRandomBias": {
-    "value": 0.2,
-    "status": "derived from pinned extracted data; physical scale unverified",
-    "binding": {
-      "parameter": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeedRandomBias",
-      "index": null,
-      "factor": 1,
-      "rawValue": 0.2
-    }
-  },
-  "weapons.charger.rechargeDelay": {
-    "value": 0.1,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "weapons.slosher.postShotDelay": {
-    "value": 0.26666666666666666,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
   "spawnArmor.hp": {
     "value": 30,
     "status": "calibration or derived value; see reference raw table and unverified list",
@@ -2887,41 +3341,6 @@
   },
   "spawnArmor.breakDelay": {
     "value": 0.3333333333333333,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "gear.subResistance.0": {
-    "value": 1,
-    "status": "derived from pinned extracted data; physical scale unverified",
-    "binding": {
-      "parameter": "data/parameter/1130/misc/params.json#/DamageRt_BombH",
-      "index": 2,
-      "factor": 1,
-      "rawValue": 1
-    }
-  },
-  "gear.subResistance.1": {
-    "value": 0.75,
-    "status": "derived from pinned extracted data; physical scale unverified",
-    "binding": {
-      "parameter": "data/parameter/1130/misc/params.json#/DamageRt_BombH",
-      "index": 1,
-      "factor": 1,
-      "rawValue": 0.75
-    }
-  },
-  "gear.subResistance.2": {
-    "value": 0.5,
-    "status": "derived from pinned extracted data; physical scale unverified",
-    "binding": {
-      "parameter": "data/parameter/1130/misc/params.json#/DamageRt_BombH",
-      "index": 0,
-      "factor": 1,
-      "rawValue": 0.5
-    }
-  },
-  "flow.abilityPoints": {
-    "value": 30,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
@@ -2960,305 +3379,6 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
-  "weapons.blaster.terrainSplashRadiusRate": {
-    "value": 0.4234,
-    "status": "derived from pinned extracted data; physical scale unverified",
-    "binding": {
-      "parameter": "data/parameter/1130/weapon/WeaponBlasterMiddle.game__GameParameterTable.json#/GameParameters/BlasterBurstParam/ShotCollisionHitRadiusRate",
-      "index": null,
-      "factor": 1,
-      "rawValue": 0.4234
-    }
-  },
-  "weapons.charger.fullChargeJumpVelocity": {
-    "value": 4.2,
-    "status": "derived from pinned extracted data; physical scale unverified",
-    "binding": {
-      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/WeaponParam/JumpHeightFullCharge",
-      "factor": 60,
-      "rawValue": 0.07
-    }
-  },
-  "weapons.charger.postShotSwimTime": {
-    "value": 0.25,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "weapons.roller.rollDamage": {
-    "value": 125,
-    "status": "derived from pinned extracted data; physical scale unverified",
-    "binding": {
-      "parameter": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/BodyParam/Damage",
-      "index": null,
-      "factor": 0.1,
-      "rawValue": 1250
-    }
-  },
-  "weapons.roller.rollInkRecoverStop": {
-    "value": 0.3333333333333333,
-    "status": "derived from pinned extracted data; physical scale unverified",
-    "binding": {
-      "parameter": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/WeaponRollParam/InkRecoverStop",
-      "index": null,
-      "factor": 0.016666666666666666,
-      "rawValue": 20
-    }
-  },
-  "bomb.readyTimeKid": {
-    "value": 0.08333333333333333,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "bomb.readyTimeSquid": {
-    "value": 0.16666666666666666,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "bomb.holdMoveSpeed": {
-    "value": 4.32,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "bomb.inkSaverCurve.0": {
-    "value": 1,
-    "status": "derived from pinned extracted data; physical scale unverified",
-    "binding": {
-      "parameter": "data/parameter/1130/misc/params.json#/ConsumeRt_Sub_Lv2",
-      "index": 2,
-      "factor": 1,
-      "rawValue": 1
-    }
-  },
-  "bomb.inkSaverCurve.1": {
-    "value": 0.825,
-    "status": "derived from pinned extracted data; physical scale unverified",
-    "binding": {
-      "parameter": "data/parameter/1130/misc/params.json#/ConsumeRt_Sub_Lv2",
-      "index": 1,
-      "factor": 1,
-      "rawValue": 0.825
-    }
-  },
-  "bomb.inkSaverCurve.2": {
-    "value": 0.65,
-    "status": "derived from pinned extracted data; physical scale unverified",
-    "binding": {
-      "parameter": "data/parameter/1130/misc/params.json#/ConsumeRt_Sub_Lv2",
-      "index": 0,
-      "factor": 1,
-      "rawValue": 0.65
-    }
-  },
-  "gear.specialPower.0": {
-    "value": 0,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "gear.specialPower.1": {
-    "value": 0.5,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "gear.specialPower.2": {
-    "value": 1,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "resources.enemyInkGraceReset": {
-    "value": 0.75,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "resources.enemyInkReferenceHz": {
-    "value": 60,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "resources.enemyInkDamageQuantum": {
-    "value": 0.1,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "movement.roll.speedGraceTime": {
-    "value": 0.16666666666666666,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "movement.roll.wallArmorTime": {
-    "value": 0.75,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "movement.roll.armorThreshold": {
-    "value": 100,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "movement.surge.chargeMoveScale": {
-    "value": 0.25,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "movement.surge.armorThreshold": {
-    "value": 100,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "movement.wallRollMaximumAngle": {
-    "value": 0.7853981633974483,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "gearExtra.enemyActionSpeedScale.0": {
-    "value": 0.5,
-    "status": "derived from pinned extracted data; physical scale unverified",
-    "binding": {
-      "parameter": "data/parameter/1130/misc/params.json#/OpInk_MoveVel_ShotK",
-      "index": 2,
-      "factor": 1,
-      "rawValue": 0.5
-    }
-  },
-  "gearExtra.enemyActionSpeedScale.1": {
-    "value": 0.75,
-    "status": "derived from pinned extracted data; physical scale unverified",
-    "binding": {
-      "parameter": "data/parameter/1130/misc/params.json#/OpInk_MoveVel_ShotK",
-      "index": 1,
-      "factor": 1,
-      "rawValue": 0.75
-    }
-  },
-  "gearExtra.enemyActionSpeedScale.2": {
-    "value": 1,
-    "status": "derived from pinned extracted data; physical scale unverified",
-    "binding": {
-      "parameter": "data/parameter/1130/misc/params.json#/OpInk_MoveVel_ShotK",
-      "index": 0,
-      "factor": 1,
-      "rawValue": 1
-    }
-  },
-  "gearExtra.enemyInkGraceFrames.0": {
-    "value": 0,
-    "status": "derived from pinned extracted data; physical scale unverified",
-    "binding": {
-      "parameter": "data/parameter/1130/misc/params.json#/OpInk_ArmorHP",
-      "index": 2,
-      "factor": 1,
-      "rawValue": 0
-    }
-  },
-  "gearExtra.enemyInkGraceFrames.1": {
-    "value": 26,
-    "status": "derived from pinned extracted data; physical scale unverified",
-    "binding": {
-      "parameter": "data/parameter/1130/misc/params.json#/OpInk_ArmorHP",
-      "index": 1,
-      "factor": 1,
-      "rawValue": 26
-    }
-  },
-  "gearExtra.enemyInkGraceFrames.2": {
-    "value": 39,
-    "status": "derived from pinned extracted data; physical scale unverified",
-    "binding": {
-      "parameter": "data/parameter/1130/misc/params.json#/OpInk_ArmorHP",
-      "index": 0,
-      "factor": 1,
-      "rawValue": 39
-    }
-  },
-  "gearExtra.quickRespawnAroundFrames.0": {
-    "value": 90,
-    "status": "derived from pinned extracted data; physical scale unverified",
-    "binding": {
-      "parameter": "data/parameter/1130/misc/params.json#/Dying_AroundFrm",
-      "index": 2,
-      "factor": 1,
-      "rawValue": 90
-    }
-  },
-  "gearExtra.quickRespawnAroundFrames.1": {
-    "value": 60,
-    "status": "derived from pinned extracted data; physical scale unverified",
-    "binding": {
-      "parameter": "data/parameter/1130/misc/params.json#/Dying_AroundFrm",
-      "index": 1,
-      "factor": 1,
-      "rawValue": 60
-    }
-  },
-  "gearExtra.quickRespawnAroundFrames.2": {
-    "value": 30,
-    "status": "derived from pinned extracted data; physical scale unverified",
-    "binding": {
-      "parameter": "data/parameter/1130/misc/params.json#/Dying_AroundFrm",
-      "index": 0,
-      "factor": 1,
-      "rawValue": 30
-    }
-  },
-  "gearExtra.stormDurationFrames.0": {
-    "value": 480,
-    "status": "derived from pinned extracted data; physical scale unverified",
-    "binding": {
-      "parameter": "data/parameter/1130/weapon/WeaponSpInkStorm.game__GameParameterTable.json#/GameParameters/CloudParam/RainyFrame/Low",
-      "index": null,
-      "factor": 1,
-      "rawValue": 480
-    }
-  },
-  "gearExtra.stormDurationFrames.1": {
-    "value": 540,
-    "status": "derived from pinned extracted data; physical scale unverified",
-    "binding": {
-      "parameter": "data/parameter/1130/weapon/WeaponSpInkStorm.game__GameParameterTable.json#/GameParameters/CloudParam/RainyFrame/Mid",
-      "index": null,
-      "factor": 1,
-      "rawValue": 540
-    }
-  },
-  "gearExtra.stormDurationFrames.2": {
-    "value": 600,
-    "status": "derived from pinned extracted data; physical scale unverified",
-    "binding": {
-      "parameter": "data/parameter/1130/weapon/WeaponSpInkStorm.game__GameParameterTable.json#/GameParameters/CloudParam/RainyFrame/High",
-      "index": null,
-      "factor": 1,
-      "rawValue": 600
-    }
-  },
-  "gearExtra.stormThrowScale.0": {
-    "value": 1,
-    "status": "derived from pinned extracted data; physical scale unverified",
-    "binding": {
-      "parameter": "data/parameter/1130/weapon/WeaponSpInkStorm.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeedZSpecUp/Low",
-      "index": null,
-      "factor": 0.8928571428571428,
-      "rawValue": 1.12
-    }
-  },
-  "gearExtra.stormThrowScale.1": {
-    "value": 1.25,
-    "status": "derived from pinned extracted data; physical scale unverified",
-    "binding": {
-      "parameter": "data/parameter/1130/weapon/WeaponSpInkStorm.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeedZSpecUp/Mid",
-      "index": null,
-      "factor": 0.8928571428571428,
-      "rawValue": 1.4
-    }
-  },
-  "gearExtra.stormThrowScale.2": {
-    "value": 1.5,
-    "status": "derived from pinned extracted data; physical scale unverified",
-    "binding": {
-      "parameter": "data/parameter/1130/weapon/WeaponSpInkStorm.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeedZSpecUp/High",
-      "index": null,
-      "factor": 0.8928571428571428,
-      "rawValue": 1.68
-    }
-  },
   "stealth.sneakRatio": {
     "value": 0.6,
     "status": "calibration or derived value; see reference raw table and unverified list",
@@ -3274,122 +3394,7 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
-  "weapons.shooter.shotGuideFrame": {
-    "value": 8,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "weapons.dualies.shotGuideFrame": {
-    "value": 7,
-    "status": "derived from pinned extracted data; physical scale unverified",
-    "binding": {
-      "parameter": "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json#/GameParameters/WeaponParam/ShotGuideFrame",
-      "index": null,
-      "factor": 1,
-      "rawValue": 7
-    }
-  },
-  "weapons.blaster.shotGuideFrame": {
-    "value": 13,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "weapons.splatling.shotGuideFrame": {
-    "value": 11,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "weapons.charger.damageMinChargeTime": {
-    "value": 0.13333333333333333,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "weapons.charger.partialDamagePerSecond": {
-    "value": 138.46,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "weapons.charger.minimumChargeTime": {
-    "value": 0.13333333333333333,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "weapons.charger.airChargeRate": {
-    "value": 0.3333333333333333,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "weapons.charger.emptyChargeRate": {
-    "value": 0.3333333333333333,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "weapons.slosher.shotGuide.unitOrderNum": {
-    "value": 1,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "weapons.slosher.shotGuide.bulletOrderNumInUnit": {
-    "value": 0,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "weapons.slosher.shotGuide.frame": {
-    "value": 13,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "superJump.startupSwimF": {
-    "value": 1,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "superJump.startupHumanoidF": {
-    "value": 22,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "player.respawnTime": {
-    "value": 8.5,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "weapons.shooter.firstShotDelay": {
-    "value": 0.05,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "weapons.shooter.swimFirstShotDelay": {
-    "value": 0.2,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "weapons.shooter.postFireSwimLock": {
-    "value": 0.06666666666666667,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "weapons.shooter.jumpSpreadHold": {
-    "value": 0.4166666666666667,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "weapons.shooter.jumpSpreadRecoverEnd": {
-    "value": 1.1666666666666667,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "weapons.charger.minReleaseTime": {
-    "value": 0.13333333333333333,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "weapons.charger.storedFireDelay": {
-    "value": 0.5166666666666667,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
-  "respawn.weapon": {
+  "respawn.normal": {
     "value": 8.5,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
