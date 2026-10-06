@@ -251,6 +251,106 @@ runtime refresh. Existing formats, appearance policy and gameplay stay intact.
 These are project resource dimensions, not Nintendo/Switch memory values.
 See [the cold-boot budget report](inkwave-cold-boot-budgets-2026-10-04.md).
 
+## 2026-10-06: ローラー振り抜け後のサブ・イカゲート（#635、重複 #636）
+
+開始mainは `37ab02fcb7314eee8a6b3e6e8e6b0593610e7bff`。公開対象は `inkwave-public/` と有効な `patches/splatoon3/`。本家の実機計測を新たに追加した変更ではない。
+
+| 項目 | 内容 |
+|---|---|
+| 本家の根拠 | [S3メインウェポン前隙・後隙の検証表](https://wikiwiki.jp/splatoon3mix/%E6%A4%9C%E8%A8%BC/%E3%83%A1%E3%82%A4%E3%83%B3%E3%82%A6%E3%82%A7%E3%83%9D%E3%83%B3/%E5%89%8D%E9%9A%99%E3%83%BB%E5%BE%8C%E9%9A%99)のスプラローラー振り後隙：横振り サブ14F / イカ15F、縦振り サブ18F / イカ19F。コミュニティ検証表の値であり、Switch実機を再計測したものではない |
+| INKWAVE の実装箇所 | `patches/splatoon3/runtime/roller.mjs` が振りリリースtickに `s3FlickPostSub` / `s3FlickPostSquid` を固定1/60で開き、同じ `_roller` で毎tick減算。`patches/splatoon3/runtime/weapons.mjs` の `busy()` がゲート中はイカ形態を拒否、`roller.mjs` の `update` ラッパはゲート中は `inp.sub` / `inp.subReleased` を無効化する。以前は `flick < 0` になると次のtickでイカが成立し、サブは一切計測されていた |
+| 再現操作 | ローラーで振り→振り抜け（tick0）→横振りなら14F目でサブが成立、15F目でイカ成立。振り中にサブを押して離してもゲート内では投擲されない。縦振りは18F/19F |
+| プレイへの影響 | 振りを中断して潜る／サブを使うのがS3の振り後隙ぶん遅くなる。`flickRecover`（移動速度）、`inkRecoverStop`、ロール中断16F/5F/6F、ロール遷移、振りの発射・間隔・弾道・ダメージ・塗りは変更しない |
+| 確認状態 | **ロジック確認済み**（source-fixture、実 `Actor.update`、1/60 tick）`issue-635-roller-post-release-gates.test.mjs` 4/4、修正前は3/4が失敗。既存ローラー/サブ/入力回帰71/71、`--quick` OK、ビルド成功・startup budget 合格。**本家Switch Ver.11.3.0での実機フレーム計測と、30/60/120Hz描画差の実端末確認は未確認** |
+
+振り後のインク回復待ち、ロール中断・ロール遷移、#527の振り開始・リピートは別ルートとして変更していない。
+## 2026-10-06: 自動的な味方ダウンマーカー (#631)
+
+- 本家の根拠：現行Splatoon 3で被弾した味方の位置は、本人が明示的に Ouch...（やられた）シグナルを送った時だけ世界座標として伝わる。通常のトップロスター表示は別物で、位置を固定マーカーとして置かない。
+- INKWAVE の実装箇所：`inkwave-public/src/ui/hud.js` の `_onSplatted()` が `if (me && victim.team === me.team) this._allyDown(victim, attacker);` で毎回マーカーを生成していた。`patches/splatoon3/adapter.mjs` の hud.js 接続がこの1行を exact-anchor で除去する（upstream未変更、接続欠落は fail-closed）。
+- 再現操作：4v4で味方が、シグナル入力なしに倒される。従来は実座標に死亡アイコン＋名前が約3秒投影された。ロジック検証は `patches/splatoon3/tests/ally-down-marker.test.mjs`（スタブHUDに実装済みHUDメソッドを展開して `_onSplatted` を実行）。
+- プレイへの影響：壁越しなどから自動的に死亡位置が読める情報が消える。キル/アシストカード、ストリーク、ロスターの生存/被弾表示、チームワイプアウト、ミニマップ、ローカル死亡表示は不変。
+- 確認状態：ロジック単独の検証。ブラウザ実機・Switch実機の確認は未実施。将来の明示シグナル実装は別Issue（位置情報の公開要否とボットの合成ルールを含む）。
+## Charger 最短8f弾の塗り最小endpoint（#620、2026-10-06）
+
+| 項目 | 内容 |
+|---|---|
+| 本家の根拠 | ピン留めした S3 Ver.11.3.0 の `WeaponChargerNormal` パラメータ（Leanny/splat3 `7280ff9c` の `PaintParam.RadiusMinCharge=0.906`、`SplashPaintParam.WidthHalfMinCharge=0.78`／`DepthHalfMinCharge=2.73`、`SplashSpawnParam.OnTopRateMinCharge=0.125`）。S3 の最短チャージ8f（issue #620 の受理条件）から最初に撃てる弾は MinCharge 系endpointに属する。8f・endpoint数値の実機フレーム測定は本リポジトリでは未実施 |
+| INKWAVE の実装箇所 | `patches/splatoon3/runtime/weapons-charger-flight.mjs`。旧 `chargerPaintParameters()` は公開版のチャージS字（`inkwave-public/src/game/weapons.js`、`chargeT=8/60` で `charge=1/6`）を生のままMin/Max間線形補間し、8f時点で impact 1.20817／width 0.91／depth 2.535／OnTopRate 0.145833（行間隔4.330625）を返した。修正後は `chargerPartialCharge()` がS3正規化部分チャージ座標（`CHARGER_FIRST_LEGAL_CHARGE=1/6`、0=8f時刻のMin系、1=60fのMax系、`charge>=.999` は従来どおりFullCharge段）を一度だけ定義し、`chargerPaintParameters()` がそれを使う |
+| 再現操作 | 固定60Hzで実 Actor をZR保持8フレーム後に解放すると、実装経路（`_charger` のS字→解放gate→`fireCharger`→`installChargerFlight`）が解決する塗りパラメータは impact 0.906／width 0.78／depth 2.73／OnTopRate 0.125／行間隔4.7775。61フレーム解放は従来どおり impact 3.263／width 1.56／depth 1.56／OnTopRate 0.34 |
+| プレイへの影響 | 最短8fのチャージショットが本家と同じ最小塗りendpointから始まり、部分チャージ域の塗りが単調・連続で8f位置に下限が固定される。空インク・空中のチャージ速度修正確変（#751）や0.12解放gate（#304）は進行速度・受理だけを変えるためendpointは動かない。ダメージ（#506）・射程（#514）・飛翔速度・インク消費（#675）・終端衝突半径（#407）・線塗り間隔（#420）は生のchargeのまま従来どおりで、別条項として残す |
+| 確認状態 | **ロジック確認済み**（`issue-620-charger-min-charge-paint.test.mjs`、weapon-edgecases-fixture の実 Actor・実 `fireCharger`、1/60 tick、修正前は1.208166…≠0.906で失敗）。**本家実機（Switch Ver.11.3.0）でのフレーム単位の実測比較は未確認**。ghost再生は `weapon:fire.charge` を介して同一座標を再計算するためパケット形式は変更していない |
+## 2026-10-06: ジャイロの静止中ゼロ率キャリブレーション (#615)
+
+`src/core/gyro.js` の `_sample()` は、軸・単位判定を終えた raw `rotationRate`
+（rrA/rrB）をそのまま `dYaw`/`dPitch` へ積算する。端末に小さなゼロ率オフセットが
+あると、静止中もカメラドリフトが積み続け、止めていても改善しない。`_calibrate()`
+は回転中の軸・単位判定専用で、静止バイアス推定は行わない。本家 Splatoon 3
+Ver. 11.3.0 はコントローラが数秒静止するとジャイロ安定度を自動キャリブレーション
+する（Damian の motion-controls 解説:
+https://damians-eng.github.io/Splatoon-Motion-Controls-Explained/ 、Nintendo サポート
+の静止面でのキャリブレーション手順:
+https://en-americas-support.nintendo.com/app/answers/detail/a_id/22340/ 。閾値・保持
+時間・フィルタ定数は任天堂未公開のため未確認のまま）。
+
+upstream はロック固定のため `inkwave-public/` は変更せず、`patches/local-quality/gyro.mjs`
+のビルド専用オーバーレーで `_sample()` を包む。attitude 由来の角速度が静止閾値
+（0.35°/s、1.2 秒保持、EMA τ=2 秒 — いずれも本家未公開の工学値であって本家値ではない）
+の間だけ raw 減算用バイアスを時間正規化 EMA で学習し、raw サンプルから減算してから
+既存パイプラインへ渡す。ゆっくりした照準追従では attitude が閾値を超えるため学習せず、
+Android の attitude 方針 (#187)、raw 信頼判定 (#595)、source handoff (#524)、Y リセンター
+(#153/#421)、感度曲線・射撃・移動・通信は変更しない。resync（画面回転・suspend・再起動・
+再開）は学習量をリセットする。
+
+回帰は `patches/local-quality/tests/gyro-stationary-bias.test.mjs`（合成トレースを
+30/60/90/120 Hz・rrA/rrB で実行）。修正前の main では静止窓後も 0.038 rad/s の
+ドリフトが収束せず、修正後は近ゼロへ収束し、実回転・遅い照準の応答は維持される。
+物理端末での実オフセット収束、本家と同一のキャリブレーション時間・特性は未確認。
+## Teammate body-block for shooter rounds (#656/#657, 2026-10-05)
+
+Splatoon 3 Ver.11.3.0 lets ordinary shooter rounds be body-blocked by a
+teammate; this is a directly observable gameplay requirement (issue #656
+sources: current-series player testing plus the pinned Leanny 11.3.0
+parameter table). The pinned `CollisionParam.FriendThroughFrameForPlayer`
+records used by INKWAVE are Splattershot/Dualies/Splatling 0, Roller 3,
+Slosher 2, Blaster 1000.
+
+Before this change `fidelityProjectileTargets()` skipped every same-team
+actor before the capsule sweep, and the adapted consumer loop re-checked the
+team, so an ally never entered projectile collision chronology: a
+Splattershot round flew through a friendly body and damaged an enemy behind
+it. Now ordinary Shooter rounds admit same-team live capsules (excluding the firing owner)
+to the same earliest-contact sweep once the contact-time age has reached the
+Shooter source friend-through window; an ally contact consumes the round without friendly
+damage, kill credit, volley bookkeeping or enemy-hit side effects; a missing
+source record keeps the previous skip instead of a global collider rule.
+Blaster (1000f) pass-through and enemy-first chronology are unchanged.
+
+確認状態: fixed 60 Hz logic/regression evidence only
+(`patches/splatoon3/tests/teammate-bodyblock.test.mjs`: blocked round,
+off-line control, muzzle-close contact, owner pass-through, same-tick
+deterministic ordering, enemy-first ordering, blaster pass-through, ghost
+consumption, 30/60/120 Hz cadence; fails on pristine main, passes with the
+change). 未確認: Switch 実機での挙動比較、短い非ゼロ窓（ローラー3F・ slosher 2F）
+のエンジン意味合い、チャージャー有限飛行・ビーム・サブ/スペシャルの味方接触は
+今回の範囲外で未確認のまま。フレーム値の推測や実機測定の代用は行っていない。
+
+
+Batch C14 scope review: #656 teammate blocking is confined to ordinary Shooter rounds. Dualies, Splatling, Roller, Slosher and Blaster retain their existing pass-through behavior; no additional family timing is inferred from a field name. Native Dualies/Splatling and existing Blaster controls verify unchanged pass-through.
+## 泳ぎ中のサブ（R）入力受付とサブ慣性キャンセル（#591、2026-10-06）
+
+自インク泳ぎ中にサブウェポンボタン（R）を入力した際、従来は `Actor.update()` の `wantSquid` がサブ入力を考慮せず、また `WeaponRunner.update()` へ渡す `sub` 入力が `isSquid` により false にマスクされていたため、ヒト化・サブ構えへ遷移できず、スプラトゥーン3の「サブ慣性キャンセル（Sub strafe）」が不可能だった。Issue #591 において、泳ぎ中の R 入力（`_subPressT >= _squidPressT`）をヒト化・サブ構え要求として受領し、泳ぎ復帰（ZL 入力または R 解放）でボム未投擲・インク無消費キャンセルとなるよう `patches/splatoon3/adapter.mjs` で接続した。
+
+| 項目 | 内容 |
+|---|---|
+| 本家の根拠 | [Inkipedia Community Glossary - Sub strafing](https://splatoonwiki.org/wiki/Community_Glossary#Sub_strafing)、任天堂 Splatoon 3 Ver. 11.3.0 操作仕様。泳ぎ中に R を押すと即座にヒト形態のサブ構え状態へ移行して泳ぎ減速・慣性を遮断し、投擲コミット前に泳ぎへ復帰することでボムを投げずインク消費 0 で鋭角反転・方向転換を行う。 |
+| INKWAVE の実装箇所 | `patches/splatoon3/adapter.mjs` による `src/game/actor.js` の `_subPressT` 記録および `wantSquid` 判定（`subWins = intent.sub && (this._subPressT ?? -1) >= this._squidPressT`）。 |
+| 再現操作 | 自インク内で安定泳ぎ状態（`intent.squid = true`）中に R（`intent.sub = true`）を入力し、スティックを 180° 反転。従来は `form === 'squid'` のまま `aimingSub` に入れず通常泳ぎ旋回のみとなったが、修正後はヒト形態・`aimingSub === true` に移行し攻撃時加速で鋭角反転、泳ぎ復帰で投擲キャンセル（ボム 0・インク消費 0）となる。 |
+| プレイへの影響 | スプラトゥーン3における主要な高機動反転技術であるサブ慣性キャンセルが再現可能になる。通常のヒト形態サブ投擲、コミット後の投擲、インク不足時の不発、イカロール判定（アーマー付与）との完全な独立性を維持。 |
+| 確認状態 | **ロジック・回帰確認済み**（`patches/splatoon3/tests/sub-strafe-admission.test.mjs`、30/60/120 Hz、owner/remote 単一投擲・同期検証）。**本家実機（Switch Ver.11.3.0）での正確なフレーム単位の角速度・停止距離実測比較は未確認**。 |
+
+
+Batch C14 gyro integration: a native 0.2 deg/s deliberate-turn control exposed that learning the whole raw rate erased motion below the engineering stillness threshold. Calibration now learns only the raw-minus-attitude residual. The unchanged native attitude integrator is the slow-motion control; its response is retained while the raw sensor bias converges. This does not claim proprietary Nintendo filter constants.
 ## Gamepad lifecycle axes and disconnect camera filters — #681 / #676 (2026-10-05)
 
 Baseline main: b4d5c31e33258a0b6f874e42234448e404eec2d4. Owner comments were posted after checking all comments, timelines and open PR scopes. #654/#655 are excluded because existing PR536 already normalizes trigger rebase; #701 owns the separate Map look-filter interval.
