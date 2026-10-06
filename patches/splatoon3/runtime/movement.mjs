@@ -13,10 +13,10 @@ export function wallRollRequested(a, jumpPressed, normal = a.wallN) {
   if (!Number.isFinite(length + nl) || length <= EPSILON || nl <= EPSILON) return false;
   return (move.x * normal.x + move.z * normal.z) / (length * nl) + EPSILON >= Math.cos(config.wallRollMaximumAngle);
 }
-export function rollLaunchSpeed(speed, chain, retention) {
-  // Speed already contains any loss from the previous roll. Apply the
-  // per-roll coefficient once, rather than compounding it again by chain count.
-  return speed * (chain > 0 ? retention : 1);
+export function rollLaunchSpeed(speed, chain, retention, previous = 0) {
+  // Consecutive rolls retain the previous penalized launch speed, including
+  // across wall reattachment where native climb velocity would otherwise rebase.
+  return chain > 0 && previous > 0 ? previous * retention : speed;
 }
 export function absorbArmor(state, damage) {
   if (!(damage > 0) || !state || state.armorTime <= 0 || state.armorHP <= 0) return damage;
@@ -25,7 +25,7 @@ export function absorbArmor(state, damage) {
 }
 export function movementState(a) {
   a.s3 ||= {};
-  return a.s3.actions || (a.s3.actions = { chain: 0, chainTimer: 0, roll: null, surge: null, armor: null, floorSpeed: null });
+  return a.s3.actions || (a.s3.actions = { chain: 0, chainTimer: 0, chainSpeed: 0, roll: null, surge: null, armor: null, floorSpeed: null });
 }
 function sync(a, state) { a.s3.roll = state.roll; a.s3.surge = state.surge; }
 function launch(a, direction, speed, vertical, kind) {
@@ -40,7 +40,7 @@ export function beforeActions(a, dt, jumpPressed) {
   if (!api) throw new Error('INKWAVE movement patch not installed');
   const state = movementState(a), cfg = config;
   state.chainTimer = Math.max(0, state.chainTimer - dt);
-  if (state.chainTimer <= 1e-10) { state.chain = 0; state.chainTimer = 0; }
+  if (state.chainTimer <= 1e-10) { state.chain = 0; state.chainTimer = 0; state.chainSpeed = 0; }
   for (const action of new Set([state.roll, state.surge, state.armor])) if (action) {
     const remaining = (action.armorTime || 0) - dt;
     action.armorTime = remaining <= 1e-10 ? 0 : remaining;
@@ -50,7 +50,7 @@ export function beforeActions(a, dt, jumpPressed) {
     if (state.roll.time <= 1e-10 || a.form !== 'squid') state.roll = null;
   }
   if (!a.alive || a.specialActive || a.superJumpState || a.form !== 'squid') {
-    state.roll = state.surge = state.armor = state.floorSpeed = null; a.anim.surgeCharge = 0; sync(a, state); return false;
+    state.roll = state.surge = state.armor = state.floorSpeed = null; state.chainSpeed = 0; a.anim.surgeCharge = 0; sync(a, state); return false;
   }
   // Keep the last qualifying real velocity direction briefly; do not queue raw input.
   if (!a.submerged || !a.grounded || a.climbing || state.roll) state.floorSpeed = null;
@@ -65,13 +65,13 @@ export function beforeActions(a, dt, jumpPressed) {
   const floorVelocity = state.floorSpeed || a.vel;
   if (jumpPressed && (wallRoll || a.submerged && a.grounded && rollEligible(floorVelocity, a.intent.move, cfg.roll))) {
     const retention = a.s3.modifiers?.rollRetention ?? cfg.roll.chainRetention;
-    const speed = rollLaunchSpeed(Math.max(cfg.roll.minimumSpeed, Math.hypot(a.vel.x, a.vel.z)), state.chain, retention);
+    const speed = rollLaunchSpeed(Math.max(cfg.roll.minimumSpeed, Math.hypot(a.vel.x, a.vel.z)), state.chain, retention, state.chainSpeed);
     const direction = wallRoll ? a.wallN : a.intent.move;
     launch(a, direction, speed, cfg.roll.jumpVelocity, 'squidroll');
     state.roll = { time: cfg.roll.duration, armorTime: wallRoll ? cfg.roll.wallArmorTime : cfg.roll.armorTime,
       armorHP: cfg.roll.armorHP, armorThreshold: cfg.roll.armorThreshold, vx: a.vel.x, vz: a.vel.z };
     state.armor = state.roll;
-    state.surge = state.floorSpeed = null; state.chain++; state.chainTimer = cfg.roll.chainReset;
+    state.surge = state.floorSpeed = null; state.chainSpeed = speed; state.chain++; state.chainTimer = cfg.roll.chainReset;
     sync(a, state); return true;
   }
   if (a.climbing && a.intent.jump) {
@@ -212,7 +212,7 @@ export function installMovement(context, tuning) {
     Actor.prototype[method] = function (...args) {
       const result = original.apply(this, args);
       if (this.specialActive || this.superJumpState) {
-        const state = movementState(this); state.roll = state.surge = state.armor = state.floorSpeed = null; this.anim.surgeCharge = 0; sync(this, state);
+        const state = movementState(this); state.roll = state.surge = state.armor = state.floorSpeed = null; state.chainSpeed = 0; this.anim.surgeCharge = 0; sync(this, state);
       }
       return result;
     };

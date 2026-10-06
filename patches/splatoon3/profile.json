@@ -98,6 +98,7 @@
         "burstTime": 0.21666666666666667
       },
       "fieldCollisionRadius": 0.2,
+      "shotGuideFrame": 13,
       "terrainSplashRadiusRate": 0.4234
     },
     "splatling": {
@@ -305,7 +306,12 @@
       "damageTail": 50,
       "range": 14.5,
       "drops": 9,
-      "splashDamage": 0
+      "splashDamage": 0,
+      "shotGuide": {
+        "unitOrderNum": 1,
+        "bulletOrderNumInUnit": 0,
+        "frame": 13
+      }
     }
   },
   "bomb": {
@@ -470,6 +476,7 @@
     "bots": true,
     "progress": {
       "referenceThreshold": 100,
+      "referenceCap": 200,
       "decayPerSecond": 0.2,
       "fastDecayAfter": 5,
       "fastDecayPerSecond": 3.3,

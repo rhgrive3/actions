@@ -11,7 +11,8 @@ import {fixture} from '../patches/network-replication/tests/robustness-fixture.m
 const ROOT=fileURLToPath(new URL('../',import.meta.url));
 const i=process.argv.indexOf('--evidence-dir'),evidence=path.resolve(i>=0?process.argv[i+1]:path.join(ROOT,'.ci-scratch/network-comparison'));
 const physical=p=>fs.existsSync(p)?fs.realpathSync(p):path.join(physical(path.dirname(p)),path.basename(p));
-assert(!['/tmp','/var/tmp','/dev/shm'].some(p=>physical(evidence)===p||physical(evidence).startsWith(p+'/')),'Persistent evidence required');fs.mkdirSync(evidence,{recursive:true});
+// Importing the pure replay helper writes no evidence; keep the storage gate on CLI execution.
+if(process.argv[1]===fileURLToPath(import.meta.url)){assert(!['/tmp','/var/tmp','/dev/shm'].some(p=>physical(evidence)===p||physical(evidence).startsWith(p+'/')),'Persistent evidence required');fs.mkdirSync(evidence,{recursive:true});}
 let sourceSha=null;
 if(process.argv.includes('--exact-source')){
  sourceSha=execFileSync('git',['rev-parse','HEAD'],{cwd:ROOT,encoding:'utf8'}).trim();
@@ -20,12 +21,12 @@ if(process.argv.includes('--exact-source')){
 }
 const DT=1/60,distance=(a,b)=>Math.hypot(...a.map((v,i)=>v-b[i]));
 const scenarios=['horizontal','vertical','shooter','dualies','blaster','splatling','slosher','bomb','storm','charger','charger_half','charger_full','charger_oblique_partial','charger_oblique_full'];
-export async function replay(network,kind){
+export async function replay(network,kind,{seed=0x1badc0de,realFloor=false}={}){
  const owner=await fixture({network}),receiver=await fixture({network});
  const draws=[0,0];
  for(const [j,f]of[[0,owner],[1,receiver]]){
   Object.assign(f.SUB.bomb,f.profile.bomb);for(const [id,data]of Object.entries(f.profile.specials||{}))Object.assign(f.SPECIALS[id],data);
-  let state=0x1badc0de;const global=f.Projectiles.constructor('return globalThis')();
+  let state=seed;const global=f.Projectiles.constructor('return globalThis')();
   global.Math.random=()=>{draws[j]++;state=(Math.imul(1664525,state)+1013904223)>>>0;return state/4294967296;};
  }
 
@@ -34,10 +35,16 @@ export async function replay(network,kind){
  const os=owner.makeSession('me','me'),rs=receiver.makeSession('p2','me');
  const onm=owner.makeNetMatch(os),rnm=receiver.makeNetMatch(rs);
  const oa=owner.makeActor({nid:0,owner:'me',remote:false,vertical:kind==='vertical'}),ra=receiver.makeActor({nid:0,owner:'me',remote:true});
- const weapon=['horizontal','vertical'].includes(kind)?'roller':['bomb','storm'].includes(kind)?'shooter':kind.startsWith('charger')?'charger':kind;
+ const weapon=['horizontal','vertical'].includes(kind)?'roller':kind==='bomb'?'shooter':kind==='storm'?'charger':kind.startsWith('charger')?'charger':kind;
  oa.weapon=owner.WEAPONS[weapon];ra.weapon=receiver.WEAPONS[weapon];
  for(const [f,a]of[[owner,oa],[receiver,ra]]){a.character.getMuzzle=out=>out.copy(a.pos).add(new f.THREE.Vector3(0,1.05,.3));a.weaponRunner=new f.WeaponRunner(a);a.weaponRunner.s3FlickVertical=kind==='vertical';}
  if(kind.startsWith('charger_oblique')){oa.aimPoint.set(17.53,11.24,49.67);ra.aimPoint.copy(oa.aimPoint);}
+ if(realFloor)for(const [f,a]of [[owner,oa],[receiver,ra]]){
+  const V=(x,y,z)=>new f.THREE.Vector3(x,y,z);a.pos.y=0;a.aimPitch=.05;a.aimPoint.set(0,1,35);
+  const block={id:0,solid:true,grate:false,center:V(0,-.5,0),half:V(50,.5,50),axes:[V(1,0,0),V(0,1,0),V(0,0,1)],faces:[-1,-1,-1,-1,-1,-1]};
+  f.G.level={blocks:[block],faces:[],queryBlocks(_x,_z,_xx,_zz,out){out.length=0;out.push(0);return out;},groundHeight:()=>0,spawnPads:[{y:0},{y:0}]};
+  f.G.physics=new f.Physics(f.G.level);
+ }
  owner.bind(onm,[oa]);receiver.bind(rnm,[ra]);
  onm.unsubs.push(owner.on('weapon:fire',e=>onm._onLocalEvent('weapon:fire',e)));
  const paint=[[],[]],traces=[[],[]],births=[[],[]],ids=[new WeakMap(),new WeakMap()];let next=0,projectileAllocations=[0,0];
@@ -50,7 +57,7 @@ export async function replay(network,kind){
  let incoming=0;const ghost=receiver.projectiles.ghostProjectile.bind(receiver.projectiles);receiver.projectiles.ghostProjectile=(a,e)=>{const p=ghost(a,e)||receiver.projectiles.list.at(-1),id=incoming++;ids[1].set(p,id);births[1].push({id,spawn:p.start.toArray(),velocity:p.vel.toArray(),life:p.life,straight:p.straight,delay:p.delay,grav:p.grav,drag:p.drag,vertical:p.s3Vertical});return p;};
  owner.G.time=1000;receiver.G.time=1000;
  const P=owner.projectiles,w=oa.weapon;
- switch(kind){case'horizontal':case'vertical':P.fireFlick(oa,w);break;case'shooter':P.fireShooter(oa,w,0);break;case'dualies':P.fireDualies(oa,w,0,1);break;case'blaster':P.fireBlaster(oa,w,0);break;case'splatling':P.fireSplatling(oa,w,0);break;case'slosher':P.fireSlosh(oa,w);break;case'bomb':P.throwBomb(oa);break;case'storm':P.throwStorm(oa);break;case'charger':case'charger_half':case'charger_full':case'charger_oblique_partial':case'charger_oblique_full':P.fireCharger(oa,w,kind.endsWith('_full')?1:kind.endsWith('_partial')?.3764321:kind==='charger_half'?.5:0);break;}
+ switch(kind){case'horizontal':case'vertical':P.fireFlick(oa,w);break;case'shooter':P.fireShooter(oa,w,0);break;case'dualies':P.fireDualies(oa,w,0,1);break;case'blaster':P.fireBlaster(oa,w,0);break;case'splatling':P.fireSplatling(oa,w,0);break;case'slosher':P.fireSlosh(oa,w);break;case'bomb':P.throwBomb(oa);break;case'storm':oa.specialActive={id:'storm',t:0,phase:'throw',armor:false};onm._rec(['ev','special:use',{actor:{n:oa.nid},id:'storm'}]);P.throwStorm(oa);break;case'charger':case'charger_half':case'charger_full':case'charger_oblique_partial':case'charger_oblique_full':P.fireCharger(oa,w,kind.endsWith('_full')?1:kind.endsWith('_partial')?.3764321:kind==='charger_half'?.5:0);break;}
  const beam=f=>{const b=f.projectiles.beams[0];return{age:b.t,len:b.mesh.scale.z,life:b.life,charge:b.mesh.material.uniforms.uCharge.value,width:b.th,spawn:b.mesh.position.toArray(),end:new f.THREE.Vector3(0,0,b.mesh.scale.z).applyQuaternion(b.mesh.quaternion).add(b.mesh.position).toArray()};};
  const packets=[];os.tr.broadcast=m=>packets.push(JSON.parse(JSON.stringify(m)));
  let bytes=0,packetCount=0,eventCount=0,maxLocal=0,maxRemote=0,sourceBomb=[],remoteBomb=[],sourceCloud=[],remoteCloud=[],sourceBeam=[],remoteBeam=[];
@@ -58,7 +65,7 @@ export async function replay(network,kind){
   const t=1000+frame*DT;owner.clock.set(t);receiver.clock.set(t);owner.G.time=t;receiver.G.time=t;
   P.update(DT);maxLocal=Math.max(maxLocal,P.list.length);
   if(frame%3===0){onm._sendTick();for(const packet of packets.splice(0)){bytes+=Buffer.byteLength('b|'+JSON.stringify(packet));packetCount++;eventCount+=packet.e?.length||0;rnm.onMessage('me',packet);}}
-  const peer=rnm.peers.get('me');if(peer){peer.tr=t;peer.sim=peer.physicsPoints?.at(-1);rnm._playEvents();}receiver.projectiles.update(DT);maxRemote=Math.max(maxRemote,receiver.projectiles.list.length);
+  const peer=rnm.peers.get('me');if(peer){peer.tr=t;peer.sim=peer.physicsPoints?.at(-1);if(kind==='storm')rnm._sample(ra,t,DT);rnm._playEvents();if(kind==='storm')rnm.applyRemote(ra,DT);}receiver.projectiles.update(DT);maxRemote=Math.max(maxRemote,receiver.projectiles.list.length);
   if(P.bombs[0])sourceBomb.push({age:P.bombs[0].age,pos:P.bombs[0].pos.toArray()});if(receiver.projectiles.bombs[0])remoteBomb.push({age:receiver.projectiles.bombs[0].age,pos:receiver.projectiles.bombs[0].pos.toArray()});
   if(P.beams[0])sourceBeam.push(beam(owner));if(receiver.projectiles.beams[0])remoteBeam.push(beam(receiver));
   if(P.clouds[0])sourceCloud.push({age:P.clouds[0].t,pos:P.clouds[0].group.position.toArray()});if(receiver.projectiles.clouds[0])remoteCloud.push({age:receiver.projectiles.clouds[0].t,pos:receiver.projectiles.clouds[0].group.position.toArray()});
@@ -77,6 +84,7 @@ export async function replay(network,kind){
  for(const s of remoteCloud){const l=sourceCloud.find(l=>Math.abs(l.age-s.age)<1e-8);if(network)assert(l,kind+': missing authoritative bomb/cloud age '+s.age);if(l){result.comparedSteps++;result.maxPositionError=Math.max(result.maxPositionError,distance(l.pos,s.pos));}}
  for(let k=0;k<paint[0].length;k++){const a=paint[0][k],b=paint[1][k];assert(b,'missing authoritative paint');result.paintLandingError=Math.max(result.paintLandingError,distance(a.pos,b.pos));if(network)assert.equal(b.seed,a.seed,'paint seed');}
  if(network&&kind==='bomb'){assert.equal(result.paintCount,16,'authoritative Bomb paint must be 1+15');assert.equal(result.remotePaintCount,16,'remote Bomb must replay exactly owner paint once');}
+ if(network&&kind==='storm'){assert(sourceCloud.length>0,'authoritative Storm cloud was not exercised');assert(remoteCloud.length>0,'admitted remote Storm cloud was not reconstructed');}
  if(network){assert(result.beamEndpointError<.001,kind+': native beam endpoint divergence '+result.beamEndpointError);assert(result.maxPositionError<.08,kind+': native trajectory divergence '+result.maxPositionError);assert.equal(births[0].length,births[1].length);assert.equal(paint[0].length,paint[1].length);assert(result.paintLandingError<.01);for(const count of Object.values(result.remaining))assert.equal(count,0,'entity residue');}
  onm.dispose();rnm.dispose();return result;
 }
