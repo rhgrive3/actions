@@ -25,3 +25,37 @@ test('active suite invokes exact-source probe and binds its successful evidence,
  assert.match(w,/'active':\[[^\n]+'idle-resources\/idle-resources-result.json'/);
  for(const name of ['motion-detail','wall','flow','responsive','identity-touch'])assert.ok(w.includes(name));
 });
+test('closes the warm page after its evidence and preserves a real independent cold identity check',()=>{
+ const source=fs.readFileSync(new URL('../check-inkwave-idle-resources.mjs',import.meta.url),'utf8');
+ const close=source.indexOf('await page.close();page=null;');
+ assert.notEqual(close,-1,'warm page must be disposed');
+ for(const marker of [
+  'for(const row of cloudEvidence)', 'result.clouds=cloudEvidence;', 'result.far=await page.evaluate',
+  'result.pause=await page.evaluate', "path.join(output,'offline-paused.png')",
+  'result.resultsWork=await page.evaluate', 'result.gpu=await page.evaluate',
+  'Runtime module not actually loaded: '
+ ]){
+  const at=source.indexOf(marker);
+  assert.ok(at>=0&&at<close,`${marker} must be captured before warm page disposal`);
+ }
+ const phase=source.indexOf("phase='cold-boot-mobile';",close);
+ const context=source.indexOf('browser.browser().newContext',close);
+ assert.ok(close<phase&&phase<context,'cold context must start only after warm page disposal');
+ const coldMarkers=[
+  'hasTouch:true,isMobile:true', 'coldPage=await coldContext.newPage();', "quality:'high'",
+  "if(manifest.artifacts[key]&&sha(body)!==manifest.artifacts[key])throw Error('Cold loaded byte mismatch '+key)",
+  "if(!hooked&&key.endsWith('/src/main.js'))", "if(G.game||G.env)throw Error('Cold observer installed too late')",
+  'gamePublishedAtAllocation:!!G.game',
+  'await coldPage.waitForFunction(()=>!!window.__G?.game&&!!window.__coldEnvironment,null,',
+  'sameTargetsAfterBoot:c.cloudId===G.env._cloudRT?.texture.uuid&&c.farId===G.env._farRT?.texture.uuid',
+  "[...coldLoaded].some(p=>p.endsWith('/src/world/environment.js'))"
+ ];
+ const coldPositions=coldMarkers.map(marker=>{
+  const at=source.indexOf(marker,context);
+  assert.ok(at>context,`cold identity/byte proof must remain after new context: ${marker}`);
+  return at;
+ });
+ assert.deepEqual(coldPositions,[...coldPositions].sort((a,b)=>a-b),'cold context must retain actual loaded bytes, pre-allocation observation and target identity order');
+ assert.ok(source.includes('result.coldBootDiagnostics={hooked,coldLoaded:[...coldLoaded].sort()}'),
+  'failed cold startup must preserve the actual loaded-stage evidence');
+});

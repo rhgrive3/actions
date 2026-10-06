@@ -125,10 +125,15 @@ async function main(){
   });
   result.gpu=await page.evaluate(()=>{const gl=__G.renderer.getContext(),ext=gl.getExtension('WEBGL_debug_renderer_info');return {webgl:gl.getParameter(gl.VERSION),renderer:ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER)};});
   for(const f of ['patches/local-quality/idle-resources.mjs','patches/local-quality/music-idle.mjs'])if(![...loaded].some(p=>p.endsWith('/'+f)))throw Error('Runtime module not actually loaded: '+f);
+  // Warm outputs and real WebGL counters are now captured. The frozen game loop
+  // still schedules requestAnimationFrame; close its page before the isolated
+  // cold context so the two startup phases do not keep separate worlds live.
+  await page.close();page=null;
   phase='cold-boot-mobile';
   const coldContext=await browser.browser().newContext({viewport:{width:844,height:390},hasTouch:true,isMobile:true});
+  let coldPage,hooked=false;const coldLoaded=new Set();
   try {
-   const coldPage=await coldContext.newPage();let hooked=false;const coldLoaded=new Set();
+   coldPage=await coldContext.newPage();
    coldPage.on('pageerror',e=>errors.push('cold boot: '+e.message));
    await coldPage.addInitScript(()=>localStorage.setItem('inkwave.settings',JSON.stringify({quality:'high',shadows:false,bloom:false,music:0,sfx:0})));
    await coldPage.route(address+'**',async route=>{
@@ -158,6 +163,10 @@ async function main(){
    result.coldBoot=await coldPage.evaluate(()=>{const G=window.__G,c=window.__coldEnvironment;G.game.debug.freeze();return {...c,sameTargetsAfterBoot:c.cloudId===G.env._cloudRT?.texture.uuid&&c.farId===G.env._farRT?.texture.uuid};});
    if(!hooked||![...coldLoaded].some(p=>p.endsWith('/src/world/environment.js')))throw Error('Cold native Environment bytes not observed');
    await coldPage.screenshot({path:path.join(output,'cold-boot-mobile-halyard.png'),animations:'disabled'});
+  } catch(error) {
+   result.coldBootDiagnostics={hooked,coldLoaded:[...coldLoaded].sort()};
+   if(coldPage)await coldPage.screenshot({path:path.join(output,'failure.png'),animations:'disabled'}).catch(()=>{});
+   throw error;
   } finally {await coldContext.close();}
   result.errors=errors;const summary=validateIdleResult(result);
   publish({status:'passed',...result,summary,sourceSha:identity.source.sourceSha,contentHash:manifest.contentHash,verifierSha256:sha(fs.readFileSync(fileURLToPath(import.meta.url))),browser:browser.browser()?.version()});
