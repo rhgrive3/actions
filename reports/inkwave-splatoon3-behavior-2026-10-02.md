@@ -180,6 +180,14 @@ Flow の外殻・粒・リボンが GTAO の法線／深度パスに不透明な
 
 ローラー横／縦振りの owner physics を packet 化する順序を修正し、remote の trajectory と projectile に紐付く curtain の時間軸を一致させた。基準射程・威力・spread・local physics・animation pose の変更はない。全武器の native replay、二人の WebSocket arena、遅延／重複／退出回帰の詳細は [Network replication report](network-replication-report.md) に記録する。これは INKWAVE 内の同期比較であり、本家の実機比較、原作の射程校正、physical iOS 検証の未確認項目を解消したという意味ではない。
 
+## 遅延した remote splat と復活 life（#599、2026-10-06）
+
+比較条件は Splatoon 3 Ver.11.3.0、オンラインの Regular Battle / Turf War、シューター、標準ギア、相手の splat 後に復活する状態。任天堂の [オンライン対戦案内](https://en-americas-support.nintendo.com/app/answers/detail/a_id/59459/p/897) と [公式ゲーム紹介](https://splatoon.nintendo.com/en/gameplay/) はオンライン対戦と Turf War を案内しているが、remote death event の順序・送信者権限・life epoch は説明していない。この内部同期の本家比較は未確認であり、Switch 実機や稼働中のオンライン対戦での再現はしていない。
+
+INKWAVE の `patches/reliability/combat-credit-adapter.mjs` は owner と event の life を検証した後、遅延した terminal event の元 paint credit を一度だけ反映する。今回の修正では、その credit 処理の後で、death presentation を最新の owner snapshot `net.lastLife` と再生中 sample `net.cur.life` の両方が event life と一致する場合だけ通す。NetMatch の packet shape、paint の生成・geometry、通常の hit / respawn timing は変更しない。
+
+再現回帰は native `Actor` の hit → splat event → `NetMatch._sendTick` → remote `_tick` / `_advance` / sample / `_playEvents` を使う。20Hz の固定 clock で life 4 の terminal event を保留中に、owner が life 5 の生存 snapshot と respawn event を送る。再生中 sample は life 4、最新 owner snapshot は alive/life 5 であることを確かめ、古い terminal は撃破表示と死亡状態を変えず、元の塗りと attacker reward を一度だけ反映し、その後の respawn event は通常どおり再生する。重複 terminal と forged owner も拒否する。これは source VM のロジック検証であり、ブラウザ実動作・実ネットワーク・本家実機との比較は未確認。
+
 ## 練習場（2026-10-03）
 
 ブランチ `inkwave/practice-range` に、既存システムを測るためのソロ練習場を独立パッチ `patches/practice-range/` として追加した（[練習場レポート](practice-range-report.md)）。歩行・泳ぎ・射撃・塗り・ボム・スペシャル・被弾の数値とロジックは変更していない。練習場の目盛りはワールド座標（1 m = 1 ワールド単位）で、本家の距離単位との対応は引き続き未確認（`distanceScale` は推定）。この記録の既存の差分・未確認項目は、練習場の追加によって解消済みとしない。
