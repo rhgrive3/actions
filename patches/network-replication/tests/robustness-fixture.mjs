@@ -126,7 +126,7 @@ export async function fixture({ network = true } = {}) {
   });
 
   function makeNetMatch(session) {
-    const nm = new NetMatch(session, { map: 'map', difficulty: 'normal' });
+    const nm = new NetMatch(session, { map: 'map', difficulty: 'normal', id: 'fixture-match' });
     G.netm = nm;
     return nm;
   }
@@ -204,7 +204,7 @@ export async function fixture({ network = true } = {}) {
     const quads = [];
     p._netQuads = quads;
     const push = p._pushQuad.bind(p);
-    p._pushQuad = (...args) => { quads.push({ team: args[9], u0: args[0], u1: args[1], v0: args[2], v1: args[3] }); return push(...args); };
+    p._pushQuad = (...args) => { quads.push({ team: args[9], u0: args[1], u1: args[2], v0: args[3], v1: args[4] }); return push(...args); };
     G.paint = p;
     return p;
   }

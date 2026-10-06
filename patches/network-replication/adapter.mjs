@@ -30,10 +30,10 @@ export function adaptNetworkSource(rel, code) {
     {
       const lifeTick = "const msg = { k: 't', ts: r3(now()), a, l: Object.fromEntries([...this.byNid.values()].filter(x => !x.remote).map(x => [x.nid, x.netLife ?? 0])) };";
       if (code.includes(lifeTick)) patch(lifeTick,
-        "const msg = { k: 't', ts: r3(now()), a, l: Object.fromEntries([...this.byNid.values()].filter(x => !x.remote).map(x => [x.nid, x.netLife ?? 0])), u: Math.round((G.time || 0)*60) };",
+        "const msg = { k: 't', ts: r3(now()), a, l: Object.fromEntries([...this.byNid.values()].filter(x => !x.remote).map(x => [x.nid, x.netLife ?? 0])), u: Math.round((G.time || 0)*60), m: this.cfg.id };",
         'owner simulation tick with combat life');
       else patch("const msg = { k: 't', ts: r3(now()), a };",
-        "const msg = { k: 't', ts: r3(now()), a, u: Math.round((G.time || 0)*60) };",
+        "const msg = { k: 't', ts: r3(now()), a, u: Math.round((G.time || 0)*60), m: this.cfg.id };",
         'owner simulation tick');
     }
     patch('for (const p of this.peers.values()) this._advance(p, dt);', 'for (const p of this.peers.values()) { this._advance(p,dt); sampleOwnerSimulation(p); }', 'sample owner simulation clock');
@@ -47,6 +47,13 @@ export function adaptNetworkSource(rel, code) {
     patch('if (d.e) for (const e of d.e) p.events.push(e);', `if (d.e) for (const e of d.e) {
       if (!Array.isArray(e) || !Number.isFinite(e[0])) continue;
       if (d.r === 2) { const seq = e[e.length-1]; if (!Number.isSafeInteger(seq) || seq < 1) continue; e._netSeq = seq; const tick = e[e.length-2]; if (Number.isSafeInteger(tick)) e._netTick = tick; }
+      if (e[1] === 's') {
+        const points = p.physicsPoints, priorTs = points?.length >= 4 ? points[points.length - 4] : undefined;
+        const priorTick = points?.length >= 4 ? points[points.length - 3] : undefined;
+        if (!validPaintEvent(this, from, d, e, priorTs, priorTick)) continue;
+        // Receiver-created provenance. The wire payload cannot claim its own authority.
+        e._netSplatAuthorized = true;
+      }
       // Receiver-created proof only: an event cannot supply its own authority.
       e._stormSnapshot = null;
       const stormNid = e[1] === 'b' && e[3] === 'storm' ? e[2]
@@ -78,21 +85,30 @@ export function adaptNetworkSource(rel, code) {
     {
       const combatLifeTick = '  _tick(from, d) {\n    this.stats.in++;\n    // Ordered WebSocket ticks cannot replay paint or terminal events.\n    if (!Number.isFinite(d.ts) || d.ts <= (this.peers.get(from)?.lastTs ?? -Infinity)) return;\n    const p = this._peer(from);';
       if (code.includes(combatLifeTick)) patch(combatLifeTick, `  _tick(from, d) {
-    if (!Number.isFinite(d.ts)) return;
+    if (!Number.isFinite(d.ts) || d.ts < 0) return;
+    if (this.s._members && !this.s._members.has(from)) return;
+    if (d.r === 2 && this.cfg?.id && d.m !== this.cfg.id) return;
     const previous = this.peers.get(from);
+    if (d.r === 2 && (!Number.isSafeInteger(d.u) || d.u < 0)) return;
+    if (d.r === 2 && previous?.physicsPoints?.length && d.u < previous.physicsPoints.at(-1)) return;
     // One ordered replay gate owns both combat-life admission and projectile/event chronology.
     if (previous?.lastTs !== undefined && d.ts <= previous.lastTs) return;
     this.stats.in++;
     const p = this._peer(from);`, 'ordered tick replay guard with combat life');
       else patch('  _tick(from, d) {\n    this.stats.in++;', `  _tick(from, d) {
-    if (!Number.isFinite(d.ts)) return;
+    if (!Number.isFinite(d.ts) || d.ts < 0) return;
+    if (this.s._members && !this.s._members.has(from)) return;
+    if (d.r === 2 && this.cfg?.id && d.m !== this.cfg.id) return;
     const previous = this.peers.get(from);
+    if (d.r === 2 && (!Number.isSafeInteger(d.u) || d.u < 0)) return;
+    if (d.r === 2 && previous?.physicsPoints?.length && d.u < previous.physicsPoints.at(-1)) return;
     // WebSocket delivery is ordered and reliable. A replay cannot create a
     // second shot, rewind the clock window, or resurrect a finished projectile.
     if (previous?.lastTs !== undefined && d.ts <= previous.lastTs) return;
     this.stats.in++;`, 'ordered tick replay guard');
     }
     patch('  _play(from, e) {\n    switch (e[1]) {', `  _play(from, e) {
+    if (e[1] === 's' && e._netSplatAuthorized !== true) return;
     const eventPeer = this.peers.get(from);
     if (e._netSeq !== undefined && eventPeer) { if (e._netSeq <= (eventPeer._lastEventSeq || 0)) return; eventPeer._lastEventSeq = e._netSeq; }
     if (e[1] === 'p' || e[1] === 'pe' || e[1] === 'b' || e[1] === 'tr') {
@@ -190,6 +206,30 @@ function netSplatKey(tick, from, team, seq) {
   const id = typeof from === 'string' ? from : '';
   for (let i = 0; i < id.length; i++) { h ^= id.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
   return t * 8589934592 + (h & 0xFFFFF) * 8192 + (team ? 1 : 0) * 4096 + (seq & 0xFFF);
+}
+const PAINT_KIND_NAMES = new Set(['shot', 'line', 'blast', 'bomb', 'trail', 'drop', 'roll', 'speck']);
+function validPaintEvent(nm, from, d, e, priorTs, priorTick) {
+  if (d.r !== 2 || e.length !== 15 || !nm.cfg?.id || d.m !== nm.cfg.id) return false;
+  if (!nm.s?._members?.has(from) || !Number.isSafeInteger(d.u) || d.u < 0) return false;
+  if (!Number.isSafeInteger(e._netTick) || e._netTick < 0 || e._netTick > d.u
+    || !Number.isSafeInteger(e._netSeq) || e._netSeq < 1) return false;
+  if (priorTick !== undefined && e._netTick < priorTick) return false;
+  if (d.ts < 0 || e[0] < 0 || e[0] > d.ts || priorTs !== undefined && e[0] < priorTs) return false;
+  for (const i of [2,3,4,5,7,9,10,11,12]) if (!Number.isFinite(e[i])) return false;
+  if (e[5] <= 0 || e[7] < 0 || e[7] >= 1 || (e[6] !== 0 && e[6] !== 1)) return false;
+  if (typeof e[8] === 'string') {
+    if (!PAINT_KIND_NAMES.has(e[8])) return false;
+  } else if (!(Number.isSafeInteger(e[8]) && e[8] >= 0 && e[8] <= 7)) return false;
+  // NetSession's roster assigns every guest actor a fixed team for this match.
+  // The host owns bots on either side, so its opposing-team bot paint stays valid.
+  if (from !== nm.s.hostId) {
+    let ownsTeam = false;
+    for (const actor of nm.byNid.values()) {
+      if (actor.remote && actor.owner === from && actor.team === e[6]) { ownsTeam = true; break; }
+    }
+    if (!ownsTeam) return false;
+  }
+  return true;
 }
 function stormSnapshotAllows(actor, proof, from) {
   const latest = actor?.net?.buf?.at(-1);
@@ -407,10 +447,10 @@ function retireNetworkGhosts(owner = null) {
     // after, which makes the final grid independent of arrival order on every
     // client, and lets the GPU growth pass read the same authority.
     patch('    this.grid = new Uint8Array(total);      // 0 none, 1 team0, 2 team1\n    this.dead = new Uint8Array(total);      // cells buried inside other geometry',
-      '    this.grid = new Uint8Array(total);      // 0 none, 1 team0, 2 team1\n    this.gridOrder = new Float64Array(total); // canonical order identity of the last writer per cell\n    this.dead = new Uint8Array(total);      // cells buried inside other geometry',
+      '    this.grid = new Uint8Array(total);      // 0 none, 1 team0, 2 team1\n    this.gridOrder = new Float64Array(total); // canonical order identity of the last writer per cell\n    this._orderVersion = 0;\n    this.dead = new Uint8Array(total);      // cells buried inside other geometry',
       'paint grid canonical order tracking');
     patch('    this.grid.fill(0);\n    this.counts[0] = this.counts[1] = 0;',
-      '    this.grid.fill(0);\n    if (this.gridOrder) this.gridOrder.fill(0);\n    this.counts[0] = this.counts[1] = 0;',
+      '    this.grid.fill(0);\n    if (this.gridOrder) this.gridOrder.fill(0);\n    this._orderVersion = (this._orderVersion || 0) + 1;\n    this.counts[0] = this.counts[1] = 0;',
       'clear paint order tracking');
     patch('if (!nm.applying) { if (opts.seed === undefined) opts.seed = Math.random(); nm.recSplat(center, radius, team, opts); }\n    }',
       'if (!nm.applying) { if (opts.seed === undefined) opts.seed = Math.random(); nm.recSplat(center, radius, team, opts); }\n    }\n    const prevNetKey = this._currentNetKey;\n    this._currentNetKey = opts._netKey;',
@@ -419,7 +459,7 @@ function retireNetworkGhosts(owner = null) {
       '    this._currentNetKey = prevNetKey;\n    return claimed;\n  }\n\n  // Cosmetic micro-splat',
       'restore the active splat order identity');
     patch('    const entries = [];\n    let wall = false;',
-      '    const entries = [];\n    let wall = false;\n    let live = 0;\n    const runs = [];',
+      '    const entries = [];\n    let wall = false;\n    let live = 0;',
       'count faces that still owe GPU ink');
     patch('        if (!cosmetic) claimed += this._cpuSplat(f, lu, lv, rr, team, seed, sdu, sdv, sa, kind);\n        entries.push(f, lu, lv, dn, sdu, sdv, sa);',
       `        this._lastOrderWins = 0;
@@ -430,12 +470,13 @@ function retireNetworkGhosts(owner = null) {
         // the atlas would contradict the gameplay grid it is supposed to match.
         const liveFace = cosmetic || this._currentNetKey === undefined || won > 0 || this._lastOrderWins > 0;
         if (liveFace) live++;
-        // Entry stride 10. Slot 8 is where this face's won cell runs start in the
-        // splat run list and slot 9 is how many there are; -1 means the splat has no
-        // canonical order and keeps the plain one-quad-per-face growth draw.
-        const runCount = this._currentNetKey === undefined ? -1 : (this._runs.length / 3);
-        entries.push(f, lu, lv, dn, sdu, sdv, sa, liveFace ? 1 : 0, runs.length, runCount);
-        for (let r = 0; r < this._runs.length; r++) runs.push(this._runs[r]);`,
+        // Entry stride 10. Slot 8 owns this face's mutable winning runs and a
+        // reusable scratch list; slot 9 is the current run count (-1 keeps the
+        // unchanged one-quad-per-face path without canonical ownership.
+        const runState = this._currentNetKey === undefined || cosmetic
+          ? null : { active: this._runs, spare: [] };
+        const runCount = runState ? (runState.active.length / 3) : -1;
+        entries.push(f, lu, lv, dn, sdu, sdv, sa, liveFace ? 1 : 0, runState, runCount);`,
       'record per-face GPU paint authority and won cell runs');
     patch('    if (entries.length) {\n      // an older splat of the other team still spreading underneath this one finishes instantly',
       '    if (live > 0) {\n      // an older splat of the other team still spreading underneath this one finishes instantly',
@@ -459,6 +500,7 @@ function retireNetworkGhosts(owner = null) {
         if (start >= 0) this._runs.push(start, i1 + 1, j);
       }
     }
+    if (this._lastOrderWins > 0) this._orderVersion++;
     if (claimed > 0) this.version++;
     return claimed;
   }`,
@@ -478,8 +520,8 @@ function retireNetworkGhosts(owner = null) {
         claimed += cellA;`,
       'deterministic cell ownership by canonical order identity');
     patch('        cx: center.x, cy: center.y, cz: center.z,\n      };',
-      '        cx: center.x, cy: center.y, cz: center.z,\n        runs: runs.length ? runs : null,\n      };',
-      'carry the won cell runs with the growth splat');
+      '        cx: center.x, cy: center.y, cz: center.z,\n        orderKey: this._currentNetKey, orderVersion: this._orderVersion,\n      };',
+      'carry the canonical order for live GPU ownership checks');
     patch('    const E = g.entries, R = g.R, kind = g.kind;\n    const reachK = REACH[kind];\n    for (let i = 0; i < E.length; i += 7) {\n      const f = E[i], lu = E[i + 1], lv = E[i + 2], dn = E[i + 3], sdu = E[i + 4], sdv = E[i + 5], sa = E[i + 6];\n      if (dn >= R) continue;\n      const rr = Math.sqrt(R * R - dn * dn);\n      if (dripOnly) {\n        if (!f.wall || rr < R * 0.3) continue;\n        this._pushQuad(f, lu - rr * 0.95, lu + rr * 0.95, lv - rr * DRIP_REACH, lv - rr * 0.3, lu, lv, dn, R, g.team, g.seed, kind, sdu, sdv, sa, tn, dT, 1);\n      } else {\n        const ext = rr * (reachK + 1.4 * sa);\n        const down = f.wall && g.dripDur ? rr * DRIP_REACH : 0;\n        this._pushQuad(f, lu - ext, lu + ext, lv - Math.max(ext, down), lv + ext, lu, lv, dn, R, g.team, g.seed, kind, sdu, sdv, sa, tn, dT, 0);\n      }\n    }',
       `    const E = g.entries, R = g.R, kind = g.kind;
     const reachK = REACH[kind];
@@ -488,8 +530,7 @@ function retireNetworkGhosts(owner = null) {
       if (!E[i + 7]) continue;                  // newer canonical ink already covers this whole face
       if (dn >= R) continue;
       const rr = Math.sqrt(R * R - dn * dn);
-      const runCount = E[i + 9];
-      if (runCount === 0) continue;             // every cell of this face was canonically lost
+      let runCount = E[i + 9];
       if (runCount < 0) {                       // no canonical order: unchanged one-quad-per-face growth
         if (dripOnly) {
           if (!f.wall || rr < R * 0.3) continue;
@@ -505,14 +546,48 @@ function retireNetworkGhosts(owner = null) {
       // can never show ink the gameplay grid already gave away. Same shape function
       // and same blend, so every pixel still drawn is identical to the unclipped
       // draw, and the quad count stays near the number of scanlines covered.
-      const runs = g.runs;
+      const runState = E[i + 8];
+      if (!runState || runCount === 0) continue; // every cell of this face was canonically lost
+      let runs = runState.active;
+      if (g.orderVersion !== this._orderVersion) {
+        let ownershipChanged = false;
+        for (let r = 0; r < runCount && !ownershipChanged; r++) {
+          const o = r * 3, row = runs[o + 2], rowBase = f.grid + row * f.nu;
+          for (let col = runs[o]; col < runs[o + 1]; col++) {
+            if (this.gridOrder[rowBase + col] !== g.orderKey) { ownershipChanged = true; break; }
+          }
+        }
+        if (ownershipChanged) {
+          const kept = runState.spare;
+          kept.length = 0;
+          for (let r = 0; r < runCount; r++) {
+            const o = r * 3, row = runs[o + 2], rowBase = f.grid + row * f.nu;
+            let start = -1;
+            for (let col = runs[o]; col < runs[o + 1]; col++) {
+              if (this.gridOrder[rowBase + col] === g.orderKey) {
+                if (start < 0) start = col;
+              } else if (start >= 0) {
+                kept.push(start, col, row); start = -1;
+              }
+            }
+            if (start >= 0) kept.push(start, runs[o + 1], row);
+          }
+          runState.spare = runs;
+          runState.active = runs = kept;
+          runCount = E[i + 9] = runs.length / 3;
+        }
+      }
+      if (runCount === 0) continue;
       for (let r = 0; r < runCount; r++) {
-        const o = E[i + 8] + r * 3;
-        // Keep the atlas pad bleed the unclipped draw had, so ink still covers the
-        // mip guard band at the face edge; only cells another splat owns are cut.
+        const o = r * 3;
+        // Atlas padding belongs only outside a face. Interior ownership edges stay
+        // on their grid boundaries, so this quad cannot paint a lost cell.
         const padM = (f.atlas.pad - 0.5) / f.atlas.ppm;
-        const cu0 = runs[o] * f.cu - padM, cu1 = runs[o + 1] * f.cu + padM;
-        const cv0 = runs[o + 2] * f.cv - padM, cv1 = cv0 + f.cv + padM;
+        const runU0 = runs[o], runU1 = runs[o + 1], row = runs[o + 2];
+        const cu0 = runU0 * f.cu - (runU0 === 0 ? padM : 0);
+        const cu1 = runU1 * f.cu + (runU1 === f.nu ? padM : 0);
+        const cv0 = row * f.cv - (row === 0 ? padM : 0);
+        const cv1 = (row + 1) * f.cv + (row + 1 === f.nv ? padM : 0);
         if (dripOnly) {
           if (!f.wall || rr < R * 0.3) continue;
           const u0 = Math.max(cu0, lu - rr * 0.95), u1 = Math.min(cu1, lu + rr * 0.95);
@@ -526,7 +601,8 @@ function retireNetworkGhosts(owner = null) {
           if (u1 > u0 && v1 > v0) this._pushQuad(f, u0, u1, v0, v1, lu, lv, dn, R, g.team, g.seed, kind, sdu, sdv, sa, tn, dT, 0);
         }
       }
-    }`,
+    }
+    if (g.orderKey !== undefined) g.orderVersion = this._orderVersion;`,
       'GPU growth draws exactly the canonically won cells');
   }
   return code;
