@@ -124,6 +124,102 @@ test('#626 squid entry cannot happen before the 6F boundary', async () => {
   }
 });
 
+// The roll-end tick is frame 0, so a release and a request on that same tick must
+// already be owned by the window. A gate that only starts on the NEXT tick lets both
+// through, which is what the real Actor ordering produces unless the stop is detected
+// before its form decision.
+test('#626 a simultaneous release and sub press on the roll-end tick cannot arm the sub', async () => {
+  const f = await fixture();
+  const a = f.make('roller');
+  a.grounded = true; a.intent.move.set(0, 0, 1);
+  const r = a.weaponRunner;
+  a.intent.fire = true;
+  for (let i = 0; i < 220; i++) { f.G.time += DT; a.update(DT); }
+  assert.equal(r.rolling, true, 'must be rolling');
+  a.intent.fire = false; a.intent.sub = true;     // frame 0: release and request together
+  f.G.time += DT; a.update(DT);
+  assert.equal(r.rolling, false, 'the roll must end on this tick');
+  assert.ok(r.s3RollStop, 'the roll-end tick must arm the interruption');
+  assert.equal(r.aimingSub, false, 'the sub armed on the roll-end tick itself');
+  const trace = [];
+  for (let frame = 1; frame <= 12; frame++) { f.G.time += DT; a.update(DT); trace.push([frame, r.aimingSub]); }
+  const admitted = trace.findIndex(([, aiming]) => aiming);
+  assert.equal(admitted, FRAMES.sub - 1, `sub admitted on frame ${admitted + 1}`);
+  for (let i = 0; i < FRAMES.sub - 1; i++) assert.equal(trace[i][1], false, `the sub armed early on frame ${trace[i][0]}`);
+
+  // The same tick driven straight through the runner, with no Actor above it.
+  const direct = await establishedRoll();
+  runnerTick(direct.f, direct.a, { fire: false, sub: true });
+  assert.equal(direct.r.aimingSub, false, 'the runner armed the sub on the roll-end tick');
+  assert.ok(direct.r.s3RollStop, 'the roll-end tick must arm the interruption');
+});
+
+test('#626 a simultaneous release and squid press on the roll-end tick cannot enter squid', async () => {
+  const f = await fixture();
+  const a = f.make('roller');
+  a.grounded = true; a.intent.move.set(0, 0, 1);
+  const r = a.weaponRunner;
+  a.intent.fire = true;
+  for (let i = 0; i < 220; i++) { f.G.time += DT; a.update(DT); }
+  assert.equal(r.rolling, true, 'must be rolling');
+  a.intent.fire = false; a.intent.squid = true;  // frame 0: release and request together
+  f.G.time += DT; a.update(DT);
+  assert.equal(r.rolling, false, 'the roll must end on this tick');
+  assert.ok(r.s3RollStop, 'the roll-end tick must arm the interruption');
+  assert.equal(a.form, 'kid', 'squid was entered on the roll-end tick itself');
+  const trace = [];
+  for (let frame = 1; frame <= 12; frame++) { f.G.time += DT; a.update(DT); trace.push([frame, a.form]); }
+  const admitted = trace.findIndex(([, form]) => form === 'squid');
+  assert.equal(admitted, FRAMES.squid - 1, `squid admitted on frame ${admitted + 1}`);
+  for (let i = 0; i < FRAMES.squid - 1; i++) assert.equal(trace[i][1], 'kid', `squid was entered early on frame ${trace[i][0]}`);
+});
+
+// Negative control for the pre-emptive stop detection: the Actor builds its own fire
+// from the raw intent plus the pop-out buffer, so a release tick can still carry fire.
+// That tick is the existing roll-into-swing transition and must arm nothing.
+test('#626 a buffered pop-out shot on the release tick is a swing, not a roll stop', async () => {
+  const f = await fixture();
+  const a = f.make('roller');
+  a.grounded = true; a.intent.move.set(0, 0, 1);
+  const r = a.weaponRunner;
+  a.intent.fire = true;
+  for (let i = 0; i < 220; i++) { f.G.time += DT; a.update(DT); }
+  assert.equal(r.rolling, true, 'must be rolling');
+  a.intent.fire = false; a.fireBuffer = f.PLAYER.fireBuffer;
+  f.G.time += DT; a.update(DT);
+  assert.ok(r.flick >= 0, 'the buffered shot must run into the existing swing');
+  assert.equal(r.s3RollStop, null, 'a release tick whose fire stays alive must arm nothing');
+});
+
+test('#626 the same-tick boundaries are exact at 30/60/120 Hz render schedules', async () => {
+  const END = 100;
+  for (const hz of [30, 60, 120]) {
+    const f = await fixture();
+    const a = f.make('roller');
+    a.grounded = true; a.intent.move.set(0, 0, 1);
+    const r = a.weaponRunner;
+    const clock = new FixedClock();
+    let seen = false, endTick = -1, subAt = -1, squidAt = -1;
+    for (let frame = 0; frame < 300 / 60 * hz; frame++) {
+      clock.advance(1 / hz, dt => {
+        const tick = clock.ticks;
+        a.intent.fire = tick < END;
+        if (tick >= END) { a.intent.sub = true; a.intent.squid = true; }
+        f.G.time += dt; a.update(dt);
+        if (r.rolling) seen = true;
+        if (seen && endTick < 0 && !r.rolling) endTick = tick;
+        if (subAt < 0 && r.aimingSub) subAt = tick;
+        if (squidAt < 0 && a.form === 'squid') squidAt = tick;
+      });
+    }
+    assert.equal(clock.ticks, 300, `${hz} Hz tick count`);
+    assert.equal(endTick, END, `${hz} Hz roll-end tick`);
+    // Frame 0 is the release tick itself, so both requests are already late there.
+    assert.equal(subAt - endTick, FRAMES.sub, `${hz} Hz sub boundary`);
+    assert.equal(squidAt - endTick, FRAMES.squid, `${hz} Hz squid boundary`);
+  }
+});
+
 test('#626 a dry roll and a roll released into a flick keep their existing behaviour', async () => {
   // Dry roll (#541): no ink is not an interruption of the sourced kind.
   const dry = await establishedRoll({ frames: 60 });
