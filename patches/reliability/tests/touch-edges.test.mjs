@@ -32,8 +32,14 @@ async function boot({ patched = true, weapon = 'shooter' } = {}) {
     for (const [name, value] of Object.entries(values)) this.setExport(name, value);
   }, { context, identifier });
   function load(file) {
+    // Adapted upstream modules import build-only patches through ../../patches.
+    // In this source fixture those bytes live at the repository root, not under
+    // immutable inkwave-public/, so mirror the build tree's module topology.
+    if (file !== 'three' && file.startsWith(path.join(UPSTREAM, 'patches') + path.sep))
+      file = path.join(ROOT, path.relative(UPSTREAM, file));
     if (modules.has(file)) return modules.get(file);
-    const rel = path.relative(UPSTREAM, file);
+    const rel = file === 'three' ? file : file.startsWith(UPSTREAM + path.sep)
+      ? path.relative(UPSTREAM, file) : path.relative(ROOT, file);
     let mod;
     if (rel === 'src/core/ctx.js' || rel === 'src/config.js' || rel === 'src/game/physics.js') mod = synthetic(file, f);
     else if (file === 'three') mod = synthetic(file, { ...f.THREE });
