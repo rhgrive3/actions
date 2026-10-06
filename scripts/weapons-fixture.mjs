@@ -56,6 +56,16 @@ export async function fixture({site = BASELINE, seed = 0x1a2b3c4d, floor = true,
       }
       if (p.startsWith(path.join(SOURCE, 'patches') + path.sep))
         p = path.join(ROOT, path.relative(SOURCE, p));
+      // Patch modules import ../../../src/... as they do in the emitted site.
+      // In source mode that resolves under the repository root, so route those
+      // upstream namespaces back to immutable inkwave-public as well.
+      for (const dir of ['src', 'assets', 'vendor']) {
+        const rootDir = path.join(ROOT, dir) + path.sep;
+        if (p.startsWith(rootDir)) {
+          p = path.join(SOURCE, path.relative(ROOT, p));
+          break;
+        }
+      }
     }
     if (!modules.has(p)) {
       let code = fs.readFileSync(p, 'utf8');
