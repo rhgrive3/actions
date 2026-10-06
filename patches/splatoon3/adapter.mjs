@@ -226,21 +226,7 @@ export function adaptSource(rel, code) {
       'S3 ShotGuideFrame HUD projection');
     return `import { runSimulation, installGame } from '../patches/splatoon3/runtime/clock.mjs';\nimport { projectShotGuide } from '../patches/splatoon3/runtime/weapons-fidelity.mjs';\n` + code;
   }
-  if (rel === 'src/world/paint.js') {
-    code = replaceOnce(code,
-      '    let claimed = 0;\n    const cellA = f.cu * f.cv;',
-      '    let claimed = 0, changed = 0;\n    const cellA = f.cu * f.cv;',
-      'cpu splat changed tracking');
-    code = replaceOnce(code,
-      '        this.grid[k] = val;\n        claimed += cellA;\n        if (f.turf && !this.dead[k]) {',
-      '        this.grid[k] = val;\n        changed++;\n        if (f.turf && !this.dead[k]) {\n          claimed += cellA;',
-      'turf eligible claimed area');
-    code = replaceOnce(code,
-      '    if (claimed > 0) this.version++;\n    return claimed;',
-      '    if (changed > 0) this.version++;\n    return claimed;',
-      'cpu splat version bump');
-    return code;
-  }
+
   return code;
 }
 

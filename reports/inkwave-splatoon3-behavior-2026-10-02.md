@@ -468,18 +468,6 @@ For #654, the INKWAVE condition is one connected controller held across a browse
 | プレイへの影響 | アメフラシ発動による敵インク被弾無効化（不当な生存性向上）を是正。スペシャル効果時間・投擲・ゲージ挙動・通常武器被弾・水没判定 (#592) はそのまま維持。 |
 | 確認状態 | **ロジック確認済み**（実 Actor + 実 Physics / Paint / Resources 環境での専用回帰 `patches/splatoon3/tests/storm-throwlock-resources.test.mjs` 6/6 通過、30/60/120 Hz で同一判定）。**Switch Ver.11.3.0 実機での精密フレーム測定は未確認**。 |
 
-## 2026-10-06 — #736 非Turf壁面塗りによるTurfポイントおよびスペシャルゲージ誤付与の解消
-
-開始mainは `c9b1c022ad4dfa0ce437698e697952deca4d94cb`。公開対象は `inkwave-public/` と有効な `patches/splatoon3/` であり、旧 `game/` は対象外。
-
-| 項目 | 内容 |
-|---|---|
-| 本家の根拠 | スプラトゥーン3 Ver.11.3.0 ナワバリバトルルール説明 ([任天堂公式](https://www.nintendo.com/jp/switch/av5ja/battle-nawabari/index.html))。壁面などの垂直面はインクで塗って登ることができるが、ナワバリ面積およびスペシャルゲージ蓄積・個人塗りポイントには計上されない（上から見える床面のみが対象）。 |
-| INKWAVE の実装箇所 | `patches/splatoon3/adapter.mjs` の `src/world/paint.js` アダプタにおいて、`_cpuSplat` の `claimed += cellA;` を `if (f.turf && !this.dead[k])` の内側へ移動。セル色更新・GPU描画・壁登り用のバージョン更新は `changed > 0` で維持しつつ、スコア対象の `claimed` 面積は非Turf壁面および `dead[k]` セルで 0 を返すよう分離。 |
-| 再現操作 | 垂直壁面 (`wall: true`, `turf: false`) に着弾させた際、修正前は `_cpuSplat` が正の `claimed` 面積を返し、`Actor.addTurf(claimed)` により `stats.turf` と `special` が増加していた。修正後は壁面のインク塗り・壁登り可能性を保ちつつ、`claimed` が 0 となり個人塗り・スペシャルへの計上が行われない。床・壁混在着弾時は適格な床面のみ計上される。 |
-| プレイへの影響 | 壁面塗りを悪用したスペシャルの早期充填や塗りポイントの水増しを防止。試合終了時の勝敗判定 (`coverage()`) および PR #785 (C15) の投影セル面積計算と整合。 |
-| 確認状態 | **ロジック確認済み**（実 PaintSystem + Actor / scoring 環境での専用回帰 `patches/splatoon3/tests/wall-turf-credit.test.mjs` 6/6 通過）。**Switch Ver.11.3.0 実機との比較は未確認**。 |
-
 ## 2026-10-06 — Enemy-ink ground and ordinary airborne acceleration (#773 / #562)
 
 **Baseline:** public `inkwave-public/` at main `c9b1c022ad4dfa0ce437698e697952deca4d94cb`; reference Splatoon 3 Ver. 11.3.0, confirmed against [Nintendo's update history](https://en-americas-support.nintendo.com/app/answers/detail/a_id/59461/). The public community verification page reports ordinary acceleration of 0.01 m/F² (0.1 DU/F²), independent of human/squid form, weapon weight and movement-speed AP; neutral release and reverse input use that same magnitude. It reports 0.02 m/F² while firing or during sub/special attack and ready states, including when squid, but does not separately measure airborne acceleration. The pinned 11.3.0 reverse-engineered [parameter data](https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/misc/params.json) exposes opponent-ink movement-speed, jump and damage fields, not a distinct opponent-ink acceleration field; this supports retaining the base rate but does not establish transient Switch behavior. These are community / reverse-engineered references, not an official Nintendo parameter table or our Switch measurement. No conversion from those units to INKWAVE profile values is asserted. [Community acceleration reference](https://wikiwiki.jp/splatoon3mix/%E3%82%B7%E3%82%B9%E3%83%86%E3%83%A0%E8%A9%B3%E7%B4%B0%E4%BB%95%E6%A7%98#xb946c7b).
