@@ -1,10 +1,10 @@
-// Weight each exposed floor cell by its top-down projected area; walls/occluded cells
+// Weight each exposed floor cell by its actual area; walls/occluded cells
 // continue to render paint but cannot alter the Turf War judge.
 export function floorCoverage(paint) {
   const totals = [0, 0]; let area = 0;
   for (const f of paint.paintFaces) {
     if (!f.turf) continue;
-    const weight = f.cu * f.cv * Math.max(0, f.n.y);
+    const weight = f.cu * f.cv;
     for (let k = f.grid; k < f.grid + f.nu * f.nv; k++) {
       if (paint.dead[k]) continue;
       area += weight;
