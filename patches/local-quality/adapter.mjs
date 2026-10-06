@@ -14,9 +14,6 @@ import { adaptTeamWipeout } from './team-wipeout-adapter.mjs';
 import { adaptSplatlingReticle } from './splatling-reticle-adapter.mjs';
 import { adaptPortraitGuard } from './portrait-guard-adapter.mjs';
 import { adaptHudAuthority } from './hud-authority-adapter.mjs';
-import { adaptIssue482 } from '../splatoon3/issue-482-adapter.mjs';
-import { adaptIssue405 } from '../splatoon3/issue-405-adapter.mjs';
-import { adaptIssue484 } from '../splatoon3/issue-484-adapter.mjs';
 // Build-only quality corrections composed after the gameplay, touch-layout and
 // reliability adapters. Upstream inkwave-public/ remains byte-for-byte intact.
 import fs from 'node:fs';
@@ -26,10 +23,6 @@ import { adaptTurfLead } from './turf-lead-adapter.mjs';
 import { adaptScoreReticle } from './score-reticle-adapter.mjs';
 import { adaptMapTeammateStatus } from './map-teammate-status-adapter.mjs';
 import { adaptResourceSource } from './resource-adapter.mjs';
-import { adaptMedalSource } from './medal-adapter.mjs';
-import { adaptAimProfiles } from './aim-profile-adapter.mjs';
-import { adaptResourceSource } from './resource-adapter.mjs';
-import { adaptHudAuthority } from './hud-authority-adapter.mjs';
 import { adaptMedalSource } from './medal-adapter.mjs';
 import { adaptAimProfiles } from './aim-profile-adapter.mjs';
 import { adaptUiActorLifetime } from './ui-actor-lifetime-adapter.mjs';
