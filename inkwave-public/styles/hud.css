@@ -144,8 +144,6 @@
 
 /* ------------------------------------------------------------------ crosshair cluster */
 .iw-xh { position: absolute; left: 50%; top: 50%; width: 0; height: 0; }
-/* Slosher ShotGuide offsets only aiming feedback; tank/sub/status stay centred. */
-.iw-ret, .iw-hit, .iw-kill { translate: var(--gx, 0px) var(--gy, 0px); }
 .iw-ret { position: absolute; left: 0; top: 0; color: #fff; filter: drop-shadow(0 0 1px rgba(0, 0, 0, .95)) drop-shadow(0 1px 2px rgba(0, 0, 0, .45)); transition: color .12s, scale .25s var(--spring);
   scale: calc(1 + var(--bl, 0) * .14); }
 .iw-xh.is-target .iw-ret { color: var(--enemy); scale: 1.14; filter: drop-shadow(0 0 1.2px #fff) drop-shadow(0 0 1.2px #fff) drop-shadow(0 0 3px rgba(0, 0, 0, .55)); }
