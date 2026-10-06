@@ -219,10 +219,12 @@ test('#645 ordinary landing and special-owned paint controls', async t => {
       const initialTurf = a.stats.turf, initialSpecial = a.special;
       try {
         assert.equal(a.superJump(new f.THREE.Vector3(20, 0, 0)), true);
-        f.tick(a, 50);
+        // One shortened charge frame plus the existing humanoid startup owns
+        // preparation; then this case uses an exact 96F flight.
+        f.tick(a, 1 + a.s3.jumpStartupHumanoidF);
         assert.equal(a.superJumpState.phase, 'flight');
         assert.equal(paintCalls, 0);
-        f.tick(a, 48);
+        f.tick(a, 96);
         assert.equal(a.superJumpState, null, 'landing completes');
         assert.equal(paintCalls, 0, 'ordinary landing paints no ink');
         assert.equal(a.stats.turf, initialTurf, 'no personal turf credit');
