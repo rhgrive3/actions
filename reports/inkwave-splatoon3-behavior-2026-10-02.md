@@ -357,3 +357,15 @@ Reset now clears the pending damage attacker and angle together with the cancell
 ## 2026-10-06 — Dualies wall-drop (#604) and composed-runtime guards
 
 Base main `67fec182`. Splat Dualies wall impacts now enter the existing sourced wall-drop state using the pinned 11.3.0 top-level `WallDropMoveParam`/`WallDropCollisionPaintParam` (shock 1.3, fall 0.65, ground 0.6; 20–40F + 10F + 15–35F at 0.06). Previously the round died on the contact frame after one generic impact. Damage is unchanged. Shooter (#385) and Charger (#625/#268) are excluded: Shooter is owned elsewhere, and the Charger record omits three period fields. #770, #777, #638/#637, #644/#643 and #556 were already correct after adapter composition (the reports read raw source). They are now pinned by composed-runtime tests. This is logic-level and emitted-verifier evidence; a Switch visual/frame comparison is still 未確認. Details: [inkwave-wall-drop-dualies-guards-2026-10-06.md](inkwave-wall-drop-dualies-guards-2026-10-06.md).
+
+## 2026-10-06 — Follow-camera collision probe reuse (#862)
+
+本家参照: この比較記録のキュレーション基準 Ver. 11.3.0。ブキ・ギア差は対象外。Nintendo の追従カメラが使う衝突クエリの回数や内部アルゴリズムを示す公式値は確認しておらず、S3 実機との性能・画面比較は未確認。
+
+INKWAVE 公開版 `inkwave-public/src/game/cameraRig.js` の `CameraRig._follow` は、追従カメラの pivot、boom 方向、希望距離が変わらない場合も毎更新 `G.physics.cameraProbe(...)` を呼ぶ。`inkwave-public/src/game/physics.js` の `Physics.cameraProbe` は中心 1 本、内側 6 本、外側 8 本の計 15 レイを使い、`src/world/level.js` の静的 Level 広域探索から衝突距離を求める。
+
+ビルド時アダプター `patches/local-quality/adapter.mjs` は、同じターゲット・カメラモード・Physics/Level・衝突配列と、ほぼ同一の pivot/方向/距離では直前の `hard/soft/floor` 結果を再利用する。pivot と希望距離は 1 mm、方向ベクトル差は 0.001 を超えた時点で再計算し、追従時間が 250 ms を超えた最初の更新で再確認する（実時間は最大 1 フレーム分量子化）。モード/ターゲット変更、Physics 関数や Level/blocks/hash/blockStamp の交換では直ちに無効化する。サイド壁用の肩クリアランス raycast は変更しない。
+
+再現: Turf の通常追従カメラで移動・照準・射撃を止め、カメラのばねが静止した後に `cameraProbe` と `raycast` の呼出数を数える。キャッシュなしの実装は各更新で 15 本を発行する。アダプターは静止中の反復プローブを 250 ms 周期へ抑え、壁に向けて動くときは入力差を検出してその更新で再計算する。
+
+影響・確認: 変更対象はカメラ表示用の同一衝突結果の再利用のみ。プレイヤー速度、身体衝突、ダメージ、ブキ時刻、インク量/分布は更新しない。実際の公開 CameraRig を使うロジックハーネスで 30/60/120 Hz の静止カメラ出力と未変更ソースを比較し、出力一致、静止時 75% 以上のプローブレイ削減、壁への移動時の即時再計算、Level/target/mode 切替え、肩 raycast の同数を確認した。ブラウザ実動作、実 CPU 時間、Switch 実機比較は未確認。ソースはアダプターに実装済みで、親統合前の Issue #862 は GitHub 上で開いたまま。詳細: [inkwave-issue-862-camera-probe-cache-2026-10-06.md](inkwave-issue-862-camera-probe-cache-2026-10-06.md)。
