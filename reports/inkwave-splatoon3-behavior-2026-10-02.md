@@ -130,6 +130,12 @@ P05 は泳ぎ 180 F・ヒト 600 F の回復基点とブキ別の待ち時間を
 
 再開後はジャイロの遅延許可が最新設定を上書きする競合と、高リフレッシュレートのメニューパッド押下再利用、オンラインのポーズ中に自分の入力が続く不具合を修正した。パッチ473件と Chromium/WebKit の生成物24項目で確認した。センサー計算と感度値は維持し、本家の同条件実機一致・物理iPad・実リレーの未確認項目は解消済みとしない。
 
+## 2026-10-06 — #204 メニュー attract の更新予算
+
+公開 INKWAVE の `patches/splatoon3/runtime/clock.mjs` は通常 menu attract 中も 60 Hz 固定 tick ごとに Match/controller/projectile/8-bot attract を進め、`patches/local-quality/idle-adapter.mjs` は各 render frame で world presentation を更新・描画していた。touch または LOW 品質の通常 title/settings menu に限り、それらを20 Hzへまとめる。固定時計、入力/menu、network pump、showcase は render cadence を維持し、live match と desktop HIGH は変更しない。
+
+比較参照は本書冒頭の Splatoon 3 Ver.11.3.0。メニュー attract の更新頻度を定める公開数値は確認できず、ブキ・ギア・battle state は対象外。したがって20 Hzは INKWAVE の端末向け presentation budget であり、本家との同 cadence や gameplay fidelity を主張しない。再現操作は INKWAVE で title/settings を開き、touch 端末または LOW 品質で通常の背景 demo を表示すること。match/gameplay の simulation は変えない。ブラウザ実表示・物理端末の frame/GPU 計測と本家実機比較は未確認で、解消済みにしない。差分、回帰範囲、open PR 重複監査は [#204 の実装記録](inkwave-idle-attract-budget-204-2026-10-06.md) を参照。
+
 ## 全モーションの追加と統合再確認（2026-10-03）
 
 更新される OSS 本体を編集せず、表示ロジックを独立パッチとして実装し、全 14 種類を本番インストーラーに接続した。各比較記録は公式任天堂の映像・公開説明、保持した原資料のハッシュと映像の時刻、実エンジンの検証、未取得の本家数値を区別する。
@@ -1192,3 +1198,24 @@ Splatoon 3 Ver. 11.3.0 において通常のスーパージャンプは移動手
 | 再現操作 | 自インクの平地面で速度条件を満たして泳ぎ、速度方向から59/60/75/89/90/180°の方向へフル深度でスティックを倒して B（ジャンプ）。修正前は60°以上90°未満が不成立。 |
 | プレイへの影響 | 60°以上90°未満の斜め前・斜め横イカロールが復活し、進行を保った回避が本家寄りになる。90°以上の挙動は不変。 |
 | 確認状態 | `movement.test.mjs` の実profile回帰が修正前 fail(90°)/修正後 pass(pi/3)。`roll-chain-window`/`squidroll-motion` 36件も pass。Community検証の校正値であり、Switch実機での角度境界やWU換算の確認済みにはしない。 |
+
+## 2026-10-06 — CPU turf ownership precedes Roller body visibility (#570)
+
+**本家参照:** Splatoon 3 Ver. 11.3.0 (released 19 August 2026), Splat Roller in a normal Turf War, horizontal rolling on a flat paintable floor, with no gear ability effects assumed. Nintendo's [public update notes](https://en-americas-support.nintendo.com/app/answers/detail/a_id/59461/p/1076/c/950) list weapon and multiplayer balance changes but do not specify frame-by-frame paint spreading or CPU/GPU ownership timing. That is a documentation-scope observation, not evidence of the Switch's internal implementation; direct Switch comparison remains 未確認.
+
+**INKWAVE root and correction:** `inkwave-public/src/world/paint.js::PaintSystem.splat()` updates `_cpuSplat()` synchronously, then queues a non-instant record in `growing`; the shader body is first submitted by `flush()` using the record's partial age. For a Roller, the checked-in shader grows the band from its initial fraction toward full size. The disposable build adapter now sends an immediate body-only draw of that same native shape at full size, while retaining the queued record for its existing spread, droplets, spatter, and wall-drip lifecycle. No CPU grid, claimed area, turf count, or score calculation changes. This closes an INKWAVE interval where a gameplay query could claim a Roller cell before the rendered body reached it.
+
+**Reproduction and acceptance:** The focused native-source fixture uses the public `PaintSystem`, its real CPU grid and quad submission, the installed adapter, and the bundled Three.js vectors. A Roller splat of radius 0.62 m is queried at 0.58R along its centerline. Before the adapter, the query returns team 0 immediately, no body quad is submitted on landing, and the first partial body remains short of the queried grid-cell center at 30/60/120 Hz. With the adapter, the landing submission carries `tn=3` and body-only mode; the later ordinary growth submission still occurs, and claimed area, grid query, and team counts match the unadapted native method. Regression: [issue-570-paint-ownership-visibility.test.mjs](../patches/splatoon3/tests/issue-570-paint-ownership-visibility.test.mjs).
+
+**確認範囲と限界:** Native logic and emitted quad attributes are verified only; the fixture does not run a WebGL renderer or inspect pixels. Browser presentation, actual atlas blending, and Switch behavior remain unmeasured. The accepted result is limited to INKWAVE's CPU-query versus body-submission timing; it does not assert Nintendo paint timings or hidden parameters.
+
+## 2026-10-06 — #312 Splattershot player-forward spawn velocity
+
+Base main `f31f5da439134fe49bb89018dad5557671a49c67`. Splattershot (`kind === 'shooter'`) の発射初速に、pinned Splatoon 3 Ver. 11.3.0 `WeaponShooterNormal` の `spl__SpawnBulletAdditionMovePlayerParam.ZRate = 2.0`（`patches/splatoon3/profile.json` の `weaponsFidelityCompletion.weapons.shooter`）に基づくプレイヤー前進速度の加算を適用。
+
+- **本家の根拠**: Splatoon 3 Ver. 11.3.0 `WeaponShooterNormal` pinned extraction `Leanny/splat3@7280ff9cde8bb1c5dcef46c700c326471584d2e6` の `spl__SpawnBulletAdditionMovePlayerParam.ZRate = 2.0`。公称スケールは `2 × MoveSpeed 0.072 = 0.144` raw units/frame（60Hz換算で `2 × 4.32 = 8.64` world units/s、静止時初速 `2.266 u/f = 135.96 u/s` に対し約6.35%）。
+- **INKWAVEの実装箇所**: `patches/splatoon3/runtime/weapons-fidelity.mjs`。`Projectiles.prototype._push` にて `applyShooterSpawnVelocity(p)` を呼び出し、shooter弾（`p.type === 'shot'` かつ `w.kind === 'shooter'`）に対して、プレイヤーのyaw基準ローカル前進軸方向の速度成分 `(a.vel.x * sin(yaw) + a.vel.z * cos(yaw)) * ZRate` を射出初速に1度のみ加算。
+- **再現操作と影響**: 同一の muzzle、aimDir、ゼロ拡散で、静止時（vel = 0）、前進時（vel = 4.32）、後退時（vel = -4.32）、横移動時（strafe vel = 4.32）に射撃。旧実装では移動状態によらずすべて同一の初速 `135.96` だった。修正後は前進時 `135.96 + 8.64 = 144.60`、後退時 `135.96 - 8.64 = 127.32` となり、横移動および鉛直移動による未定義の加算はゼロ。静止時初速（135.96）、4Fブレーキ/射程（#191）、拡散（#198）、ダメージ、半径、および他ブキ種（Dualies, Splatling等）は完全に維持される。
+- **ネットワークとリモート再生**: Authoritative gameplay owner 側で `_push` 内のネットワーク記録前に加算され、wire packet は事後速度（`vel`）を保持して送信（パケット長 32 不変）。リモート側の `ghostProjectile` は wire 速度を直接再生し、ゴーストやリモート所有者での二重加算を防止。
+- **確認状態**: 同期spawn時点のロジックと実配線のbirth packet再生を確認済み（render cadence比較は未実施）（`patches/splatoon3/tests/shooter-spawn-velocity.test.mjs`, `patches/network-replication/tests/shooter-spawn-replay.test.mjs`）。Switch実機との直接フレーム映像比較は未確認。
+
