@@ -116,7 +116,7 @@ test('a pose explicitly detached by native contact weight is measured but not ca
   assert.equal(validateCatalogResult(result).length, CATALOG_SCENARIOS.length);
 });
 test('installed graph requires a byte-exact map-reveal receipt (acceptance logic only)', () => {
-  const files = [...CATALOG_MODULES.map(([id]) => 'patches/splatoon3/runtime/' + id + '-motion.mjs'), 'patches/splatoon3/runtime/install.mjs', 'patches/splatoon3/runtime/walk.mjs', 'src/game/actor.js', 'src/game/character.js', 'src/game/weapons.js', 'src/game/physics.js', 'patches/splatoon3/runtime/map-reveal.mjs'];
+  const files = [...CATALOG_MODULES.map(([id]) => 'patches/splatoon3/runtime/' + id + '-motion.mjs'), 'patches/splatoon3/runtime/install.mjs', 'patches/splatoon3/runtime/render.mjs', 'patches/splatoon3/runtime/walk.mjs', 'src/game/actor.js', 'src/game/character.js', 'src/game/weapons.js', 'src/game/physics.js', 'patches/splatoon3/runtime/map-reveal.mjs'];
   const artifacts = Object.fromEntries(files.map(file => ['_versions/fixture/' + file, hash]));
   const manifest = { contentHash: crypto.createHash('sha256').update(JSON.stringify(artifacts)).digest('hex'), artifacts };
   const receipts = Object.keys(artifacts).map(file => ({ file, sha256: artifacts[file], bytes: 100 }));
