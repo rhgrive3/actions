@@ -4,6 +4,12 @@
 .s3-gear label { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
 .s3-gear select { max-width: 70%; font: inherit; padding: .25rem; color: #fff; background: #25353e; }
 @media (max-width: 500px) { .s3-gear { left: 1rem; right: 1rem; width: auto; } .s3-gear label { font-size: .8rem; } }
+
+/* Ver.11 approximate health: no precise HP numbers or enemy name disclosure. */
+.iw-health{position:absolute;left:0;top:0;width:46px;height:7px;margin:-3px 0 0 -23px;border:1px solid #fff;border-radius:4px;background:#111c;overflow:hidden;pointer-events:none;box-shadow:0 1px 3px #0009}
+.iw-health[hidden]{display:none}
+.iw-health>i{display:block;width:100%;height:100%;background:var(--health-color,#fff);transform-origin:left center}
+
 /* Blaster reticle: live spread (--sp, set on .iw-ret) widens only the outer dashed ring; the inner thin ring keeps its rest size. */
 .iw-ret--blaster .iw-ret__svg { transform: none; transition: none; }
 .iw-ret--blaster .iw-ret__svg circle.iw-ret__ring:not(.thin) { transform: scale(calc(1 + var(--sp, 0) * .012)); transform-box: fill-box; transform-origin: center; transition: transform .1s linear; }
