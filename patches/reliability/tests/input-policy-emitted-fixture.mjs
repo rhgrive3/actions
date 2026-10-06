@@ -12,11 +12,13 @@ export async function fixture() {
   const listeners = new Map(), storage = new Map(); let pads = [];
   const classes = {add(){},remove(){},toggle(){},contains(){return false;}};
   const context = vm.createContext({ console, performance, URL, AbortController, setTimeout, clearTimeout,
+    addEventListener(n,fn){listeners.set(n,[...(listeners.get(n)||[]),fn]);},
+    removeEventListener(n,fn){listeners.set(n,(listeners.get(n)||[]).filter(x=>x!==fn));},
     screen:{width:1000,height:700,orientation:{angle:0}},innerWidth:1000,innerHeight:700,
     localStorage:{getItem:k=>storage.get(k)??null,setItem:(k,v)=>storage.set(k,v)},
     navigator:{userAgent:'controls fixture',maxTouchPoints:0,getGamepads:()=>pads},
     window:{addEventListener(n,fn){listeners.set(n,[...(listeners.get(n)||[]),fn]);}},
-    document:{documentElement:{classList:classes},addEventListener(n,fn){listeners.set(n,[...(listeners.get(n)||[]),fn]);},querySelector(){return null;},pointerLockElement:null}
+    document:{documentElement:{classList:classes},addEventListener(n,fn){listeners.set(n,[...(listeners.get(n)||[]),fn]);},removeEventListener(n,fn){listeners.set(n,(listeners.get(n)||[]).filter(x=>x!==fn));},querySelector(){return null;},pointerLockElement:null}
   });
   const modules = new Map();
   function resolve(spec, from) {
@@ -45,6 +47,7 @@ export async function fixture() {
     export * from './inkwave-public/src/game/player.js';
 
     export * from './inkwave-public/src/core/input.js';
+    export { getPlatformLifecycle } from './patches/local-quality/platform-lifecycle.mjs';
     export * from './inkwave-public/src/net/netmatch.js';
     export * from './inkwave-public/src/core/shadowcache.js';
     export * as THREE from 'three';
