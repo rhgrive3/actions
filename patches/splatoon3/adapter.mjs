@@ -236,7 +236,7 @@ export function adaptSource(rel, code) {
       '    // S3 Spawners use stage geometry and spawn protection, not a universal radial body clamp.',
       'S3 universal spawn barrier removal');
     code = adaptTidalSlamGauge(rel, code, replaceOnce);
-    return `import { beginTidalSlamGauge, updateTidalSlamGauge, completeTidalSlamGauge, consumeTidalSlamGauge } from '../../patches/splatoon3/runtime/tidal-slam-gauge.mjs';\nimport { prepareSuperJump, rememberSuperJumpGround, superJumpTarget, updateSuperJumpMain, SUPERJUMP_MAIN_PROGRESS } from '../../patches/splatoon3/runtime/superjump.mjs';\nimport { beforeActions } from '../../patches/splatoon3/runtime/movement.mjs';\nimport { updateResources } from '../../patches/splatoon3/runtime/resources.mjs';\n` + code;
+    return `import { beginTidalSlamGauge, updateTidalSlamGauge, completeTidalSlamGauge, queueTidalSlamGaugeFinish, finishTidalSlamGauge, clearTidalSlamGaugeFinish } from '../../patches/splatoon3/runtime/tidal-slam-gauge.mjs';\nimport { prepareSuperJump, rememberSuperJumpGround, superJumpTarget, updateSuperJumpMain, SUPERJUMP_MAIN_PROGRESS } from '../../patches/splatoon3/runtime/superjump.mjs';\nimport { beforeActions } from '../../patches/splatoon3/runtime/movement.mjs';\nimport { updateResources } from '../../patches/splatoon3/runtime/resources.mjs';\n` + code;
   }
   if (rel === 'src/game/character-weapons.js') {
     code = replaceOnce(code, '    if (ft >= 0.15 && ft - dt < 0.15) w.drumW += 34;', '    const release = st.flickReleaseTime ?? 0.15;\n    if (ft >= release && ft - dt < release) w.drumW += 34;', 'roller drum release impulse');
