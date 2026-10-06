@@ -35,6 +35,20 @@ export function abilityPoints(loadout) {
   }
   return ap;
 }
+/** True while enemy-ink movement follows the attack/ready curve
+ * (OpInk_MoveVel_Shot) instead of the ordinary walk curve (OpInk_MoveVel).
+ *
+ * Pinned 11.3.0 keeps both curves, and Nintendo's own Splatoon 2 Ver. 1.4.0
+ * notes list "moving while preparing to throw a bomb or sub weapon" among the
+ * states Ink Resistance Up must apply; the Splatoon 3 ability documentation
+ * states it works the same way as in Splatoon 2. Readiness is read from the
+ * weapon's own ready state, not from the raw button, so the release and cancel
+ * frames cannot leak the ordinary curve. Squid form never enters a sub ready
+ * state, so the grounded humanoid branch is the only one affected.
+ */
+export function enemyInkAttackReady(actor) {
+  return !!actor?.intent?.fire || actor?.weaponRunner?.aimingSub === true;
+}
 export function gearCurve(points, min, mid, max) {
   const AP = Math.max(0, Math.min(57, points));
   const p = Math.min(100, 3.3 * AP - 0.027 * AP * AP) / 100;
@@ -92,6 +106,10 @@ export function installGear(api, tuning) {
     m.rollRetention = gearCurve(ap.actionIntensify || 0, ...extra.rollRetention);
     a.s3.jumpChargeTime = tuning.superJump.chargeTime * (m.quickSuperJump ?? 1);
     a.s3.jumpFlightTime = tuning.superJump.flightTime * gearCurve(ap.quickSuperJump || 0, ...extra.jumpFlightTime);
+    // The S3 initial-form term is form-dependent, not equipment-dependent, so
+    // Quick Super Jump must not reach it.
+    a.s3.jumpStartupSwimF = tuning.superJump.startupSwimF;
+    a.s3.jumpStartupHumanoidF = tuning.superJump.startupHumanoidF;
     a.s3.modifiers.surgeChargeScale = m.actionIntensify ?? 1;
     // Actor-local copy. An opponent's equipment never changes shared stats.
     const base = api.WEAPONS[a.weaponId];
@@ -121,6 +139,7 @@ export function installGear(api, tuning) {
     this.s3.swimStealth = null; this.s3.netSwimVisibility = null;
     this.s3.quickRespawnHistory = { seenEnemyDeath: false, splats: 0 };
     this.s3.splatsThisLife = 0;
+    this.s3.chargerInterruptRecover = 0;   // #737: a new life never inherits a charge-interruption lock
     return result;
   };
   const respawn = Actor.prototype.respawn, finishFrame = Actor.prototype._finishFrame;
@@ -205,12 +224,15 @@ export function installGear(api, tuning) {
     try { return update.call(this, dt, input); }
     finally {
       const bombSpent = (G.projectiles?.bombs?.length ?? bombsBefore) > bombsBefore;
+      const progressiveChargerSpend = !!this.s3ChargerProgressiveSpend;
+      this.s3ChargerProgressiveSpend = false;
       const spent = Math.max(0, beforeInk - a.ink);
       if (spent > 1e-10) {
         a.s3 ||= {};
         const rollingUse = !bombSpent && a.weapon.kind === 'roller' && this.rolling;
         a.s3.rollerRefillMode = rollingUse;
-        const mainSpent = !bombSpent || spent > effectiveBombCost + 1e-8;
+        // Progressive Charger charge debit is not a shot/cancel recovery event.
+        const mainSpent = (!bombSpent || spent > effectiveBombCost + 1e-8) && !progressiveChargerSpend;
         let delay = 0;
         if (mainSpent) {
           const mainDelay = rollingUse ? a.weapon.rollInkRecoverStop

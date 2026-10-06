@@ -1905,7 +1905,7 @@
     "binding": null
   },
   "movement.roll.minimumAngle": {
-    "value": 1.5707963267948966,
+    "value": 1.0471975511965976,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
@@ -3271,6 +3271,81 @@
   },
   "stealth.ninjaSwimMultiplier": {
     "value": 0.9,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.shooter.shotGuideFrame": {
+    "value": 8,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.dualies.shotGuideFrame": {
+    "value": 7,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json#/GameParameters/WeaponParam/ShotGuideFrame",
+      "index": null,
+      "factor": 1,
+      "rawValue": 7
+    }
+  },
+  "weapons.blaster.shotGuideFrame": {
+    "value": 13,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.splatling.shotGuideFrame": {
+    "value": 11,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.charger.damageMinChargeTime": {
+    "value": 0.13333333333333333,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.charger.partialDamagePerSecond": {
+    "value": 138.46,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.charger.minimumChargeTime": {
+    "value": 0.13333333333333333,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.charger.airChargeRate": {
+    "value": 0.3333333333333333,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.charger.emptyChargeRate": {
+    "value": 0.3333333333333333,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.slosher.shotGuide.unitOrderNum": {
+    "value": 1,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.slosher.shotGuide.bulletOrderNumInUnit": {
+    "value": 0,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.slosher.shotGuide.frame": {
+    "value": 13,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "superJump.startupSwimF": {
+    "value": 1,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "superJump.startupHumanoidF": {
+    "value": 22,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   }
