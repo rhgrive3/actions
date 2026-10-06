@@ -18,7 +18,7 @@ from pathlib import Path
 
 import bpy
 import numpy as np
-from mathutils import Vector
+from mathutils import Matrix, Vector
 from mathutils.bvhtree import BVHTree
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -27,8 +27,8 @@ import inkwave_eye_refine as er  # noqa: E402
 M = er.M
 DESIGN = er.ROOT / 'analysis/lash_rebuild/design_3d.json'
 SURFACES = ['HEAD_face', 'HEAD_skin', 'HEAD_skin_04', 'HEAD_eyes', 'HEAD_eyes_18', 'HEAD_eyes_02', 'HEAD_eyes_19']
-R = {'rim': 'HEAD_eyes_30', 'liner': 'HEAD_eyes_20', 'lashes': [f'HEAD_eyes_{i:02d}' for i in range(22, 29)]}
-L = {'rim': 'HEAD_eyes_13', 'liner': 'HEAD_eyes_03', 'lashes': [f'HEAD_eyes_{i:02d}' for i in range(5, 12)]}
+R = {'rim': 'HEAD_eyes_30', 'liner': 'HEAD_eyes_20', 'lashes': [f'HEAD_eyes_{i:02d}' for i in range(22, 29)], 'eyeball': 'HEAD_eyes_18'}
+L = {'rim': 'HEAD_eyes_13', 'liner': 'HEAD_eyes_03', 'lashes': [f'HEAD_eyes_{i:02d}' for i in range(5, 12)], 'eyeball': 'HEAD_eyes'}
 LINER_LIFT_MM = 0.8
 MIN_CLEAR_MM = 0.5
 MAX_FLOAT_MM = 1.2
@@ -557,10 +557,10 @@ def build_liner(rays, design, bot, join):
         depth = 0.4 * depth + 0.15 * (p[:-2, 1:-1] + p[2:, 1:-1] + p[1:-1, :-2] + p[1:-1, 2:])
         depth = np.clip(depth, floor, limit)
     print('LINER gap mm: median %.2f  max %.2f' % (np.median(hit - depth) * 1000, (hit - depth).max() * 1000))
-    if 'float_top' in design:
+    if 'float_top' in design or 'fan' in design:
         # the wing and the lash line stand off the face (3D, not a decal): the stand-off fitted to the 3/4 and side
         # views is added along the front ray, so the front view does not change
-        ft = np.array(design['float_top'])
+        ft = float_top_mm(design)
         fb = np.zeros(n)
         fb[:design['float_k1'] + 1] = design['float_wing']
         depth = depth - (ft[:, None] * (1 - f[None]) + fb[:, None] * f[None]) / 1000
@@ -642,13 +642,26 @@ def build_rim(rays, design):
     return (np.r_[tv, mv], list(tf) + [tuple(i + len(tv) for i in fc) for fc in mf]), px
 
 
+def float_top_mm(design):
+    """Stand-off (mm) of every liner_top point: the fitted float_top, plus the lash strip lift of the fan
+    (fan.strip_mm, a profile from the wing tip to the inner end): the black band is the lash strip, its top edge
+    stands off the lid while its lower edge stays on the lid margin."""
+    top = np.array(design['liner_top'])
+    ft = np.array(design.get('float_top', np.zeros(len(top))), float)
+    if 'fan' in design and 'strip_mm' in design['fan']:
+        prof = design['fan']['strip_mm']
+        u = (top[:, 0] - top[:, 0].min()) / (top[:, 0].max() - top[:, 0].min())
+        ft = ft + np.interp(u, np.linspace(0, 1, len(prof)), prof)
+    return ft
+
+
 def top_float(design, x):
     """Stand-off (mm) of the liner top edge at front-view column x (0 when the design has none)."""
-    if 'float_top' not in design:
+    if 'float_top' not in design and 'fan' not in design:
         return 0.0 * np.asarray(x, float)
     top = np.array(design['liner_top'])
     order = np.argsort(top[:, 0])
-    return np.interp(x, top[order, 0], np.array(design['float_top'])[order])
+    return np.interp(x, top[order, 0], float_top_mm(design)[order])
 
 
 def lash_points(rays, design, spec, standoff=None):
@@ -674,6 +687,155 @@ def build_lash(rays, design, spec):
     pts, t = lash_points(rays, design, spec)
     radius = np.maximum(UPPER_R_SCALE * spec['r_mm'] * (1 - t) ** 0.6, 0.04)
     return er.tube(pts, radius, sides=6)
+
+
+FAN_TAG = 'INKWAVE_lash_fan'
+
+
+def eye_centre_mm(name):
+    """Centre of an eyeball cap (least-squares sphere through its vertices), head-frame mm."""
+    P = M.to_local(er.world(bpy.data.objects[name])) * 1000
+    c = np.linalg.lstsq(np.c_[2 * P, np.ones(len(P))], (P ** 2).sum(1), rcond=None)[0]
+    return c[:3]
+
+
+def lash_clump(cfg):
+    """One lash clump of unit length, the usual way: a Blender curve (a quarter arc curling toward +Y, root at the
+    origin, leaving along +Z) with a round bevel whose radius tapers from the root to the tip, made a mesh."""
+    cu = bpy.data.curves.new(FAN_TAG + '_clump', 'CURVE')
+    cu.dimensions = '3D'
+    cu.bevel_mode = 'ROUND'
+    cu.bevel_depth = cfg['root_r']
+    cu.bevel_resolution = 1
+    cu.use_fill_caps = True
+    sp = cu.splines.new('POLY')
+    n = 9
+    sp.points.add(n - 1)
+    curl = np.radians(cfg['curl_deg'])
+    for i in range(n):
+        a = curl * i / (n - 1)
+        y, z = ((1 - np.cos(a)) / curl, np.sin(a) / curl) if curl > 1e-6 else (0.0, i / (n - 1))
+        sp.points[i].co = (0.0, y, z, 1.0)
+        sp.points[i].radius = max((1 - i / (n - 1)) ** cfg.get('taper_pow', 0.8), 0.05)
+    obj = bpy.data.objects.new(FAN_TAG + '_clump', cu)
+    bpy.context.scene.collection.objects.link(obj)
+    me = bpy.data.meshes.new_from_object(obj.evaluated_get(bpy.context.evaluated_depsgraph_get()))
+    bpy.data.objects.remove(obj)
+    bpy.data.curves.remove(cu)
+    clump = bpy.data.objects.new(FAN_TAG + '_clump', me)
+    bpy.context.scene.collection.objects.link(clump)
+    return clump
+
+
+def fan_nodes(clump):
+    """Geometry Nodes: a lash clump on every point, turned and scaled by the points' lash_rot / lash_scale."""
+    ng = bpy.data.node_groups.new(FAN_TAG, 'GeometryNodeTree')
+    ng.interface.new_socket('Geometry', in_out='INPUT', socket_type='NodeSocketGeometry')
+    ng.interface.new_socket('Geometry', in_out='OUTPUT', socket_type='NodeSocketGeometry')
+    nd = ng.nodes
+    gi, go = nd.new('NodeGroupInput'), nd.new('NodeGroupOutput')
+    info = nd.new('GeometryNodeObjectInfo')
+    info.inputs['Object'].default_value = clump
+    on_pts = nd.new('GeometryNodeInstanceOnPoints')
+    rot = nd.new('GeometryNodeInputNamedAttribute')
+    rot.data_type = 'FLOAT_VECTOR'
+    rot.inputs['Name'].default_value = 'lash_rot'
+    euler = nd.new('FunctionNodeEulerToRotation')
+    scl = nd.new('GeometryNodeInputNamedAttribute')
+    scl.data_type = 'FLOAT_VECTOR'
+    scl.inputs['Name'].default_value = 'lash_scale'
+    real = nd.new('GeometryNodeRealizeInstances')
+    ln = ng.links
+    ln.new(gi.outputs[0], on_pts.inputs['Points'])
+    ln.new(info.outputs['Geometry'], on_pts.inputs['Instance'])
+    ln.new(rot.outputs['Attribute'], euler.inputs['Euler'])
+    ln.new(euler.outputs['Rotation'], on_pts.inputs['Rotation'])
+    ln.new(scl.outputs['Attribute'], on_pts.inputs['Scale'])
+    ln.new(on_pts.outputs['Instances'], real.inputs['Geometry'])
+    ln.new(real.outputs['Geometry'], go.inputs[0])
+    return ng
+
+
+def fan_layout(rays, design, eye_name):
+    """Roots, directions (head frame) and lengths of the upper lash fan.  Roots sit on the upper lid margin (the
+    front-view lid edge from the outer corner to the inner end, cast onto this side's skin) and stand off it along
+    the eyeball normal.  Each lash leaves the lid along the eyeball normal tilted up by elev_deg and toward the outer
+    corner by splay_deg, then curls up (curl_deg): lashes grow out of the lid, they do not lie on it."""
+    cfg = design['fan']
+    eye = eye_centre_mm(eye_name)
+    chain = np.array(design[cfg.get('chain', 'liner_bottom')], float)
+    x0, x1 = cfg['margin_x']
+    chain = chain[(chain[:, 0] >= x0) & (chain[:, 0] <= x1)]
+    chain = chain[np.argsort(chain[:, 0])]
+    seg = np.r_[0, np.cumsum(np.linalg.norm(np.diff(chain, axis=0), axis=1))]
+    s = np.linspace(*cfg['s_range'], cfg['count'])
+    px = np.c_[np.interp(s * seg[-1], seg, chain[:, 0]), np.interp(s * seg[-1], seg, chain[:, 1])]
+    # on the liner top chain the roots stand off with the strip (its top edge), else they sit on the lid
+    lift = (lambda p: LASH_ROOT_LIFT_MM + float(top_float(design, p[0]))) if cfg.get('chain') == 'liner_top' else (lambda p: 0.0)
+    on_skin = np.array([rays.lifted(p, lift(p)) for p in px])
+    ds = 0.01
+    at = lambda v: np.r_[np.interp(min(max(v, 0), 1) * seg[-1], seg, chain[:, 0]), np.interp(min(max(v, 0), 1) * seg[-1], seg, chain[:, 1])]
+    outer = np.array([rays.lifted(at(v - ds), lift(at(v - ds))) for v in s])    # chain sorted by x: s = 0 is the outer end
+    inner = np.array([rays.lifted(at(v + ds), lift(at(v + ds))) for v in s])
+    up = np.array([0.0, 1.0, 0.0])
+    prof = lambda key: np.interp(s, np.linspace(0, 1, len(cfg[key])), cfg[key])
+    elev, splay, length = np.radians(prof('elev_deg')), np.radians(prof('splay_deg')), prof('len_mm')
+    out = []
+    for i in range(len(s)):
+        n = on_skin[i] - eye
+        n /= np.linalg.norm(n)
+        root = on_skin[i] + n * cfg['root_out_mm']
+        u = up - up.dot(n) * n
+        u /= np.linalg.norm(u)
+        d = n * np.cos(elev[i]) + u * np.sin(elev[i])
+        t = outer[i] - inner[i]                         # toward the outer corner
+        t -= t.dot(d) * d
+        t /= np.linalg.norm(t) + 1e-12
+        d = d * np.cos(splay[i]) + t * np.sin(splay[i])
+        y = up + cfg.get('curl_out', 0.0) * t           # the clump curls up (and toward the outer corner)
+        y -= y.dot(d) * d
+        y /= np.linalg.norm(y)
+        out.append((root, d, y, length[i]))
+    return out
+
+
+def build_fan(rays, design, eye_name):
+    """The upper lashes as one fan of lash clumps placed along the lid margin with Geometry Nodes (Instance on
+    Points), applied to a mesh.  Returns head-frame mm vertices and faces like the other builders."""
+    layout = fan_layout(rays, design, eye_name)
+    clump = lash_clump(design['fan'])
+    pts = bpy.data.meshes.new(FAN_TAG + '_pts')
+    roots_w = M.to_world(np.array([r for r, _, _, _ in layout]) / 1000)
+    pts.from_pydata(roots_w.tolist(), [], [])
+    rots, scales = [], []
+    for root, d, y, length in layout:
+        zw = M.to_world_delta(d[None])[0]
+        yw = M.to_world_delta(y[None])[0]
+        zw /= np.linalg.norm(zw)
+        yw -= yw.dot(zw) * zw
+        yw /= np.linalg.norm(yw)
+        xw = np.cross(yw, zw)
+        rots.append(tuple(Matrix((xw, yw, zw)).transposed().to_euler()))
+        scales.append((length / 1000,) * 3)
+    pts.attributes.new('lash_rot', 'FLOAT_VECTOR', 'POINT').data.foreach_set('vector', np.ravel(rots))
+    pts.attributes.new('lash_scale', 'FLOAT_VECTOR', 'POINT').data.foreach_set('vector', np.ravel(scales))
+    holder = bpy.data.objects.new(FAN_TAG + '_pts', pts)
+    bpy.context.scene.collection.objects.link(holder)
+    ng = fan_nodes(clump)
+    mod = holder.modifiers.new(FAN_TAG, 'NODES')
+    mod.node_group = ng
+    er.apply_modifier(holder, mod)
+    verts = M.to_local(er.world(holder)) * 1000
+    faces = [tuple(p.vertices) for p in holder.data.polygons]
+    me, cme = holder.data, clump.data
+    bpy.data.objects.remove(holder)
+    bpy.data.objects.remove(clump)
+    for m in (me, cme):
+        bpy.data.meshes.remove(m)
+    bpy.data.node_groups.remove(ng)
+    print('LASH_FAN', eye_name, len(layout), 'clumps,', len(verts), 'verts, lengths mm',
+          np.round([l for *_, l in layout], 1).tolist())
+    return verts, faces
 
 
 def build_lower(rays, design):
@@ -1111,7 +1273,12 @@ def main():
             tv, tf = build_liner_tail(rays, d)
             liner = (np.r_[liner[0], tv], list(liner[1]) + [tuple(i + len(liner[0]) for i in fc) for fc in tf])
         rim, _ = build_rim(rays, d)
-        lashes = [] if args.shape_only else [build_lash(rays, d, spec) for spec in d['lashes']]
+        if args.shape_only:
+            lashes = []
+        elif 'fan' in d:
+            lashes = [build_fan(rays, d, objs['eyeball'])]
+        else:
+            lashes = [build_lash(rays, d, spec) for spec in d['lashes']]
         lower = None if args.shape_only else build_lower(rays, d)
         built.append([objs, liner, rim, lashes, lower])
     verts, polys = [], []
