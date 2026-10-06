@@ -73,5 +73,7 @@ test('ordinary playing matches and paused matches keep their current behaviour',
   match.paused = true;
   runSimulation(game, 1 / 60);
   assert.equal(calls.sim, 2, 'Match.update still runs and self-returns while paused');
+  assert.equal(calls.controller, 2, 'paused PLAYING retains its existing controller update cadence');
   assert.equal(calls.projectile, 1, 'paused matches still skip Projectiles.update exactly as before');
+  assert.equal(calls.endFrame, 2, 'paused PLAYING still consumes input edges once per tick');
 });
