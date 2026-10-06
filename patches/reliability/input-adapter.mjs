@@ -43,6 +43,15 @@ export function adaptInput(rel, code) {
   if (rel === 'src/game/player.js') return replaceOnce(code, '    const it = a.intent;\n    if (!this.enabled) {',
     '    const it = a.intent;\n    // A missing pad cannot retain camera velocity for a later reconnect (#676).\n    if (!inp.pad) { this.padLook.x = this.padLook.y = 0; this.edgeT = 0; }\n    if (!this.enabled) {', 'disconnected pad camera filter');
   if (rel !== INPUT_REL) return code;
+  code = replaceOnce(code,
+    '    const pads = navigator.getGamepads ? navigator.getGamepads() : [];',
+    '    let pads = [];\n' +
+    '    try { pads = navigator.getGamepads ? navigator.getGamepads() : []; }\n' +
+    '    catch {\n' +
+    '      // Optional browser input may be policy-blocked. Retire buffered pad\n' +
+    '      // edges/filter ownership, then run the ordinary no-pad cleanup below.\n' +
+    '      this._padEpoch = (this._padEpoch || 0) + 1;\n' +
+    '    }', 'optional gamepad capability boundary');
   code = replaceOnce(code, BLUR_BEFORE, BLUR_AFTER, 'blur focus reset');
   code = replaceOnce(code, NOPAD_BEFORE, NOPAD_AFTER, 'gamepad disconnect reset');
   code = replaceOnce(code,
