@@ -896,12 +896,12 @@
   },
   "weapons.charger.damageMinChargeTime": {
     "value": 0.13333333333333333,
-    "status": "community-measured 8F minimum from the Splat Charger verification table; 11.0.0 measurement applied to 11.3.0 after checking official update notes, but Switch remeasurement is unverified",
+    "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
   "weapons.charger.partialDamagePerSecond": {
     "value": 138.46,
-    "status": "community-measured/derived partial-damage slope from the Splat Charger verification table; exact per-frame rounding and Switch remeasurement remain unverified",
+    "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
   "weapons.charger.fieldCollisionRadius": {
