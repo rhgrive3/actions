@@ -235,6 +235,23 @@ export function adaptQualitySource(rel, code) {
       '\ninstallGyroQuality(Gyro, screenAngle);\n';
   }
 
+  // #363/#367: Splatoon 3 holds the lens off the player's right even when the boom is
+  // clear. The shipped term only reached that while the boom was forced short, because
+  // closeK hits 0 at curDist >= 2.8, so normal follow stayed vertically centred behind the
+  // crosshair. SH0 adds a persistent baseline and keeps the obstruction-driven shift at its
+  // full current range at closeK = 1.
+  // SH0 is deliberately modest and explicitly unquantified: Splatoon 3 publishes no shoulder
+  // offset and none is pinned in this repository, so this is NOT a claimed Nintendo constant.
+  // The shift stays a parallel lens+target offset, so the aim direction is unchanged; the
+  // right-side wall probe, muzzle-to-target parallax, obstacle avoidance, input axes and the
+  // Charger zoom profile are all untouched.
+  if (rel === 'src/game/cameraRig.js') {
+    code = replaceOnce(code, `    const closeK = clamp((2.8 - this.curDist) / 1.8, 0, 1);
+    let shT = 0.55 * closeK * closeK * (3 - 2 * closeK);`, `    const closeK = clamp((2.8 - this.curDist) / 1.8, 0, 1);
+    const SH0 = 0.28;   // persistent right-shoulder framing; not a pinned S3 value
+    let shT = SH0 + (0.55 - SH0) * closeK * closeK * (3 - 2 * closeK);`, 'camera persistent shoulder framing');
+  }
+
   return code;
 }
 
