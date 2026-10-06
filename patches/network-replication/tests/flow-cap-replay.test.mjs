@@ -20,7 +20,7 @@ test('#893 capped owner Flow burst is not reapplied by delayed, duplicate or spo
   assert.equal(attacker.s3.flow.remaining, f.profile.flow.maxDuration);
   for (const delay of [0.1, 0.25, 0.5]) {
     f.clock.advance(delay);
-    const event = [f.G.time, 'ev', 'splatted', { victim: { n: 1 }, attacker: { n: 0 }, cause: 'shooter' }];
+    const event = [f.G.time, 'ev', 'splatted', { victim: { n: 1 }, attacker: { n: 0 }, cause: 'shooter', victimOwner: 'p2', victimLife: 0, burstArea: '0' }];
     event._netSeq = 1;
     nm._play('spoof', event);
     if (delay === 0.1) assert.equal(victim.alive, true, 'foreign peer cannot apply the victim event');
