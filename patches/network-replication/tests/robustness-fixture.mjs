@@ -31,7 +31,7 @@ function relFor(file) {
 }
 
 // One module environment. `network` selects whether the newest adapter participates.
-export async function fixture({ network = true } = {}) {
+export async function fixture({ network = true, rollerMotion = false } = {}) {
   let seconds = 1000;
   const context = vm.createContext({ console, performance: { now: () => seconds * 1000 } });
   const modules = new Map();
@@ -42,6 +42,7 @@ export async function fixture({ network = true } = {}) {
 
   function resolve(spec, from) {
     if (spec === 'three') return path.join(UPSTREAM, 'vendor/three/build/three.module.js');
+    if (spec.startsWith('three/addons/')) return path.join(UPSTREAM, 'vendor/three/jsm', spec.slice('three/addons/'.length));
     let file = path.resolve(path.dirname(from), spec);
     if (file.startsWith(path.join(ROOT, 'inkwave-public/'))) file = path.join(UPSTREAM, path.relative(path.join(ROOT, 'inkwave-public'), file));
     if (file.startsWith(path.join(UPSTREAM, 'patches/'))) file = path.join(ROOT, path.relative(UPSTREAM, file));
@@ -61,6 +62,11 @@ export async function fixture({ network = true } = {}) {
 
   // Only the modules the replication path actually touches. No renderer, no
   // second physics engine, no fake game model.
+  const rollerMotionExports = rollerMotion ? `
+    export * from './inkwave-public/src/game/character.js';
+    export * from './patches/splatoon3/runtime/roller.mjs';
+    export * from './patches/splatoon3/runtime/walk.mjs';
+  ` : '';
   const root = new vm.SourceTextModule(`
     export * from './inkwave-public/src/core/ctx.js';
     export * from './inkwave-public/src/config.js';
@@ -73,6 +79,7 @@ export async function fixture({ network = true } = {}) {
     export * from './patches/splatoon3/runtime/sub-special-fidelity.mjs';
     export * from './patches/local-quality/roller-visual.mjs';
     export * as THREE from 'three';
+    ${rollerMotionExports}
   `, { context, identifier: path.join(ROOT, 'robustness-fixture.mjs') });
   await root.link((spec, from) => load(resolve(spec, from.identifier)));
   await root.evaluate();
@@ -86,6 +93,7 @@ export async function fixture({ network = true } = {}) {
   for (const [id, data] of Object.entries(profile.weapons)) Object.assign(WEAPONS[id], data);
 
   api.installWeapons(api, profile);
+  if (rollerMotion) { api.installWalkMotion(api, profile); api.installRollerMotion(api, profile); }
   api.installWeaponsFidelity(api, profile);
   api.installRollerVisualQuality(api);
 
