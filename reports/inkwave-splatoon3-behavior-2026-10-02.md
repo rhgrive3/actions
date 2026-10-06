@@ -387,3 +387,5 @@ Base main `f31f5da439134fe49bb89018dad5557671a49c67`。`patches/splatoon3/runtim
 **未確認（確定ではない）**: 公式の30秒という値と「延長で足元が塗られる」という記述は任天堂の説明に基づくが、同一ステップ内の複数 splat で本家が何回塗るかの実測はしていない（本実装は適格イベントごとに1回）。`cfg.paintRadius` は既存の calibration のまま。ブラウザ / Switch 実機の塗り比較、ネットワーク越しの塗り重複は未計測。
 
 検証は `patches/splatoon3/tests/flow-cap-overflow.test.mjs` の9項目。変更後 9/9 pass（exit 0）、未変更 main では上限クランプ時の塗り欠落を捉えて 9項目中4項目が fail（exit 1）。隣接する既存 flow lifecycle / storage cap / core テスト 25/25 は両方で pass。
+
+C33 integration adds installed Flow + native NetMatch replay coverage at the paint API boundary: one cap burst stays one after delayed (100/250/500 ms), duplicate and spoofed remote death replay. This is logic evidence with paint/clock stubs, not a real transport or GPU measurement. #893's remote-marked unit case alone is not owner/remote network proof.

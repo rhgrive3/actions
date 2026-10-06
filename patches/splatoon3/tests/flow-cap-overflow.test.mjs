@@ -100,12 +100,12 @@ test('#893 the burst stays on the existing single paint path and leaves Range st
   assert.deepEqual(touched, [], 'Flow paint does not reach into the Range session');
 });
 
-test('#893 a remote Flow actor keeps exactly one burst per qualifying event', async () => {
+test('#893 a remote-marked actor keeps one burst per qualifying local event (not network evidence)', async () => {
   const f = await world(), a = f.a;
   a.remote = true;
   a.s3.flow = cap();
   f.emit('splatted', { attacker: a, victim: f.enemy, cause: 'weapon' });
-  assert.equal(f.paints.length, 1, 'no duplicated owner/remote credit');
+  assert.equal(f.paints.length, 1, 'one local listener paint call');
   assert.equal(a.s3.flow.active, true);
   near(a.s3.flow.remaining, cfg.maxDuration);
   f.emit('splatted', { attacker: a, victim: f.other, cause: 'weapon' });

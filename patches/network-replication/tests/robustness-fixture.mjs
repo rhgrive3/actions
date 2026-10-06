@@ -31,7 +31,7 @@ function relFor(file) {
 }
 
 // One module environment. `network` selects whether the newest adapter participates.
-export async function fixture({ network = true } = {}) {
+export async function fixture({ network = true, flow = false } = {}) {
   let seconds = 1000;
   const context = vm.createContext({ console, performance: { now: () => seconds * 1000 } });
   const modules = new Map();
@@ -71,6 +71,7 @@ export async function fixture({ network = true } = {}) {
     export * from './patches/splatoon3/runtime/weapons.mjs';
     export * from './patches/splatoon3/runtime/weapons-fidelity.mjs';
     export * from './patches/splatoon3/runtime/sub-special-fidelity.mjs';
+    export * from './patches/splatoon3/runtime/flow.mjs';
     export * from './patches/local-quality/roller-visual.mjs';
     export * as THREE from 'three';
   `, { context, identifier: path.join(ROOT, 'robustness-fixture.mjs') });
@@ -88,6 +89,7 @@ export async function fixture({ network = true } = {}) {
   api.installWeapons(api, profile);
   api.installWeaponsFidelity(api, profile);
   api.installRollerVisualQuality(api);
+  if (flow) api.installFlow(api, profile);
 
   // ---- world stubs: physics only reports a flat floor at y = 0, no actors, no boss
   const floorHit = (a, b, hit) => {
