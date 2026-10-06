@@ -925,6 +925,8 @@ def place_piercings(ear, nv, PI):
         dist = lambda order: sum(np.linalg.norm(Lb[lb == j].mean(0) - tops[i]) for i, j in zip(hoops, order))
         beads = min((beads, beads[::-1]), key=dist)
         for hi, bi, hole in zip(hoops, beads, holes * [-side, 1, 1]):
+            # the reference hoops are larger (sideR about 24 px tall, the model's 17): scaled about their top
+            Lh[lh == hi] = tops[hi] + (Lh[lh == hi] - tops[hi]) * PI.get('hoop_scale', 1.0)
             Lh[lh == hi] += hole + [0, PI['hoop_up'], 0] - tops[hi]
             Lb[lb == bi] += hole + nv * [-side, 1, 1] * PI['bead_out'] - Lb[lb == bi].mean(0)
     set_local_mm(hg, Lh)
