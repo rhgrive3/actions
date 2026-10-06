@@ -217,9 +217,9 @@ function setCollision(p,c,offset=0) {
   p.fidelityPlayerCollision=collisionRecord(c,'Player',offset);
   p.fidelityFieldCollision=collisionRecord(c,'Field',offset);
   // S3 teammate pass-through window from the pinned source CollisionParam.
-  // Confined to verified families (Shooter #656, Slosher #717).
+  // Confined to verified Slosher (#717); Shooter (#656) is owned by parent PR #765.
   const kind=p.s3Weapon?.kind;
-  p.fidelityFriendThrough=(kind==='shooter'||kind==='slosher') && Number.isFinite(c.FriendThroughFrameForPlayer)?c.FriendThroughFrameForPlayer:null;
+  p.fidelityFriendThrough=kind==='slosher' && Number.isFinite(c.FriendThroughFrameForPlayer)?c.FriendThroughFrameForPlayer:null;
   // Existing packet size carries initial radius; layout is unchanged.
   p.size=p.fidelityPlayerCollision.initRadius;
 }
