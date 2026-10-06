@@ -2643,5 +2643,85 @@
     "value": 57.599999999999994,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
+  },
+  "weapons.dualies.playerRadiusNormal": {
+    "value": 0.31,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json#/GameParameters/CollisionParam/InitRadiusForPlayer",
+      "index": null,
+      "factor": 1,
+      "rawValue": 0.31
+    }
+  },
+  "weapons.dualies.playerRadiusAfterRoll": {
+    "value": 0.335,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json#/GameParameters/CollisionLapOverParam/InitRadiusForPlayer",
+      "index": null,
+      "factor": 1,
+      "rawValue": 0.335
+    }
+  },
+  "weapons.dualies.rollInkRecoverStop": {
+    "value": 1.1666666666666667,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.dualies.rollShotDelay": {
+    "value": 0.06666666666666667,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.blaster.postShotDelay": {
+    "value": 0.36666666666666664,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponBlasterMiddle.game__GameParameterTable.json#/GameParameters/WeaponParam/PostDelayFrame_Blaster",
+      "index": null,
+      "factor": 0.016666666666666666,
+      "rawValue": 22
+    }
+  },
+  "weapons.splatling.airChargeRate": {
+    "value": 0.25,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.splatling.emptyChargeRate": {
+    "value": 0.25,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.splatling.speedRandomHalfWidth": {
+    "value": 7.2,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeedRandomRate",
+      "index": null,
+      "factor": 60,
+      "rawValue": 0.12
+    }
+  },
+  "weapons.splatling.speedRandomBias": {
+    "value": 0.2,
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeedRandomBias",
+      "index": null,
+      "factor": 1,
+      "rawValue": 0.2
+    }
+  },
+  "weapons.charger.rechargeDelay": {
+    "value": 0.1,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weapons.slosher.postShotDelay": {
+    "value": 0.26666666666666666,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
   }
 }

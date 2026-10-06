@@ -60,7 +60,11 @@
       "ballistics": {
         "endSpeed": 140.54999999999998
       },
-      "fieldCollisionRadius": 0.2
+      "fieldCollisionRadius": 0.2,
+      "playerRadiusNormal": 0.31,
+      "playerRadiusAfterRoll": 0.335,
+      "rollInkRecoverStop": 1.1666666666666667,
+      "rollShotDelay": 0.06666666666666667
     },
     "blaster": {
       "inkPerShot": 10,
@@ -97,7 +101,8 @@
         "straightTime": 0.15,
         "burstTime": 0.21666666666666667
       },
-      "fieldCollisionRadius": 0.2
+      "fieldCollisionRadius": 0.2,
+      "postShotDelay": 0.36666666666666664
     },
     "splatling": {
       "inkPerShot": 0.5625,
@@ -131,7 +136,11 @@
         "endSpeed": 90.63,
         "firstChargeSpeed": 126
       },
-      "fieldCollisionRadius": 0.2
+      "fieldCollisionRadius": 0.2,
+      "airChargeRate": 0.25,
+      "emptyChargeRate": 0.25,
+      "speedRandomHalfWidth": 7.2,
+      "speedRandomBias": 0.2
     },
     "charger": {
       "inkFull": 18,
@@ -145,7 +154,8 @@
       "chargeTime": 1,
       "inkRecoverStop": 0.3333333333333333,
       "damagePartialMax": 80,
-      "fieldCollisionRadius": 0.02
+      "fieldCollisionRadius": 0.02,
+      "rechargeDelay": 0.1
     },
     "roller": {
       "rollSpeed": 7.92,
@@ -299,7 +309,8 @@
       "damageTail": 50,
       "range": 14.5,
       "drops": 9,
-      "splashDamage": 0
+      "splashDamage": 0,
+      "postShotDelay": 0.26666666666666666
     }
   },
   "bomb": {
@@ -1323,6 +1334,36 @@
       "index": null,
       "factor": 1,
       "rawValue": 0.8
+    },
+    "weapons.splatling.speedRandomHalfWidth": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeedRandomRate",
+      "index": null,
+      "factor": 60,
+      "rawValue": 0.12
+    },
+    "weapons.splatling.speedRandomBias": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/MoveParam/SpawnSpeedRandomBias",
+      "index": null,
+      "factor": 1,
+      "rawValue": 0.2
+    },
+    "weapons.dualies.playerRadiusNormal": {
+      "parameter": "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json#/GameParameters/CollisionParam/InitRadiusForPlayer",
+      "index": null,
+      "factor": 1,
+      "rawValue": 0.31
+    },
+    "weapons.dualies.playerRadiusAfterRoll": {
+      "parameter": "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json#/GameParameters/CollisionLapOverParam/InitRadiusForPlayer",
+      "index": null,
+      "factor": 1,
+      "rawValue": 0.335
+    },
+    "weapons.blaster.postShotDelay": {
+      "parameter": "data/parameter/1130/weapon/WeaponBlasterMiddle.game__GameParameterTable.json#/GameParameters/WeaponParam/PostDelayFrame_Blaster",
+      "index": null,
+      "factor": 0.016666666666666666,
+      "rawValue": 22
     }
   },
   "gearExtra": {
