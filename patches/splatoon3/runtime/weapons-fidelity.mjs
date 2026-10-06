@@ -726,7 +726,7 @@ export function computeShotGuide(actor) {
   s.state.frames = 0;
   // Bucket/Blaster have their own installed per-unit guides; this centreline
   // hook owns only the two families whose launch law it predicts.
-  if (frames === null || !['shooter', 'splatling'].includes(weapon?.kind) || !guideApi.G.projectiles) return null;
+  if (frames === null || (weapon?.kind !== 'shooter' && weapon?.kind !== 'splatling') || !guideApi.G.projectiles) return null;
   const probe = guideLaunchState(actor, weapon, s);
   if (!probe) return null;
   for (let i = 0; i < frames; i++) advanceFidelityProjectile(probe, 1 / GUIDE_HZ);
