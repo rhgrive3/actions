@@ -207,17 +207,41 @@ assert.equal(ghost.f.paints.length,0,'ghost wall-drop cannot mutate turf');
 
 // Once a terrain hit has converted the projectile to wall ink, that retained
 // state must never regain projectile HP damage on its terminal frame.
+//
+// The victim must only exist once the IMPACT blast has already resolved. #729 defers
+// that blast to contact+1, and the wall-drop contact point sits inside its own splash
+// radius, so a victim added on the contact tick catches the legitimate impact splash
+// (35 HP here) and this guard would misreport it as retained-ink damage. Measured on the
+// bound site: contact tick 4, victim added tick 4, the single hit at tick 5 = contact+1,
+// victim distance to the wall-drop column 0. The damage is the deferred impact burst, not
+// the retained fall. So the impact tick is allowed to resolve first and the victim is
+// then placed on the retained path, where the guard actually measures what it claims.
+// The legitimate contact+1 blast damage stays asserted by the owned #729 suite
+// ("ground contact: ... burst and damage at R+1"), and the burst itself is required to
+// have happened here, so nothing is spliced away.
 {
   const f=await fixture({site,fidelity:true,floor:true,seed:0x576597});
   f.wall(4,{height:8});
   const a=f.make('blaster'); a.aimPoint.set(0,1.05,20); f.G.actors=[a];
+  let bursts=0; const fx=f.G.fx??(f.G.fx={}); if(typeof fx.burst!=='function')fx.burst=()=>{};
+  const realExplosion=fx.explosion; fx.explosion=(...args)=>{bursts++;return realExplosion?.apply(fx,args);};
   f.projectiles.fireBlaster(a,a.weapon,0);
   const p=f.projectiles.list[0];
   for(let i=0;i<120&&!p.fidelityWallDrop;i++){f.G.time+=1/60;f.projectiles.update(1/60);}
   assert.ok(p.fidelityWallDrop,'wall-drop begins before terminal damage guard test');
-  const victim=f.make('shooter',{team:1,z:p.pos.z,hp:100000});
+  // One tick only, so the #729 deferred impact burst resolves at contact+1 before any
+  // victim exists. No extra time, no loosened threshold: the blast must land right here.
+  f.G.time+=1/60; f.projectiles.update(1/60);
+  assert.equal(bursts,1,'the impact blast resolves at contact+1 before the victim exists');
+  assert.equal(f.hits.length,0,'no actor is damaged by the impact burst in this guard');
+  const dropZ=p.pos.z;
+  const victim=f.make('shooter',{team:1,z:dropZ,hp:100000});
   f.G.actors.push(victim); const hp=victim.hp;
+  // The victim really is standing on the retained wall-drop path.
+  assert.ok(Math.abs(victim.pos.z-dropZ)<1e-9,'victim is placed on the retained wall-drop path');
   for(let i=0;i<300&&f.projectiles.list.includes(p);i++){f.G.time+=1/60;f.projectiles.update(1/60);}
+  assert.ok(p.fidelityWallDrop,'the retained wall-drop ran to completion');
+  assert.equal(f.hits.length,0,'the retained wall ink deals no projectile HP damage at all');
   assert.equal(victim.hp,hp,'retained wall ink never deals projectile HP damage');
 }
 
