@@ -80,10 +80,14 @@ test('no kick-driven arch geometry survives in the installed HUD source', () => 
   const hud = installed('src/ui/hud.js');
   assert.equal(hud.includes('iw-ret__arch'), false, 'arch element never emitted by the installed source');
   assert.equal(hud.includes('--kk'), false, 'slosher --kk kick writer removed from the installed source');
-  // Firing recoil must not reshape the slosher reticle any more: _updCrosshair
-  // has no slosher-only branch left.
+  // Firing recoil must not reshape the slosher reticle any more. The current
+  // source legitimately has a Slosher branch for the sourced ShotGuide point;
+  // reject only the retired kick/arch state.
   const upd = section(hud, '  _updCrosshair(f, dt) {', '\n  _updTank(f, dt) {');
-  assert.equal(upd.includes("L.kind === 'slosher'"), false, 'no slosher-only crosshair state');
+  assert.equal(upd.includes('L.bk'), false, 'no slosher kick accumulator');
+  assert.equal(upd.includes("'--kk'"), false, 'no slosher kick CSS writer');
+  assert.match(upd, /L\.kind === 'slosher' \|\| L\.kind === 'blaster'/, 'ShotGuide branch retained');
+  assert.match(upd, /s3WeaponGuide/, 'Slosher live guide stays sourced from projectile motion');
   // Geometry is input-independent (mouse/pad/touch/gyro share this builder).
   assert.equal(count(hud, '  _buildReticle(kind) {'), 1, 'single shared reticle builder');
   // Upstream stays pristine (byte-identical to the locked snapshot); the rule
