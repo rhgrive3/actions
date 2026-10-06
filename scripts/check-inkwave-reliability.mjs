@@ -171,12 +171,12 @@ try {
         } });
         try {
           let owner = {}, captured = owner;
-          const old = hud.judge({ percents: [65, 35], isCurrent: () => owner === captured });
+          const old = hud.judge({ winner: 0, percents: [65, 35], isCurrent: () => owner === captured });
           const oldFx = hud._fxMap.get('judge'); hud._fxTime = 1; oldFx(.1);
           owner = {}; oldFx(.1); const cancelled = await old;
           const afterCancel = { cancelled: cancelled.cancelled, elements: hud.overLayer.querySelectorAll('.iw-jd').length, sounds: [...sounds], voicesStopped: voices.every(v => v.disposed > 0) };
-          const older = hud.judge({ percents: [70, 30] }), savedFx = hud._fxMap.get('judge');
-          const newer = hud.judge({ percents: [40, 60] }), newerFx = hud._fxMap.get('judge');
+          const older = hud.judge({ winner: 0, percents: [70, 30] }), savedFx = hud._fxMap.get('judge');
+          const newer = hud.judge({ winner: 1, percents: [40, 60] }), newerFx = hud._fxMap.get('judge');
           const replaced = await older; savedFx(.1);
           const newerPreserved = hud._fxMap.get('judge') === newerFx && hud.overLayer.querySelectorAll('.iw-jd').length === 1;
           hud._fxTime += 5.2; newerFx(.1); const delivered = await newer;
