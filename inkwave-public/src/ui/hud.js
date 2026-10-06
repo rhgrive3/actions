@@ -859,25 +859,6 @@ export class HUD {
       this.xh.className = `iw-xh iw-xh--${kind}` + (L.tgt ? ' is-target' : '') + (L.far ? ' is-far' : '');
       this.spIcon.innerHTML = specialIcon(W ? W.special : 'slam');
     }
-    // Bucket Slosher uses the pinned S3 ShotGuide projectile state rather than
-    // the raw camera-centre anchor. Keep tank/sub/status UI at screen centre;
-    // only the aiming reticle and hit feedback consume these offsets in CSS.
-    let guideX = 0, guideY = 0;
-    if (L.kind === 'slosher') {
-      const me = this._local(), cam = G.rig?.gameCam || G.camera;
-      const point = me && cam && G.projectiles?.s3SlosherGuide?.(me, me.weapon);
-      const projected = point ? this._project(cam, point.x, point.y, point.z) : null;
-      if (projected && projected.z < 1) {
-        guideX = projected.x * innerWidth * 0.5;
-        guideY = -projected.y * innerHeight * 0.5;
-      }
-    }
-    const guideKey = `${guideX.toFixed(1)}|${guideY.toFixed(1)}`;
-    if (guideKey !== L.guide) {
-      L.guide = guideKey;
-      this.xh.style.setProperty('--gx', `${guideX.toFixed(1)}px`);
-      this.xh.style.setProperty('--gy', `${guideY.toFixed(1)}px`);
-    }
     // per-shot kick (recoil events) on top of the live cone the engine reports in screen px (already includes bloom)
     this._bloom = Math.max(0, this._bloom - dt * 5);
     this._kick = Math.max(0, (this._kick || 0) - dt * 16);   // per-shot reticle kick (~60 ms), on top of the live spread
