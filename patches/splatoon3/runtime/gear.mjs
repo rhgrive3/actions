@@ -137,6 +137,7 @@ export function installGear(api, tuning) {
   const update = WeaponRunner.prototype.update;
   WeaponRunner.prototype.update = function (dt, input) {
     const a = this.a, m = a.s3?.modifiers || {}, beforeInk = a.ink;
+    if (a.weapon?.kind === 'charger') this.s3ChargerProgressiveSpend = false;
     const saved = { inkCost: api.SUB.bomb.inkCost, throwSpeed: api.SUB.bomb.throwSpeed };
     api.SUB.bomb.inkCost *= m.inkSaverSub ?? 1;
     api.SUB.bomb.throwSpeed *= m.subPower ?? 1;
@@ -145,11 +146,14 @@ export function installGear(api, tuning) {
     try { return update.call(this, dt, input); }
     finally {
       const bombSpent = (G.projectiles?.bombs?.length ?? bombsBefore) > bombsBefore;
+      const progressiveChargerSpend = !!this.s3ChargerProgressiveSpend;
+      this.s3ChargerProgressiveSpend = false;
       const spent = Math.max(0, beforeInk - a.ink);
       Object.assign(api.SUB.bomb, saved);
       if (spent > 1e-10) {
         a.s3 ||= {};
-        const mainSpent = !bombSpent || spent > effectiveBombCost + 1e-8;
+        // Progressive Charger charge debit is not a shot/cancel recovery event.
+        const mainSpent = (!bombSpent || spent > effectiveBombCost + 1e-8) && !progressiveChargerSpend;
         let delay = 0;
         if (mainSpent) {
           const mainDelay = this.s3FlickVertical ? a.weapon.verticalInkRecoverStop ?? a.weapon.inkRecoverStop : a.weapon.inkRecoverStop;
