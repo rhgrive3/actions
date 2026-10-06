@@ -1361,6 +1361,6 @@
       "status": "extracted",
       "unit": "raw reference units",
       "notes": "Primary extracted field; behavior and physical units are verified separately."
-
+    }
   }
 }
