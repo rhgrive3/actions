@@ -80,6 +80,27 @@ export function adaptSource(rel, code) {
       '    const ch = f.crosshair || {};',
       '    const ch = f.crosshair || {};\n    applyShotGuide(this, ch.guide, innerWidth, innerHeight);',
       'S3 ShotGuideFrame reticle placement');
+    code = replaceOnce(code,
+      '    // per-shot kick (recoil events) on top of the live cone the engine reports in screen px (already includes bloom)',
+      `    // Bucket Slosher ShotGuide HUD projection: only aiming feedback moves; tank/sub/status remain centred.
+    let guideX = 0, guideY = 0;
+    if (L.kind === 'slosher') {
+      const me = this._local(), cam = G.rig?.gameCam || G.camera;
+      const point = me && cam && G.projectiles?.s3SlosherGuide?.(me, me.weapon);
+      const projected = point ? this._project(cam, point.x, point.y, point.z) : null;
+      if (projected && projected.z < 1) {
+        guideX = projected.x * innerWidth * 0.5;
+        guideY = -projected.y * innerHeight * 0.5;
+      }
+    }
+    const guideKey = \`\${guideX.toFixed(1)}|\${guideY.toFixed(1)}\`;
+    if (guideKey !== L.guide) {
+      L.guide = guideKey;
+      this.xh.style.setProperty('--gx', \`\${guideX.toFixed(1)}px\`);
+      this.xh.style.setProperty('--gy', \`\${guideY.toFixed(1)}px\`);
+    }
+    // per-shot kick (recoil events) on top of the live cone the engine reports in screen px (already includes bloom)`,
+      'Bucket Slosher ShotGuide HUD projection');
     return "import { t as tr } from '../i18n.js';\nimport { applyShotGuide } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n" + code;
   }
   if (rel === 'src/ui/ui-icons.js') {
