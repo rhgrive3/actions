@@ -1,18 +1,24 @@
+import { installSubReady } from './sub-ready.mjs';
+import { installStormPower } from './storm-power.mjs';
+import { configureSwimStealth, updateSwimStealth, swimSpeedMultiplier } from './swim-stealth.mjs';
 // Gear uses three equipment pieces, each with one 10 AP main and three 3 AP subs.
 export const ABILITIES = Object.freeze({
-  none: 'なし', runSpeed: 'ヒト移動速度アップ', swimSpeed: 'イカダッシュ速度アップ',
+  ninjaSquid: 'イカニンジャ', none: 'なし', runSpeed: 'ヒト移動速度アップ', swimSpeed: 'イカダッシュ速度アップ',
   inkSaverMain: 'インク効率アップ（メイン）', inkSaverSub: 'インク効率アップ（サブ）',
   inkRecovery: 'インク回復力アップ', inkResistance: '相手インク影響軽減',
   actionIntensify: 'アクション強化', specialCharge: 'スペシャル増加量アップ',
-  specialSaver: 'スペシャル減少量ダウン', quickRespawn: '復活時間短縮',
+  specialPower: 'スペシャル性能アップ', specialSaver: 'スペシャル減少量ダウン', quickRespawn: '復活時間短縮',
   quickSuperJump: 'スーパージャンプ時間短縮', subPower: 'サブ性能アップ',
 });
+export function abilityAllowed(id, piece, slot) {
+  return Object.hasOwn(ABILITIES, id) && (id !== 'ninjaSquid' || piece === 1 && slot === 0);
+}
 export const emptyLoadout = () => Array.from({ length: 3 }, () => ({ main: 'none', subs: ['none', 'none', 'none'] }));
 export function normalizeLoadout(value) {
   if (!Array.isArray(value) || value.length !== 3) return emptyLoadout();
-  return value.map(part => ({
-    main: Object.hasOwn(ABILITIES, part?.main) ? part.main : 'none',
-    subs: Array.from({ length: 3 }, (_, i) => Object.hasOwn(ABILITIES, part?.subs?.[i]) ? part.subs[i] : 'none'),
+  return value.map((part, piece) => ({
+    main: abilityAllowed(part?.main, piece, 0) ? part.main : 'none',
+    subs: Array.from({ length: 3 }, (_, i) => abilityAllowed(part?.subs?.[i], piece, i + 1) ? part.subs[i] : 'none'),
   }));
 }
 export function abilityPoints(loadout) {
@@ -47,6 +53,7 @@ export function readLoadout() {
 }
 export function installGear(api, tuning) {
   const { Actor, WeaponRunner, G } = api;
+  configureSwimStealth(api, tuning);
   const reset = Actor.prototype.reset, setWeapon = Actor.prototype.setWeapon;
   function equip(a) {
     a.s3 ||= {};
@@ -54,10 +61,17 @@ export function installGear(api, tuning) {
     a.s3.loadout = loadout;
     a.s3.modifiers = modifiersFor(loadout, tuning.gear);
     const m = a.s3.modifiers;
+    m.ninjaSquid = loadout[1].main === 'ninjaSquid';
     const ap = abilityPoints(loadout), extra = tuning.gearExtra;
+    const aroundBase = extra.quickRespawnAroundFrames[0], chaseBase = tuning.respawnChaseTime * 60;
+    const around = Math.floor(gearCurve(ap.quickRespawn || 0, ...extra.quickRespawnAroundFrames) + 1e-10);
+    const chase = Math.floor(chaseBase * (m.quickRespawn ?? 1) + 1e-10);
+    m.quickRespawnReduction = (aroundBase + chaseBase - around - chase) / 60;
     m.inkRecoverySwim = tuning.gear.inkRecovery[0] / m.inkRecovery;
     m.inkRecoveryKid = extra.inkRecoveryKid[0] / gearCurve(ap.inkRecovery || 0, ...extra.inkRecoveryKid);
     m.enemyMoveSpeed = m.inkResistance * 60;
+    m.enemyActionSpeedScale = gearCurve(ap.inkResistance || 0, ...extra.enemyActionSpeedScale);
+    m.enemyInkGrace = Math.ceil(gearCurve(ap.inkResistance || 0, ...extra.enemyInkGraceFrames) - 1e-10) / tuning.resources.enemyInkReferenceHz;
     m.enemyShotSpeed = gearCurve(ap.inkResistance || 0, ...extra.enemyShotSpeed) * 60;
     m.enemyDamageCap = gearCurve(ap.inkResistance || 0, ...extra.enemyDamageCap) * 100;
     m.enemyDamageRate = gearCurve(ap.inkResistance || 0, ...extra.enemyDamageRate) * 6000;
@@ -74,19 +88,38 @@ export function installGear(api, tuning) {
     m.actionAirSpread = gearCurve(ap.actionIntensify || 0, ...(a.weapon.actionAirSpreadCurve || extra.actionAirSpread));
     if (Number.isFinite(a.weapon.spreadAir) && Number.isFinite(a.weapon.spreadGround)) a.weapon.spreadAir = a.weapon.spreadGround + (a.weapon.spreadAir - a.weapon.spreadGround) * (1 - m.actionAirSpread);
     for (const field of ['inkPerShot', 'inkFull', 'inkMin', 'flickInk', 'verticalInk', 'rollInkPerMeter']) if (field in a.weapon) a.weapon[field] *= m.inkSaverMain ?? 1;
+    const sub = api.SUB[a.weapon.sub || 'bomb'];
+    m.inkSaverSub = sub?.inkSaverCurve ? gearCurve(ap.inkSaverSub || 0, ...sub.inkSaverCurve) : 1;
+    m.stormDuration = Math.floor(gearCurve(ap.specialPower || 0, ...tuning.gearExtra.stormDurationFrames) + 1e-10) / 60;
+    m.stormThrowScale = gearCurve(ap.specialPower || 0, ...tuning.gearExtra.stormThrowScale);
     a.weapon.specialCost /= m.specialCharge ?? 1;
   }
   Actor.prototype.reset = function (...args) {
     const result = reset.apply(this, args); equip(this);
-    this.s3.recoverStopRemaining = 0; this.s3.enemyInkTime = 0;
+    this.s3.recoverStopRemaining = 0; this.s3.rollerRefillMode = false; this.s3.enemyInkTime = 0; this.s3.enemyInkAwayTime = 0;
+    this.s3.swimStealth = null; this.s3.netSwimVisibility = null;
+    this.s3.quickRespawnHistory = { seenEnemyDeath: false, splats: 0 };
+    this.s3.splatsThisLife = 0;
     return result;
+  };
+  const respawn = Actor.prototype.respawn, finishFrame = Actor.prototype._finishFrame;
+  Actor.prototype.respawn = function (...args) {
+    const history = this.s3?.quickRespawnHistory, splats = this.s3?.splatsThisLife;
+    const result = respawn.apply(this, args);
+    if (history) { this.s3.quickRespawnHistory = history; this.s3.splatsThisLife = splats || 0; }
+    return result;
+  };
+  Actor.prototype._finishFrame = function (...args) {
+    updateSwimStealth(this); return finishFrame.apply(this, args);
   };
   Actor.prototype.setWeapon = function (...args) { const result = setWeapon.apply(this, args); equip(this); return result; };
   const moveSpeed = WeaponRunner.prototype.moveSpeed;
   WeaponRunner.prototype.moveSpeed = function () {
     const m = this.a.s3?.modifiers || {}, w = this.a.weapon;
-    const lockedMode = this.rolling || this.charging && w.kind === 'charger';
-    const attacking = this.firingT > 0 || this.charging || this.streaming;
+    const throwingStorm = this.a.specialActive?.id === 'storm' && this.a.specialActive.phase === 'hold' && this.a.specialActive.subArmed && this.a.intent.sub;
+    if (this.a.grounded && (this.aimingSub || throwingStorm)) return tuning.bomb.holdMoveSpeed * (this.a.s3?.flow?.active ? tuning.flow.runMultiplier : 1);
+    const lockedMode = this.rolling || this.charging && w.kind === 'charger' && this.a.onEnemy;
+    const attacking = this.firingT > 0 || this.flick >= 0 || this.charging || this.streaming;
     const gear = lockedMode ? 1 : attacking ? m.runSpeedFiring ?? 1 : m.runSpeed ?? 1;
     return moveSpeed.call(this) * gear * (this.a.s3?.flow?.active ? tuning.flow.runMultiplier : 1);
   };
@@ -96,8 +129,17 @@ export function installGear(api, tuning) {
     // synchronously, restoring even when collision/weapon code throws.
     const original = { swimSpeed: api.PLAYER.swimSpeed, enemyInkSpeed: api.PLAYER.enemyInkSpeed };
     const m = this.s3?.modifiers || {}, flow = this.s3?.flow?.active;
-    api.PLAYER.swimSpeed *= (m.swimSpeed ?? 1) * (flow ? tuning.flow.swimMultiplier : 1);
-    api.PLAYER.enemyInkSpeed = (this.intent.fire ? m.enemyShotSpeed : m.enemyMoveSpeed) ?? original.enemyInkSpeed;
+    api.PLAYER.swimSpeed *= swimSpeedMultiplier(this);
+    const runner = this.weaponRunner, kind = this.weapon.kind;
+    const firing = runner.firingT > 0 || runner.s3BlasterWindup > 0;
+    const fixedShot = ['shooter', 'dualies', 'blaster'].includes(kind) && firing;
+    const scaledAction = kind === 'charger' && runner.charging ||
+      kind === 'splatling' && (runner.charging || runner.streaming || firing) ||
+      kind === 'slosher' && (runner.slosh >= 0 || firing);
+    const walk = m.enemyMoveSpeed ?? original.enemyInkSpeed;
+    if (scaledAction && !squid) api.PLAYER.enemyInkSpeed = Math.min(walk, moveSpeed.call(runner) * (m.enemyActionSpeedScale ?? 1));
+    else if (fixedShot && !squid) api.PLAYER.enemyInkSpeed = m.enemyShotSpeed ?? walk;
+    else api.PLAYER.enemyInkSpeed = kind === 'roller' && this.intent.fire && !squid ? m.enemyShotSpeed ?? walk : walk;
     api.PLAYER.enemyInkSpeed *= flow ? tuning.flow.enemyInkSpeedMultiplier : 1;
     try { return horizontal.call(this, dt, squid, enemy); }
     finally { Object.assign(api.PLAYER, original); }
@@ -105,35 +147,46 @@ export function installGear(api, tuning) {
   const splat = Actor.prototype.splat;
   Actor.prototype.splat = function (...args) {
     const before = this.special, alive = this.alive;
+    const [attacker, cause = 'weapon'] = args;
+    const enemyDeath = attacker && attacker !== this && attacker.team !== this.team &&
+      !['water', 'fall', 'out', 'bounds', 'void'].includes(cause);
     const result = splat.apply(this, args);
     if (alive && !this.alive) {
       this.special = before * (this.s3?.modifiers?.specialSaver ?? 0.5);
-      if ((this.s3?.splatsThisLife || 0) === 0 && this.s3?.previousLifeNoSplat) this.respawnTimer = Math.max(0, this.respawnTimer - tuning.respawnChaseTime * (1 - (this.s3?.modifiers?.quickRespawn ?? 1)));
-      this.s3.previousLifeNoSplat = (this.s3.splatsThisLife || 0) === 0;
-      this.s3.splatsThisLife = 0;
+      const history = this.s3.quickRespawnHistory;
+      if (enemyDeath) {
+        if (history.seenEnemyDeath && history.splats === 0) this.respawnTimer = Math.max(0, this.respawnTimer - this.s3.modifiers.quickRespawnReduction);
+        history.seenEnemyDeath = true; history.splats = 0;
+        this.s3.splatsThisLife = 0;
+      }
     }
     return result;
   };
-  api.on('splatted', ({ attacker }) => { if (attacker?.s3) attacker.s3.splatsThisLife = (attacker.s3.splatsThisLife || 0) + 1; });
+  api.on('splatted', ({ attacker, victim }) => {
+    if (attacker?.s3 && victim && attacker !== victim && attacker.team !== victim.team) {
+      attacker.s3.splatsThisLife = (attacker.s3.splatsThisLife || 0) + 1;
+      if (attacker.s3.quickRespawnHistory) attacker.s3.quickRespawnHistory.splats++;
+    }
+  });
   const update = WeaponRunner.prototype.update;
   WeaponRunner.prototype.update = function (dt, input) {
-    const a = this.a, m = a.s3?.modifiers || {}, beforeInk = a.ink;
-    const saved = { inkCost: api.SUB.bomb.inkCost, throwSpeed: api.SUB.bomb.throwSpeed };
-    api.SUB.bomb.inkCost *= m.inkSaverSub ?? 1;
-    api.SUB.bomb.throwSpeed *= m.subPower ?? 1;
-    const effectiveBombCost = api.SUB.bomb.inkCost;
+    const a = this.a, beforeInk = a.ink;
+    const effectiveBombCost = api.SUB.bomb.inkCost * (a.s3?.modifiers?.inkSaverSub ?? 1);
     const bombsBefore = G.projectiles?.bombs?.length ?? 0;
     try { return update.call(this, dt, input); }
     finally {
       const bombSpent = (G.projectiles?.bombs?.length ?? bombsBefore) > bombsBefore;
       const spent = Math.max(0, beforeInk - a.ink);
-      Object.assign(api.SUB.bomb, saved);
       if (spent > 1e-10) {
         a.s3 ||= {};
+        const rollingUse = !bombSpent && a.weapon.kind === 'roller' && this.rolling;
+        a.s3.rollerRefillMode = rollingUse;
         const mainSpent = !bombSpent || spent > effectiveBombCost + 1e-8;
         let delay = 0;
         if (mainSpent) {
-          const mainDelay = this.s3FlickVertical ? a.weapon.verticalInkRecoverStop ?? a.weapon.inkRecoverStop : a.weapon.inkRecoverStop;
+          const mainDelay = rollingUse ? a.weapon.rollInkRecoverStop
+            : this.s3FlickVertical ? a.weapon.verticalInkRecoverStop ?? a.weapon.inkRecoverStop
+            : a.weapon.inkRecoverStop;
           delay = Math.max(delay, mainDelay ?? tuning.resources.inkRefillDelay);
         }
         if (bombSpent) delay = Math.max(delay, api.SUB.bomb.inkRecoverStop ?? tuning.resources.inkRefillDelay);
@@ -141,6 +194,8 @@ export function installGear(api, tuning) {
       }
     }
   };
+  installSubReady(api, tuning);
+  installStormPower(api);
   if (api.Menus) {
     const render = api.Menus.prototype._scr_loadout;
     api.Menus.prototype._scr_loadout = function (...args) {
@@ -159,7 +214,7 @@ export function installGear(api, tuning) {
         const row = document.createElement('label'); row.textContent = slot === 0 ? 'メイン（10）' : `追加 ${slot}（3）`;
         const select = document.createElement('select'); select.setAttribute('aria-label', `${label} ${slot === 0 ? 'メイン' : '追加' + slot}`);
         for (const [id, name] of Object.entries(ABILITIES)) {
-          if (id !== 'none' && !tuning.gear[id]) continue;
+          if (!abilityAllowed(id, piece, slot) || id !== 'none' && id !== 'ninjaSquid' && !tuning.gear[id]) continue;
           const option = document.createElement('option'); option.value = id; option.textContent = name; select.append(option);
         }
         select.value = slot === 0 ? loadout[piece].main : loadout[piece].subs[slot - 1];
