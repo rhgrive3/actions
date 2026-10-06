@@ -360,23 +360,11 @@ test('#673: participant presentation metadata contract - provided title, ID, ban
   const rig = createHudRig(composedHud);
   const roster = rig.make8Roster();
 
-  // Attach metadata to local card (card 0)
-  roster[0].title = 'Grand Champion';
-  roster[0].tagNum = '#7777';
-  roster[0].banner = 4;
-  roster[0].badges = ['star', 'crown', 'mvp'];
-
-  // Attach nested profile metadata to remote card (card 1)
-  roster[1].profile = {
-    title: 'Tidal Wave',
-    tagNum: '1234',
-    banner: 2,
-    badges: [{ icon: 'squidlet' }, { id: 'turf' }],
-  };
-
-  // Attach custom SVG banner and custom SVG + text badges to remote card (card 4)
-  roster[4].banner = '<svg class="custom-banner"></svg>';
-  roster[4].badges = ['<svg class="custom-badge"></svg>', 'PRO'];
+  // Metadata rides the native style payload that src/net/session.js packs as
+  // {name, weapon, style}; there is no a.profile / a.tag producer on an Actor.
+  roster[0].style = { hair: 0, skin: 0, splashtag: { title: 'Grand Champion', num: '#7777', banner: 4, badges: ['star', 'crown', 'mvp'] } };
+  roster[1].style = { hair: 1, skin: 2, splashtag: { title: 'Tidal Wave', num: '1234', banner: 2, badges: [{ key: 'squidlet' }, { id: 'turf' }] } };
+  roster[4].style = { hair: 0, skin: 0, splashtag: { banner: 9, badges: ['PRO', 'turf'] } };
 
   const match = { actors: roster };
   rig.hud._lineup(match);
@@ -405,13 +393,13 @@ test('#673: participant presentation metadata contract - provided title, ID, ban
   assert.ok(badges1[0].innerHTML.includes('glyph-squidlet'));
   assert.ok(badges1[1].innerHTML.includes('icon-crown'));
 
-  // Card 4 (custom SVG and text badge)
+  // Card 4 (numeric banner seed + trusted glyph key + plain text badge)
   const card4 = stags[4];
-  assert.ok(card4.querySelector('.iw-stag__art').innerHTML.includes('custom-banner'));
+  assert.ok(card4.querySelector('.iw-stag__art').innerHTML.includes('data-seed="9"'));
   const badges4 = card4.querySelectorAll('.iw-stag__badge');
   assert.equal(badges4.length, 2, 'Card 4 renders 2 badges');
-  assert.ok(badges4[0].innerHTML.includes('custom-badge'));
-  assert.equal(badges4[1].textContent, 'PRO');
+  assert.equal(badges4[0].textContent, 'PRO', 'plain-text badge stays an escaped text node');
+  assert.ok(badges4[1].innerHTML.includes('icon-crown'), 'trusted award key resolves to repo markup');
 });
 
 test('#673: absent participant metadata falls back to stable deterministic defaults without inventing badge IDs', () => {
@@ -515,23 +503,77 @@ test('#673: lineup cleans up previous overlay and maintains exactly one intro ov
   assert.equal(rig.overLayer.querySelectorAll('.iw-lineup').length, 0, 'Overlay removed after cleanup timer');
 });
 
-test('#673: badge and banner sanitization prevents script injection safely', () => {
+test('#673 correction: no metadata value can place raw active markup into innerHTML', () => {
   const composedHud = compose('src/ui/hud.js');
   const rig = createHudRig(composedHud);
-  const roster = rig.make8Roster();
 
-  roster[0].banner = '<svg><script>alert("xss")</script></svg>';
-  roster[0].badges = ['<script>evil()</script>', '<svg onload="alert(1)"></svg>'];
-
-  const match = { actors: roster };
-  assert.doesNotThrow(() => rig.hud._lineup(match));
-
-  const card = rig.overLayer.querySelectorAll('.iw-stag')[0];
-  const artHtml = card.querySelector('.iw-stag__art').innerHTML;
-  assert.ok(!artHtml.includes('<script>'), 'Script tag stripped from banner');
-  assert.ok(artHtml.includes('data-seed='), 'Fell back to deterministic seed');
-
-  const badges = card.querySelectorAll('.iw-stag__badge');
-  assert.equal(badges.length, 0, 'Injected badges stripped and not rendered');
+  // `onload =` with a space, unquoted handlers and foreignObject are exactly what the
+  // removed /on\w+=/ regex let through. Nothing here may become markup.
+  const hostile = [
+    '<svg onload = "fetch(\'//x\')"><circle/></svg>',
+    '<svg><script>alert(1)</script></svg>',
+    '<svg><foreignObject><img src=x onerror=alert(1)></foreignObject></svg>',
+    '<svg ONPOINTEROVER =alert(1)></svg>',
+    '<svg><a xlink:href="javascript:alert(1)">x</a></svg>',
+  ];
+  for (const payload of hostile) {
+    const roster = rig.make8Roster();
+    roster[0].style = { splashtag: { title: payload, num: payload, banner: payload, badges: [payload, { html: payload }, { svg: payload }, { key: payload }] } };
+    rig.overLayer.innerHTML = '';
+    assert.doesNotThrow(() => rig.hud._lineup({ actors: roster }), payload);
+    const card = rig.overLayer.querySelectorAll('.iw-stag')[0];
+    // Only tagArt()'s own seeded markup may sit in the art slot.
+    assert.ok(card.querySelector('.iw-stag__art').innerHTML.includes('data-seed='), payload);
+    assert.ok(!/<\s*svg[^>]*on\w+\s*=/i.test(card.querySelector('.iw-stag__art').innerHTML), payload);
+    assert.equal(card.querySelectorAll('.iw-stag__badge').length, 0, 'no badge may render from markup: ' + payload);
+    // Title/num are text nodes, so the payload is present but inert.
+    assert.equal(card.querySelector('.iw-stag__title').textContent.length <= 48, true);
+    assert.ok(!/<\s*(script|foreignObject|iframe)/i.test(rig.overLayer.innerHTML), payload);
+  }
 });
 
+test('#673 correction: presentation metadata survives the native session producer shape', () => {
+  const composedHud = compose('src/ui/hud.js');
+  const rig = createHudRig(composedHud);
+  // Exactly what src/net/session.js _newPlayer() packs and the roster re-emits.
+  const sessionPlayer = (name, weapon, style) => ({ name: name.slice(0, 16), weapon, style });
+  const wire = [
+    sessionPlayer('WireAlpha', 'shooter', { hair: 3, skin: 4, splashtag: { title: 'Grid Racer', num: '4242', banner: 11, badges: ['star', 'crown'] } }),
+    sessionPlayer('WireBravo', 'blaster', { hair: 1, skin: 1, splashtag: { title: 'Ink Saver', num: '#77', banner: '12', badges: [{ key: 'squidlet' }, 'PRO'] } }),
+    sessionPlayer('WirePlain', 'roller', null),
+  ];
+  const roster = wire.map((p, i) => ({ name: p.name, team: i === 2 ? 1 : 0, weaponId: p.weapon, isLocal: i === 0, style: p.style }));
+  rig.hud._lineup({ actors: roster });
+
+  const stags = rig.overLayer.querySelectorAll('.iw-stag');
+  const c0 = stags[0], c1 = stags[1], c2 = stags[2];
+  assert.equal(c0.querySelector('.iw-stag__title').textContent, 'Grid Racer');
+  assert.equal(c0.querySelector('.iw-stag__num').textContent, '#4242');
+  assert.ok(c0.querySelector('.iw-stag__art').innerHTML.includes('data-seed="11"'));
+  assert.equal(c0.querySelectorAll('.iw-stag__badge').length, 2);
+  // A numeric string seed is accepted; the value itself still never reaches innerHTML.
+  assert.equal(c1.querySelector('.iw-stag__title').textContent, 'Ink Saver');
+  assert.equal(c1.querySelector('.iw-stag__num').textContent, '#77');
+  assert.ok(c1.querySelector('.iw-stag__art').innerHTML.includes('data-seed="12"'));
+  assert.equal(c1.querySelectorAll('.iw-stag__badge').length, 2);
+  // No style payload at all: deterministic fallback, no invented badges.
+  assert.equal(c2.querySelector('.iw-stag__title').textContent, rig.tagTitle('WirePlain'));
+  assert.equal(c2.querySelector('.iw-stag__num').textContent, rig.tagNum('WirePlain'));
+  assert.equal(c2.querySelectorAll('.iw-stag__badge').length, 0);
+});
+
+test('#673 correction: the raw SVG badge path is gone from the composed source', () => {
+  const composed = compose('src/ui/hud.js');
+  const from = composed.indexOf('  _lineup(match) {');
+  const to = composed.indexOf('\n  // ----------------------------------------------------------------', from);
+  assert.ok(from >= 0 && to > from, 'composed _lineup slice is non-empty');
+  const lineup = composed.slice(from, to);
+  assert.ok(!lineup.includes('sanitizeSvg'), 'the weak-regex sanitizer is removed');
+  assert.ok(!lineup.includes('b.html') && !lineup.includes('b.svg'), 'badge objects cannot carry markup fields');
+  // Code usage, not the explanatory comment above the helper.
+  for (const gone of ['a.profile?.', 'a.tag?.', 'a.tagNum', 'a.tagId', 'a.bannerArt', 'a.tagArt']) {
+    assert.ok(!lineup.includes(gone), 'no non-native producer reads ' + gone);
+  }
+  assert.ok(!/startsWith\(['"]<svg/.test(lineup), 'no raw <svg acceptance anywhere');
+  assert.ok(lineup.includes('a.style.splashtag'), 'the native style payload is the producer');
+});
