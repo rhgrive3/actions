@@ -33,6 +33,7 @@ export async function fixture({ adapt = adaptSource, adaptRuntime = (_rel, sourc
     export * from './inkwave-public/src/game/physics.js';
     export * from './inkwave-public/src/game/player.js';
     export * from './inkwave-public/src/core/shadowcache.js';
+    export * from './inkwave-public/src/world/paint.js';
     export * as THREE from 'three';
     export const VM_MATH = Math;
     export * from './patches/splatoon3/runtime/movement.mjs';
