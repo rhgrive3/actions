@@ -71,3 +71,7 @@
 - `inkwave-public/` の原生ファイルは不変。`runtime/weapons.mjs`、generic footprint264 には触れていない。
 - `patches/splatoon3/profile.json` と `upstream-lock.json` は無変更（`git diff f31f5da4 --` が空）。
 - 変更ファイル（この作業のみ）: 上記アダプタ/ヘルパ/テストと本レポート群。
+
+### Parent correction after final review B3
+
+A whole-map invalidation now captures the dirty generation before rasterization and consumes its bounds together with the full flag only when that generation remains unchanged. This prevents an already-consumed region from expanding the next distant localized update; newer writes during the draw retain their invalidation and are processed by the next refresh. Five focused regressions cover clear, force, viewer-team, team-colour invalidation and a newer write during the full draw. All 21 minimap tests pass. This changes presentation work scheduling only, with no ownership, score or gameplay tuning edits.

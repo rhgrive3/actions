@@ -137,8 +137,15 @@ export function adaptMinimapDirty(rel, code, replaceOnce) {
       '      // Initial build, viewer-team flip, theme/team-colour change, stage rebuild and\n' +
       '      // PaintSystem.clear() stay whole-map; otherwise only the coalesced dirty rectangle.\n' +
       '      if (first || force || !_rec || _rec.full || !this._drawDirtyInk) {\n' +
+      '        const _fullGen = _rec ? _rec.gen : 0;\n' +
       '        this._quiet = first; this._drawInk(0, this.h); this._quiet = false; if (first) this.flashT = 9;\n' +
-      '        if (_rec) { _rec.full = false; this._inkGen = _rec.gen; }\n' +
+      '        if (_rec) {\n' +
+      '          this._inkGen = _fullGen;\n' +
+      '          // Consume only the generation captured before the full draw.\n' +
+      '          if (_rec.gen === _fullGen) {\n' +
+      '            _rec.full = false; _rec.x0 = Infinity; _rec.z0 = Infinity; _rec.x1 = -Infinity; _rec.z1 = -Infinity;\n' +
+      '          }\n' +
+      '        }\n' +
       '      } else this._drawDirtyInk(_rec);\n' +
       '      dirty = true;\n' +
       '    }',

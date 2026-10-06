@@ -307,6 +307,71 @@ test('#895 full invalidations still repaint the whole map', async () => {
   assert.ok(rec.baseCalls >= 1, 'a theme change redraws the base layer');
 });
 
+for (const invalidation of ['clear', 'force', 'viewer-team', 'team-colour']) {
+  test(`#895 ${invalidation} consumes pending bounds before the next distant splat`, () => {
+    const stage = makeStage(STAGES.Tidewater);
+    const h = makeHarness();
+    const paint = stage.makePaint();
+    const mm = new h.Minimap(stage.level, paint);
+    const rec = instrument(mm, stage);
+    mm.update(0.016, true);
+    splat(paint, stage, 2, 2, 1);
+    mm.update(0.01); // A remains pending inside the native 150 ms gate.
+    assert.ok(Number.isFinite(paint.inkDirty.x0));
+    if (invalidation === 'clear') {
+      paint.grid.fill(0); paint.version++; paint.inkDirty.full = true;
+    } else if (invalidation === 'viewer-team') mm.setViewerTeam(1);
+    else if (invalidation === 'team-colour') h.G.teamHex = ['#ff0000', '#00ff00'];
+    mm.update(0.2, invalidation === 'force');
+    assert.equal(paint.inkDirty.full, false);
+    assert.equal(paint.inkDirty.x0, Infinity);
+    assert.equal(paint.inkDirty.z0, Infinity);
+    assert.equal(paint.inkDirty.x1, -Infinity);
+    assert.equal(paint.inkDirty.z1, -Infinity);
+    rec.ink.length = 0; rec.flash.length = 0;
+    splat(paint, stage, 45, 80, 1); // B must not union with consumed A.
+    mm.update(0.2);
+    assert.equal(mm._band, 0, 'the distant splat remains a local refresh');
+    assert.equal(rec.ink.length, 1);
+    assert.ok(rec.ink[0].w * rec.ink[0].h < mm.w * mm.h / 100);
+    const control = new h.Minimap(stage.level, stage.makePaint());
+    control.paint.grid.set(paint.grid);
+    if (invalidation === 'viewer-team') control.setViewerTeam(1);
+    control.update(0.016, true);
+    assert.equal(bytes(mm.inkImg.data), bytes(control.inkImg.data));
+  });
+}
+
+test('#895 full redraw preserves a newer paint generation arriving during rasterization', () => {
+  const stage = makeStage(STAGES.Tidewater);
+  const h = makeHarness();
+  const paint = stage.makePaint();
+  const mm = new h.Minimap(stage.level, paint);
+  mm.update(0.016, true);
+  splat(paint, stage, 2, 2, 1);
+  paint.inkDirty.full = true;
+  const consumedGen = paint.inkDirty.gen;
+  const draw = mm._drawInk.bind(mm);
+  let inject = true;
+  mm._drawInk = (...args) => {
+    const result = draw(...args);
+    if (inject) { inject = false; splat(paint, stage, 45, 80, 1); }
+    return result;
+  };
+  mm.update(0.2);
+  assert.equal(mm._inkGen, consumedGen, 'never acknowledge post-draw writes');
+  assert.ok(paint.inkDirty.gen > consumedGen);
+  assert.equal(paint.inkDirty.full, true, 'newer pending invalidation is retained');
+  assert.ok(Number.isFinite(paint.inkDirty.x0));
+  mm.update(0.2);
+  assert.equal(mm._inkGen, paint.inkDirty.gen);
+  assert.equal(paint.inkDirty.full, false);
+  assert.equal(paint.inkDirty.x0, Infinity);
+  const control = new h.Minimap(stage.level, stage.makePaint());
+  control.paint.grid.set(paint.grid); control.update(0.016, true);
+  assert.equal(bytes(mm.inkImg.data), bytes(control.inkImg.data));
+});
+
 test('#895 a large repaint keeps the existing 3-band spike bound', async () => {
   const stage = makeStage(STAGES.Kelpline);
   const h = makeHarness();
