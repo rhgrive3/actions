@@ -1,4 +1,5 @@
 // Only boundary resets and held-pad suppression. No action buffering changes.
+import { getPlatformLifecycle } from './platform-lifecycle.mjs';
 const INSTALLED = Symbol.for('inkwave.platform.input.v1');
 export function resetPlatformInput(input, controller) {
   if (!input) return;
@@ -28,12 +29,26 @@ export function resetPlatformInput(input, controller) {
     if (actor._prevIntent) for (const key of ['fire', 'jump', 'squid', 'sub', 'special']) actor._prevIntent[key] = false;
   }
 }
-export function installInputPlatform(Input) {
+export function installInputPlatform(Input, env = globalThis) {
   const P = Input.prototype;
   if (Object.hasOwn(P, INSTALLED)) return;
   Object.defineProperty(P, INSTALLED, { value: true });
+  const owner = getPlatformLifecycle(env), initialBlur = owner.metrics.blurs;
   const poll = P.pollPad, axis = P.padAxis, stick = P.padStick;
   P.pollPad = function (...args) {
+    // Visible blur does not suspend simulation. Retire pad authority for the
+    // whole unfocused interval, including new input after the initial reset.
+    if ((this._platformPadBlurEpoch ?? initialBlur) !== owner.metrics.blurs) {
+      this._platformPadBlurEpoch = owner.metrics.blurs;
+      this._padEpoch = (this._padEpoch || 0) + 1;
+      this._platformPadFocusRebase = true;
+    }
+    if (!owner.focused) {
+      this.pad = null; this.padPrev = [];
+      this.padPressed.clear(); this.padMenuPressed?.clear(); this.padMenuBlocked?.clear();
+      this._platformPadRebase = this._platformPadAxes = true;
+      return;
+    }
     const result = poll.apply(this, args);
     if (this._platformPadRebase) {
       this._platformPadRebase = false;

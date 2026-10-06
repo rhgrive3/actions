@@ -73,9 +73,9 @@ export function installSpecialMotion({ Character, Actor, THREE, CHARACTER_CHANNE
     if (this.s3SpecialMotionEnabled !== false && owner) {
       m.controlled = true;
       const live = owner.specialActive, step = Math.max(0, Math.min(.1, dt || 0));
-      const form = s.form || 'kid', stormHold = live?.id === 'storm' && live.phase === 'hold';
+      const form = s.form || 'kid';
       const interrupted = !owner.alive || s.hp === 0 || form !== 'kid' || this.dance || !shown(this) || owner.superJumpState
-        || s.subAim && !stormHold || s.rolling || owner.weaponRunner?.aimingSub && !stormHold || owner.weaponRunner?.dodge
+        || s.subAim || s.rolling || owner.weaponRunner?.aimingSub || owner.weaponRunner?.dodge
         || (!live && owner.weaponRunner?.firingPose())
         || this.weaponKind !== m.weapon;
       if (interrupted) clear(this);
@@ -84,7 +84,7 @@ export function installSpecialMotion({ Character, Actor, THREE, CHARACTER_CHANNE
         // Network proxies may supply only {id, net:true}; the local physics
         // phase cannot be inferred from it. Retain native replay presentation.
         m.nativeOnly = !Number.isFinite(live.t) || (live.id === 'slam' && !['rise', 'hang', 'fall'].includes(live.phase));
-        m.phase = m.nativeOnly ? 'native-unmapped' : live.id === 'storm' ? (stormHold ? 'storm-hold' : 'storm-deploy') : live.phase;
+        m.phase = m.nativeOnly ? 'native-unmapped' : live.id === 'storm' ? 'storm-deploy' : live.phase;
       } else if (!live && m.token) {
         // Only a completed grounded fall earns impact recovery. Cancellation
         // in rise/hang must not resurrect a slam after returning to kid form.
