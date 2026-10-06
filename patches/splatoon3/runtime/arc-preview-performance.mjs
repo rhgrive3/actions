@@ -14,16 +14,19 @@
 //   - throttle native recomputation to ARC_PREVIEW_MIN_INTERVAL_S (30 Hz);
 //   - within an interval, reuse the cached line and still refresh the
 //     per-frame presentation state (colors, visibility, ring pulse);
-//   - always recompute on hide/show, actor change, physics change, or a
-//     throw-parameter change above a small quantization epsilon;
+//   - let continuous position/aim changes share that bounded refresh cadence;
+//   - always recompute on hide/show, actor change, physics change, cache loss,
+//     a per-frame teleport/aim snap, or a throw-speed change above epsilon;
 //   - never skip when the cached native result is stale or absent.
 //
 // Actual bomb gameplay physics, damage, paint, networking and lifecycle
 // are untouched. The wrapper delegates to the original `updateArc` for
 // every recomputation and every guard evaluation.
 export const ARC_PREVIEW_MIN_INTERVAL_S = 1 / 30;
-export const ARC_PREVIEW_POS_EPSILON = 0.05;
-export const ARC_PREVIEW_VEL_EPSILON = 0.25;
+// These are local discontinuity detectors for presentation scheduling, not
+// Splatoon 3 movement or aim values. Smooth changes are refreshed on cadence.
+export const ARC_PREVIEW_POSITION_JUMP_M = 0.5;
+export const ARC_PREVIEW_VELOCITY_JUMP_MPS = 2;
 export const ARC_PREVIEW_SPEED_EPSILON = 0.05;
 
 const INSTALL = Symbol.for('inkwave.s3.arc-preview-performance.install.v1');
@@ -46,20 +49,24 @@ function previewInputs(system, api, actor) {
   };
 }
 
-function withinEpsilon(previous, current) {
+function hasLargeInputStep(previous, current) {
   if (!previous || !current) return false;
-  return Math.abs(previous.px - current.px) <= ARC_PREVIEW_POS_EPSILON
-    && Math.abs(previous.py - current.py) <= ARC_PREVIEW_POS_EPSILON
-    && Math.abs(previous.pz - current.pz) <= ARC_PREVIEW_POS_EPSILON
-    && Math.abs(previous.vx - current.vx) <= ARC_PREVIEW_VEL_EPSILON
-    && Math.abs(previous.vy - current.vy) <= ARC_PREVIEW_VEL_EPSILON
-    && Math.abs(previous.vz - current.vz) <= ARC_PREVIEW_VEL_EPSILON
-    && Math.abs((previous.speed ?? 0) - (current.speed ?? 0)) <= ARC_PREVIEW_SPEED_EPSILON;
+  const dx = current.px - previous.px, dy = current.py - previous.py, dz = current.pz - previous.pz;
+  const dvx = current.vx - previous.vx, dvy = current.vy - previous.vy, dvz = current.vz - previous.vz;
+  return Math.hypot(dx, dy, dz) > ARC_PREVIEW_POSITION_JUMP_M
+    || Math.hypot(dvx, dvy, dvz) > ARC_PREVIEW_VELOCITY_JUMP_MPS;
+}
+
+function throwSpeedChanged(previous, current) {
+  return !!(previous && current
+    && Math.abs((previous.speed ?? 0) - (current.speed ?? 0)) > ARC_PREVIEW_SPEED_EPSILON);
 }
 
 function nativeCacheReady(system, physics) {
   const cache = system._arcCache;
   return !!(cache && Number.isFinite(cache.px) && Number.isFinite(cache.vx)
+    && Number.isFinite(cache.py) && Number.isFinite(cache.pz)
+    && Number.isFinite(cache.vy) && Number.isFinite(cache.vz)
     && cache.physics === physics);
 }
 
@@ -92,15 +99,20 @@ export function installArcPreviewPerformance(api) {
     const actorChanged = !state || state.actor !== actor;
     const physicsChanged = !state || state.physics !== G.physics;
     const inputsUnknown = !inputs;
-    const largeMove = !inputsUnknown && !withinEpsilon(state?.inputs, inputs);
+    const largeInputStep = !inputsUnknown && hasLargeInputStep(state?.lastInputs, inputs);
+    const speedChanged = !inputsUnknown && throwSpeedChanged(state?.inputs, inputs);
     const cacheStale = !nativeCacheReady(this, G.physics);
     const intervalElapsed = !state || !Number.isFinite(state.time)
       || (now - state.time) >= ARC_PREVIEW_MIN_INTERVAL_S - 1e-9
       || now < state.time;
     const mustRecompute = actorChanged || physicsChanged || inputsUnknown
-      || cacheStale || intervalElapsed || largeMove;
+      || !state?.inputs || cacheStale || intervalElapsed || largeInputStep || speedChanged;
     if (!mustRecompute && state && state.inputs) {
       refreshPresentationOnly(this, api, actor);
+      // Compare discontinuities to the immediately previous render sample.
+      // Incremental walking/aiming therefore cannot evade the time budget by
+      // accumulating just beyond an epsilon from the last native refresh.
+      state.lastInputs = inputs;
       state.hits = (state.hits || 0) + 1;
       return;
     }
@@ -108,6 +120,7 @@ export function installArcPreviewPerformance(api) {
     this[STATE] = {
       actor, physics: G.physics, time: now,
       inputs: inputsUnknown ? null : { ...inputs },
+      lastInputs: inputsUnknown ? null : inputs,
       hits: 0,
     };
     return result;
