@@ -15,6 +15,7 @@ export function networkIdentity() {
 export function adaptNetworkSource(rel, code) {
   const patch = (before,after,label) => { code = once(code,before,after,rel+': '+label); };
   if (rel === 'src/net/netmatch.js') {
+    code = "import { validFidelityRollerUnitPacket } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n" + code;
     patch('  dispose() {\n    for (const u of this.unsubs)', `  dispose() {
     retireNetworkGhosts();
     for (const u of this.unsubs)`, 'session disposal retirement');
@@ -74,7 +75,7 @@ export function adaptNetworkSource(rel, code) {
     patch('  _adopt(a) {', '  _adopt(a) {\n    retireNetworkGhosts(a);\n    if (a.net) a.net._stormBirthAuth = null;', 'ownership transfer retirement');
     patch('r3(o.seed ?? Math.random())', 'o.seed ?? Math.random()', 'preserve paint pattern seed');
     patch('r3(p.delay || 0), r3(p.life), r3(p.straight)', 'p.delay || 0, p.life, p.straight', 'preserve exact physics timing boundaries');
-    patch('p.nose ?? 0.3, p.sats ?? 3]);', 'p.nose ?? 0.3, p.sats ?? 3, p.s3Vertical ? 1 : 0, p.seed, (p._netId = this._projectileSeq = (this._projectileSeq || 0) + 1)]);', 'append birth mode, appearance seed, identity');
+    patch('p.nose ?? 0.3, p.sats ?? 3]);', 'p.nose ?? 0.3, p.sats ?? 3, p.s3Vertical ? 1 : 0, p.seed, (p._netId = this._projectileSeq = (this._projectileSeq || 0) + 1), p.fidelityRollerUnitIndex ?? -1]);', 'append birth mode, appearance seed, identity, roller unit');
     {
       const combatLifeTick = '  _tick(from, d) {\n    this.stats.in++;\n    // Ordered WebSocket ticks cannot replay paint or terminal events.\n    if (!Number.isFinite(d.ts) || d.ts <= (this.peers.get(from)?.lastTs ?? -Infinity)) return;\n    const p = this._peer(from);';
       if (code.includes(combatLifeTick)) patch(combatLifeTick, `  _tick(from, d) {
@@ -93,6 +94,7 @@ export function adaptNetworkSource(rel, code) {
     this.stats.in++;`, 'ordered tick replay guard');
     }
     patch('  _play(from, e) {\n    switch (e[1]) {', `  _play(from, e) {
+    if (e[1] === 'p' && !validFidelityRollerUnitPacket(e)) return;
     const eventPeer = this.peers.get(from);
     if (e._netSeq !== undefined && eventPeer) { if (e._netSeq <= (eventPeer._lastEventSeq || 0)) return; eventPeer._lastEventSeq = e._netSeq; }
     if (e[1] === 'p' || e[1] === 'pe' || e[1] === 'b' || e[1] === 'tr') {

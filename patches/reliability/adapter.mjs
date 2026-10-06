@@ -2,6 +2,14 @@
 import fs from 'node:fs';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
+import { adaptSpecialWater } from './special-water-adapter.mjs';
+import { adaptSpecialBarrier } from './special-barrier-adapter.mjs';
+import { adaptSubAction } from './sub-action-adapter.mjs';
+import { adaptInputOwnership } from './input-ownership-adapter.mjs';
+import { adaptControls } from './controls-adapter.mjs';
+import { adaptNavigation } from './navigation-adapter.mjs';
+import { adaptMapGyro } from './map-gyro-adapter.mjs';
+import { adaptRespawnNavigation } from './respawn-navigation-adapter.mjs';
 import { adaptTouchPointerLock } from './touch-pointerlock-adapter.mjs';
 import { adaptTouchGyroOwner } from './touch-gyro-owner-adapter.mjs';
 import { adaptInput } from './input-adapter.mjs';
@@ -20,12 +28,12 @@ import { adaptCombatLife } from './combat-life-adapter.mjs';
 import { adaptCombatCredit } from './combat-credit-adapter.mjs';
 
 export const RELIABILITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
-const adapters = [adaptInput, adaptNet, adaptResults, adaptMobile, adaptTouchEdges, adaptIntro, adaptStart, adaptAttract, adaptHud, adaptGyro, adaptPause, adaptCombatLife, adaptCombatCredit, adaptTouchPointerLock, adaptTouchGyroOwner, adaptPadHandoff];
+const adapters = [adaptInput, adaptNet, adaptResults, adaptMobile, adaptTouchEdges, adaptIntro, adaptStart, adaptAttract, adaptHud, adaptGyro, adaptPause, adaptCombatLife, adaptCombatCredit, adaptInputOwnership, adaptControls, adaptNavigation, adaptRespawnNavigation, adaptMapGyro, adaptSubAction, adaptSpecialBarrier, adaptSpecialWater, adaptTouchPointerLock, adaptTouchGyroOwner, adaptPadHandoff];
 export function adaptReliability(rel, code) {
   for (const adapt of adapters) code = adapt(rel, code);
   return code;
 }
 export function reliabilityIdentity() {
-  const files = ['adapter.mjs', 'touch-pointerlock-adapter.mjs', 'input-adapter.mjs', 'net-adapter.mjs', 'results-adapter.mjs', 'mobile-adapter.mjs', 'touch-edge-adapter.mjs', 'intro-adapter.mjs', 'start-adapter.mjs', 'attract-adapter.mjs', 'hud-adapter.mjs', 'gyro-adapter.mjs', 'pause-adapter.mjs', 'combat-life-adapter.mjs', 'combat-credit-adapter.mjs', 'touch-gyro-owner-adapter.mjs', 'pad-handoff-adapter.mjs'];
+  const files = ['adapter.mjs', 'special-water-adapter.mjs', 'special-barrier-adapter.mjs', 'sub-action-adapter.mjs', 'input-ownership-adapter.mjs', 'controls-adapter.mjs', 'navigation-adapter.mjs', 'respawn-navigation-adapter.mjs', 'map-gyro-adapter.mjs', 'touch-pointerlock-adapter.mjs', 'input-adapter.mjs', 'net-adapter.mjs', 'results-adapter.mjs', 'mobile-adapter.mjs', 'touch-edge-adapter.mjs', 'intro-adapter.mjs', 'start-adapter.mjs', 'attract-adapter.mjs', 'hud-adapter.mjs', 'gyro-adapter.mjs', 'pause-adapter.mjs', 'combat-life-adapter.mjs', 'combat-credit-adapter.mjs', 'touch-gyro-owner-adapter.mjs', 'pad-handoff-adapter.mjs'];
   return Object.fromEntries(files.map(file => [file, crypto.createHash('sha256').update(fs.readFileSync(new URL(file, import.meta.url))).digest('hex')]));
 }
