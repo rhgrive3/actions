@@ -134,3 +134,6 @@
 /* Blaster reticle: live spread (--sp, set on .iw-ret) widens only the outer dashed ring; the inner thin ring keeps its rest size. */
 .iw-ret--blaster .iw-ret__svg { transform: none; transition: none; }
 .iw-ret--blaster .iw-ret__svg circle.iw-ret__ring:not(.thin) { transform: scale(calc(1 + var(--sp, 0) * .012)); transform-box: fill-box; transform-origin: center; transition: transform .1s linear; }
+
+/* Slosher ShotGuide offsets only aiming feedback; tank/sub/status stay centred. */
+.iw-ret, .iw-hit, .iw-kill { translate: var(--gx, 0px) var(--gy, 0px); }
