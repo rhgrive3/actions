@@ -86,10 +86,10 @@ export function adaptFinishTape(rel, code) {
       'clearFinishTape method');
 
     // 5) cleared exactly at the judge transition (state order itself is untouched)
-    code = replaceOnceFinish(code,
-      `        if (state === 'finish' || state === 'judge') {`,
+    const statePrefix = `        if (state === 'finish' || state === 'judge') {`;
+    code = replaceOnceFinish(code, statePrefix,
       `        if (state === 'judge') this.clearFinishTape();
-        if (state === 'finish' || state === 'judge') {`,
+${statePrefix}`,
       'finish tape cleared at judge');
 
     // 6) and again for a fresh round / attract, so no tape survives into the next match
