@@ -1,3 +1,4 @@
+import { installContactRecovery } from './contact-recovery.mjs';
 import { installFinalDamage, damageGroupId } from './final-damage.mjs';
 import { installSplatlingRadiusCharge } from './splatling-radius-charge.mjs';
 import { installWeaponEdgecases } from './weapon-edgecases.mjs';
@@ -247,5 +248,6 @@ export function installWeapons(context, profile) {
   installWeaponGates(api);
   installAgent3WeaponPhysics(api, profile);
   installFinalDamage(api);
+  installContactRecovery(api);
   installWeaponEdgecases(api);
 }
