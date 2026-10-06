@@ -40,12 +40,15 @@ export function checkCompatibility(src, patchRoot = PATCH_ROOT) {
 }
 
 export function adaptSource(rel, code) {
+  // Storm owns the structural cloud-loop rewrite. Gear/Sub may then refine
+  // the terminal frame boundary without hiding Storm's original connection.
+  if (rel === 'src/game/weapons.js') code = adaptStormEffects(rel, code);
   code = adaptChargerSurface(rel, code, replaceOnce);
   code = adaptGearSub(rel, code, replaceOnce);
   code = adaptContactRecovery(rel, code, replaceOnce);
   code = adaptScoreHud(rel, code);
   code = adaptRespawnLifecycle(rel, code, replaceOnce);
-  code = adaptStormEffects(rel, code);
+  if (rel !== 'src/game/weapons.js') code = adaptStormEffects(rel, code);
   if (rel === 'src/config.js') return replaceOnce(code,
     '  minimap: true,', '  minimap: false,', 'optional corner map default');
   if (rel === 'src/ui/menus.js') return replaceOnce(code,
@@ -239,7 +242,6 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, '        vel.y -= 24 * dt;', '        vel.y -= SUB.bomb.gravity * dt;', 'bomb preview gravity');
     code = replaceOnce(code, 'if (b.fuse <= 0) {', 'if (b.fuse <= 1e-10) {', 'bomb fuse frame boundary');
     code = replaceOnce(code, 'if (c.t < c.dur - 0.3) {', 'if (c.t <= c.dur + 1e-10) {', 'storm rain through final reference tick');
-    code = replaceOnce(code, 'if (c.t >= c.dur) {', 'if (c.t + 1e-10 >= c.dur) {', 'storm exact fixed-step retirement');
     code = adaptWeaponEdgecases(rel, code, replaceOnce);
     code = adaptWeaponPaintInertia(rel, code, replaceOnce);
     code = adaptWeaponsFidelity(code, replaceOnce);

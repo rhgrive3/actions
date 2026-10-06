@@ -12,10 +12,16 @@ function replaceOnce(code, before, after, label) {
 
 export function adaptAimProfiles(rel, code) {
   if (rel === 'src/config.js') {
+    // Reliability may already own an independent padInvertX default between
+    // padSensitivity and invertY. Compose with either source shape without
+    // deleting or duplicating that setting.
+    const reliability = "  padSensitivity: 1.0,\n  padInvertX: false,\n  invertY: false,";
+    const native = "  padSensitivity: 1.0,\n  invertY: false,";
+    const before = code.includes(reliability) ? reliability : native;
     code = replaceOnce(
       code,
-      "  padSensitivity: 1.0,\n  invertY: false,",
-      "  padSensitivity: 1.0,\n  invertY: false,\n  invertX: false,\n  aimProfile: 'tv',\n  aimProfiles: null,",
+      before,
+      before + "\n  invertX: false,\n  aimProfile: 'tv',\n  aimProfiles: null,",
       'config aim profiles default'
     );
     return code;
