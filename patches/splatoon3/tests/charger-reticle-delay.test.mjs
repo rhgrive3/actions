@@ -73,6 +73,9 @@ function install(WEAPONS) {
     _local: () => h.actor || null,
   });
   const frame = () => ({ weapon: 'charger', crosshair: { spread: 0 }, subAim: false, ink: 1, subCost: 0.7 });
+  // _buildReticle assigns `iw-ret iw-ret--${kind}` on the real root; mirror that so
+  // the shipped stylesheet's compound selector can be checked against this node.
+  h.ret.classList.add('iw-ret', 'iw-ret--charger');
   return {
     h,
     view: built.chargerReticleView,
@@ -80,7 +83,22 @@ function install(WEAPONS) {
     gauge() { const off = h._chargeEl.style.strokeDashoffset; return off == null ? null : 1 - Number(off) / 100; },
     ringOn() { return h.ret.classList.contains('is-charging'); },
     fullOn() { return h.ret.classList.contains('is-full'); },
+    delayOn() { return h.ret.classList.contains('is-charge-delay'); },
   };
+}
+
+// The shipped stylesheet, read from the patch the build actually links.
+const css = () => fs.readFileSync(path.join(ROOT, 'patches/splatoon3/ui.css'), 'utf8');
+// One rule block read from the real stylesheet text: its selector and its body.
+function rule(source, want) {
+  const at = source.indexOf(want);
+  assert.notEqual(at, -1, `missing shipped rule: ${want}`);
+  const open = source.indexOf('{', at);
+  const close = source.indexOf('}', open);
+  assert.ok(open > at && close > open, `malformed shipped rule: ${want}`);
+  const found = source.slice(at, open).trim();
+  assert.equal(found, want, `shipped rule selector must be exactly ${want}, got ${found}`);
+  return { sel: found, body: source.slice(open + 1, close) };
 }
 
 async function chargingActor() {
@@ -171,3 +189,78 @@ test('#572: a weapon without a profile gauge delay keeps the immediate reticle',
   assert.equal(idle.gauge, 0, 'idle runner gauge is 0');
 });
 
+
+test('#572: the whole charger reticle is hidden while a real charge is still inside the 5F delay', async () => {
+  const { f, a } = await chargingActor();
+  const hud = install(f.WEAPONS);
+  hud.h.actor = a;
+  for (let n = 1; n <= 5; n++) {
+    f.tick(a);
+    hud.update();
+    assert.equal(hud.delayOn(), true, `installed DOM carries is-charge-delay on frame ${n}/5`);
+    assert.equal(hud.ringOn(), false, `frame ${n}/5 is still the dead period`);
+  }
+  f.tick(a);
+  hud.update();
+  assert.equal(hud.delayOn(), false, 'frame 6 drops the delay gate');
+  assert.equal(hud.ringOn(), true, 'frame 6 shows the reticle');
+  // Releasing inside the dead period must not leave the reticle latched off.
+  const { f: f2, a: a2 } = await chargingActor();
+  const hud2 = install(f2.WEAPONS);
+  hud2.h.actor = a2;
+  f2.tick(a2, 3);
+  hud2.update();
+  assert.equal(hud2.delayOn(), true, 'still inside the dead period');
+  a2.intent.fire = false;
+  f2.tick(a2);
+  hud2.update();
+  assert.equal(hud2.delayOn(), false, 'release clears the delay gate');
+  assert.equal(hud2.ringOn(), false, 'idle Charger visibility is not gated here (#594 is a separate owner)');
+});
+
+test('#572: the shipped stylesheet hides the charger reticle on that class, and only the charger', async () => {
+  const source = css();
+  const found = rule(source, '.iw-ret--charger.is-charge-delay');
+  const { sel, body } = found;
+  assert.ok(sel.startsWith('.iw-ret--charger'), 'the rule targets the charger reticle root');
+  assert.ok(sel.endsWith('.is-charge-delay'), 'the rule keys on the installed DOM class');
+  assert.ok(/visibility\s*:\s*hidden|display\s*:\s*none|opacity\s*:\s*0/.test(body),
+    `the rule must actually hide the reticle, got: ${body.trim()}`);
+  assert.ok(!sel.includes('is-charging'), 'the rule must not depend on is-charging, which is off during the delay');
+  assert.ok(!/splatling/i.test(sel), 'splatling/streaming visibility is a separate owner and stays unchanged');
+  // The DOM class the HUD toggles is exactly the class the stylesheet keys on.
+  const { f, a } = await chargingActor();
+  const hud = install(f.WEAPONS);
+  hud.h.actor = a;
+  f.tick(a);
+  hud.update();
+  assert.equal(hud.delayOn(), true, 'HUD sets the class the stylesheet consumes');
+  assert.ok(hud.h.ret.classList.contains('iw-ret--charger'), 'the reticle root carries the reticle kind class');
+  assert.ok(sel.split('.').filter(Boolean).every(cls => hud.h.ret.classList.contains(cls)),
+    'every class in the selector is present on the live reticle root, so the rule matches it');
+});
+
+test('#572: the delay gate leaves full charge at 60F and never touches authoritative charge or damage', async () => {
+  const { f, a } = await chargingActor();
+  const hud = install(f.WEAPONS);
+  hud.h.actor = a;
+  let n = 5;
+  while (a.weaponRunner.charge < 0.999 && n < 70) { f.tick(a); n++; }
+  hud.update();
+  assert.ok(a.weaponRunner.charge >= 0.999, 'authoritative full charge');
+  assert.equal(Math.round(a.weaponRunner.chargeT * 60), 60, 'full charge is still reached at 60F');
+  assert.equal(hud.delayOn(), false, 'no delay gate at full charge');
+  assert.equal(hud.ringOn(), true, 'ring stays on at full charge');
+  assert.equal(hud.fullOn(), true, 'full flash still fires at the full-charge point');
+  assert.ok(Math.abs(hud.gauge() - 1) < 1e-9, 'gauge still reaches 100%');
+  // Reading the gate is presentation only: the runner's own state is untouched.
+  const before = JSON.stringify({ c: a.weaponRunner.charge, t: a.weaponRunner.chargeT, ch: a.weaponRunner.charging });
+  for (let i = 0; i < 3; i++) hud.update();
+  assert.equal(JSON.stringify({ c: a.weaponRunner.charge, t: a.weaponRunner.chargeT, ch: a.weaponRunner.charging }), before,
+    'HUD reads never mutate the authoritative charge');
+  a.intent.fire = false;
+  const shots = f.shots.length;
+  f.tick(a);
+  assert.equal(a.weaponRunner.charging, false, 'release is still the authoritative phase clock');
+  assert.equal(f.shots.length, shots + 1, 'exactly one projectile is fired on release; damage path unchanged');
+});

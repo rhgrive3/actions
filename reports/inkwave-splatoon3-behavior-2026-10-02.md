@@ -269,3 +269,16 @@ Goo Tuber や Grizzco Charger などの亜種は検証表で例外が記録さ�
 のみを実装した。潜伏直後の fresh charge startup は本件とは別系統のゲームプレイ側タイマーであり、
 HUD 表示ディレイと同じ 5F でも別条項として扱う。表示スレッド側の時間ではなく固定 tick の
 `chargeT` を読むため、描画 cadence を変えても HUD のタイミングは動かない。
+
+### 5F の非表示期間に本体レティクルが残っていた件の是正（2026-10-06）
+
+先行実装は `is-charging` とゲージの塗りだけを抑止していたため、`.iw-ret__track`（灰色の環）、
+`.iw-ret__notch` の目盛り、3 本の `.iw-ret__line` が 1〜5F でも描画され続けていた。本家では
+5F の表示待ち期間にレティクル自体が出ないため、`chargerReticleView` が `charging`（実チャージ中）と
+`delayed`（その待機期間内）を区別して返すようにし、実チャージが待機期間内のときだけ
+`is-charge-delay` を付ける。`patches/splatoon3/ui.css` の
+`.iw-ret--charger.is-charge-delay { visibility: hidden; }` が Charger レティクル全体を隠す。
+idle の Charger / Splatling の可視性は別所有者の領域（#594、parent PR785）であり、Splatling と
+streaming は変更しない。authoritative phase clock、チャージ開始、ダメージ、60F のフルチャージ位置は
+いずれも変更していない。表示クラスはレティクル再構築時にリセットするため（`_L.chargeDelay`）、
+武器を切り替えて戻っても表示状態が残らない。

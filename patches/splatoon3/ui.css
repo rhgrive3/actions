@@ -4,3 +4,10 @@
 .s3-gear label { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
 .s3-gear select { max-width: 70%; font: inherit; padding: .25rem; color: #fff; background: #25353e; }
 @media (max-width: 500px) { .s3-gear { left: 1rem; right: 1rem; width: auto; } .s3-gear label { font-size: .8rem; } }
+
+/* Splatoon 3 keeps the whole charge reticle off until the sourced gauge delay ends, not just the
+   ring fill: the gray track, the notch marks and the three cross lines are all still painted when
+   only `is-charging` is withheld. `is-charge-delay` is set only while a real charge is still inside
+   its profile's delay, so this hides the Charger reticle for exactly those frames. Idle
+   Charger/Splatling visibility is a separate owner and is not gated here. */
+.iw-ret--charger.is-charge-delay { visibility: hidden; }
