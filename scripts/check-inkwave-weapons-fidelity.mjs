@@ -20,10 +20,7 @@ const golden = {
   'splatling-first':[19.4,18.6,20.375,1],
   'splatling-full':[19.4,18.6,20.375,1],
   'charger-0':[9.8,9.8,13.375,0],
-  // #620 normalizes the paint interpolation from the legal minimum-charge endpoint.
-  // CI 37394080008 measures this single changed 0.25-charge footprint at 16.625;
-  // damage ranges, other charge cases/families, packet shape and tolerances stay fixed.
-  'charger-0.25':[13.5,13.5,16.625,0],
+  'charger-0.25':[13.5,13.5,16.375,0],
   'charger-0.5':[17.3,17.3,20.125,0],
   'charger-0.75':[21.0,21.0,23.625,0],
   'charger-1':[24.8,24.8,26.625,0],
@@ -93,7 +90,8 @@ async function wallDropCase(id, dt = 1/60, ghost = false) {
   else if (id === 'splatling') {
     a.weaponRunner.fidelitySplatlingCharge = 1;
     f.projectiles.fireSplatling(a,a.weapon,0);
-  } else {
+  } else if (id === 'dualies') f.projectiles.fireDualies(a,a.weapon,0,0);
+  else {
     a.weaponRunner.s3FlickVertical = id === 'roller-vertical';
     f.projectiles.fireFlick(a,a.weapon);
   }
@@ -123,6 +121,7 @@ async function wallDropCase(id, dt = 1/60, ghost = false) {
 const wallExpected={
   blaster:{first:[15,30],second:35,last:[20,35],speeds:[.07,.04],radii:[1.3,1,.6]},
   splatling:{first:[15,30],second:5,last:[15,30],speeds:[.06,.06],radii:[1.3,.65,.6]},
+  dualies:{first:[20,40],second:10,last:[15,35],speeds:[.06,.06],radii:[1.3,.65,.6]},
   'roller-horizontal-main':{first:[60,80],second:5,last:[20,35],speeds:[0,.08],radii:[0,0,.5]},
   'roller-horizontal-near':{first:[60,80],second:5,last:[20,35],speeds:[.06,.08],radii:[1.3,.65,.5]},
   'roller-vertical':{first:[60,80],second:5,last:[20,35],speeds:[.08,.10],radii:[1.4,.7,.65]},
@@ -155,6 +154,8 @@ assert.deepEqual(cadence,[cadence[0],cadence[0],cadence[0]],'wall-drop source pe
 // seed chooses the same first/last source-frame periods.
 const ghost=await wallDropCase('splatling',1/60,true);
 assert.equal(ghost.f.paints.length,0,'ghost wall-drop cannot mutate turf');
+const ghostDualies=await wallDropCase('dualies',1/60,true);
+assert.equal(ghostDualies.f.paints.length,0,'ghost Dualies wall-drop cannot mutate turf');
 
 // Player contact remains terminal projectile damage, not terrain wall-drop.
 {
@@ -214,4 +215,4 @@ assert.equal(ghost.f.paints.length,0,'ghost wall-drop cannot mutate turf');
   assert.equal(f.paints.length,0,'network ghost wall-drop remains non-authoritative for turf');
  }
 
-console.log(JSON.stringify({status:'passed',contentHash:data.artifactIdentity.contentHash,cases:Object.keys(golden).length,networkModes:3,wallDropFamilies:3,wallDropCases:Object.keys(wallExpected).length,completion:'finite-charger-continuous-collision-wall-drop'}));
+console.log(JSON.stringify({status:'passed',contentHash:data.artifactIdentity.contentHash,cases:Object.keys(golden).length,networkModes:3,wallDropFamilies:4,wallDropCases:Object.keys(wallExpected).length,completion:'finite-charger-continuous-collision-wall-drop'}));

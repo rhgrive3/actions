@@ -10,16 +10,12 @@ export function adaptWeaponsFidelity(code,replaceOnce) {
     '      const fidelityWallDropDone = advanceFidelityWallDrop(this, p, dt);\n      if (fidelityWallDropDone === null) {\n      advanceFidelityProjectile(p, dt);\n      }','staged projectile integration');
   patch('      // actors\n      for (const e of G.actors) {',
     '      // Earliest enemy before the first solid obstruction.\n      for (const e of fidelityProjectileTargets(this, p)) {','collision chronology');
-  patch('        if (e.team === p.team || !e.alive) continue;\n        const h = e.form === \'squid\' ? PLAYER.squidHeight : PLAYER.height;',
-    '        // Membership, liveness and the per-family friendly pass-through window are solved in fidelityProjectileTargets.','team membership solved by fidelity solver');
   patch('        if (Math.abs(e.pos.x - p.pos.x) > 3 || Math.abs(e.pos.z - p.pos.z) > 3) continue;',
     '        // Swept broad phase was already checked by fidelityProjectileTargets.','swept broad phase');
   patch('          if (p.vol) { if (p.vol.hits.includes(e)) dmg = 0; else p.vol.hits.push(e); }',
     '          dmg = fidelityVolleyDamage(p, e, dmg);','volley maximum');
   patch("      this.applyHit(p.owner, e, w.splashDamage, p.wid || 'slosher');",
     '      applyFidelitySlosherSplash(this, p, e, w.splashDamage);','splash shares volley maximum');
-  patch('          if (p.type === \'slosh\' && p.head) this._sloshSplash(p, _v, e);',
-    '          if (p.type === \'slosh\' && p.head && e.team !== p.team) this._sloshSplash(p, _v, e);','ally-consumed slosh never splashes');
   patch('          if (dmg > 0) applyProjectileHit(this, p, e, dmg, _v);',
     '          if (dmg > 0) applyFidelityProjectileHit(this, p, e, dmg, _v);','roller damage envelope');
   patch('        const bh = G.boss.segHit(p.prev, p.pos, p.size * 0.6);',

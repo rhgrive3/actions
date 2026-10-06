@@ -58,13 +58,15 @@ export function installWeapons(context, profile) {
   WeaponRunner.prototype.reset = function (...args) {
     const result = reset.apply(this, args);
     this.s3Stored = null; this.s3Turret = false; this.s3FlickVertical = false; this.s3BlasterWindup = 0;
-    this.s3SloshRecovery = false; return result;
+    this.s3SloshRecovery = false;
+    this.s3ChargerPostShot = 0; this.s3DualiesPostShot = 0; this.s3DodgeShotPending = 0;
+    return result;
   };
   WeaponRunner.prototype.busy = function () {
-    // Issue #635: a Roller flick release blocks squid-form admission for its
-    // post-release gate (14F/15F horizontal, 18F/19F vertical).
-    if (this.a.weapon.kind === 'roller' && this.s3FlickPostSquid > 0) return true;
-    if (['charger','splatling'].includes(this.a.weapon.kind) && this.a.intent.squid && this.a._squidPressT > this.a._firePressT) return false;
+    const kind = this.a.weapon.kind;
+    if (kind === 'charger' && this.s3ChargerPostShot > 1e-10) return true;
+    if (kind === 'dualies' && this.s3DualiesPostShot > 1e-10) return true;
+    if (['charger','splatling'].includes(kind) && this.a.intent.squid && this.a._squidPressT > this.a._firePressT) return false;
     return this.s3BlasterWindup > 0 || busy.call(this);
   };
   const charger = WeaponRunner.prototype._charger;
@@ -149,12 +151,26 @@ export function installWeapons(context, profile) {
       return result;
     };
   }
+  const fireDualies = Projectiles.prototype.fireDualies;
+  Projectiles.prototype.fireDualies = function (a, w, spreadDeg, hand) {
+    const result = fireDualies.call(this, a, w, spreadDeg, hand);
+    if (a.weaponRunner) a.weaponRunner.s3DualiesPostShot = 4 / 60;
+    return result;
+  };
   const dualies = WeaponRunner.prototype._dualies, spread = WeaponRunner.prototype._spreadDeg;
   WeaponRunner.prototype._dualies = function (dt, inp, w) {
     const dodging = !!this.dodge;
+    if (this.s3DodgeShotPending > 1e-10 && (!inp.fire || inp.sub || this.a.form === 'squid')) this.s3DodgeShotPending = 0;
     if (this.s3Turret && (!inp.fire || Math.hypot(this.a.intent.move.x, this.a.intent.move.z) > .01 && this.lockT <= 0 || this.a.form === 'squid' || inp.sub)) this.s3Turret = false;
+    if (this.s3DodgeShotPending > 1e-10) {
+      this.s3DodgeShotPending = Math.max(0, this.s3DodgeShotPending - dt);
+      if (this.s3DodgeShotPending > 1e-10) return dualies.call(this, dt, { ...inp, fire: false, firePressed: false }, this.s3Turret ? { ...w, fireInterval: w.lockInterval } : w);
+    }
     const result = dualies.call(this, dt, inp, this.s3Turret ? { ...w, fireInterval: w.lockInterval } : w);
-    if (dodging && !this.dodge) this.s3Turret = true;
+    if (dodging && !this.dodge) {
+      this.s3Turret = true;
+      this.s3DodgeShotPending = 4 / 60;
+    }
     return result;
   };
   WeaponRunner.prototype._spreadDeg = function (w) {
@@ -165,6 +181,7 @@ export function installWeapons(context, profile) {
   };
   const fireCharger = Projectiles.prototype.fireCharger;
   Projectiles.prototype.fireCharger = function (a, w, charge) {
+    if (a.weaponRunner) a.weaponRunner.s3ChargerPostShot = 16 / 60;
     if (charge < .999) return fireCharger.call(this, a, w, charge);
     const muzzle = this._muzzle(a, new THREE.Vector3()).clone(), dir = this._aimFrom(a, muzzle, new THREE.Vector3()).clone();
     const hit = G.physics.raycast(muzzle, dir, w.rangeMax, new Hit(), true);

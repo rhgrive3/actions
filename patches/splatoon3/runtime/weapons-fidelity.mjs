@@ -81,7 +81,11 @@ function wallDropSource(p) {
   if (!w) return null;
   const raw = rawWeapon(w);
   let move, paint;
-  if (w.kind === 'roller') {
+  if (w.kind === 'dualies') {
+    // #604: Splat Dualies keep their pinned wall-drop records at the weapon
+    // top level, like Blaster/Splatling; both hands share them unchanged.
+    move = raw?.WallDropMoveParam; paint = raw?.WallDropCollisionPaintParam;
+  } else if (w.kind === 'roller') {
     // Roller wall-drop data belongs to the exact flick unit that produced the
     // glob (horizontal main/near or one of the vertical units), not the weapon
     // top level. configureFidelityFlick/initialize already preserve that unit.
@@ -215,9 +219,6 @@ function fieldRadiusAt(p,age) { return radiusAt(p.fidelityFieldCollision,age,p.f
 function setCollision(p,c,offset=0) {
   p.fidelityPlayerCollision=collisionRecord(c,'Player',offset);
   p.fidelityFieldCollision=collisionRecord(c,'Field',offset);
-  // #656 only corrects ordinary Shooter rounds. Other weapon families retain
-  // their existing teammate pass-through until their separate semantics are verified.
-  p.fidelityFriendThrough=p.s3Weapon?.kind==='shooter' && Number.isFinite(c.FriendThroughFrameForPlayer)?c.FriendThroughFrameForPlayer:null;
   // Existing packet size carries initial radius; layout is unchanged.
   p.size=p.fidelityPlayerCollision.initRadius;
 }
@@ -296,24 +297,12 @@ export function fidelityProjectileTargets(system,p) {
   const r1=fidelityPlayerCollisionRadius(p),radius=PLAYER.radius+Math.max(r0,r1);
   let nearest=null,best=Infinity;
   for(const actor of G.actors){
-    if(!actor.alive||actor===p.owner)continue;
-    const friendly=actor.team===p.team;
-    // S3 teammate body-block: friendly capsules follow the per-family source
-    // FriendThroughFrameForPlayer window. A missing source record keeps the
-    // native same-team skip instead of inventing one global collider rule.
-    if(friendly&&!Number.isFinite(p.fidelityFriendThrough))continue;
+    if(actor.team===p.team||!actor.alive)continue;
     if(actor.pos.x<Math.min(p.prev.x,p.pos.x)-radius||actor.pos.x>Math.max(p.prev.x,p.pos.x)+radius||
        actor.pos.z<Math.min(p.prev.z,p.pos.z)-radius||actor.pos.z>Math.max(p.prev.z,p.pos.z)+radius)continue;
     s.base.set(actor.pos.x,actor.pos.y+(actor.smoothY||0),actor.pos.z);
     const t=capsuleEntry(p.prev,p.pos,s.base,PLAYER.radius,actor.form==='squid'?PLAYER.squidHeight:PLAYER.height,r0,r1);
-    if(t===null)continue;
-    if(friendly){
-      // The window is measured in source frames at the contact point of this
-      // sweep, so the fixed-step result is identical at any render cadence.
-      const prevAge=p.fidelityPrevAge??p.age;
-      if((prevAge+(p.age-prevAge)*t)*60<p.fidelityFriendThrough-EPSILON)continue;
-    }
-    if(t<best-EPSILON||Math.abs(t-best)<EPSILON&&String(actor.nid??actor.name)<String(nearest?.nid??nearest?.name)){best=t;nearest=actor;}
+    if(t!==null&&(t<best-EPSILON||Math.abs(t-best)<EPSILON&&String(actor.nid??actor.name)<String(nearest?.nid??nearest?.name))){best=t;nearest=actor;}
   }
   if(nearest){
     const length=p.prev.distanceTo(p.pos),world=fidelityWorldHit(system,p),boss=fidelityBossHit(system,p);
@@ -328,17 +317,12 @@ export function fidelityProjectileTargets(system,p) {
 // the already-installed maximum-per-volley damage group when a stronger glob
 // reaches a victim after a weaker glob. No second full hit is awarded.
 export function fidelityVolleyDamage(p,victim,amount) {
-  // Teammate body-block contact consumes the round without friendly damage,
-  // kill credit, or volley/damage-group bookkeeping.
-  if(victim.team===p.team)return 0;
   if(!p.vol)return amount;
   const seen=p.vol.hits.includes(victim);
   if(!seen)p.vol.hits.push(victim);
   return seen && !p.s3DamageGroup ? 0 : amount;
 }
 export function applyFidelitySlosherSplash(system,p,victim,amount) {
-  // A glob consumed by a teammate never splashes enemies behind the ally.
-  if(victim.team===p.team)return;
   // Active Splat Bucket units have no SplashSlosherHitParam records. No radial damage.
   if(rawWeapon(p.s3Weapon||p.owner.weapon)?.UnitGroupParam)return;
   if(p.ghost)return;
@@ -369,9 +353,6 @@ export function fidelityDamage(p,point) {
   return p.damage;
 }
 export function applyFidelityProjectileHit(system,p,victim,amount,point) {
-  // Teammate body-block: the round is already consumed by the solver; never
-  // route friendly damage, kill credit, or enemy-hit side effects.
-  if(victim.team===p.team)return;
   if(p.ghost)return;
   amount=groupDamage(p.s3DamageGroup,victim,fidelityDamage(p,point));
   if(amount>0)system.applyHit(p.owner,victim,amount,p.wid||p.type);
@@ -427,7 +408,7 @@ export function installWeaponsFidelity(context,profile) {
   const fresh=Projectiles.prototype._new,push=Projectiles.prototype._push,ghost=Projectiles.prototype.ghostProjectile,clear=Projectiles.prototype.clear;
   Projectiles.prototype.clear=function(...args){const result=clear.apply(this,args);this._fidelityCollision=null;this._fidelitySloshContext=null;return result;};
   Projectiles.prototype._new=function(...args){
-    const p=fresh.apply(this,args);p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityFriendThrough=null;p.fidelityRollerUnit=null;p.fidelitySloshUnit=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;return p;
+    const p=fresh.apply(this,args);p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityRollerUnit=null;p.fidelitySloshUnit=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;return p;
   };
   function initialize(p,w){
     if(!w)return;
@@ -513,6 +494,54 @@ export function installWeaponsFidelity(context,profile) {
     const previous=this._fidelitySloshContext;this._fidelitySloshContext={index:0,group:new Map()};
     try{return slosh.call(this,actor,{...w,drops:rawWeapon(w).UnitGroupParam.Unit.reduce((n,u)=>n+(u.BulletNum??1),0)});}
     finally{this._fidelitySloshContext=previous;}
+  };
+  Projectiles.prototype.s3SlosherGuide=function(actor,w){
+    const guide=w?.shotGuide,raw=rawWeapon(w);
+    const unit=guide&&raw?.UnitGroupParam?.Unit?.[guide.unitOrderNum];
+    const index=guide?.bulletOrderNumInUnit;
+    if(!unit||!Number.isInteger(index)||index<0||index>=(unit.BulletNum??1)||!Number.isFinite(guide.frame))return null;
+    // The selected Bucket Slosher guide projectile (unit 1 / bullet 0) has
+    // random yaw disabled in the pinned source. Refuse to invent a random HUD
+    // guide if a future profile selects a randomized projectile instead.
+    if((unit.RandomRotateYDegree||0)!==0&&!unit.RandomRotateYOffOrderNum?.includes(index))return null;
+    const THREE=context.THREE;
+    const p=this._s3SlosherGuideProjectile||(this._s3SlosherGuideProjectile={
+      pos:new THREE.Vector3(),prev:new THREE.Vector3(),start:new THREE.Vector3(),vel:new THREE.Vector3()
+    });
+    this._muzzle(actor,p.pos);p.prev.copy(p.pos);p.start.copy(p.pos);
+    p.owner=actor;p.type='slosh';p.wid=w.id;p.s3Weapon={...w};p.age=0;p.life=2.4;p.straight=0;
+    p.delay=((unit.UnitDelayFrame||0)+index*(unit.AfterOffsetDelayFrame||0))/60;
+    p.fidelitySloshUnit=unit;p.fidelitySloshIndex=index;p.fidelityPhase=0;p.fidelityMove=null;
+    p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;
+    const speed=((actor.grounded?unit.SpawnSpeedGround:unit.SpawnSpeedAir)+index*(unit.AfterOffsetSpawnSpeed||0))*60;
+    const aim=(this._s3SlosherGuideAim||(this._s3SlosherGuideAim=new THREE.Vector3())).copy(actor.aimDir).normalize();
+    const yaw=Math.atan2(aim.x,aim.z)+radians(unit.BaseRotateYDegree||0);
+    const pitch=Math.atan2(aim.y,Math.hypot(aim.x,aim.z)),horizontal=Math.cos(pitch)*speed;
+    p.vel.set(Math.sin(yaw)*horizontal,Math.sin(pitch)*speed+horizontal*(unit.AddSpawnSpeedYRateByXZ||0),Math.cos(yaw)*horizontal);
+    initialize(p,w);
+    let remaining=Math.max(0,guide.frame/60-p.delay);
+    while(remaining>EPSILON){const step=Math.min(1/60,remaining);advanceFidelityProjectile(p,step);remaining-=step;}
+    return p.pos;
+  };
+  Projectiles.prototype.s3WeaponGuide=function(actor,w){
+    if(w?.kind==='slosher')return this.s3SlosherGuide(actor,w);
+    const frame=w?.shotGuideFrame;
+    if(w?.kind!=='blaster'||!Number.isFinite(frame))return null;
+    const THREE=context.THREE;
+    const p=this._s3BlasterGuideProjectile||(this._s3BlasterGuideProjectile={
+      pos:new THREE.Vector3(),prev:new THREE.Vector3(),start:new THREE.Vector3(),vel:new THREE.Vector3()
+    });
+    const dir=this._s3BlasterGuideDir||(this._s3BlasterGuideDir=new THREE.Vector3());
+    this._muzzle(actor,p.pos);p.prev.copy(p.pos);p.start.copy(p.pos);
+    this._aimFrom(actor,p.pos,dir);
+    p.owner=actor;p.type='blast';p.wid=w.id;p.s3Weapon={...w};p.age=0;p.life=2;p.straight=0;
+    p.delay=0;p.ghost=false;p.fidelityPhase=0;p.fidelityMove=null;p.fidelityPrevAge=0;
+    p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;
+    p.vel.copy(dir).multiplyScalar(w.projSpeed);
+    initialize(p,w);
+    let remaining=Math.max(0,frame/60);
+    while(remaining>EPSILON){const step=Math.min(1/60,remaining);advanceFidelityProjectile(p,step);remaining-=step;}
+    return p.pos;
   };
   const reset=WeaponRunner.prototype.reset,auto=WeaponRunner.prototype._auto,spin=WeaponRunner.prototype._splatling;
   WeaponRunner.prototype.reset=function(...args){const result=reset.apply(this,args);this.fidelitySplatlingCharge=null;return result;};
