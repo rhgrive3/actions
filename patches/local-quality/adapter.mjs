@@ -18,6 +18,7 @@ import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { adaptMinimapResources } from './minimap-resource-adapter.mjs';
 import { adaptLobbyResources } from './lobby-resource-adapter.mjs';
+import { adaptFrameOrder } from './frame-order-adapter.mjs';
 
 export const QUALITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
 const IDENTITY_FILES = [
@@ -34,6 +35,7 @@ const IDENTITY_FILES = [
   'platform-adapter.mjs', 'platform-lifecycle.mjs', 'platform-game.mjs',
   'platform-input.mjs', 'platform-audio.mjs', 'platform-transport.mjs',
   'mobile-platform.mjs', 'gyro-permission.mjs',
+  'screen-angle.mjs', 'frame-order-adapter.mjs', 'charger-sight.mjs',
 ];
 
 export function replaceOnce(code, before, after, label) {
@@ -44,7 +46,12 @@ export function replaceOnce(code, before, after, label) {
   return code.slice(0, at) + after + code.slice(at + before.length);
 }
 
+// Presentation-order corrections run last, on this layer's finished output.
 export function adaptQualitySource(rel, code) {
+  return adaptFrameOrder(rel, adaptQualityLayer(rel, code));
+}
+
+function adaptQualityLayer(rel, code) {
   code = adaptScreenfxDamageReset(rel, code, replaceOnce);
   code = adaptFinalMinuteMusic(rel, code, replaceOnce);
   code = adaptTurfLead(rel, code, replaceOnce);
@@ -246,6 +253,12 @@ export function adaptQualitySource(rel, code) {
   // coefficient, _calibrate/_rrScale and the resync/dropout lifecycle below are untouched, and
   // inkwave-public/ is never edited.
   if (rel === 'src/core/gyro.js') {
+    code = replaceOnce(code,
+      "import { screenAngle } from './device.js';",
+      "import { screenAngle as deviceScreenAngle } from './device.js';\n" +
+      "import { sensorScreenAngle } from '../../patches/local-quality/screen-angle.mjs';\n" +
+      'const screenAngle = () => sensorScreenAngle(globalThis, deviceScreenAngle);',
+      'gyro sensor-frame screen angle');
     code = replaceOnce(code, `    const d = this._down;
     const gy = d[0] * s + d[1] * c, gz = d[2];
     const gl = Math.hypot(d[0] * c - d[1] * s, gy, gz) || 1;
