@@ -6,10 +6,11 @@ export function rollEligible(velocity, move, cfg) {
   const cosine = Math.max(-1, Math.min(1, (velocity.x * move.x + velocity.z * move.z) / (speed * input)));
   return Math.acos(cosine) + 1e-10 >= cfg.minimumAngle;
 }
-export function rollLaunchSpeed(speed, chain, retention) {
-  // Speed already contains any loss from the previous roll. Apply the
-  // per-roll coefficient once, rather than compounding it again by chain count.
-  return speed * (chain > 0 ? retention : 1);
+export function rollLaunchSpeed(speed, chain, retention, previous = 0) {
+  // Consecutive rolls retain the previous penalized launch speed. This survives
+  // wall reattachment, where wall-climb velocity would otherwise rebase to the
+  // minimum and flatten every later roll to the same 0.85x result.
+  return chain > 0 && previous > 0 ? previous * retention : speed;
 }
 export function absorbArmor(state, damage) {
   if (!state || state.armorTime <= 0 || state.armorHP <= 0) return damage;
@@ -18,7 +19,7 @@ export function absorbArmor(state, damage) {
 }
 export function movementState(a) {
   a.s3 ||= {};
-  return a.s3.actions || (a.s3.actions = { chain: 0, chainTimer: 0, roll: null, surge: null });
+  return a.s3.actions || (a.s3.actions = { chain: 0, chainTimer: 0, chainSpeed: 0, roll: null, surge: null });
 }
 function sync(a, state) { a.s3.roll = state.roll; a.s3.surge = state.surge; }
 function launch(a, direction, speed, vertical, kind) {
@@ -33,7 +34,7 @@ export function beforeActions(a, dt, jumpPressed) {
   if (!api) throw new Error('INKWAVE movement patch not installed');
   const state = movementState(a), cfg = config;
   state.chainTimer = Math.max(0, state.chainTimer - dt);
-  if (state.chainTimer <= 1e-10) { state.chain = 0; state.chainTimer = 0; }
+  if (state.chainTimer <= 1e-10) { state.chain = 0; state.chainTimer = 0; state.chainSpeed = 0; }
   for (const action of [state.roll, state.surge]) if (action) {
     const remaining = (action.armorTime || 0) - dt;
     action.armorTime = remaining <= 1e-10 ? 0 : remaining;
@@ -49,12 +50,12 @@ export function beforeActions(a, dt, jumpPressed) {
   const wallRoll = a.climbing && jumpPressed && (a.intent.move.x * a.wallN.x + a.intent.move.z * a.wallN.z) >= cfg.wallRollMinimumInput;
   if (jumpPressed && (wallRoll || a.submerged && rollEligible(a.vel, a.intent.move, cfg.roll))) {
     const retention = a.s3.modifiers?.rollRetention ?? cfg.roll.chainRetention;
-    const speed = rollLaunchSpeed(Math.max(cfg.roll.minimumSpeed, Math.hypot(a.vel.x, a.vel.z)), state.chain, retention);
+    const speed = rollLaunchSpeed(Math.max(cfg.roll.minimumSpeed, Math.hypot(a.vel.x, a.vel.z)), state.chain, retention, state.chainSpeed);
     const direction = wallRoll ? a.wallN : a.intent.move;
     launch(a, direction, speed, cfg.roll.jumpVelocity, 'squidroll');
     state.roll = { time: cfg.roll.duration, armorTime: cfg.roll.armorTime, armorHP: cfg.roll.armorHP,
       vx: a.vel.x, vz: a.vel.z };
-    state.surge = null; state.chain++; state.chainTimer = cfg.roll.chainReset;
+    state.surge = null; state.chainSpeed = speed; state.chain++; state.chainTimer = cfg.roll.chainReset;
     sync(a, state); return true;
   }
   if (a.climbing && a.intent.jump) {
