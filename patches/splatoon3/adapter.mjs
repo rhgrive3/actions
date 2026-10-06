@@ -82,7 +82,7 @@ export function adaptSource(rel, code) {
     let guideX = 0, guideY = 0;
     if (L.kind === 'slosher' || L.kind === 'blaster') {
       const me = this._local(), cam = G.rig?.gameCam || G.camera;
-      const point = me && cam && G.projectiles?.s3WeaponGuide?.(me, me.weapon);
+      const point = me && cam && G.projectiles?.s3WeaponGuide?.(me, me.weapon, cam, innerWidth, innerHeight);
       const projected = point ? this._project(cam, point.x, point.y, point.z) : null;
       if (projected && projected.z < 1) {
         guideX = projected.x * innerWidth * 0.5;
