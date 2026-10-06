@@ -326,3 +326,52 @@ This is a follow-on delta after #721 at `33aa331`, itself based on main `37ab02f
 Only the navigator.getGamepads capability read is caught. A failed read supplies the existing no-pad cleanup path and advances the existing #721 pad epoch, so a render-pending old controller edge and its Player filter cannot survive the failure. The polling API is tried again on subsequent frames, allowing recovery without a new permission request or environment setting change. Match/controller/render errors are not caught here. No automatic input-mode switch, gyro setting, sensitivity, or game tuning changes.
 
 Dedicated source 6/6: 300 render frames at each 30/60/120Hz continue with keyboard movement; 300 touch frames retain native stick/button ownership, swipe and actual Gyro.consume delivery. A previously held pad loses all gameplay/menu edges and filtered look, and cannot consume a ready special through a buffered edge. Mouse, absent API, normal pad recovery and unrelated controller exception propagation are positive/negative controls. Combined input/pause/clock regressions are recorded with the completed patch. These are VM input/runtime tests, not a physical restricted iframe/WebView test or a Splatoon 3 hardware comparison. Combined emitted/browser acceptance remains with the integration batch; no separate PR/CI/build was started.
+
+## 2026-10-06 — #724 Roller reticle presentation and #649 speed-dependent roll paint
+
+Base: main `3d8a48d`. Two independent roots, both fixed in the patch layer only; `inkwave-public/` is
+untouched and both connections are fail-closed against the locked upstream bytes. Detailed comparison
+record: `patches/splatoon3/reference/roller-reticle-presentation-2026-10-06.md`.
+
+**#724 Roller reticle.** `HUD._buildReticle()` emitted a Roller-only `viewBox="-80 -40 160 80"` canvas with
+a left/right bracket pair (x = ±46…±60) and a broad lower arc (x = -30…+30), pinned to 160 px by
+`styles/hud.css .iw-ret__svg.wide`. Nintendo's current Roller gameplay imagery
+(https://www.nintendo.com/jp/ichikara/av5ja/photo/01/027.jpg) shows a compact central aim marker instead.
+The adapter branch now emits a centre dot plus one thin ring on the shared 80 px canvas, so the upstream
+`.wide` rule can no longer match anything the build produces. Input-independent by construction: mouse,
+gamepad, touch swipe and DeviceMotion all take the same builder branch. Projectile, damage, collision,
+paint and range paths are untouched.
+
+**#649 Roller roll paint.** `_roller()` computed `hs` but sized the rolling turf from `w.rollWidth` alone
+(three bands at `rollWidth * 0.33`, radius 0.62) at every speed, so an early roll and a full 90F dash
+painted identical lateral geometry. `runtime/roller-paint.mjs` binds the pinned 11.3.0 values from
+`profile.weaponsFidelityCompletion.weapons.roller` — `BodyParam.PaintParam.SpeedMax = 0.132`,
+`WidthHalfMax = 2.8`, `WeaponRollParam.SpeedNormal = 0.108` / `SpeedDash = 0.132` — and re-derives the
+documented `perFrameVelocityToPerSecond: "*60"` conversion against `rollSpeed` 7.92 / `rollBaseSpeed`
+6.48, refusing to install if it no longer holds. The roller-body bands keep their upstream offsets and
+radius at every speed, so only the body can paint a wall; the speed-dependent lateral reach is emitted
+separately as floor-only side splashes (`opts.floorOnly` in the installed paint system, opt-in and used by
+nothing else). `WidthHalfMax` is consumed as the upper bound anchored on the existing `w.rollWidth`
+calibration, not as a second absolute maximum width, so #189 stays the single owner of the absolute width.
+
+Measured with deterministic paint sampling on the real Actor and WeaponRunner: reach is strictly increasing
+from 25 % of roll speed through `rollBaseSpeed` and just-before-dash to `rollSpeed`, the dash sample reaches
+`rollWidth / 2 + 0.62`, a zero-speed roller emits body bands only, the body band step and 0.62 radius are
+identical at all four speeds, the side-splash pair is symmetric and floor-only, and `rollSpeed`,
+`rollBaseSpeed`, `rollDashTime`, `rollInkPerMeter` and `rollDamage` are unchanged with the dash still
+switching at 90F. Contact-damage width (#578) and ink consumption (#537/#148) are deliberately not coupled.
+
+Verification: dedicated 5/5 (#724) and 8/8 (#649) new source tests; the same 13 tests against the baseline
+adapter fail 7 (#724 all presentation assertions, #649 the widening, the body-band invariance and the
+floor-only gate), so the regressions are meaningful. Focused neighbouring regression set 88/88.
+`scripts/check-inkwave-patches.mjs --quick` exit 0, and the full transform-plus-syntax sweep parses 197
+modules. Baseline source evidence:
+https://github.com/rhgrive3/actions/issues/724#issuecomment-6008183896 and
+https://github.com/rhgrive3/actions/issues/649#issuecomment-6008190667.
+
+Unverified, not resolved by this change: the native Splatoon 3 Roller reticle pixel geometry, line lengths,
+opacity and any momentary flick-state difference (no current-version capture exists here); the absolute
+side-splash width, the `WidthHalfMax` to world-unit factor and the intermediate speed curve; browser or
+Switch rendering of either fix. `floorOnly` also has no field in the recorded `netmatch` splat packet, so a
+remote peer replaying a side splash does not apply the wall suppression — changing that packet is a protocol
+change and is left to the replication lane. These are VM/source-level results, not hardware comparisons.

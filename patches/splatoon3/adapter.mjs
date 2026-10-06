@@ -76,6 +76,24 @@ export function adaptSource(rel, code) {
       '      const winner = Math.abs(pa - pb) < 0.05 ? -1 : pa > pb ? 0 : 1;',
       '      const winner = authoritativeWinner === 0 || authoritativeWinner === 1 ? authoritativeWinner : Math.abs(pa - pb) < 0.05 ? -1 : pa > pb ? 0 : 1;',
       'authoritative Turf winner HUD reveal');
+    // #724: the Roller-only 160 px canvas (side bracket pair + broad lower arc) is
+    // an invented aiming guide that current Splatoon 3 Roller imagery does not
+    // show. Presentation only: projectile, damage, collision, paint and range
+    // paths are untouched, and the replacement stays on the shared 80 px canvas so
+    // styles/hud.css `.iw-ret__svg.wide` can never match an emitted element again.
+    code = replaceOnce(code,
+      '    } else if (kind === \'roller\') {\n' +
+      '      r.innerHTML = `<i class="iw-ret__dot"></i><svg class="iw-ret__svg wide" viewBox="-80 -40 160 80" aria-hidden="true">\n' +
+      '        <path class="iw-ret__ring" d="M-46 -15 L-56 -15 Q-60 -15 -60 -11 L-60 11 Q-60 15 -56 15 L-46 15"/>\n' +
+      '        <path class="iw-ret__ring" d="M46 -15 L56 -15 Q60 -15 60 -11 L60 11 Q60 15 56 15 L46 15"/>\n' +
+      '        <path class="iw-ret__ring thin" d="M-30 22 Q0 30 30 22"/></svg>`;',
+      '    } else if (kind === \'roller\') {\n' +
+      '      // Compact central aim marker only. The ring radius stays on the shared\n' +
+      '      // compact reticle scale; the native Splatoon 3 pixel geometry is still\n' +
+      '      // unpinned (reference/roller-reticle-presentation-2026-10-06.md).\n' +
+      '      r.innerHTML = `<i class="iw-ret__dot"></i><svg class="iw-ret__svg" viewBox="-40 -40 80 80" aria-hidden="true">\n' +
+      '        <circle r="15" class="iw-ret__ring thin"/></svg>`;',
+      'compact Roller reticle');
     return "import { t as tr } from '../i18n.js';\n" + code;
   }
   if (rel === 'src/ui/ui-icons.js') {
@@ -135,7 +153,33 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, 'if (b.fuse <= 0) {', 'if (b.fuse <= 1e-10) {', 'bomb fuse frame boundary');
     code = adaptWeaponEdgecases(rel, code, replaceOnce);
     code = adaptWeaponsFidelity(code, replaceOnce);
-    return `import { applyProjectileHit, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\n` + code;
+    // #649: the rolling turf footprint must widen with actual roll speed. The
+    // roller-body bands keep their upstream offsets and radius at every speed, so
+    // only the body can ever paint a wall; the speed-dependent lateral reach is
+    // emitted separately as floor-only side splashes.
+    code = replaceOnce(code,
+      '    for (let i = -1; i <= 1; i++) {\n' +
+      '      const off = i * w.rollWidth * 0.33;\n' +
+      '      _v.set(a.pos.x + fx * 0.75 + rx * off, a.pos.y + 0.35, a.pos.z + fz * 0.75 + rz * off);\n' +
+      '      area += G.paint.splat(_v, 0.62, a.team, { seed: Math.random(), kind: \'roll\', stretch: _fwd });\n' +
+      '    }',
+      '    area = rollerRollPaint(a, w, hs, fx, fz, rx, rz, _fwd, _v, G.paint);',
+      'speed-dependent roller roll paint');
+    return `import { applyProjectileHit, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\nimport { rollerRollPaint } from '../../patches/splatoon3/runtime/roller-paint.mjs';\n` + code;
+  }
+  if (rel === 'src/world/paint.js') {
+    // #649: Splatoon 3 paints walls with the roller body and floor with the side
+    // splashes that grow with roll speed. `floorOnly` is the one splat option the
+    // recorded netmatch packet cannot carry, so it is opt-in per call and every
+    // other weapon keeps the upstream behaviour.
+    code = replaceOnce(code,
+      '    const seed = opts.seed ?? Math.random();\n    const cosmetic = !!opts.cosmetic;',
+      '    const seed = opts.seed ?? Math.random();\n    const cosmetic = !!opts.cosmetic;\n    const floorOnly = !!opts.floorOnly;   // #649 roller side splashes never mark a wall face',
+      'floor-only splat option');
+    return replaceOnce(code,
+      '        _rel.copy(center).sub(f.origin);\n        const dn = _rel.dot(f.n);',
+      '        if (floorOnly && f.wall) continue;\n        _rel.copy(center).sub(f.origin);\n        const dn = _rel.dot(f.n);',
+      'floor-only splat skips wall faces');
   }
   if (rel === 'src/net/netmatch.js') {
     code = replaceOnce(code, '    victim.alive = false; victim.hp = 0;', '    victim.alive = false; victim.hp = 0; victim.superJumpGround = null;', 'remote jump target death');

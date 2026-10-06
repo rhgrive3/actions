@@ -27,6 +27,7 @@
 | `runtime/dualies-motion.mjs` | マニューバーのスライドと直後の構え |
 | `runtime/roller.mjs` | ローラーの縦振り・横振り、振り下ろしと回復を射撃時刻へ同期 |
 | `runtime/roller-model.mjs` | ローラーのドラムの幅・直径とヨーク（見た目だけ。塗り・当たりは不変） |
+| `runtime/roller-paint.mjs` | ローラーの転がり塗りを転がり速度で拡幅する。本体の帯幅と接触は不変、床のみのサイド飛沫が速度で外へ出る（#649） |
 | `runtime/roller-detail-motion.mjs` | 横振りの巻き込み方向と、実際の攻撃終了後の姿勢 |
 | `runtime/hit-spawn-motion.mjs` | 被弾・復活の表示と操作復帰に残る姿勢の補正 |
 | `runtime/idle-motion.mjs`, `runtime/emotes-motion.mjs` | 待機の身振り、勝敗・メニューの姿勢と中断 |
@@ -36,7 +37,7 @@
 | `runtime/resources.mjs` | インク回復の待ち時間、敵インク、HP 回復 |
 | `runtime/flow.mjs` | フローの発動・延長・失効。強化量等は暫定設定 |
 | `runtime/scoring.mjs` | 壁を除く、露出した床の実面積による塗り判定 |
-| `runtime/ui.mjs`, `runtime/render.mjs` | 公開版のメニュー・影無効時の起動不具合を補正 |
+| `runtime/ui.mjs`, `runtime/render.mjs` | 公開版のメニュー・影無効時の起動不具合を補正。Roller の照準は専用 160 px の左右ブラケットと下部弧を廃し、共通尺寸の中央マーカーのみに戻す（#724） |
 | `profile.json` | 挙動の設定、数値の出典との対応、未確認事項 |
 | `reference/curated-numbers.json` | 抽出した値、JSON ポインター、出典ハッシュ、未知の項目 |
 | `reference/numeric-status.json` | 各設定数値の出典・換算・校正状態 |

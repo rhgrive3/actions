@@ -41,6 +41,7 @@ export async function fixture({ adapt = adaptSource, adaptRuntime = (_rel, sourc
     export * from './patches/splatoon3/runtime/flow.mjs';
     export * from './patches/splatoon3/runtime/resources.mjs';
     export * from './patches/splatoon3/runtime/render.mjs';
+    export * from './patches/splatoon3/runtime/roller-paint.mjs';
     export * from './patches/splatoon3/runtime/sub-special-fidelity.mjs';
     export const TEST_MATH = Math;
   `, { context, identifier: path.join(ROOT, 'fixture.mjs') });

@@ -34,6 +34,7 @@ import { installWallMotion } from './wall-motion.mjs';
 import { installFormMotion } from './form-motion.mjs';
 import { installDualiesMotion } from './dualies-motion.mjs';
 import { installRollerDetailMotion } from './roller-detail-motion.mjs';
+import { installRollerPaint } from './roller-paint.mjs';
 import { installSuperjumpMotion } from './superjump-motion.mjs';
 import { installSquidrollMotion } from './squidroll-motion.mjs';
 import { installHitSpawnMotion } from './hit-spawn-motion.mjs';
@@ -79,6 +80,9 @@ export function install(profile) {
   installWallMotion(api, profile);
   installFormMotion(api, profile);
   installRollerDetailMotion(api, profile);
+  // Bound before any rollout can paint, so a profile without the pinned S3 roller
+  // paint values fails the boot instead of shipping a fixed-width stripe.
+  installRollerPaint(profile, WEAPONS.roller);
   installSuperjumpMotion(api, profile);
   installSquidrollMotion(api, profile);
   installHitSpawnMotion(api, profile);
