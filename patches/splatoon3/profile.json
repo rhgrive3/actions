@@ -145,7 +145,8 @@
       "chargeTime": 1,
       "inkRecoverStop": 0.3333333333333333,
       "damagePartialMax": 80,
-      "fieldCollisionRadius": 0.02
+      "fieldCollisionRadius": 0.02,
+      "feetPaintRadius": 0.7
     },
     "roller": {
       "rollSpeed": 7.92,
@@ -496,8 +497,8 @@
       "Roller near-unit count1 is corroborated by S3 unit research, not an inferred omitted BulletNum; velocity and width use relative mappings, sampler/absolute spawn calibration remains unverified.",
       "Blaster terrain damage is half of normalized existing bands, floor to0.1HP after scaling;35HP cap is sourced, complete S3 falloff curve remains uncalibrated.",
       "PR64 completion: finite Charger flight, continuous collision, source-mirrored unit layouts and model-labelled interpolation; physical Switch parity remains unverified.",
-      "Rescued from PR #489: Flow progress now decays/penalizes and survives respawn while active; community loss values remain calibration, not Nintendo primary data.",
-      "Rescued from PR #547/#491/#545: Roller swing movement target, deterministic Alpha ties, and Tenacity owner-only passive charge remain subject to current-main combined validation."
+      "Charger feetPaintRadius 0.7 is a local footprint calibration for guaranteed feet paint; physical Switch radius remains unverified.",
+      "Death-cause respawn totals 8.5/7.0/5.5s are public-reference values retained from PR #186; official 11.3.0 parameter confirmation remains unavailable."
     ],
     "movementResourcesEvidence": "reports/inkwave-movement-resources-2026-10-02.md"
   },
@@ -3087,5 +3088,10 @@
       "chargerPaint": "pinned width/depth/radius endpoints drive existing rasterizer; spacing formula and terminal multiplier remain source-guided/community-modelled",
       "rollerAgeDamage": "linear multiplier to pinned DamageRejectRate between pinned start/end frames; subframe rounding unverified"
     }
+  },
+  "respawn": {
+    "normal": 8.5,
+    "water": 7,
+    "outOfBounds": 5.5
   }
 }
