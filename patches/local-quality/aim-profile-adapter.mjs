@@ -109,8 +109,13 @@ export function adaptAimProfiles(rel, code) {
   }
 
   if (rel === 'src/game/player.js') {
-    // Gyro stale delta discard on input ownership change to touch
-    const gyroAnchor = "    // gyro: device turn → camera turn (its own invert settings; the Splatoon handheld feel)\n    if (touch && touch.gyro.enabled) {";
+    // Gyro stale delta discard on input ownership change to touch.
+    // reliability/touch-gyro-owner may already have tightened the native branch
+    // from touch-presence to current touch ownership; compose with either form.
+    const gyroRaw = "    if (touch && touch.gyro.enabled) {";
+    const gyroOwned = "    if (usingTouch && touch.gyro.enabled) {";
+    const gyroAnchor = code.includes(gyroOwned) ? gyroOwned : code.includes(gyroRaw) ? gyroRaw : null;
+    if (!gyroAnchor) throw new Error('INKWAVE quality patch conflict (aim profile: player gyro reset on ownership switch): branch not found');
     const gyroResetCode = "    if (this._lastOwnedInput !== inp.lastDevice) {\n" +
       "      if (this._lastOwnedInput && inp.lastDevice === 'touch') {\n" +
       "        const mob = touch || inp.mobile;\n" +
@@ -123,9 +128,10 @@ export function adaptAimProfiles(rel, code) {
       gyroAnchor;
     code = replaceOnce(code, gyroAnchor, gyroResetCode, 'player gyro reset on ownership switch');
 
-    // Right stick horizontal inversion (invertX)
-    const stickLookAnchor = "      rig.yaw -= this.padLook.x * 3.6 * ps * boost * friction * dt;";
-    const stickLookPatched = "      const invX = s.invertX ? -1 : 1;\n      rig.yaw -= this.padLook.x * 3.6 * ps * boost * friction * dt * invX;";
+    // Right stick horizontal inversion (invertX). Map ownership may nest this
+    // output one block deeper, so anchor the statement rather than indentation.
+    const stickLookAnchor = "rig.yaw -= this.padLook.x * 3.6 * ps * boost * friction * dt;";
+    const stickLookPatched = "const invX = s.invertX ? -1 : 1;\n      rig.yaw -= this.padLook.x * 3.6 * ps * boost * friction * dt * invX;";
     code = replaceOnce(code, stickLookAnchor, stickLookPatched, 'player pad invertX');
 
     return code;

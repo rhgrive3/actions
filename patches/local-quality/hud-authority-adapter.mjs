@@ -60,14 +60,25 @@ const UPDATE_SPECIAL = `  _updSpecial(f, dt) {
 `;
 
 export function adaptHudAuthority(rel, code) {
-  if (rel === 'src/main.js') return once(code,
-    'const judgeP = this.hud?.judge({ colors:',
-    'const judgeP = this.hud?.judge({ winner: m.result.winner, colors:', 'authoritative result producer');
+  if (rel === 'src/main.js') {
+    // The Splatoon3 gameplay adapter may already own the authoritative winner.
+    // In that composition, retain it verbatim and apply no duplicate producer.
+    if (code.includes('winner: m.result.winner')) return code;
+    return once(code,
+      'const judgeP = this.hud?.judge({ colors:',
+      'const judgeP = this.hud?.judge({ winner: m.result.winner, colors:', 'authoritative result producer');
+  }
   if (rel === 'src/ui/hud.js') {
-    // Prefix-only connection composes with reliability's isCurrent parameter.
-    code = once(code, '  judge({ colors =', '  judge({ winner: resultWinner = -1, colors =', 'judge result input');
-    code = once(code, 'const winner = Math.abs(pa - pb) < 0.05 ? -1 : pa > pb ? 0 : 1;',
-      'const winner = resultWinner === 0 || resultWinner === 1 ? resultWinner : -1;', 'one winner authority');
+    // C22/main may already have the same winner authority under the
+    // authoritativeWinner name. Only add this adapter's winner path when absent;
+    // the segmented Special gauge below still applies in either composition.
+    const winnerOwned = code.includes('winner: authoritativeWinner') &&
+      code.includes('authoritativeWinner === 0 || authoritativeWinner === 1');
+    if (!winnerOwned) {
+      code = once(code, '  judge({ colors =', '  judge({ winner: resultWinner = -1, colors =', 'judge result input');
+      code = once(code, 'const winner = Math.abs(pa - pb) < 0.05 ? -1 : pa > pb ? 0 : 1;',
+        'const winner = resultWinner === 0 || resultWinner === 1 ? resultWinner : -1;', 'one winner authority');
+    }
     code = section(code, '    // ---- special gauge (liquid orb) + turf total\n', '    const rays =',
       '    // ---- special gauge (23 visible segments) + turf total\n', 'remove continuous gauge construction');
     const from = "      h('div', { class: 'iw-sp__orb', html:", to = "      h('i', { class: 'iw-sp__ring' })";

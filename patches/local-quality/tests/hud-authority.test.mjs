@@ -101,9 +101,17 @@ test('#381: reliability cancellation/replacement cannot show an old authoritativ
   const pending=r.game._judge();await r.advance(200);await r.game.quitToMenu();await r.advance(6000);await pending;assert.equal(r.count('results'),0);assert.equal(r.judges().length,0);
 });
 
-test('HUD adapters compile in the production order and fail closed on stale/duplicate anchors', () => {
+test('HUD adapters compile in production order and preserve an existing authoritative winner owner', () => {
   new vm.SourceTextModule(hudCode);new vm.SourceTextModule(gameCode);
-  for(const rel of ['src/ui/hud.js','src/main.js','src/core/mobile.js'])for(const input of ['',readSource(rel)+readSource(rel),compose(rel)])assert.throws(()=>adaptHudAuthority(rel,input),/HUD patch conflict/);
+  for(const rel of ['src/ui/hud.js','src/core/mobile.js'])
+    for(const input of ['',readSource(rel)+readSource(rel),compose(rel)])
+      assert.throws(()=>adaptHudAuthority(rel,input),/HUD patch conflict/);
+  // Current Splatoon3 composition already supplies winner: m.result.winner.
+  // Reapplying the quality layer must retain that owner instead of demanding a
+  // second differently-named authority path.
+  assert.equal(adaptHudAuthority('src/main.js',gameCode),gameCode);
+  for(const input of ['',readSource('src/main.js')+readSource('src/main.js')])
+    assert.throws(()=>adaptHudAuthority('src/main.js',input),/HUD patch conflict/);
   assert.equal(adaptHudAuthority('src/game/actor.js','unchanged'),'unchanged');
 });
 

@@ -319,6 +319,9 @@ jobs:
       - name: Verify built input and lifecycle modules in Chromium and WebKit
         if: matrix.suite == 'ui'
         run: node scripts/check-inkwave-reliability.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/reliability" --profile-dir "$CI_STORAGE/cache/reliability"
+      - name: Verify repeated battle → results → menu lifecycle and the untimed Practice Range
+        if: matrix.suite == 'ui'
+        run: node scripts/check-inkwave-rematch-lifecycle.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/rematch" --profile-dir "$CI_STORAGE/cache/rematch" --cycles 10
       - name: Reject forged touch and reliability source identities
         if: matrix.suite == 'ui'
         run: |
@@ -344,7 +347,7 @@ jobs:
             'active':['game/browser-result.json','motion/motion-result.json','motion-detail/motion-detail-result.json','flow/flow-render-result.json','wall/wall-render-result.json','resources/resource-render-result.json','idle-resources/idle-resources-result.json'],
             'catalog':['catalog/motion-catalog-result.json'],
             'network':['network/network-browser-result.json','network-delay/network-browser-result.json'],
-            'ui':['identity-network/network-identity-result.json','layout/touch-layout-result.json','reliability/reliability-browser-result.json','identity-touch/touch-layout-identity-result.json','identity-reliability/reliability-identity-result.json','responsive/responsive-result.json'],
+            'ui':['identity-network/network-identity-result.json','layout/touch-layout-result.json','reliability/reliability-browser-result.json','rematch/rematch-lifecycle-result.json','identity-touch/touch-layout-identity-result.json','identity-reliability/reliability-identity-result.json','responsive/responsive-result.json'],
             'range':['range/range-result.json'],
             'startup':['startup/startup-browser-result.json'],
           }[suite]
