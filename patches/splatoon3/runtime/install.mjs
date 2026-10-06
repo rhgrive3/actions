@@ -42,6 +42,7 @@ import { installIdleMotion } from './idle-motion.mjs';
 import { installEmotesMotion } from './emotes-motion.mjs';
 import { installSpecialMotion } from './special-motion.mjs';
 import { installFaceMotion } from './face-motion.mjs';
+import { installRespawnLifecycle } from './respawn-lifecycle.mjs';
 import { installCarryMotion } from './carry-motion.mjs';
 
 let installed = false;
@@ -89,6 +90,7 @@ export function install(profile) {
   installSpecialMotion(api, profile);
   installFlowMotion(api);
   installFaceMotion(api, profile);
+  installRespawnLifecycle(api, profile);
   // Main-weapon fidelity must be installed on the same canonical context before
   // gameplay can create projectiles; bootstrap's compatibility call is then a no-op.
   installWeaponsFidelity(api, profile);
