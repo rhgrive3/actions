@@ -311,3 +311,25 @@ The W3C Pointer Lock API explicitly separates lock-target state from queued poin
 | 再現操作 | 同一 aim/spread で静止・前進・後退 Blaster の `p.vel` を `_push` 直後に比較。修正前はすべて同一 `(0,0,56.7)`、修正後は前進 `+5.4` / 後退 `-5.4` world u/s の yaw-local 前進成分のみが加算され、strafe/vertical は無変化。`30/60/120Hz` は同一 authoritative actor state からの固定 spawn 速度として検証 |
 | プレイへの影響 | 移動射撃の初速・9f straight 到達・13f burst 位置が S3 方向へ補正。`SpawnSpeed` 基準の静止初速、straight/brake/free 状態、burst/collision/damage/spread/wall-impact、ネットワーク `recProj` 形式・ghost 再生・owner/remote 判定は変更なし |
 | 確認状態 | **ロジック確認済み**（source-fixture 実 `fireBlaster` 経路、focused 回帰 5/5、近傍 `weapons-fidelity-source`/`weapon-edgecases`/`weapons-gear-flow`/`sub-special-fidelity-source` 31 件、`weapon-edgecases`+`weapons`+`integration` 38 件、`adapter` 10 件、`--quick` 合格）。**本家実機（Switch Ver.11.3.0）でのフレーム単位の実測比較は未確認**。basis/clamp/分解を超える推測は確定させない |
+## 2026-10-06: #245 bomb-aiming ground humanoid speed
+
+Splatoon 3 Ver.11.3.0 keeps a throwing stance on the ground at a fixed speed:
+the bomb-aiming top speed is 0.72 DU/f against the 0.96 DU/f medium-weight
+normal walk, a ratio of **0.75**, and Run Speed Up gear does not apply while the
+throw button is held (57AP/0AP stays 1.00). Only the forward component matters;
+squid form and swim are unaffected.
+
+Before, `WeaponRunner.moveSpeed()` had no `aimingSub` branch, so cocking a bomb
+kept the full normal-walk speed, and the gear wrapper omitted `aimingSub` from
+`lockedMode`, so Human Speed gear still multiplied it (measured 57AP/0AP = 1.50).
+
+The gear wrapper now treats `aimingSub` as gear-locked and caps, rather than
+replaces, the upstream speed at `PLAYER.runSpeed * 0.75`, so a weapon-specific
+speed that is already lower keeps its authoritative value. Locked upstream
+`inkwave-public/` is unchanged.
+
+- ロジック確認済み / 実機未確認. The 0.75 ratio is taken from the S3 documented
+  0.72/0.96 pair and matches the existing `PLAYER.runSpeed * 0.75` splatling
+  charge coefficient; no interpolation or device measurement was invented.
+- Regression: `patches/splatoon3/tests/issue-245-bomb-aim-speed.test.mjs`
+  (fails 3/4 on `ecfdd268` without the fix, 4/4 with it).
