@@ -133,6 +133,46 @@ function setWorld({ probe, ray } = {}) {
 const wallAt = (d) => (o, dir, maxDist) => (d <= maxDist ? { hit: true, dist: d } : { hit: false, dist: maxDist });
 const fixedProbe = (d) => (pivot, dir, dist, r, out) => { out.hard = d; out.soft = d; out.floor = false; return out; };
 
+// A right-side wall that can APPEAR mid-run. C19-CAMERA-COLLISION-TRANSITION: the existing
+// settled-wall test starts with a fresh rig and leaves the wall present for 240 frames, so it only
+// ever checked the settled 0.05 m value and never the first frame after SH0 had already settled.
+// `state.at` is the distance along camera right, or null for clear.
+function mutableWall() {
+  const state = { at: null };
+  state.ray = (o, dir, maxDist) => (state.at != null && state.at <= maxDist
+    ? { hit: true, dist: state.at } : { hit: false, dist: maxDist });
+  return state;
+}
+
+// Run the rig, letting the caller drive frames and move the wall between them.
+async function live(opts = {}) {
+  const wall = mutableWall();
+  setWorld({ probe: opts.probe, ray: wall.ray });
+  const a = actor(opts.actor);
+  const ns = await loadRig({ adapted: true });
+  const THREE = ns.THREE;
+  const cam = new THREE.PerspectiveCamera(70, 16 / 9, 0.1, 500);
+  const rig = new ns.CameraRig(cam);
+  rig.yaw = opts.yaw ?? 0;
+  rig.pitch = opts.pitch ?? -0.1;
+  rig.follow(a, true);
+  const dt = opts.dt ?? 1 / 60;
+  // let the mode-change pose blend finish before anything is measured
+  for (let i = 0; i < 40; i++) rig.update(dt);
+  return {
+    rig, cam, a, wall, THREE: ns.THREE, dt,
+    step(n = 1) { for (let i = 0; i < n; i++) rig.update(dt); return this; },
+    shoulder() { return rig.shoulder; },
+    /** lateral offset actually applied to the lens, along camera right */
+    applied() {
+      const R = rightOf(rig.yaw);
+      const d = { x: cam.position.x - rig.pivot.x, y: cam.position.y - rig.pivot.y, z: cam.position.z - rig.pivot.z };
+      return dot(d, R);
+    },
+    view() { return renderedForward(ns.THREE, cam); },
+  };
+}
+
 function actor(over = {}) {
   return {
     pos: { x: 0, y: 0, z: 0 }, vel: { x: 0, y: 0, z: 0 }, visualPos: null,
@@ -488,6 +528,109 @@ test('the offset is frame-rate independent (#363/#367)', async () => {
 // 5. the patch itself
 // ---------------------------------------------------------------------------------------
 
+// ===========================================================================================
+// C19-CAMERA-COLLISION-TRANSITION regression
+//
+// The blocker: with SH0 the shoulder settles at 0.28 m in a clear follow. A right-side wall
+// appearing at 0.30 m only moved the *target* to 0.05 m; the damped value kept rendering ~0.2513 m
+// on the first 60 Hz frame, i.e. through the 0.25 m clearance envelope. These tests drive the
+// installed rig + real THREE and measure the APPLIED offset on the very first frame after the
+// transition, which the pre-existing settled-wall test never did.
+// ============================================================================================
+
+// Float tolerance for the clearance bound. cam.position is rebuilt from the spring-integrated pivot
+// every frame, so dot(cam.position - pivot, _right) carries ~1e-8 of double rounding. The defect being
+// guarded against is 0.2513 against a 0.05 limit - a 0.2 m violation - so 1e-6 sits five orders of
+// magnitude below it and cannot mask a real regression.
+const CLEARANCE_TOL = 1e-6;
+
+test('a wall appearing after SH0 settles is safe on the FIRST frame, at every cadence (#363/#367)', async () => {
+  const WALL = 0.30, CLEAR = 0.25, SAFE = WALL - CLEAR;      // 0.05
+  for (const hz of [30, 60, 120]) {
+    const r = await live({ dt: 1 / hz });
+    r.step(240);                                             // settle normally, clear side
+    assert.ok(Math.abs(r.shoulder() - SH0) < 1e-6, `${hz}Hz: precondition, shoulder must settle at SH0, got ${r.shoulder()}`);
+    r.wall.at = WALL;                                        // the wall arrives between two frames
+    for (let i = 0; i < 6; i++) {
+      r.step();
+      assert.ok(r.shoulder() <= SAFE + CLEARANCE_TOL,
+        `${hz}Hz frame ${i}: applied shoulder ${r.shoulder()} must never exceed the ${SAFE} m clearance`);
+      assert.ok(r.applied() <= SAFE + CLEARANCE_TOL,
+        `${hz}Hz frame ${i}: RENDERED lens offset ${r.applied()} must never exceed the ${SAFE} m clearance`);
+    }
+  }
+});
+
+test('the transition is safe from both corners and for every actor form (#363/#367)', async () => {
+  const WALL = 0.30, SAFE = WALL - 0.25;
+  // yaw and yaw+PI put the "right" side on opposite world axes; the rig's _right rotates with yaw
+  for (const yaw of [0, Math.PI / 2, Math.PI, -Math.PI / 2]) {
+    for (const [form, over] of [['kid', {}], ['squid', { form: 'squid' }],
+      ['swim', { anim: { form: 'swim' } }],
+      ['super jump', { superJumpState: superJumpFlight(0.4) }]]) {
+      const r = await live({ yaw, actor: over });
+      r.step(240);
+      assert.ok(Math.abs(r.shoulder() - SH0) < 1e-6, `yaw ${yaw} ${form}: precondition SH0, got ${r.shoulder()}`);
+      r.wall.at = WALL;
+      r.step();
+      assert.ok(r.shoulder() <= SAFE + CLEARANCE_TOL, `yaw ${yaw} ${form}: first-frame shoulder ${r.shoulder()} must be <= ${SAFE}`);
+      assert.ok(r.applied() <= SAFE + CLEARANCE_TOL, `yaw ${yaw} ${form}: first-frame rendered offset ${r.applied()} must be <= ${SAFE}`);
+    }
+  }
+});
+
+test('the lens never crosses the clearance envelope at any point of the transition (#363/#367)', async () => {
+  const WALL = 0.30, SAFE = WALL - 0.25;
+  for (const hz of [30, 60, 120]) {
+    const r = await live({ dt: 1 / hz });
+    r.step(240);
+    r.wall.at = WALL;
+    let worst = 0;
+    for (let i = 0; i < 90; i++) { r.step(); worst = Math.max(worst, r.applied()); }
+    assert.ok(worst <= SAFE + CLEARANCE_TOL, `${hz}Hz: worst rendered offset over the whole transition was ${worst}, limit ${SAFE}`);
+    // it must still settle to the same value the pre-existing settled-wall test expects
+    assert.ok(Math.abs(r.shoulder() - SAFE) < 1e-6, `${hz}Hz: settled shoulder must be ${SAFE}, got ${r.shoulder()}`);
+  }
+});
+
+test('removing the wall still eases back to SH0 with the original damping (#363/#367)', async () => {
+  const WALL = 0.30;
+  const r = await live();
+  r.step(240);
+  r.wall.at = WALL;
+  r.step(30);
+  const pinned = r.shoulder();
+  r.wall.at = null;                                          // side is open again
+  r.step();
+  assert.ok(r.shoulder() >= pinned - 1e-9, 'the offset must never jump past the pinned value on the way out');
+  r.step(240);
+  assert.ok(Math.abs(r.shoulder() - SH0) < 1e-6, `open side must return to SH0, got ${r.shoulder()}`);
+  // and an unobstructed rig is completely unaffected: the clamp must not engage when nothing hits
+  assert.ok(r.applied() <= Math.abs(SH0) + 1e-9, 'clear-side offset stays at the framing value');
+});
+
+test('the transition changes only the rendered offset - aim and rig state are untouched (#363/#367)', async () => {
+  const WALL = 0.30;
+  const a = await live({ yaw: 0.9, pitch: -0.2 });
+  const b = await live({ yaw: 0.9, pitch: -0.2 });
+  a.step(240); b.step(240);
+  const before = snap(a.rig), aimBefore = a.view();
+  b.wall.at = WALL;
+  b.step();                                                   // one frame with the wall
+  b.wall.at = null;
+  const after = snap(b.rig), aimAfter = b.view();
+  for (const k of ['pivot.x', 'pivot.y', 'pivot.z', 'curDist', 'wantDist', 'zoom', 'fovKick', 'kick', 'yaw', 'pitch']) {
+    assert.ok(Math.abs(before[k] - after[k]) < 1e-9,
+      `wall transition must not move rig.${k} (${before[k]} -> ${after[k]})`);
+  }
+  assert.ok(Math.abs(dot(aimBefore, aimAfter) - 1) < 1e-9, 'the wall transition must not rotate the aim');
+  // weapon/ink authoritative values are not produced by CameraRig at all; assert the rig exposes
+  // nothing that could carry them, so the correction is provably rendering-only
+  assert.deepEqual(
+    Object.keys(b.rig).filter((k) => /weapon|ink|damage|dmg|ammo/i.test(k)), [],
+    'CameraRig must not carry weapon or ink state that this correction could touch');
+});
+
 test('the adapter is fail-closed and upstream stays byte-locked (#363/#367)', async () => {
   const raw = rawUpstream();
   assert.equal(raw.includes('const SH0'), false, 'published upstream must not contain the baseline');
@@ -501,6 +644,12 @@ test('the adapter is fail-closed and upstream stays byte-locked (#363/#367)', as
   // the obstruction range must be preserved exactly at closeK = 1
   assert.ok(once.includes(`SH0 + (${OBSTRUCTED_ENDPOINT} - SH0) * closeK * closeK * (3 - 2 * closeK)`),
     'the obstruction-driven term must keep its 0.55 endpoint');
+  // the wall-transition correction must be present and fail-closed
+  assert.ok(once.includes('Math.max(shT, this.shoulder || 0) + 0.25'),
+    'the probe must cover the previously applied shoulder, not just the target');
+  assert.ok(once.includes('if (this.shoulder > shMax) this.shoulder = shMax;'),
+    'the applied shoulder must be clamped to the probed clearance');
+  assert.ok(once.includes('let shMax = Infinity;'), 'an unobstructed side must impose no cap');
   // fail-closed: missing anchor and re-applied anchor both throw
   assert.throws(() => adaptQualitySource(REL, ''), /conflict/, 'empty source must be rejected');
   assert.throws(() => adaptQualitySource(REL, once), /conflict/, 're-applying must be rejected');
