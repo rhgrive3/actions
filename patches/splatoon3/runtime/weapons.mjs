@@ -39,7 +39,9 @@ export function applySlosherVolleyHit(system, owner, victim, group, groupId, amo
   if (acceptedHit(result, victim, hpBefore, aliveBefore)) group.set(victim, next);
   return result;
 }
-function volleyOwnerKey(owner, groupId) { return `${owner.nid ?? owner.name ?? 'actor'}:${String(groupId)}`; }
+function volleyOwnerKey(owner, groupId) {
+  return JSON.stringify([owner.owner ?? null, owner.nid ?? owner.name ?? 'actor', String(groupId)]);
+}
 export function distanceDamage(bands, distance, linear = true) {
   if (!bands?.length) return 0;
   if (distance <= bands[0][0]) return bands[0][1];
@@ -247,7 +249,7 @@ export function installWeapons(context, profile) {
     const groups = this._s3SlosherOwnerGroups || (this._s3SlosherOwnerGroups = new Map());
     const key = volleyOwnerKey(attacker, groupId);
     let group = groups.get(key);
-    if (!group) { group = new Map(); groups.set(key, group); }
+    if (!group) { group = new WeakMap(); groups.set(key, group); }
     const previous = group.get(victim) || 0, next = Math.max(previous, damage), delta = next - previous;
     if (!(delta > 0)) return 'accepted';
     const hpBefore = victim.hp, aliveBefore = victim.alive;
