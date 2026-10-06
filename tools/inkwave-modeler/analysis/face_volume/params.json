@@ -1569,6 +1569,47 @@
    "kind": "neck_normals",
    "after_delta_smooth": true,
    "like": "jaw_tuck"
+  },
+  {
+   "name": "lower_lid_lift",
+   "kind": "warp",
+   "vec_mm": [
+    0,
+    3.6,
+    0.9
+   ],
+   "weight_smooth": 6,
+   "protect_lips": false,
+   "after_delta_smooth": true,
+   "eye_keep_mm": [
+    -2.0,
+    -1.0
+   ],
+   "bumps": [
+    {
+     "centre": [
+      67,
+      -25,
+      74
+     ],
+     "rx": 9,
+     "ry": 6,
+     "rz": 12,
+     "front_only": false
+    },
+    {
+     "centre": [
+      50,
+      -28.5,
+      82
+     ],
+     "rx": 18,
+     "ry": 6,
+     "rz": 12,
+     "scale": 0.35,
+     "front_only": false
+    }
+   ]
   }
  ],
  "delta_smooth": {
@@ -1632,6 +1673,17 @@
   "centre_px_left": [
    219.0,
    131.2
+  ],
+  "scale": 1.08,
+  "scale_centre_px": [
+   [
+    136.0,
+    128.8
+   ],
+   [
+    230.8,
+    136.3
+   ]
   ]
  },
  "limbal_ring": {
@@ -1878,6 +1930,11 @@
   "keep_white": [
    0.85,
    0.95
+  ],
+  "gain": [
+   0.82,
+   0.8,
+   0.83
   ]
  },
  "ears": {

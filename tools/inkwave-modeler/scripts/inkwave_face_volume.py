@@ -1754,13 +1754,34 @@ def eye_look(cfg):
             t.links.new(rng.outputs['Result'], mx.inputs[0])
             t.links.new(rw.outputs['Result'], mx.inputs[1])
             t.links.new(mx.outputs[0], mul.inputs[7])
-        t.links.new(mul.outputs[2], bsdf.inputs['Base Color'])
+        out = mul.outputs[2]
+        if cfg.get('gain'):
+            # the eye colours are brighter than the reference's (front view white about 245 vs 217, iris teal
+            # 63/207/187 vs 35/152/143): the colour is multiplied by cfg['gain']; the near-white catch lights
+            # (keep_white mask) stay as they are
+            gmix = t.nodes.new('ShaderNodeMix')
+            gmix.data_type, gmix.blend_type = 'RGBA', 'MIX'
+            gmix.inputs[6].default_value = (*cfg['gain'], 1.0)
+            gmix.inputs[7].default_value = (1.0, 1.0, 1.0, 1.0)
+            gmul = t.nodes.new('ShaderNodeMix')
+            gmul.data_type, gmul.blend_type = 'RGBA', 'MULTIPLY'
+            gmul.inputs['Factor'].default_value = 1.0
+            for n in (gmix, gmul):
+                n.name = n.label = EYE_LOOK + '_gain_' + n.blend_type
+            if cfg.get('keep_white'):
+                t.links.new(rw.outputs['Result'], gmix.inputs['Factor'])
+            else:
+                gmix.inputs['Factor'].default_value = 0.0
+            t.links.new(out, gmul.inputs[6])
+            t.links.new(gmix.outputs[2], gmul.inputs[7])
+            out = gmul.outputs[2]
+        t.links.new(out, bsdf.inputs['Base Color'])
         if cfg.get('emission'):
             # the white behind the iris lies in the socket's shadow and went black in the side view, where the
             # reference shows it white: a little of the eye's own colour as emission (old value kept)
             if SUFFIX + '_emit' not in bpy.data.materials[mat_name]:
                 bpy.data.materials[mat_name][SUFFIX + '_emit'] = bsdf.inputs['Emission Strength'].default_value
-            t.links.new(mul.outputs[2], bsdf.inputs['Emission Color'])
+            t.links.new(out, bsdf.inputs['Emission Color'])
             bsdf.inputs['Emission Strength'].default_value = cfg['emission']
 
 
@@ -1773,7 +1794,7 @@ def restore_eye_look():
         mine = [n for n in t.nodes if n.name.startswith(EYE_LOOK)]
         if not mine:
             continue
-        mul = next(n for n in mine if n.bl_idname == 'ShaderNodeMix')
+        mul = next(n for n in mine if n.name == EYE_LOOK + '_ShaderNodeMix')
         src = mul.inputs[6].links[0].from_socket
         bsdf = next(n for n in t.nodes if n.type == 'BSDF_PRINCIPLED')
         if SUFFIX + '_emit' in mat:
@@ -1879,6 +1900,14 @@ def raise_iris(cfg):
         uvl.foreach_set('uv', uv.ravel())
         me.update()
         print('FACE_VOLUME iris', name, 'up px', cfg['px'], 'uv shift', np.round(duv, 4).tolist())
+        if cfg.get('scale', 1.0) != 1.0:
+            # the painted iris is smaller than the reference's (front view radius 13.6 / 12.9 px, reference 14.3 /
+            # 14.2): the UV map shrinks about the UV under the front-view iris centre, so the iris grows on the ball
+            c = uv_at(*cfg['scale_centre_px'][0 if side < 0 else 1])
+            uv = c + (uv - c) / cfg['scale']
+            uvl.foreach_set('uv', uv.ravel())
+            me.update()
+            print('FACE_VOLUME iris', name, 'scale', cfg['scale'], 'about uv', np.round(c, 4).tolist())
 
 
 IRIS_IMAGES = {'Image_0': (184.5, 134.0), 'Image_1': (198.5, 134.0)}
