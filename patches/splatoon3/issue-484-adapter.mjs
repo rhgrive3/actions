@@ -118,12 +118,14 @@ export function adaptIssue484Actor(code) {
   // Local and adopted actors always use weapon.specialCost.
   // Exact native readiness condition (no -0.01 epsilon) preserved.
   // Absence of valid remote readiness falls back to native readiness.
-  code = replaceOnce(
-    code,
-    '  specialCost() { return this.weapon.specialCost; }\n  specialFrac() { return clamp(this.special / this.specialCost(), 0, 1); }\n  specialReady() { return this.special >= this.specialCost() && !this.specialActive; }',
-    '  specialCost() {\n    if (this.remote && typeof this.s3SpecialCost === \'number\' && Number.isFinite(this.s3SpecialCost) && this.s3SpecialCost > 0) {\n      return this.s3SpecialCost;\n    }\n    return this.weapon.specialCost;\n  }\n  specialFrac() { return clamp(this.special / this.specialCost(), 0, 1); }\n  specialReady() {\n    if (!this.alive) return false;\n    if (this.remote && this.s3SpecialReady !== undefined) {\n      return this.s3SpecialReady && !this.specialActive;\n    }\n    return this.special >= this.specialCost() && !this.specialActive;\n  }',
-    'actor specialCost and specialReady presentation sync'
-  );
+  const plainSpecialMethods = '  specialCost() { return this.weapon.specialCost; }\n  specialFrac() { return clamp(this.special / this.specialCost(), 0, 1); }\n  specialReady() { return this.special >= this.specialCost() && !this.specialActive; }';
+  const stormSpecialMethods = '  specialCost() { return this.weapon.specialCost; }\n  specialFrac() { return clamp(this.special / this.specialCost(), 0, 1); }\n  specialReady() { return this.special >= this.specialCost() && !this.specialActive && !(this.stormGaugeLock > 0); }';
+  const specialMethodsAnchor = code.includes(stormSpecialMethods) ? stormSpecialMethods : plainSpecialMethods;
+  const fallbackReady = specialMethodsAnchor === stormSpecialMethods
+    ? 'return this.special >= this.specialCost() && !this.specialActive && !(this.stormGaugeLock > 0);'
+    : 'return this.special >= this.specialCost() && !this.specialActive;';
+  const specialMethodsTarget = '  specialCost() {\n    if (this.remote && typeof this.s3SpecialCost === \'number\' && Number.isFinite(this.s3SpecialCost) && this.s3SpecialCost > 0) {\n      return this.s3SpecialCost;\n    }\n    return this.weapon.specialCost;\n  }\n  specialFrac() { return clamp(this.special / this.specialCost(), 0, 1); }\n  specialReady() {\n    if (!this.alive) return false;\n    if (this.remote && this.s3SpecialReady !== undefined) {\n      return this.s3SpecialReady && !this.specialActive;\n    }\n    ' + fallbackReady + '\n  }';
+  code = replaceOnce(code, specialMethodsAnchor, specialMethodsTarget, 'actor specialCost and specialReady presentation sync');
 
   return code;
 }
