@@ -195,3 +195,36 @@ test('#362 30/60/120Hz preserve one committed destination and flight announcemen
     assert.ok(new f.THREE.Vector3(...committed).distanceTo(new f.THREE.Vector3(10,0,7)) < 1e-9);
   }
 });
+
+test('#842 Super Jump ages the Squid Roll chain on fixed simulation ticks at 30/60/120Hz render cadence', async t => {
+  const profile = JSON.parse(fs.readFileSync(path.join(ROOT, 'patches/splatoon3/profile.json'), 'utf8'));
+  const window = profile.movement.roll.chainReset, speed = profile.movement.roll.minimumSpeed;
+  let expectedElapsed;
+  for (const hz of [30, 60, 120]) {
+    const f = await boot(); t.after(f.close); const a = f.make();
+    a.s3.actions = { chain: 1, chainTimer: window, chainSpeed: speed, roll: null, surge: null };
+    const state = a.s3.actions;
+    assert.equal(a.superJump(new f.THREE.Vector3(10, 0, 0)), true);
+    const clock = new f.FixedClock(); let elapsed = 0, renders = 0, checkedLiveWindow = false;
+    while (a.superJumpState && renders < hz * 10) {
+      clock.advance(1 / hz, dt => {
+        f.G.time += dt; a.update(dt); elapsed += dt;
+        if (!checkedLiveWindow && elapsed + 1e-10 >= window / 2) {
+          assert.ok(a.superJumpState, 'Super Jump remains active inside the roll window');
+          assert.equal(state.chain, 1, 'a still-valid consecutive roll is retained');
+          assert.ok(state.chainTimer > 0 && state.chainTimer < window);
+          assert.ok(Math.abs(state.chainTimer - (window - elapsed)) < 1e-9);
+          assert.equal(state.chainSpeed, speed, 'the prior launch speed remains available only inside the window');
+          checkedLiveWindow = true;
+        }
+      });
+      renders++;
+    }
+    assert.equal(a.superJumpState, null, `${hz}Hz render schedule completes the native Super Jump`);
+    assert.ok(checkedLiveWindow);
+    assert.ok(elapsed > window, 'the composed Super Jump lasts longer than the configured chain window');
+    assert.equal(state.chain, 0); assert.equal(state.chainTimer, 0); assert.equal(state.chainSpeed, 0);
+    if (expectedElapsed === undefined) expectedElapsed = elapsed;
+    else assert.equal(elapsed, expectedElapsed, 'render cadence does not change fixed-step chain time');
+  }
+});

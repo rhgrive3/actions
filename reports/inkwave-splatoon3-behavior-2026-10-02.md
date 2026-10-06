@@ -357,3 +357,13 @@ Reset now clears the pending damage attacker and angle together with the cancell
 ## 2026-10-06 — Dualies wall-drop (#604) and composed-runtime guards
 
 Base main `67fec182`. Splat Dualies wall impacts now enter the existing sourced wall-drop state using the pinned 11.3.0 top-level `WallDropMoveParam`/`WallDropCollisionPaintParam` (shock 1.3, fall 0.65, ground 0.6; 20–40F + 10F + 15–35F at 0.06). Previously the round died on the contact frame after one generic impact. Damage is unchanged. Shooter (#385) and Charger (#625/#268) are excluded: Shooter is owned elsewhere, and the Charger record omits three period fields. #770, #777, #638/#637, #644/#643 and #556 were already correct after adapter composition (the reports read raw source). They are now pinned by composed-runtime tests. This is logic-level and emitted-verifier evidence; a Switch visual/frame comparison is still 未確認. Details: [inkwave-wall-drop-dualies-guards-2026-10-06.md](inkwave-wall-drop-dualies-guards-2026-10-06.md).
+
+## 2026-10-07 — Super Jump中のSquid Roll連続時計 (#842)
+
+**本家比較条件:** Splatoon 3 Ver. 11.3.0、シューター、ギア効果を比較条件に加えず、自インク中で泳いでSquid Rollを出した後に有効なSuper Jumpを開始する操作を対象とする。Nintendo公式の[操作説明](https://splatoon.nintendo.com/en/gameplay/)は泳ぎながら反対方向へ素早く跳ぶ技としてSquid Rollを説明し、[初心者向けガイド](https://splatoon.nintendo.com/en/news/beginner-basics-for-splatoon-3-tips-for-improving-in-battle/)は反対方向へのスティック入力とBボタン操作を説明している。公式の[Ver. 11.3.0更新履歴](https://en-americas-support.nintendo.com/app/answers/detail/a_id/61257/)を確認したが、Squid Rollの連続判定時計がSuper Jump中にどう進むか、またその境界時間は公開されていない。Switch実機でのフレーム計測は未実施であり、本項はこの点の本家挙動を確定しない。
+
+**INKWAVEの差分:** 公開main `f31f5da4` の `Actor.update()` はSuper Jump中に `_updateSuperJump(dt)` を通って通常の移動処理より先にreturnする。移動runtimeでは連続ロールの `chainTimer` を `beforeActions()` だけで進めていたため、この経路では値が止まり、着地後も以前の `chainSpeed` が残った。`patches/splatoon3/runtime/movement.mjs` は時計の進行を共通化し、通常移動とSuper Jumpの両方でそのActor simulation tickの実 `dt` を使う。設定済み `movement.roll.chainReset` 以外の時間値は追加していない。公開版 `inkwave-public/` は変更していない。
+
+**再現と影響:** 完全なmain source-adapter順序（Splatoon 3、touch-layout、reliability、local-quality）と実Actor/Physics/Level、installed gameplay runtimeで、成功済みロール後の状態（`chain=1`, `chainTimer=chainReset`, `chainSpeed=profile.minimumSpeed`）からSuper Jumpを実行した。修正前は固定60Hz simulation 218 tick（3.633秒）後も `chainTimer=1.5` と `chainSpeed` が残った。修正後は時計が実simulation時間で進み、期限後に3値がresetする。以前の値が残ると、期限を超えた次の適格ロールにも設定済み保持率がかかり、速度が不意に低下し得る。
+
+**確認状態:** full-composition regressionを30/60/120Hzのrender scheduleで実行し、同じ60Hz fixed simulation経過とreset境界を確認した。通常の連続ロール窓と、offline pause中にworld/composer描画を抑える既存のcomposed pathも別のcontrolとして確認済み。これはlogic/runtime測定であり、ブラウザ描画性能や本家Switchの連続判定と一致するという証拠ではない。実機比較は未確認のまま残す。
