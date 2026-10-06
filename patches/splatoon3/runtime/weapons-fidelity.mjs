@@ -215,8 +215,22 @@ function fieldRadiusAt(p,age) { return radiusAt(p.fidelityFieldCollision,age,p.f
 function setCollision(p,c,offset=0) {
   p.fidelityPlayerCollision=collisionRecord(c,'Player',offset);
   p.fidelityFieldCollision=collisionRecord(c,'Field',offset);
-  // Existing packet size carries initial radius; layout is unchanged.
+  // Existing size carries initial radius; Roller unit identity is transmitted separately.
   p.size=p.fidelityPlayerCollision.initRadius;
+}
+// Legacy projectile packets have no unit discriminator. New packets preserve
+// their first30 entries, then carry unit before the existing owner tick/sequence.
+export function validFidelityRollerUnitPacket(event) {
+  if (!Array.isArray(event)) return false;
+  if ([27, 30, 32].includes(event.length)) return true;
+  if (event.length !== 33) return false;
+  const weapons = api?.WEAPONS;
+  const weapon = weapons && Object.hasOwn(weapons, event[4]) ? weapons[event[4]] : null, unit = event[30];
+  if (!weapon) return false;
+  if (weapon.kind !== 'roller') return unit === -1;
+  if (event[27] !== 0 && event[27] !== 1) return false;
+  const units = rawWeapon(weapon)?.[event[27] === 1 ? 'VerticalSwingUnitGroupParam' : 'WideSwingUnitGroupParam']?.Unit;
+  return Number.isSafeInteger(unit) && unit >= 0 && !!units && unit < units.length;
 }
 export function configureFidelityFlick(p, actor, weapon, index, angle, speed) {
   const b=weapon.ballistics, raw=rawWeapon(weapon);if(!b||!raw)return;
@@ -249,7 +263,7 @@ export function configureFidelityFlick(p, actor, weapon, index, angle, speed) {
   const cp=Math.cos(pitch);
   p.vel.set(Math.sin(angle)*cp*speed,Math.sin(pitch)*speed,Math.cos(angle)*cp*speed);
   p.fidelityYaw=Math.atan2(Math.sin(angle-actor.yaw),Math.cos(angle-actor.yaw));
-  p.fidelityMode=vertical?'vertical':'horizontal';p.fidelityRollerUnit=unit;
+  p.fidelityMode=vertical?'vertical':'horizontal';p.fidelityRollerUnit=unit;p.fidelityRollerUnitIndex=group.Unit.indexOf(unit);
   setCollision(p,unit.UnitParam.CollisionParam);
   p.straight=unit.UnitParam.MoveParam.GoStraightToBrakeStateFrame/60;
   p.grav=weapon.flickGravity;p.drag=weapon.flickDrag;
@@ -404,7 +418,7 @@ export function installWeaponsFidelity(context,profile) {
   const fresh=Projectiles.prototype._new,push=Projectiles.prototype._push,ghost=Projectiles.prototype.ghostProjectile,clear=Projectiles.prototype.clear;
   Projectiles.prototype.clear=function(...args){const result=clear.apply(this,args);this._fidelityCollision=null;this._fidelitySloshContext=null;return result;};
   Projectiles.prototype._new=function(...args){
-    const p=fresh.apply(this,args);p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityRollerUnit=null;p.fidelitySloshUnit=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;return p;
+    const p=fresh.apply(this,args);p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityRollerUnit=null;p.fidelityRollerUnitIndex=null;p.fidelitySloshUnit=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;return p;
   };
   function initialize(p,w){
     if(!w)return;
@@ -419,14 +433,15 @@ export function installWeaponsFidelity(context,profile) {
       p.straight=w.ballistics.straightTime;p.life=w.ballistics.burstTime;
       p.grav=p.fidelityMove.freeGravity;p.drag=p.fidelityMove.freeDrag*60;
     }else if(w.kind==='roller'){
-      const vertical=p.fidelityMode==='vertical'||p.ghost&&Math.round(p.straight*60)===Math.round(w.ballistics.verticalStraightTime*60);
+      const vertical=p.fidelityMode==='vertical'||p.ghost&&p.fidelityMode===null&&Math.round(p.straight*60)===Math.round(w.ballistics.verticalStraightTime*60);
       p.fidelityMode=vertical?'vertical':'horizontal';p.s3Vertical=vertical;
+      const units=raw[vertical?'VerticalSwingUnitGroupParam':'WideSwingUnitGroupParam'].Unit;
       // WideSwing has no recurring intermediate splash system. Impact paint
       // and the separately owned VerticalSwing trail remain unchanged.
       if(!vertical)p.trailEvery=0;
       if(!p.fidelityRollerUnit){
-        const units=raw[vertical?'VerticalSwingUnitGroupParam':'WideSwingUnitGroupParam'].Unit;
-        p.fidelityRollerUnit=p.ghost&&!vertical?horizontalRollerReplayUnit(units,p.vel.length()):null;
+        if(Number.isSafeInteger(p.fidelityRollerUnitIndex)&&units[p.fidelityRollerUnitIndex])p.fidelityRollerUnit=units[p.fidelityRollerUnitIndex];
+        if(!p.fidelityRollerUnit)p.fidelityRollerUnit=p.ghost&&!vertical?horizontalRollerReplayUnit(units,p.vel.length()):null;
         if(!p.fidelityRollerUnit){
           let best=Infinity;
           for(const u of units)for(let i=0;i<(u.BulletNum??1);i++){
@@ -436,6 +451,7 @@ export function installWeaponsFidelity(context,profile) {
         }
         setCollision(p,p.fidelityRollerUnit.UnitParam.CollisionParam);
       }
+      p.fidelityRollerUnitIndex=units.indexOf(p.fidelityRollerUnit);
       p.straight=(vertical?w.ballistics.verticalStraightTime:w.ballistics.horizontalStraightTime);
       p.grav=w.flickGravity;p.drag=w.flickDrag;
     }else if(w.kind==='slosher'){
@@ -481,8 +497,9 @@ export function installWeaponsFidelity(context,profile) {
     return result;
   };
   Projectiles.prototype.ghostProjectile=function(actor,event){
+    if(!validFidelityRollerUnitPacket(event))return null;
     const before=this.list.length;const result=ghost.call(this,actor,event);
-    if(this.list.length>before){const p=this.list.at(-1);initialize(p,WEAPONS[p.wid]||actor.weapon);}
+    if(this.list.length>before){const p=this.list.at(-1);if(event.length===33&&event[30]>=0){p.fidelityRollerUnitIndex=event[30];p.fidelityMode=event[27]===1?'vertical':'horizontal';}initialize(p,WEAPONS[p.wid]||actor.weapon);}
     return result;
   };
   const slosh=Projectiles.prototype.fireSlosh;
