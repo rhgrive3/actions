@@ -1,3 +1,4 @@
+import { adaptWeaponPaintInertia } from './weapon-paint-inertia-adapter.mjs';
 import { adaptWeaponEdgecases } from './weapon-edgecases-adapter.mjs';
 import { adaptWeaponsFidelity } from './weapons-adapter.mjs';
 // Apply only to a disposable BUILD tree. Upstream sources are never modified.
@@ -32,11 +33,30 @@ export function checkCompatibility(src, patchRoot = PATCH_ROOT) {
 }
 
 export function adaptSource(rel, code) {
+  if (rel === 'src/config.js') return replaceOnce(code,
+    '  minimap: true,', '  minimap: false,', 'optional corner map default');
+  if (rel === 'src/ui/menus.js') return replaceOnce(code,
+    "{ key: 'minimap', label: 'Minimap', type: 'toggle', help: 'Show the turf minimap in the corner during matches.' },",
+    "{ key: 'minimap', label: 'Corner map (non-S3 aid)', type: 'toggle', help: 'Optional aid outside the S3 baseline. The full Turf Map remains available.' },",
+    'optional corner map explanation');
+  if (rel === 'src/i18n.js') return replaceOnce(code,
+    "  'Minimap': 'ミニマップ',",
+    "  'Corner map (non-S3 aid)': '画面端マップ（本家外の補助）', 'Optional aid outside the S3 baseline. The full Turf Map remains available.': '本家の標準とは異なる任意の補助です。全体マップは引き続き使用できます。',\n  'Minimap': 'ミニマップ',",
+    'optional corner map Japanese explanation');
   if (rel === 'src/game/match.js') {
+    // The lobby/roster protocol assigns team 0 to Alpha and team 1 to Bravo.
+    // Preserve that match-side assignment; never redraw a winner at judgment.
     code = replaceOnce(code,
       'const win = cov[0] === cov[1] ? (Math.random() < 0.5 ? 0 : 1) : cov[0] > cov[1] ? 0 : 1;',
       'const win = cov[0] >= cov[1] ? 0 : 1; // Exact tie belongs to the assigned Alpha side.',
       'deterministic Alpha turf tie');
+    code = replaceOnce(code, '  setState(s) {',
+      '  setState(s) {\n    captureTurfFinish(this, s, G.paint);', 'Turf deadline snapshot before state listeners');
+    code = replaceOnce(code, '    const cov = G.paint.coverage();',
+      '    const cov = this.s3FinishCoverage ? [...this.s3FinishCoverage] : G.paint.coverage();', 'Turf judge deadline coverage');
+    code = "import { captureTurfFinish } from '../../patches/splatoon3/runtime/turf-finish.mjs';\n" + code;
+
+    return code;
   }
   if (rel === 'patches/splatoon3/runtime/resources.mjs') return adaptIssue415(rel, code);
   code = adaptMovementPhysics(rel, code, replaceOnce);
@@ -68,14 +88,8 @@ export function adaptSource(rel, code) {
     return "import { dualiesMotionLock, dualiesMotionAllowsFootPlant } from '../../patches/splatoon3/runtime/action-admission.mjs';\nimport { specialMotionAllowsFootPlant } from '../../patches/splatoon3/runtime/special-motion.mjs';\nimport { applyWalkLocomotion, walkLean, walkSwingUnloaded, walkFootReach, walkPelvisDrop, walkTreadAllowed, walkActive } from '../../patches/splatoon3/runtime/walk.mjs';\n"+code;
   }
   if (rel === 'src/ui/hud.js') {
-    code = replaceOnce(code,
-      "  judge({ colors = ['#ff8a14', '#2f5bff'], percents = [50, 50], names = TEAM_NAMES } = {}) {",
-      "  judge({ colors = ['#ff8a14', '#2f5bff'], percents = [50, 50], names = TEAM_NAMES, winner: authoritativeWinner = null } = {}) {",
-      'authoritative Turf winner HUD input');
-    code = replaceOnce(code,
-      '      const winner = Math.abs(pa - pb) < 0.05 ? -1 : pa > pb ? 0 : 1;',
-      '      const winner = authoritativeWinner === 0 || authoritativeWinner === 1 ? authoritativeWinner : Math.abs(pa - pb) < 0.05 ? -1 : pa > pb ? 0 : 1;',
-      'authoritative Turf winner HUD reveal');
+    code = replaceOnce(code, 'const lock = !!(lr && lr.lockT > 0), roll = !!(lr && lr.dodge);',
+      'const lock = !!(lr && lr.s3Turret), roll = !!(lr && lr.dodge);', 'Dualies HUD authoritative turret lifetime');
     return "import { t as tr } from '../i18n.js';\n" + code;
   }
   if (rel === 'src/ui/ui-icons.js') {
@@ -98,7 +112,27 @@ export function adaptSource(rel, code) {
       '<script>if ("serviceWorker" in navigator && location.protocol === "https:") { addEventListener("load", () => { const root = new URL("./", location.href); navigator.serviceWorker.register(new URL("sw.js", root).href, { scope: root.pathname }).catch(() => {}); }); }</script>\n</body>',
       'pwa service worker');
   }
+  if (rel === 'src/core/input.js') {
+    code = replaceOnce(code, '    const ax = pad.axes;', `    const touchContact = this.lastDevice === 'touch' && this.mobile?.active && !this.mobile._destroyed &&
+      ((this.mobile._ptr?.size || 0) > 0 || (this.mobile._stick?.id ?? -1) >= 0);
+    const ax = pad.axes;`, 'live touch gesture owns axis arbitration');
+    return replaceOnce(code,
+      "if (Math.abs(ax[0]) > 0.3 || Math.abs(ax[1]) > 0.3 || Math.abs(ax[2]) > 0.3 || Math.abs(ax[3]) > 0.3) this.lastDevice = 'pad';",
+      "if (!touchContact && (Math.abs(ax[0]) > 0.3 || Math.abs(ax[1]) > 0.3 || Math.abs(ax[2]) > 0.3 || Math.abs(ax[3]) > 0.3)) this.lastDevice = 'pad';",
+      'held axis cannot cancel live touch');
+  }
   if (rel === 'src/game/player.js') {
+    code = replaceOnce(code, '  update(dt) {', `  _s3ClearDisabledLook() {
+    if (this.padLook) this.padLook.x = this.padLook.y = 0;
+    this.edgeT = 0;
+    if (this.assist) this.assist.has = false;
+  }
+  get enabled() { return this._s3Enabled; }
+  set enabled(value) {
+    if (!value && this._s3Enabled) this._s3ClearDisabledLook();
+    this._s3Enabled = value;
+  }
+  update(dt) {`, 'controller disable neutralizes transient pad look');
     const start = code.indexOf('    if (this.onTarget && this.onTarget !== G.boss) {');
     const end = code.indexOf('    // is the crosshair point inside', start);
     if (start < 0 || end < start) throw new Error('INKWAVE patch conflict: camera aim connection');
@@ -111,6 +145,7 @@ export function adaptSource(rel, code) {
     return code;
   }
   if (rel === 'src/game/weapons.js') {
+    code = replaceOnce(code, 'Math.max(this.cooldown, 0.22)', 'Math.max(this.cooldown, w.postStreamDelay)', 'splatling sourced post-stream delay');
     code = replaceOnce(code,
       '    if (this.flick >= 0) return lerp(w.moveSpeedFiring, w.moveSpeedFiring * 0.45, clamp(this.flick / w.flickWindup, 0, 1));',
       "    if (this.flick >= 0 && w.kind === 'roller') return w.moveSpeedFiring; // S3 swing target is independent of windup progress\n    if (this.flick >= 0) return lerp(w.moveSpeedFiring, w.moveSpeedFiring * 0.45, clamp(this.flick / w.flickWindup, 0, 1));",
@@ -133,7 +168,10 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, 'const p = _v.copy(a.pos); p.y += 1.35;', 'const p = _v.copy(a.pos); p.y += 1.35; bombPreviewPosition(a, p);', 'bomb preview origin');
     code = replaceOnce(code, '        vel.y -= 24 * dt;', '        vel.y -= SUB.bomb.gravity * dt;', 'bomb preview gravity');
     code = replaceOnce(code, 'if (b.fuse <= 0) {', 'if (b.fuse <= 1e-10) {', 'bomb fuse frame boundary');
+    code = replaceOnce(code, 'if (c.t < c.dur - 0.3) {', 'if (c.t <= c.dur + 1e-10) {', 'storm rain through final reference tick');
+    code = replaceOnce(code, 'if (c.t >= c.dur) {', 'if (c.t + 1e-10 >= c.dur) {', 'storm exact fixed-step retirement');
     code = adaptWeaponEdgecases(rel, code, replaceOnce);
+    code = adaptWeaponPaintInertia(rel, code, replaceOnce);
     code = adaptWeaponsFidelity(code, replaceOnce);
     return `import { applyProjectileHit, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\n` + code;
   }
@@ -162,6 +200,11 @@ export function adaptSource(rel, code) {
     const fallBody = code.slice(fallStart, fallEnd).replace('      return;', '      return true;');
     code = code.slice(0, fallStart) + '    if (this._checkFallDeath()) return;\n\n' + code.slice(fallEnd);
     code = replaceOnce(code, '  _nearCamera() {', '  _checkFallDeath() {\n    const P = PLAYER;\n' + fallBody + '    return false;\n  }\n\n  _nearCamera() {', 'shared environmental death');
+    code = replaceOnce(code, 'this.fireBuffer = firePressed ? P.fireBuffer : Math.max(0, this.fireBuffer - dt);',
+      'this.fireBuffer = firePressed ? rollerFireBuffer(this, P.fireBuffer, dt) : Math.max(0, this.fireBuffer - dt);', 'roller buffered squid-start press');
+    code = replaceOnce(code, 'this.kidT >= P.emergeDelay',
+      'this.kidT + 1e-10 >= rollerEmergeDelay(this, P.emergeDelay)', 'roller squid-start admission');
+
     code = replaceOnce(code, '    this._updateClimb(dt, isSquid);',
       '    this._updateClimb(dt, isSquid);\n    const actionHandled = beforeActions(this, dt, jumpPressed);', 'movement actions');
     code = replaceOnce(code, '    if (this.jumpBuffer > 0 && (this.grounded || this.coyote > 0) && !this.climbing) {',
@@ -179,7 +222,7 @@ export function adaptSource(rel, code) {
     const end = code.indexOf('    // ---- weapons (', start);
     if (start < 0 || end < start) throw new Error('INKWAVE patch conflict: actor resource connection');
     code = replaceOnce(code, code.slice(start, end), '    updateResources(this, dt);\n\n', 'post-movement resources');
-    return `import { prepareSuperJump, rememberSuperJumpGround, superJumpTarget, updateSuperJumpMain, SUPERJUMP_MAIN_PROGRESS } from '../../patches/splatoon3/runtime/superjump.mjs';\nimport { beforeActions } from '../../patches/splatoon3/runtime/movement.mjs';\nimport { updateResources } from '../../patches/splatoon3/runtime/resources.mjs';\n` + code;
+    return `import { prepareSuperJump, rememberSuperJumpGround, superJumpTarget, updateSuperJumpMain, SUPERJUMP_MAIN_PROGRESS } from '../../patches/splatoon3/runtime/superjump.mjs';\nimport { rollerEmergeDelay, rollerFireBuffer } from '../../patches/splatoon3/runtime/roller.mjs';\nimport { beforeActions } from '../../patches/splatoon3/runtime/movement.mjs';\nimport { updateResources } from '../../patches/splatoon3/runtime/resources.mjs';\n` + code;
   }
   if (rel === 'src/game/character-weapons.js') {
     code = replaceOnce(code, '    if (ft >= 0.15 && ft - dt < 0.15) w.drumW += 34;', '    const release = st.flickReleaseTime ?? 0.15;\n    if (ft >= release && ft - dt < release) w.drumW += 34;', 'roller drum release impulse');
@@ -193,10 +236,6 @@ export function adaptSource(rel, code) {
     code = code.slice(0, start) + '    const m = this.match;\n    const setUp = !!this.showcase?.fullFrame;\n    runSimulation(this, dt);\n' + code.slice(end);
     code = replaceOnce(code, '    dt = Math.min(dt, 1 / 24);\n', '', 'elapsed time');
     code = replaceOnce(code, '    this.input.endFrame();\n', '', 'input consumption');
-    code = replaceOnce(code,
-      '    const judgeP = this.hud?.judge({ colors: [G.teamHex[0], G.teamHex[1]], percents: [cov[0] * 100, cov[1] * 100], names: this.palette.names || TEAM_NAMES });',
-      '    const judgeP = this.hud?.judge({ colors: [G.teamHex[0], G.teamHex[1]], percents: [cov[0] * 100, cov[1] * 100], names: this.palette.names || TEAM_NAMES, winner: m.result.winner });',
-      'authoritative Turf winner Game to HUD');
     code = replaceOnce(code, 'const game = new Game();', 'installGame(Game);\nconst game = new Game();', 'game installation');
     return `import { runSimulation, installGame } from '../patches/splatoon3/runtime/clock.mjs';\n` + code;
   }
