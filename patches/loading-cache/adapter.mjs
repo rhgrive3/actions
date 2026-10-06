@@ -117,12 +117,16 @@ export function prepareLoading(build, preloads) {
   if(precacheBytes>5*1024*1024||assetBytes+512*1024>12*1024*1024)throw new Error('loading-cache: payload budget exceeded');
   return {assets,precache,assetBytes,precacheBytes,phases:adapted.phases};
 }
-export function finalizeLoadingWorker(build, revision, plan) {
+export function finalizeLoadingWorker(build, revision, plan, compactTemplate = source => source) {
   if(!/^[a-f0-9]{64}$/.test(revision))throw new Error('loading-cache: invalid revision');
   const index=fs.readFileSync(path.join(build,'index.html'));
   const config={schema:1,revision,index:{bytes:index.length,sha256:hash(index)},declaredBytes:plan.assetBytes+index.length,precache:plan.precache,assets:plan.assets};
   const template=fs.readFileSync(path.join(LOADING_ROOT,'sw.js'),'utf8');
-  const worker=countReplace(template,'/*__INKWAVE_CACHE_BUILD__*/ null',JSON.stringify(config),'worker stamp');
+  // Compact executable whitespace before inserting JSON so its literal remains
+  // directly auditable by the existing manifest/dependency gate.
+  const marker='__INKWAVE_CACHE_CONFIG_VALUE__';
+  const compact=compactTemplate(countReplace(template,'/*__INKWAVE_CACHE_BUILD__*/ null',marker,'worker template marker'));
+  const worker=countReplace(compact,marker,JSON.stringify(config),'worker stamp');
   if(Buffer.byteLength(worker)>64*1024)throw new Error('loading-cache: worker exceeds 64 KiB budget');
   fs.writeFileSync(path.join(build,'sw.js'),worker);
   return {revision,precacheCount:plan.precache.length,precacheBytes:plan.precacheBytes,declaredBytes:config.declaredBytes,maxRevisions:2,workerBytes:Buffer.byteLength(worker)};

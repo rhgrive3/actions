@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { runQualityBrowserProbe } from '../patches/local-quality/quality-probe.mjs';
 import { runPaintMipmapBrowserProbe } from '../patches/local-quality/paint-mipmap-probe.mjs';
 import { checkHudAuthority, checkUiVisualProbes } from './check-inkwave-hud-authority.mjs';
 import fs from 'node:fs';
@@ -339,6 +340,7 @@ try {
   });
   result.hudAuthority = await checkHudAuthority({ page, evidence, sourceSha, contentHash: manifest.contentHash });
   }
+  if (!uiProbesOnly) result.runtimeQuality = await runQualityBrowserProbe(page);
   result.paintMipmaps = await runPaintMipmapBrowserProbe(page);
   result.status = 'passed';
 } catch (error) {

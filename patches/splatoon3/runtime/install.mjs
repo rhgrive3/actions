@@ -1,3 +1,4 @@
+import { installSplatGhostReturn } from '../issue-284-adapter.mjs';
 import { installIssue196SpecialChargeCancel } from '../issue-196-adapter.mjs';
 import * as THREE from 'three';
 import { G, on, emit } from '../../../src/core/ctx.js';
@@ -128,5 +129,6 @@ export function install(profile) {
   G.s3 = { patchVersion: 1, referenceVersion: profile.referenceVersion, calibration: profile.calibration, installed: true };
   installed = true;
   installIssue196SpecialChargeCancel(api);
+  installSplatGhostReturn(api);
   return api;
 }

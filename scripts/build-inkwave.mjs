@@ -170,6 +170,11 @@ visit('patches/splatoon3/bootstrap.mjs');
 // requests to the critical HTML. Browser startup/offline CI validates the
 // resulting dependency fetch path and timing.
 const deferredIntegrationPreloads = new Set([
+  // Remaining PR786 helpers keep their static-import and full-precache owners.
+  'patches/local-quality/world-quality.mjs',
+  'patches/splatoon3/issue-284-adapter.mjs',
+  'patches/splatoon3/runtime/issue-465-blaster-startup.mjs',
+  'patches/local-quality/texlib.mjs',
   // PR786 runtime helpers retain static imports and precache, without extra eager hints.
   'patches/local-quality/issue-472-adapter.mjs',
   'patches/splatoon3/issue-196-adapter.mjs',
@@ -266,7 +271,8 @@ for (const file of versionFiles) {
 // Place base before the import map so all relative imports, preload hints,
 // stylesheet URLs and runtime fetches resolve within the same revision.
 fs.writeFileSync(path.join(BUILD,'index.html'), loadingHTML.replace('<head>', `<head>\n<base href="./_versions/${revision}/">`));
-const loadingSummary = finalizeLoadingWorker(BUILD, revision, loadingPlan);
+const loadingSummary = finalizeLoadingWorker(BUILD, revision, loadingPlan,
+  source => esbuild.transformSync(source, { loader: 'js', minifyWhitespace: true, minifyIdentifiers: false, minifySyntax: false, legalComments: 'inline' }).code);
 const identity = writeBuildIdentity(SRC, BUILD, PATCH_ROOT, { esbuild:esbuild.version, revision, script:sha256(fs.readFileSync(new URL(import.meta.url))), touchLayout:touchLayoutIdentity(), reliability:reliabilityIdentity(), quality:qualityIdentity(), network:networkIdentity(), range:rangeIdentity(), loadingCache:{ source:loadingIdentity(), ...loadingSummary } });
 // Include the independent editor in exact-source verification, not only artifact hashing.
 for (const [file, hash] of Object.entries(identity.build.touchLayout)) identity.files['touch-layout/' + file] = hash;

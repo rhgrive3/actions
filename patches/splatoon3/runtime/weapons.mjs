@@ -1,3 +1,4 @@
+import { blasterStartupWindup } from './issue-465-blaster-startup.mjs';
 import { installContactRecovery } from './contact-recovery.mjs';
 import { installFinalDamage, damageGroupId } from './final-damage.mjs';
 import { installSplatlingRadiusCharge } from './splatling-radius-charge.mjs';
@@ -140,7 +141,7 @@ export function installWeapons(context, profile) {
   const reset = WeaponRunner.prototype.reset, busy = WeaponRunner.prototype.busy;
   WeaponRunner.prototype.reset = function (...args) {
     const result = reset.apply(this, args);
-    this.s3Stored = null; this.s3Turret = false; this.s3FlickVertical = false; this.s3BlasterWindup = 0;
+    this.s3Stored = null; this.s3Turret = false; this.s3FlickVertical = false; this.s3BlasterWindup = 0; this.s3BlasterFromSwim = false;
     this.s3SloshRecovery = false;
     this.s3SplatlingStartup = 0; this.s3SplatlingEmerging = false; this.s3SplatlingEmergeT = 0;
     this.s3SplatlingHeld = false;
@@ -513,7 +514,7 @@ export function installWeapons(context, profile) {
       if (this.a.ink < beforeInk) this.s3PostShotRemaining = w.postShotDelay;
       return result;
     }
-    if (input.fire && this.cooldown <= 0 && this.a.ink >= w.inkPerShot) { this.s3BlasterWindup = w.preDelay; this.firingT = .35; return; }
+    if (input.fire && this.cooldown <= 0 && this.a.ink >= w.inkPerShot) { this.s3BlasterWindup = blasterStartupWindup(this.a, input.firePressed, dt, PLAYER.emergeDelay, w.preDelay); this.s3BlasterFromSwim = false; this.firingT = .35; return; }
     if (!input.fire) this.cooldown = Math.max(0, this.cooldown);
   };
   installSplatling(api, profile, { splatlingChargeCap, splatlingReservation, tickSplatlingInterrupt, releaseSplatlingInterrupt });
