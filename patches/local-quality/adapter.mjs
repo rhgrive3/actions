@@ -2,6 +2,10 @@ import { adaptTenacity } from './tenacity-adapter.mjs';
 // Build-only quality corrections composed after the gameplay, touch-layout and
 // reliability adapters. Upstream inkwave-public/ remains byte-for-byte intact.
 import fs from 'node:fs';
+import { adaptResourceSource } from './resource-adapter.mjs';
+import { adaptHudAuthority } from './hud-authority-adapter.mjs';
+import { adaptMedalSource } from './medal-adapter.mjs';
+import { adaptAimProfiles } from './aim-profile-adapter.mjs';
 import { adaptUiActorLifetime } from './ui-actor-lifetime-adapter.mjs';
 import { adaptIdleSource } from './idle-adapter.mjs';
 import { adaptPlatformSource } from './platform-adapter.mjs';
@@ -15,6 +19,9 @@ import { adaptLobbyResources } from './lobby-resource-adapter.mjs';
 
 export const QUALITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
 const IDENTITY_FILES = [
+  'resource-adapter.mjs', 'resource-budget.mjs', 'depth-cache.mjs',
+  'hud-authority-adapter.mjs',
+  'aim-profile-adapter.mjs', 'aim-profile.mjs', 'medal-adapter.mjs',
   'ui-actor-lifetime-adapter.mjs',
   'tenacity-adapter.mjs', 'tenacity.mjs',
   'idle-adapter.mjs', 'idle-resources.mjs', 'music-idle.mjs',
@@ -35,12 +42,16 @@ export function replaceOnce(code, before, after, label) {
 }
 
 export function adaptQualitySource(rel, code) {
+  code = adaptAimProfiles(rel, code);
+  code = adaptMedalSource(rel, code);
+  code = adaptResourceSource(rel, code, replaceOnce);
   code = adaptTenacity(rel, code, replaceOnce);
   code = adaptIdleSource(rel, code, replaceOnce);
   code = adaptLobbyResources(rel, code);
   code = adaptMinimapResources(rel, code);
   code = adaptUiActorLifetime(rel, code, replaceOnce);
   code = adaptLandingRigidity(rel, code);
+  code = adaptHudAuthority(rel, code);
   if (rel === 'src/core/mobile.js') {
     code = adaptFirstTouch(rel, code);
     code = adaptTouchRelayout(rel, code);
