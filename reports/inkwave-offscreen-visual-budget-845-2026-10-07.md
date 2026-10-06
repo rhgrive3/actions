@@ -107,3 +107,20 @@ before/after は**同一プロセス内**で比較している（in view / just 
 - `_ground` の interception は budget 中の tick 内でしか効かないので、budget 中に呼ぶのは foot 用の可視 query のみ。authoritative collision には触れない。
 - `scripts/check-inkwave-patches.mjs --quick` の "Numeric status is stale" は main 時点からの既存差分で、`profile.json` は main と byte 一致。本タスクでは対象外。
 - 中間の Nintendo timing 数値は使用も主張もしていない（Issue が要求していないため）。
+
+## 補正 (fb6 r68, 2026-10-07): 初回可視フレームのカメラ旋回競合・far 面・投影の安全側
+
+上記の初版（供与コミット `18c45890963a3477ac1bdad7ae8ed88b23b79f09`、**未受理**）には 3 件の具体的欠陥があり、本補正で直した。いずれも表示層のみ、`inkwave-public/` はバイトロックのまま。
+
+1. **初回可視フレームのカメラ旋回競合。** `inkwave-public/src/main.js::_frame` は `m.update(dt)`（〜L1037）を **先に**、`this.rig.update(dt)`（〜L1058）を **後に** 呼ぶ。したがって `inViewVolume()` の判定は**前フレームのカメラ**を使い、続く render は**旋回後のカメラ**を見る。判定時点で budget された登場人物は、その 1 フレーム目を `_buildPose`/`_applyPose` 省略のまま描画されうる。修正は、native `_camHook` と同じ `S.list[0].onBeforeRender` に連鎖する `catchUpBeforeVisible()` を追加したもので、**描画投入の直前**（＝フレーム最終のカメラが確定した唯一の地点）で、native の not-drawn 分岐と同一の invalidation を再生してから、抑えていた `_updateFeet` / `_buildPose` / `_applyPose` を実行する。`_ovbWasBudgeted` を消費するため同一フレーム内で 2 回は走らない。判定側で確立できない場合は常に full rate（`null` → 試験なし）。
+2. **far 面の判定がコメントの中に埋まっていた。** `if (d > far + REACH) return false;` が near 面の行コメントに連結されており未実行だった（放置すると「遠方＝inside」と誤判定）。2 行に分離して実行。
+3. **投影の安全側ガード。** three.js は `zoom` で frustum を拡縮し、`filmOffset` で横へずらす。特に `zoom < 1` は実 frustum を**広く**するため、無視すると「実際に描画される人物を provably outside と誤認する」＝**unsafe culling** になる。`zoom !== 1` / `filmOffset !== 0` / `near <= 0` / `near >= far` は `null`（＝full rate）に落とし、`cam.view.enabled`・`cam.parent`・非 perspective は従来どおり `null`。
+
+回帰（すべて `node --experimental-vm-modules --test patches/local-quality/tests/offscreen-visual-budget.test.mjs`）:
+
+- **after: 11 pass / 0 fail (exit 0)。**
+- **before（helper のみ `18c45890` に戻し、テストは保持）: 8 pass / 3 fail (exit 1)** — 追加した 3 件（順序競合・far 面・投影ガード）だけが失敗し、既存 8 件は通る。
+- 隣接控制: `turf-lead` 15/0、`score-reticle` 8/0（計 23、exit 0）。
+- 順序競合テストは**静的カメラ証明ではない**: update 時は `turnAway()`、`rig.update` 相当で `turnTo()` と向きを実際に変え、そのうえで実際の投入フック `mesh.onBeforeRender(...)` を呼ぶ。旋回後に `Character.update` を挟まない点が本件の核心（next tick に逃げない）。
+
+制限は前節のとおり変わらない。**ブラウザ実行・端末 Performance trace・実機比較は未確認、FPS/frame-time の改善は主張しない。** 補正の正当性は「投入前に遅延分が回収される」「未モデル投影を full rate に落とす」という論理検証と呼び出し回数に限る。オフスクリーン時の通常 tick は従来どおり抑止されており、回収は「budgeted のまま実際に描画される」少数フレームでのみ発生する。

@@ -243,6 +243,83 @@ test('30/60/120 Hz: the budget is a function of renderer frames, never of the st
   assert.deepEqual(covered, [1, 1, 1], 'the full-rate warm-up is exactly one tick at every step size');
 });
 
+test('#845 ordering regression: update with the OLD camera, then the camera turns, then the actual visible render hook', () => {
+  // Reproduces main.js::_frame literally: `m.update(dt)` decides with last
+  // frame's camera, `this.rig.update(dt)` turns the camera afterwards, and only
+  // then does the renderer submit the mesh. A static-camera proof would hide
+  // this race, so the camera orientation genuinely differs between the two phases.
+  reset();
+  markDrawn(600);
+  renderer.info.render.frame = 600 + GRACE_FRAMES;
+  turnAway();
+  assert.equal(inViewVolume(ch, camera), false, 'phase 1 (old camera): the actor is outside the view volume');
+  step();                                        // first outside verdict -> full rate
+  assert.equal(ch._ovbWasBudgeted, false, 'first outside verdict stays full rate');
+  const pose0 = counts.pose, ray0 = counters.ray, catch0 = ch._ovbCatchUps;
+  step();                                        // second verdict -> budgeted
+  assert.equal(ch._ovbWasBudgeted, true, 'budgeted while the old camera still looks away');
+  assert.equal(counts.pose, pose0, 'the budgeted tick really deferred _buildPose/_applyPose');
+
+  // phase 2: rig.update(dt) turns the camera ONTO the actor after that decision.
+  turnTo();
+  assert.equal(inViewVolume(ch, camera), true, 'phase 2 (new camera): the actor is now visible');
+  assert.equal(counts.pose, pose0, 'no Character.update runs in between — the draw is next');
+
+  // phase 3: the actual visible submission. Find the tier mesh whose
+  // onBeforeRender chain carries our catch-up plus the native _camHook.
+  const sets = ch.lodSets || {};
+  let mesh = (sets[ch.lod?.tier] && sets[ch.lod.tier].list && sets[ch.lod.tier].list[0]) || null;
+  if (!mesh) for (const k of Object.keys(sets)) { const L = sets[k]; if (L && L.list && L.list[0]) { mesh = L.list[0]; break; } }
+  assert.ok(mesh && typeof mesh.onBeforeRender === 'function', 'the native draw hook is chained on a tier mesh');
+
+  mesh.onBeforeRender(renderer, G.scene, camera, mesh.geometry);   // pre-submission hook
+
+  assert.equal(ch._ovbCatchUps, catch0 + 1, 'exactly one pre-submission catch-up for the budgeted tick');
+  assert.ok(counts.pose - pose0 >= 2, `pose + hair rebuilt before the draw call (got ${counts.pose - pose0})`);
+  assert.ok(counters.ray - ray0 > 0, 'the replant ground query ran with the real physics raycast');
+  assert.equal(ch.feetValid, true, 'feet replanted before the first visible submission');
+  assert.equal(ch._ovbWasBudgeted, false, 'the deferred work is consumed, so it cannot run twice');
+  assert.equal(ch._ovbBudget, false, 'the suppression flag is never left on outside update');
+  assert.equal(ch._camFrame, renderer.info.render.frame, 'the native _camHook still runs after ours (chain intact)');
+
+  const p1 = counts.pose;                         // a second pass (shadow / multi-part) in the same frame
+  mesh.onBeforeRender(renderer, G.scene, camera, mesh.geometry);
+  assert.equal(counts.pose, p1, 'the catch-up is idempotent within a frame');
+  assert.equal(ch._ovbCatchUps, catch0 + 1, 'no second catch-up is charged');
+});
+
+test('#845: the far-plane half-space is really evaluated (it must not sit inside a comment)', () => {
+  reset({ frames: 1 });
+  turnTo();
+  assert.equal(inViewVolume(ch, camera), true, 'actor in range is inside');
+  ch.root.position.set(0, 0, -10000);            // straight ahead, past `far` (6500)
+  assert.equal(inViewVolume(ch, camera), false, 'beyond the far plane must be provably outside');
+  ch.root.position.set(0, 0, -6000);             // still inside the frustum depth
+  assert.equal(inViewVolume(ch, camera), true, 'inside `far` stays inside');
+  ch.root.position.set(0, 0, 0);
+});
+
+test('#845: unmodelled projections (zoom / filmOffset / invalid near-far) never cull', () => {
+  reset({ frames: 1 });
+  turnTo();
+  assert.equal(inViewVolume(ch, camera), true, 'the plain camera still classifies');
+  camera.zoom = 0.5;                             // widens the real frustum: ignoring it would cull visible actors
+  assert.equal(inViewVolume(ch, camera), null, 'zoom != 1 -> unknown, never skip');
+  camera.zoom = 2;
+  assert.equal(inViewVolume(ch, camera), null, 'a different zoom is still an unmodelled projection');
+  camera.zoom = 1;
+  camera.filmOffset = 4;                         // shifts the frustum sideways
+  assert.equal(inViewVolume(ch, camera), null, 'filmOffset -> unknown, never skip');
+  camera.filmOffset = 0;
+  const near0 = camera.near, far0 = camera.far;
+  camera.near = 0;
+  assert.equal(inViewVolume(ch, camera), null, 'degenerate near plane -> unknown');
+  camera.near = 7000; camera.far = 6000;
+  assert.equal(inViewVolume(ch, camera), null, 'near >= far -> unknown');
+  camera.near = near0; camera.far = far0;
+  assert.equal(inViewVolume(ch, camera), true, 'restored camera classifies exactly as before');
+});
+
 test('decision guards are individually testable and never invent a Nintendo timing', () => {
   assert.equal(GRACE_FRAMES, 2, 'grace is counted in renderer frames');
   assert.equal(OUTSIDE_STREAK, 2, 'outside streak is a fixed verdict count');

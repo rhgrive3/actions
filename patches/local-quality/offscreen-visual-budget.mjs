@@ -38,6 +38,7 @@
 // gameplay frame budget.
 
 const INSTALLED = Symbol.for('inkwave.local-quality.offscreen-visual-budget.v1');
+const CHAINED = Symbol.for('inkwave.local-quality.offscreen-visual-budget.render-hook.v1');
 
 /** Renderer frames a Character may go undrawn before its visual work is budgeted. */
 export const GRACE_FRAMES = 2;
@@ -77,6 +78,14 @@ export function inViewVolume(ch, cam) {
   const fov = cam.fov, aspect = cam.aspect, near = cam.near, far = cam.far;
   if (!Number.isFinite(fov) || !Number.isFinite(aspect) || aspect <= 0) return null;
   if (!Number.isFinite(near) || !Number.isFinite(far)) return null;
+  if (!(near > 0) || !(far > near)) return null;
+  // three.js scales the frustum by `zoom` and shifts it sideways by `filmOffset`
+  // (both live on the camera itself). A projection we do not model must never be
+  // reported "provably outside", because `zoom < 1` / a positive `filmOffset`
+  // makes the real frustum *larger* than the plain-fov one computed below — that
+  // is exactly the unsafe-culling direction. `null` keeps the actor full rate.
+  if (cam.zoom !== undefined && cam.zoom !== 1) return null;
+  if (cam.filmOffset !== undefined && cam.filmOffset !== 0) return null;
   if (typeof cam.updateMatrixWorld === 'function') cam.updateMatrixWorld();
   const e = cam.matrixWorld?.elements;
   if (!e || e.length < 16) return null;
@@ -109,12 +118,66 @@ export function inViewVolume(ch, cam) {
   if (-vx - d * k > side) return false;
   if (vy - d * t > vert) return false;
   if (-vy - d * t > vert) return false;
-  if (d < near - REACH) return false;         // behind the near plane  if (d > far + REACH) return false;         // beyond the far plane
+  if (d < near - REACH) return false;         // behind the near plane
+  if (d > far + REACH) return false;          // beyond the far plane
   return true;
 }
 
 function gameCamera(G) {
   return G?.rig?.gameCam || G?.camera || null;
+}
+
+/**
+ * Finish the presentation a budgeted tick deferred, **before this Character is
+ * actually submitted for drawing**.
+ *
+ * `main.js::_frame` runs `m.update(dt)` *before* `this.rig.update(dt)`, so the
+ * budget decision always reads the previous frame's camera while the render that
+ * follows already uses the freshly-turned one. A previously off-screen actor can
+ * therefore become visible on a tick whose decision still said "budgeted", and
+ * its `_buildPose` / `_applyPose` were skipped for that frame.
+ *
+ * `S.list[0].onBeforeRender` (the same mesh hook the native `_camHook` hangs on)
+ * fires with the final camera of the frame and *before* the draw call, so this
+ * is the one place that can still catch up in time. It replays exactly what the
+ * native not-drawn branch replants and then runs exactly the two calls the
+ * budget suppressed, so the first visible frame has coherent pose, feet and hair.
+ *
+ * Idempotent: `_ovbWasBudgeted` is cleared, so shadow/main/multi-part passes all
+ * do the work at most once per budgeted tick, and only when something was
+ * actually deferred.
+ */
+export function catchUpBeforeVisible(ch) {
+  if (!ch || !ch._ovbWasBudgeted) return false;
+  const dt = ch._ovbLastDt, s = ch._ovbLastActor;
+  if (!(dt > 0)) { ch._ovbWasBudgeted = false; return false; }
+  if (!ch.inWorld) { ch._ovbWasBudgeted = false; return false; }
+  ch._ovbBudget = false;                 // un-guard the native methods for this call only
+  // exactly the invalidation `Character.update` applies on its not-drawn branch
+  ch.feetValid = false;
+  ch.headInit = false;
+  ch._headSet = false;
+  if (ch.kidScale > 0.001 && typeof ch._buildPose === 'function') {
+    // the return-to-view frame: replant feet, rebuild and write the pose
+    if (typeof ch._updateFeet === 'function') ch._updateFeet(dt, s);
+    ch._buildPose(dt, s);
+    if (typeof ch._applyPose === 'function') ch._applyPose(dt, s);
+  }
+  ch._ovbWasBudgeted = false;
+  ch._ovbCatchUps = (ch._ovbCatchUps || 0) + 1;
+  return true;
+}
+
+/** Chain the pre-submission catch-up onto a tier set's first mesh (once). */
+function chainRenderCatchup(ch, S) {
+  const m = S && S.list && S.list[0];
+  if (!m || m[CHAINED]) return;
+  m[CHAINED] = true;
+  const inner = m.onBeforeRender;
+  m.onBeforeRender = function ovbRenderHook(renderer, scene, camera, geometry, material, group) {
+    catchUpBeforeVisible(ch);
+    if (typeof inner === 'function') return inner.call(this, renderer, scene, camera, geometry, material, group);
+  };
 }
 
 /**
@@ -181,6 +244,22 @@ export function installOffscreenVisualBudget(api, G) {
   proto._ovbPoseSkips = 0;
   proto._ovbWasBudgeted = false;
   proto._ovbOutsideStreak = 0;
+  proto._ovbCatchUps = 0;
+  proto._ovbLastDt = 0;
+  proto._ovbLastActor = null;
+
+  // 0) Pre-submission catch-up. `_tierSet` builds the body meshes once per tier
+  //    per Character and is where the native `_camHook` is chained onto
+  //    `S.list[0].onBeforeRender`, so it is the one place we can reliably hook
+  //    the actual "about to be drawn" moment with the frame's final camera.
+  const nativeTierSet = proto._tierSet;
+  if (nativeTierSet) {
+    proto._tierSet = function _ovbTierSet(...args) {
+      const set = nativeTierSet.apply(this, args);
+      try { chainRenderCatchup(this, set); } catch { /* never break mesh building */ }
+      return set;
+    };
+  }
 
   // 1) Foot-IK ground query: reuse the native no-physics fallback instead of the
   //    `phys.raycast`. Only reachable while a budgeted tick is running.
@@ -214,6 +293,10 @@ export function installOffscreenVisualBudget(api, G) {
     this._ovbWasBudgeted = budget;
     this._ovbBudget = budget;
     this._ovbTicks++;
+    // remembered so the pre-submission catch-up can replay the deferred work
+    // with this tick's own dt / Actor even though `_ovbBudget` is cleared below.
+    this._ovbLastDt = dt;
+    this._ovbLastActor = s;
     if (budget) this._ovbBudgetTicks++;
     if (returning) {
       // Exactly the invalidation native `Character.update` applies on its own
