@@ -126,13 +126,23 @@ export function installGear(api, tuning) {
     const saved = { inkCost: api.SUB.bomb.inkCost, throwSpeed: api.SUB.bomb.throwSpeed };
     api.SUB.bomb.inkCost *= m.inkSaverSub ?? 1;
     api.SUB.bomb.throwSpeed *= m.subPower ?? 1;
+    const effectiveBombCost = api.SUB.bomb.inkCost;
+    const bombsBefore = G.projectiles?.bombs?.length ?? 0;
     try { return update.call(this, dt, input); }
     finally {
+      const bombSpent = (G.projectiles?.bombs?.length ?? bombsBefore) > bombsBefore;
+      const spent = Math.max(0, beforeInk - a.ink);
       Object.assign(api.SUB.bomb, saved);
-      if (a.ink < beforeInk) {
+      if (spent > 1e-10) {
         a.s3 ||= {};
-        const delay = input.subReleased ? api.SUB.bomb.inkRecoverStop : this.s3FlickVertical ? a.weapon.verticalInkRecoverStop ?? a.weapon.inkRecoverStop : a.weapon.inkRecoverStop;
-        a.s3.recoverStopRemaining = Math.max(a.s3.recoverStopRemaining || 0, delay ?? tuning.resources.inkRefillDelay);
+        const mainSpent = !bombSpent || spent > effectiveBombCost + 1e-8;
+        let delay = 0;
+        if (mainSpent) {
+          const mainDelay = this.s3FlickVertical ? a.weapon.verticalInkRecoverStop ?? a.weapon.inkRecoverStop : a.weapon.inkRecoverStop;
+          delay = Math.max(delay, mainDelay ?? tuning.resources.inkRefillDelay);
+        }
+        if (bombSpent) delay = Math.max(delay, api.SUB.bomb.inkRecoverStop ?? tuning.resources.inkRefillDelay);
+        a.s3.recoverStopRemaining = Math.max(a.s3.recoverStopRemaining || 0, delay);
       }
     }
   };
