@@ -101,7 +101,7 @@ export function adaptSource(rel, code) {
       const offsets = projected.map(point => point && point.z < 1
         ? [point.x * innerWidth * .5, -point.y * innerHeight * .5] : [0, 0]);
       const key = offsets.map(v => v.map(n => n.toFixed(1)).join(',')).join('|');
-      if (key !== L.dualGuide && this._twin) {
+      if (key !== L.dualGuide && this._twin && offsets.length === 2) {
         L.dualGuide = key;
         // _twin is [right, left], matching s3DualiesGuides hand order.
         // Remove the SVG's native +/-10.5 ring centres so each ring centre is
