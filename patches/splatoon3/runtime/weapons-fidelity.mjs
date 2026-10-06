@@ -228,9 +228,9 @@ function setCollision(p,c,offset=0) {
   p.fidelityPlayerCollision=collisionRecord(c,'Player',offset);
   p.fidelityFieldCollision=collisionRecord(c,'Field',offset);
   // S3 teammate pass-through window from the pinned source CollisionParam.
-  // Confined to verified Slosher (#717); Shooter (#656) is owned by parent PR #765.
+  // Verified Slosher 2F (#717) and Roller 3F (#801); Shooter remains in PR #765.
   const kind=p.s3Weapon?.kind;
-  p.fidelityFriendThrough=kind==='slosher' && Number.isFinite(c.FriendThroughFrameForPlayer)?c.FriendThroughFrameForPlayer:null;
+  p.fidelityFriendThrough=(kind==='slosher'||kind==='roller') && Number.isFinite(c.FriendThroughFrameForPlayer)?c.FriendThroughFrameForPlayer:null;
   // Existing packet size carries initial radius; layout is unchanged.
   p.size=p.fidelityPlayerCollision.initRadius;
 }
@@ -300,6 +300,9 @@ export function fidelityBossHit(system,p) {
 // The original loop selected actor-array order and tested the wall afterwards.
 // One reusable scratch record avoids per-projectile sorting/allocation and
 // also avoids a second terrain query when the segment reaches the world.
+// #801: Roller flicks admit same-team capsules only after the pinned 3F
+// teammate-through window. The window is measured at this sweep's candidate
+// contact age (fixed 60 Hz frames), so render cadence cannot move the boundary.
 export function fidelityProjectileTargets(system,p) {
   const s=scratch(system),{G,PLAYER}=api;
   s.worldReady=s.bossReady=false;s.boss=null;s.targets.length=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;
