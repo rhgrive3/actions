@@ -177,6 +177,20 @@ export function adaptSource(rel, code) {
       '    const ch = f.crosshair || {};\n    applyShotGuide(this, ch.guide, innerWidth, innerHeight);',
       'S3 ShotGuideFrame reticle placement');
     code = replaceOnce(code,
+      '    } else if (kind === \'roller\') {\n' +
+      '      r.innerHTML = `<i class="iw-ret__dot"></i><svg class="iw-ret__svg wide" viewBox="-80 -40 160 80" aria-hidden="true">\n' +
+      '        <path class="iw-ret__ring" d="M-46 -15 L-56 -15 Q-60 -15 -60 -11 L-60 11 Q-60 15 -56 15 L-46 15"/>\n' +
+      '        <path class="iw-ret__ring" d="M46 -15 L56 -15 Q60 -15 60 -11 L60 11 Q60 15 56 15 L46 15"/>\n' +
+      '        <path class="iw-ret__ring thin" d="M-30 22 Q0 30 30 22"/></svg>`;',
+      '    } else if (kind === \'roller\') {\n' +
+      '      r.innerHTML = `<i class="iw-ret__dot"></i><svg class="iw-ret__svg" viewBox="-40 -40 80 80" aria-hidden="true">\n' +
+      '        <circle r="7.5" class="iw-ret__ring thin"/>\n' +
+      '        <path class="iw-ret__ring thin" d="M-25.04 -15.15 L-27.11 -11.04"/>\n' +
+      '        <path class="iw-ret__ring thin" d="M27.27 -10.92 L25.23 -15.04"/>\n' +
+      '        <path class="iw-ret__ring thin" d="M-27.05 11.04 L-24.98 15.15"/>\n' +
+      '        <path class="iw-ret__ring thin" d="M25.04 15.15 L27.11 11.04"/></svg>`;',
+      'compact Roller reticle');
+    code = replaceOnce(code,
       '    // per-shot kick (recoil events) on top of the live cone the engine reports in screen px (already includes bloom)',
       `    // S3 weapon ShotGuide projection: only aiming feedback moves; tank/sub/status remain centred.
     let guideX = 0, guideY = 0;
@@ -433,7 +447,7 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, '    if (into < P.climbDetachDot) {',
       '    if (into < P.climbDetachDot && !wallRollRequested(this, jumpPressed, h.normal)) {', 'wall roll before ordinary detach');
     code = replaceOnce(code, '    if (this.jumpBuffer > 0 && (this.grounded || this.coyote > 0) && !this.climbing) {',
-      '    if (!actionHandled && this.jumpBuffer > 0 && (this.grounded || this.coyote > 0) && !this.climbing) {', 'jump action consumption');
+      '    if (!actionHandled && this.jumpBuffer > 0 && (this.grounded || this.coyote > 0) && !this.climbing && (isSquid || this.weapon.kind !== \'dualies\' || !this.weaponRunner.dodge && !(this.weaponRunner.lockT > 0))) {', 'jump action consumption');
     code = replaceOnce(code, '      if (onEnemy) jv *= 0.72;', '      if (onEnemy) jv = this.s3?.modifiers?.enemyJumpVelocity ?? P.enemyInkJumpVel;', 'enemy ink jump');
     code = replaceOnce(code, '      this.vel.y = jv;', '      this.vel.y = normalJumpVelocity(this, jv);', 'charger full-charge jump');
     code = replaceOnce(code, '    if (!inked) {                                                        // ink ran out under us: let go',

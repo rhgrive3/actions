@@ -586,7 +586,8 @@
       "Rescued #299/#315/#340 residuals: roll/surge control, enemy-ink grace/quantization/action speed, Roller contact/recovery and terrain Blaster hit ratio; current #5 projectile chronology remains authoritative.",
       "super jump initial-form term (1F swim / 22F humanoid, issue #708) is a published community measurement from the S3 main-weapon verification table, not an extracted 11.3.0 parameter; the 80F charge wait and 138F flight it precedes stay pinned and Quick Super Jump scaling still applies only to those two components",
       "Charger feetPaintRadius 0.7 is a local footprint calibration for guaranteed feet paint; physical Switch radius remains unverified.",
-      "Death-cause respawn totals 8.5/7.0/5.5s are public-reference values retained from PR #186; official 11.3.0 parameter confirmation remains unavailable."
+      "Death-cause respawn totals 8.5/7.0/5.5s are public-reference values retained from PR #186; official 11.3.0 parameter confirmation remains unavailable.",
+      "Roller roll-stop action interruption (main 16F / sub 5F / squid 6F) is a community frame measurement from the S3 verification table '検証/メインウェポン/前隙・後隙', 塗り進み interruption row. The page returned HTTP 403 on the 2026-10-06 re-fetch, so the three numbers are recorded with that source and NOT claimed as re-verified here; the frame-to-second conversion is /60 and the endpoint convention is 'roll-end tick is frame 0'. They are not pinned Ver. 11.3.0 parameter-table fields."
     ],
     "movementResourcesEvidence": "reports/inkwave-movement-resources-2026-10-02.md"
   },
