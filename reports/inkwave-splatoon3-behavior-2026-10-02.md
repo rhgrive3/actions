@@ -71,7 +71,7 @@
 | P10 | スーパージャンプと復活 | ジャンプ準備は約0.75秒で、飛行開始時に飛行時間+0.2秒の無敵を付ける。着地時は1.4m半径を塗る。復活タイマー5.5秒後、高さ4.5mから落ちる（`src/game/actor.js:712`、`:727`、`:754`、`:143`）。 | 準備・飛行・着地の被弾、着地塗り、移動可能になるまでの時間。ギア条件も固定する。 |
 | P11 | サブとスペシャル | ボムは面の法線yが0.6を超える接触時に0.95秒の導火線を開始する。その条件を満たす接触がなければ開始しない（`src/game/weapons.js:1302`）。飛び上がって落下爆発するスペシャルには被ダメージを25%にする装甲があり、着地後にも0.3秒の無敵がある（`src/game/actor.js:162`、`:774`、`:819`）。 | 斜面・壁でのボム、発動前後の被弾、爆発の遮蔽・範囲・段差。見た目の似た本家スペシャルを、対応確認なしに同一仕様と扱わない。 |
 | P12 | 金網と細い足場 | ヒトは金網に接地するが、イカ状態の接地・身体衝突では金網を除外する（`src/game/physics.js:207`、`src/game/actor.js:536`、`:548`、`:561`）。細い手すりにはヒト用の足位置補正もある。 | 金網上で変身する、ジャンプ中に変身する、手すりを歩く。各状態の通過・接地・塗りを実機と照合する。 |
-| P13 | Judd / Li'l Judd の結果シーン | `judge` 状態の表示は所有パッチ `patches/splatoon3/judd-result-adapter.mjs` による二人審判のシーン。自チームに Judd、相手に Li'l Judd を置き、権威勝敗でフラッグを上げ下ろす。判定中に乱数のパーセンテージを出す表示は廃止した（#894、詳細は末尾の節）。 | 時間切れ→判定→勝敗表示までの猫の動き、フラッグの上げ下げと勝敗表示のタイミング、引き分け時の挙動、色・位置・縮尺を同じ画角で実機と照合する。描画は独自の SVG/CSS によるスタイライズなので公式アセットとの一致は主張しない。 |
+| P13 | Judd / Li'l Judd の結果シーン | `judge` 状態は二人審判と、実際の `G.game.minimap.canvas` から取る現在 stage / 塗りのスナップショットを同時に表示する。自チームに Judd、相手に Li'l Judd を置き、権威勝敗で CSS が一致したフラッグ状態を出す。判定中に乱数パーセンテージは出さない（#894、詳細は末尾）。これは INKWAVE の現 stage/塗り map を表示する実装確認であり、本家のマップ構図・アニメーションと一致したという判定ではない。 | 時間切れ→判定→勝敗表示までの猫の動き、フラッグの実機アニメーションとタイミング、引き分け時の挙動、色・位置・縮尺を同じ画角で S3 実機と照合する。参照は Ver.11.3.0。描画は独自 SVG/CSS によるスタイライズなので公式アセットとの一致は主張しない。 |
 
 ## 継続比較の手順
 
@@ -361,12 +361,12 @@ Base main `67fec182`. Splat Dualies wall impacts now enter the existing sourced 
 
 ## 2026-10-07 — #894 Judd / Li'l Judd の結果シーン
 
-ベース main `f31f5da439134fe49bb89018dad5557671a49c67`。公開版の `judge` は独自の `JUDGING` オーバーレイで、抽象的なレースバーと判定中のランダムなパーセンテージだけだった。今回は所有パッチ `patches/splatoon3/` で、二人の審判による結果シーンに置き換えた。`inkwave-public/` はバイトロックのまま（`git status` で未変更を確認）。
+ベース main `f31f5da439134fe49bb89018dad5557671a49c67`。初回実装 commit `cfa760ed` の親レビューで、旗の状態クラスと CSS selector の不一致、および実マップの代わりに装飾グラデーションを表示している差分が見つかった。今回の補正ではその二点を所有パッチ内で修正した。`inkwave-public/` はバイトロックのまま。
 
 | 項目 | 内容 |
 | --- | --- |
-| 本家の根拠 | Inkipedia [Judd](https://splatoonwiki.org/wiki/Judd) と [Li'l Judd](https://splatoonwiki.org/wiki/Li%27l_Judd)、[Turf War](https://splatoonwiki.org/wiki/Turf_War) / [Gallery](https://splatoonwiki.org/wiki/Turf_War/Gallery)。スプラトゥーン2 以降、Judd が自チーム、Li'l Judd が相手チームの審判を務め、その役割はスプラトゥーン3 でも継続する。参照版は本タスクの受け入れ基準どおり **S3 Ver.11.3.0**（NOA、2026-08-19 公表）。猫の具体的なアニメーション・フラッグ動作・フレーム値を示す公式資料は取得していない |
-| INKWAVE の実装箇所 | `patches/splatoon3/judd-result-adapter.mjs`（`patches/splatoon3/adapter.mjs` の `src/ui/hud.js` 分岐から適用）と `patches/splatoon3/ui.css`。`inkwave-public/src/ui/hud.js:401-476` の `HUD.judge()` を、ステージプレート＋両サイドの審判＋フラッグのシーンに書き換え、判定中の `Math.random()` による偽のパーセンテージ表示を廃止。タイトルは既存キー `'TURF WAR'` に変更（i18n.js は変更不可）。権威 `winner`（`m.result.winner`）、0.8秒のドラムロール、3.45秒のリビール、3.75秒の勝者表示、5.1秒の resolve、`judge_drumroll` / `judge_reveal`、owner/cancel 契約は従来のまま |
-| 再現操作 | ナワバリバトルを時間切れまで待つ → `judge` 状態 → 従来は `JUDGING` ＋レースバー ＋乱数の％だけだった。変更後はステージプレートの左に Judd（自チーム色のフラッグ）、右に Li'l Judd（相手チーム色）が並び、塗り割合は確定値だけを表示し、権威勝敗側のフラッグが上がる。引き分けは両フラッグが水平、勝敗双方とも既存のリザルト画面へ遷移する。自チームが Bravo の場合は Judd が右（team1）に立つ |
-| プレイへの影響 | 判定中に測っていない数値が表示されなくなった。勝敗の読み手は文字列から二人の審判とフラッグにもなり、負け側でも審判は画面に残る。結果画面・XP・ネットワーク送信・Range は変更していない。`prefers-reduced-motion` ではドラムロールを経ず、最初のフレームから二人の審判・勝敗・確定値が表示される |
-| 確認状態 | **ロジック／DOM 状態は確認済み**：`patches/splatoon3/tests/judd-result-scene.test.mjs` 10/10（公開版との基線比較、自チーム側の入れ替わり、権威勝敗、reduced-motion、勝敗双方の遷移、マークアップと CSS の対応）、既存の #158/#381 `turf-alpha-tie` と #720 `score-reticle` と reliability `hud` は 31 テスト中 30 成功・1 スキップ（`INKWAVE_TIE_BUILT_SITE` 未設定）、`adapter` / `blaster-reticle-css` / `results` は 62/62。**ブラウザでの実際の描画表示と Switch 実機（Ver.11.3.0）の猫・フラッグのアニメーション比較は未確認**。公式アセット・公式ポーズ・フレーム値は使用しておらず、審判の姿は独自の SVG/CSS によるスタイライズ描画である |
+| 本家の根拠 | 任天堂公式 [Splatoon Base キャラクター紹介](https://www.nintendo.com/jp/character/splatoon/en/character/index.html) は Judd と Li'l Judd が Turf War の勝敗を判定すると説明する。参照版は受け入れ基準の **S3 Ver.11.3.0**（[Nintendo Support の更新履歴](https://en-americas-support.nintendo.com/app/answers/detail/a_id/59461)、2026-08-19 公表）。公式資料で猫の具体的なアニメーション、旗の向き、フレーム値は確認できず、これらの一致は未確認 |
+| INKWAVE の実装箇所 | `patches/splatoon3/judd-result-adapter.mjs`（`patches/splatoon3/adapter.mjs` の `src/ui/hud.js` 分岐から適用）と `patches/splatoon3/ui.css`。`HUD.judge()` は二人審判と実マップのプレートを表示する。マップは `G.game.minimap.canvas` を時刻ゼロで既存 Minimap renderer に更新させ、`toDataURL('image/png')` で読み取り専用スナップショットを取得する。公開 `inkwave-public/src/game/minimap.js` のレンダラーは現在の stage layout と `G.paint` の塗りを同じ canvas に描く。取得できない場合はマップ画像を省き、装飾背景を実マップと見せない。勝敗クラスは DOM 上で `is-up` / `is-down` を持つ `iw-jd__flag` に対応する CSS selector が処理する |
+| 再現操作 | 通常のナワバリバトルを時間切れまで進めて `judge` 状態を見る。結果プレート中央にはその試合の stage と塗り領域を持つ Minimap canvas のスナップショットが出て、その左右に Judd（ローカルチーム）と Li'l Judd（相手チーム）が並ぶ。実マップの塗り表示と勝敗百分率の集計は別経路で、権威 `winner` と確定 `coverage` は変更しない。自チームが Bravo の場合は Judd が右（team1）に立つ |
+| プレイへの影響 | ランダムな仮百分率は表示しない。勝敗側の flag class が対応 CSS により上がり、敗者側は下がる。タイムライン、`judge_drumroll` / `judge_reveal`、resolve、owner/cancel、結果画面、XP、network、Range は変更していない。`prefers-reduced-motion` では最初の frame から同じマップ・二人の審判・勝敗・確定値を表示する |
+| 確認状態 | `patches/splatoon3/tests/judd-result-scene.test.mjs` **12/12**：公開版との前後比較、実マップ canvas fixture と保留塗り band の更新、勝敗に応じた flag/CSS selector の一致、権威勝敗、自チーム側の入れ替わり、reduced-motion、owner cancellation、勝敗双方の既存遷移。**ブラウザでの実表示と Switch 実機（Ver.11.3.0）のマップ構図・猫・旗アニメーション比較は未確認**。公式アセット・ポーズ・フレーム値は使用しておらず、審判の姿は独自 SVG/CSS のスタイライズ描画である。前回 FB3 の #158/#381/#720 関連テスト結果は既存証拠であり、この補正では再実行していない |
