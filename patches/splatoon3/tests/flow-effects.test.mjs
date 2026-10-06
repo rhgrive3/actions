@@ -61,7 +61,7 @@ test('Flow extension, expiry, re-entry and equipment changes do not compound spr
   activate(f, a); const active = snapshot(a), spread = a.weapon.spreadAir;
   a.s3.flow.remaining = 10; const victim = f.make(); victim.team = 1;
   f.emit('splatted', { attacker: a, victim });
-  assert.equal(a.s3.flow.remaining, 15); assert.deepEqual(snapshot(a), active); assert.equal(a.weapon.spreadAir, spread);
+  assert.equal(a.s3.flow.remaining, Math.min(f.profile.flow.maxDuration,10+f.profile.flow.extension)); assert.deepEqual(snapshot(a), active); assert.equal(a.weapon.spreadAir, spread);
   a.s3.flow.remaining = 1 / 60; f.tick(a);
   assert.equal(a.s3.flow.active, false); assert.deepEqual(snapshot(a), base); assert.equal(a.weapon.spreadAir, 10);
   activate(f, a); assert.equal(a.weapon.spreadAir, spread);
@@ -74,8 +74,8 @@ test('current reset/death Flow policy is preserved and temporary effects never s
   activate(f, a); a.reset();
   assert.equal(a.s3.flow.active, false); assert.deepEqual(snapshot(a), base);
   activate(f, a); const enemy = f.make(); enemy.team = 1;
-  a.splat(enemy); assert.equal(a.s3.flow.active, false); assert.deepEqual(snapshot(a), base);
-  assert.equal(a.weapon.spreadAir, 10);
+  const active=snapshot(a);a.splat(enemy);assert.equal(a.s3.flow.active,true,'current306 retains active Flow through death');assert.deepEqual(snapshot(a),active);
+  a.s3.flow.remaining=1/60;f.tick(a);assert.equal(a.s3.flow.active,false);assert.deepEqual(snapshot(a),base);assert.equal(a.weapon.spreadAir,10);
 });
 test('real enemy-ink resource consumer receives reduced rate and cap from Flow', async () => {
   const f = await fixture(), ordinary = f.make(), boosted = f.make(); activate(f, boosted);
@@ -97,7 +97,7 @@ test('actual surge charge and chained roll consume temporary Action Intensify', 
     frames.push(n);
     actor.s3.actions.surge = null; actor.climbing = false; actor.submerged = true; actor.intent.jump = false;
     actor.vel.set(0, 0, 12); actor.intent.move.set(0, 0, -1);
-    actor.s3.actions.chain = 1; actor.s3.actions.chainTimer = 1;
+    actor.s3.actions.chain = 1; actor.s3.actions.chainTimer = 1;actor.s3.actions.chainSpeed=12;
     f.beforeActions(actor, 1 / 60, true);
     close(Math.hypot(actor.vel.x, actor.vel.z), 12 * actor.s3.modifiers.rollRetention);
   }

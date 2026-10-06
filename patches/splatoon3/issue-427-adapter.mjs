@@ -148,6 +148,7 @@ function adaptCurrentFlow427(code) {
   patch('    credits.delete(this);', '    credits.delete(this); terminals.delete(this);', 'reset terminal history');
   patch('    const map = credits.get(victim) || new Map(); map.set(attacker, G.time); credits.set(victim, map);', '    const map = credits.get(victim) || new Map(); map.set(attacker, { time: G.time, victimLife: victim?.netLife ?? 0, helperLife: attacker.netLife ?? 0 }); credits.set(victim, map);', 'credit epochs');
   patch("    if (attacker && attacker !== victim && attacker.team !== victim.team) award(attacker, 'splat', 1);", "    const term = terminal427(victim, attacker, victim?.netLife ?? 0);\n    splat427(attacker, victim, term);", 'local terminal splat');
+  patch('const candidates = Array.isArray(event.assists) ? event.assists :', 'const candidates = Array.isArray(event.assists) ? event.assists.filter(helper => validAssist427(helper, victim, event)) :', 'authoritative assist still requires current local credit life');
   patch('[...(credits.get(victim) || [])].filter(([, time]) => G.time - time <= cfg.assistWindow).map(([helper]) => helper);', '[...(credits.get(victim) || [])].filter(([helper, credit]) => validCredit427(helper, victim, credit)).map(([helper]) => helper);', 'typed credit filtering');
   patch("      helper.stats.assists = (helper.stats.assists || 0) + 1;\n      award(helper, 'assist', 1);\n      emit('actor:assist', { actor: helper, victim, attacker });", '      assist427(helper, victim, attacker, term);', 'one assist owner');
   patch('    penalizeFlowDeath(state(victim), cause, cfg);', '    if (!victim.remote) penalizeFlowDeath(state(victim), cause, cfg);', 'keep local death progress');
@@ -161,7 +162,20 @@ function adaptCurrentFlow427(code) {
     }
     return term;
   }
+  function validAssist427(helper, victim, event) {
+    if (!helper) return false;
+    if (event.assistLives !== undefined) {
+      const lives = event.assistLives;
+      if (!lives || typeof lives !== 'object' || Array.isArray(lives) || !Object.hasOwn(lives, helper.nid)) return false;
+      const life = lives[helper.nid];
+      return Number.isSafeInteger(life) && life >= 0 && life === (helper.netLife ?? 0);
+    }
+    // Legacy packets carry no helper epoch. Existing local accepted credit is
+    // usable; otherwise a later validated ACK can complete the terminal award.
+    return validCredit427(helper, victim, credits.get(victim)?.get(helper));
+  }
   function validCredit427(helper, victim, credit) {
+    if (credit == null) return false;
     const time = typeof credit === 'number' ? credit : credit.time;
     return G.time >= time && G.time - time <= cfg.assistWindow &&
       (typeof credit === 'number' || (credit.victimLife === (victim.netLife ?? 0) && credit.helperLife === (helper.netLife ?? 0)));

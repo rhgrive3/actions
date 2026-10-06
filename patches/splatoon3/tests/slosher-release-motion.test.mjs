@@ -149,7 +149,7 @@ test('display partitions preserve real 12F release and 29F repeat',async()=>{
  }
 });
 
-test('retimed actual births remain before nearby walls and each native unit hits once',async t=>{
+test('retimed actual births remain before nearby walls and each native unit enters wall-drop once',async t=>{
  const api=await production(),rows=[];
  for(const front of [.31,.35,.45,.55,1.7]){
   api.G.camera=null;
@@ -162,11 +162,21 @@ test('retimed actual births remain before nearby walls and each native unit hits
    api.G.camera={position:new V(0,2,-6)};
    const ps=api.G.projectiles,births=ps.list.map(p=>p.pos.toArray());
    assert.equal(births.length,9);assert.ok(births.every(p=>p[2]<front),`birth precedes wall ${front}`);
-   const seen=new Set(),impact=ps._impact;
-   ps._impact=function(p,hit){assert.ok(hit.hit);assert.ok(!seen.has(p),'no duplicate impact');seen.add(p);return impact.call(this,p,hit);};
-   for(let i=0;i<120&&ps.list.length;i++)ps.update(1/60);
-   assert.equal(seen.size,9);assert.equal(ps.list.length,0);
-   rows.push({front,birth:births[0],impacts:seen.size});
+   // The installed Slosher wall-drop owner consumes wall contact before the
+   // legacy _impact method. Observe its real per-unit state and emitted impact.
+   const units=[...ps.list],seen=new Map(),impacts=[];
+   const off=api.on('weapon:impact',event=>impacts.push(event));
+   try {
+    for(let i=0;i<120&&ps.list.length;i++){
+     ps.update(1/60);
+     for(const p of units)if(p.agent3SlosherWallDrop){
+      if(seen.has(p))assert.equal(p.agent3SlosherWallDrop,seen.get(p),'one wall-drop admission per native unit');
+      else seen.set(p,p.agent3SlosherWallDrop);
+     }
+    }
+   }finally{off();}
+   assert.equal(seen.size,9);assert.equal(impacts.length,9);assert.ok(impacts.every(e=>e.kind==='drop'&&e.victim===null));assert.equal(ps.list.length,0);
+   rows.push({front,birth:births[0],impacts:impacts.length,wallDropUnits:seen.size});
   }finally{api.G.camera=null;r.close();}
  }
  t.diagnostic(JSON.stringify({nativeWallBoundary:rows}));

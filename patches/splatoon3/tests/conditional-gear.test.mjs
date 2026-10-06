@@ -11,7 +11,7 @@ async function setup(duration=180){
   f.profile.flow.threshold=1e6;
   f.G.level.spawnPads=[new f.THREE.Vector3(),new f.THREE.Vector3()];
   f.G.physics.groundProbe=(_x,_y,_z,_u,_d,_r,h)=>{h.hit=false;return h;};
-  m.setState('playing');return {...f,m};
+  f.G.paint.coverage=()=>[.5,.5];m.setState('playing');return {...f,m};
 }
 function equip(a, head='none', ability='none', ap=0){
   const l=emptyLoadout();l[0].main=head;
@@ -51,7 +51,7 @@ test('last ditch combines with equipment at cap57, persists after death and clea
 });
 test('last ditch reaches actual main consumption and both existing recovery consumers',async()=>{
   const f=await setup(),a=f.make();equip(a,'lastDitchEffort');f.m.time=20;f.tick(a);
-  a.grounded=true;a.ink=100;a.intent.fire=true;const before=a.ink;f.tick(a);close(before-a.ink,a.weapon.inkPerShot);
+  a.grounded=true;a.ink=100;a.intent.fire=true;const before=a.ink;f.tick(a,Math.round(a.weapon.firstShotDelay*60));close(before-a.ink,a.weapon.inkPerShot);
   a.intent.fire=false;a.lastFire=99;a.weaponRunner.reset();a.s3.recoverStopRemaining=0;a.ink=0;a.form='kid';
   f.updateResources(a,1);close(a.ink,f.profile.resources.inkRefillKid*a.s3.modifiers.inkRecoveryKid);
   a.ink=0;a.form='squid';a.grounded=true;f.updateResources(a,1);
@@ -130,7 +130,7 @@ test('sub resistance is applied before armor and only quantized at the final HP 
   const f=await setup(),owner=f.make(),v=enemy(f);equip(v,'none','subResistance',3);v.invuln=0;v.specialActive={armor:true};
   v.damage(30,owner,'splat-bomb-far');close(v.hp,92.9);
   v.hp=100;v.damage(180,owner,'bomb');close(v.hp,55);
-  v.specialActive=null;v.hp=100;v.s3.actions={chain:0,chainTimer:0,roll:{armorTime:1,armorHP:100},surge:null};
+  v.specialActive=null;v.hp=100;v.form='squid';v.submerged=v.grounded=true;v.vel.set(0,0,12);v.intent.move.set(0,0,-1);f.beforeActions(v,1/60,true);assert.ok(v.s3.actions.armor);
   v.damage(180,owner,'bomb');close(v.hp,20);
 });
 test('network routing sends the unreduced band and victim owner applies its own gear once',async()=>{

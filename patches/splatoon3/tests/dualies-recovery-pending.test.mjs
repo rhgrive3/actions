@@ -5,10 +5,11 @@ import { adaptSource } from '../adapter.mjs';
 import { FixedClock, STEP } from '../runtime/clock.mjs';
 
 async function setup({oldJump=false,oldRefill=false}={}) {
- const f=await fixture({adapt:(rel,code)=>{
+ const f=await fixture({extraExports:"export {installWeaponsFidelity} from './patches/splatoon3/runtime/weapons-fidelity.mjs';",adapt:(rel,code)=>{
   const s=adaptSource(rel,code);
   return oldJump&&rel==='src/game/actor.js'?s.replace(" && (isSquid || this.weapon.kind !== 'dualies' || !this.weaponRunner.dodge && !(this.weaponRunner.lockT > 0))",''):s;
  },adaptRuntime:(rel,s)=>oldRefill&&rel==='patches/splatoon3/runtime/weapons.mjs'?s.replace('    if (!this.dodge && this.lockT <= 0) this.rollsLeft = w.rolls;',''):s});
+ f.installWeaponsFidelity(f,f.profile);
  const a=f.make('dualies'),r=a.weaponRunner,ps=new f.Projectiles(new f.THREE.Scene());
  f.G.projectiles=ps;f.G.actors=[a];f.G.camera={position:new f.THREE.Vector3(0,20,0)};
  const shots=[],fire=ps.fireDualies;let tick=0;

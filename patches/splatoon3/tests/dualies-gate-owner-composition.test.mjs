@@ -8,11 +8,11 @@ import {fixture} from './source-fixture.mjs';
 const readGate = () => fs.readFileSync(new URL('../runtime/weapon-gates.mjs', import.meta.url), 'utf8');
 async function setup(legacy = false) {
   const transform = source => legacy ? source.replaceAll('s3GateDodgeShotPending', 's3DodgeShotPending') : source;
-  const f = await fixture({adaptRuntime: (rel, source) => rel.endsWith('/weapon-gates.mjs') ? transform(source) : source});
+  const f = await fixture({extraExports:"export {installWeaponsFidelity} from './patches/splatoon3/runtime/weapons-fidelity.mjs';",adaptRuntime: (rel, source) => rel.endsWith('/weapon-gates.mjs') ? transform(source) : source});
   // Supports a base fixture before this installer was added, and the final
   // composed runner where its idempotent installation already happened.
   const install = new Function(transform(readGate()).replaceAll('export ', '') + '; return installWeaponGates;')();
-  install(f);
+  install(f); f.installWeaponsFidelity(f,f.profile);
   f.G.scene = new f.THREE.Scene();
   f.G.projectiles = new f.Projectiles(f.G.scene);
   const a = f.make('dualies'), r = a.weaponRunner;

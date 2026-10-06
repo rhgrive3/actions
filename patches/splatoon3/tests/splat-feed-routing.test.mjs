@@ -119,6 +119,7 @@ test('#614 roster life routing and WIPEOUT! survive alongside the feed gate', ()
   const match = composed('src/game/match.js');
   assert.ok(match.includes("on('splatted', (e) => this._onSplatted(e))"), 'roster alive/splatted subscription untouched');
   const hud = composed('src/ui/hud.js');
-  assert.ok(hud.includes("tr('WIPEOUT!')"), 'WIPEOUT! team notification untouched');
+  assert.ok(hud.includes("on('team:wipeout', (e) => queueTeamWipeHud(this, e, G.match))"), 'current match-owned WIPEOUT subscriber remains');
+  assert.ok(hud.includes("flushTeamWipeHud(this, G.match, tr);"), 'the queued team notification retains its HUD consumer');
   assert.ok(hud.includes("kind === 'kill'"), 'kill-card suppression path untouched');
 });

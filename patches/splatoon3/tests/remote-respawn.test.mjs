@@ -32,3 +32,12 @@ test('proxy respawn clears real wall Surge charge and roll armor like owner rese
   assert.equal(proxy.s3.surge, null); assert.equal(proxy.s3.roll, null);
   assert.equal(proxy.s3.actions, undefined); assert.equal(proxy.anim.surgeCharge, 0);
 });
+
+test('old missing remote movement cleanup retains the prior-life Surge after native respawn',async()=>{
+ const connection="  if (remoteRespawn) api.NetMatch.prototype._remoteRespawn = function (actor, ...args) {\n    const result = remoteRespawn.call(this, actor, ...args); clearMovement(actor); return result;\n  };";
+ const f=await fixture({adaptRuntime:(rel,source)=>{if(rel!=='patches/splatoon3/runtime/movement.mjs')return source;assert.equal(source.split(connection).length,2);return source.replace(connection,'');}});
+ const a=f.make();a.remote=true;a.net={buf:[],tp:0};a._updateClimb=()=>{};a.form='squid';a.climbing=true;a.intent.squid=a.intent.jump=true;
+ f.tick(a,6);const old=a.s3.surge;assert.ok(old?.charge>0);
+ f.NetMatch.prototype._remoteSplat.call({_stopLoops(){}},a,null,'shooter');f.NetMatch.prototype._remoteRespawn.call({},a);
+ assert.equal(a.alive,true);assert.equal(a.s3.surge,old,'native reset alone does not retire the added movement owner');
+});

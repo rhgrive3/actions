@@ -120,10 +120,9 @@ test('the installed adapter replaces both legacy S3 call sites before spread', (
   assert.equal(calls.length, 2);
   assert.doesNotMatch(installed,
     /this\._ballistic\(m, dir, a\.aimPoint, w\.projSpeed, w\.straightTime, 28, 0\.8, w\.range\)/);
-  assert.ok(installed.indexOf('this._spread(', calls[0].index) > calls[0].index,
-    'single Shooter spread follows centerline convergence');
-  assert.ok(installed.indexOf('spreadWeaponRound(', calls[1].index) > calls[1].index,
-    'shared Dualies/Splatling spread follows centerline convergence');
+  for (const call of calls) assert.match(installed.slice(call.index),
+    /^fidelityAimConvergence\(m, dir, a\.aimPoint, w, w\.projSpeed\);\s+spreadWeaponRound\(this, dir, a, w, spreadDeg\);\s+const p = this\._new\(\);/,
+    'the current shared cone sampler follows convergence exactly once before each native birth');
 });
 
 test('#608 the existing weapon guides still predict each converged centerline', async () => {

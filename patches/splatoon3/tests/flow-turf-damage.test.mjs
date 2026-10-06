@@ -15,8 +15,8 @@ test('#500 accepted enemy damage alone grants no Flow and does not reset idle de
  const f=await fixture(),a=f.make('shooter'),e=f.make('shooter');e.team=1;e.invuln=0;a.s3.flow.score=.6;a.s3.flow.idleTime=4.8;for(const amount of [1,10,25]){e.damage(amount,a,'shooter');near(a.s3.flow.score,.6);near(a.s3.flow.idleTime,4.8);}near(e.hp,64);assert.equal(a.s3.flow.active,false);
 });
 test('#500 damage assist credit survives, even though immediate damage awards are disabled',async()=>{
- const f=await fixture(),a=f.make('shooter'),killer=f.make('shooter'),e=f.make('shooter');e.team=1;e.invuln=0;e.damage(20,a,'shooter');near(fp(a,f),0);e.damage(100,killer,'shooter');near(a.s3.flow.score,f.profile.flow.weights.assist);assert.equal(a.s3.flow.active,false);assert.ok(killer.s3.flow.score>0||killer.s3.flow.active);
+ const f=await fixture(),a=f.make('shooter'),killer=f.make('shooter'),e=f.make('shooter');e.team=1;e.invuln=0;e.damage(20,a,'shooter');near(fp(a,f),0);e.damage(100,killer,'shooter');assert.equal(e.alive,true,'lethal waits for the next fixed tick');f.tick(e);near(a.s3.flow.score,f.profile.flow.weights.assist);assert.equal(a.s3.flow.active,false);assert.ok(killer.s3.flow.score>0||killer.s3.flow.active);
 });
 test('#500 active Flow ignores damage while retaining the existing assist extension',async()=>{
- const f=await fixture(),a=f.make('shooter'),killer=f.make('shooter'),e=f.make('shooter');e.team=1;e.invuln=0;Object.assign(a.s3.flow,{active:true,remaining:10,score:0});e.damage(10,a,'shooter');near(a.s3.flow.remaining,10);e.damage(100,killer,'shooter');near(a.s3.flow.remaining,Math.min(f.profile.flow.maxDuration,10+f.profile.flow.extension));
+ const f=await fixture(),a=f.make('shooter'),killer=f.make('shooter'),e=f.make('shooter');e.team=1;e.invuln=0;Object.assign(a.s3.flow,{active:true,remaining:10,score:0});e.damage(10,a,'shooter');near(a.s3.flow.remaining,10);e.damage(100,killer,'shooter');assert.equal(e.alive,true,'lethal waits for the next fixed tick');f.tick(e);near(a.s3.flow.remaining,Math.min(f.profile.flow.maxDuration,10+f.profile.flow.extension));
 });

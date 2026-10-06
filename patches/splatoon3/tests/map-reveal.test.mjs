@@ -45,7 +45,7 @@ test('adapter replaces the form-only swim gate and keeps teammate handling', () 
   const src = fs.readFileSync(new URL('inkwave-public/src/main.js', root), 'utf8');
   const out = adaptSource('src/main.js', src);
   assert.match(out, /import \{ enemyRevealedOnMap \} from '\.\.\/patches\/splatoon3\/runtime\/map-reveal\.mjs';/);
-  assert.match(out, /if \(!enemyRevealedOnMap\(o, PLAYER\.hp\)\) continue;/);
+  assert.match(out, /if \(!mapActorVisible\(o, a, PLAYER\.hp, G\.time\) && !enemyRevealedOnMap\(o, PLAYER\.hp\)\) continue;/);
   assert.doesNotMatch(out, /if \(o\.anim\.form === 'swim'\) continue;/);
   // The enemy-only branch and teammate/self dots are otherwise preserved.
   assert.match(out, /if \(o\.team !== a\.team && !o\.isLocal\) \{/);

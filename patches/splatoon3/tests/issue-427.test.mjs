@@ -10,11 +10,16 @@ import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
 import { adaptReliability } from '../../reliability/adapter.mjs';
 import { adaptQualitySource } from '../../local-quality/adapter.mjs';
 import { adaptIssue427 } from '../issue-427-adapter.mjs';
+import { calculateFlowSplatPoints } from '../issue-481-adapter.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const SRC = path.join(ROOT, 'inkwave-public');
+const FLOW = JSON.parse(fs.readFileSync(path.join(ROOT, 'patches/splatoon3/profile.json'), 'utf8')).flow;
+const damageScore = amount => amount * FLOW.weights.damage;
+const assistScore = FLOW.weights.assist;
+function syncTick(sender, recipient) { sender.net._sendTick(); recipient.deliver(sender.net.myId, sender.wire.at(-1).data); }
 
-async function createCombatWorld(owner, { apply427 = true, pr400 = false, roster = null, offline = false } = {}) {
+async function createCombatWorld(owner, { apply427 = true, pr400 = false, roster = null, offline = false, oldAssistLife = false } = {}) {
   let clock = 1000;
   const context = vm.createContext({ console, performance: { now: () => clock * 1000 } });
   const mods = new Map();
@@ -32,6 +37,7 @@ async function createCombatWorld(owner, { apply427 = true, pr400 = false, roster
     if (spec === 'three') return path.join(SRC, 'vendor/three/build/three.module.js');
     let file = path.resolve(path.dirname(from), spec);
     if (file.startsWith(path.join(SRC, 'patches/'))) file = path.join(ROOT, path.relative(SRC, file));
+    if (file.startsWith(path.join(ROOT, 'src/'))) file = path.join(SRC, path.relative(ROOT, file));
     return file;
   };
 
@@ -42,6 +48,10 @@ async function createCombatWorld(owner, { apply427 = true, pr400 = false, roster
 
     source = adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, source)));
     if (apply427) source = adaptQualitySource(rel, source);
+    if (oldAssistLife && rel === 'patches/splatoon3/runtime/flow.mjs') {
+      const current = 'event.assists.filter(helper => validAssist427(helper, victim, event))';
+      assert(source.includes(current)); source = source.replace(current, 'event.assists');
+    }
     if (pr400Adapter) {
       source = pr400Adapter(rel, source, (code, b, a, lbl) => {
         const idx = code.indexOf(b);
@@ -58,6 +68,7 @@ async function createCombatWorld(owner, { apply427 = true, pr400 = false, roster
   const entry = new vm.SourceTextModule(`
     export * from './src/core/ctx.js'; export * from './src/config.js';
     export * from './src/game/actor.js'; export * from './src/game/weapons.js';
+    export * from './src/game/physics.js';
     export * from './src/net/netmatch.js'; export * as THREE from 'three';
     export * from './patches/splatoon3/runtime/movement.mjs';
     export * from './patches/splatoon3/runtime/weapons.mjs';
@@ -98,7 +109,7 @@ async function createCombatWorld(owner, { apply427 = true, pr400 = false, roster
     const a = new api.Actor({ team, name: 'actor-' + nid, weapon: 'shooter', CharacterClass: Display });
     a.nid = nid; a.owner = actorOwner; a.isLocal = actorOwner === owner;
     a.spawnAt(new THREE.Vector3(nid * 2, 0, 0), 0); a.invuln = 0;
-    a._nearCamera = () => false; a._finishFrame = () => {};
+    a._nearCamera = () => false; a._finishFrame = () => {}; a._integrate = () => {}; a._resolve = () => {};
     return a;
   };
 
@@ -110,7 +121,8 @@ async function createCombatWorld(owner, { apply427 = true, pr400 = false, roster
   G.actors = actors;
   const attacker = actors[0], victim = actors[1];
 
-  const wire = [];
+  const wire = [], confirmed = [];
+  api.on('combat:confirmed', e => confirmed.push({ damage: e.damage, killed: e.killed }));
   let net = null;
   if (!offline) {
     const session = {
@@ -122,7 +134,7 @@ async function createCombatWorld(owner, { apply427 = true, pr400 = false, roster
       }
     };
     net = new api.NetMatch(session, { map: 'reef' });
-    const match = { actors: G.actors, state: 'playing', time: 180, canRespawn: () => true };
+    const match = { actors: G.actors, state: 'playing', time: 180, playing: () => true, canRespawn: () => true };
     G.match = match; net.bind(match);
   }
   G.projectiles = { applyHit: api.Projectiles.prototype.applyHit };
@@ -134,28 +146,33 @@ async function createCombatWorld(owner, { apply427 = true, pr400 = false, roster
     if (peer) { peer.tr = (data.ts || 0) + 1; peer.sim = Number.MAX_SAFE_INTEGER; net._playEvents(); }
   };
 
+  const receiveHit = (from, data) => {
+    net.onMessage(from, data);
+    // The current lethal owner commits at the next native Actor phase, not inside _hit.
+    for (const a of actors) if (!a.remote && a.alive && a.hp <= 0) {
+      G.time += 1 / 60; a.update(1 / 60);
+    }
+  };
   return {
-    ...api, profile, attacker, victim, actors, net, wire, paint, deliver,
+    ...api, profile, attacker, victim, actors, net, wire, paint, deliver, receiveHit, confirmed,
     advance: dt => { clock += (dt || 0.05); G.time += (dt || 0.05); },
     dispose: () => net?.dispose()
   };
 }
 
-test('negative control: unpatched main leaves shooter Flow inactive and misses splatsThisLife on attacker owner', async () => {
+test('negative control: omitting owner isolation leaks kill progression to the defender proxy', async () => {
   const shooter = await createCombatWorld('A', { apply427: false });
   const defender = await createCombatWorld('B', { apply427: false });
   try {
     shooter.attacker.s3.flow.score = 2.6;
     shooter.G.projectiles.applyHit(shooter.attacker, shooter.victim, 100, 'shooter');
     const hitPkt = shooter.wire.find(x => x.to === 'B').data;
-    defender.net.onMessage('A', hitPkt);
+    defender.receiveHit('A', hitPkt);
     defender.net._sendTick();
     shooter.deliver('B', defender.wire.at(-1).data);
 
     // Negative check: Flow did NOT activate on shooter, splatsThisLife is unincremented
-    assert.equal(shooter.attacker.s3.flow.active, false, 'unpatched main cannot activate Flow');
-    assert.ok(shooter.attacker.s3.flow.score < 3.0, 'unpatched main misses cross-owner Flow combat progression');
-    assert.equal(shooter.attacker.s3.splatsThisLife ?? 0, 0, 'unpatched main misses authoritative splatsThisLife');
+    assert.equal(shooter.attacker.s3.flow.active, true, 'current native terminal also reaches the local killer; the negative boundary is proxy isolation');
 
     // Remote proxy on defender incorrectly accumulated proxy progression
     assert.equal(defender.attacker.s3.splatsThisLife, 1, 'unpatched main leaked kill count to remote proxy');
@@ -173,7 +190,7 @@ test('patched: cross-owner confirmed lethal hit activates Flow and increments sp
     const hitPkt = shooter.wire.find(x => x.to === 'B').data;
     assert.ok(hitPkt.h >= 1, 'hit sequence assigned');
 
-    defender.net.onMessage('A', hitPkt);
+    defender.receiveHit('A', hitPkt);
     assert.equal(defender.victim.alive, false, 'victim killed on its authoritative owner');
 
     // Defender proxy must NOT accumulate proxy progression
@@ -183,17 +200,19 @@ test('patched: cross-owner confirmed lethal hit activates Flow and increments sp
     const ackPkt = defender.wire.find(x => x.to === 'A' && x.data.k === 'hit_ack')?.data;
     assert.ok(ackPkt, 'victim owner sent hit_ack');
     assert.equal(ackPkt.d, 100, 'confirmed accepted damage');
-    assert.equal(ackPkt.kld, 1, 'confirmed kill');
+    assert.equal(ackPkt.kld, 0, 'immediate ACK precedes the next-tick authoritative splat');
 
     shooter.net.onMessage('B', ackPkt);
+    syncTick(defender, shooter);
 
-    // Flow activation: 2.6 + (100 * 0.003 = 0.3) + 1.0 (splat) = 3.9 >= 3.0 -> Flow active
+    // Current high-tier splat points cross the configured activation threshold after the terminal.
     assert.equal(shooter.attacker.s3.flow.active, true, 'Flow activated on attacker owner');
     assert.equal(shooter.attacker.s3.flow.score, 0, 'Flow score resets to 0 on activation');
     assert.equal(shooter.attacker.s3.splatsThisLife, 1, 'splatsThisLife incremented on attacker owner');
 
     // Duplicate ACK must be rejected
     shooter.net.onMessage('B', ackPkt);
+    syncTick(defender, shooter);
     assert.equal(shooter.attacker.s3.splatsThisLife, 1, 'duplicate ACK does not increment splatsThisLife twice');
   } finally {
     shooter.dispose(); defender.dispose();
@@ -207,7 +226,7 @@ test('patched: cross-owner confirmed nonlethal hit awards damage progress withou
     shooter.attacker.s3.flow.score = 0;
     shooter.G.projectiles.applyHit(shooter.attacker, shooter.victim, 30, 'shooter');
     const hitPkt = shooter.wire.find(x => x.to === 'B').data;
-    defender.net.onMessage('A', hitPkt);
+    defender.receiveHit('A', hitPkt);
     assert.equal(defender.victim.hp, 70, 'victim took 30 damage');
     assert.equal(defender.victim.alive, true);
 
@@ -216,8 +235,10 @@ test('patched: cross-owner confirmed nonlethal hit awards damage progress withou
     assert.equal(ackPkt.kld, 0);
 
     shooter.net.onMessage('B', ackPkt);
-    assert.ok(Math.abs(shooter.attacker.s3.flow.score - 0.09) < 1e-6, 'damage progress awarded (30 * 0.003)');
+    syncTick(defender, shooter);
+    assert.ok(Math.abs(shooter.attacker.s3.flow.score - damageScore(30)) < 1e-6, 'current configured damage progression retained');
     assert.equal(shooter.attacker.s3.flow.active, false, 'nonlethal hit did not activate Flow');
+    assert.deepEqual(shooter.confirmed, [{ damage: 30, killed: false }], 'confirmed accepted damage is observed even when its configured Flow weight is zero');
     assert.equal(shooter.attacker.s3.splatsThisLife ?? 0, 0, 'nonlethal hit did not increment splatsThisLife');
   } finally {
     shooter.dispose(); defender.dispose();
@@ -231,11 +252,12 @@ test('patched: reversed owners (B shoots A) retains symmetric confirmed progress
     shooter.victim.s3.flow.score = 2.6;
     shooter.G.projectiles.applyHit(shooter.victim, shooter.attacker, 100, 'shooter');
     const hitPkt = shooter.wire.find(x => x.to === 'A').data;
-    defender.net.onMessage('B', hitPkt);
+    defender.receiveHit('B', hitPkt);
     assert.equal(defender.attacker.alive, false);
 
     const ackPkt = defender.wire.find(x => x.to === 'B' && x.data.k === 'hit_ack')?.data;
     shooter.net.onMessage('A', ackPkt);
+    syncTick(defender, shooter);
 
     assert.equal(shooter.victim.s3.flow.active, true, 'Flow activated for B');
     assert.equal(shooter.victim.s3.splatsThisLife, 1, 'splatsThisLife incremented for B');
@@ -255,23 +277,24 @@ test('patched: Quick Respawn is correctly withheld after cross-owner kill (noqui
     ];
     shooter.attacker.setWeapon('shooter');
 
-    shooter.attacker.splat(null);
+    shooter.attacker.splat(shooter.victim);
     const regularRespawn = shooter.attacker.respawnTimer;
-    shooter.attacker.reset();
-    assert.equal(shooter.attacker.s3.previousLifeNoSplat, true);
+    shooter.attacker.respawn();
+    assert.equal(shooter.attacker.s3.quickRespawnHistory.seenEnemyDeath, true);
     assert.equal(shooter.attacker.s3.splatsThisLife, 0);
 
     shooter.G.projectiles.applyHit(shooter.attacker, shooter.victim, 100, 'shooter');
     const hitPkt = shooter.wire.find(x => x.to === 'B').data;
-    defender.net.onMessage('A', hitPkt);
+    defender.receiveHit('A', hitPkt);
     const ackPkt = defender.wire.find(x => x.to === 'A' && x.data.k === 'hit_ack')?.data;
     shooter.net.onMessage('B', ackPkt);
+    syncTick(defender, shooter);
 
     assert.equal(shooter.attacker.s3.splatsThisLife, 1, 'confirmed kill recorded');
 
-    shooter.attacker.splat(null);
+    shooter.attacker.splat(shooter.victim);
     assert.equal(shooter.attacker.respawnTimer, regularRespawn, 'Quick Respawn correctly denied after confirmed kill');
-    assert.equal(shooter.attacker.s3.previousLifeNoSplat, false, 'previousLifeNoSplat cleared after kill life');
+    assert.equal(shooter.attacker.s3.quickRespawnHistory.splats, 0, 'the completed enemy death retires this life kill history');
   } finally {
     shooter.dispose(); defender.dispose();
   }
@@ -298,7 +321,7 @@ test('adversarial: false sender cannot consume real ack, which subsequently gran
     shooter.net.onMessage('B', forgedAck);
 
     // Verify authenticated ACK is accepted, progress awarded, and pending consumed exactly once
-    assert.ok(Math.abs(shooter.attacker.s3.flow.score - 0.09) < 1e-6, 'genuine ACK awards Flow progression');
+    assert.ok(Math.abs(shooter.attacker.s3.flow.score - damageScore(30)) < 1e-6, 'genuine ACK awards Flow progression');
     assert.equal(shooter.net._pendingHits.has(h), false, 'pending request consumed after genuine ACK');
   } finally {
     shooter.dispose(); defender.dispose();
@@ -351,7 +374,7 @@ test('adversarial: wrong a/v/life and malformed payloads are rejected without co
 
     // 7. Finally valid genuine ACK is accepted and consumes pending
     shooter.net.onMessage('B', { k: 'hit_ack', h, v: 2, a: 1, d: 40, kld: 0, vl: correctVl });
-    assert.ok(Math.abs(shooter.attacker.s3.flow.score - 0.12) < 1e-6);
+    assert.ok(Math.abs(shooter.attacker.s3.flow.score - damageScore(40)) < 1e-6);
     assert.equal(shooter.net._pendingHits.has(h), false);
   } finally {
     shooter.dispose(); defender.dispose();
@@ -369,13 +392,14 @@ test('adversarial: authenticated blocked ACK retires pending request without gra
     assert.equal(shooter.net._pendingHits.has(h), true);
 
     const hitPkt = shooter.wire.find(x => x.to === 'B').data;
-    defender.net.onMessage('A', hitPkt);
+    defender.receiveHit('A', hitPkt);
     const ackPkt = defender.wire.find(x => x.to === 'A' && x.data.k === 'hit_ack')?.data;
     assert.equal(ackPkt.d, 0);
     assert.equal(ackPkt.kld, 0);
 
     // Shooter delivers authenticated blocked ACK
     shooter.net.onMessage('B', ackPkt);
+    syncTick(defender, shooter);
 
     // Authenticated blocked ACK retires pending without granting progression
     assert.equal(shooter.attacker.s3.flow.score, 1.0, 'Flow score unchanged');
@@ -384,6 +408,7 @@ test('adversarial: authenticated blocked ACK retires pending request without gra
 
     // Duplicate delivery finds no pending hit and is safely ignored
     shooter.net.onMessage('B', ackPkt);
+    syncTick(defender, shooter);
     assert.equal(shooter.attacker.s3.flow.score, 1.0);
   } finally {
     shooter.dispose(); defender.dispose();
@@ -412,19 +437,19 @@ test('adversarial: out-of-order distinct legitimate ACKs each credit without dro
 
     // Network reordering: ACK 2 arrives BEFORE ACK 1!
     shooter.net.onMessage('B', ack2);
-    assert.ok(Math.abs(shooter.attacker.s3.flow.score - 0.09) < 1e-6, 'ACK 2 processed first (30 * 0.003)');
+    assert.ok(Math.abs(shooter.attacker.s3.flow.score - damageScore(30)) < 1e-6, 'ACK 2 processed first with the current configured weight');
     assert.equal(shooter.net._pendingHits.has(h2), false, 'pending hit 2 consumed');
     assert.equal(shooter.net._pendingHits.has(h1), true, 'pending hit 1 still awaiting ACK');
 
     // ACK 1 arrives SECOND (out-of-order reordered arrival)
     shooter.net.onMessage('B', ack1);
-    assert.ok(Math.abs(shooter.attacker.s3.flow.score - 0.15) < 1e-6, 'reordered ACK 1 processed without being dropped (total 0.15)');
+    assert.ok(Math.abs(shooter.attacker.s3.flow.score - damageScore(50)) < 1e-6, 'reordered ACK 1 processed without being dropped (total damageScore(50))');
     assert.equal(shooter.net._pendingHits.has(h1), false, 'pending hit 1 consumed');
 
     // Replay of ACK 1 or ACK 2 is dropped exactly once
     shooter.net.onMessage('B', ack1);
     shooter.net.onMessage('B', ack2);
-    assert.ok(Math.abs(shooter.attacker.s3.flow.score - 0.15) < 1e-6, 'no duplicate progression on replay');
+    assert.ok(Math.abs(shooter.attacker.s3.flow.score - damageScore(50)) < 1e-6, 'no duplicate progression on replay');
   } finally {
     shooter.dispose(); defender.dispose();
   }
@@ -497,20 +522,20 @@ test('adversarial: assistant receives Flow assist progression on authenticated t
     const hitPkt = helperWorld.wire.find(x => x.to === 'V').data;
 
     // Victim V receives and applies H's hit
-    victimWorld.net.onMessage('H', hitPkt);
+    victimWorld.receiveHit('H', hitPkt);
     assert.equal(victimActorV.hp, 70);
 
     const ackPkt = victimWorld.wire.find(x => x.to === 'H' && x.data.k === 'hit_ack')?.data;
     assert.equal(ackPkt.d, 30);
     assert.equal(ackPkt.kld, 0);
 
-    // Helper H receives confirmed damage ACK: Flow awards 30 * 0.003 = 0.09
+    // Helper H receives confirmed damage; the current profile owns the award weight.
     helperWorld.net.onMessage('V', ackPkt);
-    assert.ok(Math.abs(helperActorH.s3.flow.score - 0.09) < 1e-6, 'helper awarded damage Flow progress');
+    assert.ok(Math.abs(helperActorH.s3.flow.score - damageScore(30)) < 1e-6, 'helper awarded damage Flow progress');
 
     // 2. Killer A shoots victim V for 70 damage -> lethal blow!
     const hitPktFromA = { k: 'hit', v: 3, a: 2, l: victimActorV.netLife, h: 1, d: 70, w: 'shooter' };
-    victimWorld.net.onMessage('A', hitPktFromA);
+    victimWorld.receiveHit('A', hitPktFromA);
     assert.equal(victimActorV.alive, false, 'victim is splatted');
 
     // Victim V broadcasts terminal event in tick
@@ -521,14 +546,14 @@ test('adversarial: assistant receives Flow assist progression on authenticated t
     // 3. Helper H receives and delivers victim's tick with authenticated terminal splatted event
     helperWorld.deliver('V', tickPkt);
 
-    // Assistant progression: cfg.weights.assist is 0.5
-    // Flow score on Helper H should advance from 0.09 to 0.09 + 0.5 = 0.59!
-    assert.ok(Math.abs(helperActorH.s3.flow.score - 0.59) < 1e-6, 'helper awarded assist Flow progression on terminal event');
+    // Assistant progression follows the current configured assist weight.
+    // The once-only authoritative assist is independent from the current damage weight.
+    assert.ok(Math.abs(helperActorH.s3.flow.score - (damageScore(30) + assistScore)) < 1e-6, 'helper awarded assist Flow progression on terminal event');
     assert.equal(helperActorH.stats.splats, 0, 'helper is assistant, not killer (stats.splats remains 0)');
 
     // 4. Duplicate delivery of terminal tick does NOT award duplicate assist
     helperWorld.deliver('V', tickPkt);
-    assert.ok(Math.abs(helperActorH.s3.flow.score - 0.59) < 1e-6, 'terminal event cannot duplicate assist');
+    assert.ok(Math.abs(helperActorH.s3.flow.score - (damageScore(30) + assistScore)) < 1e-6, 'terminal event cannot duplicate assist');
   } finally {
     helperWorld.dispose(); victimWorld.dispose();
   }
@@ -570,7 +595,7 @@ test('negative counterexample: terminal-before-ACK ordering awards assist exactl
     assert.ok(hitPktFromH, 'hit packet sent from H to V');
 
     // Victim V receives and accepts H's hit
-    victimWorld.net.onMessage('H', hitPktFromH);
+    victimWorld.receiveHit('H', hitPktFromH);
     assert.equal(victimV.hp, 70);
 
     // Victim V generates ACK to H, but ACK is delayed over the wire!
@@ -585,52 +610,54 @@ test('negative counterexample: terminal-before-ACK ordering awards assist exactl
     assert.ok(hitPktFromC, 'hit packet sent from C to V');
 
     // Victim V receives and accepts lethal hit from C
-    victimWorld.net.onMessage('C', hitPktFromC);
+    victimWorld.receiveHit('C', hitPktFromC);
     assert.equal(victimV.alive, false, 'victim splatted on authoritative owner');
 
     // Killer C receives its ACK and records kill
     const ackPktToC = victimWorld.wire.find(x => x.to === 'C' && x.data?.k === 'hit_ack')?.data;
     assert.ok(ackPktToC, 'ACK packet generated by V for C');
     killerWorld.net.onMessage('V', ackPktToC);
-    assert.equal(killerC.s3.splatsThisLife, 1, 'killer credited with splatsThisLife');
+    assert.equal(killerC.s3.splatsThisLife, 0, 'nonlethal ACK precedes next-tick terminal delivery');
 
     // Victim V broadcasts terminal tick packet
     victimWorld.net._sendTick();
     const terminalTick = victimWorld.wire.filter(x => x.data?.k === 't').at(-1)?.data;
     assert.ok(terminalTick, 'terminal tick broadcast by victim owner');
+    killerWorld.deliver('V', terminalTick);
+    assert.equal(killerC.s3.splatsThisLife, 1, 'authoritative terminal credits the killer once');
 
     // 3. NEGATIVE COUNTEREXAMPLE ORDER: Terminal packet reaches Helper H BEFORE delayed ACK!
     helperWorld.deliver('V', terminalTick);
     assert.equal(victimV_onH.alive, false, 'victim recognized as dead on helper client');
     // At this moment, delayed ACK has not arrived yet: Flow score must be 0 (no premature or unconfirmed awards)
-    assert.equal(helperH.s3.flow.score, 0, 'terminal-before-ACK does not grant premature assist');
+    assert.equal(helperH.s3.flow.score, assistScore, 'life-bound victim terminal can grant the authoritative assist before its redundant ACK');
     assert.equal(helperH.stats.splats, 0);
 
     // 4. Delayed ACK finally reaches Helper H!
     helperWorld.net.onMessage('V', ackPktToH);
 
-    // Progression: 30 * 0.003 = 0.09 damage + 0.5 assist = 0.59 total Flow score!
-    assert.ok(Math.abs(helperH.s3.flow.score - 0.59) < 1e-6, 'helper awarded exactly-once assist upon delayed ACK arrival');
+    // Damage and assist contributions remain separately configured and idempotent.
+    assert.ok(Math.abs(helperH.s3.flow.score - (damageScore(30) + assistScore)) < 1e-6, 'helper awarded exactly-once assist upon delayed ACK arrival');
     assert.equal(helperH.stats.splats, 0, 'helper is assistant, not killer (stats.splats is 0)');
     assert.equal(helperH.s3.splatsThisLife ?? 0, 0, 'helper not credited with kill splatsThisLife');
 
     // 5. Idempotency: duplicate delayed ACK does not re-award assist or damage
     helperWorld.net.onMessage('V', ackPktToH);
-    assert.ok(Math.abs(helperH.s3.flow.score - 0.59) < 1e-6, 'duplicate delayed ACK cannot duplicate progression');
+    assert.ok(Math.abs(helperH.s3.flow.score - (damageScore(30) + assistScore)) < 1e-6, 'duplicate delayed ACK cannot duplicate progression');
 
     // Duplicate terminal tick does not duplicate assist
     helperWorld.deliver('V', terminalTick);
-    assert.ok(Math.abs(helperH.s3.flow.score - 0.59) < 1e-6, 'duplicate terminal tick cannot duplicate progression');
+    assert.ok(Math.abs(helperH.s3.flow.score - (damageScore(30) + assistScore)) < 1e-6, 'duplicate terminal tick cannot duplicate progression');
 
-    // 6. Generic event isolation: no generic damage or splatted events emitted on helper
+    // 6. Current authoritative terminal emits one splatted notification; ACK replay emits no extra damage or terminal.
     assert.equal(genericDamageCount, 0, 'no generic damage events emitted during cross-owner assist');
-    assert.equal(genericSplatCount, 0, 'no generic splatted events emitted during cross-owner assist');
+    assert.equal(genericSplatCount, 1, 'exactly one current authoritative splatted notification survives both replay attempts');
 
     // 7. Killer C terminal delivery preservation: killer is not awarded an assist
     killerWorld.deliver('V', terminalTick);
     assert.equal(killerC.s3.splatsThisLife, 1, 'killer retained splatsThisLife');
-    const killerTurfBonus = 0.123456789 * 0.003;
-    assert.ok(Math.abs(killerC.s3.flow.score - (1.21 + killerTurfBonus)) < 1e-6, 'killer preserved without assist progression');
+    const killerTurfBonus = 0.123456789 * FLOW.weights.turf;
+    assert.ok(Math.abs(killerC.s3.flow.score - ((damageScore(70) + calculateFlowSplatPoints(damageScore(70), false, FLOW).gain) + killerTurfBonus)) < 1e-6, `killer preserved without assist progression: ${killerC.s3.flow.score}, ${killerTurfBonus}`);
     assert.ok(killerC.s3.flow.score < 1.5, 'assist progression was not awarded to killer');
 
     // --- Part 2: ACK-first sequence for exact parity verification ---
@@ -644,21 +671,21 @@ test('negative counterexample: terminal-before-ACK ordering awards assist exactl
       // H2 shoots V2
       helperWorld2.G.projectiles.applyHit(h2, v2_onH, 30, 'shooter');
       const hitPkt2 = helperWorld2.wire.find(x => x.to === 'V' && x.data?.k === 'hit')?.data;
-      victimWorld2.net.onMessage('H', hitPkt2);
+      victimWorld2.receiveHit('H', hitPkt2);
       const ackPkt2 = victimWorld2.wire.find(x => x.to === 'H' && x.data?.k === 'hit_ack')?.data;
 
       // In ACK-first order: ACK is delivered FIRST
       helperWorld2.net.onMessage('V', ackPkt2);
-      assert.ok(Math.abs(h2.s3.flow.score - 0.09) < 1e-6, 'ACK-first damage awarded');
+      assert.ok(Math.abs(h2.s3.flow.score - damageScore(30)) < 1e-6, 'ACK-first damage awarded');
 
       // V2 killed by C
-      victimWorld2.net.onMessage('C', { k: 'hit', v: 3, a: 2, l: v2.netLife, h: 1, d: 70, w: 'shooter' });
+      victimWorld2.receiveHit('C', { k: 'hit', v: 3, a: 2, l: v2.netLife, h: 1, d: 70, w: 'shooter' });
       victimWorld2.net._sendTick();
       const terminalTick2 = victimWorld2.wire.filter(x => x.data?.k === 't').at(-1)?.data;
 
       // In ACK-first order: Terminal is delivered SECOND
       helperWorld2.deliver('V', terminalTick2);
-      assert.ok(Math.abs(h2.s3.flow.score - 0.59) < 1e-6, 'ACK-first assist awarded');
+      assert.ok(Math.abs(h2.s3.flow.score - (damageScore(30) + assistScore)) < 1e-6, 'ACK-first assist awarded');
 
       // VERIFY EXACT PARITY: Terminal-first score === ACK-first score
       assert.ok(Math.abs(helperH.s3.flow.score - h2.s3.flow.score) < 1e-6, 'terminal-first and ACK-first achieve exact parity');
@@ -688,12 +715,12 @@ test('adversarial: stale pending hits and credits are cleaned across owner death
     // 1. Focused regression: ACK-first damage -> helper dies + reset + newlife -> victim terminal yields no stale assist
     helperWorld.G.projectiles.applyHit(helperH, victimV_onH, 30, 'shooter');
     const hitPkt1 = helperWorld.wire.find(x => x.to === 'V' && x.data?.k === 'hit')?.data;
-    victimWorld.net.onMessage('H', hitPkt1);
+    victimWorld.receiveHit('H', hitPkt1);
     const ackPkt1 = victimWorld.wire.find(x => x.to === 'H' && x.data?.k === 'hit_ack')?.data;
 
     // ACK arrives first on helper: helper gets damage credit and is recorded in credits
     helperWorld.net.onMessage('V', ackPkt1);
-    assert.ok(Math.abs(helperH.s3.flow.score - 0.09) < 1e-6, 'helper awarded initial damage Flow progress');
+    assert.ok(Math.abs(helperH.s3.flow.score - damageScore(30)) < 1e-6, 'helper awarded initial damage Flow progress');
 
     // Helper dies, resets, and respawns into new life
     const initialLife = helperH.netLife ?? 0;
@@ -704,7 +731,7 @@ test('adversarial: stale pending hits and credits are cleaned across owner death
     assert.equal(helperH.s3.flow.score, 0, 'helper flow reset on new life');
 
     // Victim V dies to Killer C; victim owner broadcasts terminal tick
-    victimWorld.net.onMessage('C', { k: 'hit', v: 3, a: 2, l: victimV.netLife, h: 10, d: 70, w: 'shooter' });
+    victimWorld.receiveHit('C', { k: 'hit', v: 3, a: 2, l: victimV.netLife, h: 10, d: 70, w: 'shooter' });
     victimWorld.net._sendTick();
     const terminalTick1 = victimWorld.wire.filter(x => x.data?.k === 't').at(-1)?.data;
 
@@ -727,11 +754,11 @@ test('adversarial: stale pending hits and credits are cleaned across owner death
       // H2 damages V2, but ACK is delayed
       helperWorld2.G.projectiles.applyHit(h2, v2_onH, 30, 'shooter');
       const hitPkt2 = helperWorld2.wire.find(x => x.to === 'V' && x.data?.k === 'hit')?.data;
-      victimWorld2.net.onMessage('H', hitPkt2);
+      victimWorld2.receiveHit('H', hitPkt2);
       const ackPkt2 = victimWorld2.wire.find(x => x.to === 'H' && x.data?.k === 'hit_ack')?.data;
 
       // V2 dies to C; terminal tick arrives at H2 before delayed ACK
-      victimWorld2.net.onMessage('C', { k: 'hit', v: 3, a: 2, l: v2.netLife, h: 11, d: 70, w: 'shooter' });
+      victimWorld2.receiveHit('C', { k: 'hit', v: 3, a: 2, l: v2.netLife, h: 11, d: 70, w: 'shooter' });
       victimWorld2.net._sendTick();
       const terminalTick2 = victimWorld2.wire.filter(x => x.data?.k === 't').at(-1)?.data;
       helperWorld2.deliver('V', terminalTick2);
@@ -763,12 +790,13 @@ test('adversarial: stale pending hits and credits are cleaned across owner death
 
       helperWorld3.G.projectiles.applyHit(h3, v3_onH, 30, 'shooter');
       const hitPkt3 = helperWorld3.wire.find(x => x.to === 'V' && x.data?.k === 'hit')?.data;
-      victimWorld3.net.onMessage('H', hitPkt3);
+      victimWorld3.receiveHit('H', hitPkt3);
       const ackPkt3 = victimWorld3.wire.find(x => x.to === 'H' && x.data?.k === 'hit_ack')?.data;
 
-      victimWorld3.net.onMessage('C', { k: 'hit', v: 3, a: 2, l: v3.netLife, h: 12, d: 70, w: 'shooter' });
+      victimWorld3.receiveHit('C', { k: 'hit', v: 3, a: 2, l: v3.netLife, h: 12, d: 70, w: 'shooter' });
       victimWorld3.net._sendTick();
       const terminalTick3 = victimWorld3.wire.filter(x => x.data?.k === 't').at(-1)?.data;
+      for (const row of terminalTick3.e || []) if (row[1] === 'ev' && row[2] === 'splatted') delete row[3].assistLives; // legacy metadata-free expiry path
       helperWorld3.deliver('V', terminalTick3);
 
       // Advance clock by 6.0 seconds (> cfg.assistWindow 5.0s)
@@ -776,13 +804,13 @@ test('adversarial: stale pending hits and credits are cleaned across owner death
 
       // Delayed ACK arrives after expiration: damage is credited, but assist is withheld!
       helperWorld3.net.onMessage('V', ackPkt3);
-      assert.ok(Math.abs(h3.s3.flow.score - 0.09) < 1e-6, 'assist withheld when ACK arrives past assistWindow');
+      assert.ok(Math.abs(h3.s3.flow.score - damageScore(30)) < 1e-6, 'assist withheld when ACK arrives past assistWindow');
     } finally {
       helperWorld3.dispose(); victimWorld3.dispose();
     }
 
     // 3. Remote victim respawn cleans pending hits targeting that victim:
-    victimV_onH.alive = true; victimV_onH.hp = 100;
+    victimV_onH.alive = true; victimV_onH.hp = 100; victimV_onH.invuln = 0;
     helperWorld.G.projectiles.applyHit(helperH, victimV_onH, 30, 'shooter');
     assert.equal(helperWorld.net._pendingHits.size, 1, 'pending hit tracked');
     // Remote victim respawns
@@ -791,7 +819,7 @@ test('adversarial: stale pending hits and credits are cleaned across owner death
 
     // 4. Local helper death cleans pending hits from that attacker:
     helperH.alive = true; helperH.hp = 100;
-    victimV_onH.alive = true; victimV_onH.hp = 100;
+    victimV_onH.alive = true; victimV_onH.hp = 100; victimV_onH.invuln = 0;
     helperWorld.G.projectiles.applyHit(helperH, victimV_onH, 30, 'shooter');
     assert.equal(helperWorld.net._pendingHits.size, 1, 'pending hit tracked');
     helperH.splat(null);
@@ -810,11 +838,12 @@ test('normal/offline: local combat retains standard progression with no duplicat
     // Normal local nonlethal hit
     offlineWorld.G.projectiles.applyHit(p1, p2, 40, 'shooter');
     assert.equal(p2.hp, 60);
-    assert.ok(Math.abs(p1.s3.flow.score - (2.6 + 40 * 0.003)) < 1e-6, 'damage progress awarded offline');
+    assert.ok(Math.abs(p1.s3.flow.score - (2.6 + damageScore(40))) < 1e-6, 'damage progress awarded offline');
     assert.equal(p1.s3.flow.active, false);
 
     // Normal local lethal hit
     offlineWorld.G.projectiles.applyHit(p1, p2, 60, 'shooter');
+    offlineWorld.G.time += 1 / 60; p2.update(1 / 60);
     assert.equal(p2.alive, false);
     assert.equal(p1.s3.flow.active, true, 'Flow activated offline on splat');
     assert.equal(p1.s3.splatsThisLife, 1, 'splatsThisLife incremented offline');
@@ -865,13 +894,81 @@ test('patched: composition with PR400 clothing gear adapter preserves hit transa
     shooter.attacker.s3.flow.score = 2.6;
     shooter.G.projectiles.applyHit(shooter.attacker, shooter.victim, 100, 'shooter');
     const hitPkt = shooter.wire.find(x => x.to === 'B').data;
-    defender.net.onMessage('A', hitPkt);
+    defender.receiveHit('A', hitPkt);
     const ackPkt = defender.wire.find(x => x.to === 'A' && x.data.k === 'hit_ack')?.data;
     shooter.net.onMessage('B', ackPkt);
+    syncTick(defender, shooter);
 
     assert.equal(shooter.attacker.s3.flow.active, true, 'Flow active under PR400 composition');
     assert.equal(shooter.attacker.s3.splatsThisLife, 1, 'splatsThisLife incremented under PR400 composition');
   } finally {
     shooter.dispose(); defender.dispose();
   }
+});
+
+async function assistPacketRig({ oldAssistLife = false, newOwner = false } = {}) {
+  const roster = [{nid:1,team:0,owner:'H'}, {nid:2,team:0,owner:'C'}, {nid:3,team:1,owner:'V'}];
+  const h = await createCombatWorld('H', {roster,oldAssistLife}), v = await createCombatWorld('V',{roster});
+  const target = h.net.byNid.get(3), victim = v.net.byNid.get(3), helper = h.net.byNid.get(1);
+  h.G.projectiles.applyHit(helper,target,30,'shooter');
+  v.receiveHit('H',h.wire.find(x=>x.data.k==='hit').data);
+  const ack = v.wire.find(x=>x.data.k==='hit_ack').data;
+  v.receiveHit('C',{k:'hit',v:3,a:2,l:victim.netLife,h:1,d:70,w:'shooter'});
+  v.net._sendTick();
+  const packet=v.wire.findLast(x=>x.data.k==='t').data;
+  const payload=packet.e.find(row=>row[1]==='ev'&&row[2]==='splatted')[3];
+  let receiver=h;
+  if(newOwner){
+    receiver=await createCombatWorld('N',{roster});
+    receiver.net.s.hostId='N';receiver.net.s.isHost=true;
+    const life=receiver.net.byNid.get(1).netLife;
+    receiver.net.onLeave('H',true);
+    assert.equal(receiver.net.byNid.get(1).remote,false);
+    assert.equal(receiver.net.byNid.get(1).netLife,life);
+  }
+  return {h,v,receiver,helper:receiver.net.byNid.get(1),ack,packet,payload,
+    close(){h.dispose();v.dispose();if(receiver!==h)receiver.dispose();}};
+}
+
+test('assist life metadata preserves the ID array, rejects a new helper life and closes the old alias counterexample',async()=>{
+ for(const oldAssistLife of [false,true]){
+  const f=await assistPacketRig({oldAssistLife});
+  try {
+   assert.deepEqual(f.payload.assists,[1]);assert.equal(f.payload.assistLives[1],f.helper.netLife);
+   const oldLife=f.helper.netLife;f.helper.splat(null);f.helper.reset();f.helper.spawnAt(new f.h.THREE.Vector3(),0);
+   assert(f.helper.netLife>oldLife);
+   f.h.deliver('V',f.packet);
+   assert.equal(f.helper.s3.flow.score,oldAssistLife?assistScore:0);
+  }finally{f.close();}
+ }
+});
+test('legacy assist packet uses proven ACK credit in either order, without assigning an unknown epoch',async()=>{
+ for(const ackFirst of [false,true]){
+  const f=await assistPacketRig();
+  try {
+   delete f.payload.assistLives;
+   if(ackFirst)f.h.net.onMessage('V',f.ack);
+   f.h.deliver('V',f.packet);
+   assert.equal(f.helper.s3.flow.score,ackFirst?assistScore:0);
+   if(!ackFirst)f.h.net.onMessage('V',f.ack);
+   assert.equal(f.helper.s3.flow.score,assistScore);
+   f.h.net.onMessage('V',f.ack);f.h.deliver('V',f.packet);
+   assert.equal(f.helper.s3.flow.score,assistScore);
+  }finally{f.close();}
+ }
+});
+test('same-life native owner adoption accepts victim metadata without an old-owner ACK',async()=>{
+ const f=await assistPacketRig({newOwner:true});
+ try{
+  assert.equal(f.receiver.net._pendingHits?.size || 0,0);assert.equal(f.receiver.confirmed.length,0);
+  f.receiver.deliver('V',f.packet);assert.equal(f.helper.s3.flow.score,assistScore);
+  f.receiver.deliver('V',f.packet);assert.equal(f.helper.s3.flow.score,assistScore);
+ }finally{f.close();}
+});
+test('malformed or mismatched assist life metadata never borrows the current helper epoch',async()=>{
+ for(const value of [null,[],{}, {'1':-1},{'1':'1'},{'1':99}]){
+  const f=await assistPacketRig();
+  try{f.payload.assistLives=value;f.h.deliver('V',f.packet);assert.equal(f.helper.s3.flow.score,0);}
+  finally{f.close();}
+ }
 });

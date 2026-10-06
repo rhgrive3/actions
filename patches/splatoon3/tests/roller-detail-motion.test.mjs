@@ -204,7 +204,8 @@ test('vertical release, recovery, held ground pushing and lift on a fresh attack
       assert.ok(rows.every(x => x.gripL < .02 && x.gripR < .002 && x.bottom >= -.006));
       assert.equal(rows[30].gameplay.shots, 0); assert.equal(rows[31].gameplay.shots, 1);
       assert.equal(rows[30].drumW, 0); assert.ok(rows[31].drumW > 30);
-      assert.ok(rows[65].gameplay.rolling && rows[65].bottom < .055);
+      assert.equal(rows[52].gameplay.rolling,false); assert.equal(rows[53].gameplay.rolling,true,'31F release plus22F roll admission');
+      assert.ok(rows[79].gameplay.rolling && rows[79].bottom < .055, 'completed held-push window settles to the unchanged drum-height bound');
       assert.equal(rows[100].gameplay.rolling, false, 'new airborne attack lifts the rolling drum');
       assert.ok(rows[110].center[1] > rows[79].center[1] + .5);
       traces.push(rows); evidence.push({ scenario: enabled ? 'after-vertical-push-lift' : 'before-vertical-push-lift', rows });

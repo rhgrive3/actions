@@ -34,7 +34,7 @@ test('armor durability, delayed break and uncapped per-hit overflow replace bina
   a.damage(90, attacker, 'shooter'); assert.equal(a.hp, 100, 'armor persists during verified break delay');
   advanceSpawnProtection(a,1/60); a.damage(40,attacker,'shooter'); assert.equal(a.hp,60);
   for(const [amount,hp] of [[100,100],[160,40],[180,20],[220,-20]]) {
-    a.respawn(); a.damage(amount,attacker,'bomb'); assert.equal(a.hp, Math.max(0,hp));
+    a.respawn(); a.damage(amount,attacker,'bomb'); assert.equal(a.hp,hp);if(hp<=0){assert.equal(a.alive,true);f.tick(a);assert.equal(a.alive,false);assert.equal(a.hp,0);}
     if(amount>100)assert.equal(a.s3.spawnArmor,null);
   }
   a.respawn(); a.damage(30,attacker,'shooter'); a.damage(180,attacker,'bomb'); assert.equal(a.hp,20,'over-100 breaks immediately during delayed break');
@@ -66,11 +66,11 @@ test('all held action keys rearm independently, stale press ordering disappears,
   const bot=f.make('roller');bot.isBot=true;bot.splat(null);bot.respawn();assert.equal(bot.s3.respawnRearm,undefined);
 });
 test('HUD samples final actor timer after gear wrapper, ignores independent FX time and isolates players', async () => {
-  const f=await setup(),a=f.make(),b=f.make();a.s3.previousLifeNoSplat=true;a.s3.modifiers.quickRespawn=1/3;
+  const f=await setup(),a=f.make(),b=f.make();const killer=f.make();killer.team=1;a.s3.modifiers.quickRespawnReduction=4;a.splat(killer);a.respawn();
   let st;f.on('splatted',({victim})=>{if(victim===a)st={actor:a,end:5.5,total:0,circumference:100,ring:{style:{}}};});
-  a.splat(null);assert.ok(Math.abs(a.respawnTimer-2.5)<1e-10);assert.equal(sampleRespawnCountdown(st,0),a.respawnTimer);assert.equal(st.ring.style.strokeDashoffset,'100');
+  a.s3.modifiers.quickRespawnReduction=4;a.splat(killer);assert.ok(Math.abs(a.respawnTimer-(f.PLAYER.respawnTime-4))<1e-10);const timer=a.respawnTimer;assert.equal(sampleRespawnCountdown(st,0),a.respawnTimer);assert.equal(st.ring.style.strokeDashoffset,'100');
   b.respawnTimer=99;assert.equal(sampleRespawnCountdown(st,200),a.respawnTimer,'render FX clock cannot consume authoritative time');
-  a.respawnTimer=1.25;assert.equal(sampleRespawnCountdown(st,0),1.25);assert.ok(Math.abs(Number(st.ring.style.strokeDashoffset)-50)<1e-10);
+  a.respawnTimer=timer/2;assert.equal(sampleRespawnCountdown(st,0),timer/2);assert.ok(Math.abs(Number(st.ring.style.strokeDashoffset)-50)<1e-10);
   a.alive=true;assert.equal(sampleRespawnCountdown(st,0),0);assert.equal(sampleRespawnCountdown({end:4},1),3,'preview fallback retains old behavior');
 });
 test('30/60/120 render schedules preserve armor and retained gauge boundaries', async () => {
@@ -89,7 +89,7 @@ test('real composed controller keeps held mouse blocked through map filtering an
   for(let i=0;i<4;i++)h.frame(STEP);assert.equal(h.ownedShots.length,0);
   h.input.keys.add('Tab');for(let i=0;i<4;i++)h.frame(STEP);h.input.keys.delete('Tab');h.frame(STEP);
   assert.equal(h.ownedShots.length,0,'map-owned intent false is not a physical release');
-  h.input.mouse.left=false;h.frame(STEP);h.input.mouse.left=true;h.frame(STEP);
+  h.input.mouse.left=false;h.frame(STEP);h.input.mouse.left=true;for(let i=0;i<Math.round(a.weapon.firstShotDelay/STEP);i++)h.frame(STEP);
   assert.equal(h.ownedShots.length,1,'fresh mouse press reaches native shooter once');
 });
 
@@ -115,7 +115,7 @@ test('native NetMatch snapshots carry armor separately from invulnerability and 
   f.G.physics.groundProbe=(_x,_y,_z,_u,_d,_r,h)=>{h.hit=false;return h;};
   const a=f.make(),proxy=f.make();a.nid=1;a.slot=0;a.respawn();proxy.remote=true;proxy._finishFrame=()=>{};
   const out=[],nm=Object.create(f.NetMatch.prototype);Object.assign(nm,{byNid:new Map([[1,a]]),out:[],stats:{out:0},s:{tr:{broadcast:m=>out.push(m)}}});
-  nm._sendTick();const packet=out[0].a[0];assert.equal(packet.length,21);assert.ok(packet[10]&8388608);assert.equal(packet[10]&262144,0);
+  nm._sendTick();const packet=out[0].a[0];assert.equal(packet.length,22);assert.equal(packet[21],a.stats.specials||0,'current special-count sidecar');assert.ok(packet[10]&8388608);assert.equal(packet[10]&262144,0);
   const sample={x:packet[1],y:packet[2],z:packet[3],vx:0,vy:0,vz:0,yaw:0,aimYaw:0,aimPitch:0,f:packet[10],hp:100,ink:100,sp:80,turf:0,ch:0,lockT:0};
   proxy.net={ready:true,cur:sample,err:new f.THREE.Vector3(),prevGrounded:false,prevVy:0};nm.applyRemote(proxy,1/60);
   assert.ok(spawnProtectionRemaining(proxy)>0);assert.equal(proxy.invuln,0);assert.equal(proxy.s3.spawnArmor,undefined,'visual sample cannot create proxy damage authority');

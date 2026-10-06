@@ -34,6 +34,13 @@ async function createFixture({ apply405 = true } = {}) {
       ? adaptSource(relative, fs.readFileSync(file, 'utf8'))
       : fs.readFileSync(file, 'utf8');
 
+    if (!apply405 && relative === 'src/game/actor.js') {
+      const raw = fs.readFileSync(file,'utf8'), start='  _horizontal(dt, isSquid, onEnemy) {', end='\n  // ------------------------------------------------------------------ character controller';
+      const a=raw.indexOf(start),b=raw.indexOf(end,a),c=source.indexOf(start),d=source.indexOf(end,c);
+      assert.ok(a>=0&&b>a&&c>=0&&d>c,'historical native ground-model negative control');
+      source=source.slice(0,c)+raw.slice(a,b)+source.slice(d);
+    }
+
     if (apply405 && file.startsWith(UPSTREAM + path.sep)) {
       source = adaptQualitySource(relative, adaptReliability(relative, adaptTouchLayout(relative, source)));
     }
@@ -124,7 +131,7 @@ test('Issue #405 negative counterexample: unpatched exhibits 78/58=1.345x revers
     assert.ok(Math.abs(ratioUnpatched - 78 / 58) < 1e-6, `Unpatched ratio was ${ratioUnpatched}, expected 78/58`);
   }
 
-  // B. Patched run (fix applied via issue-405-adapter)
+  // B. Current composed vector-ground owner retains the original equal-rate guarantee.
   {
     const fPatched = await createFixture({ apply405: true });
     const aNeutral = fPatched.make('shooter');
@@ -145,8 +152,8 @@ test('Issue #405 negative counterexample: unpatched exhibits 78/58=1.345x revers
     const deltaVReverse = topSpeed - aReverse.vel.z;
 
     const ratioPatched = deltaVReverse / deltaVNeutral;
-    assert.ok(Math.abs(deltaVNeutral - 58 / 60) < 1e-6, `Patched neutral deltaV: ${deltaVNeutral}`);
-    assert.ok(Math.abs(deltaVReverse - 58 / 60) < 1e-6, `Patched reverse deltaV: ${deltaVReverse}`);
+    assert.ok(Math.abs(deltaVNeutral - fPatched.PLAYER.s3GroundAccel / 60) < 1e-6, `Patched neutral deltaV: ${deltaVNeutral}`);
+    assert.ok(Math.abs(deltaVReverse - fPatched.PLAYER.s3GroundAccel / 60) < 1e-6, `Patched reverse deltaV: ${deltaVReverse}`);
     assert.ok(Math.abs(ratioPatched - 1.00) < 1e-9, `Patched ratio is ${ratioPatched}, expected exactly 1.00`);
   }
 });
@@ -175,14 +182,14 @@ test('Ordinary deceleration ratio is 1.00 across 30Hz, 60Hz, and 120Hz simulatio
     const deltaVNeutral = topSpeed - aNeutral.vel.z;
     const deltaVReverse = topSpeed - aReverse.vel.z;
 
-    const expectedDelta = 58 * dt;
+    const expectedDelta = f.PLAYER.s3GroundAccel * dt;
     assert.ok(Math.abs(deltaVNeutral - expectedDelta) < 1e-6, `Hz ${hz} neutral delta ${deltaVNeutral} vs ${expectedDelta}`);
     assert.ok(Math.abs(deltaVReverse - expectedDelta) < 1e-6, `Hz ${hz} reverse delta ${deltaVReverse} vs ${expectedDelta}`);
     assert.ok(Math.abs((deltaVReverse / deltaVNeutral) - 1.0) < 1e-9, `Hz ${hz} ratio is 1.00`);
   }
 });
 
-test('Multi-frame deceleration trajectory maintains consistent 58 WU/s² braking rate', async () => {
+test('Multi-frame deceleration trajectory maintains current shared ground acceleration', async () => {
   const f = await createFixture({ apply405: true });
   const topSpeed = f.PLAYER.runSpeed;
   const dt = 1 / 60;
@@ -190,20 +197,19 @@ test('Multi-frame deceleration trajectory maintains consistent 58 WU/s² braking
   aReverse.vel.set(0, 0, topSpeed);
   aReverse.intent.move.set(0, 0, -1);
 
-  // Over the first 3 frames while speed is above runDecelKnee (2.2 WU/s):
-  // deltaV should be exactly 58/60 per tick
+  // The current profile owns one constant vector acceleration at all speeds.
   for (let frame = 1; frame <= 3; frame++) {
     const vBefore = aReverse.vel.z;
     aReverse._horizontal(dt, false, false);
     const stepDecel = vBefore - aReverse.vel.z;
-    assert.ok(Math.abs(stepDecel - 58 / 60) < 1e-6, `Frame ${frame} decel: ${stepDecel}`);
+    assert.ok(Math.abs(stepDecel - f.PLAYER.s3GroundAccel / 60) < 1e-6, `Frame ${frame} decel: ${stepDecel}`);
   }
 });
 
 // -----------------------------------------------------------------------------
 // 3. DIAGONAL & ANGLE TRANSITIONS: 90°, 120°, 130°, 150°, 180°
 // -----------------------------------------------------------------------------
-test('Diagonal angle transitions: carving preserved under 126°, no 1.345x jump above reverseAngle', async () => {
+test('Diagonal angle transitions preserve inertia and share the same vector acceleration across legacy reverseAngle', async () => {
   const f = await createFixture({ apply405: true });
   const topSpeed = f.PLAYER.runSpeed;
   const dt = 1 / 60;
@@ -217,7 +223,8 @@ test('Diagonal angle transitions: carving preserved under 126°, no 1.345x jump 
     a90._horizontal(dt, false, false);
     // Heading should rotate smoothly; speed remains near topSpeed (carving)
     const sp90 = Math.hypot(a90.vel.x, a90.vel.z);
-    assert.ok(Math.abs(sp90 - topSpeed) < 1e-3, `90° carve maintains speed: ${sp90} vs ${topSpeed}`);
+    assert.ok(Math.abs(Math.hypot(a90.vel.x,a90.vel.z-topSpeed)-f.PLAYER.s3GroundAccel*dt)<1e-6,'current vector turn uses the shared acceleration');
+    assert.ok(sp90<topSpeed,'vector steering keeps inertia instead of rotating full-speed velocity');
     assert.ok(a90.vel.x > 0, `90° carve develops lateral velocity: ${a90.vel.x}`);
   }
 
@@ -245,7 +252,7 @@ test('Diagonal angle transitions: carving preserved under 126°, no 1.345x jump 
 
     // Vector change |Δv|
     const dv = Math.hypot(aRev.vel.x - vBefore.x, aRev.vel.z - vBefore.z);
-    const expectedRate = 58 * dt; // 58/60 ≈ 0.96667
+    const expectedRate = f.PLAYER.s3GroundAccel * dt; // 58/60 ≈ 0.96667
     assert.ok(Math.abs(dv - expectedRate) < 1e-6, `${deg}° vector deltaV is ${dv}, expected ${expectedRate} (not 78/60)`);
   }
 });
@@ -307,13 +314,13 @@ test('Owner vs remote isolation: horizontal kinematics match identically', async
 
   assert.equal(localActor.vel.x, remoteActor.vel.x, 'Local and remote vel.x match');
   assert.equal(localActor.vel.z, remoteActor.vel.z, 'Local and remote vel.z match');
-  assert.ok(Math.abs((topSpeed - remoteActor.vel.z) - 58 / 60) < 1e-6, 'Remote decel matches 58/60');
+  assert.ok(Math.abs((topSpeed - remoteActor.vel.z) - f.PLAYER.s3GroundAccel / 60) < 1e-6, 'Remote decel matches current ground rate');
 });
 
 // -----------------------------------------------------------------------------
 // 6. NON-REGRESSION OF LOCOMOTION MODES: Swim, enemy ink, airborne
 // -----------------------------------------------------------------------------
-test('Non-regression: swim reversal ratio is 1.00, enemy ink scaling preserved, airborne untouched', async () => {
+test('Current swim/enemy ground reversal ratio remains1.00 and the separate airborne rate remains unchanged', async () => {
   const f = await createFixture({ apply405: true });
   const dt = 1 / 60;
 
@@ -338,7 +345,7 @@ test('Non-regression: swim reversal ratio is 1.00, enemy ink scaling preserved, 
     const deltaSwimNeutral = swimSpeed - aSwimNeutral.vel.z;
     const deltaSwimReverse = swimSpeed - aSwimReverse.vel.z;
 
-    const expectedSwimDelta = f.PLAYER.swimDecel * dt; // 42 * (1/60) = 0.7
+    const expectedSwimDelta = f.PLAYER.s3GroundAccel * dt; // current shared ground rate
     assert.ok(Math.abs(deltaSwimNeutral - expectedSwimDelta) < 1e-6, `Swim neutral decel: ${deltaSwimNeutral}`);
     assert.ok(Math.abs(deltaSwimReverse - expectedSwimDelta) < 1e-6, `Swim reverse decel: ${deltaSwimReverse}`);
     assert.ok(Math.abs((deltaSwimReverse / deltaSwimNeutral) - 1.0) < 1e-9, 'Swim reversal ratio is 1.00');
@@ -351,11 +358,11 @@ test('Non-regression: swim reversal ratio is 1.00, enemy ink scaling preserved, 
     aEnemy.vel.set(0, 0, topSpeed);
     aEnemy.intent.move.set(0, 0, -1);
 
-    // onEnemy = true: D = enemyInkDecel = 30; reverse rate = D * dt * 0.5 = 15 * dt
+    // Enemy ink changes the target speed, while current ground acceleration stays shared.
     aEnemy._horizontal(dt, false, true);
 
     const deltaVEnemy = topSpeed - aEnemy.vel.z;
-    const expectedEnemyDelta = 30 * dt * 0.5; // 0.25
+    const expectedEnemyDelta = f.PLAYER.s3GroundAccel * dt; // current shared ground rate
     assert.ok(Math.abs(deltaVEnemy - expectedEnemyDelta) < 1e-6, `Enemy ink reverse delta: ${deltaVEnemy} vs ${expectedEnemyDelta}`);
   }
 

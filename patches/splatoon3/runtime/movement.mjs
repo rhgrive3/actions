@@ -143,9 +143,16 @@ export function installMovement(context, tuning) {
   api = context; config = tuning.movement;
   const { Actor } = api;
   const reset = Actor.prototype.reset, damage = Actor.prototype.damage;
+  const clearMovement = actor => {
+    actor.s3 ||= {}; delete actor.s3.actions; actor.s3.roll = actor.s3.surge = null;
+    actor.anim.surgeCharge = 0;
+  };
+  const remoteRespawn = api.NetMatch?.prototype._remoteRespawn;
+  if (remoteRespawn) api.NetMatch.prototype._remoteRespawn = function (actor, ...args) {
+    const result = remoteRespawn.call(this, actor, ...args); clearMovement(actor); return result;
+  };
   Actor.prototype.reset = function (...args) {
-    const value = reset.apply(this, args); this.s3 ||= {}; delete this.s3.actions; this.s3.roll = this.s3.surge = null;
-    this.anim.surgeCharge = 0; return value;
+    const value = reset.apply(this, args); clearMovement(this); return value;
   };
   Actor.prototype.damage = function (amount, attacker, source) {
     if (this.invuln > 0 || !this.alive) return false;
