@@ -684,7 +684,7 @@ def build_corner_fill(rays, design):
     if not core.any():
         return None
     keep = core.copy()
-    for _ in range(2):
+    for _ in range(design.get('corner_fill_grow', 2)):
         g = keep.copy()
         g[1:] |= keep[:-1]; g[:-1] |= keep[1:]; g[:, 1:] |= keep[:, :-1]; g[:, :-1] |= keep[:, 1:]
         keep = g & out
@@ -698,14 +698,22 @@ def build_corner_fill(rays, design):
         O[j, i], D[j, i], H[j, i] = o, d, t
     lo = design.get('corner_fill_lift_mm', 0.05) / 1000
     hi = design.get('corner_fill_max_mm', 0.6) / 1000
-    depth = np.where(used, H - lo, 0.0)
+    # vertices over the skin stay just under it (hidden; the skin's own edge is jagged), vertices over the eyeball
+    # may rise up to hi toward the skin, so the patch is one smooth sheet from under the skin to the eyeball
+    on_ball = np.zeros(used.shape, bool)
+    for j, i in np.argwhere(used):
+        on_ball[j, i] = rays.on_eye(xs[0] - step / 2 + i * step, ys[0] - step / 2 + j * step)
+    under = design.get('corner_fill_under_mm', 0.0) / 1000
+    near_lim = np.where(on_ball, H - hi, H + under)
+    far_lim = np.where(on_ball, H - lo, H + under)
+    depth = np.where(used, far_lim, 0.0)
     for _ in range(40):
         p = np.pad(depth, 1, mode='edge')
         m = np.pad(used.astype(float), 1)
         nb = (p[:-2, 1:-1] * m[:-2, 1:-1] + p[2:, 1:-1] * m[2:, 1:-1] + p[1:-1, :-2] * m[1:-1, :-2] + p[1:-1, 2:] * m[1:-1, 2:])
         cnt = m[:-2, 1:-1] + m[2:, 1:-1] + m[1:-1, :-2] + m[1:-1, 2:]
         avg = np.where(cnt > 0, nb / np.maximum(cnt, 1), depth)
-        depth = np.where(used, np.clip(0.5 * depth + 0.5 * avg, H - hi, H - lo), 0.0)
+        depth = np.where(used, np.clip(0.5 * depth + 0.5 * avg, near_lim, far_lim), 0.0)
     idx = -np.ones(used.shape, int)
     pts = []
     for j, i in np.argwhere(used):
