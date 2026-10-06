@@ -753,11 +753,13 @@ function guideLaunchState(actor, weapon, out) {
 // fixed steps. Returns the shared state object, or null when the weapon has no
 // guide frame / no installed launch path.
 export function computeShotGuide(actor) {
-  const s = guideScratch(), weapon = actor?.weapon, frames = shotGuideFrames(weapon);
+  const weapon = actor?.weapon, frames = shotGuideFrames(weapon);
+  // Partial/source-only test realms can execute the adapted PlayerController
+  // before installShotGuide owns a runtime context. That path has no guide,
+  // rather than being allowed to dereference an uninstalled scratch owner.
+  if (!guideApi || frames === null || (weapon?.kind !== 'shooter' && weapon?.kind !== 'splatling') || !guideApi.G?.projectiles) return null;
+  const s = guideScratch();
   s.state.frames = 0;
-  // Bucket/Blaster have their own installed per-unit guides; this centreline
-  // hook owns only the two families whose launch law it predicts.
-  if (frames === null || (weapon?.kind !== 'shooter' && weapon?.kind !== 'splatling') || !guideApi.G.projectiles) return null;
   const probe = guideLaunchState(actor, weapon, s);
   if (!probe) return null;
   for (let i = 0; i < frames; i++) advanceFidelityProjectile(probe, 1 / GUIDE_HZ);
@@ -784,7 +786,7 @@ export function updateShotGuide(controller) {
 // World point -> screen pixels for the HUD only. Behind-camera and off-viewport
 // results are clamped to the viewport edge so the guide stays reachable.
 export function projectShotGuide(state, camera, width, height) {
-  if (!state || !camera || !(width > 0) || !(height > 0)) return null;
+  if (!guideApi || !state || !camera || !(width > 0) || !(height > 0)) return null;
   const s = guideScratch();
   s.projected.set(state.x, state.y, state.z).project(camera);
   if (!Number.isFinite(s.projected.x) || !Number.isFinite(s.projected.y)) return null;
