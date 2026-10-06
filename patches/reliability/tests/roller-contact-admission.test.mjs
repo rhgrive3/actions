@@ -78,6 +78,85 @@ test('real victim update order around expiry does not leave failed-contact immun
   }
 });
 
+test('remote Roller retries on native cadence after lost confirmation and ignores late ACK for a newer request', async () => {
+  const sender = await combatWorld('A', { network: true }), receiver = await combatWorld('B', { network: true });
+  try {
+    const runner = placeRoller(sender), { victim } = sender, { victim: ownedVictim } = receiver;
+    sender.G.time = 1;
+    victim.hp = ownedVictim.hp = 500;
+    const feedback = [];
+    sender.G.audio = { play: (...args) => feedback.push(args), loop: () => ({ set(){}, stop(){} }) };
+
+    runner._roller(1 / 60, { fire: true, firePressed: false }, sender.WEAPONS.roller);
+    const first = sender.wire[0].data;
+    assert.equal(first.h, 1);
+    assert.equal(first.l, victim.netLife);
+    receiver.deliver('A', first);
+    receiver.deliver('A', first);
+    assert.equal(ownedVictim.hp, 360, 'the owner applies the first h/l packet once despite replay');
+    receiver.net._sendTick();
+    const lateFirstAck = receiver.wire.at(-1).data;
+    assert.ok(lateFirstAck.e?.some(event => event[1] === 'ev' && event[2] === 'hit'));
+
+    sender.G.time = 1.5;
+    runner._roller(1 / 60, { fire: true, firePressed: false }, sender.WEAPONS.roller);
+    assert.equal(sender.wire.length, 1, 'the existing contact gate remains closed at exactly 0.5 seconds');
+
+    // sendHit returns true when tr/sendTo is absent. Let this native-cadence
+    // retry disappear, then prove another retry can still reach the owner.
+    sender.net.s.tr = null;
+    sender.G.time = 1.500001;
+    runner._roller(1 / 60, { fire: true, firePressed: false }, sender.WEAPONS.roller);
+    assert.equal(sender.wire.length, 1);
+    assert.equal(runner.rollHits.get(victim), sender.G.time, 'the transport-absent request keeps the native finite retry timestamp');
+    assert.equal(runner.s3RollHitConfirmDisabled.has(victim), true,
+      'the second attempt retires ambiguous ACK matching even though no transport sent it');
+
+    const transport = { sendTo: (to, data) => sender.wire.push({ to, data: JSON.parse(JSON.stringify(data)) }) };
+    sender.net.s.tr = transport;
+    sender.G.time = 2.000002;
+    runner._roller(1 / 60, { fire: true, firePressed: false }, sender.WEAPONS.roller);
+    assert.equal(sender.wire.length, 2, 'ongoing contact recovers after the existing 0.5-second debounce');
+    const second = sender.wire[1].data;
+    assert.equal(second.h, 2, 'the transport-absent attempt creates no wire sequence value');
+    assert.equal(second.l, first.l, 'the retry targets the same owner life');
+    const secondSentAt = runner.rollHits.get(victim);
+    assert.equal(secondSentAt, sender.G.time);
+    assert.equal(feedback.filter(args => args[0] === 'ink_hit_body').length, 0,
+      'no hit-body feedback is predicted while the owner confirmation is undelivered');
+
+    sender.deliver('B', lateFirstAck);
+    assert.equal(runner.rollHits.get(victim), secondSentAt,
+      'an old same-owner/same-life ACK cannot resolve or extend the newer contact request');
+    receiver.deliver('A', second);
+    receiver.deliver('A', second);
+    assert.equal(ownedVictim.hp, 220, 'the owner applies the newer h/l packet once despite replay');
+    receiver.net._sendTick();
+    sender.deliver('B', receiver.wire.at(-1).data);
+    assert.equal(runner.rollHits.get(victim), secondSentAt,
+      'current owner confirmation does not replace the native retry timestamp');
+    assert.equal(feedback.filter(args => args[0] === 'ink_hit_body').length, 0);
+
+    victim.netLife++;
+    sender.G.time += 1 / 60;
+    runner._roller(1 / 60, { fire: true, firePressed: false }, sender.WEAPONS.roller);
+    assert.equal(sender.wire.length, 3, 'a new victim life clears the previous contact timestamp immediately');
+    assert.equal(sender.wire[2].data.l, victim.netLife);
+    victim.owner = 'C';
+    sender.G.time += 1 / 60;
+    runner._roller(1 / 60, { fire: true, firePressed: false }, sender.WEAPONS.roller);
+    assert.equal(sender.wire.length, 4, 'an ownership change clears the previous contact timestamp immediately');
+    assert.equal(sender.wire[3].to, 'C');
+
+    runner.reset();
+    sender.G.time += 1 / 60;
+    runner._roller(1 / 60, { fire: true, firePressed: false }, sender.WEAPONS.roller);
+    assert.equal(sender.wire.length, 5, 'runner reset clears contact cooldown and request state');
+  } finally {
+    sender.dispose(); receiver.dispose();
+  }
+});
+
 test('remote Roller contact waits for owner acceptance, retries after rejection, and confirms once over the existing event wire', async () => {
   const sender = await combatWorld('A', { network: true }), receiver = await combatWorld('B', { network: true });
   try {
@@ -100,9 +179,10 @@ test('remote Roller contact waits for owner acceptance, retries after rejection,
     victim.net.buf.push({ t: 1000, hp: 100, life: victim.netLife });
     runner._roller(1 / 60, { fire: true, firePressed: false }, sender.WEAPONS.roller);
     assert.equal(sender.wire.length, 1);
-    assert.equal(runner.rollHits.get(victim), Infinity, 'send is pending owner admission, not an accepted hit');
+    assert.equal(runner.rollHits.get(victim), sender.G.time,
+      'the native contact timestamp remains finite while owner admission is pending');
     runner._roller(1 / 60, { fire: true, firePressed: false }, sender.WEAPONS.roller);
-    assert.equal(sender.wire.length, 1, 'one hit remains in flight until the owner publishes a newer state');
+    assert.equal(sender.wire.length, 1, 'native contact cadence blocks a same-tick duplicate');
 
     receiver.victim.invuln = .01;
     receiver.deliver('A', sender.wire[0].data);
@@ -120,7 +200,7 @@ test('remote Roller contact waits for owner acceptance, retries after rejection,
 
     runner._roller(1 / 60, { fire: true, firePressed: false }, sender.WEAPONS.roller);
     assert.equal(sender.wire.length, 2, 'the rejection acknowledgement admits a retry without starting the 0.5-second debounce');
-    assert.equal(runner.rollHits.get(victim), Infinity);
+    assert.equal(runner.rollHits.get(victim), sender.G.time);
     assert.deepEqual(Object.keys(sender.wire[1].data).sort(), ['a', 'd', 'h', 'k', 'l', 'v', 'w']);
 
     receiver.victim.invuln = 0;
