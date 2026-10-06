@@ -1,6 +1,36 @@
 import { installWeaponEdgecases } from './weapon-edgecases.mjs';
 import { installRollerLogic } from './roller.mjs';
 let api;
+const dualiesLockViews = new WeakMap();
+const splatlingStreamViews = new WeakMap();
+
+function cachedOverrideView(cache, source, key, value) {
+  let view = cache.get(source);
+  if (!view) {
+    view = Object.create(source);
+    Object.defineProperty(view, key, { value, enumerable: true });
+    Object.freeze(view);
+    cache.set(source, view);
+  }
+  return view;
+}
+
+function suppressDualiesGateInput(runner, input) {
+  let view = runner.s3DualiesGateInput;
+  if (!view) {
+    view = Object.create(null);
+    Object.defineProperties(view, {
+      fire: { value: false, writable: true, enumerable: true },
+      firePressed: { value: false, writable: true, enumerable: true },
+    });
+    runner.s3DualiesGateInput = view;
+  }
+  view.fire = false;
+  view.firePressed = false;
+  Object.setPrototypeOf(view, input);
+  return view;
+}
+
 export function splatlingBurst(w, charge) {
   const boundary = w.firstChargeTime / w.chargeTime, c = Math.max(0, Math.min(1, charge));
   return c <= boundary ? w.burstFirst * c / boundary : w.burstFirst + (w.burstMax - w.burstFirst) * (c - boundary) / (1 - boundary);
@@ -44,10 +74,12 @@ export function installWeapons(context, profile) {
   const { WeaponRunner, Projectiles, G, THREE, Physics, Hit, PLAYER } = api;
   const newProjectile = Projectiles.prototype._new, pushProjectile = Projectiles.prototype._push;
   Projectiles.prototype._new = function (...args) {
-    const p = newProjectile.apply(this, args); p.s3DamageGroup = null; p.s3Weapon = null; p.s3Vertical = false; return p;
+    const p = newProjectile.apply(this, args); p.s3DamageGroup = null; p.s3Weapon = null; p.s3SpecialWeapon = null; p.s3Vertical = false; return p;
   };
   Projectiles.prototype._push = function (p) {
-    p.s3Weapon = p.owner ? { ...p.owner.weapon } : null;
+    // Gear equip replaces actor.weapon with a new actor-local config. Retaining
+    // the fired config preserves projectile snapshot semantics without a clone.
+    p.s3Weapon = p.s3SpecialWeapon || (p.owner ? p.owner.weapon : null);
     if (['shooter', 'dualies', 'splatling'].includes(p.s3Weapon?.kind) && Number.isFinite(p.s3Weapon.referenceGravity)) p.grav = p.s3Weapon.referenceGravity;
     return pushProjectile.call(this, p);
   };
@@ -164,9 +196,18 @@ export function installWeapons(context, profile) {
     if (this.s3Turret && (!inp.fire || Math.hypot(this.a.intent.move.x, this.a.intent.move.z) > .01 && this.lockT <= 0 || this.a.form === 'squid' || inp.sub)) this.s3Turret = false;
     if (this.s3DodgeShotPending > 1e-10) {
       this.s3DodgeShotPending = Math.max(0, this.s3DodgeShotPending - dt);
-      if (this.s3DodgeShotPending > 1e-10) return dualies.call(this, dt, { ...inp, fire: false, firePressed: false }, this.s3Turret ? { ...w, fireInterval: w.lockInterval } : w);
+      if (this.s3DodgeShotPending > 1e-10) {
+        const gatedInput = suppressDualiesGateInput(this, inp);
+        try {
+          return dualies.call(this, dt, gatedInput,
+            this.s3Turret ? cachedOverrideView(dualiesLockViews, w, 'fireInterval', w.lockInterval) : w);
+        } finally {
+          Object.setPrototypeOf(gatedInput, null);
+        }
+      }
     }
-    const result = dualies.call(this, dt, inp, this.s3Turret ? { ...w, fireInterval: w.lockInterval } : w);
+    const result = dualies.call(this, dt, inp,
+      this.s3Turret ? cachedOverrideView(dualiesLockViews, w, 'fireInterval', w.lockInterval) : w);
     if (dodging && !this.dodge) {
       this.s3Turret = true;
       this.s3DodgeShotPending = 4 / 60;
@@ -218,7 +259,8 @@ export function installWeapons(context, profile) {
       this.spinLoop?.stop(.12); this.spinLoop = null; return;
     }
     const charging = this.charging, charge = this.charge;
-    const result = splatling.call(this, dt, input, this.streaming ? { ...w, inkPerShot: 0 } : w);
+    const result = splatling.call(this, dt, input,
+      this.streaming ? cachedOverrideView(splatlingStreamViews, w, 'inkPerShot', 0) : w);
     if (charging && !input.fire && this.streaming) {
       this.burstDur = this.burstT = splatlingBurst(w, charge);
       this.a.ink = Math.max(0, this.a.ink - w.inkFull * this.burstDur / w.burstMax); this.a.lastFire = 0;
