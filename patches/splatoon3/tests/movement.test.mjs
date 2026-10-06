@@ -9,9 +9,9 @@ test('Squid Roll uses direction change and pre-braking speed', () => {
   assert.equal(rollEligible({ x: 0, z: 7 }, { x: 0, z: -1 }, cfg), false);
   assert.equal(rollEligible({ x: 0, z: 10 }, { x: 0, z: -.1 }, cfg), false);
 });
-test('roll armor absorbs only its remaining capacity and passes lethal overflow', () => {
-  const state = { armorHP: 100, armorTime: .1 };
-  assert.equal(absorbArmor(state, 60), 0); assert.equal(state.armorHP, 40);
-  assert.equal(absorbArmor(state, 180), 140); assert.equal(state.armorHP, 0);
+test('roll armor separates 30 HP durability from the 100 HP per-hit threshold', () => {
+  const state = { armorHP: 30, armorTime: .1 };
+  assert.equal(absorbArmor(state, 20), 0); assert.equal(state.armorHP, 10);
+  assert.equal(absorbArmor(state, 180), 80); assert.equal(state.armorHP, 0);
   state.armorHP = 100; state.armorTime = 0; assert.equal(absorbArmor(state, 60), 60);
 });
