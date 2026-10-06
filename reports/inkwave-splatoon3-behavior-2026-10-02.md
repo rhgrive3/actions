@@ -375,3 +375,48 @@ side-splash width, the `WidthHalfMax` to world-unit factor and the intermediate 
 Switch rendering of either fix. `floorOnly` also has no field in the recorded `netmatch` splat packet, so a
 remote peer replaying a side splash does not apply the wall suppression — changing that packet is a protocol
 change and is left to the replication lane. These are VM/source-level results, not hardware comparisons.
+
+### 2026-10-06 follow-up — #724 official reference image fetched and inspected (partial); #649 held out
+
+Authorized follow-up on the same worktree/branch, source commit `ec0165a0`.
+
+**#724 reference pinned.** The official Nintendo image cited by the issue was fetched successfully
+(HTTP 200) and inspected at pixel level, not assumed. Pinned under
+`/mnt/workspace/inkwave-batch-c/evidence/additional-100/issue724-reference/`: `027.jpg`, 133844 bytes,
+1280x720 (16:9, 3 components, ICC profile, no EXIF camera metadata), SHA256
+`349f7c9f8fba19d074adbbbc873fbd9db0b0f46d2ac863a24240b982d0183750`, with `manifest.json` recording the URL,
+retrieval time, hash and dimensions. Analysis used OpenCV 4.11.0 / NumPy 1.26.4 / Pillow 11.3.0.
+
+Result: **the frame contains no resolvable aiming-reticle overlay.** No thin bright circular stroke sits
+on the aim point at any radius 3–80 px (peak bright-sector fraction 0.056 at r=60, i.e. noise). The 413
+full-frame thin-ring candidates all cluster at (804–828, 284–288) r=11–12 and coincide with a bright scene
+blob, not a HUD. Near-pure-white pixels are 0.46 % of the frame and no bracket, tick, ring or arc is
+resolvable. Template matching the old INKWAVE geometry (bracket pair plus lower arc) across scales 0.5–4.0
+peaks at NC 0.2852; the compact ring peaks at NC 0.3276. Both are noise, so there is no geometric match.
+
+Therefore the honest reading is: absence of the old wide bracket/lower arc is **consistent but not proven**
+by this image, because nothing reticle-like is resolvable at all, so the absence cannot be attributed to the
+reference rather than to framing, cropping, fade-out or JPEG compression. The compact marker is **not
+confirmed**, and native pixel geometry remains **unknown**. Acceptance item "matches a pinned Splatoon 3
+capture in silhouette" stays open.
+
+Consequence: **no #724 source change.** The already-committed compact central marker stays a minimal,
+non-pixel-claiming presentation fix. Two new tests pin the fetched artifact's hash and byte length, read
+the real JPEG SOF header for the dimensions, and assert the recorded verdict stays PARTIAL with
+NOT CONFIRMED / STILL UNKNOWN / NOT PROVEN wording, so the reference cannot be quietly upgraded into a
+claimed screenshot match. They skip cleanly when the evidence tree is absent (verified: 5 pass / 2 skip,
+exit 0), so the patch stays testable standalone.
+
+**#649 held out by the parent.** Not claimed complete and not extended. The unresolved intermediate paint
+law and the remote `floorOnly` leak recorded earlier both remain open, and no further speculative paint
+model was added. Its source is preserved exactly as committed in `ec0165a0`
+(`runtime/roller-paint.mjs`, the `src/game/weapons.js` and `src/world/paint.js` adapter branches, the
+`install.mjs` wiring and the fixture re-export). The parent will exclude those before integration. Its test
+still passes 8/8 against the preserved source, recorded as source-preservation evidence only, not as
+acceptance.
+
+Also recorded honestly: during the previous round the baseline-failure procedure exported a copy of
+`adapter.mjs` to OS temporary storage, which the round rules forbid. It was detected during the final
+audit, ownership was confirmed by timestamp, the file was removed, and the foreign `/tmp/probe625.mjs`
+belonging to another lane was deliberately left untouched. No file was cleaned up that this lane did not
+create.

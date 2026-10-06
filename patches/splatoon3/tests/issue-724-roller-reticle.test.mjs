@@ -8,6 +8,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { adaptSource, replaceOnce } from '../adapter.mjs';
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
@@ -15,6 +16,24 @@ const UPSTREAM = process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave
 
 const readSource = rel => fs.readFileSync(path.join(UPSTREAM, rel), 'utf8');
 const installed = rel => adaptSource(rel, readSource(rel));
+// Minimal JPEG SOF reader: walks the marker segments until a start-of-frame and
+// returns the encoded dimensions, so the assertion reads the real file header
+// instead of trusting a recorded number.
+function jpegSize(bytes) {
+  let i = 2;
+  while (i < bytes.length - 9) {
+    if (bytes[i] !== 0xff) { i++; continue; }
+    const marker = bytes[i + 1];
+    if (marker === 0xd8 || marker === 0x01 || (marker >= 0xd0 && marker <= 0xd7)) { i += 2; continue; }
+    const length = bytes.readUInt16BE(i + 2);
+    if (marker >= 0xc0 && marker <= 0xcf && marker !== 0xc4 && marker !== 0xc8 && marker !== 0xcc) {
+      return { height: bytes.readUInt16BE(i + 5), width: bytes.readUInt16BE(i + 7) };
+    }
+    i += 2 + length;
+  }
+  throw new Error('no JPEG start-of-frame segment');
+}
+
 const section = (source, open, close) => {
   const start = source.indexOf(open);
   if (start < 0) throw new Error(`missing section start ${open}`);
@@ -96,4 +115,37 @@ test('#724 the connection is fail-closed and leaves the locked upstream file pri
   assert.throws(() => adaptSource('src/ui/hud.js', installed('src/ui/hud.js')), /INKWAVE patch conflict/);
   assert.throws(() => replaceOnce(before, '    } else if (kind === ', '    } else if (kind === ', 'duplicate anchor'),
     /expected exactly one connection/);
+});
+// The official Nintendo image cited by #724 was fetched and inspected on
+// 2026-10-06 and pinned by hash. It shows no resolvable reticle overlay, so it
+// supports neither the old geometry nor the compact marker. These assertions pin
+// the fetched artifact and the recorded partial verdict so the reference cannot
+// be quietly upgraded into a claimed screenshot match. Skipped when the evidence
+// tree is not present (the patch must stay testable standalone).
+const EVIDENCE = process.env.INKWAVE_EVIDENCE_DIR
+  || '/mnt/workspace/inkwave-batch-c/evidence/additional-100/issue724-reference';
+const REFERENCE_IMAGE = path.join(EVIDENCE, '027.jpg');
+const PINNED_SHA256 = '349f7c9f8fba19d074adbbbc873fbd9db0b0f46d2ac863a24240b982d0183750';
+
+test('#724 the pinned official reference image is unmodified', { skip: fs.existsSync(REFERENCE_IMAGE) ? false : 'reference image not fetched in this environment' }, () => {
+  const bytes = fs.readFileSync(REFERENCE_IMAGE);
+  assert.equal(bytes.length, 133844, 'pinned byte length');
+  assert.equal(crypto.createHash('sha256').update(bytes).digest('hex'), PINNED_SHA256, 'pinned SHA256');
+  // JPEG SOF marker carries the dimensions, so this reads the real header.
+  assert.deepEqual(jpegSize(bytes), { width: 1280, height: 720 });
+});
+
+test('#724 the reference verdict stays partial and claims no screenshot match', { skip: fs.existsSync(path.join(EVIDENCE, 'manifest.json')) ? false : 'reference manifest not fetched in this environment' }, () => {
+  const manifest = JSON.parse(fs.readFileSync(path.join(EVIDENCE, 'manifest.json'), 'utf8'));
+  assert.equal(manifest.issue, 724);
+  assert.equal(manifest.url, 'https://www.nintendo.com/jp/ichikara/av5ja/photo/01/027.jpg');
+  assert.equal(manifest.sha256, PINNED_SHA256);
+  assert.deepEqual(manifest.dimensions_px, { width: 1280, height: 720 });
+  assert.equal(manifest.verdict, 'PARTIAL', 'the fetched image must not be recorded as a resolved match');
+  assert.match(manifest.verdict_detail.compact_marker_supported, /NOT CONFIRMED/);
+  assert.match(manifest.verdict_detail.pixel_geometry, /STILL UNKNOWN/);
+  assert.match(manifest.verdict_detail.old_wide_bracket_lower_arc_absent, /NOT PROVEN/);
+  // Both template correlations stayed at noise level in the recorded analysis.
+  assert.match(manifest.inspection.template_old_geometry, /0\.2852/);
+  assert.match(manifest.inspection.template_compact_ring, /0\.3276/);
 });
