@@ -594,10 +594,16 @@ export function adaptSource(rel, code) {
       "      crosshair: { spread, onTarget: m.controller?.onTarget ? 'enemy' : null, inRange: m.controller ? m.controller.inRange !== false : true },",
       "      crosshair: { spread, onTarget: m.controller?.onTarget ? 'enemy' : null, inRange: m.controller ? m.controller.inRange !== false : true, guide: projectShotGuide(m.controller?.enabled && m.controller?.a?.alive ? m.controller.shotGuide : null, cam, W, H) },",
       'S3 ShotGuideFrame HUD projection');
-    code = replaceOnce(code,
-      "          // enemies only show on the map when visible to your team (not submerged far away)\n          if (o.anim.form === 'swim') continue;",
-      "          // S3 Turf Map: opponents appear only once damaged (>=18) or explicitly marked.\n          if (!enemyRevealedOnMap(o, PLAYER.hp)) continue;",
-      'enemy map reveal');
+    {
+      const rawEnemyReveal = "          // enemies only show on the map when visible to your team (not submerged far away)\n          if (o.anim.form === 'swim') continue;";
+      const composedEnemyReveal = "          // S3 Turf Map: opponents appear only once damaged (>=18) or explicitly marked.\n          if (!enemyRevealedOnMap(o, PLAYER.hp)) continue;";
+      if (code.includes(rawEnemyReveal)) {
+        code = replaceOnce(code, rawEnemyReveal, composedEnemyReveal, 'enemy map reveal');
+      } else {
+        const count = code.split(composedEnemyReveal).length - 1;
+        if (count !== 1) throw new Error('INKWAVE patch conflict (enemy map reveal): expected raw or composed connection');
+      }
+    }
     return `import { runSimulation, installGame } from '../patches/splatoon3/runtime/clock.mjs';\nimport { projectShotGuide } from '../patches/splatoon3/runtime/weapons-fidelity.mjs';\nimport { enemyRevealedOnMap } from '../patches/splatoon3/runtime/map-reveal.mjs';\n` + code;
   }
 
