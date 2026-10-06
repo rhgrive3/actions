@@ -2,6 +2,11 @@ import { adaptTenacity } from './tenacity-adapter.mjs';
 // Build-only quality corrections composed after the gameplay, touch-layout and
 // reliability adapters. Upstream inkwave-public/ remains byte-for-byte intact.
 import fs from 'node:fs';
+import { adaptIssue473Source } from '../splatoon3/issue-473-adapter.mjs';
+import { adaptIssue479Source } from '../splatoon3/issue-479-adapter.mjs';
+import { adaptPropRetention } from './prop-retention-adapter.mjs';
+import { adaptBossHit } from './boss-hit-adapter.mjs';
+import { adaptPropAtlas } from './prop-atlas-adapter.mjs';
 import { adaptFinalMinuteMusic } from './final-minute-music-adapter.mjs';
 import { adaptTurfLead } from './turf-lead-adapter.mjs';
 import { adaptScoreReticle } from './score-reticle-adapter.mjs';
@@ -24,6 +29,7 @@ const IDENTITY_FILES = [
   'score-reticle-adapter.mjs', 'map-teammate-status-adapter.mjs',
   'ui-actor-lifetime-adapter.mjs',
   'tenacity-adapter.mjs', 'tenacity.mjs',
+  'prop-atlas-adapter.mjs', 'boss-hit-adapter.mjs', 'prop-retention-adapter.mjs',
   'idle-adapter.mjs', 'idle-resources.mjs', 'music-idle.mjs',
   'lobby-resource-adapter.mjs', 'minimap-resource-adapter.mjs',
   'adapter.mjs', 'gyro.mjs', 'install.mjs', 'menu-preview.mjs', 'menu.mjs',
@@ -47,6 +53,11 @@ export function adaptQualitySource(rel, code) {
   code = adaptScoreReticle(rel, code, replaceOnce);
   code = adaptMapTeammateStatus(rel, code, replaceOnce);
   code = adaptTenacity(rel, code, replaceOnce);
+  code = adaptBossHit(rel, code);
+  code = adaptPropRetention(rel, code);
+  code = adaptPropAtlas(rel, code);
+  code = adaptIssue479Source(rel, code);
+  code = adaptIssue473Source(rel, code);
   code = adaptIdleSource(rel, code, replaceOnce);
   code = adaptLobbyResources(rel, code);
   code = adaptMinimapResources(rel, code);
