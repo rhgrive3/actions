@@ -42,6 +42,20 @@ export function applyProjectileHit(system, projectile, victim, amount, point) {
 export function installWeapons(context, profile) {
   api = context;
   const { WeaponRunner, Projectiles, G, THREE, Physics, Hit, PLAYER } = api;
+  const dualiesJumpParams = profile?.weaponsFidelityCompletion?.weapons?.dualies?.WeaponParam;
+  const referenceHz = profile?.referenceHz;
+  const dualiesJumpSpreadHold = Number.isFinite(dualiesJumpParams?.Jump_DegBiasDecreaseStartFrame) && Number.isFinite(referenceHz) && referenceHz > 0
+    ? dualiesJumpParams.Jump_DegBiasDecreaseStartFrame / referenceHz : null;
+  const dualiesJumpSpreadEnd = Number.isFinite(dualiesJumpParams?.Jump_DegBiasEndFrame) && Number.isFinite(referenceHz) && referenceHz > 0
+    ? dualiesJumpParams.Jump_DegBiasEndFrame / referenceHz : null;
+  const hasDualiesJumpSpreadRecovery = Number.isFinite(dualiesJumpSpreadHold) && Number.isFinite(dualiesJumpSpreadEnd) && dualiesJumpSpreadEnd > dualiesJumpSpreadHold;
+  if (hasDualiesJumpSpreadRecovery && typeof api.on === 'function') api.on('actor:jump', event => {
+    const actor = event?.actor, runner = actor?.weaponRunner;
+    if (!actor || event?.swim || !runner || !actor.alive || actor.form === 'squid' || actor.weapon?.kind !== 'dualies'
+      || runner.dodge || runner.s3Turret || runner.lockT > 1e-10 || actor.superJumpState || actor.specialActive) return;
+    // The actor jump event is the native action owner; keep this timer on that actor's runner.
+    runner.s3DualiesJumpSpreadAge = 0;
+  });
   const newProjectile = Projectiles.prototype._new, pushProjectile = Projectiles.prototype._push;
   Projectiles.prototype._new = function (...args) {
     const p = newProjectile.apply(this, args); p.s3DamageGroup = null; p.s3Weapon = null; p.s3Vertical = false; return p;
@@ -60,6 +74,7 @@ export function installWeapons(context, profile) {
     this.s3Stored = null; this.s3Turret = false; this.s3FlickVertical = false; this.s3BlasterWindup = 0;
     this.s3SloshRecovery = false;
     this.s3ChargerPostShot = 0; this.s3DualiesPostShot = 0; this.s3DodgeShotPending = 0;
+    this.s3DualiesJumpSpreadAge = null;
     return result;
   };
   WeaponRunner.prototype.busy = function () {
@@ -68,6 +83,17 @@ export function installWeapons(context, profile) {
     if (kind === 'dualies' && this.s3DualiesPostShot > 1e-10) return true;
     if (['charger','splatling'].includes(kind) && this.a.intent.squid && this.a._squidPressT > this.a._firePressT) return false;
     return this.s3BlasterWindup > 0 || busy.call(this);
+  };
+  const runnerUpdate = WeaponRunner.prototype.update;
+  WeaponRunner.prototype.update = function (dt, input) {
+    const a = this.a;
+    if (!hasDualiesJumpSpreadRecovery || !a.alive || a.form === 'squid' || a.weapon?.kind !== 'dualies'
+      || a.superJumpState || a.specialActive || this.dodge || this.s3Turret || this.lockT > 1e-10) {
+      this.s3DualiesJumpSpreadAge = null;
+    } else if (Number.isFinite(this.s3DualiesJumpSpreadAge)) {
+      this.s3DualiesJumpSpreadAge = Math.min(dualiesJumpSpreadEnd, this.s3DualiesJumpSpreadAge + dt);
+    }
+    return runnerUpdate.call(this, dt, input);
   };
   const charger = WeaponRunner.prototype._charger;
   // S3 keeps a full charge only while ZR stays down; letting go of ZR before
@@ -177,7 +203,20 @@ export function installWeapons(context, profile) {
     // The upstream blaster reads `spread`, while the pinned profile supplies
     // Stand_DegSwerve as spreadGround. Connect both ground and jump values.
     if (w.kind === 'blaster') return this.a.grounded ? w.spreadGround : w.spreadAir;
-    return w.kind === 'dualies' && this.s3Turret ? w.spreadLock : spread.call(this, w);
+    if (w.kind === 'dualies' && (this.s3Turret || this.lockT > 0)) return w.spreadLock;
+    if (w.kind === 'dualies' && hasDualiesJumpSpreadRecovery && Number.isFinite(this.s3DualiesJumpSpreadAge)) {
+      const age = this.s3DualiesJumpSpreadAge;
+      let base;
+      if (age <= dualiesJumpSpreadHold + 1e-10) base = w.spreadAir;
+      else if (age < dualiesJumpSpreadEnd - 1e-10) {
+        // The table pins the interval and endpoints, not its curve; this blend is an unverified local approximation.
+        const recovery = (age - dualiesJumpSpreadHold) / (dualiesJumpSpreadEnd - dualiesJumpSpreadHold);
+        base = w.spreadAir + (w.spreadGround - w.spreadAir) * recovery;
+      } else base = w.spreadGround;
+      const first = w.spreadFirst ?? 0.45;
+      return base * (first + (1 - first) * this.bloom);
+    }
+    return spread.call(this, w);
   };
   const fireCharger = Projectiles.prototype.fireCharger;
   Projectiles.prototype.fireCharger = function (a, w, charge) {
