@@ -357,3 +357,19 @@ Reset now clears the pending damage attacker and angle together with the cancell
 ## 2026-10-06 — Dualies wall-drop (#604) and composed-runtime guards
 
 Base main `67fec182`. Splat Dualies wall impacts now enter the existing sourced wall-drop state using the pinned 11.3.0 top-level `WallDropMoveParam`/`WallDropCollisionPaintParam` (shock 1.3, fall 0.65, ground 0.6; 20–40F + 10F + 15–35F at 0.06). Previously the round died on the contact frame after one generic impact. Damage is unchanged. Shooter (#385) and Charger (#625/#268) are excluded: Shooter is owned elsewhere, and the Charger record omits three period fields. #770, #777, #638/#637, #644/#643 and #556 were already correct after adapter composition (the reports read raw source). They are now pinned by composed-runtime tests. This is logic-level and emitted-verifier evidence; a Switch visual/frame comparison is still 未確認. Details: [inkwave-wall-drop-dualies-guards-2026-10-06.md](inkwave-wall-drop-dualies-guards-2026-10-06.md).
+
+## 2026-10-07 — ライブミニマップの局所更新 (#895)
+
+基準 main `f31f5da439134fe49bb89018dad5557671a49c67`。本家の参照版はスプラトゥーン3 Ver.11.3.0。ステージ配置は INKWAVE の3レイアウト（Tidewater 50×88m、Kelpline 48×96m、Halyard 48×92m、既定 7 px/m でそれぞれ 350×616 / 336×672 / 336×644 px）を使い、本家の特定ステージ名とは対応させていない。
+
+本家のミニマップは塗り替わった領域だけが順次更新され、味方/敵タンクやステージ全体の再走査を常時行わない、という観察可能な挙動を基準にする。ただし本家内部の更新単位・フレーム値は公開されていないため、その数値をこちらへ写していない。
+
+修正：`PaintSystem._cpuSplat` の所有権書き込み地点で変更セルのマップ座標を記録し（`_inkMark`）、ミニマップは150ms窓で合流した矩形のみを再描画する（`_drawDirtyInk` → 既存 `_drawInk` のx範囲引数）。立体エンボスのため矩形を1px拡張し、セル中心のバイリニア参照に2セル分のパディングを付ける。判定材料：
+
+- **ロジックのみ確認**：3ステージすべてで、局所更新の `inkImg` バイト列が強制全描画と毎ステップ一致。描画した putImageData 面積は定常交戦フィクスチャで全描画の5%未満。
+- ちらつきレイヤ（`flashImg`）は遷移履歴であり、部分更新では再描画矩形の外側だけが全描画と異なる（矩形内は完全一致）。
+- 全体無効化は維持：初回構築、`PaintSystem.clear()`、視点チーム反転、チーム色変更、テーマ変更、ステージ再構築は全描画。広域の変更は既存の3バンド経路（幅=全幅、高さ<全高、`_band=1`）へフォールバックし、1フレームのスパイク上限を保つ。
+- ミニマップOFF時（`tickHidden`）はラスタ・ImageData を一切実行せず、ダーティ領域を O(1) の全体無効化へ畳む。復帰時は全体を1回再描画。
+- 3バンド間で古い領域を残さない（合流窓内の複数スプラットは1回の更新に合流し、和集合内に継ぎ目なし）。
+
+検証は `node --test` のロジック/CPU レベル（フォーカス9/9、基準未適用2/9）と、#419ミニマップ資源10/10・splatoon3合成10/10・練習場7/7・通信契約13/13 の隣接制御。ブラウザ canvas/GPU 実測と Switch 実機比較は**未確認**。速度の実測値は主張しない。詳細は[専用レポート](inkwave-minimap-dirty-bounds-895-2026-10-07.md)。
