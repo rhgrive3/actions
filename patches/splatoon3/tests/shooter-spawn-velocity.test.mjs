@@ -133,18 +133,10 @@ test('#312 ghosts, remote owners and repeated application never inherit', async 
   close(fresh.vel.z, s.base);
 });
 
-test('#312 launch velocity is fixed-step deterministic and recorded post-addition at 30/60/120Hz', async () => {
+test('#312 synchronous launch is recorded once after player-forward addition', async () => {
   const { f, a, ps } = await setup();
   const s = source(f);
   a.yaw = 0;
-  const seen = [];
-  for (const dt of [1 / 30, 1 / 60, 1 / 120]) {
-    void dt; // spawn capture happens synchronously in _push, before any tick
-    const p = fire(f, a, ps, [0, 0, s.moveSpeedFiring]);
-    seen.push(p.vel.z);
-  }
-  for (const z of seen) close(z, s.base + s.zrate * s.moveSpeedFiring);
-
   // The owner-side birth packet records the post-addition velocity.
   const packets = [];
   f.G.netm = { recProj(p) { packets.push(p.vel.clone()); } };
