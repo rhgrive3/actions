@@ -58,10 +58,12 @@ async function boot({ floor = true, grate = false, wall = false } = {}) {
   return { ...api, make, tick, close };
 }
 
-for (const grate of [false, true]) test(`#215 grounded ${grate ? 'grate' : 'floor'} preparation launches at 80F`, async t => {
+for (const grate of [false, true]) test(`#215 grounded ${grate ? 'grate' : 'floor'} preparation launches at the charge boundary`, async t => {
   const f = await boot({ grate }); t.after(f.close); const a = f.make();
+  // A spawned Actor is humanoid, so #708's initial-form term precedes the 80F charge wait.
+  const startup = a.s3.jumpStartupHumanoidF;
   assert.equal(a.grounded, true); a.superJump(new f.THREE.Vector3(10, 0, 0));
-  f.tick(a, 79); assert.equal(a.superJumpState.phase, 'charge'); assert.ok(Math.abs(a.pos.y) < 1e-9);
+  f.tick(a, 79 + startup); assert.equal(a.superJumpState.phase, 'charge'); assert.ok(Math.abs(a.pos.y) < 1e-9);
   f.tick(a); assert.equal(a.superJumpState.phase, 'flight'); assert.equal(a.grounded, false);
 });
 
@@ -82,7 +84,7 @@ test('#215 inked wall supports preparation; lost wall ink resumes falling', asyn
   for (const painted of [true, false]) {
     const a = f.make({ pos: [1.7, 5, 0] }); a.climbing = true; a.wallN.set(-1, 0, 0); a.form = 'squid';
     f.G.paint.sample = () => painted ? 1 : 2; a.s3.jumpChargeTime = STEP;
-    a.superJump(new f.THREE.Vector3(-10, 0, 0)); f.tick(a);
+    a.superJump(new f.THREE.Vector3(-10, 0, 0)); f.tick(a, 1 + a.s3.jumpStartupSwimF);
     assert.equal(a.superJumpState.phase, painted ? 'flight' : 'charge');
     assert.equal(a.pos.y === 5, painted);
   }
@@ -107,7 +109,7 @@ for (const frames of [138, 96]) for (const distance of [2, 70]) test(`#255 fligh
   const f = await boot(); t.after(f.close); const a = f.make(), enemy = f.make({ team: 1 });
   a.s3.jumpChargeTime = STEP; a.s3.jumpFlightTime = frames / 60; a.superJump(new f.THREE.Vector3(distance, 0, 0));
   f.G.projectiles.applyHit(enemy, a, 36, 'shooter'); assert.equal(a.hp, 64); a.hp = 100;
-  f.tick(a); assert.equal(a.superJumpState.phase, 'flight');
+  f.tick(a, 1 + a.s3.jumpStartupHumanoidF); assert.equal(a.superJumpState.phase, 'flight');
   const nm = Object.create(f.NetMatch.prototype); nm.byNid = new Map([[1, a], [2, enemy]]); nm.peers = new Map(); nm.s = { myId: 'owner' }; nm.myId = 'owner';
   a.owner = enemy.owner = 'owner'; f.G.netm = nm;
   let hitSeq = 0;
@@ -126,7 +128,7 @@ for (const weapon of ['shooter', 'blaster']) test(`#218 ${weapon} fires before l
   const shots = []; const native = f.G.projectiles[weapon === 'shooter' ? 'fireShooter' : 'fireBlaster'];
   f.G.projectiles[weapon === 'shooter' ? 'fireShooter' : 'fireBlaster'] = function (...args) { shots.push({ tick: a.superJumpState?.t / STEP, pos: plain(a.pos.toArray()), phase: a.superJumpState?.phase }); return native.apply(this, args); };
   let bombs = 0; f.G.projectiles.throwBomb = () => bombs++;
-  a.superJump(new f.THREE.Vector3(20, 0, 0)); f.tick(a, 114); assert.equal(shots.length, 0);
+  a.superJump(new f.THREE.Vector3(20, 0, 0)); f.tick(a, 114 + a.s3.jumpStartupHumanoidF); assert.equal(shots.length, 0);
   f.tick(a, 24); assert.ok(shots.length > 0); assert.equal(shots[0].phase, 'flight'); assert.ok(shots[0].pos[1] > 0);
   if (weapon === 'blaster') assert.ok(shots[0].tick >= 123, 'runner retains native windup');
   assert.equal(bombs, 0); assert.equal(a.specialActive, null);
@@ -160,7 +162,7 @@ for (const mutation of ['move', 'splat', 'reset']) test(`#362 confirmation locks
   if(mutation==='move') target.pos.set(30,0,25);
   if(mutation==='splat') target.splat(null,'water');
   if(mutation==='reset') target.spawnAt(new f.THREE.Vector3(30,0,25),0);
-  f.tick(a,80); assert.equal(a.superJumpState.phase,'flight');
+  f.tick(a,80 + a.s3.jumpStartupHumanoidF); assert.equal(a.superJumpState.phase,'flight');
   assert.deepEqual(plain(a.superJumpState.to.toArray()),committed);
 });
 

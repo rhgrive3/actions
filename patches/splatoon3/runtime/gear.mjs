@@ -65,6 +65,10 @@ export function installGear(api, tuning) {
     m.rollRetention = gearCurve(ap.actionIntensify || 0, ...extra.rollRetention);
     a.s3.jumpChargeTime = tuning.superJump.chargeTime * (m.quickSuperJump ?? 1);
     a.s3.jumpFlightTime = tuning.superJump.flightTime * gearCurve(ap.quickSuperJump || 0, ...extra.jumpFlightTime);
+    // The S3 initial-form term is form-dependent, not equipment-dependent, so
+    // Quick Super Jump must not reach it.
+    a.s3.jumpStartupSwimF = tuning.superJump.startupSwimF;
+    a.s3.jumpStartupHumanoidF = tuning.superJump.startupHumanoidF;
     a.s3.modifiers.surgeChargeScale = m.actionIntensify ?? 1;
     // Actor-local copy. An opponent's equipment never changes shared stats.
     a.weapon = { ...api.WEAPONS[a.weaponId] };

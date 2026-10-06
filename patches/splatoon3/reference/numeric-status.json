@@ -2099,6 +2099,16 @@
       "rawValue": 138
     }
   },
+  "superJump.startupSwimF": {
+    "value": 1,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "superJump.startupHumanoidF": {
+    "value": 22,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
   "gearExtra.inkRecoveryKid.0": {
     "value": 600,
     "status": "derived from pinned extracted data; physical scale unverified",
