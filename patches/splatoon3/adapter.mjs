@@ -1,3 +1,6 @@
+import { adaptMatchHud } from './match-hud-adapter.mjs';
+import { adaptContactRecovery } from './contact-recovery-adapter.mjs';
+import { adaptClothingGear } from './clothing-gear-adapter.mjs';
 import { adaptWeaponEdgecases } from './weapon-edgecases-adapter.mjs';
 import { adaptWeaponsFidelity } from './weapons-adapter.mjs';
 // Apply only to a disposable BUILD tree. Upstream sources are never modified.
@@ -32,6 +35,9 @@ export function checkCompatibility(src, patchRoot = PATCH_ROOT) {
 }
 
 export function adaptSource(rel, code) {
+  code = adaptClothingGear(rel, code, replaceOnce);
+  code = adaptContactRecovery(rel, code, replaceOnce);
+  code = adaptMatchHud(rel, code);
   if (rel === 'src/game/match.js') {
     code = replaceOnce(code,
       'const win = cov[0] === cov[1] ? (Math.random() < 0.5 ? 0 : 1) : cov[0] > cov[1] ? 0 : 1;',
@@ -179,7 +185,7 @@ export function adaptSource(rel, code) {
     const end = code.indexOf('    // ---- weapons (', start);
     if (start < 0 || end < start) throw new Error('INKWAVE patch conflict: actor resource connection');
     code = replaceOnce(code, code.slice(start, end), '    updateResources(this, dt);\n\n', 'post-movement resources');
-    return `import { prepareSuperJump, rememberSuperJumpGround, superJumpTarget, updateSuperJumpMain, SUPERJUMP_MAIN_PROGRESS } from '../../patches/splatoon3/runtime/superjump.mjs';\nimport { beforeActions } from '../../patches/splatoon3/runtime/movement.mjs';\nimport { updateResources } from '../../patches/splatoon3/runtime/resources.mjs';\n` + code;
+    return `import { prepareSuperJump, rememberSuperJumpGround, superJumpTarget, updateSuperJumpMain, SUPERJUMP_MAIN_PROGRESS } from '../../patches/splatoon3/runtime/superjump.mjs';\nimport { beforeActions } from '../../patches/splatoon3/runtime/movement.mjs';\nimport { updateResources, respawnTimeForCause } from '../../patches/splatoon3/runtime/resources.mjs';\n` + code;
   }
   if (rel === 'src/game/character-weapons.js') {
     code = replaceOnce(code, '    if (ft >= 0.15 && ft - dt < 0.15) w.drumW += 34;', '    const release = st.flickReleaseTime ?? 0.15;\n    if (ft >= release && ft - dt < release) w.drumW += 34;', 'roller drum release impulse');
