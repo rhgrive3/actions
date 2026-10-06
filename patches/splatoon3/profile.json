@@ -60,7 +60,9 @@
       "ballistics": {
         "endSpeed": 140.54999999999998
       },
-      "fieldCollisionRadius": 0.2
+      "fieldCollisionRadius": 0.2,
+      "swimFirstShotDelay": 0.2,
+      "spawnPlayerForwardRate": 2
     },
     "blaster": {
       "inkPerShot": 10,
@@ -131,7 +133,8 @@
         "endSpeed": 90.63,
         "firstChargeSpeed": 126
       },
-      "fieldCollisionRadius": 0.2
+      "fieldCollisionRadius": 0.2,
+      "postStreamDelay": 0.06666666666666667
     },
     "charger": {
       "inkFull": 18,
@@ -145,7 +148,21 @@
       "chargeTime": 1,
       "inkRecoverStop": 0.3333333333333333,
       "damagePartialMax": 80,
-      "fieldCollisionRadius": 0.02
+      "fieldCollisionRadius": 0.02,
+      "swimChargeStartDelay": 0.1,
+      "impactPaint": {
+        "min": 0.906,
+        "max": 2.719,
+        "full": 3.263
+      },
+      "lineSpacing": {
+        "depthMin": 2.73,
+        "depthMax": 1.56,
+        "depthFull": 1.56,
+        "overlapMin": 0.125,
+        "overlapMax": 0.25,
+        "overlapFull": 0.34
+      }
     },
     "roller": {
       "rollSpeed": 7.92,
@@ -178,7 +195,7 @@
           35
         ]
       ],
-      "verticalWindup": 0.43333333333333335,
+      "verticalWindup": 0.5166666666666667,
       "verticalInk": 8.5,
       "verticalDrops": 5,
       "verticalSpeed": 110.028,
@@ -208,7 +225,7 @@
       "inkRecoverStop": 0.7166666666666667,
       "verticalInkRecoverStop": 0.9666666666666667,
       "flickInterval": 0.7,
-      "verticalInterval": 0.7833333333333333,
+      "verticalInterval": 0.9333333333333333,
       "nearFlickUnit": {
         "count": 1,
         "speedBase": 0.48,
@@ -287,7 +304,9 @@
           "endRadius": 1.02,
           "changeTime": 0.06666666666666667
         }
-      }
+      },
+      "spawnPlayerForwardRate": 2,
+      "squidFlickDelay": 0.21666666666666667
     },
     "slosher": {
       "inkPerShot": 7.6,
@@ -427,13 +446,13 @@
   "flow": {
     "threshold": 3,
     "duration": 30,
-    "extension": 5,
+    "extension": 10,
     "maxDuration": 30,
     "weights": {
       "splat": 1,
       "assist": 0.5,
-      "damage": 0.003,
-      "turf": 0.003
+      "damage": 0,
+      "turf": 0.0024
     },
     "assistWindow": 5,
     "runMultiplier": 1.2,
@@ -492,13 +511,13 @@
       "superjump airborne vulnerability window/trajectory/landing paint and respawn timing/armor; raw 80F preparation/138F flight are pinned and landing protection is removed per Nintendo 9.3.0 fix",
       "aim response, gyro, animation, terrain/network and physical-device validation; see movement-resources comparison matrix and Switch/iOS/two-peer measurement protocol",
       "upstream acceleration/braking/turn/air-control/jump and landing feel",
-      "Dualies 1F released-tap cancellation is a conservative non-buffering choice; stable held-human first shot is measured3F, squid timing remains unchanged and unverified.",
       "Splatling grounded pitch1.6deg uses the existing radial sampler with separate axes; S3 PDF, bias, air/IA correlations are unverified.",
       "Roller near-unit count1 is corroborated by S3 unit research, not an inferred omitted BulletNum; velocity and width use relative mappings, sampler/absolute spawn calibration remains unverified.",
       "Blaster terrain damage is half of normalized existing bands, floor to0.1HP after scaling;35HP cap is sourced, complete S3 falloff curve remains uncalibrated.",
       "PR64 completion: finite Charger flight, continuous collision, source-mirrored unit layouts and model-labelled interpolation; physical Switch parity remains unverified.",
       "Rescued from PR #489: Flow progress now decays/penalizes and survives respawn while active; community loss values remain calibration, not Nintendo primary data.",
-      "Rescued from PR #547/#491/#545: Roller swing movement target, deterministic Alpha ties, and Tenacity owner-only passive charge remain subject to current-main combined validation."
+      "Rescued from PR #547/#491/#545: Roller swing movement target, deterministic Alpha ties, and Tenacity owner-only passive charge remain subject to current-main combined validation.",
+      "Dualies first shot counts the recognized input as frame1: stable human3F (2 elapsed intervals), swim13F (12 elapsed intervals). Swim13F is a community reference target, not a direct raw-table extraction; physical input/display latency remains unverified. Released startup taps cancel."
     ],
     "movementResourcesEvidence": "reports/inkwave-movement-resources-2026-10-02.md"
   },
@@ -1324,6 +1343,76 @@
       "index": null,
       "factor": 1,
       "rawValue": 0.8
+    },
+    "splatlingPlayerCollision.referenceRadius": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/CollisionParam/InitRadiusForPlayer",
+      "rawValue": 0.225,
+      "factor": 1
+    },
+    "splatlingPlayerCollision.referenceShooterRadius": {
+      "parameter": "data/parameter/1130/weapon/WeaponShooterNormal.game__GameParameterTable.json#/GameParameters/CollisionParam/InitRadiusForPlayer",
+      "rawValue": 0.285,
+      "factor": 1
+    },
+    "weapons.charger.impactPaint.min": {
+      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/PaintParam/RadiusMinCharge",
+      "rawValue": 0.906,
+      "factor": 1
+    },
+    "weapons.charger.impactPaint.max": {
+      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/PaintParam/RadiusMaxCharge",
+      "rawValue": 2.719,
+      "factor": 1
+    },
+    "weapons.charger.impactPaint.full": {
+      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/PaintParam/RadiusFullCharge",
+      "rawValue": 3.263,
+      "factor": 1
+    },
+    "weapons.charger.lineSpacing.depthMin": {
+      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/SplashPaintParam/DepthHalfMinCharge",
+      "rawValue": 2.73,
+      "factor": 1
+    },
+    "weapons.charger.lineSpacing.depthMax": {
+      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/SplashPaintParam/DepthHalfMaxCharge",
+      "rawValue": 1.56,
+      "factor": 1
+    },
+    "weapons.charger.lineSpacing.depthFull": {
+      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/SplashPaintParam/DepthHalfFullCharge",
+      "rawValue": 1.56,
+      "factor": 1
+    },
+    "weapons.charger.lineSpacing.overlapMin": {
+      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/SplashSpawnParam/OnTopRateMinCharge",
+      "rawValue": 0.125,
+      "factor": 1
+    },
+    "weapons.charger.lineSpacing.overlapMax": {
+      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/SplashSpawnParam/OnTopRateMaxCharge",
+      "rawValue": 0.25,
+      "factor": 1
+    },
+    "weapons.charger.lineSpacing.overlapFull": {
+      "parameter": "data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json#/GameParameters/SplashSpawnParam/OnTopRateFullCharge",
+      "rawValue": 0.34,
+      "factor": 1
+    },
+    "weapons.dualies.spawnPlayerForwardRate": {
+      "parameter": "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json#/GameParameters/spl__SpawnBulletAdditionMovePlayerParam/ZRate",
+      "rawValue": 2,
+      "factor": 1
+    },
+    "weapons.roller.spawnPlayerForwardRate": {
+      "parameter": "data/parameter/1130/weapon/WeaponRollerNormal.game__GameParameterTable.json#/GameParameters/spl__SpawnBulletAdditionMovePlayerParam/ZRate",
+      "rawValue": 2,
+      "factor": 1
+    },
+    "weapons.splatling.postStreamDelay": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json#/GameParameters/WeaponParam/PostDelayFrame",
+      "rawValue": 4,
+      "factor": 0.016666666666666666
     }
   },
   "gearExtra": {
@@ -3088,5 +3177,10 @@
       "chargerPaint": "pinned width/depth/radius endpoints drive existing rasterizer; spacing formula and terminal multiplier remain source-guided/community-modelled",
       "rollerAgeDamage": "linear multiplier to pinned DamageRejectRate between pinned start/end frames; subframe rounding unverified"
     }
+  },
+  "splatlingPlayerCollision": {
+    "referenceRadius": 0.225,
+    "referenceShooterRadius": 0.285,
+    "shooterWorldRadius": 0.15
   }
 }
