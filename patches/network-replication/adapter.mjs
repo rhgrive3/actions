@@ -240,14 +240,13 @@ function retireNetworkGhosts(owner = null) {
       '    const c = b.pos;\n    const detonationLocalTime = b.ghost ? b._netBornLocal + b.age : null;\n    let area = G.paint.splat',
       'bomb detonation playback time');
     {
-      const rawBombHit = "      this.applyHit(b.owner, e, distanceDamage(s.damageBands, d, false), 'bomb');";
-      const kitBombHit = "      this.applyHit(b.owner, e, distanceDamage(kitBombDamageBands(SUB, b, s.damageBands), d, false), 'bomb');";
-      const bombHit = code.includes(kitBombHit) ? kitBombHit : rawBombHit;
-      patch(bombHit,
-        `      if (b.ghost && (!Number.isFinite(detonationLocalTime)
-          || !Number.isFinite(e._netLifeStartedAt) || e._netLifeStartedAt > detonationLocalTime)) continue;
-${bombHit}`,
-        'reject bomb from prior recipient life');
+      const bombHitMatches = [...code.matchAll(/^([ \t]*)this\.applyHit\(b\.owner, e, [^\n]+, 'bomb'\);$/gm)];
+      if (bombHitMatches.length !== 1) throw Error('Network replication anchor mismatch: ' + rel + ': reject bomb from prior recipient life');
+      const bombHit = bombHitMatches[0][0], indent = bombHitMatches[0][1];
+      const guarded = `${indent}if (b.ghost && (!Number.isFinite(detonationLocalTime)
+${indent}  || !Number.isFinite(e._netLifeStartedAt) || e._netLifeStartedAt > detonationLocalTime)) continue;
+${bombHit}`;
+      code = code.slice(0, bombHitMatches[0].index) + guarded + code.slice(bombHitMatches[0].index + bombHit.length);
     }
     patch('    const up = clamp(a.aimPitch, -0.2, 0.5) + 0.32;', '    const up = clamp(a.aimPitch, -0.2, 0.5) + 0.32;\n    let projectileFirst;', 'attack-owned first projectile');
     patch("      this._push(p);\n    }\n    appendRollerNearUnit(this, a, w);\n    if (a.isLocal) emit('recoil', { amount: 0.007 });", "      this._push(p);\n      if (i === 0) projectileFirst = p._netId;\n    }\n    appendRollerNearUnit(this, a, w);\n    if (a.isLocal) emit('recoil', { amount: 0.007 });", 'capture exact volley during generation');
