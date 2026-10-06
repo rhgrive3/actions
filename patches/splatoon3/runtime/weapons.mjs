@@ -1,5 +1,8 @@
 import { installSplatlingRadiusCharge } from './splatling-radius-charge.mjs';
 import { installWeaponEdgecases } from './weapon-edgecases.mjs';
+import { installSplatling } from './splatling.mjs';
+import { installWeaponGates } from './weapon-gates.mjs';
+import { installAgent3WeaponPhysics } from './agent3-weapon-physics.mjs';
 import { installRollerLogic } from './roller.mjs';
 let api;
 export function splatlingBurst(w, charge) {
@@ -124,6 +127,7 @@ export function installWeapons(context, profile) {
       // 12 * (1/60) misses .2 and the 17F recovery also gains an extra tick.
       const carry = Math.max(0, this.slosh - w.windup);
       this.slosh = -1; G.projectiles.fireSlosh(a, w);
+      this.s3PostShotRemaining = w.postShotDelay;
       this.cooldown = w.fireInterval - w.windup - carry;
       this.s3SloshRecovery = !!inp.fire;
     };
@@ -220,36 +224,15 @@ export function installWeapons(context, profile) {
       this.s3BlasterWindup -= dt; this.firingT = .35;
       if (this.s3BlasterWindup > 1e-10) return;
       this.s3BlasterWindup = 0;
-      return auto.call(this, dt, { ...input, fire: true }, { ...w, fireInterval: w.fireInterval - w.preDelay });
+      const beforeInk = this.a.ink;
+      const result = auto.call(this, dt, { ...input, fire: true }, { ...w, fireInterval: w.fireInterval - w.preDelay });
+      if (this.a.ink < beforeInk) this.s3PostShotRemaining = w.postShotDelay;
+      return result;
     }
     if (input.fire && this.cooldown <= 0 && this.a.ink >= w.inkPerShot) { this.s3BlasterWindup = w.preDelay; this.firingT = .35; return; }
     if (!input.fire) this.cooldown = Math.max(0, this.cooldown);
   };
-  const splatling = WeaponRunner.prototype._splatling;
-  WeaponRunner.prototype._splatling = function (dt, input, w) {
-    if(this.a.form === 'squid') {
-      this.charging = this.streaming = false; this.charge = this.chargeT = this.burstT = 0;
-      this.spinLoop?.stop(.12); this.spinLoop = null; return;
-    }
-    const charging = this.charging, charge = this.charge;
-    // First stream tick emits at time zero; do not borrow its pre-update dt
-    // from the next 4F interval. Later near-zero boundaries remain exact.
-    if (this.streaming && this.burstT === this.burstDur) this.cooldown = Math.max(0, this.cooldown);
-    if (Math.abs(this.cooldown) < 1e-10) this.cooldown = 0;
-    // End the final prepaid cadence slot without a floating-point extra tick.
-    if (this.streaming && this.burstT <= dt + 1e-10) this.burstT = Math.min(this.burstT, dt);
-    const result = splatling.call(this, dt, input, this.streaming ? { ...w, inkPerShot: 0 } : w);
-    if (charging && !input.fire && this.streaming) {
-      const reservation = splatlingReservation(w, charge, this.a.ink);
-      this.burstDur = this.burstT = reservation.duration;
-      this.a.ink = Math.max(0, this.a.ink - reservation.cost); this.a.lastFire = 0;
-      if (!reservation.shots) {
-        this.streaming = false; this.charge = this.burstFrac = 0;
-        this.spinLoop?.stop(.12); this.spinLoop = null;
-      }
-    }
-    return result;
-  };
+  installSplatling(api, profile, { splatlingChargeCap, splatlingReservation });
   // Movement Physics owns roller rolling speed/recovery. Add only the latest
   // Charger charging-speed rule here, then delegate every other movement state.
   const moveSpeed = WeaponRunner.prototype.moveSpeed;
@@ -260,5 +243,7 @@ export function installWeapons(context, profile) {
     return moveSpeed.call(this);
   };
   installSplatlingRadiusCharge(api, profile);
+  installWeaponGates(api);
+  installAgent3WeaponPhysics(api, profile);
   installWeaponEdgecases(api);
 }
