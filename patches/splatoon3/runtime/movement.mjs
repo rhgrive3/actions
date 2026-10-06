@@ -1,4 +1,5 @@
 let api, config;
+const EPSILON = 1e-10;
 export function rollEligible(velocity, move, cfg) {
   const speed = Math.hypot(velocity.x, velocity.z), input = Math.hypot(move.x, move.z);
   if (speed < cfg.minimumSpeed || input < cfg.minimumInput) return false;
@@ -18,12 +19,28 @@ export function absorbArmor(state, damage) {
 }
 export function movementState(a) {
   a.s3 ||= {};
-  return a.s3.actions || (a.s3.actions = { chain: 0, chainTimer: 0, chainSpeed: 0, roll: null, surge: null });
+  const state = a.s3.actions || (a.s3.actions = {
+    chain: 0, chainTimer: 0, chainSpeed: 0, roll: null, surge: null,
+    fullCancelCandidate: null, fullCancelJumpVelocity: null
+  });
+  state.fullCancelCandidate ??= null;
+  state.fullCancelJumpVelocity ??= null;
+  return state;
 }
 function sync(a, state) { a.s3.roll = state.roll; a.s3.surge = state.surge; }
 function advanceChainTimer(state, dt) {
   state.chainTimer = Math.max(0, state.chainTimer - dt);
   if (state.chainTimer <= 1e-10) { state.chain = 0; state.chainTimer = 0; state.chainSpeed = 0; }
+}
+export function clearFullCancelCandidate(a) {
+  if (a?.s3?.actions) a.s3.actions.fullCancelCandidate = null;
+}
+export function takeFullCancelJumpVelocity(a) {
+  const state = a?.s3?.actions;
+  if (!state) return null;
+  const velocity = state.fullCancelJumpVelocity;
+  state.fullCancelJumpVelocity = null;
+  return velocity;
 }
 function launch(a, direction, speed, vertical, kind) {
   const length = Math.hypot(direction.x, direction.z) || 1;
@@ -33,10 +50,44 @@ function launch(a, direction, speed, vertical, kind) {
   a.character.trigger(kind, { duration: config.roll.duration });
   api.emit('actor:' + kind, { actor: a });
 }
-export function beforeActions(a, dt, jumpPressed) {
+export function beforeActions(a, dt, jumpPressed, input = {}) {
   if (!api) throw new Error('INKWAVE movement patch not installed');
   const state = movementState(a), cfg = config;
+  state.fullCancelJumpVelocity = null;
   advanceChainTimer(state, dt);
+
+  // Fire wins the existing form arbitration before the roll hook runs. Retain
+  // that tick's actual submerged state and velocity so ordinary kid movement
+  // cannot brake away the roll eligibility before a fresh B edge arrives.
+  if (!a.alive || a.specialActive || a.superJumpState || a.form === 'squid') {
+    state.fullCancelCandidate = null;
+  } else if (input.wasSquid && input.wasSubmerged && !input.wasClimbing && input.firePressed && input.fireWins &&
+      !state.roll && !state.surge) {
+    state.fullCancelCandidate = { pressT: a._firePressT, vx: a.vel.x, vz: a.vel.z };
+  }
+  const candidate = state.fullCancelCandidate;
+  if (candidate) {
+    const age = api.G.time - candidate.pressT, window = api.PLAYER.fireBuffer;
+    const inWindow = Number.isFinite(age) && Number.isFinite(window) && age >= -EPSILON && age <= window + EPSILON;
+    if (!inWindow || !a.alive || a.specialActive || a.superJumpState || a.form !== 'kid') {
+      state.fullCancelCandidate = null;
+    } else if (jumpPressed) {
+      state.fullCancelCandidate = null;
+      if (age > EPSILON && a.grounded && a.groundTeam === 1 && !a.climbing &&
+          rollEligible({ x: candidate.vx, z: candidate.vz }, a.intent.move, cfg.roll)) {
+        const retention = a.s3.modifiers?.rollRetention ?? cfg.roll.chainRetention;
+        const speed = rollLaunchSpeed(Math.max(cfg.roll.minimumSpeed, Math.hypot(candidate.vx, candidate.vz)),
+          state.chain, retention, state.chainSpeed);
+        const length = Math.hypot(a.intent.move.x, a.intent.move.z);
+        a.vel.x = a.intent.move.x / length * speed;
+        a.vel.z = a.intent.move.z / length * speed;
+        state.fullCancelJumpVelocity = cfg.roll.jumpVelocity;
+        state.chainSpeed = speed; state.chain++; state.chainTimer = cfg.roll.chainReset;
+        sync(a, state); return false;
+      }
+    }
+  }
+
   for (const action of [state.roll, state.surge]) if (action) {
     const remaining = (action.armorTime || 0) - dt;
     action.armorTime = remaining <= 1e-10 ? 0 : remaining;
@@ -116,10 +167,10 @@ export function installMovement(context, tuning) {
   };
   const horizontal = Actor.prototype._horizontal;
   Actor.prototype._horizontal = function (...args) {
-    const roll = movementState(this).roll;
+    const state = movementState(this), roll = state.roll;
     // Keep launch momentum, including any clipping applied by the real collision
     // resolver. Restoring vx/vz here would push into the wall again every tick.
-    if (roll) return;
+    if (roll || state.fullCancelJumpVelocity !== null) return;
     return horizontal.apply(this, args);
   };
   const ledge = Actor.prototype._ledgePop;
