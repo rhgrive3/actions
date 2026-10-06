@@ -79,6 +79,21 @@ export function adaptSource(rel, code) {
       '      const winner = authoritativeWinner === 0 || authoritativeWinner === 1 ? authoritativeWinner : Math.abs(pa - pb) < 0.05 ? -1 : pa > pb ? 0 : 1;',
       'authoritative Turf winner HUD reveal');
     code = replaceOnce(code,
+      `    } else if (kind === 'slosher') {
+      // the lob: an arch over the aim point and a landing "bucket" bracket under it
+      r.innerHTML = \`<i class="iw-ret__dot"></i><svg class="iw-ret__svg" viewBox="-40 -40 80 80" aria-hidden="true">
+        <path class="iw-ret__ring iw-ret__arch" d="M-24 6 Q0 -26 24 6"/><path class="iw-ret__ring thin" d="M-10 13 L-6 18 L6 18 L10 13"/>
+        <path class="iw-ret__ring thin" d="M-24 6 L-27 1 M24 6 L27 1"/></svg>\`;
+    } else if (kind === 'splatling') {`,
+      `    } else if (kind === 'splatling') {`, 'slosher trajectory reticle (#652)');
+    code = replaceOnce(code,
+      `    if (L.kind === 'slosher') {
+      const k = this._kick;
+      if (L.bk == null || Math.abs(k - L.bk) > 0.02) { L.bk = k; this.ret.style.setProperty('--kk', k.toFixed(2)); }
+    }
+    // spawn shield + bomb aim`,
+      `    // spawn shield + bomb aim`, 'slosher arch kick writer (#652)');
+    code = replaceOnce(code,
       '    const ch = f.crosshair || {};',
       '    const ch = f.crosshair || {};\n    applyShotGuide(this, ch.guide, innerWidth, innerHeight);',
       'S3 ShotGuideFrame reticle placement');
@@ -199,6 +214,15 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, 'const p = _v.copy(a.pos); p.y += 1.35;', 'const p = _v.copy(a.pos); p.y += 1.35; bombPreviewPosition(a, p);', 'bomb preview origin');
     code = replaceOnce(code, '        vel.y -= 24 * dt;', '        vel.y -= SUB.bomb.gravity * dt;', 'bomb preview gravity');
     code = replaceOnce(code, 'if (b.fuse <= 0) {', 'if (b.fuse <= 1e-10) {', 'bomb fuse frame boundary');
+    // #246: the Ink Storm cloud belongs to the device's first real terrain/object
+    // contact. The old `age > 1.1` branch deployed a cloud from elapsed air time
+    // alone, so a device that had not hit anything rained mid-air. Keep only a
+    // non-gameplay memory guard for a device that never contacts anything; it
+    // releases the device without a cloud and is not an S3 timing value.
+    code = replaceOnce(code,
+      "if (b.kind === 'storm' && b.age > 1.1) { this._spawnCloud(b); if (b.ghost) this.clouds[this.clouds.length - 1].ghost = true; this._releaseBomb(b); this.bombs.splice(i, 1); continue; }",
+      "if (b.kind === 'storm' && b.age > 30) { this._releaseBomb(b); this.bombs.splice(i, 1); continue; }",
+      'storm airborne deploy');
     code = adaptWeaponEdgecases(rel, code, replaceOnce);
     code = adaptWeaponsFidelity(code, replaceOnce);
     return `import { applyProjectileHit, chargerDamage, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\n` + code;
@@ -247,6 +271,10 @@ export function adaptSource(rel, code) {
       '      const k = s.t + 1e-10 >= s.dur ? 1 : Math.min(1, s.t / s.dur);', 'super jump frame boundary');
     code = replaceOnce(code, "      if (k >= 1) {\n        this.superJumpState = null;",
       "      if (k >= 1) {\n        this.invuln = 0; // Spawn protection always ends before landing.\n        this.superJumpState = null;", 'super jump landing vulnerability');
+    code = replaceOnce(code,
+      '        this.addTurf(G.paint.splat(_v.copy(this.pos).setY(this.pos.y + 0.3), 1.4, this.team, { seed: Math.random() }));\n',
+      '        // Splatoon 3: Ordinary Super Jump does not leave ink, grant turf points, or charge special at landing.\n',
+      'super jump landing paint');
     const start = code.indexOf('    // ---- ink / hp\n');
     const end = code.indexOf('    // ---- weapons (', start);
     if (start < 0 || end < start) throw new Error('INKWAVE patch conflict: actor resource connection');
@@ -262,6 +290,25 @@ export function adaptSource(rel, code) {
     return "import { rollerModel } from '../../patches/splatoon3/runtime/roller-model.mjs';\n" + code;
   }
   if (rel === 'src/main.js') {
+    // #614: Splatoon 3's normal battle HUD has no global text feed naming remote
+    // attacker/victim pairs. Drop the two remote-splat feed broadcasts; the local
+    // splat confirmation (kind 'kill'), own-death showSplatted, the top roster and
+    // WIPEOUT! keep their existing paths. The ally-down audio cue stays because it
+    // carries no identity.
+    code = replaceOnce(code,
+      "        G.audio?.play('ally_splatted', { volume: 0.5 });\n" +
+      "        this.hud?.feed({ text: attacker ? t('{victim} was splatted by {attacker}', { victim: victim.name, attacker: attacker.name }) : t('{victim} was splatted', { victim: victim.name }), color: G.teamHex[victim.enemyTeam], kind: 'death' });\n" +
+      "      } else if (attacker && attacker.team === local?.team) {\n" +
+      "        this.hud?.feed({ text: t('{attacker} splatted {victim}', { attacker: attacker.name, victim: victim.name }), color: G.teamHex[attacker.team], kind: 'ally' });\n" +
+      "      }",
+      "        // #614: no global text feed naming remote attacker/victim pairs — the top\n" +
+      "        // roster (alive/splatted) and WIPEOUT! already carry remote splat state;\n" +
+      "        // keep only the non-identifying ally-down audio cue.\n" +
+      "        G.audio?.play('ally_splatted', { volume: 0.5 });\n" +
+      "      }\n" +
+      "      // Remote ally-on-enemy splats (#614) likewise add no text entry: the local\n" +
+      "      // confirmation above is the only feed that names a remote player.",
+      'splat feed remote-identity gate (#614)');
     const start = code.indexOf('    G.time += dt;\n', code.indexOf('  _frame(dt) {'));
     const end = code.indexOf('    // A full-frame lobby/showcase completely covers', start);
     if (start < 0 || end < start) throw new Error('INKWAVE patch conflict: fixed simulation connection');
@@ -295,7 +342,22 @@ export function adaptSource(rel, code) {
       "      crosshair: { spread, onTarget: m.controller?.onTarget ? 'enemy' : null, inRange: m.controller ? m.controller.inRange !== false : true },",
       "      crosshair: { spread, onTarget: m.controller?.onTarget ? 'enemy' : null, inRange: m.controller ? m.controller.inRange !== false : true, guide: projectShotGuide(m.controller?.enabled && m.controller?.a?.alive ? m.controller.shotGuide : null, cam, W, H) },",
       'S3 ShotGuideFrame HUD projection');
-    return `import { runSimulation, installGame } from '../patches/splatoon3/runtime/clock.mjs';\nimport { projectShotGuide } from '../patches/splatoon3/runtime/weapons-fidelity.mjs';\n` + code;
+    code = replaceOnce(code,
+      "          // enemies only show on the map when visible to your team (not submerged far away)\n          if (o.anim.form === 'swim') continue;",
+      "          // S3 Turf Map: opponents appear only once damaged (>=18) or explicitly marked.\n          if (!enemyRevealedOnMap(o, PLAYER.hp)) continue;",
+      'enemy map reveal');
+    return `import { runSimulation, installGame } from '../patches/splatoon3/runtime/clock.mjs';\nimport { projectShotGuide } from '../patches/splatoon3/runtime/weapons-fidelity.mjs';\nimport { enemyRevealedOnMap } from '../patches/splatoon3/runtime/map-reveal.mjs';\n` + code;
+  }
+
+  if (rel === 'src/core/shadowcache.js') {
+    // #658: a stage switch must release the previously collected static-caster
+    // generation immediately. While Shadows are OFF no shadow-map render runs,
+    // so the dirty flag alone never rebuilds `this.static` and the stale array
+    // would keep the disposed previous stage (meshes, PropKit atlas) alive.
+    code = replaceOnce(code,
+      '  setStaticRoots(roots) {\n    this.roots = roots.filter(Boolean);\n    this.dynamic = new WeakSet();\n    this.dirty = true;\n  }',
+      '  setStaticRoots(roots) {\n    this.roots = roots.filter(Boolean);\n    this.static.length = 0; // #658: release the previous collected caster generation at the root handoff\n    this.dynamic = new WeakSet();\n    this.dirty = true;\n  }',
+      'stage-root static release');
   }
 
   return code;
