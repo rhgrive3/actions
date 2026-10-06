@@ -1,6 +1,6 @@
 // Mutable synchronous HUD transport, owned by one Match/Game. No actor references
 // are retained in snapshot values; removed actors are weak keys only.
-export function teamHudSnapshot(match, colors, viewerTeam = 0) {
+export function teamHudSnapshot(match, colors, viewerTeam = 0, paint = null) {
   let cache = match._teamHudSnapshot;
   if (!cache) {
     const a = { color: '', players: [] }, b = { color: '', players: [] };
@@ -8,6 +8,12 @@ export function teamHudSnapshot(match, colors, viewerTeam = 0) {
   }
   const t0 = cache.teams[0], t1 = cache.teams[1];
   t0.color = colors[0]; t1.color = colors[1];
+  const coverage = match.mode === 'turf' && match.state === 'playing' && !match.attract ? paint?.coverage?.() : null;
+  const valid = Array.isArray(coverage) && coverage.length === 2 && coverage.every(v => Number.isFinite(v) && v >= 0 && v <= 1) && coverage[0] + coverage[1] <= 1 + Number.EPSILON * 4;
+  const delta = valid ? coverage[0] - coverage[1] : 0;
+  const leader = Math.abs(delta) + Number.EPSILON >= 0.1 ? (delta > 0 ? 0 : 1) : -1;
+  t0.leading = leader === 0; t0.danger = leader === 1;
+  t1.leading = leader === 1; t1.danger = leader === 0;
   let n0 = 0, n1 = 0;
   for (let i = 0; i < match.actors.length; i++) {
     const a = match.actors[i];

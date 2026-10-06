@@ -1,6 +1,14 @@
 export function adaptHudSnapshots(rel, code, once) {
   if (rel === 'src/game/match.js') {
-    code = once(code, "  teamSummary() {\n    return [0, 1].map((t) => ({\n      color: G.teamHex[t],\n      players: this.actors.filter((a) => a.team === t).map((a) => ({\n        name: a.name, weapon: a.weaponId, alive: a.alive, respawn: a.alive ? 0 : Math.max(0, a.respawnTimer), specialReady: a.specialReady(), isSelf: a.isLocal,\n      })),\n    }));\n  }", "  teamSummary(viewerTeam = 0) { return teamHudSnapshot(this, G.teamHex, viewerTeam); }", 'persistent team HUD snapshots');
+    const plain = "  teamSummary() {\n    return [0, 1].map((t) => ({\n      color: G.teamHex[t],\n      players: this.actors.filter((a) => a.team === t).map((a) => ({\n        name: a.name, weapon: a.weaponId, alive: a.alive, respawn: a.alive ? 0 : Math.max(0, a.respawnTimer), specialReady: a.specialReady(), isSelf: a.isLocal,\n      })),\n    }));\n  }";
+    let source = plain;
+    if (!code.includes(plain) && code.includes("  teamSummary() {\n    const coverage = this.mode === 'turf'")) {
+      const start = code.indexOf("  teamSummary() {");
+      const end = code.indexOf("\n  }\n}", start);
+      if (start < 0 || end < start) throw new Error('HUD snapshot conflict: composed teamSummary method boundary');
+      source = code.slice(start, end + 4);
+    }
+    code = once(code, source, "  teamSummary(viewerTeam = 0) { return teamHudSnapshot(this, G.teamHex, viewerTeam, G.paint); }", 'persistent team HUD snapshots');
     return "import { teamHudSnapshot } from '../../patches/local-quality/hud-snapshots.mjs';\n" + code;
   }
   if (rel === 'src/main.js') {
