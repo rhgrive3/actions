@@ -93,7 +93,11 @@ export function installRollerLogic({ WeaponRunner, Actor, G }, profile) {
     const state = this.s3RollerAttack;
     let mode = rollerMode(w, this.s3FlickVertical);
     if (state) mode = { ...mode, flickWindup: state.windup, flickInterval: state.interval };
-    const runnerMode = state?.depleted ? { ...mode, flickInk: 0 } : mode;
+    // The free runner cost belongs only to an admitted depleted swing. A
+    // depleted state remains through the tail of cooldown; carrying its zero
+    // cost into a later zero-ink press admits a second ordinary volley.
+    const depletedSwingActive = !!state?.depleted && (starting || this.flick >= 0);
+    const runnerMode = depletedSwingActive ? { ...mode, flickInk: 0 } : mode;
     const winding = this.flick >= 0;
     if (state && !starting) state.elapsed = Math.min(state.interval, state.elapsed + dt);
     // Float accumulation must not add a 22nd/27th tick to a 21F/26F windup.

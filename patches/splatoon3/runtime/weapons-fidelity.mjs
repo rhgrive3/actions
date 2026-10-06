@@ -224,6 +224,42 @@ function setCollision(p,c,offset=0,rate=1) {
   // Existing packet size carries initial radius; layout is unchanged.
   p.size=p.fidelityPlayerCollision.initRadius;
 }
+function rollerPacketDepletionRate(packetSize,c) {
+  const rate=c?.DepletionRate;
+  if(!Number.isFinite(packetSize)||!Number.isFinite(rate)||rate<0||rate>=1)return 1;
+  const normal=collisionRecord(c,'Player').initRadius;
+  const depleted=collisionRecord(c,'Player',0,rate).initRadius;
+  // NetMatch rounds size to hundredths. Treat that existing field as source
+  // metadata only when it is closer to the pinned depleted radius than normal.
+  if(Math.abs(packetSize-depleted)>.005+EPSILON||Math.abs(packetSize-depleted)+EPSILON>=Math.abs(packetSize-normal))return 1;
+  return rate;
+}
+function rollerPacketUnit(units, speed, packetSize, vertical) {
+  if(!Array.isArray(units)||!Number.isFinite(speed))return null;
+  const candidates=[];
+  const depleted=rollerDepletionVolley({Unit:units},vertical)||[];
+  for(const unit of units){
+    const collision=unit.UnitParam?.CollisionParam;
+    const rate=rollerPacketDepletionRate(packetSize,collision);
+    if(rate<1){
+      for(const entry of depleted){
+        if(entry.unit!==unit)continue;
+        const expected=60*(unit.SpawnSpeedBase+entry.offset*(unit.AfterOffsetSpawnSpeed||0))*(unit.DepletionSpeedRate??1);
+        candidates.push({unit,distance:Math.abs(speed-expected),rate});
+      }
+    }else if(vertical){
+      for(let offset=0;offset<(unit.BulletNum??1);offset++){
+        const expected=60*(unit.SpawnSpeedBase+offset*(unit.AfterOffsetSpawnSpeed||0));
+        candidates.push({unit,distance:Math.abs(speed-expected),rate});
+      }
+    }else{
+      const random=unit.SpawnSpeedRandom||0,low=60*(unit.SpawnSpeedBase-random),high=60*(unit.SpawnSpeedBase+random);
+      candidates.push({unit,distance:Math.max(low-speed,speed-high,0),rate});
+    }
+  }
+  candidates.sort((a,b)=>a.distance-b.distance);
+  return candidates[0]?.unit||null;
+}
 export function configureFidelityFlick(p, actor, weapon, index, angle, speed) {
   const b=weapon.ballistics, raw=rawWeapon(weapon);if(!b||!raw)return;
   // The attack argument owns this projectile's physics. Preserve it through
@@ -430,6 +466,7 @@ export function installWeaponsFidelity(context,profile) {
   };
   function initialize(p,w){
     if(!w)return;
+    const packetSize=p.ghost?p.size:NaN;
     const raw=rawWeapon(w);p.s3Weapon={...w};p.wid=w.id;p.fidelityPhase=0;
     p.fidelityMove=moves.get(w.id)||null;
     if(raw?.CollisionParam){
@@ -448,15 +485,22 @@ export function installWeaponsFidelity(context,profile) {
       if(!vertical)p.trailEvery=0;
       if(!p.fidelityRollerUnit){
         const units=raw[vertical?'VerticalSwingUnitGroupParam':'WideSwingUnitGroupParam'].Unit;
-        p.fidelityRollerUnit=p.ghost&&!vertical?horizontalRollerReplayUnit(units,p.vel.length()):null;
+        p.fidelityRollerUnit=p.ghost?rollerPacketUnit(units,p.vel.length(),packetSize,vertical):null;
+        if(p.ghost&&!p.fidelityRollerUnit&&!vertical)p.fidelityRollerUnit=horizontalRollerReplayUnit(units,p.vel.length());
         if(!p.fidelityRollerUnit){
           let best=Infinity;
-          for(const u of units)for(let i=0;i<(u.BulletNum??1);i++){
-            const d=Math.abs(p.vel.length()-60*(u.SpawnSpeedBase+i*(u.AfterOffsetSpawnSpeed||0)));
-            if(d<best){best=d;p.fidelityRollerUnit=u;}
+          for(const u of units){
+            const count=vertical?(u.BulletNum??1):1;
+            for(let i=0;i<count;i++){
+              const d=Math.abs(p.vel.length()-60*(u.SpawnSpeedBase+i*(u.AfterOffsetSpawnSpeed||0)));
+              if(d<best){best=d;p.fidelityRollerUnit=u;}
+            }
           }
         }
-        setCollision(p,p.fidelityRollerUnit.UnitParam.CollisionParam);
+        const collision=p.fidelityRollerUnit.UnitParam.CollisionParam;
+        const depletionRate=p.ghost?rollerPacketDepletionRate(packetSize,collision):1;
+        if(p.ghost)p.fidelityDepleted=depletionRate<1;
+        setCollision(p,collision,0,depletionRate);
       }
       p.straight=(vertical?w.ballistics.verticalStraightTime:w.ballistics.horizontalStraightTime);
       p.grav=w.flickGravity;p.drag=w.flickDrag;
