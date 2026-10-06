@@ -280,3 +280,16 @@ After all fingers release, an explicit mouse pointerdown on the canvas can recla
 Evidence:source focused66/66 (new13 plus existing input/pause/touch/first-touch),20 actual-method touch↔mouse cycles with stable listener count, FIRE/stick/look across synchronous/asynchronous/throwing exit, late acquisition, queued notifications, fresh mouse/Escape, and non-live lock rejection. Authentic full build and actual emitted13/13 are recorded in the completion handoff. VM browser-API timing surfaces are controlled fixtures; actual trusted Pointer Lock/browser hardware interaction remains for batch browser acceptance. Existing Main Map _relock can also request on the same mouse gesture; no functional failure was found and that independent owner is not rewritten here.
 
 The W3C Pointer Lock API explicitly separates lock-target state from queued pointerlockchange notification (https://www.w3.org/TR/pointerlock-2/); Pointer Events define the distinct touch/pointer lifetime (https://www.w3.org/TR/pointerevents3/). The target is coherent control ownership during play, not a claim of measured Switch/iPad/Android latency or hardware equivalence.
+
+
+## フローのファーストスプラット +10fp（#529、2026-10-06）
+
+開始mainは `ecfdd268f70bb7041f81138736b26e42306b630d`。公開対象は `inkwave-public/` と有効な `patches/splatoon3/` であり、旧 `game/` は対象外。本家の実機計測を新たに追加した変更ではない。
+
+| 項目 | 内容 |
+|---|---|
+| 本家の根拠 | Issue #529 が引用する [Inkipedia — Flow Aura](https://splatoonwiki.org/wiki/Flow_Aura) と[wikiwiki イカフロー検証](https://wikiwiki.jp/splatoon3mix/%E6%A4%9C%E8%A8%BC/%E3%82%A4%E3%82%AB%E3%83%95%E3%83%AD%E3%83%BC)：試合の最初の相手スプラットに通常報酬とは別途 **+10 fp**。Ver.11.3.0 のコミュニティ/公開資料根拠であり、今回の変更でSwitch実機を再計測したものではない |
+| INKWAVE の実装箇所 | `patches/splatoon3/runtime/flow.mjs`。`installFlow` が閉包で `firstSplatMatch` / `firstSplatClaimed` を持ち、`splatted` ハンドラで「資格あり攻撃者のスプラット」に限り `G.match` の同一性でフラグを新しい試合としてリセット（respawn ではリセットしない）→ 未請求時のみ `firstSplatBonus()` を `award(attacker,'splat',1,bonus)` へ渡し、実際に付与されたときだけ請求。`awardFlow` は第5引数のボーナスを同じ gain へ加算するため通常スプラットと同じ激活判定・idleTime更新を通る。値は `patches/splatoon3/profile.json` の `flow.progress.firstSplatBonus = 10`（fp単位、`deathPenalty` 等と同じ）で、既存の fp 正規化 `* cfg.threshold / referenceThreshold` により score へ変換（現 profile で 10fp = 0.3 score）。ロックされた upstream ファイルは変更していない |
+| 再現操作 | 新規マッチで最初の敵スプラット → 攻撃者に 通常報酬（weights.splat）+ 0.3。2体目以降・同一攻撃者の2回目は通常報酬のみ。自己/味方スプラットでは資格は消費されない。respawn 後も資格は再付与されない。`G.match` が新しい Match に入れ替わると次の試合で再び +10。同一イベントの重複配送でも +10 は1回だけ |
+| プレイへの影響 | 試合開始の初回スプラットを取った側だけ Flow 進行が10fp相当先に進み、到達タイミングが早まる。加算対象は通常スプラット報酬と同一 gain のため、連続/Flow対象/WIPEOUT 等の別ボーナスと置き換わらない。通常スプラット値（#481）、減少（#468）、死亡ペナルティ（#471）は変更していない |
+| 確認状態 | **ロジック確認済み**（`patches/splatoon3/tests/issue-529-first-splat-bonus.test.mjs` 5/5、修正前に 0/5、30/60/120Hz 同一結果、`installFlow` 実体＋実 profile を使用、`flow-progress-lifecycle`/`flow-motion`/`weapons-gear-flow`/`core`/モーション系計76テストと `scripts/build-inkwave.mjs` の compatibility check 合格）。**Switch Ver.11.3.0 実機での +10fp 効果と fp 尺度の較正は未確認**。weights.splat のキャリブレーションは profile の status どおり未較正のまま。ボーナスは fp 正規化で score へ入り、表示・受動効果の実機一致は主張しない |
