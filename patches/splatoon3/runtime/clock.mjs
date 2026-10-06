@@ -34,10 +34,23 @@ export function runSimulation(game, dt) {
   game._s3Ticked = clock.advance(dt, step => {
     G.time += step;
     if (m && !(covered && m.attract)) {
-      m.updateController(step);
-      m.controller?.computeAim?.();
-      m.update(step);
-      if (!m.paused) G.projectiles.update(step);
+      // #53: RESULT must not keep authoritative actor/projectile simulation
+      // running behind the results screen. Presentation ticks, input polling,
+      // edge consumption and menu navigation keep their own cadence. Online,
+      // Match.update stops too (no local acting, boss or physics) while the
+      // owner/remote pipeline applies each owner's latest snapshot exactly once
+      // per tick — a late owner change lands once and is never frozen and
+      // replayed stale. NetMatch pump, control and event delivery keep their own
+      // cadence from G.net.update above.
+      const results = m.state === 'results';
+      if (results && G.netm) {
+        if (!m.paused) for (const a of m.actors || []) if (a.remote && G.netm.applyRemote) G.netm.applyRemote(a, step);
+      } else if (!results) {
+        m.updateController(step);
+        m.controller?.computeAim?.();
+        m.update(step);
+        if (!m.paused) G.projectiles.update(step);
+      }
       if (m.attract) game._updateAttract(step);
       else if (m.state === 'playing' && m.local?.alive && (game.rig.mode !== 'follow' || game.rig.target !== m.local)) game.rig.follow(m.local, true);
     }
