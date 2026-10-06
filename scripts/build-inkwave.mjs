@@ -166,7 +166,7 @@ visit('patches/splatoon3/bootstrap.mjs');
 // #61's accepted startup baseline preloaded 145 modules (131 core + 14 range).
 // Later workstreams add these runtime dependencies to the static graph. Keep
 // them in the immutable revision + Service Worker precache, but let their
-// importing modules request them instead of adding 19 new eager preload
+// importing modules request them instead of adding more eager preload
 // requests to the critical HTML. Browser startup/offline CI validates the
 // resulting dependency fetch path and timing.
 const deferredIntegrationPreloads = new Set([
@@ -182,6 +182,7 @@ const deferredIntegrationPreloads = new Set([
   'patches/local-quality/platform-transport.mjs',
   'patches/local-quality/touch-relayout.mjs',
   'patches/local-quality/tenacity.mjs',
+  'patches/splatoon3/runtime/death-camera.mjs', // Match/death hooks stay statically imported and precached.
   'patches/splatoon3/runtime/issue-415-adapter.mjs',
   'patches/splatoon3/runtime/movement-physics.mjs',
   'patches/splatoon3/runtime/roller-model.mjs',
