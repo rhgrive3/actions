@@ -14,6 +14,8 @@ export function clearPendingLethal(actor) {
   if (actor) pending.delete(actor);
 }
 
+// Actor.update owns this flush, so a lethal decision made later in fixed tick N
+// cannot become a splat until the actor phase of fixed tick N+1.
 export function flushPendingLethal(actor) {
   const state = actor && pending.get(actor);
   if (!state) return false;
