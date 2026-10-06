@@ -374,6 +374,8 @@ Base main `67fec182`. Splat Dualies wall impacts now enter the existing sourced 
 
 同じ確認で main は `f31f5da439134fe49bb89018dad5557671a49c67`、GitHub PR 情報と `refs/pull/868/head` の現在値は `7c2ef70820d784792490741c1d710adf98b9c155` だった。確認した #868 の `gear.mjs` 差分にも `Actor._horizontal` の保存オブジェクトが残る。作業依頼に記載された `ee1cb11…` はその時点の live ref とは一致しなかったため、live ref と取得したファイル差分を根拠にした。
 
+作業完了前の再確認では #868 head が `2e81e2197faf0995ec2f55f2ba36ffd562f3fb41` に進んでいた。再取得した `gear.mjs` 差分でも `Actor._horizontal` の `original` と `Object.assign` 復元が残っており、残差修正を止める重複条件には当たらなかった。
+
 ### 今回の残差修正
 
 `Actor._horizontal` は `swimSpeed` と `enemyInkSpeed` を個別のローカル変数に保存し、`finally` 内で直接戻す。例外時の復元と既存計算を保ち、ギアのチューニング値やゲームプレイ挙動を変えない。`WeaponRunner.update` の scalar 置換は元の実装に戻し、#758 と重複する変更を含めない。この修正だけでは二つの確保や元の約960個/秒の推定全体を解消したとは主張しない。
