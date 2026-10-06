@@ -2089,6 +2089,11 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "flow.progress.referenceCap": {
+    "value": 200,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
   "flow.progress.decayPerSecond": {
     "value": 0.2,
     "status": "calibration or derived value; see reference raw table and unverified list",
