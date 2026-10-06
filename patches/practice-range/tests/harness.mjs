@@ -49,7 +49,8 @@ export async function rangeRealm() {
     export { Projectiles } from './src/game/weapons.js';
     export { STAGE_SURFACES, STAGE_SLOTS, FIRST_STAGE_SLOT, LAST_STAGE_SLOT } from './src/world/stages/surfaces.js';
     export { STAGES } from './src/world/stages/index.js';
-    export { installPracticeRange, isRangeMatch } from './patches/practice-range/install.mjs';
+    export { installPracticeRange, isRangeMatch, RANGE_MATCH_TIME } from './patches/practice-range/install.mjs';
+    export { HUD } from './src/ui/hud.js';
     export { RANGE_MAP, isRangeMap, rangeMapFor } from './patches/practice-range/range-map.mjs';
     export { PropKit } from './src/world/props.js';
     export { dressingFor } from './src/world/dressing.js';
