@@ -28,13 +28,12 @@
   background: linear-gradient(180deg, rgba(48, 40, 84, .94), rgba(18, 14, 34, .97));
   overflow: hidden; animation: iw-in-up .6s var(--spring) .45s backwards;
 }
-/* stage/map plate: an original terrain-style wash behind the turf coverage strip */
+/* This is a snapshot from the live Minimap canvas (stage terrain + current ink coverage). */
 .iw-jd__stagemap {
-  position: absolute; inset: 0; opacity: .34;
-  background:
-    repeating-linear-gradient(135deg, rgba(255, 255, 255, .07) 0 2px, transparent 2px 16px),
-    radial-gradient(ellipse at 22% 28%, rgba(255, 255, 255, .12), transparent 55%),
-    radial-gradient(ellipse at 78% 72%, rgba(255, 255, 255, .09), transparent 55%);
+  position: absolute; inset: 0; display: grid; place-items: center; overflow: hidden;
+}
+.iw-jd__map-snapshot {
+  display: block; width: 100%; height: 100%; object-fit: contain; opacity: .68;
 }
 .iw-jd--refs .iw-jd__arena { position: relative; left: auto; right: auto; top: auto; translate: none; animation: none; }
 
@@ -69,9 +68,9 @@
 }
 .iw-jd__ref.a .iw-jd__cloth { background: linear-gradient(180deg, var(--ja-light), var(--ja) 55%, var(--ja-dark)); }
 .iw-jd__ref.b .iw-jd__cloth { background: linear-gradient(180deg, var(--jb-light), var(--jb) 55%, var(--jb-dark)); }
-.iw-jd__ref.is-up .iw-jd__cloth { rotate: -46deg; translate: 0 calc(var(--u) * -1); }
-.iw-jd__ref.is-down .iw-jd__cloth { rotate: 84deg; translate: 0 calc(var(--u) * 3.2); }
-.iw-jd__ref.is-tie .iw-jd__cloth, .iw-jd__cloth.is-flat { rotate: -8deg; }
+.iw-jd__flag.is-up .iw-jd__cloth { rotate: -46deg; translate: 0 calc(var(--u) * -1); }
+.iw-jd__flag.is-down .iw-jd__cloth { rotate: 84deg; translate: 0 calc(var(--u) * 3.2); }
+.iw-jd__ref.is-tie .iw-jd__cloth, .iw-jd__flag.is-flat .iw-jd__cloth { rotate: -8deg; }
 
 /* judges attend during the drumroll, then react to the authoritative outcome */
 .iw-jd.is-racing .iw-jd__ref { animation: iw-ref-bob .45s ease-in-out infinite alternate; }

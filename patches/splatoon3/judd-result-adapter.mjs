@@ -33,8 +33,9 @@ export function adaptJuddResult(rel, code, once) {
     "      const numA = h('b', { class: 'iw-jd__num' }, ''), numB = h('b', { class: 'iw-jd__num' }, '');",
     'no placeholder percentages before the reveal');
 
-  // Stage/map result composition: the two referees flank a stage plate that carries the turf
-  // coverage strip, instead of a bare race bar under a generic JUDGING title.
+  // Stage/map result composition: snapshot the same live minimap canvas used by the HUD. The
+  // existing renderer builds its terrain from the current level and its ink from G.paint; no
+  // decorative gradient is presented as the actual map.
   patch(
     `      const el = h('div', { class: 'iw-jd' },
         h('div', { class: 'iw-jd__bg' }),
@@ -48,6 +49,30 @@ export function adaptJuddResult(rel, code, once) {
     `      // #894 result referees: Judd stands for the local player's team, Li'l Judd for the
       // opponent. Both stay on the stage plate for the whole judgement (win and loss alike).
       const localTeam = (() => { const me = (this.lab && this.lab.local) || (typeof G !== 'undefined' && G && G.match && G.match.local) || null; return me && me.team === 1 ? 1 : 0; })();
+      // Refresh only the existing minimap renderer at zero game-time so the captured pixels
+      // include final paint even when the corner minimap is hidden. The force update reads the
+      // current level/paint state; toDataURL below then takes a read-only snapshot of its canvas.
+      const resultMap = (() => {
+        const minimap = (typeof G !== 'undefined' && G && G.game && G.game.minimap) || null;
+        let canvas = minimap && minimap.canvas || this._mapCanvas || null;
+        if (minimap && typeof minimap.update === 'function') {
+          try {
+            let passes = 0;
+            while (minimap._band > 0 && passes < 8) { minimap.update(0, true); passes++; }
+            if (minimap._band > 0) return null;
+            minimap.update(0, true);
+            canvas = minimap.canvas || canvas;
+          } catch { return null; }
+        }
+        if (!canvas || typeof canvas.toDataURL !== 'function') return null;
+        try {
+          const image = h('img', { class: 'iw-jd__map-snapshot' });
+          image.alt = '';
+          image.src = canvas.toDataURL('image/png');
+          return image;
+        } catch { return null; }
+      })();
+      const mapPlate = resultMap ? h('div', { class: 'iw-jd__stagemap', role: 'img', 'aria-label': 'STAGE MAP' }, resultMap) : null;
       const referee = (team, kind) => {
         const flag = h('div', { class: 'iw-jd__flag', 'aria-hidden': 'true' }, h('i', { class: 'iw-jd__pole' }), h('i', { class: 'iw-jd__cloth' }));
         const node = h('div', { class: 'iw-jd__ref ' + (team === 0 ? 'a' : 'b') + (kind === 'judd' ? ' is-judd' : ' is-liljudd'), data: { ref: kind, team: String(team) } },
@@ -62,7 +87,7 @@ export function adaptJuddResult(rel, code, once) {
         h('div', { class: 'iw-jd__title iw-display' }, h('span', null, 'TURF WAR'), h('span', { class: 'iw-jd__dots' }, h('i'), h('i'), h('i'))),
         h('div', { class: 'iw-jd__refs' }, refJudd.node, refLil.node),
         h('div', { class: 'iw-jd__stage' },
-          h('div', { class: 'iw-jd__stagemap', 'aria-hidden': 'true' }),
+          mapPlate,
           h('div', { class: 'iw-jd__arena' },
             h('div', { class: 'iw-jd__labels' },
               h('div', { class: 'iw-jd__side a' }, h('span', { class: 'iw-jd__name' }, names[0] || TEAM_NAMES[0]), numA),

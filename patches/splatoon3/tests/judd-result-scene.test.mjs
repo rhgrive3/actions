@@ -24,7 +24,23 @@ function section(code) {
   return code.slice(a, b);
 }
 const rawFixture = () => fixture({ hudSource: readSource('src/ui/hud.js') });
-const sceneFixture = () => fixture({ hudSource: compose('src/ui/hud.js'), gameSource: compose('src/main.js') });
+const MAP_DATA = 'data:image/png;base64,actual-stage-and-ink-fixture';
+const sceneFixture = async ({ pendingBands = 0 } = {}) => {
+  const f = await fixture({ hudSource: compose('src/ui/hud.js'), gameSource: compose('src/main.js') });
+  const calls = [];
+  const canvas = {
+    width: 420, height: 240,
+    toDataURL(type) { calls.push({ kind: 'snapshot', type }); return MAP_DATA; },
+  };
+  const minimap = {
+    canvas, _band: pendingBands,
+    update(dt, force) { calls.push({ kind: 'update', dt, force, band: this._band }); if (this._band > 0) this._band--; },
+  };
+  f.G.game = { minimap };
+  f.hud._mapCanvas = canvas;
+  f.mapFixture = { calls, canvas, minimap };
+  return f;
+};
 const texts = (root, sel) => root.querySelectorAll(sel).map(n => n.textContent);
 const scaleX = root => root.querySelectorAll('.iw-jd__bar').map(b => Number((b.style.transform.match(/scaleX\(([^)]+)\)/) || [])[1]));
 const flagOf = ref => ref.querySelectorAll('.iw-jd__flag')[0];
@@ -44,6 +60,7 @@ test('#894 controls: upstream keeps the JUDGING bar, the composed judge is the r
   assert.match(body, /is-judd/);
   assert.match(body, /is-liljudd/);
   assert.match(body, /iw-jd__stage/);
+  assert.match(body, /iw-jd__map-snapshot/);
   assert.match(body, /setRefOutcome/);
   assert.match(body, /prefersReducedMotion/);
   new vm.SourceTextModule(scene); // the composed module still parses
@@ -80,6 +97,23 @@ for (const hz of [30, 120]) test(`#894 ${hz}Hz judging shows both referees and n
   await raw.advance(5400); await scene.advance(5400);
   assert.deepEqual(texts(sceneRoot, '.iw-jd__num'), ['61.0%', '39.0%'], 'the real coverage is revealed');
   assert.ok(scaleX(sceneRoot)[0] > 0.5, 'Alpha keeps the larger share of the stage plate');
+});
+
+test('#894 result plate snapshots the current stage and ink from the minimap renderer', async () => {
+  const f = await sceneFixture({ pendingBands: 2 });
+  const pending = f.hud.judge({ percents: [56, 44], winner: 0 });
+  await f.advance(80);
+  const root = f.judges()[0];
+  const image = root.querySelectorAll('.iw-jd__map-snapshot')[0];
+  assert.ok(image, 'the map plate contains a captured map image');
+  assert.equal(image.src, MAP_DATA, 'pixels come from the current minimap canvas');
+  assert.equal(f.mapFixture.minimap._band, 0, 'pending ink bands are composed before capture');
+  assert.deepEqual(f.mapFixture.calls.map(x => x.kind), ['update', 'update', 'update', 'snapshot']);
+  assert.ok(f.mapFixture.calls.slice(0, 3).every(x => x.dt === 0 && x.force === true), 'refresh advances no game time');
+  assert.equal(f.mapFixture.calls.at(-1).type, 'image/png');
+  assert.deepEqual(f.match.result.coverage, [0.6, 0.4], 'the map snapshot does not alter authoritative coverage');
+  await f.advance(6000);
+  await pending;
 });
 
 test("#894 Judd follows the local player's team and Li'l Judd the opponent", async () => {
@@ -140,6 +174,22 @@ test('#894 reduced motion still presents the two-referee result without the full
   assert.equal((await pending).winner, 0);
 });
 
+test('#894 owner cancellation releases the map-backed judge through the existing cleanup path', async () => {
+  const f = await sceneFixture();
+  let current = true;
+  const pending = f.hud.judge({ percents: [60, 40], winner: 0, isCurrent: () => current });
+  await f.advance(900);
+  assert.equal(f.judges()[0].querySelectorAll('.iw-jd__map-snapshot').length, 1);
+  current = false;
+  await f.advance(50);
+  assert.equal((await pending).cancelled, true);
+  assert.equal(f.judges().length, 0);
+  assert.equal(f.hud._fxMap.has('judge'), false);
+  assert.equal(f.rafs.size, 0);
+  assert.equal(f.timers.size, 0);
+  assert.ok(f.voices.every(v => v.stopped === 1), 'the owned judge sound is stopped on cancellation');
+});
+
 for (const winner of [0, 1]) test(`#894 ${winner === 0 ? 'win' : 'loss'} judgement transitions into the existing post-battle results flow`, async () => {
   const f = await sceneFixture();
   f.match.result = { coverage: [0.6, 0.4], winner };
@@ -168,9 +218,12 @@ test('#894 the rendered scene and the shipped stylesheets agree on its classes',
   const css = fs.readFileSync(new URL('../../../patches/splatoon3/ui.css', import.meta.url), 'utf8')
     + fs.readFileSync(new URL('../../../inkwave-public/styles/hud.css', import.meta.url), 'utf8');
   const styled = ['iw-jd--refs', 'iw-jd__refs', 'iw-jd__ref', 'iw-jd__flag', 'iw-jd__pole', 'iw-jd__cloth',
-    'iw-jd__figure', 'iw-jd__refname', 'iw-jd__stage', 'iw-jd__stagemap', 'is-liljudd', 'is-win', 'is-lose',
+    'iw-jd__figure', 'iw-jd__refname', 'iw-jd__stage', 'iw-jd__stagemap', 'iw-jd__map-snapshot', 'is-liljudd', 'is-win', 'is-lose',
     'is-up', 'is-down', 'is-flat', 'is-tie'];
   for (const cls of styled) assert.match(css, new RegExp('\\.' + cls + '(?![\\w-])'), `stylesheet styles .${cls}`);
+  assert.match(css, /\.iw-jd__flag\.is-up\s+\.iw-jd__cloth/, 'the raised-flag rule selects the flag that receives is-up');
+  assert.match(css, /\.iw-jd__flag\.is-down\s+\.iw-jd__cloth/, 'the lowered-flag rule selects the flag that receives is-down');
+  assert.match(css, /\.iw-jd__flag\.is-flat\s+\.iw-jd__cloth/, 'the tie rule selects the flag that receives is-flat');
 
   const rendered = new Set();
   const walk = node => {
@@ -179,9 +232,13 @@ test('#894 the rendered scene and the shipped stylesheets agree on its classes',
   };
   walk(root);
   for (const cls of ['iw-jd--refs', 'iw-jd__refs', 'iw-jd__ref', 'is-judd', 'is-liljudd', 'iw-jd__flag',
-    'iw-jd__figure', 'iw-jd__refname', 'iw-jd__stage', 'iw-jd__stagemap', 'is-lose', 'is-up', 'is-down']) {
+    'iw-jd__figure', 'iw-jd__refname', 'iw-jd__stage', 'iw-jd__stagemap', 'iw-jd__map-snapshot', 'is-lose', 'is-up', 'is-down']) {
     assert.ok(rendered.has(cls), `scene renders .${cls}`);
   }
+  const upFlag = root.querySelectorAll('.iw-jd__flag').find(flag => flag.classList.contains('is-up'));
+  const downFlag = root.querySelectorAll('.iw-jd__flag').find(flag => flag.classList.contains('is-down'));
+  assert.ok(upFlag?.querySelectorAll('.iw-jd__cloth').length === 1, 'the raised flag owns its cloth node');
+  assert.ok(downFlag?.querySelectorAll('.iw-jd__cloth').length === 1, 'the lowered flag owns its cloth node');
   const figure = root.querySelectorAll('.iw-jd__figure')[0];
   assert.match(String(figure.innerHTML), /class="iw-jd__cat"/, 'the referee figure carries its styled svg');
   assert.match(String(figure.innerHTML), /viewBox="0 0 100 100"/);
