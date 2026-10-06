@@ -9,6 +9,7 @@
 | ファイル | 役割 |
 | --- | --- |
 | `adapter.mjs` | 本体とパッチの接続。元ファイルを編集せず出力だけ変換する |
+| `assist-presentation-adapter.mjs` | #561 のアシスト表示。キルカードを使わず、撃破地点にワールドマーカーを置く |
 | `upstream-lock.json` | 接続先の SHA-256 と検証した本体コミット |
 | `bootstrap.mjs` | 設定とパッチを読み込み、適用後にゲームを起動する |
 | `runtime/clock.mjs` | 60 Hz の固定更新、経過時間と入力の保持 |
