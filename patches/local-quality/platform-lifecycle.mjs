@@ -17,7 +17,14 @@ export class PlatformLifecycle {
     this.metrics = { suspends: 0, resumes: 0, blurs: 0, errors: 0 };
     this.lastEvent = 'initial';
     this.persisted = false;
+    // An initially-unfocused visible page must not inherit pad authority
+    // before its first focus (#843). Sample hasFocus() once; when the
+    // platform cannot report focus, keep the historical focused=true so
+    // focused top-level startup is unchanged.
     this.focused = true;
+    try {
+      if (typeof env.document?.hasFocus === 'function' && env.document.hasFocus() === false) this.focused = false;
+    } catch { /* keep historical default when focus is not queryable */ }
     this._listen(env.document, 'visibilitychange', () => this.reconcile('visibilitychange'));
     this._listen(env, 'pagehide', e => { this.persisted = !!e.persisted; this.block('pagehide', true, 'pagehide'); });
     this._listen(env, 'pageshow', e => {
