@@ -18,7 +18,7 @@ from pathlib import Path
 
 import bpy
 import numpy as np
-from mathutils import Vector
+from mathutils import Matrix, Vector
 from mathutils.bvhtree import BVHTree
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -27,8 +27,8 @@ import inkwave_eye_refine as er  # noqa: E402
 M = er.M
 DESIGN = er.ROOT / 'analysis/lash_rebuild/design_3d.json'
 SURFACES = ['HEAD_face', 'HEAD_skin', 'HEAD_skin_04', 'HEAD_eyes', 'HEAD_eyes_18', 'HEAD_eyes_02', 'HEAD_eyes_19']
-R = {'rim': 'HEAD_eyes_30', 'liner': 'HEAD_eyes_20', 'lashes': [f'HEAD_eyes_{i:02d}' for i in range(22, 29)]}
-L = {'rim': 'HEAD_eyes_13', 'liner': 'HEAD_eyes_03', 'lashes': [f'HEAD_eyes_{i:02d}' for i in range(5, 12)]}
+R = {'rim': 'HEAD_eyes_30', 'liner': 'HEAD_eyes_20', 'lashes': [f'HEAD_eyes_{i:02d}' for i in range(22, 29)], 'eyeball': 'HEAD_eyes_18'}
+L = {'rim': 'HEAD_eyes_13', 'liner': 'HEAD_eyes_03', 'lashes': [f'HEAD_eyes_{i:02d}' for i in range(5, 12)], 'eyeball': 'HEAD_eyes'}
 LINER_LIFT_MM = 0.8
 MIN_CLEAR_MM = 0.5
 MAX_FLOAT_MM = 1.2
@@ -140,6 +140,11 @@ class FrontRays:
         p, d, _ = self.cast(*uv)
         return M.to_local(p[None] - d[None] * lift_mm / 1000)[0] * 1000
 
+    def to_px(self, world):
+        """Front-view design pixels of world points (the inverse of cast)."""
+        ux, uy = er.camera_pixels('front', np.asarray(world))
+        return np.c_[ux, uy]
+
     def ray(self, uv):
         """World origin and direction of the camera ray through a front-view pixel, and the hit distance."""
         p, d, t = self.cast(*uv)
@@ -150,6 +155,11 @@ class MirrorRays(FrontRays):
     """Rays for the left eye, addressed in right-eye design pixels: a design pixel is mapped to the pixel of the
     mirror image of its right-side surface point, so every part is built on the left eye's own skin and eyeball
     (the face is not exactly symmetric; mirroring finished geometry left skin gaps and skin poking through)."""
+
+    def to_px(self, world):
+        q = M.to_local(np.asarray(world))
+        q[:, 0] = -q[:, 0]
+        return FrontRays.to_px(self, M.to_world(q))
 
     def cast(self, u, v):
         p, _, _ = FrontRays.cast(self, u, v)
@@ -218,7 +228,7 @@ def off_eye(rays, top, bot, margin=-0.5):
     return bot
 
 
-def build_margin(rays, edge_mm, thick_mm=None):
+def build_margin(rays, edge_mm, thick_mm=None, stop=None):
     """Tightline: from a lid-edge line (liner lower edge, or the lower line), a thin strip wraps round the lid
     margin over the skin, step by step toward the eyeball, until it touches the eyeball.  From the front it
     lies behind the lid edge, so the front view does not change; from the 3/4 and side views it covers the lid
@@ -243,6 +253,12 @@ def build_margin(rays, edge_mm, thick_mm=None):
             q = np.array(h[0]) + np.array(h[1]) * MARGIN_LIFT_MM / 1000
             if eye.find_nearest(Vector(q))[3] < MARGIN_STOP_MM / 1000:
                 done[k] = True
+            if stop is not None and stop[0][k]:
+                # on the lower lid the strip stays behind the line in the front view (not above it)
+                u, v = rays.to_px(q[None])[0]
+                if v < np.interp(u, stop[1][:, 0], stop[1][:, 1]) + RIM_BELOW_PX:      # behind the line's centre
+                    done[k] = True
+                    q = p
             nxt.append(q)
         rows.append(np.array(nxt))
     grid = np.stack(rows, 1)
@@ -557,10 +573,10 @@ def build_liner(rays, design, bot, join):
         depth = 0.4 * depth + 0.15 * (p[:-2, 1:-1] + p[2:, 1:-1] + p[1:-1, :-2] + p[1:-1, 2:])
         depth = np.clip(depth, floor, limit)
     print('LINER gap mm: median %.2f  max %.2f' % (np.median(hit - depth) * 1000, (hit - depth).max() * 1000))
-    if 'float_top' in design:
+    if 'float_top' in design or 'fan' in design:
         # the wing and the lash line stand off the face (3D, not a decal): the stand-off fitted to the 3/4 and side
         # views is added along the front ray, so the front view does not change
-        ft = np.array(design['float_top'])
+        ft = float_top_mm(design)
         fb = np.zeros(n)
         fb[:design['float_k1'] + 1] = design['float_wing']
         depth = depth - (ft[:, None] * (1 - f[None]) + fb[:, None] * f[None]) / 1000
@@ -606,6 +622,102 @@ def corner_contour(rays):
     return sm, len(up)
 
 
+def lower_edge(rays, design, corner, n_up, lid):
+    """The lower white edge as one smooth curve (design px), from the outer corner tip to the inner corner tip.
+    The white's lower edge is where the lid skin passes behind the eyeball; the skin triangles are ~4 mm, so that
+    line has small teeth, and a line snapped to it copies them.  The edge is found column by column (the lid
+    curve, then past its inner end to the inner tip), resampled every 0.25 px and smoothed with a Gaussian that
+    may not go below the found edge by more than cfg['tol'] px (no skin left above the curve).
+    Returns the curve and the found edge y on the same samples."""
+    cfg = design['lid_edge']
+    low = np.vstack([corner[n_up:], lid])
+    low[:, 1] -= RIM_BELOW_PX
+    ext = []
+    x = low[-1, 0] + 0.25
+    while x < low[-1, 0] + 14.0:
+        ys = np.arange(low[-1, 1] - 12.0, low[-1, 1] + 4.0, 0.05)
+        seen = np.nonzero([rays.on_eye(x, y) for y in ys])[0]
+        if not len(seen):
+            break
+        ext.append((x, ys[seen[-1]]))
+        x += 0.25
+    raw = np.vstack([low, np.array(ext).reshape(-1, 2)])
+    seg = np.r_[0, np.cumsum(np.linalg.norm(np.diff(raw, axis=0), axis=1))]
+    t = np.arange(0, seg[-1], 0.25)
+    P = np.c_[np.interp(t, seg, raw[:, 0]), np.interp(t, seg, raw[:, 1])]
+    c = P[:, 1].copy()
+    for _ in range(cfg['iters']):
+        c = np.minimum(er.smooth_rows(c, cfg['sigma']), P[:, 1] + cfg['tol'])
+    print('LOWER_EDGE', len(c), 'samples, to x %.1f; lifted px mean %.2f max %.2f' % (P[-1, 0], (P[:, 1] - c).mean(), (P[:, 1] - c).max()))
+    return np.c_[P[:, 0], c], P[:, 1]
+
+
+def build_tearline(rays, design, curve, found):
+    """A thin skin strip along the lower lid margin (the tearline / lid-margin mesh of game characters): its top
+    edge is the smooth curve, it lies on whatever is in front (eyeball or lid skin) just over it, and reaches
+    below the found edge, so the white ends on the smooth curve.  It lies on the face or the eyeball under the
+    skin layers and keeps its own smooth normals (the face's normals copied over the eyeball part came from the
+    skin tucked behind the eyeball and shaded it grey)."""
+    cfg = design['lid_edge']
+    n, rows = len(curve), TEAR_ROWS
+    width = cfg['above_px'] + np.maximum(found - curve[:, 1], 0) + cfg['below_px']
+    # cover each found tooth: the widest need within 3 px, smoothed, so the lower edge (on the face) is smooth
+    # too; never narrower than needed
+    wide = np.array([width[max(i - 12, 0):i + 13].max() for i in range(n)])
+    width = np.maximum(er.smooth_rows(wide, 6.0), width)
+    s = np.linspace(0, 1, n)
+    end = cfg['taper_px'] / max(n * 0.25, 1e-6)
+    taper = np.clip(s / end, 0, 1) * np.clip((1 - s) / end, 0, 1)
+    top = curve[:, 1] - cfg['above_px'] * taper
+    f = np.linspace(0, 1, rows)
+    px = np.stack([np.repeat(curve[:, :1], rows, 1), top[:, None] + f[None] * (width * taper)[:, None]], -1)
+    cast = [[rays.ray(q) for q in col] for col in px]
+    origin = np.array([[c[0] for c in col] for col in cast])
+    direction = np.array([[c[1] for c in col] for col in cast])
+    # on the face or the eyeball, whichever is in front, but under the skin layers (HEAD_skin_04 / HEAD_skin lie
+    # 0.3 mm over the face and give the lid its colour): where a layer is, the layer shows as before
+    hit = np.array([[min(h[3] if h[0] is not None else 1e9 for h in
+                         (tr.ray_cast(Vector(o), Vector(d), 50) for tr in (rays.skin_tree, rays.eye_tree)))
+                     for o, d in zip(oc, dc)] for oc, dc in zip(origin, direction)])
+    hit = np.where(hit > 1e8, np.array([[c[2] for c in col] for col in cast]), hit)
+    # just over the surface in front: smoothed along the curve, but kept between clear_mm and lift_max_mm in front
+    # of it (the lower line lies at least 0.10 mm in front, so the strip never hides it)
+    depth = hit - cfg['lift_mm'] / 1000
+    for _ in range(20):
+        depth = np.clip(er.smooth_rows(depth, 3.0), hit - cfg['lift_max_mm'] / 1000, hit - cfg['clear_mm'] / 1000)
+    verts = M.to_local((origin + direction * depth[..., None]).reshape(-1, 3)) * 1000
+    faces = [(i * rows + j, (i + 1) * rows + j, (i + 1) * rows + j + 1, i * rows + j + 1)
+             for i in range(n - 1) for j in range(rows - 1)]
+    tot = np.zeros(3)
+    for fc in faces[::7]:
+        q = verts[list(fc)]
+        tot += np.cross(q[1] - q[0], q[2] - q[0])
+    if tot[2] < 0:
+        faces = [fc[::-1] for fc in faces]
+    return verts, faces
+
+
+TEAR_ROWS = 12
+
+
+def tearline_material(tint=(1.0, 1.0, 1.0)):
+    """The face's skin material without subsurface scattering (a strip this thin renders grey with it), its colour
+    multiplied by tint (linear) so it renders like the face round it (without subsurface it comes out more
+    orange)."""
+    name = 'INKWAVE_tearline_skin'
+    mat = bpy.data.materials.get(name)
+    if mat is not None:
+        bpy.data.materials.remove(mat)
+    src = bpy.data.materials['skin_b27050']
+    mat = src.copy()
+    mat.name = name
+    bsdf = next(n for n in mat.node_tree.nodes if n.type == 'BSDF_PRINCIPLED')
+    bsdf.inputs['Subsurface Weight'].default_value = 0.0
+    c = next(n for n in src.node_tree.nodes if n.type == 'BSDF_PRINCIPLED').inputs['Base Color'].default_value
+    bsdf.inputs['Base Color'].default_value = (*[min(c[i] * tint[i], 1.0) for i in range(3)], 1.0)
+    return mat
+
+
 def build_rim(rays, design):
     """One black line round the outer corner of the eye, resting on the lid edge: from under the liner it
     follows this side's eye-opening edge round the corner and along the lower lid to the inner end, so seen
@@ -618,7 +730,15 @@ def build_rim(rays, design):
         seen = [rays.on_eye(u, y) for y in ys]
         if any(seen):
             lid[i, 1] = ys[max(k for k, e in enumerate(seen) if e)] + RIM_BELOW_PX
-    px = np.vstack([corner, lid])
+    edge = None
+    if 'lid_edge' in design:
+        curve, found = lower_edge(rays, design, corner, n_up, lid)
+        edge = (curve, found)
+        line = curve[curve[:, 0] <= lid[-1, 0]].copy()
+        line[:, 1] += RIM_BELOW_PX
+        px = np.vstack([corner[:n_up], line])
+    else:
+        px = np.vstack([corner, lid])
     cast = [rays.ray(p) for p in px]
     origin = np.array([c[0] for c in cast])
     direction = np.array([c[1] for c in cast])
@@ -638,17 +758,35 @@ def build_rim(rays, design):
     tv, tf = er.tube(pts, r, sides=8)
     start = np.minimum(er.smooth_rows(hit, design.get('rim_depth_sigma', 2.0)), hit) if design.get('margin_smooth') else hit
     skin_pts = M.to_local(origin + direction * (start - MARGIN_LIFT_MM / 1000)[:, None]) * 1000
-    mv, mf = build_margin(rays, skin_pts)
-    return (np.r_[tv, mv], list(tf) + [tuple(i + len(tv) for i in fc) for fc in mf]), px
+    stop = None
+    if edge is not None:
+        lower = np.zeros(len(px), bool)
+        lower[n_up + 1:] = True
+        stop = (lower, edge[0])
+    mv, mf = build_margin(rays, skin_pts, stop=stop)
+    return (np.r_[tv, mv], list(tf) + [tuple(i + len(tv) for i in fc) for fc in mf]), px, edge
+
+
+def float_top_mm(design):
+    """Stand-off (mm) of every liner_top point: the fitted float_top, plus the lash strip lift of the fan
+    (fan.strip_mm, a profile from the wing tip to the inner end): the black band is the lash strip, its top edge
+    stands off the lid while its lower edge stays on the lid margin."""
+    top = np.array(design['liner_top'])
+    ft = np.array(design.get('float_top', np.zeros(len(top))), float)
+    if 'fan' in design and 'strip_mm' in design['fan']:
+        prof = design['fan']['strip_mm']
+        u = (top[:, 0] - top[:, 0].min()) / (top[:, 0].max() - top[:, 0].min())
+        ft = ft + np.interp(u, np.linspace(0, 1, len(prof)), prof)
+    return ft
 
 
 def top_float(design, x):
     """Stand-off (mm) of the liner top edge at front-view column x (0 when the design has none)."""
-    if 'float_top' not in design:
+    if 'float_top' not in design and 'fan' not in design:
         return 0.0 * np.asarray(x, float)
     top = np.array(design['liner_top'])
     order = np.argsort(top[:, 0])
-    return np.interp(x, top[order, 0], np.array(design['float_top'])[order])
+    return np.interp(x, top[order, 0], float_top_mm(design)[order])
 
 
 def lash_points(rays, design, spec, standoff=None):
@@ -676,12 +814,196 @@ def build_lash(rays, design, spec):
     return er.tube(pts, radius, sides=6)
 
 
-def build_lower(rays, design):
+FAN_TAG = 'INKWAVE_lash_fan'
+
+
+def eye_centre_mm(name):
+    """Centre of an eyeball cap (least-squares sphere through its vertices), head-frame mm."""
+    P = M.to_local(er.world(bpy.data.objects[name])) * 1000
+    c = np.linalg.lstsq(np.c_[2 * P, np.ones(len(P))], (P ** 2).sum(1), rcond=None)[0]
+    return c[:3]
+
+
+def lash_clump(cfg):
+    """One lash clump of unit length, the usual way: a Blender curve (a quarter arc curling toward +Y, root at the
+    origin, leaving along +Z) with a round bevel whose radius tapers from the root to the tip, made a mesh."""
+    cu = bpy.data.curves.new(FAN_TAG + '_clump', 'CURVE')
+    cu.dimensions = '3D'
+    cu.bevel_mode = 'ROUND'
+    cu.bevel_depth = cfg['root_r']
+    cu.bevel_resolution = 1
+    cu.use_fill_caps = True
+    sp = cu.splines.new('POLY')
+    n = 9
+    sp.points.add(n - 1)
+    curl = np.radians(cfg['curl_deg'])
+    for i in range(n):
+        a = curl * i / (n - 1)
+        y, z = ((1 - np.cos(a)) / curl, np.sin(a) / curl) if curl > 1e-6 else (0.0, i / (n - 1))
+        sp.points[i].co = (0.0, y, z, 1.0)
+        sp.points[i].radius = max((1 - i / (n - 1)) ** cfg.get('taper_pow', 0.8), 0.05)
+    obj = bpy.data.objects.new(FAN_TAG + '_clump', cu)
+    bpy.context.scene.collection.objects.link(obj)
+    me = bpy.data.meshes.new_from_object(obj.evaluated_get(bpy.context.evaluated_depsgraph_get()))
+    bpy.data.objects.remove(obj)
+    bpy.data.curves.remove(cu)
+    clump = bpy.data.objects.new(FAN_TAG + '_clump', me)
+    bpy.context.scene.collection.objects.link(clump)
+    return clump
+
+
+def fan_nodes(clump):
+    """Geometry Nodes: a lash clump on every point, turned and scaled by the points' lash_rot / lash_scale."""
+    ng = bpy.data.node_groups.new(FAN_TAG, 'GeometryNodeTree')
+    ng.interface.new_socket('Geometry', in_out='INPUT', socket_type='NodeSocketGeometry')
+    ng.interface.new_socket('Geometry', in_out='OUTPUT', socket_type='NodeSocketGeometry')
+    nd = ng.nodes
+    gi, go = nd.new('NodeGroupInput'), nd.new('NodeGroupOutput')
+    info = nd.new('GeometryNodeObjectInfo')
+    info.inputs['Object'].default_value = clump
+    on_pts = nd.new('GeometryNodeInstanceOnPoints')
+    rot = nd.new('GeometryNodeInputNamedAttribute')
+    rot.data_type = 'FLOAT_VECTOR'
+    rot.inputs['Name'].default_value = 'lash_rot'
+    euler = nd.new('FunctionNodeEulerToRotation')
+    scl = nd.new('GeometryNodeInputNamedAttribute')
+    scl.data_type = 'FLOAT_VECTOR'
+    scl.inputs['Name'].default_value = 'lash_scale'
+    real = nd.new('GeometryNodeRealizeInstances')
+    ln = ng.links
+    ln.new(gi.outputs[0], on_pts.inputs['Points'])
+    ln.new(info.outputs['Geometry'], on_pts.inputs['Instance'])
+    ln.new(rot.outputs['Attribute'], euler.inputs['Euler'])
+    ln.new(euler.outputs['Rotation'], on_pts.inputs['Rotation'])
+    ln.new(scl.outputs['Attribute'], on_pts.inputs['Scale'])
+    ln.new(on_pts.outputs['Instances'], real.inputs['Geometry'])
+    ln.new(real.outputs['Geometry'], go.inputs[0])
+    return ng
+
+
+def fan_layout(rays, design, eye_name, cfg=None):
+    """Roots, directions (head frame) and lengths of the upper lash fan.  Roots sit on the upper lid margin (the
+    front-view lid edge from the outer corner to the inner end, cast onto this side's skin) and stand off it along
+    the eyeball normal.  Each lash leaves the lid along the eyeball normal tilted up by elev_deg and toward the outer
+    corner by splay_deg, then curls up (curl_deg): lashes grow out of the lid, they do not lie on it."""
+    cfg = cfg or design['fan']
+    eye = eye_centre_mm(eye_name)
+    chain = np.array(design[cfg.get('chain', 'liner_bottom')], float)
+    x0, x1 = cfg['margin_x']
+    chain = chain[(chain[:, 0] >= x0) & (chain[:, 0] <= x1)]
+    chain = chain[np.argsort(chain[:, 0])]
+    seg = np.r_[0, np.cumsum(np.linalg.norm(np.diff(chain, axis=0), axis=1))]
+    s = np.linspace(*cfg['s_range'], cfg['count'])
+    px = np.c_[np.interp(s * seg[-1], seg, chain[:, 0]), np.interp(s * seg[-1], seg, chain[:, 1])]
+    # on the liner top chain the roots stand off with the strip (its top edge), else they sit on the lid
+    lift = (lambda p: LASH_ROOT_LIFT_MM + float(top_float(design, p[0]))) if cfg.get('chain') == 'liner_top' else (lambda p: 0.0)
+    on_skin = np.array([rays.lifted(p, lift(p)) for p in px])
+    ds = 0.01
+    at = lambda v: np.r_[np.interp(min(max(v, 0), 1) * seg[-1], seg, chain[:, 0]), np.interp(min(max(v, 0), 1) * seg[-1], seg, chain[:, 1])]
+    outer = np.array([rays.lifted(at(v - ds), lift(at(v - ds))) for v in s])    # chain sorted by x: s = 0 is the outer end
+    inner = np.array([rays.lifted(at(v + ds), lift(at(v + ds))) for v in s])
+    up = np.array([0.0, 1.0, 0.0])
+    prof = lambda key: np.interp(s, np.linspace(0, 1, len(cfg[key])), cfg[key])
+    elev, splay, length = np.radians(prof('elev_deg')), np.radians(prof('splay_deg')), prof('len_mm')
+    out = []
+    for i in range(len(s)):
+        n = on_skin[i] - eye
+        n /= np.linalg.norm(n)
+        root = on_skin[i] + n * cfg['root_out_mm']
+        u = up - up.dot(n) * n
+        u /= np.linalg.norm(u)
+        d = n * np.cos(elev[i]) + u * np.sin(elev[i])
+        t = outer[i] - inner[i]                         # toward the outer corner
+        t -= t.dot(d) * d
+        t /= np.linalg.norm(t) + 1e-12
+        d = d * np.cos(splay[i]) + t * np.sin(splay[i])
+        y = up + cfg.get('curl_out', 0.0) * t           # the clump curls up (and toward the outer corner)
+        y -= y.dot(d) * d
+        y /= np.linalg.norm(y)
+        out.append((root, d, y, length[i]))
+    return out
+
+
+def build_fan(rays, design, eye_name):
+    """The upper lashes: the main clumps (design['fan']) and, between them, shorter thin ones (fan['fill'], keys
+    that override the main ones) that thicken the fringe seen from the side.  Returns head-frame mm vertices
+    and faces like the other builders."""
+    groups = [design['fan']]
+    if 'fill' in design['fan']:
+        groups.append(dict(design['fan'], **design['fan']['fill']))
+    verts, faces = np.zeros((0, 3)), []
+    for cfg in groups:
+        v, f = build_fan_group(rays, design, eye_name, cfg)
+        faces += [tuple(i + len(verts) for i in fc) for fc in f]
+        verts = np.r_[verts, v]
+    return verts, faces
+
+
+def build_fan_group(rays, design, eye_name, cfg):
+    """One group of lash clumps placed on the strip's top edge with Geometry Nodes (Instance on Points), applied
+    to a mesh."""
+    layout = fan_layout(rays, design, eye_name, cfg)
+    clump = lash_clump(cfg)
+    pts = bpy.data.meshes.new(FAN_TAG + '_pts')
+    roots_w = M.to_world(np.array([r for r, _, _, _ in layout]) / 1000)
+    pts.from_pydata(roots_w.tolist(), [], [])
+    rots, scales = [], []
+    for root, d, y, length in layout:
+        zw = M.to_world_delta(d[None])[0]
+        yw = M.to_world_delta(y[None])[0]
+        zw /= np.linalg.norm(zw)
+        yw -= yw.dot(zw) * zw
+        yw /= np.linalg.norm(yw)
+        xw = np.cross(yw, zw)
+        rots.append(tuple(Matrix((xw, yw, zw)).transposed().to_euler()))
+        scales.append((length / 1000,) * 3)
+    pts.attributes.new('lash_rot', 'FLOAT_VECTOR', 'POINT').data.foreach_set('vector', np.ravel(rots))
+    pts.attributes.new('lash_scale', 'FLOAT_VECTOR', 'POINT').data.foreach_set('vector', np.ravel(scales))
+    holder = bpy.data.objects.new(FAN_TAG + '_pts', pts)
+    bpy.context.scene.collection.objects.link(holder)
+    ng = fan_nodes(clump)
+    mod = holder.modifiers.new(FAN_TAG, 'NODES')
+    mod.node_group = ng
+    er.apply_modifier(holder, mod)
+    verts = M.to_local(er.world(holder)) * 1000
+    faces = [tuple(p.vertices) for p in holder.data.polygons]
+    me, cme = holder.data, clump.data
+    bpy.data.objects.remove(holder)
+    bpy.data.objects.remove(clump)
+    for m in (me, cme):
+        bpy.data.meshes.remove(m)
+    bpy.data.node_groups.remove(ng)
+    print('LASH_FAN', eye_name, len(layout), 'clumps,', len(verts), 'verts, lengths mm',
+          np.round([l for *_, l in layout], 1).tolist())
+    return verts, faces
+
+
+def lower_centres(design, curve):
+    """The lower lash dots: the reference dots (design['lower']), or, with design['lower_row'] and the smooth
+    lower edge, an even row along the curve at a fixed distance below it (like the reference: dots in a row
+    parallel to the outer lower line)."""
+    row = design.get('lower_row')
+    if row is None or curve is None:
+        return design['lower']
+    seg = np.r_[0, np.cumsum(np.linalg.norm(np.diff(curve, axis=0), axis=1))]
+    out = []
+    for t in np.linspace(*row['s'], row['count']):
+        i = int(np.clip(np.searchsorted(seg, t * seg[-1]), 1, len(curve) - 2))
+        tan = curve[i + 1] - curve[i - 1]
+        tan /= np.linalg.norm(tan)
+        nrm = np.array([-tan[1], tan[0]])
+        if nrm[1] < 0:
+            nrm = -nrm                                   # away from the eye (down in the image)
+        out.append({'centre': (curve[i] + nrm * row['offset_px']).tolist()})
+    return out
+
+
+def build_lower(rays, design, curve=None):
     """Short thick lower lashes at the reference dots (outer lower lid, the first ones on the skin under the
     wedge).  Each points away from the eye, leaning to the outer corner, and its tip stands off the lid (3D)."""
     eye = np.array(design['corner']['eye_centre'])
     verts, faces = [], []
-    for st in design['lower']:
+    for st in lower_centres(design, curve):
         c = np.array(st['centre'])
         out = (c - eye) / np.linalg.norm(c - eye)
         tng = np.array([out[1], -out[0]])
@@ -708,7 +1030,7 @@ def build_lower(rays, design):
     return np.array(verts), faces
 
 
-def set_side(objs, liner, rim, lashes, lower, mat, brown):
+def set_side(objs, liner, rim, lashes, lower, mat, brown, tear=None, tear_mat=None):
     obj = bpy.data.objects[objs['rim']]
     er.back_up(obj)
     er.set_mesh(obj, *rim, mat, '_lr_rim')
@@ -721,6 +1043,8 @@ def set_side(objs, liner, rim, lashes, lower, mat, brown):
             er.set_mesh(obj, *lashes[k], mat, '_lr_lash')
         elif k == len(lashes) and lower is not None:
             er.set_mesh(obj, *lower, brown, '_lr_lower')
+        elif k == len(lashes) + 1 and tear is not None:
+            er.set_mesh(obj, *tear, tear_mat, '_lr_tearline')
         else:
             er.replace_mesh(obj, np.zeros((0, 3)), [], '_lr_cleared')
 
@@ -1034,9 +1358,10 @@ def lr_restore(drop=False):
             bpy.data.meshes.remove(backup)
         count += 1
     if drop:
-        mat = bpy.data.materials.get('INKWAVE_lash_brown')
-        if mat is not None and mat.users == 0:
-            bpy.data.materials.remove(mat)
+        for name in ('INKWAVE_lash_brown', 'INKWAVE_tearline_skin'):
+            mat = bpy.data.materials.get(name)
+            if mat is not None and mat.users == 0:
+                bpy.data.materials.remove(mat)
     return count
 
 
@@ -1110,12 +1435,18 @@ def main():
         if 'liner_tail' in d:
             tv, tf = build_liner_tail(rays, d)
             liner = (np.r_[liner[0], tv], list(liner[1]) + [tuple(i + len(liner[0]) for i in fc) for fc in tf])
-        rim, _ = build_rim(rays, d)
-        lashes = [] if args.shape_only else [build_lash(rays, d, spec) for spec in d['lashes']]
-        lower = None if args.shape_only else build_lower(rays, d)
-        built.append([objs, liner, rim, lashes, lower])
+        rim, _, edge = build_rim(rays, d)
+        tear = build_tearline(rays, d, *edge) if edge is not None else None
+        if args.shape_only:
+            lashes = []
+        elif 'fan' in d:
+            lashes = [build_fan(rays, d, objs['eyeball'])]
+        else:
+            lashes = [build_lash(rays, d, spec) for spec in d['lashes']]
+        lower = None if args.shape_only else build_lower(rays, d, edge[0] if edge is not None else None)
+        built.append([objs, liner, rim, lashes, lower, tear])
     verts, polys = [], []
-    for _, liner, rim, _, _ in built:
+    for _, liner, rim, _, _, _ in built:
         for v, f in (liner, rim):
             polys += [[i + sum(len(x) for x in verts) for i in fc] for fc in f]
             verts.append(M.to_world(np.asarray(v) / 1000))
@@ -1124,8 +1455,9 @@ def main():
         sv, sf = er.solid_sheet(*build_side_corner(design, tree, views, side, black), LINER_THICK_MM * 0.6)
         v, f = part[1]
         part[1] = (np.r_[v, sv], list(f) + [tuple(i + len(v) for i in fc) for fc in sf])
-    for objs, liner, rim, lashes, lower in built:
-        set_side(objs, liner, rim, lashes, lower, mat, brown)
+    tear_mat = tearline_material(design['lid_edge'].get('tint', (1.0, 1.0, 1.0))) if 'lid_edge' in design else None
+    for objs, liner, rim, lashes, lower, tear in built:
+        set_side(objs, liner, rim, lashes, lower, mat, brown, tear, tear_mat)
     remove_lower_paint()
     for objs in (R, L):
         decimate(bpy.data.objects[objs['liner']])
