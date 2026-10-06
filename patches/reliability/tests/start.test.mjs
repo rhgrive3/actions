@@ -6,6 +6,7 @@ import { adaptStart } from '../start-adapter.mjs';
 import { adaptResults } from '../results-adapter.mjs';
 import { adaptIntro } from '../intro-adapter.mjs';
 import { adaptSource } from '../../splatoon3/adapter.mjs';
+import { turfExperience } from '../../splatoon3/runtime/results-scoring.mjs';
 import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
 
 const RAW = fs.readFileSync(new URL('../../../inkwave-public/src/main.js', import.meta.url), 'utf8');
@@ -427,6 +428,7 @@ function resultFixture(source, boss, online = false, existingFlow = true) {
   assert.ok(progressionAt >= 0 && progressionEnd > progressionAt);
   vm.runInContext(config.slice(progressionAt, progressionEnd + 3).replace('export ', '') + '\nglobalThis.PROGRESSION = PROGRESSION;', h.context);
   h.context.TEAM_NAMES = ['A', 'B'];
+  h.context.turfExperience = turfExperience;
   h.context.saveJSON = (key, profile) => h.calls.push(['saveProfile', key, { ...profile }]);
   h.context.setTimeout = (fn, ms) => { const timer = { fn, ms }; timers.push(timer); return timer; };
   h.G.teamHex = ['#f80', '#05f']; h.G.teamColors = ['orange', 'blue'];
