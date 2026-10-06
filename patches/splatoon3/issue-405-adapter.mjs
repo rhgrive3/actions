@@ -16,16 +16,19 @@ export function replaceOnce(code, before, after, label) {
 export function adaptIssue405(rel, code) {
   const normalized = rel.replace(/^inkwave-public\//, '');
   if (normalized === 'src/game/actor.js') {
-    // Current movement-physics replaces the entire grounded velocity owner with
-    // stepGroundVelocity(), which already uses one deceleration rate for neutral
-    // and reversal. Only patch the legacy native block when that owner remains.
-    if (code.includes('stepGroundVelocity(this.vel')) return code;
-    code = replaceOnce(
-      code,
-      'const r = Math.max(P.reverseDecel, D) * dt * (onEnemy ? 0.5 : 1);',
-      'const r = D * dt * (onEnemy ? 0.5 : 1);',
-      'align reverse deceleration rate with normal locomotion deceleration D'
-    );
+    const needle = 'Math.max(P.reverseDecel, D)';
+    const at = code.indexOf(needle);
+    if (at < 0) {
+      // Current Movement Physics owns grounded reversal through one vector-acceleration
+      // step; the legacy reverseDecel branch has been intentionally removed.
+      if (code.includes('stepGroundVelocity(this.vel, mv.x, mv.z, vt, accel, dt);') ||
+          code.includes('const r = D * dt * (onEnemy ? 0.5 : 1);')) return code;
+      throw new Error('INKWAVE issue-405 patch conflict (reverse deceleration expression): expected one current reverse-decel owner');
+    }
+    if (code.indexOf(needle, at + needle.length) !== -1) {
+      throw new Error('INKWAVE issue-405 patch conflict (reverse deceleration expression): expected exactly one current reverse-decel expression');
+    }
+    code = code.slice(0, at) + 'D' + code.slice(at + needle.length);
   }
   return code;
 }

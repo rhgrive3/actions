@@ -15,6 +15,7 @@ import { installMovementMotion } from './movement-motion.mjs';
 import { installWeapons, installArcPreviewPerformance } from './weapons.mjs';
 import { installWeaponsFidelity } from './weapons-fidelity.mjs';
 import { installShotGuide } from './weapons-fidelity.mjs';
+import { installChargerSurface } from './charger-surface.mjs';
 import { installSubSpecialFidelity } from './sub-special-fidelity.mjs';
 import { installGear } from './gear.mjs';
 import { installFlow } from './flow.mjs';
@@ -103,6 +104,7 @@ export function install(profile) {
   // The S3 ShotGuideFrame guide reads the installed projectile motion records, so
   // it installs after main-weapon fidelity and before any aim/HUD consumer runs.
   installShotGuide(api, profile);
+  installChargerSurface(api);
   // Aim remains tied to the actual camera ray. No target-dependent auto-turn.
   DEFAULT_SETTINGS.aimAssist = 0; DEFAULT_SETTINGS.aimAssistMouse = false;
   PlayerController.prototype._assistTarget = () => null;

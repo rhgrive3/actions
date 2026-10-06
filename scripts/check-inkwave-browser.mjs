@@ -330,6 +330,39 @@ try {
   result.hudAuthority = await checkHudAuthority({ page, evidence, sourceSha, contentHash: manifest.contentHash });
   }
   result.hudAuthority = await checkHudAuthority({ page, evidence });
+  result.subHud = await page.evaluate(async () => {
+    const G=globalThis.s3ProbeG,g=G.game,a=g.match.local,hud=g.hud,mobile=g.input.mobile;
+    const {subInkSpec}=await import(new URL('patches/splatoon3/runtime/sub-ready.mjs',document.baseURI).href);
+    const {SUB,PLAYER}=await import(new URL('src/config.js',document.baseURI).href);
+    g.debug.freeze();
+    // Desktop Chromium has no touch-capability media flag. Install the actual
+    // mobile control DOM once, then drive its real public setHud via Game.
+    if(!mobile.els)mobile._install();
+    const key='inkwave.splatoon3.gear.v1',saved=localStorage.getItem(key),wid=a.weaponId,rows=[];
+    const update=hud.update,draw=hud._drawTank;let frame,mark;
+    hud.update=function(dt,f){frame=f;return update.call(this,dt,f);};
+    hud._drawTank=function(dt,sub,...rest){mark=sub;return draw.call(this,dt,sub,...rest);};
+    try {
+      for(const ap of [0,35,57]) {
+        let loadout;
+        for(let m=0;m<=3;m++){const n=(ap-10*m)/3;if(Number.isInteger(n)&&n>=0&&n<=9){loadout=Array.from({length:3},(_,i)=>({main:i<m?'inkSaverSub':'none',subs:Array.from({length:3},(_,j)=>i*3+j<n?'inkSaverSub':'none')}));break;}}
+        localStorage.setItem(key,JSON.stringify(loadout));a.setWeapon('shooter');a.alive=true;a.form='kid';a.grounded=true;a.specialActive=null;a.superJumpState=null;a.intent.sub=true;
+        a.ink=100;for(let i=0;i<6;i++)a.weaponRunner.update(1/60,{sub:true});
+        const cost=subInkSpec(a,SUB.bomb).inkCost;
+        for(const delta of [-.001,0,.001]) {
+          a.ink=cost+delta;g._updateHud(1/60);
+          const row={ap,delta,cost,mark,label:hud.subChip.querySelector('b').textContent,short:hud.subChip.classList.contains('is-short'),tank:hud.tank.classList.contains('is-nosub'),mobile:mobile.els.sub.classList.contains('is-dim'),ready:frame.subReady};
+          if(Math.abs(mark-cost/PLAYER.inkMax)>1e-9||row.label!==Math.round(cost)+'%'||row.ready!==(delta>=0)||[row.short,row.tank,row.mobile].some(x=>x!==(delta<0)))throw Error('Compiled equipped sub HUD mismatch: '+JSON.stringify(row));
+          rows.push(row);
+        }
+      }
+    } finally {
+      hud.update=update;hud._drawTank=draw;
+      if(saved==null)localStorage.removeItem(key);else localStorage.setItem(key,saved);
+      a.intent.sub=false;a.setWeapon(wid);a.ink=100;
+    }
+    return {fixture:'actual compiled Game/HUD Canvas2D and MobileInput DOM in Chromium',rows};
+  });
   result.status = 'passed';
 } catch (error) {
   result = { ...(result || {}), status: 'failed', error: error.message };

@@ -1,6 +1,7 @@
 import { installContactRecovery } from './contact-recovery.mjs';
 import { installFinalDamage, damageGroupId } from './final-damage.mjs';
 import { installSplatlingRadiusCharge } from './splatling-radius-charge.mjs';
+import { installContactRecovery } from './contact-recovery.mjs';
 import { installWeaponEdgecases } from './weapon-edgecases.mjs';
 import { installSplatling } from './splatling.mjs';
 import { installWeaponGates } from './weapon-gates.mjs';
@@ -397,6 +398,7 @@ export function installWeapons(context, profile) {
     this._s3SlosherOwnerGroups?.clear();
     return clearProjectiles.apply(this, args);
   };
+  installContactRecovery(api);
 }
 
 // Trajectory-preview presentation budget for Issue #798.
