@@ -1,8 +1,9 @@
 # INKWAVE C22 consolidated integration
 
 Baseline: `f31f5da439134fe49bb89018dad5557671a49c67` (main, including #819/#820).
-This combines C17/C18 and the unpublished C20/C21 source branches. It replaces
-the unmerged #792/#793 after the consolidated Ready PR is available.
+This combines C17/C18, the unpublished C20/C21 sources, and four completed C23
+fixes into the same Ready PR #822 (26 Issues). It supersedes the closed, unmerged
+#792/#793; their branches and evidence remain preserved.
 
 | Issue | Root cause and installed change |
 |---|---|
@@ -26,6 +27,10 @@ the unmerged #792/#793 after the consolidated Ready PR is available.
 | #769, #459 | Shooter/Splatling ignore their live 11F/8F guide frames; predict presentation through their installed projectile law and project it without changing aim/gameplay. |
 | #800 | Touch overlay intercepts deliberate mouse lock recovery; admit released-touch clicks on active gameplay overlay surfaces, retaining held-touch/editor/menu guards. |
 | #801 | Roller drops the pinned 3F friendly-through window; compose its per-unit window with Slosher's 2F solver, without friendly HP/credit. |
+| #506 | Active finite-flight Charger damage bypasses raw charge time; snapshot its sourced damage while preserving nonlinear range/speed/paint and owner-only hits. |
+| #798 | Continuous aim/movement invalidates the exact arc cache every render; cache ordinary preview draws within a local 30 Hz budget, retaining critical invalidations and native bomb physics. |
+| #810 | Surfacing retains an already depleted charge-keep timer; refresh only an existing held store and preserve expiry/release/startup/refill behavior. |
+| #803 | Paint splats allocate face arrays and growth records repeatedly; pool bounded exclusive leases through final spread/drip emission and release references on clear/dispose without truncating large splats. |
 
 Integration corrections preserve main's separate Bucket/Blaster guide. A missing
 Shooter/Splatling guide clears the inline translate so existing `--gx/--gy` CSS
@@ -38,8 +43,20 @@ main #819/#820 fields; no new tuning is introduced by that regeneration.
 
 Overlap exclusions: #736 is already owned by #670; #654 is already implemented
 by the actual #536 platform-input diff. Both were removed and their C claims
-released. #305/#365/#369/#506/#798 remain outside this publication while source
+released. #305/#365/#369/#641/#642 remain outside this publication while source
 acceptance or repair is pending. Ordinary builtin subagents were not used.
+
+The four added fixes and measurement limitations are detailed in the C23 subset
+report; they are published in #822 rather than a separate stacked PR. Historical
+53-test focused coverage was followed by the corrected final 3-test preview
+selection and six paint-pool tests on the integrated source. Build, quick
+contracts and startup budget pass (131 core / 14 isolated Range modules). Final
+three-root plus CI-wiring review and the paint-pool delta review have no blockers.
+Prior exact-source/native CI failed loader/catalog and cold-boot checks and is
+not acceptance evidence. Loader/catalog wiring repairs have focused passing
+regressions; cold boot is still being diagnosed. One reconnect assertion is a
+known main failure already owned by #818/#823, and #824 owns a separate inherited
+Dualies catalog contract update. No pending or failed run is reported as green.
 
 The final integration verifies the shared Slosher/Roller collision solver,
 Storm/resource return paths, Splatling/Charger startups, remote life/credit,
