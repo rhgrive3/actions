@@ -20,9 +20,17 @@ export function adaptAgent3WeaponPhysics(rel, code, replaceOnce) {
     '          if (beginAgent3SlosherWallDrop(this, p, hit)) return false;\n          this._impact(p, hit);',
     'agent3 weapon physics: Slosher wall-hit admission',
   );
-  code = replaceOnce(
+  const plainRollerBody = '      if (fwd > -0.2 && fwd < 1.35 && lat < w.rollWidth / 2 + 0.35 && Math.abs(dy) < 1.2 && hs > 1.0) {';
+  const contactRollerBody = '      if (fwd > -0.2 && fwd < 1.35 && lat < w.rollWidth / 2 + 0.35 && Math.abs(dy) < 1.2 && hs > 1.0 && rollerContactClear(a, e, w, G.physics, PLAYER)) {';
+  if (code.includes(contactRollerBody)) code = replaceOnce(
     code,
-    '      if (fwd > -0.2 && fwd < 1.35 && lat < w.rollWidth / 2 + 0.35 && Math.abs(dy) < 1.2 && hs > 1.0) {',
+    contactRollerBody,
+    '      if (agent3RollerBodyContact(a, e, hs) && rollerContactClear(a, e, w, G.physics, PLAYER)) {',
+    'agent3 weapon physics: Roller body collision with contact visibility',
+  );
+  else code = replaceOnce(
+    code,
+    plainRollerBody,
     '      if (agent3RollerBodyContact(a, e, hs)) {',
     'agent3 weapon physics: Roller body collision',
   );

@@ -39,18 +39,22 @@ function adaptIssue460Actor(code) {
     `      if (k >= 1) {`,
     `      if (k >= 1) {\n        if (this.s3) this.s3.jumpMarker460 = null;\n        clearJumpGauge460(this);`,
     'issue-460 owner gauge clear on land');
-  code = replaceOnce(code,
-    `        if (isActor && !tgt.alive) { this.superJumpState = null; return; }`,
+  const cancelAnchor = `        if (isActor && !tgt.alive) { this.superJumpState = null; return; }`;
+  if (code.includes(cancelAnchor)) code = replaceOnce(code,
+    cancelAnchor,
     `        if (isActor && !tgt.alive) { if (this.s3) this.s3.jumpMarker460 = null; clearJumpGauge460(this); this.superJumpState = null; return; }`,
     'issue-460 owner gauge clear on cancel');
+  else if (!code.includes('Destination was committed at admission; target motion/death cannot retarget it.'))
+    throw new Error('INKWAVE issue-460 patch conflict (issue-460 owner gauge clear on cancel): no legacy cancel or committed-destination owner');
   code = replaceOnce(code,
     `    this.character.setVisible(false);\n    if (this.isLocal) rumble(this, 0.8, 0.6, 260);`,
     `    if (this.s3) this.s3.jumpMarker460 = null;\n    clearJumpGauge460(this);\n    this.character.setVisible(false);\n    if (this.isLocal) rumble(this, 0.8, 0.6, 260);`,
     'issue-460 owner gauge clear on splat');
-  code = replaceOnce(code,
-    `    this.superJumpState = null;\n    this.yawVel = 0; this._faceTarget = null;`,
-    `    if (this.s3) this.s3.jumpMarker460 = null;\n    clearJumpGauge460(this);\n    this.superJumpState = null;\n    this.yawVel = 0; this._faceTarget = null;`,
-    'issue-460 owner gauge clear on reset/respawn');
+  const plainResetJump = `    this.superJumpState = null;\n    this.yawVel = 0; this._faceTarget = null;`;
+  const composedResetJump = `    this.superJumpState = null; this.superJumpGround = null;\n    clearPendingLethal(this);\n    this.yawVel = 0; this._faceTarget = null;`;
+  const resetJumpAnchor = code.includes(composedResetJump) ? composedResetJump : plainResetJump;
+  const resetJumpTarget = `    if (this.s3) this.s3.jumpMarker460 = null;\n    clearJumpGauge460(this);\n` + resetJumpAnchor;
+  code = replaceOnce(code, resetJumpAnchor, resetJumpTarget, 'issue-460 owner gauge clear on reset/respawn');
   return code;
 }
 
@@ -81,10 +85,11 @@ function adaptIssue460Net(code) {
     `      case 'superjump:land': a.net.sjTo = null; G.fx?.burst(`,
     `      case 'superjump:land': a.net.sjTo = null; a.net.sjDur460 = 0; a.net.sjT460 = 0; a.net.sjMarker460 = null; clearJumpGauge460(a); G.fx?.burst(`,
     'issue-460 remote gauge clear on land');
-  code = replaceOnce(code,
-    `    victim.specialActive = null; victim.superJumpState = null;`,
-    `    victim.specialActive = null; victim.superJumpState = null; if (victim.net) { victim.net.sjTo = null; victim.net.sjDur460 = 0; victim.net.sjT460 = 0; victim.net.sjMarker460 = null; } clearJumpGauge460(victim);`,
-    'issue-460 remote gauge clear on splat');
+  const plainRemoteSplat = `    victim.specialActive = null; victim.superJumpState = null;`;
+  const syncedRemoteSplat = `    victim.specialActive = null; victim.superJumpState = null;\n    delete victim.s3SpecialCost;\n    victim.s3SpecialReady = false;`;
+  const remoteSplatAnchor = code.includes(syncedRemoteSplat) ? syncedRemoteSplat : plainRemoteSplat;
+  const remoteSplatTarget = remoteSplatAnchor + `\n    if (victim.net) { victim.net.sjTo = null; victim.net.sjDur460 = 0; victim.net.sjT460 = 0; victim.net.sjMarker460 = null; } clearJumpGauge460(victim);`;
+  code = replaceOnce(code, remoteSplatAnchor, remoteSplatTarget, 'issue-460 remote gauge clear on splat');
   return code;
 }
 
