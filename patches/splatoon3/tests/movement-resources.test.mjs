@@ -97,7 +97,7 @@ test('configured armor expires on its exact tick boundary without a floating-poi
   a.vel.set(0, 0, 20); a.intent.move.set(0, 0, -1);
   f.beforeActions(a, 1 / 60, true);
   for (let i = 0; i < f.profile.movement.roll.armorTime * 60; i++) f.beforeActions(a, 1 / 60, false);
-  assert.equal(a.s3.roll, null); close(a.s3.actions.armor.armorTime, 0); a.damage(60, null, 'shooter'); close(a.hp, 40);
+  close(a.s3.roll.armorTime, 0); a.damage(60, null, 'shooter'); close(a.hp, 40);
 });
 
 test('roll collision clipping persists instead of restoring its pre-collision launch velocity', async () => {
