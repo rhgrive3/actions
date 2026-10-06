@@ -110,6 +110,8 @@ export function installWeapons(context, profile) {
       // 12 * (1/60) misses .2 and the 17F recovery also gains an extra tick.
       const carry = Math.max(0, this.slosh - w.windup);
       this.slosh = -1; G.projectiles.fireSlosh(a, w);
+      // Ink recovery is post-shot timing; the windup must not spend its frames.
+      a.lastFire = 0;
       this.cooldown = w.fireInterval - w.windup - carry;
       this.s3SloshRecovery = !!inp.fire;
     };

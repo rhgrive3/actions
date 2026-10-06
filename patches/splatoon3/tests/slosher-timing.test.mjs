@@ -110,3 +110,54 @@ test('reset, death and weapon replacement cancel pending release and start a fre
     assert.equal(r.shots.length, 1, ending); assert.equal(r.shots[0].tick - started, 12);
   }
 });
+
+test('Slosher ink recovery starts 40 fixed ticks after glob release at 30/60/120Hz', async () => {
+  const traces = [];
+  for (const hz of [30, 60, 120]) {
+    const f = await fixture(), a = f.make('slosher'), clock = new FixedClock(), shots = [];
+    a.lastFire = 0; a.ink = 90;
+    let simTick = 0, spentInk, releaseTick, releaseLastFire, firstRefillTick;
+    f.G.projectiles.fireSlosh = () => shots.push(simTick);
+    const step = dt => {
+      simTick++; f.G.time += dt; a.intent.fire = simTick === 1; a.update(dt);
+      if (simTick === 1) spentInk = a.ink;
+      if (releaseTick === undefined && shots.length) {
+        releaseTick = simTick; releaseLastFire = a.lastFire;
+      }
+      if (releaseTick !== undefined && firstRefillTick === undefined && a.ink > spentInk + 1e-10) {
+        firstRefillTick = simTick;
+      }
+    };
+    for (let render = 0; render < 2 * hz; render++) clock.advance(1 / hz, step);
+    assert.equal(clock.ticks, 120, `${hz}Hz fixed-step count`);
+    assert.equal(a.weapon.windup * 60, 12, 'existing Slosher windup remains 12F');
+    assert.equal(a.weapon.fireInterval * 60, 29, 'existing repeat interval remains 29F');
+    assert.equal(a.weapon.inkRecoverStop * 60, 40, 'profile recovery stop remains 40F');
+    assert.deepEqual(shots, [13], 'the first glob group still releases at tick 13');
+    assert.equal(releaseLastFire, 0, 'release restarts the existing recovery clock');
+    assert.equal(firstRefillTick, 53, 'first refill is exactly 40 fixed ticks after release');
+    traces.push({ hz, releaseTick, firstRefillTick });
+    f.restoreRandom();
+  }
+  assert.deepEqual(traces, [
+    { hz: 30, releaseTick: 13, firstRefillTick: 53 },
+    { hz: 60, releaseTick: 13, firstRefillTick: 53 },
+    { hz: 120, releaseTick: 13, firstRefillTick: 53 },
+  ]);
+});
+
+test('ordinary Shooter ink recovery retains its existing 20F fire-event deadline', async () => {
+  const f = await fixture(), a = f.make('shooter');
+  a.lastFire = 0; a.ink = 90;
+  let simTick = 0, shotTick, spentInk, firstRefillTick;
+  f.G.projectiles.fireShooter = () => { shotTick = simTick; };
+  for (simTick = 1; simTick <= 30; simTick++) {
+    a.intent.fire = simTick === 1; f.G.time += 1 / 60; a.update(1 / 60);
+    if (simTick === 1) spentInk = a.ink;
+    if (shotTick !== undefined && firstRefillTick === undefined && a.ink > spentInk + 1e-10) firstRefillTick = simTick;
+  }
+  assert.equal(a.weapon.inkRecoverStop * 60, 20);
+  assert.equal(shotTick, 1);
+  assert.equal(firstRefillTick, 21, 'ordinary Shooter timing remains unchanged');
+  f.restoreRandom();
+});
