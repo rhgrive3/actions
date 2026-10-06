@@ -18,3 +18,7 @@ The source PR's former whole-Main adapter was not copied over the current integr
 ## PR761 fixed set: collision scratch, Charger launch speed and release gap
 
 Source PR761 afdba0d7fdce4a1a142e19d30b057e78eb220992; target aa094850fdd60b3b70adfdaad54b3e3837cb1402. Issues #606, #617 and #680 are ported as a fixed three-root set. Existing progressive ink payment, startup admission, feet paint, finite-flight ownership and 16F post-shot writer are preserved. The 1F release gap is reflected in adjacent source and semantic-gate fixtures. Fifteen focused source cases and one semantic gate passed; all touched JavaScript parsed after the patch applied cleanly to the latest target. Full aggregate CI is not claimed. Other PR761 roots remain separate and the entire source PR is not marked adopted by ancestry.
+
+## PR751 fixed PropKit set
+
+Source e5640caa09d84560d1fdf792a74511b806384081; Issues #516 and #526. The two original leaf adapters and dedicated fixtures/tests are connected through narrow quality registration hunks. Seven focused actual PropKit/Three cases passed: LOW/touch atlas 1024, Halyard retained parts 12793 to 0, geometry/UV/collider/animation equivalence and rebuild/add/clear/dispose. Fixture realpath normalization ensures transformed native imports also work through symlinks. This is a complete implementation port for these two root scopes, with full aggregate CI pending; other PR751 roots remain unported.

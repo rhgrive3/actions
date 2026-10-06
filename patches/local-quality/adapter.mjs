@@ -1,3 +1,5 @@
+import { adaptPropRetention } from './prop-retention-adapter.mjs';
+import { adaptPropAtlas } from './prop-atlas-adapter.mjs';
 import { adaptIssue482 } from '../splatoon3/issue-482-adapter.mjs';
 import { adaptIssue405 } from '../splatoon3/issue-405-adapter.mjs';
 import { adaptIssue484 } from '../splatoon3/issue-484-adapter.mjs';
@@ -54,6 +56,7 @@ const IDENTITY_FILES = [
   'final-minute-music-adapter.mjs',
   'turf-lead-adapter.mjs',
   'score-reticle-adapter.mjs', 'map-teammate-status-adapter.mjs',
+  'prop-retention-adapter.mjs', 'prop-atlas-adapter.mjs',
   'issue-461-sfx-mute.mjs', 'issue-480-camera-shake-fidelity.mjs',
   'resource-adapter.mjs', 'resource-budget.mjs', 'depth-cache.mjs',
   'aim-profile-adapter.mjs', 'aim-profile.mjs', 'medal-adapter.mjs',
@@ -89,6 +92,8 @@ export function adaptQualitySource(rel, code) {
 }
 
 function adaptQualityLayer(rel, code) {
+  code = adaptPropRetention(rel, code);
+  code = adaptPropAtlas(rel, code);
   code = adaptScreenfxDamageReset(rel, code, replaceOnce);
   code = adaptFinalMinuteMusic(rel, code, replaceOnce);
   code = adaptTurfLead(rel, code, replaceOnce);
