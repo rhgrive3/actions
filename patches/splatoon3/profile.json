@@ -423,6 +423,11 @@
       1,
       0.4,
       0.1111111111111111
+    ],
+    "subResistance": [
+      1,
+      0.75,
+      0.5
     ]
   },
   "resources": {
@@ -472,9 +477,9 @@
       "turf": 0.0024
     },
     "assistWindow": 5,
-    "runMultiplier": 1.2,
-    "swimMultiplier": 1.2,
-    "enemyInkSpeedMultiplier": 1.5,
+    "runMultiplier": 1,
+    "swimMultiplier": 1,
+    "enemyInkSpeedMultiplier": 1,
     "paintRadius": 0.6,
     "bots": true,
     "progress": {
@@ -487,7 +492,10 @@
       "environmentDeathPenalty": 10,
       "source": "https://wikiwiki.jp/splatoon3mix/検証/イカフロー",
       "status": "community verification; loss values normalized to existing threshold, award weights remain uncalibrated"
-    }
+    },
+    "abilityPoints": 30,
+    "effectSource": "https://bsky.app/profile/did:plc:bqlxkhq26ie3xvvjv5kjae3r/post/3mdramqcbbs2o?ref_src=embed",
+    "effectStatus": "Primary community analysis, 2026-02-01; +30 AP for four abilities, cap 57. Not a new Switch measurement. Legacy speed multipliers are identity for pending patch composition."
   },
   "superJump": {
     "chargeTime": 1.3333333333333333,
@@ -1461,6 +1469,24 @@
       "index": null,
       "factor": 0.016666666666666666,
       "rawValue": 22
+    },
+    "gear.subResistance.0": {
+      "parameter": "data/parameter/1130/misc/params.json#/DamageRt_BombH",
+      "index": 2,
+      "factor": 1,
+      "rawValue": 1
+    },
+    "gear.subResistance.1": {
+      "parameter": "data/parameter/1130/misc/params.json#/DamageRt_BombH",
+      "index": 1,
+      "factor": 1,
+      "rawValue": 0.75
+    },
+    "gear.subResistance.2": {
+      "parameter": "data/parameter/1130/misc/params.json#/DamageRt_BombH",
+      "index": 0,
+      "factor": 1,
+      "rawValue": 0.5
     }
   },
   "gearExtra": {
@@ -3236,5 +3262,14 @@
     "maxAbsorb": 100,
     "duration": 3.9166666666666665,
     "breakDelay": 0.3333333333333333
+  },
+  "conditionalGear": {
+    "lastDitchWindow": 30,
+    "lastDitchAP": 18,
+    "comebackDuration": 20,
+    "comebackAP": 10,
+    "openingDuration": 30,
+    "openingAP": 30,
+    "openingExtension": 15
   }
 }

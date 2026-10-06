@@ -8,6 +8,7 @@ import { adaptAgent3WeaponPhysics } from './agent3-weapon-physics-adapter.mjs';
 // Every connection has a unique exact anchor; missing/duplicated hooks are errors.
 import { adaptMovementPhysics } from './movement-physics-adapter.mjs';
 import { adaptSubSpecialFidelity } from './sub-special-adapter.mjs';
+import { adaptScoreHud } from './score-hud-adapter.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
@@ -36,6 +37,7 @@ export function checkCompatibility(src, patchRoot = PATCH_ROOT) {
 }
 
 export function adaptSource(rel, code) {
+  code = adaptScoreHud(rel, code);
   code = adaptRespawnLifecycle(rel, code, replaceOnce);
   code = adaptStormEffects(rel, code);
   if (rel === 'src/config.js') return replaceOnce(code,
@@ -206,6 +208,8 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, 'if (a.ink < w.rollInk) { this._empty(); return false; }', 'if (a.ink + 1e-10 < w.rollInk) { this._empty(); return false; }', 'dualies equipped-cost float boundary');
     code = replaceOnce(code, 'a.ink -= w.rollInk; a.lastFire = 0;', 'a.ink = Math.max(0, a.ink - w.rollInk); a.lastFire = 0;', 'dualies exact payment nonnegative');
     code = replaceOnce(code, 'Math.max(this.cooldown, 0.22)', 'Math.max(this.cooldown, w.postStreamDelay)', 'splatling sourced post-stream delay');
+    code = replaceOnce(code, 'if (this.slosh >= 0) return w.moveSpeedFiring * 0.7;              // slosher heave plants you a little',
+      'if (this.slosh >= 0) return w.moveSpeedFiring; // shared sourced firing cap', 'slosher windup sourced move cap');
     code = replaceOnce(code,
       '    if (this.flick >= 0) return lerp(w.moveSpeedFiring, w.moveSpeedFiring * 0.45, clamp(this.flick / w.flickWindup, 0, 1));',
       "    if (this.flick >= 0 && w.kind === 'roller') return w.moveSpeedFiring; // S3 swing target is independent of windup progress\n    if (this.flick >= 0) return lerp(w.moveSpeedFiring, w.moveSpeedFiring * 0.45, clamp(this.flick / w.flickWindup, 0, 1));",
@@ -220,7 +224,7 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, '      this.charge = Math.min(1, this.chargeT / w.chargeTime);',
       '      this.charge = Math.min(1, this.chargeT / w.chargeTime, splatlingChargeCap(a.ink, w));', 'splatling ink charge cap');
     code = replaceOnce(code, "      this.applyHit(b.owner, e, lerp(s.damageMin, s.damageMax, k * k), 'bomb');",
-      "      this.applyHit(b.owner, e, distanceDamage(s.damageBands, d, false), 'bomb');", 'bomb damage bands');
+      "      this.applyHit(b.owner, e, distanceDamage(s.damageBands, d, false), d > s.damageBands[0][0] ? 'splat-bomb-far' : 'bomb');", 'bomb damage bands');
     code = replaceOnce(code, "      this.applyHit(p.owner, e, lerp(w.splashDamageMax, w.splashDamageMin, d / w.splashRadius), 'blaster');",
       "      this.applyHit(p.owner, e, distanceDamage(w.damageBands, d), 'blaster');", 'blaster damage bands');
     code = replaceOnce(code, '      b.vel.y -= 24 * dt;', '      b.vel.y -= (b.kind === \'bomb\' ? SUB.bomb.gravity : 24) * dt;', 'bomb gravity');
@@ -237,11 +241,14 @@ export function adaptSource(rel, code) {
     return `import { applyProjectileHit, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\n` + code;
   }
   if (rel === 'src/net/netmatch.js') {
+    code = replaceOnce(code, "d: r2(dmg), w: wid", "d: dmg, w: wid, g: victim.s3PendingHitGroup || undefined", 'unrounded hit transport with optional group');
+    code = replaceOnce(code, 'G.projectiles?.applyHit(atk, v, d.d, d.w);', 'G.projectiles?.applyHit(atk, v, d.d, d.w, d.g);', 'receive final damage group');
     code = replaceOnce(code, '    victim.alive = false; victim.hp = 0;', '    victim.alive = false; victim.hp = 0; victim.superJumpGround = null;', 'remote jump target death');
     code = replaceOnce(code, '    a.alive = true; a.hp = PLAYER.hp;', '    a.superJumpGround = null;\n    a.alive = true; a.hp = PLAYER.hp;', 'remote jump target respawn');
     return code;
   }
   if (rel === 'src/game/actor.js') {
+    code = replaceOnce(code, '    this.hp -= amount;', "    amount = finalWeaponDamage(this, amount, attacker, source);\n    if (amount <= 0) return false;\n    this.hp -= amount;\n    if (Math.abs(this.hp) < 1e-9) this.hp = 0;", 'final weapon HP quantization');
     code = replaceOnce(code, '    this.superJumpState = null;\n    this.yawVel', '    this.superJumpState = null; this.superJumpGround = null;\n    this.yawVel', 'reset super jump ground');
     code = replaceOnce(code, '    this.alive = false;\n    this.hp = 0;', '    this.alive = false;\n    this.superJumpState = null; this.superJumpGround = null;\n    this.hp = 0;', 'clear dead super jump');
     code = replaceOnce(code, '    if (this.invuln > 0) return false;', "    if (this.invuln > 0 || this.superJumpState?.phase === 'flight') return false;", 'super jump flight damage admission');
@@ -281,7 +288,7 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, '    this._spawnBarrier();',
       '    // S3 Spawners use stage geometry and spawn protection, not a universal radial body clamp.',
       'S3 universal spawn barrier removal');
-    return `import { prepareSuperJump, rememberSuperJumpGround, superJumpTarget, updateSuperJumpMain, SUPERJUMP_MAIN_PROGRESS } from '../../patches/splatoon3/runtime/superjump.mjs';\nimport { beforeActions } from '../../patches/splatoon3/runtime/movement.mjs';\nimport { updateResources } from '../../patches/splatoon3/runtime/resources.mjs';\n` + code;
+    return `import { finalWeaponDamage } from '../../patches/splatoon3/runtime/final-damage.mjs';\nimport { prepareSuperJump, rememberSuperJumpGround, superJumpTarget, updateSuperJumpMain, SUPERJUMP_MAIN_PROGRESS } from '../../patches/splatoon3/runtime/superjump.mjs';\nimport { beforeActions } from '../../patches/splatoon3/runtime/movement.mjs';\nimport { updateResources } from '../../patches/splatoon3/runtime/resources.mjs';\n` + code;
   }
   if (rel === 'src/game/character-weapons.js') {
     code = replaceOnce(code, '    if (ft >= 0.15 && ft - dt < 0.15) w.drumW += 34;', '    const release = st.flickReleaseTime ?? 0.15;\n    if (ft >= release && ft - dt < release) w.drumW += 34;', 'roller drum release impulse');
