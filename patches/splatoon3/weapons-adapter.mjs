@@ -7,7 +7,7 @@ export function adaptWeaponsFidelity(code,replaceOnce) {
       if (p.age > p.straight) p.vel.y -= p.grav * dt;
       if (p.drag) p.vel.multiplyScalar(1 - p.drag * dt * (p.age > p.straight ? 1 : 0));
       p.pos.addScaledVector(p.vel, dt);`,
-    '      advanceFidelityProjectile(p, dt);','staged projectile integration');
+    '      const fidelityWallDropDone = advanceFidelityWallDrop(this, p, dt);\n      if (fidelityWallDropDone === null) {\n      advanceFidelityProjectile(p, dt);\n      }','staged projectile integration');
   patch('      // actors\n      for (const e of G.actors) {',
     '      // Earliest enemy before the first solid obstruction.\n      for (const e of fidelityProjectileTargets(this, p)) {','collision chronology');
   patch('        if (Math.abs(e.pos.x - p.pos.x) > 3 || Math.abs(e.pos.z - p.pos.z) > 3) continue;',
@@ -22,6 +22,10 @@ export function adaptWeaponsFidelity(code,replaceOnce) {
     '        const bh = fidelityBossHit(this, p);','solid obstruction before boss');
   patch('        const hit = G.physics.segment(p.prev, p.pos, _hit, true);',
     '        const hit = fidelityWorldHit(this, p);','reuse terrain query');
+  patch('          this._impact(p, hit);\n          dead = true;',
+    '          if (beginFidelityWallDrop(this, p, hit)) return false;\n          this._impact(p, hit);\n          dead = true;','wall impact enters sourced wall-drop state');
+  patch('      let dead = false;',
+    '      let dead = fidelityWallDropDone === true;\n      if (fidelityWallDropDone === false) return false;','retained wall-drop lifecycle');
   patch('      if (!dead && p.age > p.life) {','      if (!dead && p.age + WEAPONS_FIDELITY_EPSILON >= p.life) {','exact lifetime boundary');
   patch('      p.vel.set(Math.sin(ang) * cu * sp, Math.sin(up) * sp, Math.cos(ang) * cu * sp);',
     '      p.vel.set(Math.sin(ang) * cu * sp, Math.sin(up) * sp, Math.cos(ang) * cu * sp);\n      configureFidelityFlick(p, a, w, i, ang, sp);','flick layers; retain random draw ordering');
@@ -35,5 +39,5 @@ export function adaptWeaponsFidelity(code,replaceOnce) {
     '      const elapsed = Math.max(0, dt - Math.max(0, p.delay || 0));\n      p.delay = Math.max(0, (p.delay || 0) - dt);\n      if (elapsed <= 1e-10) continue;', 'delayed projectile active fraction');
   patch('try { if (this._step(p, dt))', 'try { if (this._step(p, elapsed))', 'delayed movement duration');
   patch('      if (!dead && p.trailEvery) {','      if (!dead && !p.ghost && p.trailEvery) {','ghost trails never score paint');
-  return "import { EPSILON as WEAPONS_FIDELITY_EPSILON, advanceFidelityProjectile, configureFidelityFlick, fidelityProjectileTargets, fidelityPlayerCollisionRadius, fidelityVolleyDamage, fidelityBossHit, fidelityWorldHit, applyFidelityProjectileHit, applyFidelitySlosherSplash } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n"+code;
+  return "import { EPSILON as WEAPONS_FIDELITY_EPSILON, advanceFidelityProjectile, advanceFidelityWallDrop, beginFidelityWallDrop, configureFidelityFlick, fidelityProjectileTargets, fidelityPlayerCollisionRadius, fidelityVolleyDamage, fidelityBossHit, fidelityWorldHit, applyFidelityProjectileHit, applyFidelitySlosherSplash } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n"+code;
 }

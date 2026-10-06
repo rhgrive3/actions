@@ -47,9 +47,22 @@ export function adaptNetworkSource(rel, code) {
     patch('if (d.e) for (const e of d.e) p.events.push(e);', `if (d.e) for (const e of d.e) {
       if (!Array.isArray(e) || !Number.isFinite(e[0])) continue;
       if (d.r === 2) { const seq = e[e.length-1]; if (!Number.isSafeInteger(seq) || seq < 1) continue; e._netSeq = seq; const tick = e[e.length-2]; if (Number.isSafeInteger(tick)) e._netTick = tick; }
+      // Receiver-created proof only: an event cannot supply its own authority.
+      e._stormSnapshot = null;
+      const stormNid = e[1] === 'b' && e[3] === 'storm' ? e[2]
+        : e[1] === 'ev' && e[2] === 'special:use' && e[3]?.id === 'storm' ? e[3]?.actor?.n : null;
+      const stormActor = this.byNid.get(stormNid), snap = stormActor?.net?.buf?.at(-1);
+      if (stormActor?.remote && stormActor.owner === from && snap?.t === d.ts
+        && Number.isSafeInteger(snap.life) && snap.life === stormActor.net.lastLife
+        && (snap.f & F.alive) && (snap.f & F.special)
+        && Number.isSafeInteger(d.u) && Number.isSafeInteger(e._netTick) && e._netTick >= 0
+        && e._netTick >= (p.physicsPoints?.at(-3) ?? 0) && e._netTick <= d.u && e[0] <= d.ts) {
+        e._stormSnapshot = { owner: from, life: snap.life, at: snap.t, tick: d.u };
+      }
       p.events.push(e);
     }`, 'receive event identity');
     patch("    this._rec(['ev', name, packEvent(e)]);", "    this._rec(['ev',name,packEvent(e,name === 'weapon:fire' && (WEAPONS[e.weapon] || a.weapon)?.kind === 'charger')]);", 'preserve hitscan endpoint state');
+    patch('r2(p.vel.x), r2(p.vel.y), r2(p.vel.z)', 'p.vel.x, p.vel.y, p.vel.z', 'preserve nonlinear ballistic phase boundaries');
     patch('function packEvent(e) {', 'function packEvent(e, precise = false) {', 'hitscan precision policy');
     patch('else if (v && v.isVector3) o[k] = [r2(v.x), r2(v.y), r2(v.z)];', 'else if (v && v.isVector3) o[k] = precise ? [v.x,v.y,v.z] : [r2(v.x),r2(v.y),r2(v.z)];', 'hitscan unit direction and origin');
     patch("else if (typeof v === 'number') o[k] = r3(v);", "else if (typeof v === 'number') o[k] = precise ? v : r3(v);", 'hitscan charge and length');
@@ -57,8 +70,8 @@ export function adaptNetworkSource(rel, code) {
       'while (i < p.events.length && p.events[i][0] <= tr && (!Number.isFinite(p.events[i]._netTick) || !Number.isFinite(p.sim) || p.events[i]._netTick <= p.sim + .0306)) i++;',
       'events share owner simulation time during render hitches');
     patch('      if (drop) { this._remove(a); continue; }\n      a.owner = this.s.hostId;',
-      '      if (drop) { this._remove(a); continue; }\n      retireNetworkGhosts(a);\n      a.owner = this.s.hostId;', 'retire old timeline before remote owner transfer');
-    patch('  _adopt(a) {', '  _adopt(a) {\n    retireNetworkGhosts(a);', 'ownership transfer retirement');
+      '      if (drop) { this._remove(a); continue; }\n      retireNetworkGhosts(a);\n      if (a.net) a.net._stormBirthAuth = null;\n      a.owner = this.s.hostId;', 'retire old timeline before remote owner transfer');
+    patch('  _adopt(a) {', '  _adopt(a) {\n    retireNetworkGhosts(a);\n    if (a.net) a.net._stormBirthAuth = null;', 'ownership transfer retirement');
     patch('r3(o.seed ?? Math.random())', 'o.seed ?? Math.random()', 'preserve paint pattern seed');
     patch('r3(p.delay || 0), r3(p.life), r3(p.straight)', 'p.delay || 0, p.life, p.straight', 'preserve exact physics timing boundaries');
     const kitBirth = 'p.nose ?? 0.3, p.sats ?? 3, kitVolleyPacketIndex(p.s3VolleyIndex), kitVolleyPacketIndex(p.s3ActionIndex)]);';
@@ -101,15 +114,16 @@ export function adaptNetworkSource(rel, code) {
     const kitBombCase = "case 'b': { const a = this.byNid.get(e[2]); if (a) G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9], e[10], e[11]); break; }";
     if (code.includes(kitBombCase)) patch(kitBombCase, `case 'b': {
         for (let index = 4; index <= 9; index++) if (!Number.isFinite(e[index])) return;
-        const a = this.byNid.get(e[2]), b = a && G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9], e[10], e[11]);
-        if (b) {
-          b._netBorn = e[0]; b._netBornTick = e._netTick; b._netPeer = this.peers.get(from); b._netSteps = 0;
+        const a = this.byNid.get(e[2]);
+        if (e[3] === 'storm') {
+          const auth = a?.net?._stormBirthAuth;
+          if (!stormSnapshotAllows(a, e._stormSnapshot, from) || a.weapon?.special !== 'storm'
+            || !auth || auth.used || auth.owner !== from || auth.life !== e._stormSnapshot.life
+            || !Number.isSafeInteger(e._netTick) || e._netTick !== auth.tick
+            || !Number.isSafeInteger(e._netSeq) || e._netSeq <= auth.useSeq) break;
+          auth.used = true;
         }
-        break;
-      }`, 'bomb timeline birth with kit identity');
-    else patch("case 'b': { const a = this.byNid.get(e[2]); if (a) G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9]); break; }", `case 'b': {
-        for (let index = 4; index <= 9; index++) if (!Number.isFinite(e[index])) return;
-        const a = this.byNid.get(e[2]), b = a && G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9]);
+        const b = a && G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9]);
         if (b) {
           b._netBorn = e[0]; b._netBornTick = e._netTick; b._netPeer = this.peers.get(from); b._netSteps = 0;
         }
@@ -119,6 +133,15 @@ export function adaptNetworkSource(rel, code) {
     if (code.includes(kitEventCase)) patch(kitEventCase, `case 'ev': {
         const before = G.projectiles?.beams.length || 0;
         const actor = this.byNid.get(e[3]?.actor?.n);
+        if (actor && e[2] === 'special:use') {
+          if (e[3]?.id === 'storm' && actor.weapon?.special === 'storm'
+            && stormSnapshotAllows(actor, e._stormSnapshot, from) && Number.isSafeInteger(e._netTick) && Number.isSafeInteger(e._netSeq)) {
+            const previous = actor.net._stormBirthAuth;
+            if (!previous || previous.owner !== from || previous.life !== e._stormSnapshot.life || previous.tick !== e._netTick) {
+              actor.net._stormBirthAuth = { owner: from, life: e._stormSnapshot.life, tick: e._netTick, useSeq: e._netSeq, used: false };
+            }
+          } else if (actor.net) actor.net._stormBirthAuth = null;
+        }
         if (actor && e[2] === 'weapon:fire') actor._netFlickFirst = e[3].projectileFirst;
         try { this._playEvent(e[2],e[3],from); } finally { if (actor) actor._netFlickFirst = undefined; }
         for (let i = before; i < (G.projectiles?.beams.length || 0); i++) { const b = G.projectiles.beams[i]; b._netPeer = this.peers.get(from); b._netBorn = e[0]; b._netBornTick = e._netTick; b._netOwner = actor; b._netSteps = 0; }
@@ -132,6 +155,8 @@ export function adaptNetworkSource(rel, code) {
         for (let i = before; i < (G.projectiles?.beams.length || 0); i++) { const b = G.projectiles.beams[i]; b._netPeer = this.peers.get(from); b._netBorn = e[0]; b._netBornTick = e._netTick; b._netOwner = actor; b._netSteps = 0; }
         break;
       }`, 'beam birth clock');
+    patch('    victim.specialActive = null; victim.superJumpState = null;', '    if (victim.net) victim.net._stormBirthAuth = null;\n    victim.specialActive = null; victim.superJumpState = null;', 'death invalidates storm admission');
+    patch('  _remoteRespawn(a) {\n    a.superJumpGround = null;\n    a.alive = true;', '  _remoteRespawn(a) {\n    if (a.net) a.net._stormBirthAuth = null;\n    a.superJumpGround = null;\n    a.alive = true;', 'respawn invalidates storm admission');
     patch("case 'p': { const a = this.byNid.get(e[2]); if (a) G.projectiles?.ghostProjectile(a, e); break; }", `case 'p': {
         for (let index = 5; index <= 18; index++) if (!Number.isFinite(e[index])) return;
         if (e[11] < 0 || e[12] <= 0) return;
@@ -147,6 +172,12 @@ export function adaptNetworkSource(rel, code) {
         break;
       }`, 'birth and terminal events');
     code += `
+function stormSnapshotAllows(actor, proof, from) {
+  const latest = actor?.net?.buf?.at(-1);
+  return !!(proof && actor?.alive && actor.remote && actor.owner === from && proof.owner === from
+    && actor.net.lastLife === proof.life && latest?.life === proof.life
+    && latest.t >= proof.at && (latest.f & F.alive) && (latest.f & F.special));
+}
 function sampleOwnerSimulation(peer) {
   const points = peer.physicsPoints, t = peer.tr;
   if (!points?.length || !Number.isFinite(t)) return;

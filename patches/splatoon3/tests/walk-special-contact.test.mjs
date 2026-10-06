@@ -47,9 +47,8 @@ function world(api,ceiling=false){
   queryBlocks:(_x,_z,_xx,_zz,out)=>{out.length=0;out.push(...blocks.map(b=>b.id));return out;}};
  G.physics=new api.Physics(G.level);
 }
-function rig(api,hz=60,kind='shooter',special='slam'){
+function rig(api,hz=60,kind='shooter'){
  const {G,THREE,Actor,Character}=api,a=new Actor({team:0,name:'walk special contact',weapon:kind,CharacterClass:Character,style:{hair:0,skin:2,outfit:0,eyes:0}});
- a.weapon={...a.weapon,special};
  const ch=a.character;ch.actor=a;ch.onEvent=null;G.actors.push(a);G.scene.add(ch.root);a.grounded=a.ground.hit=true;
  const visual=()=>{G.time+=1/hz;a._finishFrame(1/hz);ch.root.updateMatrixWorld(true);ch.skeleton.update();};
  for(let i=0;i<hz*2;i++)visual();
@@ -127,7 +126,7 @@ test('actual Slam recovery and cancellation release both native contact and walk
 test('disabled and unmapped specials retain the native contact gate; Storm adds no gait restriction',async()=>{
  const api=await production();world(api);
  for(const mode of ['disabled','network','storm']){
-  const r=rig(api,60,mode==='storm'?'charger':'shooter',mode==='storm'?'storm':'slam');
+  const r=rig(api,60,mode==='storm'?'charger':'shooter');
   try{
    r.a._startSpecial();
    if(mode==='disabled')r.ch.s3SpecialMotionEnabled=false;

@@ -1,13 +1,5 @@
-let api, tuning, profile;
-export function installResources(context, values) { api = context; tuning = values.resources; profile = values; }
-export const RESPAWN_CAUSES = Object.freeze({ normal: 8.5, water: 7.0, outOfBounds: 5.5 });
-export function respawnSeconds(cause, values = profile) {
-  const table = values?.respawn || RESPAWN_CAUSES;
-  if (cause === 'water' || cause === 'drown') return table.water ?? table.normal;
-  if (cause === 'outOfBounds' || cause === 'fall' || cause === 'oob') return table.outOfBounds ?? table.normal;
-  return table.normal ?? RESPAWN_CAUSES.normal;
-}
-export function setRespawnTimer(a, cause = 'weapon') { a.respawnTimer = respawnSeconds(cause); return a.respawnTimer; }
+let api, tuning;
+export function installResources(context, values) { api = context; tuning = values.resources; }
 export function resourceSurface(a) {
   // Integration may have crossed a paint edge, taken off, or landed this tick.
   // The pre-movement surface is only suitable for movement, not recovery.

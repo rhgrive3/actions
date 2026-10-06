@@ -17,21 +17,17 @@ export function installChargerFlight(api,completion) {
   Object.defineProperty(P,INSTALLED,{value:true});
   const raw=completion.weapons.charger.MoveParam,collision=completion.weapons.charger.CollisionParam;
   const nativeGhost=P.ghostFire,nativeUpdate=P.update,nativeClear=P.clear;
-  const feetDown=new THREE.Vector3(0,-1,0),feetFrom=new THREE.Vector3(),feetAt=new THREE.Vector3(),feetHit=new Hit();
-  function feetSplash(actor,w){
-    const radius=w.feetPaintRadius;
-    if(!(radius>0)||!actor?.alive)return;
-    feetFrom.set(actor.pos.x,actor.pos.y+.2,actor.pos.z);
-    const h=G.physics.raycast(feetFrom,feetDown,3.5,feetHit,true);
-    if(!h.hit)return;
-    const area=G.paint.splat(feetAt.copy(h.point).addScaledVector(h.normal,.1),radius,actor.team,{seed:0,kind:'trail'});
-    actor.addTurf(area);
-  }
+  // Single source of the finite flight distance (world units); begin() and the HUD reach query share it.
+  const reachFor=charge=>{
+    charge=Math.max(0,Math.min(1,Number.isFinite(charge)?charge:0));
+    return charge>=.999?raw.DistanceFullCharge:raw.DistanceMinCharge+(raw.DistanceMaxCharge-raw.DistanceMinCharge)*charge;
+  };
+  P.chargerReach=function(charge){return reachFor(charge);};
   function begin(system,actor,w,charge,origin,dir,ghost=false,maxDistance=null){
     charge=Math.max(0,Math.min(1,Number.isFinite(charge)?charge:0));
     const full=charge>=.999;
     const speed=60*(full?raw.SpawnSpeedFullCharge:raw.SpawnSpeedMinCharge+(raw.SpawnSpeedMaxCharge-raw.SpawnSpeedMinCharge)*charge);
-    const distance=maxDistance??(full?raw.DistanceFullCharge:raw.DistanceMinCharge+(raw.DistanceMaxCharge-raw.DistanceMinCharge)*charge);
+    const distance=maxDistance??reachFor(charge);
     const direction=dir.clone().normalize();
     if(!Number.isFinite(distance)||distance<=0||direction.lengthSq()<EPS)return;
     const job={owner:actor,team:actor.team,weapon:{...w},charge,full,speed,range:distance,travel:0,origin:origin.clone(),dir:direction,
@@ -40,7 +36,6 @@ export function installChargerFlight(api,completion) {
     job.beam=system.beams.at(-1);
     (system._fidelityChargerFlights||(system._fidelityChargerFlights=[])).push(job);
     if(!ghost){
-      feetSplash(actor,w);
       emit('weapon:fire',{actor,weapon:w.id,muzzle:origin.clone(),dir:direction.clone(),charge,len:distance});
       if(actor.isLocal)emit('recoil',{amount:.005+charge*.013});
       if(actor.isLocal)G.input?.rumble?.(.12+charge*.45,.2+charge*.35,80+charge*90);

@@ -49,22 +49,83 @@ export function appendRollerNearUnit(system, a, w) {
   system._push(p);
 }
 
-export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYER }) {
+export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYER, G, THREE, Hit }) {
   const tag = Symbol.for('inkwave.s3.weapon-edgecases.v1');
   if (WeaponRunner.prototype[tag]) return;
   Object.defineProperty(WeaponRunner.prototype, tag, { value: true });
+  // Each Dualies hand owns its birth origin. LOS intentionally omits an end
+  // margin, so validate the full segment before allowing an origin in cover.
+  const nativeMuzzleHand = Projectiles.prototype._muzzleHand;
+  const muzzleFrom = new THREE.Vector3(), muzzleDelta = new THREE.Vector3(), muzzleHit = new Hit();
+  const obstructed = end => {
+    muzzleDelta.copy(end).sub(muzzleFrom);
+    const distance = muzzleDelta.length();
+    return distance > EPS && G.physics.raycast(muzzleFrom, muzzleDelta.multiplyScalar(1 / distance), distance, muzzleHit, true).hit;
+  };
+  Projectiles.prototype._muzzleHand = function (actor, hand, out) {
+    nativeMuzzleHand.call(this, actor, hand, out);
+    if (actor.weapon?.kind !== 'dualies') return out;
+    muzzleFrom.copy(actor.pos); muzzleFrom.y += actor.form === 'squid' ? .4 : 1.05;
+    if (!Number.isFinite(out.x) || !Number.isFinite(out.y) || !Number.isFinite(out.z) || obstructed(out)) {
+      out.copy(muzzleFrom).addScaledVector(actor.aimDir, .3);
+      if (!Number.isFinite(out.x) || !Number.isFinite(out.y) || !Number.isFinite(out.z) || obstructed(out)) out.copy(muzzleFrom);
+    }
+    return out;
+  };
   const clear = r => { r.s3DualiesStart = 0; r.s3DualiesHeld = false; };
+  const clearDualiesLocks = r => {
+    r.s3DualiesPostShot = 0; r.s3DodgeShotPending = 0;
+    r.s3DualiesSubBuffered = false; r.s3DualiesSubReleaseBuffered = false;
+  };
   const reset = WeaponRunner.prototype.reset;
-  WeaponRunner.prototype.reset = function (...args) { const out = reset.apply(this, args); clear(this); this.s3DualiesEmerging = false; return out; };
+  WeaponRunner.prototype.reset = function (...args) {
+    const out = reset.apply(this, args);
+    clear(this); clearDualiesLocks(this); this.s3DualiesEmerging = false; this.s3ChargerPostShot = 0;
+    return out;
+  };
   const update = Actor.prototype.update;
   Actor.prototype.update = function (dt) {
     const r = this.weaponRunner;
+    if (r) {
+      if (r.s3ChargerPostShot > 0) r.s3ChargerPostShot = Math.max(0, r.s3ChargerPostShot - dt);
+      if (r.s3DualiesPostShot > 0) r.s3DualiesPostShot = Math.max(0, r.s3DualiesPostShot - dt);
+      const cancelAction = !this.alive || this.specialActive || this.superJumpState || this.intent.special && this.specialReady();
+      if (cancelAction) {
+        r.s3ChargerPostShot = 0;
+        clearDualiesLocks(r);
+      }
+    }
     if (r && this.weapon.kind === 'dualies') {
-      if (this.form === 'squid') { clear(r); r.s3DualiesEmerging = true; }
+      if (this.form === 'squid') { clear(r); clearDualiesLocks(r); r.s3DualiesEmerging = true; }
       else if (this.kidT > PLAYER.emergeDelay && !this.intent.fire) r.s3DualiesEmerging = false;
       if (!this.alive || this.specialActive || this.superJumpState || this.intent.special && this.specialReady()) clear(r);
     }
     return update.call(this, dt);
+  };
+  const weaponUpdate = WeaponRunner.prototype.update;
+  WeaponRunner.prototype.update = function (dt, input) {
+    if (this.a.weapon.kind !== 'dualies') return weaponUpdate.call(this, dt, input);
+    const source = input || {}, locked = this.s3DualiesPostShot > EPS;
+    if (locked) {
+      if (source.sub) this.s3DualiesSubBuffered = true;
+      if (source.subReleased) this.s3DualiesSubReleaseBuffered = true;
+    }
+    let prepared = locked ? { ...source, sub: false, subReleased: false } : { ...source };
+    if (!locked && this.s3DualiesSubReleaseBuffered) {
+      prepared.sub = true; prepared.subReleased = true;
+      this.s3DualiesSubBuffered = false; this.s3DualiesSubReleaseBuffered = false;
+    }
+    const runner = this;
+    const gated = new Proxy(prepared, { get(target, prop) {
+      if ((prop === 'sub' || prop === 'subReleased') && runner.s3DualiesPostShot > EPS) return false;
+      return target[prop];
+    }});
+    const out = weaponUpdate.call(this, dt, gated);
+    if (this.s3DualiesPostShot > EPS) {
+      if (prepared.sub) this.s3DualiesSubBuffered = true;
+      if (prepared.subReleased) this.s3DualiesSubReleaseBuffered = true;
+    }
+    return out;
   };
   const dualies = WeaponRunner.prototype._dualies;
   WeaponRunner.prototype._dualies = function (dt, inp, w) {
