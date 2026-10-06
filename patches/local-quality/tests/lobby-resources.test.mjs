@@ -53,7 +53,8 @@ test('autostart retains native match start and does not request Online resources
 
 test('native Online hub and room entry remain demand-loaded and reuse the current set', () => {
   const source = read('src/game/showcase.js');
-  assert.equal(adaptQualitySource('src/game/showcase.js', source), source);
+  const composedShowcase = adaptQualitySource('src/game/showcase.js', source);
+  assert.ok(composedShowcase.includes('releasePortraitTargets(this)'), 'portrait lifecycle wiring present');
   const methods = section(source, '  showHub(style, color, weapon) {', '\n  updateLobby(players, colors) {');
   const Cls = vm.runInNewContext(`class Showcase { ${methods} }; Showcase`, {
     THREE: {}, G: { game: { profile: { weapon: 'shooter' } } }, HUB_ID: 'hub', styleKey: () => 'style',

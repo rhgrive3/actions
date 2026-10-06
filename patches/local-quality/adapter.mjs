@@ -18,6 +18,7 @@ import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { adaptMinimapResources } from './minimap-resource-adapter.mjs';
 import { adaptLobbyResources } from './lobby-resource-adapter.mjs';
+import { adaptPortraitSchedule } from './portrait-schedule.mjs';
 
 export const QUALITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
 const IDENTITY_FILES = [
@@ -29,6 +30,7 @@ const IDENTITY_FILES = [
   'tenacity-adapter.mjs', 'tenacity.mjs',
   'idle-adapter.mjs', 'idle-resources.mjs', 'music-idle.mjs',
   'lobby-resource-adapter.mjs', 'minimap-resource-adapter.mjs',
+  'portrait-schedule.mjs',
   'adapter.mjs', 'gyro.mjs', 'install.mjs', 'menu-preview.mjs', 'menu.mjs',
   'roller-motion.mjs', 'roller-visual.mjs', 'surface.mjs', 'landing-rigidity-adapter.mjs', 'match-retainer-adapter.mjs', 'first-touch-adapter.mjs', 'touch-relayout.mjs',
   'platform-adapter.mjs', 'platform-lifecycle.mjs', 'platform-game.mjs',
@@ -54,6 +56,7 @@ export function adaptQualitySource(rel, code) {
   code = adaptIdleSource(rel, code, replaceOnce);
   code = adaptLobbyResources(rel, code);
   code = adaptMinimapResources(rel, code);
+  code = adaptPortraitSchedule(rel, code);
   code = adaptUiActorLifetime(rel, code, replaceOnce);
   code = adaptLandingRigidity(rel, code);
   code = adaptMatchRetainers(rel, code, replaceOnce);
