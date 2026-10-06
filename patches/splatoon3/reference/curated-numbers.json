@@ -1625,6 +1625,14 @@
       "status": "extracted",
       "unit": "raw reference units",
       "notes": "Pinned 11.3.0 raw field; HP / frames / dimensionless rate conversion recorded in profile."
+    },
+    "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json#/GameParameters/WeaponParam/ShotGuideFrame": {
+      "value": 7,
+      "pointer": "/GameParameters/WeaponParam/ShotGuideFrame",
+      "sourceId": "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary extracted field; behavior and physical units are verified separately."
     }
   }
 }

@@ -28,6 +28,7 @@
       "damageReduceStart": 0.13333333333333333,
       "damageReduceEnd": 0.6666666666666666,
       "straightTime": 0.06666666666666667,
+      "shotGuideFrame": 8,
       "referenceGravity": 57.6,
       "inkRecoverStop": 0.3333333333333333,
       "range": 12.9,
@@ -66,7 +67,8 @@
       "rollInkRecoverStop": 1.1666666666666667,
       "rollShotDelay": 0.06666666666666667,
       "swimFirstShotDelay": 0.2,
-      "spawnPlayerForwardRate": 2
+      "spawnPlayerForwardRate": 2,
+      "shotGuideFrame": 7
     },
     "blaster": {
       "inkPerShot": 10,
@@ -145,7 +147,8 @@
       "emptyChargeRate": 0.25,
       "speedRandomHalfWidth": 7.2,
       "speedRandomBias": 0.2,
-      "postStreamDelay": 0.06666666666666667
+      "postStreamDelay": 0.06666666666666667,
+      "shotGuideFrame": 11
     },
     "charger": {
       "inkFull": 18,
@@ -177,7 +180,12 @@
       },
       "fullChargeJumpVelocity": 4.2,
       "scopedCharge": false,
-      "postShotSwimTime": 0.25
+      "postShotSwimTime": 0.25,
+      "damageMinChargeTime": 0.13333333333333333,
+      "partialDamagePerSecond": 138.46,
+      "minimumChargeTime": 0.13333333333333333,
+      "airChargeRate": 0.3333333333333333,
+      "emptyChargeRate": 0.3333333333333333
     },
     "roller": {
       "rollSpeed": 7.92,
@@ -469,7 +477,7 @@
     "roll": {
       "minimumSpeed": 8.7,
       "minimumInput": 0,
-      "minimumAngle": 1.5707963267948966,
+      "minimumAngle": 1.0471975511965976,
       "duration": 0.25,
       "armorTime": 0.3,
       "armorHP": 30,
@@ -526,7 +534,9 @@
   },
   "superJump": {
     "chargeTime": 1.3333333333333333,
-    "flightTime": 2.3
+    "flightTime": 2.3,
+    "startupSwimF": 1,
+    "startupHumanoidF": 22
   },
   "calibration": {
     "status": "partial; numeric data extracted, Switch behavior parity NOT verified",
@@ -572,7 +582,8 @@
       "Dualies first shot counts the recognized input as frame1: stable human3F (2 elapsed intervals), swim13F (12 elapsed intervals). Swim13F is a community reference target, not a direct raw-table extraction; physical input/display latency remains unverified. Released startup taps cancel.",
       "spawn armor break-delay 20F follows S3 verification Wiki while another public source describes up to 0.5s; physical-device launch/235F origin remains unverified",
       "Dualies 1F released-tap cancellation is a conservative non-buffering choice; stable held-human first shot is measured3F, squid timing remains unchanged and unverified.",
-      "Rescued #299/#315/#340 residuals: roll/surge control, enemy-ink grace/quantization/action speed, Roller contact/recovery and terrain Blaster hit ratio; current #5 projectile chronology remains authoritative."
+      "Rescued #299/#315/#340 residuals: roll/surge control, enemy-ink grace/quantization/action speed, Roller contact/recovery and terrain Blaster hit ratio; current #5 projectile chronology remains authoritative.",
+      "super jump initial-form term (1F swim / 22F humanoid, issue #708) is a published community measurement from the S3 main-weapon verification table, not an extracted 11.3.0 parameter; the 80F charge wait and 138F flight it precedes stay pinned and Quick Super Jump scaling still applies only to those two components"
     ],
     "movementResourcesEvidence": "reports/inkwave-movement-resources-2026-10-02.md"
   },
@@ -1647,6 +1658,12 @@
       "index": null,
       "factor": 0.8928571428571428,
       "rawValue": 1.68
+    },
+    "weapons.dualies.shotGuideFrame": {
+      "parameter": "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json#/GameParameters/WeaponParam/ShotGuideFrame",
+      "index": null,
+      "factor": 1,
+      "rawValue": 7
     }
   },
   "gearExtra": {

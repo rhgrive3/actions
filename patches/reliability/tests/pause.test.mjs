@@ -134,14 +134,17 @@ test('menu RB cannot leak as a held bomb after resuming', async () => {
   assert.equal(h.actor.intent.sub, true);
 });
 
-test('blur and disconnect clear menu channel; reconnect permits a fresh owned button', async () => {
+test('blur and disconnect clear menu channel; held reconnect waits for release and fresh press', async () => {
   const h = await boot(); h.setPads(pad([0])); h.input.pollPad();
   assert.equal(h.input.padMenuPressed.has(0), true); h.event('blur', {});
   assert.equal(h.input.padMenuPressed.size, 0);
   h.input.consumePadMenuButton(0); h.setPads([]); h.input.pollPad();
   assert.equal(h.input.padMenuBlocked.size, 0); assert.equal(h.input.padMenuPressed.size, 0);
-  h.setPads(pad([0])); h.input.pollPad(); assert.equal(h.input.padMenuPressed.has(0), true);
-  assert.equal(h.input.padButton(0), true);
+  const held = pad([0]); h.setPads(held); h.input.pollPad();
+  assert.equal(h.input.padMenuPressed.has(0), false); assert.equal(h.input.padButton(0), false);
+  held[0].buttons[0] = { pressed: false, value: 0 }; h.input.pollPad();
+  held[0].buttons[0] = { pressed: true, value: 1 }; h.input.pollPad();
+  assert.equal(h.input.padMenuPressed.has(0), true); assert.equal(h.input.padButton(0), true);
 });
 
 test('adapter rejects missing/duplicated/already applied anchors and leaves unrelated modules intact', () => {

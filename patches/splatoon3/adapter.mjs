@@ -12,6 +12,7 @@ import { adaptAgent3WeaponPhysics } from './agent3-weapon-physics-adapter.mjs';
 import { adaptMovementPhysics } from './movement-physics-adapter.mjs';
 import { adaptSubSpecialFidelity } from './sub-special-adapter.mjs';
 import { adaptScoreHud } from './score-hud-adapter.mjs';
+import { adaptPaintSplatPool } from './paint-splat-pool-adapter.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
@@ -77,6 +78,7 @@ export function adaptSource(rel, code) {
   if (rel === 'patches/splatoon3/runtime/resources.mjs') return adaptIssue415(rel, code);
   code = adaptMovementPhysics(rel, code, replaceOnce);
   code = adaptSubSpecialFidelity(rel, code, replaceOnce);
+  code = adaptPaintSplatPool(rel, code, replaceOnce);
   if (rel === 'src/game/character.js') {
     code = replaceOnce(code, 'const PN = _k;', 'const PN = _k;\nexport const CHARACTER_CHANNELS = Object.freeze({ HIPS_P,HIPS,SPINE,CHEST,NECK,HEAD,CLAVL,CLAVR,UARML,UARMR,FARML,FARMR,HANDL,HANDR,FOOTL,FOOTLR,FOOTR,FOOTRR,ANC,ANCR,POLER,POLEL,IKR,IKL,LTGT,LTGTR,LTW,LTROT,KNEEL,KNEER,STAB,WPL,WPR,TIPTOE,AFOLT,AFOLR,MODEL,MODELR,SQY,SQXZ,HLP });', 'character pose channels');
     code = replaceOnce(code, 'const BALL_Z = 0.11, HEEL_Z = 0.065;', 'const BALL_Z = 0.11, HEEL_Z = 0.065;\nexport const CHARACTER_FOOT_METRICS = Object.freeze({ ANKLE_H, BALL_Z, HEEL_Z });', 'character foot metrics');
@@ -115,13 +117,32 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, 'const lock = !!(lr && lr.lockT > 0), roll = !!(lr && lr.dodge);',
       'const lock = !!(lr && lr.s3Turret), roll = !!(lr && lr.dodge);', 'Dualies HUD authoritative turret lifetime');
     code = replaceOnce(code,
+      `    } else if (kind === 'slosher') {
+      // the lob: an arch over the aim point and a landing "bucket" bracket under it
+      r.innerHTML = \`<i class="iw-ret__dot"></i><svg class="iw-ret__svg" viewBox="-40 -40 80 80" aria-hidden="true">
+        <path class="iw-ret__ring iw-ret__arch" d="M-24 6 Q0 -26 24 6"/><path class="iw-ret__ring thin" d="M-10 13 L-6 18 L6 18 L10 13"/>
+        <path class="iw-ret__ring thin" d="M-24 6 L-27 1 M24 6 L27 1"/></svg>\`;
+    } else if (kind === 'splatling') {`,
+      `    } else if (kind === 'splatling') {`, 'slosher trajectory reticle (#652)');
+    code = replaceOnce(code,
+      `    if (L.kind === 'slosher') {
+      const k = this._kick;
+      if (L.bk == null || Math.abs(k - L.bk) > 0.02) { L.bk = k; this.ret.style.setProperty('--kk', k.toFixed(2)); }
+    }
+    // spawn shield + bomb aim`,
+      `    // spawn shield + bomb aim`, 'slosher arch kick writer (#652)');
+    code = replaceOnce(code,
+      '    const ch = f.crosshair || {};',
+      '    const ch = f.crosshair || {};\n    applyShotGuide(this, ch.guide, innerWidth, innerHeight);',
+      'S3 ShotGuideFrame reticle placement');
+    code = replaceOnce(code,
       '    // per-shot kick (recoil events) on top of the live cone the engine reports in screen px (already includes bloom)',
       `    // S3 weapon ShotGuide projection: only aiming feedback moves; tank/sub/status remain centred.
     let guideX = 0, guideY = 0;
+    const guideMe = this._local(), guideCam = G.rig?.gameCam || G.camera;
     if (L.kind === 'slosher' || L.kind === 'blaster') {
-      const me = this._local(), cam = G.rig?.gameCam || G.camera;
-      const point = me && cam && G.projectiles?.s3WeaponGuide?.(me, me.weapon);
-      const projected = point ? this._project(cam, point.x, point.y, point.z) : null;
+      const point = guideMe && guideCam && G.projectiles?.s3WeaponGuide?.(guideMe, guideMe.weapon);
+      const projected = point ? this._project(guideCam, point.x, point.y, point.z) : null;
       if (projected && projected.z < 1) {
         guideX = projected.x * innerWidth * 0.5;
         guideY = -projected.y * innerHeight * 0.5;
@@ -133,9 +154,33 @@ export function adaptSource(rel, code) {
       this.xh.style.setProperty('--gx', \`${guideX.toFixed(1)}px\`);
       this.xh.style.setProperty('--gy', \`${guideY.toFixed(1)}px\`);
     }
+    if (L.kind === 'dualies') {
+      const pair = guideMe && guideCam && G.projectiles?.s3DualiesGuides?.(guideMe, guideMe.weapon);
+      const projected = pair?.map(point => this._project(guideCam, point.x, point.y, point.z)) || [];
+      const offsets = projected.map(point => point && point.z < 1
+        ? [point.x * innerWidth * .5, -point.y * innerHeight * .5] : [0, 0]);
+      const key = offsets.map(v => v.map(n => n.toFixed(1)).join(',')).join('|');
+      if (key !== L.dualGuide && this._twin && offsets.length === 2) {
+        L.dualGuide = key;
+        const turret = !!guideMe?.weaponRunner?.s3Turret;
+        for (let i = 0; i < 2; i++) {
+          const baseX = i === 0 ? 10.5 : -10.5;
+          const lockX = turret ? (i === 0 ? 4 : -4) : 0;
+          this._twin[i]?.setAttribute('transform',
+            \`translate(\${(offsets[i][0] - baseX + lockX).toFixed(2)} \${offsets[i][1].toFixed(2)})\`);
+        }
+      }
+    } else if (L.dualGuide != null) {
+      L.dualGuide = null;
+      for (const twin of this._twin || []) twin?.removeAttribute('transform');
+    }
     // per-shot kick (recoil events) on top of the live cone the engine reports in screen px (already includes bloom)`,
       'S3 weapon ShotGuide HUD projection');
-    return "import { t as tr } from '../i18n.js';\n" + code;
+    code = replaceOnce(code,
+      '    const pad = G.level && G.level.spawnPads && G.level.spawnPads[me.team];',
+      '    const pad = G.level && (G.level.homeSuperJumpPoints?.[me.team] || G.level.spawnPads?.[me.team]);',
+      'home Super Jump HUD target');
+    return "import { t as tr } from '../i18n.js';\nimport { applyShotGuide } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n" + code;
   }
   if (rel === 'src/ui/ui-icons.js') {
     return replaceOnce(code,
@@ -156,6 +201,29 @@ export function adaptSource(rel, code) {
     return replaceOnce(code, '</body>',
       '<script>if ("serviceWorker" in navigator && location.protocol === "https:") { addEventListener("load", () => { const root = new URL("./", location.href); navigator.serviceWorker.register(new URL("sw.js", root).href, { scope: root.pathname }).catch(() => {}); }); }</script>\n</body>',
       'pwa service worker');
+  }
+  if (rel === 'src/world/level.js') {
+    code = replaceOnce(code,
+      '    this.spawnPads = layout.spawnPads.map((p) => new THREE.Vector3(...p));',
+      '    this.spawnPads = layout.spawnPads.map((p) => new THREE.Vector3(...p));\n    this.homeSuperJumpPoints = (layout.homeSuperJumpPoints || layout.spawnPads).map((p) => new THREE.Vector3(...p));',
+      'home Super Jump points');
+    return code;
+  }
+  if (rel === 'src/world/maps.js') {
+    code = replaceOnce(code, '  spawnPads: [[0, 2.2, -39.2], [0, 2.2, 39.2]],',
+      '  spawnPads: [[0, 2.2, -39.2], [0, 2.2, 39.2]],\n  homeSuperJumpPoints: [[0, 0, -33.5], [0, 0, 33.5]],', 'Tidewater home Super Jump');
+    code = replaceOnce(code, '  spawnPads: [[0, 3.2, -44], [0, 3.2, 44]],',
+      '  spawnPads: [[0, 3.2, -44], [0, 3.2, 44]],\n  homeSuperJumpPoints: [[0, 0, -38.5], [0, 0, 38.5]],', 'Kelpline home Super Jump');
+    code = replaceOnce(code, '  spawnPads: [[0, 2.4, -42], [0, 2.4, 42]],',
+      '  spawnPads: [[0, 2.4, -42], [0, 2.4, 42]],\n  homeSuperJumpPoints: [[0, 0, -31.5], [0, 0, 31.5]],', 'Halyard home Super Jump');
+    return code;
+  }
+  if (rel === 'src/world/stages/cargo/layout.js') {
+    code = replaceOnce(code, 'const pad = W(0, 2.6, -43.6);',
+      'const pad = W(0, 2.6, -43.6);\nconst home = W(0, 0, -36.5);', 'Cargo home Super Jump datum');
+    code = replaceOnce(code, '  spawnPads: [pad, [-pad[0], pad[1], -pad[2]]],',
+      '  spawnPads: [pad, [-pad[0], pad[1], -pad[2]]],\n  homeSuperJumpPoints: [home, [-home[0], home[1], -home[2]]],', 'Cargo home Super Jump');
+    return code;
   }
   if (rel === 'src/game/nav.js') {
     code = replaceOnce(code,
@@ -201,6 +269,8 @@ export function adaptSource(rel, code) {
     const end = code.indexOf('    // is the crosshair point inside', start);
     if (start < 0 || end < start) throw new Error('INKWAVE patch conflict: camera aim connection');
     code = code.slice(0, start) + code.slice(end);
+    code = replaceOnce(code, '    this.inRange = a.aimPoint.distanceTo(a.pos) <= range + 0.5;\n  }',
+      '    this.inRange = a.aimPoint.distanceTo(a.pos) <= range + 0.5;\n    updateShotGuide(this);\n  }', 'S3 ShotGuideFrame guide point');
     code = replaceOnce(code, "it.jump = inp.down('Space')", "it.jump = inp.wasPressed('Space') || inp.padPressed.has(0) || inp.down('Space')", 'latched jump input');
     code = replaceOnce(code, "it.squid = inp.down('ShiftLeft')", "it.squid = inp.wasPressed('ShiftLeft') || inp.wasPressed('ShiftRight') || inp.down('ShiftLeft')", 'latched squid input');
     code = replaceOnce(code, 'it.fire = inp.mouse.left ||', 'it.fire = inp.mouse.leftPressed || inp.mouse.left ||', 'latched fire input');
@@ -210,7 +280,7 @@ export function adaptSource(rel, code) {
       "    const chargeNow = clamp(a.weaponRunner?.s3Stored?.charge ?? a.weaponRunner?.charge ?? 0, 0, 1);\n" +
       "    const range = w.kind === 'charger' ? (G.projectiles?.chargerReach ? G.projectiles.chargerReach(chargeNow) : w.rangeMin + (w.rangeMax - w.rangeMin) * chargeNow) : w.kind === 'roller' ? 6 : (w.range || 12);",
       'charger HUD reach follows charge');
-    return code;
+    return "import { updateShotGuide } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n" + code;
   }
   if (rel === 'src/game/weapons.js') {
     code = replaceOnce(code, 'r = Math.sqrt(Math.random()) * sp.radius;', 'r = Math.sqrt(Math.random()) * (sp.radius * s);', 'storm rain paint active radius');
@@ -224,7 +294,7 @@ export function adaptSource(rel, code) {
       "    if (this.flick >= 0 && w.kind === 'roller') return w.moveSpeedFiring; // S3 swing target is independent of windup progress\n    if (this.flick >= 0) return lerp(w.moveSpeedFiring, w.moveSpeedFiring * 0.45, clamp(this.flick / w.flickWindup, 0, 1));",
       'roller swing movement target');
     code = replaceOnce(code, 'lerp(w.damageMin, w.damageMax * 0.62, charge)',
-      'lerp(w.damageMin, w.damagePartialMax, charge)', 'charger partial damage');
+      'chargerDamage(a, w, charge)', 'charger partial damage curve');
     code = replaceOnce(code, 'a.ink < w.inkFull * 0.2', 'a.ink < w.inkMin', 'charger minimum ink');
     code = replaceOnce(code, 'a.ink - w.inkFull * c', 'a.ink - Math.max(w.inkMin, w.inkFull * c)', 'charger ink floor');
     code = replaceOnce(code, 'const c = Math.max(0.12, this.charge);', 'const c = this.charge;', 'charger partial charge floor');
@@ -242,11 +312,20 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, '        vel.y -= 24 * dt;', '        vel.y -= SUB.bomb.gravity * dt;', 'bomb preview gravity');
     code = replaceOnce(code, 'if (b.fuse <= 0) {', 'if (b.fuse <= 1e-10) {', 'bomb fuse frame boundary');
     code = replaceOnce(code, 'if (c.t < c.dur - 0.3) {', 'if (c.t <= c.dur + 1e-10) {', 'storm rain through final reference tick');
+    // #246: the Ink Storm cloud belongs to the device's first real terrain/object
+    // contact. The old `age > 1.1` branch deployed a cloud from elapsed air time
+    // alone, so a device that had not hit anything rained mid-air. Keep only a
+    // non-gameplay memory guard for a device that never contacts anything; it
+    // releases the device without a cloud and is not an S3 timing value.
+    code = replaceOnce(code,
+      "if (b.kind === 'storm' && b.age > 1.1) { this._spawnCloud(b); if (b.ghost) this.clouds[this.clouds.length - 1].ghost = true; this._releaseBomb(b); this.bombs.splice(i, 1); continue; }",
+      "if (b.kind === 'storm' && b.age > 30) { this._releaseBomb(b); this.bombs.splice(i, 1); continue; }",
+      'storm airborne deploy');
     code = adaptWeaponEdgecases(rel, code, replaceOnce);
     code = adaptWeaponPaintInertia(rel, code, replaceOnce);
     code = adaptWeaponsFidelity(code, replaceOnce);
     code = adaptAgent3WeaponPhysics(rel, code, replaceOnce);
-    return `import { applyProjectileHit, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\n` + code;
+    return `import { applyProjectileHit, chargerDamage, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\n` + code;
   }
   if (rel === 'src/fx/swimWake.js') {
     code = replaceOnce(code, "        if (f !== 'swim' && f !== 'climb') continue;",
@@ -275,14 +354,26 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, "    if (a.form === 'swim' && hs > 2 && G.fx) {",
       "    if (a.form === 'swim' && hs > 2 && G.fx && swimSplashVisible(this)) {", 'sneaking wake particles');
     code = replaceOnce(code, '    this.hp -= amount;', "    amount = finalWeaponDamage(this, amount, attacker, source);\n    if (amount <= 0) return false;\n    this.hp -= amount;\n    if (Math.abs(this.hp) < 1e-9) this.hp = 0;", 'final weapon HP quantization');
-    code = replaceOnce(code, '    this.superJumpState = null;\n    this.yawVel', '    this.superJumpState = null; this.superJumpGround = null;\n    this.yawVel', 'reset super jump ground');
-    code = replaceOnce(code, '    this.alive = false;\n    this.hp = 0;', '    this.alive = false;\n    this.superJumpState = null; this.superJumpGround = null;\n    this.hp = 0;', 'clear dead super jump');
+    code = replaceOnce(code, '    this.superJumpState = null;\n    this.yawVel', '    this.superJumpState = null; this.superJumpGround = null;\n    clearPendingLethal(this);\n    this.yawVel', 'reset super jump ground');
+    code = replaceOnce(code, '    this.alive = false;\n    this.hp = 0;', '    this.alive = false;\n    clearPendingLethal(this);\n    this.superJumpState = null; this.superJumpGround = null;\n    this.hp = 0;', 'clear dead super jump');
     code = replaceOnce(code, '    if (this.invuln > 0) return false;', "    if (this.invuln > 0 || this.superJumpState?.phase === 'flight') return false;", 'super jump flight damage admission');
+    code = replaceOnce(code, '    if (!this.alive || amount <= 0) return false;',
+      '    if (!this.alive || amount <= 0) return false;\n    if (hasPendingLethal(this)) return false;', 'pending lethal damage admission');
+    code = replaceOnce(code, '    if (this.hp <= 0) { this.splat(attacker, source); return true; }',
+      '    if (this.hp <= 0) { scheduleLethal(this, attacker, source); return true; }', 'one-frame lethal decision delay');
+    code = replaceOnce(code, '  update(dt) {\n    this.anim.time = G.time;',
+      '  update(dt) {\n    flushPendingLethal(this);\n    this.anim.time = G.time;', 'flush lethal on next fixed tick');
     code = replaceOnce(code, '  _finishFrame(dt) {', '  _finishFrame(dt) {\n    rememberSuperJumpGround(this);', 'record grounded jump destination');
     code = replaceOnce(code, '    this.grounded = grounded;\n    this.airTime', '    this.grounded = grounded;\n    rememberSuperJumpGround(this);\n    this.airTime', 'record resolved jump destination');
     code = replaceOnce(code, 'this.groundN.copy(gh.normal); }\n  }', 'this.groundN.copy(gh.normal); }\n    rememberSuperJumpGround(this);\n  }', 'record spawn jump destination');
     code = replaceOnce(code, "    if (this.superJumpState) { this._updateSuperJump(dt); this._finishFrame(dt); return; }", "    if (this.superJumpState) { this._updateSuperJump(dt); updateSuperJumpMain(this, dt, firePressed); if (this.alive) this._finishFrame(dt); return; }", 'super jump main input');
-    code = replaceOnce(code, "    this.superJumpState = { phase: 'charge',", "    if (target?.pos?.isVector3 && (target === this || target.team !== this.team || target.superJumpState)) return false;\n    const destination = new THREE.Vector3();\n    if (!superJumpTarget(target, destination)) return false;\n    target = destination.clone();\n    rememberSuperJumpGround(this);\n    this.superJumpState = { wallSupport: this.climbing ? this.wallN.clone() : null, phase: 'charge',", 'super jump wall support and destination admission');
+    code = replaceOnce(code, "    if (this.specialActive) { this._updateSpecial(dt); this._finishFrame(dt); return; }", "    if (this.specialActive) { const stormResources = this.specialActive.id === 'storm'; this._updateSpecial(dt); if (stormResources && this.alive) updateResources(this, dt); if (this.alive) this._finishFrame(dt); return; }", 'special active resources');
+    // Issue #624 residual: activation also returns before ordinary resources.
+    // Admit only a live Storm user; other specials retain their resource gates.
+    code = replaceOnce(code, "    if (specialPressed && this.specialReady()) { this._startSpecial(); this._finishFrame(dt); return; }",
+      "    if (specialPressed && this.specialReady()) { this._startSpecial(); if (this.alive && this.specialActive?.id === 'storm') updateResources(this, dt); this._finishFrame(dt); return; }",
+      'storm activation resources');
+    code = replaceOnce(code, "    this.superJumpState = { phase: 'charge',", "    if (target?.pos?.isVector3 && (target === this || target.team !== this.team || target.superJumpState)) return false;\n    const destination = new THREE.Vector3();\n    if (!superJumpTarget(target, destination)) return false;\n    target = destination.clone();\n    rememberSuperJumpGround(this);\n    this.superJumpState = { wallSupport: this.climbing ? this.wallN.clone() : null, phase: 'charge', startForm: this.form,", 'super jump wall support and destination admission');
     code = replaceOnce(code, 'target, from: new THREE.Vector3(), to: new THREE.Vector3(), marker: 0', 'target, from: new THREE.Vector3(), to: destination, marker: 0', 'super jump committed destination');
     code = replaceOnce(code, "      this.vel.set(0, 0, 0);\n      this.form = 'squid';\n      this._probeGround();", '      const supported = prepareSuperJump(this, dt);\n      if (!this.alive) return;', 'super jump preparation physics');
     const targetStart = code.indexOf('        const tgt = s.target;'), targetEnd = code.indexOf("        s.phase = 'flight';", targetStart);
@@ -306,7 +397,7 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, '      this.vel.y = jv;', '      this.vel.y = normalJumpVelocity(this, jv);', 'charger full-charge jump');
     code = replaceOnce(code, '    if (!inked) {                                                        // ink ran out under us: let go',
       '    if (!inked && crossSurgeInkGap(this, h, into)) return;\n    if (!inked) {                                                        // ink ran out under us: let go', 'surge unpainted gap');
-    code = replaceOnce(code, '      if (s.t > 0.75) {', '      if (supported && s.t + 1e-10 >= this.s3.jumpChargeTime) {', 'super jump charge');
+    code = replaceOnce(code, '      if (s.t > 0.75) {', '      if (supported && s.t + 1e-10 >= this.s3.jumpChargeTime + superJumpStartupTime(this)) {', 'super jump charge');
     code = replaceOnce(code, '        s.dur = 1.15 + Math.min(0.6, s.from.distanceTo(s.to) / 80);', '        s.dur = this.s3.jumpFlightTime;', 'super jump flight');
     code = replaceOnce(code, '        this.invuln = Math.max(this.invuln, s.dur + 0.2);',
       '        // Super Jump does not grant an extra landing shield.', 'super jump invulnerability');
@@ -314,6 +405,10 @@ export function adaptSource(rel, code) {
       '      const k = s.t + 1e-10 >= s.dur ? 1 : Math.min(1, s.t / s.dur);', 'super jump frame boundary');
     code = replaceOnce(code, "      if (k >= 1) {\n        this.superJumpState = null;",
       "      if (k >= 1) {\n        this.invuln = 0; // Spawn protection always ends before landing.\n        this.superJumpState = null;", 'super jump landing vulnerability');
+    code = replaceOnce(code,
+      '        this.addTurf(G.paint.splat(_v.copy(this.pos).setY(this.pos.y + 0.3), 1.4, this.team, { seed: Math.random() }));\n',
+      '        // Splatoon 3: Ordinary Super Jump does not leave ink, grant turf points, or charge special at landing.\n',
+      'super jump landing paint');
     const start = code.indexOf('    // ---- ink / hp\n');
     const end = code.indexOf('    // ---- weapons (', start);
     if (start < 0 || end < start) throw new Error('INKWAVE patch conflict: actor resource connection');
@@ -321,18 +416,87 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, '    this._spawnBarrier();',
       '    // S3 Spawners use stage geometry and spawn protection, not a universal radial body clamp.',
       'S3 universal spawn barrier removal');
-    return `import { finalWeaponDamage } from '../../patches/splatoon3/runtime/final-damage.mjs';\nimport { swimSplashVisible } from '../../patches/splatoon3/runtime/swim-stealth.mjs';\nimport { prepareSuperJump, rememberSuperJumpGround, superJumpTarget, updateSuperJumpMain, SUPERJUMP_MAIN_PROGRESS } from '../../patches/splatoon3/runtime/superjump.mjs';\nimport { beforeActions, wallRollRequested, crossSurgeInkGap, normalJumpVelocity } from '../../patches/splatoon3/runtime/movement.mjs';\nimport { updateResources } from '../../patches/splatoon3/runtime/resources.mjs';\n` + code;
+    return `import { finalWeaponDamage } from '../../patches/splatoon3/runtime/final-damage.mjs';\nimport { swimSplashVisible } from '../../patches/splatoon3/runtime/swim-stealth.mjs';\nimport { prepareSuperJump, rememberSuperJumpGround, superJumpTarget, superJumpStartupTime, updateSuperJumpMain, SUPERJUMP_MAIN_PROGRESS } from '../../patches/splatoon3/runtime/superjump.mjs';\nimport { beforeActions, wallRollRequested, crossSurgeInkGap, normalJumpVelocity } from '../../patches/splatoon3/runtime/movement.mjs';\nimport { updateResources } from '../../patches/splatoon3/runtime/resources.mjs';\nimport { scheduleLethal, flushPendingLethal, clearPendingLethal, hasPendingLethal } from '../../patches/splatoon3/runtime/damage-timing.mjs';\n` + code;
   }
   if (rel === 'src/game/character-weapons.js') {
     code = replaceOnce(code, '    if (ft >= 0.15 && ft - dt < 0.15) w.drumW += 34;', '    const release = st.flickReleaseTime ?? 0.15;\n    if (ft >= release && ft - dt < release) w.drumW += 34;', 'roller drum release impulse');
     code = replaceOnce(code, 'const BUILDERS = { shooter: buildShooter, roller: buildRoller,', 'const BUILDERS = { shooter: buildShooter, roller: () => rollerModel(buildRoller()),', 'roller drum proportions');
     return "import { rollerModel } from '../../patches/splatoon3/runtime/roller-model.mjs';\n" + code;
   }
+  if (rel === 'src/audio/music.js') {
+    code = replaceOnce(code,
+      '  constructor() {\n    this.ctx = null; this.players = []; this.current = null; this.intensity = 1; this._want = undefined;\n  }',
+      '  constructor() {\n    this.ctx = null; this.players = []; this.current = null; this.intensity = 1; this._want = undefined; this._timerPaused = false;\n  }',
+      'music visibility state');
+    code = replaceOnce(code, '  _startTimer() {\n    const tick = () => this._tick();',
+      '  _startTimer() {\n    if (this.offline || this._timerPaused || this.worker || this.timer) return;\n    const tick = () => this._tick();',
+      'music timer idempotence');
+    code = replaceOnce(code,
+      '      this.worker.onerror = () => { this.worker = null; if (!this.timer) this.timer = setInterval(tick, TICK_MS); };',
+      '      this.worker.onerror = () => { this.worker = null; if (!this._timerPaused && !this.timer) this.timer = setInterval(tick, TICK_MS); };',
+      'music worker hidden fallback');
+    code = replaceOnce(code, '      this.timer = setInterval(tick, TICK_MS);',
+      '      if (!this._timerPaused) this.timer = setInterval(tick, TICK_MS);', 'music timer hidden fallback');
+    code = replaceOnce(code, '  _tick() {',
+      '  _pauseTimer() {\n    if (this.offline) return;\n    this._timerPaused = true;\n    if (this.worker) this.worker.postMessage(0);\n    if (this.timer) { clearInterval(this.timer); this.timer = null; }\n  }\n\n  _resumeTimer() {\n    if (this.offline || !this.ctx) return;\n    const paused = this._timerPaused; this._timerPaused = false;\n    if (this.worker) this.worker.postMessage(TICK_MS); else if (!this.timer) this._startTimer();\n    if (paused) this._tick();\n  }\n\n  _tick() {',
+      'music visibility timer controls');
+    code = replaceOnce(code, '  dispose() {\n    for (const p of this.players) p.dispose();',
+      '  dispose() {\n    this._timerPaused = true;\n    for (const p of this.players) p.dispose();', 'music dispose visibility state');
+    return code;
+  }
+  if (rel === 'src/audio/audio.js') {
+    code = replaceOnce(code,
+      "  resume() {\n    const c = this.ctx;\n    if (c && !this.offline && c.state !== 'running' && c.state !== 'closed' && c.resume) c.resume().catch(() => {});\n  }",
+      "  resume() {\n    const c = this.ctx;\n    if (!c || this.offline || c.state === 'closed') return;\n    if (c.state === 'running') { this.music?._resumeTimer?.(); return; }\n    if (c.resume) c.resume().then(() => this.music?._resumeTimer?.()).catch(() => {});\n  }",
+      'audio lifecycle resume');
+    code = replaceOnce(code,
+      "    if (typeof document !== 'undefined') document.addEventListener('visibilitychange', () => { if (!document.hidden) h(); });",
+      "    if (typeof document !== 'undefined') document.addEventListener('visibilitychange', () => {\n      if (document.hidden) {\n        this.music?._pauseTimer?.();\n        const c = this.ctx;\n        if (c && !this.offline && c.state !== 'closed' && c.suspend) c.suspend().catch(() => {});\n      } else h();\n    });",
+      'audio visibility suspend');
+    return code;
+  }
   if (rel === 'src/main.js') {
+    // #614: Splatoon 3's normal battle HUD has no global text feed naming remote
+    // attacker/victim pairs. Drop the two remote-splat feed broadcasts; the local
+    // splat confirmation (kind 'kill'), own-death showSplatted, the top roster and
+    // WIPEOUT! keep their existing paths. The ally-down audio cue stays because it
+    // carries no identity.
+    code = replaceOnce(code,
+      "        G.audio?.play('ally_splatted', { volume: 0.5 });\n" +
+      "        this.hud?.feed({ text: attacker ? t('{victim} was splatted by {attacker}', { victim: victim.name, attacker: attacker.name }) : t('{victim} was splatted', { victim: victim.name }), color: G.teamHex[victim.enemyTeam], kind: 'death' });\n" +
+      "      } else if (attacker && attacker.team === local?.team) {\n" +
+      "        this.hud?.feed({ text: t('{attacker} splatted {victim}', { attacker: attacker.name, victim: victim.name }), color: G.teamHex[attacker.team], kind: 'ally' });\n" +
+      "      }",
+      "        // #614: no global text feed naming remote attacker/victim pairs — the top\n" +
+      "        // roster (alive/splatted) and WIPEOUT! already carry remote splat state;\n" +
+      "        // keep only the non-identifying ally-down audio cue.\n" +
+      "        G.audio?.play('ally_splatted', { volume: 0.5 });\n" +
+      "      }\n" +
+      "      // Remote ally-on-enemy splats (#614) likewise add no text entry: the local\n" +
+      "      // confirmation above is the only feed that names a remote player.",
+      'splat feed remote-identity gate (#614)');
     const start = code.indexOf('    G.time += dt;\n', code.indexOf('  _frame(dt) {'));
     const end = code.indexOf('    // A full-frame lobby/showcase completely covers', start);
     if (start < 0 || end < start) throw new Error('INKWAVE patch conflict: fixed simulation connection');
-    code = code.slice(0, start) + '    const m = this.match;\n    const setUp = !!this.showcase?.fullFrame;\n    runSimulation(this, dt);\n' + code.slice(end);
+    code = code.slice(0, start)
+      + '    const m = this.match;\n'
+      + '    const setUp = !!this.showcase?.fullFrame;\n'
+      + '    runSimulation(this, dt);\n'
+      // #53: RESULT keeps only the stage/GUI animation it actually needs; the
+      // paint atlas and gameplay FX stop behind the results screen (offline and
+      // online alike). The results stage, GUI, backdrop draw and renderer keep
+      // their cadence so the reveal stays visible and rematch/resize resume.
+      + "    const resultsQuiet = this.match?.state === 'results';\n"
+      + code.slice(end);
+    code = replaceOnce(code,
+      '      if (!m || !m.paused) G.fx.update(dt, G.camera);\n      if (!m || !m.paused) this.fxHooks?.update?.(dt);',
+      '      if (!m || (!m.paused && !resultsQuiet)) G.fx.update(dt, G.camera);\n      if (!m || (!m.paused && !resultsQuiet)) this.fxHooks?.update?.(dt);',
+      '#53 gameplay FX behind results');
+    code = replaceOnce(code, '      G.paint.flush(dt);', '      if (!resultsQuiet) G.paint.flush(dt);', '#53 paint atlas behind results');
+    code = replaceOnce(code,
+      '      if (this.swimWake && (!m || !m.paused)) this.swimWake.update(dt, this.levelMat.userData.uniforms, G.camera.position);',
+      '      if (this.swimWake && (!m || (!m.paused && !resultsQuiet))) this.swimWake.update(dt, this.levelMat.userData.uniforms, G.camera.position);',
+      '#53 swim wakes behind results');
     code = replaceOnce(code, '    dt = Math.min(dt, 1 / 24);\n', '', 'elapsed time');
     code = replaceOnce(code, '    this.input.endFrame();\n', '', 'input consumption');
     code = replaceOnce(code,
@@ -340,8 +504,28 @@ export function adaptSource(rel, code) {
       '    const judgeP = this.hud?.judge({ colors: [G.teamHex[0], G.teamHex[1]], percents: [cov[0] * 100, cov[1] * 100], names: this.palette.names || TEAM_NAMES, winner: m.result.winner });',
       'authoritative Turf winner Game to HUD');
     code = replaceOnce(code, 'const game = new Game();', 'installGame(Game);\nconst game = new Game();', 'game installation');
-    return `import { runSimulation, installGame } from '../patches/splatoon3/runtime/clock.mjs';\n` + code;
+    code = replaceOnce(code,
+      "      crosshair: { spread, onTarget: m.controller?.onTarget ? 'enemy' : null, inRange: m.controller ? m.controller.inRange !== false : true },",
+      "      crosshair: { spread, onTarget: m.controller?.onTarget ? 'enemy' : null, inRange: m.controller ? m.controller.inRange !== false : true, guide: projectShotGuide(m.controller?.enabled && m.controller?.a?.alive ? m.controller.shotGuide : null, cam, W, H) },",
+      'S3 ShotGuideFrame HUD projection');
+    code = replaceOnce(code,
+      "          // enemies only show on the map when visible to your team (not submerged far away)\n          if (o.anim.form === 'swim') continue;",
+      "          // S3 Turf Map: opponents appear only once damaged (>=18) or explicitly marked.\n          if (!enemyRevealedOnMap(o, PLAYER.hp)) continue;",
+      'enemy map reveal');
+    return `import { runSimulation, installGame } from '../patches/splatoon3/runtime/clock.mjs';\nimport { projectShotGuide } from '../patches/splatoon3/runtime/weapons-fidelity.mjs';\nimport { enemyRevealedOnMap } from '../patches/splatoon3/runtime/map-reveal.mjs';\n` + code;
   }
+
+  if (rel === 'src/core/shadowcache.js') {
+    // #658: a stage switch must release the previously collected static-caster
+    // generation immediately. While Shadows are OFF no shadow-map render runs,
+    // so the dirty flag alone never rebuilds `this.static` and the stale array
+    // would keep the disposed previous stage (meshes, PropKit atlas) alive.
+    code = replaceOnce(code,
+      '  setStaticRoots(roots) {\n    this.roots = roots.filter(Boolean);\n    this.dynamic = new WeakSet();\n    this.dirty = true;\n  }',
+      '  setStaticRoots(roots) {\n    this.roots = roots.filter(Boolean);\n    this.static.length = 0; // #658: release the previous collected caster generation at the root handoff\n    this.dynamic = new WeakSet();\n    this.dirty = true;\n  }',
+      'stage-root static release');
+  }
+
   return code;
 }
 
