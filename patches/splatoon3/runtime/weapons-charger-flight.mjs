@@ -23,6 +23,16 @@ export function installChargerFlight(api,completion) {
     return charge>=.999?raw.DistanceFullCharge:raw.DistanceMinCharge+(raw.DistanceMaxCharge-raw.DistanceMinCharge)*charge;
   };
   P.chargerReach=function(charge){return reachFor(charge);};
+  const feetDown=new THREE.Vector3(0,-1,0),feetFrom=new THREE.Vector3(),feetAt=new THREE.Vector3(),feetHit=new Hit();
+  function feetSplash(actor,w){
+    const radius=w.feetPaintRadius;
+    if(!(radius>0)||!actor?.alive)return;
+    feetFrom.set(actor.pos.x,actor.pos.y+.2,actor.pos.z);
+    const h=G.physics.raycast(feetFrom,feetDown,3.5,feetHit,true);
+    if(!h.hit)return;
+    const area=G.paint.splat(feetAt.copy(h.point).addScaledVector(h.normal,.1),radius,actor.team,{seed:0,kind:'trail'});
+    actor.addTurf(area);
+  }
   function begin(system,actor,w,charge,origin,dir,ghost=false,maxDistance=null){
     charge=Math.max(0,Math.min(1,Number.isFinite(charge)?charge:0));
     const full=charge>=.999;
@@ -36,6 +46,7 @@ export function installChargerFlight(api,completion) {
     job.beam=system.beams.at(-1);
     (system._fidelityChargerFlights||(system._fidelityChargerFlights=[])).push(job);
     if(!ghost){
+      feetSplash(actor,w);
       emit('weapon:fire',{actor,weapon:w.id,muzzle:origin.clone(),dir:direction.clone(),charge,len:distance});
       if(actor.isLocal)emit('recoil',{amount:.005+charge*.013});
       if(actor.isLocal)G.input?.rumble?.(.12+charge*.45,.2+charge*.35,80+charge*90);
