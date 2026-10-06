@@ -73,7 +73,7 @@ export function installGear(api, tuning) {
     m.runSpeedFiring = gearCurve(ap.runSpeed || 0, ...(a.weapon.runSpeedFiringCurve || extra.runSpeedFiring));
     m.actionAirSpread = gearCurve(ap.actionIntensify || 0, ...(a.weapon.actionAirSpreadCurve || extra.actionAirSpread));
     if (Number.isFinite(a.weapon.spreadAir) && Number.isFinite(a.weapon.spreadGround)) a.weapon.spreadAir = a.weapon.spreadGround + (a.weapon.spreadAir - a.weapon.spreadGround) * (1 - m.actionAirSpread);
-    for (const field of ['inkPerShot', 'inkFull', 'inkMin', 'flickInk', 'verticalInk', 'rollInkPerMeter']) if (field in a.weapon) a.weapon[field] *= m.inkSaverMain ?? 1;
+    for (const field of ['inkPerShot', 'inkFull', 'inkMin', 'flickInk', 'verticalInk', 'rollInk', 'rollInkPerMeter']) if (field in a.weapon) a.weapon[field] *= m.inkSaverMain ?? 1;
     a.weapon.specialCost /= m.specialCharge ?? 1;
   }
   Actor.prototype.reset = function (...args) {
@@ -126,7 +126,7 @@ export function installGear(api, tuning) {
       Object.assign(api.SUB.bomb, saved);
       if (a.ink < beforeInk) {
         a.s3 ||= {};
-        const delay = input.subReleased ? api.SUB.bomb.inkRecoverStop : this.s3FlickVertical ? a.weapon.verticalInkRecoverStop ?? a.weapon.inkRecoverStop : a.weapon.inkRecoverStop;
+        const delay = input.subReleased && !(this.s3PostShotRemaining > 1e-10) ? api.SUB.bomb.inkRecoverStop : this.s3FlickVertical ? a.weapon.verticalInkRecoverStop ?? a.weapon.inkRecoverStop : a.weapon.inkRecoverStop;
         a.s3.recoverStopRemaining = Math.max(a.s3.recoverStopRemaining || 0, delay ?? tuning.resources.inkRefillDelay);
       }
     }
