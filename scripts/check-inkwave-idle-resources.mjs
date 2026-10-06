@@ -29,7 +29,6 @@ export async function withBoundedTimeout(promise,ms,label){
       promise,
       new Promise((_,reject)=>{
         timer=setTimeout(()=>reject(new Error(`${label} timed out after ${ms}ms`)),ms);
-        timer.unref?.();
       })
     ]);
   }finally{clearTimeout(timer);}
@@ -103,12 +102,12 @@ export async function captureColdDiagnostics({
     crashed:coldCrashed,
     documentReadyState:pageState?.documentReadyState??null,
     runtimeUrl:pageState?.runtimeUrl??null,
-    observerInstalled:pageState?.observerInstalled??false,
-    envSetCalls:pageState?.envSetCalls??0,
-    hasG:pageState?.hasG??false,
-    gamePublished:pageState?.gamePublished??false,
-    envPublished:pageState?.envPublished??false,
-    coldEnvironmentPublished:pageState?.coldEnvironmentPublished??false,
+    observerInstalled:pageState?.observerInstalled??null,
+    envSetCalls:pageState?.envSetCalls??null,
+    hasG:pageState?.hasG??null,
+    gamePublished:pageState?.gamePublished??null,
+    envPublished:pageState?.envPublished??null,
+    coldEnvironmentPublished:pageState?.coldEnvironmentPublished??null,
     coldEnvironment:pageState?.coldEnvironment??null,
     evaluateError:pageState?.error??null,
     screenshot

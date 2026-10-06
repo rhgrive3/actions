@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import { validateIdleResult, captureColdDiagnostics } from '../check-inkwave-idle-resources.mjs';
 const sample=()=>({
   coldBoot:{quality:'high',touch:true,gamePublishedAtAllocation:false,marina:true,cloud:[1024,320],farSize:256,sameTargetsAfterBoot:true},
@@ -113,8 +114,7 @@ test('cold failure diagnostics separate game vs env publication and bound hangin
  assert.deepEqual(diagB.pendingUrls,['src/world/stage.js']);
  assert.deepEqual(diagB.pageErrors,['Uncaught test error']);
  assert.equal(diagB.documentReadyState,null);
- assert.equal(diagB.gamePublished,false);
- assert.equal(diagB.coldEnvironmentPublished,false);
+ for(const field of ['observerInstalled','envSetCalls','hasG','gamePublished','envPublished','coldEnvironmentPublished'])assert.equal(diagB[field],null,`${field} must stay unknown when evaluation hangs`);
  assert.ok(diagB.evaluateError.includes('timed out after 50ms'),'eval error honestly recorded');
  assert.ok(diagB.screenshot.error.includes('timed out after 50ms'),'screenshot error honestly recorded');
 
@@ -127,6 +127,18 @@ test('cold failure diagnostics separate game vs env publication and bound hangin
   screenshotTimeoutMs:50
  });
  assert.equal(diagC.crashed,true);
+ for(const field of ['observerInstalled','envSetCalls','hasG','gamePublished','envPublished','coldEnvironmentPublished'])assert.equal(diagC[field],null,`${field} must stay unknown after a crash`);
  assert.equal(diagC.evaluateError,'page crashed');
  assert.equal(diagC.screenshot.error,'page crashed');
+});
+test('cold diagnostics finish their watchdogs with no other referenced process handles',()=>{
+ const moduleUrl=new URL('../check-inkwave-idle-resources.mjs',import.meta.url).href;
+ const script=`import {captureColdDiagnostics} from ${JSON.stringify(moduleUrl)};
+ const result=await captureColdDiagnostics({coldPage:{evaluate:()=>new Promise(()=>{}),screenshot:()=>new Promise(()=>{})},output:${JSON.stringify(new URL('.',import.meta.url).pathname)},evalTimeoutMs:15,screenshotTimeoutMs:15});
+ if(!result.evaluateError?.includes('timed out')||!result.screenshot.error?.includes('timed out')||result.gamePublished!==null)process.exit(1);
+ console.log('bounded diagnostics completed');`;
+ const child=spawnSync(process.execPath,['--input-type=module','-e',script],{encoding:'utf8',timeout:5000});
+ assert.ifError(child.error);
+ assert.equal(child.status,0,child.stderr);
+ assert.match(child.stdout,/bounded diagnostics completed/);
 });
