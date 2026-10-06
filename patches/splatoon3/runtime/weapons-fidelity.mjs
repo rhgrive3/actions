@@ -523,6 +523,26 @@ export function installWeaponsFidelity(context,profile) {
     while(remaining>EPSILON){const step=Math.min(1/60,remaining);advanceFidelityProjectile(p,step);remaining-=step;}
     return p.pos;
   };
+  Projectiles.prototype.s3WeaponGuide=function(actor,w){
+    if(w?.kind==='slosher')return this.s3SlosherGuide(actor,w);
+    const frame=w?.shotGuideFrame;
+    if(w?.kind!=='blaster'||!Number.isFinite(frame))return null;
+    const THREE=context.THREE;
+    const p=this._s3BlasterGuideProjectile||(this._s3BlasterGuideProjectile={
+      pos:new THREE.Vector3(),prev:new THREE.Vector3(),start:new THREE.Vector3(),vel:new THREE.Vector3()
+    });
+    const dir=this._s3BlasterGuideDir||(this._s3BlasterGuideDir=new THREE.Vector3());
+    this._muzzle(actor,p.pos);p.prev.copy(p.pos);p.start.copy(p.pos);
+    this._aimFrom(actor,p.pos,dir);
+    p.owner=actor;p.type='blast';p.wid=w.id;p.s3Weapon={...w};p.age=0;p.life=2;p.straight=0;
+    p.delay=0;p.ghost=false;p.fidelityPhase=0;p.fidelityMove=null;p.fidelityPrevAge=0;
+    p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;
+    p.vel.copy(dir).multiplyScalar(w.projSpeed);
+    initialize(p,w);
+    let remaining=Math.max(0,frame/60);
+    while(remaining>EPSILON){const step=Math.min(1/60,remaining);advanceFidelityProjectile(p,step);remaining-=step;}
+    return p.pos;
+  };
   const reset=WeaponRunner.prototype.reset,auto=WeaponRunner.prototype._auto,spin=WeaponRunner.prototype._splatling;
   WeaponRunner.prototype.reset=function(...args){const result=reset.apply(this,args);this.fidelitySplatlingCharge=null;return result;};
   WeaponRunner.prototype._auto=function(dt,input,w){
