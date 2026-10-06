@@ -6,7 +6,8 @@ export function advanceFlow(state, dt, cfg, alive = true) {
   const wasActive = state.active;
   state.remaining = Math.max(0, state.remaining - dt);
   if (state.remaining <= 0) state.active = false;
-  if (wasActive || !alive || !cfg?.progress) return;
+  // Inactive progress follows battle time, including the dead/respawn interval.
+  if (wasActive || !cfg?.progress) return;
   const p = cfg.progress, idle = Math.max(0, state.idleTime || 0);
   // Split a step crossing the five-second boundary; variable intervals and the
   // fixed gameplay clock must integrate the same piecewise decay.

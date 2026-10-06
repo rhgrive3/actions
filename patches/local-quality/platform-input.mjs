@@ -34,9 +34,16 @@ export function installInputPlatform(Input, env = globalThis) {
   const P = Input.prototype;
   if (Object.hasOwn(P, INSTALLED)) return;
   Object.defineProperty(P, INSTALLED, { value: true });
-  const owner = getPlatformLifecycle(env), initialBlur = owner.metrics.blurs;
+  const owner = getPlatformLifecycle(env), initialBlur = owner.metrics.blurs, initiallyFocused = owner.focused;
   const poll = P.pollPad, axis = P.padAxis, stick = P.padStick;
   P.pollPad = function (...args) {
+    // Remember initial unfocus even if focus arrives before the first poll.
+    if (this._platformPadBlurEpoch === undefined && !initiallyFocused) {
+      this._platformPadBlurEpoch = initialBlur;
+      this._padEpoch = (this._padEpoch || 0) + 1;
+      this._platformPadFocusRebase = true;
+      this._platformPadRebase = this._platformPadAxes = true;
+    }
     // Visible blur does not suspend simulation. Retire pad authority for the
     // whole unfocused interval, including new input after the initial reset.
     if ((this._platformPadBlurEpoch ?? initialBlur) !== owner.metrics.blurs) {

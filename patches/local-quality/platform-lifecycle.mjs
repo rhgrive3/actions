@@ -17,7 +17,10 @@ export class PlatformLifecycle {
     this.metrics = { suspends: 0, resumes: 0, blurs: 0, errors: 0 };
     this.lastEvent = 'initial';
     this.persisted = false;
-    this.focused = true;
+    // Visibility and focus are independent at construction (for example, iframes).
+    // Keep legacy hosts without hasFocus usable; a failed query cannot grant input.
+    try { this.focused = typeof env.document?.hasFocus === 'function' ? !!env.document.hasFocus() : true; }
+    catch { this.focused = false; }
     this._listen(env.document, 'visibilitychange', () => this.reconcile('visibilitychange'));
     this._listen(env, 'pagehide', e => { this.persisted = !!e.persisted; this.block('pagehide', true, 'pagehide'); });
     this._listen(env, 'pageshow', e => {

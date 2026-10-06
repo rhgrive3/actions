@@ -73,7 +73,7 @@ test('#468/#306: 30/60/120Hz share identical inactive and dead-active authoritat
  }
  assert.deepEqual(traces[0],traces[1]);assert.deepEqual(traces[1],traces[2]);
 });
-test('#471: dead inactive progress does not acquire a new decay/award policy accidentally',async()=>{
- const f=await world(),a=f.a;a.s3.flow=inactive(50);a.splat(f.enemy,'weapon');f.tick(a,60);near(fp(a.s3.flow),45);
- f.emit('turf',{actor:a,area:100});near(fp(a.s3.flow),45);
+test('#471/#882: death penalty is followed by normal inactive decay, without dead awards',async()=>{
+ const f=await world(),a=f.a;a.s3.flow=inactive(50);a.splat(f.enemy,'weapon');f.tick(a,60);near(fp(a.s3.flow),45-cfg.progress.decayPerSecond);
+ f.emit('turf',{actor:a,area:100});near(fp(a.s3.flow),45-cfg.progress.decayPerSecond);
 });
