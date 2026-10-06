@@ -69,6 +69,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Prepare source validation builder
+        run: npm install --no-save --no-package-lock --silent esbuild@0.28.2
       - name: Diagnose nine-way walk contact regression
         run: node --experimental-vm-modules --test patches/splatoon3/tests/walk-special-contact.test.mjs
       - name: Verify gameplay patch contracts and regressions
@@ -184,7 +186,6 @@ jobs:
           PY
       - name: Build patched site at the checkout commit
         run: |
-          npm install --no-save --no-package-lock --silent esbuild@0.28.2
           node scripts/build-inkwave.mjs inkwave-public _site
           node scripts/check-inkwave-startup-budget.mjs _site
           git rev-parse HEAD > _site-source-sha.txt

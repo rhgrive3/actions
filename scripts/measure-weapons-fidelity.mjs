@@ -46,6 +46,23 @@ export function finish(f,a,maxFrames=240, trace=null) {
     if(trace)for(const p of ps)trace.push(snap(p,!f.projectiles.list.includes(p)));
   }
 }
+// Shared by the emitted-artifact regression and this measurement runner. Keep
+// the initial-frame budget and held-input cadence here so test and telemetry
+// cannot drift into separate charge loops.
+export function runChargeCase(f,c) {
+  const a=reset(f,c),r=a.weaponRunner;
+  const chargeFrames=c.id==='charger'?1+Math.round(c.charge*a.weapon.chargeTime*60):c.id==='splatling'?Math.round(c.charge*a.weapon.chargeTime*60):0; // #726: charger counts the 1F humanoid startup before its charge frames
+  if(c.id==='roller'&&c.vertical)a.grounded=false;
+  const charge=[];
+  const chargeTarget=c.charge??1;
+  const chargeBudget=chargeFrames?chargeFrames+60:180;
+  for(let frame=0;frame<chargeBudget;frame++) {
+    f.tick(a,c.id==='roller'?{fire:frame%60===0,firePressed:frame%60===0}:{fire:true});
+    if(chargeFrames)charge.push({frame:frame+1,charge:round(r.charge),ink:round(a.ink)});
+    if(chargeFrames&&frame+1>=chargeFrames&&r.charge>=chargeTarget-1e-9)break;
+  }
+  return {a,r,chargeFrames,charge,chargeAtRelease:round(r.charge)};
+}
 export function paintMetrics(f) {
   const points=[]; let area=0;
   for(const face of f.G.paint.paintFaces)for(let j=0;j<face.nv;j++)for(let i=0;i<face.nu;i++){
@@ -116,25 +133,7 @@ export async function measure({site=BASELINE,fidelity=false,detail=true}={}) {
   result.runner={};
   for(const c of CASES){
     if(c.id==='charger'&&c.charge===0)continue;
-    const a=reset(f,c);const r=a.weaponRunner;const chargeFrames=c.id==='charger'?1+Math.round(c.charge*a.weapon.chargeTime*60):c.id==='splatling'?Math.round(c.charge*a.weapon.chargeTime*60):0; // #726: charger counts the 1F humanoid startup before its charge frames
-    if(c.id==='roller'&&c.vertical)a.grounded=false;
-    const charge=[];
-    // Hold ZR until the weapon actually reaches the case's target charge instead
-    // of counting raw ticks. A sourced startup phase spends ticks before charge
-    // accumulates, so a fixed tick budget silently measured a short charge as
-    // "full": the Heavy Splatling 1F humanoid startup (#732/#745) made the
-    // splatling-full case release at charge 0.986 and land 39 shots instead of
-    // the pinned 40. Polling real charge state budgets whatever startup the
-    // product runs, so this cannot silently drift again. The budget is strictly
-    // additive: the loop never releases before the original chargeFrames ticks,
-    // it only extends far enough to actually reach the named charge fraction.
-    const chargeTarget=c.charge??1;
-    const chargeBudget=chargeFrames?chargeFrames+60:180;
-    for(let frame=0;frame<chargeBudget;frame++) {
-      f.tick(a,c.id==='roller'?{fire:frame%60===0,firePressed:frame%60===0}:{fire:true});
-      if(chargeFrames)charge.push({frame:frame+1,charge:round(r.charge),ink:round(a.ink)});
-      if(chargeFrames&&frame+1>=chargeFrames&&r.charge>=chargeTarget-1e-9)break;
-    }
+    const {a,chargeFrames,charge}=runChargeCase(f,c);
     if(chargeFrames)for(let frame=0;frame<240;frame++)f.tick(a,{fire:false});
     const shotTimes=f.fires.map(p=>round(p.time));
     result.runner[c.key]={chargeSamples:charge,inkSpent:round(100-a.ink),shots:shotTimes.length,shotTimes,intervals:shotTimes.slice(1).map((t,i)=>round(t-shotTimes[i])),releaseCharge:f.fires[0]?.charge??null,firstRemainingProjectileSpeedAtWindowEnd:f.projectiles.list[0]?.vel.length()??null};

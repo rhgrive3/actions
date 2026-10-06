@@ -13,6 +13,9 @@ test('composed gamepad imports resolve production patch modules from the reposit
  const importer=path.join(upstream,'src/game/player.js');
  const specifier=composed('src/game/player.js',true).match(/^import \{ updateShotGuide \} from '([^']+)';/m)?.[1];
  assert.equal(specifier,'../../patches/splatoon3/runtime/weapons-fidelity.mjs');
+ const raw=path.resolve(path.dirname(importer),specifier);
+ assert.notEqual(raw,path.join(root,'patches/splatoon3/runtime/weapons-fidelity.mjs'));
+ assert.equal(fs.existsSync(raw),false,'the raw upstream-relative path is the unresolved fixture negative control');
  const resolved=resolveFixtureModule(specifier,importer);
  assert.equal(resolved,path.join(root,'patches/splatoon3/runtime/weapons-fidelity.mjs'));
  assert.equal(fs.existsSync(resolved),true);
