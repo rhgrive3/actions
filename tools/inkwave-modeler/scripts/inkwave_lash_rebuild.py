@@ -863,11 +863,10 @@ def set_uvs(obj, uvs):
     me.update()
 
 
-def tearline_material(tint=(1.0, 1.0, 1.0)):
+def tearline_material(tint=(1.0, 1.0, 1.0), name='INKWAVE_tearline_skin'):
     """The face's skin material without subsurface scattering (a strip this thin renders grey with it), its colour
     multiplied by tint (linear) so it renders like the face round it (without subsurface it comes out more
     orange)."""
-    name = 'INKWAVE_tearline_skin'
     mat = bpy.data.materials.get(name)
     if mat is not None:
         bpy.data.materials.remove(mat)
@@ -1193,7 +1192,8 @@ def build_lower(rays, design, curve=None):
     return np.array(verts), faces
 
 
-def set_side(objs, liner, rim, lashes, lower, mat, brown, tear=None, tear_mat=None, shade=None, shade_mat=None):
+def set_side(objs, liner, rim, lashes, lower, mat, brown, tear=None, tear_mat=None, shade=None, shade_mat=None,
+             fill=None, fill_mat=None):
     obj = bpy.data.objects[objs['rim']]
     er.back_up(obj)
     er.set_mesh(obj, *rim, mat, '_lr_rim')
@@ -1214,6 +1214,8 @@ def set_side(objs, liner, rim, lashes, lower, mat, brown, tear=None, tear_mat=No
             if '_lr_visible_shadow' not in obj:
                 obj['_lr_visible_shadow'] = obj.visible_shadow       # brought back by lr_restore
             obj.visible_shadow = False
+        elif k == len(lashes) + 3 and fill is not None:
+            er.set_mesh(obj, *fill, fill_mat, '_lr_corner_fill')
         else:
             er.replace_mesh(obj, np.zeros((0, 3)), [], '_lr_cleared')
 
@@ -1531,7 +1533,7 @@ def lr_restore(drop=False):
             bpy.data.meshes.remove(backup)
         count += 1
     if drop:
-        for name in ('INKWAVE_lash_brown', 'INKWAVE_tearline_skin', SHADOW_IMAGE):
+        for name in ('INKWAVE_lash_brown', 'INKWAVE_tearline_skin', 'INKWAVE_corner_fill_skin', SHADOW_IMAGE):
             mat = bpy.data.materials.get(name)
             if mat is not None and mat.users == 0:
                 bpy.data.materials.remove(mat)
@@ -1614,8 +1616,6 @@ def main():
         rim, _, edge = build_rim(rays, d)
         tear = build_tearline(rays, d, *edge) if edge is not None else None
         fill = build_corner_fill(rays, d)
-        if fill is not None and tear is not None:
-            tear = (np.r_[tear[0], fill[0]], list(tear[1]) + [tuple(i + len(tear[0]) for i in f) for f in fill[1]])
         shade = build_lash_shadow(rays, d, edge[0]) if edge is not None and 'lash_shadow' in d else None
         if args.shape_only:
             lashes = []
@@ -1624,9 +1624,9 @@ def main():
         else:
             lashes = [build_lash(rays, d, spec) for spec in d['lashes']]
         lower = None if args.shape_only else build_lower(rays, d, edge[0] if edge is not None else None)
-        built.append([objs, liner, rim, lashes, lower, tear, shade])
+        built.append([objs, liner, rim, lashes, lower, tear, shade, fill])
     verts, polys = [], []
-    for _, liner, rim, _, _, _, _ in built:
+    for _, liner, rim, _, _, _, _, _ in built:
         for v, f in (liner, rim):
             polys += [[i + sum(len(x) for x in verts) for i in fc] for fc in f]
             verts.append(M.to_world(np.asarray(v) / 1000))
@@ -1639,8 +1639,14 @@ def main():
     shade_mat = None
     if 'lash_shadow' in design and 'lid_edge' in design:
         shade_mat = lash_shadow_material(lash_shadow_image(design, *built[0][6][3]))   # u -> design x (right eye)
-    for objs, liner, rim, lashes, lower, tear, shade in built:
-        set_side(objs, liner, rim, lashes, lower, mat, brown, tear, tear_mat, shade, shade_mat)
+    # the corner fill lies in the eye socket, where the face is shaded darker than the flat patch: its own tint
+    fill_mat = None
+    if 'corner_clip' in design and 'lid_edge' in design:
+        t0 = design['lid_edge'].get('tint', (1.0, 1.0, 1.0))
+        t1 = design.get('corner_fill_tint', (1.0, 1.0, 1.0))
+        fill_mat = tearline_material([a * b for a, b in zip(t0, t1)], 'INKWAVE_corner_fill_skin')
+    for objs, liner, rim, lashes, lower, tear, shade, fill in built:
+        set_side(objs, liner, rim, lashes, lower, mat, brown, tear, tear_mat, shade, shade_mat, fill, fill_mat)
     remove_lower_paint()
     for objs in (R, L):
         decimate(bpy.data.objects[objs['liner']])
