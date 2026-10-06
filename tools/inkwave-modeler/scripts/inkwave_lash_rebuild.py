@@ -703,7 +703,7 @@ def build_corner_fill(rays, design):
         return None
     R = np.array(rows)
     R[:, 1] = er.smooth_rows(R[:, 1], 2.0)                  # smooth outer edge (it lies on the skin)
-    ncol = 12
+    ncol = design.get('corner_fill_cols', 12)
     f = np.linspace(0, 1, ncol)
     px = np.stack([R[:, 1:2] + f[None] * (R[:, 2:3] - R[:, 1:2]), np.repeat(R[:, :1], ncol, 1)], -1)
     O = np.zeros(px.shape[:2] + (3,)); D = np.zeros_like(O); H = np.zeros(px.shape[:2]); ball = np.zeros(px.shape[:2], bool)
@@ -717,9 +717,10 @@ def build_corner_fill(rays, design):
     # patch laid on the face there dips under the eyeball and a white line shows), smoothed, never behind the
     # surface right under it
     r = design.get('corner_fill_reach', 3)
-    Hp = np.pad(H, r, mode='edge')
-    env = np.min([Hp[r + dj:r + dj + H.shape[0], r + di:r + di + H.shape[1]]
-                  for dj in range(-r, r + 1) for di in range(-r, r + 1)], axis=0)
+    rc = design.get('corner_fill_reach_cols', r)          # across the row: small, so the outer columns come down
+    Hp = np.pad(H, ((r, r), (rc, rc)), mode='edge')         # onto the face (a skin ramp, no gap from the 3/4 view)
+    env = np.min([Hp[r + dj:r + dj + H.shape[0], rc + di:rc + di + H.shape[1]]
+                  for dj in range(-r, r + 1) for di in range(-rc, rc + 1)], axis=0)
     depth = env - lo
     for _ in range(40):
         depth = np.minimum(er.smooth_rows(er.smooth_rows(depth, 1.5), 1.5, axis=1), env - lo)
