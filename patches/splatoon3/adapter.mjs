@@ -4,6 +4,7 @@ import { adaptWeaponsFidelity } from './weapons-adapter.mjs';
 // Every connection has a unique exact anchor; missing/duplicated hooks are errors.
 import { adaptMovementPhysics } from './movement-physics-adapter.mjs';
 import { adaptSubSpecialFidelity } from './sub-special-adapter.mjs';
+import { adaptChargerSightCache } from './charger-sight-cache-adapter.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
@@ -186,9 +187,11 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, '        vel.y -= 24 * dt;', '        vel.y -= SUB.bomb.gravity * dt;', 'bomb preview gravity');
     code = replaceOnce(code, 'if (b.fuse <= 0) {', 'if (b.fuse <= 1e-10) {', 'bomb fuse frame boundary');
     code = adaptWeaponEdgecases(rel, code, replaceOnce);
+    code = adaptChargerSightCache(rel, code, replaceOnce);
     code = adaptWeaponsFidelity(code, replaceOnce);
     return `import { applyProjectileHit, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\n` + code;
   }
+  if (rel === 'src/fx/fxHooks.js') return adaptChargerSightCache(rel, code, replaceOnce);
   if (rel === 'src/net/netmatch.js') {
     code = replaceOnce(code, '    victim.alive = false; victim.hp = 0;', '    victim.alive = false; victim.hp = 0; victim.superJumpGround = null;', 'remote jump target death');
     code = replaceOnce(code, '    a.alive = true; a.hp = PLAYER.hp;', '    a.superJumpGround = null;\n    a.alive = true; a.hp = PLAYER.hp;', 'remote jump target respawn');
