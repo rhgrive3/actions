@@ -64,6 +64,7 @@ export function installWeapons(context, profile) {
   };
   WeaponRunner.prototype.busy = function () {
     const kind = this.a.weapon.kind;
+    if (kind === 'roller' && this.s3FlickPostSquid > 0) return true;
     if (kind === 'charger' && this.s3ChargerPostShot > 1e-10) return true;
     if (kind === 'dualies' && this.s3DualiesPostShot > 1e-10) return true;
     if (['charger','splatling'].includes(kind) && this.a.intent.squid && this.a._squidPressT > this.a._firePressT) return false;
