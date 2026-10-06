@@ -688,7 +688,7 @@ def build_corner_fill(rays, design):
         xl = xs[np.nonzero(seen)[0][-1]]                     # outer end of the opening on this row
         if xl > xr - 0.2:
             continue
-        rows.append((y, xl - 0.6, xr + 0.3))
+        rows.append((y, xl - design.get('corner_fill_out_px', 0.6), xr + design.get('corner_fill_in_px', 0.3)))
     if len(rows) < 3:
         return None
     R = np.array(rows)
