@@ -1,19 +1,16 @@
 // Main-weapon gameplay only. Values live in profile.json; provenance and retained
 // uncertainty live in reference/weapons-fidelity-reference.json.
 // Source fields and interpreted equations are explicitly separated in the profile.
-import {distanceDamage, groupDamage, applyProjectileHit as legacyHit} from './weapons.mjs';
+import {distanceDamage, groupDamage, applyProjectileHit as legacyHit, cachedWeaponOverrideConfig, withWeaponScalarOverride} from './weapons.mjs';
 import { capsuleEntry, sweptWorldHit } from './weapons-collision.mjs';
 import { installChargerFlight } from './weapons-charger-flight.mjs';
 export const EPSILON = 1e-10;
 const INSTALLED = Symbol.for('inkwave.weapons-fidelity.v1');
 let api, completion;
+const slosherDropConfigs = new WeakMap();
+const splatlingSpeedViews = new WeakMap();
 const clamp01 = value => Math.max(0, Math.min(1, value));
 const radians = degrees => degrees * Math.PI / 180;
-function weaponOverrideView(source, key, value) {
-  const view = Object.create(source);
-  Object.defineProperty(view, key, { value, enumerable: true });
-  return view;
-}
 
 function freezeDeep(value) {
   if (value && typeof value === 'object' && !Object.isFrozen(value)) {
@@ -497,7 +494,10 @@ export function installWeaponsFidelity(context,profile) {
   const slosh=Projectiles.prototype.fireSlosh;
   Projectiles.prototype.fireSlosh=function(actor,w){
     const previous=this._fidelitySloshContext;this._fidelitySloshContext={index:0,group:new Map()};
-    try{return slosh.call(this,actor,weaponOverrideView(w,'drops',rawWeapon(w).UnitGroupParam.Unit.reduce((n,u)=>n+(u.BulletNum??1),0)));}
+    try{
+      const drops=rawWeapon(w).UnitGroupParam.Unit.reduce((n,u)=>n+(u.BulletNum??1),0);
+      return slosh.call(this,actor,cachedWeaponOverrideConfig(slosherDropConfigs,w,'drops',drops));
+    }
     finally{this._fidelitySloshContext=previous;}
   };
   Projectiles.prototype.s3SlosherGuide=function(actor,w){
@@ -564,7 +564,8 @@ export function installWeaponsFidelity(context,profile) {
     const rate=rawWeapon(w).MoveParam.SpawnSpeedRandomRate;
     // Bounds are extracted. Uniform law is an explicit model; native bias law is unknown.
     speed*=1+(Math.random()*2-1)*rate;
-    return fireSpin.call(this,actor,weaponOverrideView(w,'projSpeed',speed),spread);
+    return withWeaponScalarOverride(splatlingSpeedViews,w,'projSpeed',speed,
+      config=>fireSpin.call(this,actor,config,spread));
   };
   // Boss and player hits share the same weapon damage envelope. The old native
   // boss path used a separate seven-unit falloff and an unrelated 0.3s throttle.
