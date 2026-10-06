@@ -81,72 +81,44 @@ export function adaptSource(rel, code) {
       "      side(this._myTeam()),\n" +
       "      h('div', { class: 'iw-lu__vs' }, h('span', { class: 'iw-lu__vsplat', html: splatSVG({ seed: 77, fill: '#fff', r: 56, arms: 10, drops: 6 }) }), h('span', { class: 'iw-display' }, 'VS')),\n" +
       "      side(1 - this._myTeam()));",
-      "    // Issue #673: battle-start S3 Splashtag intro presentation\n" +
-      "    const sanitizeSvg = (s) => (typeof s === 'string' && !/<script|javascript:|on\\w+=/i.test(s) ? s : '');\n" +
+      "    // Issue #673: Splashtag intro identity.\n" +
+      "    // Presentation metadata rides the native style payload (a.style.splashtag) that\n" +
+      "    // src/net/session.js already packs as {name, weapon, style}; there is no a.profile\n" +
+      "    // or a.tag producer, so nothing else is consulted. Exactly three safe shapes reach\n" +
+      "    // the DOM: a numeric banner seed, a trusted in-repo asset key, and plain text.\n" +
+      "    // Raw markup is never accepted, so no remote field can smuggle active content\n" +
+      "    // into innerHTML through a value that only looks safe.\n" +
+      "    const stagOf = (a) => (a && a.style && typeof a.style === 'object' && a.style.splashtag && typeof a.style.splashtag === 'object' && !Array.isArray(a.style.splashtag)) ? a.style.splashtag : null;\n" +
+      "    const stagText = (v, max) => (typeof v === 'string' ? v.trim().slice(0, max) : '');\n" +
+      "    const stagSeed = (v) => {\n" +
+      "      if (typeof v === 'number') return Number.isFinite(v) ? v : null;\n" +
+      "      if (typeof v === 'string' && /^[0-9]+$/.test(v.trim())) return Number(v.trim());\n" +
+      "      return null;\n" +
+      "    };\n" +
       "    const renderBadge = (b) => {\n" +
-      "      if (!b) return null;\n" +
-      "      let content = '', cls = 'iw-stag__badge', title = '';\n" +
-      "      if (typeof b === 'string') {\n" +
-      "        const k = b.trim();\n" +
-      "        if (typeof GLYPHS !== 'undefined' && GLYPHS[k]) {\n" +
-      "          content = GLYPHS[k]; cls += ' iw-stag__badge--glyph'; title = k;\n" +
-      "        } else if (typeof AWARDS !== 'undefined' && AWARDS[k]) {\n" +
-      "          content = awardIcon(AWARDS[k].icon); cls += ' iw-stag__badge--award is-' + (AWARDS[k].metal || 'gold'); title = AWARDS[k].label;\n" +
-      "        } else if (typeof AWARD_ICONS !== 'undefined' && AWARD_ICONS[k]) {\n" +
-      "          content = awardIcon(k); cls += ' iw-stag__badge--award'; title = k;\n" +
-      "        } else if (k.startsWith('<svg') && k.endsWith('</svg>')) {\n" +
-      "          content = sanitizeSvg(k);\n" +
-      "        } else if (/^[A-Za-z0-9_ -]{1,8}$/.test(k)) {\n" +
-      "          return h('span', { class: 'iw-stag__badge iw-stag__badge--text', title: k }, k.slice(0, 4));\n" +
+      "      const rec = (b && typeof b === 'object') ? b : null;\n" +
+      "      const key = stagText(rec ? (rec.key ?? rec.id) : b, 32);\n" +
+      "      if (key) {\n" +
+      "        if (typeof GLYPHS !== 'undefined' && GLYPHS[key]) return h('span', { class: 'iw-stag__badge iw-stag__badge--glyph', title: key, html: GLYPHS[key] });\n" +
+      "        if (typeof AWARDS !== 'undefined' && AWARDS[key]) {\n" +
+      "          const aw = AWARDS[key];\n" +
+      "          return h('span', { class: 'iw-stag__badge iw-stag__badge--award is-' + (aw.metal || 'gold'), title: stagText(aw.label, 48), html: awardIcon(aw.icon) });\n" +
       "        }\n" +
-      "      } else if (typeof b === 'object') {\n" +
-      "        if (b.html || b.svg) {\n" +
-      "          content = sanitizeSvg(b.html || b.svg);\n" +
-      "        } else if (b.icon && typeof GLYPHS !== 'undefined' && GLYPHS[b.icon]) {\n" +
-      "          content = GLYPHS[b.icon]; cls += ' iw-stag__badge--glyph';\n" +
-      "        } else if (b.icon && typeof AWARD_ICONS !== 'undefined' && AWARD_ICONS[b.icon]) {\n" +
-      "          content = awardIcon(b.icon); cls += ' iw-stag__badge--award';\n" +
-      "        } else if (b.id && typeof AWARDS !== 'undefined' && AWARDS[b.id]) {\n" +
-      "          content = awardIcon(AWARDS[b.id].icon); cls += ' iw-stag__badge--award is-' + (AWARDS[b.id].metal || 'gold'); title = AWARDS[b.id].label;\n" +
-      "        } else if (b.icon) {\n" +
-      "          content = awardIcon(b.icon);\n" +
-      "        } else if (b.label || b.text) {\n" +
-      "          return h('span', { class: 'iw-stag__badge iw-stag__badge--text' }, String(b.label || b.text).slice(0, 4));\n" +
-      "        }\n" +
-      "        if (b.metal) cls += ' is-' + b.metal;\n" +
-      "        if (b.title) title = b.title;\n" +
+      "        if (typeof AWARD_ICONS !== 'undefined' && AWARD_ICONS[key]) return h('span', { class: 'iw-stag__badge iw-stag__badge--award', title: key, html: awardIcon(key) });\n" +
       "      }\n" +
-      "      if (!content) return null;\n" +
-      "      return h('span', { class: cls, title, html: content });\n" +
+      "      const label = stagText(rec ? (rec.label ?? rec.text) : b, 8);\n" +
+      "      if (label && /^[A-Za-z0-9_ -]+$/.test(label)) return h('span', { class: 'iw-stag__badge iw-stag__badge--text', title: label }, label.slice(0, 4));\n" +
+      "      return null;\n" +
       "    };\n" +
       "    const makeStag = (a, i) => {\n" +
-      "      const nm = String(a.nickname || a.name || a.profile?.name || a.tag?.name || 'Player').trim().slice(0, 32) || 'Player';\n" +
-      "      const rawTitle = a.title ?? a.tagTitle ?? a.profile?.title ?? a.tag?.title;\n" +
-      "      const titleVal = (typeof rawTitle === 'string' && rawTitle.trim()) ? rawTitle.trim().slice(0, 48) : tagTitle(nm);\n" +
-      "      const rawNum = a.tagNum ?? a.tagId ?? a.tagNumber ?? a.id ?? a.num ?? a.profile?.tagNum ?? a.profile?.tagId ?? a.tag?.num;\n" +
-      "      let numVal = '';\n" +
-      "      if (rawNum != null && String(rawNum).trim()) {\n" +
-      "        const s = String(rawNum).trim();\n" +
-      "        numVal = (s.startsWith('#') ? s : '#' + s).slice(0, 16);\n" +
-      "      } else {\n" +
-      "        numVal = tagNum(nm);\n" +
-      "      }\n" +
-      "      const rawArt = a.banner ?? a.bannerArt ?? a.tagArt ?? a.bannerSeed ?? a.profile?.banner ?? a.tag?.art;\n" +
-      "      let artHtml = '';\n" +
-      "      if (typeof rawArt === 'number' && Number.isFinite(rawArt)) {\n" +
-      "        artHtml = tagArt(rawArt);\n" +
-      "      } else if (typeof rawArt === 'string' && rawArt.trim()) {\n" +
-      "        const s = rawArt.trim();\n" +
-      "        if (/^-?\\d+$/.test(s)) {\n" +
-      "          artHtml = tagArt(Number(s));\n" +
-      "        } else if (s.startsWith('<svg') && s.endsWith('</svg>')) {\n" +
-      "          artHtml = sanitizeSvg(s);\n" +
-      "        }\n" +
-      "      }\n" +
-      "      if (!artHtml) {\n" +
-      "        artHtml = tagArt(fnv(String(nm).toLowerCase()));\n" +
-      "      }\n" +
-      "      const rawBadges = a.badges ?? a.profile?.badges ?? a.tag?.badges;\n" +
+      "      const nm = stagText(a.name, 32) || 'Player';\n" +
+      "      const stag = stagOf(a);\n" +
+      "      const titleVal = stagText(stag && stag.title, 48) || tagTitle(nm);\n" +
+      "      const rawNum = stagText(stag && (stag.num ?? stag.number), 16).replace(/^#/, '');\n" +
+      "      const numVal = rawNum ? '#' + rawNum : tagNum(nm);\n" +
+      "      const seed = stagSeed(stag && (stag.banner ?? stag.bannerSeed));\n" +
+      "      const artHtml = tagArt(seed === null ? fnv(String(nm).toLowerCase()) : seed);\n" +
+      "      const rawBadges = stag && stag.badges;\n" +
       "      const badgeEls = Array.isArray(rawBadges) ? rawBadges.slice(0, 3).map(renderBadge).filter(Boolean) : [];\n" +
       "      const card = h('div', { class: 'iw-stag iw-stag--intro' + (a.isLocal ? ' is-self' : ''), style: { '--i': i } },\n" +
       "        h('span', { class: 'iw-stag__art', html: artHtml }),\n" +

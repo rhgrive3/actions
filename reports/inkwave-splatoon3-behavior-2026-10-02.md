@@ -264,4 +264,18 @@ See [the cold-boot budget report](inkwave-cold-boot-budgets-2026-10-04.md).
 | オーバーレイ管理 | `_lineup` 開始時に既存の `.iw-lineup` を全削除して単一インスタンスを保証し、3500ms タイマーで確実に自動クリーンアップする。ボス戦（Hullbreaker）演出・マッチ時間（180秒）・Ready/GO・スポーン・得点判定・ゲームプレイ権威は一切変更しない |
 | 確認状態 | **DOM / HUD ロジック検証レベル**（`patches/splatoon3/tests/issue-673-splashtag-intro.test.mjs` で 11/11 合格。adapter 変換、DOM ツリー構造、メタデータ消費・サニタイズ、バッジ描画、デフォルトフォールバック、Alpha/Bravo 順序共有・ハイライト差異、オーバーレイ単一クリーンアップ、ボス戦分離）。**実 3D WebGL キャラクター描画およびネイティブネットワークソケット実線通信は未主張（DOM/HUD モックレベルでの実証）**。**本家実機（Switch Ver.11.3.0）とのピクセル完全一致は未確認** |
 
+### 2026-10-06 訂正（#673 の親レビュー指摘）
 
+前回の実装は任意の raw SVG バッジとバナーを `innerHTML` に渡していた。その検査は `/<script|javascript:|on\w+=/i` という緩い正規表現で、`onload =`（空白付き）、`ONPOINTEROVER =alert(1)`、`<foreignObject>`、`xlink:href="javascript:..."` を通す。また `b.html` / `b.svg` は任意の文字列を受け入れた。いずれも「安全に見える」フィールドから remote の値が active markup を innerHTML へ持ち込む経路になる。
+
+訂正として raw SVG を受け付ける経路を削除した。DOM へ到達する値は次の3つだけである。
+
+1. 数値（または数字のみ文字列）のバナー seed。描画は既存の `tagArt(seed)` が行う。
+2. リポジトリ内の信頼済みアセットキー（`GLYPHS` / `AWARDS` / `AWARD_ICONS`）。
+3. プレーンテキスト。`h()` の text ノードなので escape される。
+
+メタデータの取得元も `a.profile` / `a.tag` から `a.style.splashtag` へ変更した。`a.profile` と `a.tag` は Actor が生成しない値であり、`src/net/session.js` の `_newPlayer` が実際に載せるのは `{ name, weapon, style }` であるためである。protocol の形は変更していない。`style.splashtag` が無い場合は従来どおり `tagTitle` / `tagNum` / `tagArt(fnv(name))` の決定的なフォールバックを使う。
+
+Alpha/Bravo の固定順序、YOU 表記の不在、ブキ名、3.5 秒のクリーンアップは変更していない。`inkwave-public/` と旧 Game / Hex には触れていない。
+
+確認状態は **DOM / HUD ロジック検証レベル**（`issue-673-splashtag-intro.test.mjs` で 13/13 合格）。対抗的なメタデータとして `<svg onload = "...">`、`<script>`、`foreignObject`、`ONPOINTEROVER =` を含む文字列を title / num / banner / badges の全フィールドへ入れ、バッジが1件も描画されず、art スロットに `tagArt` 由来の markup 以外が入らないことを確認した。テストは DOM fixture のみを使い、**ブラウザ実行・ネットワーク実線通信は主張していない**。**本家実機（Switch Ver.11.3.0）とのピクセル一致は未確認**。
