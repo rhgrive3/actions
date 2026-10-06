@@ -22,6 +22,98 @@ export function validateIdleResult(r) {
   if(r.errors?.length||!r.gpu?.webgl?.startsWith('WebGL 2.0')||!r.gpu.renderer)throw Error('Browser/GPU errors');
   return {cloudMiB:[10,2.5],farTransitions:4,pausedWorldRenders:'1/120',mutedSchedulerTicks:0};
 }
+export async function withBoundedTimeout(promise,ms,label){
+  let timer;
+  try{
+    return await Promise.race([
+      promise,
+      new Promise((_,reject)=>{
+        timer=setTimeout(()=>reject(new Error(`${label} timed out after ${ms}ms`)),ms);
+        timer.unref?.();
+      })
+    ]);
+  }finally{clearTimeout(timer);}
+}
+export async function captureColdDiagnostics({
+  coldPage,
+  hooked=false,
+  coldLoaded=new Set(),
+  coldPendingUrls=new Set(),
+  coldPageErrors=[],
+  coldConsoleErrors=[],
+  coldRouteErrors=[],
+  coldCrashed=false,
+  output,
+  evalTimeoutMs=5000,
+  screenshotTimeoutMs=8000
+}){
+  let pageState=null;
+  if(coldPage&&!coldCrashed){
+    try{
+      pageState=await withBoundedTimeout(
+        coldPage.evaluate(()=>{
+          const G=window.__G;
+          const prog=window.__coldObserverProgress;
+          const env=window.__coldEnvironment;
+          return {
+            documentReadyState:document.readyState||null,
+            runtimeUrl:window.location?window.location.href:null,
+            observerInstalled:!!prog?.installed,
+            envSetCalls:prog?.envSetCalls??0,
+            hasG:!!G,
+            gamePublished:!!G?.game,
+            envPublished:!!G?.env,
+            coldEnvironmentPublished:!!env,
+            coldEnvironment:env?{
+              quality:env.quality,
+              touch:env.touch,
+              gamePublishedAtAllocation:env.gamePublishedAtAllocation,
+              marina:env.marina,
+              cloud:env.cloud,
+              farSize:env.farSize,
+              cloudId:env.cloudId,
+              farId:env.farId
+            }:null
+          };
+        }),
+        evalTimeoutMs,
+        'evaluate'
+      );
+    }catch(err){pageState={unavailable:true,error:err.message};}
+  }else{pageState={unavailable:true,error:coldCrashed?'page crashed':'page unavailable'};}
+  let screenshot=null;
+  if(output&&coldPage&&!coldCrashed){
+    const screenshotPath=path.join(output,'failure.png');
+    try{
+      await withBoundedTimeout(
+        coldPage.screenshot({path:screenshotPath,animations:'disabled',timeout:screenshotTimeoutMs}),
+        screenshotTimeoutMs,
+        'screenshot'
+      );
+      screenshot={captured:true,path:'failure.png'};
+    }catch(err){screenshot={captured:false,error:err.message};}
+  }else{screenshot={captured:false,error:coldCrashed?'page crashed':'page unavailable'};}
+  return {
+    hooked,
+    coldLoaded:[...coldLoaded].sort(),
+    pendingUrls:[...coldPendingUrls].sort(),
+    pageErrors:[...coldPageErrors],
+    consoleErrors:[...coldConsoleErrors],
+    routeErrors:[...coldRouteErrors],
+    crashed:coldCrashed,
+    documentReadyState:pageState?.documentReadyState??null,
+    runtimeUrl:pageState?.runtimeUrl??null,
+    observerInstalled:pageState?.observerInstalled??false,
+    envSetCalls:pageState?.envSetCalls??0,
+    hasG:pageState?.hasG??false,
+    gamePublished:pageState?.gamePublished??false,
+    envPublished:pageState?.envPublished??false,
+    coldEnvironmentPublished:pageState?.coldEnvironmentPublished??false,
+    coldEnvironment:pageState?.coldEnvironment??null,
+    evaluateError:pageState?.error??null,
+    screenshot
+  };
+}
 async function main(){
  const option=n=>{const i=process.argv.indexOf(n);if(i<0||!process.argv[i+1])throw Error('Required '+n);return path.resolve(process.argv[i+1]);};
  const site=fs.realpathSync(option('--site')),output=option('--evidence-dir'),profile=option('--profile-dir');
@@ -131,12 +223,18 @@ async function main(){
   await page.close();page=null;
   phase='cold-boot-mobile';
   const coldContext=await browser.browser().newContext({viewport:{width:844,height:390},hasTouch:true,isMobile:true});
-  let coldPage,hooked=false;const coldLoaded=new Set();
+  let coldPage,hooked=false;const coldLoaded=new Set(),coldPendingUrls=new Set(),coldPageErrors=[],coldConsoleErrors=[],coldRouteErrors=[];
+  let coldCrashed=false;
   try {
    coldPage=await coldContext.newPage();
-   coldPage.on('pageerror',e=>errors.push('cold boot: '+e.message));
+   coldPage.on('pageerror',e=>{coldPageErrors.push(e.message);errors.push('cold boot: '+e.message);});
+   coldPage.on('crash',()=>{coldCrashed=true;errors.push('cold boot: browser page crashed');});
+   coldPage.on('console',m=>{if(m.type()==='error'){const t=m.text().slice(0,1500);coldConsoleErrors.push(t);errors.push('cold console: '+t);}});
    await coldPage.addInitScript(()=>localStorage.setItem('inkwave.settings',JSON.stringify({quality:'high',shadows:false,bloom:false,music:0,sfx:0})));
    await coldPage.route(address+'**',async route=>{
+    const reqUrl=route.request().url();
+    const relKey=reqUrl.startsWith(address)?reqUrl.slice(address.length):reqUrl;
+    coldPendingUrls.add(relKey);
     try {
      const response=await route.fetch(),body=await response.body(),key=decodeURIComponent(new URL(response.url()).pathname).slice(1)||'index.html';
      if(manifest.artifacts[key]&&sha(body)!==manifest.artifacts[key])throw Error('Cold loaded byte mismatch '+key);
@@ -147,16 +245,24 @@ async function main(){
       // executes. No constructor, target factory, budget, or served bytes change.
       await coldPage.evaluate(async url=>{
        const {G}=await import(url);if(G.game||G.env)throw Error('Cold observer installed too late');
+       window.__coldObserverProgress={installed:true,envSetCalls:0};
        const original=Object.getOwnPropertyDescriptor(G,'env')||{configurable:true,enumerable:true,writable:true,value:undefined};let value=G.env;
        Object.defineProperty(G,'env',{configurable:true,enumerable:original.enumerable,get:()=>value,set:env=>{
         value=env;
+        if(window.__coldObserverProgress)window.__coldObserverProgress.envSetCalls++;
         if(env)window.__coldEnvironment={quality:G.settings?.quality,touch:G.mobile?.touch===true,gamePublishedAtAllocation:!!G.game,marina:env._marina===true,cloud:[env._cloudRT?.width,env._cloudRT?.height],farSize:env._farRT?.width,cloudId:env._cloudRT?.texture.uuid,farId:env._farRT?.texture.uuid};
         Object.defineProperty(G,'env',{...original,value:env});
        }});
       },new URL('./core/ctx.js',response.url()).href);
      }
      await route.fulfill({response,body});
-    }catch(error){errors.push('cold boot route: '+error.message);await route.abort();}
+    }catch(error){
+     errors.push('cold boot route: '+error.message);
+     coldRouteErrors.push(error.message);
+     await route.abort();
+    }finally{
+     coldPendingUrls.delete(relKey);
+    }
    });
    await coldPage.goto(address+'?devstage&skipTitle&map=halyard',{waitUntil:'domcontentloaded'});
    await coldPage.waitForFunction(()=>!!window.__G?.game&&!!window.__coldEnvironment,null,{timeout:180000});
@@ -164,13 +270,22 @@ async function main(){
    if(!hooked||![...coldLoaded].some(p=>p.endsWith('/src/world/environment.js')))throw Error('Cold native Environment bytes not observed');
    await coldPage.screenshot({path:path.join(output,'cold-boot-mobile-halyard.png'),animations:'disabled'});
   } catch(error) {
-   result.coldBootDiagnostics={hooked,coldLoaded:[...coldLoaded].sort()};
-   if(coldPage)await coldPage.screenshot({path:path.join(output,'failure.png'),animations:'disabled'}).catch(()=>{});
+   result.coldBootDiagnostics=await captureColdDiagnostics({
+    coldPage,
+    hooked,
+    coldLoaded,
+    coldPendingUrls,
+    coldPageErrors,
+    coldConsoleErrors,
+    coldRouteErrors,
+    coldCrashed,
+    output
+   });
    throw error;
   } finally {await coldContext.close();}
   result.errors=errors;const summary=validateIdleResult(result);
   publish({status:'passed',...result,summary,sourceSha:identity.source.sourceSha,contentHash:manifest.contentHash,verifierSha256:sha(fs.readFileSync(fileURLToPath(import.meta.url))),browser:browser.browser()?.version()});
- }catch(error){publish({status:'failed',phase,error:error.stack,errors,result,sourceSha:identity?.source.sourceSha,contentHash:identity?.manifest.contentHash});if(page)await page.screenshot({path:path.join(output,'failure.png')}).catch(()=>{});throw error;}
+ }catch(error){publish({status:'failed',phase,error:error.stack,errors,result,sourceSha:identity?.source.sourceSha,contentHash:identity?.manifest.contentHash});if(page)await withBoundedTimeout(page.screenshot({path:path.join(output,'failure.png')}),8000,'warm screenshot').catch(()=>{});throw error;}
  finally{await browser?.close();if(server)await new Promise(r=>server.close(r));}
 }
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url))main().catch(e=>{console.error(e);process.exitCode=1;});
