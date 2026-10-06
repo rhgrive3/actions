@@ -306,7 +306,7 @@ projectile units:
 INKWAVE の実装箇所:
 `patches/splatoon3/runtime/weapons-fidelity.mjs`
 - `collisionRecord()`: `FriendThroughFrameForPlayer` を保持。
-- `setCollision()`: `p.fidelityFriendThrough` を設定（shooter および slosher の検証済みブキ種に限定）。
+- `setCollision()`: `p.fidelityFriendThrough` を設定（#717 受入範囲である `kind === 'slosher'` に限定。シューター #656 は親 PR #765 が所有するため、Shooter/Dualies/Splatling/Blaster は native main の味方透過挙動のまま維持）。
 - `fidelityProjectileTargets()`: 味方アクター（発射者 owner を除く）の capsuleEntry を判定し、
   スイープ内の接触時刻における projectile age が `p.fidelityFriendThrough`（2F = 2/60秒）未満の場合は透過（pass-through）、
   2F 以上の場合は衝突遮蔽（obstruction）として最短候補に含める。
@@ -326,11 +326,11 @@ INKWAVE の実装箇所:
 プレイへの影響:
 - 狭い通路や味方の密集時に、2F 猶予後（中遠距離）の味方による弾の遮蔽（ボディブロック）が本家同様に機能する。
 - 発射直後（<2F）の味方誤射による無駄な弾消えは防がれつつ、遠くの味方を貫通して敵に当たる不具合が解消される。
-- 他ブキ（Dualies, Splatling, Blaster など）の透過挙動は変更されず、Slosher の 2F 窓のみが正しく適用される。
+- 他ブキ（Shooter, Dualies, Splatling, Blaster など）の透過挙動は変更されず、Slosher の 2F 窓のみが正しく適用される。シューターは >5F でもネイティブ main の透過を維持する。
 
 確認状態:
 - 固定 60 Hz ロジックおよびリグレッション検証 (`patches/splatoon3/tests/slosher-teammate-through.test.mjs` 12項目):
   Unit 0/1/2 の値保持、<2F 透過、>=2F 遮蔽、味方ノーダメージ、背後敵ノーダメージ、接触時刻ベースの境界判定、
   発射者自身の透過、敵先行時の判定順序、ゴースト弾の単一消費、プール再利用時の初期化、
-  Dualies/Splatling/Blaster の非継承確認、30/60/120 Hz での同一挙動、最大ボレーダメージ制限の維持、地形遮蔽優先。
+  他ブキ対照（Shooter >5F 透過、Dualies/Splatling/Blaster 透過）の確認、30/60/120 Hz での同一挙動、最大ボレーダメージ制限の維持、地形遮蔽優先。
 - 未確認: Switch 実機での精密なピクセル・フレーム同期比較、ローラー等の他ブキ種の非ゼロ窓、チャージャー・ボム等の味方接触挙動。
