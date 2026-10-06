@@ -250,3 +250,22 @@ cloud/Halyard cube allocation at default high settings, not only after later
 runtime refresh. Existing formats, appearance policy and gameplay stay intact.
 These are project resource dimensions, not Nintendo/Switch memory values.
 See [the cold-boot budget report](inkwave-cold-boot-budgets-2026-10-04.md).
+
+## チャージ reticle の 5F 表示ディレイ（#572、2026-10-06）
+
+Charge HUD timing only. The authoritative `WeaponRunner` charge, shot damage, range, ink cost,
+minimum-shot admission and projectile timing are untouched.
+
+| 項目 | 内容 |
+|---|---|
+| 本家の根拠 | Splatoon 3 攻略＆検証 Wiki「メインウェポン検証」のチャージャー項目（チャージ量・ゲージ表示）。チャージ開始からチャージ reticle が表示されるまでの遅延は常に 5F、標準 Splat Charger のゲージ遅延も 5F。ゲージ表示値は `clamp((chargeFrames - gaugeDelayFrames) / (fullChargeFrames - gaugeDelayFrames), 0, 1)`、60F 基準で 1〜5F はゲージが進まず、6F が `(6-5)/(60-5) = 1/55 ≒ 1.8%`。Ver. 11.3.0 を基準 |
+| INKWAVE の実装箇所 | `patches/splatoon3/adapter.mjs` の `src/ui/hud.js` 分岐。`chargerReticleView(runner, w)` を追加し、`_updCrosshair` の charger 分岐を `f.charge` の直参照から `chargerReticleView(this._local()?.weaponRunner, WEAPONS[w])` へ差し替え。表示ディレイ値は武器プロファイルが所有する `patches/splatoon3/profile.json` の `weapons.charger.reticleDelayF = 5`（`reference/numeric-status.json` も再生成） |
+| 再現操作 | 標準 Splat Charger を装備し、idle（`weaponRunner.charge === 0`）から 60 Hz の固定 tick で fire を保持する。`weaponRunner.chargeT` は 1 tick ごとに立ち上がり、HUD は 1〜5F でリング非表示・ゲージ 0、6F でリング点灯・ゲージ 1/55、既存の 60F フルチャージで 100% とフルフラッシュとなる。描画更新を 1/2/3 回に増やしても、同じ tick なら表示は同じ |
+| プレイへの影響 | チャージの視覚フィードバックが 1 tick 早く始まり、本家より早い。最小ショットの成立・ダメージ/射程・インク消費・弾の挙動は従来通りで、見えるリングとゲージだけが 5F 遅れて始まり、ゲージの刻みもそれに合わせてずれる |
+| 確認状態 | **ロジック確認済み**（adapter 適用後の実 `src/ui/hud.js` と実 `Actor`/`WeaponRunner`、60 Hz 固定 tick、30/60/120 Hz の描画 cadence 差分）。**本家実機（Switch Ver.11.3.0）でのフレーム単位の実測比較は未確認**。ロジック単独の測定を実機比較の代用にしない |
+
+Goo Tuber や Grizzco Charger などの亜種は検証表で例外が記録されている。`reticleDelayF` は
+武器プロファイルが所有するため亜種追加時に個別設定できるが、本コミットは標準 Splat Charger
+のみを実装した。潜伏直後の fresh charge startup は本件とは別系統のゲームプレイ側タイマーであり、
+HUD 表示ディレイと同じ 5F でも別条項として扱う。表示スレッド側の時間ではなく固定 tick の
+`chargeT` を読むため、描画 cadence を変えても HUD のタイミングは動かない。
