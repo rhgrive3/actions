@@ -367,6 +367,28 @@ export function splatlingLaunchSpeed(weapon,charge) {
   return weapon.projSpeed+(maximum-weapon.projSpeed)*clamp01(charge/first);
 }
 
+// Issue #312: pinned Ver.11.3.0 WeaponShooterNormal carries
+// spl__SpawnBulletAdditionMovePlayerParam.ZRate = 2, but native fireShooter
+// launches with dir * projSpeed only. Apply the sourced yaw-local forward
+// contribution once at spawn, before the wrapped push records the round for
+// the network. Pure strafe/vertical motion contributes zero; backward motion
+// changes sign. Basis, clamps and post-launch decomposition beyond the
+// sourced ZRate remain unverified and are not inferred.
+export function applyShooterSpawnVelocity(p) {
+  if(!p||p.ghost||p.s3ShooterForwardApplied)return;
+  if(p.type!=='shot')return;
+  const a=p.owner;
+  if(!a||a.remote)return;
+  const w=p.s3Weapon||a.weapon;
+  if(!w||(w.kind!=='shooter'&&w.id!=='shooter'))return;
+  const rate=rawWeapon(w)?.spl__SpawnBulletAdditionMovePlayerParam?.ZRate;
+  if(!Number.isFinite(rate)||!Number.isFinite(a.yaw)||!Number.isFinite(a.vel?.x)||!Number.isFinite(a.vel?.z))return;
+  const x=Math.sin(a.yaw),z=Math.cos(a.yaw);
+  const amount=(a.vel.x*x+a.vel.z*z)*rate;
+  p.vel.x+=x*amount;p.vel.z+=z*amount;
+  p.s3ShooterForwardApplied=true;
+}
+
 export function installWeaponsFidelity(context,profile) {
   const {WeaponRunner,Projectiles,WEAPONS}=context;
   if(Object.hasOwn(Projectiles.prototype,INSTALLED))return;
@@ -408,7 +430,7 @@ export function installWeaponsFidelity(context,profile) {
   const fresh=Projectiles.prototype._new,push=Projectiles.prototype._push,ghost=Projectiles.prototype.ghostProjectile,clear=Projectiles.prototype.clear;
   Projectiles.prototype.clear=function(...args){const result=clear.apply(this,args);this._fidelityCollision=null;this._fidelitySloshContext=null;return result;};
   Projectiles.prototype._new=function(...args){
-    const p=fresh.apply(this,args);p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityRollerUnit=null;p.fidelitySloshUnit=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;return p;
+    const p=fresh.apply(this,args);p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityRollerUnit=null;p.fidelitySloshUnit=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;p.s3ShooterForwardApplied=false;return p;
   };
   function initialize(p,w){
     if(!w)return;
@@ -479,6 +501,7 @@ export function installWeaponsFidelity(context,profile) {
       p.s3DamageGroup=active.group;
     }
     initialize(p,w);
+    applyShooterSpawnVelocity(p);
     const group=p.s3DamageGroup;const result=push.call(this,p);
     // The generic wrapper snapshots owner state too; retain a single per-volley owner.
     if(group)p.s3DamageGroup=group;

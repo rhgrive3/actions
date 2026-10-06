@@ -357,3 +357,14 @@ Reset now clears the pending damage attacker and angle together with the cancell
 ## 2026-10-06 — Dualies wall-drop (#604) and composed-runtime guards
 
 Base main `67fec182`. Splat Dualies wall impacts now enter the existing sourced wall-drop state using the pinned 11.3.0 top-level `WallDropMoveParam`/`WallDropCollisionPaintParam` (shock 1.3, fall 0.65, ground 0.6; 20–40F + 10F + 15–35F at 0.06). Previously the round died on the contact frame after one generic impact. Damage is unchanged. Shooter (#385) and Charger (#625/#268) are excluded: Shooter is owned elsewhere, and the Charger record omits three period fields. #770, #777, #638/#637, #644/#643 and #556 were already correct after adapter composition (the reports read raw source). They are now pinned by composed-runtime tests. This is logic-level and emitted-verifier evidence; a Switch visual/frame comparison is still 未確認. Details: [inkwave-wall-drop-dualies-guards-2026-10-06.md](inkwave-wall-drop-dualies-guards-2026-10-06.md).
+
+## 2026-10-06 — #312 Splattershot player-forward spawn velocity
+
+Base main `f31f5da439134fe49bb89018dad5557671a49c67`. Splattershot (`kind === 'shooter'`) の発射初速に、pinned Splatoon 3 Ver. 11.3.0 `WeaponShooterNormal` の `spl__SpawnBulletAdditionMovePlayerParam.ZRate = 2.0`（`patches/splatoon3/profile.json` の `weaponsFidelityCompletion.weapons.shooter`）に基づくプレイヤー前進速度の加算を適用。
+
+- **本家の根拠**: Splatoon 3 Ver. 11.3.0 `WeaponShooterNormal` pinned extraction `Leanny/splat3@7280ff9cde8bb1c5dcef46c700c326471584d2e6` の `spl__SpawnBulletAdditionMovePlayerParam.ZRate = 2.0`。公称スケールは `2 × MoveSpeed 0.072 = 0.144` raw units/frame（60Hz換算で `2 × 4.32 = 8.64` world units/s、静止時初速 `2.266 u/f = 135.96 u/s` に対し約6.35%）。
+- **INKWAVEの実装箇所**: `patches/splatoon3/runtime/weapons-fidelity.mjs`。`Projectiles.prototype._push` にて `applyShooterSpawnVelocity(p)` を呼び出し、shooter弾（`p.type === 'shot'` かつ `w.kind === 'shooter'`）に対して、プレイヤーのyaw基準ローカル前進軸方向の速度成分 `(a.vel.x * sin(yaw) + a.vel.z * cos(yaw)) * ZRate` を射出初速に1度のみ加算。
+- **再現操作と影響**: 同一の muzzle、aimDir、ゼロ拡散で、静止時（vel = 0）、前進時（vel = 4.32）、後退時（vel = -4.32）、横移動時（strafe vel = 4.32）に射撃。旧実装では移動状態によらずすべて同一の初速 `135.96` だった。修正後は前進時 `135.96 + 8.64 = 144.60`、後退時 `135.96 - 8.64 = 127.32` となり、横移動および鉛直移動による未定義の加算はゼロ。静止時初速（135.96）、4Fブレーキ/射程（#191）、拡散（#198）、ダメージ、半径、および他ブキ種（Dualies, Splatling等）は完全に維持される。
+- **ネットワークとリモート再生**: Authoritative gameplay owner 側で `_push` 内のネットワーク記録前に加算され、wire packet は事後速度（`vel`）を保持して送信（パケット長 32 不変）。リモート側の `ghostProjectile` は wire 速度を直接再生し、ゴーストやリモート所有者での二重加算を防止。
+- **確認状態**: ロジック単独および実配線レプリケーション再生（30/60/120Hz）で確認済み（`patches/splatoon3/tests/shooter-spawn-velocity.test.mjs`, `patches/network-replication/tests/shooter-spawn-replay.test.mjs`）。Switch実機との直接フレーム映像比較は未確認。
+
