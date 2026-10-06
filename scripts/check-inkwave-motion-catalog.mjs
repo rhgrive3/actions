@@ -42,7 +42,7 @@ export const CATALOG_SCENARIOS = Object.freeze([
   ...['short', 'vertical', 'long'].map(distance => ({ name: 'superjump-' + distance, kind: 'shooter', frames: 300, probes: [79, 80, 200, 217, 265] })),
   { name: 'squidroll-finish', kind: 'shooter', frames: 120 },
   { name: 'squidroll-interrupt', kind: 'shooter', frames: 120 },
-  { name: 'hit-spawn-reset', kind: 'shooter', frames: 180, probes: [20, 110, 150] },
+  { name: 'hit-spawn-reset', kind: 'shooter', frames: 300, probes: [20, 246, 250, 280] },
   { name: 'quiet-idle-held-sub', kind: 'shooter', frames: 180, probes: [55, 100] },
   ...[0, 1, 2].map(variant => ({ name: 'victory-fade-lobby-' + variant, kind: 'shooter', frames: 360, variant, probes: [240, 279, 280, 290, 310] })),
   { name: 'native-slam-phases', kind: 'shooter', frames: 180, probes: [33, 49, 54, 79, 133] },
@@ -335,6 +335,7 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout 
   const { beforeActions } = await import(prefix + 'patches/splatoon3/runtime/movement.mjs');
   const { isStormHolding, updateStormHold } = await import(prefix + 'patches/splatoon3/runtime/storm-effects.mjs');
   const { FixedClock } = await import(prefix + 'patches/splatoon3/runtime/clock.mjs');
+  const { advanceSpawnProtection } = await import(prefix + 'patches/splatoon3/runtime/respawn-lifecycle.mjs');
   const { FIST_OFFSET, GRIP_HOLE_L } = await import(prefix + 'src/game/character-weapons.js');
   const methods = [Character, Actor, api.WeaponRunner].flatMap(Type => Reflect.ownKeys(Type.prototype).filter(k => typeof Object.getOwnPropertyDescriptor(Type.prototype, k).value === 'function').map(key => [Type.prototype, key, Type.prototype[key]]));
   const iframe = document.createElement('iframe'); iframe.src = '/motion-catalog'; document.body.appendChild(iframe);
@@ -655,7 +656,7 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout 
           if (n === 'roller-vertical-land') { input.fire = frame < 60; input.firePressed = frame === 0; if (!a.grounded) a._integrate(1 / 60, false, false); }
           if (n.startsWith('superjump-') && a.superJumpState) a._updateSuperJump(1 / 60);
           if (n.startsWith('squidroll-')) { beforeActions(a, 1 / 60, false); if (frame === 12 && n.endsWith('interrupt')) { a.form = 'kid'; a.submerged = false; a.s3.actions.roll = null; ch.trigger('movement_cancel'); } if (frame === 40) { a.form = 'kid'; a.grounded = true; a.submerged = false; ch.trigger('land', 8); } if (!a.grounded) { a.pos.addScaledVector(a.vel, 1 / 60); a.vel.y -= api.PLAYER.gravity / 60; } else a.vel.set(0, 0, 0); }
-          if (n === 'hit-spawn-reset') { if (frame === 0) a.damage(30, null); if (frame === 20) a.respawn(); if (frame >= 20 && !a.grounded) a._integrate(1 / 60, false, false); if (frame >= 20) a.invuln = Math.max(0, a.invuln - 1 / 60); if (frame === 150) { a.reset(); a.grounded = true; } }
+          if (n === 'hit-spawn-reset') { if (frame === 0) a.damage(30, null); if (frame === 20) a.respawn(); if (frame >= 20 && !a.grounded) a._integrate(1 / 60, false, false); if (frame > 20) advanceSpawnProtection(a, 1 / 60); if (frame === 280) { a.reset(); a.grounded = true; } }
           if (n === 'quiet-idle-held-sub') { input.sub = frame >= 40 && frame < 100; input.subReleased = frame === 100; if (frame === 55) { ch.fidget = 4; ch.fidgetT = 0; } }
           if (n.startsWith('victory-')) { if (frame === 280) ch.setDance(null); if (frame === 310) ch.setDance('lobby_pose'); }
           if (n === 'native-storm-deploy') { input.sub = frame >= 8 && frame < 12; input.stormTick = true; }

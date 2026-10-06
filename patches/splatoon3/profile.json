@@ -534,7 +534,8 @@
       "PR64 completion: finite Charger flight, continuous collision, source-mirrored unit layouts and model-labelled interpolation; physical Switch parity remains unverified.",
       "Rescued from PR #489: Flow progress now decays/penalizes and survives respawn while active; community loss values remain calibration, not Nintendo primary data.",
       "Rescued from PR #547/#491/#545: Roller swing movement target, deterministic Alpha ties, and Tenacity owner-only passive charge remain subject to current-main combined validation.",
-      "Dualies first shot counts the recognized input as frame1: stable human3F (2 elapsed intervals), swim13F (12 elapsed intervals). Swim13F is a community reference target, not a direct raw-table extraction; physical input/display latency remains unverified. Released startup taps cancel."
+      "Dualies first shot counts the recognized input as frame1: stable human3F (2 elapsed intervals), swim13F (12 elapsed intervals). Swim13F is a community reference target, not a direct raw-table extraction; physical input/display latency remains unverified. Released startup taps cancel.",
+      "spawn armor break-delay 20F follows S3 verification Wiki while another public source describes up to 0.5s; physical-device launch/235F origin remains unverified"
     ],
     "movementResourcesEvidence": "reports/inkwave-movement-resources-2026-10-02.md"
   },
@@ -3229,5 +3230,11 @@
     "referenceRadius": 0.225,
     "referenceShooterRadius": 0.285,
     "shooterWorldRadius": 0.15
+  },
+  "spawnArmor": {
+    "hp": 30,
+    "maxAbsorb": 100,
+    "duration": 3.9166666666666665,
+    "breakDelay": 0.3333333333333333
   }
 }
