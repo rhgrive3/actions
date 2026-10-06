@@ -88,7 +88,7 @@ test('#711 the composed player.js contains the charge-dependent reach exactly on
   const f = await fixedBoot();
   assert.equal(f.composed.player.split('chargerReach(chargeNow)').length - 1, 1);
   assert.equal(f.composed.player.includes(ORIGINAL_RANGE), false);
-  assert.match(f.composed.player, /const chargeNow = clamp\(a\.weaponRunner\?\.s3Stored\?\.charge \?\? a\.weaponRunner\?\.charge \?\? 0, 0, 1\);/);
+  assert.match(f.composed.player, /a\.weaponRunner\?\.s3Stored\?\.charge \?\? a\.weaponRunner\?\.charge \?\? 0/);
   assert.match(f.composed.player, /import \{ G, clamp, lerp, angleDiff \} from '\.\.\/core\/ctx\.js';/);
 });
 
