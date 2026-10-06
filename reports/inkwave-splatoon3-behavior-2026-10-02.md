@@ -357,3 +357,16 @@ Reset now clears the pending damage attacker and angle together with the cancell
 ## 2026-10-06 — Dualies wall-drop (#604) and composed-runtime guards
 
 Base main `67fec182`. Splat Dualies wall impacts now enter the existing sourced wall-drop state using the pinned 11.3.0 top-level `WallDropMoveParam`/`WallDropCollisionPaintParam` (shock 1.3, fall 0.65, ground 0.6; 20–40F + 10F + 15–35F at 0.06). Previously the round died on the contact frame after one generic impact. Damage is unchanged. Shooter (#385) and Charger (#625/#268) are excluded: Shooter is owned elsewhere, and the Charger record omits three period fields. #770, #777, #638/#637, #644/#643 and #556 were already correct after adapter composition (the reports read raw source). They are now pinned by composed-runtime tests. This is logic-level and emitted-verifier evidence; a Switch visual/frame comparison is still 未確認. Details: [inkwave-wall-drop-dualies-guards-2026-10-06.md](inkwave-wall-drop-dualies-guards-2026-10-06.md).
+
+## 2026-10-07 — #848 スーパージャンプのチャージが旧スポーンバリアを無視する
+
+Base main `f31f5da4`。#820 は通常移動から `Actor._spawnBarrier()` の呼び出しを外したが、`prepareSuperJump()` は同じ径方向クランプを呼び続けていた。`spawnBarrier: 4.2` の敵スポーン円の内側に正規のステージ形状で入った位置からチャージを始めると、最初の固定チャージ tick で半径 4.2 の境界へ射影されていた。
+
+`patches/splatoon3/runtime/superjump.mjs` の `prepareSuperJump()` から `a._spawnBarrier();` を削除した。#820 が通常移動で外したのと同じ処理を、チャージ経路からも外す。ヘルパー本体 `_spawnBarrier()` は残し、他の経路・通常移動・Range・remote（ネットワーク複製）は変更しない。`inkwave-public/` は byte-locked のまま。
+
+- 本家の根拠：スプラトゥーン3 のスポナーはステージ形状と無敵時間で扱い、移動可能な敵スポーン領域を全周の円で押し出す仕様は確認していない。実機の正確なフレーム値は未確認。
+- INKWAVE の実装箇所：`patches/splatoon3/runtime/superjump.mjs:35`（修正前 `a._spawnBarrier();`）、`inkwave-public/src/game/actor.js:597`（ヘルパー本体は保持）、`patches/splatoon3/adapter.mjs:234`（#820 が通常移動の呼び出しを除去、`:207` がチャージを `prepareSuperJump` へ接続）。
+- 再現操作：敵スポーンから水平距離 d（1.0 / 2.0 / 3.5 / 4.19）の床上に立ち、通常移動では押し出されないことを確認。その後スーパージャンプ（固定点）を開始し、最初の固定 60Hz チャージ tick で水平位置が変わらないことを確認。
+- プレイへの影響：旧 4.2 円の内側に合法に入れる位置でチャージすると 1 tick で数 m ワープし、チャージ起点と無敵開始位置が変わり、被弾・露呈・離脱タイミングが変わる。#820 以降、通常移動とスーパージャンプで同じ境界の扱いが食い違っていた。
+
+検証：実際の合成済みランタイム（splatoon3 + reliability + touch-layout + local-quality アダプタ、ネイティブ Actor/Character/Physics とインストール済みスーパージャンプランタイム、`spawnBarrier: 4.2`）で `patches/splatoon3/tests/issue-848-superjump-spawn-barrier.test.mjs` を実行し 7/7 pass。ベースライン（`main` の `superjump.mjs` に戻す）では 3 件 fail（実例：d=1 でチャージ tick 後に x が 11→7.8 へ射影＝半径 4.2 に到達）。チャージの入力ロック、重力・落下死、ゲート（dispose 含む）、旧半径外、バリア 0（Range 相当）は修正の前後で不変を確認。30/60/120Hz で同一チャージ起点。ロジック／installed-runtime 測定であり、ブラウザ表示と Switch 実機比較は未確認。
