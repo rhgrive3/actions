@@ -54,37 +54,67 @@ test('vulnerable Storm throw-state window applies normal passive enemy-ink damag
   close(hpStart - a.hp, stormTicks * 0.3);
 });
 
-test('enemy-ink damage pass does not run twice on first or last lock tick', async () => {
-  const f = await fixture();
-  const a = setupActor(f);
+test('#624 Storm resource update runs once on activation, first/last lock, and first end tick at 30/60/120 Hz', async () => {
+  const traces = [];
+  for (const hz of [30, 60, 120]) {
+    const f = await fixture();
+    const a = setupActor(f);
+    const clock = new f.FixedClock();
+    a.intent.special = true;
+    const rows = [];
 
-  // Ordinary step
-  f.tick(a);
-  const hp0 = a.hp;
+    // The real Actor.update runs at 60 Hz under each render cadence.
+    for (let frame = 0; frame < hz / 2; frame++) clock.advance(1 / hz, dt => {
+      const before = a.specialActive?.id ?? null;
+      const hpBefore = a.hp;
+      const damageBefore = a.damageFromInk;
+      const timeBefore = a.s3?.enemyInkTime || 0;
+      f.G.time += dt;
+      a.update(dt);
+      rows.push({
+        before,
+        after: a.specialActive?.id ?? null,
+        hpDelta: hpBefore - a.hp,
+        damageDelta: a.damageFromInk - damageBefore,
+        timeDelta: (a.s3?.enemyInkTime || 0) - timeBefore,
+      });
+    });
 
-  // Activation tick
-  a.intent.special = true;
-  f.tick(a);
-  assert.equal(a.specialActive?.id, 'storm');
+    assert.equal(clock.ticks, 30, `${hz}Hz produces 30 fixed gameplay ticks`);
+    assert.equal(rows[0].before, null);
+    assert.equal(rows[0].after, 'storm', 'first real Actor.update activates Storm');
+    close(rows[0].hpDelta, 0.3, 'activation tick applies one normal enemy-ink tick');
+    close(rows[0].damageDelta, 0.3);
+    close(rows[0].timeDelta, 1 / 60);
 
-  // First lock tick of _updateSpecial
-  f.tick(a);
-  close(hp0 - a.hp, 0.3, 'first lock tick deals exactly one tick of damage');
+    const activeRows = rows.filter(row => row.before === 'storm');
+    assert.ok(activeRows.length >= 21 && activeRows.length <= 22, `observed ${activeRows.length} Storm update ticks`);
+    close(activeRows[0].damageDelta, 0.3, 'first active tick runs once');
+    close(activeRows[0].timeDelta, 1 / 60);
+    const lastLockIndex = rows.findIndex(row => row.before === 'storm' && row.after === null);
+    assert.notEqual(lastLockIndex, -1, 'the last active tick clears the lock');
+    close(rows[lastLockIndex].damageDelta, 0.3, 'last active tick runs once');
+    close(rows[lastLockIndex].timeDelta, 1 / 60);
+    const firstEndTick = rows[lastLockIndex + 1];
+    assert.deepEqual([firstEndTick.before, firstEndTick.after], [null, null], 'next tick uses the ordinary Actor.update path');
+    close(firstEndTick.damageDelta, 0.3, 'first end tick runs once');
+    close(firstEndTick.timeDelta, 1 / 60);
 
-  // Step until lock clears
-  let lastLockHp = a.hp;
-  while (a.specialActive) {
-    lastLockHp = a.hp;
-    f.tick(a);
-    const drop = lastLockHp - a.hp;
-    close(drop, 0.3, `each lock tick deals exactly one tick of damage, got ${drop}`);
+    for (const [i, row] of rows.entries()) {
+      close(row.hpDelta, 0.3, `tick ${i + 1} HP delta`);
+      close(row.damageDelta, 0.3, `tick ${i + 1} damage accumulator`);
+      close(row.timeDelta, 1 / 60, `tick ${i + 1} exposure time`);
+    }
+    close(a.hp, 100 - 30 * 0.3);
+    close(a.damageFromInk, 30 * 0.3);
+    close(a.s3.enemyInkTime, 0.5);
+    assert.equal(f.profile.resources.enemyInkDps, 18);
+    assert.equal(f.profile.resources.enemyInkDamageCap, 40);
+    assert.equal(f.profile.resources.enemyInkGrace, 0);
+    traces.push(rows);
   }
-
-  // Next ordinary tick after lock cleared
-  const hpRightAfterLock = a.hp;
-  f.tick(a);
-  const postLockDrop = hpRightAfterLock - a.hp;
-  close(postLockDrop, 0.3, 'post-lock tick deals exactly one tick of damage (no double pass on boundary)');
+  assert.deepEqual(traces[1], traces[0], '60Hz fixed-tick trace matches 30Hz');
+  assert.deepEqual(traces[2], traces[0], '120Hz fixed-tick trace matches 30Hz');
 });
 
 test('genuine invulnerability prevents passive enemy-ink damage during Storm throwlock', async () => {
@@ -125,17 +155,16 @@ test('Ink Resistance Up grace period delays damage accumulation across Storm thr
   a.intent.special = true;
   f.tick(a);
 
-  // Ticks 1..3 of lock: within grace
-  f.tick(a); // tick 1
+  // Activation and the next two lock ticks reach the same continuous 3-tick grace.
+  close(a.s3.enemyInkTime, 1 / 60);
+  f.tick(a); // exposure 2/60
   close(a.hp, 100);
-  f.tick(a); // tick 2
+  f.tick(a); // exposure 3/60, grace boundary
   close(a.hp, 100);
-  f.tick(a); // tick 3 (0.05s reached)
-  close(a.hp, 100);
-
-  // Tick 4: beyond grace
-  f.tick(a);
-  assert.ok(a.hp < 100, 'damage starts after grace expires');
+  f.tick(a); // exposure 4/60
+  close(a.hp, 99.7, 'damage starts on the first tick beyond activation-inclusive grace');
+  close(a.damageFromInk, 0.3);
+  close(a.s3.enemyInkTime, 4 / 60);
 });
 
 test('Storm throwlock does not grant armor against weapon hits', async () => {
@@ -152,15 +181,31 @@ test('Storm throwlock does not grant armor against weapon hits', async () => {
   close(a.hp, 60, 'Storm user takes full weapon damage without armor reduction');
 });
 
-// #624 is a Storm resource-path correction. Other special phases retain their
-// existing refill/HP gates, including the Slam rise tick used as this control.
-test('#624 Storm resource admission does not enable HP or ink recovery during Slam', async () => {
+// #624 admits only Storm, preserving Slam activation and rise resource gates.
+test('#624 Storm-only resource admission preserves HP and ink gates during Slam activation and rise', async () => {
   const f = await fixture();
   const a = setupActor(f, { special: 'slam', grounded: false, onEnemy: false });
   a.hp = 80; a.ink = 50; a.lastDamage = 10; a.lastFire = 10;
-  a.specialActive = { id: 'slam', phase: 'rise', t: 0 };
+  a.intent.special = true;
+  f.tick(a);
+  assert.equal(a.specialActive?.id, 'slam');
+  close(a.hp, 80, 'Slam activation does not run Storm resource processing');
+  close(a.ink, 50);
   f.tick(a);
   assert.equal(a.specialActive?.id, 'slam');
   close(a.hp, 80, 'unrelated Slam HP recovery remains unchanged');
   close(a.ink, 50, 'unrelated Slam ink refill remains unchanged');
+});
+
+test('Storm activation uses the existing enemy-ink damage cap', async () => {
+  const f = await fixture();
+  const a = setupActor(f);
+  a.damageFromInk = 39.9;
+  a.intent.special = true;
+  f.tick(a);
+  close(a.damageFromInk, 40, 'activation tick clamps at the existing 40 HP cap');
+  close(a.hp, 99.9);
+  f.tick(a);
+  close(a.damageFromInk, 40, 'active tick does not exceed the cap');
+  close(a.hp, 99.9);
 });

@@ -463,10 +463,10 @@ For #654, the INKWAVE condition is one connected controller held across a browse
 | 項目 | 内容 |
 |---|---|
 | 本家の根拠 | スプラトゥーン3 Ver.11.3.0 ([任天堂更新履歴](https://support.nintendo.com/jp/switch/software_support/av5ja/1130.html))。アメフラシ (Ink Storm) 発動中はアーマーを持たない脆弱状態（非無敵）であり、相手インクとの接触時は相手インク影響軽減ギアの仕様通り受動ダメージ（0 AP で毎秒 18 HP / 60Hz あたり 0.3 HP/tick）を受ける。 |
-| INKWAVE の実装箇所 | `patches/splatoon3/adapter.mjs` の `src/game/actor.js` アダプタにおいて、`if (this.specialActive) { this._updateSpecial(dt); this._finishFrame(dt); return; }` の早期脱出時に `updateResources(this, dt)` を共通実行するよう変更 (`if (this.specialActive) { this._updateSpecial(dt); updateResources(this, dt); if (this.alive) this._finishFrame(dt); return; }`)。 |
-| 再現操作 | 0 AP 相手インク影響軽減で敵インク上に接地した状態でアメフラシを発動。修正前は約 0.35 秒（22 ticks）の投擲ロック中に HP 減少および `s3.enemyInkTime` の積算が停止していた。修正後は投擲ロック中も毎 tick 0.3 HP の受動ダメージを受け、初回・最終ロック tick での重複実行もない。 |
-| プレイへの影響 | アメフラシ発動による敵インク被弾無効化（不当な生存性向上）を是正。スペシャル効果時間・投擲・ゲージ挙動・通常武器被弾・水没判定 (#592) はそのまま維持。 |
-| 確認状態 | **ロジック確認済み**（実 Actor + 実 Physics / Paint / Resources 環境での専用回帰 `patches/splatoon3/tests/storm-throwlock-resources.test.mjs` 6/6 通過、30/60/120 Hz で同一判定）。**Switch Ver.11.3.0 実機での精密フレーム測定は未確認**。 |
+| INKWAVE の実装箇所 | `patches/splatoon3/adapter.mjs` の `src/game/actor.js` アダプタで、active-special branch は更新前に Storm ID を保持し、Storm かつ生存中だけ既存 `updateResources(this, dt)` を一度実行する。今回、`specialPressed && specialReady()` branch も `_startSpecial()` 後に `this.alive && this.specialActive?.id === 'storm'` の場合だけ同じ関数を一度実行するよう追加。通常更新は既存の一回の resource pass を維持し、Slam の発動・rise branch は対象外。 |
+| 再現操作 | 0 AP 相手インク影響軽減、ゲージ満タン、敵インク上に接地して Storm を発動。修正前の active tick 修正では発動 tick の `specialPressed` 早期 return だけが残り、HP と `s3.enemyInkTime` がその一 tick 分止まっていた。修正後は発動・最初の active・最後の active・終了後最初の通常 tick を通じ、各 60 Hz simulation tick で一度だけ 0.3 HP と 1/60 秒を積算する。grace、damage cap、invulnerability gate は既存 `updateResources()` に委譲する。 |
+| プレイへの影響 | Storm 発動操作による敵インク受動ダメージの一 tick 分の猶予を解消。Storm の armor=false、投擲・lock 時間・ゲージ挙動・通常武器被弾を維持し、Slam に HP 回復や ink refill を新たに与えない。水没判定 (#592) は独立。 |
+| 確認状態 | **ロジック確認済み**（公開版 `Actor.update()` / `_startSpecial()` / `_updateSpecial()` と適用 adapter、既存 `updateResources()` を通る専用回帰 `patches/splatoon3/tests/storm-throwlock-resources.test.mjs` 8/8。ground probe / paint surface は fixture で固定し、60 Hz simulation の tick 列は 30/60/120 Hz render cadence で一致。**ブラウザ実動作と Switch Ver.11.3.0 実機の精密フレーム測定は未確認**）。 |
 
 ## 2026-10-06 — Enemy-ink ground and ordinary airborne acceleration (#773 / #562)
 
@@ -485,6 +485,10 @@ The C17 / #731 sub-ready enemy target-speed selector is a separate root and is n
 ### #624 integration isolation correction
 
 Parent native negative control found the initial all-special resource pass also enabled Slam rise HP/ink recovery (80→80.3667 HP, 50→50.1667 ink in one tick). Admission now captures Storm identity before `_updateSpecial`, preserving the last Storm tick when it clears its state and excluding every unrelated special phase. The real Actor regression pins unchanged Slam resources. Original source and failure probe are retained; this correction narrows scope without changing passive-damage constants.
+
+
+The follow-up at current main `0aafab8127957a3211322a63f71364f718ddf492` found one remaining native `Actor.update()` exit: the activation tick calls `_startSpecial(); _finishFrame(dt); return;` before the active-state resource branch. The adapter now runs the same resource function once after activation only when the actor is alive and the resulting special is Storm. The focused trace covers activation, first and last active ticks, and the first ordinary tick after the lock at 30/60/120 Hz render cadence. The 18 HP/s rate, 40 HP cap, 0 AP grace, and resource implementation are unchanged; controller hardware timing remains unverified.
+
 ## 2026-10-06: reticle state / visible-vs-authoritative footprint (#711 #709 #757)
 
 チャージャー HUD の射程内判定を、フルチャージ固定から現在のチャージ量に応じた飛行距離（`chargerReach`）へ変更し、ブラスターの拡散拡大を外周リングのみに限定した（内側リングは静止サイズ）。インクストームの塗り位置を、その tick の見た目の雨半径と同じ範囲から選ぶようにした（#757）。弾道・数値・半径は不変。いずれも**ロジックのみ確認**で、ブラウザの実表示と Switch 実機との比較は**未確認**。本家の根拠・実装箇所・再現操作・影響は[詳細](inkwave-reticle-state-2026-10-06.md)を参照。
