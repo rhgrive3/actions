@@ -94,10 +94,11 @@ export function installWeapons(context, profile) {
     // #810: a valid squid→humanoid transition with ZR still held refreshes the
     // per-keep-cycle lifetime to a full w.keepChargeTime (75F / 1.25 s), so the
     // next submerge starts a fresh window instead of the depleted remainder.
-    // The flag is edge-triggered (`s3WasSquid` from the previous tick) and the
-    // record itself is never recreated here, so #359 (no dry/enemy/air store),
-    // #390 (ZR release still cancels) and the #291/#101 resurfacing delays are
-    // untouched: presentation stays `charge = 1` until inp.fire returns.
+    // `s3WasSquid` records the previous actor tick, so this is edge-triggered.
+    // It only writes an existing record; it does not create a store or change
+    // #359's separate initial-eligibility path. #390 release cancellation and
+    // the #291/#101 resurfacing delays remain on their existing paths:
+    // presentation stays `charge = 1` until inp.fire returns.
     if (this.s3Stored && this.s3WasSquid) this.s3Stored.remaining = w.keepChargeTime;
     this.s3WasSquid = false;
     if (this.s3Stored) {
