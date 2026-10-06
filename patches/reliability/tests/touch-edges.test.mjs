@@ -153,6 +153,8 @@ test('actual charger fires legal holds once and cancels completed sub-8F fire ta
   assert.equal(h.actor.weaponRunner.charging, true); assert.ok(h.actor.weaponRunner.charge > 0);
   assert.equal(h.shots.length, 0);
   h.release(held); h.frame();
+  assert.equal(h.shots.length, 0, 'legal release retains its 1F gap');
+  h.frame();
   assert.equal(h.shots.length, 1); assert.equal(h.shots[0].kind, 'charger');
   assert.equal(h.actor.weaponRunner.charging, false);
   for (let i = 0; i < 30; i++) h.frame();

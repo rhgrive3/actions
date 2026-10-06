@@ -43,7 +43,7 @@ export function installWeaponGates({ Actor, WeaponRunner, Projectiles }) {
   const charger = wr._charger;
   wr._charger = function (dt, input, w) {
     if (Math.abs(this.cooldown) <= EPS) this.cooldown = 0;
-    const before = this.cooldown, releasing = this.charging && !input.fire;
+    const before = this.cooldown, releasing = this.s3ReleaseHold || (this.charging && !input.fire);
     const result = charger.call(this, dt, input, w);
     // The native release creates a new cooldown. A storage/minimum-charge
     // cancellation does not; do not confuse that with an emitted shot.

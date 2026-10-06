@@ -119,6 +119,7 @@ export function installWeapons(context, profile) {
     // marker that suppresses the pre-gap after a shot.
     this.s3ChargerStartupT = 0; this.s3ChargerHeldGate = false; this.s3ChargerRepeat = false;
     this.s3ChargerSpent = 0; this.s3ChargerProgressiveSpend = false; this.s3ChargerHeldTime = 0;
+    this.s3ReleaseHold = false; this.s3HeldCharge = 0; this.s3HeldChargeT = 0; this.s3ReleaseAt = 0;
     this.s3ChargerPostShot = 0; this.s3DualiesPostShot = 0; this.s3DodgeShotPending = 0;
     this.s3ShooterHeld = false; this.s3ShooterPendingFirst = false; this.s3ShooterFirstRemaining = 0;
     this.s3SwimFireQueued = false; this.s3SwimFireRemaining = 0; this.s3PostFireLockActive = false;
@@ -188,6 +189,20 @@ export function installWeapons(context, profile) {
   };
   WeaponRunner.prototype._charger = function (dt, inp, w) {
     const a = this.a, held = !!a.intent.fire, epsilon = 1e-10;
+    // #680: retain the already-paid charge across the one fixed release frame.
+    // The current progressive-payment and finite-flight owners still perform release.
+    let releaseDue = false;
+    if (this.s3ReleaseHold) {
+      this.s3ReleaseHold = false;
+      if (a.form === 'squid' || G.time - this.s3ReleaseAt > dt + epsilon) {
+        this.s3HeldCharge = this.s3HeldChargeT = 0; cancelStored(this); return;
+      }
+      releaseDue = true;
+      this.charging = true; this.charge = this.s3HeldCharge; this.chargeT = this.s3HeldChargeT;
+      this.s3HeldCharge = this.s3HeldChargeT = 0;
+      inp = { ...inp, fire: false };
+    }
+
     if (this.s3Stored && !held) {
       cancelStored(this); this.s3WasSquid = a.form === 'squid';
       this.s3ChargerStartupT = 0; this.s3ChargerHeldGate = false;
@@ -286,6 +301,13 @@ export function installWeapons(context, profile) {
     }
 
     if (!inp.fire && this.charging) {
+      if (!releaseDue && !held) {
+        this.s3ReleaseHold = true; this.s3ReleaseAt = G.time;
+        this.s3HeldCharge = this.charge; this.s3HeldChargeT = this.chargeT;
+        this.charging = false; this.firingT = Math.max(this.firingT, .35);
+        this.chargeLoop?.stop(.05); this.chargeLoop = null;
+        return;
+      }
       // Native release still owns projectile/recovery state, but its old
       // release-only ink debit is neutralized because charge progress paid it.
       const realInk = a.ink, c = Math.max(0, this.charge || 0);

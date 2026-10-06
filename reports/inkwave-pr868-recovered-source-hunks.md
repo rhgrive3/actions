@@ -14,3 +14,7 @@ Adopts only PR751 Issue117 failed-use shortage semantics onto PR868 HUD snapshot
 The prior producer used a.ink < 18 || game._lowInkFlash > 0; native Mobile had an independent 20% threshold. Negative controls reproduce both. The port retains the existing local lowink listener and confirms normal affordable fire, other Actor isolation, flash expiry at identical ink amount, gear-cost boundaries and persistent object reuse. No new gear curve, numerical gameplay value, browser result or physical-device match is claimed.
 
 The source PR's former whole-Main adapter was not copied over the current integration. The behavior is attached to the current producer/consumer instead. Other source PR751/785/790/786/765/782/761 omissions remain separately tracked and are not silently included in this commit.
+
+## PR761 fixed set: collision scratch, Charger launch speed and release gap
+
+Source PR761 afdba0d7fdce4a1a142e19d30b057e78eb220992; target aa094850fdd60b3b70adfdaad54b3e3837cb1402. Issues #606, #617 and #680 are ported as a fixed three-root set. Existing progressive ink payment, startup admission, feet paint, finite-flight ownership and 16F post-shot writer are preserved. The 1F release gap is reflected in adjacent source and semantic-gate fixtures. Fifteen focused source cases and one semantic gate passed; all touched JavaScript parsed after the patch applied cleanly to the latest target. Full aggregate CI is not claimed. Other PR761 roots remain separate and the entire source PR is not marked adopted by ancestry.

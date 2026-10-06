@@ -11,7 +11,7 @@ test('actual Actor stores a full charger charge and expires it without firing un
 test('stored charge survives emergence on a held ZR and fires on release; reset clears it', async () => {
   const f = await fixture(), a = f.make('charger'); a.intent.fire = true; f.tick(a, 61);
   a.intent.squid = true; f.tick(a); a.intent.squid = false; f.tick(a, 6); assert.equal(f.shots.length, 0);
-  a.intent.fire = false; f.tick(a);
+  a.intent.fire = false; f.tick(a, 2); // release gap
   assert.equal(f.shots.length, 1); assert.equal(f.shots[0].charge, 1);
   a.reset(); assert.equal(a.weaponRunner.s3Stored, null);
 });

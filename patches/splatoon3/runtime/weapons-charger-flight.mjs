@@ -9,6 +9,20 @@ export function chargerPaintParameters(raw,charge){
   interval:2*depth*(1-value(raw.SplashSpawnParam,'OnTopRate'))*Math.max(1,raw.SplashSpawnParam.SkipNum),
   terminalRate:1.5}; // community-reported omitted default, NOT an explicit pinned field
 }
+// Normalized S3 launch-speed coordinate. WeaponRunner._charger's upstream
+// S-curve reaches 1/6 after the S3 8-frame legal minimum (8/60 * 1.25) and 1
+// at the 60-frame full charge, while the extracted SpawnSpeed* endpoints are
+// per-frame values anchored at the minimum legal shot (pinned Ver. 11.3.0
+// completion table). Mapping [1/6, 1] -> [0, 1] makes the first legal 8f shot
+// launch exactly at SpawnSpeedMinCharge, keeps full charge on
+// SpawnSpeedFullCharge, and clamps sub-minimum taps to the minimum endpoint.
+// Damage, distance, paint and ink keep consuming the raw runner charge; their
+// separate issues track those coordinates. No device measurement is claimed.
+export const CHARGER_MIN_CHARGE = 1 / 6;
+export function chargerLaunchSpeed(raw, charge) {
+  const q = Math.max(0, Math.min(1, (charge - CHARGER_MIN_CHARGE) / (1 - CHARGER_MIN_CHARGE)));
+  return 60 * (raw.SpawnSpeedMinCharge + (raw.SpawnSpeedMaxCharge - raw.SpawnSpeedMinCharge) * q);
+}
 const INSTALLED=Symbol.for('inkwave.charger-flight.v1'),EPS=1e-10,SIM_DT=1/60;
 // Finite straight flight. Source supplies endpoints and radii, not recovered engine
 // interpolation code. Uses the existing weapon:fire packet; no new network fields.
@@ -42,7 +56,7 @@ export function installChargerFlight(api,completion) {
     // the generic nonlinear value used for range and launch speed.
     const chargeT=!ghost&&Number.isFinite(actor.weaponRunner?.chargeT)?actor.weaponRunner.chargeT:null;
     const damage=ghost?0:full?w.damageMax:chargerDamage({weaponRunner:{chargeT}},w,charge);
-    const speed=60*(full?raw.SpawnSpeedFullCharge:raw.SpawnSpeedMinCharge+(raw.SpawnSpeedMaxCharge-raw.SpawnSpeedMinCharge)*charge);
+    const speed=full?60*raw.SpawnSpeedFullCharge:chargerLaunchSpeed(raw,charge);
     const distance=maxDistance??reachFor(charge);
     const direction=dir.clone().normalize();
     if(!Number.isFinite(distance)||distance<=0||direction.lengthSq()<EPS)return;

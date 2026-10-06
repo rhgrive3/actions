@@ -116,8 +116,8 @@ export function validateDetailResult(result) {
     if(scenario.type==='charger') {
       const shots=events.filter(e=>e.name==='fireCharger');
       shots.forEach(e=>finite(e.charge,name+'.releasedCharge'));
-      if(shots.length!==1||shots[0].frame!==80||shots[0].charge<.99||events.some(e=>e.frame<80)||samples[75].aim<.9)throw Error('Charger actual full-charge release regression');
-      if(!(peak>.003)||samples[80].weapon.chargerReleaseAge==null||samples[110].aim>1e-8||tail.some(s=>s.aim>1e-8||Math.abs(s.rcP)>=.001||Math.abs(s.rcZ)>=.001))throw Error('Charger actual recoil/carry return regression');
+      if(shots.length!==1||shots[0].frame!==81||shots[0].charge<.99||events.some(e=>e.frame<=80)||samples[75].aim<.9)throw Error('Charger actual full-charge release regression');
+      if(!(peak>.003)||samples[81].weapon.chargerReleaseAge==null||samples[110].aim>1e-8||tail.some(s=>s.aim>1e-8||Math.abs(s.rcP)>=.001||Math.abs(s.rcZ)>=.001))throw Error('Charger actual recoil/carry return regression');
       if(samples.some(s=>s.ik.slice(0,2).some(e=>e>=.025)))throw Error('Charger native arm reach regression');
     }
     summary.push({name,frames:samples.length,releases:events.length,peakNativeRecoil:peak,renderPairs:renderMetrics.length,minimumRigPixels:Math.min(...renderMetrics.map(m=>m.rig.changedPixels)),maxNativeArmReach:Math.max(...samples.flatMap(s=>s.ik.slice(0,2)))});
