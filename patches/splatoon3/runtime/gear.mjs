@@ -1,5 +1,7 @@
+import { CLOTHING_ABILITIES, SPLATFEST_TEE, clothingAbilityAllowed, deathGearPenalty } from './clothing-gear.mjs';
 // Gear uses three equipment pieces, each with one 10 AP main and three 3 AP subs.
 export const ABILITIES = Object.freeze({
+  respawnPunisher: '復活ペナルティアップ', abilityDoubler: 'フェスT：追加ギアパワー倍化',
   none: 'なし', runSpeed: 'ヒト移動速度アップ', swimSpeed: 'イカダッシュ速度アップ',
   inkSaverMain: 'インク効率アップ（メイン）', inkSaverSub: 'インク効率アップ（サブ）',
   inkRecovery: 'インク回復力アップ', inkResistance: '相手インク影響軽減',
@@ -10,16 +12,17 @@ export const ABILITIES = Object.freeze({
 export const emptyLoadout = () => Array.from({ length: 3 }, () => ({ main: 'none', subs: ['none', 'none', 'none'] }));
 export function normalizeLoadout(value) {
   if (!Array.isArray(value) || value.length !== 3) return emptyLoadout();
-  return value.map(part => ({
-    main: Object.hasOwn(ABILITIES, part?.main) ? part.main : 'none',
-    subs: Array.from({ length: 3 }, (_, i) => Object.hasOwn(ABILITIES, part?.subs?.[i]) ? part.subs[i] : 'none'),
+  return value.map((part, piece) => ({
+    ...(piece === 1 && part?.item === SPLATFEST_TEE ? { item: SPLATFEST_TEE } : {}),
+    main: Object.hasOwn(ABILITIES, part?.main) && clothingAbilityAllowed(part.main, piece, 0, part?.item) ? part.main : 'none',
+    subs: Array.from({ length: 3 }, (_, i) => Object.hasOwn(ABILITIES, part?.subs?.[i]) && clothingAbilityAllowed(part.subs[i], piece, i + 1, part?.item) ? part.subs[i] : 'none'),
   }));
 }
 export function abilityPoints(loadout) {
   const ap = {};
   for (const part of normalizeLoadout(loadout)) {
-    if (part.main !== 'none') ap[part.main] = (ap[part.main] || 0) + 10;
-    for (const sub of part.subs) if (sub !== 'none') ap[sub] = (ap[sub] || 0) + 3;
+    if (part.main !== 'none' && part.main !== 'abilityDoubler') ap[part.main] = (ap[part.main] || 0) + 10;
+    for (const sub of part.subs) if (sub !== 'none') ap[sub] = (ap[sub] || 0) + (part.item === SPLATFEST_TEE && part.main === 'abilityDoubler' ? 6 : 3);
   }
   return ap;
 }
@@ -78,7 +81,8 @@ export function installGear(api, tuning) {
   }
   Actor.prototype.reset = function (...args) {
     const result = reset.apply(this, args); equip(this);
-    this.s3.recoverStopRemaining = 0; this.s3.enemyInkTime = 0;
+    if (this.remote) delete this.s3.clothingRemote;
+    this.s3.recoverStopRemaining = 0; this.s3.rollerRefillMode = false; this.s3.enemyInkTime = 0;
     return result;
   };
   Actor.prototype.setWeapon = function (...args) { const result = setWeapon.apply(this, args); equip(this); return result; };
@@ -86,7 +90,7 @@ export function installGear(api, tuning) {
   WeaponRunner.prototype.moveSpeed = function () {
     const m = this.a.s3?.modifiers || {}, w = this.a.weapon;
     const lockedMode = this.rolling || this.charging && w.kind === 'charger';
-    const attacking = this.firingT > 0 || this.charging || this.streaming;
+    const attacking = this.firingT > 0 || this.flick >= 0 || this.charging || this.streaming;
     const gear = lockedMode ? 1 : attacking ? m.runSpeedFiring ?? 1 : m.runSpeed ?? 1;
     return moveSpeed.call(this) * gear * (this.a.s3?.flow?.active ? tuning.flow.runMultiplier : 1);
   };
@@ -105,10 +109,13 @@ export function installGear(api, tuning) {
   const splat = Actor.prototype.splat;
   Actor.prototype.splat = function (...args) {
     const before = this.special, alive = this.alive;
+    const penalty = deathGearPenalty(this, args[0], args[1], tuning, abilityPoints(this.s3?.loadout), gearCurve);
     const result = splat.apply(this, args);
     if (alive && !this.alive) {
-      this.special = before * (this.s3?.modifiers?.specialSaver ?? 0.5);
-      if ((this.s3?.splatsThisLife || 0) === 0 && this.s3?.previousLifeNoSplat) this.respawnTimer = Math.max(0, this.respawnTimer - tuning.respawnChaseTime * (1 - (this.s3?.modifiers?.quickRespawn ?? 1)));
+      this.special = before * Math.max(0, (penalty.incoming ? penalty.saver : this.s3?.modifiers?.specialSaver ?? 0.5) - penalty.loss);
+      if ((this.s3?.splatsThisLife || 0) === 0 && this.s3?.previousLifeNoSplat) this.respawnTimer = Math.max(0, this.respawnTimer - (penalty.incoming ? penalty.quickReduction : tuning.respawnChaseTime * (1 - (this.s3?.modifiers?.quickRespawn ?? 1))));
+      this.respawnTimer += penalty.frames / 60;
+      this.s3.lastDeathGear = penalty;
       this.s3.previousLifeNoSplat = (this.s3.splatsThisLife || 0) === 0;
       this.s3.splatsThisLife = 0;
     }
@@ -131,9 +138,11 @@ export function installGear(api, tuning) {
       if (spent > 1e-10) {
         a.s3 ||= {};
         const mainSpent = !bombSpent || spent > effectiveBombCost + 1e-8;
+        const rollingUse = mainSpent && !input.subReleased && a.weapon.kind === 'roller' && this.rolling;
+        a.s3.rollerRefillMode = rollingUse;
         let delay = 0;
         if (mainSpent) {
-          const mainDelay = this.s3FlickVertical ? a.weapon.verticalInkRecoverStop ?? a.weapon.inkRecoverStop : a.weapon.inkRecoverStop;
+          const mainDelay = rollingUse ? a.weapon.rollInkRecoverStop : this.s3FlickVertical ? a.weapon.verticalInkRecoverStop ?? a.weapon.inkRecoverStop : a.weapon.inkRecoverStop;
           delay = Math.max(delay, mainDelay ?? tuning.resources.inkRefillDelay);
         }
         if (bombSpent) delay = Math.max(delay, api.SUB.bomb.inkRecoverStop ?? tuning.resources.inkRefillDelay);
@@ -156,21 +165,29 @@ export function installGear(api, tuning) {
     ['アタマ', 'フク', 'クツ'].forEach((label, piece) => {
       const field = document.createElement('fieldset'), legend = document.createElement('legend'); legend.textContent = label; field.append(legend);
       for (let slot = 0; slot < 4; slot++) {
-        const row = document.createElement('label'); row.textContent = slot === 0 ? 'メイン（10）' : `追加 ${slot}（3）`;
+        const row = document.createElement('label'); const labelText = document.createElement('span'); labelText.dataset.slot = String(slot); row.append(labelText);
         const select = document.createElement('select'); select.setAttribute('aria-label', `${label} ${slot === 0 ? 'メイン' : '追加' + slot}`);
         for (const [id, name] of Object.entries(ABILITIES)) {
-          if (id !== 'none' && !tuning.gear[id]) continue;
+          if (!clothingAbilityAllowed(id, piece, slot, id === 'abilityDoubler' ? SPLATFEST_TEE : loadout[piece].item)) continue;
+          if (id !== 'none' && !CLOTHING_ABILITIES.includes(id) && !tuning.gear[id]) continue;
           const option = document.createElement('option'); option.value = id; option.textContent = name; select.append(option);
         }
         select.value = slot === 0 ? loadout[piece].main : loadout[piece].subs[slot - 1];
         select.addEventListener('keydown', event => event.stopPropagation());
         select.addEventListener('change', () => {
-          if (slot === 0) loadout[piece].main = select.value; else loadout[piece].subs[slot - 1] = select.value;
+          if (slot === 0) { loadout[piece].main = select.value; if (select.value === 'abilityDoubler') loadout[piece].item = SPLATFEST_TEE; }
+          else loadout[piece].subs[slot - 1] = select.value;
+          updateLabels();
           try { localStorage.setItem(STORAGE, JSON.stringify(loadout)); } catch { /* sandbox/private mode */ }
           if (G.match?.local && G.match?.attract) equip(G.match.local);
         });
         row.append(select); field.append(row);
       }
+      function updateLabels() {
+        const doubled = loadout[piece].item === SPLATFEST_TEE && loadout[piece].main === 'abilityDoubler';
+        for (const el of field.querySelectorAll('[data-slot]')) { const slot = Number(el.dataset.slot); el.textContent = slot === 0 ? doubled ? 'フェスT（倍化）' : 'メイン（10）' : `追加 ${slot}（${doubled ? 6 : 3}）`; }
+      }
+      updateLabels();
       details.append(field);
     });
     return details;

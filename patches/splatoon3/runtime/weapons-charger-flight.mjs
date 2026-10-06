@@ -76,7 +76,8 @@ export function installChargerFlight(api,completion) {
     const actors=[];
     for(const actor of G.actors){
       if(!actor.alive||actor.team===job.team||job.seen.has(actor))continue;
-      job.base.copy(actor.pos);job.base.y+=actor.smoothY||0;
+      // Match ordinary projectile collision: render smoothing cannot move a hurtbox.
+      job.base.copy(actor.pos);
       const t=capsuleEntry(job.prev,job.pos,job.base,PLAYER.radius,actor.form==='squid'?PLAYER.squidHeight:PLAYER.height,
         collision.InitRadiusForPlayer,collision.EndRadiusForPlayer);
       if(t!==null&&t*length<distance-EPS)actors.push({actor,d:t*length});
