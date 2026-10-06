@@ -6,6 +6,13 @@ export function rollEligible(velocity, move, cfg) {
   const cosine = Math.max(-1, Math.min(1, (velocity.x * move.x + velocity.z * move.z) / (speed * input)));
   return Math.acos(cosine) + 1e-10 >= cfg.minimumAngle;
 }
+// Device deadzone has already been applied; wall-roll admission is angular.
+export function wallRollRequested(a, jumpPressed, normal = a.wallN) {
+  if (!jumpPressed || !a.alive || !a.climbing || a.form !== 'squid' || a.specialActive || a.superJumpState) return false;
+  const move = a.intent.move, length = Math.hypot(move.x, move.z), nl = Math.hypot(normal.x, normal.z);
+  if (!Number.isFinite(length + nl) || length <= EPSILON || nl <= EPSILON) return false;
+  return (move.x * normal.x + move.z * normal.z) / (length * nl) + EPSILON >= Math.cos(config.wallRollMaximumAngle);
+}
 export function rollLaunchSpeed(speed, chain, retention, previous = 0) {
   // Consecutive rolls retain the previous penalized launch speed. This survives
   // wall reattachment, where wall-climb velocity would otherwise rebase to the
