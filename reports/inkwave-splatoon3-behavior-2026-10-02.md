@@ -357,3 +357,20 @@ Reset now clears the pending damage attacker and angle together with the cancell
 ## 2026-10-06 — Dualies wall-drop (#604) and composed-runtime guards
 
 Base main `67fec182`. Splat Dualies wall impacts now enter the existing sourced wall-drop state using the pinned 11.3.0 top-level `WallDropMoveParam`/`WallDropCollisionPaintParam` (shock 1.3, fall 0.65, ground 0.6; 20–40F + 10F + 15–35F at 0.06). Previously the round died on the contact frame after one generic impact. Damage is unchanged. Shooter (#385) and Charger (#625/#268) are excluded: Shooter is owned elsewhere, and the Charger record omits three period fields. #770, #777, #638/#637, #644/#643 and #556 were already correct after adapter composition (the reports read raw source). They are now pinned by composed-runtime tests. This is logic-level and emitted-verifier evidence; a Switch visual/frame comparison is still 未確認. Details: [inkwave-wall-drop-dualies-guards-2026-10-06.md](inkwave-wall-drop-dualies-guards-2026-10-06.md).
+
+## 2026-10-07 — #94 shooter muzzle line-of-sight cue
+
+### Splatoon 3 comparison
+
+- Reference: Splatoon 3 Ver. 11.3.0; Nintendo's update notes list its release as August 19, 2026 and summarize the version's multiplayer changes ([Nintendo Support](https://en-americas-support.nintendo.com/app/answers/detail/a_id/59461/p/1076/c/950)). The local fixture uses INKWAVE's generic `shooter` class; its exact Splatoon 3 weapon mapping is not established. Gear is not configured in the fixture. The controlled state is a stationary human-form actor, held camera direction, near solid cover, and no fire input. No Switch session was run.
+- The official update notes do not specify standard Shooter reticle placement when camera and muzzle lines disagree. That behavior, the corresponding gear/input conditions, and whether Splatoon 3 presents a muzzle-contact cue remain **未確認**; this change makes no visual-parity claim.
+
+### INKWAVE implementation and reproduction
+
+- `inkwave-public/src/game/player.js` derives `aimPoint` from the gameplay camera ray. The production adapter removes the raw-source enemy body-axis rewrite in `patches/splatoon3/adapter.mjs`; the current composed aim point therefore remains camera/world based.
+- `patches/splatoon3/runtime/muzzle-feedback.mjs` calls the installed `Projectiles._muzzle()` and `_aimFrom()` and asks the existing `G.physics.raycast()` for the first solid contact on that line, with the existing grate mask. The full production adapter sends that point through the rendered camera projection and draws a separate generic contact cue in `patches/splatoon3/ui.css`. Existing Slosher/Blaster ShotGuide projection is left intact.
+- Reproduction: the focused test loads the production installer with the adapted public `Actor`, `Character`, `PlayerController`, `Projectiles`, and `Physics`; a synthetic cover edge misses the camera ray but intersects the actual rig-muzzle line. The returned field point is on-screen. Repeated presentation queries at 30/60/120 sample rates return the same contact without firing or consuming RNG.
+
+### Impact and status
+
+The cue reports the straight muzzle-to-camera-aim line's first field contact. It is not a complete projectile trajectory or a promise of final shot impact. The change adds one LOS ray query on Shooter HUD updates, but does not alter fixed-step timing, firing, RNG, projectile birth, packets, damage, paint, ink cost, or collision rules. The composed runtime tests and full production build pass. Browser-visible placement and Splatoon 3 console behavior remain **未確認**.
