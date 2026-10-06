@@ -1,5 +1,6 @@
 import { installWeaponEdgecases } from './weapon-edgecases.mjs';
 import { installSplatling } from './splatling.mjs';
+import { installSplatlingStartupCompat } from './splatling-startup-compat.mjs';
 import { installWeaponGates } from './weapon-gates.mjs';
 import { installRollerLogic } from './roller.mjs';
 import { installAgent3WeaponPhysics } from './agent3-weapon-physics.mjs';
@@ -199,6 +200,7 @@ export function installWeapons(context, profile) {
     if (!input.fire) this.cooldown = Math.max(0, this.cooldown);
   };
   installSplatling(api, profile, { splatlingBurst, splatlingChargeCap });
+  installSplatlingStartupCompat(api);
   // Movement Physics owns roller rolling speed/recovery. Add only the latest
   // Charger charging-speed rule here, then delegate every other movement state.
   const moveSpeed = WeaponRunner.prototype.moveSpeed;
@@ -212,3 +214,4 @@ export function installWeapons(context, profile) {
   installAgent3WeaponPhysics(api, profile);
   installWeaponEdgecases(api);
 }
+
