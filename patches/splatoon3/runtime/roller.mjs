@@ -22,54 +22,36 @@ export function rollerMode(w, vertical) {
 }
 
 // Action-interruption windows that start when an authoritative roll ENDS.
-// These are the 塗り進み interruption row of the S3 verification table, not the
-// horizontal/vertical swing post-lag and not the rolling ink-recovery lock (#176).
-// They are separate boundaries, so none of them may be substituted for another.
 export const ROLL_STOP_LOCKS = Object.freeze({ main: 16 / 60, sub: 5 / 60, squid: 6 / 60 });
-
-/** Which admissions a roll-stop interruption still owns at `now`.
- * Deadlines are absolute, so the boundaries do not drift with the render rate.
- * G.time accumulates float error across fixed ticks, so the comparison carries
- * the same epsilon the rest of the movement clocks use: without it the boundary
- * tick itself can land a hair before its own deadline and wait one frame more. */
 export function rollStopBlocks(now, locks) {
   if (!locks) return { main: false, sub: false, squid: false };
-  return {
-    main: now < locks.main - EPS,
-    sub: now < locks.sub - EPS,
-    squid: now < locks.squid - EPS,
-  };
+  return { main: now < locks.main - EPS, sub: now < locks.sub - EPS, squid: now < locks.squid - EPS };
 }
-
-/** Arm the roll-end deadlines at `now`, the roll-end tick itself being frame 0. */
 export function rollStopLocks(now) {
   return { main: now + ROLL_STOP_LOCKS.main, sub: now + ROLL_STOP_LOCKS.sub, squid: now + ROLL_STOP_LOCKS.squid };
 }
 
 export function installRollerLogic({ WeaponRunner, Actor, G }, _profile) {
-  const roller = WeaponRunner.prototype._roller, reset = WeaponRunner.prototype.reset;
-  const update = WeaponRunner.prototype.update;
-  // An established roll that the player simply lets go of arms the sourced
-  // interruption. A dry roll (#541) and a roll released into a flick keep their
-  // existing behaviour, so neither arming nor admission changes for them.
+  const roller = WeaponRunner.prototype._roller, reset = WeaponRunner.prototype.reset, actorUpdate = Actor.prototype.update;
+  const runnerUpdate = WeaponRunner.prototype.update;
+  Actor.prototype.update = function (dt) {
+    const r = this.weaponRunner;
+    if (r && this.weapon?.kind === 'roller') {
+      const prev = this._prevIntent || {};
+      if (this.intent?.fire && !prev.fire) r.s3RollerSquidPressT = this.form === 'squid' ? G.time : null;
+      if (!this.alive || this.specialActive || this.superJumpState) r.s3RollerSquidPressT = null;
+    }
+    return actorUpdate.call(this, dt);
+  };
+
   const armsInterruption = runner => {
     const a = runner.a;
     return a.grounded && a.ink > 0.5 && runner.flick < 0;
   };
-  // Whether this tick's `fire` keeps the roll alive. `_roller` recomputes the same
-  // canRoll terms, so a tick that cannot hold them ends the roll: an estimate, not a
-  // second engine, and both callers below discard it again if the roll survives.
-  // A roll cannot start while a window is live (main gates fire), so any live
-  // window means no roll is in flight and nothing needs re-arming.
   const rollWillStop = (runner, fire) => {
     const a = runner.a;
     return runner.rolling === true && !fire && armsInterruption(runner);
   };
-  // Arm ahead of the tick when it can already be told that the roll ends, so the
-  // lock owns frame 0 instead of starting one tick after it. The real Actor picks
-  // its form BEFORE it calls the runner, so a lock armed inside the runner arrives
-  // after the form decision and a simultaneous release+squid still enters. The arm
-  // is rolled back below whenever the roll turns out to have survived.
   const armAheadOf = (runner, now, fire) => {
     const live = rollStopBlocks(now, runner.s3RollStop);
     if ((live.main || live.sub || live.squid) || !rollWillStop(runner, fire)) return false;
@@ -77,8 +59,6 @@ export function installRollerLogic({ WeaponRunner, Actor, G }, _profile) {
     return true;
   };
   const disarmIf = (runner, armed) => {
-    // The prediction is only kept when the real runner agrees the roll ended and the
-    // same terms the post-arm check uses still hold.
     if (armed && (runner.rolling === true || !armsInterruption(runner))) runner.s3RollStop = null;
   };
   WeaponRunner.prototype.update = function (dt, inp = {}) {
@@ -90,44 +70,38 @@ export function installRollerLogic({ WeaponRunner, Actor, G }, _profile) {
       const blocked = rollStopBlocks(now, locks);
       if (blocked.main || blocked.sub) {
         input = { ...inp };
-        // Admission only. Buffered intent may survive; the action itself must not
-        // become authoritative before its own boundary expires. A tick that armed
-        // the lock is not gated on fire: its own `inp.fire` is what stopped the roll,
-        // and blocking it here would make the prediction decide the roll.
         if (blocked.main && !armed) { input.fire = false; input.firePressed = false; }
         if (blocked.sub) { input.sub = false; input.subReleased = false; }
       }
     }
     const wasRolling = this.rolling === true;
-    const result = update.call(this, dt, input);
+    const result = runnerUpdate.call(this, dt, input);
     disarmIf(this, armed);
     if (wasRolling && this.rolling !== true && armsInterruption(this)) this.s3RollStop = rollStopLocks(now);
     return result;
   };
-  // Squid admission lives in the locked Actor form gate, which reads the generic
-  // busy set. Extending busy() would also pause ink recovery and would entangle
-  // this root with #176, so form admission is gated here instead.
-  const actorUpdate = Actor.prototype.update;
+
+  const rollStopActorUpdate = Actor.prototype.update;
   Actor.prototype.update = function (dt, ...rest) {
     const runner = this.weaponRunner;
-    if (!runner) return actorUpdate.call(this, dt, ...rest);
+    if (!runner) return rollStopActorUpdate.call(this, dt, ...rest);
     const now = G.time;
-    // The Actor builds its own fire from the raw intent, so the same estimate is
-    // read here rather than duplicated: a buffered pop-out shot keeps fire alive.
     const armed = armAheadOf(runner, now, !!(this.intent?.fire || this.fireBuffer > 0));
     const blockSquid = rollStopBlocks(now, runner.s3RollStop).squid;
     if (blockSquid && this.intent?.squid) {
       const held = this.intent.squid;
       this.intent.squid = false;
-      try { return actorUpdate.call(this, dt, ...rest); }
+      try { return rollStopActorUpdate.call(this, dt, ...rest); }
       finally { this.intent.squid = held; disarmIf(runner, armed); }
     }
-    try { return actorUpdate.call(this, dt, ...rest); }
+    try { return rollStopActorUpdate.call(this, dt, ...rest); }
     finally { disarmIf(runner, armed); }
   };
+
   WeaponRunner.prototype.reset = function (...args) {
     const result = reset.apply(this, args);
     this.s3RollerAttack = null;
+    this.s3RollerSquidPressT = null;
     this.s3RollStop = null;
     if (this.a.character) {
       this.a.character.s3RollerFlick = null;
@@ -142,14 +116,22 @@ export function installRollerLogic({ WeaponRunner, Actor, G }, _profile) {
       this.cooldown = Math.min(0, this.cooldown);
       this.s3FlickVertical = !a.grounded;
       const mode = rollerMode(w, this.s3FlickVertical);
-      this.s3RollerAttack = { vertical: this.s3FlickVertical, windup: mode.flickWindup, interval: mode.flickInterval, elapsed: 0, released: false, rolling: false };
+      let windup = mode.flickWindup;
+      if (!this.s3FlickVertical && Number.isFinite(this.s3RollerSquidPressT)) {
+        const elapsed = Math.max(0, G.time - this.s3RollerSquidPressT);
+        windup = Math.max(EPS, 34 / 60 - elapsed);
+      }
+      this.s3RollerAttack = { vertical: this.s3FlickVertical, windup, interval: mode.flickInterval, elapsed: 0, released: false, rolling: false };
+      this.s3RollerSquidPressT = null;
       a.character.s3RollerFlick = this.s3RollerAttack;
       // Starting a new flick lifts the drum. The public runner otherwise leaves
       // rolling=true through its early windup return, including in the air.
       this.rolling = false; this.rollT = 0;
       this.rollLoop?.stop(.12); this.rollLoop = null;
     }
-    const state = this.s3RollerAttack, mode = rollerMode(w, this.s3FlickVertical);
+    const state = this.s3RollerAttack;
+    let mode = rollerMode(w, this.s3FlickVertical);
+    if (state) mode = { ...mode, flickWindup: state.windup, flickInterval: state.interval };
     const winding = this.flick >= 0;
     if (state && !starting) state.elapsed = Math.min(state.interval, state.elapsed + dt);
     // Float accumulation must not add a 22nd/27th tick to a 21F/26F windup.
