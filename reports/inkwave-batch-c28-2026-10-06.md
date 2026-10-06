@@ -15,4 +15,6 @@ Combined focused verification: 25 tests passed, comprising two paint ownership c
 
 The production build passed; its complete identity is stored in `additional-100/c28-built-site/inkwave-build.json`. The startup request gate fails at 132 core plus 14 Practice Range modules. The exact f31 baseline build also has 132 core plus 14 Range modules, with an identical preload set (`C28-startup-baseline-comparison.json`). This is an inherited failure; the gate is not relaxed.
 
-Independent final review and exact pushed source/native-candidate CI are pending. No merge.
+Independent completed-diff review passed at `a647a9b095ddde6ad72896a70df90b73374b4c23`: no blockers. Parent verified the actual source diff, changed-file inventory and stored test/build receipts. A final fresh audit retained unchanged-head diff evidence and fetched the changed #822/#401 diffs; neither implements these roots. Both Issues remain open, unassigned and solely C-claimed/commented.
+
+Actual WebGL pixel verification is in progress separately; the submitted native quad and CPU regressions do not claim pixel equality. Exact pushed source/native-candidate CI is pending. No merge.
