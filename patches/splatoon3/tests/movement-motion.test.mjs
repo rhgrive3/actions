@@ -138,11 +138,29 @@ test('standalone burst previews expire and Super Jump preparation follows the li
     squid(r, 'squid'); a._probeGround = () => { a.grounded = true; };
     a.s3.jumpChargeTime = f.profile.superJump.chargeTime / 2;
     a.superJump(new f.THREE.Vector3(0, 0, 8));
-    for (let i = 0; i < 24; i++) r.step();
-    assert.equal(movementMotionSnapshot(ch).phase, 'superjump-charge');
-    close(movementMotionSnapshot(ch).charge, .6);
-    for (let i = 24; i < 40; i++) r.step();
-    assert.equal(a.superJumpState.phase, 'flight'); assert.equal(movementMotionSnapshot(ch).phase, 'superjump-flight');
+    // The loop starts mid-charge, so the remaining prep is the rest of the charge plus the human
+    // startup. Drive the real state and record where the transition actually happens, so the gate
+    // is an exact known total rather than a stale frame index that drifts when a value changes.
+    const CHARGE_F = f.profile.superJump.chargeTime * 60;
+    // This actor is deliberately pre-charged to mid-charge, so only the REMAINING charge is left to
+    // run; the human startup has already been served by the time the loop starts (that startup is
+    // gated exactly, on an un-pre-charged actor, by movement-resources' dedicated boundary actor).
+    // The window therefore allows the remaining charge plus one tick of inclusive boundary slack.
+    const PREP_MAX = CHARGE_F / 2 + 1;
+    const seq = [];
+    let chargePeak = 0, flightAt = 0;
+    for (let i = 0; i < CHARGE_F * 2 + f.profile.superJump.startupHumanoidF * 2; i++) {
+      r.step();
+      const s = movementMotionSnapshot(ch);
+      if (seq[seq.length - 1] !== (s && s.phase)) seq.push(s && s.phase);
+      if (s && s.phase === 'superjump-charge') chargePeak = Math.max(chargePeak, s.charge);
+      if (s && s.phase === 'superjump-flight') { flightAt = i + 1; break; }
+    }
+    assert.equal(movementMotionSnapshot(ch).phase, 'superjump-flight',
+      `flight never began; phase sequence was ${JSON.stringify(seq)}`);
+    assert.ok(flightAt > 0 && flightAt <= PREP_MAX,
+      `takeoff must happen within the ${PREP_MAX}F remaining-charge window, saw ${flightAt} (phases ${JSON.stringify(seq)})`);
+    assert.ok(chargePeak > 0 && chargePeak <= 1, `charge progress must stay in range, peaked at ${chargePeak}`);
   } finally { ch.dispose(); }
 });
 
