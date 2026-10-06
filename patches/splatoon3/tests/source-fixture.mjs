@@ -31,8 +31,11 @@ export async function fixture({ adapt = adaptSource, adaptRuntime = (_rel, sourc
     export * from './inkwave-public/src/game/actor.js';
     export * from './inkwave-public/src/game/weapons.js';
     export * from './inkwave-public/src/game/physics.js';
+    export * from './inkwave-public/src/net/netmatch.js';
     export * from './inkwave-public/src/game/player.js';
+    export * from './inkwave-public/src/world/level.js';
     export * from './inkwave-public/src/core/shadowcache.js';
+    export * from './inkwave-public/src/world/paint.js';
     export * as THREE from 'three';
     export const VM_MATH = Math;
     export * from './patches/splatoon3/runtime/movement.mjs';
@@ -42,6 +45,7 @@ export async function fixture({ adapt = adaptSource, adaptRuntime = (_rel, sourc
     export * from './patches/splatoon3/runtime/resources.mjs';
     export * from './patches/splatoon3/runtime/render.mjs';
     export * from './patches/splatoon3/runtime/sub-special-fidelity.mjs';
+    export * from './patches/splatoon3/runtime/clock.mjs';
     export const TEST_MATH = Math;
   `, { context, identifier: path.join(ROOT, 'fixture.mjs') });
   await root.link((spec, from) => load(resolve(spec, from.identifier))); await root.evaluate();

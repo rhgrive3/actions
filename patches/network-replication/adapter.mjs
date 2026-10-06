@@ -15,6 +15,17 @@ export function networkIdentity() {
 export function adaptNetworkSource(rel, code) {
   const patch = (before,after,label) => { code = once(code,before,after,rel+': '+label); };
   if (rel === 'src/net/netmatch.js') {
+    patch('  sendHit(attacker, victim, dmg, wid) {',
+      '  sendHit(attacker, victim, dmg, wid, slosherVolleyId) {', 'Slosher volley identity send');
+    {
+      const matches = [...code.matchAll(/    this\.s\.tr\?\.sendTo\(victim\.owner, \{ k: 'hit',[^\n]+\}\);/g)];
+      if (matches.length !== 1) throw Error('Network replication anchor mismatch: ' + rel + ': Slosher volley identity wire field');
+      const match = matches[0], payload = match[0].slice(match[0].indexOf('{'), -2);
+      const replacement = `    const hit = ${payload};\n    if (slosherVolleyId != null) hit.g = slosherVolleyId;\n    this.s.tr?.sendTo(victim.owner, hit);`;
+      code = code.slice(0, match.index) + replacement + code.slice(match.index + match[0].length);
+    }
+    patch('G.projectiles?.applyHit(atk, v, d.d, d.w);',
+      'G.projectiles?.applyHit(atk, v, d.d, d.w, d.g);', 'Slosher volley identity owner admission');
     patch('  dispose() {\n    for (const u of this.unsubs)', `  dispose() {
     retireNetworkGhosts();
     for (const u of this.unsubs)`, 'session disposal retirement');

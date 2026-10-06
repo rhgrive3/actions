@@ -1,12 +1,12 @@
 // Main-weapon gameplay only. Values live in profile.json; provenance and retained
 // uncertainty live in reference/weapons-fidelity-reference.json.
 // Source fields and interpreted equations are explicitly separated in the profile.
-import {distanceDamage, groupDamage, applyProjectileHit as legacyHit} from './weapons.mjs';
+import {distanceDamage, groupDamage, applyProjectileHit as legacyHit, applySlosherVolleyHit} from './weapons.mjs';
 import { capsuleEntry, sweptWorldHit } from './weapons-collision.mjs';
 import { installChargerFlight } from './weapons-charger-flight.mjs';
 export const EPSILON = 1e-10;
 const INSTALLED = Symbol.for('inkwave.weapons-fidelity.v1');
-let api, completion, moves;
+let api, completion, moves, slosherVolleySequence = 0;
 const clamp01 = value => Math.max(0, Math.min(1, value));
 const radians = degrees => degrees * Math.PI / 180;
 
@@ -330,8 +330,7 @@ export function applyFidelitySlosherSplash(system,p,victim,amount) {
   // Active Splat Bucket units have no SplashSlosherHitParam records. No radial damage.
   if(rawWeapon(p.s3Weapon||p.owner.weapon)?.UnitGroupParam)return;
   if(p.ghost)return;
-  const delta=groupDamage(p.s3DamageGroup,victim,amount);
-  if(delta>0)system.applyHit(p.owner,victim,delta,p.wid||'slosher');
+  return applySlosherVolleyHit(system,p.owner,victim,p.s3DamageGroup,p.s3DamageGroupId,amount,p.wid||'slosher');
 }
 export function fidelityDamage(p,point) {
   const w=p.s3Weapon||p.owner.weapon;
@@ -358,7 +357,11 @@ export function fidelityDamage(p,point) {
 }
 export function applyFidelityProjectileHit(system,p,victim,amount,point) {
   if(p.ghost)return;
-  amount=groupDamage(p.s3DamageGroup,victim,fidelityDamage(p,point));
+  amount=fidelityDamage(p,point);
+  const weapon=p.s3Weapon||p.owner.weapon;
+  if(weapon.kind==='slosher'&&p.s3DamageGroup)
+    return applySlosherVolleyHit(system,p.owner,victim,p.s3DamageGroup,p.s3DamageGroupId,amount,p.wid||p.type||'slosher');
+  amount=groupDamage(p.s3DamageGroup,victim,amount);
   if(amount>0)system.applyHit(p.owner,victim,amount,p.wid||p.type);
 }
 
@@ -480,7 +483,7 @@ export function installWeaponsFidelity(context,profile) {
       const pitch=Math.atan2(aim.y,Math.hypot(aim.x,aim.z)),horizontal=Math.cos(pitch)*speed;
       p.vel.set(Math.sin(yaw)*horizontal,Math.sin(pitch)*speed+horizontal*(u.AddSpawnSpeedYRateByXZ||0),Math.cos(yaw)*horizontal);
       p.damage=u.DamageParam.ValueMax/10;p.head=!!u.HitEffectBigOrderNum?.includes(index);
-      p.s3DamageGroup=active.group;
+      p.s3DamageGroup=active.group;p.s3DamageGroupId=active.groupId;
     }
     initialize(p,w);
     const group=p.s3DamageGroup;const result=push.call(this,p);
@@ -495,7 +498,7 @@ export function installWeaponsFidelity(context,profile) {
   };
   const slosh=Projectiles.prototype.fireSlosh;
   Projectiles.prototype.fireSlosh=function(actor,w){
-    const previous=this._fidelitySloshContext;this._fidelitySloshContext={index:0,group:new Map()};
+    const previous=this._fidelitySloshContext;this._fidelitySloshContext={index:0,group:new Map(),groupId:`${actor.nid??'local'}:${++slosherVolleySequence}`};
     try{return slosh.call(this,actor,{...w,drops:rawWeapon(w).UnitGroupParam.Unit.reduce((n,u)=>n+(u.BulletNum??1),0)});}
     finally{this._fidelitySloshContext=previous;}
   };

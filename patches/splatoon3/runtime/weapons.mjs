@@ -20,6 +20,28 @@ export function groupDamage(group, victim, amount) {
   group.set(victim, Math.max(previous, amount));
   return Math.max(0, amount - previous);
 }
+function acceptedHit(result, victim, hpBefore, aliveBefore) {
+  if (result === 'rejected' || result === 'rejected-invulnerable' || result === 'pending') return false;
+  if (result === 'accepted' || result === 'killed') return true;
+  return Number.isFinite(hpBefore) && (victim.hp < hpBefore || aliveBefore && !victim.alive);
+}
+export function applySlosherVolleyHit(system, owner, victim, group, groupId, amount, weaponId = 'slosher') {
+  if (!(amount > 0)) return;
+  const route = api?.G?.netm?.shouldApplyHit?.(owner, victim);
+  if (route === 'drop') return;
+  // The victim owner commits this budget online; do not spend it while a hit is pending.
+  if (route === 'send' && groupId != null) return system.applyHit(owner, victim, amount, weaponId, groupId);
+  const previous = group?.get(victim) || 0, next = Math.max(previous, amount), delta = next - previous;
+  if (!(delta > 0)) return;
+  if (!group) return system.applyHit(owner, victim, delta, weaponId);
+  const hpBefore = victim.hp, aliveBefore = victim.alive;
+  const result = system.applyHit(owner, victim, delta, weaponId);
+  if (acceptedHit(result, victim, hpBefore, aliveBefore)) group.set(victim, next);
+  return result;
+}
+function volleyOwnerKey(owner, groupId) {
+  return JSON.stringify([owner.owner ?? null, owner.nid ?? owner.name ?? 'actor', String(groupId)]);
+}
 export function distanceDamage(bands, distance, linear = true) {
   if (!bands?.length) return 0;
   if (distance <= bands[0][0]) return bands[0][1];
@@ -36,6 +58,10 @@ export function applyProjectileHit(system, projectile, victim, amount, point) {
   const weapon = projectile.s3Weapon || projectile.owner.weapon;
   if (['shooter', 'dualies', 'splatling'].includes(weapon.kind)) amount = ageDamage(weapon, projectile.age, amount);
   if (weapon.kind === 'roller' && point) amount = distanceDamage(projectile.s3Vertical ? weapon.verticalDamageBands : weapon.flickDamageBands, projectile.start.distanceTo(point));
+  if (weapon.kind === 'slosher' && projectile.s3DamageGroup) {
+    return applySlosherVolleyHit(system, projectile.owner, victim, projectile.s3DamageGroup,
+      projectile.s3DamageGroupId, amount, projectile.wid || projectile.type || 'slosher');
+  }
   amount = groupDamage(projectile.s3DamageGroup, victim, amount);
   if (amount > 0) system.applyHit(projectile.owner, victim, amount, projectile.wid || projectile.type);
 }
@@ -44,7 +70,7 @@ export function installWeapons(context, profile) {
   const { WeaponRunner, Projectiles, G, THREE, Physics, Hit, PLAYER } = api;
   const newProjectile = Projectiles.prototype._new, pushProjectile = Projectiles.prototype._push;
   Projectiles.prototype._new = function (...args) {
-    const p = newProjectile.apply(this, args); p.s3DamageGroup = null; p.s3Weapon = null; p.s3Vertical = false; return p;
+    const p = newProjectile.apply(this, args); p.s3DamageGroup = null; p.s3DamageGroupId = null; p.s3Weapon = null; p.s3Vertical = false; return p;
   };
   Projectiles.prototype._push = function (p) {
     p.s3Weapon = p.owner ? { ...p.owner.weapon } : null;
@@ -215,4 +241,25 @@ export function installWeapons(context, profile) {
     return moveSpeed.call(this);
   };
   installWeaponEdgecases(api);
+  const applyHit = Projectiles.prototype.applyHit;
+  Projectiles.prototype.applyHit = function (attacker, victim, damage, weaponId, groupId) {
+    if (groupId == null) return applyHit.call(this, attacker, victim, damage, weaponId);
+    const route = G.netm?.shouldApplyHit?.(attacker, victim);
+    if (route === 'send' || route === 'drop') return applyHit.call(this, attacker, victim, damage, weaponId, groupId);
+    const groups = this._s3SlosherOwnerGroups || (this._s3SlosherOwnerGroups = new Map());
+    const key = volleyOwnerKey(attacker, groupId);
+    let group = groups.get(key);
+    if (!group) { group = new WeakMap(); groups.set(key, group); }
+    const previous = group.get(victim) || 0, next = Math.max(previous, damage), delta = next - previous;
+    if (!(delta > 0)) return 'accepted';
+    const hpBefore = victim.hp, aliveBefore = victim.alive;
+    const result = applyHit.call(this, attacker, victim, delta, weaponId);
+    if (acceptedHit(result, victim, hpBefore, aliveBefore)) group.set(victim, next);
+    return result;
+  };
+  const clearProjectiles = Projectiles.prototype.clear;
+  Projectiles.prototype.clear = function (...args) {
+    this._s3SlosherOwnerGroups?.clear();
+    return clearProjectiles.apply(this, args);
+  };
 }
