@@ -5,9 +5,15 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { adaptSource } from '../adapter.mjs';
+import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
+import { adaptReliability } from '../../reliability/adapter.mjs';
+import { adaptQualitySource } from '../../local-quality/adapter.mjs';
+import { adaptNetworkSource } from '../../network-replication/adapter.mjs';
+import { adaptRange } from '../../practice-range/adapter.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const SRC = path.resolve(process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public'));
+const adaptBuildSource = (rel, code) => adaptRange(rel, adaptNetworkSource(rel, adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code))))));
 let loaded;
 
 async function production() {
@@ -19,8 +25,9 @@ async function production() {
     if (file.startsWith(path.join(ROOT, 'src') + path.sep)) file = path.join(SRC, path.relative(ROOT, file));
     if (modules.has(file)) return modules.get(file);
     const source = fs.readFileSync(file, 'utf8');
-    const module = new vm.SourceTextModule(file.startsWith(SRC + path.sep)
-      ? adaptSource(path.relative(SRC, file), source) : source,
+    const rel = file.startsWith(SRC + path.sep) ? path.relative(SRC, file)
+      : file.startsWith(ROOT + path.sep) ? path.relative(ROOT, file) : null;
+    const module = new vm.SourceTextModule(rel ? adaptBuildSource(rel, source) : source,
       { context, identifier: file, initializeImportMeta(meta) { meta.url = pathToFileURL(file).href; } });
     modules.set(file, module); return module;
   };
@@ -118,8 +125,8 @@ test('#94 full composition routes that contact to a separate shooter HUD marker'
   assert.ok(marker?.hit);
   assert.ok(marker.point.distanceTo(muzzleHit.point) < 1e-9, 'marker comes from the same physical field contact');
 
-  const main = adaptSource('src/main.js', fs.readFileSync(path.join(SRC, 'src/main.js'), 'utf8'));
-  const hud = adaptSource('src/ui/hud.js', fs.readFileSync(path.join(SRC, 'src/ui/hud.js'), 'utf8'));
+  const main = adaptBuildSource('src/main.js', fs.readFileSync(path.join(SRC, 'src/main.js'), 'utf8'));
+  const hud = adaptBuildSource('src/ui/hud.js', fs.readFileSync(path.join(SRC, 'src/ui/hud.js'), 'utf8'));
   const css = fs.readFileSync(path.join(ROOT, 'patches/splatoon3/ui.css'), 'utf8');
   assert.match(main, /muzzleBlockFeedback/);
   assert.match(main, /muzzleBlock/);
