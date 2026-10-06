@@ -14,11 +14,10 @@ export function sampleSplatlingSpeed(base, halfWidth, bias, uniform) {
   return Math.max(0, base + Math.sign(signed) * halfWidth * magnitude);
 }
 
-export function installSplatling(api, profile, { splatlingBurst, splatlingChargeCap }) {
+export function installSplatling(api, profile, { splatlingChargeCap, splatlingReservation }) {
   const { WeaponRunner, Projectiles, Actor, G, PLAYER } = api;
   if (WeaponRunner.prototype[INSTALLED]) return;
   Object.defineProperty(WeaponRunner.prototype, INSTALLED, { value: true });
-  const costAt = (w, charge) => w.inkFull * splatlingBurst(w, charge) / w.burstMax;
 
   function cancel(runner, refund = true) {
     const state = runner.s3Spin, a = runner.a;
@@ -119,11 +118,15 @@ export function installSplatling(api, profile, { splatlingBurst, splatlingCharge
     } else if (this.charging) {
       this.charging = false;
       const state = this.s3Spin;
-      this.burstDur = this.burstT = splatlingBurst(w, this.charge);
-      state.paid = state.unspent = Math.min(Math.max(0, a.ink), costAt(w, this.charge));
+      // Reuse the integration owner's whole-round reservation so low-ink
+      // releases cannot emit unpaid cadence slots while retaining S3 charge flow.
+      const reservation = splatlingReservation(w, this.charge, a.ink);
+      this.burstDur = this.burstT = reservation.duration;
+      state.paid = state.unspent = reservation.cost;
       a.ink = Math.max(0, a.ink - state.paid); a.lastFire = 0;
-      this.burstFrac = 1; this.streaming = this.burstDur > EPS;
-      state.shots = Math.max(1, Math.ceil(this.burstDur / w.fireInterval - EPS));
+      this.burstFrac = reservation.shots ? 1 : 0;
+      this.streaming = reservation.shots > 0 && this.burstDur > EPS;
+      state.shots = reservation.shots;
       state.elapsed = state.emitted = 0;
       this.cooldown = this.bloom = 0;
       if (!this.streaming) cancel(this);
