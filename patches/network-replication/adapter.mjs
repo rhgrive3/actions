@@ -80,7 +80,13 @@ export function adaptNetworkSource(rel, code) {
     patch('  _adopt(a) {', '  _adopt(a) {\n    retireNetworkGhosts(a);\n    if (a.net) a.net._stormBirthAuth = null;', 'ownership transfer retirement');
     patch('r3(o.seed ?? Math.random())', 'o.seed ?? Math.random()', 'preserve paint pattern seed');
     patch('r3(p.delay || 0), r3(p.life), r3(p.straight)', 'p.delay || 0, p.life, p.straight', 'preserve exact physics timing boundaries');
-    patch('p.nose ?? 0.3, p.sats ?? 3]);', 'p.nose ?? 0.3, p.sats ?? 3, p.s3Vertical ? 1 : 0, p.seed, (p._netId = this._projectileSeq = (this._projectileSeq || 0) + 1), p.fidelityRollerUnitIndex ?? -1]);', 'append birth mode, appearance seed, identity, roller unit');
+    const kitBirth = 'p.nose ?? 0.3, p.sats ?? 3, kitVolleyPacketIndex(p.s3VolleyIndex), kitVolleyPacketIndex(p.s3ActionIndex)]);';
+    if (code.includes(kitBirth)) patch(kitBirth,
+      'p.nose ?? 0.3, p.sats ?? 3, kitVolleyPacketIndex(p.s3VolleyIndex), kitVolleyPacketIndex(p.s3ActionIndex), p.s3Vertical ? 1 : 0, p.seed, (p._netId = this._projectileSeq = (this._projectileSeq || 0) + 1), p.fidelityRollerUnitIndex ?? -1]);',
+      'append birth mode, appearance seed, identity, roller unit after kit fields');
+    else patch('p.nose ?? 0.3, p.sats ?? 3]);',
+      'p.nose ?? 0.3, p.sats ?? 3, p.s3Vertical ? 1 : 0, p.seed, (p._netId = this._projectileSeq = (this._projectileSeq || 0) + 1), p.fidelityRollerUnitIndex ?? -1]);',
+      'append birth mode, appearance seed, identity, roller unit');
     {
       const combatLifeTick = '  _tick(from, d) {\n    this.stats.in++;\n    // Ordered WebSocket ticks cannot replay paint or terminal events.\n    if (!Number.isFinite(d.ts) || d.ts <= (this.peers.get(from)?.lastTs ?? -Infinity)) return;\n    const p = this._peer(from);';
       if (code.includes(combatLifeTick)) patch(combatLifeTick, `  _tick(from, d) {
@@ -142,7 +148,8 @@ export function adaptNetworkSource(rel, code) {
         break;
       }`, 'bomb timeline birth with optional metadata');
     }
-    patch("case 'ev': this._playEvent(e[2], e[3]); break;", `case 'ev': {
+    const kitEventCase = "case 'ev': this._playEvent(e[2], e[3], from); break;";
+    if (code.includes(kitEventCase)) patch(kitEventCase, `case 'ev': {
         const before = G.projectiles?.beams.length || 0;
         const actor = this.byNid.get(e[3]?.actor?.n);
         if (actor && e[2] === 'special:use') {
@@ -155,6 +162,14 @@ export function adaptNetworkSource(rel, code) {
           } else if (actor.net) actor.net._stormBirthAuth = null;
         }
         if (actor && e[2] === 'weapon:fire') actor._netFlickFirst = e[3].projectileFirst;
+        try { this._playEvent(e[2],e[3],from); } finally { if (actor) actor._netFlickFirst = undefined; }
+        for (let i = before; i < (G.projectiles?.beams.length || 0); i++) { const b = G.projectiles.beams[i]; b._netPeer = this.peers.get(from); b._netBorn = e[0]; b._netBornTick = e._netTick; b._netOwner = actor; b._netSteps = 0; }
+        break;
+      }`, 'beam birth clock with kit sender');
+    else patch("case 'ev': this._playEvent(e[2], e[3]); break;", `case 'ev': {
+        const before = G.projectiles?.beams.length || 0;
+        const actor = this.byNid.get(e[3]?.actor?.n);
+        if (actor && e[2] === 'weapon:fire') actor._netFlickFirst = e[3].projectileFirst;
         try { this._playEvent(e[2],e[3]); } finally { if (actor) actor._netFlickFirst = undefined; }
         for (let i = before; i < (G.projectiles?.beams.length || 0); i++) { const b = G.projectiles.beams[i]; b._netPeer = this.peers.get(from); b._netBorn = e[0]; b._netBornTick = e._netTick; b._netOwner = actor; b._netSteps = 0; }
         break;
@@ -165,7 +180,7 @@ export function adaptNetworkSource(rel, code) {
         for (let index = 5; index <= 18; index++) if (!Number.isFinite(e[index])) return;
         if (e[11] < 0 || e[12] <= 0) return;
         const peer = this.peers.get(from);
-        if (Number.isFinite(e[29]) && peer) { if (e[29] <= (peer._lastProjectileId || 0)) break; peer._lastProjectileId = e[29]; }
+        if (Number.isFinite(e[31]) && peer) { if (e[31] <= (peer._lastProjectileId || 0)) break; peer._lastProjectileId = e[31]; }
         const a = this.byNid.get(e[2]), p = a && G.projectiles?.ghostProjectile(a, e);
         if (p) { p._netBorn = e[0]; p._netBornTick = e._netTick; p._netPeer = this.peers.get(from); p._netSteps = 0; p._netMaxSteps = Math.ceil((p.life + Math.max(0,p.delay)) * 60) + 2; }
         break;
@@ -216,9 +231,9 @@ function retireNetworkGhosts(owner = null) {
       p.drag = w.flickDrag ?? p.drag;`, 'final flick physics before publication');
 
     patch('    p.delay = 0; p.head = false;', '    p._netId = undefined; p._netEnded = false; p._netPeer = null; p._netBorn = undefined; p._netBornTick = undefined; p._netSteps = 0; p._netMaxSteps = 0; p._netEndStep = undefined; p._netEndReason = 0; p._netHitActor = false;\n    p.delay = 0; p.head = false;', 'recycled identity reset');
-    patch('    this.list.push(p);\n  }\n\n  ghostBomb', `    p.s3Vertical = e[27] === 1;
-    if (Number.isFinite(e[28])) p.seed = e[28]; // retain the native random draw above
-    p._netId = e[29];
+    patch('    this.list.push(p);\n  }\n\n  ghostBomb', `    p.s3Vertical = e[29] === 1;
+    if (Number.isFinite(e[30])) p.seed = e[30]; // retain the native random draw above
+    p._netId = e[31];
     this.list.push(p);
     return p;
   }

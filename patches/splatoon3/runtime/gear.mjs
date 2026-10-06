@@ -1,3 +1,4 @@
+import { selectedSub } from './kit-composition.mjs';
 import { installSubReady } from './sub-ready.mjs';
 import { installStormPower } from './storm-power.mjs';
 import { configureSwimStealth, updateSwimStealth, swimSpeedMultiplier } from './swim-stealth.mjs';
@@ -218,8 +219,17 @@ export function installGear(api, tuning) {
   const update = WeaponRunner.prototype.update;
   WeaponRunner.prototype.update = function (dt, input) {
     refresh(this.a);
-    const a = this.a, beforeInk = a.ink;
-    const effectiveBombCost = api.SUB.bomb.inkCost * (a.s3?.modifiers?.inkSaverSub ?? 1);
+    const a = this.a, m = a.s3?.modifiers || {}, beforeInk = a.ink;
+    const sub = selectedSub(a, api.SUB);
+    const saved = { inkCost: sub.inkCost, throwSpeed: sub.throwSpeed, throwSpeedMaxCharge: sub.throwSpeedMaxCharge };
+    const hold = this.s3SubHold || 0;
+    const charge = sub.chargeable ? Math.min(1, Math.max(0, hold / sub.maxChargeTime)) : 0;
+    const subDelay = sub.inkRecoverStopMaxCharge == null ? sub.inkRecoverStop
+      : sub.inkRecoverStop + (sub.inkRecoverStopMaxCharge - sub.inkRecoverStop) * charge;
+    sub.inkCost = (sub.inkCost ?? sub.inkCostFallback) * (m.inkSaverSub ?? 1);
+    if (Number.isFinite(sub.throwSpeed)) sub.throwSpeed *= m.subPower ?? 1;
+    if (Number.isFinite(sub.throwSpeedMaxCharge)) sub.throwSpeedMaxCharge *= m.subPower ?? 1;
+    const effectiveSubCost = sub.inkCost;
     const bombsBefore = G.projectiles?.bombs?.length ?? 0;
     try { return update.call(this, dt, input); }
     finally {
@@ -227,12 +237,12 @@ export function installGear(api, tuning) {
       const progressiveChargerSpend = !!this.s3ChargerProgressiveSpend;
       this.s3ChargerProgressiveSpend = false;
       const spent = Math.max(0, beforeInk - a.ink);
+      Object.assign(sub, saved);
       if (spent > 1e-10) {
         a.s3 ||= {};
-        const rollingUse = !bombSpent && a.weapon.kind === 'roller' && this.rolling;
+        const mainSpent = (sub === api.SUB.bomb ? (!bombSpent || spent > effectiveSubCost + 1e-8) : !input.subReleased) && !progressiveChargerSpend;
+        const rollingUse = mainSpent && !input.subReleased && a.weapon.kind === 'roller' && this.rolling;
         a.s3.rollerRefillMode = rollingUse;
-        // Progressive Charger charge debit is not a shot/cancel recovery event.
-        const mainSpent = (!bombSpent || spent > effectiveBombCost + 1e-8) && !progressiveChargerSpend;
         let delay = 0;
         if (mainSpent) {
           const mainDelay = rollingUse ? a.weapon.rollInkRecoverStop
@@ -240,7 +250,7 @@ export function installGear(api, tuning) {
             : a.weapon.inkRecoverStop;
           delay = Math.max(delay, mainDelay ?? tuning.resources.inkRefillDelay);
         }
-        if (bombSpent) delay = Math.max(delay, api.SUB.bomb.inkRecoverStop ?? tuning.resources.inkRefillDelay);
+        if (input.subReleased) delay = Math.max(delay, subDelay ?? tuning.resources.inkRefillDelay);
         a.s3.recoverStopRemaining = Math.max(a.s3.recoverStopRemaining || 0, delay);
       }
     }
