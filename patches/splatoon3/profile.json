@@ -86,6 +86,7 @@
       ],
       "preDelay": 0.16666666666666666,
       "range": 13.3,
+      "shotGuideFrame": 13,
       "actionAirSpreadCurve": [
         0,
         0.5,
@@ -145,8 +146,7 @@
       "chargeTime": 1,
       "inkRecoverStop": 0.3333333333333333,
       "damagePartialMax": 80,
-      "fieldCollisionRadius": 0.02,
-      "reticleDelayF": 5
+      "fieldCollisionRadius": 0.02
     },
     "roller": {
       "rollSpeed": 7.92,
@@ -300,7 +300,12 @@
       "damageTail": 50,
       "range": 14.5,
       "drops": 9,
-      "splashDamage": 0
+      "splashDamage": 0,
+      "shotGuide": {
+        "unitOrderNum": 1,
+        "bulletOrderNumInUnit": 0,
+        "frame": 13
+      }
     }
   },
   "bomb": {
@@ -485,7 +490,6 @@
       "Flow action-intensify bonus and gear stacking; fixed run/swim/enemy-ink multipliers remain provisional, not equivalent to confirmed AP",
       "Splat Bomb sub-resistance DamageRt_BombH/BombL family routing, sub-saver level, and omitted ink-consume default",
       "charger full-charge storage countdown after emerging, pre-delay fields and charge-to-ink accounting",
-      "weapons.charger.reticleDelayF (5F charge-reticle display delay, S3 main-weapon verification table) is a published community measurement, not an extracted 11.3.0 game parameter and not confirmed by a new Switch capture; per-variant gauge delays (Goo Tuber, Grizzco) are not implemented",
       "per-weapon weight-class assignment and Splatling charge-stage movement curve; gear family curves alone do not establish assignment",
       "projectile brake-state defaults, charge-dependent Splatling velocity, collision radii and paint geometry remain unverified",
       "Squid Roll angle/minimum speed/chain reset/armor break vs overflow and duration; consecutive retention is applied once per launch but engine interpretation remains unverified",

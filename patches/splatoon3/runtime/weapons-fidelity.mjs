@@ -81,7 +81,11 @@ function wallDropSource(p) {
   if (!w) return null;
   const raw = rawWeapon(w);
   let move, paint;
-  if (w.kind === 'roller') {
+  if (w.kind === 'dualies') {
+    // #604: Splat Dualies keep their pinned wall-drop records at the weapon
+    // top level, like Blaster/Splatling; both hands share them unchanged.
+    move = raw?.WallDropMoveParam; paint = raw?.WallDropCollisionPaintParam;
+  } else if (w.kind === 'roller') {
     // Roller wall-drop data belongs to the exact flick unit that produced the
     // glob (horizontal main/near or one of the vertical units), not the weapon
     // top level. configureFidelityFlick/initialize already preserve that unit.
@@ -218,50 +222,16 @@ function setCollision(p,c,offset=0) {
   // Existing packet size carries initial radius; layout is unchanged.
   p.size=p.fidelityPlayerCollision.initRadius;
 }
-// #750: the swing unit declares the head's *rendered* size in
-// UnitParam.DrawSizeParam, separately from CollisionParam and from paint.
-// Splat Roller 11.3.0 ships constant 0.30/0.30 horizontal and 0.36/0.36
-// vertical, so one radius per unit with no fan-position gradient. This replaces
-// the generic emitter's centre-biased random radius on p.vis; that draw is still
-// consumed upstream, so the RNG order and count are unchanged. A unit without
-// DrawSizeParam keeps the generic radius rather than inventing one.
-function drawRadiusRecord(draw) {
-  if(!draw)return null;
-  const init=Number(draw.InitRadius),end=Number(draw.EndRadius??draw.InitRadius);
-  if(!(init>0)||!(end>=0))return null;
-  return {initRadius:init,endRadius:end,changeTime:Math.max(0,Number(draw.ChangeFrame??0)/60)};
-}
-function setDrawRadius(p,unit) {
-  const record=drawRadiusRecord(unit?.UnitParam?.DrawSizeParam);
-  if(!record)return;
-  p.fidelityDrawRadius=record;
-  p.vis=radiusAt(record,p.age,p.size);
-}
-// One unit-selection rule, shared by the main volley and the appended
-// nearest-glob unit, so both read the same pinned DrawSizeParam.
-function flickUnitFor(weapon,vertical,index) {
-  const raw=rawWeapon(weapon);
-  const group=raw?raw[vertical?'VerticalSwingUnitGroupParam':'WideSwingUnitGroupParam']:null;
-  if(!group)return null;
-  let offset=index;
-  for(const u of group.Unit){if(offset<(u.BulletNum??1))return {unit:u,offset};offset-=u.BulletNum??1;}
-  return null;
-}
-export function rollerFlickDrawRadius(weapon,vertical,index,age=0,fallback=null) {
-  const picked=flickUnitFor(weapon,vertical,index);
-  if(!picked)return fallback;
-  const record=drawRadiusRecord(picked.unit.UnitParam?.DrawSizeParam);
-  return record?radiusAt(record,age,fallback):fallback;
-}
 export function configureFidelityFlick(p, actor, weapon, index, angle, speed) {
   const b=weapon.ballistics, raw=rawWeapon(weapon);if(!b||!raw)return;
   // The attack argument owns this projectile's physics. Preserve it through
   // _push so a later actor/profile mutation cannot rewrite an already-fired volley.
   p.s3Weapon={...weapon}; p.wid=weapon.id;
   const vertical=!!actor.weaponRunner.s3FlickVertical;
-  const picked=flickUnitFor(weapon,vertical,index);
-  if(!picked)throw new RangeError('Roller index exceeds pinned units + labelled defaults');
-  const {unit,offset}=picked;
+  const group=raw[vertical?'VerticalSwingUnitGroupParam':'WideSwingUnitGroupParam'];
+  let offset=index,unit;
+  for(const u of group.Unit){if(offset<(u.BulletNum??1)){unit=u;break;}offset-=u.BulletNum??1;}
+  if(!unit)throw new RangeError('Roller index exceeds pinned units + labelled defaults');
   let pitch=Math.max(-.2,Math.min(.5,actor.aimPitch));
   if(vertical){
     speed=60*(unit.SpawnSpeedBase+offset*(unit.AfterOffsetSpawnSpeed||0));
@@ -285,7 +255,6 @@ export function configureFidelityFlick(p, actor, weapon, index, angle, speed) {
   p.fidelityYaw=Math.atan2(Math.sin(angle-actor.yaw),Math.cos(angle-actor.yaw));
   p.fidelityMode=vertical?'vertical':'horizontal';p.fidelityRollerUnit=unit;
   setCollision(p,unit.UnitParam.CollisionParam);
-  setDrawRadius(p,unit);
   p.straight=unit.UnitParam.MoveParam.GoStraightToBrakeStateFrame/60;
   p.grav=weapon.flickGravity;p.drag=weapon.flickDrag;
 }
@@ -525,6 +494,54 @@ export function installWeaponsFidelity(context,profile) {
     const previous=this._fidelitySloshContext;this._fidelitySloshContext={index:0,group:new Map()};
     try{return slosh.call(this,actor,{...w,drops:rawWeapon(w).UnitGroupParam.Unit.reduce((n,u)=>n+(u.BulletNum??1),0)});}
     finally{this._fidelitySloshContext=previous;}
+  };
+  Projectiles.prototype.s3SlosherGuide=function(actor,w){
+    const guide=w?.shotGuide,raw=rawWeapon(w);
+    const unit=guide&&raw?.UnitGroupParam?.Unit?.[guide.unitOrderNum];
+    const index=guide?.bulletOrderNumInUnit;
+    if(!unit||!Number.isInteger(index)||index<0||index>=(unit.BulletNum??1)||!Number.isFinite(guide.frame))return null;
+    // The selected Bucket Slosher guide projectile (unit 1 / bullet 0) has
+    // random yaw disabled in the pinned source. Refuse to invent a random HUD
+    // guide if a future profile selects a randomized projectile instead.
+    if((unit.RandomRotateYDegree||0)!==0&&!unit.RandomRotateYOffOrderNum?.includes(index))return null;
+    const THREE=context.THREE;
+    const p=this._s3SlosherGuideProjectile||(this._s3SlosherGuideProjectile={
+      pos:new THREE.Vector3(),prev:new THREE.Vector3(),start:new THREE.Vector3(),vel:new THREE.Vector3()
+    });
+    this._muzzle(actor,p.pos);p.prev.copy(p.pos);p.start.copy(p.pos);
+    p.owner=actor;p.type='slosh';p.wid=w.id;p.s3Weapon={...w};p.age=0;p.life=2.4;p.straight=0;
+    p.delay=((unit.UnitDelayFrame||0)+index*(unit.AfterOffsetDelayFrame||0))/60;
+    p.fidelitySloshUnit=unit;p.fidelitySloshIndex=index;p.fidelityPhase=0;p.fidelityMove=null;
+    p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;
+    const speed=((actor.grounded?unit.SpawnSpeedGround:unit.SpawnSpeedAir)+index*(unit.AfterOffsetSpawnSpeed||0))*60;
+    const aim=(this._s3SlosherGuideAim||(this._s3SlosherGuideAim=new THREE.Vector3())).copy(actor.aimDir).normalize();
+    const yaw=Math.atan2(aim.x,aim.z)+radians(unit.BaseRotateYDegree||0);
+    const pitch=Math.atan2(aim.y,Math.hypot(aim.x,aim.z)),horizontal=Math.cos(pitch)*speed;
+    p.vel.set(Math.sin(yaw)*horizontal,Math.sin(pitch)*speed+horizontal*(unit.AddSpawnSpeedYRateByXZ||0),Math.cos(yaw)*horizontal);
+    initialize(p,w);
+    let remaining=Math.max(0,guide.frame/60-p.delay);
+    while(remaining>EPSILON){const step=Math.min(1/60,remaining);advanceFidelityProjectile(p,step);remaining-=step;}
+    return p.pos;
+  };
+  Projectiles.prototype.s3WeaponGuide=function(actor,w){
+    if(w?.kind==='slosher')return this.s3SlosherGuide(actor,w);
+    const frame=w?.shotGuideFrame;
+    if(w?.kind!=='blaster'||!Number.isFinite(frame))return null;
+    const THREE=context.THREE;
+    const p=this._s3BlasterGuideProjectile||(this._s3BlasterGuideProjectile={
+      pos:new THREE.Vector3(),prev:new THREE.Vector3(),start:new THREE.Vector3(),vel:new THREE.Vector3()
+    });
+    const dir=this._s3BlasterGuideDir||(this._s3BlasterGuideDir=new THREE.Vector3());
+    this._muzzle(actor,p.pos);p.prev.copy(p.pos);p.start.copy(p.pos);
+    this._aimFrom(actor,p.pos,dir);
+    p.owner=actor;p.type='blast';p.wid=w.id;p.s3Weapon={...w};p.age=0;p.life=2;p.straight=0;
+    p.delay=0;p.ghost=false;p.fidelityPhase=0;p.fidelityMove=null;p.fidelityPrevAge=0;
+    p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;
+    p.vel.copy(dir).multiplyScalar(w.projSpeed);
+    initialize(p,w);
+    let remaining=Math.max(0,frame/60);
+    while(remaining>EPSILON){const step=Math.min(1/60,remaining);advanceFidelityProjectile(p,step);remaining-=step;}
+    return p.pos;
   };
   const reset=WeaponRunner.prototype.reset,auto=WeaponRunner.prototype._auto,spin=WeaponRunner.prototype._splatling;
   WeaponRunner.prototype.reset=function(...args){const result=reset.apply(this,args);this.fidelitySplatlingCharge=null;return result;};
