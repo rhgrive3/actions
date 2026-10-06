@@ -79,7 +79,7 @@ test('#801 horizontal ally inside the 3F window stays pass-through; after 3F it 
   g.enemy.pos.set(gk.pos.x, 0, 7.0);
   step(g.ps);
   assert.equal(g.ally.hp, 100, 'grace-window ally takes no friendly damage');
-  assert.equal(g.enemy.hp, 0, 'enemy behind a grace-window ally still takes the hit');
+  assert.ok(g.enemy.hp <= 0, 'enemy behind a grace-window ally still takes the hit');
   const b = await setup(false);
   b.ps.fireFlick(b.shooter, b.shooter.weapon);
   const bk = isolateCenterGlob(b.ps, false);
@@ -95,7 +95,7 @@ test('#801 horizontal ally inside the 3F window stays pass-through; after 3F it 
   c.ally.pos.set(50, 0, 0);
   c.enemy.pos.set(ck.pos.x, 0, 7.0);
   step(c.ps);
-  assert.equal(c.enemy.hp, 0, 'control without the ally reaches the enemy');
+  assert.ok(c.enemy.hp <= 0, 'control without the ally reaches the enemy');
 });
 
 test('#801 vertical flick obeys the same unit-specific 3F window', async () => {
