@@ -84,10 +84,18 @@ export function computeShotGuide(actor) {
 
 // Called from the installed camera aim path. Writes the HUD-only guide state on
 // the controller; the authoritative aim fields are not read back or changed.
+// The result is copied into a per-controller record: computeShotGuide hands back a
+// shared scratch, so publishing that reference would let another owner's guide
+// overwrite this one (lab rigs and spectate both build a second controller).
 export function updateShotGuide(controller) {
   if (!controller) return null;
-  controller.shotGuide = controller.enabled ? computeShotGuide(controller.a) : null;
-  return controller.shotGuide;
+  if (!controller.enabled) { controller.shotGuide = null; return null; }
+  const computed = computeShotGuide(controller.a);
+  if (!computed) { controller.shotGuide = null; return null; }
+  const state = controller._shotGuide || (controller._shotGuide = { x: 0, y: 0, z: 0, frames: 0 });
+  state.x = computed.x; state.y = computed.y; state.z = computed.z; state.frames = computed.frames;
+  controller.shotGuide = state;
+  return state;
 }
 
 // World point -> screen pixels for the HUD only. Behind-camera and off-viewport
@@ -105,16 +113,19 @@ export function projectShotGuide(state, camera, width, height) {
 
 // HUD reticle placement, relative to the screen-centre anchor the reticle already
 // uses. Weapons without a guide frame (and frames without a projected point) keep
-// the existing centre placement untouched.
+// the existing centre placement untouched. Numeric dirty check: this runs on every
+// render frame and must not allocate.
 export function applyShotGuide(hud, projected, width, height) {
   const ret = hud?.ret;
   if (!ret) return null;
   const x = projected && width > 0 ? projected.x - width / 2 : 0;
   const y = projected && height > 0 ? projected.y - height / 2 : 0;
   const L = hud._L || (hud._L = {});
-  const key = `${x.toFixed(1)}|${y.toFixed(1)}`;
-  if (L.guideKey !== key) { L.guideKey = key; ret.style.translate = `${x.toFixed(1)}px ${y.toFixed(1)}px`; }
-  return L.guideKey;
+  if (L.guideX == null || Math.abs(x - L.guideX) > 0.05 || Math.abs(y - L.guideY) > 0.05) {
+    L.guideX = x; L.guideY = y;
+    ret.style.translate = `${x.toFixed(1)}px ${y.toFixed(1)}px`;
+  }
+  return L;
 }
 
 export function installShotGuide(context, profile) {

@@ -281,26 +281,84 @@ test('#459/#769: re-entry keeps every projected guide point inside the viewport'
 test('#459/#769: HUD placement moves only guide weapons and always clears the guide', async () => {
   const r = await fixture();
   const hud = { ret: { style: {} } };
-  assert.equal(r.applyShotGuide(hud, { x: 1200, y: 400, frames: 8 }, 1920, 1080), '240.0|-140.0');
-  assert.equal(hud.ret.style.translate, '240.0px -140.0px');
+  const placed = () => hud.ret.style.translate;
+  r.applyShotGuide(hud, { x: 1200, y: 400, frames: 8 }, 1920, 1080);
+  assert.equal(placed(), '240.0px -140.0px');
   // A weapon without a guide frame sends no point: the reticle returns to centre
   // on any viewport, not only a 1920-wide one.
-  assert.equal(r.applyShotGuide(hud, null, 1280, 720), '0.0|0.0');
-  assert.equal(hud.ret.style.translate, '0.0px 0.0px');
-  assert.equal(r.applyShotGuide(hud, null, 1920, 1080), '0.0|0.0');
-  assert.equal(hud.ret.style.translate, '0.0px 0.0px');
+  r.applyShotGuide(hud, null, 1280, 720);
+  assert.equal(placed(), '0.0px 0.0px');
+  r.applyShotGuide(hud, null, 1920, 1080);
+  assert.equal(placed(), '0.0px 0.0px');
   // Re-entry after a weapon switch installs the new guide placement.
-  assert.equal(r.applyShotGuide(hud, { x: 800, y: 600, frames: 11 }, 1920, 1080), '-160.0|60.0');
-  assert.equal(hud.ret.style.translate, '-160.0px 60.0px');
+  r.applyShotGuide(hud, { x: 800, y: 600, frames: 11 }, 1920, 1080);
+  assert.equal(placed(), '-160.0px 60.0px');
   // A different viewport rescales the same guide point.
-  assert.equal(r.applyShotGuide(hud, { x: 800, y: 600, frames: 11 }, 1280, 720), '160.0|240.0');
-  assert.equal(hud.ret.style.translate, '160.0px 240.0px');
+  r.applyShotGuide(hud, { x: 800, y: 600, frames: 11 }, 1280, 720);
+  assert.equal(placed(), '160.0px 240.0px');
+  // Sub-pixel jitter does not rewrite the style on every render frame.
+  let writes = 0;
+  Object.defineProperty(hud.ret.style, 'translate', {
+    get: () => `${hud._L.guideX.toFixed(1)}px ${hud._L.guideY.toFixed(1)}px`,
+    set: () => { writes++; },
+  });
+  for (let i = 0; i < 30; i++) r.applyShotGuide(hud, { x: 800.01 + i * 1e-6, y: 600.02, frames: 11 }, 1280, 720);
+  assert.equal(writes, 0, 'an unchanged guide does not rewrite the reticle style');
+  r.applyShotGuide(hud, { x: 810, y: 600, frames: 11 }, 1280, 720);
+  assert.equal(writes, 1, 'a real guide change writes once');
   // Roller/charger/slosher/dualies/blaster keep their existing centre reticle.
   for (const id of ['roller', 'charger', 'slosher', 'dualies', 'blaster']) {
     assert.equal(r.shotGuideFrames(profile.weapons[id]), null, id);
   }
   assert.equal(r.shotGuideFrames(profile.weapons.shooter), 8);
   assert.equal(r.shotGuideFrames(profile.weapons.splatling), 11);
+});
+
+// ------------------------------------------------------- owner / remote values
+
+test('#459/#769: each owner guide uses its own weapon values, never another actor remote ones', async () => {
+  const r = await rig('shooter'), { G, projectiles } = r;
+  const local = r.a;
+  const remote = r.f.make('splatling');
+  remote.remote = true; remote.team = 0; remote.pos.set(3, 0, 9);
+  remote.aimDir.set(1, 0, 0); remote.aimPoint.set(30, 1.35, 9);
+  const localController = { a: local, enabled: true };
+  const remoteController = { a: remote, enabled: true };
+
+  const localBefore = flat(r.f.updateShotGuide(localController));
+  const remoteGuide = flat(r.f.updateShotGuide(remoteController));
+  assert.equal(localController.shotGuide.frames, 8, 'the local owner reads its own pinned 8F');
+  assert.equal(remoteController.shotGuide.frames, 11, 'the remote owner reads its own pinned 11F');
+  assert.notDeepEqual(remoteGuide, localBefore, 'the two owners do not share one guide');
+  // Same team, different weapons and aims: each guide stays on its own muzzle.
+  assert.ok(Math.abs(remoteGuide.x - localBefore.x) > 1, 'the remote owner aims elsewhere');
+
+  // A remote weapon swap must not reach into the local owner's guide.
+  remote.setWeapon('roller');
+  r.f.updateShotGuide(remoteController);
+  assert.deepEqual(flat(r.f.updateShotGuide(localController)), localBefore, 'remote weapon change leaves the local guide alone');
+  assert.equal(remoteController.shotGuide, null, 'a guide-less remote owner publishes nothing');
+
+  // Remote rounds in flight (their own frozen s3Weapon copy) are never read.
+  remote.setWeapon('splatling');
+  remote.weaponRunner.fidelitySplatlingCharge = 1;
+  const before = projectiles.list.length;
+  projectiles.fireSplatling(remote, remote.weapon, 0);
+  const remoteRound = projectiles.list.slice(before)[0];
+  assert.ok(remoteRound && remoteRound.s3Weapon, 'the remote round carries its own weapon copy');
+  assert.equal(remoteRound.s3Weapon.shotGuideFrame, 11);
+  assert.deepEqual(flat(r.f.computeShotGuide(local)), localBefore, 'a remote round never feeds the local guide');
+
+  // Rewriting a projectile's own weapon copy cannot rewrite the owner's guide.
+  remoteRound.s3Weapon.shotGuideFrame = 99;
+  remoteRound.s3Weapon.projSpeed = 999;
+  assert.deepEqual(flat(r.f.computeShotGuide(local)), localBefore, 'the guide is not projectile-backed state');
+  assert.equal(local.weapon.shotGuideFrame, 8, 'the live profile value is untouched');
+
+  // The guide lives on the controller, so a remote actor cannot publish into it.
+  G.actors = [local, remote];
+  assert.deepEqual(flat(r.f.updateShotGuide(localController)), localBefore);
+  assert.ok(!('shotGuide' in remote) || remote.shotGuide === undefined, 'the guide is controller state, not actor state');
 });
 
 // ---------------------------------------------------------------- fixed step + inputs
