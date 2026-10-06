@@ -21,15 +21,12 @@ export function penalizeFlowDeath(state, cause, cfg) {
   const lossFp = cause === 'water' || cause === 'fall' ? p.environmentDeathPenalty : p.deathPenalty;
   state.score = Math.max(0, state.score - lossFp * cfg.threshold / p.referenceThreshold);
 }
-export function awardFlow(state, action, value, cfg, bonus = 0) {
+export function awardFlow(state, action, value, cfg) {
   if (state.active) {
     if (action === 'splat' || action === 'assist') state.remaining = Math.min(cfg.maxDuration, state.remaining + cfg.extension);
     return false;
   }
-  // `bonus` is already in score units and joins the same gain so a bonus-bearing
-  // splat crosses the activation threshold exactly like any other splat award.
-  const extra = Number.isFinite(bonus) ? Math.max(0, bonus) : 0;
-  const gain = (Number.isFinite(value) ? Math.max(0, value) * (cfg.weights[action] || 0) : 0) + extra;
+  const gain = Number.isFinite(value) ? Math.max(0, value) * (cfg.weights[action] || 0) : 0;
   state.score += gain;
   if (gain > 0) state.idleTime = 0;
   // Nintendo describes accumulated turf/assists making the next opponent
@@ -39,19 +36,11 @@ export function awardFlow(state, action, value, cfg, bonus = 0) {
 }
 export function installFlow({ Actor, on, emit, G }, tuning) {
   const cfg = tuning.flow, credits = new WeakMap(), respawning = new WeakMap();
-  // #529: one match-global first-splat bonus per battle. G.match is a fresh Match
-  // instance per battle, so identity resets it; respawns do not. Event eligibility
-  // is claimed before award() applies recipient-specific alive/bot checks.
-  let firstSplatMatch = null, firstSplatClaimed = false;
   function state(a) { a.s3 ||= {}; return a.s3.flow || (a.s3.flow = createFlow()); }
-  function firstSplatBonus() {
-    const p = cfg.progress;
-    return p && +p.firstSplatBonus > 0 ? p.firstSplatBonus * cfg.threshold / p.referenceThreshold : 0;
-  }
-  function award(a, action, value, bonus = 0) {
-    if (!a?.alive || a.isBot && cfg.bots === false || G.match?.attract) return false;
+  function award(a, action, value) {
+    if (!a?.alive || a.isBot && cfg.bots === false || G.match?.attract) return;
     const flow = state(a), before = flow.remaining;
-    const activated = awardFlow(flow, action, value, cfg, bonus);
+    const activated = awardFlow(flow, action, value, cfg);
     if (activated) emit('actor:flow', { actor: a, active: true });
     // The official trigger is entering/extending Flow, rather than a passive
     // stream of paint for the entire active period. Radius remains calibration.
@@ -59,7 +48,6 @@ export function installFlow({ Actor, on, emit, G }, tuning) {
       const p = a.pos.clone(); p.y += 0.15;
       G.paint.splat(p, cfg.paintRadius, a.team, { kind: 'trail', seed: 0.5 });
     }
-    return true;
   }
   const reset = Actor.prototype.reset, respawn = Actor.prototype.respawn;
   Actor.prototype.reset = function (...args) {
@@ -92,20 +80,7 @@ export function installFlow({ Actor, on, emit, G }, tuning) {
     award(attacker, 'damage', amount);
   });
   on('splatted', ({ victim, attacker, cause }) => {
-    if (attacker && attacker !== victim && attacker.team !== victim.team) {
-      let bonus = 0;
-      // Environmental deaths may retain recent attacker credit, but are not the
-      // first player-caused enemy splat. Attract keeps its existing no-award/no-use
-      // behavior; ordinary splat awards still follow their existing path below.
-      if (cause !== 'water' && cause !== 'fall' && !G.match?.attract) {
-        if (firstSplatMatch !== G.match) { firstSplatMatch = G.match; firstSplatClaimed = false; }
-        bonus = firstSplatClaimed ? 0 : firstSplatBonus();
-        // Consume the match event independently of whether `award` can credit this
-        // actor (for example a simultaneous trade or disabled bot).
-        firstSplatClaimed = true;
-      }
-      award(attacker, 'splat', 1, bonus);
-    }
+    if (attacker && attacker !== victim && attacker.team !== victim.team) award(attacker, 'splat', 1);
     for (const [helper, time] of credits.get(victim) || []) if (helper !== attacker && G.time - time <= cfg.assistWindow) award(helper, 'assist', 1);
     credits.delete(victim); penalizeFlowDeath(state(victim), cause, cfg);
   });

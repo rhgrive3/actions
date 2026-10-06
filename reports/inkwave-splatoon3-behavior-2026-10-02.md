@@ -329,19 +329,6 @@ Dedicated source 6/6: 300 render frames at each 30/60/120Hz continue with keyboa
 
 
 
-## フローのファーストスプラット +10fp（#529、2026-10-06）
-
-開始mainは `ecfdd268f70bb7041f81138736b26e42306b630d`。公開対象は `inkwave-public/` と有効な `patches/splatoon3/` であり、旧 `game/` は対象外。本家の実機計測を新たに追加した変更ではない。
-
-| 項目 | 内容 |
-|---|---|
-| 本家の根拠 | Issue #529 が引用する [Inkipedia — Flow Aura](https://splatoonwiki.org/wiki/Flow_Aura) と[wikiwiki イカフロー検証](https://wikiwiki.jp/splatoon3mix/%E6%A4%9C%E8%A8%BC/%E3%82%A4%E3%82%AB%E3%83%95%E3%83%AD%E3%83%BC)：試合の最初の相手スプラットに通常報酬とは別途 **+10 fp**。Ver.11.3.0 のコミュニティ/公開資料根拠であり、今回の変更でSwitch実機を再計測したものではない |
-| INKWAVE の実装箇所 | `patches/splatoon3/runtime/flow.mjs`。`installFlow` は `G.match` の同一性でマッチ単位の資格を管理し、respawn では戻さない。対戦相手のプレイヤー由来イベント（`water` / `fall` の環境死と attract を除く）を受けた時点で資格を消費し、その後に `award()` が生存状態や `flow.bots` による受賞可否を判定する。したがって最初の攻撃者が既に死亡、または無効化された bot でもイベント枠は消費され、後続の人間が誤って +10fp を得ない。通常 splat award の既存ルートは保ち、`awardFlow` はボーナスを通常 splat と同じ gain / activate / idleTime 経路へ渡す。値は `profile.json` の `flow.progress.firstSplatBonus = 10`（fp単位）。`reference/numeric-status.json` にも同じ値と既存の未較正 status を記録。現 profile では正規化後 0.3 score。ロックされた upstream ファイルは変更していない |
-| 再現操作 | 新規マッチで最初の相手プレイヤー splat → 受賞可能な攻撃者に通常報酬（weights.splat）+ 0.3。2体目以降は通常報酬のみ。自己/味方/環境死はボーナス枠を消費しない。死亡中の攻撃者、または `flow.bots=false` で除外された bot が最初の相手 splat を取ると、本人は Flow を受けず枠だけ消費し、後続の人間は通常報酬のみ。respawn は資格を戻さず、新しい `G.match` で資格が戻る。重複 callback のテストは同じイベント callback を installer に再送し +10 が二重にならないことだけを確認し、通常報酬は各 callback で加算される。これはネットワーク配送・base award の冪等性を検証するものではない |
-| プレイへの影響 | 試合開始の初回相手プレイヤー splat を受賞可能な攻撃者が取ると Flow 進行が10fp相当先に進み、到達タイミングが早まる。最初の攻撃者が死亡中または無効 bot ならイベント枠は消費されるが本人には Flow が付かず、後続者へ bonus を移さない。加算は通常 splat と同一 gain のため他の gain を置き換えない。通常 splat 値（#481）、減少（#468）、死亡ペナルティ（#471）は変更していない |
-| 確認状態 | **ロジック確認済み**（`patches/splatoon3/tests/issue-529-first-splat-bonus.test.mjs` 7/7。補正前の回帰 run で dead attacker / disabled bot / attributed water の3 control が失敗し、補正後に通過。`installFlow` 実体＋実 profile、30/60/120Hz 同一結果。重複 callback 確認は +10 の一回性に限定し、network/base-award idempotence は未確認）。死亡中 recipient / disabled bot の event-slot 方針は event と受賞可否を分離する runtime policy で、本家実機の edge-case behavior は未確認。`flow-progress-lifecycle` / `weapons-gear-flow` の focused regression と quick profile validator を別途実行。**Switch Ver.11.3.0 実機での +10fp 効果と fp 尺度の較正は未確認**。weights.splat のキャリブレーションは profile の status どおり未較正のまま。表示・受動効果の実機一致は主張しない |
-
-
 ## Slosher 2F teammate-through grace window (#717, 2026-10-06)
 
 Splatoon 3 Ver. 11.3.0 Standard Slosher (バケットスロッシャー) projectile collision

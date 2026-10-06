@@ -448,7 +448,6 @@
       "fastDecayPerSecond": 3.3,
       "deathPenalty": 5,
       "environmentDeathPenalty": 10,
-      "firstSplatBonus": 10,
       "source": "https://wikiwiki.jp/splatoon3mix/検証/イカフロー",
       "status": "community verification; loss values normalized to existing threshold, award weights remain uncalibrated"
     }
