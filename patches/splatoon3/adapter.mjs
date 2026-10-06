@@ -76,13 +76,6 @@ export function adaptSource(rel, code) {
       '      const winner = Math.abs(pa - pb) < 0.05 ? -1 : pa > pb ? 0 : 1;',
       '      const winner = authoritativeWinner === 0 || authoritativeWinner === 1 ? authoritativeWinner : Math.abs(pa - pb) < 0.05 ? -1 : pa > pb ? 0 : 1;',
       'authoritative Turf winner HUD reveal');
-    // #652: the regular Slosher's normal-battle reticle in Splatoon 3 Ver.
-    // 11.3.0 is a compact circular target marker with surrounding ticks, not
-    // the invented trajectory arch + landing "bucket" bracket this upstream
-    // HUD draws over/under the aim point (nor its per-shot --kk kick stretch).
-    // Dropping the special case makes Slosher fall through to the standard
-    // target reticle. Exact Nintendo pixel radii stay unasserted; every other
-    // weapon's reticle and all projectile/aim physics are untouched.
     code = replaceOnce(code,
       `    } else if (kind === 'slosher') {
       // the lob: an arch over the aim point and a landing "bucket" bracket under it
@@ -98,6 +91,27 @@ export function adaptSource(rel, code) {
     }
     // spawn shield + bomb aim`,
       `    // spawn shield + bomb aim`, 'slosher arch kick writer (#652)');
+    code = replaceOnce(code,
+      '    // per-shot kick (recoil events) on top of the live cone the engine reports in screen px (already includes bloom)',
+      `    // S3 weapon ShotGuide projection: only aiming feedback moves; tank/sub/status remain centred.
+    let guideX = 0, guideY = 0;
+    if (L.kind === 'slosher' || L.kind === 'blaster') {
+      const me = this._local(), cam = G.rig?.gameCam || G.camera;
+      const point = me && cam && G.projectiles?.s3WeaponGuide?.(me, me.weapon);
+      const projected = point ? this._project(cam, point.x, point.y, point.z) : null;
+      if (projected && projected.z < 1) {
+        guideX = projected.x * innerWidth * 0.5;
+        guideY = -projected.y * innerHeight * 0.5;
+      }
+    }
+    const guideKey = \`\${guideX.toFixed(1)}|\${guideY.toFixed(1)}\`;
+    if (guideKey !== L.guide) {
+      L.guide = guideKey;
+      this.xh.style.setProperty('--gx', \`\${guideX.toFixed(1)}px\`);
+      this.xh.style.setProperty('--gy', \`\${guideY.toFixed(1)}px\`);
+    }
+    // per-shot kick (recoil events) on top of the live cone the engine reports in screen px (already includes bloom)`,
+      'Bucket Slosher ShotGuide HUD projection');
     return "import { t as tr } from '../i18n.js';\n" + code;
   }
   if (rel === 'src/ui/ui-icons.js') {
@@ -120,6 +134,28 @@ export function adaptSource(rel, code) {
       '<script>if ("serviceWorker" in navigator && location.protocol === "https:") { addEventListener("load", () => { const root = new URL("./", location.href); navigator.serviceWorker.register(new URL("sw.js", root).href, { scope: root.pathname }).catch(() => {}); }); }</script>\n</body>',
       'pwa service worker');
   }
+  if (rel === 'src/game/nav.js') {
+    // S3 does not reserve a universal radial enemy spawn zone; traversability is stage geometry.
+    code = replaceOnce(code,
+      '          for (let t = 0; t < 2; t++) {\n            const pad = L.spawnPads[t];\n            if (Math.hypot(x - pad.x, z - pad.z) < L.spawnBarrier + 0.6 && y > pad.y - 1) node.zone = t;\n          }',
+      '          // No global spawn-radius navigation exclusion in the S3 composition.',
+      'navigation spawn-radius exclusion');
+
+    // Reuse A* heap backing arrays after warm-up. Logical length resets; storage capacity stays owned by NavGraph.
+    code = replaceOnce(code, '    const heap = new Heap();',
+      '    const heap = this._heap || (this._heap = new Heap()); heap.clear();', 'reusable A* heap');
+    code = replaceOnce(code, '  constructor() { this.ids = []; this.pr = []; }',
+      '  constructor() { this.ids = []; this.pr = []; this.n = 0; }\n  clear() { this.n = 0; }', 'heap logical length');
+    code = replaceOnce(code, '  get size() { return this.ids.length; }',
+      '  get size() { return this.n; }', 'heap logical size');
+    code = replaceOnce(code, '    let i = ids.length; ids.push(id); pr.push(p);',
+      '    let i = this.n++; ids[i] = id; pr[i] = p;', 'heap push reuse');
+    code = replaceOnce(code,
+      '    const top = ids[0];\n    const lid = ids.pop(), lp = pr.pop();\n    if (ids.length) {\n      let i = 0; const n = ids.length;',
+      '    const top = ids[0];\n    const n = --this.n, lid = ids[n], lp = pr[n];\n    if (n) {\n      let i = 0;',
+      'heap pop reuse');
+    return code;
+  }
   if (rel === 'src/game/player.js') {
     const start = code.indexOf('    if (this.onTarget && this.onTarget !== G.boss) {');
     const end = code.indexOf('    // is the crosshair point inside', start);
@@ -130,9 +166,18 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, 'it.fire = inp.mouse.left ||', 'it.fire = inp.mouse.leftPressed || inp.mouse.left ||', 'latched fire input');
     code = replaceOnce(code, "it.sub = inp.mouse.right || inp.down('KeyE')", "it.sub = inp.mouse.rightPressed || inp.wasPressed('KeyE') || inp.mouse.right || inp.down('KeyE')", 'latched sub input');
     code = replaceOnce(code, "it.special = inp.down('KeyF')", "it.special = inp.wasPressed('KeyF') || inp.wasPressed('KeyQ') || inp.down('KeyF')", 'latched special input');
+    // HUD in-range state follows the live charge (a squid-form charge keep counts as its stored charge) via the
+    // installed flight's reach, or native lerp, instead of full-charge reach.
+    code = replaceOnce(code, "    const range = w.kind === 'charger' ? w.rangeMax : w.kind === 'roller' ? 6 : (w.range || 12);",
+      "    const chargeNow = clamp(a.weaponRunner?.s3Stored?.charge ?? a.weaponRunner?.charge ?? 0, 0, 1);\n" +
+      "    const range = w.kind === 'charger' ? (G.projectiles?.chargerReach ? G.projectiles.chargerReach(chargeNow) : w.rangeMin + (w.rangeMax - w.rangeMin) * chargeNow) : w.kind === 'roller' ? 6 : (w.range || 12);",
+      'charger HUD reach follows charge');
     return code;
   }
   if (rel === 'src/game/weapons.js') {
+    // Issue #757: authoritative Storm rain paint samples the same growth/fade-scaled
+    // radius as that tick's visible rain and Boss rain (RNG call order unchanged).
+    code = replaceOnce(code, 'r = Math.sqrt(Math.random()) * sp.radius;', 'r = Math.sqrt(Math.random()) * (sp.radius * s);', 'storm rain paint active radius');
     code = replaceOnce(code,
       '    if (this.flick >= 0) return lerp(w.moveSpeedFiring, w.moveSpeedFiring * 0.45, clamp(this.flick / w.flickWindup, 0, 1));',
       "    if (this.flick >= 0 && w.kind === 'roller') return w.moveSpeedFiring; // S3 swing target is independent of windup progress\n    if (this.flick >= 0) return lerp(w.moveSpeedFiring, w.moveSpeedFiring * 0.45, clamp(this.flick / w.flickWindup, 0, 1));",
@@ -214,6 +259,9 @@ export function adaptSource(rel, code) {
     const end = code.indexOf('    // ---- weapons (', start);
     if (start < 0 || end < start) throw new Error('INKWAVE patch conflict: actor resource connection');
     code = replaceOnce(code, code.slice(start, end), '    updateResources(this, dt);\n\n', 'post-movement resources');
+    code = replaceOnce(code, '    this._spawnBarrier();',
+      '    // S3 Spawners use stage geometry and spawn protection, not a universal radial body clamp.',
+      'S3 universal spawn barrier removal');
     return `import { prepareSuperJump, rememberSuperJumpGround, superJumpTarget, updateSuperJumpMain, SUPERJUMP_MAIN_PROGRESS } from '../../patches/splatoon3/runtime/superjump.mjs';\nimport { beforeActions } from '../../patches/splatoon3/runtime/movement.mjs';\nimport { updateResources } from '../../patches/splatoon3/runtime/resources.mjs';\n` + code;
   }
   if (rel === 'src/game/character-weapons.js') {
