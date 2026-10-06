@@ -1,3 +1,4 @@
+import { adaptBossHit } from './boss-hit-adapter.mjs';
 import { adaptIssue483 } from '../splatoon3/issue-483-adapter.mjs';
 import { adaptSlosherEmergeGate } from '../splatoon3/issue-435-adapter.mjs';
 import { patchLobbySetShowcase } from './issue-472-adapter.mjs';
@@ -48,6 +49,7 @@ import { adaptFinishTape } from './finish-tape-adapter.mjs';
 
 export const QUALITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
 const IDENTITY_FILES = [
+  'boss-hit-adapter.mjs',
   'issue-190-adapter.mjs', 'paint-mipmap-probe.mjs', 'issue-472-adapter.mjs',
   'screenfx-damage-reset-adapter.mjs',
   'fx-actor-lifetime-adapter.mjs',
@@ -105,6 +107,7 @@ function adaptQualityLayer(rel, code) {
   code = adaptScoreReticle(rel, code, replaceOnce);
   code = adaptMapTeammateStatus(rel, code, replaceOnce);
   code = adaptIssue427(rel, code);
+  code = adaptBossHit(rel, code);
   code = adaptIssue460Source(rel, code);
   code = adaptIssue461Source(rel, code);
   code = adaptAimProfiles(rel, code);

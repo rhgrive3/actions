@@ -1,3 +1,4 @@
+import { adaptMatchHud } from './match-hud-adapter.mjs';
 import { adaptChargerSurface } from './charger-surface-adapter.mjs';
 import { adaptGearSub } from './gear-sub-adapter.mjs';
 import { adaptContactRecovery } from './contact-recovery-adapter.mjs';
@@ -48,6 +49,7 @@ export function adaptSource(rel, code) {
   code = adaptChargerSurface(rel, code, replaceOnce);
   code = adaptGearSub(rel, code, replaceOnce);
   code = adaptContactRecovery(rel, code, replaceOnce);
+  code = adaptMatchHud(rel, code);
   code = adaptScoreHud(rel, code);
   code = adaptRespawnLifecycle(rel, code, replaceOnce);
   if (rel !== 'src/game/weapons.js') code = adaptStormEffects(rel, code);
