@@ -54,7 +54,8 @@ test('enemy contact suppresses health recovery even while its damage grace is ac
 test('contact ink remains nonlethal and bounded, including return after leaving it', async () => {
   const f = await fixture(), a = f.make(); a.hp = 20; f.G.paint.sample = () => 2;
   f.tick(a, 180); close(a.hp, 1); close(a.damageFromInk, f.profile.resources.enemyInkDamageCap);
-  a.damage(2, null, 'shooter'); assert.equal(a.alive, false);
+  a.damage(2, null, 'shooter'); assert.equal(a.alive, true, 'lethal decision is pending for one fixed tick');
+  f.tick(a); assert.equal(a.alive, false);
 });
 
 test('refill predicates distinguish own ink, wall, dry/enemy squid, and stored charge', async () => {
@@ -63,7 +64,7 @@ test('refill predicates distinguish own ink, wall, dry/enemy squid, and stored c
   f.G.paint.sample = () => 2; f.tick(a, 5); close(a.ink, 0);
   f.G.paint.sample = () => 1; a.intent.fire = true; a.weaponRunner.s3Stored = { charge: 1, remaining: 1 };
   f.tick(a, 5); close(a.ink, 0);
-  a.weaponRunner.s3Stored = null; a.climbing = true; a._updateClimb = () => {}; a.grounded = false;
+  a.weaponRunner.s3Stored = null; a.intent.fire = false; a.climbing = true; a._updateClimb = () => {}; a.grounded = false;
   f.tick(a); close(a.ink, f.profile.resources.inkRefillSwim / 60);
 });
 
@@ -74,11 +75,12 @@ test('recover-stop countdown stays tied to actor ticks and refill starts at its 
   f.tick(a); close(a.ink, f.profile.resources.inkRefillSwim / 60);
 });
 
-test('consecutive roll momentum applies one retention coefficient per new launch', () => {
-  let speed = 20;
+test('consecutive roll momentum compounds from the previous retained launch', () => {
+  let previous = 0;
   for (let chain = 0; chain < 4; chain++) {
-    speed = rollLaunchSpeed(speed, chain, .85);
-    close(speed, 20 * .85 ** Math.max(0, chain));
+    const speed = rollLaunchSpeed(20, chain, .85, previous);
+    close(speed, 20 * .85 ** chain);
+    previous = speed;
   }
 });
 
@@ -141,7 +143,8 @@ test('super jump uses raw preparation/flight times and grants no landing protect
 test('a targeted jump can be splatted during preparation', async () => {
   const f = await fixture(), a = f.make(); a._probeGround = () => {};
   a.superJump(new f.THREE.Vector3(0, 0, 10)); f.tick(a, 1);
-  a.damage(100, null, 'shooter'); assert.equal(a.alive, false);
+  a.damage(100, null, 'shooter'); assert.equal(a.alive, true);
+  f.tick(a); assert.equal(a.alive, false);
 });
 
 for (const hz of [20, 30, 60, 120, 144]) {
