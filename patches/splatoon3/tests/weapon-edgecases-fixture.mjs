@@ -8,7 +8,7 @@ import { adaptSource } from '../adapter.mjs';
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const SITE = process.env.INKWAVE_EDGECASE_SITE;
 const UPSTREAM = SITE || process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
-export async function fixture() {
+export async function fixture({ adapt = adaptSource } = {}) {
   const math = Object.create(Math); math.random = Math.random;
   const context = vm.createContext({ console, performance, Math: math });
   const modules = new Map();
@@ -24,7 +24,7 @@ export async function fixture() {
   function load(file) {
     if (modules.has(file)) return modules.get(file);
     const relative = path.relative(UPSTREAM, file);
-    const source = !SITE && file.startsWith(UPSTREAM + path.sep) ? adaptSource(relative, fs.readFileSync(file, 'utf8')) : fs.readFileSync(file, 'utf8');
+    const source = !SITE && file.startsWith(UPSTREAM + path.sep) ? adapt(relative, fs.readFileSync(file, 'utf8')) : fs.readFileSync(file, 'utf8');
     const mod = new vm.SourceTextModule(source, { context, identifier: file }); modules.set(file, mod); return mod;
   }
   const root = new vm.SourceTextModule(`
