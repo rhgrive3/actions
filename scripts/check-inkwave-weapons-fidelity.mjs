@@ -105,7 +105,8 @@ async function wallDropCase(id, dt = 1/60, ghost = false, { duplicateBurst = fal
   else if (id === 'splatling') {
     a.weaponRunner.fidelitySplatlingCharge = 1;
     f.projectiles.fireSplatling(a,a.weapon,0);
-  } else {
+  } else if (id === 'dualies') f.projectiles.fireDualies(a,a.weapon,0,0);
+  else {
     a.weaponRunner.s3FlickVertical = id === 'roller-vertical';
     f.projectiles.fireFlick(a,a.weapon);
   }
@@ -146,6 +147,7 @@ async function wallDropCase(id, dt = 1/60, ghost = false, { duplicateBurst = fal
 const wallExpected={
   blaster:{first:[15,30],second:35,last:[20,35],speeds:[.07,.04],radii:[1.3,1,.6]},
   splatling:{first:[15,30],second:5,last:[15,30],speeds:[.06,.06],radii:[1.3,.65,.6]},
+  dualies:{first:[20,40],second:10,last:[15,35],speeds:[.06,.06],radii:[1.3,.65,.6]},
   'roller-horizontal-main':{first:[60,80],second:5,last:[20,35],speeds:[0,.08],radii:[0,0,.5]},
   'roller-horizontal-near':{first:[60,80],second:5,last:[20,35],speeds:[.06,.08],radii:[1.3,.65,.5]},
   'roller-vertical':{first:[60,80],second:5,last:[20,35],speeds:[.08,.10],radii:[1.4,.7,.65]},
@@ -192,6 +194,8 @@ assert.deepEqual(cadence,[cadence[0],cadence[0],cadence[0]],'wall-drop source pe
 // seed chooses the same first/last source-frame periods.
 const ghost=await wallDropCase('splatling',1/60,true);
 assert.equal(ghost.f.paints.length,0,'ghost wall-drop cannot mutate turf');
+const ghostDualies=await wallDropCase('dualies',1/60,true);
+assert.equal(ghostDualies.f.paints.length,0,'ghost Dualies wall-drop cannot mutate turf');
 
 // Player contact remains terminal projectile damage, not terrain wall-drop.
 {
@@ -275,4 +279,4 @@ assert.equal(ghost.f.paints.length,0,'ghost wall-drop cannot mutate turf');
   assert.equal(f.paints.length,0,'network ghost wall-drop remains non-authoritative for turf');
  }
 
-console.log(JSON.stringify({status:'passed',contentHash:data.artifactIdentity.contentHash,cases:Object.keys(golden).length,networkModes:3,wallDropFamilies:3,wallDropCases:Object.keys(wallExpected).length,completion:'finite-charger-continuous-collision-wall-drop'}));
+console.log(JSON.stringify({status:'passed',contentHash:data.artifactIdentity.contentHash,cases:Object.keys(golden).length,networkModes:3,wallDropFamilies:4,wallDropCases:Object.keys(wallExpected).length,completion:'finite-charger-continuous-collision-wall-drop'}));
