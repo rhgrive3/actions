@@ -44,11 +44,20 @@ near(data.runner['charger-1'].inkSpent,18);
 for (const key of ['shooter','roller-horizontal','roller-vertical']) {
   const c = CASES.find(x => x.key === key);
   const f = await fixture({ site, fidelity:true, floor:false, network:true });
-  const a = reset(f,c); a.nid=42; const packets=[];
-  const network={mute:0,_rec:e=>packets.push([0,...e]),recProj:f.NetMatch.prototype.recProj,recSplat(){},shouldApplyHit:f.NetMatch.prototype.shouldApplyHit};
-  f.G.netm=network; launch(f,a,c); const locals=[...f.projectiles.list];
+  const a = reset(f,c); a.nid=42;
+  // Use the installed recorder, including the existing birth metadata and
+  // owner-tick/sequence footer. This adds no protocol fields or runtime changes.
+  const network={mute:0,out:[],_rec:f.NetMatch.prototype._rec,recProj:f.NetMatch.prototype.recProj,recSplat(){},shouldApplyHit:f.NetMatch.prototype.shouldApplyHit};
+  f.G.netm=network; launch(f,a,c); const locals=[...f.projectiles.list], packets=network.out;
   assert.equal(packets.length,locals.length,key);
-  assert.equal(packets.every(p=>p.length===27),true,key+' packet shape');
+  for (const [i,p] of packets.entries()) {
+    assert.equal(p.length,32,key+' complete installed packet shape');
+    assert.equal(p[27],locals[i].s3Vertical?1:0,key+' birth mode');
+    assert.equal(p[28],locals[i].seed,key+' appearance seed');
+    assert.equal(p[29],locals[i]._netId,key+' projectile identity');
+    assert.equal(p[30],Math.round((f.G.time||0)*60),key+' owner tick');
+    assert.equal(p[31],i+1,key+' event sequence');
+  }
   const ghost=f.make(c.id,{name:'remote'}); ghost.remote=true; f.projectiles.list.length=0;
   packets.forEach(e=>f.projectiles.ghostProjectile(ghost,e)); const ghosts=[...f.projectiles.list];
   assert.equal(ghosts.length,locals.length,key);
