@@ -130,3 +130,68 @@ test('#729 30/60/120 Hz render cadence keeps the one-fixed-tick ordering', async
   }
   assert.deepEqual(deltas, [1, 1, 1], 'the blast is exactly one fixed frame after contact at every render cadence');
 });
+
+test('#729 Projectiles.clear() drops pending terrain blast without resolving; rematch/next tick applies no stale damage or paint and fresh shot bursts at N+1', async () => {
+  const s = await scene({ axis: 'z', victim: AIR_VICTIM, shot: wallShot });
+  const splats = [];
+  s.f.G.paint.splat = (...args) => { splats.push(args); return 1.5; };
+  s.f.G.physics.raycast = (_from, _dir, _dist, out = new s.f.Hit()) => {
+    out.hit = true;
+    out.point.set(0, 0, WALL);
+    out.normal.set(0, 1, 0);
+    return out;
+  };
+
+  while (s.ev.contact < 0 && s.tick() < 30) s.step();
+  assert.ok(s.ev.contact > 0, 'the initial projectile reached the wall');
+  assert.equal(s.ps.s3BlastQueue?.length, 1, 'terrain contact queues 1 pending blast');
+  assert.equal(s.ev.boom.length, 0, 'no radial explosion in contact tick');
+  assert.equal(s.e.hp, 100, 'no radial damage in contact tick');
+  assert.equal(splats.length, 1, 'only contact impact paint in contact tick, no burst paint yet');
+
+  // Rematch / round reset clears projectiles
+  s.ps.clear();
+  assert.equal(s.ps.s3BlastQueue, null, 'clear drops s3BlastQueue without resolving');
+  assert.equal(s.ps.list.length, 0, 'projectile list is cleared');
+
+  // Next tick (the old N+1 tick) must NOT execute the old blast
+  s.step();
+  assert.equal(s.ev.boom.length, 0, 'no stale explosion FX after clear');
+  assert.equal(s.e.hp, 100, 'no stale blast damage after clear');
+  assert.equal(splats.length, 1, 'no stale burst paint splat after clear');
+  assert.equal(s.ps.s3BlastQueue, null, 'queue remains empty and retains no actor references');
+
+  // Fresh re-entry / new launch in the new match
+  const freshShooter = s.f.make('blaster');
+  freshShooter.team = 0;
+  const freshP = s.ps._new();
+  Object.assign(freshP, { type: 'blast', owner: freshShooter, team: 0, radius: 1, seed: .5, wid: 'blaster',
+    damage: 40, size: .35, age: 0, life: 5, straight: 999, grav: 0, drag: 0, trailEvery: 0, delay: 0 });
+  wallShot(freshP);
+  freshP.prev.copy(freshP.pos); freshP.start.copy(freshP.pos);
+  s.ps.list.push(freshP);
+
+  let freshContact = -1;
+  const origSegment = s.f.G.physics.segment;
+  s.f.G.physics.segment = (from, to, out) => {
+    const res = origSegment(from, to, out);
+    if (res.hit && freshContact < 0) freshContact = s.tick();
+    return res;
+  };
+
+  while (freshContact < 0 && s.tick() < 60) s.step();
+  assert.ok(freshContact > 0, 'fresh projectile reached the wall');
+  assert.equal(s.ps.s3BlastQueue?.length, 1, 'fresh terrain contact queues 1 blast');
+  assert.equal(s.ev.boom.length, 0, 'no explosion at fresh contact tick N');
+  assert.equal(s.e.hp, 100, 'no damage at fresh contact tick N');
+  assert.equal(splats.length, 2, 'fresh contact has impact paint only');
+
+  // Next fixed frame (tick N+1 for fresh shot)
+  s.step();
+  assert.equal(s.tick(), freshContact + 1, 'fresh burst resolves at N+1');
+  assert.equal(s.ev.boom.length, 1, 'fresh burst explosion FX fired at N+1');
+  assert.ok(s.e.hp < 100, 'fresh burst damage applied at N+1');
+  assert.equal(splats.length, 3, 'fresh burst paint splat applied at N+1');
+  assert.ok(!s.ps.s3BlastQueue?.length, 'queue is drained after resolution');
+});
+
