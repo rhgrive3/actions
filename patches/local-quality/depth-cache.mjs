@@ -33,6 +33,14 @@ export function createDepthCache(gl, width, height, type) {
 }
 export function installDepthOnlyShadowCache(ShadowCache) {
   const p = ShadowCache.prototype, nativeFbo = p._fbo, nativeRender = p._render;
+  const nativeSetStaticRoots = p.setStaticRoots;
+  p.setStaticRoots = function (roots) {
+    const result = nativeSetStaticRoots.call(this, roots);
+    // A disabled shadow pass may never rebuild. Root ownership must retire
+    // the previous caster graph immediately, independently of GPU rendering.
+    this.static.length = 0;
+    return result;
+  };
   p._fbo = function (rt) { return rt?.valid ? (rt.valid() ? rt.framebuffer : null) : rt ? nativeFbo.call(this, rt) : null; };
   p._ensureCache = function (width, height, type) {
     if (this.cache?.width === width && this.cache.height === height && this.cache.depthType === type && this.cache.valid()) return;

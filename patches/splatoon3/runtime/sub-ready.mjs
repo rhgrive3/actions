@@ -2,19 +2,22 @@ import { chargerPostShotBlocksSub } from './weapon-gates.mjs';
 export function subThrowSpec(a, base) { return { ...base, throwSpeed: base.throwSpeed * (a.s3?.modifiers?.subPower ?? 1) }; }
 export function subInkSpec(a, base) { return { ...base, inkCost: base.inkCost * (a.s3?.modifiers?.inkSaverSub ?? 1) }; }
 const EPS=1e-10;
+// Captured cancellation→trajectory-start interval (v10.0.1 FC/NC table).
+// Separate from emitted-shot15F and from the bomb's own preparation time.
+const CHARGER_CANCEL_SUB = 5 / 60;
 export function installSubReady({Actor,WeaponRunner,SUB},profile){
  const tag=Symbol.for('inkwave.s3.sub-ready.v1'),wr=WeaponRunner.prototype;
  if(wr[tag])return;Object.defineProperty(wr,tag,{value:true});
  const cancel=r=>{r.s3SubReady=null;r.s3SubFromSquid=false;r.aimingSub=false;};
  const cancelInput=wr.cancelPendingInput;
- wr.cancelPendingInput=function(...args){cancel(this);return cancelInput?.apply(this,args);};
+ wr.cancelPendingInput=function(...args){this.s3ChargerCancelSubRemaining=0;cancel(this);return cancelInput?.apply(this,args);};
  const reset=wr.reset,busy=wr.busy,update=wr.update;
- wr.reset=function(...args){cancel(this);return reset.apply(this,args);};
- wr.busy=function(){return !!this.s3SubReady?.pending||busy.call(this);};
+ wr.reset=function(...args){this.s3ChargerCancelSubRemaining=0;cancel(this);return reset.apply(this,args);};
+ wr.busy=function(){return this.s3ChargerCancelSubRemaining>EPS||!!this.s3SubReady?.pending||busy.call(this);};
  const actorUpdate=Actor.prototype.update,start=Actor.prototype._startSpecial;
  Actor.prototype.update=function(dt,...args){
   const r=this.weaponRunner;
-  if(!this.alive||this.specialActive||this.superJumpState)cancel(r);
+  if(!this.alive||this.specialActive||this.superJumpState){r.s3ChargerCancelSubRemaining=0;cancel(r);}
   else {
    if(!r.s3SubReady&&this.intent.sub&&this.form==='squid')r.s3SubFromSquid=true;
    if(r.s3SubReady&&this._prevIntent.sub&&!this.intent.sub){
@@ -24,10 +27,20 @@ export function installSubReady({Actor,WeaponRunner,SUB},profile){
   }
   return actorUpdate.call(this,dt,...args);
  };
- Actor.prototype._startSpecial=function(...args){cancel(this.weaponRunner);return start.apply(this,args);};
+ Actor.prototype._startSpecial=function(...args){this.weaponRunner.s3ChargerCancelSubRemaining=0;cancel(this.weaponRunner);return start.apply(this,args);};
  wr.update=function(dt,input){
   const a=this.a;
-  if(!a.alive||a.specialActive||a.superJumpState){cancel(this);return update.call(this,dt,{...input,sub:false,subReleased:false});}
+  if(!a.alive||a.specialActive||a.superJumpState){this.s3ChargerCancelSubRemaining=0;cancel(this);return update.call(this,dt,{...input,sub:false,subReleased:false});}
+  this.s3ChargerCancelSubRemaining=Math.max(0,(this.s3ChargerCancelSubRemaining||0)-Math.max(0,dt));
+  if(a.weapon.kind==='charger'&&input.sub&&this.charging&&!this.s3Stored&&dt>0){
+   // Use the existing main cancellation owner; paid ink is not refunded.
+   this.cancelMainForSub();cancel(this);
+   this.s3ChargerCancelSubRemaining=CHARGER_CANCEL_SUB;
+  }
+  if(this.s3ChargerCancelSubRemaining>EPS){
+   cancel(this);
+   return update.call(this,dt,{...input,fire:input.sub?false:input.fire,sub:false,subReleased:false});
+  }
   if(chargerPostShotBlocksSub(this)){
    cancel(this);return update.call(this,dt,{...input,sub:false,subReleased:false});
   }

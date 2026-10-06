@@ -41,11 +41,11 @@ test('reset and death retire the existing shot clock and pending sub state',asyn
   h.step(false,false);assert.equal(h.r.s3ChargerPostShot,0);assert.equal(h.r.s3SubReady,null);assert.equal(h.r.aimingSub,false);assert.deepEqual(h.throws,[]);
  }
 });
-test('non-fired release cancellation retains its separate contract and creates no post-shot gate',async()=>{
+test('non-fired release cancellation uses its5F gate and creates no post-shot gate',async()=>{
  const f=await fixture({site:`${ROOT}.charger-sub-source`,fidelity:true}),a=f.make('charger');f.G.actors=[a];
- for(let t=1;t<=3;t++){a.intent.fire=t===1;a.intent.sub=t>=2;f.G.time+=STEP;a.update(STEP);}
+ for(let t=1;t<=8;t++){a.intent.fire=t<=2;a.intent.sub=t>=3;f.G.time+=STEP;a.update(STEP);if(t<8)assert.equal(a.weaponRunner.aimingSub,false);}
  assert.equal(f.projectiles._fidelityChargerFlights?.length||0,0);assert.equal(a.weaponRunner.s3ChargerPostShot,0);
- assert.equal(a.weaponRunner.aimingSub,true,'charge-interruption timing remains the separate #844 root');
+ assert.equal(a.weaponRunner.aimingSub,true,'the separate #844 interruption gate has elapsed');
 });
 
 test('visual ghost flight never starts a local post-shot or SubReady clock',async()=>{
