@@ -22,6 +22,31 @@ export function validateIdleResult(r) {
   if(r.errors?.length||!r.gpu?.webgl?.startsWith('WebGL 2.0')||!r.gpu.renderer)throw Error('Browser/GPU errors');
   return {cloudMiB:[10,2.5],farTransitions:4,pausedWorldRenders:'1/120',mutedSchedulerTicks:0};
 }
+// Serialized into the cold page. Preserve the allocation observer contract while
+// retaining its stage for failures before the public Game/debug hook exists.
+export async function observeColdEnvironment(url) {
+ const trace=window.__coldResourceProbe={phase:'importing-context'};
+ const {G}=await import(url);
+ trace.phase='observing-environment';
+ trace.snapshot=()=>({hasEnvironment:!!G.env,hasGame:!!G.game,hasRenderer:!!G.renderer,hasMenus:!!G.menus,menu:G.menus?.current||null,quality:G.settings?.quality||null,touch:G.mobile?.touch===true,mode:G.mode||null});
+ const capture=env=>{if(env){trace.phase='captured';window.__coldEnvironment={quality:G.settings?.quality,touch:G.mobile?.touch===true,gamePublishedAtAllocation:!!G.game,marina:env._marina===true,cloud:[env._cloudRT?.width,env._cloudRT?.height],farSize:env._farRT?.width,cloudId:env._cloudRT?.texture.uuid,farId:env._farRT?.texture.uuid};}};
+ // Module ordering may publish Environment before the main.js response is
+ // observed. That is still a valid cold-allocation observation iff Game
+ // has not been published yet; capture it immediately instead of waiting
+ // forever for a setter that already fired.
+ if(G.env){if(G.game)throw Error('Cold observer installed after Game publication');capture(G.env);return;}
+ if(G.game)throw Error('Cold Game published before Environment observation');
+ const original=Object.getOwnPropertyDescriptor(G,'env')||{configurable:true,enumerable:true,writable:true,value:undefined};let value=G.env;
+ Object.defineProperty(G,'env',{configurable:true,enumerable:original.enumerable,get:()=>value,set:env=>{
+  value=env;capture(env);
+  Object.defineProperty(G,'env',{...original,value:env});
+ }});
+}
+export function inspectColdBoot() {
+ const p=window.__coldResourceProbe;
+ return {observerPhase:p?.phase||null,context:p?.snapshot?.()||null,hasPublicContext:!!window.__G,hasPublicGame:!!window.__G?.game,hasColdEnvironment:!!window.__coldEnvironment,coldEnvironment:window.__coldEnvironment||null,readyState:document.readyState,visibility:document.visibilityState,focused:document.hasFocus(),screen:document.querySelector('.iw-ui')?.dataset.screen||null,loadingText:document.querySelector('.iw-loading')?.textContent?.slice(0,600)||null};
+}
+
 async function main(){
  const option=n=>{const i=process.argv.indexOf(n);if(i<0||!process.argv[i+1])throw Error('Required '+n);return path.resolve(process.argv[i+1]);};
  const site=fs.realpathSync(option('--site')),output=option('--evidence-dir'),profile=option('--profile-dir');
@@ -127,9 +152,10 @@ async function main(){
   for(const f of ['patches/local-quality/idle-resources.mjs','patches/local-quality/music-idle.mjs'])if(![...loaded].some(p=>p.endsWith('/'+f)))throw Error('Runtime module not actually loaded: '+f);
   phase='cold-boot-mobile';
   const coldContext=await browser.browser().newContext({viewport:{width:844,height:390},hasTouch:true,isMobile:true});
+  const coldPage=await coldContext.newPage();let hooked=false,mainReleased=false,coldError=null;const coldLoaded=new Set();
   try {
-   const coldPage=await coldContext.newPage();let hooked=false;const coldLoaded=new Set();
    coldPage.on('pageerror',e=>errors.push('cold boot: '+e.message));
+   coldPage.on('console',m=>{if(m.type()==='error')errors.push('cold boot console: '+m.text().slice(0,1500));});
    await coldPage.addInitScript(()=>localStorage.setItem('inkwave.settings',JSON.stringify({quality:'high',shadows:false,bloom:false,music:0,sfx:0})));
    await coldPage.route(address+'**',async route=>{
     try {
@@ -140,23 +166,10 @@ async function main(){
       hooked=true;
       // Observe the real G.env publication before the unmodified main module
       // executes. No constructor, target factory, budget, or served bytes change.
-      await coldPage.evaluate(async url=>{
-       const {G}=await import(url);
-       const capture=env=>{if(env)window.__coldEnvironment={quality:G.settings?.quality,touch:G.mobile?.touch===true,gamePublishedAtAllocation:!!G.game,marina:env._marina===true,cloud:[env._cloudRT?.width,env._cloudRT?.height],farSize:env._farRT?.width,cloudId:env._cloudRT?.texture.uuid,farId:env._farRT?.texture.uuid};};
-       // Module ordering may publish Environment before the main.js response is
-       // observed. That is still a valid cold-allocation observation iff Game
-       // has not been published yet; capture it immediately instead of waiting
-       // forever for a setter that already fired.
-       if(G.env){if(G.game)throw Error('Cold observer installed after Game publication');capture(G.env);return;}
-       if(G.game)throw Error('Cold Game published before Environment observation');
-       const original=Object.getOwnPropertyDescriptor(G,'env')||{configurable:true,enumerable:true,writable:true,value:undefined};let value=G.env;
-       Object.defineProperty(G,'env',{configurable:true,enumerable:original.enumerable,get:()=>value,set:env=>{
-        value=env;capture(env);
-        Object.defineProperty(G,'env',{...original,value:env});
-       }});
-      },new URL('./core/ctx.js',response.url()).href);
+      await coldPage.evaluate(observeColdEnvironment,new URL('./core/ctx.js',response.url()).href);
      }
      await route.fulfill({response,body});
+     if(key.endsWith('/src/main.js'))mainReleased=true;
     }catch(error){errors.push('cold boot route: '+error.message);await route.abort();}
    });
    await coldPage.goto(address+'?devstage&skipTitle&map=halyard',{waitUntil:'domcontentloaded'});
@@ -164,7 +177,15 @@ async function main(){
    result.coldBoot=await coldPage.evaluate(()=>{const G=window.__G,c=window.__coldEnvironment;G.game.debug.freeze();return {...c,sameTargetsAfterBoot:c.cloudId===G.env._cloudRT?.texture.uuid&&c.farId===G.env._farRT?.texture.uuid};});
    if(!hooked||![...coldLoaded].some(p=>p.endsWith('/src/world/environment.js')))throw Error('Cold native Environment bytes not observed');
    await coldPage.screenshot({path:path.join(output,'cold-boot-mobile-halyard.png'),animations:'disabled'});
-  } finally {await coldContext.close();}
+  } catch(error) {
+   coldError=error;
+   const diagnostic=result.coldDiagnostic={hooked,mainReleased,loaded:[...coldLoaded].sort()};
+   let timer;
+   try {diagnostic.page=await Promise.race([coldPage.evaluate(inspectColdBoot),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Cold diagnostic evaluation timed out')),10000);})]);}
+   catch(inspectError){diagnostic.inspectionError=String(inspectError);}finally{clearTimeout(timer);}
+   try{await coldPage.screenshot({path:path.join(output,'cold-boot-failure.png'),timeout:15000});}catch(captureError){diagnostic.screenshotError=String(captureError);}
+   throw error;
+  } finally {try{await coldContext.close();}catch(closeError){if(!coldError)throw closeError;result.coldDiagnostic.closeError=String(closeError);}}
   result.errors=errors;const summary=validateIdleResult(result);
   publish({status:'passed',...result,summary,sourceSha:identity.source.sourceSha,contentHash:manifest.contentHash,verifierSha256:sha(fs.readFileSync(fileURLToPath(import.meta.url))),browser:browser.browser()?.version()});
  }catch(error){publish({status:'failed',phase,error:error.stack,errors,result,sourceSha:identity?.source.sourceSha,contentHash:identity?.manifest.contentHash});if(page)await page.screenshot({path:path.join(output,'failure.png')}).catch(()=>{});throw error;}

@@ -1,3 +1,4 @@
+import { blockExpiredGuestInput } from '../../splatoon3/runtime/turf-finish.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -27,7 +28,7 @@ async function rig() {
  const native=code('src/game/match.js');
  // The Node fixture extracts Match from composed source; canonical browser acceptance also executes the actual emitted Match export.
  const source=BUILT?adaptQualitySource('src/game/match.js',adaptReliability('src/game/match.js',adaptTouchLayout('src/game/match.js',adaptSource('src/game/match.js',fs.readFileSync(path.join(root,'inkwave-public/src/game/match.js'),'utf8'))))):native;
- const Match=vm.runInNewContext(`class Match {${method(source,'  updateController(dt) {','\n  _judge() {')}}; Match`);
+ const Match=vm.runInNewContext(`class Match {${method(source,'  updateController(dt) {','\n  _judge() {')}}; Match`,{blockExpiredGuestInput});
  const m={state:'playing',paused:false,attract:false,local:a,controller:c,playing:()=>m.state==='playing'&&!m.paused,canRespawn:()=>false,updateController:Match.prototype.updateController};f.G.match=m;
  function frame(held=[],mapping='standard'){f.setPads(pad(held,mapping));input.pollPad();m.updateController(STEP);input.endFrame();}
  function dead(){a.splat(null,'water');assert.equal(a.alive,false);}
@@ -67,12 +68,12 @@ test('#533 gyro hover feeds existing standard A confirmation; D-pad can replace 
  const h=await setup();h.motion(.01,0);h.ui.update(STEP,1);
  const pin=h.ui.pins[1];h.ui.cx=pin.x/1000;h.ui.cy=(pin.y-34)/700;h.ui.update(STEP,1);assert.equal(h.c.mapGyroTarget.actor,h.allies[1]);
  // No launch merely from motion hover, and the existing physical A edge admits once.
- assert.equal(h.a.superJumpState,null);h.frame([1]);assert.equal(h.a.superJumpState?.target,h.allies[1]);
- const q=await setup();q.c._mapGyroCursor=true;q.c.mapGyroTarget={actor:q.allies[1]};q.input.mobile.gyro.dYaw=.02;q.frame([14]);q.ui.update(STEP,1);assert.equal(q.c._mapGyroCursor,false);assert.equal(q.c.padJumpTarget.actor,q.allies[0]);q.frame([1]);assert.equal(q.a.superJumpState?.target,q.allies[0]);
+ assert.equal(h.a.superJumpState,null);h.frame([1]);assert.ok(h.a.superJumpState?.target.equals(h.allies[1].pos));
+ const q=await setup();q.c._mapGyroCursor=true;q.c.mapGyroTarget={actor:q.allies[1]};q.input.mobile.gyro.dYaw=.02;q.frame([14]);q.ui.update(STEP,1);assert.equal(q.c._mapGyroCursor,false);assert.equal(q.c.padJumpTarget.actor,q.allies[0]);q.frame([1]);assert.ok(q.a.superJumpState?.target.equals(q.allies[0].pos));
 });
 test('#533 dead gyro selection queues until landing through the existing A path',async()=>{
  const h=await setup(true);h.motion(.01,0);h.ui.update(STEP,1);const pin=h.ui.pins[1];h.ui.cx=pin.x/1000;h.ui.cy=(pin.y-34)/700;h.ui.update(STEP,1);
- h.frame([1]);assert.equal(h.c.pendingRespawnJump?.actor,h.allies[1]);assert.equal(h.a.superJumpState,null);h.a.respawn();h.a.grounded=true;h.m.updateController(STEP);assert.equal(h.a.superJumpState?.target,h.allies[1]);
+ h.frame([1]);assert.equal(h.c.pendingRespawnJump?.actor,h.allies[1]);assert.equal(h.a.superJumpState,null);h.a.respawn();h.a.grounded=true;h.m.updateController(STEP);assert.ok(h.a.superJumpState?.target.equals(h.allies[1].pos));
 });
 test('#533 a removed or splatted gyro-selected target cannot launch',async()=>{
  for(const mode of ['removed','dead']){const h=await setup();h.c._mapGyroCursor=true;h.c.mapGyroTarget={actor:h.allies[1]};if(mode==='removed')h.G.actors=h.G.actors.filter(a=>a!==h.allies[1]);else h.allies[1].alive=false;h.frame([1]);assert.equal(h.a.superJumpState,null);}
@@ -113,5 +114,5 @@ for(const dead of [false,true])test(`#523 + #533 emitted defaults hide corner ma
  h.motion(delta(h.ui.cx,pin.x/1000,e[0]),delta(h.ui.cy,(pin.y-34)/700,e[5]));h.ui.update(STEP,1);hud();
  assert.deepEqual([h.camera.yaw,h.camera.pitch],pose);assert.equal(h.c.mapGyroTarget.actor,h.allies[1]);assert.equal(h.a.superJumpState,null);
  h.frame([1]);if(dead){assert.equal(h.c.pendingRespawnJump?.actor,h.allies[1]);h.a.respawn();h.a.grounded=true;h.m.updateController(STEP);}
- assert.equal(h.a.superJumpState?.target,h.allies[1]);hud();assert.equal(hidden,3);assert.equal(shown,0);
+ assert.ok(h.a.superJumpState?.target.equals(h.allies[1].pos));hud();assert.equal(hidden,3);assert.equal(shown,0);
 });

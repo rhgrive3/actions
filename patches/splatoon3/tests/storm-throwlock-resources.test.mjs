@@ -2,6 +2,14 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from './source-fixture.mjs';
 
+const THROW_MAX_TICKS = Math.ceil(.35 * 60) + 1;
+function armThrow(f,a) {
+  assert.equal(a.specialActive?.phase,'hold');
+  a.intent.special=false;a.intent.sub=true;f.tick(a);
+  assert.equal(a.specialActive.phase,'hold');assert.equal(a.specialActive.subArmed,true);
+  a.intent.sub=false;
+}
+
 const close = (actual, expected, msg = '') =>
   assert.ok(Math.abs(actual - expected) < 1e-5, `${actual} != ${expected} (diff: ${Math.abs(actual - expected)}) ${msg}`);
 
@@ -37,10 +45,11 @@ test('vulnerable Storm throw-state window applies normal passive enemy-ink damag
   assert.equal(a.specialActive?.id, 'storm');
   assert.equal(a.specialActive?.armor, false);
 
-  // 3. Step through entire storm throw lock
+  armThrow(f,a);
+  // 3. The first update consumes a real R release; the existing throw lifetime is bounded.
   let stormTicks = 0;
   const hpStart = a.hp;
-  while (a.specialActive) {
+  for (let tick=0; a.specialActive && tick<THROW_MAX_TICKS; tick++) {
     stormTicks++;
     const prevHp = a.hp;
     const prevTime = a.s3.enemyInkTime;
@@ -49,6 +58,7 @@ test('vulnerable Storm throw-state window applies normal passive enemy-ink damag
     close(a.s3.enemyInkTime, prevTime + 1 / 60);
   }
 
+  assert.equal(a.specialActive,null,'throw ends within the native .35s boundary');
   // 21-22 ticks elapsed, continuous damage applied
   assert.ok(stormTicks >= 21 && stormTicks <= 22);
   close(hpStart - a.hp, stormTicks * 0.3);
@@ -65,14 +75,16 @@ test('#624 Storm resource update runs once on activation, first/last lock, and f
 
     // The real Actor.update runs at 60 Hz under each render cadence.
     for (let frame = 0; frame < hz / 2; frame++) clock.advance(1 / hz, dt => {
+      a.intent.sub = clock.ticks === 1;
       const before = a.specialActive?.id ?? null;
+      const beforePhase = a.specialActive?.phase ?? null;
       const hpBefore = a.hp;
       const damageBefore = a.damageFromInk;
       const timeBefore = a.s3?.enemyInkTime || 0;
       f.G.time += dt;
       a.update(dt);
       rows.push({
-        before,
+        before, beforePhase, afterPhase:a.specialActive?.phase??null,
         after: a.specialActive?.id ?? null,
         hpDelta: hpBefore - a.hp,
         damageDelta: a.damageFromInk - damageBefore,
@@ -87,7 +99,7 @@ test('#624 Storm resource update runs once on activation, first/last lock, and f
     close(rows[0].damageDelta, 0.3);
     close(rows[0].timeDelta, 1 / 60);
 
-    const activeRows = rows.filter(row => row.before === 'storm');
+    const activeRows = rows.filter(row => row.beforePhase === 'throw' || row.afterPhase === 'throw');
     assert.ok(activeRows.length >= 21 && activeRows.length <= 22, `observed ${activeRows.length} Storm update ticks`);
     close(activeRows[0].damageDelta, 0.3, 'first active tick runs once');
     close(activeRows[0].timeDelta, 1 / 60);
@@ -124,12 +136,14 @@ test('genuine invulnerability prevents passive enemy-ink damage during Storm thr
   a.invuln = 2.0;
   a.intent.special = true;
   f.tick(a); // activation
+  armThrow(f,a);
 
-  while (a.specialActive) {
+  for (let tick=0; a.specialActive && tick<THROW_MAX_TICKS; tick++) {
     f.tick(a);
     close(a.hp, 100);
     close(a.damageFromInk, 0);
   }
+  assert.equal(a.specialActive,null,'throw terminates within the native bound');
 });
 
 test('airborne actor during Storm throwlock does not take grounded enemy-ink damage', async () => {
@@ -138,17 +152,19 @@ test('airborne actor during Storm throwlock does not take grounded enemy-ink dam
 
   a.intent.special = true;
   f.tick(a); // activation
+  armThrow(f,a);
 
-  while (a.specialActive) {
+  for (let tick=0; a.specialActive && tick<THROW_MAX_TICKS; tick++) {
     f.tick(a);
     close(a.hp, 100);
     close(a.damageFromInk, 0);
   }
+  assert.equal(a.specialActive,null,'throw terminates within the native bound');
 });
 
 test('Ink Resistance Up grace period delays damage accumulation across Storm throwlock', async () => {
   const f = await fixture();
-  f.profile.resources.enemyInkGrace = 0.05; // 3 ticks grace (0.05s)
+  f.profile.gearExtra.enemyInkGraceFrames = [3,3,3]; // Equip the current modifier owner with a 3F test grace.
   const a = setupActor(f);
 
   // Step 1: activation
@@ -157,9 +173,9 @@ test('Ink Resistance Up grace period delays damage accumulation across Storm thr
 
   // Activation and the next two lock ticks reach the same continuous 3-tick grace.
   close(a.s3.enemyInkTime, 1 / 60);
-  f.tick(a); // exposure 2/60
+  a.intent.sub=true;f.tick(a); // real R press, exposure 2/60
   close(a.hp, 100);
-  f.tick(a); // exposure 3/60, grace boundary
+  a.intent.sub=false;f.tick(a); // real R release, exposure 3/60, grace boundary
   close(a.hp, 100);
   f.tick(a); // exposure 4/60
   close(a.hp, 99.7, 'damage starts on the first tick beyond activation-inclusive grace');
@@ -175,6 +191,7 @@ test('Storm throwlock does not grant armor against weapon hits', async () => {
   f.tick(a); // activation
   assert.equal(a.specialActive?.id, 'storm');
   assert.equal(a.specialActive?.armor, false);
+  armThrow(f,a);f.tick(a);assert.equal(a.specialActive.phase,'throw');
 
   const dealt = a.damage(40, null, 'weapon');
   assert.equal(dealt, false);
@@ -200,12 +217,12 @@ test('#624 Storm-only resource admission preserves HP and ink gates during Slam 
 test('Storm activation uses the existing enemy-ink damage cap', async () => {
   const f = await fixture();
   const a = setupActor(f);
-  a.damageFromInk = 39.9;
+  a.damageFromInk = 39.9; a.hp = 60.1; // Current cap uses total HP loss, not this diagnostic accumulator.
   a.intent.special = true;
   f.tick(a);
   close(a.damageFromInk, 40, 'activation tick clamps at the existing 40 HP cap');
-  close(a.hp, 99.9);
+  close(a.hp, 60);
   f.tick(a);
   close(a.damageFromInk, 40, 'active tick does not exceed the cap');
-  close(a.hp, 99.9);
+  close(a.hp, 60);
 });

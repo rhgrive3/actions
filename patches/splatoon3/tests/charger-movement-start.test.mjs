@@ -13,7 +13,7 @@ const close = (actual, expected, label) => assert.ok(
 
 async function chargingAt(frame, dt = 1 / 60) {
   const f = await fixture();
-  const a = f.make('charger'), r = a.weaponRunner;
+  const a = f.make('charger'), r = a.weaponRunner; a.intent.fire = true;
   let speed = 0;
   for (let i = 1; i <= frame; i++) {
     r._charger(dt, { fire: true }, a.weapon);
@@ -43,14 +43,14 @@ test('S3 Charger uses 1.2 u/s from charging entry (startup 1F, frames 2/8/12/18/
 
 test('S3 Charger uncharged run and post-release speeds are unchanged', async () => {
   const f = await fixture();
-  const a = f.make('charger'), r = a.weaponRunner;
+  const a = f.make('charger'), r = a.weaponRunner; a.intent.fire = true;
   close(r.moveSpeed(), f.PLAYER.runSpeed, 'uncharged run');
   for (let i = 0; i < 60; i++) r._charger(1 / 60, { fire: true }, a.weapon);
   assert.ok(r.charging);
-  r._charger(1 / 60, { fire: false }, a.weapon);
+  a.intent.fire = false; r._charger(1 / 60, { fire: false }, a.weapon);
   assert.equal(r.charging, false);
   close(r.moveSpeed(), a.weapon.moveSpeedFiring, 'after release firing window');
-  r._charger(1 / 60, { fire: false }, a.weapon);   // consume the S3 1F release gap
+  a.intent.fire = false; r._charger(1 / 60, { fire: false }, a.weapon);   // consume the S3 1F release gap
   // Advance past the 0.35s firing window plus the 0.28s cooldown path.
   r.update(0.7, { fire: false });
   close(r.moveSpeed(), f.PLAYER.runSpeed, 'cooldown expiry restores run');
@@ -147,7 +147,7 @@ test('two actors with distinct charge/Flow gear state share no target', async ()
   idle.s3.flow.remaining = f.profile.flow.duration;
   charging.weaponRunner.charging = true;
   // Charger charging locks the baseline before gear; idle run scales by Flow.
-  close(charging.weaponRunner.moveSpeed(), 1.2, 'charging target ignores run gear');
+  close(charging.weaponRunner.moveSpeed(), 1.2 * gearCurve(57, ...f.profile.gearExtra.runSpeedFiring), 'charging target applies the current dedicated firing-speed gear curve');
   close(idle.weaponRunner.moveSpeed(), f.PLAYER.runSpeed * gearCurve(f.profile.flow.abilityPoints, ...f.profile.gear.runSpeed), 'idle Flow target');
   assert.notEqual(charging.weapon, idle.weapon, 'per-actor weapon copies');
   assert.equal(f.profile.weapons.charger.moveSpeedFiring, 1.2, 'shared profile untouched');

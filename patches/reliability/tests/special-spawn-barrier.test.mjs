@@ -20,6 +20,9 @@ async function rig(layout, {id='slam',extra=.05,barrier=true,angle=0}={}) {
  function tick(){f.G.time+=STEP;a.update(STEP);}
  return {...f,a,pad,R,paint,hits,impacts,distance,tick,clamps:()=>clamps};
 }
+function throwStorm(h){
+ h.a._startSpecial();assert.equal(h.a.specialActive.phase,'hold');h.a.intent.sub=true;h.tick();h.a.intent.sub=false;h.tick();assert.equal(h.a.specialActive.phase,'throw');
+}
 for(const [name,layout] of Object.entries(MAP_LAYOUTS))test(`#582 ${name}: native Slam remains outside spawn through all phases and impact`,async()=>{
  const h=await rig(layout);const victim=h.make('shooter');victim.team=1;victim.pos.copy(h.pad);victim.pos.x+=.2;victim.invuln=0;h.G.actors.push(victim);h.a._startSpecial();let ticks=0;
  while(h.a.specialActive&&ticks++<180){h.tick();if(h.a.pos.y>h.pad.y-1)assert.ok(h.distance()>=h.R-1e-12,`tick ${ticks}: ${h.distance()} < ${h.R}`);assert.equal(h.clamps(),ticks,'exactly one clamp per special movement');}
@@ -32,8 +35,8 @@ test('#582 the five-tick inward rise reproduction reaches the barrier without cr
  const h=await rig(MAP_LAYOUTS.tidewater);h.a._startSpecial();for(let i=0;i<5;i++)h.tick();assert.ok(Math.abs(h.distance()-h.R)<1e-12);assert.equal(h.clamps(),5);
 });
 test('#582 Storm residual movement obeys the same barrier without changing its phase timer',async()=>{
- const h=await rig(MAP_LAYOUTS.tidewater,{id:'storm'});h.a.vel.set(-8,0,0);h.a._startSpecial();let ticks=0;
- while(h.a.specialActive&&ticks++<60){h.tick();assert.ok(h.distance()>=h.R-1e-12);assert.equal(h.clamps(),ticks);}
+ const h=await rig(MAP_LAYOUTS.tidewater,{id:'storm'});h.a.vel.set(-8,0,0);throwStorm(h);const before=h.clamps();let ticks=0;
+ while(h.a.specialActive&&ticks++<60){h.tick();assert.ok(h.distance()>=h.R-1e-12);assert.equal(h.clamps(),before+ticks);}
  assert.ok(ticks<60);assert.equal(h.impacts.length,0);assert.equal(h.paint.length,0);
 });
 test('#582 fixed-step boundary histories agree at 30/60/120/144Hz rendering',async()=>{
@@ -44,13 +47,13 @@ test('#582 fixed-step boundary histories agree at 30/60/120/144Hz rendering',asy
  }
 });
 test('#582 steering and phase timing outside spawn are byte-identical to an unclamped control',async()=>{
- for(const id of ['slam','storm']){const histories=[];for(const barrier of [false,true]){const h=await rig(MAP_LAYOUTS.kelpline,{id,extra:20,barrier,angle:.4}),rows=[];h.a._startSpecial();let ticks=0;
+ for(const id of ['slam','storm']){const histories=[];for(const barrier of [false,true]){const h=await rig(MAP_LAYOUTS.kelpline,{id,extra:20,barrier,angle:.4}),rows=[];if(id==='storm')throwStorm(h);else h.a._startSpecial();let ticks=0;
   while(h.a.specialActive&&ticks++<180){h.tick();rows.push([...h.a.pos.toArray(),...h.a.vel.toArray(),h.a.specialActive?.phase??'finished']);}histories.push(rows);
  }assert.deepEqual(histories[0],histories[1],id);}
 });
-test('#582 ordinary run/swim still apply one native clamp and preserve the below-pad exception',async()=>{
- for(const squid of [false,true]){const h=await rig(MAP_LAYOUTS.halyard);h.a._integrate=h.Actor.prototype._integrate;h.a.intent.squid=squid;h.a.vel.set(-8,0,0);h.tick();assert.ok(h.distance()>=h.R-1e-12);assert.equal(h.clamps(),1);}
- const h=await rig(MAP_LAYOUTS.halyard,{id:'storm'});h.a.pos.y=h.pad.y-2;h.a.grounded=false;h.a._resolve=()=>{};h.a.vel.set(-8,0,0);h.a._startSpecial();h.tick();assert.ok(h.distance()<h.R);assert.equal(h.clamps(),1);
+test('#582 ordinary run/swim retain current geometry-only movement and preserve the below-pad exception',async()=>{
+ for(const squid of [false,true]){const h=await rig(MAP_LAYOUTS.halyard);h.a._integrate=h.Actor.prototype._integrate;h.a.intent.squid=squid;h.a.vel.set(-8,0,0);h.tick();assert.ok(h.distance()<h.R);assert.equal(h.clamps(),0,'current S3 adapter retires universal radial clamp');}
+ const h=await rig(MAP_LAYOUTS.halyard,{id:'storm'});h.a.pos.y=h.pad.y-2;h.a.grounded=false;h.a._resolve=()=>{};h.a.vel.set(-8,0,0);throwStorm(h);const before=h.clamps();h.tick();assert.ok(h.distance()<h.R);assert.equal(h.clamps(),before+1);
 });
 test('#582 native owner packet and remote pose carry the bounded special position',async()=>{
  const h=await rig(MAP_LAYOUTS.tidewater),g=await rig(MAP_LAYOUTS.tidewater),wire=[];

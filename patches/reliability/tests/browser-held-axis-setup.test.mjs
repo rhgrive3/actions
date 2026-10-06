@@ -1,3 +1,4 @@
+import { blockExpiredGuestInput } from '../../splatoon3/runtime/turf-finish.mjs';
 import test from 'node:test';import assert from 'node:assert/strict';import fs from'node:fs';import vm from'node:vm';import {fileURLToPath} from 'node:url';
 import {fixture} from './controls-fixture.mjs';
 import{adaptSource}from'../../splatoon3/adapter.mjs';import{adaptTouchLayout}from'../../touch-layout/adapter.mjs';import{adaptReliability}from'../adapter.mjs';import{adaptQualitySource}from'../../local-quality/adapter.mjs';
@@ -7,7 +8,7 @@ const part=(s,a,b)=>{const i=s.indexOf(a),j=s.indexOf(b,i);assert.ok(i>=0&&j>i);
 const makePad=(id,axes)=>({id,index:0,connected:true,mapping:'standard',axes,buttons:Array.from({length:17},()=>({pressed:false,value:0}))});
 async function run(prime){
  const f=await fixture(),input=new f.Input({}),a=f.make(),ally=f.make(),camera={yaw:.4,pitch:.2},c=new f.PlayerController(a,camera,input);c.computeAim=()=>{};a.alive=false;
- const M=vm.runInNewContext(`class M{${part(source('src/game/match.js'),'  updateController(dt) {','\n  _judge() {')}};M`);
+ const M=vm.runInNewContext(`class M{${part(source('src/game/match.js'),'  updateController(dt) {','\n  _judge() {')}};M`,{blockExpiredGuestInput});
  const match={state:'playing',paused:false,attract:false,local:a,controller:c};f.G.match=match;f.G.actors=[a,ally];f.G.input=input;f.G.level.spawnPads=[new f.THREE.Vector3()];
  input.lastDevice='kbm';input.keys.add('Tab');M.prototype.updateController.call(match,DT);
  f.setPads([makePad('previous',[0,0,0,0])]);input.pollPad();f.setPads([]);input.pollPad();

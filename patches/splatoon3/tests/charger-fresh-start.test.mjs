@@ -16,19 +16,20 @@ test('fresh swim charge starts six elapsed intervals after native form exit',asy
  assert.equal(r.charging,true);assert.ok(Math.abs(r.chargeT-1/60)<1e-9);
  f.tick(a,59);assert.ok(Math.abs(r.charge-1)<1e-9);assert.equal(f.shots.length,0);
 });
-test('stable human begins on first update and full progress still requires60 updates',async()=>{
- const f=await setup(false),r=f.a.weaponRunner;f.a.intent.fire=true;f.tick(f.a);assert.ok(Math.abs(r.chargeT-1/60)<1e-9);f.tick(f.a,58);assert.ok(r.charge<1);f.tick(f.a);assert.equal(r.charge,1);
+test('stable human spends1F startup before60 charge updates',async()=>{
+ const f=await setup(false),r=f.a.weaponRunner;f.a.intent.fire=true;f.tick(f.a);assert.equal(r.charging,false);assert.equal(r.chargeT,0);f.tick(f.a);assert.ok(Math.abs(r.chargeT-1/60)<1e-9);f.tick(f.a,58);assert.ok(r.charge<1);f.tick(f.a);assert.equal(r.charge,1);
 });
 test('manual emergence before ZR uses remaining native exit time, not a restarted timer',async()=>{
  for(const before of [1,3,5,8]){
   const f=await setup(),a=f.a,r=a.weaponRunner;a.intent.squid=false;f.tick(a,before);a.intent.fire=true;
   let first;for(let i=0;i<8;i++){f.tick(a);if(r.charging){first=a.kidT;break;}}
-  assert.ok(Math.abs(first-Math.max(6,before)/60)<1e-9,`${before} ${first}`);
+  // An unmasked first ZR at the native5F exit boundary still pays fresh1F after the6F swim gate.
+  assert.ok(Math.abs(first-({1:6,3:6,5:7,8:9}[before])/60)<1e-9,`${before} ${first}`);
  }
 });
 test('stored full charge is delegated without adding fresh6F and release cancels keep',async()=>{
- const f=await setup(false),a=f.a,r=a.weaponRunner;a.intent.fire=true;f.tick(a,60);a.intent.squid=true;f.tick(a,2);assert.ok(r.s3Stored);
- a.intent.squid=false;f.tick(a,6);assert.equal(r.charging,true);assert.equal(r.charge,1);assert.ok(a.kidT<.1);
+ const f=await setup(false),a=f.a,r=a.weaponRunner;a.intent.fire=true;f.tick(a,61);a.intent.squid=true;f.tick(a,2);assert.ok(r.s3Stored);
+ a.intent.squid=false;f.tick(a,6);assert.ok(r.s3Stored);assert.equal(r.charging,false);f.tick(a,25);assert.equal(r.charging,true);assert.equal(r.charge,1);
  a.intent.squid=true;f.tick(a,2);assert.ok(r.s3Stored);a.intent.fire=false;f.tick(a);assert.equal(r.s3Stored,null);assert.equal(r.charge,0);
 });
 test('release, sub, death and weapon reset leave no queued fresh charge',async()=>{

@@ -11,8 +11,9 @@ test('the exact fixed-step roll duration clears admission before the next press'
     const h = await boot(), set = device(h, name);
     set('fire', true); set('jump', true); h.frame();
     set('jump', false);
-    const ticks = Math.round(h.actor.weapon.rollTime / STEP);
-    assert.ok(Math.abs(ticks * STEP - h.actor.weapon.rollTime) < Number.EPSILON);
+    const duration = h.actor.weapon.rollTime + h.actor.weaponRunner.dodge.startupDur;
+    const ticks = Math.round(duration / STEP);
+    assert.ok(Math.abs(ticks * STEP - duration) < Number.EPSILON);
     for (let i = 1; i < ticks - 1; i++) h.frame();
     assert.ok(h.actor.weaponRunner.dodge, 'one tick before completion is still active');
     h.frame();
@@ -108,7 +109,7 @@ test('repeated keyboard events and repeated pad polling cannot invent another ph
 test('all sampled gamepad action edges match canonical tap and release semantics', async () => {
   for (const mapping of ['standard', '']) for (const [id, button] of [['jump', 0], ['squid', 6], ['fire', 7], ['sub', 5], ['special', 11], ...(mapping === '' ? [['special', 3]] : [])]) {
     const h = await boot({ weapon: 'shooter' }), set = device(h, 'gamepad');
-    h.input.pollPad(); h.input.pad.mapping = mapping;
+    h.input.pollPad(); h.input.pad.mapping = mapping; h.input.pollPad(); h.input.endFrame();
     if (id === 'jump' || id === 'fire' || id === 'sub') set(id, true);
     else { h.input.pollPad(); h.input.pad.buttons[button].pressed = true; h.input.pad.buttons[button].value = 1; }
     h.frame(0);

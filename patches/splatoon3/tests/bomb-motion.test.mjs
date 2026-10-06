@@ -5,6 +5,11 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { adaptSource } from '../adapter.mjs';
+import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
+import { adaptReliability } from '../../reliability/adapter.mjs';
+import { adaptQualitySource } from '../../local-quality/adapter.mjs';
+import { adaptNetworkSource } from '../../network-replication/adapter.mjs';
+import { adaptRange } from '../../practice-range/adapter.mjs';
 import { ARC_PREVIEW_MIN_INTERVAL_S } from '../runtime/weapons.mjs';
 
 // The complete production installer and adapter run once in one VM. Duplicate
@@ -33,7 +38,7 @@ async function production() {
       ? path.join(fs.realpathSync(baseline), path.basename(file)) : null;
     const raw = fs.readFileSync(prior && fs.existsSync(prior) ? prior : file, 'utf8');
     const relative = path.relative(SRC, file);
-    let source = file.startsWith(SRC + path.sep) ? adaptSource(relative, raw) : raw;
+    let source = file.startsWith(SRC + path.sep) ? adaptRange(relative, adaptNetworkSource(relative, adaptQualitySource(relative, adaptReliability(relative, adaptTouchLayout(relative, adaptSource(relative, raw)))))) : raw;
     // Use only the real production adapter. A missing release/preview export
     // or connection must fail here instead of being repaired by the fixture.
     const module = new vm.SourceTextModule(source,
@@ -42,6 +47,7 @@ async function production() {
   };
   const entry = new vm.SourceTextModule(`
     export { install } from './patches/splatoon3/runtime/install.mjs';
+    export { updateStormHold, isStormHolding } from './patches/splatoon3/runtime/storm-effects.mjs';
     export { FixedClock } from './patches/splatoon3/runtime/clock.mjs';
     export { CHARACTER_BOMB_POSE } from './inkwave-public/src/game/character.js';
     export { installBombMotion, bombMotionSnapshot, bombReleasePosition, bombPreviewPosition } from './patches/splatoon3/runtime/bomb-motion.mjs';
@@ -225,7 +231,7 @@ test('actual Storm deployment keeps the special throw and never starts bomb reco
   const api = await production(), traces = [];
   const previous = { physics: api.G.physics, level: api.G.level };
   const level = { blocks: [], queryBlocks: (_a, _b, _c, _d, out) => { out.length = 0; return out; },
-    groundHeight: () => 0 };
+    groundHeight: () => 0, spawnPads: [new api.THREE.Vector3(-80,0,0),new api.THREE.Vector3(80,0,0)], spawnBarrier: 0 };
   api.G.level = level; api.G.physics = new api.Physics(level);
   try {
     for (const enabled of [false, true]) {
@@ -233,7 +239,10 @@ test('actual Storm deployment keeps the special throw and never starts bomb reco
       try {
         r.a.weapon = { ...r.a.weapon, special: 'storm' };
         api.G.projectiles = r.projectiles;
-        r.a._startSpecial();
+        r.a.special = r.a.specialCost(); r.a._startSpecial();
+        assert.equal(api.isStormHolding(r.a), true); assert.equal(r.projectiles.bombs.length, 0);
+        r.a.intent.sub = true; api.updateStormHold(r.a, 1 / 60, api.G);
+        r.a.intent.sub = false; api.updateStormHold(r.a, 1 / 60, api.G);
         assert.equal(r.projectiles.bombs.length, 1); assert.equal(r.projectiles.bombs[0].kind, 'storm');
         if (enabled) assert.equal(api.bombMotionSnapshot(r.ch).throwing, false, 'the native throw event also belongs to Storm');
         for (let i = 0; i < 40; i++) {
@@ -411,7 +420,7 @@ test('release and per-frame preview sample native rig without changing any live 
         assert.deepEqual(preservedRig(r, api, true), before, kind + ' preview preserves the complete live native rig and physics scratch');
         assert.deepEqual(calls, beforeCalls, 'preview performs no update, animation or secondary simulation');
         assert.equal(flowEvents, beforeEvents);
-        assert.ok(preview.distanceTo(r.a.pos) < 1.25, 'sample is reachable by this native model');
+        assert.ok(preview.distanceTo(r.a.pos) < 1.25, `sample is reachable by this native model ${kind} frame${i}: physical=${preview.distanceTo(r.a.pos)} rendered=${preview.distanceTo(r.ch.root.position)}`);
       }
       const before = preservedRig(r, api), beforeCalls = { ...calls }, preview = api.bombPreviewPosition(r.a, new api.THREE.Vector3());
       r.projectiles.updateArc(r.a, true);
@@ -507,14 +516,15 @@ test('moving real throw tick has the same walking contacts, cadence and root vel
       for (let i = 0; i < 65; i++) {
         r.a.pos.addScaledVector(r.a.vel, 1 / 60); r.a.yaw = .4 + i * .004;
         r.a.ink = 100;
-        r.step(1 / 60, { sub: i < 20, subReleased: i === 20, fire: i === 13 });
+        r.step(1 / 60, { sub: i < 20, subReleased: i === 20, fire: i === 13 || i === 30 });
         rows.push({ feet: Array.from(r.ch.feet, fields), root: fields({ rp: r.ch.rp, rv: r.ch.rv, ra: r.ch.ra,
           prevYaw: r.ch.prevYaw, yawRate: r.ch.yawRate, phase: r.ch.phase, cadence: r.ch.cad, moving: r.ch.moving }),
           pose: Array.from(r.ch.P), springs: Array.from(r.ch.sp), hair: Array.from(r.ch.hv),
           clocks: Array.from(r.ch.tr), calls: { ...calls }, volleys });
         rows.at(-1).motions = Object.fromEntries(DETAIL_HOOKS.map(([module, snapshot]) => [module, JSON.parse(JSON.stringify(api[snapshot](r.ch)))]));
       }
-      assert.equal(volleys, 1, 'real slosher fire is not duplicated by the concurrent bomb');
+      assert.equal(rows[20].volleys, 0, 'the concurrent main request is rejected by the production sub owner');
+      assert.equal(volleys, 1, 'one later legal Slosher request fires without being duplicated by sampling');
       assert.equal(calls.update, 65); assert.equal(calls._trackRoot, 65); assert.equal(calls._updateFeet, 65);
       assert.equal(calls._animWeapon, 65); assert.equal(calls._updateHair, 65);
       assert.ok(rows[20].root.moving, 'throw tick remains a real moving step');

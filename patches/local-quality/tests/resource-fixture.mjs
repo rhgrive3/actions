@@ -12,7 +12,7 @@ export async function resourceFixture({ baseline = false, globals = {} } = {}) {
   const modules = new Map(), source = rel => fs.readFileSync(path.join(ROOT, rel), 'utf8');
   const resolve = (spec, from) => spec === 'three' ? path.join(ROOT, 'inkwave-public/vendor/three/build/three.module.js')
     : spec.startsWith('three/addons/') ? path.join(ROOT, 'inkwave-public/vendor/three/jsm', spec.slice(13))
-      : path.resolve(path.dirname(from), spec).replace('/inkwave-public/patches/', '/patches/');
+      : path.resolve(path.dirname(from), spec).replace('/inkwave-public/patches/', '/patches/').replace(path.join(ROOT, 'src/'), path.join(ROOT, 'inkwave-public/src/'));
   function load(file) {
     if (modules.has(file)) return modules.get(file);
     let code = fs.readFileSync(file, 'utf8');

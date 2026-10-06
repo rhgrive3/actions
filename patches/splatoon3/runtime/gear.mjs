@@ -257,7 +257,7 @@ export function installGear(api, tuning) {
             : a.weapon.inkRecoverStop;
           delay = Math.max(delay, mainDelay ?? tuning.resources.inkRefillDelay);
         }
-        if (input.subReleased) delay = Math.max(delay, subDelay ?? tuning.resources.inkRefillDelay);
+        if (input.subReleased && (sub !== api.SUB.bomb || bombSpent || this.s3SubReleased)) delay = Math.max(delay, subDelay ?? tuning.resources.inkRefillDelay);
         a.s3.recoverStopRemaining = Math.max(a.s3.recoverStopRemaining || 0, delay);
       }
     }

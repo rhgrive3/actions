@@ -295,6 +295,7 @@ export function installWeapons(context, profile) {
     this.s3WasSquid = false;
     if (this.s3Stored) {
       this.charge = this.s3Stored.charge;
+      this.s3Stored.fireDelay = Math.max(0, (this.s3Stored.fireDelay || 0) - dt);
       if ((this.s3Stored.fireDelay || 0) > epsilon || !held || !inp.fire) return;
       this.chargeT = 1; this.charging = true;
       this.s3ChargerSpent = this.s3Stored.paid ?? w.inkFull;

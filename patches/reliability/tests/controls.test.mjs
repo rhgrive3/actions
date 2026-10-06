@@ -31,25 +31,24 @@ test('#197 standard top face toggles map, R-stick activates special; other contr
  h.frame({held:[3]});assert.equal(h.c.mapHeld,false);h.frame({held:[8]});assert.equal(h.c.mapHeld,false);
  h.frame({held:[11]});assert.equal(h.a.intent.special,true);assert.equal(h.c.mapHeld,false);
  h.frame({held:[0,5,6,7]});for(const key of ['jump','sub','squid','fire']) assert.equal(h.a.intent[key],true,key);
- h.frame({held:[3],mapping:''});assert.equal(h.a.intent.special,true);assert.equal(h.c.mapHeld,false,'raw layout keeps legacy behavior, no guessed mapping');
+ h.frame({mapping:''});h.frame({held:[3],mapping:''});assert.equal(h.a.intent.special,true);assert.equal(h.c.mapHeld,false,'raw layout keeps legacy behavior, no guessed mapping');
  h.frame({held:[8],mapping:''});assert.equal(h.c.mapHeld,true);
 });
 
 test('#197 camera reset consumes one standard Y edge, restores heading/neutral pitch and resyncs accumulated gyro',async()=>{
- const h=await rig(),g=gyro(h);h.a.yaw=1.4;h.camera.yaw=-2;h.camera.pitch=.7;h.c.padLook={x:.5,y:.3};g.yaw=.5;g.pitch=.2;
+ const h=await rig();h.frame({held:[0]});h.frame();const g=gyro(h);h.a.yaw=1.4;h.camera.yaw=-2;h.camera.pitch=.7;h.c.padLook={x:.5,y:.3};g.yaw=.5;g.pitch=.2;
  h.frame({held:[2]});assert.equal(h.camera.yaw,1.4);assert.equal(h.camera.pitch,0);assert.deepEqual({...h.c.padLook},{x:0,y:0});assert.equal(g.resets,1);
  h.camera.pitch=.4;h.frame({held:[2]});assert.equal(h.camera.pitch,.4);assert.equal(g.resets,1,'hold does not repeatedly recenter');
  h.frame();h.camera.yaw=-2;h.frame({held:[2],mapping:''});assert.equal(h.camera.yaw,-2,'raw Y not assumed');
  h.c.enabled=false;h.camera.pitch=.8;h.frame({held:[2]});assert.equal(h.camera.pitch,.8,'menu-blocked controller cannot reset view');
 });
 
-test('#276 active gyro owns pitch while stick X retains its exact response; transitions clear filtered Y',async()=>{
- const h=await rig(),control=await rig();const g=gyro(h,true);
- h.frame({axes:[0,0,.5,.7]});control.frame({axes:[0,0,.5,.7]});assert.equal(h.camera.pitch,0);assert.equal(h.camera.yaw,control.camera.yaw);assert.equal(h.c.padLook.y,0);
- g.pitch=.125;h.frame({axes:[0,0,0,.8]});assert.equal(h.camera.pitch,.125,'sensor still owns pitch');
- g.enabled=false;h.frame({axes:[0,0,0,.8]});assert.ok(h.camera.pitch<.125);assert.notEqual(h.c.padLook.y,0);
- g.enabled=true;const pitch=h.camera.pitch;h.frame();assert.equal(h.c.padLook.y,0);assert.equal(h.camera.pitch,pitch);
- g.enabled=false;h.frame();assert.equal(h.camera.pitch,pitch,'no stale low-pass kick when turning gyro off');
+test('#276 gyro pitch is consumed only by touch ownership; pad pitch retains its exact response',async()=>{
+ const h=await rig(),control=await rig(),g=gyro(h,true);
+ h.frame({axes:[0,0,.5,.7]});control.frame({axes:[0,0,.5,.7]});assert.equal(h.camera.pitch,control.camera.pitch);assert.equal(h.camera.yaw,control.camera.yaw);
+ g.pitch=.125;h.frame({axes:[0,0,0,.8]});control.frame({axes:[0,0,0,.8]});assert.equal(h.camera.pitch,control.camera.pitch,'pad owner does not consume touch sensor');
+ h.frame();h.input.lastDevice='touch';h.c.update(STEP);const before=h.camera.pitch;g.pitch=.125;h.c.update(STEP);assert.equal(h.camera.pitch,before+.125);assert.equal(h.c.padLook.y,0);
+ g.enabled=false;const pitch=h.camera.pitch;h.c.update(STEP);assert.equal(h.camera.pitch,pitch,'gyro off does not replay a filtered stick delta');
 });
 
 test('#309 horizontal inversion is independent of vertical inversion and leaves mouse/touch/gyro signs intact',async()=>{
@@ -80,7 +79,7 @@ for(const weapon of ['charger','shooter']) test(`#265 ${weapon} keeps physical Z
  h.frame({held:[3,7],simulate:true});assert.equal(h.c.mapHeld,true);for(let i=0;i<10;i++)h.frame({held:[7],simulate:true});
  assert.equal(h.a.intent.fire,true);if(weapon==='charger')assert.equal(h.shots.length,0);else assert.ok(h.shots.length>before);
  h.frame({held:[3,7],simulate:true});assert.equal(h.c.mapHeld,false);if(weapon==='charger')assert.equal(h.shots.length,0);
- h.frame({simulate:true});if(weapon==='charger')assert.equal(h.shots.filter(x=>x.kind==='charger').length,1);
+ h.frame({simulate:true});if(weapon==='charger'){assert.equal(h.shots.length,0,'existing one fixed release frame');h.frame({simulate:true});assert.equal(h.shots.filter(x=>x.kind==='charger').length,1);}
 });
 
 for(const weapon of ['charger','shooter']) test(`#265 keyboard map plus independent ZR does not synthesize a weapon release (${weapon})`,async()=>{
@@ -89,7 +88,7 @@ for(const weapon of ['charger','shooter']) test(`#265 keyboard map plus independ
  assert.equal(h.c.mapHeld,true);assert.equal(h.a.intent.fire,true);
  if(weapon==='charger')assert.equal(h.shots.length,0);else assert.ok(h.shots.length>before);
  h.input.keys.clear();h.frame({held:[7],simulate:true});if(weapon==='charger')assert.equal(h.shots.length,0);
- h.frame({simulate:true});if(weapon==='charger')assert.equal(h.shots.length,1);
+ h.frame({simulate:true});if(weapon==='charger'){assert.equal(h.shots.length,0,'existing one fixed release frame');h.frame({simulate:true});assert.equal(h.shots.length,1);}
 });
 
 test('#265 map selection mouse clicks stay suppressed and normal touch/keyboard input remains admitted outside map',async()=>{

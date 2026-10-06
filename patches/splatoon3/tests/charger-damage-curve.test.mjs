@@ -164,7 +164,7 @@ async function fireAt(runtime, frames, renderHz) {
   near(firedJob.chargeT * owner.weapon.chargeTime, releaseAt, 1e-10);
   assert.equal(runnerAtRelease.charge, 0, 'native release still resets the runner charge');
   assert.equal(runnerAtRelease.chargeT, 0, 'native release still resets the runner chargeT');
-  near(target.hp, hpBefore - hits[0].amount);
+  near(target.hp, hpBefore - Math.floor((hits[0].amount + 1e-10) * 10) / 10); // #261 quantizes final damage, not the curve input
 
   const progress = releaseAt / owner.weapon.chargeTime;
   const charge = progress < .2 ? progress * 1.25 : .25 + (progress - .2) * .9375;

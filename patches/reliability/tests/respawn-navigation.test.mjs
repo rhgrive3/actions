@@ -1,3 +1,4 @@
+import { blockExpiredGuestInput } from '../../splatoon3/runtime/turf-finish.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -25,7 +26,7 @@ async function rig() {
  const native=code('src/game/match.js');
  // The Node fixture extracts Match from composed source; canonical browser acceptance also executes the actual emitted Match export.
  const source=BUILT?adaptQualitySource('src/game/match.js',adaptReliability('src/game/match.js',adaptTouchLayout('src/game/match.js',adaptSource('src/game/match.js',fs.readFileSync(path.join(root,'inkwave-public/src/game/match.js'),'utf8'))))):native;
- const Match=vm.runInNewContext(`class Match {${method(source,'  updateController(dt) {','\n  _judge() {')}}; Match`);
+ const Match=vm.runInNewContext(`class Match {${method(source,'  updateController(dt) {','\n  _judge() {')}}; Match`,{blockExpiredGuestInput});
  const m={state:'playing',paused:false,attract:false,local:a,controller:c,playing:()=>m.state==='playing'&&!m.paused,canRespawn:()=>false,updateController:Match.prototype.updateController};f.G.match=m;
  function frame(held=[],mapping='standard'){f.setPads(pad(held,mapping));input.pollPad();m.updateController(STEP);input.endFrame();}
  function dead(){a.splat(null,'water');assert.equal(a.alive,false);}
@@ -56,7 +57,7 @@ for(const mode of ['keyboard','pad','touch','raw'])test(`#409 ${mode} queues one
  if(mode==='touch'){mob=h.touch();mob.setMap(true);mob.jumpTarget=1;h.m.updateController(STEP);}
  assert.equal(h.c.pendingRespawnJump.actor,h.allies[1]);assert.equal(h.a.superJumpState,null);
  h.a.respawn();assert.equal(h.a.grounded,false);h.m.updateController(STEP);assert.equal(h.a.superJumpState,null,'no air-charge freeze during native spawn drop');
- h.a.grounded=true;h.m.updateController(STEP);assert.equal(h.a.superJumpState.target,h.allies[1]);assert.equal(h.c.pendingRespawnJump,null);
+ h.a.grounded=true;h.m.updateController(STEP);assert.ok(h.a.superJumpState.target.equals(h.allies[1].pos));assert.equal(h.c.pendingRespawnJump,null);
  const state=h.a.superJumpState;h.m.updateController(STEP);assert.equal(h.a.superJumpState,state,'no second admission');
 });
 for(const cancel of ['close','menu','pause','finish','attract','removed','dead','owner'])test(`#409 pending selection cancels on ${cancel}`,async()=>{
@@ -76,7 +77,7 @@ test('#409 same-frame X cancellation wins over queued respawn admission and rost
  const h=await rig();h.dead();h.frame([3]);h.frame([14]);h.frame([1]);h.G.actors=[h.a,h.allies[1],h.allies[0],h.allies[2]];
  h.a.respawn();h.a.grounded=true;h.frame([3]);assert.equal(h.a.superJumpState,null);
  const q=await rig();q.dead();q.frame([3]);q.frame([14]);q.frame([1]);q.G.actors=[q.a,q.allies[1],q.allies[0],q.allies[2]];
- q.a.respawn();q.a.grounded=true;q.m.updateController(STEP);assert.equal(q.a.superJumpState.target,q.allies[0]);
+ q.a.respawn();q.a.grounded=true;q.m.updateController(STEP);assert.ok(q.a.superJumpState.target.equals(q.allies[0].pos));
 });
 test('#409 direct request rejects hidden, stale, enemy and already-jumping targets',async()=>{
  const h=await rig();h.dead();h.m.updateController(STEP);assert.equal(h.c.requestMapJump(h.allies[0]),false);
@@ -110,7 +111,7 @@ test('#409 native HUD and diorama clicks route to the deferred controller owner'
   const raw=fs.readFileSync(path.join(root,'inkwave-public',rel),'utf8');
   const source=adaptQualitySource(rel,adaptReliability(rel,adaptTouchLayout(rel,adaptSource(rel,raw))));
   const C=vm.runInNewContext(`class ${name} {${method(source,start,end)}}; ${name}`,{G:h.G});
-  const obj=new C();Object.assign(obj,{pins:[{target:h.allies[0]}],beacons:[{}],_beaconTargets:()=>[{ok:true,actor:h.allies[0]}],_local:()=>h.a,_snd(){},_restart(){},_flash(){}});
+  const obj=new C();Object.assign(obj,{on:true,k:1,pins:[{target:h.allies[0]}],beacons:[{}],_beaconTargets:()=>[{ok:true,actor:h.allies[0]}],_local:()=>h.a,_snd(){},_restart(){},_flash(){}});
   (name==='HUD'?obj._jumpTo:obj._jump).apply(obj,args);assert.equal(h.c.pendingRespawnJump.actor,h.allies[0]);assert.equal(h.a.superJumpState,null);h.c.pendingRespawnJump=null;
  }
  const src=code('src/ui/diorama.js');if(!BUILT)assert.match(src,/mapping !== 'standard' && inp.padPressed/);
@@ -124,7 +125,7 @@ test('#409 an explicit touch choice adopts the new Input owner after keyboard op
  const h=await rig();h.dead();h.input.lastDevice='kbm';h.input.keys.add('Tab');h.m.updateController(STEP);
  h.event('pointerdown',{pointerType:'touch'});assert.equal(h.input.lastDevice,'touch');
  assert.equal(h.c.requestMapJump(h.allies[0]),true);h.a.respawn();h.a.grounded=true;h.m.updateController(STEP);
- assert.equal(h.a.superJumpState?.target,h.allies[0]);
+ assert.ok(h.a.superJumpState?.target.equals(h.allies[0].pos));
 });
 
 test('#409 held-axis polls preserve native touch pin intent without Mobile contact',async()=>{
@@ -133,10 +134,10 @@ test('#409 held-axis polls preserve native touch pin intent without Mobile conta
   h.event('pointerdown',{pointerType:'touch'});assert.equal(h.input.lastDevice,'touch');assert.equal(h.input.mobile._ptr.size,0);assert.equal(h.input.mobile._stick.id,-1);
   const rel=name==='HUD'?'src/ui/hud.js':'src/ui/diorama.js',start=name==='HUD'?'  _jumpTo(i) {':'  _jump(i, me) {',end=name==='HUD'?'\n  _updMarkers(':'\n  _flash(';
   const native=adaptQualitySource(rel,adaptReliability(rel,adaptTouchLayout(rel,adaptSource(rel,fs.readFileSync(path.join(root,'inkwave-public',rel),'utf8')))));
-  const C=vm.runInNewContext(`class ${name} {${method(native,start,end)}};${name}`,{G:h.G});const obj=Object.assign(new C(),{pins:[{target:h.allies[0]}],beacons:[{}],_beaconTargets:()=>[{ok:true,actor:h.allies[0]}],_local:()=>h.a,_snd(){},_restart(){},_flash(){}});
+  const C=vm.runInNewContext(`class ${name} {${method(native,start,end)}};${name}`,{G:h.G});const obj=Object.assign(new C(),{on:true,k:1,pins:[{target:h.allies[0]}],beacons:[{}],_beaconTargets:()=>[{ok:true,actor:h.allies[0]}],_local:()=>h.a,_snd(){},_restart(){},_flash(){}});
   if(name==='HUD')obj._jumpTo(0);else obj._jump(0,h.a);assert.equal(h.c.pendingRespawnJump.actor,h.allies[0]);assert.equal(h.c._respawnNavigationOwner,'touch');
   h.frame([]);assert.equal(h.input.lastDevice,'pad');assert.equal(h.c.pendingRespawnJump.actor,h.allies[0]);assert.equal(h.input.navigationDevice,'touch');
-  for(let i=0;i<120;i++)h.frame([]);h.a.respawn();h.a.grounded=true;h.m.updateController(STEP);assert.equal(h.a.superJumpState?.target,h.allies[0]);
+  for(let i=0;i<120;i++)h.frame([]);h.a.respawn();h.a.grounded=true;h.m.updateController(STEP);assert.ok(h.a.superJumpState?.target.equals(h.allies[0].pos));
  }
 });
 
@@ -150,5 +151,9 @@ for (const action of ['button','neutral-axis','keyboard','disconnect-axis','repl
  if(action==='opposite-axis'){const p=pad();p[0].axes[0]=-.9;h.setPads(p);h.input.pollPad();}
  if(action==='second-axis'){const p=pad();p[0].axes[1]=0;h.setPads(p);h.input.pollPad();}
  if(action==='replacement-axis'){const p=pad();p[0].id='new-pad';h.setPads(p);h.input.pollPad();}
+ if(action==='disconnect-axis'||action==='replacement-axis'){
+  h.m.updateController(STEP);assert.ok(h.c.pendingRespawnJump,'held reconnect is not fresh navigation input');
+  const p=pad();if(action==='replacement-axis')p[0].id='new-pad';p[0].axes=[0,0,0,0];h.setPads(p);h.input.pollPad();h.input.endFrame();p[0].axes=[.9,-.5,.8,.7];h.input.pollPad();
+ }
  h.m.updateController(STEP);assert.equal(h.c.pendingRespawnJump,null);h.a.respawn();h.a.grounded=true;h.m.updateController(STEP);assert.equal(h.a.superJumpState,null);
 });

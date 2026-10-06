@@ -16,7 +16,7 @@ async function rig(){
 for(const [button,index]of [[14,0],[12,1],[15,2],[13,3]])test(`#391 D-pad ${button} selects ${index}; standard right-face A alone commits`,async()=>{
  const h=await rig();h.frame([3]);h.frame([button]);assert.equal(h.c.padJumpIndex,index);assert.equal(h.a.superJumpState,null);
  h.frame([button]);assert.equal(h.a.superJumpState,null);h.frame([1]);assert.equal(h.a.superJumpState.phase,'charge');
- if(index===3)assert.deepEqual([...h.a.superJumpState.target.toArray()],[3,0,4]);else assert.equal(h.a.superJumpState.target,h.allies[index]);
+ if(index===3)assert.deepEqual([...h.a.superJumpState.target.toArray()],[3,0,4]);else assert.ok(h.a.superJumpState.target.equals(h.allies[index].pos));
  assert.equal(h.c.padJumpIndex,-1);assert.equal(h.c.mapHeld,false);
 });
 test('#391 held A plus fresh direction confirms once; bottom-face B does not',async()=>{
@@ -35,10 +35,10 @@ test('#391 close, disabled, owner switch and missing/dead targets never jump to 
  }
 });
 test('#391 selection tracks the same actor across roster reorder; raw/keyboard/touch direct paths remain',async()=>{
- const h=await rig();h.frame([3]);h.frame([14]);h.G.actors=[h.a,h.allies[1],h.allies[0],h.allies[2]];h.frame();assert.equal(h.c.padJumpIndex,1);h.frame([1]);assert.equal(h.a.superJumpState.target,h.allies[0]);
- const raw=await rig();raw.frame([8,14],'');assert.equal(raw.a.superJumpState.target,raw.allies[0]);
- const key=await rig();key.input.keys.add('Tab');key.input.pressed.add('Digit2');key.frame();assert.equal(key.a.superJumpState.target,key.allies[1]);
- const mobile=await rig(),m=touch(mobile);m.mapOpen=true;m.jumpTarget=2;mobile.c.update(STEP);assert.equal(mobile.a.superJumpState.target,mobile.allies[2]);
+ const h=await rig();h.frame([3]);h.frame([14]);h.G.actors=[h.a,h.allies[1],h.allies[0],h.allies[2]];h.frame();assert.equal(h.c.padJumpIndex,1);h.frame([1]);assert.ok(h.a.superJumpState.target.equals(h.allies[0].pos));
+ const raw=await rig();raw.frame([8,14],'');assert.ok(raw.a.superJumpState.target.equals(raw.allies[0].pos));
+ const key=await rig();key.input.keys.add('Tab');key.input.pressed.add('Digit2');key.frame();assert.ok(key.a.superJumpState.target.equals(key.allies[1].pos));
+ const mobile=await rig(),m=touch(mobile);m.mapOpen=true;m.jumpTarget=2;mobile.c.update(STEP);assert.ok(mobile.a.superJumpState.target.equals(mobile.allies[2].pos));
  const out=await rig();out.frame([14,1]);assert.equal(out.a.superJumpState,null);
 });
 test('#391 menu-owned confirm hold cannot leak into map confirmation',async()=>{

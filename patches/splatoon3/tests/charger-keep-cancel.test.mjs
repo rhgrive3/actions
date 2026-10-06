@@ -88,7 +88,7 @@ test('a fresh hold after cancellation charges normally and cannot resurrect the 
   f.tick(a, 6);                                // surface past the emerge delay
   assert.equal(r.s3Stored, null);
   a.intent.fire = true;                         // press ZR again
-  f.tick(a, 8);
+  f.tick(a, 9); //1F fresh startup plus the legal8F minimum
   assert.equal(r.charging, true);
   assert.ok(r.charge < .999, 'ordinary charging, not a restored full charge');
   a.intent.fire = false;

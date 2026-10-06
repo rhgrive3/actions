@@ -12,6 +12,7 @@ const {adaptTouchLayout}=await import(ROOT+'/patches/touch-layout/adapter.mjs');
 const {adaptPause}=await import('../pause-adapter.mjs');
 const {fixture}=await import(ROOT+'/patches/splatoon3/tests/source-fixture.mjs');
 const {installClock,runSimulation}= await import(ROOT+'/patches/splatoon3/runtime/clock.mjs');
+const {blockExpiredGuestInput}=await import(ROOT+'/patches/splatoon3/runtime/turf-finish.mjs');
 export const hashes={};
 function within(base,file){const rel=path.relative(base,file);return rel===''||rel!=='..'&&!rel.startsWith('..'+path.sep)&&!path.isAbsolute(rel);}
 export function resolveFixtureModule(specifier,from){
@@ -58,7 +59,7 @@ export async function boot(patched=true,{transform=(_rel,source)=>source}={}){
  f.G.projectiles.update=()=>{};const updates=[], ownedShots=[];
  const shoot=f.G.projectiles.fireShooter;
  f.G.projectiles.fireShooter=(actor,...args)=>{ownedShots.push(actor);shoot(actor,...args);};
- const actualMatch=vm.runInNewContext(`class Match {${section(match,'  update(dt) {','\n  _judge() {')}}; Match`,{...f,G:f.G});
+ const actualMatch=vm.runInNewContext(`class Match {${section(match,'  update(dt) {','\n  _judge() {')}}; Match`,{...f,G:f.G,blockExpiredGuestInput});
  const other=f.make('shooter');other.pos.x=10;
  const m={time:180,duration:180,stateT:0,attract:false,state:'playing',paused:false,local:a,controller,actors:[a,other],
    playing:actualMatch.prototype.playing || (()=>m.state==='playing'&&!m.paused),

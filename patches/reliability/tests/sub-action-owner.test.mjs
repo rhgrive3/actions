@@ -30,16 +30,16 @@ for (const kind of ['charger','splatling']) test(`#530 ${kind}: entering sub can
   const ink=h.a.ink;h.step({sub:true});assert.equal(h.r.charging,false);assert.equal(h.r.streaming,false);assert.equal(h.r.s3Stored,null);assert.equal(h.shots.length,0);assert.equal(h.a.ink,ink);
   h.step();for(let i=0;i<60;i++)h.step();assert.equal(h.shots.length,0,'abort does not release a latent main charge');
 });
-test('#530 a cancelled baseline stream never reappears and never invents a refund',async()=>{
+test('#530 a cancelled prepaid stream refunds only its recorded unspent balance and never reappears',async()=>{
   const h=await rig('splatling');for(let i=0;i<72;i++)h.step({fire:true});h.step();assert.equal(h.r.streaming,true);
-  const ink=h.a.ink;h.step({sub:true});assert.equal(h.r.streaming,false);assert.equal(h.a.ink,ink);const shots=h.shots.length;
+  const ink=h.a.ink,unspent=h.r.s3Spin.unspent;h.step({sub:true});assert.equal(h.r.streaming,false);assert.equal(h.a.ink,Math.min(100,ink+unspent));const shots=h.shots.length;
   h.step();for(let i=0;i<120;i++)h.step();assert.equal(h.shots.length,shots);
 });
 for(const kind of ['roller','slosher','blaster'])test(`#530 ${kind}: committed attack completes before admitting a fresh sub hold`,async()=>{
   const h=await rig(kind);h.step({fire:true,firePressed:true});
   const pending=()=>h.r.flick>=0||h.r.slosh>=0||h.r.s3BlasterWindup>0;
   assert.ok(pending());let ticks=0;while(pending()&&ticks++<180){h.step({sub:true});assert.equal(h.r.aimingSub,false);}
-  assert.ok(ticks<180);assert.deepEqual(h.shots.map(s=>s.kind),[kind]);h.step({sub:true});assert.equal(h.r.aimingSub,true);
+  assert.ok(ticks<180);assert.deepEqual(h.shots.map(s=>s.kind),[kind]);const lock=Math.max(h.r.s3FlickPostSub||0,h.r.s3PostShotRemaining||0);assert.ok(lock>0,'current release owns its post-shot sub gate');for(let age=1;age<=Math.ceil((lock+1e-9)/STEP)+1&&!h.r.aimingSub;age++)h.step({sub:true});assert.equal(h.r.aimingSub,true);
   h.step({subReleased:true,fire:true,firePressed:true});assert.deepEqual(h.shots.map(s=>s.kind),[kind,'bomb']);
 });
 test('#530 sub aim preserves elapsed cooldown/recovery and low-ink Bomb rejection',async()=>{
@@ -67,7 +67,7 @@ test('#530 an in-flight Dualies dodge and its native lock keep advancing before 
 });
 test('#530 a long sub hold accrues no main-shot debt on the next legitimate press',async()=>{
  const h=await rig('shooter');for(let i=0;i<120;i++)h.step({sub:true});h.step({subReleased:true});
- const before=h.shots.length;h.step({fire:true,firePressed:true});assert.equal(h.shots.length-before,1);assert.equal(h.shots.at(-1).kind,'shooter');
+ const before=h.shots.length;for(let i=0;i<Math.round(h.a.weapon.firstShotDelay/STEP);i++){h.step({fire:true,firePressed:i===0});if(i<Math.round(h.a.weapon.firstShotDelay/STEP)-1)assert.equal(h.shots.length,before);}assert.equal(h.shots.length-before,1);assert.equal(h.shots.at(-1).kind,'shooter');
 });
 test('#530 completed Roller release is cancelled visually instead of replayed during sub aim',async()=>{
  const f=await fixture({character:true});f.installWalkMotion(f,f.profile);f.installRollerMotion(f,f.profile);const a=new f.Actor({team:0,name:'sub visual',weapon:'roller',CharacterClass:f.Character}),r=a.weaponRunner,ch=a.character;
@@ -76,7 +76,7 @@ test('#530 completed Roller release is cancelled visually instead of replayed du
  for(let i=0;i<60;i++)tick({sub:true});assert.equal(r.s3RollerAttack,null);assert.equal(ch.s3RollerFlick,null);assert.ok(ch.weapon.drumW<=releaseDrum,'no repeated release impulse');assert.equal(f.shots.length,1);
 });
 test('#530 rejected Bomb release keeps the actual Blaster recovery owner',async()=>{
- const h=await rig('blaster');h.step({fire:true,firePressed:true});for(let i=0;i<9;i++)h.step({sub:true});h.step({subReleased:true});
+ const h=await rig('blaster');h.step({fire:true,firePressed:true});for(let i=0;i<13;i++)h.step({sub:true});h.step({subReleased:true});
  assert.deepEqual(h.shots.map(s=>s.kind),['blaster']);assert.equal(h.a.s3.recoverStopRemaining,h.a.weapon.inkRecoverStop);
 });
 test('#530 sub plus fire during Dualies travel keeps the existing fire suppression',async()=>{

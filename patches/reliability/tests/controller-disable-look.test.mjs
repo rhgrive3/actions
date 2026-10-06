@@ -1,3 +1,4 @@
+import { blockExpiredGuestInput } from '../../splatoon3/runtime/turf-finish.mjs';
 import fs from 'node:fs';import vm from 'node:vm';import {adaptSource} from '../../splatoon3/adapter.mjs';import {adaptTouchLayout} from '../../touch-layout/adapter.mjs';import {adaptReliability} from '../adapter.mjs';import {adaptQualitySource} from '../../local-quality/adapter.mjs';
 import {test} from 'node:test';import assert from 'node:assert/strict';import {fixture} from './controls-fixture.mjs';
 const pad=(x=0,y=0,held=[])=>[{index:0,id:'pad',mapping:'standard',connected:true,axes:[0,0,x,y],buttons:Array.from({length:17},(_,i)=>({pressed:held.includes(i),value:held.includes(i)?1:0}))}];
@@ -21,7 +22,7 @@ test('#521 only transient look/assist state is changed; actor gameplay and curre
 
 test('#521 actual Match disable predicates cover death, offline pause, online menu and finish',async()=>{
  const raw=fs.readFileSync('inkwave-public/src/game/match.js','utf8'),rel='src/game/match.js';const source=adaptQualitySource(rel,adaptReliability(rel,adaptTouchLayout(rel,adaptSource(rel,raw))));
- const a=source.indexOf('  updateController(dt) {'),b=source.indexOf('\n  _judge()',a);assert.ok(a>=0&&b>a);const Match=vm.runInNewContext(`class Match {${source.slice(a,b)}};Match`);
+ const a=source.indexOf('  updateController(dt) {'),b=source.indexOf('\n  _judge()',a);assert.ok(a>=0&&b>a);const Match=vm.runInNewContext(`class Match {${source.slice(a,b)}};Match`,{blockExpiredGuestInput});
  for(const reason of ['death','pause','menu','finish']){const f=await setup(),m=Object.assign(new Match(),{controller:f.c,local:f.a,state:'playing',paused:false});for(let n=0;n<40;n++)f.frame(1,1);const yaw=f.rig.yaw,pitch=f.rig.pitch;
   if(reason==='death')f.a.alive=false;if(reason==='pause')m.paused=true;if(reason==='menu')f.c.menuBlocked=true;if(reason==='finish')m.state='finish';m.updateController(1/60);assert.equal(f.c.enabled,false);assert.equal(f.c.edgeT,0);
   f.setPads(pad());f.input.pollPad();f.a.alive=true;m.paused=false;f.c.menuBlocked=false;m.state='playing';m.updateController(1/60);assert.equal(f.c.enabled,true);assert.equal(f.rig.yaw,yaw);assert.equal(f.rig.pitch,pitch);
