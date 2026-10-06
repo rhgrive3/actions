@@ -295,7 +295,7 @@ export function adaptSource(rel, code) {
     return `import { runSimulation, installGame } from '../patches/splatoon3/runtime/clock.mjs';\n` + code;
   }
   if (rel === 'src/world/paint.js') {
-    return "import { installIssue570PaintPresentation } from '../../patches/splatoon3/runtime/issue-570-paint-presentation.mjs';\n" +
+    return "import { installIssue570PaintPresentation } from '../../patches/splatoon3/runtime/render.mjs';\n" +
       code + '\ninstallIssue570PaintPresentation(PaintSystem);\n';
   }
   return code;
