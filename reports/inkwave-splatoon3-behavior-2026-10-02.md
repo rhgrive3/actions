@@ -387,3 +387,27 @@ main `f31f5da439134fe49bb89018dad5557671a49c67` の `Projectiles._updateBeams()`
 A touch-owned startup had never entered the earlier mouse-to-touch relock path, so the first deliberate canvas mouse press could not request Pointer Lock. The installed reliability adapter now admits that press with no live touch pointer/stick and no pending asynchronous unlock. Menus, pause, map, editing, finished and attract states still suppress gameplay lock; mouse motion alone cannot take ownership. Three new cases and the thirteen existing touch/lock controls pass. This is INKWAVE's mixed-input contract; Splatoon 3 does not publish an equivalent mouse/Pointer Lock API, and Android tablet/Bluetooth mouse behavior remains unmeasured. Native gameplay/collision/damage/weapon timing and Range rules are unchanged.
 
 The initially-unfocused #843 source was excluded from C31 when updated Open PR #868 independently implemented the same construction-time hasFocus check. That source and review remain saved; no duplicate fix is included.
+
+## 2026-10-07 — Issue #884 gear-wrapper allocation residual
+
+本家参照版は Issue #884 が指定するスプラトゥーン3 Ver.11.3.0。これはゲーム内挙動や本家の公開フレーム値との比較ではなく、INKWAVE のギアアダプターにある一時オブジェクトのコード構造比較である。移動速度、射撃、インク、ギア補正の計算式は変更せず、`inkwave-public/` も変更していない。
+
+### 元の再現条件と推定
+
+元の Issue #884 は、通常の非登攀アクターの60 Hz tick ごとに `Actor._horizontal` と `WeaponRunner.update` が保存用 plain object を一つずつ作ると報告した。8人が対象となる条件では、各経路が最大480個/秒、合計約960個/秒となる。これはソース上の呼出し頻度から算出した上限の目安であり、ブラウザ計測値ではない。
+
+再現手順は、通常の4対4を20〜30秒維持し、Chrome DevTools の Allocation instrumentation またはメモリ付き Performance 記録で `gear.mjs` 内の両ラッパーを絞り込むこと。入力、カメラ、描画負荷を揃え、計測前後の生成オブジェクト数を比較する。本作業ではこのブラウザ計測、PWA実機、Switch実機での測定を行っていない。
+
+### PR #758 の部分カバーと残差
+
+2026-10-07の確認時、open PR #758 の head は `861b5a9067df415dc3d79660a9010a9886daf605`。その `WeaponRunner.update` 差分は、毎tickの共有 `SUB.bomb` 変更と保存オブジェクトを取り除き、有効なボム消費量を計算する。したがって、この半分は既存の未マージ提案がカバーする。一方で #758 の `Actor._horizontal` は `original` 保存オブジェクトと `Object.assign` 復元を残すため、Cの作業範囲はこの残差だけとした。
+
+同じ確認で main は `f31f5da439134fe49bb89018dad5557671a49c67`、GitHub PR 情報と `refs/pull/868/head` の現在値は `7c2ef70820d784792490741c1d710adf98b9c155` だった。確認した #868 の `gear.mjs` 差分にも `Actor._horizontal` の保存オブジェクトが残る。作業依頼に記載された `ee1cb11…` はその時点の live ref とは一致しなかったため、live ref と取得したファイル差分を根拠にした。
+
+### 今回の残差修正
+
+`Actor._horizontal` は `swimSpeed` と `enemyInkSpeed` を個別のローカル変数に保存し、`finally` 内で直接戻す。例外時の復元と既存計算を保ち、ギアのチューニング値やゲームプレイ挙動を変えない。`WeaponRunner.update` の scalar 置換は元の実装に戻し、#758 と重複する変更を含めない。この修正だけでは二つの確保や元の約960個/秒の推定全体を解消したとは主張しない。
+
+残差専用の静的確保ガードは `Actor._horizontal` のみに適用する。例外時のローカル/リモート Actor 復元テストと、ギア・Flow・Practice Range の既存コントロールで確認する。これらはロジック試験であり、ブラウザ allocation profile、本家実機比較、GC削減量の実測を代替しない。公開 Issue の範囲変更は [コメント](https://github.com/rhgrive3/actions/issues/884#issuecomment-6020906803) に明記し、初回 claim コメントとその時刻は維持した。
+
+指定された scoped テスト16件（Actor 確保ガード、ローカル/リモート例外復元、ギア/Flow、Practice Range 分離）は16/16成功。ロジック試験の結果であり、ブラウザやSwitchでの allocation / GC 実測ではない。

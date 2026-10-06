@@ -12,19 +12,14 @@ function section(start, end) {
   return source.slice(from, to);
 }
 
-test('gear actor tick wrappers save and restore scalars without scratch objects', () => {
+test('Actor._horizontal saves and restores scalars without a scratch object', () => {
   const horizontal = section('Actor.prototype._horizontal = function', 'const splat = Actor.prototype.splat;');
-  const weaponUpdate = section('WeaponRunner.prototype.update = function', 'if (api.Menus) {');
   assert.doesNotMatch(horizontal, /\bconst\s+\w+\s*=\s*\{[^}]*\bswimSpeed\s*:/s);
   assert.doesNotMatch(horizontal, /\bconst\s+\w+\s*=\s*\{[^}]*\benemyInkSpeed\s*:/s);
-  assert.doesNotMatch(weaponUpdate, /\bconst\s+\w+\s*=\s*\{[^}]*\binkCost\s*:/s);
-  assert.doesNotMatch(weaponUpdate, /\bconst\s+\w+\s*=\s*\{[^}]*\bthrowSpeed\s*:/s);
   const horizontalFinally = horizontal.slice(horizontal.lastIndexOf('finally'));
-  const weaponFinally = weaponUpdate.slice(weaponUpdate.lastIndexOf('finally'));
   assert.match(horizontalFinally, /api\.PLAYER\.swimSpeed\s*=/);
   assert.match(horizontalFinally, /api\.PLAYER\.enemyInkSpeed\s*=/);
-  assert.match(weaponFinally, /api\.SUB\.bomb\.inkCost\s*=/);
-  assert.match(weaponFinally, /api\.SUB\.bomb\.throwSpeed\s*=/);
+  assert.doesNotMatch(horizontalFinally, /Object\.assign/);
 });
 
 test('normal local and remote actor wrappers restore shared values when native calls throw', async () => {
