@@ -15,6 +15,9 @@ import { adaptFinalMinuteMusic } from './final-minute-music-adapter.mjs';
 import { adaptTurfLead } from './turf-lead-adapter.mjs';
 import { adaptScoreReticle } from './score-reticle-adapter.mjs';
 import { adaptMapTeammateStatus } from './map-teammate-status-adapter.mjs';
+import { adaptResourceSource } from './resource-adapter.mjs';
+import { adaptMedalSource } from './medal-adapter.mjs';
+import { adaptAimProfiles } from './aim-profile-adapter.mjs';
 import { adaptUiActorLifetime } from './ui-actor-lifetime-adapter.mjs';
 import { adaptIdleSource } from './idle-adapter.mjs';
 import { adaptPlatformSource } from './platform-adapter.mjs';
@@ -41,6 +44,8 @@ const IDENTITY_FILES = [
   'final-minute-music-adapter.mjs',
   'turf-lead-adapter.mjs',
   'score-reticle-adapter.mjs', 'map-teammate-status-adapter.mjs',
+  'resource-adapter.mjs', 'resource-budget.mjs', 'depth-cache.mjs',
+  'aim-profile-adapter.mjs', 'aim-profile.mjs', 'medal-adapter.mjs',
   'ui-actor-lifetime-adapter.mjs',
   'tenacity-adapter.mjs', 'tenacity.mjs',
   'idle-adapter.mjs', 'idle-resources.mjs', 'music-idle.mjs',
@@ -66,6 +71,9 @@ export function adaptQualitySource(rel, code) {
   code = adaptTurfLead(rel, code, replaceOnce);
   code = adaptScoreReticle(rel, code, replaceOnce);
   code = adaptMapTeammateStatus(rel, code, replaceOnce);
+  code = adaptAimProfiles(rel, code);
+  code = adaptMedalSource(rel, code);
+  code = adaptResourceSource(rel, code, replaceOnce);
   code = adaptFxActorLifetime(rel, code, replaceOnce);
   if (rel === 'src/main.js') {
     code = replaceOnce(code,

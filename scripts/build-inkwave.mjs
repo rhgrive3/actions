@@ -170,6 +170,7 @@ visit('patches/splatoon3/bootstrap.mjs');
 // requests to the critical HTML. Browser startup/offline CI validates the
 // resulting dependency fetch path and timing.
 const deferredIntegrationPreloads = new Set([
+  'patches/local-quality/aim-profile.mjs',
   'patches/local-quality/portrait-guard.mjs',
   'patches/local-quality/gyro-startup.mjs',
   'patches/local-quality/splatling-reticle.mjs',

@@ -54,6 +54,8 @@ test('autostart retains native match start and does not request Online resources
 test('native Online hub and room entry remain demand-loaded and reuse the current set', () => {
   const source = read('src/game/showcase.js');
   const composed = adaptQualitySource('src/game/showcase.js', source);
+  assert.match(composed, /installPortraitBudget\(Showcase, G\)/);
+  assert.equal(adaptLobbyResources('src/game/showcase.js', composed), composed);
   // The class defines a legacy pedestal showHub earlier; the final Online
   // implementation is the one JavaScript actually installs on its prototype.
   const active = text => text.slice(text.lastIndexOf('  showHub(style, color, weapon) {'));
