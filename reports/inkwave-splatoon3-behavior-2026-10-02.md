@@ -302,3 +302,12 @@ The W3C Pointer Lock API explicitly separates lock-target state from queued poin
 | 再現操作 | Charger を装備して無操作→修正前は中央にドット・ライン・チャージリング・ノッチが常時表示、修正後は待機中は非表示。チャージ開始で表示、解放で 0 へ戻り再び非表示。Splatling は `charge=0 & streaming=false` で非表示、充填と連射中は表示、ストリーム終了後は再び非表示。shooter/blaster/roller/dualies/slosher の照準は表示のまま |
 | プレイへの影響 | 待機中のチャージャーが中央の精密照準リファレンスを無償で得られなくなる。バレルスピナーのメーターも充填前に見せない。チャージ時間・ダメージ・射程・拡散・インク消費・弾速・移動・照準 authority は変更していない |
 | 確認状態 | **ロジック確認済み**（composed `src/ui/hud.js` の実 `_buildReticle`/`_updCrosshair` を使用する回帰 `patches/splatoon3/tests/issue-594-idle-reticle.test.mjs` 7/7、修正前に 5 件失敗、30/60/120 Hz で同一判定、`scripts/build-inkwave.mjs` の compatibility check 合格）。**Switch Ver.11.3.0 実機での表示タイミング・フェードの比較は未確認**。#572（5F 表示遅延）・#508（2段ゲージ）は本件では変更せず未確認のまま |
+## 2026-10-05 Blaster player-forward spawn velocity (#619)
+
+| 項目 | 内容 |
+|---|---|
+| 本家の根拠 | Splatoon 3 Ver.11.3.0 `WeaponBlasterMiddle` pinned extraction `Leanny/splat3@7280ff9cde8bb1c5dcef46c700c326471584d2e6` の `spl__SpawnBulletAdditionMovePlayerParam.ZRate = 2.0`（`patches/splatoon3/profile.json` の `weaponsFidelityCompletion.weapons.blaster` に既存）。公称スケールは `2 × MoveSpeed 0.045 = 0.09` raw units/frame（`0.945 SpawnSpeed` 基準の約9.5%） |
+| INKWAVE の実装箇所 | `patches/splatoon3/runtime/weapons-fidelity.mjs` の `applyBlasterSpawnVelocity()` を `_push` ラッパー内の `initialize()` 直後・`push()`（ネットワーク `recProj`）直前に適用。`inkwave-public/src/game/weapons.js` 上流と `profile.json` 数値は不変 |
+| 再現操作 | 同一 aim/spread で静止・前進・後退 Blaster の `p.vel` を `_push` 直後に比較。修正前はすべて同一 `(0,0,56.7)`、修正後は前進 `+5.4` / 後退 `-5.4` world u/s の yaw-local 前進成分のみが加算され、strafe/vertical は無変化。`30/60/120Hz` は同一 authoritative actor state からの固定 spawn 速度として検証 |
+| プレイへの影響 | 移動射撃の初速・9f straight 到達・13f burst 位置が S3 方向へ補正。`SpawnSpeed` 基準の静止初速、straight/brake/free 状態、burst/collision/damage/spread/wall-impact、ネットワーク `recProj` 形式・ghost 再生・owner/remote 判定は変更なし |
+| 確認状態 | **ロジック確認済み**（source-fixture 実 `fireBlaster` 経路、focused 回帰 5/5、近傍 `weapons-fidelity-source`/`weapon-edgecases`/`weapons-gear-flow`/`sub-special-fidelity-source` 31 件、`weapon-edgecases`+`weapons`+`integration` 38 件、`adapter` 10 件、`--quick` 合格）。**本家実機（Switch Ver.11.3.0）でのフレーム単位の実測比較は未確認**。basis/clamp/分解を超える推測は確定させない |
