@@ -289,3 +289,7 @@ After all fingers release, an explicit mouse pointerdown on the canvas can recla
 Evidence:source focused66/66 (new13 plus existing input/pause/touch/first-touch),20 actual-method touch↔mouse cycles with stable listener count, FIRE/stick/look across synchronous/asynchronous/throwing exit, late acquisition, queued notifications, fresh mouse/Escape, and non-live lock rejection. Authentic full build and actual emitted13/13 are recorded in the completion handoff. VM browser-API timing surfaces are controlled fixtures; actual trusted Pointer Lock/browser hardware interaction remains for batch browser acceptance. Existing Main Map _relock can also request on the same mouse gesture; no functional failure was found and that independent owner is not rewritten here.
 
 The W3C Pointer Lock API explicitly separates lock-target state from queued pointerlockchange notification (https://www.w3.org/TR/pointerlock-2/); Pointer Events define the distinct touch/pointer lifetime (https://www.w3.org/TR/pointerevents3/). The target is coherent control ownership during play, not a claim of measured Switch/iPad/Android latency or hardware equivalence.
+
+## 2026-10-06: 状態専用の更新経路が共有フェーズを飛ばす問題 (#744 / #707)
+
+スーパージャンプのチャージ中は共有のリソース処理（敵インクの継続ダメージ等）を通常と同じく 1 回実行し、飛行中は従来どおり保護する。オフライン一時停止中はゲーム時間 `G.time` を止め、Roller 接触・Boss グループ・Flow アシストの待ち時間が一時停止で進まないようにする。オンラインのリモート味方の最終接地点 (#728) は現 main で既に `applyRemote()` → `_finishFrame()` 経由で更新されており再現しないため、回帰テストのみ追加した。本家の根拠・再現操作・影響・未確認事項は[比較記録](inkwave-state-phases-2026-10-06.md)。いずれもロジック単独の確認であり、本家実機比較・ブラウザ実通信の確認は未確認として残す。
