@@ -22,9 +22,9 @@ test('browser arena uses actual Actor methods and sends current local cost/readi
  f.bind(nm,[a,remote]);let packet;nm.s.tr.broadcast=d=>{packet=JSON.parse(JSON.stringify(d));};
  assert.equal(a.specialCost,f.Actor.prototype.specialCost);assert.equal(a.specialReady,f.Actor.prototype.specialReady);assert.equal(a.specialFrac,f.Actor.prototype.specialFrac);
  a.weapon={...a.weapon,specialCost:142.25};a.special=100;remote.s3SpecialCost=97;remote.s3SpecialReady=true;
- nm._sendTick();assert.equal(packet.sc[7],142.25);assert.equal(packet.sc[8],undefined);assert.equal(packet.a.length,1);assert.equal(packet.a[0][10]&8388608,0);assert.equal(a.specialFrac(),100/142.25);
- a.weapon.specialCost=80;nm._sendTick();assert.equal(packet.sc[7],80);assert.equal(packet.a[0][10]&8388608,8388608);
- a.specialActive={id:'storm'};nm._sendTick();assert.equal(packet.a[0][10]&8388608,0);
+ nm._sendTick();assert.equal(packet.sc[7],142.25);assert.equal(packet.sc[8],undefined);assert.equal(packet.a.length,1);assert.equal(packet.a[0][10]&f.NET_FLAGS.specialReady,0);assert.equal(a.specialFrac(),100/142.25);
+ a.weapon.specialCost=80;nm._sendTick();assert.equal(packet.sc[7],80);assert.equal(packet.a[0][10]&f.NET_FLAGS.specialReady,f.NET_FLAGS.specialReady);
+ a.specialActive={id:'storm'};nm._sendTick();assert.equal(packet.a[0][10]&f.NET_FLAGS.specialReady,0);
  remote.special=25;assert.equal(remote.specialCost(),97);assert.equal(remote.specialReady(),true);remote.specialActive={id:'storm'};assert.equal(remote.specialReady(),false);
  remote.remote=false;assert.equal(remote.specialCost(),remote.weapon.specialCost,'adopted owner ignores remote presentation override');
 });

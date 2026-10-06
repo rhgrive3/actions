@@ -421,6 +421,35 @@ export function adaptSource(rel, code) {
     return `import { swimSplashVisible } from '../../patches/splatoon3/runtime/swim-stealth.mjs';\n` + code;
   }
   if (rel === 'src/net/netmatch.js') {
+    code = replaceOnce(code,
+      'const F = {',
+      'const F = {\n  flickVertical: 16777216,',
+      'network vertical Roller flag');
+    code = replaceOnce(code,
+      '  if (wr.flick >= 0) f |= F.flick;',
+      '  if (wr.flick >= 0) f |= F.flick;\n  if (wr.s3RollerAttack?.vertical) f |= F.flickVertical;',
+      'network vertical Roller owner state');
+    code = replaceOnce(code,
+      '    wr.flick = f & F.flick ? Math.max(0, wr.flick) : -1;\n    wr.slosh = f & F.slosh ? Math.max(0, wr.slosh) : -1;',
+      `    wr.flick = f & F.flick ? Math.max(0, wr.flick) : -1;
+    if (a.weapon.kind === 'roller' && (f & F.flickVertical)) {
+      const w = a.weapon;
+      if (!wr.s3RollerAttack?.networkRemote) wr.s3RollerAttack = {
+        networkRemote: true, vertical: true, windup: w.verticalWindup,
+        interval: w.verticalInterval ?? w.flickInterval, elapsed: 0, released: false, rolling: false,
+      };
+      const attack = wr.s3RollerAttack;
+      attack.elapsed = Math.min(attack.interval, attack.elapsed + Math.max(0, dt));
+      attack.released = !(f & F.flick); attack.rolling = wr.rolling;
+      wr.s3FlickVertical = true;
+      a.character.s3RollerFlick = attack;
+    } else if (wr.s3RollerAttack?.networkRemote) {
+      wr.s3RollerAttack = null; wr.s3FlickVertical = false;
+      a.character.s3RollerFlick = null;
+    }
+    wr.slosh = f & F.slosh ? Math.max(0, wr.slosh) : -1;`,
+      'network vertical Roller remote state');
+
     code = replaceOnce(code, '  invuln: 262144, enemy: 524288,',
       '  invuln: 262144, enemy: 524288, quietTrail: 1048576, quietSplash: 2097152, swimVisibility: 4194304,', 'swim visibility wire flags');
     code = replaceOnce(code, '  if (a.onEnemy) f |= F.enemy;',

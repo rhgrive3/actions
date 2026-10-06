@@ -138,7 +138,7 @@ async function createFixture({ apply484 = true } = {}) {
 // ---------------------------------------------------------------------------
 test('issue-484 adapter transforms Actor and NetMatch with exact connections', () => {
   const actorSrc = fs.readFileSync(path.join(UPSTREAM, 'src/game/actor.js'), 'utf8');
-  const netSrc = fs.readFileSync(path.join(UPSTREAM, 'src/net/netmatch.js'), 'utf8');
+  const netSrc = adaptSource('src/net/netmatch.js', fs.readFileSync(path.join(UPSTREAM, 'src/net/netmatch.js'), 'utf8'));
 
   const patchedActor = adaptIssue484('src/game/actor.js', actorSrc);
   assert.ok(patchedActor.includes('if (this.remote && typeof this.s3SpecialCost === \'number\''));
@@ -146,7 +146,7 @@ test('issue-484 adapter transforms Actor and NetMatch with exact connections', (
   assert.ok(!patchedActor.includes('- 0.01'), 'Must not contain -0.01 epsilon');
 
   const patchedNet = adaptIssue484('src/net/netmatch.js', netSrc);
-  assert.ok(patchedNet.includes('specialReady: 8388608'));
+  assert.ok(patchedNet.includes('specialReady: 67108864'));
   assert.ok(patchedNet.includes('if (a.specialReady?.()) f |= F.specialReady;'));
   assert.ok(patchedNet.includes('snap.spCost = d.sc?.[a.nid]'));
   assert.ok(!patchedNet.includes('spCost: s[21]'), 'tuple slot21 remains available for existing statistics extensions');
@@ -159,8 +159,8 @@ test('issue-484 adapter transforms Actor and NetMatch with exact connections', (
 
   // Verify compatibility when parent composition invokes #482 first
   const netSrcWith482 = netSrc.replace(
-    '  _remoteRespawn(a) {\n    a.alive = true; a.hp = PLAYER.hp; a.invuln = PLAYER.spawnInvuln;\n    a.respawnTimer = 0;\n    a.net.spawnPending = true;\n  }',
-    '  _remoteRespawn(a) {\n    a.alive = true; a.hp = PLAYER.hp; a.invuln = PLAYER.spawnInvuln;\n    a.respawnTimer = 0;\n    a.net.spawnPending = true;\n    a.lastAttacker = null; a.lastAttackerHitAge = 99;\n  }'
+    '    a.net.spawnPending = true;',
+    '    a.net.spawnPending = true;\n    a.lastAttacker = null; a.lastAttackerHitAge = 99;'
   );
   const patchedNet482Compatible = adaptIssue484('src/net/netmatch.js', netSrcWith482);
   assert.ok(patchedNet482Compatible.includes('a.net.spawnPending = true;\n    delete a.s3SpecialCost;\n    a.s3SpecialReady = false;\n    a.lastAttacker = null;'), 'Must compose cleanly after #482');
@@ -229,7 +229,7 @@ test('negative control: unpatched INKWAVE loses special ready glow on remote cli
   hostNM.tickT = 0;
   hostNM.update(1 / 20);
   assert.ok(hostPacket);
-  assert.equal(hostPacket.a[0].length, 21, 'Unpatched snapshot has only 21 elements');
+  assert.equal(hostPacket.a[0].length, 22, 'Current writer includes its existing special-use count slot');
 
   // Client receives tick
   clientNM.onMessage('host-id', hostPacket);
@@ -301,9 +301,9 @@ test('root acceptance: patched INKWAVE synchronizes specialReady and effective s
   hostNM.tickT = 0;
   hostNM.update(1 / 20);
   assert.ok(hostPacket);
-  assert.equal(hostPacket.a[0].length, 21, 'original actor tuple is unchanged');
+  assert.equal(hostPacket.a[0].length, 22, 'current actor tuple and special-use slot are unchanged');
   assert.equal(Math.round(hostPacket.sc[owner.nid]), 165, 'named sidecar carries effective cost');
-  assert.ok(hostPacket.a[0][10] & 8388608, 'Flags contain specialReady bit');
+  assert.ok(hostPacket.a[0][10] & 67108864, 'Flags contain specialReady bit');
 
   // Deliver tick to client
   clientNM.onMessage('host-id', hostPacket);
@@ -637,7 +637,7 @@ test('mixed stream: seamless transitions between new protocol and legacy samples
 
   // Step 1: Original tuple plus named cost sidecar and ready flag
   const newSnapshot = [
-    proxy.nid, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 | 8388608,
+    proxy.nid, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 | 67108864,
     100, 100, 165, 0, 50, 0, 0, 0, 0, 0, 165
   ];
   receiveFixtureSnapshot(nm, 'host-id', { k: 't', ts: 1.0, sc: { [proxy.nid]: 165 }, a: [newSnapshot] });
@@ -715,7 +715,7 @@ test('sampling alignment: Hermite interpolation aligns cost with earlier snapsho
   ];
   // Snapshot 1: t=1.1, spCost=165, sp=165, flags=1 | specialReady (ready)
   const snap1 = [
-    proxy.nid, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 | 8388608,
+    proxy.nid, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 | 67108864,
     100, 100, 165, 0, 50, 0, 0, 0, 0, 0, 165
   ];
 
@@ -775,7 +775,7 @@ test('admission checks: out-of-order and non-authoritative packets are rejected'
 
   // 1. Authoritative packet at ts=2.0
   const validSnap = [
-    proxy.nid, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 | 8388608,
+    proxy.nid, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 | 67108864,
     100, 100, 165, 0, 50, 0, 0, 0, 0, 0, 165
   ];
   receiveFixtureSnapshot(nm, 'host-id', { k: 't', ts: 2.0, sc: { [proxy.nid]: 165 }, a: [validSnap] });

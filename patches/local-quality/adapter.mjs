@@ -1,3 +1,4 @@
+import { adaptClothingGear } from '../splatoon3/clothing-gear-adapter.mjs';
 import { adaptIssue465 } from '../splatoon3/issue-465-adapter.mjs';
 import { adaptIssue481 } from '../splatoon3/issue-481-adapter.mjs';
 import { adaptQualityIssue418 } from './issue-418-adapter.mjs';
@@ -113,6 +114,7 @@ function adaptQualityLayer(rel, code) {
   code = adaptScoreReticle(rel, code, replaceOnce);
   code = adaptMapTeammateStatus(rel, code, replaceOnce);
   code = adaptIssue427(rel, code);
+  code = adaptClothingGear(rel, code, replaceOnce);
   code = adaptBossHit(rel, code);
   code = adaptIssue460Source(rel, code);
   code = adaptIssue461Source(rel, code);

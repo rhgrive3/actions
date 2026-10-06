@@ -1,3 +1,4 @@
+import { CLOTHING_ABILITIES, SPLATFEST_TEE, clothingAbilityAllowed, deathGearPenalty } from './clothing-gear.mjs';
 import { selectedSub } from './kit-composition.mjs';
 import { installSubReady } from './sub-ready.mjs';
 import { installStormPower } from './storm-power.mjs';
@@ -7,6 +8,7 @@ import { HEAD_ABILITIES, conditionalPoints, conditionalKey, installConditionalGe
 import { installSubResistance } from './sub-resistance.mjs';
 // Gear uses three equipment pieces, each with one 10 AP main and three 3 AP subs.
 export const ABILITIES = Object.freeze({
+  respawnPunisher: '復活ペナルティアップ', abilityDoubler: 'フェスT：追加ギアパワー倍化',
   ninjaSquid: 'イカニンジャ',
   lastDitchEffort: 'ラストスパート', comeback: 'カムバック', openingGambit: 'スタートダッシュ', subResistance: 'サブ影響軽減',
   none: 'なし', runSpeed: 'ヒト移動速度アップ', swimSpeed: 'イカダッシュ速度アップ',
@@ -17,22 +19,23 @@ export const ABILITIES = Object.freeze({
   specialSaver: 'スペシャル減少量ダウン', quickRespawn: '復活時間短縮',
   quickSuperJump: 'スーパージャンプ時間短縮', subPower: 'サブ性能アップ',
 });
-export function abilityAllowed(id, piece, slot) {
-  return Object.hasOwn(ABILITIES, id) && (!HEAD_ABILITIES.includes(id) || piece === 0 && slot === 0) && (id !== 'ninjaSquid' || piece === 1 && slot === 0);
+export function abilityAllowed(id, piece, slot, item) {
+  return Object.hasOwn(ABILITIES, id) && clothingAbilityAllowed(id, piece, slot, item) && (!HEAD_ABILITIES.includes(id) || piece === 0 && slot === 0) && (id !== 'ninjaSquid' || piece === 1 && slot === 0);
 }
 export const emptyLoadout = () => Array.from({ length: 3 }, () => ({ main: 'none', subs: ['none', 'none', 'none'] }));
 export function normalizeLoadout(value) {
   if (!Array.isArray(value) || value.length !== 3) return emptyLoadout();
   return value.map((part, piece) => ({
-    main: abilityAllowed(part?.main, piece, 0) ? part.main : 'none',
-    subs: Array.from({ length: 3 }, (_, i) => abilityAllowed(part?.subs?.[i], piece, i + 1) ? part.subs[i] : 'none'),
+    ...(piece === 1 && part?.item === SPLATFEST_TEE ? { item: SPLATFEST_TEE } : {}),
+    main: abilityAllowed(part?.main, piece, 0, part?.item) ? part.main : 'none',
+    subs: Array.from({ length: 3 }, (_, i) => abilityAllowed(part?.subs?.[i], piece, i + 1, part?.item) ? part.subs[i] : 'none'),
   }));
 }
 export function abilityPoints(loadout) {
   const ap = {};
   for (const part of normalizeLoadout(loadout)) {
-    if (part.main !== 'none') ap[part.main] = (ap[part.main] || 0) + 10;
-    for (const sub of part.subs) if (sub !== 'none') ap[sub] = (ap[sub] || 0) + 3;
+    if (part.main !== 'none' && part.main !== 'abilityDoubler') ap[part.main] = (ap[part.main] || 0) + 10;
+    for (const sub of part.subs) if (sub !== 'none') ap[sub] = (ap[sub] || 0) + (part.item === SPLATFEST_TEE && part.main === 'abilityDoubler' ? 6 : 3);
   }
   return ap;
 }
@@ -136,6 +139,7 @@ export function installGear(api, tuning) {
   }
   Actor.prototype.reset = function (...args) {
     const result = reset.apply(this, args); equip(this);
+    if (this.remote) delete this.s3.clothingRemote;
     this.s3.recoverStopRemaining = 0; this.s3.rollerRefillMode = false; this.s3.enemyInkTime = 0; this.s3.enemyInkAwayTime = 0;
     this.s3.swimStealth = null; this.s3.netSwimVisibility = null;
     this.s3.quickRespawnHistory = { seenEnemyDeath: false, splats: 0 };
@@ -196,17 +200,20 @@ export function installGear(api, tuning) {
   Actor.prototype.splat = function (...args) {
     const before = this.special, alive = this.alive;
     const [attacker, cause = 'weapon'] = args;
+    const penalty = deathGearPenalty(this, attacker, cause, tuning, conditionalPoints(this, abilityPoints(this.s3?.loadout), G.match, tuning.conditionalGear), gearCurve);
     const enemyDeath = attacker && attacker !== this && attacker.team !== this.team &&
       !['water', 'fall', 'out', 'bounds', 'void'].includes(cause);
     const result = splat.apply(this, args);
     if (alive && !this.alive) {
-      this.special = before * (this.s3?.modifiers?.specialSaver ?? 0.5);
+      this.special = before * Math.max(0, (penalty.incoming ? penalty.saver : this.s3?.modifiers?.specialSaver ?? 0.5) - penalty.loss);
       const history = this.s3.quickRespawnHistory;
       if (enemyDeath) {
-        if (history.seenEnemyDeath && history.splats === 0) this.respawnTimer = Math.max(0, this.respawnTimer - this.s3.modifiers.quickRespawnReduction);
+        if (history.seenEnemyDeath && history.splats === 0) this.respawnTimer = Math.max(0, this.respawnTimer - (penalty.incoming ? penalty.quickReduction : this.s3.modifiers.quickRespawnReduction));
         history.seenEnemyDeath = true; history.splats = 0;
         this.s3.splatsThisLife = 0;
       }
+      this.respawnTimer += penalty.frames / 60;
+      this.s3.lastDeathGear = penalty;
     }
     return result;
   };
@@ -274,21 +281,28 @@ export function installGear(api, tuning) {
     ['アタマ', 'フク', 'クツ'].forEach((label, piece) => {
       const field = document.createElement('fieldset'), legend = document.createElement('legend'); legend.textContent = label; field.append(legend);
       for (let slot = 0; slot < 4; slot++) {
-        const row = document.createElement('label'); row.textContent = slot === 0 ? 'メイン（10）' : `追加 ${slot}（3）`;
+        const row = document.createElement('label'); const labelText = document.createElement('span'); labelText.dataset.slot = String(slot); row.append(labelText);
         const select = document.createElement('select'); select.setAttribute('aria-label', `${label} ${slot === 0 ? 'メイン' : '追加' + slot}`);
         for (const [id, name] of Object.entries(ABILITIES)) {
-          if (!abilityAllowed(id, piece, slot) || id !== 'none' && !HEAD_ABILITIES.includes(id) && id !== 'ninjaSquid' && !tuning.gear[id]) continue;
+          if (!abilityAllowed(id, piece, slot, id === 'abilityDoubler' ? SPLATFEST_TEE : loadout[piece].item) || id !== 'none' && !CLOTHING_ABILITIES.includes(id) && !HEAD_ABILITIES.includes(id) && id !== 'ninjaSquid' && !tuning.gear[id]) continue;
           const option = document.createElement('option'); option.value = id; option.textContent = name; select.append(option);
         }
         select.value = slot === 0 ? loadout[piece].main : loadout[piece].subs[slot - 1];
         select.addEventListener('keydown', event => event.stopPropagation());
         select.addEventListener('change', () => {
-          if (slot === 0) loadout[piece].main = select.value; else loadout[piece].subs[slot - 1] = select.value;
+          if (slot === 0) { loadout[piece].main = select.value; if (select.value === 'abilityDoubler') loadout[piece].item = SPLATFEST_TEE; }
+          else loadout[piece].subs[slot - 1] = select.value;
+          updateLabels();
           try { localStorage.setItem(STORAGE, JSON.stringify(loadout)); } catch { /* sandbox/private mode */ }
           if (G.match?.local && G.match?.attract) equip(G.match.local);
         });
         row.append(select); field.append(row);
       }
+      function updateLabels() {
+        const doubled = loadout[piece].item === SPLATFEST_TEE && loadout[piece].main === 'abilityDoubler';
+        for (const el of field.querySelectorAll('[data-slot]')) { const slot = Number(el.dataset.slot); el.textContent = slot === 0 ? doubled ? 'フェスT（倍化）' : 'メイン（10）' : `追加 ${slot}（${doubled ? 6 : 3}）`; }
+      }
+      updateLabels();
       details.append(field);
     });
     return details;

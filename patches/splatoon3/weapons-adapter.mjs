@@ -59,5 +59,12 @@ export function adaptWeaponsFidelity(code,replaceOnce) {
     spreadWeaponRound(this, dir, a, w, spreadDeg);
     const p = this._new();
     Object.assign(p, { type: 'shot', wid: w.id`, 'dualies/splatling centerline convergence');
+  patch('    if (!victim.alive || victim.team === attacker.team) return;',
+    "    if (!victim.alive || victim.team === attacker.team || !(dmg > 0)) return 'rejected';", 'hit pre-admission');
+  patch('    if (route === \'drop\') return;', "    if (route === 'drop') return 'rejected';", 'dropped hit result');
+  patch("    if (route === 'send') nm.sendHit(attacker, victim, dmg, weaponId);   // the kill confirm arrives with their splat\n    else killed = victim.damage(dmg, attacker, weaponId);",
+    "    if (route === 'send') {\n      if (victim.invuln > 0) return 'rejected-invulnerable';\n      if (!nm.sendHit(attacker, victim, dmg, weaponId)) return 'rejected';\n      return 'pending';\n    }\n    const hpBefore = victim.hp;\n    killed = victim.damage(dmg, attacker, weaponId);\n    if (!(victim.hp < hpBefore)) return victim.invuln > 0 ? 'rejected-invulnerable' : 'rejected';", 'accepted damage admission');
+  patch('    if (attacker.isLocal) rumble(attacker, killed ? 0.35 : 0.06, killed ? 0.4 : 0.16, killed ? 150 : 45);',
+    "    if (attacker.isLocal) rumble(attacker, killed ? 0.35 : 0.06, killed ? 0.4 : 0.16, killed ? 150 : 45);\n    return killed ? 'killed' : 'accepted';", 'accepted feedback result');
   return "import { EPSILON as WEAPONS_FIDELITY_EPSILON, advanceFidelityProjectile, advanceFidelityWallDrop, beginFidelityWallDrop, configureFidelityFlick, fidelityProjectileTargets, fidelityPlayerCollisionRadius, fidelityVolleyDamage, fidelityBossHit, fidelityWorldHit, applyFidelityProjectileHit, applyFidelitySlosherSplash, fidelityAimConvergence } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n"+code;
 }

@@ -22,11 +22,13 @@ export function replaceOnce(code, before, after, label) {
 }
 
 export function adaptIssue484Net(code) {
+  // bit23 belongs to spawn armor; bit24/25 are Roller mode/clothing.
+  // Use one distinct bit26 in both the writer and reader via F.specialReady.
   // 1. Add specialReady after the swim-visibility bits already owned by PR #323
   code = replaceOnce(
     code,
     '  invuln: 262144, enemy: 524288, quietTrail: 1048576, quietSplash: 2097152, swimVisibility: 4194304,',
-    '  invuln: 262144, enemy: 524288, quietTrail: 1048576, quietSplash: 2097152, swimVisibility: 4194304, specialReady: 8388608,',
+    '  invuln: 262144, enemy: 524288, quietTrail: 1048576, quietSplash: 2097152, swimVisibility: 4194304, specialReady: 67108864,',
     'netmatch F specialReady flag'
   );
 

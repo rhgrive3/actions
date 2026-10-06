@@ -15,6 +15,22 @@ export function networkIdentity() {
 export function adaptNetworkSource(rel, code) {
   const patch = (before,after,label) => { code = once(code,before,after,rel+': '+label); };
   if (rel === 'src/net/netmatch.js') {
+    patch('const FORWARD = [', "const FORWARD = ['hit', 'hit:rejected', ",
+      'authoritative hit admission feedback');
+    patch('    if (!a || a.remote || a.nid === undefined || G.netm !== this) return;',
+      "    if (!a || a.remote || a.nid === undefined || G.netm !== this) return;\n    if (name === 'hit' && e.killed) return;",
+      'lethal confirmation remains owned by splat event');
+    {
+      const hitCalls = [
+        'G.projectiles?.applyHit(atk, v, d.d, d.w);',
+        'G.projectiles?.applyHit(atk, v, d.d, d.w, d.g);'
+      ];
+      const hitCall = hitCalls.find(candidate => code.includes(candidate));
+      if (!hitCall) throw Error('Network replication anchor mismatch: ' + rel + ': owner hit admission result');
+      patch(hitCall,
+        `const hitAdmission = ${hitCall.slice(0, -1)};\n    if (hitAdmission === 'rejected-invulnerable') emit('hit:rejected', { attacker: atk, victim: v, damage: d.d, weaponId: d.w });`,
+        'owner confirms invulnerability rejection');
+    }
     code = "import { validFidelityRollerUnitPacket } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n" + code;
     patch('  sendHit(attacker, victim, dmg, wid) {',
       '  sendHit(attacker, victim, dmg, wid, slosherVolleyId) {', 'Slosher volley identity send');
@@ -237,8 +253,8 @@ function retireNetworkGhosts(owner = null) {
   if (rel === 'src/game/weapons.js') {
     patch('  applyHit(attacker, victim, dmg, weaponId) {',
       '  applyHit(attacker, victim, dmg, weaponId, slosherVolleyId) {', 'Slosher volley identity projectile entry');
-    patch('nm.sendHit(attacker, victim, dmg, weaponId);',
-      'nm.sendHit(attacker, victim, dmg, weaponId, slosherVolleyId);', 'Slosher volley identity projectile forwarding');
+    patch('nm.sendHit(attacker, victim, dmg, weaponId)',
+      'nm.sendHit(attacker, victim, dmg, weaponId, slosherVolleyId)', 'Slosher volley identity projectile forwarding');
     patch("    const route = nm ? nm.shouldApplyHit(attacker, victim) : 'local';",
       "    const route = nm ? nm.shouldApplyHit(attacker, victim, weaponId) : 'local';", 'pass weapon to damage authority');
     patch('    const c = b.pos;\n    let area = G.paint.splat',

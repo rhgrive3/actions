@@ -1,3 +1,4 @@
+import { respawnPunisherEquipped, withHitPunisher } from './clothing-gear.mjs';
 const pending = new WeakMap();
 
 export function hasPendingLethal(actor) {
@@ -6,7 +7,7 @@ export function hasPendingLethal(actor) {
 
 export function scheduleLethal(actor, attacker, cause = 'weapon') {
   if (!actor || !actor.alive || pending.has(actor)) return false;
-  pending.set(actor, { attacker: attacker || null, cause });
+  pending.set(actor, { attacker: attacker || null, cause, punisher: respawnPunisherEquipped(attacker) });
   return true;
 }
 
@@ -21,6 +22,6 @@ export function flushPendingLethal(actor) {
   if (!state) return false;
   pending.delete(actor);
   if (!actor.alive) return false;
-  actor.splat(state.attacker, state.cause);
+  withHitPunisher(state.attacker, state.punisher, () => actor.splat(state.attacker, state.cause));
   return true;
 }
