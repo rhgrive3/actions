@@ -40,7 +40,7 @@ export function appendRollerNearUnit(system, a, w) {
   Object.assign(p, { type: 'drop', owner: a, team: a.team, age: 0, life: 1.4, straight: w.ballistics?.horizontalStraightTime ?? 0,
     radius: 1, damage: w.flickDamageNear, dmgFar: w.flickDamageFar, size: .15, trail: 0, trailEvery: 1.8, trailRadius: .45,
     grav: w.flickGravity ?? 26, drag: w.flickDrag ?? .4, seed: Math.random(), vis: .185, tail0: .4, tailK: 1, wob: .1, wobF: 19, nose: 0, sats: 2,
-    s3FlickUnit: 1, fidelityMode: 'horizontal', fidelityYaw: angle - a.yaw });
+    s3FlickUnit: 1, fidelityMode: 'horizontal', fidelityYaw: angle - a.yaw, fidelitySectorYaw: a.yaw });
   p.pos.set(a.pos.x + fx * .6 + fz * lateral, a.pos.y + 1.3, a.pos.z + fz * .6 - fx * lateral);
   p.prev.copy(p.pos); p.start.copy(p.pos);
   p.vel.set(Math.sin(angle) * cp * speed, Math.sin(pitch) * speed, Math.cos(angle) * cp * speed);
