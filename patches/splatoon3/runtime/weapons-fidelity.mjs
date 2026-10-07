@@ -713,7 +713,7 @@ export function installWeaponsFidelity(context,profile) {
     // Clear the outgoing kit before native _new erases wid and the generic
     // wrapper erases its descriptor, while authority is still identifiable.
     const recycled=this.pool[this.pool.length-1];if(recycled)kitTrizookaClearPooled(recycled);
-    const p=fresh.apply(this,args);kitTrizookaClearPooled(p);
+    const p=fresh.apply(this,args);kitTrizookaClearPooled(p);p.s3Weapon=null;
     p._s3SloshBirthPending=false;p._s3SloshBirthOwner=null;p._s3SloshBirthEpoch=undefined;
     p._s3SloshBirthWeaponId=null;p._s3SloshBirthRemote=undefined;p._s3SloshBirthNid=undefined;
     p._s3SloshBirthPeer=undefined;p._s3SloshBirthWasInMatch=false;p._s3SloshBirthDelay=0;
