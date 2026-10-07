@@ -18,6 +18,7 @@ import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { adaptMinimapResources } from './minimap-resource-adapter.mjs';
 import { adaptLobbyResources } from './lobby-resource-adapter.mjs';
+import { adaptPortraitCostSource } from './portrait-cost-adapter.mjs';
 
 export const QUALITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
 const IDENTITY_FILES = [
@@ -34,6 +35,7 @@ const IDENTITY_FILES = [
   'platform-adapter.mjs', 'platform-lifecycle.mjs', 'platform-game.mjs',
   'platform-input.mjs', 'platform-audio.mjs', 'platform-transport.mjs',
   'mobile-platform.mjs', 'gyro-permission.mjs',
+  'portrait-cost-adapter.mjs', 'portrait-cost.mjs',
 ];
 
 export function replaceOnce(code, before, after, label) {
@@ -62,6 +64,7 @@ export function adaptQualitySource(rel, code) {
     code = adaptTouchRelayout(rel, code);
   }
   code = adaptPlatformSource(rel, code);
+  code = adaptPortraitCostSource(rel, code, replaceOnce);
   if (rel === 'src/core/mobile.js') return code;
   if (rel === 'src/ui/menus.js') {
     code = replaceOnce(code,
