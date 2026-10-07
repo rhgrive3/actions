@@ -53,6 +53,12 @@ export function adaptWeaponsFidelity(code,replaceOnce) {
   patch('try { if (this._step(p, dt))', 'try { if (this._step(p, elapsed))', 'delayed movement duration');
   patch('      if (!dead && p.trailEvery) {','      if (!dead && !p.ghost && p.trailEvery) {','ghost trails never score paint');
   patch('p.trailRadius * (0.8 + Math.random() * 0.4)', 'fidelityFlightPaintRadius(p)', 'source-bound Shooter intermediate paint width');
+  patch(`          const g = G.physics.raycast(p.pos, DOWN, 4, _hit2, true);
+          if (g.hit) p.owner.addTurf(G.paint.splat(_v.copy(g.point).addScaledVector(g.normal, 0.1), fidelityFlightPaintRadius(p), p.team, { seed: Math.random() }));`,
+    `          if (!applyFidelityBlasterFlightPaint(this, p)) {
+            const g = G.physics.raycast(p.pos, DOWN, 4, _hit2, true);
+            if (g.hit) p.owner.addTurf(G.paint.splat(_v.copy(g.point).addScaledVector(g.normal, 0.1), fidelityFlightPaintRadius(p), p.team, { seed: Math.random() }));
+          }`, 'Blaster source-backed flight splash paint');
   // #1034: current-S3 Blaster ordinary projectile PaintParam is zero.
   // Keep dedicated burst/wall/splash paint, but suppress the legacy generic impact splat.
   patch(`    let area;
@@ -143,5 +149,5 @@ export function adaptWeaponsFidelity(code,replaceOnce) {
   patch('G.time - (this.rollHits.get(key) || -9) > 0.5',
     'G.time - (this.rollHits.get(key) ?? -Infinity) + 1e-10 >= w.rollContactInterval', 'Roller Boss contact interval');
   patch("    a.addTurf(area);\n    emit('weapon:impact', { pos: _v.set(a.pos.x + fx * 0.75", "    area += fidelityRollerMaximumPaint(this,w,fx,fz);\n    a.addTurf(area);\n    emit('weapon:impact', { pos: _v.set(a.pos.x + fx * 0.75", 'source maximum Roller floor width');
-  return "import { EPSILON as WEAPONS_FIDELITY_EPSILON, advanceFidelityProjectile, advanceFidelityWallDrop, beginFidelityWallDrop, configureFidelityFlick, fidelityProjectileTargets, fidelityPlayerCollisionRadius, fidelityVolleyDamage, fidelityBossHit, fidelityWorldHit, applyFidelityProjectileHit, applyFidelitySlosherSplash, fidelityAimConvergence, fidelityDualiesAimTarget, fidelityFlightPaintRadius } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n"+code;
+  return "import { EPSILON as WEAPONS_FIDELITY_EPSILON, advanceFidelityProjectile, advanceFidelityWallDrop, beginFidelityWallDrop, configureFidelityFlick, fidelityProjectileTargets, fidelityPlayerCollisionRadius, fidelityVolleyDamage, fidelityBossHit, fidelityWorldHit, applyFidelityProjectileHit, applyFidelitySlosherSplash, fidelityAimConvergence, fidelityDualiesAimTarget, fidelityFlightPaintRadius, applyFidelityBlasterFlightPaint, applyFidelityBlasterBurstPaint } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n"+code;
 }
