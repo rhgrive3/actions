@@ -127,8 +127,8 @@ test('activating the special deploys a stationary dome with the pinned durabilit
   assert.equal(bigBubblerDomes().length, 1);
   const dome = bigBubblerDomes()[0];
   assert.equal(dome.team, 0);
-  assert.equal(dome.hp, BIG_BUBBLER_RAW.maxHp);
-  assert.equal(dome.fieldHp, BIG_BUBBLER_RAW.maxFieldHp);
+  assert.equal(dome.hp, BIG_BUBBLER_RAW.maxFieldHp, 'outer barrier uses MaxFieldHP');
+  assert.equal(dome.fieldHp, BIG_BUBBLER_RAW.maxHp, 'weak/device target uses MaxHP');
   close(dome.pos.z, BIG_BUBBLER_CALIBRATION.deployDistance, 1e-9);
   // the native activation still owns the gauge, the stat and the form change
   assert.equal(a.special, 0);
@@ -264,7 +264,8 @@ test('the winning handler applies HP exactly once and is idempotent', async () =
   const hp = dome.hp;
   const candidate = kitBarrierCandidate(round(f, 1, start), start, end);
   const applied = candidate.onHit();
-  assert.equal(applied, 36 * BIG_BUBBLER_CALIBRATION.rawPerDamageUnit);
+  assert.equal(applied, 36 * BIG_BUBBLER_CALIBRATION.rawPerDamageUnit * BIG_BUBBLER_RAW.damageRatio,
+    'outer barrier applies DamgeRatio exactly once');
   assert.equal(dome.hp, hp - applied, 'the round spends the canopy once');
   assert.equal(candidate.onHit(), 0, 'a second call cannot double-spend');
   assert.equal(dome.hp, hp - applied);
@@ -348,6 +349,28 @@ test('the exposed emitter is a distinct target and its own budget ends the dome'
   }
   assert.equal(bigBubblerDomes().length, 0, 'the emitter budget collapses the dome');
   assert.equal(dome.fieldHp, 0);
+});
+
+test('#1051 canopy and weak-point hits advance one shared destruction state', async () => {
+  const { f } = await composed({ timeDamageIntervalSeconds: 1e9 });
+  level(f);
+  const a = roller(f); f.G.actors = [a]; activate(f, a);
+  const dome = bigBubblerDomes()[0];
+  step(f, 90);
+  // Directly exercise the authoritative adjudication with post-target raw deltas:
+  // half a canopy budget plus half a weak-point budget must total one destruction.
+  const owner = bigBubblerOwnerId(a);
+  const shooter = f.make('shooter'); shooter.team = 1; shooter.nid = 77;
+  const authority = { host: true, roster: [{ nid: 77, team: 1 }] };
+  const base = { domeId: dome.id, serial: dome.serial, shooter: 'n77', shooterTeam: 1,
+    domeOwner: owner, team: dome.team };
+  assert.equal(adjudicateBigBubblerDamage({ ...base, eventId: 1, target: 'canopy',
+    amount: BIG_BUBBLER_RAW.maxFieldHp / 2 }, authority).reason, 'applied');
+  assert.ok(bigBubblerDomes().includes(dome), 'half the shared state remains');
+  assert.equal(adjudicateBigBubblerDamage({ ...base, eventId: 2, target: 'field',
+    amount: BIG_BUBBLER_RAW.maxHp / 2 }, authority).reason, 'applied');
+  assert.equal(bigBubblerDomes().includes(dome), false,
+    'mixed shell/weak damage cannot create two independent full budgets');
 });
 
 test('ghost rounds are stopped at the dome but never spend HP, turf or paint', async () => {
@@ -612,7 +635,7 @@ test('dome ids use the real network identity, never a colliding slot fallback', 
 // ------------------------------------------------------------------ replay
 const VALID_DEPLOY = () => ({
   domeId: '1:n9:3', serial: 3, team: 1, t: 1.0,
-  pos: [-12.5, 0, 33.25], hp: BIG_BUBBLER_RAW.maxHp, fieldHp: BIG_BUBBLER_RAW.maxFieldHp,
+  pos: [-12.5, 0, 33.25], hp: BIG_BUBBLER_RAW.maxFieldHp, fieldHp: BIG_BUBBLER_RAW.maxHp,
 });
 
 test('a replayed deploy restores the transmitted position instead of re-deriving aim', async () => {
@@ -801,7 +824,8 @@ test('a local round versus a remote dome proposes damage and changes nothing', a
   assert.deepEqual(JSON.parse(JSON.stringify(scalarWire)), scalarWire, 'proposal fields are JSON-safe');
   assert.equal(wire.domeId, remote.id);
   assert.equal(wire.serial, remote.serial);
-  assert.equal(wire.amount, 36 * BIG_BUBBLER_CALIBRATION.rawPerDamageUnit);
+  assert.equal(wire.amount, 36 * BIG_BUBBLER_CALIBRATION.rawPerDamageUnit * BIG_BUBBLER_RAW.damageRatio,
+    'remote proposal already carries the one barrier ratio application');
   // The proposal names the ACTUAL projectile actor and the ACTUAL dome owner.
   assert.equal(wire.shooter, 'n9', 'the real projectile actor identity, not a placeholder');
   assert.equal(wire.shooterTeam, 0, 'and its real team');
@@ -1009,7 +1033,7 @@ test('replay bookkeeping is bounded and dropped wholesale by a match reset', asy
   const shown = bigBubblerRemoteDomes()[0];
   assert.equal(replayBigBubbler('hit', proxy,
     { domeId: fresh.domeId, serial: 3, eventId: 1, target: 'canopy', amount: 100 }).reason, 'displayed');
-  assert.equal(shown.hp, BIG_BUBBLER_RAW.maxHp - 100);
+  assert.equal(shown.hp, BIG_BUBBLER_RAW.maxFieldHp - 100);
   const resets = [];
   const stop = f.on('kit:bubbler:replay:reset', p => resets.push(p));
   resetBigBubblerReplay('test-bounded-reset');
@@ -1081,7 +1105,7 @@ test('the owner adjudication API validates authority, ownership, team, amount an
   replayBigBubbler('deploy', remote, VALID_DEPLOY());
   assert.equal(adjudicateBigBubblerDamage({ ...proposal, eventId: 4, domeId: VALID_DEPLOY().domeId },
     authority).reason, 'foreign-ownership');
-  assert.equal(bigBubblerRemoteDomes()[0].hp, BIG_BUBBLER_RAW.maxHp,
+  assert.equal(bigBubblerRemoteDomes()[0].hp, BIG_BUBBLER_RAW.maxFieldHp,
     'the remote image was not mutated by adjudication');
   // an unknown dome is named, not silently ignored
   assert.equal(adjudicateBigBubblerDamage({ ...proposal, eventId: 5, domeId: '9:n9:1' },
