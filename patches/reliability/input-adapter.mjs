@@ -38,10 +38,19 @@ const BLUR_AFTER = [
 // pad goes away so the reconnected pad's first button edge is registered.
 const NOPAD_BEFORE = '    this.padPressed.clear();\n    if (!pad) return;';
 const NOPAD_AFTER = '    this.padPressed.clear();\n    if (!pad) { this.padPrev = []; return; }';
+const S3_NOPAD_BEFORE = '    this.padPressed.clear();\n    if (!pad) {\n      if (padOwned) { this._s3PadCanceled = true; this.padPrev.length = 0; }\n      return;\n    }';
+const S3_NOPAD_AFTER = '    this.padPressed.clear();\n    if (!pad && padOwned) { this._s3PadCanceled = true; this.padPrev.length = 0; }\n    if (!pad) { this.padPrev = []; return; }';
 
 export function adaptInput(rel, code) {
-  if (rel === 'src/game/player.js') return replaceOnce(code, '    const it = a.intent;\n    if (!this.enabled) {',
-    '    const it = a.intent;\n    // A missing pad cannot retain camera velocity for a later reconnect (#676).\n    if (!inp.pad) { this.padLook.x = this.padLook.y = 0; this.edgeT = 0; }\n    if (!this.enabled) {', 'disconnected pad camera filter');
+  if (rel === 'src/game/player.js') {
+    if (code.includes('    const it = a.intent;\n    if (inp._s3PadCanceled) {')) return replaceOnce(code,
+      '    const it = a.intent;\n    if (inp._s3PadCanceled) {',
+      '    const it = a.intent;\n    // A missing pad cannot retain camera velocity for a later reconnect (#676).\n    if (!inp.pad) { this.padLook.x = this.padLook.y = 0; this.edgeT = 0; }\n    if (inp._s3PadCanceled) {',
+      'disconnected pad camera filter');
+    return replaceOnce(code, '    const it = a.intent;\n    if (!this.enabled) {',
+      '    const it = a.intent;\n    // A missing pad cannot retain camera velocity for a later reconnect (#676).\n    if (!inp.pad) { this.padLook.x = this.padLook.y = 0; this.edgeT = 0; }\n    if (!this.enabled) {',
+      'disconnected pad camera filter');
+  }
   if (rel !== INPUT_REL) return code;
   code = replaceOnce(code,
     "      this.lastDevice = 'kbm';\n      if (this.onKey && this.onKey(e, false)) return;",
@@ -60,7 +69,9 @@ export function adaptInput(rel, code) {
     '      this._padEpoch = (this._padEpoch || 0) + 1;\n' +
     '    }', 'optional gamepad capability boundary');
   code = replaceOnce(code, BLUR_BEFORE, BLUR_AFTER, 'blur focus reset');
-  code = replaceOnce(code, NOPAD_BEFORE, NOPAD_AFTER, 'gamepad disconnect reset');
+  code = code.includes(S3_NOPAD_BEFORE)
+    ? replaceOnce(code, S3_NOPAD_BEFORE, S3_NOPAD_AFTER, 'gamepad disconnect reset')
+    : replaceOnce(code, NOPAD_BEFORE, NOPAD_AFTER, 'gamepad disconnect reset');
   code = replaceOnce(code,
     '    pad.buttons.forEach((b, i) => {',
     '    pad.buttons.forEach((b, i) => {\n' +
