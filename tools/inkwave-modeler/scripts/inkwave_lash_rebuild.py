@@ -474,6 +474,26 @@ def build_side_corner(design, tree, views, side, black):
                     continue
                 faces.append(tuple(q))
         print('SIDE_CORNER', view, len(verts) - base, 'verts')
+    if design.get('side_trim_sigma'):
+        # seen from the front, the sheet must end on the reference's black outline smoothed (one smooth edge, not
+        # the per-sample teeth): faces the front camera sees outside it are dropped (faces hidden there stay)
+        sg = design['side_trim_sigma'] * ink_k
+        soft = er.smooth_rows(er.smooth_rows(ink.astype(float), sg), sg, axis=1) > 0.5
+        V = np.array(verts)
+        fx, fy = er.camera_pixels('front', V)
+        cc = np.clip(np.round((fx - ink_o[0]) * ink_k).astype(int), 0, soft.shape[1] - 1)
+        rr = np.clip(np.round((fy - ink_o[1]) * ink_k).astype(int), 0, soft.shape[0] - 1)
+        inside_v = soft[rr, cc]
+        kept = []
+        for f in faces:
+            if all(inside_v[k] for k in f):
+                kept.append(f)
+                continue
+            c = V[list(f)].mean(0)
+            if front_hidden(c):
+                kept.append(f)
+        print('SIDE_CORNER trim', len(faces), '->', len(kept), 'faces')
+        faces = kept
     verts = M.to_local(np.array(verts)) * 1000
     used = sorted({k for f in faces for k in f})
     remap = {k: i for i, k in enumerate(used)}
