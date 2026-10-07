@@ -36,9 +36,8 @@ export function adaptTouchPointerLock(rel, code) {
       if (!touchUnlock && wasLocked) this.onUnlock?.();`,'touch unlock is not Escape');
   return replaceOnce(code,'  requestLock() {',`  _isTouchOverlayReacquireTarget(target) {
     const mobile = this.mobile;
-    if (!mobile || mobile.editing) return false;
+    if (!mobile || mobile.editing || mobile.mapOpen) return false;
     if (target === this.canvas) return true;
-    if (mobile.mapOpen) return false;
     const root = mobile.root;
     if (!root) return false;
     if (typeof target?.closest === 'function') {
