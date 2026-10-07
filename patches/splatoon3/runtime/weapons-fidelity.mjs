@@ -374,6 +374,35 @@ function setDrawRadius(p,unit) {
   p.fidelityDrawRadius=record;
   p.vis=radiusAt(record,p.age,p.size);
 }
+// #1014: Slosher DrawSizeParam is presentation data, not CollisionParam.
+// Use the project's explicit source->world conversion (currently 1), as the
+// other sourced radii do. This is not a Nintendo pixel/metre calibration.
+function setSlosherDraw(p,unit,index) {
+  const d=unit?.DrawSizeParam,scale=completion?.worldUnitsPerSourceUnit;
+  if(!d||!Number.isFinite(scale)||scale<=0)return;
+  const init=Number(d.InitRadius)+index*Number(d.AfterOffsetInitRadius??0);
+  const end=Number(d.EndRadius)+index*Number(d.AfterOffsetEndRadius??0);
+  const frame=Number(d.ChangeFrame??0),min=Number(d.TailLengthMin),max=Number(d.TailLengthMax),solid=Number(d.TailSolidFrame);
+  if(![init,end,frame,min,max,solid].every(Number.isFinite)||init<0||end<0||frame<0||min<0||max<min||solid<0)return;
+  p.fidelitySloshDraw={initRadius:init*scale,endRadius:end*scale,changeTime:frame/60,
+    tailMin:min*scale,tailMax:max*scale,tailSolidTime:solid/60,worldUnitsPerSourceUnit:scale};
+  p.vis=fidelitySlosherDrawRadius(p);
+  p.tail0=fidelitySlosherDrawTail(p,p.vel.length());p.tailK=0;
+}
+export function fidelitySlosherDrawRadius(p) {
+  return radiusAt(p.fidelitySloshDraw,Math.max(0,p.age||0),p.vis??p.size);
+}
+export function fidelitySlosherDrawTail(p,speed) {
+  const d=p.fidelitySloshDraw,r=fidelitySlosherDrawRadius(p);
+  if(!d||!(r>0))return 1;
+  // Native aShape.x stretches the BACK hemisphere in head radii. Map the
+  // sourced tail to extra world length beyond that hemisphere: 1+length/r.
+  // Its solid window is TailSolidFrame/60, capped by both sourced lengths.
+  // This bounded velocity-based renderer mapping does not claim an unrecovered
+  // Nintendo curved-history mesh; it replaces the generic speed*0.04/g law.
+  const length=Math.max(d.tailMin,Math.min(d.tailMax,Math.max(0,speed)*Math.min(Math.max(0,p.age||0),d.tailSolidTime)));
+  return 1+length/r;
+}
 // One unit-selection rule, shared by the main volley and the appended
 // nearest-glob unit, so both read the same pinned DrawSizeParam.
 function flickUnitFor(weapon,vertical,index) {
@@ -718,7 +747,7 @@ export function installWeaponsFidelity(context,profile) {
     p._s3SloshBirthWeaponId=null;p._s3SloshBirthRemote=undefined;p._s3SloshBirthNid=undefined;
     p._s3SloshBirthPeer=undefined;p._s3SloshBirthWasInMatch=false;p._s3SloshBirthDelay=0;
     p._s3SloshYaw=0;p._s3SloshPitch=0;p._s3SloshBirthGhost=false;
-    p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityFriendThrough=null;p.fidelityRollerUnit=null;p.fidelityRollerUnitIndex=null;p.fidelitySloshUnit=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;p.fidelitySectorYaw=null;p.s3ShooterForwardApplied=false;p.s3BlasterForwardApplied=false;return p;
+    p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityFriendThrough=null;p.fidelityRollerUnit=null;p.fidelityRollerUnitIndex=null;p.fidelitySloshUnit=null;p.fidelitySloshDraw=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;p.fidelitySectorYaw=null;p.s3ShooterForwardApplied=false;p.s3BlasterForwardApplied=false;return p;
   };
   function initialize(p,w){
     // Kit descriptors own their identity, flight and collision. They use wid,
@@ -770,6 +799,7 @@ export function installWeaponsFidelity(context,profile) {
       }
       const u=p.fidelitySloshUnit,c=u.MoveParam;
       setCollision(p,u.CollisionParam,p.fidelitySloshIndex);
+      setSlosherDraw(p,u,p.fidelitySloshIndex);
       p.straight=c.GoStraightToBrakeStateFrame/60;
       p.fidelityMove={hz:60,endSpeed:c.GoStraightStateEndMaxSpeed*60,brakeDrag:c.BrakeAirResist,brakeGravity:c.BrakeGravity*3600,
         freeDrag:c.FreeAirResist,freeGravity:c.FreeGravity*3600,freeVelocityY:c.BrakeToFreeVelocityY*60,freeFrame:c.BrakeToFreeStateFrame};

@@ -1,0 +1,439 @@
+{
+  "baseline": "c2c938b9af5b6cce2a7bdbecf0415c7c3836cadb",
+  "draws": 17,
+  "ink": 100,
+  "rows": [
+    {
+      "pos": [
+        0,
+        1.05,
+        0.3
+      ],
+      "vel": [
+        0,
+        21.025931858889237,
+        105.12965929444618
+      ],
+      "delay": 0,
+      "size": 0.097,
+      "seed": 0,
+      "damage": 70,
+      "radius": 1.05,
+      "trailRadius": 0.5,
+      "trailEvery": 1.4,
+      "grav": 180,
+      "drag": 7.199999999999999,
+      "straight": 0.03333333333333333,
+      "life": 2.4,
+      "head": true,
+      "sats": 2,
+      "collision": {
+        "initRadius": 0.097,
+        "endRadius": 0.97,
+        "changeTime": 0.08333333333333333,
+        "FriendThroughFrameForPlayer": 2
+      },
+      "field": {
+        "initRadius": 0.08,
+        "endRadius": 0.8,
+        "changeTime": 0.06666666666666667,
+        "FriendThroughFrameForPlayer": 2
+      },
+      "move": {
+        "hz": 60,
+        "endSpeed": 600,
+        "brakeDrag": 0.1,
+        "brakeGravity": 144,
+        "freeDrag": 0.12,
+        "freeGravity": 180,
+        "freeVelocityY": 600,
+        "freeFrame": 1
+      },
+      "index": 0
+    },
+    {
+      "pos": [
+        0,
+        1.05,
+        0.3
+      ],
+      "vel": [
+        -7.190272666023706,
+        19.11546045368606,
+        95.30645669575134
+      ],
+      "delay": 0.016666666666666666,
+      "size": 0.085,
+      "seed": 0.010309278350515464,
+      "damage": 70,
+      "radius": 0.7901250000000001,
+      "trailRadius": 0.5,
+      "trailEvery": 1.4,
+      "grav": 180,
+      "drag": 7.199999999999999,
+      "straight": 0.03333333333333333,
+      "life": 2.4,
+      "head": false,
+      "sats": 2,
+      "collision": {
+        "initRadius": 0.085,
+        "endRadius": 0.85,
+        "changeTime": 0.08333333333333333,
+        "FriendThroughFrameForPlayer": 2
+      },
+      "field": {
+        "initRadius": 0.068,
+        "endRadius": 0.68,
+        "changeTime": 0.06666666666666667,
+        "FriendThroughFrameForPlayer": 2
+      },
+      "move": {
+        "hz": 60,
+        "endSpeed": 600,
+        "brakeDrag": 0.1,
+        "brakeGravity": 144,
+        "freeDrag": 0.12,
+        "freeGravity": 180,
+        "freeVelocityY": 600,
+        "freeFrame": 1
+      },
+      "index": 1
+    },
+    {
+      "pos": [
+        0,
+        1.05,
+        0.3
+      ],
+      "vel": [
+        -6.193791951464509,
+        17.20498904848288,
+        85.80167915153157
+      ],
+      "delay": 0.03333333333333333,
+      "size": 0.07300000000000001,
+      "seed": 0.030927835051546393,
+      "damage": 70,
+      "radius": 0.76125,
+      "trailRadius": 0.5,
+      "trailEvery": 1.4,
+      "grav": 180,
+      "drag": 7.199999999999999,
+      "straight": 0.03333333333333333,
+      "life": 2.4,
+      "head": false,
+      "sats": 1,
+      "collision": {
+        "initRadius": 0.07300000000000001,
+        "endRadius": 0.73,
+        "changeTime": 0.08333333333333333,
+        "FriendThroughFrameForPlayer": 2
+      },
+      "field": {
+        "initRadius": 0.056,
+        "endRadius": 0.56,
+        "changeTime": 0.06666666666666667,
+        "FriendThroughFrameForPlayer": 2
+      },
+      "move": {
+        "hz": 60,
+        "endSpeed": 600,
+        "brakeDrag": 0.1,
+        "brakeGravity": 144,
+        "freeDrag": 0.12,
+        "freeGravity": 180,
+        "freeVelocityY": 600,
+        "freeFrame": 1
+      },
+      "index": 2
+    },
+    {
+      "pos": [
+        0,
+        1.05,
+        0.3
+      ],
+      "vel": [
+        -5.258961063741901,
+        15.294517643279704,
+        76.29154656346205
+      ],
+      "delay": 0.05,
+      "size": 0.061,
+      "seed": 0.05154639175257732,
+      "damage": 70,
+      "radius": 0.732375,
+      "trailRadius": 0.5,
+      "trailEvery": 0,
+      "grav": 180,
+      "drag": 7.199999999999999,
+      "straight": 0.03333333333333333,
+      "life": 2.4,
+      "head": false,
+      "sats": 1,
+      "collision": {
+        "initRadius": 0.061,
+        "endRadius": 0.61,
+        "changeTime": 0.08333333333333333,
+        "FriendThroughFrameForPlayer": 2
+      },
+      "field": {
+        "initRadius": 0.044,
+        "endRadius": 0.44000000000000006,
+        "changeTime": 0.06666666666666667,
+        "FriendThroughFrameForPlayer": 2
+      },
+      "move": {
+        "hz": 60,
+        "endSpeed": 600,
+        "brakeDrag": 0.1,
+        "brakeGravity": 144,
+        "freeDrag": 0.12,
+        "freeGravity": 180,
+        "freeVelocityY": 600,
+        "freeFrame": 1
+      },
+      "index": 3
+    },
+    {
+      "pos": [
+        0,
+        1.05,
+        0.3
+      ],
+      "vel": [
+        -4.304027393346576,
+        13.13449091077186,
+        65.53126456376403
+      ],
+      "delay": 0.06666666666666667,
+      "size": 0.057,
+      "seed": 0.07216494845360824,
+      "damage": 50,
+      "radius": 0.7035000000000001,
+      "trailRadius": 0.5,
+      "trailEvery": 0,
+      "grav": 180,
+      "drag": 7.199999999999999,
+      "straight": 0.03333333333333333,
+      "life": 2.4,
+      "head": false,
+      "sats": 1,
+      "collision": {
+        "initRadius": 0.057,
+        "endRadius": 0.57,
+        "changeTime": 0.08333333333333333,
+        "FriendThroughFrameForPlayer": 2
+      },
+      "field": {
+        "initRadius": 0.04,
+        "endRadius": 0.4,
+        "changeTime": 0.06666666666666667,
+        "FriendThroughFrameForPlayer": 2
+      },
+      "move": {
+        "hz": 60,
+        "endSpeed": 600,
+        "brakeDrag": 0.1,
+        "brakeGravity": 144,
+        "freeDrag": 0.12,
+        "freeGravity": 180,
+        "freeVelocityY": 600,
+        "freeFrame": 1
+      },
+      "index": 0
+    },
+    {
+      "pos": [
+        0,
+        1.05,
+        0.3
+      ],
+      "vel": [
+        -3.347808103242219,
+        10.746401654267885,
+        53.62761316500254
+      ],
+      "delay": 0.1,
+      "size": 0.052000000000000005,
+      "seed": 0.09278350515463918,
+      "damage": 50,
+      "radius": 0.6746250000000001,
+      "trailRadius": 0.5,
+      "trailEvery": 0,
+      "grav": 180,
+      "drag": 7.199999999999999,
+      "straight": 0.03333333333333333,
+      "life": 2.4,
+      "head": false,
+      "sats": 1,
+      "collision": {
+        "initRadius": 0.052000000000000005,
+        "endRadius": 0.5199999999999999,
+        "changeTime": 0.08333333333333333,
+        "FriendThroughFrameForPlayer": 2
+      },
+      "field": {
+        "initRadius": 0.035,
+        "endRadius": 0.35000000000000003,
+        "changeTime": 0.06666666666666667,
+        "FriendThroughFrameForPlayer": 2
+      },
+      "move": {
+        "hz": 60,
+        "endSpeed": 600,
+        "brakeDrag": 0.1,
+        "brakeGravity": 144,
+        "freeDrag": 0.12,
+        "freeGravity": 180,
+        "freeVelocityY": 600,
+        "freeFrame": 1
+      },
+      "index": 1
+    },
+    {
+      "pos": [
+        0,
+        1.05,
+        0.3
+      ],
+      "vel": [
+        -2.468747657731395,
+        8.35831239776391,
+        41.71858025469938
+      ],
+      "delay": 0.13333333333333333,
+      "size": 0.047,
+      "seed": 0.1134020618556701,
+      "damage": 50,
+      "radius": 0.64575,
+      "trailRadius": 0.5,
+      "trailEvery": 0,
+      "grav": 180,
+      "drag": 7.199999999999999,
+      "straight": 0.03333333333333333,
+      "life": 2.4,
+      "head": false,
+      "sats": 1,
+      "collision": {
+        "initRadius": 0.047,
+        "endRadius": 0.47,
+        "changeTime": 0.08333333333333333,
+        "FriendThroughFrameForPlayer": 2
+      },
+      "field": {
+        "initRadius": 0.03,
+        "endRadius": 0.30000000000000004,
+        "changeTime": 0.06666666666666667,
+        "FriendThroughFrameForPlayer": 2
+      },
+      "move": {
+        "hz": 60,
+        "endSpeed": 600,
+        "brakeDrag": 0.1,
+        "brakeGravity": 144,
+        "freeDrag": 0.12,
+        "freeGravity": 180,
+        "freeVelocityY": 600,
+        "freeFrame": 1
+      },
+      "index": 2
+    },
+    {
+      "pos": [
+        0,
+        1.05,
+        0.3
+      ],
+      "vel": [
+        -1.6668704803584866,
+        5.970223141259936,
+        29.80454079016485
+      ],
+      "delay": 0.16666666666666666,
+      "size": 0.042,
+      "seed": 0.13402061855670103,
+      "damage": 50,
+      "radius": 0.6168750000000001,
+      "trailRadius": 0.5,
+      "trailEvery": 0,
+      "grav": 180,
+      "drag": 7.199999999999999,
+      "straight": 0.03333333333333333,
+      "life": 2.4,
+      "head": false,
+      "sats": 1,
+      "collision": {
+        "initRadius": 0.042,
+        "endRadius": 0.41999999999999993,
+        "changeTime": 0.08333333333333333,
+        "FriendThroughFrameForPlayer": 2
+      },
+      "field": {
+        "initRadius": 0.025,
+        "endRadius": 0.25,
+        "changeTime": 0.06666666666666667,
+        "FriendThroughFrameForPlayer": 2
+      },
+      "move": {
+        "hz": 60,
+        "endSpeed": 600,
+        "brakeDrag": 0.1,
+        "brakeGravity": 144,
+        "freeDrag": 0.12,
+        "freeGravity": 180,
+        "freeVelocityY": 600,
+        "freeFrame": 1
+      },
+      "index": 3
+    },
+    {
+      "pos": [
+        0,
+        1.05,
+        0.3
+      ],
+      "vel": [
+        -0.9421993751643187,
+        3.5821338847559616,
+        17.88586982915175
+      ],
+      "delay": 0.2,
+      "size": 0.037000000000000005,
+      "seed": 0.15463917525773196,
+      "damage": 50,
+      "radius": 0.5880000000000001,
+      "trailRadius": 0.5,
+      "trailEvery": 0,
+      "grav": 180,
+      "drag": 7.199999999999999,
+      "straight": 0.03333333333333333,
+      "life": 2.4,
+      "head": false,
+      "sats": 1,
+      "collision": {
+        "initRadius": 0.037000000000000005,
+        "endRadius": 0.36999999999999994,
+        "changeTime": 0.08333333333333333,
+        "FriendThroughFrameForPlayer": 2
+      },
+      "field": {
+        "initRadius": 0.02,
+        "endRadius": 0.2,
+        "changeTime": 0.06666666666666667,
+        "FriendThroughFrameForPlayer": 2
+      },
+      "move": {
+        "hz": 60,
+        "endSpeed": 600,
+        "brakeDrag": 0.1,
+        "brakeGravity": 144,
+        "freeDrag": 0.12,
+        "freeGravity": 180,
+        "freeVelocityY": 600,
+        "freeFrame": 1
+      },
+      "index": 4
+    }
+  ]
+}
