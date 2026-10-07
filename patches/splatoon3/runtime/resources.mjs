@@ -56,7 +56,8 @@ export function updateResources(a, dt) {
     }
     a.damageFromInk = Math.max(0, a.damageFromInk - dt * r.enemyInkRecovery);
   }
-  updateHealthRecovery(a, dt, onEnemy, a.submerged);
+  const swimmingForRecovery = a.submerged || (isSquid && a.climbing);
+  updateHealthRecovery(a, dt, onEnemy, swimmingForRecovery);
   const wasFull = a.ink >= P.inkMax;
   const rollingRecovery = a.weapon.kind === 'roller' && a.s3?.rollerRefillMode;
   const weaponDelay = rollingRecovery ? 0 : a.weapon.inkRecoverStop ?? r.inkRefillDelay;
