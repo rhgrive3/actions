@@ -243,7 +243,17 @@ export function adaptSource(rel, code) {
       `    // spawn shield + bomb aim`, 'slosher arch kick writer (#652)');
     code = replaceOnce(code,
       '    const ch = f.crosshair || {};',
-      '    const ch = f.crosshair || {};\n    applyShotGuide(this, ch.guide, innerWidth, innerHeight);',
+      '    const ch = f.crosshair || {};\n    applyShotGuide(this, ch.guide, innerWidth, innerHeight);\n' +
+      '    const muzzleBlock = L.kind === \'shooter\' && Number.isFinite(ch.muzzleBlock?.x) && Number.isFinite(ch.muzzleBlock?.y) ? ch.muzzleBlock : null;\n' +
+      '    const muzzleBlockKey = muzzleBlock ? `${muzzleBlock.x.toFixed(1)}|${muzzleBlock.y.toFixed(1)}` : \'\';\n' +
+      '    if (muzzleBlockKey !== L.muzzleBlock) {\n' +
+      '      L.muzzleBlock = muzzleBlockKey;\n' +
+      '      if (muzzleBlock) {\n' +
+      '        this.xh.style.setProperty(\'--muzzle-hit-x\', `${muzzleBlock.x.toFixed(1)}px`);\n' +
+      '        this.xh.style.setProperty(\'--muzzle-hit-y\', `${muzzleBlock.y.toFixed(1)}px`);\n' +
+      '      }\n' +
+      '    }\n' +
+      '    this.xh.classList.toggle(\'is-muzzle-blocked\', !!muzzleBlock);',
       'S3 ShotGuideFrame reticle placement');
     code = replaceOnce(code,
       '    } else if (kind === \'roller\') {\n' +
@@ -368,6 +378,54 @@ export function adaptSource(rel, code) {
       "      teamSide(0),\n" +
       "      teamSide(1));",
       'intro Splashtags presentation');
+    code = replaceOnce(code,
+      '  _bindBus() {',
+      `  _showSuperJumpTarget(actor) {
+    if (!this.el || !actor) return;
+    if (!this._sjTargetCue) {
+      const cue = document.createElement('div');
+      cue.className = 'iw-superjump-target-cue';
+      cue.setAttribute('role', 'status');
+      cue.setAttribute('aria-live', 'polite');
+      Object.assign(cue.style, {
+        position: 'absolute', left: '50%', top: '19%', zIndex: '20',
+        transform: 'translateX(-50%)', minWidth: '9rem', maxWidth: 'min(80vw, 24rem)',
+        padding: '0.65rem 2rem 0.65rem 0.9rem', boxSizing: 'border-box',
+        clipPath: 'polygon(0 0, calc(100% - 1.2rem) 0, 100% 50%, calc(100% - 1.2rem) 100%, 0 100%)',
+        background: 'linear-gradient(100deg, #26354a 0%, #42647b 100%)',
+        color: '#fff', font: '700 1rem/1.2 system-ui, sans-serif', textAlign: 'center',
+        textShadow: '0 1px 2px #000', pointerEvents: 'none', opacity: '0',
+      });
+      const name = document.createElement('span');
+      cue.appendChild(name);
+      this.el.appendChild(cue);
+      this._sjTargetCue = cue;
+      this._sjTargetCueName = name;
+    }
+    this._sjTargetCueName.textContent = String(actor.name || actor.character?.name || 'Teammate');
+    this._sjTargetCueAnimation?.cancel?.();
+    const cue = this._sjTargetCue;
+    cue.style.opacity = '1';
+    this._sjTargetCueAnimation = typeof cue.animate === 'function' ? cue.animate(
+      [{ opacity: 1, transform: 'translateX(-50%) scale(0.94)' }, { opacity: 1, transform: 'translateX(-50%) scale(1)' }, { opacity: 0, transform: 'translateX(-50%) scale(1)' }],
+      { duration: 1200, easing: 'ease-out', fill: 'forwards' }) : null;
+    if (!this._sjTargetCueAnimation) cue.style.opacity = '1';
+  }
+  _bindBus() {`,
+      'Super Jump target notification HUD cue');
+    code = replaceOnce(code,
+      "    const ok = tg.home ? me.superJump(tg.pad.clone()) : me.superJump(tg.actor);",
+      "    const ticket = tg.home ? null : me.selectSuperJumpTarget(tg.actor);\n    const ok = tg.home ? me.superJump(tg.pad.clone()) : me.superJump(tg.actor, ticket);",
+      'MapRoster Super Jump target selection cue');
+    code = replaceOnce(code,
+      "    on('superjump', ({ actor, phase, to }) => { if (actor === this._local() && phase === 'charge' && this._live()) this._snd('ui_confirm', { volume: 0.6 }); void to; }),",
+      `    on('superjump', ({ actor, phase, to, target }) => {
+      const local = this._local();
+      if (actor === local && phase === 'charge' && this._live()) this._snd('ui_confirm', { volume: 0.6 });
+      if (phase === 'target' && target === local && actor !== local && Number.isFinite(local?.team) && actor?.team === local.team && this._live()) this._showSuperJumpTarget(actor);
+      void to;
+    }),`,
+      'exact recipient Super Jump target event');
     code = adaptJuddResult(rel, code, replaceOnce);
     return "import { t as tr } from '../i18n.js';\nimport { applyShotGuide } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\nimport { tagArt, AWARDS, AWARD_ICONS, awardIcon } from './menu-art.js';\nimport { fnv, tagTitle, tagNum } from './menus.js';\n" + code;
   }
@@ -469,6 +527,16 @@ export function adaptSource(rel, code) {
       "    const chargeNow = clamp(w.kind === 'splatling' && a.weaponRunner?.streaming ? (a.weaponRunner?.fidelitySplatlingCharge ?? a.weaponRunner?.charge ?? 0) : (a.weaponRunner?.s3Stored?.charge ?? a.weaponRunner?.charge ?? 0), 0, 1);\n" +
       "    const range = w.kind === 'charger' ? (G.projectiles?.chargerReach ? G.projectiles.chargerReach(chargeNow) : w.rangeMin + (w.rangeMax - w.rangeMin) * chargeNow) : w.kind === 'splatling' ? (G.projectiles?.splatlingReach ? G.projectiles.splatlingReach(w, chargeNow) : (w.range || 12)) : w.kind === 'roller' ? 6 : (w.range || 12);",
       'Charger and Splatling HUD reach follow charge');
+    code = replaceOnce(code,
+      '    const pick = (i) => { const o = allies[i]; if (o && o.alive && !o.superJumpState) a.superJump(o); };',
+      `    const pick = (i) => {
+      const o = allies[i];
+      if (o && o.alive && !o.superJumpState) {
+        const ticket = a.selectSuperJumpTarget(o);
+        a.superJump(o, ticket);
+      }
+    };`,
+      'player map Super Jump target selection cue');
     return "import { updateShotGuide } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n" + code;
   }
   if (rel === 'src/game/weapons.js') {
@@ -828,9 +896,24 @@ export function adaptSource(rel, code) {
       'match-start Opening cue');
 
     code = replaceOnce(code,
+      '    const frame = {\n      time: m.time,',
+      `    const muzzleContact = w.kind === 'shooter' ? G.projectiles?.muzzleBlockFeedback?.(a) : null;
+    let muzzleBlock = null;
+    if (muzzleContact) {
+      const projectedContact = this._muzzleBlockScreen || (this._muzzleBlockScreen = new THREE.Vector3());
+      projectedContact.copy(muzzleContact.point).project(cam);
+      if (projectedContact.z >= -1 && projectedContact.z <= 1
+        && Math.abs(projectedContact.x) <= 1 && Math.abs(projectedContact.y) <= 1) {
+        muzzleBlock = { x: projectedContact.x * W / 2, y: -projectedContact.y * H / 2 };
+      }
+    }
+    const frame = {
+      time: m.time,`,
+      'projected Shooter muzzle contact');
+    code = replaceOnce(code,
       "      crosshair: { spread, onTarget: m.controller?.onTarget ? 'enemy' : null, inRange: m.controller ? m.controller.inRange !== false : true },",
-      "      crosshair: { spread, onTarget: m.controller?.onTarget ? 'enemy' : null, inRange: m.controller ? m.controller.inRange !== false : true, guide: projectShotGuide(m.controller?.enabled && m.controller?.a?.alive ? m.controller.shotGuide : null, cam, W, H) },",
-      'S3 ShotGuideFrame HUD projection');
+      "      crosshair: { spread, onTarget: m.controller?.onTarget ? 'enemy' : null, inRange: m.controller ? m.controller.inRange !== false : true, guide: projectShotGuide(m.controller?.enabled && m.controller?.a?.alive ? m.controller.shotGuide : null, cam, W, H), muzzleBlock },",
+      'S3 ShotGuideFrame and muzzle-contact HUD projection');
     {
       const rawEnemyReveal = "          // enemies only show on the map when visible to your team (not submerged far away)\n          if (o.anim.form === 'swim') continue;";
       const scoreHudEnemyReveal = "          if (!mapActorVisible(o, a, PLAYER.hp, G.time)) continue;";
