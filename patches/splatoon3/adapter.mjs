@@ -46,7 +46,6 @@ export function checkCompatibility(src, patchRoot = PATCH_ROOT) {
 }
 
 export function adaptSource(rel, code) {
-  code = adaptMinimapDirty(rel, code, replaceOnce);
   // Storm owns the structural cloud-loop rewrite. Gear/Sub may then refine
   // the terminal frame boundary without hiding Storm's original connection.
   if (rel === 'src/game/weapons.js') code = adaptStormEffects(rel, code);
@@ -55,6 +54,7 @@ export function adaptSource(rel, code) {
   code = adaptContactRecovery(rel, code, replaceOnce);
   code = adaptMatchHud(rel, code);
   code = adaptScoreHud(rel, code);
+  code = adaptMinimapDirty(rel, code, replaceOnce);
   code = adaptRespawnLifecycle(rel, code, replaceOnce);
   if (rel !== 'src/game/weapons.js') code = adaptStormEffects(rel, code);
   code = adaptAssistPresentation(rel, code, replaceOnce);
