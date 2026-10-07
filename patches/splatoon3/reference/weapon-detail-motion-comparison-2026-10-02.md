@@ -67,3 +67,13 @@ The old Flow test's free support-hand premise preceded the parent's official-sou
 The current official Nintendo page and verified Heavy/Dualies footage were inspected before changes; exact original input/build/gear and numeric curves remain unknown. See `action-admission-comparison-2026-10-03.md` and durable `review-admission/` findings, source/test receipts and parent integration handoff. Parent retains canonical build, actual GPU and complete exact-SHA Actions.
 
 The required lifetime check also reproduced track resurrection after disposal through a zero-time native state delegation. The installed shared registry now stamps disposed rigs, so both realms' helpers report disabled and earlier/native delegation cannot recreate this module's tracks. Native disposal/reset/event delegation still runs. The regression records actual indexed cluster/native IK before disposal and checks tracks/clocks afterward; it does not claim a disposed mesh is rendered.
+
+## S3 ブラスター毎ショット機構 — #915, 2026-10-07
+
+通常 Blaster の S3 appearance は [Inkipedia](https://splatoonwiki.org/wiki/Blaster)（2026-10-07閲覧）に「左側レバーが下降」「中央スプリングが前部セクションを前方へ振る」という2つの新しい武器アニメーションが**毎ショット**起こるとある。任天堂は関節曲線を公開していないので、以下の値はすべて **この rig の内部校正**であり、Switch のフレーム値とは一致扱いしない。
+
+- `runtime/blaster-mechanism.mjs`: トポロジーと校正。レバー peak .55rad（回転軸は前進軸、下方向）、front peak .014（+Z）、周期は rise/hold/fall の smoothstep、settle .30s（50F 間隔の次のショットより前にレストへ完全回復、age は exact 0 のまま消える）。
+- `runtime/blaster-mechanism-model.mjs`: builder ラップで `lever`（左側・＋X、hinge pivot）と `front`（バレル中間のカラーラ、fin と muzzle lip の間）の2パーツを追加。attribute contract は `Parts.add` と同じで far LOD の at-rest body に merge される。
+- `weapon-detail-motion.mjs`: `trigger('shoot')` を実発射イベントとして所有（空撃ち・ZR保持・windup・イカ・死亡では発生しない。remote は NetMatch の `tr` リプレイで同じ trigger を受ける）。age は `_updateStates` の sim dt だけ加算し、変換は `_animWeapon` で適用。generic recoil（`withRecoil`）は加算のまま、pump 抑制は据え置き。`clear`（form/death/hide/swap/reset/dispose）で全チャンネルレスト復帰。
+
+確認は `weapon-detail-motion.test.mjs` の production adapter 構成: 30/60/120Hz で実発射1回につき機構1サイクル、idle・空撃ち・イカ・死亡・交代・reset・opt-out ではレスト、実 NetMatch の `_setupActor`/`_play` リプレイで local/remote の trace 完全一致、FixedClock の30/60/120Hz 描画分割で trace 完全一致。**発射タイミング・弾・当たり・インク・移動は変更しておらず、#308 の winding/recovery と bullet/actor parity も維持する。実機（Switch Ver.11.3.0）での frame-by-frame 比較は引き続き未確認とする。**

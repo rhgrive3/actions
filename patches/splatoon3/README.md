@@ -15,7 +15,9 @@
 | `runtime/movement.mjs` | イカロール、イカノボリ、被弾処理の状態管理 |
 | `runtime/movement-motion.mjs` | イカロール・イカノボリ・スーパージャンプの表示と状態の同期 |
 | `runtime/weapon-motion.mjs` | スライド後の構え、バケツの振り、リセット、フローの発光 |
-| `runtime/weapon-detail-motion.mjs` | 実際の発射に同期した反動、チャージ後の復帰、バケツ内のインク、スピナー停止 |
+| `runtime/weapon-detail-motion.mjs` | 実際の発射に同期した反動、チャージ後の復帰、バケツ内のインク、スピナー停止、S3 ブラスター毎ショットのレバー下降＋前部前進機構（#915） |
+| `runtime/blaster-mechanism.mjs` | 上記ブラスター機構の校正値と周期トポロジー（実発射イベントのみ所有。engine 非依存） |
+| `runtime/blaster-mechanism-model.mjs` | ブラスター可動パーツ（左レバー・前部カラーラ）のモデル追加（見た目だけ。塗り・当たり・タイミングは不変） |
 | `runtime/bomb-motion.mjs` | 手元のボム、実際の投擲位置、予測軌道と放す姿勢 |
 | `runtime/flow-motion.mjs` | フロー開始・延長・失効の粒子と外周表示、描画パスとリソースの分離 |
 | `runtime/walk.mjs` | 足の接地・踏み出し・停止・方向転換、腰・上体の歩行校正。左右の足は一つの歩行時計で交互に動く |

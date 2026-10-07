@@ -2,6 +2,7 @@
 // Heavy Splatling / Blaster clips. These are this rig's visual curves, never
 // claimed to be unpublished Nintendo joint parameters. Gameplay is read only.
 import { specialMotionAllowsAction } from './action-admission.mjs';
+import { BLASTER_MECHANISM, blasterMechanismCycle } from './blaster-mechanism.mjs';
 const INSTALLED = Symbol.for('inkwave.weapon-detail-motion.installed');
 const RESET_INSTALLED = Symbol.for('inkwave.weapon-detail-motion.runner-reset-installed');
 const tracks = new WeakMap(), fills = new WeakMap(), reaches = new WeakMap(), disposed = new WeakSet();
@@ -27,7 +28,7 @@ const recoil = Object.freeze({
 function track(ch) {
   const map = trackMap(ch);
   let m = map.get(ch);
-  if (!m) { m = { slosh: null, release: null }; map.set(ch, m); }
+  if (!m) { m = { slosh: null, release: null, mech: null }; map.set(ch, m); }
   return m;
 }
 function enabled(ch) { return !!ch && ch.s3WeaponDetailMotionEnabled !== false && ch.s3WeaponMotionEnabled !== false
@@ -105,6 +106,8 @@ function clear(ch) {
     if (w.def.kind === 'blaster') {
       w.pump = 0;
       if (w.parts?.pump) w.parts.pump.position.copy(w.parts.pump.userData.rest);
+      if (w.parts?.lever) w.parts.lever.rotation.set(0, 0, 0);   // #915 S3 mechanism channels
+      if (w.parts?.front) w.parts.front.position.copy(w.parts.front.userData.rest);
     }
   }
 }
@@ -116,7 +119,8 @@ export function weaponDetailMotionSnapshot(ch) {
     bucketSurfaceY: w?.parts?.surface?.position.y ?? null,
     barrelSpeed: w?.def.kind === 'splatling' ? w.spinW || 0 : null,
     barrelAngle: w?.def.kind === 'splatling' ? w.spinA || 0 : null,
-    chargerReleaseAge: m?.release ?? null, gripCorrection: m?.gripCorrection ?? 0, pump: w?.pump || 0 });
+    chargerReleaseAge: m?.release ?? null, gripCorrection: m?.gripCorrection ?? 0, pump: w?.pump || 0,
+    blasterMechAge: m?.mech ?? null });
 }
 export function installWeaponDetailMotion({ Character, WeaponRunner, THREE, CHARACTER_CHANNELS: C, CHARACTER_TIMERS: T }) {
   if (!Character || !THREE || !C || !Number.isInteger(T?.T_SLOSH)) throw Error('Weapon detail motion requires actual Character, Three, channels and slosh timer');
@@ -185,6 +189,12 @@ export function installWeaponDetailMotion({ Character, WeaponRunner, THREE, CHAR
         recovery: w.fireInterval - w.windup, releaseAge: null } : null;
     }
     if (name === 'charge_release' && this.weaponKind === 'charger') m.release = 0;
+    // #915: the mechanism is owned by the ACTUAL emission event. For the
+    // Blaster this trigger fires only from WeaponRunner._auto after a real
+    // projectile (never on held ZR, dry fire or windup), and remote proxies
+    // replay the identical trigger through NetMatch, so every accepted shot
+    // starts exactly one lever + spring-front cycle locally and remotely.
+    if (name === 'shoot' && this.weaponKind === 'blaster') m.mech = 0;
     return result;
   };
   P._updateStates = function (dt, s) {
@@ -214,6 +224,13 @@ export function installWeaponDetailMotion({ Character, WeaponRunner, THREE, CHAR
       else this.wAim = Math.min(this.wAim,
         1 - smooth((m.release - WEAPON_DETAIL_CALIBRATION.chargerReturnStart) /
           (WEAPON_DETAIL_CALIBRATION.chargerReturnEnd - WEAPON_DETAIL_CALIBRATION.chargerReturnStart)));
+    }
+    if (m.mech != null && this.weaponKind === 'blaster') {
+      // Event-owned mechanism age advanced by the simulation step only, so the
+      // peak stays tied to the emission frame regardless of render partitioning.
+      // Form/death/hide/swap clear the track (above) and restore rest poses.
+      m.mech += dt;
+      if (m.mech >= BLASTER_MECHANISM.settle) m.mech = null;
     }
     return result;
   };
@@ -283,6 +300,16 @@ export function installWeaponDetailMotion({ Character, WeaponRunner, THREE, CHAR
     if (w.def.kind === 'blaster') {
       w.pump = 0;
       if (parts.pump) parts.pump.position.copy(parts.pump.userData.rest);
+      // #915 S3 mechanism: left lever pulls down, centre spring throws the front
+      // section forward, one rest→peak→rest cycle per actual emission. These two
+      // channels are written only here from the event-owned age; generic
+      // whole-weapon recoil (withRecoil) stays additive and never drives them,
+      // and the suppressed pump stroke above remains at rest.
+      const age = m.mech;
+      if (parts.lever) parts.lever.rotation.z = age == null ? 0
+        : -BLASTER_MECHANISM.leverPeak * blasterMechanismCycle(age, BLASTER_MECHANISM.lever);
+      if (parts.front) parts.front.position.z = parts.front.userData.rest.z + (age == null ? 0
+        : BLASTER_MECHANISM.frontPeak * blasterMechanismCycle(age, BLASTER_MECHANISM.front));
     }
     if (w.def.kind === 'splatling') {
       const target = this.kidForm && this.visible && !this.dance && this._owner()?.alive !== false ? r ? r.charging ? 14 + 46 * (r.charge || 0) : r.streaming ? 64 : 0
