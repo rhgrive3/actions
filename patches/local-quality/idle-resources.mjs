@@ -1,11 +1,16 @@
 // Project resource budgets, not Nintendo/Switch memory measurements.
 export const MENU_ATTRACT_HZ = 20;
 export const MENU_ATTRACT_STEP = 1 / MENU_ATTRACT_HZ;
+const EMPTY_SETTINGS = Object.freeze({});
 
 export function idleAttractMenuBudget(game, G) {
   const mobile = game?.mobile ?? G?.mobile ?? {};
   return !!(game?.match?.attract && G?.mode === 'menu' && !game?.showcase?.fullFrame &&
     (mobile.touch || game?.settings?.quality === 'low'));
+}
+
+export function notePausedWorldChange(game) {
+  if (game) game._pausedWorldRevision = (game._pausedWorldRevision || 0) + 1;
 }
 
 export function environmentBudget(settings = {}, mobile = {}) {
@@ -58,9 +63,64 @@ export function pausedWorldFrame(game, G, viewport = globalThis) {
   if (!paused) { game._pausedWorld = null; return { paused: false, draw: true }; }
   const gl = G.renderer?.getContext?.();
   if (gl?.isContextLost?.()) { game._pausedWorld = null; return { paused: true, draw: false }; }
-  const stamp = JSON.stringify([viewport.innerWidth, viewport.innerHeight, viewport.devicePixelRatio,
-    game.settings, game.R?.dynScale, G.env?.theme, game._pausedWorldRevision || 0]);
+  const width = viewport.innerWidth, height = viewport.innerHeight, pixelRatio = viewport.devicePixelRatio;
+  const settings = game.settings || EMPTY_SETTINGS, camera = G.camera, position = camera?.position;
+  const quaternion = camera?.quaternion, scale = camera?.scale;
+  const renderer = G.renderer, shadows = renderer?.shadowMap;
+  const render = game.R, bloom = render?.bloom, ao = render?.gtao, env = G.env, far = env?._farRT;
+  const revision = game._pausedWorldRevision || 0;
   const previous = game._pausedWorld;
-  return { paused: true, draw: !previous || previous.match !== game.match || previous.level !== G.level || previous.stamp !== stamp,
-    commit() { game._pausedWorld = { match: game.match, level: G.level, stamp }; } };
+  const draw = !previous || previous.match !== game.match || previous.level !== G.level ||
+    previous.width !== width || previous.height !== height || previous.pixelRatio !== pixelRatio ||
+    previous.settings !== settings || previous.quality !== settings.quality || previous.shadowsSetting !== settings.shadows ||
+    previous.bloomSetting !== settings.bloom || previous.fovSetting !== settings.fov ||
+    previous.cameraShake !== settings.cameraShake || previous.colorblind !== settings.colorblind ||
+    previous.frameRate !== settings.frameRate || previous.timeOfDay !== settings.timeOfDay ||
+    previous.aimProfile !== settings.aimProfile || previous.aimProfiles !== settings.aimProfiles ||
+    previous.gyro !== settings.gyro || previous.minimap !== settings.minimap || previous.showFps !== settings.showFps ||
+    previous.revision !== revision || previous.camera !== camera ||
+    previous.cameraX !== position?.x || previous.cameraY !== position?.y || previous.cameraZ !== position?.z ||
+    previous.cameraQx !== quaternion?.x || previous.cameraQy !== quaternion?.y ||
+    previous.cameraQz !== quaternion?.z || previous.cameraQw !== quaternion?.w ||
+    previous.cameraScaleX !== scale?.x || previous.cameraScaleY !== scale?.y || previous.cameraScaleZ !== scale?.z ||
+    previous.cameraFov !== camera?.fov || previous.cameraAspect !== camera?.aspect ||
+    previous.cameraNear !== camera?.near || previous.cameraFar !== camera?.far || previous.cameraZoom !== camera?.zoom ||
+    previous.renderer !== renderer || previous.canvas !== canvas ||
+    previous.canvasWidth !== canvas?.width || previous.canvasHeight !== canvas?.height ||
+    previous.rendererPixelRatio !== renderer?.getPixelRatio?.() || previous.autoClear !== renderer?.autoClear ||
+    previous.toneMapping !== renderer?.toneMapping || previous.toneMappingExposure !== renderer?.toneMappingExposure ||
+    previous.outputColorSpace !== renderer?.outputColorSpace ||
+    previous.shadowEnabled !== shadows?.enabled || previous.shadowAutoUpdate !== shadows?.autoUpdate ||
+    previous.render !== render || previous.dynScale !== render?.dynScale || previous.renderQuality !== render?.q ||
+    previous.qualityPixelRatio !== render?.q?.pixelRatio || previous.qualityShadowSize !== render?.q?.shadowSize ||
+    previous.qualityMsaa !== render?.q?.msaa || previous.qualityBloom !== render?.q?.bloom ||
+    previous.qualityAo !== render?.q?.ao || previous.bloom !== bloom || previous.bloomEnabled !== bloom?.enabled ||
+    previous.bloomStrength !== bloom?.strength || previous.bloomRadius !== bloom?.radius ||
+    previous.bloomThreshold !== bloom?.threshold || previous.ao !== ao || previous.aoEnabled !== ao?.enabled ||
+    previous.environment !== env || previous.theme !== env?.theme || previous.reflections !== env?.reflections ||
+    previous.reflectionScale !== env?.reflScale || previous.marina !== env?._marina || previous.farTarget !== far ||
+    previous.farWidth !== far?.width || previous.farHeight !== far?.height;
+  return { paused: true, draw,
+    commit() {
+      game._pausedWorld = { match: game.match, level: G.level, width, height, pixelRatio, settings,
+        quality: settings.quality, shadowsSetting: settings.shadows, bloomSetting: settings.bloom,
+        fovSetting: settings.fov, cameraShake: settings.cameraShake, colorblind: settings.colorblind,
+        frameRate: settings.frameRate, timeOfDay: settings.timeOfDay, aimProfile: settings.aimProfile,
+        aimProfiles: settings.aimProfiles, gyro: settings.gyro, minimap: settings.minimap, showFps: settings.showFps,
+        revision, camera, cameraX: position?.x, cameraY: position?.y, cameraZ: position?.z,
+        cameraQx: quaternion?.x, cameraQy: quaternion?.y, cameraQz: quaternion?.z, cameraQw: quaternion?.w,
+        cameraScaleX: scale?.x, cameraScaleY: scale?.y, cameraScaleZ: scale?.z,
+        cameraFov: camera?.fov, cameraAspect: camera?.aspect, cameraNear: camera?.near,
+        cameraFar: camera?.far, cameraZoom: camera?.zoom, renderer, canvas, canvasWidth: canvas?.width,
+        canvasHeight: canvas?.height, rendererPixelRatio: renderer?.getPixelRatio?.(), autoClear: renderer?.autoClear,
+        toneMapping: renderer?.toneMapping, toneMappingExposure: renderer?.toneMappingExposure,
+        outputColorSpace: renderer?.outputColorSpace, shadowEnabled: shadows?.enabled,
+        shadowAutoUpdate: shadows?.autoUpdate, render, dynScale: render?.dynScale, renderQuality: render?.q,
+        qualityPixelRatio: render?.q?.pixelRatio, qualityShadowSize: render?.q?.shadowSize,
+        qualityMsaa: render?.q?.msaa, qualityBloom: render?.q?.bloom, qualityAo: render?.q?.ao,
+        bloom, bloomEnabled: bloom?.enabled, bloomStrength: bloom?.strength, bloomRadius: bloom?.radius,
+        bloomThreshold: bloom?.threshold, ao, aoEnabled: ao?.enabled, environment: env, theme: env?.theme,
+        reflections: env?.reflections, reflectionScale: env?.reflScale, marina: env?._marina,
+        farTarget: far, farWidth: far?.width, farHeight: far?.height };
+    } };
 }
