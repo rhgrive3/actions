@@ -651,7 +651,7 @@ export function installWeapons(context, profile) {
       this.s3BlasterWindup = 0;
       const beforeInk = this.a.ink;
       const result = auto.call(this, dt, { ...input, fire: true }, { ...w, fireInterval: w.fireInterval - w.preDelay });
-      if (this.a.ink < beforeInk) this.s3PostShotRemaining = w.postShotDelay;
+      if (this.a.ink < beforeInk) { this.s3PostShotRemaining = w.postShotDelay; this.s3BlasterHeldRepeat = !!input.fire; }
       return result;
     }
     if (input.fire && this.cooldown <= 0 && this.a.ink >= w.inkPerShot) { this.s3BlasterWindup = blasterStartupWindup(this.a, input.firePressed, dt, PLAYER.emergeDelay, w.preDelay); this.s3BlasterFromSwim = false; this.firingT = .35; return; }
