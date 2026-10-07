@@ -28,6 +28,14 @@ const shoot = (f, a, n = 3) => {
     c.onHit();
   }
 };
+const enterExhale = (f, a, max = 400) => {
+  for (let i = 0; i < max && f.inkVacState(a)?.phase === 'inhale'; i++) f.tick(a);
+  assert.equal(f.inkVacState(a)?.phase, 'exhale', 'suction transitioned to the return-shot hold');
+};
+const fireReturn = (f, a) => {
+  enterExhale(f, a);
+  a.intent.fire = true; f.tick(a); a.intent.fire = false;
+};
 
 test('activation consumes the special once, refills the tank once, and opens a held intake', async () => {
   const { f, a } = await setup();
@@ -135,32 +143,48 @@ test('the special replaces main and sub while inhaling, but normal movement cont
   assert.ok(a.specialActive, 'the special is still held after withheld inputs');
 });
 
-test('primary fire inside the pinned 20F window is withheld, and releases after it', async () => {
-  const { f, a, system } = await setup();
-  activate(f, a);                                   // t = 1/60 after the first tick
-  f.tick(a, 10);                                    // ~11 frames: inside the 20F minimum window
-  a.intent.fire = true; f.tick(a);
-  assert.ok(a.specialActive, 'fire inside the 20-frame window does not release');
-  assert.equal(system.list.length, 0, 'no countershot was queued yet');
-  a.intent.fire = false; f.tick(a, 12);             // cross 20 frames
-  a.intent.fire = true; f.tick(a);
-  assert.equal(a.specialActive, null, 'fire after the 20-frame window releases');
-  assert.equal(system.list.length, 1, 'the countershot is queued on release');
-});
-
-test('an unfilled inhale auto-releases at the calibrated inhale duration', async () => {
+test('#1042 primary fire cannot skip the suction phase', async () => {
   const { f, a, system } = await setup();
   activate(f, a);
-  const cap = INK_VAC_CALIBRATION.inhaleDurationSeconds;
-  f.tick(a, Math.round(cap * 60) - 2);
-  assert.ok(a.specialActive, 'still held just before the calibrated duration');
-  f.tick(a, 3);
-  assert.equal(a.specialActive, null, 'the calibrated inhale duration ends the inhale');
-  assert.equal(system.list.length, 1, 'a min-charge countershot was queued');
-  assert.ok(INK_VAC_CALIBRATION.inhaleDurationStatus.includes('CALIBRATED'),
-    'the inhale duration is labelled calibrated, not source-backed');
-  assert.ok(INK_VAC_CALIBRATION.inhaleDurationStatus.includes('ExhaleWaitFrame'),
-    'ExhaleWaitFrame is explicitly NOT used as the inhale duration');
+  f.tick(a, 40);
+  a.intent.fire = true; f.tick(a); a.intent.fire = false;
+  assert.equal(f.inkVacState(a)?.phase, 'inhale', 'manual fire is ignored while suction is active');
+  assert.equal(system.list.length, 0, 'no return shot exists during suction');
+});
+
+test('#1042 unfilled suction lasts 360F, then a separate 150F return-shot hold auto-fires', async () => {
+  const { f, a, system } = await setup();
+  activate(f, a);
+  const state = f.inkVacState(a);
+  assert.equal(INK_VAC_CALIBRATION.inhaleDurationSeconds, 6);
+  assert.equal(INK_VAC_CALIBRATION.exhaleHoldSeconds, 2.5);
+
+  let inhaleTicks = 0;
+  while (state.phase === 'inhale' && inhaleTicks < 400) { f.tick(a); inhaleTicks++; }
+  assert.equal(state.phase, 'exhale');
+  assert.ok(inhaleTicks >= 359 && inhaleTicks <= 360, `suction transition stayed on the 360F boundary: ${inhaleTicks}`);
+  assert.equal(system.list.length, 0, 'ending suction does not itself fire the countershot');
+  assert.ok(a.specialActive, 'special remains active in the return-shot hold');
+
+  for (let i = 0; i < 149; i++) {
+    f.tick(a);
+    assert.equal(system.list.length, 0, `no forced return shot before hold frame ${i + 1}`);
+  }
+  f.tick(a);
+  assert.equal(a.specialActive, null, '150F hold auto-fires and ends the special');
+  assert.equal(system.list.length, 1, 'exactly one return projectile is authored');
+});
+
+test('#1042 filling the Vac ends suction early but still enters the return-shot hold', async () => {
+  const { f, a, system } = await setup();
+  activate(f, a);
+  shoot(f, a);
+  enterExhale(f, a, 30);
+  assert.ok(f.inkVacState(a).t < 0.1, 'post-suction hold owns a fresh clock');
+  assert.equal(system.list.length, 0, 'full charge transitions state without auto-firing immediately');
+  a.intent.fire = true; f.tick(a); a.intent.fire = false;
+  assert.equal(f.inkVacState(a), null, 'manual fire is accepted in the exhale phase');
+  assert.equal(system.list.length, 1);
 });
 
 test('zero-length segments, tangent contact and a zero aim vector are safe', async () => {
@@ -214,7 +238,7 @@ test('the countershot bursts automatically at its finite lifetime in the native 
   activate(f, a);
   shoot(f, a);                                      // absorb at ground level first
   a.pos.y = 40;                    // then isolate the lifetime: drop must not reach the water line
-  f.tick(a);                                        // release queues the countershot
+  fireReturn(f, a);                                  // exhale phase release queues the countershot
   const ex = system.list[system.list.length - 1];
   assert.equal(ex.delay, 0, 'no launch delay: the native integrator runs immediately');
   assert.ok(Math.abs(ex.life - 50 / 60) < 1e-9, 'SpawnBlastWaitFrame 50 is the native lifetime');
@@ -238,38 +262,31 @@ test('a dt0 frame is a strict no-op: no release, no countershot, no main shot', 
 
 test('the release frame does not also fire the replaced main weapon or sub', async () => {
   const { f, a } = await setup();
-  activate(f, a);
-  f.tick(a, 40);
+  activate(f, a); shoot(f, a); enterExhale(f, a, 30);
   const seen = [];
   const runner = a.weaponRunner, real = runner.update;
   runner.update = function (dt, inp) { seen.push({ ...inp }); return real.call(this, dt, inp); };
   a.intent.fire = true; a.intent.sub = true; f.tick(a);
-  assert.equal(a.specialActive, null, 'the special released');
+  assert.equal(a.specialActive, null, 'the return shot released');
   assert.ok(seen.every(i => !i.fire && !i.sub && !i.subReleased),
     'main and sub stay suppressed on the release frame');
 });
 
-test('primary fire releases the countershot (exhale transition)', async () => {
+test('primary fire releases the countershot only after suction has entered exhale', async () => {
   const { f, a, system } = await setup();
-  activate(f, a);
-  f.tick(a, 40);                                   // past the pinned 20F minimum
-  assert.ok(a.specialActive, 'still inhaling');
+  activate(f, a); shoot(f, a); enterExhale(f, a, 30);
   const before = system.list.length;
-  a.intent.fire = true; f.tick(a);
-  assert.equal(a.specialActive, null, 'primary fire ends the held special');
-  assert.equal(f.inkVacState(a), null, 'state is cleared on release');
-  assert.ok(system.list.length > before, 'primary fire queued the countershot');
+  a.intent.fire = true; f.tick(a); a.intent.fire = false;
+  assert.equal(a.specialActive, null);
+  assert.equal(f.inkVacState(a), null);
+  assert.ok(system.list.length > before);
 });
 
 test('release queues a native type-blast countershot carrying the resolved descriptor', async () => {
   const { f, a, system } = await setup();
-  activate(f, a);
-  shoot(f, a);
-  const before = system.list.length;
-  f.tick(a);
-  assert.equal(a.specialActive, null);
-  assert.equal(system.list.length, before + 1);
-  const ex = system.list[system.list.length - 1];
+  activate(f, a); shoot(f, a); fireReturn(f, a);
+  assert.equal(system.list.length, 1);
+  const ex = system.list[0];
   assert.equal(ex.type, 'blast');
   assert.equal(ex.wid, VAC_ID, 'wid is the special id used as the splash cause');
   const d = ex.s3SpecialWeapon;
@@ -284,9 +301,7 @@ test('release queues a native type-blast countershot carrying the resolved descr
 
 test('the countershot uses the pinned spawn speed, gravity and blast wait', async () => {
   const { f, a, system } = await setup();
-  activate(f, a);
-  shoot(f, a);
-  f.tick(a);
+  activate(f, a); shoot(f, a); fireReturn(f, a);
   const ex = system.list[system.list.length - 1];
   const speed = ex.vel.length();
   assert.ok(Math.abs(speed - 42) < 1e-6, `full-charge speed is 0.7*60 = 42 u/s, got ${speed}`);
@@ -311,8 +326,9 @@ test('a remote ghost authors no projectile (and thus no damage/paint) on release
   a.remote = true;
   activate(f, a);
   shoot(f, a);
+  enterExhale(f, a, 30);
   const before = system.list.length;
-  f.tick(a);
+  a.intent.fire = true; f.tick(a); a.intent.fire = false;
   assert.equal(system.list.length, before, 'a remote ghost authors no projectile');
   assert.equal(a.specialActive, null, 'the remote special still ends cleanly');
 });
@@ -372,12 +388,26 @@ test('reset clears the state and disposes the GPU resource', async () => {
   assert.equal(f.G.scene.children.length, 0);
 });
 
+test('#1010 absorbed charge does not resize suction; Special Power Up does', async () => {
+  const { f, a } = await setup();
+  a.s3.modifiers.specialPower = 0.5;
+  activate(f, a);
+  const state = f.inkVacState(a);
+  assert.equal(state.specialPower, 0.5);
+  assert.equal(state.nearR, intakeNearRadius(0.5));
+  assert.equal(state.farR, intakeFarRadius(0.5));
+  const before = [state.nearR, state.farR];
+  shoot(f, a, 2);
+  assert.ok(state.charge > 0.5, 'precondition: absorbed charge increased');
+  assert.deepEqual([state.nearR, state.farR], before, 'absorption never changes suction geometry');
+});
+
 test('pinned/calibrated geometry helpers expose the labelled values', async () => {
   await setup();
-  assert.equal(intakeNearRadius(0), 0.8, 'pinned RadiusMin.Low');
-  assert.equal(intakeNearRadius(1), 1.4, 'pinned RadiusMin.High');
-  assert.equal(intakeFarRadius(0), 3.3, 'pinned RadiusMax.Low');
-  assert.equal(intakeFarRadius(1), 4.3, 'pinned RadiusMax.High');
+  assert.equal(intakeNearRadius(0), 0.8, '0 AP uses RadiusMin.Low');
+  assert.equal(intakeNearRadius(1), 1.4, 'max Special Power Up uses RadiusMin.High');
+  assert.equal(intakeFarRadius(0), 3.3, '0 AP uses RadiusMax.Low');
+  assert.equal(intakeFarRadius(1), 4.3, 'max Special Power Up uses RadiusMax.High');
   assert.equal(blastRadius(0), 6.0);
   assert.equal(blastRadius(1), 11.0);
   assert.ok(Math.abs(exhaleSpeed(0) - 33) < 1e-9, '0.55*60 = 33 u/s');
@@ -457,8 +487,8 @@ test('every replay payload is flat, JSON-safe and survives the native packer', a
   activate(f, p1);
   assert.equal(rec.length, 1, 'activation emitted exactly one replayable event');
   const packed = packEvent(rec[0].payload);
-  assert.deepEqual(Object.keys(packed).sort(), ['actor', 'charge', 'kit', 'nid', 'serial'],
-    'the activation payload is flat: actor, nid, kit, serial, charge only');
+  assert.deepEqual(Object.keys(packed).sort(), ['actor', 'charge', 'kit', 'nid', 'power', 'serial'],
+    'the activation payload is flat and includes the Special Power Up scalar');
   assert.ok(!Object.values(packed).some(v => v && typeof v === 'object' && !Array.isArray(v) && v.n === undefined),
     'no nested object survives, so nothing is silently dropped by the native packer');
   const wire = JSON.parse(JSON.stringify(packed));
@@ -585,7 +615,7 @@ test('a shooter proposal neutralises its damage and the owner credits it exactly
   assert.equal(c2.verdict.reason, 'duplicate-proposal', 'a duplicated packet credits nothing');
   assert.equal(f.inkVacState(p1).charge, credited, 'no double credit');
   // A proposal for a finished activation is refused even with a fresh key.
-  p1.intent.fire = true; f.tick(p1, 30); p1.intent.fire = false;   // release the first activation
+  disposeInkVac(p1);                                             // end the first activation
   assert.equal(f.inkVacState(p1), null, 'the first activation really ended');
   p1.special = 190; activate(f, p1);
   const serial2 = f.inkVacState(p1).serial;

@@ -33,7 +33,8 @@ test('suction spec keeps 11.3.0 omissions explicitly unknown', () => {
   assert.equal(SUCTION.fuseStatus, 'unknown-omitted');
   assert.equal(SUCTION.inkCost, null);
   assert.equal(SUCTION.gravity, null);
-  assert.equal(SUCTION.fuseFallbackStatus, 'calibrated');
+  assert.equal(SUCTION.fuseFallback, 2, '#1028 attached fuse is 120F / 2s');
+  assert.equal(SUCTION.fuseFallbackStatus, 'community-verified');
 });
 
 test('curling charge uses SpawnSpeedZMaxCharge, never the gear tiers', () => {
