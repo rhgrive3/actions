@@ -48,9 +48,25 @@ export function advanceFidelityProjectile(p, dt) {
     const brake = p.fidelityPhase === 1;
     p.vel.multiplyScalar(Math.pow(1 - (brake ? move.brakeDrag : move.freeDrag), step * move.hz));
     p.vel.y -= (brake ? move.brakeGravity : move.freeGravity) * step;
-    // The documented Y transition is used; the apparently unused frame/XZ
-    // defaults are not silently interpreted as additional transition tests.
-    if (brake && (p.vel.y < move.freeVelocityY || move.freeFrame!=null && (p.age-p.straight)*move.hz+EPSILON>=move.freeFrame)) p.fidelityPhase = 2;
+    if (brake) {
+      // #1053: Shooter brake->free is a two-component lower-speed gate.
+      // Clamp each component when it reaches its S3 lower bound and enter free
+      // only after both XZ and Y are satisfied. Other families retain their
+      // existing Y/frame rule until their own source records opt into XZ.
+      const yDone = p.vel.y <= move.freeVelocityY + EPSILON;
+      if (yDone && p.vel.y < move.freeVelocityY) p.vel.y = move.freeVelocityY;
+      if (Number.isFinite(move.freeVelocityXZ)) {
+        const xz = Math.hypot(p.vel.x, p.vel.z);
+        const xzDone = xz <= move.freeVelocityXZ + EPSILON;
+        if (xzDone && xz > EPSILON && xz < move.freeVelocityXZ) {
+          const scale = move.freeVelocityXZ / xz;
+          p.vel.x *= scale; p.vel.z *= scale;
+        }
+        if (xzDone && yDone) p.fidelityPhase = 2;
+      } else if (yDone || move.freeFrame!=null && (p.age-p.straight)*move.hz+EPSILON>=move.freeFrame) {
+        p.fidelityPhase = 2;
+      }
+    }
   }
   p.pos.addScaledVector(p.vel, step);
   if (isKitProjectile(p)) kitTrizookaOrbitDelta(null, p, step);
@@ -652,7 +668,7 @@ export function installWeaponsFidelity(context,profile) {
   if(!defaults || defaults.schema!==1 || profile.referenceHz!==60)throw new Error('Missing or unsupported weapons fidelity profile');
   for (const [name,value] of Object.entries({brakeDrag:defaults.brakeDragPerFrame,freeDrag:defaults.freeDragPerFrame}))
     if(!Number.isFinite(value)||value<0||value>=1)throw new RangeError('Invalid '+name);
-  if(!Number.isFinite(defaults.brakeGravity)||defaults.brakeGravity<0||!Number.isFinite(defaults.freeGravity)||defaults.freeGravity<0||!Number.isFinite(defaults.brakeToFreeVelocityY))throw new RangeError('Invalid ballistic gravity/transition');
+  if(!Number.isFinite(defaults.brakeGravity)||defaults.brakeGravity<0||!Number.isFinite(defaults.freeGravity)||defaults.freeGravity<0||!Number.isFinite(defaults.brakeToFreeVelocityY)||!Number.isFinite(defaults.brakeToFreeVelocityXZ)||defaults.brakeToFreeVelocityXZ<0)throw new RangeError('Invalid ballistic gravity/transition');
   const roller=WEAPONS.roller;
   if(roller?.ballistics && roller.ballistics.verticalUnits.reduce((n,u)=>n+u.count,0)!==roller.verticalDrops)throw new Error('Vertical roller unit count differs from profile');
   api=context;completion=profile.weaponsFidelityCompletion;
@@ -682,6 +698,7 @@ export function installWeaponsFidelity(context,profile) {
       brakeDrag:defaults.brakeDragPerFrame,brakeGravity:defaults.brakeGravity,
       freeDrag:b.freeDragPerFrame??defaults.freeDragPerFrame,
       freeGravity:w.kind==='roller'?w.flickGravity:w.referenceGravity??defaults.freeGravity,
+      freeVelocityXZ:w.kind==='shooter'?defaults.brakeToFreeVelocityXZ:null,
       freeVelocityY:defaults.brakeToFreeVelocityY}));
   }
   function initializeSplatlingFlight(p,w){
