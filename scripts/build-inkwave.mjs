@@ -193,6 +193,7 @@ const deferredIntegrationPreloads = new Set([
   // PR536 additions follow the same preload-only deferral; all remain precached.
   'patches/local-quality/team-wipeout.mjs',
   'patches/local-quality/tenacity.mjs',
+  'patches/splatoon3/runtime/death-card.mjs',
   'patches/local-quality/hud-snapshots.mjs',
   'patches/local-quality/result-continuation.mjs',
   'patches/local-quality/showcase-shadow.mjs',
