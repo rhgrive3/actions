@@ -230,6 +230,44 @@ def skull_back(cfg):
               round(float(np.linalg.norm(er.world(obj) - before, axis=1).max() * 1000), 2))
 
 
+def smooth_regions(steps):
+    """Bumps left on the bald head and the neck after the shape steps (2026-10-08, user: 後頭部の凸凹を滑らかに):
+    the back of the skull had a flat band with horizontal ridges (skull_back moved y -25..28 forward 12 mm, the
+    source bulge above stayed) and the head-to-neck join at the back had a ledge and a groove.  Each step is
+    Blender's Smooth on cfg['mesh'] limited to an ellipsoid (head-frame mm, cfg['centre'], cfg['r']; weight
+    cos^2 of the scaled distance).  HEAD_face is two halves not joined at the midline: the step runs in chunks
+    and puts each midline pair back on its mean after each (as face_volume does).  Meshes lying on it
+    (cfg['follow']) follow by Surface Deform bound before."""
+    import inkwave_face_volume as fv
+    for cfg in steps:
+        obj = bpy.data.objects[cfg['mesh']]
+        pairs = fv.seam_pairs(obj)
+        mods = []
+        for r in cfg.get('follow', []):
+            f = bpy.data.objects[r]
+            mod = f.modifiers.new('INKWAVE_smooth_follow', 'SURFACE_DEFORM')
+            mod.target = obj
+            er.with_object(f, lambda: bpy.ops.object.surfacedeform_bind(modifier=mod.name))
+            if not mod.is_bound:
+                raise RuntimeError(f'Surface Deform could not bind {r}')
+            mods.append((f, mod))
+        L = er.M.to_local(er.world(obj)) * 1000
+        d = np.linalg.norm((L - np.array(cfg['centre'], float)) / np.array(cfg['r'], float), axis=1)
+        w = np.where(d < 1, np.cos(np.clip(d, 0, 1) * np.pi / 2) ** 2, 0.0)
+        if cfg.get('y_min') is not None:
+            w *= smoothstep((L[:, 1] - cfg['y_min'][0]) / (cfg['y_min'][1] - cfg['y_min'][0]))
+        before = er.world(obj)
+        chunks = int(cfg.get('chunks', 1))
+        for _ in range(chunks):
+            er.apply_weighted_modifier(obj, w, 'SMOOTH', factor=cfg['factor'], iterations=max(1, cfg['iters'] // chunks))
+            if len(pairs):
+                fv.join_seam(obj, pairs)
+        for f, mod in mods:
+            er.apply_modifier(f, mod)
+        print('BODY_SHAPE smooth', cfg['name'], 'vertices', int((w > 1e-3).sum()), 'midline pairs', len(pairs),
+              'max move mm', round(float(np.linalg.norm(er.world(obj) - before, axis=1).max() * 1000), 2))
+
+
 def seam_normals(cfg):
     """A line ran from under the ear to under the jaw in the side and 3/4 views where the face (laid on the neck by
     face_volume jaw_tuck) meets the neck: the shading jumped there (clay +5 brighter on the neck side).  The face
@@ -730,6 +768,8 @@ def main():
     names += [n for n in p.get('collar_lower', {}).get('meshes', []) if n not in names]
     names += [n for n in p.get('head_side_in', {}).get('meshes', []) if n not in names]
     names += [n for n in p.get('skull_back', {}).get('meshes', []) if n not in names]
+    for sm in p.get('smooth_regions', []):
+        names += [n for n in [sm['mesh']] + sm.get('follow', []) if n not in names]
     names += [n for n in [p.get('seam_normals', {}).get('face')] if n and n not in names]
     remove_made()
     restore_legwear()
@@ -800,6 +840,8 @@ def main():
             head_side_in(p['head_side_in'])
         if p.get('skull_back'):
             skull_back(p['skull_back'])
+        if p.get('smooth_regions'):
+            smooth_regions(p['smooth_regions'])
         if p.get('nails'):
             mat = nail_material(p['nails'])
             for hand in p['nails']['hands']:

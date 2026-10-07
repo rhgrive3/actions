@@ -780,15 +780,16 @@ def _ear_tubes(ear, D, s, tip, a1, a2, nv, mat):
     V = [np.array([v.co for v in ear.data.vertices])]
     F = [list(p.vertices) for p in ear.data.polygons]
     for tb in s['tubes']:
-        if 'idx' in tb:
-            idx = np.asarray(tb['idx'], int) % len(O)
-            P = O[idx] + inward[idx] * tb.get('inset', 0.0)
-        else:
-            P = np.array(tb['pts'], float)
+        # path entries: an outline index (moved inward by 'inset' mm) or an ear-plane point [u, v]
+        P = np.array([O[i % len(O)] + inward[i % len(O)] * tb.get('inset', 0.0) if isinstance(i, int) else i
+                      for i in tb['path']], float)
         P = _chaikin(P, 3)
         u = np.r_[0, np.cumsum(np.linalg.norm(np.diff(P, axis=0), axis=1))]
         u /= u[-1]
-        interp = lambda v: np.interp(u, np.linspace(0, 1, len(np.atleast_1d(v))), np.atleast_1d(v))
+
+        def interp(v):     # a number, or [[fraction along the path, value], ...]
+            v = np.atleast_2d(np.asarray(v, float))
+            return np.full(len(u), v[0, 0]) if v.shape[1] == 1 else np.interp(u, v[:, 0], v[:, 1])
         r, lift = interp(tb['r']), interp(tb.get('lift', 0.0))
         # the centre sits 'lift' mm off the slab's front surface there (ray from the front along -n)
         base = tip + P[:, :1] * a1 + P[:, 1:] * a2
