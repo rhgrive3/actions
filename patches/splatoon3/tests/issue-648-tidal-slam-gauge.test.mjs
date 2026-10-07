@@ -72,13 +72,18 @@ test('full composed Actor drains at a steady rate to one of 23 segments at early
     assert.ok(Math.abs(a.special - segment) < 1e-7, 'impact frame retains the final segment');
     assert.ok(Math.abs(a.specialFrac() - 1 / SPECIAL_GAUGE_SEGMENTS) < 1e-8, 'the actor HUD fraction sees that segment');
     assert.equal(a.s3TidalSlamGaugeFinish != null, true, 'the completed action owns the pending segment');
+    assert.ok(a.hardLand > 0, 'the impact landing charged the existing hard-landing recovery');
     f.tick(a);
-    assert.equal(a.special, 0, 'the next Actor.update consumes the segment after action finish');
+    assert.ok(Math.abs(a.special - segment) < 1e-7, 'the final segment is held through the landing recovery, not a one-frame boundary');
+    let held = 0;
+    while (a.s3TidalSlamGaugeFinish && held++ < 60) f.tick(a);
+    assert.ok(held > 1, 'the existing landing completion, not the next update, consumes the segment');
+    assert.equal(a.special, 0, 'the existing landing completion consumes the final segment');
     assert.equal(a.specialFrac(), 0);
   }
 });
 
-test('a fall with no ground probe uses the native timeout trajectory and still ends on one segment', async () => {
+test('a fall with no ground probe uses the native timeout trajectory and holds the segment until a real landing', async () => {
   const { f, a, impacts } = await slam({ ground: false });
   const segment = a.specialCost() / SPECIAL_GAUGE_SEGMENTS;
   const { ticks } = runToImpact(f, a);
@@ -86,8 +91,18 @@ test('a fall with no ground probe uses the native timeout trajectory and still e
   assert.ok(Math.abs(impacts[0].value - segment) < 1e-7);
   assert.ok(Math.abs(a.special - segment) < 1e-7);
   assert.ok(ticks > 60, 'timeout path includes rise, hang and the native fall safety interval');
+  assert.ok(a.s3TidalSlamGaugeFinish, 'the pending finish waits for the body landing');
   f.tick(a);
-  assert.equal(a.special, 0);
+  assert.ok(Math.abs(a.special - segment) < 1e-7, 'an airborne timeout impact never invents a one-frame zero');
+  assert.ok(a.s3TidalSlamGaugeFinish, 'still pending while the body has not landed');
+  a.splat(null);
+  assert.equal(a.special, segment * 0.5, 'death between impact and finish hands the real remainder to Special Saver');
+  assert.equal(a.s3TidalSlamGaugeFinish, null, 'the existing death path clears the pending finish');
+  f.tick(a);
+  assert.equal(a.special, segment * 0.5, 'a dead actor update does not consume the interrupted remainder');
+  a.reset();
+  assert.equal(a.special, 0, 'the existing reset state boundary owns the final zero');
+  assert.equal(a.s3TidalSlamGaugeFinish, null);
 });
 
 test('the landing forecast follows the actor across a step in its swept floor surface', async () => {
@@ -197,4 +212,25 @@ test('Storm retains its existing immediate-consume behavior', async () => {
   a._updateSpecial(STEP);
   assert.equal(a.special, 0);
   assert.equal(a.specialActive.id, 'storm');
+});
+
+test('gauge authority is owner-local: a replicated net Slam state never runs local forecast math', async () => {
+  const { f, a: owner } = await slam();
+  const proxy = f.make('shooter');
+  // The shape NetMatch pack/apply actually produces for a proxy: the owner's
+  // packed rounded gauge plus the replicated special flag (netmatch packActor
+  // / applyRemote; the full pack round trip is covered against the real
+  // NetMatch in issue-648-native-physics-gauge.test.mjs).
+  proxy.special = Math.round(owner.specialCost() * 0.62);
+  proxy.specialActive = { id: 'slam', net: true };
+  const packed = proxy.special;
+  const ownerCost = owner.specialCost();
+  for (let i = 0; i < 24; i++) { f.tick(owner); f.tick(proxy); }
+  assert.ok(owner.special > 0 && owner.special < ownerCost, 'the owner keeps draining its local action gauge');
+  assert.ok(Math.abs(owner.special - packed) > 1, 'the owner and the proxy are independent actors');
+  assert.equal(proxy.special, packed, 'the remote proxy gauge is packet-authoritative, never locally forecast');
+  assert.ok(Number.isFinite(proxy.special), 'no NaN leaks into a replicated gauge');
+  proxy.specialActive = null;
+  f.tick(proxy);
+  assert.equal(proxy.special, packed, 'clearing the replicated flag does not consume the packed gauge');
 });
