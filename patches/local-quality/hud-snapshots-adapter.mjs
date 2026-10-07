@@ -22,7 +22,8 @@ export function adaptHudSnapshots(rel, code, once) {
     const geared = code.includes('    const subCost = subInkSpec(a, SUB.bomb).inkCost;') || code.includes('    const subCost = selectedSubCost(a, SUB);');
     const healthMarked = code.includes('      healthMarkers: buildHealthMarkers(this, G, PLAYER, THREE),');
     const guide = 'projectShotGuide(m.controller?.enabled && m.controller?.a?.alive ? m.controller.shotGuide : null, cam, W, H)';
-    const guided = code.includes(', guide: ' + guide + ' },');
+    const guided = code.includes(', guide: ' + guide);
+    const muzzleBlocked = code.includes('muzzleBlock },');
     let frameSource = "    const frame = {\n      time: m.time,\n      teams: a.team === 1 ? m.teamSummary().reverse() : m.teamSummary(),   // HUD: [your team, theirs]\n      ink: a.ink / PLAYER.inkMax, inkLow: a.ink < 18 || (this._lowInkFlash > 0), subCost: SUB.bomb.inkCost / PLAYER.inkMax,\n      special: a.specialFrac(), specialReady: a.specialReady(), specialActive: !!a.specialActive,\n      hp: a.hp / PLAYER.hp,\n      weapon: a.weaponId, charge: a.weaponRunner.charge,\n      crosshair: { spread, onTarget: m.controller?.onTarget ? 'enemy' : null, inRange: m.controller ? m.controller.inRange !== false : true },\n      // corner minimap follows the setting; the TAB map (needed for super jumps) is always available\n      map: showMinimap ? { canvas: this.minimap.canvas, expanded: false, players } : null,\n      markers,\n      prompt,\n      fps: this.settings.showFps ? this.fps : undefined,\n    };";
     let mobileSource = "    this.input.mobile?.setHud({ special: frame.special, ready: frame.specialReady, activeSp: frame.specialActive, weapon: w.kind || a.weaponId, specialId: w.special, ink: frame.ink, subCost: frame.subCost });";
     if (geared) {
@@ -30,11 +31,15 @@ export function adaptHudSnapshots(rel, code, once) {
       mobileSource = mobileSource.replace('subCost: frame.subCost });', 'subCost: frame.subCost, subReady: frame.subReady });');
     }
     if (guided) frameSource = frameSource.replace('inRange: m.controller ? m.controller.inRange !== false : true },', 'inRange: m.controller ? m.controller.inRange !== false : true, guide: ' + guide + ' },');
+    if (muzzleBlocked) frameSource = frameSource.replace('guide: ' + guide + ' },', 'guide: ' + guide + ', muzzleBlock },');
     if (healthMarked) frameSource = frameSource.replace('      markers,\n      prompt,', '      markers,\n      healthMarkers: buildHealthMarkers(this, G, PLAYER, THREE),\n      prompt,');
     const subValue = geared ? 'subCost' : 'SUB.bomb.inkCost';
     const guideValue = guided ? guide : 'undefined';
-    const values = subValue + ((guided || healthMarked) ? ', ' + guideValue : '') + (healthMarked ? ', buildHealthMarkers(this, G, PLAYER, THREE)' : '');
-    code = once(code, frameSource, '    const frame = hudFrameSnapshot(this, m, a, w, spread, players, markers, prompt, showMinimap, PLAYER, SUB, ' + values + ');', 'persistent Game HUD frame');
+    const values = [subValue];
+    if (guided || healthMarked || muzzleBlocked) values.push(guideValue);
+    if (healthMarked || muzzleBlocked) values.push(healthMarked ? 'buildHealthMarkers(this, G, PLAYER, THREE)' : 'undefined');
+    if (muzzleBlocked) values.push('muzzleBlock');
+    code = once(code, frameSource, '    const frame = hudFrameSnapshot(this, m, a, w, spread, players, markers, prompt, showMinimap, PLAYER, SUB, ' + values.join(', ') + ');', 'persistent Game HUD frame');
     code = once(code, mobileSource, '    this.input.mobile?.setHud(this._hudTransport.mobile);', 'persistent touch HUD frame');
     return "import { hudFrameSnapshot } from '../patches/local-quality/hud-snapshots.mjs';\n" + code;
   }
