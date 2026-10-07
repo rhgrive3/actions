@@ -31,11 +31,18 @@ export function updateHealthRecovery(a, dt, onEnemy = false, submerged = false) 
     a.hp = Math.min(P.hp, a.hp + (submerged || rain.ally ? r.regenRateSwim : r.regenRate) * dt);
   }
 }
+export function updateSpecialHealthRecovery(a, dt) {
+  // #1019: body-owning specials still use the shared post-movement HP recovery
+  // law. Refresh the current surface once, but deliberately do not touch ink,
+  // enemy-ink damage, weapon gates, or any other resource phase.
+  const isSquid = resourceSurface(a);
+  updateHealthRecovery(a, dt, a.onEnemy, a.submerged || (isSquid && a.climbing));
+}
 export function updateResources(a, dt) {
   if (!api) throw new Error('INKWAVE resource patch not installed');
   if (!turfCombatAllowed(api.G)) return;
   const P = api.PLAYER, r = tuning, mods = a.s3?.modifiers || {};
-  const { onEnemy, isSquid } = resourceSurface(a);
+  const isSquid = resourceSurface(a), onEnemy = a.onEnemy;
   if (onEnemy) {
     a.s3 ||= {};
     const before = a.s3.enemyInkTime || 0;
