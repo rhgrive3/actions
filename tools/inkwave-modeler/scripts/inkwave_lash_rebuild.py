@@ -753,7 +753,9 @@ def build_corner_fill(rays, design, cover=None):
     if np.cross(q[1] - q[0], q[2] - q[0])[2] < 0:
         faces = [fc[::-1] for fc in faces]
     print('CORNER_FILL', len(R), 'rows')
-    return verts, faces
+    # per vertex: 1 where the patch lies on the face (it may take the face's shading), 0 over the eyeball
+    face_w = er.smooth_rows(er.smooth_rows((~ball).astype(float), 2.0), 2.0, axis=1).reshape(-1)
+    return verts, faces, face_w
 
 
 def build_tearline(rays, design, curve, found):
@@ -1183,6 +1185,27 @@ def lower_centres(design, curve):
     return out
 
 
+FILL_SKIN = {'solid_mm': 0.0, 'face_normals': False}
+
+
+def face_normals_onto(obj, weights):
+    """The face's shading (custom normals, Blender's Data Transfer, nearest face interpolated) onto obj, limited
+    by per-vertex weights (1 where obj lies on the face, 0 over the eyeball: there the nearest face is the lid
+    skin tucked behind the eyeball and its normals shade grey)."""
+    vg = obj.vertex_groups.new(name='INKWAVE_fill_face')
+    for i, x in enumerate(weights):
+        if x > 0.001:
+            vg.add([i], float(min(x, 1.0)), 'REPLACE')
+    mod = obj.modifiers.new('INKWAVE_fill_face', 'DATA_TRANSFER')
+    mod.object = bpy.data.objects['HEAD_face']
+    mod.use_loop_data = True
+    mod.data_types_loops = {'CUSTOM_NORMAL'}
+    mod.loop_mapping = 'POLYINTERP_NEAREST'
+    mod.vertex_group = vg.name
+    er.apply_modifier(obj, mod)
+    obj.vertex_groups.remove(obj.vertex_groups['INKWAVE_fill_face'])
+
+
 class OverRays:
     """Front rays that also hit an extra mesh (head mm verts, faces) lying over the skin."""
 
@@ -1294,7 +1317,13 @@ def set_side(objs, liner, rim, lashes, lower, mat, brown, tear=None, tear_mat=No
                 obj['_lr_visible_shadow'] = obj.visible_shadow       # brought back by lr_restore
             obj.visible_shadow = False
         elif k == len(lashes) + 3 and fill is not None:
-            er.set_mesh(obj, *fill, fill_mat, '_lr_corner_fill')
+            v, f, fw = fill
+            if FILL_SKIN['solid_mm']:
+                v, f = er.solid_sheet(np.asarray(v), f, FILL_SKIN['solid_mm'])
+                fw = np.r_[fw, fw]
+            er.set_mesh(obj, v, f, fill_mat, '_lr_corner_fill')
+            if FILL_SKIN['face_normals']:
+                face_normals_onto(obj, fw)
             # it stands up to 1.5 mm over the face: its shadow drew a dark band under it
             if '_lr_visible_shadow' not in obj:
                 obj['_lr_visible_shadow'] = obj.visible_shadow
@@ -1710,7 +1739,7 @@ def main():
         else:
             lashes = [build_lash(rays, d, spec) for spec in d['lashes']]
         # the lower lash dots sit on the corner fill where it is in front of the face
-        lray = OverRays(rays, fill) if fill is not None else rays
+        lray = OverRays(rays, fill[:2]) if fill is not None else rays
         lower = None if args.shape_only else build_lower(lray, d, edge[0] if edge is not None else None)
         built.append([objs, liner, rim, lashes, lower, tear, shade, fill])
     verts, polys = [], []
@@ -1733,6 +1762,10 @@ def main():
         t0 = design['lid_edge'].get('tint', (1.0, 1.0, 1.0))
         t1 = design.get('corner_fill_tint', (1.0, 1.0, 1.0))
         fill_mat = tearline_material([a * b for a, b in zip(t0, t1)], 'INKWAVE_corner_fill_skin')
+        FILL_SKIN['solid_mm'] = design.get('corner_fill_solid_mm', 0.0)
+        FILL_SKIN['face_normals'] = design.get('corner_fill_face_normals', False)
+        if design.get('corner_fill_face_material'):
+            fill_mat = bpy.data.materials['skin_b27050']        # the face's own skin (subsurface needs the solid)
     for objs, liner, rim, lashes, lower, tear, shade, fill in built:
         set_side(objs, liner, rim, lashes, lower, mat, brown, tear, tear_mat, shade, shade_mat, fill, fill_mat)
     remove_lower_paint()
