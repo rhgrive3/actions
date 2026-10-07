@@ -55,17 +55,31 @@ export function advanceFidelityProjectile(p, dt) {
       if (move.endSpeed !== null && speed > move.endSpeed) p.vel.multiplyScalar(move.endSpeed / speed);
       p.fidelityPhase = 1;
     }
-    // #959 / supplied S3 verification: Slosher's XZ and Y thresholds are
-    // admission conditions, not a forced one-frame brake timer. Evaluate them
-    // before force integration. Other weapon families keep their existing law.
     const componentTransition = Number.isFinite(move.freeVelocityXZ);
-    if (p.fidelityPhase === 1 && componentTransition &&
+    const shooterComponentTransition = componentTransition && p.s3Weapon?.kind === 'shooter';
+    const slosherComponentTransition = componentTransition && p.s3Weapon?.kind === 'slosher';
+    // #959: Slosher's XZ/Y thresholds are admission conditions evaluated before force integration.
+    if (p.fidelityPhase === 1 && slosherComponentTransition &&
         Math.hypot(p.vel.x,p.vel.z) < move.freeVelocityXZ && p.vel.y < move.freeVelocityY)
       p.fidelityPhase = 2;
     const brake = p.fidelityPhase === 1;
     p.vel.multiplyScalar(Math.pow(1 - (brake ? move.brakeDrag : move.freeDrag), step * move.hz));
     p.vel.y -= (brake ? move.brakeGravity : move.freeGravity) * step;
-    if (!componentTransition && brake && (p.vel.y < move.freeVelocityY || move.freeFrame!=null && (p.age-p.straight)*move.hz+EPSILON>=move.freeFrame)) p.fidelityPhase = 2;
+    if (brake && shooterComponentTransition) {
+      // #1053: Shooter brake->free waits until both lower-speed components are satisfied.
+      const yDone = p.vel.y <= move.freeVelocityY + EPSILON;
+      if (yDone && p.vel.y < move.freeVelocityY) p.vel.y = move.freeVelocityY;
+      const xz = Math.hypot(p.vel.x, p.vel.z);
+      const xzDone = xz <= move.freeVelocityXZ + EPSILON;
+      if (xzDone && xz > EPSILON && xz < move.freeVelocityXZ) {
+        const scale = move.freeVelocityXZ / xz;
+        p.vel.x *= scale; p.vel.z *= scale;
+      }
+      if (xzDone && yDone) p.fidelityPhase = 2;
+    } else if (!componentTransition && brake &&
+        (p.vel.y < move.freeVelocityY || move.freeFrame!=null && (p.age-p.straight)*move.hz+EPSILON>=move.freeFrame)) {
+      p.fidelityPhase = 2;
+    }
   }
   p.pos.addScaledVector(p.vel, step);
   if (isKitProjectile(p)) kitTrizookaOrbitDelta(null, p, step);
