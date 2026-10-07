@@ -5,10 +5,16 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { adaptSource } from '../adapter.mjs';
+import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
+import { adaptReliability } from '../../reliability/adapter.mjs';
+import { adaptQualitySource } from '../../local-quality/adapter.mjs';
 import { adaptNetworkSource } from '../../network-replication/adapter.mjs';
+import { adaptRange } from '../../practice-range/adapter.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const SRC = path.join(ROOT, 'inkwave-public');
+// Match the complete production adapter order in scripts/build-inkwave.mjs.
+const compose = (rel, code) => adaptRange(rel, adaptNetworkSource(rel, adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code))))));
 let loaded;
 
 async function production() {
@@ -20,9 +26,9 @@ async function production() {
     if (file.startsWith(path.join(ROOT, 'src') + path.sep)) file = path.join(SRC, path.relative(ROOT, file));
     if (modules.has(file)) return modules.get(file);
     const source = fs.readFileSync(file, 'utf8');
-    const rel = file.startsWith(SRC + path.sep) ? path.relative(SRC, file) : null;
-    let patched = rel ? adaptSource(rel, source) : source;
-    if (rel === 'src/net/netmatch.js') patched = adaptNetworkSource(rel, patched);
+    const rel = file.startsWith(SRC + path.sep) ? path.relative(SRC, file)
+      : file.startsWith(path.join(ROOT, 'patches') + path.sep) ? path.relative(ROOT, file) : null;
+    const patched = rel ? compose(rel.split(path.sep).join('/'), source) : source;
     const mod = new vm.SourceTextModule(patched, {
       context, identifier: file,
       initializeImportMeta(meta) { meta.url = pathToFileURL(file).href; },
@@ -35,7 +41,7 @@ async function production() {
     export { ROLLER_FOLD, rollerFoldSnapshot } from './patches/splatoon3/runtime/roller-fold.mjs';
     export { NetMatch } from './inkwave-public/src/net/netmatch.js';
   `, { context, identifier: path.join(ROOT, 'roller-fold-native-entry.mjs') });
-  // The loader applies the same S3 source adapter as the installed native runtime.
+  // The loader applies all six production source adapters in build order.
   await entry.link((specifier, from) => load(specifier === 'three'
     ? path.join(SRC, 'vendor/three/build/three.module.js')
     : specifier.startsWith('three/addons/')
@@ -179,6 +185,46 @@ test('owner network tick carries horizontal and vertical fold mode through remot
     } finally { local.close(); remote.close(); }
   }
   assert.equal(api.testShotCount(), 0, 'fold replication does not emit projectiles');
+});
+
+test('an adopted local Roller ignores its retained proxy fold snapshot', async () => {
+  const api = await production(), r = rig(api), wire = [];
+  try {
+    const nid = 916, dt = 1 / 60;
+    r.actor.nid = nid;
+    r.actor.owner = 'former-owner';
+    const sender = new api.NetMatch({ myId: 'former-owner', hostId: 'guest', isHost: false,
+      tr: { broadcast: message => wire.push(message) }, _members: new Set(['former-owner', 'guest']) }, {});
+    const receiver = new api.NetMatch({ myId: 'guest', hostId: 'guest', isHost: true,
+      tr: { broadcast() {} }, _members: new Set(['former-owner', 'guest']) }, {});
+    sender.byNid.set(nid, r.actor); sender._setupActor(r.actor);
+
+    r.step(dt, { fire: true, firePressed: true, grounded: true });
+    sender._sendTick();
+    receiver.byNid.set(nid, r.actor); receiver._setupActor(r.actor);
+    receiver.match = { actors: [r.actor], removeActor() {} };
+    receiver.onMessage('former-owner', JSON.parse(JSON.stringify(wire.at(-1))));
+    r.actor.net.cur = r.actor.net.buf.at(-1); r.actor.net.ready = true;
+    receiver.applyRemote(r.actor, dt);
+    assert.equal(r.actor.weaponRunner.s3RollerFoldAttack?.vertical, false);
+    animate(r.ch, dt);
+    assert.ok(r.ch.weapon.foldT < 1, 'the wire-applied horizontal proxy mode unfolds the native Roller');
+
+    const appliedProxyMode = r.actor.weaponRunner.s3RollerFoldAttack;
+    Object.assign(api.G.projectiles, { list: [], bombs: [], clouds: [], beams: [], sights: new Map(), beamPool: [], scene: api.G.scene });
+    receiver.onLeave('former-owner', false);
+    assert.equal(r.actor.owner, 'guest');
+    assert.equal(r.actor.remote, false, 'the actual NetMatch leave path adopts the proxy locally');
+    assert.equal(r.actor.weaponRunner.s3RollerAttack, null, 'adoption reset clears the former owner attack');
+    assert.equal(r.ch.s3RollerFlick, null, 'adoption reset clears the Character attack');
+    assert.equal(r.actor.weaponRunner.s3RollerFoldAttack, appliedProxyMode, 'the old proxy snapshot remains stale on the adopted runner');
+
+    const beforeGameplay = gameplay(r, api), shotsBefore = api.testShotCount();
+    for (let i = 0; i < 30; i++) animate(r.ch, dt);
+    assert.equal(r.ch.weapon.foldT, 1, 'an idle new owner returns to folded carry despite the retired proxy snapshot');
+    assert.deepEqual(gameplay(r, api), beforeGameplay, 'rendering the handoff does not change gameplay state');
+    assert.equal(api.testShotCount(), shotsBefore, 'rendering the handoff emits no projectile');
+  } finally { r.close(); }
 });
 
 test('vertical, horizontal, rolling and carry hinge curves stay stable at 30/60/120Hz, including zero elapsed updates', async () => {

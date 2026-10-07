@@ -163,7 +163,7 @@ function rollerAttack(ch) {
   const runner = ch?._runner?.() ?? ch?.actor?.weaponRunner;
   const hasRemoteSnapshot = runner?.a?.remote && Object.hasOwn(runner, 's3RollerFoldAttack');
   const flick = hasRemoteSnapshot ? runner.s3RollerFoldAttack
-    : ch?.s3RollerFlick ?? runner?.s3RollerAttack ?? runner?.s3RollerFoldAttack;
+    : ch?.s3RollerFlick ?? runner?.s3RollerAttack ?? (runner?.a?.remote ? runner?.s3RollerFoldAttack : null);
   return flick && typeof flick.vertical === 'boolean' ? flick : null;
 }
 
