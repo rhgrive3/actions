@@ -1311,6 +1311,15 @@ def lower_centres(design, curve):
     """The lower lash dots: the reference dots (design['lower']), or, with design['lower_row'] and the smooth
     lower edge, an even row along the curve at a fixed distance below it (like the reference: dots in a row
     parallel to the outer lower line)."""
+    if design.get('lower_fit'):
+        # the reference dots lie on one smooth curve: a quadratic through them, the dots evenly spaced along it
+        P = np.array([d['centre'] for d in design['lower']], float)
+        a = np.polyfit(P[:, 0], P[:, 1], 2)
+        xs = np.linspace(P[:, 0].min(), P[:, 0].max(), 400)
+        ys = np.polyval(a, xs)
+        seg = np.r_[0, np.cumsum(np.hypot(np.diff(xs), np.diff(ys)))]
+        t = np.linspace(0, seg[-1], design['lower_fit'].get('count', len(P)))
+        return [{'centre': [float(np.interp(v, seg, xs)), float(np.interp(v, seg, ys))]} for v in t]
     row = design.get('lower_row')
     if row is None or curve is None:
         return design['lower']
