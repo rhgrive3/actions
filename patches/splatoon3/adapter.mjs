@@ -38,6 +38,11 @@ export function adaptSource(rel, code) {
       'const win = cov[0] >= cov[1] ? 0 : 1; // Exact tie belongs to the assigned Alpha side.',
       'deterministic Alpha turf tie');
   }
+  if (rel === 'src/game/actor.js') {
+    code = replaceOnce(code, '  reset() {\n    this.alive = true;',
+      '  reset() {\n    this._s3SlosherBirthEpoch = (this._s3SlosherBirthEpoch || 0) + 1;\n    this.alive = true;',
+      'cancel pending Slosher births when an actor resets');
+  }
   if (rel === 'patches/splatoon3/runtime/resources.mjs') return adaptIssue415(rel, code);
   code = adaptMovementPhysics(rel, code, replaceOnce);
   code = adaptSubSpecialFidelity(rel, code, replaceOnce);
