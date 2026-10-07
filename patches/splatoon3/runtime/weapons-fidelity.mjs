@@ -543,6 +543,45 @@ export function installWeaponsFidelity(context,profile) {
     while(remaining>EPSILON){const step=Math.min(1/60,remaining);advanceFidelityProjectile(p,step);remaining-=step;}
     return p.pos;
   };
+  // Issue #94: the Shooter-only weapon-side reticle previews the nominal
+  // (unspread) shot's first field contact. Spawn state comes from the same
+  // _muzzle/_aimFrom/_ballistic path fireShooter uses, integration from
+  // advanceFidelityProjectile, and the field query from the composed swept
+  // sweep with the sourced field collision radius, all bounded by the existing
+  // projectile lifetime — so the preview point is the real impact of the center
+  // shot, and geometry beyond the shot's flight never warns. Read-only: one
+  // cached scratch projectile, no RNG, no list/paint/audio/network mutation.
+  Projectiles.prototype.s3ShooterImpact=function(actor,w){
+    if(!actor||!w||w.kind!=='shooter'||!actor.aimPoint||!actor.aimDir||!actor.character||
+      typeof actor.character.getMuzzle!=='function'||!api.G?.physics||
+      typeof this._muzzle!=='function'||typeof this._aimFrom!=='function'||typeof this._ballistic!=='function')return null;
+    const THREE=context.THREE;
+    const p=this._s3ShooterImpact||(this._s3ShooterImpact={
+      pos:new THREE.Vector3(),prev:new THREE.Vector3(),start:new THREE.Vector3(),vel:new THREE.Vector3()});
+    const dir=this._s3ShooterImpactDir||(this._s3ShooterImpactDir=new THREE.Vector3());
+    this._muzzle(actor,p.pos);
+    this._aimFrom(actor,p.pos,dir);
+    // fireShooter pitches the nominal launch toward the aim point before spread.
+    this._ballistic(p.pos,dir,actor.aimPoint,w.projSpeed,w.straightTime,28,0.8,w.range);
+    p.owner=actor;p.team=actor.team;p.type='shot';p.ghost=false;p.delay=0;p.vol=null;
+    p.s3DamageGroup=null;p.fidelitySloshUnit=null;p.fidelityRollerUnit=null;p.fidelityMode=null;
+    p.fidelityWallDrop=null;p.fidelityImpactActor=null;p.fidelityImpactT=null;
+    p.age=0;p.fidelityPrevAge=0;p.life=1.2;p.straight=w.straightTime;p.grav=28;p.drag=0.8;
+    p.radius=w.impactRadius;p.size=0.15;p.seed=0;p.wid=null;p.head=false;p.dmgFar=undefined;
+    p.prev.copy(p.pos);p.start.copy(p.pos);
+    p.vel.copy(dir).multiplyScalar(w.projSpeed);
+    initialize(p,w);
+    const hit=this._s3ShooterImpactHit||(this._s3ShooterImpactHit=new api.Hit());
+    let guard=0;
+    while(p.age+EPSILON<p.life){
+      advanceFidelityProjectile(p,1/60);
+      sweptWorldHit(api.G.physics,p.prev,p.pos,fieldRadiusAt(p,p.fidelityPrevAge),fieldRadiusAt(p,p.age),hit,true);
+      if(hit.hit)return hit;
+      if(p.pos.y<api.PLAYER.waterY-1.8)return null;
+      if(++guard>144)return null;
+    }
+    return null;
+  };
   const reset=WeaponRunner.prototype.reset,auto=WeaponRunner.prototype._auto,spin=WeaponRunner.prototype._splatling;
   WeaponRunner.prototype.reset=function(...args){const result=reset.apply(this,args);this.fidelitySplatlingCharge=null;return result;};
   WeaponRunner.prototype._auto=function(dt,input,w){
