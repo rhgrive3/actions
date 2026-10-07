@@ -50,7 +50,8 @@ export function clearFullCancelCandidate(a) {
 function fullCancelGroundAttackReady(a, state) {
   const context = state?.fullCancelGroundAttack;
   if (!context || !api) return false;
-  const age = api.G.time - context.pressT, window = api.PLAYER.fireBuffer;
+  const age = api.G.time - context.pressT;
+  const window = Math.max(api.PLAYER.fireBuffer, Number.isFinite(a.weapon?.squidFlickDelay) ? a.weapon.squidFlickDelay : 0);
   const valid = a.alive && !a.specialActive && !a.superJumpState && a.form === 'kid' &&
     a.weapon?.kind === 'roller' && a._firePressT === context.pressT &&
     Number.isFinite(age) && Number.isFinite(window) && age >= -EPSILON && age <= window + EPSILON;
