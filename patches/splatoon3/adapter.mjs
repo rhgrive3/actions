@@ -561,9 +561,9 @@ export function adaptSource(rel, code) {
   if (rel === 'src/fx/fxHooks.js') {
     code = replaceOnce(code, "      if (form === 'swim' && hs > 4.5) {",
       "      if (form === 'swim' && hs > 4.5 && swimSplashVisible(a)) {", 'sneaking turn splash');
+    code = adaptChargerSightCache(rel, code, replaceOnce);
     return `import { swimSplashVisible } from '../../patches/splatoon3/runtime/swim-stealth.mjs';\n` + code;
   }
-  if (rel === 'src/fx/fxHooks.js') return adaptChargerSightCache(rel, code, replaceOnce);
   if (rel === 'src/net/netmatch.js') {
     code = replaceOnce(code,
       'const F = {',
