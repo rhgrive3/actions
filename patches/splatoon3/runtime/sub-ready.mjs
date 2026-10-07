@@ -1,6 +1,11 @@
 import { chargerPostShotBlocksSub } from './weapon-gates.mjs';
 export function subThrowSpec(a, base) { return { ...base, throwSpeed: base.throwSpeed * (a.s3?.modifiers?.subPower ?? 1) }; }
 export function subInkSpec(a, base) { return { ...base, inkCost: base.inkCost * (a.s3?.modifiers?.inkSaverSub ?? 1) }; }
+export function selectedSubReadyCost(a, SUB) {
+  const selected = SUB[a?.weapon?.sub || 'bomb'] || SUB.bomb;
+  const baseCost = selected?.inkCost ?? selected?.inkCostFallback ?? SUB.bomb.inkCost;
+  return baseCost * (a?.s3?.modifiers?.inkSaverSub ?? 1);
+}
 const EPS=1e-10;
 // Captured cancellation→trajectory-start interval (v10.0.1 FC/NC table).
 // Separate from emitted-shot15F and from the bomb's own preparation time.
@@ -50,7 +55,8 @@ export function installSubReady({Actor,WeaponRunner,SUB},profile){
    s=this.s3SubReady={age:0,pending:false,minimum:this.s3SubFromSquid?profile.bomb.readyTimeSquid:profile.bomb.readyTimeKid,useStartup:null};
    this.s3SubFromSquid=false;
   }
-  const cost=SUB.bomb.inkCost*(a.s3?.modifiers?.inkSaverSub??1);
+  // #1000: Curling/Suction readiness uses the equipped sub's resolved cost.
+  const cost=selectedSubReadyCost(a,SUB);
   if(s&&input.subReleased){
    if(a.ink+EPS<cost){this.s3SubReady=null;s=null;}
    else s.pending=true;
