@@ -252,6 +252,9 @@ function retireNetworkGhosts(owner = null) {
 `;
   }
   if (rel === 'src/game/weapons.js') {
+    patch('    if (nm && !p.ghost) nm.recProj(p);',
+      '    if (nm && !p.ghost && !p._s3SloshBirthPending) nm.recProj(p);',
+      'defer pending Slosher projectile packet until birth');
     patch('  applyHit(attacker, victim, dmg, weaponId) {',
       '  applyHit(attacker, victim, dmg, weaponId, slosherVolleyId) {', 'Slosher volley identity projectile entry');
     patch('nm.sendHit(attacker, victim, dmg, weaponId)',
