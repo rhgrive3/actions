@@ -35,6 +35,7 @@ import { installFormMotion } from './form-motion.mjs';
 import { installDualiesMotion } from './dualies-motion.mjs';
 import { installRollerDetailMotion } from './roller-detail-motion.mjs';
 import { installSuperjumpMotion } from './superjump-motion.mjs';
+import { installSuperJumpTargetNotification } from './superjump-target-notification.mjs';
 import { installSquidrollMotion } from './squidroll-motion.mjs';
 import { installHitSpawnMotion } from './hit-spawn-motion.mjs';
 import { installDeathCamera } from './death-camera.mjs';
@@ -92,6 +93,7 @@ export function install(profile) {
   // Main-weapon fidelity must be installed on the same canonical context before
   // gameplay can create projectiles; bootstrap's compatibility call is then a no-op.
   installWeaponsFidelity(api, profile);
+  installSuperJumpTargetNotification(api);
   // Aim remains tied to the actual camera ray. No target-dependent auto-turn.
   DEFAULT_SETTINGS.aimAssist = 0; DEFAULT_SETTINGS.aimAssistMouse = false;
   PlayerController.prototype._assistTarget = () => null;
