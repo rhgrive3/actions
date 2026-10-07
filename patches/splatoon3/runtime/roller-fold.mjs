@@ -24,8 +24,9 @@ import * as THREE from 'three';
 //                             and reparents the hinge parts and the whole
 //                             drum/caps mesh under it (adapter connection).
 //   3. installRollerFold(...) — render-layer transform owner. It only READS the
-//                             existing attack state (`character.s3RollerFlick`,
-//                             `character.wRoll`) and never writes runner timing,
+//                             existing attack state (`character.s3RollerFlick` or
+//                             owner `s3RollerAttack`, plus `character.wRoll`)
+//                             and never writes runner timing,
 //                             ink, paint, projectiles or hit shapes.
 //
 // Splatoon 3 publishes the existence of the fold (folded for the vertical swing,
@@ -105,7 +106,7 @@ function extract(geometry, keep) {
   return out;
 }
 
-function splitAtJoint(geometry, label, requireYoke) {
+function splitAtJoint(geometry, label, requireFrameExtents) {
   if (!geometry) throw new Error(`INKWAVE roller fold: native ${label} geometry is missing; the articulated joint cannot be built`);
   const { owner, maxZ } = componentSplit(geometry);
   const moving = t => maxZ.get(owner[t]) >= ROLLER_FOLD.splitZ;
@@ -113,8 +114,12 @@ function splitAtJoint(geometry, label, requireYoke) {
   const roller = extract(geometry, moving);
   if (!handle || !roller) throw new Error(`INKWAVE roller fold: native ${label} did not separate at the middle joint; review upstream changes`);
   const handleMax = handle.boundingBox.max.z, rollerMax = roller.boundingBox.max.z;
-  if (handleMax < ROLLER_FOLD.shaftMaxZ) throw new Error(`INKWAVE roller fold: native ${label} handle side lost the shaft (${handleMax})`);
-  if (requireYoke && rollerMax < ROLLER_FOLD.yokeMaxZ) throw new Error(`INKWAVE roller fold: native ${label} roller side lost the yoke (${rollerMax})`);
+  // The ink overlay is narrower than the body frame and does not reach the shaft end.
+  // Validate those structural extents against the body buffer only.
+  if (requireFrameExtents) {
+    if (handleMax < ROLLER_FOLD.shaftMaxZ) throw new Error(`INKWAVE roller fold: native ${label} handle side lost the shaft (${handleMax})`);
+    if (rollerMax < ROLLER_FOLD.yokeMaxZ) throw new Error(`INKWAVE roller fold: native ${label} roller side lost the yoke (${rollerMax})`);
+  }
   return { handle, roller };
 }
 
@@ -153,10 +158,27 @@ export function attachRollerFold(d, off, parts, drum) {
   return group;
 }
 
+function rollerAttack(ch) {
+  const runner = ch?._runner?.() ?? ch?.actor?.weaponRunner;
+  const flick = ch?.s3RollerFlick ?? runner?.s3RollerAttack;
+  return flick && typeof flick.vertical === 'boolean' ? flick : null;
+}
+
 function foldTarget(ch) {
-  const flick = ch.s3RollerFlick;
+  const flick = rollerAttack(ch);
   if (flick) return flick.vertical ? 1 : 0;   // folded for the vertical swing, open for the horizontal one
   return (ch.wRoll || 0) >= 0.5 ? 0 : 1;      // open while rolling, folded at rest / carry
+}
+
+function resetHinge(w) {
+  if (!w?.fold) return;
+  w.foldT = 1;
+  w.fold.rotation.x = ROLLER_FOLD.angle;
+}
+
+function resetCharacterHinges(ch) {
+  const weapons = new Set([ch?.weapon, ...Object.values(ch?.weapons || {})]);
+  for (const w of weapons) resetHinge(w);
 }
 
 function applyFold(ch, dt, w) {
@@ -166,7 +188,7 @@ function applyFold(ch, dt, w) {
   const want = w.near === false ? 0 : foldTarget(ch);
   if (!Number.isFinite(w.foldT)) w.foldT = want;
   else {
-    const step = Number.isFinite(dt) && dt > 0 ? 1 - Math.exp(-ROLLER_FOLD.rate * Math.min(0.1, dt)) : 1;
+    const step = Number.isFinite(dt) && dt > 0 ? 1 - Math.exp(-ROLLER_FOLD.rate * Math.min(0.1, dt)) : 0;
     w.foldT = Math.max(0, Math.min(1, w.foldT + (want - w.foldT) * step));
     if (Math.abs(want - w.foldT) < 1e-4) w.foldT = want;
   }
@@ -182,10 +204,27 @@ export function installRollerFold({ Character }, _profile) {
   if (Object.hasOwn(P, INSTALL)) return;
   Object.defineProperty(P, INSTALL, { value: true });
   const anim = P._animWeapon;
+  const setWeapon = P.setWeapon, setVisible = P.setVisible, dispose = P.dispose;
   P._animWeapon = function (dt, s, w) {
     const result = anim.call(this, dt, s, w);
     for (let x = w; x; x = x.left) applyFold(this, dt, x);
     return result;
+  };
+  if (typeof setWeapon === 'function') P.setWeapon = function (...args) {
+    const changed = args[0] !== this.weaponKind;
+    if (changed) resetHinge(this.weapon);
+    const result = setWeapon.apply(this, args);
+    if (changed) resetHinge(this.weapon);
+    return result;
+  };
+  if (typeof setVisible === 'function') P.setVisible = function (visible, ...args) {
+    const owner = !visible ? this._owner?.() : null;
+    if (owner && !owner.alive) resetCharacterHinges(this);
+    return setVisible.call(this, visible, ...args);
+  };
+  if (typeof dispose === 'function') P.dispose = function (...args) {
+    resetCharacterHinges(this);
+    return dispose.apply(this, args);
   };
 }
 
@@ -196,7 +235,7 @@ export function rollerFoldSnapshot(ch, w) {
     fold: Number.isFinite(w.foldT) ? w.foldT : null,
     angle: w.fold.rotation.x,
     near: w.near !== false,
-    vertical: ch?.s3RollerFlick ? !!ch.s3RollerFlick.vertical : null,
+    vertical: rollerAttack(ch)?.vertical ?? null,
     rolling: (ch?.wRoll || 0) >= 0.5,
     drumParent: w.drum && w.drum.parent === w.fold ? 'fold' : (w.drum?.parent?.name || null),
   };
