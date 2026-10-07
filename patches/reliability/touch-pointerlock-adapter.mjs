@@ -13,6 +13,7 @@ export function adaptTouchPointerLock(rel, code) {
         // onDeviceChange may close the touch map/editor while hiding controls.
         // The same gesture must still honor the UI state it started in.
         const touchUiBlocked = this.mobile?.editing || this.mobile?.mapOpen || !this._isTouchOverlayReacquireTarget(e.target);
+        this._touchLockAdmissionBlocked = !!touchUiBlocked;
         this.lastDevice = 'kbm';
         if (touchBoot) this._dev = 'kbm';
         if (!this._touchUnlockPending && !touchUiBlocked && !this.mobile?.editing && !this.mobile?.mapOpen && G.mode === 'match' && G.match?.state === 'playing' &&
@@ -26,7 +27,7 @@ export function adaptTouchPointerLock(rel, code) {
   code=replaceOnce(code,`      this.locked = document.pointerLockElement === this.canvas;
       if (!this.locked) { this.mouse.left = this.mouse.right = false; this.mouse.leftPressed = this.mouse.rightPressed = false; this.mouse.dx = this.mouse.dy = 0; this.onUnlock?.(); }`,`      const wasLocked = this.locked;
       const locked = document.pointerLockElement === this.canvas;
-      if (locked && (this.lastDevice === 'touch' || this._touchUnlockPending)) {
+      if (locked && (this.lastDevice === 'touch' || this._touchUnlockPending || this._touchLockAdmissionBlocked || this.mobile?.editing || this.mobile?.mapOpen)) {
         this.locked = false;
         if (!this._touchUnlockPending) this._releaseMouseForTouch();
         return;
@@ -66,5 +67,10 @@ export function adaptTouchPointerLock(rel, code) {
     catch { this._touchUnlockPending = false; } // A later explicit mouse gesture can reuse the still-held lock.
   }
 
-  requestLock() {`,'touch pointer-lock lifecycle owner');
+  requestLock() {
+    // An explicit eligible request is fresh admission too (e.g. keyboard play).
+    // Async browser fallback calls the canvas directly and cannot clear this.
+    if (this.enabled && this.lastDevice !== 'touch' && !this.locked && !this._touchUnlockPending &&
+      !this.mobile?.editing && !this.mobile?.mapOpen && G.mode === 'match' && G.match?.state === 'playing' &&
+      !G.match.paused && !G.match.attract && !G.game?.menus?.current) this._touchLockAdmissionBlocked = false;`,'touch pointer-lock lifecycle owner');
 }
