@@ -3,18 +3,28 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { adaptSource } from '../adapter.mjs';
+import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
+import { adaptReliability } from '../../reliability/adapter.mjs';
+import { adaptQualitySource } from '../../local-quality/adapter.mjs';
+import { adaptNetworkSource } from '../../network-replication/adapter.mjs';
+import { adaptRange } from '../../practice-range/adapter.mjs';
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const BUILT = process.env.INKWAVE_BUILT_SITE;
 const UPSTREAM = BUILT ? path.resolve(BUILT) : process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
+const adaptProduction = (rel, code) => adaptRange(rel, adaptNetworkSource(rel,
+  adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code))))));
 export async function fixture(options = {}) {
   const extraExports = typeof options === 'string' ? options : options.extraExports || '';
-  const { adapt = adaptSource, adaptNative = adapt, adaptRuntime = (_rel, source) => source } = typeof options === 'string' ? {} : options;
-  const context = vm.createContext({ console, performance, URL, innerWidth:1280, innerHeight:720 });
+  const { adapt = adaptSource, adaptNative = adapt, adaptRuntime = (_rel, source) => source,
+    fullRuntime = false, productionComposition = false, realProjectiles = false } = typeof options === 'string' ? {} : options;
+  const context = vm.createContext({ console, performance, URL, URLSearchParams, TextEncoder, TextDecoder,
+    setTimeout, clearTimeout, queueMicrotask, innerWidth:1280, innerHeight:720 });
   const modules = new Map();
   function resolve(spec, from) {
     if (spec === 'three') return path.join(UPSTREAM, 'vendor/three/build/three.module.js');
+    if (spec.startsWith('three/addons/')) return path.join(UPSTREAM, 'vendor/three/jsm', spec.slice('three/addons/'.length));
     let file = path.resolve(path.dirname(from), spec);
     if (file.startsWith(path.join(ROOT, 'inkwave-public/'))) file = path.join(UPSTREAM, path.relative(path.join(ROOT, 'inkwave-public'), file));
     if (file.startsWith(path.join(UPSTREAM, 'patches/'))) file = path.join(ROOT, path.relative(UPSTREAM, file));
@@ -25,9 +35,14 @@ export async function fixture(options = {}) {
     if (BUILT && file.startsWith(path.join(ROOT, 'patches/'))) file = path.join(UPSTREAM, path.relative(ROOT, file));
     if (modules.has(file)) return modules.get(file);
     const relative = path.relative(UPSTREAM, file);
-    const native = !BUILT && file.startsWith(UPSTREAM + path.sep) ? adaptNative(relative, fs.readFileSync(file, 'utf8')) : fs.readFileSync(file, 'utf8');
-    const source = file.startsWith(UPSTREAM + path.sep) ? native : adaptRuntime(path.relative(ROOT, file), native);
-    const mod = new vm.SourceTextModule(source, { context, identifier: file, initializeImportMeta(meta) { meta.url = new URL(file, 'file:').href; } }); modules.set(file, mod); return mod;
+    const raw = fs.readFileSync(file, 'utf8');
+    const upstream = file.startsWith(UPSTREAM + path.sep);
+    const rel = upstream ? relative : path.relative(ROOT, file);
+    const native = !BUILT && upstream ? adaptNative(relative, raw) : raw;
+    const source = !BUILT && productionComposition && upstream ? adaptProduction(rel, raw)
+      : upstream ? native : adaptRuntime(rel, native);
+    const mod = new vm.SourceTextModule(source, { context, identifier: file,
+      initializeImportMeta(meta) { meta.url = pathToFileURL(file).href; } }); modules.set(file, mod); return mod;
   }
   const root = new vm.SourceTextModule(`
     export * from './inkwave-public/src/core/ctx.js';
@@ -41,6 +56,7 @@ export async function fixture(options = {}) {
     export * from './inkwave-public/src/net/netmatch.js';
     export * from './inkwave-public/src/world/level.js';
     export * from './inkwave-public/src/core/shadowcache.js';
+    export { install as installS3 } from './patches/splatoon3/runtime/install.mjs';
     export * from './inkwave-public/src/world/paint.js';
     export * as THREE from 'three';
     export const VM_MATH = Math;
@@ -61,26 +77,31 @@ export async function fixture(options = {}) {
   Object.assign(PLAYER, profile.player); Object.assign(SUB.bomb, profile.bomb);
   for (const [id, data] of Object.entries(profile.specials || {})) Object.assign(SPECIALS[id], data);
   for (const [id, data] of Object.entries(profile.weapons)) Object.assign(WEAPONS[id], data);
-  for (const install of ['installWeapons', 'installMovement', 'installGear', 'installFlow', 'installResources', 'installRendering']) api[install](api, profile);
+  if (fullRuntime) api.installS3(profile);
+  else for (const install of ['installWeapons', 'installMovement', 'installGear', 'installFlow', 'installResources', 'installRendering']) api[install](api, profile);
   G.teamColors = [new THREE.Color('#ff8a14'), new THREE.Color('#2f5bff')];
-  G.level = { blocks: [], groundHeight: () => 0 }; G.time = 0;
+  G.level = { blocks: [], groundHeight: () => 0 }; G.time = 0; G.actors = [];
   G.physics = { los: () => true, raycast: (_a, _b, _c, h) => { h.hit = false; return h; } };
-  G.paint = { sample: () => 1, splat: () => 0 }; G.match = { playing: () => true };
+  G.paint = { sample: () => 1, splat: () => 0 }; G.match = { playing: () => true, canRespawn: () => false };
   const shots = [];
-  G.projectiles = { fireCharger: (actor, weapon, charge) => shots.push({ kind: 'charger', charge }),
+  G.projectiles = realProjectiles ? new api.Projectiles({ add() {}, remove() {} }) : { fireCharger: (actor, weapon, charge) => shots.push({ kind: 'charger', charge }),
     fireShooter: () => shots.push({ kind: 'shooter' }), fireDualies: (_a, _w, spread) => shots.push({ kind: 'dualies', spread }),
     fireFlick: (actor, weapon) => shots.push({ kind: 'roller', windup: weapon.flickWindup }), fireBlaster: () => shots.push({ kind: 'blaster' }),
     fireSplatling: () => shots.push({ kind: 'splatling' }) };
   class Character {
-    constructor() { this.root = { position: new THREE.Vector3(), rotation: {} }; this.events = []; }
+    constructor(actor) { this.actor = actor; this.root = { position: new THREE.Vector3(), rotation: {} }; this.events = []; }
+    _owner() { return this.actor; }
+    _runner() { return this.actor?.weaponRunner; }
     trigger(...args) { this.events.push(args); }
     getMuzzle(out) { return out.copy(this.root.position).add(new THREE.Vector3(0, 1.05, .3)); }
     setVisible() {} setHurt() {} setWeapon() {}
   }
   function make(weapon = 'shooter') {
     const a = new api.Actor({ team: 0, name: 'fixture', weapon, CharacterClass: Character });
+    if (!a.character.actor) a.character.actor = a;
     a.grounded = true; a.ground.hit = true; a.ground.face = 0;
     a._spawnBarrier = () => {}; a._finishFrame = () => {}; a._integrate = () => {};
+    G.actors.push(a);
     return a;
   }
   function tick(a, frames = 1) { for (let i = 0; i < frames; i++) { G.time += 1 / 60; a.update(1 / 60); } }
