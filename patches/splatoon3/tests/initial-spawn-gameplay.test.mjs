@@ -120,15 +120,32 @@ async function boot() {
 
 const f = await boot();
 
-test('native Match gives every initial Turf actor an individual spawner and a bounded own-team landing choice before GO', t => {
+test('production Match stages eight Turf actors on distinct raised spawners and keeps landing choices bounded before GO', t => {
   const { match, input } = f.makeMatch(); t.after(f.disposeCurrent);
   match.start();
+  match.update(STEP);
   const session = match.initialSpawnSession;
   assert.ok(session);
   assert.equal(session.actors.size, 8);
   assert.equal(new Set([...session.actors.values()]).size, 8);
-  assert.ok([...session.actors.values()].every(s => s.sourceMarker));
+  assert.ok([...session.actors.values()].every(s => s.sourceMarker && s.spawner?.parent === f.G.scene));
   assert.equal(match.state, 'intro');
+
+  for (const team of [0, 1]) {
+    const teammates = match.actors.filter(actor => actor.team === team);
+    const origins = teammates.map(actor => actor.initialSpawn.origin.toArray().join(','));
+    assert.equal(new Set(origins).size, 4, `team ${team} has four distinct spawner origins`);
+  }
+  for (const actor of match.actors) {
+    const state = actor.initialSpawn, pad = f.G.level.spawnPads[actor.team];
+    const meshes = [];
+    state.spawner.traverse(object => { if (object.isMesh) meshes.push(object); });
+    assert.ok(meshes.some(mesh => mesh.geometry.type === 'CylinderGeometry'), 'each source is a native 3D spawner, not a floor ring');
+    assert.ok(state.origin.y > pad.y, 'the actor starts above the playable pad surface');
+    assert.ok(actor.pos.distanceTo(state.origin) < 1e-6, 'the real Actor is staged at the spawner top');
+    assert.ok(actor.character.root.position.distanceTo(state.origin) < 1e-6, 'the character pose is staged at the same source');
+    assert.equal(actor.character.root.visible, true);
+  }
 
   const local = match.local, state = local.initialSpawn, start = state.target.clone();
   input.keys.add('KeyA');
@@ -182,6 +199,7 @@ test('native Match gives every initial Turf actor an individual spawner and a bo
   assert.equal(state.phase, 'flight');
   assert.equal(local.superJumpState.phase, 'flight');
   assert.ok(local.superJumpState.initialSpawn);
+  assert.ok(local.superJumpState.from.distanceTo(state.origin) < 1e-6, 'GO launches from the staged spawner origin');
   assert.ok(local.superJumpState.to.distanceTo(selected) < 1e-6);
 });
 
@@ -191,10 +209,14 @@ test('eight slots launch independently; native Actor flight and landing hold at 
     const { match } = f.makeMatch(); t.after(f.disposeCurrent);
     match.start();
     const destinations = match.actors.map(a => [a.team, a.slot, ...a.initialSpawn.target.toArray()]);
+    const origins = match.actors.map(a => [a.team, a.slot, ...a.initialSpawn.origin.toArray()]);
     const independent = [...match.initialSpawnSession.actors.values()];
     assert.equal(independent.length, 8);
     match.setState('playing');
     assert.ok(match.actors.every(a => a.superJumpState?.phase === 'flight' && a.form === 'squid'));
+    for (const actor of match.actors) {
+      assert.ok(actor.superJumpState.from.distanceTo(actor.initialSpawn.origin) < 1e-6);
+    }
     const local = match.local;
     local.character.update = () => {}; // preserve native Actor/Match physics while skipping mesh-only work
     local.intent.move.set(5, 0, 0); local.intent.fire = true;
@@ -225,17 +247,35 @@ test('eight slots launch independently; native Actor flight and landing hold at 
       const expectedBotSeed = (((bot.team + 1) * 131 + (bot.slot + 1) * 197) % 997) / 997;
       assert.equal(f.paintCalls[1].seed, expectedBotSeed);
     }
-    result.push({ destinations, seed: f.paintCalls[0].seed, botSeed: dt === 1 / 60 ? f.paintCalls[1].seed : null });
+    result.push({ destinations, origins, seed: f.paintCalls[0].seed, botSeed: dt === 1 / 60 ? f.paintCalls[1].seed : null });
   }
   assert.deepEqual(result[1].destinations, result[0].destinations);
   assert.deepEqual(result[2].destinations, result[0].destinations);
+  assert.deepEqual(result[1].origins, result[0].origins);
+  assert.deepEqual(result[2].origins, result[0].origins);
   assert.equal(result[1].seed, result[0].seed);
   assert.equal(result[2].seed, result[0].seed);
+});
+
+test('a life reset cancels an unlaunched initial choice and match disposal removes its native spawner objects', t => {
+  const { match } = f.makeMatch(); t.after(f.disposeCurrent);
+  match.start();
+  const actor = match.local, state = actor.initialSpawn, spawner = state.spawner;
+  actor.alive = false; actor.hp = 0;
+  actor.respawn();
+  assert.equal(state.phase, 'cancelled', 'a life reset does not re-enter initial deployment');
+  match.setState('playing');
+  assert.equal(actor.superJumpState, null, 'GO cannot launch the actor after its life reset');
+  match.dispose();
+  assert.equal(spawner.parent, null, 'session disposal removes the source mesh from the scene');
+  assert.equal(state.spawner, null);
+  f.G.match = null;
 });
 
 test('owner destination rides the existing NetMatch superjump event, late playback is ordered once, and reconnect/session guards reject stale or invalid targets', t => {
   const owner = f.makeMatch({ networkId: 'battle-a', localId: 'p1' }); t.after(f.disposeCurrent);
   owner.match.start();
+  const source = owner.match.local.initialSpawn.origin.clone();
   const origin = owner.match.local.initialSpawn.target.clone();
   owner.input.keys.add('KeyA');
   for (let i = 0; i < 25; i++) owner.match.updateController(STEP);
@@ -243,6 +283,7 @@ test('owner destination rides the existing NetMatch superjump event, late playba
   const chosen = owner.match.local.initialSpawn.target.clone();
   assert.ok(chosen.distanceTo(origin) > 1);
   owner.match.setState('playing');
+  assert.ok(owner.match.local.superJumpState.from.distanceTo(source) < 1e-6, 'the authority launches from its staged source');
   const ownerNet = f.G.netm;
   ownerNet._sendTick();
   const sent = owner.match.testSent.findLast(message => message.k === 't');
@@ -256,6 +297,7 @@ test('owner destination rides the existing NetMatch superjump event, late playba
   receiver.match.start(); receiver.match.setState('playing');
   const receiverNet = f.G.netm;
   const remote = receiver.match.actors.find(a => a.nid === 101);
+  assert.ok(remote.initialSpawn.origin.distanceTo(source) < 1e-6, 'the peer reconstructs the same slot source');
   remote.net.ready = true;
   remote.net.cur = {
     t: 1, x: remote.pos.x, y: remote.pos.y + 1, z: remote.pos.z, vx: 0, vy: 3, vz: 0,
@@ -276,17 +318,31 @@ test('owner destination rides the existing NetMatch superjump event, late playba
 
   const peer = receiverNet._peer('p1'); peer.tr = opening[0] + 1; peer.events.push(opening);
   const burstCount = f.bursts.length;
+  const remoteStatsBefore = { ...remote.stats }, paintCallsBefore = f.paintCalls.length;
   receiverNet._playEvents();
   assert.equal(remoteState.phase, 'flight');
   assert.equal(remoteState.eventAccepted, true);
   assert.ok(remoteState.target.distanceTo(chosen) < 0.02, 'the actual owner destination is replicated');
   assert.ok(remote.net.sjTo.distanceTo(chosen) < 0.02, 'the native remote superjump effect receives the same target');
+  for (const key of Object.keys(remoteStatsBefore)) assert.equal(remote.stats[key], remoteStatsBefore[key], `the remote event does not authoritatively change ${key}`);
+  assert.equal(f.paintCalls.length, paintCallsBefore, 'the remote initial-flight event does not duplicate landing paint');
   const afterAccepted = f.bursts.length;
   receiverNet._play('p1', opening);
   assert.equal(f.bursts.length, afterAccepted, 'duplicate event is ignored');
   assert.ok(afterAccepted > burstCount);
 
   receiverNet.dispose(); receiver.match.dispose(); f.G.match = null;
+  const ordered = f.makeMatch({ networkId: 'battle-a', localId: 'p2' });
+  ordered.match.start(); ordered.match.setState('playing');
+  const orderedNet = f.G.netm, orderedRemote = ordered.match.actors.find(a => a.nid === 101);
+  const orderedSource = orderedRemote.initialSpawn.origin.clone();
+  assert.ok(orderedRemote.pos.distanceTo(orderedSource) < 1e-6);
+  orderedNet._play('p1', opening);
+  assert.equal(orderedRemote.initialSpawn.phase, 'flight');
+  assert.ok(orderedRemote.pos.distanceTo(orderedSource) < 1e-6, 'an on-time owner event starts the proxy at its local spawner origin');
+  assert.ok(orderedRemote.net.sjTo.distanceTo(chosen) < 0.02);
+  orderedNet.dispose(); ordered.match.dispose(); f.G.match = null;
+
   const reconnected = f.makeMatch({ networkId: 'battle-b', localId: 'p2' });
   reconnected.match.start(); reconnected.match.setState('playing');
   const newNet = f.G.netm, newRemote = reconnected.match.actors.find(a => a.nid === 101);

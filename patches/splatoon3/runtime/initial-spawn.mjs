@@ -16,7 +16,7 @@ function configFrom(profile) {
   if (!c || c.schema !== 1 || c.calibrationStatus !== 'internal-unverified') {
     throw new Error('Initial Turf Spawn requires profile-declared internal calibration settings');
   }
-  for (const k of ['selectionSpeed', 'ownZoneRadius', 'ownSideMargin', 'flightSeconds', 'arcBase', 'arcPerMeter', 'landingRadius', 'groundProbeUp', 'groundProbeDown']) {
+  for (const k of ['selectionSpeed', 'ownZoneRadius', 'ownSideMargin', 'flightSeconds', 'arcBase', 'arcPerMeter', 'landingRadius', 'groundProbeUp', 'groundProbeDown', 'spawnerLift']) {
     if (!Number.isFinite(c[k]) || c[k] <= 0) throw new Error(`Invalid initial-spawn setting: ${k}`);
   }
   return Object.freeze({ ...c });
@@ -108,6 +108,68 @@ function makeMarker(position, color, radius, opacity) {
   return mesh;
 }
 
+function makeSpawner(actor, floor, origin, config) {
+  if (!G.scene) return null;
+  const root = new THREE.Group();
+  root.name = `initialSpawner:${actor.team}:${actor.slot}`;
+  root.position.copy(floor);
+  root.rotation.y = actor.yaw;
+  root.layers.set(0);
+  root.userData.initialSpawn = { team: actor.team, slot: actor.slot, origin: origin.toArray() };
+
+  const radius = PLAYER.radius;
+  const height = config.spawnerLift;
+  const deckThickness = Math.min(height * 0.14, radius * 0.35);
+  const shaftHeight = height - deckThickness;
+  const deckRadius = radius * 1.5;
+  const teamColor = (G.teamColors?.[actor.team] || new THREE.Color('#ffffff')).clone();
+  const frameMaterial = new THREE.MeshStandardMaterial({ color: 0x303640, roughness: 0.34, metalness: 0.62 });
+  const deckMaterial = new THREE.MeshStandardMaterial({ color: 0x454b56, roughness: 0.3, metalness: 0.48 });
+  const teamMaterial = new THREE.MeshStandardMaterial({
+    color: teamColor, emissive: teamColor.clone().multiplyScalar(0.18), roughness: 0.3, metalness: 0.28,
+  });
+  const accentMaterial = new THREE.MeshBasicMaterial({ color: teamColor });
+
+  const shaft = new THREE.Mesh(
+    new THREE.CylinderGeometry(radius * 0.78, radius * 1.02, shaftHeight, 16), frameMaterial,
+  );
+  shaft.position.y = shaftHeight * 0.5;
+  const deck = new THREE.Mesh(
+    new THREE.CylinderGeometry(deckRadius * 0.9, deckRadius, deckThickness, 24), deckMaterial,
+  );
+  deck.position.y = height - deckThickness * 0.5;
+  const face = new THREE.Mesh(
+    new THREE.CircleGeometry(deckRadius * 0.78, 24).rotateX(-Math.PI / 2), accentMaterial,
+  );
+  face.position.y = height + 0.003;
+  const rim = new THREE.Mesh(
+    new THREE.TorusGeometry(deckRadius * 0.86, radius * 0.07, 8, 32), teamMaterial,
+  );
+  rim.rotation.x = Math.PI / 2;
+  rim.position.y = height + radius * 0.035;
+
+  root.add(shaft, deck, face, rim);
+  root.traverse(object => {
+    if (!object.isMesh) return;
+    object.castShadow = true;
+    object.receiveShadow = true;
+    object.layers.set(0);
+    object.renderOrder = 1;
+  });
+  G.scene.add(root);
+  return root;
+}
+
+function removeSpawner(spawner) {
+  if (!spawner) return;
+  spawner.parent?.remove(spawner);
+  spawner.traverse?.(object => {
+    object.geometry?.dispose?.();
+    const materials = Array.isArray(object.material) ? object.material : [object.material];
+    for (const material of materials) material?.dispose?.();
+  });
+}
+
 function removeMarker(marker) {
   if (!marker) return;
   marker.parent?.remove(marker);
@@ -127,7 +189,9 @@ function closeSession(session) {
   if (!session) return;
   for (const [actor, state] of session.actors) {
     removeMarker(state.sourceMarker); removeMarker(state.targetMarker);
+    removeSpawner(state.spawner);
     state.sourceMarker = state.targetMarker = null;
+    state.spawner = null;
     if (state.phase === 'choice' || state.phase === 'awaiting-owner' || state.phase === 'flight') state.phase = 'cancelled';
     if (actor.initialSpawn === state) actor.initialSpawn = null;
     if (actor.superJumpState?.initialSpawn?.sessionId === session.id) actor.superJumpState = null;
@@ -145,13 +209,24 @@ function openSession(match, config) {
   session.networkId = G.netm?.match === match ? G.netm.cfg?.id || null : null;
   match.initialSpawnSession = session;
   for (const actor of match.actors) {
-    const resolved = clampLanding(actor, actor.pos, config) || actor.pos.clone();
+    const floor = actor.pos.clone();
+    const resolved = clampLanding(actor, floor, config) || floor.clone();
     const proposed = actor.isBot && !actor.isLocal ? botLanding(actor, config) : resolved;
     const target = clampLanding(actor, proposed, config) || resolved.clone();
+    const origin = floor.clone().addScaledVector(up, config.spawnerLift);
+    const spawner = makeSpawner(actor, floor, origin, config);
+    actor.pos.copy(origin);
+    actor.vel.set(0, 0, 0);
+    actor.grounded = true;
+    actor.groundN.copy(up);
+    actor.form = 'kid'; actor.submerged = false; actor.climbing = false;
+    actor.character.root.position.copy(origin);
+    actor.character.root.rotation.y = actor.yaw;
+    actor.character.setVisible(true);
     const state = {
       session, phase: actor.remote ? 'awaiting-owner' : 'choice', authority: !actor.remote,
-      target, origin: actor.pos.clone(), sawFlight: false, eventAccepted: false,
-      sourceMarker: makeMarker(actor.pos.clone(), G.teamColors?.[actor.team] || '#fff', 0.82, 0.48),
+      target, fallbackTarget: resolved.clone(), origin, spawner, sawFlight: false, eventAccepted: false,
+      sourceMarker: makeMarker(origin, G.teamColors?.[actor.team] || '#fff', 0.82, 0.48),
       targetMarker: actor.isLocal && !actor.remote ? makeMarker(target, G.teamColors?.[actor.team] || '#fff', 0.48, 0.85) : null,
     };
     session.actors.set(actor, state);
@@ -165,6 +240,29 @@ function activeChoice(state) {
   return isCurrentInitialSpawnSession(match, state.session) && state.authority &&
     match === G.match && G.mode === 'match' && match.state === 'intro' && !match.paused &&
     (!G.game?.menus || !G.game.menus.current);
+}
+
+function holdAtSpawner(actor, state, dt) {
+  clearIntent(actor);
+  actor.pos.copy(state.origin);
+  actor.vel.set(0, 0, 0);
+  actor.grounded = true;
+  actor.groundN.copy(up);
+  actor.form = 'kid'; actor.submerged = false; actor.climbing = false;
+  const anim = actor.anim;
+  anim.speed = 0; anim.localMove.x = 0; anim.localMove.z = 0;
+  anim.grounded = true; anim.vy = 0; anim.form = 'kid';
+  anim.firing = false; anim.charge = 0; anim.rolling = false; anim.subAim = false;
+  anim.turnRate = actor.remote ? actor.netTurnRate || 0 : 0;
+  anim.ink = actor.ink / PLAYER.inkMax; anim.lowInk = actor.ink < 18;
+  anim.special = actor.specialFrac(); anim.invuln = actor.invuln > 0;
+  anim.hp = Math.max(0, Math.min(1, actor.hp / PLAYER.hp));
+  anim.inEnemyInk = false; anim.surface = 0;
+  actor.character.root.position.copy(state.origin);
+  actor.character.root.rotation.y = actor.yaw;
+  actor.character.setVisible(actor.alive);
+  actor.character.setHurt(Math.max(actor.hurtFlash, 1 - actor.hp / PLAYER.hp) * (actor.hp < PLAYER.hp ? 1 : 0), G.teamColors[actor.enemyTeam]);
+  actor.character.update(dt, anim);
 }
 
 function selectionVector(input) {
@@ -218,13 +316,16 @@ function startFlights(match, session, config) {
       if (state.phase === 'choice') state.phase = 'cancelled';
       continue;
     }
-    const landing = clampLanding(actor, state.target, config) || actor.pos.clone();
+    const landing = clampLanding(actor, state.target, config) || clampLanding(actor, state.fallbackTarget, config);
+    if (!landing) { state.phase = 'cancelled'; continue; }
     state.target.copy(landing); state.phase = 'flight'; state.sawFlight = true;
+    actor.pos.copy(state.origin);
+    actor.character.root.position.copy(state.origin);
     actor._setClimb?.(false);
     actor.weaponRunner?.reset?.();
     actor.form = 'squid'; actor.grounded = false; actor.vel.set(0, 0, 0);
     actor.superJumpState = {
-      phase: 'flight', t: 0, dur: config.flightSeconds, from: actor.pos.clone(), to: landing.clone(), marker: 0,
+      phase: 'flight', t: 0, dur: config.flightSeconds, from: state.origin.clone(), to: landing.clone(), marker: 0,
       initialSpawn: {
         sessionId: session.id, arcBase: config.arcBase, arcPerMeter: config.arcPerMeter,
         paintRadius: config.landingRadius, paintSeed: seedFor(actor),
@@ -293,6 +394,12 @@ export function installInitialSpawn(api, profile) {
   Actor.prototype.update = function (dt, ...args) {
     const state = this.initialSpawn;
     const session = state?.session;
+    if (state && (state.phase === 'choice' || state.phase === 'awaiting-owner') &&
+        isCurrentInitialSpawnSession(session.match, session) && session.match === G.match && G.mode === 'match' &&
+        session.match.state === 'intro') {
+      holdAtSpawner(this, state, dt);
+      return;
+    }
     if (!state || state.phase !== 'flight' || !state.authority || this.remote || !session ||
         !isCurrentInitialSpawnSession(session.match, session) || G.match !== session.match ||
         this.superJumpState?.initialSpawn?.sessionId !== session.id) return updateActor.call(this, dt, ...args);
@@ -330,6 +437,12 @@ export function installInitialSpawn(api, profile) {
       const proposed = new THREE.Vector3(xyz[0], xyz[1], xyz[2]);
       const landing = clampLanding(actor, proposed, config);
       if (!landing || !samePoint(landing, proposed)) return;
+      if (!state.sawFlight) {
+        actor.pos.copy(state.origin);
+        actor.vel.set(0, 0, 0);
+        actor.character.root.position.copy(state.origin);
+        actor.character.root.rotation.y = actor.yaw;
+      }
       state.target.copy(landing); state.phase = 'flight'; state.eventAccepted = true;
     }
     return play.call(this, from, event, ...args);
