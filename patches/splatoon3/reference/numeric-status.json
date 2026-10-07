@@ -1038,7 +1038,7 @@
     "binding": null
   },
   "weapons.charger.inkRecoverStop": {
-    "value": 0.3333333333333333,
+    "value": 0.31666666666666665,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
@@ -1168,7 +1168,7 @@
     "binding": null
   },
   "weapons.charger.partialDamagePerSecond": {
-    "value": 138.46,
+    "value": 46.15384615384615,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
@@ -1188,7 +1188,7 @@
     "binding": null
   },
   "weapons.charger.feetPaintRadius": {
-    "value": 0.7,
+    "value": 1.2,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
@@ -3348,6 +3348,11 @@
   },
   "weaponsFidelity.brakeGravity": {
     "value": 252,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "weaponsFidelity.brakeToFreeVelocityXZ": {
+    "value": 14.129999999999999,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
