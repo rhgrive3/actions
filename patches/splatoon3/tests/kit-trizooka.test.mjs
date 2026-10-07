@@ -19,7 +19,7 @@ import {adaptKitSource as adaptSource} from './kit-composed-fixture.mjs';
 import {
   TRIZOOKA, TRIZOOKA_KIT_COST, TRIZOOKA_SOURCE, TRIZOOKA_SPEC_UP, VOLLEY_CONFIG,
   installKitTrizooka, installTrizookaLifecycle, trizookaSpecialWeapon, trizookaProjectileDescriptor,
-  startTrizooka, stepTrizooka, endTrizooka, canActivateTrizooka, disposeTrizooka, trizookaIsActive,
+  startTrizooka, stepTrizooka, endTrizooka, canActivateTrizooka, disposeTrizooka, trizookaIsActive, trizookaGaugeFraction,
   newTrizookaState, newTrizookaReplayState, trizookaReplayActivate, trizookaReplayFire, trizookaReplayEnd,
   splashBandsFor, splashRadiusFor, perpendicularBasis,
   throwVolley, apOf, durationFor,
@@ -237,7 +237,7 @@ test('activation is refused when dead, super jumping, already active or not read
 
 // ---- native lifecycle -------------------------------------------------------
 
-test('the native _startSpecial engages the Trizooka and spends the gauge exactly once', async () => {
+test('#1030 activation converts the full gauge into the authoritative Trizooka duration meter', async () => {
   const api = await production();
   world(api);
   const a = makeActor(api);
@@ -245,16 +245,33 @@ test('the native _startSpecial engages the Trizooka and spends the gauge exactly
   const before = a.stats.specials;
 
   a.intent.special = true;
-  a.update(F);                       // native edge detection + native _startSpecial
+  a.update(F);
   assert.equal(a.specialActive?.id, 'trizooka', 'the native state machine now owns the body');
   assert.ok(trizookaIsActive(a));
-  assert.equal(a.special, 0, 'the native gauge spend happened exactly once');
+  assert.equal(a.special, TRIZOOKA_KIT_COST, 'activation starts the active meter full');
+  assert.equal(trizookaGaugeFraction(a), 1);
   assert.equal(a.stats.specials, before + 1, 'the native counter incremented exactly once');
 
-  // holding the button must not spend again
   a.update(F); a.update(F);
-  assert.equal(a.special, 0);
+  near(a.special, TRIZOOKA_KIT_COST * (1 - 2 * F / a.s3Trizooka.duration), 'active meter follows the same duration clock');
+  assert.ok(a.special > 0 && a.special < TRIZOOKA_KIT_COST);
   assert.equal(a.stats.specials, before + 1, 're-entrant _startSpecial never double-spends');
+});
+
+
+test('#1019 active Trizooka keeps shared HP recovery running once per fixed tick', async () => {
+  const api = await production();
+  world(api);
+  const a = makeActor(api);
+  a.hp = 50; a.lastDamage = 99;
+  a.intent.special = true;
+  a.update(F);
+  const afterActivation = a.hp;
+  assert.ok(afterActivation > 50, 'activation tick runs eligible shared HP recovery');
+  a.intent.special = false;
+  a.update(F);
+  assert.ok(a.hp > afterActivation, 'active Trizooka tick continues HP recovery');
+  assert.ok(trizookaIsActive(a));
 });
 
 test('the Trizooka does not fire without a fire press, and fires with the default config', async () => {
@@ -416,7 +433,9 @@ test('death drops the token, resets the gauge and cannot be restored', async () 
   pressFire(a); api_time(a, F);
   assert.ok(trizookaIsActive(a));
 
+  const activeGauge = a.special;
   a.splat(null, 'test');
+  near(a.special, activeGauge * 0.5, '#1030 death applies the ordinary remaining-gauge loss');
   assert.equal(a.s3Trizooka, null, 'splat disposes the token');
   assert.equal(a.specialActive, null);
   assert.equal(trizookaIsActive(a), false);
