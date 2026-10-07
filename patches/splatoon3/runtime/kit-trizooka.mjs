@@ -30,6 +30,7 @@
 // perFrameGravityToPerSecondSquared *3600, rawDamageToHP /10.
 
 import { configureTrizookaNative } from './trizooka-collision.mjs';
+import { gearCurve } from './gear.mjs';
 
 const FRAME = 1 / 60;
 const rawDamage = (v) => (v == null ? null : v / 10);
@@ -91,44 +92,41 @@ export const TRIZOOKA = {
   status: 'extracted',
 };
 
-// SpecialChargeUp ladder. `DistanceDamageDistanceRate` is a DISTANCE rate: it
-// stretches the bands outward and must not touch the damage numbers, which stay
-// at the table's 53 / 35 at every AP. INKWAVE does carry ability points
-// (gear.mjs: `abilityPoints(loadout)` -> `a.s3.modifiers`, 10 per main, 3 per
-// sub), but there is no Special Power Up selectable ability wired to a weapon,
-// so no AP source reaches this special today. `apOf` therefore reads AP 0 unless
-// the parent supplies one, and says so rather than claiming AP is absent.
+// Special Power Up resolves the extracted control points from canonical 0..57
+// actor-local equipment AP. Distance rates never change HP damage values.
 export const TRIZOOKA_SPEC_UP = {
-  ap: [0, 1, 2],
+  apDomain: [0, 57],
   duration: [TRIZOOKA.duration, TRIZOOKA.durationMid, TRIZOOKA.durationHigh],
   // PaintRadius is the ink/FX radius and stays at the table value
   paintRadius: [TRIZOOKA.paintRadius, TRIZOOKA.paintRadius, TRIZOOKA.paintRadius],
   // DistanceDamageDistanceRate, applied to DISTANCE only
   distanceRate: [1.0, 1.15, 1.3],
   outerBandDistance: 4.0,            // the outermost damage band, before AP
-  status: 'ladder-extracted-no-special-power-up-ability-is-wired-to-this-weapon-yet',
+  status: 'extracted-control-points-canonical-gear-curve-activation-snapshot',
 };
 
 export function apOf(actor) {
-  const ap = actor?.apLevel ?? actor?.s3Ap ?? actor?.s3?.specialPowerUp ?? 0;
-  return Number.isFinite(ap) ? Math.max(0, Math.min(2, Math.floor(ap))) : 0;
+  return boundedSpecialPowerAP(actor?.s3?.abilityPoints?.specialPower);
+}
+export function boundedSpecialPowerAP(ap) {
+  return Number.isFinite(ap) ? Math.max(0, Math.min(57, ap)) : 0;
 }
 
 // The AP-scaled damage bands: the RATE stretches the distance, never the damage.
 export function splashBandsFor(ap) {
-  const rate = TRIZOOKA_SPEC_UP.distanceRate[ap] ?? 1;
+  const rate = gearCurve(boundedSpecialPowerAP(ap), ...TRIZOOKA_SPEC_UP.distanceRate);
   return TRIZOOKA.splashBands.map(([r, d]) => [r * rate, d]);
 }
 
 // The outer radius that actually damages is the outer band distance x the rate,
 // NOT PaintRadius: the paint/FX radius and the damage radius are distinct.
 export function splashRadiusFor(ap) {
-  const rate = TRIZOOKA_SPEC_UP.distanceRate[ap] ?? 1;
+  const rate = gearCurve(boundedSpecialPowerAP(ap), ...TRIZOOKA_SPEC_UP.distanceRate);
   return TRIZOOKA_SPEC_UP.outerBandDistance * rate;
 }
 
 export function durationFor(ap) {
-  return TRIZOOKA_SPEC_UP.duration[ap] ?? TRIZOOKA_SPEC_UP.duration[0];
+  return gearCurve(boundedSpecialPowerAP(ap), ...TRIZOOKA_SPEC_UP.duration);
 }
 
 // Cartridge visuals are recorded from spl__WeaponSpUltraShotParam; the eject mesh
@@ -194,7 +192,8 @@ export function trizookaSpecialWeapon(ap = 0) {
     splashRadius,
     burstRadius: splashRadius,
     impactRadius: splashRadius,
-    paintRadius: TRIZOOKA_SPEC_UP.paintRadius[ap] ?? TRIZOOKA.paintRadius,
+    paintRadius: TRIZOOKA.paintRadius,
+    specialPowerAP: boundedSpecialPowerAP(ap),
     damageMax,
     damageMin,
     splashDamageMax: damageMax,
@@ -212,8 +211,8 @@ export function trizookaSpecialWeapon(ap = 0) {
 }
 
 // Replay/ghost path: the parent restores the descriptor from SPECIALS[wid].
-export function trizookaProjectileDescriptor(_p) {
-  return trizookaSpecialWeapon();
+export function trizookaProjectileDescriptor(p) {
+  return trizookaSpecialWeapon(p?.s3TrizookaAP);
 }
 
 // ---- volley -----------------------------------------------------------------
@@ -608,7 +607,7 @@ export function trizookaOrbitOffset(p, dt) {
 export const TRIZOOKA_PROJECTILE_FIELDS = [
   's3SpecialWeapon', 's3Weapon', 's3VolleyIndex', 's3ActionIndex', 'damageOwner', 's3OrbitPhase', 's3Yaw',
   's3Stage', 's3StageFrames', 's3StageTransition', 's3AppliedStage', 's3ActorRadius', 's3WorldRadius', 's3SizeBase',
-  's3OrbitApplied',
+  's3OrbitApplied', 's3TrizookaAP',
 ];
 
 export function trizookaClearProjectile(p) {
@@ -657,7 +656,8 @@ export function trizookaReplayActivate(state, payload = {}) {
   s.reason = null;
   s.actionIndex = 0;
   s.t = 0;
-  s.ap = apOf(payload) || 0;
+  s.ap = boundedSpecialPowerAP(payload.specialPowerAP);
+  s.duration = durationFor(s.ap);
   return s;
 }
 
