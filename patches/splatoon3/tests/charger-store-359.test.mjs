@@ -124,7 +124,9 @@ test('dry, enemy-ink and airborne squid form cannot create a new stored charge',
       const a = f.make({ airborne: scenario.airborne, name: `#359 ${scenario.name}` });
       f.chargeFully(a);
       if (scenario.airborne) { a.grounded = false; a.ground.hit = false; a.pos.y = 12; }
-      f.enterSquid(a);
+      a.intent.squid = true;
+      f.step(a);
+      if (scenario.name === 'enemy ink') assert.equal(a.form, 'kid', 'composed #160 rejects enemy-ground squid form');
       assert.equal(a.submerged, false, `${scenario.name} stays outside the native submerged state`);
       assert.equal(a.weaponRunner.s3Stored, null, `${scenario.name} cannot bank a full charge`);
     } finally { f.close(); }
@@ -163,7 +165,7 @@ test('partial charge is rejected; release, death, reset and weapon replacement c
       const a = f.make({ name: `#359 ${teardown}` }); f.chargeFully(a); f.enterSquid(a);
       assert.ok(a.weaponRunner.s3Stored, `precondition for ${teardown}`);
       if (teardown === 'release') { a.intent.fire = false; f.step(a); }
-      else if (teardown === 'death') a.damage(200, null, 'shooter');
+      else if (teardown === 'death') { a.damage(200, null, 'shooter'); f.step(a); }
       else if (teardown === 'reset') a.reset();
       else a.setWeapon('shooter');
       assert.equal(a.weaponRunner.s3Stored, null, `${teardown} clears the stored state`);
