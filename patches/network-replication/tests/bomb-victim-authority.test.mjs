@@ -37,8 +37,12 @@ test('bomb damage follows the victim owner view when attack and victim positions
     const remoteVictim = damageActor(attackerView.makeActor({ nid: 2, owner: 'p2', remote: true, team: 1, roller: false }));
     addActors(attackerView, shooterNet, shooter, remoteVictim);
     remoteVictim.pos.set(0, 0.6, 5); // attack owner sees the victim inside the blast
+    remoteVictim.vel.set(1, 0, 2);
+    const shooterSideVelocity = Array.from(remoteVictim.vel.toArray());
     for(const cause of ['bomb','splat-bomb-far']) attackerView.G.projectiles.applyHit(shooter, remoteVictim, 30, cause);
+    attackerView.projectiles._explodeBomb({ kind:'bomb', ghost:false, owner:shooter, team:0, pos:new attackerView.THREE.Vector3(0,.6,0) });
     assert.equal(remoteVictim.hp, 100, 'shooter-side bomb geometry cannot damage a remote victim');
+    assert.deepEqual(Array.from(remoteVictim.vel.toArray()), shooterSideVelocity, 'shooter-side remote representation cannot apply bomb knockback a second time');
     assert.deepEqual(sent, [], 'bomb authority does not send a shooter-side damage packet');
     attackerView.G.projectiles.applyHit(shooter, remoteVictim, 30, 'shooter');
     assert.equal(sent.length, 1, 'non-bomb shooter hits still use the existing packet route');
@@ -47,9 +51,14 @@ test('bomb damage follows the victim owner view when attack and victim positions
     const remoteAttacker = damageActor(victimView.makeActor({ nid: 1, owner: 'p1', remote: true, team: 0, roller: false }));
     const localVictim = damageActor(victimView.makeActor({ nid: 2, owner: 'p2', remote: false, team: 1, roller: false }));
     addActors(victimView, victimNet, remoteAttacker, localVictim);
-    localVictim.pos.set(0, 0.6, 9); // victim owner sees the same explosion outside the blast
+    localVictim.pos.set(0, 0.6, 9); // victim owner sees the same explosion outside the damage blast
+    localVictim.vel.set(1, 0, 2);
+    const knockOnlyBefore = localVictim.vel.clone();
     victimView.projectiles._explodeBomb(ghostBomb(victimView, remoteAttacker));
-    assert.equal(localVictim.hp, 100, 'victim outside its own bomb radius takes no damage');
+    assert.equal(localVictim.hp, 100, 'victim outside its own damage radius takes no damage');
+    assert.ok(localVictim.vel.distanceTo(knockOnlyBefore) > 0, 'recipient owner still gets the independent 7..12 m knockback response');
+    const packedVelocity = victimView.packActor(localVictim).slice(4,7);
+    assert.deepEqual(packedVelocity, Array.from(localVictim.vel.toArray()).map(v=>Math.round(v*1000)/1000), 'ordinary actor-state replication carries the authoritative post-blast velocity');
     localVictim.pos.set(0, 0.6, 5); // opposite view: victim owner is inside while attacker may be outside
     victimView.projectiles._explodeBomb(ghostBomb(victimView, remoteAttacker));
     assert.ok(localVictim.hp < 100, 'victim inside its own bomb radius takes damage');
