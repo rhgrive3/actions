@@ -705,13 +705,18 @@ export function installWeaponsFidelity(context,profile) {
     p.reachGravity=weapon.referenceGravity;p.reachValue=reach;
     return reach;
   };
-  const fresh=Projectiles.prototype._new,push=Projectiles.prototype._push,ghost=Projectiles.prototype.ghostProjectile,clear=Projectiles.prototype.clear;
+  const fresh=Projectiles.prototype._new,push=Projectiles.prototype._push,step=Projectiles.prototype._step,ghost=Projectiles.prototype.ghostProjectile,clear=Projectiles.prototype.clear;
   Projectiles.prototype.clear=function(...args){const result=clear.apply(this,args);this._fidelityCollision=null;this._fidelitySloshContext=null;return result;};
   Projectiles.prototype._new=function(...args){
     // Clear the outgoing kit before native _new erases wid and the generic
     // wrapper erases its descriptor, while authority is still identifiable.
     const recycled=this.pool[this.pool.length-1];if(recycled)kitTrizookaClearPooled(recycled);
-    const p=fresh.apply(this,args);kitTrizookaClearPooled(p);p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityFriendThrough=null;p.fidelityRollerUnit=null;p.fidelityRollerUnitIndex=null;p.fidelitySloshUnit=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;p.fidelitySectorYaw=null;p.s3ShooterForwardApplied=false;p.s3BlasterForwardApplied=false;return p;
+    const p=fresh.apply(this,args);kitTrizookaClearPooled(p);
+    p._s3SloshBirthPending=false;p._s3SloshBirthOwner=null;p._s3SloshBirthEpoch=undefined;
+    p._s3SloshBirthWeaponId=null;p._s3SloshBirthRemote=undefined;p._s3SloshBirthNid=undefined;
+    p._s3SloshBirthPeer=undefined;p._s3SloshBirthWasInMatch=false;p._s3SloshBirthDelay=0;
+    p._s3SloshYaw=0;p._s3SloshPitch=0;p._s3SloshBirthGhost=false;
+    p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityFriendThrough=null;p.fidelityRollerUnit=null;p.fidelityRollerUnitIndex=null;p.fidelitySloshUnit=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;p.fidelitySectorYaw=null;p.s3ShooterForwardApplied=false;p.s3BlasterForwardApplied=false;return p;
   };
   function initialize(p,w){
     // Kit descriptors own their identity, flight and collision. They use wid,
@@ -785,6 +790,10 @@ export function installWeaponsFidelity(context,profile) {
         (u.RandomRotateYOffOrderNum?.includes(index)?0:(Math.random()*2-1)*radians(u.RandomRotateYDegree||0));
       const pitch=Math.atan2(aim.y,Math.hypot(aim.x,aim.z)),horizontal=Math.cos(pitch)*speed;
       p.vel.set(Math.sin(yaw)*horizontal,Math.sin(pitch)*speed+horizontal*(u.AddSpawnSpeedYRateByXZ||0),Math.cos(yaw)*horizontal);
+      p._s3SloshBirthPending=true;p._s3SloshBirthOwner=p.owner;p._s3SloshBirthEpoch=p.owner?._s3SlosherBirthEpoch;
+      p._s3SloshBirthWeaponId=p.wid;p._s3SloshBirthRemote=p.owner?.remote;p._s3SloshBirthNid=p.owner?.nid;
+      p._s3SloshBirthPeer=p.owner?.owner;p._s3SloshBirthWasInMatch=Array.isArray(context.G?.actors)&&context.G.actors.includes(p.owner);
+      p._s3SloshBirthDelay=p.delay;p._s3SloshYaw=yaw;p._s3SloshPitch=pitch;
       p.damage=u.DamageParam.ValueMax/10;p.head=!!u.HitEffectBigOrderNum?.includes(index);
       p.s3DamageGroup=active.group;p.s3DamageGroupId=active.groupId;
     }
@@ -796,12 +805,34 @@ export function installWeaponsFidelity(context,profile) {
     if(group)p.s3DamageGroup=group;
     return result;
   };
+  Projectiles.prototype._step=function(p,dt){
+    if(p._s3SloshBirthPending){
+      const owner=p._s3SloshBirthOwner,actors=context.G?.actors;
+      const current=owner&&p.owner===owner&&owner.alive!==false&&!(Number.isFinite(owner.hp)&&owner.hp<=0)&&
+        owner._s3SlosherBirthEpoch===p._s3SloshBirthEpoch&&!owner.specialActive&&owner.weapon?.id===p._s3SloshBirthWeaponId&&
+        owner.remote===p._s3SloshBirthRemote&&owner.nid===p._s3SloshBirthNid&&owner.owner===p._s3SloshBirthPeer&&
+        (!p._s3SloshBirthWasInMatch||actors?.includes(owner));
+      if(!current){p._s3SloshBirthPending=false;return true;}
+      const u=p.fidelitySloshUnit,index=p.fidelitySloshIndex;
+      if(!u){p._s3SloshBirthPending=false;return true;}
+      this._muzzle(owner,p.pos);p.prev.copy(p.pos);p.start.copy(p.pos);
+      const speed=((owner.grounded?u.SpawnSpeedGround:u.SpawnSpeedAir)+index*(u.AfterOffsetSpawnSpeed||0))*60;
+      const horizontal=Math.cos(p._s3SloshPitch)*speed;
+      p.vel.set(Math.sin(p._s3SloshYaw)*horizontal,
+        Math.sin(p._s3SloshPitch)*speed+horizontal*(u.AddSpawnSpeedYRateByXZ||0),
+        Math.cos(p._s3SloshYaw)*horizontal);
+      p.delay=p._s3SloshBirthDelay;
+      try{if(!p.ghost)context.G?.netm?.recProj?.(p);}
+      finally{p.delay=0;p._s3SloshBirthPending=false;}
+    }
+    return step.call(this,p,dt);
+  };
   Projectiles.prototype.ghostProjectile=function(actor,event){
     if(!validFidelityRollerUnitPacket(event))return null;
     const before=this.list.length;const result=ghost.call(this,actor,event);
     if(this.list.length>before){const p=this.list.at(-1);const special=api.SPECIALS&&Object.hasOwn(api.SPECIALS,p.wid)?api.SPECIALS[p.wid]:null;
       if(!p.s3SpecialWeapon&&typeof special?.projectileDescriptor==='function'){p.s3SpecialWeapon=special.projectileDescriptor(p);p.s3Weapon=p.s3SpecialWeapon;}
-      const kitOffset=event.length===35?2:0;if((event.length===33||event.length===35)&&event[30+kitOffset]>=0){p.fidelityRollerUnitIndex=event[30+kitOffset];p.fidelityMode=event[27+kitOffset]===1?'vertical':'horizontal';}initialize(p,p.s3SpecialWeapon||WEAPONS[p.wid]||actor.weapon);}
+      const kitOffset=event.length===35?2:0;if((event.length===33||event.length===35)&&event[30+kitOffset]>=0){p.fidelityRollerUnitIndex=event[30+kitOffset];p.fidelityMode=event[27+kitOffset]===1?'vertical':'horizontal';}initialize(p,p.s3SpecialWeapon||WEAPONS[p.wid]||actor.weapon);if(p.ghost&&p.type==='slosh'&&p.s3Weapon?.kind==='slosher'){p._s3SloshBirthGhost=true;p.delay=0;p._s3SloshBirthPending=false;}}
     return result;
   };
   const slosh=Projectiles.prototype.fireSlosh;
