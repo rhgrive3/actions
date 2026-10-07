@@ -360,6 +360,11 @@ export function installWeapons(context, profile) {
     }
 
     if (this.s3Stored && !held) {
+      // #1070: cancelling a live charge keep owns S3's separate 3F ink-recovery
+      // delay. The resource pass has already run on this tick while s3Stored was
+      // present, so 3/60 blocks the next two ticks and opens exactly at +3F.
+      a.s3 ||= {};
+      a.s3.chargerKeepRecover = 3 / 60;
       cancelStored(this); this.s3WasSquid = a.form === 'squid';
       this.s3ChargerStartupT = 0; this.s3ChargerHeldGate = false;
       return;
