@@ -68,8 +68,8 @@
         "endSpeed": 140.54999999999998
       },
       "fieldCollisionRadius": 0.2,
-      "playerRadiusNormal": 0.31,
-      "playerRadiusAfterRoll": 0.335,
+      "playerRadiusNormal": 0.235,
+      "playerRadiusAfterRoll": 0.285,
       "rollInkRecoverStop": 1.1666666666666667,
       "rollShotDelay": 0.06666666666666667,
       "swimFirstShotDelay": 0.2,
@@ -361,7 +361,12 @@
         "bulletOrderNumInUnit": 0,
         "frame": 13
       },
-      "postShotDelay": 0.26666666666666666
+      "postShotDelay": 0.26666666666666666,
+      "postShotLock": 0.26666666666666666,
+      "reticleRange": {
+        "ground": 14.24,
+        "air": 13.67
+      }
     }
   },
   "bomb": {
@@ -395,6 +400,12 @@
     "storm": {
       "duration": 8,
       "radius": 10
+    },
+    "slam": {
+      "damageMax": 220,
+      "damageMin": 60,
+      "killRadius": 6.4,
+      "radius": 9.6
     }
   },
   "gear": {
