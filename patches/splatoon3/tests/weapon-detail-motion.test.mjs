@@ -827,7 +827,10 @@ test('actual emitted Blaster shot replays the identical mechanism cycle on a rem
     assert.equal(JSON.stringify(squidPair.map(ev => ev[1])), JSON.stringify(['p', 'tr']));
     remote.a.form = 'squid'; remote.ch.kidForm = false;
     G.projectiles = remoteProj;
+    const beforeValidSquidBirth = remoteProj.list.length;
     for (const ev of squidPair) nmRemote._play('me', ev);
+    assert.equal(remoteProj.list.length, beforeValidSquidBirth + 1,
+      'the fresh submerged shot pair passes actual native owner/sequence/projectile admission');
     remote.step(1 / 60); mechRest(remote);
     assert.equal(remote.snapshot().blasterMechAge, null, 'even a valid old shot pair cannot actuate a submerged proxy');
     mechRest(remote);
