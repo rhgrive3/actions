@@ -23,13 +23,13 @@ test('a late host decision still awards the observed first pair after another re
   gn._remoteSplat(ga[3], ga[2], 'shooter');
   const confirmation = sent.find(packet => packet.k === 'fs');
   assert.ok(confirmation);
-  assert.equal(ga[0].s3.flow.score, 1, 'ordinary local award precedes host decision');
+  assert.equal(ga[0].s3?.flow?.score || 0, 0, 'remote attacker proxy never owns local Flow progress');
   gn.onMessage('host', confirmation);
-  assert.ok(Math.abs(ga[0].s3.flow.score - 1.3) < 1e-9, 'interleaved remote pair cannot erase the first observation');
+  assert.equal(ga[0].s3?.flow?.score || 0, 0, 'late host decision does not mutate remote proxy Flow');
   assert.ok(Math.abs(ha[0].s3.flow.score - 0.3) < 1e-9, 'host applies its one first-splat bonus');
   gn.onMessage('host', confirmation);
   gn._remoteSplat(ga[1], ga[0], 'shooter');
-  assert.ok(Math.abs(ga[0].s3.flow.score - 1.3) < 1e-9, 'confirmation and observation repeats never grant the bonus twice');
+  assert.equal(ga[0].s3?.flow?.score || 0, 0, 'confirmation and observation repeats never create proxy progress');
   assert.equal(ga[2].s3?.flow?.score || 0, 0, 'the intervening remote attacker does not gain the first bonus');
 });
 
