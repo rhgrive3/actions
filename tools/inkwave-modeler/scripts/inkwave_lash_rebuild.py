@@ -1232,10 +1232,23 @@ def build_lower(rays, design, curve=None):
         toward_cam = M.to_local(np.array([p0 - d0 * 0.01]))[0] - M.to_local(np.array([p0]))[0]
         toward_cam /= np.linalg.norm(toward_cam)
         s = design.get('lower_standoff_mm', 0.0) * t ** 1.2
+        if design.get('lower_round', {}).get('flat'):
+            # lying on the skin (a printed-looking dot like the reference), not standing out of it
+            s = 0.0 * t
+            r3 = rays.lifted(root, radius.max() * 0.35 + 0.05)
+            way = rays.lifted(tip, radius.max() * 0.35 + 0.05) - r3
+            way = way / np.linalg.norm(way) * design['lower_round'].get('len_mm', LOWER_LEN_MM)
         ls = design.get('lower_strands')
         if ls is None:
             pts = r3[None] + t[:, None] * way[None] + s[:, None] * toward_cam[None]
             v, f = er.tube(pts, radius, sides=6)
+            if design.get('lower_round', {}).get('flat'):
+                # squash the stroke toward the skin (flat, 35 % thick), so it does not stick out of the skin
+                v = np.asarray(v)
+                c = np.repeat(pts, 6, axis=0)                       # er.tube: 6 vertices round each point
+                off = v - c
+                along = off @ toward_cam
+                v = v - np.outer(along * 0.65, toward_cam)
             faces += [tuple(i + len(verts) for i in fc) for fc in f]
             verts += list(v)
             continue
