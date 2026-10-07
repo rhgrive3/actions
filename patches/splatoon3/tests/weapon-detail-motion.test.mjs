@@ -814,6 +814,8 @@ test('actual emitted Blaster shot replays the identical mechanism cycle on a rem
       assert.equal(remote.snapshot().blasterMechAge, null,
         `${rejection} birth cannot authorize a fresh shoot trigger`);
     }
+    // Keep the subsequent real sender above the synthetic negative packet sequence.
+    nmLocal._eventSeq = sequence;
     const beforeSquid = nmLocal.out.length, shotsBeforeSquid = blasterShots(local);
     let waitSquidShot = 0;
     while (blasterShots(local) === shotsBeforeSquid && waitSquidShot++ < 60) {
