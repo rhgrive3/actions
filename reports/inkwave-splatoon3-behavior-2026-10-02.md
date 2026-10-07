@@ -1516,3 +1516,19 @@ Baseline main `c2c938b9af5b6cce2a7bdbecf0415c7c3836cadb` already contains the C3
 The local combined native/network/Practice Range check passed 121 tests on `eae787ce8a2708202dd3c4c5d0a922f54def0d71`. That source separately failed canonical build because moving-main composition reintroduced the Charger FX cache adapter twice. The existing sight-cache regression reproduced the same error before this correction; the FX transform is restored to one application. This is a build-layer composition correction and changes no Nintendo-derived timing or gameplay tuning. Final source build and exact browser CI are recorded in PR #988; earlier component/head receipts retain their own scope.
 
 The combined asset manifest also exceeded the existing 64 KiB worker ceiling after whitespace-only compaction. Build-only local identifier compaction preserves top-level worker bindings and stamps the complete JSON manifest afterward. An integration-sized manifest negative control exceeds the unchanged ceiling before compaction and fits afterward; the real compacted worker retains offline revision replay and rejects corrupted assets. No cache member, digest, runtime protocol, gameplay value or budget is removed or relaxed.
+
+
+## 2026-10-07: Input-boundary cancellation of deferred shots and touch holds (#991, #990)
+
+Reference conditions: Splatoon 3 Ver. 11.3.0, Splattershot / Splat Charger / Heavy Splatling, no gear effects, stable humanoid, stationary. Splatoon 3 itself has no browser focus, app-switch or touch/gamepad hybrid ownership, so there is no first-party source that fixes the original behaviour at these boundaries. The only reference-side claim used is the existing INKWAVE contract: an attack is admitted by a physical player input, not by a platform neutralization. The Switch behaviour at a HOME-menu / controller-handoff boundary is **not measured** and no frame value is asserted.
+
+| | #991 deferred shots survive input neutralization | #990 fresh pad button releases a held touch FIRE/SUB |
+|---|---|---|
+| INKWAVE implementation | `patches/local-quality/platform-input.mjs` `resetPlatformInput()` | `patches/splatoon3/adapter.mjs` (`_liveTouchContact`, shared with the #497 axis guard) and `patches/reliability/pause-adapter.mjs` (button-edge ownership) |
+| Repro | FIRE pressed, blur / suspend / screen reset before the 3F humanoid or 12F swim first shot, then ticks continue | Touch-hold Charger FIRE or SUB, keep the finger down, press an unrelated gamepad button (standard button 0) |
+| Before | `s3ShooterPendingFirst` / `s3SwimFireQueued` survive the reset and inject `fire:true`; the shot is emitted without a new FIRE input | Edge sets `lastDevice='pad'`; the losing-device reset clears the touch hold; the next tick reads FIRE/SUB false as a release and fires the Charger / throws the bomb |
+| After | The reset also calls the existing `WeaponRunner.cancelPendingInput()`; recovery, cooldown, accepted projectiles and Dodge history are untouched | While a finger is physically down, the button edge is still recorded in `padPressed` but does not take ownership; after the last contact ends a fresh edge takes ownership normally. Held-axis behaviour from #497 is unchanged |
+| Play impact | Unintended discharge, ink spend and position reveal while the page is unfocused or right after an app switch | Unintended Charger shot, Splatling stream start or bomb throw from an unrelated controller button on hybrid touch + pad setups |
+| Verification state | Logic-only: production adapters at fixed 60 Hz; browser / Switch not measured | Logic-only: production Input / MobileInput / PlayerController; Android / iPad Bluetooth-controller hardware not measured |
+
+Known residual: while a finger is down, a pad **menu** press does not take ownership until the finger lifts.
