@@ -77,10 +77,11 @@ export const SUCTION = {
   // MoveParam.BurstFrame is omitted for Suction in 11.3.0.
   fuse: null,
   fuseStatus: 'unknown-omitted',
-  // Functional calibration: a stuck bomb needs a finite countdown or it never
-  // detonates. Matches the existing INKWAVE bomb fuse; NOT a Nintendo figure.
-  fuseFallback: 1.0,
-  fuseFallbackStatus: 'calibrated',
+  // #1028: attached Suction Bombs use the verified 120F / 2.0 s countdown.
+  // The 11.3.0 parameter mirror omits BurstFrame for this weapon, so provenance
+  // remains community-measured rather than invented from the Splat Bomb.
+  fuseFallback: 2.0,
+  fuseFallbackStatus: 'community-verified',
   warningRestFrame: frames(60),  // MoveParam.WarningSERestFrame
   guideHitCollision: 'EnemyOffFenceOn',   // MoveParam.GuideHitCollisionType
   geyserAddSpeedPerImpact: 0.15,          // spl__BulletInformImpactControlForGeyserParam
@@ -266,7 +267,7 @@ export function resolveSubAtCharge(sub, charge) {
     charge: c,
     fuse,
     fuseStatus: sub.fuse != null ? sub.fuseStatus
-      : sub.fuseFallback != null ? 'calibrated'
+      : sub.fuseFallback != null ? (sub.fuseFallbackStatus || 'calibrated')
       : sub.burstFrame != null ? 'extracted' : 'unknown-omitted',
     inkCost: sub.inkCost ?? sub.inkCostFallback ?? null,
     inkCostStatus: tpl?.inkCost != null ? sub.inkCostStatus : 'calibrated',

@@ -109,7 +109,7 @@ export function installChargerFlight(api,completion) {
     for(;job.nextPaint<end-.3;job.nextPaint+=interval){
       const p=job.origin.clone().addScaledVector(job.dir,job.nextPaint);
       const h=G.physics.raycast(p,new THREE.Vector3(0,-1,0),3.5,new Hit(),true);
-      if(h.hit)area+=G.paint.splat(h.point.clone().addScaledVector(h.normal,.1),job.nextPaint===1.2?paint.nearest:paint.width,job.team,
+      if(h.hit)area+=G.paint.splat(h.point.clone().addScaledVector(h.normal,.1),paint.width,job.team,
         {seed:Math.random(),stretch:job.dir,stretchAmt:Math.max(0,paint.depth/paint.width-1)});
     }
     job.owner.addTurf(area);

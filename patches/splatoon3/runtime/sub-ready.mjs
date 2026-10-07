@@ -47,7 +47,7 @@ export function installSubReady({Actor,WeaponRunner,SUB},profile){
   let s=this.s3SubReady;
   if(s)s.age+=Math.max(0,dt);
   if(!s&&input.sub&&!(this.s3PostShotRemaining>EPS)){
-   s=this.s3SubReady={age:0,pending:false,minimum:this.s3SubFromSquid?profile.bomb.readyTimeSquid:profile.bomb.readyTimeKid};
+   s=this.s3SubReady={age:0,pending:false,minimum:this.s3SubFromSquid?profile.bomb.readyTimeSquid:profile.bomb.readyTimeKid,useStartup:null};
    this.s3SubFromSquid=false;
   }
   const cost=SUB.bomb.inkCost*(a.s3?.modifiers?.inkSaverSub??1);
@@ -57,8 +57,18 @@ export function installSubReady({Actor,WeaponRunner,SUB},profile){
   }
   let next=input;
   if(s?.pending){
-   if(s.age+EPS>=s.minimum){next={...input,sub:false,subReleased:true};this.s3SubReady=null;}
-   else next={...input,sub:true,subReleased:false};
+   if(s.age+EPS>=s.minimum){
+    // #1037: after the 5F/10F preparation owner admits release, S3 still
+    // has one independent fixed use-startup frame before the bomb exists.
+    if(s.useStartup===null){
+     s.useStartup=1/60;
+     next={...input,sub:true,subReleased:false};
+    }else{
+     s.useStartup=Math.max(0,s.useStartup-Math.max(0,dt));
+     if(s.useStartup<=EPS){next={...input,sub:false,subReleased:true};this.s3SubReady=null;}
+     else next={...input,sub:true,subReleased:false};
+    }
+   }else next={...input,sub:true,subReleased:false};
   }else if(s&&!input.sub&&!input.subReleased){cancel(this);s=null;}
   const result=update.call(this,dt,next);
   // A main shot can create a post-shot gate inside the nested update. Never
