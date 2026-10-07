@@ -9,6 +9,7 @@ import { capsuleEntry, sweptWorldHit } from './weapons-collision.mjs';
 import { installChargerFlight } from './weapons-charger-flight.mjs';
 export const EPSILON = 1e-10;
 const INSTALLED = Symbol.for('inkwave.weapons-fidelity.v1');
+const SPLATLING_NOMINAL_LIFETIME = 1.2;
 let api, completion, moves, slosherVolleySequence = 0;
 const slosherDropConfigs = new WeakMap();
 const splatlingSpeedViews = new WeakMap();
@@ -393,7 +394,7 @@ export function configureFidelityFlick(p, actor, weapon, index, angle, speed) {
   const b=weapon.ballistics, raw=rawWeapon(weapon);if(!b||!raw)return;
   // The attack argument owns this projectile's physics. Preserve it through
   // _push so a later actor/profile mutation cannot rewrite an already-fired volley.
-  p.s3Weapon=weapon; p.wid=weapon.id;
+  p.s3Weapon={...weapon}; p.wid=weapon.id;
   const vertical=!!actor.weaponRunner.s3FlickVertical;
   const group=raw[vertical?'VerticalSwingUnitGroupParam':'WideSwingUnitGroupParam'];
   const picked=flickUnitFor(weapon,vertical,index);
@@ -630,6 +631,20 @@ export function applyBlasterSpawnVelocity(p) {
   p.s3BlasterForwardApplied=true;
 }
 
+function simulateSplatlingReach(p,weapon,charge,initializeFlight) {
+  const speed=splatlingLaunchSpeed(weapon,Number.isFinite(charge)?charge:0);
+  if(!Number.isFinite(speed)||speed<=0)return 0;
+  p.pos.set(0,0,0);p.prev.copy(p.pos);p.start.copy(p.pos);
+  p.vel.set(0,0,speed);p.age=0;p.life=SPLATLING_NOMINAL_LIFETIME;
+  p.fidelityPrevAge=0;p.fidelityPhase=0;p.fidelityMode=null;
+  if(!initializeFlight(p,weapon))return 0;
+  let remaining=p.life;
+  while(remaining>EPSILON){const step=Math.min(1/60,remaining);advanceFidelityProjectile(p,step);remaining-=step;}
+  // The reticle range compares straight-line aim distance; use the nominal
+  // forward XZ extent and leave gravity/collision to the installed flight.
+  return Math.hypot(p.pos.x-p.start.x,p.pos.z-p.start.z);
+}
+
 export function installWeaponsFidelity(context,profile) {
   const {WeaponRunner,Projectiles,WEAPONS}=context;
   if(Object.hasOwn(Projectiles.prototype,INSTALLED))return;
@@ -669,14 +684,41 @@ export function installWeaponsFidelity(context,profile) {
       freeGravity:w.kind==='roller'?w.flickGravity:w.referenceGravity??defaults.freeGravity,
       freeVelocityY:defaults.brakeToFreeVelocityY}));
   }
+  function initializeSplatlingFlight(p,w){
+    const move=moves.get(w.id)||null;
+    p.fidelityMove=move;
+    if(!move||!Number.isFinite(w.straightTime)||!Number.isFinite(w.referenceGravity))return false;
+    p.straight=w.straightTime;p.grav=w.referenceGravity;p.drag=move.freeDrag*60;
+    return true;
+  }
   Object.defineProperty(Projectiles.prototype,INSTALLED,{value:true});
-  const fresh=Projectiles.prototype._new,push=Projectiles.prototype._push,ghost=Projectiles.prototype.ghostProjectile,clear=Projectiles.prototype.clear;
+  Projectiles.prototype.splatlingReach=function(weapon,charge){
+    const THREE=context.THREE;
+    const p=this._s3SplatlingReachProjectile||(this._s3SplatlingReachProjectile={
+      pos:new THREE.Vector3(),prev:new THREE.Vector3(),start:new THREE.Vector3(),vel:new THREE.Vector3()
+    });
+    const speed=splatlingLaunchSpeed(weapon,Number.isFinite(charge)?charge:0);
+    // Installed movement records are immutable. These are the remaining inputs
+    // to the nominal flight; steady charge must not replay 72 frames per HUD tick.
+    if(p.reachWeaponId===weapon.id&&p.reachSpeed===speed&&p.reachStraight===weapon.straightTime&&
+       p.reachGravity===weapon.referenceGravity&&p.reachValue!==undefined)return p.reachValue;
+    const reach=simulateSplatlingReach(p,weapon,charge,initializeSplatlingFlight);
+    p.reachWeaponId=weapon.id;p.reachSpeed=speed;p.reachStraight=weapon.straightTime;
+    p.reachGravity=weapon.referenceGravity;p.reachValue=reach;
+    return reach;
+  };
+  const fresh=Projectiles.prototype._new,push=Projectiles.prototype._push,step=Projectiles.prototype._step,ghost=Projectiles.prototype.ghostProjectile,clear=Projectiles.prototype.clear;
   Projectiles.prototype.clear=function(...args){const result=clear.apply(this,args);this._fidelityCollision=null;this._fidelitySloshContext=null;return result;};
   Projectiles.prototype._new=function(...args){
     // Clear the outgoing kit before native _new erases wid and the generic
     // wrapper erases its descriptor, while authority is still identifiable.
     const recycled=this.pool[this.pool.length-1];if(recycled)kitTrizookaClearPooled(recycled);
-    const p=fresh.apply(this,args);kitTrizookaClearPooled(p);p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityFriendThrough=null;p.fidelityRollerUnit=null;p.fidelityRollerUnitIndex=null;p.fidelitySloshUnit=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;p.fidelitySectorYaw=null;p.s3ShooterForwardApplied=false;p.s3BlasterForwardApplied=false;return p;
+    const p=fresh.apply(this,args);kitTrizookaClearPooled(p);
+    p._s3SloshBirthPending=false;p._s3SloshBirthOwner=null;p._s3SloshBirthEpoch=undefined;
+    p._s3SloshBirthWeaponId=null;p._s3SloshBirthRemote=undefined;p._s3SloshBirthNid=undefined;
+    p._s3SloshBirthPeer=undefined;p._s3SloshBirthWasInMatch=false;p._s3SloshBirthDelay=0;
+    p._s3SloshYaw=0;p._s3SloshPitch=0;p._s3SloshBirthGhost=false;
+    p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityFriendThrough=null;p.fidelityRollerUnit=null;p.fidelityRollerUnitIndex=null;p.fidelitySloshUnit=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;p.fidelitySectorYaw=null;p.s3ShooterForwardApplied=false;p.s3BlasterForwardApplied=false;return p;
   };
   function initialize(p,w){
     // Kit descriptors own their identity, flight and collision. They use wid,
@@ -732,6 +774,8 @@ export function installWeaponsFidelity(context,profile) {
       p.fidelityMove={hz:60,endSpeed:c.GoStraightStateEndMaxSpeed*60,brakeDrag:c.BrakeAirResist,brakeGravity:c.BrakeGravity*3600,
         freeDrag:c.FreeAirResist,freeGravity:c.FreeGravity*3600,freeVelocityY:c.BrakeToFreeVelocityY*60,freeFrame:c.BrakeToFreeStateFrame};
       p.grav=c.FreeGravity*3600;p.drag=c.FreeAirResist*60;
+    }else if(w.kind==='splatling'){
+      initializeSplatlingFlight(p,w);
     }else if(p.fidelityMove){p.straight=w.straightTime;p.grav=w.referenceGravity;p.drag=p.fidelityMove.freeDrag*60;}
   }
   Projectiles.prototype._push=function(p){
@@ -748,6 +792,10 @@ export function installWeaponsFidelity(context,profile) {
         (u.RandomRotateYOffOrderNum?.includes(index)?0:(Math.random()*2-1)*radians(u.RandomRotateYDegree||0));
       const pitch=Math.atan2(aim.y,Math.hypot(aim.x,aim.z)),horizontal=Math.cos(pitch)*speed;
       p.vel.set(Math.sin(yaw)*horizontal,Math.sin(pitch)*speed+horizontal*(u.AddSpawnSpeedYRateByXZ||0),Math.cos(yaw)*horizontal);
+      p._s3SloshBirthPending=true;p._s3SloshBirthOwner=p.owner;p._s3SloshBirthEpoch=p.owner?._s3SlosherBirthEpoch;
+      p._s3SloshBirthWeaponId=p.wid;p._s3SloshBirthRemote=p.owner?.remote;p._s3SloshBirthNid=p.owner?.nid;
+      p._s3SloshBirthPeer=p.owner?.owner;p._s3SloshBirthWasInMatch=Array.isArray(context.G?.actors)&&context.G.actors.includes(p.owner);
+      p._s3SloshBirthDelay=p.delay;p._s3SloshYaw=yaw;p._s3SloshPitch=pitch;
       p.damage=u.DamageParam.ValueMax/10;p.head=!!u.HitEffectBigOrderNum?.includes(index);
       p.s3DamageGroup=active.group;p.s3DamageGroupId=active.groupId;
     }
@@ -759,12 +807,34 @@ export function installWeaponsFidelity(context,profile) {
     if(group)p.s3DamageGroup=group;
     return result;
   };
+  Projectiles.prototype._step=function(p,dt){
+    if(p._s3SloshBirthPending){
+      const owner=p._s3SloshBirthOwner,actors=context.G?.actors;
+      const current=owner&&p.owner===owner&&owner.alive!==false&&!(Number.isFinite(owner.hp)&&owner.hp<=0)&&
+        owner._s3SlosherBirthEpoch===p._s3SloshBirthEpoch&&!owner.specialActive&&owner.weapon?.id===p._s3SloshBirthWeaponId&&
+        owner.remote===p._s3SloshBirthRemote&&owner.nid===p._s3SloshBirthNid&&owner.owner===p._s3SloshBirthPeer&&
+        (!p._s3SloshBirthWasInMatch||actors?.includes(owner));
+      if(!current){p._s3SloshBirthPending=false;return true;}
+      const u=p.fidelitySloshUnit,index=p.fidelitySloshIndex;
+      if(!u){p._s3SloshBirthPending=false;return true;}
+      this._muzzle(owner,p.pos);p.prev.copy(p.pos);p.start.copy(p.pos);
+      const speed=((owner.grounded?u.SpawnSpeedGround:u.SpawnSpeedAir)+index*(u.AfterOffsetSpawnSpeed||0))*60;
+      const horizontal=Math.cos(p._s3SloshPitch)*speed;
+      p.vel.set(Math.sin(p._s3SloshYaw)*horizontal,
+        Math.sin(p._s3SloshPitch)*speed+horizontal*(u.AddSpawnSpeedYRateByXZ||0),
+        Math.cos(p._s3SloshYaw)*horizontal);
+      p.delay=p._s3SloshBirthDelay;
+      try{if(!p.ghost)context.G?.netm?.recProj?.(p);}
+      finally{p.delay=0;p._s3SloshBirthPending=false;}
+    }
+    return step.call(this,p,dt);
+  };
   Projectiles.prototype.ghostProjectile=function(actor,event){
     if(!validFidelityRollerUnitPacket(event))return null;
     const before=this.list.length;const result=ghost.call(this,actor,event);
     if(this.list.length>before){const p=this.list.at(-1);const special=api.SPECIALS&&Object.hasOwn(api.SPECIALS,p.wid)?api.SPECIALS[p.wid]:null;
       if(!p.s3SpecialWeapon&&typeof special?.projectileDescriptor==='function'){p.s3SpecialWeapon=special.projectileDescriptor(p);p.s3Weapon=p.s3SpecialWeapon;}
-      const kitOffset=event.length===35?2:0;if((event.length===33||event.length===35)&&event[30+kitOffset]>=0){p.fidelityRollerUnitIndex=event[30+kitOffset];p.fidelityMode=event[27+kitOffset]===1?'vertical':'horizontal';}initialize(p,p.s3SpecialWeapon||WEAPONS[p.wid]||actor.weapon);}
+      const kitOffset=event.length===35?2:0;if((event.length===33||event.length===35)&&event[30+kitOffset]>=0){p.fidelityRollerUnitIndex=event[30+kitOffset];p.fidelityMode=event[27+kitOffset]===1?'vertical':'horizontal';}initialize(p,p.s3SpecialWeapon||WEAPONS[p.wid]||actor.weapon);if(p.ghost&&p.type==='slosh'&&p.s3Weapon?.kind==='slosher'){p._s3SloshBirthGhost=true;p.delay=0;p._s3SloshBirthPending=false;}}
     return result;
   };
   const slosh=Projectiles.prototype.fireSlosh;
@@ -776,6 +846,230 @@ export function installWeaponsFidelity(context,profile) {
     }
     finally{this._fidelitySloshContext=previous;}
   };
+  // The HUD writes ShotGuide offsets at 0.1 CSS-pixel precision. A tiny native
+  // idle-pose change can therefore reuse the prior *presentation* point only
+  // when a conservative projection bound proves that rounding cannot change.
+  // LOS reuse has a separate geometric certificate: the muzzle-to-body segment
+  // must stay clear inside an expanded OBB tube. All gameplay inputs remain exact.
+  const THREE=context.THREE;
+  const S3_GUIDE_POSE_RADIUS=.02;
+  const S3_GUIDE_FIELDS=Object.freeze([
+    'mode','actor','weapon','actorWeapon','character','getMuzzle','getAimMuzzle','aimReadyMethod','aimReady',
+    'weaponId','weaponKind','weaponShotGuideFrame','frame','shotGuide','unitOrder','bulletOrder','randomGuideBlocked',
+    'raw','unitGroup','unitArray','unit','move','weaponBallistics','ballisticStraight','ballisticBurst',
+    'projectileSpeed','weaponStraight','weaponGravity','weaponDrag','moveFreeGravity','moveFreeDrag',
+    'moveEndSpeed','moveBrakeDrag','moveBrakeGravity','moveFreeVelocityY','moveFreeFrame','moveHz',
+    'unitDelay','unitOffsetDelay','unitBulletNum','unitGroundSpeed','unitAirSpeed','unitOffsetSpeed','unitBaseYaw',
+    'unitRandomYaw','unitRandomOffOrder','unitAddYRate','unitMove','unitGoStraightFrame','unitEndSpeed',
+    'unitBrakeDrag','unitBrakeGravity','unitFreeDrag','unitFreeGravity','unitFreeVelocityY','unitFreeFrame',
+    'actorForm','grounded','climbing','dancing','specialActive','superJumpState','aimPitch',
+    'aimDirX','aimDirY','aimDirZ','aimPointX','aimPointY','aimPointZ','actorPosX','actorPosY','actorPosZ',
+    'runner','runnerCharge','runnerChargeT','runnerCharging','runnerStreaming','runnerFidelityCharge',
+    'runnerBlasterJump','runnerBlasterWindup',
+    'game','stage','gameLevel','physics','physicsLos','physicsRaycast','level','levelLayout','levelExtra',
+    'levelBlocks','levelFaces','levelHash','levelBlocksLength','levelFacesLength','levelHashLength','geometryGeneration',
+    'poseX','poseY','poseZ'
+  ]);
+  const S3_GUIDE_CORE_FIELDS=Object.freeze(S3_GUIDE_FIELDS.filter(k=>k!=='poseX'&&k!=='poseY'&&k!=='poseZ'));
+  function s3GuideCache(system){
+    return system._s3GuideCache||(system._s3GuideCache={
+      sample:{},key:{},point:new THREE.Vector3(),queryIds:[],valid:false,mode:null,clearRadius:0,
+      pose:{muzzle:new THREE.Vector3(),aimMuzzle:new THREE.Vector3(),base:new THREE.Vector3(),fallback:new THREE.Vector3(),
+        delta:new THREE.Vector3(),relative:new THREE.Vector3()},pointX:0,pointY:0,pointZ:0
+    });
+  }
+  function captureS3Guide(system,actor,w,mode,cache){
+    const ch=actor?.character,dir=actor?.aimDir,target=actor?.aimPoint,pose=cache.pose,s=cache.sample;
+    if(!actor||!w||!ch?.getMuzzle||!actor.pos||!dir||!target)return false;
+    ch.getMuzzle(pose.muzzle);
+    const ready=typeof ch.aimReady==='function'?ch.aimReady():1;
+    if(ready<.98&&typeof ch.getAimMuzzle==='function'&&ch.getAimMuzzle(pose.aimMuzzle,actor.aimPitch))
+      pose.muzzle.lerp(pose.aimMuzzle,1-ready);
+    pose.base.copy(actor.pos);pose.base.y+=actor.form==='squid' ? .4 : 1.05;
+    const raw=rawWeapon(w),guide=w.shotGuide,unit=mode==='slosher'?guide&&raw?.UnitGroupParam?.Unit?.[guide.unitOrderNum]:null;
+    const unitMove=unit?.MoveParam,move=moves.get(w.id)||null,runner=actor.weaponRunner;
+    const game=api.G,physics=game?.physics,level=physics?.level||game?.level||null;
+    s.mode=mode;s.actor=actor;s.weapon=w;s.actorWeapon=actor.weapon;s.character=ch;
+    s.getMuzzle=ch.getMuzzle;s.getAimMuzzle=ch.getAimMuzzle;s.aimReadyMethod=ch.aimReady;s.aimReady=ready;
+    s.weaponId=w.id;s.weaponKind=w.kind;s.weaponShotGuideFrame=w.shotGuideFrame;
+    s.frame=mode==='slosher'?guide?.frame:w.shotGuideFrame;s.shotGuide=guide;
+    s.unitOrder=guide?.unitOrderNum;s.bulletOrder=guide?.bulletOrderNumInUnit;
+    s.randomGuideBlocked=!!unit&&(unit.RandomRotateYDegree||0)!==0&&!unit.RandomRotateYOffOrderNum?.includes(guide.bulletOrderNumInUnit);
+    s.raw=raw;s.unitGroup=raw?.UnitGroupParam;s.unitArray=raw?.UnitGroupParam?.Unit;s.unit=unit;s.move=move;
+    s.weaponBallistics=w.ballistics;s.ballisticStraight=w.ballistics?.straightTime;s.ballisticBurst=w.ballistics?.burstTime;
+    s.projectileSpeed=w.projSpeed;s.weaponStraight=w.straightTime;s.weaponGravity=w.referenceGravity;s.weaponDrag=w.drag;
+    s.moveFreeGravity=move?.freeGravity;s.moveFreeDrag=move?.freeDrag;s.moveEndSpeed=move?.endSpeed;
+    s.moveBrakeDrag=move?.brakeDrag;s.moveBrakeGravity=move?.brakeGravity;s.moveFreeVelocityY=move?.freeVelocityY;
+    s.moveFreeFrame=move?.freeFrame;s.moveHz=move?.hz;
+    s.unitDelay=unit?.UnitDelayFrame;s.unitOffsetDelay=unit?.AfterOffsetDelayFrame;s.unitBulletNum=unit?.BulletNum;
+    s.unitGroundSpeed=unit?.SpawnSpeedGround;s.unitAirSpeed=unit?.SpawnSpeedAir;s.unitOffsetSpeed=unit?.AfterOffsetSpawnSpeed;
+    s.unitBaseYaw=unit?.BaseRotateYDegree;s.unitRandomYaw=unit?.RandomRotateYDegree;
+    s.unitRandomOffOrder=unit?.RandomRotateYOffOrderNum;s.unitAddYRate=unit?.AddSpawnSpeedYRateByXZ;s.unitMove=unitMove;
+    s.unitGoStraightFrame=unitMove?.GoStraightToBrakeStateFrame;s.unitEndSpeed=unitMove?.GoStraightStateEndMaxSpeed;
+    s.unitBrakeDrag=unitMove?.BrakeAirResist;s.unitBrakeGravity=unitMove?.BrakeGravity;
+    s.unitFreeDrag=unitMove?.FreeAirResist;s.unitFreeGravity=unitMove?.FreeGravity;
+    s.unitFreeVelocityY=unitMove?.BrakeToFreeVelocityY;s.unitFreeFrame=unitMove?.BrakeToFreeStateFrame;
+    s.actorForm=actor.form;s.grounded=actor.grounded;s.climbing=actor.climbing;s.dancing=actor.dance;
+    s.specialActive=actor.specialActive;s.superJumpState=actor.superJumpState;s.aimPitch=actor.aimPitch;
+    s.aimDirX=dir.x;s.aimDirY=dir.y;s.aimDirZ=dir.z;s.aimPointX=target.x;s.aimPointY=target.y;s.aimPointZ=target.z;
+    s.actorPosX=actor.pos.x;s.actorPosY=actor.pos.y;s.actorPosZ=actor.pos.z;
+    s.runner=runner;s.runnerCharge=runner?.charge;s.runnerChargeT=runner?.chargeT;s.runnerCharging=runner?.charging;
+    s.runnerStreaming=runner?.streaming;s.runnerFidelityCharge=runner?.fidelitySplatlingCharge;
+    s.runnerBlasterJump=runner?.s3BlasterJumpT;s.runnerBlasterWindup=runner?.s3BlasterWindup;
+    s.game=game;s.stage=game?.stage??game?.map??null;s.gameLevel=game?.level;s.physics=physics;
+    s.physicsLos=physics?.los;s.physicsRaycast=physics?.raycast;s.level=level;s.levelLayout=level?.layout;s.levelExtra=level?.extra;
+    s.levelBlocks=level?.blocks;s.levelFaces=level?.faces;s.levelHash=level?.hash;
+    s.levelBlocksLength=level?.blocks?.length;s.levelFacesLength=level?.faces?.length;s.levelHashLength=level?.hash?.length;
+    s.geometryGeneration=level?.geometryGeneration??level?._geometryGeneration??level?._generation;
+    s.poseX=pose.muzzle.x;s.poseY=pose.muzzle.y;s.poseZ=pose.muzzle.z;
+    return true;
+  }
+  function sameS3GuideFields(a,b,fields){for(const k of fields)if(a[k]!==b[k])return false;return true;}
+  function copyS3GuideFields(out,input){for(const k of S3_GUIDE_FIELDS)out[k]=input[k];}
+  function s3GuidePoseError(cache,mode){
+    const a=cache.key,b=cache.sample,dx=b.poseX-a.poseX,dy=b.poseY-a.poseY,dz=b.poseZ-a.poseZ;
+    const moved=Math.hypot(dx,dy,dz);
+    if(!Number.isFinite(moved))return Infinity;
+    if(mode==='slosher')return moved; // fixed aimDir and movement law: the whole prediction translates with its muzzle.
+    const x=a.aimPointX-a.poseX,y=a.aimPointY-a.poseY,z=a.aimPointZ-a.poseZ;
+    const nx=a.aimPointX-b.poseX,ny=a.aimPointY-b.poseY,nz=a.aimPointZ-b.poseZ;
+    const d0=Math.hypot(x,y,z),d1=Math.hypot(nx,ny,nz);
+    const dot0=x*a.aimDirX+y*a.aimDirY+z*a.aimDirZ,dot1=nx*a.aimDirX+ny*a.aimDirY+nz*a.aimDirZ;
+    const fallback0=d0<2||dot0<0,fallback1=d1<2||dot1<0;
+    if(fallback0!==fallback1)return Infinity;
+    if(fallback0)return moved;
+    const dmin=Math.min(d0,d1),speed=Math.abs(a.projectileSpeed),duration=Math.max(0,a.frame/60);
+    if(!(dmin>0)&&moved>0||!Number.isFinite(speed)||!Number.isFinite(duration))return Infinity;
+    const directionDelta=Math.min(2,2*moved/dmin);
+    // Gravity and drag are position-independent; the installed drag law never amplifies a direction delta.
+    return moved+speed*duration*directionDelta;
+  }
+  function pixelRoundingClearance(px){const v=px*10;return Math.abs((v-Math.floor(v))-.5)/10;}
+  function projectedS3GuideErrorFits(point,camera,width,height,error){
+    const v=camera?.matrixWorldInverse?.elements,p=camera?.projectionMatrix?.elements;
+    if(!v||!p||!(width>0)||!(height>0)||!Number.isFinite(error))return false;
+    const x=point.x,y=point.y,z=point.z;
+    const ex=v[0]*x+v[4]*y+v[8]*z+v[12],ey=v[1]*x+v[5]*y+v[9]*z+v[13],ez=v[2]*x+v[6]*y+v[10]*z+v[14];
+    const cx=p[0]*ex+p[4]*ey+p[8]*ez+p[12],cy=p[1]*ex+p[5]*ey+p[9]*ez+p[13];
+    const cz=p[2]*ex+p[6]*ey+p[10]*ez+p[14],cw=p[3]*ex+p[7]*ey+p[11]*ez+p[15];
+    const qx0=p[0]*v[0]+p[4]*v[1]+p[8]*v[2],qx1=p[0]*v[4]+p[4]*v[5]+p[8]*v[6],qx2=p[0]*v[8]+p[4]*v[9]+p[8]*v[10];
+    const qy0=p[1]*v[0]+p[5]*v[1]+p[9]*v[2],qy1=p[1]*v[4]+p[5]*v[5]+p[9]*v[6],qy2=p[1]*v[8]+p[5]*v[9]+p[9]*v[10];
+    const qz0=p[2]*v[0]+p[6]*v[1]+p[10]*v[2],qz1=p[2]*v[4]+p[6]*v[5]+p[10]*v[6],qz2=p[2]*v[8]+p[6]*v[9]+p[10]*v[10];
+    const qw0=p[3]*v[0]+p[7]*v[1]+p[11]*v[2],qw1=p[3]*v[4]+p[7]*v[5]+p[11]*v[6],qw2=p[3]*v[8]+p[7]*v[9]+p[11]*v[10];
+    const dw=error*Math.hypot(qw0,qw1,qw2),absW=Math.abs(cw),den=absW-dw;
+    if(!(cw>0)||!(den>1e-9))return false;
+    const dx=error*Math.hypot(qx0,qx1,qx2),dy=error*Math.hypot(qy0,qy1,qy2),dz=error*Math.hypot(qz0,qz1,qz2);
+    const bx=(dx*absW+Math.abs(cx)*dw)/(absW*den),by=(dy*absW+Math.abs(cy)*dw)/(absW*den),bz=(dz*absW+Math.abs(cz)*dw)/(absW*den);
+    const ndcZ=cz/cw,px=(cx/cw)*width*.5,py=-(cy/cw)*height*.5;
+    if(!Number.isFinite(bx)||!Number.isFinite(by)||!Number.isFinite(bz)||!(ndcZ+bz<1))return false;
+    return bx*width*.5<pixelRoundingClearance(px)&&by*height*.5<pixelRoundingClearance(py);
+  }
+  function segmentTouchesExpandedBlock(start,end,block,r,pose){
+    const center=block?.center,half=block?.half,axes=block?.axes;
+    if(!center||!half||!axes||axes.length<3)return true;
+    pose.delta.copy(end).sub(start);pose.relative.copy(start).sub(center);
+    let enter=0,leave=1;
+    for(let k=0;k<3;k++){
+      const axis=axes[k],h=(k===0?half.x:k===1?half.y:half.z)+r;
+      const o=pose.relative.dot(axis),d=pose.delta.dot(axis);
+      if(!Number.isFinite(o)||!Number.isFinite(d)||!Number.isFinite(h))return true;
+      if(Math.abs(d)<1e-9){if(o < -h||o > h)return false;continue;}
+      let lo=(-h-o)/d,hi=(h-o)/d;if(lo>hi){const t=lo;lo=hi;hi=t;}
+      enter=Math.max(enter,lo);leave=Math.min(leave,hi);if(enter>leave)return false;
+    }
+    return leave>=0&&enter<=1;
+  }
+  function certifyS3GuideMuzzleRadius(cache,actor,usedMuzzle){
+    const pose=cache.pose,raw=pose.muzzle,r=S3_GUIDE_POSE_RADIUS;
+    if(!Number.isFinite(raw.x)||!Number.isFinite(raw.y)||!Number.isFinite(raw.z)||
+       usedMuzzle.x!==raw.x||usedMuzzle.y!==raw.y||usedMuzzle.z!==raw.z)return 0;
+    const d2=raw.distanceToSquared(pose.base),len=Math.sqrt(d2);
+    if(!(d2<=2.5)||!(len>r+1e-4)||d2+2*len*r+r*r>=2.5)return 0;
+    pose.fallback.copy(pose.base).addScaledVector(actor.aimDir,.3);
+    if(raw.x===pose.fallback.x&&raw.y===pose.fallback.y&&raw.z===pose.fallback.z)return 0;
+    const level=api.G?.physics?.level,blocks=level?.blocks;
+    if(!level?.queryBlocks||!blocks)return 0;
+    const ids=cache.queryIds;
+    const found=level.queryBlocks(Math.min(pose.base.x,raw.x)-r,Math.min(pose.base.z,raw.z)-r,
+      Math.max(pose.base.x,raw.x)+r,Math.max(pose.base.z,raw.z)+r,ids)||ids;
+    for(let i=0;i<found.length;i++){
+      const block=blocks[found[i]];if(!block)return 0;
+      if(!block.solid||block.grate)continue;
+      if(segmentTouchesExpandedBlock(pose.base,raw,block,r,pose))return 0;
+    }
+    // Level builds immutable block/hash/face geometry in its constructor. The
+    // Level + those references/counts above act as the geometry generation.
+    return r;
+  }
+  function cachedS3Guide(system,actor,w,mode,camera,width,height){
+    const cache=s3GuideCache(system),guide=w?.shotGuide,raw=rawWeapon(w);
+    const unit=mode==='slosher'&&guide&&raw?.UnitGroupParam?.Unit?.[guide.unitOrderNum];
+    const index=guide?.bulletOrderNumInUnit;
+    if(mode==='slosher'){
+      if(w?.kind!=='slosher'||!unit||!Number.isInteger(index)||index<0||index>=(unit.BulletNum??1)||!Number.isFinite(guide.frame)||
+         ((unit.RandomRotateYDegree||0)!==0&&!unit.RandomRotateYOffOrderNum?.includes(index))){cache.valid=false;return null;}
+    }else if(mode!=='blaster'||w?.kind!=='blaster'||!Number.isFinite(w.shotGuideFrame)){cache.valid=false;return null;}
+    if(!captureS3Guide(system,actor,w,mode,cache)){cache.valid=false;return mode==='slosher'?computeS3SlosherGuide(system,actor,w):computeS3BlasterGuide(system,actor,w);}
+    if(cache.valid&&cache.mode===mode&&cache.point.x===cache.pointX&&cache.point.y===cache.pointY&&cache.point.z===cache.pointZ){
+      if(sameS3GuideFields(cache.key,cache.sample,S3_GUIDE_FIELDS))return cache.point;
+      if(sameS3GuideFields(cache.key,cache.sample,S3_GUIDE_CORE_FIELDS)){
+        const moved=Math.hypot(cache.sample.poseX-cache.key.poseX,cache.sample.poseY-cache.key.poseY,cache.sample.poseZ-cache.key.poseZ);
+        if(moved<=cache.clearRadius){
+          const error=s3GuidePoseError(cache,mode);
+          if(projectedS3GuideErrorFits(cache.point,camera,width,height,error))return cache.point;
+        }
+      }
+    }
+    cache.valid=false;
+    const point=mode==='slosher'?computeS3SlosherGuide(system,actor,w):computeS3BlasterGuide(system,actor,w);
+    if(!point)return null;
+    cache.point.copy(point);cache.pointX=cache.point.x;cache.pointY=cache.point.y;cache.pointZ=cache.point.z;
+    copyS3GuideFields(cache.key,cache.sample);cache.mode=mode;cache.valid=true;cache.clearRadius=0;
+    const projectile=mode==='slosher'?system._s3SlosherGuideProjectile:system._s3BlasterGuideProjectile;
+    if(projectile?.start)cache.clearRadius=certifyS3GuideMuzzleRadius(cache,actor,projectile.start);
+    return cache.point;
+  }
+  function computeS3SlosherGuide(system,actor,w){
+    const guide=w?.shotGuide,raw=rawWeapon(w),unit=guide&&raw?.UnitGroupParam?.Unit?.[guide.unitOrderNum];
+    const index=guide?.bulletOrderNumInUnit;
+    if(!unit||!Number.isInteger(index)||index<0||index>=(unit.BulletNum??1)||!Number.isFinite(guide.frame))return null;
+    if((unit.RandomRotateYDegree||0)!==0&&!unit.RandomRotateYOffOrderNum?.includes(index))return null;
+    const p=system._s3SlosherGuideProjectile||(system._s3SlosherGuideProjectile={
+      pos:new THREE.Vector3(),prev:new THREE.Vector3(),start:new THREE.Vector3(),vel:new THREE.Vector3()
+    });
+    system._muzzle(actor,p.pos);p.prev.copy(p.pos);p.start.copy(p.pos);
+    p.owner=actor;p.type='slosh';p.wid=w.id;p.s3Weapon=w;p.age=0;p.life=2.4;p.straight=0;
+    p.delay=((unit.UnitDelayFrame||0)+index*(unit.AfterOffsetDelayFrame||0))/60;
+    p.fidelitySloshUnit=unit;p.fidelitySloshIndex=index;p.fidelityPhase=0;p.fidelityMove=null;
+    p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;
+    const speed=((actor.grounded?unit.SpawnSpeedGround:unit.SpawnSpeedAir)+index*(unit.AfterOffsetSpawnSpeed||0))*60;
+    const aim=(system._s3SlosherGuideAim||(system._s3SlosherGuideAim=new THREE.Vector3())).copy(actor.aimDir).normalize();
+    const yaw=Math.atan2(aim.x,aim.z)+radians(unit.BaseRotateYDegree||0);
+    const pitch=Math.atan2(aim.y,Math.hypot(aim.x,aim.z)),horizontal=Math.cos(pitch)*speed;
+    p.vel.set(Math.sin(yaw)*horizontal,Math.sin(pitch)*speed+horizontal*(unit.AddSpawnSpeedYRateByXZ||0),Math.cos(yaw)*horizontal);
+    initialize(p,w);
+    let remaining=Math.max(0,guide.frame/60-p.delay);
+    while(remaining>EPSILON){const step=Math.min(1/60,remaining);advanceFidelityProjectile(p,step);remaining-=step;}
+    return p.pos;
+  }
+  function computeS3BlasterGuide(system,actor,w){
+    const frame=w?.shotGuideFrame;
+    if(w?.kind!=='blaster'||!Number.isFinite(frame))return null;
+    const p=system._s3BlasterGuideProjectile||(system._s3BlasterGuideProjectile={
+      pos:new THREE.Vector3(),prev:new THREE.Vector3(),start:new THREE.Vector3(),vel:new THREE.Vector3()
+    });
+    const dir=system._s3BlasterGuideDir||(system._s3BlasterGuideDir=new THREE.Vector3());
+    system._muzzle(actor,p.pos);p.prev.copy(p.pos);p.start.copy(p.pos);
+    system._aimFrom(actor,p.pos,dir);
+    p.owner=actor;p.type='blast';p.wid=w.id;p.s3Weapon=w;p.age=0;p.life=2;p.straight=0;
+    p.delay=0;p.ghost=false;p.fidelityPhase=0;p.fidelityMove=null;p.fidelityPrevAge=0;
+    p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;
+    p.vel.copy(dir).multiplyScalar(w.projSpeed);
+    initialize(p,w);
+    let remaining=Math.max(0,frame/60);
+    while(remaining>EPSILON){const step=Math.min(1/60,remaining);advanceFidelityProjectile(p,step);remaining-=step;}
+    return p.pos;
+  }
   Projectiles.prototype.s3SlosherGuide=function(actor,w){
     const guide=w?.shotGuide,raw=rawWeapon(w);
     const unit=guide&&raw?.UnitGroupParam?.Unit?.[guide.unitOrderNum];
@@ -790,7 +1084,7 @@ export function installWeaponsFidelity(context,profile) {
       pos:new THREE.Vector3(),prev:new THREE.Vector3(),start:new THREE.Vector3(),vel:new THREE.Vector3()
     });
     this._muzzle(actor,p.pos);p.prev.copy(p.pos);p.start.copy(p.pos);
-    p.owner=actor;p.type='slosh';p.wid=w.id;p.s3Weapon=w;p.age=0;p.life=2.4;p.straight=0;
+    p.owner=actor;p.type='slosh';p.wid=w.id;p.s3Weapon={...w};p.age=0;p.life=2.4;p.straight=0;
     p.delay=((unit.UnitDelayFrame||0)+index*(unit.AfterOffsetDelayFrame||0))/60;
     p.fidelitySloshUnit=unit;p.fidelitySloshIndex=index;p.fidelityPhase=0;p.fidelityMove=null;
     p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;
@@ -845,7 +1139,7 @@ export function installWeaponsFidelity(context,profile) {
     const dir=this._s3BlasterGuideDir||(this._s3BlasterGuideDir=new THREE.Vector3());
     this._muzzle(actor,p.pos);p.prev.copy(p.pos);p.start.copy(p.pos);
     this._aimFrom(actor,p.pos,dir);
-    p.owner=actor;p.type='blast';p.wid=w.id;p.s3Weapon=w;p.age=0;p.life=2;p.straight=0;
+    p.owner=actor;p.type='blast';p.wid=w.id;p.s3Weapon={...w};p.age=0;p.life=2;p.straight=0;
     p.delay=0;p.ghost=false;p.fidelityPhase=0;p.fidelityMove=null;p.fidelityPrevAge=0;
     p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;
     p.vel.copy(dir).multiplyScalar(w.projSpeed);
@@ -853,6 +1147,53 @@ export function installWeaponsFidelity(context,profile) {
     let remaining=Math.max(0,frame/60);
     while(remaining>EPSILON){const step=Math.min(1/60,remaining);advanceFidelityProjectile(p,step);remaining-=step;}
     return p.pos;
+  };
+  Projectiles.prototype.s3SlosherGuide=function(actor,w,camera,width,height){
+    return cachedS3Guide(this,actor,w,'slosher',camera,width,height);
+  };
+  Projectiles.prototype.s3WeaponGuide=function(actor,w,camera,width,height){
+    if(w?.kind==='slosher')return this.s3SlosherGuide(actor,w,camera,width,height);
+    if(w?.kind!=='blaster'){if(this._s3GuideCache)this._s3GuideCache.valid=false;return null;}
+    return cachedS3Guide(this,actor,w,'blaster',camera,width,height);
+  };
+  // Issue #94: the Shooter-only weapon-side reticle previews the nominal
+  // (unspread) shot's first field contact. Spawn state comes from the same
+  // _muzzle/_aimFrom/_ballistic path fireShooter uses, integration from
+  // advanceFidelityProjectile, and the field query from the composed swept
+  // sweep with the sourced field collision radius, all bounded by the existing
+  // projectile lifetime — so the preview point is the real impact of the center
+  // shot, and geometry beyond the shot's flight never warns. Read-only: one
+  // cached scratch projectile, no RNG, no list/paint/audio/network mutation.
+  Projectiles.prototype.s3ShooterImpact=function(actor,w){
+    if(!actor||!w||w.kind!=='shooter'||!actor.aimPoint||!actor.aimDir||!actor.character||
+      typeof actor.character.getMuzzle!=='function'||!api.G?.physics||
+      typeof this._muzzle!=='function'||typeof this._aimFrom!=='function'||typeof this._ballistic!=='function')return null;
+    const THREE=context.THREE;
+    const p=this._s3ShooterImpact||(this._s3ShooterImpact={
+      pos:new THREE.Vector3(),prev:new THREE.Vector3(),start:new THREE.Vector3(),vel:new THREE.Vector3()});
+    const dir=this._s3ShooterImpactDir||(this._s3ShooterImpactDir=new THREE.Vector3());
+    this._muzzle(actor,p.pos);
+    this._aimFrom(actor,p.pos,dir);
+    // fireShooter pitches the nominal launch toward the aim point before spread.
+    this._ballistic(p.pos,dir,actor.aimPoint,w.projSpeed,w.straightTime,28,0.8,w.range);
+    p.owner=actor;p.team=actor.team;p.type='shot';p.ghost=false;p.delay=0;p.vol=null;
+    p.s3DamageGroup=null;p.fidelitySloshUnit=null;p.fidelityRollerUnit=null;p.fidelityMode=null;
+    p.fidelityWallDrop=null;p.fidelityImpactActor=null;p.fidelityImpactT=null;
+    p.age=0;p.fidelityPrevAge=0;p.life=1.2;p.straight=w.straightTime;p.grav=28;p.drag=0.8;
+    p.radius=w.impactRadius;p.size=0.15;p.seed=0;p.wid=null;p.head=false;p.dmgFar=undefined;
+    p.prev.copy(p.pos);p.start.copy(p.pos);
+    p.vel.copy(dir).multiplyScalar(w.projSpeed);
+    initialize(p,w);
+    const hit=this._s3ShooterImpactHit||(this._s3ShooterImpactHit=new api.Hit());
+    let guard=0;
+    while(p.age+EPSILON<p.life){
+      advanceFidelityProjectile(p,1/60);
+      sweptWorldHit(api.G.physics,p.prev,p.pos,fieldRadiusAt(p,p.fidelityPrevAge),fieldRadiusAt(p,p.age),hit,true);
+      if(hit.hit)return hit;
+      if(p.pos.y<api.PLAYER.waterY-1.8)return null;
+      if(++guard>144)return null;
+    }
+    return null;
   };
   const reset=WeaponRunner.prototype.reset,auto=WeaponRunner.prototype._auto,spin=WeaponRunner.prototype._splatling;
   WeaponRunner.prototype.reset=function(...args){const result=reset.apply(this,args);this.fidelitySplatlingCharge=null;return result;};
