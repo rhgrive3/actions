@@ -19,7 +19,7 @@ export const productionComposition = (rel, source) => adaptRange(rel,
       adaptReliability(rel,
         adaptTouchLayout(rel, adaptSource(rel, source))))));
 
-export async function fixture({ profileTransform, composeProductionAdapters = false } = {}) {
+export async function fixture({ profileTransform, composeProductionAdapters = false, jumpSpreadControl = false } = {}) {
   const math = Object.create(Math); math.random = Math.random;
   const context = vm.createContext({ console, performance, Math: math });
   const modules = new Map();
@@ -38,8 +38,16 @@ export async function fixture({ profileTransform, composeProductionAdapters = fa
     const raw = fs.readFileSync(file, 'utf8');
     const isNative = file.startsWith(UPSTREAM + path.sep);
     const runtimeRel = file.startsWith(path.join(ROOT, 'patches') + path.sep) ? path.relative(ROOT, file) : relative;
+    // A/B control disables only the new subject hook; all production adapters
+    // and native charge/movement owners stay active. Never used by the build.
+    let prepared = raw;
+    if (jumpSpreadControl && runtimeRel === 'patches/splatoon3/runtime/weapons.mjs') {
+      const hook = '  installSplatlingJumpSpread(api);';
+      if (raw.split(hook).length !== 2) throw new Error('Expected one jump-spread subject hook');
+      prepared = raw.replace(hook, '  // Jump-spread subject disabled for native A/B control.');
+    }
     const source = !SITE && composeProductionAdapters
-      ? productionComposition(runtimeRel, raw)
+      ? productionComposition(runtimeRel, prepared)
       : !SITE && isNative ? adaptSource(relative, raw) : raw;
     const mod = new vm.SourceTextModule(source, { context, identifier: file }); modules.set(file, mod); return mod;
   }

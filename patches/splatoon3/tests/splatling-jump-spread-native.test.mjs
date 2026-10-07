@@ -22,8 +22,8 @@ const expectedHorizontal = runner => {
   return (w.spreadAir + (w.spreadGround - w.spreadAir) * recovery) * bloomScale(runner);
 };
 
-async function nativeFloorFixture() {
-  const f = await fixture({ composeProductionAdapters: true });
+async function nativeFloorFixture({ jumpSpreadControl = false } = {}) {
+  const f = await fixture({ composeProductionAdapters: true, jumpSpreadControl });
   const { THREE, G } = f;
   const floor = {
     id: 0, solid: true, center: new THREE.Vector3(0, -0.1, 0), half: new THREE.Vector3(100, 0.1, 100),
@@ -50,6 +50,17 @@ async function nativeFloorFixture() {
 }
 
 test('production six-adapter native jump age holds 25F, recovers by 70F, and never snaps on either landing at 30/60/120Hz', async () => {
+  // Current main slows charging during airborne frames. Compare against
+  // the actual native owner with only this new spread hook disabled.
+  const control = await nativeFloorFixture({ jumpSpreadControl: true });
+  const nativeCharge = [];
+  control.a.intent.fire = true;
+  for (let frame = 0; frame < 120; frame++) {
+    control.a.intent.jump = frame === 0 || frame === 45;
+    control.tick(control.a);
+    nativeCharge.push([control.a.grounded, control.a.weaponRunner.charge, control.a.ink, control.G.projectiles.list.length]);
+  }
+  assert.ok(nativeCharge.at(-1)[1] > 0 && nativeCharge.at(-1)[1] < 1, 'actual airborne charge remains partial after these two jumps');
   const runs = [];
   for (const hz of [30, 60, 120]) {
     const f = await nativeFloorFixture(), { a } = f, clock = new FixedClock();
@@ -60,6 +71,8 @@ test('production six-adapter native jump age holds 25F, recovers by 70F, and nev
       a.intent.jump = frame === 0 || frame === 45;
       f.tick(a);
       const age = a.s3SplatlingJumpAgeFrames;
+      assert.deepEqual([a.grounded, a.weaponRunner.charge, a.ink, f.G.projectiles.list.length], nativeCharge[frame],
+        'jump-spread presentation preserves every native charge, ink, movement and emission frame');
       trace.push([a.grounded, age, +a.weaponRunner.spread.toFixed(9), +a.weaponRunner.charge.toFixed(9), +a.ink.toFixed(9)]);
       if (!wasGrounded && a.grounded) landings.push({ frame, age, spread: a.weaponRunner.spread });
       if (frame === 0 || frame === 45) {
@@ -86,7 +99,7 @@ test('production six-adapter native jump age holds 25F, recovers by 70F, and nev
     }
     assert.equal(a.ink, 100, 'held charge does not pay ink before its existing release');
     assert.equal(f.G.projectiles.list.length, 0, 'held charge does not change firing cadence');
-    assert.equal(a.weaponRunner.charge, 1, 'charge reaches and remains at its existing full-charge endpoint');
+    assert.equal(a.weaponRunner.charge, nativeCharge.at(-1)[1], 'the native airborne charge endpoint is unchanged');
     runs.push(trace);
   }
   assert.deepEqual(runs[0], runs[1]);
