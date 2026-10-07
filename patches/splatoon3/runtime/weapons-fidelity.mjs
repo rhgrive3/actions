@@ -218,6 +218,8 @@ export function fidelityPlayerCollisionRadius(p) { return radiusAt(p.fidelityPla
 function fieldRadiusAt(p,age) { return radiusAt(p.fidelityFieldCollision,age,p.fieldRadius||0); }
 function setCollision(p,c,offset=0) {
   p.fidelityPlayerCollision=collisionRecord(c,'Player',offset);
+  // Teammate pass-through window from birth (FriendThroughFrameForPlayer); only ALLY_BLOCKING families consume it.
+  p.fidelityPlayerCollision.friendThrough=Number.isFinite(c.FriendThroughFrameForPlayer)?c.FriendThroughFrameForPlayer/60:null;
   p.fidelityFieldCollision=collisionRecord(c,'Field',offset);
   // Existing packet size carries initial radius; layout is unchanged.
   p.size=p.fidelityPlayerCollision.initRadius;
@@ -285,6 +287,10 @@ export function fidelityBossHit(system,p) {
 // The original loop selected actor-array order and tested the wall afterwards.
 // One reusable scratch record avoids per-projectile sorting/allocation and
 // also avoids a second terrain query when the segment reaches the world.
+// Families whose live teammates are body-obstructions once their sourced friend-through window has elapsed
+// (Splat Dualies: 0F in both collision profiles). Other families keep their existing ally transparency until their
+// own records are implemented (Shooter #656, Slosher 2F #717, Roller flick 3F #801, Blaster's 1000F pass-through).
+const ALLY_BLOCKING=new Set(['dualies']);
 export function fidelityProjectileTargets(system,p) {
   const s=scratch(system),{G,PLAYER}=api;
   s.worldReady=s.bossReady=false;s.boss=null;s.targets.length=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;
@@ -295,19 +301,29 @@ export function fidelityProjectileTargets(system,p) {
   // Ghosts share visual collision chronology, but never damage/paint ownership.
   const r0=radiusAt(p.fidelityPlayerCollision,p.fidelityPrevAge??p.age,p.size);
   const r1=fidelityPlayerCollisionRadius(p),radius=PLAYER.radius+Math.max(r0,r1);
+  const friendThrough=ALLY_BLOCKING.has(p.s3Weapon?.kind)?p.fidelityPlayerCollision?.friendThrough:null;
+  const prevAge=p.fidelityPrevAge??p.age;
   let nearest=null,best=Infinity;
   for(const actor of G.actors){
-    if(actor.team===p.team||!actor.alive)continue;
+    const ally=actor.team===p.team;
+    // An ally can only obstruct (never the shooter, never a submerged squid) and takes no damage.
+    if(!actor.alive||ally&&(friendThrough==null||actor===p.owner||actor.submerged))continue;
     if(actor.pos.x<Math.min(p.prev.x,p.pos.x)-radius||actor.pos.x>Math.max(p.prev.x,p.pos.x)+radius||
        actor.pos.z<Math.min(p.prev.z,p.pos.z)-radius||actor.pos.z>Math.max(p.prev.z,p.pos.z)+radius)continue;
     s.base.set(actor.pos.x,actor.pos.y+(actor.smoothY||0),actor.pos.z);
     const t=capsuleEntry(p.prev,p.pos,s.base,PLAYER.radius,actor.form==='squid'?PLAYER.squidHeight:PLAYER.height,r0,r1);
+    // Teammate eligibility is judged at the candidate contact age, so a nonzero window stays frame-correct.
+    if(ally&&t!==null&&(prevAge+(p.age-prevAge)*t)+EPSILON<friendThrough)continue;
     if(t!==null&&(t<best-EPSILON||Math.abs(t-best)<EPSILON&&String(actor.nid??actor.name)<String(nearest?.nid??nearest?.name))){best=t;nearest=actor;}
   }
   if(nearest){
     const length=p.prev.distanceTo(p.pos),world=fidelityWorldHit(system,p),boss=fidelityBossHit(system,p);
     if((!world.hit||best*length<world.dist-EPSILON)&&(!boss||best*length<boss.dist-EPSILON)){
-      s.targets.push(nearest);p.fidelityImpactActor=nearest;p.fidelityImpactT=best;
+      if(nearest.team===p.team){
+        // Body obstruction: stop at the teammate, no damage/credit/hit effect. Spending the lifetime lets the native
+        // step retire the round after its (cached) world/boss queries, which already ran no earlier than this contact.
+        p.pos.lerpVectors(p.prev,p.pos,best);p.age=Math.max(p.age,p.life);
+      }else{s.targets.push(nearest);p.fidelityImpactActor=nearest;p.fidelityImpactT=best;}
     }
   }
   return s.targets;
