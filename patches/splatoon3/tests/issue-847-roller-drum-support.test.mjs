@@ -18,7 +18,7 @@ import { rollerDrumSupport, rollerStickActive } from '../runtime/roller.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const SRC = path.join(ROOT, 'inkwave-public');
-const MAIN_BASE = '7ab20b44bbc00d497a50cbbbdb43b4da823b0a82';
+const MAIN_BASE = 'b34a8aaf606594be61cfbd4c21e9f09afd685ad7';
 const adaptProductionSource = (rel, code) => adaptRange(rel, adaptNetworkSource(rel,
   adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code))))));
 const headlessPaintRenderer = () => ({
@@ -230,7 +230,7 @@ test('847 owner and remote share native contact; NetMatch drops remote damage an
   }
 });
 
-test('847 current-main 7ab full production composition reproduces the uncovered gates', async t => {
+test('847 current-main b34 full production composition reproduces the uncovered gates', async t => {
   const baselineRoller = mainBaselineRollerSource();
   if (!baselineRoller) { t.skip('the pinned main baseline object is unavailable in this shallow checkout'); return; }
   const f = await production({ baselineRollerSource: baselineRoller });
