@@ -22,7 +22,7 @@ test('#712 sight shares the shot grate mask while normal solid walls and open ra
   G.actors=[a];a.weaponRunner.charging=true;
   for(const charge of [0,.5,1]){
    a.weaponRunner.charge=charge;ps._updateBeams(0);
-   const m=ps._muzzle(a,V()),dir=ps._aimFrom(a,m,V()),range=a.weapon.rangeMin+(a.weapon.rangeMax-a.weapon.rangeMin)*charge;
+   const m=ps._muzzle(a,V()),dir=ps._aimFrom(a,m,V()),range=a.weapon.rangeMax;/* #922: the laser is the maximum range at every charge */
    const h=G.physics.raycast(m,dir,range,new f.Hit(),true),expected=h.hit?h.dist:range;
    assert.ok(Math.abs(ps.sights.get(a).scale.z-expected)<1e-9);
    if(scene==='grate-wall')assert.equal(G.physics.raycast(m,dir,range,new f.Hit()).dist,1.65,'object mask still sees the grate');
