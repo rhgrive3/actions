@@ -63,14 +63,17 @@ async function boot({ main = false } = {}) {
   }
   // Camera at the actor's eye line looking down +X; the ray is stubbed to hit exactly `distance` metres of aim-point offset.
   function inRange(actor, charge, planar, projectiles = G.projectiles) {
-    G.projectiles = projectiles;
-    G.camera.position.set(0, 1.3, 0); G.camera.lookAt(10, 1.3, 0); G.camera.updateMatrixWorld(true);
-    G.physics.raycast = (_s, _d, _m, hit) => { hit.hit = true; hit.dist = Math.sqrt(planar * planar - 1.3 * 1.3); return hit; };
-    actor.weaponRunner.charge = charge;
-    const controller = new api.PlayerController(actor, null, null);
-    controller.computeAim();
-    assert.ok(Math.abs(actor.aimPoint.distanceTo(actor.pos) - planar) < 1e-9, 'aim point sits exactly at the requested distance');
-    return controller.inRange;
+    const previousProjectiles = G.projectiles;
+    try {
+      G.projectiles = projectiles;
+      G.camera.position.set(0, 1.3, 0); G.camera.lookAt(10, 1.3, 0); G.camera.updateMatrixWorld(true);
+      G.physics.raycast = (_s, _d, _m, hit) => { hit.hit = true; hit.dist = Math.sqrt(planar * planar - 1.3 * 1.3); return hit; };
+      actor.weaponRunner.charge = charge;
+      const controller = new api.PlayerController(actor, null, null);
+      controller.computeAim();
+      assert.ok(Math.abs(actor.aimPoint.distanceTo(actor.pos) - planar) < 1e-9, 'aim point sits exactly at the requested distance');
+      return controller.inRange;
+    } finally { G.projectiles = previousProjectiles; }
   }
   const close = () => { for (const a of G.actors) a.character.dispose(); real.clear(); };
   return { ...api, make, inRange, close, composed, real, math };
@@ -279,4 +282,40 @@ test('negative control: main\'s composition reports inRange=true at charge 0 for
   assert.equal(f.inRange(a, 0, mid), true, 'full-charge reach is used for every charge on main');
   const fixed = await fixedBoot();
   assert.equal(fixed.inRange(fixed.make('charger'), 0, mid), false);
+});
+
+
+test('#937 Slosher reticle range is shorter airborne than grounded', async () => {
+  const f = await fixedBoot();
+  const a = f.make('slosher'), r = a.weapon.reticleRange;
+  assert.deepEqual(r, { ground: 14.24, air: 13.67 });
+  assert.ok(r.air < r.ground);
+  const at = (grounded, planar) => { a.grounded = grounded; return f.inRange(a, 0, planar); };
+  for (const g of [true, false]) {
+    assert.equal(at(g, 10), true, `inside both (grounded ${g})`);
+    assert.equal(at(g, 20), false, `outside both (grounded ${g})`);
+  }
+  assert.equal(at(true, r.ground + .5 - 1e-6), true);
+  assert.equal(at(true, r.ground + .5 + 1e-6), false);
+  assert.equal(at(false, r.air + .5 - 1e-6), true);
+  assert.equal(at(false, r.air + .5 + 1e-6), false);
+  const band = (r.air + r.ground) / 2 + .5;
+  assert.equal(at(true, band), true, 'band target in range while grounded');
+  assert.equal(at(false, band), false, 'same target out of range while airborne');
+  assert.equal(at(true, band), true, 'landing restores the grounded threshold');
+});
+
+test('#937 airborne reticle range is scoped to Slosher and leaves projectile/weapon range data untouched', async () => {
+  const f = await fixedBoot();
+  const s = f.make('slosher');
+  assert.equal(s.weapon.range, 14.5, 'projectile/bot/aim-assist range is unchanged');
+  for (const id of ['shooter', 'roller', 'blaster']) {
+    const a = f.make(id), r = id === 'roller' ? 6 : (a.weapon.range || 12);
+    assert.equal(a.weapon.reticleRange, undefined, id);
+    for (const grounded of [true, false]) {
+      a.grounded = grounded;
+      assert.equal(f.inRange(a, 0, r + .5 - 1e-6), true, `${id} grounded ${grounded}`);
+      assert.equal(f.inRange(a, 0, r + .5 + 1e-6), false, `${id} grounded ${grounded}`);
+    }
+  }
 });
