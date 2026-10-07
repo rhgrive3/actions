@@ -116,12 +116,18 @@ test('the installed adapter replaces both legacy S3 call sites before spread', (
   const installed = adaptSource('src/game/weapons.js', source);
   assert.equal([...source.matchAll(/life: 1\.2, straight: w\.straightTime/g)].length, 2,
     'both shooter-family production constructors keep the lifetime used by the predictor');
-  const calls = [...installed.matchAll(/fidelityAimConvergence\(m, dir, a\.aimPoint, w, w\.projSpeed\)/g)];
+  const calls = [...installed.matchAll(/fidelityAimConvergence\(m, dir, (a\.aimPoint|aimTarget), w, w\.projSpeed\)/g)];
   assert.equal(calls.length, 2);
+  assert.deepEqual(calls.map(call => call[1]), ['a.aimPoint', 'aimTarget'],
+    'Shooter keeps the shared camera point while Dualies uses its live hand target');
+  assert.match(installed, /fidelityDualiesAimTarget\(this, a, m, hand\)/,
+    'the actual native Dualies hand selects its independent centerline');
+  assert.match(installed, /this\._fireRound\(a, w, spreadDeg, m, hand \? LOOK_DUAL_L : LOOK_DUAL_R, 'shoot_dualies', 0\.5, hand \? 1\.05 : 0\.97, hand\)/,
+    'the native alternating hand index reaches the shared launch method');
   assert.doesNotMatch(installed,
     /this\._ballistic\(m, dir, a\.aimPoint, w\.projSpeed, w\.straightTime, 28, 0\.8, w\.range\)/);
   for (const call of calls) assert.match(installed.slice(call.index),
-    /^fidelityAimConvergence\(m, dir, a\.aimPoint, w, w\.projSpeed\);\s+spreadWeaponRound\(this, dir, a, w, spreadDeg\);\s+const p = this\._new\(\);/,
+    new RegExp(`^fidelityAimConvergence\\(m, dir, ${call[1]}, w, w\\.projSpeed\\);\\s+spreadWeaponRound\\(this, dir, a, w, spreadDeg\\);\\s+const p = this\\._new\\(\\);`),
     'the current shared cone sampler follows convergence exactly once before each native birth');
 });
 

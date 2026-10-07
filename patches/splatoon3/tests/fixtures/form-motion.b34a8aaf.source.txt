@@ -18,35 +18,6 @@ function shape(ch) {
     kx: ch.kidScale * ch.kidSXZ, sy: ch.sqScale * ch.sqSY,
     sx: ch.sqScale * ch.sqSXZ, lift: ch.kidLift };
 }
-function makeShapeRecord() {
-  return { k: 0, s: 0, ky: 0, kx: 0, sy: 0, sx: 0, lift: 0 };
-}
-function writeShape(record, ch) {
-  record.k = ch.kidScale; record.s = ch.sqScale;
-  record.ky = ch.kidScale * ch.kidSY; record.kx = ch.kidScale * ch.kidSXZ;
-  record.sy = ch.sqScale * ch.sqSY; record.sx = ch.sqScale * ch.sqSXZ;
-  record.lift = ch.kidLift;
-  return record;
-}
-function copyShape(target, source) {
-  target.k = source.k; target.s = source.s; target.ky = source.ky; target.kx = source.kx;
-  target.sy = source.sy; target.sx = source.sx; target.lift = source.lift;
-  return target;
-}
-function blendShape(target, from, weight) {
-  target.k = from.k + (target.k - from.k) * weight;
-  target.s = from.s + (target.s - from.s) * weight;
-  target.ky = from.ky + (target.ky - from.ky) * weight;
-  target.kx = from.kx + (target.kx - from.kx) * weight;
-  target.sy = from.sy + (target.sy - from.sy) * weight;
-  target.sx = from.sx + (target.sx - from.sx) * weight;
-  target.lift = from.lift + (target.lift - from.lift) * weight;
-  return target;
-}
-function capturePrevious(m, ch) {
-  if (!m.previous) m.previous = makeShapeRecord();
-  writeShape(m.previous, ch);
-}
 function put(ch, v) {
   ch.kidScale = v.k; ch.sqScale = v.s;
   ch.kidSY = v.k > 1e-10 ? v.ky / v.k : 1;
@@ -60,8 +31,7 @@ function state(ch) {
   let m = states.get(ch);
   if (!m) {
     m = { toKid: kid(ch), clock: ch.formT, age: ch.formT, phase: null,
-      previous: null, start: null, startBuffer: null, currentBuffer: null,
-      frame: null, blocked: false };
+      previous: null, start: null, frame: null, blocked: false };
     states.set(ch, m);
   }
   return m;
@@ -85,9 +55,11 @@ function busy(ch, m, T) {
   if (!bombMotionAllowsAction(ch, nativeThrowReleased)) return true;
   const nativeDodgeBusy = Number.isInteger(T?.T_DODGE) && ch.tr[T.T_DODGE] < ch.dodgeDur + .5;
   if (dualiesMotionLock(ch, r, nativeDodgeBusy)) return true;
-  if (Number.isInteger(T?.T_FLICK) && ch.tr[T.T_FLICK] < .7) return true;
-  if (Number.isInteger(T?.T_SLOSH) && ch.tr[T.T_SLOSH] < .66) return true;
-  if (Number.isInteger(T?.T_SPAWN) && ch.tr[T.T_SPAWN] < 1.4) return true;
+  const limits = { T_FLICK: .7, T_SLOSH: .66,
+    T_SPAWN: 1.4 };
+  for (const [name, limit] of Object.entries(limits)) {
+    if (Number.isInteger(T?.[name]) && ch.tr[T[name]] < limit) return true;
+  }
   return false;
 }
 export function resetFormMotion(ch) { ch?.[INSTALL]?.reset(ch); }
@@ -128,11 +100,7 @@ export function installFormMotion({ Character, Actor, CHARACTER_CHANNELS: C, CHA
     const changed = toKid !== m.toKid, rewound = this.formT < m.clock - 1e-10;
     const interrupted = changed && previous && m.phase !== null;
     if (changed || rewound) {
-      m.age = Math.max(0, dt);
-      if (interrupted) {
-        const start = m.startBuffer || (m.startBuffer = makeShapeRecord());
-        m.start = copyShape(start, previous);
-      } else m.start = null;
+      m.age = Math.max(0, dt); m.start = interrupted ? { ...previous } : null;
     } else m.age = this.formT;
     // For a reversal the native formEnter may have skipped into its gesture.
     // Follow the native clock's deltas without ever changing that clock.
@@ -140,7 +108,7 @@ export function installFormMotion({ Character, Actor, CHARACTER_CHANNELS: C, CHA
     m.reversalAge = m.age; m.clock = this.formT; m.toKid = toKid;
     const result = scales.call(this, dt);
     if (this.s3FormMotionEnabled === false) {
-      m.phase = null; m.start = null; capturePrevious(m, this); return result;
+      m.phase = null; m.start = null; m.previous = shape(this); return result;
     }
     const transition = toKid !== (this.formPrev === 'kid') && this.formT < .45;
     m.phase = transition ? toKid ? 'emerge' : 'dive' : null;
@@ -154,13 +122,13 @@ export function installFormMotion({ Character, Actor, CHARACTER_CHANNELS: C, CHA
       this.sqSY = 1 + (this.sqSY - 1) * k;
       this.sqSXZ = 1 + (this.sqSXZ - 1) * k;
       if (m.start) {
-        const current = m.currentBuffer || (m.currentBuffer = makeShapeRecord());
-        const weight = smooth(m.age / FORM_MOTION_CALIBRATION.reversalBlend);
-        writeShape(current, this); blendShape(current, m.start, weight); put(this, current);
+        const v = shape(this), weight = smooth(m.age / FORM_MOTION_CALIBRATION.reversalBlend);
+        for (const key of Object.keys(v)) v[key] = m.start[key] + (v[key] - m.start[key]) * weight;
+        put(this, v);
         if (weight === 1) m.start = null;
       } else if (!(dt > 0) && previous) put(this, previous);
     } else m.start = null;
-    capturePrevious(m, this);
+    m.previous = shape(this);
     return result;
   };
   P._poseForm = function (out) {

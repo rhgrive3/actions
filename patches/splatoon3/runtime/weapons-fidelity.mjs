@@ -150,6 +150,55 @@ export function fidelityAimConvergence(from, dir, target, weapon, speed = weapon
   return true;
 }
 
+function dualiesAimScratch(projectiles) {
+  return projectiles._fidelityDualiesAimScratch || (projectiles._fidelityDualiesAimScratch = {
+    muzzles: [new api.THREE.Vector3(), new api.THREE.Vector3()],
+    midpoint: new api.THREE.Vector3(), forward: new api.THREE.Vector3(), right: new api.THREE.Vector3(),
+    targets: [new api.THREE.Vector3(), new api.THREE.Vector3()],
+  });
+}
+
+// Keep the two normal-fire rays parallel to the current center aim ray. Their
+// lateral offset comes from the live native hand muzzle origins, projected onto
+// the aim-plane right axis; it is geometry, not a Nintendo spacing calibration.
+export function fidelityDualiesAimTargets(projectiles, actor, muzzle0, muzzle1) {
+  const scratch = dualiesAimScratch(projectiles);
+  const { muzzles, midpoint, forward, right, targets } = scratch;
+  muzzles[0].copy(muzzle0); muzzles[1].copy(muzzle1);
+  if (actor.weaponRunner?.s3Turret) {
+    targets[0].copy(actor.aimPoint); targets[1].copy(actor.aimPoint);
+    return targets;
+  }
+
+  midpoint.copy(muzzles[0]).add(muzzles[1]).multiplyScalar(.5);
+  forward.copy(actor.aimPoint).sub(midpoint);
+  let horizontal = Math.hypot(forward.x, forward.z);
+  if (horizontal > EPSILON) right.set(forward.z / horizontal, 0, -forward.x / horizontal);
+  else {
+    horizontal = Math.hypot(actor.aimDir?.x || 0, actor.aimDir?.z || 0);
+    if (horizontal > EPSILON) right.set(actor.aimDir.z / horizontal, 0, -actor.aimDir.x / horizontal);
+    else right.set(1, 0, 0);
+  }
+  for (let hand = 0; hand < 2; hand++) {
+    const muzzle = muzzles[hand];
+    const lateral = (muzzle.x - midpoint.x) * right.x + (muzzle.z - midpoint.z) * right.z;
+    targets[hand].copy(actor.aimPoint).addScaledVector(right, lateral);
+  }
+  return targets;
+}
+
+// Called by the actual Dualies fire path after its native muzzle has been
+// selected. Only the other hand is queried; the target helper then uses both
+// final (including existing obstruction fallback) muzzle origins.
+export function fidelityDualiesAimTarget(projectiles, actor, muzzle, hand) {
+  const index = hand === true || hand === 1 ? 1 : 0;
+  if (actor.weaponRunner?.s3Turret) return actor.aimPoint;
+  const scratch = dualiesAimScratch(projectiles);
+  scratch.muzzles[index].copy(muzzle);
+  projectiles._muzzleHand(actor, 1 - index, scratch.muzzles[1 - index]);
+  return fidelityDualiesAimTargets(projectiles, actor, scratch.muzzles[0], scratch.muzzles[1])[index];
+}
+
 // Source records supply endpoints/counts. Added random draws are deterministic
 // under the fixture seed; the source PRNG/bias distribution is not recovered.
 function rawWeapon(w) { return completion?.weapons[w.id || w.kind]; }
@@ -1108,10 +1157,14 @@ export function installWeaponsFidelity(context,profile) {
       pos:new THREE.Vector3(),prev:new THREE.Vector3(),start:new THREE.Vector3(),vel:new THREE.Vector3()
     })));
     for(let hand=0;hand<2;hand++){
-      const p=shots[hand],out=points[hand],dir=dirs[hand];
+      const p=shots[hand];
       this._muzzleHand(actor,hand,p.pos);p.prev.copy(p.pos);p.start.copy(p.pos);
-      this._aimFrom(actor,p.pos,dir);
-      fidelityAimConvergence(p.pos,dir,actor.aimPoint,w,w.projSpeed);
+    }
+    const targets=fidelityDualiesAimTargets(this,actor,shots[0].pos,shots[1].pos);
+    for(let hand=0;hand<2;hand++){
+      const p=shots[hand],out=points[hand],dir=dirs[hand];
+      this._aimFrom(actor,p.pos,dir,targets[hand]);
+      fidelityAimConvergence(p.pos,dir,targets[hand],w,w.projSpeed);
       p.owner=actor;p.type='shot';p.wid=w.id;p.s3Weapon={...w};p.age=0;p.life=1.2;p.straight=w.straightTime;
       p.delay=0;p.ghost=false;p.size=w.impactRadius??.15;p.fidelityPhase=0;p.fidelityMove=null;p.fidelityPrevAge=0;
       p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;

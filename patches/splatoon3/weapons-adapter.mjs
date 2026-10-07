@@ -2,6 +2,15 @@
 // verifier. No code outside the main-projectile paths is replaced.
 export function adaptWeaponsFidelity(code,replaceOnce) {
   const patch=(before,after,label)=>{code=replaceOnce(code,before,after,'weapons fidelity: '+label);};
+  patch('  _aimFrom(a, from, out) {\n    out.copy(a.aimPoint).sub(from);',
+    '  _aimFrom(a, from, out, target = a.aimPoint) {\n    out.copy(target).sub(from);',
+    'Dualies per-hand aim target');
+  patch(`  _fireRound(a, w, spreadDeg, m, look, snd, sndVol, pitch) {\n    const dir = this._aimFrom(a, m, _dir);`,
+    `  _fireRound(a, w, spreadDeg, m, look, snd, sndVol, pitch, hand = null) {\n    const aimTarget = w.kind === 'dualies' && hand != null\n      ? fidelityDualiesAimTarget(this, a, m, hand)\n      : a.aimPoint;\n    const dir = this._aimFrom(a, m, _dir, aimTarget);`,
+    'dualies launch uses its live hand target');
+  patch(`    const dir = this._fireRound(a, w, spreadDeg, m, hand ? LOOK_DUAL_L : LOOK_DUAL_R, 'shoot_dualies', 0.5, hand ? 1.05 : 0.97);`,
+    `    const dir = this._fireRound(a, w, spreadDeg, m, hand ? LOOK_DUAL_L : LOOK_DUAL_R, 'shoot_dualies', 0.5, hand ? 1.05 : 0.97, hand);`,
+    'native fireDualies hand index');
   patch(`      p.age += dt;
       p.prev.copy(p.pos);
       if (p.age > p.straight) p.vel.y -= p.grav * dt;
@@ -93,7 +102,7 @@ export function adaptWeaponsFidelity(code,replaceOnce) {
     spreadWeaponRound(this, dir, a, w, spreadDeg);
     const p = this._new();
     Object.assign(p, { type: 'shot', wid: w.id`,
-    `    fidelityAimConvergence(m, dir, a.aimPoint, w, w.projSpeed);
+    `    fidelityAimConvergence(m, dir, aimTarget, w, w.projSpeed);
     spreadWeaponRound(this, dir, a, w, spreadDeg);
     const p = this._new();
     Object.assign(p, { type: 'shot', wid: w.id`, 'dualies/splatling centerline convergence');
@@ -110,5 +119,5 @@ export function adaptWeaponsFidelity(code,replaceOnce) {
     'if (G.time - last + 1e-10 >= w.rollContactInterval)', 'Roller same-target contact interval');
   patch('G.time - (this.rollHits.get(key) || -9) > 0.5',
     'G.time - (this.rollHits.get(key) ?? -Infinity) + 1e-10 >= w.rollContactInterval', 'Roller Boss contact interval');
-  return "import { EPSILON as WEAPONS_FIDELITY_EPSILON, advanceFidelityProjectile, advanceFidelityWallDrop, beginFidelityWallDrop, configureFidelityFlick, fidelityProjectileTargets, fidelityPlayerCollisionRadius, fidelityVolleyDamage, fidelityBossHit, fidelityWorldHit, applyFidelityProjectileHit, applyFidelitySlosherSplash, fidelityAimConvergence } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n"+code;
+  return "import { EPSILON as WEAPONS_FIDELITY_EPSILON, advanceFidelityProjectile, advanceFidelityWallDrop, beginFidelityWallDrop, configureFidelityFlick, fidelityProjectileTargets, fidelityPlayerCollisionRadius, fidelityVolleyDamage, fidelityBossHit, fidelityWorldHit, applyFidelityProjectileHit, applyFidelitySlosherSplash, fidelityAimConvergence, fidelityDualiesAimTarget } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n"+code;
 }
