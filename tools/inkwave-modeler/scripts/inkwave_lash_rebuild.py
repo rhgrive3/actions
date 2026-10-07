@@ -506,11 +506,10 @@ def build_side_corner(design, tree, views, side, black):
         inside_v = soft[rr, cc]
         kept = []
         for f in faces:
-            if all(inside_v[k] for k in f):
-                kept.append(f)
-                continue
             c = V[list(f)].mean(0)
             if front_hidden(c):
+                kept.append(f)
+            elif not design.get('side_front_hidden_only') and all(inside_v[k] for k in f):
                 kept.append(f)
         print('SIDE_CORNER trim', len(faces), '->', len(kept), 'faces')
         faces = kept
@@ -1078,6 +1077,10 @@ def build_rim(rays, design):
     depth = np.minimum(depth - (0.15 + 0.5 * r) / 1000, hit - 0.10 / 1000)
     pts = M.to_local(origin + direction * depth[:, None]) * 1000
     tv, tf = er.tube(pts, r, sides=8)
+    if design.get('rim_tube') is False:
+        # the lower line is the smooth band and the corner is drawn by the liner: no round tube (its start under
+        # the wing showed as two black horns in the front view)
+        tv, tf = np.zeros((0, 3)), []
     start = np.minimum(er.smooth_rows(hit, design.get('rim_depth_sigma', 2.0)), hit) if design.get('margin_smooth') else hit
     skin_pts = M.to_local(origin + direction * (start - MARGIN_LIFT_MM / 1000)[:, None]) * 1000
     stop = None
@@ -1217,6 +1220,8 @@ def fan_layout(rays, design, eye_name, cfg=None):
     seg = np.r_[0, np.cumsum(np.linalg.norm(np.diff(chain, axis=0), axis=1))]
     s = np.linspace(*cfg['s_range'], cfg['count'])
     px = np.c_[np.interp(s * seg[-1], seg, chain[:, 0]), np.interp(s * seg[-1], seg, chain[:, 1])]
+    # the roots go root_in_px down into the black band, so the lashes grow out of the black (not the skin above it)
+    px[:, 1] += cfg.get('root_in_px', 0.0)
     # on the liner top chain the roots stand off with the strip (its top edge), else they sit on the lid
     lift = (lambda p: LASH_ROOT_LIFT_MM + float(top_float(design, p[0]))) if cfg.get('chain') == 'liner_top' else (lambda p: 0.0)
     on_skin = np.array([rays.lifted(p, lift(p)) for p in px])
