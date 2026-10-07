@@ -17,6 +17,7 @@ test('a late host decision still awards the observed first pair after another re
   ];
   const ha = actors(h), ga = actors(g);
   h.G.match = h.bind(hn, ha); g.G.match = g.bind(gn, ga);
+  h.G.match.mode = g.G.match.mode = 'turf';
   hn._remoteSplat(ha[1], ha[0], 'shooter');
   g.emit('splatted', { attacker: ga[0], victim: ga[1] });
   gn._remoteSplat(ga[3], ga[2], 'shooter');

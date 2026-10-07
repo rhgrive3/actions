@@ -35,5 +35,5 @@ test('respawn retirement admits a new accepted victim life and rejects the previ
  const f=await ready(),{a,v}=actors(f);ack(f,a,v);const first=a.s3.flow.score;v.netLife=4;f.emit('combat:respawn',{actor:v});ack(f,a,v);assert.equal(a.s3.flow.score,first);ack(f,a,v,{victimLife:4});assert.equal(a.s3.flow.score,first+f.profile.flow.weights.splat);
 });
 test('modern adapter keeps cap/death/assist owners and remains fail-closed on repeat',()=>{
- const raw=fs.readFileSync(new URL('../runtime/flow.mjs',import.meta.url),'utf8'),code=adaptIssue427('patches/splatoon3/runtime/flow.mjs',raw);for(const keep of ['Math.min(cap, state.score + gain)','respawning.get(this)','penalizeFlowDeath(state(victim), cause, cfg)','Array.isArray(event.assists)'])assert.ok(code.includes(keep));assert.throws(()=>adaptIssue427('patches/splatoon3/runtime/flow.mjs',code),/patch conflict/);
+ const raw=fs.readFileSync(new URL('../runtime/flow.mjs',import.meta.url),'utf8'),code=adaptIssue427('patches/splatoon3/runtime/flow.mjs',raw);for(const keep of ['Math.min(cap, state.score + gain + firstSplatGain)','respawning.get(this)','penalizeFlowDeath(state(victim), cause, cfg)','Array.isArray(event.assists)'])assert.ok(code.includes(keep));assert.throws(()=>adaptIssue427('patches/splatoon3/runtime/flow.mjs',code),/patch conflict/);
 });

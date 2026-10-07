@@ -76,7 +76,7 @@ export function installFlow({ Actor, on, emit, G }, tuning) {
   const firstBonusFp = Number.isFinite(cfg.progress?.firstSplatBonus) && cfg.progress.firstSplatBonus > 0
     ? cfg.progress.firstSplatBonus : 0;
   function qualifies(match, attacker, victim) {
-    return !!(match && !match.attract && !match.range && !match.opts?.range
+    return !!(match && match.mode === 'turf' && !match.attract && !match.range && !match.opts?.range
       && attacker && victim && attacker !== victim && attacker.team !== victim.team && firstBonusFp > 0);
   }
   function sameDecision(decision, attacker, victim) {

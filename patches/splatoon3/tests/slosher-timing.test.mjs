@@ -157,7 +157,8 @@ test('ordinary Shooter ink recovery retains its existing 20F fire-event deadline
     if (spentInk !== undefined && simTick > shotTick && firstRefillTick === undefined && a.ink > spentInk + 1e-10) firstRefillTick = simTick;
   }
   assert.equal(a.weapon.inkRecoverStop * 60, 20);
-  assert.ok(Number.isSafeInteger(shotTick), 'ordinary Shooter still emits a fire event');
-  assert.equal(firstRefillTick - shotTick, 20, 'ordinary Shooter recovery stays exactly 20F after its first fire event');
+  const expectedShotTick = Math.max(1, Math.round(a.weapon.firstShotDelay * 60));
+  assert.equal(shotTick, expectedShotTick, 'Shooter keeps its sourced first-shot gate');
+  assert.equal(firstRefillTick, expectedShotTick + 20, 'ordinary Shooter recovery remains 20F after the actual first fire event');
   f.restoreRandom();
 });

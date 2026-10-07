@@ -48,6 +48,7 @@ test('#893 a qualifying assist extension at the cap also emits its own burst', a
   a.s3.flow = cap();
   f.emit('damage', { victim: f.enemy, attacker: a, amount: 30 });
   assert.equal(f.paints.length, 0, 'a damage award is not a qualifying extension event');
+  f.other.team = a.team;
   f.emit('splatted', { attacker: f.other, victim: f.enemy, cause: 'weapon' });
   assert.equal(f.paints.length, 1, 'the credited assist still paints at the cap');
   near(a.s3.flow.remaining, cfg.maxDuration);

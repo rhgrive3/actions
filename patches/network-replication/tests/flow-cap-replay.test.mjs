@@ -12,11 +12,12 @@ test('#893 capped owner Flow burst is not reapplied by delayed, duplicate or spo
   const victim = f.makeActor({ nid: 1, owner: 'p2', team: 1, roller: false });
   f.G.match = f.bind(nm, [attacker, victim]);
   nm._peer('p2');
-  const calls = [];
+  const calls = [], flowCalls = () => calls.filter(args =>
+    args[1] === f.profile.flow.paintRadius && args[3]?.kind === 'trail' && args[3]?.seed === 0.5);
   f.G.paint.splat = (...args) => { calls.push(args); return 0; };
   attacker.s3 = { flow: { active: true, remaining: f.profile.flow.maxDuration, score: 0, idleTime: 0 } };
   f.emit('splatted', { attacker, victim, cause: 'shooter' });
-  assert.equal(calls.length, 1, 'owner-side qualifying event paints once even at cap');
+  assert.equal(flowCalls().length, 1, 'owner-side qualifying event paints one Flow burst even at cap');
   assert.equal(attacker.s3.flow.remaining, f.profile.flow.maxDuration);
   for (const delay of [0.1, 0.25, 0.5]) {
     f.clock.advance(delay);
@@ -27,7 +28,7 @@ test('#893 capped owner Flow burst is not reapplied by delayed, duplicate or spo
     nm._play('p2', event);
     nm._play('p2', event);
     assert.equal(victim.alive, false, 'real owner replay applies native remote death');
-    assert.equal(calls.length, 1, 'replay/sequence/alive guards cannot create a second Flow paint');
+    assert.equal(flowCalls().length, 1, 'replay/sequence/alive guards cannot create a second Flow paint');
     assert.equal(attacker.s3.flow.remaining, f.profile.flow.maxDuration);
   }
 });

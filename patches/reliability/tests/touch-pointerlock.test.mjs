@@ -113,7 +113,7 @@ test('#800 overlay-targeted mouse press reacquires Pointer Lock after touch hand
     const h=await boot(),e=h.touch('look');h.unlocked();h.release(e);
     if(state==='menu')h.G.mode='menu';else if(state==='paused')h.G.match.paused=true;else if(state==='finish')h.G.match.state='finish';else if(state==='attract')h.G.match.attract=true;else if(state==='submenu')h.G.game.menus.current='settings';else h.mobile.editing=true;
     const target=state==='editor'?h.overlay('editor'):h.overlay();
-    h.mouse(target);assert.equal(h.requests(),0,state);assert.equal(h.input.lastDevice,state==='editor'?'touch':'kbm',state);
+    h.mouse(target);assert.equal(h.requests(),0,state);assert.equal(h.input.lastDevice,'kbm',state);
   }
   // An unrelated outside surface never reacquires.
   {

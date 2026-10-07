@@ -73,20 +73,34 @@ test('locked Dualies reuse a full enumerable lock config and clear the four-fram
   assert.equal(a.weapon, reboundWeapon);
 });
 
-test('prepaid Splatling stream reuses the actor-local config without per-round allocation or debit', async () => {
+test('streaming Splatling reuses the split owner config without changing ink', async () => {
   const f = await fixture(), a = f.make('splatling'), runner = a.weaponRunner, weapon = a.weapon;
   const passed = [];
   f.G.projectiles.fireSplatling = (_actor, config) => passed.push(config);
-  runner.streaming = true;
-  runner.burstDur = runner.burstT = 1;
-  runner.s3Spin = { paid: 0, unspent: 0, elapsed: 0, emitted: 0, shots: 4 };
-  runner.cooldown = 0;
+  const arm = (config, shots = 2) => {
+    runner.streaming = true; runner.burstDur = runner.burstT = 1; runner.cooldown = 0;
+    runner.s3Spin = { paid: 0, unspent: 0, elapsed: 0, emitted: 0, shots };
+    runner._splatling(config.fireInterval + 1e-4, { fire: true }, config);
+  };
   const inkBefore = a.ink;
-  runner._splatling(weapon.fireInterval + 1 / 60, { fire: true }, weapon);
+  arm(weapon, 2);
+  assert.equal(passed.length, 2);
+  assert.strictEqual(passed[0], weapon);
+  assert.strictEqual(passed[1], weapon);
+  assert.equal(a.ink, inkBefore);
 
-  assert.ok(passed.length >= 1);
-  assert.ok(passed.every(config => config === weapon), 'the split stream owner passes the original config directly');
-  assert.equal(a.ink, inkBefore, 'prepaid stream rounds do not debit the tank again');
+  const temporary = Object.create(weapon);
+  Object.defineProperty(temporary, 'temporaryScale', { value: 23, enumerable: true });
+  arm(temporary, 1);
+  assert.strictEqual(passed.at(-1), temporary);
+  assert.equal(passed.at(-1).temporaryScale, 23);
+
+  const previousWeapon = a.weapon;
+  a.setWeapon('splatling');
+  assert.notEqual(a.weapon, previousWeapon);
+  arm(a.weapon, 1);
+  assert.strictEqual(passed.at(-1), a.weapon);
+  assert.notEqual(passed.at(-1), passed[0]);
   for (const config of passed) {
     for (const key of ['kind', 'id', 'damage', 'damageMin', 'referenceGravity', 'spreadGround', 'spreadAir', 'impactRadius', 'fireInterval'])
       assert.equal(config[key], weapon[key], `stream preserves ${key}`);

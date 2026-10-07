@@ -23,7 +23,7 @@ test('offline first qualifying enemy splat is match-global, bot-safe, and surviv
   attacker.isBot = true; attacker.remote = true; victim1.team = victim2.team = 1;
   f.G.level.spawnPads = [{ x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 0 }];
   f.G.physics.groundProbe = (_x, _y, _z, _w, _h, _r, hit) => { hit.hit = false; return hit; };
-  const match = f.G.match = { playing: () => true };
+  const match = f.G.match = { playing: () => true, mode: 'turf' };
   f.emit('splatted', { victim: victim1, attacker });
   near(attacker.s3.flow.score, 1 + 10 * f.profile.flow.threshold / f.profile.flow.progress.referenceThreshold);
 
@@ -32,7 +32,7 @@ test('offline first qualifying enemy splat is match-global, bot-safe, and surviv
   f.emit('splatted', { victim: victim2, attacker });
   near(attacker.s3.flow.score, 2 + 10 * f.profile.flow.threshold / f.profile.flow.progress.referenceThreshold);
 
-  f.G.match = { playing: () => true };
+  f.G.match = { playing: () => true, mode: 'turf' };
   attacker.s3.flow.score = 0;
   f.emit('splatted', { victim: victim1, attacker });
   near(attacker.s3.flow.score, 1 + 10 * f.profile.flow.threshold / f.profile.flow.progress.referenceThreshold);
@@ -42,7 +42,7 @@ test('offline first qualifying enemy splat is match-global, bot-safe, and surviv
 test('the online host adds the bonus to its first splat and does not choose again', async () => {
   const f = await fixture(), attacker = f.make(), victim = f.make(), nextAttacker = f.make(), nextVictim = f.make();
   attacker.remote = true; attacker.isBot = true; victim.team = nextVictim.team = 1;
-  const match = f.G.match = { playing: () => true }, chosen = [];
+  const match = f.G.match = { playing: () => true, mode: 'turf' }, chosen = [];
   f.G.netm = {
     match, isHost: true,
     claimFirstSplat(killer, target) { if (chosen.length) return false; chosen.push([killer, target]); return true; },
@@ -57,7 +57,7 @@ test('the online host adds the bonus to its first splat and does not choose agai
 
 test('Range and attract matches do not receive or consume the first-splat bonus', async () => {
   const f = await fixture(), attacker = f.make(), victim = f.make(); victim.team = 1;
-  const match = f.G.match = { playing: () => true, range: {} };
+  const match = f.G.match = { playing: () => true, mode: 'turf', range: {} };
   f.emit('splatted', { victim, attacker });
   near(attacker.s3.flow.score, 1);
   match.range = null;
@@ -65,14 +65,14 @@ test('Range and attract matches do not receive or consume the first-splat bonus'
   near(attacker.s3.flow.score, 2 + 10 * f.profile.flow.threshold / f.profile.flow.progress.referenceThreshold);
 
   const attractActor = f.make(), attractVictim = f.make(); attractVictim.team = 1;
-  f.G.match = { playing: () => true, attract: true };
+  f.G.match = { playing: () => true, mode: 'turf', attract: true };
   f.emit('splatted', { victim: attractVictim, attacker: attractActor });
   near(attractActor.s3.flow.score, 0);
 });
 
 test('host confirmation pairs the additive award with the observed event and never elects locally', async () => {
   const f = await fixture(), attacker = f.make(), victim = f.make(); victim.team = 1;
-  const match = f.G.match = { playing: () => true };
+  const match = f.G.match = { playing: () => true, mode: 'turf' };
   f.G.netm = { match, isHost: false };
 
   f.emit('flow:first-splat-confirmed', { match, attacker, victim, matchId: 'same-match' });
@@ -86,7 +86,7 @@ test('host confirmation pairs the additive award with the observed event and nev
 
 test('late confirmation is additive after the ordinary splat and does not double an active extension', async () => {
   const f = await fixture(), attacker = f.make(), victim = f.make(); victim.team = 1;
-  const match = f.G.match = { playing: () => true };
+  const match = f.G.match = { playing: () => true, mode: 'turf' };
   f.G.netm = { match, isHost: false };
   f.emit('splatted', { victim, attacker });
   near(attacker.s3.flow.score, 1);
@@ -96,7 +96,7 @@ test('late confirmation is additive after the ordinary splat and does not double
   const active = f.make(), victim2 = f.make(); victim2.team = 1;
   active.s3.flow.active = true; active.s3.flow.remaining = 10;
   f.emit('splatted', { victim: victim2, attacker: active });
-  assert.equal(active.s3.flow.remaining, 15);
+  assert.equal(active.s3.flow.remaining, 10 + f.profile.flow.extension);
   f.emit('flow:first-splat-confirmed', { match, attacker: active, victim: victim2 });
-  assert.equal(active.s3.flow.remaining, 15, 'the first-splat FP does not extend twice');
+  assert.equal(active.s3.flow.remaining, 10 + f.profile.flow.extension, 'the first-splat FP does not extend twice');
 });

@@ -380,7 +380,7 @@ export async function checkUiVisualProbes({page,evidence,sourceSha=null,contentH
     for(const [name,charge,streaming,left,first,second]of [['first',2/3,false,0,1,0],['second',5/6,false,0,1,.5],['full',1,false,0,1,1],['partial-stream',1,true,80/60,1,0]]){
       let row=await page.evaluate(inspectSplatlingStages,{charge,streaming,left,first,second});
       if(row.errors.length)throw Error('Splatling stage geometry/progress regression: '+JSON.stringify(row));
-      await page.waitForTimeout(100);
+      await page.evaluate(async()=>{const xh=globalThis.__splatlingProbe.xh;await Promise.all(xh.getAnimations({subtree:true}).filter(a=>a.effect?.getTiming().iterations!==Infinity).map(a=>a.finished.catch(()=>{})));});
       row=await page.evaluate(inspectSplatlingStages,{charge,streaming,left,first,second,settled:true});
       if(row.errors.length)throw Error('Splatling stage geometry/progress regression: '+JSON.stringify(row));
       await page.screenshot({path:path.join(evidence,`splatling-reticle-${name}.png`),timeout:90000});
