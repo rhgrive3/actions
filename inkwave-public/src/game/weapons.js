@@ -1242,14 +1242,16 @@ export class Projectiles {
     _v.copy(hit.point).addScaledVector(hit.normal, 0.14);
     _dir.copy(p.vel).normalize();
     const rad = p.radius * (0.85 + Math.random() * 0.3);
-    let area;
+    let area = null;
     if (p.type === 'slosh') {
       // the wave lands as a thick stripe along its travel: stretched along the horizontal heading
       _dir.y = 0; if (_dir.lengthSq() < 1e-4) _dir.set(0, 0, 1); _dir.normalize();
       area = G.paint.splat(_v, rad * 1.12, p.team, { seed: p.seed, stretch: _dir, stretchAmt: 1.25 });
       if (p.head) this._sloshSplash(p, hit.point, null);
-    } else area = G.paint.splat(_v, rad, p.team, { seed: p.seed, stretch: _dir, stretchAmt: 0.7 });
-    p.owner.addTurf(area);
+    } else if (!(p.type === 'blast' && p.s3Weapon?.kind === 'blaster')) {
+      area = G.paint.splat(_v, rad, p.team, { seed: p.seed, stretch: _dir, stretchAmt: 0.7 });
+    }
+    if (area != null) p.owner.addTurf(area);
     if (p.type !== 'blast') emit('weapon:impact', { pos: hit.point.clone(), normal: hit.normal.clone(), team: p.team, kind: p.type === 'drop' || p.type === 'slosh' ? 'drop' : 'shot', radius: rad });
     const near = p.owner.isLocal || G.camera.position.distanceToSquared(hit.point) < 22 * 22;
     if (near) {
@@ -1265,9 +1267,12 @@ export class Projectiles {
     G.fx?.explosion(c, p.owner.color, w.burstRadius);
     G.audio?.play('blaster_boom', { pos: c, volume: 0.7 });
     emit('weapon:impact', { pos: c.clone(), normal: new THREE.Vector3(0, 1, 0), team: p.team, kind: 'blast', radius: w.burstRadius });
-    // paint under the burst
-    const g = G.physics.raycast(_v2.copy(c).setY(c.y + 0.2), DOWN, 3.5, _hit2);
-    if (g.hit) p.owner.addTurf(G.paint.splat(_v3.copy(g.point).addScaledVector(g.normal, 0.1), w.impactRadius, p.team, { seed: Math.random() }));
+    // Legacy/non-S3 bursts keep the old projected floor stamp. The current S3
+    // Blaster BlastParam direct-paint fields are zero; dedicated splash paths own paint instead.
+    if (p.s3Weapon?.kind !== 'blaster') {
+      const g = G.physics.raycast(_v2.copy(c).setY(c.y + 0.2), DOWN, 3.5, _hit2);
+      if (g.hit) p.owner.addTurf(G.paint.splat(_v3.copy(g.point).addScaledVector(g.normal, 0.1), w.impactRadius, p.team, { seed: Math.random() }));
+    }
     for (const e of G.actors) {
       if (e.team === p.team || !e.alive || e === direct) continue;
       _v.copy(e.pos); _v.y += 0.7;
