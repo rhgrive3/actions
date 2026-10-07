@@ -723,8 +723,8 @@ export function adaptSource(rel, code) {
     // adapter has attached its owner/ghost gate to this exact burst location.
     code = replaceOnce(code,
       "    // paint under the burst\n    const g = G.physics.raycast(_v2.copy(c).setY(c.y + 0.2), DOWN, 3.5, _hit2);\n    if (g.hit) p.owner.addTurf(G.paint.splat(_v3.copy(g.point).addScaledVector(g.normal, 0.1), w.impactRadius, p.team, { seed: Math.random() }));\n",
-      "",
-      'Blaster timed burst generic floor paint');
+      "    // paint under the burst\n    if (p.s3Weapon?.kind === 'blaster') {\n      applyFidelityBlasterBurstPaint(this, p, c, direct);\n    } else {\n      const g = G.physics.raycast(_v2.copy(c).setY(c.y + 0.2), DOWN, 3.5, _hit2);\n      if (g.hit) p.owner.addTurf(G.paint.splat(_v3.copy(g.point).addScaledVector(g.normal, 0.1), w.impactRadius, p.team, { seed: Math.random() }));\n    }\n",
+      'Blaster source collision-burst paint with timed-burst suppression');
     // #1049: sourced Blaster SplashPaintParam owns the vertical receiving-surface window.
     code = replaceOnce(code,
       '        const g = G.physics.raycast(p.pos, DOWN, 4, _hit2, true);',
