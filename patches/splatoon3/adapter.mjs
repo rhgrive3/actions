@@ -601,6 +601,13 @@ export function adaptSource(rel, code) {
       ((this.mobile._ptr?.size || 0) > 0 || (this.mobile._stick?.id ?? -1) >= 0);
   }
   pollPad() {`, 'live touch contact predicate');
+    code = replaceOnce(code, '  pollPad() {\n    const pads = navigator.getGamepads ? navigator.getGamepads() : [];',
+      "  pollPad() {\n    const previousPad = this.pad, padOwned = !!previousPad && this.lastDevice === 'pad';\n    const pads = navigator.getGamepads ? navigator.getGamepads() : [];",
+      'gamepad disconnect ownership snapshot');
+    code = replaceOnce(code, '    this.pad = pad;\n    this.padPressed.clear();\n    if (!pad) return;',
+      "    this.pad = pad;\n    this.padPressed.clear();\n    if (!pad) {\n      if (padOwned) { this._s3PadCanceled = true; this.padPrev.length = 0; }\n      return;\n    }",
+      'gamepad disappearance is cancellation epoch');
+
     code = replaceOnce(code, '    const ax = pad.axes;', `    const touchContact = this._liveTouchContact();
     const ax = pad.axes;`, 'live touch gesture owns axis arbitration');
     return replaceOnce(code,
@@ -623,6 +630,32 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, '    this.inRange = false;',
       '    this.inRange = false;\n    this.chargerCurrentReach = new THREE.Vector3(); this.chargerFullReach = new THREE.Vector3(); this.chargerReachVisible = false;',
       'Charger dual reach HUD state');
+    code = replaceOnce(code, '    const it = a.intent;\n    if (!this.enabled) {',
+      `    const it = a.intent;
+    if (inp._s3PadCanceled) {
+      // #1024: losing the active pad is source cancellation, not RT/RB release.
+      inp._s3PadCanceled = false;
+      a.weaponRunner?.cancelPendingInput?.();
+      if (a.weaponRunner) a.weaponRunner.aimingSub = false;
+      if (a._prevIntent) { a._prevIntent.fire = false; a._prevIntent.sub = false; }
+      it.fire = false; it.sub = false;
+      this.padLook.x = this.padLook.y = 0; this.edgeT = 0;
+    }
+    if (!this.enabled) {`, 'pad disconnect cancels held release actions');
+    code = replaceOnce(code,
+      `      // edge boost: holding the stick at the rim speeds yaw up (quick 180s) after a short delay
+      if (_stick.mag > 0.93) this.edgeT = Math.min(0.5, this.edgeT + dt); else this.edgeT = Math.max(0, this.edgeT - dt * 3);
+      const boost = 1 + 0.55 * clamp((this.edgeT - 0.16) / 0.3, 0, 1);
+      const c = _stick.mag > 0 ? lookCurve(_stick.mag) / _stick.mag : 0;`,
+      `      this.edgeT = 0;
+      const yawRate = Math.min(3.6 * ps, Math.PI * 2 - 1e-6);
+      const c = _stick.mag > 0 ? lookCurve(_stick.mag) / _stick.mag : 0;`,
+      'S3 right-stick steady yaw cap');
+    code = replaceOnce(code,
+      '      rig.yaw -= this.padLook.x * 3.6 * ps * boost * friction * dt;',
+      '      rig.yaw -= this.padLook.x * yawRate * friction * dt;',
+      'S3 right-stick yaw rate');
+
     const start = code.indexOf('    if (this.onTarget && this.onTarget !== G.boss) {');
     const end = code.indexOf('    // is the crosshair point inside', start);
     if (start < 0 || end < start) throw new Error('INKWAVE patch conflict: camera aim connection');
