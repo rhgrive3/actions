@@ -178,7 +178,7 @@ test('#851 idle ShotGuide cache preserves the world point, pose controls, geomet
     const root = new URL('../../../', import.meta.url);
     const hud = fs.readFileSync(new URL('inkwave-public/src/ui/hud.js', root), 'utf8');
     const adaptedHud = adaptSource('src/ui/hud.js', hud);
-    assert.match(adaptedHud, /s3WeaponGuide\?\.\(me, me\.weapon, cam, innerWidth, innerHeight\)/);
+    assert.match(adaptedHud, /s3WeaponGuide\?\.\(guideMe, guideMe\.weapon, guideCam, innerWidth, innerHeight\)/);
     assert.match(adaptedHud, /this\._project\(cam, point\.x, point\.y, point\.z\)/, 'HUD projection continues to read the current camera every frame');
     console.log(JSON.stringify({ idle, rawNativePoseChanges: rawPoseChanges, resolvedMuzzlePoseChanges: resolvedPoseChanges, presentationReuse,
       finalLosCalls: losCalls, finalReplaySteps: replaySteps }));
