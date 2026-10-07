@@ -8,6 +8,7 @@ import { installSplatlingStartupCompat } from './splatling-startup-compat.mjs';
 import { installWeaponGates } from './weapon-gates.mjs';
 import { installAgent3WeaponPhysics } from './agent3-weapon-physics.mjs';
 import { installRollerLogic } from './roller.mjs';
+import { installSplatlingJumpSpread } from './splatling-jump-spread.mjs';
 let api;
 export function splatlingBurst(w, charge) {
   const boundary = w.firstChargeTime / w.chargeTime, c = Math.max(0, Math.min(1, charge));
@@ -551,6 +552,7 @@ export function installWeapons(context, profile) {
   installFinalDamage(api);
   installContactRecovery(api);
   installWeaponEdgecases(api);
+  installSplatlingJumpSpread(api);
   const applyHit = Projectiles.prototype.applyHit;
   Projectiles.prototype.applyHit = function (attacker, victim, damage, weaponId, groupId) {
     // Only Slosher wire hits carry a cumulative volley maximum. Other families

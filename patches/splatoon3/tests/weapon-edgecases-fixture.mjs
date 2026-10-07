@@ -5,10 +5,21 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import { adaptSource } from '../adapter.mjs';
+import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
+import { adaptReliability } from '../../reliability/adapter.mjs';
+import { adaptQualitySource } from '../../local-quality/adapter.mjs';
+import { adaptNetworkSource } from '../../network-replication/adapter.mjs';
+import { adaptRange } from '../../practice-range/adapter.mjs';
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const SITE = process.env.INKWAVE_EDGECASE_SITE;
 const UPSTREAM = SITE || process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
-export async function fixture({ profileTransform } = {}) {
+export const productionComposition = (rel, source) => adaptRange(rel,
+  adaptNetworkSource(rel,
+    adaptQualitySource(rel,
+      adaptReliability(rel,
+        adaptTouchLayout(rel, adaptSource(rel, source))))));
+
+export async function fixture({ profileTransform, composeProductionAdapters = false } = {}) {
   const math = Object.create(Math); math.random = Math.random;
   const context = vm.createContext({ console, performance, Math: math });
   const modules = new Map();
@@ -24,7 +35,12 @@ export async function fixture({ profileTransform } = {}) {
   function load(file) {
     if (modules.has(file)) return modules.get(file);
     const relative = path.relative(UPSTREAM, file);
-    const source = !SITE && file.startsWith(UPSTREAM + path.sep) ? adaptSource(relative, fs.readFileSync(file, 'utf8')) : fs.readFileSync(file, 'utf8');
+    const raw = fs.readFileSync(file, 'utf8');
+    const isNative = file.startsWith(UPSTREAM + path.sep);
+    const runtimeRel = file.startsWith(path.join(ROOT, 'patches') + path.sep) ? path.relative(ROOT, file) : relative;
+    const source = !SITE && composeProductionAdapters
+      ? productionComposition(runtimeRel, raw)
+      : !SITE && isNative ? adaptSource(relative, raw) : raw;
     const mod = new vm.SourceTextModule(source, { context, identifier: file }); modules.set(file, mod); return mod;
   }
   const root = new vm.SourceTextModule(`
@@ -69,10 +85,11 @@ export async function fixture({ profileTransform } = {}) {
     getMuzzle(out) { return out.copy(this.root.position).add(new THREE.Vector3(0, 1.05, .3)); }
     setVisible() {} setHurt() {} setWeapon() {}
   }
-  function make(weapon = 'shooter') {
+  function make(weapon = 'shooter', { nativeMovement = false } = {}) {
     const a = new api.Actor({ team: 0, name: 'fixture', weapon, CharacterClass: Character });
     a.grounded = true; a.ground.hit = true; a.ground.face = 0;
-    a._spawnBarrier = () => {}; a._finishFrame = () => {}; a._integrate = () => {};
+    a._spawnBarrier = () => {}; a._finishFrame = () => {};
+    if (!nativeMovement) a._integrate = () => {};
     return a;
   }
   function tick(a, frames = 1) { for (let i = 0; i < frames; i++) { G.time += 1 / 60; a.update(1 / 60); } }
