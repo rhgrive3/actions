@@ -7,16 +7,47 @@ import { GyroPermission, gyroStatusMessage } from './gyro-permission.mjs';
 const INSTALL = Symbol.for('inkwave.local-quality.gyro.v1');
 const RAD = Math.PI / 180;
 const zeros = () => ({ n: 0, a: 0, b: 0, ra: 0, rb: 0 });
+// Issue 921 stationary zero-rate calibration. Only REST_MIN_S reuses the
+// Nintendo-documented minimum (5s on a stable flat surface); the rate gates
+// and time constant below are internal implementation tuning, not Nintendo
+// estimator coefficients.
+const REST_MIN_S = 5, REST_ATT_DPS = 2, REST_RAW_DPS = 4, REST_TAU_S = 1;
+const restFresh = () => ({ bias: [0, 0, 0], still: 0, last: -Infinity, ok: false });
 const state = g => g._qualityGyro || (g._qualityGyro = {
   orientationTime: -Infinity, rate: [0, 0, 0], screen: null,
-  fallbacks: 0, reason: null,
+  fallbacks: 0, reason: null, rest: restFresh(),
 });
 const finiteEvent = (e, keys) => keys.every(k => typeof e?.[k] === 'number' && Number.isFinite(e[k]));
 function fallback(g, reason) {
   const s = state(g);
   if (g._src !== 'ori') { s.fallbacks++; s.reason = reason; }
   g._src = 'ori'; g._rrScale = 1; g._cal = zeros(); s.rawPendingBoundary = null;
-  g._sm.y = g._sm.p = 0;
+  g._sm.y = g._sm.p = 0; s.rest = restFresh();
+}
+function restObserve(g, s, x, y, z, time) {
+  const r = s.rest || (s.rest = restFresh());
+  const prev = r.last; r.last = time;
+  let dt = Number.isFinite(prev) ? (time - prev) / 1000 : 0;
+  if (!(dt > 0)) dt = 0; dt = Math.min(dt, 0.25);
+  const attDps = Math.hypot(x, y, z) / RAD;
+  let rawDps = null, rawVec = null;
+  if (g._rr && (time - g._tRR) <= 75) {
+    const k = g._rrScale * RAD, a = g._rr[0], b = g._rr[1], c = g._rr[2];
+    if (g._src === 'rrA') rawVec = [b * k, c * k, a * k];
+    else if (g._src === 'rrB') rawVec = [a * k, b * k, c * k];
+    rawDps = rawVec ? Math.hypot(rawVec[0], rawVec[1], rawVec[2]) / RAD : Math.hypot(a, b, c) * g._rrScale;
+  }
+  if (attDps <= REST_ATT_DPS && (rawDps == null || rawDps <= REST_RAW_DPS)) {
+    r.still += dt;
+    let ox = x, oy = y, oz = z;
+    if (rawVec && g._src !== 'ori') { ox = rawVec[0]; oy = rawVec[1]; oz = rawVec[2]; }
+    if (r.still <= dt + 1e-9) { r.bias = [ox, oy, oz]; }
+    else {
+      const al = 1 - Math.exp(-dt / REST_TAU_S);
+      r.bias[0] += (ox - r.bias[0]) * al; r.bias[1] += (oy - r.bias[1]) * al; r.bias[2] += (oz - r.bias[2]) * al;
+    }
+    if (r.still >= REST_MIN_S) r.ok = true;
+  } else { r.still = 0; }
 }
 // A committed sample owns a timestamped attitude, independent of which sensor
 // supplied it. Raw intervals advance that attitude with their existing body-rate
@@ -149,12 +180,13 @@ export function installGyroQuality(Gyro, getScreenAngle, isAndroid = () => /Andr
   };
   P._sample = function (x,y,z,dt) {
     const s=state(this),event=s.event;
-    if(!event || !s.boundary)return sample.call(this,x,y,z,dt);
+    const biased=function(bx,by,bz,bdt){const r=s.rest;if(r&&r.ok){bx-=r.bias[0];by-=r.bias[1];bz-=r.bias[2];}return sample.call(this,bx,by,bz,bdt);};
+    if(!event || !s.boundary)return biased.call(this,x,y,z,dt);
     if(event.kind==='orientation') {
       if(s.boundary.time===this._tQ && !(s.attitudes?.length)){
-        const result=sample.call(this,x,y,z,dt);s.boundary={time:event.time,q:this._q.slice()};return result;
+        const result=biased.call(this,x,y,z,dt);s.boundary={time:event.time,q:this._q.slice()};return result;
       }
-      consumeThrough(this,s,event.time,sample);return;
+      consumeThrough(this,s,event.time,biased);return;
     }
     const remaining=(event.time-s.boundary.time)/1000;
     if(!(remaining>0.002)){s.rawPendingBoundary=s.boundary.time;return;} // Native burst gate; retain adoption origin.
@@ -162,7 +194,7 @@ export function installGyroQuality(Gyro, getScreenAngle, isAndroid = () => /Andr
     // The only carried short interval is the existing first-adoption burst gate.
     if(dt+Number.EPSILON*8<remaining && s.rawPendingBoundary!==s.boundary.time){fallback(this,'unintegrated-motion');return;}
     s.rawPendingBoundary=null;
-    const result=sample.call(this,x,y,z,remaining);
+    const result=biased.call(this,x,y,z,remaining);
     commitRaw(s,x,y,z,remaining,event.time);return result;
   };
   P._calibrate = function (x, y, z, time) {
@@ -172,6 +204,7 @@ export function installGyroQuality(Gyro, getScreenAngle, isAndroid = () => /Andr
       const r = { alpha: this._rr[0], beta: this._rr[1], gamma: this._rr[2] };
       if (time - this._tRR > 75 || s.boundary && time - s.boundary.time > 75 || !gyroRateTrusted(this, r, time)) fallback(this, 'attitude-disagreement');
     }
+    restObserve(this, s, x, y, z, time);
     return calibrate.call(this, x, y, z, time);
   };
   P._orientation = function (e) {
@@ -189,7 +222,7 @@ export function installGyroQuality(Gyro, getScreenAngle, isAndroid = () => /Andr
       if(this._hasQ && this._tQ===t && (!hadQ || t>previousTime)){
         if(!s.boundary)s.boundary={time:t,q:this._q.slice()};
         else if(s.boundary.time===t)s.boundary.q=this._q.slice();
-        else if(this._src==='ori')consumeThrough(this,s,t,sample);
+        else if(this._src==='ori'){const gz=this,ss=s;consumeThrough(this,s,t,function(bx,by,bz,bdt){const r=ss.rest;if(r&&r.ok){bx-=r.bias[0];by-=r.bias[1];bz-=r.bias[2];}return sample.call(gz,bx,by,bz,bdt);});}
         else if(t>s.boundary.time)(s.attitudes||(s.attitudes=[])).push({time:t,q:this._q.slice()});
       }
       return result;
