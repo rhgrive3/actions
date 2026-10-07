@@ -104,7 +104,8 @@ async function runScenario(sc) {
   let splatAdmission = null;
   const nativeSplat = a.splat.bind(a);
   a.splat = (...args) => {
-    splatAdmission = { gauge: a.special, phase: a.specialActive?.phase, cause: args[1] };
+    if (!splatAdmission && a.alive)
+      splatAdmission = { gauge: a.special, phase: a.specialActive?.phase, cause: args[1] };
     return nativeSplat(...args);
   };
   const cost = a.specialCost(), segment = cost / SPECIAL_GAUGE_SEGMENTS;
