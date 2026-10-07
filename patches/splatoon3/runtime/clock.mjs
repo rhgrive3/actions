@@ -19,6 +19,7 @@ export class FixedClock {
   reset() { this.accumulator = 0; }
 }
 let context;
+let hiddenGuestListenerInstalled = false;
 export function installClock(api) { context = api; }
 export function runSimulation(game, dt) {
   if (!context) throw new Error('INKWAVE patches were not installed');
@@ -78,6 +79,20 @@ export function runSimulation(game, dt) {
   } else game._menuAttractRenderElapsed = menuRenderElapsed;
 }
 export function installGame(Game) {
+  // #1032: browsers may stop RAF entirely while a tab is hidden. A guest must
+  // therefore leave at the visibility edge itself instead of waiting for the
+  // next gameplay/network tick. The relay's normal leave event then enters the
+  // same #201 disconnect/no-contest policy on every remaining client.
+  if (!hiddenGuestListenerInstalled && globalThis.document?.addEventListener) {
+    globalThis.document.addEventListener('visibilitychange', () => {
+      const G = context?.G, net = G?.net;
+      if (!globalThis.document.hidden || !G?.netm || !net || net.isHost || net.state !== 'match' || net._s3HiddenGuestLeft) return;
+      net._s3HiddenGuestLeft = true;
+      net.leave(true);
+      G.game?.netMatchAborted?.('Disconnected while backgrounded');
+    });
+    hiddenGuestListenerInstalled = true;
+  }
   const original = Game.prototype._loop;
   Game.prototype._loop = function () {
     // A hidden tab explicitly suspends local play; it cannot accumulate hours
