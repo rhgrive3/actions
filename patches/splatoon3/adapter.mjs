@@ -47,46 +47,8 @@ export function checkCompatibility(src, patchRoot = PATCH_ROOT) {
 }
 
 export function adaptSource(rel, code) {
-  // Composition probes may feed the finished BUILD tree through this adapter
-  // again. Accept only the complete paint signature; raw/partial upstream drift
-  // still reaches the exact fail-closed anchors below.
-  if (rel === 'src/world/paint.js' && code.includes('installIssue570PaintPresentation(PaintSystem)')) {
-    // A presentation sentinel alone cannot prove that score, dirty-map and pool
-    // owners survived composition. Validate their unique connections as well.
-    for (const connection of [
-      'installIssue570PaintPresentation(PaintSystem)',
-      'bool bodyOnly = vGrow.z > 1.5;',
-      'let claimed = 0, changed = false;',
-      '        changed = true;',
-      '    if (changed) this.version++;',
-      'if (this._inkMark) this._inkMark(f, i, j);',
-      'if (this.inkDirty) this.inkDirty.full = true;',
-      'const SPLAT_ENTRY_POOL_MAX =',
-      'const SPLAT_GROWTH_POOL_MAX =',
-      'const SPLAT_ENTRY_POOL_MAX_FACES =',
-      '    this._splatEntryPool = [];',
-      '    this._splatGrowthPool = [];',
-      '    this._splatPoolsDisposed = false;',
-      '    this._splatPoolStats = {',
-      '  _takeSplatEntries() {',
-      '  _releaseSplatEntries(entries) {',
-      '  _takeSplatGrowth() {',
-      '  _releaseSplatGrowth(g) {',
-      '  _disposeSplatPools() {',
-      'g.entries = entries; entries = null; growth = g;',
-      'this._releaseSplatGrowth(g); growth = null;',
-      'this.growing.pop(); this._releaseSplatGrowth(g); i--;',
-      'if (growth) this._releaseSplatGrowth(growth);',
-      'if (entries) this._releaseSplatEntries(entries);',
-      'dispose() { this._disposeSplatPools();',
-    ]) {
-      const at = code.indexOf(connection);
-      if (at < 0 || code.indexOf(connection, at + connection.length) >= 0) {
-        throw new Error(`INKWAVE patch conflict (incomplete paint composition): expected exactly one ${connection}`);
-      }
-    }
-    return code;
-  }
+  // Only raw locked sources enter this build-only adapter. Re-applying a
+  // completed or partial BUILD tree must reach the exact anchors and fail closed.
   // Storm owns the structural cloud-loop rewrite. Gear/Sub may then refine
   // the terminal frame boundary without hiding Storm's original connection.
   if (rel === 'src/game/weapons.js') code = adaptStormEffects(rel, code);

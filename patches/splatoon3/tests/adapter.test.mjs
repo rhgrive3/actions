@@ -28,42 +28,25 @@ test('native FX composes charger sight and swim splash connections once', () => 
   assert.throws(() => adaptSource('src/fx/fxHooks.js', built), /conflict/);
 });
 
-test('completed paint re-composition rejects missing or duplicated owner connections', () => {
+test('completed and partial paint trees cannot bypass the raw-source build connections', () => {
   const raw = fs.readFileSync(new URL('src/world/paint.js', publicRoot), 'utf8');
   const built = adaptSource('src/world/paint.js', raw);
-  assert.equal(adaptSource('src/world/paint.js', built), built);
+  assert.throws(() => adaptSource('src/world/paint.js', built), /conflict/);
+  // These two actual reviewer counterexamples were accepted by the old complete
+  // signature while silently removing turf accounting or active growth rendering.
   for (const connection of [
-    'installIssue570PaintPresentation(PaintSystem)',
-    'bool bodyOnly = vGrow.z > 1.5;',
-    'let claimed = 0, changed = false;',
+    'claimed += cellA;',
+    'else { this.growing.push(g); growth = null; }',
     '        changed = true;',
-    '    if (changed) this.version++;',
     'if (this._inkMark) this._inkMark(f, i, j);',
-    'if (this.inkDirty) this.inkDirty.full = true;',
-    'const SPLAT_ENTRY_POOL_MAX =',
-    'const SPLAT_GROWTH_POOL_MAX =',
-    'const SPLAT_ENTRY_POOL_MAX_FACES =',
-    '    this._splatEntryPool = [];',
-    '    this._splatGrowthPool = [];',
-    '    this._splatPoolsDisposed = false;',
-    '    this._splatPoolStats = {',
-    '  _takeSplatEntries() {',
-    '  _releaseSplatEntries(entries) {',
-    '  _takeSplatGrowth() {',
-    '  _releaseSplatGrowth(g) {',
-    '  _disposeSplatPools() {',
-    'g.entries = entries; entries = null; growth = g;',
-    'this._releaseSplatGrowth(g); growth = null;',
-    'this.growing.pop(); this._releaseSplatGrowth(g); i--;',
-    'if (growth) this._releaseSplatGrowth(growth);',
-    'if (entries) this._releaseSplatEntries(entries);',
-    'dispose() { this._disposeSplatPools();',
+    'installIssue570PaintPresentation(PaintSystem)',
   ]) {
     assert.ok(built.includes(connection), connection);
     assert.throws(() => adaptSource('src/world/paint.js', built.replace(connection, '/* owner connection removed */')), /conflict/, connection);
     assert.throws(() => adaptSource('src/world/paint.js', built + '\n' + connection), /conflict/, connection);
   }
 });
+
 test('an upstream change to the planted-leg reach connection stops the build', () => {
   const character = fs.readFileSync(new URL('src/game/character.js', publicRoot), 'utf8');
   const anchor = 'const d = _v5.length(), mxr = this.legReach * 0.97;';
