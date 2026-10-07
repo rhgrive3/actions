@@ -9,6 +9,78 @@ import { installWeaponGates } from './weapon-gates.mjs';
 import { installAgent3WeaponPhysics } from './agent3-weapon-physics.mjs';
 import { installRollerLogic } from './roller.mjs';
 let api;
+const dualiesLockConfigs = new WeakMap();
+const splatlingStreamConfigs = new WeakMap();
+
+function enumerableWeaponKeys(source) {
+  const keys = [], seen = new Set();
+  for (let current = source; current && current !== Object.prototype; current = Object.getPrototypeOf(current)) {
+    for (const key of Reflect.ownKeys(current)) {
+      if (seen.has(key)) continue;
+      seen.add(key);
+      if (Object.getOwnPropertyDescriptor(current, key)?.enumerable) keys.push(key);
+    }
+  }
+  return keys;
+}
+
+export function cachedWeaponOverrideConfig(cache, source, key, value) {
+  let variants = cache.get(source);
+  if (!variants) cache.set(source, variants = new Map());
+  let values = variants.get(key);
+  if (!values) variants.set(key, values = new Map());
+  if (!values.has(value)) {
+    const config = {};
+    for (const field of enumerableWeaponKeys(source)) {
+      Object.defineProperty(config, field, { value: source[field], enumerable: true, writable: true, configurable: true });
+    }
+    Object.defineProperty(config, key, { value, enumerable: true, writable: true, configurable: true });
+    values.set(value, Object.freeze(config));
+  }
+  return values.get(value);
+}
+
+export function withWeaponScalarOverride(cache, source, key, value, run) {
+  let variants = cache.get(source);
+  if (!variants) cache.set(source, variants = new Map());
+  let entry = variants.get(key);
+  if (!entry) {
+    const values = [], view = {};
+    for (const field of enumerableWeaponKeys(source)) {
+      Object.defineProperty(view, field, {
+        enumerable: true,
+        get() { return field === key && values.length ? values[values.length - 1] : source[field]; },
+      });
+    }
+    if (!Object.prototype.hasOwnProperty.call(view, key)) {
+      Object.defineProperty(view, key, {
+        enumerable: true,
+        get() { return values.length ? values[values.length - 1] : source[key]; },
+      });
+    }
+    entry = { view: Object.freeze(view), values };
+    variants.set(key, entry);
+  }
+  entry.values.push(value);
+  try { return run(entry.view); }
+  finally { entry.values.pop(); }
+}
+
+function suppressDualiesGateInput(runner, input) {
+  let view = runner.s3DualiesGateInput;
+  if (!view) {
+    view = Object.create(null);
+    Object.defineProperties(view, {
+      fire: { value: false, writable: true, enumerable: true },
+      firePressed: { value: false, writable: true, enumerable: true },
+    });
+    runner.s3DualiesGateInput = view;
+  }
+  view.fire = false; view.firePressed = false;
+  Object.setPrototypeOf(view, input);
+  return view;
+}
+
 export function splatlingBurst(w, charge) {
   const boundary = w.firstChargeTime / w.chargeTime, c = Math.max(0, Math.min(1, charge));
   return c <= boundary ? w.burstFirst * c / boundary : w.burstFirst + (w.burstMax - w.burstFirst) * (c - boundary) / (1 - boundary);
@@ -132,7 +204,7 @@ export function installWeapons(context, profile) {
     const p = newProjectile.apply(this, args); p.s3DamageGroup = null; p.s3DamageGroupId = null; p.s3Weapon = null; p.s3SpecialWeapon = null; p.s3Vertical = false; return p;
   };
   Projectiles.prototype._push = function (p) {
-    p.s3Weapon = p.s3SpecialWeapon || (p.owner ? { ...p.owner.weapon } : null);
+    p.s3Weapon = p.s3SpecialWeapon || (p.owner ? p.owner.weapon : null);
     if (['shooter', 'dualies', 'splatling'].includes(p.s3Weapon?.kind) && Number.isFinite(p.s3Weapon.referenceGravity)) p.grav = p.s3Weapon.referenceGravity;
     return pushProjectile.call(this, p);
   };
@@ -143,6 +215,7 @@ export function installWeapons(context, profile) {
   WeaponRunner.prototype.reset = function (...args) {
     const result = reset.apply(this, args);
     this.s3Stored = null; this.s3Turret = false; this.s3FlickVertical = false; this.s3BlasterWindup = 0; this.s3BlasterFromSwim = false;
+    this.s3BlasterJumpT = null; this.s3BlasterWasGrounded = false;
     this.s3SloshRecovery = false;
     this.s3SplatlingStartup = 0; this.s3SplatlingEmerging = false; this.s3SplatlingEmergeT = 0;
     this.s3SplatlingHeld = false;
@@ -174,9 +247,38 @@ export function installWeapons(context, profile) {
     if (['charger','splatling'].includes(kind) && this.a.intent.squid && this.a._squidPressT > this.a._firePressT) return false;
     return this.s3BlasterWindup > 0 || busy.call(this);
   };
+  const blasterParam = profile.weaponsFidelityCompletion?.weapons?.blaster?.WeaponParam;
+  const BLASTER_REF_HZ = Number.isFinite(profile.referenceHz) ? profile.referenceHz : 60;
+  const BLASTER_START = Number.isFinite(blasterParam?.Jump_DegBiasDecreaseStartFrame) ? blasterParam.Jump_DegBiasDecreaseStartFrame / BLASTER_REF_HZ : null;
+  const BLASTER_END = Number.isFinite(blasterParam?.Jump_DegBiasEndFrame) ? blasterParam.Jump_DegBiasEndFrame / BLASTER_REF_HZ : null;
+  const BLASTER_BIAS_MAX = Number.isFinite(blasterParam?.Jump_DegBiasMax) ? blasterParam.Jump_DegBiasMax : null;
+  const blasterJumpSupported = () => Number.isFinite(BLASTER_START) && Number.isFinite(BLASTER_END) && BLASTER_END > BLASTER_START && BLASTER_BIAS_MAX > 0;
+  const blasterJumpBias = age => age <= BLASTER_START ? BLASTER_BIAS_MAX
+    : age >= BLASTER_END ? 0 : BLASTER_BIAS_MAX * (BLASTER_END - age) / (BLASTER_END - BLASTER_START);
+  WeaponRunner.prototype.s3BlasterJumpState = function (w) {
+    if (!w || w.kind !== 'blaster' || !blasterJumpSupported())
+      return { supported: false, active: false, age: null, frames: null, bias: 0, envelope: 0, ground: 0, phase: 'idle', recovering: false };
+    const active = this.s3BlasterJumpT != null, bias = active ? blasterJumpBias(this.s3BlasterJumpT) : 0;
+    const envelope = w.spreadAir, ground = w.spreadGround;
+    const frames = active ? this.s3BlasterJumpT * BLASTER_REF_HZ : null;
+    const phase = !active ? 'idle' : frames <= BLASTER_START * BLASTER_REF_HZ ? 'held'
+      : frames < BLASTER_END * BLASTER_REF_HZ ? 'recovering' : 'recovered';
+    return { supported: true, active, age: active ? this.s3BlasterJumpT : null,
+      frames, bias, envelope, ground, phase, recovering: phase === 'recovering' };
+  };
   const runnerUpdate = WeaponRunner.prototype.update;
   WeaponRunner.prototype.update = function (dt, input) {
     const weapon = this.a.weapon;
+    if (blasterJumpSupported() && weapon?.kind === 'blaster') {
+      const grounded = !!this.a.grounded;
+      if (this.s3BlasterWasGrounded === true && !grounded) this.s3BlasterJumpT = 0;
+      else if (this.s3BlasterJumpT != null) this.s3BlasterJumpT += dt;
+      this.s3BlasterWasGrounded = grounded;
+      if (this.s3BlasterJumpT != null && grounded && this.s3BlasterJumpT >= BLASTER_END) this.s3BlasterJumpT = null;
+    } else {
+      this.s3BlasterJumpT = null;
+      this.s3BlasterWasGrounded = false;
+    }
     if (weapon.kind === 'shooter') {
       if (this.s3WasGrounded && !this.a.grounded) this.s3JumpSpreadAge = 0;
       if (this.s3JumpSpreadAge != null) this.s3JumpSpreadAge += dt;
@@ -382,6 +484,7 @@ export function installWeapons(context, profile) {
       // 12 * (1/60) misses .2 and the 17F recovery also gains an extra tick.
       const carry = Math.max(0, this.slosh - w.windup);
       this.slosh = -1; G.projectiles.fireSlosh(a, w);
+      a.lastFire = 0;
       this.s3PostShotRemaining = w.postShotDelay;
       this.cooldown = w.fireInterval - w.windup - carry;
       this.s3SloshRecovery = !!inp.fire;
@@ -437,9 +540,18 @@ export function installWeapons(context, profile) {
     if (this.s3Turret && (!inp.fire || Math.hypot(this.a.intent.move.x, this.a.intent.move.z) > .01 && this.lockT <= 0 || this.a.form === 'squid' || inp.sub)) this.s3Turret = false;
     if (this.s3DodgeShotPending > 1e-10) {
       this.s3DodgeShotPending = Math.max(0, this.s3DodgeShotPending - dt);
-      if (this.s3DodgeShotPending > 1e-10) return dualies.call(this, dt, { ...inp, fire: false, firePressed: false }, this.s3Turret ? { ...w, fireInterval: w.lockInterval } : w);
+      if (this.s3DodgeShotPending > 1e-10) {
+        const gatedInput = suppressDualiesGateInput(this, inp);
+        try {
+          return dualies.call(this, dt, gatedInput,
+            this.s3Turret ? cachedWeaponOverrideConfig(dualiesLockConfigs, w, 'fireInterval', w.lockInterval) : w);
+        } finally {
+          Object.setPrototypeOf(gatedInput, null);
+        }
+      }
     }
-    const result = dualies.call(this, dt, inp, this.s3Turret ? { ...w, fireInterval: w.lockInterval } : w);
+    const result = dualies.call(this, dt, inp,
+      this.s3Turret ? cachedWeaponOverrideConfig(dualiesLockConfigs, w, 'fireInterval', w.lockInterval) : w);
     if (dodging && !this.dodge) {
       this.s3Turret = true;
       this.s3DodgeShotPending = 4 / 60;
@@ -450,8 +562,12 @@ export function installWeapons(context, profile) {
   };
   WeaponRunner.prototype._spreadDeg = function (w) {
     // The upstream blaster reads `spread`, while the pinned profile supplies
-    // Stand_DegSwerve as spreadGround. Connect both ground and jump values.
-    if (w.kind === 'blaster') return this.a.grounded ? w.spreadGround : w.spreadAir;
+    // Stand_DegSwerve as spreadGround. During the sourced jump-recovery state
+    // publish the outer envelope; the probability bias is sampled at fire time.
+    if (w.kind === 'blaster') {
+      const state = this.s3BlasterJumpState(w);
+      return state.active ? state.envelope : (this.a.grounded ? w.spreadGround : w.spreadAir);
+    }
     if (w.kind === 'shooter' && this.s3JumpSpreadAge != null) {
       const age = this.s3JumpSpreadAge, hold = w.jumpSpreadHold ?? 0, end = Math.max(hold + 1e-10, w.jumpSpreadRecoverEnd ?? hold);
       let base;
@@ -462,6 +578,13 @@ export function installWeapons(context, profile) {
       return base * (first + (1 - first) * this.bloom);
     }
     return w.kind === 'dualies' && this.s3Turret ? w.spreadLock : spread.call(this, w);
+  };
+  const fireBlaster = Projectiles.prototype.fireBlaster;
+  Projectiles.prototype.fireBlaster = function (a, w, spreadDeg) {
+    const state = a?.weaponRunner?.s3BlasterJumpState?.(w);
+    if (state?.active)
+      return fireBlaster.call(this, a, w, Math.random() < state.bias ? state.envelope : state.ground);
+    return fireBlaster.call(this, a, w, spreadDeg);
   };
   const fireShooter = Projectiles.prototype.fireShooter;
   Projectiles.prototype.fireShooter = function (a, weapon, spreadDeg) {
