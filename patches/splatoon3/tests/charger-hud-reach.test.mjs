@@ -235,6 +235,7 @@ test('#858 Splatling HUD reach follows the released charge snapshot and expires 
   a.weaponRunner.streaming = false;
   a.weaponRunner.charging = false;
   a.weaponRunner.cooldown = 0;
+  a.weaponRunner._splatling(1 / 60, { fire: true }, a.weapon); // consume the installed 1F startup owner
   a.weaponRunner._splatling(a.weapon.firstChargeTime, { fire: true }, a.weapon);
   assert.ok(Math.abs(a.weaponRunner.charge - circle) < 1e-9, 'real split owner reaches the first-circle charge');
   a.weaponRunner.fidelitySplatlingCharge = null;
