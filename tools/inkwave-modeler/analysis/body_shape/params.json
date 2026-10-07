@@ -698,6 +698,110 @@
    85
   ]
  },
+ "occiput_in": {
+  "meshes": [
+   "HEAD_face",
+   "BODY_torso",
+   "HAIR_hair",
+   "HAIR_scalp"
+  ],
+  "profile": [
+   [
+    -110,
+    0.0
+   ],
+   [
+    -100,
+    0.5
+   ],
+   [
+    -90,
+    2.0
+   ],
+   [
+    -80,
+    6.5
+   ],
+   [
+    -70,
+    6.5
+   ],
+   [
+    -60,
+    18.0
+   ],
+   [
+    -50,
+    22.0
+   ],
+   [
+    -40,
+    20.0
+   ],
+   [
+    -30,
+    15.5
+   ],
+   [
+    -20,
+    11.0
+   ],
+   [
+    -10,
+    8.0
+   ],
+   [
+    0,
+    7.0
+   ],
+   [
+    10,
+    5.4
+   ],
+   [
+    20,
+    4.0
+   ],
+   [
+    40,
+    3.0
+   ],
+   [
+    55,
+    1.5
+   ],
+   [
+    70,
+    0.0
+   ]
+  ],
+  "z": [
+   -20,
+   -45
+  ],
+  "x_side": [
+   -300,
+   -299
+  ],
+  "x_out": [
+   45,
+   95
+  ]
+ },
+ "nape_fillet": {
+  "mesh": "HEAD_face",
+  "target": "BODY_torso",
+  "mm": [
+   2.0,
+   10.0
+  ],
+  "offset_mm": 0.3,
+  "z": [
+   -5.0,
+   -25.0
+  ],
+  "y_max": -55.0
+ },
  "smooth_regions": [
   {
    "name": "skull_back_smooth",
@@ -721,6 +825,34 @@
    "chunks": 10
   },
   {
+   "name": "occiput_under_smooth",
+   "mesh": "HEAD_face",
+   "follow": [
+    "HAIR_scalp",
+    "HAIR_hair"
+   ],
+   "centre": [
+    0,
+    -62,
+    -50
+   ],
+   "r": [
+    95,
+    32,
+    60
+   ],
+   "factor": 0.5,
+   "iters": 300,
+   "chunks": 15,
+   "keep_near": {
+    "mesh": "BODY_torso",
+    "mm": [
+     1.5,
+     8.0
+    ]
+   }
+  },
+  {
    "name": "nape_join_smooth",
    "mesh": "HEAD_face",
    "centre": [
@@ -735,7 +867,14 @@
    ],
    "factor": 0.5,
    "iters": 100,
-   "chunks": 10
+   "chunks": 10,
+   "keep_near": {
+    "mesh": "BODY_torso",
+    "mm": [
+     1.5,
+     8.0
+    ]
+   }
   },
   {
    "name": "neck_back_smooth",
