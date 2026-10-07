@@ -147,7 +147,7 @@ test('#729 Projectiles.clear() drops pending terrain blast without resolving; re
   assert.equal(s.ps.s3BlastQueue?.length, 1, 'terrain contact queues 1 pending blast');
   assert.equal(s.ev.boom.length, 0, 'no radial explosion in contact tick');
   assert.equal(s.e.hp, 100, 'no radial damage in contact tick');
-  assert.equal(splats.length, 1, 'only contact impact paint in contact tick, no burst paint yet');
+  assert.deepEqual(splats.map(s => s[1]), [2.2, 1.3], 'separate wall impact and drop shock; no burst paint yet');
 
   // Rematch / round reset clears projectiles
   s.ps.clear();
@@ -158,7 +158,7 @@ test('#729 Projectiles.clear() drops pending terrain blast without resolving; re
   s.step();
   assert.equal(s.ev.boom.length, 0, 'no stale explosion FX after clear');
   assert.equal(s.e.hp, 100, 'no stale blast damage after clear');
-  assert.equal(splats.length, 1, 'no stale burst paint splat after clear');
+  assert.equal(splats.length, 2, 'no stale burst paint splat after clear');
   assert.equal(s.ps.s3BlastQueue, null, 'queue remains empty and retains no actor references');
 
   // Fresh re-entry / new launch in the new match
@@ -184,13 +184,13 @@ test('#729 Projectiles.clear() drops pending terrain blast without resolving; re
   assert.equal(s.ps.s3BlastQueue?.length, 1, 'fresh terrain contact queues 1 blast');
   assert.equal(s.ev.boom.length, 0, 'no explosion at fresh contact tick N');
   assert.equal(s.e.hp, 100, 'no damage at fresh contact tick N');
-  assert.equal(splats.length, 2, 'fresh contact has impact paint only');
+  assert.deepEqual(splats.map(s => s[1]), [2.2, 1.3, 2.2, 1.3], 'fresh wall impact and shock only');
 
   // Next fixed frame (tick N+1 for fresh shot)
   s.step();
   assert.equal(s.tick(), freshContact + 1, 'fresh burst resolves at N+1');
   assert.equal(s.ev.boom.length, 1, 'fresh burst explosion FX fired at N+1');
   assert.ok(s.e.hp < 100, 'fresh burst damage applied at N+1');
-  assert.equal(splats.length, 3, 'fresh burst paint splat applied at N+1');
+  assert.equal(splats.length, 5, 'fresh burst paint splat applied at N+1');
   assert.ok(!s.ps.s3BlastQueue?.length, 'queue is drained after resolution');
 });
