@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { G, on, emit } from '../../../src/core/ctx.js';
 import { PLAYER, WEAPONS, SUB, SPECIALS, DEFAULT_SETTINGS } from '../../../src/config.js';
 import { Actor } from '../../../src/game/actor.js';
+import { Match } from '../../../src/game/match.js';
 import { Character, CHARACTER_CHANNELS, CHARACTER_TIMERS, CHARACTER_FOOT_MODES, CHARACTER_FOOT_METRICS, CHARACTER_BOMB_POSE } from '../../../src/game/character.js';
 import { WeaponRunner, Projectiles } from '../../../src/game/weapons.js';
 import { NetMatch } from '../../../src/net/netmatch.js';
@@ -48,6 +49,7 @@ import { installWallMotion } from './wall-motion.mjs';
 import { installFormMotion } from './form-motion.mjs';
 import { installDualiesMotion } from './dualies-motion.mjs';
 import { installRollerDetailMotion } from './roller-detail-motion.mjs';
+import { installRollerFold } from './roller-fold.mjs';
 import { installSuperjumpMotion } from './superjump-motion.mjs';
 import { installSquidrollMotion } from './squidroll-motion.mjs';
 import { installHitSpawnMotion } from './hit-spawn-motion.mjs';
@@ -57,12 +59,13 @@ import { installSpecialMotion } from './special-motion.mjs';
 import { installFaceMotion } from './face-motion.mjs';
 import { installRespawnLifecycle } from './respawn-lifecycle.mjs';
 import { installCarryMotion } from './carry-motion.mjs';
+import { installInitialSpawn } from './initial-spawn.mjs';
 
 let installed = false;
 export function install(profile) {
   if (installed) throw new Error('INKWAVE patches already installed');
   if (profile.schema !== 1 || profile.referenceVersion !== '11.3.0') throw new Error('Unsupported gameplay profile');
-  const api = { THREE, G, on, emit, PLAYER, WEAPONS, SUB, SPECIALS, SUB_ICONS, SPECIAL_ICONS, Actor, NetMatch, Character, CHARACTER_CHANNELS, CHARACTER_TIMERS, CHARACTER_FOOT_MODES, CHARACTER_FOOT_METRICS, CHARACTER_BOMB_POSE, WeaponRunner, Projectiles, PaintSystem, PlayerController, Menus, HUD, ShadowCache, Physics, Hit };
+  const api = { THREE, G, on, emit, PLAYER, WEAPONS, SUB, SPECIALS, SUB_ICONS, SPECIAL_ICONS, Match, Actor, NetMatch, Character, CHARACTER_CHANNELS, CHARACTER_TIMERS, CHARACTER_FOOT_MODES, CHARACTER_FOOT_METRICS, CHARACTER_BOMB_POSE, WeaponRunner, Projectiles, PaintSystem, PlayerController, Menus, HUD, ShadowCache, Physics, Hit };
   Object.assign(PLAYER, profile.player);
   for (const [kind, data] of Object.entries(profile.weapons)) {
     if (!WEAPONS[kind]) throw new Error(`Missing upstream weapon ${kind}`);
@@ -101,6 +104,9 @@ export function install(profile) {
   installWallMotion(api, profile);
   installFormMotion(api, profile);
   installRollerDetailMotion(api, profile);
+  // Presentation only: the Roller's articulated middle hinge reads the attack state
+  // installRollerMotion/roller logic already own and never writes gameplay back.
+  installRollerFold(api, profile);
   installSuperjumpMotion(api, profile);
   installSquidrollMotion(api, profile);
   installHitSpawnMotion(api, profile);
@@ -126,6 +132,7 @@ export function install(profile) {
   // Aim remains tied to the actual camera ray. No target-dependent auto-turn.
   DEFAULT_SETTINGS.aimAssist = 0; DEFAULT_SETTINGS.aimAssistMouse = false;
   PlayerController.prototype._assistTarget = () => null;
+  installInitialSpawn(api, profile);
   G.s3 = { patchVersion: 1, referenceVersion: profile.referenceVersion, calibration: profile.calibration, installed: true };
   installed = true;
   installIssue196SpecialChargeCancel(api);

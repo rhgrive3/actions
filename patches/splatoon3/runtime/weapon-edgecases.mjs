@@ -70,6 +70,27 @@ export function appendRollerNearUnit(system, a, w) {
   system._push(p);
 }
 
+export function paintRollerReleaseFootprint(system, a, w, { G, PLAYER, Hit, WALKABLE }) {
+  const mode = a?.weaponRunner?.s3FlickVertical ? 'vertical' : 'horizontal';
+  const shape = w?.releaseFootPaint?.[mode];
+  if (!shape || a.remote || a.alive === false || w.kind !== 'roller' || !G.paint?.splat || !G.physics?.groundProbe) return 0;
+  const forwardX = Math.sin(a.yaw), forwardZ = Math.cos(a.yaw);
+  const rightX = Math.cos(a.yaw), rightZ = -Math.sin(a.yaw);
+  const x = a.pos.x + rightX * shape.offset.x + forwardX * shape.offset.z;
+  const z = a.pos.z + rightZ * shape.offset.x + forwardZ * shape.offset.z;
+  const ground = new Hit();
+  // SplashNearest's downward offset and MaxHeight bound the real ground query;
+  // this lets an airborne vertical swing paint only when walkable ground is in range.
+  G.physics.groundProbe(x, a.pos.y, z, shape.maxHeight, Math.abs(shape.offset.y), PLAYER.footRadius, ground, false);
+  if (!ground.hit || ground.normal.y < WALKABLE || !Number.isFinite(ground.y)) return 0;
+  const p = system.list[system.list.length - 1];
+  if (!p || p.owner !== a || !Number.isFinite(p.seed)) return 0;
+  const center = a.pos.clone().set(x, ground.y, z).addScaledVector(ground.normal, 0.1);
+  const area = G.paint.splat(center, shape.paintWidthHalf, a.team, { seed: p.seed });
+  if (area > 0) a.addTurf?.(area);
+  return area;
+}
+
 export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYER, G, THREE, Hit }) {
   const tag = Symbol.for('inkwave.s3.weapon-edgecases.v1');
   if (WeaponRunner.prototype[tag]) return;

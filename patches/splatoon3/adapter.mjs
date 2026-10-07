@@ -167,7 +167,14 @@ export function adaptSource(rel, code) {
     for (const [anchor, label] of [['  _poseThrow(P, tt) {', 'native bomb throw pose'], ['  _applyPose(dt, s) {', 'native bomb pose application']])
       code = replaceOnce(code, anchor, anchor, label);
     code += '\nexport const CHARACTER_BOMB_POSE = Object.freeze({ throw: Character.prototype._poseThrow, apply: Character.prototype._applyPose });\n';
-    return "import { dualiesMotionLock, dualiesMotionAllowsFootPlant } from '../../patches/splatoon3/runtime/action-admission.mjs';\nimport { specialMotionAllowsFootPlant } from '../../patches/splatoon3/runtime/special-motion.mjs';\nimport { applyWalkLocomotion, walkLean, walkSwingUnloaded, walkFootReach, walkPelvisDrop, walkTreadAllowed, walkActive } from '../../patches/splatoon3/runtime/walk.mjs';\n"+code;
+    // Roller middle hinge (#916): the native static yoke gains one articulated group
+    // that owns the roller-side parts and the drum. Dedicated connection, kept apart
+    // from the independent #915 weapon-transform ownership.
+    code = replaceOnce(code, '    const muzzle = new THREE.Object3D(); muzzle.position.copy(d.muzzle); off.add(muzzle);',
+      '    const muzzle = new THREE.Object3D(); muzzle.position.copy(d.muzzle); off.add(muzzle);\n    const fold = attachRollerFold(d, off, parts, drum);', 'roller articulated hinge group');
+    code = replaceOnce(code, 'return { def: d, pivot, off, body, ink, bodyFar, inkFar, glow, drum, muzzle, parts, partList, lamps, coil, near: true, pump: 0, trig: 0, left: null, hidden: 0 };',
+      'return { def: d, pivot, off, body, ink, bodyFar, inkFar, glow, drum, muzzle, parts, partList, lamps, coil, fold, near: true, pump: 0, trig: 0, left: null, hidden: 0 };', 'roller fold instance handle');
+    return "import { attachRollerFold } from '../../patches/splatoon3/runtime/roller-fold.mjs';\nimport { dualiesMotionLock, dualiesMotionAllowsFootPlant } from '../../patches/splatoon3/runtime/action-admission.mjs';\nimport { specialMotionAllowsFootPlant } from '../../patches/splatoon3/runtime/special-motion.mjs';\nimport { applyWalkLocomotion, walkLean, walkSwingUnloaded, walkFootReach, walkPelvisDrop, walkTreadAllowed, walkActive } from '../../patches/splatoon3/runtime/walk.mjs';\n"+code;
   }
   if (rel === 'src/ui/hud.js') {
     code = replaceOnce(code,
@@ -626,6 +633,11 @@ export function adaptSource(rel, code) {
     if (targetStart < 0 || targetEnd < targetStart) throw new Error('INKWAVE patch conflict: super jump destination');
     code = replaceOnce(code, code.slice(targetStart, targetEnd), '        // Destination was committed at admission; target motion/death cannot retarget it.\n        s.from.copy(this.pos);\n', 'super jump last grounded destination');
     code = replaceOnce(code, "this.form = k > 0.82 ? 'kid' : 'squid';", "this.form = k > SUPERJUMP_MAIN_PROGRESS ? 'kid' : 'squid';", 'super jump human main boundary');
+    code = replaceOnce(code, "this.form = k > SUPERJUMP_MAIN_PROGRESS ? 'kid' : 'squid';",
+      "this.form = s.initialSpawn ? 'squid' : k > SUPERJUMP_MAIN_PROGRESS ? 'kid' : 'squid';", 'initial deployment stays squid through flight');
+    code = replaceOnce(code, 'const apex = 11 + s.from.distanceTo(s.to) * 0.08;',
+      'const apex = s.initialSpawn ? s.initialSpawn.arcBase + s.from.distanceTo(s.to) * s.initialSpawn.arcPerMeter : 11 + s.from.distanceTo(s.to) * 0.08;',
+      'profile-declared internal initial deployment arc');
     const fallStart = code.indexOf('    // ---- fall into the sea\n'), fallEnd = code.indexOf('    this._finishFrame(dt);', fallStart);
     if (fallStart < 0 || fallEnd < fallStart) throw new Error('INKWAVE patch conflict: super jump environmental death');
     const fallBody = code.slice(fallStart, fallEnd).replace('      return;', '      return true;');
@@ -653,7 +665,8 @@ export function adaptSource(rel, code) {
       "      if (k >= 1) {\n        this.invuln = 0; // Spawn protection always ends before landing.\n        this.superJumpState = null;", 'super jump landing vulnerability');
     code = replaceOnce(code,
       '        this.addTurf(G.paint.splat(_v.copy(this.pos).setY(this.pos.y + 0.3), 1.4, this.team, { seed: Math.random() }));\n',
-      '        // Splatoon 3: Ordinary Super Jump does not leave ink, grant turf points, or charge special at landing.\n',
+      '        // Ordinary Super Jump remains unpainted; only initial deployment owns its deterministic landing paint.\n' +
+      '        if (s.initialSpawn) this.addTurf(G.paint.splat(_v.copy(this.pos).setY(this.pos.y + 0.3), s.initialSpawn.paintRadius, this.team, { seed: s.initialSpawn.paintSeed }));\n',
       'super jump landing paint');
     const swimFormHead = code.includes('    const wantSquid = intent.squid && !intent.sub && !fireWins && !this.weaponRunner.busy() && !chargerSwimLocked(this);')
       ? '    const fireWins = (intent.fire || this.fireBuffer > 0) && this._firePressT >= this._squidPressT;\n' +
@@ -687,9 +700,9 @@ export function adaptSource(rel, code) {
   }
   if (rel === 'src/game/character-weapons.js') {
     code = replaceOnce(code, '    if (ft >= 0.15 && ft - dt < 0.15) w.drumW += 34;', '    const release = st.flickReleaseTime ?? 0.15;\n    if (ft >= release && ft - dt < release) w.drumW += 34;', 'roller drum release impulse');
-    code = replaceOnce(code, 'const BUILDERS = { shooter: buildShooter, roller: buildRoller,', 'const BUILDERS = { shooter: buildShooter, roller: () => rollerModel(buildRoller()),', 'roller drum proportions');
+    code = replaceOnce(code, 'const BUILDERS = { shooter: buildShooter, roller: buildRoller,', 'const BUILDERS = { shooter: buildShooter, roller: () => rollerFoldModel(rollerModel(buildRoller())),', 'roller drum proportions and articulated middle hinge');
     code = replaceOnce(code, 'blaster: buildBlaster,', 'blaster: () => blasterMechanism(buildBlaster()),', 'blaster S3 lever/spring-front mechanism channels');
-    return "import { rollerModel } from '../../patches/splatoon3/runtime/roller-model.mjs';\nimport { blasterMechanism } from '../../patches/splatoon3/runtime/blaster-mechanism-model.mjs';\n" + code;
+    return "import { rollerModel } from '../../patches/splatoon3/runtime/roller-model.mjs';\nimport { rollerFoldModel } from '../../patches/splatoon3/runtime/roller-fold.mjs';\nimport { blasterMechanism } from '../../patches/splatoon3/runtime/blaster-mechanism-model.mjs';\n" + code;
   }
   if (rel === 'src/audio/music.js') {
     // Match-start Opening cue (issue #605): an original short sting for the pre-GO intro.

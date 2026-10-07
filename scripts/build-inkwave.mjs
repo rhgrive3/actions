@@ -174,6 +174,9 @@ const deferredIntegrationPreloads = new Set([
   'patches/splatoon3/runtime/blaster-mechanism-model.mjs',
   'patches/splatoon3/runtime/blaster-mechanism.mjs',
   'patches/splatoon3/runtime/tidal-slam-gauge.mjs',
+  // C41: retain the new static runtime dependencies and full precache; defer their extra eager hints.
+  'patches/splatoon3/runtime/initial-spawn.mjs',
+  'patches/splatoon3/runtime/roller-fold.mjs',
   'patches/splatoon3/runtime/clothing-gear.mjs', // Static import and full precache are retained.
   // Remaining PR786 helpers keep their static-import and full-precache owners.
   'patches/local-quality/world-quality.mjs',
