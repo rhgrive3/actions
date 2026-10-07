@@ -2363,6 +2363,15 @@ def main():
             elif step['kind'] == 'displace':
                 er.apply_weighted_modifier(face, w, 'DISPLACE', direction='NORMAL', strength=step['mm'] / 1000,
                                            mid_level=0.0)
+            elif step['kind'] == 'eye_wrap':
+                # the lid margin rests on the eyeball (the usual eyelid build): weighted Shrinkwrap of the lid skin
+                # onto this side's eyeball, Above Surface at offset_mm, so skin moved over the eye stays in front
+                for side, ball in ((-1, 'HEAD_eyes_18'), (1, 'HEAD_eyes')):
+                    ws = w * (np.sign(loc[:, 0]) == side)
+                    if ws.any():
+                        er.apply_weighted_modifier(face, ws, 'SHRINKWRAP', target=bpy.data.objects[ball],
+                                                   wrap_method='NEAREST_SURFACEPOINT', wrap_mode='ABOVE_SURFACE',
+                                                   offset=step['offset_mm'] / 1000)
             else:
                 # seam_chunks > 1: smooth across the open midline too.  Each half is smoothed on its own for a few
                 # iterations, then the midline pairs are joined again, so the joint never drifts far and no fold
