@@ -1,12 +1,14 @@
 export function adaptIdleSource(rel, code, replace) {
   const patch = (before, after, label) => { code = replace(code, before, after, 'idle: ' + label); };
   if (rel === 'src/world/environment.js') {
-    code = "import { environmentBudget, releaseFarReflection } from '../../patches/local-quality/idle-resources.mjs';\n" + code;
+    code = "import { environmentBudget, releaseFarReflection, releaseReflection } from '../../patches/local-quality/idle-resources.mjs';\n" + code;
     patch('  _initCloudBake() {', '  _initCloudBake() {\n    const { cloudWidth: CLOUD_W, cloudHeight: CLOUD_H } = environmentBudget(G.settings, G.game?.mobile ?? G.mobile);', 'cloud allocation budget');
     patch('    const rt = this._cloudRT;', '    const rt = this._cloudRT;\n    const CLOUD_W = rt.width, CLOUD_H = rt.height;', 'cloud bake dimensions');
     patch('    if (!this._marina) { U.uFarOn.value = 0; return; }',
       '    if (!this._marina) { releaseFarReflection(this); return; }\n    const farSize = environmentBudget(G.settings, G.game?.mobile ?? G.mobile).farSize;\n    if (this._farRT && this._farRT.width !== farSize) releaseFarReflection(this);', 'far reflection lifetime');
     patch('new THREE.WebGLCubeRenderTarget(512, {', 'new THREE.WebGLCubeRenderTarget(farSize, {', 'far reflection budget');
+    patch('    if (!on) { this._marinaData = null; U.uWetCount.value = 0; U.uReflOn.value = 0; this._writeRects(); return; }',
+      '    if (!on) { releaseReflection(this); this._marinaData = null; U.uWetCount.value = 0; U.uReflOn.value = 0; this._writeRects(); return; }', 'planar reflection lifetime');
   }
   if (rel === 'src/audio/music.js') {
     code = "import { installMusicIdle } from '../../patches/local-quality/music-idle.mjs';\n" + code;

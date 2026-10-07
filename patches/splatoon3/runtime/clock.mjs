@@ -37,7 +37,7 @@ export function runSimulation(game, dt) {
       m.updateController(step);
       m.controller?.computeAim?.();
       m.update(step);
-      if (!m.paused) G.projectiles.update(step);
+      if (!m.paused && !m._timeUpFrozen) G.projectiles.update(step);   // TIME UP / JUDGE: no shot may paint or hit
       if (m.attract) game._updateAttract(step);
       else if (m.state === 'playing' && m.local?.alive && (game.rig.mode !== 'follow' || game.rig.target !== m.local)) game.rig.follow(m.local, true);
     }

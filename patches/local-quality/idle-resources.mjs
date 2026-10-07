@@ -13,6 +13,16 @@ export function releaseFarReflection(env) {
   target?.dispose();
 }
 
+// The planar reflection target (RGBA16F + depth, mipmapped) only exists for marina water. Leaving that stage class
+// releases it and clears the sampler; _renderReflection recreates it lazily on the next marina entry.
+export function releaseReflection(env) {
+  env.U.uReflOn.value = 0;
+  env.U.uReflTex.value = null;
+  const target = env._reflRT;
+  env._reflRT = env._reflCam = null;
+  target?.dispose();
+}
+
 export function refreshEnvironmentBudget(env, settings, mobile) {
   if (!env?._cloudRT) return false;
   const q = environmentBudget(settings, mobile), rt = env._cloudRT;
