@@ -5,7 +5,7 @@ import { selectedSubCost } from '../runtime/kit-composition.mjs';
 import { projectShotGuide } from '../runtime/weapons-fidelity.mjs';
 import { hudFrameSnapshot } from '../../local-quality/hud-snapshots.mjs';
 import { enemyRevealedOnMap } from '../runtime/map-reveal.mjs';
-import { buildHealthMarkers, mapActorVisible } from '../runtime/combat-info.mjs';
+import { buildHealthMarkers, healthActorVisible, mapActorVisible } from '../runtime/combat-info.mjs';
 import {test} from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import path from 'node:path';import {fileURLToPath} from 'node:url';
 import {fixture} from './source-fixture.mjs';import {adaptSource} from '../adapter.mjs';import {subInkSpec} from '../runtime/sub-ready.mjs';
 const ROOT=fileURLToPath(new URL('../../../',import.meta.url)),DT=1/60,near=(a,b)=>assert.ok(Math.abs(a-b)<1e-9,`${a} != ${b}`);
@@ -46,4 +46,44 @@ test('#349: changing actor-local modifiers, equipment, respawn and local actor r
 test('#349: UI-lab frames without optional readiness use the same unrounded threshold',async()=>{
  const f=await fixture(extra),a=f.make(),u=ui(f,a);
  for(const ink of [.455-1e-8,.455,.455+1e-8]){const frame={weapon:'shooter',ink,subCost:.455,subAim:true};const out=u.read(frame,frame);assert.equal(out.short,ink<.455);assert.equal(out.tank,ink<.455);assert.equal(out.mobile,ink<.455);assert.equal(out.label,'46%');}
+});
+
+test('#1044 real health marker runtime skips LOS for ineligible actors and keeps eligible disclosures current',async()=>{
+ const f=await fixture(),{G,THREE,PLAYER}=f;
+ const actors=Array.from({length:8},(_,i)=>{const a=f.make();a.team=i<4?0:1;a.pos.set((i-3.5)*.6,0,0);a.hp=PLAYER.hp;return a;});
+ const viewer=actors[0],ally=actors[1],enemy=actors[4],dead=actors[5],stale=actors[6],hidden=actors[7];
+ const game={match:{local:viewer,actors}};G.time=10;G.camera=new THREE.PerspectiveCamera(60,800/600,.1,100);
+ G.camera.position.set(0,3,12);G.camera.lookAt(0,1,0);G.camera.updateMatrixWorld();
+ let losCalls=0;G.physics.los=()=>{losCalls++;return true;};
+ const width=Object.hasOwn(globalThis,'innerWidth')?globalThis.innerWidth:undefined;
+ const height=Object.hasOwn(globalThis,'innerHeight')?globalThis.innerHeight:undefined;
+ const hadWidth=Object.hasOwn(globalThis,'innerWidth'),hadHeight=Object.hasOwn(globalThis,'innerHeight');
+ globalThis.innerWidth=800;globalThis.innerHeight=600;
+ try{
+  let rows=buildHealthMarkers(game,G,PLAYER,THREE);assert.equal(rows.length,0);assert.equal(losCalls,0,'eight full-health actors require no LOS queries');
+  dead.hp=40;dead.alive=false;dead.lastDamage=0;
+  stale.hp=40;stale.lastDamage=4;
+  hidden.hp=40;hidden.lastDamage=0;hidden.submerged=true;hidden.anim.form='swim';
+  ally.hp=80;rows=buildHealthMarkers(game,G,PLAYER,THREE);assert.equal(rows.length,1);assert.equal(rows[0].hp,.8);assert.equal(losCalls,0,'damaged ally visibility does not need LOS');
+  enemy.hp=70;enemy.lastDamage=0;rows=buildHealthMarkers(game,G,PLAYER,THREE);
+  assert.equal(losCalls,1,'only the recently damaged, visible enemy reaches LOS');assert.equal(rows.length,2);assert.equal(rows[1].hp,.7);assert.equal(rows[1].color,G.teamHex[enemy.team]);
+  assert.equal(healthActorVisible(enemy,viewer,{hpMax:PLAYER.hp,now:G.time,visible:true}),true,'the existing health predicate owns eligibility');
+  const enemyRow=rows[1];enemy.hp=42;G.time+=.1;rows=buildHealthMarkers(game,G,PLAYER,THREE);
+  assert.equal(losCalls,2);assert.equal(rows[1],enemyRow);assert.equal(enemyRow.hp,.42,'health gauge reflects the current value');
+  enemy.submerged=true;enemy.anim.form='swim';rows=buildHealthMarkers(game,G,PLAYER,THREE);
+  assert.equal(rows.length,1);assert.equal(losCalls,2,'hidden enemy is rejected before LOS');
+  assert.equal(healthActorVisible(enemy,viewer,{hpMax:PLAYER.hp,now:G.time,visible:true}),false);
+  enemy.s3.revealedUntil={[viewer.team]:G.time+1};rows=buildHealthMarkers(game,G,PLAYER,THREE);
+  assert.equal(rows.length,2);assert.equal(losCalls,2,'explicit reveal preserves the hidden-target exception without LOS');
+  assert.equal(healthActorVisible(enemy,viewer,{hpMax:PLAYER.hp,now:G.time,visible:false}),true);
+  const beforeCameraX=rows[1].x;G.camera.position.x=5;G.camera.lookAt(0,1,0);G.camera.updateMatrixWorld();
+  rows=buildHealthMarkers(game,G,PLAYER,THREE);assert.notEqual(rows[1].x,beforeCameraX,'camera movement reprojects the marker');
+  const beforeViewportX=rows[1].x;globalThis.innerWidth=1200;rows=buildHealthMarkers(game,G,PLAYER,THREE);
+  assert.notEqual(rows[1].x,beforeViewportX,'viewport width updates marker coordinates');
+  game.match.actors=actors.filter(actor=>actor!==enemy);rows=buildHealthMarkers(game,G,PLAYER,THREE);
+  assert.equal(rows.length,1,'removed opponent disclosure is cleared from the pooled row list');
+ }finally{
+  if(hadWidth)globalThis.innerWidth=width;else delete globalThis.innerWidth;
+  if(hadHeight)globalThis.innerHeight=height;else delete globalThis.innerHeight;
+ }
 });
