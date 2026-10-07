@@ -571,7 +571,7 @@ export function installKitInkVac(context, _profile) {
   if (!Object.hasOwn(proto, INSTALL)) {
     Object.defineProperty(proto, INSTALL, { value: true });
     const update = proto.update, startSpecial = proto._startSpecial;
-    const splat = proto.splat, reset = proto.reset;
+    const splat = proto.splat, reset = proto.reset, setWeapon = proto.setWeapon;
 
     proto.update = function (dt) {
       const s = this.specialActive;
@@ -633,6 +633,12 @@ export function installKitInkVac(context, _profile) {
       return undefined;
     };
 
+    proto.setWeapon = function (...args) {
+      const previous = this.weaponId;
+      const result = setWeapon.apply(this, args);
+      if (this.weaponId !== previous) disposeInkVac(this);
+      return result;
+    };
     proto.splat = function (...args) { disposeInkVac(this); return splat.apply(this, args); };
     proto.reset = function (...args) { disposeInkVac(this); return reset.apply(this, args); };
   }

@@ -205,6 +205,31 @@ function adaptQualityLayer(rel, code) {
   code = adaptPlatformSource(rel, code);
   if (rel === 'src/core/mobile.js') return code;
   if (rel === 'src/ui/menus.js') {
+    // #950: delayed title navigation belongs to the originating screen and
+    // menu lifetime. Keep the native 200ms confirmation and wipe sequence.
+    code = replaceOnce(code,
+      '  show(name = null, opts = {}) {',
+      '  show(name = null, opts = {}) {\n    if (this._qualityDisposed) return;',
+      'retired menu navigation guard');
+    code = replaceOnce(code,
+      '    const token = ++this._swapToken;',
+      '    const token = ++this._swapToken;\n' +
+      '    clearTimeout(this._titleTimer); this._titleTimer = null; this._titleTicket = null; this._leavingTitle = false;',
+      'new screen retires pending title confirmation');
+    code = replaceOnce(code,
+      "    if (this.current !== 'title' || this._leavingTitle) return;",
+      "    if (this._qualityDisposed || this.current !== 'title' || this._leavingTitle) return;",
+      'retired title input guard');
+    code = replaceOnce(code,
+      "    setTimeout(() => { this._leavingTitle = false; this.show('main', { wipe: true }); }, 200);",
+      "    const generation = this._swapToken, ticket = this._titleTicket = {};\n" +
+      "    this._titleTimer = setTimeout(() => {\n" +
+      "      if (this._titleTicket !== ticket) return;\n" +
+      "      this._titleTimer = null; this._titleTicket = null; this._leavingTitle = false;\n" +
+      "      if (this._qualityDisposed || this.current !== 'title' || this._swapToken !== generation) return;\n" +
+      "      this.show('main', { wipe: true });\n" +
+      "    }, 200);",
+      'title confirmation screen generation');
     code = replaceOnce(code,
       "    if (typeof ResizeObserver !== 'undefined') new ResizeObserver(this._refit).observe(this.el);",
       "    if (typeof ResizeObserver !== 'undefined') { this._qualityFitObserver = new ResizeObserver(this._refit); this._qualityFitObserver.observe(this.el); }",
@@ -217,6 +242,7 @@ function adaptQualityLayer(rel, code) {
       '  dispose() {\n    cancelAnimationFrame(this._raf);\n    this.wipe.cancel();\n    this.el.remove();\n  }',
       '  dispose() {\n' +
       '    this._qualityDisposed = true;\n' +
+      '    clearTimeout(this._titleTimer); this._titleTimer = null; this._titleTicket = null; this._leavingTitle = false;\n' +
       '    cancelAnimationFrame(this._raf); cancelAnimationFrame(this._fitQ); this._fitQ = 0;\n' +
       '    this._qualityFitObserver?.disconnect(); this._qualityFitObserver = null;\n' +
       "    window.removeEventListener('resize', this._refit);\n" +
