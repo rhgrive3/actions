@@ -50,10 +50,12 @@ export function clearFullCancelCandidate(a) {
 function fullCancelGroundAttackReady(a, state) {
   const context = state?.fullCancelGroundAttack;
   if (!context || !api) return false;
-  const age = api.G.time - context.pressT, window = api.PLAYER.fireBuffer;
+  const age = api.G.time - context.pressT;
+  const window = Math.max(api.PLAYER.fireBuffer, Number.isFinite(a.weapon?.squidFlickDelay) ? a.weapon.squidFlickDelay : 0);
+  const expiresAt = Number.isFinite(context.expiresAt) ? context.expiresAt : context.pressT + window;
   const valid = a.alive && !a.specialActive && !a.superJumpState && a.form === 'kid' &&
     a.weapon?.kind === 'roller' && a._firePressT === context.pressT &&
-    Number.isFinite(age) && Number.isFinite(window) && age >= -EPSILON && age <= window + EPSILON;
+    Number.isFinite(age) && Number.isFinite(expiresAt) && age >= -EPSILON && api.G.time <= expiresAt + EPSILON;
   if (!valid) state.fullCancelGroundAttack = null;
   return valid;
 }
@@ -111,7 +113,9 @@ export function beforeActions(a, dt, jumpPressed, input = {}) {
         a.vel.x = a.intent.move.x / length * speed;
         a.vel.z = a.intent.move.z / length * speed;
         state.fullCancelJumpVelocity = cfg.roll.jumpVelocity;
-        state.fullCancelGroundAttack = a.weapon?.kind === 'roller' ? { pressT: candidate.pressT } : null;
+        state.fullCancelGroundAttack = a.weapon?.kind === 'roller'
+          ? { pressT: candidate.pressT, expiresAt: api.G.time + Math.max(0, a.fireBuffer || 0) }
+          : null;
         state.chainSpeed = speed; state.chain++; state.chainTimer = cfg.roll.chainReset;
         sync(a, state); return false;
       }

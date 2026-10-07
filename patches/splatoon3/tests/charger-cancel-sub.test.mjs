@@ -40,7 +40,7 @@ test('released ZR cancellation has the same5F boundary and keeps paid ink',async
  assert.equal(h.projectiles._fidelityChargerFlights?.length||0,0);
 });
 test('actual full-charge keep is not classified as fresh-charge interruption',async()=>{
- const h=await setup(80);h.a.intent.squid=true;
+ const h=await setup(80);h.G.paint.sample=()=>1;h.a.intent.squid=true;
  for(let i=0;i<10;i++)h.step(true,false);
  assert.ok(h.r.s3Stored,'native squid entry stored the full charge');
  h.a.intent.squid=false;h.step(true,true);

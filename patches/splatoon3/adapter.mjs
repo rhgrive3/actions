@@ -47,7 +47,14 @@ export function checkCompatibility(src, patchRoot = PATCH_ROOT) {
 }
 
 export function adaptSource(rel, code) {
-  code = adaptMinimapDirty(rel, code, replaceOnce);
+  // Composition probes may feed the finished BUILD tree through this adapter
+  // again. Accept only the complete paint signature; raw/partial upstream drift
+  // still reaches the exact fail-closed anchors below.
+  if (rel === 'src/world/paint.js' &&
+      code.includes('installIssue570PaintPresentation(PaintSystem)') &&
+      code.includes('bool bodyOnly = vGrow.z > 1.5;') &&
+      code.includes('  _disposeSplatPools() {') &&
+      code.includes('if (this._inkMark) this._inkMark(f, i, j);')) return code;
   // Storm owns the structural cloud-loop rewrite. Gear/Sub may then refine
   // the terminal frame boundary without hiding Storm's original connection.
   if (rel === 'src/game/weapons.js') code = adaptStormEffects(rel, code);
@@ -56,6 +63,7 @@ export function adaptSource(rel, code) {
   code = adaptContactRecovery(rel, code, replaceOnce);
   code = adaptMatchHud(rel, code);
   code = adaptScoreHud(rel, code);
+  code = adaptMinimapDirty(rel, code, replaceOnce);
   code = adaptRespawnLifecycle(rel, code, replaceOnce);
   if (rel !== 'src/game/weapons.js') code = adaptStormEffects(rel, code);
   code = adaptAssistPresentation(rel, code, replaceOnce);
@@ -546,7 +554,7 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, "it.sub = inp.mouse.right || inp.down('KeyE')", "it.sub = inp.mouse.rightPressed || inp.wasPressed('KeyE') || inp.mouse.right || inp.down('KeyE')", 'latched sub input');
     code = replaceOnce(code, "it.special = inp.down('KeyF')", "it.special = inp.wasPressed('KeyF') || inp.wasPressed('KeyQ') || inp.down('KeyF')", 'latched special input');
     code = replaceOnce(code, "    const range = w.kind === 'charger' ? w.rangeMax : w.kind === 'roller' ? 6 : (w.range || 12);",
-      "    const chargeNow = clamp(w.kind === 'splatling' && a.weaponRunner?.streaming ? (a.weaponRunner?.fidelitySplatlingCharge ?? a.weaponRunner?.charge ?? 0) : (a.weaponRunner?.s3Stored?.charge ?? a.weaponRunner?.charge ?? 0), 0, 1);\n" +
+      "    const chargeNow = clamp(w.kind === 'splatling' ? (a.weaponRunner?.streaming ? (a.weaponRunner?.fidelitySplatlingCharge ?? a.weaponRunner?.charge ?? 0) : (a.weaponRunner?.charge ?? 0)) : (a.weaponRunner?.s3Stored?.charge ?? a.weaponRunner?.charge ?? 0), 0, 1);\n" +
       "    const range = w.kind === 'charger' ? (G.projectiles?.chargerReach ? G.projectiles.chargerReach(chargeNow) : w.rangeMin + (w.rangeMax - w.rangeMin) * chargeNow) : w.kind === 'splatling' ? (G.projectiles?.splatlingReach ? G.projectiles.splatlingReach(w, chargeNow) : (w.range || 12)) : w.kind === 'roller' ? 6 : (w.range || 12);",
       'Charger and Splatling HUD reach follow charge');
     code = replaceOnce(code,
@@ -554,7 +562,7 @@ export function adaptSource(rel, code) {
       `    const pick = (i) => {
       const o = allies[i];
       if (o && o.alive && !o.superJumpState) {
-        const ticket = a.selectSuperJumpTarget(o);
+        const ticket = a.selectSuperJumpTarget?.(o);
         a.superJump(o, ticket);
       }
     };`,
@@ -771,7 +779,7 @@ export function adaptSource(rel, code) {
         '    this._surface();\n' +
         '    const enemyGrounded = this.grounded && this.groundTeam === 2 && !this.climbing;\n' +
         '    const fireWins = (intent.fire || this.fireBuffer > 0) && this._firePressT >= this._squidPressT;\n' +
-        '    const wantSquid = intent.squid && !intent.sub && !fireWins && !this.weaponRunner.busy() && !chargerSwimLocked(this) && !enemyGrounded;\n'
+        '    const wantSquid = intent.squid && !intent.sub && !fireWins && !hasFullCancelGroundAttack(this) && !this.weaponRunner.busy() && !chargerSwimLocked(this) && !enemyGrounded;\n'
       : '    const wasSquid = this.form === \'squid\';\n' +
         '    const wasSubmerged = this.submerged;\n' +
         '    const wasClimbing = this.climbing;\n' +
@@ -779,7 +787,7 @@ export function adaptSource(rel, code) {
         '    this._surface();\n' +
         '    const enemyGrounded = this.grounded && this.groundTeam === 2 && !this.climbing;\n' +
         '    const fireWins = (intent.fire || this.fireBuffer > 0) && this._firePressT >= this._squidPressT;\n' +
-        '    const wantSquid = intent.squid && !fireWins && !this.weaponRunner.busy() && !enemyGrounded;\n';
+        '    const wantSquid = intent.squid && !fireWins && !hasFullCancelGroundAttack(this) && !this.weaponRunner.busy() && !enemyGrounded;\n';
     code = replaceOnce(code, swimFormHead, swimFormTarget, 'enemy ink swim-form eligibility');
     code = replaceOnce(code,
       "    // ---- surface under feet (from last frame's ground probe; position hasn't moved since)\n    this._surface();\n",
@@ -791,7 +799,7 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, '    this._spawnBarrier();',
       '    // S3 Spawners use stage geometry and spawn protection, not a universal radial body clamp.',
       'S3 universal spawn barrier removal');
-    return `import { rollerEmergeDelay, rollerFireBuffer } from '../../patches/splatoon3/runtime/roller.mjs';\nimport { finalWeaponDamage } from '../../patches/splatoon3/runtime/final-damage.mjs';\nimport { swimSplashVisible } from '../../patches/splatoon3/runtime/swim-stealth.mjs';\nimport { prepareSuperJump, rememberSuperJumpGround, superJumpTarget, superJumpStartupTime, updateSuperJumpMain, SUPERJUMP_MAIN_PROGRESS } from '../../patches/splatoon3/runtime/superjump.mjs';\nimport { beforeActions, wallRollRequested, crossSurgeInkGap, normalJumpVelocity, clearFullCancelCandidate, takeFullCancelJumpVelocity } from '../../patches/splatoon3/runtime/movement.mjs';\nimport { updateResources, updateHealthRecovery } from '../../patches/splatoon3/runtime/resources.mjs';\nimport { scheduleLethal, flushPendingLethal, clearPendingLethal, hasPendingLethal } from '../../patches/splatoon3/runtime/damage-timing.mjs';\n` + code;
+    return `import { rollerEmergeDelay, rollerFireBuffer } from '../../patches/splatoon3/runtime/roller.mjs';\nimport { finalWeaponDamage } from '../../patches/splatoon3/runtime/final-damage.mjs';\nimport { swimSplashVisible } from '../../patches/splatoon3/runtime/swim-stealth.mjs';\nimport { prepareSuperJump, rememberSuperJumpGround, superJumpTarget, superJumpStartupTime, updateSuperJumpMain, SUPERJUMP_MAIN_PROGRESS } from '../../patches/splatoon3/runtime/superjump.mjs';\nimport { beforeActions, wallRollRequested, crossSurgeInkGap, normalJumpVelocity, clearFullCancelCandidate, hasFullCancelGroundAttack, takeFullCancelJumpVelocity } from '../../patches/splatoon3/runtime/movement.mjs';\nimport { updateResources, updateHealthRecovery } from '../../patches/splatoon3/runtime/resources.mjs';\nimport { scheduleLethal, flushPendingLethal, clearPendingLethal, hasPendingLethal } from '../../patches/splatoon3/runtime/damage-timing.mjs';\n` + code;
   }
   if (rel === 'src/game/character-weapons.js') {
     code = replaceOnce(code, '    if (ft >= 0.15 && ft - dt < 0.15) w.drumW += 34;', '    const release = st.flickReleaseTime ?? 0.15;\n    if (ft >= release && ft - dt < release) w.drumW += 34;', 'roller drum release impulse');

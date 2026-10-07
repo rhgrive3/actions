@@ -56,7 +56,7 @@ export async function fixture(options = {}) {
     export * from './inkwave-public/src/net/netmatch.js';
     export * from './inkwave-public/src/world/level.js';
     export * from './inkwave-public/src/core/shadowcache.js';
-    export { install as installS3 } from './patches/splatoon3/runtime/install.mjs';
+    ${fullRuntime ? "export { install as installS3 } from './patches/splatoon3/runtime/install.mjs';" : ""}
     export * from './inkwave-public/src/world/paint.js';
     export * as THREE from 'three';
     export const VM_MATH = Math;

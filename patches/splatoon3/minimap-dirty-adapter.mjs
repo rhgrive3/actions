@@ -20,21 +20,23 @@ export function adaptMinimapDirty(rel, code, replaceOnce) {
     // (e.g. local-quality) may re-compose an already-built tree. Any partial
     // application or genuine upstream drift still falls through to replaceOnce,
     // which fails closed on a missing/duplicated anchor.
-    if (!code.includes('if (this._inkMark) this._inkMark(f, i, j);')) {
-      // Other paint owners may insert bookkeeping between the ownership write
-      // and the turf counter. The grid assignment itself is the unique semantic
-      // connection and remains stable across those compositions.
-      code = replaceOnce(code,
-        '        this.grid[k] = val;',
-        '        this.grid[k] = val;\n        if (this._inkMark) this._inkMark(f, i, j);   // #895 map-space dirty bounds for the live minimap',
+    if (code.includes('if (this._inkMark) this._inkMark(f, i, j);') &&
+        code.includes('if (this.inkDirty) this.inkDirty.full = true;')) return code;
+    const scoredWrite = '        this.grid[k] = val;\n        changed = true;\n        if (f.turf && !this.dead[k]) {';
+    const nativeWrite = '        this.grid[k] = val;\n        claimed += cellA;';
+    if (code.includes(scoredWrite)) {
+      code = replaceOnce(code, scoredWrite,
+        '        this.grid[k] = val;\n        changed = true;\n        if (this._inkMark) this._inkMark(f, i, j);   // #895 map-space dirty bounds for the live minimap\n        if (f.turf && !this.dead[k]) {',
+        'paint dirty bounds write site after score/HUD');
+    } else {
+      code = replaceOnce(code, nativeWrite,
+        '        this.grid[k] = val;\n        if (this._inkMark) this._inkMark(f, i, j);   // #895 map-space dirty bounds for the live minimap\n        claimed += cellA;',
         'paint dirty bounds write site');
     }
-    if (!code.includes('if (this.inkDirty) this.inkDirty.full = true;')) {
-      code = replaceOnce(code,
-        '    this._wetUntil = this.clock;\n    this.version++;',
-        '    this._wetUntil = this.clock;\n    this.version++;\n    if (this.inkDirty) this.inkDirty.full = true;   // #895 reset needs a whole-map repaint',
-        'paint reset invalidation');
-    }
+    code = replaceOnce(code,
+      '    this._wetUntil = this.clock;\n    this.version++;',
+      '    this._wetUntil = this.clock;\n    this.version++;\n    if (this.inkDirty) this.inkDirty.full = true;   // #895 reset needs a whole-map repaint',
+      'paint reset invalidation');
     return code;
   }
   if (rel === 'src/game/minimap.js') {

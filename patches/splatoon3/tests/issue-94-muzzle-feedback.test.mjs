@@ -167,10 +167,7 @@ test('#94 presentation query is read-only and clears when the field line is clea
   assert.equal(projectiles.bombs.length, before.bombs);
   assert.equal(actor.weaponRunner.charge, before.charge);
   assert.equal(actor.weaponRunner.cooldown, before.cooldown);
-  assert.deepEqual({
-    turf: actor.stats.turf, splats: actor.stats.splats,
-    deaths: actor.stats.deaths, specials: actor.stats.specials,
-  }, before.stats);
+  assert.deepEqual({ ...actor.stats }, before.stats);
 
   api.G.level.blocks.length = 0;
   assert.equal(projectiles.muzzleBlockFeedback(actor), null, 'cleared field removes the marker input');

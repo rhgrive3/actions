@@ -166,7 +166,7 @@ test('#895 adapter anchors are exact, unique and fail-closed; #419 anchors survi
   const raw = read('inkwave-public/src/world/paint.js');
   const out = compose('src/world/paint.js');
   assert.notEqual(out, raw);
-  assert.match(out, /this\.grid\[k\] = val;\n        if \(this\._inkMark\) this\._inkMark\(f, i, j\);/);
+  assert.match(out, /this\.grid\[k\] = val;\n        changed = true;\n        if \(this\._inkMark\) this\._inkMark\(f, i, j\);/);
   assert.match(out, /this\.version\+\+;\n    if \(this\.inkDirty\) this\.inkDirty\.full = true;/);
   // re-composition of an already-built tree is idempotent ...
   assert.equal(adaptSource('src/world/paint.js', out), out);

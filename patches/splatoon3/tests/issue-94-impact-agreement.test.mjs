@@ -148,7 +148,9 @@ function fireActualShot(s, maxFrames = 300) {
 function composedMuzzleBlock(s, W = 1600, H = 900) {
   const main = adaptBuildSource('src/main.js', fs.readFileSync(path.join(SRC, 'src/main.js'), 'utf8'));
   const start = main.indexOf('    const muzzleContact =');
-  const end = main.indexOf('    const frame = {', start);
+  const rawFrame = main.indexOf('    const frame = {', start);
+  const snapshotFrame = main.indexOf('    const frame = hudFrameSnapshot(', start);
+  const end = rawFrame >= 0 && snapshotFrame >= 0 ? Math.min(rawFrame, snapshotFrame) : Math.max(rawFrame, snapshotFrame);
   assert.ok(start >= 0 && end > start, 'composed main keeps the projected shooter muzzle contact connection');
   const sandbox = { THREE: s.THREE, G: s.G, w: s.actor.weapon, cam: s.camera, W, H, a: s.actor };
   const fn = vm.runInNewContext(`(function () {\n${main.slice(start, end)}\nreturn muzzleBlock; })`, sandbox);
@@ -337,7 +339,7 @@ async function hudHarness() {
     overLayer: new El(), ret: new El(), xh: new El(), spIcon: new El(), shield: new El(), subChip: new El(),
     lab: null, _snd() {}, _restart() {},
   });
-  return { hud };
+  return { hud, code };
 }
 
 test('#94 composed projection and HUD style update run for the real contact', async () => {
@@ -353,9 +355,11 @@ test('#94 composed projection and HUD style update run for the real contact', as
   console.log('#94 composed projected muzzleBlock px', block);
   assert.ok(block && Number.isFinite(block.x) && Number.isFinite(block.y),
     'the actual composed main.js projection returns the contact payload');
-  const { hud } = await hudHarness();
+  const { hud, code } = await hudHarness();
   const h = hud();
   h._updCrosshair({ weapon: 'shooter', crosshair: { spread: 3.5, onTarget: 'enemy', inRange: false, muzzleBlock: block } }, 1 / 60);
+  console.log('#94 HUD target debug', JSON.stringify({ kind: h._L.kind, tgt: h._L.tgt, far: h._L.far,
+    className: h.xh.className, sourceOwnsTarget: code.includes("const tgt = ch.onTarget === 'enemy';") }));
   assert.ok(h.xh.classList.contains('is-muzzle-blocked'), 'HUD shows the weapon-side contact ring');
   assert.equal(h.xh.style['--muzzle-hit-x'], `${block.x.toFixed(1)}px`, 'native style var carries the projected x');
   assert.equal(h.xh.style['--muzzle-hit-y'], `${block.y.toFixed(1)}px`, 'native style var carries the projected y');

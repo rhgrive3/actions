@@ -4,6 +4,12 @@ const ENTRY_POOL_MAX_FACES = 256;
 
 export function adaptPaintSplatPool(rel, code, replaceOnce) {
   if (rel !== 'src/world/paint.js') return code;
+  // Composition tests may feed the finished BUILD tree through adaptSource again.
+  // Accept only our complete pool signature; raw/upstream drift still reaches the
+  // exact anchors below and therefore remains fail-closed.
+  if (code.includes('const SPLAT_ENTRY_POOL_MAX =') &&
+      code.includes('  _disposeSplatPools() {') &&
+      code.includes('this._releaseSplatGrowth(g);')) return code;
 
   code = replaceOnce(code, 'const DRIP_REACH = 3.9;', `const DRIP_REACH = 3.9;
 const SPLAT_ENTRY_POOL_MAX = ${ENTRY_POOL_MAX};

@@ -15,6 +15,7 @@ import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
 import { adaptReliability } from '../../reliability/adapter.mjs';
 import { adaptQualitySource } from '../../local-quality/adapter.mjs';
 import { fixture, readSource } from '../../reliability/tests/hud-fixture.mjs';
+import { turfExperience } from '../runtime/results-scoring.mjs';
 
 const read = rel => fs.readFileSync(new URL('../../../inkwave-public/' + rel, import.meta.url), 'utf8');
 const compose = (rel, code = read(rel)) => adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code))));
@@ -26,7 +27,7 @@ function section(code) {
 const rawFixture = () => fixture({ hudSource: readSource('src/ui/hud.js') });
 const MAP_DATA = 'data:image/png;base64,actual-stage-and-ink-fixture';
 const sceneFixture = async ({ pendingBands = 0 } = {}) => {
-  const f = await fixture({ hudSource: compose('src/ui/hud.js'), gameSource: compose('src/main.js') });
+  const f = await fixture({ hudSource: compose('src/ui/hud.js'), gameSource: compose('src/main.js'), globals: { turfExperience } });
   const calls = [];
   const canvas = {
     width: 420, height: 240,

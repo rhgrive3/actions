@@ -232,9 +232,12 @@ test('#858 Splatling HUD reach follows the released charge snapshot and expires 
   assert.equal(f.inRange(a, 0, beyondBoth), false, 'a target beyond both native-flight extents remains out of range');
   assert.equal(f.inRange(a, circle, beyondBoth), false);
 
-  a.weaponRunner.charge = circle;
-  a.weaponRunner.charging = true;
   a.weaponRunner.streaming = false;
+  a.weaponRunner.charging = false;
+  a.weaponRunner.cooldown = 0;
+  a.weaponRunner._splatling(1 / 60, { fire: true }, a.weapon); // consume the installed 1F startup owner
+  a.weaponRunner._splatling(a.weapon.firstChargeTime, { fire: true }, a.weapon);
+  assert.ok(Math.abs(a.weaponRunner.charge - circle) < 1e-9, 'real split owner reaches the first-circle charge');
   a.weaponRunner.fidelitySplatlingCharge = null;
   a.weaponRunner._splatling(1 / 60, { fire: false }, a.weapon);
   assert.equal(a.weaponRunner.streaming, true);
@@ -244,6 +247,8 @@ test('#858 Splatling HUD reach follows the released charge snapshot and expires 
   const isolated = f.make('splatling');
   assert.equal(f.inRange(isolated, 0, mid), false, 'another Actor does not inherit the released charge');
   a.weaponRunner.burstT = 1 / 120;
+  assert.ok(a.weaponRunner.s3Spin, 'installed Splatling stream owner is present');
+  a.weaponRunner.s3Spin.elapsed = Math.max(0, a.weaponRunner.burstDur - 1 / 120);
   a.weaponRunner._splatling(1 / 60, { fire: false }, a.weapon);
   assert.equal(a.weaponRunner.streaming, false);
   assert.equal(f.inRange(a, 0, mid), false, 'completed stream ignores its retained snapshot');
