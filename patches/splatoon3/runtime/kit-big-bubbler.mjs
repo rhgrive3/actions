@@ -556,6 +556,74 @@ export function kitBarrierCandidate(p, start, end) {
   return candidate;
 }
 
+// #1036: Roller-body contact uses only the Bubbler's damageable hardware,
+// never the spherical barrier shell. Base contact spends canopy/body HP; the
+// raised emitter spends field/weak-point HP.
+export function rollerBubblerCandidate(actor, forwardX, forwardZ, rollWidth) {
+  if (!api || !actor?.pos || actor.remote || !Number.isInteger(actor.team) || !(rollWidth > 0)) return null;
+  const fl = Math.hypot(forwardX, forwardZ);
+  if (fl < 1e-8) return null;
+  const fx = forwardX / fl, fz = forwardZ / fl;
+  let best = null, bestMetric = Infinity;
+  const consider = (dome, target, x, y, z, radius) => {
+    if (!dome || dome.dead || dome.team === actor.team) return;
+    const dx = x - actor.pos.x, dz = z - actor.pos.z;
+    const along = dx * fx + dz * fz;
+    const lateral = Math.abs(dx * fz - dz * fx);
+    if (along <= -0.2 - radius || along >= 1.35 + radius) return;
+    if (lateral >= rollWidth / 2 + radius) return;
+    if (Math.abs(y - actor.pos.y) >= 1.2 + radius) return;
+    const metric = Math.max(0, along) + lateral * 0.25 + Math.abs(y - actor.pos.y) * 0.05;
+    if (metric >= bestMetric) return;
+    const point = new api.THREE.Vector3(x, y, z);
+    const normal = new api.THREE.Vector3(actor.pos.x - x, Math.max(0.05, actor.pos.y + 0.35 - y), actor.pos.z - z);
+    if (normal.lengthSq() < 1e-8) normal.set(0, 1, 0); else normal.normalize();
+    bestMetric = metric;
+    best = {
+      dome, domeId: dome.id, serial: dome.serial, team: dome.team, target,
+      remote: !!dome.remote, point, normal, domeOwner: dome.owner ?? null, settled: false,
+      domeOwnerId: bigBubblerOwnerId(dome.owner), shooterId: bigBubblerOwnerId(actor),
+    };
+  };
+  for (const pool of [domes, remoteDomes]) for (const dome of pool) {
+    const r = raw.fieldCollisionRadius;
+    consider(dome, 'canopy', dome.pos.x, dome.pos.y + r, dome.pos.z, r);
+    if (dome.ignited) consider(dome, 'field', dome.pos.x, dome.pos.y + dome.emitterY, dome.pos.z, r);
+  }
+  return best;
+}
+
+export function applyRollerBubblerHit(candidate, actor, damage) {
+  if (!candidate || candidate.settled || !actor || actor.remote || !(damage > 0) || !Number.isInteger(actor.team)) return 0;
+  const dome = candidate.dome;
+  if (!dome || dome.dead || dome.team === actor.team || dome.id !== candidate.domeId || dome.serial !== candidate.serial) return 0;
+  if (!listOf(dome).includes(dome)) return 0;
+  candidate.settled = true;
+  // Splat Roller's object contact modifier is 1.0x. This is only the existing
+  // raw-damage-unit conversion used by other Bubbler damage inputs.
+  const amount = damage * tuning.rawPerDamageUnit;
+  if (candidate.remote) {
+    const eventId = ++proposalSerial;
+    const payload = {
+      e: 'damage-proposal', domeId: candidate.domeId, serial: candidate.serial,
+      team: candidate.team, target: candidate.target, amount, eventId,
+      pointX: candidate.point.x, pointY: candidate.point.y, pointZ: candidate.point.z,
+      normalX: candidate.normal.x, normalY: candidate.normal.y, normalZ: candidate.normal.z,
+    };
+    if (candidate.shooterId !== null) { payload.shooter = candidate.shooterId; payload.shooterTeam = actor.team; }
+    if (candidate.domeOwnerId !== null) payload.domeOwner = candidate.domeOwnerId;
+    api.emit?.('kit:bubbler:damage-proposal', { ...payload, actor });
+    return 0;
+  }
+  const applied = damageDome(dome, candidate.target, amount);
+  if (applied > 0) {
+    api.G.fx?.burst?.(candidate.point, candidate.normal, dome.color, { count: 6, speed: 3, size: 0.07 });
+    api.emit?.('weapon:impact', { pos: candidate.point.clone(), normal: candidate.normal.clone(),
+      team: actor.team, kind: 'roll', radius: raw.fieldCollisionRadius });
+  }
+  return applied;
+}
+
 /**
  * Explosion shielding HANDOFF (read-only, no native integration).
  *
