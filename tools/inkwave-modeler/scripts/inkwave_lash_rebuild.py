@@ -518,6 +518,8 @@ def build_side_corner(design, tree, views, side, black):
     remap = {k: i for i, k in enumerate(used)}
     verts = verts[used]
     faces = [tuple(remap[k] for k in f) for f in faces]
+    if not faces:
+        return np.zeros((0, 3)), []
     tot = sum(np.cross(verts[f[1]] - verts[f[0]], verts[f[2]] - verts[f[0]]) for f in faces)
     if tot[0] * side > 0:      # face away from the head (the right eye's outside is -x)
         faces = [f[::-1] for f in faces]
@@ -1932,7 +1934,10 @@ def main():
             verts.append(M.to_world(np.asarray(v) / 1000))
     black = BVHTree.FromPolygons([Vector(v) for v in np.vstack(verts)], polys)
     for part, views, side in zip(built if design.get('side_corner') else [], (('sideR', 'q34R'), ('q34L', 'sideL')), (-1, 1)):
-        sv, sf = er.solid_sheet(*build_side_corner(design, tree, views, side, black), LINER_THICK_MM * 0.6)
+        sc_v, sc_f = build_side_corner(design, tree, views, side, black)
+        if not sc_f:
+            continue
+        sv, sf = er.solid_sheet(sc_v, sc_f, LINER_THICK_MM * 0.6)
         v, f = part[1]
         part[1] = (np.r_[v, sv], list(f) + [tuple(i + len(v) for i in fc) for fc in sf])
     tear_mat = tearline_material(design['lid_edge'].get('tint', (1.0, 1.0, 1.0))) if 'lid_edge' in design else None
