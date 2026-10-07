@@ -6,9 +6,16 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { adaptSource } from '../adapter.mjs';
+import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
+import { adaptReliability } from '../../reliability/adapter.mjs';
+import { adaptQualitySource } from '../../local-quality/adapter.mjs';
+import { adaptNetworkSource } from '../../network-replication/adapter.mjs';
+import { adaptRange } from '../../practice-range/adapter.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const SRC = path.join(ROOT, 'inkwave-public');
+const adaptProduction = (rel, code) => adaptRange(rel, adaptNetworkSource(rel,
+  adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code))))));
 let runtime;
 
 async function production() {
@@ -24,8 +31,8 @@ async function production() {
     if (file.startsWith(path.join(ROOT, 'src') + path.sep)) file = path.join(SRC, path.relative(ROOT, file));
     if (modules.has(file)) return modules.get(file);
     const source = fs.readFileSync(file, 'utf8');
-    const module = new vm.SourceTextModule(file.startsWith(SRC + path.sep)
-      ? adaptSource(path.relative(SRC, file), source) : source,
+    const rel = file.startsWith(SRC + path.sep) ? path.relative(SRC, file) : path.relative(ROOT, file);
+    const module = new vm.SourceTextModule(adaptProduction(rel, source),
       { context, identifier: file, initializeImportMeta(meta) { meta.url = pathToFileURL(file).href; } });
     modules.set(file, module);
     return module;
