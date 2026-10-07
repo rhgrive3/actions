@@ -168,9 +168,11 @@ test('#895 adapter anchors are exact, unique and fail-closed; #419 anchors survi
   assert.notEqual(out, raw);
   assert.match(out, /this\.grid\[k\] = val;\n        changed = true;\n        if \(this\._inkMark\) this\._inkMark\(f, i, j\);/);
   assert.match(out, /this\.version\+\+;\n    if \(this\.inkDirty\) this\.inkDirty\.full = true;/);
-  // re-composition of an already-built tree is idempotent ...
-  assert.equal(adaptSource('src/world/paint.js', out), out);
-  // ... but a genuine upstream drift to the write site still fails closed
+  // The public adapter remains fail-closed when a completed BUILD tree is
+  // accidentally passed through it again; only the narrow #895 sub-adapter is
+  // allowed to recognize its own complete hooks.
+  assert.throws(() => adaptSource('src/world/paint.js', out), /conflict/);
+  // A genuine upstream drift to the write site also fails closed.
   const paintDrift = raw.replace('        this.grid[k] = val;\n        claimed += cellA;', '        this.grid[k] = val; claimed += cellA;');
   assert.throws(() => adaptSource('src/world/paint.js', paintDrift), /conflict/);
 

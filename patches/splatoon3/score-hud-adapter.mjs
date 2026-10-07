@@ -12,12 +12,6 @@ export function adaptScoreHud(rel, code) {
     'this.stats = { turf: 0, splats: 0, assists: 0, deaths: 0, specials: 0 };', 'assist stat');
   }
   if (rel === 'src/world/paint.js') {
-    // A fully composed BUILD tree may be passed through adaptSource again by
-    // composition tests/tools. Preserve the completed score owner instead of
-    // trying to consume its native anchors a second time.
-    if (code.includes('let claimed = 0, changed = false;') &&
-        code.includes('        changed = true;') &&
-        code.includes('    if (changed) this.version++;')) return code;
     code = replaceOnce(code, '        claimed += cellA;\n        if (f.turf && !this.dead[k]) {',
       '        changed = true;\n        if (f.turf && !this.dead[k]) {\n          claimed += cellA;', 'point-eligible paint area');
     code = replaceOnce(code, '    if (claimed > 0) this.version++;', '    if (changed) this.version++;', 'wall paint cache invalidation');
