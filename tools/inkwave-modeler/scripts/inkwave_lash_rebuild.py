@@ -1278,6 +1278,10 @@ def set_side(objs, liner, rim, lashes, lower, mat, brown, tear=None, tear_mat=No
             obj.visible_shadow = False
         elif k == len(lashes) + 3 and fill is not None:
             er.set_mesh(obj, *fill, fill_mat, '_lr_corner_fill')
+            # it stands up to 1.5 mm over the face: its shadow drew a dark band under it
+            if '_lr_visible_shadow' not in obj:
+                obj['_lr_visible_shadow'] = obj.visible_shadow
+            obj.visible_shadow = False
         else:
             er.replace_mesh(obj, np.zeros((0, 3)), [], '_lr_cleared')
 
