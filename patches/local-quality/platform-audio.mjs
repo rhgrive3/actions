@@ -3,6 +3,7 @@ const AUDIO = Symbol.for('inkwave.platform.audio.v1');
 const MUSIC = Symbol.for('inkwave.platform.music.v1');
 
 export function installAudioPlatform(AudioEngine, env = globalThis) {
+  installAudioLoopDedupe(AudioEngine);
   const P = AudioEngine.prototype;
   if (Object.hasOwn(P, AUDIO)) return;
   Object.defineProperty(P, AUDIO, { value: true });
@@ -96,5 +97,47 @@ export function installMusicPlatform(MusicEngine, env = globalThis) {
   P.dispose = function (...args) {
     this._platformMusic?.off?.(); this._platformMusic = null;
     stop(this); return dispose.apply(this, args);
+  };
+}
+
+
+const LOOP_DEDUPE = Symbol.for('inkwave.audio.loop-parameter-dedupe.v1');
+// Compare to the last scheduled target (not the last request), so a sequence of
+// sub-epsilon changes eventually moves the sound instead of permanently sticking.
+export function installAudioLoopDedupe(AudioEngine) {
+  const P=AudioEngine.prototype;
+  if(Object.hasOwn(P,LOOP_DEDUPE))return;
+  Object.defineProperty(P,LOOP_DEDUPE,{value:true});
+  const loop=P.loop;
+  if(typeof loop!=='function')return;
+  P.loop=function(name,options={}){
+    const h=loop.call(this,name,options),o=options||{};
+    if(!h?.playing||typeof h.set!=='function')return h;
+    const set=h.set;
+    let volume=Math.max(0,+(o.volume??1)||0),pitch=Math.max(.05,+(o.pitch??1));
+    let x=o.pos?.x,y=o.pos?.y,z=o.pos?.z;
+    h.set=function(p={}){
+      if(!h.playing||!p)return;
+      let changes=null,nextVolume=volume,nextPitch=pitch;
+      if(p.volume!=null&&Number.isFinite(+p.volume)){
+        nextVolume=Math.max(0,+p.volume);
+        if(Math.abs(nextVolume-volume)>1e-5||!Number.isFinite(volume))(changes||={}).volume=nextVolume;
+      }
+      if(p.pitch!=null&&Number.isFinite(+p.pitch)){
+        nextPitch=Math.max(.05,+p.pitch);
+        if(Math.abs(nextPitch-pitch)>1e-4||!Number.isFinite(pitch))(changes||={}).pitch=nextPitch;
+      }
+      const pos=p.pos;
+      if(pos&&Number.isFinite(pos.x)&&Number.isFinite(pos.y)&&Number.isFinite(pos.z)&&
+        (!Number.isFinite(x)||!Number.isFinite(y)||!Number.isFinite(z)||Math.hypot(pos.x-x,pos.y-y,pos.z-z)>1e-3))
+        (changes||={}).pos=pos;
+      if(!changes)return;
+      const result=set.call(h,changes);
+      if('volume'in changes)volume=nextVolume;
+      if('pitch'in changes)pitch=nextPitch;
+      if(changes.pos){x=pos.x;y=pos.y;z=pos.z;}
+      return result;
+    };
+    return h;
   };
 }
