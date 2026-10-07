@@ -111,11 +111,49 @@ export function chargerDamage(actor, weapon, charge) {
   return Math.min(weapon.damagePartialMax, weapon.damageMin + (elapsed - minimum) * rate);
 }
 export const SPLATLING_INTERRUPT = 6 / 60;
+// Splatling R cancellation is a separate destination from its 6F squid
+// interruption window. The sub-ready owner consumes this delay before aiming.
+export const SPLATLING_SUB_INTERRUPT = 5 / 60;
 const INTERRUPT_EPS = 1e-10;
 const INTERRUPT_SLOTS = {
   charge: { time: 's3ChargeInterruptT', press: 's3ChargeInterruptPressT', live: r => r.charging },
   stream: { time: 's3StreamInterrupt', press: 's3StreamInterruptPressT', live: r => r.streaming },
 };
+export function clearSplatlingSubInterrupt(runner) {
+  runner.s3SplatlingSubInterruptPending = false;
+  runner.s3SplatlingSubInterruptRemaining = 0;
+  runner.s3SplatlingSubInterruptReleased = false;
+  runner.s3SplatlingSubInterruptReady = false;
+}
+export function splatlingSubInterrupt(runner, actor, dt, input) {
+  if (actor?.weapon?.kind !== 'splatling') {
+    clearSplatlingSubInterrupt(runner);
+    return null;
+  }
+  if (runner.s3SplatlingSubInterruptPending) {
+    if (actor.form === 'squid') {
+      clearSplatlingSubInterrupt(runner);
+      return 'cancelled';
+    }
+    if (!input?.sub) {
+      if (input?.subReleased || actor.intent?.sub) runner.s3SplatlingSubInterruptReleased = true;
+      else if (!runner.s3SplatlingSubInterruptReleased) {
+        clearSplatlingSubInterrupt(runner);
+        return 'cancelled';
+      }
+    }
+    runner.s3SplatlingSubInterruptRemaining = Math.max(0,
+      runner.s3SplatlingSubInterruptRemaining - Math.max(0, dt));
+    if (runner.s3SplatlingSubInterruptRemaining > INTERRUPT_EPS) return 'wait';
+    runner.s3SplatlingSubInterruptPending = false;
+    runner.s3SplatlingSubInterruptReady = true;
+    return 'ready';
+  }
+  if (!input?.sub || !(runner.charging || runner.streaming)) return null;
+  runner.s3SplatlingSubInterruptPending = true;
+  runner.s3SplatlingSubInterruptRemaining = SPLATLING_SUB_INTERRUPT;
+  return 'wait';
+}
 export function splatlingInterrupt(runner, actor, slot) {
   const x = INTERRUPT_SLOTS[slot];
   if (actor.weapon.kind !== 'splatling') return false;
@@ -199,6 +237,12 @@ export function applyProjectileHit(system, projectile, victim, amount, point) {
 export function installWeapons(context, profile) {
   api = context;
   const { WeaponRunner, Projectiles, G, THREE, Physics, Hit, PLAYER } = api;
+  WeaponRunner.prototype.s3StepSplatlingSubInterrupt = function (dt, input) {
+    return splatlingSubInterrupt(this, this.a, dt, input);
+  };
+  WeaponRunner.prototype.s3ClearSplatlingSubInterrupt = function () {
+    clearSplatlingSubInterrupt(this);
+  };
   const newProjectile = Projectiles.prototype._new, pushProjectile = Projectiles.prototype._push;
   Projectiles.prototype._new = function (...args) {
     const p = newProjectile.apply(this, args); p.s3DamageGroup = null; p.s3DamageGroupId = null; p.s3Weapon = null; p.s3SpecialWeapon = null; p.s3Vertical = false; return p;
@@ -214,6 +258,7 @@ export function installWeapons(context, profile) {
   const reset = WeaponRunner.prototype.reset, busy = WeaponRunner.prototype.busy;
   WeaponRunner.prototype.reset = function (...args) {
     const result = reset.apply(this, args);
+    clearSplatlingSubInterrupt(this);
     this.s3Stored = null; this.s3Turret = false; this.s3FlickVertical = false; this.s3BlasterWindup = 0; this.s3BlasterFromSwim = false;
     this.s3BlasterJumpT = null; this.s3BlasterWasGrounded = false;
     this.s3SloshRecovery = false;
