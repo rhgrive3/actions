@@ -292,7 +292,11 @@ export function emit(name, payload) {
     patch('r3(o.seed ?? Math.random())', 'o.seed ?? Math.random()', 'preserve paint pattern seed');
     patch('r3(p.delay || 0), r3(p.life), r3(p.straight)', 'p.delay || 0, p.life, p.straight', 'preserve exact physics timing boundaries');
     const kitBirth = 'p.nose ?? 0.3, p.sats ?? 3, kitVolleyPacketIndex(p.s3VolleyIndex), kitVolleyPacketIndex(p.s3ActionIndex)]);';
-    if (code.includes(kitBirth)) patch(kitBirth,
+    const poweredKitBirth = 'p.nose ?? 0.3, p.sats ?? 3, kitVolleyPacketIndex(p.s3VolleyIndex), kitVolleyPacketIndex(p.s3ActionIndex), ...(Number.isFinite(p.s3SpecialWeapon?.specialPowerAP) ? [{ s3SpecialPowerAP: p.s3SpecialWeapon.specialPowerAP ?? 0 }] : [])]);';
+    if (code.includes(poweredKitBirth)) patch(poweredKitBirth,
+      'p.nose ?? 0.3, p.sats ?? 3, kitVolleyPacketIndex(p.s3VolleyIndex), kitVolleyPacketIndex(p.s3ActionIndex), p.s3Vertical ? 1 : 0, p.seed, (p._netId = this._projectileSeq = (this._projectileSeq || 0) + 1), p.fidelityRollerUnitIndex ?? -1, ...(Number.isFinite(p.s3SpecialWeapon?.specialPowerAP) ? [{ s3SpecialPowerAP: p.s3SpecialWeapon.specialPowerAP ?? 0 }] : [])]);',
+      'append immutable special power after stable birth fields');
+    else if (code.includes(kitBirth)) patch(kitBirth,
       'p.nose ?? 0.3, p.sats ?? 3, kitVolleyPacketIndex(p.s3VolleyIndex), kitVolleyPacketIndex(p.s3ActionIndex), p.s3Vertical ? 1 : 0, p.seed, (p._netId = this._projectileSeq = (this._projectileSeq || 0) + 1), p.fidelityRollerUnitIndex ?? -1]);',
       'append birth mode, appearance seed, identity, roller unit after kit fields');
     else patch('p.nose ?? 0.3, p.sats ?? 3]);',
@@ -395,7 +399,7 @@ export function emit(name, payload) {
         for (let index = 5; index <= 18; index++) if (!Number.isFinite(e[index])) return;
         if (e[11] < 0 || e[12] <= 0) return;
         const peer = this.peers.get(from);
-        const birthId = e[e.length === 35 ? 31 : 29];
+        const birthId = e[(e.length === 35 || e.length === 36) ? 31 : 29];
         if (Number.isFinite(birthId) && peer) { if (birthId <= (peer._lastProjectileId || 0)) break; peer._lastProjectileId = birthId; }
         const a = this.byNid.get(e[2]), p = a && G.projectiles?.ghostProjectile(a, e);
         if (p) { p._netBorn = e[0]; p._netBornTick = e._netTick; p._netPeer = this.peers.get(from); p._netSteps = 0; p._netMaxSteps = Math.ceil((p.life + Math.max(0,p.delay)) * 60) + 2; }
@@ -567,7 +571,7 @@ ${bombHit}`;
       p.drag = w.flickDrag ?? p.drag;`, 'final flick physics before publication');
 
     patch('    p.delay = 0; p.head = false;', '    p._netId = undefined; p._netEnded = false; p._netPeer = null; p._netBorn = undefined; p._netBornTick = undefined; p._netSteps = 0; p._netMaxSteps = 0; p._netEndStep = undefined; p._netEndReason = 0; p._netHitActor = false;\n    p.delay = 0; p.head = false;', 'recycled identity reset');
-    patch('    this.list.push(p);\n  }\n\n  ghostBomb', `    const birthOffset = e.length === 35 ? 2 : 0;
+    patch('    this.list.push(p);\n  }\n\n  ghostBomb', `    const birthOffset = (e.length === 35 || e.length === 36) ? 2 : 0;
     p.s3Vertical = e[27 + birthOffset] === 1;
     if (Number.isFinite(e[28 + birthOffset])) p.seed = e[28 + birthOffset]; // retain the native random draw above
     p._netId = e[29 + birthOffset];
