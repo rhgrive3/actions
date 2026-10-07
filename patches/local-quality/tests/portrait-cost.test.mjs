@@ -299,17 +299,28 @@ test('native owner refreshes wardrobe colour in place, equals a fresh settle, an
   // the world participation a frozen owner would otherwise latch after the scene removal.
   api.G.scene = scene;
   api.G.physics = { raycast: () => ({ hit: false }) };
-  vm.runInContext('globalThis.__rngDraws = 0; globalThis.__origRandom = Math.random; globalThis.__rngStacks = []; ' +
+  vm.runInContext('globalThis.__rngDraws = 0; globalThis.__rngUuidDraws = 0; globalThis.__rngOtherDraws = 0; globalThis.__rngOtherStacks = []; ' +
+    'globalThis.__uuidStacks = []; globalThis.__uuidCaptureAfter = 0; globalThis.__origRandom = Math.random; ' +
     'Math.random = function () { globalThis.__rngDraws++; ' +
-    'if (globalThis.__rngDraws <= 5) globalThis.__rngStacks.push(new Error().stack.split("\\n").slice(1, 6).join(" <- ")); ' +
+    'const stack = new Error().stack; ' +
+    'if (stack.indexOf("generateUUID") !== -1) { globalThis.__rngUuidDraws++; ' +
+    'if (globalThis.__rngDraws > globalThis.__uuidCaptureAfter && globalThis.__uuidStacks.length < 3) globalThis.__uuidStacks.push(stack.split("\\n").slice(1, 8).join(" <- ")); } ' +
+    'else { globalThis.__rngOtherDraws++; if (globalThis.__rngOtherStacks.length < 4) globalThis.__rngOtherStacks.push(stack.split("\\n").slice(1, 6).join(" <- ")); } ' +
     'return globalThis.__origRandom(); };', context);
   const rngDraws = () => vm.runInContext('globalThis.__rngDraws', context);
+  const rngUuidDraws = () => vm.runInContext('globalThis.__rngUuidDraws', context);
+  const rngOtherDraws = () => vm.runInContext('globalThis.__rngOtherDraws', context);
+  const rngOtherStacks = () => vm.runInContext('JSON.stringify(globalThis.__rngOtherStacks)', context);
+  const armUuidStacks = () => vm.runInContext('globalThis.__uuidCaptureAfter = globalThis.__rngDraws; globalThis.__uuidStacks = [];', context);
+  const uuidStacks = () => vm.runInContext('JSON.stringify(globalThis.__uuidStacks)', context);
   const base = { color: new THREE.Color('#4269b2'), weapon: 'shooter', style: { hair: 2, skin: 1, outfit: 3, eyes: 0 },
     size: 128, kind: 'head' };
   const enqueue = (request) => show.portrait(request, (canvas) => { if (canvas) metrics.callbacks++; });
   const flush = async () => { for (let i = 0; i < 8; i++) await Promise.resolve(); };
 
   const coldDraws = rngDraws();
+  const coldUuidDraws = rngUuidDraws();
+  const coldOtherDraws = rngOtherDraws();
   enqueue({ ...base });
   show._portraitStep(); await flush();
   assert.equal(metrics.constructors, 1);
@@ -320,10 +331,19 @@ test('native owner refreshes wardrobe colour in place, equals a fresh settle, an
   assert.equal(owner.inWorld, false, 'settled owner returns to display-only after the run');
   assert.equal(owner.phys, null, 'settled owner drops the live physics reference');
   assert.strictEqual(show.CharacterClass, MeasuredCharacter, 'spawn paths get the native class back outside a run');
-  assert.equal(rngDraws(), coldDraws, 'cold native portrait generation draws no shared Math.random values; ' +
-    'draws=' + rngDraws() + ' stacks=' + vm.runInContext('JSON.stringify(globalThis.__rngStacks)', context));
+  // Native construction draws shared Math.random only where three.js itself does: generateUUID
+  // object ids for Textures/RenderTargets/Materials/Geometries. Current main draws the same ids
+  // (and more: it constructs and discards a Character per uncached tile); what must stay at zero
+  // is every other shared RNG consumer, i.e. game logic (Battle/Range draw streams included).
+  assert.equal(rngOtherDraws(), coldOtherDraws, 'cold native portrait generation draws no shared Math.random values outside three.js generateUUID object ids; ' +
+    'other=' + rngOtherDraws() + ' uuid=' + rngUuidDraws() + ' total=' + rngDraws() + ' otherStacks=' + rngOtherStacks());
+  const coldPhase = { total: rngDraws() - coldDraws, uuid: rngUuidDraws() - coldUuidDraws, other: rngOtherDraws() - coldOtherDraws };
+  const coldUuidSample = uuidStacks();
   // Wardrobe colour change: the native tile cache misses, but the private owner identity hits.
   const reuseDraws = rngDraws();
+  const reuseUuidDraws = rngUuidDraws();
+  const reuseOtherDraws = rngOtherDraws();
+  armUuidStacks();
   const updatesBeforeReuse = metrics.updates;
   enqueue({ ...base, color: new THREE.Color('#ff5511') });
   show._portraitStep(); await flush();
@@ -336,12 +356,34 @@ test('native owner refreshes wardrobe colour in place, equals a fresh settle, an
   assert.deepEqual(show._pv.toArray(), ownerHead, 'frozen pose is unchanged by the colour refresh');
   assert.equal(owner.inWorld, false);
   assert.equal(owner.phys, null);
-  assert.equal(rngDraws(), reuseDraws, 'reuse draws no shared RNG values');
+  // The colour refresh legitimately allocates one native object id: Character.setColor assigns the
+  // cached-by-hex ink material for the new colour (character-mats getInkMaterial). Current main
+  // pays that plus an entire Character construction on this same cache miss. What must stay at
+  // zero is every non-three.js consumer of the shared RNG (game logic, Battle/Range streams).
+  assert.equal(rngOtherDraws(), reuseOtherDraws, 'colour-refresh reuse draws no shared Math.random values outside three.js generateUUID object ids; ' +
+    'uuidDelta=' + (rngUuidDraws() - reuseUuidDraws) + ' totalDelta=' + (rngDraws() - reuseDraws) + ' other=' + rngOtherDraws() + ' stacks=' + rngOtherStacks());
+  const reusePhase = { total: rngDraws() - reuseDraws, uuid: rngUuidDraws() - reuseUuidDraws, other: rngOtherDraws() - reuseOtherDraws };
+  const reuseUuidSample = uuidStacks();
   assert.strictEqual(metrics.readBuffers[0], metrics.readBuffers[1], 'one pooled readback buffer serves both crops');
   assert.equal(metrics.imageData, 1, 'one pooled ImageData serves both crops');
   assert.equal(metrics.callbacks, 2);
   assert.equal(show._pcache.size, 2, 'the colour variant keeps its own native tile cache entry');
   assert.deepEqual(metrics.imageRows[0], [127, 0]);
+  // Steady state: another uncached crop of the refreshed colour reuses the owner and the
+  // now-cached ink material, so generation draws no shared RNG values at all.
+  const steadyDraws = rngDraws();
+  const steadyUuidDraws = rngUuidDraws();
+  const steadyOtherDraws = rngOtherDraws();
+  enqueue({ ...base, color: new THREE.Color('#ff5511'), kind: 'bust' });
+  show._portraitStep(); await flush();
+  assert.equal(metrics.constructors, 1, 'steady-state crop reuses the private owner');
+  assert.equal(metrics.updates, updatesBeforeReuse, 'steady-state crop runs no settle updates');
+  assert.equal(metrics.callbacks, 3);
+  assert.equal(rngDraws(), steadyDraws, 'steady-state reuse draws no shared RNG values; ' +
+    'uuidDelta=' + (rngUuidDraws() - steadyUuidDraws) + ' otherDelta=' + (rngOtherDraws() - steadyOtherDraws));
+  const steadyPhase = { total: rngDraws() - steadyDraws, uuid: rngUuidDraws() - steadyUuidDraws, other: rngOtherDraws() - steadyOtherDraws };
+  const preTwin = { total: rngDraws(), uuid: rngUuidDraws(), other: rngOtherDraws() };
+  armUuidStacks();
   // Equivalence: a fresh native settle of the same identity matches the frozen owner.
   const twin = new MeasuredCharacter({ color: new THREE.Color('#ff5511'), weapon: 'shooter',
     style: { ...base.style }, name: 'portrait', isLocal: false });
@@ -356,7 +398,13 @@ test('native owner refreshes wardrobe colour in place, equals a fresh settle, an
   assert.equal(twin.color.getHexString(), owner.color.getHexString());
   assert.equal(twin.weaponKind, owner.weaponKind);
   assert.equal(twin.dance, owner.dance);
-  assert.equal(rngDraws(), reuseDraws, 'the equivalence settle also draws no shared RNG values');
+  // The equivalence settle is a fresh native Character construction, exactly what current main
+  // performs for every uncached tile: its shared RNG consumption is again limited to three.js
+  // generateUUID object ids, with zero draws from any game-logic consumer.
+  assert.equal(rngOtherDraws(), preTwin.other, 'the equivalence settle draws no shared RNG values outside three.js generateUUID object ids; ' +
+    'other=' + rngOtherDraws() + ' otherStacks=' + rngOtherStacks());
+  const twinPhase = { total: rngDraws() - preTwin.total, uuid: rngUuidDraws() - preTwin.uuid, other: rngOtherDraws() - preTwin.other };
+  const twinUuidSample = uuidStacks();
 
   // Clear retires the private owner (hide/dispose share the same wrapper).
   show._clear();
@@ -365,6 +413,10 @@ test('native owner refreshes wardrobe colour in place, equals a fresh settle, an
     colour_refresh_without_rebuild: { extra_constructors: metrics.constructors - 2, nativeUpdates: metrics.updates,
       shared_rng_draws_total: rngDraws() - coldDraws, pooled_readback_buffers: new Set(metrics.readBuffers).size,
       imageDataAllocations: metrics.imageData },
+    shared_rng_breakdown: { cold: coldPhase, colour_refresh: reusePhase, steady_reuse: steadyPhase, twin_construction: twinPhase,
+      total_three_uuid_draws: rngUuidDraws() - coldUuidDraws, total_other_draws: rngOtherDraws() - coldOtherDraws,
+      other_stacks: rngOtherStacks(),
+      uuid_stack_samples: { cold: coldUuidSample, colour_refresh: reuseUuidSample, twin: twinUuidSample } },
     fresh_settle_equivalence_head: ownerHead, owner_retired_on_clear: metrics.disposals === 1 }));
 });
 
