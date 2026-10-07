@@ -172,8 +172,9 @@ test('#717/#656 composed family windows: Shooter blocks from birth while Slosher
     assert.equal(enemy.hp, 100, 'Shooter bullet is blocked by ally without friendly damage');
   }
 
-  // 3. Other families (Dualies, Splatling, Blaster) maintain pass-through
-  for (const kind of ['dualies', 'splatling', 'blaster']) {
+  // 3. Families without a sourced teammate-block window remain pass-through.
+  // Heavy Splatling is covered by #929 and correctly uses its pinned 0F window.
+  for (const kind of ['dualies', 'blaster']) {
     const { ps, shooter, ally, enemy } = await setup(kind);
     ally.pos.set(0, 0, 4.5);
     enemy.pos.set(0, 0, 6.0);
