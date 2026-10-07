@@ -48,8 +48,13 @@ Input.prototype.pollPad = function (...args) {
     patch(isHud ? '    const canJump = this.lab ? true : !!(me && me.canSuperJump && me.canSuperJump());' : '    const canJump = !!(me.alive && me.canSuperJump && me.canSuperJump());',
       isHud ? `    const canJump = this.lab ? true : (${request});` : `    const canJump = ${request};`, 'present selectable targets');
     patch('    if (!me || !me.canSuperJump || !me.canSuperJump()) {', `    if (!(${request})) {`, 'click navigation eligibility');
-    if (isHud) patch('    const ok = tg.home ? me.superJump(tg.pad.clone()) : me.superJump(tg.actor);',
-      '    const target = tg.home ? tg.pad.clone() : tg.actor;\n    const ok = me && G.match?.controller?.a === me ? G.match.controller.requestMapJump(target) : me.superJump(target);', 'HUD routes one request');
+    if (isHud) {
+      const c39 = '    const ticket = tg.home ? null : me.selectSuperJumpTarget(tg.actor);\n    const ok = tg.home ? me.superJump(tg.pad.clone()) : me.superJump(tg.actor, ticket);';
+      const raw = '    const ok = tg.home ? me.superJump(tg.pad.clone()) : me.superJump(tg.actor);';
+      patch(code.includes(c39) ? c39 : raw,
+        '    const target = tg.home ? tg.pad.clone() : tg.actor;\n    const ok = me && G.match?.controller?.a === me ? G.match.controller.requestMapJump(target) : me.superJump(target);',
+        'HUD routes one request');
+    }
     else {
       patch("    if (i === 3) { const pad = G.level?.spawnPads?.[me.team]; ok = pad ? me.superJump(pad.clone()) : false; }\n    else if (p.target && p.target.alive && !p.target.superJumpState) ok = me.superJump(p.target);",
         "    const request = target => me && G.match?.controller?.a === me ? G.match.controller.requestMapJump(target) : me.superJump(target);\n    if (i === 3) { const pad = G.level?.spawnPads?.[me.team]; ok = pad ? request(pad.clone()) : false; }\n    else if (p.target && p.target.alive && !p.target.superJumpState) ok = request(p.target);", 'diorama routes one request');
