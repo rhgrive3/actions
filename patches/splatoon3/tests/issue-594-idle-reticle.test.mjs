@@ -33,7 +33,7 @@ class Classes {
   toggle(n, on = !this.contains(n)) { on ? this.add(n) : this.remove(n); return on; }
 }
 class El {
-  constructor() { this.classList = new Classes(); this.style = { setProperty: (k, v) => { this.style[k] = v; } }; this.innerHTML = ''; }
+  constructor() { this.classList = new Classes(); this.style = { setProperty: (k, v) => { this.style[k] = v; } }; this.dataset = {}; this.innerHTML = ''; }
   set className(v) { this.classList.names = new Set(String(v).split(/\s+/).filter(Boolean)); }
   get className() { return [...this.classList.names].join(' '); }
   querySelector() { return new El(); }

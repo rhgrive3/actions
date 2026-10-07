@@ -180,7 +180,7 @@ export function installGear(api, tuning) {
     refresh(this);
     // The upstream method reads a shared configuration. Provide scoped values
     // synchronously, restoring even when collision/weapon code throws.
-    const original = { swimSpeed: api.PLAYER.swimSpeed, enemyInkSpeed: api.PLAYER.enemyInkSpeed };
+    const swimSpeed = api.PLAYER.swimSpeed, enemyInkSpeed = api.PLAYER.enemyInkSpeed;
     const m = this.s3?.modifiers || {};
     api.PLAYER.swimSpeed *= swimSpeedMultiplier(this);
     const runner = this.weaponRunner, kind = this.weapon.kind;
@@ -189,13 +189,16 @@ export function installGear(api, tuning) {
     const scaledAction = kind === 'charger' && runner.charging ||
       kind === 'splatling' && (runner.charging || runner.streaming || firing) ||
       kind === 'slosher' && (runner.slosh >= 0 || firing);
-    const walk = m.enemyMoveSpeed ?? original.enemyInkSpeed;
+    const walk = m.enemyMoveSpeed ?? enemyInkSpeed;
     if (runner.aimingSub && !squid) api.PLAYER.enemyInkSpeed = m.enemyShotSpeed ?? walk;
     else if (scaledAction && !squid) api.PLAYER.enemyInkSpeed = Math.min(walk, moveSpeed.call(runner) * (m.enemyActionSpeedScale ?? 1));
     else if (fixedShot && !squid) api.PLAYER.enemyInkSpeed = m.enemyShotSpeed ?? walk;
     else api.PLAYER.enemyInkSpeed = kind === 'roller' && this.intent.fire && !squid ? m.enemyShotSpeed ?? walk : walk;
     try { return horizontal.call(this, dt, squid, enemy); }
-    finally { Object.assign(api.PLAYER, original); }
+    finally {
+      api.PLAYER.swimSpeed = swimSpeed;
+      api.PLAYER.enemyInkSpeed = enemyInkSpeed;
+    }
   };
   const splat = Actor.prototype.splat;
   Actor.prototype.splat = function (...args) {

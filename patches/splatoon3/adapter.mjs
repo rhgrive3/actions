@@ -15,6 +15,7 @@ import { adaptKitRescue } from './kit-rescue-adapter.mjs';
 // Every connection has a unique exact anchor; missing/duplicated hooks are errors.
 import { adaptMovementPhysics } from './movement-physics-adapter.mjs';
 import { adaptSubSpecialFidelity } from './sub-special-adapter.mjs';
+import { adaptChargerSightCache } from './charger-sight-cache-adapter.mjs';
 import { adaptJuddResult } from './judd-result-adapter.mjs';
 import { adaptScoreHud } from './score-hud-adapter.mjs';
 import { adaptPaintSplatPool } from './paint-splat-pool-adapter.mjs';
@@ -177,6 +178,35 @@ export function adaptSource(rel, code) {
     return "import { dualiesMotionLock, dualiesMotionAllowsFootPlant } from '../../patches/splatoon3/runtime/action-admission.mjs';\nimport { specialMotionAllowsFootPlant } from '../../patches/splatoon3/runtime/special-motion.mjs';\nimport { applyWalkLocomotion, walkLean, walkSwingUnloaded, walkFootReach, walkPelvisDrop, walkTreadAllowed, walkActive } from '../../patches/splatoon3/runtime/walk.mjs';\n"+code;
   }
   if (rel === 'src/ui/hud.js') {
+    code = replaceOnce(code,
+      '        <circle r="23" class="iw-ret__ring" pathLength="100" style="stroke-dasharray:19 6;stroke-dashoffset:9.5"/><circle r="9" class="iw-ret__ring thin"/></svg>`;',
+      '        <circle r="23" class="iw-ret__ring" pathLength="100" style="stroke-dasharray:19 6;stroke-dashoffset:9.5"/><circle r="9" class="iw-ret__ring thin"/></svg><span class="iw-ret__bias" hidden aria-hidden="true"></span>`;',
+      'Blaster outer-bias cue element');
+    code = replaceOnce(code,
+      '    this._L.spread = null; this._L.charge = null; this._L.full = null;',
+      '    this._L.spread = null; this._L.charge = null; this._L.full = null;\n' +
+      '    this._L.blasterCue = null; this._L.blasterCuePhase = null;\n' +
+      '    this._blasterBiasEl = kind === \'blaster\' ? r.querySelector(\'.iw-ret__bias\') : null;',
+      'Blaster outer-bias cue ownership');
+    code = replaceOnce(code,
+      '    const ch = f.crosshair || {};',
+      '    const ch = f.crosshair || {};\n' +
+      '    const localActor = this._local();\n' +
+      '    const jumpState = L.kind === \'blaster\' ? localActor?.weaponRunner?.s3BlasterJumpState?.(localActor.weapon) : null;\n' +
+      '    const cueActive = !!(jumpState?.supported && jumpState.active);\n' +
+      '    if (this._blasterBiasEl) {\n' +
+      '      const percent = cueActive ? Math.round(jumpState.bias * 100) : 0;\n' +
+      '      const cuePhase = cueActive ? jumpState.phase : \'idle\';\n' +
+      '      const cue = !cueActive ? \'\' : cuePhase === \'held\' ? `OUTER ${percent}%`\n' +
+      '        : cuePhase === \'recovering\' ? \'RECOVERING\' : `OUTER ${percent}%`;\n' +
+      '      if (cue !== L.blasterCue || cuePhase !== L.blasterCuePhase) {\n' +
+      '        L.blasterCue = cue; L.blasterCuePhase = cuePhase;\n' +
+      '        this._blasterBiasEl.hidden = !cueActive;\n' +
+      '        this._blasterBiasEl.textContent = cue;\n' +
+      '        this._blasterBiasEl.dataset.phase = cuePhase;\n' +
+      '      }\n' +
+      '    }',
+      'Blaster sourced bias and recovery presentation');
     code = replaceOnce(code,
       '// ------------------------------------------------------------------ HUD-only art',
       "// Splatoon 3 drives the charge reticle off the runner's fixed-tick charge clock, never the\n" +
@@ -593,6 +623,7 @@ export function adaptSource(rel, code) {
       '{ list[i] = list[list.length - 1]; list.pop(); this._recycle(p); } }',
       'normal completion recycles without owners');
     code = adaptWeaponEdgecases(rel, code, replaceOnce);
+    code = adaptChargerSightCache(rel, code, replaceOnce);
     code = adaptWeaponPaintInertia(rel, code, replaceOnce);
     code = adaptWeaponsFidelity(code, replaceOnce);
     code = adaptKitRescue(rel, code, replaceOnce);
@@ -607,6 +638,7 @@ export function adaptSource(rel, code) {
   if (rel === 'src/fx/fxHooks.js') {
     code = replaceOnce(code, "      if (form === 'swim' && hs > 4.5) {",
       "      if (form === 'swim' && hs > 4.5 && swimSplashVisible(a)) {", 'sneaking turn splash');
+    code = adaptChargerSightCache(rel, code, replaceOnce);
     return `import { swimSplashVisible } from '../../patches/splatoon3/runtime/swim-stealth.mjs';\n` + code;
   }
   if (rel === 'src/net/netmatch.js') {

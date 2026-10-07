@@ -42,8 +42,10 @@ export function prepareSuperJump(a, dt) {
   }
   // Preparation locks horizontal input, not gravity. Human collision admission
   // retains grate/rail support even though the charge is rendered as a squid.
+  // S3 composition (#820) removed the universal radial spawn clamp from ordinary
+  // movement; #848 removes it from Super Jump charge as well so a legal
+  // in-spawn position is not projected to the old 4.2 boundary on charge start.
   a._integrate(dt, false, false);
-  a._spawnBarrier();
   if (a._checkFallDeath()) return false;
   rememberSuperJumpGround(a);
   a._probeGround();

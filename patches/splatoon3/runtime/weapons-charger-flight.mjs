@@ -77,7 +77,7 @@ export function installChargerFlight(api,completion) {
     const distance=maxDistance??reachFor(charge);
     const direction=dir.clone().normalize();
     if(!Number.isFinite(distance)||distance<=0||direction.lengthSq()<EPS)return;
-    const job={owner:actor,team:actor.team,weapon:{...w},charge,chargeT,damage,full,speed,range:distance,travel:0,origin:origin.clone(),dir:direction,
+    const job={owner:actor,team:actor.team,weapon:w,charge,chargeT,damage,full,speed,range:distance,travel:0,origin:origin.clone(),dir:direction,
       pos:origin.clone(),prev:origin.clone(),hit:new Hit(),base:new THREE.Vector3(),seen:new Set(),ghost,nextPaint:1.2,paint:chargerPaintParameters(completion.weapons.charger,charge),beam:null};
     system._ghostBeam(actor,origin,direction,.0001,charge,false);
     job.beam=system.beams.at(-1);
