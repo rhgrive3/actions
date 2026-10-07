@@ -61,14 +61,17 @@ async function boot({ main = false } = {}) {
   }
   // Camera at the actor's eye line looking down +X; the ray is stubbed to hit exactly `distance` metres of aim-point offset.
   function inRange(actor, charge, planar, projectiles = G.projectiles) {
-    G.projectiles = projectiles;
-    G.camera.position.set(0, 1.3, 0); G.camera.lookAt(10, 1.3, 0); G.camera.updateMatrixWorld(true);
-    G.physics.raycast = (_s, _d, _m, hit) => { hit.hit = true; hit.dist = Math.sqrt(planar * planar - 1.3 * 1.3); return hit; };
-    actor.weaponRunner.charge = charge;
-    const controller = new api.PlayerController(actor, null, null);
-    controller.computeAim();
-    assert.ok(Math.abs(actor.aimPoint.distanceTo(actor.pos) - planar) < 1e-9, 'aim point sits exactly at the requested distance');
-    return controller.inRange;
+    const previousProjectiles = G.projectiles;
+    try {
+      G.projectiles = projectiles;
+      G.camera.position.set(0, 1.3, 0); G.camera.lookAt(10, 1.3, 0); G.camera.updateMatrixWorld(true);
+      G.physics.raycast = (_s, _d, _m, hit) => { hit.hit = true; hit.dist = Math.sqrt(planar * planar - 1.3 * 1.3); return hit; };
+      actor.weaponRunner.charge = charge;
+      const controller = new api.PlayerController(actor, null, null);
+      controller.computeAim();
+      assert.ok(Math.abs(actor.aimPoint.distanceTo(actor.pos) - planar) < 1e-9, 'aim point sits exactly at the requested distance');
+      return controller.inRange;
+    } finally { G.projectiles = previousProjectiles; }
   }
   const close = () => { for (const a of G.actors) a.character.dispose(); real.clear(); };
   return { ...api, make, inRange, close, composed, real };

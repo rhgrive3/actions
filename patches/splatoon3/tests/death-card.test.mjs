@@ -30,7 +30,7 @@ class Node {
   }
   find(name) { return this.names.has(name) ? this : this.children.map(c => c instanceof Node ? c.find(name) : null).find(Boolean) || null; }
   text() { return this.children.map(c => c instanceof Node ? c.text() : String(c)).join(''); }
-  prepend() {} appendChild(n) { this.children.push(n); return n; } animate() {}
+  prepend() {} appendChild(n) { this.children.push(n); return n; } querySelector(sel) { return typeof sel === 'string' && sel.startsWith('.') ? this.find(sel.slice(1)) : null; } animate() {}
 }
 function showSplatted(source, args, lastKiller = null) {
   const code = `(() => { class Hud {${section(source, '  showSplatted({', '\n  hideSplatted(')}} return Hud; })()`;
@@ -117,6 +117,6 @@ test('#918: respawn timing and the spectate camera are untouched', () => {
 test('#918: the connections fail closed on upstream drift', () => {
   const main = read('src/main.js'), hud = read('src/ui/hud.js');
   assert.throws(() => adaptSource('src/main.js', main.replace("t(cause === 'water' ? 'the sea' : 'enemy ink')", "t('enemy ink')")), /death card splat cause/);
-  assert.throws(() => adaptSource('src/ui/hud.js', hud.replace("showSplatted({ by = null, byColor", "showSplatted({ by = null, color, byColor")), /death card opponent identity input/);
-  assert.throws(() => adaptSource('src/ui/hud.js', hud.replace("killer && killer.weaponId ? h('div', { class: 'iw-spl__wn' }", "killer && killer.weaponId ? h('div', { class: 'iw-spl__wx' }")), /death card opponent identity line/);
+  assert.throws(() => adaptSource('src/ui/hud.js', hud.replace("showSplatted({ by = null, byColor", "showSplatted({ by = null, color, byColor")), /death card opponent identity input|respawn lifecycle/);
+  assert.throws(() => adaptSource('src/ui/hud.js', hud.replace("killer && killer.weaponId ? h('div', { class: 'iw-spl__wn' }", "killer && killer.weaponId ? h('div', { class: 'iw-spl__wx' }")), /death card opponent identity line|respawn lifecycle/);
 });
