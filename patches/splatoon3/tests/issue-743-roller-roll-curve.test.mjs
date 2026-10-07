@@ -27,6 +27,8 @@ async function rolling() {
   const f = await fixture();
   const a = f.make('roller');
   const r = a.weaponRunner;
+  a.grounded = true;
+  a.intent.move.set(0, 0, 1);
   r.update(DT, { fire: true, firePressed: true });
   for (let i = 0; i < 42; i++) r.update(DT, { fire: true });
   assert.equal(r.rolling, true, 'must be rolling');

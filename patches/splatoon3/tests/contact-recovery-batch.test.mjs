@@ -2,17 +2,25 @@ import {test} from 'node:test';import assert from 'node:assert/strict';
 import {fixture} from './source-fixture.mjs';
 import {FixedClock} from '../runtime/clock.mjs';
 const DT=1/60,near=(a,b)=>assert.ok(Math.abs(a-b)<1e-8,`${a} != ${b}`);
-function box(f,id,x,z,wx,wz,yaw=0){
- const V=f.THREE.Vector3,center=new V(x,1,z),half=new V(wx/2,1,wz/2),c=Math.cos(yaw),s=Math.sin(yaw);
- return {id,solid:true,center,half,axes:[new V(c,0,s),new V(0,1,0),new V(-s,0,c)],faces:Array(6).fill(-1)};
+function box(f,id,x,z,wx,wz,yaw=0,{centerY=1,halfY=1}={}){
+ const V=f.THREE.Vector3,center=new V(x,centerY,z),half=new V(wx/2,halfY,wz/2),c=Math.cos(yaw),s=Math.sin(yaw);
+ const axes=[new V(c,0,s),new V(0,1,0),new V(-s,0,c)];
+ const ex=Math.abs(axes[0].x)*half.x+Math.abs(axes[1].x)*half.y+Math.abs(axes[2].x)*half.z;
+ const ey=Math.abs(axes[0].y)*half.x+Math.abs(axes[1].y)*half.y+Math.abs(axes[2].y)*half.z;
+ const ez=Math.abs(axes[0].z)*half.x+Math.abs(axes[1].z)*half.y+Math.abs(axes[2].z)*half.z;
+ return {id,solid:true,center,half,axes,faces:Array(6).fill(-1),
+  aabbMin:new V(center.x-ex,center.y-ey,center.z-ez),aabbMax:new V(center.x+ex,center.y+ey,center.z+ez)};
 }
 function world(f,blocks){
- const level={blocks,faces:[],queryBlocks:(_x,_z,_xx,_zz,out)=>{out.length=0;out.push(...blocks.map(b=>b.id));return out;},groundHeight:()=>0};
+ const floor=box(f,-1,0,0,200,200,0,{centerY:-.25,halfY:.25}),stageBlocks=[floor,...blocks];
+ stageBlocks.forEach((b,i)=>{b.id=i;});
+ const level={blocks:stageBlocks,faces:[],floorBlock:floor,
+  queryBlocks:(_x,_z,_xx,_zz,out)=>{out.length=0;for(let i=0;i<stageBlocks.length;i++)out.push(i);return out;},groundHeight:()=>0};
  level.pointInside=p=>blocks.some(b=>b.axes.every((ax,i)=>Math.abs(p.clone().sub(b.center).dot(ax))<(i===0?b.half.x:i===1?b.half.y:b.half.z)));
  f.G.physics=new f.Physics(level);f.G.level=level;return level;
 }
 function rolling(f){
- const a=f.make('roller');f.G.actors=[];a.vel.set(0,0,3);a.intent.fire=true;a._prevIntent.fire=true;a.weaponRunner.update(DT,{fire:true});return a;
+ const a=f.make('roller');f.G.actors=[];a.grounded=true;a.ground.hit=true;a.intent.move.set(0,0,1);a.vel.set(0,0,3);a.intent.fire=true;a._prevIntent.fire=true;a.weaponRunner.update(DT,{fire:true});return a;
 }
 function spentRoll(f,a){a.pos.z+=.3;f.tick(a);return a.ink;}
 
@@ -21,7 +29,7 @@ test('#200/#73: actual roll contact deals125 on open ground, and thin/rotated wa
   const f=await fixture(),a=rolling(f),e=f.make();e.team=1;e.pos.set(0,0,1);f.G.actors=[a,e];let damage=[];f.G.projectiles.applyHit=(_a,_e,d)=>damage.push(d);
   world(f,wall==='none'?[]:[box(f,0,0,.45,4,.03,wall==='rotated'?.25:0)]);
   a.weaponRunner.update(DT,{fire:true});assert.equal(damage.length,hit?1:0,wall);if(hit)near(damage[0],125);
-  if(!hit){f.G.physics.level.blocks.length=0;a.weaponRunner.update(DT,{fire:true});assert.deepEqual(damage,[125]);}
+  if(!hit){f.G.physics.level.blocks.length=1;a.weaponRunner.update(DT,{fire:true});assert.deepEqual(damage,[125]);}
  }
 });
 
@@ -97,7 +105,8 @@ test('contact/refill traces are render-rate independent through the public Fixed
 function runLoadout(gp){return Array.from({length:3},(_,i)=>({main:gp===57||gp===10&&i===0?'runSpeed':'none',subs:Array.from({length:3},(_,j)=>gp===57||gp===3&&i===0&&j===0?'runSpeed':'none')}));}
 test('#350: real tap/held repeated horizontal/vertical flicks use firing gear at 0/3/10/57 AP from first windup frame',async()=>{
  for(const gp of [0,3,10,57])for(const vertical of [false,true])for(const held of [false,true]){
-  const f=await fixture(),a=f.make('roller'),b=f.make('roller');a.s3.loadout=runLoadout(gp);a.setWeapon('roller');a.grounded=b.grounded=!vertical;f.G.actors=[];f.G.projectiles.applyHit=()=>{};
+  const f=await fixture(),a=f.make('roller'),b=f.make('roller');a.s3.loadout=runLoadout(gp);a.setWeapon('roller');a.grounded=b.grounded=!vertical;
+  a.intent.move.set(0,0,1);b.intent.move.set(0,0,1);f.G.actors=[];f.G.projectiles.applyHit=()=>{};
   const factor=f.gearCurve(gp,...f.profile.gearExtra.runSpeedFiring);let winding=0,rolling=0;
   for(let i=0;i<130;i++){
    const press=i===0||i===70,input={fire:held||press,firePressed:press};a.weaponRunner.update(DT,input);b.weaponRunner.update(DT,input);

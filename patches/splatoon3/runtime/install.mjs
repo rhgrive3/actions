@@ -4,9 +4,9 @@ import * as THREE from 'three';
 import { G, on, emit } from '../../../src/core/ctx.js';
 import { PLAYER, WEAPONS, SUB, SPECIALS, DEFAULT_SETTINGS } from '../../../src/config.js';
 import { Actor } from '../../../src/game/actor.js';
-import { NetMatch } from '../../../src/net/netmatch.js';
 import { Character, CHARACTER_CHANNELS, CHARACTER_TIMERS, CHARACTER_FOOT_MODES, CHARACTER_FOOT_METRICS, CHARACTER_BOMB_POSE } from '../../../src/game/character.js';
 import { WeaponRunner, Projectiles } from '../../../src/game/weapons.js';
+import { NetMatch } from '../../../src/net/netmatch.js';
 import { PaintSystem } from '../../../src/world/paint.js';
 import { PlayerController } from '../../../src/game/player.js';
 import { Physics, Hit } from '../../../src/game/physics.js';
@@ -92,7 +92,6 @@ export function install(profile) {
   installRendering(api);
   installWeaponMotion(api, profile);
   installBombMotion(api);
-  installWeaponDetailMotion(api, profile);
   installDualiesMotion(api, profile);
   installCarryMotion(api);
   installWalkMotion(api, profile);
@@ -118,6 +117,7 @@ export function install(profile) {
   // Main-weapon fidelity must be installed on the same canonical context before
   // gameplay can create projectiles; bootstrap's compatibility call is then a no-op.
   installWeaponsFidelity(api, profile);
+  installWeaponDetailMotion(api, profile);
   installChargerSurface(api);
   // The S3 ShotGuideFrame guide reads the installed projectile motion records, so
   // it installs after main-weapon fidelity and before any aim/HUD consumer runs.

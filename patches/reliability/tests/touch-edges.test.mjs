@@ -167,7 +167,10 @@ test('actual charger fires legal holds once and cancels completed sub-8F fire ta
 });
 
 test('actual roller completes a tap flick and stops rolling after a held trigger releases', async () => {
-  const h = await boot({ weapon: 'roller' }); h.tap('fire'); h.frame();
+  const h = await boot({ weapon: 'roller' });
+  h.pads([{ connected: true, mapping: 'standard', axes: [0, -1, 0, 0],
+    buttons: Array.from({ length: 17 }, () => ({ pressed: false, value: 0 })) }]);
+  h.tap('fire'); h.frame();
   assert.ok(h.actor.weaponRunner.s3RollerAttack);
   for (let i = 0; i < 50; i++) h.frame();
   assert.equal(h.shots.length, 1); assert.equal(h.actor.weaponRunner.rolling, false);

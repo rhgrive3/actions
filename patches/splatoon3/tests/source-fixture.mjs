@@ -10,11 +10,12 @@ const BUILT = process.env.INKWAVE_BUILT_SITE;
 const UPSTREAM = BUILT ? path.resolve(BUILT) : process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
 export async function fixture(options = {}) {
   const extraExports = typeof options === 'string' ? options : options.extraExports || '';
-  const { adapt = adaptSource, adaptNative = adapt, adaptRuntime = (_rel, source) => source } = typeof options === 'string' ? {} : options;
+  const { adapt = adaptSource, adaptNative = adapt, adaptRuntime = (_rel, source) => source, includeCharacter = false } = typeof options === 'string' ? {} : options;
   const context = vm.createContext({ console, performance, URL, innerWidth:1280, innerHeight:720 });
   const modules = new Map();
   function resolve(spec, from) {
     if (spec === 'three') return path.join(UPSTREAM, 'vendor/three/build/three.module.js');
+    if (spec.startsWith('three/addons/')) return path.join(UPSTREAM, 'vendor/three/jsm', spec.slice('three/addons/'.length));
     let file = path.resolve(path.dirname(from), spec);
     if (file.startsWith(path.join(ROOT, 'inkwave-public/'))) file = path.join(UPSTREAM, path.relative(path.join(ROOT, 'inkwave-public'), file));
     if (file.startsWith(path.join(UPSTREAM, 'patches/'))) file = path.join(ROOT, path.relative(UPSTREAM, file));
@@ -29,6 +30,10 @@ export async function fixture(options = {}) {
     const source = file.startsWith(UPSTREAM + path.sep) ? native : adaptRuntime(path.relative(ROOT, file), native);
     const mod = new vm.SourceTextModule(source, { context, identifier: file, initializeImportMeta(meta) { meta.url = new URL(file, 'file:').href; } }); modules.set(file, mod); return mod;
   }
+  const characterExports = includeCharacter ? `
+    export { Character, CHARACTER_CHANNELS, CHARACTER_TIMERS, CHARACTER_BOMB_POSE } from './inkwave-public/src/game/character.js';
+    export { installSpecialMotion, specialMotionSnapshot } from './patches/splatoon3/runtime/special-motion.mjs';
+  ` : '';
   const root = new vm.SourceTextModule(`
     export * from './inkwave-public/src/core/ctx.js';
     export * from './inkwave-public/src/config.js';
@@ -53,6 +58,7 @@ export async function fixture(options = {}) {
     export * from './patches/splatoon3/runtime/sub-special-fidelity.mjs';
     export * from './patches/splatoon3/runtime/clock.mjs';
     export const TEST_MATH = Math;
+    ${characterExports}
     ${extraExports}
   `, { context, identifier: path.join(ROOT, 'fixture.mjs') });
   await root.link((spec, from) => load(resolve(spec, from.identifier))); await root.evaluate();

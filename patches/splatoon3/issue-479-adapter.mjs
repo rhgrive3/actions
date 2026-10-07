@@ -33,20 +33,16 @@ export function adaptIssue479(rel, code) {
     'roller installRollerLogic actor hook connection'
   );
 
-  // 2. Select vertical mode considering 25F natural free-fall grace and latched attacks
-  code = replaceOnce(
-    code,
-    '    const starting = this.flick < 0 && inp.firePressed && this.cooldown <= EPS && a.ink >= (!a.grounded ? w.verticalInk : w.flickInk);\n' +
-    '    if (starting) {\n' +
-    '      this.cooldown = Math.min(0, this.cooldown);\n' +
-    '      this.s3FlickVertical = !a.grounded;',
+  // 2. Keep support/no-stick admission between starting and the release block.
+  // Each independent connection remains exact and fails closed on reapplication.
+  code = replaceOnce(code,
+    '    const starting = this.flick < 0 && inp.firePressed && this.cooldown <= EPS && a.ink >= (!a.grounded ? w.verticalInk : w.flickInk);',
     '    const isVertical = selectRollerFlickVertical(a, this);\n' +
-    '    const starting = this.flick < 0 && inp.firePressed && this.cooldown <= EPS && a.ink >= (isVertical ? w.verticalInk : w.flickInk);\n' +
-    '    if (starting) {\n' +
-    '      this.cooldown = Math.min(0, this.cooldown);\n' +
+    '    const starting = this.flick < 0 && inp.firePressed && this.cooldown <= EPS && a.ink >= (isVertical ? w.verticalInk : w.flickInk);',
+    'roller selectRollerFlickVertical 25F grace and latching');
+  code = replaceOnce(code, '      this.s3FlickVertical = !a.grounded;',
     '      this.s3FlickVertical = isVertical;',
-    'roller selectRollerFlickVertical 25F grace and latching'
-  );
+    'roller selected free-fall mode owns attack');
 
   if (!code.includes('./roller-freefall.mjs')) {
     code = ROLLER_IMPORT + code;
