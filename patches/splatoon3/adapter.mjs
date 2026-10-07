@@ -425,8 +425,15 @@ export function adaptSource(rel, code) {
     return code;
   }
   if (rel === 'src/core/input.js') {
-    code = replaceOnce(code, '    const ax = pad.axes;', `    const touchContact = this.lastDevice === 'touch' && this.mobile?.active && !this.mobile._destroyed &&
+    // One owner for "a finger is physically down": held axes (#497) and fresh
+    // button edges (#990) both consult it, so neither converts the finger's
+    // FIRE/SUB hold into a synthetic release by taking device ownership.
+    code = replaceOnce(code, '  pollPad() {', `  _liveTouchContact() {
+    return this.lastDevice === 'touch' && !!this.mobile?.active && !this.mobile._destroyed &&
       ((this.mobile._ptr?.size || 0) > 0 || (this.mobile._stick?.id ?? -1) >= 0);
+  }
+  pollPad() {`, 'live touch contact predicate');
+    code = replaceOnce(code, '    const ax = pad.axes;', `    const touchContact = this._liveTouchContact();
     const ax = pad.axes;`, 'live touch gesture owns axis arbitration');
     return replaceOnce(code,
       "if (Math.abs(ax[0]) > 0.3 || Math.abs(ax[1]) > 0.3 || Math.abs(ax[2]) > 0.3 || Math.abs(ax[3]) > 0.3) this.lastDevice = 'pad';",

@@ -10,7 +10,7 @@ export function adaptPause(rel, code) {
     code = replaceOnce(code, '    this.pad = pad;\n    this.padPressed.clear();',
       '    this.pad = pad;\n    this.padPressed.clear();\n    this.padMenuPressed.clear();', 'fresh menu pad edges');
     code = replaceOnce(code, "      if (b.pressed && !was) { this.padPressed.add(i); this.lastDevice = 'pad'; }",
-      "      if (!b.pressed) this.padMenuBlocked.delete(i);\n      if (b.pressed && !was) { this.padPressed.add(i); this.padMenuPressed.add(i); this.lastDevice = 'pad'; }", 'deliver physical menu pad edge');
+      "      if (!b.pressed) this.padMenuBlocked.delete(i);\n      if (b.pressed && !was) { this.padPressed.add(i); this.padMenuPressed.add(i); if (!this._liveTouchContact?.()) this.lastDevice = 'pad'; }", 'deliver physical menu pad edge');
     code = replaceOnce(code, '    if (!pad) { this.padPrev = []; return; }',
       '    if (!pad) { this.padPrev = []; this.padMenuBlocked.clear(); return; }', 'disconnect menu button ownership');
     code = replaceOnce(code, '  padButton(i) { return !!(this.pad && this.pad.buttons[i] && this.pad.buttons[i].pressed); }',

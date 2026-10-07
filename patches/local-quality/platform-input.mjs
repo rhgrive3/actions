@@ -27,6 +27,10 @@ export function resetPlatformInput(input, controller) {
       weapon.chargeLoop?.stop?.(.05); weapon.chargeLoop = null;
     }
     if (weapon) weapon.aimingSub = false;
+    // Deferred shots (3F/12F Shooter startup, Blaster windup, Splatling startup,
+    // Dodge queue) are derived from the input just neutralized; without this they
+    // keep counting down and synthesize fire:true after the boundary (#991).
+    weapon?.cancelPendingInput?.();
     if (actor._prevIntent) for (const key of ['fire', 'jump', 'squid', 'sub', 'special']) actor._prevIntent[key] = false;
   }
 }
