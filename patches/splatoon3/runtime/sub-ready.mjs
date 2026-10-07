@@ -50,7 +50,7 @@ export function installSubReady({Actor,WeaponRunner,SUB},profile){
    s=this.s3SubReady={age:0,pending:false,minimum:this.s3SubFromSquid?profile.bomb.readyTimeSquid:profile.bomb.readyTimeKid};
    this.s3SubFromSquid=false;
   }
-  const cost=SUB.bomb.inkCost*(a.s3?.modifiers?.inkSaverSub??1);
+  // #1000: readiness must use the equipped sub's resolved cost, not the generic Splat Bomb cost.\n  const selected=SUB[a.weapon.sub||'bomb']||SUB.bomb;\n  const baseCost=selected?.inkCost??selected?.inkCostFallback??SUB.bomb.inkCost;\n  const cost=baseCost*(a.s3?.modifiers?.inkSaverSub??1);
   if(s&&input.subReleased){
    if(a.ink+EPS<cost){this.s3SubReady=null;s=null;}
    else s.pending=true;
