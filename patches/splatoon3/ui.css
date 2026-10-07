@@ -160,3 +160,106 @@
    A distinct splat icon sits above the splatted location in the existing world-marker pool. */
 .iw-down--assist i { left: -15px; top: -52px; width: 30px; height: 30px; color: #fff; animation-name: iw-assist-in; }
 @keyframes iw-assist-in { 0% { opacity: 0; scale: .3; translate: 0 8px; } 60% { scale: 1.15; } }
+
+/* ------------------------------------------------------------------ #894 Judd + Li'l Judd stage result scene
+   Splatoon 3 judges the final Turf result with the two series referees standing beside the
+   stage/map result plate: Judd for the local player's team, Li'l Judd for the opposing team.
+   The figures are original stylised SVG/CSS cats (no official asset, pose or frame value is
+   reproduced); the flag and outcome classes are driven by the authoritative winner in
+   HUD.judge(). The stylesheet loads after styles/ui.css + styles/mobile.css, so these rules
+   override the upstream .iw-jd__* layout only inside the scene root (.iw-jd--refs). */
+.iw-jd--refs .iw-jd__title { top: 11%; }
+.iw-jd__refs { position: absolute; inset: 0; pointer-events: none; }
+.iw-jd__stage {
+  position: absolute; left: 17vw; right: 17vw; top: 50%; translate: 0 -50%;
+  min-height: min(50vh, calc(var(--u) * 64));
+  padding: calc(var(--u) * 3) calc(var(--u) * 3.5) calc(var(--u) * 2.6);
+  border-radius: calc(var(--u) * 2.6); border: calc(var(--u) * .5) solid var(--k);
+  box-shadow: 0 calc(var(--u) * 1.2) 0 calc(var(--u) * .6) rgba(0, 0, 0, .4);
+  background: linear-gradient(180deg, rgba(48, 40, 84, .94), rgba(18, 14, 34, .97));
+  overflow: hidden; animation: iw-in-up .6s var(--spring) .45s backwards;
+}
+/* This is a snapshot from the live Minimap canvas (stage terrain + current ink coverage). */
+.iw-jd__stagemap {
+  position: absolute; inset: 0; display: grid; place-items: center; overflow: hidden;
+}
+.iw-jd__map-snapshot {
+  position: absolute; inset: 0; display: block;
+  width: 100%; height: 100%; object-fit: contain; opacity: .9;
+}
+.iw-jd--refs .iw-jd__arena {
+  position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end;
+  padding: calc(var(--u) * 2.2); z-index: 1; animation: none;
+}
+.iw-jd--refs .iw-jd__labels { align-items: center; gap: calc(var(--u) * 1.2); margin: 0; }
+.iw-jd--refs .iw-jd__side {
+  align-items: center; gap: calc(var(--u) * .8); min-width: 0; padding: .35em .55em;
+  border-radius: .55em; background: rgba(10, 8, 18, .86);
+}
+.iw-jd--refs .iw-jd__side .iw-jd__name { font-size: min(calc(var(--u) * 2.4), 4.2vw); }
+.iw-jd--refs .iw-jd__side .iw-jd__num { font-size: min(calc(var(--u) * 3.2), 5.2vw); }
+/* Keep inherited race-bar nodes for the existing result contracts, but never show them here. */
+.iw-jd--refs .iw-jd__track { display: none; }
+.iw-jd--refs .iw-jd__win { top: 88%; z-index: 2; }
+
+/* the two referees flank the stage plate and stay for win, loss and tie alike */
+.iw-jd__ref { position: absolute; top: 50%; translate: 0 -50%; display: flex; flex-direction: column; align-items: center; gap: calc(var(--u) * 1.4); }
+.iw-jd__ref.a { left: 2vw; } .iw-jd__ref.b { right: 2vw; }
+.iw-jd__figure { width: min(13vw, calc(var(--u) * 24)); aspect-ratio: 1; }
+.iw-jd__cat { display: block; width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 calc(var(--u) * .5) 0 rgba(0, 0, 0, .35)); }
+.iw-jd__ear { fill: #fdfdfb; stroke: var(--k); stroke-width: 5; stroke-linejoin: round; }
+.iw-jd__face { fill: #fdfdfb; stroke: var(--k); stroke-width: 5; }
+.iw-jd__patch { fill: #23202e; }
+.iw-jd__eye { fill: #1a1626; }
+.iw-jd__nose { fill: #ff7b8a; stroke: var(--k); stroke-width: 2; }
+.iw-jd__mouth, .iw-jd__whisker { fill: none; stroke: var(--k); stroke-width: 4; stroke-linecap: round; }
+/* Li'l Judd is the miniature of Judd */
+.iw-jd__ref.is-liljudd .iw-jd__figure { scale: .72; }
+.iw-jd__refname {
+  font: 900 var(--fs-xs) / 1 'Rubik', 'IW JP Body', sans-serif; letter-spacing: .14em; text-transform: uppercase;
+  color: #fff; padding: .32em .6em; border-radius: .4em; background: rgba(10, 8, 18, .6);
+  text-shadow: 0 .1em 0 var(--k); white-space: nowrap;
+}
+.iw-jd__ref.a .iw-jd__refname { box-shadow: 0 0 0 .18em var(--ja); }
+.iw-jd__ref.b .iw-jd__refname { box-shadow: 0 0 0 .18em var(--jb); }
+
+/* team flag: raised for the winning referee, dropped for the losing one, level on a tie */
+.iw-jd__flag { position: absolute; top: calc(var(--u) * -7); left: 50%; width: calc(var(--u) * 7); height: calc(var(--u) * 7); translate: -50% 0; }
+.iw-jd__pole { position: absolute; left: 44%; top: 0; width: calc(var(--u) * .7); height: 100%; border-radius: calc(var(--u) * .4); background: linear-gradient(180deg, #fff, #cfcfe0); box-shadow: 0 0 0 calc(var(--u) * .2) var(--k); }
+.iw-jd__cloth {
+  position: absolute; left: 52%; top: 7%; width: 62%; height: 42%; transform-origin: left center; rotate: 4deg;
+  border-radius: 0 calc(var(--u) * .6) calc(var(--u) * .6) 0; box-shadow: 0 0 0 calc(var(--u) * .22) var(--k);
+  transition: rotate .45s var(--spring), translate .45s var(--spring);
+}
+.iw-jd__ref.a .iw-jd__cloth { background: linear-gradient(180deg, var(--ja-light), var(--ja) 55%, var(--ja-dark)); }
+.iw-jd__ref.b .iw-jd__cloth { background: linear-gradient(180deg, var(--jb-light), var(--jb) 55%, var(--jb-dark)); }
+.iw-jd__flag.is-up .iw-jd__cloth { rotate: -46deg; translate: 0 calc(var(--u) * -1); }
+.iw-jd__flag.is-down .iw-jd__cloth { rotate: 84deg; translate: 0 calc(var(--u) * 3.2); }
+.iw-jd__ref.is-tie .iw-jd__cloth, .iw-jd__flag.is-flat .iw-jd__cloth { rotate: -8deg; }
+
+/* judges attend during the drumroll, then react to the authoritative outcome */
+.iw-jd.is-racing .iw-jd__ref { animation: iw-ref-bob .45s ease-in-out infinite alternate; }
+@keyframes iw-ref-bob { to { translate: 0 calc(var(--u) * -1.4); } }
+.iw-jd.is-drum .iw-jd__figure { animation: iw-shake .25s infinite; }
+.iw-jd__ref.is-win .iw-jd__figure { animation: iw-ref-win .6s var(--spring2) both; }
+@keyframes iw-ref-win { 0% { scale: .92; } 45% { scale: 1.12; rotate: -5deg; } 100% { scale: 1.05; rotate: 0deg; } }
+.iw-jd__ref.is-lose .iw-jd__figure { filter: saturate(.6) brightness(.78); translate: 0 calc(var(--u) * .9); }
+
+@media (prefers-reduced-motion: reduce) {
+  .iw-jd__stage, .iw-jd.is-racing .iw-jd__ref, .iw-jd.is-drum .iw-jd__figure, .iw-jd__ref.is-win .iw-jd__figure { animation: none; }
+  .iw-jd__cloth { transition: none; }
+}
+/* Generic field-contact cue; separate from and does not reposition ShotGuide. */
+.iw-xh.is-muzzle-blocked::after {
+  content: "";
+  position: absolute;
+  left: var(--muzzle-hit-x, 0px);
+  top: var(--muzzle-hit-y, 0px);
+  width: 9px;
+  height: 9px;
+  border: 1px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, .9);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
