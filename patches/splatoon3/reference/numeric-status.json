@@ -2591,6 +2591,11 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "flow.progress.firstSplatBonus": {
+    "value": 10,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
   "superJump.chargeTime": {
     "value": 1.3333333333333333,
     "status": "derived from pinned extracted data; physical scale unverified",
