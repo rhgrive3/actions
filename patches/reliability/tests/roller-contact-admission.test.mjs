@@ -8,6 +8,7 @@ function placeRoller(world) {
   attacker.setWeapon('roller');
   attacker.isLocal = !attacker.remote;
   attacker.pos.set(0, 0, 0); attacker.vel.set(0, 0, 2); attacker.yaw = 0; attacker.grounded = true;
+  attacker.intent.move.set(0, 0, 1);
   victim.pos.set(0, 0, .8); victim.grounded = true;
   G.actors = [attacker, victim];
   return attacker.weaponRunner;
@@ -18,7 +19,8 @@ test('invulnerability rejection emits no generic feedback or Roller success debo
   const attacker = f.make('roller'), victim = f.make('shooter');
   attacker.isLocal = true; attacker._nearCamera = () => false;
   victim.team = 1; victim.isLocal = true; victim._nearCamera = () => false;
-  attacker.pos.set(0, 0, 0); attacker.vel.set(0, 0, 2); attacker.yaw = 0;
+  attacker.pos.set(0, 0, 0); attacker.vel.set(0, 0, 2); attacker.yaw = 0; attacker.grounded = true;
+  attacker.intent.move.set(0, 0, 1);
   victim.pos.set(0, 0, .8); victim.invuln = .01; G.paint.sample = () => 0;
   G.actors = [attacker, victim]; G.time = 1;
   const feedback = [], hits = [];
@@ -55,7 +57,8 @@ test('real victim update order around expiry does not leave failed-contact immun
     attacker._nearCamera = victim._nearCamera = () => false;
     G.paint.sample = () => 0;
     victim.team = 1; victim.invuln = .01; victim.hp = 200;
-    attacker.pos.set(0, 0, 0); attacker.vel.set(0, 0, 2); attacker.yaw = 0;
+    attacker.pos.set(0, 0, 0); attacker.vel.set(0, 0, 2); attacker.yaw = 0; attacker.grounded = true;
+    attacker.intent.move.set(0, 0, 1);
     victim.pos.set(0, 0, .8); G.actors = [attacker, victim]; G.time = 1;
     G.projectiles = { applyHit: Projectiles.prototype.applyHit };
     const runner = attacker.weaponRunner, dt = 1 / 60;
