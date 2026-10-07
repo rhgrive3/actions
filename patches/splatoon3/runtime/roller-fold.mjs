@@ -24,8 +24,9 @@ import * as THREE from 'three';
 //                             and reparents the hinge parts and the whole
 //                             drum/caps mesh under it (adapter connection).
 //   3. installRollerFold(...) — render-layer transform owner. It only READS the
-//                             existing attack state (`character.s3RollerFlick` or
-//                             owner `s3RollerAttack`, plus `character.wRoll`)
+//                             existing attack state (`character.s3RollerFlick`, owner
+//                             `s3RollerAttack`, or network-applied `s3RollerFoldAttack`,
+//                             plus `character.wRoll`)
 //                             and never writes runner timing,
 //                             ink, paint, projectiles or hit shapes.
 //
@@ -160,7 +161,9 @@ export function attachRollerFold(d, off, parts, drum) {
 
 function rollerAttack(ch) {
   const runner = ch?._runner?.() ?? ch?.actor?.weaponRunner;
-  const flick = ch?.s3RollerFlick ?? runner?.s3RollerAttack;
+  const hasRemoteSnapshot = runner?.a?.remote && Object.hasOwn(runner, 's3RollerFoldAttack');
+  const flick = hasRemoteSnapshot ? runner.s3RollerFoldAttack
+    : ch?.s3RollerFlick ?? runner?.s3RollerAttack ?? runner?.s3RollerFoldAttack;
   return flick && typeof flick.vertical === 'boolean' ? flick : null;
 }
 
