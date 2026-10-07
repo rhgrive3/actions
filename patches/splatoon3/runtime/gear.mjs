@@ -94,6 +94,7 @@ export function installGear(api, tuning) {
     const m = a.s3.modifiers;
     m.ninjaSquid = loadout[1].main === 'ninjaSquid';
     const ap = points, extra = tuning.gearExtra;
+    m.specialPowerAP = ap.specialPower || 0;
     const aroundBase = extra.quickRespawnAroundFrames[0], chaseBase = tuning.respawnChaseTime * 60;
     const around = Math.floor(gearCurve(ap.quickRespawn || 0, ...extra.quickRespawnAroundFrames) + 1e-10);
     const chase = Math.floor(chaseBase * (m.quickRespawn ?? 1) + 1e-10);
