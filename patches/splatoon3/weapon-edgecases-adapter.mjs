@@ -1,6 +1,11 @@
 // Connections are restricted to native launch/contact points. Missing anchors fail closed.
 export function adaptWeaponEdgecases(rel, code, replace) {
   if (rel !== 'src/game/weapons.js') return code;
+  // #922: the Charger laser telegraphs maximum reach at every charge level; obstruction still shortens it.
+  code = replace(code,
+    '        const range = lerp(w.rangeMin, w.rangeMax, ch);',
+    '        const range = this.chargerReach ? this.chargerReach(1) : w.rangeMax;',
+    'charger sight shows maximum range');
   code = replace(code,
     '  _fireRound(a, w, spreadDeg, m, look, snd, sndVol, pitch) {\n    const dir = this._aimFrom(a, m, _dir);\n    this._ballistic(m, dir, a.aimPoint, w.projSpeed, w.straightTime, 28, 0.8, w.range);\n    this._spread(dir, spreadDeg ?? (a.grounded ? w.spreadGround : w.spreadAir));',
     '  _fireRound(a, w, spreadDeg, m, look, snd, sndVol, pitch) {\n    const dir = this._aimFrom(a, m, _dir);\n    this._ballistic(m, dir, a.aimPoint, w.projSpeed, w.straightTime, 28, 0.8, w.range);\n    spreadWeaponRound(this, dir, a, w, spreadDeg);', 'splatling independent ground pitch');
