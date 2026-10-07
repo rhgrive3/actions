@@ -637,10 +637,6 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, 'const apex = 11 + s.from.distanceTo(s.to) * 0.08;',
       'const apex = s.initialSpawn ? s.initialSpawn.arcBase + s.from.distanceTo(s.to) * s.initialSpawn.arcPerMeter : 11 + s.from.distanceTo(s.to) * 0.08;',
       'profile-declared internal initial deployment arc');
-    code = replaceOnce(code,
-      'this.addTurf(G.paint.splat(_v.copy(this.pos).setY(this.pos.y + 0.3), 1.4, this.team, { seed: Math.random() }));',
-      'this.addTurf(G.paint.splat(_v.copy(this.pos).setY(this.pos.y + 0.3), s.initialSpawn?.paintRadius ?? 1.4, this.team, { seed: s.initialSpawn ? s.initialSpawn.paintSeed : Math.random() }));',
-      'deterministic initial deployment landing paint');
     const fallStart = code.indexOf('    // ---- fall into the sea\n'), fallEnd = code.indexOf('    this._finishFrame(dt);', fallStart);
     if (fallStart < 0 || fallEnd < fallStart) throw new Error('INKWAVE patch conflict: super jump environmental death');
     const fallBody = code.slice(fallStart, fallEnd).replace('      return;', '      return true;');
@@ -668,7 +664,8 @@ export function adaptSource(rel, code) {
       "      if (k >= 1) {\n        this.invuln = 0; // Spawn protection always ends before landing.\n        this.superJumpState = null;", 'super jump landing vulnerability');
     code = replaceOnce(code,
       '        this.addTurf(G.paint.splat(_v.copy(this.pos).setY(this.pos.y + 0.3), 1.4, this.team, { seed: Math.random() }));\n',
-      '        // Splatoon 3: Ordinary Super Jump does not leave ink, grant turf points, or charge special at landing.\n',
+      '        // Ordinary Super Jump remains unpainted; only initial deployment owns its deterministic landing paint.\n' +
+      '        if (s.initialSpawn) this.addTurf(G.paint.splat(_v.copy(this.pos).setY(this.pos.y + 0.3), s.initialSpawn.paintRadius, this.team, { seed: s.initialSpawn.paintSeed }));\n',
       'super jump landing paint');
     const swimFormHead = code.includes('    const wantSquid = intent.squid && !intent.sub && !fireWins && !this.weaponRunner.busy() && !chargerSwimLocked(this);')
       ? '    const fireWins = (intent.fire || this.fireBuffer > 0) && this._firePressT >= this._squidPressT;\n' +
