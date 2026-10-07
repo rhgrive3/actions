@@ -119,5 +119,6 @@ export function adaptWeaponsFidelity(code,replaceOnce) {
     'if (G.time - last + 1e-10 >= w.rollContactInterval)', 'Roller same-target contact interval');
   patch('G.time - (this.rollHits.get(key) || -9) > 0.5',
     'G.time - (this.rollHits.get(key) ?? -Infinity) + 1e-10 >= w.rollContactInterval', 'Roller Boss contact interval');
+  patch("    a.addTurf(area);\n    emit('weapon:impact', { pos: _v.set(a.pos.x + fx * 0.75", "    area += fidelityRollerMaximumPaint(this,w,fx,fz);\n    a.addTurf(area);\n    emit('weapon:impact', { pos: _v.set(a.pos.x + fx * 0.75", 'source maximum Roller floor width');
   return "import { EPSILON as WEAPONS_FIDELITY_EPSILON, advanceFidelityProjectile, advanceFidelityWallDrop, beginFidelityWallDrop, configureFidelityFlick, fidelityProjectileTargets, fidelityPlayerCollisionRadius, fidelityVolleyDamage, fidelityBossHit, fidelityWorldHit, applyFidelityProjectileHit, applyFidelitySlosherSplash, fidelityAimConvergence, fidelityDualiesAimTarget } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n"+code;
 }
