@@ -1,3 +1,4 @@
+import { hurtboxRadius, hurtboxHeight } from './player-hurtbox.mjs';
 import { capsuleEntry, sweptWorldHit } from './weapons-collision.mjs';
 import { chargerDamage } from './weapons.mjs';
 // Splatoon-3-normalized partial-charge coordinate for Charger paint endpoints.
@@ -129,7 +130,7 @@ export function installChargerFlight(api,completion) {
       // Partial rounds meet allied bodies; full rounds retain teammate piercing.
       if(!actor.alive||actor===job.owner||(job.full&&actor.team===job.team)||job.seen.has(actor))continue;
       job.base.copy(actor.pos); // same authoritative basis as ordinary projectiles
-      const t=capsuleEntry(job.prev,job.pos,job.base,PLAYER.radius,actor.form==='squid'?PLAYER.squidHeight:PLAYER.height,
+      const t=capsuleEntry(job.prev,job.pos,job.base,hurtboxRadius(actor,PLAYER),hurtboxHeight(actor,PLAYER),
         collision.InitRadiusForPlayer,collision.EndRadiusForPlayer);
       if(t!==null&&t*length<distance-EPS)actors.push({actor,d:t*length});
     }

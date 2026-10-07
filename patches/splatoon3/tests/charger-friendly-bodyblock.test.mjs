@@ -4,6 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from './weapon-edgecases-fixture.mjs';
 import { FixedClock } from '../runtime/clock.mjs';
+import { hurtboxRadius } from '../runtime/player-hurtbox.mjs';
 
 async function trace({charge=.5, allyX=0, allyZ=3, enemyZ=6, ghost=false, wallZ=null, reverse=false, hz=60}={}) {
   const f=await fixture(), a=f.make('charger'), ally=f.make('shooter'), enemy=f.make('shooter'), V=f.THREE.Vector3;
@@ -38,7 +39,7 @@ test('existing full-charge threshold preserves teammate pass-through',async()=>{
 });
 test('ally obstruction uses the same pinned .125 player radius as enemy contacts',async()=>{
   const f=await fixture();assert.equal(f.profile.weaponsFidelityCompletion.weapons.charger.CollisionParam.InitRadiusForPlayer,.125);
-  const inside=await trace({allyX:f.PLAYER.radius+.125-.01}),outside=await trace({allyX:f.PLAYER.radius+.125+.01});
+  const inside=await trace({allyX:hurtboxRadius({form:'kid'},f.PLAYER)+.125-.01}),outside=await trace({allyX:hurtboxRadius({form:'kid'},f.PLAYER)+.125+.01});
   assert.equal(inside.hits.length,0);assert.equal(outside.hits.length,1);
 });
 test('world and actor contacts retain earliest-contact ordering independent of actor enumeration',async()=>{
