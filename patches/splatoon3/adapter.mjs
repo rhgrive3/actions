@@ -74,10 +74,15 @@ export function adaptSource(rel, code) {
       'const tagNum = (name) =>',
       'export const tagNum = (name) =>',
       'export tagNum');
-    return replaceOnce(code,
+    code = replaceOnce(code,
     "{ key: 'minimap', label: 'Minimap', type: 'toggle', help: 'Show the turf minimap in the corner during matches.' },",
     "{ key: 'minimap', label: 'Corner map (non-S3 aid)', type: 'toggle', help: 'Optional aid outside the S3 baseline. The full Turf Map remains available.' },",
     'optional corner map explanation');
+    code = replaceOnce(code,
+      "h('div', { class: 'iw-res__foot' }, xpPanel, h('div', { class: 'iw-res__btns' },",
+      "h('div', { class: 'iw-res__foot' }, online ? null : xpPanel, h('div', { class: 'iw-res__btns' },",
+      'Private Battle result XP panel');
+    return code;
   }
   if (rel === 'src/i18n.js') return replaceOnce(code,
     "  'Minimap': 'ミニマップ',",
@@ -229,7 +234,7 @@ export function adaptSource(rel, code) {
       'charger charge-reticle display delay helper');
     code = replaceOnce(code,
       "    if (L.kind === 'charger') {\n      const c = clamp(+f.charge || 0);\n      if (L.charge == null || Math.abs(c - L.charge) > 0.004) {\n        L.charge = c;\n        this._chargeEl.style.strokeDashoffset = (this._chargeC * (1 - c)).toFixed(2);\n        this.ret.style.setProperty('--ch', c.toFixed(3));\n      }\n      const full = c >= 0.999;\n      if (full !== L.full) { L.full = full; this.ret.classList.toggle('is-full', full); if (full) this._restart(this.ret, 'is-flash'); }\n      const charging = c > 0.001;\n      if (charging !== L.charging) { L.charging = charging; this.ret.classList.toggle('is-charging', charging); }\n    } else if",
-      "    if (L.kind === 'charger') {\n      const view = chargerReticleView(this._local()?.weaponRunner, WEAPONS[w] || {});\n      const c = view.gauge;\n      if (L.charge == null || Math.abs(c - L.charge) > 0.004) {\n        L.charge = c;\n        this._chargeEl.style.strokeDashoffset = this._chargeC * (1 - c);\n        this.ret.style.setProperty('--ch', c.toFixed(3));\n      }\n      const full = view.visible && c >= 0.999;\n      if (full !== L.full) { L.full = full; this.ret.classList.toggle('is-full', full); if (full) this._restart(this.ret, 'is-flash'); }\n      const charging = view.visible;\n      if (charging !== L.charging) { L.charging = charging; this.ret.classList.toggle('is-charging', charging); }\n      const delayed = view.delayed;\n      if (delayed !== L.chargeDelay) { L.chargeDelay = delayed; this.ret.classList.toggle('is-charge-delay', delayed); }\n    } else if",
+      "    if (L.kind === 'charger') {\n      const view = chargerReticleView(this._local()?.weaponRunner, WEAPONS[w] || {});\n      const c = view.gauge;\n      if (L.charge == null || Math.abs(c - L.charge) > 0.004) {\n        L.charge = c;\n        this._chargeEl.style.strokeDashoffset = this._chargeC * (1 - c);\n        this.ret.style.setProperty('--ch', c.toFixed(3));\n      }\n      const full = view.visible && c >= 0.999;\n      if (full !== L.full) { L.full = full; this.ret.classList.toggle('is-full', full); if (full) this._restart(this.ret, 'is-flash'); }\n      const charging = view.visible;\n      if (charging !== L.charging) { L.charging = charging; this.ret.classList.toggle('is-charging', charging); }\n      const delayed = view.delayed;\n      if (delayed !== L.chargeDelay) { L.chargeDelay = delayed; this.ret.classList.toggle('is-charge-delay', delayed); }\n      let reachOn = view.visible && !!ch.chargerCurrent && !!ch.chargerFull;\n      if (reachOn) {\n        const cam = G.rig?.gameCam || G.camera;\n        const current = cam ? this._project(cam, ch.chargerCurrent.x, ch.chargerCurrent.y, ch.chargerCurrent.z) : null;\n        const fullReach = cam ? this._project(cam, ch.chargerFull.x, ch.chargerFull.y, ch.chargerFull.z) : null;\n        reachOn = !!current && !!fullReach && current.z >= -1 && current.z <= 1 && fullReach.z >= -1 && fullReach.z <= 1;\n        if (reachOn) {\n          this.ret.style.setProperty('--crx', (current.x * innerWidth * 0.5).toFixed(1) + 'px');\n          this.ret.style.setProperty('--cry', (-current.y * innerHeight * 0.5).toFixed(1) + 'px');\n          this.ret.style.setProperty('--cfx', (fullReach.x * innerWidth * 0.5).toFixed(1) + 'px');\n          this.ret.style.setProperty('--cfy', (-fullReach.y * innerHeight * 0.5).toFixed(1) + 'px');\n        }\n      }\n      this.ret.classList.toggle('has-reach', reachOn);\n    } else if",
       'charger charge-reticle display delay');
     code = replaceOnce(code,
       '    this._L.spread = null; this._L.charge = null; this._L.full = null;',
@@ -457,6 +462,21 @@ export function adaptSource(rel, code) {
     }),`,
       'exact recipient Super Jump target event');
     code = adaptJuddResult(rel, code, replaceOnce);
+    code = replaceOnce(code,
+      "    const gained = Math.round((won ? PROGRESSION.xpWin : PROGRESSION.xpLose) + turf * PROGRESSION.xpPerTurfPoint + local.stats.splats * PROGRESSION.xpPerSplat);\n" +
+      "    const before = { level: p.level, xp: p.xp, toNext: PROGRESSION.xpForLevel(p.level) };\n" +
+      "    p.xp += gained; p.matches++; if (won) p.wins++; p.totalTurf += turf;\n" +
+      "    while (p.xp >= PROGRESSION.xpForLevel(p.level)) { p.xp -= PROGRESSION.xpForLevel(p.level); p.level++; }\n" +
+      "    saveJSON('inkwave.profile', p);",
+      "    const privateBattle = !!G.netm;\n" +
+      "    const gained = privateBattle ? 0 : Math.round((won ? PROGRESSION.xpWin : PROGRESSION.xpLose) + turf * PROGRESSION.xpPerTurfPoint + local.stats.splats * PROGRESSION.xpPerSplat);\n" +
+      "    const before = { level: p.level, xp: p.xp, toNext: PROGRESSION.xpForLevel(p.level) };\n" +
+      "    if (!privateBattle) {\n" +
+      "      p.xp += gained; p.matches++; if (won) p.wins++; p.totalTurf += turf;\n" +
+      "      while (p.xp >= PROGRESSION.xpForLevel(p.level)) { p.xp -= PROGRESSION.xpForLevel(p.level); p.level++; }\n" +
+      "      saveJSON('inkwave.profile', p);\n" +
+      "    }",
+      'Private Battle persistent progression');
     return "import { t as tr } from '../i18n.js';\nimport { applyShotGuide } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\nimport { tagArt, AWARDS, AWARD_ICONS, awardIcon } from './menu-art.js';\nimport { fnv, tagTitle, tagNum } from './menus.js';\n" + code;
   }
   if (rel === 'src/ui/ui-icons.js') {
@@ -542,6 +562,9 @@ export function adaptSource(rel, code) {
     this._s3Enabled = value;
   }
   update(dt) {`, 'controller disable neutralizes transient pad look');
+    code = replaceOnce(code, '    this.inRange = false;',
+      '    this.inRange = false;\n    this.chargerCurrentReach = new THREE.Vector3(); this.chargerFullReach = new THREE.Vector3(); this.chargerReachVisible = false;',
+      'Charger dual reach HUD state');
     const start = code.indexOf('    if (this.onTarget && this.onTarget !== G.boss) {');
     const end = code.indexOf('    // is the crosshair point inside', start);
     if (start < 0 || end < start) throw new Error('INKWAVE patch conflict: camera aim connection');
@@ -558,6 +581,17 @@ export function adaptSource(rel, code) {
       "    const range = w.kind === 'charger' ? (G.projectiles?.chargerReach ? G.projectiles.chargerReach(chargeNow) : w.rangeMin + (w.rangeMax - w.rangeMin) * chargeNow) : w.kind === 'splatling' ? (G.projectiles?.splatlingReach ? G.projectiles.splatlingReach(w, chargeNow) : (w.range || 12)) : w.kind === 'roller' ? 6 : (w.range || 12);",
       'Charger and Splatling HUD reach follow charge');
     code = replaceOnce(code,
+      "    this.inRange = a.aimPoint.distanceTo(a.pos) <= range + 0.5;",
+      "    if (w.kind === 'charger') {\n" +
+      "      const fullRange = G.projectiles?.chargerReach ? G.projectiles.chargerReach(1) : w.rangeMax;\n" +
+      "      const stop = Math.min(range, this.onTarget === G.boss ? a.aimPoint.distanceTo(start) : best);\n" +
+      "      this.chargerCurrentReach.copy(start).addScaledVector(fwd, stop);\n" +
+      "      this.chargerFullReach.copy(start).addScaledVector(fwd, fullRange);\n" +
+      "      this.chargerReachVisible = !!a.weaponRunner?.charging;\n" +
+      "    } else this.chargerReachVisible = false;\n" +
+      "    this.inRange = a.aimPoint.distanceTo(a.pos) <= range + 0.5;",
+      'Charger current/full HUD endpoints');
+    code = replaceOnce(code,
       '    const pick = (i) => { const o = allies[i]; if (o && o.alive && !o.superJumpState) a.superJump(o); };',
       `    const pick = (i) => {
       const o = allies[i];
@@ -570,6 +604,10 @@ export function adaptSource(rel, code) {
     return "import { updateShotGuide } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n" + code;
   }
   if (rel === 'src/game/weapons.js') {
+    code = replaceOnce(code,
+      "    // paint under the burst\n    const g = G.physics.raycast(_v2.copy(c).setY(c.y + 0.2), DOWN, 3.5, _hit2);\n    if (g.hit) p.owner.addTurf(G.paint.splat(_v3.copy(g.point).addScaledVector(g.normal, 0.1), w.impactRadius, p.team, { seed: Math.random() }));\n",
+      "",
+      'Blaster timed burst generic floor paint');
     code = replaceOnce(code, 'r = Math.sqrt(Math.random()) * sp.radius;', 'r = Math.sqrt(Math.random()) * (sp.radius * s);', 'storm rain paint active radius');
     code = replaceOnce(code, 'if (a.ink < w.rollInk) { this._empty(); return false; }', 'if (a.ink + 1e-10 < w.rollInk) { this._empty(); return false; }', 'dualies equipped-cost float boundary');
     code = replaceOnce(code, 'a.ink -= w.rollInk; a.lastFire = 0;', 'a.ink = Math.max(0, a.ink - w.rollInk); a.lastFire = 0;', 'dualies exact payment nonnegative');
@@ -944,7 +982,7 @@ export function adaptSource(rel, code) {
       'projected Shooter muzzle contact');
     code = replaceOnce(code,
       "      crosshair: { spread, onTarget: m.controller?.onTarget ? 'enemy' : null, inRange: m.controller ? m.controller.inRange !== false : true },",
-      "      crosshair: { spread, onTarget: m.controller?.onTarget ? 'enemy' : null, inRange: m.controller ? m.controller.inRange !== false : true, guide: projectShotGuide(m.controller?.enabled && m.controller?.a?.alive ? m.controller.shotGuide : null, cam, W, H), muzzleBlock },",
+      "      crosshair: { spread, onTarget: m.controller?.onTarget ? 'enemy' : null, inRange: m.controller ? m.controller.inRange !== false : true, guide: projectShotGuide(m.controller?.enabled && m.controller?.a?.alive ? m.controller.shotGuide : null, cam, W, H), muzzleBlock, chargerCurrent: m.controller?.chargerReachVisible ? m.controller.chargerCurrentReach : null, chargerFull: m.controller?.chargerReachVisible ? m.controller.chargerFullReach : null },",
       'S3 ShotGuideFrame and muzzle-contact HUD projection');
     {
       const rawEnemyReveal = "          // enemies only show on the map when visible to your team (not submerged far away)\n          if (o.anim.form === 'swim') continue;";
