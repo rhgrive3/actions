@@ -115,7 +115,8 @@ test('ordinary movement admits an in-radius position and Super Jump charge no lo
       assert.ok(Math.abs(Math.hypot(a.superJumpGround.x - f.enemyPad.x, a.superJumpGround.z - f.enemyPad.z) - d) < 1e-9,
         'superJumpGround recorded a displaced origin');
 
-      f.tick(a, 90);
+      let chargeGuard = 0;
+      while (a.superJumpState?.phase === 'charge' && chargeGuard++ < 180) f.tick(a);
       assert.equal(a.superJumpState.phase, 'flight');
       evidence.push({ stage: 'charge-origin', d, before, after: { x: a.pos.x, z: a.pos.z } });
     } finally { f.drop(a); }
