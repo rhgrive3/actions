@@ -554,14 +554,7 @@ export function fidelityDamage(p,point,impactT=p.fidelityImpactT??1) {
     return distanceDamage(bands,d)*(1+(source.DamageRejectRate-1)*t);
   }
   if(w.kind==='slosher'&&p.fidelitySloshUnit){
-    const d=p.fidelitySloshUnit.DamageParam,launchY=p.fidelitySloshLaunchVelY;
-    // #1065: downward travel during the sourced 2F straight state is excluded
-    // from Bucket Slosher's fall-damage counter. Upward shots keep the spawn
-    // height anchor, preserving the existing apex -> muzzle-height exception.
-    const fallAnchorY=Number.isFinite(launchY)&&launchY<0
-      ? p.start.y+launchY*Math.max(0,p.straight||0)
-      : p.start.y;
-    const fall=Math.max(0,fallAnchorY-point.y);
+    const d=p.fidelitySloshUnit.DamageParam,fall=Math.max(0,p.start.y-point.y);
     const t=clamp01((fall-d.ReduceStartFallDistance)/(d.ReduceEndFallDistance-d.ReduceStartFallDistance));
     return (d.ValueMax+(d.ValueMin-d.ValueMax)*t)/10;
   }
@@ -725,7 +718,7 @@ export function installWeaponsFidelity(context,profile) {
     p._s3SloshBirthWeaponId=null;p._s3SloshBirthRemote=undefined;p._s3SloshBirthNid=undefined;
     p._s3SloshBirthPeer=undefined;p._s3SloshBirthWasInMatch=false;p._s3SloshBirthDelay=0;
     p._s3SloshYaw=0;p._s3SloshPitch=0;p._s3SloshBirthGhost=false;
-    p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityFriendThrough=null;p.fidelityRollerUnit=null;p.fidelityRollerUnitIndex=null;p.fidelitySloshUnit=null;p.fidelitySloshLaunchVelY=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;p.fidelitySectorYaw=null;p.s3ShooterForwardApplied=false;p.s3BlasterForwardApplied=false;return p;
+    p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityFriendThrough=null;p.fidelityRollerUnit=null;p.fidelityRollerUnitIndex=null;p.fidelitySloshUnit=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;p.fidelitySectorYaw=null;p.s3ShooterForwardApplied=false;p.s3BlasterForwardApplied=false;return p;
   };
   function initialize(p,w){
     // Kit descriptors own their identity, flight and collision. They use wid,
@@ -776,7 +769,6 @@ export function installWeaponsFidelity(context,profile) {
         }
       }
       const u=p.fidelitySloshUnit,c=u.MoveParam;
-      p.fidelitySloshLaunchVelY=p.vel.y;
       setCollision(p,u.CollisionParam,p.fidelitySloshIndex);
       p.straight=c.GoStraightToBrakeStateFrame/60;
       p.fidelityMove={hz:60,endSpeed:c.GoStraightStateEndMaxSpeed*60,brakeDrag:c.BrakeAirResist,brakeGravity:c.BrakeGravity*3600,
@@ -831,7 +823,6 @@ export function installWeaponsFidelity(context,profile) {
       p.vel.set(Math.sin(p._s3SloshYaw)*horizontal,
         Math.sin(p._s3SloshPitch)*speed+horizontal*(u.AddSpawnSpeedYRateByXZ||0),
         Math.cos(p._s3SloshYaw)*horizontal);
-      p.fidelitySloshLaunchVelY=p.vel.y;
       p.delay=p._s3SloshBirthDelay;
       try{if(!p.ghost)context.G?.netm?.recProj?.(p);}
       finally{p.delay=0;p._s3SloshBirthPending=false;}
