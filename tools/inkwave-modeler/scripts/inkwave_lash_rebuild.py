@@ -1220,10 +1220,14 @@ def build_lower(rays, design, curve=None):
         n = 8
         t = np.linspace(0, 1, n)
         radius = np.maximum(LOWER_ROOT_MM * (1 - t) ** 0.6, 0.05)
+        if design.get('lower_round'):
+            # a soft rounded stroke (the reference's lower lashes read as small rounded dashes, not sharp spikes)
+            lr = design['lower_round']
+            radius = np.maximum(lr['r_mm'] * np.sqrt(np.clip(1 - (2 * t - 1) ** 2, 0, 1)) ** lr.get('pow', 1.0), 0.03)
         # fixed 3D length: the front-view direction gives the way, the lash does not follow steep skin
         r3 = rays.lifted(root, LOWER_LIFT_MM + radius[0])
         way = rays.lifted(tip, LOWER_LIFT_MM + radius[0]) - r3
-        way = way / np.linalg.norm(way) * LOWER_LEN_MM
+        way = way / np.linalg.norm(way) * design.get('lower_round', {}).get('len_mm', LOWER_LEN_MM)
         p0, d0, _ = rays.cast(*root)
         toward_cam = M.to_local(np.array([p0 - d0 * 0.01]))[0] - M.to_local(np.array([p0]))[0]
         toward_cam /= np.linalg.norm(toward_cam)
