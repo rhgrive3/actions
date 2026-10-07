@@ -101,9 +101,9 @@ export function adaptSource(rel, code) {
 
     return code;
   }
-  if (rel === 'src/game/actor.js') {
-    code = replaceOnce(code, '  reset() {\n    this.alive = true;',
-      '  reset() {\n    this._s3SlosherBirthEpoch = (this._s3SlosherBirthEpoch || 0) + 1;\n    this.alive = true;',
+  if (rel === 'src/game/actor.js' && !code.includes('_s3SlosherBirthEpoch = (this._s3SlosherBirthEpoch || 0) + 1')) {
+    code = replaceOnce(code, '  reset() {',
+      '  reset() {\n    this._s3SlosherBirthEpoch = (this._s3SlosherBirthEpoch || 0) + 1;',
       'cancel pending Slosher births when an actor resets');
   }
   if (rel === 'patches/splatoon3/runtime/resources.mjs') return adaptIssue415(rel, code);
