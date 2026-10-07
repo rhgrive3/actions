@@ -156,6 +156,12 @@ test('owner network tick carries horizontal and vertical fold mode through remot
       local.actor.nid = remote.actor.nid = nid;
       local.actor.owner = remote.actor.owner = 'owner';
       local.actor.grounded = !vertical;
+      // Current main #479 keeps natural free fall horizontal for 25F.
+      // A vertical wire case must observe an accepted movement launch.
+      if (vertical) {
+        local.ch.trigger('jump');
+        assert.equal(local.actor.s3JumpAirborne, true, 'native Character jump hook records the launch');
+      }
       const sender = new api.NetMatch({ myId: 'owner', hostId: 'owner', isHost: true,
         tr: { broadcast: message => wire.push(message) }, _members: new Set(['owner', 'guest']) }, {});
       const receiver = new api.NetMatch({ myId: 'guest', hostId: 'owner', isHost: false,
