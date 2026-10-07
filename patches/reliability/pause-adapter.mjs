@@ -19,13 +19,25 @@ export function adaptPause(rel, code) {
       '  padValue(i) { return !this.padMenuBlocked.has(i) && this.pad && this.pad.buttons[i] ? this.pad.buttons[i].value : 0; }', 'mask menu-owned pad values');
   } else if (rel === 'src/main.js') {
     code = replaceOnce(code, '      if (this.match.controller) this.match.controller.enabled = false;',
-      '      if (this.match.controller) { this.match.controller.menuBlocked = true; this.match.controller.enabled = false; }', 'online pause input ownership');
+      '      if (this.match.controller) { this.match.controller.cancelForMenuTakeover?.(); this.match.controller.menuBlocked = true; this.match.controller.enabled = false; }', 'online pause input ownership');
     code = replaceOnce(code, '    if (this.match.controller) this.match.controller.enabled = true;',
       '    if (this.match.controller) { this.match.controller.menuBlocked = false; this.match.controller.enabled = true; }', 'resume input ownership');
     code = replaceOnce(code, '    const pp = inp.padPressed;',
       '    const pp = new Set(inp.padMenuPressed);\n    inp.padMenuPressed.clear();', 'consume menu pad presses independently');
     code = replaceOnce(code, '      const nav = (d) => this.menus.nav?.(d);',
       '      // A routed menu press owns both its edge and hold until physical release.\n      for (const i of [0, 1, 2, 4, 5, 12, 13, 14, 15]) if (pp.has(i)) inp.consumePadMenuButton(i);\n      const nav = (d) => this.menus.nav?.(d);', 'consume menu-owned gameplay edges');
+  } else if (rel === 'src/game/player.js') {
+    if (code.includes('const menuGameplayUpdate =')) throw new Error('pause adapter conflict: already installed');
+    code = replaceOnce(code, 'export class PlayerController {', 'export class PlayerController {', 'menu takeover controller');
+    code = "import { cancelMenuGameplay, rearmMenuGameplay } from '../../patches/reliability/menu-takeover.mjs';\n" + code;
+    code += `
+const menuGameplayUpdate = PlayerController.prototype.update;
+PlayerController.prototype.cancelForMenuTakeover = function () { cancelMenuGameplay(this); };
+PlayerController.prototype.update = function (...args) {
+  try { return menuGameplayUpdate.apply(this,args); }
+  finally { rearmMenuGameplay(this); }
+};
+`;
   } else if (rel === 'src/game/match.js') {
     code = replaceOnce(code, "    this.controller.enabled = this.state === 'playing' && !this.paused && this.local.alive;",
       "    this.controller.enabled = this.state === 'playing' && !this.paused && this.local.alive && !this.controller.menuBlocked;", 'persistent local menu input suppression');
