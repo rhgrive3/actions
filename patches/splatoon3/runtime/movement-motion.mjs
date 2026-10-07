@@ -81,18 +81,23 @@ export function installMovementMotion({ Character, Actor, THREE }, profile) {
       const allowed = (s.form || 'kid') !== 'kid' && !this.dance && !(frame && (!frame.alive || frame.special));
       if (!allowed) cancel(this, m);
       else {
+        const live = frame?.actions?.roll;
         if (frame) {
-          const live = frame.actions?.roll;
           if (!live) m.roll = m.liveRoll = null;
           else if (live !== m.liveRoll) {
             m.liveRoll = live;
-            m.roll = { age: 0, duration: cfg.roll.duration };
+            const age = live.remotePresentation === true && Number.isFinite(live.remaining)
+              ? Math.max(0, Math.min(cfg.roll.duration, cfg.roll.duration - live.remaining)) : 0;
+            m.roll = { age, duration: cfg.roll.duration };
+          } else if (live.remotePresentation === true && m.roll && Number.isFinite(live.remaining)) {
+            const age = Math.max(0, Math.min(cfg.roll.duration, cfg.roll.duration - live.remaining));
+            m.roll.age = Math.max(m.roll.age, age);
           }
           if (frame.superJump) { m.roll = m.top = m.burst = null; }
           if (!frame.actions?.surge) m.burst = null;
         }
         if (m.roll) {
-          m.roll.age = Math.min(m.roll.duration, m.roll.age + step);
+          if (live?.remotePresentation !== true) m.roll.age = Math.min(m.roll.duration, m.roll.age + step);
           if (!frame && m.roll.age + EPS >= m.roll.duration) m.roll = null;
         }
         if (m.top) {
@@ -166,7 +171,12 @@ export function installMovementMotion({ Character, Actor, THREE }, profile) {
       if (ch?.[CHARACTER_OWNER]?.disposed(ch)) delete this.anim.movementMotion;
       else {
         const frame = this.anim.movementMotion ||= {};
-        frame.actions = this.s3?.actions; frame.superJump = this.superJumpState;
+        if (this.remote) {
+          const actions = frame.remoteActions ||= { roll: null };
+          actions.roll = this.remoteSquidrollVisual || null;
+          frame.actions = actions;
+        } else frame.actions = this.s3?.actions;
+        frame.superJump = this.superJumpState;
         frame.chargeTime = this.s3?.jumpChargeTime;
         frame.alive = this.alive; frame.special = this.specialActive;
       }
