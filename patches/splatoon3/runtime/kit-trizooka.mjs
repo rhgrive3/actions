@@ -334,6 +334,15 @@ export function trizookaState(actor) {
 export function trizookaIsActive(actor) {
   return !!actor?.s3Trizooka?.active;
 }
+export function trizookaGaugeFraction(actor) {
+  const s = actor?.s3Trizooka;
+  if (!s?.active || !(s.duration > 0)) return 0;
+  return Math.max(0, Math.min(1, 1 - s.t / s.duration));
+}
+function syncTrizookaGauge(actor) {
+  const cost = typeof actor?.specialCost === 'function' ? actor.specialCost() : actor?.weapon?.specialCost;
+  if (Number.isFinite(cost) && cost >= 0) actor.special = cost * trizookaGaugeFraction(actor);
+}
 
 // Activation guards. Dead, super-jumping, already-active or not-ready is refused.
 export function canActivateTrizooka(actor) {
@@ -387,6 +396,8 @@ export function stepTrizooka(actor, dt, System) {
   if (!actor.alive || actor.superJumpState || !matchIsPlaying()) { disposeTrizooka(actor); return []; }
 
   s.t += dt;
+  // #1030: use the authoritative Trizooka lifetime as the active special meter.
+  syncTrizookaGauge(actor);
   const events = [];
   const intent = actor.intent;
   const held = !!intent?.fire;
@@ -439,6 +450,7 @@ export function endTrizooka(actor, reason = 'done') {
   s.active = false;
   s.endedAt = s.t;
   s.endReason = reason;
+  actor.special = 0;
   if (actor.specialActive?.id === TRIZOOKA_ID) actor.specialActive = null;
   actor.fireBuffer = 0;
   disposeTrizooka(actor);
@@ -728,6 +740,7 @@ export function installTrizookaLifecycle(api) {
     if (this.stats.specials !== specialsBefore + 1) return r;
     this.s3Trizooka = newTrizookaState(apOf(this));
     this.specialActive = { id: TRIZOOKA_ID, t: 0, phase: 'charge', armor: false };
+    syncTrizookaGauge(this);
     return r;
   };
 
@@ -803,7 +816,7 @@ export function installKitTrizooka(api, profile) {
     installKitTrizooka, installTrizookaLifecycle, trizookaUninstall,
     trizookaSpecialWeapon, trizookaProjectileDescriptor,
     startTrizooka, stepTrizooka, endTrizooka, canActivateTrizooka, disposeTrizooka,
-    trizookaState, trizookaIsActive, newTrizookaState, newTrizookaReplayState,
+    trizookaState, trizookaIsActive, trizookaGaugeFraction, newTrizookaState, newTrizookaReplayState,
     trizookaReplayActivate, trizookaReplayFire, trizookaReplayEnd,
     throwVolley, volleysPerAction, apOf, durationFor, VOLLEY_CONFIG,
     selectTrizookaFlight, selectTrizookaCollision, trizookaOrbitOffset,
