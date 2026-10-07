@@ -329,7 +329,16 @@ function setCollision(p,c,offset=0) {
   p.fidelityPlayerCollision=collisionRecord(c,'Player',offset);
   p.fidelityFieldCollision=collisionRecord(c,'Field',offset);
   // Restore the pinned family-specific window consumed by the existing solver.
-  p.fidelityFriendThrough=['shooter','slosher','roller','splatling'].includes(p.s3Weapon?.kind) ? p.fidelityPlayerCollision.FriendThroughFrameForPlayer : null;
+  p.fidelityFriendThrough=['shooter','slosher','roller','splatling','dualies'].includes(p.s3Weapon?.kind) ? p.fidelityPlayerCollision.FriendThroughFrameForPlayer : null;
+  if (p.s3Weapon?.kind === 'dualies') {
+    const raw = rawWeapon(p.s3Weapon);
+    const radius = c === raw?.CollisionLapOverParam ? p.s3Weapon.playerRadiusAfterRoll : p.s3Weapon.playerRadiusNormal;
+    if (Number.isFinite(radius)) {
+      p.fidelityPlayerCollision.initRadius = radius;
+      p.fidelityPlayerCollision.endRadius = radius;
+      p.fidelityPlayerCollision.changeTime = 0;
+    }
+  }
   // Existing size carries initial radius; Roller unit identity is transmitted separately.
   p.size=p.fidelityPlayerCollision.initRadius;
 }
