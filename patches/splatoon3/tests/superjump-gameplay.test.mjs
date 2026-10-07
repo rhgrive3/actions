@@ -14,7 +14,7 @@ const SRC = BUILT ? path.resolve(BUILT) : path.join(ROOT, 'inkwave-public');
 const STEP = 1 / 60;
 const plain = value => JSON.parse(JSON.stringify(value));
 
-// Same source composition and installer as build-inkwave, including all motion
+// Source mode composes S3/touch/reliability/quality and the gameplay installer.\n// INKWAVE_SUPERJUMP_SITE selects the canonical built six-layer runtime, including motion
 // hooks and native Character/Physics/Runner/Projectiles. With
 // INKWAVE_SUPERJUMP_SITE this executes emitted/minified files. No GPU claim.
 async function boot({ floor = true, grate = false, wall = false } = {}) {
