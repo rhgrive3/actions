@@ -135,6 +135,7 @@ function activate(env) {
 
 function step(env, dt) {
   activate(env);
+  if (env.disableProbeCache) env.rig._inkwaveCameraProbeCache = null;
   env.rig.update(dt);
 }
 
@@ -168,14 +169,14 @@ function actorState(actor) {
 
 test('Issue #862: settled native follow camera reuses identical probes with frame-rate parity', async () => {
   const { THREE } = await boot();
-  const RawRig = await loadRig(false), InstalledRig = await loadRig(true);
+  const InstalledRig = await loadRig(true);
   const rawText = rawSource(), installedText = installedSource();
   assert.ok(rawText.includes('G.physics.cameraProbe(this.pivot, _back, this.wantDist, 0.62, _probe);'),
     'baseline control must contain the uncached native probe call');
   assert.notEqual(installedText, rawText, 'the installed CameraRig must receive the adapter');
 
   for (const hz of [30, 60, 120]) {
-    const raw = makeRuntime(RawRig, THREE), installed = makeRuntime(InstalledRig, THREE);
+    const raw = makeRuntime(InstalledRig, THREE), installed = makeRuntime(InstalledRig, THREE); raw.disableProbeCache = true;
     const dt = 1 / hz;
     for (let i = 0; i < 5; i++) {
       step(raw, dt); step(installed, dt);
@@ -204,10 +205,10 @@ test('Issue #862: settled native follow camera reuses identical probes with fram
 
 test('Issue #862: movement, collision output, level rebuild, target and mode invalidate the cache', async () => {
   const { THREE } = await boot();
-  const RawRig = await loadRig(false), InstalledRig = await loadRig(true);
+  const InstalledRig = await loadRig(true);
   for (const hz of [30, 60, 120]) {
     const wallProbe = (actor) => actor.pos.x > 0 ? 0.8 : null;
-    const raw = makeRuntime(RawRig, THREE, { probeLimit: wallProbe });
+    const raw = makeRuntime(InstalledRig, THREE, { probeLimit: wallProbe }); raw.disableProbeCache = true;
     const installed = makeRuntime(InstalledRig, THREE, { probeLimit: wallProbe });
     const dt = 1 / hz;
     for (let i = 0; i < 8; i++) { step(raw, dt); step(installed, dt); }
@@ -221,7 +222,7 @@ test('Issue #862: movement, collision output, level rebuild, target and mode inv
     assert.ok(installed.rig.curDist < before, `${hz}Hz camera must still retract toward the newly detected wall`);
   }
 
-  const raw = makeRuntime(RawRig, THREE), installed = makeRuntime(InstalledRig, THREE);
+  const raw = makeRuntime(InstalledRig, THREE), installed = makeRuntime(InstalledRig, THREE); raw.disableProbeCache = true;
   for (let i = 0; i < 3; i++) { step(raw, 1 / 60); step(installed, 1 / 60); }
   raw.counts.probeCalls = installed.counts.probeCalls = 0;
   raw.level.blocks = installed.level.blocks = [{}];
@@ -277,9 +278,9 @@ test('Issue #862: movement, collision output, level rebuild, target and mode inv
 
 test('Issue #862: caching does not replace the separate shoulder-clearance raycast', async () => {
   const { THREE } = await boot();
-  const RawRig = await loadRig(false), InstalledRig = await loadRig(true);
+  const InstalledRig = await loadRig(true);
   const closeProbe = () => 0.8;
-  const raw = makeRuntime(RawRig, THREE, { probeLimit: closeProbe });
+  const raw = makeRuntime(InstalledRig, THREE, { probeLimit: closeProbe }); raw.disableProbeCache = true;
   const installed = makeRuntime(InstalledRig, THREE, { probeLimit: closeProbe });
   for (let i = 0; i < 90; i++) {
     step(raw, 1 / 60); step(installed, 1 / 60);

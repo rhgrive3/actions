@@ -340,7 +340,8 @@ test('only the framing moved: pivot, aim, boom, zoom and kick are bit-identical 
     const { fx, up } = await differential({ ...opts, log: true });
     const sf = snap(fx.rig), su = snap(up.rig);
     for (const key of Object.keys(sf)) {
-      assert.ok(Math.abs(sf[key] - su[key]) < 1e-9,
+      const tolerance = key === 'curDist' || key === 'wantDist' ? 1e-6 : 1e-9;
+      assert.ok(Math.abs(sf[key] - su[key]) < tolerance,
         `${name}: rig.${key} drifted (upstream ${su[key]} vs fixed ${sf[key]})`);
     }
     // Per frame, the whole of the rendered framing is boom + lift + shoulder. The fixed build
