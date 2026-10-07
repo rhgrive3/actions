@@ -158,10 +158,11 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, "it.sub = inp.mouse.right || inp.down('KeyE')", "it.sub = inp.mouse.rightPressed || inp.wasPressed('KeyE') || inp.mouse.right || inp.down('KeyE')", 'latched sub input');
     code = replaceOnce(code, "it.special = inp.down('KeyF')", "it.special = inp.wasPressed('KeyF') || inp.wasPressed('KeyQ') || inp.down('KeyF')", 'latched special input');
     // HUD in-range state follows the live charge (a squid-form charge keep counts as its stored charge) via the
-    // installed flight's reach, or native lerp, instead of full-charge reach.
+    // installed flight's reach, or native lerp, instead of full-charge reach. A weapon with `reticleRange` (Slosher: the
+    // distance at which the crosshair changes over an opponent) uses its grounded or airborne threshold; HUD only.
     code = replaceOnce(code, "    const range = w.kind === 'charger' ? w.rangeMax : w.kind === 'roller' ? 6 : (w.range || 12);",
       "    const chargeNow = clamp(a.weaponRunner?.s3Stored?.charge ?? a.weaponRunner?.charge ?? 0, 0, 1);\n" +
-      "    const range = w.kind === 'charger' ? (G.projectiles?.chargerReach ? G.projectiles.chargerReach(chargeNow) : w.rangeMin + (w.rangeMax - w.rangeMin) * chargeNow) : w.kind === 'roller' ? 6 : (w.range || 12);",
+      "    const range = w.kind === 'charger' ? (G.projectiles?.chargerReach ? G.projectiles.chargerReach(chargeNow) : w.rangeMin + (w.rangeMax - w.rangeMin) * chargeNow) : w.kind === 'roller' ? 6 : w.reticleRange ? (a.grounded ? w.reticleRange.ground : w.reticleRange.air) : (w.range || 12);",
       'charger HUD reach follows charge');
     return code;
   }
@@ -224,6 +225,12 @@ export function adaptSource(rel, code) {
     const fallBody = code.slice(fallStart, fallEnd).replace('      return;', '      return true;');
     code = code.slice(0, fallStart) + '    if (this._checkFallDeath()) return;\n\n' + code.slice(fallEnd);
     code = replaceOnce(code, '  _nearCamera() {', '  _checkFallDeath() {\n    const P = PLAYER;\n' + fallBody + '    return false;\n  }\n\n  _nearCamera() {', 'shared environmental death');
+    // Tidal Slam is an ordinary damageable player action: it keeps the early return that owns its movement but not
+    // the HP-recovery freeze. Storm throw and Super Jump keep their own tracked recovery behavior.
+    code = replaceOnce(code, '    if (this.specialActive) { this._updateSpecial(dt); this._finishFrame(dt); return; }',
+      "    if (this.specialActive) { const slam = this.specialActive.id === 'slam'; this._updateSpecial(dt); if (slam && this.alive) updateSpecialRecovery(this, dt); this._finishFrame(dt); return; }", 'Tidal Slam HP recovery');
+    code = replaceOnce(code, '    if (specialPressed && this.specialReady()) { this._startSpecial(); this._finishFrame(dt); return; }',
+      "    if (specialPressed && this.specialReady()) { this._startSpecial(); if (this.specialActive?.id === 'slam') updateSpecialRecovery(this, dt); this._finishFrame(dt); return; }", 'Tidal Slam activation-tick HP recovery');
     code = replaceOnce(code, '    this._updateClimb(dt, isSquid);',
       '    this._updateClimb(dt, isSquid);\n    const actionHandled = beforeActions(this, dt, jumpPressed);', 'movement actions');
     code = replaceOnce(code, '    if (this.jumpBuffer > 0 && (this.grounded || this.coyote > 0) && !this.climbing) {',
@@ -245,7 +252,7 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, '    this._spawnBarrier();',
       '    // S3 Spawners use stage geometry and spawn protection, not a universal radial body clamp.',
       'S3 universal spawn barrier removal');
-    return `import { prepareSuperJump, rememberSuperJumpGround, superJumpTarget, updateSuperJumpMain, SUPERJUMP_MAIN_PROGRESS } from '../../patches/splatoon3/runtime/superjump.mjs';\nimport { beforeActions } from '../../patches/splatoon3/runtime/movement.mjs';\nimport { updateResources } from '../../patches/splatoon3/runtime/resources.mjs';\n` + code;
+    return `import { prepareSuperJump, rememberSuperJumpGround, superJumpTarget, updateSuperJumpMain, SUPERJUMP_MAIN_PROGRESS } from '../../patches/splatoon3/runtime/superjump.mjs';\nimport { beforeActions } from '../../patches/splatoon3/runtime/movement.mjs';\nimport { updateResources, updateSpecialRecovery } from '../../patches/splatoon3/runtime/resources.mjs';\n` + code;
   }
   if (rel === 'src/game/character-weapons.js') {
     code = replaceOnce(code, '    if (ft >= 0.15 && ft - dt < 0.15) w.drumW += 34;', '    const release = st.flickReleaseTime ?? 0.15;\n    if (ft >= release && ft - dt < release) w.drumW += 34;', 'roller drum release impulse');

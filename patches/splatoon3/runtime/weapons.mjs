@@ -59,13 +59,14 @@ export function installWeapons(context, profile) {
     const result = reset.apply(this, args);
     this.s3Stored = null; this.s3Turret = false; this.s3FlickVertical = false; this.s3BlasterWindup = 0;
     this.s3SloshRecovery = false;
-    this.s3ChargerPostShot = 0; this.s3DualiesPostShot = 0; this.s3DodgeShotPending = 0;
+    this.s3ChargerPostShot = 0; this.s3DualiesPostShot = 0; this.s3SloshPostShot = 0; this.s3DodgeShotPending = 0;
     return result;
   };
   WeaponRunner.prototype.busy = function () {
     const kind = this.a.weapon.kind;
     if (kind === 'charger' && this.s3ChargerPostShot > 1e-10) return true;
     if (kind === 'dualies' && this.s3DualiesPostShot > 1e-10) return true;
+    if (kind === 'slosher' && this.s3SloshPostShot > 1e-10) return true;
     if (['charger','splatling'].includes(kind) && this.a.intent.squid && this.a._squidPressT > this.a._firePressT) return false;
     return this.s3BlasterWindup > 0 || busy.call(this);
   };
@@ -112,6 +113,8 @@ export function installWeapons(context, profile) {
       this.slosh = -1; G.projectiles.fireSlosh(a, w);
       this.cooldown = w.fireInterval - w.windup - carry;
       this.s3SloshRecovery = !!inp.fire;
+      // The post-shot no-swim/no-sub commitment starts at glob emission, independent of the 29F repeat clock.
+      this.s3SloshPostShot = w.postShotLock ?? 0;
     };
     if (!inp.fire) this.s3SloshRecovery = false;
     if (this.slosh >= 0) {

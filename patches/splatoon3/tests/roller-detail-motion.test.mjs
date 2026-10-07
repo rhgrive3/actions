@@ -171,6 +171,11 @@ test('horizontal startup removes the double lift in actual posed geometry while 
         rows.push(poseRow(api, r, i, [0, 5, 8, 12, 14, 18, 21, 30, 42, 60].includes(i)));
       }
       assert.equal(r.shots, 1); assert.ok(r.solves > 300, 'the public two-bone solver executed for real limbs');
+      // #896: the drum fling impulse follows the authoritative release clock (21F), not the legacy fixed 9F trigger.
+      const released = rows.findIndex(x => x.gameplay.shots === 1);
+      assert.equal(released, 21, 'horizontal gameplay release is on elapsed tick 21');
+      assert.ok(rows.slice(0, released).every(x => x.drumW === 0), 'no drum fling before release (the legacy trigger fired at 9F)');
+      assert.ok(rows[released].drumW > 30, 'drum fling lands on the release tick');
       assert.ok(rows.every(x => x.gripL < .02 && x.gripR < .002));
       assert.ok(rows.every(x => x.bottom >= -.006 && x.drawnIndexCount > 500));
       assert.ok(rows[8].bodyMeshes.some(m => m.skinned && m.triangles.length > 1000
