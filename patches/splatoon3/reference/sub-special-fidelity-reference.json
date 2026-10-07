@@ -56,7 +56,7 @@
     "Exact INKWAVE mapping for GroundPositionDeg50AirResist/GroundPositionHorizonAirResist and bounce/friction equations",
     "Whether CloudParam.RainNum maps one-to-one to INKWAVE gameplay paint splat calls; it is retained as reference metadata only",
     "Exact Splatoon 3 cloud drift speed in INKWAVE world units",
-    "Tidal Slam has no one-to-one Splatoon 3 special; Triple Splashdown numeric substitution is intentionally not performed",
+    "Tidal Slam maps current Splatoon 3 Triple Splashdown community-reference player-explosion endpoints (220/60 HP; near/outer radii 6.4/9.6) while fists, exact falloff topology, armor and animation remain independently unverified",
     "Exact original-game bomb visual particle count/lifetime and detailed wall/slope paint silhouette"
   ]
 }
