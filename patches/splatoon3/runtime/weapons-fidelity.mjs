@@ -21,6 +21,8 @@ const SPLATLING_NOMINAL_LIFETIME = 1.2;
 let api, completion, moves, slosherVolleySequence = 0;
 const slosherDropConfigs = new WeakMap();
 const splatlingSpeedViews = new WeakMap();
+const blasterPaintContracts = new WeakMap();
+const blasterAxisDirectionsCache = new WeakMap();
 const clamp01 = value => Math.max(0, Math.min(1, value));
 const radians = degrees => degrees * Math.PI / 180;
 const MAIN_SHOT_LIFETIME = 1.2;
@@ -327,6 +329,215 @@ function wallDropFallPaint(p, state, from, to) {
     cursor += spacing;
   }
   state.paintCarry = (state.paintCarry + distance) % spacing;
+}
+
+
+export function blasterPaintContract(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  if (blasterPaintContracts.has(raw)) return blasterPaintContracts.get(raw);
+  const splash = raw.SplashPaintParam, wall = raw.SplashWallHitParam, burst = raw.BlasterBurstParam;
+  if (!splash || !wall?.SpawnParam || !wall?.WallDropMoveParam || !wall?.WallDropCollisionPaintParam ||
+      !burst?.SplashWallDropMoveParam || !burst?.SplashWallDropPaintParam) return null;
+  const x = burst.SplashRoundAxisXArray, y = burst.SplashRoundAxisYArray;
+  const values = [
+    splash.DepthMaxDropHeight, splash.DepthMinDropHeight,
+    wall.SpawnParam.FirstDistance, wall.SpawnParam.VelocityMinusYRate,
+    wall.WallDropCollisionPaintParam.PaintRadiusShock, wall.WallDropCollisionPaintParam.PaintRadiusFall,
+    burst.SplashDropPaintShotColHitRadius,
+    burst.SplashWallDropPaintParam.PaintRadiusShock,
+    burst.SplashWallDropPaintParam.PaintRadiusFall,
+    burst.SplashWallDropPaintParam.PaintRadiusGround,
+  ];
+  if (!values.every(Number.isFinite) || !Array.isArray(x) || !Array.isArray(y) ||
+      !x.length || !y.length || !x.every(Number.isFinite) || !y.every(Number.isFinite)) return null;
+  if (splash.DepthMaxDropHeight < 0 || splash.DepthMinDropHeight < splash.DepthMaxDropHeight ||
+      wall.SpawnParam.FirstDistance < 0 || wall.SpawnParam.VelocityMinusYRate < 0 ||
+      burst.SplashDropPaintShotColHitRadius <= 0) return null;
+  const contract = {
+    dropHeightMax: splash.DepthMaxDropHeight,
+    dropHeightMin: splash.DepthMinDropHeight,
+    flightRadius: splash.WidthHalf,
+    flightNearestRadius: splash.WidthHalfNearest,
+    flightWall: {
+      firstDistance: wall.SpawnParam.FirstDistance,
+      velocityMinusYRate: wall.SpawnParam.VelocityMinusYRate,
+      move: wall.WallDropMoveParam,
+      paint: wall.WallDropCollisionPaintParam,
+    },
+    burst: {
+      radius: burst.SplashDropPaintShotColHitRadius,
+      axisX: x,
+      axisY: y,
+      move: burst.SplashWallDropMoveParam,
+      paint: burst.SplashWallDropPaintParam,
+    },
+  };
+  blasterPaintContracts.set(raw, contract);
+  return contract;
+}
+
+export function blasterSplashDropBand(contract, height) {
+  if (!contract || !Number.isFinite(height) || height < 0) return 'none';
+  if (height <= contract.dropHeightMax + EPSILON) return 'max';
+  if (height <= contract.dropHeightMin + EPSILON) return 'transition';
+  return 'none';
+}
+
+export function blasterBurstAxisDirections(contract) {
+  if (!contract?.burst?.axisX || !contract?.burst?.axisY) return [];
+  if (blasterAxisDirectionsCache.has(contract)) return blasterAxisDirectionsCache.get(contract);
+  const out = [];
+  for (const pitchDeg of contract.burst.axisX) for (const yawDeg of contract.burst.axisY) {
+    const pitch = radians(pitchDeg), yaw = radians(yawDeg), cp = Math.cos(pitch);
+    out.push(Object.freeze({ x: Math.sin(yaw) * cp, y: Math.sin(pitch), z: Math.cos(yaw) * cp }));
+  }
+  Object.freeze(out);
+  blasterAxisDirectionsCache.set(contract, out);
+  return out;
+}
+
+function detachedPaint(system, state, point, radius, salt) {
+  if (state.ghost || !(radius > 0) || !api?.G?.paint) return 0;
+  const area = api.G.paint.splat(point, radius, state.team, {
+    seed: seededUnit(state.seed, salt + state.paintIndex++),
+  });
+  if (Number.isFinite(area)) state.owner?.addTurf?.(area);
+  return area || 0;
+}
+
+function startDetachedWallDrop(system, p, hit, move, paint, tag, salt) {
+  if (!move || !paint || !eligibleWallDropHit(hit)) return false;
+  const firstFrames = seededFrames(p.seed, move.FallPeriodFirstFrameMin, move.FallPeriodFirstFrameMax, salt ^ 0x11);
+  const secondFrames = Math.max(0, Math.round(move.FallPeriodSecondFrame ?? 0));
+  const lastFrames = seededFrames(p.seed, move.FallPeriodLastFrameMin, move.FallPeriodLastFrameMax, salt ^ 0x22);
+  const firstSpeed = Number(move.FallPeriodFirstTargetSpeed ?? 0), secondSpeed = Number(move.FallPeriodSecondTargetSpeed ?? 0);
+  if (![firstSpeed, secondSpeed].every(v => Number.isFinite(v) && v >= 0)) throw new RangeError('Invalid detached wall-drop speed');
+  const state = {
+    tag, owner: p.owner, team: p.team, seed: Number.isFinite(p.seed) ? p.seed : 0, ghost: !!p.ghost,
+    frame: 0, firstFrames, secondFrames, lastFrames, totalFrames: firstFrames + secondFrames + lastFrames,
+    firstSpeed, secondSpeed,
+    shockRadius: Number(paint.PaintRadiusShock) || 0,
+    fallRadius: Number(paint.PaintRadiusFall) || 0,
+    groundRadius: Number(paint.PaintRadiusGround) || 0,
+    paintSpacing: Math.max(.08, (Number(paint.PaintRadiusFall) || 0) * .5),
+    paintCarry: 0, paintIndex: 0,
+    pos: hit.point.clone().addScaledVector(hit.normal, .025),
+    from: new api.THREE.Vector3(), next: new api.THREE.Vector3(), paintPoint: new api.THREE.Vector3(),
+    hit: new api.Hit(),
+  };
+  (system._s3DetachedWallDrops || (system._s3DetachedWallDrops = [])).push(state);
+  detachedPaint(system, state, state.pos, state.shockRadius, salt ^ 0x33);
+  return true;
+}
+
+function advanceDetachedWallDrops(system, dt) {
+  const list = system._s3DetachedWallDrops;
+  if (!list?.length || !(dt > 0)) return;
+  for (let i = list.length - 1; i >= 0; i--) {
+    const state = list[i];
+    let frames = dt * 60;
+    while (frames > EPSILON && state.frame < state.totalFrames - EPSILON) {
+      const firstEnd = state.firstFrames, secondEnd = firstEnd + state.secondFrames;
+      const phaseEnd = state.frame < firstEnd ? firstEnd : state.frame < secondEnd ? secondEnd : state.totalFrames;
+      const stepFrames = Math.min(frames, 1, phaseEnd - state.frame);
+      const speed = state.frame < firstEnd ? state.firstSpeed : state.secondSpeed;
+      state.from.copy(state.pos); state.next.copy(state.pos); state.next.y -= speed * stepFrames;
+      const moved = state.from.distanceToSquared(state.next) > EPSILON * EPSILON;
+      const hit = moved ? api.G.physics.segment(state.from, state.next, state.hit, true) : null;
+      if (hit?.hit) {
+        state.pos.copy(hit.point).addScaledVector(hit.normal, .02);
+        if (hit.normal.y > .45) detachedPaint(system, state, state.pos, state.groundRadius, 0x6a0d);
+        state.frame = state.totalFrames;
+        break;
+      }
+      state.pos.copy(state.next);
+      if (state.fallRadius > 0) {
+        const distance = state.from.distanceTo(state.next);
+        if (distance > EPSILON) {
+          let cursor = state.paintSpacing - state.paintCarry;
+          while (cursor <= distance + EPSILON) {
+            state.paintPoint.copy(state.from).lerp(state.next, Math.min(1, cursor / distance));
+            detachedPaint(system, state, state.paintPoint, state.fallRadius, 0x51f15e);
+            cursor += state.paintSpacing;
+          }
+          state.paintCarry = (state.paintCarry + distance) % state.paintSpacing;
+        }
+      }
+      state.frame += stepFrames; frames -= stepFrames;
+    }
+    if (state.frame + EPSILON >= state.totalFrames) list.splice(i, 1);
+  }
+}
+
+function blasterPaintSource(p) {
+  const w = p?.s3Weapon || p?.owner?.weapon;
+  if (w?.kind !== 'blaster') return null;
+  const contract = blasterPaintContract(rawWeapon(w));
+  return contract ? { w, contract } : null;
+}
+
+export function applyFidelityBlasterFlightPaint(system, p) {
+  const source = blasterPaintSource(p);
+  if (!source) return false;
+  if (p.ghost) return true;
+  const { contract } = source;
+  const index = p.s3BlasterSplashIndex = (p.s3BlasterSplashIndex || 0) + 1;
+  const wall = contract.flightWall;
+  const dir = system._s3BlasterFlightSplashDir || (system._s3BlasterFlightSplashDir = new api.THREE.Vector3());
+  dir.copy(p.vel);
+  const horizontal = Math.hypot(dir.x, dir.z);
+  if (horizontal > EPSILON) dir.y -= horizontal * wall.velocityMinusYRate;
+  if (dir.lengthSq() > EPSILON) {
+    dir.normalize();
+    const wh = system._s3BlasterFlightSplashWallHit || (system._s3BlasterFlightSplashWallHit = new api.Hit());
+    const hit = api.G.physics.raycast(p.pos, dir, wall.firstDistance, wh, true);
+    if (eligibleWallDropHit(hit) && startDetachedWallDrop(system, p, hit, wall.move, wall.paint, 'flight', 0x1009 + index)) return true;
+  }
+  const downHit = system._s3BlasterFlightSplashFloorHit || (system._s3BlasterFlightSplashFloorHit = new api.Hit());
+  const down = system._s3BlasterPaintDown || (system._s3BlasterPaintDown = new api.THREE.Vector3(0, -1, 0));
+  const g = api.G.physics.raycast(p.pos, down, contract.dropHeightMin, downHit, true);
+  if (!g.hit || blasterSplashDropBand(contract, g.dist) === 'none') return true;
+  const point = system._s3BlasterFlightSplashPoint || (system._s3BlasterFlightSplashPoint = new api.THREE.Vector3());
+  point.copy(g.point).addScaledVector(g.normal, .1);
+  const radius = p.trailRadius * (.8 + seededUnit(p.seed, 0x1049 + index) * .4);
+  const area = api.G.paint.splat(point, radius, p.team, { seed: seededUnit(p.seed, 0x1490 + index) });
+  if (Number.isFinite(area)) p.owner?.addTurf?.(area);
+  return true;
+}
+
+export function applyFidelityBlasterBurstPaint(system, p, point, direct) {
+  const source = blasterPaintSource(p);
+  if (!source) return false;
+  const collision = direct != null || !!p.s3BurstCollisionHit || !!p.s3TerrainBurst;
+  if (!collision) return false; // timed airburst remains owned by its separate issue/path
+  if (p.ghost) return true;
+  const { contract } = source, burst = contract.burst;
+  const floorHit = system._s3BlasterBurstFloorHit || (system._s3BlasterBurstFloorHit = new api.Hit());
+  const floorOrigin = system._s3BlasterBurstFloorOrigin || (system._s3BlasterBurstFloorOrigin = new api.THREE.Vector3());
+  const floorPoint = system._s3BlasterBurstFloorPoint || (system._s3BlasterBurstFloorPoint = new api.THREE.Vector3());
+  floorOrigin.copy(point); floorOrigin.y += .2;
+  const down = system._s3BlasterPaintDown || (system._s3BlasterPaintDown = new api.THREE.Vector3(0, -1, 0));
+  const floor = api.G.physics.raycast(floorOrigin, down, 3.5, floorHit, true);
+  if (floor.hit) {
+    floorPoint.copy(floor.point).addScaledVector(floor.normal, .1);
+    const area = api.G.paint.splat(floorPoint, burst.radius, p.team, { seed: seededUnit(p.seed, 0x1001) });
+    if (Number.isFinite(area)) p.owner?.addTurf?.(area);
+  }
+
+  const dirs = blasterBurstAxisDirections(contract);
+  const ray = system._s3BlasterBurstAxisDir || (system._s3BlasterBurstAxisDir = new api.THREE.Vector3());
+  const hit = system._s3BlasterBurstAxisHit || (system._s3BlasterBurstAxisHit = new api.Hit());
+  const seen = new Set();
+  for (let i = 0; i < dirs.length; i++) {
+    const d = dirs[i]; ray.set(d.x, d.y, d.z);
+    const h = api.G.physics.raycast(point, ray, burst.radius, hit, true);
+    if (!eligibleWallDropHit(h)) continue;
+    const key = h.block + ':' + h.face;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    startDetachedWallDrop(system, p, h, burst.move, burst.paint, 'burst', 0x1027 + i);
+  }
+  return true;
 }
 
 // #519/#576/#597: the source mirror already contains the pinned S3 WallDrop
