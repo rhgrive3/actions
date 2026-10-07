@@ -163,8 +163,12 @@ export function adaptIssue481Flow(code) {
   );
 
   // 8. on('splatted') consecutive splat award and victim life-epoch deduplication
-  // Narrowly replaces only the attacker award line, preserving helper assists and victim death handling
+  // Narrowly replaces only the attacker award line, preserving helper assists and victim death handling.
+  // Choose the call shape here in the adapter; never leak this composition flag into runtime output.
   const unpatchedAttackerAward = "    if (attacker && attacker !== victim && attacker.team !== victim.team) award(attacker, 'splat', 1);";
+  const splatAwardCall = firstSplatComposed
+    ? "award(attacker, 'splat', 1, 0, isConsecutive);"
+    : "award(attacker, 'splat', 1, isConsecutive);";
   let patchedAttackerAward = `    if (victim?.s3) victim.s3.flowLastSplatTime = null;
     let isDuplicate = false;
     if (victim) {
@@ -184,8 +188,7 @@ export function adaptIssue481Flow(code) {
       const isConsecutive = typeof lastTime === 'number' && Number.isFinite(lastTime) && now >= lastTime && (now - lastTime) <= 5.0;
       attacker.s3 ||= {};
       attacker.s3.flowLastSplatTime = now;
-      if (firstSplatComposed) award(attacker, 'splat', 1, 0, isConsecutive);
-      else award(attacker, 'splat', 1, isConsecutive);
+      ${splatAwardCall}
       if (attacker.s3.flow?.active) {
         attacker.s3.flowLastSplatTime = null;
       }
