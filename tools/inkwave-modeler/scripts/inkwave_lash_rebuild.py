@@ -1314,6 +1314,14 @@ def lower_centres(design, curve):
     row = design.get('lower_row')
     if row is None or curve is None:
         return design['lower']
+    if 'x' in row:
+        # along the lower lid only (from x[0] on, where the curve no longer turns up into the corner): the curve
+        # is smoothed first, so the dots lie on one smooth curve parallel to the lower line
+        c = curve[(curve[:, 0] >= row['x'][0] - 3) & (curve[:, 0] <= row['x'][1] + 3)].copy()
+        c[:, 1] = er.smooth_rows(c[:, 1], row.get('sigma', 6.0))
+        c = c[(c[:, 0] >= row['x'][0]) & (c[:, 0] <= row['x'][1])]
+        curve = c
+        row = dict(row, s=[0.0, 1.0])
     seg = np.r_[0, np.cumsum(np.linalg.norm(np.diff(curve, axis=0), axis=1))]
     out = []
     for t in np.linspace(*row['s'], row['count']):
