@@ -747,7 +747,7 @@ test('the volley identity rides the main projectile packet, and old packets stil
   nm.byNid = new Map(); nm.replayKitEvent = () => false;
   api.G.netm = nm;
 
-  throwVolley(projectiles, a, trizookaSpecialWeapon());
+  throwVolley(projectiles, a, trizookaSpecialWeapon(57));
   const wire = JSON.parse(JSON.stringify(nm.out));      // the real serialisation hop
   const packets = wire.filter((e) => e[1] === 'p');
   assert.equal(packets.length, VOLLEY_CONFIG.lobes);
@@ -755,6 +755,7 @@ test('the volley identity rides the main projectile packet, and old packets stil
   for (let i = 0; i < VOLLEY_CONFIG.lobes; i++) {
     assert.equal(packets[i][27], i, `packet ${i} carries its own volley index`);
     assert.equal(packets[i][28], 0, 'and the action index');
+    assert.equal(packets[i][33].s3SpecialPowerAP, 57, '#977 immutable AP follows stable metadata');
   }
 
   nm.out.length = 0;
@@ -771,7 +772,11 @@ test('the volley identity rides the main projectile packet, and old packets stil
   for (let i = 1; i < phases.length; i++) {
     near(phases[i] - phases[i - 1], TRIZOOKA_ORBIT.lobePhase, 1e-9);
   }
-  for (const g of ghosts) assert.equal(g.damageOwner, false, 'and none of them carries authority');
+  for (const g of ghosts) {
+    assert.equal(g.damageOwner, false, 'and none of them carries authority');
+    assert.equal(g.s3SpecialWeapon.specialPowerAP, 57);
+    near(g.s3SpecialWeapon.impactRadius, 5.2, '#977 ghost inherits owner radius');
+  }
 
   // an OLD packet, with no appended fields at all, must still replay
   const legacy = packets.map((e) => e.slice(0, 27));
