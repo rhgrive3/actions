@@ -123,16 +123,19 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on }, _profile) {
     const runner = this.weaponRunner;
     if (!runner) return rollStopActorUpdate.call(this, dt, ...rest);
     const now = G.time;
+    // Capture the native B edge before Actor.update overwrites _prevIntent and
+    // consumes jumpBuffer. _roller runs later in this same authoritative tick.
+    runner.s3RollerJumpPressed = this.weapon?.kind === 'roller' && !!this.intent?.jump && !this._prevIntent?.jump;
     const armed = armAheadOf(runner, now, !!(this.intent?.fire || this.fireBuffer > 0));
     const blockSquid = rollStopBlocks(now, runner.s3RollStop).squid;
     if (blockSquid && this.intent?.squid) {
       const held = this.intent.squid;
       this.intent.squid = false;
       try { return rollStopActorUpdate.call(this, dt, ...rest); }
-      finally { this.intent.squid = held; disarmIf(runner, armed); }
+      finally { this.intent.squid = held; runner.s3RollerJumpPressed = false; disarmIf(runner, armed); }
     }
     try { return rollStopActorUpdate.call(this, dt, ...rest); }
-    finally { disarmIf(runner, armed); }
+    finally { runner.s3RollerJumpPressed = false; disarmIf(runner, armed); }
   };
 
   const resolveRemoteContact = (event, accepted) => {
@@ -167,6 +170,7 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on }, _profile) {
     const result = reset.apply(this, args);
     this.s3RollerAttack = null;
     this.s3RollerSquidPressT = null;
+    this.s3RollerJumpPressed = false;
     this.s3PendingRollHits = new Map();
     this.s3RollHitEpochs = new Map();
     this.s3RollHitConfirmDisabled = uncorrelated;
@@ -202,7 +206,12 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on }, _profile) {
         const elapsed = Math.max(0, G.time - this.s3RollerSquidPressT);
         windup = Math.max(EPS, 34 / 60 - elapsed);
       }
-      this.s3RollerAttack = { vertical: this.s3FlickVertical, windup, interval: mode.flickInterval, elapsed: 0, released: false, rolling: false };
+      this.s3RollerAttack = {
+        vertical: this.s3FlickVertical, windup, interval: mode.flickInterval,
+        elapsed: 0, released: false, rolling: false,
+        groundedStart: !this.s3FlickVertical && !!a.grounded && !groundedCancel,
+        jumpConverted: false,
+      };
       this.s3RollerSquidPressT = null;
       a.character.s3RollerFlick = this.s3RollerAttack;
       // Starting a new flick lifts the drum. The public runner otherwise leaves
@@ -211,6 +220,22 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on }, _profile) {
       this.rollLoop?.stop(.12); this.rollLoop = null;
     }
     const state = this.s3RollerAttack;
+    // #1041: grounded ZR remains provisional for the first 3 fixed frames.
+    // A real B/jump edge at +1/+2/+3F converts it once to vertical and uses
+    // the measured one-frame-faster converted startup. +4F is too late.
+    if (state && !state.released && !state.vertical && state.groundedStart && !state.jumpConverted &&
+        this.s3RollerJumpPressed && !a.grounded && state.elapsed < 3 / 60 - EPS) {
+      const verticalMode = rollerMode(w, true);
+      const extraInk = Math.max(0, (verticalMode.flickInk || 0) - (w.flickInk || 0));
+      if (a.ink + EPS >= extraInk) {
+        if (extraInk > 0) a.ink = Math.max(0, a.ink - extraInk);
+        state.vertical = true; state.jumpConverted = true;
+        state.windup = Math.max(EPS, verticalMode.flickWindup - 1 / 60);
+        state.interval = verticalMode.flickInterval;
+        this.s3FlickVertical = true;
+        if (a.character) a.character.s3RollerFlick = state;
+      }
+    }
     const vertical = state ? state.vertical : this.s3FlickVertical;
     let mode = rollerMode(w, vertical);
     if (state) mode = { ...mode, flickWindup: state.windup, flickInterval: state.interval };
