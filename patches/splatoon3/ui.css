@@ -241,3 +241,17 @@
   .iw-jd__stage, .iw-jd.is-racing .iw-jd__ref, .iw-jd.is-drum .iw-jd__figure, .iw-jd__ref.is-win .iw-jd__figure { animation: none; }
   .iw-jd__cloth { transition: none; }
 }
+/* Generic field-contact cue; separate from and does not reposition ShotGuide. */
+.iw-xh.is-muzzle-blocked::after {
+  content: "";
+  position: absolute;
+  left: var(--muzzle-hit-x, 0px);
+  top: var(--muzzle-hit-y, 0px);
+  width: 9px;
+  height: 9px;
+  border: 1px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, .9);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
