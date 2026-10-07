@@ -1835,7 +1835,7 @@ def main():
             polys += [[i + sum(len(x) for x in verts) for i in fc] for fc in f]
             verts.append(M.to_world(np.asarray(v) / 1000))
     black = BVHTree.FromPolygons([Vector(v) for v in np.vstack(verts)], polys)
-    for part, views, side in zip(built, (('sideR', 'q34R'), ('q34L', 'sideL')), (-1, 1)):
+    for part, views, side in zip(built if design.get('side_corner') else [], (('sideR', 'q34R'), ('q34L', 'sideL')), (-1, 1)):
         sv, sf = er.solid_sheet(*build_side_corner(design, tree, views, side, black), LINER_THICK_MM * 0.6)
         v, f = part[1]
         part[1] = (np.r_[v, sv], list(f) + [tuple(i + len(v) for i in fc) for fc in sf])
