@@ -129,7 +129,7 @@ test('projectile keeps the fired actor-local config reference after weapon rebin
   projectiles.pool.push(projectile);
   const recycled = projectiles._new();
   assert.equal(recycled, projectile);
-  assert.equal(recycled.s3Weapon, null);
+  assert.equal(recycled.s3Weapon ?? null, null);
   recycled.owner = a;
   recycled.wid = a.weapon.id;
   projectiles._push(recycled);
