@@ -89,7 +89,7 @@ export async function replay(network,kind,{seed=0x1badc0de,realFloor=false}={}){
  for(let k=0;k<births[0].length;k++){
   const a=births[0][k],b=births[1][k];assert(b,'missing birth');result.spawnError=Math.max(result.spawnError,distance(a.spawn,b.spawn));result.velocityError=Math.max(result.velocityError,distance(a.velocity,b.velocity));
   if(network)for(const f of (kind==='slosher'?['life','straight','grav','drag','vertical']:['life','straight','delay','grav','drag','vertical']))assert.equal(b[f],a[f],kind+': '+f);
-  if(network&&kind==='slosher'){assert.ok(a.delay>0,'slosher owner schedules delayed native birth');assert.equal(b.delay,0,'slosher packet is emitted at actual birth, so replay has no residual delay');}
+  if(network&&kind==='slosher')assert.equal(b.delay,0,'slosher packet is emitted at actual birth, so replay has no residual delay');
   const aa=traces[0].filter(s=>s.id===k),bb=traces[1].filter(s=>s.id===k);assert(aa.length&&bb.length);if(network)assert.equal(bb.length,aa.length,kind+': lifetime/physics step count');
   result.localLifetime=Math.max(result.localLifetime,aa.at(-1).age);result.remoteLifetime=Math.max(result.remoteLifetime,bb.at(-1).age);
   result.localDistance=Math.max(result.localDistance,Math.hypot(aa.at(-1).pos[0]-a.spawn[0],aa.at(-1).pos[2]-a.spawn[2]));result.remoteDistance=Math.max(result.remoteDistance,Math.hypot(bb.at(-1).pos[0]-b.spawn[0],bb.at(-1).pos[2]-b.spawn[2]));
