@@ -215,7 +215,7 @@ export function installWeapons(context, profile) {
   WeaponRunner.prototype.reset = function (...args) {
     const result = reset.apply(this, args);
     this.s3Stored = null; this.s3Turret = false; this.s3FlickVertical = false; this.s3BlasterWindup = 0; this.s3BlasterFromSwim = false;
-    this.s3BlasterJumpT = null; this.s3BlasterWasGrounded = false;
+    this.s3BlasterJumpT = null; this.s3BlasterWasGrounded = false; this.s3BlasterMoveRemaining = 0;
     this.s3SloshRecovery = false;
     this.s3SplatlingStartup = 0; this.s3SplatlingEmerging = false; this.s3SplatlingEmergeT = 0;
     this.s3SplatlingHeld = false;
@@ -269,6 +269,8 @@ export function installWeapons(context, profile) {
   const runnerUpdate = WeaponRunner.prototype.update;
   WeaponRunner.prototype.update = function (dt, input) {
     const weapon = this.a.weapon;
+    if (weapon?.kind === 'blaster') this.s3BlasterMoveRemaining = Math.max(0, (this.s3BlasterMoveRemaining || 0) - dt);
+    else this.s3BlasterMoveRemaining = 0;
     if (blasterJumpSupported() && weapon?.kind === 'blaster') {
       const grounded = !!this.a.grounded;
       if (this.s3BlasterWasGrounded === true && !grounded) this.s3BlasterJumpT = 0;
@@ -651,7 +653,11 @@ export function installWeapons(context, profile) {
       this.s3BlasterWindup = 0;
       const beforeInk = this.a.ink;
       const result = auto.call(this, dt, { ...input, fire: true }, { ...w, fireInterval: w.fireInterval - w.preDelay });
-      if (this.a.ink < beforeInk) this.s3PostShotRemaining = w.postShotDelay;
+      if (this.a.ink < beforeInk) {
+        this.s3PostShotRemaining = w.postShotDelay;
+        this.s3BlasterMoveRemaining = w.postShotDelay;
+        this.s3InkRecoverRemaining = w.inkRecoverStop;
+      }
       return result;
     }
     if (input.fire && this.cooldown <= 0 && this.a.ink >= w.inkPerShot) { this.s3BlasterWindup = blasterStartupWindup(this.a, input.firePressed, dt, PLAYER.emergeDelay, w.preDelay); this.s3BlasterFromSwim = false; this.firingT = .35; return; }
@@ -665,6 +671,7 @@ export function installWeapons(context, profile) {
   WeaponRunner.prototype.moveSpeed = function () {
     const w = this.a.weapon;
     if (this.lockT > 0) return moveSpeed.call(this);
+    if (w.kind === 'blaster' && this.s3BlasterMoveRemaining > 1e-10 && Number.isFinite(w.moveSpeedFiring)) return w.moveSpeedFiring;
     if (this.charging && w.kind === 'charger' && Number.isFinite(w.moveSpeedFiring)) return w.moveSpeedFiring;
     return moveSpeed.call(this);
   };
