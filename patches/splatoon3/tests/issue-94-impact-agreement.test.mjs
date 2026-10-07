@@ -148,7 +148,9 @@ function fireActualShot(s, maxFrames = 300) {
 function composedMuzzleBlock(s, W = 1600, H = 900) {
   const main = adaptBuildSource('src/main.js', fs.readFileSync(path.join(SRC, 'src/main.js'), 'utf8'));
   const start = main.indexOf('    const muzzleContact =');
-  const end = main.indexOf('    const frame = {', start);
+  const rawFrame = main.indexOf('    const frame = {', start);
+  const snapshotFrame = main.indexOf('    const frame = hudFrameSnapshot(', start);
+  const end = rawFrame >= 0 && snapshotFrame >= 0 ? Math.min(rawFrame, snapshotFrame) : Math.max(rawFrame, snapshotFrame);
   assert.ok(start >= 0 && end > start, 'composed main keeps the projected shooter muzzle contact connection');
   const sandbox = { THREE: s.THREE, G: s.G, w: s.actor.weapon, cam: s.camera, W, H, a: s.actor };
   const fn = vm.runInNewContext(`(function () {\n${main.slice(start, end)}\nreturn muzzleBlock; })`, sandbox);
