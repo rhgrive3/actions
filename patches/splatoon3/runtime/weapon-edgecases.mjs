@@ -110,6 +110,7 @@ export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYE
   const clear = r => { r.s3DualiesStart = 0; r.s3DualiesHeld = false; };
   const clearDualiesLocks = r => {
     r.s3DualiesPostShot = 0; r.s3DodgeShotPending = 0;
+    r.s3DualiesInterruptSub = 0; r.s3DualiesInterruptSquid = 0; r.s3DualiesInterruptCancelMain = false;
     r.s3DualiesSubBuffered = false; r.s3DualiesSubReleaseBuffered = false;
   };
   const reset = WeaponRunner.prototype.reset;
@@ -130,6 +131,9 @@ export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYE
     if (r) {
       if (r.s3ChargerPostShot > 0) r.s3ChargerPostShot = Math.max(0, r.s3ChargerPostShot - dt);
       if (r.s3DualiesPostShot > 0) r.s3DualiesPostShot = Math.max(0, r.s3DualiesPostShot - dt);
+      if (r.s3DualiesInterruptSub > 0) r.s3DualiesInterruptSub = Math.max(0, r.s3DualiesInterruptSub - dt);
+      if (r.s3DualiesInterruptSquid > 0) r.s3DualiesInterruptSquid = Math.max(0, r.s3DualiesInterruptSquid - dt);
+      if (r.s3DualiesInterruptSub <= EPS && r.s3DualiesInterruptSquid <= EPS) r.s3DualiesInterruptCancelMain = false;
       const cancelAction = !this.alive || this.specialActive || this.superJumpState || this.intent.special && this.specialReady();
       if (cancelAction) {
         r.s3ChargerPostShot = 0;
@@ -137,10 +141,20 @@ export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYE
       }
     }
     if (r && this.weapon.kind === 'dualies') {
+      // #1047: a real cancellation of an active held-fire sequence owns its own
+      // action recovery, independent of the previous shot's 4F post-shot clock.
+      const postRoll = !!r.dodge || r.lockT > 0 || r.s3Turret || r.s3DodgeShotPending;
+      const cancelEdge = r.s3DualiesHeld && this._prevIntent.fire && !postRoll &&
+        (!this.intent.fire || this.intent.sub || (this.intent.squid && !this._prevIntent.squid));
+      if (cancelEdge) {
+        r.s3DualiesInterruptSub = Math.max(r.s3DualiesInterruptSub || 0, 5 / 60);
+        r.s3DualiesInterruptSquid = Math.max(r.s3DualiesInterruptSquid || 0, 6 / 60);
+        r.s3DualiesInterruptCancelMain = true;
+      }
       if (this.form === 'squid') { clear(r); clearDualiesLocks(r); r.s3DualiesEmerging = true; }
       else if (this.kidT > PLAYER.emergeDelay && !this.intent.fire) r.s3DualiesEmerging = false;
       const canceled = !this.alive || !this.intent.fire || this.intent.sub || this.specialActive || this.superJumpState ||
-        this.intent.special && this.specialReady() || r.dodge || r.lockT > 0 ||
+        this.intent.special && this.specialReady() || postRoll ||
         r.s3DualiesSwimStart != null && this._prevIntent.fire && (this.form === 'squid' || this.intent.squid && !this._prevIntent.squid);
       if (canceled) {
         if (r.s3DualiesSwimStart != null) { this.fireBuffer = 0; r.s3DualiesEmerging = false; }
@@ -151,8 +165,19 @@ export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYE
         r.s3DualiesSwimStart = Math.max(0, r.s3DualiesSwimStart - dt);
       }
       if (!this.alive || this.specialActive || this.superJumpState || this.intent.special && this.specialReady()) clear(r);
+      if (r.s3DualiesInterruptSquid > EPS && this.intent.squid) {
+        const heldSquid = this.intent.squid;
+        this.intent.squid = false;
+        try { return update.call(this, dt); }
+        finally { this.intent.squid = heldSquid; }
+      }
     }
     return update.call(this, dt);
+  };
+  const interruptBusy = WeaponRunner.prototype.busy;
+  WeaponRunner.prototype.busy = function (...args) {
+    if (this.a?.weapon?.kind === 'dualies' && this.s3DualiesInterruptSquid > EPS) return true;
+    return interruptBusy.apply(this, args);
   };
   const weaponUpdate = WeaponRunner.prototype.update;
   WeaponRunner.prototype.update = function (dt, input) {
@@ -164,23 +189,24 @@ export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYE
       });
     }
     if (this.a.weapon.kind !== 'dualies') return weaponUpdate.call(this, dt, input);
-    const source = input || {}, locked = this.s3DualiesPostShot > EPS;
+    const source = input || {}, locked = this.s3DualiesPostShot > EPS || this.s3DualiesInterruptSub > EPS;
     if (locked) {
       if (source.sub) this.s3DualiesSubBuffered = true;
       if (source.subReleased) this.s3DualiesSubReleaseBuffered = true;
     }
     let prepared = locked ? { ...source, sub: false, subReleased: false } : { ...source };
+    if (this.s3DualiesInterruptCancelMain) { prepared.fire = false; prepared.firePressed = false; }
     if (!locked && this.s3DualiesSubReleaseBuffered) {
       prepared.sub = true; prepared.subReleased = true;
       this.s3DualiesSubBuffered = false; this.s3DualiesSubReleaseBuffered = false;
     }
     const runner = this;
     const gated = new Proxy(prepared, { get(target, prop) {
-      if ((prop === 'sub' || prop === 'subReleased') && runner.s3DualiesPostShot > EPS) return false;
+      if ((prop === 'sub' || prop === 'subReleased') && (runner.s3DualiesPostShot > EPS || runner.s3DualiesInterruptSub > EPS)) return false;
       return target[prop];
     }});
     const out = weaponUpdate.call(this, dt, gated);
-    if (this.s3DualiesPostShot > EPS) {
+    if (this.s3DualiesPostShot > EPS || this.s3DualiesInterruptSub > EPS) {
       if (prepared.sub) this.s3DualiesSubBuffered = true;
       if (prepared.subReleased) this.s3DualiesSubReleaseBuffered = true;
     }
