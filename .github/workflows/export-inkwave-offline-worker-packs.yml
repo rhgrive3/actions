@@ -1,0 +1,174 @@
+name: Export INKWAVE offline worker packs
+
+on:
+  push:
+    branches:
+      - tmp/inkwave-offline-export-b34a8aaf
+
+permissions:
+  contents: read
+  issues: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact main base
+        uses: actions/checkout@v4
+        with:
+          ref: b34a8aaf606594be61cfbd4c21e9f09afd685ad7
+          fetch-depth: 1
+
+      - name: Build Blender-free editable source snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=b34a8aaf606594be61cfbd4c21e9f09afd685ad7
+          mkdir -p work/source out issue-export
+          rsync -a ./ work/source/ \
+            --exclude='.git/' \
+            --exclude='tools/inkwave-modeler/' \
+            --exclude='*.blend' \
+            --exclude='*.blend1' \
+            --exclude='*.blend2'
+
+          # Remove any remaining Blender-specific source helpers outside the modeler tree.
+          while IFS= read -r -d '' f; do
+            if grep -IqE '(^|[^A-Za-z0-9_])(import[[:space:]]+bpy|from[[:space:]]+bpy)' "$f"; then
+              rm -f "$f"
+            fi
+          done < <(find work/source -type f -print0)
+
+          printf '%s\n' "$BASE" > work/source/BASE_MAIN_SHA.txt
+          cat > work/source/OFFLINE_SOURCE_README.txt <<'EOF'
+          This directory is an editable snapshot of rhgrive3/actions at:
+          b34a8aaf606594be61cfbd4c21e9f09afd685ad7
+
+          Blender/modeler content is intentionally excluded.
+          The .git directory is intentionally not included, so initialize a local repository
+          before working. The file contents themselves come from the exact BASE commit.
+          EOF
+
+          (
+            cd work/source
+            find . -type f -print0 | sort -z | xargs -0 sha256sum > ../SOURCE_SHA256SUMS.txt
+          )
+
+      - name: Export all five Issue batches
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          batches=(
+            "01:981 973 972 921 719 714 538 525 437 430 422 417 413 380 372 292 287 275 272 271"
+            "02:982 971 961 956 952 940 854 836 675 539 429 378 374 289 280 270 252 207 198 191"
+            "03:979 978 975 970 965 959 674 857 650 628 611 574 189 387 532 515 509 466 423 411"
+            "04:980 977 976 974 968 957 544 383 351 348 343 308 282 277 273 241 240 216 195 139"
+            "05:983 879 873 869 653 613 557 535 424 402 371 310 297 294 291 285 281 278 269 263"
+          )
+
+          for entry in "${batches[@]}"; do
+            batch="${entry%%:*}"
+            nums="${entry#*:}"
+            dir="issue-export/batch-${batch}"
+            mkdir -p "$dir/issues"
+            printf '%s\n' $nums > "$dir/ISSUE_NUMBERS.txt"
+
+            for n in $nums; do
+              gh api "repos/$GITHUB_REPOSITORY/issues/$n" > "$dir/issues/issue-$n.json"
+              gh api "repos/$GITHUB_REPOSITORY/issues/$n/comments?per_page=100" > "$dir/issues/issue-$n-comments.json"
+            done
+
+            python3 - "$dir" <<'PY'
+          import json, pathlib, sys
+          d = pathlib.Path(sys.argv[1])
+          nums = [int(x) for x in (d/'ISSUE_NUMBERS.txt').read_text().split()]
+          out = [
+              f"# INKWAVE Issue Export — {d.name}",
+              "",
+              "Repository: rhgrive3/actions",
+              "Base: b34a8aaf606594be61cfbd4c21e9f09afd685ad7",
+              "",
+          ]
+          for n in nums:
+              issue = json.loads((d/'issues'/f'issue-{n}.json').read_text())
+              comments = json.loads((d/'issues'/f'issue-{n}-comments.json').read_text())
+              out += [
+                  f"## #{n} — {issue.get('title','')}",
+                  "",
+                  f"State: {issue.get('state','')}",
+                  f"URL: {issue.get('html_url','')}",
+                  "",
+                  "### Body / acceptance criteria",
+                  "",
+                  issue.get('body') or "(no body)",
+                  "",
+              ]
+              if comments:
+                  out += ["### Comments", ""]
+                  for c in comments:
+                      out += [
+                          f"- {c.get('user',{}).get('login','unknown')} @ {c.get('created_at','')}",
+                          "",
+                          c.get('body') or "",
+                          "",
+                      ]
+              out += ["---", ""]
+          (d/'ISSUES.md').write_text("\n".join(out), encoding='utf-8')
+          PY
+          done
+
+      - name: Assemble five worker ZIPs
+        shell: bash
+        run: |
+          set -euo pipefail
+          for batch in 01 02 03 04 05; do
+            stage="pack-$batch"
+            mkdir -p "$stage"
+            cp -al work/source "$stage/source"
+            cp work/SOURCE_SHA256SUMS.txt "$stage/SOURCE_SHA256SUMS.txt"
+            cp -a "issue-export/batch-$batch" "$stage/issues"
+
+            cat > "$stage/README.md" <<EOF
+          # INKWAVE Local Issue Fix Worker ${batch}/5 — offline pack
+
+          BASE_MAIN_SHA:
+          b34a8aaf606594be61cfbd4c21e9f09afd685ad7
+
+          This pack contains:
+          - source/ — editable repository snapshot from the exact BASE, with Blender/modeler files excluded
+          - issues/ISSUES.md — the assigned 20 Issue bodies plus comments
+          - issues/issues/*.json — raw Issue/comment exports
+          - SOURCE_SHA256SUMS.txt — integrity manifest
+
+          Initialize locally:
+            cd source
+            git init
+            git add -A
+            git -c user.name=OfflineWorker -c user.email=offline@example.invalid commit -m "snapshot b34a8aaf"
+            git branch -M local/issue-batch-${batch}
+
+          IMPORTANT:
+          The synthetic local commit SHA will differ from BASE_MAIN_SHA because .git history is not bundled.
+          File contents are taken directly from the exact BASE commit. Produce normal patches/commits against
+          this snapshot; do not claim the synthetic commit SHA is the upstream BASE.
+          EOF
+
+            zip -qr "out/INKWAVE-issue-batch-${batch}-b34a8aaf.zip" "$stage"
+            rm -rf "$stage"
+          done
+          (cd out && sha256sum *.zip > SHA256SUMS.txt)
+
+      - name: Upload worker packs
+        uses: actions/upload-artifact@v4
+        with:
+          name: inkwave-offline-worker-packs-b34a8aaf
+          path: |
+            out/*.zip
+            out/SHA256SUMS.txt
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 7
