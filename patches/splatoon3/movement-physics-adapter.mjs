@@ -27,7 +27,7 @@ export function adaptMovementPhysics(rel, code, replaceOnce) {
       const target = isSquid ? Math.max(P.squidDrySpeed, sp) : Math.max(this.weaponRunner.moveSpeed(), P.airMinSpeed);
       const tvx = mh > 0.01 ? (mv.x / mh) * target * mag : 0, tvz = mh > 0.01 ? (mv.z / mh) * target * mag : 0;
       const dvx = tvx - vx, dvz = tvz - vz, dl = Math.hypot(dvx, dvz);
-      const rate = P.airAccel * dt;
+      const rate = P.airAccel * attackAirRateScale(this, P) * dt;
       if (dl <= rate) { this.vel.x = tvx; this.vel.z = tvz; } else { this.vel.x += (dvx / dl) * rate; this.vel.z += (dvz / dl) * rate; }
       return;
     }`, 'S3 ordinary airborne acceleration/braking');
@@ -45,7 +45,7 @@ export function adaptMovementPhysics(rel, code, replaceOnce) {
       ? (P.s3AttackGroundAccel ?? 72) : (P.s3GroundAccel ?? 36);
     if (onEnemy) vt = Math.min(vt, P.enemyInkSpeed); // enemy ink limits target speed, not the selected S3 acceleration
     stepGroundVelocity(this.vel, mv.x, mv.z, vt, accel, dt);`, 'S3 grounded vector acceleration');
-    return "import { integrateMovement, rollingMovementActive, stepGroundVelocity } from '../../patches/splatoon3/runtime/movement-physics.mjs';\n" + code;
+    return "import { integrateMovement, rollingMovementActive, stepGroundVelocity, attackAirRateScale } from '../../patches/splatoon3/runtime/movement-physics.mjs';\n" + code;
   }
   if (rel === 'src/game/weapons.js') {
     replace('    if (this.rolling) return lerp(w.rollSpeed * 0.5, w.rollSpeed, smoothstep(0, 0.45, this.rollT));',
