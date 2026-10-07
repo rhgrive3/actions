@@ -1,7 +1,3 @@
-import { G } from '../../../src/core/ctx.js';
-import { PLAYER } from '../../../src/config.js';
-import { Hit, WALKABLE } from '../../../src/game/physics.js';
-
 import { chargerPostShotBlocksSub } from './weapon-gates.mjs';
 // #750: the nearest glob uses the pinned swing DrawSizeParam; gameplay is unchanged.
 import { rollerFlickDrawRadius } from './weapons-fidelity.mjs';
@@ -74,7 +70,7 @@ export function appendRollerNearUnit(system, a, w) {
   system._push(p);
 }
 
-export function paintRollerReleaseFootprint(system, a, w) {
+export function paintRollerReleaseFootprint(system, a, w, { G, PLAYER, Hit, WALKABLE }) {
   const mode = a?.weaponRunner?.s3FlickVertical ? 'vertical' : 'horizontal';
   const shape = w?.releaseFootPaint?.[mode];
   if (!shape || a.remote || a.alive === false || w.kind !== 'roller' || !G.paint?.splat || !G.physics?.groundProbe) return 0;

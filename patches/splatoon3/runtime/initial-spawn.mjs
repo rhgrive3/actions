@@ -2,8 +2,6 @@
 // its Actor through the existing super-jump flight path; NetMatch carries the
 // existing superjump event and owner snapshots to the other clients.
 import * as THREE from 'three';
-import { G, emit } from '../../../src/core/ctx.js';
-import { PLAYER } from '../../../src/config.js';
 
 const sessions = new WeakMap();
 const stick = new THREE.Vector2();
@@ -48,7 +46,7 @@ export function endInitialSpawnSession(match, session) {
 
 function finitePoint(p) { return !!p && Number.isFinite(p.x) && Number.isFinite(p.y) && Number.isFinite(p.z); }
 
-function clampLanding(actor, candidate, config) {
+function clampLanding(actor, candidate, config, { G, PLAYER }) {
   const level = G.level, pads = level?.spawnPads;
   if (!finitePoint(candidate) || !pads || !pads[actor.team] || !pads[1 - actor.team] || !G.physics?.groundProbe) return null;
   const pad = pads[actor.team], enemy = pads[1 - actor.team];
@@ -88,14 +86,14 @@ function deterministicSeed(actor) {
   return key / 997;
 }
 
-function botLanding(actor, config) {
+function botLanding(actor, config, { G }) {
   const pad = G.level.spawnPads[actor.team];
   const angle = actor.slot * 2.399963229728653 + (actor.team ? Math.PI : 0);
   const radius = config.ownZoneRadius * (0.22 + (actor.slot % 4) * 0.11);
   return new THREE.Vector3(pad.x + Math.cos(angle) * radius, pad.y, pad.z + Math.sin(angle) * radius);
 }
 
-function makeMarker(position, color, radius, opacity) {
+function makeMarker(position, color, radius, opacity, G) {
   if (!G.scene) return null;
   const mesh = new THREE.Mesh(
     new THREE.RingGeometry(radius * 0.78, radius, 40),
@@ -108,7 +106,7 @@ function makeMarker(position, color, radius, opacity) {
   return mesh;
 }
 
-function makeSpawner(actor, floor, origin, config) {
+function makeSpawner(actor, floor, origin, config, { G, PLAYER }) {
   if (!G.scene) return null;
   const root = new THREE.Group();
   root.name = `initialSpawner:${actor.team}:${actor.slot}`;
@@ -200,7 +198,8 @@ function closeSession(session) {
   session.match.initialSpawnSession = null;
 }
 
-function openSession(match, config) {
+function openSession(match, config, runtime) {
+  const { G } = runtime;
   const o = match.opts || {};
   if (G.match !== match || G.mode !== 'match' || match.attract || o.attract || match.mode !== 'turf' || o.noBots) return null;
   if (currentInitialSpawnSession(match)) return currentInitialSpawnSession(match);
@@ -210,11 +209,11 @@ function openSession(match, config) {
   match.initialSpawnSession = session;
   for (const actor of match.actors) {
     const floor = actor.pos.clone();
-    const resolved = clampLanding(actor, floor, config) || floor.clone();
-    const proposed = actor.isBot && !actor.isLocal ? botLanding(actor, config) : resolved;
-    const target = clampLanding(actor, proposed, config) || resolved.clone();
+    const resolved = clampLanding(actor, floor, config, runtime) || floor.clone();
+    const proposed = actor.isBot && !actor.isLocal ? botLanding(actor, config, runtime) : resolved;
+    const target = clampLanding(actor, proposed, config, runtime) || resolved.clone();
     const origin = floor.clone().addScaledVector(up, config.spawnerLift);
-    const spawner = makeSpawner(actor, floor, origin, config);
+    const spawner = makeSpawner(actor, floor, origin, config, runtime);
     actor.pos.copy(origin);
     actor.vel.set(0, 0, 0);
     actor.grounded = true;
@@ -226,8 +225,8 @@ function openSession(match, config) {
     const state = {
       session, phase: actor.remote ? 'awaiting-owner' : 'choice', authority: !actor.remote,
       target, fallbackTarget: resolved.clone(), origin, spawner, sawFlight: false, eventAccepted: false,
-      sourceMarker: makeMarker(origin, G.teamColors?.[actor.team] || '#fff', 0.82, 0.48),
-      targetMarker: actor.isLocal && !actor.remote ? makeMarker(target, G.teamColors?.[actor.team] || '#fff', 0.48, 0.85) : null,
+      sourceMarker: makeMarker(origin, G.teamColors?.[actor.team] || '#fff', 0.82, 0.48, G),
+      targetMarker: actor.isLocal && !actor.remote ? makeMarker(target, G.teamColors?.[actor.team] || '#fff', 0.48, 0.85, G) : null,
     };
     session.actors.set(actor, state);
     actor.initialSpawn = state;
@@ -235,14 +234,14 @@ function openSession(match, config) {
   return session;
 }
 
-function activeChoice(state) {
+function activeChoice(state, G) {
   const match = state.session.match;
   return isCurrentInitialSpawnSession(match, state.session) && state.authority &&
     match === G.match && G.mode === 'match' && match.state === 'intro' && !match.paused &&
     (!G.game?.menus || !G.game.menus.current);
 }
 
-function holdAtSpawner(actor, state, dt) {
+function holdAtSpawner(actor, state, dt, { G, PLAYER }) {
   clearIntent(actor);
   actor.pos.copy(state.origin);
   actor.vel.set(0, 0, 0);
@@ -283,18 +282,18 @@ function selectionVector(input) {
   return { x, z };
 }
 
-function chooseLanding(controller, dt, state, config) {
+function chooseLanding(controller, dt, state, config, runtime) {
   const actor = controller.a;
   clearIntent(actor);
   controller.input?.mobile?.gyro?.discard?.();
-  if (!activeChoice(state)) return true;
+  if (!activeChoice(state, runtime.G)) return true;
   const v = selectionVector(controller.input);
   if (Math.hypot(v.x, v.z) < 1e-5 || !(dt > 0)) return true;
   const yaw = Number.isFinite(controller.rig?.yaw) ? controller.rig.yaw : actor.team ? Math.PI : 0;
   const sy = Math.sin(yaw), cy = Math.cos(yaw);
   const worldX = sy * v.z - cy * v.x, worldZ = cy * v.z + sy * v.x;
   const candidate = state.target.clone().add(new THREE.Vector3(worldX, 0, worldZ).multiplyScalar(config.selectionSpeed * dt));
-  const landing = clampLanding(actor, candidate, config);
+  const landing = clampLanding(actor, candidate, config, runtime);
   if (landing) {
     state.target.copy(landing);
     updateMarker(state.targetMarker, landing);
@@ -306,7 +305,8 @@ function seedFor(actor) {
   return deterministicSeed(actor);
 }
 
-function startFlights(match, session, config) {
+function startFlights(match, session, config, runtime) {
+  const { G, emit } = runtime;
   if (!isCurrentInitialSpawnSession(match, session) || session.goStarted || match.state !== 'playing') return false;
   session.goStarted = true;
   for (const [actor, state] of session.actors) {
@@ -316,7 +316,7 @@ function startFlights(match, session, config) {
       if (state.phase === 'choice') state.phase = 'cancelled';
       continue;
     }
-    const landing = clampLanding(actor, state.target, config) || clampLanding(actor, state.fallbackTarget, config);
+    const landing = clampLanding(actor, state.target, config, runtime) || clampLanding(actor, state.fallbackTarget, config, runtime);
     if (!landing) { state.phase = 'cancelled'; continue; }
     state.target.copy(landing); state.phase = 'flight'; state.sawFlight = true;
     actor.pos.copy(state.origin);
@@ -352,19 +352,23 @@ function observeRemoteFlight(netmatch, actor) {
 export function installInitialSpawn(api, profile) {
   if (installed) throw new Error('Initial Turf Spawn already installed');
   const config = configFrom(profile);
-  const { Actor, Match, PlayerController, NetMatch } = api;
+  const { Actor, Match, PlayerController, NetMatch, G, emit, PLAYER } = api;
   if (!Actor?.prototype || !Match?.prototype || !PlayerController?.prototype || !NetMatch?.prototype) {
     throw new Error('Initial Turf Spawn requires the native Actor, Match, PlayerController and NetMatch');
   }
+  if (!G || typeof emit !== 'function' || !PLAYER) {
+    throw new Error('Initial Turf Spawn requires the native G, emit and PLAYER runtime context');
+  }
+  const runtime = { G, emit, PLAYER };
 
   const setState = Match.prototype.setState;
   Match.prototype.setState = function (next, ...args) {
     const previous = this.state;
     const result = setState.call(this, next, ...args);
-    if (next === 'intro' && previous !== 'intro') openSession(this, config);
+    if (next === 'intro' && previous !== 'intro') openSession(this, config, runtime);
     if (previous === 'intro' && next === 'playing') {
       const session = currentInitialSpawnSession(this);
-      if (session) startFlights(this, session, config);
+      if (session) startFlights(this, session, config, runtime);
     }
     if (next !== 'intro' && next !== 'playing') {
       const session = currentInitialSpawnSession(this);
@@ -386,7 +390,7 @@ export function installInitialSpawn(api, profile) {
   const updateController = PlayerController.prototype.update;
   PlayerController.prototype.update = function (dt, ...args) {
     const state = this.a?.initialSpawn;
-    if (state?.phase === 'choice' && state.session.config) return chooseLanding(this, dt, state, state.session.config);
+    if (state?.phase === 'choice' && state.session.config) return chooseLanding(this, dt, state, state.session.config, runtime);
     return updateController.call(this, dt, ...args);
   };
 
@@ -397,7 +401,7 @@ export function installInitialSpawn(api, profile) {
     if (state && (state.phase === 'choice' || state.phase === 'awaiting-owner') &&
         isCurrentInitialSpawnSession(session.match, session) && session.match === G.match && G.mode === 'match' &&
         session.match.state === 'intro') {
-      holdAtSpawner(this, state, dt);
+      holdAtSpawner(this, state, dt, runtime);
       return;
     }
     if (!state || state.phase !== 'flight' || !state.authority || this.remote || !session ||
@@ -435,7 +439,7 @@ export function installInitialSpawn(api, profile) {
       const xyz = packed.to;
       if (!Array.isArray(xyz) || xyz.length !== 3) return;
       const proposed = new THREE.Vector3(xyz[0], xyz[1], xyz[2]);
-      const landing = clampLanding(actor, proposed, config);
+      const landing = clampLanding(actor, proposed, config, runtime);
       if (!landing || !samePoint(landing, proposed)) return;
       if (!state.sawFlight) {
         actor.pos.copy(state.origin);
