@@ -1,5 +1,5 @@
 // Fixed clothing abilities are equipment identities, not ordinary AP curves.
-export const CLOTHING_ABILITIES = Object.freeze(['respawnPunisher', 'abilityDoubler']);
+export const CLOTHING_ABILITIES = Object.freeze(['respawnPunisher', 'abilityDoubler', 'thermalInk', 'haunt']);
 export const SPLATFEST_TEE = 'splatfestTee';
 export const RESPAWN_PUNISHER_FLAG = 33554432; // bit25; bit24 belongs to Roller vertical state; no tuple-column change
 
