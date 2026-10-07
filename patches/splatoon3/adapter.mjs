@@ -77,6 +77,54 @@ export function adaptSource(rel, code) {
       '      const winner = authoritativeWinner === 0 || authoritativeWinner === 1 ? authoritativeWinner : Math.abs(pa - pb) < 0.05 ? -1 : pa > pb ? 0 : 1;',
       'authoritative Turf winner HUD reveal');
     code = replaceOnce(code,
+      '  _bindBus() {',
+      `  _showSuperJumpTarget(actor) {
+    if (!this.el || !actor) return;
+    if (!this._sjTargetCue) {
+      const cue = document.createElement('div');
+      cue.className = 'iw-superjump-target-cue';
+      cue.setAttribute('role', 'status');
+      cue.setAttribute('aria-live', 'polite');
+      Object.assign(cue.style, {
+        position: 'absolute', left: '50%', top: '19%', zIndex: '20',
+        transform: 'translateX(-50%)', minWidth: '9rem', maxWidth: 'min(80vw, 24rem)',
+        padding: '0.65rem 2rem 0.65rem 0.9rem', boxSizing: 'border-box',
+        clipPath: 'polygon(0 0, calc(100% - 1.2rem) 0, 100% 50%, calc(100% - 1.2rem) 100%, 0 100%)',
+        background: 'linear-gradient(100deg, #26354a 0%, #42647b 100%)',
+        color: '#fff', font: '700 1rem/1.2 system-ui, sans-serif', textAlign: 'center',
+        textShadow: '0 1px 2px #000', pointerEvents: 'none', opacity: '0',
+      });
+      const name = document.createElement('span');
+      cue.appendChild(name);
+      this.el.appendChild(cue);
+      this._sjTargetCue = cue;
+      this._sjTargetCueName = name;
+    }
+    this._sjTargetCueName.textContent = String(actor.name || actor.character?.name || 'Teammate');
+    this._sjTargetCueAnimation?.cancel?.();
+    const cue = this._sjTargetCue;
+    cue.style.opacity = '1';
+    this._sjTargetCueAnimation = typeof cue.animate === 'function' ? cue.animate(
+      [{ opacity: 1, transform: 'translateX(-50%) scale(0.94)' }, { opacity: 1, transform: 'translateX(-50%) scale(1)' }, { opacity: 0, transform: 'translateX(-50%) scale(1)' }],
+      { duration: 1200, easing: 'ease-out', fill: 'forwards' }) : null;
+    if (!this._sjTargetCueAnimation) cue.style.opacity = '1';
+  }
+  _bindBus() {`,
+      'Super Jump target notification HUD cue');
+    code = replaceOnce(code,
+      "    const ok = tg.home ? me.superJump(tg.pad.clone()) : me.superJump(tg.actor);",
+      "    const ticket = tg.home ? null : me.selectSuperJumpTarget(tg.actor);\n    const ok = tg.home ? me.superJump(tg.pad.clone()) : me.superJump(tg.actor, ticket);",
+      'MapRoster Super Jump target selection cue');
+    code = replaceOnce(code,
+      "    on('superjump', ({ actor, phase, to }) => { if (actor === this._local() && phase === 'charge' && this._live()) this._snd('ui_confirm', { volume: 0.6 }); void to; }),",
+      `    on('superjump', ({ actor, phase, to, target }) => {
+      const local = this._local();
+      if (actor === local && phase === 'charge' && this._live()) this._snd('ui_confirm', { volume: 0.6 });
+      if (phase === 'target' && target === local && actor !== local && Number.isFinite(local?.team) && actor?.team === local.team && this._live()) this._showSuperJumpTarget(actor);
+      void to;
+    }),`,
+      'exact recipient Super Jump target event');
+    code = replaceOnce(code,
       '    // per-shot kick (recoil events) on top of the live cone the engine reports in screen px (already includes bloom)',
       `    // S3 weapon ShotGuide projection: only aiming feedback moves; tank/sub/status remain centred.
     let guideX = 0, guideY = 0;
@@ -151,6 +199,16 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, 'it.fire = inp.mouse.left ||', 'it.fire = inp.mouse.leftPressed || inp.mouse.left ||', 'latched fire input');
     code = replaceOnce(code, "it.sub = inp.mouse.right || inp.down('KeyE')", "it.sub = inp.mouse.rightPressed || inp.wasPressed('KeyE') || inp.mouse.right || inp.down('KeyE')", 'latched sub input');
     code = replaceOnce(code, "it.special = inp.down('KeyF')", "it.special = inp.wasPressed('KeyF') || inp.wasPressed('KeyQ') || inp.down('KeyF')", 'latched special input');
+    code = replaceOnce(code,
+      '    const pick = (i) => { const o = allies[i]; if (o && o.alive && !o.superJumpState) a.superJump(o); };',
+      `    const pick = (i) => {
+      const o = allies[i];
+      if (o && o.alive && !o.superJumpState) {
+        const ticket = a.selectSuperJumpTarget(o);
+        a.superJump(o, ticket);
+      }
+    };`,
+      'player map Super Jump target selection cue');
     // HUD in-range state follows the live charge (a squid-form charge keep counts as its stored charge) via the
     // installed flight's reach, or native lerp, instead of full-charge reach.
     code = replaceOnce(code, "    const range = w.kind === 'charger' ? w.rangeMax : w.kind === 'roller' ? 6 : (w.range || 12);",

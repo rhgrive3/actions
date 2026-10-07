@@ -13,12 +13,27 @@ const BUILT = process.env.INKWAVE_SUPERJUMP_SITE;
 const SRC = BUILT ? path.resolve(BUILT) : path.join(ROOT, 'inkwave-public');
 const STEP = 1 / 60;
 const plain = value => JSON.parse(JSON.stringify(value));
+function testElement(tag) {
+  const el = {
+    tagName: tag, children: [], style: {}, attributes: {}, animations: [], textContent: '', hidden: false,
+    setAttribute(name, value) { this.attributes[name] = String(value); },
+    appendChild(child) { child.parentNode = this; this.children.push(child); return child; },
+    classList: { add() {}, remove() {}, toggle() {} },
+    animate(frames, options) {
+      const animation = { frames, options, cancelled: false, cancel() { this.cancelled = true; } };
+      this.animations.push(animation); return animation;
+    },
+  };
+  return el;
+}
 
 // Same source composition and installer as build-inkwave, including all motion
 // hooks and native Character/Physics/Runner/Projectiles. With
 // INKWAVE_SUPERJUMP_SITE this executes emitted/minified files. No GPU claim.
 async function boot({ floor = true, grate = false, wall = false } = {}) {
-  const context = vm.createContext({ console, performance, URL, innerHeight: 720 }), modules = new Map();
+  const context = vm.createContext({ console, performance, URL, innerHeight: 720, innerWidth: 1280,
+    screen: { width: 1280, height: 720, orientation: { angle: 0 } },
+    document: { body: testElement('body'), documentElement: testElement('html'), createElement: tag => testElement(tag) } }), modules = new Map();
   const load = requested => {
     let file = requested;
     if (!BUILT && file.startsWith(path.join(SRC, 'patches') + path.sep)) file = path.join(ROOT, path.relative(SRC, file));
@@ -34,6 +49,7 @@ async function boot({ floor = true, grate = false, wall = false } = {}) {
     export { FixedClock } from './patches/splatoon3/runtime/clock.mjs';
     export { Level } from './src/world/level.js';
     export { NetMatch } from './src/net/netmatch.js';
+    export { HUD } from './src/ui/hud.js';
   `, { context, identifier: path.join(SRC, 'superjump-test-entry.mjs') });
   await entry.link((spec, from) => load(spec === 'three' ? path.join(SRC, 'vendor/three/build/three.module.js')
     : spec.startsWith('three/addons/') ? path.join(SRC, 'vendor/three/jsm', spec.slice(13)) : path.resolve(path.dirname(from.identifier), spec)));
@@ -47,15 +63,16 @@ async function boot({ floor = true, grate = false, wall = false } = {}) {
     level, physics: new Physics(level), mode: 'match', teamColors: [new THREE.Color('#ff8a14'), new THREE.Color('#2f5bff')],
     match: { playing: () => true, canRespawn: () => false }, paint: { sample: () => 1, splat: () => 0 } });
   G.projectiles = new api.Projectiles(G.scene);
-  function make({ pos = [0, 0, 0], weapon = 'shooter', team = 0 } = {}) {
-    const a = new api.Actor({ team, name: 'superjump regression', weapon, CharacterClass: api.Character,
+  function make({ pos = [0, 0, 0], weapon = 'shooter', team = 0, name = 'superjump regression', isLocal = false, remote = false } = {}) {
+    const a = new api.Actor({ team, name, weapon, isLocal, CharacterClass: api.Character,
       style: { hair: 0, skin: 2, outfit: 0, eyes: 0 } });
     a.character.actor = a; G.actors.push(a); G.scene.add(a.character.root);
+    a.remote = remote;
     a.spawnAt(new THREE.Vector3(...pos), 0); a.invuln = 0; return a;
   }
   const tick = (a, count = 1) => { for (let i = 0; i < count; i++) { G.time += STEP; a.update(STEP); } };
   const close = () => { for (const a of G.actors) a.character.dispose(); G.projectiles.clear(); };
-  return { ...api, make, tick, close };
+  return { ...api, HUD: entry.namespace.HUD, context, make, tick, close };
 }
 
 for (const grate of [false, true]) test(`#215 grounded ${grate ? 'grate' : 'floor'} preparation launches at 80F`, async t => {
@@ -194,4 +211,102 @@ test('#362 30/60/120Hz preserve one committed destination and flight announcemen
     assert.deepEqual(events,[['charge',null],['flight',committed]]);
     assert.ok(new f.THREE.Vector3(...committed).distanceTo(new f.THREE.Vector3(10,0,7)) < 1e-9);
   }
+});
+
+test('#909 MapRoster selection gives only its exact teammate a retriggerable jumper-name arrow; owner packet replay preserves target identity', async t => {
+  const f = await boot(); t.after(f.close);
+  const jumper = f.make({ team: 0, name: 'ReefRunner' });
+  const target = f.make({ team: 0, name: 'Frontline' });
+  const other = f.make({ team: 0, name: 'Anchor' });
+  const enemy = f.make({ team: 1, name: 'Opponent' });
+  const seen = [];
+  const off = f.on('superjump', e => { if (e.actor === jumper && e.phase === 'target') seen.push({ event: e, phaseAtSelection: jumper.superJumpState?.phase ?? null }); });
+  t.after(off);
+
+  const view = local => {
+    const hud = Object.create(f.HUD.prototype);
+    hud.el = f.context.document.createElement('div');
+    hud._local = () => local; hud._live = () => true; hud._snd = () => {};
+    hud._bindBus(); t.after(() => hud._unsubs?.forEach(unsub => unsub()));
+    return hud;
+  };
+  const targetHud = view(target), otherHud = view(other), enemyHud = view(enemy);
+  const offlineJumper = f.make({ pos: [0, 0, 12], team: 1, name: 'OfflineRunner' });
+  const offlineTarget = f.make({ pos: [10, 0, 7], team: 1, name: 'OfflineBuddy' });
+  const offlineHud = view(offlineTarget), offlinePhases = [];
+  const offOffline = f.on('superjump', e => { if (e.actor === offlineJumper) offlinePhases.push(e.phase); });
+  t.after(offOffline);
+  offlineJumper.superJump(offlineTarget);
+  assert.deepEqual(offlinePhases, ['target', 'charge'], 'native offline selection notifies before charge');
+  assert.equal(offlineHud._sjTargetCueName.textContent, 'OfflineRunner');
+
+  const roster = Object.create(f.HUD.prototype);
+  roster._local = () => jumper; roster._restart = () => {}; roster._snd = () => {};
+  roster.beacons = [{}]; roster.lab = null;
+  roster._beaconTargets = () => [{ home: false, ok: true, actor: target }];
+
+  roster._jumpTo(0);
+  assert.equal(seen.length, 1, 'the actual MapRoster pick emits one selection event');
+  assert.equal(seen[0].event.actor, jumper);
+  assert.equal(seen[0].event.target, target, 'selection carries the exact teammate actor');
+  assert.equal(seen[0].phaseAtSelection, null, 'notification happens before charge commits');
+  assert.equal(targetHud._sjTargetCueName.textContent, 'ReefRunner');
+  assert.match(targetHud._sjTargetCue.style.clipPath, /polygon/);
+  assert.equal(targetHud._sjTargetCue.attributes.role, 'status');
+  assert.equal(otherHud._sjTargetCue, undefined, 'another teammate receives no cue');
+  assert.equal(enemyHud._sjTargetCue, undefined, 'an enemy receives no cue');
+
+  const firstCue = targetHud._sjTargetCue;
+  jumper.superJumpState = null; // cancellation does not retract a completed target selection
+  assert.equal(targetHud._sjTargetCue, firstCue);
+  roster._jumpTo(0);
+  assert.equal(seen.length, 2, 'reselecting the same target emits again');
+  assert.equal(targetHud._sjTargetCue.animations.length, 2, 'the visible cue restarts on reselection');
+  assert.ok(targetHud._sjTargetCue.animations[0].cancelled, 'the previous flash is stopped before restart');
+
+  jumper.superJumpState = null;
+  roster._beaconTargets = () => [{ home: false, ok: true, actor: other }];
+  roster._jumpTo(0);
+  assert.equal(seen.length, 3);
+  assert.equal(seen[2].event.target, other);
+  assert.equal(targetHud._sjTargetCue.animations.length, 2, 'selecting a different teammate does not notify this target');
+  assert.equal(otherHud._sjTargetCueName.textContent, 'ReefRunner');
+  assert.equal(enemyHud._sjTargetCue, undefined);
+  jumper.superJumpState = null;
+  assert.equal(jumper.selectSuperJumpTarget(enemy), null, 'enemy actors are rejected by the selection signal');
+  assert.equal(seen.length, 3);
+  jumper.superJumpState = { phase: 'charge' };
+  assert.equal(jumper.selectSuperJumpTarget(target), null, 'an actor that cannot start a jump does not notify a target');
+  assert.equal(seen.length, 3);
+  jumper.superJumpState = null;
+
+  // Replay a fresh owner event through the existing NetMatch actor-reference packer.
+  for (const hud of [targetHud, otherHud, enemyHud]) hud._unsubs.forEach(unsub => unsub());
+  const ownerHud = view(jumper);
+  jumper.superJumpState = null;
+  roster._beaconTargets = () => [{ home: false, ok: true, actor: target }];
+  roster._jumpTo(0);
+  const ownerEvent = seen[seen.length - 1].event;
+  assert.equal(ownerHud._sjTargetCue, undefined, 'the jumper owner does not display its own target cue');
+  jumper.nid = 11; target.nid = 22; jumper.remote = false; target.remote = true;
+  const sent = [], ownerNet = Object.create(f.NetMatch.prototype);
+  ownerNet.myId = 'owner'; ownerNet._rec = packet => sent.push(packet); f.G.netm = ownerNet;
+  ownerNet._onLocalEvent('superjump', ownerEvent);
+  assert.equal(sent.length, 1);
+  assert.deepEqual(plain(sent[0]), ['ev', 'superjump', { actor: { n: 11 }, phase: 'target', target: { n: 22 } }]);
+
+  target.remote = false;
+  const remoteJumper = f.make({ team: 0, name: 'ReefRunner', remote: true });
+  remoteJumper.nid = 11; remoteJumper._nearCamera = () => false;
+  const receiver = Object.create(f.NetMatch.prototype);
+  receiver.byNid = new Map([[11, remoteJumper], [22, target]]); receiver.myId = 'target-owner';
+  const recipientHud = view(target);
+  f.G.netm = receiver;
+  receiver._playEvent('superjump', sent[0][2]);
+  assert.equal(recipientHud._sjTargetCueName.textContent, 'ReefRunner');
+  assert.equal(recipientHud._sjTargetCue.animations.length, 1, 'remote application notifies the target once');
+  receiver._playEvent('superjump', { actor: { n: 11 }, phase: 'target', target: { n: 999 } });
+  assert.equal(recipientHud._sjTargetCue.animations.length, 1, 'a stale target reference resolves to no cue');
+  receiver._playEvent('superjump', { actor: { n: 11 }, phase: 'charge' });
+  assert.equal(recipientHud._sjTargetCue.animations.length, 1, 'legacy charge payloads remain valid and do not show a target cue');
 });
