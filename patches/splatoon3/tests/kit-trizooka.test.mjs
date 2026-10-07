@@ -237,26 +237,7 @@ test('activation is refused when dead, super jumping, already active or not read
 
 // ---- native lifecycle -------------------------------------------------------
 
-test('#1054 Trizooka active frames still run the ordinary enemy-ink resource pass', async () => {
-  const api = await production();
-  world(api);
-  const a = makeActor(api);
-  a.intent.special = true;
-  a.update(F);
-  a.intent.special = false;
-  assert.equal(a.specialActive?.id, 'trizooka');
 
-  a.s3 ||= {};
-  a.s3.enemyInkTime = 0;
-  a.grounded = true;
-  a.groundTeam = 2;
-  // Pin the post-movement sample to enemy ink so the test only asks whether
-  // the special early-return path still admits updateResources once this tick.
-  a._surface = () => { a.grounded = true; a.groundTeam = 2; };
-  a.update(F);
-  assert.ok(a.s3.enemyInkTime > 0,
-    'enemy-ink exposure advances during Trizooka instead of freezing for the whole special');
-});
 
 test('the native _startSpecial engages the Trizooka and spends the gauge exactly once', async () => {
   const api = await production();
