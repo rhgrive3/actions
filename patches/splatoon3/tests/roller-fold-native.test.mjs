@@ -5,6 +5,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { adaptSource } from '../adapter.mjs';
+import { adaptNetworkSource } from '../../network-replication/adapter.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const SRC = path.join(ROOT, 'inkwave-public');
@@ -19,7 +20,9 @@ async function production() {
     if (file.startsWith(path.join(ROOT, 'src') + path.sep)) file = path.join(SRC, path.relative(ROOT, file));
     if (modules.has(file)) return modules.get(file);
     const source = fs.readFileSync(file, 'utf8');
-    const patched = file.startsWith(SRC + path.sep) ? adaptSource(path.relative(SRC, file), source) : source;
+    const rel = file.startsWith(SRC + path.sep) ? path.relative(SRC, file) : null;
+    let patched = rel ? adaptSource(rel, source) : source;
+    if (rel === 'src/net/netmatch.js') patched = adaptNetworkSource(rel, patched);
     const mod = new vm.SourceTextModule(patched, {
       context, identifier: file,
       initializeImportMeta(meta) { meta.url = pathToFileURL(file).href; },
@@ -30,6 +33,7 @@ async function production() {
   const entry = new vm.SourceTextModule(`
     export { install } from './patches/splatoon3/runtime/install.mjs';
     export { ROLLER_FOLD, rollerFoldSnapshot } from './patches/splatoon3/runtime/roller-fold.mjs';
+    export { NetMatch } from './inkwave-public/src/net/netmatch.js';
   `, { context, identifier: path.join(ROOT, 'roller-fold-native-entry.mjs') });
   // The loader applies the same S3 source adapter as the installed native runtime.
   await entry.link((specifier, from) => load(specifier === 'three'
@@ -135,6 +139,46 @@ test('owner and remote Character use the same attack state; the fold hook leaves
     assert.ok(local.ch.weapon.foldT < 0.02, 'horizontal flick unfolds the roller-side assembly');
     assert.equal(api.testShotCount(), 0, 'presentation does not emit projectiles');
   } finally { local.close(); remote.close(); }
+});
+
+test('owner network tick carries horizontal and vertical fold mode through remote apply into the native Character', async () => {
+  const api = await production();
+  for (const vertical of [false, true]) {
+    const local = rig(api), remote = rig(api, { remote: true }), wire = [];
+    try {
+      const nid = 916;
+      local.actor.nid = remote.actor.nid = nid;
+      local.actor.owner = remote.actor.owner = 'owner';
+      local.actor.grounded = !vertical;
+      const sender = new api.NetMatch({ myId: 'owner', hostId: 'owner', isHost: true,
+        tr: { broadcast: message => wire.push(message) }, _members: new Set(['owner', 'guest']) }, {});
+      const receiver = new api.NetMatch({ myId: 'guest', hostId: 'owner', isHost: false,
+        tr: { broadcast() {} }, _members: new Set(['owner', 'guest']) }, {});
+      sender.byNid.set(nid, local.actor); sender._setupActor(local.actor);
+      receiver.byNid.set(nid, remote.actor); receiver._setupActor(remote.actor);
+
+      const dt = 1 / 60;
+      local.step(dt, { fire: true, firePressed: true, grounded: !vertical });
+      assert.equal(local.actor.weaponRunner.s3RollerAttack?.vertical, vertical);
+      sender._sendTick();
+      const packet = JSON.parse(JSON.stringify(wire.at(-1)));
+      // The owner packet is authoritative over any stale local/character mode on a remote actor.
+      remote.actor.weaponRunner.s3RollerAttack = { vertical: !vertical };
+      remote.ch.s3RollerFlick = { vertical: !vertical };
+      receiver.onMessage('owner', packet);
+      const net = remote.actor.net;
+      net.cur = net.buf.at(-1); net.ready = true;
+      receiver.applyRemote(remote.actor, dt);
+
+      assert.equal(remote.actor.weaponRunner.s3RollerFoldAttack?.vertical, vertical);
+      assert.deepEqual(api.rollerFoldSnapshot(remote.ch, remote.ch.weapon), api.rollerFoldSnapshot(local.ch, local.ch.weapon));
+      const beforeRender = gameplay(remote, api);
+      animate(remote.ch, dt);
+      assert.deepEqual(gameplay(remote, api), beforeRender, 'the received presentation mode does not change gameplay');
+      assertAbsoluteHinge(api, local.ch); assertAbsoluteHinge(api, remote.ch);
+    } finally { local.close(); remote.close(); }
+  }
+  assert.equal(api.testShotCount(), 0, 'fold replication does not emit projectiles');
 });
 
 test('vertical, horizontal, rolling and carry hinge curves stay stable at 30/60/120Hz, including zero elapsed updates', async () => {

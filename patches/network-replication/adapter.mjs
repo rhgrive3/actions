@@ -15,6 +15,15 @@ export function networkIdentity() {
 export function adaptNetworkSource(rel, code) {
   const patch = (before,after,label) => { code = once(code,before,after,rel+': '+label); };
   if (rel === 'src/net/netmatch.js') {
+    patch('invuln: 262144, enemy: 524288,',
+      'invuln: 262144, enemy: 524288, rollerFoldAttack: 1048576, rollerFoldVertical: 2097152,',
+      'roller fold mode snapshot flags');
+    patch('if (wr.slosh >= 0) f |= F.slosh;',
+      'if (wr.slosh >= 0) f |= F.slosh;\n  if (wr.s3RollerAttack) f |= F.rollerFoldAttack;\n  if (wr.s3RollerAttack?.vertical) f |= F.rollerFoldVertical;',
+      'pack owner Roller fold mode');
+    patch('wr.slosh = f & F.slosh ? Math.max(0, wr.slosh) : -1;',
+      'wr.slosh = f & F.slosh ? Math.max(0, wr.slosh) : -1;\n    wr.s3RollerFoldAttack = f & F.rollerFoldAttack ? { vertical: !!(f & F.rollerFoldVertical) } : null;',
+      'apply remote Roller fold mode');
     patch('  dispose() {\n    for (const u of this.unsubs)', `  dispose() {
     retireNetworkGhosts();
     for (const u of this.unsubs)`, 'session disposal retirement');
