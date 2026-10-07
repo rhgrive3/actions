@@ -16,7 +16,7 @@ export function resourceSurface(a) {
   const isSquid = a.form === 'squid';
   a.submerged = isSquid && a.grounded && a.groundTeam === 1;
   a.onEnemy = a.grounded && a.groundTeam === 2 && !a.submerged;
-  return { isSquid, onEnemy: a.onEnemy };
+  return isSquid;
 }
 export function enemyInkDamageRate(rate, referenceHz = 60, quantum = 0.1) {
   return Math.max(0, Math.floor(rate / referenceHz / quantum + 1e-10)) * quantum * referenceHz;
@@ -32,7 +32,7 @@ export function updateHealthRecovery(a, dt, onEnemy = false, submerged = false) 
 export function updateResources(a, dt) {
   if (!api) throw new Error('INKWAVE resource patch not installed');
   const P = api.PLAYER, r = tuning, mods = a.s3?.modifiers || {};
-  const { onEnemy, isSquid } = resourceSurface(a);
+  const isSquid = resourceSurface(a), onEnemy = a.onEnemy;
   if (onEnemy) {
     a.s3 ||= {};
     const before = a.s3.enemyInkTime || 0;
@@ -72,7 +72,8 @@ export function updateResources(a, dt) {
   // this tick's decrement the lock is rewritten to exactly 19F, which blocks
   // 19 fixed ticks (cancel tick .. cancel+18F) and reopens eligibility at
   // cancel+19F. Full-charge keeps (charge >= .999 → s3Stored) never take this
-  // path. Community-verified S3 table, no Switch re-measurement is claimed.
+  // path. Stored-charge physical release writes its independent 3F recovery
+  // value from weapons.mjs. Community-verified S3 table, no Switch re-measurement is claimed.
   if (a.s3) a.s3.chargerInterruptRecover = Math.max(0, (a.s3.chargerInterruptRecover || 0) - dt);
   const runner = a.weaponRunner;
   if (runner?.charging && isSquid && a.weapon.kind === 'charger' && runner.charge < .999) {
