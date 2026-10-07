@@ -9,7 +9,7 @@ test('upstream compatibility matches the audited original; patches do not edit s
   const actor = fs.readFileSync(new URL('src/game/actor.js', publicRoot), 'utf8');
   assert.ok(!actor.includes('beforeActions'));
   const generated = adaptSource('src/game/actor.js', actor);
-  assert.ok(generated.includes('beforeActions(this, dt, jumpPressed)'));
+  assert.ok(generated.includes('beforeActions(this, dt, jumpPressed, { wasSquid, wasSubmerged, wasClimbing, firePressed, fireWins })'));
   assert.ok(generated.includes('!actionHandled && this.jumpBuffer'));
 });
 test('missing or duplicated upstream connections fail closed', () => {

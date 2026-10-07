@@ -4,7 +4,6 @@ const ENTRY_POOL_MAX_FACES = 256;
 
 export function adaptPaintSplatPool(rel, code, replaceOnce) {
   if (rel !== 'src/world/paint.js') return code;
-
   code = replaceOnce(code, 'const DRIP_REACH = 3.9;', `const DRIP_REACH = 3.9;
 const SPLAT_ENTRY_POOL_MAX = ${ENTRY_POOL_MAX};
 const SPLAT_GROWTH_POOL_MAX = ${GROWTH_POOL_MAX};
