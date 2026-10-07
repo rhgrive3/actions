@@ -64,12 +64,15 @@ export async function fixture({ hudSource = readSource('src/ui/hud.js'), gameSou
   Object.assign(context, util.namespace, config.namespace);
   const hudMethods = [
     section(hudSource, '  setVisible(v) {', '\n  /** ScreenFX'),
+    // Current HUD visibility/disposal also owns teammate-special feed retirement.
+    ...(hudSource.includes('  _clearTeamSpecialSignals() {')
+      ? [section(hudSource, '  _clearTeamSpecialSignals() {', '\n  _bindBus() {')] : []),
     section(hudSource, '  judge(', '\n  _live()'),
     section(hudSource, '  _addFx(name, fn) {', '\n  _restart(el, cls)'),
   ].join('\n');
   const Hud = vm.runInContext(`class Hud { ${hudMethods} }; Hud`,context);
   const hud = new Hud();
-  Object.assign(hud, { el: new Node(), overLayer: new Node(), timeScale:1, paused:false, _fxTime:0, _lastFx:0, _rafId:0, _visible:false, _unsubs:[], boss:{dispose(){calls.push(['bossDispose']);}},
+  Object.assign(hud, { el: new Node(), overLayer: new Node(), feedEl: new Node(), timeScale:1, paused:false, _fxTime:0, _lastFx:0, _rafId:0, _visible:false, _unsubs:[], boss:{dispose(){calls.push(['bossDispose']);}},
     hideSplatted() {}, playSound(name) { const v = { name, stopped:0, v:{ dispose() { v.stopped++; } } }; voices.push(v); calls.push(['hudSound',name,now]); hook?.(name); return v; },
   });
   body.append(hud.el,hud.overLayer); hud._fxLoop = hud._fxLoop.bind(hud);
