@@ -519,7 +519,7 @@
     "maxDuration": 30,
     "weights": {
       "splat": 1,
-      "assist": 0.5,
+      "assist": 0.42,
       "damage": 0,
       "turf": 0.0024
     },
@@ -543,7 +543,17 @@
     },
     "abilityPoints": 30,
     "effectSource": "https://bsky.app/profile/did:plc:bqlxkhq26ie3xvvjv5kjae3r/post/3mdramqcbbs2o?ref_src=embed",
-    "effectStatus": "Primary community analysis, 2026-02-01; +30 AP for four abilities, cap 57. Not a new Switch measurement. Legacy speed multipliers are identity for pending patch composition."
+    "effectStatus": "Primary community analysis, 2026-02-01; +30 AP for four abilities, cap 57. Not a new Switch measurement. Legacy speed multipliers are identity for pending patch composition.",
+    "assistPoints": {
+      "referenceThreshold": 100,
+      "damage": 14,
+      "marking": 4,
+      "sources": [
+        "pointSensor",
+        "lineMarker"
+      ],
+      "status": "FIXED #544: S3 11.3.0 +14 damage / +4 marking assist split; Point Sensor and Line Marker marking receipts are explicit and splat-gated activation remains separate. Tacticooler assist fp remains intentionally unverified/out of scope."
+    }
   },
   "superJump": {
     "chargeTime": 1.3333333333333333,
@@ -3511,6 +3521,19 @@
       "selfSpecialLoss": 0.225,
       "quickRespawnAPScale": 0.15,
       "specialSaverAPScale": 0.7
+    },
+    "thermalInk": {
+      "duration": 16
+    },
+    "trackingVisual": {
+      "nearStart": 6,
+      "nearFull": 8,
+      "status": "PROVISIONAL visual calibration in INKWAVE world units, NOT S2 DU or converted S3 range-line distances. Exact S3 near fade remains uncalibrated."
+    },
+    "haunt": {
+      "targetFrames": 45,
+      "targetSpecialLoss": 0.15,
+      "status": "PARTIAL #351: post-respawn offline/online Haunt, owner/life-authorized transport, immediate-trade exclusion, QR/Special Saver, target Respawn Punisher, and Tacticooler composition are verified. Public S3 verification still reports the exact pre-respawn delayed-posthumous activation boundary as unknown, so that boundary remains BLOCKED rather than guessed."
     }
   }
 }
