@@ -153,8 +153,8 @@ test('ordinary Shooter ink recovery retains its existing 20F fire-event deadline
   f.G.projectiles.fireShooter = () => { shotTick = simTick; };
   for (simTick = 1; simTick <= 30; simTick++) {
     a.intent.fire = simTick === 1; f.G.time += 1 / 60; a.update(1 / 60);
-    if (simTick === 1) spentInk = a.ink;
-    if (shotTick !== undefined && firstRefillTick === undefined && a.ink > spentInk + 1e-10) firstRefillTick = simTick;
+    if (shotTick === simTick) spentInk = a.ink;
+    if (spentInk !== undefined && simTick > shotTick && firstRefillTick === undefined && a.ink > spentInk + 1e-10) firstRefillTick = simTick;
   }
   assert.equal(a.weapon.inkRecoverStop * 60, 20);
   const expectedShotTick = Math.max(1, Math.round(a.weapon.firstShotDelay * 60));
