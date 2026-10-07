@@ -116,6 +116,7 @@ async function runScenario(sc) {
       tick: tick + 1, gaugeBefore: a.special, aliveBefore: a.alive,
       phaseBefore: a.specialActive?.phase ?? null, phaseTimeBefore: a.specialActive?.t ?? null,
       groundedBefore: a.grounded, impactsBefore: impacts.length,
+      slamEventsBefore: slamEvents,
     };
     counters.curProbe = 0; counters.curBody = 0;
     G.time += STEP; a.update(STEP);
@@ -126,6 +127,7 @@ async function runScenario(sc) {
       gaugeAfter: a.special, aliveAfter: a.alive,
       phaseAfter: a.specialActive?.phase ?? null, phaseTimeAfter: a.specialActive?.t ?? null,
       groundedAfter: a.grounded, impact: impacts.length > row.impactsBefore,
+      slamEventsAfter: slamEvents,
     });
     phaseTrace.push(row);
     return row;
@@ -178,7 +180,15 @@ for (const sc of scenarios) {
     assert.equal(r.impacts.length, 1, 'exactly one native impact callback');
     assert.equal(r.impacts[0].phase, 'fall', 'impact happens in the native fall phase');
     assert.ok(Math.abs(r.impacts[0].gauge - r.segment) < 1e-9, 'the impact frame observes exactly one of 23 segments');
-    assert.equal(r.phaseTrace.impact?.phaseBefore, 'fall', 'the actual native trace reaches impact from fall');
+    if (sc.id === 'low ceiling early contact') {
+      // Actor._updateSpecial transitions hang -> fall, resolves the body and
+      // impacts in the same update when the ceiling kept the actor on the floor.
+      assert.equal(r.phaseTrace.impact?.phaseBefore, 'hang', 'the low ceiling lands in the native hang-to-fall update');
+      assert.equal(r.phaseTrace.impact?.slamEventsBefore, 0, 'there is no premature slam while hanging');
+      assert.equal(r.phaseTrace.impact?.slamEventsAfter, 1, 'the native fall transition triggers exactly once before impact');
+    } else {
+      assert.equal(r.phaseTrace.impact?.phaseBefore, 'fall', 'the actual native trace reaches impact from fall');
+    }
     assert.equal(r.phaseTrace.impact?.actionAlive, true, 'the action owner is alive through the impact update');
     assert.ok(Math.abs(r.phaseTrace.impact?.gaugeAfter - r.segment) < 1e-9, 'only the native impact update takes the gauge to one segment');
     if (!sc.id.startsWith('void')) assert.equal(r.impacts[0].grounded, true, 'non-void impact is an actual native landing');
