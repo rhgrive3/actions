@@ -40,16 +40,18 @@ export function replaceOnce(code, before, after, label) {
   return code.slice(0, at) + after + code.slice(at + before.length);
 }
 
-export function calculateFlowSplatPoints(currentScore, isConsecutive, cfg) {
+export function calculateFlowSplatPoints(currentScore, isConsecutive, cfg, activeVictim = false) {
   const threshold = Number.isFinite(cfg?.threshold) && cfg.threshold > 0 ? cfg.threshold : 3;
   const scale = threshold / 100;
   const currentFp = currentScore / scale;
   const isHighTier = currentFp >= (75 - 1e-9);
-  const points = isHighTier
+  const basePoints = isHighTier
     ? (isConsecutive ? 35 : 15)
     : (isConsecutive ? 45 : 23);
+  const bonusPoints = activeVictim ? 10 : 0;
+  const points = basePoints + bonusPoints;
   const gain = points * scale;
-  return { points, gain, scale, isHighTier, isConsecutive: Boolean(isConsecutive) };
+  return { points, basePoints, bonusPoints, gain, scale, isHighTier, isConsecutive: Boolean(isConsecutive), activeVictim: Boolean(activeVictim) };
 }
 
 export function adaptIssue481Flow(code) {
@@ -74,8 +76,9 @@ export function adaptIssue481Flow(code) {
     const consecutive = Boolean(isConsecutive || (value && typeof value === 'object' && value.consecutive));
     const scale = (cfg?.threshold ?? 3) / 100;
     const currentFp = state.score / scale;
-    const points = currentFp >= (75 - 1e-9) ? (consecutive ? 35 : 15) : (consecutive ? 45 : 23);
-    gain = points * scale;
+    const basePoints = currentFp >= (75 - 1e-9) ? (consecutive ? 35 : 15) : (consecutive ? 45 : 23);
+    const bonusPoints = value && typeof value === 'object' && value.activeVictim ? 10 : 0;
+    gain = (basePoints + bonusPoints) * scale;
   } else {
     gain = Number.isFinite(value) ? Math.max(0, value) * (cfg?.weights?.[action] || 0) : 0;
   }
@@ -161,7 +164,8 @@ export function adaptIssue481Flow(code) {
       const isConsecutive = typeof lastTime === 'number' && Number.isFinite(lastTime) && now >= lastTime && (now - lastTime) <= 5.0;
       attacker.s3 ||= {};
       attacker.s3.flowLastSplatTime = now;
-      award(attacker, 'splat', 1, isConsecutive);
+      const activeVictim = victim?.s3?.flow?.active === true;
+      award(attacker, 'splat', { consecutive: isConsecutive, activeVictim }, isConsecutive);
       if (attacker.s3.flow?.active) {
         attacker.s3.flowLastSplatTime = null;
       }
