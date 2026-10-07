@@ -114,6 +114,15 @@ export function adaptSource(rel, code) {
     }
     // per-shot kick (recoil events) on top of the live cone the engine reports in screen px (already includes bloom)`,
       'Bucket Slosher ShotGuide HUD projection');
+    // S3 death card: "Splatted by <weapon/cause>"; the opponent's name is a separate secondary line.
+    code = replaceOnce(code,
+      "  showSplatted({ by = null, byColor = '#2f5bff', respawn = 5 } = {}) {",
+      "  showSplatted({ by = null, who = null, byColor = '#2f5bff', respawn = 5 } = {}) {",
+      'death card opponent identity input');
+    code = replaceOnce(code,
+      "          killer && killer.weaponId ? h('div', { class: 'iw-spl__wn' }, (WEAPONS[killer.weaponId] || {}).name || '') : null),",
+      "          who ? h('div', { class: 'iw-spl__wn iw-spl__who' }, String(who)) : null),",
+      'death card opponent identity line');
     return "import { t as tr } from '../i18n.js';\n" + code;
   }
   if (rel === 'src/ui/ui-icons.js') {
@@ -270,7 +279,11 @@ export function adaptSource(rel, code) {
       '    const judgeP = this.hud?.judge({ colors: [G.teamHex[0], G.teamHex[1]], percents: [cov[0] * 100, cov[1] * 100], names: this.palette.names || TEAM_NAMES, winner: m.result.winner });',
       'authoritative Turf winner Game to HUD');
     code = replaceOnce(code, 'const game = new Game();', 'installGame(Game);\nconst game = new Game();', 'game installation');
-    return `import { runSimulation, installGame } from '../patches/splatoon3/runtime/clock.mjs';\n` + code;
+    code = replaceOnce(code,
+      "        const by = attacker ? attacker.name : t(cause === 'water' ? 'the sea' : 'enemy ink');\n        this.hud?.showSplatted({ by, byColor:",
+      "        const card = splatCardText(cause, attacker, t); // SPLATTED BY names the cause; the opponent is a separate line\n        this.hud?.showSplatted({ by: card.cause, who: card.who, byColor:",
+      'death card splat cause');
+    return `import { runSimulation, installGame } from '../patches/splatoon3/runtime/clock.mjs';\nimport { splatCardText } from '../patches/splatoon3/runtime/death-card.mjs';\n` + code;
   }
   return code;
 }
