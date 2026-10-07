@@ -2586,13 +2586,13 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
-  "flow.abilityPoints": {
-    "value": 30,
+  "flow.progress.firstSplatBonus": {
+    "value": 10,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
-  "flow.progress.firstSplatBonus": {
-    "value": 10,
+  "flow.abilityPoints": {
+    "value": 30,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
