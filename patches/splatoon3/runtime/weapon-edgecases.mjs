@@ -143,7 +143,9 @@ export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYE
         get subReleased() { return chargerPostShotBlocksSub(runner) ? false : source.subReleased; },
       });
     }
-    const kind = this.a.weapon.kind, postShot = () => kind === 'slosher' ? this.s3SloshPostShot : this.s3DualiesPostShot;
+    const kind = this.a.weapon.kind, postShot = () => kind === 'slosher'
+      ? Math.max(0, (this.s3SloshPostShot || 0) - (this.s3GateInActor ? 0 : dt))
+      : this.s3DualiesPostShot;
     if (kind !== 'dualies' && kind !== 'slosher') return weaponUpdate.call(this, dt, input);
     const source = input || {}, locked = postShot() > EPS;
     if (locked) {
