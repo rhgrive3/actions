@@ -55,7 +55,7 @@ function finishNoContest(nm, announce = false) {
   nm.match.s3NoContestFinished = true;
   nm.match.paused = true; // never fall through to the normal turf judge / XP path
   if (announce && nm.isHost) nm._sendNow?.({ k: 'ncend' });
-  const game = globalThis?.document ? nm.__s3G?.game : null;
+  const game = nm.__s3G?.game || null;
   game?.hud?.banner?.('NO CONTEST');
   game?.netMatchEnd?.();
 }
