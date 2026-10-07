@@ -53,7 +53,7 @@ export function adaptActorWeaponInput(rel, code, once) {
     }
     const key = (colon < 0 ? part : part.slice(0, colon)).trim();
     const expr = (colon < 0 ? part : part.slice(colon + 1)).trim();
-    if (!/^[A-Za-z_$][\\w$]*$/.test(key) || !expr)
+    if (!/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(key) || !expr)
       throw new Error('INKWAVE quality patch conflict (Actor weapon input reuse): unsupported field ' + part);
     return [key, expr];
   });
