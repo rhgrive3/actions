@@ -6,10 +6,7 @@ const F = 1 / 60;
 const close = (a, b, msg) => assert.ok(Math.abs(a - b) < 1e-9, `${msg}: expected ${b}, got ${a}`);
 
 async function rollerRig() {
-  const f = await fixture({
-    extraExports: "export { installRollerLogic } from './patches/splatoon3/runtime/roller.mjs';",
-  });
-  f.installRollerLogic(f, f.profile);
+  const f = await fixture();
   const a = f.make('roller');
   a.ink = 100;
   return { f, a, r: a.weaponRunner };
@@ -51,10 +48,7 @@ test('#1041 jumping before/with ZR keeps the ordinary vertical startup', async (
 });
 
 async function dualiesRig() {
-  const f = await fixture({
-    extraExports: "export { installWeaponEdgecases } from './patches/splatoon3/runtime/weapon-edgecases.mjs';",
-  });
-  f.installWeaponEdgecases(f);
+  const f = await fixture();
   const a = f.make('dualies');
   return { f, a, r: a.weaponRunner };
 }
