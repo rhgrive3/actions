@@ -1660,11 +1660,47 @@ def remove_lower_paint():
 
 
 LR_SUFFIX = '__pre_lash_rebuild'
+TUCK_BALLS = {'HEAD_eyes_18': -1, 'HEAD_eyes': 1}
+
+
+def tuck_eye_corner(design):
+    """The model's eye opening is wider than the reference's at the outer lower corner (the white reaches 3-4 px
+    further out; the lid skin lies just behind the eyeball there).  The eyeball (a dense cap, 0.15 mm edges) is
+    pushed back along the front camera's rays outside one smooth curve (design['eye_tuck']['curve'], the
+    reference white's outer end per row, design px): there it goes behind the lid skin, so the white ends on that
+    smooth curve and the real skin shows round it.  The left eye uses the mirror image of the curve."""
+    cfg = design.get('eye_tuck')
+    if not cfg:
+        return
+    C = np.array(cfg['curve'], float)
+    ys = np.arange(C[0, 0], C[-1, 0] + 1e-6, 0.05)
+    xs = er.smooth_rows(np.interp(ys, C[:, 0], C[:, 1]), cfg.get('sigma', 10.0))
+    _, d, _ = FrontRays(mesh_tree(['HEAD_face'])).ray((133.0, 127.5))
+    for name, side in TUCK_BALLS.items():
+        obj = bpy.data.objects[name]
+        W = er.world(obj)
+        Lm = M.to_local(W) * 1000
+        q = Lm.copy()
+        if side > 0:
+            q[:, 0] = -q[:, 0]                              # the left eye in right-eye design pixels
+        u, v = er.camera_pixels('front', M.to_world(q / 1000))
+        cx = np.interp(v, ys, xs)
+        out = np.clip((cx - u) / cfg.get('fade_px', 0.4), 0, 1)
+        rows = np.clip(np.minimum(v - ys[0], ys[-1] - v) / cfg.get('row_fade_px', 0.6) + 0.5, 0, 1)
+        w = out * rows * ((v >= ys[0] - 1) & (v <= ys[-1] + 1))
+        w = w * w * (3 - 2 * w)
+        back = M.to_local(np.array([W[0] + d * 0.001]))[0] * 1000 - M.to_local(W[:1])[0] * 1000
+        back = back / np.linalg.norm(back)
+        if side > 0:
+            back[0] = -back[0]
+        Lm += w[:, None] * back[None] * cfg.get('depth_mm', 4.0)
+        er.put_world(obj, M.to_world(Lm / 1000))
+        print('EYE_TUCK', name, int((w > 0.01).sum()), 'vertices pushed back')
 CANTHUS_FOLLOWERS = ['HEAD_eyes_12', 'HEAD_eyes_29']
 
 
 def touched_names():
-    names = ['HEAD_face'] + list(er.FACE_LAYER_NAMES) + CANTHUS_FOLLOWERS
+    names = ['HEAD_face'] + list(er.FACE_LAYER_NAMES) + CANTHUS_FOLLOWERS + list(TUCK_BALLS)
     for objs in (R, L):
         names += [objs['rim'], objs['liner']] + objs['lashes']
     return names
@@ -1752,6 +1788,7 @@ def main():
     design = json.loads(Path(args.design).read_text())
     if 'inner_corner' in design:
         smooth_inner_corner(design)
+    tuck_eye_corner(design)
     tree, shell = surface_tree(), shell_tree()
     mat = er.lash_material()
     mat.node_tree.nodes['Principled BSDF'].inputs['Specular IOR Level'].default_value = 0.0
