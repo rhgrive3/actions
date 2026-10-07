@@ -383,7 +383,8 @@ export function installWeapons(context, profile) {
       if (this.charging) {
         if (this.charge >= .999 && held && a.submerged === true) this.s3Stored = {
           charge: 1, remaining: w.keepChargeTime,
-          fireDelay: Math.max(0, (w.storedFireDelay || 0) - dt),
+          fireDelay: w.storedFireDelay || 0, laserDelay: w.storedLaserDelay || 0,
+          resurfaced: false,
           paid: Math.max(this.s3ChargerSpent || 0, w.inkFull)
         };
         this.charging = false; this.charge = 0; this.chargeT = 0; this.s3ChargerHeldTime = 0;
