@@ -1,6 +1,6 @@
 import { cancelStormPendingInput } from './storm-effects.mjs';
-// Host Turf coverage belongs to the deadline, before state listeners and the
-// remainder of the simulation tick can advance paint. Presentation may continue.
+// Host Turf coverage belongs to the deadline, after its final legal simulation
+// interval but before state listeners or finish presentation can advance paint.
 export function captureTurfFinish(match, nextState, paint) {
   if (nextState === 'intro' || nextState === 'playing') match.s3FinishCoverage = null;
   if (nextState !== 'finish' || match.state !== 'playing' || match.bossMode) return;
@@ -66,4 +66,39 @@ export function blockExpiredGuestInput(match) {
     controller.input?.mobile?.gyro?.discard?.();
   }
   return true;
+}
+
+// #980: Match owns the clock, but Projectiles advances outside Match.update.
+// Only the fixed-step orchestrator may defer this transition; direct Match users
+// retain the historical synchronous boundary (catalog/native integrations).
+export function requestTurfFinish(match) {
+  if (match.s3DeadlineStep && !match.bossMode) match.s3FinishPending = true;
+  else match.setState('finish');
+}
+export function simulateMatchInterval(match, dt, G) {
+  const advance = (span, controller = true) => {
+    if (!(span > 0)) return;
+    if (controller) { match.updateController(span); match.controller?.computeAim?.(); }
+    match.update(span);
+    if (!match.paused) G.projectiles.update(span);
+  };
+  const turf = !match.bossMode && !match.attract && (match.mode == null || match.mode === 'turf');
+  const boundary = turf && !match.paused && match.state === 'playing'
+    && Number.isFinite(match.time) && match.time <= dt + 1e-10;
+  if (!boundary) { advance(dt); return; }
+  const legal = Math.max(0, Math.min(dt, match.time));
+  const endTime = G.time;
+  // Preserve endpoint timestamps for both fractions of this fixed-clock step.
+  G.time = endTime - dt + legal;
+  match.s3DeadlineStep = true;
+  try { advance(legal); }
+  finally { match.s3DeadlineStep = false; }
+  // Floating-point subtraction can leave a sub-epsilon remainder at 180 s.
+  match.time = 0;
+  if (!match.follower && match.state === 'playing') match.setState('finish');
+  else if (match.follower) blockExpiredGuestInput(match);
+  match.s3FinishPending = false;
+  G.time = endTime;
+  // Visual effects may use the remainder; score and combat authority have ended.
+  advance(Math.max(0, dt - legal), false);
 }
