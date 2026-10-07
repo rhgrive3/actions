@@ -31,7 +31,7 @@ export function installWeaponGates({ Actor, WeaponRunner, Projectiles }) {
   };
   const reset = wr.reset, busy = wr.busy, update = wr.update;
   wr.reset = function (...args) {
-    this.s3PostShotRemaining = this.s3DodgeInkRemaining = this.s3DodgeShotRemaining = 0;
+    this.s3PostShotRemaining = this.s3InkRecoverRemaining = this.s3DodgeInkRemaining = this.s3DodgeShotRemaining = 0;
     this.s3GateInActor = false; this.s3GateDodgeShotPending = false;
     return reset.apply(this, args);
   };
