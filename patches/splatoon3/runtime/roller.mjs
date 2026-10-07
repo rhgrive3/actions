@@ -1,6 +1,7 @@
 import { specialMotionAllowsAction } from './action-admission.mjs';
 import { ROLLER_DRUM } from './roller-model.mjs';
 import { hasFullCancelGroundAttack, takeFullCancelGroundAttack } from './movement.mjs';
+import { rollerBubblerCandidate, applyRollerBubblerHit } from './kit-big-bubbler.mjs';
 // Roller-specific refinements. Timing comes from the existing gameplay profile;
 // joint curves are visual calibration against Nintendo's public roller videos.
 const EPS = 1e-10;
@@ -312,10 +313,21 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on }, _profile) {
       this.rollLoop?.stop(.12); this.rollLoop = null;
     }
     const state = this.s3RollerAttack;
+    if (state && !starting) state.elapsed += dt;
+    // #1056: an airborne vertical startup that lands within the first 5 source
+    // frames converts to the faster grounded horizontal swing without restarting
+    // elapsed startup time. A frame-6-or-later landing stays vertical.
+    if (state && state.vertical && !state.released && a.grounded &&
+        state.elapsed > EPS && state.elapsed <= 5 / 60 + EPS) {
+      const horizontal = rollerMode(w, false);
+      state.vertical = false;
+      this.s3FlickVertical = false;
+      state.windup = Math.max(EPS, horizontal.flickWindup - 1 / 60);
+      state.interval = horizontal.flickInterval;
+    }
     const vertical = state ? state.vertical : this.s3FlickVertical;
     let mode = rollerMode(w, vertical);
     if (state) mode = { ...mode, flickWindup: state.windup, flickInterval: state.interval };
-    if (state && !starting) state.elapsed += dt;
     // Float accumulation must not add a 22nd/27th tick to a 21F/26F windup.
     if (winding && this.flick + dt + EPS >= mode.flickWindup) this.flick = mode.flickWindup;
     let rollInp = fireIn;
@@ -357,6 +369,16 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on }, _profile) {
       try { result = roller.call(this, dt, rollInp, mode); }
       finally { if (projectiles.applyHit === admittedHit) projectiles.applyHit = applyHit; }
     } else result = roller.call(this, dt, rollInp, mode);
+    // #1036: the Bubbler shell remains permeable. Only its damageable hardware
+    // participates in native Roller's existing 0.5s contact cadence.
+    const rollSpeed = Math.hypot(a.vel.x, a.vel.z);
+    if (this.rolling && rollSpeed > 1.0) {
+      const bubbler = rollerBubblerCandidate(a, Math.sin(a.yaw), Math.cos(a.yaw), w.rollWidth);
+      if (bubbler && G.time - (this.rollHits.get(bubbler.dome) || -9) > 0.5) {
+        this.rollHits.set(bubbler.dome, G.time);
+        applyRollerBubblerHit(bubbler, a, w.rollDamage);
+      }
+    }
     if (state) state.rolling = this.rolling;
     if (state && winding && this.flick < 0) {
       state.elapsed = mode.flickWindup;
