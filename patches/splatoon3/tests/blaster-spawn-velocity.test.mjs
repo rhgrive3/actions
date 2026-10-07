@@ -7,7 +7,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from './weapon-edgecases-fixture.mjs';
-import { applyBlasterSpawnVelocity } from '../runtime/weapons-fidelity.mjs';
+import { advanceFidelityProjectile, applyBlasterSpawnVelocity } from '../runtime/weapons-fidelity.mjs';
 
 const close = (a, b, e = 1e-9) => assert.ok(Math.abs(a - b) <= e, `${a} != ${b}`);
 
@@ -142,4 +142,38 @@ test('#619 launch velocity is fixed-step deterministic and recorded post-additio
     assert.equal(packets.length, 1);
     assert.deepEqual(packets[0].toArray(), p.vel.toArray());
   } finally { delete f.G.netm; }
+});
+
+
+test('#1074 Blaster ShotGuide uses the same forward launch velocity and invalidates on movement', async () => {
+  const { f, a, ps } = await setup();
+  const s = source(f), frames = a.weapon.shotGuideFrame;
+  assert.equal(frames, 13, 'pinned ShotGuideFrame remains 13F');
+  a.yaw = 0;
+  a.aimDir.set(0, 0, 1);
+  a.aimPoint.set(0, 1.05, 100);
+
+  const sample = velZ => {
+    a.vel.set(0, 0, velZ);
+    const guide = ps.s3WeaponGuide(a, a.weapon, null, 0, 0)?.clone();
+    assert.ok(guide, 'guide point is available');
+    const p = fire(f, a, ps, [0, 0, velZ]);
+    for (let i = 0; i < frames; i++) advanceFidelityProjectile(p, 1 / 60);
+    close(guide.x, p.pos.x, 1e-8);
+    close(guide.y, p.pos.y, 1e-8);
+    close(guide.z, p.pos.z, 1e-8);
+    return guide;
+  };
+
+  const still = sample(0);
+  const forward = sample(s.moveSpeedFiring);
+  const backward = sample(-s.moveSpeedFiring);
+  assert.ok(forward.z > still.z, 'forward movement advances the guide');
+  assert.ok(backward.z < still.z, 'backward movement retracts the guide');
+
+  a.vel.set(s.moveSpeedFiring, 0, 0);
+  const strafe = ps.s3WeaponGuide(a, a.weapon, null, 0, 0)?.clone();
+  close(strafe.x, still.x, 1e-8);
+  close(strafe.y, still.y, 1e-8);
+  close(strafe.z, still.z, 1e-8);
 });

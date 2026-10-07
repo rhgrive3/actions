@@ -138,21 +138,27 @@ test('cancellation spends no ink, sets no cooldown and queues no shot', async ()
   assert.equal(f.shots.length, 0);
 });
 
-test('ink refill becomes eligible again once the cancellation clears the store', async () => {
+test('#1070 stored-charge cancellation blocks ink recovery through N+2 and opens at N+3', async () => {
   const f = await fixture(), a = await kept(f);
   const r = a.weaponRunner;
-  // A live store keeps refill gated; hold ZR and pin the post-shot delay open.
+  // A live store keeps refill gated; pin every unrelated post-shot gate open.
   a.lastFire = 10;
-  a.ink = 50;                                 // headroom, so refill is observable
+  a.ink = 50;
   f.tick(a, 5);
   assert.ok(r.s3Stored, 'still keeping the charge');
   const heldInk = a.ink;
-  a.intent.fire = false;                       // release -> cancel
+  a.intent.fire = false;                       // release -> cancel at N
   f.tick(a);
   assert.equal(r.s3Stored, null);
-  a.lastFire = 10;                             // re-arm the post-shot refill delay
-  f.tick(a, 30);
-  assert.ok(a.ink > heldInk, 'refill resumes after the cancellation');
+  assert.equal(a.ink, heldInk, 'N: the live store blocks the cancellation tick');
+  assert.ok(Math.abs((a.s3.chargerKeepRecover || 0) - 3 / 60) < 1e-10, 'dedicated CK recovery lock starts at 3F');
+  assert.ok((a.s3.chargerInterruptRecover || 0) <= 1e-10, 'ordinary 19F interruption timer is not reused');
+  f.tick(a);
+  assert.equal(a.ink, heldInk, 'N+1 remains blocked');
+  f.tick(a);
+  assert.equal(a.ink, heldInk, 'N+2 remains blocked');
+  f.tick(a);
+  assert.ok(a.ink > heldInk, 'N+3 is the verified refill boundary');
 });
 
 test('reset, death and weapon swap all clear a kept charge', async () => {
