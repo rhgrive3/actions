@@ -6,6 +6,7 @@ import { adaptContactRecovery } from './contact-recovery-adapter.mjs';
 import { adaptWeaponPaintInertia } from './weapon-paint-inertia-adapter.mjs';
 import { adaptWeaponEdgecases } from './weapon-edgecases-adapter.mjs';
 import { adaptWeaponsFidelity } from './weapons-adapter.mjs';
+import { adaptMinimapDirty } from './minimap-dirty-adapter.mjs';
 import { adaptRespawnLifecycle } from './respawn-lifecycle-adapter.mjs';
 import { adaptStormEffects } from './storm-effects-adapter.mjs';
 import { adaptAgent3WeaponPhysics } from './agent3-weapon-physics-adapter.mjs';
@@ -14,6 +15,7 @@ import { adaptKitRescue } from './kit-rescue-adapter.mjs';
 // Every connection has a unique exact anchor; missing/duplicated hooks are errors.
 import { adaptMovementPhysics } from './movement-physics-adapter.mjs';
 import { adaptSubSpecialFidelity } from './sub-special-adapter.mjs';
+import { adaptJuddResult } from './judd-result-adapter.mjs';
 import { adaptScoreHud } from './score-hud-adapter.mjs';
 import { adaptPaintSplatPool } from './paint-splat-pool-adapter.mjs';
 import fs from 'node:fs';
@@ -44,6 +46,7 @@ export function checkCompatibility(src, patchRoot = PATCH_ROOT) {
 }
 
 export function adaptSource(rel, code) {
+  code = adaptMinimapDirty(rel, code, replaceOnce);
   // Storm owns the structural cloud-loop rewrite. Gear/Sub may then refine
   // the terminal frame boundary without hiding Storm's original connection.
   if (rel === 'src/game/weapons.js') code = adaptStormEffects(rel, code);
@@ -360,6 +363,7 @@ export function adaptSource(rel, code) {
       "      teamSide(0),\n" +
       "      teamSide(1));",
       'intro Splashtags presentation');
+    code = adaptJuddResult(rel, code, replaceOnce);
     return "import { t as tr } from '../i18n.js';\nimport { applyShotGuide } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\nimport { tagArt, AWARDS, AWARD_ICONS, awardIcon } from './menu-art.js';\nimport { fnv, tagTitle, tagNum } from './menus.js';\n" + code;
   }
   if (rel === 'src/ui/ui-icons.js') {
