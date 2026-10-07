@@ -357,3 +357,13 @@ Reset now clears the pending damage attacker and angle together with the cancell
 ## 2026-10-06 — Dualies wall-drop (#604) and composed-runtime guards
 
 Base main `67fec182`. Splat Dualies wall impacts now enter the existing sourced wall-drop state using the pinned 11.3.0 top-level `WallDropMoveParam`/`WallDropCollisionPaintParam` (shock 1.3, fall 0.65, ground 0.6; 20–40F + 10F + 15–35F at 0.06). Previously the round died on the contact frame after one generic impact. Damage is unchanged. Shooter (#385) and Charger (#625/#268) are excluded: Shooter is owned elsewhere, and the Charger record omits three period fields. #770, #777, #638/#637, #644/#643 and #556 were already correct after adapter composition (the reports read raw source). They are now pinned by composed-runtime tests. This is logic-level and emitted-verifier evidence; a Switch visual/frame comparison is still 未確認. Details: [inkwave-wall-drop-dualies-guards-2026-10-06.md](inkwave-wall-drop-dualies-guards-2026-10-06.md).
+
+## 2026-10-07 — #915 Blaster 毎ショットのレバー＋スプリング前部機構
+
+| 項目 | 内容 |
+| --- | --- |
+| 本家の根拠 | [Inkipedia の Blaster 項目](https://splatoonwiki.org/wiki/Blaster)（2026-10-07閲覧）の Splatoon 3 appearance 注記: 通常 Blaster には左側レバーが下降し、中央スプリングが前部セクションを前方へ振るという2つの新しい武器アニメーションがあり、どちらも**毎ショット**起こる。関節の exact curve は公開されていない。 |
+| INKWAVE の実装箇所 | `patches/splatoon3/runtime/blaster-mechanism.mjs`（周期トポロジーと内部 rig 校正、engine 非依存）、`blaster-mechanism-model.mjs`（`adapter.mjs` が `character-weapons.js` の builder をラップし `lever`/`front` パーツを追加、Parts と同じ attribute contract で far LOD の at-rest body に merge）、`weapon-detail-motion.mjs`（`trigger('shoot')` を実発射イベントとして所有、`_updateStates` の sim dt だけ age を加算、`_animWeapon` で変換適用、`clear` でレスト復帰、`weaponDetailMotionSnapshot.blasterMechAge` で観測）。generic recoil は `withRecoil` のまま加算、pump 抑制は据え置き。 |
+| 再現操作 | 通常 Blaster で静止し単発タップ→サイド画角で左レバーが下降→レスト、前部カラーラが前進→レスト。連射で1発1サイクル。ZR保持のみ・空撃ち・イカ形態・死亡・武器交代・reset・詳細モーション無効では動かない。remote プレイヤーでも同じ trigger リプレイで同じ周期。 |
+| プレイへの影響 | 実発射に同期してブキ自体が「撃つ」機構動作が読みやすくなり、50F 間隔の連射ビートと ZR離脱のピークが復活する。弾・発射間隔・ダメージ・インク・移動・当たり判定は不変。 |
+| 確認状態 | **構成テスト確認済み**（production adapter 構成 VM）: `weapon-detail-motion.test.mjs` で 30/60/120Hz 実発射1回につき機構1サイクル、idle/空撃ち/イカ/死亡/交代/reset/opt-out レスト、実 `NetMatch` の `_setupActor`/`_play` リプレイで local/remote trace 完全一致、FixedClock 30/60/120Hz 描画分割で trace 完全一致。既存17テストも同構成で pass。**公開された任天堂の exact curve は未確認**で、数値は内部 rig 校正。Switch 実機（Ver.11.3.0）の frame-by-frame 比較は未確認のまま。#308 の winding/recovery と bullet/actor parity は変更していない。 |
