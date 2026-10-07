@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
-import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { adaptSource } from '../adapter.mjs';
 import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
@@ -18,7 +18,7 @@ import { rollerDrumSupport, rollerStickActive } from '../runtime/roller.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const SRC = path.join(ROOT, 'inkwave-public');
-const MAIN_BASE = 'b34a8aaf606594be61cfbd4c21e9f09afd685ad7';
+const MAIN_BASE_SHA256 = '52e587f60d6211054c2bad04f746471e85ebdb0295e051f797b41a0019847eb7';
 const adaptProductionSource = (rel, code) => adaptRange(rel, adaptNetworkSource(rel,
   adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code))))));
 const headlessPaintRenderer = () => ({
@@ -31,10 +31,10 @@ const headlessPaintRenderer = () => ({
 });
 const apis = new Map();
 function mainBaselineRollerSource() {
-  try {
-    return execFileSync('git', ['-C', ROOT, 'show', `${MAIN_BASE}:patches/splatoon3/runtime/roller.mjs`],
-      { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
-  } catch { return null; }
+  // Frozen exact-main control remains available in shallow CI checkouts.
+  const source = fs.readFileSync(new URL('./fixtures/roller.b34a8aaf.source.txt', import.meta.url), 'utf8');
+  assert.equal(createHash('sha256').update(source).digest('hex'), MAIN_BASE_SHA256);
+  return source;
 }
 async function production({ baselineRollerSource = null } = {}) {
   const cacheKey = baselineRollerSource ? 'main' : 'candidate';
@@ -230,9 +230,8 @@ test('847 owner and remote share native contact; NetMatch drops remote damage an
   }
 });
 
-test('847 current-main b34 full production composition reproduces the uncovered gates', async t => {
+test('847 current-main b34 full production composition reproduces the uncovered gates', async () => {
   const baselineRoller = mainBaselineRollerSource();
-  if (!baselineRoller) { t.skip('the pinned main baseline object is unavailable in this shallow checkout'); return; }
   const f = await production({ baselineRollerSource: baselineRoller });
   const a = new f.Actor({ team: 0, name: 'r847main', isLocal: true, weapon: 'roller', CharacterClass: f.Character, style: { hair: 0, skin: 2, outfit: 0, eyes: 0 } });
   const v = new f.Actor({ team: 1, name: 'r847mainvictim', isLocal: false, weapon: 'shooter', CharacterClass: f.Character, style: { hair: 0, skin: 0, outfit: 0, eyes: 0 } });
