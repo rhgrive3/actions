@@ -33,6 +33,10 @@ import { adaptHudAuthority } from './hud-authority-adapter.mjs';
 // reliability adapters. Upstream inkwave-public/ remains byte-for-byte intact.
 import fs from 'node:fs';
 import { adaptScreenfxDamageReset } from './screenfx-damage-reset-adapter.mjs';
+import { adaptScreenfxLensRelease } from './screenfx-lens-release-adapter.mjs';
+import { adaptActorWeaponInput } from './actor-weapon-input-adapter.mjs';
+import { adaptBotRefillRelease } from './bot-refill-release-adapter.mjs';
+import { adaptBotEdgeGuard } from './bot-edge-guard-adapter.mjs';
 import { adaptFinalMinuteMusic } from './final-minute-music-adapter.mjs';
 import { adaptFinalCount } from './final-count-adapter.mjs';
 import { adaptTurfLead } from './turf-lead-adapter.mjs';
@@ -63,7 +67,7 @@ const IDENTITY_FILES = [
   'issue-418-adapter.mjs','world-quality.mjs','quality-probe.mjs','texlib-adapter.mjs','texlib.mjs',
   'boss-hit-adapter.mjs',
   'issue-190-adapter.mjs', 'paint-mipmap-probe.mjs', 'issue-472-adapter.mjs',
-  'screenfx-damage-reset-adapter.mjs',
+  'screenfx-damage-reset-adapter.mjs', 'screenfx-lens-release-adapter.mjs', 'actor-weapon-input-adapter.mjs', 'bot-refill-release-adapter.mjs', 'bot-edge-guard-adapter.mjs',
   'fx-actor-lifetime-adapter.mjs',
   'hud-snapshots-adapter.mjs', 'hud-snapshots.mjs',
   'hud-authority-adapter.mjs',
@@ -117,6 +121,10 @@ function adaptQualityLayer(rel, code) {
   code = adaptPropRetention(rel, code);
   code = adaptPropAtlas(rel, code);
   code = adaptScreenfxDamageReset(rel, code, replaceOnce);
+  code = adaptScreenfxLensRelease(rel, code, replaceOnce);
+  code = adaptActorWeaponInput(rel, code, replaceOnce);
+  code = adaptBotRefillRelease(rel, code, replaceOnce);
+  code = adaptBotEdgeGuard(rel, code, replaceOnce);
   code = adaptFinalMinuteMusic(rel, code, replaceOnce);
   code = adaptFinalCount(rel, code, replaceOnce);
   code = adaptTurfLead(rel, code, replaceOnce);
