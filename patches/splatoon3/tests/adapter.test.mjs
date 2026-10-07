@@ -4,8 +4,15 @@ import fs from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { replaceOnce, adaptSource, checkCompatibility } from '../adapter.mjs';
 const publicRoot = process.env.INKWAVE_UPSTREAM_SOURCE ? pathToFileURL(process.env.INKWAVE_UPSTREAM_SOURCE + '/') : new URL('../../../inkwave-public/', import.meta.url);
-test('upstream compatibility matches the audited original; patches do not edit source', () => {
-  assert.doesNotThrow(() => checkCompatibility(fileURLToPath(publicRoot)));
+test('upstream lock pins the audited source plus the authorized Issue 907 map overrides', () => {
+  const lock = checkCompatibility(fileURLToPath(publicRoot));
+  const overrides = lock.authorizedSourceOverrides;
+  assert.deepEqual(Object.keys(overrides).sort(), ['src/game/player.js', 'src/main.js']);
+  for (const file of Object.keys(overrides)) {
+    assert.equal(overrides[file].issue, 907);
+    assert.equal(overrides[file].sha256, lock.files[file]);
+    assert.ok(overrides[file].fromSha256);
+  }
   const actor = fs.readFileSync(new URL('src/game/actor.js', publicRoot), 'utf8');
   assert.ok(!actor.includes('beforeActions'));
   const generated = adaptSource('src/game/actor.js', actor);

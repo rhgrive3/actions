@@ -1101,7 +1101,17 @@ class Game {
     this._frameN = (this._frameN || 0) + 1;
     if (!worldHidden && (this.settings.quality !== 'low' || (this._frameN & 1))) sm.needsUpdate = true;
     if (!this._skipRender) {
-      if (!setUp) this.R.render();
+      const hiddenRoots = this._mapHiddenRoots || (this._mapHiddenRoots = []);
+      hiddenRoots.length = 0;
+      if (!setUp && loc && this.rig.mapK > 0.002) {
+        for (const actor of G.actors || []) {
+          const root = actor.team === loc.team ? null : actor.character?.root;
+          if (root?.visible) { root.visible = false; hiddenRoots.push(root); }
+        }
+      }
+      try {
+        if (!setUp) this.R.render();
+      } finally { for (const root of hiddenRoots) root.visible = true; hiddenRoots.length = 0; }
       if (this.showcase.mode) sm.needsUpdate = true;
       this.showcase.render();
     }

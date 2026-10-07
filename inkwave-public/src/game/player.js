@@ -51,7 +51,8 @@ export class PlayerController {
     const friction = as ? lerp(1, 0.58, as.closeness * as.strength) : 1;
     let lookActive = false;
     // while the map diorama is up the mouse / right stick steer the map cursor, not your camera
-    const mapUp = (G.rig?.mapK ?? 0) > 0.05 || inp.down('Tab') || inp.down('KeyM') || inp.padButton(8) || !!touch?.mapOpen;
+    // Match DioramaOverlay's visibility threshold so controls stay gated during both transition directions.
+    const mapUp = (G.rig?.mapK ?? 0) > 0.002 || inp.down('Tab') || inp.down('KeyM') || inp.padButton(8) || !!touch?.mapOpen;
     const mdx = mapUp ? 0 : inp.mouse.dx, mdy = mapUp ? 0 : inp.mouse.dy;
     if (mdx || mdy) {
       const sens = 0.0021 * (s.sensitivity ?? 1) * (s.aimAssistMouse ? friction : 1);
@@ -97,6 +98,7 @@ export class PlayerController {
     if (inp.down('KeyD') || inp.down('ArrowRight')) mx += 1;
     if (inp.pad) { inp.padStick(0, 1, _stick, 0.14, 0.95); mx += _stick.x; mz -= _stick.y; }
     if (touch) { mx += touch.moveX; mz += touch.moveY; }
+    if (mapUp) { mx = 0; mz = 0; it.fire = false; }
     const ml = Math.hypot(mx, mz);
     if (ml > 1) { mx /= ml; mz /= ml; }
     // tracking assist: carry a share of the target's angular motion while the player is engaging (look or move input)
@@ -118,8 +120,11 @@ export class PlayerController {
     it.sub = inp.mouse.right || inp.down('KeyE') || inp.padButton(5) || !!touch?.down('sub');
     it.special = inp.down('KeyF') || inp.down('KeyQ') || inp.padButton(3) || inp.padButton(11) || !!touch?.down('special');
     this.mapHeld = inp.down('Tab') || inp.down('KeyM') || inp.padButton(8) || !!touch?.mapOpen;
-    // the TAB map is a targeting UI (clicking a teammate beacon super jumps) — never fire or throw through it
-    if (this.mapHeld) { it.fire = false; it.sub = false; }
+    // The map is a presentation/input mode; never move or trigger combat actions behind the visible diorama.
+    if (mapUp) {
+      it.move.set(0, 0, 0);
+      it.jump = it.squid = it.fire = it.sub = it.special = false;
+    }
     // super jump: while the map is open, 1-3 (or d-pad left/up/right) jumps to that teammate, 4 / d-pad down to spawn
     if (this.mapHeld && a.canSuperJump()) {
       const allies = G.actors.filter((o) => o.team === a.team && o !== a);

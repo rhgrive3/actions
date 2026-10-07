@@ -56,3 +56,15 @@ test('actual emitted input policy boundaries', {skip:!built},async()=>{
   assert.equal(game.s3Clock.ticks,300);assert.equal(h.input.pad,null);assert.equal(h.a.intent.special,false);assert.equal(h.c.padLook.x,0);assert.ok(h.a.intent.move.length()>0);
  }
 });
+
+test('visible map blocks movement and combat through open and close easing at 30/60/120Hz',{skip:!built},async()=>{
+ for(const hz of [30,60,120]){
+  const h=await rig();h.input.keys.add('KeyW');h.input.keys.add('Space');h.input.keys.add('ShiftLeft');h.input.keys.add('KeyF');
+  h.input.mouse.left=true;h.input.mouse.right=true;
+  const neutral=()=>{assert.equal(h.a.intent.move.length(),0);for(const k of ['fire','jump','squid','sub','special'])assert.equal(h.a.intent[k],false);};
+  h.input.keys.add('Tab');h.camera.mapK=0;h.c.update(1/hz);assert.equal(h.c.mapHeld,true);neutral();
+  h.input.keys.delete('Tab');h.camera.mapK=.8;h.c.update(1/hz);assert.equal(h.c.mapHeld,false);neutral();
+  h.camera.mapK=.002;h.c.update(1/hz);assert.ok(h.a.intent.move.length()>0);assert.equal(h.a.intent.fire,true);assert.equal(h.a.intent.jump,true);
+  assert.equal(h.a.intent.squid,true);assert.equal(h.a.intent.sub,true);assert.equal(h.a.intent.special,true);
+ }
+});
