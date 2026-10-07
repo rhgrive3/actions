@@ -44,3 +44,34 @@ test('catalog Match entry executes native finish/judge and rejects an uncaptured
  assert.throws(()=>validateCatalogTurfFinish(catalogTurfFinishProbe(Uncaptured,f.G)),/native Turf finish/);
  assert.equal(f.G.paint,paint);assert.equal(f.G.netm,net);
 });
+
+
+import { installClock, runSimulation } from '../runtime/clock.mjs';
+function clockGame(f) {
+ installClock({G:f.G});
+ return {match:f.m,input:{padPressed:new Set(),pollPad(){},endFrame(){}},rig:{},_padMenus(){},_updateAttract(){}};
+}
+test('#980 final legal projectile interval flips the frozen winner at every render cadence',async()=>{
+ for(const hz of [30,60,120,144]){
+  const f=await fixture(),game=clockGame(f);f.m.time=1/60;f.G.time=0;
+  let age=0,hits=0;f.G.projectiles={update(dt){const before=age;age+=dt;if(before<1/120&&age>=1/120){hits++;f.G.paint.splat();}}};
+  for(let i=0;i<hz*3;i++)runSimulation(game,1/hz);
+  assert.equal(hits,1);assert.deepEqual(plain(f.m.result),{coverage:[.4,.6],winner:1});assert.equal(f.reads,1);
+ }
+});
+test('#980 a fractional last tick includes only pre-deadline paint and neutralizes at the boundary',async()=>{
+ for(const impact of [1/240,1/80]){
+  const f=await fixture(),game=clockGame(f);f.m.time=1/120;f.G.time=0;
+  let age=0,hits=0;f.G.projectiles={update(dt){const before=age;age+=dt;if(before<impact&&age>=impact){hits++;f.G.paint.splat();}}};
+  const it={fire:true,sub:true,move:new f.THREE.Vector3(1,0,0)};f.m.local={intent:it,_prevIntent:{fire:true,sub:true},weaponRunner:{cancelPendingInput(){}}};
+  runSimulation(game,1/60);assert.equal(hits,1);assert.equal(f.m.state,'finish');
+  assert.deepEqual(plain(f.m.s3FinishCoverage),impact<1/120?[.4,.6]:[.51,.49]);
+  assert.equal(it.fire,false);assert.equal(it.sub,false);assert.equal(f.m.local._prevIntent.sub,false);
+ }
+});
+test('#980 180 seconds includes every authoritative interval, including number 10800',async()=>{
+ const f=await fixture(),game=clockGame(f);f.m.time=f.m.duration=180;f.G.time=0;
+ let legal=0,total=0;f.G.projectiles={update(dt){if(f.m.state==='playing'){legal++;total+=dt;if(legal===10800)f.G.paint.splat();}}};
+ for(let frame=0;frame<180*144;frame++)runSimulation(game,1/144);
+ assert.equal(legal,10800);assert.ok(Math.abs(total-180)<1e-8);assert.equal(f.m.state,'finish');assert.deepEqual(plain(f.m.s3FinishCoverage),[.4,.6]);
+});

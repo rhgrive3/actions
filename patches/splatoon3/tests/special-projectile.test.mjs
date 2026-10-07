@@ -53,6 +53,7 @@ test('real NetMatch projectile packet restores ghost special descriptor without 
     life:50/60,straight:0,grav:10.8,drag:.6,trailEvery:0,s3SpecialWeapon:descriptor});
   p.pos.set(0,1,0);p.prev.copy(p.pos);p.start.copy(p.pos);p.vel.set(33,0,0);system._push(p);
   const packet=JSON.parse(JSON.stringify(nm.out.find(e=>e[1]==='p')));assert.ok(packet);assert.equal(packet.length,35,'actual network metadata plus Kit slots');
+  assert.equal(packet.some(x=>x&&typeof x==='object'&&'s3SpecialPowerAP' in x),false,'#977 unrelated special descriptors keep their pre-AP wire shape');
   const remote=f.make('charger');remote.remote=true;remote.nid=7;
   const before=nm.out.length,beforeProjectiles=system.list.length;system.ghostProjectile(remote,packet);
   assert.equal(system.list.length,beforeProjectiles+1,'one accepted ghost, not the unchanged owner list tail');const ghost=system.list.at(-1);assert.notEqual(ghost,p);
