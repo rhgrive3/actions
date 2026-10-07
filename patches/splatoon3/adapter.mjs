@@ -522,6 +522,12 @@ export function adaptSource(rel, code) {
     return code;
   }
   if (rel === 'src/core/input.js') {
+    code = replaceOnce(code, '  pollPad() {\n    const pads = navigator.getGamepads ? navigator.getGamepads() : [];',
+      "  pollPad() {\n    const previousPad = this.pad, padOwned = !!previousPad && this.lastDevice === 'pad';\n    const pads = navigator.getGamepads ? navigator.getGamepads() : [];",
+      'gamepad disconnect ownership snapshot');
+    code = replaceOnce(code, '    this.pad = pad;\n    this.padPressed.clear();\n    if (!pad) return;',
+      "    this.pad = pad;\n    this.padPressed.clear();\n    if (!pad) {\n      if (padOwned) { this._s3PadCanceled = true; this.padPrev.length = 0; }\n      return;\n    }",
+      'gamepad disappearance is cancellation epoch');
     code = replaceOnce(code, '    const ax = pad.axes;', `    const touchContact = this.lastDevice === 'touch' && this.mobile?.active && !this.mobile._destroyed &&
       ((this.mobile._ptr?.size || 0) > 0 || (this.mobile._stick?.id ?? -1) >= 0);
     const ax = pad.axes;`, 'live touch gesture owns axis arbitration');
@@ -542,6 +548,34 @@ export function adaptSource(rel, code) {
     this._s3Enabled = value;
   }
   update(dt) {`, 'controller disable neutralizes transient pad look');
+    code = replaceOnce(code, '    const it = a.intent;\n    if (!this.enabled) {',
+      `    const it = a.intent;
+    if (inp._s3PadCanceled) {
+      // #1024: losing the active pad is source cancellation, not RT/RB release.
+      inp._s3PadCanceled = false;
+      a.weaponRunner?.cancelPendingInput?.();
+      if (a.weaponRunner) a.weaponRunner.aimingSub = false;
+      if (a._prevIntent) { a._prevIntent.fire = false; a._prevIntent.sub = false; }
+      it.fire = false; it.sub = false;
+      this.padLook.x = this.padLook.y = 0; this.edgeT = 0;
+    }
+    if (!this.enabled) {`, 'pad disconnect cancels held release actions');
+    // #1012: no time-dependent rim acceleration; enforce the accepted S3
+    // sub-360 deg/s steady yaw upper bound without inventing the unresolved
+    // -5..+5 mapping tracked separately by #287.
+    code = replaceOnce(code,
+      `      // edge boost: holding the stick at the rim speeds yaw up (quick 180s) after a short delay
+      if (_stick.mag > 0.93) this.edgeT = Math.min(0.5, this.edgeT + dt); else this.edgeT = Math.max(0, this.edgeT - dt * 3);
+      const boost = 1 + 0.55 * clamp((this.edgeT - 0.16) / 0.3, 0, 1);
+      const c = _stick.mag > 0 ? lookCurve(_stick.mag) / _stick.mag : 0;`,
+      `      this.edgeT = 0;
+      const yawRate = Math.min(3.6 * ps, Math.PI * 2 - 1e-6);
+      const c = _stick.mag > 0 ? lookCurve(_stick.mag) / _stick.mag : 0;`,
+      'S3 right-stick steady yaw cap');
+    code = replaceOnce(code,
+      '      rig.yaw -= this.padLook.x * 3.6 * ps * boost * friction * dt;',
+      '      rig.yaw -= this.padLook.x * yawRate * friction * dt;',
+      'S3 right-stick yaw rate');
     const start = code.indexOf('    if (this.onTarget && this.onTarget !== G.boss) {');
     const end = code.indexOf('    // is the crosshair point inside', start);
     if (start < 0 || end < start) throw new Error('INKWAVE patch conflict: camera aim connection');
@@ -913,6 +947,23 @@ export function adaptSource(rel, code) {
       '      if (this.swimWake && (!m || (!m.paused && !resultsQuiet))) this.swimWake.update(dt, this.levelMat.userData.uniforms, G.camera.position);',
       '#53 swim wakes behind results');
     code = replaceOnce(code, '    dt = Math.min(dt, 1 / 24);\n', '', 'elapsed time');
+    code = replaceOnce(code,
+      `    // shadows: every frame (half-rate updates made moving shadows — your own, right under the crosshair — judder);
+    // only the low preset halves it
+    const sm = G.renderer.shadowMap;
+    sm.autoUpdate = false;
+    this._frameN = (this._frameN || 0) + 1;
+    if (!worldHidden && (this.settings.quality !== 'low' || (this._frameN & 1))) sm.needsUpdate = true;`,
+      `    // #1026: shadow cadence follows effective device quality. Touch-primary
+    // gameplay caps the 2048px sun shadow at 30 Hz; desktop HIGH/ULTRA keeps
+    // full cadence and LOW remains half-rate. ShadowCache stays enabled.
+    const sm = G.renderer.shadowMap;
+    sm.autoUpdate = false;
+    this._frameN = (this._frameN || 0) + 1;
+    const shadowQuality = effectiveQuality(this.settings, this.mobile);
+    const halfRateShadow = !!this.mobile?.touch || shadowQuality.shadowSize <= 1024;
+    if (!worldHidden && (!halfRateShadow || (this._frameN & 1))) sm.needsUpdate = true;`,
+      'effective mobile shadow cadence');
     code = replaceOnce(code, '    this.input.endFrame();\n', '', 'input consumption');
     code = replaceOnce(code,
       '    const judgeP = this.hud?.judge({ colors: [G.teamHex[0], G.teamHex[1]], percents: [cov[0] * 100, cov[1] * 100], names: this.palette.names || TEAM_NAMES });',
