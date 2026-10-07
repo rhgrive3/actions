@@ -373,7 +373,7 @@ export function installWeapons(context, profile) {
     if (a.form === 'squid') {
       this.s3WasSquid = true;
       if (this.charging) {
-        if (this.charge >= .999 && held) this.s3Stored = {
+        if (this.charge >= .999 && held && a.submerged === true) this.s3Stored = {
           charge: 1, remaining: w.keepChargeTime,
           fireDelay: Math.max(0, (w.storedFireDelay || 0) - dt),
           paid: Math.max(this.s3ChargerSpent || 0, w.inkFull)
