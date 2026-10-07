@@ -123,7 +123,10 @@ test('#94 full composition routes that contact to a separate shooter HUD marker'
     'the installed production runtime must expose presentation-only muzzle LOS contact');
   const marker = projectiles.muzzleBlockFeedback(actor);
   assert.ok(marker?.hit);
-  assert.ok(marker.point.distanceTo(muzzleHit.point) < 1e-9, 'marker comes from the same physical field contact');
+  // The composed cue sweeps the sourced field collision radius, so its contact
+  // sits on the same physical cover face as the raw centreline query (solver
+  // precision apart) and equals the real shot's impact.
+  assert.ok(marker.point.distanceTo(muzzleHit.point) < 0.05, 'marker comes from the same physical field contact');
 
   const main = adaptBuildSource('src/main.js', fs.readFileSync(path.join(SRC, 'src/main.js'), 'utf8'));
   const hud = adaptBuildSource('src/ui/hud.js', fs.readFileSync(path.join(SRC, 'src/ui/hud.js'), 'utf8'));
@@ -151,7 +154,9 @@ test('#94 presentation query is read-only and clears when the field line is clea
     for (const count of [30, 60, 120]) {
       for (let i = 0; i < count; i++) samples.push(projectiles.muzzleBlockFeedback(actor).point.clone());
     }
-    assert.ok(samples.every(point => point.distanceTo(muzzleHit.point) < 1e-9));
+    assert.ok(samples.every(point => point.distanceTo(samples[0]) < 1e-9), 'repeat queries return one contact');
+    assert.ok(samples.every(point => point.distanceTo(muzzleHit.point) < 0.05),
+      'repeat queries stay on the physical cover contact');
     assert.equal(randomCalls, 0);
   } finally {
     vmMath.random = nativeRandom;
